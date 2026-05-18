@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Aion.ChatServer/Aion.ChatServer.csproj" />
+    <Project Path="src/Aion.Commons/Aion.Commons.csproj" />
+    <Project Path="src/Aion.GameServer/Aion.GameServer.csproj" />
+    <Project Path="src/Aion.LoginServer/Aion.LoginServer.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Aion.ChatServer.Tests/Aion.ChatServer.Tests.csproj" />
+    <Project Path="tests/Aion.Commons.Tests/Aion.Commons.Tests.csproj" />
+    <Project Path="tests/Aion.GameServer.Tests/Aion.GameServer.Tests.csproj" />
+    <Project Path="tests/Aion.LoginServer.Tests/Aion.LoginServer.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/Aion.PortParity/Aion.PortParity.csproj" />
+  </Folder>
+</Solution>
