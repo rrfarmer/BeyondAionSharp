@@ -81,6 +81,14 @@ namespace Aion.Commons.Network
 		}
 
 		/// <summary>
+		/// Write the low byte of an integer. (writeC in Java)
+		/// </summary>
+		public void WriteC(int value)
+		{
+			WriteC((byte)value);
+		}
+
+		/// <summary>
 		/// Write a 16-bit unsigned integer in little-endian. (writeH in Java)
 		/// </summary>
 		public void WriteH(ushort value)
@@ -88,6 +96,14 @@ namespace Aion.Commons.Network
 			EnsureCapacity(2);
 			BinaryPrimitives.WriteUInt16LittleEndian(new Span<byte>(_buffer, _position, 2), value);
 			_position += 2;
+		}
+
+		/// <summary>
+		/// Write a 16-bit integer in little-endian. (writeH in Java)
+		/// </summary>
+		public void WriteH(int value)
+		{
+			WriteH((ushort)value);
 		}
 
 		/// <summary>
@@ -147,13 +163,13 @@ namespace Aion.Commons.Network
 			var byteCount = charCount * 2; // UTF-16, 2 bytes per char
 			EnsureCapacity(byteCount + 2);
 
-			// Write character count
-			WriteH((ushort)charCount);
-
 			// Write UTF-16 LE bytes
 			var bytes = Encoding.Unicode.GetBytes(value);
 			Array.Copy(bytes, 0, _buffer, _position, bytes.Length);
 			_position += bytes.Length;
+
+			// Java ByteBuffer.putChar('\0') terminator.
+			WriteH(0);
 		}
 
 		/// <summary>
@@ -246,17 +262,24 @@ namespace Aion.Commons.Network
 		/// </summary>
 		public string ReadS()
 		{
-			var charCount = ReadH();
-			if (charCount == 0)
-				return string.Empty;
+			var sb = new StringBuilder();
+			while (true)
+			{
+				var ch = ReadH();
+				if (ch == 0)
+					return sb.ToString();
+				sb.Append((char)ch);
+			}
+		}
 
-			var byteCount = charCount * 2;
-			if (Remaining < byteCount)
-				throw new EndOfStreamException("Not enough data to read string");
-
-			var str = Encoding.Unicode.GetString(_buffer, _position, byteCount);
-			_position += byteCount;
-			return str;
+		/// <summary>
+		/// Read raw bytes and return them as a new array.
+		/// </summary>
+		public byte[] ReadB(int length)
+		{
+			var result = new byte[length];
+			ReadB(result, 0, length);
+			return result;
 		}
 
 		/// <summary>

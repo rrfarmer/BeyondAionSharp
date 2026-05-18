@@ -1,4 +1,7 @@
-﻿using Microsoft.Extensions.Configuration;
+using Aion.LoginServer.Configuration;
+using Aion.LoginServer.Network;
+using Aion.LoginServer.Services;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -7,16 +10,18 @@ var builder = Host.CreateDefaultBuilder(args)
 	.ConfigureAppConfiguration(
 		(hostContext, config) =>
 		{
-			config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
-			config.AddJsonFile($"appsettings.{hostContext.HostingEnvironment.EnvironmentName}.json", optional: true);
 			config.AddEnvironmentVariables();
 		}
 	)
 	.ConfigureServices(
 		(hostContext, services) =>
 		{
-			// Add commons services (to be implemented in Phase 2)
-			services.AddLogging();
+			var options = LoginServerOptions.LoadFromJavaConfig(Directory.GetCurrentDirectory());
+			services.AddSingleton(options);
+			services.AddSingleton<IGameServerRegistry, GameServerRegistry>();
+			services.AddSingleton<LoginClientSocketServer>();
+			services.AddSingleton<GameServerSocketServer>();
+			services.AddHostedService<LoginServerHostedService>();
 		}
 	)
 	.ConfigureLogging(

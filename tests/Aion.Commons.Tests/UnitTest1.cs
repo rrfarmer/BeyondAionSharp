@@ -67,18 +67,20 @@ public class PacketBufferParityTests
 	}
 
 	[Fact]
-	public void WriteS_WritesUtf16WithCharCount()
+	public void WriteS_WritesNullTerminatedUtf16()
 	{
 		var buf = new PacketBuffer();
 		buf.WriteS("Hi");
 
 		var data = buf.ToArray();
-		// Format: [charCount: 2 bytes LE][UTF-16 bytes]
-		// charCount = 2
-		Assert.Equal(0x02, data[0]); // char count low byte
-		Assert.Equal(0x00, data[1]); // char count high byte
 		// UTF-16 LE: "Hi" = 0x48 0x00 0x69 0x00
-		Assert.Equal(6, data.Length); // 2 (count) + 4 (2 chars * 2 bytes)
+		Assert.Equal(6, data.Length); // 4 bytes text + 2 byte terminator
+		Assert.Equal(0x48, data[0]);
+		Assert.Equal(0x00, data[1]);
+		Assert.Equal(0x69, data[2]);
+		Assert.Equal(0x00, data[3]);
+		Assert.Equal(0x00, data[4]);
+		Assert.Equal(0x00, data[5]);
 	}
 
 	[Fact]
@@ -141,8 +143,8 @@ public class PacketBufferParityTests
 	[Fact]
 	public void ReadS_ReadsUtf16String()
 	{
-		// "Hi" = charCount: 2, UTF-16: 0x48 0x00 0x69 0x00
-		var data = new byte[] { 0x02, 0x00, 0x48, 0x00, 0x69, 0x00 };
+		// "Hi" = UTF-16 text followed by a 0 char terminator.
+		var data = new byte[] { 0x48, 0x00, 0x69, 0x00, 0x00, 0x00 };
 		var buf = new PacketBuffer(data);
 
 		var value = buf.ReadS();
