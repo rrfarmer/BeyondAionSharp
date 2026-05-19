@@ -15,6 +15,10 @@ public sealed class LoginServerOptions
 
 	public bool AutoCreateAccounts { get; init; } = true;
 
+	public int LoginTryBeforeBan { get; init; } = 5;
+
+	public int WrongLoginBanMinutes { get; init; } = 15;
+
 	public bool BruteForceProtectionEnabled { get; init; } = true;
 
 	public bool LogGameServerLogins { get; init; }
@@ -41,6 +45,8 @@ public sealed class LoginServerOptions
 			ClientEndPoint = ParseEndPoint(loader.Get("loginserver.network.client.socket_address", "0.0.0.0:2106")),
 			GameServerEndPoint = ParseEndPoint(loader.Get("loginserver.network.gameserver.socket_address", "0.0.0.0:9014")),
 			AutoCreateAccounts = loader.GetBool("loginserver.accounts.autocreate", true),
+			LoginTryBeforeBan = loader.GetInt("loginserver.network.client.logintrybeforeban", 5),
+			WrongLoginBanMinutes = loader.GetInt("loginserver.network.client.bantimeforbruteforcing", 15),
 			BruteForceProtectionEnabled = loader.GetBool("loginserver.server.bruteforceprotector", true),
 			LogGameServerLogins = loader.GetBool("loginserver.log.logins", false),
 			ExternalAuthUrl = loader.Get("loginserver.accounts.external_auth.url", string.Empty),

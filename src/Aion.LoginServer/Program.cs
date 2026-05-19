@@ -31,6 +31,8 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<IPlayerTransferRepository, PlayerTransferRepository>();
 			services.AddSingleton<IBannedMacService, BannedMacService>();
 			services.AddSingleton<IBannedHddService, BannedHddService>();
+			services.AddSingleton<IBruteForceProtector, BruteForceProtector>();
+			services.AddSingleton<IExternalAuthClient>(serviceProvider => new ExternalAuthClient(new HttpClient(), serviceProvider.GetRequiredService<ILogger<ExternalAuthClient>>()));
 			services.AddSingleton<ILoginAuthService, LoginAuthService>();
 			services.AddSingleton<IPlayerTransferService, PlayerTransferService>();
 			services.AddSingleton<ILoginSessionRegistry, LoginSessionRegistry>();

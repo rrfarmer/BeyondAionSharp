@@ -6,9 +6,11 @@ using Aion.LoginServer.Utils;
 
 namespace Aion.LoginServer.Services;
 
-public sealed record LoginAuthResult(AionAuthResponse? Response, Account? Account, bool SendAccountBannedPacket = false)
+public sealed record LoginAuthResult(AionAuthResponse? Response, Account? Account, bool SendAccountBannedPacket = false, bool CloseAfterResponse = false)
 {
 	public static LoginAuthResult Failure(AionAuthResponse response) => new(response, null);
+
+	public static LoginAuthResult FailureAndClose(AionAuthResponse response) => new(response, null, CloseAfterResponse: true);
 
 	public static LoginAuthResult Success(Account account) => new(AionAuthResponse.STR_L2AUTH_S_ALL_OK, account);
 
@@ -30,17 +32,23 @@ public sealed class LoginAuthService : ILoginAuthService
 	private readonly IAccountRepository _accountRepository;
 	private readonly IAccountTimeRepository _accountTimeRepository;
 	private readonly IBannedIpRepository _bannedIpRepository;
+	private readonly IExternalAuthClient _externalAuthClient;
+	private readonly IBruteForceProtector _bruteForceProtector;
 
 	public LoginAuthService(
 		LoginServerOptions options,
 		IAccountRepository accountRepository,
 		IAccountTimeRepository accountTimeRepository,
-		IBannedIpRepository bannedIpRepository)
+		IBannedIpRepository bannedIpRepository,
+		IExternalAuthClient externalAuthClient,
+		IBruteForceProtector bruteForceProtector)
 	{
 		_options = options;
 		_accountRepository = accountRepository;
 		_accountTimeRepository = accountTimeRepository;
 		_bannedIpRepository = bannedIpRepository;
+		_externalAuthClient = externalAuthClient;
+		_bruteForceProtector = bruteForceProtector;
 	}
 
 	public async Task<LoginAuthResult> LoginAsync(string username, string password, string remoteIp, CancellationToken cancellationToken = default)
@@ -48,18 +56,29 @@ public sealed class LoginAuthService : ILoginAuthService
 		if (await IsIpBannedAsync(remoteIp, cancellationToken))
 			return LoginAuthResult.Failure(AionAuthResponse.STR_L2AUTH_S_BLOCKED_IP);
 
+		var accountName = username;
 		if (_options.UseExternalAuth)
-			return LoginAuthResult.Failure(AionAuthResponse.STR_L2AUTH_S_ACCOUNTCACHESERVER_DOWN);
+		{
+			var externalAuth = await _externalAuthClient.AuthenticateAsync(username, password, _options.ExternalAuthUrl, cancellationToken);
+			if (externalAuth == null)
+				return LoginAuthResult.Failure(AionAuthResponse.STR_L2AUTH_S_ACCOUNTCACHESERVER_DOWN);
 
-		var account = await _accountRepository.GetAccountByNameAsync(username, useExternalAuth: false, cancellationToken);
-		if (account == null && _options.AutoCreateAccounts && !string.IsNullOrEmpty(username))
-			account = await CreateAccountAsync(username, password, cancellationToken);
+			var externalResponse = GetByIdOrDefault(externalAuth.AionAuthResponseId, AionAuthResponse.STR_L2AUTH_UNKNOWN4);
+			if (externalResponse != AionAuthResponse.STR_L2AUTH_S_ALL_OK)
+				return await ApplyBruteForceProtectionAsync(externalResponse, remoteIp, cancellationToken);
+
+			accountName = externalAuth.AccountId;
+		}
+
+		var account = await _accountRepository.GetAccountByNameAsync(accountName, _options.UseExternalAuth, cancellationToken);
+		if (account == null && _options.AutoCreateAccounts && !string.IsNullOrEmpty(accountName))
+			account = await CreateAccountAsync(accountName, password, _options.UseExternalAuth, cancellationToken);
 
 		if (account == null)
 			return LoginAuthResult.Failure(AionAuthResponse.STR_L2AUTH_S_ACCOUNT_LOAD_FAIL);
 
-		if (account.PasswordHash != AccountUtils.EncodePassword(password))
-			return LoginAuthResult.Failure(AionAuthResponse.STR_L2AUTH_S_INCORRECT_PWD);
+		if (!_options.UseExternalAuth && account.PasswordHash != AccountUtils.EncodePassword(password))
+			return await ApplyBruteForceProtectionAsync(AionAuthResponse.STR_L2AUTH_S_INCORRECT_PWD, remoteIp, cancellationToken);
 
 		if (account.Activated != 1)
 			return LoginAuthResult.Failure(AionAuthResponse.STR_L2AUTH_S_AGREE_GAME);
@@ -102,12 +121,26 @@ public sealed class LoginAuthService : ILoginAuthService
 		return bans.Any(ban => ban.IsActive(now) && NetworkMask.Matches(ban.Mask, remoteIp));
 	}
 
-	private async Task<Account?> CreateAccountAsync(string username, string password, CancellationToken cancellationToken)
+	private async Task<LoginAuthResult> ApplyBruteForceProtectionAsync(AionAuthResponse response, string remoteIp, CancellationToken cancellationToken)
+	{
+		if (_options.BruteForceProtectionEnabled
+			&& response is AionAuthResponse.STR_L2AUTH_S_INVALID_ACCOUT or AionAuthResponse.STR_L2AUTH_S_INCORRECT_PWD
+			&& remoteIp != "127.0.0.1"
+			&& _bruteForceProtector.AddFailedConnect(remoteIp, _options.LoginTryBeforeBan, _options.WrongLoginBanMinutes))
+		{
+			await _bannedIpRepository.InsertAsync(remoteIp, DateTime.UtcNow.AddMinutes(_options.WrongLoginBanMinutes), cancellationToken);
+			return LoginAuthResult.FailureAndClose(AionAuthResponse.STR_L2AUTH_S_BLOCKED_IP);
+		}
+
+		return LoginAuthResult.Failure(response);
+	}
+
+	private async Task<Account?> CreateAccountAsync(string username, string password, bool useExternalAuth, CancellationToken cancellationToken)
 	{
 		var account = new Account
 		{
 			Name = username,
-			PasswordHash = AccountUtils.EncodePassword(password),
+			PasswordHash = useExternalAuth ? string.Empty : AccountUtils.EncodePassword(password),
 			AccessLevel = 0,
 			Membership = 0,
 			Activated = 1,
@@ -115,7 +148,7 @@ public sealed class LoginAuthService : ILoginAuthService
 			LastMac = "xx-xx-xx-xx-xx-xx",
 			Toll = 0,
 		};
-		return await _accountRepository.InsertAccountAsync(account, useExternalAuth: false, cancellationToken) ? account : null;
+		return await _accountRepository.InsertAccountAsync(account, useExternalAuth, cancellationToken) ? account : null;
 	}
 
 	private static void UpdateOnLogin(Account account)
@@ -154,5 +187,10 @@ public sealed class LoginAuthService : ILoginAuthService
 	private static int GetDays(DateTime value)
 	{
 		return (int)(new DateTimeOffset(value).ToUnixTimeMilliseconds() / 1000 / 3600 / 24);
+	}
+
+	private static AionAuthResponse GetByIdOrDefault(int id, AionAuthResponse fallback)
+	{
+		return Enum.IsDefined(typeof(AionAuthResponse), id) ? (AionAuthResponse)id : fallback;
 	}
 }

@@ -146,6 +146,8 @@ public sealed class LoginClientConnection : BaseClientConnection, ILoginClientSe
 				else
 				{
 					await SendPacketAsync(new SmLoginFail(authResult.Response ?? AionAuthResponse.STR_L2AUTH_S_SYSTEM_ERROR));
+					if (authResult.CloseAfterResponse)
+						await CloseAsync();
 				}
 				break;
 			case CmServerList serverList:

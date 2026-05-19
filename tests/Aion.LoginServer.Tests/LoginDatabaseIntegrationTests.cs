@@ -40,7 +40,7 @@ public class LoginDatabaseIntegrationTests
 
 	private static async Task InitializeSchemaAsync()
 	{
-		var sqlPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "login-server", "sql", "aion_ls.sql"));
+		var sqlPath = FindLoginSchemaPath();
 		var sql = await File.ReadAllTextAsync(sqlPath);
 		await using var connection = DatabaseFactory.GetConnection();
 		await connection.OpenAsync();
@@ -50,6 +50,20 @@ public class LoginDatabaseIntegrationTests
 			command.CommandText = statement;
 			await command.ExecuteNonQueryAsync();
 		}
+	}
+
+	private static string FindLoginSchemaPath()
+	{
+		var directory = new DirectoryInfo(AppContext.BaseDirectory);
+		while (directory != null)
+		{
+			var candidate = Path.Combine(directory.FullName, "login-server", "sql", "aion_ls.sql");
+			if (File.Exists(candidate))
+				return candidate;
+			directory = directory.Parent;
+		}
+
+		throw new FileNotFoundException("Could not find login-server/sql/aion_ls.sql from test output directory.", "login-server/sql/aion_ls.sql");
 	}
 
 	private static IEnumerable<string> SplitSqlStatements(string sql)
