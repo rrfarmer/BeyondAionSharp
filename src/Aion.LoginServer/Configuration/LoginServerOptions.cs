@@ -13,6 +13,8 @@ public sealed class LoginServerOptions
 
 	public int MaxGameServerConnections { get; init; } = 100;
 
+	public int NioReadWriteThreads { get; init; }
+
 	public bool AutoCreateAccounts { get; init; } = true;
 
 	public int LoginTryBeforeBan { get; init; } = 5;
@@ -47,6 +49,7 @@ public sealed class LoginServerOptions
 			AutoCreateAccounts = loader.GetBool("loginserver.accounts.autocreate", true),
 			LoginTryBeforeBan = loader.GetInt("loginserver.network.client.logintrybeforeban", 5),
 			WrongLoginBanMinutes = loader.GetInt("loginserver.network.client.bantimeforbruteforcing", 15),
+			NioReadWriteThreads = loader.GetInt("loginserver.network.nio.threads", 0),
 			BruteForceProtectionEnabled = loader.GetBool("loginserver.server.bruteforceprotector", true),
 			LogGameServerLogins = loader.GetBool("loginserver.log.logins", false),
 			ExternalAuthUrl = loader.Get("loginserver.accounts.external_auth.url", string.Empty),
