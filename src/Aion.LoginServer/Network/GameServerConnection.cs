@@ -35,6 +35,7 @@ public sealed class GameServerConnection : BaseClientConnection, IGameServerSess
 	private readonly GameServerPingTracker _pingTracker = new();
 	private readonly CancellationTokenSource _pingCancellationTokenSource = new();
 	private readonly SemaphoreSlim _sendLock = new(1, 1);
+	private readonly SemaphoreSlim _closeLock = new(1, 1);
 	private GameServerConnectionState _state = GameServerConnectionState.Connected;
 	private GameServerInfo? _gameServerInfo;
 	private Task? _pingTask;
@@ -172,10 +173,13 @@ public sealed class GameServerConnection : BaseClientConnection, IGameServerSess
 
 	public async Task SendPacketAsync(GsServerPacket packet)
 	{
-		var frame = packet.SerializeFrame();
 		await _sendLock.WaitAsync();
 		try
 		{
+			if (!_isConnected)
+				return;
+
+			var frame = packet.SerializeFrame();
 			await WriteAsync(frame, 0, frame.Length);
 		}
 		finally
@@ -472,16 +476,35 @@ public sealed class GameServerConnection : BaseClientConnection, IGameServerSess
 
 	public override async Task CloseAsync()
 	{
-		await StopPingLoopAsync(waitForTask: false);
-
-		if (_gameServerInfo != null)
+		await _closeLock.WaitAsync();
+		try
 		{
-			_registry.UnregisterGameServer(_gameServerInfo.Id, this);
-			_gameServerInfo = null;
-			await _sessionRegistry.UpdateServerListForAllLoggedInPlayersAsync(_registry.GetGameServers());
-		}
+			if (!_isConnected)
+				return;
 
-		await base.CloseAsync();
+			await StopPingLoopAsync(waitForTask: false);
+
+			if (_gameServerInfo != null)
+			{
+				_registry.UnregisterGameServer(_gameServerInfo.Id, this);
+				_gameServerInfo = null;
+				await _sessionRegistry.UpdateServerListForAllLoggedInPlayersAsync(_registry.GetGameServers());
+			}
+
+			await _sendLock.WaitAsync();
+			try
+			{
+				await base.CloseAsync();
+			}
+			finally
+			{
+				_sendLock.Release();
+			}
+		}
+		finally
+		{
+			_closeLock.Release();
+		}
 	}
 
 	private void StartPingLoop()

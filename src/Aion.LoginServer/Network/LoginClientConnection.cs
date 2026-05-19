@@ -19,6 +19,8 @@ public sealed class LoginClientConnection : BaseClientConnection, ILoginClientSe
 	private readonly ILoginAuthService _authService;
 	private readonly ILoginSessionRegistry _sessionRegistry;
 	private readonly IGameServerRegistry _gameServerRegistry;
+	private readonly SemaphoreSlim _sendLock = new(1, 1);
+	private readonly SemaphoreSlim _closeLock = new(1, 1);
 	private LoginClientState _state = LoginClientState.Connected;
 	private readonly int _sessionId;
 	private Model.Account? _account;
@@ -222,8 +224,19 @@ public sealed class LoginClientConnection : BaseClientConnection, ILoginClientSe
 
 	public async Task SendPacketAsync(AionServerPacket packet)
 	{
-		var frame = packet.SerializeEncryptedFrame(_cryptEngine);
-		await WriteAsync(frame, 0, frame.Length);
+		await _sendLock.WaitAsync();
+		try
+		{
+			if (!_isConnected)
+				return;
+
+			var frame = packet.SerializeEncryptedFrame(_cryptEngine);
+			await WriteAsync(frame, 0, frame.Length);
+		}
+		finally
+		{
+			_sendLock.Release();
+		}
 	}
 
 	public async Task CloseWithPacketAsync(AionServerPacket packet)
@@ -234,15 +247,32 @@ public sealed class LoginClientConnection : BaseClientConnection, ILoginClientSe
 
 	public override async Task CloseAsync()
 	{
-		if (!_isConnected)
-			return;
-
-		if (_account != null && !_joinedGameServer)
+		await _closeLock.WaitAsync();
+		try
 		{
-			_sessionRegistry.RemoveLoginSession(_account, this);
-			await _authService.UpdateOnLogoutAsync(_account);
+			if (!_isConnected)
+				return;
+
+			if (_account != null && !_joinedGameServer)
+			{
+				_sessionRegistry.RemoveLoginSession(_account, this);
+				await _authService.UpdateOnLogoutAsync(_account);
+			}
+
+			await _sendLock.WaitAsync();
+			try
+			{
+				await base.CloseAsync();
+			}
+			finally
+			{
+				_sendLock.Release();
+			}
 		}
-		await base.CloseAsync();
+		finally
+		{
+			_closeLock.Release();
+		}
 	}
 
 	private async Task<byte[]?> ReadExactOrNullAsync(int length)

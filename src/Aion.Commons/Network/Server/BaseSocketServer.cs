@@ -119,6 +119,8 @@ namespace Aion.Commons.Network.Server
 				// Stop accepting new connections
 				_listener?.Stop();
 
+				await CloseActiveConnectionsAsync();
+
 				// Wait for active connections to close gracefully
 				var deadline = DateTime.UtcNow.Add(gracePeriod);
 				while (_activeConnections > 0 && DateTime.UtcNow < deadline)
@@ -146,6 +148,11 @@ namespace Aion.Commons.Network.Server
 		{
 			Interlocked.Decrement(ref _activeConnections);
 		}
+
+		/// <summary>
+		/// Close active child connections during server shutdown.
+		/// </summary>
+		protected virtual Task CloseActiveConnectionsAsync() => Task.CompletedTask;
 
 		/// <summary>
 		/// Get current count of active connections.

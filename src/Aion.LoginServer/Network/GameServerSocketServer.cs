@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Net.Sockets;
 using Aion.Commons.Network.Server;
 using Aion.LoginServer.Configuration;
@@ -21,6 +22,7 @@ public sealed class GameServerSocketServer : BaseSocketServer
 	private readonly IBannedHddService _bannedHddService;
 	private readonly IPlayerTransferService _playerTransferService;
 	private readonly LoginServerOptions _options;
+	private readonly ConcurrentDictionary<string, GameServerConnection> _connections = new();
 	private long _nextClientId;
 
 	public GameServerSocketServer(
@@ -56,23 +58,43 @@ public sealed class GameServerSocketServer : BaseSocketServer
 	protected override async Task HandleConnectionAsync(TcpClient client, CancellationToken cancellationToken)
 	{
 		var clientId = $"game-server-{Interlocked.Increment(ref _nextClientId)}";
-		await using var connection = new GameServerConnection(
-			_logger,
-			client,
-			clientId,
-			_registry,
-			_sessionRegistry,
-			_accountRepository,
-			_accountTimeRepository,
-			_bannedIpRepository,
-			_premiumRepository,
-			_accountsLogRepository,
-			_authService,
-			_bannedMacService,
-			_bannedHddService,
-			_playerTransferService,
-			_options);
-		await connection.RunAsync();
-		ConnectionClosed();
+		GameServerConnection? connection = null;
+		try
+		{
+			connection = new GameServerConnection(
+				_logger,
+				client,
+				clientId,
+				_registry,
+				_sessionRegistry,
+				_accountRepository,
+				_accountTimeRepository,
+				_bannedIpRepository,
+				_premiumRepository,
+				_accountsLogRepository,
+				_authService,
+				_bannedMacService,
+				_bannedHddService,
+				_playerTransferService,
+				_options);
+			_connections[clientId] = connection;
+			await connection.RunAsync();
+		}
+		finally
+		{
+			if (connection != null)
+			{
+				_connections.TryRemove(clientId, out _);
+				await connection.DisposeAsync();
+			}
+
+			ConnectionClosed();
+		}
+	}
+
+	protected override Task CloseActiveConnectionsAsync()
+	{
+		var closeTasks = _connections.Values.Select(connection => connection.CloseAsync()).ToArray();
+		return closeTasks.Length == 0 ? Task.CompletedTask : Task.WhenAll(closeTasks);
 	}
 }
