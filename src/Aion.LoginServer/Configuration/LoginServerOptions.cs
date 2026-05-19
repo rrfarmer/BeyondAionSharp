@@ -17,6 +17,10 @@ public sealed class LoginServerOptions
 
 	public bool BruteForceProtectionEnabled { get; init; } = true;
 
+	public string ExternalAuthUrl { get; init; } = string.Empty;
+
+	public bool UseExternalAuth => !string.IsNullOrWhiteSpace(ExternalAuthUrl);
+
 	public static LoginServerOptions LoadFromJavaConfig(string startDirectory)
 	{
 		var loader = new ConfigLoader();
@@ -36,6 +40,7 @@ public sealed class LoginServerOptions
 			GameServerEndPoint = ParseEndPoint(loader.Get("loginserver.network.gameserver.socket_address", "0.0.0.0:9014")),
 			AutoCreateAccounts = loader.GetBool("loginserver.accounts.autocreate", true),
 			BruteForceProtectionEnabled = loader.GetBool("loginserver.server.bruteforceprotector", true),
+			ExternalAuthUrl = loader.Get("loginserver.accounts.external_auth.url", string.Empty),
 		};
 	}
 

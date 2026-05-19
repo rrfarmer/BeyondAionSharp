@@ -1,33 +1,39 @@
 using System.Buffers.Binary;
 using System.Net.Sockets;
-using System.Security.Cryptography;
 using Aion.Commons.Network;
 using Aion.Commons.Network.Server;
 using Aion.LoginServer.Network.Aion;
 using Aion.LoginServer.Network.Aion.ClientPackets;
 using Aion.LoginServer.Network.Aion.ServerPackets;
+using Aion.LoginServer.Network.Crypto;
+using Aion.LoginServer.Services;
 using Microsoft.Extensions.Logging;
 
 namespace Aion.LoginServer.Network;
 
 public sealed class LoginClientConnection : BaseClientConnection
 {
-	private readonly byte[] _rsaModulus;
+	private readonly LoginRsaKeyPair _rsaKeyPair;
 	private readonly byte[] _blowfishKey;
+	private readonly LoginCryptEngine _cryptEngine = new();
+	private readonly ILoginAuthService _authService;
 	private LoginClientState _state = LoginClientState.Connected;
 	private readonly int _sessionId;
+	private SessionKey? _sessionKey;
 
-	public LoginClientConnection(ILogger logger, TcpClient client, string clientId)
+	public LoginClientConnection(ILogger logger, TcpClient client, string clientId, ILoginKeyGenerator keyGenerator, ILoginAuthService authService)
 		: base(logger, client, clientId)
 	{
+		_authService = authService;
 		_sessionId = GetHashCode();
-		_rsaModulus = RandomNumberGenerator.GetBytes(128);
-		_blowfishKey = RandomNumberGenerator.GetBytes(16);
+		_rsaKeyPair = keyGenerator.GetEncryptedRsaKeyPair();
+		_blowfishKey = keyGenerator.GenerateBlowfishKey();
+		_cryptEngine.UpdateKey(_blowfishKey);
 	}
 
 	public override async Task RunAsync()
 	{
-		await SendPacketAsync(new SmInit(_rsaModulus, _blowfishKey, _sessionId));
+		await SendPacketAsync(new SmInit(_rsaKeyPair.EncryptedModulus, _blowfishKey, _sessionId));
 		await base.RunAsync();
 	}
 
@@ -42,7 +48,17 @@ public sealed class LoginClientConnection : BaseClientConnection
 			return null;
 
 		var payload = await ReadExactOrNullAsync(frameLength - 2);
-		return payload == null ? null : new PacketBuffer(payload);
+		if (payload == null)
+			return null;
+
+		if (!_cryptEngine.Decrypt(payload, 0, payload.Length))
+		{
+			_logger.LogWarning("Wrong checksum from login client {ClientId}", _clientId);
+			await CloseAsync();
+			return null;
+		}
+
+		return new PacketBuffer(payload);
 	}
 
 	protected override async Task ProcessPacketAsync(PacketBuffer packet)
@@ -58,8 +74,29 @@ public sealed class LoginClientConnection : BaseClientConnection
 				await SendPacketAsync(new SmLoginFail(AionAuthResponse.STR_L2AUTH_S_SYSTEM_ERROR));
 				await CloseAsync();
 				break;
-			case CmLogin:
-				await SendPacketAsync(new SmLoginFail(AionAuthResponse.STR_L2AUTH_S_SYSTEM_ERROR));
+			case CmLogin login:
+				var credentials = LoginCredentialDecryptor.Decrypt(login.EncryptedLoginData, _rsaKeyPair);
+				if (credentials == null)
+				{
+					await SendPacketAsync(new SmLoginFail(AionAuthResponse.STR_L2AUTH_S_SYSTEM_ERROR));
+					break;
+				}
+				var authResult = await _authService.LoginAsync(credentials.Username, credentials.Password, GetRemoteIp());
+				if (authResult.SendAccountBannedPacket)
+				{
+					await SendPacketAsync(new SmAccountBanned2());
+					await CloseAsync();
+				}
+				else if (authResult.Response == AionAuthResponse.STR_L2AUTH_S_ALL_OK && authResult.Account != null)
+				{
+					_state = LoginClientState.AuthedLogin;
+					_sessionKey = new SessionKey(authResult.Account);
+					await SendPacketAsync(new SmLoginOk(_sessionKey));
+				}
+				else
+				{
+					await SendPacketAsync(new SmLoginFail(authResult.Response ?? AionAuthResponse.STR_L2AUTH_S_SYSTEM_ERROR));
+				}
 				break;
 			case null:
 				_logger.LogWarning("Unknown login packet from {ClientId} in state {State}", _clientId, _state);
@@ -70,9 +107,16 @@ public sealed class LoginClientConnection : BaseClientConnection
 		}
 	}
 
+	private string GetRemoteIp()
+	{
+		return _client.Client.RemoteEndPoint is System.Net.IPEndPoint endPoint
+			? endPoint.Address.ToString()
+			: string.Empty;
+	}
+
 	private async Task SendPacketAsync(AionServerPacket packet)
 	{
-		var frame = packet.SerializeUnencryptedFrame();
+		var frame = packet.SerializeEncryptedFrame(_cryptEngine);
 		await WriteAsync(frame, 0, frame.Length);
 	}
 

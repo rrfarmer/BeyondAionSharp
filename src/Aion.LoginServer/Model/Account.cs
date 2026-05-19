@@ -2,21 +2,31 @@ namespace Aion.LoginServer.Model;
 
 public sealed class Account
 {
-	public int Id { get; init; }
+	public int Id { get; set; }
 
-	public string Name { get; init; } = string.Empty;
+	public string Name { get; set; } = string.Empty;
 
-	public byte AccessLevel { get; init; }
+	public string PasswordHash { get; set; } = string.Empty;
 
-	public byte Membership { get; init; }
+	public DateTime CreationDate { get; set; } = DateTime.UtcNow;
 
-	public byte LastServer { get; set; }
+	public byte AccessLevel { get; set; }
 
-	public long Toll { get; init; }
+	public byte Membership { get; set; }
 
-	public long CreationDate { get; init; }
+	public byte Activated { get; set; } = 1;
 
-	public string AllowedHddSerial { get; init; } = string.Empty;
+	public sbyte LastServer { get; set; } = -1;
 
-	public AccountTime AccountTime { get; init; } = new();
+	public string? LastIp { get; set; }
+
+	public string LastMac { get; set; } = "xx-xx-xx-xx-xx-xx";
+
+	public string? IpForce { get; set; }
+
+	public string? AllowedHddSerial { get; set; }
+
+	public long Toll { get; set; }
+
+	public AccountTime AccountTime { get; set; } = new();
 }

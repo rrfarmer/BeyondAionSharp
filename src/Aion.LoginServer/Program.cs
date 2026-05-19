@@ -1,5 +1,7 @@
 using Aion.LoginServer.Configuration;
+using Aion.LoginServer.Data;
 using Aion.LoginServer.Network;
+using Aion.LoginServer.Network.Crypto;
 using Aion.LoginServer.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,6 +20,13 @@ var builder = Host.CreateDefaultBuilder(args)
 		{
 			var options = LoginServerOptions.LoadFromJavaConfig(Directory.GetCurrentDirectory());
 			services.AddSingleton(options);
+			services.AddSingleton<IAccountTimeRepository, AccountTimeRepository>();
+			services.AddSingleton<IAccountRepository, AccountRepository>();
+			services.AddSingleton<IBannedIpRepository, BannedIpRepository>();
+			services.AddSingleton<IGameServersRepository, GameServersRepository>();
+			services.AddSingleton<IPremiumRepository, PremiumRepository>();
+			services.AddSingleton<ILoginAuthService, LoginAuthService>();
+			services.AddSingleton<ILoginKeyGenerator, LoginKeyGenerator>();
 			services.AddSingleton<IGameServerRegistry, GameServerRegistry>();
 			services.AddSingleton<LoginClientSocketServer>();
 			services.AddSingleton<GameServerSocketServer>();
