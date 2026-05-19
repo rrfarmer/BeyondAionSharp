@@ -13,7 +13,7 @@ public sealed class CmAccountList : GsClientPacket
 
 	protected override void ReadPayload(PacketBuffer buffer)
 	{
-		var count = buffer.ReadH();
+		var count = buffer.ReadD();
 		var accounts = new int[count];
 		for (var i = 0; i < count; i++)
 			accounts[i] = buffer.ReadD();

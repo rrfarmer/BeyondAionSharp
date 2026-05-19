@@ -133,4 +133,42 @@ public class LoginProtocolPacketTests
 
 		Assert.Equal(new byte[] { 0x05, 0x00, 0x00, 0x00, 0x03 }, frame);
 	}
+
+	[Fact]
+	public void GsFactory_AuthedStateReadsCharacterCountResponse()
+	{
+		using var payload = new PacketBuffer();
+		payload.WriteC(8);
+		payload.WriteD(123);
+		payload.WriteC(4);
+
+		var packet = GsClientPacketFactory.Create(new PacketBuffer(payload.ToArray()), GameServerConnectionState.Authed);
+
+		var character = Assert.IsType<CmGameServerCharacter>(packet);
+		Assert.Equal(123, character.AccountId);
+		Assert.Equal(4, character.CharacterCount);
+	}
+
+	[Fact]
+	public void GsFactory_AuthedStateReadsAccountListWithJavaIntCount()
+	{
+		using var payload = new PacketBuffer();
+		payload.WriteC(4);
+		payload.WriteD(2);
+		payload.WriteD(10);
+		payload.WriteD(11);
+
+		var packet = GsClientPacketFactory.Create(new PacketBuffer(payload.ToArray()), GameServerConnectionState.Authed);
+
+		var list = Assert.IsType<CmAccountList>(packet);
+		Assert.Equal(new[] { 10, 11 }, list.AccountIds);
+	}
+
+	[Fact]
+	public void SmGameServerCharacterResponse_WritesJavaPayloadShape()
+	{
+		var payload = new SmGameServerCharacterResponse(123).SerializePayload();
+
+		Assert.Equal(new byte[] { 0x04, 0x7B, 0x00, 0x00, 0x00 }, payload);
+	}
 }

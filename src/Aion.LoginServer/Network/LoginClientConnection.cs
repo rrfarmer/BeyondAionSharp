@@ -11,25 +11,44 @@ using Microsoft.Extensions.Logging;
 
 namespace Aion.LoginServer.Network;
 
-public sealed class LoginClientConnection : BaseClientConnection
+public sealed class LoginClientConnection : BaseClientConnection, ILoginClientSession
 {
 	private readonly LoginRsaKeyPair _rsaKeyPair;
 	private readonly byte[] _blowfishKey;
 	private readonly LoginCryptEngine _cryptEngine = new();
 	private readonly ILoginAuthService _authService;
+	private readonly ILoginSessionRegistry _sessionRegistry;
+	private readonly IGameServerRegistry _gameServerRegistry;
 	private LoginClientState _state = LoginClientState.Connected;
 	private readonly int _sessionId;
+	private Model.Account? _account;
 	private SessionKey? _sessionKey;
+	private bool _joinedGameServer;
 
-	public LoginClientConnection(ILogger logger, TcpClient client, string clientId, ILoginKeyGenerator keyGenerator, ILoginAuthService authService)
+	public LoginClientConnection(
+		ILogger logger,
+		TcpClient client,
+		string clientId,
+		ILoginKeyGenerator keyGenerator,
+		ILoginAuthService authService,
+		ILoginSessionRegistry sessionRegistry,
+		IGameServerRegistry gameServerRegistry)
 		: base(logger, client, clientId)
 	{
 		_authService = authService;
+		_sessionRegistry = sessionRegistry;
+		_gameServerRegistry = gameServerRegistry;
 		_sessionId = GetHashCode();
 		_rsaKeyPair = keyGenerator.GetEncryptedRsaKeyPair();
 		_blowfishKey = keyGenerator.GenerateBlowfishKey();
 		_cryptEngine.UpdateKey(_blowfishKey);
 	}
+
+	public Model.Account Account => _account ?? throw new InvalidOperationException("Login session does not have an account yet.");
+
+	public SessionKey SessionKey => _sessionKey ?? throw new InvalidOperationException("Login session does not have a session key yet.");
+
+	public bool JoinedGameServer => _joinedGameServer;
 
 	public override async Task RunAsync()
 	{
@@ -66,6 +85,20 @@ public sealed class LoginClientConnection : BaseClientConnection
 		var parsed = AionClientPacketFactory.Create(packet, _state);
 		switch (parsed)
 		{
+			case CmUpdateSession updateSession:
+				if (_sessionRegistry.TryConsumeReconnectingAccount(updateSession.AccountId, updateSession.ReconnectKey, out var reconnectingAccount) && reconnectingAccount != null)
+				{
+					_account = reconnectingAccount.Account;
+					_state = LoginClientState.AuthedLogin;
+					_sessionKey = new SessionKey(_account);
+					_sessionRegistry.RegisterReconnectedSession(this);
+					await SendPacketAsync(new SmUpdateSession(_sessionKey));
+				}
+				else
+				{
+					await CloseAsync();
+				}
+				break;
 			case CmAuthGameGuard auth when auth.SessionId == _sessionId:
 				_state = LoginClientState.AuthedGameGuard;
 				await SendPacketAsync(new SmAuthGameGuard(_sessionId));
@@ -89,13 +122,84 @@ public sealed class LoginClientConnection : BaseClientConnection
 				}
 				else if (authResult.Response == AionAuthResponse.STR_L2AUTH_S_ALL_OK && authResult.Account != null)
 				{
+					if (await _gameServerRegistry.KickAccountFromGameServerAsync(authResult.Account.Id, notifyDoubleLogin: true))
+					{
+						await SendPacketAsync(new SmLoginFail(AionAuthResponse.STR_L2AUTH_S_ALREADY_LOGIN));
+						break;
+					}
+
+					_account = authResult.Account;
 					_state = LoginClientState.AuthedLogin;
 					_sessionKey = new SessionKey(authResult.Account);
+					var registerResult = await _sessionRegistry.RegisterLoginSessionAsync(this);
+					if (registerResult == LoginSessionRegisterResult.AlreadyLoggedIn)
+					{
+						await SendPacketAsync(new SmLoginFail(AionAuthResponse.STR_L2AUTH_S_ALREADY_LOGIN));
+						_account = null;
+						_sessionKey = null;
+						_state = LoginClientState.AuthedGameGuard;
+						break;
+					}
+					await _authService.CompleteSuccessfulLoginAsync(authResult.Account, GetRemoteIp());
 					await SendPacketAsync(new SmLoginOk(_sessionKey));
 				}
 				else
 				{
 					await SendPacketAsync(new SmLoginFail(authResult.Response ?? AionAuthResponse.STR_L2AUTH_S_SYSTEM_ERROR));
+				}
+				break;
+			case CmServerList serverList:
+				if (_sessionKey == null || _account == null || !_sessionKey.CheckLogin(serverList.AccountId, serverList.LoginOk))
+				{
+					await SendPacketAsync(new SmLoginFail(AionAuthResponse.STR_L2AUTH_S_SYSTEM_ERROR));
+					await CloseAsync();
+					break;
+				}
+
+				var servers = _gameServerRegistry.GetGameServers();
+				if (servers.Count == 0)
+				{
+					await SendPacketAsync(new SmLoginFail(AionAuthResponse.STR_L2AUTH_S_NO_SERVER_LIST));
+					await CloseAsync();
+					break;
+				}
+
+				_sessionRegistry.BeginGameServerCharacterCountLoad(serverList.AccountId, _gameServerRegistry.GetOfflineGameServerCharacterCounts());
+				await _gameServerRegistry.RequestOnlineGameServerCharacterCountsAsync(serverList.AccountId);
+				if (_sessionRegistry.HasAllGameServerCharacterCounts(serverList.AccountId, servers.Count))
+				{
+					await SendPacketAsync(
+						new SmServerList(
+							servers,
+							_sessionRegistry.GetGameServerCharacterCounts(serverList.AccountId),
+							(byte)_account.LastServer));
+				}
+				break;
+			case CmPlay play:
+				if (_sessionKey == null || _account == null || !_sessionKey.CheckLogin(play.AccountId, play.LoginOk))
+				{
+					await SendPacketAsync(new SmLoginFail(AionAuthResponse.STR_L2AUTH_S_SYSTEM_ERROR));
+					await CloseAsync();
+					break;
+				}
+
+				var gameServer = _gameServerRegistry.GetGameServer(play.ServerId);
+				if (gameServer == null || !gameServer.IsOnline)
+				{
+					await SendPacketAsync(new SmPlayFail(AionAuthResponse.STR_L2AUTH_S_SERVER_DOWN));
+				}
+				else if (gameServer.MinAccessLevel > _account.AccessLevel)
+				{
+					await SendPacketAsync(new SmPlayFail(AionAuthResponse.STR_L2AUTH_S_SEVER_CHECK));
+				}
+				else if (gameServer.IsFull)
+				{
+					await SendPacketAsync(new SmPlayFail(AionAuthResponse.STR_L2AUTH_S_LIMIT_EXCEED));
+				}
+				else
+				{
+					_joinedGameServer = true;
+					await SendPacketAsync(new SmPlayOk(_sessionKey, play.ServerId));
 				}
 				break;
 			case null:
@@ -114,10 +218,29 @@ public sealed class LoginClientConnection : BaseClientConnection
 			: string.Empty;
 	}
 
-	private async Task SendPacketAsync(AionServerPacket packet)
+	public async Task SendPacketAsync(AionServerPacket packet)
 	{
 		var frame = packet.SerializeEncryptedFrame(_cryptEngine);
 		await WriteAsync(frame, 0, frame.Length);
+	}
+
+	public async Task CloseWithPacketAsync(AionServerPacket packet)
+	{
+		await SendPacketAsync(packet);
+		await CloseAsync();
+	}
+
+	public override async Task CloseAsync()
+	{
+		if (!_isConnected)
+			return;
+
+		if (_account != null && !_joinedGameServer)
+		{
+			_sessionRegistry.RemoveLoginSession(_account, this);
+			await _authService.UpdateOnLogoutAsync(_account);
+		}
+		await base.CloseAsync();
 	}
 
 	private async Task<byte[]?> ReadExactOrNullAsync(int length)

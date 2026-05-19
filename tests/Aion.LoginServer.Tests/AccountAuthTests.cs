@@ -16,7 +16,7 @@ public class AccountAuthTests
 	}
 
 	[Fact]
-	public async Task LoginAsync_ValidPassword_ReturnsSuccessAndUpdatesLoginFields()
+	public async Task LoginAsync_ValidPassword_ReturnsSuccessWithoutMutatingLoginFields()
 	{
 		var account = TestAccount("player", "secret");
 		var accountRepo = new FakeAccountRepository(account);
@@ -27,6 +27,20 @@ public class AccountAuthTests
 
 		Assert.Equal(AionAuthResponse.STR_L2AUTH_S_ALL_OK, result.Response);
 		Assert.Same(account, result.Account);
+		Assert.Null(accountRepo.LastIp);
+		Assert.False(timeRepo.Updated);
+	}
+
+	[Fact]
+	public async Task CompleteSuccessfulLoginAsync_UpdatesLoginFields()
+	{
+		var account = TestAccount("player", "secret");
+		var accountRepo = new FakeAccountRepository(account);
+		var timeRepo = new FakeAccountTimeRepository();
+		var service = new LoginAuthService(new LoginServerOptions(), accountRepo, timeRepo, new FakeBannedIpRepository());
+
+		await service.CompleteSuccessfulLoginAsync(account, "127.0.0.1");
+
 		Assert.Equal("127.0.0.1", accountRepo.LastIp);
 		Assert.True(timeRepo.Updated);
 	}

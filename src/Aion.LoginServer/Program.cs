@@ -26,6 +26,7 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<IGameServersRepository, GameServersRepository>();
 			services.AddSingleton<IPremiumRepository, PremiumRepository>();
 			services.AddSingleton<ILoginAuthService, LoginAuthService>();
+			services.AddSingleton<ILoginSessionRegistry, LoginSessionRegistry>();
 			services.AddSingleton<ILoginKeyGenerator, LoginKeyGenerator>();
 			services.AddSingleton<IGameServerRegistry, GameServerRegistry>();
 			services.AddSingleton<LoginClientSocketServer>();

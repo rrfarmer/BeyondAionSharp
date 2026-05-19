@@ -17,6 +17,7 @@ public static class GsClientPacketFactory
 				2 => new CmAccountReconnectKey(opCode),
 				3 => new CmAccountDisconnected(opCode),
 				4 => new CmAccountList(opCode),
+				8 => new CmGameServerCharacter(opCode),
 				12 => new CmGameServerPong(opCode),
 				_ => new UnknownGsClientPacket(opCode)
 			},

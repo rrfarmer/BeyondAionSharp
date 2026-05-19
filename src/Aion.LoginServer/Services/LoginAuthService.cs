@@ -18,6 +18,10 @@ public sealed record LoginAuthResult(AionAuthResponse? Response, Account? Accoun
 public interface ILoginAuthService
 {
 	Task<LoginAuthResult> LoginAsync(string username, string password, string remoteIp, CancellationToken cancellationToken = default);
+
+	Task CompleteSuccessfulLoginAsync(Account account, string remoteIp, CancellationToken cancellationToken = default);
+
+	Task UpdateOnLogoutAsync(Account account, CancellationToken cancellationToken = default);
 }
 
 public sealed class LoginAuthService : ILoginAuthService
@@ -69,12 +73,25 @@ public sealed class LoginAuthService : ILoginAuthService
 		if (!string.IsNullOrWhiteSpace(account.IpForce) && !NetworkMask.Matches(account.IpForce, remoteIp))
 			return LoginAuthResult.Failure(AionAuthResponse.STR_L2AUTH_S_BLOCKED_IP);
 
+		return LoginAuthResult.Success(account);
+	}
+
+	public async Task CompleteSuccessfulLoginAsync(Account account, string remoteIp, CancellationToken cancellationToken = default)
+	{
 		UpdateOnLogin(account);
 		await _accountTimeRepository.UpdateAccountTimeAsync(account.Id, account.AccountTime, cancellationToken);
 		await _accountRepository.UpdateLastIpAsync(account.Id, remoteIp, cancellationToken);
 		await _accountRepository.UpdateMembershipAsync(account.Id, cancellationToken);
+	}
 
-		return LoginAuthResult.Success(account);
+	public async Task UpdateOnLogoutAsync(Account account, CancellationToken cancellationToken = default)
+	{
+		var accountTime = account.AccountTime;
+		accountTime.LastLoginTime = DateTime.UtcNow;
+		accountTime.SessionDuration = (long)(DateTime.UtcNow - accountTime.LastLoginTime).TotalMilliseconds;
+		accountTime.AccumulatedOnlineTime += accountTime.SessionDuration;
+		await _accountTimeRepository.UpdateAccountTimeAsync(account.Id, accountTime, cancellationToken);
+		account.AccountTime = accountTime;
 	}
 
 	private async Task<bool> IsIpBannedAsync(string remoteIp, CancellationToken cancellationToken)
