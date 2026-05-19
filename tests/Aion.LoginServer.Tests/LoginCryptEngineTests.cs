@@ -121,7 +121,6 @@ public class LoginCryptEngineTests
 	public void LaterEncrypt_CanBeDecryptedByEnginePrimedWithSameSessionKey()
 	{
 		var encryptEngine = PrimedEngine(SessionKey);
-		var decryptEngine = PrimedEngine(SessionKey);
 		var originalPayload = new byte[] { 0x03, 0xE9, 0x03, 0x00, 0x00, 0x44, 0x33, 0x22, 0x11 };
 		var encrypted = new byte[64];
 		originalPayload.CopyTo(encrypted, 0);
@@ -129,20 +128,42 @@ public class LoginCryptEngineTests
 		var encryptedLength = encryptEngine.Encrypt(encrypted, 0, originalPayload.Length);
 		var encryptedBytes = encrypted[..encryptedLength].ToArray();
 
-		var decryptOk = decryptEngine.Decrypt(encryptedBytes, 0, encryptedLength);
+		var decryptOk = DecryptServerPayload(encryptedBytes, SessionKey);
 
 		Assert.True(decryptOk);
 		Assert.Equal(originalPayload, encryptedBytes[..originalPayload.Length]);
 	}
 
 	[Fact]
+	public void Decrypt_AcceptsCapturedClientGameGuardChecksumShape()
+	{
+		var decryptedClientPayload = new byte[]
+		{
+			0x07, 0x5A, 0x1E, 0x45,
+			0x00, 0x00, 0x00, 0x00,
+			0x00, 0x00, 0x00, 0x00,
+			0x00, 0x00, 0x00, 0x00,
+			0x00, 0x00, 0x00, 0x00,
+			0x00, 0x3F, 0x81, 0x80,
+			0x07, 0x65, 0x9F, 0xC5,
+			0x80, 0x3E, 0x81, 0x80,
+		};
+		var encrypted = decryptedClientPayload.ToArray();
+		new BlowfishCipher(SessionKey).Cipher(encrypted);
+		var decryptEngine = PrimedEngine(SessionKey);
+
+		var decryptOk = decryptEngine.Decrypt(encrypted, 0, encrypted.Length);
+
+		Assert.True(decryptOk);
+		Assert.Equal(decryptedClientPayload, encrypted);
+	}
+
+	[Fact]
 	public void Decrypt_ReturnsFalseForTamperedPacket()
 	{
-		var encryptEngine = PrimedEngine(SessionKey);
 		var decryptEngine = PrimedEngine(SessionKey);
-		var encrypted = new byte[64];
-		new byte[] { 0x06, 0x08, 0x00, 0x00, 0x00 }.CopyTo(encrypted, 0);
-		var encryptedLength = encryptEngine.Encrypt(encrypted, 0, 5);
+		var encrypted = EncryptClientPayload(SessionKey, new byte[] { 0x06, 0x08, 0x00, 0x00, 0x00 });
+		var encryptedLength = encrypted.Length;
 		encrypted[3] ^= 0x7F;
 
 		var decryptOk = decryptEngine.Decrypt(encrypted, 0, encryptedLength);
@@ -158,6 +179,44 @@ public class LoginCryptEngineTests
 		firstPacket[0] = 0x00;
 		engine.Encrypt(firstPacket, 0, 1);
 		return engine;
+	}
+
+	private static byte[] EncryptClientPayload(byte[] sessionKey, byte[] rawPayload)
+	{
+		var payload = CreateClientChecksummedPayload(rawPayload);
+		new BlowfishCipher(sessionKey).Cipher(payload);
+		return payload;
+	}
+
+	private static byte[] CreateClientChecksummedPayload(byte[] rawPayload)
+	{
+		var length = rawPayload.Length + 8;
+		if ((length & 7) != 0)
+			length += 8 - (length & 7);
+
+		var payload = new byte[length];
+		rawPayload.CopyTo(payload, 0);
+		var checksumOffset = length - 8;
+		var xor = 0;
+		for (var offset = 0; offset < checksumOffset; offset += 4)
+			xor ^= BitConverter.ToInt32(payload, offset);
+		BitConverter.GetBytes(xor).CopyTo(payload, checksumOffset);
+		return payload;
+	}
+
+	private static bool DecryptServerPayload(byte[] encryptedPayload, byte[] sessionKey)
+	{
+		new BlowfishCipher(sessionKey).Decipher(encryptedPayload);
+		return VerifyServerChecksum(encryptedPayload);
+	}
+
+	private static bool VerifyServerChecksum(byte[] payload)
+	{
+		var xor = 0;
+		var checksumOffset = payload.Length - 4;
+		for (var offset = 0; offset < checksumOffset; offset += 4)
+			xor ^= BitConverter.ToInt32(payload, offset);
+		return xor == BitConverter.ToInt32(payload, checksumOffset);
 	}
 
 	private static LoginCryptEngine CreateSessionEngine()

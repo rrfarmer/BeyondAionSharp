@@ -74,7 +74,14 @@ public sealed class LoginClientConnection : BaseClientConnection, ILoginClientSe
 
 		if (!_cryptEngine.Decrypt(payload, 0, payload.Length))
 		{
-			_logger.LogWarning("Wrong checksum from login client {ClientId}", _clientId);
+			var (opCode, xorBeforeLastWord, ignoredLastWord) = GetChecksumDebugInfo(payload);
+			_logger.LogWarning(
+				"Wrong checksum from login client {ClientId}. Length={Length}, Opcode=0x{Opcode:X2}, XorBeforeLastWord=0x{XorBeforeLastWord:X8}, IgnoredLastWord=0x{IgnoredLastWord:X8}",
+				_clientId,
+				payload.Length,
+				opCode,
+				xorBeforeLastWord,
+				ignoredLastWord);
 			await CloseAsync();
 			return null;
 		}
@@ -294,5 +301,23 @@ public sealed class LoginClientConnection : BaseClientConnection, ILoginClientSe
 		}
 
 		return buffer;
+	}
+
+	private static (byte OpCode, uint XorBeforeLastWord, uint IgnoredLastWord) GetChecksumDebugInfo(byte[] payload)
+	{
+		if (payload.Length == 0)
+			return (0, 0, 0);
+
+		uint xor = 0;
+		uint ignoredLastWord = 0;
+		if ((payload.Length & 3) == 0 && payload.Length > 4)
+		{
+			var count = payload.Length - 4;
+			for (var offset = 0; offset < count; offset += 4)
+				xor ^= BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(offset, 4));
+			ignoredLastWord = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(count, 4));
+		}
+
+		return (payload[0], xor, ignoredLastWord);
 	}
 }

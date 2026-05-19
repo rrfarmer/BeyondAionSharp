@@ -79,7 +79,7 @@ public sealed class LoginCryptEngine
 				return false;
 
 			long chksum = 0;
-			var count = length - 4;
+			var count = offset + length - 4;
 			long check;
 			int i;
 
@@ -97,7 +97,7 @@ public sealed class LoginCryptEngine
 			check |= data[i + 2] << 0x10 & 0xFF0000L;
 			check |= data[i + 3] << 0x18 & 0xFF000000L;
 
-			return chksum == check;
+			return chksum == 0;
 		}
 	}
 

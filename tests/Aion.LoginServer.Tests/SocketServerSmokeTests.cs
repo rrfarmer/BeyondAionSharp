@@ -850,7 +850,7 @@ public sealed class SocketServerSmokeTests
 		return PacketFrameCodec.CreateFrame(payload.ToArray());
 	}
 
-	private static byte[] CreateEncryptedAuthGameGuardFrame(LoginCryptEngine cryptEngine, int sessionId)
+	private static byte[] CreateEncryptedAuthGameGuardFrame(TestLoginClientCrypto clientCrypto, int sessionId)
 	{
 		using var payload = new PacketBuffer();
 		payload.WriteC(0x07);
@@ -861,14 +861,10 @@ public sealed class SocketServerSmokeTests
 		payload.WriteD(0);
 		payload.WriteB(new byte[0x0B]);
 
-		var rawPayload = payload.ToArray();
-		var encryptedPayload = new byte[rawPayload.Length + 16];
-		rawPayload.CopyTo(encryptedPayload, 0);
-		var encryptedLength = cryptEngine.Encrypt(encryptedPayload, 0, rawPayload.Length);
-		return PacketFrameCodec.CreateFrame(encryptedPayload.AsSpan(0, encryptedLength));
+		return clientCrypto.EncryptFrame(payload.ToArray());
 	}
 
-	private static byte[] CreateEncryptedServerListFrame(LoginCryptEngine cryptEngine, int accountId, int loginOk)
+	private static byte[] CreateEncryptedServerListFrame(TestLoginClientCrypto clientCrypto, int accountId, int loginOk)
 	{
 		using var payload = new PacketBuffer();
 		payload.WriteC(0x05);
@@ -878,10 +874,10 @@ public sealed class SocketServerSmokeTests
 		payload.WriteB(new byte[6]);
 		payload.WriteD(0);
 		payload.WriteD(0);
-		return EncryptLoginPayload(cryptEngine, payload.ToArray());
+		return clientCrypto.EncryptFrame(payload.ToArray());
 	}
 
-	private static byte[] CreateEncryptedPlayFrame(LoginCryptEngine cryptEngine, int accountId, int loginOk, byte serverId)
+	private static byte[] CreateEncryptedPlayFrame(TestLoginClientCrypto clientCrypto, int accountId, int loginOk, byte serverId)
 	{
 		using var payload = new PacketBuffer();
 		payload.WriteC(0x02);
@@ -890,15 +886,15 @@ public sealed class SocketServerSmokeTests
 		payload.WriteC(serverId);
 		payload.WriteB(new byte[6]);
 		payload.WriteQ(0);
-		return EncryptLoginPayload(cryptEngine, payload.ToArray());
+		return clientCrypto.EncryptFrame(payload.ToArray());
 	}
 
-	private static byte[] CreateEncryptedOpcodeOnlyFrame(LoginCryptEngine cryptEngine, byte opcode)
+	private static byte[] CreateEncryptedOpcodeOnlyFrame(TestLoginClientCrypto clientCrypto, byte opcode)
 	{
-		return EncryptLoginPayload(cryptEngine, new[] { opcode });
+		return clientCrypto.EncryptFrame(new[] { opcode });
 	}
 
-	private static byte[] CreateEncryptedUpdateSessionFrame(LoginCryptEngine cryptEngine, int accountId, int loginOk, int reconnectKey)
+	private static byte[] CreateEncryptedUpdateSessionFrame(TestLoginClientCrypto clientCrypto, int accountId, int loginOk, int reconnectKey)
 	{
 		using var payload = new PacketBuffer();
 		payload.WriteC(0x08);
@@ -910,18 +906,10 @@ public sealed class SocketServerSmokeTests
 		payload.WriteC(4);
 		payload.WriteC(68);
 		payload.WriteH(0x7788);
-		return EncryptLoginPayload(cryptEngine, payload.ToArray());
+		return clientCrypto.EncryptFrame(payload.ToArray());
 	}
 
-	private static byte[] EncryptLoginPayload(LoginCryptEngine cryptEngine, byte[] rawPayload)
-	{
-		var encryptedPayload = new byte[rawPayload.Length + 16];
-		rawPayload.CopyTo(encryptedPayload, 0);
-		var encryptedLength = cryptEngine.Encrypt(encryptedPayload, 0, rawPayload.Length);
-		return PacketFrameCodec.CreateFrame(encryptedPayload.AsSpan(0, encryptedLength));
-	}
-
-	private static byte[] CreateEncryptedLoginFrame(LoginCryptEngine cryptEngine, System.Security.Cryptography.RSAParameters publicParameters, int sessionId, string username, string password)
+	private static byte[] CreateEncryptedLoginFrame(TestLoginClientCrypto clientCrypto, System.Security.Cryptography.RSAParameters publicParameters, int sessionId, string username, string password)
 	{
 		var plainCredentials = new byte[128];
 		WriteAscii(plainCredentials, 94, username);
@@ -938,7 +926,7 @@ public sealed class SocketServerSmokeTests
 		payload.WriteB(new byte[] { 0x9D, 0xDA, 0x47, 0xA7, 0x21, 0xC0, 0xA6, 0xA5, 0x4B, 0xB7, 0x5E, 0xE3, 0xCE, 0xC9, 0x26, 0xAA });
 		payload.WriteD(0);
 
-		return EncryptLoginPayload(cryptEngine, payload.ToArray());
+		return clientCrypto.EncryptFrame(payload.ToArray());
 	}
 
 	private static void WriteAscii(byte[] buffer, int offset, string value)
@@ -947,17 +935,12 @@ public sealed class SocketServerSmokeTests
 			buffer[offset + i] = (byte)value[i];
 	}
 
-	private static LoginCryptEngine CreatePrimedClientEngine(byte[] blowfishKey)
+	private static TestLoginClientCrypto CreatePrimedClientEngine(byte[] blowfishKey)
 	{
-		var engine = new LoginCryptEngine(() => 0x01020304);
-		engine.UpdateKey(blowfishKey);
-		var firstServerPacket = new byte[64];
-		firstServerPacket[0] = 0x00;
-		engine.Encrypt(firstServerPacket, 0, 1);
-		return engine;
+		return new TestLoginClientCrypto(blowfishKey);
 	}
 
-	internal static async Task<(LoginCryptEngine Engine, int AccountId, int LoginOk)> CompleteLoginHandshakeAsync(
+	internal static async Task<(TestLoginClientCrypto Engine, int AccountId, int LoginOk)> CompleteLoginHandshakeAsync(
 		TcpClient client,
 		FixedLoginKeyGenerator keyGenerator,
 		int expectedAccountId,
@@ -988,12 +971,11 @@ public sealed class SocketServerSmokeTests
 		return (clientEngine, accountId, loginOk);
 	}
 
-	private static async Task<byte[]> ReadEncryptedLoginPayloadAsync(NetworkStream stream, LoginCryptEngine cryptEngine)
+	private static async Task<byte[]> ReadEncryptedLoginPayloadAsync(NetworkStream stream, TestLoginClientCrypto clientCrypto)
 	{
 		var frame = await ReadFrameAsync(stream);
 		var payload = frame[2..];
-		Assert.True(cryptEngine.Decrypt(payload, 0, payload.Length));
-		return payload;
+		return clientCrypto.DecryptServerFramePayload(payload);
 	}
 
 	private static byte[] DecryptFirstServerPayload(byte[] encryptedPayload)
@@ -1103,6 +1085,56 @@ public sealed class SocketServerSmokeTests
 		}
 
 		Assert.Equal(expected, getActiveConnections());
+	}
+
+	internal sealed class TestLoginClientCrypto
+	{
+		private readonly BlowfishCipher _cipher;
+
+		public TestLoginClientCrypto(byte[] blowfishKey)
+		{
+			_cipher = new BlowfishCipher(blowfishKey);
+		}
+
+		public byte[] EncryptFrame(byte[] rawPayload)
+		{
+			var payload = CreateClientChecksummedPayload(rawPayload);
+			_cipher.Cipher(payload);
+			return PacketFrameCodec.CreateFrame(payload);
+		}
+
+		public byte[] DecryptServerFramePayload(byte[] encryptedPayload)
+		{
+			var payload = encryptedPayload.ToArray();
+			_cipher.Decipher(payload);
+			Assert.True(VerifyServerChecksum(payload));
+			return payload;
+		}
+
+		private static byte[] CreateClientChecksummedPayload(byte[] rawPayload)
+		{
+			var length = rawPayload.Length + 8;
+			if ((length & 7) != 0)
+				length += 8 - (length & 7);
+
+			var payload = new byte[length];
+			rawPayload.CopyTo(payload, 0);
+			var checksumOffset = length - 8;
+			var xor = 0;
+			for (var offset = 0; offset < checksumOffset; offset += 4)
+				xor ^= BitConverter.ToInt32(payload, offset);
+			BinaryPrimitives.WriteInt32LittleEndian(payload.AsSpan(checksumOffset, 4), xor);
+			return payload;
+		}
+
+		private static bool VerifyServerChecksum(byte[] payload)
+		{
+			var xor = 0;
+			var checksumOffset = payload.Length - 4;
+			for (var offset = 0; offset < checksumOffset; offset += 4)
+				xor ^= BitConverter.ToInt32(payload, offset);
+			return xor == BitConverter.ToInt32(payload, checksumOffset);
+		}
 	}
 
 	internal sealed class FixedLoginKeyGenerator : ILoginKeyGenerator, IDisposable
