@@ -1,5 +1,6 @@
 using Aion.Commons.Configuration;
 using Aion.Commons.Database;
+using Aion.Commons.Logging;
 using Aion.LoginServer.Configuration;
 using Aion.LoginServer.Data;
 using Aion.LoginServer.Network;
@@ -54,6 +55,7 @@ var builder = Host.CreateDefaultBuilder(args)
 		{
 			logging.ClearProviders();
 			logging.AddConsole();
+			logging.AddProvider(new AionFileLoggerProvider(ResolveJavaModuleLogDirectory("login-server")));
 			if (hostContext.HostingEnvironment.IsDevelopment())
 			{
 				logging.AddDebug();
@@ -69,3 +71,16 @@ logger.LogInformation("Aion Login Server starting...");
 await host.RunAsync();
 
 logger.LogInformation("Aion Login Server stopped.");
+
+static string ResolveJavaModuleLogDirectory(string moduleName)
+{
+	var directory = new DirectoryInfo(Directory.GetCurrentDirectory());
+	while (directory != null)
+	{
+		if (Directory.Exists(Path.Combine(directory.FullName, moduleName, "config")))
+			return Path.Combine(directory.FullName, moduleName, "log");
+		directory = directory.Parent;
+	}
+
+	return Path.Combine(Directory.GetCurrentDirectory(), "log");
+}
