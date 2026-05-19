@@ -22,6 +22,7 @@ public sealed class LoginServerHostedServiceTests
 		var bannedIpService = new TrackingBannedIpService(order);
 		var bannedMacService = new TrackingBannedMacService(order);
 		var bannedHddService = new TrackingBannedHddService(order);
+		var playerTransferScheduler = new TrackingPlayerTransferScheduler(order);
 		var registry = new GameServerRegistry();
 		var sessions = new LoginSessionRegistry();
 		using var keyGenerator = new SocketServerSmokeTests.FixedLoginKeyGenerator();
@@ -64,6 +65,7 @@ public sealed class LoginServerHostedServiceTests
 			bannedIpService,
 			bannedMacService,
 			bannedHddService,
+			playerTransferScheduler,
 			NullLogger<LoginServerHostedService>.Instance);
 
 		using var startupTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
@@ -80,7 +82,7 @@ public sealed class LoginServerHostedServiceTests
 		});
 		await SocketServerSmokeTests.AssertTaskCompletedAsync(startTask);
 
-		Assert.Equal(new[] { "gameservers", "ip", "mac", "hdd" }, order.ToArray());
+		Assert.Equal(new[] { "gameservers", "ip", "mac-clean", "hdd-clean", "ptransfer" }, order.ToArray());
 		Assert.Same(configuredGameServer, registry.GetGameServer(configuredGameServer.Id));
 
 		using var loginClient = await SocketServerSmokeTests.ConnectWithRetryAsync(loginPort);
@@ -88,7 +90,15 @@ public sealed class LoginServerHostedServiceTests
 		await AssertActiveConnectionsAsync(loginServer.GetActiveConnections, 1);
 		await AssertActiveConnectionsAsync(gameServerSocketServer.GetActiveConnections, 1);
 
-		await hosted.StopAsync(CancellationToken.None);
+		playerTransferScheduler.BlockStop();
+		var stopTask = hosted.StopAsync(CancellationToken.None);
+		await playerTransferScheduler.WaitUntilStopCalledAsync();
+		Assert.False(stopTask.IsCompleted);
+		Assert.Equal(1, loginServer.GetActiveConnections());
+		Assert.Equal(1, gameServerSocketServer.GetActiveConnections());
+
+		playerTransferScheduler.ReleaseStop();
+		await SocketServerSmokeTests.AssertTaskCompletedAsync(stopTask);
 		await AssertEventuallyClosedAsync(loginClient.GetStream());
 		await AssertEventuallyClosedAsync(gameServerClient.GetStream());
 		Assert.Equal(0, loginServer.GetActiveConnections());
@@ -177,13 +187,15 @@ public sealed class LoginServerHostedServiceTests
 			_order = order;
 		}
 
-		public Task LoadAsync(CancellationToken cancellationToken = default)
+		public Task LoadAsync(CancellationToken cancellationToken = default) => throw NotUsed();
+
+		public Task CleanExpiredBansAsync(CancellationToken cancellationToken = default)
 		{
-			_order.Enqueue("mac");
+			_order.Enqueue("mac-clean");
 			return Task.CompletedTask;
 		}
 
-		public IReadOnlyCollection<BannedMacEntry> GetEntries() => Array.Empty<BannedMacEntry>();
+		public Task<IReadOnlyCollection<BannedMacEntry>> GetEntriesAsync(CancellationToken cancellationToken = default) => throw NotUsed();
 
 		public Task BanAsync(string address, DateTime time, string details, CancellationToken cancellationToken = default) => throw NotUsed();
 
@@ -223,17 +235,58 @@ public sealed class LoginServerHostedServiceTests
 			_order = order;
 		}
 
-		public Task LoadAsync(CancellationToken cancellationToken = default)
+		public Task LoadAsync(CancellationToken cancellationToken = default) => throw NotUsed();
+
+		public Task CleanExpiredBansAsync(CancellationToken cancellationToken = default)
 		{
-			_order.Enqueue("hdd");
+			_order.Enqueue("hdd-clean");
 			return Task.CompletedTask;
 		}
 
-		public IReadOnlyDictionary<string, DateTime> GetEntries() => new Dictionary<string, DateTime>();
+		public Task<IReadOnlyDictionary<string, DateTime>> GetEntriesAsync(CancellationToken cancellationToken = default) => throw NotUsed();
 
 		public Task BanAsync(string serial, DateTime time, CancellationToken cancellationToken = default) => throw NotUsed();
 
 		public Task UnbanAsync(string serial, CancellationToken cancellationToken = default) => throw NotUsed();
+	}
+
+	private sealed class TrackingPlayerTransferScheduler : IPlayerTransferScheduler
+	{
+		private readonly ConcurrentQueue<string> _order;
+		private readonly TaskCompletionSource _stopEntered = new(TaskCreationOptions.RunContinuationsAsynchronously);
+		private readonly TaskCompletionSource _releaseStop = new(TaskCreationOptions.RunContinuationsAsynchronously);
+		private bool _blockStop;
+
+		public TrackingPlayerTransferScheduler(ConcurrentQueue<string> order)
+		{
+			_order = order;
+		}
+
+		public void BlockStop()
+		{
+			_blockStop = true;
+		}
+
+		public Task WaitUntilStopCalledAsync() => _stopEntered.Task;
+
+		public void ReleaseStop()
+		{
+			_releaseStop.SetResult();
+		}
+
+		public Task StartAsync(CancellationToken cancellationToken)
+		{
+			_order.Enqueue("ptransfer");
+			return Task.CompletedTask;
+		}
+
+		public async Task StopAsync(CancellationToken cancellationToken)
+		{
+			_order.Enqueue("ptransfer-stop");
+			_stopEntered.SetResult();
+			if (_blockStop)
+				await _releaseStop.Task.WaitAsync(cancellationToken);
+		}
 	}
 
 	private sealed class ThrowingGameServerDependencies :

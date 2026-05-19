@@ -71,7 +71,7 @@ public sealed class AccountRepository : IAccountRepository
 				new MySqlParameter { Value = (object?)account.LastIp ?? DBNull.Value },
 				new MySqlParameter { Value = account.LastMac },
 				new MySqlParameter { Value = (object?)account.IpForce ?? DBNull.Value },
-				new MySqlParameter { Value = account.Toll },
+				new MySqlParameter { Value = 0 },
 			});
 
 		var rows = await command.ExecuteNonQueryAsync(cancellationToken);
@@ -81,7 +81,6 @@ public sealed class AccountRepository : IAccountRepository
 		account.Id = (int)command.LastInsertedId;
 		account.CreationDate = DateTime.UtcNow;
 		account.AccountTime = new AccountTime();
-		await _accountTimeRepository.UpdateAccountTimeAsync(account.Id, account.AccountTime, cancellationToken);
 		return true;
 	}
 

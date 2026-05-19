@@ -45,6 +45,39 @@ public class LoginDatabaseIntegrationTests
 	}
 
 	[Fact]
+	public async Task AccountRepository_InsertMatchesJavaAccountDaoShape_WhenEnabled()
+	{
+		if (Environment.GetEnvironmentVariable("AION_LOGIN_DB_INTEGRATION") != "1")
+			return;
+
+		DatabaseFactory.Initialize(
+			server: Environment.GetEnvironmentVariable("AION_LOGIN_DB_HOST") ?? "localhost",
+			userId: Environment.GetEnvironmentVariable("AION_LOGIN_DB_USER") ?? "root",
+			password: Environment.GetEnvironmentVariable("AION_LOGIN_DB_PASSWORD") ?? "aion",
+			database: Environment.GetEnvironmentVariable("AION_LOGIN_DB_NAME") ?? "aion_ls",
+			port: int.Parse(Environment.GetEnvironmentVariable("AION_LOGIN_DB_PORT") ?? "3307"));
+		await InitializeSchemaAsync();
+
+		var timeRepo = new TrackingAccountTimeRepository();
+		var accountRepo = new AccountRepository(timeRepo);
+		var inserted = new Account
+		{
+			Name = "insertshape",
+			PasswordHash = AccountUtils.EncodePassword("secret"),
+			Activated = 1,
+			LastServer = -1,
+			Toll = 999,
+		};
+
+		Assert.True(await accountRepo.InsertAccountAsync(inserted, useExternalAuth: false));
+
+		Assert.Equal(0, timeRepo.UpdateCalls);
+		Assert.Equal(0, await ExecuteScalarLongAsync($"SELECT toll FROM account_data WHERE id={inserted.Id}"));
+		Assert.Equal(0, await ExecuteScalarLongAsync($"SELECT COUNT(*) FROM account_time WHERE account_id={inserted.Id}"));
+		Assert.NotEqual(default, inserted.AccountTime.LastLoginTime);
+	}
+
+	[Fact]
 	public async Task AuxiliaryRepositories_RoundTripAgainstLoginSchema_WhenEnabled()
 	{
 		if (Environment.GetEnvironmentVariable("AION_LOGIN_DB_INTEGRATION") != "1")
@@ -239,6 +272,22 @@ public class LoginDatabaseIntegrationTests
 		public Task<ExternalAuthResponse?> AuthenticateAsync(string user, string password, string url, CancellationToken cancellationToken = default)
 		{
 			throw new InvalidOperationException("External auth should not be reached by login database integration tests.");
+		}
+	}
+
+	private sealed class TrackingAccountTimeRepository : IAccountTimeRepository
+	{
+		public int UpdateCalls { get; private set; }
+
+		public Task<AccountTime?> GetAccountTimeAsync(int accountId, CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult<AccountTime?>(new AccountTime());
+		}
+
+		public Task UpdateAccountTimeAsync(int accountId, AccountTime accountTime, CancellationToken cancellationToken = default)
+		{
+			UpdateCalls++;
+			return Task.CompletedTask;
 		}
 	}
 }

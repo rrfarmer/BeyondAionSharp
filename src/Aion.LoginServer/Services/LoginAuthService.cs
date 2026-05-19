@@ -136,7 +136,7 @@ public sealed class LoginAuthService : ILoginAuthService
 			AccessLevel = 0,
 			Membership = 0,
 			Activated = 1,
-			LastServer = -1,
+			LastServer = 0,
 			LastMac = "xx-xx-xx-xx-xx-xx",
 			Toll = 0,
 		};

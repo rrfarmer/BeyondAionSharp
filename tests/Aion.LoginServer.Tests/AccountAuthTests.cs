@@ -67,6 +67,7 @@ public class AccountAuthTests
 		Assert.NotNull(result.Account);
 		Assert.Equal("newbie", result.Account.Name);
 		Assert.Equal(AccountUtils.EncodePassword("secret"), result.Account.PasswordHash);
+		Assert.Equal(0, result.Account.LastServer);
 	}
 
 	[Fact]

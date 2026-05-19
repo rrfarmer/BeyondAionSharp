@@ -55,6 +55,72 @@ public class LoginProtocolPacketTests
 	}
 
 	[Fact]
+	public void AionFactory_ReadsJavaClientPacketShapes()
+	{
+		using var loginPayload = new PacketBuffer();
+		loginPayload.WriteC(0x00);
+		loginPayload.WriteB(Enumerable.Range(0, 128).Select(i => (byte)i).ToArray());
+		loginPayload.WriteD(0x11223344);
+		loginPayload.WriteB(new byte[16]);
+		loginPayload.WriteB(new byte[] { 0x20, 0, 0, 0, 0, 0, 1 });
+		loginPayload.WriteB(new byte[] { 0x9D, 0xDA, 0x47, 0xA7, 0x21, 0xC0, 0xA6, 0xA5, 0x4B, 0xB7, 0x5E, 0xE3, 0xCE, 0xC9, 0x26, 0xAA });
+		loginPayload.WriteD(0);
+		loginPayload.WriteD(unchecked((int)0x88776655));
+		loginPayload.WriteD(0);
+
+		var login = Assert.IsType<CmLogin>(AionClientPacketFactory.Create(new PacketBuffer(loginPayload.ToArray()), LoginClientState.AuthedGameGuard));
+		Assert.Equal(Enumerable.Range(0, 128).Select(i => (byte)i), login.EncryptedLoginData);
+		Assert.Equal(0x11223344, login.SessionId);
+
+		using var serverListPayload = new PacketBuffer();
+		serverListPayload.WriteC(0x05);
+		serverListPayload.WriteD(1001);
+		serverListPayload.WriteD(0x11223344);
+		serverListPayload.WriteC(7);
+		serverListPayload.WriteB(new byte[] { 1, 2, 3, 4, 5, 6 });
+		serverListPayload.WriteD(0x01020304);
+		serverListPayload.WriteD(60222);
+
+		var serverList = Assert.IsType<CmServerList>(AionClientPacketFactory.Create(new PacketBuffer(serverListPayload.ToArray()), LoginClientState.AuthedLogin));
+		Assert.Equal(1001, serverList.AccountId);
+		Assert.Equal(0x11223344, serverList.LoginOk);
+
+		using var playPayload = new PacketBuffer();
+		playPayload.WriteC(0x02);
+		playPayload.WriteD(1001);
+		playPayload.WriteD(0x11223344);
+		playPayload.WriteC(3);
+		playPayload.WriteB(new byte[] { 6, 5, 4, 3, 2, 1 });
+		playPayload.WriteQ(0x0102030405060708);
+
+		var play = Assert.IsType<CmPlay>(AionClientPacketFactory.Create(new PacketBuffer(playPayload.ToArray()), LoginClientState.AuthedLogin));
+		Assert.Equal(1001, play.AccountId);
+		Assert.Equal(0x11223344, play.LoginOk);
+		Assert.Equal(3, play.ServerId);
+	}
+
+	[Fact]
+	public void AionFactory_ConnectedStateReadsUpdateSession()
+	{
+		using var payload = new PacketBuffer();
+		payload.WriteC(0x08);
+		payload.WriteD(1001);
+		payload.WriteD(0x11223344);
+		payload.WriteD(0x55667788);
+		payload.WriteC(68);
+		payload.WriteB(new byte[] { 1, 2, 3, 4, 5, 6 });
+		payload.WriteC(4);
+		payload.WriteC(68);
+		payload.WriteH(0x7788);
+
+		var update = Assert.IsType<CmUpdateSession>(AionClientPacketFactory.Create(new PacketBuffer(payload.ToArray()), LoginClientState.Connected));
+
+		Assert.Equal(1001, update.AccountId);
+		Assert.Equal(0x11223344, update.LoginOk);
+		Assert.Equal(0x55667788, update.ReconnectKey);
+	}
+
+	[Fact]
 	public void SmAuthGameGuard_MatchesJavaGeneratedPayloadVector()
 	{
 		var payload = new SmAuthGameGuard(0x11223344).SerializePayload();
@@ -208,6 +274,43 @@ public class LoginProtocolPacketTests
 	}
 
 	[Fact]
+	public void GsFactory_AuthedStateReadsAccountSessionAndSimpleAccountPackets()
+	{
+		using var authPayload = new PacketBuffer();
+		authPayload.WriteC(1);
+		authPayload.WriteD(1001);
+		authPayload.WriteD(0x11223344);
+		authPayload.WriteD(0x01020304);
+		authPayload.WriteD(unchecked((int)0x88776655));
+
+		var auth = Assert.IsType<CmAccountAuth>(GsClientPacketFactory.Create(new PacketBuffer(authPayload.ToArray()), GameServerConnectionState.Authed));
+		Assert.Equal(1001, auth.SessionKey.AccountId);
+		Assert.Equal(0x11223344, auth.SessionKey.LoginOk);
+		Assert.Equal(0x01020304, auth.SessionKey.PlayOk1);
+		Assert.Equal(unchecked((int)0x88776655), auth.SessionKey.PlayOk2);
+
+		using var reconnectPayload = new PacketBuffer();
+		reconnectPayload.WriteC(2);
+		reconnectPayload.WriteD(1001);
+		var reconnect = Assert.IsType<CmAccountReconnectKey>(GsClientPacketFactory.Create(new PacketBuffer(reconnectPayload.ToArray()), GameServerConnectionState.Authed));
+		Assert.Equal(1001, reconnect.AccountId);
+
+		using var disconnectedPayload = new PacketBuffer();
+		disconnectedPayload.WriteC(3);
+		disconnectedPayload.WriteD(1001);
+		var disconnected = Assert.IsType<CmAccountDisconnected>(GsClientPacketFactory.Create(new PacketBuffer(disconnectedPayload.ToArray()), GameServerConnectionState.Authed));
+		Assert.Equal(1001, disconnected.AccountId);
+
+		using var tollPayload = new PacketBuffer();
+		tollPayload.WriteC(9);
+		tollPayload.WriteD(1001);
+		tollPayload.WriteQ(1500);
+		var toll = Assert.IsType<CmAccountTollInfo>(GsClientPacketFactory.Create(new PacketBuffer(tollPayload.ToArray()), GameServerConnectionState.Authed));
+		Assert.Equal(1001, toll.AccountId);
+		Assert.Equal(1500, toll.Toll);
+	}
+
+	[Fact]
 	public void SmGameServerCharacterResponse_MatchesJavaGeneratedPayloadVector()
 	{
 		var payload = new SmGameServerCharacterResponse(123).SerializePayload();
@@ -294,6 +397,45 @@ public class LoginProtocolPacketTests
 		Assert.Equal(1, mac.Type);
 		Assert.Equal("aa-bb", mac.Address);
 		Assert.Equal("reason", mac.Details);
+		Assert.Equal(1_700_000_000_000, mac.Time);
+
+		using var hddPayload = new PacketBuffer();
+		hddPayload.WriteC(14);
+		hddPayload.WriteC(1);
+		hddPayload.WriteS("disk");
+		hddPayload.WriteQ(1_700_000_000_000);
+
+		var hdd = Assert.IsType<CmHddBanControl>(GsClientPacketFactory.Create(new PacketBuffer(hddPayload.ToArray()), GameServerConnectionState.Authed));
+		Assert.Equal(1, hdd.Type);
+		Assert.Equal("disk", hdd.Address);
+		Assert.Equal(1_700_000_000_000, hdd.Time);
+
+		using var allowedHddPayload = new PacketBuffer();
+		allowedHddPayload.WriteC(15);
+		allowedHddPayload.WriteD(1001);
+		allowedHddPayload.WriteS("allowed-disk");
+
+		var allowedHdd = Assert.IsType<CmChangeAllowedHddSerial>(GsClientPacketFactory.Create(new PacketBuffer(allowedHddPayload.ToArray()), GameServerConnectionState.Authed));
+		Assert.Equal(1001, allowedHdd.AccountId);
+		Assert.Equal("allowed-disk", allowedHdd.HddSerial);
+
+		using var pongPayload = new PacketBuffer();
+		pongPayload.WriteC(12);
+		Assert.IsType<CmGameServerPong>(GsClientPacketFactory.Create(new PacketBuffer(pongPayload.ToArray()), GameServerConnectionState.Authed));
+	}
+
+	[Fact]
+	public void GsFactory_UnknownAuthedOpcodeMatchesJavaByReturningNoPacket()
+	{
+		using var payload = new PacketBuffer();
+		payload.WriteC(0xFE);
+		payload.WriteD(0x11223344);
+		var buffer = new PacketBuffer(payload.ToArray());
+
+		var packet = GsClientPacketFactory.Create(buffer, GameServerConnectionState.Authed);
+
+		Assert.Null(packet);
+		Assert.Equal(4, buffer.Remaining);
 	}
 
 	[Fact]
@@ -374,6 +516,24 @@ public class LoginProtocolPacketTests
 		Assert.Equal(2, error.ActionId);
 		Assert.Equal(5, error.TaskId);
 		Assert.Equal("nope", error.Reason);
+
+		using var okPayload = new PacketBuffer();
+		okPayload.WriteC(13);
+		okPayload.WriteC(3);
+		okPayload.WriteD(5);
+		var ok = Assert.IsType<CmPlayerTransferControl>(GsClientPacketFactory.Create(new PacketBuffer(okPayload.ToArray()), GameServerConnectionState.Authed));
+		Assert.Equal(3, ok.ActionId);
+		Assert.Equal(5, ok.TaskId);
+
+		using var stopPayload = new PacketBuffer();
+		stopPayload.WriteC(13);
+		stopPayload.WriteC(4);
+		stopPayload.WriteD(5);
+		stopPayload.WriteS("stopped");
+		var stop = Assert.IsType<CmPlayerTransferControl>(GsClientPacketFactory.Create(new PacketBuffer(stopPayload.ToArray()), GameServerConnectionState.Authed));
+		Assert.Equal(4, stop.ActionId);
+		Assert.Equal(5, stop.TaskId);
+		Assert.Equal("stopped", stop.Reason);
 	}
 
 	[Fact]

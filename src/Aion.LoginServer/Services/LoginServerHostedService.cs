@@ -14,6 +14,7 @@ public sealed class LoginServerHostedService : IHostedService
 	private readonly IBannedIpService _bannedIpService;
 	private readonly IBannedMacService _bannedMacService;
 	private readonly IBannedHddService _bannedHddService;
+	private readonly IPlayerTransferScheduler _playerTransferScheduler;
 	private readonly ILogger<LoginServerHostedService> _logger;
 	private Task? _loginClientTask;
 	private Task? _gameServerTask;
@@ -26,6 +27,7 @@ public sealed class LoginServerHostedService : IHostedService
 		IBannedIpService bannedIpService,
 		IBannedMacService bannedMacService,
 		IBannedHddService bannedHddService,
+		IPlayerTransferScheduler playerTransferScheduler,
 		ILogger<LoginServerHostedService> logger)
 	{
 		_loginClientServer = loginClientServer;
@@ -35,6 +37,7 @@ public sealed class LoginServerHostedService : IHostedService
 		_bannedIpService = bannedIpService;
 		_bannedMacService = bannedMacService;
 		_bannedHddService = bannedHddService;
+		_playerTransferScheduler = playerTransferScheduler;
 		_logger = logger;
 	}
 
@@ -46,8 +49,9 @@ public sealed class LoginServerHostedService : IHostedService
 			_gameServerRegistry.RegisterKnownServer(gameServer);
 		_logger.LogInformation("Loaded {Count} registered game servers", gameServers.Count);
 		await _bannedIpService.LoadAsync(cancellationToken);
-		await _bannedMacService.LoadAsync(cancellationToken);
-		await _bannedHddService.LoadAsync(cancellationToken);
+		await _bannedMacService.CleanExpiredBansAsync(cancellationToken);
+		await _bannedHddService.CleanExpiredBansAsync(cancellationToken);
+		await _playerTransferScheduler.StartAsync(cancellationToken);
 
 		_loginClientTask = Task.Run(() => _loginClientServer.StartAsync(), cancellationToken);
 		_gameServerTask = Task.Run(() => _gameServerSocketServer.StartAsync(), cancellationToken);
@@ -56,6 +60,7 @@ public sealed class LoginServerHostedService : IHostedService
 	public async Task StopAsync(CancellationToken cancellationToken)
 	{
 		_logger.LogInformation("Stopping login-server listeners");
+		await _playerTransferScheduler.StopAsync(cancellationToken);
 		await _loginClientServer.StopAsync();
 		await _gameServerSocketServer.StopAsync();
 

@@ -28,7 +28,7 @@ public static class GsClientPacketFactory
 				13 => new CmPlayerTransferControl(opCode),
 				14 => new CmHddBanControl(opCode),
 				15 => new CmChangeAllowedHddSerial(opCode),
-				_ => new UnknownGsClientPacket(opCode)
+				_ => null
 			},
 			_ => null
 		};

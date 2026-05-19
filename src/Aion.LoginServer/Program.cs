@@ -36,13 +36,13 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<IExternalAuthClient>(serviceProvider => new ExternalAuthClient(new HttpClient(), serviceProvider.GetRequiredService<ILogger<ExternalAuthClient>>()));
 			services.AddSingleton<ILoginAuthService, LoginAuthService>();
 			services.AddSingleton<IPlayerTransferService, PlayerTransferService>();
+			services.AddSingleton<IPlayerTransferScheduler, PlayerTransferScheduler>();
 			services.AddSingleton<ILoginSessionRegistry, LoginSessionRegistry>();
 			services.AddSingleton<ILoginKeyGenerator, LoginKeyGenerator>();
 			services.AddSingleton<IGameServerRegistry, GameServerRegistry>();
 			services.AddSingleton<LoginClientSocketServer>();
 			services.AddSingleton<GameServerSocketServer>();
 			services.AddHostedService<LoginServerHostedService>();
-			services.AddHostedService<PlayerTransferHostedService>();
 		}
 	)
 	.ConfigureLogging(

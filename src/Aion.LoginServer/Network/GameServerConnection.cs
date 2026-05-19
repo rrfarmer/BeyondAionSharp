@@ -266,8 +266,8 @@ public sealed class GameServerConnection : BaseClientConnection, IGameServerSess
 			}
 		}
 
-		await SendPacketAsync(new SmMacBanList(_bannedMacService.GetEntries()));
-		await SendPacketAsync(new SmHddBanList(_bannedHddService.GetEntries()));
+		await SendPacketAsync(new SmMacBanList(await _bannedMacService.GetEntriesAsync()));
+		await SendPacketAsync(new SmHddBanList(await _bannedHddService.GetEntriesAsync()));
 		await _sessionRegistry.UpdateServerListForAllLoggedInPlayersAsync(_registry.GetGameServers());
 	}
 

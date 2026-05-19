@@ -44,7 +44,7 @@ public sealed class SocketServerSmokeTests
 		var serverTask = server.StartAsync();
 
 		using var client = await ConnectWithRetryAsync(port);
-		Assert.Equal(1, server.GetActiveConnections());
+		await AssertActiveConnectionsAsync(server.GetActiveConnections, 1);
 		await CompleteLoginHandshakeAsync(client, keyGenerator, authService.Account.Id);
 		Assert.Equal(1, authService.LoginAttempts);
 		Assert.Equal(1, authService.CompletedLogins);
@@ -53,6 +53,51 @@ public sealed class SocketServerSmokeTests
 		await AssertClientClosedAsync(client.GetStream());
 		Assert.Equal(0, server.GetActiveConnections());
 		Assert.Equal(1, authService.Logouts);
+		await AssertTaskCompletedAsync(serverTask);
+	}
+
+	[Fact]
+	public async Task LoginClientSocketServer_RejectsLoginWhenSessionIdDoesNotMatchInit()
+	{
+		var port = GetFreeLoopbackPort();
+		using var keyGenerator = new FixedLoginKeyGenerator();
+		var authService = new SuccessfulLoginAuthService();
+		var server = new LoginClientSocketServer(
+			NullLogger<LoginClientSocketServer>.Instance,
+			new LoginServerOptions
+			{
+				ClientEndPoint = new IPEndPoint(IPAddress.Loopback, port),
+				MaxClientConnections = 10,
+			},
+			keyGenerator,
+			authService,
+			new LoginSessionRegistry(),
+			new GameServerRegistry());
+		var serverTask = server.StartAsync();
+
+		using var client = await ConnectWithRetryAsync(port);
+		await AssertActiveConnectionsAsync(server.GetActiveConnections, 1);
+		var stream = client.GetStream();
+		var frame = await ReadFrameAsync(stream);
+		Assert.Equal(210, frame.Length);
+		var initPayload = DecryptFirstServerPayload(frame[2..]);
+		var sessionId = BinaryPrimitives.ReadInt32LittleEndian(initPayload.AsSpan(1, 4));
+
+		var clientEngine = CreatePrimedClientEngine(keyGenerator.BlowfishKey);
+		await stream.WriteAsync(CreateEncryptedAuthGameGuardFrame(clientEngine, sessionId));
+		var authGameGuardPayload = await ReadEncryptedLoginPayloadAsync(stream, clientEngine);
+		Assert.Equal(0x0B, authGameGuardPayload[0]);
+		Assert.Equal(sessionId, BinaryPrimitives.ReadInt32LittleEndian(authGameGuardPayload.AsSpan(1, 4)));
+
+		await stream.WriteAsync(CreateEncryptedLoginFrame(clientEngine, keyGenerator.PublicParameters, sessionId ^ 0x01020304, "player", "secret"));
+		var loginFailPayload = await ReadEncryptedLoginPayloadAsync(stream, clientEngine);
+		Assert.Equal(0x01, loginFailPayload[0]);
+		Assert.Equal((int)AionAuthResponse.STR_L2AUTH_S_SYSTEM_ERROR, BinaryPrimitives.ReadInt32LittleEndian(loginFailPayload.AsSpan(1, 4)));
+		Assert.Equal(0, authService.LoginAttempts);
+
+		await server.StopAsync(TimeSpan.FromSeconds(1));
+		await AssertClientClosedAsync(stream);
+		Assert.Equal(0, server.GetActiveConnections());
 		await AssertTaskCompletedAsync(serverTask);
 	}
 
@@ -428,6 +473,19 @@ public sealed class SocketServerSmokeTests
 		await task;
 	}
 
+	private static async Task AssertActiveConnectionsAsync(Func<int> getActiveConnections, int expected)
+	{
+		var deadline = DateTime.UtcNow.AddSeconds(2);
+		while (DateTime.UtcNow < deadline)
+		{
+			if (getActiveConnections() == expected)
+				return;
+			await Task.Delay(25);
+		}
+
+		Assert.Equal(expected, getActiveConnections());
+	}
+
 	internal sealed class FixedLoginKeyGenerator : ILoginKeyGenerator, IDisposable
 	{
 		private readonly LoginRsaKeyPair _keyPair = LoginRsaKeyPair.Generate();
@@ -567,7 +625,9 @@ public sealed class SocketServerSmokeTests
 	{
 		public Task LoadAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
 
-		public IReadOnlyCollection<BannedMacEntry> GetEntries() => Array.Empty<BannedMacEntry>();
+		public Task CleanExpiredBansAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+		public Task<IReadOnlyCollection<BannedMacEntry>> GetEntriesAsync(CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyCollection<BannedMacEntry>>(Array.Empty<BannedMacEntry>());
 
 		public Task BanAsync(string address, DateTime time, string details, CancellationToken cancellationToken = default) => throw NotUsed();
 
@@ -578,7 +638,9 @@ public sealed class SocketServerSmokeTests
 	{
 		public Task LoadAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
 
-		public IReadOnlyDictionary<string, DateTime> GetEntries() => new Dictionary<string, DateTime>();
+		public Task CleanExpiredBansAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+		public Task<IReadOnlyDictionary<string, DateTime>> GetEntriesAsync(CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyDictionary<string, DateTime>>(new Dictionary<string, DateTime>());
 
 		public Task BanAsync(string serial, DateTime time, CancellationToken cancellationToken = default) => throw NotUsed();
 

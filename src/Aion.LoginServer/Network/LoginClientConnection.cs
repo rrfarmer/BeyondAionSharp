@@ -110,6 +110,12 @@ public sealed class LoginClientConnection : BaseClientConnection, ILoginClientSe
 				await CloseAsync();
 				break;
 			case CmLogin login:
+				if (login.SessionId != _sessionId)
+				{
+					await SendPacketAsync(new SmLoginFail(AionAuthResponse.STR_L2AUTH_S_SYSTEM_ERROR));
+					break;
+				}
+
 				var credentials = LoginCredentialDecryptor.Decrypt(login.EncryptedLoginData, _rsaKeyPair);
 				if (credentials == null)
 				{
