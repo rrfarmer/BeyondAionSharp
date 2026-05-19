@@ -1,4 +1,5 @@
 using Aion.LoginServer.Network.Crypto;
+using Aion.LoginServer.Network.Aion.ServerPackets;
 
 namespace Aion.LoginServer.Tests;
 
@@ -17,6 +18,8 @@ public class LoginCryptEngineTests
 		1, 3, 5, 7, 9, 11, 13, 15,
 		2, 4, 6, 8, 10, 12, 14, 16
 	};
+
+	private static readonly byte[] RsaKey = Enumerable.Range(0, 128).Select(i => (byte)i).ToArray();
 
 	[Fact]
 	public void BlowfishCipher_RoundTripsFullBlocks()
@@ -92,6 +95,26 @@ public class LoginCryptEngineTests
 
 		Assert.Equal(16, encryptedLength);
 		Assert.Equal(Hex("9B406066E713C7631157BBF7D89CC550"), laterPacket[..encryptedLength]);
+	}
+
+	[Fact]
+	public void SmInitEncryptedFrame_MatchesJavaGoldenVector()
+	{
+		var engine = CreateSessionEngine();
+
+		var frame = new SmInit(RsaKey, SessionKey, 0x11223344).SerializeEncryptedFrame(engine);
+
+		Assert.Equal(210, frame.Length);
+		Assert.Equal(
+			Hex(
+				"D20071247EBD9E5575028AF9A6FB3D2193B3A98D3D89D2753883D251C088F131" +
+				"29AD6C5A586271774A46F072927ECB8F55BBDCE63D4276A1132E68A39C1CA134" +
+				"5E63E0B09256A8B14F281F751464E765791F133B43B9D258379842E2EB92130" +
+				"9276B33705A6D41C362DC0A6305D2371839F14CCE4986B6F2B97C7858149AB" +
+				"59148BBA270D7A39761431AD7ABBEC7756AA5531C23CEB8F7481226FBA0F0B" +
+				"2DA25F4A8706E0D428AFBE00E4B8365CC3F9F7BD24B6F379089F57639D1A01" +
+				"3FB3411988D805FEEC353FABCEDF8A971F3B9067375"),
+			frame);
 	}
 
 	[Fact]

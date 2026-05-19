@@ -26,6 +26,22 @@ public class LoginRsaCredentialTests
 	}
 
 	[Fact]
+	public void ScrambleModulus_MatchesJavaGoldenVector()
+	{
+		var modulus = Enumerable.Range(0, 128).Select(i => (byte)(0x80 + i)).ToArray();
+
+		var scrambled = LoginRsaKeyPair.ScrambleModulus(modulus);
+
+		Assert.Equal(
+			Convert.FromHexString(
+				"0D0F0D134040404040404040404D4F4D53404040404040404040404040404040" +
+				"4040404040404040404040404040404040404040404040404040404040404040" +
+				"CDCECFD08485868788898A8B8CCDCECFD09192939495969798999A9B9C9D9E" +
+				"9FA0A1A2A3A4A5A6A7A8A9AAABACADAEAFB0B1B2B3B4B5B6B7B8B9BABBBCBDBEBF"),
+			scrambled);
+	}
+
+	[Fact]
 	public void CredentialDecryptor_ReadsNormalLoginLayout()
 	{
 		using var keyPair = LoginRsaKeyPair.Generate();
