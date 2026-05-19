@@ -79,7 +79,7 @@ public sealed class LoginClientConnection : BaseClientConnection, ILoginClientSe
 			return null;
 		}
 
-		return new PacketBuffer(payload);
+		return new PacketBuffer(payload, strictReads: false);
 	}
 
 	protected override async Task ProcessPacketAsync(PacketBuffer packet)

@@ -235,4 +235,16 @@ public class PacketBufferParityTests
 		buf.ReadH();
 		Assert.Throws<EndOfStreamException>(() => buf.ReadD());
 	}
+
+	[Fact]
+	public void NonStrictReads_ReturnJavaStyleDefaultsOnUnderflow()
+	{
+		var buf = new PacketBuffer(new byte[] { 0x01, 0x00 }, strictReads: false);
+
+		Assert.Equal((ushort)1, buf.ReadH());
+		Assert.Equal(0, buf.ReadD());
+		Assert.Equal(0, buf.ReadC());
+		Assert.Equal("", buf.ReadS());
+		Assert.Equal(new byte[4], buf.ReadB(4));
+	}
 }

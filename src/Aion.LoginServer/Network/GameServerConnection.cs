@@ -19,7 +19,7 @@ namespace Aion.LoginServer.Network;
 
 public sealed class GameServerConnection : BaseClientConnection, IGameServerSession
 {
-	private static readonly TimeSpan PingInterval = TimeSpan.FromSeconds(5);
+	private static readonly TimeSpan DefaultPingInterval = TimeSpan.FromSeconds(5);
 	private readonly IGameServerRegistry _registry;
 	private readonly ILoginSessionRegistry _sessionRegistry;
 	private readonly IAccountRepository _accountRepository;
@@ -32,6 +32,7 @@ public sealed class GameServerConnection : BaseClientConnection, IGameServerSess
 	private readonly IBannedHddService _bannedHddService;
 	private readonly IPlayerTransferService _playerTransferService;
 	private readonly LoginServerOptions _options;
+	private readonly TimeSpan _pingInterval;
 	private readonly GameServerPingTracker _pingTracker = new();
 	private readonly CancellationTokenSource _pingCancellationTokenSource = new();
 	private readonly SemaphoreSlim _sendLock = new(1, 1);
@@ -55,7 +56,8 @@ public sealed class GameServerConnection : BaseClientConnection, IGameServerSess
 		IBannedMacService bannedMacService,
 		IBannedHddService bannedHddService,
 		IPlayerTransferService playerTransferService,
-		LoginServerOptions options)
+		LoginServerOptions options,
+		TimeSpan? pingInterval = null)
 		: base(logger, client, clientId)
 	{
 		_registry = registry;
@@ -70,6 +72,7 @@ public sealed class GameServerConnection : BaseClientConnection, IGameServerSess
 		_bannedHddService = bannedHddService;
 		_playerTransferService = playerTransferService;
 		_options = options;
+		_pingInterval = pingInterval ?? DefaultPingInterval;
 	}
 
 	public override async Task RunAsync()
@@ -95,7 +98,7 @@ public sealed class GameServerConnection : BaseClientConnection, IGameServerSess
 			return null;
 
 		var payload = await ReadExactOrNullAsync(frameLength - 2);
-		return payload == null ? null : new PacketBuffer(payload);
+		return payload == null ? null : new PacketBuffer(payload, strictReads: false);
 	}
 
 	protected override async Task ProcessPacketAsync(PacketBuffer packet)
@@ -529,7 +532,7 @@ public sealed class GameServerConnection : BaseClientConnection, IGameServerSess
 		var cancellationToken = _pingCancellationTokenSource.Token;
 		while (!cancellationToken.IsCancellationRequested)
 		{
-			await Task.Delay(PingInterval, cancellationToken);
+			await Task.Delay(_pingInterval, cancellationToken);
 			if (_pingTracker.ShouldCloseOnPingTick())
 			{
 				_logger.LogWarning("Gameserver #{GameServerId} connection died, closing it.", _gameServerInfo?.Id);

@@ -1,3 +1,5 @@
+using Aion.Commons.Configuration;
+using Aion.Commons.Database;
 using Aion.LoginServer.Configuration;
 using Aion.LoginServer.Data;
 using Aion.LoginServer.Network;
@@ -19,6 +21,8 @@ var builder = Host.CreateDefaultBuilder(args)
 		(hostContext, services) =>
 		{
 			var options = LoginServerOptions.LoadFromJavaConfig(Directory.GetCurrentDirectory());
+			var databaseOptions = DatabaseOptions.LoadFromJavaConfig(Directory.GetCurrentDirectory());
+			DatabaseFactory.Initialize(databaseOptions);
 			services.AddSingleton(options);
 			services.AddSingleton<IAccountTimeRepository, AccountTimeRepository>();
 			services.AddSingleton<IAccountRepository, AccountRepository>();

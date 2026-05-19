@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Aion.Commons.Configuration;
 using MySqlConnector;
 
 namespace Aion.Commons.Database
@@ -41,6 +42,18 @@ namespace Aion.Commons.Database
 
 			var builder = new MySqlDataSourceBuilder(_connectionString);
 			_dataSource = builder.Build();
+		}
+
+		public static void Initialize(DatabaseOptions options)
+		{
+			Initialize(
+				options.Server,
+				options.UserId,
+				options.Password,
+				options.Database,
+				options.Port,
+				options.MaxPoolSize,
+				options.ConnectionTimeout);
 		}
 
 		/// <summary>

@@ -9,6 +9,7 @@ using Aion.LoginServer.Network;
 using Aion.LoginServer.Network.Aion;
 using Aion.LoginServer.Network.Crypto;
 using Aion.LoginServer.Network.GameServer;
+using Aion.LoginServer.Network.GameServer.ServerPackets;
 using Aion.LoginServer.Services;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -102,14 +103,473 @@ public sealed class SocketServerSmokeTests
 	}
 
 	[Fact]
+	public async Task LoginClientSocketServer_IgnoresShortLoginPacketAndKeepsConnectionOpen()
+	{
+		var port = GetFreeLoopbackPort();
+		using var keyGenerator = new FixedLoginKeyGenerator();
+		var authService = new SuccessfulLoginAuthService();
+		var server = new LoginClientSocketServer(
+			NullLogger<LoginClientSocketServer>.Instance,
+			new LoginServerOptions
+			{
+				ClientEndPoint = new IPEndPoint(IPAddress.Loopback, port),
+				MaxClientConnections = 10,
+			},
+			keyGenerator,
+			authService,
+			new LoginSessionRegistry(),
+			new GameServerRegistry());
+		var serverTask = server.StartAsync();
+
+		using var client = await ConnectWithRetryAsync(port);
+		var stream = client.GetStream();
+		var frame = await ReadFrameAsync(stream);
+		var initPayload = DecryptFirstServerPayload(frame[2..]);
+		var sessionId = BinaryPrimitives.ReadInt32LittleEndian(initPayload.AsSpan(1, 4));
+
+		var clientEngine = CreatePrimedClientEngine(keyGenerator.BlowfishKey);
+		await stream.WriteAsync(CreateEncryptedAuthGameGuardFrame(clientEngine, sessionId));
+		var authGameGuardPayload = await ReadEncryptedLoginPayloadAsync(stream, clientEngine);
+		Assert.Equal(0x0B, authGameGuardPayload[0]);
+
+		await stream.WriteAsync(CreateEncryptedOpcodeOnlyFrame(clientEngine, 0x00));
+		await stream.WriteAsync(CreateEncryptedLoginFrame(clientEngine, keyGenerator.PublicParameters, sessionId, "player", "secret"));
+		var loginOkPayload = await ReadEncryptedLoginPayloadAsync(stream, clientEngine);
+
+		Assert.Equal(0x03, loginOkPayload[0]);
+		Assert.Equal(authService.Account.Id, BinaryPrimitives.ReadInt32LittleEndian(loginOkPayload.AsSpan(1, 4)));
+		Assert.Equal(1, authService.LoginAttempts);
+
+		await server.StopAsync(TimeSpan.FromSeconds(1));
+		await AssertClientClosedAsync(stream);
+		Assert.Equal(0, server.GetActiveConnections());
+		await AssertTaskCompletedAsync(serverTask);
+	}
+
+	[Fact]
+	public async Task LoginClientSocketServer_BannedAccountSendsJavaBannedPacketAndCloses()
+	{
+		var port = GetFreeLoopbackPort();
+		using var keyGenerator = new FixedLoginKeyGenerator();
+		var authService = new AccountBannedLoginAuthService();
+		var server = new LoginClientSocketServer(
+			NullLogger<LoginClientSocketServer>.Instance,
+			new LoginServerOptions
+			{
+				ClientEndPoint = new IPEndPoint(IPAddress.Loopback, port),
+				MaxClientConnections = 10,
+			},
+			keyGenerator,
+			authService,
+			new LoginSessionRegistry(),
+			new GameServerRegistry());
+		var serverTask = server.StartAsync();
+
+		using var client = await ConnectWithRetryAsync(port);
+		var stream = client.GetStream();
+		var frame = await ReadFrameAsync(stream);
+		var initPayload = DecryptFirstServerPayload(frame[2..]);
+		var sessionId = BinaryPrimitives.ReadInt32LittleEndian(initPayload.AsSpan(1, 4));
+
+		var clientEngine = CreatePrimedClientEngine(keyGenerator.BlowfishKey);
+		await stream.WriteAsync(CreateEncryptedAuthGameGuardFrame(clientEngine, sessionId));
+		var authGameGuardPayload = await ReadEncryptedLoginPayloadAsync(stream, clientEngine);
+		Assert.Equal(0x0B, authGameGuardPayload[0]);
+
+		await stream.WriteAsync(CreateEncryptedLoginFrame(clientEngine, keyGenerator.PublicParameters, sessionId, "player", "secret"));
+		var accountBannedPayload = await ReadEncryptedLoginPayloadAsync(stream, clientEngine);
+		Assert.Equal(0x09, accountBannedPayload[0]);
+		Assert.Equal(1, authService.LoginAttempts);
+		await AssertClientClosedAsync(stream);
+
+		await server.StopAsync(TimeSpan.FromSeconds(1));
+		Assert.Equal(0, server.GetActiveConnections());
+		await AssertTaskCompletedAsync(serverTask);
+	}
+
+	[Fact]
+	public async Task LoginClientSocketServer_RejectsGameGuardWhenSessionIdDoesNotMatchInit()
+	{
+		var port = GetFreeLoopbackPort();
+		using var keyGenerator = new FixedLoginKeyGenerator();
+		var authService = new SuccessfulLoginAuthService();
+		var server = new LoginClientSocketServer(
+			NullLogger<LoginClientSocketServer>.Instance,
+			new LoginServerOptions
+			{
+				ClientEndPoint = new IPEndPoint(IPAddress.Loopback, port),
+				MaxClientConnections = 10,
+			},
+			keyGenerator,
+			authService,
+			new LoginSessionRegistry(),
+			new GameServerRegistry());
+		var serverTask = server.StartAsync();
+
+		using var client = await ConnectWithRetryAsync(port);
+		var stream = client.GetStream();
+		var frame = await ReadFrameAsync(stream);
+		var initPayload = DecryptFirstServerPayload(frame[2..]);
+		var sessionId = BinaryPrimitives.ReadInt32LittleEndian(initPayload.AsSpan(1, 4));
+
+		var clientEngine = CreatePrimedClientEngine(keyGenerator.BlowfishKey);
+		await stream.WriteAsync(CreateEncryptedAuthGameGuardFrame(clientEngine, sessionId ^ 0x01020304));
+		var loginFailPayload = await ReadEncryptedLoginPayloadAsync(stream, clientEngine);
+		Assert.Equal(0x01, loginFailPayload[0]);
+		Assert.Equal((int)AionAuthResponse.STR_L2AUTH_S_SYSTEM_ERROR, BinaryPrimitives.ReadInt32LittleEndian(loginFailPayload.AsSpan(1, 4)));
+		Assert.Equal(0, authService.LoginAttempts);
+		await AssertClientClosedAsync(stream);
+
+		await server.StopAsync(TimeSpan.FromSeconds(1));
+		Assert.Equal(0, server.GetActiveConnections());
+		await AssertTaskCompletedAsync(serverTask);
+	}
+
+	[Fact]
+	public async Task LoginClientSocketServer_DuplicateLoginKicksExistingSessionAndRejectsIncoming()
+	{
+		var port = GetFreeLoopbackPort();
+		using var keyGenerator = new FixedLoginKeyGenerator();
+		var authService = new SuccessfulLoginAuthService();
+		var server = new LoginClientSocketServer(
+			NullLogger<LoginClientSocketServer>.Instance,
+			new LoginServerOptions
+			{
+				ClientEndPoint = new IPEndPoint(IPAddress.Loopback, port),
+				MaxClientConnections = 10,
+			},
+			keyGenerator,
+			authService,
+			new LoginSessionRegistry(),
+			new GameServerRegistry());
+		var serverTask = server.StartAsync();
+
+		using var firstClient = await ConnectWithRetryAsync(port);
+		var firstLogin = await CompleteLoginHandshakeAsync(firstClient, keyGenerator, authService.Account.Id);
+
+		using var secondClient = await ConnectWithRetryAsync(port);
+		var secondStream = secondClient.GetStream();
+		var secondFrame = await ReadFrameAsync(secondStream);
+		var secondInitPayload = DecryptFirstServerPayload(secondFrame[2..]);
+		var secondSessionId = BinaryPrimitives.ReadInt32LittleEndian(secondInitPayload.AsSpan(1, 4));
+		var secondEngine = CreatePrimedClientEngine(keyGenerator.BlowfishKey);
+		await secondStream.WriteAsync(CreateEncryptedAuthGameGuardFrame(secondEngine, secondSessionId));
+		var authGameGuardPayload = await ReadEncryptedLoginPayloadAsync(secondStream, secondEngine);
+		Assert.Equal(0x0B, authGameGuardPayload[0]);
+
+		await secondStream.WriteAsync(CreateEncryptedLoginFrame(secondEngine, keyGenerator.PublicParameters, secondSessionId, "player", "secret"));
+		var kickPayload = await ReadEncryptedLoginPayloadAsync(firstClient.GetStream(), firstLogin.Engine);
+		var duplicateLoginPayload = await ReadEncryptedLoginPayloadAsync(secondStream, secondEngine);
+
+		Assert.Equal(0x08, kickPayload[0]);
+		Assert.Equal((int)AionAuthResponse.STR_L2AUTH_S_KICKED_DOUBLE_LOGIN, BinaryPrimitives.ReadInt32LittleEndian(kickPayload.AsSpan(1, 4)));
+		await AssertClientClosedAsync(firstClient.GetStream());
+		Assert.Equal(0x01, duplicateLoginPayload[0]);
+		Assert.Equal((int)AionAuthResponse.STR_L2AUTH_S_ALREADY_LOGIN, BinaryPrimitives.ReadInt32LittleEndian(duplicateLoginPayload.AsSpan(1, 4)));
+		Assert.Equal(2, authService.LoginAttempts);
+		Assert.Equal(1, authService.Logouts);
+
+		await server.StopAsync(TimeSpan.FromSeconds(1));
+		await AssertClientClosedAsync(secondStream);
+		Assert.Equal(0, server.GetActiveConnections());
+		await AssertTaskCompletedAsync(serverTask);
+	}
+
+	[Fact]
+	public async Task LoginClientSocketServer_ClosesWithNoServerListWhenNoGameServersAreRegistered()
+	{
+		var port = GetFreeLoopbackPort();
+		using var keyGenerator = new FixedLoginKeyGenerator();
+		var authService = new SuccessfulLoginAuthService();
+		var server = new LoginClientSocketServer(
+			NullLogger<LoginClientSocketServer>.Instance,
+			new LoginServerOptions
+			{
+				ClientEndPoint = new IPEndPoint(IPAddress.Loopback, port),
+				MaxClientConnections = 10,
+			},
+			keyGenerator,
+			authService,
+			new LoginSessionRegistry(),
+			new GameServerRegistry());
+		var serverTask = server.StartAsync();
+
+		using var client = await ConnectWithRetryAsync(port);
+		var login = await CompleteLoginHandshakeAsync(client, keyGenerator, authService.Account.Id);
+		await client.GetStream().WriteAsync(CreateEncryptedServerListFrame(login.Engine, login.AccountId, login.LoginOk));
+		var loginFailPayload = await ReadEncryptedLoginPayloadAsync(client.GetStream(), login.Engine);
+		Assert.Equal(0x01, loginFailPayload[0]);
+		Assert.Equal((int)AionAuthResponse.STR_L2AUTH_S_NO_SERVER_LIST, BinaryPrimitives.ReadInt32LittleEndian(loginFailPayload.AsSpan(1, 4)));
+		await AssertClientClosedAsync(client.GetStream());
+		Assert.Equal(1, authService.Logouts);
+
+		await server.StopAsync(TimeSpan.FromSeconds(1));
+		Assert.Equal(0, server.GetActiveConnections());
+		await AssertTaskCompletedAsync(serverTask);
+	}
+
+	[Fact]
+	public async Task LoginClientSocketServer_ServerListClosesWithSystemErrorWhenSessionKeyIsWrong()
+	{
+		var port = GetFreeLoopbackPort();
+		using var keyGenerator = new FixedLoginKeyGenerator();
+		var authService = new SuccessfulLoginAuthService();
+		var server = new LoginClientSocketServer(
+			NullLogger<LoginClientSocketServer>.Instance,
+			new LoginServerOptions
+			{
+				ClientEndPoint = new IPEndPoint(IPAddress.Loopback, port),
+				MaxClientConnections = 10,
+			},
+			keyGenerator,
+			authService,
+			new LoginSessionRegistry(),
+			new GameServerRegistry());
+		var serverTask = server.StartAsync();
+
+		using var client = await ConnectWithRetryAsync(port);
+		var login = await CompleteLoginHandshakeAsync(client, keyGenerator, authService.Account.Id);
+		await client.GetStream().WriteAsync(CreateEncryptedServerListFrame(login.Engine, login.AccountId, login.LoginOk ^ 0x01020304));
+		var loginFailPayload = await ReadEncryptedLoginPayloadAsync(client.GetStream(), login.Engine);
+
+		Assert.Equal(0x01, loginFailPayload[0]);
+		Assert.Equal((int)AionAuthResponse.STR_L2AUTH_S_SYSTEM_ERROR, BinaryPrimitives.ReadInt32LittleEndian(loginFailPayload.AsSpan(1, 4)));
+		await AssertClientClosedAsync(client.GetStream());
+		Assert.Equal(1, authService.Logouts);
+
+		await server.StopAsync(TimeSpan.FromSeconds(1));
+		Assert.Equal(0, server.GetActiveConnections());
+		await AssertTaskCompletedAsync(serverTask);
+	}
+
+	[Fact]
+	public async Task LoginClientSocketServer_ServerListIncludesRegisteredOfflineGameServers()
+	{
+		var port = GetFreeLoopbackPort();
+		using var keyGenerator = new FixedLoginKeyGenerator();
+		var authService = new SuccessfulLoginAuthService();
+		var gameServerRegistry = new GameServerRegistry();
+		gameServerRegistry.RegisterKnownServer(new GameServerInfo(1, "127.0.0.1", "secret"));
+		var server = new LoginClientSocketServer(
+			NullLogger<LoginClientSocketServer>.Instance,
+			new LoginServerOptions
+			{
+				ClientEndPoint = new IPEndPoint(IPAddress.Loopback, port),
+				MaxClientConnections = 10,
+			},
+			keyGenerator,
+			authService,
+			new LoginSessionRegistry(),
+			gameServerRegistry);
+		var serverTask = server.StartAsync();
+
+		using var client = await ConnectWithRetryAsync(port);
+		var login = await CompleteLoginHandshakeAsync(client, keyGenerator, authService.Account.Id);
+		await client.GetStream().WriteAsync(CreateEncryptedServerListFrame(login.Engine, login.AccountId, login.LoginOk));
+		var serverListPayload = await ReadEncryptedLoginPayloadAsync(client.GetStream(), login.Engine);
+
+		Assert.Equal(0x04, serverListPayload[0]);
+		Assert.Equal(1, serverListPayload[1]);
+		Assert.Equal((byte)authService.Account.LastServer, serverListPayload[2]);
+		Assert.Equal(1, serverListPayload[3]);
+		Assert.Equal(0, serverListPayload[18]);
+		Assert.Equal(2, BinaryPrimitives.ReadUInt16LittleEndian(serverListPayload.AsSpan(24, 2)));
+		Assert.Equal(1, serverListPayload[26]);
+		Assert.Equal(0, serverListPayload[27]);
+
+		await server.StopAsync(TimeSpan.FromSeconds(1));
+		await AssertClientClosedAsync(client.GetStream());
+		Assert.Equal(1, authService.Logouts);
+		Assert.Equal(0, server.GetActiveConnections());
+		await AssertTaskCompletedAsync(serverTask);
+	}
+
+	[Fact]
+	public async Task LoginClientSocketServer_UpdateSessionRestoresReconnectingAccount()
+	{
+		var port = GetFreeLoopbackPort();
+		using var keyGenerator = new FixedLoginKeyGenerator();
+		var authService = new SuccessfulLoginAuthService();
+		var sessionRegistry = new LoginSessionRegistry();
+		var reconnectingAccount = authService.Account;
+		sessionRegistry.AddReconnectingAccount(new ReconnectingAccount(reconnectingAccount, 0x11223344));
+		var server = new LoginClientSocketServer(
+			NullLogger<LoginClientSocketServer>.Instance,
+			new LoginServerOptions
+			{
+				ClientEndPoint = new IPEndPoint(IPAddress.Loopback, port),
+				MaxClientConnections = 10,
+			},
+			keyGenerator,
+			authService,
+			sessionRegistry,
+			new GameServerRegistry());
+		var serverTask = server.StartAsync();
+
+		using var client = await ConnectWithRetryAsync(port);
+		var stream = client.GetStream();
+		await ReadFrameAsync(stream);
+		var clientEngine = CreatePrimedClientEngine(keyGenerator.BlowfishKey);
+		await stream.WriteAsync(CreateEncryptedUpdateSessionFrame(clientEngine, reconnectingAccount.Id, loginOk: unchecked((int)0x88776655), reconnectKey: 0x11223344));
+		var updatePayload = await ReadEncryptedLoginPayloadAsync(stream, clientEngine);
+
+		Assert.Equal(0x0C, updatePayload[0]);
+		Assert.Equal(reconnectingAccount.Id, BinaryPrimitives.ReadInt32LittleEndian(updatePayload.AsSpan(1, 4)));
+		Assert.Equal(0, updatePayload[9]);
+		var session = sessionRegistry.GetLoginSession(reconnectingAccount.Id);
+		Assert.NotNull(session);
+		Assert.Equal(BinaryPrimitives.ReadInt32LittleEndian(updatePayload.AsSpan(5, 4)), session.SessionKey.LoginOk);
+		Assert.Equal(0, authService.LoginAttempts);
+
+		await server.StopAsync(TimeSpan.FromSeconds(1));
+		await AssertClientClosedAsync(stream);
+		Assert.Equal(1, authService.Logouts);
+		Assert.Equal(0, server.GetActiveConnections());
+		await AssertTaskCompletedAsync(serverTask);
+	}
+
+	[Fact]
+	public async Task LoginClientSocketServer_UpdateSessionClosesWhenReconnectKeyIsWrong()
+	{
+		var port = GetFreeLoopbackPort();
+		using var keyGenerator = new FixedLoginKeyGenerator();
+		var authService = new SuccessfulLoginAuthService();
+		var sessionRegistry = new LoginSessionRegistry();
+		var reconnectingAccount = authService.Account;
+		sessionRegistry.AddReconnectingAccount(new ReconnectingAccount(reconnectingAccount, 0x11223344));
+		var server = new LoginClientSocketServer(
+			NullLogger<LoginClientSocketServer>.Instance,
+			new LoginServerOptions
+			{
+				ClientEndPoint = new IPEndPoint(IPAddress.Loopback, port),
+				MaxClientConnections = 10,
+			},
+			keyGenerator,
+			authService,
+			sessionRegistry,
+			new GameServerRegistry());
+		var serverTask = server.StartAsync();
+
+		using var client = await ConnectWithRetryAsync(port);
+		var stream = client.GetStream();
+		await ReadFrameAsync(stream);
+		var clientEngine = CreatePrimedClientEngine(keyGenerator.BlowfishKey);
+		await stream.WriteAsync(CreateEncryptedUpdateSessionFrame(clientEngine, reconnectingAccount.Id, loginOk: unchecked((int)0x88776655), reconnectKey: 0x55667788));
+
+		await AssertClientClosedAsync(stream);
+		Assert.False(sessionRegistry.TryConsumeReconnectingAccount(reconnectingAccount.Id, 0x11223344, out _));
+		Assert.Null(sessionRegistry.GetLoginSession(reconnectingAccount.Id));
+		Assert.Equal(0, authService.LoginAttempts);
+		Assert.Equal(0, authService.Logouts);
+
+		await server.StopAsync(TimeSpan.FromSeconds(1));
+		Assert.Equal(0, server.GetActiveConnections());
+		await AssertTaskCompletedAsync(serverTask);
+	}
+
+	[Theory]
+	[InlineData("offline", AionAuthResponse.STR_L2AUTH_S_SERVER_DOWN)]
+	[InlineData("access", AionAuthResponse.STR_L2AUTH_S_SEVER_CHECK)]
+	[InlineData("full", AionAuthResponse.STR_L2AUTH_S_LIMIT_EXCEED)]
+	public async Task LoginClientSocketServer_PlaySelectionReturnsJavaFailureResponses(string mode, AionAuthResponse expectedResponse)
+	{
+		var port = GetFreeLoopbackPort();
+		using var keyGenerator = new FixedLoginKeyGenerator();
+		var authService = new SuccessfulLoginAuthService();
+		var gameServerRegistry = new GameServerRegistry();
+		var gameServer = new GameServerInfo(1, "127.0.0.1", "secret");
+		gameServerRegistry.RegisterKnownServer(gameServer);
+		if (mode != "offline")
+		{
+			var minAccessLevel = mode == "access" ? (byte)1 : (byte)0;
+			var maxPlayers = mode == "full" ? 0 : 100;
+			Assert.Equal(
+				GsAuthResponse.AUTHED,
+				gameServerRegistry.RegisterGameServer(
+					new GameServerAuthRequest(1, "secret", new byte[] { 127, 0, 0, 1 }, 7777, minAccessLevel, maxPlayers),
+					"127.0.0.1:7777",
+					new NoopGameServerSession()));
+		}
+
+		var server = new LoginClientSocketServer(
+			NullLogger<LoginClientSocketServer>.Instance,
+			new LoginServerOptions
+			{
+				ClientEndPoint = new IPEndPoint(IPAddress.Loopback, port),
+				MaxClientConnections = 10,
+			},
+			keyGenerator,
+			authService,
+			new LoginSessionRegistry(),
+			gameServerRegistry);
+		var serverTask = server.StartAsync();
+
+		using var client = await ConnectWithRetryAsync(port);
+		var login = await CompleteLoginHandshakeAsync(client, keyGenerator, authService.Account.Id);
+		await client.GetStream().WriteAsync(CreateEncryptedPlayFrame(login.Engine, login.AccountId, login.LoginOk, serverId: 1));
+		var playFailPayload = await ReadEncryptedLoginPayloadAsync(client.GetStream(), login.Engine);
+
+		Assert.Equal(0x06, playFailPayload[0]);
+		Assert.Equal((int)expectedResponse, BinaryPrimitives.ReadInt32LittleEndian(playFailPayload.AsSpan(1, 4)));
+
+		await server.StopAsync(TimeSpan.FromSeconds(1));
+		await AssertClientClosedAsync(client.GetStream());
+		Assert.Equal(0, server.GetActiveConnections());
+		await AssertTaskCompletedAsync(serverTask);
+	}
+
+	[Fact]
+	public async Task LoginClientSocketServer_PlaySelectionClosesWhenSessionKeyIsWrong()
+	{
+		var port = GetFreeLoopbackPort();
+		using var keyGenerator = new FixedLoginKeyGenerator();
+		var authService = new SuccessfulLoginAuthService();
+		var gameServerRegistry = new GameServerRegistry();
+		var gameServer = new GameServerInfo(1, "127.0.0.1", "secret");
+		gameServerRegistry.RegisterKnownServer(gameServer);
+		gameServerRegistry.RegisterGameServer(
+			new GameServerAuthRequest(1, "secret", new byte[] { 127, 0, 0, 1 }, 7777, 0, 100),
+			"127.0.0.1:7777",
+			new NoopGameServerSession());
+		var server = new LoginClientSocketServer(
+			NullLogger<LoginClientSocketServer>.Instance,
+			new LoginServerOptions
+			{
+				ClientEndPoint = new IPEndPoint(IPAddress.Loopback, port),
+				MaxClientConnections = 10,
+			},
+			keyGenerator,
+			authService,
+			new LoginSessionRegistry(),
+			gameServerRegistry);
+		var serverTask = server.StartAsync();
+
+		using var client = await ConnectWithRetryAsync(port);
+		var login = await CompleteLoginHandshakeAsync(client, keyGenerator, authService.Account.Id);
+		await client.GetStream().WriteAsync(CreateEncryptedPlayFrame(login.Engine, login.AccountId, login.LoginOk ^ 0x01020304, serverId: 1));
+		var loginFailPayload = await ReadEncryptedLoginPayloadAsync(client.GetStream(), login.Engine);
+
+		Assert.Equal(0x01, loginFailPayload[0]);
+		Assert.Equal((int)AionAuthResponse.STR_L2AUTH_S_SYSTEM_ERROR, BinaryPrimitives.ReadInt32LittleEndian(loginFailPayload.AsSpan(1, 4)));
+		await AssertClientClosedAsync(client.GetStream());
+
+		await server.StopAsync(TimeSpan.FromSeconds(1));
+		Assert.Equal(0, server.GetActiveConnections());
+		await AssertTaskCompletedAsync(serverTask);
+	}
+
+	[Fact]
 	public async Task LoginAndGameServerSockets_RouteServerListCharacterCountsAndPlaySelection()
 	{
 		var loginPort = GetFreeLoopbackPort();
 		var gameServerPort = GetFreeLoopbackPort();
 		using var keyGenerator = new FixedLoginKeyGenerator();
 		var authService = new SuccessfulLoginAuthService();
+		authService.Account.AllowedHddSerial = "disk-1";
 		var sessionRegistry = new LoginSessionRegistry();
 		var gameServerRegistry = new GameServerRegistry();
+		var accountRepository = new TrackingAccountRepository();
+		var premiumRepository = new FixedPremiumRepository(1_500);
 		var gameServer = new GameServerInfo(1, "127.0.0.1", "secret");
 		gameServerRegistry.RegisterKnownServer(gameServer);
 		var loginServer = new LoginClientSocketServer(
@@ -132,10 +592,10 @@ public sealed class SocketServerSmokeTests
 			},
 			gameServerRegistry,
 			sessionRegistry,
-			new ThrowingAccountRepository(),
+			accountRepository,
 			new ThrowingAccountTimeRepository(),
 			new EmptyBannedIpService(),
-			new ThrowingPremiumRepository(),
+			premiumRepository,
 			new ThrowingAccountsLogRepository(),
 			new ThrowingLoginAuthService(),
 			new EmptyBannedMacService(),
@@ -174,6 +634,27 @@ public sealed class SocketServerSmokeTests
 		var playOkPayload = await ReadEncryptedLoginPayloadAsync(fakeClient.GetStream(), login.Engine);
 		Assert.Equal(0x07, playOkPayload[0]);
 		Assert.Equal(1, playOkPayload[9]);
+
+		var playOk1 = BinaryPrimitives.ReadInt32LittleEndian(playOkPayload.AsSpan(1, 4));
+		var playOk2 = BinaryPrimitives.ReadInt32LittleEndian(playOkPayload.AsSpan(5, 4));
+		await fakeGameServer.GetStream().WriteAsync(CreateAccountAuthFrame(login.AccountId, login.LoginOk, playOk1, playOk2));
+		var accountAuthFrame = await ReadFrameAsync(fakeGameServer.GetStream());
+		using (var accountAuthPayload = new PacketBuffer(accountAuthFrame[2..]))
+		{
+			Assert.Equal(1, accountAuthPayload.ReadC());
+			Assert.Equal(login.AccountId, accountAuthPayload.ReadD());
+			Assert.Equal(1, accountAuthPayload.ReadC());
+			Assert.Equal("player", accountAuthPayload.ReadS());
+			Assert.Equal(new DateTimeOffset(authService.Account.CreationDate).ToUnixTimeMilliseconds(), accountAuthPayload.ReadQ());
+			Assert.Equal(authService.Account.AccountTime.AccumulatedOnlineTime, accountAuthPayload.ReadQ());
+			Assert.Equal(authService.Account.AccountTime.AccumulatedRestTime, accountAuthPayload.ReadQ());
+			Assert.Equal(authService.Account.AccessLevel, accountAuthPayload.ReadC());
+			Assert.Equal(authService.Account.Membership, accountAuthPayload.ReadC());
+			Assert.Equal(1_500, accountAuthPayload.ReadQ());
+			Assert.Equal("disk-1", accountAuthPayload.ReadS());
+		}
+		Assert.True(gameServer.IsAccountOnGameServer(login.AccountId));
+		Assert.Equal((login.AccountId, (sbyte)1), accountRepository.LastServerUpdate);
 
 		await loginServer.StopAsync(TimeSpan.FromSeconds(1));
 		await gameServerSocketServer.StopAsync(TimeSpan.FromSeconds(1));
@@ -228,12 +709,114 @@ public sealed class SocketServerSmokeTests
 		await AssertTaskCompletedAsync(serverTask);
 	}
 
-	private static byte[] CreateGameServerAuthFrame()
+	[Theory]
+	[InlineData("unregistered")]
+	[InlineData("wrong-password")]
+	[InlineData("wrong-ip")]
+	public async Task GameServerSocketServer_RejectsInvalidAuthAndClosesWithJavaResponse(string mode)
+	{
+		var port = GetFreeLoopbackPort();
+		var registry = new GameServerRegistry();
+		var gameServer = new GameServerInfo(1, mode == "wrong-ip" ? "10.0.0.1" : "127.0.0.1", "secret");
+		if (mode != "unregistered")
+			registry.RegisterKnownServer(gameServer);
+		var server = CreateGameServerSocketServer(port, registry);
+		var serverTask = server.StartAsync();
+
+		using var client = await ConnectWithRetryAsync(port);
+		var serverId = mode == "unregistered" ? (byte)2 : (byte)1;
+		var password = mode == "wrong-password" ? "bad-secret" : "secret";
+		await client.GetStream().WriteAsync(CreateGameServerAuthFrame(serverId, password));
+		var frame = await ReadFrameAsync(client.GetStream());
+
+		Assert.Equal(CreateGameServerAuthResponseFrame(GsAuthResponse.NOT_AUTHED, registeredServerCount: mode == "unregistered" ? 0 : 1), frame);
+		await AssertClientClosedAsync(client.GetStream());
+		Assert.False(gameServer.IsOnline);
+
+		await server.StopAsync(TimeSpan.FromSeconds(1));
+		Assert.Equal(0, server.GetActiveConnections());
+		await AssertTaskCompletedAsync(serverTask);
+	}
+
+	[Fact]
+	public async Task GameServerSocketServer_ShortAuthPacketUsesJavaDefaultReadsAndClosesWithNotAuthed()
+	{
+		var port = GetFreeLoopbackPort();
+		var registry = new GameServerRegistry();
+		var gameServer = new GameServerInfo(1, "127.0.0.1", "secret");
+		registry.RegisterKnownServer(gameServer);
+		var server = CreateGameServerSocketServer(port, registry);
+		var serverTask = server.StartAsync();
+
+		using var client = await ConnectWithRetryAsync(port);
+		await client.GetStream().WriteAsync(PacketFrameCodec.CreateFrame(new byte[] { 0 }));
+		var frame = await ReadFrameAsync(client.GetStream());
+
+		Assert.Equal(CreateGameServerAuthResponseFrame(GsAuthResponse.NOT_AUTHED, 1), frame);
+		await AssertClientClosedAsync(client.GetStream());
+		Assert.False(gameServer.IsOnline);
+
+		await server.StopAsync(TimeSpan.FromSeconds(1));
+		Assert.Equal(0, server.GetActiveConnections());
+		await AssertTaskCompletedAsync(serverTask);
+	}
+
+	[Fact]
+	public async Task GameServerSocketServer_RejectsDuplicateRegistrationAndKeepsFirstServerOnline()
+	{
+		var port = GetFreeLoopbackPort();
+		var registry = new GameServerRegistry();
+		var gameServer = new GameServerInfo(1, "127.0.0.1", "secret");
+		registry.RegisterKnownServer(gameServer);
+		var server = CreateGameServerSocketServer(port, registry);
+		var serverTask = server.StartAsync();
+
+		using var firstClient = await ConnectWithRetryAsync(port);
+		await firstClient.GetStream().WriteAsync(CreateGameServerAuthFrame());
+		Assert.Equal(CreateGameServerAuthResponseFrame(GsAuthResponse.AUTHED, 1), await ReadFrameAsync(firstClient.GetStream()));
+		Assert.True(gameServer.IsOnline);
+
+		using var duplicateClient = await ConnectWithRetryAsync(port);
+		await duplicateClient.GetStream().WriteAsync(CreateGameServerAuthFrame());
+		Assert.Equal(CreateGameServerAuthResponseFrame(GsAuthResponse.ALREADY_REGISTERED, 1), await ReadFrameAsync(duplicateClient.GetStream()));
+		await AssertClientClosedAsync(duplicateClient.GetStream());
+		Assert.True(gameServer.IsOnline);
+
+		await server.StopAsync(TimeSpan.FromSeconds(1));
+		await AssertClientClosedAsync(firstClient.GetStream());
+		Assert.False(gameServer.IsOnline);
+		Assert.Equal(0, server.GetActiveConnections());
+		await AssertTaskCompletedAsync(serverTask);
+	}
+
+	private static GameServerSocketServer CreateGameServerSocketServer(int port, GameServerRegistry registry)
+	{
+		return new GameServerSocketServer(
+			NullLogger<GameServerSocketServer>.Instance,
+			new LoginServerOptions
+			{
+				GameServerEndPoint = new IPEndPoint(IPAddress.Loopback, port),
+				MaxGameServerConnections = 10,
+			},
+			registry,
+			new LoginSessionRegistry(),
+			new ThrowingAccountRepository(),
+			new ThrowingAccountTimeRepository(),
+			new EmptyBannedIpService(),
+			new ThrowingPremiumRepository(),
+			new ThrowingAccountsLogRepository(),
+			new ThrowingLoginAuthService(),
+			new EmptyBannedMacService(),
+			new EmptyBannedHddService(),
+			new ThrowingPlayerTransferService());
+	}
+
+	private static byte[] CreateGameServerAuthFrame(byte gameServerId = 1, string password = "secret")
 	{
 		using var payload = new PacketBuffer();
 		payload.WriteC(0);
-		payload.WriteC(1);
-		payload.WriteS("secret");
+		payload.WriteC(gameServerId);
+		payload.WriteS(password);
 		payload.WriteC(4);
 		payload.WriteB(new byte[] { 127, 0, 0, 1 });
 		payload.WriteH(7777);
@@ -242,12 +825,28 @@ public sealed class SocketServerSmokeTests
 		return PacketFrameCodec.CreateFrame(payload.ToArray());
 	}
 
+	private static byte[] CreateGameServerAuthResponseFrame(GsAuthResponse response, int registeredServerCount)
+	{
+		return PacketFrameCodec.CreateFrame(new SmGameServerAuthResponse(response, registeredServerCount).SerializePayload());
+	}
+
 	private static byte[] CreateGameServerCharacterFrame(int accountId, byte characterCount)
 	{
 		using var payload = new PacketBuffer();
 		payload.WriteC(8);
 		payload.WriteD(accountId);
 		payload.WriteC(characterCount);
+		return PacketFrameCodec.CreateFrame(payload.ToArray());
+	}
+
+	private static byte[] CreateAccountAuthFrame(int accountId, int loginOk, int playOk1, int playOk2)
+	{
+		using var payload = new PacketBuffer();
+		payload.WriteC(1);
+		payload.WriteD(accountId);
+		payload.WriteD(loginOk);
+		payload.WriteD(playOk1);
+		payload.WriteD(playOk2);
 		return PacketFrameCodec.CreateFrame(payload.ToArray());
 	}
 
@@ -291,6 +890,26 @@ public sealed class SocketServerSmokeTests
 		payload.WriteC(serverId);
 		payload.WriteB(new byte[6]);
 		payload.WriteQ(0);
+		return EncryptLoginPayload(cryptEngine, payload.ToArray());
+	}
+
+	private static byte[] CreateEncryptedOpcodeOnlyFrame(LoginCryptEngine cryptEngine, byte opcode)
+	{
+		return EncryptLoginPayload(cryptEngine, new[] { opcode });
+	}
+
+	private static byte[] CreateEncryptedUpdateSessionFrame(LoginCryptEngine cryptEngine, int accountId, int loginOk, int reconnectKey)
+	{
+		using var payload = new PacketBuffer();
+		payload.WriteC(0x08);
+		payload.WriteD(accountId);
+		payload.WriteD(loginOk);
+		payload.WriteD(reconnectKey);
+		payload.WriteC(68);
+		payload.WriteB(new byte[] { 1, 2, 3, 4, 5, 6 });
+		payload.WriteC(4);
+		payload.WriteC(68);
+		payload.WriteH(0x7788);
 		return EncryptLoginPayload(cryptEngine, payload.ToArray());
 	}
 
@@ -543,6 +1162,24 @@ public sealed class SocketServerSmokeTests
 		}
 	}
 
+	private sealed class AccountBannedLoginAuthService : ILoginAuthService
+	{
+		public int LoginAttempts { get; private set; }
+
+		public Task<LoginAuthResult> LoginAsync(string username, string password, string remoteIp, CancellationToken cancellationToken = default)
+		{
+			LoginAttempts++;
+			Assert.Equal("player", username);
+			Assert.Equal("secret", password);
+			Assert.Equal("127.0.0.1", remoteIp);
+			return Task.FromResult(LoginAuthResult.AccountBanned());
+		}
+
+		public Task CompleteSuccessfulLoginAsync(Account account, string remoteIp, CancellationToken cancellationToken = default) => throw NotUsed();
+
+		public Task UpdateOnLogoutAsync(Account account, CancellationToken cancellationToken = default) => throw NotUsed();
+	}
+
 	private sealed class ThrowingLoginAuthService : ILoginAuthService
 	{
 		public Task<LoginAuthResult> LoginAsync(string username, string password, string remoteIp, CancellationToken cancellationToken = default)
@@ -586,6 +1223,37 @@ public sealed class SocketServerSmokeTests
 		public Task UpdateMembershipAsync(int accountId, CancellationToken cancellationToken = default) => throw NotUsed();
 	}
 
+	private sealed class TrackingAccountRepository : IAccountRepository
+	{
+		public (int AccountId, sbyte LastServer)? LastServerUpdate { get; private set; }
+
+		public Task<Account?> GetAccountByNameAsync(string name, bool useExternalAuth, CancellationToken cancellationToken = default) => throw NotUsed();
+
+		public Task<Account?> GetAccountByIdAsync(int id, bool useExternalAuth, CancellationToken cancellationToken = default) => throw NotUsed();
+
+		public Task<bool> InsertAccountAsync(Account account, bool useExternalAuth, CancellationToken cancellationToken = default) => throw NotUsed();
+
+		public Task UpdateLastIpAsync(int accountId, string ip, CancellationToken cancellationToken = default) => throw NotUsed();
+
+		public Task<bool> UpdateLastMacAsync(int accountId, string mac, CancellationToken cancellationToken = default) => throw NotUsed();
+
+		public Task<bool> UpdateLastHddSerialAsync(int accountId, string hddSerial, CancellationToken cancellationToken = default) => throw NotUsed();
+
+		public Task<bool> UpdateAllowedHddSerialAsync(int accountId, string hddSerial, CancellationToken cancellationToken = default) => throw NotUsed();
+
+		public Task<string> GetLastIpAsync(int accountId, CancellationToken cancellationToken = default) => throw NotUsed();
+
+		public Task<bool> UpdateAccountAsync(Account account, bool useExternalAuth, CancellationToken cancellationToken = default) => throw NotUsed();
+
+		public Task UpdateLastServerAsync(int accountId, sbyte lastServer, CancellationToken cancellationToken = default)
+		{
+			LastServerUpdate = (accountId, lastServer);
+			return Task.CompletedTask;
+		}
+
+		public Task UpdateMembershipAsync(int accountId, CancellationToken cancellationToken = default) => throw NotUsed();
+	}
+
 	private sealed class ThrowingAccountTimeRepository : IAccountTimeRepository
 	{
 		public Task<AccountTime?> GetAccountTimeAsync(int accountId, CancellationToken cancellationToken = default) => throw NotUsed();
@@ -609,6 +1277,23 @@ public sealed class SocketServerSmokeTests
 	private sealed class ThrowingPremiumRepository : IPremiumRepository
 	{
 		public Task<long> GetPointsAsync(int accountId, CancellationToken cancellationToken = default) => throw NotUsed();
+
+		public Task<bool> UpdatePointsAsync(int accountId, long points, long required, CancellationToken cancellationToken = default) => throw NotUsed();
+	}
+
+	private sealed class FixedPremiumRepository : IPremiumRepository
+	{
+		private readonly long _points;
+
+		public FixedPremiumRepository(long points)
+		{
+			_points = points;
+		}
+
+		public Task<long> GetPointsAsync(int accountId, CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult(_points);
+		}
 
 		public Task<bool> UpdatePointsAsync(int accountId, long points, long required, CancellationToken cancellationToken = default) => throw NotUsed();
 	}
@@ -663,5 +1348,13 @@ public sealed class SocketServerSmokeTests
 	private static InvalidOperationException NotUsed()
 	{
 		return new InvalidOperationException("Dependency should not be reached by socket smoke tests.");
+	}
+
+	private sealed class NoopGameServerSession : IGameServerSession
+	{
+		public Task SendPacketAsync(GsServerPacket packet)
+		{
+			return Task.CompletedTask;
+		}
 	}
 }

@@ -14,6 +14,7 @@ namespace Aion.Commons.Network
 		private byte[] _buffer;
 		private int _position;
 		private int _capacity;
+		private readonly bool _strictReads;
 
 		/// <summary>
 		/// Create a new buffer with the specified capacity.
@@ -23,16 +24,18 @@ namespace Aion.Commons.Network
 			_buffer = new byte[capacity];
 			_capacity = capacity;
 			_position = 0;
+			_strictReads = true;
 		}
 
 		/// <summary>
 		/// Create a buffer from existing byte array (read mode).
 		/// </summary>
-		public PacketBuffer(byte[] data)
+		public PacketBuffer(byte[] data, bool strictReads = true)
 		{
 			_buffer = data ?? throw new ArgumentNullException(nameof(data));
 			_capacity = data.Length;
 			_position = 0;
+			_strictReads = strictReads;
 		}
 
 		/// <summary>
@@ -193,7 +196,11 @@ namespace Aion.Commons.Network
 		public byte ReadC()
 		{
 			if (Remaining < 1)
+			{
+				if (!_strictReads)
+					return 0;
 				throw new EndOfStreamException("Not enough data to read byte");
+			}
 			return _buffer[_position++];
 		}
 
@@ -203,7 +210,11 @@ namespace Aion.Commons.Network
 		public ushort ReadH()
 		{
 			if (Remaining < 2)
+			{
+				if (!_strictReads)
+					return 0;
 				throw new EndOfStreamException("Not enough data to read ushort");
+			}
 			var value = BinaryPrimitives.ReadUInt16LittleEndian(new Span<byte>(_buffer, _position, 2));
 			_position += 2;
 			return value;
@@ -215,7 +226,11 @@ namespace Aion.Commons.Network
 		public int ReadD()
 		{
 			if (Remaining < 4)
+			{
+				if (!_strictReads)
+					return 0;
 				throw new EndOfStreamException("Not enough data to read int");
+			}
 			var value = BinaryPrimitives.ReadInt32LittleEndian(new Span<byte>(_buffer, _position, 4));
 			_position += 4;
 			return value;
@@ -227,7 +242,11 @@ namespace Aion.Commons.Network
 		public long ReadQ()
 		{
 			if (Remaining < 8)
+			{
+				if (!_strictReads)
+					return 0;
 				throw new EndOfStreamException("Not enough data to read long");
+			}
 			var value = BinaryPrimitives.ReadInt64LittleEndian(new Span<byte>(_buffer, _position, 8));
 			_position += 8;
 			return value;
@@ -239,7 +258,11 @@ namespace Aion.Commons.Network
 		public float ReadF()
 		{
 			if (Remaining < 4)
+			{
+				if (!_strictReads)
+					return 0;
 				throw new EndOfStreamException("Not enough data to read float");
+			}
 			var intValue = BinaryPrimitives.ReadInt32LittleEndian(new Span<byte>(_buffer, _position, 4));
 			_position += 4;
 			return BitConverter.Int32BitsToSingle(intValue);
@@ -251,7 +274,11 @@ namespace Aion.Commons.Network
 		public double ReadDF()
 		{
 			if (Remaining < 8)
+			{
+				if (!_strictReads)
+					return 0;
 				throw new EndOfStreamException("Not enough data to read double");
+			}
 			var longValue = BinaryPrimitives.ReadInt64LittleEndian(new Span<byte>(_buffer, _position, 8));
 			_position += 8;
 			return BitConverter.Int64BitsToDouble(longValue);
@@ -265,6 +292,8 @@ namespace Aion.Commons.Network
 			var sb = new StringBuilder();
 			while (true)
 			{
+				if (!_strictReads && Remaining < 2)
+					return sb.ToString();
 				var ch = ReadH();
 				if (ch == 0)
 					return sb.ToString();
@@ -277,6 +306,8 @@ namespace Aion.Commons.Network
 		/// </summary>
 		public byte[] ReadB(int length)
 		{
+			if (length < 0)
+				throw new EndOfStreamException("Invalid negative byte array length");
 			var result = new byte[length];
 			ReadB(result, 0, length);
 			return result;
@@ -287,8 +318,14 @@ namespace Aion.Commons.Network
 		/// </summary>
 		public void ReadB(byte[] destination, int offset, int length)
 		{
+			if (length < 0)
+				throw new EndOfStreamException("Invalid negative byte array length");
 			if (Remaining < length)
+			{
+				if (!_strictReads)
+					return;
 				throw new EndOfStreamException("Not enough data to read bytes");
+			}
 			Array.Copy(_buffer, _position, destination, offset, length);
 			_position += length;
 		}

@@ -238,4 +238,28 @@ database.user=admin
 		Assert.Equal("value1", all["key1"]);
 		Assert.Equal("value2", all["key2"]);
 	}
+
+	[Fact]
+	public void DatabaseOptions_ParseJdbcMysqlUrl_ReadsHostPortAndDatabase()
+	{
+		var parsed = DatabaseOptions.ParseJdbcMysqlUrl("jdbc:mysql://db.example.test:3307/aion_ls?serverTimezone=&characterEncoding=UTF-8");
+
+		Assert.Equal("db.example.test", parsed.Server);
+		Assert.Equal(3307, parsed.Port);
+		Assert.Equal("aion_ls", parsed.Database);
+	}
+
+	[Fact]
+	public void DatabaseOptions_LoadFromJavaConfig_ReadsDatabaseProperties()
+	{
+		var options = DatabaseOptions.LoadFromJavaConfig(AppContext.BaseDirectory);
+
+		Assert.Equal("localhost", options.Server);
+		Assert.Equal(3306, options.Port);
+		Assert.Equal("aion_ls", options.Database);
+		Assert.Equal("root", options.UserId);
+		Assert.Equal(5, options.MaxPoolSize);
+		Assert.Equal(5000, options.ConnectionTimeout);
+		Assert.False(string.IsNullOrEmpty(options.Password));
+	}
 }

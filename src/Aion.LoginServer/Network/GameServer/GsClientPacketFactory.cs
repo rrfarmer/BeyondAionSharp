@@ -33,7 +33,17 @@ public static class GsClientPacketFactory
 			_ => null
 		};
 
-		packet?.Read(payload);
-		return packet;
+		if (packet == null)
+			return null;
+
+		try
+		{
+			packet.Read(payload);
+			return packet;
+		}
+		catch (Exception)
+		{
+			return null;
+		}
 	}
 }

@@ -22,6 +22,7 @@ public sealed class GameServerSocketServer : BaseSocketServer
 	private readonly IBannedHddService _bannedHddService;
 	private readonly IPlayerTransferService _playerTransferService;
 	private readonly LoginServerOptions _options;
+	private readonly TimeSpan? _gameServerPingInterval;
 	private readonly ConcurrentDictionary<string, GameServerConnection> _connections = new();
 	private long _nextClientId;
 
@@ -38,7 +39,8 @@ public sealed class GameServerSocketServer : BaseSocketServer
 		ILoginAuthService authService,
 		IBannedMacService bannedMacService,
 		IBannedHddService bannedHddService,
-		IPlayerTransferService playerTransferService)
+		IPlayerTransferService playerTransferService,
+		TimeSpan? gameServerPingInterval = null)
 		: base(logger, "Aion GameServer Bridge", options.GameServerEndPoint.Address, options.GameServerEndPoint.Port, options.MaxGameServerConnections)
 	{
 		_registry = registry;
@@ -53,6 +55,7 @@ public sealed class GameServerSocketServer : BaseSocketServer
 		_bannedHddService = bannedHddService;
 		_playerTransferService = playerTransferService;
 		_options = options;
+		_gameServerPingInterval = gameServerPingInterval;
 	}
 
 	protected override async Task HandleConnectionAsync(TcpClient client, CancellationToken cancellationToken)
@@ -76,7 +79,8 @@ public sealed class GameServerSocketServer : BaseSocketServer
 				_bannedMacService,
 				_bannedHddService,
 				_playerTransferService,
-				_options);
+				_options,
+				_gameServerPingInterval);
 			_connections[clientId] = connection;
 			await connection.RunAsync();
 		}
