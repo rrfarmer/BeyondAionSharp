@@ -89,7 +89,7 @@ public sealed class SocketServerSmokeTests
 			sessionRegistry,
 			new ThrowingAccountRepository(),
 			new ThrowingAccountTimeRepository(),
-			new ThrowingBannedIpRepository(),
+			new EmptyBannedIpService(),
 			new ThrowingPremiumRepository(),
 			new ThrowingAccountsLogRepository(),
 			new ThrowingLoginAuthService(),
@@ -160,7 +160,7 @@ public sealed class SocketServerSmokeTests
 			new LoginSessionRegistry(),
 			new ThrowingAccountRepository(),
 			new ThrowingAccountTimeRepository(),
-			new ThrowingBannedIpRepository(),
+			new EmptyBannedIpService(),
 			new ThrowingPremiumRepository(),
 			new ThrowingAccountsLogRepository(),
 			new ThrowingLoginAuthService(),
@@ -535,15 +535,17 @@ public sealed class SocketServerSmokeTests
 		public Task UpdateAccountTimeAsync(int accountId, AccountTime accountTime, CancellationToken cancellationToken = default) => throw NotUsed();
 	}
 
-	private sealed class ThrowingBannedIpRepository : IBannedIpRepository
+	private sealed class EmptyBannedIpService : IBannedIpService
 	{
-		public Task CleanExpiredBansAsync(CancellationToken cancellationToken = default) => throw NotUsed();
+		public Task LoadAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
 
-		public Task<IReadOnlyCollection<BannedIp>> GetAllBansAsync(CancellationToken cancellationToken = default) => throw NotUsed();
+		public IReadOnlyCollection<BannedIp> GetEntries() => Array.Empty<BannedIp>();
 
-		public Task<bool> InsertAsync(string mask, DateTime? expireTime, CancellationToken cancellationToken = default) => throw NotUsed();
+		public bool IsBanned(string ip) => false;
 
-		public Task<bool> RemoveAsync(string mask, CancellationToken cancellationToken = default) => throw NotUsed();
+		public Task<bool> BanAsync(string mask, DateTime? expireTime, CancellationToken cancellationToken = default) => throw NotUsed();
+
+		public Task<bool> UnbanAsync(string mask, CancellationToken cancellationToken = default) => throw NotUsed();
 	}
 
 	private sealed class ThrowingPremiumRepository : IPremiumRepository

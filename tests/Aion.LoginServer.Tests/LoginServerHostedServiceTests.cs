@@ -19,6 +19,7 @@ public sealed class LoginServerHostedServiceTests
 		var gameServerPort = SocketServerSmokeTests.GetFreeLoopbackPort();
 		var order = new ConcurrentQueue<string>();
 		var gameServersRepository = new BlockingGameServersRepository(order);
+		var bannedIpService = new TrackingBannedIpService(order);
 		var bannedMacService = new TrackingBannedMacService(order);
 		var bannedHddService = new TrackingBannedHddService(order);
 		var registry = new GameServerRegistry();
@@ -48,7 +49,7 @@ public sealed class LoginServerHostedServiceTests
 			sessions,
 			dependencies,
 			dependencies,
-			dependencies,
+			bannedIpService,
 			dependencies,
 			dependencies,
 			dependencies,
@@ -60,6 +61,7 @@ public sealed class LoginServerHostedServiceTests
 			gameServerSocketServer,
 			gameServersRepository,
 			registry,
+			bannedIpService,
 			bannedMacService,
 			bannedHddService,
 			NullLogger<LoginServerHostedService>.Instance);
@@ -78,19 +80,31 @@ public sealed class LoginServerHostedServiceTests
 		});
 		await SocketServerSmokeTests.AssertTaskCompletedAsync(startTask);
 
-		Assert.Equal(new[] { "gameservers", "mac", "hdd" }, order.ToArray());
+		Assert.Equal(new[] { "gameservers", "ip", "mac", "hdd" }, order.ToArray());
 		Assert.Same(configuredGameServer, registry.GetGameServer(configuredGameServer.Id));
 
 		using var loginClient = await SocketServerSmokeTests.ConnectWithRetryAsync(loginPort);
 		using var gameServerClient = await SocketServerSmokeTests.ConnectWithRetryAsync(gameServerPort);
-		Assert.Equal(1, loginServer.GetActiveConnections());
-		Assert.Equal(1, gameServerSocketServer.GetActiveConnections());
+		await AssertActiveConnectionsAsync(loginServer.GetActiveConnections, 1);
+		await AssertActiveConnectionsAsync(gameServerSocketServer.GetActiveConnections, 1);
 
 		await hosted.StopAsync(CancellationToken.None);
 		await AssertEventuallyClosedAsync(loginClient.GetStream());
 		await AssertEventuallyClosedAsync(gameServerClient.GetStream());
 		Assert.Equal(0, loginServer.GetActiveConnections());
 		Assert.Equal(0, gameServerSocketServer.GetActiveConnections());
+	}
+
+	private static async Task AssertActiveConnectionsAsync(Func<int> getActiveConnections, int expected)
+	{
+		var deadline = DateTime.UtcNow.AddSeconds(2);
+		while (DateTime.UtcNow < deadline)
+		{
+			if (getActiveConnections() == expected)
+				return;
+			await Task.Delay(25);
+		}
+		Assert.Equal(expected, getActiveConnections());
 	}
 
 	private static async Task AssertEventuallyClosedAsync(NetworkStream stream)
@@ -176,6 +190,30 @@ public sealed class LoginServerHostedServiceTests
 		public Task UnbanAsync(string address, CancellationToken cancellationToken = default) => throw NotUsed();
 	}
 
+	private sealed class TrackingBannedIpService : IBannedIpService
+	{
+		private readonly ConcurrentQueue<string> _order;
+
+		public TrackingBannedIpService(ConcurrentQueue<string> order)
+		{
+			_order = order;
+		}
+
+		public Task LoadAsync(CancellationToken cancellationToken = default)
+		{
+			_order.Enqueue("ip");
+			return Task.CompletedTask;
+		}
+
+		public IReadOnlyCollection<BannedIp> GetEntries() => Array.Empty<BannedIp>();
+
+		public bool IsBanned(string ip) => false;
+
+		public Task<bool> BanAsync(string mask, DateTime? expireTime, CancellationToken cancellationToken = default) => throw NotUsed();
+
+		public Task<bool> UnbanAsync(string mask, CancellationToken cancellationToken = default) => throw NotUsed();
+	}
+
 	private sealed class TrackingBannedHddService : IBannedHddService
 	{
 		private readonly ConcurrentQueue<string> _order;
@@ -201,7 +239,6 @@ public sealed class LoginServerHostedServiceTests
 	private sealed class ThrowingGameServerDependencies :
 		IAccountRepository,
 		IAccountTimeRepository,
-		IBannedIpRepository,
 		IPremiumRepository,
 		IAccountsLogRepository,
 		ILoginAuthService,

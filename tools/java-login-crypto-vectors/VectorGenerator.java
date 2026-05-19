@@ -2,28 +2,56 @@ import com.aionemu.loginserver.network.ncrypt.EncryptedRSAKeyPair;
 import com.aionemu.loginserver.network.ncrypt.BlowfishCipher;
 import com.aionemu.loginserver.network.ncrypt.CryptEngine;
 import com.aionemu.loginserver.network.aion.AionServerPacket;
+import com.aionemu.loginserver.network.aion.AionAuthResponse;
 import com.aionemu.loginserver.network.aion.LoginConnection;
 import com.aionemu.loginserver.network.aion.SessionKey;
+import com.aionemu.loginserver.network.aion.serverpackets.SM_ACCOUNT_BANNED;
+import com.aionemu.loginserver.network.aion.serverpackets.SM_ACCOUNT_BANNED_2;
+import com.aionemu.loginserver.network.aion.serverpackets.SM_ACCOUNT_KICK;
 import com.aionemu.loginserver.network.aion.serverpackets.SM_AUTH_GG;
+import com.aionemu.loginserver.network.aion.serverpackets.SM_LOGIN_FAIL;
 import com.aionemu.loginserver.network.aion.serverpackets.SM_LOGIN_OK;
+import com.aionemu.loginserver.network.aion.serverpackets.SM_PLAY_FAIL;
 import com.aionemu.loginserver.network.aion.serverpackets.SM_PLAY_OK;
 import com.aionemu.loginserver.network.aion.serverpackets.SM_SERVER_LIST;
+import com.aionemu.loginserver.network.aion.serverpackets.SM_UPDATE_SESSION;
 import com.aionemu.loginserver.network.gameserver.GsConnection;
+import com.aionemu.loginserver.network.gameserver.GsAuthResponse;
 import com.aionemu.loginserver.network.gameserver.GsServerPacket;
+import com.aionemu.loginserver.network.gameserver.serverpackets.SM_ACCOUNT_AUTH_RESPONSE;
+import com.aionemu.loginserver.network.gameserver.serverpackets.SM_ACCOUNT_RECONNECT_KEY;
+import com.aionemu.loginserver.network.gameserver.serverpackets.SM_BAN_RESPONSE;
+import com.aionemu.loginserver.network.gameserver.serverpackets.SM_GS_AUTH_RESPONSE;
 import com.aionemu.loginserver.network.gameserver.serverpackets.SM_GS_CHARACTER_RESPONSE;
+import com.aionemu.loginserver.network.gameserver.serverpackets.SM_HDDBAN_LIST;
+import com.aionemu.loginserver.network.gameserver.serverpackets.SM_LS_CONTROL_RESPONSE;
+import com.aionemu.loginserver.network.gameserver.serverpackets.SM_MACBAN_LIST;
+import com.aionemu.loginserver.network.gameserver.serverpackets.SM_PING;
+import com.aionemu.loginserver.network.gameserver.serverpackets.SM_PREMIUM_RESPONSE;
+import com.aionemu.loginserver.network.gameserver.serverpackets.SM_PTRANSFER_RESPONSE;
 import com.aionemu.loginserver.network.gameserver.serverpackets.SM_REQUEST_KICK_ACCOUNT;
 import com.aionemu.loginserver.GameServerInfo;
 import com.aionemu.loginserver.GameServerTable;
 import com.aionemu.loginserver.controller.AccountController;
+import com.aionemu.loginserver.controller.BannedHDDController;
+import com.aionemu.loginserver.controller.BannedMacManager;
 import com.aionemu.loginserver.model.Account;
+import com.aionemu.loginserver.model.AccountTime;
+import com.aionemu.loginserver.model.base.BannedMacEntry;
+import com.aionemu.loginserver.service.ptransfer.PlayerTransferRequest;
+import com.aionemu.loginserver.service.ptransfer.PlayerTransferResultStatus;
+import com.aionemu.loginserver.service.ptransfer.PlayerTransferStatus;
+import com.aionemu.loginserver.service.ptransfer.PlayerTransferTask;
 import java.math.BigInteger;
 import java.lang.reflect.Method;
 import java.security.KeyPair;
 import java.security.interfaces.RSAPublicKey;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class VectorGenerator {
@@ -88,14 +116,65 @@ public final class VectorGenerator {
 
 		print("SM_AUTH_GG_PAYLOAD", writeAionPayload(new SM_AUTH_GG(0x11223344)));
 		SessionKey sessionKey = new SessionKey(1001, 0x11223344, 0x01020304, 0x55667788);
+		print("SM_LOGIN_FAIL_PAYLOAD", writeAionPayload(new SM_LOGIN_FAIL(AionAuthResponse.STR_L2AUTH_S_INCORRECT_PWD)));
 		print("SM_LOGIN_OK_PAYLOAD", writeAionPayload(new SM_LOGIN_OK(sessionKey)));
+		print("SM_PLAY_FAIL_PAYLOAD", writeAionPayload(new SM_PLAY_FAIL(AionAuthResponse.STR_L2AUTH_S_SERVER_DOWN)));
 		print("SM_PLAY_OK_PAYLOAD", writeAionPayload(new SM_PLAY_OK(sessionKey, (byte) 7)));
+		print("SM_ACCOUNT_KICK_PAYLOAD", writeAionPayload(new SM_ACCOUNT_KICK(AionAuthResponse.STR_L2AUTH_S_BLOCKED_IP)));
+		print("SM_ACCOUNT_BANNED_PAYLOAD", writeAionPayload(new SM_ACCOUNT_BANNED()));
+		print("SM_ACCOUNT_BANNED_2_PAYLOAD", writeAionPayload(new SM_ACCOUNT_BANNED_2()));
+		print("SM_UPDATE_SESSION_PAYLOAD", writeAionPayload(new SM_UPDATE_SESSION(sessionKey)));
 		GameServerTable.setGameServers(Arrays.asList(new GameServerInfo((byte) 1, new byte[] { 127, 0, 0, 1 }, 7777, 0, 100, true)));
 		Map<Byte, Integer> characterCounts = new HashMap<Byte, Integer>();
 		characterCounts.put((byte) 1, 2);
 		AccountController.setGSCharacterCountsFor(1001, characterCounts);
 		print("SM_SERVER_LIST_PAYLOAD", writeAionPayload(new SM_SERVER_LIST(), new LoginConnection(new Account(1001, 1))));
+		print("SM_GS_AUTH_RESPONSE_AUTHED_PAYLOAD", writeGsPayload(new SM_GS_AUTH_RESPONSE(GsAuthResponse.AUTHED)));
+		print("SM_GS_AUTH_RESPONSE_NOT_AUTHED_PAYLOAD", writeGsPayload(new SM_GS_AUTH_RESPONSE(GsAuthResponse.NOT_AUTHED)));
+		AccountTime accountTime = new AccountTime();
+		accountTime.setAccumulatedOnlineTime(1111L);
+		accountTime.setAccumulatedRestTime(2222L);
+		Account account = new Account(1001, 1, "player", accountTime);
+		GameServerInfo accountAuthGameServer = new GameServerInfo((byte) 1, new byte[] { 127, 0, 0, 1 }, 7777, 0, 100, true);
+		accountAuthGameServer.addAccount(account);
+		GsConnection accountAuthConnection = new GsConnection(accountAuthGameServer);
+		print("SM_ACCOUNT_AUTH_RESPONSE_OK_PAYLOAD", writeGsPayload(
+			new SM_ACCOUNT_AUTH_RESPONSE(1001, true, "player", 1700000000000L, (byte) 3, (byte) 2, 1500L, "disk-1"),
+			accountAuthConnection));
+		print("SM_ACCOUNT_AUTH_RESPONSE_FAIL_PAYLOAD", writeGsPayload(
+			new SM_ACCOUNT_AUTH_RESPONSE(1001, false, "", 0L, (byte) 0, (byte) 0, 0L, ""),
+			accountAuthConnection));
+		print("SM_ACCOUNT_RECONNECT_KEY_PAYLOAD", writeGsPayload(new SM_ACCOUNT_RECONNECT_KEY(1001, 0x11223344)));
+		print("SM_BAN_RESPONSE_PAYLOAD", writeGsPayload(new SM_BAN_RESPONSE((byte) 3, 99, "127.0.0.1", 15, 12345, true)));
 		print("SM_GS_CHARACTER_RESPONSE_PAYLOAD", writeGsPayload(new SM_GS_CHARACTER_RESPONSE(123)));
+		Map<String, Timestamp> hddBans = new LinkedHashMap<String, Timestamp>();
+		hddBans.put("disk", new Timestamp(1700000000000L));
+		BannedHDDController.setMap(hddBans);
+		print("SM_HDDBAN_LIST_PAYLOAD", writeGsPayload(new SM_HDDBAN_LIST()));
+		print("SM_LS_CONTROL_RESPONSE_PAYLOAD", writeGsPayload(new SM_LS_CONTROL_RESPONSE((byte) 1, (byte) 7, 99, 12345, true)));
+		Map<String, BannedMacEntry> macBans = new LinkedHashMap<String, BannedMacEntry>();
+		macBans.put("aa-bb", new BannedMacEntry("aa-bb", new Timestamp(1700000000000L), "reason"));
+		BannedMacManager.setMap(macBans);
+		print("SM_MACBAN_LIST_PAYLOAD", writeGsPayload(new SM_MACBAN_LIST()));
+		print("SM_PING_PAYLOAD", writeGsPayload(new SM_PING()));
+		print("SM_PREMIUM_RESPONSE_PAYLOAD", writeGsPayload(new SM_PREMIUM_RESPONSE(200, 3, 1500)));
+		PlayerTransferTask transferTask = new PlayerTransferTask();
+		transferTask.sourceServerId = 1;
+		transferTask.targetServerId = 2;
+		transferTask.sourceAccountId = 10;
+		transferTask.targetAccountId = 20;
+		transferTask.playerId = 30;
+		transferTask.id = 40;
+		print("SM_PTRANSFER_PERFORM_ACTION_PAYLOAD", writeGsPayload(new SM_PTRANSFER_RESPONSE(PlayerTransferResultStatus.PERFORM_ACTION, transferTask)));
+		PlayerTransferRequest transferRequest = new PlayerTransferRequest(PlayerTransferStatus.STEP1);
+		transferRequest.targetAccountId = 20;
+		transferRequest.taskId = 40;
+		transferRequest.name = "Character";
+		transferRequest.targetAccount = new Account(20, -1, "target", new AccountTime());
+		transferRequest.db = new byte[] { 1, 2, 3 };
+		print("SM_PTRANSFER_SEND_INFO_PAYLOAD", writeGsPayload(new SM_PTRANSFER_RESPONSE(PlayerTransferResultStatus.SEND_INFO, transferRequest)));
+		print("SM_PTRANSFER_OK_PAYLOAD", writeGsPayload(new SM_PTRANSFER_RESPONSE(PlayerTransferResultStatus.OK, 40)));
+		print("SM_PTRANSFER_ERROR_PAYLOAD", writeGsPayload(new SM_PTRANSFER_RESPONSE(PlayerTransferResultStatus.ERROR, 40, "nope")));
 		print("SM_REQUEST_KICK_ACCOUNT_PAYLOAD", writeGsPayload(new SM_REQUEST_KICK_ACCOUNT(123, true)));
 	}
 
@@ -147,11 +226,15 @@ public final class VectorGenerator {
 	}
 
 	private static byte[] writeGsPayload(GsServerPacket packet) throws Exception {
+		return writeGsPayload(packet, null);
+	}
+
+	private static byte[] writeGsPayload(GsServerPacket packet, GsConnection connection) throws Exception {
 		ByteBuffer buffer = ByteBuffer.allocate(256).order(ByteOrder.LITTLE_ENDIAN);
 		packet.setBuf(buffer);
 		Method writeImpl = packet.getClass().getDeclaredMethod("writeImpl", GsConnection.class);
 		writeImpl.setAccessible(true);
-		writeImpl.invoke(packet, new Object[] { null });
+		writeImpl.invoke(packet, connection);
 		return toArray(buffer);
 	}
 

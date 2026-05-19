@@ -24,7 +24,7 @@ public sealed class GameServerConnection : BaseClientConnection, IGameServerSess
 	private readonly ILoginSessionRegistry _sessionRegistry;
 	private readonly IAccountRepository _accountRepository;
 	private readonly IAccountTimeRepository _accountTimeRepository;
-	private readonly IBannedIpRepository _bannedIpRepository;
+	private readonly IBannedIpService _bannedIpService;
 	private readonly IPremiumRepository _premiumRepository;
 	private readonly IAccountsLogRepository _accountsLogRepository;
 	private readonly ILoginAuthService _authService;
@@ -48,7 +48,7 @@ public sealed class GameServerConnection : BaseClientConnection, IGameServerSess
 		ILoginSessionRegistry sessionRegistry,
 		IAccountRepository accountRepository,
 		IAccountTimeRepository accountTimeRepository,
-		IBannedIpRepository bannedIpRepository,
+		IBannedIpService bannedIpService,
 		IPremiumRepository premiumRepository,
 		IAccountsLogRepository accountsLogRepository,
 		ILoginAuthService authService,
@@ -62,7 +62,7 @@ public sealed class GameServerConnection : BaseClientConnection, IGameServerSess
 		_sessionRegistry = sessionRegistry;
 		_accountRepository = accountRepository;
 		_accountTimeRepository = accountTimeRepository;
-		_bannedIpRepository = bannedIpRepository;
+		_bannedIpService = bannedIpService;
 		_premiumRepository = premiumRepository;
 		_accountsLogRepository = accountsLogRepository;
 		_authService = authService;
@@ -324,13 +324,13 @@ public sealed class GameServerConnection : BaseClientConnection, IGameServerSess
 
 			if (!string.IsNullOrEmpty(ip))
 			{
-				if (await IsBannedIpAsync(ip))
-					result = await _bannedIpRepository.RemoveAsync(ip);
+				if (_bannedIpService.IsBanned(ip))
+					result = await _bannedIpService.UnbanAsync(ip);
 
 				if (packet.Time >= 0)
 				{
 					DateTime? expireTime = packet.Time == 0 ? null : DateTime.UtcNow.AddMinutes(packet.Time);
-					result = await _bannedIpRepository.InsertAsync(ip, expireTime);
+					result = await _bannedIpService.BanAsync(ip, expireTime);
 				}
 			}
 		}
@@ -444,14 +444,6 @@ public sealed class GameServerConnection : BaseClientConnection, IGameServerSess
 	{
 		await _registry.KickAccountFromGameServerAsync(accountId, notifyDoubleLogin: false);
 		await _sessionRegistry.KickLoginSessionAsync(accountId, AionAuthResponse.STR_L2AUTH_S_BLOCKED_IP);
-	}
-
-	private async Task<bool> IsBannedIpAsync(string ip)
-	{
-		await _bannedIpRepository.CleanExpiredBansAsync();
-		var now = DateTime.UtcNow;
-		var bans = await _bannedIpRepository.GetAllBansAsync();
-		return bans.Any(ban => ban.IsActive(now) && NetworkMask.Matches(ban.Mask, ip));
 	}
 
 	private async Task HandleGameServerCharacterAsync(CmGameServerCharacter packet)

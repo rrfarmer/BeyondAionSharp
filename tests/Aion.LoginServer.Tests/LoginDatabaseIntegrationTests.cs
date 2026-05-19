@@ -139,6 +139,8 @@ public class LoginDatabaseIntegrationTests
 			LastServer = -1,
 		};
 		Assert.True(await accountRepository.InsertAccountAsync(account, useExternalAuth: false));
+		var bannedIpService = new BannedIpService(new BannedIpRepository());
+		await bannedIpService.LoadAsync();
 
 		using var keyGenerator = new SocketServerSmokeTests.FixedLoginKeyGenerator();
 		var loginServer = new LoginClientSocketServer(
@@ -149,7 +151,7 @@ public class LoginDatabaseIntegrationTests
 				options,
 				accountRepository,
 				accountTimeRepository,
-				new BannedIpRepository(),
+				bannedIpService,
 				new ThrowingExternalAuthClient(),
 				new BruteForceProtector()),
 			new LoginSessionRegistry(),

@@ -10,6 +10,6 @@ public sealed class BannedIp
 
 	public bool IsActive(DateTime utcNow)
 	{
-		return TimeEnd == null || TimeEnd.Value >= utcNow;
+		return TimeEnd == null || TimeEnd.Value > utcNow;
 	}
 }

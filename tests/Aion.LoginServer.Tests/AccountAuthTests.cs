@@ -21,7 +21,7 @@ public class AccountAuthTests
 		var account = TestAccount("player", "secret");
 		var accountRepo = new FakeAccountRepository(account);
 		var timeRepo = new FakeAccountTimeRepository();
-		var service = CreateService(new LoginServerOptions(), accountRepo, timeRepo, new FakeBannedIpRepository());
+		var service = CreateService(new LoginServerOptions(), accountRepo, timeRepo, new FakeBannedIpService());
 
 		var result = await service.LoginAsync("player", "secret", "127.0.0.1");
 
@@ -37,7 +37,7 @@ public class AccountAuthTests
 		var account = TestAccount("player", "secret");
 		var accountRepo = new FakeAccountRepository(account);
 		var timeRepo = new FakeAccountTimeRepository();
-		var service = CreateService(new LoginServerOptions(), accountRepo, timeRepo, new FakeBannedIpRepository());
+		var service = CreateService(new LoginServerOptions(), accountRepo, timeRepo, new FakeBannedIpService());
 
 		await service.CompleteSuccessfulLoginAsync(account, "127.0.0.1");
 
@@ -48,7 +48,7 @@ public class AccountAuthTests
 	[Fact]
 	public async Task LoginAsync_InvalidPassword_ReturnsIncorrectPassword()
 	{
-		var service = CreateService(new LoginServerOptions(), new FakeAccountRepository(TestAccount("player", "secret")), new FakeAccountTimeRepository(), new FakeBannedIpRepository());
+		var service = CreateService(new LoginServerOptions(), new FakeAccountRepository(TestAccount("player", "secret")), new FakeAccountTimeRepository(), new FakeBannedIpService());
 
 		var result = await service.LoginAsync("player", "wrong", "127.0.0.1");
 
@@ -59,7 +59,7 @@ public class AccountAuthTests
 	public async Task LoginAsync_AutoCreatesMissingAccountWhenEnabled()
 	{
 		var accountRepo = new FakeAccountRepository(null);
-		var service = CreateService(new LoginServerOptions { AutoCreateAccounts = true }, accountRepo, new FakeAccountTimeRepository(), new FakeBannedIpRepository());
+		var service = CreateService(new LoginServerOptions { AutoCreateAccounts = true }, accountRepo, new FakeAccountTimeRepository(), new FakeBannedIpService());
 
 		var result = await service.LoginAsync("newbie", "secret", "127.0.0.1");
 
@@ -72,8 +72,8 @@ public class AccountAuthTests
 	[Fact]
 	public async Task LoginAsync_BannedIp_ReturnsBlockedIp()
 	{
-		var bannedRepo = new FakeBannedIpRepository(new BannedIp { Mask = "127.0.0.1" });
-		var service = CreateService(new LoginServerOptions(), new FakeAccountRepository(TestAccount("player", "secret")), new FakeAccountTimeRepository(), bannedRepo);
+		var bannedIpService = new FakeBannedIpService(new BannedIp { Mask = "127.0.0.1" });
+		var service = CreateService(new LoginServerOptions(), new FakeAccountRepository(TestAccount("player", "secret")), new FakeAccountTimeRepository(), bannedIpService);
 
 		var result = await service.LoginAsync("player", "secret", "127.0.0.1");
 
@@ -89,7 +89,7 @@ public class AccountAuthTests
 			new LoginServerOptions { ExternalAuthUrl = "http://auth.example/login", AutoCreateAccounts = true },
 			accountRepo,
 			new FakeAccountTimeRepository(),
-			new FakeBannedIpRepository(),
+			new FakeBannedIpService(),
 			externalAuth);
 
 		var result = await service.LoginAsync("player", "secret", "10.0.0.1");
@@ -110,7 +110,7 @@ public class AccountAuthTests
 			new LoginServerOptions { ExternalAuthUrl = "http://auth.example/login" },
 			new FakeAccountRepository(null),
 			new FakeAccountTimeRepository(),
-			new FakeBannedIpRepository(),
+			new FakeBannedIpService(),
 			externalAuth);
 
 		var result = await service.LoginAsync("player", "secret", "127.0.0.1");
@@ -125,7 +125,7 @@ public class AccountAuthTests
 			new LoginServerOptions { ExternalAuthUrl = "http://auth.example/login" },
 			new FakeAccountRepository(null),
 			new FakeAccountTimeRepository(),
-			new FakeBannedIpRepository(),
+			new FakeBannedIpService(),
 			new FakeExternalAuthClient(null));
 
 		var result = await service.LoginAsync("player", "secret", "127.0.0.1");
@@ -136,12 +136,12 @@ public class AccountAuthTests
 	[Fact]
 	public async Task LoginAsync_BruteForceBanOccursAfterJavaThreshold()
 	{
-		var bannedRepo = new FakeBannedIpRepository();
+		var bannedIpService = new FakeBannedIpService();
 		var service = CreateService(
 			new LoginServerOptions { LoginTryBeforeBan = 2, WrongLoginBanMinutes = 15 },
 			new FakeAccountRepository(TestAccount("player", "secret")),
 			new FakeAccountTimeRepository(),
-			bannedRepo);
+			bannedIpService);
 
 		var first = await service.LoginAsync("player", "wrong", "10.0.0.1");
 		var second = await service.LoginAsync("player", "wrong", "10.0.0.1");
@@ -152,15 +152,15 @@ public class AccountAuthTests
 		Assert.Equal(AionAuthResponse.STR_L2AUTH_S_INCORRECT_PWD, second.Response);
 		Assert.Equal(AionAuthResponse.STR_L2AUTH_S_BLOCKED_IP, third.Response);
 		Assert.True(third.CloseAfterResponse);
-		Assert.Equal("10.0.0.1", bannedRepo.InsertedMask);
-		Assert.NotNull(bannedRepo.InsertedExpireTime);
+		Assert.Equal("10.0.0.1", bannedIpService.InsertedMask);
+		Assert.NotNull(bannedIpService.InsertedExpireTime);
 	}
 
 	private static LoginAuthService CreateService(
 		LoginServerOptions options,
 		IAccountRepository accountRepository,
 		IAccountTimeRepository accountTimeRepository,
-		IBannedIpRepository bannedIpRepository,
+		IBannedIpService bannedIpService,
 		IExternalAuthClient? externalAuthClient = null,
 		IBruteForceProtector? bruteForceProtector = null)
 	{
@@ -168,7 +168,7 @@ public class AccountAuthTests
 			options,
 			accountRepository,
 			accountTimeRepository,
-			bannedIpRepository,
+			bannedIpService,
 			externalAuthClient ?? new FakeExternalAuthClient(null),
 			bruteForceProtector ?? new BruteForceProtector());
 	}
@@ -257,31 +257,38 @@ public class AccountAuthTests
 		}
 	}
 
-	private sealed class FakeBannedIpRepository : IBannedIpRepository
+	private sealed class FakeBannedIpService : IBannedIpService
 	{
-		private readonly IReadOnlyCollection<BannedIp> _bans;
+		private readonly List<BannedIp> _bans;
 
-		public FakeBannedIpRepository(params BannedIp[] bans)
+		public FakeBannedIpService(params BannedIp[] bans)
 		{
-			_bans = bans;
+			_bans = bans.ToList();
 		}
 
-		public Task CleanExpiredBansAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+		public Task LoadAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
 
-		public Task<IReadOnlyCollection<BannedIp>> GetAllBansAsync(CancellationToken cancellationToken = default) => Task.FromResult(_bans);
+		public IReadOnlyCollection<BannedIp> GetEntries() => _bans;
+
+		public bool IsBanned(string ip)
+		{
+			var now = DateTime.UtcNow;
+			return _bans.Any(ban => ban.IsActive(now) && NetworkMask.Matches(ban.Mask, ip));
+		}
 
 		public string? InsertedMask { get; private set; }
 
 		public DateTime? InsertedExpireTime { get; private set; }
 
-		public Task<bool> InsertAsync(string mask, DateTime? expireTime, CancellationToken cancellationToken = default)
+		public Task<bool> BanAsync(string mask, DateTime? expireTime, CancellationToken cancellationToken = default)
 		{
 			InsertedMask = mask;
 			InsertedExpireTime = expireTime;
+			_bans.Add(new BannedIp { Mask = mask, TimeEnd = expireTime });
 			return Task.FromResult(true);
 		}
 
-		public Task<bool> RemoveAsync(string mask, CancellationToken cancellationToken = default) => Task.FromResult(true);
+		public Task<bool> UnbanAsync(string mask, CancellationToken cancellationToken = default) => Task.FromResult(_bans.RemoveAll(ban => ban.Mask == mask) > 0);
 	}
 
 	private sealed class FakeExternalAuthClient : IExternalAuthClient

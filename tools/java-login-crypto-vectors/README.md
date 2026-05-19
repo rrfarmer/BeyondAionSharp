@@ -8,7 +8,7 @@ Run from the repository root:
 
 ```powershell
 $repo = (Get-Location).Path
-docker run --rm -v "${repo}:/work" -w /work eclipse-temurin:8-jdk bash -lc "mkdir -p /tmp/aion-vectors/classes && javac -d /tmp/aion-vectors/classes commons/src/com/aionemu/commons/network/packet/BasePacket.java commons/src/com/aionemu/commons/network/packet/BaseServerPacket.java login-server/src/com/aionemu/loginserver/network/ncrypt/BlowfishCipher.java login-server/src/com/aionemu/loginserver/network/ncrypt/CryptEngine.java login-server/src/com/aionemu/loginserver/network/ncrypt/EncryptedRSAKeyPair.java dotnetConversion/tools/java-login-crypto-vectors/com/aionemu/commons/utils/Rnd.java dotnetConversion/tools/java-login-crypto-vectors/com/aionemu/loginserver/model/Account.java dotnetConversion/tools/java-login-crypto-vectors/com/aionemu/loginserver/GameServerInfo.java dotnetConversion/tools/java-login-crypto-vectors/com/aionemu/loginserver/GameServerTable.java dotnetConversion/tools/java-login-crypto-vectors/com/aionemu/loginserver/controller/AccountController.java dotnetConversion/tools/java-login-crypto-vectors/com/aionemu/loginserver/network/aion/LoginConnection.java dotnetConversion/tools/java-login-crypto-vectors/com/aionemu/loginserver/network/gameserver/GsConnection.java login-server/src/com/aionemu/loginserver/network/aion/AionServerPacket.java login-server/src/com/aionemu/loginserver/network/aion/SessionKey.java login-server/src/com/aionemu/loginserver/network/aion/serverpackets/SM_AUTH_GG.java login-server/src/com/aionemu/loginserver/network/aion/serverpackets/SM_LOGIN_OK.java login-server/src/com/aionemu/loginserver/network/aion/serverpackets/SM_PLAY_OK.java login-server/src/com/aionemu/loginserver/network/aion/serverpackets/SM_SERVER_LIST.java login-server/src/com/aionemu/loginserver/network/gameserver/GsServerPacket.java login-server/src/com/aionemu/loginserver/network/gameserver/serverpackets/SM_GS_CHARACTER_RESPONSE.java login-server/src/com/aionemu/loginserver/network/gameserver/serverpackets/SM_REQUEST_KICK_ACCOUNT.java dotnetConversion/tools/java-login-crypto-vectors/VectorGenerator.java && java -cp /tmp/aion-vectors/classes VectorGenerator"
+docker run --rm -v "${repo}:/work" -w /work eclipse-temurin:8-jdk bash -lc "mkdir -p /tmp/aion-vectors/classes && javac -d /tmp/aion-vectors/classes @dotnetConversion/tools/java-login-crypto-vectors/sources.txt && java -cp /tmp/aion-vectors/classes VectorGenerator"
 ```
 
 Current output:
@@ -23,9 +23,30 @@ LATER_ENCRYPTED=9B406066E713C7631157BBF7D89CC550
 SM_INIT_LEN=210
 SM_INIT_FRAME=D20071247EBD9E5575028AF9A6FB3D2193B3A98D3D89D2753883D251C088F13129AD6C5A586271774A46F072927ECB8F55BBDCE63D4276A1132E68A39C1CA1345E63E0B09256A8B14F281F751464E765791F133B43B9D258379842E2EB921309276B33705A6D41C362DC0A6305D2371839F14CCE4986B6F2B97C7858149AB59148BBA270D7A39761431AD7ABBEC7756AA5531C23CEB8F7481226FBA0F0B2DA25F4A8706E0D428AFBE00E4B8365CC3F9F7BD24B6F379089F57639D1A013FB3411988D805FEEC353FABCEDF8A971F3B9067375
 SM_AUTH_GG_PAYLOAD=0B44332211000000000000000000000000000000000050CD00000000000000000B4463EF11000000
+SM_LOGIN_FAIL_PAYLOAD=0103000000
 SM_LOGIN_OK_PAYLOAD=03E9030000443322110000000000000000EA0300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+SM_PLAY_FAIL_PAYLOAD=0608000000
 SM_PLAY_OK_PAYLOAD=070403020188776655070000000000000000000000000000
+SM_ACCOUNT_KICK_PAYLOAD=0816000000
+SM_ACCOUNT_BANNED_PAYLOAD=02
+SM_ACCOUNT_BANNED_2_PAYLOAD=09
+SM_UPDATE_SESSION_PAYLOAD=0CE90300004433221100
 SM_SERVER_LIST_PAYLOAD=040101017F000001611E00000000000064000101000000000200010200000000000000000000000000
+SM_GS_AUTH_RESPONSE_AUTHED_PAYLOAD=000001
+SM_GS_AUTH_RESPONSE_NOT_AUTHED_PAYLOAD=0001
+SM_ACCOUNT_AUTH_RESPONSE_OK_PAYLOAD=01E90300000170006C00610079006500720000000068E5CF8B0100005704000000000000AE080000000000000302DC050000000000006400690073006B002D0031000000
+SM_ACCOUNT_AUTH_RESPONSE_FAIL_PAYLOAD=01E903000000
+SM_ACCOUNT_RECONNECT_KEY_PAYLOAD=03E903000044332211
+SM_BAN_RESPONSE_PAYLOAD=0503630000003100320037002E0030002E0030002E00310000000F0000003930000001
 SM_GS_CHARACTER_RESPONSE_PAYLOAD=087B000000
+SM_HDDBAN_LIST_PAYLOAD=0D010000006400690073006B0000000068E5CF8B010000
+SM_LS_CONTROL_RESPONSE_PAYLOAD=040107630000003930000001
+SM_MACBAN_LIST_PAYLOAD=0901000000610061002D006200620000000068E5CF8B01000072006500610073006F006E000000
+SM_PING_PAYLOAD=0B
+SM_PREMIUM_RESPONSE_PAYLOAD=0AC800000003000000DC05000000000000
+SM_PTRANSFER_PERFORM_ACTION_PAYLOAD=0C1700000001020A000000140000001E00000028000000
+SM_PTRANSFER_SEND_INFO_PAYLOAD=0C1400000014000000280000004300680061007200610063007400650072000000740061007200670065007400000003000000010203
+SM_PTRANSFER_OK_PAYLOAD=0C1500000028000000
+SM_PTRANSFER_ERROR_PAYLOAD=0C16000000280000006E006F00700065000000
 SM_REQUEST_KICK_ACCOUNT_PAYLOAD=027B00000001
 ```

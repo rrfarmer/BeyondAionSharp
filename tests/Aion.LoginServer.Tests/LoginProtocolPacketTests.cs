@@ -65,6 +65,16 @@ public class LoginProtocolPacketTests
 	}
 
 	[Fact]
+	public void AionFailureAndControlPackets_MatchJavaGeneratedPayloadVectors()
+	{
+		Assert.Equal(Convert.FromHexString("0103000000"), new SmLoginFail(AionAuthResponse.STR_L2AUTH_S_INCORRECT_PWD).SerializePayload());
+		Assert.Equal(Convert.FromHexString("0608000000"), new SmPlayFail(AionAuthResponse.STR_L2AUTH_S_SERVER_DOWN).SerializePayload());
+		Assert.Equal(Convert.FromHexString("0816000000"), new SmAccountKick(AionAuthResponse.STR_L2AUTH_S_BLOCKED_IP).SerializePayload());
+		Assert.Equal(Convert.FromHexString("02"), new SmAccountBanned().SerializePayload());
+		Assert.Equal(Convert.FromHexString("09"), new SmAccountBanned2().SerializePayload());
+	}
+
+	[Fact]
 	public void SmLoginOk_MatchesJavaGeneratedPayloadVector()
 	{
 		var sessionKey = new SessionKey(1001, 0x11223344, 0x01020304, 0x55667788);
@@ -84,6 +94,15 @@ public class LoginProtocolPacketTests
 		var payload = new SmPlayOk(sessionKey, 7).SerializePayload();
 
 		Assert.Equal(Convert.FromHexString("070403020188776655070000000000000000000000000000"), payload);
+	}
+
+	[Fact]
+	public void SmUpdateSession_MatchesJavaGeneratedPayloadVector()
+	{
+		var sessionKey = new SessionKey(1001, 0x11223344, 0x01020304, 0x55667788);
+		var payload = new SmUpdateSession(sessionKey).SerializePayload();
+
+		Assert.Equal(Convert.FromHexString("0CE90300004433221100"), payload);
 	}
 
 	[Fact]
@@ -123,11 +142,39 @@ public class LoginProtocolPacketTests
 	}
 
 	[Fact]
-	public void SmGameServerAuthResponse_WritesAuthedResponseWithServerCount()
+	public void SmGameServerAuthResponse_MatchesJavaGeneratedPayloadVectors()
 	{
-		var frame = new SmGameServerAuthResponse(GsAuthResponse.AUTHED, 3).SerializeFrame();
+		var authedPayload = new SmGameServerAuthResponse(GsAuthResponse.AUTHED, 1).SerializePayload();
+		var failedPayload = new SmGameServerAuthResponse(GsAuthResponse.NOT_AUTHED, 1).SerializePayload();
 
-		Assert.Equal(new byte[] { 0x05, 0x00, 0x00, 0x00, 0x03 }, frame);
+		Assert.Equal(Convert.FromHexString("000001"), authedPayload);
+		Assert.Equal(Convert.FromHexString("0001"), failedPayload);
+	}
+
+	[Fact]
+	public void SmAccountAuthAndReconnectResponses_MatchJavaGeneratedPayloadVectors()
+	{
+		var okPayload = new SmAccountAuthResponse(
+			1001,
+			ok: true,
+			"player",
+			1_700_000_000_000,
+			1_111,
+			2_222,
+			accessLevel: 3,
+			membership: 2,
+			toll: 1_500,
+			allowedHddSerial: "disk-1").SerializePayload();
+		var failedPayload = new SmAccountAuthResponse(1001, ok: false).SerializePayload();
+		var reconnectPayload = new SmAccountReconnectKey(1001, 0x11223344).SerializePayload();
+
+		Assert.Equal(
+			Convert.FromHexString(
+				"01E90300000170006C00610079006500720000000068E5CF8B010000" +
+				"5704000000000000AE080000000000000302DC050000000000006400690073006B002D0031000000"),
+			okPayload);
+		Assert.Equal(Convert.FromHexString("01E903000000"), failedPayload);
+		Assert.Equal(Convert.FromHexString("03E903000044332211"), reconnectPayload);
 	}
 
 	[Fact]
@@ -177,11 +224,11 @@ public class LoginProtocolPacketTests
 	}
 
 	[Fact]
-	public void SmPing_WritesJavaPayloadShape()
+	public void SmPing_MatchesJavaGeneratedPayloadVector()
 	{
 		var payload = new SmPing().SerializePayload();
 
-		Assert.Equal(new byte[] { 0x0B }, payload);
+		Assert.Equal(Convert.FromHexString("0B"), payload);
 	}
 
 	[Fact]
@@ -250,35 +297,23 @@ public class LoginProtocolPacketTests
 	}
 
 	[Fact]
-	public void SmPremiumResponse_WritesJavaPayloadShape()
+	public void SmPremiumResponse_MatchesJavaGeneratedPayloadVector()
 	{
 		var payload = new SmPremiumResponse(200, 3, 1500).SerializePayload();
 
-		Assert.Equal(17, payload.Length);
-		Assert.Equal(10, payload[0]);
-		Assert.Equal(new byte[] { 0xC8, 0x00, 0x00, 0x00 }, payload[1..5]);
-		Assert.Equal(new byte[] { 0x03, 0x00, 0x00, 0x00 }, payload[5..9]);
-		Assert.Equal(new byte[] { 0xDC, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, payload[9..17]);
+		Assert.Equal(Convert.FromHexString("0AC800000003000000DC05000000000000"), payload);
 	}
 
 	[Fact]
-	public void BanListPackets_WriteJavaPayloadShape()
+	public void BanListPackets_MatchJavaGeneratedPayloadVectors()
 	{
 		var banTime = DateTimeOffset.FromUnixTimeMilliseconds(1_700_000_000_000).UtcDateTime;
 		var macPayload = new SmMacBanList(new[] { new BannedMacEntry("aa-bb", banTime, "reason") }).SerializePayload();
-		using var macBuffer = new PacketBuffer(macPayload);
-		Assert.Equal(9, macBuffer.ReadC());
-		Assert.Equal(1, macBuffer.ReadD());
-		Assert.Equal("aa-bb", macBuffer.ReadS());
-		Assert.Equal(1_700_000_000_000, macBuffer.ReadQ());
-		Assert.Equal("reason", macBuffer.ReadS());
 
 		var hddPayload = new SmHddBanList(new Dictionary<string, DateTime> { ["disk"] = banTime }).SerializePayload();
-		using var hddBuffer = new PacketBuffer(hddPayload);
-		Assert.Equal(13, hddBuffer.ReadC());
-		Assert.Equal(1, hddBuffer.ReadD());
-		Assert.Equal("disk", hddBuffer.ReadS());
-		Assert.Equal(1_700_000_000_000, hddBuffer.ReadQ());
+
+		Assert.Equal(Convert.FromHexString("0901000000610061002D006200620000000068E5CF8B01000072006500610073006F006E000000"), macPayload);
+		Assert.Equal(Convert.FromHexString("0D010000006400690073006B0000000068E5CF8B010000"), hddPayload);
 	}
 
 	[Fact]
@@ -342,24 +377,17 @@ public class LoginProtocolPacketTests
 	}
 
 	[Fact]
-	public void SmBanAndLoginServerControlResponses_WriteJavaPayloadShape()
+	public void SmBanAndLoginServerControlResponses_MatchJavaGeneratedPayloadVectors()
 	{
 		var banPayload = new SmBanResponse(3, 99, "127.0.0.1", 15, 12345, true).SerializePayload();
-		using var banBuffer = new PacketBuffer(banPayload);
-		Assert.Equal(5, banBuffer.ReadC());
-		Assert.Equal(3, banBuffer.ReadC());
-		Assert.Equal(99, banBuffer.ReadD());
-		Assert.Equal("127.0.0.1", banBuffer.ReadS());
-		Assert.Equal(15, banBuffer.ReadD());
-		Assert.Equal(12345, banBuffer.ReadD());
-		Assert.Equal(1, banBuffer.ReadC());
+		Assert.Equal(Convert.FromHexString("0503630000003100320037002E0030002E0030002E00310000000F0000003930000001"), banPayload);
 
 		var controlPayload = new SmLoginServerControlResponse(1, 7, 99, 12345, true).SerializePayload();
-		Assert.Equal(new byte[] { 0x04, 0x01, 0x07, 0x63, 0x00, 0x00, 0x00, 0x39, 0x30, 0x00, 0x00, 0x01 }, controlPayload);
+		Assert.Equal(Convert.FromHexString("040107630000003930000001"), controlPayload);
 	}
 
 	[Fact]
-	public void SmPlayerTransferResponses_WriteJavaPayloadShapes()
+	public void SmPlayerTransferResponses_MatchJavaGeneratedPayloadVectors()
 	{
 		var performPayload = new SmPlayerTransferResponse(
 			PlayerTransferResultStatus.PerformAction,
@@ -372,7 +400,7 @@ public class LoginProtocolPacketTests
 				PlayerId = 30,
 				Id = 40,
 			}).SerializePayload();
-		Assert.Equal(new byte[] { 0x0C, 0x17, 0x00, 0x00, 0x00, 0x01, 0x02, 0x0A, 0x00, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00, 0x1E, 0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00 }, performPayload);
+		Assert.Equal(Convert.FromHexString("0C1700000001020A000000140000001E00000028000000"), performPayload);
 
 		var sendInfoPayload = new SmPlayerTransferResponse(
 			PlayerTransferResultStatus.SendInfo,
@@ -384,14 +412,15 @@ public class LoginProtocolPacketTests
 				TargetAccount = new Account { Name = "target" },
 				Db = new byte[] { 1, 2, 3 },
 			}).SerializePayload();
-		using var sendInfo = new PacketBuffer(sendInfoPayload);
-		Assert.Equal(12, sendInfo.ReadC());
-		Assert.Equal(20, sendInfo.ReadD());
-		Assert.Equal(20, sendInfo.ReadD());
-		Assert.Equal(40, sendInfo.ReadD());
-		Assert.Equal("Character", sendInfo.ReadS());
-		Assert.Equal("target", sendInfo.ReadS());
-		Assert.Equal(3, sendInfo.ReadD());
-		Assert.Equal(new byte[] { 1, 2, 3 }, sendInfo.ReadB(3));
+		var okPayload = new SmPlayerTransferResponse(PlayerTransferResultStatus.Ok, 40).SerializePayload();
+		var errorPayload = new SmPlayerTransferResponse(PlayerTransferResultStatus.Error, 40, "nope").SerializePayload();
+
+		Assert.Equal(
+			Convert.FromHexString(
+				"0C1400000014000000280000004300680061007200610063007400650072000000" +
+				"740061007200670065007400000003000000010203"),
+			sendInfoPayload);
+		Assert.Equal(Convert.FromHexString("0C1500000028000000"), okPayload);
+		Assert.Equal(Convert.FromHexString("0C16000000280000006E006F00700065000000"), errorPayload);
 	}
 }

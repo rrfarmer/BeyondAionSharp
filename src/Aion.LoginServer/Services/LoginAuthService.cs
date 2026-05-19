@@ -31,7 +31,7 @@ public sealed class LoginAuthService : ILoginAuthService
 	private readonly LoginServerOptions _options;
 	private readonly IAccountRepository _accountRepository;
 	private readonly IAccountTimeRepository _accountTimeRepository;
-	private readonly IBannedIpRepository _bannedIpRepository;
+	private readonly IBannedIpService _bannedIpService;
 	private readonly IExternalAuthClient _externalAuthClient;
 	private readonly IBruteForceProtector _bruteForceProtector;
 
@@ -39,21 +39,21 @@ public sealed class LoginAuthService : ILoginAuthService
 		LoginServerOptions options,
 		IAccountRepository accountRepository,
 		IAccountTimeRepository accountTimeRepository,
-		IBannedIpRepository bannedIpRepository,
+		IBannedIpService bannedIpService,
 		IExternalAuthClient externalAuthClient,
 		IBruteForceProtector bruteForceProtector)
 	{
 		_options = options;
 		_accountRepository = accountRepository;
 		_accountTimeRepository = accountTimeRepository;
-		_bannedIpRepository = bannedIpRepository;
+		_bannedIpService = bannedIpService;
 		_externalAuthClient = externalAuthClient;
 		_bruteForceProtector = bruteForceProtector;
 	}
 
 	public async Task<LoginAuthResult> LoginAsync(string username, string password, string remoteIp, CancellationToken cancellationToken = default)
 	{
-		if (await IsIpBannedAsync(remoteIp, cancellationToken))
+		if (_bannedIpService.IsBanned(remoteIp))
 			return LoginAuthResult.Failure(AionAuthResponse.STR_L2AUTH_S_BLOCKED_IP);
 
 		var accountName = username;
@@ -113,14 +113,6 @@ public sealed class LoginAuthService : ILoginAuthService
 		account.AccountTime = accountTime;
 	}
 
-	private async Task<bool> IsIpBannedAsync(string remoteIp, CancellationToken cancellationToken)
-	{
-		await _bannedIpRepository.CleanExpiredBansAsync(cancellationToken);
-		var bans = await _bannedIpRepository.GetAllBansAsync(cancellationToken);
-		var now = DateTime.UtcNow;
-		return bans.Any(ban => ban.IsActive(now) && NetworkMask.Matches(ban.Mask, remoteIp));
-	}
-
 	private async Task<LoginAuthResult> ApplyBruteForceProtectionAsync(AionAuthResponse response, string remoteIp, CancellationToken cancellationToken)
 	{
 		if (_options.BruteForceProtectionEnabled
@@ -128,7 +120,7 @@ public sealed class LoginAuthService : ILoginAuthService
 			&& remoteIp != "127.0.0.1"
 			&& _bruteForceProtector.AddFailedConnect(remoteIp, _options.LoginTryBeforeBan, _options.WrongLoginBanMinutes))
 		{
-			await _bannedIpRepository.InsertAsync(remoteIp, DateTime.UtcNow.AddMinutes(_options.WrongLoginBanMinutes), cancellationToken);
+			await _bannedIpService.BanAsync(remoteIp, DateTime.UtcNow.AddMinutes(_options.WrongLoginBanMinutes), cancellationToken);
 			return LoginAuthResult.FailureAndClose(AionAuthResponse.STR_L2AUTH_S_BLOCKED_IP);
 		}
 

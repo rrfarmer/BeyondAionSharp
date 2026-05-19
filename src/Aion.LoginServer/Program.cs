@@ -29,6 +29,7 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<IPremiumRepository, PremiumRepository>();
 			services.AddSingleton<IAccountsLogRepository, AccountsLogRepository>();
 			services.AddSingleton<IPlayerTransferRepository, PlayerTransferRepository>();
+			services.AddSingleton<IBannedIpService, BannedIpService>();
 			services.AddSingleton<IBannedMacService, BannedMacService>();
 			services.AddSingleton<IBannedHddService, BannedHddService>();
 			services.AddSingleton<IBruteForceProtector, BruteForceProtector>();

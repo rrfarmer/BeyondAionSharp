@@ -14,6 +14,10 @@ public final class GameServerTable {
 		return gameServers;
 	}
 
+	public static int size() {
+		return gameServers.size();
+	}
+
 	public static void setGameServers(Collection<GameServerInfo> servers) {
 		gameServers.clear();
 		gameServers.addAll(servers);

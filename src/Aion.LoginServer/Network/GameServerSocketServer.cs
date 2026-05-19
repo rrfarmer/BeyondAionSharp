@@ -14,7 +14,7 @@ public sealed class GameServerSocketServer : BaseSocketServer
 	private readonly ILoginSessionRegistry _sessionRegistry;
 	private readonly IAccountRepository _accountRepository;
 	private readonly IAccountTimeRepository _accountTimeRepository;
-	private readonly IBannedIpRepository _bannedIpRepository;
+	private readonly IBannedIpService _bannedIpService;
 	private readonly IPremiumRepository _premiumRepository;
 	private readonly IAccountsLogRepository _accountsLogRepository;
 	private readonly ILoginAuthService _authService;
@@ -32,7 +32,7 @@ public sealed class GameServerSocketServer : BaseSocketServer
 		ILoginSessionRegistry sessionRegistry,
 		IAccountRepository accountRepository,
 		IAccountTimeRepository accountTimeRepository,
-		IBannedIpRepository bannedIpRepository,
+		IBannedIpService bannedIpService,
 		IPremiumRepository premiumRepository,
 		IAccountsLogRepository accountsLogRepository,
 		ILoginAuthService authService,
@@ -45,7 +45,7 @@ public sealed class GameServerSocketServer : BaseSocketServer
 		_sessionRegistry = sessionRegistry;
 		_accountRepository = accountRepository;
 		_accountTimeRepository = accountTimeRepository;
-		_bannedIpRepository = bannedIpRepository;
+		_bannedIpService = bannedIpService;
 		_premiumRepository = premiumRepository;
 		_accountsLogRepository = accountsLogRepository;
 		_authService = authService;
@@ -69,7 +69,7 @@ public sealed class GameServerSocketServer : BaseSocketServer
 				_sessionRegistry,
 				_accountRepository,
 				_accountTimeRepository,
-				_bannedIpRepository,
+				_bannedIpService,
 				_premiumRepository,
 				_accountsLogRepository,
 				_authService,
