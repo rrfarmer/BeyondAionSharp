@@ -70,6 +70,22 @@ public class AccountAuthTests
 		Assert.Equal(0, result.Account.LastServer);
 	}
 
+	[Theory]
+	[InlineData(false, "missing")]
+	[InlineData(true, "")]
+	public async Task LoginAsync_MissingAccountNotCreated_ReturnsAccountLoadFail(bool autoCreateAccounts, string username)
+	{
+		var service = CreateService(
+			new LoginServerOptions { AutoCreateAccounts = autoCreateAccounts },
+			new FakeAccountRepository(null),
+			new FakeAccountTimeRepository(),
+			new FakeBannedIpService());
+
+		var result = await service.LoginAsync(username, "secret", "127.0.0.1");
+
+		Assert.Equal(AionAuthResponse.STR_L2AUTH_S_ACCOUNT_LOAD_FAIL, result.Response);
+	}
+
 	[Fact]
 	public async Task LoginAsync_BannedIp_ReturnsBlockedIp()
 	{
@@ -79,6 +95,74 @@ public class AccountAuthTests
 		var result = await service.LoginAsync("player", "secret", "127.0.0.1");
 
 		Assert.Equal(AionAuthResponse.STR_L2AUTH_S_BLOCKED_IP, result.Response);
+	}
+
+	[Fact]
+	public async Task LoginAsync_InactiveAccount_ReturnsAgreeGame()
+	{
+		var account = TestAccount("player", "secret");
+		account.Activated = 0;
+		var service = CreateService(new LoginServerOptions(), new FakeAccountRepository(account), new FakeAccountTimeRepository(), new FakeBannedIpService());
+
+		var result = await service.LoginAsync("player", "secret", "127.0.0.1");
+
+		Assert.Equal(AionAuthResponse.STR_L2AUTH_S_AGREE_GAME, result.Response);
+	}
+
+	[Fact]
+	public async Task LoginAsync_ExpiredAccount_ReturnsTimeExhausted()
+	{
+		var account = TestAccount("player", "secret");
+		account.AccountTime.ExpirationTime = DateTime.UtcNow.AddMinutes(-1);
+		var service = CreateService(new LoginServerOptions(), new FakeAccountRepository(account), new FakeAccountTimeRepository(), new FakeBannedIpService());
+
+		var result = await service.LoginAsync("player", "secret", "127.0.0.1");
+
+		Assert.Equal(AionAuthResponse.STR_L2AUTH_S_TIME_EXHAUSTED, result.Response);
+	}
+
+	[Fact]
+	public async Task LoginAsync_ActivePenalty_ReturnsAccountBannedSignal()
+	{
+		var account = TestAccount("player", "secret");
+		account.AccountTime.PenaltyEnd = DateTime.UnixEpoch.AddMilliseconds(1000);
+		var service = CreateService(new LoginServerOptions(), new FakeAccountRepository(account), new FakeAccountTimeRepository(), new FakeBannedIpService());
+
+		var result = await service.LoginAsync("player", "secret", "127.0.0.1");
+
+		Assert.Null(result.Response);
+		Assert.True(result.SendAccountBannedPacket);
+	}
+
+	[Fact]
+	public async Task LoginAsync_ForcedIpMismatch_ReturnsBlockedIp()
+	{
+		var account = TestAccount("player", "secret");
+		account.IpForce = "10.0.0.1";
+		var service = CreateService(new LoginServerOptions(), new FakeAccountRepository(account), new FakeAccountTimeRepository(), new FakeBannedIpService());
+
+		var result = await service.LoginAsync("player", "secret", "127.0.0.1");
+
+		Assert.Equal(AionAuthResponse.STR_L2AUTH_S_BLOCKED_IP, result.Response);
+	}
+
+	[Fact]
+	public async Task CompleteSuccessfulLoginAsync_PreviousDayLoginResetsDailyCounters()
+	{
+		var account = TestAccount("player", "secret");
+		account.AccountTime.LastLoginTime = DateTime.UtcNow.AddDays(-1);
+		account.AccountTime.AccumulatedOnlineTime = 3_000;
+		account.AccountTime.AccumulatedRestTime = 4_000;
+		var accountRepo = new FakeAccountRepository(account);
+		var timeRepo = new FakeAccountTimeRepository();
+		var service = CreateService(new LoginServerOptions(), accountRepo, timeRepo, new FakeBannedIpService());
+
+		await service.CompleteSuccessfulLoginAsync(account, "127.0.0.1");
+
+		Assert.Equal(0, account.AccountTime.AccumulatedOnlineTime);
+		Assert.Equal(0, account.AccountTime.AccumulatedRestTime);
+		Assert.Equal("127.0.0.1", accountRepo.LastIp);
+		Assert.True(timeRepo.Updated);
 	}
 
 	[Fact]
