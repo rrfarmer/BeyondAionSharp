@@ -20,6 +20,10 @@ public interface IAccountRepository
 
 	Task<bool> UpdateAllowedHddSerialAsync(int accountId, string hddSerial, CancellationToken cancellationToken = default);
 
+	Task<string> GetLastIpAsync(int accountId, CancellationToken cancellationToken = default);
+
+	Task<bool> UpdateAccountAsync(Account account, bool useExternalAuth, CancellationToken cancellationToken = default);
+
 	Task UpdateLastServerAsync(int accountId, sbyte lastServer, CancellationToken cancellationToken = default);
 
 	Task UpdateMembershipAsync(int accountId, CancellationToken cancellationToken = default);
@@ -99,6 +103,42 @@ public sealed class AccountRepository : IAccountRepository
 	public Task<bool> UpdateAllowedHddSerialAsync(int accountId, string hddSerial, CancellationToken cancellationToken = default)
 	{
 		return ExecuteWithResultAsync("UPDATE account_data SET allowed_hdd_serial = ? WHERE id = ?", cancellationToken, hddSerial, accountId);
+	}
+
+	public async Task<string> GetLastIpAsync(int accountId, CancellationToken cancellationToken = default)
+	{
+		await using var connection = DatabaseFactory.GetConnection();
+		await connection.OpenAsync(cancellationToken);
+		await using var command = connection.CreateCommand();
+		command.CommandText = "SELECT `last_ip` FROM `account_data` WHERE `id` = ?";
+		command.Parameters.Add(new MySqlParameter { Value = accountId });
+		var result = await command.ExecuteScalarAsync(cancellationToken);
+		return result == null || result == DBNull.Value ? string.Empty : Convert.ToString(result) ?? string.Empty;
+	}
+
+	public async Task<bool> UpdateAccountAsync(Account account, bool useExternalAuth, CancellationToken cancellationToken = default)
+	{
+		var nameColumn = useExternalAuth ? "ext_auth_name" : "name";
+		await using var connection = DatabaseFactory.GetConnection();
+		await connection.OpenAsync(cancellationToken);
+		await using var command = connection.CreateCommand();
+		command.CommandText = $"""
+			UPDATE account_data SET `{nameColumn}` = ?, `password` = ?, access_level = ?, membership = ?, last_server = ?, last_ip = ?, last_mac = ?, ip_force = ? WHERE `id` = ?
+			""";
+		command.Parameters.AddRange(
+			new[]
+			{
+				new MySqlParameter { Value = account.Name },
+				new MySqlParameter { Value = account.PasswordHash },
+				new MySqlParameter { Value = account.AccessLevel },
+				new MySqlParameter { Value = account.Membership },
+				new MySqlParameter { Value = account.LastServer },
+				new MySqlParameter { Value = (object?)account.LastIp ?? DBNull.Value },
+				new MySqlParameter { Value = account.LastMac },
+				new MySqlParameter { Value = (object?)account.IpForce ?? DBNull.Value },
+				new MySqlParameter { Value = account.Id },
+			});
+		return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
 	}
 
 	public async Task UpdateLastServerAsync(int accountId, sbyte lastServer, CancellationToken cancellationToken = default)

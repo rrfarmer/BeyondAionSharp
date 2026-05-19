@@ -132,6 +132,14 @@ public class AccountAuthTests
 
 		public Task<bool> UpdateAllowedHddSerialAsync(int accountId, string hddSerial, CancellationToken cancellationToken = default) => Task.FromResult(true);
 
+		public Task<string> GetLastIpAsync(int accountId, CancellationToken cancellationToken = default) => Task.FromResult(_account?.LastIp ?? string.Empty);
+
+		public Task<bool> UpdateAccountAsync(Account account, bool useExternalAuth, CancellationToken cancellationToken = default)
+		{
+			_account = account;
+			return Task.FromResult(true);
+		}
+
 		public Task UpdateLastServerAsync(int accountId, sbyte lastServer, CancellationToken cancellationToken = default) => Task.CompletedTask;
 
 		public Task UpdateMembershipAsync(int accountId, CancellationToken cancellationToken = default) => Task.CompletedTask;
@@ -165,5 +173,9 @@ public class AccountAuthTests
 		public Task CleanExpiredBansAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
 
 		public Task<IReadOnlyCollection<BannedIp>> GetAllBansAsync(CancellationToken cancellationToken = default) => Task.FromResult(_bans);
+
+		public Task<bool> InsertAsync(string mask, DateTime? expireTime, CancellationToken cancellationToken = default) => Task.FromResult(true);
+
+		public Task<bool> RemoveAsync(string mask, CancellationToken cancellationToken = default) => Task.FromResult(true);
 	}
 }

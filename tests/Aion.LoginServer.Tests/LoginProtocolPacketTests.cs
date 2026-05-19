@@ -276,4 +276,118 @@ public class LoginProtocolPacketTests
 		Assert.Equal("disk", hddBuffer.ReadS());
 		Assert.Equal(1_700_000_000_000, hddBuffer.ReadQ());
 	}
+
+	[Fact]
+	public void GsFactory_AuthedStateReadsBanAndLoginServerControl()
+	{
+		using var banPayload = new PacketBuffer();
+		banPayload.WriteC(6);
+		banPayload.WriteC(3);
+		banPayload.WriteD(99);
+		banPayload.WriteS("127.0.0.1");
+		banPayload.WriteD(15);
+		banPayload.WriteD(12345);
+
+		var ban = Assert.IsType<CmBan>(GsClientPacketFactory.Create(new PacketBuffer(banPayload.ToArray()), GameServerConnectionState.Authed));
+		Assert.Equal(3, ban.Type);
+		Assert.Equal(99, ban.AccountId);
+		Assert.Equal("127.0.0.1", ban.Ip);
+		Assert.Equal(15, ban.Time);
+		Assert.Equal(12345, ban.AdminObjectId);
+
+		using var controlPayload = new PacketBuffer();
+		controlPayload.WriteC(5);
+		controlPayload.WriteC(1);
+		controlPayload.WriteC(7);
+		controlPayload.WriteD(99);
+		controlPayload.WriteD(12345);
+
+		var control = Assert.IsType<CmLoginServerControl>(GsClientPacketFactory.Create(new PacketBuffer(controlPayload.ToArray()), GameServerConnectionState.Authed));
+		Assert.Equal(1, control.Type);
+		Assert.Equal(7, control.Param);
+		Assert.Equal(99, control.AccountId);
+		Assert.Equal(12345, control.AdminId);
+	}
+
+	[Fact]
+	public void GsFactory_AuthedStateReadsPlayerTransferControlVariants()
+	{
+		using var requestPayload = new PacketBuffer();
+		requestPayload.WriteC(13);
+		requestPayload.WriteC(1);
+		requestPayload.WriteD(5);
+		requestPayload.WriteS("Character");
+		requestPayload.WriteB(new byte[] { 1, 2, 3 });
+
+		var request = Assert.IsType<CmPlayerTransferControl>(GsClientPacketFactory.Create(new PacketBuffer(requestPayload.ToArray()), GameServerConnectionState.Authed));
+		Assert.Equal(1, request.ActionId);
+		Assert.Equal(5, request.TaskId);
+		Assert.Equal("Character", request.Name);
+		Assert.Equal(new byte[] { 1, 2, 3 }, request.Db);
+
+		using var errorPayload = new PacketBuffer();
+		errorPayload.WriteC(13);
+		errorPayload.WriteC(2);
+		errorPayload.WriteD(5);
+		errorPayload.WriteS("nope");
+
+		var error = Assert.IsType<CmPlayerTransferControl>(GsClientPacketFactory.Create(new PacketBuffer(errorPayload.ToArray()), GameServerConnectionState.Authed));
+		Assert.Equal(2, error.ActionId);
+		Assert.Equal(5, error.TaskId);
+		Assert.Equal("nope", error.Reason);
+	}
+
+	[Fact]
+	public void SmBanAndLoginServerControlResponses_WriteJavaPayloadShape()
+	{
+		var banPayload = new SmBanResponse(3, 99, "127.0.0.1", 15, 12345, true).SerializePayload();
+		using var banBuffer = new PacketBuffer(banPayload);
+		Assert.Equal(5, banBuffer.ReadC());
+		Assert.Equal(3, banBuffer.ReadC());
+		Assert.Equal(99, banBuffer.ReadD());
+		Assert.Equal("127.0.0.1", banBuffer.ReadS());
+		Assert.Equal(15, banBuffer.ReadD());
+		Assert.Equal(12345, banBuffer.ReadD());
+		Assert.Equal(1, banBuffer.ReadC());
+
+		var controlPayload = new SmLoginServerControlResponse(1, 7, 99, 12345, true).SerializePayload();
+		Assert.Equal(new byte[] { 0x04, 0x01, 0x07, 0x63, 0x00, 0x00, 0x00, 0x39, 0x30, 0x00, 0x00, 0x01 }, controlPayload);
+	}
+
+	[Fact]
+	public void SmPlayerTransferResponses_WriteJavaPayloadShapes()
+	{
+		var performPayload = new SmPlayerTransferResponse(
+			PlayerTransferResultStatus.PerformAction,
+			new PlayerTransferTask
+			{
+				SourceServerId = 1,
+				TargetServerId = 2,
+				SourceAccountId = 10,
+				TargetAccountId = 20,
+				PlayerId = 30,
+				Id = 40,
+			}).SerializePayload();
+		Assert.Equal(new byte[] { 0x0C, 0x17, 0x00, 0x00, 0x00, 0x01, 0x02, 0x0A, 0x00, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00, 0x1E, 0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00 }, performPayload);
+
+		var sendInfoPayload = new SmPlayerTransferResponse(
+			PlayerTransferResultStatus.SendInfo,
+			new PlayerTransferRequest
+			{
+				TargetAccountId = 20,
+				TaskId = 40,
+				Name = "Character",
+				TargetAccount = new Account { Name = "target" },
+				Db = new byte[] { 1, 2, 3 },
+			}).SerializePayload();
+		using var sendInfo = new PacketBuffer(sendInfoPayload);
+		Assert.Equal(12, sendInfo.ReadC());
+		Assert.Equal(20, sendInfo.ReadD());
+		Assert.Equal(20, sendInfo.ReadD());
+		Assert.Equal(40, sendInfo.ReadD());
+		Assert.Equal("Character", sendInfo.ReadS());
+		Assert.Equal("target", sendInfo.ReadS());
+		Assert.Equal(3, sendInfo.ReadD());
+		Assert.Equal(new byte[] { 1, 2, 3 }, sendInfo.ReadB(3));
+	}
 }

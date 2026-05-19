@@ -12,11 +12,14 @@ public sealed class GameServerSocketServer : BaseSocketServer
 	private readonly IGameServerRegistry _registry;
 	private readonly ILoginSessionRegistry _sessionRegistry;
 	private readonly IAccountRepository _accountRepository;
+	private readonly IAccountTimeRepository _accountTimeRepository;
+	private readonly IBannedIpRepository _bannedIpRepository;
 	private readonly IPremiumRepository _premiumRepository;
 	private readonly IAccountsLogRepository _accountsLogRepository;
 	private readonly ILoginAuthService _authService;
 	private readonly IBannedMacService _bannedMacService;
 	private readonly IBannedHddService _bannedHddService;
+	private readonly IPlayerTransferService _playerTransferService;
 	private readonly LoginServerOptions _options;
 	private long _nextClientId;
 
@@ -26,21 +29,27 @@ public sealed class GameServerSocketServer : BaseSocketServer
 		IGameServerRegistry registry,
 		ILoginSessionRegistry sessionRegistry,
 		IAccountRepository accountRepository,
+		IAccountTimeRepository accountTimeRepository,
+		IBannedIpRepository bannedIpRepository,
 		IPremiumRepository premiumRepository,
 		IAccountsLogRepository accountsLogRepository,
 		ILoginAuthService authService,
 		IBannedMacService bannedMacService,
-		IBannedHddService bannedHddService)
+		IBannedHddService bannedHddService,
+		IPlayerTransferService playerTransferService)
 		: base(logger, "Aion GameServer Bridge", options.GameServerEndPoint.Address, options.GameServerEndPoint.Port, options.MaxGameServerConnections)
 	{
 		_registry = registry;
 		_sessionRegistry = sessionRegistry;
 		_accountRepository = accountRepository;
+		_accountTimeRepository = accountTimeRepository;
+		_bannedIpRepository = bannedIpRepository;
 		_premiumRepository = premiumRepository;
 		_accountsLogRepository = accountsLogRepository;
 		_authService = authService;
 		_bannedMacService = bannedMacService;
 		_bannedHddService = bannedHddService;
+		_playerTransferService = playerTransferService;
 		_options = options;
 	}
 
@@ -54,11 +63,14 @@ public sealed class GameServerSocketServer : BaseSocketServer
 			_registry,
 			_sessionRegistry,
 			_accountRepository,
+			_accountTimeRepository,
+			_bannedIpRepository,
 			_premiumRepository,
 			_accountsLogRepository,
 			_authService,
 			_bannedMacService,
 			_bannedHddService,
+			_playerTransferService,
 			_options);
 		await connection.RunAsync();
 		ConnectionClosed();

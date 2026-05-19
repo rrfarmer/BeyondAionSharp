@@ -34,6 +34,8 @@ public interface ILoginSessionRegistry
 
 	ILoginClientSession? GetLoginSession(int accountId);
 
+	Task<bool> KickLoginSessionAsync(int accountId, AionAuthResponse response);
+
 	ILoginClientSession? ConsumeLoginSession(SessionKey sessionKey);
 
 	void AddReconnectingAccount(ReconnectingAccount account);
@@ -83,6 +85,15 @@ public sealed class LoginSessionRegistry : ILoginSessionRegistry
 	{
 		_accountsOnLoginServer.TryGetValue(accountId, out var session);
 		return session;
+	}
+
+	public async Task<bool> KickLoginSessionAsync(int accountId, AionAuthResponse response)
+	{
+		if (!_accountsOnLoginServer.TryRemove(accountId, out var session))
+			return false;
+
+		await session.CloseWithPacketAsync(new SmAccountKick(response));
+		return true;
 	}
 
 	public ILoginClientSession? ConsumeLoginSession(SessionKey sessionKey)

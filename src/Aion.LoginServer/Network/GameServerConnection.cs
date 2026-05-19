@@ -6,11 +6,13 @@ using Aion.Commons.Network.Server;
 using Aion.LoginServer.Configuration;
 using Aion.LoginServer.Data;
 using Aion.LoginServer.Model;
+using Aion.LoginServer.Network.Aion;
 using Aion.LoginServer.Network.Aion.ServerPackets;
 using Aion.LoginServer.Network.GameServer;
 using Aion.LoginServer.Network.GameServer.ClientPackets;
 using Aion.LoginServer.Network.GameServer.ServerPackets;
 using Aion.LoginServer.Services;
+using Aion.LoginServer.Utils;
 using Microsoft.Extensions.Logging;
 
 namespace Aion.LoginServer.Network;
@@ -21,11 +23,14 @@ public sealed class GameServerConnection : BaseClientConnection, IGameServerSess
 	private readonly IGameServerRegistry _registry;
 	private readonly ILoginSessionRegistry _sessionRegistry;
 	private readonly IAccountRepository _accountRepository;
+	private readonly IAccountTimeRepository _accountTimeRepository;
+	private readonly IBannedIpRepository _bannedIpRepository;
 	private readonly IPremiumRepository _premiumRepository;
 	private readonly IAccountsLogRepository _accountsLogRepository;
 	private readonly ILoginAuthService _authService;
 	private readonly IBannedMacService _bannedMacService;
 	private readonly IBannedHddService _bannedHddService;
+	private readonly IPlayerTransferService _playerTransferService;
 	private readonly LoginServerOptions _options;
 	private readonly GameServerPingTracker _pingTracker = new();
 	private readonly CancellationTokenSource _pingCancellationTokenSource = new();
@@ -41,22 +46,28 @@ public sealed class GameServerConnection : BaseClientConnection, IGameServerSess
 		IGameServerRegistry registry,
 		ILoginSessionRegistry sessionRegistry,
 		IAccountRepository accountRepository,
+		IAccountTimeRepository accountTimeRepository,
+		IBannedIpRepository bannedIpRepository,
 		IPremiumRepository premiumRepository,
 		IAccountsLogRepository accountsLogRepository,
 		ILoginAuthService authService,
 		IBannedMacService bannedMacService,
 		IBannedHddService bannedHddService,
+		IPlayerTransferService playerTransferService,
 		LoginServerOptions options)
 		: base(logger, client, clientId)
 	{
 		_registry = registry;
 		_sessionRegistry = sessionRegistry;
 		_accountRepository = accountRepository;
+		_accountTimeRepository = accountTimeRepository;
+		_bannedIpRepository = bannedIpRepository;
 		_premiumRepository = premiumRepository;
 		_accountsLogRepository = accountsLogRepository;
 		_authService = authService;
 		_bannedMacService = bannedMacService;
 		_bannedHddService = bannedHddService;
+		_playerTransferService = playerTransferService;
 		_options = options;
 	}
 
@@ -116,6 +127,12 @@ public sealed class GameServerConnection : BaseClientConnection, IGameServerSess
 			case CmAccountList accountList:
 				await HandleAccountListAsync(accountList);
 				break;
+			case CmLoginServerControl loginServerControl:
+				await HandleLoginServerControlAsync(loginServerControl);
+				break;
+			case CmBan ban:
+				await HandleBanAsync(ban);
+				break;
 			case CmAccountConnectionInfo connectionInfo:
 				await HandleAccountConnectionInfoAsync(connectionInfo);
 				break;
@@ -134,6 +151,9 @@ public sealed class GameServerConnection : BaseClientConnection, IGameServerSess
 			case CmGameServerPong:
 				_pingTracker.OnReceivePong();
 				_logger.LogDebug("Received gameserver pong from {ClientId}", _clientId);
+				break;
+			case CmPlayerTransferControl playerTransfer:
+				await HandlePlayerTransferControlAsync(playerTransfer);
 				break;
 			case CmHddBanControl hddBanControl:
 				await HandleHddBanControlAsync(hddBanControl);
@@ -246,6 +266,76 @@ public sealed class GameServerConnection : BaseClientConnection, IGameServerSess
 		await SendPacketAsync(new SmHddBanList(_bannedHddService.GetEntries()));
 	}
 
+	private async Task HandleLoginServerControlAsync(CmLoginServerControl packet)
+	{
+		var account = await _accountRepository.GetAccountByIdAsync(packet.AccountId, useExternalAuth: false);
+		var result = false;
+		if (account != null)
+		{
+			switch (packet.Type)
+			{
+				case 1:
+					account.AccessLevel = packet.Param;
+					break;
+				case 2:
+					account.Membership = packet.Param;
+					break;
+			}
+			result = await _accountRepository.UpdateAccountAsync(account, useExternalAuth: false);
+		}
+
+		await SendPacketAsync(new SmLoginServerControlResponse(packet.Type, packet.Param, packet.AccountId, packet.AdminId, result));
+	}
+
+	private async Task HandleBanAsync(CmBan packet)
+	{
+		var result = false;
+		var ip = packet.Ip;
+
+		if ((packet.Type == 1 || packet.Type == 3) && packet.AccountId != 0 && packet.Time >= 0)
+		{
+			var account = _registry.FindLoggedInAccountGameServer(packet.AccountId)?.GetAccount(packet.AccountId);
+			var accountTime = account?.AccountTime ?? await _accountTimeRepository.GetAccountTimeAsync(packet.AccountId);
+			if (accountTime != null)
+			{
+				accountTime.PenaltyEnd = packet.Time == 0
+					? DateTime.UnixEpoch.AddMilliseconds(1000)
+					: DateTime.UtcNow.AddMinutes(packet.Time);
+				await _accountTimeRepository.UpdateAccountTimeAsync(packet.AccountId, accountTime);
+				if (account != null)
+					account.AccountTime = accountTime;
+				result = true;
+			}
+		}
+
+		if (packet.Type == 2 || packet.Type == 3)
+		{
+			if (packet.AccountId != 0)
+			{
+				var lastIp = await _accountRepository.GetLastIpAsync(packet.AccountId);
+				if (!string.IsNullOrEmpty(lastIp))
+					ip = lastIp;
+			}
+
+			if (!string.IsNullOrEmpty(ip))
+			{
+				if (await IsBannedIpAsync(ip))
+					result = await _bannedIpRepository.RemoveAsync(ip);
+
+				if (packet.Time >= 0)
+				{
+					DateTime? expireTime = packet.Time == 0 ? null : DateTime.UtcNow.AddMinutes(packet.Time);
+					result = await _bannedIpRepository.InsertAsync(ip, expireTime);
+				}
+			}
+		}
+
+		if (packet.AccountId != 0)
+			await KickAccountAsync(packet.AccountId);
+
+		await SendPacketAsync(new SmBanResponse(packet.Type, packet.AccountId, ip, packet.Time, packet.AdminObjectId, result));
+	}
+
 	private async Task HandleAccountConnectionInfoAsync(CmAccountConnectionInfo packet)
 	{
 		if (!await _accountRepository.UpdateLastMacAsync(packet.AccountId, packet.Mac))
@@ -324,6 +414,39 @@ public sealed class GameServerConnection : BaseClientConnection, IGameServerSess
 		{
 			await _registry.SendPacketToGameServerAsync(packet.ServerId, new SmPremiumResponse(packet.RequestId, result: 1, points));
 		}
+	}
+
+	private async Task HandlePlayerTransferControlAsync(CmPlayerTransferControl packet)
+	{
+		switch (packet.ActionId)
+		{
+			case 1:
+				await _playerTransferService.RequestTransferAsync(packet.TaskId, packet.Name, packet.Db);
+				break;
+			case 2:
+				await _playerTransferService.OnErrorAsync(packet.TaskId, packet.Reason);
+				break;
+			case 3:
+				await _playerTransferService.OnOkAsync(packet.TaskId);
+				break;
+			case 4:
+				await _playerTransferService.OnTaskStopAsync(packet.TaskId, packet.Reason);
+				break;
+		}
+	}
+
+	private async Task KickAccountAsync(int accountId)
+	{
+		await _registry.KickAccountFromGameServerAsync(accountId, notifyDoubleLogin: false);
+		await _sessionRegistry.KickLoginSessionAsync(accountId, AionAuthResponse.STR_L2AUTH_S_BLOCKED_IP);
+	}
+
+	private async Task<bool> IsBannedIpAsync(string ip)
+	{
+		await _bannedIpRepository.CleanExpiredBansAsync();
+		var now = DateTime.UtcNow;
+		var bans = await _bannedIpRepository.GetAllBansAsync();
+		return bans.Any(ban => ban.IsActive(now) && NetworkMask.Matches(ban.Mask, ip));
 	}
 
 	private async Task HandleGameServerCharacterAsync(CmGameServerCharacter packet)

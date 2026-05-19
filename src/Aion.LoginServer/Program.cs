@@ -28,15 +28,18 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<IGameServersRepository, GameServersRepository>();
 			services.AddSingleton<IPremiumRepository, PremiumRepository>();
 			services.AddSingleton<IAccountsLogRepository, AccountsLogRepository>();
+			services.AddSingleton<IPlayerTransferRepository, PlayerTransferRepository>();
 			services.AddSingleton<IBannedMacService, BannedMacService>();
 			services.AddSingleton<IBannedHddService, BannedHddService>();
 			services.AddSingleton<ILoginAuthService, LoginAuthService>();
+			services.AddSingleton<IPlayerTransferService, PlayerTransferService>();
 			services.AddSingleton<ILoginSessionRegistry, LoginSessionRegistry>();
 			services.AddSingleton<ILoginKeyGenerator, LoginKeyGenerator>();
 			services.AddSingleton<IGameServerRegistry, GameServerRegistry>();
 			services.AddSingleton<LoginClientSocketServer>();
 			services.AddSingleton<GameServerSocketServer>();
 			services.AddHostedService<LoginServerHostedService>();
+			services.AddHostedService<PlayerTransferHostedService>();
 		}
 	)
 	.ConfigureLogging(

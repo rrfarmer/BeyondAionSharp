@@ -9,6 +9,10 @@ public interface IBannedIpRepository
 	Task CleanExpiredBansAsync(CancellationToken cancellationToken = default);
 
 	Task<IReadOnlyCollection<BannedIp>> GetAllBansAsync(CancellationToken cancellationToken = default);
+
+	Task<bool> InsertAsync(string mask, DateTime? expireTime, CancellationToken cancellationToken = default);
+
+	Task<bool> RemoveAsync(string mask, CancellationToken cancellationToken = default);
 }
 
 public sealed class BannedIpRepository : IBannedIpRepository
@@ -40,5 +44,30 @@ public sealed class BannedIpRepository : IBannedIpRepository
 			});
 		}
 		return result;
+	}
+
+	public async Task<bool> InsertAsync(string mask, DateTime? expireTime, CancellationToken cancellationToken = default)
+	{
+		await using var connection = DatabaseFactory.GetConnection();
+		await connection.OpenAsync(cancellationToken);
+		await using var command = connection.CreateCommand();
+		command.CommandText = "INSERT INTO banned_ip(mask, time_end) VALUES (?, ?)";
+		command.Parameters.AddRange(
+			new[]
+			{
+				new MySqlParameter { Value = mask },
+				new MySqlParameter { Value = (object?)expireTime ?? DBNull.Value },
+			});
+		return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+	}
+
+	public async Task<bool> RemoveAsync(string mask, CancellationToken cancellationToken = default)
+	{
+		await using var connection = DatabaseFactory.GetConnection();
+		await connection.OpenAsync(cancellationToken);
+		await using var command = connection.CreateCommand();
+		command.CommandText = "DELETE FROM banned_ip WHERE mask = ?";
+		command.Parameters.Add(new MySqlParameter { Value = mask });
+		return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
 	}
 }
