@@ -264,6 +264,7 @@ public sealed class GameServerConnection : BaseClientConnection, IGameServerSess
 
 		await SendPacketAsync(new SmMacBanList(_bannedMacService.GetEntries()));
 		await SendPacketAsync(new SmHddBanList(_bannedHddService.GetEntries()));
+		await _sessionRegistry.UpdateServerListForAllLoggedInPlayersAsync(_registry.GetGameServers());
 	}
 
 	private async Task HandleLoginServerControlAsync(CmLoginServerControl packet)
@@ -477,6 +478,7 @@ public sealed class GameServerConnection : BaseClientConnection, IGameServerSess
 		{
 			_registry.UnregisterGameServer(_gameServerInfo.Id, this);
 			_gameServerInfo = null;
+			await _sessionRegistry.UpdateServerListForAllLoggedInPlayersAsync(_registry.GetGameServers());
 		}
 
 		await base.CloseAsync();

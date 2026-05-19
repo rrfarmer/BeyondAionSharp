@@ -49,6 +49,8 @@ public interface ILoginSessionRegistry
 	bool HasAllGameServerCharacterCounts(int accountId, int gameServerCount);
 
 	IReadOnlyDictionary<byte, int> GetGameServerCharacterCounts(int accountId);
+
+	Task UpdateServerListForAllLoggedInPlayersAsync(IReadOnlyCollection<GameServerInfo> gameServers);
 }
 
 public sealed class LoginSessionRegistry : ILoginSessionRegistry
@@ -149,5 +151,20 @@ public sealed class LoginSessionRegistry : ILoginSessionRegistry
 		return _accountsGameServerCharacterCounts.TryGetValue(accountId, out var counts)
 			? new Dictionary<byte, int>(counts)
 			: new Dictionary<byte, int>();
+	}
+
+	public async Task UpdateServerListForAllLoggedInPlayersAsync(IReadOnlyCollection<GameServerInfo> gameServers)
+	{
+		foreach (var session in _accountsOnLoginServer.Values)
+		{
+			if (session.JoinedGameServer || !HasAllGameServerCharacterCounts(session.Account.Id, gameServers.Count))
+				continue;
+
+			await session.SendPacketAsync(
+				new SmServerList(
+					gameServers,
+					GetGameServerCharacterCounts(session.Account.Id),
+					(byte)session.Account.LastServer));
+		}
 	}
 }

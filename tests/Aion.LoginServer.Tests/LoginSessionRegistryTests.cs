@@ -97,6 +97,33 @@ public class LoginSessionRegistryTests
 		Assert.Equal(0, counts[2]);
 	}
 
+	[Fact]
+	public async Task UpdateServerListForAllLoggedInPlayers_SendsOnlyReadyUnjoinedSessions()
+	{
+		var registry = new LoginSessionRegistry();
+		var ready = new FakeLoginSession(1);
+		var notReady = new FakeLoginSession(2);
+		var joined = new FakeLoginSession(3) { JoinedGameServer = true };
+		await registry.RegisterLoginSessionAsync(ready);
+		await registry.RegisterLoginSessionAsync(notReady);
+		await registry.RegisterLoginSessionAsync(joined);
+		var servers = new[]
+		{
+			new GameServerInfo(1, "*", "pass"),
+			new GameServerInfo(2, "*", "pass")
+		};
+		registry.BeginGameServerCharacterCountLoad(1, new Dictionary<byte, int> { [2] = 0 });
+		registry.AddGameServerCharacterCount(1, 1, 2);
+		registry.BeginGameServerCharacterCountLoad(2, new Dictionary<byte, int>());
+		registry.BeginGameServerCharacterCountLoad(3, new Dictionary<byte, int> { [1] = 1, [2] = 0 });
+
+		await registry.UpdateServerListForAllLoggedInPlayersAsync(servers);
+
+		Assert.IsType<SmServerList>(ready.SentPacket);
+		Assert.Null(notReady.SentPacket);
+		Assert.Null(joined.SentPacket);
+	}
+
 	private sealed class FakeLoginSession : ILoginClientSession
 	{
 		public FakeLoginSession(int accountId)

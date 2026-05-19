@@ -12,6 +12,12 @@ public class LoginCryptEngineTests
 		0x6C, 0x6C, 0x6C, 0x6C
 	};
 
+	private static readonly byte[] SessionKey =
+	{
+		1, 3, 5, 7, 9, 11, 13, 15,
+		2, 4, 6, 8, 10, 12, 14, 16
+	};
+
 	[Fact]
 	public void BlowfishCipher_RoundTripsFullBlocks()
 	{
@@ -27,10 +33,21 @@ public class LoginCryptEngineTests
 	}
 
 	[Fact]
+	public void BlowfishCipher_MatchesJavaGoldenVector()
+	{
+		var cipher = new BlowfishCipher(StaticKey);
+		var data = Enumerable.Range(0, 16).Select(i => (byte)i).ToArray();
+
+		cipher.Cipher(data);
+
+		Assert.Equal(Hex("458EF8CB40966A791B9161DBC9042822"), data);
+	}
+
+	[Fact]
 	public void FirstEncrypt_UsesJavaPaddingAndUpdatesKeyAfterStaticKeyPacket()
 	{
 		var engine = new LoginCryptEngine(() => 0x01020304);
-		engine.UpdateKey(new byte[] { 1, 3, 5, 7, 9, 11, 13, 15, 2, 4, 6, 8, 10, 12, 14, 16 });
+		engine.UpdateKey(SessionKey);
 		var packet = new byte[64];
 		packet[0] = 0x00;
 		packet[1] = 0x11;
@@ -44,11 +61,44 @@ public class LoginCryptEngineTests
 	}
 
 	[Fact]
+	public void FirstEncrypt_MatchesJavaGoldenVector()
+	{
+		var engine = CreateSessionEngine();
+		var packet = new byte[64];
+		packet[0] = 0x00;
+		packet[1] = 0x11;
+		packet[2] = 0x22;
+
+		var encryptedLength = engine.Encrypt(packet, 0, 3);
+
+		Assert.Equal(16, encryptedLength);
+		Assert.Equal(Hex("E0EC1DF408F551AA6F82C092934970B9"), packet[..encryptedLength]);
+	}
+
+	[Fact]
+	public void LaterEncrypt_MatchesJavaGoldenVector()
+	{
+		var engine = CreateSessionEngine();
+		var firstPacket = new byte[64];
+		firstPacket[0] = 0x00;
+		firstPacket[1] = 0x11;
+		firstPacket[2] = 0x22;
+		engine.Encrypt(firstPacket, 0, 3);
+		var laterPacket = new byte[64];
+		var laterPlain = new byte[] { 0x03, 0xE9, 0x03, 0x00, 0x00, 0x44, 0x33, 0x22, 0x11 };
+		laterPlain.CopyTo(laterPacket, 0);
+
+		var encryptedLength = engine.Encrypt(laterPacket, 0, laterPlain.Length);
+
+		Assert.Equal(16, encryptedLength);
+		Assert.Equal(Hex("9B406066E713C7631157BBF7D89CC550"), laterPacket[..encryptedLength]);
+	}
+
+	[Fact]
 	public void LaterEncrypt_CanBeDecryptedByEnginePrimedWithSameSessionKey()
 	{
-		var sessionKey = new byte[] { 1, 3, 5, 7, 9, 11, 13, 15, 2, 4, 6, 8, 10, 12, 14, 16 };
-		var encryptEngine = PrimedEngine(sessionKey);
-		var decryptEngine = PrimedEngine(sessionKey);
+		var encryptEngine = PrimedEngine(SessionKey);
+		var decryptEngine = PrimedEngine(SessionKey);
 		var originalPayload = new byte[] { 0x03, 0xE9, 0x03, 0x00, 0x00, 0x44, 0x33, 0x22, 0x11 };
 		var encrypted = new byte[64];
 		originalPayload.CopyTo(encrypted, 0);
@@ -65,9 +115,8 @@ public class LoginCryptEngineTests
 	[Fact]
 	public void Decrypt_ReturnsFalseForTamperedPacket()
 	{
-		var sessionKey = new byte[] { 1, 3, 5, 7, 9, 11, 13, 15, 2, 4, 6, 8, 10, 12, 14, 16 };
-		var encryptEngine = PrimedEngine(sessionKey);
-		var decryptEngine = PrimedEngine(sessionKey);
+		var encryptEngine = PrimedEngine(SessionKey);
+		var decryptEngine = PrimedEngine(SessionKey);
 		var encrypted = new byte[64];
 		new byte[] { 0x06, 0x08, 0x00, 0x00, 0x00 }.CopyTo(encrypted, 0);
 		var encryptedLength = encryptEngine.Encrypt(encrypted, 0, 5);
@@ -86,5 +135,17 @@ public class LoginCryptEngineTests
 		firstPacket[0] = 0x00;
 		engine.Encrypt(firstPacket, 0, 1);
 		return engine;
+	}
+
+	private static LoginCryptEngine CreateSessionEngine()
+	{
+		var engine = new LoginCryptEngine(() => 0x01020304);
+		engine.UpdateKey(SessionKey);
+		return engine;
+	}
+
+	private static byte[] Hex(string value)
+	{
+		return Convert.FromHexString(value);
 	}
 }
