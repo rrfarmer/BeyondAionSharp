@@ -30,6 +30,8 @@ public interface IGameServerRegistry
 	IReadOnlyDictionary<byte, int> GetOfflineGameServerCharacterCounts();
 
 	Task RequestOnlineGameServerCharacterCountsAsync(int accountId);
+
+	Task<bool> SendPacketToGameServerAsync(byte serverId, GsServerPacket packet);
 }
 
 public sealed record GameServerAuthRequest(byte ServerId, string Password, byte[] Ip, ushort Port, byte MinAccessLevel, int MaxPlayers);
@@ -112,6 +114,15 @@ public sealed class GameServerRegistry : IGameServerRegistry
 
 			await session.SendPacketAsync(new SmGameServerCharacterResponse(accountId));
 		}
+	}
+
+	public async Task<bool> SendPacketToGameServerAsync(byte serverId, GsServerPacket packet)
+	{
+		if (!_onlineSessions.TryGetValue(serverId, out var session))
+			return false;
+
+		await session.SendPacketAsync(packet);
+		return true;
 	}
 
 	private static string ExtractIp(string remoteAddress)

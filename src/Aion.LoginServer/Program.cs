@@ -23,8 +23,13 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<IAccountTimeRepository, AccountTimeRepository>();
 			services.AddSingleton<IAccountRepository, AccountRepository>();
 			services.AddSingleton<IBannedIpRepository, BannedIpRepository>();
+			services.AddSingleton<IBannedMacRepository, BannedMacRepository>();
+			services.AddSingleton<IBannedHddRepository, BannedHddRepository>();
 			services.AddSingleton<IGameServersRepository, GameServersRepository>();
 			services.AddSingleton<IPremiumRepository, PremiumRepository>();
+			services.AddSingleton<IAccountsLogRepository, AccountsLogRepository>();
+			services.AddSingleton<IBannedMacService, BannedMacService>();
+			services.AddSingleton<IBannedHddService, BannedHddService>();
 			services.AddSingleton<ILoginAuthService, LoginAuthService>();
 			services.AddSingleton<ILoginSessionRegistry, LoginSessionRegistry>();
 			services.AddSingleton<ILoginKeyGenerator, LoginKeyGenerator>();

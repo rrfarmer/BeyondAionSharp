@@ -13,7 +13,11 @@ public sealed class GameServerSocketServer : BaseSocketServer
 	private readonly ILoginSessionRegistry _sessionRegistry;
 	private readonly IAccountRepository _accountRepository;
 	private readonly IPremiumRepository _premiumRepository;
+	private readonly IAccountsLogRepository _accountsLogRepository;
 	private readonly ILoginAuthService _authService;
+	private readonly IBannedMacService _bannedMacService;
+	private readonly IBannedHddService _bannedHddService;
+	private readonly LoginServerOptions _options;
 	private long _nextClientId;
 
 	public GameServerSocketServer(
@@ -23,20 +27,39 @@ public sealed class GameServerSocketServer : BaseSocketServer
 		ILoginSessionRegistry sessionRegistry,
 		IAccountRepository accountRepository,
 		IPremiumRepository premiumRepository,
-		ILoginAuthService authService)
+		IAccountsLogRepository accountsLogRepository,
+		ILoginAuthService authService,
+		IBannedMacService bannedMacService,
+		IBannedHddService bannedHddService)
 		: base(logger, "Aion GameServer Bridge", options.GameServerEndPoint.Address, options.GameServerEndPoint.Port, options.MaxGameServerConnections)
 	{
 		_registry = registry;
 		_sessionRegistry = sessionRegistry;
 		_accountRepository = accountRepository;
 		_premiumRepository = premiumRepository;
+		_accountsLogRepository = accountsLogRepository;
 		_authService = authService;
+		_bannedMacService = bannedMacService;
+		_bannedHddService = bannedHddService;
+		_options = options;
 	}
 
 	protected override async Task HandleConnectionAsync(TcpClient client, CancellationToken cancellationToken)
 	{
 		var clientId = $"game-server-{Interlocked.Increment(ref _nextClientId)}";
-		await using var connection = new GameServerConnection(_logger, client, clientId, _registry, _sessionRegistry, _accountRepository, _premiumRepository, _authService);
+		await using var connection = new GameServerConnection(
+			_logger,
+			client,
+			clientId,
+			_registry,
+			_sessionRegistry,
+			_accountRepository,
+			_premiumRepository,
+			_accountsLogRepository,
+			_authService,
+			_bannedMacService,
+			_bannedHddService,
+			_options);
 		await connection.RunAsync();
 		ConnectionClosed();
 	}

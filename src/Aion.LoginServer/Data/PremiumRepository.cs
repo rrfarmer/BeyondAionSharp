@@ -5,6 +5,8 @@ namespace Aion.LoginServer.Data;
 public interface IPremiumRepository
 {
 	Task<long> GetPointsAsync(int accountId, CancellationToken cancellationToken = default);
+
+	Task<bool> UpdatePointsAsync(int accountId, long points, long required, CancellationToken cancellationToken = default);
 }
 
 public sealed class PremiumRepository : IPremiumRepository
@@ -31,7 +33,7 @@ public sealed class PremiumRepository : IPremiumRepository
 				command.CommandText = "SELECT uniqId,points FROM account_rewards WHERE accountId=? AND rewarded=0";
 				command.Parameters.Add(new MySqlConnector.MySqlParameter { Value = accountId });
 				await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-				while (await reader.ReadAsync(cancellationToken))
+				if (await reader.ReadAsync(cancellationToken))
 				{
 					var uniqId = reader.GetInt32("uniqId");
 					points += reader.GetInt64("points");
@@ -53,5 +55,20 @@ public sealed class PremiumRepository : IPremiumRepository
 		}
 
 		return points;
+	}
+
+	public async Task<bool> UpdatePointsAsync(int accountId, long points, long required, CancellationToken cancellationToken = default)
+	{
+		await using var connection = DatabaseFactory.GetConnection();
+		await connection.OpenAsync(cancellationToken);
+		await using var command = connection.CreateCommand();
+		command.CommandText = "UPDATE account_data SET toll=? WHERE id=?";
+		command.Parameters.AddRange(
+			new[]
+			{
+				new MySqlConnector.MySqlParameter { Value = points - required },
+				new MySqlConnector.MySqlParameter { Value = accountId },
+			});
+		return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
 	}
 }

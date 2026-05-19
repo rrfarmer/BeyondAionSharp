@@ -17,8 +17,14 @@ public static class GsClientPacketFactory
 				2 => new CmAccountReconnectKey(opCode),
 				3 => new CmAccountDisconnected(opCode),
 				4 => new CmAccountList(opCode),
+				7 => new CmAccountConnectionInfo(opCode),
 				8 => new CmGameServerCharacter(opCode),
+				9 => new CmAccountTollInfo(opCode),
+				10 => new CmMacBanControl(opCode),
+				11 => new CmPremiumControl(opCode),
 				12 => new CmGameServerPong(opCode),
+				14 => new CmHddBanControl(opCode),
+				15 => new CmChangeAllowedHddSerial(opCode),
 				_ => new UnknownGsClientPacket(opCode)
 			},
 			_ => null

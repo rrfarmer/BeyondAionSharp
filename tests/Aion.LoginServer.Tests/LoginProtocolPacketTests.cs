@@ -171,4 +171,109 @@ public class LoginProtocolPacketTests
 
 		Assert.Equal(new byte[] { 0x04, 0x7B, 0x00, 0x00, 0x00 }, payload);
 	}
+
+	[Fact]
+	public void SmPing_WritesJavaPayloadShape()
+	{
+		var payload = new SmPing().SerializePayload();
+
+		Assert.Equal(new byte[] { 0x0B }, payload);
+	}
+
+	[Fact]
+	public void GameServerPingTracker_MatchesJavaUnansweredPingThreshold()
+	{
+		var tracker = new GameServerPingTracker();
+
+		Assert.False(tracker.ShouldCloseOnPingTick());
+		Assert.False(tracker.ShouldCloseOnPingTick());
+		Assert.False(tracker.ShouldCloseOnPingTick());
+		Assert.True(tracker.ShouldCloseOnPingTick());
+
+		tracker.OnReceivePong();
+
+		Assert.False(tracker.ShouldCloseOnPingTick());
+	}
+
+	[Fact]
+	public void GsFactory_AuthedStateReadsAccountConnectionInfo()
+	{
+		using var payload = new PacketBuffer();
+		payload.WriteC(7);
+		payload.WriteD(77);
+		payload.WriteQ(1_700_000_000_000);
+		payload.WriteS("127.0.0.1");
+		payload.WriteS("aa-bb");
+		payload.WriteS("disk");
+
+		var packet = GsClientPacketFactory.Create(new PacketBuffer(payload.ToArray()), GameServerConnectionState.Authed);
+
+		var info = Assert.IsType<CmAccountConnectionInfo>(packet);
+		Assert.Equal(77, info.AccountId);
+		Assert.Equal(1_700_000_000_000, info.Time);
+		Assert.Equal("127.0.0.1", info.Ip);
+		Assert.Equal("aa-bb", info.Mac);
+		Assert.Equal("disk", info.HddSerial);
+	}
+
+	[Fact]
+	public void GsFactory_AuthedStateReadsPremiumAndBanControls()
+	{
+		using var premiumPayload = new PacketBuffer();
+		premiumPayload.WriteC(11);
+		premiumPayload.WriteD(1);
+		premiumPayload.WriteD(200);
+		premiumPayload.WriteQ(500);
+		premiumPayload.WriteC(3);
+
+		var premium = Assert.IsType<CmPremiumControl>(GsClientPacketFactory.Create(new PacketBuffer(premiumPayload.ToArray()), GameServerConnectionState.Authed));
+		Assert.Equal(1, premium.AccountId);
+		Assert.Equal(200, premium.RequestId);
+		Assert.Equal(500, premium.RequiredCost);
+		Assert.Equal(3, premium.ServerId);
+
+		using var macPayload = new PacketBuffer();
+		macPayload.WriteC(10);
+		macPayload.WriteC(1);
+		macPayload.WriteS("aa-bb");
+		macPayload.WriteS("reason");
+		macPayload.WriteQ(1_700_000_000_000);
+
+		var mac = Assert.IsType<CmMacBanControl>(GsClientPacketFactory.Create(new PacketBuffer(macPayload.ToArray()), GameServerConnectionState.Authed));
+		Assert.Equal(1, mac.Type);
+		Assert.Equal("aa-bb", mac.Address);
+		Assert.Equal("reason", mac.Details);
+	}
+
+	[Fact]
+	public void SmPremiumResponse_WritesJavaPayloadShape()
+	{
+		var payload = new SmPremiumResponse(200, 3, 1500).SerializePayload();
+
+		Assert.Equal(17, payload.Length);
+		Assert.Equal(10, payload[0]);
+		Assert.Equal(new byte[] { 0xC8, 0x00, 0x00, 0x00 }, payload[1..5]);
+		Assert.Equal(new byte[] { 0x03, 0x00, 0x00, 0x00 }, payload[5..9]);
+		Assert.Equal(new byte[] { 0xDC, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, payload[9..17]);
+	}
+
+	[Fact]
+	public void BanListPackets_WriteJavaPayloadShape()
+	{
+		var banTime = DateTimeOffset.FromUnixTimeMilliseconds(1_700_000_000_000).UtcDateTime;
+		var macPayload = new SmMacBanList(new[] { new BannedMacEntry("aa-bb", banTime, "reason") }).SerializePayload();
+		using var macBuffer = new PacketBuffer(macPayload);
+		Assert.Equal(9, macBuffer.ReadC());
+		Assert.Equal(1, macBuffer.ReadD());
+		Assert.Equal("aa-bb", macBuffer.ReadS());
+		Assert.Equal(1_700_000_000_000, macBuffer.ReadQ());
+		Assert.Equal("reason", macBuffer.ReadS());
+
+		var hddPayload = new SmHddBanList(new Dictionary<string, DateTime> { ["disk"] = banTime }).SerializePayload();
+		using var hddBuffer = new PacketBuffer(hddPayload);
+		Assert.Equal(13, hddBuffer.ReadC());
+		Assert.Equal(1, hddBuffer.ReadD());
+		Assert.Equal("disk", hddBuffer.ReadS());
+		Assert.Equal(1_700_000_000_000, hddBuffer.ReadQ());
+	}
 }

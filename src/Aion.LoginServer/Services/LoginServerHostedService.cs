@@ -11,6 +11,8 @@ public sealed class LoginServerHostedService : IHostedService
 	private readonly GameServerSocketServer _gameServerSocketServer;
 	private readonly IGameServersRepository _gameServersRepository;
 	private readonly IGameServerRegistry _gameServerRegistry;
+	private readonly IBannedMacService _bannedMacService;
+	private readonly IBannedHddService _bannedHddService;
 	private readonly ILogger<LoginServerHostedService> _logger;
 	private Task? _loginClientTask;
 	private Task? _gameServerTask;
@@ -20,12 +22,16 @@ public sealed class LoginServerHostedService : IHostedService
 		GameServerSocketServer gameServerSocketServer,
 		IGameServersRepository gameServersRepository,
 		IGameServerRegistry gameServerRegistry,
+		IBannedMacService bannedMacService,
+		IBannedHddService bannedHddService,
 		ILogger<LoginServerHostedService> logger)
 	{
 		_loginClientServer = loginClientServer;
 		_gameServerSocketServer = gameServerSocketServer;
 		_gameServersRepository = gameServersRepository;
 		_gameServerRegistry = gameServerRegistry;
+		_bannedMacService = bannedMacService;
+		_bannedHddService = bannedHddService;
 		_logger = logger;
 	}
 
@@ -36,6 +42,8 @@ public sealed class LoginServerHostedService : IHostedService
 		foreach (var gameServer in gameServers.Values)
 			_gameServerRegistry.RegisterKnownServer(gameServer);
 		_logger.LogInformation("Loaded {Count} registered game servers", gameServers.Count);
+		await _bannedMacService.LoadAsync(cancellationToken);
+		await _bannedHddService.LoadAsync(cancellationToken);
 
 		_loginClientTask = Task.Run(() => _loginClientServer.StartAsync(), cancellationToken);
 		_gameServerTask = Task.Run(() => _gameServerSocketServer.StartAsync(), cancellationToken);

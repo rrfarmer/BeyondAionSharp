@@ -14,6 +14,12 @@ public interface IAccountRepository
 
 	Task UpdateLastIpAsync(int accountId, string ip, CancellationToken cancellationToken = default);
 
+	Task<bool> UpdateLastMacAsync(int accountId, string mac, CancellationToken cancellationToken = default);
+
+	Task<bool> UpdateLastHddSerialAsync(int accountId, string hddSerial, CancellationToken cancellationToken = default);
+
+	Task<bool> UpdateAllowedHddSerialAsync(int accountId, string hddSerial, CancellationToken cancellationToken = default);
+
 	Task UpdateLastServerAsync(int accountId, sbyte lastServer, CancellationToken cancellationToken = default);
 
 	Task UpdateMembershipAsync(int accountId, CancellationToken cancellationToken = default);
@@ -80,6 +86,21 @@ public sealed class AccountRepository : IAccountRepository
 		await ExecuteAsync("UPDATE account_data SET last_ip = ? WHERE id = ?", cancellationToken, ip, accountId);
 	}
 
+	public Task<bool> UpdateLastMacAsync(int accountId, string mac, CancellationToken cancellationToken = default)
+	{
+		return ExecuteWithResultAsync("UPDATE account_data SET last_mac = ? WHERE id = ?", cancellationToken, mac, accountId);
+	}
+
+	public Task<bool> UpdateLastHddSerialAsync(int accountId, string hddSerial, CancellationToken cancellationToken = default)
+	{
+		return ExecuteWithResultAsync("UPDATE account_data SET last_hdd_serial = ? WHERE id = ?", cancellationToken, hddSerial, accountId);
+	}
+
+	public Task<bool> UpdateAllowedHddSerialAsync(int accountId, string hddSerial, CancellationToken cancellationToken = default)
+	{
+		return ExecuteWithResultAsync("UPDATE account_data SET allowed_hdd_serial = ? WHERE id = ?", cancellationToken, hddSerial, accountId);
+	}
+
 	public async Task UpdateLastServerAsync(int accountId, sbyte lastServer, CancellationToken cancellationToken = default)
 	{
 		await ExecuteAsync("UPDATE account_data SET last_server = ? WHERE id = ?", cancellationToken, lastServer, accountId);
@@ -132,5 +153,16 @@ public sealed class AccountRepository : IAccountRepository
 		foreach (var parameter in parameters)
 			command.Parameters.Add(new MySqlParameter { Value = parameter ?? DBNull.Value });
 		await command.ExecuteNonQueryAsync(cancellationToken);
+	}
+
+	private static async Task<bool> ExecuteWithResultAsync(string sql, CancellationToken cancellationToken, params object?[] parameters)
+	{
+		await using var connection = DatabaseFactory.GetConnection();
+		await connection.OpenAsync(cancellationToken);
+		await using var command = connection.CreateCommand();
+		command.CommandText = sql;
+		foreach (var parameter in parameters)
+			command.Parameters.Add(new MySqlParameter { Value = parameter ?? DBNull.Value });
+		return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
 	}
 }
