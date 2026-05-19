@@ -59,6 +59,31 @@ public class LoginRsaCredentialTests
 		Assert.Equal(123456, credentials.OneTimePassword);
 	}
 
+	[Fact]
+	public void CredentialDecryptor_ReadsLoginExLayoutAcrossTwoBlocks()
+	{
+		using var keyPair = LoginRsaKeyPair.Generate();
+		var username = "abcdefghijklmnopabcdefghijklmnopabcdefghijklmnopabcdefghijklmnop";
+		var password = "12345678901234561234567890123456";
+		var compacted = new byte[100];
+		WriteAscii(compacted, 0, username);
+		WriteAscii(compacted, 64, password);
+		BinaryPrimitives.WriteInt32LittleEndian(compacted.AsSpan(96, 4), 654321);
+		var plain = new byte[256];
+		compacted.AsSpan(0, 50).CopyTo(plain.AsSpan(78, 50));
+		compacted.AsSpan(50, 50).CopyTo(plain.AsSpan(206, 50));
+		var encrypted = new byte[256];
+		LoginRsaKeyPair.RawEncryptForTesting(plain.AsSpan(0, 128), keyPair.PublicParameters).CopyTo(encrypted, 0);
+		LoginRsaKeyPair.RawEncryptForTesting(plain.AsSpan(128, 128), keyPair.PublicParameters).CopyTo(encrypted, 128);
+
+		var credentials = LoginCredentialDecryptor.Decrypt(encrypted, keyPair);
+
+		Assert.NotNull(credentials);
+		Assert.Equal(username, credentials.Username);
+		Assert.Equal(password, credentials.Password);
+		Assert.Equal(654321, credentials.OneTimePassword);
+	}
+
 	private static void WriteAscii(byte[] buffer, int offset, string value)
 	{
 		for (var i = 0; i < value.Length; i++)

@@ -55,51 +55,47 @@ public class LoginProtocolPacketTests
 	}
 
 	[Fact]
-	public void SmLoginOk_WritesJavaPayloadShape()
+	public void SmAuthGameGuard_MatchesJavaGeneratedPayloadVector()
 	{
-		var sessionKey = new SessionKey(1001, 0x11223344, 0x55667788, 0x01020304);
+		var payload = new SmAuthGameGuard(0x11223344).SerializePayload();
+
+		Assert.Equal(
+			Convert.FromHexString("0B44332211000000000000000000000000000000000050CD00000000000000000B4463EF11000000"),
+			payload);
+	}
+
+	[Fact]
+	public void SmLoginOk_MatchesJavaGeneratedPayloadVector()
+	{
+		var sessionKey = new SessionKey(1001, 0x11223344, 0x01020304, 0x55667788);
 		var payload = new SmLoginOk(sessionKey).SerializePayload();
 
-		Assert.Equal(68, payload.Length);
-		Assert.Equal(0x03, payload[0]);
-		Assert.Equal(new byte[] { 0xE9, 0x03, 0x00, 0x00 }, payload[1..5]);
-		Assert.Equal(new byte[] { 0x44, 0x33, 0x22, 0x11 }, payload[5..9]);
-		Assert.Equal(new byte[] { 0xEA, 0x03, 0x00, 0x00 }, payload[17..21]);
-		Assert.All(payload[49..], value => Assert.Equal(0, value));
+		Assert.Equal(
+			Convert.FromHexString(
+				"03E9030000443322110000000000000000EA030000000000000000000000000000" +
+				"0000000000000000000000000000000000000000000000000000000000000000000000"),
+			payload);
 	}
 
 	[Fact]
-	public void SmPlayOk_WritesPlayKeysServerIdAndPadding()
+	public void SmPlayOk_MatchesJavaGeneratedPayloadVector()
 	{
-		var sessionKey = new SessionKey(1, 2, 0x01020304, 0x11223344);
+		var sessionKey = new SessionKey(1001, 0x11223344, 0x01020304, 0x55667788);
 		var payload = new SmPlayOk(sessionKey, 7).SerializePayload();
 
-		Assert.Equal(24, payload.Length);
-		Assert.Equal(0x07, payload[0]);
-		Assert.Equal(new byte[] { 0x04, 0x03, 0x02, 0x01 }, payload[1..5]);
-		Assert.Equal(new byte[] { 0x44, 0x33, 0x22, 0x11 }, payload[5..9]);
-		Assert.Equal(7, payload[9]);
-		Assert.All(payload[10..], value => Assert.Equal(0, value));
+		Assert.Equal(Convert.FromHexString("070403020188776655070000000000000000000000000000"), payload);
 	}
 
 	[Fact]
-	public void SmServerList_WritesRegisteredServersAndCharacterCounts()
+	public void SmServerList_MatchesJavaGeneratedPayloadVector()
 	{
 		var server = new GameServerInfo(1, "127.0.0.1", "secret");
 		server.MarkOnline(new byte[] { 127, 0, 0, 1 }, 7777, 0, 100);
 		var payload = new SmServerList(new[] { server }, new Dictionary<byte, int> { [1] = 2 }, lastServer: 1).SerializePayload();
 
-		Assert.Equal(41, payload.Length);
-		Assert.Equal(0x04, payload[0]);
-		Assert.Equal(1, payload[1]);
-		Assert.Equal(1, payload[2]);
-		Assert.Equal(1, payload[3]);
-		Assert.Equal(new byte[] { 127, 0, 0, 1 }, payload[4..8]);
-		Assert.Equal(new byte[] { 0x61, 0x1E }, payload[8..10]);
-		Assert.Equal(1, payload[18]); // online
-		Assert.Equal(new byte[] { 0x02, 0x00 }, payload[24..26]); // maxIdWithChars + 1
-		Assert.Equal(1, payload[26]); // auto-connect enabled
-		Assert.Equal(2, payload[27]); // character count on server 1
+		Assert.Equal(
+			Convert.FromHexString("040101017F000001611E00000000000064000101000000000200010200000000000000000000000000"),
+			payload);
 	}
 
 	[Fact]
@@ -165,11 +161,19 @@ public class LoginProtocolPacketTests
 	}
 
 	[Fact]
-	public void SmGameServerCharacterResponse_WritesJavaPayloadShape()
+	public void SmGameServerCharacterResponse_MatchesJavaGeneratedPayloadVector()
 	{
 		var payload = new SmGameServerCharacterResponse(123).SerializePayload();
 
-		Assert.Equal(new byte[] { 0x04, 0x7B, 0x00, 0x00, 0x00 }, payload);
+		Assert.Equal(Convert.FromHexString("087B000000"), payload);
+	}
+
+	[Fact]
+	public void SmRequestKickAccount_MatchesJavaGeneratedPayloadVector()
+	{
+		var payload = new SmRequestKickAccount(123, notifyDoubleLogin: true).SerializePayload();
+
+		Assert.Equal(Convert.FromHexString("027B00000001"), payload);
 	}
 
 	[Fact]

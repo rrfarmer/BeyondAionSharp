@@ -1,7 +1,12 @@
+using System.Net;
 using Aion.Commons.Database;
+using Aion.LoginServer.Configuration;
 using Aion.LoginServer.Data;
 using Aion.LoginServer.Model;
+using Aion.LoginServer.Network;
+using Aion.LoginServer.Services;
 using Aion.LoginServer.Utils;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Aion.LoginServer.Tests;
 
@@ -103,6 +108,66 @@ public class LoginDatabaseIntegrationTests
 		Assert.NotNull(await ExecuteScalarAsync("SELECT time_performed FROM player_transfers WHERE id=200"));
 	}
 
+	[Fact]
+	public async Task LoginSocket_RoundTripsEncryptedHandshakeAgainstLoginSchema_WhenEnabled()
+	{
+		if (Environment.GetEnvironmentVariable("AION_LOGIN_DB_INTEGRATION") != "1")
+			return;
+
+		DatabaseFactory.Initialize(
+			server: Environment.GetEnvironmentVariable("AION_LOGIN_DB_HOST") ?? "localhost",
+			userId: Environment.GetEnvironmentVariable("AION_LOGIN_DB_USER") ?? "root",
+			password: Environment.GetEnvironmentVariable("AION_LOGIN_DB_PASSWORD") ?? "aion",
+			database: Environment.GetEnvironmentVariable("AION_LOGIN_DB_NAME") ?? "aion_ls",
+			port: int.Parse(Environment.GetEnvironmentVariable("AION_LOGIN_DB_PORT") ?? "3307"));
+		await InitializeSchemaAsync();
+
+		var port = SocketServerSmokeTests.GetFreeLoopbackPort();
+		var options = new LoginServerOptions
+		{
+			ClientEndPoint = new IPEndPoint(IPAddress.Loopback, port),
+			AutoCreateAccounts = false,
+			BruteForceProtectionEnabled = false,
+		};
+		var accountTimeRepository = new AccountTimeRepository();
+		var accountRepository = new AccountRepository(accountTimeRepository);
+		var account = new Account
+		{
+			Name = "socketlogin",
+			PasswordHash = AccountUtils.EncodePassword("secret"),
+			Activated = 1,
+			LastServer = -1,
+		};
+		Assert.True(await accountRepository.InsertAccountAsync(account, useExternalAuth: false));
+
+		using var keyGenerator = new SocketServerSmokeTests.FixedLoginKeyGenerator();
+		var loginServer = new LoginClientSocketServer(
+			NullLogger<LoginClientSocketServer>.Instance,
+			options,
+			keyGenerator,
+			new LoginAuthService(
+				options,
+				accountRepository,
+				accountTimeRepository,
+				new BannedIpRepository(),
+				new ThrowingExternalAuthClient(),
+				new BruteForceProtector()),
+			new LoginSessionRegistry(),
+			new GameServerRegistry());
+		var serverTask = loginServer.StartAsync();
+
+		using var client = await SocketServerSmokeTests.ConnectWithRetryAsync(port);
+		await SocketServerSmokeTests.CompleteLoginHandshakeAsync(client, keyGenerator, account.Id, account.Name, "secret");
+
+		await loginServer.StopAsync(TimeSpan.FromSeconds(1));
+		await SocketServerSmokeTests.AssertClientClosedAsync(client.GetStream());
+		await SocketServerSmokeTests.AssertTaskCompletedAsync(serverTask);
+
+		var loaded = await accountRepository.GetAccountByIdAsync(account.Id, useExternalAuth: false);
+		Assert.NotNull(loaded);
+		Assert.Equal("127.0.0.1", loaded.LastIp);
+	}
+
 	private static async Task InitializeSchemaAsync()
 	{
 		var sqlPath = FindLoginSchemaPath();
@@ -165,5 +230,13 @@ public class LoginDatabaseIntegrationTests
 		var value = await ExecuteScalarAsync(sql);
 		Assert.NotNull(value);
 		return Convert.ToInt64(value);
+	}
+
+	private sealed class ThrowingExternalAuthClient : IExternalAuthClient
+	{
+		public Task<ExternalAuthResponse?> AuthenticateAsync(string user, string password, string url, CancellationToken cancellationToken = default)
+		{
+			throw new InvalidOperationException("External auth should not be reached by login database integration tests.");
+		}
 	}
 }

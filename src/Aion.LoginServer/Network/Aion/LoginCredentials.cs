@@ -7,14 +7,14 @@ public sealed record LoginCredentials(string Username, string Password, int OneT
 		var contentStartOffset = isLoginEx ? 78 : 94;
 		var usernameByteLength = isLoginEx ? 64 : 14;
 		var passwordByteLength = isLoginEx ? 32 : 16;
-		var compacted = new byte[decrypted.Length];
+		var compacted = (byte[])decrypted.Clone();
 
 		for (var offset = decrypted.Length - 128; offset >= 0; offset -= 128)
 		{
 			var source = offset + contentStartOffset;
-			var length = decrypted.Length - source;
+			var length = compacted.Length - source;
 			if (length > 0)
-				Array.Copy(decrypted, source, compacted, offset, length);
+				Array.Copy(compacted, source, compacted, offset, length);
 		}
 
 		var username = ReadNullTerminatedCp1252(compacted, 0, usernameByteLength);

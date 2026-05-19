@@ -13,7 +13,7 @@ public sealed class SmGameServerCharacterResponse : GsServerPacket
 
 	protected override void WritePayload(PacketBuffer buffer)
 	{
-		buffer.WriteC(4);
+		buffer.WriteC(8);
 		buffer.WriteD(_accountId);
 	}
 }

@@ -1,11 +1,30 @@
 import com.aionemu.loginserver.network.ncrypt.EncryptedRSAKeyPair;
 import com.aionemu.loginserver.network.ncrypt.BlowfishCipher;
 import com.aionemu.loginserver.network.ncrypt.CryptEngine;
+import com.aionemu.loginserver.network.aion.AionServerPacket;
+import com.aionemu.loginserver.network.aion.LoginConnection;
+import com.aionemu.loginserver.network.aion.SessionKey;
+import com.aionemu.loginserver.network.aion.serverpackets.SM_AUTH_GG;
+import com.aionemu.loginserver.network.aion.serverpackets.SM_LOGIN_OK;
+import com.aionemu.loginserver.network.aion.serverpackets.SM_PLAY_OK;
+import com.aionemu.loginserver.network.aion.serverpackets.SM_SERVER_LIST;
+import com.aionemu.loginserver.network.gameserver.GsConnection;
+import com.aionemu.loginserver.network.gameserver.GsServerPacket;
+import com.aionemu.loginserver.network.gameserver.serverpackets.SM_GS_CHARACTER_RESPONSE;
+import com.aionemu.loginserver.network.gameserver.serverpackets.SM_REQUEST_KICK_ACCOUNT;
+import com.aionemu.loginserver.GameServerInfo;
+import com.aionemu.loginserver.GameServerTable;
+import com.aionemu.loginserver.controller.AccountController;
+import com.aionemu.loginserver.model.Account;
 import java.math.BigInteger;
+import java.lang.reflect.Method;
 import java.security.KeyPair;
 import java.security.interfaces.RSAPublicKey;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 public final class VectorGenerator {
 	private static final byte[] STATIC_KEY = new byte[] {
@@ -20,7 +39,7 @@ public final class VectorGenerator {
 		2, 4, 6, 8, 10, 12, 14, 16
 	};
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		byte[] blowfishBlock = new byte[16];
 		for (int i = 0; i < blowfishBlock.length; i++)
 			blowfishBlock[i] = (byte) i;
@@ -66,6 +85,18 @@ public final class VectorGenerator {
 		System.arraycopy(initEncrypted, 0, initFrame, 2, initLength);
 		System.out.println("SM_INIT_LEN=" + initFrame.length);
 		print("SM_INIT_FRAME", initFrame, initFrame.length);
+
+		print("SM_AUTH_GG_PAYLOAD", writeAionPayload(new SM_AUTH_GG(0x11223344)));
+		SessionKey sessionKey = new SessionKey(1001, 0x11223344, 0x01020304, 0x55667788);
+		print("SM_LOGIN_OK_PAYLOAD", writeAionPayload(new SM_LOGIN_OK(sessionKey)));
+		print("SM_PLAY_OK_PAYLOAD", writeAionPayload(new SM_PLAY_OK(sessionKey, (byte) 7)));
+		GameServerTable.setGameServers(Arrays.asList(new GameServerInfo((byte) 1, new byte[] { 127, 0, 0, 1 }, 7777, 0, 100, true)));
+		Map<Byte, Integer> characterCounts = new HashMap<Byte, Integer>();
+		characterCounts.put((byte) 1, 2);
+		AccountController.setGSCharacterCountsFor(1001, characterCounts);
+		print("SM_SERVER_LIST_PAYLOAD", writeAionPayload(new SM_SERVER_LIST(), new LoginConnection(new Account(1001, 1))));
+		print("SM_GS_CHARACTER_RESPONSE_PAYLOAD", writeGsPayload(new SM_GS_CHARACTER_RESPONSE(123)));
+		print("SM_REQUEST_KICK_ACCOUNT_PAYLOAD", writeGsPayload(new SM_REQUEST_KICK_ACCOUNT(123, true)));
 	}
 
 	private static byte[] createSmInitPayload() {
@@ -95,6 +126,40 @@ public final class VectorGenerator {
 		for (int i = 0; i < length; i++)
 			sb.append(String.format("%02X", data[i] & 0xFF));
 		System.out.println(sb);
+	}
+
+	private static void print(String label, byte[] data) {
+		print(label, data, data.length);
+	}
+
+	private static byte[] writeAionPayload(AionServerPacket packet) throws Exception {
+		return writeAionPayload(packet, null);
+	}
+
+	private static byte[] writeAionPayload(AionServerPacket packet, LoginConnection connection) throws Exception {
+		ByteBuffer buffer = ByteBuffer.allocate(256).order(ByteOrder.LITTLE_ENDIAN);
+		packet.setBuf(buffer);
+		buffer.put((byte) packet.getOpCode());
+		Method writeImpl = packet.getClass().getDeclaredMethod("writeImpl", LoginConnection.class);
+		writeImpl.setAccessible(true);
+		writeImpl.invoke(packet, connection);
+		return toArray(buffer);
+	}
+
+	private static byte[] writeGsPayload(GsServerPacket packet) throws Exception {
+		ByteBuffer buffer = ByteBuffer.allocate(256).order(ByteOrder.LITTLE_ENDIAN);
+		packet.setBuf(buffer);
+		Method writeImpl = packet.getClass().getDeclaredMethod("writeImpl", GsConnection.class);
+		writeImpl.setAccessible(true);
+		writeImpl.invoke(packet, new Object[] { null });
+		return toArray(buffer);
+	}
+
+	private static byte[] toArray(ByteBuffer buffer) {
+		byte[] result = new byte[buffer.position()];
+		buffer.flip();
+		buffer.get(result);
+		return result;
 	}
 
 	private static final class FixedRsaPublicKey implements RSAPublicKey {

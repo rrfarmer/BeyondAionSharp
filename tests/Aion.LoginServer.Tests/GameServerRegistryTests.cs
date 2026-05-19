@@ -67,7 +67,7 @@ public class GameServerRegistryTests
 
 		Assert.Equal(0, offlineCounts[2]);
 		Assert.NotNull(session.LastPacket);
-		Assert.Equal(new byte[] { 0x04, 0x37, 0x00, 0x00, 0x00 }, session.LastPacket!.SerializePayload());
+		Assert.Equal(new byte[] { 0x08, 0x37, 0x00, 0x00, 0x00 }, session.LastPacket!.SerializePayload());
 	}
 
 	private sealed class FakeGameServerSession : IGameServerSession
