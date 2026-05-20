@@ -58,6 +58,61 @@ public class GamePacketTests
 		Assert.Equal(
 			Convert.FromHexString("060000"),
 			SerializeUnencryptedPayload(new SmEnterWorldCheck(EnterWorldCheckMessage.ReentryTime)));
+		Assert.Equal(
+			Convert.FromHexString("01000125000100000040E201000000000000"),
+			SerializeUnencryptedPayload(
+				new SmSkillList(
+					[new PlayerSkill { SkillId = 37, SkillLevel = 1 }],
+					() => DateTimeOffset.FromUnixTimeSeconds(123456))));
+		Assert.Equal(
+			Convert.FromHexString("01000025000A000000E8030000"),
+			SerializeUnencryptedPayload(
+				new SmSkillCooldown(
+					[new PlayerSkill { SkillId = 37, SkillLevel = 1 }],
+					new Dictionary<int, long> { [700] = 20_000 },
+					new SkillTemplateTable(
+						[
+							new SkillTemplateSummary(
+								37,
+								"Basic Sword Training",
+								281815,
+								1,
+								"P_EQUIP_ENHANCEDSWORD",
+								"P_EQUIP_ENHANCEDSWORD",
+								"PHYSICAL",
+								"NONE",
+								700,
+								10),
+						]),
+					notify: false,
+					() => DateTimeOffset.FromUnixTimeMilliseconds(10_000))));
+		Assert.Equal(
+			Convert.FromHexString("01007B00140000003C000000"),
+			SerializeUnencryptedPayload(
+				new SmItemCooldown(
+					new Dictionary<int, PlayerItemCooldown> { [123] = new(30_000, 60) },
+					() => DateTimeOffset.FromUnixTimeMilliseconds(10_000))));
+		Assert.Equal(
+			Convert.FromHexString("0100FFFF64000000032200000205"),
+			SerializeUnencryptedPayload(
+				new SmQuestList([new PlayerQuestState(100, "START", 0x22, 2, 5)])));
+		Assert.Equal(
+			Convert.FromHexString("014D00"),
+			SerializeUnencryptedPayload(new SmTitleInfo(77)));
+		Assert.Equal(
+			Convert.FromHexString("0101000B000A00000001"),
+			SerializeUnencryptedPayload(
+				new SmMotion(
+					[new PlayerMotion(11, 1010, true)],
+					() => DateTimeOffset.FromUnixTimeSeconds(1000))));
+		Assert.Equal(
+			Convert.FromHexString("010000000000"),
+			SerializeUnencryptedPayload(new SmAfterTimeCheck475()));
+
+		var uiSettings = SerializeUnencryptedPayload(new SmUiSettings([0xAA, 0xBB], type: 1));
+		Assert.Equal(0x1c00 + 3, uiSettings.Length);
+		Assert.True(uiSettings.AsSpan(0, 5).SequenceEqual(Convert.FromHexString("01001CAABB")));
+		Assert.True(uiSettings.AsSpan(5).SequenceEqual(new byte[0x1c00 - 2]));
 	}
 
 	[Fact]

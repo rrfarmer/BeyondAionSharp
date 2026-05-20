@@ -17,6 +17,12 @@ public sealed class PlayerEnterWorldServiceTests
 		{
 			Player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5)),
 			Items = [new InventoryItem { ObjectId = 2001, ItemId = 100000094, IsEquipped = true, Location = 0, Slot = 1 }],
+			Skills = [new PlayerSkill { SkillId = 37, SkillLevel = 1 }],
+			SkillCooldowns = new Dictionary<int, long> { [37] = 123456 },
+			ItemCooldowns = new Dictionary<int, PlayerItemCooldown> { [7] = new(123456, 60) },
+			Quests = [new PlayerQuestState(1001, "START", 2, 3, 0)],
+			Motions = [new PlayerMotion(11, 0, true)],
+			Settings = new PlayerSettings { UiSettings = [1, 2], Shortcuts = [3], HouseBuddies = [4] },
 		};
 		var world = CreateWorld();
 		var service = CreateService(repository, world);
@@ -27,7 +33,19 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.Same(repository.Player, result.Player);
 		Assert.True(repository.Player!.IsOnline);
 		Assert.Single(repository.Player.InventoryItems);
+		Assert.Single(repository.Player.Skills);
+		Assert.Single(repository.Player.SkillCooldowns);
+		Assert.Single(repository.Player.ItemCooldowns);
+		Assert.Single(repository.Player.Quests);
+		Assert.Single(repository.Player.Motions);
+		Assert.NotNull(repository.Player.Settings.UiSettings);
 		Assert.Equal(1, repository.LoadItemsCalls);
+		Assert.Equal(1, repository.LoadSkillsCalls);
+		Assert.Equal(1, repository.LoadSkillCooldownsCalls);
+		Assert.Equal(1, repository.LoadItemCooldownsCalls);
+		Assert.Equal(1, repository.LoadQuestsCalls);
+		Assert.Equal(1, repository.LoadMotionsCalls);
+		Assert.Equal(1, repository.LoadSettingsCalls);
 		Assert.Equal(1, repository.MarkOnlineCalls);
 		Assert.True(world.TryGetObject(1001, out var stored));
 		Assert.Same(repository.Player, stored);
@@ -128,7 +146,31 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public IReadOnlyList<InventoryItem> Items { get; init; } = Array.Empty<InventoryItem>();
 
+		public IReadOnlyList<PlayerSkill> Skills { get; init; } = Array.Empty<PlayerSkill>();
+
+		public IReadOnlyDictionary<int, long> SkillCooldowns { get; init; } = new Dictionary<int, long>();
+
+		public IReadOnlyDictionary<int, PlayerItemCooldown> ItemCooldowns { get; init; } = new Dictionary<int, PlayerItemCooldown>();
+
+		public IReadOnlyList<PlayerQuestState> Quests { get; init; } = Array.Empty<PlayerQuestState>();
+
+		public IReadOnlyList<PlayerMotion> Motions { get; init; } = Array.Empty<PlayerMotion>();
+
+		public PlayerSettings Settings { get; init; } = new();
+
 		public int LoadItemsCalls { get; private set; }
+
+		public int LoadSkillsCalls { get; private set; }
+
+		public int LoadSkillCooldownsCalls { get; private set; }
+
+		public int LoadItemCooldownsCalls { get; private set; }
+
+		public int LoadQuestsCalls { get; private set; }
+
+		public int LoadMotionsCalls { get; private set; }
+
+		public int LoadSettingsCalls { get; private set; }
 
 		public int MarkOnlineCalls { get; private set; }
 
@@ -143,6 +185,42 @@ public sealed class PlayerEnterWorldServiceTests
 		{
 			LoadItemsCalls++;
 			return Task.FromResult(Items);
+		}
+
+		public Task<IReadOnlyList<PlayerSkill>> LoadPlayerSkillsAsync(int playerObjectId, CancellationToken cancellationToken = default)
+		{
+			LoadSkillsCalls++;
+			return Task.FromResult(Skills);
+		}
+
+		public Task<IReadOnlyDictionary<int, long>> LoadPlayerSkillCooldownsAsync(int playerObjectId, CancellationToken cancellationToken = default)
+		{
+			LoadSkillCooldownsCalls++;
+			return Task.FromResult(SkillCooldowns);
+		}
+
+		public Task<IReadOnlyDictionary<int, PlayerItemCooldown>> LoadPlayerItemCooldownsAsync(int playerObjectId, CancellationToken cancellationToken = default)
+		{
+			LoadItemCooldownsCalls++;
+			return Task.FromResult(ItemCooldowns);
+		}
+
+		public Task<IReadOnlyList<PlayerQuestState>> LoadPlayerQuestsAsync(int playerObjectId, CancellationToken cancellationToken = default)
+		{
+			LoadQuestsCalls++;
+			return Task.FromResult(Quests);
+		}
+
+		public Task<IReadOnlyList<PlayerMotion>> LoadPlayerMotionsAsync(int playerObjectId, CancellationToken cancellationToken = default)
+		{
+			LoadMotionsCalls++;
+			return Task.FromResult(Motions);
+		}
+
+		public Task<PlayerSettings> LoadPlayerSettingsAsync(int playerObjectId, CancellationToken cancellationToken = default)
+		{
+			LoadSettingsCalls++;
+			return Task.FromResult(Settings);
 		}
 
 		public Task<bool> MarkPlayerOnlineAsync(int playerObjectId, DateTime lastOnline, CancellationToken cancellationToken = default)

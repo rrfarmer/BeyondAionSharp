@@ -61,6 +61,12 @@ public sealed class PlayerEnterWorldService
 		try
 		{
 			player.InventoryItems = await _repository.LoadPlayerItemsAsync(playerObjectId, cancellationToken);
+			player.Skills = await _repository.LoadPlayerSkillsAsync(playerObjectId, cancellationToken);
+			player.SkillCooldowns = await _repository.LoadPlayerSkillCooldownsAsync(playerObjectId, cancellationToken);
+			player.ItemCooldowns = await _repository.LoadPlayerItemCooldownsAsync(playerObjectId, cancellationToken);
+			player.Quests = await _repository.LoadPlayerQuestsAsync(playerObjectId, cancellationToken);
+			player.Motions = await _repository.LoadPlayerMotionsAsync(playerObjectId, cancellationToken);
+			player.Settings = await _repository.LoadPlayerSettingsAsync(playerObjectId, cancellationToken);
 			if (!_world.TryAddObject(playerObjectId, player))
 				return new PlayerEnterWorldResult(EnterWorldCheckMessage.ConnectionError);
 

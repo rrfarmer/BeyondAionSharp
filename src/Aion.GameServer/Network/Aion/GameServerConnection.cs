@@ -251,6 +251,40 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (enterWorldResult.Message == EnterWorldCheckMessage.Ok)
 					_state = GameConnectionState.InGame;
 				await SendPacketAsync(new SmEnterWorldCheck(enterWorldResult.Message));
+				if (enterWorldResult is { Message: EnterWorldCheckMessage.Ok, Player: not null })
+				{
+					// Java parity: PlayerEnterWorldService sends SM_SKILL_LIST after SM_ENTER_WORLD_CHECK.
+					await SendPacketAsync(new SmSkillList(enterWorldResult.Player.Skills));
+					var skillTemplates = _runtimeContext?.DataManager?.StaticData.SkillTemplates;
+					if (skillTemplates != null && enterWorldResult.Player.SkillCooldowns.Count > 0)
+					{
+						var cooldownPacket = new SmSkillCooldown(
+							enterWorldResult.Player.Skills,
+							enterWorldResult.Player.SkillCooldowns,
+							skillTemplates,
+							notify: false);
+						if (cooldownPacket.HasCooldowns)
+							await SendPacketAsync(cooldownPacket);
+					}
+
+					if (enterWorldResult.Player.ItemCooldowns.Count > 0)
+					{
+						// Java parity: PlayerEnterWorldService sends SM_ITEM_COOLDOWN after SM_SKILL_COOLDOWN when item cooldowns exist.
+						await SendPacketAsync(new SmItemCooldown(enterWorldResult.Player.ItemCooldowns));
+					}
+
+					var workingQuests = enterWorldResult.Player.Quests.Where(quest => !quest.IsComplete).ToArray();
+					await SendPacketAsync(new SmQuestList(workingQuests));
+					await SendPacketAsync(new SmTitleInfo(enterWorldResult.Player.TitleId));
+					await SendPacketAsync(new SmMotion(enterWorldResult.Player.Motions));
+					await SendPacketAsync(new SmAfterTimeCheck475());
+					if (enterWorldResult.Player.Settings.UiSettings != null)
+						await SendPacketAsync(new SmUiSettings(enterWorldResult.Player.Settings.UiSettings, type: 0));
+					if (enterWorldResult.Player.Settings.Shortcuts != null)
+						await SendPacketAsync(new SmUiSettings(enterWorldResult.Player.Settings.Shortcuts, type: 1));
+					if (enterWorldResult.Player.Settings.HouseBuddies != null)
+						await SendPacketAsync(new SmUiSettings(enterWorldResult.Player.Settings.HouseBuddies, type: 2));
+				}
 				break;
 		}
 	}

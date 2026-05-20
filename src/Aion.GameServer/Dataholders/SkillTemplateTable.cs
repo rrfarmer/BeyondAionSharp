@@ -73,4 +73,5 @@ public sealed record SkillTemplateSummary(
 	string Stack,
 	string SkillType,
 	string SkillSubType,
+	int CooldownId,
 	int Cooldown);

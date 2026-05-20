@@ -182,6 +182,7 @@ public sealed class StaticData
 					reader.GetAttribute("stack") ?? string.Empty,
 					reader.GetAttribute("skilltype") ?? string.Empty,
 					reader.GetAttribute("skillsubtype") ?? string.Empty,
+					ReadIntAttribute(reader, "cooldownId"),
 					ReadIntAttribute(reader, "cooldown")));
 				continue;
 			}

@@ -12,6 +12,18 @@ public interface IPlayerEnterWorldRepository
 
 	Task<IReadOnlyList<InventoryItem>> LoadPlayerItemsAsync(int playerObjectId, CancellationToken cancellationToken = default);
 
+	Task<IReadOnlyList<PlayerSkill>> LoadPlayerSkillsAsync(int playerObjectId, CancellationToken cancellationToken = default);
+
+	Task<IReadOnlyDictionary<int, long>> LoadPlayerSkillCooldownsAsync(int playerObjectId, CancellationToken cancellationToken = default);
+
+	Task<IReadOnlyDictionary<int, PlayerItemCooldown>> LoadPlayerItemCooldownsAsync(int playerObjectId, CancellationToken cancellationToken = default);
+
+	Task<IReadOnlyList<PlayerQuestState>> LoadPlayerQuestsAsync(int playerObjectId, CancellationToken cancellationToken = default);
+
+	Task<IReadOnlyList<PlayerMotion>> LoadPlayerMotionsAsync(int playerObjectId, CancellationToken cancellationToken = default);
+
+	Task<PlayerSettings> LoadPlayerSettingsAsync(int playerObjectId, CancellationToken cancellationToken = default);
+
 	Task<bool> MarkPlayerOnlineAsync(int playerObjectId, DateTime lastOnline, CancellationToken cancellationToken = default);
 }
 
@@ -25,6 +37,36 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	public Task<IReadOnlyList<InventoryItem>> LoadPlayerItemsAsync(int playerObjectId, CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult<IReadOnlyList<InventoryItem>>(Array.Empty<InventoryItem>());
+	}
+
+	public Task<IReadOnlyList<PlayerSkill>> LoadPlayerSkillsAsync(int playerObjectId, CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult<IReadOnlyList<PlayerSkill>>(Array.Empty<PlayerSkill>());
+	}
+
+	public Task<IReadOnlyDictionary<int, long>> LoadPlayerSkillCooldownsAsync(int playerObjectId, CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult<IReadOnlyDictionary<int, long>>(new Dictionary<int, long>());
+	}
+
+	public Task<IReadOnlyDictionary<int, PlayerItemCooldown>> LoadPlayerItemCooldownsAsync(int playerObjectId, CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult<IReadOnlyDictionary<int, PlayerItemCooldown>>(new Dictionary<int, PlayerItemCooldown>());
+	}
+
+	public Task<IReadOnlyList<PlayerQuestState>> LoadPlayerQuestsAsync(int playerObjectId, CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult<IReadOnlyList<PlayerQuestState>>(Array.Empty<PlayerQuestState>());
+	}
+
+	public Task<IReadOnlyList<PlayerMotion>> LoadPlayerMotionsAsync(int playerObjectId, CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult<IReadOnlyList<PlayerMotion>>(Array.Empty<PlayerMotion>());
+	}
+
+	public Task<PlayerSettings> LoadPlayerSettingsAsync(int playerObjectId, CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(new PlayerSettings());
 	}
 
 	public Task<bool> MarkPlayerOnlineAsync(int playerObjectId, DateTime lastOnline, CancellationToken cancellationToken = default)
@@ -51,7 +93,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			await connection.OpenAsync(cancellationToken);
 			await using var command = connection.CreateCommand();
 			command.CommandText = """
-				SELECT id, account_id, name, player_class, race, gender, exp, online, last_online, world_id, x, y, z, heading
+				SELECT id, account_id, name, player_class, race, gender, exp, online, last_online, world_id, x, y, z, heading, title_id
 				FROM players
 				WHERE id = ? AND account_id = ? AND (deletion_date IS NULL OR deletion_date > CURRENT_TIMESTAMP)
 				""";
@@ -77,6 +119,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				Exp = reader.GetInt64(reader.GetOrdinal("exp")),
 				IsOnline = ReadBoolean(reader, "online"),
 				LastOnline = ReadDateTime(reader, "last_online"),
+				TitleId = ReadInt(reader, "title_id"),
 				Position = new WorldPosition(
 					ReadInt(reader, "world_id"),
 					reader.GetFloat(reader.GetOrdinal("x")),
@@ -161,6 +204,225 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		}
 	}
 
+	public async Task<IReadOnlyList<PlayerSkill>> LoadPlayerSkillsAsync(int playerObjectId, CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/PlayerSkillListDAO.loadSkillList.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = "SELECT skill_id, skill_level FROM player_skills WHERE player_id = ? ORDER BY skill_id";
+			command.Parameters.Add(new MySqlParameter { Value = playerObjectId });
+
+			var skills = new List<PlayerSkill>();
+			await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+			while (await reader.ReadAsync(cancellationToken))
+			{
+				skills.Add(
+					new PlayerSkill
+					{
+						SkillId = ReadInt(reader, "skill_id"),
+						SkillLevel = ReadInt(reader, "skill_level"),
+						SkillType = 0,
+					});
+			}
+
+			return skills;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not load skill list for player {PlayerObjectId}", playerObjectId);
+			return Array.Empty<PlayerSkill>();
+		}
+	}
+
+	public async Task<IReadOnlyDictionary<int, long>> LoadPlayerSkillCooldownsAsync(int playerObjectId, CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/PlayerCooldownsDAO.loadPlayerCooldowns.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = "SELECT cooldown_id, reuse_delay FROM player_cooldowns WHERE player_id = ?";
+			command.Parameters.Add(new MySqlParameter { Value = playerObjectId });
+
+			var nowMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+			var cooldowns = new Dictionary<int, long>();
+			await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+			while (await reader.ReadAsync(cancellationToken))
+			{
+				var reuseDelay = ReadLong(reader, "reuse_delay");
+				if (reuseDelay <= nowMillis)
+					continue;
+
+				cooldowns[ReadInt(reader, "cooldown_id")] = reuseDelay;
+			}
+
+			return cooldowns;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not load skill cooldowns for player {PlayerObjectId}", playerObjectId);
+			return new Dictionary<int, long>();
+		}
+	}
+
+	public async Task<IReadOnlyDictionary<int, PlayerItemCooldown>> LoadPlayerItemCooldownsAsync(int playerObjectId, CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/ItemCooldownsDAO.loadItemCooldowns.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = "SELECT delay_id, use_delay, reuse_time FROM item_cooldowns WHERE player_id = ?";
+			command.Parameters.Add(new MySqlParameter { Value = playerObjectId });
+
+			var nowMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+			var cooldowns = new Dictionary<int, PlayerItemCooldown>();
+			await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+			while (await reader.ReadAsync(cancellationToken))
+			{
+				var reuseTime = ReadLong(reader, "reuse_time");
+				if (reuseTime <= nowMillis)
+					continue;
+
+				cooldowns[ReadInt(reader, "delay_id")] = new PlayerItemCooldown(
+					reuseTime,
+					ReadInt(reader, "use_delay"));
+			}
+
+			return cooldowns;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not load item cooldowns for player {PlayerObjectId}", playerObjectId);
+			return new Dictionary<int, PlayerItemCooldown>();
+		}
+	}
+
+	public async Task<IReadOnlyList<PlayerQuestState>> LoadPlayerQuestsAsync(int playerObjectId, CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/PlayerQuestListDAO.load.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = """
+				SELECT quest_id, status, quest_vars, flags, complete_count
+				FROM player_quests
+				WHERE player_id = ?
+				ORDER BY quest_id
+				""";
+			command.Parameters.Add(new MySqlParameter { Value = playerObjectId });
+
+			var quests = new List<PlayerQuestState>();
+			await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+			while (await reader.ReadAsync(cancellationToken))
+			{
+				quests.Add(
+					new PlayerQuestState(
+						ReadInt(reader, "quest_id"),
+						ReadString(reader, "status"),
+						ReadInt(reader, "quest_vars"),
+						ReadInt(reader, "flags"),
+						ReadInt(reader, "complete_count")));
+			}
+
+			return quests;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not load quests for player {PlayerObjectId}", playerObjectId);
+			return Array.Empty<PlayerQuestState>();
+		}
+	}
+
+	public async Task<IReadOnlyList<PlayerMotion>> LoadPlayerMotionsAsync(int playerObjectId, CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/MotionDAO.loadMotionList.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = """
+				SELECT motion_id, active, time
+				FROM player_motions
+				WHERE player_id = ?
+				ORDER BY motion_id
+				""";
+			command.Parameters.Add(new MySqlParameter { Value = playerObjectId });
+
+			var motions = new List<PlayerMotion>();
+			await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+			while (await reader.ReadAsync(cancellationToken))
+			{
+				motions.Add(
+					new PlayerMotion(
+						ReadInt(reader, "motion_id"),
+						ReadInt(reader, "time"),
+						ReadBoolean(reader, "active")));
+			}
+
+			return motions;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not load motions for player {PlayerObjectId}", playerObjectId);
+			return Array.Empty<PlayerMotion>();
+		}
+	}
+
+	public async Task<PlayerSettings> LoadPlayerSettingsAsync(int playerObjectId, CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/PlayerSettingsDAO.loadSettings, scoped to client setting blobs.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = "SELECT settings_type, settings FROM player_settings WHERE player_id = ?";
+			command.Parameters.Add(new MySqlParameter { Value = playerObjectId });
+
+			byte[]? uiSettings = null;
+			byte[]? shortcuts = null;
+			byte[]? houseBuddies = null;
+			await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+			while (await reader.ReadAsync(cancellationToken))
+			{
+				var settings = ReadBytes(reader, "settings");
+				switch (ReadInt(reader, "settings_type"))
+				{
+					case 0:
+						uiSettings = settings;
+						break;
+					case 1:
+						shortcuts = settings;
+						break;
+					case 2:
+						houseBuddies = settings;
+						break;
+				}
+			}
+
+			return new PlayerSettings
+			{
+				UiSettings = uiSettings,
+				Shortcuts = shortcuts,
+				HouseBuddies = houseBuddies,
+			};
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not load settings for player {PlayerObjectId}", playerObjectId);
+			return new PlayerSettings();
+		}
+	}
+
 	private static string ReadString(MySqlDataReader reader, string column)
 	{
 		var ordinal = reader.GetOrdinal(column);
@@ -215,6 +477,12 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		return reader.IsDBNull(ordinal) ? 0 : Convert.ToInt32(reader.GetValue(ordinal));
 	}
 
+	private static long ReadLong(MySqlDataReader reader, string column)
+	{
+		var ordinal = reader.GetOrdinal(column);
+		return reader.IsDBNull(ordinal) ? 0 : Convert.ToInt64(reader.GetValue(ordinal));
+	}
+
 	private static int? ReadNullableInt(MySqlDataReader reader, string column)
 	{
 		var ordinal = reader.GetOrdinal(column);
@@ -225,6 +493,12 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	{
 		var ordinal = reader.GetOrdinal(column);
 		return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+	}
+
+	private static byte[] ReadBytes(MySqlDataReader reader, string column)
+	{
+		var ordinal = reader.GetOrdinal(column);
+		return reader.IsDBNull(ordinal) ? Array.Empty<byte>() : (byte[])reader.GetValue(ordinal);
 	}
 
 	private static bool ReadBoolean(MySqlDataReader reader, string column)
