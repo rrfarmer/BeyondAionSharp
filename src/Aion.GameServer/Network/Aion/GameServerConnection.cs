@@ -292,6 +292,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 				{
 					// Java parity: network/aion/clientpackets/CM_BROKER_LIST.runImpl -> BrokerService.showRequestedItems.
+					_activePlayer.BrokerMaskCache = brokerList.ListMask;
+					_activePlayer.BrokerSortTypeCache = brokerList.SortType;
+					_activePlayer.BrokerStartPageCache = brokerList.Page;
+					_activePlayer.BrokerSearchItemIds = Array.Empty<int>();
 					var page = await LoadBrokerMaskPageAsync(_activePlayer, brokerList.SortType, brokerList.Page, brokerList.ListMask);
 					await SendPacketAsync(SmBrokerService.CreateSearchedItems(page));
 				}
@@ -300,6 +304,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 				{
 					// Java parity: network/aion/clientpackets/CM_BROKER_SEARCH.runImpl -> BrokerService.showRequestedItems.
+					_activePlayer.BrokerMaskCache = brokerSearch.Mask;
+					_activePlayer.BrokerSortTypeCache = brokerSearch.SortType;
+					_activePlayer.BrokerStartPageCache = brokerSearch.Page;
+					_activePlayer.BrokerSearchItemIds = brokerSearch.ItemIds.ToArray();
 					var page = _brokerRepository != null && brokerSearch.Mask == 0 && brokerSearch.ItemIds.Count > 0
 						? await _brokerRepository.SearchItemsByTemplateIdsAsync(_activePlayer.Race, brokerSearch.SortType, brokerSearch.Page, brokerSearch.ItemIds)
 						: await LoadBrokerMaskPageAsync(_activePlayer, brokerSearch.SortType, brokerSearch.Page, brokerSearch.Mask);
@@ -339,7 +347,8 @@ public sealed class GameServerConnection : BaseClientConnection
 					await HandleBrokerRegisterItemAsync(_activePlayer, (CmRegisterBrokerItem)packet);
 				break;
 			case CmBuyBrokerItem:
-				// Java parity: remaining parsed broker mutation packets; persistence/inventory mutations are deferred to the full BrokerService port.
+				if (_activePlayer != null)
+					await HandleBuyBrokerItemAsync(_activePlayer, (CmBuyBrokerItem)packet);
 				break;
 			case CmSendMail sendMail:
 				if (_activePlayer != null)
@@ -579,6 +588,21 @@ public sealed class GameServerConnection : BaseClientConnection
 		return new PlayerBrokerItemPage(pageItems, sortedItems.Length, pageIndex, 0);
 	}
 
+	private async Task<PlayerBrokerItemPage> LoadCachedBrokerPageAsync(Player player)
+	{
+		// Java parity: BrokerPlayerCache refresh after BrokerService.buyBrokerItem.
+		if (_brokerRepository != null && player.BrokerMaskCache == 0 && player.BrokerSearchItemIds.Count > 0)
+		{
+			return await _brokerRepository.SearchItemsByTemplateIdsAsync(
+				player.Race,
+				player.BrokerSortTypeCache,
+				player.BrokerStartPageCache,
+				player.BrokerSearchItemIds);
+		}
+
+		return await LoadBrokerMaskPageAsync(player, player.BrokerSortTypeCache, player.BrokerStartPageCache, player.BrokerMaskCache);
+	}
+
 	private async Task HandleBrokerCancelRegisteredAsync(Player player, CmBrokerCancelRegistered packet)
 	{
 		// Java parity: network/aion/clientpackets/CM_BROKER_CANCEL_REGISTERED.runImpl -> BrokerService.cancelRegisteredItem.
@@ -793,6 +817,117 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (itemTemplates?.GetItemTemplate(KinahItemId) is { } kinahTemplate)
 			await SendPacketAsync(new SmInventoryUpdateItem(kinahUpdate, kinahTemplate, SmInventoryUpdateItem.DecreaseKinahBuy));
 		await SendPacketAsync(SmBrokerService.CreateRegisterItem(brokerItem, registeredItemsCount));
+	}
+
+	private async Task HandleBuyBrokerItemAsync(Player player, CmBuyBrokerItem packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_BUY_BROKER_ITEM.runImpl -> BrokerService.buyBrokerItem.
+		if (_brokerRepository == null || packet.ItemCount < 1)
+			return;
+
+		var brokerItem = await _brokerRepository.LoadActiveItemAsync(player.Race, packet.BrokerItemObjectId);
+		if (brokerItem?.Item == null)
+			return;
+		if (brokerItem.SellerId == player.ObjectId)
+		{
+			await SendPacketAsync(SmSystemMessage.VendorCannotBuyOwnRegisteredItem());
+			return;
+		}
+		if (packet.ItemCount > brokerItem.ItemCount)
+			return;
+
+		var itemTemplates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
+		var itemTemplate = itemTemplates?.GetItemTemplate(brokerItem.Item.ItemId);
+		var kinahItem = player.InventoryItems.FirstOrDefault(item => item.ItemId == KinahItemId && item.Location == CubeStorageId);
+		if (itemTemplate == null || kinahItem == null)
+			return;
+
+		var totalPrice = brokerItem.Price * packet.ItemCount;
+		if (kinahItem.Count < totalPrice)
+			return;
+
+		var settleTime = TruncateToSecond(DateTime.Now);
+		var kinahUpdate = CopyInventoryItem(kinahItem, count: kinahItem.Count - totalPrice);
+		var partialPurchase = brokerItem.ItemCount > packet.ItemCount && brokerItem.SplittingAvailable;
+		PlayerBrokerItem? remainingBrokerItem = null;
+		InventoryItem? remainingBrokerStorageItem = null;
+		InventoryItem boughtItem;
+		PlayerBrokerItem soldBrokerItem;
+		if (partialPurchase)
+		{
+			var objectId = _idFactory?.NextId() ?? 0;
+			if (objectId == 0)
+				return;
+
+			remainingBrokerStorageItem = CopyInventoryItem(brokerItem.Item, count: brokerItem.ItemCount - packet.ItemCount);
+			remainingBrokerItem = brokerItem with
+			{
+				ItemCount = brokerItem.ItemCount - packet.ItemCount,
+				Item = remainingBrokerStorageItem,
+			};
+			boughtItem = new InventoryItem
+			{
+				ObjectId = objectId,
+				ItemId = brokerItem.ItemId,
+				Count = packet.ItemCount,
+				OwnerId = player.ObjectId,
+				Location = CubeStorageId,
+				Slot = FirstAvailableSlot,
+			};
+			soldBrokerItem = new PlayerBrokerItem(
+				boughtItem.ObjectId,
+				boughtItem.ItemId,
+				boughtItem.Count,
+				string.Empty,
+				brokerItem.Price,
+				brokerItem.SellerId,
+				brokerItem.SellerName,
+				brokerItem.BrokerRace,
+				IsSold: true,
+				IsSettled: true,
+				TruncateToSecond(DateTime.Now.AddDays(_options.Custom.BrokerRegistrationExpirationDays)),
+				settleTime,
+				brokerItem.SplittingAvailable,
+				boughtItem);
+		}
+		else
+		{
+			var packCount = brokerItem.Item.PackCount > 0 ? brokerItem.Item.PackCount * -1 : brokerItem.Item.PackCount;
+			boughtItem = CopyInventoryItem(
+				brokerItem.Item,
+				location: CubeStorageId,
+				slot: FirstAvailableSlot,
+				ownerId: player.ObjectId,
+				isEquipped: false,
+				packCount: packCount);
+			soldBrokerItem = brokerItem with
+			{
+				IsSold = true,
+				IsSettled = true,
+				SettleTime = settleTime,
+				Item = boughtItem,
+			};
+		}
+
+		var purchase = new PlayerBrokerPurchase(soldBrokerItem, remainingBrokerItem, boughtItem, remainingBrokerStorageItem, kinahUpdate);
+		if (!await _brokerRepository.BuyItemAsync(purchase))
+			return;
+
+		var inventoryItems = player.InventoryItems.ToList();
+		ReplaceInventoryItem(inventoryItems, kinahUpdate);
+		inventoryItems.RemoveAll(item => item.ObjectId == boughtItem.ObjectId);
+		inventoryItems.Add(boughtItem);
+		player.InventoryItems = inventoryItems.ToArray();
+		if (itemTemplates?.GetItemTemplate(KinahItemId) is { } kinahTemplate)
+			await SendPacketAsync(new SmInventoryUpdateItem(kinahUpdate, kinahTemplate, SmInventoryUpdateItem.DecreaseKinahBuy));
+		await SendPacketAsync(SmInventoryAddItem.CreateBrokerBuy(boughtItem, itemTemplate));
+		await SendPacketAsync(SmCubeUpdate.CubeSize(player));
+
+		var sellerSettledPage = await _brokerRepository.LoadSettledItemsAsync(brokerItem.SellerId, player.Race, pageIndex: 0);
+		if (_connectionRegistry != null)
+			await _connectionRegistry.NotifyBrokerSettledAsync(brokerItem.SellerId, sellerSettledPage.SettledKinah);
+
+		await SendPacketAsync(SmBrokerService.CreateSearchedItems(await LoadCachedBrokerPageAsync(player)));
 	}
 
 	private static long CalculateBrokerRegistrationCommission(long price, long count, int registeredItemsCount, string race)

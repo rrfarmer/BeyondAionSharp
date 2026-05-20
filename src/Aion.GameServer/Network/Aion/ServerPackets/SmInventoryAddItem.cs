@@ -8,6 +8,7 @@ public sealed class SmInventoryAddItem : GameServerPacket
 {
 	public const int PacketOpCode = 27;
 	public const int ItemCollect = 0x19;
+	public const int BrokerBuy = 0x2E;
 	public const int BrokerReturn = 0x2F;
 
 	private readonly int _addType;
@@ -25,6 +26,12 @@ public sealed class SmInventoryAddItem : GameServerPacket
 	{
 		// Java parity: services/BrokerService.cancelRegisteredItem uses ItemPacketService.ItemAddType.BROKER_RETURN.
 		return new SmInventoryAddItem([new InventoryPacketItem(item, template)], BrokerReturn);
+	}
+
+	public static SmInventoryAddItem CreateBrokerBuy(InventoryItem item, ItemTemplateSummary template)
+	{
+		// Java parity: services/BrokerService.buyBrokerItem uses ItemPacketService.ItemAddType.BROKER_BUY.
+		return new SmInventoryAddItem([new InventoryPacketItem(item, template)], BrokerBuy);
 	}
 
 	public static SmInventoryAddItem CreateItemCollect(InventoryItem item, ItemTemplateSummary template)

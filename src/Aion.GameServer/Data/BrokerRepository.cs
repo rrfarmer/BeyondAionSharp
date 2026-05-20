@@ -13,6 +13,11 @@ public interface IBrokerRepository
 		int brokerItemObjectId,
 		CancellationToken cancellationToken = default);
 
+	Task<PlayerBrokerItem?> LoadActiveItemAsync(
+		string race,
+		int brokerItemObjectId,
+		CancellationToken cancellationToken = default);
+
 	Task<IReadOnlyList<PlayerBrokerItem>> LoadSettledItemsForAccountAsync(
 		int playerObjectId,
 		string race,
@@ -60,11 +65,20 @@ public interface IBrokerRepository
 		InventoryItem? reducedSourceItem,
 		InventoryItem kinahItem,
 		CancellationToken cancellationToken = default);
+
+	Task<bool> BuyItemAsync(
+		PlayerBrokerPurchase purchase,
+		CancellationToken cancellationToken = default);
 }
 
 public sealed class EmptyBrokerRepository : IBrokerRepository
 {
 	public Task<PlayerBrokerItem?> LoadRegisteredItemAsync(int playerObjectId, string race, int brokerItemObjectId, CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult<PlayerBrokerItem?>(null);
+	}
+
+	public Task<PlayerBrokerItem?> LoadActiveItemAsync(string race, int brokerItemObjectId, CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult<PlayerBrokerItem?>(null);
 	}
@@ -120,6 +134,11 @@ public sealed class EmptyBrokerRepository : IBrokerRepository
 		InventoryItem? reducedSourceItem,
 		InventoryItem kinahItem,
 		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(false);
+	}
+
+	public Task<bool> BuyItemAsync(PlayerBrokerPurchase purchase, CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(false);
 	}
@@ -211,6 +230,43 @@ public sealed class MySqlBrokerRepository : IBrokerRepository
 		{
 			_logger.LogError(ex, "Could not load registered broker items for player {PlayerObjectId}", playerObjectId);
 			return Array.Empty<PlayerBrokerItem>();
+		}
+	}
+
+	public async Task<PlayerBrokerItem?> LoadActiveItemAsync(
+		string race,
+		int brokerItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: services/BrokerService.buyBrokerItem active race broker lookup by item object id.
+		var brokerRace = GetBrokerRace(race);
+		if (brokerRace == null)
+			return null;
+
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			var items = await LoadBrokerItemsAsync(
+				connection,
+				"""
+				WHERE b.broker_race = @broker_race
+					AND b.item_pointer = @item_pointer
+					AND b.is_sold = 0
+					AND b.is_settled = 0
+					AND i.item_unique_id IS NOT NULL
+				""",
+				[
+					new MySqlParameter("@broker_race", brokerRace),
+					new MySqlParameter("@item_pointer", brokerItemObjectId),
+				],
+				cancellationToken);
+			return AttachAveragePrices(items).FirstOrDefault();
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not load active broker item {BrokerItemObjectId}", brokerItemObjectId);
+			return null;
 		}
 	}
 
@@ -555,6 +611,77 @@ public sealed class MySqlBrokerRepository : IBrokerRepository
 		}
 	}
 
+	public async Task<bool> BuyItemAsync(
+		PlayerBrokerPurchase purchase,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: services/BrokerService.buyBrokerItem + BrokerOpSaveTask persistence.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			if (purchase.RemainingBrokerItem != null && purchase.RemainingBrokerStorageItem != null)
+			{
+				await UpsertInventoryItemAsync(connection, transaction, purchase.RemainingBrokerStorageItem, cancellationToken);
+				await UpdateBrokerItemAsync(connection, transaction, purchase.RemainingBrokerItem, cancellationToken);
+				await UpsertInventoryItemAsync(connection, transaction, purchase.BoughtItem, cancellationToken);
+				await InsertBrokerItemAsync(connection, transaction, purchase.SoldBrokerItem, cancellationToken);
+			}
+			else
+			{
+				if (!await MoveBrokerItemToCubeAsync(connection, transaction, purchase.BoughtItem, cancellationToken))
+				{
+					await transaction.RollbackAsync(cancellationToken);
+					return false;
+				}
+
+				if (!await UpdateBrokerItemAsync(connection, transaction, purchase.SoldBrokerItem, cancellationToken))
+				{
+					await transaction.RollbackAsync(cancellationToken);
+					return false;
+				}
+			}
+
+			await UpsertInventoryItemAsync(connection, transaction, purchase.KinahItem, cancellationToken);
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not buy broker item {BrokerItemObjectId}", purchase.SoldBrokerItem.ItemObjectId);
+			return false;
+		}
+	}
+
+	private static async Task<bool> UpdateBrokerItemAsync(
+		MySqlConnection connection,
+		MySqlTransaction transaction,
+		PlayerBrokerItem brokerItem,
+		CancellationToken cancellationToken)
+	{
+		await using var command = connection.CreateCommand();
+		command.Transaction = transaction;
+		command.CommandText = """
+			UPDATE broker
+			SET is_sold = ?, is_settled = ?, settle_time = ?, item_count = ?
+			WHERE item_pointer = ? AND expire_time = ? AND seller_id = ? AND is_settled = 0
+			""";
+		command.Parameters.AddRange(
+			new[]
+			{
+				new MySqlParameter { Value = brokerItem.IsSold },
+				new MySqlParameter { Value = brokerItem.IsSettled },
+				new MySqlParameter { Value = brokerItem.SettleTime },
+				new MySqlParameter { Value = brokerItem.ItemCount },
+				new MySqlParameter { Value = brokerItem.ItemObjectId },
+				new MySqlParameter { Value = brokerItem.ExpireTime },
+				new MySqlParameter { Value = brokerItem.SellerId },
+			});
+		return await command.ExecuteNonQueryAsync(cancellationToken) != 0;
+	}
+
 	private static async Task InsertBrokerItemAsync(
 		MySqlConnection connection,
 		MySqlTransaction transaction,
@@ -598,7 +725,7 @@ public sealed class MySqlBrokerRepository : IBrokerRepository
 		command.Transaction = transaction;
 		command.CommandText = """
 			UPDATE inventory
-			SET item_owner = ?, item_location = ?, slot = ?, is_equipped = ?
+			SET item_owner = ?, item_location = ?, slot = ?, is_equipped = ?, pack_count = ?
 			WHERE item_unique_id = ? AND item_location = ?
 			""";
 		command.Parameters.AddRange(
@@ -608,6 +735,7 @@ public sealed class MySqlBrokerRepository : IBrokerRepository
 				new MySqlParameter { Value = returnedItem.Location },
 				new MySqlParameter { Value = returnedItem.Slot },
 				new MySqlParameter { Value = returnedItem.IsEquipped },
+				new MySqlParameter { Value = returnedItem.PackCount },
 				new MySqlParameter { Value = returnedItem.ObjectId },
 				new MySqlParameter { Value = BrokerStorageId },
 			});

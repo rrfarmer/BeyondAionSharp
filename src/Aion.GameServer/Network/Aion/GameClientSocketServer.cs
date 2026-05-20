@@ -145,4 +145,15 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 			await connection.SendPacketAsync(SmSystemMessage.PostmanNotify());
 		return true;
 	}
+
+	public async Task<bool> NotifyBrokerSettledAsync(int sellerObjectId, long settledKinah)
+	{
+		// Java parity: services/BrokerService.putToSettled online seller notification.
+		if (!_playerConnections.TryGetValue(sellerObjectId, out var connection) || connection.ActivePlayer == null)
+			return false;
+
+		connection.ActivePlayer.BrokerSettlements = connection.ActivePlayer.BrokerSettlements with { EarnedKinah = settledKinah };
+		await connection.SendPacketAsync(new SmBrokerService(settledKinah));
+		return true;
+	}
 }

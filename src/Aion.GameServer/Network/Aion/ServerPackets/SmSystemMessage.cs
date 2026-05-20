@@ -37,6 +37,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1402666);
 	}
 
+	public static SmSystemMessage VendorCannotBuyOwnRegisteredItem()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_VENDOR_CAN_NOT_BUY_MY_REGISTER_ITEM.
+		return new SmSystemMessage(1400750);
+	}
+
 	public static SmSystemMessage MailSendCannotSendEquippedItem()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MAIL_SEND_CAN_NOT_SEND_EQUIPPED_ITEM.

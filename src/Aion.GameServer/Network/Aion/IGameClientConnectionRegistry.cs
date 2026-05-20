@@ -9,4 +9,6 @@ public interface IGameClientConnectionRegistry
 	void UnregisterPlayerConnection(int playerObjectId, GameServerConnection connection);
 
 	Task<bool> NotifyMailReceivedAsync(int recipientObjectId, PlayerMail mail);
+
+	Task<bool> NotifyBrokerSettledAsync(int sellerObjectId, long settledKinah);
 }

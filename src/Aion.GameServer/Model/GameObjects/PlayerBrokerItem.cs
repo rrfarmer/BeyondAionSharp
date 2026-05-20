@@ -36,3 +36,10 @@ public sealed record PlayerBrokerAccountSettlement(
 	IReadOnlyList<PlayerBrokerItem> CollectedBrokerItems,
 	IReadOnlyList<PlayerBrokerReturnedItem> ReturnedItems,
 	InventoryItem? KinahItem);
+
+public sealed record PlayerBrokerPurchase(
+	PlayerBrokerItem SoldBrokerItem,
+	PlayerBrokerItem? RemainingBrokerItem,
+	InventoryItem BoughtItem,
+	InventoryItem? RemainingBrokerStorageItem,
+	InventoryItem KinahItem);

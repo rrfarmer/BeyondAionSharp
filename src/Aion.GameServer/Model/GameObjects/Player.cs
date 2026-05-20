@@ -84,6 +84,15 @@ public sealed class Player
 
 	public PlayerBrokerSettlementSummary BrokerSettlements { get; set; } = PlayerBrokerSettlementSummary.Empty;
 
+	// Java parity: model/broker/BrokerPlayerCache remembers the last broker list/search for refresh after buy.
+	public int BrokerMaskCache { get; set; }
+
+	public byte BrokerSortTypeCache { get; set; }
+
+	public int BrokerStartPageCache { get; set; }
+
+	public IReadOnlyList<int> BrokerSearchItemIds { get; set; } = Array.Empty<int>();
+
 	public IReadOnlyList<PlayerHouse> Houses { get; set; } = Array.Empty<PlayerHouse>();
 
 	public IReadOnlyDictionary<int, long> CraftCooldowns { get; set; } = new Dictionary<int, long>();
