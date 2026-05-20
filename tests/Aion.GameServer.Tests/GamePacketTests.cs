@@ -7,6 +7,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ClientPackets;
 using Aion.GameServer.Network.Aion.ServerPackets;
+using Aion.GameServer.Services;
 using Aion.GameServer.World;
 
 namespace Aion.GameServer.Tests;
@@ -383,7 +384,135 @@ public class GamePacketTests
 		Assert.Equal(0, brokerSellWindowReader.ReadQ());
 		Assert.Equal(0, brokerSellWindowReader.ReadQ());
 		Assert.Equal(0, brokerSellWindowReader.Remaining);
+		Assert.Equal(
+			Convert.FromHexString("04005A000000"),
+			SerializeUnencryptedPayload(SmBrokerService.CreateCancelRegisteredItem(90)));
 		Assert.Equal(Convert.FromHexString("0600"), SerializeUnencryptedPayload(SmBrokerService.CreateRemoveSettledIcon()));
+
+		var brokerReturnPayload = SerializeUnencryptedPayload(
+			SmInventoryAddItem.CreateBrokerReturn(
+				new InventoryItem { ObjectId = 90, ItemId = 100000, Count = 2, OwnerId = 1001, Location = 0, Slot = 65535 },
+				attachedTemplate));
+		using var brokerReturnReader = new PacketBuffer(brokerReturnPayload);
+		Assert.Equal(SmInventoryAddItem.BrokerReturn, brokerReturnReader.ReadH());
+		Assert.Equal(1, brokerReturnReader.ReadH());
+		var brokerReturnItem = ReadInventoryItemHeader(brokerReturnReader);
+		Assert.Equal(90, brokerReturnItem.ObjectId);
+		Assert.Equal(100000, brokerReturnItem.ItemId);
+		Assert.True(brokerReturnItem.BlobSize > 0);
+		Assert.Equal(65535, brokerReturnItem.EquipmentSlot);
+		Assert.Equal(0, brokerReturnItem.IsCloth);
+		Assert.Equal(0, brokerReturnReader.Remaining);
+		Assert.Equal(
+			Convert.FromHexString("000001000000020304"),
+			SerializeUnencryptedPayload(
+				SmCubeUpdate.CubeSize(
+					new Player
+					{
+						NpcExpands = 2,
+						QuestExpands = 3,
+						ItemExpands = 4,
+						InventoryItems =
+						[
+							new InventoryItem { ObjectId = 77, ItemId = 182400001, Count = 10, Location = 0 },
+							new InventoryItem { ObjectId = 90, ItemId = 100000, Count = 2, Location = 0 },
+						],
+					})));
+
+		var brokerItem = new PlayerBrokerItem(
+			90,
+			100000,
+			2,
+			"Maker",
+			50,
+			1001,
+			"Seller",
+			"ELYOS",
+			IsSold: false,
+			IsSettled: false,
+			DateTime.Now.AddDays(7),
+			DateTime.Now,
+			SplittingAvailable: true,
+			new InventoryItem { ObjectId = 90, ItemId = 100000, Count = 2 });
+		var brokerRegisteredPayload = SerializeUnencryptedPayload(SmBrokerService.CreateRegisteredItems([brokerItem]));
+		using var brokerRegisteredReader = new PacketBuffer(brokerRegisteredPayload);
+		Assert.Equal(1, (int)brokerRegisteredReader.ReadC());
+		Assert.Equal(0, brokerRegisteredReader.ReadD());
+		Assert.Equal(1, brokerRegisteredReader.ReadH());
+		Assert.Equal(90, brokerRegisteredReader.ReadD());
+		Assert.Equal(100000, brokerRegisteredReader.ReadD());
+		Assert.Equal(100, brokerRegisteredReader.ReadQ());
+		Assert.Equal(2, brokerRegisteredReader.ReadQ());
+		Assert.Equal(2, brokerRegisteredReader.ReadQ());
+		Assert.InRange((int)brokerRegisteredReader.ReadC(), 6, 7);
+		brokerRegisteredReader.ReadB(138);
+		Assert.Equal("Maker", brokerRegisteredReader.ReadS());
+		Assert.Equal(0, brokerRegisteredReader.ReadH());
+		Assert.Equal(0, (int)brokerRegisteredReader.ReadC());
+		Assert.Equal(0x11, (int)brokerRegisteredReader.ReadC());
+		Assert.Equal(0, brokerRegisteredReader.ReadD());
+		Assert.Equal(0x12, (int)brokerRegisteredReader.ReadC());
+		Assert.Equal(0, (int)brokerRegisteredReader.ReadC());
+		Assert.Equal(1, (int)brokerRegisteredReader.ReadC());
+		Assert.Equal(0, brokerRegisteredReader.Remaining);
+
+		var brokerSearchedPayload = SerializeUnencryptedPayload(
+			SmBrokerService.CreateSearchedItems(
+				new PlayerBrokerItemPage([brokerItem with { AveragePrice = 75 }], 1, 0, 0)));
+		using var brokerSearchedReader = new PacketBuffer(brokerSearchedPayload);
+		Assert.Equal(0, (int)brokerSearchedReader.ReadC());
+		Assert.Equal(1, brokerSearchedReader.ReadD());
+		Assert.Equal(0, (int)brokerSearchedReader.ReadC());
+		Assert.Equal(0, brokerSearchedReader.ReadH());
+		Assert.Equal(1, brokerSearchedReader.ReadH());
+		Assert.Equal(90, brokerSearchedReader.ReadD());
+		Assert.Equal(100000, brokerSearchedReader.ReadD());
+		Assert.Equal(100, brokerSearchedReader.ReadQ());
+		Assert.Equal(75, brokerSearchedReader.ReadQ());
+		Assert.Equal(2, brokerSearchedReader.ReadQ());
+		brokerSearchedReader.ReadB(138);
+		Assert.Equal("Seller", brokerSearchedReader.ReadS());
+		Assert.Equal("Maker", brokerSearchedReader.ReadS());
+		Assert.Equal(0, brokerSearchedReader.ReadH());
+		Assert.Equal(0, (int)brokerSearchedReader.ReadC());
+		Assert.Equal(0x11, (int)brokerSearchedReader.ReadC());
+		Assert.Equal(0, brokerSearchedReader.ReadD());
+		Assert.Equal(0x12, (int)brokerSearchedReader.ReadC());
+		Assert.Equal(0, (int)brokerSearchedReader.ReadC());
+		Assert.Equal(1, (int)brokerSearchedReader.ReadC());
+		Assert.Equal(0, brokerSearchedReader.Remaining);
+
+		var settleTime = new DateTime(2026, 1, 1, 10, 30, 0, DateTimeKind.Local);
+		var brokerSettledSoldPayload = SerializeUnencryptedPayload(
+			SmBrokerService.CreateSettledItems(
+				new PlayerBrokerItemPage(
+					[
+						brokerItem with
+						{
+							IsSold = true,
+							IsSettled = true,
+							SettleTime = settleTime,
+							Item = null,
+						},
+					],
+					1,
+					0,
+					100)));
+		using var brokerSettledSoldReader = new PacketBuffer(brokerSettledSoldPayload);
+		Assert.Equal(5, (int)brokerSettledSoldReader.ReadC());
+		Assert.Equal(100, brokerSettledSoldReader.ReadQ());
+		Assert.Equal(1, brokerSettledSoldReader.ReadD());
+		Assert.Equal(0, brokerSettledSoldReader.ReadH());
+		Assert.Equal(0, (int)brokerSettledSoldReader.ReadC());
+		Assert.Equal(1, brokerSettledSoldReader.ReadH());
+		Assert.Equal(100000, brokerSettledSoldReader.ReadD());
+		Assert.Equal(100, brokerSettledSoldReader.ReadQ());
+		Assert.Equal(2, brokerSettledSoldReader.ReadQ());
+		Assert.Equal(2, brokerSettledSoldReader.ReadQ());
+		Assert.Equal((int)(new DateTimeOffset(settleTime).ToUnixTimeSeconds() / 60), brokerSettledSoldReader.ReadD());
+		Assert.All(brokerSettledSoldReader.ReadB(138), value => Assert.Equal(0, value));
+		Assert.Equal("Maker", brokerSettledSoldReader.ReadS());
+		Assert.Equal(0, brokerSettledSoldReader.Remaining);
 
 		var houseNow = new DateTime(2026, 1, 1, 10, 0, 0, DateTimeKind.Local);
 		var housePayload = SerializeUnencryptedPayload(
@@ -1181,6 +1310,22 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void BrokerItemMaskMatcher_MatchesJavaNumericMasks()
+	{
+		var sword = CreateBrokerTemplate(100000001);
+		var gatheredMaterial = CreateBrokerTemplate(152001234);
+		var enchantStone = CreateBrokerTemplate(166001234);
+
+		Assert.True(BrokerItemMaskMatcher.Matches(9010, sword));
+		Assert.True(BrokerItemMaskMatcher.Matches(1000, sword));
+		Assert.False(BrokerItemMaskMatcher.Matches(1001, sword));
+		Assert.True(BrokerItemMaskMatcher.Matches(6030, gatheredMaterial));
+		Assert.False(BrokerItemMaskMatcher.Matches(6031, gatheredMaterial));
+		Assert.True(BrokerItemMaskMatcher.Matches(1660, enchantStone));
+		Assert.True(BrokerItemMaskMatcher.Matches(8060, enchantStone));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesMailPackets()
 	{
 		var sendMail = Assert.IsType<CmSendMail>(
@@ -1466,5 +1611,22 @@ public class GamePacketTests
 		var bytes = new byte[48];
 		Encoding.Unicode.GetBytes(value, bytes);
 		buffer.WriteB(bytes);
+	}
+
+	private static ItemTemplateSummary CreateBrokerTemplate(int templateId)
+	{
+		return new ItemTemplateSummary(
+			templateId,
+			$"item_{templateId}",
+			0,
+			0,
+			1,
+			string.Empty,
+			string.Empty,
+			string.Empty,
+			string.Empty,
+			1,
+			0,
+			0);
 	}
 }

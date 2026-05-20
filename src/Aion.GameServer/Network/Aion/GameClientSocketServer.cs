@@ -23,6 +23,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 	private readonly CharacterCreationService? _characterCreationService;
 	private readonly PlayerEnterWorldService? _playerEnterWorldService;
 	private readonly IMailRepository? _mailRepository;
+	private readonly IBrokerRepository? _brokerRepository;
 	private readonly IDFactory? _idFactory;
 	private readonly GameTimeService? _gameTimeService;
 	private readonly ConcurrentDictionary<string, GameServerConnection> _connections = new();
@@ -39,6 +40,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		CharacterCreationService? characterCreationService = null,
 		PlayerEnterWorldService? playerEnterWorldService = null,
 		IMailRepository? mailRepository = null,
+		IBrokerRepository? brokerRepository = null,
 		IDFactory? idFactory = null,
 		GameTimeService? gameTimeService = null)
 		: base(
@@ -56,6 +58,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		_characterCreationService = characterCreationService;
 		_playerEnterWorldService = playerEnterWorldService;
 		_mailRepository = mailRepository;
+		_brokerRepository = brokerRepository;
 		_idFactory = idFactory;
 		_gameTimeService = gameTimeService;
 	}
@@ -81,6 +84,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 				_characterCreationService,
 				_playerEnterWorldService,
 				_mailRepository,
+				_brokerRepository,
 				this,
 				_idFactory,
 				_gameTimeService);

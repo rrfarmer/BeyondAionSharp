@@ -7,6 +7,7 @@ namespace Aion.GameServer.Network.Aion.ServerPackets;
 public sealed class SmInventoryUpdateItem : GameServerPacket
 {
 	public const int PacketOpCode = 29;
+	public const int IncreaseKinahCollect = 0x1A;
 	public const int DecreaseItemUse = 0x16;
 	public const int DecreaseKinahBuy = 0x1D;
 

@@ -274,45 +274,47 @@ public sealed class SmInventoryInfo : GameServerPacket
 		WriteBlob(
 			buffer,
 			0x0b,
-			payload =>
-			{
-				// Java parity: network/aion/iteminfo/EnchantInfoBlobEntry.writeInfo.
-				payload.WriteC(item.IsSoulBound ? 1 : 0);
-				payload.WriteC(item.Enchant);
-				payload.WriteD(item.ItemSkin == 0 ? item.ItemId : item.ItemSkin);
-				payload.WriteC(item.OptionalSocket);
-				payload.WriteC(item.EnchantBonus);
-				WriteStoneSlots(payload, item.ManaStones);
-				payload.WriteD(item.Godstone?.ItemId ?? 0);
-				var dyeExpiration = GetRemainingSeconds(item.ColorExpires);
-				WriteDyeInfo(payload, dyeExpiration < 0 ? null : item.Color);
-				payload.WriteC(0);
-				payload.WriteD(0);
-				payload.WriteD(Math.Max(0, dyeExpiration));
-				if (item.IdianStone is { PolishNumber: > 0 } idianStone)
-				{
-					payload.WriteD(idianStone.ItemId);
-					payload.WriteC(idianStone.PolishNumber);
-				}
-				else
-				{
-					payload.WriteD(0);
-					payload.WriteC(0);
-				}
-				payload.WriteC(item.Tempering);
-				payload.WriteD(0);
-				payload.WriteC(0);
-				payload.WriteD(0);
-				payload.WriteC(0);
-				payload.WriteD(0);
-				payload.WriteD(0);
-				for (var i = 0; i < 13; i++)
-					payload.WriteD(0);
-				payload.WriteC(item.IsAmplified ? 1 : 0);
-				payload.WriteD(item.BuffSkill);
-				payload.WriteD(0);
-				payload.WriteD(0);
-			});
+			payload => WriteEnchantInfo(payload, item));
+	}
+
+	internal static void WriteEnchantInfo(PacketBuffer payload, InventoryItem item)
+	{
+		// Java parity: network/aion/iteminfo/EnchantInfoBlobEntry.writeInfo.
+		payload.WriteC(item.IsSoulBound ? 1 : 0);
+		payload.WriteC(item.Enchant);
+		payload.WriteD(item.ItemSkin == 0 ? item.ItemId : item.ItemSkin);
+		payload.WriteC(item.OptionalSocket);
+		payload.WriteC(item.EnchantBonus);
+		WriteStoneSlots(payload, item.ManaStones);
+		payload.WriteD(item.Godstone?.ItemId ?? 0);
+		var dyeExpiration = GetRemainingSeconds(item.ColorExpires);
+		WriteDyeInfo(payload, dyeExpiration < 0 ? null : item.Color);
+		payload.WriteC(0);
+		payload.WriteD(0);
+		payload.WriteD(Math.Max(0, dyeExpiration));
+		if (item.IdianStone is { PolishNumber: > 0 } idianStone)
+		{
+			payload.WriteD(idianStone.ItemId);
+			payload.WriteC(idianStone.PolishNumber);
+		}
+		else
+		{
+			payload.WriteD(0);
+			payload.WriteC(0);
+		}
+		payload.WriteC(item.Tempering);
+		payload.WriteD(0);
+		payload.WriteC(0);
+		payload.WriteD(0);
+		payload.WriteC(0);
+		payload.WriteD(0);
+		payload.WriteD(0);
+		for (var i = 0; i < 13; i++)
+			payload.WriteD(0);
+		payload.WriteC(item.IsAmplified ? 1 : 0);
+		payload.WriteD(item.BuffSkill);
+		payload.WriteD(0);
+		payload.WriteD(0);
 	}
 
 	private static void WriteConditioningInfoBlob(PacketBuffer buffer, InventoryItem item)
@@ -320,7 +322,7 @@ public sealed class SmInventoryInfo : GameServerPacket
 		WriteBlob(buffer, 0x0f, payload => payload.WriteD(item.Charge));
 	}
 
-	private static void WritePolishInfoBlob(PacketBuffer buffer, InventoryItem item)
+	internal static void WritePolishInfoBlob(PacketBuffer buffer, InventoryItem item)
 	{
 		// Java parity: network/aion/iteminfo/PolishInfoBlobEntry.writeThisBlob.
 		WriteBlob(buffer, 0x11, payload => payload.WriteD(item.IdianStone?.PolishCharge ?? 0));
@@ -374,7 +376,7 @@ public sealed class SmInventoryInfo : GameServerPacket
 			});
 	}
 
-	private static void WriteWrapInfoBlob(PacketBuffer buffer, InventoryItem item)
+	internal static void WriteWrapInfoBlob(PacketBuffer buffer, InventoryItem item)
 	{
 		WriteBlob(buffer, 0x12, payload => payload.WriteC(item.PackCount));
 	}
