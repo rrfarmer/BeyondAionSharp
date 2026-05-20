@@ -118,11 +118,13 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(staticData.GetElementCount("npc_template"), staticData.NpcTemplates.Count);
 		Assert.Equal(staticData.GetElementCount("skill_template"), staticData.SkillTemplates.Count);
 		Assert.Equal(staticData.GetElementCount("recipe_template"), staticData.RecipeTemplates.Count);
+		Assert.Equal(staticData.GetElementCount("instance_cooltime"), staticData.InstanceCooltimes.Count);
 		Assert.Equal("SWORD", staticData.ItemTemplates.GetItemTemplate(100000001)?.ItemGroup);
 		Assert.Equal(3, staticData.ItemTemplates.GetItemTemplate(100000094)?.ValidEquipmentSlots);
 		Assert.Equal("kamikaze worm", staticData.NpcTemplates.GetNpcTemplate(201000)?.Name);
 		Assert.Equal(8, staticData.SkillTemplates.GetSkillTemplatesByGroup("RA_WHITETIGER").Count);
 		Assert.Equal(152000401, staticData.RecipeTemplates.GetRecipeTemplateById(155000001)?.ProductId);
+		Assert.Equal(5, staticData.InstanceCooltimes.GetInstanceCooltimeByWorldId(300030000)?.MaxCount);
 		Assert.Contains(staticData.RecipeTemplates.GetAutolearnRecipes("ELYOS", 40009, 1), recipe => recipe.RecipeId == 155000001);
 		Assert.Equal(6, staticData.PlayerInitialData.Count);
 		Assert.Equal(210010000, staticData.PlayerInitialData.GetSpawnLocation("ELYOS")?.MapId);

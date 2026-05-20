@@ -9,6 +9,8 @@ public sealed record PlayerQuestState(
 {
 	public bool IsComplete => string.Equals(Status, "COMPLETE", StringComparison.Ordinal);
 
+	public bool IsCompletedAtLeastOnce => CompleteCount > 0;
+
 	// Java parity: questEngine/model/QuestStatus.value.
 	public int GetStatusValue()
 	{
@@ -31,5 +33,13 @@ public sealed record PlayerQuestState(
 	public int GetClientCompleteCount()
 	{
 		return Math.Min(CompleteCount, 255);
+	}
+
+	// Java parity: network/aion/serverpackets/SM_QUEST_COMPLETED_LIST writes QuestState.canRepeat() ? 0 : 1.
+	public int GetCompletedQuestRepeatFlag()
+	{
+		// The Java value depends on QuestTemplate repeat metadata and next_repeat_time.
+		// Those quest templates are not ported yet, so match the non-repeat default until the quest engine lands.
+		return 1;
 	}
 }

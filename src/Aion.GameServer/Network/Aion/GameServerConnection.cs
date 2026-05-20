@@ -21,6 +21,9 @@ namespace Aion.GameServer.Network.Aion;
 public sealed class GameServerConnection : BaseClientConnection
 {
 	private const int MaxCorruptPacketsBeforeDisconnect = 3;
+	private const int CubeStorageId = 0;
+	private const int KinahItemId = 182400001;
+	private const int FirstAvailableSlot = 65535;
 	private readonly GamePacketProcessor<string> _packetProcessor;
 	private readonly GameCrypt _crypt;
 	private readonly GameServerOptions _options;
@@ -37,6 +40,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private int _accountId;
 	private string _accountName = string.Empty;
 	private byte _membership;
+	private Player? _activePlayer;
 	private bool _accountDisconnectNotified;
 	private string _macAddress = string.Empty;
 	private string _hddSerial = string.Empty;
@@ -191,6 +195,7 @@ public sealed class GameServerConnection : BaseClientConnection
 					_accountId = auth.AccountId;
 					_accountName = accountName;
 					_membership = authResult.Membership;
+					_activePlayer = null;
 					_accountDisconnectNotified = false;
 				}
 				else
@@ -198,6 +203,7 @@ public sealed class GameServerConnection : BaseClientConnection
 					_accountId = 0;
 					_accountName = string.Empty;
 					_membership = 0;
+					_activePlayer = null;
 				}
 
 				var worldMaps = _runtimeContext?.DataManager?.StaticData.WorldMaps ?? Array.Empty<WorldMapSummary>();
@@ -251,12 +257,65 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmCharacterPasskey characterPasskey:
 				await SendPacketAsync(new SmCharacterSelect(type: 2, messageType: characterPasskey.Type, wrongCount: 0));
 				break;
+			case CmSendMail sendMail:
+				if (_activePlayer != null)
+				{
+					// Java parity: network/aion/clientpackets/CM_SEND_MAIL.runImpl -> MailService.sendMail.
+					var mailMessageId = GetSendMailShellResponse(sendMail);
+					if (mailMessageId != null)
+						await SendPacketAsync(SmMailService.CreateMailMessage(mailMessageId.Value));
+				}
+				break;
+			case CmCheckMailList checkMailList:
+				if (_activePlayer != null)
+				{
+					// Java parity: network/aion/clientpackets/CM_CHECK_MAIL_LIST.runImpl -> MailService.sendMailList.
+					foreach (var mailListPacket in SmMailService.CreateListPackets(
+						_activePlayer.ObjectId,
+						_activePlayer.Mailbox,
+						checkMailList.ExpressOnly))
+					{
+						await SendPacketAsync(mailListPacket);
+					}
+				}
+				break;
+			case CmReadMail readMail:
+				if (_activePlayer != null)
+				{
+					// Java parity: network/aion/clientpackets/CM_READ_MAIL.runImpl -> MailService.readMail.
+					var letter = _activePlayer.Mailbox.FirstOrDefault(mail => mail.Id == readMail.MailObjectId);
+					if (letter != null)
+					{
+						await SendPacketAsync(SmMailService.CreateReadPacket(
+							_activePlayer.Mailbox,
+							letter,
+							_runtimeContext?.DataManager?.StaticData.ItemTemplates));
+						_activePlayer.Mailbox = _activePlayer.Mailbox
+							.Select(mail => mail.Id == readMail.MailObjectId ? mail with { IsUnread = false } : mail)
+							.ToArray();
+					}
+				}
+				break;
+			case CmGetMailAttachment getMailAttachment:
+				if (_activePlayer != null)
+					await HandleGetMailAttachmentAsync(_activePlayer, getMailAttachment);
+				break;
+			case CmDeleteMail deleteMail:
+				if (_activePlayer != null && deleteMail.MailObjectIds.Count > 0)
+				{
+					// Java parity: network/aion/clientpackets/CM_DELETE_MAIL.runImpl -> MailService.deleteMail.
+					var ids = deleteMail.MailObjectIds.ToHashSet();
+					_activePlayer.Mailbox = _activePlayer.Mailbox.Where(mail => !ids.Contains(mail.Id)).ToArray();
+					await SendPacketAsync(SmMailService.CreateDeletePacket(_activePlayer.Mailbox, deleteMail.MailObjectIds));
+				}
+				break;
 			case CmEnterWorld enterWorld:
 				var enterWorldResult = _playerEnterWorldService == null
 					? new PlayerEnterWorldResult(EnterWorldCheckMessage.ConnectionError)
 					: await _playerEnterWorldService.EnterWorldAsync(_accountId, enterWorld.ObjectId);
 				if (enterWorldResult.Message == EnterWorldCheckMessage.Ok)
 					_state = GameConnectionState.InGame;
+				_activePlayer = enterWorldResult.Message == EnterWorldCheckMessage.Ok ? enterWorldResult.Player : null;
 				await SendPacketAsync(new SmEnterWorldCheck(enterWorldResult.Message));
 				if (enterWorldResult is { Message: EnterWorldCheckMessage.Ok, Player: not null })
 				{
@@ -281,8 +340,12 @@ public sealed class GameServerConnection : BaseClientConnection
 					}
 
 					var workingQuests = enterWorldResult.Player.Quests.Where(quest => !quest.IsComplete).ToArray();
+					foreach (var completedQuestPacket in SmQuestCompletedList.CreateLoginPackets(enterWorldResult.Player.Quests))
+						await SendPacketAsync(completedQuestPacket);
 					await SendPacketAsync(new SmQuestList(workingQuests));
 					await SendPacketAsync(new SmTitleInfo(enterWorldResult.Player.TitleId));
+					if (enterWorldResult.Player.BonusTitleId != 0)
+						await SendPacketAsync(new SmTitleInfo(6, enterWorldResult.Player.BonusTitleId));
 					await SendPacketAsync(new SmMotion(enterWorldResult.Player.Motions));
 					await SendPacketAsync(new SmAfterTimeCheck475());
 					if (enterWorldResult.Player.Settings.UiSettings != null)
@@ -309,9 +372,165 @@ public sealed class GameServerConnection : BaseClientConnection
 					await SendPacketAsync(CreateBindPointPacket(enterWorldResult.Player, staticData));
 					await SendPacketAsync(new SmPlayerSpawn(enterWorldResult.Player));
 					await SendPacketAsync(new SmGameTime(_gameTimeService?.GameMinutes ?? 0));
+					if (itemTemplates != null)
+					{
+						foreach (var warehousePacket in SmWarehouseInfo.CreateLoginPackets(enterWorldResult.Player, itemTemplates))
+							await SendPacketAsync(warehousePacket);
+					}
+
+					await SendPacketAsync(new SmTitleInfo(enterWorldResult.Player.Titles));
+					await SendPacketAsync(new SmEmotionList(0, enterWorldResult.Player.Emotions));
+					await SendPacketAsync(new SmPrices());
+					if (enterWorldResult.Player.CraftCooldowns.Count > 0)
+						await SendPacketAsync(new SmRecipeCooldown(enterWorldResult.Player.CraftCooldowns, mode: 1));
+					await SendPacketAsync(new SmFriendList(enterWorldResult.Player.Friends, staticData?.PlayerExperienceTable));
+					await SendPacketAsync(new SmBlockList(enterWorldResult.Player.BlockedUsers));
+					if (staticData?.InstanceCooltimes.Count > 0)
+						await SendPacketAsync(new SmInstanceInfo(2, enterWorldResult.Player, staticData.InstanceCooltimes));
+					await SendPacketAsync(new SmAbyssRank(enterWorldResult.Player.AbyssRank));
+					await SendPacketAsync(new SmStatsInfo(enterWorldResult.Player, staticData?.PlayerExperienceTable, _gameTimeService?.GameMinutes ?? 0));
+					// Java parity: services/mail/MailService.onPlayerLogin sends mailbox state before macro/recipe restore.
+					await SendPacketAsync(new SmMailService(enterWorldResult.Player.Mailbox));
+					var housingBidRefreshPacket = SmReceiveBids.CreateLoginPacket(enterWorldResult.Player);
+					if (housingBidRefreshPacket != null)
+					{
+						// Java parity: services/HousingBidService.onPlayerLogin after mailbox initialization.
+						await SendPacketAsync(housingBidRefreshPacket);
+					}
+
+					// Java parity: PlayerEnterWorldService.sendMacroList before SM_RECIPE_LIST.
+					foreach (var macroPacket in SmMacroList.CreateLoginPackets(enterWorldResult.Player.ObjectId, enterWorldResult.Player.Macros))
+						await SendPacketAsync(macroPacket);
+					await SendPacketAsync(new SmRecipeList(enterWorldResult.Player.Recipes));
+					if (enterWorldResult.Player.BrokerSettlements.HasSettledItems)
+					{
+						// Java parity: services/BrokerService.onPlayerLogin settled-icon notification.
+						await SendPacketAsync(new SmBrokerService(enterWorldResult.Player.BrokerSettlements.EarnedKinah));
+					}
+
+					// Java parity: services/HousingService.onPlayerLogin sends house owner profile info.
+					await SendPacketAsync(new SmHouseOwnerInfo(enterWorldResult.Player));
 				}
 				break;
 		}
+	}
+
+	private async Task HandleGetMailAttachmentAsync(Player player, CmGetMailAttachment packet)
+	{
+		// Java parity: services/mail/MailService.getAttachments.
+		var letter = player.Mailbox.FirstOrDefault(mail => mail.Id == packet.MailObjectId);
+		if (letter == null)
+			return;
+
+		switch (packet.AttachmentType)
+		{
+			case 0:
+				if (letter.AttachedItem == null)
+					return;
+
+				player.InventoryItems = player.InventoryItems
+					.Concat([CopyInventoryItem(letter.AttachedItem, CubeStorageId, FirstAvailableSlot)])
+					.ToArray();
+				player.Mailbox = player.Mailbox
+					.Select(mail => mail.Id == packet.MailObjectId
+						? mail with { AttachedItem = null, AttachedItemObjectId = 0, AttachedItemTemplateId = 0 }
+						: mail)
+					.ToArray();
+				await SendPacketAsync(SmMailService.CreateAttachmentState(packet.MailObjectId, packet.AttachmentType));
+				break;
+			case 1:
+				player.InventoryItems = IncreaseInventoryKinah(
+					player.InventoryItems,
+					player.ObjectId,
+					letter.AttachedKinah,
+					_idFactory?.NextId() ?? 0);
+				player.Mailbox = player.Mailbox
+					.Select(mail => mail.Id == packet.MailObjectId ? mail with { AttachedKinah = 0 } : mail)
+					.ToArray();
+				await SendPacketAsync(SmMailService.CreateAttachmentState(packet.MailObjectId, packet.AttachmentType));
+				break;
+		}
+	}
+
+	private static int? GetSendMailShellResponse(CmSendMail sendMail)
+	{
+		// Java parity: services/mail/MailService.sendMail early validation; full recipient lookup/persistence is still deferred.
+		if (sendMail.RecipientName.Length > 16 || sendMail.LetterTypeId == 2 || sendMail.KinahCount < 0)
+			return null;
+		if (sendMail.LetterTypeId is not (0 or 1))
+			return null;
+		return SmMailService.NoSuchCharacterName;
+	}
+
+	private static IReadOnlyList<InventoryItem> IncreaseInventoryKinah(
+		IReadOnlyList<InventoryItem> inventoryItems,
+		int ownerId,
+		long amount,
+		int fallbackObjectId)
+	{
+		var items = inventoryItems.ToList();
+		var index = items.FindIndex(item => item.ItemId == KinahItemId && item.Location == CubeStorageId);
+		if (index >= 0)
+		{
+			items[index] = CopyInventoryItem(items[index], count: items[index].Count + amount);
+			return items;
+		}
+
+		items.Add(
+			new InventoryItem
+			{
+				ObjectId = fallbackObjectId,
+				ItemId = KinahItemId,
+				Count = amount,
+				OwnerId = ownerId,
+				Location = CubeStorageId,
+				Slot = FirstAvailableSlot,
+			});
+		return items;
+	}
+
+	private static InventoryItem CopyInventoryItem(
+		InventoryItem item,
+		int? location = null,
+		long? slot = null,
+		long? count = null)
+	{
+		var copy = new InventoryItem
+		{
+			ObjectId = item.ObjectId,
+			ItemId = item.ItemId,
+			Count = count ?? item.Count,
+			Color = item.Color,
+			ColorExpires = item.ColorExpires,
+			Creator = item.Creator,
+			ExpireTime = item.ExpireTime,
+			ActivationCount = item.ActivationCount,
+			OwnerId = item.OwnerId,
+			IsEquipped = item.IsEquipped,
+			IsSoulBound = item.IsSoulBound,
+			Slot = slot ?? item.Slot,
+			Location = location ?? item.Location,
+			Enchant = item.Enchant,
+			EnchantBonus = item.EnchantBonus,
+			ItemSkin = item.ItemSkin,
+			FusionedItem = item.FusionedItem,
+			OptionalSocket = item.OptionalSocket,
+			OptionalFusionSocket = item.OptionalFusionSocket,
+			Charge = item.Charge,
+			TuneCount = item.TuneCount,
+			RandomBonus = item.RandomBonus,
+			FusionRandomBonus = item.FusionRandomBonus,
+			Tempering = item.Tempering,
+			PackCount = item.PackCount,
+			IsAmplified = item.IsAmplified,
+			BuffSkill = item.BuffSkill,
+			RandomPlumeBonus = item.RandomPlumeBonus,
+		};
+		copy.ManaStones = item.ManaStones;
+		copy.FusionStones = item.FusionStones;
+		copy.Godstone = item.Godstone;
+		copy.IdianStone = item.IdianStone;
+		return copy;
 	}
 
 	private static SmBindPointInfo CreateBindPointPacket(Player player, StaticData? staticData)

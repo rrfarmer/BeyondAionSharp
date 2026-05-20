@@ -57,4 +57,21 @@ public sealed class InventoryItem
 	public int BuffSkill { get; init; }
 
 	public int RandomPlumeBonus { get; init; }
+
+	public IReadOnlyList<ItemStoneSocket> ManaStones { get; set; } = Array.Empty<ItemStoneSocket>();
+
+	public IReadOnlyList<ItemStoneSocket> FusionStones { get; set; } = Array.Empty<ItemStoneSocket>();
+
+	public PlayerGodstone? Godstone { get; set; }
+
+	public PlayerIdianStone? IdianStone { get; set; }
 }
+
+// Java parity: model/items/ManaStone for item_stones category MANASTONE and FUSIONSTONE.
+public sealed record ItemStoneSocket(int ItemId, int Slot);
+
+// Java parity: model/items/GodStone restored by dao/ItemStoneListDAO.load.
+public sealed record PlayerGodstone(int ItemId, int ProcCount);
+
+// Java parity: model/items/IdianStone restored by dao/ItemStoneListDAO.load.
+public sealed record PlayerIdianStone(int ItemId, int PolishNumber, int PolishCharge);

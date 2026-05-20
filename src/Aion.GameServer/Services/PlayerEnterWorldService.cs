@@ -61,11 +61,26 @@ public sealed class PlayerEnterWorldService
 		try
 		{
 			player.InventoryItems = await _repository.LoadPlayerItemsAsync(playerObjectId, cancellationToken);
+			player.WarehouseItems = await _repository.LoadPlayerWarehouseItemsAsync(playerObjectId, cancellationToken);
+			player.AccountWarehouseItems = await _repository.LoadAccountWarehouseItemsAsync(player.AccountId, cancellationToken);
 			player.Skills = await _repository.LoadPlayerSkillsAsync(playerObjectId, cancellationToken);
 			player.SkillCooldowns = await _repository.LoadPlayerSkillCooldownsAsync(playerObjectId, cancellationToken);
 			player.ItemCooldowns = await _repository.LoadPlayerItemCooldownsAsync(playerObjectId, cancellationToken);
 			player.Quests = await _repository.LoadPlayerQuestsAsync(playerObjectId, cancellationToken);
+			player.Titles = await _repository.LoadPlayerTitlesAsync(playerObjectId, cancellationToken);
 			player.Motions = await _repository.LoadPlayerMotionsAsync(playerObjectId, cancellationToken);
+			player.Emotions = await _repository.LoadPlayerEmotionsAsync(playerObjectId, cancellationToken);
+			player.Recipes = await _repository.LoadPlayerRecipesAsync(playerObjectId, cancellationToken);
+			player.Macros = await _repository.LoadPlayerMacrosAsync(playerObjectId, cancellationToken);
+			player.Mailbox = await _repository.LoadPlayerMailboxAsync(playerObjectId, cancellationToken);
+			player.BrokerSettlements = await _repository.LoadBrokerSettlementsAsync(playerObjectId, player.Race, cancellationToken);
+			player.Houses = await _repository.LoadPlayerHousesAsync(playerObjectId, cancellationToken);
+			player.CraftCooldowns = await _repository.LoadPlayerCraftCooldownsAsync(playerObjectId, cancellationToken);
+			player.PortalCooldowns = await _repository.LoadPlayerPortalCooldownsAsync(playerObjectId, cancellationToken);
+			player.LifeStats = await _repository.LoadPlayerLifeStatsAsync(playerObjectId, cancellationToken);
+			player.Friends = await _repository.LoadPlayerFriendsAsync(playerObjectId, cancellationToken);
+			player.BlockedUsers = await _repository.LoadPlayerBlockedUsersAsync(playerObjectId, cancellationToken);
+			player.AbyssRank = await _repository.LoadPlayerAbyssRankAsync(playerObjectId, cancellationToken);
 			player.Settings = await _repository.LoadPlayerSettingsAsync(playerObjectId, cancellationToken);
 			player.BindPoint = await _repository.LoadPlayerBindPointAsync(playerObjectId, cancellationToken);
 			if (!_world.TryAddObject(playerObjectId, player))

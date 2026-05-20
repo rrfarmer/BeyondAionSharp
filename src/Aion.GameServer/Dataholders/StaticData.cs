@@ -17,6 +17,7 @@ public sealed class StaticData
 		NpcTemplateTable npcTemplates,
 		SkillTemplateTable skillTemplates,
 		RecipeTemplateTable recipeTemplates,
+		InstanceCooltimeTable instanceCooltimes,
 		PlayerInitialDataTable playerInitialData,
 		SkillTreeTable skillTree,
 		Task? validationTask)
@@ -31,6 +32,7 @@ public sealed class StaticData
 		NpcTemplates = npcTemplates;
 		SkillTemplates = skillTemplates;
 		RecipeTemplates = recipeTemplates;
+		InstanceCooltimes = instanceCooltimes;
 		PlayerInitialData = playerInitialData;
 		SkillTree = skillTree;
 		ValidationTask = validationTask;
@@ -58,6 +60,8 @@ public sealed class StaticData
 
 	public RecipeTemplateTable RecipeTemplates { get; }
 
+	public InstanceCooltimeTable InstanceCooltimes { get; }
+
 	public PlayerInitialDataTable PlayerInitialData { get; }
 
 	public SkillTreeTable SkillTree { get; }
@@ -84,10 +88,12 @@ public sealed class StaticData
 		var npcTemplates = new List<NpcTemplateSummary>();
 		var skillTemplates = new List<SkillTemplateSummary>();
 		var recipeTemplates = new List<RecipeTemplateSummary>();
+		var instanceCooltimes = new List<InstanceCooltimeSummary>();
 		var skillTree = new List<SkillLearnSummary>();
 		var creationItemsByClass = new Dictionary<string, List<StartingItem>>(StringComparer.OrdinalIgnoreCase);
 		var spawnLocationsByRace = new Dictionary<string, PlayerSpawnLocation>(StringComparer.OrdinalIgnoreCase);
 		string? currentPlayerCreationClass = null;
+		InstanceCooltimeBuilder? currentInstanceCooltime = null;
 		var elementPath = new Dictionary<int, string>();
 		var settings = new XmlReaderSettings
 		{
@@ -103,6 +109,12 @@ public sealed class StaticData
 			cancellationToken.ThrowIfCancellationRequested();
 			if (reader.NodeType == XmlNodeType.EndElement)
 			{
+				if (reader.Depth == 2 && reader.LocalName == "instance_cooltime" && currentInstanceCooltime != null)
+				{
+					instanceCooltimes.Add(currentInstanceCooltime.ToSummary());
+					currentInstanceCooltime = null;
+				}
+
 				if (reader.Depth == 2 && reader.LocalName == "player_data")
 					currentPlayerCreationClass = null;
 				elementPath.Remove(reader.Depth);
@@ -138,6 +150,22 @@ public sealed class StaticData
 					var twinCount = int.TryParse(reader.GetAttribute("twin_count"), out var parsedTwinCount) ? parsedTwinCount : 0;
 					worldMaps.Add(new WorldMapSummary(mapId, isInstance, twinCount));
 				}
+			}
+
+			if (reader.Depth == 2 && reader.LocalName == "instance_cooltime")
+			{
+				currentInstanceCooltime = new InstanceCooltimeBuilder(
+					ReadRequiredIntAttribute(reader, "id"),
+					ReadRequiredIntAttribute(reader, "worldId"),
+					reader.GetAttribute("race") ?? string.Empty);
+				continue;
+			}
+
+			if (reader.Depth == 3 && reader.LocalName == "maxcount" && currentInstanceCooltime != null)
+			{
+				var value = await ReadElementTextAsync(reader, cancellationToken);
+				currentInstanceCooltime.MaxCount = int.TryParse(value, out var parsedMaxCount) ? parsedMaxCount : 0;
+				continue;
 			}
 
 			if (reader.Depth == 2 && reader.LocalName == "item_template")
@@ -261,6 +289,7 @@ public sealed class StaticData
 			new NpcTemplateTable(npcTemplates.AsReadOnly()),
 			new SkillTemplateTable(skillTemplates.AsReadOnly()),
 			new RecipeTemplateTable(recipeTemplates.AsReadOnly()),
+			new InstanceCooltimeTable(instanceCooltimes.AsReadOnly()),
 			new PlayerInitialDataTable(
 				creationItemsByClass.ToDictionary(
 					pair => pair.Key,
@@ -269,6 +298,30 @@ public sealed class StaticData
 				spawnLocationsByRace),
 			new SkillTreeTable(skillTree.AsReadOnly(), new SkillTemplateTable(skillTemplates.AsReadOnly())),
 			validationTask);
+	}
+
+	private sealed class InstanceCooltimeBuilder
+	{
+		public InstanceCooltimeBuilder(int id, int worldId, string race)
+		{
+			Id = id;
+			WorldId = worldId;
+			Race = race;
+		}
+
+		private int Id { get; }
+
+		private int WorldId { get; }
+
+		private string Race { get; }
+
+		public int MaxCount { get; set; }
+
+		public InstanceCooltimeSummary ToSummary()
+		{
+			// Java parity: model/templates/InstanceCooltime fields consumed by SM_INSTANCE_INFO.
+			return new InstanceCooltimeSummary(Id, WorldId, Race, MaxCount);
+		}
 	}
 
 	private static PlayerSpawnLocation ReadSpawnLocation(XmlReader reader)

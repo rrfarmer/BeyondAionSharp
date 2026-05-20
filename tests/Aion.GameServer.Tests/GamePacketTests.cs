@@ -98,14 +98,399 @@ public class GamePacketTests
 			SerializeUnencryptedPayload(
 				new SmQuestList([new PlayerQuestState(100, "START", 0x22, 2, 5)])));
 		Assert.Equal(
+			Convert.FromHexString("0100FFFF640000000201"),
+			SerializeUnencryptedPayload(
+				new SmQuestCompletedList(0, [new PlayerQuestState(100, "COMPLETE", 0, 0, 2)])));
+		Assert.Equal(
+			Convert.FromHexString("01000000"),
+			SerializeUnencryptedPayload(SmQuestCompletedList.CreateLoginPackets(Array.Empty<PlayerQuestState>())[0]));
+		Assert.Equal(
 			Convert.FromHexString("014D00"),
 			SerializeUnencryptedPayload(new SmTitleInfo(77)));
+		Assert.Equal(
+			Convert.FromHexString("060500"),
+			SerializeUnencryptedPayload(new SmTitleInfo(6, 5)));
+		Assert.Equal(
+			Convert.FromHexString("00000100050000000A000000"),
+			SerializeUnencryptedPayload(
+				new SmTitleInfo(
+					[new PlayerTitle(5, 1010)],
+					() => DateTimeOffset.FromUnixTimeSeconds(1000))));
 		Assert.Equal(
 			Convert.FromHexString("0101000B000A00000001"),
 			SerializeUnencryptedPayload(
 				new SmMotion(
 					[new PlayerMotion(11, 1010, true)],
 					() => DateTimeOffset.FromUnixTimeSeconds(1000))));
+		Assert.Equal(
+			Convert.FromHexString("0001000A0000000A00"),
+			SerializeUnencryptedPayload(
+				new SmEmotionList(
+					0,
+					[new PlayerEmotion(10, 1010)],
+					() => DateTimeOffset.FromUnixTimeSeconds(1000))));
+		Assert.Equal(
+			Convert.FromHexString("646464"),
+			SerializeUnencryptedPayload(new SmPrices()));
+		Assert.Equal(
+			Convert.FromHexString("010100070000000A000000"),
+			SerializeUnencryptedPayload(
+				new SmRecipeCooldown(
+					new Dictionary<int, long> { [7] = 20_000 },
+					mode: 1,
+					() => DateTimeOffset.FromUnixTimeMilliseconds(10_000))));
+
+		Assert.Equal(
+			Convert.FromHexString("000400030001000100"),
+			SerializeUnencryptedPayload(
+				new SmMailService(
+					[
+						new PlayerMail(1, 1001, "A", "N", "m", true, 0, 0, 0, 0, DateTime.Now),
+						new PlayerMail(2, 1001, "B", "E", "m", true, 0, 0, 0, 1, DateTime.Now),
+						new PlayerMail(3, 1001, "C", "B", "m", true, 0, 0, 0, 2, DateTime.Now),
+						new PlayerMail(4, 1001, "D", "R", "m", false, 0, 0, 0, 1, DateTime.Now),
+					])));
+
+		var mailReceivedAt = new DateTime(2026, 1, 1, 10, 0, 0, DateTimeKind.Local);
+		var mailListPackets = SmMailService.CreateListPackets(
+			1001,
+			[
+				new PlayerMail(10, 1001, "Old", "Normal", "m", true, 90, 100000, 123, 0, mailReceivedAt.AddMinutes(-2)),
+				new PlayerMail(11, 1001, "Read", "Express", "m", false, 0, 0, 55, 1, mailReceivedAt.AddMinutes(-1)),
+				new PlayerMail(12, 1001, "Cloud", "BC", "m", true, 0, 0, 999, 2, mailReceivedAt),
+			],
+			expressOnly: false);
+		Assert.Single(mailListPackets);
+		var mailListPayload = SerializeUnencryptedPayload(mailListPackets[0]);
+		using var mailListReader = new PacketBuffer(mailListPayload);
+		Assert.Equal(2, (int)mailListReader.ReadC());
+		Assert.Equal(1001, mailListReader.ReadD());
+		Assert.Equal(0, (int)mailListReader.ReadC());
+		Assert.Equal(65533, mailListReader.ReadH());
+		Assert.Equal(12, mailListReader.ReadD());
+		Assert.Equal("Cloud", mailListReader.ReadS());
+		Assert.Equal("BC", mailListReader.ReadS());
+		Assert.Equal(0, (int)mailListReader.ReadC());
+		Assert.Equal(0, mailListReader.ReadD());
+		Assert.Equal(0, mailListReader.ReadD());
+		Assert.Equal(999, mailListReader.ReadQ());
+		Assert.Equal(2, (int)mailListReader.ReadC());
+		Assert.Equal(11, mailListReader.ReadD());
+		Assert.Equal("Read", mailListReader.ReadS());
+		Assert.Equal("Express", mailListReader.ReadS());
+		Assert.Equal(1, (int)mailListReader.ReadC());
+		Assert.Equal(0, mailListReader.ReadD());
+		Assert.Equal(0, mailListReader.ReadD());
+		Assert.Equal(55, mailListReader.ReadQ());
+		Assert.Equal(1, (int)mailListReader.ReadC());
+		Assert.Equal(10, mailListReader.ReadD());
+		Assert.Equal("Old", mailListReader.ReadS());
+		Assert.Equal("Normal", mailListReader.ReadS());
+		Assert.Equal(0, (int)mailListReader.ReadC());
+		Assert.Equal(90, mailListReader.ReadD());
+		Assert.Equal(100000, mailListReader.ReadD());
+		Assert.Equal(123, mailListReader.ReadQ());
+		Assert.Equal(0, (int)mailListReader.ReadC());
+		Assert.Equal(0, mailListReader.Remaining);
+
+		var expressMailPayload = SerializeUnencryptedPayload(
+			SmMailService.CreateListPackets(
+				1001,
+				[
+					new PlayerMail(10, 1001, "Old", "Normal", "m", true, 90, 100000, 123, 0, mailReceivedAt.AddMinutes(-2)),
+					new PlayerMail(11, 1001, "Read", "Express", "m", false, 0, 0, 55, 1, mailReceivedAt.AddMinutes(-1)),
+					new PlayerMail(12, 1001, "Cloud", "BC", "m", true, 0, 0, 999, 2, mailReceivedAt),
+				],
+				expressOnly: true)[0]);
+		using var expressMailReader = new PacketBuffer(expressMailPayload);
+		Assert.Equal(2, (int)expressMailReader.ReadC());
+		Assert.Equal(1001, expressMailReader.ReadD());
+		Assert.Equal(0, (int)expressMailReader.ReadC());
+		Assert.Equal(65535, expressMailReader.ReadH());
+		Assert.Equal(12, expressMailReader.ReadD());
+
+		var readMail = new PlayerMail(20, 1001, "Sender", "Subject", "Body", true, 0, 0, 500, 1, mailReceivedAt);
+		var readMailPayload = SerializeUnencryptedPayload(SmMailService.CreateReadPacket([readMail], readMail, itemTemplates: null));
+		using var readMailReader = new PacketBuffer(readMailPayload);
+		Assert.Equal(3, (int)readMailReader.ReadC());
+		Assert.Equal(1001, readMailReader.ReadD());
+		Assert.Equal(65537, readMailReader.ReadD());
+		Assert.Equal(1, readMailReader.ReadD());
+		Assert.Equal(20, readMailReader.ReadD());
+		Assert.Equal(1001, readMailReader.ReadD());
+		Assert.Equal("Sender", readMailReader.ReadS());
+		Assert.Equal("Subject", readMailReader.ReadS());
+		Assert.Equal("Body", readMailReader.ReadS());
+		Assert.Equal(0, readMailReader.ReadQ());
+		Assert.Equal(0, readMailReader.ReadQ());
+		Assert.Equal(0, readMailReader.ReadD());
+		Assert.Equal(500, readMailReader.ReadD());
+		Assert.Equal(0, readMailReader.ReadD());
+		Assert.Equal(0, (int)readMailReader.ReadC());
+		Assert.Equal((int)new DateTimeOffset(mailReceivedAt).ToUnixTimeSeconds(), readMailReader.ReadD());
+		Assert.Equal(1, (int)readMailReader.ReadC());
+		Assert.Equal(0, readMailReader.Remaining);
+
+		var attachedTemplate = new ItemTemplateSummary(
+			100000,
+			"mail_item",
+			40000,
+			0x1234,
+			1,
+			"MATERIAL",
+			"NORMAL",
+			"COMMON",
+			"ALL",
+			100,
+			10,
+			0);
+		var attachedItem = new InventoryItem
+		{
+			ObjectId = 90,
+			ItemId = 100000,
+			Count = 2,
+			OwnerId = 1001,
+			Location = 127,
+		};
+		var attachedMail = new PlayerMail(21, 1001, "ItemSender", "ItemSubject", "ItemBody", true, 90, 100000, 77, 0, mailReceivedAt, attachedItem);
+		var attachedMailPayload = SerializeUnencryptedPayload(
+			SmMailService.CreateReadPacket(
+				[attachedMail, new PlayerMail(22, 1001, "Cloud", "BC", "m", true, 0, 0, 0, 2, mailReceivedAt)],
+				attachedMail,
+				new ItemTemplateTable([attachedTemplate])));
+		using var attachedMailReader = new PacketBuffer(attachedMailPayload);
+		Assert.Equal(3, (int)attachedMailReader.ReadC());
+		Assert.Equal(1001, attachedMailReader.ReadD());
+		Assert.Equal(131074, attachedMailReader.ReadD());
+		Assert.Equal(1, attachedMailReader.ReadD());
+		Assert.Equal(21, attachedMailReader.ReadD());
+		Assert.Equal(1001, attachedMailReader.ReadD());
+		Assert.Equal("ItemSender", attachedMailReader.ReadS());
+		Assert.Equal("ItemSubject", attachedMailReader.ReadS());
+		Assert.Equal("ItemBody", attachedMailReader.ReadS());
+		Assert.Equal(90, attachedMailReader.ReadD());
+		Assert.Equal(100000, attachedMailReader.ReadD());
+		Assert.Equal(1, attachedMailReader.ReadD());
+		Assert.Equal(0, attachedMailReader.ReadD());
+		Assert.Equal(attachedTemplate.GetClientName(), attachedMailReader.ReadS());
+		var attachedBlobSize = attachedMailReader.ReadH();
+		Assert.True(attachedBlobSize > 0);
+		attachedMailReader.ReadB(attachedBlobSize);
+		Assert.Equal(77, attachedMailReader.ReadD());
+		Assert.Equal(0, attachedMailReader.ReadD());
+		Assert.Equal(0, (int)attachedMailReader.ReadC());
+		Assert.Equal((int)new DateTimeOffset(mailReceivedAt).ToUnixTimeSeconds(), attachedMailReader.ReadD());
+		Assert.Equal(0, (int)attachedMailReader.ReadC());
+		Assert.Equal(0, attachedMailReader.Remaining);
+
+		Assert.Equal(
+			Convert.FromHexString("0100"),
+			SerializeUnencryptedPayload(SmMailService.CreateMailMessage(SmMailService.MailSendSuccess)));
+
+		var attachmentStatePayload = SerializeUnencryptedPayload(SmMailService.CreateAttachmentState(letterId: 123, attachmentType: 1));
+		using var attachmentStateReader = new PacketBuffer(attachmentStatePayload);
+		Assert.Equal(5, (int)attachmentStateReader.ReadC());
+		Assert.Equal(123, attachmentStateReader.ReadD());
+		Assert.Equal(1, (int)attachmentStateReader.ReadC());
+		Assert.Equal(1, (int)attachmentStateReader.ReadC());
+		Assert.Equal(0, attachmentStateReader.Remaining);
+
+		var deleteMailPayload = SerializeUnencryptedPayload(
+			SmMailService.CreateDeletePacket(
+				[
+					new PlayerMail(30, 1001, "A", "N", "m", true, 0, 0, 0, 0, mailReceivedAt),
+					new PlayerMail(31, 1001, "B", "E", "m", false, 0, 0, 0, 1, mailReceivedAt),
+					new PlayerMail(32, 1001, "C", "B", "m", true, 0, 0, 0, 2, mailReceivedAt),
+				],
+				[10, 11]));
+		using var deleteMailReader = new PacketBuffer(deleteMailPayload);
+		Assert.Equal(6, (int)deleteMailReader.ReadC());
+		Assert.Equal(131075, deleteMailReader.ReadD());
+		Assert.Equal(1, deleteMailReader.ReadD());
+		Assert.Equal(2, deleteMailReader.ReadH());
+		Assert.Equal(10, deleteMailReader.ReadD());
+		Assert.Equal(11, deleteMailReader.ReadD());
+		Assert.Equal(0, deleteMailReader.Remaining);
+
+		var brokerPayload = SerializeUnencryptedPayload(new SmBrokerService(123456));
+		using var brokerReader = new PacketBuffer(brokerPayload);
+		Assert.Equal(5, (int)brokerReader.ReadC());
+		Assert.Equal(123456, brokerReader.ReadQ());
+		Assert.Equal(0, brokerReader.ReadD());
+		Assert.Equal(0, brokerReader.ReadH());
+		Assert.Equal(1, brokerReader.ReadH());
+		Assert.Equal(0, (int)brokerReader.ReadC());
+		Assert.Equal(0, brokerReader.Remaining);
+
+		var houseNow = new DateTime(2026, 1, 1, 10, 0, 0, DateTimeKind.Local);
+		var housePayload = SerializeUnencryptedPayload(
+			new SmHouseOwnerInfo(
+				new Player
+				{
+					Race = "ELYOS",
+					Houses =
+					[
+						new PlayerHouse(50, 700100, 900100, houseNow.AddDays(-30), houseNow.AddDays(14), false),
+						new PlayerHouse(51, 700200, 900200, houseNow, null, true),
+					],
+				},
+				() => houseNow));
+		using var houseReader = new PacketBuffer(housePayload);
+		Assert.Equal(700100, houseReader.ReadD());
+		Assert.Equal(900100, houseReader.ReadD());
+		Assert.Equal(5, (int)houseReader.ReadC());
+		Assert.Equal(0, (int)houseReader.ReadC());
+		Assert.Equal(3, houseReader.ReadD());
+		Assert.Equal(700200, houseReader.ReadD());
+		Assert.Equal(900200, houseReader.ReadD());
+		Assert.Equal(1209600, houseReader.ReadD());
+		Assert.Equal(0, houseReader.Remaining);
+
+		Assert.Equal(
+			Convert.FromHexString("00000000"),
+			SerializeUnencryptedPayload(new SmReceiveBids(0)));
+
+		var houseBidRefresh = SmReceiveBids.CreateLoginPacket(
+			new Player
+			{
+				LastOnline = houseNow.AddMinutes(-5),
+				Mailbox =
+				[
+					new PlayerMail(500, 1001, "$$HS_AUCTION_MAIL", "4,0", "body,700100", true, 0, 0, 0, 0, houseNow),
+				],
+			});
+		Assert.NotNull(houseBidRefresh);
+
+		var oldHouseBidRefresh = SmReceiveBids.CreateLoginPacket(
+			new Player
+			{
+				LastOnline = houseNow.AddMinutes(5),
+				Mailbox =
+				[
+					new PlayerMail(501, 1001, "$$HS_AUCTION_MAIL", "4,0", "body,700100", true, 0, 0, 0, 0, houseNow),
+				],
+			});
+		Assert.Null(oldHouseBidRefresh);
+
+		var macroPackets = SmMacroList.CreateLoginPackets(1001, [new PlayerMacro(1, "<m/>"), new PlayerMacro(12, "two")]);
+		Assert.Single(macroPackets);
+		var macroPayload = SerializeUnencryptedPayload(macroPackets[0]);
+		using var macroReader = new PacketBuffer(macroPayload);
+		Assert.Equal(1001, macroReader.ReadD());
+		Assert.Equal(1, (int)macroReader.ReadC());
+		Assert.Equal(65534, macroReader.ReadH());
+		Assert.Equal(1, (int)macroReader.ReadC());
+		Assert.Equal("<m/>", macroReader.ReadS());
+		Assert.Equal(12, (int)macroReader.ReadC());
+		Assert.Equal("two", macroReader.ReadS());
+		Assert.Equal(0, macroReader.Remaining);
+
+		Assert.Equal(
+			Convert.FromHexString("E9030000010000"),
+			SerializeUnencryptedPayload(SmMacroList.CreateLoginPackets(1001, Array.Empty<PlayerMacro>())[0]));
+
+		var friendListPayload = SerializeUnencryptedPayload(
+			new SmFriendList(
+				[new PlayerFriend(44, "Friend", 1000, "RANGER", "FEMALE", 210010000, null, "note", "memo", false)],
+				new PlayerExperienceTable([0, 1000, 3000])));
+		using var friendListReader = new PacketBuffer(friendListPayload);
+		Assert.Equal(65535, friendListReader.ReadH());
+		Assert.Equal(0, (int)friendListReader.ReadC());
+		Assert.Equal(44, friendListReader.ReadD());
+		Assert.Equal("Friend", friendListReader.ReadS());
+		Assert.Equal(2, friendListReader.ReadD());
+		Assert.Equal(5, friendListReader.ReadD());
+		Assert.Equal(1, (int)friendListReader.ReadC());
+		Assert.Equal(210010000, friendListReader.ReadD());
+		Assert.Equal(0, friendListReader.ReadD());
+		Assert.Equal("note", friendListReader.ReadS());
+		Assert.Equal(0, (int)friendListReader.ReadC());
+		Assert.Equal(0, friendListReader.ReadD());
+		Assert.Equal(0, (int)friendListReader.ReadC());
+		Assert.Equal("memo", friendListReader.ReadS());
+		Assert.Equal(0, friendListReader.Remaining);
+
+		var blockListPayload = SerializeUnencryptedPayload(
+			new SmBlockList([new PlayerBlockedUser(55, "Blocked", "reason")]));
+		using var blockListReader = new PacketBuffer(blockListPayload);
+		Assert.Equal(65535, blockListReader.ReadH());
+		Assert.Equal(0, (int)blockListReader.ReadC());
+		Assert.Equal("Blocked", blockListReader.ReadS());
+		Assert.Equal("reason", blockListReader.ReadS());
+		Assert.Equal(0, blockListReader.Remaining);
+
+		var instanceInfoPayload = SerializeUnencryptedPayload(
+			new SmInstanceInfo(
+				2,
+				new Player
+				{
+					ObjectId = 1001,
+					Name = "Character",
+					Race = "ELYOS",
+					PortalCooldowns = new Dictionary<int, PlayerPortalCooldown>
+					{
+						[300030000] = new(300030000, 20_000, 2),
+					},
+				},
+				new InstanceCooltimeTable(
+					[
+						new InstanceCooltimeSummary(8, 300030000, "PC_ALL", 5),
+						new InstanceCooltimeSummary(9, 300040000, "ASMODIANS", 1),
+					]),
+				() => DateTimeOffset.FromUnixTimeMilliseconds(10_000)));
+		using var instanceInfoReader = new PacketBuffer(instanceInfoPayload);
+		Assert.Equal(2, (int)instanceInfoReader.ReadC());
+		Assert.Equal(0, instanceInfoReader.ReadD());
+		Assert.Equal(0, (int)instanceInfoReader.ReadC());
+		Assert.Equal(1, instanceInfoReader.ReadH());
+		Assert.Equal(1001, instanceInfoReader.ReadD());
+		Assert.Equal(2, instanceInfoReader.ReadH());
+		Assert.Equal(8, instanceInfoReader.ReadD());
+		Assert.Equal(0, instanceInfoReader.ReadD());
+		Assert.Equal(10, instanceInfoReader.ReadD());
+		Assert.Equal(5, instanceInfoReader.ReadD());
+		Assert.Equal(-2, instanceInfoReader.ReadD());
+		Assert.Equal(1, (int)instanceInfoReader.ReadC());
+		Assert.Equal(9, instanceInfoReader.ReadD());
+		Assert.Equal(0, instanceInfoReader.ReadD());
+		Assert.Equal(0, instanceInfoReader.ReadD());
+		Assert.Equal(1, instanceInfoReader.ReadD());
+		Assert.Equal(0, instanceInfoReader.ReadD());
+		Assert.Equal(0, (int)instanceInfoReader.ReadC());
+		Assert.Equal("Character", instanceInfoReader.ReadS());
+		Assert.Equal(0, instanceInfoReader.Remaining);
+
+		var abyssRankPayload = SerializeUnencryptedPayload(
+			new SmAbyssRank(new PlayerAbyssRank(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)));
+		using var abyssRankReader = new PacketBuffer(abyssRankPayload);
+		Assert.Equal(3, abyssRankReader.ReadQ());
+		Assert.Equal(6, abyssRankReader.ReadD());
+		Assert.Equal(7, abyssRankReader.ReadD());
+		Assert.Equal(15, abyssRankReader.ReadD());
+		Assert.Equal(0, abyssRankReader.ReadD());
+		Assert.Equal(10, abyssRankReader.ReadD());
+		Assert.Equal(11, abyssRankReader.ReadD());
+		Assert.Equal(8, abyssRankReader.ReadD());
+		Assert.Equal(1, abyssRankReader.ReadQ());
+		Assert.Equal(4, abyssRankReader.ReadD());
+		Assert.Equal(9, abyssRankReader.ReadD());
+		Assert.Equal(2, abyssRankReader.ReadQ());
+		Assert.Equal(5, abyssRankReader.ReadD());
+		Assert.Equal(12, abyssRankReader.ReadD());
+		Assert.Equal(13, abyssRankReader.ReadQ());
+		Assert.Equal(14, abyssRankReader.ReadD());
+		Assert.Equal(0, (int)abyssRankReader.ReadC());
+		Assert.Equal(0, abyssRankReader.Remaining);
+
+		var recipeListPayload = SerializeUnencryptedPayload(new SmRecipeList([155000001, 155000002]));
+		using var recipeListReader = new PacketBuffer(recipeListPayload);
+		Assert.Equal(2, recipeListReader.ReadH());
+		Assert.Equal(155000001, recipeListReader.ReadD());
+		Assert.Equal(0, (int)recipeListReader.ReadC());
+		Assert.Equal(155000002, recipeListReader.ReadD());
+		Assert.Equal(0, (int)recipeListReader.ReadC());
+		Assert.Equal(0, recipeListReader.Remaining);
+
 		Assert.Equal(
 			Convert.FromHexString("010000000000"),
 			SerializeUnencryptedPayload(new SmAfterTimeCheck475()));
@@ -148,6 +533,59 @@ public class GamePacketTests
 		Assert.Equal(
 			Convert.FromHexString("000203040000"),
 			SerializeUnencryptedPayload(inventoryPackets[1]));
+
+		var warehousePackets = SmWarehouseInfo.CreateLoginPackets(
+			new Player
+			{
+				WarehouseNpcExpands = 1,
+				WarehouseBonusExpands = 2,
+				WarehouseItems =
+				[
+					new InventoryItem { ObjectId = 88, ItemId = 100, Count = 1, Location = 1, Slot = 1 },
+				],
+				AccountWarehouseItems =
+				[
+					new InventoryItem { ObjectId = 89, ItemId = 182400001, Count = 10, Location = 2, Slot = 0 },
+					new InventoryItem { ObjectId = 90, ItemId = 100, Count = 2, Location = 2, Slot = 2 },
+				],
+			},
+			new ItemTemplateTable(
+				[
+					new ItemTemplateSummary(182400001, "Kinah", 0, 12350, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
+					new ItemTemplateSummary(100, "Sword", 0, 1, 1, "SWORD", "NORMAL", "COMMON", "PC_ALL", 1, 0, 3),
+				]),
+			includeAuxiliaryStoragePlaceholders: false);
+		Assert.Equal(4, warehousePackets.Count);
+
+		var regularWarehousePayload = SerializeUnencryptedPayload(warehousePackets[0]);
+		using var regularWarehouseReader = new PacketBuffer(regularWarehousePayload);
+		Assert.Equal(1, (int)regularWarehouseReader.ReadC());
+		Assert.Equal(1, (int)regularWarehouseReader.ReadC());
+		Assert.Equal(3, (int)regularWarehouseReader.ReadC());
+		Assert.Equal(1, (int)regularWarehouseReader.ReadC());
+		Assert.Equal(0, (int)regularWarehouseReader.ReadC());
+		Assert.Equal(1, regularWarehouseReader.ReadH());
+		Assert.Equal((88, 100, 0, 203, 1), ReadWarehouseItemHeader(regularWarehouseReader));
+		Assert.Equal(0, regularWarehouseReader.Remaining);
+
+		Assert.Equal(
+			Convert.FromHexString("01000300000000"),
+			SerializeUnencryptedPayload(warehousePackets[1]));
+
+		var accountWarehousePayload = SerializeUnencryptedPayload(warehousePackets[2]);
+		using var accountWarehouseReader = new PacketBuffer(accountWarehousePayload);
+		Assert.Equal(2, (int)accountWarehouseReader.ReadC());
+		Assert.Equal(1, (int)accountWarehouseReader.ReadC());
+		Assert.Equal(0, (int)accountWarehouseReader.ReadC());
+		Assert.Equal(0, accountWarehouseReader.ReadH());
+		Assert.Equal(2, accountWarehouseReader.ReadH());
+		Assert.Equal((90, 100, 0, 203, 2), ReadWarehouseItemHeader(accountWarehouseReader));
+		Assert.Equal((89, 182400001, 0, 34, 0), ReadWarehouseItemHeader(accountWarehouseReader));
+		Assert.Equal(0, accountWarehouseReader.Remaining);
+
+		Assert.Equal(
+			Convert.FromHexString("02000000000000"),
+			SerializeUnencryptedPayload(warehousePackets[3]));
 		Assert.Equal(
 			Convert.FromHexString("0000000005000000"),
 			SerializeUnencryptedPayload(new SmChannelInfo(new WorldPosition(210010000, 1, 2, 3, 32), [new WorldMapSummary(210010000, false, 5)])));
@@ -181,6 +619,184 @@ public class GamePacketTests
 		Assert.Equal(2.5f, spawnReader.ReadF());
 		Assert.Equal(3.5f, spawnReader.ReadF());
 		Assert.Equal(32, (int)spawnReader.ReadC());
+	}
+
+	[Fact]
+	public void SmInventoryInfo_WritesItemStoneAndIdianDetailsInItemBlobs()
+	{
+		var inventoryPackets = SmInventoryInfo.CreateLoginPackets(
+			new Player
+			{
+				InventoryItems =
+				[
+					new InventoryItem
+					{
+						ObjectId = 88,
+						ItemId = 100,
+						Count = 1,
+						IsEquipped = true,
+						IsSoulBound = true,
+						Location = 0,
+						Slot = 1,
+						Enchant = 5,
+						EnchantBonus = 2,
+						OptionalSocket = 3,
+						FusionedItem = 101,
+						OptionalFusionSocket = 2,
+						Tempering = 9,
+						IsAmplified = true,
+						BuffSkill = 55,
+						ManaStones = [new ItemStoneSocket(167000001, 0), new ItemStoneSocket(167000002, 2)],
+						FusionStones = [new ItemStoneSocket(167000003, 1)],
+						Godstone = new PlayerGodstone(168000001, 7),
+						IdianStone = new PlayerIdianStone(168000385, 4, 123456),
+					},
+				],
+			},
+			new ItemTemplateTable(
+				[
+					new ItemTemplateSummary(182400001, "Kinah", 0, 12350, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
+					new ItemTemplateSummary(100, "Sword", 0, 1 << 17, 1, "SWORD", "NORMAL", "COMMON", "PC_ALL", 1, 0, 3),
+				]),
+			() => 77);
+
+		var inventoryPayload = SerializeUnencryptedPayload(inventoryPackets[0]);
+		using var inventoryReader = new PacketBuffer(inventoryPayload);
+		inventoryReader.ReadC();
+		inventoryReader.ReadC();
+		inventoryReader.ReadC();
+		inventoryReader.ReadC();
+		Assert.Equal(2, inventoryReader.ReadH());
+		ReadInventoryItemWithBlob(inventoryReader);
+		var sword = ReadInventoryItemWithBlob(inventoryReader);
+		Assert.Equal((88, 100, 1, 0), (sword.ObjectId, sword.ItemId, sword.EquipmentSlot, sword.IsCloth));
+
+		using var blobReader = new PacketBuffer(sword.Blob);
+		Assert.Equal(0x0e, (int)blobReader.ReadC());
+		Assert.Equal(101, blobReader.ReadD());
+		Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(167000003, blobReader.ReadD());
+		for (var i = 0; i < 4; i++)
+			Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(2, (int)blobReader.ReadC());
+		Assert.Equal(0, (int)blobReader.ReadC());
+
+		Assert.Equal(0x06, (int)blobReader.ReadC());
+		blobReader.ReadQ();
+		Assert.Equal(0x01, (int)blobReader.ReadC());
+		blobReader.ReadQ();
+		blobReader.ReadQ();
+
+		Assert.Equal(0x0b, (int)blobReader.ReadC());
+		Assert.Equal(1, (int)blobReader.ReadC());
+		Assert.Equal(5, (int)blobReader.ReadC());
+		Assert.Equal(100, blobReader.ReadD());
+		Assert.Equal(3, (int)blobReader.ReadC());
+		Assert.Equal(2, (int)blobReader.ReadC());
+		Assert.Equal(167000001, blobReader.ReadD());
+		Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(167000002, blobReader.ReadD());
+		for (var i = 0; i < 3; i++)
+			Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(168000001, blobReader.ReadD());
+		Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(0, (int)blobReader.ReadC());
+		Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(168000385, blobReader.ReadD());
+		Assert.Equal(4, (int)blobReader.ReadC());
+		Assert.Equal(9, (int)blobReader.ReadC());
+		blobReader.ReadB(70);
+		Assert.Equal(1, (int)blobReader.ReadC());
+		Assert.Equal(55, blobReader.ReadD());
+		Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(0, blobReader.ReadD());
+
+		Assert.Equal(0x11, (int)blobReader.ReadC());
+		Assert.Equal(123456, blobReader.ReadD());
+	}
+
+	[Fact]
+	public void SmStatsInfo_WritesJavaShapedBaselineStats()
+	{
+		var payload = SerializeUnencryptedPayload(
+			new SmStatsInfo(
+				new Player
+				{
+					ObjectId = 1001,
+					PlayerClass = "WARRIOR",
+					Exp = 0,
+					RecoverableExp = 7,
+					Dp = 300,
+					ReposeEnergy = 99,
+					NpcExpands = 1,
+					QuestExpands = 2,
+					ItemExpands = 3,
+					LifeStats = new PlayerLifeStats(111, 205, 55),
+					InventoryItems =
+					[
+						new InventoryItem { ObjectId = 1, ItemId = 100, Location = 0 },
+						new InventoryItem { ObjectId = 2, ItemId = 200, Location = 0, IsEquipped = true },
+						new InventoryItem { ObjectId = 3, ItemId = 182400001, Location = 0 },
+						new InventoryItem { ObjectId = 4, ItemId = 300, Location = 1 },
+					],
+				},
+				new PlayerExperienceTable([0, 400]),
+				gameMinutes: 321));
+
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(1001, reader.ReadD());
+		Assert.Equal(321, reader.ReadD());
+		AssertPrimaryStats(reader, 110, 110, 100, 100, 90, 90);
+		AssertElementalResists(reader);
+		Assert.Equal(1, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(400, reader.ReadQ());
+		Assert.Equal(7, reader.ReadQ());
+		Assert.Equal(0, reader.ReadQ());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(244, reader.ReadD());
+		Assert.Equal(111, reader.ReadD());
+		Assert.Equal(210, reader.ReadD());
+		Assert.Equal(205, reader.ReadD());
+		Assert.Equal(4000, reader.ReadH());
+		Assert.Equal(300, reader.ReadH());
+		Assert.Equal(60, reader.ReadD());
+		Assert.Equal(55, reader.ReadD());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		AssertCombatStats(reader, blockEvasionParry: 74, physicalAccuracy: 198, magicalAccuracy: 14, strikeResist: 0, spellResist: 0);
+		Assert.Equal(81, reader.ReadD());
+		Assert.Equal(1, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadQ());
+		Assert.Equal(0, reader.ReadQ());
+		Assert.Equal(0, reader.ReadQ());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(1, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		AssertPrimaryStats(reader, 110, 110, 100, 100, 90, 90);
+		AssertElementalResists(reader);
+		Assert.Equal(244, reader.ReadD());
+		Assert.Equal(210, reader.ReadD());
+		Assert.Equal(4000, reader.ReadH());
+		Assert.Equal(21592, reader.ReadH());
+		Assert.Equal(60, reader.ReadD());
+		AssertBaseCombatStats(reader, blockEvasionParry: 74, physicalAccuracy: 198, magicalAccuracy: 14, strikeResist: 0, spellResist: 0);
+		Assert.Equal(0, reader.Remaining);
 	}
 
 	[Fact]
@@ -399,6 +1015,59 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesMailPackets()
+	{
+		var sendMail = Assert.IsType<CmSendMail>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(132, b =>
+			{
+				b.WriteS("Recipient");
+				b.WriteS("Title");
+				b.WriteS("Message");
+				b.WriteD(90);
+				b.WriteQ(2);
+				b.WriteQ(500);
+				b.WriteC(1);
+			}), GameConnectionState.InGame));
+		var checkMail = Assert.IsType<CmCheckMailList>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(133, b => b.WriteC(1)), GameConnectionState.InGame));
+		var readMail = Assert.IsType<CmReadMail>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(134, b => b.WriteD(1234)), GameConnectionState.InGame));
+		var getAttachment = Assert.IsType<CmGetMailAttachment>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(136, b =>
+			{
+				b.WriteD(1234);
+				b.WriteC(1);
+			}), GameConnectionState.InGame));
+		var deleteMail = Assert.IsType<CmDeleteMail>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(137, b =>
+			{
+				b.WriteH(2);
+				b.WriteD(1234);
+				b.WriteC(0);
+				b.WriteD(5678);
+				b.WriteC(1);
+			}), GameConnectionState.InGame));
+
+		Assert.Equal("Recipient", sendMail.RecipientName);
+		Assert.Equal("Title", sendMail.Title);
+		Assert.Equal("Message", sendMail.Message);
+		Assert.Equal(90, sendMail.ItemObjectId);
+		Assert.Equal(2, sendMail.ItemCount);
+		Assert.Equal(500, sendMail.KinahCount);
+		Assert.Equal(1, sendMail.LetterTypeId);
+		Assert.True(checkMail.ExpressOnly);
+		Assert.Equal(1234, readMail.MailObjectId);
+		Assert.Equal(1234, getAttachment.MailObjectId);
+		Assert.Equal(1, (int)getAttachment.AttachmentType);
+		Assert.Equal([1234, 5678], deleteMail.MailObjectIds);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(132, b => b.WriteS("Recipient")), GameConnectionState.Authed));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(133, b => b.WriteC(0)), GameConnectionState.Authed));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(134, b => b.WriteD(1234)), GameConnectionState.Authed));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(136, b => b.WriteD(1234)), GameConnectionState.Authed));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(137, b => b.WriteH(0)), GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_RejectsInvalidStateAndBadHeader()
 	{
 		var characterListPayload = CreateClientPayload(150, b => b.WriteD(1234));
@@ -443,6 +1112,128 @@ public class GamePacketTests
 		var equipmentSlot = reader.ReadH();
 		var isCloth = reader.ReadC();
 		return (objectId, itemId, blobSize, equipmentSlot, isCloth);
+	}
+
+	private static (int ObjectId, int ItemId, byte[] Blob, int EquipmentSlot, int IsCloth) ReadInventoryItemWithBlob(PacketBuffer reader)
+	{
+		var objectId = reader.ReadD();
+		var itemId = reader.ReadD();
+		reader.ReadS();
+		var blobSize = reader.ReadH();
+		var blob = reader.ReadB(blobSize);
+		var equipmentSlot = reader.ReadH();
+		var isCloth = reader.ReadC();
+		return (objectId, itemId, blob, equipmentSlot, isCloth);
+	}
+
+	private static (int ObjectId, int ItemId, int ItemInfo, int BlobSize, int EquipmentSlot) ReadWarehouseItemHeader(PacketBuffer reader)
+	{
+		var objectId = reader.ReadD();
+		var itemId = reader.ReadD();
+		var itemInfo = reader.ReadC();
+		reader.ReadS();
+		var blobSize = reader.ReadH();
+		reader.ReadB(blobSize);
+		var equipmentSlot = reader.ReadH();
+		return (objectId, itemId, itemInfo, blobSize, equipmentSlot);
+	}
+
+	private static void AssertPrimaryStats(PacketBuffer reader, int power, int health, int accuracy, int agility, int knowledge, int will)
+	{
+		Assert.Equal(power, reader.ReadH());
+		Assert.Equal(health, reader.ReadH());
+		Assert.Equal(accuracy, reader.ReadH());
+		Assert.Equal(agility, reader.ReadH());
+		Assert.Equal(knowledge, reader.ReadH());
+		Assert.Equal(will, reader.ReadH());
+	}
+
+	private static void AssertElementalResists(PacketBuffer reader)
+	{
+		for (var i = 0; i < 6; i++)
+			Assert.Equal(0, reader.ReadH());
+	}
+
+	private static void AssertCombatStats(
+		PacketBuffer reader,
+		int blockEvasionParry,
+		int physicalAccuracy,
+		int magicalAccuracy,
+		int strikeResist,
+		int spellResist)
+	{
+		Assert.Equal(18, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(1.5f, reader.ReadF());
+		Assert.Equal(1500, reader.ReadH());
+		Assert.Equal(blockEvasionParry, reader.ReadH());
+		Assert.Equal(blockEvasionParry, reader.ReadH());
+		Assert.Equal(blockEvasionParry, reader.ReadH());
+		Assert.Equal(2, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(physicalAccuracy, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(1, reader.ReadH());
+		Assert.Equal(magicalAccuracy, reader.ReadH());
+		Assert.Equal(50, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(1.0f, reader.ReadF());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(strikeResist, reader.ReadH());
+		Assert.Equal(spellResist, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+	}
+
+	private static void AssertBaseCombatStats(
+		PacketBuffer reader,
+		int blockEvasionParry,
+		int physicalAccuracy,
+		int magicalAccuracy,
+		int strikeResist,
+		int spellResist)
+	{
+		Assert.Equal(18, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(1.5f, reader.ReadF());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(blockEvasionParry, reader.ReadH());
+		Assert.Equal(blockEvasionParry, reader.ReadH());
+		Assert.Equal(blockEvasionParry, reader.ReadH());
+		Assert.Equal(2, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(50, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(physicalAccuracy, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(magicalAccuracy, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(strikeResist, reader.ReadH());
+		Assert.Equal(spellResist, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
 	}
 
 	private static void WriteCreateCharacterPayload(PacketBuffer buffer)

@@ -12,6 +12,11 @@ public static class GameClientPacketFactory
 	{
 		// Java parity: network/aion/AionClientPacketFactory opcode registration table.
 		Register(8, states => new CmEnterWorld(8, states), GameConnectionState.Authed);
+		Register(132, states => new CmSendMail(132, states), GameConnectionState.InGame);
+		Register(133, states => new CmCheckMailList(133, states), GameConnectionState.InGame);
+		Register(134, states => new CmReadMail(134, states), GameConnectionState.InGame);
+		Register(136, states => new CmGetMailAttachment(136, states), GameConnectionState.InGame);
+		Register(137, states => new CmDeleteMail(137, states), GameConnectionState.InGame);
 		Register(149, states => new CmL2AuthLoginCheck(149, states), GameConnectionState.Connected);
 		Register(150, states => new CmCharacterList(150, states), GameConnectionState.Authed);
 		Register(151, states => new CmCreateCharacter(151, states), GameConnectionState.Authed);
