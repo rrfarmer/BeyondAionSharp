@@ -14,7 +14,7 @@ public sealed class FilterHandler : IChatMessageHandler
 		_blockedKeywords = options.FilteredKeywords;
 	}
 
-	public FilterHandler(IEnumerable<string> blockedKeywords)
+	public FilterHandler(params string[] blockedKeywords)
 	{
 		_blockedKeywords = blockedKeywords.Where(keyword => !string.IsNullOrWhiteSpace(keyword)).ToArray();
 	}

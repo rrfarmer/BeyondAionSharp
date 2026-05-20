@@ -1,0 +1,57 @@
+using System.Buffers.Binary;
+using Aion.Commons.Network;
+using Aion.GameServer.Network.Aion.ClientPackets;
+
+namespace Aion.GameServer.Network.Aion;
+
+public static class GameClientPacketFactory
+{
+	private static readonly PacketInfo?[] Packets = new PacketInfo[250];
+
+	static GameClientPacketFactory()
+	{
+		// Java parity: network/aion/AionClientPacketFactory opcode registration table.
+		Register(8, states => new CmEnterWorld(8, states), GameConnectionState.Authed);
+		Register(149, states => new CmL2AuthLoginCheck(149, states), GameConnectionState.Connected);
+		Register(150, states => new CmCharacterList(150, states), GameConnectionState.Authed);
+		Register(151, states => new CmCreateCharacter(151, states), GameConnectionState.Authed);
+		Register(152, states => new CmDeleteCharacter(152, states), GameConnectionState.Authed);
+		Register(153, states => new CmRestoreCharacter(153, states), GameConnectionState.Authed);
+		Register(183, states => new CmReconnectAuth(183, states), GameConnectionState.Authed);
+		Register(186, states => new CmMayLoginIntoGame(186, states), GameConnectionState.Authed);
+		Register(189, states => new CmMacAddress(189, states), GameConnectionState.Connected);
+		Register(210, states => new CmCharacterPasskey(210, states), GameConnectionState.Authed);
+	}
+
+	public static GameClientPacket? TryCreatePacket(ReadOnlySpan<byte> decryptedPayload, GameConnectionState state)
+	{
+		// Java parity: AionClientPacketFactory handling encoded opcode + valid connection state.
+		if (decryptedPayload.Length < 5 || !ValidateClientHeader(decryptedPayload))
+			return null;
+
+		var encodedOpcode = BinaryPrimitives.ReadUInt16LittleEndian(decryptedPayload[..2]);
+		var opcode = GameCrypt.DecodeClientPacketOpcode(encodedOpcode);
+		var packetInfo = opcode < 0 || opcode >= Packets.Length ? null : Packets[opcode];
+		if (packetInfo == null || !packetInfo.ValidStates.Contains(state))
+			return null;
+
+		using var buffer = new PacketBuffer(decryptedPayload[5..].ToArray(), strictReads: false);
+		var packet = packetInfo.Create(packetInfo.ValidStates);
+		packet.ReadFrom(buffer);
+		return packet;
+	}
+
+	private static void Register(int opcode, Func<IReadOnlySet<GameConnectionState>, GameClientPacket> create, params GameConnectionState[] validStates)
+	{
+		Packets[opcode] = new PacketInfo(create, validStates.ToHashSet());
+	}
+
+	private static bool ValidateClientHeader(ReadOnlySpan<byte> payload)
+	{
+		var encodedOpcode = BinaryPrimitives.ReadUInt16LittleEndian(payload[..2]);
+		var flippedOpcode = BinaryPrimitives.ReadUInt16LittleEndian(payload.Slice(3, 2));
+		return payload[2] == 0x65 && (ushort)~encodedOpcode == flippedOpcode;
+	}
+
+	private sealed record PacketInfo(Func<IReadOnlySet<GameConnectionState>, GameClientPacket> Create, IReadOnlySet<GameConnectionState> ValidStates);
+}

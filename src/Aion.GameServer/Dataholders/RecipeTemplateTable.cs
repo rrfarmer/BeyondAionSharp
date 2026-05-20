@@ -1,0 +1,47 @@
+using System.Collections.ObjectModel;
+
+namespace Aion.GameServer.Dataholders;
+
+public sealed class RecipeTemplateTable
+{
+	private readonly IReadOnlyDictionary<int, RecipeTemplateSummary> _templatesById;
+	private readonly IReadOnlyList<RecipeTemplateSummary> _autoLearnRecipes;
+
+	public RecipeTemplateTable(IReadOnlyList<RecipeTemplateSummary> templates)
+	{
+		Templates = templates;
+		_templatesById = new ReadOnlyDictionary<int, RecipeTemplateSummary>(
+			templates.ToDictionary(template => template.RecipeId));
+		_autoLearnRecipes = templates.Where(template => template.AutoLearn != 0).ToArray();
+	}
+
+	public IReadOnlyList<RecipeTemplateSummary> Templates { get; }
+
+	public int Count => Templates.Count;
+
+	public RecipeTemplateSummary? GetRecipeTemplateById(int recipeId)
+	{
+		return _templatesById.GetValueOrDefault(recipeId);
+	}
+
+	public IReadOnlyList<RecipeTemplateSummary> GetAutolearnRecipes(string race, int skillId, int maxLevel)
+	{
+		return _autoLearnRecipes
+			.Where(template =>
+				template.SkillId == skillId
+				&& template.SkillPoint <= maxLevel
+				&& (template.Race == "PC_ALL" || template.Race == race))
+			.ToArray();
+	}
+}
+
+public sealed record RecipeTemplateSummary(
+	int RecipeId,
+	int NameId,
+	int SkillId,
+	string Race,
+	int SkillPoint,
+	int Dp,
+	int AutoLearn,
+	int ProductId,
+	int Quantity);

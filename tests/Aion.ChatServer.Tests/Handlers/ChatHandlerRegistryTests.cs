@@ -4,6 +4,7 @@ using Aion.ChatServer.Handlers;
 using Aion.ChatServer.Handlers.BuiltIn;
 using Aion.ChatServer.Models;
 using Aion.ChatServer.Models.Channels;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Aion.ChatServer.Tests.Handlers;
@@ -60,6 +61,29 @@ public class ChatHandlerRegistryTests
 		registry.RegisterHandler("early", new OrderedHandler(0));
 
 		Assert.Equal([0, 10], registry.GetHandlers().Select(handler => handler.Order));
+	}
+
+	[Fact]
+	public void ServiceCollection_ResolvesBuiltInHandlers()
+	{
+		var services = new ServiceCollection();
+		services.AddLogging();
+		services.AddSingleton(new ChatServerOptions { FilteredKeywords = ["badword"] });
+		services.AddSingleton<IChatLogRepository, RecordingChatLogRepository>();
+		services.AddSingleton<IChatMessageHandler, FloodProtectionHandler>();
+		services.AddSingleton<IChatMessageHandler, FilterHandler>();
+		services.AddSingleton<IChatMessageHandler, LoggingHandler>();
+		services.AddSingleton<ChatHandlerRegistry>();
+
+		using var provider = services.BuildServiceProvider(new ServiceProviderOptions
+		{
+			ValidateOnBuild = true,
+			ValidateScopes = true,
+		});
+
+		var registry = provider.GetRequiredService<ChatHandlerRegistry>();
+
+		Assert.Contains(registry.GetHandlers(), handler => handler is FilterHandler);
 	}
 
 	private sealed class RecordingChatLogRepository : IChatLogRepository
