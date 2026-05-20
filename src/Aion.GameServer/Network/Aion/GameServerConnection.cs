@@ -572,13 +572,14 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (itemTemplates == null)
 			return new PlayerBrokerItemPage(Array.Empty<PlayerBrokerItem>(), 0, pageIndex, 0);
 
+		var recipeTemplates = _runtimeContext?.DataManager?.StaticData.RecipeTemplates;
 		var activeItems = await _brokerRepository.LoadActiveItemsAsync(player.Race);
 		var filteredItems = activeItems
 			.Where(
 				item =>
 					item.Item != null
 					&& itemTemplates.GetItemTemplate(item.ItemId) is { } template
-					&& BrokerItemMaskMatcher.Matches(brokerMask, template))
+					&& BrokerItemMaskMatcher.Matches(brokerMask, template, recipeTemplates))
 			.ToArray();
 		var sortedItems = SortBrokerItems(filteredItems, sortType, itemTemplates).ToArray();
 		var start = Math.Max(0, pageIndex) * 9;

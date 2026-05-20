@@ -37,7 +37,9 @@ public sealed record ItemTemplateSummary(
 	long Price,
 	long ValidEquipmentSlots,
 	int DispositionItemId = 0,
-	int DispositionItemCount = 0)
+	int DispositionItemCount = 0,
+	IReadOnlySet<string>? ClassRestrictions = null,
+	int CraftLearnRecipeId = 0)
 {
 	private const int CanPolishMask = 1 << 17;
 
@@ -56,6 +58,21 @@ public sealed record ItemTemplateSummary(
 	private static readonly HashSet<string> AccessoryGroups = new(StringComparer.Ordinal)
 	{
 		"EARRING", "RING", "NECKLACE", "BELT", "HEAD", "CL_SHIELD", "POWER_SHARDS",
+	};
+
+	private static readonly IReadOnlyDictionary<string, string> StartingClasses = new Dictionary<string, string>(StringComparer.Ordinal)
+	{
+		["GLADIATOR"] = "WARRIOR",
+		["TEMPLAR"] = "WARRIOR",
+		["ASSASSIN"] = "SCOUT",
+		["RANGER"] = "SCOUT",
+		["SORCERER"] = "MAGE",
+		["SPIRIT_MASTER"] = "MAGE",
+		["CLERIC"] = "PRIEST",
+		["CHANTER"] = "PRIEST",
+		["RIDER"] = "ENGINEER",
+		["GUNNER"] = "ENGINEER",
+		["BARD"] = "ARTIST",
 	};
 
 	public bool IsEquipment => ValidEquipmentSlots != 0;
@@ -83,6 +100,20 @@ public sealed record ItemTemplateSummary(
 	public bool CanPolish => (Mask & CanPolishMask) == CanPolishMask;
 
 	public bool IsCloth => IsArmor && ((!IsAccessory && !string.Equals(ItemGroup, "BELT", StringComparison.Ordinal)) || string.Equals(ItemGroup, "HEAD", StringComparison.Ordinal));
+
+	public bool IsClassSpecific(string playerClass)
+	{
+		// Java parity: model/templates/item/ItemTemplate.isClassSpecific.
+		if (ClassRestrictions == null || ClassRestrictions.Count == 0)
+			return false;
+
+		var normalizedClass = playerClass.ToUpperInvariant();
+		if (ClassRestrictions.Contains(normalizedClass))
+			return true;
+
+		return StartingClasses.TryGetValue(normalizedClass, out var startingClass)
+			&& ClassRestrictions.Contains(startingClass);
+	}
 
 	public string? GetClientName()
 	{

@@ -189,7 +189,8 @@ public sealed class StaticData
 					reader.GetAttribute("race") ?? string.Empty,
 					ReadIntAttribute(reader, "max_stack_count"),
 					ReadLongAttribute(reader, "price"),
-					GetItemGroupSlots(reader.GetAttribute("item_group")));
+					GetItemGroupSlots(reader.GetAttribute("item_group")),
+					ReadClassRestrictions(reader.GetAttribute("restrict")));
 				if (reader.IsEmptyElement)
 				{
 					itemTemplates.Add(currentItemTemplate.ToSummary());
@@ -203,6 +204,12 @@ public sealed class StaticData
 			{
 				currentItemTemplate.DispositionItemId = ReadIntAttribute(reader, "id");
 				currentItemTemplate.DispositionItemCount = ReadIntAttribute(reader, "count");
+				continue;
+			}
+
+			if (reader.Depth == 4 && reader.LocalName == "craftlearn" && currentItemTemplate != null)
+			{
+				currentItemTemplate.CraftLearnRecipeId = ReadIntAttribute(reader, "recipeid");
 				continue;
 			}
 
@@ -358,7 +365,8 @@ public sealed class StaticData
 			string race,
 			int maxStackCount,
 			long price,
-			long validEquipmentSlots)
+			long validEquipmentSlots,
+			IReadOnlySet<string> classRestrictions)
 		{
 			TemplateId = templateId;
 			Name = name;
@@ -372,6 +380,7 @@ public sealed class StaticData
 			MaxStackCount = maxStackCount;
 			Price = price;
 			ValidEquipmentSlots = validEquipmentSlots;
+			ClassRestrictions = classRestrictions;
 		}
 
 		private int TemplateId { get; }
@@ -398,13 +407,17 @@ public sealed class StaticData
 
 		private long ValidEquipmentSlots { get; }
 
+		private IReadOnlySet<string> ClassRestrictions { get; }
+
 		public int DispositionItemId { get; set; }
 
 		public int DispositionItemCount { get; set; }
 
+		public int CraftLearnRecipeId { get; set; }
+
 		public ItemTemplateSummary ToSummary()
 		{
-			// Java parity: model/templates/item/ItemTemplate plus nested Disposition courier-pass data.
+			// Java parity: model/templates/item/ItemTemplate restrict array, actions/craftlearn, and nested Disposition courier-pass data.
 			return new ItemTemplateSummary(
 				TemplateId,
 				Name,
@@ -419,7 +432,9 @@ public sealed class StaticData
 				Price,
 				ValidEquipmentSlots,
 				DispositionItemId,
-				DispositionItemCount);
+				DispositionItemCount,
+				ClassRestrictions,
+				CraftLearnRecipeId);
 		}
 	}
 
@@ -461,6 +476,23 @@ public sealed class StaticData
 	private static long ReadLongAttribute(XmlReader reader, string attributeName)
 	{
 		return long.TryParse(reader.GetAttribute(attributeName), out var parsed) ? parsed : 0;
+	}
+
+	private static IReadOnlySet<string> ReadClassRestrictions(string? restrict)
+	{
+		// Java parity: model/templates/item/ItemTemplate.levelRestrictions ordinal order from PlayerClass.
+		if (string.IsNullOrWhiteSpace(restrict))
+			return new HashSet<string>(StringComparer.Ordinal);
+
+		var restrictions = restrict.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+		var classRestrictions = new HashSet<string>(StringComparer.Ordinal);
+		for (var i = 0; i < restrictions.Length && i < PlayerClasses.Length; i++)
+		{
+			if (int.TryParse(restrictions[i], out var requiredLevel) && requiredLevel > 0)
+				classRestrictions.Add(PlayerClasses[i]);
+		}
+
+		return classRestrictions;
 	}
 
 	private static float ReadFloatAttribute(XmlReader reader, string attributeName)
@@ -516,6 +548,26 @@ public sealed class StaticData
 	private const long Plume = 1L << 19;
 	private const long RegularStigmas = (1L << 30) | (1L << 31) | (1L << 32);
 	private const long AdvancedStigmas = (1L << 33) | (1L << 34) | (1L << 35);
+	private static readonly string[] PlayerClasses =
+	[
+		"WARRIOR",
+		"GLADIATOR",
+		"TEMPLAR",
+		"SCOUT",
+		"ASSASSIN",
+		"RANGER",
+		"MAGE",
+		"SORCERER",
+		"SPIRIT_MASTER",
+		"PRIEST",
+		"CLERIC",
+		"CHANTER",
+		"ENGINEER",
+		"RIDER",
+		"GUNNER",
+		"ARTIST",
+		"BARD",
+	];
 
 	private static async Task<IReadOnlyList<long>> LoadExperienceTableFromImportedFilesAsync(
 		IReadOnlyList<string> importedFiles,

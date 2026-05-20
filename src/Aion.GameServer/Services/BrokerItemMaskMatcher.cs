@@ -4,6 +4,45 @@ namespace Aion.GameServer.Services;
 
 public static class BrokerItemMaskMatcher
 {
+	private static readonly IReadOnlyDictionary<int, BrokerPlayerClassFilter> ClassFilters =
+		new Dictionary<int, BrokerPlayerClassFilter>
+		{
+			[6010] = new(1400, "GLADIATOR"),
+			[6011] = new(1400, "TEMPLAR"),
+			[6012] = new(1400, "ASSASSIN"),
+			[6013] = new(1400, "RANGER"),
+			[6014] = new(1400, "SORCERER"),
+			[6015] = new(1400, "SPIRIT_MASTER"),
+			[6016] = new(1400, "CLERIC"),
+			[6017] = new(1400, "CHANTER"),
+			[6018] = new(1400, "GUNNER"),
+			[6019] = new(1400, "BARD"),
+			[6048] = new(1400, "RIDER"),
+			[6020] = new(1695, "GLADIATOR"),
+			[6021] = new(1695, "TEMPLAR"),
+			[6022] = new(1695, "ASSASSIN"),
+			[6023] = new(1695, "RANGER"),
+			[6024] = new(1695, "SORCERER"),
+			[6025] = new(1695, "SPIRIT_MASTER"),
+			[6026] = new(1695, "CLERIC"),
+			[6027] = new(1695, "CHANTER"),
+			[6028] = new(1695, "GUNNER"),
+			[6029] = new(1695, "BARD"),
+			[6049] = new(1695, "RIDER"),
+		};
+
+	private static readonly IReadOnlyDictionary<int, BrokerRecipeFilter> RecipeFilters =
+		new Dictionary<int, BrokerRecipeFilter>
+		{
+			[6040] = new(40002, 1522),
+			[6041] = new(40003, 1522),
+			[6042] = new(40004, 1522),
+			[6043] = new(40008, 1522),
+			[6044] = new(40007, 1522),
+			[6045] = new(40001, 1522),
+			[6046] = new(40010, 1522),
+		};
+
 	private static readonly IReadOnlyDictionary<int, BrokerTemplateIdFilter> Filters =
 		new Dictionary<int, BrokerTemplateIdFilter>
 		{
@@ -96,10 +135,37 @@ public static class BrokerItemMaskMatcher
 			[7070] = new([1850, 1860, 1870, 1880, 1881, 1887]),
 		};
 
-	public static bool Matches(int brokerMask, ItemTemplateSummary template)
+	public static bool Matches(int brokerMask, ItemTemplateSummary template, RecipeTemplateTable? recipes = null)
 	{
-		// Java parity: model/broker/BrokerItemMask numeric BrokerContains*, BrokerMinMax* filters.
+		// Java parity: model/broker/BrokerItemMask with BrokerPlayerClassExtraFilter and BrokerRecipeFilter specializations.
+		if (ClassFilters.TryGetValue(brokerMask, out var classFilter))
+			return classFilter.Matches(template);
+
+		if (RecipeFilters.TryGetValue(brokerMask, out var recipeFilter))
+			return recipeFilter.Matches(template, recipes);
+
 		return Filters.TryGetValue(brokerMask, out var filter) && filter.Matches(template.TemplateId);
+	}
+
+	private sealed record BrokerPlayerClassFilter(int TemplateMask, string PlayerClass)
+	{
+		public bool Matches(ItemTemplateSummary template)
+		{
+			return TemplateMask == template.TemplateId / 100000
+				&& template.IsClassSpecific(PlayerClass);
+		}
+	}
+
+	private sealed record BrokerRecipeFilter(int CraftSkillId, int TemplateMask)
+	{
+		public bool Matches(ItemTemplateSummary template, RecipeTemplateTable? recipes)
+		{
+			if (recipes == null || TemplateMask != template.TemplateId / 100000 || template.CraftLearnRecipeId == 0)
+				return false;
+
+			var recipe = recipes.GetRecipeTemplateById(template.CraftLearnRecipeId);
+			return recipe?.SkillId == CraftSkillId;
+		}
 	}
 
 	private sealed record BrokerTemplateIdFilter(

@@ -1357,6 +1357,26 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void BrokerItemMaskMatcher_MatchesJavaClassAndRecipeMasks()
+	{
+		var rangerStigma = CreateBrokerTemplate(140000001, classRestrictions: new HashSet<string>(StringComparer.Ordinal) { "RANGER" });
+		var priestSkillManual = CreateBrokerTemplate(169500001, classRestrictions: new HashSet<string>(StringComparer.Ordinal) { "PRIEST" });
+		var weaponRecipe = CreateBrokerTemplate(152200001, craftLearnRecipeId: 155000001);
+		var recipes = new RecipeTemplateTable(
+		[
+			new RecipeTemplateSummary(155000001, 0, 40002, "PC_ALL", 0, 0, 0, 100000001, 1),
+		]);
+
+		Assert.True(BrokerItemMaskMatcher.Matches(6013, rangerStigma));
+		Assert.False(BrokerItemMaskMatcher.Matches(6012, rangerStigma));
+		Assert.True(BrokerItemMaskMatcher.Matches(6026, priestSkillManual));
+		Assert.False(BrokerItemMaskMatcher.Matches(6020, priestSkillManual));
+		Assert.True(BrokerItemMaskMatcher.Matches(6040, weaponRecipe, recipes));
+		Assert.False(BrokerItemMaskMatcher.Matches(6041, weaponRecipe, recipes));
+		Assert.False(BrokerItemMaskMatcher.Matches(6040, weaponRecipe));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesMailPackets()
 	{
 		var sendMail = Assert.IsType<CmSendMail>(
@@ -1644,7 +1664,10 @@ public class GamePacketTests
 		buffer.WriteB(bytes);
 	}
 
-	private static ItemTemplateSummary CreateBrokerTemplate(int templateId)
+	private static ItemTemplateSummary CreateBrokerTemplate(
+		int templateId,
+		IReadOnlySet<string>? classRestrictions = null,
+		int craftLearnRecipeId = 0)
 	{
 		return new ItemTemplateSummary(
 			templateId,
@@ -1658,6 +1681,8 @@ public class GamePacketTests
 			string.Empty,
 			1,
 			0,
-			0);
+			0,
+			ClassRestrictions: classRestrictions,
+			CraftLearnRecipeId: craftLearnRecipeId);
 	}
 }
