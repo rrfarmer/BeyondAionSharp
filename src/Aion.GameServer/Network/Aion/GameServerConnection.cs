@@ -11,6 +11,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion.ClientPackets;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
+using Aion.GameServer.Utils.IdFactory;
 using AccountAuthResult = Aion.GameServer.Network.LoginServer.AccountAuthResult;
 using GameLoginServer = Aion.GameServer.Network.LoginServer.LoginServer;
 using Microsoft.Extensions.Logging;
@@ -28,6 +29,8 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly ICharacterSelectionRepository _characterSelectionRepository;
 	private readonly CharacterCreationService? _characterCreationService;
 	private readonly PlayerEnterWorldService? _playerEnterWorldService;
+	private readonly IDFactory? _idFactory;
+	private readonly GameTimeService? _gameTimeService;
 	private readonly SemaphoreSlim _sendLock = new(1, 1);
 	private readonly SemaphoreSlim _closeLock = new(1, 1);
 	private GameConnectionState _state = GameConnectionState.Connected;
@@ -50,6 +53,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		ICharacterSelectionRepository? characterSelectionRepository = null,
 		CharacterCreationService? characterCreationService = null,
 		PlayerEnterWorldService? playerEnterWorldService = null,
+		IDFactory? idFactory = null,
+		GameTimeService? gameTimeService = null,
 		GameCrypt? crypt = null)
 		: base(logger, client, clientId)
 	{
@@ -60,6 +65,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		_characterSelectionRepository = characterSelectionRepository ?? new EmptyCharacterSelectionRepository();
 		_characterCreationService = characterCreationService;
 		_playerEnterWorldService = playerEnterWorldService;
+		_idFactory = idFactory;
+		_gameTimeService = gameTimeService;
 		_crypt = crypt ?? new GameCrypt();
 	}
 
@@ -284,9 +291,39 @@ public sealed class GameServerConnection : BaseClientConnection
 						await SendPacketAsync(new SmUiSettings(enterWorldResult.Player.Settings.Shortcuts, type: 1));
 					if (enterWorldResult.Player.Settings.HouseBuddies != null)
 						await SendPacketAsync(new SmUiSettings(enterWorldResult.Player.Settings.HouseBuddies, type: 2));
+
+					var itemTemplates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
+					if (itemTemplates != null)
+					{
+						foreach (var inventoryPacket in SmInventoryInfo.CreateLoginPackets(
+							enterWorldResult.Player,
+							itemTemplates,
+							_idFactory == null ? null : () => _idFactory.NextId()))
+						{
+							await SendPacketAsync(inventoryPacket);
+						}
+					}
+
+					var staticData = _runtimeContext?.DataManager?.StaticData;
+					await SendPacketAsync(new SmChannelInfo(enterWorldResult.Player.Position, staticData?.WorldMaps ?? Array.Empty<WorldMapSummary>()));
+					await SendPacketAsync(CreateBindPointPacket(enterWorldResult.Player, staticData));
+					await SendPacketAsync(new SmPlayerSpawn(enterWorldResult.Player));
+					await SendPacketAsync(new SmGameTime(_gameTimeService?.GameMinutes ?? 0));
 				}
 				break;
 		}
+	}
+
+	private static SmBindPointInfo CreateBindPointPacket(Player player, StaticData? staticData)
+	{
+		// Java parity: services/teleport/TeleportService.sendObeliskBindPoint.
+		if (player.BindPoint != null)
+			return new SmBindPointInfo(player.BindPoint.MapId, player.BindPoint.X, player.BindPoint.Y, player.BindPoint.Z);
+
+		var spawn = staticData?.PlayerInitialData.GetSpawnLocation(player.Race);
+		return spawn == null
+			? new SmBindPointInfo(player.Position.WorldId, player.Position.X, player.Position.Y, player.Position.Z)
+			: new SmBindPointInfo(spawn.MapId, spawn.X, spawn.Y, spawn.Z);
 	}
 
 	private async Task<AccountAuthResult> AuthenticateAccountAsync(CmL2AuthLoginCheck auth)

@@ -23,6 +23,7 @@ public sealed class PlayerEnterWorldServiceTests
 			Quests = [new PlayerQuestState(1001, "START", 2, 3, 0)],
 			Motions = [new PlayerMotion(11, 0, true)],
 			Settings = new PlayerSettings { UiSettings = [1, 2], Shortcuts = [3], HouseBuddies = [4] },
+			BindPoint = new PlayerBindPoint(210010000, 10, 20, 30, 0),
 		};
 		var world = CreateWorld();
 		var service = CreateService(repository, world);
@@ -39,6 +40,7 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.Single(repository.Player.Quests);
 		Assert.Single(repository.Player.Motions);
 		Assert.NotNull(repository.Player.Settings.UiSettings);
+		Assert.NotNull(repository.Player.BindPoint);
 		Assert.Equal(1, repository.LoadItemsCalls);
 		Assert.Equal(1, repository.LoadSkillsCalls);
 		Assert.Equal(1, repository.LoadSkillCooldownsCalls);
@@ -46,6 +48,7 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.Equal(1, repository.LoadQuestsCalls);
 		Assert.Equal(1, repository.LoadMotionsCalls);
 		Assert.Equal(1, repository.LoadSettingsCalls);
+		Assert.Equal(1, repository.LoadBindPointCalls);
 		Assert.Equal(1, repository.MarkOnlineCalls);
 		Assert.True(world.TryGetObject(1001, out var stored));
 		Assert.Same(repository.Player, stored);
@@ -158,6 +161,8 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public PlayerSettings Settings { get; init; } = new();
 
+		public PlayerBindPoint? BindPoint { get; init; }
+
 		public int LoadItemsCalls { get; private set; }
 
 		public int LoadSkillsCalls { get; private set; }
@@ -171,6 +176,8 @@ public sealed class PlayerEnterWorldServiceTests
 		public int LoadMotionsCalls { get; private set; }
 
 		public int LoadSettingsCalls { get; private set; }
+
+		public int LoadBindPointCalls { get; private set; }
 
 		public int MarkOnlineCalls { get; private set; }
 
@@ -221,6 +228,12 @@ public sealed class PlayerEnterWorldServiceTests
 		{
 			LoadSettingsCalls++;
 			return Task.FromResult(Settings);
+		}
+
+		public Task<PlayerBindPoint?> LoadPlayerBindPointAsync(int playerObjectId, CancellationToken cancellationToken = default)
+		{
+			LoadBindPointCalls++;
+			return Task.FromResult(BindPoint);
 		}
 
 		public Task<bool> MarkPlayerOnlineAsync(int playerObjectId, DateTime lastOnline, CancellationToken cancellationToken = default)

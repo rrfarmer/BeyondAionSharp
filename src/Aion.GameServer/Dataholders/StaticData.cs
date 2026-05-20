@@ -145,6 +145,8 @@ public sealed class StaticData
 				itemTemplates.Add(new ItemTemplateSummary(
 					ReadRequiredIntAttribute(reader, "id"),
 					reader.GetAttribute("name") ?? string.Empty,
+					ReadIntAttribute(reader, "desc"),
+					ReadIntAttribute(reader, "mask"),
 					ReadIntAttribute(reader, "level"),
 					reader.GetAttribute("item_group") ?? string.Empty,
 					reader.GetAttribute("item_type") ?? string.Empty,

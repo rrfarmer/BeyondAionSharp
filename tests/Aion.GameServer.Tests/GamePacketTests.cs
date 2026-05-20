@@ -7,6 +7,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ClientPackets;
 using Aion.GameServer.Network.Aion.ServerPackets;
+using Aion.GameServer.World;
 
 namespace Aion.GameServer.Tests;
 
@@ -113,6 +114,73 @@ public class GamePacketTests
 		Assert.Equal(0x1c00 + 3, uiSettings.Length);
 		Assert.True(uiSettings.AsSpan(0, 5).SequenceEqual(Convert.FromHexString("01001CAABB")));
 		Assert.True(uiSettings.AsSpan(5).SequenceEqual(new byte[0x1c00 - 2]));
+
+		var inventoryPackets = SmInventoryInfo.CreateLoginPackets(
+			new Player
+			{
+				NpcExpands = 2,
+				QuestExpands = 3,
+				ItemExpands = 4,
+				InventoryItems =
+				[
+					new InventoryItem { ObjectId = 88, ItemId = 100, Count = 1, IsEquipped = true, Location = 0, Slot = 1 },
+				],
+			},
+			new ItemTemplateTable(
+				[
+					new ItemTemplateSummary(182400001, "Kinah", 0, 12350, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
+					new ItemTemplateSummary(100, "Sword", 0, 1, 1, "SWORD", "NORMAL", "COMMON", "PC_ALL", 1, 0, 3),
+				]),
+			() => 77);
+		Assert.Equal(2, inventoryPackets.Count);
+
+		var inventoryPayload = SerializeUnencryptedPayload(inventoryPackets[0]);
+		using var inventoryReader = new PacketBuffer(inventoryPayload);
+		Assert.Equal(1, (int)inventoryReader.ReadC());
+		Assert.Equal(2, (int)inventoryReader.ReadC());
+		Assert.Equal(3, (int)inventoryReader.ReadC());
+		Assert.Equal(4, (int)inventoryReader.ReadC());
+		Assert.Equal(2, inventoryReader.ReadH());
+		Assert.Equal((77, 182400001, 34, 65535, 0), ReadInventoryItemHeader(inventoryReader));
+		Assert.Equal((88, 100, 203, 1, 0), ReadInventoryItemHeader(inventoryReader));
+		Assert.Equal(0, inventoryReader.Remaining);
+
+		Assert.Equal(
+			Convert.FromHexString("000203040000"),
+			SerializeUnencryptedPayload(inventoryPackets[1]));
+		Assert.Equal(
+			Convert.FromHexString("0000000005000000"),
+			SerializeUnencryptedPayload(new SmChannelInfo(new WorldPosition(210010000, 1, 2, 3, 32), [new WorldMapSummary(210010000, false, 5)])));
+		Assert.Equal(
+			Convert.FromHexString("7B000000"),
+			SerializeUnencryptedPayload(new SmGameTime(123)));
+
+		var bindPointPayload = SerializeUnencryptedPayload(new SmBindPointInfo(210010000, 1.5f, 2.5f, 3.5f));
+		using var bindPointReader = new PacketBuffer(bindPointPayload);
+		Assert.Equal(0, (int)bindPointReader.ReadC());
+		Assert.Equal(1, (int)bindPointReader.ReadC());
+		Assert.Equal(210010000, bindPointReader.ReadD());
+		Assert.Equal(1.5f, bindPointReader.ReadF());
+		Assert.Equal(2.5f, bindPointReader.ReadF());
+		Assert.Equal(3.5f, bindPointReader.ReadF());
+		Assert.Equal(0, bindPointReader.ReadD());
+		Assert.Equal(0, bindPointReader.Remaining);
+
+		var spawnPayload = SerializeUnencryptedPayload(
+			new SmPlayerSpawn(
+				new Player
+				{
+					Position = new WorldPosition(210010000, 1.5f, 2.5f, 3.5f, 32),
+				}));
+		using var spawnReader = new PacketBuffer(spawnPayload);
+		Assert.Equal(210010000, spawnReader.ReadD());
+		Assert.Equal(210010000, spawnReader.ReadD());
+		spawnReader.ReadD();
+		Assert.Equal(0, (int)spawnReader.ReadC());
+		Assert.Equal(1.5f, spawnReader.ReadF());
+		Assert.Equal(2.5f, spawnReader.ReadF());
+		Assert.Equal(3.5f, spawnReader.ReadF());
+		Assert.Equal(32, (int)spawnReader.ReadC());
 	}
 
 	[Fact]
@@ -363,6 +431,18 @@ public class GamePacketTests
 		crypt.EnableKey();
 		var frame = packet.SerializeFrame(crypt);
 		return frame[7..];
+	}
+
+	private static (int ObjectId, int ItemId, int BlobSize, int EquipmentSlot, int IsCloth) ReadInventoryItemHeader(PacketBuffer reader)
+	{
+		var objectId = reader.ReadD();
+		var itemId = reader.ReadD();
+		reader.ReadS();
+		var blobSize = reader.ReadH();
+		reader.ReadB(blobSize);
+		var equipmentSlot = reader.ReadH();
+		var isCloth = reader.ReadC();
+		return (objectId, itemId, blobSize, equipmentSlot, isCloth);
 	}
 
 	private static void WriteCreateCharacterPayload(PacketBuffer buffer)

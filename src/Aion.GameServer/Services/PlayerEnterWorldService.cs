@@ -67,6 +67,7 @@ public sealed class PlayerEnterWorldService
 			player.Quests = await _repository.LoadPlayerQuestsAsync(playerObjectId, cancellationToken);
 			player.Motions = await _repository.LoadPlayerMotionsAsync(playerObjectId, cancellationToken);
 			player.Settings = await _repository.LoadPlayerSettingsAsync(playerObjectId, cancellationToken);
+			player.BindPoint = await _repository.LoadPlayerBindPointAsync(playerObjectId, cancellationToken);
 			if (!_world.TryAddObject(playerObjectId, player))
 				return new PlayerEnterWorldResult(EnterWorldCheckMessage.ConnectionError);
 

@@ -24,6 +24,8 @@ public interface IPlayerEnterWorldRepository
 
 	Task<PlayerSettings> LoadPlayerSettingsAsync(int playerObjectId, CancellationToken cancellationToken = default);
 
+	Task<PlayerBindPoint?> LoadPlayerBindPointAsync(int playerObjectId, CancellationToken cancellationToken = default);
+
 	Task<bool> MarkPlayerOnlineAsync(int playerObjectId, DateTime lastOnline, CancellationToken cancellationToken = default);
 }
 
@@ -69,6 +71,11 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		return Task.FromResult(new PlayerSettings());
 	}
 
+	public Task<PlayerBindPoint?> LoadPlayerBindPointAsync(int playerObjectId, CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult<PlayerBindPoint?>(null);
+	}
+
 	public Task<bool> MarkPlayerOnlineAsync(int playerObjectId, DateTime lastOnline, CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(false);
@@ -93,7 +100,9 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			await connection.OpenAsync(cancellationToken);
 			await using var command = connection.CreateCommand();
 			command.CommandText = """
-				SELECT id, account_id, name, player_class, race, gender, exp, online, last_online, world_id, x, y, z, heading, title_id
+				SELECT id, account_id, name, player_class, race, gender, exp, online, last_online,
+					quest_expands, npc_expands, item_expands, title_id,
+					world_id, x, y, z, heading
 				FROM players
 				WHERE id = ? AND account_id = ? AND (deletion_date IS NULL OR deletion_date > CURRENT_TIMESTAMP)
 				""";
@@ -119,6 +128,9 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				Exp = reader.GetInt64(reader.GetOrdinal("exp")),
 				IsOnline = ReadBoolean(reader, "online"),
 				LastOnline = ReadDateTime(reader, "last_online"),
+				NpcExpands = ReadInt(reader, "npc_expands"),
+				QuestExpands = ReadInt(reader, "quest_expands"),
+				ItemExpands = ReadInt(reader, "item_expands"),
 				TitleId = ReadInt(reader, "title_id"),
 				Position = new WorldPosition(
 					ReadInt(reader, "world_id"),
@@ -420,6 +432,35 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		{
 			_logger.LogError(ex, "Could not load settings for player {PlayerObjectId}", playerObjectId);
 			return new PlayerSettings();
+		}
+	}
+
+	public async Task<PlayerBindPoint?> LoadPlayerBindPointAsync(int playerObjectId, CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/PlayerBindPointDAO.loadBindPoint.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = "SELECT map_id, x, y, z, heading FROM player_bind_point WHERE player_id = ?";
+			command.Parameters.Add(new MySqlParameter { Value = playerObjectId });
+
+			await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+			if (!await reader.ReadAsync(cancellationToken))
+				return null;
+
+			return new PlayerBindPoint(
+				ReadInt(reader, "map_id"),
+				reader.GetFloat(reader.GetOrdinal("x")),
+				reader.GetFloat(reader.GetOrdinal("y")),
+				reader.GetFloat(reader.GetOrdinal("z")),
+				(byte)ReadInt(reader, "heading"));
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not load bind point for player {PlayerObjectId}", playerObjectId);
+			return null;
 		}
 	}
 

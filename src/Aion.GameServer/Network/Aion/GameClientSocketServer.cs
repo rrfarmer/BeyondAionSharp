@@ -5,6 +5,7 @@ using Aion.Commons.Network.Server;
 using Aion.GameServer.Configuration;
 using Aion.GameServer.Data;
 using Aion.GameServer.Services;
+using Aion.GameServer.Utils.IdFactory;
 using Microsoft.Extensions.Logging;
 using GameLoginServer = Aion.GameServer.Network.LoginServer.LoginServer;
 
@@ -19,6 +20,8 @@ public sealed class GameClientSocketServer : BaseSocketServer
 	private readonly ICharacterSelectionRepository _characterSelectionRepository;
 	private readonly CharacterCreationService? _characterCreationService;
 	private readonly PlayerEnterWorldService? _playerEnterWorldService;
+	private readonly IDFactory? _idFactory;
+	private readonly GameTimeService? _gameTimeService;
 	private readonly ConcurrentDictionary<string, GameServerConnection> _connections = new();
 	private long _nextClientId;
 
@@ -30,7 +33,9 @@ public sealed class GameClientSocketServer : BaseSocketServer
 		GameLoginServer? loginServer = null,
 		ICharacterSelectionRepository? characterSelectionRepository = null,
 		CharacterCreationService? characterCreationService = null,
-		PlayerEnterWorldService? playerEnterWorldService = null)
+		PlayerEnterWorldService? playerEnterWorldService = null,
+		IDFactory? idFactory = null,
+		GameTimeService? gameTimeService = null)
 		: base(
 			logger,
 			"Aion Game Client Server",
@@ -45,6 +50,8 @@ public sealed class GameClientSocketServer : BaseSocketServer
 		_characterSelectionRepository = characterSelectionRepository ?? new EmptyCharacterSelectionRepository();
 		_characterCreationService = characterCreationService;
 		_playerEnterWorldService = playerEnterWorldService;
+		_idFactory = idFactory;
+		_gameTimeService = gameTimeService;
 	}
 
 	public IPEndPoint? LocalEndPoint => _listener?.LocalEndpoint as IPEndPoint;
@@ -66,7 +73,9 @@ public sealed class GameClientSocketServer : BaseSocketServer
 				_loginServer,
 				_characterSelectionRepository,
 				_characterCreationService,
-				_playerEnterWorldService);
+				_playerEnterWorldService,
+				_idFactory,
+				_gameTimeService);
 			_connections[clientId] = connection;
 			await connection.RunAsync();
 		}

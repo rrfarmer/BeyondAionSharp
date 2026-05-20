@@ -22,6 +22,12 @@ public sealed class Player
 
 	public DateTime? LastOnline { get; set; }
 
+	public int NpcExpands { get; init; }
+
+	public int QuestExpands { get; init; }
+
+	public int ItemExpands { get; init; }
+
 	public int TitleId { get; init; }
 
 	public WorldPosition Position { get; init; }
@@ -39,4 +45,6 @@ public sealed class Player
 	public IReadOnlyList<PlayerMotion> Motions { get; set; } = Array.Empty<PlayerMotion>();
 
 	public PlayerSettings Settings { get; set; } = new();
+
+	public PlayerBindPoint? BindPoint { get; set; }
 }
