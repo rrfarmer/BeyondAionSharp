@@ -94,6 +94,7 @@ public sealed class StaticData
 		var spawnLocationsByRace = new Dictionary<string, PlayerSpawnLocation>(StringComparer.OrdinalIgnoreCase);
 		string? currentPlayerCreationClass = null;
 		InstanceCooltimeBuilder? currentInstanceCooltime = null;
+		ItemTemplateBuilder? currentItemTemplate = null;
 		var elementPath = new Dictionary<int, string>();
 		var settings = new XmlReaderSettings
 		{
@@ -113,6 +114,12 @@ public sealed class StaticData
 				{
 					instanceCooltimes.Add(currentInstanceCooltime.ToSummary());
 					currentInstanceCooltime = null;
+				}
+
+				if (reader.Depth == 2 && reader.LocalName == "item_template" && currentItemTemplate != null)
+				{
+					itemTemplates.Add(currentItemTemplate.ToSummary());
+					currentItemTemplate = null;
 				}
 
 				if (reader.Depth == 2 && reader.LocalName == "player_data")
@@ -170,7 +177,7 @@ public sealed class StaticData
 
 			if (reader.Depth == 2 && reader.LocalName == "item_template")
 			{
-				itemTemplates.Add(new ItemTemplateSummary(
+				currentItemTemplate = new ItemTemplateBuilder(
 					ReadRequiredIntAttribute(reader, "id"),
 					reader.GetAttribute("name") ?? string.Empty,
 					ReadIntAttribute(reader, "desc"),
@@ -182,7 +189,20 @@ public sealed class StaticData
 					reader.GetAttribute("race") ?? string.Empty,
 					ReadIntAttribute(reader, "max_stack_count"),
 					ReadLongAttribute(reader, "price"),
-					GetItemGroupSlots(reader.GetAttribute("item_group"))));
+					GetItemGroupSlots(reader.GetAttribute("item_group")));
+				if (reader.IsEmptyElement)
+				{
+					itemTemplates.Add(currentItemTemplate.ToSummary());
+					currentItemTemplate = null;
+				}
+
+				continue;
+			}
+
+			if (reader.Depth == 3 && reader.LocalName == "disposition" && currentItemTemplate != null)
+			{
+				currentItemTemplate.DispositionItemId = ReadIntAttribute(reader, "id");
+				currentItemTemplate.DispositionItemCount = ReadIntAttribute(reader, "count");
 				continue;
 			}
 
@@ -321,6 +341,85 @@ public sealed class StaticData
 		{
 			// Java parity: model/templates/InstanceCooltime fields consumed by SM_INSTANCE_INFO.
 			return new InstanceCooltimeSummary(Id, WorldId, Race, MaxCount);
+		}
+	}
+
+	private sealed class ItemTemplateBuilder
+	{
+		public ItemTemplateBuilder(
+			int templateId,
+			string name,
+			int descriptionId,
+			int mask,
+			int level,
+			string itemGroup,
+			string itemType,
+			string quality,
+			string race,
+			int maxStackCount,
+			long price,
+			long validEquipmentSlots)
+		{
+			TemplateId = templateId;
+			Name = name;
+			DescriptionId = descriptionId;
+			Mask = mask;
+			Level = level;
+			ItemGroup = itemGroup;
+			ItemType = itemType;
+			Quality = quality;
+			Race = race;
+			MaxStackCount = maxStackCount;
+			Price = price;
+			ValidEquipmentSlots = validEquipmentSlots;
+		}
+
+		private int TemplateId { get; }
+
+		private string Name { get; }
+
+		private int DescriptionId { get; }
+
+		private int Mask { get; }
+
+		private int Level { get; }
+
+		private string ItemGroup { get; }
+
+		private string ItemType { get; }
+
+		private string Quality { get; }
+
+		private string Race { get; }
+
+		private int MaxStackCount { get; }
+
+		private long Price { get; }
+
+		private long ValidEquipmentSlots { get; }
+
+		public int DispositionItemId { get; set; }
+
+		public int DispositionItemCount { get; set; }
+
+		public ItemTemplateSummary ToSummary()
+		{
+			// Java parity: model/templates/item/ItemTemplate plus nested Disposition courier-pass data.
+			return new ItemTemplateSummary(
+				TemplateId,
+				Name,
+				DescriptionId,
+				Mask,
+				Level,
+				ItemGroup,
+				ItemType,
+				Quality,
+				Race,
+				MaxStackCount,
+				Price,
+				ValidEquipmentSlots,
+				DispositionItemId,
+				DispositionItemCount);
 		}
 	}
 

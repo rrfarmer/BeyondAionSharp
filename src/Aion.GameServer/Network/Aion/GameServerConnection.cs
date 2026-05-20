@@ -22,6 +22,7 @@ public sealed class GameServerConnection : BaseClientConnection
 {
 	private const int MaxCorruptPacketsBeforeDisconnect = 3;
 	private const int CubeStorageId = 0;
+	private const int MailboxStorageId = 127;
 	private const int KinahItemId = 182400001;
 	private const int FirstAvailableSlot = 65535;
 	private readonly GamePacketProcessor<string> _packetProcessor;
@@ -32,6 +33,8 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly ICharacterSelectionRepository _characterSelectionRepository;
 	private readonly CharacterCreationService? _characterCreationService;
 	private readonly PlayerEnterWorldService? _playerEnterWorldService;
+	private readonly IMailRepository? _mailRepository;
+	private readonly IGameClientConnectionRegistry? _connectionRegistry;
 	private readonly IDFactory? _idFactory;
 	private readonly GameTimeService? _gameTimeService;
 	private readonly SemaphoreSlim _sendLock = new(1, 1);
@@ -57,6 +60,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		ICharacterSelectionRepository? characterSelectionRepository = null,
 		CharacterCreationService? characterCreationService = null,
 		PlayerEnterWorldService? playerEnterWorldService = null,
+		IMailRepository? mailRepository = null,
+		IGameClientConnectionRegistry? connectionRegistry = null,
 		IDFactory? idFactory = null,
 		GameTimeService? gameTimeService = null,
 		GameCrypt? crypt = null)
@@ -69,10 +74,14 @@ public sealed class GameServerConnection : BaseClientConnection
 		_characterSelectionRepository = characterSelectionRepository ?? new EmptyCharacterSelectionRepository();
 		_characterCreationService = characterCreationService;
 		_playerEnterWorldService = playerEnterWorldService;
+		_mailRepository = mailRepository;
+		_connectionRegistry = connectionRegistry;
 		_idFactory = idFactory;
 		_gameTimeService = gameTimeService;
 		_crypt = crypt ?? new GameCrypt();
 	}
+
+	internal Player? ActivePlayer => _activePlayer;
 
 	public GameConnectionState State => _state;
 
@@ -162,6 +171,10 @@ public sealed class GameServerConnection : BaseClientConnection
 		{
 			if (!_isConnected)
 				return;
+
+			// Java parity: online player is removed from World-backed player lookups when the connection closes.
+			if (_activePlayer != null)
+				_connectionRegistry?.UnregisterPlayerConnection(_activePlayer.ObjectId, this);
 
 			await NotifyAccountDisconnectedAsync();
 
@@ -257,19 +270,61 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmCharacterPasskey characterPasskey:
 				await SendPacketAsync(new SmCharacterSelect(type: 2, messageType: characterPasskey.Type, wrongCount: 0));
 				break;
+			case CmBrokerSellWindow brokerSellWindow:
+				if (_activePlayer != null)
+				{
+					// Java parity: network/aion/clientpackets/CM_BROKER_SELL_WINDOW.runImpl -> BrokerService.showSellWindow.
+					await SendPacketAsync(SmBrokerService.CreateSellWindow(brokerSellWindow.ItemObjectId));
+				}
+				break;
+			case CmBrokerList brokerList:
+				if (_activePlayer != null)
+				{
+					// Java parity: network/aion/clientpackets/CM_BROKER_LIST.runImpl -> BrokerService.showRequestedItems.
+					await SendPacketAsync(SmBrokerService.CreateEmptySearchedItems(totalItemCount: 0, brokerList.Page));
+				}
+				break;
+			case CmBrokerSearch brokerSearch:
+				if (_activePlayer != null)
+				{
+					// Java parity: network/aion/clientpackets/CM_BROKER_SEARCH.runImpl -> BrokerService.showRequestedItems.
+					await SendPacketAsync(SmBrokerService.CreateEmptySearchedItems(totalItemCount: 0, brokerSearch.Page));
+				}
+				break;
+			case CmBrokerRegistered:
+				if (_activePlayer != null)
+				{
+					// Java parity: network/aion/clientpackets/CM_BROKER_REGISTERED.runImpl -> BrokerService.showRegisteredItems.
+					await SendPacketAsync(SmBrokerService.CreateEmptyRegisteredItems());
+				}
+				break;
+			case CmBrokerSettleList brokerSettleList:
+				if (_activePlayer != null)
+				{
+					// Java parity: network/aion/clientpackets/CM_BROKER_SETTLE_LIST.runImpl -> BrokerService.showSettledItems.
+					await SendPacketAsync(SmBrokerService.CreateEmptySettledItems(0, brokerSettleList.StartPageIndex, _activePlayer.BrokerSettlements.EarnedKinah));
+				}
+				break;
+			case CmBuyBrokerItem:
+			case CmRegisterBrokerItem:
+			case CmBrokerCancelRegistered:
+			case CmBrokerSettleAccount:
+				// Java parity: parsed broker mutation packets; persistence/inventory mutations are deferred to the full BrokerService port.
+				break;
 			case CmSendMail sendMail:
 				if (_activePlayer != null)
 				{
 					// Java parity: network/aion/clientpackets/CM_SEND_MAIL.runImpl -> MailService.sendMail.
-					var mailMessageId = GetSendMailShellResponse(sendMail);
-					if (mailMessageId != null)
-						await SendPacketAsync(SmMailService.CreateMailMessage(mailMessageId.Value));
+					var responsePacket = await HandleSendMailAsync(_activePlayer, sendMail);
+					if (responsePacket != null)
+						await SendPacketAsync(responsePacket);
 				}
 				break;
 			case CmCheckMailList checkMailList:
 				if (_activePlayer != null)
 				{
 					// Java parity: network/aion/clientpackets/CM_CHECK_MAIL_LIST.runImpl -> MailService.sendMailList.
+					_activePlayer.MailboxState = checkMailList.ExpressOnly ? Player.MailboxExpressState : Player.MailboxRegularState;
 					foreach (var mailListPacket in SmMailService.CreateListPackets(
 						_activePlayer.ObjectId,
 						_activePlayer.Mailbox,
@@ -293,6 +348,8 @@ public sealed class GameServerConnection : BaseClientConnection
 						_activePlayer.Mailbox = _activePlayer.Mailbox
 							.Select(mail => mail.Id == readMail.MailObjectId ? mail with { IsUnread = false } : mail)
 							.ToArray();
+						if (_mailRepository != null)
+							await _mailRepository.MarkMailReadAsync(readMail.MailObjectId);
 					}
 				}
 				break;
@@ -306,8 +363,14 @@ public sealed class GameServerConnection : BaseClientConnection
 					// Java parity: network/aion/clientpackets/CM_DELETE_MAIL.runImpl -> MailService.deleteMail.
 					var ids = deleteMail.MailObjectIds.ToHashSet();
 					_activePlayer.Mailbox = _activePlayer.Mailbox.Where(mail => !ids.Contains(mail.Id)).ToArray();
+					if (_mailRepository != null)
+						await _mailRepository.DeleteLettersAsync(deleteMail.MailObjectIds);
 					await SendPacketAsync(SmMailService.CreateDeletePacket(_activePlayer.Mailbox, deleteMail.MailObjectIds));
 				}
+				break;
+			case CmReadExpressMail readExpressMail:
+				if (_activePlayer != null)
+					await HandleReadExpressMailAsync(_activePlayer, readExpressMail);
 				break;
 			case CmEnterWorld enterWorld:
 				var enterWorldResult = _playerEnterWorldService == null
@@ -316,6 +379,8 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (enterWorldResult.Message == EnterWorldCheckMessage.Ok)
 					_state = GameConnectionState.InGame;
 				_activePlayer = enterWorldResult.Message == EnterWorldCheckMessage.Ok ? enterWorldResult.Player : null;
+				if (_activePlayer != null)
+					_connectionRegistry?.RegisterPlayerConnection(_activePlayer.ObjectId, this);
 				await SendPacketAsync(new SmEnterWorldCheck(enterWorldResult.Message));
 				if (enterWorldResult is { Message: EnterWorldCheckMessage.Ok, Player: not null })
 				{
@@ -391,6 +456,11 @@ public sealed class GameServerConnection : BaseClientConnection
 					await SendPacketAsync(new SmStatsInfo(enterWorldResult.Player, staticData?.PlayerExperienceTable, _gameTimeService?.GameMinutes ?? 0));
 					// Java parity: services/mail/MailService.onPlayerLogin sends mailbox state before macro/recipe restore.
 					await SendPacketAsync(new SmMailService(enterWorldResult.Player.Mailbox));
+					foreach (var housingBidSystemMessage in SmReceiveBids.CreateLoginSystemMessages(enterWorldResult.Player))
+					{
+						// Java parity: services/HousingBidService.onPlayerLogin sends auction-result system messages before SM_RECEIVE_BIDS.
+						await SendPacketAsync(housingBidSystemMessage);
+					}
 					var housingBidRefreshPacket = SmReceiveBids.CreateLoginPacket(enterWorldResult.Player);
 					if (housingBidRefreshPacket != null)
 					{
@@ -411,6 +481,44 @@ public sealed class GameServerConnection : BaseClientConnection
 					// Java parity: services/HousingService.onPlayerLogin sends house owner profile info.
 					await SendPacketAsync(new SmHouseOwnerInfo(enterWorldResult.Player));
 				}
+				break;
+		}
+	}
+
+	private async Task HandleReadExpressMailAsync(Player player, CmReadExpressMail packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_READ_EXPRESS_MAIL.runImpl.
+		switch (packet.Action)
+		{
+			case 0:
+				player.HasSummonedPostman = false;
+				break;
+			case 1:
+				var hasUnreadExpress = player.Mailbox.Any(mail => mail.IsUnreadExpress);
+				var hasUnreadBlackCloud = player.Mailbox.Any(mail => mail.IsUnreadBlackCloud);
+				if (player.HasSummonedPostman)
+				{
+					await SendPacketAsync(SmSystemMessage.PostmanAlreadySummoned());
+				}
+				else if (hasUnreadBlackCloud)
+				{
+					player.HasSummonedPostman = true;
+				}
+				else if (hasUnreadExpress)
+				{
+					var now = DateTimeOffset.UtcNow;
+					if (player.ExpressMailCooldownUntil > now)
+					{
+						await SendPacketAsync(SmSystemMessage.PostmanUnableInCooltime());
+						return;
+					}
+
+					player.HasSummonedPostman = true;
+					player.ExpressMailCooldownUntil = now.AddMinutes(10);
+				}
+				break;
+			default:
+				_logger.LogWarning("Player {PlayerObjectId} sent unknown read express mail action type {Action}", player.ObjectId, packet.Action);
 				break;
 		}
 	}
@@ -436,6 +544,8 @@ public sealed class GameServerConnection : BaseClientConnection
 						? mail with { AttachedItem = null, AttachedItemObjectId = 0, AttachedItemTemplateId = 0 }
 						: mail)
 					.ToArray();
+				if (_mailRepository != null)
+					await _mailRepository.ClearAttachedItemAsync(packet.MailObjectId, letter.AttachedItem.ObjectId, player.ObjectId);
 				await SendPacketAsync(SmMailService.CreateAttachmentState(packet.MailObjectId, packet.AttachmentType));
 				break;
 			case 1:
@@ -447,19 +557,238 @@ public sealed class GameServerConnection : BaseClientConnection
 				player.Mailbox = player.Mailbox
 					.Select(mail => mail.Id == packet.MailObjectId ? mail with { AttachedKinah = 0 } : mail)
 					.ToArray();
+				if (_mailRepository != null)
+					await _mailRepository.ClearAttachedKinahAsync(packet.MailObjectId);
 				await SendPacketAsync(SmMailService.CreateAttachmentState(packet.MailObjectId, packet.AttachmentType));
 				break;
 		}
 	}
 
-	private static int? GetSendMailShellResponse(CmSendMail sendMail)
+	private async Task<GameServerPacket?> HandleSendMailAsync(Player sender, CmSendMail sendMail)
 	{
-		// Java parity: services/mail/MailService.sendMail early validation; full recipient lookup/persistence is still deferred.
+		// Java parity: services/mail/MailService.sendMail for non-item mail.
+		if (_mailRepository == null)
+			return null;
 		if (sendMail.RecipientName.Length > 16 || sendMail.LetterTypeId == 2 || sendMail.KinahCount < 0)
 			return null;
 		if (sendMail.LetterTypeId is not (0 or 1))
 			return null;
-		return SmMailService.NoSuchCharacterName;
+
+		var title = sendMail.Title.Length > 20 ? sendMail.Title[..20] : sendMail.Title;
+		var message = sendMail.Message.Length > 1000 ? sendMail.Message[..1000] : sendMail.Message;
+		var recipient = await _mailRepository.LoadRecipientAsync(sendMail.RecipientName);
+		if (recipient == null)
+			return SmMailService.CreateMailMessage(SmMailService.NoSuchCharacterName);
+		if (!string.Equals(recipient.Race, sender.Race, StringComparison.Ordinal))
+			return SmMailService.CreateMailMessage(SmMailService.MailIsOneRaceOnly);
+		if (recipient.MailboxLetters >= 100)
+			return SmMailService.CreateMailMessage(SmMailService.RecipientMailboxFull);
+		if (await _mailRepository.IsBlockedByRecipientAsync(recipient.PlayerObjectId, sender.ObjectId))
+			return SmMailService.CreateMailMessage(SmMailService.YouAreInRecipientIgnoreList);
+
+		var itemTemplates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
+		var senderItem = sendMail is { ItemObjectId: not 0, ItemCount: > 0 }
+			? sender.InventoryItems.FirstOrDefault(item => item.ObjectId == sendMail.ItemObjectId && item.Location == CubeStorageId)
+			: null;
+		var senderItemTemplate = senderItem == null ? null : itemTemplates?.GetItemTemplate(senderItem.ItemId);
+		if (sendMail is { ItemObjectId: not 0, ItemCount: > 0 })
+		{
+			if (senderItem == null || senderItem.Count < sendMail.ItemCount)
+				return SmSystemMessage.MailSendUsedItem();
+			if (senderItem.IsEquipped)
+				return SmSystemMessage.MailSendCannotSendEquippedItem();
+			if (senderItemTemplate == null)
+				return null;
+		}
+
+		var costFactor = sendMail.LetterTypeId == 1 ? 5 : 1;
+		var baseCost = sendMail.LetterTypeId == 1 ? 500 : 10;
+		var kinahMailCommission = sendMail.KinahCount > 0 ? (long)(sendMail.KinahCount * 0.01d * costFactor) : 0;
+		var itemMailCommission = senderItem == null || senderItemTemplate == null
+			? 0
+			: (long)(senderItemTemplate.Price * GetQualityPriceRate(senderItemTemplate) * sendMail.ItemCount * costFactor);
+		var finalMailKinah = baseCost + kinahMailCommission + itemMailCommission + sendMail.KinahCount;
+		var kinahItem = sender.InventoryItems.FirstOrDefault(item => item.ItemId == KinahItemId && item.Location == CubeStorageId);
+		if (kinahItem == null || kinahItem.Count < finalMailKinah)
+			return SmSystemMessage.NotEnoughMoney();
+
+		var dispositionConsumption = InventoryItemConsumption.Empty;
+		if (senderItem != null
+			&& senderItemTemplate != null
+			&& senderItem.PackCount <= 0
+			&& (!senderItemTemplate.IsTradeable || senderItem.IsSoulBound))
+		{
+			if (senderItemTemplate.DispositionItemId == 0 || senderItemTemplate.DispositionItemCount == 0)
+				return null;
+
+			var consumption = BuildItemCountConsumption(
+				sender.InventoryItems,
+				senderItemTemplate.DispositionItemId,
+				senderItemTemplate.DispositionItemCount);
+			if (consumption == null)
+				return null;
+			dispositionConsumption = consumption;
+		}
+
+		var mailId = _idFactory?.NextId() ?? 0;
+		if (mailId == 0)
+			return null;
+
+		var senderKinahCount = kinahItem.Count - finalMailKinah;
+		var attachedItem = BuildMailAttachment(senderItem, recipient.PlayerObjectId, sendMail.ItemCount);
+		if (senderItem != null && attachedItem == null)
+			return null;
+		var mail = new PlayerMail(
+			mailId,
+			recipient.PlayerObjectId,
+			sender.Name,
+			title,
+			message,
+			IsUnread: true,
+			AttachedItemObjectId: attachedItem?.ObjectId ?? 0,
+			AttachedItemTemplateId: attachedItem?.ItemId ?? 0,
+			sendMail.KinahCount,
+			sendMail.LetterTypeId,
+			DateTime.Now,
+			attachedItem);
+		var stored = attachedItem == null
+			? await _mailRepository.StoreSentMailAsync(mail, kinahItem.ObjectId, senderKinahCount)
+			: await _mailRepository.StoreSentItemMailAsync(
+				mail,
+				kinahItem.ObjectId,
+				senderKinahCount,
+				attachedItem,
+				attachedItem.ObjectId == senderItem?.ObjectId ? null : senderItem?.ObjectId,
+				senderItem == null ? 0 : senderItem.Count - sendMail.ItemCount,
+				dispositionConsumption.Updates,
+				dispositionConsumption.Deletes.Select(item => item.ObjectId).ToArray());
+		if (!stored)
+			return null;
+
+		var kinahUpdate = CopyInventoryItem(kinahItem, count: senderKinahCount);
+		var inventoryItems = sender.InventoryItems.ToList();
+		foreach (var itemUpdate in dispositionConsumption.Updates)
+		{
+			ReplaceInventoryItem(inventoryItems, itemUpdate);
+			if (itemTemplates?.GetItemTemplate(itemUpdate.ItemId) is { } itemTemplate)
+				await SendPacketAsync(new SmInventoryUpdateItem(itemUpdate, itemTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+		}
+
+		foreach (var itemDelete in dispositionConsumption.Deletes)
+		{
+			inventoryItems.RemoveAll(item => item.ObjectId == itemDelete.ObjectId);
+			await SendPacketAsync(new SmDeleteItem(itemDelete.ObjectId, SmDeleteItem.UseDeleteType));
+		}
+
+		if (attachedItem != null && senderItem != null && senderItemTemplate != null)
+		{
+			if (attachedItem.ObjectId == senderItem.ObjectId)
+			{
+				inventoryItems.RemoveAll(item => item.ObjectId == senderItem.ObjectId);
+				await SendPacketAsync(new SmDeleteItem(senderItem.ObjectId));
+			}
+			else
+			{
+				var reducedItem = CopyInventoryItem(senderItem, count: senderItem.Count - sendMail.ItemCount);
+				ReplaceInventoryItem(inventoryItems, reducedItem);
+				await SendPacketAsync(new SmInventoryUpdateItem(reducedItem, senderItemTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+			}
+		}
+
+		ReplaceInventoryItem(inventoryItems, kinahUpdate);
+		sender.InventoryItems = inventoryItems.ToArray();
+		if (itemTemplates?.GetItemTemplate(KinahItemId) is { } kinahTemplate)
+			await SendPacketAsync(new SmInventoryUpdateItem(kinahUpdate, kinahTemplate, SmInventoryUpdateItem.DecreaseKinahBuy));
+
+		await SendPacketAsync(SmMailService.CreateMailMessage(SmMailService.MailSendSuccess));
+		var notifiedOnlineRecipient = _connectionRegistry != null
+			&& await _connectionRegistry.NotifyMailReceivedAsync(recipient.PlayerObjectId, mail);
+		if (!notifiedOnlineRecipient && recipient.PlayerObjectId == sender.ObjectId)
+			sender.Mailbox = sender.Mailbox.Concat([mail]).ToArray();
+		return null;
+	}
+
+	private static InventoryItemConsumption? BuildItemCountConsumption(
+		IReadOnlyList<InventoryItem> inventoryItems,
+		int itemId,
+		int count)
+	{
+		// Java parity: model/items/storage/Storage.decreaseByItemId used by MailService courier-pass disposition.
+		var remaining = count;
+		var updates = new List<InventoryItem>();
+		var deletes = new List<InventoryItem>();
+		foreach (var item in inventoryItems.Where(item => item.ItemId == itemId && item.Location == CubeStorageId).OrderBy(item => item.Slot))
+		{
+			if (remaining <= 0)
+				break;
+
+			var consumed = Math.Min(item.Count, remaining);
+			var itemCount = item.Count - consumed;
+			if (itemCount == 0)
+				deletes.Add(item);
+			else
+				updates.Add(CopyInventoryItem(item, count: itemCount));
+			remaining -= (int)consumed;
+		}
+
+		return remaining == 0 ? new InventoryItemConsumption(updates, deletes) : null;
+	}
+
+	private static void ReplaceInventoryItem(List<InventoryItem> items, InventoryItem replacement)
+	{
+		var index = items.FindIndex(item => item.ObjectId == replacement.ObjectId);
+		if (index >= 0)
+			items[index] = replacement;
+	}
+
+	private InventoryItem? BuildMailAttachment(InventoryItem? senderItem, int recipientObjectId, long attachedCount)
+	{
+		// Java parity: services/mail/MailService.sendMail attached item move/split before Letter creation.
+		if (senderItem == null || attachedCount <= 0)
+			return null;
+		if (senderItem.Count == attachedCount)
+		{
+			var packCount = senderItem.PackCount > 0 ? senderItem.PackCount * -1 : senderItem.PackCount;
+			return CopyInventoryItem(
+				senderItem,
+				ownerId: recipientObjectId,
+				location: MailboxStorageId,
+				isEquipped: false,
+				packCount: packCount);
+		}
+
+		if (senderItem.Count <= attachedCount)
+			return null;
+
+		var objectId = _idFactory?.NextId() ?? 0;
+		return objectId == 0
+			? null
+			: new InventoryItem
+			{
+				ObjectId = objectId,
+				ItemId = senderItem.ItemId,
+				Count = attachedCount,
+				OwnerId = recipientObjectId,
+				Slot = FirstAvailableSlot,
+				Location = MailboxStorageId,
+			};
+	}
+
+	private static double GetQualityPriceRate(ItemTemplateSummary template)
+	{
+		// Java parity: services/mail/MailService.getQualityPriceRate.
+		return template.Quality switch
+		{
+			"MYTHIC" or "EPIC" => 0.05d,
+			"UNIQUE" or "LEGEND" => 0.04d,
+			"RARE" => 0.03d,
+			_ => 0.02d,
+		};
+	}
+
+	private sealed record InventoryItemConsumption(IReadOnlyList<InventoryItem> Updates, IReadOnlyList<InventoryItem> Deletes)
+	{
+		public static InventoryItemConsumption Empty { get; } = new(Array.Empty<InventoryItem>(), Array.Empty<InventoryItem>());
 	}
 
 	private static IReadOnlyList<InventoryItem> IncreaseInventoryKinah(
@@ -493,7 +822,10 @@ public sealed class GameServerConnection : BaseClientConnection
 		InventoryItem item,
 		int? location = null,
 		long? slot = null,
-		long? count = null)
+		long? count = null,
+		int? ownerId = null,
+		bool? isEquipped = null,
+		int? packCount = null)
 	{
 		var copy = new InventoryItem
 		{
@@ -505,8 +837,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			Creator = item.Creator,
 			ExpireTime = item.ExpireTime,
 			ActivationCount = item.ActivationCount,
-			OwnerId = item.OwnerId,
-			IsEquipped = item.IsEquipped,
+			OwnerId = ownerId ?? item.OwnerId,
+			IsEquipped = isEquipped ?? item.IsEquipped,
 			IsSoulBound = item.IsSoulBound,
 			Slot = slot ?? item.Slot,
 			Location = location ?? item.Location,
@@ -521,7 +853,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			RandomBonus = item.RandomBonus,
 			FusionRandomBonus = item.FusionRandomBonus,
 			Tempering = item.Tempering,
-			PackCount = item.PackCount,
+			PackCount = packCount ?? item.PackCount,
 			IsAmplified = item.IsAmplified,
 			BuffSkill = item.BuffSkill,
 			RandomPlumeBonus = item.RandomPlumeBonus,

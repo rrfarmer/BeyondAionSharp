@@ -283,9 +283,36 @@ public class GamePacketTests
 		Assert.Equal(0, (int)attachedMailReader.ReadC());
 		Assert.Equal(0, attachedMailReader.Remaining);
 
+		var deleteItemPayload = SerializeUnencryptedPayload(new SmDeleteItem(90));
+		using var deleteItemReader = new PacketBuffer(deleteItemPayload);
+		Assert.Equal(90, deleteItemReader.ReadD());
+		Assert.Equal(0, (int)deleteItemReader.ReadC());
+		Assert.Equal(0, deleteItemReader.Remaining);
+
+		var inventoryUpdatePayload = SerializeUnencryptedPayload(
+			new SmInventoryUpdateItem(attachedItem, attachedTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+		using var inventoryUpdateReader = new PacketBuffer(inventoryUpdatePayload);
+		Assert.Equal(90, inventoryUpdateReader.ReadD());
+		Assert.Equal(attachedTemplate.GetClientName(), inventoryUpdateReader.ReadS());
+		var updateBlobSize = inventoryUpdateReader.ReadH();
+		Assert.True(updateBlobSize > 0);
+		inventoryUpdateReader.ReadB(updateBlobSize);
+		Assert.Equal(SmInventoryUpdateItem.DecreaseItemUse, inventoryUpdateReader.ReadH());
+		Assert.Equal(0, inventoryUpdateReader.Remaining);
+
 		Assert.Equal(
 			Convert.FromHexString("0100"),
 			SerializeUnencryptedPayload(SmMailService.CreateMailMessage(SmMailService.MailSendSuccess)));
+
+		var systemMessagePayload = SerializeUnencryptedPayload(SmSystemMessage.NotEnoughMoney());
+		using var systemMessageReader = new PacketBuffer(systemMessagePayload);
+		Assert.Equal(25, (int)systemMessageReader.ReadC());
+		Assert.Equal(0, (int)systemMessageReader.ReadC());
+		Assert.Equal(0, systemMessageReader.ReadD());
+		Assert.Equal(1300388, systemMessageReader.ReadD());
+		Assert.Equal(0, (int)systemMessageReader.ReadC());
+		Assert.Equal(0, (int)systemMessageReader.ReadC());
+		Assert.Equal(0, systemMessageReader.Remaining);
 
 		var attachmentStatePayload = SerializeUnencryptedPayload(SmMailService.CreateAttachmentState(letterId: 123, attachmentType: 1));
 		using var attachmentStateReader = new PacketBuffer(attachmentStatePayload);
@@ -321,6 +348,42 @@ public class GamePacketTests
 		Assert.Equal(1, brokerReader.ReadH());
 		Assert.Equal(0, (int)brokerReader.ReadC());
 		Assert.Equal(0, brokerReader.Remaining);
+
+		var brokerSearchPayload = SerializeUnencryptedPayload(SmBrokerService.CreateEmptySearchedItems(totalItemCount: 12, startPage: 3));
+		using var brokerSearchReader = new PacketBuffer(brokerSearchPayload);
+		Assert.Equal(0, (int)brokerSearchReader.ReadC());
+		Assert.Equal(12, brokerSearchReader.ReadD());
+		Assert.Equal(0, (int)brokerSearchReader.ReadC());
+		Assert.Equal(3, brokerSearchReader.ReadH());
+		Assert.Equal(0, brokerSearchReader.ReadH());
+		Assert.Equal(0, brokerSearchReader.Remaining);
+
+		Assert.Equal(
+			Convert.FromHexString("01000000000000"),
+			SerializeUnencryptedPayload(SmBrokerService.CreateEmptyRegisteredItems()));
+
+		var brokerSettledPayload = SerializeUnencryptedPayload(SmBrokerService.CreateEmptySettledItems(totalItemCount: 0, pageIndex: 2, settledKinah: 77));
+		using var brokerSettledReader = new PacketBuffer(brokerSettledPayload);
+		Assert.Equal(5, (int)brokerSettledReader.ReadC());
+		Assert.Equal(77, brokerSettledReader.ReadQ());
+		Assert.Equal(0, brokerSettledReader.ReadD());
+		Assert.Equal(2, brokerSettledReader.ReadH());
+		Assert.Equal(0, (int)brokerSettledReader.ReadC());
+		Assert.Equal(0, brokerSettledReader.ReadH());
+		Assert.Equal(0, brokerSettledReader.Remaining);
+
+		var brokerSellWindowPayload = SerializeUnencryptedPayload(SmBrokerService.CreateSellWindow(90));
+		using var brokerSellWindowReader = new PacketBuffer(brokerSellWindowPayload);
+		Assert.Equal(7, (int)brokerSellWindowReader.ReadC());
+		Assert.Equal(0, (int)brokerSellWindowReader.ReadC());
+		Assert.Equal(90, brokerSellWindowReader.ReadD());
+		Assert.Equal(0, brokerSellWindowReader.ReadD());
+		Assert.Equal(0, brokerSellWindowReader.ReadD());
+		Assert.Equal(3, (int)brokerSellWindowReader.ReadC());
+		Assert.Equal(0, brokerSellWindowReader.ReadQ());
+		Assert.Equal(0, brokerSellWindowReader.ReadQ());
+		Assert.Equal(0, brokerSellWindowReader.Remaining);
+		Assert.Equal(Convert.FromHexString("0600"), SerializeUnencryptedPayload(SmBrokerService.CreateRemoveSettledIcon()));
 
 		var houseNow = new DateTime(2026, 1, 1, 10, 0, 0, DateTimeKind.Local);
 		var housePayload = SerializeUnencryptedPayload(
@@ -360,6 +423,25 @@ public class GamePacketTests
 				],
 			});
 		Assert.NotNull(houseBidRefresh);
+
+		var houseBidSystemMessages = SmReceiveBids.CreateLoginSystemMessages(
+			new Player
+			{
+				LastOnline = houseNow.AddMinutes(-5),
+				Mailbox =
+				[
+					new PlayerMail(502, 1001, "$$HS_AUCTION_MAIL", "4,0", "body,700100", true, 0, 0, 0, 0, houseNow),
+					new PlayerMail(503, 1001, "$$HS_AUCTION_MAIL", "2,0", "body,700200", true, 0, 0, 0, 0, houseNow),
+					new PlayerMail(504, 1001, "$$HS_AUCTION_MAIL", "7,0", "body,700300", true, 0, 0, 0, 0, houseNow),
+					new PlayerMail(505, 1001, "$$HS_AUCTION_MAIL", "0,0", "body,0", true, 0, 0, 0, 0, houseNow),
+				],
+			});
+		Assert.Collection(
+			houseBidSystemMessages,
+			message => AssertSystemMessage(message, 1401267, "700100"),
+			message => AssertSystemMessage(message, 1401270, "700200"),
+			message => AssertSystemMessage(message, 1401269, "700300"),
+			message => AssertSystemMessage(message, 1401266));
 
 		var oldHouseBidRefresh = SmReceiveBids.CreateLoginPacket(
 			new Player
@@ -1015,6 +1097,90 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesBrokerPackets()
+	{
+		var sellWindow = Assert.IsType<CmBrokerSellWindow>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(117, b => b.WriteD(90)), GameConnectionState.InGame));
+		var brokerList = Assert.IsType<CmBrokerList>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(123, b =>
+			{
+				b.WriteD(7001);
+				b.WriteC(4);
+				b.WriteH(2);
+				b.WriteH(32);
+			}), GameConnectionState.InGame));
+		var brokerSearch = Assert.IsType<CmBrokerSearch>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(124, b =>
+			{
+				b.WriteD(7002);
+				b.WriteC(6);
+				b.WriteH(3);
+				b.WriteH(64);
+				b.WriteH(2);
+				b.WriteD(1001);
+				b.WriteD(1002);
+			}), GameConnectionState.InGame));
+		var registered = Assert.IsType<CmBrokerRegistered>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(125, b => b.WriteD(7003)), GameConnectionState.InGame));
+		var buy = Assert.IsType<CmBuyBrokerItem>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(126, b =>
+			{
+				b.WriteD(7004);
+				b.WriteD(8004);
+				b.WriteQ(9);
+			}), GameConnectionState.InGame));
+		var register = Assert.IsType<CmRegisterBrokerItem>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(127, b =>
+			{
+				b.WriteD(7005);
+				b.WriteD(8005);
+				b.WriteQ(123456);
+				b.WriteQ(3);
+				b.WriteC(1);
+			}), GameConnectionState.InGame));
+		var cancel = Assert.IsType<CmBrokerCancelRegistered>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(128, b =>
+			{
+				b.WriteD(7006);
+				b.WriteD(8006);
+			}), GameConnectionState.InGame));
+		var settleList = Assert.IsType<CmBrokerSettleList>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(129, b =>
+			{
+				b.WriteD(7007);
+				b.WriteH(5);
+			}), GameConnectionState.InGame));
+		var settleAccount = Assert.IsType<CmBrokerSettleAccount>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(130, b => b.WriteD(7008)), GameConnectionState.InGame));
+
+		Assert.Equal(90, sellWindow.ItemObjectId);
+		Assert.Equal(7001, brokerList.BrokerObjectId);
+		Assert.Equal(4, brokerList.SortType);
+		Assert.Equal(2, brokerList.Page);
+		Assert.Equal(32, brokerList.ListMask);
+		Assert.Equal(7002, brokerSearch.BrokerObjectId);
+		Assert.Equal(6, brokerSearch.SortType);
+		Assert.Equal(3, brokerSearch.Page);
+		Assert.Equal(64, brokerSearch.Mask);
+		Assert.Equal([1001, 1002], brokerSearch.ItemIds);
+		Assert.Equal(7003, registered.BrokerObjectId);
+		Assert.Equal(7004, buy.BrokerObjectId);
+		Assert.Equal(8004, buy.BrokerItemObjectId);
+		Assert.Equal(9, buy.ItemCount);
+		Assert.Equal(7005, register.BrokerObjectId);
+		Assert.Equal(8005, register.ItemObjectId);
+		Assert.Equal(123456, register.Price);
+		Assert.Equal(3, register.ItemCount);
+		Assert.True(register.SplittingAvailable);
+		Assert.Equal(7006, cancel.BrokerObjectId);
+		Assert.Equal(8006, cancel.BrokerItemObjectId);
+		Assert.Equal(7007, settleList.BrokerObjectId);
+		Assert.Equal(5, settleList.StartPageIndex);
+		Assert.Equal(7008, settleAccount.BrokerObjectId);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(123, b => b.WriteD(1)), GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesMailPackets()
 	{
 		var sendMail = Assert.IsType<CmSendMail>(
@@ -1047,6 +1213,8 @@ public class GamePacketTests
 				b.WriteD(5678);
 				b.WriteC(1);
 			}), GameConnectionState.InGame));
+		var readExpressMail = Assert.IsType<CmReadExpressMail>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(162, b => b.WriteC(1)), GameConnectionState.InGame));
 
 		Assert.Equal("Recipient", sendMail.RecipientName);
 		Assert.Equal("Title", sendMail.Title);
@@ -1060,11 +1228,13 @@ public class GamePacketTests
 		Assert.Equal(1234, getAttachment.MailObjectId);
 		Assert.Equal(1, (int)getAttachment.AttachmentType);
 		Assert.Equal([1234, 5678], deleteMail.MailObjectIds);
+		Assert.Equal(1, readExpressMail.Action);
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(132, b => b.WriteS("Recipient")), GameConnectionState.Authed));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(133, b => b.WriteC(0)), GameConnectionState.Authed));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(134, b => b.WriteD(1234)), GameConnectionState.Authed));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(136, b => b.WriteD(1234)), GameConnectionState.Authed));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(137, b => b.WriteH(0)), GameConnectionState.Authed));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(162, b => b.WriteC(1)), GameConnectionState.Authed));
 	}
 
 	[Fact]
@@ -1100,6 +1270,21 @@ public class GamePacketTests
 		crypt.EnableKey();
 		var frame = packet.SerializeFrame(crypt);
 		return frame[7..];
+	}
+
+	private static void AssertSystemMessage(GameServerPacket packet, int expectedMessageId, params string[] expectedParameters)
+	{
+		var payload = SerializeUnencryptedPayload(packet);
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(25, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(expectedMessageId, reader.ReadD());
+		Assert.Equal(expectedParameters.Length, (int)reader.ReadC());
+		foreach (var expectedParameter in expectedParameters)
+			Assert.Equal(expectedParameter, reader.ReadS());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
 	}
 
 	private static (int ObjectId, int ItemId, int BlobSize, int EquipmentSlot, int IsCloth) ReadInventoryItemHeader(PacketBuffer reader)

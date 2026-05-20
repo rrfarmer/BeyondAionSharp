@@ -35,7 +35,9 @@ public sealed record ItemTemplateSummary(
 	string Race,
 	int MaxStackCount,
 	long Price,
-	long ValidEquipmentSlots)
+	long ValidEquipmentSlots,
+	int DispositionItemId = 0,
+	int DispositionItemCount = 0)
 {
 	private const int CanPolishMask = 1 << 17;
 
@@ -75,6 +77,8 @@ public sealed record ItemTemplateSummary(
 	public bool IsStigmaShard => string.Equals(ItemGroup, "STIGMA_SHARD", StringComparison.Ordinal);
 
 	public bool IsTwoHandWeapon => TwoHandWeaponGroups.Contains(ItemGroup);
+
+	public bool IsTradeable => (Mask & (1 << 1)) == (1 << 1);
 
 	public bool CanPolish => (Mask & CanPolishMask) == CanPolishMask;
 

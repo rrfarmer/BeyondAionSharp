@@ -4,6 +4,10 @@ namespace Aion.GameServer.Model.GameObjects;
 
 public sealed class Player
 {
+	public const byte MailboxClosedState = 0;
+	public const byte MailboxRegularState = 1;
+	public const byte MailboxExpressState = 2;
+
 	public int ObjectId { get; init; }
 
 	public int AccountId { get; init; }
@@ -69,6 +73,14 @@ public sealed class Player
 	public IReadOnlyList<PlayerMacro> Macros { get; set; } = Array.Empty<PlayerMacro>();
 
 	public IReadOnlyList<PlayerMail> Mailbox { get; set; } = Array.Empty<PlayerMail>();
+
+	// Java parity: services/player/PlayerMailboxState and model/gameobjects/player/Mailbox.mailBoxState.
+	public byte MailboxState { get; set; }
+
+	// Java parity: CM_READ_EXPRESS_MAIL.runImpl checks Player.getPostman and TaskId.EXPRESS_MAIL_USE.
+	public bool HasSummonedPostman { get; set; }
+
+	public DateTimeOffset? ExpressMailCooldownUntil { get; set; }
 
 	public PlayerBrokerSettlementSummary BrokerSettlements { get; set; } = PlayerBrokerSettlementSummary.Empty;
 

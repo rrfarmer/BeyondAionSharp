@@ -12,6 +12,15 @@ public static class GameClientPacketFactory
 	{
 		// Java parity: network/aion/AionClientPacketFactory opcode registration table.
 		Register(8, states => new CmEnterWorld(8, states), GameConnectionState.Authed);
+		Register(117, states => new CmBrokerSellWindow(117, states), GameConnectionState.InGame);
+		Register(123, states => new CmBrokerList(123, states), GameConnectionState.InGame);
+		Register(124, states => new CmBrokerSearch(124, states), GameConnectionState.InGame);
+		Register(125, states => new CmBrokerRegistered(125, states), GameConnectionState.InGame);
+		Register(126, states => new CmBuyBrokerItem(126, states), GameConnectionState.InGame);
+		Register(127, states => new CmRegisterBrokerItem(127, states), GameConnectionState.InGame);
+		Register(128, states => new CmBrokerCancelRegistered(128, states), GameConnectionState.InGame);
+		Register(129, states => new CmBrokerSettleList(129, states), GameConnectionState.InGame);
+		Register(130, states => new CmBrokerSettleAccount(130, states), GameConnectionState.InGame);
 		Register(132, states => new CmSendMail(132, states), GameConnectionState.InGame);
 		Register(133, states => new CmCheckMailList(133, states), GameConnectionState.InGame);
 		Register(134, states => new CmReadMail(134, states), GameConnectionState.InGame);
@@ -22,6 +31,7 @@ public static class GameClientPacketFactory
 		Register(151, states => new CmCreateCharacter(151, states), GameConnectionState.Authed);
 		Register(152, states => new CmDeleteCharacter(152, states), GameConnectionState.Authed);
 		Register(153, states => new CmRestoreCharacter(153, states), GameConnectionState.Authed);
+		Register(162, states => new CmReadExpressMail(162, states), GameConnectionState.InGame);
 		Register(183, states => new CmReconnectAuth(183, states), GameConnectionState.Authed);
 		Register(186, states => new CmMayLoginIntoGame(186, states), GameConnectionState.Authed);
 		Register(189, states => new CmMacAddress(189, states), GameConnectionState.Connected);

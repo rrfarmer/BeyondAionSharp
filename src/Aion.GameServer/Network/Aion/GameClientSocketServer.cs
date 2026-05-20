@@ -4,6 +4,8 @@ using System.Net.Sockets;
 using Aion.Commons.Network.Server;
 using Aion.GameServer.Configuration;
 using Aion.GameServer.Data;
+using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils.IdFactory;
 using Microsoft.Extensions.Logging;
@@ -11,7 +13,7 @@ using GameLoginServer = Aion.GameServer.Network.LoginServer.LoginServer;
 
 namespace Aion.GameServer.Network.Aion;
 
-public sealed class GameClientSocketServer : BaseSocketServer
+public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnectionRegistry
 {
 	private readonly GamePacketProcessor<string> _packetProcessor;
 	private readonly GameServerOptions _options;
@@ -20,9 +22,11 @@ public sealed class GameClientSocketServer : BaseSocketServer
 	private readonly ICharacterSelectionRepository _characterSelectionRepository;
 	private readonly CharacterCreationService? _characterCreationService;
 	private readonly PlayerEnterWorldService? _playerEnterWorldService;
+	private readonly IMailRepository? _mailRepository;
 	private readonly IDFactory? _idFactory;
 	private readonly GameTimeService? _gameTimeService;
 	private readonly ConcurrentDictionary<string, GameServerConnection> _connections = new();
+	private readonly ConcurrentDictionary<int, GameServerConnection> _playerConnections = new();
 	private long _nextClientId;
 
 	public GameClientSocketServer(
@@ -34,6 +38,7 @@ public sealed class GameClientSocketServer : BaseSocketServer
 		ICharacterSelectionRepository? characterSelectionRepository = null,
 		CharacterCreationService? characterCreationService = null,
 		PlayerEnterWorldService? playerEnterWorldService = null,
+		IMailRepository? mailRepository = null,
 		IDFactory? idFactory = null,
 		GameTimeService? gameTimeService = null)
 		: base(
@@ -50,6 +55,7 @@ public sealed class GameClientSocketServer : BaseSocketServer
 		_characterSelectionRepository = characterSelectionRepository ?? new EmptyCharacterSelectionRepository();
 		_characterCreationService = characterCreationService;
 		_playerEnterWorldService = playerEnterWorldService;
+		_mailRepository = mailRepository;
 		_idFactory = idFactory;
 		_gameTimeService = gameTimeService;
 	}
@@ -74,6 +80,8 @@ public sealed class GameClientSocketServer : BaseSocketServer
 				_characterSelectionRepository,
 				_characterCreationService,
 				_playerEnterWorldService,
+				_mailRepository,
+				this,
 				_idFactory,
 				_gameTimeService);
 			_connections[clientId] = connection;
@@ -96,5 +104,41 @@ public sealed class GameClientSocketServer : BaseSocketServer
 		// Java parity: listener shutdown closes active AionConnection sessions.
 		var closeTasks = _connections.Values.Select(connection => connection.CloseAsync()).ToArray();
 		return closeTasks.Length == 0 ? Task.CompletedTask : Task.WhenAll(closeTasks);
+	}
+
+	public void RegisterPlayerConnection(int playerObjectId, GameServerConnection connection)
+	{
+		// Java parity: world/World player lookup used by SystemMailService.updateRecipientMailbox.
+		_playerConnections[playerObjectId] = connection;
+	}
+
+	public void UnregisterPlayerConnection(int playerObjectId, GameServerConnection connection)
+	{
+		// Java parity: online player leaves World lookup on disconnect/logout.
+		if (_playerConnections.TryGetValue(playerObjectId, out var registeredConnection)
+			&& ReferenceEquals(registeredConnection, connection))
+			_playerConnections.TryRemove(playerObjectId, out _);
+	}
+
+	public async Task<bool> NotifyMailReceivedAsync(int recipientObjectId, PlayerMail mail)
+	{
+		// Java parity: services/mail/SystemMailService.updateRecipientMailbox online recipient branch.
+		if (!_playerConnections.TryGetValue(recipientObjectId, out var connection) || connection.ActivePlayer == null)
+			return false;
+
+		var recipient = connection.ActivePlayer;
+		recipient.Mailbox = recipient.Mailbox.Concat([mail]).ToArray();
+		await connection.SendPacketAsync(new SmMailService(recipient.Mailbox));
+
+		if (recipient.MailboxState != Player.MailboxClosedState)
+		{
+			var expressOnly = (recipient.MailboxState & Player.MailboxExpressState) == Player.MailboxExpressState;
+			foreach (var mailListPacket in SmMailService.CreateListPackets(recipient.ObjectId, recipient.Mailbox, expressOnly))
+				await connection.SendPacketAsync(mailListPacket);
+		}
+
+		if (mail.LetterType == 1)
+			await connection.SendPacketAsync(SmSystemMessage.PostmanNotify());
+		return true;
 	}
 }
