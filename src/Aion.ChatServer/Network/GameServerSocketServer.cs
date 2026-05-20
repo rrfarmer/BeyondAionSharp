@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Net;
 using System.Net.Sockets;
 using Aion.ChatServer.Configuration;
 using Aion.ChatServer.Network.Handlers;
@@ -27,6 +28,8 @@ public sealed class GameServerSocketServer : BaseSocketServer
 		_gameServerService = gameServerService;
 		_chatService = chatService;
 	}
+
+	public IPEndPoint? LocalEndPoint => _listener?.LocalEndpoint as IPEndPoint;
 
 	protected override async Task HandleConnectionAsync(TcpClient client, CancellationToken cancellationToken)
 	{

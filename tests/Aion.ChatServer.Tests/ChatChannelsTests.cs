@@ -33,4 +33,23 @@ public class ChatChannelsTests
 
 		Assert.Null(channel);
 	}
+
+	[Theory]
+	[InlineData("Gladiator")]
+	[InlineData("Gladyatör")]
+	[InlineData("Гладиатор")]
+	[InlineData("剑星")]
+	[InlineData("검성")]
+	public void GetOrCreate_ReusesJobChannelForJavaLocalizedAliases(string alias)
+	{
+		var channels = new ChatChannels(NullLogger<ChatChannels>.Instance);
+		var client = new ChatClient(1, new byte[48], "account", "Daeva", Race.Elyos, accessLevel: 0);
+
+		var first = channels.GetOrCreate(client, "@\u0001job_Gladiator\u00011.0.AION.KOR");
+		var aliasChannel = channels.GetOrCreate(client, $"@\u0001job_{alias}\u00011.0.AION.KOR");
+
+		var job = Assert.IsType<JobChannel>(first);
+		Assert.True(job.HasAliases);
+		Assert.Same(first, aliasChannel);
+	}
 }

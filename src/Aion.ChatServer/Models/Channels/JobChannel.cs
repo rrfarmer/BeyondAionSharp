@@ -4,17 +4,17 @@ public sealed class JobChannel : RaceChannel
 {
 	private static readonly List<IReadOnlySet<string>> AliasSets =
 	[
-		NewOrderedSet("Gladiator"),
-		NewOrderedSet("Templar"),
-		NewOrderedSet("Assassin"),
-		NewOrderedSet("Ranger"),
-		NewOrderedSet("Sorcerer"),
-		NewOrderedSet("Spiritmaster"),
-		NewOrderedSet("Cleric"),
-		NewOrderedSet("Chanter"),
-		NewOrderedSet("Aethertech"),
-		NewOrderedSet("Gunslinger", "Gunner"),
-		NewOrderedSet("Songweaver", "Bard"),
+		NewOrderedSet("Gladiator", "Gladiador", "Gladiatore", "Gladiateur", "Gladyatör", "Гладиатор", "剑星", "검성"),
+		NewOrderedSet("Templar", "Templer", "Templario", "Templare", "Templier", "Templariusz", "Tapınakçı", "Страж", "守护星", "수호성"),
+		NewOrderedSet("Assassin", "Assassine", "Asesino", "Assassino", "Asasyn", "Suikastçı", "Убийца", "杀星", "살성"),
+		NewOrderedSet("Ranger", "Jäger", "Cazador", "Cacciatore", "Rôdeur", "Łowca", "Avcı", "Стрелок", "弓星", "궁성"),
+		NewOrderedSet("Sorcerer", "Zauberer", "Hechicero", "Fattucchiere", "Sorcier", "Czarodziej", "Sihirbaz", "Волшебник", "魔道星", "마도성"),
+		NewOrderedSet("Spiritmaster", "Beschwörer", "Invocador", "Incantatore", "Spiritualiste", "Zaklinacz", "Ruh Çağırıcı", "Заклинатель", "精灵星", "정령성"),
+		NewOrderedSet("Cleric", "Kleriker", "Clérigo", "Chierico", "Clerc", "Kleryk", "Ruhban", "Целитель", "治愈星", "치유성"),
+		NewOrderedSet("Chanter", "Kantor", "Cantor", "Cantore", "Aède", "Чародей", "护法星", "호법성"),
+		NewOrderedSet("Aethertech", "Äthertech", "Técnico del éter", "Tecnico dell'etere", "Éthertech", "EterTech", "Etertek", "Пилот", "机甲星", "기갑성"),
+		NewOrderedSet("Gunslinger", "Gunner", "Schütze", "Tirador", "Tiratore", "Pistolero", "Strzelec", "Nişancı", "Снайпер", "枪炮星", "사격성"),
+		NewOrderedSet("Songweaver", "Bard", "Barde", "Bardo", "Ozan", "Бард", "吟游星", "음유성")
 	];
 
 	private readonly IReadOnlySet<string> _classIdentifiers;

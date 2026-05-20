@@ -36,7 +36,7 @@ Write-Host "Waiting for MySQL container $ContainerName on localhost:$HostPort...
 $deadline = (Get-Date).AddSeconds(90)
 do {
 	Start-Sleep -Seconds 2
-	docker exec -e MYSQL_PWD=$RootPassword $ContainerName mysqladmin ping -uroot --silent 2>$null
+	docker exec -e MYSQL_PWD=$RootPassword $ContainerName mysqladmin ping -h 127.0.0.1 -P 3306 --protocol=tcp -uroot --silent 2>$null
 	if ($LASTEXITCODE -eq 0) {
 		Write-Host "MySQL is ready."
 		break
@@ -51,20 +51,35 @@ foreach ($schema in $schemas) {
 	$database = $schema.Database
 	$sqlFile = Resolve-Path $schema.File
 	docker exec -e MYSQL_PWD=$RootPassword $ContainerName mysql -uroot -e "CREATE DATABASE IF NOT EXISTS ``$database`` CHARACTER SET utf8mb4;" | Out-Null
+	if ($LASTEXITCODE -ne 0) {
+		throw "Failed to create database $database."
+	}
 
 	$probeTable = $schema.ProbeTable
 	$existingTable = docker exec -e MYSQL_PWD=$RootPassword $ContainerName mysql -N -uroot $database -e "SHOW TABLES LIKE '$probeTable';"
+	if ($LASTEXITCODE -ne 0) {
+		throw "Failed to inspect database $database."
+	}
 	$needsSchema = [string]::IsNullOrWhiteSpace($existingTable)
 
 	if ($created -or $ResetSchema -or $needsSchema) {
 		$containerSqlPath = "/tmp/$database.sql"
 		docker cp $sqlFile "${ContainerName}:$containerSqlPath" | Out-Null
+		if ($LASTEXITCODE -ne 0) {
+			throw "Failed to copy schema file for $database."
+		}
 		docker exec -e MYSQL_PWD=$RootPassword $ContainerName sh -c "mysql -uroot $database < $containerSqlPath"
+		if ($LASTEXITCODE -ne 0) {
+			throw "Failed to initialize $database from $sqlFile."
+		}
 		Write-Host "Initialized $database from $sqlFile"
 	}
 }
 
 docker exec -e MYSQL_PWD=$RootPassword $ContainerName mysql -uroot aion_ls -e "REPLACE INTO gameservers (id, mask, password) VALUES (1, '*', '1234');" | Out-Null
+if ($LASTEXITCODE -ne 0) {
+	throw "Failed to seed login DB gameservers row."
+}
 
 Write-Host "Seeded login DB gameservers row: id=1, mask=*, password=1234"
 Write-Host "Connection: Server=localhost;Port=$HostPort;User ID=root;Password=$RootPassword"

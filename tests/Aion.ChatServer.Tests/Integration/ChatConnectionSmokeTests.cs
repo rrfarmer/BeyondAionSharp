@@ -4,6 +4,8 @@ using System.Net.Sockets;
 using System.Text;
 using Aion.ChatServer.Configuration;
 using Aion.ChatServer.Data.Repositories;
+using Aion.ChatServer.Handlers;
+using Aion.ChatServer.Handlers.BuiltIn;
 using Aion.ChatServer.Models;
 using Aion.ChatServer.Models.Channels;
 using Aion.ChatServer.Network;
@@ -63,6 +65,7 @@ public class ChatConnectionSmokeTests
 		var broadcast = new BroadcastService(NullLogger<BroadcastService>.Instance);
 		var chatService = new ChatService(channels, broadcast, NullLogger<ChatService>.Instance);
 		var client = chatService.RegisterPlayer(123, "account", "Daeva", Race.Elyos, 0);
+		var handlerRegistry = CreateHandlerRegistry(options, new NullChatLogRepository());
 
 		await using var harness = await SocketHarness.ConnectAsync(
 			serverClient => new ClientChannelHandler(
@@ -72,7 +75,7 @@ public class ChatConnectionSmokeTests
 				chatService,
 				channels,
 				broadcast,
-				new NullChatLogRepository(),
+				handlerRegistry,
 				options));
 
 		await harness.ClientStream.WriteAsync(ChatPacketFrameCodec.CreateFrame(Packet(w => w.C(ClientPacketFactory.CmChatIni).C(0x40).H(0).D(0).D(0).D(0))));
@@ -103,6 +106,7 @@ public class ChatConnectionSmokeTests
 		var firstClient = chatService.RegisterPlayer(123, "account", "Daeva", Race.Elyos, 0);
 		var secondClient = chatService.RegisterPlayer(124, "account2", "Other", Race.Elyos, 0);
 		var chatLogRepository = new NullChatLogRepository();
+		var handlerRegistry = CreateHandlerRegistry(options, chatLogRepository);
 
 		await using var first = await SocketHarness.ConnectAsync(
 			serverClient => new ClientChannelHandler(
@@ -112,7 +116,7 @@ public class ChatConnectionSmokeTests
 				chatService,
 				channels,
 				broadcast,
-				chatLogRepository,
+				handlerRegistry,
 				options));
 		await using var second = await SocketHarness.ConnectAsync(
 			serverClient => new ClientChannelHandler(
@@ -122,7 +126,7 @@ public class ChatConnectionSmokeTests
 				chatService,
 				channels,
 				broadcast,
-				chatLogRepository,
+				handlerRegistry,
 				options));
 
 		var channelId = await AuthenticateAndJoinAsync(first.ClientStream, firstClient, requestId: 1);
@@ -191,6 +195,17 @@ public class ChatConnectionSmokeTests
 		var writer = new ByteWriter();
 		write(writer);
 		return writer.ToArray();
+	}
+
+	private static ChatHandlerRegistry CreateHandlerRegistry(ChatServerOptions options, IChatLogRepository chatLogRepository)
+	{
+		IChatMessageHandler[] handlers =
+		[
+			new FloodProtectionHandler(),
+			new FilterHandler(options),
+			new LoggingHandler(options, chatLogRepository, NullLogger<LoggingHandler>.Instance),
+		];
+		return new ChatHandlerRegistry(handlers, NullLogger<ChatHandlerRegistry>.Instance);
 	}
 
 	private static async Task<byte[]> ReadPayloadAsync(NetworkStream stream)

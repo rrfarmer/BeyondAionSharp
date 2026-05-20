@@ -1,7 +1,7 @@
 using System.Buffers.Binary;
 using System.Net.Sockets;
 using Aion.ChatServer.Configuration;
-using Aion.ChatServer.Data.Repositories;
+using Aion.ChatServer.Handlers;
 using Aion.ChatServer.Models;
 using Aion.ChatServer.Models.Channels;
 using Aion.ChatServer.Network.Packets;
@@ -19,7 +19,7 @@ public sealed class ClientChannelHandler : BaseClientConnection, IChatClientConn
 	private readonly IChatService _chatService;
 	private readonly ChatChannels _channels;
 	private readonly IBroadcastService _broadcastService;
-	private readonly IChatLogRepository _chatLogRepository;
+	private readonly ChatHandlerRegistry _handlerRegistry;
 	private readonly ChatServerOptions _options;
 	private readonly SemaphoreSlim _sendLock = new(1, 1);
 	private readonly SemaphoreSlim _closeLock = new(1, 1);
@@ -33,14 +33,14 @@ public sealed class ClientChannelHandler : BaseClientConnection, IChatClientConn
 		IChatService chatService,
 		ChatChannels channels,
 		IBroadcastService broadcastService,
-		IChatLogRepository chatLogRepository,
+		ChatHandlerRegistry handlerRegistry,
 		ChatServerOptions options)
 		: base(logger, client, clientId)
 	{
 		_chatService = chatService;
 		_channels = channels;
 		_broadcastService = broadcastService;
-		_chatLogRepository = chatLogRepository;
+		_handlerRegistry = handlerRegistry;
 		_options = options;
 	}
 
@@ -106,10 +106,7 @@ public sealed class ClientChannelHandler : BaseClientConnection, IChatClientConn
 		}
 	}
 
-	public async Task CloseAsync(CancellationToken cancellationToken = default)
-	{
-		await CloseAsync();
-	}
+	Task IChatClientConnection.CloseAsync(CancellationToken cancellationToken) => CloseAsync();
 
 	public override async Task CloseAsync()
 	{
@@ -191,21 +188,18 @@ public sealed class ClientChannelHandler : BaseClientConnection, IChatClientConn
 			return;
 		}
 
-		var floodProtectionTime = _chatClient.NextMessageTimeSeconds(channel.ChannelType);
-		if (floodProtectionTime > 0)
+		try
 		{
-			message.SetText($"You can chat again in this channel in {floodProtectionTime} second{(floodProtectionTime == 1 ? "." : "s.")}");
+			await _handlerRegistry.ExecuteHandlersAsync(message, _chatClient, channel);
+		}
+		catch (HandlerVetoException ex)
+		{
+			message.SetText(ex.ResponseText);
 			await SendPacketAsync(new SmChannelMessage(message));
 			return;
 		}
 
-		_chatClient.UpdateLastMessageTime(channel.ChannelType);
 		await _broadcastService.BroadcastMessageAsync(message);
-
-		if (_options.LogChat)
-			_logger.LogInformation("[{Channel}] {Sender}: {Message}", message.Channel.Name(), message.Sender.Name, message.TextString);
-		if (_options.LogChatToDatabase)
-			await _chatLogRepository.InsertChatLogAsync(message.Sender.Name, message.TextString, message.Channel.Name());
 	}
 
 	private async Task<byte[]?> ReadExactOrNullAsync(int length)

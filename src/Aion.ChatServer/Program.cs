@@ -1,5 +1,7 @@
 using Aion.ChatServer.Configuration;
 using Aion.ChatServer.Data.Repositories;
+using Aion.ChatServer.Handlers;
+using Aion.ChatServer.Handlers.BuiltIn;
 using Aion.ChatServer.Models.Channels;
 using Aion.ChatServer.Network;
 using Aion.ChatServer.Services;
@@ -27,6 +29,10 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton(options);
 			services.AddSingleton<ChatChannels>();
 			services.AddSingleton<IChatLogRepository, ChatLogRepository>();
+			services.AddSingleton<IChatMessageHandler, FloodProtectionHandler>();
+			services.AddSingleton<IChatMessageHandler, FilterHandler>();
+			services.AddSingleton<IChatMessageHandler, LoggingHandler>();
+			services.AddSingleton<ChatHandlerRegistry>();
 			services.AddSingleton<IBroadcastService, BroadcastService>();
 			services.AddSingleton<IChatService, ChatService>();
 			services.AddSingleton<IGameServerService, GameServerService>();

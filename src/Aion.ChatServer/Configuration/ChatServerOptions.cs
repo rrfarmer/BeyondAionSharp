@@ -23,6 +23,8 @@ public sealed class ChatServerOptions
 
 	public bool LogChatToDatabase { get; init; }
 
+	public IReadOnlyCollection<string> FilteredKeywords { get; init; } = [];
+
 	public static ChatServerOptions LoadFromJavaConfig(string startDirectory)
 	{
 		var loader = LoadProperties(startDirectory);
@@ -43,6 +45,7 @@ public sealed class ChatServerOptions
 			LogInvalidChannels = GetBoolWithEnvironment(loader, "chatserver.log.channel.invalid", false),
 			LogChat = GetBoolWithEnvironment(loader, "chatserver.log.chat", false),
 			LogChatToDatabase = GetBoolWithEnvironment(loader, "chatserver.log.chat_to_db", false),
+			FilteredKeywords = GetListWithEnvironment(loader, "chatserver.chat.filter.keywords"),
 		};
 	}
 
@@ -111,6 +114,12 @@ public sealed class ChatServerOptions
 	{
 		var value = GetWithEnvironment(loader, key, defaultValue.ToString());
 		return bool.TryParse(value, out var parsed) ? parsed : defaultValue;
+	}
+
+	private static IReadOnlyCollection<string> GetListWithEnvironment(ConfigLoader loader, string key)
+	{
+		var value = GetWithEnvironment(loader, key, string.Empty);
+		return value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
 	}
 
 	private static string ResolvePropertyReference(string value, ConfigLoader loader, string defaultValue)
