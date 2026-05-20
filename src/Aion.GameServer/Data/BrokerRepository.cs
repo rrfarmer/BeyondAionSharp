@@ -53,6 +53,13 @@ public interface IBrokerRepository
 	Task<bool> SettleAccountAsync(
 		PlayerBrokerAccountSettlement settlement,
 		CancellationToken cancellationToken = default);
+
+	Task<bool> RegisterItemAsync(
+		PlayerBrokerItem brokerItem,
+		InventoryItem brokerStorageItem,
+		InventoryItem? reducedSourceItem,
+		InventoryItem kinahItem,
+		CancellationToken cancellationToken = default);
 }
 
 public sealed class EmptyBrokerRepository : IBrokerRepository
@@ -103,6 +110,16 @@ public sealed class EmptyBrokerRepository : IBrokerRepository
 	}
 
 	public Task<bool> SettleAccountAsync(PlayerBrokerAccountSettlement settlement, CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(false);
+	}
+
+	public Task<bool> RegisterItemAsync(
+		PlayerBrokerItem brokerItem,
+		InventoryItem brokerStorageItem,
+		InventoryItem? reducedSourceItem,
+		InventoryItem kinahItem,
+		CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(false);
 	}
@@ -506,6 +523,69 @@ public sealed class MySqlBrokerRepository : IBrokerRepository
 			_logger.LogError(ex, "Could not settle broker account");
 			return false;
 		}
+	}
+
+	public async Task<bool> RegisterItemAsync(
+		PlayerBrokerItem brokerItem,
+		InventoryItem brokerStorageItem,
+		InventoryItem? reducedSourceItem,
+		InventoryItem kinahItem,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: services/BrokerService.registerItem + BrokerOpSaveTask(item, brokerItem, kinahItem).
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			await UpsertInventoryItemAsync(connection, transaction, brokerStorageItem, cancellationToken);
+			if (reducedSourceItem != null)
+				await UpsertInventoryItemAsync(connection, transaction, reducedSourceItem, cancellationToken);
+			await UpsertInventoryItemAsync(connection, transaction, kinahItem, cancellationToken);
+			await InsertBrokerItemAsync(connection, transaction, brokerItem, cancellationToken);
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not register broker item {BrokerItemObjectId}", brokerItem.ItemObjectId);
+			return false;
+		}
+	}
+
+	private static async Task InsertBrokerItemAsync(
+		MySqlConnection connection,
+		MySqlTransaction transaction,
+		PlayerBrokerItem brokerItem,
+		CancellationToken cancellationToken)
+	{
+		await using var command = connection.CreateCommand();
+		command.Transaction = transaction;
+		command.CommandText = """
+			INSERT INTO broker (
+				item_pointer, item_id, item_count, item_creator, price, broker_race, expire_time,
+				seller_id, is_sold, is_settled, splitting_available
+			)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			""";
+		command.Parameters.AddRange(
+			new[]
+			{
+				new MySqlParameter { Value = brokerItem.ItemObjectId },
+				new MySqlParameter { Value = brokerItem.ItemId },
+				new MySqlParameter { Value = brokerItem.ItemCount },
+				new MySqlParameter { Value = brokerItem.ItemCreator.Length == 0 ? (object)DBNull.Value : brokerItem.ItemCreator },
+				new MySqlParameter { Value = brokerItem.Price },
+				new MySqlParameter { Value = brokerItem.BrokerRace },
+				new MySqlParameter { Value = brokerItem.ExpireTime },
+				new MySqlParameter { Value = brokerItem.SellerId },
+				new MySqlParameter { Value = brokerItem.IsSold },
+				new MySqlParameter { Value = brokerItem.IsSettled },
+				new MySqlParameter { Value = brokerItem.SplittingAvailable },
+			});
+		await command.ExecuteNonQueryAsync(cancellationToken);
 	}
 
 	private static async Task<bool> MoveBrokerItemToCubeAsync(

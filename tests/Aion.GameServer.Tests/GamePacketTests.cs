@@ -456,6 +456,37 @@ public class GamePacketTests
 		Assert.Equal(1, (int)brokerRegisteredReader.ReadC());
 		Assert.Equal(0, brokerRegisteredReader.Remaining);
 
+		var brokerRegisterSuccessPayload = SerializeUnencryptedPayload(SmBrokerService.CreateRegisterItem(brokerItem, registeredItemsCount: 2));
+		using var brokerRegisterSuccessReader = new PacketBuffer(brokerRegisterSuccessPayload);
+		Assert.Equal(3, (int)brokerRegisterSuccessReader.ReadC());
+		Assert.Equal(0, (int)brokerRegisterSuccessReader.ReadC());
+		Assert.Equal(3, (int)brokerRegisterSuccessReader.ReadC());
+		Assert.Equal(90, brokerRegisterSuccessReader.ReadD());
+		Assert.Equal(100000, brokerRegisterSuccessReader.ReadD());
+		Assert.Equal(100, brokerRegisterSuccessReader.ReadQ());
+		Assert.Equal(2, brokerRegisterSuccessReader.ReadQ());
+		Assert.Equal(2, brokerRegisterSuccessReader.ReadQ());
+		Assert.InRange((int)brokerRegisterSuccessReader.ReadC(), 6, 7);
+		brokerRegisterSuccessReader.ReadB(138);
+		Assert.Equal("Maker", brokerRegisterSuccessReader.ReadS());
+		Assert.Equal(0, brokerRegisterSuccessReader.ReadH());
+		Assert.Equal(0, (int)brokerRegisterSuccessReader.ReadC());
+		Assert.Equal(0x11, (int)brokerRegisterSuccessReader.ReadC());
+		Assert.Equal(0, brokerRegisterSuccessReader.ReadD());
+		Assert.Equal(0x12, (int)brokerRegisterSuccessReader.ReadC());
+		Assert.Equal(0, (int)brokerRegisterSuccessReader.ReadC());
+		Assert.Equal(1, (int)brokerRegisterSuccessReader.ReadC());
+		Assert.Equal(0, brokerRegisterSuccessReader.Remaining);
+
+		var brokerRegisterErrorPayload = SerializeUnencryptedPayload(SmBrokerService.CreateRegisterMessage(5));
+		using var brokerRegisterErrorReader = new PacketBuffer(brokerRegisterErrorPayload);
+		Assert.Equal(3, (int)brokerRegisterErrorReader.ReadC());
+		Assert.Equal(5, (int)brokerRegisterErrorReader.ReadC());
+		Assert.All(brokerRegisterErrorReader.ReadB(174), value => Assert.Equal(0, value));
+		Assert.Equal(255, brokerRegisterErrorReader.ReadH());
+		Assert.All(brokerRegisterErrorReader.ReadB(7), value => Assert.Equal(0, value));
+		Assert.Equal(0, brokerRegisterErrorReader.Remaining);
+
 		var brokerSearchedPayload = SerializeUnencryptedPayload(
 			SmBrokerService.CreateSearchedItems(
 				new PlayerBrokerItemPage([brokerItem with { AveragePrice = 75 }], 1, 0, 0)));

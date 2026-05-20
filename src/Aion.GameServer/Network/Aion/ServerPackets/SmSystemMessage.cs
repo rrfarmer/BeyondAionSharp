@@ -31,6 +31,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300388);
 	}
 
+	public static SmSystemMessage BrokerPriceExceedsLimit()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LIMITED_VENDOR_CANT_OVER_GOLD.
+		return new SmSystemMessage(1402666);
+	}
+
 	public static SmSystemMessage MailSendCannotSendEquippedItem()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MAIL_SEND_CAN_NOT_SEND_EQUIPPED_ITEM.

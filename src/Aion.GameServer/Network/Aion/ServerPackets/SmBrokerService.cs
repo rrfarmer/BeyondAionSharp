@@ -97,6 +97,18 @@ public sealed class SmBrokerService : GameServerPacket
 		return new SmBrokerService(BrokerPacketType.CancelRegisteredItem, itemId: itemId, unknown: unknown);
 	}
 
+	public static SmBrokerService CreateRegisterItem(PlayerBrokerItem brokerItem, int registeredItemsCount)
+	{
+		// Java parity: SM_BROKER_SERVICE(BrokerItem brokerItem, int message, int itemsCount).
+		return new SmBrokerService(BrokerPacketType.RegisterItem, totalItemCount: registeredItemsCount, brokerItems: [brokerItem]);
+	}
+
+	public static SmBrokerService CreateRegisterMessage(int message)
+	{
+		// Java parity: SM_BROKER_SERVICE(int message).
+		return new SmBrokerService(BrokerPacketType.RegisterItem, totalItemCount: message);
+	}
+
 	public static SmBrokerService CreateSellWindow(int itemId, long currentLow = 0, long currentHigh = 0)
 	{
 		// Java parity: SM_BROKER_SERVICE(byte unk, int itemId, long currentLow, long currentHigh).
@@ -125,6 +137,9 @@ public sealed class SmBrokerService : GameServerPacket
 				break;
 			case BrokerPacketType.CancelRegisteredItem:
 				WriteCancelRegisteredItem(buffer);
+				break;
+			case BrokerPacketType.RegisterItem:
+				WriteRegisterItem(buffer);
 				break;
 			case BrokerPacketType.ShowSellWindow:
 				WriteShowSellWindow(buffer);
@@ -191,6 +206,24 @@ public sealed class SmBrokerService : GameServerPacket
 		buffer.WriteC(4);
 		buffer.WriteC(_unknown);
 		buffer.WriteD(_itemId);
+	}
+
+	private void WriteRegisterItem(PacketBuffer buffer)
+	{
+		// Java parity: SM_BROKER_SERVICE.writeRegisterItem.
+		buffer.WriteC(3);
+		if (_brokerItems.Count > 0)
+		{
+			buffer.WriteC(0);
+			buffer.WriteC(_totalItemCount + 1);
+			WriteRegisteredItemInfo(buffer, _brokerItems[0]);
+			return;
+		}
+
+		buffer.WriteC(_totalItemCount);
+		buffer.WriteB(new byte[174]);
+		buffer.WriteH(255);
+		buffer.WriteB(new byte[7]);
 	}
 
 	private void WriteShowSellWindow(PacketBuffer buffer)
@@ -279,6 +312,7 @@ public sealed class SmBrokerService : GameServerPacket
 		SettledItems,
 		RemoveSettledIcon,
 		CancelRegisteredItem,
+		RegisterItem,
 		ShowSellWindow,
 	}
 }

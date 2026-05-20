@@ -22,6 +22,7 @@ public sealed class GameServerConnection : BaseClientConnection
 {
 	private const int MaxCorruptPacketsBeforeDisconnect = 3;
 	private const int CubeStorageId = 0;
+	private const int BrokerStorageId = 126;
 	private const int MailboxStorageId = 127;
 	private const int KinahItemId = 182400001;
 	private const int FirstAvailableSlot = 65535;
@@ -333,8 +334,11 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleBrokerSettleAccountAsync(_activePlayer);
 				break;
-			case CmBuyBrokerItem:
 			case CmRegisterBrokerItem:
+				if (_activePlayer != null)
+					await HandleBrokerRegisterItemAsync(_activePlayer, (CmRegisterBrokerItem)packet);
+				break;
+			case CmBuyBrokerItem:
 				// Java parity: remaining parsed broker mutation packets; persistence/inventory mutations are deferred to the full BrokerService port.
 				break;
 			case CmSendMail sendMail:
@@ -684,6 +688,137 @@ public sealed class GameServerConnection : BaseClientConnection
 		await SendPacketAsync(SmBrokerService.CreateSettledItems(page));
 		if (page.TotalItemCount == 0)
 			await SendPacketAsync(SmBrokerService.CreateRemoveSettledIcon());
+	}
+
+	private async Task HandleBrokerRegisterItemAsync(Player player, CmRegisterBrokerItem packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_REGISTER_BROKER_ITEM.runImpl -> BrokerService.registerItem.
+		if (_brokerRepository == null || packet.ItemCount <= 0 || packet.Price <= 0)
+			return;
+
+		var itemTemplates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
+		var sourceItem = player.InventoryItems.FirstOrDefault(item => item.ObjectId == packet.ItemObjectId && item.Location == CubeStorageId);
+		var itemTemplate = sourceItem == null ? null : itemTemplates?.GetItemTemplate(sourceItem.ItemId);
+		if (sourceItem == null || itemTemplate == null || packet.ItemCount > sourceItem.Count)
+			return;
+
+		if (packet.ItemCount > 1 && packet.Price / packet.ItemCount > 999_999_999L || packet.Price > 99_999_999_999L)
+		{
+			await SendPacketAsync(SmSystemMessage.BrokerPriceExceedsLimit());
+			return;
+		}
+
+		if (sourceItem.PackCount <= 0 && (!itemTemplate.IsTradeable || sourceItem.IsSoulBound))
+			return;
+
+		var registeredItems = await _brokerRepository.LoadRegisteredItemsAsync(player.ObjectId, player.Race);
+		var registeredItemsCount = registeredItems.Count;
+		if (registeredItemsCount > 14)
+		{
+			await SendPacketAsync(SmBrokerService.CreateRegisterMessage(3));
+			return;
+		}
+
+		var registrationCommission = CalculateBrokerRegistrationCommission(packet.Price, packet.ItemCount, registeredItemsCount, player.Race);
+		var kinahItem = player.InventoryItems.FirstOrDefault(item => item.ItemId == KinahItemId && item.Location == CubeStorageId);
+		if (kinahItem == null || kinahItem.Count < registrationCommission)
+		{
+			await SendPacketAsync(SmBrokerService.CreateRegisterMessage(5));
+			return;
+		}
+
+		var splittingAvailable = itemTemplate.MaxStackCount > 1 && packet.SplittingAvailable;
+		var reducedSourceItem = default(InventoryItem);
+		InventoryItem brokerStorageItem;
+		if (itemTemplate.MaxStackCount > 1 && packet.ItemCount < sourceItem.Count)
+		{
+			var objectId = _idFactory?.NextId() ?? 0;
+			if (objectId == 0)
+				return;
+
+			reducedSourceItem = CopyInventoryItem(sourceItem, count: sourceItem.Count - packet.ItemCount);
+			brokerStorageItem = new InventoryItem
+			{
+				ObjectId = objectId,
+				ItemId = sourceItem.ItemId,
+				Count = packet.ItemCount,
+				OwnerId = player.ObjectId,
+				Location = BrokerStorageId,
+				Slot = FirstAvailableSlot,
+			};
+		}
+		else
+		{
+			brokerStorageItem = CopyInventoryItem(
+				sourceItem,
+				location: BrokerStorageId,
+				count: packet.ItemCount,
+				isEquipped: false);
+		}
+
+		var kinahUpdate = CopyInventoryItem(kinahItem, count: kinahItem.Count - registrationCommission);
+		var expireTime = TruncateToSecond(DateTime.Now.AddDays(_options.Custom.BrokerRegistrationExpirationDays));
+		var brokerItem = new PlayerBrokerItem(
+			brokerStorageItem.ObjectId,
+			brokerStorageItem.ItemId,
+			brokerStorageItem.Count,
+			brokerStorageItem.Creator ?? string.Empty,
+			packet.Price,
+			player.ObjectId,
+			player.Name,
+			GetBrokerRace(player.Race),
+			IsSold: false,
+			IsSettled: false,
+			expireTime,
+			TruncateToSecond(DateTime.Now),
+			splittingAvailable,
+			brokerStorageItem);
+		if (!await _brokerRepository.RegisterItemAsync(brokerItem, brokerStorageItem, reducedSourceItem, kinahUpdate))
+			return;
+
+		var inventoryItems = player.InventoryItems.ToList();
+		if (reducedSourceItem == null)
+		{
+			inventoryItems.RemoveAll(item => item.ObjectId == sourceItem.ObjectId);
+			await SendPacketAsync(new SmDeleteItem(sourceItem.ObjectId));
+		}
+		else
+		{
+			ReplaceInventoryItem(inventoryItems, reducedSourceItem);
+			await SendPacketAsync(new SmInventoryUpdateItem(reducedSourceItem, itemTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+		}
+
+		ReplaceInventoryItem(inventoryItems, kinahUpdate);
+		player.InventoryItems = inventoryItems.ToArray();
+		if (itemTemplates?.GetItemTemplate(KinahItemId) is { } kinahTemplate)
+			await SendPacketAsync(new SmInventoryUpdateItem(kinahUpdate, kinahTemplate, SmInventoryUpdateItem.DecreaseKinahBuy));
+		await SendPacketAsync(SmBrokerService.CreateRegisterItem(brokerItem, registeredItemsCount));
+	}
+
+	private static long CalculateBrokerRegistrationCommission(long price, long count, int registeredItemsCount, string race)
+	{
+		// Java parity: services/BrokerService.registerItem commission calculation; price modifiers are currently baseline 100/100/100.
+		var commission = registeredItemsCount > 9
+			? (long)(price * count * 0.04f)
+			: (long)(price * count * 0.02f);
+		return commission < 10 ? 10 : GetPriceForService(commission, race);
+	}
+
+	private static long GetPriceForService(long basePrice, string race)
+	{
+		// Java parity: services/trade/PricesService.getPriceForService with the currently ported baseline SM_PRICES values.
+		return race is "ELYOS" or "ASMODIANS" ? basePrice : basePrice;
+	}
+
+	private static DateTime TruncateToSecond(DateTime value)
+	{
+		// Java parity: BrokerItem expiration timestamps set nanos to zero for DB key comparisons.
+		return new DateTime(value.Year, value.Month, value.Day, value.Hour, value.Minute, value.Second, value.Kind);
+	}
+
+	private static string GetBrokerRace(string race)
+	{
+		return race == "ASMODIANS" ? "ASMODIAN" : race;
 	}
 
 	private InventoryItem? BuildBrokerSettlementKinahItem(Player player, long collectedKinah)
