@@ -1922,10 +1922,20 @@ public class GamePacketTests
 			GameClientPacketFactory.TryCreatePacket(
 				CreateClientPayload(103, _ => { }),
 				GameConnectionState.InGame));
+		var quitTimeCheck = Assert.IsType<CmTimeCheckQuit>(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(209, buffer => buffer.WriteD(345678)),
+				GameConnectionState.InGame));
+
+		Assert.Equal(345678, quitTimeCheck.NanoTime);
 		Assert.Null(
 			GameClientPacketFactory.TryCreatePacket(
 				CreateClientPayload(44, buffer => buffer.WriteH(1)),
 				GameConnectionState.Connected));
+		Assert.Null(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(209, buffer => buffer.WriteD(345678)),
+				GameConnectionState.Authed));
 		Assert.Null(
 			GameClientPacketFactory.TryCreatePacket(
 				CreateClientPayload(103, _ => { }),

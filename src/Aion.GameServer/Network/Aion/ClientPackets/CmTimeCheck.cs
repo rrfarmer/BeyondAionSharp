@@ -2,7 +2,7 @@ using Aion.Commons.Network;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 
-public sealed class CmTimeCheck : GameClientPacket
+public class CmTimeCheck : GameClientPacket
 {
 	public CmTimeCheck(int opCode, IReadOnlySet<GameConnectionState> validStates)
 		: base(opCode, validStates)
