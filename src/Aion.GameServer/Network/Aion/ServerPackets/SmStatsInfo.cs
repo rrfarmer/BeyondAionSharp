@@ -315,6 +315,12 @@ public sealed class SmStatsInfo : GameServerPacket
 			"ORB", "STAFF", "SPELLBOOK", "GUN", "CANNON", "HARP", "KEYBLADE",
 		};
 
+		private static readonly HashSet<string> TwoHandWeaponGroups = new(StringComparer.Ordinal)
+		{
+			"NOWEAPON", "GREATSWORD", "ORB", "SPELLBOOK", "POLEARM", "STAFF", "BOW", "HARP", "CANNON", "KEYBLADE",
+			"TOOLRODS", "TOOLPICKS",
+		};
+
 		public static PlayerCalculatedStats Apply(
 			Player player,
 			ItemTemplateTable itemTemplates,
@@ -338,6 +344,8 @@ public sealed class SmStatsInfo : GameServerPacket
 				.SelectMany(item => GetEquipmentModifiers(item, itemTemplates, itemRandomBonuses, enchantTemplates, temperingTemplates))
 				.Concat(GetItemSetModifiers(equippedItems, itemSets))
 				.Concat(GetArmorMasteryModifiers(player, equippedItems, skillTemplates))
+				.Concat(GetWeaponMasteryModifiers(player, equippedItems, skillTemplates))
+				.Concat(GetShieldMasteryModifiers(player, equippedItems, skillTemplates))
 				.Concat(GetBonusTitleModifiers(player, titleTemplates))
 				.Where(modifier => !string.IsNullOrEmpty(modifier.Name))
 				.ToArray();
@@ -370,16 +378,16 @@ public sealed class SmStatsInfo : GameServerPacket
 				? baseStats.AttackSpeed
 				: mainWeaponStats.AttackSpeed + (offHandWeaponStats?.AttackSpeed / 4 ?? 0);
 			var mainPhysicalAttack = mainWeaponStats != null && mainWeapon?.Template.IsMagicalAttackWeapon == false
-				? CalculateStat("PHYSICAL_ATTACK", mainWeaponStats.MeanDamage, modifiers, baseRate: current.Power * 0.01f)
+				? CalculateStat("PHYSICAL_ATTACK", mainWeaponStats.MeanDamage, modifiers, baseRate: current.Power * 0.01f, statAliases: ["MAIN_HAND_POWER"])
 				: CalculateStat("PHYSICAL_ATTACK", baseStats.MainHandPhysicalAttack, modifiers);
 			var offPhysicalAttack = offHandWeaponStats != null && offHandWeapon?.Template.IsMagicalAttackWeapon == false
-				? CalculateStat("PHYSICAL_ATTACK", offHandWeaponStats.MeanDamage, modifiers, baseRate: current.Power * 0.01f)
+				? CalculateStat("PHYSICAL_ATTACK", offHandWeaponStats.MeanDamage, modifiers, baseRate: current.Power * 0.01f, statAliases: ["OFF_HAND_POWER"])
 				: 0;
 			var mainMagicalAttack = mainWeaponStats != null && mainWeapon?.Template.IsMagicalAttackWeapon == true
-				? CalculateStat("MAGICAL_ATTACK", mainWeaponStats.MeanDamage, modifiers, baseRate: current.Knowledge * 0.01f)
+				? CalculateStat("MAGICAL_ATTACK", mainWeaponStats.MeanDamage, modifiers, baseRate: current.Knowledge * 0.01f, statAliases: ["MAIN_HAND_POWER"])
 				: CalculateStat("MAGICAL_ATTACK", baseStats.MainHandMagicalAttack, modifiers, baseRate: current.Knowledge * 0.01f);
 			var offMagicalAttack = offHandWeaponStats != null && offHandWeapon?.Template.IsMagicalAttackWeapon == true
-				? CalculateStat("MAGICAL_ATTACK", offHandWeaponStats.MeanDamage, modifiers, baseRate: current.Knowledge * 0.01f)
+				? CalculateStat("MAGICAL_ATTACK", offHandWeaponStats.MeanDamage, modifiers, baseRate: current.Knowledge * 0.01f, statAliases: ["OFF_HAND_POWER"])
 				: 0;
 
 			return current with
@@ -638,6 +646,81 @@ public sealed class SmStatsInfo : GameServerPacket
 			return titleTemplates.GetTitleTemplate(player.BonusTitleId)?.Modifiers ?? Array.Empty<ItemStatModifier>();
 		}
 
+		private static IEnumerable<ItemStatModifier> GetWeaponMasteryModifiers(
+			Player player,
+			IReadOnlyList<EquippedItem> equippedItems,
+			SkillTemplateTable? skillTemplates)
+		{
+			// Java parity: skillengine/effect/WeaponMasteryEffect + model/stats/calc/functions/StatWeaponMasteryFunction.
+			if (skillTemplates == null)
+				yield break;
+
+			var mainWeaponGroup = equippedItems
+				.FirstOrDefault(item => item.Template.IsWeapon && IsRightHandSlot(item.Item.Slot))
+				?.Template.ItemGroup;
+			var offHandWeaponGroup = equippedItems
+				.FirstOrDefault(item =>
+					item.Template.IsWeapon
+					&& IsLeftHandSlot(item.Item.Slot)
+					&& !IsTwoHandedSlot(item.Item.Slot))
+				?.Template.ItemGroup;
+
+			foreach (var skill in player.Skills)
+			{
+				var skillTemplate = skillTemplates.GetSkillTemplate(skill.SkillId);
+				if (skillTemplate == null)
+					continue;
+
+				foreach (var weaponMastery in skillTemplate.WeaponMastery)
+				foreach (var change in weaponMastery.Changes)
+				{
+					var value = change.Value + change.Delta * skill.SkillLevel;
+					if (value == 0)
+						continue;
+
+					if (TwoHandWeaponGroups.Contains(weaponMastery.WeaponGroup))
+					{
+						if (string.Equals(mainWeaponGroup, weaponMastery.WeaponGroup, StringComparison.Ordinal))
+							yield return new ItemStatModifier("rate", change.Stat, value, Bonus: true);
+						continue;
+					}
+
+					if (change.Stat is not ("PHYSICAL_ATTACK" or "MAGICAL_ATTACK"))
+						continue;
+
+					if (string.Equals(mainWeaponGroup, weaponMastery.WeaponGroup, StringComparison.Ordinal))
+						yield return new ItemStatModifier("rate", "MAIN_HAND_POWER", value, Bonus: true);
+					if (string.Equals(offHandWeaponGroup, weaponMastery.WeaponGroup, StringComparison.Ordinal))
+						yield return new ItemStatModifier("rate", "OFF_HAND_POWER", value, Bonus: true);
+				}
+			}
+		}
+
+		private static IEnumerable<ItemStatModifier> GetShieldMasteryModifiers(
+			Player player,
+			IReadOnlyList<EquippedItem> equippedItems,
+			SkillTemplateTable? skillTemplates)
+		{
+			// Java parity: skillengine/effect/ShieldMasteryEffect + model/stats/calc/functions/StatShieldMasteryFunction.
+			if (skillTemplates == null || !equippedItems.Any(item => item.Template.IsShield && IsLeftHandSlot(item.Item.Slot)))
+				yield break;
+
+			foreach (var skill in player.Skills)
+			{
+				var skillTemplate = skillTemplates.GetSkillTemplate(skill.SkillId);
+				if (skillTemplate == null)
+					continue;
+
+				foreach (var shieldMastery in skillTemplate.ShieldMastery)
+				foreach (var change in shieldMastery.Changes)
+				{
+					var value = change.Value + change.Delta * skill.SkillLevel;
+					if (value != 0)
+						yield return new ItemStatModifier("rate", change.Stat, value, Bonus: true);
+				}
+			}
+		}
+
 		private static int GetArmorMasteryEquipmentFactor(IReadOnlyList<EquippedItem> equippedItems, string armorType)
 		{
 			var equipmentFactor = 0;
@@ -686,17 +769,26 @@ public sealed class SmStatsInfo : GameServerPacket
 			float baseValue,
 			IReadOnlyList<ItemStatModifier> modifiers,
 			bool reverse = false,
-			float baseRate = 1f)
+			float baseRate = 1f,
+			params string[] statAliases)
 		{
 			var value = new MutableStat(baseValue, reverse) { BaseRate = baseRate };
 			foreach (var modifier in modifiers
-				.Where(modifier => string.Equals(modifier.Name, statName, StringComparison.Ordinal))
+				.Where(modifier => StatNameMatches(modifier.Name, statName, statAliases))
 				.OrderBy(modifier => modifier.Priority))
 			{
 				value.Apply(modifier);
 			}
 
 			return value.Current;
+		}
+
+		private static bool StatNameMatches(string modifierName, string statName, IReadOnlyList<string> statAliases)
+		{
+			if (string.Equals(modifierName, statName, StringComparison.Ordinal))
+				return true;
+
+			return statAliases.Any(alias => string.Equals(modifierName, alias, StringComparison.Ordinal));
 		}
 
 		private static bool IsRightHandSlot(long slot)

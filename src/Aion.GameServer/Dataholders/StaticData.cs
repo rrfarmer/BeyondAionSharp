@@ -218,8 +218,8 @@ public sealed class StaticData
 					currentTitleTemplate = null;
 				}
 
-				if (reader.Depth == 4 && reader.LocalName == "armormastery")
-					currentSkillTemplate?.EndArmorMastery();
+				if (reader.Depth == 4 && reader.LocalName is "armormastery" or "wpnmastery" or "shieldmastery")
+					currentSkillTemplate?.EndMastery();
 
 				if (reader.Depth == 2 && reader.LocalName == "player_data")
 					currentPlayerCreationClass = null;
@@ -648,13 +648,29 @@ public sealed class StaticData
 					ReadIntAttribute(reader, "value"),
 					ReadIntAttribute(reader, "delta"));
 				if (reader.IsEmptyElement)
-					currentSkillTemplate.EndArmorMastery();
+					currentSkillTemplate.EndMastery();
+				continue;
+			}
+
+			if (reader.Depth == 4 && reader.LocalName == "wpnmastery" && currentSkillTemplate != null)
+			{
+				currentSkillTemplate.StartWeaponMastery(reader.GetAttribute("weapon") ?? string.Empty);
+				if (reader.IsEmptyElement)
+					currentSkillTemplate.EndMastery();
+				continue;
+			}
+
+			if (reader.Depth == 4 && reader.LocalName == "shieldmastery" && currentSkillTemplate != null)
+			{
+				currentSkillTemplate.StartShieldMastery();
+				if (reader.IsEmptyElement)
+					currentSkillTemplate.EndMastery();
 				continue;
 			}
 
 			if (reader.Depth == 5 && reader.LocalName == "change" && currentSkillTemplate != null)
 			{
-				currentSkillTemplate.AddArmorMasteryChange(
+				currentSkillTemplate.AddCurrentMasteryChange(
 					new SkillStatChange(
 						reader.GetAttribute("stat") ?? string.Empty,
 						reader.GetAttribute("func") ?? string.Empty,
@@ -862,7 +878,9 @@ public sealed class StaticData
 	private sealed class SkillTemplateBuilder
 	{
 		private readonly List<SkillArmorMasteryEffectSummary> _armorMasteryEffects = [];
-		private List<SkillStatChange>? _currentArmorMasteryChanges;
+		private readonly List<SkillWeaponMasteryEffectSummary> _weaponMasteryEffects = [];
+		private readonly List<SkillShieldMasteryEffectSummary> _shieldMasteryEffects = [];
+		private List<SkillStatChange>? _currentMasteryChanges;
 
 		public SkillTemplateBuilder(
 			int skillId,
@@ -910,30 +928,42 @@ public sealed class StaticData
 
 		public void StartArmorMastery(string armorType, int value, int delta)
 		{
-			_currentArmorMasteryChanges = [];
+			_currentMasteryChanges = [];
 			_armorMasteryEffects.Add(new SkillArmorMasteryEffectSummary(
 				armorType,
 				value,
 				delta,
-				_currentArmorMasteryChanges));
+				_currentMasteryChanges));
 		}
 
-		public void AddArmorMasteryChange(SkillStatChange change)
+		public void StartWeaponMastery(string weaponGroup)
 		{
-			if (_currentArmorMasteryChanges == null)
+			_currentMasteryChanges = [];
+			_weaponMasteryEffects.Add(new SkillWeaponMasteryEffectSummary(weaponGroup, _currentMasteryChanges));
+		}
+
+		public void StartShieldMastery()
+		{
+			_currentMasteryChanges = [];
+			_shieldMasteryEffects.Add(new SkillShieldMasteryEffectSummary(_currentMasteryChanges));
+		}
+
+		public void AddCurrentMasteryChange(SkillStatChange change)
+		{
+			if (_currentMasteryChanges == null)
 				return;
 
-			_currentArmorMasteryChanges.Add(change);
+			_currentMasteryChanges.Add(change);
 		}
 
-		public void EndArmorMastery()
+		public void EndMastery()
 		{
-			_currentArmorMasteryChanges = null;
+			_currentMasteryChanges = null;
 		}
 
 		public SkillTemplateSummary ToSummary()
 		{
-			// Java parity: model/templates/skill/SkillTemplate with passive ArmorMasteryEffect metadata.
+			// Java parity: model/templates/skill/SkillTemplate with passive mastery effect metadata.
 			return new SkillTemplateSummary(
 				SkillId,
 				Name,
@@ -945,7 +975,9 @@ public sealed class StaticData
 				SkillSubType,
 				CooldownId,
 				Cooldown,
-				_armorMasteryEffects.ToArray());
+				_armorMasteryEffects.ToArray(),
+				_weaponMasteryEffects.ToArray(),
+				_shieldMasteryEffects.ToArray());
 		}
 	}
 

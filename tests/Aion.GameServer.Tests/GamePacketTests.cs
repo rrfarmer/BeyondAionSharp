@@ -1927,6 +1927,201 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmStatsInfo_AppliesWeaponMasteryToMatchingWeaponHands()
+	{
+		var templates = new ItemTemplateTable(
+		[
+			new ItemTemplateSummary(
+				200,
+				"Training Sword",
+				0,
+				1,
+				1,
+				"SWORD",
+				"NORMAL",
+				"COMMON",
+				"PC_ALL",
+				1,
+				0,
+				3,
+				AttackType: "PHYSICAL",
+				WeaponStats: new ItemWeaponStats(
+					MinDamage: 20,
+					MaxDamage: 30,
+					AttackSpeed: 1400,
+					PhysicalCritical: 50,
+					PhysicalAccuracy: 52,
+					Parry: 173,
+					MagicalAccuracy: 10,
+					MagicalBoost: 0,
+					AttackRange: 1500,
+					HitCount: 2,
+					ReduceMax: 0)),
+		]);
+		var skillTemplates = new SkillTemplateTable(
+		[
+			new SkillTemplateSummary(
+				37,
+				"Basic Sword Training",
+				0,
+				1,
+				"P_EQUIP_ENHANCEDSWORD",
+				"P_EQUIP_ENHANCEDSWORD",
+				"PHYSICAL",
+				"NONE",
+				0,
+				0,
+				WeaponMasteryEffects:
+				[
+					new SkillWeaponMasteryEffectSummary(
+						"SWORD",
+						[
+							new SkillStatChange("PHYSICAL_ATTACK", "PERCENT", 16, 0),
+						]),
+				]),
+		]);
+		var payload = SerializeUnencryptedPayload(
+			new SmStatsInfo(
+				new Player
+				{
+					ObjectId = 1001,
+					PlayerClass = "WARRIOR",
+					Skills = [new PlayerSkill { SkillId = 37, SkillLevel = 1 }],
+					InventoryItems =
+					[
+						new InventoryItem { ObjectId = 2, ItemId = 200, Location = 0, IsEquipped = true, Slot = 1 },
+						new InventoryItem { ObjectId = 3, ItemId = 200, Location = 0, IsEquipped = true, Slot = 2 },
+					],
+				},
+				new PlayerExperienceTable([0, 400]),
+				gameMinutes: 321,
+				itemTemplates: templates,
+				skillTemplates: skillTemplates));
+
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(1001, reader.ReadD());
+		Assert.Equal(321, reader.ReadD());
+		AssertPrimaryStats(reader, 110, 110, 100, 100, 90, 90);
+		AssertElementalResists(reader);
+		Assert.Equal(1, reader.ReadH());
+		reader.ReadH();
+		reader.ReadH();
+		reader.ReadH();
+		Assert.Equal(400, reader.ReadQ());
+		Assert.Equal(0, reader.ReadQ());
+		Assert.Equal(0, reader.ReadQ());
+		reader.ReadD();
+		Assert.Equal(244, reader.ReadD());
+		Assert.Equal(244, reader.ReadD());
+		Assert.Equal(210, reader.ReadD());
+		Assert.Equal(210, reader.ReadD());
+		Assert.Equal(4000, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(60, reader.ReadD());
+		Assert.Equal(60, reader.ReadD());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(31, reader.ReadH());
+		Assert.Equal(31, reader.ReadH());
+	}
+
+	[Fact]
+	public void SmStatsInfo_AppliesShieldMasteryWhenShieldEquipped()
+	{
+		var templates = new ItemTemplateTable(
+		[
+			new ItemTemplateSummary(
+				201,
+				"Training Shield",
+				0,
+				1,
+				1,
+				"SHIELD",
+				"NORMAL",
+				"COMMON",
+				"PC_ALL",
+				1,
+				0,
+				2),
+		]);
+		var skillTemplates = new SkillTemplateTable(
+		[
+			new SkillTemplateSummary(
+				50,
+				"Advanced Shield Training I",
+				0,
+				1,
+				"P_EQUIP_ENHANCEDSHIELD",
+				"P_EQUIP_SHIELD",
+				"PHYSICAL",
+				"NONE",
+				0,
+				0,
+				ShieldMasteryEffects:
+				[
+					new SkillShieldMasteryEffectSummary(
+					[
+						new SkillStatChange("BLOCK", "PERCENT", 5, 0),
+					]),
+				]),
+		]);
+		var payload = SerializeUnencryptedPayload(
+			new SmStatsInfo(
+				new Player
+				{
+					ObjectId = 1001,
+					PlayerClass = "WARRIOR",
+					Skills = [new PlayerSkill { SkillId = 50, SkillLevel = 1 }],
+					InventoryItems =
+					[
+						new InventoryItem { ObjectId = 3, ItemId = 201, Location = 0, IsEquipped = true, Slot = 2 },
+					],
+				},
+				new PlayerExperienceTable([0, 400]),
+				gameMinutes: 321,
+				itemTemplates: templates,
+				skillTemplates: skillTemplates));
+
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(1001, reader.ReadD());
+		Assert.Equal(321, reader.ReadD());
+		AssertPrimaryStats(reader, 110, 110, 100, 100, 90, 90);
+		AssertElementalResists(reader);
+		Assert.Equal(1, reader.ReadH());
+		reader.ReadH();
+		reader.ReadH();
+		reader.ReadH();
+		Assert.Equal(400, reader.ReadQ());
+		Assert.Equal(0, reader.ReadQ());
+		Assert.Equal(0, reader.ReadQ());
+		reader.ReadD();
+		Assert.Equal(244, reader.ReadD());
+		Assert.Equal(244, reader.ReadD());
+		Assert.Equal(210, reader.ReadD());
+		Assert.Equal(210, reader.ReadD());
+		Assert.Equal(4000, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(60, reader.ReadD());
+		Assert.Equal(60, reader.ReadD());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(18, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		reader.ReadH();
+		reader.ReadD();
+		reader.ReadH();
+		reader.ReadH();
+		reader.ReadD();
+		reader.ReadH();
+		reader.ReadH();
+		reader.ReadF();
+		reader.ReadH();
+		Assert.Equal(74, reader.ReadH());
+		Assert.Equal(74, reader.ReadH());
+		Assert.Equal(77, reader.ReadH());
+	}
+
+	[Fact]
 	public void SmStatsInfo_AppliesBonusTitleStats()
 	{
 		var titleTemplates = new TitleTemplateTable(
