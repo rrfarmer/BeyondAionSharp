@@ -253,6 +253,13 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleLevelReadyAsync(_activePlayer);
 				break;
+			case CmMarkFriendList:
+				if (_activePlayer != null)
+				{
+					// Java parity: network/aion/clientpackets/CM_MARK_FRIENDLIST.runImpl -> SM_MARK_FRIENDLIST.
+					await SendPacketAsync(new SmMarkFriendList(_activePlayer.ObjectId));
+				}
+				break;
 			case CmTargetSelect targetSelect:
 				if (_activePlayer != null)
 					HandleTargetSelect(_activePlayer, targetSelect);
@@ -298,6 +305,13 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmRestoreCharacter restoreCharacter:
 				var restored = _accountId != 0 && await _characterSelectionRepository.RestoreCharacterAsync(_accountId, restoreCharacter.CharacterObjectId);
 				await SendPacketAsync(new SmRestoreCharacter(restoreCharacter.CharacterObjectId, restored));
+				break;
+			case CmShowBlockList:
+				if (_activePlayer != null)
+				{
+					// Java parity: network/aion/clientpackets/CM_SHOW_BLOCKLIST.runImpl -> SM_BLOCK_LIST.
+					await SendPacketAsync(new SmBlockList(_activePlayer.BlockedUsers));
+				}
 				break;
 			case CmCharacterPasskey characterPasskey:
 				await SendPacketAsync(new SmCharacterSelect(type: 2, messageType: characterPasskey.Type, wrongCount: 0));
@@ -468,6 +482,14 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmPlaceBid placeBid:
 				if (_activePlayer != null)
 					_logger.LogDebug("Player {PlayerObjectId} requested unported house bid {BidKinah} Kinah for list index {ListIndex}", _activePlayer.ObjectId, placeBid.BidOffer, placeBid.ListIndex);
+				break;
+			case CmShowFriendList:
+				if (_activePlayer != null)
+				{
+					// Java parity: network/aion/clientpackets/CM_SHOW_FRIENDLIST.runImpl -> SM_FRIEND_LIST.
+					var staticData = _runtimeContext?.DataManager?.StaticData;
+					await SendPacketAsync(new SmFriendList(_activePlayer.Friends, staticData?.PlayerExperienceTable));
+				}
 				break;
 			case CmEnterWorld enterWorld:
 				var enterWorldResult = _playerEnterWorldService == null

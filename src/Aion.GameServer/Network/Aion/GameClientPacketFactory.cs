@@ -18,6 +18,7 @@ public static class GameClientPacketFactory
 		Register(31, states => new CmTargetSelect(31, states), GameConnectionState.InGame);
 		Register(48, states => new CmMove(48, states), GameConnectionState.InGame);
 		Register(49, states => new CmMoveInAir(49, states), GameConnectionState.InGame);
+		Register(110, states => new CmMarkFriendList(110, states), GameConnectionState.InGame);
 		Register(117, states => new CmBrokerSellWindow(117, states), GameConnectionState.InGame);
 		Register(123, states => new CmBrokerList(123, states), GameConnectionState.InGame);
 		Register(124, states => new CmBrokerSearch(124, states), GameConnectionState.InGame);
@@ -37,6 +38,7 @@ public static class GameClientPacketFactory
 		Register(151, states => new CmCreateCharacter(151, states), GameConnectionState.Authed);
 		Register(152, states => new CmDeleteCharacter(152, states), GameConnectionState.Authed);
 		Register(153, states => new CmRestoreCharacter(153, states), GameConnectionState.Authed);
+		Register(158, states => new CmShowBlockList(158, states), GameConnectionState.InGame);
 		Register(162, states => new CmReadExpressMail(162, states), GameConnectionState.InGame);
 		Register(183, states => new CmReconnectAuth(183, states), GameConnectionState.Authed);
 		Register(186, states => new CmMayLoginIntoGame(186, states), GameConnectionState.Authed);
@@ -45,6 +47,7 @@ public static class GameClientPacketFactory
 		Register(218, states => new CmGetHouseBids(218, states), GameConnectionState.InGame);
 		Register(219, states => new CmRegisterHouse(219, states), GameConnectionState.InGame);
 		Register(221, states => new CmPlaceBid(221, states), GameConnectionState.InGame);
+		Register(230, states => new CmShowFriendList(230, states), GameConnectionState.InGame);
 	}
 
 	public static GameClientPacket? TryCreatePacket(ReadOnlySpan<byte> decryptedPayload, GameConnectionState state)
