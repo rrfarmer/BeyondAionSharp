@@ -20,6 +20,7 @@ public sealed class StaticData
 		TemperingTable temperingTemplates,
 		NpcTemplateTable npcTemplates,
 		SkillTemplateTable skillTemplates,
+		TitleTemplateTable titleTemplates,
 		RecipeTemplateTable recipeTemplates,
 		HousingTemplateTable housingTemplates,
 		InstanceCooltimeTable instanceCooltimes,
@@ -40,6 +41,7 @@ public sealed class StaticData
 		TemperingTemplates = temperingTemplates;
 		NpcTemplates = npcTemplates;
 		SkillTemplates = skillTemplates;
+		TitleTemplates = titleTemplates;
 		RecipeTemplates = recipeTemplates;
 		HousingTemplates = housingTemplates;
 		InstanceCooltimes = instanceCooltimes;
@@ -76,6 +78,8 @@ public sealed class StaticData
 
 	public SkillTemplateTable SkillTemplates { get; }
 
+	public TitleTemplateTable TitleTemplates { get; }
+
 	public RecipeTemplateTable RecipeTemplates { get; }
 
 	public HousingTemplateTable HousingTemplates { get; }
@@ -111,6 +115,7 @@ public sealed class StaticData
 		var temperingGroups = new List<TemperingGroupSummary>();
 		var npcTemplates = new List<NpcTemplateSummary>();
 		var skillTemplates = new List<SkillTemplateSummary>();
+		var titleTemplates = new List<TitleTemplateSummary>();
 		var recipeTemplates = new List<RecipeTemplateSummary>();
 		var housingAddresses = new List<HousingAddressSummary>();
 		var housingLandMinLevels = new Dictionary<int, int>();
@@ -129,6 +134,7 @@ public sealed class StaticData
 		TemperingGroupBuilder? currentTemperingGroup = null;
 		NpcTemplateBuilder? currentNpcTemplate = null;
 		SkillTemplateBuilder? currentSkillTemplate = null;
+		TitleTemplateBuilder? currentTitleTemplate = null;
 		int currentHousingLandId = 0;
 		int currentHousingManagerNpcId = 0;
 		var elementPath = new Dictionary<int, string>();
@@ -204,6 +210,12 @@ public sealed class StaticData
 				{
 					skillTemplates.Add(currentSkillTemplate.ToSummary());
 					currentSkillTemplate = null;
+				}
+
+				if (reader.Depth == 2 && reader.LocalName == "title" && currentTitleTemplate != null)
+				{
+					titleTemplates.Add(currentTitleTemplate.ToSummary());
+					currentTitleTemplate = null;
 				}
 
 				if (reader.Depth == 4 && reader.LocalName == "armormastery")
@@ -651,6 +663,39 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 2
+				&& reader.LocalName == "title"
+				&& elementPath.TryGetValue(1, out var titleParent)
+				&& titleParent == "player_titles")
+			{
+				currentTitleTemplate = new TitleTemplateBuilder(
+					ReadRequiredIntAttribute(reader, "id"),
+					ReadIntAttribute(reader, "nameId"),
+					reader.GetAttribute("desc") ?? string.Empty,
+					reader.GetAttribute("race") ?? string.Empty);
+				if (reader.IsEmptyElement)
+				{
+					titleTemplates.Add(currentTitleTemplate.ToSummary());
+					currentTitleTemplate = null;
+				}
+				continue;
+			}
+
+			if (reader.Depth == 4
+				&& currentTitleTemplate != null
+				&& IsStatModifierElement(reader.LocalName)
+				&& elementPath.TryGetValue(reader.Depth - 1, out var titleModifierParent)
+				&& titleModifierParent == "modifiers")
+			{
+				currentTitleTemplate.AddModifier(
+					new ItemStatModifier(
+						reader.LocalName,
+						reader.GetAttribute("name") ?? string.Empty,
+						ReadIntAttribute(reader, "value"),
+						ReadBoolAttribute(reader, "bonus")));
+				continue;
+			}
+
 			if (reader.Depth == 2 && reader.LocalName == "recipe_template")
 			{
 				recipeTemplates.Add(new RecipeTemplateSummary(
@@ -726,6 +771,7 @@ public sealed class StaticData
 			new TemperingTable(temperingGroups.AsReadOnly()),
 			new NpcTemplateTable(npcTemplates.AsReadOnly()),
 			new SkillTemplateTable(skillTemplates.AsReadOnly()),
+			new TitleTemplateTable(titleTemplates.AsReadOnly()),
 			new RecipeTemplateTable(recipeTemplates.AsReadOnly()),
 			new HousingTemplateTable(
 				housingAddresses
@@ -900,6 +946,43 @@ public sealed class StaticData
 				CooldownId,
 				Cooldown,
 				_armorMasteryEffects.ToArray());
+		}
+	}
+
+	private sealed class TitleTemplateBuilder
+	{
+		private readonly List<ItemStatModifier> _modifiers = [];
+
+		public TitleTemplateBuilder(int titleId, int nameId, string description, string race)
+		{
+			TitleId = titleId;
+			NameId = nameId;
+			Description = description;
+			Race = race;
+		}
+
+		private int TitleId { get; }
+
+		private int NameId { get; }
+
+		private string Description { get; }
+
+		private string Race { get; }
+
+		public void AddModifier(ItemStatModifier modifier)
+		{
+			_modifiers.Add(modifier);
+		}
+
+		public TitleTemplateSummary ToSummary()
+		{
+			// Java parity: model/templates/TitleTemplate modifiers.
+			return new TitleTemplateSummary(
+				TitleId,
+				NameId,
+				Description,
+				Race,
+				_modifiers.ToArray());
 		}
 	}
 

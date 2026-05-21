@@ -117,6 +117,7 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(staticData.GetElementCount("item_template"), staticData.ItemTemplates.Count);
 		Assert.Equal(staticData.GetElementCount("npc_template"), staticData.NpcTemplates.Count);
 		Assert.Equal(staticData.GetElementCount("skill_template"), staticData.SkillTemplates.Count);
+		Assert.Equal(300, staticData.TitleTemplates.Count);
 		Assert.Equal(staticData.GetElementCount("recipe_template"), staticData.RecipeTemplates.Count);
 		Assert.Equal(staticData.GetElementCount("random_bonus"), staticData.ItemRandomBonuses.Count);
 		Assert.Equal(staticData.GetElementCount("itemset"), staticData.ItemSets.Count);
@@ -204,6 +205,11 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal("PHYSICAL_DEFENSE", armorChange.Stat);
 		Assert.Equal("PERCENT", armorChange.Func);
 		Assert.Equal(10, armorChange.Value);
+		var poetaProtector = staticData.TitleTemplates.GetTitleTemplate(1);
+		Assert.NotNull(poetaProtector);
+		Assert.Equal("ELYOS", poetaProtector.Race);
+		Assert.Contains(poetaProtector.Modifiers, modifier => modifier is { Operation: "add", Name: "MAXHP", Value: 20, Bonus: true });
+		Assert.Contains(poetaProtector.Modifiers, modifier => modifier is { Operation: "add", Name: "PHYSICAL_DEFENSE", Value: 5, Bonus: true });
 		Assert.Equal(152000401, staticData.RecipeTemplates.GetRecipeTemplateById(155000001)?.ProductId);
 		Assert.True(staticData.HousingTemplates.AddressCount > 1000);
 		Assert.Equal(9, staticData.HousingTemplates.BuildingCount);

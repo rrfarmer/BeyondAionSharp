@@ -1927,6 +1927,63 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmStatsInfo_AppliesBonusTitleStats()
+	{
+		var titleTemplates = new TitleTemplateTable(
+		[
+			new TitleTemplateSummary(
+				1,
+				1100900,
+				"Poeta's Protector",
+				"ELYOS",
+				[
+					new ItemStatModifier("add", "MAXHP", 20, Bonus: true),
+					new ItemStatModifier("add", "PHYSICAL_DEFENSE", 5, Bonus: true),
+				]),
+		]);
+		var payload = SerializeUnencryptedPayload(
+			new SmStatsInfo(
+				new Player
+				{
+					ObjectId = 1001,
+					PlayerClass = "WARRIOR",
+					BonusTitleId = 1,
+				},
+				new PlayerExperienceTable([0, 400]),
+				gameMinutes: 321,
+				itemTemplates: new ItemTemplateTable([]),
+				titleTemplates: titleTemplates));
+
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(1001, reader.ReadD());
+		Assert.Equal(321, reader.ReadD());
+		AssertPrimaryStats(reader, 110, 110, 100, 100, 90, 90);
+		AssertElementalResists(reader);
+		Assert.Equal(1, reader.ReadH());
+		reader.ReadH();
+		reader.ReadH();
+		reader.ReadH();
+		Assert.Equal(400, reader.ReadQ());
+		Assert.Equal(0, reader.ReadQ());
+		Assert.Equal(0, reader.ReadQ());
+		reader.ReadD();
+		Assert.Equal(264, reader.ReadD());
+		Assert.Equal(264, reader.ReadD());
+		Assert.Equal(210, reader.ReadD());
+		Assert.Equal(210, reader.ReadD());
+		Assert.Equal(4000, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(60, reader.ReadD());
+		Assert.Equal(60, reader.ReadD());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(18, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(5, reader.ReadD());
+	}
+
+	[Fact]
 	public void SmCharacterList_WritesJavaShapedCharacterSelectionInfo()
 	{
 		var payload = SerializeUnencryptedPayload(

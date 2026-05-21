@@ -19,6 +19,7 @@ public sealed class SmStatsInfo : GameServerPacket
 	private readonly EnchantTable? _enchantTemplates;
 	private readonly TemperingTable? _temperingTemplates;
 	private readonly SkillTemplateTable? _skillTemplates;
+	private readonly TitleTemplateTable? _titleTemplates;
 
 	public SmStatsInfo(
 		Player player,
@@ -29,7 +30,8 @@ public sealed class SmStatsInfo : GameServerPacket
 		ItemSetTable? itemSets = null,
 		EnchantTable? enchantTemplates = null,
 		TemperingTable? temperingTemplates = null,
-		SkillTemplateTable? skillTemplates = null)
+		SkillTemplateTable? skillTemplates = null,
+		TitleTemplateTable? titleTemplates = null)
 		: base(PacketOpCode)
 	{
 		// Java parity: network/aion/serverpackets/SM_STATS_INFO(Player).
@@ -42,6 +44,7 @@ public sealed class SmStatsInfo : GameServerPacket
 		_enchantTemplates = enchantTemplates;
 		_temperingTemplates = temperingTemplates;
 		_skillTemplates = skillTemplates;
+		_titleTemplates = titleTemplates;
 	}
 
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
@@ -55,7 +58,8 @@ public sealed class SmStatsInfo : GameServerPacket
 			_itemSets,
 			_enchantTemplates,
 			_temperingTemplates,
-			_skillTemplates);
+			_skillTemplates,
+			_titleTemplates);
 
 		buffer.WriteD(_player.ObjectId);
 		buffer.WriteD(_gameMinutes);
@@ -240,7 +244,8 @@ public sealed class SmStatsInfo : GameServerPacket
 			ItemSetTable? itemSets,
 			EnchantTable? enchantTemplates,
 			TemperingTable? temperingTemplates,
-			SkillTemplateTable? skillTemplates)
+			SkillTemplateTable? skillTemplates,
+			TitleTemplateTable? titleTemplates)
 		{
 			// Java parity: PlayerCommonData.setExp/updateMaxRepose plus PlayerClass.createStatsTemplate.
 			var classStats = PlayerClassStats.Get(player.PlayerClass);
@@ -260,6 +265,7 @@ public sealed class SmStatsInfo : GameServerPacket
 					enchantTemplates,
 					temperingTemplates,
 					skillTemplates,
+					titleTemplates,
 					baseStats);
 			var lifeStats = player.LifeStats;
 			return new PlayerStatsContext(
@@ -317,6 +323,7 @@ public sealed class SmStatsInfo : GameServerPacket
 			EnchantTable? enchantTemplates,
 			TemperingTable? temperingTemplates,
 			SkillTemplateTable? skillTemplates,
+			TitleTemplateTable? titleTemplates,
 			PlayerCalculatedStats baseStats)
 		{
 			// Java parity: model/stats/listeners/ItemEquipmentListener.onItemEquipment plus PlayerGameStats weapon stat accessors.
@@ -326,13 +333,12 @@ public sealed class SmStatsInfo : GameServerPacket
 				.Where(item => item.Template != null)
 				.Select(item => new EquippedItem(item.Item, item.Template!))
 				.ToArray();
-			if (equippedItems.Length == 0)
-				return baseStats;
 
 			var modifiers = equippedItems
 				.SelectMany(item => GetEquipmentModifiers(item, itemTemplates, itemRandomBonuses, enchantTemplates, temperingTemplates))
 				.Concat(GetItemSetModifiers(equippedItems, itemSets))
 				.Concat(GetArmorMasteryModifiers(player, equippedItems, skillTemplates))
+				.Concat(GetBonusTitleModifiers(player, titleTemplates))
 				.Where(modifier => !string.IsNullOrEmpty(modifier.Name))
 				.ToArray();
 
@@ -621,6 +627,15 @@ public sealed class SmStatsInfo : GameServerPacket
 					}
 				}
 			}
+		}
+
+		private static IReadOnlyList<ItemStatModifier> GetBonusTitleModifiers(Player player, TitleTemplateTable? titleTemplates)
+		{
+			// Java parity: model/stats/listeners/TitleChangeListener.onBonusTitleChange.
+			if (titleTemplates == null || player.BonusTitleId <= 0)
+				return Array.Empty<ItemStatModifier>();
+
+			return titleTemplates.GetTitleTemplate(player.BonusTitleId)?.Modifiers ?? Array.Empty<ItemStatModifier>();
 		}
 
 		private static int GetArmorMasteryEquipmentFactor(IReadOnlyList<EquippedItem> equippedItems, string armorType)
