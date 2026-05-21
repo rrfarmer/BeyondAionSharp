@@ -118,6 +118,7 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(staticData.GetElementCount("npc_template"), staticData.NpcTemplates.Count);
 		Assert.Equal(staticData.GetElementCount("skill_template"), staticData.SkillTemplates.Count);
 		Assert.Equal(staticData.GetElementCount("recipe_template"), staticData.RecipeTemplates.Count);
+		Assert.Equal(staticData.GetElementCount("random_bonus"), staticData.ItemRandomBonuses.Count);
 		Assert.Equal(staticData.GetElementCount("instance_cooltime"), staticData.InstanceCooltimes.Count);
 		Assert.Equal("SWORD", staticData.ItemTemplates.GetItemTemplate(100000001)?.ItemGroup);
 		Assert.Equal(3, staticData.ItemTemplates.GetItemTemplate(100000094)?.ValidEquipmentSlots);
@@ -141,6 +142,9 @@ public sealed class StaticDataLoadingTests
 		var hpManastone = staticData.ItemTemplates.GetItemTemplate(167000226);
 		Assert.NotNull(hpManastone);
 		Assert.Contains(hpManastone.StatModifiers, modifier => modifier is { Operation: "add", Name: "MAXHP", Value: 20, Bonus: true });
+		var randomBonusModifiers = staticData.ItemRandomBonuses.GetModifiers("INVENTORY", 1, 1);
+		Assert.Contains(randomBonusModifiers, modifier => modifier is { Operation: "add", Name: "MAXHP", Value: 100, Bonus: true });
+		Assert.Contains(randomBonusModifiers, modifier => modifier is { Operation: "add", Name: "MAXMP", Value: -50, Bonus: true });
 		Assert.Equal("kamikaze worm", staticData.NpcTemplates.GetNpcTemplate(201000)?.Name);
 		var postmanNpc = staticData.NpcTemplates.GetNpcTemplate(798100);
 		Assert.NotNull(postmanNpc);

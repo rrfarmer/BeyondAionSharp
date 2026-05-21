@@ -818,7 +818,13 @@ public sealed class GameServerConnection : BaseClientConnection
 					if (staticData?.InstanceCooltimes.Count > 0)
 						await SendPacketAsync(new SmInstanceInfo(2, enterWorldResult.Player, staticData.InstanceCooltimes));
 					await SendPacketAsync(new SmAbyssRank(enterWorldResult.Player.AbyssRank));
-					await SendPacketAsync(new SmStatsInfo(enterWorldResult.Player, staticData?.PlayerExperienceTable, _gameTimeService?.GameMinutes ?? 0, staticData?.ItemTemplates));
+					await SendPacketAsync(
+						new SmStatsInfo(
+							enterWorldResult.Player,
+							staticData?.PlayerExperienceTable,
+							_gameTimeService?.GameMinutes ?? 0,
+							staticData?.ItemTemplates,
+							staticData?.ItemRandomBonuses));
 					// Java parity: services/mail/MailService.onPlayerLogin sends mailbox state before macro/recipe restore.
 					await SendPacketAsync(new SmMailService(enterWorldResult.Player.Mailbox));
 					foreach (var housingBidSystemMessage in SmReceiveBids.CreateLoginSystemMessages(enterWorldResult.Player))

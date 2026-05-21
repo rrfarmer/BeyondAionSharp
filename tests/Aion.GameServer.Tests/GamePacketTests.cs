@@ -1561,7 +1561,8 @@ public class GamePacketTests
 				[
 					new ItemStatModifier("add", "MAXHP", 33, Bonus: true),
 					new ItemStatModifier("add", "PHYSICAL_ATTACK", 7, Bonus: true),
-				]),
+				],
+				StatBonusSetId: 10),
 			new ItemTemplateSummary(
 				300,
 				"Training Breastplate",
@@ -1629,7 +1630,8 @@ public class GamePacketTests
 				[
 					new ItemStatModifier("add", "PHYSICAL_ATTACK", 2, Bonus: false),
 					new ItemStatModifier("add", "ATTACK_SPEED", 100, Bonus: true),
-				]),
+				],
+				StatBonusSetId: 11),
 			new ItemTemplateSummary(
 				401,
 				"Manastone: Magic Boost +12",
@@ -1646,6 +1648,21 @@ public class GamePacketTests
 				Modifiers:
 				[
 					new ItemStatModifier("add", "BOOST_MAGICAL_SKILL", 12, Bonus: true),
+				]),
+		]);
+		var randomBonuses = new ItemRandomBonusTable(
+		[
+			new ItemRandomBonusSummary(
+				"INVENTORY",
+				10,
+				[
+					[new ItemStatModifier("add", "MAXHP", 11, Bonus: true)],
+				]),
+			new ItemRandomBonusSummary(
+				"INVENTORY",
+				11,
+				[
+					[new ItemStatModifier("add", "BOOST_MAGICAL_SKILL", 5, Bonus: true)],
 				]),
 		]);
 
@@ -1665,6 +1682,8 @@ public class GamePacketTests
 							IsEquipped = true,
 							Slot = 1,
 							FusionedItem = 500,
+							RandomBonus = 1,
+							FusionRandomBonus = 1,
 							ManaStones = [new ItemStoneSocket(400, 0)],
 							FusionStones = [new ItemStoneSocket(401, 0)],
 						},
@@ -1673,7 +1692,8 @@ public class GamePacketTests
 				},
 				new PlayerExperienceTable([0, 400]),
 				gameMinutes: 321,
-				templates));
+				templates,
+				randomBonuses));
 
 		using var reader = new PacketBuffer(payload);
 		Assert.Equal(1001, reader.ReadD());
@@ -1688,8 +1708,8 @@ public class GamePacketTests
 		Assert.Equal(0, reader.ReadQ());
 		Assert.Equal(0, reader.ReadQ());
 		reader.ReadD();
-		Assert.Equal(297, reader.ReadD());
-		Assert.Equal(297, reader.ReadD());
+		Assert.Equal(308, reader.ReadD());
+		Assert.Equal(308, reader.ReadD());
 		Assert.Equal(210, reader.ReadD());
 		Assert.Equal(210, reader.ReadD());
 		Assert.Equal(4000, reader.ReadH());
@@ -1723,7 +1743,7 @@ public class GamePacketTests
 		Assert.Equal(1.0f, reader.ReadF());
 		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
-		Assert.Equal(16, reader.ReadH());
+		Assert.Equal(21, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());

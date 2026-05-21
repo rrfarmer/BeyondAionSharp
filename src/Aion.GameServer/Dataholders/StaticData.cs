@@ -14,6 +14,7 @@ public sealed class StaticData
 		IReadOnlyList<WorldMapSummary> worldMaps,
 		PlayerExperienceTable playerExperienceTable,
 		ItemTemplateTable itemTemplates,
+		ItemRandomBonusTable itemRandomBonuses,
 		NpcTemplateTable npcTemplates,
 		SkillTemplateTable skillTemplates,
 		RecipeTemplateTable recipeTemplates,
@@ -30,6 +31,7 @@ public sealed class StaticData
 		WorldMaps = worldMaps;
 		PlayerExperienceTable = playerExperienceTable;
 		ItemTemplates = itemTemplates;
+		ItemRandomBonuses = itemRandomBonuses;
 		NpcTemplates = npcTemplates;
 		SkillTemplates = skillTemplates;
 		RecipeTemplates = recipeTemplates;
@@ -55,6 +57,8 @@ public sealed class StaticData
 	public PlayerExperienceTable PlayerExperienceTable { get; }
 
 	public ItemTemplateTable ItemTemplates { get; }
+
+	public ItemRandomBonusTable ItemRandomBonuses { get; }
 
 	public NpcTemplateTable NpcTemplates { get; }
 
@@ -89,6 +93,7 @@ public sealed class StaticData
 		var worldMaps = new List<WorldMapSummary>();
 		var experience = new List<long>();
 		var itemTemplates = new List<ItemTemplateSummary>();
+		var itemRandomBonuses = new List<ItemRandomBonusSummary>();
 		var npcTemplates = new List<NpcTemplateSummary>();
 		var skillTemplates = new List<SkillTemplateSummary>();
 		var recipeTemplates = new List<RecipeTemplateSummary>();
@@ -103,6 +108,7 @@ public sealed class StaticData
 		string? currentPlayerCreationClass = null;
 		InstanceCooltimeBuilder? currentInstanceCooltime = null;
 		ItemTemplateBuilder? currentItemTemplate = null;
+		ItemRandomBonusBuilder? currentItemRandomBonus = null;
 		NpcTemplateBuilder? currentNpcTemplate = null;
 		int currentHousingLandId = 0;
 		int currentHousingManagerNpcId = 0;
@@ -131,6 +137,12 @@ public sealed class StaticData
 				{
 					itemTemplates.Add(currentItemTemplate.ToSummary());
 					currentItemTemplate = null;
+				}
+
+				if (reader.Depth == 2 && reader.LocalName == "random_bonus" && currentItemRandomBonus != null)
+				{
+					itemRandomBonuses.Add(currentItemRandomBonus.ToSummary());
+					currentItemRandomBonus = null;
 				}
 
 				if (reader.Depth == 2 && reader.LocalName == "npc_template" && currentNpcTemplate != null)
@@ -275,6 +287,20 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 2 && reader.LocalName == "random_bonus")
+			{
+				currentItemRandomBonus = new ItemRandomBonusBuilder(
+					reader.GetAttribute("type") ?? string.Empty,
+					ReadRequiredIntAttribute(reader, "id"));
+				continue;
+			}
+
+			if (reader.Depth == 3 && reader.LocalName == "modifiers" && currentItemRandomBonus != null)
+			{
+				currentItemRandomBonus.AddModifierGroup();
+				continue;
+			}
+
 			if (reader.Depth == 3 && reader.LocalName == "weapon_stats" && currentItemTemplate != null)
 			{
 				currentItemTemplate.WeaponStats = new ItemWeaponStats(
@@ -299,6 +325,21 @@ public sealed class StaticData
 				&& modifierParent == "modifiers")
 			{
 				currentItemTemplate.Modifiers.Add(
+					new ItemStatModifier(
+						reader.LocalName,
+						reader.GetAttribute("name") ?? string.Empty,
+						ReadIntAttribute(reader, "value"),
+						ReadBoolAttribute(reader, "bonus")));
+				continue;
+			}
+
+			if (reader.Depth == 4
+				&& currentItemRandomBonus != null
+				&& IsStatModifierElement(reader.LocalName)
+				&& elementPath.TryGetValue(reader.Depth - 1, out var randomModifierParent)
+				&& randomModifierParent == "modifiers")
+			{
+				currentItemRandomBonus.AddModifier(
 					new ItemStatModifier(
 						reader.LocalName,
 						reader.GetAttribute("name") ?? string.Empty,
@@ -454,6 +495,7 @@ public sealed class StaticData
 			worldMaps.AsReadOnly(),
 			new PlayerExperienceTable(experience.AsReadOnly()),
 			new ItemTemplateTable(itemTemplates.AsReadOnly()),
+			new ItemRandomBonusTable(itemRandomBonuses.AsReadOnly()),
 			new NpcTemplateTable(npcTemplates.AsReadOnly()),
 			new SkillTemplateTable(skillTemplates.AsReadOnly()),
 			new RecipeTemplateTable(recipeTemplates.AsReadOnly()),
@@ -502,6 +544,42 @@ public sealed class StaticData
 		}
 	}
 
+	private sealed class ItemRandomBonusBuilder
+	{
+		private readonly List<IReadOnlyList<ItemStatModifier>> _modifierGroups = [];
+		private List<ItemStatModifier>? _currentModifierGroup;
+
+		public ItemRandomBonusBuilder(string type, int setId)
+		{
+			Type = type;
+			SetId = setId;
+		}
+
+		private string Type { get; }
+
+		private int SetId { get; }
+
+		public void AddModifierGroup()
+		{
+			_currentModifierGroup = [];
+			_modifierGroups.Add(_currentModifierGroup);
+		}
+
+		public void AddModifier(ItemStatModifier modifier)
+		{
+			_currentModifierGroup ??= [];
+			if (_modifierGroups.Count == 0)
+				_modifierGroups.Add(_currentModifierGroup);
+			_currentModifierGroup.Add(modifier);
+		}
+
+		public ItemRandomBonusSummary ToSummary()
+		{
+			// Java parity: model/templates/item/bonuses/RandomBonusSet modifier groups are selected by 1-based rnd_bonus rows.
+			return new ItemRandomBonusSummary(Type, SetId, _modifierGroups.ToArray());
+		}
+	}
+
 	private sealed class ItemTemplateBuilder
 	{
 		public ItemTemplateBuilder(
@@ -544,6 +622,7 @@ public sealed class StaticData
 			ActivationCount = activationCount;
 			ExpireTimeMinutes = expireTimeMinutes;
 			EnchantType = enchantType;
+			StatBonusSetId = randomBonusId;
 			CanTune = CalculateCanTune(validEquipmentSlots, maxTuneCount, maxEnchantBonus, optionSlotBonus, randomBonusId);
 		}
 
@@ -580,6 +659,8 @@ public sealed class StaticData
 		private int ExpireTimeMinutes { get; }
 
 		private int EnchantType { get; }
+
+		private int StatBonusSetId { get; }
 
 		private bool CanTune { get; }
 
@@ -622,7 +703,8 @@ public sealed class StaticData
 				ConditioningMaxLevel,
 				AttackType,
 				WeaponStats,
-				Modifiers.AsReadOnly());
+				Modifiers.AsReadOnly(),
+				StatBonusSetId);
 		}
 
 		private static bool CalculateCanTune(

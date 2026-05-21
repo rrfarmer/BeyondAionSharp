@@ -47,7 +47,8 @@ public sealed record ItemTemplateSummary(
 	int ConditioningMaxLevel = 0,
 	string AttackType = "",
 	ItemWeaponStats? WeaponStats = null,
-	IReadOnlyList<ItemStatModifier>? Modifiers = null)
+	IReadOnlyList<ItemStatModifier>? Modifiers = null,
+	int StatBonusSetId = 0)
 {
 	private const int CanPolishMask = 1 << 17;
 

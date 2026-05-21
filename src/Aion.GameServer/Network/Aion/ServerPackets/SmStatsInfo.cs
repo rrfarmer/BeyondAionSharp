@@ -14,8 +14,14 @@ public sealed class SmStatsInfo : GameServerPacket
 	private readonly PlayerExperienceTable? _experienceTable;
 	private readonly int _gameMinutes;
 	private readonly ItemTemplateTable? _itemTemplates;
+	private readonly ItemRandomBonusTable? _itemRandomBonuses;
 
-	public SmStatsInfo(Player player, PlayerExperienceTable? experienceTable, int gameMinutes, ItemTemplateTable? itemTemplates = null)
+	public SmStatsInfo(
+		Player player,
+		PlayerExperienceTable? experienceTable,
+		int gameMinutes,
+		ItemTemplateTable? itemTemplates = null,
+		ItemRandomBonusTable? itemRandomBonuses = null)
 		: base(PacketOpCode)
 	{
 		// Java parity: network/aion/serverpackets/SM_STATS_INFO(Player).
@@ -23,12 +29,13 @@ public sealed class SmStatsInfo : GameServerPacket
 		_experienceTable = experienceTable;
 		_gameMinutes = gameMinutes;
 		_itemTemplates = itemTemplates;
+		_itemRandomBonuses = itemRandomBonuses;
 	}
 
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
 		// Java parity: SM_STATS_INFO.writeImpl. Full effects remain deferred, but equipped item template stats are applied when templates are loaded.
-		var context = PlayerStatsContext.Create(_player, _experienceTable, _itemTemplates);
+		var context = PlayerStatsContext.Create(_player, _experienceTable, _itemTemplates, _itemRandomBonuses);
 
 		buffer.WriteD(_player.ObjectId);
 		buffer.WriteD(_gameMinutes);
@@ -205,7 +212,11 @@ public sealed class SmStatsInfo : GameServerPacket
 		int CurrentMp,
 		int CurrentFp)
 	{
-		public static PlayerStatsContext Create(Player player, PlayerExperienceTable? experienceTable, ItemTemplateTable? itemTemplates)
+		public static PlayerStatsContext Create(
+			Player player,
+			PlayerExperienceTable? experienceTable,
+			ItemTemplateTable? itemTemplates,
+			ItemRandomBonusTable? itemRandomBonuses)
 		{
 			// Java parity: PlayerCommonData.setExp/updateMaxRepose plus PlayerClass.createStatsTemplate.
 			var classStats = PlayerClassStats.Get(player.PlayerClass);
@@ -217,7 +228,7 @@ public sealed class SmStatsInfo : GameServerPacket
 			var baseStats = PlayerCalculatedStats.Create(classStats, level);
 			var currentStats = itemTemplates == null
 				? baseStats
-				: PlayerEquipmentStats.Apply(player, itemTemplates, baseStats);
+				: PlayerEquipmentStats.Apply(player, itemTemplates, itemRandomBonuses, baseStats);
 			var lifeStats = player.LifeStats;
 			return new PlayerStatsContext(
 				classStats,
@@ -260,7 +271,11 @@ public sealed class SmStatsInfo : GameServerPacket
 			"ORB", "STAFF", "SPELLBOOK", "GUN", "CANNON", "HARP", "KEYBLADE",
 		};
 
-		public static PlayerCalculatedStats Apply(Player player, ItemTemplateTable itemTemplates, PlayerCalculatedStats baseStats)
+		public static PlayerCalculatedStats Apply(
+			Player player,
+			ItemTemplateTable itemTemplates,
+			ItemRandomBonusTable? itemRandomBonuses,
+			PlayerCalculatedStats baseStats)
 		{
 			// Java parity: model/stats/listeners/ItemEquipmentListener.onItemEquipment plus PlayerGameStats weapon stat accessors.
 			var equippedItems = player.InventoryItems
@@ -273,7 +288,7 @@ public sealed class SmStatsInfo : GameServerPacket
 				return baseStats;
 
 			var modifiers = equippedItems
-				.SelectMany(item => GetEquipmentModifiers(item, itemTemplates))
+				.SelectMany(item => GetEquipmentModifiers(item, itemTemplates, itemRandomBonuses))
 				.Where(modifier => !string.IsNullOrEmpty(modifier.Name))
 				.ToArray();
 
@@ -363,18 +378,38 @@ public sealed class SmStatsInfo : GameServerPacket
 			};
 		}
 
-		private static IEnumerable<ItemStatModifier> GetEquipmentModifiers(EquippedItem item, ItemTemplateTable itemTemplates)
+		private static IEnumerable<ItemStatModifier> GetEquipmentModifiers(
+			EquippedItem item,
+			ItemTemplateTable itemTemplates,
+			ItemRandomBonusTable? itemRandomBonuses)
 		{
 			foreach (var modifier in item.Template.StatModifiers)
 				yield return modifier;
+			foreach (var modifier in GetRandomBonusModifiers(itemRandomBonuses, item.Template.StatBonusSetId, item.Item.RandomBonus))
+				yield return modifier;
 			foreach (var modifier in GetFusionedWeaponModifiers(item, itemTemplates))
 				yield return modifier;
+			var fusionedTemplate = item.Item.FusionedItem == 0 ? null : itemTemplates.GetItemTemplate(item.Item.FusionedItem);
+			if (fusionedTemplate != null)
+			{
+				foreach (var modifier in GetRandomBonusModifiers(itemRandomBonuses, fusionedTemplate.StatBonusSetId, item.Item.FusionRandomBonus))
+					yield return modifier;
+			}
 
 			// Java parity: model/stats/listeners/ItemEquipmentListener.addStonesStats + model/items/ManaStone constructor.
 			foreach (var modifier in GetStoneModifiers(item.Item.ManaStones, itemTemplates))
 				yield return modifier;
 			foreach (var modifier in GetStoneModifiers(item.Item.FusionStones, itemTemplates))
 				yield return modifier;
+		}
+
+		private static IReadOnlyList<ItemStatModifier> GetRandomBonusModifiers(
+			ItemRandomBonusTable? itemRandomBonuses,
+			int statBonusSetId,
+			int statBonusId)
+		{
+			// Java parity: model/items/RandomBonusEffect applies StatBonusType.INVENTORY selected by item rnd_bonus/fusion_rnd_bonus.
+			return itemRandomBonuses?.GetModifiers("INVENTORY", statBonusSetId, statBonusId) ?? Array.Empty<ItemStatModifier>();
 		}
 
 		private static IEnumerable<ItemStatModifier> GetStoneModifiers(IReadOnlyList<ItemStoneSocket> stones, ItemTemplateTable itemTemplates)
