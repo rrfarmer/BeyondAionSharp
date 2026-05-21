@@ -14,6 +14,7 @@ using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils.IdFactory;
 using AccountAuthResult = Aion.GameServer.Network.LoginServer.AccountAuthResult;
+using GameChatServer = Aion.GameServer.Network.ChatServer.ChatServer;
 using GameLoginServer = Aion.GameServer.Network.LoginServer.LoginServer;
 using GameWorld = Aion.GameServer.World.World;
 using Microsoft.Extensions.Logging;
@@ -34,6 +35,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly GameServerOptions _options;
 	private readonly GameServerRuntimeContext? _runtimeContext;
 	private readonly GameLoginServer? _loginServer;
+	private readonly GameChatServer? _chatServer;
 	private readonly ICharacterSelectionRepository _characterSelectionRepository;
 	private readonly CharacterCreationService? _characterCreationService;
 	private readonly PlayerEnterWorldService? _playerEnterWorldService;
@@ -65,6 +67,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		GameServerOptions? options = null,
 		GameServerRuntimeContext? runtimeContext = null,
 		GameLoginServer? loginServer = null,
+		GameChatServer? chatServer = null,
 		ICharacterSelectionRepository? characterSelectionRepository = null,
 		CharacterCreationService? characterCreationService = null,
 		PlayerEnterWorldService? playerEnterWorldService = null,
@@ -81,6 +84,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_options = options ?? new GameServerOptions();
 		_runtimeContext = runtimeContext;
 		_loginServer = loginServer;
+		_chatServer = chatServer;
 		_characterSelectionRepository = characterSelectionRepository ?? new EmptyCharacterSelectionRepository();
 		_characterCreationService = characterCreationService;
 		_playerEnterWorldService = playerEnterWorldService;
@@ -497,6 +501,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleReadExpressMailAsync(_activePlayer, readExpressMail);
 				break;
+			case CmChatAuth chatAuth:
+				if (_activePlayer != null)
+					await HandleChatAuthAsync(_activePlayer, chatAuth);
+				break;
 			case CmGetHouseBids:
 				if (_activePlayer != null)
 				{
@@ -786,6 +794,21 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		await SendPacketAsync(CreateChatWindowPacket(target, isGroup: true));
+	}
+
+	private async Task HandleChatAuthAsync(Player player, CmChatAuth packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_CHAT_AUTH.runImpl -> ChatServer.sendPlayerLoginRequest.
+		if (_chatServer == null || !_chatServer.IsAuthed)
+		{
+			_logger.LogDebug("Ignoring CM_CHAT_AUTH for player {PlayerObjectId} because the chat-server bridge is not authenticated", player.ObjectId);
+			return;
+		}
+
+		await _chatServer.SendPlayerLoginRequestAsync(
+			player,
+			_accountName.Length == 0 ? $"account-{_accountId}" : _accountName,
+			token => SendPacketAsync(new SmChatInit(token)));
 	}
 
 	private SmChatWindow CreateChatWindowPacket(Player target, bool isGroup)

@@ -10,6 +10,7 @@ using Aion.GameServer.Services;
 using Aion.GameServer.Utils.IdFactory;
 using Aion.GameServer.World;
 using Microsoft.Extensions.Logging;
+using GameChatServer = Aion.GameServer.Network.ChatServer.ChatServer;
 using GameLoginServer = Aion.GameServer.Network.LoginServer.LoginServer;
 using GameWorld = Aion.GameServer.World.World;
 
@@ -21,6 +22,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 	private readonly GameServerOptions _options;
 	private readonly GameServerRuntimeContext? _runtimeContext;
 	private readonly GameLoginServer? _loginServer;
+	private readonly GameChatServer? _chatServer;
 	private readonly ICharacterSelectionRepository _characterSelectionRepository;
 	private readonly CharacterCreationService? _characterCreationService;
 	private readonly PlayerEnterWorldService? _playerEnterWorldService;
@@ -39,6 +41,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		GamePacketProcessor<string> packetProcessor,
 		GameServerRuntimeContext? runtimeContext = null,
 		GameLoginServer? loginServer = null,
+		GameChatServer? chatServer = null,
 		ICharacterSelectionRepository? characterSelectionRepository = null,
 		CharacterCreationService? characterCreationService = null,
 		PlayerEnterWorldService? playerEnterWorldService = null,
@@ -58,6 +61,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		_options = options;
 		_runtimeContext = runtimeContext;
 		_loginServer = loginServer;
+		_chatServer = chatServer;
 		_characterSelectionRepository = characterSelectionRepository ?? new EmptyCharacterSelectionRepository();
 		_characterCreationService = characterCreationService;
 		_playerEnterWorldService = playerEnterWorldService;
@@ -85,6 +89,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 				_options,
 				_runtimeContext,
 				_loginServer,
+				_chatServer,
 				_characterSelectionRepository,
 				_characterCreationService,
 				_playerEnterWorldService,

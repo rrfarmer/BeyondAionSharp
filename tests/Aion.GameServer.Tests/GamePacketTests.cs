@@ -152,6 +152,9 @@ public class GamePacketTests
 			Convert.FromHexString("D20400002A000000"),
 			SerializeUnencryptedPayload(new SmTimeCheck(42, () => 1234)));
 		Assert.Equal(
+			Convert.FromHexString("03000000010203"),
+			SerializeUnencryptedPayload(new SmChatInit([1, 2, 3])));
+		Assert.Equal(
 			Convert.FromHexString("D204000000"),
 			SerializeUnencryptedPayload(new SmCharacterList(playOk2: 1234)));
 		Assert.Equal(
@@ -1687,6 +1690,30 @@ public class GamePacketTests
 				{
 					buffer.WriteS("marchutan");
 					buffer.WriteD(7);
+				}),
+				GameConnectionState.Authed));
+	}
+
+	[Fact]
+	public void ClientPacketFactory_ParsesChatAuthPacket()
+	{
+		var chatAuth = Assert.IsType<CmChatAuth>(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(174, buffer =>
+				{
+					buffer.WriteD(7001);
+					buffer.WriteB([0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF]);
+				}),
+				GameConnectionState.InGame));
+
+		Assert.Equal(7001, chatAuth.ObjectId);
+		Assert.Equal([0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF], chatAuth.MacAddress);
+		Assert.Null(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(174, buffer =>
+				{
+					buffer.WriteD(7001);
+					buffer.WriteB([0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF]);
 				}),
 				GameConnectionState.Authed));
 	}

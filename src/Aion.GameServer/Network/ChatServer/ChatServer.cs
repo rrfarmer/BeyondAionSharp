@@ -1,8 +1,10 @@
 using System.Buffers.Binary;
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
 using Aion.Commons.Network;
 using Aion.GameServer.Configuration;
+using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.ChatServer.ServerPackets;
 using Microsoft.Extensions.Logging;
 
@@ -13,6 +15,7 @@ public sealed class ChatServer : IAsyncDisposable
 	private readonly ILogger<ChatServer> _logger;
 	private readonly GameServerOptions _options;
 	private readonly SemaphoreSlim _sendLock = new(1, 1);
+	private readonly ConcurrentDictionary<int, Func<byte[], Task>> _playerAuthCallbacks = new();
 	private readonly CancellationTokenSource _shutdownTokenSource = new();
 	private TcpClient? _client;
 	private NetworkStream? _stream;
@@ -82,7 +85,7 @@ public sealed class ChatServer : IAsyncDisposable
 				if (packet == null)
 					break;
 
-				ProcessPacket(packet);
+				await ProcessPacketAsync(packet);
 			}
 		}
 		catch (OperationCanceledException)
@@ -104,16 +107,45 @@ public sealed class ChatServer : IAsyncDisposable
 		}
 	}
 
-	private void ProcessPacket(PacketBuffer packet)
+	public async Task<bool> SendPlayerLoginRequestAsync(
+		Player player,
+		string accountName,
+		Func<byte[], Task> sendChatInit,
+		CancellationToken cancellationToken = default)
 	{
-		// Java parity: chatserver bridge auth response packet.
+		// Java parity: network/chatserver/ChatServer.sendPlayerLoginRequest.
+		if (!IsAuthed)
+			return false;
+
+		_playerAuthCallbacks[player.ObjectId] = sendChatInit;
+		await SendPacketAsync(
+			new SmPlayerAuth(player.ObjectId, accountName, player.Name, ToRaceId(player.Race), player.AccessLevel),
+			cancellationToken);
+		return true;
+	}
+
+	private async Task ProcessPacketAsync(PacketBuffer packet)
+	{
+		// Java parity: chatserver bridge response packet dispatch.
 		var opcode = packet.ReadC();
-		if (opcode != 0x00 || _state != ChatServerState.Connected)
+		if (opcode == 0x00 && _state == ChatServerState.Connected)
 		{
-			_logger.LogWarning("Unknown chat-server packet 0x{Opcode:X2} in state {State}", opcode, _state);
+			ProcessAuthResponse(packet);
 			return;
 		}
 
+		if (opcode == 0x01 && _state == ChatServerState.Authed)
+		{
+			await ProcessPlayerAuthResponseAsync(packet);
+			return;
+		}
+
+		_logger.LogWarning("Unknown chat-server packet 0x{Opcode:X2} in state {State}", opcode, _state);
+	}
+
+	private void ProcessAuthResponse(PacketBuffer packet)
+	{
+		// Java parity: network/chatserver/clientpackets/CM_CS_AUTH_RESPONSE.readImpl/runImpl.
 		var response = packet.ReadC();
 		if (response == 0)
 		{
@@ -127,6 +159,16 @@ public sealed class ChatServer : IAsyncDisposable
 
 		_logger.LogWarning("Chat-server rejected game-server auth with response {Response}", response);
 		CloseConnection();
+	}
+
+	private async Task ProcessPlayerAuthResponseAsync(PacketBuffer packet)
+	{
+		// Java parity: network/chatserver/clientpackets/CM_CS_PLAYER_AUTH_RESPONSE.readImpl/runImpl.
+		var playerId = packet.ReadD();
+		var tokenLength = packet.ReadC();
+		var token = packet.ReadB(tokenLength);
+		if (_playerAuthCallbacks.TryRemove(playerId, out var callback))
+			await callback(token);
 	}
 
 	private async Task<PacketBuffer?> ReadPacketAsync(CancellationToken cancellationToken)
@@ -165,6 +207,7 @@ public sealed class ChatServer : IAsyncDisposable
 
 		_closed = true;
 		_state = ChatServerState.Disconnected;
+		_playerAuthCallbacks.Clear();
 		_shutdownTokenSource.Cancel();
 
 		try
@@ -175,6 +218,12 @@ public sealed class ChatServer : IAsyncDisposable
 		catch
 		{
 		}
+	}
+
+	private static int ToRaceId(string race)
+	{
+		// Java parity: model/Race.raceId.
+		return string.Equals(race, "ASMODIANS", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
 	}
 
 	public async ValueTask DisposeAsync()
