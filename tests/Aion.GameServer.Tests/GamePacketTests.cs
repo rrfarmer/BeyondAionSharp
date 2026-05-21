@@ -1044,6 +1044,59 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmInventoryInfo_WritesConditioningBlobForConditionableTemplateAtZeroCharge()
+	{
+		var inventoryPackets = SmInventoryInfo.CreateLoginPackets(
+			new Player
+			{
+				InventoryItems =
+				[
+					new InventoryItem { ObjectId = 88, ItemId = 100, Count = 1, IsEquipped = true, Location = 0, Slot = 1 },
+				],
+			},
+			new ItemTemplateTable(
+				[
+					new ItemTemplateSummary(182400001, "Kinah", 0, 12350, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
+					new ItemTemplateSummary(
+						100,
+						"Sword",
+						0,
+						1,
+						1,
+						"SWORD",
+						"NORMAL",
+						"COMMON",
+						"PC_ALL",
+						1,
+						0,
+						3,
+						ConditioningMaxLevel: 1),
+				]),
+			() => 77);
+
+		var inventoryPayload = SerializeUnencryptedPayload(inventoryPackets[0]);
+		using var reader = new PacketBuffer(inventoryPayload);
+		reader.ReadC();
+		reader.ReadC();
+		reader.ReadC();
+		reader.ReadC();
+		Assert.Equal(2, reader.ReadH());
+		ReadInventoryItemWithBlob(reader);
+		var sword = ReadInventoryItemWithBlob(reader);
+		using var blobReader = new PacketBuffer(sword.Blob);
+
+		Assert.Equal(0x06, (int)blobReader.ReadC());
+		blobReader.ReadQ();
+		Assert.Equal(0x01, (int)blobReader.ReadC());
+		blobReader.ReadQ();
+		blobReader.ReadQ();
+		Assert.Equal(0x0b, (int)blobReader.ReadC());
+		blobReader.ReadB(138);
+		Assert.Equal(0x0f, (int)blobReader.ReadC());
+		Assert.Equal(0, blobReader.ReadD());
+	}
+
+	[Fact]
 	public void SmStatsInfo_WritesJavaShapedBaselineStats()
 	{
 		var payload = SerializeUnencryptedPayload(

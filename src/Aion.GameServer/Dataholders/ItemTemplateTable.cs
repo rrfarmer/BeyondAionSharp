@@ -39,7 +39,12 @@ public sealed record ItemTemplateSummary(
 	int DispositionItemId = 0,
 	int DispositionItemCount = 0,
 	IReadOnlySet<string>? ClassRestrictions = null,
-	int CraftLearnRecipeId = 0)
+	int CraftLearnRecipeId = 0,
+	int ActivationCount = 0,
+	int ExpireTimeMinutes = 0,
+	int EnchantType = 0,
+	bool CanTune = false,
+	int ConditioningMaxLevel = 0)
 {
 	private const int CanPolishMask = 1 << 17;
 

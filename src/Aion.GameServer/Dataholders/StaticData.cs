@@ -194,10 +194,17 @@ public sealed class StaticData
 					reader.GetAttribute("item_type") ?? string.Empty,
 					reader.GetAttribute("quality") ?? string.Empty,
 					reader.GetAttribute("race") ?? string.Empty,
-					ReadIntAttribute(reader, "max_stack_count"),
+					ReadOptionalIntAttribute(reader, "max_stack_count", 1),
 					ReadLongAttribute(reader, "price"),
 					GetItemGroupSlots(reader.GetAttribute("item_group")),
-					ReadClassRestrictions(reader.GetAttribute("restrict")));
+					ReadClassRestrictions(reader.GetAttribute("restrict")),
+					ReadIntAttribute(reader, "activate_count"),
+					ReadIntAttribute(reader, "expire_time"),
+					ReadIntAttribute(reader, "enchant_type"),
+					ReadIntAttribute(reader, "max_enchant_bonus"),
+					ReadIntAttribute(reader, "option_slot_bonus"),
+					ReadIntAttribute(reader, "rnd_bonus"),
+					ReadOptionalIntAttribute(reader, "rnd_count", -1));
 				if (reader.IsEmptyElement)
 				{
 					itemTemplates.Add(currentItemTemplate.ToSummary());
@@ -211,6 +218,12 @@ public sealed class StaticData
 			{
 				currentItemTemplate.DispositionItemId = ReadIntAttribute(reader, "id");
 				currentItemTemplate.DispositionItemCount = ReadIntAttribute(reader, "count");
+				continue;
+			}
+
+			if (reader.Depth == 3 && reader.LocalName == "improve" && currentItemTemplate != null)
+			{
+				currentItemTemplate.ConditioningMaxLevel = ReadIntAttribute(reader, "level");
 				continue;
 			}
 
@@ -401,7 +414,14 @@ public sealed class StaticData
 			int maxStackCount,
 			long price,
 			long validEquipmentSlots,
-			IReadOnlySet<string> classRestrictions)
+			IReadOnlySet<string> classRestrictions,
+			int activationCount,
+			int expireTimeMinutes,
+			int enchantType,
+			int maxEnchantBonus,
+			int optionSlotBonus,
+			int randomBonusId,
+			int maxTuneCount)
 		{
 			TemplateId = templateId;
 			Name = name;
@@ -416,6 +436,10 @@ public sealed class StaticData
 			Price = price;
 			ValidEquipmentSlots = validEquipmentSlots;
 			ClassRestrictions = classRestrictions;
+			ActivationCount = activationCount;
+			ExpireTimeMinutes = expireTimeMinutes;
+			EnchantType = enchantType;
+			CanTune = CalculateCanTune(validEquipmentSlots, maxTuneCount, maxEnchantBonus, optionSlotBonus, randomBonusId);
 		}
 
 		private int TemplateId { get; }
@@ -444,15 +468,25 @@ public sealed class StaticData
 
 		private IReadOnlySet<string> ClassRestrictions { get; }
 
+		private int ActivationCount { get; }
+
+		private int ExpireTimeMinutes { get; }
+
+		private int EnchantType { get; }
+
+		private bool CanTune { get; }
+
 		public int DispositionItemId { get; set; }
 
 		public int DispositionItemCount { get; set; }
 
 		public int CraftLearnRecipeId { get; set; }
 
+		public int ConditioningMaxLevel { get; set; }
+
 		public ItemTemplateSummary ToSummary()
 		{
-			// Java parity: model/templates/item/ItemTemplate restrict array, actions/craftlearn, and nested Disposition courier-pass data.
+			// Java parity: model/templates/item/ItemTemplate fields consumed by item creation, broker/mail checks, and item blobs.
 			return new ItemTemplateSummary(
 				TemplateId,
 				Name,
@@ -469,7 +503,29 @@ public sealed class StaticData
 				DispositionItemId,
 				DispositionItemCount,
 				ClassRestrictions,
-				CraftLearnRecipeId);
+				CraftLearnRecipeId,
+				ActivationCount,
+				ExpireTimeMinutes,
+				EnchantType,
+				CanTune,
+				ConditioningMaxLevel);
+		}
+
+		private static bool CalculateCanTune(
+			long validEquipmentSlots,
+			int maxTuneCount,
+			int maxEnchantBonus,
+			int optionSlotBonus,
+			int randomBonusId)
+		{
+			// Java parity: model/templates/item/ItemTemplate.afterUnmarshal + canTune.
+			if (validEquipmentSlots == 0)
+				return false;
+
+			if (maxTuneCount != -1)
+				return maxTuneCount != 0;
+
+			return maxEnchantBonus != 0 || optionSlotBonus != 0 || randomBonusId != 0;
 		}
 	}
 
@@ -580,6 +636,11 @@ public sealed class StaticData
 	private static int ReadIntAttribute(XmlReader reader, string attributeName)
 	{
 		return int.TryParse(reader.GetAttribute(attributeName), out var parsed) ? parsed : 0;
+	}
+
+	private static int ReadOptionalIntAttribute(XmlReader reader, string attributeName, int defaultValue)
+	{
+		return int.TryParse(reader.GetAttribute(attributeName), out var parsed) ? parsed : defaultValue;
 	}
 
 	private static int? ReadNullableIntAttribute(XmlReader reader, string attributeName)

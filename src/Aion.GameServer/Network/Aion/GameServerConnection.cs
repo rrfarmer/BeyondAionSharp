@@ -1586,6 +1586,10 @@ public sealed class GameServerConnection : BaseClientConnection
 		long slot)
 	{
 		// Java parity: services/item/ItemFactory.newItem(itemId, count) default item state and count clamp.
+		var expireTime = itemTemplate.ExpireTimeMinutes == 0
+			? 0
+			: (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds() + itemTemplate.ExpireTimeMinutes * 60 - 1;
+
 		return new InventoryItem
 		{
 			ObjectId = objectId,
@@ -1594,6 +1598,10 @@ public sealed class GameServerConnection : BaseClientConnection
 			OwnerId = ownerId,
 			Location = location,
 			Slot = slot,
+			ExpireTime = expireTime,
+			ActivationCount = itemTemplate.ActivationCount,
+			TuneCount = itemTemplate.CanTune ? -1 : 0,
+			IsAmplified = itemTemplate.EnchantType == 1,
 		};
 	}
 

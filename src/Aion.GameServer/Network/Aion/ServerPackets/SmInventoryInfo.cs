@@ -133,7 +133,7 @@ public sealed class SmInventoryInfo : GameServerPacket
 			}
 
 			WriteEnchantInfoBlob(blob, item);
-			if (item.Charge > 0)
+			if (template.ConditioningMaxLevel > 0 || item.Charge > 0)
 				WriteConditioningInfoBlob(blob, item);
 			if (template.CanPolish)
 				WritePolishInfoBlob(blob, item);

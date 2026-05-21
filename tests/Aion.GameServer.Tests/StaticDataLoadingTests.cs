@@ -126,6 +126,12 @@ public sealed class StaticDataLoadingTests
 		Assert.True(staticData.ItemTemplates.GetItemTemplate(169500916)?.IsClassSpecific("RANGER"));
 		Assert.False(staticData.ItemTemplates.GetItemTemplate(169500916)?.IsClassSpecific("ASSASSIN"));
 		Assert.Equal(155000001, staticData.ItemTemplates.GetItemTemplate(152200001)?.CraftLearnRecipeId);
+		Assert.Equal(1, staticData.ItemTemplates.GetItemTemplate(152000065)?.ActivationCount);
+		Assert.Equal(1, staticData.ItemTemplates.GetItemTemplate(100000895)?.ExpireTimeMinutes);
+		Assert.Equal(1, staticData.ItemTemplates.GetItemTemplate(100000714)?.EnchantType);
+		Assert.True(staticData.ItemTemplates.GetItemTemplate(100001276)?.CanTune);
+		Assert.False(staticData.ItemTemplates.GetItemTemplate(100000001)?.CanTune);
+		Assert.Equal(1, staticData.ItemTemplates.GetItemTemplate(100001105)?.ConditioningMaxLevel);
 		Assert.Equal("kamikaze worm", staticData.NpcTemplates.GetNpcTemplate(201000)?.Name);
 		var postmanNpc = staticData.NpcTemplates.GetNpcTemplate(798100);
 		Assert.NotNull(postmanNpc);
