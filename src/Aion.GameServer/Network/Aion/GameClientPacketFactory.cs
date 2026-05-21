@@ -13,6 +13,7 @@ public static class GameClientPacketFactory
 		// Java parity: network/aion/AionClientPacketFactory opcode registration table.
 		Register(3, states => new CmQuit(3, states), GameConnectionState.Authed, GameConnectionState.InGame);
 		Register(4, states => new CmMayQuit(4, states), GameConnectionState.InGame);
+		Register(5, states => new CmRevive(5, states), GameConnectionState.InGame);
 		Register(8, states => new CmEnterWorld(8, states), GameConnectionState.Authed);
 		Register(9, states => new CmLevelReady(9, states), GameConnectionState.InGame);
 		Register(10, states => new CmUiSettings(10, states), GameConnectionState.InGame);
@@ -49,6 +50,7 @@ public static class GameClientPacketFactory
 		Register(136, states => new CmGetMailAttachment(136, states), GameConnectionState.InGame);
 		Register(137, states => new CmDeleteMail(137, states), GameConnectionState.InGame);
 		Register(139, states => new CmTitleSet(139, states), GameConnectionState.InGame);
+		Register(145, states => new CmQuestionnaire(145, states), GameConnectionState.InGame);
 		Register(146, states => new CmRejectRevive(146, states), GameConnectionState.InGame);
 		Register(147, states => new CmHeadingUpdate(147, states), GameConnectionState.InGame);
 		Register(149, states => new CmL2AuthLoginCheck(149, states), GameConnectionState.Connected);
@@ -56,11 +58,15 @@ public static class GameClientPacketFactory
 		Register(151, states => new CmCreateCharacter(151, states), GameConnectionState.Authed);
 		Register(152, states => new CmDeleteCharacter(152, states), GameConnectionState.Authed);
 		Register(153, states => new CmRestoreCharacter(153, states), GameConnectionState.Authed);
+		Register(154, states => new CmStartLoot(154, states), GameConnectionState.InGame);
+		Register(155, states => new CmLootItem(155, states), GameConnectionState.InGame);
 		Register(158, states => new CmShowBlockList(158, states), GameConnectionState.InGame);
 		Register(162, states => new CmReadExpressMail(162, states), GameConnectionState.InGame);
+		Register(163, states => new CmSubzoneChange(163, states), GameConnectionState.InGame);
 		Register(166, states => new CmBlockAdd(166, states), GameConnectionState.InGame);
 		Register(167, states => new CmBlockDelete(167, states), GameConnectionState.InGame);
 		Register(170, states => new CmFriendStatus(170, states), GameConnectionState.InGame);
+		Register(172, states => new CmChangeChannel(172, states), GameConnectionState.InGame);
 		Register(174, states => new CmChatAuth(174, states), GameConnectionState.InGame);
 		Register(175, states => new CmMacroCreate(175, states), GameConnectionState.InGame);
 		Register(176, states => new CmMacroDelete(176, states), GameConnectionState.InGame);

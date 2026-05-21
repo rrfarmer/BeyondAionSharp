@@ -288,11 +288,27 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleLevelReadyAsync(_activePlayer);
 				break;
+			case CmRevive:
+				// Java parity: network/aion/clientpackets/CM_REVIVE.runImpl dispatches PlayerReviveService; deferred until revive/combat state is ported.
+				break;
 			case CmRejectRevive:
 				// Java parity: network/aion/clientpackets/CM_REJECT_REVIVE.runImpl has no side effect.
 				break;
 			case CmHeadingUpdate:
 				// Java parity: network/aion/clientpackets/CM_HEADING_UPDATE.runImpl has no side effect.
+				break;
+			case CmQuestionnaire:
+				// Java parity: network/aion/clientpackets/CM_QUESTIONNAIRE.runImpl dispatches HTMLService rewards; deferred until questionnaire rewards are ported.
+				break;
+			case CmStartLoot:
+			case CmLootItem:
+				// Java parity: network/aion/clientpackets/CM_START_LOOT/CM_LOOT_ITEM.runImpl dispatch DropService; deferred until loot/drop systems are ported.
+				break;
+			case CmSubzoneChange:
+				// Java parity: network/aion/clientpackets/CM_SUBZONE_CHANGE.runImpl revalidates zones; deferred until zone instances are ported.
+				break;
+			case CmChangeChannel:
+				// Java parity: network/aion/clientpackets/CM_CHANGE_CHANNEL.runImpl dispatches TeleportService.changeChannel; deferred until channel instances are ported.
 				break;
 			case CmUiSettings uiSettings:
 				if (_activePlayer != null)

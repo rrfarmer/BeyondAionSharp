@@ -2047,6 +2047,8 @@ public class GamePacketTests
 	[Fact]
 	public void ClientPacketFactory_ParsesMovementPackets()
 	{
+		var revive = Assert.IsType<CmRevive>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(5, b => b.WriteC(4)), GameConnectionState.InGame));
 		Assert.IsType<CmRejectRevive>(
 			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(146, _ => { }), GameConnectionState.InGame));
 		var headingUpdate = Assert.IsType<CmHeadingUpdate>(
@@ -2120,11 +2122,58 @@ public class GamePacketTests
 		Assert.Equal(35, moveInAir.Z);
 		Assert.Equal(16, (int)moveInAir.Heading);
 		Assert.Equal(900, moveInAir.Distance);
+		Assert.Equal(4, revive.ReviveId);
 		Assert.Equal(88, (int)headingUpdate.Heading);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(5, b => b.WriteC(1)), GameConnectionState.Authed));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(146, _ => { }), GameConnectionState.Authed));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(48, b => b.WriteF(1)), GameConnectionState.Authed));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(49, b => b.WriteD(1)), GameConnectionState.Authed));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(147, b => b.WriteC(1)), GameConnectionState.Authed));
+	}
+
+	[Fact]
+	public void ClientPacketFactory_ParsesDeferredGameplayPackets()
+	{
+		var questionnaire = Assert.IsType<CmQuestionnaire>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(145, b =>
+			{
+				b.WriteD(7001);
+				b.WriteH(2);
+				b.WriteD(182400001);
+				b.WriteD(182400002);
+				b.WriteS("182400001,182400002");
+			}), GameConnectionState.InGame));
+		var startLoot = Assert.IsType<CmStartLoot>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(154, b =>
+			{
+				b.WriteD(9001);
+				b.WriteC(1);
+			}), GameConnectionState.InGame));
+		var lootItem = Assert.IsType<CmLootItem>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(155, b =>
+			{
+				b.WriteD(9002);
+				b.WriteC(3);
+			}), GameConnectionState.InGame));
+		var subzoneChange = Assert.IsType<CmSubzoneChange>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(163, b => b.WriteC(1)), GameConnectionState.InGame));
+		var changeChannel = Assert.IsType<CmChangeChannel>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(172, b => b.WriteD(2)), GameConnectionState.InGame));
+
+		Assert.Equal(7001, questionnaire.ObjectId);
+		Assert.Equal([182400001, 182400002], questionnaire.ItemIds);
+		Assert.Equal("182400001,182400002", questionnaire.StringItemsId);
+		Assert.Equal(9001, startLoot.TargetObjectId);
+		Assert.Equal(1, startLoot.Action);
+		Assert.Equal(9002, lootItem.TargetObjectId);
+		Assert.Equal(3, lootItem.Index);
+		Assert.Equal(1, subzoneChange.Unknown);
+		Assert.Equal(2, changeChannel.Channel);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(145, b => b.WriteD(1)), GameConnectionState.Authed));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(154, b => b.WriteD(1)), GameConnectionState.Authed));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(155, b => b.WriteD(1)), GameConnectionState.Authed));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(163, b => b.WriteC(1)), GameConnectionState.Authed));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(172, b => b.WriteD(1)), GameConnectionState.Authed));
 	}
 
 	[Fact]
