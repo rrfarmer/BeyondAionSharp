@@ -3484,31 +3484,89 @@ public sealed class GameServerConnection : BaseClientConnection
 
 	private async Task HandleEmotionAsync(Player player, CmEmotion packet)
 	{
-		// Java parity: network/aion/clientpackets/CM_EMOTION.runImpl powershard branches.
+		// Java parity: network/aion/clientpackets/CM_EMOTION.runImpl state-changing branches.
 		if ((player.LifeStats?.CurrentHp ?? 1) <= 0)
 			return;
 
-		if (packet.EmotionType != EmotionType.PowershardOn && packet.EmotionType != EmotionType.PowershardOff)
+		if (!IsHandledEmotion(packet.EmotionType))
+			return;
+
+		// TODO Phase 6: apply EffectController abnormal-state/fear/confuse and stance guards once those models are ported.
+		if (player.IsInState(PlayerCreatureState.PrivateShop)
+			|| player.IsInState(PlayerCreatureState.WeaponEquipped) && packet.EmotionType == EmotionType.ChairSit)
 			return;
 
 		await CancelPendingItemUseOnEmotionAsync(player);
-		if (packet.EmotionType == EmotionType.PowershardOn)
+		switch (packet.EmotionType)
 		{
-			if (!HasEquippedPowerShard(player, _runtimeContext?.DataManager?.StaticData.ItemTemplates))
-			{
-				await SendPacketAsync(SmSystemMessage.WeaponBoostNoBoosterEquipped());
-				return;
-			}
+			case EmotionType.Sit:
+				if (player.IsInState(PlayerCreatureState.PrivateShop))
+					return;
+				player.IsInRideMode = false;
+				player.SetCreatureState(PlayerCreatureState.Resting, enabled: true);
+				break;
+			case EmotionType.Stand:
+				player.SetCreatureState(PlayerCreatureState.Resting, enabled: false);
+				break;
+			case EmotionType.ChairSit:
+				player.ReplaceCreatureState(PlayerCreatureState.Chair);
+				break;
+			case EmotionType.ChairUp:
+				if (player.IsInState(PlayerCreatureState.Chair))
+					player.ReplaceCreatureState(PlayerCreatureState.Active);
+				break;
+			case EmotionType.AttackModeInMove:
+			case EmotionType.AttackModeInStanding:
+				player.SetCreatureState(PlayerCreatureState.WeaponEquipped, enabled: true);
+				break;
+			case EmotionType.NeutralModeInMove:
+			case EmotionType.NeutralModeInStanding:
+				player.SetCreatureState(PlayerCreatureState.WeaponEquipped, enabled: false);
+				break;
+			case EmotionType.Walk:
+				if (player.IsInState(PlayerCreatureState.Flying) || player.IsInState(PlayerCreatureState.Gliding))
+					return;
+				player.SetCreatureState(PlayerCreatureState.WalkMode, enabled: true);
+				break;
+			case EmotionType.Run:
+				player.SetCreatureState(PlayerCreatureState.WalkMode, enabled: false);
+				break;
+			case EmotionType.PowershardOn:
+				if (!HasEquippedPowerShard(player, _runtimeContext?.DataManager?.StaticData.ItemTemplates))
+				{
+					await SendPacketAsync(SmSystemMessage.WeaponBoostNoBoosterEquipped());
+					return;
+				}
 
-			await SendPacketAsync(SmSystemMessage.WeaponBoostStarted());
-			player.SetCreatureState(PlayerCreatureState.Powershard, enabled: true);
-			await BroadcastEmotionAsync(player, new SmEmotion(player, EmotionType.PowershardOn));
-			return;
+				await SendPacketAsync(SmSystemMessage.WeaponBoostStarted());
+				player.SetCreatureState(PlayerCreatureState.Powershard, enabled: true);
+				break;
+			case EmotionType.PowershardOff:
+				await SendPacketAsync(SmSystemMessage.WeaponBoostEnded());
+				player.SetCreatureState(PlayerCreatureState.Powershard, enabled: false);
+				break;
 		}
 
-		await SendPacketAsync(SmSystemMessage.WeaponBoostEnded());
-		player.SetCreatureState(PlayerCreatureState.Powershard, enabled: false);
-		await BroadcastEmotionAsync(player, new SmEmotion(player, EmotionType.PowershardOff));
+		var targetObjectId = player.TargetObjectId != 0 ? player.TargetObjectId : packet.TargetObjectId;
+		await BroadcastEmotionAsync(
+			player,
+			new SmEmotion(player, packet.EmotionType, packet.Emotion, packet.X, packet.Y, packet.Z, packet.Heading, targetObjectId));
+	}
+
+	private static bool IsHandledEmotion(EmotionType emotionType)
+	{
+		return emotionType is EmotionType.Sit
+			or EmotionType.Stand
+			or EmotionType.ChairSit
+			or EmotionType.ChairUp
+			or EmotionType.AttackModeInMove
+			or EmotionType.AttackModeInStanding
+			or EmotionType.NeutralModeInMove
+			or EmotionType.NeutralModeInStanding
+			or EmotionType.Walk
+			or EmotionType.Run
+			or EmotionType.PowershardOn
+			or EmotionType.PowershardOff;
 	}
 
 	private async Task BroadcastEmotionAsync(Player player, SmEmotion packet)

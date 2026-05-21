@@ -21,4 +21,28 @@ public sealed class PlayerStateTests
 
 		Assert.Empty(player.ItemCooldowns);
 	}
+
+	[Fact]
+	public void Player_CreatureStateMatchesJavaBitAndExactMultibitSemantics()
+	{
+		var player = new Player();
+
+		player.SetCreatureState(PlayerCreatureState.WalkMode, enabled: true);
+		player.SetCreatureState(PlayerCreatureState.Powershard, enabled: true);
+
+		Assert.True(player.IsInState(PlayerCreatureState.WalkMode));
+		Assert.True(player.IsInState(PlayerCreatureState.Powershard));
+		Assert.Equal(64, (int)PlayerCreatureState.WalkMode);
+		Assert.Equal(128, (int)PlayerCreatureState.Powershard);
+
+		player.ReplaceCreatureState(PlayerCreatureState.Chair);
+
+		Assert.True(player.IsInState(PlayerCreatureState.Chair));
+		Assert.False(player.IsInState(PlayerCreatureState.PrivateShop));
+
+		player.ReplaceCreatureState(PlayerCreatureState.PrivateShop);
+
+		Assert.True(player.IsInState(PlayerCreatureState.PrivateShop));
+		Assert.False(player.IsInState(PlayerCreatureState.Chair));
+	}
 }

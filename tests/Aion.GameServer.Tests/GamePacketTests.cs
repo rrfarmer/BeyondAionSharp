@@ -288,6 +288,22 @@ public class GamePacketTests
 					},
 					EmotionType.PowershardOn)));
 		Assert.Equal(
+			Convert.FromHexString("E903000004060000000000000030410000B041000004422C"),
+			SerializeUnencryptedPayload(
+				new SmEmotion(
+					new Player
+					{
+						ObjectId = 1001,
+						CreatureState = PlayerCreatureState.Chair,
+					},
+					EmotionType.ChairSit,
+					0,
+					11,
+					22,
+					33,
+					44,
+					0)));
+		Assert.Equal(
 			Convert.FromHexString("646464"),
 			SerializeUnencryptedPayload(new SmPrices()));
 		Assert.Equal(

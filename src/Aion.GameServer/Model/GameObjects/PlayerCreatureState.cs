@@ -9,7 +9,10 @@ public enum PlayerCreatureState
 	Resting = 1 << 2,
 	FloatingCorpse = 1 << 3,
 	WeaponEquipped = 1 << 5,
+	WalkMode = 1 << 6,
 	Powershard = 1 << 7,
 	Gliding = 1 << 9,
 	Chair = Flying | Resting,
+	Dead = Active | Flying | Resting,
+	PrivateShop = Active | Flying | FloatingCorpse,
 }

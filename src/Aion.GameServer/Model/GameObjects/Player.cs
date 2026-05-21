@@ -171,16 +171,25 @@ public sealed class Player
 
 	public bool IsInState(PlayerCreatureState state)
 	{
-		// Java parity: model/gameobjects/Creature.isInState, including CHAIR exact-match semantics.
-		return state == PlayerCreatureState.Chair
-			? CreatureState == PlayerCreatureState.Chair
-			: (CreatureState & state) == state;
+		// Java parity: model/gameobjects/Creature.isInState, including exact-match multibit states.
+		return state switch
+		{
+			PlayerCreatureState.Chair => CreatureState == PlayerCreatureState.Chair,
+			PlayerCreatureState.PrivateShop => CreatureState == PlayerCreatureState.PrivateShop,
+			_ => (CreatureState & state) == state,
+		};
 	}
 
 	public void SetCreatureState(PlayerCreatureState state, bool enabled)
 	{
 		// Java parity: model/gameobjects/Creature.setState/unsetState bit updates.
 		CreatureState = enabled ? CreatureState | state : CreatureState & ~state;
+	}
+
+	public void ReplaceCreatureState(PlayerCreatureState state)
+	{
+		// Java parity: model/gameobjects/Creature.setState(state, replace=true).
+		CreatureState = state;
 	}
 
 	public void AddItemCooldown(int delayId, int useDelayMillis, DateTimeOffset now)
