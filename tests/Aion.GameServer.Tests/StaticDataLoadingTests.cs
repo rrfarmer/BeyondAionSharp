@@ -137,6 +137,8 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(155000001, staticData.ItemTemplates.GetItemTemplate(152200001)?.CraftLearnRecipeId);
 		Assert.Equal(1, staticData.ItemTemplates.GetItemTemplate(152000065)?.ActivationCount);
 		Assert.Equal(1, staticData.ItemTemplates.GetItemTemplate(100000895)?.ExpireTimeMinutes);
+		Assert.Equal(21, staticData.ItemTemplates.GetItemTemplate(160000001)?.UseDelayId);
+		Assert.Equal(5000, staticData.ItemTemplates.GetItemTemplate(160000001)?.UseDelayMillis);
 		Assert.Equal(1, staticData.ItemTemplates.GetItemTemplate(100000714)?.EnchantType);
 		Assert.Equal(15, staticData.ItemTemplates.GetItemTemplate(100100860)?.MaxEnchantLevel);
 		Assert.True(staticData.ItemTemplates.GetItemTemplate(100100860)?.CanExceedEnchant);

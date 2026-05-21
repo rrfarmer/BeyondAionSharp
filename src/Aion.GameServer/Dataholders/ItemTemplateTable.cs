@@ -69,7 +69,9 @@ public sealed record ItemTemplateSummary(
 	int ManastoneSlots = 0,
 	int SpecialManastoneSlots = 0,
 	string ExceedEnchantSkill = "",
-	ItemEnchantActionInfo? EnchantAction = null)
+	ItemEnchantActionInfo? EnchantAction = null,
+	int UseDelayId = 0,
+	int UseDelayMillis = 0)
 {
 	private const int CanPolishMask = 1 << 17;
 	private const int SoulBoundMask = 1 << 7;

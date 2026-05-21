@@ -579,6 +579,8 @@ public sealed class StaticData
 				currentItemTemplate.MinRank = ReadOptionalIntAttribute(reader, "rank_min", 1);
 				currentItemTemplate.MaxRank = ReadOptionalIntAttribute(reader, "rank_max", 18);
 				currentItemTemplate.RecommendRank = ReadIntAttribute(reader, "recommend_rank");
+				currentItemTemplate.UseDelayId = ReadIntAttribute(reader, "usedelayid");
+				currentItemTemplate.UseDelayMillis = ReadIntAttribute(reader, "usedelay");
 				continue;
 			}
 
@@ -1387,6 +1389,10 @@ public sealed class StaticData
 
 		public int MaxRank { get; set; } = 18;
 
+		public int UseDelayId { get; set; }
+
+		public int UseDelayMillis { get; set; }
+
 		public void AddModifier(ItemStatModifier modifier)
 		{
 			Modifiers.Add(modifier);
@@ -1455,7 +1461,9 @@ public sealed class StaticData
 				ManastoneSlots,
 				SpecialManastoneSlots,
 				ExceedEnchantSkill,
-				EnchantAction);
+				EnchantAction,
+				UseDelayId,
+				UseDelayMillis);
 		}
 
 		private static int CalculateMaxTuneCount(

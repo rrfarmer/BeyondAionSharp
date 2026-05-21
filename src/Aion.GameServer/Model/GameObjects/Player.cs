@@ -158,6 +158,9 @@ public sealed class Player
 
 	public PendingSoulBindRequest? PendingSoulBindRequest { get; set; }
 
+	// Java parity: Player.usingItem set by SM_ITEM_USAGE_ANIMATION while delayed item use is active.
+	public int UsingItemObjectId { get; set; }
+
 	public IReadOnlyList<PlayerBlockedUser> BlockedUsers { get; set; } = Array.Empty<PlayerBlockedUser>();
 
 	public PlayerAbyssRank AbyssRank { get; set; } = PlayerAbyssRank.Default();
@@ -178,5 +181,29 @@ public sealed class Player
 	{
 		// Java parity: model/gameobjects/Creature.setState/unsetState bit updates.
 		CreatureState = enabled ? CreatureState | state : CreatureState & ~state;
+	}
+
+	public void AddItemCooldown(int delayId, int useDelayMillis, DateTimeOffset now)
+	{
+		// Java parity: model/gameobjects/player/Player.addItemCoolDown.
+		if (useDelayMillis <= 0)
+			return;
+
+		var cooldowns = new Dictionary<int, PlayerItemCooldown>(ItemCooldowns)
+		{
+			[delayId] = new PlayerItemCooldown(now.ToUnixTimeMilliseconds() + useDelayMillis, useDelayMillis / 1000),
+		};
+		ItemCooldowns = cooldowns;
+	}
+
+	public void RemoveItemCooldown(int delayId)
+	{
+		// Java parity: model/gameobjects/player/Player.removeItemCoolDown.
+		if (!ItemCooldowns.ContainsKey(delayId))
+			return;
+
+		var cooldowns = new Dictionary<int, PlayerItemCooldown>(ItemCooldowns);
+		cooldowns.Remove(delayId);
+		ItemCooldowns = cooldowns;
 	}
 }

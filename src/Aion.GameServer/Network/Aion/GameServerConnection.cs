@@ -1667,7 +1667,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		Func<CancellationToken, Task> completeAsync,
 		int? cancelTargetObjectId = null,
 		int cancelEndState = 3,
-		int cancelUnknown3 = 0)
+		int cancelUnknown3 = 0,
+		int? removeCooldownDelayIdOnCancel = null)
 	{
 		// Java parity: controllers/CreatureController.addTask(TaskId.ITEM_USE) + ThreadPoolManager.schedule.
 		if (_threadPoolManager == null || delay <= TimeSpan.Zero)
@@ -1676,7 +1677,10 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
-		_pendingItemUse?.Task.Cancel();
+		if (_pendingItemUse?.Task.Cancel() == true)
+			CleanupPendingItemUse(player, _pendingItemUse, canceled: true);
+
+		player.UsingItemObjectId = itemObjectId;
 		ScheduledTask? scheduledTask = null;
 		scheduledTask = _threadPoolManager.Schedule(
 			async cancellationToken =>
@@ -1690,8 +1694,12 @@ public sealed class GameServerConnection : BaseClientConnection
 				}
 				finally
 				{
-					if (ReferenceEquals(_pendingItemUse?.Task, scheduledTask))
+					var pendingItemUse = _pendingItemUse;
+					if (pendingItemUse != null && ReferenceEquals(pendingItemUse.Task, scheduledTask))
+					{
+						CleanupPendingItemUse(player, pendingItemUse, canceled: cancellationToken.IsCancellationRequested);
 						_pendingItemUse = null;
+					}
 				}
 			},
 			delay);
@@ -1703,7 +1711,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			cancelMessage,
 			cancelTargetObjectId,
 			cancelEndState,
-			cancelUnknown3);
+			cancelUnknown3,
+			removeCooldownDelayIdOnCancel);
 	}
 
 	private async Task CancelPendingItemUseOnMoveAsync(Player player)
@@ -1714,6 +1723,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		_pendingItemUse = null;
+		CleanupPendingItemUse(player, pendingItemUse, canceled: true);
 		await BroadcastItemUsageAnimationAsync(player, CreateCancelItemUsageAnimation(player, pendingItemUse));
 		await SendPacketAsync(pendingItemUse.CancelMessage switch
 		{
@@ -1725,6 +1735,16 @@ public sealed class GameServerConnection : BaseClientConnection
 			PendingItemUseCancelMessage.SoulBind => SmSystemMessage.SoulBoundItemCanceled(pendingItemUse.TargetItemName),
 			_ => SmSystemMessage.GiveItemOptionCanceled(pendingItemUse.TargetItemName),
 		});
+	}
+
+	private static void CleanupPendingItemUse(Player player, PendingItemUse pendingItemUse, bool canceled)
+	{
+		// Java parity: PlayerController.cancelUseItem clears Player.usingItem; selected ItemUseObserver.abort branches also remove item cooldowns.
+		if (player.UsingItemObjectId == pendingItemUse.ItemObjectId)
+			player.UsingItemObjectId = 0;
+
+		if (canceled && pendingItemUse.RemoveCooldownDelayIdOnCancel.HasValue)
+			player.RemoveItemCooldown(pendingItemUse.RemoveCooldownDelayIdOnCancel.Value);
 	}
 
 	private static SmItemUsageAnimation CreateCancelItemUsageAnimation(Player player, PendingItemUse pendingItemUse)
@@ -2380,6 +2400,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		bool success)
 	{
 		// Java parity: model/templates/item/actions/PolishAction.act delayed TaskId.ITEM_USE completion.
+		var removeCooldownDelayIdOnCancel = AddItemCooldownIfNeeded(player, sourceTemplate, removeOnCancel: true);
 		await BroadcastItemUsageAnimationAsync(
 			player,
 			new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 5000, 0, 0));
@@ -2398,7 +2419,8 @@ public sealed class GameServerConnection : BaseClientConnection
 
 				await ApplyIdianPolishPlanAsync(player, inventoryItems, sourceItem, polishPlan, staticData, success, cancellationToken);
 			},
-			cancelEndState: 2);
+			cancelEndState: 2,
+			removeCooldownDelayIdOnCancel: removeCooldownDelayIdOnCancel);
 	}
 
 	private async Task ApplyIdianPolishPlanAsync(
@@ -2494,6 +2516,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (chargePlans.Length == 0)
 			return;
 
+		AddItemCooldownIfNeeded(player, sourceTemplate, removeOnCancel: false);
 		await BroadcastItemUsageAnimationAsync(
 			player,
 			new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 3000, 0, 0));
@@ -2520,6 +2543,16 @@ public sealed class GameServerConnection : BaseClientConnection
 					cancellationToken);
 			},
 			cancelEndState: 1);
+	}
+
+	private static int? AddItemCooldownIfNeeded(Player player, ItemTemplateSummary sourceTemplate, bool removeOnCancel)
+	{
+		// Java parity: network/aion/clientpackets/CM_USE_ITEM adds item cooldown before AbstractItemAction.act.
+		if (sourceTemplate.UseDelayMillis <= 0)
+			return null;
+
+		player.AddItemCooldown(sourceTemplate.UseDelayId, sourceTemplate.UseDelayMillis, DateTimeOffset.UtcNow);
+		return removeOnCancel ? sourceTemplate.UseDelayId : null;
 	}
 
 	private async Task CompleteChargeUseItemAsync(
@@ -4983,7 +5016,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		PendingItemUseCancelMessage CancelMessage,
 		int? CancelTargetObjectId,
 		int CancelEndState,
-		int CancelUnknown3);
+		int CancelUnknown3,
+		int? RemoveCooldownDelayIdOnCancel);
 
 	private enum PendingItemUseCancelMessage
 	{
