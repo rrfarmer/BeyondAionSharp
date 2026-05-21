@@ -504,6 +504,12 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 4 && reader.LocalName == "polish" && currentItemTemplate != null)
+			{
+				currentItemTemplate.PolishSetId = ReadIntAttribute(reader, "set_id");
+				continue;
+			}
+
 			if (reader.Depth == 4 && reader.LocalName == "craftlearn" && currentItemTemplate != null)
 			{
 				currentItemTemplate.CraftLearnRecipeId = ReadIntAttribute(reader, "recipeid");
@@ -984,6 +990,8 @@ public sealed class StaticData
 
 		public int ConditioningMaxLevel { get; set; }
 
+		public int PolishSetId { get; set; }
+
 		public void AddModifier(ItemStatModifier modifier)
 		{
 			Modifiers.Add(modifier);
@@ -1033,7 +1041,8 @@ public sealed class StaticData
 				Modifiers.AsReadOnly(),
 				StatBonusSetId,
 				EnchantName,
-				TemperingName);
+				TemperingName,
+				PolishSetId);
 		}
 
 		private static bool CalculateCanTune(

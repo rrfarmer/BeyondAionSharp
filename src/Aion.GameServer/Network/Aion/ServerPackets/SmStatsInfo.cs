@@ -420,6 +420,8 @@ public sealed class SmStatsInfo : GameServerPacket
 				yield return modifier;
 			foreach (var modifier in GetStoneModifiers(item.Item.FusionStones, itemTemplates))
 				yield return modifier;
+			foreach (var modifier in GetIdianModifiers(item, itemTemplates, itemRandomBonuses))
+				yield return modifier;
 			foreach (var modifier in GetEnchantModifiers(item, enchantTemplates))
 				yield return modifier;
 			foreach (var modifier in GetTemperingModifiers(item, temperingTemplates))
@@ -457,6 +459,23 @@ public sealed class SmStatsInfo : GameServerPacket
 				foreach (var modifier in template.StatModifiers)
 					yield return modifier;
 			}
+		}
+
+		private static IReadOnlyList<ItemStatModifier> GetIdianModifiers(
+			EquippedItem item,
+			ItemTemplateTable itemTemplates,
+			ItemRandomBonusTable? itemRandomBonuses)
+		{
+			// Java parity: model/items/IdianStone.onEquip applies RandomBonusEffect(StatBonusType.POLISH) only for charged main-hand idians.
+			if (item.Item.IdianStone is not { PolishCharge: > 0, PolishNumber: > 0 } idianStone
+				|| (item.Item.Slot & MainHand) == 0)
+			{
+				return Array.Empty<ItemStatModifier>();
+			}
+
+			var idianTemplate = itemTemplates.GetItemTemplate(idianStone.ItemId);
+			return itemRandomBonuses?.GetModifiers("POLISH", idianTemplate?.PolishSetId ?? 0, idianStone.PolishNumber)
+				?? Array.Empty<ItemStatModifier>();
 		}
 
 		private static IEnumerable<ItemStatModifier> GetFusionedWeaponModifiers(EquippedItem item, ItemTemplateTable itemTemplates)

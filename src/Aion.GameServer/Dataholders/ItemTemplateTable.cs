@@ -50,7 +50,8 @@ public sealed record ItemTemplateSummary(
 	IReadOnlyList<ItemStatModifier>? Modifiers = null,
 	int StatBonusSetId = 0,
 	string EnchantName = "",
-	string TemperingName = "")
+	string TemperingName = "",
+	int PolishSetId = 0)
 {
 	private const int CanPolishMask = 1 << 17;
 

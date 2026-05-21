@@ -1653,6 +1653,20 @@ public class GamePacketTests
 				[
 					new ItemStatModifier("add", "BOOST_MAGICAL_SKILL", 12, Bonus: true),
 				]),
+			new ItemTemplateSummary(
+				600,
+				"Training Idian",
+				0,
+				1,
+				1,
+				"NONE",
+				"NORMAL",
+				"COMMON",
+				"PC_ALL",
+				1,
+				0,
+				0,
+				PolishSetId: 12),
 		]);
 		var randomBonuses = new ItemRandomBonusTable(
 		[
@@ -1667,6 +1681,15 @@ public class GamePacketTests
 				11,
 				[
 					[new ItemStatModifier("add", "BOOST_MAGICAL_SKILL", 5, Bonus: true)],
+				]),
+			new ItemRandomBonusSummary(
+				"POLISH",
+				12,
+				[
+					[
+						new ItemStatModifier("add", "MAXHP", 13, Bonus: true),
+						new ItemStatModifier("add", "MAXMP", 8, Bonus: true),
+					],
 				]),
 		]);
 		var itemSets = new ItemSetTable(
@@ -1747,6 +1770,7 @@ public class GamePacketTests
 							FusionRandomBonus = 1,
 							ManaStones = [new ItemStoneSocket(400, 0)],
 							FusionStones = [new ItemStoneSocket(401, 0)],
+							IdianStone = new PlayerIdianStone(600, 1, 123456),
 						},
 						new InventoryItem { ObjectId = 3, ItemId = 300, Location = 0, IsEquipped = true, Slot = 8, Charge = 500000, Tempering = 2 },
 					],
@@ -1772,10 +1796,10 @@ public class GamePacketTests
 		Assert.Equal(0, reader.ReadQ());
 		Assert.Equal(0, reader.ReadQ());
 		reader.ReadD();
-		Assert.Equal(376, reader.ReadD());
-		Assert.Equal(376, reader.ReadD());
-		Assert.Equal(219, reader.ReadD());
-		Assert.Equal(219, reader.ReadD());
+		Assert.Equal(389, reader.ReadD());
+		Assert.Equal(389, reader.ReadD());
+		Assert.Equal(227, reader.ReadD());
+		Assert.Equal(227, reader.ReadD());
 		Assert.Equal(4000, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(60, reader.ReadD());
