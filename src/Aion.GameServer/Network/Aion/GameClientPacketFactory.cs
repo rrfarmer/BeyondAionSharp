@@ -12,6 +12,8 @@ public static class GameClientPacketFactory
 	{
 		// Java parity: network/aion/AionClientPacketFactory opcode registration table.
 		Register(8, states => new CmEnterWorld(8, states), GameConnectionState.Authed);
+		Register(48, states => new CmMove(48, states), GameConnectionState.InGame);
+		Register(49, states => new CmMoveInAir(49, states), GameConnectionState.InGame);
 		Register(117, states => new CmBrokerSellWindow(117, states), GameConnectionState.InGame);
 		Register(123, states => new CmBrokerList(123, states), GameConnectionState.InGame);
 		Register(124, states => new CmBrokerSearch(124, states), GameConnectionState.InGame);

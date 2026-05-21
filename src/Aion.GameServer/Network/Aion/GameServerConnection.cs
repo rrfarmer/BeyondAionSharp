@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using Aion.Commons.Network;
 using Aion.Commons.Network.Server;
 using Aion.GameServer.Configuration;
+using Aion.GameServer.Controllers.Movement;
 using Aion.GameServer.Data;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.Account;
@@ -243,6 +244,14 @@ public sealed class GameServerConnection : BaseClientConnection
 				break;
 			case CmMayLoginIntoGame:
 				await SendPacketAsync(new SmMayLoginIntoGame());
+				break;
+			case CmMove move:
+				if (_activePlayer != null)
+					HandleMove(_activePlayer, move);
+				break;
+			case CmMoveInAir moveInAir:
+				if (_activePlayer != null)
+					HandleMoveInAir(_activePlayer, moveInAir);
 				break;
 			case CmCharacterList characterList:
 				await SendPacketAsync(new SmAccountProperties());
@@ -529,6 +538,80 @@ public sealed class GameServerConnection : BaseClientConnection
 				}
 				break;
 		}
+	}
+
+	private static void HandleMove(Player player, CmMove packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_MOVE.runImpl movement-state updates before World.updatePosition.
+		var movement = player.Movement;
+		movement.Mask = packet.Type;
+
+		if (packet.Type == MovementMask.Immediate)
+		{
+			movement.SetNewDirection(packet.X, packet.Y, packet.Z);
+			movement.IsJumping = false;
+		}
+		else
+		{
+			if (packet.IsGliding)
+			{
+				movement.GlideFlag = packet.GlideFlag;
+				movement.GeyserLocationId = packet.GeyserLocationId;
+			}
+			else
+			{
+				movement.GlideFlag = GlideFlag.None;
+				movement.GeyserLocationId = 0;
+			}
+
+			if (packet.HasManualPosition)
+			{
+				movement.SetNewDirection(packet.TargetX, packet.TargetY, packet.TargetZ);
+				if (!packet.IsAbsolute)
+				{
+					movement.VectorX = packet.VectorX;
+					movement.VectorY = packet.VectorY;
+					movement.VectorZ = packet.VectorZ;
+				}
+			}
+			else if (!packet.IsAbsolute)
+			{
+				movement.SetNewDirection(
+					packet.X + movement.VectorX,
+					packet.Y + movement.VectorY,
+					packet.Z + movement.VectorZ);
+			}
+
+			if (packet.IsVehicle)
+			{
+				movement.VehicleUnk1 = packet.VehicleUnk1;
+				movement.VehicleUnk2 = packet.VehicleUnk2;
+				movement.VehicleX = packet.VehicleX;
+				movement.VehicleY = packet.VehicleY;
+				movement.VehicleZ = packet.VehicleZ;
+			}
+
+			movement.IsJumping = packet.HasManualPosition
+				&& !packet.IsAbsolute
+				&& !packet.IsGliding
+				&& !packet.IsVehicle
+				&& packet.TargetZ > packet.Z;
+		}
+
+		player.Position = player.Position with
+		{
+			X = packet.X,
+			Y = packet.Y,
+			Z = packet.Z,
+			Heading = packet.Heading,
+		};
+	}
+
+	private static void HandleMoveInAir(Player player, CmMoveInAir packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_MOVE_IN_AIR.runImpl position update.
+		player.Movement.FlightDistance = packet.Distance;
+		player.Position = new global::Aion.GameServer.World.WorldPosition(packet.WorldId, packet.X, packet.Y, packet.Z, packet.Heading);
 	}
 
 	private async Task HandleReadExpressMailAsync(Player player, CmReadExpressMail packet)

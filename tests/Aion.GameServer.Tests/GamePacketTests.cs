@@ -1,6 +1,7 @@
 using Aion.Commons.Network;
 using System.Buffers.Binary;
 using System.Text;
+using Aion.GameServer.Controllers.Movement;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.Account;
 using Aion.GameServer.Model.GameObjects;
@@ -1205,6 +1206,74 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmMove_WritesJavaShapedMovementPayload()
+	{
+		var player = new Player
+		{
+			ObjectId = 1234,
+			Position = new WorldPosition(210010000, 1.25f, 2.5f, 3.75f, 9),
+		};
+		player.Movement.Mask = (byte)(MovementMask.Position | MovementMask.Manual);
+		player.Movement.VectorX = 4.25f;
+		player.Movement.VectorY = 5.5f;
+		player.Movement.VectorZ = 6.75f;
+
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(new SmMove(player)));
+
+		Assert.Equal(1234, reader.ReadD());
+		Assert.Equal(1.25f, reader.ReadF());
+		Assert.Equal(2.5f, reader.ReadF());
+		Assert.Equal(3.75f, reader.ReadF());
+		Assert.Equal(9, (int)reader.ReadC());
+		Assert.Equal(MovementMask.Position | MovementMask.Manual, (int)reader.ReadC());
+		Assert.Equal(4.25f, reader.ReadF());
+		Assert.Equal(5.5f, reader.ReadF());
+		Assert.Equal(6.75f, reader.ReadF());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void SmMove_WritesAbsoluteGlideAndVehicleTails()
+	{
+		var player = new Player
+		{
+			ObjectId = 4321,
+			Position = new WorldPosition(210010000, 10, 20, 30, 40),
+		};
+		player.Movement.Mask = (byte)(MovementMask.Position | MovementMask.Manual | MovementMask.Absolute | MovementMask.Glide | MovementMask.Vehicle);
+		player.Movement.TargetX = 11;
+		player.Movement.TargetY = 22;
+		player.Movement.TargetZ = 33;
+		player.Movement.GlideFlag = GlideFlag.Geyser;
+		player.Movement.GeyserLocationId = 7;
+		player.Movement.VehicleUnk1 = 101;
+		player.Movement.VehicleUnk2 = 202;
+		player.Movement.VectorX = 1;
+		player.Movement.VectorY = 2;
+		player.Movement.VectorZ = 3;
+
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(new SmMove(player)));
+
+		Assert.Equal(4321, reader.ReadD());
+		Assert.Equal(10, reader.ReadF());
+		Assert.Equal(20, reader.ReadF());
+		Assert.Equal(30, reader.ReadF());
+		Assert.Equal(40, (int)reader.ReadC());
+		Assert.Equal(MovementMask.Position | MovementMask.Manual | MovementMask.Absolute | MovementMask.Glide | MovementMask.Vehicle, (int)reader.ReadC());
+		Assert.Equal(11, reader.ReadF());
+		Assert.Equal(22, reader.ReadF());
+		Assert.Equal(33, reader.ReadF());
+		Assert.Equal(GlideFlag.Geyser, reader.ReadC());
+		Assert.Equal(7, (int)reader.ReadC());
+		Assert.Equal(101, reader.ReadD());
+		Assert.Equal(202, reader.ReadD());
+		Assert.Equal(1, reader.ReadF());
+		Assert.Equal(2, reader.ReadF());
+		Assert.Equal(3, reader.ReadF());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesL2AuthLoginCheck()
 	{
 		var payload = CreateClientPayload(
@@ -1252,6 +1321,82 @@ public class GamePacketTests
 		Assert.Equal("AA-BB-CC-DD-EE-FF", packet.MacAddress);
 		Assert.Equal("disk-1", packet.HddSerial);
 		Assert.Equal(0x0200007F, packet.LocalIp);
+	}
+
+	[Fact]
+	public void ClientPacketFactory_ParsesMovementPackets()
+	{
+		var move = Assert.IsType<CmMove>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(48, b =>
+			{
+				b.WriteF(10);
+				b.WriteF(20);
+				b.WriteF(30);
+				b.WriteC(4);
+				b.WriteC(MovementMask.Position | MovementMask.Manual | MovementMask.Glide | MovementMask.Vehicle);
+				b.WriteF(1);
+				b.WriteF(2);
+				b.WriteF(3);
+				b.WriteC(GlideFlag.Geyser);
+				b.WriteC(9);
+				b.WriteD(100);
+				b.WriteD(200);
+				b.WriteF(11);
+				b.WriteF(22);
+				b.WriteF(33);
+			}), GameConnectionState.InGame));
+		var absoluteMove = Assert.IsType<CmMove>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(48, b =>
+			{
+				b.WriteF(5);
+				b.WriteF(6);
+				b.WriteF(7);
+				b.WriteC(8);
+				b.WriteC(MovementMask.Position | MovementMask.Manual | MovementMask.Absolute);
+				b.WriteF(55);
+				b.WriteF(66);
+				b.WriteF(77);
+			}), GameConnectionState.InGame));
+		var moveInAir = Assert.IsType<CmMoveInAir>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(49, b =>
+			{
+				b.WriteD(210010000);
+				b.WriteF(15);
+				b.WriteF(25);
+				b.WriteF(35);
+				b.WriteC(16);
+				b.WriteD(900);
+			}), GameConnectionState.InGame));
+
+		Assert.Equal(10, move.X);
+		Assert.Equal(20, move.Y);
+		Assert.Equal(30, move.Z);
+		Assert.Equal(4, (int)move.Heading);
+		Assert.Equal(MovementMask.Position | MovementMask.Manual | MovementMask.Glide | MovementMask.Vehicle, (int)move.Type);
+		Assert.Equal(1, move.VectorX);
+		Assert.Equal(2, move.VectorY);
+		Assert.Equal(3, move.VectorZ);
+		Assert.Equal(11, move.TargetX);
+		Assert.Equal(22, move.TargetY);
+		Assert.Equal(33, move.TargetZ);
+		Assert.Equal(GlideFlag.Geyser, move.GlideFlag);
+		Assert.Equal(9, move.GeyserLocationId);
+		Assert.Equal(100, move.VehicleUnk1);
+		Assert.Equal(200, move.VehicleUnk2);
+		Assert.Equal(11, move.VehicleX);
+		Assert.Equal(22, move.VehicleY);
+		Assert.Equal(33, move.VehicleZ);
+		Assert.Equal(55, absoluteMove.TargetX);
+		Assert.Equal(66, absoluteMove.TargetY);
+		Assert.Equal(77, absoluteMove.TargetZ);
+		Assert.Equal(210010000, moveInAir.WorldId);
+		Assert.Equal(15, moveInAir.X);
+		Assert.Equal(25, moveInAir.Y);
+		Assert.Equal(35, moveInAir.Z);
+		Assert.Equal(16, (int)moveInAir.Heading);
+		Assert.Equal(900, moveInAir.Distance);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(48, b => b.WriteF(1)), GameConnectionState.Authed));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(49, b => b.WriteD(1)), GameConnectionState.Authed));
 	}
 
 	[Fact]

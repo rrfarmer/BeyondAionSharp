@@ -46,7 +46,10 @@ public sealed class Player
 
 	public int BonusTitleId { get; init; }
 
-	public WorldPosition Position { get; init; }
+	public WorldPosition Position { get; set; }
+
+	// Java parity: controllers/movement/PlayerMoveController state mirrored for CM_MOVE/SM_MOVE.
+	public PlayerMovementState Movement { get; } = new();
 
 	public IReadOnlyList<InventoryItem> InventoryItems { get; set; } = Array.Empty<InventoryItem>();
 
