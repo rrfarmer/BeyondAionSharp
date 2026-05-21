@@ -2321,10 +2321,10 @@ public sealed class GameServerConnection : BaseClientConnection
 			switch (polishPlan.Result)
 			{
 				case IdianPolishResult.Success:
-					await ApplyIdianPolishPlanAsync(player, inventoryItems, sourceItem, polishPlan, staticData, success: true);
+					await ScheduleIdianPolishAsync(player, inventoryItems, sourceItem, sourceTemplate, polishPlan, staticData, success: true);
 					break;
 				case IdianPolishResult.NoRandomBonus:
-					await ApplyIdianPolishPlanAsync(player, inventoryItems, sourceItem, polishPlan, staticData, success: false);
+					await ScheduleIdianPolishAsync(player, inventoryItems, sourceItem, sourceTemplate, polishPlan, staticData, success: false);
 					break;
 				case IdianPolishResult.WrongLevel:
 					await SendPacketAsync(SmSystemMessage.PolishWrongLevel());
@@ -2340,13 +2340,45 @@ public sealed class GameServerConnection : BaseClientConnection
 			await HandleChargeUseItemAsync(player, inventoryItems, sourceItem, sourceTemplate, staticData);
 	}
 
+	private async Task ScheduleIdianPolishAsync(
+		Player player,
+		List<InventoryItem> inventoryItems,
+		InventoryItem sourceItem,
+		ItemTemplateSummary sourceTemplate,
+		IdianPolishPlan polishPlan,
+		StaticData staticData,
+		bool success)
+	{
+		// Java parity: model/templates/item/actions/PolishAction.act delayed TaskId.ITEM_USE completion.
+		await BroadcastItemUsageAnimationAsync(
+			player,
+			new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 5000, 0, 0));
+
+		await SchedulePendingItemUseAsync(
+			player,
+			itemObjectId: sourceItem.ObjectId,
+			itemTemplateId: sourceItem.ItemId,
+			targetItemName: sourceTemplate.GetClientName() ?? sourceTemplate.Name,
+			cancelMessage: PendingItemUseCancelMessage.Item,
+			delay: TimeSpan.FromMilliseconds(5000),
+			completeAsync: async cancellationToken =>
+			{
+				if (cancellationToken.IsCancellationRequested)
+					return;
+
+				await ApplyIdianPolishPlanAsync(player, inventoryItems, sourceItem, polishPlan, staticData, success, cancellationToken);
+			},
+			cancelEndState: 2);
+	}
+
 	private async Task ApplyIdianPolishPlanAsync(
 		Player player,
 		List<InventoryItem> inventoryItems,
 		InventoryItem sourceItem,
 		IdianPolishPlan polishPlan,
 		StaticData staticData,
-		bool success)
+		bool success,
+		CancellationToken cancellationToken)
 	{
 		if (polishPlan.SourceTemplate == null)
 			return;
@@ -2357,7 +2389,8 @@ public sealed class GameServerConnection : BaseClientConnection
 				player,
 				polishPlan.TargetItemUpdate,
 				polishPlan.SourceItemUpdate,
-				deletedSourceObjectId);
+				deletedSourceObjectId,
+				cancellationToken);
 		if (!saved)
 			return;
 
