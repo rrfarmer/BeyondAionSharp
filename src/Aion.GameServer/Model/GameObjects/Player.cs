@@ -13,6 +13,9 @@ public sealed class Player
 
 	public int AccountId { get; init; }
 
+	// Java parity: model/gameobjects/player/PlayerAccount.accessLevel used by AdminService.hasAccess checks.
+	public byte AccessLevel { get; set; }
+
 	public string Name { get; init; } = string.Empty;
 
 	public string PlayerClass { get; init; } = string.Empty;

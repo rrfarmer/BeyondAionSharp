@@ -47,6 +47,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private GameConnectionState _state = GameConnectionState.Connected;
 	private int _accountId;
 	private string _accountName = string.Empty;
+	private byte _accessLevel;
 	private byte _membership;
 	private Player? _activePlayer;
 	private bool _accountDisconnectNotified;
@@ -215,6 +216,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				{
 					_accountId = auth.AccountId;
 					_accountName = accountName;
+					_accessLevel = authResult.AccessLevel;
 					_membership = authResult.Membership;
 					_activePlayer = null;
 					_accountDisconnectNotified = false;
@@ -223,6 +225,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				{
 					_accountId = 0;
 					_accountName = string.Empty;
+					_accessLevel = 0;
 					_membership = 0;
 					_activePlayer = null;
 				}
@@ -448,7 +451,10 @@ public sealed class GameServerConnection : BaseClientConnection
 					_state = GameConnectionState.InGame;
 				_activePlayer = enterWorldResult.Message == EnterWorldCheckMessage.Ok ? enterWorldResult.Player : null;
 				if (_activePlayer != null)
+				{
+					_activePlayer.AccessLevel = _accessLevel;
 					_connectionRegistry?.RegisterPlayerConnection(_activePlayer.ObjectId, this);
+				}
 				await SendPacketAsync(new SmEnterWorldCheck(enterWorldResult.Message));
 				if (enterWorldResult is { Message: EnterWorldCheckMessage.Ok, Player: not null })
 				{
@@ -791,6 +797,31 @@ public sealed class GameServerConnection : BaseClientConnection
 		return false;
 	}
 
+	private bool CanOperateItem(Player player, InventoryItem item, string type)
+	{
+		// Java parity: services/AdminService.canOperate(player, null, item, type).
+		if (player.AccessLevel == 0)
+			return true;
+		if (player.AccessLevel >= _options.Administration.UnrestrictedItemTradeAccessLevel)
+			return true;
+		if (_options.Administration.OperationalItemIds.Contains(item.ItemId))
+		{
+			_logger.LogInformation(
+				"Staff player {PlayerObjectId} used item {ItemId} via {Type} under AdminService item restriction allow-list",
+				player.ObjectId,
+				item.ItemId,
+				type);
+			return true;
+		}
+
+		_logger.LogWarning(
+			"Staff player {PlayerObjectId} cannot use item {ItemId} via {Type}; item is not in AdminService item restriction allow-list",
+			player.ObjectId,
+			item.ItemId,
+			type);
+		return false;
+	}
+
 	private async Task<PlayerBrokerItemPage> LoadBrokerMaskPageAsync(Player player, byte sortType, int pageIndex, int brokerMask)
 	{
 		// Java parity: services/BrokerService.showRequestedItems direct BrokerItemMask filtering path.
@@ -973,6 +1004,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		if (sourceItem.PackCount <= 0 && (!itemTemplate.IsTradeable || sourceItem.IsSoulBound))
+			return;
+		if (!CanOperateItem(player, sourceItem, "broker"))
 			return;
 
 		var registeredItems = await _brokerRepository.LoadRegisteredItemsAsync(player.ObjectId, player.Race);
@@ -1331,6 +1364,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			if (senderItem.IsEquipped)
 				return SmSystemMessage.MailSendCannotSendEquippedItem();
 			if (senderItemTemplate == null)
+				return null;
+			if (!CanOperateItem(sender, senderItem, "mail"))
 				return null;
 		}
 

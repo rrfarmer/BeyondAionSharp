@@ -18,6 +18,9 @@ public class GameServerOptionsTests
 		Assert.Equal("./data/handlers/quest", options.Core.QuestHandlerDirectory);
 		Assert.Equal(10, options.Membership.CharacterAdditionalEnable);
 		Assert.Equal(8, options.Membership.CharacterAdditionalCount);
+		Assert.Equal(1, options.Administration.UnrestrictedItemTradeAccessLevel);
+		Assert.Contains(10000001, options.Administration.OperationalItemIds);
+		Assert.Contains(10000002, options.Administration.OperationalItemIds);
 
 		Assert.Equal(new IPEndPoint(IPAddress.Any, 7777), options.Network.ClientEndPoint);
 		Assert.Equal(new IPEndPoint(IPAddress.Any, 7777), options.Network.ClientConnectEndPoint);

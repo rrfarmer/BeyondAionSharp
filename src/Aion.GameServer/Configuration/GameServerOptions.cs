@@ -23,6 +23,8 @@ public sealed class GameServerOptions
 
 	public GameServerMembershipOptions Membership { get; init; } = new();
 
+	public GameServerAdministrationOptions Administration { get; init; } = new();
+
 	public int LoadedPropertyCount { get; init; }
 
 	public static GameServerOptions LoadFromJavaConfig(string startDirectory)
@@ -184,6 +186,11 @@ public sealed class GameServerOptions
 				CharacterAdditionalEnable = GetByteWithEnvironment(loader, "gameserver.character.additional.enable", 10),
 				CharacterAdditionalCount = GetByteWithEnvironment(loader, "gameserver.character.additional.count", 8),
 			},
+			Administration = new GameServerAdministrationOptions
+			{
+				UnrestrictedItemTradeAccessLevel = GetIntWithEnvironment(loader, "gameserver.administration.unrestricted_itemtrade", 1),
+				OperationalItemIds = LoadOperationalItemIds(startDirectory),
+			},
 			LoadedPropertyCount = loader.Count,
 		};
 	}
@@ -288,6 +295,28 @@ public sealed class GameServerOptions
 	{
 		var value = GetWithEnvironment(loader, key, defaultValue);
 		return value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+	}
+
+	private static IReadOnlySet<int> LoadOperationalItemIds(string startDirectory)
+	{
+		// Java parity: services/AdminService.reload reads config/administration/item.restriction.txt.
+		var repoRoot = FindRepoRoot(startDirectory);
+		if (repoRoot == null)
+			return new HashSet<int>();
+
+		var path = Path.Combine(repoRoot, "game-server", "config", "administration", "item.restriction.txt");
+		if (!File.Exists(path))
+			return new HashSet<int>();
+
+		var ids = new HashSet<int>();
+		foreach (var line in File.ReadLines(path))
+		{
+			var trimmed = line.Split('#', 2)[0].Replace(" ", string.Empty, StringComparison.Ordinal).Trim();
+			if (trimmed.Length > 0 && int.TryParse(trimmed, NumberStyles.Integer, CultureInfo.InvariantCulture, out var itemId))
+				ids.Add(itemId);
+		}
+
+		return ids;
 	}
 
 	private static string ResolvePropertyReferences(string value, ConfigLoader loader, HashSet<string> visitedKeys)
@@ -414,6 +443,13 @@ public sealed class GameServerMembershipOptions
 	public byte CharacterAdditionalEnable { get; init; } = 10;
 
 	public byte CharacterAdditionalCount { get; init; } = 8;
+}
+
+public sealed class GameServerAdministrationOptions
+{
+	public int UnrestrictedItemTradeAccessLevel { get; init; } = 1;
+
+	public IReadOnlySet<int> OperationalItemIds { get; init; } = new HashSet<int>();
 }
 
 public sealed class GameServerNetworkOptions
