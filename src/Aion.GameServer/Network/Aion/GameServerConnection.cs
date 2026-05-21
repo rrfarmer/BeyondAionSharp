@@ -3552,7 +3552,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				player.SetCreatureState(PlayerCreatureState.Powershard, enabled: false);
 				break;
 			case EmotionType.Emote:
-				if (!CanUseEmotion(player, packet.Emotion))
+				if (!CanUseEmotion(player, packet.Emotion, _runtimeContext?.DataManager?.StaticData.ItemTemplates))
 					return;
 				break;
 		}
@@ -3580,12 +3580,15 @@ public sealed class GameServerConnection : BaseClientConnection
 			or EmotionType.Emote;
 	}
 
-	private static bool CanUseEmotion(Player player, int emotionId)
+	private static bool CanUseEmotion(Player player, int emotionId, ItemTemplateTable? itemTemplates)
 	{
-		// Java parity: model/gameobjects/player/emotion/EmotionList.canUse plus EmotionLearnAction 4.8 id ranges.
-		// TODO Phase 6: replace the learned-emotion range shortcut once EmotionLearnAction static data is parsed.
-		return emotionId is >= 1 and <= 35
-			|| emotionId > 10000
+		// Java parity: model/gameobjects/player/emotion/EmotionList.canUse plus EmotionLearnAction.isLearnable.
+		if (itemTemplates == null)
+			return emotionId is >= 1 and <= 35
+				|| emotionId > 10000
+				|| player.Emotions.Any(emotion => emotion.Id == emotionId);
+
+		return !itemTemplates.IsLearnableEmotion(emotionId)
 			|| player.Emotions.Any(emotion => emotion.Id == emotionId);
 	}
 

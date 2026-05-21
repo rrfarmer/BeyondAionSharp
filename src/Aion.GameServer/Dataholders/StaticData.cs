@@ -123,6 +123,7 @@ public sealed class StaticData
 		var housingBuildings = new List<HousingBuildingSummary>();
 		var instanceCooltimes = new List<InstanceCooltimeSummary>();
 		var skillTree = new List<SkillLearnSummary>();
+		var learnableEmotionIds = new HashSet<int>();
 		var creationItemsByClass = new Dictionary<string, List<StartingItem>>(StringComparer.OrdinalIgnoreCase);
 		var spawnLocationsByRace = new Dictionary<string, PlayerSpawnLocation>(StringComparer.OrdinalIgnoreCase);
 		string? currentPlayerCreationClass = null;
@@ -613,6 +614,13 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 4 && reader.LocalName == "learnemotion" && currentItemTemplate != null)
+			{
+				// Java parity: model/templates/item/actions/EmotionLearnAction.afterUnmarshal.
+				learnableEmotionIds.Add(ReadRequiredIntAttribute(reader, "emotionid"));
+				continue;
+			}
+
 			if (reader.Depth == 2 && reader.LocalName == "npc_template")
 			{
 				currentNpcTemplate = new NpcTemplateBuilder(
@@ -831,7 +839,7 @@ public sealed class StaticData
 			topLevelElements.AsReadOnly(),
 			worldMaps.AsReadOnly(),
 			new PlayerExperienceTable(experience.AsReadOnly()),
-			new ItemTemplateTable(itemTemplates.AsReadOnly()),
+			new ItemTemplateTable(itemTemplates.AsReadOnly(), learnableEmotionIds),
 			new ItemRandomBonusTable(itemRandomBonuses.AsReadOnly()),
 			new ItemSetTable(itemSets.AsReadOnly()),
 			new EnchantTable(enchantGroups.AsReadOnly()),

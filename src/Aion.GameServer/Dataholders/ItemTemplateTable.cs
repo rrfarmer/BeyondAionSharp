@@ -5,21 +5,31 @@ namespace Aion.GameServer.Dataholders;
 public sealed class ItemTemplateTable
 {
 	private readonly IReadOnlyDictionary<int, ItemTemplateSummary> _templatesById;
+	private readonly IReadOnlySet<int> _learnableEmotionIds;
 
-	public ItemTemplateTable(IReadOnlyList<ItemTemplateSummary> templates)
+	public ItemTemplateTable(IReadOnlyList<ItemTemplateSummary> templates, IReadOnlySet<int>? learnableEmotionIds = null)
 	{
 		Templates = templates;
 		_templatesById = new ReadOnlyDictionary<int, ItemTemplateSummary>(
 			templates.ToDictionary(template => template.TemplateId));
+		_learnableEmotionIds = learnableEmotionIds?.ToHashSet() ?? new HashSet<int>();
 	}
 
 	public IReadOnlyList<ItemTemplateSummary> Templates { get; }
+
+	public IReadOnlySet<int> LearnableEmotionIds => _learnableEmotionIds;
 
 	public int Count => Templates.Count;
 
 	public ItemTemplateSummary? GetItemTemplate(int itemId)
 	{
 		return _templatesById.GetValueOrDefault(itemId);
+	}
+
+	public bool IsLearnableEmotion(int emotionId)
+	{
+		// Java parity: model/templates/item/actions/EmotionLearnAction.isLearnable.
+		return _learnableEmotionIds.Contains(emotionId);
 	}
 }
 
