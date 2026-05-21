@@ -14,6 +14,7 @@ public static class GameClientPacketFactory
 		Register(3, states => new CmQuit(3, states), GameConnectionState.Authed, GameConnectionState.InGame);
 		Register(4, states => new CmMayQuit(4, states), GameConnectionState.InGame);
 		Register(8, states => new CmEnterWorld(8, states), GameConnectionState.Authed);
+		Register(9, states => new CmLevelReady(9, states), GameConnectionState.InGame);
 		Register(31, states => new CmTargetSelect(31, states), GameConnectionState.InGame);
 		Register(48, states => new CmMove(48, states), GameConnectionState.InGame);
 		Register(49, states => new CmMoveInAir(49, states), GameConnectionState.InGame);

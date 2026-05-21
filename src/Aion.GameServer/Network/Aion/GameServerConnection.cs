@@ -249,6 +249,10 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmQuit quit:
 				await HandleQuitAsync(quit);
 				break;
+			case CmLevelReady:
+				if (_activePlayer != null)
+					await HandleLevelReadyAsync(_activePlayer);
+				break;
 			case CmTargetSelect targetSelect:
 				if (_activePlayer != null)
 					HandleTargetSelect(_activePlayer, targetSelect);
@@ -262,7 +266,7 @@ public sealed class GameServerConnection : BaseClientConnection
 					HandleMoveInAir(_activePlayer, moveInAir);
 				break;
 			case CmCharacterList characterList:
-				await SendPacketAsync(new SmAccountProperties());
+				await SendPacketAsync(CreateAccountPropertiesPacket());
 				var characters = _accountId == 0
 					? Array.Empty<CharacterSelectionEntry>()
 					: await _characterSelectionRepository.LoadCharactersAsync(_accountId);
@@ -590,6 +594,22 @@ public sealed class GameServerConnection : BaseClientConnection
 				}
 				break;
 		}
+	}
+
+	private async Task HandleLevelReadyAsync(Player player)
+	{
+		// Java parity: network/aion/clientpackets/CM_LEVEL_READY.runImpl baseline packets after client map load.
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		await SendPacketAsync(new SmPlayerInfo(player, staticData?.PlayerExperienceTable));
+		await SendPacketAsync(CreateAccountPropertiesPacket());
+		await SendPacketAsync(new SmMotion(player.ObjectId, player.Motions));
+		await SendPacketAsync(SmCubeUpdate.CubeSize(player));
+	}
+
+	private SmAccountProperties CreateAccountPropertiesPacket()
+	{
+		// Java parity: network/aion/serverpackets/SM_ACCOUNT_PROPERTIES uses AdminConfig.GM_PANEL.
+		return new SmAccountProperties(_accessLevel >= _options.Administration.GmPanelAccessLevel);
 	}
 
 	private async Task HandleQuitAsync(CmQuit packet)

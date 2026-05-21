@@ -189,6 +189,7 @@ public sealed class GameServerOptions
 			Administration = new GameServerAdministrationOptions
 			{
 				UnrestrictedItemTradeAccessLevel = GetIntWithEnvironment(loader, "gameserver.administration.unrestricted_itemtrade", 1),
+				GmPanelAccessLevel = GetIntWithEnvironment(loader, "gameserver.administration.gm_panel", 2),
 				OperationalItemIds = LoadOperationalItemIds(startDirectory),
 			},
 			LoadedPropertyCount = loader.Count,
@@ -448,6 +449,8 @@ public sealed class GameServerMembershipOptions
 public sealed class GameServerAdministrationOptions
 {
 	public int UnrestrictedItemTradeAccessLevel { get; init; } = 1;
+
+	public int GmPanelAccessLevel { get; init; } = 2;
 
 	public IReadOnlySet<int> OperationalItemIds { get; init; } = new HashSet<int>();
 }

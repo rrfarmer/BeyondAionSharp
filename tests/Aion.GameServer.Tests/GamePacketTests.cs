@@ -58,6 +58,9 @@ public class GamePacketTests
 			Convert.FromHexString("0000000000000000000000000000000000000000000000000004000000"),
 			SerializeUnencryptedPayload(new SmAccountProperties()));
 		Assert.Equal(
+			Convert.FromHexString("0100000000000000000000000000000000000000000000000004000000"),
+			SerializeUnencryptedPayload(new SmAccountProperties(gmPanelEnabled: true)));
+		Assert.Equal(
 			Convert.FromHexString("D204000000"),
 			SerializeUnencryptedPayload(new SmCharacterList(playOk2: 1234)));
 		Assert.Equal(
@@ -1621,6 +1624,13 @@ public class GamePacketTests
 	public void ClientPacketFactory_ParsesMayQuitInGame()
 	{
 		Assert.IsType<CmMayQuit>(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(4, _ => { }), GameConnectionState.InGame));
+	}
+
+	[Fact]
+	public void ClientPacketFactory_ParsesLevelReadyInGame()
+	{
+		Assert.IsType<CmLevelReady>(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(9, _ => { }), GameConnectionState.InGame));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(9, _ => { }), GameConnectionState.Authed));
 	}
 
 	[Fact]
