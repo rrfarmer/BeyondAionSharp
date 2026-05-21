@@ -15,6 +15,7 @@ public static class EquipmentService
 	private const long MainOffOrSubOff = MainOffHand | SubOffHand;
 	private const long RightHand = MainHand | MainOffHand;
 	private const long LeftHand = SubHand | SubOffHand;
+	private const string PowerShardItemGroup = "POWER_SHARDS";
 
 	public static EquipmentChangeResult ChangeEquipment(
 		Player player,
@@ -239,10 +240,12 @@ public static class EquipmentService
 		if (updates.Length == 0)
 			return EquipmentChangeResult.FullInventoryFailure();
 
+		var powerShardDeactivated = itemTemplate != null && string.Equals(itemTemplate.ItemGroup, PowerShardItemGroup, StringComparison.Ordinal);
 		return EquipmentChangeResult.Success(
 			inventoryItems,
 			updates,
 			updates,
+			powerShardDeactivated: powerShardDeactivated,
 			kinahItemUpdate: null,
 			skills: updatedSkills,
 			addedSkills: Array.Empty<PlayerSkill>(),
@@ -550,6 +553,7 @@ public sealed record EquipmentChangeResult(
 	IReadOnlyList<InventoryItem> InventoryItems,
 	IReadOnlyList<InventoryItem> PersistedItems,
 	IReadOnlyList<InventoryItem> InventoryUpdateItems,
+	bool PowerShardDeactivated = false,
 	EquipmentChangeFailure Failure = EquipmentChangeFailure.None,
 	int RequiredLevel = 0,
 	int MaxLevel = 0,
@@ -686,7 +690,8 @@ public sealed record EquipmentChangeResult(
 		IReadOnlyList<PlayerSkill>? addedSkills = null,
 		IReadOnlyList<PlayerSkill>? removedSkills = null,
 		IReadOnlyList<string>? removedStigmaSkillNames = null,
-		IReadOnlyList<StigmaHiddenSkillDeleteMessage>? hiddenStigmaSkillDeleteMessages = null)
+		IReadOnlyList<StigmaHiddenSkillDeleteMessage>? hiddenStigmaSkillDeleteMessages = null,
+		bool powerShardDeactivated = false)
 	{
 		return new EquipmentChangeResult(
 			Changed: true,
@@ -696,6 +701,7 @@ public sealed record EquipmentChangeResult(
 			InventoryItems: inventoryItems,
 			PersistedItems: persistedItems,
 			InventoryUpdateItems: inventoryUpdateItems,
+			PowerShardDeactivated: powerShardDeactivated,
 			KinahItemUpdate: kinahItemUpdate,
 			Skills: skills,
 			AddedSkills: addedSkills,

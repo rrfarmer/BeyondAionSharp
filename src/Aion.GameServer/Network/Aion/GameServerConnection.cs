@@ -2215,6 +2215,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		player.InventoryItems = change.InventoryItems;
+		if (change.PowerShardDeactivated)
+		{
+			// Java parity: model/gameobjects/player/Equipment.unEquipItem POWER_SHARDS branch sends SM_EMOTION to owner only.
+			player.SetCreatureState(PlayerCreatureState.Powershard, enabled: false);
+			await SendPacketAsync(new SmEmotion(player, EmotionType.PowershardOff));
+		}
 		if (change.FinalSkills.Count > 0 || change.SkillListUpdates.Count > 0 || change.SkillRemoveUpdates.Count > 0)
 			player.Skills = change.FinalSkills;
 		foreach (var update in change.InventoryUpdateItems)
