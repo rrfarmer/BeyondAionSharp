@@ -112,6 +112,28 @@ public sealed class GameServerBootstrapTests
 	}
 
 	[Fact]
+	public async Task PeriodicSaveService_StoresServerLastRunPeriodicallyAndOnShutdown()
+	{
+		await using var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		var repository = new TrackingServerVariablesRepository();
+		var service = new PeriodicSaveService(
+			repository,
+			threadPoolManager,
+			NullLogger<PeriodicSaveService>.Instance,
+			TimeSpan.FromMilliseconds(10),
+			TimeSpan.FromMilliseconds(10));
+
+		await service.InitAsync(CancellationToken.None);
+		await WaitUntilAsync(() => repository.StoreCalls > 0);
+		var storeCallsBeforeShutdown = repository.StoreCalls;
+		await service.ShutdownAsync(CancellationToken.None);
+
+		Assert.Equal("PeriodicSaveService", service.Name);
+		Assert.True(repository.StoredValues.ContainsKey("serverLastRun"));
+		Assert.True(repository.StoreCalls > storeCallsBeforeShutdown);
+	}
+
+	[Fact]
 	public async Task GameServerBootstrap_PreloadsUsedObjectIds()
 	{
 		using var temp = StaticDataFixture.Create();
