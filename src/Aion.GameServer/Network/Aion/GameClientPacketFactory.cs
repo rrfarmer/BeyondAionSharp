@@ -15,6 +15,7 @@ public static class GameClientPacketFactory
 		Register(4, states => new CmMayQuit(4, states), GameConnectionState.InGame);
 		Register(8, states => new CmEnterWorld(8, states), GameConnectionState.Authed);
 		Register(9, states => new CmLevelReady(9, states), GameConnectionState.InGame);
+		Register(10, states => new CmUiSettings(10, states), GameConnectionState.InGame);
 		Register(18, states => new CmTimeCheck(18, states), GameConnectionState.Connected, GameConnectionState.Authed, GameConnectionState.InGame);
 		Register(27, states => new CmChatMessagePublic(27, states), GameConnectionState.InGame);
 		Register(28, states => new CmChatMessageWhisper(28, states), GameConnectionState.InGame);

@@ -4,15 +4,15 @@ public sealed class PlayerSettings
 {
 	public const int DenyFriendRequests = 16;
 
-	public byte[]? UiSettings { get; init; }
+	public byte[]? UiSettings { get; set; }
 
-	public byte[]? Shortcuts { get; init; }
+	public byte[]? Shortcuts { get; set; }
 
-	public byte[]? HouseBuddies { get; init; }
+	public byte[]? HouseBuddies { get; set; }
 
-	public int Deny { get; init; }
+	public int Deny { get; set; }
 
-	public int Display { get; init; }
+	public int Display { get; set; }
 
 	public bool DeniesFriendRequests()
 	{

@@ -288,6 +288,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleLevelReadyAsync(_activePlayer);
 				break;
+			case CmUiSettings uiSettings:
+				if (_activePlayer != null)
+					HandleUiSettings(_activePlayer, uiSettings);
+				break;
 			case CmChatMessagePublic chatMessage:
 				if (_activePlayer != null)
 					await HandlePublicChatAsync(_activePlayer, chatMessage);
@@ -893,6 +897,30 @@ public sealed class GameServerConnection : BaseClientConnection
 			player,
 			_accountName.Length == 0 ? $"account-{_accountId}" : _accountName,
 			token => SendPacketAsync(new SmChatInit(token)));
+	}
+
+	private void HandleUiSettings(Player player, CmUiSettings packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_UI_SETTINGS.runImpl mutates PlayerSettings for PlayerSettingsDAO.saveSettings.
+		switch (packet.SettingsType)
+		{
+			case 0:
+				player.Settings.UiSettings = packet.Data;
+				break;
+			case 1:
+				player.Settings.Shortcuts = packet.Data;
+				break;
+			case 2:
+				player.Settings.HouseBuddies = packet.Data;
+				break;
+			default:
+				_logger.LogWarning(
+					"Player {PlayerName} ({PlayerObjectId}) sent unknown UI settings type {SettingsType}",
+					player.Name,
+					player.ObjectId,
+					packet.SettingsType);
+				break;
+		}
 	}
 
 	private async Task HandleFriendStatusAsync(Player player, CmFriendStatus packet)

@@ -332,6 +332,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			var nowMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 			await SavePlayerSkillCooldownsAsync(connection, player.ObjectId, player.SkillCooldowns, nowMillis, cancellationToken);
 			await SavePlayerItemCooldownsAsync(connection, player.ObjectId, player.ItemCooldowns, nowMillis, cancellationToken);
+			await SavePlayerSettingsAsync(connection, player.ObjectId, player.Settings, cancellationToken);
 
 			await using var command = connection.CreateCommand();
 			command.CommandText = """
@@ -374,6 +375,43 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			_logger.LogError(ex, "Could not save logout state for player {PlayerObjectId}", player.ObjectId);
 			return false;
 		}
+	}
+
+	private static async Task SavePlayerSettingsAsync(
+		MySqlConnection connection,
+		int playerObjectId,
+		PlayerSettings settings,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: dao/PlayerSettingsDAO.saveSettings.
+		if (settings.UiSettings != null)
+			await ReplacePlayerSettingAsync(connection, playerObjectId, 0, settings.UiSettings, cancellationToken);
+		if (settings.Shortcuts != null)
+			await ReplacePlayerSettingAsync(connection, playerObjectId, 1, settings.Shortcuts, cancellationToken);
+		if (settings.HouseBuddies != null)
+			await ReplacePlayerSettingAsync(connection, playerObjectId, 2, settings.HouseBuddies, cancellationToken);
+
+		await ReplacePlayerSettingAsync(connection, playerObjectId, -1, settings.Display, cancellationToken);
+		await ReplacePlayerSettingAsync(connection, playerObjectId, -2, settings.Deny, cancellationToken);
+	}
+
+	private static async Task ReplacePlayerSettingAsync(
+		MySqlConnection connection,
+		int playerObjectId,
+		int settingsType,
+		object settingsValue,
+		CancellationToken cancellationToken)
+	{
+		await using var command = connection.CreateCommand();
+		command.CommandText = "REPLACE INTO player_settings VALUES (?, ?, ?)";
+		command.Parameters.AddRange(
+			new[]
+			{
+				new MySqlParameter { Value = playerObjectId },
+				new MySqlParameter { Value = settingsType },
+				new MySqlParameter { Value = settingsValue },
+			});
+		await command.ExecuteNonQueryAsync(cancellationToken);
 	}
 
 	private static CharacterAppearance ReadAppearance(MySqlDataReader reader)

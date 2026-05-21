@@ -2072,6 +2072,28 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesUiSettingsInGame()
+	{
+		var settings = Assert.IsType<CmUiSettings>(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					10,
+					buffer =>
+					{
+						buffer.WriteC(1);
+						buffer.WriteH(0);
+						buffer.WriteH(3);
+						buffer.WriteB([0xAA, 0xBB, 0xCC]);
+					}),
+				GameConnectionState.InGame));
+
+		Assert.Equal(1, settings.SettingsType);
+		Assert.Equal(3, settings.DeclaredSize);
+		Assert.Equal([0xAA, 0xBB, 0xCC], settings.Data);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(10, _ => { }), GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesMotionPacket()
 	{
 		var motion = Assert.IsType<CmMotion>(
