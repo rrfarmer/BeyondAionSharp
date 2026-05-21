@@ -143,6 +143,7 @@ public sealed class EnchantServiceTests
 		Assert.Equal(2001, plan.DeletedSourceItemObjectId);
 		Assert.Empty(plan.TargetItemUpdate?.ManaStones ?? Array.Empty<ItemStoneSocket>());
 		Assert.DoesNotContain(plan.InventoryItems, item => item.ObjectId == 2001);
+		Assert.Equal(1, plan.TargetItemUpdate?.TuneCount);
 	}
 
 	[Fact]
@@ -165,6 +166,7 @@ public sealed class EnchantServiceTests
 		Assert.False(plan.SocketSucceeded);
 		Assert.Equal(2001, plan.DeletedSourceItemObjectId);
 		Assert.Empty(plan.TargetItemUpdate?.ManaStones ?? Array.Empty<ItemStoneSocket>());
+		Assert.Equal(1, plan.TargetItemUpdate?.TuneCount);
 	}
 
 	[Fact]
@@ -342,6 +344,7 @@ public sealed class EnchantServiceTests
 				1,
 				MaxEnchantLevel: 15,
 				CanExceedEnchant: true,
+				MaxTuneCount: 1,
 				ManastoneSlots: 4,
 				SpecialManastoneSlots: 1),
 			new ItemTemplateSummary(

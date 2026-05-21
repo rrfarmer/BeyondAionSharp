@@ -164,6 +164,7 @@ public static class ItemSocketService
 
 			return InsertManastoneIntoNextSlot(
 				item,
+				targetTemplate,
 				manaStoneItemId,
 				useFusionSlots,
 				manaStones,
@@ -178,6 +179,7 @@ public static class ItemSocketService
 
 		return InsertManastoneIntoNextSlot(
 			item,
+			targetTemplate,
 			manaStoneItemId,
 			useFusionSlots,
 			manaStones,
@@ -203,7 +205,7 @@ public static class ItemSocketService
 			items.Add(update);
 	}
 
-	private static InventoryItem CopyInventoryItem(InventoryItem item, long? count = null)
+	private static InventoryItem CopyInventoryItem(InventoryItem item, long? count = null, int? tuneCount = null)
 	{
 		var copy = new InventoryItem
 		{
@@ -227,7 +229,7 @@ public static class ItemSocketService
 			OptionalSocket = item.OptionalSocket,
 			OptionalFusionSocket = item.OptionalFusionSocket,
 			Charge = item.Charge,
-			TuneCount = item.TuneCount,
+			TuneCount = tuneCount ?? item.TuneCount,
 			RandomBonus = item.RandomBonus,
 			FusionRandomBonus = item.FusionRandomBonus,
 			Tempering = item.Tempering,
@@ -296,6 +298,7 @@ public static class ItemSocketService
 
 	private static ManastoneAddPlan InsertManastoneIntoNextSlot(
 		InventoryItem item,
+		ItemTemplateSummary targetTemplate,
 		int manaStoneItemId,
 		bool useFusionSlots,
 		IReadOnlyList<ItemStoneSocket> manaStones,
@@ -308,7 +311,7 @@ public static class ItemSocketService
 			if (occupiedSlots.Contains(slot))
 				continue;
 
-			var itemUpdate = CopyInventoryItem(item);
+			var itemUpdate = RemoveRemainingTuningCountIfPossible(item, targetTemplate);
 			var addedStone = new ItemStoneSocket(manaStoneItemId, slot);
 			var updatedStones = manaStones
 				.Append(addedStone)
@@ -323,6 +326,15 @@ public static class ItemSocketService
 		}
 
 		return ManastoneAddPlan.Failed(ManastoneAddFailure.NoAvailableSlot);
+	}
+
+	private static InventoryItem RemoveRemainingTuningCountIfPossible(InventoryItem item, ItemTemplateSummary targetTemplate)
+	{
+		// Java parity: model/gameobjects/Item.removeRemainingTuningCountIfPossible during addManaStone.
+		if (item.IsIdentified && targetTemplate.MaxTuneCount > 0 && item.TuneCount != targetTemplate.MaxTuneCount)
+			return CopyInventoryItem(item, tuneCount: targetTemplate.MaxTuneCount);
+
+		return CopyInventoryItem(item);
 	}
 
 	private sealed record ItemCountMutation(InventoryItem? UpdatedItem, int? DeletedObjectId);

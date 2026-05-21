@@ -144,7 +144,9 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(6, staticData.ItemTemplates.GetItemTemplate(100001384)?.ManastoneSlots);
 		Assert.Equal(2, staticData.ItemTemplates.GetItemTemplate(100001384)?.SpecialManastoneSlots);
 		Assert.True(staticData.ItemTemplates.GetItemTemplate(100001276)?.CanTune);
+		Assert.Equal(1, staticData.ItemTemplates.GetItemTemplate(100001276)?.MaxTuneCount);
 		Assert.False(staticData.ItemTemplates.GetItemTemplate(100000001)?.CanTune);
+		Assert.Equal(0, staticData.ItemTemplates.GetItemTemplate(100000001)?.MaxTuneCount);
 		Assert.Equal(1, staticData.ItemTemplates.GetItemTemplate(100001105)?.ConditioningMaxLevel);
 		var chargeTemplate = staticData.ItemTemplates.GetItemTemplate(100001105);
 		Assert.NotNull(chargeTemplate);

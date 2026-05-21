@@ -88,6 +88,10 @@ public static class EnchantService
 				addedCategory = addPlan.AddedCategory;
 			}
 		}
+		else
+		{
+			targetItemUpdate = RemoveRemainingTuningCountIfPossible(targetItemUpdate, targetTemplate);
+		}
 
 		var sourceMutation = DecreaseItemCount(sourceItem);
 		var supplementMutation = supplementTemplate == null || supplementUseCount <= 0
@@ -362,7 +366,11 @@ public static class EnchantService
 			items.Add(update);
 	}
 
-	private static InventoryItem CopyInventoryItem(InventoryItem item, long? count = null, bool? isAmplified = null)
+	private static InventoryItem CopyInventoryItem(
+		InventoryItem item,
+		long? count = null,
+		bool? isAmplified = null,
+		int? tuneCount = null)
 	{
 		var copy = new InventoryItem
 		{
@@ -386,7 +394,7 @@ public static class EnchantService
 			OptionalSocket = item.OptionalSocket,
 			OptionalFusionSocket = item.OptionalFusionSocket,
 			Charge = item.Charge,
-			TuneCount = item.TuneCount,
+			TuneCount = tuneCount ?? item.TuneCount,
 			RandomBonus = item.RandomBonus,
 			FusionRandomBonus = item.FusionRandomBonus,
 			Tempering = item.Tempering,
@@ -400,6 +408,15 @@ public static class EnchantService
 		copy.Godstone = item.Godstone;
 		copy.IdianStone = item.IdianStone;
 		return copy;
+	}
+
+	private static InventoryItem RemoveRemainingTuningCountIfPossible(InventoryItem item, ItemTemplateSummary targetTemplate)
+	{
+		// Java parity: model/gameobjects/Item.removeRemainingTuningCountIfPossible during socketManastoneAct failure.
+		if (item.IsIdentified && targetTemplate.MaxTuneCount > 0 && item.TuneCount != targetTemplate.MaxTuneCount)
+			return CopyInventoryItem(item, tuneCount: targetTemplate.MaxTuneCount);
+
+		return item;
 	}
 
 	private static ItemCountMutation DecreaseItemCount(InventoryItem item)

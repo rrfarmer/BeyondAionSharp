@@ -900,6 +900,9 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			if (!await InventoryItemExistsAsync(connection, transaction, playerObjectId, targetItemUpdate.ObjectId, cancellationToken))
 				return false;
 
+			if (!await SaveInventoryItemTuneCountAsync(connection, transaction, playerObjectId, targetItemUpdate, cancellationToken))
+				return false;
+
 			if (addedStone != null)
 				await SaveManastoneAsync(connection, transaction, targetItemUpdate.ObjectId, addedStone, addedCategory, cancellationToken);
 
@@ -1128,6 +1131,27 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			new[]
 			{
 				new MySqlParameter { Value = item.Count },
+				new MySqlParameter { Value = item.ObjectId },
+				new MySqlParameter { Value = playerObjectId },
+			});
+		return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+	}
+
+	private static async Task<bool> SaveInventoryItemTuneCountAsync(
+		MySqlConnection connection,
+		MySqlTransaction transaction,
+		int playerObjectId,
+		InventoryItem item,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: Item.removeRemainingTuningCountIfPossible marks inventory item state dirty.
+		await using var command = connection.CreateCommand();
+		command.Transaction = transaction;
+		command.CommandText = "UPDATE inventory SET tune_count = ? WHERE item_unique_id = ? AND item_owner = ?";
+		command.Parameters.AddRange(
+			new[]
+			{
+				new MySqlParameter { Value = item.TuneCount },
 				new MySqlParameter { Value = item.ObjectId },
 				new MySqlParameter { Value = playerObjectId },
 			});

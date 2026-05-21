@@ -195,6 +195,17 @@ public class ItemSocketServiceTests
 	}
 
 	[Fact]
+	public void AddManastone_RemovesRemainingTuneCount()
+	{
+		var item = CreateSword(1001, tuneCount: 0);
+
+		var plan = ItemSocketService.CreateAddManastonePlan(item, ManastoneItemId, useFusionSlots: false, CreateItemTemplates());
+
+		Assert.True(plan.Succeeded);
+		Assert.Equal(1, plan.ItemUpdate?.TuneCount);
+	}
+
+	[Fact]
 	public void AddManastone_ReturnsFailureWhenNoMatchingSlotsRemain()
 	{
 		var item = CreateSword(
@@ -232,7 +243,8 @@ public class ItemSocketServiceTests
 		IReadOnlyList<ItemStoneSocket>? manaStones = null,
 		IReadOnlyList<ItemStoneSocket>? fusionStones = null,
 		int fusionedItemId = 0,
-		int optionalFusionSocket = 0)
+		int optionalFusionSocket = 0,
+		int tuneCount = 0)
 	{
 		return new InventoryItem
 		{
@@ -243,6 +255,7 @@ public class ItemSocketServiceTests
 			Slot = 10,
 			FusionedItem = fusionedItemId,
 			OptionalFusionSocket = optionalFusionSocket,
+			TuneCount = tuneCount,
 			ManaStones = manaStones ?? Array.Empty<ItemStoneSocket>(),
 			FusionStones = fusionStones ?? Array.Empty<ItemStoneSocket>(),
 		};
@@ -253,7 +266,7 @@ public class ItemSocketServiceTests
 		return new ItemTemplateTable(
 		[
 			new ItemTemplateSummary(KinahItemId, "Kinah", 0, 0, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
-			new ItemTemplateSummary(SwordItemId, "Practice Sword", 0, 1 << 10, 1, "SWORD", "NORMAL", "COMMON", "PC_ALL", 1, 0, 1, ManastoneSlots: 4, SpecialManastoneSlots: 1),
+			new ItemTemplateSummary(SwordItemId, "Practice Sword", 0, 1 << 10, 1, "SWORD", "NORMAL", "COMMON", "PC_ALL", 1, 0, 1, MaxTuneCount: 1, ManastoneSlots: 4, SpecialManastoneSlots: 1),
 			new ItemTemplateSummary(PlainSwordItemId, "Plain Sword", 0, 1, 1, "SWORD", "NORMAL", "COMMON", "PC_ALL", 1, 0, 1),
 			new ItemTemplateSummary(FusedSwordItemId, "Fusion Sword", 0, 0, 1, "SWORD", "NORMAL", "COMMON", "PC_ALL", 1, 0, 1, ManastoneSlots: 2, SpecialManastoneSlots: 1),
 			new ItemTemplateSummary(ManastoneItemId, "Manastone: HP +20", 0, 0, 1, "MANASTONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),

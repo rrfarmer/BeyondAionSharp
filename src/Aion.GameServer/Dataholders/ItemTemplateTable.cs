@@ -44,6 +44,7 @@ public sealed record ItemTemplateSummary(
 	int ExpireTimeMinutes = 0,
 	int EnchantType = 0,
 	bool CanTune = false,
+	int MaxTuneCount = 0,
 	int ConditioningMaxLevel = 0,
 	string AttackType = "",
 	ItemWeaponStats? WeaponStats = null,

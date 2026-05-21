@@ -1286,7 +1286,8 @@ public sealed class StaticData
 			StatBonusSetId = randomBonusId;
 			EnchantName = enchantName;
 			TemperingName = temperingName;
-			CanTune = CalculateCanTune(validEquipmentSlots, maxTuneCount, maxEnchantBonus, optionSlotBonus, randomBonusId);
+			MaxTuneCount = CalculateMaxTuneCount(validEquipmentSlots, maxTuneCount, maxEnchantBonus, optionSlotBonus, randomBonusId);
+			CanTune = MaxTuneCount != 0;
 		}
 
 		private int TemplateId { get; }
@@ -1342,6 +1343,8 @@ public sealed class StaticData
 		private string TemperingName { get; }
 
 		private bool CanTune { get; }
+
+		private int MaxTuneCount { get; }
 
 		private int CurrentModifierIndex { get; set; } = -1;
 
@@ -1422,6 +1425,7 @@ public sealed class StaticData
 				ExpireTimeMinutes,
 				EnchantType,
 				CanTune,
+				MaxTuneCount,
 				ConditioningMaxLevel,
 				AttackType,
 				WeaponStats,
@@ -1448,21 +1452,21 @@ public sealed class StaticData
 				EnchantAction);
 		}
 
-		private static bool CalculateCanTune(
+		private static int CalculateMaxTuneCount(
 			long validEquipmentSlots,
 			int maxTuneCount,
 			int maxEnchantBonus,
 			int optionSlotBonus,
 			int randomBonusId)
 		{
-			// Java parity: model/templates/item/ItemTemplate.afterUnmarshal + canTune.
+			// Java parity: model/templates/item/ItemTemplate.afterUnmarshal + getMaxTuneCount.
 			if (validEquipmentSlots == 0)
-				return false;
+				return 0;
 
-			if (maxTuneCount != -1)
-				return maxTuneCount != 0;
+			if (maxTuneCount == -1 && maxEnchantBonus == 0 && optionSlotBonus == 0 && randomBonusId == 0)
+				return 0;
 
-			return maxEnchantBonus != 0 || optionSlotBonus != 0 || randomBonusId != 0;
+			return maxTuneCount;
 		}
 	}
 
