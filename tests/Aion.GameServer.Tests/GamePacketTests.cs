@@ -402,6 +402,11 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.FullInventory(), 1300762);
 		AssertSystemMessage(SmSystemMessage.ExchangeFullInventory(), 1300366);
 		AssertSystemMessage(SmSystemMessage.MailTakeAllCancel(), 1402251);
+		AssertSystemMessage(SmSystemMessage.NoSuchUser("Kahrun"), 1300627, "Kahrun");
+		AssertSystemMessage(SmSystemMessage.YouExcluded("Kahrun"), 1300628, "Kahrun");
+		AssertSystemMessage(SmSystemMessage.WhisperRefuse("Kahrun"), 1300629, "Kahrun");
+		AssertSystemMessage(SmSystemMessage.CantWhisperLevel(10), 1310004, "10");
+		AssertSystemMessage(SmSystemMessage.CantWhisperOtherRace(), 1401174);
 
 		var attachmentStatePayload = SerializeUnencryptedPayload(SmMailService.CreateAttachmentState(letterId: 123, attachmentType: 1));
 		using var attachmentStateReader = new PacketBuffer(attachmentStatePayload);
@@ -1589,6 +1594,30 @@ public class GamePacketTests
 				CreateClientPayload(27, buffer =>
 				{
 					buffer.WriteC(0);
+					buffer.WriteS("too soon");
+				}),
+				GameConnectionState.Authed));
+	}
+
+	[Fact]
+	public void ClientPacketFactory_ParsesWhisperChatPacket()
+	{
+		var whisper = Assert.IsType<CmChatMessageWhisper>(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(28, buffer =>
+				{
+					buffer.WriteS("kahrun");
+					buffer.WriteS("Need aid?");
+				}),
+				GameConnectionState.InGame));
+
+		Assert.Equal("kahrun", whisper.RecipientName);
+		Assert.Equal("Need aid?", whisper.Message);
+		Assert.Null(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(28, buffer =>
+				{
+					buffer.WriteS("kahrun");
 					buffer.WriteS("too soon");
 				}),
 				GameConnectionState.Authed));

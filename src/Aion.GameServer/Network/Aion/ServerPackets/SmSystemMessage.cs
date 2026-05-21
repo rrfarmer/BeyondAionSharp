@@ -115,6 +115,36 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1401270, address.ToString(System.Globalization.CultureInfo.InvariantCulture));
 	}
 
+	public static SmSystemMessage NoSuchUser(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_NO_SUCH_USER.
+		return new SmSystemMessage(1300627, playerName);
+	}
+
+	public static SmSystemMessage YouExcluded(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_YOU_EXCLUDED.
+		return new SmSystemMessage(1300628, playerName);
+	}
+
+	public static SmSystemMessage WhisperRefuse(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_WHISPER_REFUSE.
+		return new SmSystemMessage(1300629, playerName);
+	}
+
+	public static SmSystemMessage CantWhisperLevel(int level)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_CANT_WHISPER_LEVEL.
+		return new SmSystemMessage(1310004, level.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage CantWhisperOtherRace()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_CANT_WHISPER_OTHER_RACE.
+		return new SmSystemMessage(1401174);
+	}
+
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.writeImpl.

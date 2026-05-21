@@ -9,6 +9,10 @@ public interface IGameClientConnectionRegistry
 
 	void UnregisterPlayerConnection(int playerObjectId, GameServerConnection connection);
 
+	bool TryGetOnlinePlayerByName(string playerName, out Player? player);
+
+	Task<bool> SendPacketToPlayerAsync(int playerObjectId, GameServerPacket packet);
+
 	Task<int> BroadcastToVisiblePlayersAsync(
 		WorldPosition sourcePosition,
 		int sourceObjectId,

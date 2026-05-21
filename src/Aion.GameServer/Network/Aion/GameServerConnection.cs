@@ -271,6 +271,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandlePublicChatAsync(_activePlayer, chatMessage);
 				break;
+			case CmChatMessageWhisper whisper:
+				if (_activePlayer != null)
+					await HandleWhisperChatAsync(_activePlayer, whisper);
+				break;
 			case CmMarkFriendList:
 				if (_activePlayer != null)
 				{
@@ -709,6 +713,58 @@ public sealed class GameServerConnection : BaseClientConnection
 		return sender.AccessLevel > 0
 			|| receiver.AccessLevel > 0
 			|| receiver.BlockedUsers.All(blockedUser => blockedUser.ObjectId != sender.ObjectId);
+	}
+
+	private async Task HandleWhisperChatAsync(Player sender, CmChatMessageWhisper packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_CHAT_MESSAGE_WHISPER.runImpl.
+		var recipientName = GetRealCharacterName(packet.RecipientName);
+		if (recipientName.Length == 0 || _connectionRegistry == null || !_connectionRegistry.TryGetOnlinePlayerByName(recipientName, out var receiver) || receiver == null)
+		{
+			await SendPacketAsync(SmSystemMessage.NoSuchUser(recipientName));
+			return;
+		}
+
+		var requiredLevel = _options.Custom.LevelToWhisper;
+		var senderLevel = Math.Max(1, _runtimeContext?.DataManager?.StaticData.PlayerExperienceTable.GetLevelForExp(sender.Exp) ?? 1);
+		if (senderLevel < requiredLevel && receiver.AccessLevel == 0)
+		{
+			await SendPacketAsync(SmSystemMessage.CantWhisperLevel(requiredLevel));
+			return;
+		}
+
+		if (receiver.BlockedUsers.Any(blockedUser => blockedUser.ObjectId == sender.ObjectId))
+		{
+			await SendPacketAsync(SmSystemMessage.YouExcluded(receiver.Name));
+			return;
+		}
+
+		if (!string.Equals(sender.Race, receiver.Race, StringComparison.OrdinalIgnoreCase)
+			&& !_options.Custom.SpeakingBetweenFactions
+			&& sender.AccessLevel == 0
+			&& receiver.AccessLevel == 0)
+		{
+			await SendPacketAsync(SmSystemMessage.CantWhisperOtherRace());
+			return;
+		}
+
+		if (string.IsNullOrWhiteSpace(packet.Message))
+			return;
+
+		await _connectionRegistry.SendPacketToPlayerAsync(receiver.ObjectId, new SmMessage(sender, packet.Message, 4));
+	}
+
+	private static string GetRealCharacterName(string name)
+	{
+		// Java parity: utils/ChatUtil.getRealCharName with default Util.convertName behavior.
+		var normalized = name.Trim();
+		if (normalized.Length == 0)
+			return string.Empty;
+		if (normalized[0] is '\uE052' or '\uE053')
+			normalized = normalized[1..];
+		if (normalized.Length == 0)
+			return string.Empty;
+		return char.ToUpperInvariant(normalized[0]) + normalized[1..].ToLowerInvariant();
 	}
 
 	private async Task HandleQuitAsync(CmQuit packet)

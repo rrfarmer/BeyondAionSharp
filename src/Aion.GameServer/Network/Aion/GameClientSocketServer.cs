@@ -130,6 +130,30 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 			_playerConnections.TryRemove(playerObjectId, out _);
 	}
 
+	public bool TryGetOnlinePlayerByName(string playerName, out Player? player)
+	{
+		// Java parity: world/World.getPlayer(String) lookup used by whisper and social packets.
+		foreach (var connection in _playerConnections.Values)
+		{
+			player = connection.ActivePlayer;
+			if (player != null && string.Equals(player.Name, playerName, StringComparison.OrdinalIgnoreCase))
+				return true;
+		}
+
+		player = null;
+		return false;
+	}
+
+	public async Task<bool> SendPacketToPlayerAsync(int playerObjectId, GameServerPacket packet)
+	{
+		// Java parity: PacketSendUtility.sendPacket(targetPlayer, packet).
+		if (!_playerConnections.TryGetValue(playerObjectId, out var connection) || connection.ActivePlayer == null)
+			return false;
+
+		await connection.SendPacketAsync(packet);
+		return true;
+	}
+
 	public async Task<int> BroadcastToVisiblePlayersAsync(
 		WorldPosition sourcePosition,
 		int sourceObjectId,
