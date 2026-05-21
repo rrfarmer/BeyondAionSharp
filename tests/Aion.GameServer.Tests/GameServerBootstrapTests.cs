@@ -77,6 +77,30 @@ public sealed class GameServerBootstrapTests
 	}
 
 	[Fact]
+	public async Task GameTimeService_LoadsAndPeriodicallyStoresServerVariable()
+	{
+		await using var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		var repository = new TrackingServerVariablesRepository { LoadedInt = 42 };
+		var gameTime = new GameTimeService(
+			NullLogger<GameTimeService>.Instance,
+			threadPoolManager,
+			repository,
+			TimeSpan.FromMilliseconds(5),
+			TimeSpan.FromMilliseconds(5),
+			TimeSpan.FromMilliseconds(25),
+			TimeSpan.FromMilliseconds(25));
+
+		await gameTime.InitAsync(CancellationToken.None);
+		gameTime.StartClock();
+		await WaitUntilAsync(() => repository.StoreCalls > 0);
+		await gameTime.ShutdownAsync(CancellationToken.None);
+
+		Assert.True(repository.LoadIntCalled);
+		Assert.True(repository.StoredValues.TryGetValue("time", out var storedTime));
+		Assert.True(int.Parse(storedTime!) >= 42);
+	}
+
+	[Fact]
 	public async Task GameServerBootstrap_PreloadsUsedObjectIds()
 	{
 		using var temp = StaticDataFixture.Create();
@@ -159,6 +183,35 @@ public sealed class GameServerBootstrapTests
 		{
 			Loaded = true;
 			return Task.FromResult(_ids);
+		}
+	}
+
+	private sealed class TrackingServerVariablesRepository : IServerVariablesRepository
+	{
+		public int? LoadedInt { get; init; }
+
+		public bool LoadIntCalled { get; private set; }
+
+		public int StoreCalls { get; private set; }
+
+		public Dictionary<string, string> StoredValues { get; } = [];
+
+		public Task<int?> LoadIntAsync(string key, CancellationToken cancellationToken = default)
+		{
+			LoadIntCalled = true;
+			return Task.FromResult(LoadedInt);
+		}
+
+		public Task<long?> LoadLongAsync(string key, CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult<long?>(null);
+		}
+
+		public Task<bool> StoreAsync(string key, object value, CancellationToken cancellationToken = default)
+		{
+			StoreCalls++;
+			StoredValues[key] = value.ToString() ?? string.Empty;
+			return Task.FromResult(true);
 		}
 	}
 

@@ -1,4 +1,5 @@
 using Aion.GameServer.Model;
+using Aion.GameServer.Data;
 using Aion.GameServer.Utils;
 using Microsoft.Extensions.Logging;
 
@@ -6,28 +7,58 @@ namespace Aion.GameServer.Services;
 
 public sealed class GameTimeService : GameEngine
 {
+	private const string GameTimeVariable = "time";
 	private static readonly TimeSpan DefaultTickDelay = TimeSpan.FromSeconds(5);
 	private static readonly TimeSpan DefaultTickPeriod = TimeSpan.FromSeconds(5);
+	private static readonly TimeSpan DefaultSaveDelay = TimeSpan.FromMinutes(3);
+	private static readonly TimeSpan DefaultSavePeriod = TimeSpan.FromMinutes(3);
 	private readonly ILogger<GameTimeService> _logger;
 	private readonly ThreadPoolManager _threadPoolManager;
+	private readonly IServerVariablesRepository? _serverVariablesRepository;
 	private readonly TimeSpan _tickDelay;
 	private readonly TimeSpan _tickPeriod;
+	private readonly TimeSpan _saveDelay;
+	private readonly TimeSpan _savePeriod;
 	private int _isInitialized;
 	private int _isStarted;
 	private int _gameMinutes;
 	private Task? _clockTask;
+	private Task? _saveTask;
 
 	public GameTimeService(ILogger<GameTimeService> logger, ThreadPoolManager threadPoolManager)
-		: this(logger, threadPoolManager, DefaultTickDelay, DefaultTickPeriod)
+		: this(logger, threadPoolManager, null, DefaultTickDelay, DefaultTickPeriod, DefaultSaveDelay, DefaultSavePeriod)
+	{
+	}
+
+	public GameTimeService(
+		ILogger<GameTimeService> logger,
+		ThreadPoolManager threadPoolManager,
+		IServerVariablesRepository serverVariablesRepository)
+		: this(logger, threadPoolManager, serverVariablesRepository, DefaultTickDelay, DefaultTickPeriod, DefaultSaveDelay, DefaultSavePeriod)
 	{
 	}
 
 	public GameTimeService(ILogger<GameTimeService> logger, ThreadPoolManager threadPoolManager, TimeSpan tickDelay, TimeSpan tickPeriod)
+		: this(logger, threadPoolManager, null, tickDelay, tickPeriod, DefaultSaveDelay, DefaultSavePeriod)
+	{
+	}
+
+	public GameTimeService(
+		ILogger<GameTimeService> logger,
+		ThreadPoolManager threadPoolManager,
+		IServerVariablesRepository? serverVariablesRepository,
+		TimeSpan tickDelay,
+		TimeSpan tickPeriod,
+		TimeSpan saveDelay,
+		TimeSpan savePeriod)
 	{
 		_logger = logger;
 		_threadPoolManager = threadPoolManager;
+		_serverVariablesRepository = serverVariablesRepository;
 		_tickDelay = tickDelay;
 		_tickPeriod = tickPeriod;
+		_saveDelay = saveDelay;
+		_savePeriod = savePeriod;
 	}
 
 	public string Name => "GameTimeService";
@@ -36,12 +67,18 @@ public sealed class GameTimeService : GameEngine
 
 	public int GameMinutes => Volatile.Read(ref _gameMinutes);
 
-	public ValueTask InitAsync(CancellationToken cancellationToken = default)
+	public async ValueTask InitAsync(CancellationToken cancellationToken = default)
 	{
 		// Java parity: services/GameTimeService init during GameServer bootstrap.
 		if (Interlocked.Exchange(ref _isInitialized, 1) == 0)
+		{
+			var persistedTime = _serverVariablesRepository == null
+				? null
+				: await _serverVariablesRepository.LoadIntAsync(GameTimeVariable, cancellationToken);
+			if (persistedTime.HasValue)
+				Volatile.Write(ref _gameMinutes, persistedTime.Value);
 			_logger.LogInformation("Initialized GameTime");
-		return ValueTask.CompletedTask;
+		}
 	}
 
 	public void StartClock()
@@ -58,12 +95,32 @@ public sealed class GameTimeService : GameEngine
 			},
 			_tickDelay,
 			_tickPeriod);
-		_logger.LogInformation("GameTime started. Update interval: {Seconds}s", (int)_tickPeriod.TotalSeconds);
+		if (_serverVariablesRepository != null)
+		{
+			_saveTask = _threadPoolManager.ScheduleAtFixedRate(
+				async _ =>
+				{
+					if (await SaveGameTimeAsync())
+						_logger.LogInformation("Game time saved...");
+					else
+						_logger.LogWarning("Error saving game time");
+				},
+				_saveDelay,
+				_savePeriod);
+		}
+		_logger.LogInformation("GameTime started. Update interval: {Seconds}s", (int)_savePeriod.TotalSeconds);
 	}
 
-	public ValueTask ShutdownAsync(CancellationToken cancellationToken = default)
+	public async Task<bool> SaveGameTimeAsync(CancellationToken cancellationToken = default)
+	{
+		// Java parity: services/GameTimeService.saveGameTime -> ServerVariablesDAO.store("time", gameTime.getTime()).
+		return _serverVariablesRepository == null
+			|| await _serverVariablesRepository.StoreAsync(GameTimeVariable, GameMinutes, cancellationToken);
+	}
+
+	public async ValueTask ShutdownAsync(CancellationToken cancellationToken = default)
 	{
 		Volatile.Write(ref _isStarted, 0);
-		return ValueTask.CompletedTask;
+		await SaveGameTimeAsync(cancellationToken);
 	}
 }
