@@ -39,6 +39,7 @@ public static class GameClientPacketFactory
 		Register(62, states => new CmCheckPak(62, states), GameConnectionState.InGame);
 		Register(71, states => new CmMotion(71, states), GameConnectionState.InGame);
 		Register(73, states => new CmHouseSettings(73, states), GameConnectionState.InGame);
+		Register(74, states => new CmManastone(74, states), GameConnectionState.InGame);
 		Register(78, states => new CmChargeItem(78, states), GameConnectionState.InGame);
 		Register(80, states => new CmDeleteQuest(80, states), GameConnectionState.InGame);
 		Register(81, states => new CmPlayMovieEnd(81, states), GameConnectionState.InGame);

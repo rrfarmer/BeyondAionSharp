@@ -222,6 +222,24 @@ public sealed class PlayerEnterWorldService
 			cancellationToken);
 	}
 
+	public Task<bool> SaveStigmaChargeMutationAsync(
+		Player player,
+		InventoryItem? targetItemUpdate,
+		int? deletedTargetItemObjectId,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: services/StigmaService.chargeStigma inventory/enchant persistence.
+		return _repository.SaveStigmaChargeMutationAsync(
+			player.ObjectId,
+			targetItemUpdate,
+			deletedTargetItemObjectId,
+			sourceItemUpdate,
+			deletedSourceItemObjectId,
+			cancellationToken);
+	}
+
 	public Task<bool> SaveEquipmentMutationAsync(
 		Player player,
 		IReadOnlyList<InventoryItem> items,

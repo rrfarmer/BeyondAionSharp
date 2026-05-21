@@ -93,6 +93,97 @@ public static class StigmaService
 		return StigmaUnequipResult.Success(skills, removal.RemovedSkills, removal.RemovedSkillNames);
 	}
 
+	public static StigmaChargePlan CreateChargePlan(
+		Player player,
+		int targetItemObjectId,
+		int chargeStoneObjectId,
+		ItemTemplateTable itemTemplates,
+		SkillTemplateTable skillTemplates,
+		SkillTreeTable skillTree,
+		PlayerExperienceTable? experienceTable = null,
+		Func<double>? rollPercent = null)
+	{
+		// Java parity: services/StigmaService.chargeStigma.
+		var inventoryItems = player.InventoryItems.ToList();
+		var chargeStone = inventoryItems.FirstOrDefault(item =>
+			item.ObjectId == chargeStoneObjectId
+			&& item.Location == CubeStorageId
+			&& !item.IsEquipped);
+		var stigma = inventoryItems.FirstOrDefault(item =>
+			item.ObjectId == targetItemObjectId
+			&& item.Location == CubeStorageId);
+		if (chargeStone == null || stigma == null)
+			return StigmaChargePlan.Invalid();
+
+		var chargeStoneTemplate = itemTemplates.GetItemTemplate(chargeStone.ItemId);
+		var stigmaTemplate = itemTemplates.GetItemTemplate(stigma.ItemId);
+		if (chargeStoneTemplate?.StigmaInfo == null || stigmaTemplate?.StigmaInfo == null)
+			return StigmaChargePlan.Invalid();
+		if (stigma.ItemId != chargeStone.ItemId || chargeStone.Enchant > 0 || stigma.Enchant >= 10)
+			return StigmaChargePlan.Invalid();
+		if (!stigmaTemplate.StigmaInfo.Chargeable)
+			return StigmaChargePlan.Invalid();
+
+		var roll = rollPercent?.Invoke() ?? Random.Shared.NextDouble() * 100d;
+		var isSuccess = roll < Math.Max(25, 100 - (stigma.Enchant * 10));
+		var sourceUpdate = DecreaseItemCount(chargeStone);
+		InventoryItem? targetUpdate = null;
+		int? deletedTargetObjectId = null;
+		var skills = player.Skills.ToList();
+		var addedSkills = new List<PlayerSkill>();
+		var removedSkills = new List<PlayerSkill>();
+
+		if (isSuccess)
+		{
+			targetUpdate = CopyInventoryItem(stigma, enchant: stigma.Enchant + 1);
+			ReplaceInventoryItem(inventoryItems, targetUpdate);
+			if (stigma.IsEquipped)
+			{
+				var removal = RemoveStigmaSkills(skills, player, stigmaTemplate.StigmaInfo, skillTemplates, skillTree, notifyPlayer: false);
+				removedSkills.AddRange(removal.RemovedSkills);
+				addedSkills.AddRange(AddStigmaSkills(skills, player, stigmaTemplate.StigmaInfo, targetUpdate.Enchant, skillTemplates, skillTree, experienceTable));
+			}
+		}
+		else
+		{
+			var targetCountUpdate = DecreaseItemCount(stigma);
+			if (targetCountUpdate.UpdatedItem != null)
+			{
+				targetUpdate = targetCountUpdate.UpdatedItem;
+				ReplaceInventoryItem(inventoryItems, targetUpdate);
+			}
+			else
+			{
+				deletedTargetObjectId = targetCountUpdate.DeletedObjectId;
+				inventoryItems.RemoveAll(item => item.ObjectId == deletedTargetObjectId);
+			}
+
+			if (stigma.IsEquipped)
+			{
+				var removal = RemoveStigmaSkills(skills, player, stigmaTemplate.StigmaInfo, skillTemplates, skillTree, notifyPlayer: false);
+				removedSkills.AddRange(removal.RemovedSkills);
+			}
+		}
+
+		if (sourceUpdate.UpdatedItem != null)
+			ReplaceInventoryItem(inventoryItems, sourceUpdate.UpdatedItem);
+		else if (sourceUpdate.DeletedObjectId.HasValue)
+			inventoryItems.RemoveAll(item => item.ObjectId == sourceUpdate.DeletedObjectId);
+
+		return new StigmaChargePlan(
+			StigmaChargeResult.Success,
+			isSuccess,
+			GetItemName(stigmaTemplate),
+			inventoryItems,
+			targetUpdate,
+			deletedTargetObjectId,
+			sourceUpdate.UpdatedItem,
+			sourceUpdate.DeletedObjectId,
+			skills,
+			addedSkills,
+			removedSkills);
+	}
+
 	private static IReadOnlyList<PlayerSkill> AddStigmaSkills(
 		List<PlayerSkill> skills,
 		Player player,
@@ -228,6 +319,22 @@ public static class StigmaService
 		var removed = skills[existingIndex];
 		skills.RemoveAt(existingIndex);
 		return removed;
+	}
+
+	private static ItemCountMutation DecreaseItemCount(InventoryItem item)
+	{
+		return item.Count > 1
+			? new ItemCountMutation(CopyInventoryItem(item, count: item.Count - 1), null)
+			: new ItemCountMutation(null, item.ObjectId);
+	}
+
+	private static void ReplaceInventoryItem(List<InventoryItem> items, InventoryItem update)
+	{
+		var index = items.FindIndex(item => item.ObjectId == update.ObjectId);
+		if (index >= 0)
+			items[index] = update;
+		else
+			items.Add(update);
 	}
 
 	private static IEnumerable<EquippedStigma> GetEquippedStigmas(IReadOnlyList<InventoryItem> inventoryItems, ItemTemplateTable itemTemplates)
@@ -410,7 +517,12 @@ public static class StigmaService
 		return (itemTemplate.GetClientName() ?? itemTemplate.Name).Replace(" ", string.Empty, StringComparison.Ordinal).ToUpperInvariant();
 	}
 
-	private static InventoryItem CopyInventoryItem(InventoryItem item, long? count = null, long? slot = null, bool? isEquipped = null)
+	private static string GetItemName(ItemTemplateSummary itemTemplate)
+	{
+		return itemTemplate.GetClientName() ?? itemTemplate.Name;
+	}
+
+	private static InventoryItem CopyInventoryItem(InventoryItem item, long? count = null, long? slot = null, bool? isEquipped = null, int? enchant = null)
 	{
 		var copy = new InventoryItem
 		{
@@ -427,7 +539,7 @@ public static class StigmaService
 			IsSoulBound = item.IsSoulBound,
 			Slot = slot ?? item.Slot,
 			Location = item.Location,
-			Enchant = item.Enchant,
+			Enchant = enchant ?? item.Enchant,
 			EnchantBonus = item.EnchantBonus,
 			ItemSkin = item.ItemSkin,
 			FusionedItem = item.FusionedItem,
@@ -453,6 +565,8 @@ public static class StigmaService
 	private sealed record EquippedStigma(InventoryItem Item, ItemTemplateSummary Template);
 
 	private sealed record StigmaSkillRemoval(IReadOnlyList<PlayerSkill> RemovedSkills, IReadOnlyList<string> RemovedSkillNames);
+
+	private sealed record ItemCountMutation(InventoryItem? UpdatedItem, int? DeletedObjectId);
 }
 
 public enum StigmaEquipFailure
@@ -498,5 +612,41 @@ public sealed record StigmaUnequipResult(
 		IReadOnlyList<string> removedSkillNames)
 	{
 		return new StigmaUnequipResult(skills, removedSkills, removedSkillNames);
+	}
+}
+
+public enum StigmaChargeResult
+{
+	Invalid,
+	Success,
+}
+
+public sealed record StigmaChargePlan(
+	StigmaChargeResult Result,
+	bool EnchantSucceeded,
+	string ItemName,
+	IReadOnlyList<InventoryItem> InventoryItems,
+	InventoryItem? TargetItemUpdate,
+	int? DeletedTargetItemObjectId,
+	InventoryItem? SourceItemUpdate,
+	int? DeletedSourceItemObjectId,
+	IReadOnlyList<PlayerSkill> Skills,
+	IReadOnlyList<PlayerSkill> AddedSkills,
+	IReadOnlyList<PlayerSkill> RemovedSkills)
+{
+	public static StigmaChargePlan Invalid()
+	{
+		return new StigmaChargePlan(
+			StigmaChargeResult.Invalid,
+			EnchantSucceeded: false,
+			ItemName: string.Empty,
+			InventoryItems: Array.Empty<InventoryItem>(),
+			TargetItemUpdate: null,
+			DeletedTargetItemObjectId: null,
+			SourceItemUpdate: null,
+			DeletedSourceItemObjectId: null,
+			Skills: Array.Empty<PlayerSkill>(),
+			AddedSkills: Array.Empty<PlayerSkill>(),
+			RemovedSkills: Array.Empty<PlayerSkill>());
 	}
 }

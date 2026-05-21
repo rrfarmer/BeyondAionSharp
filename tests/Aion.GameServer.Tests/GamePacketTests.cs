@@ -542,6 +542,8 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.SoulBoundCloseOtherMsgBoxAndRetry(), 1300488);
 		AssertSystemMessage(SmSystemMessage.StigmaNotEnoughMoney(), 1300413);
 		AssertSystemMessage(SmSystemMessage.StigmaSkillUnavailable("skill"), 1300403, "skill");
+		AssertSystemMessage(SmSystemMessage.StigmaEnchantSuccess("stigma"), 1402930, "stigma");
+		AssertSystemMessage(SmSystemMessage.StigmaEnchantFail("stigma"), 1402931, "stigma");
 		AssertSystemMessage(SmSystemMessage.ExchangeFullInventory(), 1300366);
 		AssertSystemMessage(SmSystemMessage.MailTakeAllCancel(), 1402251);
 		AssertSystemMessage(SmSystemMessage.NoSuchUser("Kahrun"), 1300627, "Kahrun");
@@ -2805,6 +2807,43 @@ public class GamePacketTests
 		Assert.Equal(2, equipItem.Slot);
 		Assert.Equal(9001, equipItem.ItemObjectId);
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(38, _ => { }), GameConnectionState.Authed));
+	}
+
+	[Fact]
+	public void ClientPacketFactory_ParsesManastone()
+	{
+		var addStone = Assert.IsType<CmManastone>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(74, b =>
+			{
+				b.WriteC(2);
+				b.WriteC(1);
+				b.WriteD(1001);
+				b.WriteD(1002);
+				b.WriteD(1003);
+			}), GameConnectionState.InGame));
+
+		Assert.Equal(2, addStone.ActionType);
+		Assert.Equal(1, addStone.TargetFusedSlot);
+		Assert.Equal(1001, addStone.TargetItemObjectId);
+		Assert.Equal(1002, addStone.StoneObjectId);
+		Assert.Equal(1003, addStone.SupplementObjectId);
+
+		var removeStone = Assert.IsType<CmManastone>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(74, b =>
+			{
+				b.WriteC(3);
+				b.WriteC(0);
+				b.WriteD(2001);
+				b.WriteC(4);
+				b.WriteC(0);
+				b.WriteH(0);
+				b.WriteD(7001);
+			}), GameConnectionState.InGame));
+
+		Assert.Equal(3, removeStone.ActionType);
+		Assert.Equal(4, removeStone.SlotNumber);
+		Assert.Equal(7001, removeStone.NpcObjectId);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(74, _ => { }), GameConnectionState.Authed));
 	}
 
 	[Fact]

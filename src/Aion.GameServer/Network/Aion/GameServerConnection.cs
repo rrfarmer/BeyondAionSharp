@@ -416,6 +416,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleEquipItemAsync(_activePlayer, equipItem);
 				break;
+			case CmManastone manastone:
+				if (_activePlayer != null)
+					await HandleManastoneAsync(_activePlayer, manastone);
+				break;
 			case CmDialogSelect dialogSelect:
 				if (_activePlayer != null)
 					await HandleDialogSelectAsync(_activePlayer, dialogSelect);
@@ -1271,6 +1275,105 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		await ApplyEquipmentChangeAsync(player, change, itemTemplates, staticData);
+	}
+
+	private async Task HandleManastoneAsync(Player player, CmManastone packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_MANASTONE.runImpl stigma branch.
+		if (packet.ActionType is not (1 or 2))
+			return;
+
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var itemTemplates = staticData?.ItemTemplates;
+		if (staticData == null || itemTemplates == null)
+			return;
+
+		var targetItem = player.InventoryItems.FirstOrDefault(item => item.ObjectId == packet.TargetItemObjectId && item.Location == CubeStorageId);
+		var sourceItem = player.InventoryItems.FirstOrDefault(item => item.ObjectId == packet.StoneObjectId && item.Location == CubeStorageId && !item.IsEquipped);
+		if (targetItem == null || sourceItem == null)
+			return;
+
+		var targetTemplate = itemTemplates.GetItemTemplate(targetItem.ItemId);
+		var sourceTemplate = itemTemplates.GetItemTemplate(sourceItem.ItemId);
+		if (targetTemplate?.StigmaInfo == null || sourceTemplate?.StigmaInfo == null)
+			return;
+
+		var plan = StigmaService.CreateChargePlan(
+			player,
+			packet.TargetItemObjectId,
+			packet.StoneObjectId,
+			itemTemplates,
+			staticData.SkillTemplates,
+			staticData.SkillTree,
+			staticData.PlayerExperienceTable);
+		if (plan.Result != StigmaChargeResult.Success)
+			return;
+
+		await BroadcastItemUsageAnimationAsync(
+			player,
+			new SmItemUsageAnimation(
+				player.ObjectId,
+				targetItem.ObjectId,
+				sourceItem.ObjectId,
+				targetItem.ItemId,
+				5000,
+				0,
+				0,
+				0,
+				1,
+				0));
+
+		var saved = _playerEnterWorldService == null
+			|| await _playerEnterWorldService.SaveStigmaChargeMutationAsync(
+				player,
+				plan.TargetItemUpdate,
+				plan.DeletedTargetItemObjectId,
+				plan.SourceItemUpdate,
+				plan.DeletedSourceItemObjectId);
+		if (!saved)
+			return;
+
+		player.InventoryItems = plan.InventoryItems;
+		if (plan.AddedSkills.Count > 0 || plan.RemovedSkills.Count > 0)
+			player.Skills = plan.Skills;
+
+		await BroadcastItemUsageAnimationAsync(
+			player,
+			new SmItemUsageAnimation(
+				player.ObjectId,
+				targetItem.ObjectId,
+				targetItem.ItemId,
+				0,
+				plan.EnchantSucceeded ? 1 : 2,
+				1));
+
+		if (plan.SourceItemUpdate != null)
+			await SendPacketAsync(new SmInventoryUpdateItem(plan.SourceItemUpdate, sourceTemplate, SmInventoryUpdateItem.DecreaseStigmaUse));
+		else if (plan.DeletedSourceItemObjectId.HasValue && plan.DeletedSourceItemObjectId != plan.DeletedTargetItemObjectId)
+			await SendPacketAsync(new SmDeleteItem(plan.DeletedSourceItemObjectId.Value));
+
+		foreach (var removedSkill in plan.RemovedSkills)
+			await SendPacketAsync(new SmSkillRemove(removedSkill));
+		foreach (var addedSkill in plan.AddedSkills)
+			await SendPacketAsync(new SmSkillList([addedSkill], addedSkill.SkillType >= 3 ? 1402891 : 1300401));
+
+		if (plan.EnchantSucceeded)
+		{
+			await SendPacketAsync(SmSystemMessage.StigmaEnchantSuccess(plan.ItemName));
+			if (plan.TargetItemUpdate != null)
+				await SendPacketAsync(new SmInventoryUpdateItem(plan.TargetItemUpdate, targetTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+		}
+		else
+		{
+			if (plan.TargetItemUpdate != null)
+				await SendPacketAsync(new SmInventoryUpdateItem(plan.TargetItemUpdate, targetTemplate, SmInventoryUpdateItem.DecreaseStigmaUse));
+			else if (plan.DeletedTargetItemObjectId.HasValue)
+				await SendPacketAsync(new SmDeleteItem(plan.DeletedTargetItemObjectId.Value));
+			await SendPacketAsync(SmSystemMessage.StigmaEnchantFail(plan.ItemName));
+		}
+
+		if (targetItem.IsEquipped)
+			await SendPacketAsync(CreateStatsInfoPacket(player, staticData));
 	}
 
 	private async Task StartSoulBindRequestAsync(Player player, EquipmentChangeResult change)

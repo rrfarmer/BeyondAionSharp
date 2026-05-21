@@ -411,6 +411,16 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public int? ChargeActionDeletedSourceItemObjectId { get; private set; }
 
+		public int SaveStigmaChargeMutationCalls { get; private set; }
+
+		public InventoryItem? StigmaChargeTargetItemUpdate { get; private set; }
+
+		public int? StigmaChargeDeletedTargetItemObjectId { get; private set; }
+
+		public InventoryItem? StigmaChargeSourceItemUpdate { get; private set; }
+
+		public int? StigmaChargeDeletedSourceItemObjectId { get; private set; }
+
 		public int SaveEquipmentMutationCalls { get; private set; }
 
 		public IReadOnlyList<InventoryItem> EquipmentItems { get; private set; } = Array.Empty<InventoryItem>();
@@ -639,6 +649,22 @@ public sealed class PlayerEnterWorldServiceTests
 			ChargeActionChargedItems = chargedItems;
 			ChargeActionSourceItemUpdate = sourceItemUpdate;
 			ChargeActionDeletedSourceItemObjectId = deletedSourceItemObjectId;
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> SaveStigmaChargeMutationAsync(
+			int playerObjectId,
+			InventoryItem? targetItemUpdate,
+			int? deletedTargetItemObjectId,
+			InventoryItem? sourceItemUpdate,
+			int? deletedSourceItemObjectId,
+			CancellationToken cancellationToken = default)
+		{
+			SaveStigmaChargeMutationCalls++;
+			StigmaChargeTargetItemUpdate = targetItemUpdate;
+			StigmaChargeDeletedTargetItemObjectId = deletedTargetItemObjectId;
+			StigmaChargeSourceItemUpdate = sourceItemUpdate;
+			StigmaChargeDeletedSourceItemObjectId = deletedSourceItemObjectId;
 			return Task.FromResult(true);
 		}
 

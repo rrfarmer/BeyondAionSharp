@@ -199,6 +199,18 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300403, skillName);
 	}
 
+	public static SmSystemMessage StigmaEnchantSuccess(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_STIGMA_ENCHANT_SUCCESS.
+		return new SmSystemMessage(1402930, itemName);
+	}
+
+	public static SmSystemMessage StigmaEnchantFail(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_STIGMA_ENCHANT_FAIL.
+		return new SmSystemMessage(1402931, itemName);
+	}
+
 	public static SmSystemMessage ExchangeFullInventory()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_EXCHANGE_FULL_INVENTORY.

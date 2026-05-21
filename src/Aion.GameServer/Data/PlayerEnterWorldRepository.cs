@@ -96,6 +96,14 @@ public interface IPlayerEnterWorldRepository
 		int? deletedSourceItemObjectId,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveStigmaChargeMutationAsync(
+		int playerObjectId,
+		InventoryItem? targetItemUpdate,
+		int? deletedTargetItemObjectId,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SaveEquipmentMutationAsync(
 		int playerObjectId,
 		IReadOnlyList<InventoryItem> items,
@@ -280,6 +288,17 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	public Task<bool> SaveItemChargeActionMutationAsync(
 		int playerObjectId,
 		IReadOnlyList<InventoryItem> chargedItems,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> SaveStigmaChargeMutationAsync(
+		int playerObjectId,
+		InventoryItem? targetItemUpdate,
+		int? deletedTargetItemObjectId,
 		InventoryItem? sourceItemUpdate,
 		int? deletedSourceItemObjectId,
 		CancellationToken cancellationToken = default)
@@ -671,6 +690,64 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not save charge action mutation for player {PlayerObjectId}", playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SaveStigmaChargeMutationAsync(
+		int playerObjectId,
+		InventoryItem? targetItemUpdate,
+		int? deletedTargetItemObjectId,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: services/StigmaService.chargeStigma persists charge-stone consume plus target enchant/delete.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			if (targetItemUpdate != null)
+			{
+				await using var targetCommand = connection.CreateCommand();
+				targetCommand.Transaction = transaction;
+				targetCommand.CommandText = "UPDATE inventory SET item_count = ?, enchant = ? WHERE item_unique_id = ? AND item_owner = ?";
+				targetCommand.Parameters.AddRange(
+					new[]
+					{
+						new MySqlParameter { Value = targetItemUpdate.Count },
+						new MySqlParameter { Value = targetItemUpdate.Enchant },
+						new MySqlParameter { Value = targetItemUpdate.ObjectId },
+						new MySqlParameter { Value = playerObjectId },
+					});
+				if (await targetCommand.ExecuteNonQueryAsync(cancellationToken) <= 0)
+					return false;
+			}
+
+			if (deletedTargetItemObjectId.HasValue
+				&& !await DeleteInventoryItemAsync(connection, transaction, playerObjectId, deletedTargetItemObjectId.Value, cancellationToken))
+			{
+				return false;
+			}
+
+			if (sourceItemUpdate != null && !await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, sourceItemUpdate, cancellationToken))
+				return false;
+
+			if (deletedSourceItemObjectId.HasValue
+				&& deletedSourceItemObjectId != deletedTargetItemObjectId
+				&& !await DeleteInventoryItemAsync(connection, transaction, playerObjectId, deletedSourceItemObjectId.Value, cancellationToken))
+			{
+				return false;
+			}
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save stigma charge mutation for player {PlayerObjectId}", playerObjectId);
 			return false;
 		}
 	}
