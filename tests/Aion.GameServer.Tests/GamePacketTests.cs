@@ -800,6 +800,22 @@ public class GamePacketTests
 		Assert.Equal("memo", friendListReader.ReadS());
 		Assert.Equal(0, friendListReader.Remaining);
 
+		var friendUpdatePayload = SerializeUnencryptedPayload(
+			new SmFriendUpdate(
+				new PlayerFriend(44, "Friend", 3000, "RANGER", "FEMALE", 210010000, null, "note", "memo", true),
+				status: 3,
+				new PlayerExperienceTable([0, 1000, 3000])));
+		using var friendUpdateReader = new PacketBuffer(friendUpdatePayload);
+		Assert.Equal("Friend", friendUpdateReader.ReadS());
+		Assert.Equal(2, friendUpdateReader.ReadD());
+		Assert.Equal(5, friendUpdateReader.ReadD());
+		Assert.Equal(1, (int)friendUpdateReader.ReadC());
+		Assert.Equal(210010000, friendUpdateReader.ReadD());
+		Assert.Equal(0, friendUpdateReader.ReadD());
+		Assert.Equal("note", friendUpdateReader.ReadS());
+		Assert.Equal(3, (int)friendUpdateReader.ReadC());
+		Assert.Equal(0, friendUpdateReader.Remaining);
+
 		var blockListPayload = SerializeUnencryptedPayload(
 			new SmBlockList([new PlayerBlockedUser(55, "Blocked", "reason")]));
 		using var blockListReader = new PacketBuffer(blockListPayload);

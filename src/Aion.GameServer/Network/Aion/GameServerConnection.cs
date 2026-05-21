@@ -362,7 +362,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 				{
 					// Java parity: network/aion/clientpackets/CM_FRIEND_STATUS.runImpl -> FriendList.setStatus + SM_FRIEND_STATUS.
-					_activePlayer.FriendListStatus = friendStatus.Status;
+					await HandleFriendStatusAsync(_activePlayer, friendStatus);
 					await SendPacketAsync(new SmFriendStatus(friendStatus.Status));
 				}
 				break;
@@ -843,6 +843,44 @@ public sealed class GameServerConnection : BaseClientConnection
 			token => SendPacketAsync(new SmChatInit(token)));
 	}
 
+	private async Task HandleFriendStatusAsync(Player player, CmFriendStatus packet)
+	{
+		// Java parity: model/gameobjects/player/FriendList.setStatus(Status, PlayerCommonData).
+		var previousStatus = player.FriendListStatus;
+		var effectiveStatus = NormalizeFriendStatus(packet.Status);
+		player.FriendListStatus = effectiveStatus;
+
+		if (_connectionRegistry == null)
+			return;
+
+		foreach (var friend in player.Friends)
+		{
+			if (!_connectionRegistry.TryGetOnlinePlayerByName(friend.Name, out var friendPlayer) || friendPlayer == null)
+				continue;
+
+			var reciprocalFriend = UpdateFriendSnapshot(friendPlayer, player, effectiveStatus);
+			if (reciprocalFriend == null)
+				continue;
+
+			await _connectionRegistry.SendPacketToPlayerAsync(
+				friendPlayer.ObjectId,
+				new SmFriendUpdate(reciprocalFriend, effectiveStatus, GetPlayerExperienceTable()));
+
+			if (previousStatus == 0)
+			{
+				await _connectionRegistry.SendPacketToPlayerAsync(
+					friendPlayer.ObjectId,
+					new SmFriendNotify(SmFriendNotify.Login, player.Name));
+			}
+			else if (effectiveStatus == 0)
+			{
+				await _connectionRegistry.SendPacketToPlayerAsync(
+					friendPlayer.ObjectId,
+					new SmFriendNotify(SmFriendNotify.Logout, player.Name));
+			}
+		}
+	}
+
 	private async Task HandleBlockAddAsync(Player player, CmBlockAdd packet)
 	{
 		// Java parity: network/aion/clientpackets/CM_BLOCK_ADD.runImpl -> SocialService.addBlockedUser.
@@ -1013,6 +1051,38 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		// Java parity: model/gameobjects/player/BlockList.getBlockedPlayer(String) uses case-insensitive name matching.
 		return player.BlockedUsers.FirstOrDefault(blockedUser => string.Equals(blockedUser.Name, targetName, StringComparison.OrdinalIgnoreCase));
+	}
+
+	private static byte NormalizeFriendStatus(byte status)
+	{
+		// Java parity: FriendList.Status.getByValue fallback in CM_FRIEND_STATUS.runImpl.
+		return status is 0 or 1 or 3 ? status : (byte)1;
+	}
+
+	private static PlayerFriend? UpdateFriendSnapshot(Player friendPlayer, Player activePlayer, byte activeStatus)
+	{
+		// Java parity: friendPlayer.getFriendList().getFriend(activePlayerId).setPCD(activePlayer.getCommonData()).
+		PlayerFriend? updatedFriend = null;
+		friendPlayer.Friends = friendPlayer.Friends
+			.Select(friend =>
+			{
+				if (friend.ObjectId != activePlayer.ObjectId)
+					return friend;
+
+				updatedFriend = friend with
+				{
+					Exp = activePlayer.Exp,
+					PlayerClass = activePlayer.PlayerClass,
+					Gender = activePlayer.Gender,
+					MapId = activePlayer.Position.WorldId,
+					LastOnline = activeStatus == 0 ? activePlayer.LastOnline : null,
+					IsOnline = activeStatus != 0,
+				};
+				return updatedFriend;
+			})
+			.ToArray();
+
+		return updatedFriend;
 	}
 
 	private static string GetRealCharacterName(string name)
