@@ -48,6 +48,7 @@ public static class GameClientPacketFactory
 		Register(153, states => new CmRestoreCharacter(153, states), GameConnectionState.Authed);
 		Register(158, states => new CmShowBlockList(158, states), GameConnectionState.InGame);
 		Register(162, states => new CmReadExpressMail(162, states), GameConnectionState.InGame);
+		Register(166, states => new CmBlockAdd(166, states), GameConnectionState.InGame);
 		Register(167, states => new CmBlockDelete(167, states), GameConnectionState.InGame);
 		Register(170, states => new CmFriendStatus(170, states), GameConnectionState.InGame);
 		Register(174, states => new CmChatAuth(174, states), GameConnectionState.InGame);

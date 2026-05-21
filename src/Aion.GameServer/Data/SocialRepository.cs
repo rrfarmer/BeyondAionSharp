@@ -6,6 +6,14 @@ namespace Aion.GameServer.Data;
 
 public interface ISocialRepository
 {
+	Task<SocialPlayerInfo?> LoadPlayerByNameAsync(string playerName, CancellationToken cancellationToken = default);
+
+	Task<bool> AddBlockedUserAsync(
+		int playerObjectId,
+		int blockedPlayerObjectId,
+		string reason,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> DeleteFriendsAsync(int playerObjectId, int friendObjectId, CancellationToken cancellationToken = default);
 
 	Task<bool> SetFriendMemoAsync(int playerObjectId, int friendObjectId, string memo, CancellationToken cancellationToken = default);
@@ -15,8 +23,24 @@ public interface ISocialRepository
 	Task<bool> SetBlockedReasonAsync(int playerObjectId, int blockedPlayerObjectId, string reason, CancellationToken cancellationToken = default);
 }
 
+public sealed record SocialPlayerInfo(int ObjectId, string Name);
+
 public sealed class EmptySocialRepository : ISocialRepository
 {
+	public Task<SocialPlayerInfo?> LoadPlayerByNameAsync(string playerName, CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult<SocialPlayerInfo?>(null);
+	}
+
+	public Task<bool> AddBlockedUserAsync(
+		int playerObjectId,
+		int blockedPlayerObjectId,
+		string reason,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(false);
+	}
+
 	public Task<bool> DeleteFriendsAsync(int playerObjectId, int friendObjectId, CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(false);
@@ -45,6 +69,71 @@ public sealed class MySqlSocialRepository : ISocialRepository
 	public MySqlSocialRepository(ILogger<MySqlSocialRepository> logger)
 	{
 		_logger = logger;
+	}
+
+	public async Task<SocialPlayerInfo?> LoadPlayerByNameAsync(
+		string playerName,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: services/player/PlayerService.getOrLoadPlayerCommonData(String) backed by PlayerDAO.loadPlayerCommonDataByName.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = """
+				SELECT id, name
+				FROM players
+				WHERE name = ? AND (deletion_date IS NULL OR deletion_date > CURRENT_TIMESTAMP)
+				""";
+			command.Parameters.Add(new MySqlParameter { Value = playerName });
+
+			await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+			if (!await reader.ReadAsync(cancellationToken))
+				return null;
+
+			return new SocialPlayerInfo(
+				ReadInt(reader, "id"),
+				ReadString(reader, "name"));
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not load social player common data for {PlayerName}", playerName);
+			return null;
+		}
+	}
+
+	public async Task<bool> AddBlockedUserAsync(
+		int playerObjectId,
+		int blockedPlayerObjectId,
+		string reason,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/BlockListDAO.addBlockedUser.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = "INSERT INTO blocks (player, blocked_player, reason) VALUES (?, ?, ?)";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = playerObjectId },
+					new MySqlParameter { Value = blockedPlayerObjectId },
+					new MySqlParameter { Value = reason },
+				});
+			return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(
+				ex,
+				"Could not add blocked user {BlockedPlayerObjectId} for player {PlayerObjectId}",
+				blockedPlayerObjectId,
+				playerObjectId);
+			return false;
+		}
 	}
 
 	public async Task<bool> DeleteFriendsAsync(
@@ -178,5 +267,16 @@ public sealed class MySqlSocialRepository : ISocialRepository
 				blockedPlayerObjectId);
 			return false;
 		}
+	}
+
+	private static int ReadInt(MySqlDataReader reader, string name)
+	{
+		return reader.GetInt32(reader.GetOrdinal(name));
+	}
+
+	private static string ReadString(MySqlDataReader reader, string name)
+	{
+		var ordinal = reader.GetOrdinal(name);
+		return reader.IsDBNull(ordinal) ? string.Empty : reader.GetString(ordinal);
 	}
 }

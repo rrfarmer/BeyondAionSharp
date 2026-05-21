@@ -157,6 +157,18 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300897);
 	}
 
+	public static SmSystemMessage BlockListNoBuddy()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_BLOCKLIST_NO_BUDDY.
+		return new SmSystemMessage(1300891);
+	}
+
+	public static SmSystemMessage BlockListAlreadyBlocked()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_BLOCKLIST_ALREADY_BLOCKED.
+		return new SmSystemMessage(1300894);
+	}
+
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.writeImpl.

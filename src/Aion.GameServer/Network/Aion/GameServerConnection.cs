@@ -29,6 +29,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private const int MailboxStorageId = 127;
 	private const int KinahItemId = 182400001;
 	private const int FirstAvailableSlot = 65535;
+	private const int MaxBlockedUsers = 100;
 	private static readonly TimeSpan ClientPingInterval = TimeSpan.FromMilliseconds(180000);
 	private readonly GamePacketProcessor<string> _packetProcessor;
 	private readonly GameCrypt _crypt;
@@ -524,6 +525,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleReadExpressMailAsync(_activePlayer, readExpressMail);
 				break;
+			case CmBlockAdd blockAdd:
+				if (_activePlayer != null)
+					await HandleBlockAddAsync(_activePlayer, blockAdd);
+				break;
 			case CmChatAuth chatAuth:
 				if (_activePlayer != null)
 					await HandleChatAuthAsync(_activePlayer, chatAuth);
@@ -838,6 +843,52 @@ public sealed class GameServerConnection : BaseClientConnection
 			token => SendPacketAsync(new SmChatInit(token)));
 	}
 
+	private async Task HandleBlockAddAsync(Player player, CmBlockAdd packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_BLOCK_ADD.runImpl -> SocialService.addBlockedUser.
+		var targetName = ConvertCharacterName(packet.TargetName);
+		var target = await _socialRepository.LoadPlayerByNameAsync(targetName);
+
+		if (string.Equals(player.Name, packet.TargetName, StringComparison.OrdinalIgnoreCase))
+		{
+			await SendPacketAsync(new SmBlockResponse(SmBlockResponse.CantBlockSelf, packet.TargetName));
+			return;
+		}
+
+		if (player.BlockedUsers.Count >= MaxBlockedUsers)
+		{
+			await SendPacketAsync(new SmBlockResponse(SmBlockResponse.ListFull, packet.TargetName));
+			return;
+		}
+
+		if (target == null)
+		{
+			await SendPacketAsync(new SmBlockResponse(SmBlockResponse.TargetNotFound, packet.TargetName));
+			return;
+		}
+
+		if (player.Friends.Any(friend => friend.ObjectId == target.ObjectId))
+		{
+			await SendPacketAsync(SmSystemMessage.BlockListNoBuddy());
+			return;
+		}
+
+		if (player.BlockedUsers.Any(blockedUser => blockedUser.ObjectId == target.ObjectId))
+		{
+			await SendPacketAsync(SmSystemMessage.BlockListAlreadyBlocked());
+			return;
+		}
+
+		if (!await _socialRepository.AddBlockedUserAsync(player.ObjectId, target.ObjectId, packet.Reason))
+			return;
+
+		player.BlockedUsers = player.BlockedUsers
+			.Concat([new PlayerBlockedUser(target.ObjectId, target.Name, packet.Reason)])
+			.ToArray();
+		await SendPacketAsync(new SmBlockList(player.BlockedUsers));
+		await SendPacketAsync(new SmBlockResponse(SmBlockResponse.BlockSuccessful, target.Name));
+	}
+
 	private async Task HandleFriendDeleteAsync(Player player, CmFriendDelete packet)
 	{
 		// Java parity: network/aion/clientpackets/CM_FRIEND_DEL.runImpl -> SocialService.deleteFriend.
@@ -975,6 +1026,15 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (normalized.Length == 0)
 			return string.Empty;
 		return char.ToUpperInvariant(normalized[0]) + normalized[1..].ToLowerInvariant();
+	}
+
+	private static string ConvertCharacterName(string name)
+	{
+		// Java parity: utils/Util.convertName with default NameConfig.ALLOW_CUSTOM_NAMES=false behavior.
+		var normalized = name.Trim();
+		return normalized.Length == 0
+			? string.Empty
+			: char.ToUpperInvariant(normalized[0]) + normalized[1..].ToLowerInvariant();
 	}
 
 	private async Task HandleQuitAsync(CmQuit packet)
