@@ -13,6 +13,8 @@ public sealed class GameServerOptions
 
 	public GeoDataOptions GeoData { get; init; } = new();
 
+	public GameServerHousingOptions Housing { get; init; } = new();
+
 	public GameServerCustomOptions Custom { get; init; } = new();
 
 	public CleaningOptions Cleaning { get; init; } = new();
@@ -95,6 +97,16 @@ public sealed class GameServerOptions
 				MaterialsEnabled = GetBoolWithEnvironment(loader, "gameserver.geodata.materials.enable", true),
 				MaterialsShowDetails = GetBoolWithEnvironment(loader, "gameserver.geodata.materials.showdetails", false),
 				ShieldsEnabled = GetBoolWithEnvironment(loader, "gameserver.geodata.shields.enable", true),
+			},
+			Housing = new GameServerHousingOptions
+			{
+				AuctionsEnabled = GetBoolWithEnvironment(loader, "gameserver.housing.auction.enable", true),
+				PayEnabled = GetBoolWithEnvironment(loader, "gameserver.housing.pay.enable", true),
+				AuctionEndTime = GetWithEnvironment(loader, "gameserver.housing.auction.end_time", "0 0 12 ? * SUN"),
+				AuctionRegisterDays = GetIntListWithEnvironment(loader, "gameserver.housing.auction.register_days", "1, 5"),
+				AuctionRegistrationFeePercent = GetFloatWithEnvironment(loader, "gameserver.housing.auction.registration_fee", 0.3f),
+				AuctionSalesCommissionPercent = GetFloatWithEnvironment(loader, "gameserver.housing.auction.sales_commission", 0.1f),
+				AuctionBidStepLimit = GetFloatWithEnvironment(loader, "gameserver.housing.auction.steplimit", 100f),
 			},
 			Custom = new GameServerCustomOptions
 			{
@@ -290,6 +302,14 @@ public sealed class GameServerOptions
 		return value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
 			.Select(v => int.Parse(v, CultureInfo.InvariantCulture))
 			.ToHashSet();
+	}
+
+	private static IReadOnlyList<int> GetIntListWithEnvironment(ConfigLoader loader, string key, string defaultValue)
+	{
+		var value = GetWithEnvironment(loader, key, defaultValue);
+		return value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+			.Select(v => int.Parse(v, CultureInfo.InvariantCulture))
+			.ToArray();
 	}
 
 	private static IReadOnlyList<string> GetStringListWithEnvironment(ConfigLoader loader, string key, string defaultValue)
@@ -523,6 +543,23 @@ public sealed class GeoDataOptions
 	public bool MaterialsShowDetails { get; init; }
 
 	public bool ShieldsEnabled { get; init; } = true;
+}
+
+public sealed class GameServerHousingOptions
+{
+	public bool AuctionsEnabled { get; init; } = true;
+
+	public bool PayEnabled { get; init; } = true;
+
+	public string AuctionEndTime { get; init; } = "0 0 12 ? * SUN";
+
+	public IReadOnlyList<int> AuctionRegisterDays { get; init; } = [1, 5];
+
+	public float AuctionRegistrationFeePercent { get; init; } = 0.3f;
+
+	public float AuctionSalesCommissionPercent { get; init; } = 0.1f;
+
+	public float AuctionBidStepLimit { get; init; } = 100f;
 }
 
 public sealed class GameServerCustomOptions

@@ -30,7 +30,6 @@ public sealed class GameServerConnection : BaseClientConnection
 	private const int KinahItemId = 182400001;
 	private const int FirstAvailableSlot = 65535;
 	private const int MaxBlockedUsers = 100;
-	private const double HousingAuctionRegistrationFeePercent = 0.3d;
 	private static readonly TimeSpan ClientPingInterval = TimeSpan.FromMilliseconds(180000);
 	private readonly GamePacketProcessor<string> _packetProcessor;
 	private readonly GameCrypt _crypt;
@@ -1605,7 +1604,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private async Task HandleRegisterHouseAsync(Player player, CmRegisterHouse packet)
 	{
 		// Java parity: network/aion/clientpackets/CM_REGISTER_HOUSE.runImpl.
-		if (!IsHouseAuctionRegistrationAllowed() || packet.BidKinah <= 0)
+		if (!IsHouseAuctionRegistrationAllowed(_options.Housing) || packet.BidKinah <= 0)
 		{
 			await SendPacketAsync(SmSystemMessage.HousingCantAuctionTimeout());
 			return;
@@ -1616,13 +1615,13 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (activeHouse == null)
 			return;
 
-		if (!IsHouseFeePaid(activeHouse))
+		if (_options.Housing.PayEnabled && !IsHouseFeePaid(activeHouse))
 		{
 			await SendPacketAsync(SmSystemMessage.HousingCantAuctionOverdue());
 			return;
 		}
 
-		var fee = (long)(packet.BidKinah * HousingAuctionRegistrationFeePercent);
+		var fee = (long)(packet.BidKinah * _options.Housing.AuctionRegistrationFeePercent);
 		var kinahItem = player.InventoryItems.FirstOrDefault(item => item.ItemId == KinahItemId && item.Location == CubeStorageId);
 		if (kinahItem == null || kinahItem.Count < fee)
 		{
@@ -1675,11 +1674,20 @@ public sealed class GameServerConnection : BaseClientConnection
 		return null;
 	}
 
-	private static bool IsHouseAuctionRegistrationAllowed()
+	private static bool IsHouseAuctionRegistrationAllowed(GameServerHousingOptions housingOptions)
 	{
-		// Java parity: HousingBidService.isRegisteringAllowed with default Monday-Friday registration window.
-		var today = DateTime.Now.DayOfWeek;
-		return today is DayOfWeek.Monday or DayOfWeek.Tuesday or DayOfWeek.Wednesday or DayOfWeek.Thursday or DayOfWeek.Friday;
+		// Java parity: HousingBidService.isRegisteringAllowed.
+		if (!housingOptions.AuctionsEnabled)
+			return false;
+		if (housingOptions.AuctionRegisterDays.Count < 2)
+			return true;
+
+		var today = DateTime.Now.DayOfWeek == DayOfWeek.Sunday ? 7 : (int)DateTime.Now.DayOfWeek;
+		var from = housingOptions.AuctionRegisterDays[0];
+		var to = housingOptions.AuctionRegisterDays[1];
+		return from > to
+			? from <= today || to >= today
+			: from <= today && to >= today;
 	}
 
 	private static bool IsHouseFeePaid(PlayerHouse house)

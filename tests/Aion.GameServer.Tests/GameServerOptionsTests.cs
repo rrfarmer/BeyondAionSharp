@@ -45,6 +45,14 @@ public class GameServerOptionsTests
 		Assert.True(options.GeoData.MaterialsEnabled);
 		Assert.False(options.GeoData.MaterialsShowDetails);
 
+		Assert.True(options.Housing.AuctionsEnabled);
+		Assert.True(options.Housing.PayEnabled);
+		Assert.Equal("0 0 12 ? * SUN", options.Housing.AuctionEndTime);
+		Assert.Equal([1, 5], options.Housing.AuctionRegisterDays);
+		Assert.Equal(0.3f, options.Housing.AuctionRegistrationFeePercent, 0.001f);
+		Assert.Equal(0.1f, options.Housing.AuctionSalesCommissionPercent, 0.001f);
+		Assert.Equal(100f, options.Housing.AuctionBidStepLimit, 0.001f);
+
 		Assert.True(options.Custom.ChallengeTasksEnabled);
 		Assert.True(options.Custom.EnableEnchantAnnounce);
 		Assert.False(options.Custom.SpeakingBetweenFactions);
