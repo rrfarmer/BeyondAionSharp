@@ -45,6 +45,13 @@ public interface IHouseAuctionRepository
 		DateTime nextPay,
 		InventoryItem kinahItem,
 		CancellationToken cancellationToken = default);
+
+	Task<bool> UpdateHouseSettingsAsync(
+		int playerObjectId,
+		int houseObjectId,
+		int settings,
+		string? signNotice,
+		CancellationToken cancellationToken = default);
 }
 
 public enum HouseAuctionRegistrationResult
@@ -103,6 +110,16 @@ public sealed class EmptyHouseAuctionRepository : IHouseAuctionRepository
 		int houseObjectId,
 		DateTime nextPay,
 		InventoryItem kinahItem,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(false);
+	}
+
+	public Task<bool> UpdateHouseSettingsAsync(
+		int playerObjectId,
+		int houseObjectId,
+		int settings,
+		string? signNotice,
 		CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(false);
@@ -286,6 +303,37 @@ public sealed class MySqlHouseAuctionRepository : IHouseAuctionRepository
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not pay rent for house {HouseObjectId} by player {PlayerObjectId}", houseObjectId, playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> UpdateHouseSettingsAsync(
+		int playerObjectId,
+		int houseObjectId,
+		int settings,
+		string? signNotice,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: CM_HOUSE_SETTINGS mutates House permissions/sign notice; House.save stores settings/sign_notice.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = "UPDATE houses SET settings = ?, sign_notice = ? WHERE id = ? AND player_id = ?";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = settings },
+					new MySqlParameter { Value = (object?)signNotice ?? DBNull.Value },
+					new MySqlParameter { Value = houseObjectId },
+					new MySqlParameter { Value = playerObjectId },
+				});
+			return await command.ExecuteNonQueryAsync(cancellationToken) == 1;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not update settings for house {HouseObjectId} by player {PlayerObjectId}", houseObjectId, playerObjectId);
 			return false;
 		}
 	}

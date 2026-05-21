@@ -235,6 +235,24 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1401445);
 	}
 
+	public static SmSystemMessage HousingOrderOpenDoor()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_ORDER_OPEN_DOOR.
+		return new SmSystemMessage(1401379);
+	}
+
+	public static SmSystemMessage HousingOrderCloseDoorWithoutFriends()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_ORDER_CLOSE_DOOR_WITHOUT_FRIENDS.
+		return new SmSystemMessage(1401380);
+	}
+
+	public static SmSystemMessage HousingOrderCloseDoorAll()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_ORDER_CLOSE_DOOR_ALL.
+		return new SmSystemMessage(1401381);
+	}
+
 	public static SmSystemMessage NoSuchUser(string playerName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_NO_SUCH_USER.

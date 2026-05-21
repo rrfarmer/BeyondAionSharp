@@ -993,7 +993,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			await connection.OpenAsync(cancellationToken);
 			await using var command = connection.CreateCommand();
 			command.CommandText = """
-				SELECT id, address, building_id, acquire_time, next_pay
+				SELECT id, address, building_id, acquire_time, next_pay, settings, sign_notice
 				FROM houses
 				WHERE player_id = ?
 				ORDER BY acquire_time, address
@@ -1011,7 +1011,10 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 						ReadInt(reader, "building_id"),
 						ReadDateTime(reader, "acquire_time"),
 						ReadDateTime(reader, "next_pay"),
-						IsInactive: false));
+						IsInactive: false,
+						PlayerHouse.GetDoorStateFromSettings(ReadInt(reader, "settings")),
+						PlayerHouse.GetShowOwnerNameFromSettings(ReadInt(reader, "settings")),
+						ReadString(reader, "sign_notice")));
 			}
 
 			var studio = houses.FirstOrDefault(IsStudioAddress);

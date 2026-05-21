@@ -293,6 +293,10 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmChatGroupInfo chatGroupInfo:
 				await HandleChatGroupInfoAsync(chatGroupInfo);
 				break;
+			case CmHouseSettings houseSettings:
+				if (_activePlayer != null)
+					await HandleHouseSettingsAsync(_activePlayer, houseSettings);
+				break;
 			case CmMarkFriendList:
 				if (_activePlayer != null)
 				{
@@ -1839,6 +1843,55 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (staticData?.ItemTemplates.GetItemTemplate(KinahItemId) is { } kinahTemplate)
 			await SendPacketAsync(new SmInventoryUpdateItem(kinahUpdate, kinahTemplate, SmInventoryUpdateItem.DecreaseKinahBuy));
 		await SendPacketAsync(new SmHousePayRent(packet.WeekCount));
+	}
+
+	private async Task HandleHouseSettingsAsync(Player player, CmHouseSettings packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_HOUSE_SETTINGS.runImpl.
+		var activeHouse = player.Houses.FirstOrDefault(house => !house.IsInactive);
+		if (activeHouse == null)
+			return;
+
+		var signNotice = packet.SignNotice.Length > PlayerHouse.SignNoticeMaxLength
+			? packet.SignNotice[..PlayerHouse.SignNoticeMaxLength]
+			: packet.SignNotice;
+		var hasValidDoorState = PlayerHouse.IsKnownDoorState(packet.DoorState);
+		var doorState = hasValidDoorState ? packet.DoorState : activeHouse.DoorState;
+		var updatedHouse = activeHouse with
+		{
+			DoorState = doorState,
+			ShowOwnerName = packet.ShowOwnerName,
+			SignNotice = signNotice,
+		};
+
+		player.Houses = player.Houses
+			.Select(house => house.ObjectId == activeHouse.ObjectId ? updatedHouse : house)
+			.ToArray();
+
+		// Java dirty-saves this through House.save during periodic player saves; persist immediately until that scheduler is ported.
+		var saved = await _houseAuctionRepository.UpdateHouseSettingsAsync(
+			player.ObjectId,
+			activeHouse.ObjectId,
+			PlayerHouse.CreateSettings(doorState, packet.ShowOwnerName),
+			signNotice);
+		if (!saved)
+		{
+			_logger.LogWarning(
+				"House settings update for house {HouseObjectId} by player {PlayerObjectId} was not persisted",
+				activeHouse.ObjectId,
+				player.ObjectId);
+		}
+
+		await SendPacketAsync(new SmHouseAcquire(player.ObjectId, activeHouse.AddressId, acquire: true));
+
+		if (!hasValidDoorState)
+			return;
+		if (doorState == PlayerHouse.DoorOpen)
+			await SendPacketAsync(SmSystemMessage.HousingOrderOpenDoor());
+		else if (doorState == PlayerHouse.DoorClosedExceptFriends)
+			await SendPacketAsync(SmSystemMessage.HousingOrderCloseDoorWithoutFriends());
+		else if (doorState == PlayerHouse.DoorClosed)
+			await SendPacketAsync(SmSystemMessage.HousingOrderCloseDoorAll());
 	}
 
 	private async Task<bool> CanOwnHouseForAuctionAsync(Player player)

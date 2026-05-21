@@ -476,6 +476,9 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.HousingAuctionMyHouse(6001), 1401268, "6001");
 		AssertSystemMessage(SmSystemMessage.HousingAuctionAlreadyRegistered(), 1401372);
 		AssertSystemMessage(SmSystemMessage.HousingFeeFree(), 1401445);
+		AssertSystemMessage(SmSystemMessage.HousingOrderOpenDoor(), 1401379);
+		AssertSystemMessage(SmSystemMessage.HousingOrderCloseDoorWithoutFriends(), 1401380);
+		AssertSystemMessage(SmSystemMessage.HousingOrderCloseDoorAll(), 1401381);
 
 		var attachmentStatePayload = SerializeUnencryptedPayload(SmMailService.CreateAttachmentState(letterId: 123, attachmentType: 1));
 		using var attachmentStateReader = new PacketBuffer(attachmentStatePayload);
@@ -737,6 +740,13 @@ public class GamePacketTests
 		Assert.Equal(
 			Convert.FromHexString("0002"),
 			SerializeUnencryptedPayload(new SmHousePayRent(2)));
+		var houseAcquirePayload = SerializeUnencryptedPayload(new SmHouseAcquire(1001, 6001, acquire: true));
+		using var houseAcquireReader = new PacketBuffer(houseAcquirePayload);
+		Assert.Equal(1001, houseAcquireReader.ReadD());
+		Assert.Equal(6001, houseAcquireReader.ReadD());
+		Assert.Equal(1, houseAcquireReader.ReadD());
+		Assert.Equal(0, houseAcquireReader.Remaining);
+
 		var emptyHouseBidsPayload = SerializeUnencryptedPayload(SmHouseBids.CreateEmpty());
 		using var emptyHouseBidsReader = new PacketBuffer(emptyHouseBidsPayload);
 		Assert.Equal(1, (int)emptyHouseBidsReader.ReadC());
@@ -2079,6 +2089,13 @@ public class GamePacketTests
 	[Fact]
 	public void ClientPacketFactory_ParsesHousingAuctionPackets()
 	{
+		var houseSettings = Assert.IsType<CmHouseSettings>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(73, b =>
+			{
+				b.WriteC(PlayerHouse.DoorClosedExceptFriends);
+				b.WriteC(0);
+				b.WriteS("Visitors welcome");
+			}), GameConnectionState.InGame));
 		Assert.IsType<CmGetHouseBids>(
 			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(218, _ => { }), GameConnectionState.InGame));
 		var registerHouse = Assert.IsType<CmRegisterHouse>(
@@ -2096,11 +2113,15 @@ public class GamePacketTests
 		var payRent = Assert.IsType<CmHousePayRent>(
 			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(223, b => b.WriteC(2)), GameConnectionState.InGame));
 
+		Assert.Equal(PlayerHouse.DoorClosedExceptFriends, houseSettings.DoorState);
+		Assert.False(houseSettings.ShowOwnerName);
+		Assert.Equal("Visitors welcome", houseSettings.SignNotice);
 		Assert.Equal(500000, registerHouse.BidKinah);
 		Assert.Equal(100000, registerHouse.ClientFixedValue);
 		Assert.Equal(12, placeBid.ListIndex);
 		Assert.Equal(750000, placeBid.BidOffer);
 		Assert.Equal(2, payRent.WeekCount);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(73, _ => { }), GameConnectionState.Authed));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(218, _ => { }), GameConnectionState.Authed));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(223, b => b.WriteC(1)), GameConnectionState.Authed));
 	}
