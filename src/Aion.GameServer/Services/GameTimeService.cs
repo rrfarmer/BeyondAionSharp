@@ -1,5 +1,7 @@
 using Aion.GameServer.Model;
 using Aion.GameServer.Data;
+using Aion.GameServer.Network.Aion;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
 using Microsoft.Extensions.Logging;
 
@@ -24,6 +26,7 @@ public sealed class GameTimeService : GameEngine
 	private int _gameMinutes;
 	private Task? _clockTask;
 	private Task? _saveTask;
+	private Func<GameServerPacket, CancellationToken, Task<int>>? _broadcastToWorld;
 
 	public GameTimeService(ILogger<GameTimeService> logger, ThreadPoolManager threadPoolManager)
 		: this(logger, threadPoolManager, null, DefaultTickDelay, DefaultTickPeriod, DefaultSaveDelay, DefaultSavePeriod)
@@ -67,6 +70,12 @@ public sealed class GameTimeService : GameEngine
 
 	public int GameMinutes => Volatile.Read(ref _gameMinutes);
 
+	public void SetWorldBroadcaster(Func<GameServerPacket, CancellationToken, Task<int>> broadcastToWorld)
+	{
+		// Java parity: PacketSendUtility.broadcastToWorld hook used by GameTimeService periodic update.
+		_broadcastToWorld = broadcastToWorld;
+	}
+
 	public async ValueTask InitAsync(CancellationToken cancellationToken = default)
 	{
 		// Java parity: services/GameTimeService init during GameServer bootstrap.
@@ -98,8 +107,15 @@ public sealed class GameTimeService : GameEngine
 		if (_serverVariablesRepository != null)
 		{
 			_saveTask = _threadPoolManager.ScheduleAtFixedRate(
-				async _ =>
+				async cancellationToken =>
 				{
+					var broadcastToWorld = _broadcastToWorld;
+					if (broadcastToWorld != null)
+					{
+						_logger.LogInformation("Sending current game time to all players");
+						await broadcastToWorld(new SmGameTime(GameMinutes), cancellationToken);
+					}
+
 					if (await SaveGameTimeAsync())
 						_logger.LogInformation("Game time saved...");
 					else

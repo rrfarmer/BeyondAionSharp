@@ -2,6 +2,7 @@ using Aion.GameServer.Data;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Dataholders.LoadingUtils;
 using Aion.GameServer.Model;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.IdFactory;
@@ -81,6 +82,8 @@ public sealed class GameServerBootstrapTests
 	{
 		await using var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
 		var repository = new TrackingServerVariablesRepository { LoadedInt = 42 };
+		var broadcastCount = 0;
+		SmGameTime? lastBroadcast = null;
 		var gameTime = new GameTimeService(
 			NullLogger<GameTimeService>.Instance,
 			threadPoolManager,
@@ -89,15 +92,23 @@ public sealed class GameServerBootstrapTests
 			TimeSpan.FromMilliseconds(5),
 			TimeSpan.FromMilliseconds(25),
 			TimeSpan.FromMilliseconds(25));
+		gameTime.SetWorldBroadcaster(
+			(packet, _) =>
+			{
+				Interlocked.Increment(ref broadcastCount);
+				lastBroadcast = Assert.IsType<SmGameTime>(packet);
+				return Task.FromResult(0);
+			});
 
 		await gameTime.InitAsync(CancellationToken.None);
 		gameTime.StartClock();
-		await WaitUntilAsync(() => repository.StoreCalls > 0);
+		await WaitUntilAsync(() => repository.StoreCalls > 0 && Volatile.Read(ref broadcastCount) > 0);
 		await gameTime.ShutdownAsync(CancellationToken.None);
 
 		Assert.True(repository.LoadIntCalled);
 		Assert.True(repository.StoredValues.TryGetValue("time", out var storedTime));
 		Assert.True(int.Parse(storedTime!) >= 42);
+		Assert.NotNull(lastBroadcast);
 	}
 
 	[Fact]

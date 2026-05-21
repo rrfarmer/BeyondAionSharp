@@ -13,6 +13,8 @@ public interface IGameClientConnectionRegistry
 
 	Task<bool> SendPacketToPlayerAsync(int playerObjectId, GameServerPacket packet);
 
+	Task<int> BroadcastToWorldAsync(GameServerPacket packet, Func<Player, bool>? filter = null);
+
 	Task<int> BroadcastToVisiblePlayersAsync(
 		WorldPosition sourcePosition,
 		int sourceObjectId,

@@ -84,6 +84,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		_motionRepository = motionRepository;
 		_idFactory = idFactory;
 		_gameTimeService = gameTimeService;
+		_gameTimeService?.SetWorldBroadcaster((packet, _) => BroadcastToWorldAsync(packet));
 		_world = world;
 	}
 
@@ -177,6 +178,25 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 
 		await connection.SendPacketAsync(packet);
 		return true;
+	}
+
+	public async Task<int> BroadcastToWorldAsync(GameServerPacket packet, Func<Player, bool>? filter = null)
+	{
+		// Java parity: utils/PacketSendUtility.broadcastToWorld.
+		var sent = 0;
+		foreach (var connection in _playerConnections.Values)
+		{
+			var player = connection.ActivePlayer;
+			if (player == null)
+				continue;
+			if (filter != null && !filter(player))
+				continue;
+
+			await connection.SendPacketAsync(packet);
+			sent++;
+		}
+
+		return sent;
 	}
 
 	public async Task<int> BroadcastToVisiblePlayersAsync(
