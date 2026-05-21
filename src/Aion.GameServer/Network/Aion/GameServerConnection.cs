@@ -565,6 +565,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandlePlaceBidAsync(_activePlayer, placeBid);
 				break;
+			case CmHousePayRent housePayRent:
+				if (_activePlayer != null)
+					await HandleHousePayRentAsync(_activePlayer, housePayRent);
+				break;
 			case CmShowFriendList:
 				if (_activePlayer != null)
 				{
@@ -1791,6 +1795,52 @@ public sealed class GameServerConnection : BaseClientConnection
 		await SendPacketAsync(new SmReceiveBids(0));
 	}
 
+	private async Task HandleHousePayRentAsync(Player player, CmHousePayRent packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_HOUSE_PAY_RENT.runImpl.
+		var activeHouse = player.Houses.FirstOrDefault(house => !house.IsInactive);
+		if (activeHouse == null)
+			return;
+
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var maintenanceFee = staticData?.HousingTemplates.GetAddress(activeHouse.AddressId)?.MaintenanceFee ?? 0;
+		var cost = _options.Housing.PayEnabled ? maintenanceFee * packet.WeekCount : 0;
+		if (cost <= 0)
+		{
+			await SendPacketAsync(SmSystemMessage.HousingFeeFree());
+			return;
+		}
+
+		var kinahItem = player.InventoryItems.FirstOrDefault(item => item.ItemId == KinahItemId && item.Location == CubeStorageId);
+		if (kinahItem == null || kinahItem.Count < cost)
+		{
+			await SendPacketAsync(SmSystemMessage.NotEnoughMoney());
+			return;
+		}
+
+		var nextPay = activeHouse.NextPay ?? GetNextHousingMaintenanceRun();
+		for (var counter = 0; counter < packet.WeekCount; counter++)
+			nextPay = GetNextHousingMaintenanceRunAfter(nextPay);
+
+		if (GetPaidHousingMaintenanceWeeks(nextPay) > 4)
+			return;
+
+		var kinahUpdate = CopyInventoryItem(kinahItem, count: kinahItem.Count - cost);
+		if (!await _houseAuctionRepository.PayHouseRentAsync(player.ObjectId, activeHouse.ObjectId, nextPay, kinahUpdate))
+			return;
+
+		player.InventoryItems = player.InventoryItems
+			.Select(item => item.ObjectId == kinahUpdate.ObjectId ? kinahUpdate : item)
+			.ToArray();
+		player.Houses = player.Houses
+			.Select(house => house.ObjectId == activeHouse.ObjectId ? house with { NextPay = nextPay } : house)
+			.ToArray();
+
+		if (staticData?.ItemTemplates.GetItemTemplate(KinahItemId) is { } kinahTemplate)
+			await SendPacketAsync(new SmInventoryUpdateItem(kinahUpdate, kinahTemplate, SmInventoryUpdateItem.DecreaseKinahBuy));
+		await SendPacketAsync(new SmHousePayRent(packet.WeekCount));
+	}
+
 	private async Task<bool> CanOwnHouseForAuctionAsync(Player player)
 	{
 		// Java parity: services/HousingService.canOwnHouse(player, true) quest gate.
@@ -1838,6 +1888,29 @@ public sealed class GameServerConnection : BaseClientConnection
 		// Java parity: HousingBidService.isBiddingTime default Sunday-noon cutoff; prolongation state is not ported yet.
 		var now = DateTime.Now;
 		return now.DayOfWeek != DayOfWeek.Sunday || now.Hour < 12;
+	}
+
+	private static DateTime GetNextHousingMaintenanceRun()
+	{
+		// Java parity: MaintenanceTask default HOUSE_MAINTENANCE_TIME cron (Monday midnight).
+		return GetNextHousingMaintenanceRunAfter(DateTime.Now);
+	}
+
+	private static DateTime GetNextHousingMaintenanceRunAfter(DateTime date)
+	{
+		// Java parity: AbstractCronTask.getNextRunAfter for HousingConfig.HOUSE_MAINTENANCE_TIME default.
+		var next = date.Date;
+		var daysUntilMonday = ((int)DayOfWeek.Monday - (int)next.DayOfWeek + 7) % 7;
+		next = next.AddDays(daysUntilMonday);
+		if (next <= date)
+			next = next.AddDays(7);
+		return next;
+	}
+
+	private static long GetPaidHousingMaintenanceWeeks(DateTime nextPay)
+	{
+		// Java parity: ChronoUnit.WEEKS between ServerTime.now().with(LocalTime.MIDNIGHT) and nextPay.
+		return (nextPay.Date - DateTime.Now.Date).Days / 7;
 	}
 
 	private int GetPlayerLevel(Player player)

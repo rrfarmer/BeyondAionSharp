@@ -229,6 +229,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1401372);
 	}
 
+	public static SmSystemMessage HousingFeeFree()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_F2P_CASH_HOUSE_FEE_FREE.
+		return new SmSystemMessage(1401445);
+	}
+
 	public static SmSystemMessage NoSuchUser(string playerName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_NO_SUCH_USER.

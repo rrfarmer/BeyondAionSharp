@@ -49,6 +49,7 @@ public class GameServerOptionsTests
 		Assert.True(options.Housing.PayEnabled);
 		Assert.Equal("0 0 12 ? * SUN", options.Housing.AuctionEndTime);
 		Assert.Equal([1, 5], options.Housing.AuctionRegisterDays);
+		Assert.Equal("0 0 0 ? * MON", options.Housing.MaintenanceTime);
 		Assert.Equal(0.3f, options.Housing.AuctionRegistrationFeePercent, 0.001f);
 		Assert.Equal(0.1f, options.Housing.AuctionSalesCommissionPercent, 0.001f);
 		Assert.Equal(100f, options.Housing.AuctionBidStepLimit, 0.001f);

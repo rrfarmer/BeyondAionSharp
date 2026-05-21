@@ -38,6 +38,13 @@ public interface IHouseAuctionRepository
 		DateTime bidTime,
 		HousingTemplateTable? housingTemplates,
 		CancellationToken cancellationToken = default);
+
+	Task<bool> PayHouseRentAsync(
+		int playerObjectId,
+		int houseObjectId,
+		DateTime nextPay,
+		InventoryItem kinahItem,
+		CancellationToken cancellationToken = default);
 }
 
 public enum HouseAuctionRegistrationResult
@@ -89,6 +96,16 @@ public sealed class EmptyHouseAuctionRepository : IHouseAuctionRepository
 		CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(new HouseAuctionPlaceBidResult(HouseAuctionPlaceBidStatus.Failed));
+	}
+
+	public Task<bool> PayHouseRentAsync(
+		int playerObjectId,
+		int houseObjectId,
+		DateTime nextPay,
+		InventoryItem kinahItem,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(false);
 	}
 }
 
@@ -241,6 +258,35 @@ public sealed class MySqlHouseAuctionRepository : IHouseAuctionRepository
 		{
 			_logger.LogError(ex, "Could not place house bid for player {PlayerObjectId} and list index {ListIndex}", playerObjectId, listIndex);
 			return new HouseAuctionPlaceBidResult(HouseAuctionPlaceBidStatus.Failed);
+		}
+	}
+
+	public async Task<bool> PayHouseRentAsync(
+		int playerObjectId,
+		int houseObjectId,
+		DateTime nextPay,
+		InventoryItem kinahItem,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: CM_HOUSE_PAY_RENT persists House.nextPay and Storage.decreaseKinah.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			if (!await UpdateKinahAsync(connection, transaction, kinahItem, cancellationToken))
+				return false;
+			if (!await UpdateHouseNextPayAsync(connection, transaction, playerObjectId, houseObjectId, nextPay, cancellationToken))
+				return false;
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not pay rent for house {HouseObjectId} by player {PlayerObjectId}", houseObjectId, playerObjectId);
+			return false;
 		}
 	}
 
@@ -441,6 +487,28 @@ public sealed class MySqlHouseAuctionRepository : IHouseAuctionRepository
 				new MySqlParameter { Value = bidTime },
 			});
 		await command.ExecuteNonQueryAsync(cancellationToken);
+	}
+
+	private static async Task<bool> UpdateHouseNextPayAsync(
+		DbConnection connection,
+		DbTransaction transaction,
+		int playerObjectId,
+		int houseObjectId,
+		DateTime nextPay,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: model/house/House.save for the next_pay field after CM_HOUSE_PAY_RENT.
+		await using var command = connection.CreateCommand();
+		command.Transaction = transaction;
+		command.CommandText = "UPDATE houses SET next_pay = ? WHERE id = ? AND player_id = ?";
+		command.Parameters.AddRange(
+			new[]
+			{
+				new MySqlParameter { Value = nextPay },
+				new MySqlParameter { Value = houseObjectId },
+				new MySqlParameter { Value = playerObjectId },
+			});
+		return await command.ExecuteNonQueryAsync(cancellationToken) == 1;
 	}
 
 	private static async Task<PlayerMail?> TryCreatePreviousBidRefundMailAsync(

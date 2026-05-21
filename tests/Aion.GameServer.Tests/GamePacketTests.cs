@@ -475,6 +475,7 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.HousingCantAuctionOverdue(), 1401317);
 		AssertSystemMessage(SmSystemMessage.HousingAuctionMyHouse(6001), 1401268, "6001");
 		AssertSystemMessage(SmSystemMessage.HousingAuctionAlreadyRegistered(), 1401372);
+		AssertSystemMessage(SmSystemMessage.HousingFeeFree(), 1401445);
 
 		var attachmentStatePayload = SerializeUnencryptedPayload(SmMailService.CreateAttachmentState(letterId: 123, attachmentType: 1));
 		using var attachmentStateReader = new PacketBuffer(attachmentStatePayload);
@@ -733,6 +734,9 @@ public class GamePacketTests
 		Assert.Equal(
 			Convert.FromHexString("00000000"),
 			SerializeUnencryptedPayload(new SmReceiveBids(0)));
+		Assert.Equal(
+			Convert.FromHexString("0002"),
+			SerializeUnencryptedPayload(new SmHousePayRent(2)));
 		var emptyHouseBidsPayload = SerializeUnencryptedPayload(SmHouseBids.CreateEmpty());
 		using var emptyHouseBidsReader = new PacketBuffer(emptyHouseBidsPayload);
 		Assert.Equal(1, (int)emptyHouseBidsReader.ReadC());
@@ -2089,12 +2093,16 @@ public class GamePacketTests
 				b.WriteD(12);
 				b.WriteQ(750000);
 			}), GameConnectionState.InGame));
+		var payRent = Assert.IsType<CmHousePayRent>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(223, b => b.WriteC(2)), GameConnectionState.InGame));
 
 		Assert.Equal(500000, registerHouse.BidKinah);
 		Assert.Equal(100000, registerHouse.ClientFixedValue);
 		Assert.Equal(12, placeBid.ListIndex);
 		Assert.Equal(750000, placeBid.BidOffer);
+		Assert.Equal(2, payRent.WeekCount);
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(218, _ => { }), GameConnectionState.Authed));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(223, b => b.WriteC(1)), GameConnectionState.Authed));
 	}
 
 	[Fact]

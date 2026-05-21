@@ -94,6 +94,7 @@ public sealed class StaticData
 		var recipeTemplates = new List<RecipeTemplateSummary>();
 		var housingAddresses = new List<HousingAddressSummary>();
 		var housingLandMinLevels = new Dictionary<int, int>();
+		var housingLandMaintenanceFees = new Dictionary<int, long>();
 		var housingBuildings = new List<HousingBuildingSummary>();
 		var instanceCooltimes = new List<InstanceCooltimeSummary>();
 		var skillTree = new List<SkillLearnSummary>();
@@ -207,6 +208,14 @@ public sealed class StaticData
 			{
 				// Java parity: model/templates/housing/Sale.level used as fallback minimum bid level.
 				housingLandMinLevels[currentHousingLandId] = ReadIntAttribute(reader, "level");
+				continue;
+			}
+
+			if (reader.Depth == 3 && reader.LocalName == "fee" && currentHousingLandId != 0)
+			{
+				// Java parity: model/templates/housing/HousingLand.maintenanceFee used by CM_HOUSE_PAY_RENT.
+				var value = await ReadElementTextAsync(reader, cancellationToken);
+				housingLandMaintenanceFees[currentHousingLandId] = long.TryParse(value, out var parsedFee) ? parsedFee : 0;
 				continue;
 			}
 
@@ -416,7 +425,12 @@ public sealed class StaticData
 			new RecipeTemplateTable(recipeTemplates.AsReadOnly()),
 			new HousingTemplateTable(
 				housingAddresses
-					.Select(address => address with { MinLevel = housingLandMinLevels.GetValueOrDefault(address.LandId) })
+					.Select(
+						address => address with
+						{
+							MinLevel = housingLandMinLevels.GetValueOrDefault(address.LandId),
+							MaintenanceFee = housingLandMaintenanceFees.GetValueOrDefault(address.LandId),
+						})
 					.ToArray(),
 				housingBuildings.AsReadOnly()),
 			new InstanceCooltimeTable(instanceCooltimes.AsReadOnly()),

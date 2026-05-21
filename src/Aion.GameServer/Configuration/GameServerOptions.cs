@@ -104,6 +104,7 @@ public sealed class GameServerOptions
 				PayEnabled = GetBoolWithEnvironment(loader, "gameserver.housing.pay.enable", true),
 				AuctionEndTime = GetWithEnvironment(loader, "gameserver.housing.auction.end_time", "0 0 12 ? * SUN"),
 				AuctionRegisterDays = GetIntListWithEnvironment(loader, "gameserver.housing.auction.register_days", "1, 5"),
+				MaintenanceTime = GetWithEnvironment(loader, "gameserver.housing.maintain.time", "0 0 0 ? * MON"),
 				AuctionRegistrationFeePercent = GetFloatWithEnvironment(loader, "gameserver.housing.auction.registration_fee", 0.3f),
 				AuctionSalesCommissionPercent = GetFloatWithEnvironment(loader, "gameserver.housing.auction.sales_commission", 0.1f),
 				AuctionBidStepLimit = GetFloatWithEnvironment(loader, "gameserver.housing.auction.steplimit", 100f),
@@ -558,6 +559,8 @@ public sealed class GameServerHousingOptions
 	public string AuctionEndTime { get; init; } = "0 0 12 ? * SUN";
 
 	public IReadOnlyList<int> AuctionRegisterDays { get; init; } = [1, 5];
+
+	public string MaintenanceTime { get; init; } = "0 0 0 ? * MON";
 
 	public float AuctionRegistrationFeePercent { get; init; } = 0.3f;
 
