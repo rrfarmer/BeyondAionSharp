@@ -1395,6 +1395,21 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesTargetSelect()
+	{
+		var targetSelect = Assert.IsType<CmTargetSelect>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(31, b =>
+			{
+				b.WriteD(7001);
+				b.WriteC(1);
+			}), GameConnectionState.InGame));
+
+		Assert.Equal(7001, targetSelect.TargetObjectId);
+		Assert.True(targetSelect.SelectTargetOfTarget);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(31, b => b.WriteD(7001)), GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesMovementPackets()
 	{
 		var move = Assert.IsType<CmMove>(

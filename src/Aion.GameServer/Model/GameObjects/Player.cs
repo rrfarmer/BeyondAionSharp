@@ -54,6 +54,9 @@ public sealed class Player
 	// Java parity: controllers/movement/PlayerMoveController state mirrored for CM_MOVE/SM_MOVE.
 	public PlayerMovementState Movement { get; } = new();
 
+	// Java parity: model/gameobjects/VisibleObject target set by network/aion/clientpackets/CM_TARGET_SELECT.
+	public int TargetObjectId { get; set; }
+
 	public IReadOnlyList<InventoryItem> InventoryItems { get; set; } = Array.Empty<InventoryItem>();
 
 	public IReadOnlyList<InventoryItem> WarehouseItems { get; set; } = Array.Empty<InventoryItem>();

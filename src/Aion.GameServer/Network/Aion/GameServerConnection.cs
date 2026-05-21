@@ -246,6 +246,10 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmQuit quit:
 				await HandleQuitAsync(quit);
 				break;
+			case CmTargetSelect targetSelect:
+				if (_activePlayer != null)
+					HandleTargetSelect(_activePlayer, targetSelect);
+				break;
 			case CmMove move:
 				if (_activePlayer != null)
 					await HandleMoveAsync(_activePlayer, move);
@@ -309,6 +313,8 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 				{
 					// Java parity: network/aion/clientpackets/CM_BROKER_LIST.runImpl -> BrokerService.showRequestedItems.
+					if (!IsTargetingBroker(_activePlayer, brokerList.BrokerObjectId, "browse for broker items"))
+						break;
 					_activePlayer.BrokerMaskCache = brokerList.ListMask;
 					_activePlayer.BrokerSortTypeCache = brokerList.SortType;
 					_activePlayer.BrokerStartPageCache = brokerList.Page;
@@ -321,6 +327,8 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 				{
 					// Java parity: network/aion/clientpackets/CM_BROKER_SEARCH.runImpl -> BrokerService.showRequestedItems.
+					if (!IsTargetingBroker(_activePlayer, brokerSearch.BrokerObjectId, "search for items in broker"))
+						break;
 					_activePlayer.BrokerMaskCache = brokerSearch.Mask;
 					_activePlayer.BrokerSortTypeCache = brokerSearch.SortType;
 					_activePlayer.BrokerStartPageCache = brokerSearch.Page;
@@ -331,10 +339,12 @@ public sealed class GameServerConnection : BaseClientConnection
 					await SendPacketAsync(SmBrokerService.CreateSearchedItems(page));
 				}
 				break;
-			case CmBrokerRegistered:
+			case CmBrokerRegistered brokerRegistered:
 				if (_activePlayer != null)
 				{
 					// Java parity: network/aion/clientpackets/CM_BROKER_REGISTERED.runImpl -> BrokerService.showRegisteredItems.
+					if (!IsTargetingBroker(_activePlayer, brokerRegistered.BrokerObjectId, "view registered broker items"))
+						break;
 					var registeredItems = _brokerRepository == null
 						? Array.Empty<PlayerBrokerItem>()
 						: await _brokerRepository.LoadRegisteredItemsAsync(_activePlayer.ObjectId, _activePlayer.Race);
@@ -345,27 +355,29 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 				{
 					// Java parity: network/aion/clientpackets/CM_BROKER_SETTLE_LIST.runImpl -> BrokerService.showSettledItems.
+					if (!IsTargetingBroker(_activePlayer, brokerSettleList.BrokerObjectId, "open broker settled item list"))
+						break;
 					var page = _brokerRepository == null
 						? new PlayerBrokerItemPage(Array.Empty<PlayerBrokerItem>(), 0, brokerSettleList.StartPageIndex, _activePlayer.BrokerSettlements.EarnedKinah)
 						: await _brokerRepository.LoadSettledItemsAsync(_activePlayer.ObjectId, _activePlayer.Race, brokerSettleList.StartPageIndex);
 					await SendPacketAsync(SmBrokerService.CreateSettledItems(page));
 				}
 				break;
-			case CmBrokerCancelRegistered:
-				if (_activePlayer != null)
-					await HandleBrokerCancelRegisteredAsync(_activePlayer, (CmBrokerCancelRegistered)packet);
+			case CmBrokerCancelRegistered brokerCancelRegistered:
+				if (_activePlayer != null && IsTargetingBroker(_activePlayer, brokerCancelRegistered.BrokerObjectId, "unregister broker item"))
+					await HandleBrokerCancelRegisteredAsync(_activePlayer, brokerCancelRegistered);
 				break;
-			case CmBrokerSettleAccount:
-				if (_activePlayer != null)
+			case CmBrokerSettleAccount brokerSettleAccount:
+				if (_activePlayer != null && IsTargetingBroker(_activePlayer, brokerSettleAccount.BrokerObjectId, "collect broker settlement"))
 					await HandleBrokerSettleAccountAsync(_activePlayer);
 				break;
-			case CmRegisterBrokerItem:
-				if (_activePlayer != null)
-					await HandleBrokerRegisterItemAsync(_activePlayer, (CmRegisterBrokerItem)packet);
+			case CmRegisterBrokerItem registerBrokerItem:
+				if (_activePlayer != null && IsTargetingBroker(_activePlayer, registerBrokerItem.BrokerObjectId, "register broker item"))
+					await HandleBrokerRegisterItemAsync(_activePlayer, registerBrokerItem);
 				break;
-			case CmBuyBrokerItem:
-				if (_activePlayer != null)
-					await HandleBuyBrokerItemAsync(_activePlayer, (CmBuyBrokerItem)packet);
+			case CmBuyBrokerItem buyBrokerItem:
+				if (_activePlayer != null && IsTargetingBroker(_activePlayer, buyBrokerItem.BrokerObjectId, "buy broker item"))
+					await HandleBuyBrokerItemAsync(_activePlayer, buyBrokerItem);
 				break;
 			case CmSendMail sendMail:
 				if (_activePlayer != null)
@@ -584,6 +596,19 @@ public sealed class GameServerConnection : BaseClientConnection
 		_activePlayer = null;
 	}
 
+	private void HandleTargetSelect(Player player, CmTargetSelect packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_TARGET_SELECT.runImpl updates VisibleObject.target.
+		if (packet.SelectTargetOfTarget)
+		{
+			// Full assist-key behavior depends on target object references, target-of-target, and KnownList visibility.
+			_logger.LogDebug("Player {PlayerObjectId} requested target-of-target selection before KnownList target references are ported", player.ObjectId);
+			return;
+		}
+
+		player.TargetObjectId = packet.TargetObjectId <= 0 ? 0 : packet.TargetObjectId;
+	}
+
 	private async Task HandleMoveAsync(Player player, CmMove packet)
 	{
 		// Java parity: network/aion/clientpackets/CM_MOVE.runImpl movement-state updates before World.updatePosition.
@@ -748,6 +773,22 @@ public sealed class GameServerConnection : BaseClientConnection
 		_world?.TryRemoveObject(postman.ObjectId, out _);
 		if (_idFactory != null)
 			_idFactory.ReleaseId(postman.ObjectId);
+	}
+
+	private bool IsTargetingBroker(Player player, int brokerObjectId, string action)
+	{
+		// Java parity: Player.isTargetingNpcWithFunction(brokerObjId, DialogAction.OPEN_VENDOR) in CM_BROKER_* runImpl methods.
+		// TODO Phase 6: replace this object-id guard with real NPC template function + KnownList visibility validation.
+		if (brokerObjectId > 0 && player.TargetObjectId == brokerObjectId)
+			return true;
+
+		_logger.LogWarning(
+			"Player {PlayerObjectId} tried to {Action} without targeting broker {BrokerObjectId}; current target is {TargetObjectId}",
+			player.ObjectId,
+			action,
+			brokerObjectId,
+			player.TargetObjectId);
+		return false;
 	}
 
 	private async Task<PlayerBrokerItemPage> LoadBrokerMaskPageAsync(Player player, byte sortType, int pageIndex, int brokerMask)
