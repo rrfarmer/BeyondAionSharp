@@ -161,6 +161,8 @@ public sealed class PlayerEnterWorldServiceTests
 		player.IsOnline = true;
 		player.Position = new WorldPosition(210010000, 11, 22, 33, 44);
 		player.LifeStats = new PlayerLifeStats(333, 444, 55);
+		player.SkillCooldowns = new Dictionary<int, long> { [10] = DateTimeOffset.UtcNow.AddMinutes(5).ToUnixTimeMilliseconds() };
+		player.ItemCooldowns = new Dictionary<int, PlayerItemCooldown> { [20] = new(DateTimeOffset.UtcNow.AddMinutes(6).ToUnixTimeMilliseconds(), 120) };
 		player.Mailbox =
 		[
 			new PlayerMail(1, player.ObjectId, "Sender", "Title", "Message", true, 0, 0, 0, 0, DateTime.Now),
@@ -180,6 +182,8 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.Same(player, repository.SavedLogoutPlayer);
 		Assert.NotNull(repository.SavedLogoutPlayer);
 		Assert.Equal(new PlayerLifeStats(333, 444, 55), repository.SavedLogoutPlayer!.LifeStats);
+		Assert.Single(repository.SavedLogoutPlayer.SkillCooldowns);
+		Assert.Single(repository.SavedLogoutPlayer.ItemCooldowns);
 		Assert.Equal(player.LastOnline, repository.LogoutLastOnline);
 	}
 

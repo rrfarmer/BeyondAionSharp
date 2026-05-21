@@ -311,6 +311,9 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			await connection.OpenAsync(cancellationToken);
 			if (player.LifeStats != null)
 				await SavePlayerLifeStatsAsync(connection, player.ObjectId, player.LifeStats, cancellationToken);
+			var nowMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+			await SavePlayerSkillCooldownsAsync(connection, player.ObjectId, player.SkillCooldowns, nowMillis, cancellationToken);
+			await SavePlayerItemCooldownsAsync(connection, player.ObjectId, player.ItemCooldowns, nowMillis, cancellationToken);
 
 			await using var command = connection.CreateCommand();
 			command.CommandText = """
@@ -382,6 +385,77 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				new MySqlParameter { Value = lifeStats.CurrentFp },
 			});
 		await insertCommand.ExecuteNonQueryAsync(cancellationToken);
+	}
+
+	private static async Task SavePlayerSkillCooldownsAsync(
+		MySqlConnection connection,
+		int playerObjectId,
+		IReadOnlyDictionary<int, long> cooldowns,
+		long nowMillis,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: dao/PlayerCooldownsDAO.storePlayerCooldowns.
+		await using var deleteCommand = connection.CreateCommand();
+		deleteCommand.CommandText = "DELETE FROM player_cooldowns WHERE player_id = ?";
+		deleteCommand.Parameters.Add(new MySqlParameter { Value = playerObjectId });
+		await deleteCommand.ExecuteNonQueryAsync(cancellationToken);
+
+		var activeCooldowns = cooldowns
+			.Where(entry => entry.Value - nowMillis > 28_000)
+			.ToArray();
+		if (activeCooldowns.Length == 0)
+			return;
+
+		await using var insertCommand = connection.CreateCommand();
+		insertCommand.CommandText = "INSERT INTO player_cooldowns (player_id, cooldown_id, reuse_delay) VALUES (?, ?, ?)";
+		foreach (var (cooldownId, reuseDelay) in activeCooldowns)
+		{
+			insertCommand.Parameters.Clear();
+			insertCommand.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = playerObjectId },
+					new MySqlParameter { Value = cooldownId },
+					new MySqlParameter { Value = reuseDelay },
+				});
+			await insertCommand.ExecuteNonQueryAsync(cancellationToken);
+		}
+	}
+
+	private static async Task SavePlayerItemCooldownsAsync(
+		MySqlConnection connection,
+		int playerObjectId,
+		IReadOnlyDictionary<int, PlayerItemCooldown> cooldowns,
+		long nowMillis,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: dao/ItemCooldownsDAO.storeItemCooldowns.
+		await using var deleteCommand = connection.CreateCommand();
+		deleteCommand.CommandText = "DELETE FROM item_cooldowns WHERE player_id = ?";
+		deleteCommand.Parameters.Add(new MySqlParameter { Value = playerObjectId });
+		await deleteCommand.ExecuteNonQueryAsync(cancellationToken);
+
+		var activeCooldowns = cooldowns
+			.Where(entry => entry.Value.ReuseTimeMillis - nowMillis > 30_000)
+			.ToArray();
+		if (activeCooldowns.Length == 0)
+			return;
+
+		await using var insertCommand = connection.CreateCommand();
+		insertCommand.CommandText = "INSERT INTO item_cooldowns (player_id, delay_id, use_delay, reuse_time) VALUES (?, ?, ?, ?)";
+		foreach (var entry in activeCooldowns)
+		{
+			insertCommand.Parameters.Clear();
+			insertCommand.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = playerObjectId },
+					new MySqlParameter { Value = entry.Key },
+					new MySqlParameter { Value = entry.Value.UseDelaySeconds },
+					new MySqlParameter { Value = entry.Value.ReuseTimeMillis },
+				});
+			await insertCommand.ExecuteNonQueryAsync(cancellationToken);
+		}
 	}
 
 	public async Task<IReadOnlyList<InventoryItem>> LoadPlayerItemsAsync(int playerObjectId, CancellationToken cancellationToken = default)
