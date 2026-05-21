@@ -103,6 +103,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300463, itemName);
 	}
 
+	public static SmSystemMessage ItemEnchantAssistantNoRightItem()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_ITEM_ENCHANT_ASSISTANT_NO_RIGHT_ITEM.
+		return new SmSystemMessage(1400961);
+	}
+
 	public static SmSystemMessage PolishWrongLevel()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_POLISH_WRONG_LEVEL.

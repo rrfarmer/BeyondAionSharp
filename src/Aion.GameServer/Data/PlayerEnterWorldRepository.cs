@@ -119,6 +119,8 @@ public interface IPlayerEnterWorldRepository
 		int addedCategory,
 		InventoryItem? sourceItemUpdate,
 		int? deletedSourceItemObjectId,
+		IReadOnlyList<InventoryItem> supplementItemUpdates,
+		IReadOnlyList<int> deletedSupplementItemObjectIds,
 		CancellationToken cancellationToken = default);
 
 	Task<bool> SaveGodstoneSocketMutationAsync(
@@ -357,6 +359,8 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		int addedCategory,
 		InventoryItem? sourceItemUpdate,
 		int? deletedSourceItemObjectId,
+		IReadOnlyList<InventoryItem> supplementItemUpdates,
+		IReadOnlyList<int> deletedSupplementItemObjectIds,
 		CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(true);
@@ -882,9 +886,11 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		int addedCategory,
 		InventoryItem? sourceItemUpdate,
 		int? deletedSourceItemObjectId,
+		IReadOnlyList<InventoryItem> supplementItemUpdates,
+		IReadOnlyList<int> deletedSupplementItemObjectIds,
 		CancellationToken cancellationToken = default)
 	{
-		// Java parity: services/EnchantService.socketManastoneAct persists ItemSocketService.addManaStone plus source consume.
+		// Java parity: services/EnchantService.socketManastoneAct persists updateSupplements, ItemSocketService.addManaStone, and source consume.
 		try
 		{
 			await using var connection = DatabaseFactory.GetConnection();
@@ -896,6 +902,18 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 			if (addedStone != null)
 				await SaveManastoneAsync(connection, transaction, targetItemUpdate.ObjectId, addedStone, addedCategory, cancellationToken);
+
+			foreach (var supplementItemUpdate in supplementItemUpdates)
+			{
+				if (!await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, supplementItemUpdate, cancellationToken))
+					return false;
+			}
+
+			foreach (var deletedSupplementItemObjectId in deletedSupplementItemObjectIds)
+			{
+				if (!await DeleteInventoryItemAsync(connection, transaction, playerObjectId, deletedSupplementItemObjectId, cancellationToken))
+					return false;
+			}
 
 			if (sourceItemUpdate != null && !await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, sourceItemUpdate, cancellationToken))
 				return false;

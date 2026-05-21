@@ -1442,15 +1442,6 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (staticData == null || itemTemplates == null)
 			return;
 
-		if (packet.SupplementObjectId != 0
-			&& player.InventoryItems.Any(item =>
-				item.ObjectId == packet.SupplementObjectId
-				&& item.Location == CubeStorageId
-				&& !item.IsEquipped))
-		{
-			return;
-		}
-
 		var sourceItem = player.InventoryItems.FirstOrDefault(item =>
 			item.ObjectId == packet.StoneObjectId
 			&& item.Location == CubeStorageId
@@ -1462,11 +1453,14 @@ public sealed class GameServerConnection : BaseClientConnection
 			packet.StoneObjectId,
 			packet.TargetFusedSlot,
 			itemTemplates,
-			_options.Rates.ManastoneChances);
+			supplementObjectId: packet.SupplementObjectId,
+			manastoneChances: _options.Rates.ManastoneChances);
 		if (!plan.Succeeded)
 		{
 			if (plan.Failure == ManastoneSocketFailure.NoTargetItem)
 				await SendPacketAsync(SmSystemMessage.GiveItemOptionNoTargetItem());
+			else if (plan.Failure == ManastoneSocketFailure.WrongSupplementLevel)
+				await SendPacketAsync(SmSystemMessage.ItemEnchantAssistantNoRightItem());
 			return;
 		}
 
@@ -1498,11 +1492,21 @@ public sealed class GameServerConnection : BaseClientConnection
 				plan.AddedStone,
 				plan.AddedCategory,
 				plan.SourceItemUpdate,
-				plan.DeletedSourceItemObjectId);
+				plan.DeletedSourceItemObjectId,
+				plan.SupplementItemUpdates,
+				plan.DeletedSupplementItemObjectIds);
 		if (!saved)
 			return;
 
 		player.InventoryItems = plan.InventoryItems;
+		foreach (var supplementUpdate in plan.SupplementItemUpdates)
+		{
+			var supplementTemplate = itemTemplates.GetItemTemplate(supplementUpdate.ItemId);
+			if (supplementTemplate != null)
+				await SendPacketAsync(new SmInventoryUpdateItem(supplementUpdate, supplementTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+		}
+		foreach (var deletedSupplementItemObjectId in plan.DeletedSupplementItemObjectIds)
+			await SendPacketAsync(new SmDeleteItem(deletedSupplementItemObjectId, SmDeleteItem.UseDeleteType));
 		await SendItemUseMutationAsync(plan.SourceItemUpdate, plan.DeletedSourceItemObjectId, sourceTemplate);
 		await SendPacketAsync(
 			plan.SocketSucceeded

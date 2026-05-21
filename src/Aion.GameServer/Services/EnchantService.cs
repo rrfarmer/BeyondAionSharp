@@ -10,8 +10,10 @@ public static class EnchantService
 	private const int ExceedEnchantMaterialItemId = 166500002;
 	private const int ExceedEnchantAlternateMaterialItemId = 166500005;
 	private const int TemplateIdFamilyDivisor = 1_000_000;
+	private const int SupplementTemplateIdFamilyDivisor = 100_000;
 	private const int EnchantOrSupplementFamily = 166;
 	private const int ManastoneFamily = 167;
+	private const int SupplementFamily = 1661;
 	private const int MaxBasicManastones = 6;
 	private const string EnchantmentItemGroup = "ENCHANTMENT";
 	private const string ManastoneItemGroup = "MANASTONE";
@@ -23,6 +25,7 @@ public static class EnchantService
 		int manastoneObjectId,
 		int targetFusedSlot,
 		ItemTemplateTable itemTemplates,
+		int supplementObjectId = 0,
 		IReadOnlyList<float>? manastoneChances = null,
 		Func<double>? rollPercent = null)
 	{
@@ -48,6 +51,17 @@ public static class EnchantService
 
 		var useFusionSlots = targetFusedSlot != 1;
 		var targetName = GetItemName(targetItem, itemTemplates);
+		var supplementItem = supplementObjectId == 0 ? null : FindCubeItem(inventoryItems, supplementObjectId);
+		if (supplementItem != null && supplementItem.ItemId / SupplementTemplateIdFamilyDivisor != SupplementFamily)
+			return ManastoneSocketPlan.Failed(ManastoneSocketFailure.InvalidSupplementItem, targetName);
+
+		var supplementTemplate = supplementItem == null ? null : itemTemplates.GetItemTemplate(supplementItem.ItemId);
+		if (supplementItem != null && supplementTemplate == null)
+			return ManastoneSocketPlan.Failed(ManastoneSocketFailure.InvalidSupplementItem, targetName);
+
+		if (supplementTemplate != null && !CanUseSupplementWithTarget(supplementTemplate, targetTemplate))
+			return ManastoneSocketPlan.Failed(ManastoneSocketFailure.WrongSupplementLevel, targetName);
+
 		var socketSucceeded = IsSocketManastoneSuccess(
 			player,
 			sourceTemplate,
@@ -55,6 +69,9 @@ public static class EnchantService
 			targetTemplate,
 			useFusionSlots,
 			itemTemplates,
+			inventoryItems,
+			supplementTemplate,
+			out var supplementUseCount,
 			manastoneChances,
 			rollPercent);
 
@@ -73,7 +90,11 @@ public static class EnchantService
 		}
 
 		var sourceMutation = DecreaseItemCount(sourceItem);
+		var supplementMutation = supplementTemplate == null || supplementUseCount <= 0
+			? SupplementCountMutation.Empty
+			: DecreaseSupplementCount(inventoryItems, supplementTemplate.TemplateId, supplementUseCount);
 		ReplaceInventoryItem(inventoryItems, targetItemUpdate);
+		ApplySupplementMutation(inventoryItems, supplementMutation);
 		ApplySourceMutation(inventoryItems, sourceMutation);
 
 		return new ManastoneSocketPlan(
@@ -83,6 +104,8 @@ public static class EnchantService
 			targetItemUpdate,
 			sourceMutation.UpdatedItem,
 			sourceMutation.DeletedObjectId,
+			supplementMutation.UpdatedItems,
+			supplementMutation.DeletedObjectIds,
 			addedStone,
 			addedCategory,
 			socketSucceeded,
@@ -175,6 +198,18 @@ public static class EnchantService
 			|| string.Equals(template.ItemGroup, SpecialManastoneItemGroup, StringComparison.Ordinal);
 	}
 
+	private static bool CanUseSupplementWithTarget(ItemTemplateSummary supplementTemplate, ItemTemplateSummary targetTemplate)
+	{
+		// Java parity: model/templates/item/actions/EnchantItemAction.checkSupplementLevel.
+		if (string.Equals(supplementTemplate.ItemGroup, EnchantmentItemGroup, StringComparison.Ordinal))
+			return true;
+
+		var action = supplementTemplate.EnchantAction;
+		var minLevel = action?.MinLevel is > 0 ? action.MinLevel : targetTemplate.Level;
+		var maxLevel = action?.MaxLevel is > 0 ? action.MaxLevel : targetTemplate.Level;
+		return minLevel <= targetTemplate.Level && maxLevel >= targetTemplate.Level;
+	}
+
 	private static bool IsSocketManastoneSuccess(
 		Player player,
 		ItemTemplateSummary manastoneTemplate,
@@ -182,9 +217,13 @@ public static class EnchantService
 		ItemTemplateSummary targetTemplate,
 		bool useFusionSlots,
 		ItemTemplateTable itemTemplates,
+		IReadOnlyList<InventoryItem> inventoryItems,
+		ItemTemplateSummary? supplementTemplate,
+		out int supplementUseCount,
 		IReadOnlyList<float>? manastoneChances,
 		Func<double>? rollPercent)
 	{
+		supplementUseCount = 0;
 		var targetItemLevel = targetTemplate.Level;
 		if (useFusionSlots)
 		{
@@ -210,6 +249,38 @@ public static class EnchantService
 
 		var socketDiff = stoneCount * 1.25f + 1.75f;
 		successChance += (slotLevel - manastoneTemplate.Level) / socketDiff;
+		if (supplementTemplate != null)
+		{
+			var manastoneAction = manastoneTemplate.EnchantAction;
+			if (manastoneAction != null)
+				supplementUseCount = manastoneAction.Count;
+
+			var supplementAction = supplementTemplate.EnchantAction;
+			var isManastoneOnly = false;
+			if (supplementAction != null)
+			{
+				successChance += supplementAction.Chance;
+				isManastoneOnly = supplementAction.ManastoneOnly;
+			}
+
+			if (isManastoneOnly)
+				supplementUseCount = 1;
+			else if (stoneCount > 0)
+				supplementUseCount *= stoneCount + 1;
+
+			var supplementCount = inventoryItems
+				.Where(item =>
+					item.ItemId == supplementTemplate.TemplateId
+					&& item.Location == CubeStorageId
+					&& !item.IsEquipped)
+				.Sum(item => item.Count);
+			if (supplementCount < supplementUseCount)
+			{
+				supplementUseCount = 0;
+				return false;
+			}
+		}
+
 		var roll = rollPercent?.Invoke() ?? Random.Shared.NextDouble() * 100d;
 		return roll < successChance;
 	}
@@ -274,6 +345,14 @@ public static class EnchantService
 			inventoryItems.RemoveAll(item => item.ObjectId == mutation.DeletedObjectId);
 	}
 
+	private static void ApplySupplementMutation(List<InventoryItem> inventoryItems, SupplementCountMutation mutation)
+	{
+		foreach (var update in mutation.UpdatedItems)
+			ReplaceInventoryItem(inventoryItems, update);
+		foreach (var deletedObjectId in mutation.DeletedObjectIds)
+			inventoryItems.RemoveAll(item => item.ObjectId == deletedObjectId);
+	}
+
 	private static void ReplaceInventoryItem(List<InventoryItem> items, InventoryItem update)
 	{
 		var index = items.FindIndex(item => item.ObjectId == update.ObjectId);
@@ -330,7 +409,47 @@ public static class EnchantService
 			: new ItemCountMutation(null, item.ObjectId);
 	}
 
+	private static SupplementCountMutation DecreaseSupplementCount(
+		IReadOnlyList<InventoryItem> inventoryItems,
+		int itemId,
+		long count)
+	{
+		// Java parity: model/gameobjects/player/Player.subtractSupplements + updateSupplements.
+		if (count <= 0)
+			return SupplementCountMutation.Empty;
+
+		var remaining = count;
+		var updates = new List<InventoryItem>();
+		var deletes = new List<int>();
+		foreach (var item in inventoryItems
+			.Where(candidate =>
+				candidate.ItemId == itemId
+				&& candidate.Location == CubeStorageId
+				&& !candidate.IsEquipped)
+			.OrderBy(candidate => candidate.ObjectId))
+		{
+			if (remaining <= 0)
+				break;
+
+			var consumed = Math.Min(item.Count, remaining);
+			remaining -= consumed;
+			if (item.Count == consumed)
+				deletes.Add(item.ObjectId);
+			else
+				updates.Add(CopyInventoryItem(item, count: item.Count - consumed));
+		}
+
+		return new SupplementCountMutation(updates, deletes);
+	}
+
 	private sealed record ItemCountMutation(InventoryItem? UpdatedItem, int? DeletedObjectId);
+
+	private sealed record SupplementCountMutation(
+		IReadOnlyList<InventoryItem> UpdatedItems,
+		IReadOnlyList<int> DeletedObjectIds)
+	{
+		public static SupplementCountMutation Empty { get; } = new(Array.Empty<InventoryItem>(), Array.Empty<int>());
+	}
 }
 
 public enum AmplificationFailure
@@ -374,6 +493,8 @@ public enum ManastoneSocketFailure
 	NoSourceItem,
 	NoTargetItem,
 	CannotAct,
+	InvalidSupplementItem,
+	WrongSupplementLevel,
 }
 
 public sealed record ManastoneSocketPlan(
@@ -383,6 +504,8 @@ public sealed record ManastoneSocketPlan(
 	InventoryItem? TargetItemUpdate,
 	InventoryItem? SourceItemUpdate,
 	int? DeletedSourceItemObjectId,
+	IReadOnlyList<InventoryItem> SupplementItemUpdates,
+	IReadOnlyList<int> DeletedSupplementItemObjectIds,
 	ItemStoneSocket? AddedStone,
 	int AddedCategory,
 	bool SocketSucceeded,
@@ -399,6 +522,8 @@ public sealed record ManastoneSocketPlan(
 			TargetItemUpdate: null,
 			SourceItemUpdate: null,
 			DeletedSourceItemObjectId: null,
+			SupplementItemUpdates: Array.Empty<InventoryItem>(),
+			DeletedSupplementItemObjectIds: Array.Empty<int>(),
 			AddedStone: null,
 			AddedCategory: 0,
 			SocketSucceeded: false,

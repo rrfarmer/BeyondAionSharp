@@ -195,6 +195,13 @@ public sealed class StaticDataLoadingTests
 		var hpManastone = staticData.ItemTemplates.GetItemTemplate(167000226);
 		Assert.NotNull(hpManastone);
 		Assert.Contains(hpManastone.StatModifiers, modifier => modifier is { Operation: "add", Name: "MAXHP", Value: 20, Bonus: true });
+		Assert.Equal(1, hpManastone.EnchantAction?.Count);
+		var assuredSupplement = staticData.ItemTemplates.GetItemTemplate(166150017);
+		Assert.NotNull(assuredSupplement);
+		Assert.Equal(100f, assuredSupplement.EnchantAction?.Chance);
+		Assert.Equal(1, assuredSupplement.EnchantAction?.MinLevel);
+		Assert.Equal(65, assuredSupplement.EnchantAction?.MaxLevel);
+		Assert.True(assuredSupplement.EnchantAction?.ManastoneOnly);
 		var randomBonusModifiers = staticData.ItemRandomBonuses.GetModifiers("INVENTORY", 1, 1);
 		Assert.Contains(randomBonusModifiers, modifier => modifier is { Operation: "add", Name: "MAXHP", Value: 100, Bonus: true });
 		Assert.Contains(randomBonusModifiers, modifier => modifier is { Operation: "add", Name: "MAXMP", Value: -50, Bonus: true });

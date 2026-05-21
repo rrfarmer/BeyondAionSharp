@@ -265,9 +265,11 @@ public sealed class PlayerEnterWorldService
 		int addedCategory,
 		InventoryItem? sourceItemUpdate,
 		int? deletedSourceItemObjectId,
+		IReadOnlyList<InventoryItem> supplementItemUpdates,
+		IReadOnlyList<int> deletedSupplementItemObjectIds,
 		CancellationToken cancellationToken = default)
 	{
-		// Java parity: services/EnchantService.socketManastoneAct source consume and item_stones insert persistence.
+		// Java parity: services/EnchantService.socketManastoneAct supplement consume, source consume, and item_stones insert persistence.
 		return _repository.SaveManastoneSocketMutationAsync(
 			player.ObjectId,
 			targetItemUpdate,
@@ -275,6 +277,8 @@ public sealed class PlayerEnterWorldService
 			addedCategory,
 			sourceItemUpdate,
 			deletedSourceItemObjectId,
+			supplementItemUpdates,
+			deletedSupplementItemObjectIds,
 			cancellationToken);
 	}
 

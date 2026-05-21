@@ -66,7 +66,8 @@ public sealed record ItemTemplateSummary(
 	int MaxEnchantLevel = 0,
 	bool CanExceedEnchant = false,
 	int ManastoneSlots = 0,
-	int SpecialManastoneSlots = 0)
+	int SpecialManastoneSlots = 0,
+	ItemEnchantActionInfo? EnchantAction = null)
 {
 	private const int CanPolishMask = 1 << 17;
 	private const int SoulBoundMask = 1 << 7;
@@ -303,6 +304,9 @@ public sealed record ItemIdianInfo(int BurnAttack, int BurnDefend);
 
 // Java parity: model/templates/item/Stigma.
 public sealed record ItemStigmaInfo(IReadOnlyList<string> GainSkillGroups, bool Chargeable);
+
+// Java parity: model/templates/item/actions/EnchantItemAction.
+public sealed record ItemEnchantActionInfo(int Count, int MinLevel, int MaxLevel, bool ManastoneOnly, float Chance);
 
 public sealed record ItemStatModifier(
 	string Operation,

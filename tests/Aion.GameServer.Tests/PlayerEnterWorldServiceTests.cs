@@ -686,6 +686,8 @@ public sealed class PlayerEnterWorldServiceTests
 			int addedCategory,
 			InventoryItem? sourceItemUpdate,
 			int? deletedSourceItemObjectId,
+			IReadOnlyList<InventoryItem> supplementItemUpdates,
+			IReadOnlyList<int> deletedSupplementItemObjectIds,
 			CancellationToken cancellationToken = default)
 		{
 			return Task.FromResult(true);

@@ -13,6 +13,9 @@ public sealed class EnchantServiceTests
 	private const int ToolItemId = 165030001;
 	private const int ManastoneItemId = 167000001;
 	private const int HighLevelManastoneItemId = 167000002;
+	private const int SupplementItemId = 166100000;
+	private const int AssuredSupplementItemId = 166150017;
+	private const int WrongLevelSupplementItemId = 166150099;
 
 	[Fact]
 	public void CreateAmplificationPlan_AmplifiesTargetAndConsumesSources()
@@ -165,6 +168,111 @@ public sealed class EnchantServiceTests
 	}
 
 	[Fact]
+	public void CreateSocketManastonePlan_ConsumesSupplementsByExistingStoneCount()
+	{
+		var player = CreatePlayer(
+			CreateItem(1001, SwordItemId, manaStones: [new ItemStoneSocket(ManastoneItemId, 1)]),
+			CreateItem(2001, ManastoneItemId),
+			CreateItem(3001, SupplementItemId, count: 3));
+
+		var plan = EnchantService.CreateSocketManastonePlan(
+			player,
+			targetItemObjectId: 1001,
+			manastoneObjectId: 2001,
+			targetFusedSlot: 1,
+			CreateItemTemplates(),
+			supplementObjectId: 3001,
+			manastoneChances: [0f, 0f],
+			rollPercent: () => 99);
+
+		Assert.True(plan.Succeeded);
+		Assert.True(plan.SocketSucceeded);
+		Assert.Equal(2001, plan.DeletedSourceItemObjectId);
+		var supplementUpdate = Assert.Single(plan.SupplementItemUpdates);
+		Assert.Equal(3001, supplementUpdate.ObjectId);
+		Assert.Equal(1, supplementUpdate.Count);
+		Assert.Empty(plan.DeletedSupplementItemObjectIds);
+		Assert.NotNull(plan.TargetItemUpdate);
+		Assert.Equal([1, 2], plan.TargetItemUpdate.ManaStones.Select(stone => stone.Slot).ToArray());
+		Assert.Contains(plan.InventoryItems, item => item.ObjectId == 3001 && item.Count == 1);
+	}
+
+	[Fact]
+	public void CreateSocketManastonePlan_InsufficientSupplementsFailWithoutSupplementMutation()
+	{
+		var player = CreatePlayer(
+			CreateItem(1001, SwordItemId, manaStones: [new ItemStoneSocket(ManastoneItemId, 1)]),
+			CreateItem(2001, ManastoneItemId),
+			CreateItem(3001, SupplementItemId));
+
+		var plan = EnchantService.CreateSocketManastonePlan(
+			player,
+			targetItemObjectId: 1001,
+			manastoneObjectId: 2001,
+			targetFusedSlot: 1,
+			CreateItemTemplates(),
+			supplementObjectId: 3001,
+			manastoneChances: [100f, 100f],
+			rollPercent: () => 0);
+
+		Assert.True(plan.Succeeded);
+		Assert.False(plan.SocketSucceeded);
+		Assert.Equal(2001, plan.DeletedSourceItemObjectId);
+		Assert.Empty(plan.SupplementItemUpdates);
+		Assert.Empty(plan.DeletedSupplementItemObjectIds);
+		Assert.Contains(plan.InventoryItems, item => item.ObjectId == 3001 && item.Count == 1);
+		Assert.NotNull(plan.TargetItemUpdate);
+		Assert.Equal([1], plan.TargetItemUpdate.ManaStones.Select(stone => stone.Slot).ToArray());
+	}
+
+	[Fact]
+	public void CreateSocketManastonePlan_ManastoneOnlySupplementConsumesSingleItem()
+	{
+		var player = CreatePlayer(
+			CreateItem(1001, SwordItemId, manaStones: [new ItemStoneSocket(ManastoneItemId, 1)]),
+			CreateItem(2001, ManastoneItemId),
+			CreateItem(3001, AssuredSupplementItemId));
+
+		var plan = EnchantService.CreateSocketManastonePlan(
+			player,
+			targetItemObjectId: 1001,
+			manastoneObjectId: 2001,
+			targetFusedSlot: 1,
+			CreateItemTemplates(),
+			supplementObjectId: 3001,
+			manastoneChances: [0f, 0f],
+			rollPercent: () => 99);
+
+		Assert.True(plan.Succeeded);
+		Assert.True(plan.SocketSucceeded);
+		Assert.Empty(plan.SupplementItemUpdates);
+		Assert.Equal([3001], plan.DeletedSupplementItemObjectIds);
+		Assert.DoesNotContain(plan.InventoryItems, item => item.ObjectId == 3001);
+	}
+
+	[Fact]
+	public void CreateSocketManastonePlan_RejectsWrongSupplementLevelBeforeAction()
+	{
+		var player = CreatePlayer(
+			CreateItem(1001, SwordItemId),
+			CreateItem(2001, ManastoneItemId),
+			CreateItem(3001, WrongLevelSupplementItemId));
+
+		var plan = EnchantService.CreateSocketManastonePlan(
+			player,
+			targetItemObjectId: 1001,
+			manastoneObjectId: 2001,
+			targetFusedSlot: 1,
+			CreateItemTemplates(),
+			supplementObjectId: 3001);
+
+		Assert.Equal(ManastoneSocketFailure.WrongSupplementLevel, plan.Failure);
+		Assert.Empty(plan.InventoryItems);
+		Assert.Empty(plan.SupplementItemUpdates);
+		Assert.Empty(plan.DeletedSupplementItemObjectIds);
+	}
+
+	[Fact]
 	public void CreateSocketManastonePlan_ReturnsPreActionFailuresWithoutMutation()
 	{
 		var templates = CreateItemTemplates();
@@ -199,9 +307,10 @@ public sealed class EnchantServiceTests
 		int itemId,
 		long count = 1,
 		int enchant = 0,
-		bool isAmplified = false)
+		bool isAmplified = false,
+		IReadOnlyList<ItemStoneSocket>? manaStones = null)
 	{
-		return new InventoryItem
+		var item = new InventoryItem
 		{
 			ObjectId = objectId,
 			ItemId = itemId,
@@ -210,6 +319,8 @@ public sealed class EnchantServiceTests
 			Enchant = enchant,
 			IsAmplified = isAmplified,
 		};
+		item.ManaStones = manaStones ?? Array.Empty<ItemStoneSocket>();
+		return item;
 	}
 
 	private static ItemTemplateTable CreateItemTemplates()
@@ -250,8 +361,11 @@ public sealed class EnchantServiceTests
 			new ItemTemplateSummary(UniversalMaterialItemId, "Amplification Material", 0, 0, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
 			new ItemTemplateSummary(InvalidMaterialItemId, "Invalid Material", 0, 0, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
 			new ItemTemplateSummary(ToolItemId, "Amplification Tool", 0, 0, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
-			new ItemTemplateSummary(ManastoneItemId, "Manastone: HP +20", 0, 0, 50, "MANASTONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
-			new ItemTemplateSummary(HighLevelManastoneItemId, "Manastone: HP +95", 0, 0, 80, "MANASTONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
+			new ItemTemplateSummary(ManastoneItemId, "Manastone: HP +20", 0, 0, 50, "MANASTONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0, EnchantAction: new ItemEnchantActionInfo(1, 0, 0, false, 0)),
+			new ItemTemplateSummary(HighLevelManastoneItemId, "Manastone: HP +95", 0, 0, 80, "MANASTONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0, EnchantAction: new ItemEnchantActionInfo(1, 0, 0, false, 0)),
+			new ItemTemplateSummary(SupplementItemId, "Lesser Supplements (Heroic or Less)", 0, 0, 30, "NONE", "NORMAL", "LEGEND", "PC_ALL", 1, 0, 0, EnchantAction: new ItemEnchantActionInfo(0, 0, 0, false, 100)),
+			new ItemTemplateSummary(AssuredSupplementItemId, "Assured Greater Felicitous Socketing (Fabled)", 0, 0, 65, "NONE", "NORMAL", "UNIQUE", "PC_ALL", 1, 0, 0, EnchantAction: new ItemEnchantActionInfo(0, 1, 65, true, 100)),
+			new ItemTemplateSummary(WrongLevelSupplementItemId, "Wrong Level Supplement", 0, 0, 10, "NONE", "NORMAL", "UNIQUE", "PC_ALL", 1, 0, 0, EnchantAction: new ItemEnchantActionInfo(0, 1, 10, true, 100)),
 		]);
 	}
 }

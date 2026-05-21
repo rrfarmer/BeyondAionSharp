@@ -593,6 +593,17 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 4 && reader.LocalName == "enchant" && currentItemTemplate != null)
+			{
+				currentItemTemplate.EnchantAction = new ItemEnchantActionInfo(
+					ReadIntAttribute(reader, "count"),
+					ReadIntAttribute(reader, "min_level"),
+					ReadIntAttribute(reader, "max_level"),
+					ReadBoolAttribute(reader, "manastone_only"),
+					ReadFloatAttribute(reader, "chance"));
+				continue;
+			}
+
 			if (reader.Depth == 4 && reader.LocalName == "craftlearn" && currentItemTemplate != null)
 			{
 				currentItemTemplate.CraftLearnRecipeId = ReadIntAttribute(reader, "recipeid");
@@ -1358,6 +1369,8 @@ public sealed class StaticData
 
 		public int ChargeActionMaxLevel { get; set; }
 
+		public ItemEnchantActionInfo? EnchantAction { get; set; }
+
 		public int RecommendRank { get; set; }
 
 		public string GenderPermitted { get; set; } = string.Empty;
@@ -1431,7 +1444,8 @@ public sealed class StaticData
 				MaxEnchantLevel,
 				CanExceedEnchant,
 				ManastoneSlots,
-				SpecialManastoneSlots);
+				SpecialManastoneSlots,
+				EnchantAction);
 		}
 
 		private static bool CalculateCanTune(
