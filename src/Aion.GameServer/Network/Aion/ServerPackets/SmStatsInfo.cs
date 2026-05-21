@@ -268,7 +268,7 @@ public sealed class SmStatsInfo : GameServerPacket
 				return baseStats;
 
 			var modifiers = equippedItems
-				.SelectMany(item => item.Template.StatModifiers)
+				.SelectMany(item => GetEquipmentModifiers(item, itemTemplates))
 				.Where(modifier => !string.IsNullOrEmpty(modifier.Name))
 				.ToArray();
 
@@ -356,6 +356,31 @@ public sealed class SmStatsInfo : GameServerPacket
 				PhysicalCriticalDamageReduce = CalculateStat("PHYSICAL_CRITICAL_DAMAGE_REDUCE", baseStats.PhysicalCriticalDamageReduce, modifiers),
 				MagicalCriticalDamageReduce = CalculateStat("MAGICAL_CRITICAL_DAMAGE_REDUCE", baseStats.MagicalCriticalDamageReduce, modifiers),
 			};
+		}
+
+		private static IEnumerable<ItemStatModifier> GetEquipmentModifiers(EquippedItem item, ItemTemplateTable itemTemplates)
+		{
+			foreach (var modifier in item.Template.StatModifiers)
+				yield return modifier;
+
+			// Java parity: model/stats/listeners/ItemEquipmentListener.addStonesStats + model/items/ManaStone constructor.
+			foreach (var modifier in GetStoneModifiers(item.Item.ManaStones, itemTemplates))
+				yield return modifier;
+			foreach (var modifier in GetStoneModifiers(item.Item.FusionStones, itemTemplates))
+				yield return modifier;
+		}
+
+		private static IEnumerable<ItemStatModifier> GetStoneModifiers(IReadOnlyList<ItemStoneSocket> stones, ItemTemplateTable itemTemplates)
+		{
+			foreach (var stone in stones)
+			{
+				var template = itemTemplates.GetItemTemplate(stone.ItemId);
+				if (template == null)
+					continue;
+
+				foreach (var modifier in template.StatModifiers)
+					yield return modifier;
+			}
 		}
 
 		private static int CalculateStat(

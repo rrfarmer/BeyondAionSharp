@@ -138,6 +138,9 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(70, fireSword.WeaponStats?.MeanDamage);
 		Assert.Equal(1400, fireSword.WeaponStats?.AttackSpeed);
 		Assert.Contains(fireSword.StatModifiers, modifier => modifier is { Operation: "add", Name: "PHYSICAL_ATTACK", Value: 7, Bonus: true });
+		var hpManastone = staticData.ItemTemplates.GetItemTemplate(167000226);
+		Assert.NotNull(hpManastone);
+		Assert.Contains(hpManastone.StatModifiers, modifier => modifier is { Operation: "add", Name: "MAXHP", Value: 20, Bonus: true });
 		Assert.Equal("kamikaze worm", staticData.NpcTemplates.GetNpcTemplate(201000)?.Name);
 		var postmanNpc = staticData.NpcTemplates.GetNpcTemplate(798100);
 		Assert.NotNull(postmanNpc);

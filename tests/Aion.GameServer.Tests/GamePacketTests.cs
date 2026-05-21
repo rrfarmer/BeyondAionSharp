@@ -1581,6 +1581,41 @@ public class GamePacketTests
 					new ItemStatModifier("add", "MAGICAL_RESIST", 5, Bonus: true),
 					new ItemStatModifier("add", "BLOCK", 9, Bonus: true),
 				]),
+			new ItemTemplateSummary(
+				400,
+				"Manastone: HP +20",
+				0,
+				1,
+				1,
+				"MANASTONE",
+				"NORMAL",
+				"COMMON",
+				"PC_ALL",
+				1,
+				0,
+				0,
+				Modifiers:
+				[
+					new ItemStatModifier("add", "MAXHP", 20, Bonus: true),
+					new ItemStatModifier("add", "PHYSICAL_ACCURACY", 12, Bonus: true),
+				]),
+			new ItemTemplateSummary(
+				401,
+				"Manastone: Magic Boost +12",
+				0,
+				1,
+				1,
+				"MANASTONE",
+				"NORMAL",
+				"COMMON",
+				"PC_ALL",
+				1,
+				0,
+				0,
+				Modifiers:
+				[
+					new ItemStatModifier("add", "BOOST_MAGICAL_SKILL", 12, Bonus: true),
+				]),
 		]);
 
 		var payload = SerializeUnencryptedPayload(
@@ -1591,7 +1626,16 @@ public class GamePacketTests
 					PlayerClass = "WARRIOR",
 					InventoryItems =
 					[
-						new InventoryItem { ObjectId = 2, ItemId = 200, Location = 0, IsEquipped = true, Slot = 1 },
+						new InventoryItem
+						{
+							ObjectId = 2,
+							ItemId = 200,
+							Location = 0,
+							IsEquipped = true,
+							Slot = 1,
+							ManaStones = [new ItemStoneSocket(400, 0)],
+							FusionStones = [new ItemStoneSocket(401, 0)],
+						},
 						new InventoryItem { ObjectId = 3, ItemId = 300, Location = 0, IsEquipped = true, Slot = 8 },
 					],
 				},
@@ -1612,8 +1656,8 @@ public class GamePacketTests
 		Assert.Equal(0, reader.ReadQ());
 		Assert.Equal(0, reader.ReadQ());
 		reader.ReadD();
-		Assert.Equal(277, reader.ReadD());
-		Assert.Equal(277, reader.ReadD());
+		Assert.Equal(297, reader.ReadD());
+		Assert.Equal(297, reader.ReadD());
 		Assert.Equal(210, reader.ReadD());
 		Assert.Equal(210, reader.ReadD());
 		Assert.Equal(4000, reader.ReadH());
@@ -1638,7 +1682,7 @@ public class GamePacketTests
 		Assert.Equal(83, reader.ReadH());
 		Assert.Equal(52, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
-		Assert.Equal(250, reader.ReadH());
+		Assert.Equal(262, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(1, reader.ReadH());
 		Assert.Equal(24, reader.ReadH());
@@ -1647,7 +1691,7 @@ public class GamePacketTests
 		Assert.Equal(1.0f, reader.ReadF());
 		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
-		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(12, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
