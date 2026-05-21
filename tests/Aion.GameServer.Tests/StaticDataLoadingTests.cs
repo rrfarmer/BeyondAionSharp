@@ -220,6 +220,14 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal("BLOCK", shieldChange.Stat);
 		Assert.Equal("PERCENT", shieldChange.Func);
 		Assert.Equal(5, shieldChange.Value);
+		var dualWieldTraining = staticData.SkillTemplates.GetSkillTemplate(55);
+		Assert.NotNull(dualWieldTraining);
+		var weaponDual = Assert.Single(dualWieldTraining.WeaponDual);
+		Assert.Equal(70, weaponDual.Value);
+		Assert.Equal(0, weaponDual.Delta);
+		Assert.Equal(40, weaponDual.SkillEfficiency);
+		Assert.Equal(400, weaponDual.MaxDamageChance);
+		Assert.Equal(0, weaponDual.MaxDamageDelta);
 		var poetaProtector = staticData.TitleTemplates.GetTitleTemplate(1);
 		Assert.NotNull(poetaProtector);
 		Assert.Equal("ELYOS", poetaProtector.Race);

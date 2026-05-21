@@ -668,6 +668,18 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 4 && reader.LocalName == "wpndual" && currentSkillTemplate != null)
+			{
+				currentSkillTemplate.AddWeaponDual(
+					new SkillWeaponDualEffectSummary(
+						ReadIntAttribute(reader, "value"),
+						ReadIntAttribute(reader, "delta"),
+						ReadIntAttribute(reader, "skill_efficiency"),
+						ReadIntAttribute(reader, "max_damage_chance"),
+						ReadIntAttribute(reader, "max_damage_delta")));
+				continue;
+			}
+
 			if (reader.Depth == 5 && reader.LocalName == "change" && currentSkillTemplate != null)
 			{
 				currentSkillTemplate.AddCurrentMasteryChange(
@@ -880,6 +892,7 @@ public sealed class StaticData
 		private readonly List<SkillArmorMasteryEffectSummary> _armorMasteryEffects = [];
 		private readonly List<SkillWeaponMasteryEffectSummary> _weaponMasteryEffects = [];
 		private readonly List<SkillShieldMasteryEffectSummary> _shieldMasteryEffects = [];
+		private readonly List<SkillWeaponDualEffectSummary> _weaponDualEffects = [];
 		private List<SkillStatChange>? _currentMasteryChanges;
 
 		public SkillTemplateBuilder(
@@ -956,6 +969,11 @@ public sealed class StaticData
 			_currentMasteryChanges.Add(change);
 		}
 
+		public void AddWeaponDual(SkillWeaponDualEffectSummary weaponDual)
+		{
+			_weaponDualEffects.Add(weaponDual);
+		}
+
 		public void EndMastery()
 		{
 			_currentMasteryChanges = null;
@@ -977,7 +995,8 @@ public sealed class StaticData
 				Cooldown,
 				_armorMasteryEffects.ToArray(),
 				_weaponMasteryEffects.ToArray(),
-				_shieldMasteryEffects.ToArray());
+				_shieldMasteryEffects.ToArray(),
+				_weaponDualEffects.ToArray());
 		}
 	}
 

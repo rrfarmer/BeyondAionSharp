@@ -77,13 +77,16 @@ public sealed record SkillTemplateSummary(
 	int Cooldown,
 	IReadOnlyList<SkillArmorMasteryEffectSummary>? ArmorMasteryEffects = null,
 	IReadOnlyList<SkillWeaponMasteryEffectSummary>? WeaponMasteryEffects = null,
-	IReadOnlyList<SkillShieldMasteryEffectSummary>? ShieldMasteryEffects = null)
+	IReadOnlyList<SkillShieldMasteryEffectSummary>? ShieldMasteryEffects = null,
+	IReadOnlyList<SkillWeaponDualEffectSummary>? WeaponDualEffects = null)
 {
 	public IReadOnlyList<SkillArmorMasteryEffectSummary> ArmorMastery => ArmorMasteryEffects ?? Array.Empty<SkillArmorMasteryEffectSummary>();
 
 	public IReadOnlyList<SkillWeaponMasteryEffectSummary> WeaponMastery => WeaponMasteryEffects ?? Array.Empty<SkillWeaponMasteryEffectSummary>();
 
 	public IReadOnlyList<SkillShieldMasteryEffectSummary> ShieldMastery => ShieldMasteryEffects ?? Array.Empty<SkillShieldMasteryEffectSummary>();
+
+	public IReadOnlyList<SkillWeaponDualEffectSummary> WeaponDual => WeaponDualEffects ?? Array.Empty<SkillWeaponDualEffectSummary>();
 }
 
 // Java parity: skillengine/effect/ArmorMasteryEffect.
@@ -98,6 +101,9 @@ public sealed record SkillWeaponMasteryEffectSummary(string WeaponGroup, IReadOn
 
 // Java parity: skillengine/effect/ShieldMasteryEffect.
 public sealed record SkillShieldMasteryEffectSummary(IReadOnlyList<SkillStatChange> Changes);
+
+// Java parity: skillengine/effect/WeaponDualEffect.
+public sealed record SkillWeaponDualEffectSummary(int Value, int Delta, int SkillEfficiency, int MaxDamageChance, int MaxDamageDelta);
 
 // Java parity: skillengine/change/Change entries under passive skill effects.
 public sealed record SkillStatChange(string Stat, string Func, int Value, int Delta);
