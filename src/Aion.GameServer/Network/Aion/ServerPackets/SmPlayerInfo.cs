@@ -49,7 +49,7 @@ public sealed class SmPlayerInfo : GameServerPacket
 		buffer.WriteH(_player.TitleId);
 		buffer.WriteH(0);
 		buffer.WriteH(0);
-		WriteEmptyLegion(buffer);
+		WriteLegion(buffer);
 		buffer.WriteC(100);
 		buffer.WriteH(_player.Dp);
 		buffer.WriteC(0);
@@ -195,8 +195,22 @@ public sealed class SmPlayerInfo : GameServerPacket
 		return player.Houses.FirstOrDefault(house => !house.IsInactive)?.AddressId ?? 0;
 	}
 
-	private static void WriteEmptyLegion(PacketBuffer buffer)
+	private void WriteLegion(PacketBuffer buffer)
 	{
+		// Java parity: SM_PLAYER_INFO.writeImpl legion member/emblem block.
+		if (_player.LegionId > 0 && _player.LegionName.Length > 0)
+		{
+			buffer.WriteD(_player.LegionId);
+			buffer.WriteC(_player.LegionEmblemId);
+			buffer.WriteC(_player.LegionEmblemType);
+			buffer.WriteC(_player.LegionEmblemColorA);
+			buffer.WriteC(_player.LegionEmblemColorR);
+			buffer.WriteC(_player.LegionEmblemColorG);
+			buffer.WriteC(_player.LegionEmblemColorB);
+			buffer.WriteS(_player.LegionName);
+			return;
+		}
+
 		buffer.WriteB(new byte[12]);
 	}
 

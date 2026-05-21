@@ -223,6 +223,9 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				SELECT id, account_id, name, player_class, race, gender, note, exp, recoverexp, dp, reposte_energy, online, last_online,
 					quest_expands, npc_expands, item_expands, wh_npc_expands, wh_bonus_expands, title_id, bonus_title_id,
 					lm.legion_id, l.name AS legion_name,
+					le.emblem_id AS legion_emblem_id, le.emblem_type AS legion_emblem_type,
+					le.color_a AS legion_emblem_color_a, le.color_r AS legion_emblem_color_r,
+					le.color_g AS legion_emblem_color_g, le.color_b AS legion_emblem_color_b,
 					world_id, x, y, z, heading,
 					pa.face, pa.hair, pa.deco, pa.tattoo, pa.face_contour, pa.expression, pa.jaw_line,
 					pa.skin_rgb, pa.hair_rgb, pa.eye_rgb, pa.lip_rgb, pa.face_shape, pa.forehead, pa.eye_height,
@@ -236,6 +239,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				LEFT JOIN player_appearance pa ON pa.player_id = p.id
 				LEFT JOIN legion_members lm ON lm.player_id = p.id
 				LEFT JOIN legions l ON l.id = lm.legion_id
+				LEFT JOIN legion_emblems le ON le.legion_id = lm.legion_id
 				WHERE p.id = ? AND p.account_id = ? AND (p.deletion_date IS NULL OR p.deletion_date > CURRENT_TIMESTAMP)
 				""";
 			command.Parameters.AddRange(
@@ -260,6 +264,12 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				Note = ReadString(reader, "note"),
 				LegionId = ReadInt(reader, "legion_id"),
 				LegionName = ReadString(reader, "legion_name"),
+				LegionEmblemId = (byte)ReadInt(reader, "legion_emblem_id"),
+				LegionEmblemType = ToLegionEmblemTypeValue(ReadString(reader, "legion_emblem_type")),
+				LegionEmblemColorA = (byte)ReadInt(reader, "legion_emblem_color_a"),
+				LegionEmblemColorR = (byte)ReadInt(reader, "legion_emblem_color_r"),
+				LegionEmblemColorG = (byte)ReadInt(reader, "legion_emblem_color_g"),
+				LegionEmblemColorB = (byte)ReadInt(reader, "legion_emblem_color_b"),
 				Appearance = ReadAppearance(reader),
 				Exp = reader.GetInt64(reader.GetOrdinal("exp")),
 				RecoverableExp = ReadLong(reader, "recoverexp"),
@@ -1696,6 +1706,12 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	{
 		var ordinal = reader.GetOrdinal(column);
 		return !reader.IsDBNull(ordinal) && Convert.ToInt32(reader.GetValue(ordinal)) != 0;
+	}
+
+	private static byte ToLegionEmblemTypeValue(string emblemType)
+	{
+		// Java parity: model/team/legion/LegionEmblemType values.
+		return string.Equals(emblemType, "CUSTOM", StringComparison.OrdinalIgnoreCase) ? (byte)0x80 : (byte)0;
 	}
 
 	private static int ReadSettingsInt(MySqlDataReader reader, string column)

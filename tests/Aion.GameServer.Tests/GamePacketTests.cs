@@ -1705,6 +1705,14 @@ public class GamePacketTests
 			TitleId = 12,
 			Dp = 300,
 			Note = "Looking sharp",
+			LegionId = 101,
+			LegionName = "Codeguard",
+			LegionEmblemId = 7,
+			LegionEmblemType = 0x80,
+			LegionEmblemColorA = 255,
+			LegionEmblemColorR = 10,
+			LegionEmblemColorG = 20,
+			LegionEmblemColorB = 30,
 			AccountMembership = 2,
 			TargetObjectId = 9005,
 			Position = new WorldPosition(210010000, 10, 20, 30, 40),
@@ -1770,7 +1778,14 @@ public class GamePacketTests
 		Assert.Equal(12, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
-		Assert.Equal(new byte[12], reader.ReadB(12));
+		Assert.Equal(101, reader.ReadD());
+		Assert.Equal(7, (int)reader.ReadC());
+		Assert.Equal(0x80, (int)reader.ReadC());
+		Assert.Equal(255, (int)reader.ReadC());
+		Assert.Equal(10, (int)reader.ReadC());
+		Assert.Equal(20, (int)reader.ReadC());
+		Assert.Equal(30, (int)reader.ReadC());
+		Assert.Equal("Codeguard", reader.ReadS());
 		Assert.Equal(100, (int)reader.ReadC());
 		Assert.Equal(300, reader.ReadH());
 		Assert.Equal(0, (int)reader.ReadC());

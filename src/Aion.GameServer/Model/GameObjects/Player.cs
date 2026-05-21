@@ -24,6 +24,18 @@ public sealed class Player
 
 	public string LegionName { get; set; } = string.Empty;
 
+	public byte LegionEmblemId { get; set; }
+
+	public byte LegionEmblemType { get; set; }
+
+	public byte LegionEmblemColorA { get; set; }
+
+	public byte LegionEmblemColorR { get; set; }
+
+	public byte LegionEmblemColorG { get; set; }
+
+	public byte LegionEmblemColorB { get; set; }
+
 	public string Name { get; init; } = string.Empty;
 
 	public string PlayerClass { get; init; } = string.Empty;
