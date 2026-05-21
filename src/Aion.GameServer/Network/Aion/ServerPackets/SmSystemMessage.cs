@@ -115,6 +115,36 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1402666);
 	}
 
+	public static SmSystemMessage ExceedCannotAmplify(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_EXCEED_CANNOT_01.
+		return new SmSystemMessage(1402650, itemName);
+	}
+
+	public static SmSystemMessage ExceedNeedsMaxEnchant()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_EXCEED_CANNOT_02.
+		return new SmSystemMessage(1402651);
+	}
+
+	public static SmSystemMessage ExceedNoTargetItem()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_EXCEED_NO_TARGET_ITEM.
+		return new SmSystemMessage(1402655);
+	}
+
+	public static SmSystemMessage ExceedAlready()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_EXCEED_ALREADY.
+		return new SmSystemMessage(1402656);
+	}
+
+	public static SmSystemMessage ExceedSucceed(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_EXCEED_SUCCEED.
+		return new SmSystemMessage(1402657, itemName);
+	}
+
 	public static SmSystemMessage VendorCannotBuyOwnRegisteredItem()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_VENDOR_CAN_NOT_BUY_MY_REGISTER_ITEM.

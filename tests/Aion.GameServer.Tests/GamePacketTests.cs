@@ -2844,6 +2844,21 @@ public class GamePacketTests
 		Assert.Equal(3, removeStone.ActionType);
 		Assert.Equal(4, removeStone.SlotNumber);
 		Assert.Equal(7001, removeStone.NpcObjectId);
+
+		var amplification = Assert.IsType<CmManastone>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(74, b =>
+			{
+				b.WriteC(8);
+				b.WriteC(0);
+				b.WriteD(3001);
+				b.WriteD(3002);
+				b.WriteD(3003);
+			}), GameConnectionState.InGame));
+
+		Assert.Equal(8, amplification.ActionType);
+		Assert.Equal(3001, amplification.TargetItemObjectId);
+		Assert.Equal(3002, amplification.StoneObjectId);
+		Assert.Equal(3003, amplification.SupplementObjectId);
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(74, _ => { }), GameConnectionState.Authed));
 	}
 

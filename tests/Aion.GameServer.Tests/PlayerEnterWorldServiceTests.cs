@@ -689,6 +689,18 @@ public sealed class PlayerEnterWorldServiceTests
 			return Task.FromResult(true);
 		}
 
+		public Task<bool> SaveItemAmplificationMutationAsync(
+			int playerObjectId,
+			InventoryItem targetItemUpdate,
+			InventoryItem? materialItemUpdate,
+			int? deletedMaterialItemObjectId,
+			InventoryItem? toolItemUpdate,
+			int? deletedToolItemObjectId,
+			CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult(true);
+		}
+
 		public Task<bool> SaveEquipmentMutationAsync(
 			int playerObjectId,
 			IReadOnlyList<InventoryItem> items,

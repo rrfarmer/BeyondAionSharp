@@ -346,7 +346,9 @@ public sealed class StaticData
 					ReadIntAttribute(reader, "activate_count"),
 					ReadIntAttribute(reader, "expire_time"),
 					ReadIntAttribute(reader, "enchant_type"),
+					ReadIntAttribute(reader, "max_enchant"),
 					ReadIntAttribute(reader, "max_enchant_bonus"),
+					ReadBoolAttribute(reader, "can_exceed_enchant"),
 					ReadIntAttribute(reader, "option_slot_bonus"),
 					ReadIntAttribute(reader, "rnd_bonus"),
 					ReadOptionalIntAttribute(reader, "rnd_count", -1),
@@ -1234,7 +1236,9 @@ public sealed class StaticData
 			int activationCount,
 			int expireTimeMinutes,
 			int enchantType,
+			int maxEnchantLevel,
 			int maxEnchantBonus,
+			bool canExceedEnchant,
 			int optionSlotBonus,
 			int randomBonusId,
 			int maxTuneCount,
@@ -1260,6 +1264,8 @@ public sealed class StaticData
 			ActivationCount = activationCount;
 			ExpireTimeMinutes = expireTimeMinutes;
 			EnchantType = enchantType;
+			MaxEnchantLevel = maxEnchantLevel;
+			CanExceedEnchant = canExceedEnchant;
 			StatBonusSetId = randomBonusId;
 			EnchantName = enchantName;
 			TemperingName = temperingName;
@@ -1303,6 +1309,10 @@ public sealed class StaticData
 		private int ExpireTimeMinutes { get; }
 
 		private int EnchantType { get; }
+
+		private int MaxEnchantLevel { get; }
+
+		private bool CanExceedEnchant { get; }
 
 		private int StatBonusSetId { get; }
 
@@ -1407,7 +1417,9 @@ public sealed class StaticData
 				MaxLevelRestrictions,
 				GenderPermitted,
 				MinRank,
-				MaxRank);
+				MaxRank,
+				MaxEnchantLevel,
+				CanExceedEnchant);
 		}
 
 		private static bool CalculateCanTune(

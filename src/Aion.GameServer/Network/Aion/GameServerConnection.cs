@@ -1316,6 +1316,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (packet.ActionType == 8)
+		{
+			await HandleAmplifyItemAsync(player, packet);
+			return;
+		}
+
 		if (packet.ActionType is not (1 or 2))
 			return;
 
@@ -1493,6 +1499,79 @@ public sealed class GameServerConnection : BaseClientConnection
 			GodstoneSocketFailure.TargetNotProcGivable => SmSystemMessage.GiveItemProcNotProcGivableItem(plan.ItemName),
 			GodstoneSocketFailure.NoGodstoneItem => SmSystemMessage.GiveItemProcNoProcGiveItem(),
 			_ => SmSystemMessage.GiveItemProcNoTargetItem(),
+		};
+	}
+
+	private async Task HandleAmplifyItemAsync(Player player, CmManastone packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_MANASTONE.runImpl actionType 8 + services/EnchantService.amplifyItem.
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var itemTemplates = staticData?.ItemTemplates;
+		if (staticData == null || itemTemplates == null)
+			return;
+
+		var targetItem = player.InventoryItems.FirstOrDefault(item => item.ObjectId == packet.TargetItemObjectId);
+		var materialItem = player.InventoryItems.FirstOrDefault(item =>
+			item.ObjectId == packet.SupplementObjectId
+			&& item.Location == CubeStorageId
+			&& !item.IsEquipped);
+		var toolItem = player.InventoryItems.FirstOrDefault(item =>
+			item.ObjectId == packet.StoneObjectId
+			&& item.Location == CubeStorageId
+			&& !item.IsEquipped);
+
+		var plan = EnchantService.CreateAmplificationPlan(
+			player,
+			packet.TargetItemObjectId,
+			packet.SupplementObjectId,
+			packet.StoneObjectId,
+			itemTemplates);
+		if (!plan.Succeeded)
+		{
+			await SendPacketAsync(CreateAmplificationFailureMessage(plan));
+			return;
+		}
+
+		var targetTemplate = targetItem == null ? null : itemTemplates.GetItemTemplate(targetItem.ItemId);
+		var materialTemplate = materialItem == null ? null : itemTemplates.GetItemTemplate(materialItem.ItemId);
+		var toolTemplate = toolItem == null ? null : itemTemplates.GetItemTemplate(toolItem.ItemId);
+		if (plan.TargetItemUpdate == null || targetTemplate == null)
+			return;
+
+		var saved = _playerEnterWorldService == null
+			|| await _playerEnterWorldService.SaveItemAmplificationMutationAsync(
+				player,
+				plan.TargetItemUpdate,
+				plan.MaterialItemUpdate,
+				plan.DeletedMaterialItemObjectId,
+				plan.ToolItemUpdate,
+				plan.DeletedToolItemObjectId);
+		if (!saved)
+			return;
+
+		player.InventoryItems = plan.InventoryItems;
+		await SendItemUseMutationAsync(plan.MaterialItemUpdate, plan.DeletedMaterialItemObjectId, materialTemplate);
+		await SendItemUseMutationAsync(plan.ToolItemUpdate, plan.DeletedToolItemObjectId, toolTemplate);
+		await SendPacketAsync(SmSystemMessage.ExceedSucceed(plan.ItemName));
+		await SendPacketAsync(new SmInventoryUpdateItem(plan.TargetItemUpdate, targetTemplate, updateType: 0));
+	}
+
+	private async Task SendItemUseMutationAsync(InventoryItem? itemUpdate, int? deletedItemObjectId, ItemTemplateSummary? template)
+	{
+		if (itemUpdate != null && template != null)
+			await SendPacketAsync(new SmInventoryUpdateItem(itemUpdate, template, SmInventoryUpdateItem.DecreaseItemUse));
+		else if (deletedItemObjectId.HasValue)
+			await SendPacketAsync(new SmDeleteItem(deletedItemObjectId.Value, SmDeleteItem.UseDeleteType));
+	}
+
+	private static SmSystemMessage CreateAmplificationFailureMessage(AmplificationPlan plan)
+	{
+		return plan.Failure switch
+		{
+			AmplificationFailure.AlreadyAmplified => SmSystemMessage.ExceedAlready(),
+			AmplificationFailure.CannotAmplify => SmSystemMessage.ExceedCannotAmplify(plan.ItemName),
+			AmplificationFailure.NeedsMaxEnchant => SmSystemMessage.ExceedNeedsMaxEnchant(),
+			_ => SmSystemMessage.ExceedNoTargetItem(),
 		};
 	}
 

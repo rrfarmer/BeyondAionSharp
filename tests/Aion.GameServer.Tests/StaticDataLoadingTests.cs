@@ -138,6 +138,9 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(1, staticData.ItemTemplates.GetItemTemplate(152000065)?.ActivationCount);
 		Assert.Equal(1, staticData.ItemTemplates.GetItemTemplate(100000895)?.ExpireTimeMinutes);
 		Assert.Equal(1, staticData.ItemTemplates.GetItemTemplate(100000714)?.EnchantType);
+		Assert.Equal(15, staticData.ItemTemplates.GetItemTemplate(100100860)?.MaxEnchantLevel);
+		Assert.True(staticData.ItemTemplates.GetItemTemplate(100100860)?.CanExceedEnchant);
+		Assert.False(staticData.ItemTemplates.GetItemTemplate(100000001)?.CanExceedEnchant);
 		Assert.True(staticData.ItemTemplates.GetItemTemplate(100001276)?.CanTune);
 		Assert.False(staticData.ItemTemplates.GetItemTemplate(100000001)?.CanTune);
 		Assert.Equal(1, staticData.ItemTemplates.GetItemTemplate(100001105)?.ConditioningMaxLevel);

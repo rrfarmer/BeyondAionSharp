@@ -274,6 +274,26 @@ public sealed class PlayerEnterWorldService
 			cancellationToken);
 	}
 
+	public Task<bool> SaveItemAmplificationMutationAsync(
+		Player player,
+		InventoryItem targetItemUpdate,
+		InventoryItem? materialItemUpdate,
+		int? deletedMaterialItemObjectId,
+		InventoryItem? toolItemUpdate,
+		int? deletedToolItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: services/EnchantService.amplifyItem target amplification and source-consume persistence.
+		return _repository.SaveItemAmplificationMutationAsync(
+			player.ObjectId,
+			targetItemUpdate,
+			materialItemUpdate,
+			deletedMaterialItemObjectId,
+			toolItemUpdate,
+			deletedToolItemObjectId,
+			cancellationToken);
+	}
+
 	public Task<bool> SaveEquipmentMutationAsync(
 		Player player,
 		IReadOnlyList<InventoryItem> items,

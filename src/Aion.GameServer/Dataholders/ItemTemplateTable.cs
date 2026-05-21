@@ -62,7 +62,9 @@ public sealed record ItemTemplateSummary(
 	IReadOnlyDictionary<string, int>? MaxLevelRestrictions = null,
 	string GenderPermitted = "",
 	int MinRank = 1,
-	int MaxRank = 18)
+	int MaxRank = 18,
+	int MaxEnchantLevel = 0,
+	bool CanExceedEnchant = false)
 {
 	private const int CanPolishMask = 1 << 17;
 	private const int SoulBoundMask = 1 << 7;

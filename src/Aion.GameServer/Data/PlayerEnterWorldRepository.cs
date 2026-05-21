@@ -119,6 +119,15 @@ public interface IPlayerEnterWorldRepository
 		int? deletedSourceItemObjectId,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveItemAmplificationMutationAsync(
+		int playerObjectId,
+		InventoryItem targetItemUpdate,
+		InventoryItem? materialItemUpdate,
+		int? deletedMaterialItemObjectId,
+		InventoryItem? toolItemUpdate,
+		int? deletedToolItemObjectId,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SaveEquipmentMutationAsync(
 		int playerObjectId,
 		IReadOnlyList<InventoryItem> items,
@@ -337,6 +346,18 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		InventoryItem targetItemUpdate,
 		InventoryItem? sourceItemUpdate,
 		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> SaveItemAmplificationMutationAsync(
+		int playerObjectId,
+		InventoryItem targetItemUpdate,
+		InventoryItem? materialItemUpdate,
+		int? deletedMaterialItemObjectId,
+		InventoryItem? toolItemUpdate,
+		int? deletedToolItemObjectId,
 		CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(true);
@@ -867,6 +888,66 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not save godstone socket mutation for player {PlayerObjectId}", playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SaveItemAmplificationMutationAsync(
+		int playerObjectId,
+		InventoryItem targetItemUpdate,
+		InventoryItem? materialItemUpdate,
+		int? deletedMaterialItemObjectId,
+		InventoryItem? toolItemUpdate,
+		int? deletedToolItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: services/EnchantService.amplifyItem persists target is_amplified plus material/tool consume.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			await using (var targetCommand = connection.CreateCommand())
+			{
+				targetCommand.Transaction = transaction;
+				targetCommand.CommandText = "UPDATE inventory SET is_amplified = ? WHERE item_unique_id = ? AND item_owner = ?";
+				targetCommand.Parameters.AddRange(
+					new[]
+					{
+						new MySqlParameter { Value = targetItemUpdate.IsAmplified },
+						new MySqlParameter { Value = targetItemUpdate.ObjectId },
+						new MySqlParameter { Value = playerObjectId },
+					});
+				if (await targetCommand.ExecuteNonQueryAsync(cancellationToken) <= 0)
+					return false;
+			}
+
+			if (materialItemUpdate != null && !await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, materialItemUpdate, cancellationToken))
+				return false;
+
+			if (deletedMaterialItemObjectId.HasValue
+				&& !await DeleteInventoryItemAsync(connection, transaction, playerObjectId, deletedMaterialItemObjectId.Value, cancellationToken))
+			{
+				return false;
+			}
+
+			if (toolItemUpdate != null && !await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, toolItemUpdate, cancellationToken))
+				return false;
+
+			if (deletedToolItemObjectId.HasValue
+				&& deletedToolItemObjectId != deletedMaterialItemObjectId
+				&& !await DeleteInventoryItemAsync(connection, transaction, playerObjectId, deletedToolItemObjectId.Value, cancellationToken))
+			{
+				return false;
+			}
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save item amplification mutation for player {PlayerObjectId}", playerObjectId);
 			return false;
 		}
 	}
