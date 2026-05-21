@@ -150,6 +150,8 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal("PHYSICAL", fireSword.AttackType);
 		Assert.Equal(70, fireSword.WeaponStats?.MeanDamage);
 		Assert.Equal(1400, fireSword.WeaponStats?.AttackSpeed);
+		Assert.Equal(29, fireSword.IdianInfo?.BurnAttack);
+		Assert.Equal(12, fireSword.IdianInfo?.BurnDefend);
 		Assert.Contains(fireSword.StatModifiers, modifier => modifier is { Operation: "add", Name: "PHYSICAL_ATTACK", Value: 7, Bonus: true });
 		var conditionedDagger = staticData.ItemTemplates.GetItemTemplate(100201371);
 		Assert.NotNull(conditionedDagger);
@@ -166,6 +168,7 @@ public sealed class StaticDataLoadingTests
 		Assert.Contains(staticData.TemperingTemplates.GetModifiers(physicalPlume, 3, 7), modifier => modifier is { Operation: "add", Name: "MAXHP", Value: 450, Bonus: true });
 		Assert.Equal(3, staticData.ItemTemplates.GetItemTemplate(166050001)?.PolishSetId);
 		Assert.Contains(staticData.ItemRandomBonuses.GetModifiers("POLISH", 3, 1), modifier => modifier is { Operation: "add", Name: "MAXHP", Value: 347, Bonus: true });
+		Assert.Equal(1, staticData.ItemRandomBonuses.SelectRandomBonusNumber("POLISH", 3, () => 0));
 		var testGodstone = staticData.ItemTemplates.GetItemTemplate(168000001);
 		Assert.NotNull(testGodstone);
 		Assert.Equal(8255, testGodstone.GodstoneInfo?.SkillId);

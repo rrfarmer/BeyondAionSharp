@@ -67,6 +67,36 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1401340);
 	}
 
+	public static SmSystemMessage EnchantItemFailed(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_ENCHANT_ITEM_FAILED.
+		return new SmSystemMessage(1300456, itemName);
+	}
+
+	public static SmSystemMessage PolishWrongLevel()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_POLISH_WRONG_LEVEL.
+		return new SmSystemMessage(1401649);
+	}
+
+	public static SmSystemMessage PolishSuccess(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_POLISH_SUCCEED.
+		return new SmSystemMessage(1401650, itemName);
+	}
+
+	public static SmSystemMessage PolishChargeEnd(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_POLISH_CHANGE_CONDITION_END.
+		return new SmSystemMessage(1401652, itemName);
+	}
+
+	public static SmSystemMessage PolishNeedIdentify()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_POLISH_NEED_IDENTIFY.
+		return new SmSystemMessage(1401750);
+	}
+
 	public static SmSystemMessage BrokerPriceExceedsLimit()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LIMITED_VENDOR_CANT_OVER_GOLD.

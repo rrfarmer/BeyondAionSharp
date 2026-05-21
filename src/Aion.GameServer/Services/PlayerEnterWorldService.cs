@@ -179,6 +179,22 @@ public sealed class PlayerEnterWorldService
 		return _repository.SaveItemChargeMutationAsync(player.ObjectId, chargedItem, kinahItem, abyssRank, cancellationToken);
 	}
 
+	public Task<bool> SaveIdianPolishMutationAsync(
+		Player player,
+		InventoryItem? targetItem,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/ItemStoneListDAO.storeIdianStones and inventory decreaseByObjectId side effects.
+		return _repository.SaveIdianPolishMutationAsync(
+			player.ObjectId,
+			targetItem,
+			sourceItemUpdate,
+			deletedSourceItemObjectId,
+			cancellationToken);
+	}
+
 	public async Task LeaveWorldAsync(Player player, CancellationToken cancellationToken = default)
 	{
 		// Java parity: services/player/PlayerLeaveWorldService.leaveWorld baseline persistence.

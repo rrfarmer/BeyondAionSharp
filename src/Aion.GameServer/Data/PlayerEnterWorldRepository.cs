@@ -75,6 +75,13 @@ public interface IPlayerEnterWorldRepository
 		PlayerAbyssRank? abyssRank,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveIdianPolishMutationAsync(
+		int playerObjectId,
+		InventoryItem? targetItem,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SavePlayerLogoutAsync(Player player, DateTime lastOnline, CancellationToken cancellationToken = default);
 }
 
@@ -225,6 +232,16 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		InventoryItem chargedItem,
 		InventoryItem? kinahItem,
 		PlayerAbyssRank? abyssRank,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> SaveIdianPolishMutationAsync(
+		int playerObjectId,
+		InventoryItem? targetItem,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
 		CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(true);
@@ -475,6 +492,46 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		}
 	}
 
+	public async Task<bool> SaveIdianPolishMutationAsync(
+		int playerObjectId,
+		InventoryItem? targetItem,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: model/templates/item/actions/PolishAction + dao/ItemStoneListDAO.storeIdianStones.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			if (targetItem != null)
+			{
+				if (!await InventoryItemExistsAsync(connection, transaction, playerObjectId, targetItem.ObjectId, cancellationToken))
+					return false;
+				await SaveIdianStoneAsync(connection, transaction, targetItem, cancellationToken);
+			}
+
+			if (sourceItemUpdate != null && !await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, sourceItemUpdate, cancellationToken))
+				return false;
+
+			if (deletedSourceItemObjectId.HasValue
+				&& !await DeleteInventoryItemAsync(connection, transaction, playerObjectId, deletedSourceItemObjectId.Value, cancellationToken))
+			{
+				return false;
+			}
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save idian polish mutation for player {PlayerObjectId}", playerObjectId);
+			return false;
+		}
+	}
+
 	private static async Task SavePlayerSettingsAsync(
 		MySqlConnection connection,
 		int playerObjectId,
@@ -528,6 +585,92 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			{
 				new MySqlParameter { Value = item.Count },
 				new MySqlParameter { Value = item.ObjectId },
+				new MySqlParameter { Value = playerObjectId },
+			});
+		return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+	}
+
+	private static async Task<bool> InventoryItemExistsAsync(
+		MySqlConnection connection,
+		MySqlTransaction transaction,
+		int playerObjectId,
+		int itemObjectId,
+		CancellationToken cancellationToken)
+	{
+		await using var command = connection.CreateCommand();
+		command.Transaction = transaction;
+		command.CommandText = "SELECT COUNT(*) FROM inventory WHERE item_unique_id = ? AND item_owner = ?";
+		command.Parameters.AddRange(
+			new[]
+			{
+				new MySqlParameter { Value = itemObjectId },
+				new MySqlParameter { Value = playerObjectId },
+			});
+		return Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken), CultureInfo.InvariantCulture) > 0;
+	}
+
+	private static async Task SaveIdianStoneAsync(
+		MySqlConnection connection,
+		MySqlTransaction transaction,
+		InventoryItem item,
+		CancellationToken cancellationToken)
+	{
+		await DeleteIdianStoneAsync(connection, transaction, item.ObjectId, cancellationToken);
+		if (item.IdianStone == null)
+			return;
+
+		await using var command = connection.CreateCommand();
+		command.Transaction = transaction;
+		command.CommandText = """
+			INSERT INTO item_stones (item_unique_id, item_id, slot, category, polishNumber, polishCharge, proc_count)
+			VALUES (?, ?, 0, 3, ?, ?, 0)
+			""";
+		command.Parameters.AddRange(
+			new[]
+			{
+				new MySqlParameter { Value = item.ObjectId },
+				new MySqlParameter { Value = item.IdianStone.ItemId },
+				new MySqlParameter { Value = item.IdianStone.PolishNumber },
+				new MySqlParameter { Value = item.IdianStone.PolishCharge },
+			});
+		await command.ExecuteNonQueryAsync(cancellationToken);
+	}
+
+	private static async Task DeleteIdianStoneAsync(
+		MySqlConnection connection,
+		MySqlTransaction transaction,
+		int itemObjectId,
+		CancellationToken cancellationToken)
+	{
+		await using var command = connection.CreateCommand();
+		command.Transaction = transaction;
+		command.CommandText = "DELETE FROM item_stones WHERE item_unique_id = ? AND slot = 0 AND category = 3";
+		command.Parameters.Add(new MySqlParameter { Value = itemObjectId });
+		await command.ExecuteNonQueryAsync(cancellationToken);
+	}
+
+	private static async Task<bool> DeleteInventoryItemAsync(
+		MySqlConnection connection,
+		MySqlTransaction transaction,
+		int playerObjectId,
+		int itemObjectId,
+		CancellationToken cancellationToken)
+	{
+		await using (var stoneCommand = connection.CreateCommand())
+		{
+			stoneCommand.Transaction = transaction;
+			stoneCommand.CommandText = "DELETE FROM item_stones WHERE item_unique_id = ?";
+			stoneCommand.Parameters.Add(new MySqlParameter { Value = itemObjectId });
+			await stoneCommand.ExecuteNonQueryAsync(cancellationToken);
+		}
+
+		await using var command = connection.CreateCommand();
+		command.Transaction = transaction;
+		command.CommandText = "DELETE FROM inventory WHERE item_unique_id = ? AND item_owner = ?";
+		command.Parameters.AddRange(
+			new[]
+			{
+				new MySqlParameter { Value = itemObjectId },
 				new MySqlParameter { Value = playerObjectId },
 			});
 		return await command.ExecuteNonQueryAsync(cancellationToken) > 0;

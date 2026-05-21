@@ -11,6 +11,7 @@ public sealed class SmInventoryUpdateItem : GameServerPacket
 	public const int DecreaseItemUse = 0x16;
 	public const int DecreaseKinahBuy = 0x1D;
 	public const int Charge = -2;
+	public const int PolishCharge = -3;
 
 	private readonly InventoryItem _item;
 	private readonly ItemTemplateSummary _template;
@@ -37,6 +38,17 @@ public sealed class SmInventoryUpdateItem : GameServerPacket
 			var chargeBlobBytes = chargeBlob.ToArray();
 			buffer.WriteH(chargeBlobBytes.Length);
 			buffer.WriteB(chargeBlobBytes);
+			return;
+		}
+
+		if (_updateType == PolishCharge)
+		{
+			// Java parity: ItemUpdateType.POLISH_CHARGE writes only PolishInfoBlob and omits the trailing update type.
+			using var polishBlob = new PacketBuffer();
+			SmInventoryInfo.WritePolishInfoBlob(polishBlob, _item);
+			var polishBlobBytes = polishBlob.ToArray();
+			buffer.WriteH(polishBlobBytes.Length);
+			buffer.WriteB(polishBlobBytes);
 			return;
 		}
 

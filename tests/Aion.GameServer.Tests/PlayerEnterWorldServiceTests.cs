@@ -387,6 +387,14 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public PlayerAbyssRank? ChargePaymentAbyssRank { get; private set; }
 
+		public int SaveIdianPolishMutationCalls { get; private set; }
+
+		public InventoryItem? IdianPolishTargetItem { get; private set; }
+
+		public InventoryItem? IdianPolishSourceItemUpdate { get; private set; }
+
+		public int? IdianPolishDeletedSourceItemObjectId { get; private set; }
+
 		public Task<Player?> LoadPlayerAsync(int accountId, int playerObjectId, CancellationToken cancellationToken = default)
 		{
 			return Task.FromResult(Player);
@@ -569,6 +577,20 @@ public sealed class PlayerEnterWorldServiceTests
 			ChargedItem = chargedItem;
 			ChargePaymentKinahItem = kinahItem;
 			ChargePaymentAbyssRank = abyssRank;
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> SaveIdianPolishMutationAsync(
+			int playerObjectId,
+			InventoryItem? targetItem,
+			InventoryItem? sourceItemUpdate,
+			int? deletedSourceItemObjectId,
+			CancellationToken cancellationToken = default)
+		{
+			SaveIdianPolishMutationCalls++;
+			IdianPolishTargetItem = targetItem;
+			IdianPolishSourceItemUpdate = sourceItemUpdate;
+			IdianPolishDeletedSourceItemObjectId = deletedSourceItemObjectId;
 			return Task.FromResult(true);
 		}
 

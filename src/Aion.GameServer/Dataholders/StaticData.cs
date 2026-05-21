@@ -397,7 +397,7 @@ public sealed class StaticData
 
 			if (reader.Depth == 3 && reader.LocalName == "modifiers" && currentItemRandomBonus != null)
 			{
-				currentItemRandomBonus.AddModifierGroup();
+				currentItemRandomBonus.AddModifierGroup(ReadFloatAttribute(reader, "chance"));
 				continue;
 			}
 
@@ -520,6 +520,14 @@ public sealed class StaticData
 					ReadIntAttribute(reader, "price1"),
 					ReadIntAttribute(reader, "price2"));
 				currentItemTemplate.ConditioningMaxLevel = currentItemTemplate.Improvement.Level;
+				continue;
+			}
+
+			if (reader.Depth == 3 && reader.LocalName == "idian" && currentItemTemplate != null)
+			{
+				currentItemTemplate.IdianInfo = new ItemIdianInfo(
+					ReadIntAttribute(reader, "burn_attack"),
+					ReadIntAttribute(reader, "burn_defend"));
 				continue;
 			}
 
@@ -724,6 +732,7 @@ public sealed class StaticData
 	private sealed class ItemRandomBonusBuilder
 	{
 		private readonly List<IReadOnlyList<ItemStatModifier>> _modifierGroups = [];
+		private readonly List<double> _chances = [];
 		private List<ItemStatModifier>? _currentModifierGroup;
 
 		public ItemRandomBonusBuilder(string type, int setId)
@@ -736,24 +745,28 @@ public sealed class StaticData
 
 		private int SetId { get; }
 
-		public void AddModifierGroup()
+		public void AddModifierGroup(double chance)
 		{
 			_currentModifierGroup = [];
 			_modifierGroups.Add(_currentModifierGroup);
+			_chances.Add(chance);
 		}
 
 		public void AddModifier(ItemStatModifier modifier)
 		{
 			_currentModifierGroup ??= [];
 			if (_modifierGroups.Count == 0)
+			{
 				_modifierGroups.Add(_currentModifierGroup);
+				_chances.Add(0);
+			}
 			_currentModifierGroup.Add(modifier);
 		}
 
 		public ItemRandomBonusSummary ToSummary()
 		{
 			// Java parity: model/templates/item/bonuses/RandomBonusSet modifier groups are selected by 1-based rnd_bonus rows.
-			return new ItemRandomBonusSummary(Type, SetId, _modifierGroups.ToArray());
+			return new ItemRandomBonusSummary(Type, SetId, _modifierGroups.ToArray(), _chances.ToArray());
 		}
 	}
 
@@ -1009,6 +1022,8 @@ public sealed class StaticData
 
 		public ItemImprovement? Improvement { get; set; }
 
+		public ItemIdianInfo? IdianInfo { get; set; }
+
 		public List<ItemStatModifier> Modifiers { get; } = [];
 
 		public int DispositionItemId { get; set; }
@@ -1076,7 +1091,8 @@ public sealed class StaticData
 				PolishSetId,
 				GodstoneInfo,
 				Improvement,
-				RecommendRank);
+				RecommendRank,
+				IdianInfo);
 		}
 
 		private static bool CalculateCanTune(

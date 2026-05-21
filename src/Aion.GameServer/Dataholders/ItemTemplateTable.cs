@@ -54,7 +54,8 @@ public sealed record ItemTemplateSummary(
 	int PolishSetId = 0,
 	ItemGodstoneInfo? GodstoneInfo = null,
 	ItemImprovement? Improvement = null,
-	int RecommendRank = 0)
+	int RecommendRank = 0,
+	ItemIdianInfo? IdianInfo = null)
 {
 	private const int CanPolishMask = 1 << 17;
 
@@ -178,6 +179,9 @@ public sealed record ItemImprovement(
 	int BurnDefend,
 	int Price1,
 	int Price2);
+
+// Java parity: model/templates/item/actions/IdianAction.
+public sealed record ItemIdianInfo(int BurnAttack, int BurnDefend);
 
 public sealed record ItemStatModifier(
 	string Operation,

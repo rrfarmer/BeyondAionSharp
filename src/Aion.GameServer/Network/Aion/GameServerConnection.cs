@@ -412,6 +412,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleChargeItemAsync(_activePlayer, chargeItem);
 				break;
+			case CmUseItem useItem:
+				if (_activePlayer != null)
+					await HandleUseItemAsync(_activePlayer, useItem);
+				break;
 			case CmTitleSet titleSet:
 				if (_activePlayer != null)
 					await HandleTitleSetAsync(_activePlayer, titleSet);
@@ -1167,6 +1171,108 @@ public sealed class GameServerConnection : BaseClientConnection
 					? SmSystemMessage.ItemChargeAllComplete()
 					: SmSystemMessage.ItemCharge2AllComplete());
 		}
+	}
+
+	private async Task HandleUseItemAsync(Player player, CmUseItem packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_USE_ITEM.runImpl. This slice wires the PolishAction branch.
+		if (packet.Type != 2)
+			return;
+
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var itemTemplates = staticData?.ItemTemplates;
+		var itemRandomBonuses = staticData?.ItemRandomBonuses;
+		if (staticData == null || itemTemplates == null || itemRandomBonuses == null)
+			return;
+
+		var inventoryItems = player.InventoryItems.ToList();
+		var sourceItem = inventoryItems.FirstOrDefault(item => item.ObjectId == packet.SourceItemObjectId && item.Location == CubeStorageId && !item.IsEquipped);
+		if (sourceItem == null)
+			return;
+
+		var sourceTemplate = itemTemplates.GetItemTemplate(sourceItem.ItemId);
+		if (sourceTemplate == null || sourceTemplate.PolishSetId <= 0)
+			return;
+
+		var targetItem = packet.TargetItemObjectId == 0
+			? null
+			: inventoryItems.FirstOrDefault(item => item.ObjectId == packet.TargetItemObjectId);
+		var polishPlan = IdianPolishService.CreatePolishPlan(sourceItem, targetItem, itemTemplates, itemRandomBonuses);
+		switch (polishPlan.Result)
+		{
+			case IdianPolishResult.Success:
+				await ApplyIdianPolishPlanAsync(player, inventoryItems, sourceItem, polishPlan, staticData, success: true);
+				break;
+			case IdianPolishResult.NoRandomBonus:
+				await ApplyIdianPolishPlanAsync(player, inventoryItems, sourceItem, polishPlan, staticData, success: false);
+				break;
+			case IdianPolishResult.WrongLevel:
+				await SendPacketAsync(SmSystemMessage.PolishWrongLevel());
+				break;
+		}
+	}
+
+	private async Task ApplyIdianPolishPlanAsync(
+		Player player,
+		List<InventoryItem> inventoryItems,
+		InventoryItem sourceItem,
+		IdianPolishPlan polishPlan,
+		StaticData staticData,
+		bool success)
+	{
+		if (polishPlan.SourceTemplate == null)
+			return;
+
+		int? deletedSourceObjectId = polishPlan.DeleteSourceItem ? sourceItem.ObjectId : null;
+		var saved = _playerEnterWorldService == null
+			|| await _playerEnterWorldService.SaveIdianPolishMutationAsync(
+				player,
+				polishPlan.TargetItemUpdate,
+				polishPlan.SourceItemUpdate,
+				deletedSourceObjectId);
+		if (!saved)
+			return;
+
+		await BroadcastItemUsageAnimationAsync(
+			player,
+			new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, success ? 1 : 2, success ? 1 : 0));
+
+		if (polishPlan.DeleteSourceItem)
+		{
+			inventoryItems.RemoveAll(item => item.ObjectId == sourceItem.ObjectId);
+			await SendPacketAsync(new SmDeleteItem(sourceItem.ObjectId, SmDeleteItem.UseDeleteType));
+		}
+		else if (polishPlan.SourceItemUpdate != null)
+		{
+			ReplaceInventoryItem(inventoryItems, polishPlan.SourceItemUpdate);
+			await SendPacketAsync(new SmInventoryUpdateItem(polishPlan.SourceItemUpdate, polishPlan.SourceTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+		}
+
+		if (!success)
+		{
+			player.InventoryItems = inventoryItems.ToArray();
+			await SendPacketAsync(SmSystemMessage.EnchantItemFailed(polishPlan.SourceTemplate.GetClientName() ?? polishPlan.SourceTemplate.Name));
+			return;
+		}
+
+		if (polishPlan.TargetItemUpdate == null || polishPlan.TargetTemplate == null)
+			return;
+
+		ReplaceInventoryItem(inventoryItems, polishPlan.TargetItemUpdate);
+		player.InventoryItems = inventoryItems.ToArray();
+		await SendPacketAsync(SmSystemMessage.PolishSuccess(polishPlan.TargetTemplate.GetClientName() ?? polishPlan.TargetTemplate.Name));
+		await SendPacketAsync(new SmInventoryUpdateItem(polishPlan.TargetItemUpdate, polishPlan.TargetTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+		if (polishPlan.TargetItemUpdate.IsEquipped)
+			await SendPacketAsync(CreateStatsInfoPacket(player, staticData));
+	}
+
+	private async Task BroadcastItemUsageAnimationAsync(Player player, SmItemUsageAnimation packet)
+	{
+		// Java parity: PacketSendUtility.broadcastPacket(..., true) includes the source player.
+		if (_connectionRegistry != null)
+			await _connectionRegistry.BroadcastToVisiblePlayersAsync(player.Position, player.ObjectId, packet, includeSourcePlayer: true);
+		else
+			await SendPacketAsync(packet);
 	}
 
 	private static int GetChargeBarStep(int charge)

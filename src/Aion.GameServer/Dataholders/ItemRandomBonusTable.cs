@@ -31,9 +31,51 @@ public sealed class ItemRandomBonusTable
 
 		return set.ModifierGroups[statBonusId - 1];
 	}
+
+	public int SelectRandomBonusNumber(string type, int statBonusSetId, Func<double>? random = null)
+	{
+		// Java parity: dataholders/ItemRandomBonusData.selectRandomBonusNumber.
+		if (statBonusSetId == 0
+			|| !_bonuses.TryGetValue(type, out var typedBonuses)
+			|| !typedBonuses.TryGetValue(statBonusSetId, out var set)
+			|| set.ModifierGroups.Count == 0)
+		{
+			return 0;
+		}
+
+		var chances = set.Chances ?? Enumerable.Repeat(1d, set.ModifierGroups.Count).ToArray();
+		var totalChance = 0d;
+		for (var i = 0; i < set.ModifierGroups.Count; i++)
+		{
+			var chance = i < chances.Count ? chances[i] : 0d;
+			if (chance > 0)
+				totalChance += chance;
+		}
+
+		if (totalChance <= 0)
+			return 0;
+
+		var roll = Math.Clamp(random?.Invoke() ?? Random.Shared.NextDouble(), 0d, 0.999999999999d) * totalChance;
+		var cumulativeChance = 0d;
+		var lastPositiveGroup = 0;
+		for (var i = 0; i < set.ModifierGroups.Count; i++)
+		{
+			var chance = i < chances.Count ? chances[i] : 0d;
+			if (chance <= 0)
+				continue;
+
+			lastPositiveGroup = i + 1;
+			cumulativeChance += chance;
+			if (cumulativeChance >= roll)
+				return i + 1;
+		}
+
+		return lastPositiveGroup;
+	}
 }
 
 public sealed record ItemRandomBonusSummary(
 	string Type,
 	int SetId,
-	IReadOnlyList<IReadOnlyList<ItemStatModifier>> ModifierGroups);
+	IReadOnlyList<IReadOnlyList<ItemStatModifier>> ModifierGroups,
+	IReadOnlyList<double>? Chances = null);

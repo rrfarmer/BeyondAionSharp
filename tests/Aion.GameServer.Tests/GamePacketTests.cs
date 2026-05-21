@@ -461,6 +461,38 @@ public class GamePacketTests
 		Assert.Equal(500000, chargeInventoryUpdateReader.ReadD());
 		Assert.Equal(0, chargeInventoryUpdateReader.Remaining);
 
+		var polishChargeUpdateItem = new InventoryItem
+		{
+			ObjectId = 92,
+			ItemId = attachedTemplate.TemplateId,
+			Count = 1,
+			Location = 0,
+			IdianStone = new PlayerIdianStone(166050001, 1, 299999),
+		};
+		var polishChargeInventoryUpdatePayload = SerializeUnencryptedPayload(
+			new SmInventoryUpdateItem(polishChargeUpdateItem, attachedTemplate, SmInventoryUpdateItem.PolishCharge));
+		using var polishChargeInventoryUpdateReader = new PacketBuffer(polishChargeInventoryUpdatePayload);
+		Assert.Equal(92, polishChargeInventoryUpdateReader.ReadD());
+		Assert.Equal(attachedTemplate.GetClientName(), polishChargeInventoryUpdateReader.ReadS());
+		Assert.Equal(5, polishChargeInventoryUpdateReader.ReadH());
+		Assert.Equal(0x11, (int)polishChargeInventoryUpdateReader.ReadC());
+		Assert.Equal(299999, polishChargeInventoryUpdateReader.ReadD());
+		Assert.Equal(0, polishChargeInventoryUpdateReader.Remaining);
+
+		var itemUsagePayload = SerializeUnencryptedPayload(new SmItemUsageAnimation(7001, 9001, 166050001, 0, 1, 1));
+		using var itemUsageReader = new PacketBuffer(itemUsagePayload);
+		Assert.Equal(7001, itemUsageReader.ReadD());
+		Assert.Equal(7001, itemUsageReader.ReadD());
+		Assert.Equal(9001, itemUsageReader.ReadD());
+		Assert.Equal(166050001, itemUsageReader.ReadD());
+		Assert.Equal(0, itemUsageReader.ReadD());
+		Assert.Equal(1, (int)itemUsageReader.ReadC());
+		Assert.Equal(0, (int)itemUsageReader.ReadC());
+		Assert.Equal(0, (int)itemUsageReader.ReadC());
+		Assert.Equal(1, (int)itemUsageReader.ReadC());
+		Assert.Equal(1, itemUsageReader.ReadD());
+		Assert.Equal(0, itemUsageReader.Remaining);
+
 		Assert.Equal(
 			Convert.FromHexString("0100"),
 			SerializeUnencryptedPayload(SmMailService.CreateMailMessage(SmMailService.MailSendSuccess)));
@@ -503,6 +535,11 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.ItemCharge2Success("item", 2), 1401335, "item", "2");
 		AssertSystemMessage(SmSystemMessage.ItemChargeAllComplete(), 1400892);
 		AssertSystemMessage(SmSystemMessage.ItemCharge2AllComplete(), 1401340);
+		AssertSystemMessage(SmSystemMessage.EnchantItemFailed("idian"), 1300456, "idian");
+		AssertSystemMessage(SmSystemMessage.PolishWrongLevel(), 1401649);
+		AssertSystemMessage(SmSystemMessage.PolishSuccess("weapon"), 1401650, "weapon");
+		AssertSystemMessage(SmSystemMessage.PolishChargeEnd("weapon"), 1401652, "weapon");
+		AssertSystemMessage(SmSystemMessage.PolishNeedIdentify(), 1401750);
 		AssertSystemMessage(SmSystemMessage.HousingBidSuccess(6001), 1401265, "6001");
 		AssertSystemMessage(SmSystemMessage.HousingBidFail(), 1401348);
 		AssertSystemMessage(SmSystemMessage.HousingCantOwnNotCompleteQuest(18802), 1401277, "18802");
@@ -2426,6 +2463,25 @@ public class GamePacketTests
 		Assert.Equal(2, chargeItem.ChargeLevel);
 		Assert.Equal([101, 102], chargeItem.ItemObjectIds);
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(78, _ => { }), GameConnectionState.Authed));
+	}
+
+	[Fact]
+	public void ClientPacketFactory_ParsesUseItemTargetItemBranch()
+	{
+		var useItem = Assert.IsType<CmUseItem>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(37, b =>
+			{
+				b.WriteD(9001);
+				b.WriteC(2);
+				b.WriteD(9002);
+			}), GameConnectionState.InGame));
+
+		Assert.Equal(9001, useItem.SourceItemObjectId);
+		Assert.Equal(2, useItem.Type);
+		Assert.Equal(9002, useItem.TargetItemObjectId);
+		Assert.Equal(0, useItem.SyncId);
+		Assert.Equal(0, useItem.IndexReturn);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(37, _ => { }), GameConnectionState.Authed));
 	}
 
 	[Fact]
