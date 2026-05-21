@@ -45,6 +45,85 @@ public sealed class StigmaServiceTests
 	}
 
 	[Fact]
+	public void ApplyOnLogin_WithoutAutoLearnRebuildsEquippedStigmaSkills()
+	{
+		var player = CreatePlayer();
+		player.Quests = [new PlayerQuestState(1929, "COMPLETE", 0, 0, 1)];
+		player.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 1001, ItemId = StigmaId, Count = 1, Location = 0, IsEquipped = true, Slot = StigmaSlot1, Enchant = 2 },
+		];
+
+		var result = StigmaService.ApplyOnLogin(
+			player,
+			CreateItemTemplates(),
+			CreateSkillTemplates(),
+			CreateSkillTree(),
+			CreateExperienceTable(),
+			stigmaAutoLearnMembership: 10,
+			stigmaSlotQuestMembership: 10);
+
+		Assert.True(result.Changed);
+		Assert.Empty(result.PersistedItems);
+		var addedSkill = Assert.Single(result.AddedSkills);
+		Assert.Equal((500, 3, 1), (addedSkill.SkillId, addedSkill.SkillLevel, addedSkill.SkillType));
+		Assert.Equal([(500, 3, 1)], result.Skills.Select(skill => (skill.SkillId, skill.SkillLevel, skill.SkillType)).ToArray());
+	}
+
+	[Fact]
+	public void ApplyOnLogin_WithoutQuestUnequipsInvalidStigma()
+	{
+		var player = CreatePlayer();
+		player.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 1001, ItemId = StigmaId, Count = 1, Location = 0, IsEquipped = true, Slot = StigmaSlot1, Enchant = 2 },
+		];
+
+		var result = StigmaService.ApplyOnLogin(
+			player,
+			CreateItemTemplates(),
+			CreateSkillTemplates(),
+			CreateSkillTree(),
+			CreateExperienceTable(),
+			stigmaAutoLearnMembership: 10,
+			stigmaSlotQuestMembership: 10);
+
+		Assert.True(result.Changed);
+		var persisted = Assert.Single(result.PersistedItems);
+		Assert.Equal(1001, persisted.ObjectId);
+		Assert.False(persisted.IsEquipped);
+		Assert.Equal(0, persisted.Slot);
+		Assert.Empty(result.AddedSkills);
+		Assert.Empty(result.Skills);
+		Assert.Contains(result.InventoryItems, item => item.ObjectId == 1001 && !item.IsEquipped && item.Slot == 0);
+	}
+
+	[Fact]
+	public void ApplyOnLogin_WithAutoLearnMembershipSkipsEquippedStigmaCleanup()
+	{
+		var player = CreatePlayer();
+		player.AccountMembership = 10;
+		player.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 1001, ItemId = StigmaId, Count = 1, Location = 0, IsEquipped = true, Slot = StigmaSlot1, Enchant = 2 },
+		];
+
+		var result = StigmaService.ApplyOnLogin(
+			player,
+			CreateItemTemplates(),
+			CreateSkillTemplates(),
+			CreateSkillTree(),
+			CreateExperienceTable(),
+			stigmaAutoLearnMembership: 10,
+			stigmaSlotQuestMembership: 10);
+
+		Assert.True(result.Changed);
+		Assert.Empty(result.PersistedItems);
+		Assert.Contains(result.InventoryItems, item => item.ObjectId == 1001 && item.IsEquipped && item.Slot == StigmaSlot1);
+		Assert.Equal([(500, 1, 1), (662, 1, 3)], result.AddedSkills.Select(skill => (skill.SkillId, skill.SkillLevel, skill.SkillType)).ToArray());
+	}
+
+	[Fact]
 	public void CreateChargePlan_SuccessConsumesStoneAndRaisesEquippedStigmaSkillLevel()
 	{
 		var player = CreatePlayer();
@@ -184,8 +263,36 @@ public sealed class StigmaServiceTests
 	{
 		return new ItemTemplateTable(
 		[
-			new ItemTemplateSummary(StigmaId, "Practice Stigma", 0, 1, 20, "STIGMA", "NORMAL", "COMMON", "PC_ALL", 1, 0, StigmaSlot1, StigmaInfo: new ItemStigmaInfo(["STIGMA_TEST"], Chargeable: true)),
-			new ItemTemplateSummary(OtherStigmaId, "Other Stigma", 0, 1, 20, "STIGMA", "NORMAL", "COMMON", "PC_ALL", 1, 0, StigmaSlot1, StigmaInfo: new ItemStigmaInfo(["STIGMA_TEST"], Chargeable: true)),
+			new ItemTemplateSummary(
+				StigmaId,
+				"Practice Stigma",
+				0,
+				1,
+				20,
+				"STIGMA",
+				"NORMAL",
+				"COMMON",
+				"PC_ALL",
+				1,
+				0,
+				StigmaSlot1,
+				ClassRestrictions: new HashSet<string>(StringComparer.Ordinal) { "GLADIATOR" },
+				StigmaInfo: new ItemStigmaInfo(["STIGMA_TEST"], Chargeable: true)),
+			new ItemTemplateSummary(
+				OtherStigmaId,
+				"Other Stigma",
+				0,
+				1,
+				20,
+				"STIGMA",
+				"NORMAL",
+				"COMMON",
+				"PC_ALL",
+				1,
+				0,
+				StigmaSlot1,
+				ClassRestrictions: new HashSet<string>(StringComparer.Ordinal) { "GLADIATOR" },
+				StigmaInfo: new ItemStigmaInfo(["STIGMA_TEST"], Chargeable: true)),
 		]);
 	}
 

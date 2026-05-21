@@ -7,8 +7,14 @@ public static class StigmaService
 {
 	private const int CubeStorageId = 0;
 	private const int KinahItemId = 182400001;
-	private const long RegularStigmas = (1L << 30) | (1L << 31) | (1L << 32);
-	private const long AdvancedStigmas = (1L << 33) | (1L << 34) | (1L << 35);
+	private const long StigmaSlot1 = 1L << 30;
+	private const long StigmaSlot2 = 1L << 31;
+	private const long StigmaSlot3 = 1L << 32;
+	private const long AdvancedStigmaSlot1 = 1L << 33;
+	private const long AdvancedStigmaSlot2 = 1L << 34;
+	private const long AdvancedStigmaSlot3 = 1L << 35;
+	private const long RegularStigmas = StigmaSlot1 | StigmaSlot2 | StigmaSlot3;
+	private const long AdvancedStigmas = AdvancedStigmaSlot1 | AdvancedStigmaSlot2 | AdvancedStigmaSlot3;
 
 	public static StigmaEquipResult NotifyEquipAction(
 		Player player,
@@ -135,6 +141,69 @@ public static class StigmaService
 		return addedSkills.Count == 0
 			? StigmaAutoLearnResult.NoChange(player.Skills)
 			: new StigmaAutoLearnResult(true, skills, addedSkills);
+	}
+
+	public static StigmaLoginResult ApplyOnLogin(
+		Player player,
+		ItemTemplateTable itemTemplates,
+		SkillTemplateTable skillTemplates,
+		SkillTreeTable skillTree,
+		PlayerExperienceTable? experienceTable,
+		byte stigmaAutoLearnMembership = 10,
+		byte stigmaSlotQuestMembership = 10)
+	{
+		// Java parity: services/StigmaService.onPlayerLogin.
+		if (HasPermission(player, stigmaAutoLearnMembership))
+		{
+			var autoLearn = ApplyAutoLearnOnLogin(player, skillTree, experienceTable, stigmaAutoLearnMembership);
+			return new StigmaLoginResult(
+				autoLearn.Changed,
+				player.InventoryItems,
+				Array.Empty<InventoryItem>(),
+				autoLearn.Skills,
+				autoLearn.AddedSkills);
+		}
+
+		var inventoryItems = player.InventoryItems.ToList();
+		var persistedItems = new List<InventoryItem>();
+		var skills = player.Skills.ToList();
+		var addedSkills = new List<PlayerSkill>();
+
+		foreach (var equippedItem in GetEquippedStigmaSlotItems(inventoryItems).ToArray())
+		{
+			var item = inventoryItems.FirstOrDefault(candidate =>
+				candidate.ObjectId == equippedItem.ObjectId
+				&& candidate.IsEquipped
+				&& IsStigmaSlot(candidate.Slot));
+			if (item == null)
+				continue;
+
+			var template = itemTemplates.GetItemTemplate(item.ItemId);
+			if (template?.StigmaInfo == null
+				|| !IsPossibleEquippedStigma(player, item, experienceTable, stigmaSlotQuestMembership)
+				|| !template.IsClassSpecific(player.PlayerClass)
+				|| HasDifferentStigmaEquippedInSameSlot(inventoryItems, item))
+			{
+				var update = CopyInventoryItem(item, slot: 0, isEquipped: false);
+				ReplaceInventoryItem(inventoryItems, update);
+				persistedItems.Add(update);
+				continue;
+			}
+
+			addedSkills.AddRange(AddStigmaSkills(skills, player, template.StigmaInfo, item.Enchant, skillTemplates, skillTree, experienceTable));
+		}
+
+		addedSkills.AddRange(AddLinkedStigmaSkills(
+			skills,
+			player,
+			GetEquippedStigmas(inventoryItems, itemTemplates).ToArray(),
+			skillTemplates,
+			skillTree,
+			experienceTable));
+
+		return persistedItems.Count == 0 && addedSkills.Count == 0
+			? StigmaLoginResult.NoChange(player)
+			: new StigmaLoginResult(true, inventoryItems, persistedItems, skills, addedSkills);
 	}
 
 	public static StigmaChargePlan CreateChargePlan(
@@ -445,6 +514,21 @@ public static class StigmaService
 		}
 	}
 
+	private static IEnumerable<InventoryItem> GetEquippedStigmaSlotItems(IReadOnlyList<InventoryItem> inventoryItems)
+	{
+		return inventoryItems.Where(item => item.Location == CubeStorageId && item.IsEquipped && IsStigmaSlot(item.Slot));
+	}
+
+	private static bool HasDifferentStigmaEquippedInSameSlot(IReadOnlyList<InventoryItem> inventoryItems, InventoryItem item)
+	{
+		// Java parity: services/StigmaService.onPlayerLogin double-stigma same-slot check.
+		return GetEquippedStigmaSlotItems(inventoryItems)
+			.Any(checkStigma =>
+				checkStigma.ObjectId != item.ObjectId
+				&& checkStigma.Slot == item.Slot
+				&& checkStigma.ItemId != item.ItemId);
+	}
+
 	private static IReadOnlyList<EquippedStigma> GetEquippedStigmasAfterEquip(
 		IReadOnlyList<InventoryItem> inventoryItems,
 		ItemTemplateTable itemTemplates,
@@ -566,6 +650,31 @@ public static class StigmaService
 		return playerLevel >= 45 ? 1 : 0;
 	}
 
+	private static bool IsPossibleEquippedStigma(
+		Player player,
+		InventoryItem item,
+		PlayerExperienceTable? experienceTable,
+		byte stigmaSlotQuestMembership)
+	{
+		// Java parity: services/StigmaService.isPossibleEquippedStigma.
+		if (IsRegularStigma(item.Slot))
+			return IsAllowedStigmaSlotByCount(item.Slot, GetPossibleStigmaCount(player, experienceTable, stigmaSlotQuestMembership), StigmaSlot1, StigmaSlot2);
+		if (IsAdvancedStigma(item.Slot))
+			return IsAllowedStigmaSlotByCount(item.Slot, GetPossibleAdvancedStigmaCount(player, experienceTable, stigmaSlotQuestMembership), AdvancedStigmaSlot1, AdvancedStigmaSlot2);
+		return false;
+	}
+
+	private static bool IsAllowedStigmaSlotByCount(long itemSlot, int allowedCount, long firstSlot, long secondSlot)
+	{
+		return allowedCount switch
+		{
+			1 => itemSlot == firstSlot,
+			2 => itemSlot == firstSlot || itemSlot == secondSlot,
+			>= 3 => true,
+			_ => false,
+		};
+	}
+
 	private static bool IsCompleteStigmaQuest(Player player)
 	{
 		// Java parity: services/StigmaService.isCompleteQuest.
@@ -620,6 +729,11 @@ public static class StigmaService
 	private static bool IsAdvancedStigma(long slot)
 	{
 		return (AdvancedStigmas & slot) == slot;
+	}
+
+	private static bool IsStigmaSlot(long slot)
+	{
+		return slot != 0 && (IsRegularStigma(slot) || IsAdvancedStigma(slot));
 	}
 
 	private static string NormalizeStigmaName(ItemTemplateSummary itemTemplate)
@@ -762,6 +876,19 @@ public sealed record StigmaAutoLearnResult(
 	public static StigmaAutoLearnResult NoChange(IReadOnlyList<PlayerSkill> skills)
 	{
 		return new StigmaAutoLearnResult(false, skills, Array.Empty<PlayerSkill>());
+	}
+}
+
+public sealed record StigmaLoginResult(
+	bool Changed,
+	IReadOnlyList<InventoryItem> InventoryItems,
+	IReadOnlyList<InventoryItem> PersistedItems,
+	IReadOnlyList<PlayerSkill> Skills,
+	IReadOnlyList<PlayerSkill> AddedSkills)
+{
+	public static StigmaLoginResult NoChange(Player player)
+	{
+		return new StigmaLoginResult(false, player.InventoryItems, Array.Empty<InventoryItem>(), player.Skills, Array.Empty<PlayerSkill>());
 	}
 }
 

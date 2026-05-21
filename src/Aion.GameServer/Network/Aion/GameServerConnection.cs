@@ -759,13 +759,23 @@ public sealed class GameServerConnection : BaseClientConnection
 					if (staticData != null)
 					{
 						// Java parity: services/StigmaService.onPlayerLogin runs before SM_ENTER_WORLD_CHECK/SM_SKILL_LIST.
-						var stigmaAutoLearn = StigmaService.ApplyAutoLearnOnLogin(
+						var stigmaLogin = StigmaService.ApplyOnLogin(
 							_activePlayer,
+							staticData.ItemTemplates,
+							staticData.SkillTemplates,
 							staticData.SkillTree,
 							staticData.PlayerExperienceTable,
-							_options.Membership.StigmaAutoLearn);
-						if (stigmaAutoLearn.Changed)
-							_activePlayer.Skills = stigmaAutoLearn.Skills;
+							_options.Membership.StigmaAutoLearn,
+							_options.Membership.StigmaSlotQuest);
+						var savedStigmaCleanup = !stigmaLogin.Changed
+							|| stigmaLogin.PersistedItems.Count == 0
+							|| _playerEnterWorldService == null
+							|| await _playerEnterWorldService.SaveEquipmentMutationAsync(_activePlayer, stigmaLogin.PersistedItems);
+						if (stigmaLogin.Changed && savedStigmaCleanup)
+						{
+							_activePlayer.InventoryItems = stigmaLogin.InventoryItems;
+							_activePlayer.Skills = stigmaLogin.Skills;
+						}
 					}
 				}
 				await SendPacketAsync(new SmEnterWorldCheck(enterWorldResult.Message));
