@@ -125,6 +125,17 @@ public class GamePacketTests
 					[new PlayerMotion(11, 1010, true)],
 					() => DateTimeOffset.FromUnixTimeSeconds(1000))));
 		Assert.Equal(
+			Convert.FromHexString("07E90300000B000D00000000000000"),
+			SerializeUnencryptedPayload(
+				new SmMotion(
+					1001,
+					[
+						new PlayerMotion(11, 1010, true),
+						new PlayerMotion(12, 1010, false),
+						new PlayerMotion(13, 1010, true),
+					],
+					() => DateTimeOffset.FromUnixTimeSeconds(1000))));
+		Assert.Equal(
 			Convert.FromHexString("0001000A0000000A00"),
 			SerializeUnencryptedPayload(
 				new SmEmotionList(
