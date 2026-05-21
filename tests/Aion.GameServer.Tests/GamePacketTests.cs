@@ -61,6 +61,15 @@ public class GamePacketTests
 			Convert.FromHexString("0100000000000000000000000000000000000000000000000004000000"),
 			SerializeUnencryptedPayload(new SmAccountProperties(gmPanelEnabled: true)));
 		Assert.Equal(
+			Convert.FromHexString("0000"),
+			SerializeUnencryptedPayload(new SmPong()));
+		Assert.Equal(
+			Convert.FromHexString("04"),
+			SerializeUnencryptedPayload(new SmPingResponse()));
+		Assert.Equal(
+			Convert.FromHexString("D20400002A000000"),
+			SerializeUnencryptedPayload(new SmTimeCheck(42, () => 1234)));
+		Assert.Equal(
 			Convert.FromHexString("D204000000"),
 			SerializeUnencryptedPayload(new SmCharacterList(playOk2: 1234)));
 		Assert.Equal(
@@ -1476,6 +1485,42 @@ public class GamePacketTests
 		Assert.Equal("AA-BB-CC-DD-EE-FF", packet.MacAddress);
 		Assert.Equal("disk-1", packet.HddSerial);
 		Assert.Equal(0x0200007F, packet.LocalIp);
+	}
+
+	[Fact]
+	public void ClientPacketFactory_ParsesPingAndTimeCheckPackets()
+	{
+		var timeCheck = Assert.IsType<CmTimeCheck>(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(18, buffer => buffer.WriteD(123456)),
+				GameConnectionState.Connected));
+		var pingAuthed = Assert.IsType<CmPing>(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(44, buffer => buffer.WriteH(7)),
+				GameConnectionState.Authed));
+
+		Assert.Equal(123456, timeCheck.NanoTime);
+		Assert.Equal(7, pingAuthed.Unknown);
+		Assert.IsType<CmTimeCheck>(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(18, buffer => buffer.WriteD(234567)),
+				GameConnectionState.InGame));
+		Assert.IsType<CmPing>(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(44, buffer => buffer.WriteH(8)),
+				GameConnectionState.InGame));
+		Assert.IsType<CmPingRequest>(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(103, _ => { }),
+				GameConnectionState.InGame));
+		Assert.Null(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(44, buffer => buffer.WriteH(1)),
+				GameConnectionState.Connected));
+		Assert.Null(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(103, _ => { }),
+				GameConnectionState.Authed));
 	}
 
 	[Fact]

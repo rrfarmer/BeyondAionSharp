@@ -28,6 +28,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private const int MailboxStorageId = 127;
 	private const int KinahItemId = 182400001;
 	private const int FirstAvailableSlot = 65535;
+	private static readonly TimeSpan ClientPingInterval = TimeSpan.FromMilliseconds(180000);
 	private readonly GamePacketProcessor<string> _packetProcessor;
 	private readonly GameCrypt _crypt;
 	private readonly GameServerOptions _options;
@@ -54,6 +55,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private string _macAddress = string.Empty;
 	private string _hddSerial = string.Empty;
 	private int _corruptPackets;
+	private DateTimeOffset? _lastPingTime;
 
 	public GameServerConnection(
 		ILogger logger,
@@ -240,6 +242,18 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmMacAddress macAddress:
 				_macAddress = macAddress.MacAddress;
 				_hddSerial = macAddress.HddSerial;
+				break;
+			case CmPing ping:
+				await HandlePingAsync(ping);
+				break;
+			case CmPingRequest:
+				// Java parity: network/aion/clientpackets/CM_PING_REQUEST.runImpl -> SM_PING_RESPONSE.
+				await SendPacketAsync(new SmPingResponse());
+				break;
+			case CmTimeCheck timeCheck:
+				// Java parity: network/aion/clientpackets/CM_TIME_CHECK.runImpl sends SM_AFTER_TIME_CHECK_4_7_5 before SM_TIME_CHECK.
+				await SendPacketAsync(new SmAfterTimeCheck475());
+				await SendPacketAsync(new SmTimeCheck(timeCheck.NanoTime));
 				break;
 			case CmMayLoginIntoGame:
 				await SendPacketAsync(new SmMayLoginIntoGame());
@@ -632,6 +646,23 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		// Java parity: network/aion/serverpackets/SM_ACCOUNT_PROPERTIES uses AdminConfig.GM_PANEL.
 		return new SmAccountProperties(_accessLevel >= _options.Administration.GmPanelAccessLevel);
+	}
+
+	private async Task HandlePingAsync(CmPing packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_PING.runImpl sends SM_PONG and audits the client ping interval.
+		var now = DateTimeOffset.UtcNow;
+		if (_lastPingTime is { } lastPingTime && now - lastPingTime < ClientPingInterval)
+		{
+			_logger.LogTrace(
+				"Client {ClientId} sent CM_PING value {PingValue} after {ElapsedMilliseconds}ms before ping-kick parity is ported",
+				_clientId,
+				packet.Unknown,
+				(now - lastPingTime).TotalMilliseconds);
+		}
+
+		_lastPingTime = now;
+		await SendPacketAsync(new SmPong());
 	}
 
 	private async Task HandleQuitAsync(CmQuit packet)
