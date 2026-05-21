@@ -1719,6 +1719,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		{
 			PendingItemUseCancelMessage.EnchantItem => SmSystemMessage.EnchantItemCanceled(pendingItemUse.TargetItemName),
 			PendingItemUseCancelMessage.Item => SmSystemMessage.ItemCanceled(),
+			PendingItemUseCancelMessage.ItemCharge => SmSystemMessage.ItemChargeCanceled(),
+			PendingItemUseCancelMessage.ItemCharge2 => SmSystemMessage.ItemCharge2Canceled(),
 			PendingItemUseCancelMessage.GodstoneSocket => SmSystemMessage.GiveItemProcCancel(pendingItemUse.TargetItemName),
 			_ => SmSystemMessage.GiveItemOptionCanceled(pendingItemUse.TargetItemName),
 		});
@@ -2429,6 +2431,43 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (chargePlans.Length == 0)
 			return;
 
+		await BroadcastItemUsageAnimationAsync(
+			player,
+			new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 3000, 0, 0));
+
+		await SchedulePendingItemUseAsync(
+			player,
+			itemObjectId: sourceItem.ObjectId,
+			itemTemplateId: sourceItem.ItemId,
+			targetItemName: sourceTemplate.GetClientName() ?? sourceTemplate.Name,
+			cancelMessage: chargeWay == 1 ? PendingItemUseCancelMessage.ItemCharge : PendingItemUseCancelMessage.ItemCharge2,
+			delay: TimeSpan.FromMilliseconds(3000),
+			completeAsync: async cancellationToken =>
+			{
+				if (cancellationToken.IsCancellationRequested)
+					return;
+
+				await CompleteChargeUseItemAsync(
+					player,
+					inventoryItems,
+					sourceItem,
+					sourceTemplate,
+					chargePlans,
+					staticData,
+					cancellationToken);
+			},
+			cancelEndState: 1);
+	}
+
+	private async Task CompleteChargeUseItemAsync(
+		Player player,
+		List<InventoryItem> inventoryItems,
+		InventoryItem sourceItem,
+		ItemTemplateSummary sourceTemplate,
+		IReadOnlyList<ItemChargePlan> chargePlans,
+		StaticData staticData,
+		CancellationToken cancellationToken)
+	{
 		var chargedItems = chargePlans
 			.Select(plan => CopyInventoryItem(plan.Item, charge: plan.TargetChargePoints))
 			.ToArray();
@@ -2439,7 +2478,8 @@ public sealed class GameServerConnection : BaseClientConnection
 				player,
 				chargedItems,
 				sourceItemUpdate,
-				deletedSourceObjectId);
+				deletedSourceObjectId,
+				cancellationToken);
 		if (!saved)
 			return;
 
@@ -4885,6 +4925,8 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		Item,
 		EnchantItem,
+		ItemCharge,
+		ItemCharge2,
 		ManastoneSocket,
 		GodstoneSocket,
 	}

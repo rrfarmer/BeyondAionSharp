@@ -79,6 +79,18 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1401343);
 	}
 
+	public static SmSystemMessage ItemChargeCanceled()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ITEM_CHARGE_CANCELED.
+		return new SmSystemMessage(1400891);
+	}
+
+	public static SmSystemMessage ItemCharge2Canceled()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ITEM_CHARGE2_CANCELED.
+		return new SmSystemMessage(1401339);
+	}
+
 	public static SmSystemMessage EnchantItemFailed(string itemName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_ENCHANT_ITEM_FAILED.

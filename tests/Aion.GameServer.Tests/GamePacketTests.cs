@@ -577,6 +577,8 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.ItemCharge2Success("item", 2), 1401335, "item", "2");
 		AssertSystemMessage(SmSystemMessage.ItemChargeAllComplete(), 1400892);
 		AssertSystemMessage(SmSystemMessage.ItemCharge2AllComplete(), 1401340);
+		AssertSystemMessage(SmSystemMessage.ItemChargeCanceled(), 1400891);
+		AssertSystemMessage(SmSystemMessage.ItemCharge2Canceled(), 1401339);
 		AssertSystemMessage(SmSystemMessage.EnchantItemFailed("idian"), 1300456, "idian");
 		AssertSystemMessage(SmSystemMessage.PolishWrongLevel(), 1401649);
 		AssertSystemMessage(SmSystemMessage.PolishSuccess("weapon"), 1401650, "weapon");
