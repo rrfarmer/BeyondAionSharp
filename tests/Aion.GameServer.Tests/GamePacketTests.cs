@@ -288,6 +288,12 @@ public class GamePacketTests
 					},
 					EmotionType.PowershardOn)));
 		Assert.Equal(
+			Convert.FromHexString("E903000001000000000000"),
+			SerializeUnencryptedPayload(
+				new SmEmotion(
+					new Player { ObjectId = 1001 },
+					EmotionType.Jump)));
+		Assert.Equal(
 			Convert.FromHexString("E903000004060000000000000030410000B041000004422C"),
 			SerializeUnencryptedPayload(
 				new SmEmotion(
@@ -3335,10 +3341,16 @@ public class GamePacketTests
 	[Fact]
 	public void ClientPacketFactory_ParsesEmotionPacket()
 	{
+		var selectTarget = Assert.IsType<CmEmotion>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(0)), GameConnectionState.InGame));
+		var jump = Assert.IsType<CmEmotion>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(1)), GameConnectionState.InGame));
 		var powershardOn = Assert.IsType<CmEmotion>(
 			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(36)), GameConnectionState.InGame));
 		var powershardOff = Assert.IsType<CmEmotion>(
 			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(37)), GameConnectionState.InGame));
+		var openDoor = Assert.IsType<CmEmotion>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(31)), GameConnectionState.InGame));
 		var emote = Assert.IsType<CmEmotion>(
 			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b =>
 			{
@@ -3356,8 +3368,11 @@ public class GamePacketTests
 				b.WriteC(44);
 			}), GameConnectionState.InGame));
 
+		Assert.Equal(EmotionType.SelectTarget, selectTarget.EmotionType);
+		Assert.Equal(EmotionType.Jump, jump.EmotionType);
 		Assert.Equal(EmotionType.PowershardOn, powershardOn.EmotionType);
 		Assert.Equal(EmotionType.PowershardOff, powershardOff.EmotionType);
+		Assert.Equal(EmotionType.OpenDoor, openDoor.EmotionType);
 		Assert.Equal(EmotionType.Emote, emote.EmotionType);
 		Assert.Equal(101, emote.Emotion);
 		Assert.Equal(7001, emote.TargetObjectId);

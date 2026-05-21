@@ -3499,10 +3499,14 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		// TODO Phase 6: apply EffectController abnormal-state/fear/confuse and stance guards once those models are ported.
 		if (player.IsInState(PlayerCreatureState.PrivateShop)
-			|| player.IsInState(PlayerCreatureState.WeaponEquipped) && packet.EmotionType == EmotionType.ChairSit)
+			|| (player.IsInState(PlayerCreatureState.WeaponEquipped)
+				&& packet.EmotionType is EmotionType.ChairSit or EmotionType.Jump))
 			return;
 
 		await CancelPendingItemUseOnEmotionAsync(player);
+		if (packet.EmotionType == EmotionType.SelectTarget)
+			return;
+
 		switch (packet.EmotionType)
 		{
 			case EmotionType.Sit:
@@ -3565,7 +3569,9 @@ public sealed class GameServerConnection : BaseClientConnection
 
 	private static bool IsHandledEmotion(EmotionType emotionType)
 	{
-		return emotionType is EmotionType.Sit
+		return emotionType is EmotionType.SelectTarget
+			or EmotionType.Jump
+			or EmotionType.Sit
 			or EmotionType.Stand
 			or EmotionType.ChairSit
 			or EmotionType.ChairUp
@@ -3575,6 +3581,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			or EmotionType.NeutralModeInStanding
 			or EmotionType.Walk
 			or EmotionType.Run
+			or EmotionType.OpenDoor
+			or EmotionType.CloseDoor
 			or EmotionType.PowershardOn
 			or EmotionType.PowershardOff
 			or EmotionType.Emote;
