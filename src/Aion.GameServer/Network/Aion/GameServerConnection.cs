@@ -182,16 +182,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				return;
 
 			// Java parity: online player is removed from World-backed player lookups when the connection closes.
-			if (_activePlayer != null)
-			{
-				await DismissPostmanAsync(_activePlayer, notifyClient: false);
-				_connectionRegistry?.UnregisterPlayerConnection(_activePlayer.ObjectId, this);
-				if (_playerEnterWorldService != null)
-					await _playerEnterWorldService.LeaveWorldAsync(_activePlayer);
-				else
-					_world?.TryRemoveObject(_activePlayer.ObjectId, out _);
-				_activePlayer = null;
-			}
+			await LeaveActivePlayerAsync(notifyPostmanClient: false);
 
 			await NotifyAccountDisconnectedAsync();
 
@@ -249,6 +240,11 @@ public sealed class GameServerConnection : BaseClientConnection
 				break;
 			case CmMayLoginIntoGame:
 				await SendPacketAsync(new SmMayLoginIntoGame());
+				break;
+			case CmMayQuit:
+				break;
+			case CmQuit quit:
+				await HandleQuitAsync(quit);
 				break;
 			case CmMove move:
 				if (_activePlayer != null)
@@ -543,6 +539,36 @@ public sealed class GameServerConnection : BaseClientConnection
 				}
 				break;
 		}
+	}
+
+	private async Task HandleQuitAsync(CmQuit packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_QUIT.runImpl.
+		await LeaveActivePlayerAsync(notifyPostmanClient: true);
+		if (packet.StayConnected)
+		{
+			_state = GameConnectionState.Authed;
+			await SendPacketAsync(new SmQuitResponse());
+			return;
+		}
+
+		await SendPacketAsync(new SmQuitResponse());
+		await CloseAsync();
+	}
+
+	private async Task LeaveActivePlayerAsync(bool notifyPostmanClient)
+	{
+		var player = _activePlayer;
+		if (player == null)
+			return;
+
+		await DismissPostmanAsync(player, notifyClient: notifyPostmanClient);
+		_connectionRegistry?.UnregisterPlayerConnection(player.ObjectId, this);
+		if (_playerEnterWorldService != null)
+			await _playerEnterWorldService.LeaveWorldAsync(player);
+		else
+			_world?.TryRemoveObject(player.ObjectId, out _);
+		_activePlayer = null;
 	}
 
 	private async Task HandleMoveAsync(Player player, CmMove packet)

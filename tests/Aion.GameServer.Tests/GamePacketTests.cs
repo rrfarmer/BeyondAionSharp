@@ -1206,6 +1206,13 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmQuitResponse_WritesJavaShapedPayload()
+	{
+		Assert.Equal(Convert.FromHexString("0100000000FFFFFFFF"), SerializeUnencryptedPayload(new SmQuitResponse()));
+		Assert.Equal(Convert.FromHexString("0200000000FFFFFFFF"), SerializeUnencryptedPayload(new SmQuitResponse(editMode: true)));
+	}
+
+	[Fact]
 	public void SmMove_WritesJavaShapedMovementPayload()
 	{
 		var player = new Player
@@ -1402,6 +1409,8 @@ public class GamePacketTests
 	[Fact]
 	public void ClientPacketFactory_ParsesCharacterSelectionPackets()
 	{
+		var quit = Assert.IsType<CmQuit>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(3, b => b.WriteC(1)), GameConnectionState.Authed));
 		var characterList = Assert.IsType<CmCharacterList>(
 			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(150, b => b.WriteD(1234)), GameConnectionState.Authed));
 		var createCharacter = Assert.IsType<CmCreateCharacter>(
@@ -1429,6 +1438,7 @@ public class GamePacketTests
 			}), GameConnectionState.Authed));
 
 		Assert.Equal(1234, characterList.PlayOk2);
+		Assert.True(quit.StayConnected);
 		Assert.Equal(99, createCharacter.AccountId);
 		Assert.Equal("account-name", createCharacter.AccountName);
 		Assert.Equal("Character", createCharacter.CharacterName);
@@ -1448,6 +1458,13 @@ public class GamePacketTests
 		Assert.Equal(2, passkey.Type);
 		Assert.Equal("old-pass", passkey.Passkey);
 		Assert.Equal("new-pass", passkey.NewPasskey);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(4, _ => { }), GameConnectionState.Authed));
+	}
+
+	[Fact]
+	public void ClientPacketFactory_ParsesMayQuitInGame()
+	{
+		Assert.IsType<CmMayQuit>(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(4, _ => { }), GameConnectionState.InGame));
 	}
 
 	[Fact]
