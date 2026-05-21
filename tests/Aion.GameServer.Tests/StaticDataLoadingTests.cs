@@ -141,6 +141,8 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(15, staticData.ItemTemplates.GetItemTemplate(100100860)?.MaxEnchantLevel);
 		Assert.True(staticData.ItemTemplates.GetItemTemplate(100100860)?.CanExceedEnchant);
 		Assert.False(staticData.ItemTemplates.GetItemTemplate(100000001)?.CanExceedEnchant);
+		Assert.Equal(6, staticData.ItemTemplates.GetItemTemplate(100001384)?.ManastoneSlots);
+		Assert.Equal(2, staticData.ItemTemplates.GetItemTemplate(100001384)?.SpecialManastoneSlots);
 		Assert.True(staticData.ItemTemplates.GetItemTemplate(100001276)?.CanTune);
 		Assert.False(staticData.ItemTemplates.GetItemTemplate(100000001)?.CanTune);
 		Assert.Equal(1, staticData.ItemTemplates.GetItemTemplate(100001105)?.ConditioningMaxLevel);

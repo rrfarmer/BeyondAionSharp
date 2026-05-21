@@ -10,8 +10,10 @@ public class ItemSocketServiceTests
 	private const int KinahItemId = 182400001;
 	private const int SwordItemId = 100;
 	private const int PlainSwordItemId = 101;
+	private const int FusedSwordItemId = 102;
 	private const int ManastoneItemId = 167000001;
 	private const int FusionStoneItemId = 167000002;
+	private const int SpecialManastoneItemId = 167100001;
 	private const int GodstoneItemId = 168000001;
 	private const int InvalidGodstoneItemId = 168000002;
 
@@ -149,6 +151,69 @@ public class ItemSocketServiceTests
 			ItemSocketService.CreateSocketGodstonePlan(player, 1001, 2002, templates).Failure);
 	}
 
+	[Fact]
+	public void AddManastone_UsesJavaNormalAndSpecialSlotRanges()
+	{
+		var item = CreateSword(
+			1001,
+			manaStones:
+			[
+				new ItemStoneSocket(SpecialManastoneItemId, 0),
+				new ItemStoneSocket(ManastoneItemId, 1),
+			]);
+		var templates = CreateItemTemplates();
+
+		var normalPlan = ItemSocketService.CreateAddManastonePlan(item, ManastoneItemId, useFusionSlots: false, templates);
+		var specialPlan = ItemSocketService.CreateAddManastonePlan(item, SpecialManastoneItemId, useFusionSlots: false, templates);
+
+		Assert.True(normalPlan.Succeeded);
+		Assert.Equal(2, normalPlan.AddedStone?.Slot);
+		Assert.Equal(0, normalPlan.AddedCategory);
+		Assert.NotNull(normalPlan.ItemUpdate);
+		Assert.Equal([0, 1, 2], normalPlan.ItemUpdate.ManaStones.Select(stone => stone.Slot).ToArray());
+		Assert.False(specialPlan.Succeeded);
+		Assert.Equal(ManastoneAddFailure.NoAvailableSlot, specialPlan.Failure);
+	}
+
+	[Fact]
+	public void AddManastone_UsesFusionTemplateSlots()
+	{
+		var item = CreateSword(
+			1001,
+			fusionStones: [new ItemStoneSocket(SpecialManastoneItemId, 0)],
+			fusionedItemId: FusedSwordItemId,
+			optionalFusionSocket: 1);
+		var templates = CreateItemTemplates();
+
+		var plan = ItemSocketService.CreateAddManastonePlan(item, ManastoneItemId, useFusionSlots: true, templates);
+
+		Assert.True(plan.Succeeded);
+		Assert.Equal(1, plan.AddedStone?.Slot);
+		Assert.Equal(2, plan.AddedCategory);
+		Assert.NotNull(plan.ItemUpdate);
+		Assert.Equal([0, 1], plan.ItemUpdate.FusionStones.Select(stone => stone.Slot).ToArray());
+	}
+
+	[Fact]
+	public void AddManastone_ReturnsFailureWhenNoMatchingSlotsRemain()
+	{
+		var item = CreateSword(
+			1001,
+			manaStones:
+			[
+				new ItemStoneSocket(SpecialManastoneItemId, 0),
+				new ItemStoneSocket(ManastoneItemId, 1),
+				new ItemStoneSocket(ManastoneItemId, 2),
+				new ItemStoneSocket(ManastoneItemId, 3),
+			]);
+		var templates = CreateItemTemplates();
+
+		var plan = ItemSocketService.CreateAddManastonePlan(item, ManastoneItemId, useFusionSlots: false, templates);
+
+		Assert.False(plan.Succeeded);
+		Assert.Equal(ManastoneAddFailure.NoAvailableSlot, plan.Failure);
+	}
+
 	private static Player CreatePlayer()
 	{
 		return new Player
@@ -165,7 +230,9 @@ public class ItemSocketServiceTests
 	private static InventoryItem CreateSword(
 		int objectId,
 		IReadOnlyList<ItemStoneSocket>? manaStones = null,
-		IReadOnlyList<ItemStoneSocket>? fusionStones = null)
+		IReadOnlyList<ItemStoneSocket>? fusionStones = null,
+		int fusionedItemId = 0,
+		int optionalFusionSocket = 0)
 	{
 		return new InventoryItem
 		{
@@ -174,6 +241,8 @@ public class ItemSocketServiceTests
 			Count = 1,
 			Location = 0,
 			Slot = 10,
+			FusionedItem = fusionedItemId,
+			OptionalFusionSocket = optionalFusionSocket,
 			ManaStones = manaStones ?? Array.Empty<ItemStoneSocket>(),
 			FusionStones = fusionStones ?? Array.Empty<ItemStoneSocket>(),
 		};
@@ -184,10 +253,12 @@ public class ItemSocketServiceTests
 		return new ItemTemplateTable(
 		[
 			new ItemTemplateSummary(KinahItemId, "Kinah", 0, 0, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
-			new ItemTemplateSummary(SwordItemId, "Practice Sword", 0, 1 << 10, 1, "SWORD", "NORMAL", "COMMON", "PC_ALL", 1, 0, 1),
+			new ItemTemplateSummary(SwordItemId, "Practice Sword", 0, 1 << 10, 1, "SWORD", "NORMAL", "COMMON", "PC_ALL", 1, 0, 1, ManastoneSlots: 4, SpecialManastoneSlots: 1),
 			new ItemTemplateSummary(PlainSwordItemId, "Plain Sword", 0, 1, 1, "SWORD", "NORMAL", "COMMON", "PC_ALL", 1, 0, 1),
+			new ItemTemplateSummary(FusedSwordItemId, "Fusion Sword", 0, 0, 1, "SWORD", "NORMAL", "COMMON", "PC_ALL", 1, 0, 1, ManastoneSlots: 2, SpecialManastoneSlots: 1),
 			new ItemTemplateSummary(ManastoneItemId, "Manastone: HP +20", 0, 0, 1, "MANASTONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
 			new ItemTemplateSummary(FusionStoneItemId, "Fusion Manastone: HP +20", 0, 0, 1, "MANASTONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
+			new ItemTemplateSummary(SpecialManastoneItemId, "Ancient Manastone: HP +20", 0, 0, 1, "SPECIAL_MANASTONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
 			new ItemTemplateSummary(
 				GodstoneItemId,
 				"Godstone: Fire",

@@ -341,6 +341,8 @@ public sealed class StaticData
 					ReadOptionalIntAttribute(reader, "max_stack_count", 1),
 					ReadLongAttribute(reader, "price"),
 					GetItemGroupSlots(reader.GetAttribute("item_group")),
+					ReadIntAttribute(reader, "m_slots"),
+					ReadIntAttribute(reader, "s_slots"),
 					requiredLevels,
 					ReadLevelRestrictions(reader.GetAttribute("restrict_max")),
 					ReadIntAttribute(reader, "activate_count"),
@@ -1231,6 +1233,8 @@ public sealed class StaticData
 			int maxStackCount,
 			long price,
 			long validEquipmentSlots,
+			int manastoneSlots,
+			int specialManastoneSlots,
 			IReadOnlyDictionary<string, int> requiredLevels,
 			IReadOnlyDictionary<string, int> maxLevelRestrictions,
 			int activationCount,
@@ -1258,6 +1262,8 @@ public sealed class StaticData
 			MaxStackCount = maxStackCount;
 			Price = price;
 			ValidEquipmentSlots = validEquipmentSlots;
+			ManastoneSlots = manastoneSlots;
+			SpecialManastoneSlots = specialManastoneSlots;
 			RequiredLevels = requiredLevels;
 			MaxLevelRestrictions = maxLevelRestrictions;
 			ClassRestrictions = requiredLevels.Keys.ToHashSet(StringComparer.Ordinal);
@@ -1297,6 +1303,10 @@ public sealed class StaticData
 		private long Price { get; }
 
 		private long ValidEquipmentSlots { get; }
+
+		private int ManastoneSlots { get; }
+
+		private int SpecialManastoneSlots { get; }
 
 		private IReadOnlySet<string> ClassRestrictions { get; }
 
@@ -1419,7 +1429,9 @@ public sealed class StaticData
 				MinRank,
 				MaxRank,
 				MaxEnchantLevel,
-				CanExceedEnchant);
+				CanExceedEnchant,
+				ManastoneSlots,
+				SpecialManastoneSlots);
 		}
 
 		private static bool CalculateCanTune(

@@ -64,7 +64,9 @@ public sealed record ItemTemplateSummary(
 	int MinRank = 1,
 	int MaxRank = 18,
 	int MaxEnchantLevel = 0,
-	bool CanExceedEnchant = false)
+	bool CanExceedEnchant = false,
+	int ManastoneSlots = 0,
+	int SpecialManastoneSlots = 0)
 {
 	private const int CanPolishMask = 1 << 17;
 	private const int SoulBoundMask = 1 << 7;

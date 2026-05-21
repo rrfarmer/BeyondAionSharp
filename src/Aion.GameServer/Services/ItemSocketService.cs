@@ -9,6 +9,8 @@ public static class ItemSocketService
 	private const int CubeStorageId = 0;
 	private const int KinahItemId = 182400001;
 	private const int ManastoneRemovalPrice = 650;
+	private const int MaxBasicManastones = 6;
+	private const string SpecialManastoneGroup = "SPECIAL_MANASTONE";
 
 	public static ManastoneRemovalPlan CreateRemoveManastonePlan(
 		Player player,
@@ -118,6 +120,72 @@ public static class ItemSocketService
 			sourceMutation.DeletedObjectId);
 	}
 
+	public static ManastoneAddPlan CreateAddManastonePlan(
+		InventoryItem item,
+		int manaStoneItemId,
+		bool useFusionSlots,
+		ItemTemplateTable itemTemplates)
+	{
+		// Java parity: services/item/ItemSocketService.addManaStone(Item, int, boolean).
+		var targetTemplate = itemTemplates.GetItemTemplate(item.ItemId);
+		if (targetTemplate == null)
+			return ManastoneAddPlan.Failed(ManastoneAddFailure.NoTargetTemplate);
+
+		var maxSlots = GetSocketCount(item, useFusionSlots, itemTemplates, targetTemplate);
+		var manaStones = useFusionSlots ? item.FusionStones : item.ManaStones;
+		if (manaStones.Count > maxSlots)
+			return ManastoneAddPlan.Failed(ManastoneAddFailure.NoAvailableSlot);
+
+		var manaStoneTemplate = itemTemplates.GetItemTemplate(manaStoneItemId);
+		if (manaStoneTemplate == null)
+			return ManastoneAddPlan.Failed(ManastoneAddFailure.NoManastoneTemplate);
+
+		var specialSlotCount = GetSpecialSlotCount(item, useFusionSlots, itemTemplates, targetTemplate, maxSlots);
+		if (IsSpecialManastone(manaStoneTemplate) && specialSlotCount == 0)
+			return ManastoneAddPlan.Failed(ManastoneAddFailure.NoAvailableSlot);
+
+		var specialSlotsOccupied = 0;
+		var normalSlotsOccupied = 0;
+		var occupiedSlots = new HashSet<int>();
+		foreach (var stone in manaStones)
+		{
+			var stoneTemplate = itemTemplates.GetItemTemplate(stone.ItemId);
+			if (stoneTemplate != null && IsSpecialManastone(stoneTemplate))
+				specialSlotsOccupied++;
+			else
+				normalSlotsOccupied++;
+			occupiedSlots.Add(stone.Slot);
+		}
+
+		if (IsSpecialManastone(manaStoneTemplate))
+		{
+			if (specialSlotsOccupied >= specialSlotCount)
+				return ManastoneAddPlan.Failed(ManastoneAddFailure.NoAvailableSlot);
+
+			return InsertManastoneIntoNextSlot(
+				item,
+				manaStoneItemId,
+				useFusionSlots,
+				manaStones,
+				occupiedSlots,
+				startSlot: 0,
+				endSlot: specialSlotCount);
+		}
+
+		var normalSlotCount = maxSlots - specialSlotCount;
+		if (normalSlotsOccupied >= normalSlotCount)
+			return ManastoneAddPlan.Failed(ManastoneAddFailure.NoAvailableSlot);
+
+		return InsertManastoneIntoNextSlot(
+			item,
+			manaStoneItemId,
+			useFusionSlots,
+			manaStones,
+			occupiedSlots,
+			startSlot: specialSlotCount,
+			endSlot: maxSlots);
+	}
+
 	private static string GetItemName(InventoryItem item, ItemTemplateTable itemTemplates)
 	{
 		var template = itemTemplates.GetItemTemplate(item.ItemId);
@@ -180,6 +248,81 @@ public static class ItemSocketService
 		return item.Count > 1
 			? new ItemCountMutation(CopyInventoryItem(item, count: item.Count - 1), null)
 			: new ItemCountMutation(null, item.ObjectId);
+	}
+
+	private static int GetSocketCount(
+		InventoryItem item,
+		bool useFusionSlots,
+		ItemTemplateTable itemTemplates,
+		ItemTemplateSummary targetTemplate)
+	{
+		// Java parity: model/gameobjects/Item.getSockets.
+		if (!targetTemplate.IsWeapon && !targetTemplate.IsArmor)
+			return 0;
+
+		if (useFusionSlots)
+		{
+			var fusionTemplate = item.FusionedItem == 0 ? null : itemTemplates.GetItemTemplate(item.FusionedItem);
+			if (fusionTemplate == null)
+				return 0;
+
+			return Math.Min(fusionTemplate.ManastoneSlots + item.OptionalFusionSocket, MaxBasicManastones);
+		}
+
+		return Math.Min(targetTemplate.ManastoneSlots + item.OptionalSocket, MaxBasicManastones);
+	}
+
+	private static int GetSpecialSlotCount(
+		InventoryItem item,
+		bool useFusionSlots,
+		ItemTemplateTable itemTemplates,
+		ItemTemplateSummary targetTemplate,
+		int maxSlots)
+	{
+		var specialSlotCount = targetTemplate.SpecialManastoneSlots;
+		if (useFusionSlots)
+		{
+			var fusionTemplate = item.FusionedItem == 0 ? null : itemTemplates.GetItemTemplate(item.FusionedItem);
+			specialSlotCount = fusionTemplate?.SpecialManastoneSlots ?? 0;
+		}
+
+		return Math.Min(specialSlotCount, maxSlots);
+	}
+
+	private static bool IsSpecialManastone(ItemTemplateSummary template)
+	{
+		return string.Equals(template.ItemGroup, SpecialManastoneGroup, StringComparison.Ordinal);
+	}
+
+	private static ManastoneAddPlan InsertManastoneIntoNextSlot(
+		InventoryItem item,
+		int manaStoneItemId,
+		bool useFusionSlots,
+		IReadOnlyList<ItemStoneSocket> manaStones,
+		IReadOnlySet<int> occupiedSlots,
+		int startSlot,
+		int endSlot)
+	{
+		for (var slot = startSlot; slot < endSlot; slot++)
+		{
+			if (occupiedSlots.Contains(slot))
+				continue;
+
+			var itemUpdate = CopyInventoryItem(item);
+			var addedStone = new ItemStoneSocket(manaStoneItemId, slot);
+			var updatedStones = manaStones
+				.Append(addedStone)
+				.OrderBy(stone => stone.Slot)
+				.ToArray();
+			if (useFusionSlots)
+				itemUpdate.FusionStones = updatedStones;
+			else
+				itemUpdate.ManaStones = updatedStones;
+
+			return new ManastoneAddPlan(ManastoneAddFailure.None, itemUpdate, addedStone, useFusionSlots ? 2 : 0);
+		}
+
+		return ManastoneAddPlan.Failed(ManastoneAddFailure.NoAvailableSlot);
 	}
 
 	private sealed record ItemCountMutation(InventoryItem? UpdatedItem, int? DeletedObjectId);
@@ -246,5 +389,31 @@ public sealed record GodstoneSocketPlan(
 			TargetItemUpdate: null,
 			SourceItemUpdate: null,
 			DeletedSourceItemObjectId: null);
+	}
+}
+
+public enum ManastoneAddFailure
+{
+	None,
+	NoTargetTemplate,
+	NoManastoneTemplate,
+	NoAvailableSlot,
+}
+
+public sealed record ManastoneAddPlan(
+	ManastoneAddFailure Failure,
+	InventoryItem? ItemUpdate,
+	ItemStoneSocket? AddedStone,
+	int AddedCategory)
+{
+	public bool Succeeded => Failure == ManastoneAddFailure.None;
+
+	public static ManastoneAddPlan Failed(ManastoneAddFailure failure)
+	{
+		return new ManastoneAddPlan(
+			failure,
+			ItemUpdate: null,
+			AddedStone: null,
+			AddedCategory: 0);
 	}
 }
