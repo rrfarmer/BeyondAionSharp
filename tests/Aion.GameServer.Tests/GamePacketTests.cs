@@ -2204,8 +2204,16 @@ public class GamePacketTests
 	[Fact]
 	public void ClientPacketFactory_ParsesDeferredUtilityPackets()
 	{
+		var objectSearch = Assert.IsType<CmObjectSearch>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(11, b => b.WriteD(730001)), GameConnectionState.InGame));
 		Assert.IsType<CmTeleportAnimationDone>(
 			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(15, _ => { }), GameConnectionState.InGame));
+		Assert.IsType<CmPositionSelf>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(17, _ => { }), GameConnectionState.InGame));
+		Assert.IsType<CmPlayerListener>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(40, _ => { }), GameConnectionState.InGame));
+		var deleteQuest = Assert.IsType<CmDeleteQuest>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(80, b => b.WriteD(1001)), GameConnectionState.InGame));
 		Assert.IsType<CmSecurityToken>(
 			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(92, _ => { }), GameConnectionState.Connected));
 		var checkPak = Assert.IsType<CmCheckPak>(
@@ -2229,6 +2237,8 @@ public class GamePacketTests
 		Assert.IsType<CmCheckMailUnknown>(
 			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(213, _ => { }), GameConnectionState.InGame));
 
+		Assert.Equal(730001, objectSearch.NpcId);
+		Assert.Equal(1001, deleteQuest.QuestId);
 		Assert.Equal(2, (int)checkPak.Unknown);
 		Assert.Equal("[1:OK]", checkPak.PakStatus);
 		Assert.Equal(1, (int)playMovieEnd.Type);
@@ -2238,7 +2248,11 @@ public class GamePacketTests
 		Assert.Equal(9, (int)playMovieEnd.Unknown);
 		Assert.True(playMovieEnd.CanSkip);
 		Assert.Equal(0, (int)showMap.Action);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(11, b => b.WriteD(730001)), GameConnectionState.Authed));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(15, _ => { }), GameConnectionState.Authed));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(17, _ => { }), GameConnectionState.Authed));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(40, _ => { }), GameConnectionState.Authed));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(80, b => b.WriteD(1001)), GameConnectionState.Authed));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(62, b => b.WriteC(2)), GameConnectionState.Authed));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(81, b => b.WriteC(1)), GameConnectionState.Authed));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(196, b => b.WriteC(0)), GameConnectionState.Authed));

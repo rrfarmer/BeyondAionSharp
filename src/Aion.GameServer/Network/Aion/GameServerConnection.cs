@@ -299,6 +299,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmTeleportAnimationDone:
 				// Java parity: network/aion/clientpackets/CM_TELEPORT_ANIMATION_DONE.runImpl executes a pending teleport task; deferred until teleport task state is ported.
 				break;
+			case CmPositionSelf:
+				// Java parity: network/aion/clientpackets/CM_POSITION_SELF.runImpl has no side effect.
+				break;
 			case CmHeadingUpdate:
 				// Java parity: network/aion/clientpackets/CM_HEADING_UPDATE.runImpl has no side effect.
 				break;
@@ -333,6 +336,15 @@ public sealed class GameServerConnection : BaseClientConnection
 				break;
 			case CmCheckMailUnknown:
 				// Java parity: network/aion/clientpackets/CM_CHECK_MAIL_UNK.runImpl is TODO/no-op.
+				break;
+			case CmObjectSearch:
+				// Java parity: network/aion/clientpackets/CM_OBJECT_SEARCH.runImpl searches DataManager.SPAWNS_DATA; deferred until spawn search data is ported.
+				break;
+			case CmPlayerListener:
+				// Java parity: network/aion/clientpackets/CM_PLAYER_LISTENER.runImpl dispatches WebRewardService when enabled; deferred until web rewards are ported.
+				break;
+			case CmDeleteQuest:
+				// Java parity: network/aion/clientpackets/CM_DELETE_QUEST.runImpl cancels timed quests and dispatches QuestService.abandonQuest; deferred until quest mutation is ported.
 				break;
 			case CmUiSettings uiSettings:
 				if (_activePlayer != null)

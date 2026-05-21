@@ -17,13 +17,16 @@ public static class GameClientPacketFactory
 		Register(8, states => new CmEnterWorld(8, states), GameConnectionState.Authed);
 		Register(9, states => new CmLevelReady(9, states), GameConnectionState.InGame);
 		Register(10, states => new CmUiSettings(10, states), GameConnectionState.InGame);
+		Register(11, states => new CmObjectSearch(11, states), GameConnectionState.InGame);
 		Register(12, states => new CmCustomSettings(12, states), GameConnectionState.InGame);
 		Register(15, states => new CmTeleportAnimationDone(15, states), GameConnectionState.InGame);
+		Register(17, states => new CmPositionSelf(17, states), GameConnectionState.InGame);
 		Register(18, states => new CmTimeCheck(18, states), GameConnectionState.Connected, GameConnectionState.Authed, GameConnectionState.InGame);
 		Register(27, states => new CmChatMessagePublic(27, states), GameConnectionState.InGame);
 		Register(28, states => new CmChatMessageWhisper(28, states), GameConnectionState.InGame);
 		Register(31, states => new CmTargetSelect(31, states), GameConnectionState.InGame);
 		Register(39, states => new CmChatPlayerInfo(39, states), GameConnectionState.InGame);
+		Register(40, states => new CmPlayerListener(40, states), GameConnectionState.InGame);
 		Register(44, states => new CmPing(44, states), GameConnectionState.Authed, GameConnectionState.InGame);
 		Register(48, states => new CmMove(48, states), GameConnectionState.InGame);
 		Register(49, states => new CmMoveInAir(49, states), GameConnectionState.InGame);
@@ -33,6 +36,7 @@ public static class GameClientPacketFactory
 		Register(62, states => new CmCheckPak(62, states), GameConnectionState.InGame);
 		Register(71, states => new CmMotion(71, states), GameConnectionState.InGame);
 		Register(73, states => new CmHouseSettings(73, states), GameConnectionState.InGame);
+		Register(80, states => new CmDeleteQuest(80, states), GameConnectionState.InGame);
 		Register(81, states => new CmPlayMovieEnd(81, states), GameConnectionState.InGame);
 		Register(89, states => new CmRecipeDelete(89, states), GameConnectionState.InGame);
 		Register(92, states => new CmSecurityToken(92, states), GameConnectionState.Connected, GameConnectionState.Authed, GameConnectionState.InGame);
