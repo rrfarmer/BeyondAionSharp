@@ -11,6 +11,8 @@ public sealed class SmMotion : GameServerPacket
 	private readonly Func<DateTimeOffset> _clock;
 	private readonly byte _action;
 	private readonly int _playerObjectId;
+	private readonly int _motionId;
+	private readonly byte _motionType;
 
 	public SmMotion(IReadOnlyList<PlayerMotion> motions, Func<DateTimeOffset>? clock = null)
 		: base(PacketOpCode)
@@ -19,6 +21,19 @@ public sealed class SmMotion : GameServerPacket
 		_motions = motions;
 		_clock = clock ?? (() => DateTimeOffset.Now);
 		_action = 1;
+		_motionId = 0;
+		_motionType = 0;
+	}
+
+	public SmMotion(int motionId, byte motionType)
+		: base(PacketOpCode)
+	{
+		// Java parity: network/aion/serverpackets/SM_MOTION(short motionId, byte type).
+		_motionId = motionId;
+		_motionType = motionType;
+		_motions = Array.Empty<PlayerMotion>();
+		_clock = () => DateTimeOffset.Now;
+		_action = 5;
 	}
 
 	public SmMotion(int playerObjectId, IReadOnlyList<PlayerMotion> motions, Func<DateTimeOffset>? clock = null)
@@ -29,6 +44,8 @@ public sealed class SmMotion : GameServerPacket
 		_motions = motions;
 		_clock = clock ?? (() => DateTimeOffset.Now);
 		_action = 7;
+		_motionId = 0;
+		_motionType = 0;
 	}
 
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
@@ -38,9 +55,16 @@ public sealed class SmMotion : GameServerPacket
 		if (_action == 7)
 		{
 			buffer.WriteD(_playerObjectId);
-			var activeMotions = _motions.Where(motion => motion.IsActive).OrderBy(motion => motion.Id).Take(5).ToArray();
-			for (var i = 0; i < 5; i++)
-				buffer.WriteH(i < activeMotions.Length ? activeMotions[i].Id : 0);
+			var activeMotions = _motions.Where(motion => motion.IsActive).ToArray();
+			for (var motionType = 1; motionType <= 5; motionType++)
+				buffer.WriteH(activeMotions.FirstOrDefault(motion => PlayerMotion.GetMotionType(motion.Id) == motionType)?.Id ?? 0);
+			return;
+		}
+
+		if (_action == 5)
+		{
+			buffer.WriteH(_motionId);
+			buffer.WriteC(_motionType);
 			return;
 		}
 

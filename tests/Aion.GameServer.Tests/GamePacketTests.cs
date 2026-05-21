@@ -242,7 +242,10 @@ public class GamePacketTests
 					[new PlayerMotion(11, 1010, true)],
 					() => DateTimeOffset.FromUnixTimeSeconds(1000))));
 		Assert.Equal(
-			Convert.FromHexString("07E90300000B000D00000000000000"),
+			Convert.FromHexString("050B0001"),
+			SerializeUnencryptedPayload(new SmMotion(11, 1)));
+		Assert.Equal(
+			Convert.FromHexString("07E90300000B0000000D0000000000"),
 			SerializeUnencryptedPayload(
 				new SmMotion(
 					1001,
@@ -1969,6 +1972,23 @@ public class GamePacketTests
 	{
 		Assert.IsType<CmLevelReady>(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(9, _ => { }), GameConnectionState.InGame));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(9, _ => { }), GameConnectionState.Authed));
+	}
+
+	[Fact]
+	public void ClientPacketFactory_ParsesMotionPacket()
+	{
+		var motion = Assert.IsType<CmMotion>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(71, b =>
+			{
+				b.WriteC(4);
+				b.WriteH(11);
+				b.WriteC(1);
+			}), GameConnectionState.InGame));
+
+		Assert.Equal(4, motion.Unknown);
+		Assert.Equal(11, motion.MotionId);
+		Assert.Equal(1, motion.MotionType);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(71, _ => { }), GameConnectionState.Authed));
 	}
 
 	[Fact]

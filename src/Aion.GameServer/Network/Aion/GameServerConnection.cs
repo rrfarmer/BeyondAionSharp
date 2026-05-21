@@ -45,6 +45,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly IBrokerRepository? _brokerRepository;
 	private readonly ISocialRepository _socialRepository;
 	private readonly IHouseAuctionRepository _houseAuctionRepository;
+	private readonly IMotionRepository _motionRepository;
 	private readonly IGameClientConnectionRegistry? _connectionRegistry;
 	private readonly IDFactory? _idFactory;
 	private readonly GameTimeService? _gameTimeService;
@@ -79,6 +80,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		IBrokerRepository? brokerRepository = null,
 		ISocialRepository? socialRepository = null,
 		IHouseAuctionRepository? houseAuctionRepository = null,
+		IMotionRepository? motionRepository = null,
 		IGameClientConnectionRegistry? connectionRegistry = null,
 		IDFactory? idFactory = null,
 		GameTimeService? gameTimeService = null,
@@ -98,6 +100,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_brokerRepository = brokerRepository;
 		_socialRepository = socialRepository ?? new EmptySocialRepository();
 		_houseAuctionRepository = houseAuctionRepository ?? new EmptyHouseAuctionRepository();
+		_motionRepository = motionRepository ?? new EmptyMotionRepository();
 		_connectionRegistry = connectionRegistry;
 		_idFactory = idFactory;
 		_gameTimeService = gameTimeService;
@@ -293,6 +296,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				break;
 			case CmChatGroupInfo chatGroupInfo:
 				await HandleChatGroupInfoAsync(chatGroupInfo);
+				break;
+			case CmMotion motion:
+				if (_activePlayer != null)
+					await HandleMotionAsync(_activePlayer, motion);
 				break;
 			case CmHouseSettings houseSettings:
 				if (_activePlayer != null)
@@ -1386,6 +1393,61 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		// Java parity: model/gameobjects/player/title/TitleList.contains.
 		return player.Titles.Any(title => title.Id == titleId);
+	}
+
+	private async Task HandleMotionAsync(Player player, CmMotion packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_MOTION.runImpl -> MotionList.setActive.
+		var motions = player.Motions.ToArray();
+		PlayerMotion? oldMotion;
+		PlayerMotion? newMotion = null;
+
+		if (packet.MotionId != 0)
+		{
+			newMotion = motions.FirstOrDefault(motion => motion.Id == packet.MotionId);
+			if (newMotion == null || newMotion.IsActive)
+				return;
+
+			oldMotion = motions.FirstOrDefault(motion => motion.IsActive && PlayerMotion.GetMotionType(motion.Id) == packet.MotionType);
+			motions = motions
+				.Select(motion =>
+					motion.Id == packet.MotionId ? motion with { IsActive = true } :
+					oldMotion != null && motion.Id == oldMotion.Id ? motion with { IsActive = false } :
+					motion)
+				.ToArray();
+		}
+		else
+		{
+			oldMotion = motions.FirstOrDefault(motion => motion.IsActive && PlayerMotion.GetMotionType(motion.Id) == packet.MotionType);
+			if (oldMotion == null)
+				return;
+
+			motions = motions
+				.Select(motion => motion.Id == oldMotion.Id ? motion with { IsActive = false } : motion)
+				.ToArray();
+		}
+
+		player.Motions = motions;
+		if (oldMotion != null)
+			await PersistMotionActiveAsync(player.ObjectId, oldMotion.Id, isActive: false);
+		if (newMotion != null)
+			await PersistMotionActiveAsync(player.ObjectId, newMotion.Id, isActive: true);
+
+		await SendPacketAsync(new SmMotion(packet.MotionId, packet.MotionType));
+		if (_connectionRegistry != null)
+			await _connectionRegistry.BroadcastToVisiblePlayersAsync(player.Position, player.ObjectId, new SmMotion(player.ObjectId, player.Motions), includeSourcePlayer: true);
+	}
+
+	private async Task PersistMotionActiveAsync(int playerObjectId, int motionId, bool isActive)
+	{
+		if (!await _motionRepository.UpdateMotionActiveAsync(playerObjectId, motionId, isActive))
+		{
+			_logger.LogWarning(
+				"Motion {MotionId} active={IsActive} update for player {PlayerObjectId} was not persisted",
+				motionId,
+				isActive,
+				playerObjectId);
+		}
 	}
 
 	private async Task HandleMoveAsync(Player player, CmMove packet)

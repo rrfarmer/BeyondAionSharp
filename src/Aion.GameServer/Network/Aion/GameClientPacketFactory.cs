@@ -25,6 +25,7 @@ public static class GameClientPacketFactory
 		Register(49, states => new CmMoveInAir(49, states), GameConnectionState.InGame);
 		Register(50, states => new CmQuestionResponse(50, states), GameConnectionState.InGame);
 		Register(61, states => new CmChatGroupInfo(61, states), GameConnectionState.InGame);
+		Register(71, states => new CmMotion(71, states), GameConnectionState.InGame);
 		Register(73, states => new CmHouseSettings(73, states), GameConnectionState.InGame);
 		Register(103, states => new CmPingRequest(103, states), GameConnectionState.InGame);
 		Register(110, states => new CmMarkFriendList(110, states), GameConnectionState.InGame);
