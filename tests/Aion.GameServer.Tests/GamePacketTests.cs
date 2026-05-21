@@ -294,6 +294,16 @@ public class GamePacketTests
 					new Player { ObjectId = 1001 },
 					EmotionType.Jump)));
 		Assert.Equal(
+			Convert.FromHexString("E90300000D020000000000"),
+			SerializeUnencryptedPayload(
+				new SmEmotion(
+					new Player
+					{
+						ObjectId = 1001,
+						CreatureState = PlayerCreatureState.Flying,
+					},
+					EmotionType.Fly)));
+		Assert.Equal(
 			Convert.FromHexString("E903000004060000000000000030410000B041000004422C"),
 			SerializeUnencryptedPayload(
 				new SmEmotion(
@@ -3345,6 +3355,10 @@ public class GamePacketTests
 			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(0)), GameConnectionState.InGame));
 		var jump = Assert.IsType<CmEmotion>(
 			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(1)), GameConnectionState.InGame));
+		var fly = Assert.IsType<CmEmotion>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(13)), GameConnectionState.InGame));
+		var land = Assert.IsType<CmEmotion>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(14)), GameConnectionState.InGame));
 		var powershardOn = Assert.IsType<CmEmotion>(
 			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(36)), GameConnectionState.InGame));
 		var powershardOff = Assert.IsType<CmEmotion>(
@@ -3370,6 +3384,8 @@ public class GamePacketTests
 
 		Assert.Equal(EmotionType.SelectTarget, selectTarget.EmotionType);
 		Assert.Equal(EmotionType.Jump, jump.EmotionType);
+		Assert.Equal(EmotionType.Fly, fly.EmotionType);
+		Assert.Equal(EmotionType.Land, land.EmotionType);
 		Assert.Equal(EmotionType.PowershardOn, powershardOn.EmotionType);
 		Assert.Equal(EmotionType.PowershardOff, powershardOff.EmotionType);
 		Assert.Equal(EmotionType.OpenDoor, openDoor.EmotionType);

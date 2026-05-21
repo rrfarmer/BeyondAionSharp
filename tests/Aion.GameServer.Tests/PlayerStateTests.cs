@@ -32,8 +32,11 @@ public sealed class PlayerStateTests
 
 		Assert.True(player.IsInState(PlayerCreatureState.WalkMode));
 		Assert.True(player.IsInState(PlayerCreatureState.Powershard));
+		Assert.Equal(2, (int)PlayerCreatureState.Flying);
+		Assert.Equal(8, (int)PlayerCreatureState.FloatingCorpse);
 		Assert.Equal(64, (int)PlayerCreatureState.WalkMode);
 		Assert.Equal(128, (int)PlayerCreatureState.Powershard);
+		Assert.Equal(512, (int)PlayerCreatureState.Gliding);
 
 		player.ReplaceCreatureState(PlayerCreatureState.Chair);
 
