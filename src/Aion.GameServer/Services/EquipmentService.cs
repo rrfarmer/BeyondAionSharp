@@ -69,6 +69,9 @@ public static class EquipmentService
 		if (!CanEquipIntoSlot(player, inventoryItems, itemTemplates, template, slot, out var inventoryFull))
 			return inventoryFull ? EquipmentChangeResult.FullInventoryFailure() : EquipmentChangeResult.NoChange();
 
+		if (!HasRequiredEquipSkill(player, template))
+			return EquipmentChangeResult.MissingRequiredSkillFailure();
+
 		var updates = new List<InventoryItem>();
 		var persisted = new List<InventoryItem>();
 		foreach (var unequipped in UnEquipSlots(inventoryItems, GetUnequipSlots(inventoryItems, slot, itemTemplates)))
@@ -113,6 +116,14 @@ public static class EquipmentService
 			return EquipmentChangeResult.InvalidRankFailure(PlayerAbyssRank.GetRankL10n(player.Race, template.MinRank));
 
 		return null;
+	}
+
+	private static bool HasRequiredEquipSkill(Player player, ItemTemplateSummary template)
+	{
+		// Java parity: model/gameobjects/player/Equipment.checkAvailableEquipSkills.
+		var requiredSkills = template.RequiredEquipSkills;
+		return requiredSkills.Count == 0
+			|| requiredSkills.Any(requiredSkill => player.Skills.Any(skill => skill.SkillId == requiredSkill));
 	}
 
 	private static EquipmentChangeResult UnEquipItem(
@@ -411,6 +422,7 @@ public enum EquipmentChangeFailure
 	InvalidRace,
 	InvalidGender,
 	InvalidRank,
+	MissingRequiredSkill,
 }
 
 public sealed record EquipmentChangeResult(
@@ -482,6 +494,11 @@ public sealed record EquipmentChangeResult(
 	public static EquipmentChangeResult InvalidRankFailure(string rankName)
 	{
 		return NoChange() with { Failure = EquipmentChangeFailure.InvalidRank, RankName = rankName };
+	}
+
+	public static EquipmentChangeResult MissingRequiredSkillFailure()
+	{
+		return NoChange() with { Failure = EquipmentChangeFailure.MissingRequiredSkill };
 	}
 
 	public static EquipmentChangeResult Success(

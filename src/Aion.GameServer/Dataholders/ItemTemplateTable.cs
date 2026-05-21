@@ -82,6 +82,54 @@ public sealed record ItemTemplateSummary(
 		"EARRING", "RING", "NECKLACE", "BELT", "HEAD", "CL_SHIELD", "POWER_SHARDS",
 	};
 
+	private static readonly IReadOnlyDictionary<string, int[]> RequiredSkillsByGroup = new Dictionary<string, int[]>(StringComparer.Ordinal)
+	{
+		["SWORD"] = [37, 44],
+		["GREATSWORD"] = [51],
+		["DAGGER"] = [66, 45],
+		["MACE"] = [39, 46],
+		["ORB"] = [111],
+		["SPELLBOOK"] = [100],
+		["POLEARM"] = [52],
+		["STAFF"] = [89],
+		["BOW"] = [53],
+		["HARP"] = [124, 114],
+		["GUN"] = [117, 112],
+		["CANNON"] = [113],
+		["KEYBLADE"] = [112, 115],
+		["SHIELD"] = [43, 50],
+		["TORSO"] = [103, 106],
+		["GLOVE"] = [103, 106],
+		["SHOULDER"] = [103, 106],
+		["PANTS"] = [103, 106],
+		["SHOES"] = [103, 106],
+		["RB_TORSO"] = [103, 106],
+		["RB_GLOVE"] = [103, 106],
+		["RB_SHOULDER"] = [103, 106],
+		["RB_PANTS"] = [103, 106],
+		["RB_SHOES"] = [103, 106],
+		["CL_TORSO"] = [40],
+		["CL_GLOVE"] = [40],
+		["CL_SHOULDER"] = [40],
+		["CL_PANTS"] = [40],
+		["CL_SHOES"] = [40],
+		["LT_TORSO"] = [41, 48],
+		["LT_GLOVE"] = [41, 48],
+		["LT_SHOULDER"] = [41, 48],
+		["LT_PANTS"] = [41, 48],
+		["LT_SHOES"] = [41, 48],
+		["CH_TORSO"] = [42, 49],
+		["CH_GLOVE"] = [42, 49],
+		["CH_SHOULDER"] = [42, 49],
+		["CH_PANTS"] = [42, 49],
+		["CH_SHOES"] = [42, 49],
+		["PL_TORSO"] = [54],
+		["PL_GLOVE"] = [54],
+		["PL_SHOULDER"] = [54],
+		["PL_PANTS"] = [54],
+		["PL_SHOES"] = [54],
+	};
+
 	private static readonly IReadOnlyDictionary<string, string> StartingClasses = new Dictionary<string, string>(StringComparer.Ordinal)
 	{
 		["GLADIATOR"] = "WARRIOR",
@@ -126,6 +174,15 @@ public sealed record ItemTemplateSummary(
 	public bool IsMagicalAttackWeapon => string.Equals(AttackType, "MAGICAL", StringComparison.Ordinal);
 
 	public IReadOnlyList<ItemStatModifier> StatModifiers => Modifiers ?? Array.Empty<ItemStatModifier>();
+
+	public IReadOnlyList<int> RequiredEquipSkills
+	{
+		get
+		{
+			// Java parity: model/templates/item/enums/ItemGroup.getRequiredSkills.
+			return RequiredSkillsByGroup.GetValueOrDefault(ItemGroup) ?? Array.Empty<int>();
+		}
+	}
 
 	public bool IsClassSpecific(string playerClass)
 	{

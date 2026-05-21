@@ -30,7 +30,11 @@ public sealed class EquipmentServiceTests
 	public void ChangeEquipment_AllowsOffHandOneHandWeaponWithWeaponDualSkill()
 	{
 		var player = CreatePlayer();
-		player.Skills = [new PlayerSkill { SkillId = 55, SkillLevel = 1 }];
+		player.Skills =
+		[
+			new PlayerSkill { SkillId = 37, SkillLevel = 1 },
+			new PlayerSkill { SkillId = 55, SkillLevel = 1 },
+		];
 		player.InventoryItems =
 		[
 			new InventoryItem { ObjectId = 1001, ItemId = SwordId, Location = 0, Slot = 65535 },
@@ -315,6 +319,23 @@ public sealed class EquipmentServiceTests
 		Assert.Equal(PlayerAbyssRank.GetRankL10n("ELYOS", 5), change.RankName);
 	}
 
+	[Fact]
+	public void ChangeEquipment_RejectsItemWhenRequiredEquipSkillIsMissing()
+	{
+		var player = CreatePlayer();
+		player.Skills = [];
+		player.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 1001, ItemId = SwordId, Location = 0, Slot = 65535 },
+		];
+
+		var change = EquipmentService.ChangeEquipment(player, action: 0, slotRead: 1, itemObjectId: 1001, CreateItemTemplates(), skillTemplates: null);
+
+		Assert.False(change.Changed);
+		Assert.Equal(EquipmentChangeFailure.MissingRequiredSkill, change.Failure);
+		Assert.Empty(change.InventoryUpdateItems);
+	}
+
 	private static Player CreatePlayer(
 		string playerClass = "WARRIOR",
 		string race = "ELYOS",
@@ -333,6 +354,12 @@ public sealed class EquipmentServiceTests
 			Exp = exp,
 			Position = new WorldPosition(210010000, 1, 2, 3, 0),
 			AbyssRank = PlayerAbyssRank.Default() with { Rank = rank, MaxRank = rank },
+			Skills =
+			[
+				new PlayerSkill { SkillId = 37, SkillLevel = 1 },
+				new PlayerSkill { SkillId = 40, SkillLevel = 1 },
+				new PlayerSkill { SkillId = 51, SkillLevel = 1 },
+			],
 		};
 	}
 
