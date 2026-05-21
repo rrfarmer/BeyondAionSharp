@@ -52,7 +52,9 @@ public sealed record ItemTemplateSummary(
 	string EnchantName = "",
 	string TemperingName = "",
 	int PolishSetId = 0,
-	ItemGodstoneInfo? GodstoneInfo = null)
+	ItemGodstoneInfo? GodstoneInfo = null,
+	ItemImprovement? Improvement = null,
+	int RecommendRank = 0)
 {
 	private const int CanPolishMask = 1 << 17;
 
@@ -167,6 +169,15 @@ public sealed record ItemGodstoneInfo(
 	int ProbabilityLeft,
 	int BreakProbability,
 	int NonBreakCount);
+
+// Java parity: model/templates/item/Improvement.
+public sealed record ItemImprovement(
+	int ChargeWay,
+	int Level,
+	int BurnAttack,
+	int BurnDefend,
+	int Price1,
+	int Price2);
 
 public sealed record ItemStatModifier(
 	string Operation,

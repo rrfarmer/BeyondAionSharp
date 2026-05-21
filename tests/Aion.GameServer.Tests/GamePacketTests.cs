@@ -443,6 +443,24 @@ public class GamePacketTests
 		Assert.Equal(SmInventoryUpdateItem.DecreaseItemUse, inventoryUpdateReader.ReadH());
 		Assert.Equal(0, inventoryUpdateReader.Remaining);
 
+		var chargeUpdateItem = new InventoryItem
+		{
+			ObjectId = 91,
+			ItemId = attachedTemplate.TemplateId,
+			Count = 1,
+			Location = 0,
+			Charge = 500000,
+		};
+		var chargeInventoryUpdatePayload = SerializeUnencryptedPayload(
+			new SmInventoryUpdateItem(chargeUpdateItem, attachedTemplate, SmInventoryUpdateItem.Charge));
+		using var chargeInventoryUpdateReader = new PacketBuffer(chargeInventoryUpdatePayload);
+		Assert.Equal(91, chargeInventoryUpdateReader.ReadD());
+		Assert.Equal(attachedTemplate.GetClientName(), chargeInventoryUpdateReader.ReadS());
+		Assert.Equal(5, chargeInventoryUpdateReader.ReadH());
+		Assert.Equal(0x0f, (int)chargeInventoryUpdateReader.ReadC());
+		Assert.Equal(500000, chargeInventoryUpdateReader.ReadD());
+		Assert.Equal(0, chargeInventoryUpdateReader.Remaining);
+
 		Assert.Equal(
 			Convert.FromHexString("0100"),
 			SerializeUnencryptedPayload(SmMailService.CreateMailMessage(SmMailService.MailSendSuccess)));
@@ -480,6 +498,11 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.DiceCustomMe(7, 100), 1400126, "7", "100");
 		AssertSystemMessage(SmSystemMessage.DiceCustomOther("Roller", 7, 100), 1400127, "Roller", "7", "100");
 		AssertSystemMessage(SmSystemMessage.NotEnoughKinah(12345), 901285, "12345");
+		AssertSystemMessage(SmSystemMessage.UseAbyssPoint(1234), 1300965, "1234");
+		AssertSystemMessage(SmSystemMessage.ItemChargeSuccess("item", 1), 1400887, "item", "1");
+		AssertSystemMessage(SmSystemMessage.ItemCharge2Success("item", 2), 1401335, "item", "2");
+		AssertSystemMessage(SmSystemMessage.ItemChargeAllComplete(), 1400892);
+		AssertSystemMessage(SmSystemMessage.ItemCharge2AllComplete(), 1401340);
 		AssertSystemMessage(SmSystemMessage.HousingBidSuccess(6001), 1401265, "6001");
 		AssertSystemMessage(SmSystemMessage.HousingBidFail(), 1401348);
 		AssertSystemMessage(SmSystemMessage.HousingCantOwnNotCompleteQuest(18802), 1401277, "18802");
@@ -2384,6 +2407,25 @@ public class GamePacketTests
 		Assert.Equal(7001, targetSelect.TargetObjectId);
 		Assert.True(targetSelect.SelectTargetOfTarget);
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(31, b => b.WriteD(7001)), GameConnectionState.Authed));
+	}
+
+	[Fact]
+	public void ClientPacketFactory_ParsesChargeItem()
+	{
+		var chargeItem = Assert.IsType<CmChargeItem>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(78, b =>
+			{
+				b.WriteD(7001);
+				b.WriteC(2);
+				b.WriteH(2);
+				b.WriteD(101);
+				b.WriteD(102);
+			}), GameConnectionState.InGame));
+
+		Assert.Equal(7001, chargeItem.TargetNpcObjectId);
+		Assert.Equal(2, chargeItem.ChargeLevel);
+		Assert.Equal([101, 102], chargeItem.ItemObjectIds);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(78, _ => { }), GameConnectionState.Authed));
 	}
 
 	[Fact]

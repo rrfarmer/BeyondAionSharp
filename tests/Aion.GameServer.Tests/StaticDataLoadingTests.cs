@@ -136,6 +136,15 @@ public sealed class StaticDataLoadingTests
 		Assert.True(staticData.ItemTemplates.GetItemTemplate(100001276)?.CanTune);
 		Assert.False(staticData.ItemTemplates.GetItemTemplate(100000001)?.CanTune);
 		Assert.Equal(1, staticData.ItemTemplates.GetItemTemplate(100001105)?.ConditioningMaxLevel);
+		var chargeTemplate = staticData.ItemTemplates.GetItemTemplate(100001105);
+		Assert.NotNull(chargeTemplate);
+		Assert.Equal(1, chargeTemplate.Improvement?.ChargeWay);
+		Assert.Equal(1, chargeTemplate.Improvement?.Level);
+		Assert.Equal(200, chargeTemplate.Improvement?.BurnAttack);
+		Assert.Equal(100, chargeTemplate.Improvement?.BurnDefend);
+		Assert.Equal(10000, chargeTemplate.Improvement?.Price1);
+		Assert.Equal(0, chargeTemplate.Improvement?.Price2);
+		Assert.Equal(4, chargeTemplate.RecommendRank);
 		var fireSword = staticData.ItemTemplates.GetItemTemplate(100000125);
 		Assert.NotNull(fireSword);
 		Assert.Equal("PHYSICAL", fireSword.AttackType);

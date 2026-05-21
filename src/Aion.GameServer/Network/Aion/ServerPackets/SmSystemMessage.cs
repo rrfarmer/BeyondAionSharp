@@ -37,6 +37,36 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(901285, kinah.ToString(System.Globalization.CultureInfo.InvariantCulture));
 	}
 
+	public static SmSystemMessage UseAbyssPoint(long abyssPoints)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_USE_ABYSSPOINT.
+		return new SmSystemMessage(1300965, abyssPoints.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage ItemChargeSuccess(string itemName, int level)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ITEM_CHARGE_SUCCESS.
+		return new SmSystemMessage(1400887, itemName, level.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage ItemCharge2Success(string itemName, int level)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ITEM_CHARGE2_SUCCESS.
+		return new SmSystemMessage(1401335, itemName, level.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage ItemChargeAllComplete()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ITEM_CHARGE_ALL_COMPLETE.
+		return new SmSystemMessage(1400892);
+	}
+
+	public static SmSystemMessage ItemCharge2AllComplete()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ITEM_CHARGE2_ALL_COMPLETE.
+		return new SmSystemMessage(1401340);
+	}
+
 	public static SmSystemMessage BrokerPriceExceedsLimit()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LIMITED_VENDOR_CANT_OVER_GOLD.

@@ -317,7 +317,7 @@ public sealed class SmInventoryInfo : GameServerPacket
 		payload.WriteD(0);
 	}
 
-	private static void WriteConditioningInfoBlob(PacketBuffer buffer, InventoryItem item)
+	internal static void WriteConditioningInfoBlob(PacketBuffer buffer, InventoryItem item)
 	{
 		WriteBlob(buffer, 0x0f, payload => payload.WriteD(item.Charge));
 	}

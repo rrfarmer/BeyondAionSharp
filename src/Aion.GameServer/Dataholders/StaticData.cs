@@ -512,7 +512,20 @@ public sealed class StaticData
 
 			if (reader.Depth == 3 && reader.LocalName == "improve" && currentItemTemplate != null)
 			{
-				currentItemTemplate.ConditioningMaxLevel = ReadIntAttribute(reader, "level");
+				currentItemTemplate.Improvement = new ItemImprovement(
+					ReadIntAttribute(reader, "way"),
+					ReadIntAttribute(reader, "level"),
+					ReadIntAttribute(reader, "burn_attack"),
+					ReadIntAttribute(reader, "burn_defend"),
+					ReadIntAttribute(reader, "price1"),
+					ReadIntAttribute(reader, "price2"));
+				currentItemTemplate.ConditioningMaxLevel = currentItemTemplate.Improvement.Level;
+				continue;
+			}
+
+			if (reader.Depth == 3 && reader.LocalName == "uselimits" && currentItemTemplate != null)
+			{
+				currentItemTemplate.RecommendRank = ReadIntAttribute(reader, "recommend_rank");
 				continue;
 			}
 
@@ -994,6 +1007,8 @@ public sealed class StaticData
 
 		public ItemGodstoneInfo? GodstoneInfo { get; set; }
 
+		public ItemImprovement? Improvement { get; set; }
+
 		public List<ItemStatModifier> Modifiers { get; } = [];
 
 		public int DispositionItemId { get; set; }
@@ -1005,6 +1020,8 @@ public sealed class StaticData
 		public int ConditioningMaxLevel { get; set; }
 
 		public int PolishSetId { get; set; }
+
+		public int RecommendRank { get; set; }
 
 		public void AddModifier(ItemStatModifier modifier)
 		{
@@ -1057,7 +1074,9 @@ public sealed class StaticData
 				EnchantName,
 				TemperingName,
 				PolishSetId,
-				GodstoneInfo);
+				GodstoneInfo,
+				Improvement,
+				RecommendRank);
 		}
 
 		private static bool CalculateCanTune(

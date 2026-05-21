@@ -68,6 +68,13 @@ public interface IPlayerEnterWorldRepository
 
 	Task<bool> MarkPlayerOnlineAsync(int playerObjectId, DateTime lastOnline, CancellationToken cancellationToken = default);
 
+	Task<bool> SaveItemChargeMutationAsync(
+		int playerObjectId,
+		InventoryItem chargedItem,
+		InventoryItem? kinahItem,
+		PlayerAbyssRank? abyssRank,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SavePlayerLogoutAsync(Player player, DateTime lastOnline, CancellationToken cancellationToken = default);
 }
 
@@ -211,6 +218,16 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	public Task<bool> MarkPlayerOnlineAsync(int playerObjectId, DateTime lastOnline, CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(false);
+	}
+
+	public Task<bool> SaveItemChargeMutationAsync(
+		int playerObjectId,
+		InventoryItem chargedItem,
+		InventoryItem? kinahItem,
+		PlayerAbyssRank? abyssRank,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
 	}
 
 	public Task<bool> SavePlayerLogoutAsync(Player player, DateTime lastOnline, CancellationToken cancellationToken = default)
@@ -415,6 +432,49 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		}
 	}
 
+	public async Task<bool> SaveItemChargeMutationAsync(
+		int playerObjectId,
+		InventoryItem chargedItem,
+		InventoryItem? kinahItem,
+		PlayerAbyssRank? abyssRank,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: ItemChargeService.chargeItem persists ChargeInfo and payment mutations before sending item updates.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			await using var chargeCommand = connection.CreateCommand();
+			chargeCommand.Transaction = transaction;
+			chargeCommand.CommandText = "UPDATE inventory SET charge = ? WHERE item_unique_id = ? AND item_owner = ?";
+			chargeCommand.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = chargedItem.Charge },
+					new MySqlParameter { Value = chargedItem.ObjectId },
+					new MySqlParameter { Value = playerObjectId },
+				});
+			var chargeRows = await chargeCommand.ExecuteNonQueryAsync(cancellationToken);
+			if (chargeRows <= 0)
+				return false;
+
+			if (kinahItem != null && !await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, kinahItem, cancellationToken))
+				return false;
+			if (abyssRank != null)
+				await SaveAbyssRankAsync(connection, transaction, playerObjectId, abyssRank, cancellationToken);
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save item charge mutation for player {PlayerObjectId} item {ItemObjectId}", playerObjectId, chargedItem.ObjectId);
+			return false;
+		}
+	}
+
 	private static async Task SavePlayerSettingsAsync(
 		MySqlConnection connection,
 		int playerObjectId,
@@ -448,6 +508,85 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				new MySqlParameter { Value = playerObjectId },
 				new MySqlParameter { Value = settingsType },
 				new MySqlParameter { Value = settingsValue },
+			});
+		await command.ExecuteNonQueryAsync(cancellationToken);
+	}
+
+	private static async Task<bool> SaveInventoryItemCountAsync(
+		MySqlConnection connection,
+		MySqlTransaction transaction,
+		int playerObjectId,
+		InventoryItem item,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: model/items/storage/Storage.decreaseKinah update path.
+		await using var command = connection.CreateCommand();
+		command.Transaction = transaction;
+		command.CommandText = "UPDATE inventory SET item_count = ? WHERE item_unique_id = ? AND item_owner = ?";
+		command.Parameters.AddRange(
+			new[]
+			{
+				new MySqlParameter { Value = item.Count },
+				new MySqlParameter { Value = item.ObjectId },
+				new MySqlParameter { Value = playerObjectId },
+			});
+		return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+	}
+
+	private static async Task SaveAbyssRankAsync(
+		MySqlConnection connection,
+		MySqlTransaction transaction,
+		int playerObjectId,
+		PlayerAbyssRank rank,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: dao/AbyssRankDAO.storeAbyssRank.
+		await using var command = connection.CreateCommand();
+		command.Transaction = transaction;
+		command.CommandText = """
+			INSERT INTO abyss_rank (
+				player_id, daily_ap, weekly_ap, ap, `rank`, max_rank, rank_pos, old_rank_pos,
+				daily_kill, weekly_kill, all_kill, last_kill, last_ap, last_update, rank_ap,
+				daily_gp, weekly_gp, gp, last_gp)
+			VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)
+			ON DUPLICATE KEY UPDATE
+				daily_ap = VALUES(daily_ap),
+				weekly_ap = VALUES(weekly_ap),
+				ap = VALUES(ap),
+				`rank` = VALUES(`rank`),
+				max_rank = VALUES(max_rank),
+				rank_pos = VALUES(rank_pos),
+				daily_kill = VALUES(daily_kill),
+				weekly_kill = VALUES(weekly_kill),
+				all_kill = VALUES(all_kill),
+				last_kill = VALUES(last_kill),
+				last_ap = VALUES(last_ap),
+				last_update = VALUES(last_update),
+				daily_gp = VALUES(daily_gp),
+				weekly_gp = VALUES(weekly_gp),
+				gp = VALUES(gp),
+				last_gp = VALUES(last_gp)
+			""";
+		command.Parameters.AddRange(
+			new[]
+			{
+				new MySqlParameter { Value = playerObjectId },
+				new MySqlParameter { Value = rank.DailyAp },
+				new MySqlParameter { Value = rank.WeeklyAp },
+				new MySqlParameter { Value = rank.Ap },
+				new MySqlParameter { Value = rank.Rank },
+				new MySqlParameter { Value = rank.MaxRank },
+				new MySqlParameter { Value = rank.RankingListPosition },
+				new MySqlParameter { Value = rank.DailyKill },
+				new MySqlParameter { Value = rank.WeeklyKill },
+				new MySqlParameter { Value = rank.AllKill },
+				new MySqlParameter { Value = rank.LastKill },
+				new MySqlParameter { Value = rank.LastAp },
+				new MySqlParameter { Value = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() },
+				new MySqlParameter { Value = rank.DailyGp },
+				new MySqlParameter { Value = rank.WeeklyGp },
+				new MySqlParameter { Value = rank.Gp },
+				new MySqlParameter { Value = rank.LastGp },
 			});
 		await command.ExecuteNonQueryAsync(cancellationToken);
 	}

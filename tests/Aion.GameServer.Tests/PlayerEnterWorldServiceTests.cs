@@ -379,6 +379,14 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public int DeletedRecipeId { get; private set; }
 
+		public int SaveItemChargeMutationCalls { get; private set; }
+
+		public InventoryItem? ChargedItem { get; private set; }
+
+		public InventoryItem? ChargePaymentKinahItem { get; private set; }
+
+		public PlayerAbyssRank? ChargePaymentAbyssRank { get; private set; }
+
 		public Task<Player?> LoadPlayerAsync(int accountId, int playerObjectId, CancellationToken cancellationToken = default)
 		{
 			return Task.FromResult(Player);
@@ -548,6 +556,20 @@ public sealed class PlayerEnterWorldServiceTests
 			MarkOnlineCalls++;
 			LastOnline = lastOnline;
 			return Task.FromResult(MarkOnlineResult);
+		}
+
+		public Task<bool> SaveItemChargeMutationAsync(
+			int playerObjectId,
+			InventoryItem chargedItem,
+			InventoryItem? kinahItem,
+			PlayerAbyssRank? abyssRank,
+			CancellationToken cancellationToken = default)
+		{
+			SaveItemChargeMutationCalls++;
+			ChargedItem = chargedItem;
+			ChargePaymentKinahItem = kinahItem;
+			ChargePaymentAbyssRank = abyssRank;
+			return Task.FromResult(true);
 		}
 
 		public Task<bool> SavePlayerLogoutAsync(Player player, DateTime lastOnline, CancellationToken cancellationToken = default)

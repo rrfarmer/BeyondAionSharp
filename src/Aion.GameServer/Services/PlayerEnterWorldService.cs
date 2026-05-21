@@ -168,6 +168,17 @@ public sealed class PlayerEnterWorldService
 		return true;
 	}
 
+	public Task<bool> SaveItemChargeMutationAsync(
+		Player player,
+		InventoryItem chargedItem,
+		InventoryItem? kinahItem,
+		PlayerAbyssRank? abyssRank,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: services/item/ItemChargeService payment + ChargeInfo persistence side effects.
+		return _repository.SaveItemChargeMutationAsync(player.ObjectId, chargedItem, kinahItem, abyssRank, cancellationToken);
+	}
+
 	public async Task LeaveWorldAsync(Player player, CancellationToken cancellationToken = default)
 	{
 		// Java parity: services/player/PlayerLeaveWorldService.leaveWorld baseline persistence.
