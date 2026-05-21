@@ -314,6 +314,9 @@ public class GamePacketTests
 		Assert.Equal(0, (int)systemMessageReader.ReadC());
 		Assert.Equal(0, (int)systemMessageReader.ReadC());
 		Assert.Equal(0, systemMessageReader.Remaining);
+		AssertSystemMessage(SmSystemMessage.FullInventory(), 1300762);
+		AssertSystemMessage(SmSystemMessage.ExchangeFullInventory(), 1300366);
+		AssertSystemMessage(SmSystemMessage.MailTakeAllCancel(), 1402251);
 
 		var attachmentStatePayload = SerializeUnencryptedPayload(SmMailService.CreateAttachmentState(letterId: 123, attachmentType: 1));
 		using var attachmentStateReader = new PacketBuffer(attachmentStatePayload);
@@ -1420,6 +1423,34 @@ public class GamePacketTests
 		Assert.True(BrokerItemMaskMatcher.Matches(6040, weaponRecipe, recipes));
 		Assert.False(BrokerItemMaskMatcher.Matches(6041, weaponRecipe, recipes));
 		Assert.False(BrokerItemMaskMatcher.Matches(6040, weaponRecipe));
+	}
+
+	[Fact]
+	public void InventoryCapacity_MatchesJavaCubeLimitAndIgnoresKinahAndEquippedRows()
+	{
+		var player = new Player
+		{
+			NpcExpands = 1,
+			QuestExpands = 2,
+			ItemExpands = 3,
+			InventoryItems = Enumerable.Range(1, 80)
+				.Select(id => new InventoryItem { ObjectId = id, ItemId = 100000000 + id, Location = 0 })
+				.Concat(
+				[
+					new InventoryItem { ObjectId = 1000, ItemId = 182400001, Location = 0 },
+					new InventoryItem { ObjectId = 1001, ItemId = 100000099, Location = 0, IsEquipped = true },
+				])
+				.ToArray(),
+		};
+
+		Assert.Equal(81, InventoryCapacity.GetCubeLimit(player));
+		Assert.Equal(80, InventoryCapacity.GetUsedCubeSlots(player));
+		Assert.True(InventoryCapacity.HasFreeCubeSlot(player));
+
+		player.InventoryItems = player.InventoryItems
+			.Concat([new InventoryItem { ObjectId = 1002, ItemId = 100000100, Location = 0 }])
+			.ToArray();
+		Assert.False(InventoryCapacity.HasFreeCubeSlot(player));
 	}
 
 	[Fact]

@@ -664,6 +664,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			var itemTemplate = itemTemplates?.GetItemTemplate(brokerItem.Item.ItemId);
 			if (itemTemplate != null)
 			{
+				if (!InventoryCapacity.HasFreeCubeSlot(player))
+				{
+					await SendPacketAsync(SmSystemMessage.ExchangeFullInventory());
+					return;
+				}
+
 				var returnedItem = CopyInventoryItem(
 					brokerItem.Item,
 					location: CubeStorageId,
@@ -701,6 +707,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		var returnedItems = new List<(PlayerBrokerReturnedItem Return, ItemTemplateSummary Template)>();
 		var collectedItems = new List<PlayerBrokerItem>();
 		var collectedKinah = 0L;
+		var freeCubeSlots = InventoryCapacity.GetFreeCubeSlots(player);
 		foreach (var brokerItem in settledItems)
 		{
 			if (brokerItem.IsSold)
@@ -712,6 +719,8 @@ public sealed class GameServerConnection : BaseClientConnection
 
 			if (brokerItem.Item == null || itemTemplates.GetItemTemplate(brokerItem.Item.ItemId) is not { } itemTemplate)
 				continue;
+			if (freeCubeSlots <= 0)
+				continue;
 
 			var returnedItem = CopyInventoryItem(
 				brokerItem.Item,
@@ -722,6 +731,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			var returnedBrokerItem = new PlayerBrokerReturnedItem(brokerItem, returnedItem);
 			returnedItems.Add((returnedBrokerItem, itemTemplate));
 			collectedItems.Add(brokerItem);
+			freeCubeSlots--;
 		}
 
 		var kinahItem = BuildBrokerSettlementKinahItem(player, collectedKinah);
@@ -891,6 +901,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		var totalPrice = brokerItem.Price * packet.ItemCount;
+		if (!InventoryCapacity.HasFreeCubeSlot(player))
+		{
+			await SendPacketAsync(SmSystemMessage.FullInventory());
+			return;
+		}
+
 		if (kinahItem.Count < totalPrice)
 			return;
 
@@ -1065,6 +1081,11 @@ public sealed class GameServerConnection : BaseClientConnection
 			case 0:
 				if (letter.AttachedItem == null)
 					return;
+				if (!InventoryCapacity.HasFreeCubeSlot(player))
+				{
+					await SendPacketAsync(SmSystemMessage.MailTakeAllCancel());
+					return;
+				}
 
 				player.InventoryItems = player.InventoryItems
 					.Concat([CopyInventoryItem(letter.AttachedItem, CubeStorageId, FirstAvailableSlot)])

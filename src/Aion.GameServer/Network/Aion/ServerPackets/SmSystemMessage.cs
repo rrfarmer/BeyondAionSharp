@@ -43,6 +43,24 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1400750);
 	}
 
+	public static SmSystemMessage FullInventory()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_FULL_INVENTORY.
+		return new SmSystemMessage(1300762);
+	}
+
+	public static SmSystemMessage ExchangeFullInventory()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_EXCHANGE_FULL_INVENTORY.
+		return new SmSystemMessage(1300366);
+	}
+
+	public static SmSystemMessage MailTakeAllCancel()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MAIL_TAKE_ALL_CANCEL.
+		return new SmSystemMessage(1402251);
+	}
+
 	public static SmSystemMessage MailSendCannotSendEquippedItem()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MAIL_SEND_CAN_NOT_SEND_EQUIPPED_ITEM.
