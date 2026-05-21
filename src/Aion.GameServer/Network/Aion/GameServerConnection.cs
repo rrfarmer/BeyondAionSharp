@@ -1069,15 +1069,13 @@ public sealed class GameServerConnection : BaseClientConnection
 				return;
 
 			reducedSourceItem = CopyInventoryItem(sourceItem, count: sourceItem.Count - packet.ItemCount);
-			brokerStorageItem = new InventoryItem
-			{
-				ObjectId = objectId,
-				ItemId = sourceItem.ItemId,
-				Count = packet.ItemCount,
-				OwnerId = player.ObjectId,
-				Location = BrokerStorageId,
-				Slot = FirstAvailableSlot,
-			};
+			brokerStorageItem = CreateNewItem(
+				objectId,
+				itemTemplate,
+				packet.ItemCount,
+				ownerId: player.ObjectId,
+				location: BrokerStorageId,
+				slot: FirstAvailableSlot);
 		}
 		else
 		{
@@ -1181,15 +1179,13 @@ public sealed class GameServerConnection : BaseClientConnection
 				ItemCount = brokerItem.ItemCount - packet.ItemCount,
 				Item = remainingBrokerStorageItem,
 			};
-			boughtItem = new InventoryItem
-			{
-				ObjectId = objectId,
-				ItemId = brokerItem.ItemId,
-				Count = packet.ItemCount,
-				OwnerId = player.ObjectId,
-				Location = CubeStorageId,
-				Slot = FirstAvailableSlot,
-			};
+			boughtItem = CreateNewItem(
+				objectId,
+				itemTemplate,
+				packet.ItemCount,
+				ownerId: player.ObjectId,
+				location: CubeStorageId,
+				slot: FirstAvailableSlot);
 			soldBrokerItem = new PlayerBrokerItem(
 				boughtItem.ObjectId,
 				boughtItem.ItemId,
@@ -1442,7 +1438,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			return null;
 
 		var senderKinahCount = kinahItem.Count - finalMailKinah;
-		var attachedItem = BuildMailAttachment(senderItem, recipient.PlayerObjectId, sendMail.ItemCount);
+		var attachedItem = BuildMailAttachment(senderItem, senderItemTemplate, recipient.PlayerObjectId, sendMail.ItemCount);
 		if (senderItem != null && attachedItem == null)
 			return null;
 		var mail = new PlayerMail(
@@ -1548,7 +1544,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			items[index] = replacement;
 	}
 
-	private InventoryItem? BuildMailAttachment(InventoryItem? senderItem, int recipientObjectId, long attachedCount)
+	private InventoryItem? BuildMailAttachment(InventoryItem? senderItem, ItemTemplateSummary? senderItemTemplate, int recipientObjectId, long attachedCount)
 	{
 		// Java parity: services/mail/MailService.sendMail attached item move/split before Letter creation.
 		if (senderItem == null || attachedCount <= 0)
@@ -1566,19 +1562,47 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		if (senderItem.Count <= attachedCount)
 			return null;
+		if (senderItemTemplate == null)
+			return null;
 
 		var objectId = _idFactory?.NextId() ?? 0;
 		return objectId == 0
 			? null
-			: new InventoryItem
-			{
-				ObjectId = objectId,
-				ItemId = senderItem.ItemId,
-				Count = attachedCount,
-				OwnerId = recipientObjectId,
-				Slot = FirstAvailableSlot,
-				Location = MailboxStorageId,
-			};
+			: CreateNewItem(
+				objectId,
+				senderItemTemplate,
+				attachedCount,
+				ownerId: recipientObjectId,
+				location: MailboxStorageId,
+				slot: FirstAvailableSlot);
+	}
+
+	private static InventoryItem CreateNewItem(
+		int objectId,
+		ItemTemplateSummary itemTemplate,
+		long count,
+		int ownerId,
+		int location,
+		long slot)
+	{
+		// Java parity: services/item/ItemFactory.newItem(itemId, count) default item state and count clamp.
+		return new InventoryItem
+		{
+			ObjectId = objectId,
+			ItemId = itemTemplate.TemplateId,
+			Count = CalculateNewItemCount(itemTemplate, count),
+			OwnerId = ownerId,
+			Location = location,
+			Slot = slot,
+		};
+	}
+
+	private static long CalculateNewItemCount(ItemTemplateSummary itemTemplate, long count)
+	{
+		// Java parity: ItemFactory.calculateCount exempts kinah from max-stack clamping.
+		return count > itemTemplate.MaxStackCount && itemTemplate.TemplateId != KinahItemId
+			? itemTemplate.MaxStackCount
+			: count;
 	}
 
 	private static double GetQualityPriceRate(ItemTemplateSummary template)
