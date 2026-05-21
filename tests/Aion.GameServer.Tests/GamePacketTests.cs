@@ -466,6 +466,7 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.BuddyCantAddWhenAskedQuestion("Friend"), 1300795, "Friend");
 		AssertSystemMessage(SmSystemMessage.BuddyListNoBlockedCharacter(), 1300884);
 		AssertSystemMessage(SmSystemMessage.RejectedFriend("Friend"), 1390119, "Friend");
+		AssertSystemMessage(SmSystemMessage.AccuseInfoNormal(), 1400076);
 		AssertSystemMessage(SmSystemMessage.NotEnoughKinah(12345), 901285, "12345");
 		AssertSystemMessage(SmSystemMessage.HousingBidSuccess(6001), 1401265, "6001");
 		AssertSystemMessage(SmSystemMessage.HousingBidFail(), 1401348);
@@ -2427,6 +2428,14 @@ public class GamePacketTests
 		Assert.Equal(0, instanceInfo.Unknown);
 		Assert.Equal(1, instanceInfo.UpdateType);
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(192, buffer => buffer.WriteC(1)), GameConnectionState.Authed));
+	}
+
+	[Fact]
+	public void ClientPacketFactory_ParsesShowRestrictionsPacket()
+	{
+		Assert.IsType<CmShowRestrictions>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(194, _ => { }), GameConnectionState.InGame));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(194, _ => { }), GameConnectionState.Authed));
 	}
 
 	[Fact]

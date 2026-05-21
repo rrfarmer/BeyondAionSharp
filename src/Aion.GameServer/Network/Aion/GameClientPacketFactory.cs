@@ -75,6 +75,7 @@ public static class GameClientPacketFactory
 		Register(186, states => new CmMayLoginIntoGame(186, states), GameConnectionState.Authed);
 		Register(189, states => new CmMacAddress(189, states), GameConnectionState.Connected);
 		Register(192, states => new CmInstanceInfo(192, states), GameConnectionState.InGame);
+		Register(194, states => new CmShowRestrictions(194, states), GameConnectionState.InGame);
 		Register(210, states => new CmCharacterPasskey(210, states), GameConnectionState.Authed);
 		Register(218, states => new CmGetHouseBids(218, states), GameConnectionState.InGame);
 		Register(219, states => new CmRegisterHouse(219, states), GameConnectionState.InGame);

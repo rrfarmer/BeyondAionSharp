@@ -617,6 +617,13 @@ public sealed class GameServerConnection : BaseClientConnection
 					await SendPacketAsync(new SmInstanceInfo(instanceInfo.UpdateType, _activePlayer, instanceCooltimes));
 				}
 				break;
+			case CmShowRestrictions:
+				if (_activePlayer != null)
+				{
+					// Java parity: network/aion/clientpackets/CM_SHOW_RESTRICTIONS.runImpl -> SM_SYSTEM_MESSAGE.STR_MSG_ACCUSE_INFO_NORMAL.
+					await SendPacketAsync(SmSystemMessage.AccuseInfoNormal());
+				}
+				break;
 			case CmGetHouseBids:
 				if (_activePlayer != null)
 				{

@@ -343,6 +343,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1390119, playerName);
 	}
 
+	public static SmSystemMessage AccuseInfoNormal()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ACCUSE_INFO_NORMAL.
+		return new SmSystemMessage(1400076);
+	}
+
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.writeImpl.
