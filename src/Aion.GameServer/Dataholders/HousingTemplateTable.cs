@@ -39,6 +39,6 @@ public sealed class HousingTemplateTable
 	}
 }
 
-public sealed record HousingAddressSummary(int AddressId, int LandId, int ManagerNpcId);
+public sealed record HousingAddressSummary(int AddressId, int LandId, int ManagerNpcId, int MinLevel = 0);
 
 public sealed record HousingBuildingSummary(int BuildingId, string Size, int HouseTypeId);

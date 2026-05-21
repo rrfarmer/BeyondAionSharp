@@ -22,6 +22,22 @@ public interface IHouseAuctionRepository
 		InventoryItem kinahItem,
 		DateTime bidTime,
 		CancellationToken cancellationToken = default);
+
+	Task<HouseAuctionBidContext?> LoadHouseBidContextAsync(
+		int playerObjectId,
+		int listIndex,
+		HousingTemplateTable? housingTemplates,
+		CancellationToken cancellationToken = default);
+
+	Task<HouseAuctionPlaceBidResult> PlaceHouseBidAsync(
+		int playerObjectId,
+		int listIndex,
+		long bidOffer,
+		InventoryItem kinahItem,
+		int refundMailObjectId,
+		DateTime bidTime,
+		HousingTemplateTable? housingTemplates,
+		CancellationToken cancellationToken = default);
 }
 
 public enum HouseAuctionRegistrationResult
@@ -51,6 +67,28 @@ public sealed class EmptyHouseAuctionRepository : IHouseAuctionRepository
 		CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(HouseAuctionRegistrationResult.Failed);
+	}
+
+	public Task<HouseAuctionBidContext?> LoadHouseBidContextAsync(
+		int playerObjectId,
+		int listIndex,
+		HousingTemplateTable? housingTemplates,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult<HouseAuctionBidContext?>(null);
+	}
+
+	public Task<HouseAuctionPlaceBidResult> PlaceHouseBidAsync(
+		int playerObjectId,
+		int listIndex,
+		long bidOffer,
+		InventoryItem kinahItem,
+		int refundMailObjectId,
+		DateTime bidTime,
+		HousingTemplateTable? housingTemplates,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(new HouseAuctionPlaceBidResult(HouseAuctionPlaceBidStatus.Failed));
 	}
 }
 
@@ -132,41 +170,146 @@ public sealed class MySqlHouseAuctionRepository : IHouseAuctionRepository
 		}
 	}
 
-	private static async Task<IReadOnlyList<HouseAuctionBidRow>> LoadBidRowsAsync(CancellationToken cancellationToken)
+	public async Task<HouseAuctionBidContext?> LoadHouseBidContextAsync(
+		int playerObjectId,
+		int listIndex,
+		HousingTemplateTable? housingTemplates,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: services/HousingBidService.bid locates the target HouseBids by client listIndex.
+		try
+		{
+			var groups = BuildBidGroups(await LoadBidRowsAsync(cancellationToken));
+			var target = groups.FirstOrDefault(group => group.ListIndex == listIndex);
+			return target?.ToContext(
+				housingTemplates,
+				groups.Any(group => group.ListIndex != listIndex && group.HighestBid.PlayerObjectId == playerObjectId));
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not load housing bid context for player {PlayerObjectId} and list index {ListIndex}", playerObjectId, listIndex);
+			return null;
+		}
+	}
+
+	public async Task<HouseAuctionPlaceBidResult> PlaceHouseBidAsync(
+		int playerObjectId,
+		int listIndex,
+		long bidOffer,
+		InventoryItem kinahItem,
+		int refundMailObjectId,
+		DateTime bidTime,
+		HousingTemplateTable? housingTemplates,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: services/HousingBidService.bid success branch with HouseBidsDAO.addBid and previous-bid refund mail.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			var groups = BuildBidGroups(await LoadBidRowsAsync(connection, transaction, forUpdate: true, cancellationToken));
+			var target = groups.FirstOrDefault(group => group.ListIndex == listIndex);
+			if (target == null)
+				return new HouseAuctionPlaceBidResult(HouseAuctionPlaceBidStatus.Missing);
+			if (!target.CanAcceptBid(bidOffer))
+				return new HouseAuctionPlaceBidResult(HouseAuctionPlaceBidStatus.PriceChanged, target.AddressId);
+			if (!await UpdateKinahAsync(connection, transaction, kinahItem, cancellationToken))
+				return new HouseAuctionPlaceBidResult(HouseAuctionPlaceBidStatus.Failed, target.AddressId);
+
+			var previousBid = target.HighestBid;
+			await InsertBidAsync(connection, transaction, playerObjectId, target.HouseObjectId, bidOffer, bidTime, cancellationToken);
+			var refundMail = await TryCreatePreviousBidRefundMailAsync(
+				connection,
+				transaction,
+				previousBid,
+				target,
+				refundMailObjectId,
+				bidTime,
+				cancellationToken);
+
+			await transaction.CommitAsync(cancellationToken);
+			return new HouseAuctionPlaceBidResult(
+				HouseAuctionPlaceBidStatus.Success,
+				target.AddressId,
+				kinahItem,
+				refundMail,
+				refundMail?.RecipientId ?? 0);
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not place house bid for player {PlayerObjectId} and list index {ListIndex}", playerObjectId, listIndex);
+			return new HouseAuctionPlaceBidResult(HouseAuctionPlaceBidStatus.Failed);
+		}
+	}
+
+	private static Task<IReadOnlyList<HouseAuctionBidRow>> LoadBidRowsAsync(CancellationToken cancellationToken)
+	{
+		return LoadBidRowsAsync(connection: null, transaction: null, forUpdate: false, cancellationToken);
+	}
+
+	private static async Task<IReadOnlyList<HouseAuctionBidRow>> LoadBidRowsAsync(
+		DbConnection? connection,
+		DbTransaction? transaction,
+		bool forUpdate,
+		CancellationToken cancellationToken)
 	{
 		// Java parity: dao/HouseBidsDAO.LOAD_QUERY joined to HousesDAO-loaded address/building fields needed by SM_HOUSE_BIDS.
-		await using var connection = DatabaseFactory.GetConnection();
-		await connection.OpenAsync(cancellationToken);
-		await using var command = connection.CreateCommand();
-		command.CommandText = """
-			SELECT
-				CASE WHEN b.player_id <> 0 AND p.id IS NULL THEN 0 ELSE b.player_id END AS player_id,
-				b.house_id,
-				b.bid,
-				b.bid_time,
-				h.address,
-				h.building_id
-			FROM house_bids b
-				INNER JOIN houses h ON h.id = b.house_id
-				LEFT JOIN players p ON p.id = b.player_id
-			ORDER BY b.bid, b.bid_time
-			""";
+		var ownsConnection = connection == null;
+		DbConnection? ownedConnection = null;
+		connection ??= DatabaseFactory.GetConnection();
+		if (ownsConnection)
+			ownedConnection = connection;
+		if (ownsConnection)
+			await connection.OpenAsync(cancellationToken);
 
-		var rows = new List<HouseAuctionBidRow>();
-		await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-		while (await reader.ReadAsync(cancellationToken))
+		try
 		{
-			rows.Add(
-				new HouseAuctionBidRow(
-					ReadInt(reader, "player_id"),
-					ReadInt(reader, "house_id"),
-					ReadLong(reader, "bid"),
-					ReadDateTime(reader, "bid_time"),
-					ReadInt(reader, "address"),
-					ReadInt(reader, "building_id")));
-		}
+			await using var command = connection.CreateCommand();
+			command.Transaction = transaction;
+			command.CommandText = $"""
+				SELECT
+					CASE WHEN b.player_id <> 0 AND p.id IS NULL THEN 0 ELSE b.player_id END AS player_id,
+					p.name AS player_name,
+					p.race AS player_race,
+					b.house_id,
+					b.bid,
+					b.bid_time,
+					h.address,
+					h.building_id,
+					h.player_id AS house_owner_id
+				FROM house_bids b
+					INNER JOIN houses h ON h.id = b.house_id
+					LEFT JOIN players p ON p.id = b.player_id
+				ORDER BY b.bid, b.bid_time
+				{(forUpdate ? "FOR UPDATE" : string.Empty)}
+				""";
 
-		return rows;
+			var rows = new List<HouseAuctionBidRow>();
+			await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+			while (await reader.ReadAsync(cancellationToken))
+			{
+				rows.Add(
+					new HouseAuctionBidRow(
+						ReadInt(reader, "player_id"),
+						ReadString(reader, "player_name"),
+						ReadString(reader, "player_race"),
+						ReadInt(reader, "house_id"),
+						ReadLong(reader, "bid"),
+						ReadDateTime(reader, "bid_time"),
+						ReadInt(reader, "address"),
+						ReadInt(reader, "building_id"),
+						ReadInt(reader, "house_owner_id")));
+			}
+
+			return rows;
+		}
+		finally
+		{
+			if (ownedConnection != null)
+				await ownedConnection.DisposeAsync();
+		}
 	}
 
 	private static IReadOnlyList<HouseAuctionBidGroup> BuildBidGroups(IReadOnlyList<HouseAuctionBidRow> rows)
@@ -183,6 +326,7 @@ public sealed class MySqlHouseAuctionRepository : IHouseAuctionRepository
 					row.HouseObjectId,
 					row.AddressId,
 					row.BuildingId,
+					row.HouseOwnerObjectId,
 					initialKinah: row.Kinah,
 					row.BidTime);
 				groupsByHouseId[row.HouseObjectId] = group;
@@ -190,7 +334,7 @@ public sealed class MySqlHouseAuctionRepository : IHouseAuctionRepository
 				continue;
 			}
 
-			group.AddBid(row.PlayerObjectId, row.Kinah, row.BidTime);
+			group.AddBid(row.PlayerObjectId, row.PlayerName, row.PlayerRace, row.Kinah, row.BidTime);
 		}
 
 		return groups;
@@ -275,6 +419,123 @@ public sealed class MySqlHouseAuctionRepository : IHouseAuctionRepository
 		await command.ExecuteNonQueryAsync(cancellationToken);
 	}
 
+	private static async Task InsertBidAsync(
+		DbConnection connection,
+		DbTransaction transaction,
+		int playerObjectId,
+		int houseObjectId,
+		long bidOffer,
+		DateTime bidTime,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: HouseBidsDAO.INSERT_QUERY for a player bid.
+		await using var command = connection.CreateCommand();
+		command.Transaction = transaction;
+		command.CommandText = "INSERT INTO house_bids (player_id, house_id, bid, bid_time) VALUES (?, ?, ?, ?)";
+		command.Parameters.AddRange(
+			new[]
+			{
+				new MySqlParameter { Value = playerObjectId },
+				new MySqlParameter { Value = houseObjectId },
+				new MySqlParameter { Value = bidOffer },
+				new MySqlParameter { Value = bidTime },
+			});
+		await command.ExecuteNonQueryAsync(cancellationToken);
+	}
+
+	private static async Task<PlayerMail?> TryCreatePreviousBidRefundMailAsync(
+		DbConnection connection,
+		DbTransaction transaction,
+		HouseAuctionBid previousBid,
+		HouseAuctionBidGroup target,
+		int refundMailObjectId,
+		DateTime bidTime,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: MailFormatter.sendHouseAuctionMail(..., AuctionResult.FAILED_BID, bid.getTime(), previousBid.getKinah()).
+		if (previousBid.IsInitialOffer || previousBid.PlayerObjectId == 0 || refundMailObjectId == 0)
+			return null;
+
+		var recipient = await LoadPlayerMailTargetAsync(connection, transaction, previousBid.PlayerObjectId, cancellationToken);
+		if (recipient == null)
+			return null;
+
+		var mail = new PlayerMail(
+			refundMailObjectId,
+			previousBid.PlayerObjectId,
+			"$$HS_AUCTION_MAIL",
+			$"0,{GetRaceId(recipient.Value.Race)}",
+			$"{new DateTimeOffset(bidTime).ToUnixTimeSeconds()},{target.AddressId}",
+			true,
+			0,
+			0,
+			previousBid.Kinah,
+			0,
+			bidTime);
+		await InsertSystemMailAsync(connection, transaction, mail, cancellationToken);
+		return mail;
+	}
+
+	private static async Task<PlayerMailTarget?> LoadPlayerMailTargetAsync(
+		DbConnection connection,
+		DbTransaction transaction,
+		int playerObjectId,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: services/player/PlayerService.getOrLoadPlayerCommonData for auction refund mail.
+		await using var command = connection.CreateCommand();
+		command.Transaction = transaction;
+		command.CommandText = "SELECT name, race, mailbox_letters FROM players WHERE id = ? LIMIT 1";
+		command.Parameters.Add(new MySqlParameter { Value = playerObjectId });
+		await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+		if (!await reader.ReadAsync(cancellationToken))
+			return null;
+
+		return new PlayerMailTarget(
+			ReadString(reader, "name"),
+			ReadString(reader, "race"),
+			ReadInt(reader, "mailbox_letters"));
+	}
+
+	private static async Task InsertSystemMailAsync(
+		DbConnection connection,
+		DbTransaction transaction,
+		PlayerMail mail,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: services/mail/SystemMailService.sendMail stores the Letter and increments offline mailbox count.
+		await using var command = connection.CreateCommand();
+		command.Transaction = transaction;
+		command.CommandText = """
+			INSERT INTO mail (
+				mail_unique_id, mail_recipient_id, sender_name, mail_title, mail_message, unread,
+				attached_item_id, attached_kinah_count, expressed, recieved_time
+			)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			""";
+		command.Parameters.AddRange(
+			new[]
+			{
+				new MySqlParameter { Value = mail.Id },
+				new MySqlParameter { Value = mail.RecipientId },
+				new MySqlParameter { Value = mail.SenderName },
+				new MySqlParameter { Value = mail.Title },
+				new MySqlParameter { Value = mail.Message },
+				new MySqlParameter { Value = mail.IsUnread },
+				new MySqlParameter { Value = 0 },
+				new MySqlParameter { Value = mail.AttachedKinah },
+				new MySqlParameter { Value = mail.LetterType },
+				new MySqlParameter { Value = mail.ReceivedTime },
+			});
+		await command.ExecuteNonQueryAsync(cancellationToken);
+
+		await using var mailboxCommand = connection.CreateCommand();
+		mailboxCommand.Transaction = transaction;
+		mailboxCommand.CommandText = "UPDATE players SET mailbox_letters = LEAST(mailbox_letters + 1, 255) WHERE id = ?";
+		mailboxCommand.Parameters.Add(new MySqlParameter { Value = mail.RecipientId });
+		await mailboxCommand.ExecuteNonQueryAsync(cancellationToken);
+	}
+
 	private static HouseAuctionBidGroup? FindRegisteredHouseBid(
 		IReadOnlyList<HouseAuctionBidGroup> groups,
 		IReadOnlyList<PlayerHouse> playerHouses)
@@ -330,19 +591,36 @@ public sealed class MySqlHouseAuctionRepository : IHouseAuctionRepository
 		return reader.IsDBNull(ordinal) ? 0 : Convert.ToInt64(reader.GetValue(ordinal));
 	}
 
+	private static string ReadString(DbDataReader reader, string columnName)
+	{
+		var ordinal = reader.GetOrdinal(columnName);
+		return reader.IsDBNull(ordinal) ? string.Empty : reader.GetString(ordinal);
+	}
+
 	private static DateTime ReadDateTime(DbDataReader reader, string columnName)
 	{
 		var ordinal = reader.GetOrdinal(columnName);
 		return reader.IsDBNull(ordinal) ? DateTime.MinValue : reader.GetDateTime(ordinal);
 	}
 
+	private static int GetRaceId(string race)
+	{
+		// Java parity: model/Race.getRaceId for playable race system-mail params.
+		return string.Equals(race, "ASMODIANS", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
+	}
+
 	private sealed record HouseAuctionBidRow(
 		int PlayerObjectId,
+		string PlayerName,
+		string PlayerRace,
 		int HouseObjectId,
 		long Kinah,
 		DateTime BidTime,
 		int AddressId,
-		int BuildingId);
+		int BuildingId,
+		int HouseOwnerObjectId);
+
+	private readonly record struct PlayerMailTarget(string Name, string Race, int MailboxLetters);
 
 	private sealed class HouseAuctionBidGroup
 	{
@@ -353,6 +631,7 @@ public sealed class MySqlHouseAuctionRepository : IHouseAuctionRepository
 			int houseObjectId,
 			int addressId,
 			int buildingId,
+			int ownerObjectId,
 			long initialKinah,
 			DateTime initialBidTime)
 		{
@@ -360,7 +639,8 @@ public sealed class MySqlHouseAuctionRepository : IHouseAuctionRepository
 			HouseObjectId = houseObjectId;
 			AddressId = addressId;
 			BuildingId = buildingId;
-			_bids.Add(new HouseAuctionBid(ListIndex, PlayerObjectId: 0, Kinah: initialKinah, Time: initialBidTime));
+			OwnerObjectId = ownerObjectId;
+			_bids.Add(new HouseAuctionBid(ListIndex, PlayerObjectId: 0, PlayerName: string.Empty, PlayerRace: string.Empty, Kinah: initialKinah, Time: initialBidTime, IsInitialOffer: true));
 		}
 
 		public int ListIndex { get; }
@@ -371,16 +651,24 @@ public sealed class MySqlHouseAuctionRepository : IHouseAuctionRepository
 
 		public int BuildingId { get; }
 
+		public int OwnerObjectId { get; }
+
 		public HouseAuctionBid InitialOffer => _bids[0];
 
-		private HouseAuctionBid HighestBid => _bids[^1];
+		public HouseAuctionBid HighestBid => _bids[^1];
 
-		public void AddBid(int playerObjectId, long kinah, DateTime bidTime)
+		public void AddBid(int playerObjectId, string playerName, string playerRace, long kinah, DateTime bidTime)
 		{
 			// Java parity: model/house/HouseBids.bid accepts higher bids or one real bid matching the initial offer.
 			var highestBid = HighestBid;
 			if (highestBid.Kinah < kinah || _bids.Count == 1 && highestBid.Kinah == kinah)
-				_bids.Add(new HouseAuctionBid(ListIndex, playerObjectId, kinah, bidTime));
+				_bids.Add(new HouseAuctionBid(ListIndex, playerObjectId, playerName, playerRace, kinah, bidTime, IsInitialOffer: false));
+		}
+
+		public bool CanAcceptBid(long bidOffer)
+		{
+			// Java parity: model/house/HouseBids.bid return-null branch.
+			return HighestBid.Kinah < bidOffer || _bids.Count == 1 && HighestBid.Kinah == bidOffer;
 		}
 
 		public HouseAuctionBid? GetLatestBid(int playerObjectId)
@@ -409,7 +697,32 @@ public sealed class MySqlHouseAuctionRepository : IHouseAuctionRepository
 				_bids.Count - 1,
 				remainingAuctionSeconds);
 		}
+
+		public HouseAuctionBidContext ToContext(HousingTemplateTable? housingTemplates, bool playerIsHighestBidderElsewhere)
+		{
+			var address = housingTemplates?.GetAddress(AddressId);
+			return new HouseAuctionBidContext(
+				ListIndex,
+				HouseObjectId,
+				OwnerObjectId,
+				AddressId,
+				BuildingId,
+				housingTemplates?.GetHouseTypeId(BuildingId) ?? 0,
+				address?.MinLevel ?? 0,
+				HighestBid.Kinah,
+				HighestBid.PlayerObjectId,
+				InitialOffer.Kinah,
+				HighestBid.IsInitialOffer,
+				playerIsHighestBidderElsewhere);
+		}
 	}
 
-	private sealed record HouseAuctionBid(int ListIndex, int PlayerObjectId, long Kinah, DateTime Time);
+	private sealed record HouseAuctionBid(
+		int ListIndex,
+		int PlayerObjectId,
+		string PlayerName,
+		string PlayerRace,
+		long Kinah,
+		DateTime Time,
+		bool IsInitialOffer);
 }

@@ -109,6 +109,90 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1401267, address.ToString(System.Globalization.CultureInfo.InvariantCulture));
 	}
 
+	public static SmSystemMessage HousingBidSuccess(int address)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_BID_SUCCESS.
+		return new SmSystemMessage(1401265, address.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage HousingBidFail()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_BID_FAIL.
+		return new SmSystemMessage(1401348);
+	}
+
+	public static SmSystemMessage HousingCantOwnNotCompleteQuest(int questId)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_CANT_OWN_NOT_COMPLETE_QUEST.
+		return new SmSystemMessage(1401277, questId.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage HousingCantBidTimeout()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_CANT_BID_TIMEOUT.
+		return new SmSystemMessage(1401274);
+	}
+
+	public static SmSystemMessage HousingCantBidMyHouse()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_CANT_BID_MY_HOUSE.
+		return new SmSystemMessage(1401221);
+	}
+
+	public static SmSystemMessage HousingCantBidGraceHouse()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_CANT_BID_GRACE_HOUSE.
+		return new SmSystemMessage(1401224);
+	}
+
+	public static SmSystemMessage HousingCantBidOverdue()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_CANT_BID_OVERDUE.
+		return new SmSystemMessage(1401349);
+	}
+
+	public static SmSystemMessage HousingCantBidLowLevel(int minLevel)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_CANT_BID_LOW_LEVEL.
+		return new SmSystemMessage(1401225, minLevel.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage HousingCantBidAlreadyHighest()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_CANT_BID_SUCC_BID_HOUSE.
+		return new SmSystemMessage(1401222);
+	}
+
+	public static SmSystemMessage HousingCantBidOtherHouse()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_CANT_BID_OTHER_HOUSE.
+		return new SmSystemMessage(1401223);
+	}
+
+	public static SmSystemMessage HousingCantBidNotEnoughMoney(long kinah)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_CANT_BID_NOT_ENOUGH_MONEY.
+		return new SmSystemMessage(1401283, kinah.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage HousingCantBidExcessAccount()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_CANT_BID_EXCESS_ACCOUNT.
+		return new SmSystemMessage(1401497);
+	}
+
+	public static SmSystemMessage HousingCantBidLower()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_CANT_BID_LOWER.
+		return new SmSystemMessage(1401307);
+	}
+
+	public static SmSystemMessage HousingPriceChange(long kinah)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_PRICE_CHANGE.
+		return new SmSystemMessage(1401324, kinah.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
 	public static SmSystemMessage HousingAuctionSuccess(int address)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_AUCTION_SUCCESS.

@@ -93,6 +93,7 @@ public sealed class StaticData
 		var skillTemplates = new List<SkillTemplateSummary>();
 		var recipeTemplates = new List<RecipeTemplateSummary>();
 		var housingAddresses = new List<HousingAddressSummary>();
+		var housingLandMinLevels = new Dictionary<int, int>();
 		var housingBuildings = new List<HousingBuildingSummary>();
 		var instanceCooltimes = new List<InstanceCooltimeSummary>();
 		var skillTree = new List<SkillLearnSummary>();
@@ -199,6 +200,13 @@ public sealed class StaticData
 						ReadRequiredIntAttribute(reader, "id"),
 						currentHousingLandId,
 						currentHousingManagerNpcId));
+				continue;
+			}
+
+			if (reader.Depth == 3 && reader.LocalName == "sale" && currentHousingLandId != 0)
+			{
+				// Java parity: model/templates/housing/Sale.level used as fallback minimum bid level.
+				housingLandMinLevels[currentHousingLandId] = ReadIntAttribute(reader, "level");
 				continue;
 			}
 
@@ -406,7 +414,11 @@ public sealed class StaticData
 			new NpcTemplateTable(npcTemplates.AsReadOnly()),
 			new SkillTemplateTable(skillTemplates.AsReadOnly()),
 			new RecipeTemplateTable(recipeTemplates.AsReadOnly()),
-			new HousingTemplateTable(housingAddresses.AsReadOnly(), housingBuildings.AsReadOnly()),
+			new HousingTemplateTable(
+				housingAddresses
+					.Select(address => address with { MinLevel = housingLandMinLevels.GetValueOrDefault(address.LandId) })
+					.ToArray(),
+				housingBuildings.AsReadOnly()),
 			new InstanceCooltimeTable(instanceCooltimes.AsReadOnly()),
 			new PlayerInitialDataTable(
 				creationItemsByClass.ToDictionary(

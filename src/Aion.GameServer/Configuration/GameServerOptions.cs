@@ -107,6 +107,10 @@ public sealed class GameServerOptions
 				AuctionRegistrationFeePercent = GetFloatWithEnvironment(loader, "gameserver.housing.auction.registration_fee", 0.3f),
 				AuctionSalesCommissionPercent = GetFloatWithEnvironment(loader, "gameserver.housing.auction.sales_commission", 0.1f),
 				AuctionBidStepLimit = GetFloatWithEnvironment(loader, "gameserver.housing.auction.steplimit", 100f),
+				HouseMinBidLevel = GetIntWithEnvironment(loader, "gameserver.housing.auction.bidding.min_level.house", 0),
+				MansionMinBidLevel = GetIntWithEnvironment(loader, "gameserver.housing.auction.bidding.min_level.mansion", 0),
+				EstateMinBidLevel = GetIntWithEnvironment(loader, "gameserver.housing.auction.bidding.min_level.estate", 0),
+				PalaceMinBidLevel = GetIntWithEnvironment(loader, "gameserver.housing.auction.bidding.min_level.palace", 0),
 			},
 			Custom = new GameServerCustomOptions
 			{
@@ -560,6 +564,14 @@ public sealed class GameServerHousingOptions
 	public float AuctionSalesCommissionPercent { get; init; } = 0.1f;
 
 	public float AuctionBidStepLimit { get; init; } = 100f;
+
+	public int HouseMinBidLevel { get; init; }
+
+	public int MansionMinBidLevel { get; init; }
+
+	public int EstateMinBidLevel { get; init; }
+
+	public int PalaceMinBidLevel { get; init; }
 }
 
 public sealed class GameServerCustomOptions

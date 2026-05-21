@@ -563,7 +563,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				break;
 			case CmPlaceBid placeBid:
 				if (_activePlayer != null)
-					_logger.LogDebug("Player {PlayerObjectId} requested unported house bid {BidKinah} Kinah for list index {ListIndex}", _activePlayer.ObjectId, placeBid.BidOffer, placeBid.ListIndex);
+					await HandlePlaceBidAsync(_activePlayer, placeBid);
 				break;
 			case CmShowFriendList:
 				if (_activePlayer != null)
@@ -1659,6 +1659,149 @@ public sealed class GameServerConnection : BaseClientConnection
 		await SendPacketAsync(new SmReceiveBids(0));
 	}
 
+	private async Task HandlePlaceBidAsync(Player player, CmPlaceBid packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_PLACE_BID.runImpl -> services/HousingBidService.bid.
+		if (!_options.Housing.AuctionsEnabled)
+			return;
+		if (!await CanOwnHouseForAuctionAsync(player))
+			return;
+
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var context = await _houseAuctionRepository.LoadHouseBidContextAsync(
+			player.ObjectId,
+			packet.ListIndex,
+			staticData?.HousingTemplates);
+		if (context == null)
+		{
+			await SendPacketAsync(SmSystemMessage.HousingBidFail());
+			return;
+		}
+
+		if (!IsHouseAuctionBiddingTime())
+		{
+			await SendPacketAsync(SmSystemMessage.HousingCantBidTimeout());
+			return;
+		}
+
+		if (player.ObjectId == context.OwnerObjectId)
+		{
+			await SendPacketAsync(SmSystemMessage.HousingCantBidMyHouse());
+			return;
+		}
+
+		if (player.Houses.Any(house => house.IsInactive))
+		{
+			await SendPacketAsync(SmSystemMessage.HousingCantBidGraceHouse());
+			return;
+		}
+
+		var activeHouse = player.Houses.FirstOrDefault(house => !house.IsInactive);
+		if (_options.Housing.PayEnabled && activeHouse != null && !IsHouseFeePaid(activeHouse))
+		{
+			await SendPacketAsync(SmSystemMessage.HousingCantBidOverdue());
+			return;
+		}
+
+		var minBidLevel = GetMinBidLevel(context, _options.Housing);
+		if (minBidLevel > 0 && GetPlayerLevel(player) < minBidLevel)
+		{
+			await SendPacketAsync(SmSystemMessage.HousingCantBidLowLevel(minBidLevel));
+			return;
+		}
+
+		if (context.CurrentBidderObjectId == player.ObjectId)
+		{
+			await SendPacketAsync(SmSystemMessage.HousingCantBidAlreadyHighest());
+			return;
+		}
+
+		if (context.PlayerIsHighestBidderElsewhere)
+		{
+			await SendPacketAsync(SmSystemMessage.HousingCantBidOtherHouse());
+			return;
+		}
+
+		var kinahItem = player.InventoryItems.FirstOrDefault(item => item.ItemId == KinahItemId && item.Location == CubeStorageId);
+		if (kinahItem == null || kinahItem.Count < packet.BidOffer)
+		{
+			await SendPacketAsync(SmSystemMessage.HousingCantBidNotEnoughMoney(packet.BidOffer));
+			return;
+		}
+
+		if (packet.BidOffer - context.CurrentBidKinah >= context.CurrentBidKinah * _options.Housing.AuctionBidStepLimit / 100f)
+		{
+			await SendPacketAsync(SmSystemMessage.HousingCantBidExcessAccount());
+			return;
+		}
+
+		var refundMailObjectId = _idFactory?.NextId() ?? 0;
+		if (refundMailObjectId == 0 && !context.IsCurrentBidInitialOffer && context.CurrentBidderObjectId != 0)
+		{
+			_logger.LogWarning(
+				"Cannot create housing auction refund mail after bid on list index {ListIndex}; IDFactory is unavailable",
+				packet.ListIndex);
+			await SendPacketAsync(SmSystemMessage.HousingBidFail());
+			return;
+		}
+
+		var kinahUpdate = CopyInventoryItem(kinahItem, count: kinahItem.Count - packet.BidOffer);
+		var result = await _houseAuctionRepository.PlaceHouseBidAsync(
+			player.ObjectId,
+			packet.ListIndex,
+			packet.BidOffer,
+			kinahUpdate,
+			refundMailObjectId,
+			DateTime.Now,
+			staticData?.HousingTemplates);
+
+		switch (result.Status)
+		{
+			case HouseAuctionPlaceBidStatus.Missing:
+				await SendPacketAsync(SmSystemMessage.HousingBidFail());
+				return;
+			case HouseAuctionPlaceBidStatus.PriceChanged:
+				await SendPacketAsync(SmSystemMessage.HousingCantBidLower());
+				await SendPacketAsync(new SmReceiveBids(0));
+				return;
+			case HouseAuctionPlaceBidStatus.Failed:
+				await SendPacketAsync(SmSystemMessage.HousingBidFail());
+				return;
+		}
+
+		if (result.KinahItem != null)
+		{
+			player.InventoryItems = player.InventoryItems
+				.Select(item => item.ObjectId == result.KinahItem.ObjectId ? result.KinahItem : item)
+				.ToArray();
+
+			if (staticData?.ItemTemplates.GetItemTemplate(KinahItemId) is { } kinahTemplate)
+				await SendPacketAsync(new SmInventoryUpdateItem(result.KinahItem, kinahTemplate, SmInventoryUpdateItem.DecreaseKinahBuy));
+		}
+
+		if (_connectionRegistry != null && result.PreviousBidRefundMail != null && result.PreviousBidderObjectId != 0)
+		{
+			await _connectionRegistry.SendPacketToPlayerAsync(result.PreviousBidderObjectId, SmSystemMessage.HousingBidCancel());
+			await _connectionRegistry.SendPacketToPlayerAsync(result.PreviousBidderObjectId, new SmReceiveBids(0));
+			await _connectionRegistry.NotifyMailReceivedAsync(result.PreviousBidderObjectId, result.PreviousBidRefundMail);
+		}
+
+		await SendPacketAsync(SmSystemMessage.HousingBidSuccess(result.AddressId));
+		await SendPacketAsync(SmSystemMessage.HousingPriceChange(packet.BidOffer));
+		await SendPacketAsync(new SmReceiveBids(0));
+	}
+
+	private async Task<bool> CanOwnHouseForAuctionAsync(Player player)
+	{
+		// Java parity: services/HousingService.canOwnHouse(player, true) quest gate.
+		var questId = string.Equals(player.Race, "ELYOS", StringComparison.OrdinalIgnoreCase) ? 18802 : 28802;
+		if (player.Quests.Any(quest => quest.QuestId == questId && quest.IsComplete))
+			return true;
+
+		await SendPacketAsync(SmSystemMessage.HousingCantOwnNotCompleteQuest(questId));
+		return false;
+	}
+
 	private static PlayerHouse? GetActiveAuctionHouse(Player player, HousingTemplateTable? housingTemplates)
 	{
 		// Java parity: CM_REGISTER_HOUSE uses Player.getActiveHouse and rejects HouseType.STUDIO.
@@ -1688,6 +1831,32 @@ public sealed class GameServerConnection : BaseClientConnection
 		return from > to
 			? from <= today || to >= today
 			: from <= today && to >= today;
+	}
+
+	private static bool IsHouseAuctionBiddingTime()
+	{
+		// Java parity: HousingBidService.isBiddingTime default Sunday-noon cutoff; prolongation state is not ported yet.
+		var now = DateTime.Now;
+		return now.DayOfWeek != DayOfWeek.Sunday || now.Hour < 12;
+	}
+
+	private int GetPlayerLevel(Player player)
+	{
+		// Java parity: Player.getLevel delegates to the loaded experience table.
+		return Math.Max(1, GetPlayerExperienceTable()?.GetLevelForExp(player.Exp) ?? 1);
+	}
+
+	private static int GetMinBidLevel(HouseAuctionBidContext context, GameServerHousingOptions housingOptions)
+	{
+		// Java parity: HousingBidService.getMinBidLevel falls back to LandSaleOptions.minLevel.
+		return context.HouseTypeId switch
+		{
+			1 when housingOptions.HouseMinBidLevel > 0 => housingOptions.HouseMinBidLevel,
+			2 when housingOptions.MansionMinBidLevel > 0 => housingOptions.MansionMinBidLevel,
+			3 when housingOptions.EstateMinBidLevel > 0 => housingOptions.EstateMinBidLevel,
+			4 when housingOptions.PalaceMinBidLevel > 0 => housingOptions.PalaceMinBidLevel,
+			_ => context.LandMinLevel,
+		};
 	}
 
 	private static bool IsHouseFeePaid(PlayerHouse house)

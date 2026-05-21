@@ -26,3 +26,32 @@ public sealed record HouseAuctionBidSummary(
 	long HighestBidKinah,
 	int BidCount,
 	int RemainingAuctionSeconds);
+
+public sealed record HouseAuctionBidContext(
+	int ListIndex,
+	int HouseObjectId,
+	int OwnerObjectId,
+	int AddressId,
+	int BuildingId,
+	int HouseTypeId,
+	int LandMinLevel,
+	long CurrentBidKinah,
+	int CurrentBidderObjectId,
+	long InitialOfferKinah,
+	bool IsCurrentBidInitialOffer,
+	bool PlayerIsHighestBidderElsewhere);
+
+public sealed record HouseAuctionPlaceBidResult(
+	HouseAuctionPlaceBidStatus Status,
+	int AddressId = 0,
+	InventoryItem? KinahItem = null,
+	PlayerMail? PreviousBidRefundMail = null,
+	int PreviousBidderObjectId = 0);
+
+public enum HouseAuctionPlaceBidStatus
+{
+	Success,
+	Missing,
+	PriceChanged,
+	Failed,
+}

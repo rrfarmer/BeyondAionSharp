@@ -52,6 +52,10 @@ public class GameServerOptionsTests
 		Assert.Equal(0.3f, options.Housing.AuctionRegistrationFeePercent, 0.001f);
 		Assert.Equal(0.1f, options.Housing.AuctionSalesCommissionPercent, 0.001f);
 		Assert.Equal(100f, options.Housing.AuctionBidStepLimit, 0.001f);
+		Assert.Equal(0, options.Housing.HouseMinBidLevel);
+		Assert.Equal(0, options.Housing.MansionMinBidLevel);
+		Assert.Equal(0, options.Housing.EstateMinBidLevel);
+		Assert.Equal(0, options.Housing.PalaceMinBidLevel);
 
 		Assert.True(options.Custom.ChallengeTasksEnabled);
 		Assert.True(options.Custom.EnableEnchantAnnounce);
