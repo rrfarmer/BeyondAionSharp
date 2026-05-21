@@ -52,6 +52,16 @@ public sealed class JavaCronSchedule
 		return nextRun;
 	}
 
+	public DateTimeOffset GetPreviousRunBefore(DateTimeOffset date)
+	{
+		// Java parity: taskmanager/AbstractCronTask.findLastPlannedRun for weekly housing cron schedules.
+		var daysSinceRun = ((int)date.DayOfWeek - (int)DayOfWeek + 7) % 7;
+		var previousRun = new DateTimeOffset(date.Year, date.Month, date.Day, Hour, Minute, Second, date.Offset).AddDays(-daysSinceRun);
+		if (previousRun >= date)
+			previousRun = previousRun.AddDays(-7);
+		return previousRun;
+	}
+
 	public DateTime GetNextRunAfter(DateTime date)
 	{
 		return GetNextRunAfter(new DateTimeOffset(date)).DateTime;

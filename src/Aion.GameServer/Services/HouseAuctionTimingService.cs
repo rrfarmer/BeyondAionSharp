@@ -63,6 +63,19 @@ public sealed class HouseAuctionTimingService
 		_prolongedAuctionEnds.TryRemove(houseObjectId, out _);
 	}
 
+	public bool ShouldRunAuctionEndOnStartup(DateTimeOffset? serverStopTime, DateTimeOffset? startupTime = null)
+	{
+		// Java parity: taskmanager/tasks/housing/AuctionEndTask.shouldRunOnStart.
+		if (serverStopTime == null)
+			return false;
+
+		var lastPlannedRun = _auctionEndSchedule.GetPreviousRunBefore(startupTime ?? GetNow());
+		if (serverStopTime.Value < lastPlannedRun)
+			return true;
+
+		return serverStopTime.Value - lastPlannedRun <= MaxProlongationTime;
+	}
+
 	private bool IsAuctionProlonged(int houseObjectId, DateTimeOffset now)
 	{
 		// Java parity: taskmanager/tasks/housing/AuctionEndTask.isAuctionProlonged.

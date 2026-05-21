@@ -83,6 +83,24 @@ public sealed class HouseAuctionTimingServiceTests
 		Assert.False(service.IsBiddingTime(1001));
 	}
 
+	[Fact]
+	public void ShouldRunAuctionEndOnStartup_FollowsJavaRecoveryWindow()
+	{
+		var service = new HouseAuctionTimingService(new GameServerOptions());
+		var startup = new DateTimeOffset(2026, 5, 24, 12, 45, 0, TimeSpan.Zero);
+
+		Assert.True(service.ShouldRunAuctionEndOnStartup(
+			new DateTimeOffset(2026, 5, 24, 11, 59, 0, TimeSpan.Zero),
+			startup));
+		Assert.True(service.ShouldRunAuctionEndOnStartup(
+			new DateTimeOffset(2026, 5, 24, 12, 29, 0, TimeSpan.Zero),
+			startup));
+		Assert.False(service.ShouldRunAuctionEndOnStartup(
+			new DateTimeOffset(2026, 5, 24, 12, 31, 0, TimeSpan.Zero),
+			startup));
+		Assert.False(service.ShouldRunAuctionEndOnStartup(null, startup));
+	}
+
 	private sealed class MutableTimeProvider : TimeProvider
 	{
 		private DateTimeOffset _utcNow;

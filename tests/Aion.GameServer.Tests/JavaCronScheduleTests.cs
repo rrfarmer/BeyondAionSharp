@@ -40,6 +40,18 @@ public sealed class JavaCronScheduleTests
 	}
 
 	[Fact]
+	public void GetPreviousRunBefore_IsStrictlyBeforeInputTime()
+	{
+		var schedule = JavaCronSchedule.WeeklyOrDefault("0 0 12 ? * SUN", DayOfWeek.Monday, 0);
+
+		var previousBeforeExactRun = schedule.GetPreviousRunBefore(new DateTimeOffset(2026, 5, 24, 12, 0, 0, TimeSpan.Zero));
+		var previousAfterRun = schedule.GetPreviousRunBefore(new DateTimeOffset(2026, 5, 24, 12, 30, 0, TimeSpan.Zero));
+
+		Assert.Equal(new DateTimeOffset(2026, 5, 17, 12, 0, 0, TimeSpan.Zero), previousBeforeExactRun);
+		Assert.Equal(new DateTimeOffset(2026, 5, 24, 12, 0, 0, TimeSpan.Zero), previousAfterRun);
+	}
+
+	[Fact]
 	public void WeeklyOrDefault_FallsBackForUnsupportedExpression()
 	{
 		var schedule = JavaCronSchedule.WeeklyOrDefault("bad cron", DayOfWeek.Wednesday, 3, 15, 30);
