@@ -44,7 +44,10 @@ public sealed record ItemTemplateSummary(
 	int ExpireTimeMinutes = 0,
 	int EnchantType = 0,
 	bool CanTune = false,
-	int ConditioningMaxLevel = 0)
+	int ConditioningMaxLevel = 0,
+	string AttackType = "",
+	ItemWeaponStats? WeaponStats = null,
+	IReadOnlyList<ItemStatModifier>? Modifiers = null)
 {
 	private const int CanPolishMask = 1 << 17;
 
@@ -106,6 +109,10 @@ public sealed record ItemTemplateSummary(
 
 	public bool IsCloth => IsArmor && ((!IsAccessory && !string.Equals(ItemGroup, "BELT", StringComparison.Ordinal)) || string.Equals(ItemGroup, "HEAD", StringComparison.Ordinal));
 
+	public bool IsMagicalAttackWeapon => string.Equals(AttackType, "MAGICAL", StringComparison.Ordinal);
+
+	public IReadOnlyList<ItemStatModifier> StatModifiers => Modifiers ?? Array.Empty<ItemStatModifier>();
+
 	public bool IsClassSpecific(string playerClass)
 	{
 		// Java parity: model/templates/item/ItemTemplate.isClassSpecific.
@@ -129,4 +136,34 @@ public sealed record ItemTemplateSummary(
 		var l10nId = (DescriptionId << 1) | 1;
 		return string.Concat("$", (char)(l10nId & 0xffff), (char)((l10nId >>> 16) & 0xffff));
 	}
+}
+
+public sealed record ItemWeaponStats(
+	int MinDamage,
+	int MaxDamage,
+	int AttackSpeed,
+	int PhysicalCritical,
+	int PhysicalAccuracy,
+	int Parry,
+	int MagicalAccuracy,
+	int MagicalBoost,
+	int AttackRange,
+	int HitCount,
+	int ReduceMax)
+{
+	public int MeanDamage => (int)((MinDamage + MaxDamage) / 2f);
+}
+
+public sealed record ItemStatModifier(
+	string Operation,
+	string Name,
+	int Value,
+	bool Bonus)
+{
+	public int Priority => Operation switch
+	{
+		"rate" => Bonus ? 50 : 20,
+		"set" or "abs" => Bonus ? 70 : 40,
+		_ => Bonus ? 60 : 30,
+	};
 }

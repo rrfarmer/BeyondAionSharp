@@ -132,6 +132,12 @@ public sealed class StaticDataLoadingTests
 		Assert.True(staticData.ItemTemplates.GetItemTemplate(100001276)?.CanTune);
 		Assert.False(staticData.ItemTemplates.GetItemTemplate(100000001)?.CanTune);
 		Assert.Equal(1, staticData.ItemTemplates.GetItemTemplate(100001105)?.ConditioningMaxLevel);
+		var fireSword = staticData.ItemTemplates.GetItemTemplate(100000125);
+		Assert.NotNull(fireSword);
+		Assert.Equal("PHYSICAL", fireSword.AttackType);
+		Assert.Equal(70, fireSword.WeaponStats?.MeanDamage);
+		Assert.Equal(1400, fireSword.WeaponStats?.AttackSpeed);
+		Assert.Contains(fireSword.StatModifiers, modifier => modifier is { Operation: "add", Name: "PHYSICAL_ATTACK", Value: 7, Bonus: true });
 		Assert.Equal("kamikaze worm", staticData.NpcTemplates.GetNpcTemplate(201000)?.Name);
 		var postmanNpc = staticData.NpcTemplates.GetNpcTemplate(798100);
 		Assert.NotNull(postmanNpc);

@@ -13,20 +13,22 @@ public sealed class SmStatsInfo : GameServerPacket
 	private readonly Player _player;
 	private readonly PlayerExperienceTable? _experienceTable;
 	private readonly int _gameMinutes;
+	private readonly ItemTemplateTable? _itemTemplates;
 
-	public SmStatsInfo(Player player, PlayerExperienceTable? experienceTable, int gameMinutes)
+	public SmStatsInfo(Player player, PlayerExperienceTable? experienceTable, int gameMinutes, ItemTemplateTable? itemTemplates = null)
 		: base(PacketOpCode)
 	{
 		// Java parity: network/aion/serverpackets/SM_STATS_INFO(Player).
 		_player = player;
 		_experienceTable = experienceTable;
 		_gameMinutes = gameMinutes;
+		_itemTemplates = itemTemplates;
 	}
 
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
-		// Java parity: SM_STATS_INFO.writeImpl. This is the no-equipment/no-effect baseline until stat functions are ported.
-		var context = PlayerStatsContext.Create(_player, _experienceTable);
+		// Java parity: SM_STATS_INFO.writeImpl. Full effects remain deferred, but equipped item template stats are applied when templates are loaded.
+		var context = PlayerStatsContext.Create(_player, _experienceTable, _itemTemplates);
 
 		buffer.WriteD(_player.ObjectId);
 		buffer.WriteD(_gameMinutes);
@@ -203,7 +205,7 @@ public sealed class SmStatsInfo : GameServerPacket
 		int CurrentMp,
 		int CurrentFp)
 	{
-		public static PlayerStatsContext Create(Player player, PlayerExperienceTable? experienceTable)
+		public static PlayerStatsContext Create(Player player, PlayerExperienceTable? experienceTable, ItemTemplateTable? itemTemplates)
 		{
 			// Java parity: PlayerCommonData.setExp/updateMaxRepose plus PlayerClass.createStatsTemplate.
 			var classStats = PlayerClassStats.Get(player.PlayerClass);
@@ -213,19 +215,22 @@ public sealed class SmStatsInfo : GameServerPacket
 			var maxRepose = level >= 10 ? (long)(expNeed * 0.25f) : 0;
 			var currentRepose = Math.Clamp(player.ReposeEnergy, 0, maxRepose);
 			var baseStats = PlayerCalculatedStats.Create(classStats, level);
+			var currentStats = itemTemplates == null
+				? baseStats
+				: PlayerEquipmentStats.Apply(player, itemTemplates, baseStats);
 			var lifeStats = player.LifeStats;
 			return new PlayerStatsContext(
 				classStats,
 				baseStats,
-				baseStats,
+				currentStats,
 				level,
 				expNeed,
 				Math.Max(0, player.Exp - expStart),
 				currentRepose,
 				maxRepose,
-				lifeStats?.GetCurrentHp(baseStats.MaxHp) ?? baseStats.MaxHp,
-				lifeStats?.GetCurrentMp(baseStats.MaxMp) ?? baseStats.MaxMp,
-				lifeStats?.GetCurrentFp() ?? baseStats.FlyTime);
+				lifeStats?.GetCurrentHp(currentStats.MaxHp) ?? currentStats.MaxHp,
+				lifeStats?.GetCurrentMp(currentStats.MaxMp) ?? currentStats.MaxMp,
+				lifeStats?.GetCurrentFp() ?? currentStats.FlyTime);
 		}
 
 		private static long GetStartExp(PlayerExperienceTable? experienceTable, int level)
@@ -240,6 +245,229 @@ public sealed class SmStatsInfo : GameServerPacket
 			if (experienceTable == null || level <= 0 || level >= experienceTable.MaxLevel)
 				return 0;
 			return experienceTable.GetStartExpForLevel(level + 1) - experienceTable.GetStartExpForLevel(level);
+		}
+	}
+
+	private static class PlayerEquipmentStats
+	{
+		private const long MainHand = 1L;
+		private const long SubHand = 1L << 1;
+		private const long MainOffHand = 1L << 17;
+		private const long SubOffHand = 1L << 18;
+
+		public static PlayerCalculatedStats Apply(Player player, ItemTemplateTable itemTemplates, PlayerCalculatedStats baseStats)
+		{
+			// Java parity: model/stats/listeners/ItemEquipmentListener.onItemEquipment plus PlayerGameStats weapon stat accessors.
+			var equippedItems = player.InventoryItems
+				.Where(item => item.IsEquipped && item.Location == 0)
+				.Select(item => (Item: item, Template: itemTemplates.GetItemTemplate(item.ItemId)))
+				.Where(item => item.Template != null)
+				.Select(item => new EquippedItem(item.Item, item.Template!))
+				.ToArray();
+			if (equippedItems.Length == 0)
+				return baseStats;
+
+			var modifiers = equippedItems
+				.SelectMany(item => item.Template.StatModifiers)
+				.Where(modifier => !string.IsNullOrEmpty(modifier.Name))
+				.ToArray();
+
+			var mainWeapon = equippedItems.FirstOrDefault(item => item.Template.IsWeapon && IsRightHandSlot(item.Item.Slot));
+			var offHandWeapon = equippedItems.FirstOrDefault(item =>
+				item.Template.IsWeapon
+				&& item != mainWeapon
+				&& IsLeftHandSlot(item.Item.Slot)
+				&& !IsTwoHandedSlot(item.Item.Slot));
+			var mainWeaponStats = mainWeapon?.Template.WeaponStats;
+			var offHandWeaponStats = offHandWeapon?.Template.WeaponStats;
+
+			var current = baseStats with
+			{
+				Power = CalculateStat("POWER", baseStats.Power, modifiers),
+				Health = CalculateStat("HEALTH", baseStats.Health, modifiers),
+				Accuracy = CalculateStat("ACCURACY", baseStats.Accuracy, modifiers),
+				Agility = CalculateStat("AGILITY", baseStats.Agility, modifiers),
+				Knowledge = CalculateStat("KNOWLEDGE", baseStats.Knowledge, modifiers),
+				Will = CalculateStat("WILL", baseStats.Will, modifiers),
+			};
+
+			var mainAttackRange = mainWeaponStats?.AttackRange ?? baseStats.AttackRange;
+			var offHandAttackRange = offHandWeaponStats?.AttackRange;
+			var attackRange = offHandAttackRange.HasValue
+				? Math.Min(mainAttackRange, offHandAttackRange.Value)
+				: mainAttackRange;
+			var attackSpeed = mainWeaponStats == null
+				? baseStats.AttackSpeed
+				: mainWeaponStats.AttackSpeed + (offHandWeaponStats?.AttackSpeed / 4 ?? 0);
+			var mainPhysicalAttack = mainWeaponStats != null && mainWeapon?.Template.IsMagicalAttackWeapon == false
+				? CalculateStat("PHYSICAL_ATTACK", mainWeaponStats.MeanDamage, modifiers, baseRate: current.Power * 0.01f)
+				: CalculateStat("PHYSICAL_ATTACK", baseStats.MainHandPhysicalAttack, modifiers);
+			var offPhysicalAttack = offHandWeaponStats != null && offHandWeapon?.Template.IsMagicalAttackWeapon == false
+				? CalculateStat("PHYSICAL_ATTACK", offHandWeaponStats.MeanDamage, modifiers, baseRate: current.Power * 0.01f)
+				: 0;
+			var mainMagicalAttack = mainWeaponStats != null && mainWeapon?.Template.IsMagicalAttackWeapon == true
+				? CalculateStat("MAGICAL_ATTACK", mainWeaponStats.MeanDamage, modifiers, baseRate: current.Knowledge * 0.01f)
+				: CalculateStat("MAGICAL_ATTACK", baseStats.MainHandMagicalAttack, modifiers, baseRate: current.Knowledge * 0.01f);
+			var offMagicalAttack = offHandWeaponStats != null && offHandWeapon?.Template.IsMagicalAttackWeapon == true
+				? CalculateStat("MAGICAL_ATTACK", offHandWeaponStats.MeanDamage, modifiers, baseRate: current.Knowledge * 0.01f)
+				: 0;
+
+			return current with
+			{
+				MaxHp = CalculateStat("MAXHP", baseStats.MaxHp, modifiers),
+				MaxMp = CalculateStat("MAXMP", baseStats.MaxMp, modifiers),
+				MaxDp = CalculateStat("MAXDP", baseStats.MaxDp, modifiers),
+				FlyTime = CalculateStat("FLY_TIME", baseStats.FlyTime, modifiers),
+				Evasion = CalculateStat("EVASION", baseStats.Evasion, modifiers),
+				Parry = CalculateStat("PARRY", baseStats.Parry + (mainWeaponStats?.Parry ?? 0), modifiers),
+				Block = CalculateStat("BLOCK", baseStats.Block, modifiers),
+				MainHandPhysicalAccuracy = CalculateStat("PHYSICAL_ACCURACY", baseStats.MainHandPhysicalAccuracy + (mainWeaponStats?.PhysicalAccuracy ?? 0), modifiers),
+				OffHandPhysicalAccuracy = offHandWeaponStats == null
+					? 0
+					: CalculateStat("PHYSICAL_ACCURACY", baseStats.MainHandPhysicalAccuracy + offHandWeaponStats.PhysicalAccuracy, modifiers),
+				MagicalAccuracy = CalculateStat("MAGICAL_ACCURACY", baseStats.MagicalAccuracy + (mainWeaponStats?.MagicalAccuracy ?? 0), modifiers),
+				PhysicalCriticalResist = CalculateStat("PHYSICAL_CRITICAL_RESIST", baseStats.PhysicalCriticalResist, modifiers),
+				MagicalCriticalResist = CalculateStat("MAGICAL_CRITICAL_RESIST", baseStats.MagicalCriticalResist, modifiers),
+				MainHandPhysicalAttack = mainPhysicalAttack,
+				OffHandPhysicalAttack = offPhysicalAttack,
+				PhysicalDefense = CalculateStat("PHYSICAL_DEFENSE", baseStats.PhysicalDefense, modifiers),
+				MainHandMagicalAttack = mainMagicalAttack,
+				OffHandMagicalAttack = offMagicalAttack,
+				MagicalDefense = CalculateStat("MAGICAL_DEFEND", baseStats.MagicalDefense, modifiers),
+				MagicalResist = CalculateStat("MAGICAL_RESIST", baseStats.MagicalResist, modifiers),
+				AttackRange = CalculateStat("ATTACK_RANGE", attackRange, modifiers),
+				AttackSpeed = CalculateStat("ATTACK_SPEED", attackSpeed, modifiers),
+				MainHandPhysicalCritical = CalculateStat(
+					"PHYSICAL_CRITICAL",
+					baseStats.MainHandPhysicalCritical + (mainWeaponStats != null && mainWeapon?.Template.IsMagicalAttackWeapon == false ? mainWeaponStats.PhysicalCritical : 0),
+					modifiers),
+				OffHandPhysicalCritical = offHandWeaponStats == null || offHandWeapon?.Template.IsMagicalAttackWeapon == true
+					? 0
+					: CalculateStat("PHYSICAL_CRITICAL", baseStats.MainHandPhysicalCritical + offHandWeaponStats.PhysicalCritical, modifiers),
+				MagicalCritical = CalculateStat(
+					"MAGICAL_CRITICAL",
+					baseStats.MagicalCritical + (mainWeaponStats != null && mainWeapon?.Template.IsMagicalAttackWeapon == true ? mainWeaponStats.PhysicalCritical : 0),
+					modifiers),
+				CastingSpeed = CalculateStat("BOOST_CASTING_TIME", baseStats.CastingSpeed, modifiers, reverse: true),
+				Concentration = CalculateStat("CONCENTRATION", baseStats.Concentration, modifiers),
+				MagicalBoost = CalculateStat("BOOST_MAGICAL_SKILL", baseStats.MagicalBoost + (mainWeaponStats?.MagicalBoost ?? 0), modifiers),
+				MagicalSuppression = CalculateStat("MAGIC_SKILL_BOOST_RESIST", baseStats.MagicalSuppression, modifiers),
+				HealBoost = CalculateStat("HEAL_BOOST", baseStats.HealBoost, modifiers),
+				PhysicalCriticalDamageReduce = CalculateStat("PHYSICAL_CRITICAL_DAMAGE_REDUCE", baseStats.PhysicalCriticalDamageReduce, modifiers),
+				MagicalCriticalDamageReduce = CalculateStat("MAGICAL_CRITICAL_DAMAGE_REDUCE", baseStats.MagicalCriticalDamageReduce, modifiers),
+			};
+		}
+
+		private static int CalculateStat(
+			string statName,
+			float baseValue,
+			IReadOnlyList<ItemStatModifier> modifiers,
+			bool reverse = false,
+			float baseRate = 1f)
+		{
+			var value = new MutableStat(baseValue, reverse) { BaseRate = baseRate };
+			foreach (var modifier in modifiers
+				.Where(modifier => string.Equals(modifier.Name, statName, StringComparison.Ordinal))
+				.OrderBy(modifier => modifier.Priority))
+			{
+				value.Apply(modifier);
+			}
+
+			return value.Current;
+		}
+
+		private static bool IsRightHandSlot(long slot)
+		{
+			return (slot & (MainHand | MainOffHand)) != 0;
+		}
+
+		private static bool IsLeftHandSlot(long slot)
+		{
+			return (slot & (SubHand | SubOffHand)) != 0;
+		}
+
+		private static bool IsTwoHandedSlot(long slot)
+		{
+			return (slot & (MainHand | SubHand)) == (MainHand | SubHand)
+				|| (slot & (MainOffHand | SubOffHand)) == (MainOffHand | SubOffHand);
+		}
+
+		private sealed record EquippedItem(InventoryItem Item, ItemTemplateSummary Template);
+
+		private sealed class MutableStat
+		{
+			private readonly bool _reverse;
+			private float _base;
+			private float _bonus;
+
+			public MutableStat(float baseValue, bool reverse)
+			{
+				_base = baseValue;
+				_reverse = reverse;
+			}
+
+			public float BaseRate { get; init; } = 1f;
+
+			public int Current => (int)(_base * BaseRate + _bonus);
+
+			public void Apply(ItemStatModifier modifier)
+			{
+				switch (modifier.Operation)
+				{
+					case "rate":
+						if (modifier.Bonus)
+							AddToBonus(_base * modifier.Value / 100f);
+						else
+							_base *= CalculatePercent(modifier.Value);
+						break;
+					case "set":
+					case "abs":
+						if (modifier.Bonus)
+							_bonus = modifier.Value;
+						else
+							_base = modifier.Value;
+						break;
+					case "sub":
+						Add(modifier, -modifier.Value);
+						break;
+					default:
+						Add(modifier, modifier.Value);
+						break;
+				}
+			}
+
+			private void Add(ItemStatModifier modifier, int value)
+			{
+				if (modifier.Bonus)
+					AddToBonus(value);
+				else
+					AddToBase(value);
+			}
+
+			private void AddToBase(float value)
+			{
+				if (_reverse)
+					_base = Math.Max(0, _base - value);
+				else
+					_base += value;
+			}
+
+			private void AddToBonus(float value)
+			{
+				if (_reverse)
+					_bonus -= value;
+				else
+					_bonus += value;
+			}
+
+			private float CalculatePercent(int delta)
+			{
+				if (!_reverse)
+					return (100 + delta) / 100f;
+
+				var percent = (100 - delta) / 100f;
+				return percent < 0 ? 0 : percent;
+			}
 		}
 	}
 
@@ -258,31 +486,30 @@ public sealed class SmStatsInfo : GameServerPacket
 		int MainHandPhysicalAccuracy,
 		int MagicalAccuracy,
 		int PhysicalCriticalResist,
-		int MagicalCriticalResist)
+		int MagicalCriticalResist,
+		int MaxDp = 4000,
+		int FlyTime = BaseFlyTime,
+		int MainHandPhysicalAttack = 18,
+		int OffHandPhysicalAttack = 0,
+		int PhysicalDefense = 0,
+		int MainHandMagicalAttack = 0,
+		int OffHandMagicalAttack = 0,
+		int MagicalDefense = 0,
+		int MagicalResist = 0,
+		int AttackRange = 1500,
+		int AttackSpeed = 1500,
+		int MainHandPhysicalCritical = 2,
+		int OffHandPhysicalCritical = 0,
+		int OffHandPhysicalAccuracy = 0,
+		int MagicalCritical = 50,
+		int CastingSpeed = 1000,
+		int Concentration = 0,
+		int MagicalBoost = 0,
+		int MagicalSuppression = 0,
+		int HealBoost = 0,
+		int PhysicalCriticalDamageReduce = 0,
+		int MagicalCriticalDamageReduce = 0)
 	{
-		public int MaxDp => 4000;
-		public int FlyTime => BaseFlyTime;
-		public int MainHandPhysicalAttack => 18;
-		public int OffHandPhysicalAttack => 0;
-		public int PhysicalDefense => 0;
-		public int MainHandMagicalAttack => 0;
-		public int OffHandMagicalAttack => 0;
-		public int MagicalDefense => 0;
-		public int MagicalResist => 0;
-		public int AttackRange => 1500;
-		public int AttackSpeed => 1500;
-		public int MainHandPhysicalCritical => 2;
-		public int OffHandPhysicalCritical => 0;
-		public int OffHandPhysicalAccuracy => 0;
-		public int MagicalCritical => 50;
-		public int CastingSpeed => 1000;
-		public int Concentration => 0;
-		public int MagicalBoost => 0;
-		public int MagicalSuppression => 0;
-		public int HealBoost => 0;
-		public int PhysicalCriticalDamageReduce => 0;
-		public int MagicalCriticalDamageReduce => 0;
-
 		public static PlayerCalculatedStats Create(PlayerClassStats classStats, int level)
 		{
 			// Java parity: model/stats/calc/PlayerStatCalculator and PlayerClass.PlayerStatsTemplate.

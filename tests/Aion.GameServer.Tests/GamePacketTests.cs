@@ -1527,6 +1527,137 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmStatsInfo_AppliesEquippedItemTemplateStats()
+	{
+		var templates = new ItemTemplateTable(
+		[
+			new ItemTemplateSummary(
+				200,
+				"Training Sword",
+				0,
+				1,
+				1,
+				"SWORD",
+				"NORMAL",
+				"COMMON",
+				"PC_ALL",
+				1,
+				0,
+				3,
+				AttackType: "PHYSICAL",
+				WeaponStats: new ItemWeaponStats(
+					MinDamage: 20,
+					MaxDamage: 30,
+					AttackSpeed: 1400,
+					PhysicalCritical: 50,
+					PhysicalAccuracy: 52,
+					Parry: 173,
+					MagicalAccuracy: 10,
+					MagicalBoost: 0,
+					AttackRange: 1500,
+					HitCount: 2,
+					ReduceMax: 0),
+				Modifiers:
+				[
+					new ItemStatModifier("add", "MAXHP", 33, Bonus: true),
+					new ItemStatModifier("add", "PHYSICAL_ATTACK", 7, Bonus: true),
+				]),
+			new ItemTemplateSummary(
+				300,
+				"Training Breastplate",
+				0,
+				1,
+				1,
+				"TORSO",
+				"NORMAL",
+				"COMMON",
+				"PC_ALL",
+				1,
+				0,
+				8,
+				Modifiers:
+				[
+					new ItemStatModifier("add", "PHYSICAL_DEFENSE", 20, Bonus: true),
+					new ItemStatModifier("add", "MAGICAL_RESIST", 5, Bonus: true),
+					new ItemStatModifier("add", "BLOCK", 9, Bonus: true),
+				]),
+		]);
+
+		var payload = SerializeUnencryptedPayload(
+			new SmStatsInfo(
+				new Player
+				{
+					ObjectId = 1001,
+					PlayerClass = "WARRIOR",
+					InventoryItems =
+					[
+						new InventoryItem { ObjectId = 2, ItemId = 200, Location = 0, IsEquipped = true, Slot = 1 },
+						new InventoryItem { ObjectId = 3, ItemId = 300, Location = 0, IsEquipped = true, Slot = 8 },
+					],
+				},
+				new PlayerExperienceTable([0, 400]),
+				gameMinutes: 321,
+				templates));
+
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(1001, reader.ReadD());
+		Assert.Equal(321, reader.ReadD());
+		AssertPrimaryStats(reader, 110, 110, 100, 100, 90, 90);
+		AssertElementalResists(reader);
+		Assert.Equal(1, reader.ReadH());
+		reader.ReadH();
+		reader.ReadH();
+		reader.ReadH();
+		Assert.Equal(400, reader.ReadQ());
+		Assert.Equal(0, reader.ReadQ());
+		Assert.Equal(0, reader.ReadQ());
+		reader.ReadD();
+		Assert.Equal(277, reader.ReadD());
+		Assert.Equal(277, reader.ReadD());
+		Assert.Equal(210, reader.ReadD());
+		Assert.Equal(210, reader.ReadD());
+		Assert.Equal(4000, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(60, reader.ReadD());
+		Assert.Equal(60, reader.ReadD());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(34, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(20, reader.ReadD());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(5, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(1.5f, reader.ReadF());
+		Assert.Equal(1400, reader.ReadH());
+		Assert.Equal(74, reader.ReadH());
+		Assert.Equal(247, reader.ReadH());
+		Assert.Equal(83, reader.ReadH());
+		Assert.Equal(52, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(250, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(1, reader.ReadH());
+		Assert.Equal(24, reader.ReadH());
+		Assert.Equal(50, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(1.0f, reader.ReadF());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+	}
+
+	[Fact]
 	public void SmCharacterList_WritesJavaShapedCharacterSelectionInfo()
 	{
 		var payload = SerializeUnencryptedPayload(

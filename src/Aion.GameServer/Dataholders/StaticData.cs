@@ -254,6 +254,7 @@ public sealed class StaticData
 					reader.GetAttribute("item_type") ?? string.Empty,
 					reader.GetAttribute("quality") ?? string.Empty,
 					reader.GetAttribute("race") ?? string.Empty,
+					reader.GetAttribute("attack_type") ?? string.Empty,
 					ReadOptionalIntAttribute(reader, "max_stack_count", 1),
 					ReadLongAttribute(reader, "price"),
 					GetItemGroupSlots(reader.GetAttribute("item_group")),
@@ -271,6 +272,38 @@ public sealed class StaticData
 					currentItemTemplate = null;
 				}
 
+				continue;
+			}
+
+			if (reader.Depth == 3 && reader.LocalName == "weapon_stats" && currentItemTemplate != null)
+			{
+				currentItemTemplate.WeaponStats = new ItemWeaponStats(
+					ReadIntAttribute(reader, "min_damage"),
+					ReadIntAttribute(reader, "max_damage"),
+					ReadIntAttribute(reader, "attack_speed"),
+					ReadIntAttribute(reader, "critical"),
+					ReadIntAttribute(reader, "physical_accuracy"),
+					ReadIntAttribute(reader, "parry"),
+					ReadIntAttribute(reader, "magical_accuracy"),
+					ReadIntAttribute(reader, "boost_magical_skill"),
+					ReadIntAttribute(reader, "attack_range"),
+					ReadIntAttribute(reader, "hit_count"),
+					ReadIntAttribute(reader, "reduce_max"));
+				continue;
+			}
+
+			if (reader.Depth == 4
+				&& currentItemTemplate != null
+				&& IsStatModifierElement(reader.LocalName)
+				&& elementPath.TryGetValue(reader.Depth - 1, out var modifierParent)
+				&& modifierParent == "modifiers")
+			{
+				currentItemTemplate.Modifiers.Add(
+					new ItemStatModifier(
+						reader.LocalName,
+						reader.GetAttribute("name") ?? string.Empty,
+						ReadIntAttribute(reader, "value"),
+						ReadBoolAttribute(reader, "bonus")));
 				continue;
 			}
 
@@ -481,6 +514,7 @@ public sealed class StaticData
 			string itemType,
 			string quality,
 			string race,
+			string attackType,
 			int maxStackCount,
 			long price,
 			long validEquipmentSlots,
@@ -502,6 +536,7 @@ public sealed class StaticData
 			ItemType = itemType;
 			Quality = quality;
 			Race = race;
+			AttackType = attackType;
 			MaxStackCount = maxStackCount;
 			Price = price;
 			ValidEquipmentSlots = validEquipmentSlots;
@@ -530,6 +565,8 @@ public sealed class StaticData
 
 		private string Race { get; }
 
+		private string AttackType { get; }
+
 		private int MaxStackCount { get; }
 
 		private long Price { get; }
@@ -545,6 +582,10 @@ public sealed class StaticData
 		private int EnchantType { get; }
 
 		private bool CanTune { get; }
+
+		public ItemWeaponStats? WeaponStats { get; set; }
+
+		public List<ItemStatModifier> Modifiers { get; } = [];
 
 		public int DispositionItemId { get; set; }
 
@@ -578,7 +619,10 @@ public sealed class StaticData
 				ExpireTimeMinutes,
 				EnchantType,
 				CanTune,
-				ConditioningMaxLevel);
+				ConditioningMaxLevel,
+				AttackType,
+				WeaponStats,
+				Modifiers.AsReadOnly());
 		}
 
 		private static bool CalculateCanTune(
@@ -721,6 +765,11 @@ public sealed class StaticData
 	private static bool ReadBoolAttribute(XmlReader reader, string attributeName)
 	{
 		return bool.TryParse(reader.GetAttribute(attributeName), out var parsed) && parsed;
+	}
+
+	private static bool IsStatModifierElement(string elementName)
+	{
+		return elementName is "add" or "sub" or "rate" or "set" or "abs";
 	}
 
 	private static long ReadLongAttribute(XmlReader reader, string attributeName)
