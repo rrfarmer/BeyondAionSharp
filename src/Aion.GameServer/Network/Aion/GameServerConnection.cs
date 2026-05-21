@@ -608,6 +608,15 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleMacroDeleteAsync(_activePlayer, macroDelete);
 				break;
+			case CmInstanceInfo instanceInfo:
+				if (_activePlayer != null)
+				{
+					// Java parity: network/aion/clientpackets/CM_INSTANCE_INFO.runImpl no-team branch -> SM_INSTANCE_INFO(updateType, player).
+					var instanceCooltimes = _runtimeContext?.DataManager?.StaticData.InstanceCooltimes
+						?? new InstanceCooltimeTable(Array.Empty<InstanceCooltimeSummary>());
+					await SendPacketAsync(new SmInstanceInfo(instanceInfo.UpdateType, _activePlayer, instanceCooltimes));
+				}
+				break;
 			case CmGetHouseBids:
 				if (_activePlayer != null)
 				{

@@ -2415,6 +2415,21 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesInstanceInfoPacket()
+	{
+		var instanceInfo = Assert.IsType<CmInstanceInfo>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(192, buffer =>
+			{
+				buffer.WriteD(0);
+				buffer.WriteC(1);
+			}), GameConnectionState.InGame));
+
+		Assert.Equal(0, instanceInfo.Unknown);
+		Assert.Equal(1, instanceInfo.UpdateType);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(192, buffer => buffer.WriteC(1)), GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void SmHouseBids_WritesJavaAuctionRows()
 	{
 		var bidPage = new HouseAuctionBidPage(
