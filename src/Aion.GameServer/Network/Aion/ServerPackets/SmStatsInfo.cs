@@ -18,6 +18,7 @@ public sealed class SmStatsInfo : GameServerPacket
 	private readonly ItemSetTable? _itemSets;
 	private readonly EnchantTable? _enchantTemplates;
 	private readonly TemperingTable? _temperingTemplates;
+	private readonly SkillTemplateTable? _skillTemplates;
 
 	public SmStatsInfo(
 		Player player,
@@ -27,7 +28,8 @@ public sealed class SmStatsInfo : GameServerPacket
 		ItemRandomBonusTable? itemRandomBonuses = null,
 		ItemSetTable? itemSets = null,
 		EnchantTable? enchantTemplates = null,
-		TemperingTable? temperingTemplates = null)
+		TemperingTable? temperingTemplates = null,
+		SkillTemplateTable? skillTemplates = null)
 		: base(PacketOpCode)
 	{
 		// Java parity: network/aion/serverpackets/SM_STATS_INFO(Player).
@@ -39,12 +41,21 @@ public sealed class SmStatsInfo : GameServerPacket
 		_itemSets = itemSets;
 		_enchantTemplates = enchantTemplates;
 		_temperingTemplates = temperingTemplates;
+		_skillTemplates = skillTemplates;
 	}
 
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
 		// Java parity: SM_STATS_INFO.writeImpl. Full effects remain deferred, but equipped item template stats are applied when templates are loaded.
-		var context = PlayerStatsContext.Create(_player, _experienceTable, _itemTemplates, _itemRandomBonuses, _itemSets, _enchantTemplates, _temperingTemplates);
+		var context = PlayerStatsContext.Create(
+			_player,
+			_experienceTable,
+			_itemTemplates,
+			_itemRandomBonuses,
+			_itemSets,
+			_enchantTemplates,
+			_temperingTemplates,
+			_skillTemplates);
 
 		buffer.WriteD(_player.ObjectId);
 		buffer.WriteD(_gameMinutes);
@@ -228,7 +239,8 @@ public sealed class SmStatsInfo : GameServerPacket
 			ItemRandomBonusTable? itemRandomBonuses,
 			ItemSetTable? itemSets,
 			EnchantTable? enchantTemplates,
-			TemperingTable? temperingTemplates)
+			TemperingTable? temperingTemplates,
+			SkillTemplateTable? skillTemplates)
 		{
 			// Java parity: PlayerCommonData.setExp/updateMaxRepose plus PlayerClass.createStatsTemplate.
 			var classStats = PlayerClassStats.Get(player.PlayerClass);
@@ -240,7 +252,15 @@ public sealed class SmStatsInfo : GameServerPacket
 			var baseStats = PlayerCalculatedStats.Create(classStats, level);
 			var currentStats = itemTemplates == null
 				? baseStats
-				: PlayerEquipmentStats.Apply(player, itemTemplates, itemRandomBonuses, itemSets, enchantTemplates, temperingTemplates, baseStats);
+				: PlayerEquipmentStats.Apply(
+					player,
+					itemTemplates,
+					itemRandomBonuses,
+					itemSets,
+					enchantTemplates,
+					temperingTemplates,
+					skillTemplates,
+					baseStats);
 			var lifeStats = player.LifeStats;
 			return new PlayerStatsContext(
 				classStats,
@@ -275,6 +295,11 @@ public sealed class SmStatsInfo : GameServerPacket
 	{
 		private const long MainHand = 1L;
 		private const long SubHand = 1L << 1;
+		private const long Torso = 1L << 3;
+		private const long Gloves = 1L << 4;
+		private const long Boots = 1L << 5;
+		private const long Shoulder = 1L << 11;
+		private const long Pants = 1L << 12;
 		private const long MainOffHand = 1L << 17;
 		private const long SubOffHand = 1L << 18;
 		private const int ChargeLevel1 = 500000;
@@ -291,6 +316,7 @@ public sealed class SmStatsInfo : GameServerPacket
 			ItemSetTable? itemSets,
 			EnchantTable? enchantTemplates,
 			TemperingTable? temperingTemplates,
+			SkillTemplateTable? skillTemplates,
 			PlayerCalculatedStats baseStats)
 		{
 			// Java parity: model/stats/listeners/ItemEquipmentListener.onItemEquipment plus PlayerGameStats weapon stat accessors.
@@ -306,6 +332,7 @@ public sealed class SmStatsInfo : GameServerPacket
 			var modifiers = equippedItems
 				.SelectMany(item => GetEquipmentModifiers(item, itemTemplates, itemRandomBonuses, enchantTemplates, temperingTemplates))
 				.Concat(GetItemSetModifiers(equippedItems, itemSets))
+				.Concat(GetArmorMasteryModifiers(player, equippedItems, skillTemplates))
 				.Where(modifier => !string.IsNullOrEmpty(modifier.Name))
 				.ToArray();
 
@@ -560,6 +587,78 @@ public sealed class SmStatsInfo : GameServerPacket
 						yield return modifier;
 				}
 			}
+		}
+
+		private static IEnumerable<ItemStatModifier> GetArmorMasteryModifiers(
+			Player player,
+			IReadOnlyList<EquippedItem> equippedItems,
+			SkillTemplateTable? skillTemplates)
+		{
+			// Java parity: skillengine/effect/ArmorMasteryEffect + model/stats/calc/functions/StatArmorMasteryFunction.
+			if (skillTemplates == null)
+				yield break;
+
+			foreach (var skill in player.Skills)
+			{
+				var skillTemplate = skillTemplates.GetSkillTemplate(skill.SkillId);
+				if (skillTemplate == null)
+					continue;
+
+				foreach (var armorMastery in skillTemplate.ArmorMastery)
+				{
+					var equipmentFactor = GetArmorMasteryEquipmentFactor(equippedItems, armorMastery.ArmorType);
+					if (equipmentFactor == 0)
+						continue;
+
+					var fixedBonus = (armorMastery.Value + armorMastery.Delta * skill.SkillLevel) * equipmentFactor / 100;
+					foreach (var change in armorMastery.Changes)
+					{
+						var value = (change.Value + change.Delta * skill.SkillLevel) * equipmentFactor / 100;
+						if (value != 0)
+							yield return new ItemStatModifier("rate", change.Stat, value, Bonus: true);
+						if (fixedBonus != 0)
+							yield return new ItemStatModifier("add", change.Stat, fixedBonus, Bonus: true);
+					}
+				}
+			}
+		}
+
+		private static int GetArmorMasteryEquipmentFactor(IReadOnlyList<EquippedItem> equippedItems, string armorType)
+		{
+			var equipmentFactor = 0;
+			foreach (var item in equippedItems)
+			{
+				if (!string.Equals(GetArmorSubtype(item.Template.ItemGroup), armorType, StringComparison.Ordinal))
+					continue;
+
+				equipmentFactor += GetArmorSlotFactor(item.Item.Slot);
+			}
+
+			return equipmentFactor;
+		}
+
+		private static string GetArmorSubtype(string itemGroup)
+		{
+			return itemGroup switch
+			{
+				"CL_TORSO" or "CL_GLOVE" or "CL_SHOULDER" or "CL_PANTS" or "CL_SHOES" or "CL_HEADS" or "CL_MULTISLOT" => "CLOTHES",
+				"LT_TORSO" or "LT_GLOVE" or "LT_SHOULDER" or "LT_PANTS" or "LT_SHOES" or "LT_HEADS" => "LEATHER",
+				"CH_TORSO" or "CH_GLOVE" or "CH_SHOULDER" or "CH_PANTS" or "CH_SHOES" => "CHAIN",
+				"PL_TORSO" or "PL_GLOVE" or "PL_SHOULDER" or "PL_PANTS" or "PL_SHOES" => "PLATE",
+				"RB_TORSO" or "RB_GLOVE" or "RB_SHOULDER" or "RB_PANTS" or "RB_SHOES" => "ROBE",
+				_ => string.Empty,
+			};
+		}
+
+		private static int GetArmorSlotFactor(long slot)
+		{
+			if ((slot & Torso) != 0)
+				return 30;
+			if ((slot & Pants) != 0)
+				return 25;
+			if ((slot & (Shoulder | Gloves | Boots)) != 0)
+				return 15;
+			return 0;
 		}
 
 		private static bool IsApplicableFusionWeaponModifier(ItemStatModifier modifier)

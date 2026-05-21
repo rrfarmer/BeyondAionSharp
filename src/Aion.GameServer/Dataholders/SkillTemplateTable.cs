@@ -74,4 +74,18 @@ public sealed record SkillTemplateSummary(
 	string SkillType,
 	string SkillSubType,
 	int CooldownId,
-	int Cooldown);
+	int Cooldown,
+	IReadOnlyList<SkillArmorMasteryEffectSummary>? ArmorMasteryEffects = null)
+{
+	public IReadOnlyList<SkillArmorMasteryEffectSummary> ArmorMastery => ArmorMasteryEffects ?? Array.Empty<SkillArmorMasteryEffectSummary>();
+}
+
+// Java parity: skillengine/effect/ArmorMasteryEffect.
+public sealed record SkillArmorMasteryEffectSummary(
+	string ArmorType,
+	int Value,
+	int Delta,
+	IReadOnlyList<SkillStatChange> Changes);
+
+// Java parity: skillengine/change/Change entries under passive skill effects.
+public sealed record SkillStatChange(string Stat, string Func, int Value, int Delta);

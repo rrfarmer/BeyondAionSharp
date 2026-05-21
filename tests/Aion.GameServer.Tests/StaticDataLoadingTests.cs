@@ -195,6 +195,15 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(4.23f, postmanNpc.RunSpeed);
 		Assert.Equal(0.595f, postmanNpc.BoundRadius);
 		Assert.Equal(8, staticData.SkillTemplates.GetSkillTemplatesByGroup("RA_WHITETIGER").Count);
+		var clothMastery = staticData.SkillTemplates.GetSkillTemplate(40);
+		Assert.NotNull(clothMastery);
+		var armorMastery = Assert.Single(clothMastery.ArmorMastery);
+		Assert.Equal("CLOTHES", armorMastery.ArmorType);
+		Assert.Equal(1, armorMastery.Value);
+		var armorChange = Assert.Single(armorMastery.Changes);
+		Assert.Equal("PHYSICAL_DEFENSE", armorChange.Stat);
+		Assert.Equal("PERCENT", armorChange.Func);
+		Assert.Equal(10, armorChange.Value);
 		Assert.Equal(152000401, staticData.RecipeTemplates.GetRecipeTemplateById(155000001)?.ProductId);
 		Assert.True(staticData.HousingTemplates.AddressCount > 1000);
 		Assert.Equal(9, staticData.HousingTemplates.BuildingCount);

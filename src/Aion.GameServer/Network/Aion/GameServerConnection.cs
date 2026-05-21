@@ -835,7 +835,8 @@ public sealed class GameServerConnection : BaseClientConnection
 							staticData?.ItemRandomBonuses,
 							staticData?.ItemSets,
 							staticData?.EnchantTemplates,
-							staticData?.TemperingTemplates));
+							staticData?.TemperingTemplates,
+							staticData?.SkillTemplates));
 					// Java parity: services/mail/MailService.onPlayerLogin sends mailbox state before macro/recipe restore.
 					await SendPacketAsync(new SmMailService(enterWorldResult.Player.Mailbox));
 					foreach (var housingBidSystemMessage in SmReceiveBids.CreateLoginSystemMessages(enterWorldResult.Player))
@@ -3537,7 +3538,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			staticData?.ItemRandomBonuses,
 			staticData?.ItemSets,
 			staticData?.EnchantTemplates,
-			staticData?.TemperingTemplates);
+			staticData?.TemperingTemplates,
+			staticData?.SkillTemplates);
 	}
 
 	private static SmBindPointInfo CreateBindPointPacket(Player player, StaticData? staticData)

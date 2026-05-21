@@ -1630,7 +1630,7 @@ public class GamePacketTests
 				0,
 				1,
 				1,
-				"TORSO",
+				"CL_TORSO",
 				"NORMAL",
 				"COMMON",
 				"PC_ALL",
@@ -1808,6 +1808,29 @@ public class GamePacketTests
 						]),
 				]),
 		]);
+		var skillTemplates = new SkillTemplateTable(
+		[
+			new SkillTemplateSummary(
+				40,
+				"Basic Cloth Armor Proficiency",
+				0,
+				1,
+				"P_EQUIP_ENHANCEDCLOTH",
+				"P_EQUIP_ENHANCEDCLOTH",
+				"PHYSICAL",
+				"NONE",
+				0,
+				0,
+				[
+					new SkillArmorMasteryEffectSummary(
+						"CLOTHES",
+						10,
+						0,
+						[
+							new SkillStatChange("PHYSICAL_DEFENSE", "PERCENT", 10, 0),
+						]),
+				]),
+		]);
 
 		var payload = SerializeUnencryptedPayload(
 			new SmStatsInfo(
@@ -1815,6 +1838,7 @@ public class GamePacketTests
 				{
 					ObjectId = 1001,
 					PlayerClass = "WARRIOR",
+					Skills = [new PlayerSkill { SkillId = 40, SkillLevel = 1 }],
 					InventoryItems =
 					[
 						new InventoryItem
@@ -1841,7 +1865,8 @@ public class GamePacketTests
 				randomBonuses,
 				itemSets,
 				enchantTemplates,
-				temperingTemplates));
+				temperingTemplates,
+				skillTemplates));
 
 		using var reader = new PacketBuffer(payload);
 		Assert.Equal(1001, reader.ReadD());
@@ -1869,7 +1894,7 @@ public class GamePacketTests
 		Assert.Equal(47, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
-		Assert.Equal(40, reader.ReadD());
+		Assert.Equal(43, reader.ReadD());
 		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(0, reader.ReadD());

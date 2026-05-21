@@ -128,6 +128,7 @@ public sealed class StaticData
 		EnchantGroupBuilder? currentEnchantGroup = null;
 		TemperingGroupBuilder? currentTemperingGroup = null;
 		NpcTemplateBuilder? currentNpcTemplate = null;
+		SkillTemplateBuilder? currentSkillTemplate = null;
 		int currentHousingLandId = 0;
 		int currentHousingManagerNpcId = 0;
 		var elementPath = new Dictionary<int, string>();
@@ -198,6 +199,15 @@ public sealed class StaticData
 					npcTemplates.Add(currentNpcTemplate.ToSummary());
 					currentNpcTemplate = null;
 				}
+
+				if (reader.Depth == 2 && reader.LocalName == "skill_template" && currentSkillTemplate != null)
+				{
+					skillTemplates.Add(currentSkillTemplate.ToSummary());
+					currentSkillTemplate = null;
+				}
+
+				if (reader.Depth == 4 && reader.LocalName == "armormastery")
+					currentSkillTemplate?.EndArmorMastery();
 
 				if (reader.Depth == 2 && reader.LocalName == "player_data")
 					currentPlayerCreationClass = null;
@@ -600,7 +610,7 @@ public sealed class StaticData
 
 			if (reader.Depth == 2 && reader.LocalName == "skill_template")
 			{
-				skillTemplates.Add(new SkillTemplateSummary(
+				currentSkillTemplate = new SkillTemplateBuilder(
 					ReadRequiredIntAttribute(reader, "skill_id"),
 					reader.GetAttribute("name") ?? string.Empty,
 					ReadIntAttribute(reader, "nameId"),
@@ -610,7 +620,34 @@ public sealed class StaticData
 					reader.GetAttribute("skilltype") ?? string.Empty,
 					reader.GetAttribute("skillsubtype") ?? string.Empty,
 					ReadIntAttribute(reader, "cooldownId"),
-					ReadIntAttribute(reader, "cooldown")));
+					ReadIntAttribute(reader, "cooldown"));
+				if (reader.IsEmptyElement)
+				{
+					skillTemplates.Add(currentSkillTemplate.ToSummary());
+					currentSkillTemplate = null;
+				}
+				continue;
+			}
+
+			if (reader.Depth == 4 && reader.LocalName == "armormastery" && currentSkillTemplate != null)
+			{
+				currentSkillTemplate.StartArmorMastery(
+					reader.GetAttribute("armor") ?? string.Empty,
+					ReadIntAttribute(reader, "value"),
+					ReadIntAttribute(reader, "delta"));
+				if (reader.IsEmptyElement)
+					currentSkillTemplate.EndArmorMastery();
+				continue;
+			}
+
+			if (reader.Depth == 5 && reader.LocalName == "change" && currentSkillTemplate != null)
+			{
+				currentSkillTemplate.AddArmorMasteryChange(
+					new SkillStatChange(
+						reader.GetAttribute("stat") ?? string.Empty,
+						reader.GetAttribute("func") ?? string.Empty,
+						ReadIntAttribute(reader, "value"),
+						ReadIntAttribute(reader, "delta")));
 				continue;
 			}
 
@@ -773,6 +810,96 @@ public sealed class StaticData
 		{
 			// Java parity: model/templates/item/bonuses/RandomBonusSet modifier groups are selected by 1-based rnd_bonus rows.
 			return new ItemRandomBonusSummary(Type, SetId, _modifierGroups.ToArray(), _chances.ToArray());
+		}
+	}
+
+	private sealed class SkillTemplateBuilder
+	{
+		private readonly List<SkillArmorMasteryEffectSummary> _armorMasteryEffects = [];
+		private List<SkillStatChange>? _currentArmorMasteryChanges;
+
+		public SkillTemplateBuilder(
+			int skillId,
+			string name,
+			int nameId,
+			int level,
+			string group,
+			string stack,
+			string skillType,
+			string skillSubType,
+			int cooldownId,
+			int cooldown)
+		{
+			SkillId = skillId;
+			Name = name;
+			NameId = nameId;
+			Level = level;
+			Group = group;
+			Stack = stack;
+			SkillType = skillType;
+			SkillSubType = skillSubType;
+			CooldownId = cooldownId;
+			Cooldown = cooldown;
+		}
+
+		private int SkillId { get; }
+
+		private string Name { get; }
+
+		private int NameId { get; }
+
+		private int Level { get; }
+
+		private string Group { get; }
+
+		private string Stack { get; }
+
+		private string SkillType { get; }
+
+		private string SkillSubType { get; }
+
+		private int CooldownId { get; }
+
+		private int Cooldown { get; }
+
+		public void StartArmorMastery(string armorType, int value, int delta)
+		{
+			_currentArmorMasteryChanges = [];
+			_armorMasteryEffects.Add(new SkillArmorMasteryEffectSummary(
+				armorType,
+				value,
+				delta,
+				_currentArmorMasteryChanges));
+		}
+
+		public void AddArmorMasteryChange(SkillStatChange change)
+		{
+			if (_currentArmorMasteryChanges == null)
+				return;
+
+			_currentArmorMasteryChanges.Add(change);
+		}
+
+		public void EndArmorMastery()
+		{
+			_currentArmorMasteryChanges = null;
+		}
+
+		public SkillTemplateSummary ToSummary()
+		{
+			// Java parity: model/templates/skill/SkillTemplate with passive ArmorMasteryEffect metadata.
+			return new SkillTemplateSummary(
+				SkillId,
+				Name,
+				NameId,
+				Level,
+				Group,
+				Stack,
+				SkillType,
+				SkillSubType,
+				CooldownId,
+				Cooldown,
+				_armorMasteryEffects.ToArray());
 		}
 	}
 
