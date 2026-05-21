@@ -79,6 +79,12 @@ public sealed class Player
 	// Java parity: controllers/movement/PlayerMoveController state mirrored for CM_MOVE/SM_MOVE.
 	public PlayerMovementState Movement { get; } = new();
 
+	// Java parity: model/gameobjects/Creature.state queried through Creature.isInState(CreatureState).
+	public PlayerCreatureState CreatureState { get; set; }
+
+	// Java parity: model/actions/PlayerMode.RIDE queried through Player.isInPlayerMode.
+	public bool IsInRideMode { get; set; }
+
 	// Java parity: model/gameobjects/VisibleObject target set by network/aion/clientpackets/CM_TARGET_SELECT.
 	public int TargetObjectId { get; set; }
 
@@ -159,4 +165,18 @@ public sealed class Player
 	public PlayerSettings Settings { get; set; } = new();
 
 	public PlayerBindPoint? BindPoint { get; set; }
+
+	public bool IsInState(PlayerCreatureState state)
+	{
+		// Java parity: model/gameobjects/Creature.isInState, including CHAIR exact-match semantics.
+		return state == PlayerCreatureState.Chair
+			? CreatureState == PlayerCreatureState.Chair
+			: (CreatureState & state) == state;
+	}
+
+	public void SetCreatureState(PlayerCreatureState state, bool enabled)
+	{
+		// Java parity: model/gameobjects/Creature.setState/unsetState bit updates.
+		CreatureState = enabled ? CreatureState | state : CreatureState & ~state;
+	}
 }

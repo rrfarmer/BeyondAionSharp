@@ -2318,6 +2318,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			case EquipmentChangeFailure.StigmaNotEnoughKinah:
 				await SendPacketAsync(SmSystemMessage.StigmaNotEnoughMoney());
 				break;
+			case EquipmentChangeFailure.SoulBindInvalidStance:
+				await SendPacketAsync(SmSystemMessage.SoulBoundInvalidStance(ChatUtil.L10n(change.SoulBindInvalidStanceL10nId)));
+				break;
 		}
 	}
 
@@ -3444,6 +3447,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		// Java parity: network/aion/clientpackets/CM_MOVE.runImpl movement-state updates before World.updatePosition.
 		await CancelPendingItemUseOnMoveAsync(player);
+		player.SetCreatureState(PlayerCreatureState.Gliding, packet.IsGliding);
 		var movement = player.Movement;
 		movement.Mask = packet.Type;
 

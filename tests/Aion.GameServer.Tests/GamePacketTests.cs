@@ -9,6 +9,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ClientPackets;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
+using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 
 namespace Aion.GameServer.Tests;
@@ -544,6 +545,7 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.SoulBoundItemSucceed("item"), 1300485, "item");
 		AssertSystemMessage(SmSystemMessage.SoulBoundItemCanceled("item"), 1300487, "item");
 		AssertSystemMessage(SmSystemMessage.SoulBoundCloseOtherMsgBoxAndRetry(), 1300488);
+		AssertSystemMessage(SmSystemMessage.SoulBoundInvalidStance(ChatUtil.L10n(1400059)), 1300489, ChatUtil.L10n(1400059));
 		AssertSystemMessage(SmSystemMessage.StigmaNotEnoughMoney(), 1300413);
 		AssertSystemMessage(SmSystemMessage.StigmaSkillUnavailable("skill"), 1300403, "skill");
 		AssertSystemMessage(SmSystemMessage.StigmaEnchantSuccess("stigma"), 1402930, "stigma");

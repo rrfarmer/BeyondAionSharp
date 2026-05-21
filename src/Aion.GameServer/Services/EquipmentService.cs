@@ -117,6 +117,10 @@ public static class EquipmentService
 
 		if (template.IsSoulBound && !item.IsSoulBound)
 		{
+			var soulBindStance = ValidateSoulBindStance(player);
+			if (soulBindStance != 0 && !soulBindConfirmed)
+				return EquipmentChangeResult.SoulBindInvalidStanceFailure(soulBindStance);
+
 			if (!soulBindConfirmed)
 				return EquipmentChangeResult.SoulBindRequiredFailure(item.ObjectId, slot, GetItemName(template));
 
@@ -349,6 +353,27 @@ public static class EquipmentService
 		}
 	}
 
+	private static int ValidateSoulBindStance(Player player)
+	{
+		// Java parity: model/gameobjects/player/Equipment.soulBindItem stance guard order.
+		if (player.LifeStats?.CurrentHp == 0)
+			return 1400059;
+		if (player.IsInRideMode)
+			return 1400056;
+		if (player.IsInState(PlayerCreatureState.Chair))
+			return 1400058;
+		if (player.IsInState(PlayerCreatureState.Resting))
+			return 1400057;
+		if (player.IsInState(PlayerCreatureState.Gliding))
+			return 1400082;
+		if (player.IsInState(PlayerCreatureState.Flying))
+			return 1400055;
+		if (player.IsInState(PlayerCreatureState.WeaponEquipped))
+			return 1400079;
+
+		return 0;
+	}
+
 	private static bool HasDualWieldEffect(Player player, SkillTemplateTable? skillTemplates)
 	{
 		// Java parity: skillengine/effect/WeaponDualEffect.hasDualWieldEffect fallback for not-yet-spawned players.
@@ -512,6 +537,7 @@ public enum EquipmentChangeFailure
 	MissingRequiredSkill,
 	UnidentifiedItem,
 	SoulBindRequired,
+	SoulBindInvalidStance,
 	StigmaDenied,
 	StigmaNotEnoughKinah,
 }
@@ -531,6 +557,7 @@ public sealed record EquipmentChangeResult(
 	string ItemName = "",
 	int SoulBindItemObjectId = 0,
 	long SoulBindSlot = 0,
+	int SoulBindInvalidStanceL10nId = 0,
 	InventoryItem? KinahItemUpdate = null,
 	IReadOnlyList<PlayerSkill>? Skills = null,
 	IReadOnlyList<PlayerSkill>? AddedSkills = null,
@@ -626,6 +653,16 @@ public sealed record EquipmentChangeResult(
 			SoulBindItemObjectId = itemObjectId,
 			SoulBindSlot = slot,
 			ItemName = itemName,
+		};
+	}
+
+	public static EquipmentChangeResult SoulBindInvalidStanceFailure(int stanceL10nId)
+	{
+		// Java parity: model/gameobjects/player/Equipment.soulBindItem invalid stance messages.
+		return NoChange() with
+		{
+			Failure = EquipmentChangeFailure.SoulBindInvalidStance,
+			SoulBindInvalidStanceL10nId = stanceL10nId,
 		};
 	}
 

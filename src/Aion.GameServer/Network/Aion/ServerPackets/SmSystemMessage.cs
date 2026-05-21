@@ -325,6 +325,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300488);
 	}
 
+	public static SmSystemMessage SoulBoundInvalidStance(string stance)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_INVALID_STANCE.
+		return new SmSystemMessage(1300489, stance);
+	}
+
 	public static SmSystemMessage StigmaNotEnoughMoney()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_STIGMA_NOT_ENOUGH_MONEY.

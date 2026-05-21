@@ -371,6 +371,31 @@ public sealed class EquipmentServiceTests
 		Assert.Equal("Practice Soulbound Sword", change.ItemName);
 	}
 
+	[Theory]
+	[InlineData("dead", 1400059)]
+	[InlineData("riding", 1400056)]
+	[InlineData("chair", 1400058)]
+	[InlineData("resting", 1400057)]
+	[InlineData("gliding", 1400082)]
+	[InlineData("flying", 1400055)]
+	[InlineData("weapon", 1400079)]
+	public void ChangeEquipment_DeniesSoulBindRequestInInvalidJavaStance(string stance, int expectedL10nId)
+	{
+		var player = CreatePlayer();
+		ApplySoulBindStance(player, stance);
+		player.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 1001, ItemId = SoulBoundSwordId, Location = 0, Slot = 65535 },
+		];
+
+		var change = EquipmentService.ChangeEquipment(player, action: 0, slotRead: 1, itemObjectId: 1001, CreateItemTemplates(), skillTemplates: null);
+
+		Assert.False(change.Changed);
+		Assert.Equal(EquipmentChangeFailure.SoulBindInvalidStance, change.Failure);
+		Assert.Equal(expectedL10nId, change.SoulBindInvalidStanceL10nId);
+		Assert.Equal(0, change.SoulBindItemObjectId);
+	}
+
 	[Fact]
 	public void ChangeEquipment_SoulBindsAndEquipsWhenConfirmed()
 	{
@@ -575,6 +600,34 @@ public sealed class EquipmentServiceTests
 				new PlayerSkill { SkillId = 51, SkillLevel = 1 },
 			],
 		};
+	}
+
+	private static void ApplySoulBindStance(Player player, string stance)
+	{
+		switch (stance)
+		{
+			case "dead":
+				player.LifeStats = new PlayerLifeStats(0, 0, 0);
+				break;
+			case "riding":
+				player.IsInRideMode = true;
+				break;
+			case "chair":
+				player.CreatureState = PlayerCreatureState.Chair;
+				break;
+			case "resting":
+				player.CreatureState = PlayerCreatureState.Resting;
+				break;
+			case "gliding":
+				player.CreatureState = PlayerCreatureState.Gliding;
+				break;
+			case "flying":
+				player.CreatureState = PlayerCreatureState.Flying;
+				break;
+			case "weapon":
+				player.CreatureState = PlayerCreatureState.WeaponEquipped;
+				break;
+		}
 	}
 
 	private static ItemTemplateTable CreateItemTemplates(params ItemTemplateSummary[] extraTemplates)
