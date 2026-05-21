@@ -17,6 +17,7 @@ public sealed class StaticData
 		NpcTemplateTable npcTemplates,
 		SkillTemplateTable skillTemplates,
 		RecipeTemplateTable recipeTemplates,
+		HousingTemplateTable housingTemplates,
 		InstanceCooltimeTable instanceCooltimes,
 		PlayerInitialDataTable playerInitialData,
 		SkillTreeTable skillTree,
@@ -32,6 +33,7 @@ public sealed class StaticData
 		NpcTemplates = npcTemplates;
 		SkillTemplates = skillTemplates;
 		RecipeTemplates = recipeTemplates;
+		HousingTemplates = housingTemplates;
 		InstanceCooltimes = instanceCooltimes;
 		PlayerInitialData = playerInitialData;
 		SkillTree = skillTree;
@@ -59,6 +61,8 @@ public sealed class StaticData
 	public SkillTemplateTable SkillTemplates { get; }
 
 	public RecipeTemplateTable RecipeTemplates { get; }
+
+	public HousingTemplateTable HousingTemplates { get; }
 
 	public InstanceCooltimeTable InstanceCooltimes { get; }
 
@@ -88,6 +92,8 @@ public sealed class StaticData
 		var npcTemplates = new List<NpcTemplateSummary>();
 		var skillTemplates = new List<SkillTemplateSummary>();
 		var recipeTemplates = new List<RecipeTemplateSummary>();
+		var housingAddresses = new List<HousingAddressSummary>();
+		var housingBuildings = new List<HousingBuildingSummary>();
 		var instanceCooltimes = new List<InstanceCooltimeSummary>();
 		var skillTree = new List<SkillLearnSummary>();
 		var creationItemsByClass = new Dictionary<string, List<StartingItem>>(StringComparer.OrdinalIgnoreCase);
@@ -96,6 +102,8 @@ public sealed class StaticData
 		InstanceCooltimeBuilder? currentInstanceCooltime = null;
 		ItemTemplateBuilder? currentItemTemplate = null;
 		NpcTemplateBuilder? currentNpcTemplate = null;
+		int currentHousingLandId = 0;
+		int currentHousingManagerNpcId = 0;
 		var elementPath = new Dictionary<int, string>();
 		var settings = new XmlReaderSettings
 		{
@@ -172,6 +180,40 @@ public sealed class StaticData
 					ReadRequiredIntAttribute(reader, "id"),
 					ReadRequiredIntAttribute(reader, "worldId"),
 					reader.GetAttribute("race") ?? string.Empty);
+				continue;
+			}
+
+			if (reader.Depth == 2 && reader.LocalName == "land")
+			{
+				// Java parity: model/templates/housing/HousingLand id/manager_npc used by House.matchesLandRace.
+				currentHousingLandId = ReadRequiredIntAttribute(reader, "id");
+				currentHousingManagerNpcId = ReadRequiredIntAttribute(reader, "manager_npc");
+				continue;
+			}
+
+			if (reader.Depth == 4 && reader.LocalName == "address" && currentHousingLandId != 0)
+			{
+				// Java parity: model/templates/housing/HouseAddress links an address back to its HousingLand.
+				housingAddresses.Add(
+					new HousingAddressSummary(
+						ReadRequiredIntAttribute(reader, "id"),
+						currentHousingLandId,
+						currentHousingManagerNpcId));
+				continue;
+			}
+
+			if (reader.Depth == 2
+				&& reader.LocalName == "building"
+				&& elementPath.TryGetValue(1, out var rootElement)
+				&& rootElement == "buildings")
+			{
+				// Java parity: model/templates/housing/Building.size -> HouseType id written in SM_HOUSE_BIDS.
+				var size = reader.GetAttribute("size") ?? string.Empty;
+				housingBuildings.Add(
+					new HousingBuildingSummary(
+						ReadRequiredIntAttribute(reader, "id"),
+						size,
+						GetHouseTypeId(size)));
 				continue;
 			}
 
@@ -364,6 +406,7 @@ public sealed class StaticData
 			new NpcTemplateTable(npcTemplates.AsReadOnly()),
 			new SkillTemplateTable(skillTemplates.AsReadOnly()),
 			new RecipeTemplateTable(recipeTemplates.AsReadOnly()),
+			new HousingTemplateTable(housingAddresses.AsReadOnly(), housingBuildings.AsReadOnly()),
 			new InstanceCooltimeTable(instanceCooltimes.AsReadOnly()),
 			new PlayerInitialDataTable(
 				creationItemsByClass.ToDictionary(
@@ -656,6 +699,20 @@ public sealed class StaticData
 	private static long ReadLongAttribute(XmlReader reader, string attributeName)
 	{
 		return long.TryParse(reader.GetAttribute(attributeName), out var parsed) ? parsed : 0;
+	}
+
+	private static int GetHouseTypeId(string size)
+	{
+		// Java parity: model/templates/housing/HouseType enum ids.
+		return size.ToUpperInvariant() switch
+		{
+			"STUDIO" => 0,
+			"HOUSE" => 1,
+			"MANSION" => 2,
+			"ESTATE" => 3,
+			"PALACE" => 4,
+			_ => 0,
+		};
 	}
 
 	private static IReadOnlySet<string> ReadClassRestrictions(string? restrict)

@@ -2011,6 +2011,49 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmHouseBids_WritesJavaAuctionRows()
+	{
+		var bidPage = new HouseAuctionBidPage(
+			[
+				new HouseAuctionBidSummary(
+					ListIndex: 7,
+					HouseObjectId: 9001,
+					LandId: 326001,
+					AddressId: 6001,
+					BuildingId: 353000,
+					HouseTypeId: 1,
+					HighestBidKinah: 12_000_000,
+					BidCount: 2,
+					RemainingAuctionSeconds: 3600),
+			],
+			LastBidListIndex: 7,
+			LastBidKinah: 12_000_000,
+			RegisteredHouseListIndex: 8,
+			RegisteredHouseStartingPrice: 9_000_000);
+
+		var payload = SerializeUnencryptedPayload(SmHouseBids.CreatePackets(bidPage)[0]);
+		using var reader = new PacketBuffer(payload);
+
+		Assert.Equal(1, (int)reader.ReadC());
+		Assert.Equal(1, (int)reader.ReadC());
+		Assert.Equal(7, reader.ReadD());
+		Assert.Equal(12_000_000, reader.ReadQ());
+		Assert.Equal(8, reader.ReadD());
+		Assert.Equal(9_000_000, reader.ReadQ());
+		Assert.Equal(1, reader.ReadH());
+		Assert.Equal(7, reader.ReadD());
+		Assert.Equal(326001, reader.ReadD());
+		Assert.Equal(6001, reader.ReadD());
+		Assert.Equal(353000, reader.ReadD());
+		Assert.Equal(1, reader.ReadD());
+		Assert.Equal(12_000_000, reader.ReadQ());
+		Assert.Equal(100000, reader.ReadQ());
+		Assert.Equal(2, reader.ReadD());
+		Assert.Equal(3600, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesHousingAuctionPackets()
 	{
 		Assert.IsType<CmGetHouseBids>(

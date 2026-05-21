@@ -43,6 +43,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly IMailRepository? _mailRepository;
 	private readonly IBrokerRepository? _brokerRepository;
 	private readonly ISocialRepository _socialRepository;
+	private readonly IHouseAuctionRepository _houseAuctionRepository;
 	private readonly IGameClientConnectionRegistry? _connectionRegistry;
 	private readonly IDFactory? _idFactory;
 	private readonly GameTimeService? _gameTimeService;
@@ -76,6 +77,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		IMailRepository? mailRepository = null,
 		IBrokerRepository? brokerRepository = null,
 		ISocialRepository? socialRepository = null,
+		IHouseAuctionRepository? houseAuctionRepository = null,
 		IGameClientConnectionRegistry? connectionRegistry = null,
 		IDFactory? idFactory = null,
 		GameTimeService? gameTimeService = null,
@@ -94,6 +96,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_mailRepository = mailRepository;
 		_brokerRepository = brokerRepository;
 		_socialRepository = socialRepository ?? new EmptySocialRepository();
+		_houseAuctionRepository = houseAuctionRepository ?? new EmptyHouseAuctionRepository();
 		_connectionRegistry = connectionRegistry;
 		_idFactory = idFactory;
 		_gameTimeService = gameTimeService;
@@ -545,7 +548,13 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 				{
 					// Java parity: network/aion/clientpackets/CM_GET_HOUSE_BIDS.runImpl -> SM_HOUSE_BIDS split list.
-					await SendPacketAsync(SmHouseBids.CreateEmpty());
+					var staticData = _runtimeContext?.DataManager?.StaticData;
+					var bidPage = await _houseAuctionRepository.LoadHouseBidsAsync(
+						_activePlayer,
+						staticData?.HousingTemplates,
+						staticData?.NpcTemplates);
+					foreach (var bidPacket in SmHouseBids.CreatePackets(bidPage))
+						await SendPacketAsync(bidPacket);
 				}
 				break;
 			case CmRegisterHouse registerHouse:

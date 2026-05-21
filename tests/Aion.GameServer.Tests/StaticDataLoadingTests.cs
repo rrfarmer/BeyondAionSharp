@@ -140,6 +140,12 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(0.595f, postmanNpc.BoundRadius);
 		Assert.Equal(8, staticData.SkillTemplates.GetSkillTemplatesByGroup("RA_WHITETIGER").Count);
 		Assert.Equal(152000401, staticData.RecipeTemplates.GetRecipeTemplateById(155000001)?.ProductId);
+		Assert.True(staticData.HousingTemplates.AddressCount > 1000);
+		Assert.Equal(9, staticData.HousingTemplates.BuildingCount);
+		Assert.Equal(326001, staticData.HousingTemplates.GetAddress(6001)?.LandId);
+		Assert.Equal(810018, staticData.HousingTemplates.GetAddress(6001)?.ManagerNpcId);
+		Assert.Equal(4, staticData.HousingTemplates.GetHouseTypeId(350000));
+		Assert.Equal(1, staticData.HousingTemplates.GetHouseTypeId(353000));
 		Assert.Equal(5, staticData.InstanceCooltimes.GetInstanceCooltimeByWorldId(300030000)?.MaxCount);
 		Assert.Contains(staticData.RecipeTemplates.GetAutolearnRecipes("ELYOS", 40009, 1), recipe => recipe.RecipeId == 155000001);
 		Assert.Equal(6, staticData.PlayerInitialData.Count);

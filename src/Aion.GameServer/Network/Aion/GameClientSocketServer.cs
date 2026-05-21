@@ -29,6 +29,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 	private readonly IMailRepository? _mailRepository;
 	private readonly IBrokerRepository? _brokerRepository;
 	private readonly ISocialRepository? _socialRepository;
+	private readonly IHouseAuctionRepository? _houseAuctionRepository;
 	private readonly IDFactory? _idFactory;
 	private readonly GameTimeService? _gameTimeService;
 	private readonly GameWorld? _world;
@@ -49,6 +50,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		IMailRepository? mailRepository = null,
 		IBrokerRepository? brokerRepository = null,
 		ISocialRepository? socialRepository = null,
+		IHouseAuctionRepository? houseAuctionRepository = null,
 		IDFactory? idFactory = null,
 		GameTimeService? gameTimeService = null,
 		GameWorld? world = null)
@@ -70,6 +72,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		_mailRepository = mailRepository;
 		_brokerRepository = brokerRepository;
 		_socialRepository = socialRepository;
+		_houseAuctionRepository = houseAuctionRepository;
 		_idFactory = idFactory;
 		_gameTimeService = gameTimeService;
 		_world = world;
@@ -99,6 +102,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 				_mailRepository,
 				_brokerRepository,
 				_socialRepository,
+				_houseAuctionRepository,
 				this,
 				_idFactory,
 				_gameTimeService,
