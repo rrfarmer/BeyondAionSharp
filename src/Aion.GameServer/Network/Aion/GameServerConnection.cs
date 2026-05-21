@@ -13,6 +13,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion.ClientPackets;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
+using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.IdFactory;
 using AccountAuthResult = Aion.GameServer.Network.LoginServer.AccountAuthResult;
 using GameChatServer = Aion.GameServer.Network.ChatServer.ChatServer;
@@ -53,6 +54,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly IDFactory? _idFactory;
 	private readonly GameTimeService? _gameTimeService;
 	private readonly GameWorld? _world;
+	private readonly ThreadPoolManager? _threadPoolManager;
 	private readonly SemaphoreSlim _sendLock = new(1, 1);
 	private readonly SemaphoreSlim _closeLock = new(1, 1);
 	private GameConnectionState _state = GameConnectionState.Connected;
@@ -67,6 +69,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private string _securityToken = string.Empty;
 	private int _corruptPackets;
 	private DateTimeOffset? _lastPingTime;
+	private PendingItemUse? _pendingItemUse;
 
 	public GameServerConnection(
 		ILogger logger,
@@ -91,6 +94,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		IDFactory? idFactory = null,
 		GameTimeService? gameTimeService = null,
 		GameWorld? world = null,
+		ThreadPoolManager? threadPoolManager = null,
 		GameCrypt? crypt = null)
 		: base(logger, client, clientId)
 	{
@@ -113,6 +117,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_idFactory = idFactory;
 		_gameTimeService = gameTimeService;
 		_world = world;
+		_threadPoolManager = threadPoolManager;
 		_crypt = crypt ?? new GameCrypt();
 	}
 
@@ -1494,6 +1499,47 @@ public sealed class GameServerConnection : BaseClientConnection
 				0,
 				0));
 
+		await SchedulePendingItemUseAsync(
+			player,
+			itemObjectId: packet.StoneObjectId,
+			itemTemplateId: sourceTemplate.TemplateId,
+			targetItemName: plan.ItemName,
+			isEnchantmentStone: true,
+			delay: TimeSpan.FromMilliseconds(4000),
+			completeAsync: async cancellationToken =>
+			{
+				if (cancellationToken.IsCancellationRequested)
+					return;
+
+				if (!player.InventoryItems.Any(item => item.ObjectId == packet.TargetItemObjectId))
+				{
+					await SendPacketAsync(SmSystemMessage.EnchantItemNoTargetItem(), cancellationToken);
+					await BroadcastItemUsageAnimationAsync(
+						player,
+						new SmItemUsageAnimation(
+							player.ObjectId,
+							packet.StoneObjectId,
+							sourceTemplate.TemplateId,
+							0,
+							2,
+							0));
+					return;
+				}
+
+				await CompleteEnchantItemAsync(player, packet, plan, sourceTemplate, targetTemplate, staticData, cancellationToken);
+			});
+	}
+
+	private async Task CompleteEnchantItemAsync(
+		Player player,
+		CmManastone packet,
+		EnchantItemPlan plan,
+		ItemTemplateSummary sourceTemplate,
+		ItemTemplateSummary targetTemplate,
+		StaticData staticData,
+		CancellationToken cancellationToken)
+	{
+		var itemTemplates = staticData.ItemTemplates;
 		var saved = _playerEnterWorldService == null
 			|| await _playerEnterWorldService.SaveEnchantItemMutationAsync(
 				player,
@@ -1502,7 +1548,8 @@ public sealed class GameServerConnection : BaseClientConnection
 				plan.SourceItemUpdate,
 				plan.DeletedSourceItemObjectId,
 				plan.SupplementItemUpdates,
-				plan.DeletedSupplementItemObjectIds);
+				plan.DeletedSupplementItemObjectIds,
+				cancellationToken);
 		if (!saved)
 			return;
 
@@ -1569,6 +1616,71 @@ public sealed class GameServerConnection : BaseClientConnection
 				0,
 				plan.EnchantSucceeded ? 1 : 2,
 				0));
+	}
+
+	private async Task SchedulePendingItemUseAsync(
+		Player player,
+		int itemObjectId,
+		int itemTemplateId,
+		string targetItemName,
+		bool isEnchantmentStone,
+		TimeSpan delay,
+		Func<CancellationToken, Task> completeAsync)
+	{
+		// Java parity: controllers/CreatureController.addTask(TaskId.ITEM_USE) + ThreadPoolManager.schedule.
+		if (_threadPoolManager == null || delay <= TimeSpan.Zero)
+		{
+			await completeAsync(CancellationToken.None);
+			return;
+		}
+
+		_pendingItemUse?.Task.Cancel();
+		ScheduledTask? scheduledTask = null;
+		scheduledTask = _threadPoolManager.Schedule(
+			async cancellationToken =>
+			{
+				try
+				{
+					if (cancellationToken.IsCancellationRequested || !ReferenceEquals(_activePlayer, player))
+						return;
+
+					await completeAsync(cancellationToken);
+				}
+				finally
+				{
+					if (ReferenceEquals(_pendingItemUse?.Task, scheduledTask))
+						_pendingItemUse = null;
+				}
+			},
+			delay);
+		_pendingItemUse = new PendingItemUse(
+			scheduledTask,
+			itemObjectId,
+			itemTemplateId,
+			targetItemName,
+			isEnchantmentStone);
+	}
+
+	private async Task CancelPendingItemUseOnMoveAsync(Player player)
+	{
+		// Java parity: controllers/PlayerController.onStartMove -> cancelUseItem and EnchantItemAction StartMovingListener.
+		var pendingItemUse = _pendingItemUse;
+		if (pendingItemUse == null || !pendingItemUse.Task.Cancel())
+			return;
+
+		_pendingItemUse = null;
+		await BroadcastItemUsageAnimationAsync(
+			player,
+			new SmItemUsageAnimation(
+				player.ObjectId,
+				pendingItemUse.ItemObjectId,
+				pendingItemUse.ItemTemplateId,
+				0,
+				3,
+				0));
+		await SendPacketAsync(pendingItemUse.IsEnchantmentStone
+			? SmSystemMessage.EnchantItemCanceled(pendingItemUse.TargetItemName)
+			: SmSystemMessage.GiveItemOptionCanceled(pendingItemUse.TargetItemName));
 	}
 
 	private async Task SendEnchantFailureMessageAsync(EnchantItemPlan plan)
@@ -3091,6 +3203,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private async Task HandleMoveAsync(Player player, CmMove packet)
 	{
 		// Java parity: network/aion/clientpackets/CM_MOVE.runImpl movement-state updates before World.updatePosition.
+		await CancelPendingItemUseOnMoveAsync(player);
 		var movement = player.Movement;
 		movement.Mask = packet.Type;
 
@@ -4617,4 +4730,11 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		return buffer;
 	}
+
+	private sealed record PendingItemUse(
+		ScheduledTask Task,
+		int ItemObjectId,
+		int ItemTemplateId,
+		string TargetItemName,
+		bool IsEnchantmentStone);
 }

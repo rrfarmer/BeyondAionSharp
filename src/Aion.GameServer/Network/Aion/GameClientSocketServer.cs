@@ -7,6 +7,7 @@ using Aion.GameServer.Data;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
+using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.IdFactory;
 using Aion.GameServer.World;
 using Microsoft.Extensions.Logging;
@@ -35,6 +36,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 	private readonly IMotionRepository? _motionRepository;
 	private readonly IDFactory? _idFactory;
 	private readonly GameTimeService? _gameTimeService;
+	private readonly ThreadPoolManager? _threadPoolManager;
 	private readonly GameWorld? _world;
 	private readonly ConcurrentDictionary<string, GameServerConnection> _connections = new();
 	private readonly ConcurrentDictionary<int, GameServerConnection> _playerConnections = new();
@@ -59,6 +61,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		IMotionRepository? motionRepository = null,
 		IDFactory? idFactory = null,
 		GameTimeService? gameTimeService = null,
+		ThreadPoolManager? threadPoolManager = null,
 		GameWorld? world = null)
 		: base(
 			logger,
@@ -85,6 +88,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		_idFactory = idFactory;
 		_gameTimeService = gameTimeService;
 		_gameTimeService?.SetWorldBroadcaster((packet, _) => BroadcastToWorldAsync(packet));
+		_threadPoolManager = threadPoolManager;
 		_world = world;
 	}
 
@@ -119,7 +123,8 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 				this,
 				_idFactory,
 				_gameTimeService,
-				_world);
+				_world,
+				threadPoolManager: _threadPoolManager);
 			_connections[clientId] = connection;
 			await connection.RunAsync();
 		}

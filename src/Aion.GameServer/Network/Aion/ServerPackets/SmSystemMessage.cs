@@ -91,6 +91,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300452);
 	}
 
+	public static SmSystemMessage EnchantItemCanceled(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_ENCHANT_ITEM_CANCELED.
+		return new SmSystemMessage(1300457, itemName);
+	}
+
 	public static SmSystemMessage EnchantItemSucceedNew(string itemName, int enchantLevel)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ENCHANT_ITEM_SUCCEED_NEW.
@@ -137,6 +143,12 @@ public sealed class SmSystemMessage : GameServerPacket
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_GIVE_ITEM_OPTION_FAILED.
 		return new SmSystemMessage(1300463, itemName);
+	}
+
+	public static SmSystemMessage GiveItemOptionCanceled(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GIVE_ITEM_OPTION_CANCELED.
+		return new SmSystemMessage(1300464, itemName);
 	}
 
 	public static SmSystemMessage ItemEnchantAssistantNoRightItem()
