@@ -1,3 +1,4 @@
+using Aion.GameServer.Model.Account;
 using Aion.GameServer.World;
 
 namespace Aion.GameServer.Model.GameObjects;
@@ -19,6 +20,8 @@ public sealed class Player
 	public string Race { get; init; } = string.Empty;
 
 	public string Gender { get; init; } = string.Empty;
+
+	public CharacterAppearance Appearance { get; set; } = new();
 
 	public long Exp { get; init; }
 

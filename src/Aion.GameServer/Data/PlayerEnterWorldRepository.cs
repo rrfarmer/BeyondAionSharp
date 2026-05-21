@@ -1,4 +1,5 @@
 using Aion.Commons.Database;
+using Aion.GameServer.Model.Account;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.World;
 using Microsoft.Extensions.Logging;
@@ -214,9 +215,18 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			command.CommandText = """
 				SELECT id, account_id, name, player_class, race, gender, exp, recoverexp, dp, reposte_energy, online, last_online,
 					quest_expands, npc_expands, item_expands, wh_npc_expands, wh_bonus_expands, title_id, bonus_title_id,
-					world_id, x, y, z, heading
-				FROM players
-				WHERE id = ? AND account_id = ? AND (deletion_date IS NULL OR deletion_date > CURRENT_TIMESTAMP)
+					world_id, x, y, z, heading,
+					pa.face, pa.hair, pa.deco, pa.tattoo, pa.face_contour, pa.expression, pa.jaw_line,
+					pa.skin_rgb, pa.hair_rgb, pa.eye_rgb, pa.lip_rgb, pa.face_shape, pa.forehead, pa.eye_height,
+					pa.eye_space, pa.eye_width, pa.eye_size, pa.eye_shape, pa.eye_angle, pa.brow_height,
+					pa.brow_angle, pa.brow_shape, pa.nose, pa.nose_bridge, pa.nose_width, pa.nose_tip,
+					pa.cheek, pa.lip_height, pa.mouth_size, pa.lip_size, pa.smile, pa.lip_shape, pa.jaw_height,
+					pa.chin_jut, pa.ear_shape, pa.head_size, pa.neck, pa.neck_length, pa.shoulders,
+					pa.shoulder_size, pa.torso, pa.chest, pa.waist, pa.hips, pa.arm_thickness, pa.arm_length,
+					pa.hand_size, pa.leg_thickness, pa.leg_length, pa.foot_size, pa.facial_rate, pa.voice, pa.height
+				FROM players p
+				LEFT JOIN player_appearance pa ON pa.player_id = p.id
+				WHERE p.id = ? AND p.account_id = ? AND (p.deletion_date IS NULL OR p.deletion_date > CURRENT_TIMESTAMP)
 				""";
 			command.Parameters.AddRange(
 				new[]
@@ -237,6 +247,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				PlayerClass = ReadString(reader, "player_class"),
 				Race = ReadString(reader, "race"),
 				Gender = ReadString(reader, "gender"),
+				Appearance = ReadAppearance(reader),
 				Exp = reader.GetInt64(reader.GetOrdinal("exp")),
 				RecoverableExp = ReadLong(reader, "recoverexp"),
 				Dp = ReadInt(reader, "dp"),
@@ -356,6 +367,67 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			_logger.LogError(ex, "Could not save logout state for player {PlayerObjectId}", player.ObjectId);
 			return false;
 		}
+	}
+
+	private static CharacterAppearance ReadAppearance(MySqlDataReader reader)
+	{
+		// Java parity: dao/PlayerAppearanceDAO.loadPlayerAppearance.
+		return new CharacterAppearance
+		{
+			Face = ReadInt(reader, "face"),
+			Hair = ReadInt(reader, "hair"),
+			Deco = ReadInt(reader, "deco"),
+			Tattoo = ReadInt(reader, "tattoo"),
+			FaceContour = ReadInt(reader, "face_contour"),
+			Expression = ReadInt(reader, "expression"),
+			JawLine = ReadInt(reader, "jaw_line"),
+			SkinRgb = ReadInt(reader, "skin_rgb"),
+			HairRgb = ReadInt(reader, "hair_rgb"),
+			EyeRgb = ReadInt(reader, "eye_rgb"),
+			LipRgb = ReadInt(reader, "lip_rgb"),
+			FaceShape = ReadInt(reader, "face_shape"),
+			Forehead = ReadInt(reader, "forehead"),
+			EyeHeight = ReadInt(reader, "eye_height"),
+			EyeSpace = ReadInt(reader, "eye_space"),
+			EyeWidth = ReadInt(reader, "eye_width"),
+			EyeSize = ReadInt(reader, "eye_size"),
+			EyeShape = ReadInt(reader, "eye_shape"),
+			EyeAngle = ReadInt(reader, "eye_angle"),
+			BrowHeight = ReadInt(reader, "brow_height"),
+			BrowAngle = ReadInt(reader, "brow_angle"),
+			BrowShape = ReadInt(reader, "brow_shape"),
+			Nose = ReadInt(reader, "nose"),
+			NoseBridge = ReadInt(reader, "nose_bridge"),
+			NoseWidth = ReadInt(reader, "nose_width"),
+			NoseTip = ReadInt(reader, "nose_tip"),
+			Cheek = ReadInt(reader, "cheek"),
+			LipHeight = ReadInt(reader, "lip_height"),
+			MouthSize = ReadInt(reader, "mouth_size"),
+			LipSize = ReadInt(reader, "lip_size"),
+			Smile = ReadInt(reader, "smile"),
+			LipShape = ReadInt(reader, "lip_shape"),
+			JawHeight = ReadInt(reader, "jaw_height"),
+			ChinJut = ReadInt(reader, "chin_jut"),
+			EarShape = ReadInt(reader, "ear_shape"),
+			HeadSize = ReadInt(reader, "head_size"),
+			Neck = ReadInt(reader, "neck"),
+			NeckLength = ReadInt(reader, "neck_length"),
+			Shoulders = ReadInt(reader, "shoulders"),
+			ShoulderSize = ReadInt(reader, "shoulder_size"),
+			Torso = ReadInt(reader, "torso"),
+			Chest = ReadInt(reader, "chest"),
+			Waist = ReadInt(reader, "waist"),
+			Hips = ReadInt(reader, "hips"),
+			ArmThickness = ReadInt(reader, "arm_thickness"),
+			ArmLength = ReadInt(reader, "arm_length"),
+			HandSize = ReadInt(reader, "hand_size"),
+			LegThickness = ReadInt(reader, "leg_thickness"),
+			LegLength = ReadInt(reader, "leg_length"),
+			FootSize = ReadInt(reader, "foot_size"),
+			FacialRate = ReadInt(reader, "facial_rate"),
+			Voice = ReadInt(reader, "voice"),
+			Height = ReadFloat(reader, "height"),
+		};
 	}
 
 	private static async Task SavePlayerLifeStatsAsync(MySqlConnection connection, int playerObjectId, PlayerLifeStats lifeStats, CancellationToken cancellationToken)
@@ -1440,6 +1512,12 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	{
 		var ordinal = reader.GetOrdinal(column);
 		return reader.IsDBNull(ordinal) ? 0 : Convert.ToInt64(reader.GetValue(ordinal));
+	}
+
+	private static float ReadFloat(MySqlDataReader reader, string column)
+	{
+		var ordinal = reader.GetOrdinal(column);
+		return reader.IsDBNull(ordinal) ? 0 : Convert.ToSingle(reader.GetValue(ordinal));
 	}
 
 	private static int? ReadNullableInt(MySqlDataReader reader, string column)
