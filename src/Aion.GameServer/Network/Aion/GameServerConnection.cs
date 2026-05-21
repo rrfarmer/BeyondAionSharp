@@ -1270,6 +1270,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private static PlayerFriend CreateFriendSnapshot(Player player)
 	{
 		// Java parity: model/gameobjects/player/Friend constructed from PlayerCommonData with an empty memo.
+		var activeHouse = GetActiveHouse(player);
 		return new PlayerFriend(
 			player.ObjectId,
 			player.Name,
@@ -1280,12 +1281,15 @@ public sealed class GameServerConnection : BaseClientConnection
 			player.FriendListStatus == 0 ? player.LastOnline : null,
 			string.Empty,
 			string.Empty,
-			player.FriendListStatus != 0 || player.IsOnline);
+			player.FriendListStatus != 0 || player.IsOnline,
+			activeHouse?.AddressId ?? 0,
+			activeHouse?.DoorState ?? 0);
 	}
 
 	private static PlayerFriend? UpdateFriendSnapshot(Player friendPlayer, Player activePlayer, byte activeStatus)
 	{
 		// Java parity: friendPlayer.getFriendList().getFriend(activePlayerId).setPCD(activePlayer.getCommonData()).
+		var activeHouse = GetActiveHouse(activePlayer);
 		PlayerFriend? updatedFriend = null;
 		friendPlayer.Friends = friendPlayer.Friends
 			.Select(friend =>
@@ -1301,12 +1305,20 @@ public sealed class GameServerConnection : BaseClientConnection
 					MapId = activePlayer.Position.WorldId,
 					LastOnline = activeStatus == 0 ? activePlayer.LastOnline : null,
 					IsOnline = activeStatus != 0,
+					HouseAddressId = activeHouse?.AddressId ?? 0,
+					HouseDoorState = activeHouse?.DoorState ?? 0,
 				};
 				return updatedFriend;
 			})
 			.ToArray();
 
 		return updatedFriend;
+	}
+
+	private static PlayerHouse? GetActiveHouse(Player player)
+	{
+		// Java parity: services/HousingService.findActiveHouse prefers the loaded studio, otherwise the non-inactive custom house.
+		return player.Houses.FirstOrDefault(house => !house.IsInactive);
 	}
 
 	private static string GetRealCharacterName(string name)

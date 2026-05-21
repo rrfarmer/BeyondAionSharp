@@ -1218,7 +1218,21 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			command.CommandText = """
 				SELECT
 					f.friend, f.memo,
-					p.name, p.exp, p.player_class, p.gender, p.world_id, p.last_online, p.note, p.online
+					p.name, p.exp, p.player_class, p.gender, p.world_id, p.last_online, p.note, p.online,
+					(
+						SELECT h.address
+						FROM houses h
+						WHERE h.player_id = p.id
+						ORDER BY CASE WHEN h.address IN (2001, 3001) THEN 0 ELSE 1 END, h.acquire_time, h.address
+						LIMIT 1
+					) AS house_address,
+					(
+						SELECT h.settings
+						FROM houses h
+						WHERE h.player_id = p.id
+						ORDER BY CASE WHEN h.address IN (2001, 3001) THEN 0 ELSE 1 END, h.acquire_time, h.address
+						LIMIT 1
+					) AS house_settings
 				FROM friends f
 				JOIN players p ON p.id = f.friend
 				WHERE f.player = ?
@@ -1230,6 +1244,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			await using var reader = await command.ExecuteReaderAsync(cancellationToken);
 			while (await reader.ReadAsync(cancellationToken))
 			{
+				var houseAddressId = ReadInt(reader, "house_address");
 				friends.Add(
 					new PlayerFriend(
 						ReadInt(reader, "friend"),
@@ -1241,7 +1256,11 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 						ReadDateTime(reader, "last_online"),
 						ReadString(reader, "note"),
 						ReadString(reader, "memo"),
-						ReadBoolean(reader, "online")));
+						ReadBoolean(reader, "online"),
+						houseAddressId,
+						houseAddressId == 0
+							? (byte)0
+							: PlayerHouse.GetDoorStateFromSettings(ReadInt(reader, "house_settings"))));
 			}
 
 			return friends;

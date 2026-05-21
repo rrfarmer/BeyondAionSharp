@@ -826,7 +826,21 @@ public class GamePacketTests
 
 		var friendListPayload = SerializeUnencryptedPayload(
 			new SmFriendList(
-				[new PlayerFriend(44, "Friend", 1000, "RANGER", "FEMALE", 210010000, null, "note", "memo", false)],
+				[
+					new PlayerFriend(
+						44,
+						"Friend",
+						1000,
+						"RANGER",
+						"FEMALE",
+						210010000,
+						null,
+						"note",
+						"memo",
+						false,
+						700100,
+						PlayerHouse.DoorClosedExceptFriends),
+				],
 				new PlayerExperienceTable([0, 1000, 3000])));
 		using var friendListReader = new PacketBuffer(friendListPayload);
 		Assert.Equal(65535, friendListReader.ReadH());
@@ -840,8 +854,8 @@ public class GamePacketTests
 		Assert.Equal(0, friendListReader.ReadD());
 		Assert.Equal("note", friendListReader.ReadS());
 		Assert.Equal(0, (int)friendListReader.ReadC());
-		Assert.Equal(0, friendListReader.ReadD());
-		Assert.Equal(0, (int)friendListReader.ReadC());
+		Assert.Equal(700100, friendListReader.ReadD());
+		Assert.Equal(PlayerHouse.DoorClosedExceptFriends, (byte)friendListReader.ReadC());
 		Assert.Equal("memo", friendListReader.ReadS());
 		Assert.Equal(0, friendListReader.Remaining);
 

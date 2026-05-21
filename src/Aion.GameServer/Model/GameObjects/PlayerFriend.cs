@@ -10,4 +10,6 @@ public sealed record PlayerFriend(
 	DateTime? LastOnline,
 	string Note,
 	string Memo,
-	bool IsOnline);
+	bool IsOnline,
+	int HouseAddressId = 0,
+	byte HouseDoorState = 0);

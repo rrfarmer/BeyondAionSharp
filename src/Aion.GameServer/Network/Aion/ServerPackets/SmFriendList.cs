@@ -36,8 +36,8 @@ public sealed class SmFriendList : GameServerPacket
 			buffer.WriteD(isOnline ? 0 : ToEpochSeconds(friend.LastOnline));
 			buffer.WriteS(friend.Note);
 			buffer.WriteC(isOnline ? 1 : 0);
-			buffer.WriteD(0);
-			buffer.WriteC(0);
+			buffer.WriteD(friend.HouseAddressId);
+			buffer.WriteC(friend.HouseDoorState);
 			buffer.WriteS(friend.Memo);
 		}
 	}
