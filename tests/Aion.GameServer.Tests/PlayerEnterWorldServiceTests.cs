@@ -154,6 +154,32 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.False(world.TryGetObject(1001, out _));
 	}
 
+	[Fact]
+	public async Task LeaveWorld_RemovesPlayerFromWorldAndPersistsLogoutState()
+	{
+		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
+		player.IsOnline = true;
+		player.Position = new WorldPosition(210010000, 11, 22, 33, 44);
+		player.Mailbox =
+		[
+			new PlayerMail(1, player.ObjectId, "Sender", "Title", "Message", true, 0, 0, 0, 0, DateTime.Now),
+			new PlayerMail(2, player.ObjectId, "Sender", "Title", "Message", false, 0, 0, 0, 1, DateTime.Now),
+		];
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var world = CreateWorld();
+		world.TryAddObject(player.ObjectId, player);
+		var service = CreateService(repository, world);
+
+		await service.LeaveWorldAsync(player);
+
+		Assert.False(player.IsOnline);
+		Assert.NotNull(player.LastOnline);
+		Assert.False(world.TryGetObject(player.ObjectId, out _));
+		Assert.Equal(1, repository.SaveLogoutCalls);
+		Assert.Same(player, repository.SavedLogoutPlayer);
+		Assert.Equal(player.LastOnline, repository.LogoutLastOnline);
+	}
+
 	private static PlayerEnterWorldService CreateService(CapturingEnterWorldRepository repository, GameWorld world)
 	{
 		return new PlayerEnterWorldService(
@@ -289,6 +315,12 @@ public sealed class PlayerEnterWorldServiceTests
 		public int MarkOnlineCalls { get; private set; }
 
 		public DateTime? LastOnline { get; private set; }
+
+		public int SaveLogoutCalls { get; private set; }
+
+		public Player? SavedLogoutPlayer { get; private set; }
+
+		public DateTime? LogoutLastOnline { get; private set; }
 
 		public Task<Player?> LoadPlayerAsync(int accountId, int playerObjectId, CancellationToken cancellationToken = default)
 		{
@@ -438,6 +470,14 @@ public sealed class PlayerEnterWorldServiceTests
 			MarkOnlineCalls++;
 			LastOnline = lastOnline;
 			return Task.FromResult(MarkOnlineResult);
+		}
+
+		public Task<bool> SavePlayerLogoutAsync(Player player, DateTime lastOnline, CancellationToken cancellationToken = default)
+		{
+			SaveLogoutCalls++;
+			SavedLogoutPlayer = player;
+			LogoutLastOnline = lastOnline;
+			return Task.FromResult(true);
 		}
 	}
 }

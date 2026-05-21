@@ -57,6 +57,8 @@ public interface IPlayerEnterWorldRepository
 	Task<PlayerBindPoint?> LoadPlayerBindPointAsync(int playerObjectId, CancellationToken cancellationToken = default);
 
 	Task<bool> MarkPlayerOnlineAsync(int playerObjectId, DateTime lastOnline, CancellationToken cancellationToken = default);
+
+	Task<bool> SavePlayerLogoutAsync(Player player, DateTime lastOnline, CancellationToken cancellationToken = default);
 }
 
 public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepository
@@ -185,6 +187,11 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	{
 		return Task.FromResult(false);
 	}
+
+	public Task<bool> SavePlayerLogoutAsync(Player player, DateTime lastOnline, CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(false);
+	}
 }
 
 public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepository
@@ -290,6 +297,57 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not mark player {PlayerObjectId} online", playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SavePlayerLogoutAsync(Player player, DateTime lastOnline, CancellationToken cancellationToken = default)
+	{
+		// Java parity: services/player/PlayerLeaveWorldService.leaveWorld -> PlayerService.storePlayer,
+		// PlayerDAO.storeLastOnlineTime, then PlayerDAO.onlinePlayer(false).
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = """
+				UPDATE players
+				SET exp = ?, recoverexp = ?, x = ?, y = ?, z = ?, heading = ?, world_id = ?,
+					quest_expands = ?, npc_expands = ?, item_expands = ?, wh_npc_expands = ?, wh_bonus_expands = ?,
+					title_id = ?, bonus_title_id = ?, dp = ?, mailbox_letters = ?, reposte_energy = ?,
+					last_online = ?, online = ?
+				WHERE id = ?
+				""";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = player.Exp },
+					new MySqlParameter { Value = player.RecoverableExp },
+					new MySqlParameter { Value = player.Position.X },
+					new MySqlParameter { Value = player.Position.Y },
+					new MySqlParameter { Value = player.Position.Z },
+					new MySqlParameter { Value = player.Position.Heading },
+					new MySqlParameter { Value = player.Position.WorldId },
+					new MySqlParameter { Value = player.QuestExpands },
+					new MySqlParameter { Value = player.NpcExpands },
+					new MySqlParameter { Value = player.ItemExpands },
+					new MySqlParameter { Value = player.WarehouseNpcExpands },
+					new MySqlParameter { Value = player.WarehouseBonusExpands },
+					new MySqlParameter { Value = player.TitleId },
+					new MySqlParameter { Value = player.BonusTitleId },
+					new MySqlParameter { Value = player.Dp },
+					new MySqlParameter { Value = player.Mailbox.Count },
+					new MySqlParameter { Value = player.ReposeEnergy },
+					new MySqlParameter { Value = lastOnline },
+					new MySqlParameter { Value = false },
+					new MySqlParameter { Value = player.ObjectId },
+				});
+
+			return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save logout state for player {PlayerObjectId}", player.ObjectId);
 			return false;
 		}
 	}

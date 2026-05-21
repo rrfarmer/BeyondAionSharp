@@ -186,6 +186,11 @@ public sealed class GameServerConnection : BaseClientConnection
 			{
 				await DismissPostmanAsync(_activePlayer, notifyClient: false);
 				_connectionRegistry?.UnregisterPlayerConnection(_activePlayer.ObjectId, this);
+				if (_playerEnterWorldService != null)
+					await _playerEnterWorldService.LeaveWorldAsync(_activePlayer);
+				else
+					_world?.TryRemoveObject(_activePlayer.ObjectId, out _);
+				_activePlayer = null;
 			}
 
 			await NotifyAccountDisconnectedAsync();

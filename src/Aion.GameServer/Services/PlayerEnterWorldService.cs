@@ -110,6 +110,20 @@ public sealed class PlayerEnterWorldService
 		}
 	}
 
+	public async Task LeaveWorldAsync(Player player, CancellationToken cancellationToken = default)
+	{
+		// Java parity: services/player/PlayerLeaveWorldService.leaveWorld baseline persistence.
+		var lastOnline = DateTime.Now;
+		player.IsOnline = false;
+		player.LastOnline = lastOnline;
+		_world.TryRemoveObject(player.ObjectId, out _);
+		var saved = await _repository.SavePlayerLogoutAsync(player, lastOnline, cancellationToken);
+		if (saved)
+			_logger.LogInformation("Player {PlayerName} ({PlayerObjectId}) logged off", player.Name, player.ObjectId);
+		else
+			_logger.LogWarning("Player {PlayerName} ({PlayerObjectId}) logout state was not fully persisted", player.Name, player.ObjectId);
+	}
+
 	private bool IsInsideReentryWindow(DateTime? lastOnline)
 	{
 		// Java parity: PlayerEnterWorldService lastOnline vs GSConfig.CHARACTER_REENTRY_TIME check.
