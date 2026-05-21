@@ -3545,6 +3545,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				await SendPacketAsync(SmSystemMessage.WeaponBoostEnded());
 				player.SetCreatureState(PlayerCreatureState.Powershard, enabled: false);
 				break;
+			case EmotionType.Emote:
+				if (!CanUseEmotion(player, packet.Emotion))
+					return;
+				break;
 		}
 
 		var targetObjectId = player.TargetObjectId != 0 ? player.TargetObjectId : packet.TargetObjectId;
@@ -3566,7 +3570,17 @@ public sealed class GameServerConnection : BaseClientConnection
 			or EmotionType.Walk
 			or EmotionType.Run
 			or EmotionType.PowershardOn
-			or EmotionType.PowershardOff;
+			or EmotionType.PowershardOff
+			or EmotionType.Emote;
+	}
+
+	private static bool CanUseEmotion(Player player, int emotionId)
+	{
+		// Java parity: model/gameobjects/player/emotion/EmotionList.canUse plus EmotionLearnAction 4.8 id ranges.
+		// TODO Phase 6: replace the learned-emotion range shortcut once EmotionLearnAction static data is parsed.
+		return emotionId is >= 1 and <= 35
+			|| emotionId > 10000
+			|| player.Emotions.Any(emotion => emotion.Id == emotionId);
 	}
 
 	private async Task BroadcastEmotionAsync(Player player, SmEmotion packet)

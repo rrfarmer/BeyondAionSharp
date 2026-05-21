@@ -304,6 +304,14 @@ public class GamePacketTests
 					44,
 					0)));
 		Assert.Equal(
+			Convert.FromHexString("E903000015000000000000591B0000650001"),
+			SerializeUnencryptedPayload(
+				new SmEmotion(
+					new Player { ObjectId = 1001 },
+					EmotionType.Emote,
+					101,
+					7001)));
+		Assert.Equal(
 			Convert.FromHexString("646464"),
 			SerializeUnencryptedPayload(new SmPrices()));
 		Assert.Equal(
