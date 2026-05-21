@@ -64,6 +64,35 @@ public sealed class IdianPolishServiceTests
 	}
 
 	[Fact]
+	public void CreatePolishPlan_RejectsUnidentifiedTarget()
+	{
+		var itemTemplates = new ItemTemplateTable(
+		[
+			CreateTemplate(100, level: 20, itemGroup: "SWORD", mask: 1 << 17),
+			CreateTemplate(600, level: 10, polishSetId: 12),
+		]);
+		var randomBonuses = new ItemRandomBonusTable([]);
+
+		var plan = IdianPolishService.CreatePolishPlan(
+			CreateItem(600, objectId: 10),
+			CreateItem(100, objectId: 20, tuneCount: -1),
+			itemTemplates,
+			randomBonuses);
+
+		Assert.Equal(IdianPolishResult.NeedIdentify, plan.Result);
+		Assert.Null(plan.SourceItemUpdate);
+		Assert.False(plan.DeleteSourceItem);
+		Assert.Null(plan.TargetItemUpdate);
+	}
+
+	[Fact]
+	public void InventoryItem_IsIdentifiedFollowsJavaTuneCount()
+	{
+		Assert.False(CreateItem(100, objectId: 20, tuneCount: -1).IsIdentified);
+		Assert.True(CreateItem(100, objectId: 20, tuneCount: 0).IsIdentified);
+	}
+
+	[Fact]
 	public void DecreasePolishCharge_MatchesJavaThresholdAndExhaustionUpdates()
 	{
 		var template = CreateTemplate(100, level: 20, itemGroup: "SWORD", mask: 1 << 17, idianInfo: new ItemIdianInfo(60_000, 12));
@@ -107,7 +136,7 @@ public sealed class IdianPolishServiceTests
 			IdianInfo: idianInfo);
 	}
 
-	private static InventoryItem CreateItem(int itemId, int objectId, long count = 1, int polishCharge = 0)
+	private static InventoryItem CreateItem(int itemId, int objectId, long count = 1, int polishCharge = 0, int tuneCount = 0)
 	{
 		var item = new InventoryItem
 		{
@@ -115,6 +144,7 @@ public sealed class IdianPolishServiceTests
 			ItemId = itemId,
 			Count = count,
 			Location = 0,
+			TuneCount = tuneCount,
 		};
 		if (polishCharge > 0)
 			item.IdianStone = new PlayerIdianStone(600, 1, polishCharge);

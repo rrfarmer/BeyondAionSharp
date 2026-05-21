@@ -283,8 +283,8 @@ public sealed class SmInventoryInfo : GameServerPacket
 		payload.WriteC(item.IsSoulBound ? 1 : 0);
 		payload.WriteC(item.Enchant);
 		payload.WriteD(item.ItemSkin == 0 ? item.ItemId : item.ItemSkin);
-		payload.WriteC(item.OptionalSocket);
-		payload.WriteC(item.EnchantBonus);
+		payload.WriteC(item.IsIdentified ? item.OptionalSocket : -1);
+		payload.WriteC(item.IsIdentified ? item.EnchantBonus : -1);
 		WriteStoneSlots(payload, item.ManaStones);
 		payload.WriteD(item.Godstone?.ItemId ?? 0);
 		var dyeExpiration = GetRemainingSeconds(item.ColorExpires);
@@ -344,8 +344,8 @@ public sealed class SmInventoryInfo : GameServerPacket
 			payload =>
 			{
 				// Java parity: network/aion/iteminfo/PremiumOptionInfoBlobEntry.writeThisBlob.
-				payload.WriteC(item.RandomBonus);
-				payload.WriteC(item.TuneCount);
+				payload.WriteC(item.IsIdentified ? item.RandomBonus : -1);
+				payload.WriteC(item.IsIdentified ? item.TuneCount : 0);
 				payload.WriteC(0);
 			});
 	}

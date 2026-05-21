@@ -1355,6 +1355,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				case IdianPolishResult.WrongLevel:
 					await SendPacketAsync(SmSystemMessage.PolishWrongLevel());
 					break;
+				case IdianPolishResult.NeedIdentify:
+					await SendPacketAsync(SmSystemMessage.PolishNeedIdentify());
+					break;
 			}
 			return;
 		}

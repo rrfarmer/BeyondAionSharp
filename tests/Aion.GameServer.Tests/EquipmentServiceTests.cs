@@ -336,6 +336,23 @@ public sealed class EquipmentServiceTests
 		Assert.Empty(change.InventoryUpdateItems);
 	}
 
+	[Fact]
+	public void ChangeEquipment_RejectsUnidentifiedItemAfterJavaEquipGuards()
+	{
+		var player = CreatePlayer();
+		player.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 1001, ItemId = SwordId, Location = 0, Slot = 65535, TuneCount = -1 },
+		];
+
+		var change = EquipmentService.ChangeEquipment(player, action: 0, slotRead: 1, itemObjectId: 1001, CreateItemTemplates(), skillTemplates: null);
+
+		Assert.False(change.Changed);
+		Assert.Equal(EquipmentChangeFailure.UnidentifiedItem, change.Failure);
+		Assert.Empty(change.PersistedItems);
+		Assert.Empty(change.InventoryUpdateItems);
+	}
+
 	private static Player CreatePlayer(
 		string playerClass = "WARRIOR",
 		string race = "ELYOS",

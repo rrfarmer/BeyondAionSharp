@@ -72,6 +72,9 @@ public static class EquipmentService
 		if (!HasRequiredEquipSkill(player, template))
 			return EquipmentChangeResult.MissingRequiredSkillFailure();
 
+		if (!item.IsIdentified)
+			return EquipmentChangeResult.UnidentifiedItemFailure();
+
 		var updates = new List<InventoryItem>();
 		var persisted = new List<InventoryItem>();
 		foreach (var unequipped in UnEquipSlots(inventoryItems, GetUnequipSlots(inventoryItems, slot, itemTemplates)))
@@ -423,6 +426,7 @@ public enum EquipmentChangeFailure
 	InvalidGender,
 	InvalidRank,
 	MissingRequiredSkill,
+	UnidentifiedItem,
 }
 
 public sealed record EquipmentChangeResult(
@@ -499,6 +503,12 @@ public sealed record EquipmentChangeResult(
 	public static EquipmentChangeResult MissingRequiredSkillFailure()
 	{
 		return NoChange() with { Failure = EquipmentChangeFailure.MissingRequiredSkill };
+	}
+
+	public static EquipmentChangeResult UnidentifiedItemFailure()
+	{
+		// Java parity: model/gameobjects/player/Equipment.equip logs and silently rejects unidentified items.
+		return NoChange() with { Failure = EquipmentChangeFailure.UnidentifiedItem };
 	}
 
 	public static EquipmentChangeResult Success(

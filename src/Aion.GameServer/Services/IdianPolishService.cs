@@ -30,7 +30,10 @@ public static class IdianPolishService
 		if (sourceTemplate.Level > targetTemplate.Level)
 			return IdianPolishPlan.Failed(IdianPolishResult.WrongLevel, sourceTemplate, targetTemplate);
 
-		// Java also checks targetItem.isIdentified() and !player.isInAttackMode(); those flags are not modeled in the C# player/item state yet.
+		if (!targetItem.IsIdentified)
+			return IdianPolishPlan.Failed(IdianPolishResult.NeedIdentify, sourceTemplate, targetTemplate);
+
+		// Java also checks !player.isInAttackMode(); that player mode is not modeled in the C# player state yet.
 		if (!targetTemplate.IsWeapon || !targetTemplate.CanPolish)
 			return IdianPolishPlan.Failed(IdianPolishResult.InvalidTarget, sourceTemplate, targetTemplate);
 
@@ -137,6 +140,7 @@ public enum IdianPolishResult
 	Success,
 	NotPolishItem,
 	WrongLevel,
+	NeedIdentify,
 	InvalidTarget,
 	NoRandomBonus,
 }

@@ -44,6 +44,9 @@ public sealed class InventoryItem
 
 	public int TuneCount { get; init; }
 
+	// Java parity: model/gameobjects/Item.isIdentified.
+	public bool IsIdentified => TuneCount != -1;
+
 	public int RandomBonus { get; init; }
 
 	public int FusionRandomBonus { get; init; }
