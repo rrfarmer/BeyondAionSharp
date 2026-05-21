@@ -1303,7 +1303,13 @@ public sealed class GameServerConnection : BaseClientConnection
 
 	private async Task HandleManastoneAsync(Player player, CmManastone packet)
 	{
-		// Java parity: network/aion/clientpackets/CM_MANASTONE.runImpl stigma branch.
+		// Java parity: network/aion/clientpackets/CM_MANASTONE.runImpl action routing.
+		if (packet.ActionType == 3)
+		{
+			await HandleRemoveManastoneAsync(player, packet);
+			return;
+		}
+
 		if (packet.ActionType is not (1 or 2))
 			return;
 
@@ -1403,6 +1409,63 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		if (targetItem.IsEquipped)
 			await SendPacketAsync(CreateStatsInfoPacket(player, staticData));
+	}
+
+	private async Task HandleRemoveManastoneAsync(Player player, CmManastone packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_MANASTONE.runImpl actionType 3 + services/item/ItemSocketService.removeManastone.
+		if (packet.NpcObjectId == 0 || player.TargetObjectId != packet.NpcObjectId)
+			return;
+
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var itemTemplates = staticData?.ItemTemplates;
+		if (itemTemplates == null)
+			return;
+
+		var plan = ItemSocketService.CreateRemoveManastonePlan(
+			player,
+			packet.TargetItemObjectId,
+			packet.SlotNumber,
+			isFusionSocket: packet.TargetFusedSlot != 1,
+			itemTemplates);
+		if (!plan.Succeeded)
+		{
+			await SendPacketAsync(CreateRemoveManastoneFailureMessage(plan));
+			return;
+		}
+
+		if (plan.ItemUpdate == null || plan.KinahItemUpdate == null)
+			return;
+
+		var saved = _playerEnterWorldService == null
+			|| await _playerEnterWorldService.SaveManastoneRemovalMutationAsync(
+				player,
+				plan.ItemUpdate.ObjectId,
+				plan.RemovedSlot,
+				plan.RemovedCategory,
+				plan.KinahItemUpdate);
+		if (!saved)
+			return;
+
+		player.InventoryItems = plan.InventoryItems;
+		if (itemTemplates.GetItemTemplate(KinahItemId) is { } kinahTemplate)
+			await SendPacketAsync(new SmInventoryUpdateItem(plan.KinahItemUpdate, kinahTemplate, SmInventoryUpdateItem.DecreaseKinahBuy));
+
+		await SendPacketAsync(SmSystemMessage.RemoveItemOptionSucceed(plan.ItemName));
+		if (itemTemplates.GetItemTemplate(plan.ItemUpdate.ItemId) is { } itemTemplate)
+			await SendPacketAsync(new SmInventoryUpdateItem(plan.ItemUpdate, itemTemplate, updateType: 0));
+	}
+
+	private static SmSystemMessage CreateRemoveManastoneFailureMessage(ManastoneRemovalPlan plan)
+	{
+		return plan.Failure switch
+		{
+			ManastoneRemovalFailure.NoTargetItem => SmSystemMessage.RemoveItemOptionNoTargetItem(),
+			ManastoneRemovalFailure.NoOptionToRemove => SmSystemMessage.RemoveItemOptionNoOptionToRemove(plan.ItemName),
+			ManastoneRemovalFailure.InvalidSlot => SmSystemMessage.RemoveItemOptionInvalidSlot(plan.ItemName),
+			ManastoneRemovalFailure.NotEnoughKinah => SmSystemMessage.RemoveItemOptionNotEnoughGold(plan.ItemName),
+			_ => SmSystemMessage.RemoveItemOptionNoTargetItem(),
+		};
 	}
 
 	private async Task StartSoulBindRequestAsync(Player player, EquipmentChangeResult change)

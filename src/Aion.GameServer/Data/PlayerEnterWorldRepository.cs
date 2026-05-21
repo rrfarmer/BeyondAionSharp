@@ -104,6 +104,14 @@ public interface IPlayerEnterWorldRepository
 		int? deletedSourceItemObjectId,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveManastoneRemovalMutationAsync(
+		int playerObjectId,
+		int itemObjectId,
+		int slot,
+		int category,
+		InventoryItem kinahItemUpdate,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SaveEquipmentMutationAsync(
 		int playerObjectId,
 		IReadOnlyList<InventoryItem> items,
@@ -301,6 +309,17 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		int? deletedTargetItemObjectId,
 		InventoryItem? sourceItemUpdate,
 		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> SaveManastoneRemovalMutationAsync(
+		int playerObjectId,
+		int itemObjectId,
+		int slot,
+		int category,
+		InventoryItem kinahItemUpdate,
 		CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(true);
@@ -748,6 +767,51 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not save stigma charge mutation for player {PlayerObjectId}", playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SaveManastoneRemovalMutationAsync(
+		int playerObjectId,
+		int itemObjectId,
+		int slot,
+		int category,
+		InventoryItem kinahItemUpdate,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: services/item/ItemSocketService.removeManastone -> dao/ItemStoneListDAO.store* delete plus Storage.tryDecreaseKinah.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			if (!await InventoryItemExistsAsync(connection, transaction, playerObjectId, itemObjectId, cancellationToken))
+				return false;
+
+			await using (var stoneCommand = connection.CreateCommand())
+			{
+				stoneCommand.Transaction = transaction;
+				stoneCommand.CommandText = "DELETE FROM item_stones WHERE item_unique_id = ? AND slot = ? AND category = ?";
+				stoneCommand.Parameters.AddRange(
+					new[]
+					{
+						new MySqlParameter { Value = itemObjectId },
+						new MySqlParameter { Value = slot },
+						new MySqlParameter { Value = category },
+					});
+				await stoneCommand.ExecuteNonQueryAsync(cancellationToken);
+			}
+
+			if (!await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, kinahItemUpdate, cancellationToken))
+				return false;
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save manastone removal mutation for player {PlayerObjectId}", playerObjectId);
 			return false;
 		}
 	}

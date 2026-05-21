@@ -668,6 +668,17 @@ public sealed class PlayerEnterWorldServiceTests
 			return Task.FromResult(true);
 		}
 
+		public Task<bool> SaveManastoneRemovalMutationAsync(
+			int playerObjectId,
+			int itemObjectId,
+			int slot,
+			int category,
+			InventoryItem kinahItemUpdate,
+			CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult(true);
+		}
+
 		public Task<bool> SaveEquipmentMutationAsync(
 			int playerObjectId,
 			IReadOnlyList<InventoryItem> items,

@@ -221,6 +221,36 @@ public sealed class SmSystemMessage : GameServerPacket
 			secondSkillName);
 	}
 
+	public static SmSystemMessage RemoveItemOptionNoTargetItem()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_REMOVE_ITEM_OPTION_NO_TARGET_ITEM.
+		return new SmSystemMessage(1300468);
+	}
+
+	public static SmSystemMessage RemoveItemOptionNoOptionToRemove(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_REMOVE_ITEM_OPTION_NO_OPTION_TO_REMOVE.
+		return new SmSystemMessage(1300470, itemName);
+	}
+
+	public static SmSystemMessage RemoveItemOptionInvalidSlot(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_REMOVE_ITEM_OPTION_INVALID_OPTION_SLOT_NUMBER.
+		return new SmSystemMessage(1300471, itemName);
+	}
+
+	public static SmSystemMessage RemoveItemOptionNotEnoughGold(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_REMOVE_ITEM_OPTION_NOT_ENOUGH_GOLD.
+		return new SmSystemMessage(1300472, itemName);
+	}
+
+	public static SmSystemMessage RemoveItemOptionSucceed(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_REMOVE_ITEM_OPTION_SUCCEED.
+		return new SmSystemMessage(1300473, itemName);
+	}
+
 	public static SmSystemMessage ExchangeFullInventory()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_EXCHANGE_FULL_INVENTORY.

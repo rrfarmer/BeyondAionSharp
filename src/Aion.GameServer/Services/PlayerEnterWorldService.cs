@@ -240,6 +240,24 @@ public sealed class PlayerEnterWorldService
 			cancellationToken);
 	}
 
+	public Task<bool> SaveManastoneRemovalMutationAsync(
+		Player player,
+		int itemObjectId,
+		int slot,
+		int category,
+		InventoryItem kinahItemUpdate,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: services/item/ItemSocketService.removeManastone persistence side effects.
+		return _repository.SaveManastoneRemovalMutationAsync(
+			player.ObjectId,
+			itemObjectId,
+			slot,
+			category,
+			kinahItemUpdate,
+			cancellationToken);
+	}
+
 	public Task<bool> SaveEquipmentMutationAsync(
 		Player player,
 		IReadOnlyList<InventoryItem> items,
