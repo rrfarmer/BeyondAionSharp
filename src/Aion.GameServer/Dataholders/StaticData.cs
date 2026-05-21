@@ -351,6 +351,7 @@ public sealed class StaticData
 					ReadIntAttribute(reader, "max_enchant"),
 					ReadIntAttribute(reader, "max_enchant_bonus"),
 					ReadBoolAttribute(reader, "can_exceed_enchant"),
+					reader.GetAttribute("exceed_enchant_skill") ?? string.Empty,
 					ReadIntAttribute(reader, "option_slot_bonus"),
 					ReadIntAttribute(reader, "rnd_bonus"),
 					ReadOptionalIntAttribute(reader, "rnd_count", -1),
@@ -1254,6 +1255,7 @@ public sealed class StaticData
 			int maxEnchantLevel,
 			int maxEnchantBonus,
 			bool canExceedEnchant,
+			string exceedEnchantSkill,
 			int optionSlotBonus,
 			int randomBonusId,
 			int maxTuneCount,
@@ -1283,6 +1285,7 @@ public sealed class StaticData
 			EnchantType = enchantType;
 			MaxEnchantLevel = maxEnchantLevel;
 			CanExceedEnchant = canExceedEnchant;
+			ExceedEnchantSkill = exceedEnchantSkill;
 			StatBonusSetId = randomBonusId;
 			EnchantName = enchantName;
 			TemperingName = temperingName;
@@ -1335,6 +1338,8 @@ public sealed class StaticData
 		private int MaxEnchantLevel { get; }
 
 		private bool CanExceedEnchant { get; }
+
+		private string ExceedEnchantSkill { get; }
 
 		private int StatBonusSetId { get; }
 
@@ -1449,6 +1454,7 @@ public sealed class StaticData
 				CanExceedEnchant,
 				ManastoneSlots,
 				SpecialManastoneSlots,
+				ExceedEnchantSkill,
 				EnchantAction);
 		}
 

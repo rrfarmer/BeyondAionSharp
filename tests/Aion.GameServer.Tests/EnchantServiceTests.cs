@@ -352,6 +352,35 @@ public sealed class EnchantServiceTests
 	}
 
 	[Fact]
+	public void CreateEnchantItemPlan_AddsExceedBuffSkillAtTwentyWhenEquipped()
+	{
+		var player = CreatePlayer(
+			CreateItem(1001, SwordItemId, enchant: 19, isAmplified: true, isEquipped: true),
+			CreateItem(2001, OmegaEnchantStoneItemId));
+
+		var plan = EnchantService.CreateEnchantItemPlan(
+			player,
+			targetItemObjectId: 1001,
+			enchantmentStoneObjectId: 2001,
+			CreateItemTemplates(),
+			enchantmentStoneAmplifiedChances: [100f, 100f],
+			rollPercent: () => 0,
+			criticalRollPercent: () => 99,
+			rollBuffSkillIndex: _ => 1);
+
+		Assert.True(plan.Succeeded);
+		Assert.True(plan.EnchantSucceeded);
+		Assert.Equal(20, plan.TargetItemUpdate?.Enchant);
+		Assert.Equal(13006, plan.TargetItemUpdate?.BuffSkill);
+		Assert.Equal(13006, plan.EnchantBuffSkillId);
+		var addedSkill = Assert.Single(plan.AddedBuffSkills);
+		Assert.Equal(13006, addedSkill.SkillId);
+		Assert.Equal(1, addedSkill.SkillLevel);
+		Assert.Equal(0, addedSkill.SkillType);
+		Assert.Contains(plan.Skills, skill => skill.SkillId == 13006);
+	}
+
+	[Fact]
 	public void CreateEnchantItemPlan_FailureDowngradesAndConsumesTuneCount()
 	{
 		var player = CreatePlayer(
@@ -371,6 +400,33 @@ public sealed class EnchantServiceTests
 		Assert.Equal(10, plan.TargetItemUpdate?.Enchant);
 		Assert.Equal(1, plan.TargetItemUpdate?.TuneCount);
 		Assert.Equal(2001, plan.DeletedSourceItemObjectId);
+	}
+
+	[Fact]
+	public void CreateEnchantItemPlan_RemovesExceedBuffSkillWhenAmplifiedFailureDropsBelowTwenty()
+	{
+		var player = CreatePlayer(
+			CreateItem(1001, SwordItemId, enchant: 20, isAmplified: true, isEquipped: true, buffSkill: 13006),
+			CreateItem(2001, OmegaEnchantStoneItemId));
+		player.Skills = [new PlayerSkill { SkillId = 13006, SkillLevel = 1, SkillType = 0 }];
+
+		var plan = EnchantService.CreateEnchantItemPlan(
+			player,
+			targetItemObjectId: 1001,
+			enchantmentStoneObjectId: 2001,
+			CreateItemTemplates(),
+			enchantmentStoneAmplifiedChances: [0f, 0f],
+			rollPercent: () => 99);
+
+		Assert.True(plan.Succeeded);
+		Assert.False(plan.EnchantSucceeded);
+		Assert.Equal(15, plan.TargetItemUpdate?.Enchant);
+		Assert.False(plan.TargetItemUpdate?.IsAmplified);
+		Assert.Equal(0, plan.TargetItemUpdate?.BuffSkill);
+		var removedSkill = Assert.Single(plan.RemovedBuffSkills);
+		Assert.Equal(13006, removedSkill.SkillId);
+		Assert.Empty(plan.AddedBuffSkills);
+		Assert.DoesNotContain(plan.Skills, skill => skill.SkillId == 13006);
 	}
 
 	[Fact]
@@ -481,6 +537,8 @@ public sealed class EnchantServiceTests
 		long count = 1,
 		int enchant = 0,
 		bool isAmplified = false,
+		bool isEquipped = false,
+		int buffSkill = 0,
 		IReadOnlyList<ItemStoneSocket>? manaStones = null)
 	{
 		var item = new InventoryItem
@@ -491,6 +549,8 @@ public sealed class EnchantServiceTests
 			Location = 0,
 			Enchant = enchant,
 			IsAmplified = isAmplified,
+			IsEquipped = isEquipped,
+			BuffSkill = buffSkill,
 		};
 		item.ManaStones = manaStones ?? Array.Empty<ItemStoneSocket>();
 		return item;
@@ -517,7 +577,8 @@ public sealed class EnchantServiceTests
 				CanExceedEnchant: true,
 				MaxTuneCount: 1,
 				ManastoneSlots: 4,
-				SpecialManastoneSlots: 1),
+				SpecialManastoneSlots: 1,
+				ExceedEnchantSkill: "RANK1_SET2_PHYSICAL_WEAPON"),
 			new ItemTemplateSummary(
 				PlainSwordItemId,
 				"Circulus' Sword",

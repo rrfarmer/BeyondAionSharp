@@ -1507,6 +1507,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		player.InventoryItems = plan.InventoryItems;
+		if (plan.AddedBuffSkills.Count > 0 || plan.RemovedBuffSkills.Count > 0)
+			player.Skills = plan.Skills;
 		foreach (var supplementUpdate in plan.SupplementItemUpdates)
 		{
 			var supplementTemplate = itemTemplates.GetItemTemplate(supplementUpdate.ItemId);
@@ -1517,9 +1519,21 @@ public sealed class GameServerConnection : BaseClientConnection
 			await SendPacketAsync(new SmDeleteItem(deletedSupplementItemObjectId, SmDeleteItem.UseDeleteType));
 		await SendItemUseMutationAsync(plan.SourceItemUpdate, plan.DeletedSourceItemObjectId, sourceTemplate);
 
+		foreach (var removedSkill in plan.RemovedBuffSkills)
+			await SendPacketAsync(new SmSkillRemove(removedSkill));
+		foreach (var addedSkill in plan.AddedBuffSkills)
+			await SendPacketAsync(new SmSkillList([addedSkill], 1300050));
+
 		if (plan.EnchantSucceeded)
 		{
 			await SendPacketAsync(SmSystemMessage.EnchantItemSucceedNew(plan.ItemName, plan.NewEnchantLevel));
+			if (plan.EnchantBuffSkillId != 0)
+			{
+				var skillTemplate = staticData.SkillTemplates.GetSkillTemplate(plan.EnchantBuffSkillId);
+				var skillName = skillTemplate?.GetClientName() ?? skillTemplate?.Name ?? plan.EnchantBuffSkillId.ToString();
+				await SendPacketAsync(SmSystemMessage.ExceedSkillEnchant(plan.ItemName, plan.NewEnchantLevel, skillName));
+			}
+
 			if (_options.Custom.EnableEnchantAnnounce && _connectionRegistry != null && plan.NewEnchantLevel is 15 or 20)
 			{
 				var announce = plan.NewEnchantLevel == 15

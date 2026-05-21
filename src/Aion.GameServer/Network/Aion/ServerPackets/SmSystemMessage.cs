@@ -211,6 +211,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1402657, itemName);
 	}
 
+	public static SmSystemMessage ExceedSkillEnchant(string itemName, int enchantLevel, string skillName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_EXCEED_SKILL_ENCHANT.
+		return new SmSystemMessage(1402662, itemName, enchantLevel.ToString(System.Globalization.CultureInfo.InvariantCulture), skillName);
+	}
+
 	public static SmSystemMessage EnchantType1EnchantFail(string itemName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ENCHANT_TYPE1_ENCHANT_FAIL.

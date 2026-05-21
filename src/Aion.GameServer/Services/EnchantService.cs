@@ -21,6 +21,128 @@ public static class EnchantService
 	private const string ManastoneItemGroup = "MANASTONE";
 	private const string SpecialManastoneItemGroup = "SPECIAL_MANASTONE";
 
+	private static readonly IReadOnlyDictionary<string, int[]> ExceedEnchantBuffSkillsBySet =
+		new Dictionary<string, int[]>(StringComparer.Ordinal)
+		{
+			// Java parity: services/EnchantService.getEquipBuff switch over ExceedEnchantSkillSetType.
+			["RANK1_SET1_MAGICAL_GLOVES"] = [13042, 13046, 13055],
+			["RANK1_SET1_MAGICAL_PANTS"] = [13071, 13075, 13078],
+			["RANK1_SET1_MAGICAL_SHOES"] = [13108, 13118, 13121],
+			["RANK1_SET1_MAGICAL_SHOULDER"] = [13104, 13097, 13098],
+			["RANK1_SET1_MAGICAL_TORSO"] = [13128, 13132, 13144],
+			["RANK1_SET1_MAGICAL_WEAPON"] = [13011, 13012, 13027],
+			["RANK1_SET1_PHYSICAL_GLOVES"] = [13042, 13046, 13055],
+			["RANK1_SET1_PHYSICAL_PANTS"] = [13071, 13075, 13078],
+			["RANK1_SET1_PHYSICAL_SHOES"] = [13108, 13118, 13121],
+			["RANK1_SET1_PHYSICAL_SHOULDER"] = [13104, 13097, 13098],
+			["RANK1_SET1_PHYSICAL_TORSO"] = [13128, 13132, 13144],
+			["RANK1_SET1_PHYSICAL_WEAPON"] = [13011, 13012, 13027],
+			["RANK1_SET2_MAGICAL_GLOVES"] = [13046, 13058, 13056],
+			["RANK1_SET2_MAGICAL_PANTS"] = [13075, 13061, 13067],
+			["RANK1_SET2_MAGICAL_SHOES"] = [13121, 13114, 13119],
+			["RANK1_SET2_MAGICAL_SHOULDER"] = [13104, 13094, 13192],
+			["RANK1_SET2_MAGICAL_TORSO"] = [13144, 13135, 13133],
+			["RANK1_SET2_MAGICAL_WEAPON"] = [13029, 13003, 13023],
+			["RANK1_SET2_PHYSICAL_GLOVES"] = [13046, 13058, 13056],
+			["RANK1_SET2_PHYSICAL_PANTS"] = [13075, 13064, 13069],
+			["RANK1_SET2_PHYSICAL_SHOES"] = [13121, 13114, 13119],
+			["RANK1_SET2_PHYSICAL_SHOULDER"] = [13104, 13094, 13192],
+			["RANK1_SET2_PHYSICAL_TORSO"] = [13144, 13135, 13133],
+			["RANK1_SET2_PHYSICAL_WEAPON"] = [13029, 13006, 13023],
+			["RANK1_SET3_MAGICAL_WEAPON"] = [13031, 13022, 13026],
+			["RANK1_SET3_PHYSICAL_WEAPON"] = [13031, 13022, 13026],
+			["RANK2_SET1_MAGICAL_GLOVES"] = [13050, 13047, 13057],
+			["RANK2_SET1_MAGICAL_PANTS"] = [13072, 13075, 13068],
+			["RANK2_SET1_MAGICAL_SHOES"] = [13125, 13122, 13120],
+			["RANK2_SET1_MAGICAL_SHOULDER"] = [13088, 13105, 13193],
+			["RANK2_SET1_MAGICAL_TORSO"] = [13139, 13145, 13134],
+			["RANK2_SET1_MAGICAL_WEAPON"] = [13008, 13010, 13024],
+			["RANK2_SET1_PHYSICAL_GLOVES"] = [13050, 13047, 13057],
+			["RANK2_SET1_PHYSICAL_PANTS"] = [13072, 13075, 13070],
+			["RANK2_SET1_PHYSICAL_SHOES"] = [13125, 13122, 13120],
+			["RANK2_SET1_PHYSICAL_SHOULDER"] = [13091, 13105, 13193],
+			["RANK2_SET1_PHYSICAL_TORSO"] = [13139, 13145, 13134],
+			["RANK2_SET1_PHYSICAL_WEAPON"] = [13008, 13010, 13024],
+			["RANK2_SET2_MAGICAL_GLOVES"] = [13050, 13043, 13059],
+			["RANK2_SET2_MAGICAL_PANTS"] = [13072, 13078, 13062],
+			["RANK2_SET2_MAGICAL_SHOES"] = [13125, 13109, 13115],
+			["RANK2_SET2_MAGICAL_SHOULDER"] = [13088, 13099, 13095],
+			["RANK2_SET2_MAGICAL_TORSO"] = [13139, 13129, 13136],
+			["RANK2_SET2_MAGICAL_WEAPON"] = [13010, 13032, 13004],
+			["RANK2_SET2_PHYSICAL_GLOVES"] = [13050, 13043, 13059],
+			["RANK2_SET2_PHYSICAL_PANTS"] = [13072, 13078, 13065],
+			["RANK2_SET2_PHYSICAL_SHOES"] = [13125, 13109, 13115],
+			["RANK2_SET2_PHYSICAL_SHOULDER"] = [13091, 13099, 13095],
+			["RANK2_SET2_PHYSICAL_TORSO"] = [13139, 13129, 13136],
+			["RANK2_SET2_PHYSICAL_WEAPON"] = [13010, 13032, 13007],
+			["RANK2_SET3_MAGICAL_WEAPON"] = [13008, 13013, 13030],
+			["RANK2_SET3_PHYSICAL_WEAPON"] = [13008, 13013, 13030],
+			["RANK3_SET1_MAGICAL_GLOVES"] = [13038, 13051, 13060],
+			["RANK3_SET1_MAGICAL_PANTS"] = [13080, 13073, 13063],
+			["RANK3_SET1_MAGICAL_SHOES"] = [13112, 13126, 13116],
+			["RANK3_SET1_MAGICAL_SHOULDER"] = [13082, 13089, 13096],
+			["RANK3_SET1_MAGICAL_TORSO"] = [13142, 13140, 13137],
+			["RANK3_SET1_MAGICAL_WEAPON"] = [13034, 13018, 13009],
+			["RANK3_SET1_PHYSICAL_GLOVES"] = [13040, 13051, 13060],
+			["RANK3_SET1_PHYSICAL_PANTS"] = [13080, 13073, 13066],
+			["RANK3_SET1_PHYSICAL_SHOES"] = [13112, 13126, 13116],
+			["RANK3_SET1_PHYSICAL_SHOULDER"] = [13084, 13092, 13096],
+			["RANK3_SET1_PHYSICAL_TORSO"] = [13142, 13140, 13137],
+			["RANK3_SET1_PHYSICAL_WEAPON"] = [13036, 13020, 13009],
+			["RANK3_SET2_MAGICAL_GLOVES"] = [13038, 13048, 13044],
+			["RANK3_SET2_MAGICAL_PANTS"] = [13080, 13076, 13079],
+			["RANK3_SET2_MAGICAL_SHOES"] = [13112, 13123, 13110],
+			["RANK3_SET2_MAGICAL_SHOULDER"] = [13082, 13106, 13100],
+			["RANK3_SET2_MAGICAL_TORSO"] = [13142, 13146, 13130],
+			["RANK3_SET2_MAGICAL_WEAPON"] = [13034, 13014, 13025],
+			["RANK3_SET2_PHYSICAL_GLOVES"] = [13040, 13048, 13044],
+			["RANK3_SET2_PHYSICAL_PANTS"] = [13080, 13076, 13079],
+			["RANK3_SET2_PHYSICAL_SHOES"] = [13112, 13123, 13110],
+			["RANK3_SET2_PHYSICAL_SHOULDER"] = [13084, 13106, 13100],
+			["RANK3_SET2_PHYSICAL_TORSO"] = [13142, 13146, 13130],
+			["RANK3_SET2_PHYSICAL_WEAPON"] = [13036, 13014, 13025],
+			["RANK3_SET3_MAGICAL_WEAPON"] = [13018, 13014, 13033],
+			["RANK3_SET3_PHYSICAL_WEAPON"] = [13020, 13014, 13033],
+			["RANK4_SET1_MAGICAL_GLOVES"] = [13053, 13039, 13045],
+			["RANK4_SET1_MAGICAL_PANTS"] = [13077, 13081, 13079],
+			["RANK4_SET1_MAGICAL_SHOES"] = [13117, 13113, 13111],
+			["RANK4_SET1_MAGICAL_SHOULDER"] = [13086, 13083, 13101],
+			["RANK4_SET1_MAGICAL_TORSO"] = [13138, 13143, 13131],
+			["RANK4_SET1_MAGICAL_WEAPON"] = [13015, 13028, 13017],
+			["RANK4_SET1_PHYSICAL_GLOVES"] = [13054, 13041, 13045],
+			["RANK4_SET1_PHYSICAL_PANTS"] = [13077, 13081, 13079],
+			["RANK4_SET1_PHYSICAL_SHOES"] = [13117, 13113, 13111],
+			["RANK4_SET1_PHYSICAL_SHOULDER"] = [13087, 13085, 13101],
+			["RANK4_SET1_PHYSICAL_TORSO"] = [13138, 13143, 13131],
+			["RANK4_SET1_PHYSICAL_WEAPON"] = [13016, 13028, 13017],
+			["RANK4_SET2_MAGICAL_GLOVES"] = [13053, 13052, 13049],
+			["RANK4_SET2_MAGICAL_PANTS"] = [13077, 13074, 13076],
+			["RANK4_SET2_MAGICAL_SHOES"] = [13117, 13127, 13124],
+			["RANK4_SET2_MAGICAL_SHOULDER"] = [13086, 13090, 13107],
+			["RANK4_SET2_MAGICAL_TORSO"] = [13138, 13141, 13147],
+			["RANK4_SET2_MAGICAL_WEAPON"] = [13019, 13017, 13005],
+			["RANK4_SET2_PHYSICAL_GLOVES"] = [13054, 13052, 13049],
+			["RANK4_SET2_PHYSICAL_PANTS"] = [13077, 13074, 13076],
+			["RANK4_SET2_PHYSICAL_SHOES"] = [13117, 13127, 13124],
+			["RANK4_SET2_PHYSICAL_SHOULDER"] = [13087, 13093, 13107],
+			["RANK4_SET2_PHYSICAL_TORSO"] = [13138, 13141, 13147],
+			["RANK4_SET2_PHYSICAL_WEAPON"] = [13021, 13017, 13005],
+			["RANK4_SET3_MAGICAL_WEAPON"] = [13035, 13001, 13005],
+			["RANK4_SET3_PHYSICAL_WEAPON"] = [13037, 13001, 13005],
+			["RANK5_SET1_MAGICAL_TORSO"] = [13235, 13236, 13238],
+			["RANK5_SET1_MAGICAL_GLOVES"] = [13248, 13253, 13251],
+			["RANK5_SET1_MAGICAL_PANTS"] = [13241, 13079, 13240],
+			["RANK5_SET1_MAGICAL_SHOULDER"] = [13269, 13279, 13247],
+			["RANK5_SET1_MAGICAL_SHOES"] = [13245, 13266, 13246],
+			["RANK5_SET1_MAGICAL_WEAPON"] = [13228, 13234, 13231],
+			["RANK5_SET1_PHYSICAL_TORSO"] = [13235, 13236, 13238],
+			["RANK5_SET1_PHYSICAL_GLOVES"] = [13251, 13249, 13248],
+			["RANK5_SET1_PHYSICAL_SHOULDER"] = [13270, 13247, 13269],
+			["RANK5_SET1_PHYSICAL_PANTS"] = [13241, 13079, 13240],
+			["RANK5_SET1_PHYSICAL_SHOES"] = [13245, 13244, 13266],
+			["RANK5_SET1_PHYSICAL_WEAPON"] = [13229, 13234, 13231],
+		};
+
 	public static EnchantItemPlan CreateEnchantItemPlan(
 		Player player,
 		int targetItemObjectId,
@@ -30,7 +152,8 @@ public static class EnchantService
 		IReadOnlyList<float>? enchantmentStoneBaseChances = null,
 		IReadOnlyList<float>? enchantmentStoneAmplifiedChances = null,
 		Func<double>? rollPercent = null,
-		Func<double>? criticalRollPercent = null)
+		Func<double>? criticalRollPercent = null,
+		Func<int, int>? rollBuffSkillIndex = null)
 	{
 		// Java parity: services/EnchantService.enchantItem + enchantItemAct.
 		var inventoryItems = player.InventoryItems.ToList();
@@ -124,10 +247,18 @@ public static class EnchantService
 		}
 
 		var enchantCap = isAmplified ? MaxEnchantLevel : maxEnchant;
+		var newEnchantLevel = Math.Min(currentEnchant, enchantCap);
+		var buffSkillMutation = CreateEnchantBuffSkillMutation(
+			player,
+			targetItem,
+			targetTemplate,
+			newEnchantLevel,
+			rollBuffSkillIndex);
 		var targetItemUpdate = CopyInventoryItem(
 			targetItem,
-			enchant: Math.Min(currentEnchant, enchantCap),
-			isAmplified: isAmplified);
+			enchant: newEnchantLevel,
+			isAmplified: isAmplified,
+			buffSkill: buffSkillMutation.BuffSkillId);
 		int? deletedTargetItemObjectId = null;
 		var targetDestroyed = false;
 		if (!enchantSucceeded && targetTemplate.EnchantType > 0)
@@ -168,7 +299,11 @@ public static class EnchantService
 			enchantSucceeded,
 			targetDestroyed,
 			targetItem.IsEquipped && !targetDestroyed,
-			Math.Min(currentEnchant, enchantCap));
+			buffSkillMutation.Skills,
+			buffSkillMutation.AddedSkills,
+			buffSkillMutation.RemovedSkills,
+			newEnchantLevel,
+			buffSkillMutation.EnchantBuffSkillId);
 	}
 
 	public static ManastoneSocketPlan CreateSocketManastonePlan(
@@ -329,6 +464,92 @@ public static class EnchantService
 			materialMutation.DeletedObjectId,
 			toolMutation.UpdatedItem,
 			toolMutation.DeletedObjectId);
+	}
+
+	private static EnchantBuffSkillMutation CreateEnchantBuffSkillMutation(
+		Player player,
+		InventoryItem targetItem,
+		ItemTemplateSummary targetTemplate,
+		int enchantLevel,
+		Func<int, int>? rollBuffSkillIndex)
+	{
+		// Java parity: services/EnchantService.setEnchantLevel.
+		var oldBuffId = targetItem.BuffSkill;
+		var newBuffId = enchantLevel >= 20 ? GetEquipBuff(targetTemplate, rollBuffSkillIndex) : 0;
+		var skills = player.Skills.ToList();
+		var addedSkills = new List<PlayerSkill>();
+		var removedSkills = new List<PlayerSkill>();
+
+		if (newBuffId != oldBuffId && targetItem.IsEquipped)
+		{
+			if (oldBuffId != 0)
+			{
+				var removedSkill = RemoveSkill(skills, oldBuffId);
+				if (removedSkill != null)
+					removedSkills.Add(removedSkill);
+			}
+
+			if (newBuffId != 0)
+			{
+				var addedSkill = AddOrUpgradeTemporarySkill(skills, newBuffId, skillLevel: 1, skillType: 0);
+				if (addedSkill != null)
+					addedSkills.Add(addedSkill);
+			}
+		}
+
+		return new EnchantBuffSkillMutation(
+			newBuffId,
+			newBuffId,
+			skills.AsReadOnly(),
+			addedSkills.AsReadOnly(),
+			removedSkills.AsReadOnly());
+	}
+
+	private static int GetEquipBuff(ItemTemplateSummary targetTemplate, Func<int, int>? rollBuffSkillIndex)
+	{
+		// Java parity: services/EnchantService.getEquipBuff.
+		var skills = ExceedEnchantBuffSkillsBySet.GetValueOrDefault(targetTemplate.ExceedEnchantSkill) ?? [0];
+		var index = rollBuffSkillIndex?.Invoke(skills.Length) ?? Random.Shared.Next(skills.Length);
+		index = Math.Clamp(index, 0, skills.Length - 1);
+		return skills[index];
+	}
+
+	private static PlayerSkill? AddOrUpgradeTemporarySkill(List<PlayerSkill> skills, int skillId, int skillLevel, int skillType)
+	{
+		// Java parity: services/SkillLearnService.learnTemporarySkill.
+		var existingIndex = skills.FindIndex(skill => skill.SkillId == skillId);
+		if (existingIndex >= 0)
+		{
+			var existing = skills[existingIndex];
+			if (skillLevel <= existing.SkillLevel)
+				return null;
+
+			var upgraded = new PlayerSkill
+			{
+				SkillId = existing.SkillId,
+				SkillLevel = skillLevel,
+				SkillType = skillType,
+				CurrentXp = existing.CurrentXp,
+			};
+			skills[existingIndex] = upgraded;
+			return upgraded;
+		}
+
+		var added = new PlayerSkill { SkillId = skillId, SkillLevel = skillLevel, SkillType = skillType };
+		skills.Add(added);
+		return added;
+	}
+
+	private static PlayerSkill? RemoveSkill(List<PlayerSkill> skills, int skillId)
+	{
+		// Java parity: services/SkillLearnService.removeSkill.
+		var existingIndex = skills.FindIndex(skill => skill.SkillId == skillId);
+		if (existingIndex < 0)
+			return null;
+
+		var removed = skills[existingIndex];
+		skills.RemoveAt(existingIndex);
+		return removed;
 	}
 
 	private static InventoryItem? FindCubeItem(IReadOnlyList<InventoryItem> inventoryItems, int objectId)
@@ -706,6 +927,13 @@ public static class EnchantService
 		public static SupplementCountMutation Empty { get; } = new(Array.Empty<InventoryItem>(), Array.Empty<int>());
 	}
 
+	private sealed record EnchantBuffSkillMutation(
+		int BuffSkillId,
+		int EnchantBuffSkillId,
+		IReadOnlyList<PlayerSkill> Skills,
+		IReadOnlyList<PlayerSkill> AddedSkills,
+		IReadOnlyList<PlayerSkill> RemovedSkills);
+
 	private sealed record EnchantmentStoneInfo(EnchantmentStoneKind Kind, int BaseLevel, int BaseQualityId)
 	{
 		private static readonly EnchantmentStoneInfo Alpha = new(EnchantmentStoneKind.Alpha, 20, 2);
@@ -774,7 +1002,11 @@ public sealed record EnchantItemPlan(
 	bool EnchantSucceeded,
 	bool TargetDestroyed,
 	bool RefreshStats,
-	int NewEnchantLevel)
+	IReadOnlyList<PlayerSkill> Skills,
+	IReadOnlyList<PlayerSkill> AddedBuffSkills,
+	IReadOnlyList<PlayerSkill> RemovedBuffSkills,
+	int NewEnchantLevel,
+	int EnchantBuffSkillId)
 {
 	public bool Succeeded => Failure == EnchantItemFailure.None;
 
@@ -794,7 +1026,11 @@ public sealed record EnchantItemPlan(
 			EnchantSucceeded: false,
 			TargetDestroyed: false,
 			RefreshStats: false,
-			NewEnchantLevel: 0);
+			Skills: Array.Empty<PlayerSkill>(),
+			AddedBuffSkills: Array.Empty<PlayerSkill>(),
+			RemovedBuffSkills: Array.Empty<PlayerSkill>(),
+			NewEnchantLevel: 0,
+			EnchantBuffSkillId: 0);
 	}
 }
 

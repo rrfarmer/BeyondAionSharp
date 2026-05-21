@@ -68,6 +68,7 @@ public sealed record ItemTemplateSummary(
 	bool CanExceedEnchant = false,
 	int ManastoneSlots = 0,
 	int SpecialManastoneSlots = 0,
+	string ExceedEnchantSkill = "",
 	ItemEnchantActionInfo? EnchantAction = null)
 {
 	private const int CanPolishMask = 1 << 17;
