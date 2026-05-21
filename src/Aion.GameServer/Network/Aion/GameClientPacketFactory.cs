@@ -49,6 +49,7 @@ public static class GameClientPacketFactory
 		Register(136, states => new CmGetMailAttachment(136, states), GameConnectionState.InGame);
 		Register(137, states => new CmDeleteMail(137, states), GameConnectionState.InGame);
 		Register(139, states => new CmTitleSet(139, states), GameConnectionState.InGame);
+		Register(146, states => new CmRejectRevive(146, states), GameConnectionState.InGame);
 		Register(147, states => new CmHeadingUpdate(147, states), GameConnectionState.InGame);
 		Register(149, states => new CmL2AuthLoginCheck(149, states), GameConnectionState.Connected);
 		Register(150, states => new CmCharacterList(150, states), GameConnectionState.Authed);

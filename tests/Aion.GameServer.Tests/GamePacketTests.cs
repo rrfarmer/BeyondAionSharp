@@ -2041,6 +2041,8 @@ public class GamePacketTests
 	[Fact]
 	public void ClientPacketFactory_ParsesMovementPackets()
 	{
+		Assert.IsType<CmRejectRevive>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(146, _ => { }), GameConnectionState.InGame));
 		var headingUpdate = Assert.IsType<CmHeadingUpdate>(
 			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(147, b => b.WriteC(88)), GameConnectionState.InGame));
 		var move = Assert.IsType<CmMove>(
@@ -2113,6 +2115,7 @@ public class GamePacketTests
 		Assert.Equal(16, (int)moveInAir.Heading);
 		Assert.Equal(900, moveInAir.Distance);
 		Assert.Equal(88, (int)headingUpdate.Heading);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(146, _ => { }), GameConnectionState.Authed));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(48, b => b.WriteF(1)), GameConnectionState.Authed));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(49, b => b.WriteD(1)), GameConnectionState.Authed));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(147, b => b.WriteC(1)), GameConnectionState.Authed));

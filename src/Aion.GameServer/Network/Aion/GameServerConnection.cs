@@ -288,6 +288,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleLevelReadyAsync(_activePlayer);
 				break;
+			case CmRejectRevive:
+				// Java parity: network/aion/clientpackets/CM_REJECT_REVIVE.runImpl has no side effect.
+				break;
 			case CmHeadingUpdate:
 				// Java parity: network/aion/clientpackets/CM_HEADING_UPDATE.runImpl has no side effect.
 				break;
