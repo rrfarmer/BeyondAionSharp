@@ -278,7 +278,49 @@ public sealed class EquipmentServiceTests
 		Assert.Equal(EquipmentChangeFailure.InvalidGender, change.Failure);
 	}
 
-	private static Player CreatePlayer(string playerClass = "WARRIOR", string race = "ELYOS", string gender = "MALE", long exp = 0)
+	[Fact]
+	public void ChangeEquipment_RejectsItemForInvalidAbyssRank()
+	{
+		var player = CreatePlayer(rank: 1);
+		player.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 1001, ItemId = RestrictedSwordId, Location = 0, Slot = 65535 },
+		];
+
+		var change = EquipmentService.ChangeEquipment(
+			player,
+			action: 0,
+			slotRead: 1,
+			itemObjectId: 1001,
+			CreateItemTemplates(new ItemTemplateSummary(
+				RestrictedSwordId,
+				"Abyss Sword",
+				0,
+				1,
+				1,
+				"SWORD",
+				"NORMAL",
+				"COMMON",
+				"PC_ALL",
+				1,
+				0,
+				3,
+				RequiredLevels: RequiredLevels(1),
+				MinRank: 5,
+				MaxRank: 9)),
+			skillTemplates: null);
+
+		Assert.False(change.Changed);
+		Assert.Equal(EquipmentChangeFailure.InvalidRank, change.Failure);
+		Assert.Equal(PlayerAbyssRank.GetRankL10n("ELYOS", 5), change.RankName);
+	}
+
+	private static Player CreatePlayer(
+		string playerClass = "WARRIOR",
+		string race = "ELYOS",
+		string gender = "MALE",
+		long exp = 0,
+		int rank = 1)
 	{
 		return new Player
 		{
@@ -290,6 +332,7 @@ public sealed class EquipmentServiceTests
 			Gender = gender,
 			Exp = exp,
 			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			AbyssRank = PlayerAbyssRank.Default() with { Rank = rank, MaxRank = rank },
 		};
 	}
 

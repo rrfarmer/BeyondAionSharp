@@ -109,6 +109,9 @@ public static class EquipmentService
 		if (!template.IsGenderPermitted(player.Gender))
 			return EquipmentChangeResult.InvalidGenderFailure();
 
+		if (!template.VerifyRank(player.AbyssRank.Rank))
+			return EquipmentChangeResult.InvalidRankFailure(PlayerAbyssRank.GetRankL10n(player.Race, template.MinRank));
+
 		return null;
 	}
 
@@ -407,6 +410,7 @@ public enum EquipmentChangeFailure
 	TooHighLevel,
 	InvalidRace,
 	InvalidGender,
+	InvalidRank,
 }
 
 public sealed record EquipmentChangeResult(
@@ -420,6 +424,7 @@ public sealed record EquipmentChangeResult(
 	EquipmentChangeFailure Failure = EquipmentChangeFailure.None,
 	int RequiredLevel = 0,
 	int MaxLevel = 0,
+	string RankName = "",
 	string ItemName = "")
 {
 	public static EquipmentChangeResult NoChange()
@@ -472,6 +477,11 @@ public sealed record EquipmentChangeResult(
 	public static EquipmentChangeResult InvalidGenderFailure()
 	{
 		return NoChange() with { Failure = EquipmentChangeFailure.InvalidGender };
+	}
+
+	public static EquipmentChangeResult InvalidRankFailure(string rankName)
+	{
+		return NoChange() with { Failure = EquipmentChangeFailure.InvalidRank, RankName = rankName };
 	}
 
 	public static EquipmentChangeResult Success(

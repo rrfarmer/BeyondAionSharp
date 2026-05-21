@@ -528,6 +528,7 @@ public class GamePacketTests
 		Assert.Equal(0, systemMessageReader.Remaining);
 		AssertSystemMessage(SmSystemMessage.FullInventory(), 1300762);
 		AssertSystemMessage(SmSystemMessage.UiInventoryFull(), 1300042);
+		AssertSystemMessage(SmSystemMessage.CannotUseItemInvalidRank(PlayerAbyssRank.GetRankL10n("ELYOS", 5)), 1300370, PlayerAbyssRank.GetRankL10n("ELYOS", 5));
 		AssertSystemMessage(SmSystemMessage.CannotUseItemInvalidClass(), 1300371);
 		AssertSystemMessage(SmSystemMessage.CannotUseItemTooLowLevel("item", 10), 1300372, "10", "item");
 		AssertSystemMessage(SmSystemMessage.CannotUseItemInvalidRace(), 1300373);

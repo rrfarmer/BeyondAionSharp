@@ -179,6 +179,12 @@ public sealed record ItemTemplateSummary(
 			|| string.Equals(GenderPermitted, playerGender, StringComparison.Ordinal);
 	}
 
+	public bool VerifyRank(int rank)
+	{
+		// Java parity: model/templates/item/ItemUseLimits.verifyRank.
+		return MinRank <= rank && MaxRank >= rank;
+	}
+
 	public string? GetClientName()
 	{
 		// Java parity: model/templates/L10n.getL10n -> utils/ChatUtil.l10n.

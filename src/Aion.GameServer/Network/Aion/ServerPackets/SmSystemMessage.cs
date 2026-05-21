@@ -133,6 +133,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300042);
 	}
 
+	public static SmSystemMessage CannotUseItemInvalidRank(string rankName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_CANNOT_USE_ITEM_INVALID_RANK.
+		return new SmSystemMessage(1300370, rankName);
+	}
+
 	public static SmSystemMessage CannotUseItemInvalidClass()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_CANNOT_USE_ITEM_INVALID_CLASS.

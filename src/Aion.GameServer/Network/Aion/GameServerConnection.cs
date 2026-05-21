@@ -1314,6 +1314,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			case EquipmentChangeFailure.InvalidGender:
 				await SendPacketAsync(SmSystemMessage.CannotUseItemInvalidGender());
 				break;
+			case EquipmentChangeFailure.InvalidRank:
+				await SendPacketAsync(SmSystemMessage.CannotUseItemInvalidRank(change.RankName));
+				break;
 		}
 	}
 

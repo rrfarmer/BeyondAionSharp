@@ -56,6 +56,16 @@ public sealed record PlayerAbyssRank(
 		};
 	}
 
+	public static string GetRankL10n(string race, int rankId)
+	{
+		// Java parity: utils/stats/AbyssRankEnum.getRankL10n(Race, int) plus ChatUtil.l10n.
+		if (rankId is < 1 or > 18)
+			throw new ArgumentOutOfRangeException(nameof(rankId), "The given abyss rank is outside the Java rank enum.");
+
+		var rank9L10nId = string.Equals(race, "ELYOS", StringComparison.Ordinal) ? 901215 : 901233;
+		return ToClientL10n(rank9L10nId + rankId - 1);
+	}
+
 	private static AbyssRankDefinition GetRankForPoints(int ap, int gp)
 	{
 		var rankForPoints = AbyssRanks[0];
@@ -66,6 +76,12 @@ public sealed record PlayerAbyssRank(
 		}
 
 		return rankForPoints;
+	}
+
+	private static string ToClientL10n(int l10nId)
+	{
+		var shifted = (l10nId << 1) | 1;
+		return string.Concat("$", (char)(shifted & 0xffff), (char)((shifted >>> 16) & 0xffff));
 	}
 
 	private static readonly AbyssRankDefinition[] AbyssRanks =
