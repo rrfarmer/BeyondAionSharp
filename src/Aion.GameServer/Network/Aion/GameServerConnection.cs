@@ -1504,7 +1504,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			itemObjectId: packet.StoneObjectId,
 			itemTemplateId: sourceTemplate.TemplateId,
 			targetItemName: plan.ItemName,
-			isEnchantmentStone: true,
+			cancelMessage: PendingItemUseCancelMessage.EnchantItem,
 			delay: TimeSpan.FromMilliseconds(4000),
 			completeAsync: async cancellationToken =>
 			{
@@ -1623,7 +1623,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		int itemObjectId,
 		int itemTemplateId,
 		string targetItemName,
-		bool isEnchantmentStone,
+		PendingItemUseCancelMessage cancelMessage,
 		TimeSpan delay,
 		Func<CancellationToken, Task> completeAsync)
 	{
@@ -1658,7 +1658,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			itemObjectId,
 			itemTemplateId,
 			targetItemName,
-			isEnchantmentStone);
+			cancelMessage);
 	}
 
 	private async Task CancelPendingItemUseOnMoveAsync(Player player)
@@ -1678,9 +1678,12 @@ public sealed class GameServerConnection : BaseClientConnection
 				0,
 				3,
 				0));
-		await SendPacketAsync(pendingItemUse.IsEnchantmentStone
-			? SmSystemMessage.EnchantItemCanceled(pendingItemUse.TargetItemName)
-			: SmSystemMessage.GiveItemOptionCanceled(pendingItemUse.TargetItemName));
+		await SendPacketAsync(pendingItemUse.CancelMessage switch
+		{
+			PendingItemUseCancelMessage.EnchantItem => SmSystemMessage.EnchantItemCanceled(pendingItemUse.TargetItemName),
+			PendingItemUseCancelMessage.GodstoneSocket => SmSystemMessage.GiveItemProcCancel(pendingItemUse.TargetItemName),
+			_ => SmSystemMessage.GiveItemOptionCanceled(pendingItemUse.TargetItemName),
+		});
 	}
 
 	private async Task SendEnchantFailureMessageAsync(EnchantItemPlan plan)
@@ -1761,7 +1764,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			itemObjectId: packet.StoneObjectId,
 			itemTemplateId: sourceTemplate.TemplateId,
 			targetItemName: plan.ItemName,
-			isEnchantmentStone: false,
+			cancelMessage: PendingItemUseCancelMessage.ManastoneSocket,
 			delay: TimeSpan.FromMilliseconds(2000),
 			completeAsync: async cancellationToken =>
 			{
@@ -1879,12 +1882,40 @@ public sealed class GameServerConnection : BaseClientConnection
 				0,
 				0));
 
+		await SchedulePendingItemUseAsync(
+			player,
+			itemObjectId: packet.StoneObjectId,
+			itemTemplateId: sourceTemplate.TemplateId,
+			targetItemName: plan.ItemName,
+			cancelMessage: PendingItemUseCancelMessage.GodstoneSocket,
+			delay: TimeSpan.FromMilliseconds(2000),
+			completeAsync: async cancellationToken =>
+			{
+				if (cancellationToken.IsCancellationRequested)
+					return;
+
+				await CompleteSocketGodstoneAsync(player, packet.StoneObjectId, plan, sourceTemplate, itemTemplates, cancellationToken);
+			});
+	}
+
+	private async Task CompleteSocketGodstoneAsync(
+		Player player,
+		int stoneObjectId,
+		GodstoneSocketPlan plan,
+		ItemTemplateSummary sourceTemplate,
+		ItemTemplateTable itemTemplates,
+		CancellationToken cancellationToken)
+	{
+		if (plan.TargetItemUpdate == null)
+			return;
+
 		var saved = _playerEnterWorldService == null
 			|| await _playerEnterWorldService.SaveGodstoneSocketMutationAsync(
 				player,
 				plan.TargetItemUpdate,
 				plan.SourceItemUpdate,
-				plan.DeletedSourceItemObjectId);
+				plan.DeletedSourceItemObjectId,
+				cancellationToken);
 		if (!saved)
 			return;
 
@@ -1894,7 +1925,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			player,
 			new SmItemUsageAnimation(
 				player.ObjectId,
-				packet.StoneObjectId,
+				stoneObjectId,
 				sourceTemplate.TemplateId,
 				0,
 				1,
@@ -4781,5 +4812,12 @@ public sealed class GameServerConnection : BaseClientConnection
 		int ItemObjectId,
 		int ItemTemplateId,
 		string TargetItemName,
-		bool IsEnchantmentStone);
+		PendingItemUseCancelMessage CancelMessage);
+
+	private enum PendingItemUseCancelMessage
+	{
+		EnchantItem,
+		ManastoneSocket,
+		GodstoneSocket,
+	}
 }

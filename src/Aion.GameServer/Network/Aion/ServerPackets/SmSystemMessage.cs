@@ -401,6 +401,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300508, itemName);
 	}
 
+	public static SmSystemMessage GiveItemProcCancel(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_GIVE_PROC_CANCEL.
+		return new SmSystemMessage(1402238, itemName);
+	}
+
 	public static SmSystemMessage ExchangeFullInventory()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_EXCHANGE_FULL_INVENTORY.
