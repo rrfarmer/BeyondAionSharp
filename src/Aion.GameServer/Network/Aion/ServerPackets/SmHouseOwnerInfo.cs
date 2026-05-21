@@ -1,5 +1,6 @@
 using Aion.Commons.Network;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Services;
 
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 
@@ -11,16 +12,18 @@ public sealed class SmHouseOwnerInfo : GameServerPacket
 	private const int BiddingAllowed = 1 << 2;
 
 	private readonly Func<DateTime> _clock;
+	private readonly JavaCronSchedule? _auctionEndSchedule;
 	private readonly PlayerHouse? _activeHouse;
 	private readonly PlayerHouse? _inactiveHouse;
 	private readonly int _ownerState;
 	private readonly int _townLevel;
 
-	public SmHouseOwnerInfo(Player player, Func<DateTime>? clock = null)
+	public SmHouseOwnerInfo(Player player, Func<DateTime>? clock = null, JavaCronSchedule? auctionEndSchedule = null)
 		: base(PacketOpCode)
 	{
 		// Java parity: network/aion/serverpackets/SM_HOUSE_OWNER_INFO(Player).
 		_clock = clock ?? (() => DateTime.Now);
+		_auctionEndSchedule = auctionEndSchedule;
 		_activeHouse = player.Houses.FirstOrDefault(house => !house.IsInactive);
 		_inactiveHouse = player.Houses.FirstOrDefault(house => house.IsInactive);
 		_ownerState = _activeHouse == null
@@ -39,7 +42,7 @@ public sealed class SmHouseOwnerInfo : GameServerPacket
 		buffer.WriteD(CalculateWeeksUntilNextPay());
 		buffer.WriteD(_inactiveHouse?.AddressId ?? 0);
 		buffer.WriteD(_inactiveHouse?.BuildingId ?? 0);
-		buffer.WriteD(_inactiveHouse?.GetGraceSeconds(_clock) ?? 0);
+		buffer.WriteD(_inactiveHouse?.GetGraceSeconds(_clock, _auctionEndSchedule) ?? 0);
 	}
 
 	private int CalculateWeeksUntilNextPay()

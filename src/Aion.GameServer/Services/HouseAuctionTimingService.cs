@@ -17,6 +17,8 @@ public sealed class HouseAuctionTimingService
 		_timeProvider = timeProvider ?? TimeProvider.System;
 	}
 
+	public JavaCronSchedule AuctionEndSchedule => _auctionEndSchedule;
+
 	public bool IsBiddingTime(int houseObjectId)
 	{
 		// Java parity: services/HousingBidService.isBiddingTime.

@@ -727,7 +727,7 @@ public sealed class GameServerConnection : BaseClientConnection
 					}
 
 					// Java parity: services/HousingService.onPlayerLogin sends house owner profile info.
-					await SendPacketAsync(new SmHouseOwnerInfo(enterWorldResult.Player));
+					await SendPacketAsync(new SmHouseOwnerInfo(enterWorldResult.Player, auctionEndSchedule: _houseAuctionTiming.AuctionEndSchedule));
 				}
 				break;
 		}

@@ -737,7 +737,7 @@ public class GamePacketTests
 		Assert.Equal(3, houseReader.ReadD());
 		Assert.Equal(700200, houseReader.ReadD());
 		Assert.Equal(900200, houseReader.ReadD());
-		Assert.Equal(1209600, houseReader.ReadD());
+		Assert.Equal(871200, houseReader.ReadD());
 		Assert.Equal(0, houseReader.Remaining);
 
 		Assert.Equal(
