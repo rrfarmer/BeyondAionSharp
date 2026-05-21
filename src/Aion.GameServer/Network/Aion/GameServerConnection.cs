@@ -1,6 +1,7 @@
 using System.Buffers.Binary;
 using System.Net;
 using System.Net.Sockets;
+using System.Security.Cryptography;
 using Aion.Commons.Network;
 using Aion.Commons.Network.Server;
 using Aion.GameServer.Configuration;
@@ -63,6 +64,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private bool _accountDisconnectNotified;
 	private string _macAddress = string.Empty;
 	private string _hddSerial = string.Empty;
+	private string _securityToken = string.Empty;
 	private int _corruptPackets;
 	private DateTimeOffset? _lastPingTime;
 
@@ -312,6 +314,13 @@ public sealed class GameServerConnection : BaseClientConnection
 				break;
 			case CmChangeChannel:
 				// Java parity: network/aion/clientpackets/CM_CHANGE_CHANNEL.runImpl dispatches TeleportService.changeChannel; deferred until channel instances are ported.
+				break;
+			case CmSecurityToken:
+				if (_accountId != 0)
+				{
+					// Java parity: network/aion/clientpackets/CM_SECURITY_TOKEN.runImpl -> SecurityTokenService.generateToken + SM_SECURITY_TOKEN.
+					await SendPacketAsync(new SmSecurityToken(GetOrCreateSecurityToken()));
+				}
 				break;
 			case CmCheckPak:
 				// Java parity: network/aion/clientpackets/CM_CHECK_PAK.runImpl only audit-logs suspicious pak status; deferred until audit logging policy is ported.
@@ -1484,6 +1493,16 @@ public sealed class GameServerConnection : BaseClientConnection
 	private SmChatWindow CreateChatWindowPacket(Player target, bool isGroup)
 	{
 		return new SmChatWindow(target, isGroup, _runtimeContext?.DataManager?.StaticData.PlayerExperienceTable);
+	}
+
+	private string GetOrCreateSecurityToken()
+	{
+		// Java parity: services/player/SecurityTokenService.generateToken.
+		if (_securityToken.Length != 0)
+			return _securityToken;
+
+		_securityToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(16));
+		return _securityToken;
 	}
 
 	private PlayerExperienceTable? GetPlayerExperienceTable()

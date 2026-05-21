@@ -159,6 +159,9 @@ public class GamePacketTests
 			Convert.FromHexString("03000000010203"),
 			SerializeUnencryptedPayload(new SmChatInit([1, 2, 3])));
 		Assert.Equal(
+			Convert.FromHexString("00616263000000"),
+			SerializeUnencryptedPayload(new SmSecurityToken("abc")));
+		Assert.Equal(
 			Convert.FromHexString("03"),
 			SerializeUnencryptedPayload(new SmFriendStatus(3)));
 		Assert.Equal(
@@ -2199,6 +2202,8 @@ public class GamePacketTests
 	{
 		Assert.IsType<CmTeleportAnimationDone>(
 			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(15, _ => { }), GameConnectionState.InGame));
+		Assert.IsType<CmSecurityToken>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(92, _ => { }), GameConnectionState.Connected));
 		var checkPak = Assert.IsType<CmCheckPak>(
 			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(62, b =>
 			{
