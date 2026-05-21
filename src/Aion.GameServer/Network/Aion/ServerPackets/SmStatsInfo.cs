@@ -15,13 +15,15 @@ public sealed class SmStatsInfo : GameServerPacket
 	private readonly int _gameMinutes;
 	private readonly ItemTemplateTable? _itemTemplates;
 	private readonly ItemRandomBonusTable? _itemRandomBonuses;
+	private readonly ItemSetTable? _itemSets;
 
 	public SmStatsInfo(
 		Player player,
 		PlayerExperienceTable? experienceTable,
 		int gameMinutes,
 		ItemTemplateTable? itemTemplates = null,
-		ItemRandomBonusTable? itemRandomBonuses = null)
+		ItemRandomBonusTable? itemRandomBonuses = null,
+		ItemSetTable? itemSets = null)
 		: base(PacketOpCode)
 	{
 		// Java parity: network/aion/serverpackets/SM_STATS_INFO(Player).
@@ -30,12 +32,13 @@ public sealed class SmStatsInfo : GameServerPacket
 		_gameMinutes = gameMinutes;
 		_itemTemplates = itemTemplates;
 		_itemRandomBonuses = itemRandomBonuses;
+		_itemSets = itemSets;
 	}
 
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
 		// Java parity: SM_STATS_INFO.writeImpl. Full effects remain deferred, but equipped item template stats are applied when templates are loaded.
-		var context = PlayerStatsContext.Create(_player, _experienceTable, _itemTemplates, _itemRandomBonuses);
+		var context = PlayerStatsContext.Create(_player, _experienceTable, _itemTemplates, _itemRandomBonuses, _itemSets);
 
 		buffer.WriteD(_player.ObjectId);
 		buffer.WriteD(_gameMinutes);
@@ -216,7 +219,8 @@ public sealed class SmStatsInfo : GameServerPacket
 			Player player,
 			PlayerExperienceTable? experienceTable,
 			ItemTemplateTable? itemTemplates,
-			ItemRandomBonusTable? itemRandomBonuses)
+			ItemRandomBonusTable? itemRandomBonuses,
+			ItemSetTable? itemSets)
 		{
 			// Java parity: PlayerCommonData.setExp/updateMaxRepose plus PlayerClass.createStatsTemplate.
 			var classStats = PlayerClassStats.Get(player.PlayerClass);
@@ -228,7 +232,7 @@ public sealed class SmStatsInfo : GameServerPacket
 			var baseStats = PlayerCalculatedStats.Create(classStats, level);
 			var currentStats = itemTemplates == null
 				? baseStats
-				: PlayerEquipmentStats.Apply(player, itemTemplates, itemRandomBonuses, baseStats);
+				: PlayerEquipmentStats.Apply(player, itemTemplates, itemRandomBonuses, itemSets, baseStats);
 			var lifeStats = player.LifeStats;
 			return new PlayerStatsContext(
 				classStats,
@@ -275,6 +279,7 @@ public sealed class SmStatsInfo : GameServerPacket
 			Player player,
 			ItemTemplateTable itemTemplates,
 			ItemRandomBonusTable? itemRandomBonuses,
+			ItemSetTable? itemSets,
 			PlayerCalculatedStats baseStats)
 		{
 			// Java parity: model/stats/listeners/ItemEquipmentListener.onItemEquipment plus PlayerGameStats weapon stat accessors.
@@ -289,6 +294,7 @@ public sealed class SmStatsInfo : GameServerPacket
 
 			var modifiers = equippedItems
 				.SelectMany(item => GetEquipmentModifiers(item, itemTemplates, itemRandomBonuses))
+				.Concat(GetItemSetModifiers(equippedItems, itemSets))
 				.Where(modifier => !string.IsNullOrEmpty(modifier.Name))
 				.ToArray();
 
@@ -451,6 +457,52 @@ public sealed class SmStatsInfo : GameServerPacket
 				yield return new ItemStatModifier("add", item.Template.IsMagicalAttackWeapon ? "MAGICAL_ATTACK" : "PHYSICAL_ATTACK", attack, Bonus: false);
 		}
 
+		private static IEnumerable<ItemStatModifier> GetItemSetModifiers(
+			IReadOnlyList<EquippedItem> equippedItems,
+			ItemSetTable? itemSets)
+		{
+			// Java parity: model/stats/listeners/ItemEquipmentListener.recalculateItemSet + Equipment.itemSetPartsEquipped.
+			if (itemSets == null)
+				yield break;
+
+			var equippedSetItemIds = new Dictionary<int, HashSet<int>>();
+			foreach (var item in equippedItems)
+			{
+				if (IsAlternateWeaponSlot(item.Item.Slot))
+					continue;
+
+				var set = itemSets.GetItemSetTemplateByItemId(item.Item.ItemId);
+				if (set == null)
+					continue;
+
+				if (!equippedSetItemIds.TryGetValue(set.SetId, out var itemIds))
+				{
+					itemIds = [];
+					equippedSetItemIds.Add(set.SetId, itemIds);
+				}
+
+				itemIds.Add(item.Item.ItemId);
+			}
+
+			foreach (var (setId, itemIds) in equippedSetItemIds)
+			{
+				var set = itemSets.GetItemSetTemplate(setId);
+				if (set == null)
+					continue;
+
+				var equippedPartCount = itemIds.Count;
+				foreach (var partBonus in set.PartBonuses.Where(partBonus => partBonus.Count <= equippedPartCount))
+				foreach (var modifier in partBonus.Modifiers)
+					yield return modifier;
+
+				if (set.FullBonus != null && equippedPartCount == set.FullBonus.Count)
+				{
+					foreach (var modifier in set.FullBonus.Modifiers)
+						yield return modifier;
+				}
+			}
+		}
+
 		private static bool IsApplicableFusionWeaponModifier(ItemStatModifier modifier)
 		{
 			return modifier.Name is not ("ATTACK_SPEED" or "PVP_ATTACK_RATIO" or "BOOST_CASTING_TIME");
@@ -493,6 +545,11 @@ public sealed class SmStatsInfo : GameServerPacket
 		private static bool IsMainOrSubSlot(long slot)
 		{
 			return (slot & (MainHand | SubHand)) != 0;
+		}
+
+		private static bool IsAlternateWeaponSlot(long slot)
+		{
+			return (slot & (MainOffHand | SubOffHand)) != 0;
 		}
 
 		private sealed record EquippedItem(InventoryItem Item, ItemTemplateSummary Template);

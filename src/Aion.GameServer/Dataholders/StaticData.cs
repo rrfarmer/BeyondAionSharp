@@ -15,6 +15,7 @@ public sealed class StaticData
 		PlayerExperienceTable playerExperienceTable,
 		ItemTemplateTable itemTemplates,
 		ItemRandomBonusTable itemRandomBonuses,
+		ItemSetTable itemSets,
 		NpcTemplateTable npcTemplates,
 		SkillTemplateTable skillTemplates,
 		RecipeTemplateTable recipeTemplates,
@@ -32,6 +33,7 @@ public sealed class StaticData
 		PlayerExperienceTable = playerExperienceTable;
 		ItemTemplates = itemTemplates;
 		ItemRandomBonuses = itemRandomBonuses;
+		ItemSets = itemSets;
 		NpcTemplates = npcTemplates;
 		SkillTemplates = skillTemplates;
 		RecipeTemplates = recipeTemplates;
@@ -59,6 +61,8 @@ public sealed class StaticData
 	public ItemTemplateTable ItemTemplates { get; }
 
 	public ItemRandomBonusTable ItemRandomBonuses { get; }
+
+	public ItemSetTable ItemSets { get; }
 
 	public NpcTemplateTable NpcTemplates { get; }
 
@@ -94,6 +98,7 @@ public sealed class StaticData
 		var experience = new List<long>();
 		var itemTemplates = new List<ItemTemplateSummary>();
 		var itemRandomBonuses = new List<ItemRandomBonusSummary>();
+		var itemSets = new List<ItemSetSummary>();
 		var npcTemplates = new List<NpcTemplateSummary>();
 		var skillTemplates = new List<SkillTemplateSummary>();
 		var recipeTemplates = new List<RecipeTemplateSummary>();
@@ -109,6 +114,7 @@ public sealed class StaticData
 		InstanceCooltimeBuilder? currentInstanceCooltime = null;
 		ItemTemplateBuilder? currentItemTemplate = null;
 		ItemRandomBonusBuilder? currentItemRandomBonus = null;
+		ItemSetBuilder? currentItemSet = null;
 		NpcTemplateBuilder? currentNpcTemplate = null;
 		int currentHousingLandId = 0;
 		int currentHousingManagerNpcId = 0;
@@ -144,6 +150,15 @@ public sealed class StaticData
 					itemRandomBonuses.Add(currentItemRandomBonus.ToSummary());
 					currentItemRandomBonus = null;
 				}
+
+				if (reader.Depth == 2 && reader.LocalName == "itemset" && currentItemSet != null)
+				{
+					itemSets.Add(currentItemSet.ToSummary());
+					currentItemSet = null;
+				}
+
+				if (reader.Depth == 3 && currentItemSet != null && reader.LocalName is "partbonus" or "fullbonus")
+					currentItemSet.EndBonus();
 
 				if (reader.Depth == 2 && reader.LocalName == "npc_template" && currentNpcTemplate != null)
 				{
@@ -295,6 +310,32 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 2 && reader.LocalName == "itemset")
+			{
+				currentItemSet = new ItemSetBuilder(
+					ReadRequiredIntAttribute(reader, "id"),
+					reader.GetAttribute("name") ?? string.Empty);
+				continue;
+			}
+
+			if (reader.Depth == 3 && reader.LocalName == "itempart" && currentItemSet != null)
+			{
+				currentItemSet.AddItemPart(ReadRequiredIntAttribute(reader, "itemid"));
+				continue;
+			}
+
+			if (reader.Depth == 3 && reader.LocalName == "partbonus" && currentItemSet != null)
+			{
+				currentItemSet.StartPartBonus(ReadIntAttribute(reader, "count"));
+				continue;
+			}
+
+			if (reader.Depth == 3 && reader.LocalName == "fullbonus" && currentItemSet != null)
+			{
+				currentItemSet.StartFullBonus();
+				continue;
+			}
+
 			if (reader.Depth == 3 && reader.LocalName == "modifiers" && currentItemRandomBonus != null)
 			{
 				currentItemRandomBonus.AddModifierGroup();
@@ -340,6 +381,21 @@ public sealed class StaticData
 				&& randomModifierParent == "modifiers")
 			{
 				currentItemRandomBonus.AddModifier(
+					new ItemStatModifier(
+						reader.LocalName,
+						reader.GetAttribute("name") ?? string.Empty,
+						ReadIntAttribute(reader, "value"),
+						ReadBoolAttribute(reader, "bonus")));
+				continue;
+			}
+
+			if (reader.Depth == 5
+				&& currentItemSet != null
+				&& IsStatModifierElement(reader.LocalName)
+				&& elementPath.TryGetValue(reader.Depth - 1, out var itemSetModifierParent)
+				&& itemSetModifierParent == "modifiers")
+			{
+				currentItemSet.AddModifier(
 					new ItemStatModifier(
 						reader.LocalName,
 						reader.GetAttribute("name") ?? string.Empty,
@@ -496,6 +552,7 @@ public sealed class StaticData
 			new PlayerExperienceTable(experience.AsReadOnly()),
 			new ItemTemplateTable(itemTemplates.AsReadOnly()),
 			new ItemRandomBonusTable(itemRandomBonuses.AsReadOnly()),
+			new ItemSetTable(itemSets.AsReadOnly()),
 			new NpcTemplateTable(npcTemplates.AsReadOnly()),
 			new SkillTemplateTable(skillTemplates.AsReadOnly()),
 			new RecipeTemplateTable(recipeTemplates.AsReadOnly()),
@@ -577,6 +634,76 @@ public sealed class StaticData
 		{
 			// Java parity: model/templates/item/bonuses/RandomBonusSet modifier groups are selected by 1-based rnd_bonus rows.
 			return new ItemRandomBonusSummary(Type, SetId, _modifierGroups.ToArray());
+		}
+	}
+
+	private sealed class ItemSetBuilder
+	{
+		private readonly HashSet<int> _itemIds = [];
+		private readonly List<ItemSetPartBonus> _partBonuses = [];
+		private List<ItemStatModifier>? _currentModifiers;
+		private int _currentPartBonusIndex = -1;
+		private bool _isBuildingFullBonus;
+
+		public ItemSetBuilder(int setId, string name)
+		{
+			SetId = setId;
+			Name = name;
+		}
+
+		private int SetId { get; }
+
+		private string Name { get; }
+
+		private ItemSetFullBonus? FullBonus { get; set; }
+
+		public void AddItemPart(int itemId)
+		{
+			_itemIds.Add(itemId);
+		}
+
+		public void StartPartBonus(int count)
+		{
+			_currentModifiers = [];
+			_currentPartBonusIndex = _partBonuses.Count;
+			_isBuildingFullBonus = false;
+			_partBonuses.Add(new ItemSetPartBonus(count, _currentModifiers));
+		}
+
+		public void StartFullBonus()
+		{
+			_currentModifiers = [];
+			_currentPartBonusIndex = -1;
+			_isBuildingFullBonus = true;
+			FullBonus = new ItemSetFullBonus(_itemIds.Count, _currentModifiers);
+		}
+
+		public void AddModifier(ItemStatModifier modifier)
+		{
+			_currentModifiers ??= [];
+			_currentModifiers.Add(modifier);
+			if (_isBuildingFullBonus)
+				FullBonus = new ItemSetFullBonus(_itemIds.Count, _currentModifiers);
+			else if (_currentPartBonusIndex >= 0)
+				_partBonuses[_currentPartBonusIndex] = _partBonuses[_currentPartBonusIndex] with { Modifiers = _currentModifiers };
+		}
+
+		public void EndBonus()
+		{
+			_currentModifiers = null;
+			_currentPartBonusIndex = -1;
+			_isBuildingFullBonus = false;
+		}
+
+		public ItemSetSummary ToSummary()
+		{
+			// Java parity: model/templates/itemset/ItemSetTemplate.afterUnmarshal sets full-bonus count to itempart size.
+			return new ItemSetSummary(
+				SetId,
+				Name,
+				_itemIds.ToHashSet(),
+				_partBonuses.AsReadOnly(),
+				FullBonus);
 		}
 	}
 

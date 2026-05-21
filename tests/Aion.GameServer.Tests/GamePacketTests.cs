@@ -1665,6 +1665,25 @@ public class GamePacketTests
 					[new ItemStatModifier("add", "BOOST_MAGICAL_SKILL", 5, Bonus: true)],
 				]),
 		]);
+		var itemSets = new ItemSetTable(
+		[
+			new ItemSetSummary(
+				1,
+				"Training Set",
+				new HashSet<int> { 200, 300 },
+				[
+					new ItemSetPartBonus(
+						2,
+						[
+							new ItemStatModifier("add", "PHYSICAL_DEFENSE", 15, Bonus: true),
+						]),
+				],
+				new ItemSetFullBonus(
+					2,
+					[
+						new ItemStatModifier("add", "MAXHP", 46, Bonus: true),
+					])),
+		]);
 
 		var payload = SerializeUnencryptedPayload(
 			new SmStatsInfo(
@@ -1693,7 +1712,8 @@ public class GamePacketTests
 				new PlayerExperienceTable([0, 400]),
 				gameMinutes: 321,
 				templates,
-				randomBonuses));
+				randomBonuses,
+				itemSets));
 
 		using var reader = new PacketBuffer(payload);
 		Assert.Equal(1001, reader.ReadD());
@@ -1708,8 +1728,8 @@ public class GamePacketTests
 		Assert.Equal(0, reader.ReadQ());
 		Assert.Equal(0, reader.ReadQ());
 		reader.ReadD();
-		Assert.Equal(308, reader.ReadD());
-		Assert.Equal(308, reader.ReadD());
+		Assert.Equal(354, reader.ReadD());
+		Assert.Equal(354, reader.ReadD());
 		Assert.Equal(210, reader.ReadD());
 		Assert.Equal(210, reader.ReadD());
 		Assert.Equal(4000, reader.ReadH());
@@ -1721,7 +1741,7 @@ public class GamePacketTests
 		Assert.Equal(37, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
-		Assert.Equal(20, reader.ReadD());
+		Assert.Equal(35, reader.ReadD());
 		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(0, reader.ReadD());
