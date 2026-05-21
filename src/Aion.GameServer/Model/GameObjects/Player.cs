@@ -123,6 +123,9 @@ public sealed class Player
 	// Java parity: model/gameobjects/player/FriendList.Status changed by CM_FRIEND_STATUS.
 	public byte FriendListStatus { get; set; }
 
+	// Java parity: model/gameobjects/player/ResponseRequester stores pending SM_QUESTION_WINDOW handlers.
+	public PendingFriendRequest? PendingFriendRequest { get; set; }
+
 	public IReadOnlyList<PlayerBlockedUser> BlockedUsers { get; set; } = Array.Empty<PlayerBlockedUser>();
 
 	public PlayerAbyssRank AbyssRank { get; set; } = PlayerAbyssRank.Default();

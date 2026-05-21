@@ -169,6 +169,30 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300894);
 	}
 
+	public static SmSystemMessage BuddyListBusy()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_BUDDYLIST_BUSY.
+		return new SmSystemMessage(900847);
+	}
+
+	public static SmSystemMessage BuddyCantAddWhenAskedQuestion(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_BUDDY_CANT_ADD_WHEN_HE_IS_ASKED_QUESTION.
+		return new SmSystemMessage(1300795, playerName);
+	}
+
+	public static SmSystemMessage BuddyListNoBlockedCharacter()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_BUDDYLIST_NO_BLOCKED_CHARACTER.
+		return new SmSystemMessage(1300884);
+	}
+
+	public static SmSystemMessage RejectedFriend(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_REJECTED_FRIEND.
+		return new SmSystemMessage(1390119, playerName);
+	}
+
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.writeImpl.

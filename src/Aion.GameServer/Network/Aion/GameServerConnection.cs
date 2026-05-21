@@ -297,6 +297,10 @@ public sealed class GameServerConnection : BaseClientConnection
 					await SendPacketAsync(new SmMarkFriendList(_activePlayer.ObjectId));
 				}
 				break;
+			case CmFriendAdd friendAdd:
+				if (_activePlayer != null)
+					await HandleFriendAddAsync(_activePlayer, friendAdd);
+				break;
 			case CmFriendDelete friendDelete:
 				if (_activePlayer != null)
 					await HandleFriendDeleteAsync(_activePlayer, friendDelete);
@@ -312,6 +316,10 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmMoveInAir moveInAir:
 				if (_activePlayer != null)
 					HandleMoveInAir(_activePlayer, moveInAir);
+				break;
+			case CmQuestionResponse questionResponse:
+				if (_activePlayer != null)
+					await HandleQuestionResponseAsync(_activePlayer, questionResponse);
 				break;
 			case CmCharacterList characterList:
 				await SendPacketAsync(CreateAccountPropertiesPacket());
@@ -881,6 +889,156 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 	}
 
+	private async Task HandleFriendAddAsync(Player requester, CmFriendAdd packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_FRIEND_ADD.runImpl.
+		var targetName = ConvertCharacterName(packet.TargetName);
+		if (_connectionRegistry == null
+			|| !_connectionRegistry.TryGetOnlinePlayerByName(targetName, out var target)
+			|| target == null
+			|| !target.IsOnline)
+		{
+			await SendPacketAsync(new SmFriendResponse(SmFriendResponse.TargetOffline));
+			return;
+		}
+
+		if (requester.ObjectId == target.ObjectId)
+		{
+			await SendPacketAsync(SmSystemMessage.BuddyListBusy());
+			return;
+		}
+
+		if (_options.Custom.FriendListGmRestrict
+			&& ((target.AccessLevel > 0 && requester.AccessLevel == 0)
+				|| (requester.AccessLevel > 0 && target.AccessLevel == 0)))
+		{
+			await SendPacketAsync(SmSystemMessage.BuddyCantAddWhenAskedQuestion(target.Name));
+			return;
+		}
+
+		if (requester.Friends.Any(friend => friend.ObjectId == target.ObjectId))
+		{
+			await SendPacketAsync(new SmFriendResponse(SmFriendResponse.TargetAlreadyFriend));
+			return;
+		}
+
+		if (!string.Equals(requester.Race, target.Race, StringComparison.OrdinalIgnoreCase))
+		{
+			await SendPacketAsync(new SmFriendResponse(SmFriendResponse.TargetNotFound));
+			return;
+		}
+
+		if (requester.BlockedUsers.Any(blockedUser => blockedUser.ObjectId == target.ObjectId))
+		{
+			await SendPacketAsync(SmSystemMessage.BuddyListNoBlockedCharacter());
+			return;
+		}
+
+		if (target.BlockedUsers.Any(blockedUser => blockedUser.ObjectId == requester.ObjectId))
+		{
+			await SendPacketAsync(new SmFriendResponse(SmFriendResponse.TargetBlockedYou));
+			return;
+		}
+
+		if (IsFriendListFull(requester))
+		{
+			await SendPacketAsync(new SmFriendResponse(SmFriendResponse.ListFull));
+			return;
+		}
+
+		if (IsFriendListFull(target))
+		{
+			await SendPacketAsync(new SmFriendResponse(SmFriendResponse.TargetListFull, target.Name));
+			return;
+		}
+
+		if (target.PendingFriendRequest != null)
+		{
+			await SendPacketAsync(SmSystemMessage.BuddyListBusy());
+			return;
+		}
+
+		target.PendingFriendRequest = new PendingFriendRequest(requester.ObjectId, requester.Name);
+		var sent = await _connectionRegistry.SendPacketToPlayerAsync(
+			target.ObjectId,
+			new SmQuestionWindow(
+				SmQuestionWindow.BuddyListAddBuddyRequest,
+				requester.ObjectId,
+				0,
+				requester.Name,
+				packet.Message));
+		if (!sent)
+			target.PendingFriendRequest = null;
+	}
+
+	private async Task HandleQuestionResponseAsync(Player responder, CmQuestionResponse packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_QUESTION_RESPONSE.runImpl for buddy-list request handlers.
+		if (packet.QuestionId != SmQuestionWindow.BuddyListAddBuddyRequest)
+			return;
+
+		var request = responder.PendingFriendRequest;
+		if (request == null)
+			return;
+
+		responder.PendingFriendRequest = null;
+		if (_connectionRegistry == null
+			|| !_connectionRegistry.TryGetOnlinePlayerByName(request.RequesterName, out var requester)
+			|| requester == null)
+		{
+			return;
+		}
+
+		if (packet.Response == 0)
+		{
+			await _connectionRegistry.SendPacketToPlayerAsync(
+				requester.ObjectId,
+				new SmFriendResponse(SmFriendResponse.TargetDenied, responder.Name));
+			return;
+		}
+
+		await AcceptFriendRequestAsync(requester, responder);
+	}
+
+	private async Task AcceptFriendRequestAsync(Player requester, Player responder)
+	{
+		// Java parity: services/SocialService.makeFriends plus CM_FRIEND_ADD acceptRequest guards.
+		if (IsFriendListFull(requester))
+		{
+			await SendPacketAsync(new SmFriendResponse(SmFriendResponse.RequesterListFullCantAccept, requester.Name));
+			return;
+		}
+
+		if (IsFriendListFull(responder))
+			return;
+
+		if (requester.Friends.Any(friend => friend.ObjectId == responder.ObjectId))
+			return;
+
+		if (!await _socialRepository.AddFriendsAsync(requester.ObjectId, responder.ObjectId))
+			return;
+
+		requester.Friends = requester.Friends
+			.Concat([CreateFriendSnapshot(responder)])
+			.ToArray();
+		responder.Friends = responder.Friends
+			.Concat([CreateFriendSnapshot(requester)])
+			.ToArray();
+
+		if (_connectionRegistry != null)
+		{
+			await _connectionRegistry.SendPacketToPlayerAsync(
+				requester.ObjectId,
+				new SmFriendList(requester.Friends, GetPlayerExperienceTable()));
+			await _connectionRegistry.SendPacketToPlayerAsync(
+				requester.ObjectId,
+				new SmFriendResponse(SmFriendResponse.TargetAdded, responder.Name));
+		}
+
+		await SendPacketAsync(new SmFriendList(responder.Friends, GetPlayerExperienceTable()));
+		await SendPacketAsync(new SmFriendResponse(SmFriendResponse.TargetAdded, requester.Name));
+	}
+
 	private async Task HandleBlockAddAsync(Player player, CmBlockAdd packet)
 	{
 		// Java parity: network/aion/clientpackets/CM_BLOCK_ADD.runImpl -> SocialService.addBlockedUser.
@@ -1057,6 +1215,28 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		// Java parity: FriendList.Status.getByValue fallback in CM_FRIEND_STATUS.runImpl.
 		return status is 0 or 1 or 3 ? status : (byte)1;
+	}
+
+	private bool IsFriendListFull(Player player)
+	{
+		// Java parity: model/gameobjects/player/FriendList.isFull uses CustomConfig.FRIENDLIST_SIZE.
+		return player.Friends.Count >= _options.Custom.FriendListSize;
+	}
+
+	private static PlayerFriend CreateFriendSnapshot(Player player)
+	{
+		// Java parity: model/gameobjects/player/Friend constructed from PlayerCommonData with an empty memo.
+		return new PlayerFriend(
+			player.ObjectId,
+			player.Name,
+			player.Exp,
+			player.PlayerClass,
+			player.Gender,
+			player.Position.WorldId,
+			player.FriendListStatus == 0 ? player.LastOnline : null,
+			string.Empty,
+			string.Empty,
+			player.FriendListStatus != 0 || player.IsOnline);
 	}
 
 	private static PlayerFriend? UpdateFriendSnapshot(Player friendPlayer, Player activePlayer, byte activeStatus)

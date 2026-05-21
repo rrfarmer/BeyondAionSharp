@@ -14,6 +14,8 @@ public interface ISocialRepository
 		string reason,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> AddFriendsAsync(int playerObjectId, int friendObjectId, CancellationToken cancellationToken = default);
+
 	Task<bool> DeleteFriendsAsync(int playerObjectId, int friendObjectId, CancellationToken cancellationToken = default);
 
 	Task<bool> SetFriendMemoAsync(int playerObjectId, int friendObjectId, string memo, CancellationToken cancellationToken = default);
@@ -37,6 +39,11 @@ public sealed class EmptySocialRepository : ISocialRepository
 		int blockedPlayerObjectId,
 		string reason,
 		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(false);
+	}
+
+	public Task<bool> AddFriendsAsync(int playerObjectId, int friendObjectId, CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(false);
 	}
@@ -132,6 +139,52 @@ public sealed class MySqlSocialRepository : ISocialRepository
 				"Could not add blocked user {BlockedPlayerObjectId} for player {PlayerObjectId}",
 				blockedPlayerObjectId,
 				playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> AddFriendsAsync(
+		int playerObjectId,
+		int friendObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/FriendListDAO.addFriends inserts both directions in one batch.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+			try
+			{
+				await using var command = connection.CreateCommand();
+				command.Transaction = transaction;
+				command.CommandText = "INSERT INTO friends (player, friend) VALUES (?, ?)";
+				command.Parameters.AddRange(
+					new[]
+					{
+						new MySqlParameter { Value = playerObjectId },
+						new MySqlParameter { Value = friendObjectId },
+					});
+				await command.ExecuteNonQueryAsync(cancellationToken);
+				command.Parameters[0].Value = friendObjectId;
+				command.Parameters[1].Value = playerObjectId;
+				await command.ExecuteNonQueryAsync(cancellationToken);
+				await transaction.CommitAsync(cancellationToken);
+				return true;
+			}
+			catch
+			{
+				await transaction.RollbackAsync(cancellationToken);
+				throw;
+			}
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(
+				ex,
+				"Could not add friendship between player {PlayerObjectId} and friend {FriendObjectId}",
+				playerObjectId,
+				friendObjectId);
 			return false;
 		}
 	}
