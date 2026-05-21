@@ -9,8 +9,11 @@ public class ItemSocketServiceTests
 {
 	private const int KinahItemId = 182400001;
 	private const int SwordItemId = 100;
+	private const int PlainSwordItemId = 101;
 	private const int ManastoneItemId = 167000001;
 	private const int FusionStoneItemId = 167000002;
+	private const int GodstoneItemId = 168000001;
+	private const int InvalidGodstoneItemId = 168000002;
 
 	[Fact]
 	public void RemoveManastone_RemovesNormalStoneAndChargesKinah()
@@ -79,6 +82,73 @@ public class ItemSocketServiceTests
 			ItemSocketService.CreateRemoveManastonePlan(player, 1001, 0, false, templates).Failure);
 	}
 
+	[Fact]
+	public void SocketGodstone_AddsGodstoneAndConsumesSourceItem()
+	{
+		var player = CreatePlayer();
+		player.InventoryItems =
+		[
+			CreateSword(1001),
+			new InventoryItem { ObjectId = 2001, ItemId = GodstoneItemId, Count = 2, Location = 0 },
+		];
+
+		var plan = ItemSocketService.CreateSocketGodstonePlan(player, 1001, 2001, CreateItemTemplates());
+
+		Assert.True(plan.Succeeded);
+		Assert.Equal(GodstoneItemId, plan.TargetItemUpdate?.Godstone?.ItemId);
+		Assert.Equal(1, plan.SourceItemUpdate?.Count);
+		Assert.Null(plan.DeletedSourceItemObjectId);
+		Assert.Equal(GodstoneItemId, plan.InventoryItems.Single(item => item.ObjectId == 1001).Godstone?.ItemId);
+	}
+
+	[Fact]
+	public void SocketGodstone_DeletesSingleSourceItem()
+	{
+		var player = CreatePlayer();
+		player.InventoryItems =
+		[
+			CreateSword(1001),
+			new InventoryItem { ObjectId = 2001, ItemId = GodstoneItemId, Count = 1, Location = 0 },
+		];
+
+		var plan = ItemSocketService.CreateSocketGodstonePlan(player, 1001, 2001, CreateItemTemplates());
+
+		Assert.True(plan.Succeeded);
+		Assert.Null(plan.SourceItemUpdate);
+		Assert.Equal(2001, plan.DeletedSourceItemObjectId);
+		Assert.DoesNotContain(plan.InventoryItems, item => item.ObjectId == 2001);
+	}
+
+	[Fact]
+	public void SocketGodstone_ReturnsJavaShapedFailures()
+	{
+		var templates = CreateItemTemplates();
+		var player = CreatePlayer();
+		player.InventoryItems =
+		[
+			CreateSword(1001),
+			new InventoryItem { ObjectId = 1003, ItemId = PlainSwordItemId, Count = 1, Location = 0 },
+			new InventoryItem { ObjectId = 1004, ItemId = SwordItemId, Count = 1, Location = 0, IsEquipped = true },
+			new InventoryItem { ObjectId = 2002, ItemId = InvalidGodstoneItemId, Count = 1, Location = 0 },
+		];
+
+		Assert.Equal(
+			GodstoneSocketFailure.NoTargetItem,
+			ItemSocketService.CreateSocketGodstonePlan(player, 404, 2001, templates).Failure);
+		Assert.Equal(
+			GodstoneSocketFailure.TargetItemEquipped,
+			ItemSocketService.CreateSocketGodstonePlan(player, 1004, 2001, templates).Failure);
+		Assert.Equal(
+			GodstoneSocketFailure.TargetNotProcGivable,
+			ItemSocketService.CreateSocketGodstonePlan(player, 1003, 2001, templates).Failure);
+		Assert.Equal(
+			GodstoneSocketFailure.NoGodstoneItem,
+			ItemSocketService.CreateSocketGodstonePlan(player, 1001, 404, templates).Failure);
+		Assert.Equal(
+			GodstoneSocketFailure.NoGodstoneItem,
+			ItemSocketService.CreateSocketGodstonePlan(player, 1001, 2002, templates).Failure);
+	}
+
 	private static Player CreatePlayer()
 	{
 		return new Player
@@ -114,9 +184,25 @@ public class ItemSocketServiceTests
 		return new ItemTemplateTable(
 		[
 			new ItemTemplateSummary(KinahItemId, "Kinah", 0, 0, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
-			new ItemTemplateSummary(SwordItemId, "Practice Sword", 0, 1, 1, "SWORD", "NORMAL", "COMMON", "PC_ALL", 1, 0, 1),
+			new ItemTemplateSummary(SwordItemId, "Practice Sword", 0, 1 << 10, 1, "SWORD", "NORMAL", "COMMON", "PC_ALL", 1, 0, 1),
+			new ItemTemplateSummary(PlainSwordItemId, "Plain Sword", 0, 1, 1, "SWORD", "NORMAL", "COMMON", "PC_ALL", 1, 0, 1),
 			new ItemTemplateSummary(ManastoneItemId, "Manastone: HP +20", 0, 0, 1, "MANASTONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
 			new ItemTemplateSummary(FusionStoneItemId, "Fusion Manastone: HP +20", 0, 0, 1, "MANASTONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
+			new ItemTemplateSummary(
+				GodstoneItemId,
+				"Godstone: Fire",
+				0,
+				0,
+				1,
+				"GODSTONE",
+				"NORMAL",
+				"COMMON",
+				"PC_ALL",
+				1,
+				0,
+				0,
+				GodstoneInfo: new ItemGodstoneInfo(1, 1, 50, 50, 0, 0)),
+			new ItemTemplateSummary(InvalidGodstoneItemId, "Invalid Godstone", 0, 0, 1, "GODSTONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
 		]);
 	}
 }

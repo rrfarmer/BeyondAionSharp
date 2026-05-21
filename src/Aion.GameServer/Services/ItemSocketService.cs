@@ -62,6 +62,62 @@ public static class ItemSocketService
 			isFusionSocket ? 2 : 0);
 	}
 
+	public static GodstoneSocketPlan CreateSocketGodstonePlan(
+		Player player,
+		int targetItemObjectId,
+		int godstoneObjectId,
+		ItemTemplateTable itemTemplates)
+	{
+		// Java parity: services/item/ItemSocketService.socketGodstone.
+		var inventoryItems = player.InventoryItems.ToList();
+		var targetItem = inventoryItems.FirstOrDefault(candidate =>
+			candidate.ObjectId == targetItemObjectId
+			&& candidate.Location == CubeStorageId
+			&& !candidate.IsEquipped);
+		if (targetItem == null)
+		{
+			var equippedTarget = inventoryItems.Any(candidate =>
+				candidate.ObjectId == targetItemObjectId
+				&& candidate.Location == CubeStorageId
+				&& candidate.IsEquipped);
+			return GodstoneSocketPlan.Failed(
+				equippedTarget ? GodstoneSocketFailure.TargetItemEquipped : GodstoneSocketFailure.NoTargetItem);
+		}
+
+		var targetTemplate = itemTemplates.GetItemTemplate(targetItem.ItemId);
+		var targetName = GetItemName(targetItem, itemTemplates);
+		if (targetTemplate?.CanSocketGodstone != true)
+			return GodstoneSocketPlan.Failed(GodstoneSocketFailure.TargetNotProcGivable, targetName);
+
+		var godstoneItem = inventoryItems.FirstOrDefault(candidate =>
+			candidate.ObjectId == godstoneObjectId
+			&& candidate.Location == CubeStorageId
+			&& !candidate.IsEquipped);
+		if (godstoneItem == null)
+			return GodstoneSocketPlan.Failed(GodstoneSocketFailure.NoGodstoneItem, targetName);
+
+		var godstoneTemplate = itemTemplates.GetItemTemplate(godstoneItem.ItemId);
+		if (godstoneTemplate?.GodstoneInfo == null)
+			return GodstoneSocketPlan.Failed(GodstoneSocketFailure.NoGodstoneItem, targetName);
+
+		var sourceMutation = DecreaseItemCount(godstoneItem);
+		var targetUpdate = CopyInventoryItem(targetItem);
+		targetUpdate.Godstone = new PlayerGodstone(godstoneItem.ItemId, ProcCount: 0);
+		ReplaceInventoryItem(inventoryItems, targetUpdate);
+		if (sourceMutation.UpdatedItem != null)
+			ReplaceInventoryItem(inventoryItems, sourceMutation.UpdatedItem);
+		else if (sourceMutation.DeletedObjectId.HasValue)
+			inventoryItems.RemoveAll(item => item.ObjectId == sourceMutation.DeletedObjectId);
+
+		return new GodstoneSocketPlan(
+			GodstoneSocketFailure.None,
+			targetName,
+			inventoryItems,
+			targetUpdate,
+			sourceMutation.UpdatedItem,
+			sourceMutation.DeletedObjectId);
+	}
+
 	private static string GetItemName(InventoryItem item, ItemTemplateTable itemTemplates)
 	{
 		var template = itemTemplates.GetItemTemplate(item.ItemId);
@@ -118,6 +174,15 @@ public static class ItemSocketService
 		copy.IdianStone = item.IdianStone;
 		return copy;
 	}
+
+	private static ItemCountMutation DecreaseItemCount(InventoryItem item)
+	{
+		return item.Count > 1
+			? new ItemCountMutation(CopyInventoryItem(item, count: item.Count - 1), null)
+			: new ItemCountMutation(null, item.ObjectId);
+	}
+
+	private sealed record ItemCountMutation(InventoryItem? UpdatedItem, int? DeletedObjectId);
 }
 
 public enum ManastoneRemovalFailure
@@ -150,5 +215,36 @@ public sealed record ManastoneRemovalPlan(
 			null,
 			RemovedSlot: 0,
 			RemovedCategory: 0);
+	}
+}
+
+public enum GodstoneSocketFailure
+{
+	None,
+	NoTargetItem,
+	TargetItemEquipped,
+	TargetNotProcGivable,
+	NoGodstoneItem,
+}
+
+public sealed record GodstoneSocketPlan(
+	GodstoneSocketFailure Failure,
+	string ItemName,
+	IReadOnlyList<InventoryItem> InventoryItems,
+	InventoryItem? TargetItemUpdate,
+	InventoryItem? SourceItemUpdate,
+	int? DeletedSourceItemObjectId)
+{
+	public bool Succeeded => Failure == GodstoneSocketFailure.None;
+
+	public static GodstoneSocketPlan Failed(GodstoneSocketFailure failure, string itemName = "")
+	{
+		return new GodstoneSocketPlan(
+			failure,
+			itemName,
+			Array.Empty<InventoryItem>(),
+			TargetItemUpdate: null,
+			SourceItemUpdate: null,
+			DeletedSourceItemObjectId: null);
 	}
 }

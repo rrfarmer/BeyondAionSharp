@@ -1310,6 +1310,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (packet.ActionType == 4)
+		{
+			await HandleSocketGodstoneAsync(player, packet);
+			return;
+		}
+
 		if (packet.ActionType is not (1 or 2))
 			return;
 
@@ -1409,6 +1415,85 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		if (targetItem.IsEquipped)
 			await SendPacketAsync(CreateStatsInfoPacket(player, staticData));
+	}
+
+	private async Task HandleSocketGodstoneAsync(Player player, CmManastone packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_MANASTONE.runImpl actionType 4 + services/item/ItemSocketService.socketGodstone.
+		var itemTemplates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
+		if (itemTemplates == null)
+			return;
+
+		var sourceItem = player.InventoryItems.FirstOrDefault(item =>
+			item.ObjectId == packet.StoneObjectId
+			&& item.Location == CubeStorageId
+			&& !item.IsEquipped);
+		var plan = ItemSocketService.CreateSocketGodstonePlan(
+			player,
+			packet.TargetItemObjectId,
+			packet.StoneObjectId,
+			itemTemplates);
+		if (!plan.Succeeded)
+		{
+			await SendPacketAsync(CreateSocketGodstoneFailureMessage(plan));
+			return;
+		}
+
+		var sourceTemplate = sourceItem == null ? null : itemTemplates.GetItemTemplate(sourceItem.ItemId);
+		if (plan.TargetItemUpdate == null || sourceTemplate == null)
+			return;
+
+		await BroadcastItemUsageAnimationAsync(
+			player,
+			new SmItemUsageAnimation(
+				player.ObjectId,
+				packet.StoneObjectId,
+				sourceTemplate.TemplateId,
+				2000,
+				0,
+				0));
+
+		var saved = _playerEnterWorldService == null
+			|| await _playerEnterWorldService.SaveGodstoneSocketMutationAsync(
+				player,
+				plan.TargetItemUpdate,
+				plan.SourceItemUpdate,
+				plan.DeletedSourceItemObjectId);
+		if (!saved)
+			return;
+
+		player.InventoryItems = plan.InventoryItems;
+
+		await BroadcastItemUsageAnimationAsync(
+			player,
+			new SmItemUsageAnimation(
+				player.ObjectId,
+				packet.StoneObjectId,
+				sourceTemplate.TemplateId,
+				0,
+				1,
+				0));
+
+		if (plan.SourceItemUpdate != null)
+			await SendPacketAsync(new SmInventoryUpdateItem(plan.SourceItemUpdate, sourceTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+		else if (plan.DeletedSourceItemObjectId.HasValue)
+			await SendPacketAsync(new SmDeleteItem(plan.DeletedSourceItemObjectId.Value, SmDeleteItem.UseDeleteType));
+
+		await SendPacketAsync(SmSystemMessage.GiveItemProcEnchantedTargetItem(plan.ItemName));
+		if (itemTemplates.GetItemTemplate(plan.TargetItemUpdate.ItemId) is { } targetTemplate)
+			await SendPacketAsync(new SmInventoryUpdateItem(plan.TargetItemUpdate, targetTemplate, updateType: 0));
+	}
+
+	private static SmSystemMessage CreateSocketGodstoneFailureMessage(GodstoneSocketPlan plan)
+	{
+		return plan.Failure switch
+		{
+			GodstoneSocketFailure.NoTargetItem => SmSystemMessage.GiveItemProcNoTargetItem(),
+			GodstoneSocketFailure.TargetItemEquipped => SmSystemMessage.GiveItemProcCannotGiveToEquippedItem(),
+			GodstoneSocketFailure.TargetNotProcGivable => SmSystemMessage.GiveItemProcNotProcGivableItem(plan.ItemName),
+			GodstoneSocketFailure.NoGodstoneItem => SmSystemMessage.GiveItemProcNoProcGiveItem(),
+			_ => SmSystemMessage.GiveItemProcNoTargetItem(),
+		};
 	}
 
 	private async Task HandleRemoveManastoneAsync(Player player, CmManastone packet)

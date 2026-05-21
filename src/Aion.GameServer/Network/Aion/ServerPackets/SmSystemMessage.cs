@@ -251,6 +251,36 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300473, itemName);
 	}
 
+	public static SmSystemMessage GiveItemProcNoTargetItem()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GIVE_ITEM_PROC_NO_TARGET_ITEM.
+		return new SmSystemMessage(1300502);
+	}
+
+	public static SmSystemMessage GiveItemProcCannotGiveToEquippedItem()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GIVE_ITEM_PROC_CANNOT_GIVE_PROC_TO_EQUIPPED_ITEM.
+		return new SmSystemMessage(1300503);
+	}
+
+	public static SmSystemMessage GiveItemProcNotProcGivableItem(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GIVE_ITEM_PROC_NOT_PROC_GIVABLE_ITEM.
+		return new SmSystemMessage(1300504, itemName);
+	}
+
+	public static SmSystemMessage GiveItemProcNoProcGiveItem()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GIVE_ITEM_PROC_NO_PROC_GIVE_ITEM.
+		return new SmSystemMessage(1300505);
+	}
+
+	public static SmSystemMessage GiveItemProcEnchantedTargetItem(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GIVE_ITEM_PROC_ENCHANTED_TARGET_ITEM.
+		return new SmSystemMessage(1300508, itemName);
+	}
+
 	public static SmSystemMessage ExchangeFullInventory()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_EXCHANGE_FULL_INVENTORY.

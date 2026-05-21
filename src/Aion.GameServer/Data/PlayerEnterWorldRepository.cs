@@ -112,6 +112,13 @@ public interface IPlayerEnterWorldRepository
 		InventoryItem kinahItemUpdate,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveGodstoneSocketMutationAsync(
+		int playerObjectId,
+		InventoryItem targetItemUpdate,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SaveEquipmentMutationAsync(
 		int playerObjectId,
 		IReadOnlyList<InventoryItem> items,
@@ -320,6 +327,16 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		int slot,
 		int category,
 		InventoryItem kinahItemUpdate,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> SaveGodstoneSocketMutationAsync(
+		int playerObjectId,
+		InventoryItem targetItemUpdate,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
 		CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(true);
@@ -816,6 +833,44 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		}
 	}
 
+	public async Task<bool> SaveGodstoneSocketMutationAsync(
+		int playerObjectId,
+		InventoryItem targetItemUpdate,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: services/item/ItemSocketService.socketGodstone delayed completion persists Item.addGodStone plus source consume.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			if (!await InventoryItemExistsAsync(connection, transaction, playerObjectId, targetItemUpdate.ObjectId, cancellationToken))
+				return false;
+
+			await SaveGodstoneAsync(connection, transaction, targetItemUpdate, cancellationToken);
+
+			if (sourceItemUpdate != null && !await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, sourceItemUpdate, cancellationToken))
+				return false;
+
+			if (deletedSourceItemObjectId.HasValue
+				&& !await DeleteInventoryItemAsync(connection, transaction, playerObjectId, deletedSourceItemObjectId.Value, cancellationToken))
+			{
+				return false;
+			}
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save godstone socket mutation for player {PlayerObjectId}", playerObjectId);
+			return false;
+		}
+	}
+
 	public async Task<bool> SaveEquipmentMutationAsync(
 		int playerObjectId,
 		IReadOnlyList<InventoryItem> items,
@@ -960,6 +1015,39 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				new MySqlParameter { Value = item.IdianStone.ItemId },
 				new MySqlParameter { Value = item.IdianStone.PolishNumber },
 				new MySqlParameter { Value = item.IdianStone.PolishCharge },
+			});
+		await command.ExecuteNonQueryAsync(cancellationToken);
+	}
+
+	private static async Task SaveGodstoneAsync(
+		MySqlConnection connection,
+		MySqlTransaction transaction,
+		InventoryItem item,
+		CancellationToken cancellationToken)
+	{
+		await using (var deleteCommand = connection.CreateCommand())
+		{
+			deleteCommand.Transaction = transaction;
+			deleteCommand.CommandText = "DELETE FROM item_stones WHERE item_unique_id = ? AND slot = 0 AND category = 1";
+			deleteCommand.Parameters.Add(new MySqlParameter { Value = item.ObjectId });
+			await deleteCommand.ExecuteNonQueryAsync(cancellationToken);
+		}
+
+		if (item.Godstone == null)
+			return;
+
+		await using var command = connection.CreateCommand();
+		command.Transaction = transaction;
+		command.CommandText = """
+			INSERT INTO item_stones (item_unique_id, item_id, slot, category, polishNumber, polishCharge, proc_count)
+			VALUES (?, ?, 0, 1, 0, 0, ?)
+			""";
+		command.Parameters.AddRange(
+			new[]
+			{
+				new MySqlParameter { Value = item.ObjectId },
+				new MySqlParameter { Value = item.Godstone.ItemId },
+				new MySqlParameter { Value = item.Godstone.ProcCount },
 			});
 		await command.ExecuteNonQueryAsync(cancellationToken);
 	}

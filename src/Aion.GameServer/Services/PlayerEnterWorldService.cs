@@ -258,6 +258,22 @@ public sealed class PlayerEnterWorldService
 			cancellationToken);
 	}
 
+	public Task<bool> SaveGodstoneSocketMutationAsync(
+		Player player,
+		InventoryItem targetItemUpdate,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: services/item/ItemSocketService.socketGodstone completion persistence.
+		return _repository.SaveGodstoneSocketMutationAsync(
+			player.ObjectId,
+			targetItemUpdate,
+			sourceItemUpdate,
+			deletedSourceItemObjectId,
+			cancellationToken);
+	}
+
 	public Task<bool> SaveEquipmentMutationAsync(
 		Player player,
 		IReadOnlyList<InventoryItem> items,
