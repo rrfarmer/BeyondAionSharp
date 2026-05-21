@@ -52,6 +52,53 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmMessage_WritesPlayerPublicChatPayload()
+	{
+		var player = new Player
+		{
+			ObjectId = 7001,
+			Name = "Kahrun",
+			Race = "ELYOS",
+			Position = new WorldPosition(210010000, 11, 22, 33, 0),
+		};
+
+		var payload = SerializeUnencryptedPayload(new SmMessage(player, "For Atreia", 0));
+		using var reader = new PacketBuffer(payload);
+
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(1, (int)reader.ReadC());
+		Assert.Equal(7001, reader.ReadD());
+		Assert.Equal("Kahrun", reader.ReadS());
+		Assert.Equal("For Atreia", reader.ReadS());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void SmMessage_WritesShoutCoordinates()
+	{
+		var player = new Player
+		{
+			ObjectId = 7002,
+			Name = "Marchutan",
+			Race = "ASMODIANS",
+			Position = new WorldPosition(220010000, 11.5f, 22.5f, 33.5f, 0),
+		};
+
+		var payload = SerializeUnencryptedPayload(new SmMessage(player, "Stand firm", 3));
+		using var reader = new PacketBuffer(payload);
+
+		Assert.Equal(3, (int)reader.ReadC());
+		Assert.Equal(2, (int)reader.ReadC());
+		Assert.Equal(7002, reader.ReadD());
+		Assert.Equal("Marchutan", reader.ReadS());
+		Assert.Equal("Stand firm", reader.ReadS());
+		Assert.Equal(11.5f, reader.ReadF());
+		Assert.Equal(22.5f, reader.ReadF());
+		Assert.Equal(33.5f, reader.ReadF());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
 	public void CharacterSelectionServerPackets_WriteJavaShapedPayloads()
 	{
 		Assert.Equal(
@@ -1520,6 +1567,30 @@ public class GamePacketTests
 		Assert.Null(
 			GameClientPacketFactory.TryCreatePacket(
 				CreateClientPayload(103, _ => { }),
+				GameConnectionState.Authed));
+	}
+
+	[Fact]
+	public void ClientPacketFactory_ParsesPublicChatPacket()
+	{
+		var chatMessage = Assert.IsType<CmChatMessagePublic>(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(27, buffer =>
+				{
+					buffer.WriteC(3);
+					buffer.WriteS("Anyone there?");
+				}),
+				GameConnectionState.InGame));
+
+		Assert.Equal(3, (int)chatMessage.ChatType);
+		Assert.Equal("Anyone there?", chatMessage.Message);
+		Assert.Null(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(27, buffer =>
+				{
+					buffer.WriteC(0);
+					buffer.WriteS("too soon");
+				}),
 				GameConnectionState.Authed));
 	}
 

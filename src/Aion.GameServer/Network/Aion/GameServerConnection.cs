@@ -267,6 +267,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleLevelReadyAsync(_activePlayer);
 				break;
+			case CmChatMessagePublic chatMessage:
+				if (_activePlayer != null)
+					await HandlePublicChatAsync(_activePlayer, chatMessage);
+				break;
 			case CmMarkFriendList:
 				if (_activePlayer != null)
 				{
@@ -663,6 +667,48 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		_lastPingTime = now;
 		await SendPacketAsync(new SmPong());
+	}
+
+	private async Task HandlePublicChatAsync(Player player, CmChatMessagePublic packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_CHAT_MESSAGE_PUBLIC.runImpl normal/shout broadcast branch.
+		var message = packet.Message;
+		if (string.IsNullOrWhiteSpace(message))
+			return;
+
+		switch (packet.ChatType)
+		{
+			case 0:
+			case 3:
+				var chatPacket = new SmMessage(player, message, packet.ChatType);
+				if (_connectionRegistry == null)
+				{
+					await SendPacketAsync(chatPacket);
+					return;
+				}
+
+				await _connectionRegistry.BroadcastToVisiblePlayersAsync(
+					player.Position,
+					player.ObjectId,
+					chatPacket,
+					includeSourcePlayer: true,
+					receiver => IsVisiblePublicChatRecipient(player, receiver));
+				break;
+			default:
+				_logger.LogDebug(
+					"Player {PlayerObjectId} sent unported public chat type {ChatType}",
+					player.ObjectId,
+					packet.ChatType);
+				break;
+		}
+	}
+
+	private static bool IsVisiblePublicChatRecipient(Player sender, Player receiver)
+	{
+		// Java parity: CM_CHAT_MESSAGE_PUBLIC.broadcastToPlayers skips blockers except staff.
+		return sender.AccessLevel > 0
+			|| receiver.AccessLevel > 0
+			|| receiver.BlockedUsers.All(blockedUser => blockedUser.ObjectId != sender.ObjectId);
 	}
 
 	private async Task HandleQuitAsync(CmQuit packet)

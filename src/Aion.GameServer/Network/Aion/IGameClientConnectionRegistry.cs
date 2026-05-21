@@ -9,7 +9,12 @@ public interface IGameClientConnectionRegistry
 
 	void UnregisterPlayerConnection(int playerObjectId, GameServerConnection connection);
 
-	Task<int> BroadcastToVisiblePlayersAsync(WorldPosition sourcePosition, int sourceObjectId, GameServerPacket packet, bool includeSourcePlayer = false);
+	Task<int> BroadcastToVisiblePlayersAsync(
+		WorldPosition sourcePosition,
+		int sourceObjectId,
+		GameServerPacket packet,
+		bool includeSourcePlayer = false,
+		Func<Player, bool>? filter = null);
 
 	Task<bool> NotifyMailReceivedAsync(int recipientObjectId, PlayerMail mail);
 

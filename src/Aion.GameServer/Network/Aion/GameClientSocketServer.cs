@@ -130,7 +130,12 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 			_playerConnections.TryRemove(playerObjectId, out _);
 	}
 
-	public async Task<int> BroadcastToVisiblePlayersAsync(WorldPosition sourcePosition, int sourceObjectId, GameServerPacket packet, bool includeSourcePlayer = false)
+	public async Task<int> BroadcastToVisiblePlayersAsync(
+		WorldPosition sourcePosition,
+		int sourceObjectId,
+		GameServerPacket packet,
+		bool includeSourcePlayer = false,
+		Func<Player, bool>? filter = null)
 	{
 		// Java parity: utils/PacketSendUtility.broadcastToSightedPlayers using KnownList.sees(object).
 		var sent = 0;
@@ -142,6 +147,8 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 			if (!includeSourcePlayer && player.ObjectId == sourceObjectId)
 				continue;
 			if (!WorldVisibility.IsVisibleTo(player, sourcePosition))
+				continue;
+			if (filter != null && !filter(player))
 				continue;
 
 			await connection.SendPacketAsync(packet);
