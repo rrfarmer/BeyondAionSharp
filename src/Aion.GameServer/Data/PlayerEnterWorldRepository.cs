@@ -38,6 +38,10 @@ public interface IPlayerEnterWorldRepository
 
 	Task<IReadOnlyList<PlayerMacro>> LoadPlayerMacrosAsync(int playerObjectId, CancellationToken cancellationToken = default);
 
+	Task<bool> SavePlayerMacroAsync(int playerObjectId, PlayerMacro macro, CancellationToken cancellationToken = default);
+
+	Task<bool> DeletePlayerMacroAsync(int playerObjectId, int macroId, CancellationToken cancellationToken = default);
+
 	Task<IReadOnlyList<PlayerMail>> LoadPlayerMailboxAsync(int playerObjectId, CancellationToken cancellationToken = default);
 
 	Task<PlayerBrokerSettlementSummary> LoadBrokerSettlementsAsync(int playerObjectId, string race, CancellationToken cancellationToken = default);
@@ -130,6 +134,16 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	public Task<IReadOnlyList<PlayerMacro>> LoadPlayerMacrosAsync(int playerObjectId, CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult<IReadOnlyList<PlayerMacro>>(Array.Empty<PlayerMacro>());
+	}
+
+	public Task<bool> SavePlayerMacroAsync(int playerObjectId, PlayerMacro macro, CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> DeletePlayerMacroAsync(int playerObjectId, int macroId, CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
 	}
 
 	public Task<IReadOnlyList<PlayerMail>> LoadPlayerMailboxAsync(int playerObjectId, CancellationToken cancellationToken = default)
@@ -935,6 +949,59 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		{
 			_logger.LogError(ex, "Could not load macros for player {PlayerObjectId}", playerObjectId);
 			return Array.Empty<PlayerMacro>();
+		}
+	}
+
+	public async Task<bool> SavePlayerMacroAsync(int playerObjectId, PlayerMacro macro, CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/PlayerMacrosDAO.addMacro/updateMacro.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = """
+				INSERT INTO player_macrosses (player_id, `order`, macro)
+				VALUES (?, ?, ?)
+				ON DUPLICATE KEY UPDATE macro = VALUES(macro)
+				""";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = playerObjectId },
+					new MySqlParameter { Value = macro.Id },
+					new MySqlParameter { Value = macro.Xml },
+				});
+			return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save macro {MacroId} for player {PlayerObjectId}", macro.Id, playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> DeletePlayerMacroAsync(int playerObjectId, int macroId, CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/PlayerMacrosDAO.deleteMacro.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = "DELETE FROM player_macrosses WHERE player_id = ? AND `order` = ?";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = playerObjectId },
+					new MySqlParameter { Value = macroId },
+				});
+			return await command.ExecuteNonQueryAsync(cancellationToken) >= 0;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not delete macro {MacroId} for player {PlayerObjectId}", macroId, playerObjectId);
+			return false;
 		}
 	}
 

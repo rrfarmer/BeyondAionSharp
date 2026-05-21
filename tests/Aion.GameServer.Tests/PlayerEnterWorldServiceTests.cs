@@ -187,6 +187,26 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.Equal(player.LastOnline, repository.LogoutLastOnline);
 	}
 
+	[Fact]
+	public async Task MacroMutations_UpdateLoadedPlayerAndRepository()
+	{
+		var player = CreatePlayer();
+		player.Macros = [new PlayerMacro(1, "<old/>")];
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var service = CreateService(repository, CreateWorld());
+
+		await service.SaveMacroAsync(player, 1, "<updated/>");
+		await service.SaveMacroAsync(player, 2, "<new/>");
+		await service.DeleteMacroAsync(player, 1);
+
+		Assert.Equal([2], player.Macros.Select(macro => macro.Id).ToArray());
+		Assert.Equal("<new/>", player.Macros.Single().Xml);
+		Assert.Equal(2, repository.SaveMacroCalls);
+		Assert.Equal(new PlayerMacro(2, "<new/>"), repository.SavedMacro);
+		Assert.Equal(1, repository.DeleteMacroCalls);
+		Assert.Equal(1, repository.DeletedMacroId);
+	}
+
 	private static PlayerEnterWorldService CreateService(CapturingEnterWorldRepository repository, GameWorld world)
 	{
 		return new PlayerEnterWorldService(
@@ -329,6 +349,14 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public DateTime? LogoutLastOnline { get; private set; }
 
+		public int SaveMacroCalls { get; private set; }
+
+		public PlayerMacro? SavedMacro { get; private set; }
+
+		public int DeleteMacroCalls { get; private set; }
+
+		public int DeletedMacroId { get; private set; }
+
 		public Task<Player?> LoadPlayerAsync(int accountId, int playerObjectId, CancellationToken cancellationToken = default)
 		{
 			return Task.FromResult(Player);
@@ -404,6 +432,20 @@ public sealed class PlayerEnterWorldServiceTests
 		{
 			LoadMacrosCalls++;
 			return Task.FromResult(Macros);
+		}
+
+		public Task<bool> SavePlayerMacroAsync(int playerObjectId, PlayerMacro macro, CancellationToken cancellationToken = default)
+		{
+			SaveMacroCalls++;
+			SavedMacro = macro;
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> DeletePlayerMacroAsync(int playerObjectId, int macroId, CancellationToken cancellationToken = default)
+		{
+			DeleteMacroCalls++;
+			DeletedMacroId = macroId;
+			return Task.FromResult(true);
 		}
 
 		public Task<IReadOnlyList<PlayerMail>> LoadPlayerMailboxAsync(int playerObjectId, CancellationToken cancellationToken = default)

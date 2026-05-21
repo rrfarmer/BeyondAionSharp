@@ -110,6 +110,45 @@ public sealed class PlayerEnterWorldService
 		}
 	}
 
+	public async Task<bool> SaveMacroAsync(
+		Player player,
+		int macroId,
+		string macroXml,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: services/player/PlayerService.addMacro.
+		if (macroId is < 1 or > 12)
+			return false;
+
+		var macro = new PlayerMacro(macroId, macroXml);
+		player.Macros = player.Macros
+			.Where(existing => existing.Id != macroId)
+			.Append(macro)
+			.OrderBy(existing => existing.Id)
+			.ToArray();
+		return await _repository.SavePlayerMacroAsync(player.ObjectId, macro, cancellationToken);
+	}
+
+	public async Task<bool> DeleteMacroAsync(
+		Player player,
+		int macroId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: services/player/PlayerService.removeMacro.
+		if (macroId is < 1 or > 12)
+			return false;
+
+		var beforeCount = player.Macros.Count;
+		player.Macros = player.Macros
+			.Where(existing => existing.Id != macroId)
+			.OrderBy(existing => existing.Id)
+			.ToArray();
+		if (player.Macros.Count == beforeCount)
+			return true;
+
+		return await _repository.DeletePlayerMacroAsync(player.ObjectId, macroId, cancellationToken);
+	}
+
 	public async Task LeaveWorldAsync(Player player, CancellationToken cancellationToken = default)
 	{
 		// Java parity: services/player/PlayerLeaveWorldService.leaveWorld baseline persistence.

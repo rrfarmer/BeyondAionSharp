@@ -584,6 +584,14 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleChatAuthAsync(_activePlayer, chatAuth);
 				break;
+			case CmMacroCreate macroCreate:
+				if (_activePlayer != null)
+					await HandleMacroCreateAsync(_activePlayer, macroCreate);
+				break;
+			case CmMacroDelete macroDelete:
+				if (_activePlayer != null)
+					await HandleMacroDeleteAsync(_activePlayer, macroDelete);
+				break;
 			case CmGetHouseBids:
 				if (_activePlayer != null)
 				{
@@ -912,6 +920,39 @@ public sealed class GameServerConnection : BaseClientConnection
 			player,
 			_accountName.Length == 0 ? $"account-{_accountId}" : _accountName,
 			token => SendPacketAsync(new SmChatInit(token)));
+	}
+
+	private async Task HandleMacroCreateAsync(Player player, CmMacroCreate packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_MACRO_CREATE.runImpl -> PlayerService.addMacro.
+		if (packet.MacroPosition is < 1 or > 12)
+			return;
+
+		if (_playerEnterWorldService != null)
+			await _playerEnterWorldService.SaveMacroAsync(player, packet.MacroPosition, packet.MacroXml);
+		else
+			player.Macros = player.Macros
+				.Where(macro => macro.Id != packet.MacroPosition)
+				.Append(new PlayerMacro(packet.MacroPosition, packet.MacroXml))
+				.OrderBy(macro => macro.Id)
+				.ToArray();
+		await SendPacketAsync(SmMacroResult.Created);
+	}
+
+	private async Task HandleMacroDeleteAsync(Player player, CmMacroDelete packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_MACRO_DELETE.runImpl -> PlayerService.removeMacro.
+		if (packet.MacroPosition is < 1 or > 12)
+			return;
+
+		if (_playerEnterWorldService != null)
+			await _playerEnterWorldService.DeleteMacroAsync(player, packet.MacroPosition);
+		else
+			player.Macros = player.Macros
+				.Where(macro => macro.Id != packet.MacroPosition)
+				.OrderBy(macro => macro.Id)
+				.ToArray();
+		await SendPacketAsync(SmMacroResult.Deleted);
 	}
 
 	private void HandleUiSettings(Player player, CmUiSettings packet)

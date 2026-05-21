@@ -827,6 +827,12 @@ public class GamePacketTests
 		Assert.Equal(
 			Convert.FromHexString("E9030000010000"),
 			SerializeUnencryptedPayload(SmMacroList.CreateLoginPackets(1001, Array.Empty<PlayerMacro>())[0]));
+		Assert.Equal(
+			Convert.FromHexString("00"),
+			SerializeUnencryptedPayload(SmMacroResult.Created));
+		Assert.Equal(
+			Convert.FromHexString("01"),
+			SerializeUnencryptedPayload(SmMacroResult.Deleted));
 
 		var friendListPayload = SerializeUnencryptedPayload(
 			new SmFriendList(
@@ -2338,6 +2344,25 @@ public class GamePacketTests
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(170, buffer => buffer.WriteC(1)), GameConnectionState.Authed));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(179, buffer => buffer.WriteS("Blocked")), GameConnectionState.Authed));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(239, buffer => buffer.WriteS("Friend")), GameConnectionState.Authed));
+	}
+
+	[Fact]
+	public void ClientPacketFactory_ParsesMacroPackets()
+	{
+		var create = Assert.IsType<CmMacroCreate>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(175, buffer =>
+			{
+				buffer.WriteC(3);
+				buffer.WriteS("<macro id=\"3\"/>");
+			}), GameConnectionState.InGame));
+		var delete = Assert.IsType<CmMacroDelete>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(176, buffer => buffer.WriteC(3)), GameConnectionState.InGame));
+
+		Assert.Equal(3, create.MacroPosition);
+		Assert.Equal("<macro id=\"3\"/>", create.MacroXml);
+		Assert.Equal(3, delete.MacroPosition);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(175, buffer => buffer.WriteC(1)), GameConnectionState.Authed));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(176, buffer => buffer.WriteC(1)), GameConnectionState.Authed));
 	}
 
 	[Fact]
