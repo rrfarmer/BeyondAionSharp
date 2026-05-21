@@ -1582,7 +1582,8 @@ public class GamePacketTests
 					new ItemStatModifier("add", "PHYSICAL_DEFENSE", 20, Bonus: true),
 					new ItemStatModifier("add", "MAGICAL_RESIST", 5, Bonus: true),
 					new ItemStatModifier("add", "BLOCK", 9, Bonus: true),
-				]),
+				],
+				TemperingName: "TRAINING_TEMPER"),
 			new ItemTemplateSummary(
 				400,
 				"Manastone: HP +20",
@@ -1708,6 +1709,20 @@ public class GamePacketTests
 						]),
 				]),
 		]);
+		var temperingTemplates = new TemperingTable(
+		[
+			new TemperingGroupSummary(
+				"TRAINING_TEMPER",
+				[
+					new TemperingLevelSummary(
+						2,
+						[
+							new TemperingStatSummary("MAXHP", 22),
+							new TemperingStatSummary("PHYSICAL_DEFENSE", 5),
+							new TemperingStatSummary("MAGICAL_RESIST", 4),
+						]),
+				]),
+		]);
 
 		var payload = SerializeUnencryptedPayload(
 			new SmStatsInfo(
@@ -1731,7 +1746,7 @@ public class GamePacketTests
 							ManaStones = [new ItemStoneSocket(400, 0)],
 							FusionStones = [new ItemStoneSocket(401, 0)],
 						},
-						new InventoryItem { ObjectId = 3, ItemId = 300, Location = 0, IsEquipped = true, Slot = 8 },
+						new InventoryItem { ObjectId = 3, ItemId = 300, Location = 0, IsEquipped = true, Slot = 8, Tempering = 2 },
 					],
 				},
 				new PlayerExperienceTable([0, 400]),
@@ -1739,7 +1754,8 @@ public class GamePacketTests
 				templates,
 				randomBonuses,
 				itemSets,
-				enchantTemplates));
+				enchantTemplates,
+				temperingTemplates));
 
 		using var reader = new PacketBuffer(payload);
 		Assert.Equal(1001, reader.ReadD());
@@ -1754,8 +1770,8 @@ public class GamePacketTests
 		Assert.Equal(0, reader.ReadQ());
 		Assert.Equal(0, reader.ReadQ());
 		reader.ReadD();
-		Assert.Equal(354, reader.ReadD());
-		Assert.Equal(354, reader.ReadD());
+		Assert.Equal(376, reader.ReadD());
+		Assert.Equal(376, reader.ReadD());
 		Assert.Equal(210, reader.ReadD());
 		Assert.Equal(210, reader.ReadD());
 		Assert.Equal(4000, reader.ReadH());
@@ -1767,11 +1783,11 @@ public class GamePacketTests
 		Assert.Equal(47, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
-		Assert.Equal(35, reader.ReadD());
+		Assert.Equal(40, reader.ReadD());
 		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(0, reader.ReadD());
-		Assert.Equal(5, reader.ReadH());
+		Assert.Equal(9, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(1.5f, reader.ReadF());
 		Assert.Equal(1400, reader.ReadH());

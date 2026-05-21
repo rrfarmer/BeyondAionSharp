@@ -17,6 +17,7 @@ public sealed class SmStatsInfo : GameServerPacket
 	private readonly ItemRandomBonusTable? _itemRandomBonuses;
 	private readonly ItemSetTable? _itemSets;
 	private readonly EnchantTable? _enchantTemplates;
+	private readonly TemperingTable? _temperingTemplates;
 
 	public SmStatsInfo(
 		Player player,
@@ -25,7 +26,8 @@ public sealed class SmStatsInfo : GameServerPacket
 		ItemTemplateTable? itemTemplates = null,
 		ItemRandomBonusTable? itemRandomBonuses = null,
 		ItemSetTable? itemSets = null,
-		EnchantTable? enchantTemplates = null)
+		EnchantTable? enchantTemplates = null,
+		TemperingTable? temperingTemplates = null)
 		: base(PacketOpCode)
 	{
 		// Java parity: network/aion/serverpackets/SM_STATS_INFO(Player).
@@ -36,12 +38,13 @@ public sealed class SmStatsInfo : GameServerPacket
 		_itemRandomBonuses = itemRandomBonuses;
 		_itemSets = itemSets;
 		_enchantTemplates = enchantTemplates;
+		_temperingTemplates = temperingTemplates;
 	}
 
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
 		// Java parity: SM_STATS_INFO.writeImpl. Full effects remain deferred, but equipped item template stats are applied when templates are loaded.
-		var context = PlayerStatsContext.Create(_player, _experienceTable, _itemTemplates, _itemRandomBonuses, _itemSets, _enchantTemplates);
+		var context = PlayerStatsContext.Create(_player, _experienceTable, _itemTemplates, _itemRandomBonuses, _itemSets, _enchantTemplates, _temperingTemplates);
 
 		buffer.WriteD(_player.ObjectId);
 		buffer.WriteD(_gameMinutes);
@@ -224,7 +227,8 @@ public sealed class SmStatsInfo : GameServerPacket
 			ItemTemplateTable? itemTemplates,
 			ItemRandomBonusTable? itemRandomBonuses,
 			ItemSetTable? itemSets,
-			EnchantTable? enchantTemplates)
+			EnchantTable? enchantTemplates,
+			TemperingTable? temperingTemplates)
 		{
 			// Java parity: PlayerCommonData.setExp/updateMaxRepose plus PlayerClass.createStatsTemplate.
 			var classStats = PlayerClassStats.Get(player.PlayerClass);
@@ -236,7 +240,7 @@ public sealed class SmStatsInfo : GameServerPacket
 			var baseStats = PlayerCalculatedStats.Create(classStats, level);
 			var currentStats = itemTemplates == null
 				? baseStats
-				: PlayerEquipmentStats.Apply(player, itemTemplates, itemRandomBonuses, itemSets, enchantTemplates, baseStats);
+				: PlayerEquipmentStats.Apply(player, itemTemplates, itemRandomBonuses, itemSets, enchantTemplates, temperingTemplates, baseStats);
 			var lifeStats = player.LifeStats;
 			return new PlayerStatsContext(
 				classStats,
@@ -285,6 +289,7 @@ public sealed class SmStatsInfo : GameServerPacket
 			ItemRandomBonusTable? itemRandomBonuses,
 			ItemSetTable? itemSets,
 			EnchantTable? enchantTemplates,
+			TemperingTable? temperingTemplates,
 			PlayerCalculatedStats baseStats)
 		{
 			// Java parity: model/stats/listeners/ItemEquipmentListener.onItemEquipment plus PlayerGameStats weapon stat accessors.
@@ -298,7 +303,7 @@ public sealed class SmStatsInfo : GameServerPacket
 				return baseStats;
 
 			var modifiers = equippedItems
-				.SelectMany(item => GetEquipmentModifiers(item, itemTemplates, itemRandomBonuses, enchantTemplates))
+				.SelectMany(item => GetEquipmentModifiers(item, itemTemplates, itemRandomBonuses, enchantTemplates, temperingTemplates))
 				.Concat(GetItemSetModifiers(equippedItems, itemSets))
 				.Where(modifier => !string.IsNullOrEmpty(modifier.Name))
 				.ToArray();
@@ -393,7 +398,8 @@ public sealed class SmStatsInfo : GameServerPacket
 			EquippedItem item,
 			ItemTemplateTable itemTemplates,
 			ItemRandomBonusTable? itemRandomBonuses,
-			EnchantTable? enchantTemplates)
+			EnchantTable? enchantTemplates,
+			TemperingTable? temperingTemplates)
 		{
 			foreach (var modifier in item.Template.StatModifiers)
 				yield return modifier;
@@ -414,6 +420,8 @@ public sealed class SmStatsInfo : GameServerPacket
 			foreach (var modifier in GetStoneModifiers(item.Item.FusionStones, itemTemplates))
 				yield return modifier;
 			foreach (var modifier in GetEnchantModifiers(item, enchantTemplates))
+				yield return modifier;
+			foreach (var modifier in GetTemperingModifiers(item, temperingTemplates))
 				yield return modifier;
 		}
 
@@ -469,6 +477,12 @@ public sealed class SmStatsInfo : GameServerPacket
 		{
 			// Java parity: services/EnchantService.applyEnchantEffect adds model/enchants/EnchantEffect when an equipped item has enchant level > 0.
 			return enchantTemplates?.GetModifiers(item.Template, item.Item.Enchant, item.Item.Slot) ?? Array.Empty<ItemStatModifier>();
+		}
+
+		private static IReadOnlyList<ItemStatModifier> GetTemperingModifiers(EquippedItem item, TemperingTable? temperingTemplates)
+		{
+			// Java parity: model/enchants/TemperingEffect.apply when equipped item tempering > 0.
+			return temperingTemplates?.GetModifiers(item.Template, item.Item.Tempering, item.Item.RandomPlumeBonus) ?? Array.Empty<ItemStatModifier>();
 		}
 
 		private static IEnumerable<ItemStatModifier> GetItemSetModifiers(

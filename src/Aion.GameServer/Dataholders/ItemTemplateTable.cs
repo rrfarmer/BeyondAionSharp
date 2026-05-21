@@ -49,7 +49,8 @@ public sealed record ItemTemplateSummary(
 	ItemWeaponStats? WeaponStats = null,
 	IReadOnlyList<ItemStatModifier>? Modifiers = null,
 	int StatBonusSetId = 0,
-	string EnchantName = "")
+	string EnchantName = "",
+	string TemperingName = "")
 {
 	private const int CanPolishMask = 1 << 17;
 

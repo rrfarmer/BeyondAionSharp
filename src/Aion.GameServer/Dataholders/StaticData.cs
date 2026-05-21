@@ -17,6 +17,7 @@ public sealed class StaticData
 		ItemRandomBonusTable itemRandomBonuses,
 		ItemSetTable itemSets,
 		EnchantTable enchantTemplates,
+		TemperingTable temperingTemplates,
 		NpcTemplateTable npcTemplates,
 		SkillTemplateTable skillTemplates,
 		RecipeTemplateTable recipeTemplates,
@@ -36,6 +37,7 @@ public sealed class StaticData
 		ItemRandomBonuses = itemRandomBonuses;
 		ItemSets = itemSets;
 		EnchantTemplates = enchantTemplates;
+		TemperingTemplates = temperingTemplates;
 		NpcTemplates = npcTemplates;
 		SkillTemplates = skillTemplates;
 		RecipeTemplates = recipeTemplates;
@@ -67,6 +69,8 @@ public sealed class StaticData
 	public ItemSetTable ItemSets { get; }
 
 	public EnchantTable EnchantTemplates { get; }
+
+	public TemperingTable TemperingTemplates { get; }
 
 	public NpcTemplateTable NpcTemplates { get; }
 
@@ -104,6 +108,7 @@ public sealed class StaticData
 		var itemRandomBonuses = new List<ItemRandomBonusSummary>();
 		var itemSets = new List<ItemSetSummary>();
 		var enchantGroups = new List<EnchantGroupSummary>();
+		var temperingGroups = new List<TemperingGroupSummary>();
 		var npcTemplates = new List<NpcTemplateSummary>();
 		var skillTemplates = new List<SkillTemplateSummary>();
 		var recipeTemplates = new List<RecipeTemplateSummary>();
@@ -121,6 +126,7 @@ public sealed class StaticData
 		ItemRandomBonusBuilder? currentItemRandomBonus = null;
 		ItemSetBuilder? currentItemSet = null;
 		EnchantGroupBuilder? currentEnchantGroup = null;
+		TemperingGroupBuilder? currentTemperingGroup = null;
 		NpcTemplateBuilder? currentNpcTemplate = null;
 		int currentHousingLandId = 0;
 		int currentHousingManagerNpcId = 0;
@@ -174,6 +180,15 @@ public sealed class StaticData
 
 				if (reader.Depth == 3 && reader.LocalName == "enchant_data" && currentEnchantGroup != null)
 					currentEnchantGroup.EndLevel();
+
+				if (reader.Depth == 2 && reader.LocalName == "tempering_list" && currentTemperingGroup != null)
+				{
+					temperingGroups.Add(currentTemperingGroup.ToSummary());
+					currentTemperingGroup = null;
+				}
+
+				if (reader.Depth == 3 && reader.LocalName == "tempering_data" && currentTemperingGroup != null)
+					currentTemperingGroup.EndLevel();
 
 				if (reader.Depth == 2 && reader.LocalName == "npc_template" && currentNpcTemplate != null)
 				{
@@ -308,7 +323,8 @@ public sealed class StaticData
 					ReadIntAttribute(reader, "option_slot_bonus"),
 					ReadIntAttribute(reader, "rnd_bonus"),
 					ReadOptionalIntAttribute(reader, "rnd_count", -1),
-					reader.GetAttribute("enchant_name") ?? string.Empty);
+					reader.GetAttribute("enchant_name") ?? string.Empty,
+					reader.GetAttribute("tempering_name") ?? string.Empty);
 				if (reader.IsEmptyElement)
 				{
 					itemTemplates.Add(currentItemTemplate.ToSummary());
@@ -340,6 +356,12 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 2 && reader.LocalName == "tempering_list")
+			{
+				currentTemperingGroup = new TemperingGroupBuilder(reader.GetAttribute("item_group") ?? string.Empty);
+				continue;
+			}
+
 			if (reader.Depth == 3 && reader.LocalName == "itempart" && currentItemSet != null)
 			{
 				currentItemSet.AddItemPart(ReadRequiredIntAttribute(reader, "itemid"));
@@ -361,6 +383,12 @@ public sealed class StaticData
 			if (reader.Depth == 3 && reader.LocalName == "enchant_data" && currentEnchantGroup != null)
 			{
 				currentEnchantGroup.StartLevel(ReadRequiredIntAttribute(reader, "level"));
+				continue;
+			}
+
+			if (reader.Depth == 3 && reader.LocalName == "tempering_data" && currentTemperingGroup != null)
+			{
+				currentTemperingGroup.StartLevel(ReadRequiredIntAttribute(reader, "level"));
 				continue;
 			}
 
@@ -436,6 +464,15 @@ public sealed class StaticData
 			{
 				currentEnchantGroup.AddStat(
 					new EnchantStatSummary(
+						reader.GetAttribute("stat") ?? string.Empty,
+						ReadIntAttribute(reader, "value")));
+				continue;
+			}
+
+			if (reader.Depth == 4 && reader.LocalName == "tempering_stat" && currentTemperingGroup != null)
+			{
+				currentTemperingGroup.AddStat(
+					new TemperingStatSummary(
 						reader.GetAttribute("stat") ?? string.Empty,
 						ReadIntAttribute(reader, "value")));
 				continue;
@@ -591,6 +628,7 @@ public sealed class StaticData
 			new ItemRandomBonusTable(itemRandomBonuses.AsReadOnly()),
 			new ItemSetTable(itemSets.AsReadOnly()),
 			new EnchantTable(enchantGroups.AsReadOnly()),
+			new TemperingTable(temperingGroups.AsReadOnly()),
 			new NpcTemplateTable(npcTemplates.AsReadOnly()),
 			new SkillTemplateTable(skillTemplates.AsReadOnly()),
 			new RecipeTemplateTable(recipeTemplates.AsReadOnly()),
@@ -786,6 +824,47 @@ public sealed class StaticData
 		}
 	}
 
+	private sealed class TemperingGroupBuilder
+	{
+		private readonly List<TemperingLevelSummary> _levels = [];
+		private List<TemperingStatSummary>? _currentStats;
+		private int _currentLevelIndex = -1;
+
+		public TemperingGroupBuilder(string itemGroup)
+		{
+			ItemGroup = itemGroup;
+		}
+
+		private string ItemGroup { get; }
+
+		public void StartLevel(int level)
+		{
+			_currentStats = [];
+			_currentLevelIndex = _levels.Count;
+			_levels.Add(new TemperingLevelSummary(level, _currentStats));
+		}
+
+		public void AddStat(TemperingStatSummary stat)
+		{
+			_currentStats ??= [];
+			_currentStats.Add(stat);
+			if (_currentLevelIndex >= 0)
+				_levels[_currentLevelIndex] = _levels[_currentLevelIndex] with { Stats = _currentStats };
+		}
+
+		public void EndLevel()
+		{
+			_currentStats = null;
+			_currentLevelIndex = -1;
+		}
+
+		public TemperingGroupSummary ToSummary()
+		{
+			// Java parity: model/enchants/TemperingList item_group mapped by dataholders/TemperingData.afterUnmarshal.
+			return new TemperingGroupSummary(ItemGroup, _levels.AsReadOnly());
+		}
+	}
+
 	private sealed class ItemTemplateBuilder
 	{
 		public ItemTemplateBuilder(
@@ -810,7 +889,8 @@ public sealed class StaticData
 			int optionSlotBonus,
 			int randomBonusId,
 			int maxTuneCount,
-			string enchantName)
+			string enchantName,
+			string temperingName)
 		{
 			TemplateId = templateId;
 			Name = name;
@@ -831,6 +911,7 @@ public sealed class StaticData
 			EnchantType = enchantType;
 			StatBonusSetId = randomBonusId;
 			EnchantName = enchantName;
+			TemperingName = temperingName;
 			CanTune = CalculateCanTune(validEquipmentSlots, maxTuneCount, maxEnchantBonus, optionSlotBonus, randomBonusId);
 		}
 
@@ -871,6 +952,8 @@ public sealed class StaticData
 		private int StatBonusSetId { get; }
 
 		private string EnchantName { get; }
+
+		private string TemperingName { get; }
 
 		private bool CanTune { get; }
 
@@ -915,7 +998,8 @@ public sealed class StaticData
 				WeaponStats,
 				Modifiers.AsReadOnly(),
 				StatBonusSetId,
-				EnchantName);
+				EnchantName,
+				TemperingName);
 		}
 
 		private static bool CalculateCanTune(
