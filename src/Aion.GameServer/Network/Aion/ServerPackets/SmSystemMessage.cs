@@ -157,6 +157,18 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1401225, minLevel.ToString(System.Globalization.CultureInfo.InvariantCulture));
 	}
 
+	public static SmSystemMessage HousingOverdue()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_OVERDUE.
+		return new SmSystemMessage(1401226);
+	}
+
+	public static SmSystemMessage HousingSequestrate()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_SEQUESTRATE.
+		return new SmSystemMessage(1401227);
+	}
+
 	public static SmSystemMessage HousingCantBidAlreadyHighest()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_CANT_BID_SUCC_BID_HOUSE.

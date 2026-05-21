@@ -471,6 +471,8 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.HousingCantBidGraceHouse(), 1401224);
 		AssertSystemMessage(SmSystemMessage.HousingCantBidOverdue(), 1401349);
 		AssertSystemMessage(SmSystemMessage.HousingCantBidLowLevel(21), 1401225, "21");
+		AssertSystemMessage(SmSystemMessage.HousingOverdue(), 1401226);
+		AssertSystemMessage(SmSystemMessage.HousingSequestrate(), 1401227);
 		AssertSystemMessage(SmSystemMessage.HousingCantBidAlreadyHighest(), 1401222);
 		AssertSystemMessage(SmSystemMessage.HousingCantBidOtherHouse(), 1401223);
 		AssertSystemMessage(SmSystemMessage.HousingCantBidNotEnoughMoney(500000), 1401283, "500000");
@@ -1181,6 +1183,55 @@ public class GamePacketTests
 		Assert.Equal(0, reader.ReadD());
 		Assert.Equal(0, reader.ReadD());
 		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void SmHouseOwnerInfo_CreatesMaintenanceLoginMessages()
+	{
+		var now = new DateTime(2026, 1, 12, 0, 0, 0, DateTimeKind.Local);
+		var overdueMessages = SmHouseOwnerInfo.CreateLoginSystemMessages(
+			new Player
+			{
+				Houses =
+				[
+					new PlayerHouse(50, 700100, 900100, now.AddDays(-30), now.AddSeconds(-1), IsInactive: false),
+				],
+			},
+			payEnabled: true,
+			() => now);
+		Assert.Collection(overdueMessages, message => AssertSystemMessage(message, 1401226));
+
+		var payDisabledMessages = SmHouseOwnerInfo.CreateLoginSystemMessages(
+			new Player
+			{
+				Houses =
+				[
+					new PlayerHouse(50, 700100, 900100, now.AddDays(-30), now.AddSeconds(-1), IsInactive: false),
+				],
+			},
+			payEnabled: false,
+			() => now);
+		Assert.Empty(payDisabledMessages);
+
+		var sequesterMessages = SmHouseOwnerInfo.CreateLoginSystemMessages(
+			new Player
+			{
+				Mailbox =
+				[
+					new PlayerMail(501, 1001, "$$HS_OVERDUE_3RD", "title", "body", true, 0, 0, 0, 0, now),
+				],
+			});
+		Assert.Collection(sequesterMessages, message => AssertSystemMessage(message, 1401227));
+
+		var earlierOverdueMessages = SmHouseOwnerInfo.CreateLoginSystemMessages(
+			new Player
+			{
+				Mailbox =
+				[
+					new PlayerMail(502, 1001, "$$HS_OVERDUE_2ND", "title", "body", true, 0, 0, 0, 0, now),
+				],
+			});
+		Assert.Empty(earlierOverdueMessages);
 	}
 
 	[Fact]

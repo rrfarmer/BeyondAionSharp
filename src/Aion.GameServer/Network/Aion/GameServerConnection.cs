@@ -726,6 +726,11 @@ public sealed class GameServerConnection : BaseClientConnection
 						await SendPacketAsync(new SmBrokerService(enterWorldResult.Player.BrokerSettlements.EarnedKinah));
 					}
 
+					foreach (var housingSystemMessage in SmHouseOwnerInfo.CreateLoginSystemMessages(enterWorldResult.Player, _options.Housing.PayEnabled))
+					{
+						// Java parity: services/HousingService.onPlayerLogin sends maintenance/sequestration notices before house owner info.
+						await SendPacketAsync(housingSystemMessage);
+					}
 					// Java parity: services/HousingService.onPlayerLogin sends house owner profile info.
 					await SendPacketAsync(new SmHouseOwnerInfo(enterWorldResult.Player, auctionEndSchedule: _houseAuctionTiming.AuctionEndSchedule));
 				}
