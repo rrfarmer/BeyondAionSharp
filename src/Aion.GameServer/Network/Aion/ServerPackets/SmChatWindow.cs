@@ -41,7 +41,7 @@ public sealed class SmChatWindow : GameServerPacket
 		buffer.WriteH(ToClassId(_target.PlayerClass));
 		buffer.WriteS(_target.Note);
 		buffer.WriteD(1);
-		buffer.WriteC(0);
+		buffer.WriteC(_target.AccountMembership);
 	}
 
 	private int GetLevel()

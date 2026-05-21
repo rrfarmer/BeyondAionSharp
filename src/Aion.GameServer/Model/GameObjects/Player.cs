@@ -16,6 +16,9 @@ public sealed class Player
 	// Java parity: model/gameobjects/player/PlayerAccount.accessLevel used by AdminService.hasAccess checks.
 	public byte AccessLevel { get; set; }
 
+	// Java parity: model/account/PlayerAccount.membership consumed by chat/player-info packets.
+	public byte AccountMembership { get; set; }
+
 	public string Name { get; init; } = string.Empty;
 
 	public string PlayerClass { get; init; } = string.Empty;

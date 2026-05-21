@@ -629,6 +629,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 				{
 					_activePlayer.AccessLevel = _accessLevel;
+					_activePlayer.AccountMembership = _membership;
 					_connectionRegistry?.RegisterPlayerConnection(_activePlayer.ObjectId, this);
 				}
 				await SendPacketAsync(new SmEnterWorldCheck(enterWorldResult.Message));

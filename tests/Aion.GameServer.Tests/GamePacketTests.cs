@@ -108,6 +108,7 @@ public class GamePacketTests
 			PlayerClass = "CLERIC",
 			Exp = 1500,
 			Note = "Healing today",
+			AccountMembership = 2,
 		};
 		var experienceTable = new PlayerExperienceTable([0, 1000, 3000]);
 
@@ -120,7 +121,7 @@ public class GamePacketTests
 		Assert.Equal(10, playerInfoReader.ReadH());
 		Assert.Equal("Healing today", playerInfoReader.ReadS());
 		Assert.Equal(1, playerInfoReader.ReadD());
-		Assert.Equal(0, (int)playerInfoReader.ReadC());
+		Assert.Equal(2, (int)playerInfoReader.ReadC());
 		Assert.Equal(0, playerInfoReader.Remaining);
 
 		var groupInfoPayload = SerializeUnencryptedPayload(new SmChatWindow(target, isGroup: true, experienceTable));
@@ -1702,6 +1703,7 @@ public class GamePacketTests
 			TitleId = 12,
 			Dp = 300,
 			Note = "Looking sharp",
+			AccountMembership = 2,
 			TargetObjectId = 9005,
 			Position = new WorldPosition(210010000, 10, 20, 30, 40),
 			Settings = new PlayerSettings
@@ -1804,7 +1806,7 @@ public class GamePacketTests
 		Assert.Equal(0, reader.ReadD());
 		Assert.Equal(0, (int)reader.ReadC());
 		Assert.Equal(700100, reader.ReadD());
-		Assert.Equal(1, reader.ReadD());
+		Assert.Equal(5, reader.ReadD());
 		Assert.Equal(1, reader.ReadD());
 		Assert.Equal(3, (int)reader.ReadC());
 		Assert.Equal(0, (int)reader.ReadC());

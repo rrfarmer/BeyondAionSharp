@@ -77,7 +77,7 @@ public sealed class SmPlayerInfo : GameServerPacket
 		buffer.WriteD(0);
 		buffer.WriteC(0);
 		buffer.WriteD(GetActiveHouseAddressId(_player));
-		buffer.WriteD(1);
+		buffer.WriteD(_player.AccountMembership > 0 ? 3 + _player.AccountMembership : 1);
 		buffer.WriteD(1);
 		buffer.WriteC(3);
 		buffer.WriteC(0);
