@@ -46,7 +46,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly ISocialRepository _socialRepository;
 	private readonly IHouseAuctionRepository _houseAuctionRepository;
 	private readonly HouseAuctionTimingService _houseAuctionTiming;
-	private readonly JavaCronSchedule _housingMaintenanceSchedule;
+	private readonly HouseMaintenanceTimingService _houseMaintenanceTiming;
 	private readonly IMotionRepository _motionRepository;
 	private readonly IGameClientConnectionRegistry? _connectionRegistry;
 	private readonly IDFactory? _idFactory;
@@ -83,6 +83,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		ISocialRepository? socialRepository = null,
 		IHouseAuctionRepository? houseAuctionRepository = null,
 		HouseAuctionTimingService? houseAuctionTiming = null,
+		HouseMaintenanceTimingService? houseMaintenanceTiming = null,
 		IMotionRepository? motionRepository = null,
 		IGameClientConnectionRegistry? connectionRegistry = null,
 		IDFactory? idFactory = null,
@@ -104,7 +105,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_socialRepository = socialRepository ?? new EmptySocialRepository();
 		_houseAuctionRepository = houseAuctionRepository ?? new EmptyHouseAuctionRepository();
 		_houseAuctionTiming = houseAuctionTiming ?? new HouseAuctionTimingService();
-		_housingMaintenanceSchedule = JavaCronSchedule.WeeklyOrDefault(_options.Housing.MaintenanceTime, DayOfWeek.Monday, 0);
+		_houseMaintenanceTiming = houseMaintenanceTiming ?? new HouseMaintenanceTimingService(_options);
 		_motionRepository = motionRepository ?? new EmptyMotionRepository();
 		_connectionRegistry = connectionRegistry;
 		_idFactory = idFactory;
@@ -1938,11 +1939,11 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
-		var nextPay = activeHouse.NextPay ?? GetNextHousingMaintenanceRun();
+		var nextPay = activeHouse.NextPay ?? _houseMaintenanceTiming.GetNextRun();
 		for (var counter = 0; counter < packet.WeekCount; counter++)
-			nextPay = GetNextHousingMaintenanceRunAfter(nextPay);
+			nextPay = _houseMaintenanceTiming.GetNextRunAfter(nextPay);
 
-		if (GetPaidHousingMaintenanceWeeks(nextPay) > 4)
+		if (_houseMaintenanceTiming.GetPaidWeeks(nextPay) > 4)
 			return;
 
 		var kinahUpdate = CopyInventoryItem(kinahItem, count: kinahItem.Count - cost);
@@ -2050,24 +2051,6 @@ public sealed class GameServerConnection : BaseClientConnection
 		return from > to
 			? from <= today || to >= today
 			: from <= today && to >= today;
-	}
-
-	private DateTime GetNextHousingMaintenanceRun()
-	{
-		// Java parity: MaintenanceTask uses HousingConfig.HOUSE_MAINTENANCE_TIME.
-		return GetNextHousingMaintenanceRunAfter(DateTime.Now);
-	}
-
-	private DateTime GetNextHousingMaintenanceRunAfter(DateTime date)
-	{
-		// Java parity: AbstractCronTask.getNextRunAfter for HousingConfig.HOUSE_MAINTENANCE_TIME.
-		return _housingMaintenanceSchedule.GetNextRunAfter(date);
-	}
-
-	private static long GetPaidHousingMaintenanceWeeks(DateTime nextPay)
-	{
-		// Java parity: ChronoUnit.WEEKS between ServerTime.now().with(LocalTime.MIDNIGHT) and nextPay.
-		return (nextPay.Date - DateTime.Now.Date).Days / 7;
 	}
 
 	private int GetPlayerLevel(Player player)
