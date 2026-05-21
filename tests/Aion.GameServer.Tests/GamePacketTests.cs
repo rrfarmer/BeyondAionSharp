@@ -1000,6 +1000,14 @@ public class GamePacketTests
 		Assert.True(uiSettings.AsSpan(0, 5).SequenceEqual(Convert.FromHexString("01001CAABB")));
 		Assert.True(uiSettings.AsSpan(5).SequenceEqual(new byte[0x1c00 - 2]));
 
+		var customSettings = SerializeUnencryptedPayload(new SmCustomSettings(1001, 1, display: 4, deny: PlayerSettings.DenyFriendRequests));
+		using var customSettingsReader = new PacketBuffer(customSettings);
+		Assert.Equal(1001, customSettingsReader.ReadD());
+		Assert.Equal(1, (int)customSettingsReader.ReadC());
+		Assert.Equal(4, customSettingsReader.ReadH());
+		Assert.Equal(PlayerSettings.DenyFriendRequests, customSettingsReader.ReadH());
+		Assert.Equal(0, customSettingsReader.Remaining);
+
 		var inventoryPackets = SmInventoryInfo.CreateLoginPackets(
 			new Player
 			{
@@ -2091,6 +2099,25 @@ public class GamePacketTests
 		Assert.Equal(3, settings.DeclaredSize);
 		Assert.Equal([0xAA, 0xBB, 0xCC], settings.Data);
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(10, _ => { }), GameConnectionState.Authed));
+	}
+
+	[Fact]
+	public void ClientPacketFactory_ParsesCustomSettingsInGame()
+	{
+		var settings = Assert.IsType<CmCustomSettings>(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					12,
+					buffer =>
+					{
+						buffer.WriteH(4);
+						buffer.WriteH(PlayerSettings.DenyFriendRequests);
+					}),
+				GameConnectionState.InGame));
+
+		Assert.Equal(4, settings.Display);
+		Assert.Equal(PlayerSettings.DenyFriendRequests, settings.Deny);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(12, _ => { }), GameConnectionState.Authed));
 	}
 
 	[Fact]

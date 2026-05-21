@@ -292,6 +292,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					HandleUiSettings(_activePlayer, uiSettings);
 				break;
+			case CmCustomSettings customSettings:
+				if (_activePlayer != null)
+					await HandleCustomSettingsAsync(_activePlayer, customSettings);
+				break;
 			case CmChatMessagePublic chatMessage:
 				if (_activePlayer != null)
 					await HandlePublicChatAsync(_activePlayer, chatMessage);
@@ -921,6 +925,28 @@ public sealed class GameServerConnection : BaseClientConnection
 					packet.SettingsType);
 				break;
 		}
+	}
+
+	private async Task HandleCustomSettingsAsync(Player player, CmCustomSettings packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_CUSTOM_SETTINGS.runImpl.
+		player.Settings.Display = packet.Display;
+		player.Settings.Deny = packet.Deny;
+
+		var response = new SmCustomSettings(player);
+		if (_connectionRegistry == null)
+		{
+			await SendPacketAsync(response);
+			return;
+		}
+
+		var sent = await _connectionRegistry.BroadcastToVisiblePlayersAsync(
+			player.Position,
+			player.ObjectId,
+			response,
+			includeSourcePlayer: true);
+		if (sent == 0)
+			await SendPacketAsync(response);
 	}
 
 	private async Task HandleFriendStatusAsync(Player player, CmFriendStatus packet)
