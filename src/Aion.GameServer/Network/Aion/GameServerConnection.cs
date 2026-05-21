@@ -850,6 +850,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (player == null)
 			return;
 
+		if (_chatServer != null)
+			await _chatServer.SendPlayerLogoutAsync(player.ObjectId);
 		await DismissPostmanAsync(player, notifyClient: notifyPostmanClient);
 		if (_connectionRegistry != null)
 			await _connectionRegistry.BroadcastToVisiblePlayersAsync(player.Position, player.ObjectId, new SmDelete(player.ObjectId));

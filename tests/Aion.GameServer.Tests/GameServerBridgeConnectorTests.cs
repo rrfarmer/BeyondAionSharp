@@ -128,6 +128,17 @@ public sealed class GameServerBridgeConnectorTests
 	}
 
 	[Fact]
+	public void ChatServerPlayerLogoutPacket_MatchesJavaPayload()
+	{
+		var payload = new SmPlayerLogout(7001).SerializePayload();
+		using var reader = new PacketBuffer(payload);
+
+		Assert.Equal(0x02, (int)reader.ReadC());
+		Assert.Equal(7001, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
 	public async Task ChatServerConnector_SendsAuthFrameAndReadsPublicEndpoint()
 	{
 		await using var mockServer = await MockBridgeServer.StartAsync(CreateChatAuthResponseFrame(IPAddress.Loopback, 10241));

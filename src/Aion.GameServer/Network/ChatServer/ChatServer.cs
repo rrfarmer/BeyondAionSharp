@@ -124,6 +124,17 @@ public sealed class ChatServer : IAsyncDisposable
 		return true;
 	}
 
+	public async Task<bool> SendPlayerLogoutAsync(int playerObjectId, CancellationToken cancellationToken = default)
+	{
+		// Java parity: network/chatserver/ChatServer.sendPlayerLogout.
+		_playerAuthCallbacks.TryRemove(playerObjectId, out _);
+		if (!IsAuthed)
+			return false;
+
+		await SendPacketAsync(new SmPlayerLogout(playerObjectId), cancellationToken);
+		return true;
+	}
+
 	private async Task ProcessPacketAsync(PacketBuffer packet)
 	{
 		// Java parity: chatserver bridge response packet dispatch.
