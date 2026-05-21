@@ -45,6 +45,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly IBrokerRepository? _brokerRepository;
 	private readonly ISocialRepository _socialRepository;
 	private readonly IHouseAuctionRepository _houseAuctionRepository;
+	private readonly HouseAuctionTimingService _houseAuctionTiming;
 	private readonly IMotionRepository _motionRepository;
 	private readonly IGameClientConnectionRegistry? _connectionRegistry;
 	private readonly IDFactory? _idFactory;
@@ -80,6 +81,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		IBrokerRepository? brokerRepository = null,
 		ISocialRepository? socialRepository = null,
 		IHouseAuctionRepository? houseAuctionRepository = null,
+		HouseAuctionTimingService? houseAuctionTiming = null,
 		IMotionRepository? motionRepository = null,
 		IGameClientConnectionRegistry? connectionRegistry = null,
 		IDFactory? idFactory = null,
@@ -100,6 +102,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_brokerRepository = brokerRepository;
 		_socialRepository = socialRepository ?? new EmptySocialRepository();
 		_houseAuctionRepository = houseAuctionRepository ?? new EmptyHouseAuctionRepository();
+		_houseAuctionTiming = houseAuctionTiming ?? new HouseAuctionTimingService();
 		_motionRepository = motionRepository ?? new EmptyMotionRepository();
 		_connectionRegistry = connectionRegistry;
 		_idFactory = idFactory;
@@ -1785,7 +1788,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
-		if (!IsHouseAuctionBiddingTime())
+		if (!_houseAuctionTiming.IsBiddingTime(context.HouseObjectId))
 		{
 			await SendPacketAsync(SmSystemMessage.HousingCantBidTimeout());
 			return;
@@ -1853,6 +1856,13 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		var kinahUpdate = CopyInventoryItem(kinahItem, count: kinahItem.Count - packet.BidOffer);
+		// Java parity: taskmanager/tasks/housing/AuctionEndTask.tryProlongAuction before HouseBidsDAO.addBid.
+		if (!_houseAuctionTiming.TryProlongAuction(context.HouseObjectId))
+		{
+			await SendPacketAsync(SmSystemMessage.HousingCantBidTimeout());
+			return;
+		}
+
 		var result = await _houseAuctionRepository.PlaceHouseBidAsync(
 			player.ObjectId,
 			packet.ListIndex,
@@ -2033,13 +2043,6 @@ public sealed class GameServerConnection : BaseClientConnection
 		return from > to
 			? from <= today || to >= today
 			: from <= today && to >= today;
-	}
-
-	private static bool IsHouseAuctionBiddingTime()
-	{
-		// Java parity: HousingBidService.isBiddingTime default Sunday-noon cutoff; prolongation state is not ported yet.
-		var now = DateTime.Now;
-		return now.DayOfWeek != DayOfWeek.Sunday || now.Hour < 12;
 	}
 
 	private static DateTime GetNextHousingMaintenanceRun()

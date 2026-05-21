@@ -33,6 +33,7 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<GameServerRuntimeContext>();
 			services.AddSingleton<GameWorld>();
 			services.AddSingleton<GameTimeService>();
+			services.AddSingleton<HouseAuctionTimingService>();
 			services.AddSingleton<ShutdownHook>();
 			services.AddSingleton<IStaticDataLoader, StaticDataService>();
 			services.AddSingleton(

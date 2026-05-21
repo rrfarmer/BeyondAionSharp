@@ -2,6 +2,7 @@ using System.Data.Common;
 using Aion.Commons.Database;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Services;
 using Microsoft.Extensions.Logging;
 using MySqlConnector;
 
@@ -129,10 +130,12 @@ public sealed class EmptyHouseAuctionRepository : IHouseAuctionRepository
 public sealed class MySqlHouseAuctionRepository : IHouseAuctionRepository
 {
 	private readonly ILogger<MySqlHouseAuctionRepository> _logger;
+	private readonly HouseAuctionTimingService _auctionTiming;
 
-	public MySqlHouseAuctionRepository(ILogger<MySqlHouseAuctionRepository> logger)
+	public MySqlHouseAuctionRepository(ILogger<MySqlHouseAuctionRepository> logger, HouseAuctionTimingService? auctionTiming = null)
 	{
 		_logger = logger;
+		_auctionTiming = auctionTiming ?? new HouseAuctionTimingService();
 	}
 
 	public async Task<HouseAuctionBidPage> LoadHouseBidsAsync(
@@ -154,7 +157,7 @@ public sealed class MySqlHouseAuctionRepository : IHouseAuctionRepository
 			var registeredHouse = FindRegisteredHouseBid(groups, player.Houses);
 			var visibleBids = groups
 				.Where(group => MatchesLandRace(group, player.Race, housingTemplates, npcTemplates))
-				.Select(group => group.ToSummary(housingTemplates, CalculateRemainingAuctionSeconds()))
+				.Select(group => group.ToSummary(housingTemplates, _auctionTiming.GetRemainingAuctionSeconds(group.HouseObjectId)))
 				.ToArray();
 
 			return new HouseAuctionBidPage(
@@ -682,17 +685,6 @@ public sealed class MySqlHouseAuctionRepository : IHouseAuctionRepository
 		var isElyosLand = string.Equals(managerNpc.Tribe, "GENERAL", StringComparison.OrdinalIgnoreCase);
 		return string.Equals(race, "ELYOS", StringComparison.OrdinalIgnoreCase) && isElyosLand
 			|| string.Equals(race, "ASMODIANS", StringComparison.OrdinalIgnoreCase) && !isElyosLand;
-	}
-
-	private static int CalculateRemainingAuctionSeconds()
-	{
-		// Java parity: taskmanager/tasks/housing/AuctionEndTask default cron, without per-house prolongation state yet.
-		var now = DateTimeOffset.Now;
-		var daysUntilSunday = ((int)DayOfWeek.Sunday - (int)now.DayOfWeek + 7) % 7;
-		var auctionEnd = new DateTimeOffset(now.Date.AddDays(daysUntilSunday).AddHours(12), now.Offset);
-		if (auctionEnd <= now)
-			auctionEnd = auctionEnd.AddDays(7);
-		return Math.Max(0, (int)(auctionEnd - now).TotalSeconds);
 	}
 
 	private static int ReadInt(DbDataReader reader, string columnName)
