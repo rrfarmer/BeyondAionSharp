@@ -477,6 +477,8 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.InvalidTarget(), 1300823);
 		AssertSystemMessage(SmSystemMessage.AccuseSubmit("Reported", "\u221e"), 1390258, "Reported", "\u221e");
 		AssertSystemMessage(SmSystemMessage.AccuseCountInfo("\u221e"), 1400091, "\u221e");
+		AssertSystemMessage(SmSystemMessage.DiceCustomMe(7, 100), 1400126, "7", "100");
+		AssertSystemMessage(SmSystemMessage.DiceCustomOther("Roller", 7, 100), 1400127, "Roller", "7", "100");
 		AssertSystemMessage(SmSystemMessage.NotEnoughKinah(12345), 901285, "12345");
 		AssertSystemMessage(SmSystemMessage.HousingBidSuccess(6001), 1401265, "6001");
 		AssertSystemMessage(SmSystemMessage.HousingBidFail(), 1401348);
@@ -2397,6 +2399,16 @@ public class GamePacketTests
 
 		Assert.Equal(155000001, recipeDelete.RecipeId);
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(89, b => b.WriteD(155000001)), GameConnectionState.Authed));
+	}
+
+	[Fact]
+	public void ClientPacketFactory_ParsesClientCommandRollPacket()
+	{
+		var commandRoll = Assert.IsType<CmClientCommandRoll>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(107, b => b.WriteD(100)), GameConnectionState.InGame));
+
+		Assert.Equal(100, commandRoll.MaxRoll);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(107, b => b.WriteD(100)), GameConnectionState.Authed));
 	}
 
 	[Fact]

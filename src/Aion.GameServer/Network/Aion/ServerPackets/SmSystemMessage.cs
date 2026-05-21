@@ -373,6 +373,25 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1400091, remainingReports);
 	}
 
+	public static SmSystemMessage DiceCustomMe(int roll, int maxRoll)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_DICE_CUSTOM_ME.
+		return new SmSystemMessage(
+			1400126,
+			roll.ToString(System.Globalization.CultureInfo.InvariantCulture),
+			maxRoll.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage DiceCustomOther(string playerName, int roll, int maxRoll)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_DICE_CUSTOM_OTHER.
+		return new SmSystemMessage(
+			1400127,
+			playerName,
+			roll.ToString(System.Globalization.CultureInfo.InvariantCulture),
+			maxRoll.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.writeImpl.

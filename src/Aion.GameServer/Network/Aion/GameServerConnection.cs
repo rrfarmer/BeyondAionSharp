@@ -377,6 +377,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleMotionAsync(_activePlayer, motion);
 				break;
+			case CmClientCommandRoll commandRoll:
+				if (_activePlayer != null)
+					await HandleClientCommandRollAsync(_activePlayer, commandRoll);
+				break;
 			case CmRecipeDelete recipeDelete:
 				if (_activePlayer != null)
 					await HandleRecipeDeleteAsync(_activePlayer, recipeDelete);
@@ -1058,6 +1062,21 @@ public sealed class GameServerConnection : BaseClientConnection
 		var beforeCount = player.Recipes.Count;
 		player.Recipes = player.Recipes.Where(existing => existing != recipeId).ToArray();
 		return player.Recipes.Count != beforeCount;
+	}
+
+	private async Task HandleClientCommandRollAsync(Player player, CmClientCommandRoll packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_CLIENT_COMMAND_ROLL.runImpl.
+		var maxRoll = packet.MaxRoll <= 0 ? 100 : packet.MaxRoll;
+		var roll = RandomNumberGenerator.GetInt32(maxRoll) + 1;
+		await SendPacketAsync(SmSystemMessage.DiceCustomMe(roll, maxRoll));
+		if (_connectionRegistry != null)
+		{
+			await _connectionRegistry.BroadcastToVisiblePlayersAsync(
+				player.Position,
+				player.ObjectId,
+				SmSystemMessage.DiceCustomOther(player.Name, roll, maxRoll));
+		}
 	}
 
 	private async Task HandleReportPlayerAsync(Player player, CmReportPlayer packet)

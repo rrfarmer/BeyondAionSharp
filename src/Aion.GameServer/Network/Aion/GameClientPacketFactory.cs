@@ -41,6 +41,7 @@ public static class GameClientPacketFactory
 		Register(89, states => new CmRecipeDelete(89, states), GameConnectionState.InGame);
 		Register(92, states => new CmSecurityToken(92, states), GameConnectionState.Connected, GameConnectionState.Authed, GameConnectionState.InGame);
 		Register(103, states => new CmPingRequest(103, states), GameConnectionState.InGame);
+		Register(107, states => new CmClientCommandRoll(107, states), GameConnectionState.InGame);
 		Register(110, states => new CmMarkFriendList(110, states), GameConnectionState.InGame);
 		Register(111, states => new CmFriendAdd(111, states), GameConnectionState.InGame);
 		Register(112, states => new CmFriendDelete(112, states), GameConnectionState.InGame);
