@@ -142,6 +142,9 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(70, fireSword.WeaponStats?.MeanDamage);
 		Assert.Equal(1400, fireSword.WeaponStats?.AttackSpeed);
 		Assert.Contains(fireSword.StatModifiers, modifier => modifier is { Operation: "add", Name: "PHYSICAL_ATTACK", Value: 7, Bonus: true });
+		var conditionedDagger = staticData.ItemTemplates.GetItemTemplate(100201371);
+		Assert.NotNull(conditionedDagger);
+		Assert.Contains(conditionedDagger.StatModifiers, modifier => modifier is { Operation: "rate", Name: "ATTACK_SPEED", Value: -4, Bonus: true, ChargeCondition: 1 });
 		Assert.Equal("WEAPON_TEST", staticData.ItemTemplates.GetItemTemplate(100001673)?.EnchantName);
 		Assert.Contains(staticData.EnchantTemplates.GetModifiers(fireSword, 2, 1), modifier => modifier is { Operation: "add", Name: "PHYSICAL_ATTACK", Value: 4, Bonus: false });
 		var temperingTestEarring = staticData.ItemTemplates.GetItemTemplate(120001486);

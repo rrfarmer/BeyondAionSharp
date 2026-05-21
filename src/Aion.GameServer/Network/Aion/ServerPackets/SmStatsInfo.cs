@@ -277,6 +277,7 @@ public sealed class SmStatsInfo : GameServerPacket
 		private const long SubHand = 1L << 1;
 		private const long MainOffHand = 1L << 17;
 		private const long SubOffHand = 1L << 18;
+		private const int ChargeLevel1 = 500000;
 
 		private static readonly HashSet<string> FusionMagicalBoostWeaponGroups = new(StringComparer.Ordinal)
 		{
@@ -401,7 +402,7 @@ public sealed class SmStatsInfo : GameServerPacket
 			EnchantTable? enchantTemplates,
 			TemperingTable? temperingTemplates)
 		{
-			foreach (var modifier in item.Template.StatModifiers)
+			foreach (var modifier in GetTemplateModifiers(item))
 				yield return modifier;
 			foreach (var modifier in GetRandomBonusModifiers(itemRandomBonuses, item.Template.StatBonusSetId, item.Item.RandomBonus))
 				yield return modifier;
@@ -432,6 +433,17 @@ public sealed class SmStatsInfo : GameServerPacket
 		{
 			// Java parity: model/items/RandomBonusEffect applies StatBonusType.INVENTORY selected by item rnd_bonus/fusion_rnd_bonus.
 			return itemRandomBonuses?.GetModifiers("INVENTORY", statBonusSetId, statBonusId) ?? Array.Empty<ItemStatModifier>();
+		}
+
+		private static IEnumerable<ItemStatModifier> GetTemplateModifiers(EquippedItem item)
+		{
+			// Java parity: model/stats/calc/functions/StatFunction.validate with skillengine/condition/ItemChargeCondition.
+			var chargeLevel = GetChargeLevel(item.Item.Charge);
+			foreach (var modifier in item.Template.StatModifiers)
+			{
+				if (modifier.ChargeCondition <= 0 || chargeLevel >= modifier.ChargeCondition)
+					yield return modifier;
+			}
 		}
 
 		private static IEnumerable<ItemStatModifier> GetStoneModifiers(IReadOnlyList<ItemStoneSocket> stones, ItemTemplateTable itemTemplates)
@@ -578,6 +590,13 @@ public sealed class SmStatsInfo : GameServerPacket
 		private static bool IsAlternateWeaponSlot(long slot)
 		{
 			return (slot & (MainOffHand | SubOffHand)) != 0;
+		}
+
+		private static int GetChargeLevel(int charge)
+		{
+			if (charge <= 0)
+				return 0;
+			return charge > ChargeLevel1 ? 2 : 1;
 		}
 
 		private sealed record EquippedItem(InventoryItem Item, ItemTemplateSummary Template);

@@ -172,6 +172,9 @@ public sealed class StaticData
 				if (reader.Depth == 3 && currentItemSet != null && reader.LocalName is "partbonus" or "fullbonus")
 					currentItemSet.EndBonus();
 
+				if (reader.Depth == 4 && currentItemTemplate != null && IsStatModifierElement(reader.LocalName))
+					currentItemTemplate.EndModifier();
+
 				if (reader.Depth == 2 && reader.LocalName == "enchant_list" && currentEnchantGroup != null)
 				{
 					enchantGroups.Add(currentEnchantGroup.ToSummary());
@@ -421,12 +424,22 @@ public sealed class StaticData
 				&& elementPath.TryGetValue(reader.Depth - 1, out var modifierParent)
 				&& modifierParent == "modifiers")
 			{
-				currentItemTemplate.Modifiers.Add(
+				currentItemTemplate.AddModifier(
 					new ItemStatModifier(
 						reader.LocalName,
 						reader.GetAttribute("name") ?? string.Empty,
 						ReadIntAttribute(reader, "value"),
 						ReadBoolAttribute(reader, "bonus")));
+				continue;
+			}
+
+			if (reader.Depth == 6
+				&& currentItemTemplate != null
+				&& reader.LocalName == "charge"
+				&& elementPath.TryGetValue(reader.Depth - 1, out var conditionParent)
+				&& conditionParent == "conditions")
+			{
+				currentItemTemplate.SetCurrentModifierChargeCondition(ReadIntAttribute(reader, "value"));
 				continue;
 			}
 
@@ -957,6 +970,8 @@ public sealed class StaticData
 
 		private bool CanTune { get; }
 
+		private int CurrentModifierIndex { get; set; } = -1;
+
 		public ItemWeaponStats? WeaponStats { get; set; }
 
 		public List<ItemStatModifier> Modifiers { get; } = [];
@@ -968,6 +983,25 @@ public sealed class StaticData
 		public int CraftLearnRecipeId { get; set; }
 
 		public int ConditioningMaxLevel { get; set; }
+
+		public void AddModifier(ItemStatModifier modifier)
+		{
+			Modifiers.Add(modifier);
+			CurrentModifierIndex = Modifiers.Count - 1;
+		}
+
+		public void SetCurrentModifierChargeCondition(int chargeCondition)
+		{
+			if (CurrentModifierIndex < 0)
+				return;
+
+			Modifiers[CurrentModifierIndex] = Modifiers[CurrentModifierIndex] with { ChargeCondition = chargeCondition };
+		}
+
+		public void EndModifier()
+		{
+			CurrentModifierIndex = -1;
+		}
 
 		public ItemTemplateSummary ToSummary()
 		{

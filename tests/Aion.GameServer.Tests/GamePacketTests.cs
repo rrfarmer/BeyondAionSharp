@@ -1582,6 +1582,8 @@ public class GamePacketTests
 					new ItemStatModifier("add", "PHYSICAL_DEFENSE", 20, Bonus: true),
 					new ItemStatModifier("add", "MAGICAL_RESIST", 5, Bonus: true),
 					new ItemStatModifier("add", "BLOCK", 9, Bonus: true),
+					new ItemStatModifier("add", "MAXHP", 12, Bonus: true, ChargeCondition: 2),
+					new ItemStatModifier("add", "MAXMP", 9, Bonus: true, ChargeCondition: 1),
 				],
 				TemperingName: "TRAINING_TEMPER"),
 			new ItemTemplateSummary(
@@ -1746,7 +1748,7 @@ public class GamePacketTests
 							ManaStones = [new ItemStoneSocket(400, 0)],
 							FusionStones = [new ItemStoneSocket(401, 0)],
 						},
-						new InventoryItem { ObjectId = 3, ItemId = 300, Location = 0, IsEquipped = true, Slot = 8, Tempering = 2 },
+						new InventoryItem { ObjectId = 3, ItemId = 300, Location = 0, IsEquipped = true, Slot = 8, Charge = 500000, Tempering = 2 },
 					],
 				},
 				new PlayerExperienceTable([0, 400]),
@@ -1772,8 +1774,8 @@ public class GamePacketTests
 		reader.ReadD();
 		Assert.Equal(376, reader.ReadD());
 		Assert.Equal(376, reader.ReadD());
-		Assert.Equal(210, reader.ReadD());
-		Assert.Equal(210, reader.ReadD());
+		Assert.Equal(219, reader.ReadD());
+		Assert.Equal(219, reader.ReadD());
 		Assert.Equal(4000, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(60, reader.ReadD());

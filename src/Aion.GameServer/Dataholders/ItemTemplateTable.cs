@@ -161,7 +161,8 @@ public sealed record ItemStatModifier(
 	string Operation,
 	string Name,
 	int Value,
-	bool Bonus)
+	bool Bonus,
+	int ChargeCondition = 0)
 {
 	public int Priority => Operation switch
 	{
