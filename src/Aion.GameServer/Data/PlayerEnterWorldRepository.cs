@@ -220,7 +220,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			await connection.OpenAsync(cancellationToken);
 			await using var command = connection.CreateCommand();
 			command.CommandText = """
-				SELECT id, account_id, name, player_class, race, gender, exp, recoverexp, dp, reposte_energy, online, last_online,
+				SELECT id, account_id, name, player_class, race, gender, note, exp, recoverexp, dp, reposte_energy, online, last_online,
 					quest_expands, npc_expands, item_expands, wh_npc_expands, wh_bonus_expands, title_id, bonus_title_id,
 					world_id, x, y, z, heading,
 					pa.face, pa.hair, pa.deco, pa.tattoo, pa.face_contour, pa.expression, pa.jaw_line,
@@ -254,6 +254,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				PlayerClass = ReadString(reader, "player_class"),
 				Race = ReadString(reader, "race"),
 				Gender = ReadString(reader, "gender"),
+				Note = ReadString(reader, "note"),
 				Appearance = ReadAppearance(reader),
 				Exp = reader.GetInt64(reader.GetOrdinal("exp")),
 				RecoverableExp = ReadLong(reader, "recoverexp"),
@@ -339,7 +340,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				UPDATE players
 				SET exp = ?, recoverexp = ?, x = ?, y = ?, z = ?, heading = ?, world_id = ?,
 					quest_expands = ?, npc_expands = ?, item_expands = ?, wh_npc_expands = ?, wh_bonus_expands = ?,
-					title_id = ?, bonus_title_id = ?, dp = ?, mailbox_letters = ?, reposte_energy = ?,
+					note = ?, title_id = ?, bonus_title_id = ?, dp = ?, mailbox_letters = ?, reposte_energy = ?,
 					last_online = ?, online = ?
 				WHERE id = ?
 				""";
@@ -358,6 +359,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 					new MySqlParameter { Value = player.ItemExpands },
 					new MySqlParameter { Value = player.WarehouseNpcExpands },
 					new MySqlParameter { Value = player.WarehouseBonusExpands },
+					new MySqlParameter { Value = player.Note },
 					new MySqlParameter { Value = player.TitleId },
 					new MySqlParameter { Value = player.BonusTitleId },
 					new MySqlParameter { Value = player.Dp },

@@ -311,6 +311,10 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmChatGroupInfo chatGroupInfo:
 				await HandleChatGroupInfoAsync(chatGroupInfo);
 				break;
+			case CmSetNote setNote:
+				if (_activePlayer != null)
+					await HandleSetNoteAsync(_activePlayer, setNote);
+				break;
 			case CmMotion motion:
 				if (_activePlayer != null)
 					await HandleMotionAsync(_activePlayer, motion);
@@ -949,6 +953,44 @@ public sealed class GameServerConnection : BaseClientConnection
 			await SendPacketAsync(response);
 	}
 
+	private async Task HandleSetNoteAsync(Player player, CmSetNote packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_SET_NOTE.runImpl.
+		if (string.Equals(player.Note, packet.Note, StringComparison.Ordinal))
+			return;
+
+		player.Note = packet.Note;
+
+		if (_connectionRegistry != null)
+		{
+			foreach (var friend in player.Friends)
+			{
+				if (!_connectionRegistry.TryGetOnlinePlayerByName(friend.Name, out var friendPlayer) || friendPlayer == null)
+					continue;
+
+				UpdateFriendSnapshot(friendPlayer, player, player.FriendListStatus);
+				await _connectionRegistry.SendPacketToPlayerAsync(
+					friendPlayer.ObjectId,
+					new SmFriendList(friendPlayer.Friends, GetPlayerExperienceTable()));
+			}
+		}
+
+		var response = new SmUpdateNote(player);
+		if (_connectionRegistry == null)
+		{
+			await SendPacketAsync(response);
+			return;
+		}
+
+		var sent = await _connectionRegistry.BroadcastToVisiblePlayersAsync(
+			player.Position,
+			player.ObjectId,
+			response,
+			includeSourcePlayer: true);
+		if (sent == 0)
+			await SendPacketAsync(response);
+	}
+
 	private async Task HandleFriendStatusAsync(Player player, CmFriendStatus packet)
 	{
 		// Java parity: model/gameobjects/player/FriendList.setStatus(Status, PlayerCommonData).
@@ -1339,7 +1381,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			player.Gender,
 			player.Position.WorldId,
 			player.FriendListStatus == 0 ? player.LastOnline : null,
-			string.Empty,
+			player.Note,
 			string.Empty,
 			player.FriendListStatus != 0 || player.IsOnline,
 			activeHouse?.AddressId ?? 0,
@@ -1364,6 +1406,7 @@ public sealed class GameServerConnection : BaseClientConnection
 					Gender = activePlayer.Gender,
 					MapId = activePlayer.Position.WorldId,
 					LastOnline = activeStatus == 0 ? activePlayer.LastOnline : null,
+					Note = activePlayer.Note,
 					IsOnline = activeStatus != 0,
 					HouseAddressId = activeHouse?.AddressId ?? 0,
 					HouseDoorState = activeHouse?.DoorState ?? 0,

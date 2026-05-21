@@ -24,6 +24,8 @@ public sealed class Player
 
 	public string Gender { get; init; } = string.Empty;
 
+	public string Note { get; set; } = string.Empty;
+
 	public CharacterAppearance Appearance { get; set; } = new();
 
 	public long Exp { get; init; }

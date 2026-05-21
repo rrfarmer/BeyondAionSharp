@@ -65,10 +65,10 @@ public sealed class SmPlayerInfo : GameServerPacket
 		buffer.WriteS(string.Empty);
 		WriteMovement(buffer, position);
 		buffer.WriteC(0);
-		buffer.WriteS(string.Empty);
+		buffer.WriteS(_player.Note);
 		buffer.WriteH(GetLevel());
-		buffer.WriteH(0);
-		buffer.WriteH(0);
+		buffer.WriteH(_player.Settings.Display);
+		buffer.WriteH(_player.Settings.Deny);
 		buffer.WriteH(_player.AbyssRank.Rank);
 		buffer.WriteH(0);
 		buffer.WriteD(0);

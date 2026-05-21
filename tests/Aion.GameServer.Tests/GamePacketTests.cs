@@ -107,6 +107,7 @@ public class GamePacketTests
 			Name = "Yustiel",
 			PlayerClass = "CLERIC",
 			Exp = 1500,
+			Note = "Healing today",
 		};
 		var experienceTable = new PlayerExperienceTable([0, 1000, 3000]);
 
@@ -117,7 +118,7 @@ public class GamePacketTests
 		Assert.Equal(string.Empty, playerInfoReader.ReadS());
 		Assert.Equal(2, (int)playerInfoReader.ReadC());
 		Assert.Equal(10, playerInfoReader.ReadH());
-		Assert.Equal(string.Empty, playerInfoReader.ReadS());
+		Assert.Equal("Healing today", playerInfoReader.ReadS());
 		Assert.Equal(1, playerInfoReader.ReadD());
 		Assert.Equal(0, (int)playerInfoReader.ReadC());
 		Assert.Equal(0, playerInfoReader.Remaining);
@@ -874,6 +875,18 @@ public class GamePacketTests
 		Assert.Equal("note", friendUpdateReader.ReadS());
 		Assert.Equal(3, (int)friendUpdateReader.ReadC());
 		Assert.Equal(0, friendUpdateReader.Remaining);
+
+		var updateNotePayload = SerializeUnencryptedPayload(
+			new SmUpdateNote(
+				new Player
+				{
+					ObjectId = 44,
+					Note = "Ready for dredge",
+				}));
+		using var updateNoteReader = new PacketBuffer(updateNotePayload);
+		Assert.Equal(44, updateNoteReader.ReadD());
+		Assert.Equal("Ready for dredge", updateNoteReader.ReadS());
+		Assert.Equal(0, updateNoteReader.Remaining);
 
 		var blockListPayload = SerializeUnencryptedPayload(
 			new SmBlockList([new PlayerBlockedUser(55, "Blocked", "reason")]));
@@ -1688,7 +1701,13 @@ public class GamePacketTests
 			PlayerClass = "RANGER",
 			TitleId = 12,
 			Dp = 300,
+			Note = "Looking sharp",
 			Position = new WorldPosition(210010000, 10, 20, 30, 40),
+			Settings = new PlayerSettings
+			{
+				Display = 4,
+				Deny = PlayerSettings.DenyFriendRequests,
+			},
 			Appearance = new CharacterAppearance
 			{
 				SkinRgb = 0x112233,
@@ -1727,6 +1746,39 @@ public class GamePacketTests
 		Assert.Equal(40, (int)reader.ReadC());
 		Assert.Equal("Visible", reader.ReadS());
 		Assert.Equal(12, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(new byte[12], reader.ReadB(12));
+		Assert.Equal(100, (int)reader.ReadC());
+		Assert.Equal(300, reader.ReadH());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(1, reader.ReadD());
+		Assert.Equal(100000099, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(new byte[4], reader.ReadB(4));
+		Assert.Equal(5, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		reader.ReadB(16 + 51);
+		Assert.Equal(1.2f, reader.ReadF());
+		Assert.Equal(0.25f, reader.ReadF());
+		Assert.Equal(2.0f, reader.ReadF());
+		Assert.Equal(6.0f, reader.ReadF());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(string.Empty, reader.ReadS());
+		Assert.Equal(0, reader.ReadF());
+		Assert.Equal(0, reader.ReadF());
+		Assert.Equal(0, reader.ReadF());
+		Assert.Equal(10, reader.ReadF());
+		Assert.Equal(20, reader.ReadF());
+		Assert.Equal(30, reader.ReadF());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal("Looking sharp", reader.ReadS());
+		Assert.Equal(1, reader.ReadH());
+		Assert.Equal(4, reader.ReadH());
+		Assert.Equal(PlayerSettings.DenyFriendRequests, reader.ReadH());
 	}
 
 	[Fact]
@@ -2202,8 +2254,11 @@ public class GamePacketTests
 		Assert.Equal(SmQuestionWindow.BuddyListAddBuddyRequest, questionResponse.QuestionId);
 		Assert.Equal(1, (int)questionResponse.Response);
 		Assert.Equal(1001, questionResponse.SenderObjectId);
+		var setNote = Assert.IsType<CmSetNote>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(58, buffer => buffer.WriteS("Available for siege")), GameConnectionState.InGame));
 		Assert.Equal("Friend", friendAdd.TargetName);
 		Assert.Equal("hello", friendAdd.Message);
+		Assert.Equal("Available for siege", setNote.Note);
 		Assert.Equal("Friend", friendDelete.TargetName);
 		Assert.Equal("Blocked", blockAdd.TargetName);
 		Assert.Equal("reason", blockAdd.Reason);
@@ -2214,6 +2269,7 @@ public class GamePacketTests
 		Assert.Equal("Friend", friendSetMemo.TargetName);
 		Assert.Equal("new memo", friendSetMemo.Memo);
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(50, _ => { }), GameConnectionState.Authed));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(58, buffer => buffer.WriteS("too soon")), GameConnectionState.Authed));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(110, _ => { }), GameConnectionState.Authed));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(111, buffer => buffer.WriteS("Friend")), GameConnectionState.Authed));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(112, buffer => buffer.WriteS("Friend")), GameConnectionState.Authed));
