@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text;
 using Aion.Commons.Database;
 using Aion.GameServer.Model.Account;
 using Aion.GameServer.Model.GameObjects;
@@ -1355,7 +1357,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public async Task<PlayerSettings> LoadPlayerSettingsAsync(int playerObjectId, CancellationToken cancellationToken = default)
 	{
-		// Java parity: dao/PlayerSettingsDAO.loadSettings, scoped to client setting blobs.
+		// Java parity: dao/PlayerSettingsDAO.loadSettings.
 		try
 		{
 			await using var connection = DatabaseFactory.GetConnection();
@@ -1367,20 +1369,27 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			byte[]? uiSettings = null;
 			byte[]? shortcuts = null;
 			byte[]? houseBuddies = null;
+			var display = 0;
+			var deny = 0;
 			await using var reader = await command.ExecuteReaderAsync(cancellationToken);
 			while (await reader.ReadAsync(cancellationToken))
 			{
-				var settings = ReadBytes(reader, "settings");
 				switch (ReadInt(reader, "settings_type"))
 				{
 					case 0:
-						uiSettings = settings;
+						uiSettings = ReadBytes(reader, "settings");
 						break;
 					case 1:
-						shortcuts = settings;
+						shortcuts = ReadBytes(reader, "settings");
 						break;
 					case 2:
-						houseBuddies = settings;
+						houseBuddies = ReadBytes(reader, "settings");
+						break;
+					case -1:
+						display = ReadSettingsInt(reader, "settings");
+						break;
+					case -2:
+						deny = ReadSettingsInt(reader, "settings");
 						break;
 				}
 			}
@@ -1390,6 +1399,8 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				UiSettings = uiSettings,
 				Shortcuts = shortcuts,
 				HouseBuddies = houseBuddies,
+				Display = display,
+				Deny = deny,
 			};
 		}
 		catch (Exception ex)
@@ -1640,6 +1651,28 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	{
 		var ordinal = reader.GetOrdinal(column);
 		return !reader.IsDBNull(ordinal) && Convert.ToInt32(reader.GetValue(ordinal)) != 0;
+	}
+
+	private static int ReadSettingsInt(MySqlDataReader reader, string column)
+	{
+		var ordinal = reader.GetOrdinal(column);
+		if (reader.IsDBNull(ordinal))
+			return 0;
+
+		var value = reader.GetValue(ordinal);
+		if (value is byte[] bytes)
+		{
+			if (bytes.Length == 0)
+				return 0;
+
+			var text = Encoding.UTF8.GetString(bytes).Trim('\0', ' ', '\t', '\r', '\n');
+			if (int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed))
+				return parsed;
+
+			return bytes.Length >= sizeof(int) ? BitConverter.ToInt32(bytes, 0) : bytes[0];
+		}
+
+		return Convert.ToInt32(value, CultureInfo.InvariantCulture);
 	}
 
 	private static string? GetBrokerRace(string race)

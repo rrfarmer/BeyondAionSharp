@@ -996,6 +996,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (target.Settings.DeniesFriendRequests())
+		{
+			await SendPacketAsync(SmSystemMessage.RejectedFriend(target.Name));
+			return;
+		}
+
 		if (target.PendingFriendRequest != null)
 		{
 			await SendPacketAsync(SmSystemMessage.BuddyListBusy());
