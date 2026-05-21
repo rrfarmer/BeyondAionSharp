@@ -861,6 +861,52 @@ public class GamePacketTests
 		Assert.Equal(2.5f, spawnReader.ReadF());
 		Assert.Equal(3.5f, spawnReader.ReadF());
 		Assert.Equal(32, (int)spawnReader.ReadC());
+
+		var postmanTemplate = new NpcTemplateSummary(
+			798100,
+			"<zephyr deliveryman>",
+			350579,
+			15,
+			"DISCIPLINED",
+			"NORMAL",
+			"BROWNIE",
+			"GENERAL",
+			"GENERAL",
+			Height: 1.16875f,
+			AttackSpeed: 2000,
+			MaxHp: 2256,
+			RunSpeed: 4.23f,
+			BoundRadius: 0.595f);
+		var postman = PostmanNpc.Create(
+			new Player
+			{
+				ObjectId = 1001,
+				Name = "Owner",
+				Race = "ELYOS",
+				Position = new WorldPosition(210010000, 1, 2, 3, 30),
+			},
+			9001,
+			postmanTemplate);
+		Assert.Equal(1, postman.Position.X, precision: 4);
+		Assert.Equal(9, postman.Position.Y, precision: 4);
+
+		var npcPayload = SerializeUnencryptedPayload(new SmNpcInfo(postman));
+		using var npcReader = new PacketBuffer(npcPayload);
+		Assert.Equal(postman.Position.X, npcReader.ReadF(), precision: 4);
+		Assert.Equal(postman.Position.Y, npcReader.ReadF(), precision: 4);
+		Assert.Equal(3, npcReader.ReadF());
+		Assert.Equal(9001, npcReader.ReadD());
+		Assert.Equal(798100, npcReader.ReadD());
+		Assert.Equal(798100, npcReader.ReadD());
+		Assert.Equal(38, (int)npcReader.ReadC());
+		Assert.Equal(1, npcReader.ReadH());
+		Assert.Equal(0, (int)npcReader.ReadC());
+		Assert.Equal(350579, npcReader.ReadD());
+
+		var deletePayload = SerializeUnencryptedPayload(new SmDelete(9001));
+		using var deleteReader = new PacketBuffer(deletePayload);
+		Assert.Equal(9001, deleteReader.ReadD());
+		Assert.Equal(1, (int)deleteReader.ReadC());
 	}
 
 	[Fact]

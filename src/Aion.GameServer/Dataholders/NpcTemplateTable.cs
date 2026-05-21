@@ -32,4 +32,10 @@ public sealed record NpcTemplateSummary(
 	string Rating,
 	string Race,
 	string Tribe,
-	string Type);
+	string Type,
+	int TitleId = 0,
+	float Height = 0,
+	int AttackSpeed = 0,
+	int MaxHp = 0,
+	float RunSpeed = 0,
+	float BoundRadius = 0);

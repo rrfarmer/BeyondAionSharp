@@ -80,6 +80,8 @@ public sealed class Player
 	// Java parity: CM_READ_EXPRESS_MAIL.runImpl checks Player.getPostman and TaskId.EXPRESS_MAIL_USE.
 	public bool HasSummonedPostman { get; set; }
 
+	public PostmanNpc? Postman { get; set; }
+
 	public DateTimeOffset? ExpressMailCooldownUntil { get; set; }
 
 	public PlayerBrokerSettlementSummary BrokerSettlements { get; set; } = PlayerBrokerSettlementSummary.Empty;

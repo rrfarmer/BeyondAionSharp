@@ -95,6 +95,7 @@ public sealed class StaticData
 		string? currentPlayerCreationClass = null;
 		InstanceCooltimeBuilder? currentInstanceCooltime = null;
 		ItemTemplateBuilder? currentItemTemplate = null;
+		NpcTemplateBuilder? currentNpcTemplate = null;
 		var elementPath = new Dictionary<int, string>();
 		var settings = new XmlReaderSettings
 		{
@@ -120,6 +121,12 @@ public sealed class StaticData
 				{
 					itemTemplates.Add(currentItemTemplate.ToSummary());
 					currentItemTemplate = null;
+				}
+
+				if (reader.Depth == 2 && reader.LocalName == "npc_template" && currentNpcTemplate != null)
+				{
+					npcTemplates.Add(currentNpcTemplate.ToSummary());
+					currentNpcTemplate = null;
 				}
 
 				if (reader.Depth == 2 && reader.LocalName == "player_data")
@@ -215,7 +222,7 @@ public sealed class StaticData
 
 			if (reader.Depth == 2 && reader.LocalName == "npc_template")
 			{
-				npcTemplates.Add(new NpcTemplateSummary(
+				currentNpcTemplate = new NpcTemplateBuilder(
 					ReadRequiredIntAttribute(reader, "npc_id"),
 					reader.GetAttribute("name") ?? string.Empty,
 					ReadIntAttribute(reader, "name_id"),
@@ -224,7 +231,35 @@ public sealed class StaticData
 					reader.GetAttribute("rating") ?? string.Empty,
 					reader.GetAttribute("race") ?? string.Empty,
 					reader.GetAttribute("tribe") ?? string.Empty,
-					reader.GetAttribute("type") ?? string.Empty));
+					reader.GetAttribute("type") ?? string.Empty,
+					ReadIntAttribute(reader, "title_id"),
+					ReadFloatAttribute(reader, "height"),
+					ReadIntAttribute(reader, "attack_speed"));
+				if (reader.IsEmptyElement)
+				{
+					npcTemplates.Add(currentNpcTemplate.ToSummary());
+					currentNpcTemplate = null;
+				}
+
+				continue;
+			}
+
+			if (reader.Depth == 3 && reader.LocalName == "stats" && currentNpcTemplate != null)
+			{
+				currentNpcTemplate.MaxHp = ReadIntAttribute(reader, "maxHp");
+				continue;
+			}
+
+			if (reader.Depth == 4 && reader.LocalName == "speeds" && currentNpcTemplate != null)
+			{
+				currentNpcTemplate.RunSpeed = ReadFloatAttribute(reader, "run");
+				continue;
+			}
+
+			if (reader.Depth == 3 && reader.LocalName == "bound_radius" && currentNpcTemplate != null)
+			{
+				currentNpcTemplate.BoundRadiusFront = ReadFloatAttribute(reader, "front");
+				currentNpcTemplate.BoundRadiusSide = ReadFloatAttribute(reader, "side");
 				continue;
 			}
 
@@ -435,6 +470,90 @@ public sealed class StaticData
 				DispositionItemCount,
 				ClassRestrictions,
 				CraftLearnRecipeId);
+		}
+	}
+
+	private sealed class NpcTemplateBuilder
+	{
+		public NpcTemplateBuilder(
+			int templateId,
+			string name,
+			int nameId,
+			int level,
+			string rank,
+			string rating,
+			string race,
+			string tribe,
+			string type,
+			int titleId,
+			float height,
+			int attackSpeed)
+		{
+			TemplateId = templateId;
+			Name = name;
+			NameId = nameId;
+			Level = level;
+			Rank = rank;
+			Rating = rating;
+			Race = race;
+			Tribe = tribe;
+			Type = type;
+			TitleId = titleId;
+			Height = height;
+			AttackSpeed = attackSpeed;
+		}
+
+		private int TemplateId { get; }
+
+		private string Name { get; }
+
+		private int NameId { get; }
+
+		private int Level { get; }
+
+		private string Rank { get; }
+
+		private string Rating { get; }
+
+		private string Race { get; }
+
+		private string Tribe { get; }
+
+		private string Type { get; }
+
+		private int TitleId { get; }
+
+		private float Height { get; }
+
+		private int AttackSpeed { get; }
+
+		public int MaxHp { get; set; }
+
+		public float RunSpeed { get; set; }
+
+		public float BoundRadiusFront { get; set; }
+
+		public float BoundRadiusSide { get; set; }
+
+		public NpcTemplateSummary ToSummary()
+		{
+			// Java parity: model/templates/npc/NpcTemplate fields consumed by SM_NPC_INFO.
+			return new NpcTemplateSummary(
+				TemplateId,
+				Name,
+				NameId,
+				Level,
+				Rank,
+				Rating,
+				Race,
+				Tribe,
+				Type,
+				TitleId,
+				Height,
+				AttackSpeed,
+				MaxHp,
+				RunSpeed,
+				Math.Max(BoundRadiusFront, BoundRadiusSide));
 		}
 	}
 

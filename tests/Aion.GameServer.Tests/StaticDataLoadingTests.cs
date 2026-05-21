@@ -127,6 +127,11 @@ public sealed class StaticDataLoadingTests
 		Assert.False(staticData.ItemTemplates.GetItemTemplate(169500916)?.IsClassSpecific("ASSASSIN"));
 		Assert.Equal(155000001, staticData.ItemTemplates.GetItemTemplate(152200001)?.CraftLearnRecipeId);
 		Assert.Equal("kamikaze worm", staticData.NpcTemplates.GetNpcTemplate(201000)?.Name);
+		var postmanNpc = staticData.NpcTemplates.GetNpcTemplate(798100);
+		Assert.NotNull(postmanNpc);
+		Assert.Equal(2256, postmanNpc.MaxHp);
+		Assert.Equal(4.23f, postmanNpc.RunSpeed);
+		Assert.Equal(0.595f, postmanNpc.BoundRadius);
 		Assert.Equal(8, staticData.SkillTemplates.GetSkillTemplatesByGroup("RA_WHITETIGER").Count);
 		Assert.Equal(152000401, staticData.RecipeTemplates.GetRecipeTemplateById(155000001)?.ProductId);
 		Assert.Equal(5, staticData.InstanceCooltimes.GetInstanceCooltimeByWorldId(300030000)?.MaxCount);

@@ -14,6 +14,7 @@ using Aion.GameServer.Services;
 using Aion.GameServer.Utils.IdFactory;
 using AccountAuthResult = Aion.GameServer.Network.LoginServer.AccountAuthResult;
 using GameLoginServer = Aion.GameServer.Network.LoginServer.LoginServer;
+using GameWorld = Aion.GameServer.World.World;
 using Microsoft.Extensions.Logging;
 
 namespace Aion.GameServer.Network.Aion;
@@ -39,6 +40,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly IGameClientConnectionRegistry? _connectionRegistry;
 	private readonly IDFactory? _idFactory;
 	private readonly GameTimeService? _gameTimeService;
+	private readonly GameWorld? _world;
 	private readonly SemaphoreSlim _sendLock = new(1, 1);
 	private readonly SemaphoreSlim _closeLock = new(1, 1);
 	private GameConnectionState _state = GameConnectionState.Connected;
@@ -67,6 +69,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		IGameClientConnectionRegistry? connectionRegistry = null,
 		IDFactory? idFactory = null,
 		GameTimeService? gameTimeService = null,
+		GameWorld? world = null,
 		GameCrypt? crypt = null)
 		: base(logger, client, clientId)
 	{
@@ -82,6 +85,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_connectionRegistry = connectionRegistry;
 		_idFactory = idFactory;
 		_gameTimeService = gameTimeService;
+		_world = world;
 		_crypt = crypt ?? new GameCrypt();
 	}
 
@@ -178,7 +182,10 @@ public sealed class GameServerConnection : BaseClientConnection
 
 			// Java parity: online player is removed from World-backed player lookups when the connection closes.
 			if (_activePlayer != null)
+			{
+				await DismissPostmanAsync(_activePlayer, notifyClient: false);
 				_connectionRegistry?.UnregisterPlayerConnection(_activePlayer.ObjectId, this);
+			}
 
 			await NotifyAccountDisconnectedAsync();
 
@@ -530,7 +537,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		switch (packet.Action)
 		{
 			case 0:
-				player.HasSummonedPostman = false;
+				await DismissPostmanAsync(player);
 				break;
 			case 1:
 				var hasUnreadExpress = player.Mailbox.Any(mail => mail.IsUnreadExpress);
@@ -541,7 +548,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				}
 				else if (hasUnreadBlackCloud)
 				{
-					player.HasSummonedPostman = true;
+					await SpawnPostmanAsync(player);
 				}
 				else if (hasUnreadExpress)
 				{
@@ -552,7 +559,7 @@ public sealed class GameServerConnection : BaseClientConnection
 						return;
 					}
 
-					player.HasSummonedPostman = true;
+					await SpawnPostmanAsync(player);
 					player.ExpressMailCooldownUntil = now.AddMinutes(10);
 				}
 				break;
@@ -560,6 +567,46 @@ public sealed class GameServerConnection : BaseClientConnection
 				_logger.LogWarning("Player {PlayerObjectId} sent unknown read express mail action type {Action}", player.ObjectId, packet.Action);
 				break;
 		}
+	}
+
+	private async Task SpawnPostmanAsync(Player player)
+	{
+		// Java parity: spawnengine/VisibleObjectSpawner.spawnPostman.
+		if (_runtimeContext?.DataManager?.StaticData.NpcTemplates == null || _idFactory == null)
+		{
+			player.HasSummonedPostman = true;
+			return;
+		}
+
+		var npcId = string.Equals(player.Race, "ELYOS", StringComparison.OrdinalIgnoreCase) ? 798100 : 798101;
+		var template = _runtimeContext.DataManager.StaticData.NpcTemplates.GetNpcTemplate(npcId);
+		if (template == null)
+		{
+			player.HasSummonedPostman = true;
+			return;
+		}
+
+		var postman = PostmanNpc.Create(player, _idFactory.NextId(), template);
+		player.Postman = postman;
+		player.HasSummonedPostman = true;
+		_world?.TryAddObject(postman.ObjectId, postman);
+		await SendPacketAsync(new SmNpcInfo(postman));
+	}
+
+	private async Task DismissPostmanAsync(Player player, bool notifyClient = true)
+	{
+		// Java parity: CM_READ_EXPRESS_MAIL action 0 deletes Player.getPostman.
+		var postman = player.Postman;
+		player.Postman = null;
+		player.HasSummonedPostman = false;
+		if (postman == null)
+			return;
+
+		_world?.TryRemoveObject(postman.ObjectId, out _);
+		if (_idFactory != null)
+			_idFactory.ReleaseId(postman.ObjectId);
+		if (notifyClient)
+			await SendPacketAsync(new SmDelete(postman.ObjectId));
 	}
 
 	private async Task<PlayerBrokerItemPage> LoadBrokerMaskPageAsync(Player player, byte sortType, int pageIndex, int brokerMask)

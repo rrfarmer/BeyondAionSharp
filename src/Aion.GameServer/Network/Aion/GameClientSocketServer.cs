@@ -10,6 +10,7 @@ using Aion.GameServer.Services;
 using Aion.GameServer.Utils.IdFactory;
 using Microsoft.Extensions.Logging;
 using GameLoginServer = Aion.GameServer.Network.LoginServer.LoginServer;
+using GameWorld = Aion.GameServer.World.World;
 
 namespace Aion.GameServer.Network.Aion;
 
@@ -26,6 +27,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 	private readonly IBrokerRepository? _brokerRepository;
 	private readonly IDFactory? _idFactory;
 	private readonly GameTimeService? _gameTimeService;
+	private readonly GameWorld? _world;
 	private readonly ConcurrentDictionary<string, GameServerConnection> _connections = new();
 	private readonly ConcurrentDictionary<int, GameServerConnection> _playerConnections = new();
 	private long _nextClientId;
@@ -42,7 +44,8 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		IMailRepository? mailRepository = null,
 		IBrokerRepository? brokerRepository = null,
 		IDFactory? idFactory = null,
-		GameTimeService? gameTimeService = null)
+		GameTimeService? gameTimeService = null,
+		GameWorld? world = null)
 		: base(
 			logger,
 			"Aion Game Client Server",
@@ -61,6 +64,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		_brokerRepository = brokerRepository;
 		_idFactory = idFactory;
 		_gameTimeService = gameTimeService;
+		_world = world;
 	}
 
 	public IPEndPoint? LocalEndPoint => _listener?.LocalEndpoint as IPEndPoint;
@@ -87,7 +91,8 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 				_brokerRepository,
 				this,
 				_idFactory,
-				_gameTimeService);
+				_gameTimeService,
+				_world);
 			_connections[clientId] = connection;
 			await connection.RunAsync();
 		}
