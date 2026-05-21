@@ -1368,6 +1368,11 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		foreach (var removedSkill in plan.RemovedSkills)
 			await SendPacketAsync(new SmSkillRemove(removedSkill));
+		foreach (var hiddenSkillMessage in plan.HiddenSkillDeleteMessages)
+			await SendPacketAsync(SmSystemMessage.StigmaDeleteHiddenSkill(
+				hiddenSkillMessage.FirstSkillName,
+				hiddenSkillMessage.SkillLevel,
+				hiddenSkillMessage.SecondSkillName));
 		foreach (var addedSkill in plan.AddedSkills)
 			await SendPacketAsync(new SmSkillList([addedSkill], addedSkill.SkillType >= 3 ? 1402891 : 1300401));
 
@@ -1432,6 +1437,11 @@ public sealed class GameServerConnection : BaseClientConnection
 			await SendPacketAsync(SmSystemMessage.StigmaSkillUnavailable(skillName));
 		foreach (var removedSkill in change.SkillRemoveUpdates)
 			await SendPacketAsync(new SmSkillRemove(removedSkill));
+		foreach (var hiddenSkillMessage in change.HiddenStigmaSkillRemoveMessages)
+			await SendPacketAsync(SmSystemMessage.StigmaDeleteHiddenSkill(
+				hiddenSkillMessage.FirstSkillName,
+				hiddenSkillMessage.SkillLevel,
+				hiddenSkillMessage.SecondSkillName));
 		foreach (var addedSkill in change.SkillListUpdates)
 			await SendPacketAsync(new SmSkillList([addedSkill], addedSkill.SkillType >= 3 ? 1402891 : 1300401));
 

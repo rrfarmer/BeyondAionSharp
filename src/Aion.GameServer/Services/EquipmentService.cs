@@ -84,6 +84,7 @@ public static class EquipmentService
 		var addedSkills = Array.Empty<PlayerSkill>();
 		var removedSkills = Array.Empty<PlayerSkill>();
 		var removedSkillNames = Array.Empty<string>();
+		var hiddenSkillDeleteMessages = Array.Empty<StigmaHiddenSkillDeleteMessage>();
 		IReadOnlyList<PlayerSkill>? updatedSkills = null;
 		InventoryItem? kinahItemUpdate = null;
 		if (template.StigmaInfo != null && skillTemplates != null && skillTree != null)
@@ -108,6 +109,7 @@ public static class EquipmentService
 			addedSkills = stigma.AddedSkills.ToArray();
 			removedSkills = stigma.RemovedSkills.ToArray();
 			removedSkillNames = stigma.RemovedSkillNames.ToArray();
+			hiddenSkillDeleteMessages = stigma.HiddenSkillDeleteMessages.ToArray();
 			kinahItemUpdate = stigma.KinahItemUpdate;
 			if (kinahItemUpdate != null)
 				ReplaceInventoryItem(inventoryItems, kinahItemUpdate);
@@ -143,7 +145,8 @@ public static class EquipmentService
 			updatedSkills,
 			addedSkills,
 			removedSkills,
-			removedSkillNames);
+			removedSkillNames,
+			hiddenSkillDeleteMessages);
 	}
 
 	private static EquipmentChangeResult? ValidateEquipRestrictions(
@@ -204,12 +207,14 @@ public static class EquipmentService
 		IReadOnlyList<PlayerSkill>? updatedSkills = null;
 		var removedSkills = Array.Empty<PlayerSkill>();
 		var removedSkillNames = Array.Empty<string>();
+		var hiddenSkillDeleteMessages = Array.Empty<StigmaHiddenSkillDeleteMessage>();
 		if (itemTemplate?.StigmaInfo != null && skillTemplates != null && skillTree != null)
 		{
 			var stigma = StigmaService.NotifyUnequipAction(player, item, itemTemplate, skillTemplates, skillTree);
 			updatedSkills = stigma.Skills;
 			removedSkills = stigma.RemovedSkills.ToArray();
 			removedSkillNames = stigma.RemovedSkillNames.ToArray();
+			hiddenSkillDeleteMessages = stigma.HiddenSkillDeleteMessages.ToArray();
 		}
 
 		var slotsToUnequip = item.Slot;
@@ -238,7 +243,8 @@ public static class EquipmentService
 			skills: updatedSkills,
 			addedSkills: Array.Empty<PlayerSkill>(),
 			removedSkills: removedSkills,
-			removedStigmaSkillNames: removedSkillNames);
+			removedStigmaSkillNames: removedSkillNames,
+			hiddenStigmaSkillDeleteMessages: hiddenSkillDeleteMessages);
 	}
 
 	private static EquipmentChangeResult SwitchHands(Player player, ItemTemplateTable itemTemplates)
@@ -529,7 +535,8 @@ public sealed record EquipmentChangeResult(
 	IReadOnlyList<PlayerSkill>? Skills = null,
 	IReadOnlyList<PlayerSkill>? AddedSkills = null,
 	IReadOnlyList<PlayerSkill>? RemovedSkills = null,
-	IReadOnlyList<string>? RemovedStigmaSkillNames = null)
+	IReadOnlyList<string>? RemovedStigmaSkillNames = null,
+	IReadOnlyList<StigmaHiddenSkillDeleteMessage>? HiddenStigmaSkillDeleteMessages = null)
 {
 	public IReadOnlyList<PlayerSkill> FinalSkills => Skills ?? Array.Empty<PlayerSkill>();
 
@@ -538,6 +545,9 @@ public sealed record EquipmentChangeResult(
 	public IReadOnlyList<PlayerSkill> SkillRemoveUpdates => RemovedSkills ?? Array.Empty<PlayerSkill>();
 
 	public IReadOnlyList<string> StigmaSkillRemoveMessages => RemovedStigmaSkillNames ?? Array.Empty<string>();
+
+	public IReadOnlyList<StigmaHiddenSkillDeleteMessage> HiddenStigmaSkillRemoveMessages =>
+		HiddenStigmaSkillDeleteMessages ?? Array.Empty<StigmaHiddenSkillDeleteMessage>();
 
 	public static EquipmentChangeResult NoChange()
 	{
@@ -638,7 +648,8 @@ public sealed record EquipmentChangeResult(
 		IReadOnlyList<PlayerSkill>? skills = null,
 		IReadOnlyList<PlayerSkill>? addedSkills = null,
 		IReadOnlyList<PlayerSkill>? removedSkills = null,
-		IReadOnlyList<string>? removedStigmaSkillNames = null)
+		IReadOnlyList<string>? removedStigmaSkillNames = null,
+		IReadOnlyList<StigmaHiddenSkillDeleteMessage>? hiddenStigmaSkillDeleteMessages = null)
 	{
 		return new EquipmentChangeResult(
 			Changed: true,
@@ -652,6 +663,7 @@ public sealed record EquipmentChangeResult(
 			Skills: skills,
 			AddedSkills: addedSkills,
 			RemovedSkills: removedSkills,
-			RemovedStigmaSkillNames: removedStigmaSkillNames);
+			RemovedStigmaSkillNames: removedStigmaSkillNames,
+			HiddenStigmaSkillDeleteMessages: hiddenStigmaSkillDeleteMessages);
 	}
 }

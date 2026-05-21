@@ -82,6 +82,35 @@ public sealed class StigmaServiceTests
 	}
 
 	[Fact]
+	public void NotifyUnequipAction_RemovesLinkedStigmaGroupsWithHiddenDeleteMessages()
+	{
+		var player = CreatePlayer();
+		player.Skills =
+		[
+			new PlayerSkill { SkillId = 37, SkillLevel = 1 },
+			new PlayerSkill { SkillId = 500, SkillLevel = 3, SkillType = 1 },
+			new PlayerSkill { SkillId = 662, SkillLevel = 4, SkillType = 3 },
+			new PlayerSkill { SkillId = 663, SkillLevel = 4, SkillType = 3 },
+		];
+		var skillTemplates = CreateSkillTemplates();
+		var itemTemplate = CreateItemTemplates().GetItemTemplate(StigmaId)!;
+
+		var result = StigmaService.NotifyUnequipAction(
+			player,
+			new InventoryItem { ObjectId = 1001, ItemId = StigmaId, Count = 1, Location = 0, IsEquipped = true, Slot = StigmaSlot1 },
+			itemTemplate,
+			skillTemplates,
+			CreateSkillTree());
+
+		Assert.Equal([500, 662, 663], result.RemovedSkills.Select(skill => skill.SkillId).ToArray());
+		Assert.Equal([37], result.Skills.Select(skill => skill.SkillId).ToArray());
+		var hiddenMessage = Assert.Single(result.HiddenSkillDeleteMessages);
+		Assert.Equal(skillTemplates.GetSkillTemplate(662)?.GetClientName(), hiddenMessage.FirstSkillName);
+		Assert.Equal(4, hiddenMessage.SkillLevel);
+		Assert.Equal(skillTemplates.GetSkillTemplate(663)?.GetClientName(), hiddenMessage.SecondSkillName);
+	}
+
+	[Fact]
 	public void CreateChargePlan_FailureConsumesStoneDestroysStigmaAndRemovesSkills()
 	{
 		var player = CreatePlayer();
@@ -166,6 +195,7 @@ public sealed class StigmaServiceTests
 		[
 			new SkillTemplateSummary(500, "Practice Stigma Skill", 200, 1, "STIGMA_TEST", "STIGMA_TEST", "PHYSICAL", "ATTACK", 0, 0, StigmaType: "NORMAL"),
 			new SkillTemplateSummary(662, "Practice Linked Stigma Skill", 201, 1, "LINKED_STIGMA_TEST", "LINKED_STIGMA_TEST", "PHYSICAL", "ATTACK", 0, 0, StigmaType: "LINKED"),
+			new SkillTemplateSummary(663, "Practice Second Linked Stigma Skill", 202, 1, "LINKED_STIGMA_TEST_2", "LINKED_STIGMA_TEST", "PHYSICAL", "ATTACK", 0, 0, StigmaType: "LINKED"),
 		]);
 	}
 

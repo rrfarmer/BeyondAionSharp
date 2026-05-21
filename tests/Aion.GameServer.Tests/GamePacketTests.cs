@@ -544,6 +544,7 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.StigmaSkillUnavailable("skill"), 1300403, "skill");
 		AssertSystemMessage(SmSystemMessage.StigmaEnchantSuccess("stigma"), 1402930, "stigma");
 		AssertSystemMessage(SmSystemMessage.StigmaEnchantFail("stigma"), 1402931, "stigma");
+		AssertSystemMessage(SmSystemMessage.StigmaDeleteHiddenSkill("first", 3, "second"), 1402895, "first", "3", "second");
 		AssertSystemMessage(SmSystemMessage.ExchangeFullInventory(), 1300366);
 		AssertSystemMessage(SmSystemMessage.MailTakeAllCancel(), 1402251);
 		AssertSystemMessage(SmSystemMessage.NoSuchUser("Kahrun"), 1300627, "Kahrun");

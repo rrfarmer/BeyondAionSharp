@@ -24,11 +24,18 @@ public static class StigmaService
 	{
 		// Java parity: services/StigmaService.notifyEquipAction.
 		if (resultTemplate.StigmaInfo == null)
-			return StigmaEquipResult.Success(player.Skills, Array.Empty<PlayerSkill>(), Array.Empty<PlayerSkill>(), Array.Empty<string>(), kinahItemUpdate: null);
+			return StigmaEquipResult.Success(
+				player.Skills,
+				Array.Empty<PlayerSkill>(),
+				Array.Empty<PlayerSkill>(),
+				Array.Empty<string>(),
+				Array.Empty<StigmaHiddenSkillDeleteMessage>(),
+				kinahItemUpdate: null);
 
 		var skills = player.Skills.ToList();
 		var removedSkills = new List<PlayerSkill>();
 		var removedSkillNames = new List<string>();
+		var hiddenSkillDeleteMessages = new List<StigmaHiddenSkillDeleteMessage>();
 		var stigmaName = NormalizeStigmaName(resultTemplate);
 		var replace = false;
 
@@ -49,6 +56,7 @@ public static class StigmaService
 				notifyPlayer: equippedStigma.Item.Enchant > resultItem.Enchant);
 			removedSkills.AddRange(removal.RemovedSkills);
 			removedSkillNames.AddRange(removal.RemovedSkillNames);
+			hiddenSkillDeleteMessages.AddRange(removal.HiddenSkillDeleteMessages);
 			replace = true;
 			break;
 		}
@@ -75,7 +83,7 @@ public static class StigmaService
 			skillTemplates,
 			skillTree,
 			experienceTable));
-		return StigmaEquipResult.Success(skills, addedSkills, removedSkills, removedSkillNames, kinahUpdate);
+		return StigmaEquipResult.Success(skills, addedSkills, removedSkills, removedSkillNames, hiddenSkillDeleteMessages, kinahUpdate);
 	}
 
 	public static StigmaUnequipResult NotifyUnequipAction(
@@ -87,11 +95,15 @@ public static class StigmaService
 	{
 		// Java parity: services/StigmaService.removeStigmaSkills called by Equipment.unEquipItem.
 		if (itemTemplate.StigmaInfo == null)
-			return StigmaUnequipResult.Success(player.Skills, Array.Empty<PlayerSkill>(), Array.Empty<string>());
+			return StigmaUnequipResult.Success(
+				player.Skills,
+				Array.Empty<PlayerSkill>(),
+				Array.Empty<string>(),
+				Array.Empty<StigmaHiddenSkillDeleteMessage>());
 
 		var skills = player.Skills.ToList();
 		var removal = RemoveStigmaSkills(skills, player, itemTemplate.StigmaInfo, skillTemplates, skillTree, notifyPlayer: true);
-		return StigmaUnequipResult.Success(skills, removal.RemovedSkills, removal.RemovedSkillNames);
+		return StigmaUnequipResult.Success(skills, removal.RemovedSkills, removal.RemovedSkillNames, removal.HiddenSkillDeleteMessages);
 	}
 
 	public static StigmaAutoLearnResult ApplyAutoLearnOnLogin(
@@ -164,6 +176,7 @@ public static class StigmaService
 		var skills = player.Skills.ToList();
 		var addedSkills = new List<PlayerSkill>();
 		var removedSkills = new List<PlayerSkill>();
+		var hiddenSkillDeleteMessages = new List<StigmaHiddenSkillDeleteMessage>();
 
 		if (isSuccess)
 		{
@@ -173,6 +186,7 @@ public static class StigmaService
 			{
 				var removal = RemoveStigmaSkills(skills, player, stigmaTemplate.StigmaInfo, skillTemplates, skillTree, notifyPlayer: false);
 				removedSkills.AddRange(removal.RemovedSkills);
+				hiddenSkillDeleteMessages.AddRange(removal.HiddenSkillDeleteMessages);
 				addedSkills.AddRange(AddStigmaSkills(skills, player, stigmaTemplate.StigmaInfo, targetUpdate.Enchant, skillTemplates, skillTree, experienceTable));
 			}
 		}
@@ -194,6 +208,7 @@ public static class StigmaService
 			{
 				var removal = RemoveStigmaSkills(skills, player, stigmaTemplate.StigmaInfo, skillTemplates, skillTree, notifyPlayer: false);
 				removedSkills.AddRange(removal.RemovedSkills);
+				hiddenSkillDeleteMessages.AddRange(removal.HiddenSkillDeleteMessages);
 			}
 		}
 
@@ -213,7 +228,8 @@ public static class StigmaService
 			sourceUpdate.DeletedObjectId,
 			skills,
 			addedSkills,
-			removedSkills);
+			removedSkills,
+			hiddenSkillDeleteMessages);
 	}
 
 	private static IReadOnlyList<PlayerSkill> AddStigmaSkills(
@@ -286,7 +302,10 @@ public static class StigmaService
 	{
 		// Java parity: services/StigmaService.removeStigmaSkills.
 		if (stigma == null)
-			return new StigmaSkillRemoval(Array.Empty<PlayerSkill>(), Array.Empty<string>());
+			return new StigmaSkillRemoval(
+				Array.Empty<PlayerSkill>(),
+				Array.Empty<string>(),
+				Array.Empty<StigmaHiddenSkillDeleteMessage>());
 
 		var removedSkills = new List<PlayerSkill>();
 		var removedSkillNames = new List<string>();
@@ -307,14 +326,61 @@ public static class StigmaService
 			}
 		}
 
-		foreach (var linkedSkill in skills.Where(skill => skill.SkillType >= 3).ToArray())
+		var linkedRemoval = RemoveLinkedStigmaSkills(skills, skillTemplates);
+		removedSkills.AddRange(linkedRemoval.RemovedSkills);
+
+		return new StigmaSkillRemoval(removedSkills, removedSkillNames, linkedRemoval.HiddenSkillDeleteMessages);
+	}
+
+	private static StigmaLinkedSkillRemoval RemoveLinkedStigmaSkills(List<PlayerSkill> skills, SkillTemplateTable skillTemplates)
+	{
+		// Java parity: services/StigmaService.removeLinkedStigmaSkills.
+		var removedSkills = new List<PlayerSkill>();
+		var hiddenSkillDeleteMessages = new List<StigmaHiddenSkillDeleteMessage>();
+		while (true)
 		{
-			var removed = RemoveSkill(skills, linkedSkill.SkillId);
-			if (removed != null)
-				removedSkills.Add(removed);
+			string? stack = null;
+			var linkedStigmaSkills = new List<PlayerSkill>();
+			foreach (var skill in skills.Where(skill => skill.SkillType >= 3).ToArray())
+			{
+				var skillTemplate = skillTemplates.GetSkillTemplate(skill.SkillId);
+				var skillStack = string.IsNullOrEmpty(skillTemplate?.Stack) ? "NONE" : skillTemplate.Stack;
+				stack ??= skillStack;
+				if (string.Equals(skillStack, stack, StringComparison.OrdinalIgnoreCase))
+					linkedStigmaSkills.Add(skill);
+				if (string.Equals(stack, "NONE", StringComparison.OrdinalIgnoreCase))
+					break;
+			}
+
+			if (linkedStigmaSkills.Count == 0)
+				break;
+
+			string? firstSkillName = null;
+			string? secondSkillName = null;
+			var skillLevel = 0;
+			for (var index = 0; index < linkedStigmaSkills.Count; index++)
+			{
+				var skillEntry = linkedStigmaSkills[index];
+				var removed = RemoveSkill(skills, skillEntry.SkillId);
+				if (removed != null)
+					removedSkills.Add(removed);
+
+				var skillName = skillTemplates.GetSkillTemplate(skillEntry.SkillId)?.GetClientName();
+				if (index == 0)
+				{
+					firstSkillName = skillName;
+					skillLevel = skillEntry.SkillLevel;
+				}
+				else if (index == 1)
+				{
+					secondSkillName = skillName;
+				}
+			}
+
+			hiddenSkillDeleteMessages.Add(new StigmaHiddenSkillDeleteMessage(firstSkillName, skillLevel, secondSkillName));
 		}
 
-		return new StigmaSkillRemoval(removedSkills, removedSkillNames);
+		return new StigmaLinkedSkillRemoval(removedSkills, hiddenSkillDeleteMessages);
 	}
 
 	private static PlayerSkill? AddOrUpgradeTemporarySkill(List<PlayerSkill> skills, int skillId, int skillLevel, int skillType)
@@ -608,7 +674,14 @@ public static class StigmaService
 
 	private sealed record EquippedStigma(InventoryItem Item, ItemTemplateSummary Template);
 
-	private sealed record StigmaSkillRemoval(IReadOnlyList<PlayerSkill> RemovedSkills, IReadOnlyList<string> RemovedSkillNames);
+	private sealed record StigmaSkillRemoval(
+		IReadOnlyList<PlayerSkill> RemovedSkills,
+		IReadOnlyList<string> RemovedSkillNames,
+		IReadOnlyList<StigmaHiddenSkillDeleteMessage> HiddenSkillDeleteMessages);
+
+	private sealed record StigmaLinkedSkillRemoval(
+		IReadOnlyList<PlayerSkill> RemovedSkills,
+		IReadOnlyList<StigmaHiddenSkillDeleteMessage> HiddenSkillDeleteMessages);
 
 	private sealed record ItemCountMutation(InventoryItem? UpdatedItem, int? DeletedObjectId);
 }
@@ -627,6 +700,7 @@ public sealed record StigmaEquipResult(
 	IReadOnlyList<PlayerSkill> AddedSkills,
 	IReadOnlyList<PlayerSkill> RemovedSkills,
 	IReadOnlyList<string> RemovedSkillNames,
+	IReadOnlyList<StigmaHiddenSkillDeleteMessage> HiddenSkillDeleteMessages,
 	InventoryItem? KinahItemUpdate)
 {
 	public static StigmaEquipResult Success(
@@ -634,30 +708,51 @@ public sealed record StigmaEquipResult(
 		IReadOnlyList<PlayerSkill> addedSkills,
 		IReadOnlyList<PlayerSkill> removedSkills,
 		IReadOnlyList<string> removedSkillNames,
+		IReadOnlyList<StigmaHiddenSkillDeleteMessage> hiddenSkillDeleteMessages,
 		InventoryItem? kinahItemUpdate)
 	{
-		return new StigmaEquipResult(true, StigmaEquipFailure.None, skills, addedSkills, removedSkills, removedSkillNames, kinahItemUpdate);
+		return new StigmaEquipResult(
+			true,
+			StigmaEquipFailure.None,
+			skills,
+			addedSkills,
+			removedSkills,
+			removedSkillNames,
+			hiddenSkillDeleteMessages,
+			kinahItemUpdate);
 	}
 
 	public static StigmaEquipResult Failed(StigmaEquipFailure failure)
 	{
-		return new StigmaEquipResult(false, failure, Array.Empty<PlayerSkill>(), Array.Empty<PlayerSkill>(), Array.Empty<PlayerSkill>(), Array.Empty<string>(), null);
+		return new StigmaEquipResult(
+			false,
+			failure,
+			Array.Empty<PlayerSkill>(),
+			Array.Empty<PlayerSkill>(),
+			Array.Empty<PlayerSkill>(),
+			Array.Empty<string>(),
+			Array.Empty<StigmaHiddenSkillDeleteMessage>(),
+			null);
 	}
 }
 
 public sealed record StigmaUnequipResult(
 	IReadOnlyList<PlayerSkill> Skills,
 	IReadOnlyList<PlayerSkill> RemovedSkills,
-	IReadOnlyList<string> RemovedSkillNames)
+	IReadOnlyList<string> RemovedSkillNames,
+	IReadOnlyList<StigmaHiddenSkillDeleteMessage> HiddenSkillDeleteMessages)
 {
 	public static StigmaUnequipResult Success(
 		IReadOnlyList<PlayerSkill> skills,
 		IReadOnlyList<PlayerSkill> removedSkills,
-		IReadOnlyList<string> removedSkillNames)
+		IReadOnlyList<string> removedSkillNames,
+		IReadOnlyList<StigmaHiddenSkillDeleteMessage> hiddenSkillDeleteMessages)
 	{
-		return new StigmaUnequipResult(skills, removedSkills, removedSkillNames);
+		return new StigmaUnequipResult(skills, removedSkills, removedSkillNames, hiddenSkillDeleteMessages);
 	}
 }
+
+public sealed record StigmaHiddenSkillDeleteMessage(string? FirstSkillName, int SkillLevel, string? SecondSkillName);
 
 public sealed record StigmaAutoLearnResult(
 	bool Changed,
@@ -687,7 +782,8 @@ public sealed record StigmaChargePlan(
 	int? DeletedSourceItemObjectId,
 	IReadOnlyList<PlayerSkill> Skills,
 	IReadOnlyList<PlayerSkill> AddedSkills,
-	IReadOnlyList<PlayerSkill> RemovedSkills)
+	IReadOnlyList<PlayerSkill> RemovedSkills,
+	IReadOnlyList<StigmaHiddenSkillDeleteMessage> HiddenSkillDeleteMessages)
 {
 	public static StigmaChargePlan Invalid()
 	{
@@ -702,6 +798,7 @@ public sealed record StigmaChargePlan(
 			DeletedSourceItemObjectId: null,
 			Skills: Array.Empty<PlayerSkill>(),
 			AddedSkills: Array.Empty<PlayerSkill>(),
-			RemovedSkills: Array.Empty<PlayerSkill>());
+			RemovedSkills: Array.Empty<PlayerSkill>(),
+			HiddenSkillDeleteMessages: Array.Empty<StigmaHiddenSkillDeleteMessage>());
 	}
 }

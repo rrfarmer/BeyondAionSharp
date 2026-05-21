@@ -8,15 +8,15 @@ public sealed class SmSystemMessage : GameServerPacket
 	private const int GoldenYellowChatType = 25;
 
 	private readonly int _messageId;
-	private readonly IReadOnlyList<string> _parameters;
-	private readonly IReadOnlyList<string> _specialParameters;
+	private readonly IReadOnlyList<string?> _parameters;
+	private readonly IReadOnlyList<string?> _specialParameters;
 
-	public SmSystemMessage(int messageId, params string[] parameters)
-		: this(messageId, parameters, Array.Empty<string>())
+	public SmSystemMessage(int messageId, params string?[] parameters)
+		: this(messageId, parameters, Array.Empty<string?>())
 	{
 	}
 
-	private SmSystemMessage(int messageId, IReadOnlyList<string> parameters, IReadOnlyList<string> specialParameters)
+	private SmSystemMessage(int messageId, IReadOnlyList<string?> parameters, IReadOnlyList<string?> specialParameters)
 		: base(PacketOpCode)
 	{
 		// Java parity: network/aion/serverpackets/SM_SYSTEM_MESSAGE(ChatType.GOLDEN_YELLOW, null, msgId, params).
@@ -209,6 +209,16 @@ public sealed class SmSystemMessage : GameServerPacket
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_STIGMA_ENCHANT_FAIL.
 		return new SmSystemMessage(1402931, itemName);
+	}
+
+	public static SmSystemMessage StigmaDeleteHiddenSkill(string? firstSkillName, int skillLevel, string? secondSkillName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_STIGMA_DELETE_HIDDEN_SKILL.
+		return new SmSystemMessage(
+			1402895,
+			firstSkillName,
+			skillLevel.ToString(System.Globalization.CultureInfo.InvariantCulture),
+			secondSkillName);
 	}
 
 	public static SmSystemMessage ExchangeFullInventory()

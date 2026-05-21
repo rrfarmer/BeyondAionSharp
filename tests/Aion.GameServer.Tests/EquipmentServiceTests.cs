@@ -524,7 +524,9 @@ public sealed class EquipmentServiceTests
 		[
 			new PlayerSkill { SkillId = 37, SkillLevel = 1 },
 			new PlayerSkill { SkillId = 500, SkillLevel = 3, SkillType = 1 },
+			new PlayerSkill { SkillId = 662, SkillLevel = 3, SkillType = 3 },
 		];
+		var skillTemplates = CreateStigmaSkillTemplates();
 
 		var change = EquipmentService.ChangeEquipment(
 			player,
@@ -532,14 +534,18 @@ public sealed class EquipmentServiceTests
 			slotRead: 0,
 			itemObjectId: 1001,
 			CreateItemTemplates(),
-			CreateStigmaSkillTemplates(),
+			skillTemplates,
 			CreateExperienceTable(),
 			skillTree: CreateStigmaSkillTree());
 
 		Assert.True(change.Changed);
 		Assert.DoesNotContain(change.FinalSkills, skill => skill.SkillId == 500);
-		Assert.Equal([500], change.SkillRemoveUpdates.Select(skill => skill.SkillId).ToArray());
+		Assert.DoesNotContain(change.FinalSkills, skill => skill.SkillId == 662);
+		Assert.Equal([500, 662], change.SkillRemoveUpdates.Select(skill => skill.SkillId).ToArray());
 		Assert.Single(change.StigmaSkillRemoveMessages);
+		var hiddenMessage = Assert.Single(change.HiddenStigmaSkillRemoveMessages);
+		Assert.Equal(skillTemplates.GetSkillTemplate(662)?.GetClientName(), hiddenMessage.FirstSkillName);
+		Assert.Equal(3, hiddenMessage.SkillLevel);
 	}
 
 	private static Player CreatePlayer(
