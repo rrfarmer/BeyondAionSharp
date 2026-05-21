@@ -2491,6 +2491,81 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesDialogSelect()
+	{
+		var dialogSelect = Assert.IsType<CmDialogSelect>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(54, b =>
+			{
+				b.WriteD(7001);
+				b.WriteH(CmDialogSelect.ChargeItemMulti);
+				b.WriteH(3);
+				b.WriteH(4);
+				b.WriteD(11056);
+				b.WriteH(9);
+			}), GameConnectionState.InGame));
+
+		Assert.Equal(7001, dialogSelect.TargetObjectId);
+		Assert.Equal(CmDialogSelect.ChargeItemMulti, dialogSelect.DialogActionId);
+		Assert.Equal(3, dialogSelect.ExtendedRewardIndex);
+		Assert.Equal(4, dialogSelect.LastPage);
+		Assert.Equal(11056, dialogSelect.QuestId);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(54, _ => { }), GameConnectionState.Authed));
+	}
+
+	[Fact]
+	public void ItemChargeService_CreatesChargeAllPlansForMatchingEquippedItems()
+	{
+		var templates = new ItemTemplateTable(
+		[
+			new ItemTemplateSummary(
+				100,
+				"Conditionable Robe",
+				0,
+				1,
+				1,
+				"CL_TORSO",
+				"NORMAL",
+				"COMMON",
+				"PC_ALL",
+				1,
+				0,
+				8,
+				Improvement: new ItemImprovement(1, 2, 0, 0, 100, 300)),
+			new ItemTemplateSummary(
+				101,
+				"Augmentable Robe",
+				0,
+				1,
+				1,
+				"CL_GLOVE",
+				"NORMAL",
+				"COMMON",
+				"PC_ALL",
+				1,
+				0,
+				16,
+				Improvement: new ItemImprovement(2, 2, 0, 0, 100, 300)),
+		]);
+		var player = new Player
+		{
+			InventoryItems =
+			[
+				new InventoryItem { ObjectId = 1, ItemId = 100, IsEquipped = true, Slot = 8 },
+				new InventoryItem { ObjectId = 2, ItemId = 100 },
+				new InventoryItem { ObjectId = 3, ItemId = 101, IsEquipped = true, Slot = 16 },
+			],
+		};
+
+		var plans = ItemChargeService.CreateChargeAllPlans(player, player.InventoryItems, templates, chargeWay: 1);
+
+		var plan = Assert.Single(plans);
+		Assert.Equal(1, plan.Item.ObjectId);
+		Assert.Equal(2, plan.Level);
+		Assert.Equal(ItemChargeService.Level2ChargePoints, plan.TargetChargePoints);
+		Assert.Equal(200, plan.PaymentAmount);
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesUseItemTargetItemBranch()
 	{
 		var useItem = Assert.IsType<CmUseItem>(

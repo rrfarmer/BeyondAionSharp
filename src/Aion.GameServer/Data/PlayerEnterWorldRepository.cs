@@ -75,6 +75,13 @@ public interface IPlayerEnterWorldRepository
 		PlayerAbyssRank? abyssRank,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveItemChargeAllMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<InventoryItem> chargedItems,
+		InventoryItem? kinahItem,
+		PlayerAbyssRank? abyssRank,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SaveIdianPolishMutationAsync(
 		int playerObjectId,
 		InventoryItem? targetItem,
@@ -237,6 +244,16 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	public Task<bool> SaveItemChargeMutationAsync(
 		int playerObjectId,
 		InventoryItem chargedItem,
+		InventoryItem? kinahItem,
+		PlayerAbyssRank? abyssRank,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> SaveItemChargeAllMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<InventoryItem> chargedItems,
 		InventoryItem? kinahItem,
 		PlayerAbyssRank? abyssRank,
 		CancellationToken cancellationToken = default)
@@ -505,6 +522,51 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not save item charge mutation for player {PlayerObjectId} item {ItemObjectId}", playerObjectId, chargedItem.ObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SaveItemChargeAllMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<InventoryItem> chargedItems,
+		InventoryItem? kinahItem,
+		PlayerAbyssRank? abyssRank,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: ItemChargeService.startChargingEquippedItems processes one payment before mutating the filtered equipped items.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			foreach (var chargedItem in chargedItems)
+			{
+				await using var chargeCommand = connection.CreateCommand();
+				chargeCommand.Transaction = transaction;
+				chargeCommand.CommandText = "UPDATE inventory SET charge = ? WHERE item_unique_id = ? AND item_owner = ?";
+				chargeCommand.Parameters.AddRange(
+					new[]
+					{
+						new MySqlParameter { Value = chargedItem.Charge },
+						new MySqlParameter { Value = chargedItem.ObjectId },
+						new MySqlParameter { Value = playerObjectId },
+					});
+				if (await chargeCommand.ExecuteNonQueryAsync(cancellationToken) <= 0)
+					return false;
+			}
+
+			if (kinahItem != null && !await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, kinahItem, cancellationToken))
+				return false;
+			if (abyssRank != null)
+				await SaveAbyssRankAsync(connection, transaction, playerObjectId, abyssRank, cancellationToken);
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save charge-all mutation for player {PlayerObjectId}", playerObjectId);
 			return false;
 		}
 	}

@@ -412,6 +412,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleChargeItemAsync(_activePlayer, chargeItem);
 				break;
+			case CmDialogSelect dialogSelect:
+				if (_activePlayer != null)
+					await HandleDialogSelectAsync(_activePlayer, dialogSelect);
+				break;
 			case CmUseItem useItem:
 				if (_activePlayer != null)
 					await HandleUseItemAsync(_activePlayer, useItem);
@@ -1082,6 +1086,67 @@ public sealed class GameServerConnection : BaseClientConnection
 		return player.Recipes.Count != beforeCount;
 	}
 
+	private async Task HandleDialogSelectAsync(Player player, CmDialogSelect packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_DIALOG_SELECT.runImpl -> services/DialogService.onDialogSelect narrow charge-all branch.
+		if (player.IsTrading)
+			return;
+
+		var chargeWay = packet.DialogActionId switch
+		{
+			CmDialogSelect.ChargeItemMulti => 1,
+			CmDialogSelect.ChargeItemMulti2 => 2,
+			_ => 0,
+		};
+		if (chargeWay == 0)
+			return;
+
+		// Full known-list NPC lookup and supportsAction validation are deferred with the NPC/dialog engine.
+		if (packet.TargetObjectId == 0 || player.TargetObjectId != packet.TargetObjectId)
+			return;
+
+		await StartChargingEquippedItemsAsync(player, packet.TargetObjectId, chargeWay);
+	}
+
+	private async Task StartChargingEquippedItemsAsync(Player player, int senderObjectId, int chargeWay)
+	{
+		// Java parity: services/item/ItemChargeService.startChargingEquippedItems.
+		var itemTemplates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
+		if (itemTemplates == null || player.PendingChargeAllRequest != null)
+			return;
+
+		var chargePlans = ItemChargeService.CreateChargeAllPlans(player, player.InventoryItems, itemTemplates, chargeWay);
+		if (chargePlans.Count == 0)
+		{
+			await SendPacketAsync(
+				chargeWay == 1
+					? SmSystemMessage.ItemChargeAllFailNoChargeableEquipment()
+					: SmSystemMessage.ItemCharge2AllFailNoChargeableEquipment());
+			return;
+		}
+
+		var payAmount = chargePlans.Sum(plan => plan.PaymentAmount);
+		player.PendingChargeAllRequest = new PendingChargeAllRequest(
+			senderObjectId,
+			chargeWay,
+			payAmount,
+			chargePlans
+				.Select(plan => new PendingChargeAllItem(
+					plan.Item.ObjectId,
+					plan.Item.ItemId,
+					plan.Item.Charge,
+					plan.TargetChargePoints,
+					plan.Level))
+				.ToArray());
+
+		await SendPacketAsync(
+			new SmQuestionWindow(
+				GetChargeAllQuestionId(chargeWay),
+				senderObjectId,
+				0,
+				payAmount.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+	}
+
 	private async Task HandleChargeItemAsync(Player player, CmChargeItem packet)
 	{
 		// Java parity: network/aion/clientpackets/CM_CHARGE_ITEM.runImpl -> services/item/ItemChargeService.chargeItems.
@@ -1631,12 +1696,125 @@ public sealed class GameServerConnection : BaseClientConnection
 			target.PendingFriendRequest = null;
 	}
 
+	private async Task HandleChargeAllQuestionResponseAsync(Player player, CmQuestionResponse packet)
+	{
+		// Java parity: ResponseRequester handler registered by ItemChargeService.startChargingEquippedItems.
+		var request = player.PendingChargeAllRequest;
+		if (request == null || packet.QuestionId != GetChargeAllQuestionId(request.ChargeWay))
+			return;
+
+		player.PendingChargeAllRequest = null;
+		if (packet.Response == 0)
+			return;
+
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var itemTemplates = staticData?.ItemTemplates;
+		if (staticData == null || itemTemplates == null || request.Items.Count == 0)
+			return;
+
+		var inventoryItems = player.InventoryItems.ToList();
+		InventoryItem? kinahUpdate = null;
+		PlayerAbyssRank? abyssRankUpdate = null;
+		switch (request.ChargeWay)
+		{
+			case 1:
+				if (request.PaymentAmount > 0)
+				{
+					var kinahItem = inventoryItems.FirstOrDefault(item => item.ItemId == KinahItemId && item.Location == CubeStorageId);
+					if (kinahItem == null || kinahItem.Count < request.PaymentAmount)
+						return;
+					kinahUpdate = CopyInventoryItem(kinahItem, count: kinahItem.Count - request.PaymentAmount);
+				}
+				break;
+			case 2:
+				if (request.PaymentAmount > int.MaxValue || player.AbyssRank.Ap < request.PaymentAmount)
+					return;
+				if (request.PaymentAmount > 0)
+					abyssRankUpdate = player.AbyssRank.AddAp(-(int)request.PaymentAmount);
+				break;
+			default:
+				return;
+		}
+
+		var chargedItems = request.Items
+			.Select(pending =>
+			{
+				var currentItem = inventoryItems.FirstOrDefault(item => item.ObjectId == pending.ObjectId && item.Location == CubeStorageId && item.IsEquipped);
+				return currentItem == null ? null : CopyInventoryItem(currentItem, charge: pending.TargetCharge);
+			})
+			.Where(item => item != null)
+			.Cast<InventoryItem>()
+			.ToArray();
+		if (chargedItems.Length == 0)
+			return;
+
+		var saved = _playerEnterWorldService == null
+			|| await _playerEnterWorldService.SaveItemChargeAllMutationAsync(player, chargedItems, kinahUpdate, abyssRankUpdate);
+		if (!saved)
+			return;
+
+		if (kinahUpdate != null)
+		{
+			ReplaceInventoryItem(inventoryItems, kinahUpdate);
+			if (itemTemplates.GetItemTemplate(KinahItemId) is { } kinahTemplate)
+				await SendPacketAsync(new SmInventoryUpdateItem(kinahUpdate, kinahTemplate, SmInventoryUpdateItem.DecreaseKinahBuy));
+		}
+		if (abyssRankUpdate != null)
+		{
+			player.AbyssRank = abyssRankUpdate;
+			await SendPacketAsync(SmSystemMessage.UseAbyssPoint(request.PaymentAmount));
+			await SendPacketAsync(new SmAbyssRank(player.AbyssRank));
+		}
+
+		foreach (var chargedItem in chargedItems)
+		{
+			var pending = request.Items.First(item => item.ObjectId == chargedItem.ObjectId);
+			ReplaceInventoryItem(inventoryItems, chargedItem);
+			var itemTemplate = itemTemplates.GetItemTemplate(chargedItem.ItemId);
+			if (itemTemplate == null)
+				continue;
+
+			if (GetChargeBarStep(pending.PreviousCharge) != GetChargeBarStep(chargedItem.Charge))
+				await SendPacketAsync(new SmInventoryUpdateItem(chargedItem, itemTemplate, SmInventoryUpdateItem.Charge));
+
+			var itemName = itemTemplate.GetClientName() ?? itemTemplate.Name;
+			await SendPacketAsync(
+				request.ChargeWay == 1
+					? SmSystemMessage.ItemChargeSuccess(itemName, pending.Level)
+					: SmSystemMessage.ItemCharge2Success(itemName, pending.Level));
+		}
+
+		player.InventoryItems = inventoryItems.ToArray();
+		await SendPacketAsync(CreateStatsInfoPacket(player, staticData));
+		await SendPacketAsync(
+			request.ChargeWay == 1
+				? SmSystemMessage.ItemChargeAllComplete()
+				: SmSystemMessage.ItemCharge2AllComplete());
+	}
+
+	private static bool IsChargeAllQuestion(int questionId)
+	{
+		return questionId is SmQuestionWindow.ItemChargeAllConfirm or SmQuestionWindow.ItemCharge2AllConfirm;
+	}
+
+	private static int GetChargeAllQuestionId(int chargeWay)
+	{
+		return chargeWay == 1 ? SmQuestionWindow.ItemChargeAllConfirm : SmQuestionWindow.ItemCharge2AllConfirm;
+	}
+
 	private async Task HandleQuestionResponseAsync(Player responder, CmQuestionResponse packet)
 	{
-		// Java parity: network/aion/clientpackets/CM_QUESTION_RESPONSE.runImpl for buddy-list request handlers.
+		// Java parity: network/aion/clientpackets/CM_QUESTION_RESPONSE.runImpl.
+		if (IsChargeAllQuestion(packet.QuestionId))
+		{
+			await HandleChargeAllQuestionResponseAsync(responder, packet);
+			return;
+		}
+
 		if (packet.QuestionId != SmQuestionWindow.BuddyListAddBuddyRequest)
 			return;
 
+		// Java parity: CM_QUESTION_RESPONSE through ResponseRequester for buddy-list request handlers.
 		var request = responder.PendingFriendRequest;
 		if (request == null)
 			return;

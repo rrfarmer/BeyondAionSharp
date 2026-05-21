@@ -179,6 +179,17 @@ public sealed class PlayerEnterWorldService
 		return _repository.SaveItemChargeMutationAsync(player.ObjectId, chargedItem, kinahItem, abyssRank, cancellationToken);
 	}
 
+	public Task<bool> SaveItemChargeAllMutationAsync(
+		Player player,
+		IReadOnlyList<InventoryItem> chargedItems,
+		InventoryItem? kinahItem,
+		PlayerAbyssRank? abyssRank,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: services/item/ItemChargeService.startChargingEquippedItems payment + chargeItems persistence.
+		return _repository.SaveItemChargeAllMutationAsync(player.ObjectId, chargedItems, kinahItem, abyssRank, cancellationToken);
+	}
+
 	public Task<bool> SaveIdianPolishMutationAsync(
 		Player player,
 		InventoryItem? targetItem,

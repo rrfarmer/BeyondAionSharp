@@ -45,6 +45,27 @@ public static class ItemChargeService
 			paymentAmount);
 	}
 
+	public static IReadOnlyList<ItemChargePlan> CreateChargeAllPlans(
+		Player player,
+		IReadOnlyList<InventoryItem> inventoryItems,
+		ItemTemplateTable itemTemplates,
+		int chargeWay)
+	{
+		// Java parity: services/item/ItemChargeService.filterItemsToCondition(player, null, chargeWay).
+		return inventoryItems
+			.Where(item => item.Location == 0 && item.IsEquipped && item.Charge < Level2ChargePoints)
+			.Select(item => CreateChargePlan(
+				player,
+				item,
+				itemTemplates,
+				maxLevel: 2,
+				ignoreRankRequirement: false,
+				requirePayment: true))
+			.Where(plan => plan is { } && plan.ChargeWay == chargeWay)
+			.Cast<ItemChargePlan>()
+			.ToArray();
+	}
+
 	public static long GetPayAmountForService(InventoryItem item, ItemImprovement improvement, int chargeLevel)
 	{
 		// Java parity: services/item/ItemChargeService.getPayAmountForService.

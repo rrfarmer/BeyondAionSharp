@@ -67,6 +67,18 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1401340);
 	}
 
+	public static SmSystemMessage ItemChargeAllFailNoChargeableEquipment()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ITEM_CHARGE_ALL_FAIL_NO_CHARGEABLE_EQUIPMENT.
+		return new SmSystemMessage(1400895);
+	}
+
+	public static SmSystemMessage ItemCharge2AllFailNoChargeableEquipment()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ITEM_CHARGE2_ALL_FAIL_NO_CHARGEABLE_EQUIPMENT.
+		return new SmSystemMessage(1401343);
+	}
+
 	public static SmSystemMessage EnchantItemFailed(string itemName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_ENCHANT_ITEM_FAILED.
