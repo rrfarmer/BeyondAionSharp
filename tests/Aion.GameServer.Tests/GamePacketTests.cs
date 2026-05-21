@@ -1600,6 +1600,37 @@ public class GamePacketTests
 					new ItemStatModifier("add", "PHYSICAL_ACCURACY", 12, Bonus: true),
 				]),
 			new ItemTemplateSummary(
+				500,
+				"Fusion Staff",
+				0,
+				1,
+				1,
+				"STAFF",
+				"NORMAL",
+				"COMMON",
+				"PC_ALL",
+				1,
+				0,
+				3,
+				AttackType: "MAGICAL",
+				WeaponStats: new ItemWeaponStats(
+					MinDamage: 10,
+					MaxDamage: 10,
+					AttackSpeed: 2000,
+					PhysicalCritical: 0,
+					PhysicalAccuracy: 0,
+					Parry: 0,
+					MagicalAccuracy: 0,
+					MagicalBoost: 40,
+					AttackRange: 1500,
+					HitCount: 2,
+					ReduceMax: 0),
+				Modifiers:
+				[
+					new ItemStatModifier("add", "PHYSICAL_ATTACK", 2, Bonus: false),
+					new ItemStatModifier("add", "ATTACK_SPEED", 100, Bonus: true),
+				]),
+			new ItemTemplateSummary(
 				401,
 				"Manastone: Magic Boost +12",
 				0,
@@ -1633,6 +1664,7 @@ public class GamePacketTests
 							Location = 0,
 							IsEquipped = true,
 							Slot = 1,
+							FusionedItem = 500,
 							ManaStones = [new ItemStoneSocket(400, 0)],
 							FusionStones = [new ItemStoneSocket(401, 0)],
 						},
@@ -1666,7 +1698,7 @@ public class GamePacketTests
 		Assert.Equal(60, reader.ReadD());
 		Assert.Equal(0, (int)reader.ReadC());
 		Assert.Equal(0, (int)reader.ReadC());
-		Assert.Equal(34, reader.ReadH());
+		Assert.Equal(37, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(20, reader.ReadD());
@@ -1691,7 +1723,7 @@ public class GamePacketTests
 		Assert.Equal(1.0f, reader.ReadF());
 		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
-		Assert.Equal(12, reader.ReadH());
+		Assert.Equal(16, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());

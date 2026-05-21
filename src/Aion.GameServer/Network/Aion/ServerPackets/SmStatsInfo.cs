@@ -255,6 +255,11 @@ public sealed class SmStatsInfo : GameServerPacket
 		private const long MainOffHand = 1L << 17;
 		private const long SubOffHand = 1L << 18;
 
+		private static readonly HashSet<string> FusionMagicalBoostWeaponGroups = new(StringComparer.Ordinal)
+		{
+			"ORB", "STAFF", "SPELLBOOK", "GUN", "CANNON", "HARP", "KEYBLADE",
+		};
+
 		public static PlayerCalculatedStats Apply(Player player, ItemTemplateTable itemTemplates, PlayerCalculatedStats baseStats)
 		{
 			// Java parity: model/stats/listeners/ItemEquipmentListener.onItemEquipment plus PlayerGameStats weapon stat accessors.
@@ -362,6 +367,8 @@ public sealed class SmStatsInfo : GameServerPacket
 		{
 			foreach (var modifier in item.Template.StatModifiers)
 				yield return modifier;
+			foreach (var modifier in GetFusionedWeaponModifiers(item, itemTemplates))
+				yield return modifier;
 
 			// Java parity: model/stats/listeners/ItemEquipmentListener.addStonesStats + model/items/ManaStone constructor.
 			foreach (var modifier in GetStoneModifiers(item.Item.ManaStones, itemTemplates))
@@ -381,6 +388,37 @@ public sealed class SmStatsInfo : GameServerPacket
 				foreach (var modifier in template.StatModifiers)
 					yield return modifier;
 			}
+		}
+
+		private static IEnumerable<ItemStatModifier> GetFusionedWeaponModifiers(EquippedItem item, ItemTemplateTable itemTemplates)
+		{
+			// Java parity: model/stats/listeners/ItemEquipmentListener.addWeaponStats fusioned-item branch.
+			if (item.Item.FusionedItem == 0 || !IsMainOrSubSlot(item.Item.Slot))
+				yield break;
+
+			var template = itemTemplates.GetItemTemplate(item.Item.FusionedItem);
+			if (template == null)
+				yield break;
+
+			foreach (var modifier in template.StatModifiers.Where(IsApplicableFusionWeaponModifier))
+				yield return modifier;
+
+			var weaponStats = template.WeaponStats;
+			if (weaponStats == null)
+				yield break;
+
+			var magicalBoost = (int)(0.1f * weaponStats.MagicalBoost);
+			if (magicalBoost != 0 && FusionMagicalBoostWeaponGroups.Contains(template.ItemGroup))
+				yield return new ItemStatModifier("add", "BOOST_MAGICAL_SKILL", magicalBoost, Bonus: false);
+
+			var attack = (int)(0.1f * weaponStats.MeanDamage);
+			if (attack != 0)
+				yield return new ItemStatModifier("add", item.Template.IsMagicalAttackWeapon ? "MAGICAL_ATTACK" : "PHYSICAL_ATTACK", attack, Bonus: false);
+		}
+
+		private static bool IsApplicableFusionWeaponModifier(ItemStatModifier modifier)
+		{
+			return modifier.Name is not ("ATTACK_SPEED" or "PVP_ATTACK_RATIO" or "BOOST_CASTING_TIME");
 		}
 
 		private static int CalculateStat(
@@ -415,6 +453,11 @@ public sealed class SmStatsInfo : GameServerPacket
 		{
 			return (slot & (MainHand | SubHand)) == (MainHand | SubHand)
 				|| (slot & (MainOffHand | SubOffHand)) == (MainOffHand | SubOffHand);
+		}
+
+		private static bool IsMainOrSubSlot(long slot)
+		{
+			return (slot & (MainHand | SubHand)) != 0;
 		}
 
 		private sealed record EquippedItem(InventoryItem Item, ItemTemplateSummary Template);
