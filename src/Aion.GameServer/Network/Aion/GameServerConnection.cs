@@ -1722,6 +1722,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			PendingItemUseCancelMessage.ItemCharge => SmSystemMessage.ItemChargeCanceled(),
 			PendingItemUseCancelMessage.ItemCharge2 => SmSystemMessage.ItemCharge2Canceled(),
 			PendingItemUseCancelMessage.GodstoneSocket => SmSystemMessage.GiveItemProcCancel(pendingItemUse.TargetItemName),
+			PendingItemUseCancelMessage.SoulBind => SmSystemMessage.SoulBoundItemCanceled(pendingItemUse.TargetItemName),
 			_ => SmSystemMessage.GiveItemOptionCanceled(pendingItemUse.TargetItemName),
 		});
 	}
@@ -2241,6 +2242,32 @@ public sealed class GameServerConnection : BaseClientConnection
 			player,
 			new SmItemUsageAnimation(player.ObjectId, currentItem.ObjectId, currentItem.ItemId, 5000, 4, 0));
 
+		await SchedulePendingItemUseAsync(
+			player,
+			itemObjectId: currentItem.ObjectId,
+			itemTemplateId: currentItem.ItemId,
+			targetItemName: request.ItemName,
+			cancelMessage: PendingItemUseCancelMessage.SoulBind,
+			delay: TimeSpan.FromMilliseconds(5000),
+			completeAsync: async cancellationToken =>
+			{
+				if (cancellationToken.IsCancellationRequested)
+					return;
+
+				await CompleteSoulBindAsync(player, request, itemTemplates, staticData, currentItem.ObjectId, currentItem.ItemId, cancellationToken);
+			},
+			cancelEndState: 8);
+	}
+
+	private async Task CompleteSoulBindAsync(
+		Player player,
+		PendingSoulBindRequest request,
+		ItemTemplateTable itemTemplates,
+		StaticData staticData,
+		int itemObjectId,
+		int itemId,
+		CancellationToken cancellationToken)
+	{
 		var change = EquipmentService.ChangeEquipment(
 			player,
 			action: 0,
@@ -2252,13 +2279,13 @@ public sealed class GameServerConnection : BaseClientConnection
 			soulBindConfirmed: true,
 			skillTree: staticData.SkillTree,
 			stigmaSlotQuestMembership: _options.Membership.StigmaSlotQuest);
-		if (!change.Changed)
+		if (!change.Changed || cancellationToken.IsCancellationRequested)
 			return;
 
-		await SendPacketAsync(SmSystemMessage.SoulBoundItemSucceed(request.ItemName));
 		await BroadcastItemUsageAnimationAsync(
 			player,
-			new SmItemUsageAnimation(player.ObjectId, currentItem.ObjectId, currentItem.ItemId, 0, 6, 0));
+			new SmItemUsageAnimation(player.ObjectId, itemObjectId, itemId, 0, 6, 0));
+		await SendPacketAsync(SmSystemMessage.SoulBoundItemSucceed(request.ItemName));
 		await ApplyEquipmentChangeAsync(player, change, itemTemplates, staticData);
 	}
 
@@ -4962,5 +4989,6 @@ public sealed class GameServerConnection : BaseClientConnection
 		ItemCharge2,
 		ManastoneSocket,
 		GodstoneSocket,
+		SoulBind,
 	}
 }
