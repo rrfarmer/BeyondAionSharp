@@ -27,6 +27,8 @@ public sealed class GameServerOptions
 
 	public GameServerAdministrationOptions Administration { get; init; } = new();
 
+	public GameServerRateOptions Rates { get; init; } = new();
+
 	public int LoadedPropertyCount { get; init; }
 
 	public static GameServerOptions LoadFromJavaConfig(string startDirectory)
@@ -211,6 +213,10 @@ public sealed class GameServerOptions
 				GmPanelAccessLevel = GetIntWithEnvironment(loader, "gameserver.administration.gm_panel", 2),
 				OperationalItemIds = LoadOperationalItemIds(startDirectory),
 			},
+			Rates = new GameServerRateOptions
+			{
+				ManastoneChances = GetFloatListWithEnvironment(loader, "gameserver.rates.manastone_chances", "75.0, 75.0"),
+			},
 			LoadedPropertyCount = loader.Count,
 		};
 	}
@@ -316,6 +322,14 @@ public sealed class GameServerOptions
 		var value = GetWithEnvironment(loader, key, defaultValue);
 		return value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
 			.Select(v => int.Parse(v, CultureInfo.InvariantCulture))
+			.ToArray();
+	}
+
+	private static IReadOnlyList<float> GetFloatListWithEnvironment(ConfigLoader loader, string key, string defaultValue)
+	{
+		var value = GetWithEnvironment(loader, key, defaultValue);
+		return value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+			.Select(v => float.Parse(v, CultureInfo.InvariantCulture))
 			.ToArray();
 	}
 
@@ -475,6 +489,11 @@ public sealed class GameServerMembershipOptions
 	public byte StigmaSlotQuest { get; init; } = 10;
 
 	public byte StigmaAutoLearn { get; init; } = 10;
+}
+
+public sealed class GameServerRateOptions
+{
+	public IReadOnlyList<float> ManastoneChances { get; init; } = [75f, 75f];
 }
 
 public sealed class GameServerAdministrationOptions

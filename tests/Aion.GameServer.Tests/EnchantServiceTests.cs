@@ -11,6 +11,8 @@ public sealed class EnchantServiceTests
 	private const int UniversalMaterialItemId = 166500002;
 	private const int InvalidMaterialItemId = 166500003;
 	private const int ToolItemId = 165030001;
+	private const int ManastoneItemId = 167000001;
+	private const int HighLevelManastoneItemId = 167000002;
 
 	[Fact]
 	public void CreateAmplificationPlan_AmplifiesTargetAndConsumesSources()
@@ -89,6 +91,99 @@ public sealed class EnchantServiceTests
 			EnchantService.CreateAmplificationPlan(player, 1001, 2003, 2002, templates).Failure);
 	}
 
+	[Fact]
+	public void CreateSocketManastonePlan_AddsStoneAndConsumesSourceOnSuccess()
+	{
+		var player = CreatePlayer(
+			CreateItem(1001, SwordItemId),
+			CreateItem(2001, ManastoneItemId, count: 2));
+
+		var plan = EnchantService.CreateSocketManastonePlan(
+			player,
+			targetItemObjectId: 1001,
+			manastoneObjectId: 2001,
+			targetFusedSlot: 1,
+			CreateItemTemplates(),
+			manastoneChances: [75f, 75f],
+			rollPercent: () => 0);
+
+		Assert.True(plan.Succeeded);
+		Assert.True(plan.SocketSucceeded);
+		Assert.Equal(ManastoneItemId, plan.AddedStone?.ItemId);
+		Assert.Equal(1, plan.AddedStone?.Slot);
+		Assert.Equal(0, plan.AddedCategory);
+		Assert.Equal(1, plan.SourceItemUpdate?.Count);
+		Assert.NotNull(plan.TargetItemUpdate);
+		Assert.Equal([1], plan.TargetItemUpdate.ManaStones.Select(stone => stone.Slot).ToArray());
+		Assert.Contains(plan.InventoryItems, item => item.ObjectId == 2001 && item.Count == 1);
+	}
+
+	[Fact]
+	public void CreateSocketManastonePlan_FailureStillConsumesSourceLikeJavaAct()
+	{
+		var player = CreatePlayer(
+			CreateItem(1001, SwordItemId),
+			CreateItem(2001, ManastoneItemId));
+
+		var plan = EnchantService.CreateSocketManastonePlan(
+			player,
+			targetItemObjectId: 1001,
+			manastoneObjectId: 2001,
+			targetFusedSlot: 1,
+			CreateItemTemplates(),
+			manastoneChances: [75f, 75f],
+			rollPercent: () => 99);
+
+		Assert.True(plan.Succeeded);
+		Assert.False(plan.SocketSucceeded);
+		Assert.Null(plan.AddedStone);
+		Assert.Equal(2001, plan.DeletedSourceItemObjectId);
+		Assert.Empty(plan.TargetItemUpdate?.ManaStones ?? Array.Empty<ItemStoneSocket>());
+		Assert.DoesNotContain(plan.InventoryItems, item => item.ObjectId == 2001);
+	}
+
+	[Fact]
+	public void CreateSocketManastonePlan_LevelRejectionUsesFailureSideEffects()
+	{
+		var player = CreatePlayer(
+			CreateItem(1001, SwordItemId),
+			CreateItem(2001, HighLevelManastoneItemId));
+
+		var plan = EnchantService.CreateSocketManastonePlan(
+			player,
+			targetItemObjectId: 1001,
+			manastoneObjectId: 2001,
+			targetFusedSlot: 1,
+			CreateItemTemplates(),
+			manastoneChances: [75f, 75f],
+			rollPercent: () => 0);
+
+		Assert.True(plan.Succeeded);
+		Assert.False(plan.SocketSucceeded);
+		Assert.Equal(2001, plan.DeletedSourceItemObjectId);
+		Assert.Empty(plan.TargetItemUpdate?.ManaStones ?? Array.Empty<ItemStoneSocket>());
+	}
+
+	[Fact]
+	public void CreateSocketManastonePlan_ReturnsPreActionFailuresWithoutMutation()
+	{
+		var templates = CreateItemTemplates();
+		var player = CreatePlayer(
+			CreateItem(1001, SwordItemId),
+			CreateItem(2001, ManastoneItemId),
+			CreateItem(3001, UniversalMaterialItemId));
+
+		Assert.Equal(
+			ManastoneSocketFailure.NoSourceItem,
+			EnchantService.CreateSocketManastonePlan(player, 1001, 404, 1, templates).Failure);
+		Assert.Equal(
+			ManastoneSocketFailure.NoTargetItem,
+			EnchantService.CreateSocketManastonePlan(player, 404, 2001, 1, templates).Failure);
+		Assert.Equal(
+			ManastoneSocketFailure.CannotAct,
+			EnchantService.CreateSocketManastonePlan(player, 1001, 3001, 1, templates).Failure);
+	}
+
 	private static Player CreatePlayer(params InventoryItem[] items)
 	{
 		return new Player
@@ -135,7 +230,9 @@ public sealed class EnchantServiceTests
 				0,
 				1,
 				MaxEnchantLevel: 15,
-				CanExceedEnchant: true),
+				CanExceedEnchant: true,
+				ManastoneSlots: 4,
+				SpecialManastoneSlots: 1),
 			new ItemTemplateSummary(
 				PlainSwordItemId,
 				"Circulus' Sword",
@@ -153,6 +250,8 @@ public sealed class EnchantServiceTests
 			new ItemTemplateSummary(UniversalMaterialItemId, "Amplification Material", 0, 0, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
 			new ItemTemplateSummary(InvalidMaterialItemId, "Invalid Material", 0, 0, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
 			new ItemTemplateSummary(ToolItemId, "Amplification Tool", 0, 0, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
+			new ItemTemplateSummary(ManastoneItemId, "Manastone: HP +20", 0, 0, 50, "MANASTONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
+			new ItemTemplateSummary(HighLevelManastoneItemId, "Manastone: HP +95", 0, 0, 80, "MANASTONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
 		]);
 	}
 }

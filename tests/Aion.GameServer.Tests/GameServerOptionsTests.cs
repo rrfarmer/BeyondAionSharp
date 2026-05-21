@@ -24,6 +24,7 @@ public class GameServerOptionsTests
 		Assert.Equal(2, options.Administration.GmPanelAccessLevel);
 		Assert.Contains(10000001, options.Administration.OperationalItemIds);
 		Assert.Contains(10000002, options.Administration.OperationalItemIds);
+		Assert.Equal([75f, 75f], options.Rates.ManastoneChances);
 
 		Assert.Equal(new IPEndPoint(IPAddress.Any, 7777), options.Network.ClientEndPoint);
 		Assert.Equal(new IPEndPoint(IPAddress.Any, 7777), options.Network.ClientConnectEndPoint);

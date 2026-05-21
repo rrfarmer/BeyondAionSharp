@@ -1330,15 +1330,26 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (staticData == null || itemTemplates == null)
 			return;
 
-		var targetItem = player.InventoryItems.FirstOrDefault(item => item.ObjectId == packet.TargetItemObjectId && item.Location == CubeStorageId);
 		var sourceItem = player.InventoryItems.FirstOrDefault(item => item.ObjectId == packet.StoneObjectId && item.Location == CubeStorageId && !item.IsEquipped);
-		if (targetItem == null || sourceItem == null)
+		if (sourceItem == null)
 			return;
+
+		var targetItem = player.InventoryItems.FirstOrDefault(item => item.ObjectId == packet.TargetItemObjectId && item.Location == CubeStorageId);
+		if (targetItem == null)
+		{
+			if (packet.ActionType == 2)
+				await SendPacketAsync(SmSystemMessage.GiveItemOptionNoTargetItem());
+			return;
+		}
 
 		var targetTemplate = itemTemplates.GetItemTemplate(targetItem.ItemId);
 		var sourceTemplate = itemTemplates.GetItemTemplate(sourceItem.ItemId);
 		if (targetTemplate?.StigmaInfo == null || sourceTemplate?.StigmaInfo == null)
+		{
+			if (packet.ActionType == 2)
+				await HandleSocketManastoneAsync(player, packet);
 			return;
+		}
 
 		var plan = StigmaService.CreateChargePlan(
 			player,
@@ -1421,6 +1432,95 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		if (targetItem.IsEquipped)
 			await SendPacketAsync(CreateStatsInfoPacket(player, staticData));
+	}
+
+	private async Task HandleSocketManastoneAsync(Player player, CmManastone packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_MANASTONE.runImpl actionType 2 + services/EnchantService.socketManastoneAct.
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var itemTemplates = staticData?.ItemTemplates;
+		if (staticData == null || itemTemplates == null)
+			return;
+
+		if (packet.SupplementObjectId != 0
+			&& player.InventoryItems.Any(item =>
+				item.ObjectId == packet.SupplementObjectId
+				&& item.Location == CubeStorageId
+				&& !item.IsEquipped))
+		{
+			return;
+		}
+
+		var sourceItem = player.InventoryItems.FirstOrDefault(item =>
+			item.ObjectId == packet.StoneObjectId
+			&& item.Location == CubeStorageId
+			&& !item.IsEquipped);
+		var sourceTemplate = sourceItem == null ? null : itemTemplates.GetItemTemplate(sourceItem.ItemId);
+		var plan = EnchantService.CreateSocketManastonePlan(
+			player,
+			packet.TargetItemObjectId,
+			packet.StoneObjectId,
+			packet.TargetFusedSlot,
+			itemTemplates,
+			_options.Rates.ManastoneChances);
+		if (!plan.Succeeded)
+		{
+			if (plan.Failure == ManastoneSocketFailure.NoTargetItem)
+				await SendPacketAsync(SmSystemMessage.GiveItemOptionNoTargetItem());
+			return;
+		}
+
+		if (plan.TargetItemUpdate == null || sourceTemplate == null)
+			return;
+
+		var targetTemplate = itemTemplates.GetItemTemplate(plan.TargetItemUpdate.ItemId);
+		if (targetTemplate == null)
+			return;
+
+		await BroadcastItemUsageAnimationAsync(
+			player,
+			new SmItemUsageAnimation(
+				player.ObjectId,
+				packet.TargetItemObjectId,
+				packet.StoneObjectId,
+				sourceTemplate.TemplateId,
+				2000,
+				0,
+				0,
+				1,
+				0,
+				0));
+
+		var saved = _playerEnterWorldService == null
+			|| await _playerEnterWorldService.SaveManastoneSocketMutationAsync(
+				player,
+				plan.TargetItemUpdate,
+				plan.AddedStone,
+				plan.AddedCategory,
+				plan.SourceItemUpdate,
+				plan.DeletedSourceItemObjectId);
+		if (!saved)
+			return;
+
+		player.InventoryItems = plan.InventoryItems;
+		await SendItemUseMutationAsync(plan.SourceItemUpdate, plan.DeletedSourceItemObjectId, sourceTemplate);
+		await SendPacketAsync(
+			plan.SocketSucceeded
+				? SmSystemMessage.GiveItemOptionSucceed(plan.ItemName)
+				: SmSystemMessage.GiveItemOptionFailed(plan.ItemName));
+		await SendPacketAsync(new SmInventoryUpdateItem(plan.TargetItemUpdate, targetTemplate, updateType: 0));
+		if (plan.RefreshStats && plan.SocketSucceeded)
+			await SendPacketAsync(CreateStatsInfoPacket(player, staticData));
+
+		await BroadcastItemUsageAnimationAsync(
+			player,
+			new SmItemUsageAnimation(
+				player.ObjectId,
+				packet.StoneObjectId,
+				sourceTemplate.TemplateId,
+				0,
+				plan.SocketSucceeded ? 1 : 2,
+				0));
 	}
 
 	private async Task HandleSocketGodstoneAsync(Player player, CmManastone packet)

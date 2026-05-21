@@ -112,6 +112,15 @@ public interface IPlayerEnterWorldRepository
 		InventoryItem kinahItemUpdate,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveManastoneSocketMutationAsync(
+		int playerObjectId,
+		InventoryItem targetItemUpdate,
+		ItemStoneSocket? addedStone,
+		int addedCategory,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SaveGodstoneSocketMutationAsync(
 		int playerObjectId,
 		InventoryItem targetItemUpdate,
@@ -336,6 +345,18 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		int slot,
 		int category,
 		InventoryItem kinahItemUpdate,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> SaveManastoneSocketMutationAsync(
+		int playerObjectId,
+		InventoryItem targetItemUpdate,
+		ItemStoneSocket? addedStone,
+		int addedCategory,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
 		CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(true);
@@ -854,6 +875,47 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		}
 	}
 
+	public async Task<bool> SaveManastoneSocketMutationAsync(
+		int playerObjectId,
+		InventoryItem targetItemUpdate,
+		ItemStoneSocket? addedStone,
+		int addedCategory,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: services/EnchantService.socketManastoneAct persists ItemSocketService.addManaStone plus source consume.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			if (!await InventoryItemExistsAsync(connection, transaction, playerObjectId, targetItemUpdate.ObjectId, cancellationToken))
+				return false;
+
+			if (addedStone != null)
+				await SaveManastoneAsync(connection, transaction, targetItemUpdate.ObjectId, addedStone, addedCategory, cancellationToken);
+
+			if (sourceItemUpdate != null && !await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, sourceItemUpdate, cancellationToken))
+				return false;
+
+			if (deletedSourceItemObjectId.HasValue
+				&& !await DeleteInventoryItemAsync(connection, transaction, playerObjectId, deletedSourceItemObjectId.Value, cancellationToken))
+			{
+				return false;
+			}
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save manastone socket mutation for player {PlayerObjectId}", playerObjectId);
+			return false;
+		}
+	}
+
 	public async Task<bool> SaveGodstoneSocketMutationAsync(
 		int playerObjectId,
 		InventoryItem targetItemUpdate,
@@ -1129,6 +1191,31 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				new MySqlParameter { Value = item.ObjectId },
 				new MySqlParameter { Value = item.Godstone.ItemId },
 				new MySqlParameter { Value = item.Godstone.ProcCount },
+			});
+		await command.ExecuteNonQueryAsync(cancellationToken);
+	}
+
+	private static async Task SaveManastoneAsync(
+		MySqlConnection connection,
+		MySqlTransaction transaction,
+		int itemObjectId,
+		ItemStoneSocket addedStone,
+		int category,
+		CancellationToken cancellationToken)
+	{
+		await using var command = connection.CreateCommand();
+		command.Transaction = transaction;
+		command.CommandText = """
+			INSERT INTO item_stones (item_unique_id, item_id, slot, category, polishNumber, polishCharge, proc_count)
+			VALUES (?, ?, ?, ?, 0, 0, 0)
+			""";
+		command.Parameters.AddRange(
+			new[]
+			{
+				new MySqlParameter { Value = itemObjectId },
+				new MySqlParameter { Value = addedStone.ItemId },
+				new MySqlParameter { Value = addedStone.Slot },
+				new MySqlParameter { Value = category },
 			});
 		await command.ExecuteNonQueryAsync(cancellationToken);
 	}

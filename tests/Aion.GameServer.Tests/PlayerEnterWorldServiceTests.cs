@@ -679,6 +679,18 @@ public sealed class PlayerEnterWorldServiceTests
 			return Task.FromResult(true);
 		}
 
+		public Task<bool> SaveManastoneSocketMutationAsync(
+			int playerObjectId,
+			InventoryItem targetItemUpdate,
+			ItemStoneSocket? addedStone,
+			int addedCategory,
+			InventoryItem? sourceItemUpdate,
+			int? deletedSourceItemObjectId,
+			CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult(true);
+		}
+
 		public Task<bool> SaveGodstoneSocketMutationAsync(
 			int playerObjectId,
 			InventoryItem targetItemUpdate,

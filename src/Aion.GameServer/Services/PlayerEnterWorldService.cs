@@ -258,6 +258,26 @@ public sealed class PlayerEnterWorldService
 			cancellationToken);
 	}
 
+	public Task<bool> SaveManastoneSocketMutationAsync(
+		Player player,
+		InventoryItem targetItemUpdate,
+		ItemStoneSocket? addedStone,
+		int addedCategory,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: services/EnchantService.socketManastoneAct source consume and item_stones insert persistence.
+		return _repository.SaveManastoneSocketMutationAsync(
+			player.ObjectId,
+			targetItemUpdate,
+			addedStone,
+			addedCategory,
+			sourceItemUpdate,
+			deletedSourceItemObjectId,
+			cancellationToken);
+	}
+
 	public Task<bool> SaveGodstoneSocketMutationAsync(
 		Player player,
 		InventoryItem targetItemUpdate,

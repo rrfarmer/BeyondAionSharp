@@ -85,6 +85,24 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300456, itemName);
 	}
 
+	public static SmSystemMessage GiveItemOptionNoTargetItem()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GIVE_ITEM_OPTION_NO_TARGET_ITEM.
+		return new SmSystemMessage(1300459);
+	}
+
+	public static SmSystemMessage GiveItemOptionSucceed(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GIVE_ITEM_OPTION_SUCCEED.
+		return new SmSystemMessage(1300462, itemName);
+	}
+
+	public static SmSystemMessage GiveItemOptionFailed(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GIVE_ITEM_OPTION_FAILED.
+		return new SmSystemMessage(1300463, itemName);
+	}
+
 	public static SmSystemMessage PolishWrongLevel()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_POLISH_WRONG_LEVEL.
