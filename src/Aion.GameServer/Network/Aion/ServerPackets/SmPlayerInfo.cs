@@ -1,0 +1,246 @@
+using Aion.Commons.Network;
+using Aion.GameServer.Controllers.Movement;
+using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model.GameObjects;
+
+namespace Aion.GameServer.Network.Aion.ServerPackets;
+
+public sealed class SmPlayerInfo : GameServerPacket
+{
+	public const int PacketOpCode = 32;
+	private const int FriendlyCreatureType = 0x26;
+	private readonly Player _player;
+	private readonly PlayerExperienceTable? _experienceTable;
+
+	public SmPlayerInfo(Player player, PlayerExperienceTable? experienceTable = null)
+		: base(PacketOpCode)
+	{
+		// Java parity: network/aion/serverpackets/SM_PLAYER_INFO(Player).
+		_player = player;
+		_experienceTable = experienceTable;
+	}
+
+	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
+	{
+		// Java parity: network/aion/serverpackets/SM_PLAYER_INFO.writeImpl baseline path.
+		var position = _player.Position;
+		var appearance = _player.Appearance;
+		var raceId = ToRaceId(_player.Race);
+		var genderId = ToGenderId(_player.Gender);
+		var templateId = 100000 + raceId * 2 + genderId;
+		buffer.WriteF(position.X);
+		buffer.WriteF(position.Y);
+		buffer.WriteF(position.Z);
+		buffer.WriteD(_player.ObjectId);
+		buffer.WriteD(templateId);
+		buffer.WriteD(0);
+		buffer.WriteD(templateId);
+		buffer.WriteC(0);
+		buffer.WriteD(0);
+		buffer.WriteC(FriendlyCreatureType);
+		buffer.WriteC(raceId);
+		buffer.WriteC(ToClassId(_player.PlayerClass));
+		buffer.WriteC(genderId);
+		buffer.WriteH(0);
+		buffer.WriteD(0);
+		buffer.WriteD(0);
+		buffer.WriteC(position.Heading);
+		buffer.WriteS(_player.Name);
+		buffer.WriteH(_player.TitleId);
+		buffer.WriteH(0);
+		buffer.WriteH(0);
+		WriteEmptyLegion(buffer);
+		buffer.WriteC(100);
+		buffer.WriteH(_player.Dp);
+		buffer.WriteC(0);
+		WriteEquippedItems(buffer);
+		WriteAppearance(buffer, appearance);
+		buffer.WriteF(appearance.Height);
+		buffer.WriteF(0.25f);
+		buffer.WriteF(2.0f);
+		buffer.WriteF(6.0f);
+		buffer.WriteH(0);
+		buffer.WriteH(0);
+		buffer.WriteC(0);
+		buffer.WriteS(string.Empty);
+		WriteMovement(buffer, position);
+		buffer.WriteC(0);
+		buffer.WriteS(string.Empty);
+		buffer.WriteH(GetLevel());
+		buffer.WriteH(0);
+		buffer.WriteH(0);
+		buffer.WriteH(_player.AbyssRank.Rank);
+		buffer.WriteH(0);
+		buffer.WriteD(0);
+		buffer.WriteC(0);
+		buffer.WriteD(0);
+		buffer.WriteC(0);
+		buffer.WriteD(0);
+		buffer.WriteD(1);
+		buffer.WriteD(1);
+		buffer.WriteC(3);
+		buffer.WriteC(0);
+		buffer.WriteC(0);
+		buffer.WriteC(0);
+	}
+
+	private void WriteEquippedItems(PacketBuffer buffer)
+	{
+		// Java parity: network/aion/serverpackets/AbstractPlayerInfoPacket.writeEquippedItems.
+		var items = _player.InventoryItems
+			.Where(item => item is { Location: 0, IsEquipped: true })
+			.OrderBy(item => item.Slot)
+			.ThenBy(item => item.ObjectId)
+			.ToArray();
+		var mask = 0;
+		foreach (var item in items)
+			mask |= unchecked((int)item.Slot);
+
+		buffer.WriteD(mask);
+		foreach (var item in items)
+		{
+			buffer.WriteD(item.ItemSkin == 0 ? item.ItemId : item.ItemSkin);
+			buffer.WriteD(item.Godstone?.ItemId ?? 0);
+			WriteDyeInfo(buffer, item.Color);
+			buffer.WriteH(item.Enchant);
+			buffer.WriteH(0);
+		}
+	}
+
+	private static void WriteAppearance(PacketBuffer buffer, Model.Account.CharacterAppearance appearance)
+	{
+		// Java parity: SM_PLAYER_INFO appearance tail from PlayerAppearance.
+		buffer.WriteD(appearance.SkinRgb);
+		buffer.WriteD(appearance.HairRgb);
+		buffer.WriteD(appearance.EyeRgb);
+		buffer.WriteD(appearance.LipRgb);
+		buffer.WriteC(appearance.Face);
+		buffer.WriteC(appearance.Hair);
+		buffer.WriteC(appearance.Deco);
+		buffer.WriteC(appearance.Tattoo);
+		buffer.WriteC(appearance.FaceContour);
+		buffer.WriteC(appearance.Expression);
+		buffer.WriteC(5);
+		buffer.WriteC(appearance.JawLine);
+		buffer.WriteC(appearance.Forehead);
+		buffer.WriteC(appearance.EyeHeight);
+		buffer.WriteC(appearance.EyeSpace);
+		buffer.WriteC(appearance.EyeWidth);
+		buffer.WriteC(appearance.EyeSize);
+		buffer.WriteC(appearance.EyeShape);
+		buffer.WriteC(appearance.EyeAngle);
+		buffer.WriteC(appearance.BrowHeight);
+		buffer.WriteC(appearance.BrowAngle);
+		buffer.WriteC(appearance.BrowShape);
+		buffer.WriteC(appearance.Nose);
+		buffer.WriteC(appearance.NoseBridge);
+		buffer.WriteC(appearance.NoseWidth);
+		buffer.WriteC(appearance.NoseTip);
+		buffer.WriteC(appearance.Cheek);
+		buffer.WriteC(appearance.LipHeight);
+		buffer.WriteC(appearance.MouthSize);
+		buffer.WriteC(appearance.LipSize);
+		buffer.WriteC(appearance.Smile);
+		buffer.WriteC(appearance.LipShape);
+		buffer.WriteC(appearance.JawHeight);
+		buffer.WriteC(appearance.ChinJut);
+		buffer.WriteC(appearance.EarShape);
+		buffer.WriteC(appearance.HeadSize);
+		buffer.WriteC(appearance.Neck);
+		buffer.WriteC(appearance.NeckLength);
+		buffer.WriteC(appearance.ShoulderSize);
+		buffer.WriteC(appearance.Torso);
+		buffer.WriteC(appearance.Chest);
+		buffer.WriteC(appearance.Waist);
+		buffer.WriteC(appearance.Hips);
+		buffer.WriteC(appearance.ArmThickness);
+		buffer.WriteC(appearance.HandSize);
+		buffer.WriteC(appearance.LegThickness);
+		buffer.WriteC(appearance.FootSize);
+		buffer.WriteC(appearance.FacialRate);
+		buffer.WriteC(0);
+		buffer.WriteC(appearance.ArmLength);
+		buffer.WriteC(appearance.LegLength);
+		buffer.WriteC(appearance.Shoulders);
+		buffer.WriteC(appearance.FaceShape);
+		buffer.WriteC(0);
+		buffer.WriteC(appearance.Voice);
+	}
+
+	private void WriteMovement(PacketBuffer buffer, global::Aion.GameServer.World.WorldPosition position)
+	{
+		// Java parity: SM_PLAYER_INFO movement-vector/current-position tail.
+		var movement = _player.Movement;
+		var movementMask = movement.Mask;
+		if (MovementMask.Has(movementMask, MovementMask.Absolute))
+			movementMask &= unchecked((byte)~MovementMask.Absolute);
+		buffer.WriteF(movement.VectorX);
+		buffer.WriteF(movement.VectorY);
+		buffer.WriteF(movement.VectorZ);
+		buffer.WriteF(position.X);
+		buffer.WriteF(position.Y);
+		buffer.WriteF(position.Z);
+		buffer.WriteC(movementMask);
+	}
+
+	private int GetLevel()
+	{
+		return Math.Max(1, _experienceTable?.GetLevelForExp(_player.Exp) ?? 1);
+	}
+
+	private static void WriteEmptyLegion(PacketBuffer buffer)
+	{
+		buffer.WriteB(new byte[12]);
+	}
+
+	private static void WriteDyeInfo(PacketBuffer buffer, int? rgb)
+	{
+		if (!rgb.HasValue)
+		{
+			buffer.WriteB(new byte[4]);
+			return;
+		}
+
+		buffer.WriteC(1);
+		buffer.WriteC((rgb.Value & 0xFF0000) >> 16);
+		buffer.WriteC((rgb.Value & 0xFF00) >> 8);
+		buffer.WriteC(rgb.Value & 0xFF);
+	}
+
+	private static int ToRaceId(string race)
+	{
+		return string.Equals(race, "ASMODIANS", StringComparison.OrdinalIgnoreCase) || string.Equals(race, "ASMODIAN", StringComparison.OrdinalIgnoreCase)
+			? 1
+			: 0;
+	}
+
+	private static int ToGenderId(string gender)
+	{
+		return string.Equals(gender, "FEMALE", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
+	}
+
+	private static int ToClassId(string playerClass)
+	{
+		return playerClass.ToUpperInvariant() switch
+		{
+			"WARRIOR" => 0,
+			"GLADIATOR" => 1,
+			"TEMPLAR" => 2,
+			"SCOUT" => 3,
+			"ASSASSIN" => 4,
+			"RANGER" => 5,
+			"MAGE" => 6,
+			"SORCERER" => 7,
+			"SPIRIT_MASTER" => 8,
+			"PRIEST" => 9,
+			"CLERIC" => 10,
+			"CHANTER" => 11,
+			"ENGINEER" => 12,
+			"GUNNER" => 13,
+			"ARTIST" => 14,
+			"BARD" => 15,
+			"RIDER" => 16,
+			_ => 0,
+		};
+	}
+}

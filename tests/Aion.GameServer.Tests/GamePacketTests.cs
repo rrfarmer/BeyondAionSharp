@@ -1281,6 +1281,59 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmPlayerInfo_WritesJavaShapedBaseline()
+	{
+		var player = new Player
+		{
+			ObjectId = 1001,
+			Name = "Visible",
+			Race = "ELYOS",
+			Gender = "FEMALE",
+			PlayerClass = "RANGER",
+			TitleId = 12,
+			Dp = 300,
+			Position = new WorldPosition(210010000, 10, 20, 30, 40),
+			Appearance = new CharacterAppearance
+			{
+				SkinRgb = 0x112233,
+				HairRgb = 0x445566,
+				EyeRgb = 0x778899,
+				LipRgb = 0xAABBCC,
+				Face = 1,
+				Hair = 2,
+				Voice = 7,
+				Height = 1.2f,
+			},
+			InventoryItems =
+			[
+				new InventoryItem { ObjectId = 2001, ItemId = 100000001, ItemSkin = 100000099, IsEquipped = true, Location = 0, Slot = 1, Enchant = 5 },
+			],
+		};
+
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(new SmPlayerInfo(player)));
+
+		Assert.Equal(10, reader.ReadF());
+		Assert.Equal(20, reader.ReadF());
+		Assert.Equal(30, reader.ReadF());
+		Assert.Equal(1001, reader.ReadD());
+		Assert.Equal(100001, reader.ReadD());
+		reader.ReadD();
+		Assert.Equal(100001, reader.ReadD());
+		reader.ReadC();
+		reader.ReadD();
+		Assert.Equal(0x26, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(5, (int)reader.ReadC());
+		Assert.Equal(1, (int)reader.ReadC());
+		reader.ReadH();
+		reader.ReadD();
+		reader.ReadD();
+		Assert.Equal(40, (int)reader.ReadC());
+		Assert.Equal("Visible", reader.ReadS());
+		Assert.Equal(12, reader.ReadH());
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesL2AuthLoginCheck()
 	{
 		var payload = CreateClientPayload(

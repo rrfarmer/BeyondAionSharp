@@ -492,6 +492,11 @@ public sealed class GameServerConnection : BaseClientConnection
 					await SendPacketAsync(new SmChannelInfo(enterWorldResult.Player.Position, staticData?.WorldMaps ?? Array.Empty<WorldMapSummary>()));
 					await SendPacketAsync(CreateBindPointPacket(enterWorldResult.Player, staticData));
 					await SendPacketAsync(new SmPlayerSpawn(enterWorldResult.Player));
+					if (_connectionRegistry != null)
+						await _connectionRegistry.BroadcastToVisiblePlayersAsync(
+							enterWorldResult.Player.Position,
+							enterWorldResult.Player.ObjectId,
+							new SmPlayerInfo(enterWorldResult.Player, staticData?.PlayerExperienceTable));
 					await SendPacketAsync(new SmGameTime(_gameTimeService?.GameMinutes ?? 0));
 					if (itemTemplates != null)
 					{
