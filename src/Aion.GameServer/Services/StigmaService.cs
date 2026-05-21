@@ -66,7 +66,14 @@ public static class StigmaService
 			return StigmaEquipResult.Failed(StigmaEquipFailure.NotEnoughKinah);
 
 		var kinahUpdate = CopyInventoryItem(kinahItem, count: kinahItem.Count - kinahPrice);
-		var addedSkills = AddStigmaSkills(skills, player, resultTemplate.StigmaInfo, resultItem.Enchant, skillTemplates, skillTree, experienceTable);
+		var addedSkills = AddStigmaSkills(skills, player, resultTemplate.StigmaInfo, resultItem.Enchant, skillTemplates, skillTree, experienceTable).ToList();
+		addedSkills.AddRange(AddLinkedStigmaSkills(
+			skills,
+			player,
+			GetEquippedStigmasAfterEquip(inventoryItems, itemTemplates, resultItem, resultTemplate, slot),
+			skillTemplates,
+			skillTree,
+			experienceTable));
 		return StigmaEquipResult.Success(skills, addedSkills, removedSkills, removedSkillNames, kinahUpdate);
 	}
 
@@ -112,6 +119,35 @@ public static class StigmaService
 						addedSkills.Add(learned);
 				}
 			}
+		}
+
+		return addedSkills;
+	}
+
+	private static IReadOnlyList<PlayerSkill> AddLinkedStigmaSkills(
+		List<PlayerSkill> skills,
+		Player player,
+		IReadOnlyList<EquippedStigma> stigmas,
+		SkillTemplateTable skillTemplates,
+		SkillTreeTable skillTree,
+		PlayerExperienceTable? experienceTable)
+	{
+		// Java parity: services/StigmaService.addLinkedStigmaSkills.
+		if (stigmas.Count < 6 || stigmas.Any(stigma => stigma.Template.StigmaInfo?.Chargeable != true))
+			return Array.Empty<PlayerSkill>();
+
+		var skillId = GetLinkedStigmaLearnSkill(player, stigmas.Select(stigma => stigma.Item.ItemId).ToHashSet());
+		if (skillId <= 0)
+			return Array.Empty<PlayerSkill>();
+
+		var playerLevel = Math.Max(1, experienceTable?.GetLevelForExp(player.Exp) ?? 1);
+		var linkedStigmaSkillLevel = stigmas.Min(stigma => stigma.Item.Enchant) + 1;
+		var addedSkills = new List<PlayerSkill>();
+		foreach (var skill in skillTree.GetSkillsForSkill(skillId, player.PlayerClass, player.Race, playerLevel, skillTemplates))
+		{
+			var learned = AddOrUpgradeTemporarySkill(skills, skill.SkillId, linkedStigmaSkillLevel, skill.IsLinkedStigma ? 3 : 1);
+			if (learned != null)
+				addedSkills.Add(learned);
 		}
 
 		return addedSkills;
@@ -204,6 +240,97 @@ public static class StigmaService
 		}
 	}
 
+	private static IReadOnlyList<EquippedStigma> GetEquippedStigmasAfterEquip(
+		IReadOnlyList<InventoryItem> inventoryItems,
+		ItemTemplateTable itemTemplates,
+		InventoryItem resultItem,
+		ItemTemplateSummary resultTemplate,
+		long slot)
+	{
+		// Java parity: Equipment.equip calls addLinkedStigmaSkills after the target stigma is equipped.
+		var stigmas = GetEquippedStigmas(inventoryItems, itemTemplates)
+			.Where(stigma => stigma.Item.ObjectId != resultItem.ObjectId && stigma.Item.Slot != slot)
+			.ToList();
+		stigmas.Add(new EquippedStigma(CopyInventoryItem(resultItem, slot: slot, isEquipped: true), resultTemplate));
+		return stigmas;
+	}
+
+	private static int GetLinkedStigmaLearnSkill(Player player, IReadOnlySet<int> equippedItemIds)
+	{
+		// Java parity: services/StigmaService.getLinkedStigmaLearnSkill.
+		var isElyos = player.Race == "ELYOS";
+		return player.PlayerClass switch
+		{
+			"GLADIATOR" => IsEquipped(equippedItemIds, 140001118) && IsEquipped(equippedItemIds, 2, 140001103, 140001104, 140001105)
+				? 731
+				: IsEquipped(equippedItemIds, 140001119) && IsEquipped(equippedItemIds, 2, 140001106, 140001107, 140001108)
+					? 643
+					: isElyos ? 662 : 661,
+			"TEMPLAR" => IsEquipped(equippedItemIds, 140001134) && IsEquipped(equippedItemIds, 2, 140001120, 140001122, 140001125)
+				? 2921
+				: IsEquipped(equippedItemIds, 140001135) && IsEquipped(equippedItemIds, 2, 140001121, 140001123, 140001124)
+					? 2918
+					: 2917,
+			"ASSASSIN" => IsEquipped(equippedItemIds, 140001151) && IsEquipped(equippedItemIds, 2, 140001136, 140001137, 140001140)
+				? 3241
+				: IsEquipped(equippedItemIds, 140001152) && IsEquipped(equippedItemIds, 2, 140001138, 140001139, 140001141)
+					? 3238
+					: 3244,
+			"RANGER" => IsEquipped(equippedItemIds, 140001172) && IsEquipped(equippedItemIds, 2, 140001153, 140001155, 140001157)
+				? 1008
+				: IsEquipped(equippedItemIds, 140001173) && IsEquipped(equippedItemIds, 2, 140001154, 140001156, 140001158)
+					? 938
+					: isElyos ? 1065 : 1064,
+			"SORCERER" => IsEquipped(equippedItemIds, 140001191) && IsEquipped(equippedItemIds, 2, 140001174, 140001178, 140001181)
+				? 1342
+				: IsEquipped(equippedItemIds, 140001192) && IsEquipped(equippedItemIds, 2, 140001176, 140001177, isElyos ? 140001184 : 140001185)
+					? 1542
+					: 1420,
+			"SPIRIT_MASTER" => IsEquipped(equippedItemIds, 140001209) && IsEquipped(equippedItemIds, 2, 140001193, 140001194, 140001195)
+				? 3543
+				: IsEquipped(equippedItemIds, 140001210) && IsEquipped(equippedItemIds, 2, 140001196, isElyos ? 140001197 : 140001198, 140001199)
+					? 3549
+					: 3851,
+			"CLERIC" => IsEquipped(equippedItemIds, 140001245) && IsEquipped(equippedItemIds, 2, 140001228, 140001229, isElyos ? 140001230 : 140001231)
+				? 4169
+				: IsEquipped(equippedItemIds, 140001246) && IsEquipped(equippedItemIds, 2, 140001232, 140001233, isElyos ? 140001234 : 140001235)
+					? 3934
+					: isElyos ? 3906 : 3911,
+			"CHANTER" => IsEquipped(equippedItemIds, 140001226) && IsEquipped(equippedItemIds, 2, 140001211, 140001212, 140001213)
+				? 1909
+				: IsEquipped(equippedItemIds, 140001227) && IsEquipped(equippedItemIds, 2, 140001214, 140001215, 140001216)
+					? 1903
+					: 1906,
+			"RIDER" => IsEquipped(equippedItemIds, 140001279) && IsEquipped(equippedItemIds, 2, 140001264, 140001265, 140001269)
+				? 2858
+				: IsEquipped(equippedItemIds, 140001280) && IsEquipped(equippedItemIds, 2, 140001266, 140001267, 140001268)
+					? 2863
+					: 2851,
+			"GUNNER" => IsEquipped(equippedItemIds, 140001262) && IsEquipped(equippedItemIds, 2, 140001247, 140001248, 140001249)
+				? 2370
+				: IsEquipped(equippedItemIds, 140001263) && IsEquipped(equippedItemIds, 2, 140001250, 140001251, 140001252)
+					? 2377
+					: 2382,
+			"BARD" => IsEquipped(equippedItemIds, 140001296) && IsEquipped(equippedItemIds, 2, 140001281, 140001282, 140001284)
+				? 4480
+				: IsEquipped(equippedItemIds, 140001297) && IsEquipped(equippedItemIds, 2, 140001283, 140001285, 140001286)
+					? 4483
+					: 4566,
+			_ => 0,
+		};
+	}
+
+	private static bool IsEquipped(IReadOnlySet<int> equippedItemIds, int itemId)
+	{
+		return equippedItemIds.Contains(itemId);
+	}
+
+	private static bool IsEquipped(IReadOnlySet<int> equippedItemIds, int neededCount, params int[] itemIds)
+	{
+		var equippedCount = itemIds.Count(equippedItemIds.Contains);
+		return equippedCount == neededCount;
+	}
+
 	private static int GetPossibleStigmaCount(Player player, PlayerExperienceTable? experienceTable)
 	{
 		// Java parity: services/StigmaService.getPossibleStigmaCount without membership override until account permission parity exists.
@@ -283,7 +410,7 @@ public static class StigmaService
 		return (itemTemplate.GetClientName() ?? itemTemplate.Name).Replace(" ", string.Empty, StringComparison.Ordinal).ToUpperInvariant();
 	}
 
-	private static InventoryItem CopyInventoryItem(InventoryItem item, long? count = null)
+	private static InventoryItem CopyInventoryItem(InventoryItem item, long? count = null, long? slot = null, bool? isEquipped = null)
 	{
 		var copy = new InventoryItem
 		{
@@ -296,9 +423,9 @@ public static class StigmaService
 			ExpireTime = item.ExpireTime,
 			ActivationCount = item.ActivationCount,
 			OwnerId = item.OwnerId,
-			IsEquipped = item.IsEquipped,
+			IsEquipped = isEquipped ?? item.IsEquipped,
 			IsSoulBound = item.IsSoulBound,
-			Slot = item.Slot,
+			Slot = slot ?? item.Slot,
 			Location = item.Location,
 			Enchant = item.Enchant,
 			EnchantBonus = item.EnchantBonus,

@@ -428,6 +428,38 @@ public sealed class EquipmentServiceTests
 	}
 
 	[Fact]
+	public void ChangeEquipment_EquipsSixthChargeableStigmaAndAddsLinkedSkill()
+	{
+		var player = CreatePlayer(playerClass: "GLADIATOR", exp: 60);
+		player.Quests = [new PlayerQuestState(1929, "COMPLETE", 0, 0, 1)];
+		player.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 77, ItemId = KinahItemId, Count = 50_000, Location = 0 },
+			new InventoryItem { ObjectId = 2001, ItemId = LinkedStigmaItemIds[0], Location = 0, IsEquipped = true, Slot = StigmaSlot1, Enchant = 4 },
+			new InventoryItem { ObjectId = 2002, ItemId = LinkedStigmaItemIds[1], Location = 0, IsEquipped = true, Slot = StigmaSlot2, Enchant = 4 },
+			new InventoryItem { ObjectId = 2003, ItemId = LinkedStigmaItemIds[2], Location = 0, IsEquipped = true, Slot = StigmaSlot3, Enchant = 4 },
+			new InventoryItem { ObjectId = 2004, ItemId = LinkedStigmaItemIds[3], Location = 0, IsEquipped = true, Slot = AdvancedStigmaSlot1, Enchant = 4 },
+			new InventoryItem { ObjectId = 2005, ItemId = LinkedStigmaItemIds[4], Location = 0, IsEquipped = true, Slot = AdvancedStigmaSlot2, Enchant = 4 },
+			new InventoryItem { ObjectId = 1001, ItemId = StigmaId, Location = 0, Slot = 65535, Enchant = 2 },
+		];
+
+		var change = EquipmentService.ChangeEquipment(
+			player,
+			action: 0,
+			slotRead: AdvancedStigmaSlot3,
+			itemObjectId: 1001,
+			CreateItemTemplates(CreateLinkedStigmaTemplates()),
+			CreateStigmaSkillTemplates(),
+			CreateExperienceTable(),
+			skillTree: CreateStigmaSkillTree());
+
+		Assert.True(change.Changed);
+		Assert.Contains(change.SkillListUpdates, skill => skill.SkillId == 500 && skill.SkillLevel == 3 && skill.SkillType == 1);
+		Assert.Contains(change.SkillListUpdates, skill => skill.SkillId == 662 && skill.SkillLevel == 3 && skill.SkillType == 3);
+		Assert.Contains(change.FinalSkills, skill => skill.SkillId == 662 && skill.SkillType == 3);
+	}
+
+	[Fact]
 	public void ChangeEquipment_RejectsStigmaWhenKinahIsMissing()
 	{
 		var player = CreatePlayer(playerClass: "GLADIATOR", exp: 46);
@@ -520,7 +552,7 @@ public sealed class EquipmentServiceTests
 			new(SoulBoundSwordId, "Practice Soulbound Sword", 0, 1 << 7, 1, "SWORD", "NORMAL", "COMMON", "PC_ALL", 1, 0, 3, RequiredLevels: RequiredLevels(1)),
 			new(GreatswordId, "Practice Greatsword", 0, 1, 1, "GREATSWORD", "NORMAL", "COMMON", "PC_ALL", 1, 0, 3, RequiredLevels: RequiredLevels(1)),
 			new(RobeId, "Practice Robe", 0, 1, 1, "CL_TORSO", "NORMAL", "COMMON", "PC_ALL", 1, 0, 8, RequiredLevels: RequiredLevels(1)),
-			new(StigmaId, "Practice Stigma", 0, 1, 20, "STIGMA", "NORMAL", "COMMON", "PC_ALL", 1, 0, StigmaSlot1 | StigmaSlot2 | StigmaSlot3, StigmaInfo: new ItemStigmaInfo(["STIGMA_TEST"], Chargeable: true), RequiredLevels: RequiredLevels(("GLADIATOR", 20))),
+			new(StigmaId, "Practice Stigma", 0, 1, 20, "STIGMA", "NORMAL", "COMMON", "PC_ALL", 1, 0, StigmaSlot1 | StigmaSlot2 | StigmaSlot3 | AdvancedStigmaSlot1 | AdvancedStigmaSlot2 | AdvancedStigmaSlot3, StigmaInfo: new ItemStigmaInfo(["STIGMA_TEST"], Chargeable: true), RequiredLevels: RequiredLevels(("GLADIATOR", 20))),
 		};
 		templates.AddRange(extraTemplates);
 		return new ItemTemplateTable(templates);
@@ -571,6 +603,18 @@ public sealed class EquipmentServiceTests
 				0,
 				0,
 				StigmaType: "NORMAL"),
+			new SkillTemplateSummary(
+				662,
+				"Practice Linked Stigma Skill",
+				201,
+				1,
+				"LINKED_STIGMA_TEST",
+				"LINKED_STIGMA_TEST",
+				"PHYSICAL",
+				"ATTACK",
+				0,
+				0,
+				StigmaType: "LINKED"),
 		]);
 	}
 
@@ -579,7 +623,29 @@ public sealed class EquipmentServiceTests
 		return new SkillTreeTable(
 		[
 			new SkillLearnSummary("GLADIATOR", 500, null, "PC_ALL", 20, AutoLearn: false, Stigma: 1, SkillLevel: 0),
+			new SkillLearnSummary("GLADIATOR", 662, null, "ELYOS", 55, AutoLearn: false, Stigma: 4, SkillLevel: 0),
 		], CreateStigmaSkillTemplates());
+	}
+
+	private static ItemTemplateSummary[] CreateLinkedStigmaTemplates()
+	{
+		return LinkedStigmaItemIds
+			.Select(itemId => new ItemTemplateSummary(
+				itemId,
+				$"Linked Stigma {itemId}",
+				0,
+				1,
+				20,
+				"STIGMA",
+				"NORMAL",
+				"COMMON",
+				"PC_ALL",
+				1,
+				0,
+				StigmaSlot1 | StigmaSlot2 | StigmaSlot3 | AdvancedStigmaSlot1 | AdvancedStigmaSlot2 | AdvancedStigmaSlot3,
+				StigmaInfo: new ItemStigmaInfo(["STIGMA_OTHER"], Chargeable: true),
+				RequiredLevels: RequiredLevels(("GLADIATOR", 20))))
+			.ToArray();
 	}
 
 	private static PlayerExperienceTable CreateExperienceTable()
@@ -597,6 +663,10 @@ public sealed class EquipmentServiceTests
 	private const long StigmaSlot1 = 1L << 30;
 	private const long StigmaSlot2 = 1L << 31;
 	private const long StigmaSlot3 = 1L << 32;
+	private const long AdvancedStigmaSlot1 = 1L << 33;
+	private const long AdvancedStigmaSlot2 = 1L << 34;
+	private const long AdvancedStigmaSlot3 = 1L << 35;
+	private static readonly int[] LinkedStigmaItemIds = [140001010, 140001011, 140001012, 140001013, 140001014];
 	private static readonly string[] PlayerClasses =
 	[
 		"WARRIOR",
