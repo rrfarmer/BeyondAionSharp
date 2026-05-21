@@ -149,6 +149,25 @@ public sealed class PlayerEnterWorldService
 		return await _repository.DeletePlayerMacroAsync(player.ObjectId, macroId, cancellationToken);
 	}
 
+	public async Task<bool> DeleteRecipeAsync(
+		Player player,
+		int recipeId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: model/gameobjects/player/RecipeList.deleteRecipe.
+		if (!player.Recipes.Contains(recipeId))
+			return false;
+
+		if (!await _repository.DeletePlayerRecipeAsync(player.ObjectId, recipeId, cancellationToken))
+			return false;
+
+		player.Recipes = player.Recipes
+			.Where(existing => existing != recipeId)
+			.Order()
+			.ToArray();
+		return true;
+	}
+
 	public async Task LeaveWorldAsync(Player player, CancellationToken cancellationToken = default)
 	{
 		// Java parity: services/player/PlayerLeaveWorldService.leaveWorld baseline persistence.

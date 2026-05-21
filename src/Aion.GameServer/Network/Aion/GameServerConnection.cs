@@ -365,6 +365,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleMotionAsync(_activePlayer, motion);
 				break;
+			case CmRecipeDelete recipeDelete:
+				if (_activePlayer != null)
+					await HandleRecipeDeleteAsync(_activePlayer, recipeDelete);
+				break;
 			case CmHouseSettings houseSettings:
 				if (_activePlayer != null)
 					await HandleHouseSettingsAsync(_activePlayer, houseSettings);
@@ -1022,6 +1026,26 @@ public sealed class GameServerConnection : BaseClientConnection
 				.OrderBy(macro => macro.Id)
 				.ToArray();
 		await SendPacketAsync(SmMacroResult.Deleted);
+	}
+
+	private async Task HandleRecipeDeleteAsync(Player player, CmRecipeDelete packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_RECIPE_DELETE.runImpl -> RecipeList.deleteRecipe.
+		if (!player.Recipes.Contains(packet.RecipeId))
+			return;
+
+		var deleted = _playerEnterWorldService == null
+			? DeleteRecipeInMemory(player, packet.RecipeId)
+			: await _playerEnterWorldService.DeleteRecipeAsync(player, packet.RecipeId);
+		if (deleted)
+			await SendPacketAsync(new SmRecipeDelete(packet.RecipeId));
+	}
+
+	private static bool DeleteRecipeInMemory(Player player, int recipeId)
+	{
+		var beforeCount = player.Recipes.Count;
+		player.Recipes = player.Recipes.Where(existing => existing != recipeId).ToArray();
+		return player.Recipes.Count != beforeCount;
 	}
 
 	private async Task HandleReportPlayerAsync(Player player, CmReportPlayer packet)

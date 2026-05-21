@@ -1025,6 +1025,10 @@ public class GamePacketTests
 		Assert.Equal(0, recipeListReader.Remaining);
 
 		Assert.Equal(
+			Convert.FromHexString("7B000000"),
+			SerializeUnencryptedPayload(new SmRecipeDelete(123)));
+
+		Assert.Equal(
 			Convert.FromHexString("010000000000"),
 			SerializeUnencryptedPayload(new SmAfterTimeCheck475()));
 
@@ -2369,6 +2373,16 @@ public class GamePacketTests
 		Assert.Equal(11, motion.MotionId);
 		Assert.Equal(1, motion.MotionType);
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(71, _ => { }), GameConnectionState.Authed));
+	}
+
+	[Fact]
+	public void ClientPacketFactory_ParsesRecipeDeletePacket()
+	{
+		var recipeDelete = Assert.IsType<CmRecipeDelete>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(89, b => b.WriteD(155000001)), GameConnectionState.InGame));
+
+		Assert.Equal(155000001, recipeDelete.RecipeId);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(89, b => b.WriteD(155000001)), GameConnectionState.Authed));
 	}
 
 	[Fact]

@@ -207,6 +207,24 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.Equal(1, repository.DeletedMacroId);
 	}
 
+	[Fact]
+	public async Task DeleteRecipe_RemovesLoadedRecipeAndRepositoryRow()
+	{
+		var player = CreatePlayer();
+		player.Recipes = [155000001, 155000002];
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var service = CreateService(repository, CreateWorld());
+
+		var deleted = await service.DeleteRecipeAsync(player, 155000001);
+		var missing = await service.DeleteRecipeAsync(player, 155000003);
+
+		Assert.True(deleted);
+		Assert.False(missing);
+		Assert.Equal([155000002], player.Recipes);
+		Assert.Equal(1, repository.DeleteRecipeCalls);
+		Assert.Equal(155000001, repository.DeletedRecipeId);
+	}
+
 	private static PlayerEnterWorldService CreateService(CapturingEnterWorldRepository repository, GameWorld world)
 	{
 		return new PlayerEnterWorldService(
@@ -357,6 +375,10 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public int DeletedMacroId { get; private set; }
 
+		public int DeleteRecipeCalls { get; private set; }
+
+		public int DeletedRecipeId { get; private set; }
+
 		public Task<Player?> LoadPlayerAsync(int accountId, int playerObjectId, CancellationToken cancellationToken = default)
 		{
 			return Task.FromResult(Player);
@@ -426,6 +448,13 @@ public sealed class PlayerEnterWorldServiceTests
 		{
 			LoadRecipesCalls++;
 			return Task.FromResult(Recipes);
+		}
+
+		public Task<bool> DeletePlayerRecipeAsync(int playerObjectId, int recipeId, CancellationToken cancellationToken = default)
+		{
+			DeleteRecipeCalls++;
+			DeletedRecipeId = recipeId;
+			return Task.FromResult(true);
 		}
 
 		public Task<IReadOnlyList<PlayerMacro>> LoadPlayerMacrosAsync(int playerObjectId, CancellationToken cancellationToken = default)

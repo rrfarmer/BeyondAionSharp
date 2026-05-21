@@ -36,6 +36,8 @@ public interface IPlayerEnterWorldRepository
 
 	Task<IReadOnlyList<int>> LoadPlayerRecipesAsync(int playerObjectId, CancellationToken cancellationToken = default);
 
+	Task<bool> DeletePlayerRecipeAsync(int playerObjectId, int recipeId, CancellationToken cancellationToken = default);
+
 	Task<IReadOnlyList<PlayerMacro>> LoadPlayerMacrosAsync(int playerObjectId, CancellationToken cancellationToken = default);
 
 	Task<bool> SavePlayerMacroAsync(int playerObjectId, PlayerMacro macro, CancellationToken cancellationToken = default);
@@ -129,6 +131,11 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	public Task<IReadOnlyList<int>> LoadPlayerRecipesAsync(int playerObjectId, CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult<IReadOnlyList<int>>(Array.Empty<int>());
+	}
+
+	public Task<bool> DeletePlayerRecipeAsync(int playerObjectId, int recipeId, CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
 	}
 
 	public Task<IReadOnlyList<PlayerMacro>> LoadPlayerMacrosAsync(int playerObjectId, CancellationToken cancellationToken = default)
@@ -925,6 +932,30 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		{
 			_logger.LogError(ex, "Could not load recipes for player {PlayerObjectId}", playerObjectId);
 			return Array.Empty<int>();
+		}
+	}
+
+	public async Task<bool> DeletePlayerRecipeAsync(int playerObjectId, int recipeId, CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/PlayerRecipesDAO.delRecipe.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = "DELETE FROM player_recipes WHERE player_id = ? AND recipe_id = ?";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = playerObjectId },
+					new MySqlParameter { Value = recipeId },
+				});
+			return await command.ExecuteNonQueryAsync(cancellationToken) >= 0;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not delete recipe {RecipeId} for player {PlayerObjectId}", recipeId, playerObjectId);
+			return false;
 		}
 	}
 
