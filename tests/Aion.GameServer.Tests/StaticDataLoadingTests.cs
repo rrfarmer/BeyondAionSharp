@@ -144,6 +144,8 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(9, staticData.HousingTemplates.BuildingCount);
 		Assert.Equal(326001, staticData.HousingTemplates.GetAddress(6001)?.LandId);
 		Assert.Equal(810018, staticData.HousingTemplates.GetAddress(6001)?.ManagerNpcId);
+		Assert.Equal(0, staticData.HousingTemplates.GetAddress(6001)?.TownId);
+		Assert.Equal(1001, staticData.HousingTemplates.GetAddress(10001)?.TownId);
 		Assert.Equal(40, staticData.HousingTemplates.GetAddress(6001)?.MinLevel);
 		Assert.Equal(4_000_000, staticData.HousingTemplates.GetAddress(6001)?.MaintenanceFee);
 		Assert.Equal(4, staticData.HousingTemplates.GetHouseTypeId(350000));

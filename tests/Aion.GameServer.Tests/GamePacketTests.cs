@@ -1152,6 +1152,38 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmHouseOwnerInfo_WritesActiveHouseTownLevel()
+	{
+		var payload = SerializeUnencryptedPayload(
+			new SmHouseOwnerInfo(
+				new Player
+				{
+					Houses =
+					[
+						new PlayerHouse(
+							50,
+							700100,
+							900100,
+							new DateTime(2026, 1, 1, 10, 0, 0, DateTimeKind.Local),
+							null,
+							IsInactive: false,
+							TownLevel: 4),
+					],
+				}));
+		using var reader = new PacketBuffer(payload);
+
+		Assert.Equal(700100, reader.ReadD());
+		Assert.Equal(900100, reader.ReadD());
+		Assert.Equal(5, (int)reader.ReadC());
+		Assert.Equal(4, (int)reader.ReadC());
+		Assert.Equal(1, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
 	public void SmInventoryInfo_WritesItemStoneAndIdianDetailsInItemBlobs()
 	{
 		var inventoryPackets = SmInventoryInfo.CreateLoginPackets(

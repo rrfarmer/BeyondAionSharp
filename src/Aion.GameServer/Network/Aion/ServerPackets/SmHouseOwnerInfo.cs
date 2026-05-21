@@ -29,7 +29,8 @@ public sealed class SmHouseOwnerInfo : GameServerPacket
 		_ownerState = _activeHouse == null
 			? SingleHouse | (CanBidForHouse(player) ? BiddingAllowed : 0)
 			: HasOwner | BiddingAllowed;
-		_townLevel = 0;
+		// Java parity: model/house/House.getTownLevel written by SM_HOUSE_OWNER_INFO.writeImpl.
+		_townLevel = _activeHouse?.TownLevel ?? 0;
 	}
 
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)

@@ -195,12 +195,13 @@ public sealed class StaticData
 
 			if (reader.Depth == 4 && reader.LocalName == "address" && currentHousingLandId != 0)
 			{
-				// Java parity: model/templates/housing/HouseAddress links an address back to its HousingLand.
+				// Java parity: model/templates/housing/HouseAddress links an address back to its HousingLand and town id.
 				housingAddresses.Add(
 					new HousingAddressSummary(
 						ReadRequiredIntAttribute(reader, "id"),
 						currentHousingLandId,
-						currentHousingManagerNpcId));
+						currentHousingManagerNpcId,
+						ReadIntAttribute(reader, "town")));
 				continue;
 			}
 

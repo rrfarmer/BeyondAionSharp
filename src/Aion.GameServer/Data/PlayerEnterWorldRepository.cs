@@ -1,6 +1,7 @@
 using Aion.Commons.Database;
 using Aion.GameServer.Model.Account;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Services;
 using Aion.GameServer.World;
 using Microsoft.Extensions.Logging;
 using MySqlConnector;
@@ -197,10 +198,14 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepository
 {
+	private readonly GameServerRuntimeContext _runtimeContext;
 	private readonly ILogger<MySqlPlayerEnterWorldRepository> _logger;
 
-	public MySqlPlayerEnterWorldRepository(ILogger<MySqlPlayerEnterWorldRepository> logger)
+	public MySqlPlayerEnterWorldRepository(
+		GameServerRuntimeContext runtimeContext,
+		ILogger<MySqlPlayerEnterWorldRepository> logger)
 	{
+		_runtimeContext = runtimeContext;
 		_logger = logger;
 	}
 
@@ -1001,21 +1006,24 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			command.Parameters.Add(new MySqlParameter { Value = playerObjectId });
 
 			var houses = new List<PlayerHouse>();
-			await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-			while (await reader.ReadAsync(cancellationToken))
+			await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
 			{
-				houses.Add(
-					new PlayerHouse(
-						ReadInt(reader, "id"),
-						ReadInt(reader, "address"),
-						ReadInt(reader, "building_id"),
-						ReadDateTime(reader, "acquire_time"),
-						ReadDateTime(reader, "next_pay"),
-						IsInactive: false,
-						PlayerHouse.GetDoorStateFromSettings(ReadInt(reader, "settings")),
-						PlayerHouse.GetShowOwnerNameFromSettings(ReadInt(reader, "settings")),
-						ReadString(reader, "sign_notice")));
+				while (await reader.ReadAsync(cancellationToken))
+				{
+					houses.Add(
+						new PlayerHouse(
+							ReadInt(reader, "id"),
+							ReadInt(reader, "address"),
+							ReadInt(reader, "building_id"),
+							ReadDateTime(reader, "acquire_time"),
+							ReadDateTime(reader, "next_pay"),
+							IsInactive: false,
+							PlayerHouse.GetDoorStateFromSettings(ReadInt(reader, "settings")),
+							PlayerHouse.GetShowOwnerNameFromSettings(ReadInt(reader, "settings")),
+							ReadString(reader, "sign_notice")));
+				}
 			}
+			houses = await AttachTownLevelsAsync(connection, houses, cancellationToken);
 
 			var studio = houses.FirstOrDefault(IsStudioAddress);
 			if (studio != null)
@@ -1033,6 +1041,74 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		{
 			_logger.LogError(ex, "Could not load houses for player {PlayerObjectId}", playerObjectId);
 			return Array.Empty<PlayerHouse>();
+		}
+	}
+
+	private async Task<List<PlayerHouse>> AttachTownLevelsAsync(
+		MySqlConnection connection,
+		List<PlayerHouse> houses,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: model/house/House.getTownLevel -> TownService.getTownById(address.townId).getLevel().
+		var housingTemplates = _runtimeContext.DataManager?.StaticData.HousingTemplates;
+		if (housingTemplates == null || houses.Count == 0)
+			return houses;
+
+		var townIds = houses
+			.Select(house => housingTemplates.GetAddress(house.AddressId)?.TownId ?? 0)
+			.Where(townId => townId > 0)
+			.Distinct()
+			.ToArray();
+		if (townIds.Length == 0)
+			return houses;
+
+		var townLevels = await LoadTownLevelsAsync(connection, townIds, cancellationToken);
+		return houses
+			.Select(
+				house =>
+				{
+					var townId = housingTemplates.GetAddress(house.AddressId)?.TownId ?? 0;
+					if (townId == 0)
+						return house with { TownLevel = 0 };
+
+					// Java parity: TownService seeds known towns at level 1 when the towns table starts empty.
+					return house with { TownLevel = townLevels.GetValueOrDefault(townId, 1) };
+				})
+			.ToList();
+	}
+
+	private async Task<IReadOnlyDictionary<int, int>> LoadTownLevelsAsync(
+		MySqlConnection connection,
+		IReadOnlyList<int> townIds,
+		CancellationToken cancellationToken)
+	{
+		try
+		{
+			await using var command = connection.CreateCommand();
+			var placeholders = new string[townIds.Count];
+			for (var i = 0; i < townIds.Count; i++)
+			{
+				var parameterName = $"@town{i}";
+				placeholders[i] = parameterName;
+				command.Parameters.Add(new MySqlParameter(parameterName, townIds[i]));
+			}
+
+			command.CommandText = $"""
+				SELECT id, level
+				FROM towns
+				WHERE id IN ({string.Join(", ", placeholders)})
+				""";
+
+			var townLevels = new Dictionary<int, int>();
+			await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+			while (await reader.ReadAsync(cancellationToken))
+				townLevels[ReadInt(reader, "id")] = ReadInt(reader, "level");
+			return townLevels;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogWarning(ex, "Could not load housing town levels");
+			return new Dictionary<int, int>();
 		}
 	}
 
