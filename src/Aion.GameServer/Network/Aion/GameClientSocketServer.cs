@@ -8,6 +8,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils.IdFactory;
+using Aion.GameServer.World;
 using Microsoft.Extensions.Logging;
 using GameLoginServer = Aion.GameServer.Network.LoginServer.LoginServer;
 using GameWorld = Aion.GameServer.World.World;
@@ -129,6 +130,27 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 			_playerConnections.TryRemove(playerObjectId, out _);
 	}
 
+	public async Task<int> BroadcastToVisiblePlayersAsync(WorldPosition sourcePosition, int sourceObjectId, GameServerPacket packet, bool includeSourcePlayer = false)
+	{
+		// Java parity: utils/PacketSendUtility.broadcastToSightedPlayers using KnownList.sees(object).
+		var sent = 0;
+		foreach (var connection in _playerConnections.Values)
+		{
+			var player = connection.ActivePlayer;
+			if (player == null)
+				continue;
+			if (!includeSourcePlayer && player.ObjectId == sourceObjectId)
+				continue;
+			if (!WorldVisibility.IsVisibleTo(player, sourcePosition))
+				continue;
+
+			await connection.SendPacketAsync(packet);
+			sent++;
+		}
+
+		return sent;
+	}
+
 	public async Task<bool> NotifyMailReceivedAsync(int recipientObjectId, PlayerMail mail)
 	{
 		// Java parity: services/mail/SystemMailService.updateRecipientMailbox online recipient branch.
@@ -161,4 +183,5 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		await connection.SendPacketAsync(new SmBrokerService(settledKinah));
 		return true;
 	}
+
 }

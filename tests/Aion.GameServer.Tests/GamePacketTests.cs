@@ -1599,6 +1599,20 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void WorldVisibility_MatchesKnownListDefaultRange()
+	{
+		var player = new Player
+		{
+			Position = new WorldPosition(210010000, 0, 0, 0, 0),
+		};
+
+		Assert.True(WorldVisibility.IsVisibleTo(player, new WorldPosition(210010000, 95, 0, 0, 0)));
+		Assert.True(WorldVisibility.IsVisibleTo(player, new WorldPosition(210010000, 30, 40, 80, 0)));
+		Assert.False(WorldVisibility.IsVisibleTo(player, new WorldPosition(210010000, 96, 0, 0, 0)));
+		Assert.False(WorldVisibility.IsVisibleTo(player, new WorldPosition(220010000, 0, 0, 0, 0)));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesMailPackets()
 	{
 		var sendMail = Assert.IsType<CmSendMail>(

@@ -247,7 +247,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				break;
 			case CmMove move:
 				if (_activePlayer != null)
-					HandleMove(_activePlayer, move);
+					await HandleMoveAsync(_activePlayer, move);
 				break;
 			case CmMoveInAir moveInAir:
 				if (_activePlayer != null)
@@ -540,7 +540,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 	}
 
-	private static void HandleMove(Player player, CmMove packet)
+	private async Task HandleMoveAsync(Player player, CmMove packet)
 	{
 		// Java parity: network/aion/clientpackets/CM_MOVE.runImpl movement-state updates before World.updatePosition.
 		var movement = player.Movement;
@@ -605,6 +605,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			Z = packet.Z,
 			Heading = packet.Heading,
 		};
+
+		if (_connectionRegistry != null && (MovementMask.HasManualPosition(packet.Type) || packet.Type == MovementMask.Immediate))
+			await _connectionRegistry.BroadcastToVisiblePlayersAsync(player.Position, player.ObjectId, new SmMove(player));
 	}
 
 	private static void HandleMoveInAir(Player player, CmMoveInAir packet)
@@ -673,7 +676,11 @@ public sealed class GameServerConnection : BaseClientConnection
 		player.Postman = postman;
 		player.HasSummonedPostman = true;
 		_world?.TryAddObject(postman.ObjectId, postman);
-		await SendPacketAsync(new SmNpcInfo(postman));
+		var postmanPacket = new SmNpcInfo(postman);
+		if (_connectionRegistry != null)
+			await _connectionRegistry.BroadcastToVisiblePlayersAsync(postman.Position, postman.ObjectId, postmanPacket, includeSourcePlayer: true);
+		else
+			await SendPacketAsync(postmanPacket);
 	}
 
 	private async Task DismissPostmanAsync(Player player, bool notifyClient = true)
@@ -685,11 +692,18 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (postman == null)
 			return;
 
+		if (notifyClient)
+		{
+			var deletePacket = new SmDelete(postman.ObjectId);
+			if (_connectionRegistry != null)
+				await _connectionRegistry.BroadcastToVisiblePlayersAsync(postman.Position, postman.ObjectId, deletePacket, includeSourcePlayer: true);
+			else
+				await SendPacketAsync(deletePacket);
+		}
+
 		_world?.TryRemoveObject(postman.ObjectId, out _);
 		if (_idFactory != null)
 			_idFactory.ReleaseId(postman.ObjectId);
-		if (notifyClient)
-			await SendPacketAsync(new SmDelete(postman.ObjectId));
 	}
 
 	private async Task<PlayerBrokerItemPage> LoadBrokerMaskPageAsync(Player player, byte sortType, int pageIndex, int brokerMask)
