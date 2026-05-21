@@ -540,6 +540,7 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.EnchantItemCanceled("item"), 1300457, "item");
 		AssertSystemMessage(SmSystemMessage.GiveItemOptionCanceled("item"), 1300464, "item");
 		AssertSystemMessage(SmSystemMessage.GiveItemProcCancel("item"), 1402238, "item");
+		AssertSystemMessage(SmSystemMessage.ItemCanceled(), 1300427);
 		AssertSystemMessage(SmSystemMessage.SoulBoundItemSucceed("item"), 1300485, "item");
 		AssertSystemMessage(SmSystemMessage.SoulBoundItemCanceled("item"), 1300487, "item");
 		AssertSystemMessage(SmSystemMessage.SoulBoundCloseOtherMsgBoxAndRetry(), 1300488);

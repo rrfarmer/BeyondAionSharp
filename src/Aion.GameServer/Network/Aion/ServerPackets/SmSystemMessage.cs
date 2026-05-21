@@ -157,6 +157,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1400961);
 	}
 
+	public static SmSystemMessage ItemCanceled()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_ITEM_CANCELED.
+		return new SmSystemMessage(1300427);
+	}
+
 	public static SmSystemMessage PolishWrongLevel()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_POLISH_WRONG_LEVEL.

@@ -1387,13 +1387,52 @@ public sealed class GameServerConnection : BaseClientConnection
 				1,
 				0));
 
+		await SchedulePendingItemUseAsync(
+			player,
+			itemObjectId: sourceItem.ObjectId,
+			itemTemplateId: targetItem.ItemId,
+			targetItemName: plan.ItemName,
+			cancelMessage: PendingItemUseCancelMessage.Item,
+			delay: TimeSpan.FromMilliseconds(5000),
+			completeAsync: async cancellationToken =>
+			{
+				if (cancellationToken.IsCancellationRequested)
+					return;
+
+				await CompleteStigmaChargeAsync(
+					player,
+					plan,
+					sourceTemplate,
+					targetTemplate,
+					targetItem.ObjectId,
+					targetItem.ItemId,
+					targetItem.IsEquipped,
+					staticData,
+					cancellationToken);
+			},
+			cancelTargetObjectId: targetItem.ObjectId,
+			cancelEndState: 2);
+	}
+
+	private async Task CompleteStigmaChargeAsync(
+		Player player,
+		StigmaChargePlan plan,
+		ItemTemplateSummary sourceTemplate,
+		ItemTemplateSummary targetTemplate,
+		int targetObjectId,
+		int targetItemId,
+		bool targetWasEquipped,
+		StaticData staticData,
+		CancellationToken cancellationToken)
+	{
 		var saved = _playerEnterWorldService == null
 			|| await _playerEnterWorldService.SaveStigmaChargeMutationAsync(
 				player,
 				plan.TargetItemUpdate,
 				plan.DeletedTargetItemObjectId,
 				plan.SourceItemUpdate,
-				plan.DeletedSourceItemObjectId);
+				plan.DeletedSourceItemObjectId,
+				cancellationToken);
 		if (!saved)
 			return;
 
@@ -1405,8 +1444,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			player,
 			new SmItemUsageAnimation(
 				player.ObjectId,
-				targetItem.ObjectId,
-				targetItem.ItemId,
+				targetObjectId,
+				targetItemId,
 				0,
 				plan.EnchantSucceeded ? 1 : 2,
 				1));
@@ -1441,7 +1480,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			await SendPacketAsync(SmSystemMessage.StigmaEnchantFail(plan.ItemName));
 		}
 
-		if (targetItem.IsEquipped)
+		if (targetWasEquipped)
 			await SendPacketAsync(CreateStatsInfoPacket(player, staticData));
 	}
 
@@ -1625,7 +1664,10 @@ public sealed class GameServerConnection : BaseClientConnection
 		string targetItemName,
 		PendingItemUseCancelMessage cancelMessage,
 		TimeSpan delay,
-		Func<CancellationToken, Task> completeAsync)
+		Func<CancellationToken, Task> completeAsync,
+		int? cancelTargetObjectId = null,
+		int cancelEndState = 3,
+		int cancelUnknown3 = 0)
 	{
 		// Java parity: controllers/CreatureController.addTask(TaskId.ITEM_USE) + ThreadPoolManager.schedule.
 		if (_threadPoolManager == null || delay <= TimeSpan.Zero)
@@ -1658,7 +1700,10 @@ public sealed class GameServerConnection : BaseClientConnection
 			itemObjectId,
 			itemTemplateId,
 			targetItemName,
-			cancelMessage);
+			cancelMessage,
+			cancelTargetObjectId,
+			cancelEndState,
+			cancelUnknown3);
 	}
 
 	private async Task CancelPendingItemUseOnMoveAsync(Player player)
@@ -1669,21 +1714,40 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		_pendingItemUse = null;
-		await BroadcastItemUsageAnimationAsync(
-			player,
-			new SmItemUsageAnimation(
-				player.ObjectId,
-				pendingItemUse.ItemObjectId,
-				pendingItemUse.ItemTemplateId,
-				0,
-				3,
-				0));
+		await BroadcastItemUsageAnimationAsync(player, CreateCancelItemUsageAnimation(player, pendingItemUse));
 		await SendPacketAsync(pendingItemUse.CancelMessage switch
 		{
 			PendingItemUseCancelMessage.EnchantItem => SmSystemMessage.EnchantItemCanceled(pendingItemUse.TargetItemName),
+			PendingItemUseCancelMessage.Item => SmSystemMessage.ItemCanceled(),
 			PendingItemUseCancelMessage.GodstoneSocket => SmSystemMessage.GiveItemProcCancel(pendingItemUse.TargetItemName),
 			_ => SmSystemMessage.GiveItemOptionCanceled(pendingItemUse.TargetItemName),
 		});
+	}
+
+	private static SmItemUsageAnimation CreateCancelItemUsageAnimation(Player player, PendingItemUse pendingItemUse)
+	{
+		if (pendingItemUse.CancelTargetObjectId.HasValue)
+		{
+			return new SmItemUsageAnimation(
+				player.ObjectId,
+				pendingItemUse.CancelTargetObjectId.Value,
+				pendingItemUse.ItemObjectId,
+				pendingItemUse.ItemTemplateId,
+				0,
+				pendingItemUse.CancelEndState,
+				0,
+				0,
+				1,
+				pendingItemUse.CancelUnknown3);
+		}
+
+		return new SmItemUsageAnimation(
+			player.ObjectId,
+			pendingItemUse.ItemObjectId,
+			pendingItemUse.ItemTemplateId,
+			0,
+			pendingItemUse.CancelEndState,
+			pendingItemUse.CancelUnknown3);
 	}
 
 	private async Task SendEnchantFailureMessageAsync(EnchantItemPlan plan)
@@ -4812,10 +4876,14 @@ public sealed class GameServerConnection : BaseClientConnection
 		int ItemObjectId,
 		int ItemTemplateId,
 		string TargetItemName,
-		PendingItemUseCancelMessage CancelMessage);
+		PendingItemUseCancelMessage CancelMessage,
+		int? CancelTargetObjectId,
+		int CancelEndState,
+		int CancelUnknown3);
 
 	private enum PendingItemUseCancelMessage
 	{
+		Item,
 		EnchantItem,
 		ManastoneSocket,
 		GodstoneSocket,
