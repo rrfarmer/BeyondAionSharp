@@ -41,6 +41,9 @@ public static class GameClientPacketFactory
 		Register(186, states => new CmMayLoginIntoGame(186, states), GameConnectionState.Authed);
 		Register(189, states => new CmMacAddress(189, states), GameConnectionState.Connected);
 		Register(210, states => new CmCharacterPasskey(210, states), GameConnectionState.Authed);
+		Register(218, states => new CmGetHouseBids(218, states), GameConnectionState.InGame);
+		Register(219, states => new CmRegisterHouse(219, states), GameConnectionState.InGame);
+		Register(221, states => new CmPlaceBid(221, states), GameConnectionState.InGame);
 	}
 
 	public static GameClientPacket? TryCreatePacket(ReadOnlySpan<byte> decryptedPayload, GameConnectionState state)

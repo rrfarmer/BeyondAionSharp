@@ -601,6 +601,16 @@ public class GamePacketTests
 		Assert.Equal(
 			Convert.FromHexString("00000000"),
 			SerializeUnencryptedPayload(new SmReceiveBids(0)));
+		var emptyHouseBidsPayload = SerializeUnencryptedPayload(SmHouseBids.CreateEmpty());
+		using var emptyHouseBidsReader = new PacketBuffer(emptyHouseBidsPayload);
+		Assert.Equal(1, (int)emptyHouseBidsReader.ReadC());
+		Assert.Equal(1, (int)emptyHouseBidsReader.ReadC());
+		Assert.Equal(0, emptyHouseBidsReader.ReadD());
+		Assert.Equal(0, emptyHouseBidsReader.ReadQ());
+		Assert.Equal(0, emptyHouseBidsReader.ReadD());
+		Assert.Equal(0, emptyHouseBidsReader.ReadQ());
+		Assert.Equal(0, emptyHouseBidsReader.ReadH());
+		Assert.Equal(0, emptyHouseBidsReader.Remaining);
 
 		var houseBidRefresh = SmReceiveBids.CreateLoginPacket(
 			new Player
@@ -1558,6 +1568,31 @@ public class GamePacketTests
 	public void ClientPacketFactory_ParsesMayQuitInGame()
 	{
 		Assert.IsType<CmMayQuit>(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(4, _ => { }), GameConnectionState.InGame));
+	}
+
+	[Fact]
+	public void ClientPacketFactory_ParsesHousingAuctionPackets()
+	{
+		Assert.IsType<CmGetHouseBids>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(218, _ => { }), GameConnectionState.InGame));
+		var registerHouse = Assert.IsType<CmRegisterHouse>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(219, b =>
+			{
+				b.WriteQ(500000);
+				b.WriteQ(100000);
+			}), GameConnectionState.InGame));
+		var placeBid = Assert.IsType<CmPlaceBid>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(221, b =>
+			{
+				b.WriteD(12);
+				b.WriteQ(750000);
+			}), GameConnectionState.InGame));
+
+		Assert.Equal(500000, registerHouse.BidKinah);
+		Assert.Equal(100000, registerHouse.ClientFixedValue);
+		Assert.Equal(12, placeBid.ListIndex);
+		Assert.Equal(750000, placeBid.BidOffer);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(218, _ => { }), GameConnectionState.Authed));
 	}
 
 	[Fact]

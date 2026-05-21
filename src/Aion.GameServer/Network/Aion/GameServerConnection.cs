@@ -450,6 +450,21 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleReadExpressMailAsync(_activePlayer, readExpressMail);
 				break;
+			case CmGetHouseBids:
+				if (_activePlayer != null)
+				{
+					// Java parity: network/aion/clientpackets/CM_GET_HOUSE_BIDS.runImpl -> SM_HOUSE_BIDS split list.
+					await SendPacketAsync(SmHouseBids.CreateEmpty());
+				}
+				break;
+			case CmRegisterHouse registerHouse:
+				if (_activePlayer != null)
+					_logger.LogDebug("Player {PlayerObjectId} requested unported house auction registration for {BidKinah} Kinah", _activePlayer.ObjectId, registerHouse.BidKinah);
+				break;
+			case CmPlaceBid placeBid:
+				if (_activePlayer != null)
+					_logger.LogDebug("Player {PlayerObjectId} requested unported house bid {BidKinah} Kinah for list index {ListIndex}", _activePlayer.ObjectId, placeBid.BidOffer, placeBid.ListIndex);
+				break;
 			case CmEnterWorld enterWorld:
 				var enterWorldResult = _playerEnterWorldService == null
 					? new PlayerEnterWorldResult(EnterWorldCheckMessage.ConnectionError)
