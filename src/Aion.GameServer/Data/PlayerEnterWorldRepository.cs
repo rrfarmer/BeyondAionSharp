@@ -309,6 +309,9 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		{
 			await using var connection = DatabaseFactory.GetConnection();
 			await connection.OpenAsync(cancellationToken);
+			if (player.LifeStats != null)
+				await SavePlayerLifeStatsAsync(connection, player.ObjectId, player.LifeStats, cancellationToken);
+
 			await using var command = connection.CreateCommand();
 			command.CommandText = """
 				UPDATE players
@@ -350,6 +353,35 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			_logger.LogError(ex, "Could not save logout state for player {PlayerObjectId}", player.ObjectId);
 			return false;
 		}
+	}
+
+	private static async Task SavePlayerLifeStatsAsync(MySqlConnection connection, int playerObjectId, PlayerLifeStats lifeStats, CancellationToken cancellationToken)
+	{
+		// Java parity: dao/PlayerLifeStatsDAO.updatePlayerLifeStat, with insert fallback matching loadPlayerLifeStat.
+		await using var updateCommand = connection.CreateCommand();
+		updateCommand.CommandText = "UPDATE player_life_stats SET hp = ?, mp = ?, fp = ? WHERE player_id = ?";
+		updateCommand.Parameters.AddRange(
+			new[]
+			{
+				new MySqlParameter { Value = lifeStats.CurrentHp },
+				new MySqlParameter { Value = lifeStats.CurrentMp },
+				new MySqlParameter { Value = lifeStats.CurrentFp },
+				new MySqlParameter { Value = playerObjectId },
+			});
+		if (await updateCommand.ExecuteNonQueryAsync(cancellationToken) > 0)
+			return;
+
+		await using var insertCommand = connection.CreateCommand();
+		insertCommand.CommandText = "INSERT INTO player_life_stats (player_id, hp, mp, fp) VALUES (?, ?, ?, ?)";
+		insertCommand.Parameters.AddRange(
+			new[]
+			{
+				new MySqlParameter { Value = playerObjectId },
+				new MySqlParameter { Value = lifeStats.CurrentHp },
+				new MySqlParameter { Value = lifeStats.CurrentMp },
+				new MySqlParameter { Value = lifeStats.CurrentFp },
+			});
+		await insertCommand.ExecuteNonQueryAsync(cancellationToken);
 	}
 
 	public async Task<IReadOnlyList<InventoryItem>> LoadPlayerItemsAsync(int playerObjectId, CancellationToken cancellationToken = default)

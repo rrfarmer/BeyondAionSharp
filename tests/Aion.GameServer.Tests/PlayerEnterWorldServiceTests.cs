@@ -160,6 +160,7 @@ public sealed class PlayerEnterWorldServiceTests
 		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
 		player.IsOnline = true;
 		player.Position = new WorldPosition(210010000, 11, 22, 33, 44);
+		player.LifeStats = new PlayerLifeStats(333, 444, 55);
 		player.Mailbox =
 		[
 			new PlayerMail(1, player.ObjectId, "Sender", "Title", "Message", true, 0, 0, 0, 0, DateTime.Now),
@@ -177,6 +178,8 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.False(world.TryGetObject(player.ObjectId, out _));
 		Assert.Equal(1, repository.SaveLogoutCalls);
 		Assert.Same(player, repository.SavedLogoutPlayer);
+		Assert.NotNull(repository.SavedLogoutPlayer);
+		Assert.Equal(new PlayerLifeStats(333, 444, 55), repository.SavedLogoutPlayer!.LifeStats);
 		Assert.Equal(player.LastOnline, repository.LogoutLastOnline);
 	}
 
