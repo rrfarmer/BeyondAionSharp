@@ -60,6 +60,9 @@ public sealed class Player
 	// Java parity: model/gameobjects/VisibleObject target set by network/aion/clientpackets/CM_TARGET_SELECT.
 	public int TargetObjectId { get; set; }
 
+	// Java parity: model/gameobjects/player/Player.isTrading guard used by mail and broker packets.
+	public bool IsTrading { get; set; }
+
 	public IReadOnlyList<InventoryItem> InventoryItems { get; set; } = Array.Empty<InventoryItem>();
 
 	public IReadOnlyList<InventoryItem> WarehouseItems { get; set; } = Array.Empty<InventoryItem>();

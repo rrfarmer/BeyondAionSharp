@@ -302,6 +302,8 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 				{
 					// Java parity: network/aion/clientpackets/CM_BROKER_SELL_WINDOW.runImpl -> BrokerService.showSellWindow.
+					if (_activePlayer.IsTrading)
+						break;
 					var item = _activePlayer.InventoryItems.FirstOrDefault(item => item.ObjectId == brokerSellWindow.ItemObjectId);
 					if (item != null)
 					{
@@ -375,11 +377,16 @@ public sealed class GameServerConnection : BaseClientConnection
 					await HandleBrokerSettleAccountAsync(_activePlayer);
 				break;
 			case CmRegisterBrokerItem registerBrokerItem:
-				if (_activePlayer != null && IsTargetingBroker(_activePlayer, registerBrokerItem.BrokerObjectId, "register broker item"))
+				if (_activePlayer != null
+					&& !_activePlayer.IsTrading
+					&& registerBrokerItem.ItemCount > 0
+					&& IsTargetingBroker(_activePlayer, registerBrokerItem.BrokerObjectId, "register broker item"))
 					await HandleBrokerRegisterItemAsync(_activePlayer, registerBrokerItem);
 				break;
 			case CmBuyBrokerItem buyBrokerItem:
-				if (_activePlayer != null && IsTargetingBroker(_activePlayer, buyBrokerItem.BrokerObjectId, "buy broker item"))
+				if (_activePlayer != null
+					&& buyBrokerItem.ItemCount >= 1
+					&& IsTargetingBroker(_activePlayer, buyBrokerItem.BrokerObjectId, "buy broker item"))
 					await HandleBuyBrokerItemAsync(_activePlayer, buyBrokerItem);
 				break;
 			case CmSendMail sendMail:
@@ -822,6 +829,14 @@ public sealed class GameServerConnection : BaseClientConnection
 		return false;
 	}
 
+	private static bool CanTrade(Player player)
+	{
+		// Java parity: restrictions/PlayerRestrictions.canTrade baseline.
+		return player.IsOnline
+			&& !player.IsTrading
+			&& (player.LifeStats == null || player.LifeStats.CurrentHp > 0);
+	}
+
 	private async Task<PlayerBrokerItemPage> LoadBrokerMaskPageAsync(Player player, byte sortType, int pageIndex, int brokerMask)
 	{
 		// Java parity: services/BrokerService.showRequestedItems direct BrokerItemMask filtering path.
@@ -868,6 +883,8 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		// Java parity: network/aion/clientpackets/CM_BROKER_CANCEL_REGISTERED.runImpl -> BrokerService.cancelRegisteredItem.
 		if (_brokerRepository == null)
+			return;
+		if (!CanTrade(player))
 			return;
 
 		var brokerItem = await _brokerRepository.LoadRegisteredItemAsync(player.ObjectId, player.Race, packet.BrokerItemObjectId);
@@ -990,6 +1007,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		// Java parity: network/aion/clientpackets/CM_REGISTER_BROKER_ITEM.runImpl -> BrokerService.registerItem.
 		if (_brokerRepository == null || packet.ItemCount <= 0 || packet.Price <= 0)
 			return;
+		if (!CanTrade(player))
+			return;
 
 		var itemTemplates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
 		var sourceItem = player.InventoryItems.FirstOrDefault(item => item.ObjectId == packet.ItemObjectId && item.Location == CubeStorageId);
@@ -1096,6 +1115,8 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		// Java parity: network/aion/clientpackets/CM_BUY_BROKER_ITEM.runImpl -> BrokerService.buyBrokerItem.
 		if (_brokerRepository == null || packet.ItemCount < 1)
+			return;
+		if (!CanTrade(player))
 			return;
 
 		var brokerItem = await _brokerRepository.LoadActiveItemAsync(player.Race, packet.BrokerItemObjectId);
@@ -1334,6 +1355,8 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		// Java parity: services/mail/MailService.sendMail for non-item mail.
 		if (_mailRepository == null)
+			return null;
+		if (sender.IsTrading)
 			return null;
 		if (sendMail.RecipientName.Length > 16 || sendMail.LetterTypeId == 2 || sendMail.KinahCount < 0)
 			return null;
