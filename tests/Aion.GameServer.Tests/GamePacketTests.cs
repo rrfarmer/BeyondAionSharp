@@ -1702,12 +1702,30 @@ public class GamePacketTests
 			TitleId = 12,
 			Dp = 300,
 			Note = "Looking sharp",
+			TargetObjectId = 9005,
 			Position = new WorldPosition(210010000, 10, 20, 30, 40),
 			Settings = new PlayerSettings
 			{
 				Display = 4,
 				Deny = PlayerSettings.DenyFriendRequests,
 			},
+			Houses =
+			[
+				new PlayerHouse(
+					9001,
+					700100,
+					353000,
+					DateTime.UtcNow.AddDays(-1),
+					DateTime.UtcNow.AddDays(7),
+					IsInactive: false),
+				new PlayerHouse(
+					9002,
+					700101,
+					353001,
+					DateTime.UtcNow.AddDays(-2),
+					DateTime.UtcNow.AddDays(6),
+					IsInactive: true),
+			],
 			Appearance = new CharacterAppearance
 			{
 				SkinRgb = 0x112233,
@@ -1779,6 +1797,20 @@ public class GamePacketTests
 		Assert.Equal(1, reader.ReadH());
 		Assert.Equal(4, reader.ReadH());
 		Assert.Equal(PlayerSettings.DenyFriendRequests, reader.ReadH());
+		Assert.Equal(1, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(9005, reader.ReadD());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(700100, reader.ReadD());
+		Assert.Equal(1, reader.ReadD());
+		Assert.Equal(1, reader.ReadD());
+		Assert.Equal(3, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
 	}
 
 	[Fact]

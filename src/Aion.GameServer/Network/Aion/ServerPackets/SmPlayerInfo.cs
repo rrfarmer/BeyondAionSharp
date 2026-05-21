@@ -71,11 +71,12 @@ public sealed class SmPlayerInfo : GameServerPacket
 		buffer.WriteH(_player.Settings.Deny);
 		buffer.WriteH(_player.AbyssRank.Rank);
 		buffer.WriteH(0);
-		buffer.WriteD(0);
+		// Java parity: SM_PLAYER_INFO.writeImpl target/team/mentor/active-house tail.
+		buffer.WriteD(Math.Max(0, _player.TargetObjectId));
 		buffer.WriteC(0);
 		buffer.WriteD(0);
 		buffer.WriteC(0);
-		buffer.WriteD(0);
+		buffer.WriteD(GetActiveHouseAddressId(_player));
 		buffer.WriteD(1);
 		buffer.WriteD(1);
 		buffer.WriteC(3);
@@ -186,6 +187,12 @@ public sealed class SmPlayerInfo : GameServerPacket
 	private int GetLevel()
 	{
 		return Math.Max(1, _experienceTable?.GetLevelForExp(_player.Exp) ?? 1);
+	}
+
+	private static int GetActiveHouseAddressId(Player player)
+	{
+		// Java parity: SM_PLAYER_INFO.writeImpl player.getActiveHouse().getAddress().getId().
+		return player.Houses.FirstOrDefault(house => !house.IsInactive)?.AddressId ?? 0;
 	}
 
 	private static void WriteEmptyLegion(PacketBuffer buffer)
