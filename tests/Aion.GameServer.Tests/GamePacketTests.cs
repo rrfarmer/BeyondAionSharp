@@ -448,6 +448,8 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.WhisperRefuse("Kahrun"), 1300629, "Kahrun");
 		AssertSystemMessage(SmSystemMessage.CantWhisperLevel(10), 1310004, "10");
 		AssertSystemMessage(SmSystemMessage.CantWhisperOtherRace(), 1401174);
+		AssertSystemMessage(SmSystemMessage.BuddyListNotInList(), 1300889);
+		AssertSystemMessage(SmSystemMessage.BlockListNotInList(), 1300897);
 
 		var attachmentStatePayload = SerializeUnencryptedPayload(SmMailService.CreateAttachmentState(letterId: 123, attachmentType: 1));
 		using var attachmentStateReader = new PacketBuffer(attachmentStatePayload);
@@ -808,6 +810,24 @@ public class GamePacketTests
 		Assert.Equal(
 			Convert.FromHexString("E9030000010000"),
 			SerializeUnencryptedPayload(new SmMarkFriendList(1001)));
+
+		var friendResponsePayload = SerializeUnencryptedPayload(new SmFriendResponse(SmFriendResponse.TargetRemoved, "Friend"));
+		using var friendResponseReader = new PacketBuffer(friendResponsePayload);
+		Assert.Equal("Friend", friendResponseReader.ReadS());
+		Assert.Equal(SmFriendResponse.TargetRemoved, friendResponseReader.ReadC());
+		Assert.Equal(0, friendResponseReader.Remaining);
+
+		var blockResponsePayload = SerializeUnencryptedPayload(new SmBlockResponse(SmBlockResponse.EditNote, "Blocked"));
+		using var blockResponseReader = new PacketBuffer(blockResponsePayload);
+		Assert.Equal("Blocked", blockResponseReader.ReadS());
+		Assert.Equal(SmBlockResponse.EditNote, blockResponseReader.ReadC());
+		Assert.Equal(0, blockResponseReader.Remaining);
+
+		var friendNotifyPayload = SerializeUnencryptedPayload(new SmFriendNotify(SmFriendNotify.Deleted, "Kahrun"));
+		using var friendNotifyReader = new PacketBuffer(friendNotifyPayload);
+		Assert.Equal("Kahrun", friendNotifyReader.ReadS());
+		Assert.Equal(SmFriendNotify.Deleted, friendNotifyReader.ReadC());
+		Assert.Equal(0, friendNotifyReader.Remaining);
 
 		var instanceInfoPayload = SerializeUnencryptedPayload(
 			new SmInstanceInfo(
@@ -1884,15 +1904,42 @@ public class GamePacketTests
 	public void ClientPacketFactory_ParsesSocialListPackets()
 	{
 		Assert.IsType<CmMarkFriendList>(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(110, _ => { }), GameConnectionState.InGame));
+		var friendDelete = Assert.IsType<CmFriendDelete>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(112, buffer => buffer.WriteS("Friend")), GameConnectionState.InGame));
 		Assert.IsType<CmShowBlockList>(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(158, _ => { }), GameConnectionState.InGame));
+		var blockDelete = Assert.IsType<CmBlockDelete>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(167, buffer => buffer.WriteS("Blocked")), GameConnectionState.InGame));
 		Assert.IsType<CmShowFriendList>(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(230, _ => { }), GameConnectionState.InGame));
 		var friendStatus = Assert.IsType<CmFriendStatus>(
 			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(170, buffer => buffer.WriteC(3)), GameConnectionState.InGame));
+		var blockSetReason = Assert.IsType<CmBlockSetReason>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(179, buffer =>
+			{
+				buffer.WriteS("Blocked");
+				buffer.WriteS("new reason");
+			}), GameConnectionState.InGame));
+		var friendSetMemo = Assert.IsType<CmFriendSetMemo>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(239, buffer =>
+			{
+				buffer.WriteS("Friend");
+				buffer.WriteS("new memo");
+			}), GameConnectionState.InGame));
+
+		Assert.Equal("Friend", friendDelete.TargetName);
+		Assert.Equal("Blocked", blockDelete.TargetName);
 		Assert.Equal(3, (int)friendStatus.Status);
+		Assert.Equal("Blocked", blockSetReason.TargetName);
+		Assert.Equal("new reason", blockSetReason.Reason);
+		Assert.Equal("Friend", friendSetMemo.TargetName);
+		Assert.Equal("new memo", friendSetMemo.Memo);
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(110, _ => { }), GameConnectionState.Authed));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(112, buffer => buffer.WriteS("Friend")), GameConnectionState.Authed));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(158, _ => { }), GameConnectionState.Authed));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(167, buffer => buffer.WriteS("Blocked")), GameConnectionState.Authed));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(230, _ => { }), GameConnectionState.Authed));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(170, buffer => buffer.WriteC(1)), GameConnectionState.Authed));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(179, buffer => buffer.WriteS("Blocked")), GameConnectionState.Authed));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(239, buffer => buffer.WriteS("Friend")), GameConnectionState.Authed));
 	}
 
 	[Fact]

@@ -41,6 +41,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly PlayerEnterWorldService? _playerEnterWorldService;
 	private readonly IMailRepository? _mailRepository;
 	private readonly IBrokerRepository? _brokerRepository;
+	private readonly ISocialRepository _socialRepository;
 	private readonly IGameClientConnectionRegistry? _connectionRegistry;
 	private readonly IDFactory? _idFactory;
 	private readonly GameTimeService? _gameTimeService;
@@ -73,6 +74,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		PlayerEnterWorldService? playerEnterWorldService = null,
 		IMailRepository? mailRepository = null,
 		IBrokerRepository? brokerRepository = null,
+		ISocialRepository? socialRepository = null,
 		IGameClientConnectionRegistry? connectionRegistry = null,
 		IDFactory? idFactory = null,
 		GameTimeService? gameTimeService = null,
@@ -90,6 +92,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_playerEnterWorldService = playerEnterWorldService;
 		_mailRepository = mailRepository;
 		_brokerRepository = brokerRepository;
+		_socialRepository = socialRepository ?? new EmptySocialRepository();
 		_connectionRegistry = connectionRegistry;
 		_idFactory = idFactory;
 		_gameTimeService = gameTimeService;
@@ -293,6 +296,10 @@ public sealed class GameServerConnection : BaseClientConnection
 					await SendPacketAsync(new SmMarkFriendList(_activePlayer.ObjectId));
 				}
 				break;
+			case CmFriendDelete friendDelete:
+				if (_activePlayer != null)
+					await HandleFriendDeleteAsync(_activePlayer, friendDelete);
+				break;
 			case CmTargetSelect targetSelect:
 				if (_activePlayer != null)
 					HandleTargetSelect(_activePlayer, targetSelect);
@@ -346,6 +353,10 @@ public sealed class GameServerConnection : BaseClientConnection
 					await SendPacketAsync(new SmBlockList(_activePlayer.BlockedUsers));
 				}
 				break;
+			case CmBlockDelete blockDelete:
+				if (_activePlayer != null)
+					await HandleBlockDeleteAsync(_activePlayer, blockDelete);
+				break;
 			case CmFriendStatus friendStatus:
 				if (_activePlayer != null)
 				{
@@ -353,6 +364,10 @@ public sealed class GameServerConnection : BaseClientConnection
 					_activePlayer.FriendListStatus = friendStatus.Status;
 					await SendPacketAsync(new SmFriendStatus(friendStatus.Status));
 				}
+				break;
+			case CmBlockSetReason blockSetReason:
+				if (_activePlayer != null)
+					await HandleBlockSetReasonAsync(_activePlayer, blockSetReason);
 				break;
 			case CmCharacterPasskey characterPasskey:
 				await SendPacketAsync(new SmCharacterSelect(type: 2, messageType: characterPasskey.Type, wrongCount: 0));
@@ -535,6 +550,10 @@ public sealed class GameServerConnection : BaseClientConnection
 					var staticData = _runtimeContext?.DataManager?.StaticData;
 					await SendPacketAsync(new SmFriendList(_activePlayer.Friends, staticData?.PlayerExperienceTable));
 				}
+				break;
+			case CmFriendSetMemo friendSetMemo:
+				if (_activePlayer != null)
+					await HandleFriendSetMemoAsync(_activePlayer, friendSetMemo);
 				break;
 			case CmEnterWorld enterWorld:
 				var enterWorldResult = _playerEnterWorldService == null
@@ -819,9 +838,130 @@ public sealed class GameServerConnection : BaseClientConnection
 			token => SendPacketAsync(new SmChatInit(token)));
 	}
 
+	private async Task HandleFriendDeleteAsync(Player player, CmFriendDelete packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_FRIEND_DEL.runImpl -> SocialService.deleteFriend.
+		var friend = FindFriendByName(player, packet.TargetName);
+		if (friend == null)
+		{
+			await SendPacketAsync(SmSystemMessage.BuddyListNotInList());
+			return;
+		}
+
+		if (!await _socialRepository.DeleteFriendsAsync(player.ObjectId, friend.ObjectId))
+			return;
+
+		if (_connectionRegistry != null
+			&& _connectionRegistry.TryGetOnlinePlayerByName(friend.Name, out var friendPlayer)
+			&& friendPlayer != null)
+		{
+			friendPlayer.Friends = friendPlayer.Friends
+				.Where(existingFriend => existingFriend.ObjectId != player.ObjectId)
+				.ToArray();
+			await _connectionRegistry.SendPacketToPlayerAsync(
+				friendPlayer.ObjectId,
+				new SmFriendList(friendPlayer.Friends, GetPlayerExperienceTable()));
+			await _connectionRegistry.SendPacketToPlayerAsync(
+				friendPlayer.ObjectId,
+				new SmFriendNotify(SmFriendNotify.Deleted, player.Name));
+		}
+
+		player.Friends = player.Friends
+			.Where(existingFriend => existingFriend.ObjectId != friend.ObjectId)
+			.ToArray();
+		await SendPacketAsync(new SmFriendList(player.Friends, GetPlayerExperienceTable()));
+		await SendPacketAsync(new SmFriendResponse(SmFriendResponse.TargetRemoved, friend.Name));
+	}
+
+	private async Task HandleFriendSetMemoAsync(Player player, CmFriendSetMemo packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_FRIEND_SET_MEMO.runImpl -> SocialService.setFriendMemo.
+		var friend = FindFriendByName(player, packet.TargetName);
+		if (friend == null)
+		{
+			await SendPacketAsync(SmSystemMessage.BuddyListNotInList());
+			return;
+		}
+
+		if (string.Equals(friend.Memo, packet.Memo, StringComparison.Ordinal))
+			return;
+
+		if (!await _socialRepository.SetFriendMemoAsync(player.ObjectId, friend.ObjectId, packet.Memo))
+			return;
+
+		player.Friends = player.Friends
+			.Select(existingFriend => existingFriend.ObjectId == friend.ObjectId
+				? existingFriend with { Memo = packet.Memo }
+				: existingFriend)
+			.ToArray();
+		await SendPacketAsync(new SmFriendList(player.Friends, GetPlayerExperienceTable()));
+	}
+
+	private async Task HandleBlockDeleteAsync(Player player, CmBlockDelete packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_BLOCK_DEL.runImpl -> SocialService.deleteBlockedUser.
+		var blockedUser = FindBlockedUserByName(player, packet.TargetName);
+		if (blockedUser == null)
+		{
+			await SendPacketAsync(SmSystemMessage.BuddyListNotInList());
+			return;
+		}
+
+		if (!await _socialRepository.DeleteBlockedUserAsync(player.ObjectId, blockedUser.ObjectId))
+			return;
+
+		player.BlockedUsers = player.BlockedUsers
+			.Where(existingBlockedUser => existingBlockedUser.ObjectId != blockedUser.ObjectId)
+			.ToArray();
+		await SendPacketAsync(new SmBlockList(player.BlockedUsers));
+		await SendPacketAsync(new SmBlockResponse(SmBlockResponse.UnblockSuccessful, blockedUser.Name));
+	}
+
+	private async Task HandleBlockSetReasonAsync(Player player, CmBlockSetReason packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_BLOCK_SET_REASON.runImpl -> SocialService.setBlockedReason.
+		var blockedUser = FindBlockedUserByName(player, packet.TargetName);
+		if (blockedUser == null)
+		{
+			await SendPacketAsync(SmSystemMessage.BlockListNotInList());
+			return;
+		}
+
+		if (string.Equals(blockedUser.Reason, packet.Reason, StringComparison.Ordinal))
+			return;
+
+		if (!await _socialRepository.SetBlockedReasonAsync(player.ObjectId, blockedUser.ObjectId, packet.Reason))
+			return;
+
+		player.BlockedUsers = player.BlockedUsers
+			.Select(existingBlockedUser => existingBlockedUser.ObjectId == blockedUser.ObjectId
+				? existingBlockedUser with { Reason = packet.Reason }
+				: existingBlockedUser)
+			.ToArray();
+		await SendPacketAsync(new SmBlockList(player.BlockedUsers));
+		await SendPacketAsync(new SmBlockResponse(SmBlockResponse.EditNote, blockedUser.Name));
+	}
+
 	private SmChatWindow CreateChatWindowPacket(Player target, bool isGroup)
 	{
 		return new SmChatWindow(target, isGroup, _runtimeContext?.DataManager?.StaticData.PlayerExperienceTable);
+	}
+
+	private PlayerExperienceTable? GetPlayerExperienceTable()
+	{
+		return _runtimeContext?.DataManager?.StaticData.PlayerExperienceTable;
+	}
+
+	private static PlayerFriend? FindFriendByName(Player player, string targetName)
+	{
+		// Java parity: model/gameobjects/player/FriendList.getFriend(String) uses case-insensitive name matching.
+		return player.Friends.FirstOrDefault(friend => string.Equals(friend.Name, targetName, StringComparison.OrdinalIgnoreCase));
+	}
+
+	private static PlayerBlockedUser? FindBlockedUserByName(Player player, string targetName)
+	{
+		// Java parity: model/gameobjects/player/BlockList.getBlockedPlayer(String) uses case-insensitive name matching.
+		return player.BlockedUsers.FirstOrDefault(blockedUser => string.Equals(blockedUser.Name, targetName, StringComparison.OrdinalIgnoreCase));
 	}
 
 	private static string GetRealCharacterName(string name)

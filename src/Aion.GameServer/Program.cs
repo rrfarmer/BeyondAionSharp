@@ -51,6 +51,7 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<IPlayerEnterWorldRepository, MySqlPlayerEnterWorldRepository>();
 			services.AddSingleton<IMailRepository, MySqlMailRepository>();
 			services.AddSingleton<IBrokerRepository, MySqlBrokerRepository>();
+			services.AddSingleton<ISocialRepository, MySqlSocialRepository>();
 			services.AddSingleton<CharacterCreationService>();
 			services.AddSingleton<PlayerEnterWorldService>();
 			services.AddHostedService<GameServerBootstrapService>();

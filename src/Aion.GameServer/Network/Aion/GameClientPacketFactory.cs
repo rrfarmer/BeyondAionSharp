@@ -26,6 +26,7 @@ public static class GameClientPacketFactory
 		Register(61, states => new CmChatGroupInfo(61, states), GameConnectionState.InGame);
 		Register(103, states => new CmPingRequest(103, states), GameConnectionState.InGame);
 		Register(110, states => new CmMarkFriendList(110, states), GameConnectionState.InGame);
+		Register(112, states => new CmFriendDelete(112, states), GameConnectionState.InGame);
 		Register(117, states => new CmBrokerSellWindow(117, states), GameConnectionState.InGame);
 		Register(123, states => new CmBrokerList(123, states), GameConnectionState.InGame);
 		Register(124, states => new CmBrokerSearch(124, states), GameConnectionState.InGame);
@@ -47,8 +48,10 @@ public static class GameClientPacketFactory
 		Register(153, states => new CmRestoreCharacter(153, states), GameConnectionState.Authed);
 		Register(158, states => new CmShowBlockList(158, states), GameConnectionState.InGame);
 		Register(162, states => new CmReadExpressMail(162, states), GameConnectionState.InGame);
+		Register(167, states => new CmBlockDelete(167, states), GameConnectionState.InGame);
 		Register(170, states => new CmFriendStatus(170, states), GameConnectionState.InGame);
 		Register(174, states => new CmChatAuth(174, states), GameConnectionState.InGame);
+		Register(179, states => new CmBlockSetReason(179, states), GameConnectionState.InGame);
 		Register(183, states => new CmReconnectAuth(183, states), GameConnectionState.Authed);
 		Register(186, states => new CmMayLoginIntoGame(186, states), GameConnectionState.Authed);
 		Register(189, states => new CmMacAddress(189, states), GameConnectionState.Connected);
@@ -57,6 +60,7 @@ public static class GameClientPacketFactory
 		Register(219, states => new CmRegisterHouse(219, states), GameConnectionState.InGame);
 		Register(221, states => new CmPlaceBid(221, states), GameConnectionState.InGame);
 		Register(230, states => new CmShowFriendList(230, states), GameConnectionState.InGame);
+		Register(239, states => new CmFriendSetMemo(239, states), GameConnectionState.InGame);
 	}
 
 	public static GameClientPacket? TryCreatePacket(ReadOnlySpan<byte> decryptedPayload, GameConnectionState state)

@@ -145,6 +145,18 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1401174);
 	}
 
+	public static SmSystemMessage BuddyListNotInList()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_BUDDYLIST_NOT_IN_LIST.
+		return new SmSystemMessage(1300889);
+	}
+
+	public static SmSystemMessage BlockListNotInList()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_BLOCKLIST_NOT_IN_LIST.
+		return new SmSystemMessage(1300897);
+	}
+
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.writeImpl.
