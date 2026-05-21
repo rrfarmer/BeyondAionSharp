@@ -157,6 +157,11 @@ public sealed class StaticDataLoadingTests
 		Assert.Contains(staticData.TemperingTemplates.GetModifiers(physicalPlume, 3, 7), modifier => modifier is { Operation: "add", Name: "MAXHP", Value: 450, Bonus: true });
 		Assert.Equal(3, staticData.ItemTemplates.GetItemTemplate(166050001)?.PolishSetId);
 		Assert.Contains(staticData.ItemRandomBonuses.GetModifiers("POLISH", 3, 1), modifier => modifier is { Operation: "add", Name: "MAXHP", Value: 347, Bonus: true });
+		var testGodstone = staticData.ItemTemplates.GetItemTemplate(168000001);
+		Assert.NotNull(testGodstone);
+		Assert.Equal(8255, testGodstone.GodstoneInfo?.SkillId);
+		Assert.Equal(1, testGodstone.GodstoneInfo?.SkillLevel);
+		Assert.Equal(1000, testGodstone.GodstoneInfo?.Probability);
 		var hpManastone = staticData.ItemTemplates.GetItemTemplate(167000226);
 		Assert.NotNull(hpManastone);
 		Assert.Contains(hpManastone.StatModifiers, modifier => modifier is { Operation: "add", Name: "MAXHP", Value: 20, Bonus: true });

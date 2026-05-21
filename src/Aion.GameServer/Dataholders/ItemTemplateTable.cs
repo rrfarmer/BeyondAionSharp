@@ -51,7 +51,8 @@ public sealed record ItemTemplateSummary(
 	int StatBonusSetId = 0,
 	string EnchantName = "",
 	string TemperingName = "",
-	int PolishSetId = 0)
+	int PolishSetId = 0,
+	ItemGodstoneInfo? GodstoneInfo = null)
 {
 	private const int CanPolishMask = 1 << 17;
 
@@ -157,6 +158,15 @@ public sealed record ItemWeaponStats(
 {
 	public int MeanDamage => (int)((MinDamage + MaxDamage) / 2f);
 }
+
+// Java parity: model/templates/item/GodstoneInfo.
+public sealed record ItemGodstoneInfo(
+	int SkillId,
+	int SkillLevel,
+	int Probability,
+	int ProbabilityLeft,
+	int BreakProbability,
+	int NonBreakCount);
 
 public sealed record ItemStatModifier(
 	string Operation,

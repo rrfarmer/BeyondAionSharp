@@ -418,6 +418,18 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 3 && reader.LocalName == "godstone" && currentItemTemplate != null)
+			{
+				currentItemTemplate.GodstoneInfo = new ItemGodstoneInfo(
+					ReadIntAttribute(reader, "skillid"),
+					ReadIntAttribute(reader, "skilllvl"),
+					ReadIntAttribute(reader, "probability"),
+					ReadIntAttribute(reader, "probabilityleft"),
+					ReadIntAttribute(reader, "breakprob"),
+					ReadIntAttribute(reader, "nonbreakcount"));
+				continue;
+			}
+
 			if (reader.Depth == 4
 				&& currentItemTemplate != null
 				&& IsStatModifierElement(reader.LocalName)
@@ -980,6 +992,8 @@ public sealed class StaticData
 
 		public ItemWeaponStats? WeaponStats { get; set; }
 
+		public ItemGodstoneInfo? GodstoneInfo { get; set; }
+
 		public List<ItemStatModifier> Modifiers { get; } = [];
 
 		public int DispositionItemId { get; set; }
@@ -1042,7 +1056,8 @@ public sealed class StaticData
 				StatBonusSetId,
 				EnchantName,
 				TemperingName,
-				PolishSetId);
+				PolishSetId,
+				GodstoneInfo);
 		}
 
 		private static bool CalculateCanTune(
