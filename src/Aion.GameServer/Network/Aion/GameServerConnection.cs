@@ -804,7 +804,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		return false;
 	}
 
-	private bool CanOperateItem(Player player, InventoryItem item, string type)
+	private async Task<bool> CanOperateItemAsync(Player player, InventoryItem item, string type)
 	{
 		// Java parity: services/AdminService.canOperate(player, null, item, type).
 		if (player.AccessLevel == 0)
@@ -826,6 +826,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			player.ObjectId,
 			item.ItemId,
 			type);
+		await SendPacketAsync(new SmMessage($"You cannot use {type} with this item."));
 		return false;
 	}
 
@@ -1024,7 +1025,7 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		if (sourceItem.PackCount <= 0 && (!itemTemplate.IsTradeable || sourceItem.IsSoulBound))
 			return;
-		if (!CanOperateItem(player, sourceItem, "broker"))
+		if (!await CanOperateItemAsync(player, sourceItem, "broker"))
 			return;
 
 		var registeredItems = await _brokerRepository.LoadRegisteredItemsAsync(player.ObjectId, player.Race);
@@ -1388,7 +1389,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				return SmSystemMessage.MailSendCannotSendEquippedItem();
 			if (senderItemTemplate == null)
 				return null;
-			if (!CanOperateItem(sender, senderItem, "mail"))
+			if (!await CanOperateItemAsync(sender, senderItem, "mail"))
 				return null;
 		}
 

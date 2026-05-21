@@ -38,6 +38,20 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmMessage_WritesGoldenYellowSystemChatPayload()
+	{
+		var payload = SerializeUnencryptedPayload(new SmMessage("You cannot use broker with this item."));
+		using var reader = new PacketBuffer(payload);
+
+		Assert.Equal(25, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(string.Empty, reader.ReadS());
+		Assert.Equal("You cannot use broker with this item.", reader.ReadS());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
 	public void CharacterSelectionServerPackets_WriteJavaShapedPayloads()
 	{
 		Assert.Equal(
