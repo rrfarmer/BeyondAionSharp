@@ -30,6 +30,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private const int KinahItemId = 182400001;
 	private const int FirstAvailableSlot = 65535;
 	private const int MaxBlockedUsers = 100;
+	private const double HousingAuctionRegistrationFeePercent = 0.3d;
 	private static readonly TimeSpan ClientPingInterval = TimeSpan.FromMilliseconds(180000);
 	private readonly GamePacketProcessor<string> _packetProcessor;
 	private readonly GameCrypt _crypt;
@@ -559,7 +560,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				break;
 			case CmRegisterHouse registerHouse:
 				if (_activePlayer != null)
-					_logger.LogDebug("Player {PlayerObjectId} requested unported house auction registration for {BidKinah} Kinah", _activePlayer.ObjectId, registerHouse.BidKinah);
+					await HandleRegisterHouseAsync(_activePlayer, registerHouse);
 				break;
 			case CmPlaceBid placeBid:
 				if (_activePlayer != null)
@@ -1599,6 +1600,92 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		return await LoadBrokerMaskPageAsync(player, player.BrokerSortTypeCache, player.BrokerStartPageCache, player.BrokerMaskCache);
+	}
+
+	private async Task HandleRegisterHouseAsync(Player player, CmRegisterHouse packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_REGISTER_HOUSE.runImpl.
+		if (!IsHouseAuctionRegistrationAllowed() || packet.BidKinah <= 0)
+		{
+			await SendPacketAsync(SmSystemMessage.HousingCantAuctionTimeout());
+			return;
+		}
+
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var activeHouse = GetActiveAuctionHouse(player, staticData?.HousingTemplates);
+		if (activeHouse == null)
+			return;
+
+		if (!IsHouseFeePaid(activeHouse))
+		{
+			await SendPacketAsync(SmSystemMessage.HousingCantAuctionOverdue());
+			return;
+		}
+
+		var fee = (long)(packet.BidKinah * HousingAuctionRegistrationFeePercent);
+		var kinahItem = player.InventoryItems.FirstOrDefault(item => item.ItemId == KinahItemId && item.Location == CubeStorageId);
+		if (kinahItem == null || kinahItem.Count < fee)
+		{
+			await SendPacketAsync(SmSystemMessage.NotEnoughKinah(fee));
+			return;
+		}
+
+		var kinahUpdate = CopyInventoryItem(kinahItem, count: kinahItem.Count - fee);
+		var result = await _houseAuctionRepository.RegisterHouseAuctionAsync(
+			player.ObjectId,
+			activeHouse.ObjectId,
+			packet.BidKinah,
+			kinahUpdate,
+			DateTime.Now);
+
+		if (result == HouseAuctionRegistrationResult.AlreadyRegistered)
+		{
+			await SendPacketAsync(SmSystemMessage.HousingAuctionAlreadyRegistered());
+			return;
+		}
+
+		if (result != HouseAuctionRegistrationResult.Success)
+		{
+			await SendPacketAsync(SmSystemMessage.HousingCantAuctionTimeout());
+			return;
+		}
+
+		player.InventoryItems = player.InventoryItems
+			.Select(item => item.ObjectId == kinahUpdate.ObjectId ? kinahUpdate : item)
+			.ToArray();
+
+		if (staticData?.ItemTemplates.GetItemTemplate(KinahItemId) is { } kinahTemplate)
+			await SendPacketAsync(new SmInventoryUpdateItem(kinahUpdate, kinahTemplate, SmInventoryUpdateItem.DecreaseKinahBuy));
+		await SendPacketAsync(SmSystemMessage.HousingAuctionMyHouse(activeHouse.AddressId));
+		await SendPacketAsync(new SmReceiveBids(0));
+	}
+
+	private static PlayerHouse? GetActiveAuctionHouse(Player player, HousingTemplateTable? housingTemplates)
+	{
+		// Java parity: CM_REGISTER_HOUSE uses Player.getActiveHouse and rejects HouseType.STUDIO.
+		foreach (var house in player.Houses)
+		{
+			if (house.IsInactive)
+				continue;
+			if (housingTemplates?.GetHouseTypeId(house.BuildingId) == 0)
+				return null;
+			return house;
+		}
+
+		return null;
+	}
+
+	private static bool IsHouseAuctionRegistrationAllowed()
+	{
+		// Java parity: HousingBidService.isRegisteringAllowed with default Monday-Friday registration window.
+		var today = DateTime.Now.DayOfWeek;
+		return today is DayOfWeek.Monday or DayOfWeek.Tuesday or DayOfWeek.Wednesday or DayOfWeek.Thursday or DayOfWeek.Friday;
+	}
+
+	private static bool IsHouseFeePaid(PlayerHouse house)
+	{
+		// Java parity: model/house/House.isFeePaid.
+		return house.NextPay == null || house.NextPay.Value >= DateTime.Now;
 	}
 
 	private async Task HandleBrokerCancelRegisteredAsync(Player player, CmBrokerCancelRegistered packet)

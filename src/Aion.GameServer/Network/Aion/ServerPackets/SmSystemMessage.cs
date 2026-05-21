@@ -31,6 +31,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300388);
 	}
 
+	public static SmSystemMessage NotEnoughKinah(long kinah)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_NOT_ENOUGH_KINA.
+		return new SmSystemMessage(901285, kinah.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
 	public static SmSystemMessage BrokerPriceExceedsLimit()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LIMITED_VENDOR_CANT_OVER_GOLD.
@@ -113,6 +119,30 @@ public sealed class SmSystemMessage : GameServerPacket
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_AUCTION_FAIL.
 		return new SmSystemMessage(1401270, address.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage HousingCantAuctionTimeout()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_CANT_AUCTION_TIMEOUT.
+		return new SmSystemMessage(1401308);
+	}
+
+	public static SmSystemMessage HousingCantAuctionOverdue()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_CANT_AUCTION_OVERDUE.
+		return new SmSystemMessage(1401317);
+	}
+
+	public static SmSystemMessage HousingAuctionMyHouse(int address)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_AUCTION_MY_HOUSE.
+		return new SmSystemMessage(1401268, address.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage HousingAuctionAlreadyRegistered()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_AUCTION_FAIL_ALREADY_REGISTED.
+		return new SmSystemMessage(1401372);
 	}
 
 	public static SmSystemMessage NoSuchUser(string playerName)

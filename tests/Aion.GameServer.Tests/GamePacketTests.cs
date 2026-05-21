@@ -456,6 +456,11 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.BuddyCantAddWhenAskedQuestion("Friend"), 1300795, "Friend");
 		AssertSystemMessage(SmSystemMessage.BuddyListNoBlockedCharacter(), 1300884);
 		AssertSystemMessage(SmSystemMessage.RejectedFriend("Friend"), 1390119, "Friend");
+		AssertSystemMessage(SmSystemMessage.NotEnoughKinah(12345), 901285, "12345");
+		AssertSystemMessage(SmSystemMessage.HousingCantAuctionTimeout(), 1401308);
+		AssertSystemMessage(SmSystemMessage.HousingCantAuctionOverdue(), 1401317);
+		AssertSystemMessage(SmSystemMessage.HousingAuctionMyHouse(6001), 1401268, "6001");
+		AssertSystemMessage(SmSystemMessage.HousingAuctionAlreadyRegistered(), 1401372);
 
 		var attachmentStatePayload = SerializeUnencryptedPayload(SmMailService.CreateAttachmentState(letterId: 123, attachmentType: 1));
 		using var attachmentStateReader = new PacketBuffer(attachmentStatePayload);

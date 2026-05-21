@@ -3,6 +3,7 @@ using Aion.Commons.Database;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Microsoft.Extensions.Logging;
+using MySqlConnector;
 
 namespace Aion.GameServer.Data;
 
@@ -13,6 +14,21 @@ public interface IHouseAuctionRepository
 		HousingTemplateTable? housingTemplates,
 		NpcTemplateTable? npcTemplates,
 		CancellationToken cancellationToken = default);
+
+	Task<HouseAuctionRegistrationResult> RegisterHouseAuctionAsync(
+		int playerObjectId,
+		int houseObjectId,
+		long initialBidKinah,
+		InventoryItem kinahItem,
+		DateTime bidTime,
+		CancellationToken cancellationToken = default);
+}
+
+public enum HouseAuctionRegistrationResult
+{
+	Success,
+	AlreadyRegistered,
+	Failed,
 }
 
 public sealed class EmptyHouseAuctionRepository : IHouseAuctionRepository
@@ -24,6 +40,17 @@ public sealed class EmptyHouseAuctionRepository : IHouseAuctionRepository
 		CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(HouseAuctionBidPage.Empty);
+	}
+
+	public Task<HouseAuctionRegistrationResult> RegisterHouseAuctionAsync(
+		int playerObjectId,
+		int houseObjectId,
+		long initialBidKinah,
+		InventoryItem kinahItem,
+		DateTime bidTime,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(HouseAuctionRegistrationResult.Failed);
 	}
 }
 
@@ -69,6 +96,39 @@ public sealed class MySqlHouseAuctionRepository : IHouseAuctionRepository
 		{
 			_logger.LogError(ex, "Could not load housing auction bids for player {PlayerObjectId}", player.ObjectId);
 			return HouseAuctionBidPage.Empty;
+		}
+	}
+
+	public async Task<HouseAuctionRegistrationResult> RegisterHouseAuctionAsync(
+		int playerObjectId,
+		int houseObjectId,
+		long initialBidKinah,
+		InventoryItem kinahItem,
+		DateTime bidTime,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: services/HousingBidService.auction with HouseBidsDAO.addBid plus Inventory.tryDecreaseKinah caller state.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			if (!await PlayerOwnsHouseAsync(connection, transaction, playerObjectId, houseObjectId, cancellationToken))
+				return HouseAuctionRegistrationResult.Failed;
+			if (await HouseHasBidsAsync(connection, transaction, houseObjectId, cancellationToken))
+				return HouseAuctionRegistrationResult.AlreadyRegistered;
+			if (!await UpdateKinahAsync(connection, transaction, kinahItem, cancellationToken))
+				return HouseAuctionRegistrationResult.Failed;
+
+			await InsertInitialBidAsync(connection, transaction, houseObjectId, initialBidKinah, bidTime, cancellationToken);
+			await transaction.CommitAsync(cancellationToken);
+			return HouseAuctionRegistrationResult.Success;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not register house {HouseObjectId} for auction by player {PlayerObjectId}", houseObjectId, playerObjectId);
+			return HouseAuctionRegistrationResult.Failed;
 		}
 	}
 
@@ -134,6 +194,85 @@ public sealed class MySqlHouseAuctionRepository : IHouseAuctionRepository
 		}
 
 		return groups;
+	}
+
+	private static async Task<bool> PlayerOwnsHouseAsync(
+		DbConnection connection,
+		DbTransaction transaction,
+		int playerObjectId,
+		int houseObjectId,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: CM_REGISTER_HOUSE uses player.getActiveHouse from HousingService-loaded ownership state.
+		await using var command = connection.CreateCommand();
+		command.Transaction = transaction;
+		command.CommandText = "SELECT 1 FROM houses WHERE id = ? AND player_id = ? LIMIT 1";
+		command.Parameters.AddRange(
+			new[]
+			{
+				new MySqlParameter { Value = houseObjectId },
+				new MySqlParameter { Value = playerObjectId },
+			});
+		await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+		return await reader.ReadAsync(cancellationToken);
+	}
+
+	private static async Task<bool> HouseHasBidsAsync(
+		DbConnection connection,
+		DbTransaction transaction,
+		int houseObjectId,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: CM_REGISTER_HOUSE denies when house.getBids() is already present.
+		await using var command = connection.CreateCommand();
+		command.Transaction = transaction;
+		command.CommandText = "SELECT 1 FROM house_bids WHERE house_id = ? LIMIT 1";
+		command.Parameters.Add(new MySqlParameter { Value = houseObjectId });
+		await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+		return await reader.ReadAsync(cancellationToken);
+	}
+
+	private static async Task<bool> UpdateKinahAsync(
+		DbConnection connection,
+		DbTransaction transaction,
+		InventoryItem kinahItem,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: model/items/storage/Storage.tryDecreaseKinah persists the Kinah item count.
+		await using var command = connection.CreateCommand();
+		command.Transaction = transaction;
+		command.CommandText = "UPDATE inventory SET item_count = ? WHERE item_unique_id = ? AND item_owner = ?";
+		command.Parameters.AddRange(
+			new[]
+			{
+				new MySqlParameter { Value = kinahItem.Count },
+				new MySqlParameter { Value = kinahItem.ObjectId },
+				new MySqlParameter { Value = kinahItem.OwnerId },
+			});
+		return await command.ExecuteNonQueryAsync(cancellationToken) == 1;
+	}
+
+	private static async Task InsertInitialBidAsync(
+		DbConnection connection,
+		DbTransaction transaction,
+		int houseObjectId,
+		long initialBidKinah,
+		DateTime bidTime,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: HouseBidsDAO.INSERT_QUERY for the initial player_id=0 offer.
+		await using var command = connection.CreateCommand();
+		command.Transaction = transaction;
+		command.CommandText = "INSERT INTO house_bids (player_id, house_id, bid, bid_time) VALUES (?, ?, ?, ?)";
+		command.Parameters.AddRange(
+			new[]
+			{
+				new MySqlParameter { Value = 0 },
+				new MySqlParameter { Value = houseObjectId },
+				new MySqlParameter { Value = initialBidKinah },
+				new MySqlParameter { Value = bidTime },
+			});
+		await command.ExecuteNonQueryAsync(cancellationToken);
 	}
 
 	private static HouseAuctionBidGroup? FindRegisteredHouseBid(
