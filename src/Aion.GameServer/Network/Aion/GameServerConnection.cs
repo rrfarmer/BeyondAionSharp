@@ -294,6 +294,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmRejectRevive:
 				// Java parity: network/aion/clientpackets/CM_REJECT_REVIVE.runImpl has no side effect.
 				break;
+			case CmTeleportAnimationDone:
+				// Java parity: network/aion/clientpackets/CM_TELEPORT_ANIMATION_DONE.runImpl executes a pending teleport task; deferred until teleport task state is ported.
+				break;
 			case CmHeadingUpdate:
 				// Java parity: network/aion/clientpackets/CM_HEADING_UPDATE.runImpl has no side effect.
 				break;
@@ -309,6 +312,18 @@ public sealed class GameServerConnection : BaseClientConnection
 				break;
 			case CmChangeChannel:
 				// Java parity: network/aion/clientpackets/CM_CHANGE_CHANNEL.runImpl dispatches TeleportService.changeChannel; deferred until channel instances are ported.
+				break;
+			case CmCheckPak:
+				// Java parity: network/aion/clientpackets/CM_CHECK_PAK.runImpl only audit-logs suspicious pak status; deferred until audit logging policy is ported.
+				break;
+			case CmPlayMovieEnd:
+				// Java parity: network/aion/clientpackets/CM_PLAY_MOVIE_END.runImpl dispatches quest and instance movie-end hooks; deferred until those systems are ported.
+				break;
+			case CmShowMap:
+				// Java parity: network/aion/clientpackets/CM_SHOW_MAP.runImpl action 0 dispatches ConquerorAndProtectorService.intruderScan; deferred until that system is ported.
+				break;
+			case CmCheckMailUnknown:
+				// Java parity: network/aion/clientpackets/CM_CHECK_MAIL_UNK.runImpl is TODO/no-op.
 				break;
 			case CmUiSettings uiSettings:
 				if (_activePlayer != null)

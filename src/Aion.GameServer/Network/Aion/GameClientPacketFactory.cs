@@ -18,6 +18,7 @@ public static class GameClientPacketFactory
 		Register(9, states => new CmLevelReady(9, states), GameConnectionState.InGame);
 		Register(10, states => new CmUiSettings(10, states), GameConnectionState.InGame);
 		Register(12, states => new CmCustomSettings(12, states), GameConnectionState.InGame);
+		Register(15, states => new CmTeleportAnimationDone(15, states), GameConnectionState.InGame);
 		Register(18, states => new CmTimeCheck(18, states), GameConnectionState.Connected, GameConnectionState.Authed, GameConnectionState.InGame);
 		Register(27, states => new CmChatMessagePublic(27, states), GameConnectionState.InGame);
 		Register(28, states => new CmChatMessageWhisper(28, states), GameConnectionState.InGame);
@@ -29,8 +30,10 @@ public static class GameClientPacketFactory
 		Register(50, states => new CmQuestionResponse(50, states), GameConnectionState.InGame);
 		Register(58, states => new CmSetNote(58, states), GameConnectionState.InGame);
 		Register(61, states => new CmChatGroupInfo(61, states), GameConnectionState.InGame);
+		Register(62, states => new CmCheckPak(62, states), GameConnectionState.InGame);
 		Register(71, states => new CmMotion(71, states), GameConnectionState.InGame);
 		Register(73, states => new CmHouseSettings(73, states), GameConnectionState.InGame);
+		Register(81, states => new CmPlayMovieEnd(81, states), GameConnectionState.InGame);
 		Register(103, states => new CmPingRequest(103, states), GameConnectionState.InGame);
 		Register(110, states => new CmMarkFriendList(110, states), GameConnectionState.InGame);
 		Register(111, states => new CmFriendAdd(111, states), GameConnectionState.InGame);
@@ -78,7 +81,9 @@ public static class GameClientPacketFactory
 		Register(191, states => new CmReportPlayer(191, states), GameConnectionState.InGame);
 		Register(192, states => new CmInstanceInfo(192, states), GameConnectionState.InGame);
 		Register(194, states => new CmShowRestrictions(194, states), GameConnectionState.InGame);
+		Register(196, states => new CmShowMap(196, states), GameConnectionState.InGame);
 		Register(210, states => new CmCharacterPasskey(210, states), GameConnectionState.Authed);
+		Register(213, states => new CmCheckMailUnknown(213, states), GameConnectionState.InGame);
 		Register(218, states => new CmGetHouseBids(218, states), GameConnectionState.InGame);
 		Register(219, states => new CmRegisterHouse(219, states), GameConnectionState.InGame);
 		Register(221, states => new CmPlaceBid(221, states), GameConnectionState.InGame);

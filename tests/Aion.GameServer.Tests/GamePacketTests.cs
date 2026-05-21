@@ -2185,6 +2185,48 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesDeferredUtilityPackets()
+	{
+		Assert.IsType<CmTeleportAnimationDone>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(15, _ => { }), GameConnectionState.InGame));
+		var checkPak = Assert.IsType<CmCheckPak>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(62, b =>
+			{
+				b.WriteC(2);
+				b.WriteS("[1:OK]");
+			}), GameConnectionState.InGame));
+		var playMovieEnd = Assert.IsType<CmPlayMovieEnd>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(81, b =>
+			{
+				b.WriteC(1);
+				b.WriteD(7001);
+				b.WriteD(12001);
+				b.WriteD(5);
+				b.WriteC(9);
+				b.WriteC(0);
+			}), GameConnectionState.InGame));
+		var showMap = Assert.IsType<CmShowMap>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(196, b => b.WriteC(0)), GameConnectionState.InGame));
+		Assert.IsType<CmCheckMailUnknown>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(213, _ => { }), GameConnectionState.InGame));
+
+		Assert.Equal(2, (int)checkPak.Unknown);
+		Assert.Equal("[1:OK]", checkPak.PakStatus);
+		Assert.Equal(1, (int)playMovieEnd.Type);
+		Assert.Equal(7001, playMovieEnd.TargetObjectId);
+		Assert.Equal(12001, playMovieEnd.QuestId);
+		Assert.Equal(5, playMovieEnd.MovieId);
+		Assert.Equal(9, (int)playMovieEnd.Unknown);
+		Assert.True(playMovieEnd.CanSkip);
+		Assert.Equal(0, (int)showMap.Action);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(15, _ => { }), GameConnectionState.Authed));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(62, b => b.WriteC(2)), GameConnectionState.Authed));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(81, b => b.WriteC(1)), GameConnectionState.Authed));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(196, b => b.WriteC(0)), GameConnectionState.Authed));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(213, _ => { }), GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesCharacterSelectionPackets()
 	{
 		var quit = Assert.IsType<CmQuit>(
