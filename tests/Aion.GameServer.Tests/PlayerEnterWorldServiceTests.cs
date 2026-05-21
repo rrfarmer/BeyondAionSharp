@@ -693,6 +693,19 @@ public sealed class PlayerEnterWorldServiceTests
 			return Task.FromResult(true);
 		}
 
+		public Task<bool> SaveEnchantItemMutationAsync(
+			int playerObjectId,
+			InventoryItem? targetItemUpdate,
+			int? deletedTargetItemObjectId,
+			InventoryItem? sourceItemUpdate,
+			int? deletedSourceItemObjectId,
+			IReadOnlyList<InventoryItem> supplementItemUpdates,
+			IReadOnlyList<int> deletedSupplementItemObjectIds,
+			CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult(true);
+		}
+
 		public Task<bool> SaveGodstoneSocketMutationAsync(
 			int playerObjectId,
 			InventoryItem targetItemUpdate,

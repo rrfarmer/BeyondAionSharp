@@ -85,10 +85,46 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300456, itemName);
 	}
 
+	public static SmSystemMessage EnchantItemNoTargetItem()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_ENCHANT_ITEM_NO_TARGET_ITEM.
+		return new SmSystemMessage(1300452);
+	}
+
+	public static SmSystemMessage EnchantItemSucceedNew(string itemName, int enchantLevel)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ENCHANT_ITEM_SUCCEED_NEW.
+		return new SmSystemMessage(1401681, itemName, enchantLevel.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage EnchantItemSucceeded15(string playerName, string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ENCHANT_ITEM_SUCCEEDED_15.
+		return new SmSystemMessage(1400435, playerName, itemName);
+	}
+
+	public static SmSystemMessage EnchantItemSucceeded20(string playerName, string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ENCHANT_ITEM_SUCCEEDED_20.
+		return new SmSystemMessage(1402285, playerName, itemName);
+	}
+
 	public static SmSystemMessage GiveItemOptionNoTargetItem()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_GIVE_ITEM_OPTION_NO_TARGET_ITEM.
 		return new SmSystemMessage(1300459);
+	}
+
+	public static SmSystemMessage GiveItemOptionCannotBeGivenOption(string itemName, string enchantmentStoneName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GIVE_ITEM_OPTION_IT_CAN_NOT_BE_GIVEN_OPTION.
+		return new SmSystemMessage(1300460, itemName, enchantmentStoneName);
+	}
+
+	public static SmSystemMessage GiveItemOptionCannotBeGivenOptionMoreTime(string itemName, string enchantmentStoneName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GIVE_ITEM_OPTION_IT_CAN_NOT_BE_GIVEN_OPTION_MORE_TIME.
+		return new SmSystemMessage(1300461, itemName, enchantmentStoneName);
 	}
 
 	public static SmSystemMessage GiveItemOptionSucceed(string itemName)
@@ -151,6 +187,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1402651);
 	}
 
+	public static SmSystemMessage ExceedCannotEnchantAmplified(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_EXCEED_CANNOT_02(String).
+		return new SmSystemMessage(1402661, itemName);
+	}
+
 	public static SmSystemMessage ExceedNoTargetItem()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_EXCEED_NO_TARGET_ITEM.
@@ -167,6 +209,12 @@ public sealed class SmSystemMessage : GameServerPacket
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_EXCEED_SUCCEED.
 		return new SmSystemMessage(1402657, itemName);
+	}
+
+	public static SmSystemMessage EnchantType1EnchantFail(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ENCHANT_TYPE1_ENCHANT_FAIL.
+		return new SmSystemMessage(1402674, itemName);
 	}
 
 	public static SmSystemMessage VendorCannotBuyOwnRegisteredItem()

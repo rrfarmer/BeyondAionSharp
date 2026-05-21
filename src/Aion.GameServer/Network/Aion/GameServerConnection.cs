@@ -1334,11 +1334,15 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (sourceItem == null)
 			return;
 
-		var targetItem = player.InventoryItems.FirstOrDefault(item => item.ObjectId == packet.TargetItemObjectId && item.Location == CubeStorageId);
+		var targetItem = player.InventoryItems.FirstOrDefault(item =>
+			item.ObjectId == packet.TargetItemObjectId
+			&& (packet.ActionType == 1 || item.Location == CubeStorageId));
 		if (targetItem == null)
 		{
 			if (packet.ActionType == 2)
 				await SendPacketAsync(SmSystemMessage.GiveItemOptionNoTargetItem());
+			else
+				await SendPacketAsync(SmSystemMessage.EnchantItemNoTargetItem());
 			return;
 		}
 
@@ -1348,6 +1352,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		{
 			if (packet.ActionType == 2)
 				await HandleSocketManastoneAsync(player, packet);
+			else
+				await HandleEnchantItemAsync(player, packet);
 			return;
 		}
 
@@ -1432,6 +1438,145 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		if (targetItem.IsEquipped)
 			await SendPacketAsync(CreateStatsInfoPacket(player, staticData));
+	}
+
+	private async Task HandleEnchantItemAsync(Player player, CmManastone packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_MANASTONE.runImpl actionType 1 + services/EnchantService.enchantItemAct.
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var itemTemplates = staticData?.ItemTemplates;
+		if (staticData == null || itemTemplates == null)
+			return;
+
+		var sourceItem = player.InventoryItems.FirstOrDefault(item =>
+			item.ObjectId == packet.StoneObjectId
+			&& item.Location == CubeStorageId
+			&& !item.IsEquipped);
+		var sourceTemplate = sourceItem == null ? null : itemTemplates.GetItemTemplate(sourceItem.ItemId);
+		var plan = EnchantService.CreateEnchantItemPlan(
+			player,
+			packet.TargetItemObjectId,
+			packet.StoneObjectId,
+			itemTemplates,
+			supplementObjectId: packet.SupplementObjectId,
+			enchantmentStoneBaseChances: _options.Rates.EnchantmentStoneBaseChances,
+			enchantmentStoneAmplifiedChances: _options.Rates.EnchantmentStoneAmplifiedChances);
+		if (!plan.Succeeded)
+		{
+			await SendEnchantFailureMessageAsync(plan);
+			return;
+		}
+
+		if (sourceTemplate == null)
+			return;
+
+		var targetTemplate = plan.TargetItemUpdate == null
+			? player.InventoryItems
+				.FirstOrDefault(item => item.ObjectId == packet.TargetItemObjectId)
+				?.ItemId is { } targetItemId
+				? itemTemplates.GetItemTemplate(targetItemId)
+				: null
+			: itemTemplates.GetItemTemplate(plan.TargetItemUpdate.ItemId);
+		if (targetTemplate == null)
+			return;
+
+		await BroadcastItemUsageAnimationAsync(
+			player,
+			new SmItemUsageAnimation(
+				player.ObjectId,
+				packet.TargetItemObjectId,
+				packet.StoneObjectId,
+				sourceTemplate.TemplateId,
+				4000,
+				0,
+				0,
+				1,
+				0,
+				0));
+
+		var saved = _playerEnterWorldService == null
+			|| await _playerEnterWorldService.SaveEnchantItemMutationAsync(
+				player,
+				plan.TargetItemUpdate,
+				plan.DeletedTargetItemObjectId,
+				plan.SourceItemUpdate,
+				plan.DeletedSourceItemObjectId,
+				plan.SupplementItemUpdates,
+				plan.DeletedSupplementItemObjectIds);
+		if (!saved)
+			return;
+
+		player.InventoryItems = plan.InventoryItems;
+		foreach (var supplementUpdate in plan.SupplementItemUpdates)
+		{
+			var supplementTemplate = itemTemplates.GetItemTemplate(supplementUpdate.ItemId);
+			if (supplementTemplate != null)
+				await SendPacketAsync(new SmInventoryUpdateItem(supplementUpdate, supplementTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+		}
+		foreach (var deletedSupplementItemObjectId in plan.DeletedSupplementItemObjectIds)
+			await SendPacketAsync(new SmDeleteItem(deletedSupplementItemObjectId, SmDeleteItem.UseDeleteType));
+		await SendItemUseMutationAsync(plan.SourceItemUpdate, plan.DeletedSourceItemObjectId, sourceTemplate);
+
+		if (plan.EnchantSucceeded)
+		{
+			await SendPacketAsync(SmSystemMessage.EnchantItemSucceedNew(plan.ItemName, plan.NewEnchantLevel));
+			if (_options.Custom.EnableEnchantAnnounce && _connectionRegistry != null && plan.NewEnchantLevel is 15 or 20)
+			{
+				var announce = plan.NewEnchantLevel == 15
+					? SmSystemMessage.EnchantItemSucceeded15(player.Name, plan.ItemName)
+					: SmSystemMessage.EnchantItemSucceeded20(player.Name, plan.ItemName);
+				await _connectionRegistry.BroadcastToWorldAsync(
+					announce,
+					otherPlayer => string.Equals(otherPlayer.Race, player.Race, StringComparison.Ordinal));
+			}
+		}
+		else
+		{
+			await SendPacketAsync(SmSystemMessage.EnchantItemFailed(plan.ItemName));
+		}
+
+		if (plan.TargetItemUpdate != null)
+			await SendPacketAsync(new SmInventoryUpdateItem(plan.TargetItemUpdate, targetTemplate, updateType: 0));
+		else if (plan.DeletedTargetItemObjectId.HasValue)
+			await SendPacketAsync(new SmDeleteItem(plan.DeletedTargetItemObjectId.Value));
+
+		if (plan.TargetDestroyed)
+			await SendPacketAsync(SmSystemMessage.EnchantType1EnchantFail(plan.ItemName));
+
+		if (plan.RefreshStats)
+			await SendPacketAsync(CreateStatsInfoPacket(player, staticData));
+
+		await BroadcastItemUsageAnimationAsync(
+			player,
+			new SmItemUsageAnimation(
+				player.ObjectId,
+				packet.StoneObjectId,
+				sourceTemplate.TemplateId,
+				0,
+				plan.EnchantSucceeded ? 1 : 2,
+				0));
+	}
+
+	private async Task SendEnchantFailureMessageAsync(EnchantItemPlan plan)
+	{
+		switch (plan.Failure)
+		{
+			case EnchantItemFailure.NoTargetItem:
+				await SendPacketAsync(SmSystemMessage.EnchantItemNoTargetItem());
+				break;
+			case EnchantItemFailure.CannotEnchant:
+				await SendPacketAsync(SmSystemMessage.GiveItemOptionCannotBeGivenOption(plan.ItemName, plan.EnchantmentStoneName));
+				break;
+			case EnchantItemFailure.CannotEnchantMoreTime:
+				await SendPacketAsync(SmSystemMessage.GiveItemOptionCannotBeGivenOptionMoreTime(plan.ItemName, plan.EnchantmentStoneName));
+				break;
+			case EnchantItemFailure.AmplifiedNeedsOmega:
+				await SendPacketAsync(SmSystemMessage.ExceedCannotEnchantAmplified(plan.EnchantmentStoneName));
+				break;
+			case EnchantItemFailure.WrongSupplementLevel:
+				await SendPacketAsync(SmSystemMessage.ItemEnchantAssistantNoRightItem());
+				break;
+		}
 	}
 
 	private async Task HandleSocketManastoneAsync(Player player, CmManastone packet)

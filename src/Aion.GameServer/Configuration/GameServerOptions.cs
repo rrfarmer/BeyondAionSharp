@@ -216,6 +216,8 @@ public sealed class GameServerOptions
 			Rates = new GameServerRateOptions
 			{
 				ManastoneChances = GetFloatListWithEnvironment(loader, "gameserver.rates.manastone_chances", "75.0, 75.0"),
+				EnchantmentStoneBaseChances = GetFloatListWithEnvironment(loader, "gameserver.rates.enchantment_stone.base_chances", "65.0, 65.0"),
+				EnchantmentStoneAmplifiedChances = GetFloatListWithEnvironment(loader, "gameserver.rates.enchantment_stone.amplified_chances", "50.0, 50.0"),
 			},
 			LoadedPropertyCount = loader.Count,
 		};
@@ -494,6 +496,10 @@ public sealed class GameServerMembershipOptions
 public sealed class GameServerRateOptions
 {
 	public IReadOnlyList<float> ManastoneChances { get; init; } = [75f, 75f];
+
+	public IReadOnlyList<float> EnchantmentStoneBaseChances { get; init; } = [65f, 65f];
+
+	public IReadOnlyList<float> EnchantmentStoneAmplifiedChances { get; init; } = [50f, 50f];
 }
 
 public sealed class GameServerAdministrationOptions

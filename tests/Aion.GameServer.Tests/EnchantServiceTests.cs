@@ -8,14 +8,20 @@ public sealed class EnchantServiceTests
 {
 	private const int SwordItemId = 100100860;
 	private const int PlainSwordItemId = 100000001;
+	private const int NoEnchantSwordItemId = 100000002;
+	private const int DestructibleSwordItemId = 100000003;
 	private const int UniversalMaterialItemId = 166500002;
 	private const int InvalidMaterialItemId = 166500003;
 	private const int ToolItemId = 165030001;
 	private const int ManastoneItemId = 167000001;
 	private const int HighLevelManastoneItemId = 167000002;
+	private const int AlphaEnchantStoneItemId = 166000191;
+	private const int DeltaEnchantStoneItemId = 166000194;
+	private const int OmegaEnchantStoneItemId = 166020000;
 	private const int SupplementItemId = 166100000;
 	private const int AssuredSupplementItemId = 166150017;
 	private const int WrongLevelSupplementItemId = 166150099;
+	private const int ManastoneOnlySupplementItemId = 166150018;
 
 	[Fact]
 	public void CreateAmplificationPlan_AmplifiesTargetAndConsumesSources()
@@ -294,6 +300,171 @@ public sealed class EnchantServiceTests
 			EnchantService.CreateSocketManastonePlan(player, 1001, 3001, 1, templates).Failure);
 	}
 
+	[Fact]
+	public void CreateEnchantItemPlan_IncreasesEnchantAndConsumesSourceOnSuccess()
+	{
+		var player = CreatePlayer(
+			CreateItem(1001, SwordItemId, enchant: 14),
+			CreateItem(2001, DeltaEnchantStoneItemId, count: 2));
+
+		var plan = EnchantService.CreateEnchantItemPlan(
+			player,
+			targetItemObjectId: 1001,
+			enchantmentStoneObjectId: 2001,
+			CreateItemTemplates(),
+			enchantmentStoneBaseChances: [100f, 100f],
+			rollPercent: () => 0,
+			criticalRollPercent: () => 99);
+
+		Assert.True(plan.Succeeded);
+		Assert.True(plan.EnchantSucceeded);
+		Assert.Equal(15, plan.TargetItemUpdate?.Enchant);
+		Assert.Equal(1, plan.SourceItemUpdate?.Count);
+		Assert.Equal(15, plan.NewEnchantLevel);
+		Assert.Contains(plan.InventoryItems, item => item.ObjectId == 1001 && item.Enchant == 15);
+	}
+
+	[Fact]
+	public void CreateEnchantItemPlan_UsesSupplementCountAndCapsChance()
+	{
+		var player = CreatePlayer(
+			CreateItem(1001, SwordItemId, enchant: 10),
+			CreateItem(2001, AlphaEnchantStoneItemId),
+			CreateItem(3001, SupplementItemId, count: 6));
+
+		var plan = EnchantService.CreateEnchantItemPlan(
+			player,
+			targetItemObjectId: 1001,
+			enchantmentStoneObjectId: 2001,
+			CreateItemTemplates(),
+			supplementObjectId: 3001,
+			enchantmentStoneBaseChances: [100f, 100f],
+			rollPercent: () => 94,
+			criticalRollPercent: () => 99);
+
+		Assert.True(plan.Succeeded);
+		Assert.True(plan.EnchantSucceeded);
+		Assert.Equal(11, plan.TargetItemUpdate?.Enchant);
+		Assert.Equal(2001, plan.DeletedSourceItemObjectId);
+		var supplementUpdate = Assert.Single(plan.SupplementItemUpdates);
+		Assert.Equal(3001, supplementUpdate.ObjectId);
+		Assert.Equal(2, supplementUpdate.Count);
+	}
+
+	[Fact]
+	public void CreateEnchantItemPlan_FailureDowngradesAndConsumesTuneCount()
+	{
+		var player = CreatePlayer(
+			CreateItem(1001, SwordItemId, enchant: 12),
+			CreateItem(2001, AlphaEnchantStoneItemId));
+
+		var plan = EnchantService.CreateEnchantItemPlan(
+			player,
+			targetItemObjectId: 1001,
+			enchantmentStoneObjectId: 2001,
+			CreateItemTemplates(),
+			enchantmentStoneBaseChances: [0f, 0f],
+			rollPercent: () => 99);
+
+		Assert.True(plan.Succeeded);
+		Assert.False(plan.EnchantSucceeded);
+		Assert.Equal(10, plan.TargetItemUpdate?.Enchant);
+		Assert.Equal(1, plan.TargetItemUpdate?.TuneCount);
+		Assert.Equal(2001, plan.DeletedSourceItemObjectId);
+	}
+
+	[Fact]
+	public void CreateEnchantItemPlan_AmplifiedFailureResetsToMaxEnchant()
+	{
+		var player = CreatePlayer(
+			CreateItem(1001, SwordItemId, enchant: 18, isAmplified: true),
+			CreateItem(2001, OmegaEnchantStoneItemId));
+
+		var plan = EnchantService.CreateEnchantItemPlan(
+			player,
+			targetItemObjectId: 1001,
+			enchantmentStoneObjectId: 2001,
+			CreateItemTemplates(),
+			enchantmentStoneAmplifiedChances: [0f, 0f],
+			rollPercent: () => 99);
+
+		Assert.True(plan.Succeeded);
+		Assert.False(plan.EnchantSucceeded);
+		Assert.Equal(15, plan.TargetItemUpdate?.Enchant);
+		Assert.False(plan.TargetItemUpdate?.IsAmplified);
+	}
+
+	[Fact]
+	public void CreateEnchantItemPlan_EnchantTypeFailureDestroysTarget()
+	{
+		var player = CreatePlayer(
+			CreateItem(1001, DestructibleSwordItemId, enchant: 4),
+			CreateItem(2001, AlphaEnchantStoneItemId));
+
+		var plan = EnchantService.CreateEnchantItemPlan(
+			player,
+			targetItemObjectId: 1001,
+			enchantmentStoneObjectId: 2001,
+			CreateItemTemplates(),
+			enchantmentStoneBaseChances: [0f, 0f],
+			rollPercent: () => 99);
+
+		Assert.True(plan.Succeeded);
+		Assert.False(plan.EnchantSucceeded);
+		Assert.True(plan.TargetDestroyed);
+		Assert.Equal(1001, plan.DeletedTargetItemObjectId);
+		Assert.DoesNotContain(plan.InventoryItems, item => item.ObjectId == 1001);
+	}
+
+	[Fact]
+	public void CreateEnchantItemPlan_ReturnsJavaShapedGuardFailures()
+	{
+		var templates = CreateItemTemplates();
+		var player = CreatePlayer(
+			CreateItem(1001, SwordItemId, enchant: 15),
+			CreateItem(1002, PlainSwordItemId),
+			CreateItem(1003, NoEnchantSwordItemId),
+			CreateItem(1004, SwordItemId, enchant: 15, isAmplified: true),
+			CreateItem(1005, SwordItemId),
+			CreateItem(2001, AlphaEnchantStoneItemId),
+			CreateItem(2002, OmegaEnchantStoneItemId),
+			CreateItem(3001, WrongLevelSupplementItemId),
+			CreateItem(3002, ManastoneOnlySupplementItemId));
+
+		Assert.Equal(
+			EnchantItemFailure.NoTargetItem,
+			EnchantService.CreateEnchantItemPlan(player, 404, 2001, templates).Failure);
+		Assert.Equal(
+			EnchantItemFailure.CannotEnchantMoreTime,
+			EnchantService.CreateEnchantItemPlan(player, 1001, 2001, templates).Failure);
+		Assert.Equal(
+			EnchantItemFailure.CannotEnchant,
+			EnchantService.CreateEnchantItemPlan(player, 1002, 2001, templates).Failure);
+		Assert.Equal(
+			EnchantItemFailure.CannotAct,
+			EnchantService.CreateEnchantItemPlan(player, 1003, 2001, templates).Failure);
+		Assert.Equal(
+			EnchantItemFailure.AmplifiedNeedsOmega,
+			EnchantService.CreateEnchantItemPlan(player, 1004, 2001, templates).Failure);
+		Assert.Equal(
+			EnchantItemFailure.WrongSupplementLevel,
+			EnchantService.CreateEnchantItemPlan(player, 1005, 2002, templates, supplementObjectId: 3001).Failure);
+
+		var manastoneOnlySupplementPlan = EnchantService.CreateEnchantItemPlan(
+			player,
+			targetItemObjectId: 1005,
+			enchantmentStoneObjectId: 2002,
+			templates,
+			supplementObjectId: 3002,
+			enchantmentStoneBaseChances: [100f, 100f],
+			rollPercent: () => 0);
+
+		Assert.True(manastoneOnlySupplementPlan.Succeeded);
+		Assert.False(manastoneOnlySupplementPlan.EnchantSucceeded);
+		Assert.Empty(manastoneOnlySupplementPlan.SupplementItemUpdates);
+		Assert.Empty(manastoneOnlySupplementPlan.DeletedSupplementItemObjectIds);
+	}
+
 	private static Player CreatePlayer(params InventoryItem[] items)
 	{
 		return new Player
@@ -359,16 +530,48 @@ public sealed class EnchantServiceTests
 				"PC_ALL",
 				1,
 				0,
+				1),
+			new ItemTemplateSummary(
+				NoEnchantSwordItemId,
+				"No-Enchant Sword",
+				0,
+				1 << 9,
 				1,
+				"SWORD",
+				"NORMAL",
+				"UNIQUE",
+				"PC_ALL",
+				1,
+				0,
+				1,
+				MaxEnchantLevel: 15),
+			new ItemTemplateSummary(
+				DestructibleSwordItemId,
+				"Destructible Sword",
+				0,
+				1,
+				1,
+				"SWORD",
+				"NORMAL",
+				"UNIQUE",
+				"PC_ALL",
+				1,
+				0,
+				1,
+				EnchantType: 1,
 				MaxEnchantLevel: 15),
 			new ItemTemplateSummary(UniversalMaterialItemId, "Amplification Material", 0, 0, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
 			new ItemTemplateSummary(InvalidMaterialItemId, "Invalid Material", 0, 0, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
 			new ItemTemplateSummary(ToolItemId, "Amplification Tool", 0, 0, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
+			new ItemTemplateSummary(AlphaEnchantStoneItemId, "Alpha Enchantment Stone", 0, 0, 20, "ENCHANTMENT", "NORMAL", "RARE", "PC_ALL", 1, 0, 0, EnchantAction: new ItemEnchantActionInfo(2, 0, 0, false, 0)),
+			new ItemTemplateSummary(DeltaEnchantStoneItemId, "Delta Enchantment Stone", 0, 0, 60, "ENCHANTMENT", "NORMAL", "EPIC", "PC_ALL", 1, 0, 0, EnchantAction: new ItemEnchantActionInfo(2, 0, 0, false, 0)),
+			new ItemTemplateSummary(OmegaEnchantStoneItemId, "Omega Enchantment Stone", 0, 0, 65, "ENCHANTMENT", "NORMAL", "MYTHIC", "PC_ALL", 1, 0, 0, EnchantAction: new ItemEnchantActionInfo(2, 0, 0, false, 0)),
 			new ItemTemplateSummary(ManastoneItemId, "Manastone: HP +20", 0, 0, 50, "MANASTONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0, EnchantAction: new ItemEnchantActionInfo(1, 0, 0, false, 0)),
 			new ItemTemplateSummary(HighLevelManastoneItemId, "Manastone: HP +95", 0, 0, 80, "MANASTONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0, EnchantAction: new ItemEnchantActionInfo(1, 0, 0, false, 0)),
 			new ItemTemplateSummary(SupplementItemId, "Lesser Supplements (Heroic or Less)", 0, 0, 30, "NONE", "NORMAL", "LEGEND", "PC_ALL", 1, 0, 0, EnchantAction: new ItemEnchantActionInfo(0, 0, 0, false, 100)),
 			new ItemTemplateSummary(AssuredSupplementItemId, "Assured Greater Felicitous Socketing (Fabled)", 0, 0, 65, "NONE", "NORMAL", "UNIQUE", "PC_ALL", 1, 0, 0, EnchantAction: new ItemEnchantActionInfo(0, 1, 65, true, 100)),
 			new ItemTemplateSummary(WrongLevelSupplementItemId, "Wrong Level Supplement", 0, 0, 10, "NONE", "NORMAL", "UNIQUE", "PC_ALL", 1, 0, 0, EnchantAction: new ItemEnchantActionInfo(0, 1, 10, true, 100)),
+			new ItemTemplateSummary(ManastoneOnlySupplementItemId, "Manastone-Only Supplement", 0, 0, 65, "NONE", "NORMAL", "UNIQUE", "PC_ALL", 1, 0, 0, EnchantAction: new ItemEnchantActionInfo(0, 1, 65, true, 100)),
 		]);
 	}
 }

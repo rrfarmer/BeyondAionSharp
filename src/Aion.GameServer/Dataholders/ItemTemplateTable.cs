@@ -72,6 +72,7 @@ public sealed record ItemTemplateSummary(
 {
 	private const int CanPolishMask = 1 << 17;
 	private const int SoulBoundMask = 1 << 7;
+	private const int NoEnchantMask = 1 << 9;
 	private const int CanProcEnchantMask = 1 << 10;
 
 	private static readonly HashSet<string> WeaponGroups = new(StringComparer.Ordinal)
@@ -177,6 +178,8 @@ public sealed record ItemTemplateSummary(
 	public bool IsTradeable => (Mask & (1 << 1)) == (1 << 1);
 
 	public bool IsSoulBound => (Mask & SoulBoundMask) == SoulBoundMask;
+
+	public bool IsNoEnchant => (Mask & NoEnchantMask) == NoEnchantMask;
 
 	public bool CanPolish => (Mask & CanPolishMask) == CanPolishMask;
 

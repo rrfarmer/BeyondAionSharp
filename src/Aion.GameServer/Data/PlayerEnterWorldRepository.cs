@@ -123,6 +123,16 @@ public interface IPlayerEnterWorldRepository
 		IReadOnlyList<int> deletedSupplementItemObjectIds,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveEnchantItemMutationAsync(
+		int playerObjectId,
+		InventoryItem? targetItemUpdate,
+		int? deletedTargetItemObjectId,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		IReadOnlyList<InventoryItem> supplementItemUpdates,
+		IReadOnlyList<int> deletedSupplementItemObjectIds,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SaveGodstoneSocketMutationAsync(
 		int playerObjectId,
 		InventoryItem targetItemUpdate,
@@ -357,6 +367,19 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		InventoryItem targetItemUpdate,
 		ItemStoneSocket? addedStone,
 		int addedCategory,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		IReadOnlyList<InventoryItem> supplementItemUpdates,
+		IReadOnlyList<int> deletedSupplementItemObjectIds,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> SaveEnchantItemMutationAsync(
+		int playerObjectId,
+		InventoryItem? targetItemUpdate,
+		int? deletedTargetItemObjectId,
 		InventoryItem? sourceItemUpdate,
 		int? deletedSourceItemObjectId,
 		IReadOnlyList<InventoryItem> supplementItemUpdates,
@@ -937,6 +960,64 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		}
 	}
 
+	public async Task<bool> SaveEnchantItemMutationAsync(
+		int playerObjectId,
+		InventoryItem? targetItemUpdate,
+		int? deletedTargetItemObjectId,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		IReadOnlyList<InventoryItem> supplementItemUpdates,
+		IReadOnlyList<int> deletedSupplementItemObjectIds,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: services/EnchantService.enchantItemAct persists target enchant/amplification/tune, supplements, source, and possible target destruction.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			if (targetItemUpdate != null && !await SaveInventoryItemEnchantStateAsync(connection, transaction, playerObjectId, targetItemUpdate, cancellationToken))
+				return false;
+
+			if (deletedTargetItemObjectId.HasValue
+				&& !await DeleteInventoryItemAsync(connection, transaction, playerObjectId, deletedTargetItemObjectId.Value, cancellationToken))
+			{
+				return false;
+			}
+
+			foreach (var supplementItemUpdate in supplementItemUpdates)
+			{
+				if (!await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, supplementItemUpdate, cancellationToken))
+					return false;
+			}
+
+			foreach (var deletedSupplementItemObjectId in deletedSupplementItemObjectIds)
+			{
+				if (!await DeleteInventoryItemAsync(connection, transaction, playerObjectId, deletedSupplementItemObjectId, cancellationToken))
+					return false;
+			}
+
+			if (sourceItemUpdate != null && !await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, sourceItemUpdate, cancellationToken))
+				return false;
+
+			if (deletedSourceItemObjectId.HasValue
+				&& deletedSourceItemObjectId != deletedTargetItemObjectId
+				&& !await DeleteInventoryItemAsync(connection, transaction, playerObjectId, deletedSourceItemObjectId.Value, cancellationToken))
+			{
+				return false;
+			}
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save enchant item mutation for player {PlayerObjectId}", playerObjectId);
+			return false;
+		}
+	}
+
 	public async Task<bool> SaveGodstoneSocketMutationAsync(
 		int playerObjectId,
 		InventoryItem targetItemUpdate,
@@ -1152,6 +1233,35 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			new[]
 			{
 				new MySqlParameter { Value = item.TuneCount },
+				new MySqlParameter { Value = item.ObjectId },
+				new MySqlParameter { Value = playerObjectId },
+			});
+		return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+	}
+
+	private static async Task<bool> SaveInventoryItemEnchantStateAsync(
+		MySqlConnection connection,
+		MySqlTransaction transaction,
+		int playerObjectId,
+		InventoryItem item,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: services/EnchantService.setEnchantLevel plus InventoryDAO.store updated item fields.
+		await using var command = connection.CreateCommand();
+		command.Transaction = transaction;
+		command.CommandText = """
+			UPDATE inventory
+			SET item_count = ?, enchant = ?, is_amplified = ?, tune_count = ?, buff_skill = ?
+			WHERE item_unique_id = ? AND item_owner = ?
+			""";
+		command.Parameters.AddRange(
+			new[]
+			{
+				new MySqlParameter { Value = item.Count },
+				new MySqlParameter { Value = item.Enchant },
+				new MySqlParameter { Value = item.IsAmplified },
+				new MySqlParameter { Value = item.TuneCount },
+				new MySqlParameter { Value = item.BuffSkill },
 				new MySqlParameter { Value = item.ObjectId },
 				new MySqlParameter { Value = playerObjectId },
 			});

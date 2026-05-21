@@ -282,6 +282,28 @@ public sealed class PlayerEnterWorldService
 			cancellationToken);
 	}
 
+	public Task<bool> SaveEnchantItemMutationAsync(
+		Player player,
+		InventoryItem? targetItemUpdate,
+		int? deletedTargetItemObjectId,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		IReadOnlyList<InventoryItem> supplementItemUpdates,
+		IReadOnlyList<int> deletedSupplementItemObjectIds,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: services/EnchantService.enchantItemAct source/supplement consume and target enchant persistence.
+		return _repository.SaveEnchantItemMutationAsync(
+			player.ObjectId,
+			targetItemUpdate,
+			deletedTargetItemObjectId,
+			sourceItemUpdate,
+			deletedSourceItemObjectId,
+			supplementItemUpdates,
+			deletedSupplementItemObjectIds,
+			cancellationToken);
+	}
+
 	public Task<bool> SaveGodstoneSocketMutationAsync(
 		Player player,
 		InventoryItem targetItemUpdate,
