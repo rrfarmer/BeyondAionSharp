@@ -78,6 +78,47 @@ public sealed class GameServerBootstrapTests
 	}
 
 	[Fact]
+	public async Task ThreadPoolManager_RunsSingleDelayedTask()
+	{
+		await using var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		var ran = 0;
+
+		var scheduledTask = threadPoolManager.Schedule(
+			_ =>
+			{
+				Interlocked.Exchange(ref ran, 1);
+				return ValueTask.CompletedTask;
+			},
+			TimeSpan.FromMilliseconds(10));
+
+		await WaitUntilAsync(() => Volatile.Read(ref ran) == 1);
+		await scheduledTask.Completion;
+
+		Assert.Equal(1, Volatile.Read(ref ran));
+	}
+
+	[Fact]
+	public async Task ThreadPoolManager_CancelsSingleDelayedTask()
+	{
+		await using var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		var ran = 0;
+
+		var scheduledTask = threadPoolManager.Schedule(
+			_ =>
+			{
+				Interlocked.Exchange(ref ran, 1);
+				return ValueTask.CompletedTask;
+			},
+			TimeSpan.FromMilliseconds(100));
+
+		Assert.True(scheduledTask.Cancel());
+		await scheduledTask.Completion;
+		await Task.Delay(50);
+
+		Assert.Equal(0, Volatile.Read(ref ran));
+	}
+
+	[Fact]
 	public async Task GameTimeService_LoadsAndPeriodicallyStoresServerVariable()
 	{
 		await using var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);

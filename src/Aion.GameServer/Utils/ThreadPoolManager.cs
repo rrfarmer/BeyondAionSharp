@@ -15,6 +15,21 @@ public sealed class ThreadPoolManager : IAsyncDisposable
 		_logger = logger;
 	}
 
+	public ScheduledTask Schedule(
+		Func<CancellationToken, ValueTask> action,
+		TimeSpan delay,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: utils/ThreadPoolManager.schedule.
+		if (Volatile.Read(ref _isShutdown) != 0)
+			throw new InvalidOperationException("ThreadPoolManager is shut down.");
+
+		var linkedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_shutdownTokenSource.Token, cancellationToken);
+		var task = Task.Run(() => RunOnceAsync(action, delay, linkedTokenSource.Token), CancellationToken.None);
+		_scheduledTasks.Add(task);
+		return new ScheduledTask(task, linkedTokenSource);
+	}
+
 	public Task ScheduleAtFixedRate(
 		Func<CancellationToken, ValueTask> action,
 		TimeSpan initialDelay,
@@ -76,9 +91,70 @@ public sealed class ThreadPoolManager : IAsyncDisposable
 		}
 	}
 
+	private async Task RunOnceAsync(
+		Func<CancellationToken, ValueTask> action,
+		TimeSpan delay,
+		CancellationToken cancellationToken)
+	{
+		try
+		{
+			if (delay > TimeSpan.Zero)
+				await Task.Delay(delay, cancellationToken);
+
+			if (!cancellationToken.IsCancellationRequested)
+				await action(cancellationToken);
+		}
+		catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+		{
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Scheduled game-server task failed");
+		}
+	}
+
 	public async ValueTask DisposeAsync()
 	{
 		await ShutdownAsync();
 		_shutdownTokenSource.Dispose();
+	}
+}
+
+public sealed class ScheduledTask
+{
+	private readonly CancellationTokenSource _cancellationTokenSource;
+	private int _isComplete;
+
+	internal ScheduledTask(Task completion, CancellationTokenSource cancellationTokenSource)
+	{
+		Completion = completion;
+		_cancellationTokenSource = cancellationTokenSource;
+		_ = completion.ContinueWith(
+			_ =>
+			{
+				Interlocked.Exchange(ref _isComplete, 1);
+				_cancellationTokenSource.Dispose();
+			},
+			CancellationToken.None,
+			TaskContinuationOptions.ExecuteSynchronously,
+			TaskScheduler.Default);
+	}
+
+	public Task Completion { get; }
+
+	public bool Cancel()
+	{
+		if (Volatile.Read(ref _isComplete) != 0)
+			return false;
+
+		try
+		{
+			_cancellationTokenSource.Cancel();
+			return true;
+		}
+		catch (ObjectDisposedException)
+		{
+			return false;
+		}
 	}
 }
