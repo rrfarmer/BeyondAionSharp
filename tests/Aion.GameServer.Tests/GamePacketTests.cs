@@ -108,6 +108,8 @@ public class GamePacketTests
 			PlayerClass = "CLERIC",
 			Exp = 1500,
 			Note = "Healing today",
+			LegionId = 101,
+			LegionName = "Codeguard",
 			AccountMembership = 2,
 		};
 		var experienceTable = new PlayerExperienceTable([0, 1000, 3000]);
@@ -116,7 +118,7 @@ public class GamePacketTests
 		using var playerInfoReader = new PacketBuffer(playerInfoPayload);
 		Assert.Equal(1, (int)playerInfoReader.ReadC());
 		Assert.Equal("Yustiel", playerInfoReader.ReadS());
-		Assert.Equal(string.Empty, playerInfoReader.ReadS());
+		Assert.Equal("Codeguard", playerInfoReader.ReadS());
 		Assert.Equal(2, (int)playerInfoReader.ReadC());
 		Assert.Equal(10, playerInfoReader.ReadH());
 		Assert.Equal("Healing today", playerInfoReader.ReadS());

@@ -36,7 +36,7 @@ public sealed class SmChatWindow : GameServerPacket
 
 		buffer.WriteC(1);
 		buffer.WriteS(_target.Name);
-		buffer.WriteS(string.Empty);
+		buffer.WriteS(_target.LegionName);
 		buffer.WriteC(GetLevel());
 		buffer.WriteH(ToClassId(_target.PlayerClass));
 		buffer.WriteS(_target.Note);

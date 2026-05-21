@@ -19,6 +19,11 @@ public sealed class Player
 	// Java parity: model/account/PlayerAccount.membership consumed by chat/player-info packets.
 	public byte AccountMembership { get; set; }
 
+	// Java parity: model/team/legion/LegionMember data used by chat/player info packets.
+	public int LegionId { get; set; }
+
+	public string LegionName { get; set; } = string.Empty;
+
 	public string Name { get; init; } = string.Empty;
 
 	public string PlayerClass { get; init; } = string.Empty;

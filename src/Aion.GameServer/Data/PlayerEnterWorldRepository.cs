@@ -222,6 +222,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			command.CommandText = """
 				SELECT id, account_id, name, player_class, race, gender, note, exp, recoverexp, dp, reposte_energy, online, last_online,
 					quest_expands, npc_expands, item_expands, wh_npc_expands, wh_bonus_expands, title_id, bonus_title_id,
+					lm.legion_id, l.name AS legion_name,
 					world_id, x, y, z, heading,
 					pa.face, pa.hair, pa.deco, pa.tattoo, pa.face_contour, pa.expression, pa.jaw_line,
 					pa.skin_rgb, pa.hair_rgb, pa.eye_rgb, pa.lip_rgb, pa.face_shape, pa.forehead, pa.eye_height,
@@ -233,6 +234,8 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 					pa.hand_size, pa.leg_thickness, pa.leg_length, pa.foot_size, pa.facial_rate, pa.voice, pa.height
 				FROM players p
 				LEFT JOIN player_appearance pa ON pa.player_id = p.id
+				LEFT JOIN legion_members lm ON lm.player_id = p.id
+				LEFT JOIN legions l ON l.id = lm.legion_id
 				WHERE p.id = ? AND p.account_id = ? AND (p.deletion_date IS NULL OR p.deletion_date > CURRENT_TIMESTAMP)
 				""";
 			command.Parameters.AddRange(
@@ -255,6 +258,8 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				Race = ReadString(reader, "race"),
 				Gender = ReadString(reader, "gender"),
 				Note = ReadString(reader, "note"),
+				LegionId = ReadInt(reader, "legion_id"),
+				LegionName = ReadString(reader, "legion_name"),
 				Appearance = ReadAppearance(reader),
 				Exp = reader.GetInt64(reader.GetOrdinal("exp")),
 				RecoverableExp = ReadLong(reader, "recoverexp"),
