@@ -99,6 +99,41 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmChatWindow_WritesPlayerInfoAndNoGroupPayloads()
+	{
+		var target = new Player
+		{
+			ObjectId = 7003,
+			Name = "Yustiel",
+			PlayerClass = "CLERIC",
+			Exp = 1500,
+		};
+		var experienceTable = new PlayerExperienceTable([0, 1000, 3000]);
+
+		var playerInfoPayload = SerializeUnencryptedPayload(new SmChatWindow(target, isGroup: false, experienceTable));
+		using var playerInfoReader = new PacketBuffer(playerInfoPayload);
+		Assert.Equal(1, (int)playerInfoReader.ReadC());
+		Assert.Equal("Yustiel", playerInfoReader.ReadS());
+		Assert.Equal(string.Empty, playerInfoReader.ReadS());
+		Assert.Equal(2, (int)playerInfoReader.ReadC());
+		Assert.Equal(10, playerInfoReader.ReadH());
+		Assert.Equal(string.Empty, playerInfoReader.ReadS());
+		Assert.Equal(1, playerInfoReader.ReadD());
+		Assert.Equal(0, (int)playerInfoReader.ReadC());
+		Assert.Equal(0, playerInfoReader.Remaining);
+
+		var groupInfoPayload = SerializeUnencryptedPayload(new SmChatWindow(target, isGroup: true, experienceTable));
+		using var groupInfoReader = new PacketBuffer(groupInfoPayload);
+		Assert.Equal(4, (int)groupInfoReader.ReadC());
+		Assert.Equal("Yustiel", groupInfoReader.ReadS());
+		Assert.Equal(0, groupInfoReader.ReadD());
+		Assert.Equal(10, (int)groupInfoReader.ReadC());
+		Assert.Equal(2, (int)groupInfoReader.ReadC());
+		Assert.Equal(0, (int)groupInfoReader.ReadC());
+		Assert.Equal(0, groupInfoReader.Remaining);
+	}
+
+	[Fact]
 	public void CharacterSelectionServerPackets_WriteJavaShapedPayloads()
 	{
 		Assert.Equal(
@@ -1619,6 +1654,39 @@ public class GamePacketTests
 				{
 					buffer.WriteS("kahrun");
 					buffer.WriteS("too soon");
+				}),
+				GameConnectionState.Authed));
+	}
+
+	[Fact]
+	public void ClientPacketFactory_ParsesChatInfoPackets()
+	{
+		var playerInfo = Assert.IsType<CmChatPlayerInfo>(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(39, buffer => buffer.WriteS("yustiel")),
+				GameConnectionState.InGame));
+		var groupInfo = Assert.IsType<CmChatGroupInfo>(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(61, buffer =>
+				{
+					buffer.WriteS("marchutan");
+					buffer.WriteD(7);
+				}),
+				GameConnectionState.InGame));
+
+		Assert.Equal("yustiel", playerInfo.PlayerName);
+		Assert.Equal("marchutan", groupInfo.PlayerName);
+		Assert.Equal(7, groupInfo.Unknown);
+		Assert.Null(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(39, buffer => buffer.WriteS("yustiel")),
+				GameConnectionState.Authed));
+		Assert.Null(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(61, buffer =>
+				{
+					buffer.WriteS("marchutan");
+					buffer.WriteD(7);
 				}),
 				GameConnectionState.Authed));
 	}

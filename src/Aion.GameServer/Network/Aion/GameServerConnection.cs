@@ -275,6 +275,13 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleWhisperChatAsync(_activePlayer, whisper);
 				break;
+			case CmChatPlayerInfo chatPlayerInfo:
+				if (_activePlayer != null)
+					await HandleChatPlayerInfoAsync(_activePlayer, chatPlayerInfo);
+				break;
+			case CmChatGroupInfo chatGroupInfo:
+				await HandleChatGroupInfoAsync(chatGroupInfo);
+				break;
 			case CmMarkFriendList:
 				if (_activePlayer != null)
 				{
@@ -752,6 +759,38 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		await _connectionRegistry.SendPacketToPlayerAsync(receiver.ObjectId, new SmMessage(sender, packet.Message, 4));
+	}
+
+	private async Task HandleChatPlayerInfoAsync(Player requester, CmChatPlayerInfo packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_CHAT_PLAYER_INFO.runImpl.
+		var targetName = GetRealCharacterName(packet.PlayerName);
+		if (_connectionRegistry == null || !_connectionRegistry.TryGetOnlinePlayerByName(targetName, out var target) || target == null)
+		{
+			await SendPacketAsync(SmSystemMessage.NoSuchUser(packet.PlayerName));
+			return;
+		}
+
+		if (!WorldVisibility.IsVisibleTo(requester, target.Position))
+			await SendPacketAsync(CreateChatWindowPacket(target, isGroup: false));
+	}
+
+	private async Task HandleChatGroupInfoAsync(CmChatGroupInfo packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_CHAT_GROUP_INFO.runImpl.
+		var targetName = GetRealCharacterName(packet.PlayerName);
+		if (_connectionRegistry == null || !_connectionRegistry.TryGetOnlinePlayerByName(targetName, out var target) || target == null)
+		{
+			await SendPacketAsync(SmSystemMessage.NoSuchUser(packet.PlayerName));
+			return;
+		}
+
+		await SendPacketAsync(CreateChatWindowPacket(target, isGroup: true));
+	}
+
+	private SmChatWindow CreateChatWindowPacket(Player target, bool isGroup)
+	{
+		return new SmChatWindow(target, isGroup, _runtimeContext?.DataManager?.StaticData.PlayerExperienceTable);
 	}
 
 	private static string GetRealCharacterName(string name)
