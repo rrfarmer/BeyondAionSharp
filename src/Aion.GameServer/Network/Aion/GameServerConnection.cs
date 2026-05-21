@@ -346,6 +346,14 @@ public sealed class GameServerConnection : BaseClientConnection
 					await SendPacketAsync(new SmBlockList(_activePlayer.BlockedUsers));
 				}
 				break;
+			case CmFriendStatus friendStatus:
+				if (_activePlayer != null)
+				{
+					// Java parity: network/aion/clientpackets/CM_FRIEND_STATUS.runImpl -> FriendList.setStatus + SM_FRIEND_STATUS.
+					_activePlayer.FriendListStatus = friendStatus.Status;
+					await SendPacketAsync(new SmFriendStatus(friendStatus.Status));
+				}
+				break;
 			case CmCharacterPasskey characterPasskey:
 				await SendPacketAsync(new SmCharacterSelect(type: 2, messageType: characterPasskey.Type, wrongCount: 0));
 				break;

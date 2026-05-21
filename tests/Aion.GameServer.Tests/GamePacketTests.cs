@@ -155,6 +155,9 @@ public class GamePacketTests
 			Convert.FromHexString("03000000010203"),
 			SerializeUnencryptedPayload(new SmChatInit([1, 2, 3])));
 		Assert.Equal(
+			Convert.FromHexString("03"),
+			SerializeUnencryptedPayload(new SmFriendStatus(3)));
+		Assert.Equal(
 			Convert.FromHexString("D204000000"),
 			SerializeUnencryptedPayload(new SmCharacterList(playOk2: 1234)));
 		Assert.Equal(
@@ -1883,9 +1886,13 @@ public class GamePacketTests
 		Assert.IsType<CmMarkFriendList>(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(110, _ => { }), GameConnectionState.InGame));
 		Assert.IsType<CmShowBlockList>(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(158, _ => { }), GameConnectionState.InGame));
 		Assert.IsType<CmShowFriendList>(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(230, _ => { }), GameConnectionState.InGame));
+		var friendStatus = Assert.IsType<CmFriendStatus>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(170, buffer => buffer.WriteC(3)), GameConnectionState.InGame));
+		Assert.Equal(3, (int)friendStatus.Status);
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(110, _ => { }), GameConnectionState.Authed));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(158, _ => { }), GameConnectionState.Authed));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(230, _ => { }), GameConnectionState.Authed));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(170, buffer => buffer.WriteC(1)), GameConnectionState.Authed));
 	}
 
 	[Fact]

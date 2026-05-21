@@ -120,6 +120,9 @@ public sealed class Player
 
 	public IReadOnlyList<PlayerFriend> Friends { get; set; } = Array.Empty<PlayerFriend>();
 
+	// Java parity: model/gameobjects/player/FriendList.Status changed by CM_FRIEND_STATUS.
+	public byte FriendListStatus { get; set; }
+
 	public IReadOnlyList<PlayerBlockedUser> BlockedUsers { get; set; } = Array.Empty<PlayerBlockedUser>();
 
 	public PlayerAbyssRank AbyssRank { get; set; } = PlayerAbyssRank.Default();
