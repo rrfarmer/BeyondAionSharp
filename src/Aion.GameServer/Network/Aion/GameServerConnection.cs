@@ -1259,7 +1259,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			packet.ItemObjectId,
 			itemTemplates,
 			staticData.SkillTemplates,
-			staticData.PlayerExperienceTable);
+			staticData.PlayerExperienceTable,
+			skillTree: staticData.SkillTree);
 		if (!change.Changed)
 		{
 			if (change.Failure == EquipmentChangeFailure.SoulBindRequired)
@@ -1294,16 +1295,28 @@ public sealed class GameServerConnection : BaseClientConnection
 		// Java parity: model/gameobjects/player/Equipment.equip/unEquip/switchHands persistence and fanout.
 		var saved = _playerEnterWorldService == null
 			|| change.PersistedItems.Count == 0
-			|| await _playerEnterWorldService.SaveEquipmentMutationAsync(player, change.PersistedItems);
+			|| await _playerEnterWorldService.SaveEquipmentMutationAsync(player, change.PersistedItems, change.KinahItemUpdate);
 		if (!saved)
 			return;
 
 		player.InventoryItems = change.InventoryItems;
+		if (change.FinalSkills.Count > 0 || change.SkillListUpdates.Count > 0 || change.SkillRemoveUpdates.Count > 0)
+			player.Skills = change.FinalSkills;
 		foreach (var update in change.InventoryUpdateItems)
 		{
 			if (itemTemplates.GetItemTemplate(update.ItemId) is { } template)
 				await SendPacketAsync(new SmInventoryUpdateItem(update, template, SmInventoryUpdateItem.EquipUnequip));
 		}
+
+		if (change.KinahItemUpdate != null && itemTemplates.GetItemTemplate(KinahItemId) is { } kinahTemplate)
+			await SendPacketAsync(new SmInventoryUpdateItem(change.KinahItemUpdate, kinahTemplate, SmInventoryUpdateItem.DecreaseKinahBuy));
+
+		foreach (var skillName in change.StigmaSkillRemoveMessages)
+			await SendPacketAsync(SmSystemMessage.StigmaSkillUnavailable(skillName));
+		foreach (var removedSkill in change.SkillRemoveUpdates)
+			await SendPacketAsync(new SmSkillRemove(removedSkill));
+		foreach (var addedSkill in change.SkillListUpdates)
+			await SendPacketAsync(new SmSkillList([addedSkill], addedSkill.SkillType >= 3 ? 1402891 : 1300401));
 
 		if (change.RefreshStats)
 			await SendPacketAsync(CreateStatsInfoPacket(player, staticData));
@@ -1355,7 +1368,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			itemTemplates,
 			staticData.SkillTemplates,
 			staticData.PlayerExperienceTable,
-			soulBindConfirmed: true);
+			soulBindConfirmed: true,
+			skillTree: staticData.SkillTree);
 		if (!change.Changed)
 			return;
 
@@ -1391,6 +1405,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				break;
 			case EquipmentChangeFailure.InvalidRank:
 				await SendPacketAsync(SmSystemMessage.CannotUseItemInvalidRank(change.RankName));
+				break;
+			case EquipmentChangeFailure.StigmaNotEnoughKinah:
+				await SendPacketAsync(SmSystemMessage.StigmaNotEnoughMoney());
 				break;
 		}
 	}

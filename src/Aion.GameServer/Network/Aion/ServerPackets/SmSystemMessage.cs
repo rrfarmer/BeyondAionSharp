@@ -187,6 +187,18 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300488);
 	}
 
+	public static SmSystemMessage StigmaNotEnoughMoney()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_STIGMA_NOT_ENOUGH_MONEY.
+		return new SmSystemMessage(1300413);
+	}
+
+	public static SmSystemMessage StigmaSkillUnavailable(string skillName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_STIGMA_YOU_CANNOT_USE_THIS_SKILL_AFTER_UNEQUIP_STIGMA_STONE.
+		return new SmSystemMessage(1300403, skillName);
+	}
+
 	public static SmSystemMessage ExchangeFullInventory()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_EXCHANGE_FULL_INVENTORY.

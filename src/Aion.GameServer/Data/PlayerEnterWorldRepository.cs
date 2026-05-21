@@ -99,6 +99,7 @@ public interface IPlayerEnterWorldRepository
 	Task<bool> SaveEquipmentMutationAsync(
 		int playerObjectId,
 		IReadOnlyList<InventoryItem> items,
+		InventoryItem? kinahItem = null,
 		CancellationToken cancellationToken = default);
 
 	Task<bool> SavePlayerLogoutAsync(Player player, DateTime lastOnline, CancellationToken cancellationToken = default);
@@ -289,6 +290,7 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	public Task<bool> SaveEquipmentMutationAsync(
 		int playerObjectId,
 		IReadOnlyList<InventoryItem> items,
+		InventoryItem? kinahItem = null,
 		CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(true);
@@ -676,6 +678,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	public async Task<bool> SaveEquipmentMutationAsync(
 		int playerObjectId,
 		IReadOnlyList<InventoryItem> items,
+		InventoryItem? kinahItem = null,
 		CancellationToken cancellationToken = default)
 	{
 		// Java parity: dao/InventoryDAO.store updated equipped flag and equipment slot after Equipment equip/unequip/switch.
@@ -702,6 +705,9 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				if (await command.ExecuteNonQueryAsync(cancellationToken) <= 0)
 					return false;
 			}
+
+			if (kinahItem != null && !await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, kinahItem, cancellationToken))
+				return false;
 
 			await transaction.CommitAsync(cancellationToken);
 			return true;

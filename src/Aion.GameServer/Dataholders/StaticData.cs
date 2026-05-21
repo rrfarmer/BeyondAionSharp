@@ -555,6 +555,19 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 3 && reader.LocalName == "stigma" && currentItemTemplate != null)
+			{
+				// Java parity: model/templates/item/Stigma.afterUnmarshal gain skill groups.
+				var gainSkillGroup1 = reader.GetAttribute("gain_skill_group1") ?? string.Empty;
+				var gainSkillGroup2 = reader.GetAttribute("gain_skill_group2") ?? string.Empty;
+				currentItemTemplate.StigmaInfo = new ItemStigmaInfo(
+					new[] { gainSkillGroup1, gainSkillGroup2 }
+						.Where(group => !string.IsNullOrWhiteSpace(group))
+						.ToArray(),
+					ReadBoolAttribute(reader, "chargeable"));
+				continue;
+			}
+
 			if (reader.Depth == 3 && reader.LocalName == "uselimits" && currentItemTemplate != null)
 			{
 				currentItemTemplate.GenderPermitted = reader.GetAttribute("gender") ?? string.Empty;
@@ -637,7 +650,10 @@ public sealed class StaticData
 					reader.GetAttribute("skilltype") ?? string.Empty,
 					reader.GetAttribute("skillsubtype") ?? string.Empty,
 					ReadIntAttribute(reader, "cooldownId"),
-					ReadIntAttribute(reader, "cooldown"));
+					ReadIntAttribute(reader, "cooldown"))
+				{
+					StigmaType = reader.GetAttribute("stigma") ?? string.Empty,
+				};
 				if (reader.IsEmptyElement)
 				{
 					skillTemplates.Add(currentSkillTemplate.ToSummary());
@@ -944,6 +960,8 @@ public sealed class StaticData
 
 		private int Cooldown { get; }
 
+		public string StigmaType { get; set; } = string.Empty;
+
 		public void StartArmorMastery(string armorType, int value, int delta)
 		{
 			_currentMasteryChanges = [];
@@ -1001,7 +1019,8 @@ public sealed class StaticData
 				_armorMasteryEffects.ToArray(),
 				_weaponMasteryEffects.ToArray(),
 				_shieldMasteryEffects.ToArray(),
-				_weaponDualEffects.ToArray());
+				_weaponDualEffects.ToArray(),
+				StigmaType);
 		}
 	}
 
@@ -1303,6 +1322,8 @@ public sealed class StaticData
 
 		public ItemIdianInfo? IdianInfo { get; set; }
 
+		public ItemStigmaInfo? StigmaInfo { get; set; }
+
 		public List<ItemStatModifier> Modifiers { get; } = [];
 
 		public int DispositionItemId { get; set; }
@@ -1381,6 +1402,7 @@ public sealed class StaticData
 				Improvement,
 				RecommendRank,
 				IdianInfo,
+				StigmaInfo,
 				RequiredLevels,
 				MaxLevelRestrictions,
 				GenderPermitted,

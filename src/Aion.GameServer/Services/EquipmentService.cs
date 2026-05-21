@@ -24,13 +24,14 @@ public static class EquipmentService
 		ItemTemplateTable itemTemplates,
 		SkillTemplateTable? skillTemplates,
 		PlayerExperienceTable? experienceTable = null,
-		bool soulBindConfirmed = false)
+		bool soulBindConfirmed = false,
+		SkillTreeTable? skillTree = null)
 	{
 		// Java parity: network/aion/clientpackets/CM_EQUIP_ITEM.runImpl action routing.
 		return action switch
 		{
-			0 => EquipItem(player, slotRead, itemObjectId, itemTemplates, skillTemplates, experienceTable, soulBindConfirmed),
-			1 => UnEquipItem(player, itemObjectId, itemTemplates),
+			0 => EquipItem(player, slotRead, itemObjectId, itemTemplates, skillTemplates, experienceTable, soulBindConfirmed, skillTree),
+			1 => UnEquipItem(player, itemObjectId, itemTemplates, skillTemplates, skillTree),
 			2 => SwitchHands(player, itemTemplates),
 			_ => EquipmentChangeResult.NoChange(),
 		};
@@ -43,7 +44,8 @@ public static class EquipmentService
 		ItemTemplateTable itemTemplates,
 		SkillTemplateTable? skillTemplates,
 		PlayerExperienceTable? experienceTable,
-		bool soulBindConfirmed)
+		bool soulBindConfirmed,
+		SkillTreeTable? skillTree)
 	{
 		// Java parity: model/gameobjects/player/Equipment.equipItem.
 		var inventoryItems = player.InventoryItems.ToList();
@@ -77,6 +79,37 @@ public static class EquipmentService
 		if (!item.IsIdentified)
 			return EquipmentChangeResult.UnidentifiedItemFailure();
 
+		var addedSkills = Array.Empty<PlayerSkill>();
+		var removedSkills = Array.Empty<PlayerSkill>();
+		var removedSkillNames = Array.Empty<string>();
+		IReadOnlyList<PlayerSkill>? updatedSkills = null;
+		InventoryItem? kinahItemUpdate = null;
+		if (template.StigmaInfo != null && skillTemplates != null && skillTree != null)
+		{
+			var stigma = StigmaService.NotifyEquipAction(
+				player,
+				item,
+				template,
+				slot,
+				inventoryItems,
+				itemTemplates,
+				skillTemplates,
+				skillTree,
+				experienceTable);
+			if (!stigma.Allowed)
+				return stigma.Failure == StigmaEquipFailure.NotEnoughKinah
+					? EquipmentChangeResult.StigmaNotEnoughKinahFailure()
+					: EquipmentChangeResult.StigmaDeniedFailure();
+
+			updatedSkills = stigma.Skills;
+			addedSkills = stigma.AddedSkills.ToArray();
+			removedSkills = stigma.RemovedSkills.ToArray();
+			removedSkillNames = stigma.RemovedSkillNames.ToArray();
+			kinahItemUpdate = stigma.KinahItemUpdate;
+			if (kinahItemUpdate != null)
+				ReplaceInventoryItem(inventoryItems, kinahItemUpdate);
+		}
+
 		if (template.IsSoulBound && !item.IsSoulBound)
 		{
 			if (!soulBindConfirmed)
@@ -99,7 +132,15 @@ public static class EquipmentService
 		updates.Add(equippedItem);
 		persisted.Add(equippedItem);
 
-		return EquipmentChangeResult.Success(inventoryItems, persisted, updates);
+		return EquipmentChangeResult.Success(
+			inventoryItems,
+			persisted,
+			updates,
+			kinahItemUpdate,
+			updatedSkills,
+			addedSkills,
+			removedSkills,
+			removedSkillNames);
 	}
 
 	private static EquipmentChangeResult? ValidateEquipRestrictions(
@@ -143,7 +184,9 @@ public static class EquipmentService
 	private static EquipmentChangeResult UnEquipItem(
 		Player player,
 		int itemObjectId,
-		ItemTemplateTable itemTemplates)
+		ItemTemplateTable itemTemplates,
+		SkillTemplateTable? skillTemplates,
+		SkillTreeTable? skillTree)
 	{
 		// Java parity: model/gameobjects/player/Equipment.unEquipItem(int, boolean).
 		if (InventoryCapacity.GetFreeCubeSlots(player) <= 0)
@@ -153,6 +196,18 @@ public static class EquipmentService
 		var item = GetEquippedItemByObjectId(inventoryItems, itemObjectId);
 		if (item == null)
 			return EquipmentChangeResult.FullInventoryFailure();
+
+		var itemTemplate = itemTemplates.GetItemTemplate(item.ItemId);
+		IReadOnlyList<PlayerSkill>? updatedSkills = null;
+		var removedSkills = Array.Empty<PlayerSkill>();
+		var removedSkillNames = Array.Empty<string>();
+		if (itemTemplate?.StigmaInfo != null && skillTemplates != null && skillTree != null)
+		{
+			var stigma = StigmaService.NotifyUnequipAction(player, item, itemTemplate, skillTemplates, skillTree);
+			updatedSkills = stigma.Skills;
+			removedSkills = stigma.RemovedSkills.ToArray();
+			removedSkillNames = stigma.RemovedSkillNames.ToArray();
+		}
 
 		var slotsToUnequip = item.Slot;
 		if (item.Slot == MainHand)
@@ -172,7 +227,15 @@ public static class EquipmentService
 		if (updates.Length == 0)
 			return EquipmentChangeResult.FullInventoryFailure();
 
-		return EquipmentChangeResult.Success(inventoryItems, updates, updates);
+		return EquipmentChangeResult.Success(
+			inventoryItems,
+			updates,
+			updates,
+			kinahItemUpdate: null,
+			skills: updatedSkills,
+			addedSkills: Array.Empty<PlayerSkill>(),
+			removedSkills: removedSkills,
+			removedStigmaSkillNames: removedSkillNames);
 	}
 
 	private static EquipmentChangeResult SwitchHands(Player player, ItemTemplateTable itemTemplates)
@@ -440,6 +503,8 @@ public enum EquipmentChangeFailure
 	MissingRequiredSkill,
 	UnidentifiedItem,
 	SoulBindRequired,
+	StigmaDenied,
+	StigmaNotEnoughKinah,
 }
 
 public sealed record EquipmentChangeResult(
@@ -456,8 +521,21 @@ public sealed record EquipmentChangeResult(
 	string RankName = "",
 	string ItemName = "",
 	int SoulBindItemObjectId = 0,
-	long SoulBindSlot = 0)
+	long SoulBindSlot = 0,
+	InventoryItem? KinahItemUpdate = null,
+	IReadOnlyList<PlayerSkill>? Skills = null,
+	IReadOnlyList<PlayerSkill>? AddedSkills = null,
+	IReadOnlyList<PlayerSkill>? RemovedSkills = null,
+	IReadOnlyList<string>? RemovedStigmaSkillNames = null)
 {
+	public IReadOnlyList<PlayerSkill> FinalSkills => Skills ?? Array.Empty<PlayerSkill>();
+
+	public IReadOnlyList<PlayerSkill> SkillListUpdates => AddedSkills ?? Array.Empty<PlayerSkill>();
+
+	public IReadOnlyList<PlayerSkill> SkillRemoveUpdates => RemovedSkills ?? Array.Empty<PlayerSkill>();
+
+	public IReadOnlyList<string> StigmaSkillRemoveMessages => RemovedStigmaSkillNames ?? Array.Empty<string>();
+
 	public static EquipmentChangeResult NoChange()
 	{
 		return new EquipmentChangeResult(
@@ -538,10 +616,26 @@ public sealed record EquipmentChangeResult(
 		};
 	}
 
+	public static EquipmentChangeResult StigmaDeniedFailure()
+	{
+		// Java parity: services/StigmaService.notifyEquipAction audit-only denials return null from Equipment.equipItem.
+		return NoChange() with { Failure = EquipmentChangeFailure.StigmaDenied };
+	}
+
+	public static EquipmentChangeResult StigmaNotEnoughKinahFailure()
+	{
+		return NoChange() with { Failure = EquipmentChangeFailure.StigmaNotEnoughKinah };
+	}
+
 	public static EquipmentChangeResult Success(
 		IReadOnlyList<InventoryItem> inventoryItems,
 		IReadOnlyList<InventoryItem> persistedItems,
-		IReadOnlyList<InventoryItem> inventoryUpdateItems)
+		IReadOnlyList<InventoryItem> inventoryUpdateItems,
+		InventoryItem? kinahItemUpdate = null,
+		IReadOnlyList<PlayerSkill>? skills = null,
+		IReadOnlyList<PlayerSkill>? addedSkills = null,
+		IReadOnlyList<PlayerSkill>? removedSkills = null,
+		IReadOnlyList<string>? removedStigmaSkillNames = null)
 	{
 		return new EquipmentChangeResult(
 			Changed: true,
@@ -550,6 +644,11 @@ public sealed record EquipmentChangeResult(
 			RefreshStats: true,
 			InventoryItems: inventoryItems,
 			PersistedItems: persistedItems,
-			InventoryUpdateItems: inventoryUpdateItems);
+			InventoryUpdateItems: inventoryUpdateItems,
+			KinahItemUpdate: kinahItemUpdate,
+			Skills: skills,
+			AddedSkills: addedSkills,
+			RemovedSkills: removedSkills,
+			RemovedStigmaSkillNames: removedStigmaSkillNames);
 	}
 }

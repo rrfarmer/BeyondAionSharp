@@ -57,6 +57,7 @@ public sealed record ItemTemplateSummary(
 	ItemImprovement? Improvement = null,
 	int RecommendRank = 0,
 	ItemIdianInfo? IdianInfo = null,
+	ItemStigmaInfo? StigmaInfo = null,
 	IReadOnlyDictionary<string, int>? RequiredLevels = null,
 	IReadOnlyDictionary<string, int>? MaxLevelRestrictions = null,
 	string GenderPermitted = "",
@@ -160,7 +161,7 @@ public sealed record ItemTemplateSummary(
 
 	public bool IsPlume => string.Equals(ItemGroup, "PLUME", StringComparison.Ordinal);
 
-	public bool IsStigma => string.Equals(ItemGroup, "STIGMA", StringComparison.Ordinal);
+	public bool IsStigma => StigmaInfo != null || string.Equals(ItemGroup, "STIGMA", StringComparison.Ordinal);
 
 	public bool IsStigmaShard => string.Equals(ItemGroup, "STIGMA_SHARD", StringComparison.Ordinal);
 
@@ -292,6 +293,9 @@ public sealed record ItemImprovement(
 
 // Java parity: model/templates/item/actions/IdianAction.
 public sealed record ItemIdianInfo(int BurnAttack, int BurnDefend);
+
+// Java parity: model/templates/item/Stigma.
+public sealed record ItemStigmaInfo(IReadOnlyList<string> GainSkillGroups, bool Chargeable);
 
 public sealed record ItemStatModifier(
 	string Operation,

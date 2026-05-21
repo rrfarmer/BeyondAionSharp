@@ -24,11 +24,13 @@ public sealed class SkillTreeTable
 	];
 
 	private readonly IReadOnlyDictionary<SkillTreeKey, IReadOnlyList<SkillLearnSummary>> _templatesByClassRaceLevel;
+	private readonly IReadOnlyDictionary<int, IReadOnlyList<SkillLearnSummary>> _templatesBySkillId;
 
 	public SkillTreeTable(IReadOnlyList<SkillLearnSummary> templates, SkillTemplateTable skillTemplates)
 	{
 		// Java parity: dataholders/SkillTreeData.afterUnmarshal expands blank classId entries to all player classes.
 		var templatesByClassRaceLevel = new Dictionary<SkillTreeKey, List<SkillLearnSummary>>();
+		var templatesBySkillId = new Dictionary<int, List<SkillLearnSummary>>();
 		foreach (var template in templates)
 		{
 			var skillTemplate = skillTemplates.GetSkillTemplate(template.SkillId);
@@ -36,15 +38,18 @@ public sealed class SkillTreeTable
 			if (string.IsNullOrEmpty(normalized.PlayerClass))
 			{
 				foreach (var playerClass in PlayerClasses)
-					AddTemplate(templatesByClassRaceLevel, normalized with { PlayerClass = playerClass });
+					AddTemplate(templatesByClassRaceLevel, templatesBySkillId, normalized with { PlayerClass = playerClass });
 			}
 			else
 			{
-				AddTemplate(templatesByClassRaceLevel, normalized);
+				AddTemplate(templatesByClassRaceLevel, templatesBySkillId, normalized);
 			}
 		}
 
 		_templatesByClassRaceLevel = templatesByClassRaceLevel.ToDictionary(
+			pair => pair.Key,
+			pair => (IReadOnlyList<SkillLearnSummary>) pair.Value.AsReadOnly());
+		_templatesBySkillId = templatesBySkillId.ToDictionary(
 			pair => pair.Key,
 			pair => (IReadOnlyList<SkillLearnSummary>) pair.Value.AsReadOnly());
 	}
@@ -73,7 +78,71 @@ public sealed class SkillTreeTable
 		return result;
 	}
 
-	private static void AddTemplate(Dictionary<SkillTreeKey, List<SkillLearnSummary>> templatesByClassRaceLevel, SkillLearnSummary template)
+	public IReadOnlyList<SkillLearnSummary> GetTemplatesForSkill(int skillId, string playerClass, string race)
+	{
+		// Java parity: dataholders/SkillTreeData.getTemplatesForSkill.
+		if (!_templatesBySkillId.TryGetValue(skillId, out var bySkillId))
+			return Array.Empty<SkillLearnSummary>();
+
+		return bySkillId
+			.Where(template =>
+				string.Equals(template.PlayerClass, playerClass, StringComparison.Ordinal)
+				&& (string.Equals(template.Race, "PC_ALL", StringComparison.Ordinal)
+					|| string.Equals(template.Race, race, StringComparison.Ordinal)))
+			.ToArray();
+	}
+
+	public IReadOnlyList<SkillLearnSummary> GetSkillsForSkill(
+		int skillId,
+		string playerClass,
+		string race,
+		int playerLevel,
+		SkillTemplateTable skillTemplates)
+	{
+		// Java parity: dataholders/SkillTreeData.getSkillsForSkill.
+		var skillTree = new List<SkillLearnSummary>();
+		foreach (var learnTemplate in GetTemplatesForSkill(GetHighestSkill(skillId, skillTemplates), playerClass, race))
+		{
+			CreateSkillTree(learnTemplate, skillTree);
+			break;
+		}
+
+		if (playerLevel > -1)
+			skillTree.RemoveAll(template => template.MinLevel > playerLevel);
+		return skillTree;
+	}
+
+	private void CreateSkillTree(SkillLearnSummary topSkill, List<SkillLearnSummary> addList)
+	{
+		addList.Insert(0, topSkill);
+		if (topSkill.SkillLearn == null)
+			return;
+
+		foreach (var template in GetTemplatesForSkill(topSkill.SkillLearn.Value, topSkill.PlayerClass, topSkill.Race))
+		{
+			if (topSkill.IsStigma != template.IsStigma)
+				continue;
+			CreateSkillTree(template, addList);
+			break;
+		}
+	}
+
+	private static int GetHighestSkill(int skillId, SkillTemplateTable skillTemplates)
+	{
+		var baseTemplate = skillTemplates.GetSkillTemplate(skillId);
+		if (baseTemplate == null || string.IsNullOrEmpty(baseTemplate.Stack))
+			return skillId;
+
+		var stackTemplates = skillTemplates.GetSkillTemplatesByStack(baseTemplate.Stack);
+		return stackTemplates.Count == 0
+			? skillId
+			: stackTemplates.MaxBy(template => template.Level)?.SkillId ?? skillId;
+	}
+
+	private static void AddTemplate(
+		Dictionary<SkillTreeKey, List<SkillLearnSummary>> templatesByClassRaceLevel,
+		Dictionary<int, List<SkillLearnSummary>> templatesBySkillId,
+		SkillLearnSummary template)
 	{
 		var key = new SkillTreeKey(template.PlayerClass, template.Race, template.MinLevel);
 		if (!templatesByClassRaceLevel.TryGetValue(key, out var templates))
@@ -83,6 +152,14 @@ public sealed class SkillTreeTable
 		}
 
 		templates.Add(template);
+
+		if (!templatesBySkillId.TryGetValue(template.SkillId, out var bySkillId))
+		{
+			bySkillId = [];
+			templatesBySkillId[template.SkillId] = bySkillId;
+		}
+
+		bySkillId.Add(template);
 	}
 
 	private sealed record SkillTreeKey(string PlayerClass, string Race, int Level);
@@ -96,4 +173,9 @@ public sealed record SkillLearnSummary(
 	int MinLevel,
 	bool AutoLearn,
 	int Stigma,
-	int SkillLevel);
+	int SkillLevel)
+{
+	public bool IsStigma => Stigma > 0;
+
+	public bool IsLinkedStigma => Stigma == 4;
+}

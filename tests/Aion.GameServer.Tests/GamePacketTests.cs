@@ -192,6 +192,9 @@ public class GamePacketTests
 					[new PlayerSkill { SkillId = 37, SkillLevel = 1 }],
 					() => DateTimeOffset.FromUnixTimeSeconds(123456))));
 		Assert.Equal(
+			Convert.FromHexString("F4010301"),
+			SerializeUnencryptedPayload(new SmSkillRemove(new PlayerSkill { SkillId = 500, SkillLevel = 3, SkillType = 1 })));
+		Assert.Equal(
 			Convert.FromHexString("01000025000A000000E8030000"),
 			SerializeUnencryptedPayload(
 				new SmSkillCooldown(
@@ -537,6 +540,8 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.SoulBoundItemSucceed("item"), 1300485, "item");
 		AssertSystemMessage(SmSystemMessage.SoulBoundItemCanceled("item"), 1300487, "item");
 		AssertSystemMessage(SmSystemMessage.SoulBoundCloseOtherMsgBoxAndRetry(), 1300488);
+		AssertSystemMessage(SmSystemMessage.StigmaNotEnoughMoney(), 1300413);
+		AssertSystemMessage(SmSystemMessage.StigmaSkillUnavailable("skill"), 1300403, "skill");
 		AssertSystemMessage(SmSystemMessage.ExchangeFullInventory(), 1300366);
 		AssertSystemMessage(SmSystemMessage.MailTakeAllCancel(), 1402251);
 		AssertSystemMessage(SmSystemMessage.NoSuchUser("Kahrun"), 1300627, "Kahrun");

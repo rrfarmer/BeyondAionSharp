@@ -78,7 +78,8 @@ public sealed record SkillTemplateSummary(
 	IReadOnlyList<SkillArmorMasteryEffectSummary>? ArmorMasteryEffects = null,
 	IReadOnlyList<SkillWeaponMasteryEffectSummary>? WeaponMasteryEffects = null,
 	IReadOnlyList<SkillShieldMasteryEffectSummary>? ShieldMasteryEffects = null,
-	IReadOnlyList<SkillWeaponDualEffectSummary>? WeaponDualEffects = null)
+	IReadOnlyList<SkillWeaponDualEffectSummary>? WeaponDualEffects = null,
+	string StigmaType = "")
 {
 	public IReadOnlyList<SkillArmorMasteryEffectSummary> ArmorMastery => ArmorMasteryEffects ?? Array.Empty<SkillArmorMasteryEffectSummary>();
 
@@ -87,6 +88,18 @@ public sealed record SkillTemplateSummary(
 	public IReadOnlyList<SkillShieldMasteryEffectSummary> ShieldMastery => ShieldMasteryEffects ?? Array.Empty<SkillShieldMasteryEffectSummary>();
 
 	public IReadOnlyList<SkillWeaponDualEffectSummary> WeaponDual => WeaponDualEffects ?? Array.Empty<SkillWeaponDualEffectSummary>();
+
+	public bool IsStigmaSkill => !string.IsNullOrEmpty(StigmaType) && !string.Equals(StigmaType, "NONE", StringComparison.Ordinal);
+
+	public string? GetClientName()
+	{
+		// Java parity: model/templates/L10n.getL10n -> utils/ChatUtil.l10n.
+		if (NameId == 0)
+			return null;
+
+		var l10nId = (NameId << 1) | 1;
+		return string.Concat("$", (char)(l10nId & 0xffff), (char)((l10nId >>> 16) & 0xffff));
+	}
 }
 
 // Java parity: skillengine/effect/ArmorMasteryEffect.

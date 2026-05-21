@@ -396,6 +396,95 @@ public sealed class EquipmentServiceTests
 		Assert.Equal([(1001, true, true, 1L)], change.PersistedItems.Select(item => (item.ObjectId, item.IsSoulBound, item.IsEquipped, item.Slot)).ToArray());
 	}
 
+	[Fact]
+	public void ChangeEquipment_EquipsStigmaWithKinahCostAndTemporarySkill()
+	{
+		var player = CreatePlayer(playerClass: "GLADIATOR", exp: 46);
+		player.Quests = [new PlayerQuestState(1929, "COMPLETE", 0, 0, 1)];
+		player.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 77, ItemId = KinahItemId, Count = 50_000, Location = 0 },
+			new InventoryItem { ObjectId = 1001, ItemId = StigmaId, Location = 0, Slot = 65535, Enchant = 2 },
+		];
+
+		var change = EquipmentService.ChangeEquipment(
+			player,
+			action: 0,
+			slotRead: StigmaSlot1,
+			itemObjectId: 1001,
+			CreateItemTemplates(),
+			CreateStigmaSkillTemplates(),
+			CreateExperienceTable(),
+			skillTree: CreateStigmaSkillTree());
+
+		Assert.True(change.Changed);
+		Assert.Equal(25_000, change.KinahItemUpdate?.Count);
+		Assert.Equal([(1001, true, StigmaSlot1)], change.PersistedItems.Select(item => (item.ObjectId, item.IsEquipped, item.Slot)).ToArray());
+		var learnedSkill = Assert.Single(change.SkillListUpdates);
+		Assert.Equal(500, learnedSkill.SkillId);
+		Assert.Equal(3, learnedSkill.SkillLevel);
+		Assert.Equal(1, learnedSkill.SkillType);
+		Assert.Contains(change.FinalSkills, skill => skill.SkillId == 500 && skill.SkillLevel == 3 && skill.SkillType == 1);
+	}
+
+	[Fact]
+	public void ChangeEquipment_RejectsStigmaWhenKinahIsMissing()
+	{
+		var player = CreatePlayer(playerClass: "GLADIATOR", exp: 46);
+		player.Quests = [new PlayerQuestState(1929, "COMPLETE", 0, 0, 1)];
+		player.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 77, ItemId = KinahItemId, Count = 10, Location = 0 },
+			new InventoryItem { ObjectId = 1001, ItemId = StigmaId, Location = 0, Slot = 65535 },
+		];
+
+		var change = EquipmentService.ChangeEquipment(
+			player,
+			action: 0,
+			slotRead: StigmaSlot1,
+			itemObjectId: 1001,
+			CreateItemTemplates(),
+			CreateStigmaSkillTemplates(),
+			CreateExperienceTable(),
+			skillTree: CreateStigmaSkillTree());
+
+		Assert.False(change.Changed);
+		Assert.Equal(EquipmentChangeFailure.StigmaNotEnoughKinah, change.Failure);
+		Assert.Empty(change.PersistedItems);
+		Assert.Empty(change.SkillListUpdates);
+	}
+
+	[Fact]
+	public void ChangeEquipment_UnequipsStigmaAndRemovesTemporarySkill()
+	{
+		var player = CreatePlayer(playerClass: "GLADIATOR", exp: 46);
+		player.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 77, ItemId = KinahItemId, Count = 50_000, Location = 0 },
+			new InventoryItem { ObjectId = 1001, ItemId = StigmaId, Location = 0, IsEquipped = true, Slot = StigmaSlot1 },
+		];
+		player.Skills =
+		[
+			new PlayerSkill { SkillId = 37, SkillLevel = 1 },
+			new PlayerSkill { SkillId = 500, SkillLevel = 3, SkillType = 1 },
+		];
+
+		var change = EquipmentService.ChangeEquipment(
+			player,
+			action: 1,
+			slotRead: 0,
+			itemObjectId: 1001,
+			CreateItemTemplates(),
+			CreateStigmaSkillTemplates(),
+			CreateExperienceTable(),
+			skillTree: CreateStigmaSkillTree());
+
+		Assert.True(change.Changed);
+		Assert.DoesNotContain(change.FinalSkills, skill => skill.SkillId == 500);
+		Assert.Equal([500], change.SkillRemoveUpdates.Select(skill => skill.SkillId).ToArray());
+		Assert.Single(change.StigmaSkillRemoveMessages);
+	}
+
 	private static Player CreatePlayer(
 		string playerClass = "WARRIOR",
 		string race = "ELYOS",
@@ -431,6 +520,7 @@ public sealed class EquipmentServiceTests
 			new(SoulBoundSwordId, "Practice Soulbound Sword", 0, 1 << 7, 1, "SWORD", "NORMAL", "COMMON", "PC_ALL", 1, 0, 3, RequiredLevels: RequiredLevels(1)),
 			new(GreatswordId, "Practice Greatsword", 0, 1, 1, "GREATSWORD", "NORMAL", "COMMON", "PC_ALL", 1, 0, 3, RequiredLevels: RequiredLevels(1)),
 			new(RobeId, "Practice Robe", 0, 1, 1, "CL_TORSO", "NORMAL", "COMMON", "PC_ALL", 1, 0, 8, RequiredLevels: RequiredLevels(1)),
+			new(StigmaId, "Practice Stigma", 0, 1, 20, "STIGMA", "NORMAL", "COMMON", "PC_ALL", 1, 0, StigmaSlot1 | StigmaSlot2 | StigmaSlot3, StigmaInfo: new ItemStigmaInfo(["STIGMA_TEST"], Chargeable: true), RequiredLevels: RequiredLevels(("GLADIATOR", 20))),
 		};
 		templates.AddRange(extraTemplates);
 		return new ItemTemplateTable(templates);
@@ -465,11 +555,48 @@ public sealed class EquipmentServiceTests
 		]);
 	}
 
+	private static SkillTemplateTable CreateStigmaSkillTemplates()
+	{
+		return new SkillTemplateTable(
+		[
+			new SkillTemplateSummary(
+				500,
+				"Practice Stigma Skill",
+				200,
+				1,
+				"STIGMA_TEST",
+				"STIGMA_TEST",
+				"PHYSICAL",
+				"ATTACK",
+				0,
+				0,
+				StigmaType: "NORMAL"),
+		]);
+	}
+
+	private static SkillTreeTable CreateStigmaSkillTree()
+	{
+		return new SkillTreeTable(
+		[
+			new SkillLearnSummary("GLADIATOR", 500, null, "PC_ALL", 20, AutoLearn: false, Stigma: 1, SkillLevel: 0),
+		], CreateStigmaSkillTemplates());
+	}
+
+	private static PlayerExperienceTable CreateExperienceTable()
+	{
+		return new PlayerExperienceTable(Enumerable.Range(0, 70).Select(level => (long)level).ToArray());
+	}
+
+	private const int KinahItemId = 182400001;
 	private const int SwordId = 100000001;
 	private const int SoulBoundSwordId = 100000003;
 	private const int GreatswordId = 100100001;
 	private const int RobeId = 110100001;
 	private const int RestrictedSwordId = 100000002;
+	private const int StigmaId = 140001001;
+	private const long StigmaSlot1 = 1L << 30;
+	private const long StigmaSlot2 = 1L << 31;
+	private const long StigmaSlot3 = 1L << 32;
 	private static readonly string[] PlayerClasses =
 	[
 		"WARRIOR",

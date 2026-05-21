@@ -645,6 +645,7 @@ public sealed class PlayerEnterWorldServiceTests
 		public Task<bool> SaveEquipmentMutationAsync(
 			int playerObjectId,
 			IReadOnlyList<InventoryItem> items,
+			InventoryItem? kinahItem = null,
 			CancellationToken cancellationToken = default)
 		{
 			SaveEquipmentMutationCalls++;

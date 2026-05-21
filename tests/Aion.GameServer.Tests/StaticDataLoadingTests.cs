@@ -178,6 +178,10 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(1, staticData.ItemRandomBonuses.SelectRandomBonusNumber("POLISH", 3, () => 0));
 		Assert.Equal(2, staticData.ItemTemplates.GetItemTemplate(168300003)?.ChargeActionMaxLevel);
 		Assert.Equal(1, staticData.ItemTemplates.GetItemTemplate(168300003)?.Improvement?.ChargeWay);
+		var stigmaStone = staticData.ItemTemplates.GetItemTemplate(140001107);
+		Assert.NotNull(stigmaStone);
+		Assert.Equal(["FI_WHIRLDRAIN", "FI_WHIRLTORNADO"], stigmaStone.StigmaInfo?.GainSkillGroups);
+		Assert.True(stigmaStone.StigmaInfo?.Chargeable);
 		var testGodstone = staticData.ItemTemplates.GetItemTemplate(168000001);
 		Assert.NotNull(testGodstone);
 		Assert.Equal(8255, testGodstone.GodstoneInfo?.SkillId);
@@ -234,6 +238,11 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(40, weaponDual.SkillEfficiency);
 		Assert.Equal(400, weaponDual.MaxDamageChance);
 		Assert.Equal(0, weaponDual.MaxDamageDelta);
+		var exhaustingWave = staticData.SkillTemplates.GetSkillTemplate(539);
+		Assert.NotNull(exhaustingWave);
+		Assert.Equal("ADVANCED", exhaustingWave.StigmaType);
+		Assert.True(exhaustingWave.IsStigmaSkill);
+		Assert.Contains(staticData.SkillTree.GetTemplatesForSkill(539, "GLADIATOR", "ELYOS"), skill => skill.Stigma == 2);
 		var poetaProtector = staticData.TitleTemplates.GetTitleTemplate(1);
 		Assert.NotNull(poetaProtector);
 		Assert.Equal("ELYOS", poetaProtector.Race);
