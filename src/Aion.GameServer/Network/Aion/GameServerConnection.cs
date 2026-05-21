@@ -8,6 +8,7 @@ using Aion.GameServer.Configuration;
 using Aion.GameServer.Controllers.Movement;
 using Aion.GameServer.Data;
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model;
 using Aion.GameServer.Model.Account;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion.ClientPackets;
@@ -33,6 +34,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private const int FirstAvailableSlot = 65535;
 	private const int NoTitleId = 0xFFFF;
 	private const int MaxBlockedUsers = 100;
+	private const string PowerShardItemGroup = "POWER_SHARDS";
 	private static readonly TimeSpan ClientPingInterval = TimeSpan.FromMilliseconds(180000);
 	private readonly GamePacketProcessor<string> _packetProcessor;
 	private readonly GameCrypt _crypt;
@@ -381,6 +383,10 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmMotion motion:
 				if (_activePlayer != null)
 					await HandleMotionAsync(_activePlayer, motion);
+				break;
+			case CmEmotion emotion:
+				if (_activePlayer != null)
+					await HandleEmotionAsync(_activePlayer, emotion);
 				break;
 			case CmClientCommandRoll commandRoll:
 				if (_activePlayer != null)
@@ -1718,6 +1724,18 @@ public sealed class GameServerConnection : BaseClientConnection
 	private async Task CancelPendingItemUseOnMoveAsync(Player player)
 	{
 		// Java parity: controllers/PlayerController.onStartMove -> cancelUseItem and EnchantItemAction StartMovingListener.
+		await CancelPendingItemUseAsync(player);
+	}
+
+	private async Task CancelPendingItemUseOnEmotionAsync(Player player)
+	{
+		// Java parity: network/aion/clientpackets/CM_EMOTION.runImpl -> PlayerController.cancelUseItem.
+		// TODO Phase 6: preserve the ride-action exception after ride item actions are ported.
+		await CancelPendingItemUseAsync(player);
+	}
+
+	private async Task CancelPendingItemUseAsync(Player player)
+	{
 		var pendingItemUse = _pendingItemUse;
 		if (pendingItemUse == null || !pendingItemUse.Task.Cancel())
 			return;
@@ -3462,6 +3480,53 @@ public sealed class GameServerConnection : BaseClientConnection
 		await SendPacketAsync(new SmMotion(packet.MotionId, packet.MotionType));
 		if (_connectionRegistry != null)
 			await _connectionRegistry.BroadcastToVisiblePlayersAsync(player.Position, player.ObjectId, new SmMotion(player.ObjectId, player.Motions), includeSourcePlayer: true);
+	}
+
+	private async Task HandleEmotionAsync(Player player, CmEmotion packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_EMOTION.runImpl powershard branches.
+		if ((player.LifeStats?.CurrentHp ?? 1) <= 0)
+			return;
+
+		if (packet.EmotionType != EmotionType.PowershardOn && packet.EmotionType != EmotionType.PowershardOff)
+			return;
+
+		await CancelPendingItemUseOnEmotionAsync(player);
+		if (packet.EmotionType == EmotionType.PowershardOn)
+		{
+			if (!HasEquippedPowerShard(player, _runtimeContext?.DataManager?.StaticData.ItemTemplates))
+			{
+				await SendPacketAsync(SmSystemMessage.WeaponBoostNoBoosterEquipped());
+				return;
+			}
+
+			await SendPacketAsync(SmSystemMessage.WeaponBoostStarted());
+			player.SetCreatureState(PlayerCreatureState.Powershard, enabled: true);
+			await BroadcastEmotionAsync(player, new SmEmotion(player, EmotionType.PowershardOn));
+			return;
+		}
+
+		await SendPacketAsync(SmSystemMessage.WeaponBoostEnded());
+		player.SetCreatureState(PlayerCreatureState.Powershard, enabled: false);
+		await BroadcastEmotionAsync(player, new SmEmotion(player, EmotionType.PowershardOff));
+	}
+
+	private async Task BroadcastEmotionAsync(Player player, SmEmotion packet)
+	{
+		// Java parity: PacketSendUtility.broadcastToSightedPlayers(player, SM_EMOTION, true).
+		if (_connectionRegistry != null)
+			await _connectionRegistry.BroadcastToVisiblePlayersAsync(player.Position, player.ObjectId, packet, includeSourcePlayer: true);
+		else
+			await SendPacketAsync(packet);
+	}
+
+	private static bool HasEquippedPowerShard(Player player, ItemTemplateTable? itemTemplates)
+	{
+		// Java parity: model/gameobjects/player/Equipment.isPowerShardEquipped.
+		return itemTemplates != null && player.InventoryItems.Any(item =>
+			item.Location == CubeStorageId
+			&& item.IsEquipped
+			&& string.Equals(itemTemplates.GetItemTemplate(item.ItemId)?.ItemGroup, PowerShardItemGroup, StringComparison.Ordinal));
 	}
 
 	private async Task PersistMotionActiveAsync(int playerObjectId, int motionId, bool isActive)

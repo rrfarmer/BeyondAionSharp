@@ -331,6 +331,24 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300489, stance);
 	}
 
+	public static SmSystemMessage WeaponBoostNoBoosterEquipped()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_WEAPON_BOOST_NO_BOOSTER_EQUIPED.
+		return new SmSystemMessage(1300490);
+	}
+
+	public static SmSystemMessage WeaponBoostStarted()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_WEAPON_BOOST_BOOST_MODE_STARTED.
+		return new SmSystemMessage(1300491);
+	}
+
+	public static SmSystemMessage WeaponBoostEnded()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_WEAPON_BOOST_BOOST_MODE_ENDED.
+		return new SmSystemMessage(1300492);
+	}
+
 	public static SmSystemMessage StigmaNotEnoughMoney()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_STIGMA_NOT_ENOUGH_MONEY.

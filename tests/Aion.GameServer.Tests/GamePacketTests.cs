@@ -3,6 +3,7 @@ using System.Buffers.Binary;
 using System.Text;
 using Aion.GameServer.Controllers.Movement;
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model;
 using Aion.GameServer.Model.Account;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
@@ -277,6 +278,16 @@ public class GamePacketTests
 					[new PlayerEmotion(10, 1010)],
 					() => DateTimeOffset.FromUnixTimeSeconds(1000))));
 		Assert.Equal(
+			Convert.FromHexString("E903000024800000000000"),
+			SerializeUnencryptedPayload(
+				new SmEmotion(
+					new Player
+					{
+						ObjectId = 1001,
+						CreatureState = PlayerCreatureState.Powershard,
+					},
+					EmotionType.PowershardOn)));
+		Assert.Equal(
 			Convert.FromHexString("646464"),
 			SerializeUnencryptedPayload(new SmPrices()));
 		Assert.Equal(
@@ -546,6 +557,9 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.SoulBoundItemCanceled("item"), 1300487, "item");
 		AssertSystemMessage(SmSystemMessage.SoulBoundCloseOtherMsgBoxAndRetry(), 1300488);
 		AssertSystemMessage(SmSystemMessage.SoulBoundInvalidStance(ChatUtil.L10n(1400059)), 1300489, ChatUtil.L10n(1400059));
+		AssertSystemMessage(SmSystemMessage.WeaponBoostNoBoosterEquipped(), 1300490);
+		AssertSystemMessage(SmSystemMessage.WeaponBoostStarted(), 1300491);
+		AssertSystemMessage(SmSystemMessage.WeaponBoostEnded(), 1300492);
 		AssertSystemMessage(SmSystemMessage.StigmaNotEnoughMoney(), 1300413);
 		AssertSystemMessage(SmSystemMessage.StigmaSkillUnavailable("skill"), 1300403, "skill");
 		AssertSystemMessage(SmSystemMessage.StigmaEnchantSuccess("stigma"), 1402930, "stigma");
@@ -3292,6 +3306,43 @@ public class GamePacketTests
 		Assert.Equal(11, motion.MotionId);
 		Assert.Equal(1, motion.MotionType);
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(71, _ => { }), GameConnectionState.Authed));
+	}
+
+	[Fact]
+	public void ClientPacketFactory_ParsesEmotionPacket()
+	{
+		var powershardOn = Assert.IsType<CmEmotion>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(36)), GameConnectionState.InGame));
+		var powershardOff = Assert.IsType<CmEmotion>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(37)), GameConnectionState.InGame));
+		var emote = Assert.IsType<CmEmotion>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b =>
+			{
+				b.WriteC(21);
+				b.WriteH(101);
+				b.WriteD(7001);
+			}), GameConnectionState.InGame));
+		var chairSit = Assert.IsType<CmEmotion>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b =>
+			{
+				b.WriteC(4);
+				b.WriteF(11);
+				b.WriteF(22);
+				b.WriteF(33);
+				b.WriteC(44);
+			}), GameConnectionState.InGame));
+
+		Assert.Equal(EmotionType.PowershardOn, powershardOn.EmotionType);
+		Assert.Equal(EmotionType.PowershardOff, powershardOff.EmotionType);
+		Assert.Equal(EmotionType.Emote, emote.EmotionType);
+		Assert.Equal(101, emote.Emotion);
+		Assert.Equal(7001, emote.TargetObjectId);
+		Assert.Equal(EmotionType.ChairSit, chairSit.EmotionType);
+		Assert.Equal(11, chairSit.X);
+		Assert.Equal(22, chairSit.Y);
+		Assert.Equal(33, chairSit.Z);
+		Assert.Equal(44, chairSit.Heading);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(36)), GameConnectionState.Authed));
 	}
 
 	[Fact]
