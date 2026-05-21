@@ -168,6 +168,9 @@ public class GamePacketTests
 			Convert.FromHexString("16000000"),
 			SerializeUnencryptedPayload(new SmCreateCharacter(SmCreateCharacter.ResponseOpenCreationWindow)));
 		Assert.Equal(
+			Convert.FromHexString("0A"),
+			SerializeUnencryptedPayload(new SmNicknameCheckResponse(SmCreateCharacter.ResponseNameAlreadyUsed)));
+		Assert.Equal(
 			Convert.FromHexString("00"),
 			SerializeUnencryptedPayload(new SmCharacterSelect(0)));
 		Assert.Equal(
@@ -2207,6 +2210,8 @@ public class GamePacketTests
 				WriteFixedUtf16Bytes(b, "old-pass");
 				WriteFixedUtf16Bytes(b, "new-pass");
 			}), GameConnectionState.Authed));
+		var nickname = Assert.IsType<CmCheckNickname>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(177, b => b.WriteS("candidate")), GameConnectionState.Authed));
 
 		Assert.Equal(1234, characterList.PlayOk2);
 		Assert.True(quit.StayConnected);
@@ -2229,7 +2234,9 @@ public class GamePacketTests
 		Assert.Equal(2, passkey.Type);
 		Assert.Equal("old-pass", passkey.Passkey);
 		Assert.Equal("new-pass", passkey.NewPasskey);
+		Assert.Equal("candidate", nickname.Nickname);
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(4, _ => { }), GameConnectionState.Authed));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(177, b => b.WriteS("candidate")), GameConnectionState.InGame));
 	}
 
 	[Fact]

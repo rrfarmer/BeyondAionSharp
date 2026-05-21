@@ -70,6 +70,7 @@ public static class GameClientPacketFactory
 		Register(174, states => new CmChatAuth(174, states), GameConnectionState.InGame);
 		Register(175, states => new CmMacroCreate(175, states), GameConnectionState.InGame);
 		Register(176, states => new CmMacroDelete(176, states), GameConnectionState.InGame);
+		Register(177, states => new CmCheckNickname(177, states), GameConnectionState.Authed);
 		Register(179, states => new CmBlockSetReason(179, states), GameConnectionState.InGame);
 		Register(183, states => new CmReconnectAuth(183, states), GameConnectionState.Authed);
 		Register(186, states => new CmMayLoginIntoGame(186, states), GameConnectionState.Authed);

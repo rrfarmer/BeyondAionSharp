@@ -89,6 +89,29 @@ public sealed class CharacterCreationServiceTests
 	}
 
 	[Fact]
+	public async Task CheckNickname_ValidatesJavaNameResponses()
+	{
+		var creationRepository = new CapturingCreationRepository { NameUsed = true };
+		var service = await CreateServiceAsync(creationRepository: creationRepository);
+
+		Assert.Equal(SmCreateCharacter.ResponseNameAlreadyUsed, await service.CheckNicknameAsync("taken"));
+		Assert.Equal("Taken", creationRepository.LastCheckedName);
+
+		service = await CreateServiceAsync(
+			options: new GameServerOptions { Core = new GameServerCoreOptions { CharacterCreationMode = 2 } },
+			creationRepository: new CapturingCreationRepository { NameUsed = true });
+
+		Assert.Equal(SmCreateCharacter.ResponseNameReserved, await service.CheckNicknameAsync("reserved"));
+
+		service = await CreateServiceAsync(
+			options: new GameServerOptions { Names = new GameServerNameOptions { ForbiddenWords = ["Forbidden"] } });
+
+		Assert.Equal(SmCreateCharacter.ResponseInvalidName, await service.CheckNicknameAsync("x"));
+		Assert.Equal(SmCreateCharacter.ResponseForbiddenCharacterName, await service.CheckNicknameAsync("forbidden"));
+		Assert.Equal(SmCreateCharacter.ResponseOk, await service.CheckNicknameAsync("candidate"));
+	}
+
+	[Fact]
 	public async Task CreateCharacter_UsesMembershipSpecificCharacterLimit()
 	{
 		var existingCharacters = new FixedSelectionRepository(
@@ -185,17 +208,21 @@ public sealed class CharacterCreationServiceTests
 
 		public bool StoreResult { get; init; }
 
+		public string LastCheckedName { get; private set; } = string.Empty;
+
 		public int StoredAccountId { get; private set; }
 
 		public NewCharacterRecord StoredCharacter { get; private set; } = null!;
 
 		public Task<bool> IsNameUsedAsync(string name, CancellationToken cancellationToken = default)
 		{
+			LastCheckedName = name;
 			return Task.FromResult(NameUsed);
 		}
 
 		public Task<bool> IsNameUsedOrReservedAsync(string? oldName, string newName, int reservationDays, CancellationToken cancellationToken = default)
 		{
+			LastCheckedName = newName;
 			return Task.FromResult(NameUsed);
 		}
 

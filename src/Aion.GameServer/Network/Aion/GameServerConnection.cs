@@ -414,6 +414,15 @@ public sealed class GameServerConnection : BaseClientConnection
 				var restored = _accountId != 0 && await _characterSelectionRepository.RestoreCharacterAsync(_accountId, restoreCharacter.CharacterObjectId);
 				await SendPacketAsync(new SmRestoreCharacter(restoreCharacter.CharacterObjectId, restored));
 				break;
+			case CmCheckNickname checkNickname:
+			{
+				// Java parity: network/aion/clientpackets/CM_CHECK_NICKNAME.runImpl -> SM_NICKNAME_CHECK_RESPONSE.
+				var responseCode = _characterCreationService == null
+					? SmCreateCharacter.ResponseDbError
+					: await _characterCreationService.CheckNicknameAsync(checkNickname.Nickname);
+				await SendPacketAsync(new SmNicknameCheckResponse(responseCode));
+				break;
+			}
 			case CmShowBlockList:
 				if (_activePlayer != null)
 				{

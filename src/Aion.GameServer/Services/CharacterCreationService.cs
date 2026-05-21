@@ -100,6 +100,25 @@ public sealed class CharacterCreationService
 		return new CharacterCreationResult(SmCreateCharacter.ResponseDbError);
 	}
 
+	public async Task<int> CheckNicknameAsync(string nickname, CancellationToken cancellationToken = default)
+	{
+		// Java parity: network/aion/clientpackets/CM_CHECK_NICKNAME.runImpl.
+		var normalizedName = NormalizeName(nickname);
+		if (await _creationRepository.IsNameUsedOrReservedAsync(null, normalizedName, _options.Names.ReserveOldNameDays, cancellationToken))
+		{
+			return _options.Core.CharacterCreationMode == 2
+				? SmCreateCharacter.ResponseNameReserved
+				: SmCreateCharacter.ResponseNameAlreadyUsed;
+		}
+
+		if (!IsValidName(normalizedName))
+			return SmCreateCharacter.ResponseInvalidName;
+		if (IsForbiddenName(normalizedName))
+			return SmCreateCharacter.ResponseForbiddenCharacterName;
+
+		return SmCreateCharacter.ResponseOk;
+	}
+
 	private async Task<int> ValidateBasicInfoAsync(
 		string normalizedName,
 		CmCreateCharacter request,
