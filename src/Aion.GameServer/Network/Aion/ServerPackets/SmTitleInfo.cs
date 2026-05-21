@@ -9,6 +9,7 @@ public sealed class SmTitleInfo : GameServerPacket
 
 	private readonly int _action;
 	private readonly int _titleId;
+	private readonly int _playerObjectId;
 	private readonly IReadOnlyList<PlayerTitle> _titles;
 	private readonly Func<DateTimeOffset> _clock;
 
@@ -18,6 +19,18 @@ public sealed class SmTitleInfo : GameServerPacket
 		// Java parity: network/aion/serverpackets/SM_TITLE_INFO(int titleId).
 		_action = 1;
 		_titleId = titleId;
+		_playerObjectId = 0;
+		_titles = Array.Empty<PlayerTitle>();
+		_clock = () => DateTimeOffset.Now;
+	}
+
+	public SmTitleInfo(Player player, int titleId)
+		: base(PacketOpCode)
+	{
+		// Java parity: network/aion/serverpackets/SM_TITLE_INFO(Player, int titleId).
+		_action = 3;
+		_titleId = titleId;
+		_playerObjectId = player.ObjectId;
 		_titles = Array.Empty<PlayerTitle>();
 		_clock = () => DateTimeOffset.Now;
 	}
@@ -28,6 +41,7 @@ public sealed class SmTitleInfo : GameServerPacket
 		// Java parity: network/aion/serverpackets/SM_TITLE_INFO(Player).
 		_action = 0;
 		_titleId = 0;
+		_playerObjectId = 0;
 		_titles = titles;
 		_clock = clock ?? (() => DateTimeOffset.Now);
 	}
@@ -38,6 +52,7 @@ public sealed class SmTitleInfo : GameServerPacket
 		// Java parity: network/aion/serverpackets/SM_TITLE_INFO(int action, int bonusTitleId).
 		_action = action;
 		_titleId = bonusTitleId;
+		_playerObjectId = 0;
 		_titles = Array.Empty<PlayerTitle>();
 		_clock = () => DateTimeOffset.Now;
 	}
@@ -60,6 +75,10 @@ public sealed class SmTitleInfo : GameServerPacket
 				break;
 			case 1:
 			case 6:
+				buffer.WriteH(_titleId);
+				break;
+			case 3:
+				buffer.WriteD(_playerObjectId);
 				buffer.WriteH(_titleId);
 				break;
 		}

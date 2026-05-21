@@ -29,6 +29,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private const int MailboxStorageId = 127;
 	private const int KinahItemId = 182400001;
 	private const int FirstAvailableSlot = 65535;
+	private const int NoTitleId = 0xFFFF;
 	private const int MaxBlockedUsers = 100;
 	private static readonly TimeSpan ClientPingInterval = TimeSpan.FromMilliseconds(180000);
 	private readonly GamePacketProcessor<string> _packetProcessor;
@@ -316,6 +317,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					HandleTargetSelect(_activePlayer, targetSelect);
 				break;
+			case CmTitleSet titleSet:
+				if (_activePlayer != null)
+					await HandleTitleSetAsync(_activePlayer, titleSet);
+				break;
 			case CmMove move:
 				if (_activePlayer != null)
 					await HandleMoveAsync(_activePlayer, move);
@@ -580,6 +585,10 @@ public sealed class GameServerConnection : BaseClientConnection
 					var staticData = _runtimeContext?.DataManager?.StaticData;
 					await SendPacketAsync(new SmFriendList(_activePlayer.Friends, staticData?.PlayerExperienceTable));
 				}
+				break;
+			case CmBonusTitle bonusTitle:
+				if (_activePlayer != null)
+					await HandleBonusTitleAsync(_activePlayer, bonusTitle);
 				break;
 			case CmFriendSetMemo friendSetMemo:
 				if (_activePlayer != null)
@@ -1349,6 +1358,34 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		player.TargetObjectId = packet.TargetObjectId <= 0 ? 0 : packet.TargetObjectId;
+	}
+
+	private async Task HandleTitleSetAsync(Player player, CmTitleSet packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_TITLE_SET.runImpl -> TitleList.setDisplayTitle.
+		if (packet.TitleId != NoTitleId && !PlayerHasTitle(player, packet.TitleId))
+			return;
+
+		player.TitleId = packet.TitleId;
+		await SendPacketAsync(new SmTitleInfo(packet.TitleId));
+		if (_connectionRegistry != null)
+			await _connectionRegistry.BroadcastToVisiblePlayersAsync(player.Position, player.ObjectId, new SmTitleInfo(player, packet.TitleId), includeSourcePlayer: true);
+	}
+
+	private async Task HandleBonusTitleAsync(Player player, CmBonusTitle packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_BONUS_TITLE.runImpl -> TitleList.setBonusTitle.
+		if (packet.BonusTitleId != NoTitleId && !PlayerHasTitle(player, packet.BonusTitleId))
+			return;
+
+		player.BonusTitleId = packet.BonusTitleId;
+		await SendPacketAsync(new SmTitleInfo(6, packet.BonusTitleId));
+	}
+
+	private static bool PlayerHasTitle(Player player, int titleId)
+	{
+		// Java parity: model/gameobjects/player/title/TitleList.contains.
+		return player.Titles.Any(title => title.Id == titleId);
 	}
 
 	private async Task HandleMoveAsync(Player player, CmMove packet)

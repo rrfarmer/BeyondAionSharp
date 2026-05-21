@@ -48,9 +48,9 @@ public sealed class Player
 
 	public int WarehouseBonusExpands { get; init; }
 
-	public int TitleId { get; init; }
+	public int TitleId { get; set; }
 
-	public int BonusTitleId { get; init; }
+	public int BonusTitleId { get; set; }
 
 	public WorldPosition Position { get; set; }
 

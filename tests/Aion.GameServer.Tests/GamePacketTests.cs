@@ -224,6 +224,9 @@ public class GamePacketTests
 			Convert.FromHexString("014D00"),
 			SerializeUnencryptedPayload(new SmTitleInfo(77)));
 		Assert.Equal(
+			Convert.FromHexString("03E90300004D00"),
+			SerializeUnencryptedPayload(new SmTitleInfo(new Player { ObjectId = 1001 }, 77)));
+		Assert.Equal(
 			Convert.FromHexString("060500"),
 			SerializeUnencryptedPayload(new SmTitleInfo(6, 5)));
 		Assert.Equal(
@@ -1966,6 +1969,20 @@ public class GamePacketTests
 	{
 		Assert.IsType<CmLevelReady>(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(9, _ => { }), GameConnectionState.InGame));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(9, _ => { }), GameConnectionState.Authed));
+	}
+
+	[Fact]
+	public void ClientPacketFactory_ParsesTitlePackets()
+	{
+		var titleSet = Assert.IsType<CmTitleSet>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(139, b => b.WriteH(77)), GameConnectionState.InGame));
+		var bonusTitle = Assert.IsType<CmBonusTitle>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(233, b => b.WriteH(5)), GameConnectionState.InGame));
+
+		Assert.Equal(77, titleSet.TitleId);
+		Assert.Equal(5, bonusTitle.BonusTitleId);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(139, b => b.WriteH(77)), GameConnectionState.Authed));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(233, b => b.WriteH(5)), GameConnectionState.Authed));
 	}
 
 	[Fact]
