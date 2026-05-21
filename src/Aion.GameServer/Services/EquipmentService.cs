@@ -22,12 +22,13 @@ public static class EquipmentService
 		long slotRead,
 		int itemObjectId,
 		ItemTemplateTable itemTemplates,
-		SkillTemplateTable? skillTemplates)
+		SkillTemplateTable? skillTemplates,
+		PlayerExperienceTable? experienceTable = null)
 	{
 		// Java parity: network/aion/clientpackets/CM_EQUIP_ITEM.runImpl action routing.
 		return action switch
 		{
-			0 => EquipItem(player, slotRead, itemObjectId, itemTemplates, skillTemplates),
+			0 => EquipItem(player, slotRead, itemObjectId, itemTemplates, skillTemplates, experienceTable),
 			1 => UnEquipItem(player, itemObjectId, itemTemplates),
 			2 => SwitchHands(player, itemTemplates),
 			_ => EquipmentChangeResult.NoChange(),
@@ -39,7 +40,8 @@ public static class EquipmentService
 		long slotRead,
 		int itemObjectId,
 		ItemTemplateTable itemTemplates,
-		SkillTemplateTable? skillTemplates)
+		SkillTemplateTable? skillTemplates,
+		PlayerExperienceTable? experienceTable)
 	{
 		// Java parity: model/gameobjects/player/Equipment.equipItem.
 		var inventoryItems = player.InventoryItems.ToList();
@@ -60,6 +62,10 @@ public static class EquipmentService
 				? MainHand
 				: slotRead;
 
+		var validationFailure = ValidateEquipRestrictions(player, template, experienceTable);
+		if (validationFailure != null)
+			return validationFailure;
+
 		if (!CanEquipIntoSlot(player, inventoryItems, itemTemplates, template, slot, out var inventoryFull))
 			return inventoryFull ? EquipmentChangeResult.FullInventoryFailure() : EquipmentChangeResult.NoChange();
 
@@ -77,6 +83,33 @@ public static class EquipmentService
 		persisted.Add(equippedItem);
 
 		return EquipmentChangeResult.Success(inventoryItems, persisted, updates);
+	}
+
+	private static EquipmentChangeResult? ValidateEquipRestrictions(
+		Player player,
+		ItemTemplateSummary template,
+		PlayerExperienceTable? experienceTable)
+	{
+		// Java parity: model/gameobjects/player/Equipment.equipItem validation before inventory slot mutation.
+		if (!template.IsClassSpecific(player.PlayerClass))
+			return EquipmentChangeResult.InvalidClassFailure();
+
+		var playerLevel = Math.Max(1, experienceTable?.GetLevelForExp(player.Exp) ?? 1);
+		var requiredLevel = template.GetRequiredLevel(player.PlayerClass);
+		if (requiredLevel == -1 || requiredLevel > playerLevel)
+			return EquipmentChangeResult.TooLowLevelFailure(GetItemName(template), requiredLevel);
+
+		var maxLevel = template.GetMaxLevelRestrict(player.PlayerClass);
+		if (maxLevel != 0 && playerLevel > maxLevel)
+			return EquipmentChangeResult.TooHighLevelFailure(GetItemName(template), maxLevel);
+
+		if (!template.IsRacePermitted(player.Race))
+			return EquipmentChangeResult.InvalidRaceFailure();
+
+		if (!template.IsGenderPermitted(player.Gender))
+			return EquipmentChangeResult.InvalidGenderFailure();
+
+		return null;
 	}
 
 	private static EquipmentChangeResult UnEquipItem(
@@ -236,6 +269,11 @@ public static class EquipmentService
 		return (slot & MainOrSub) == MainOrSub || (slot & MainOffOrSubOff) == MainOffOrSubOff;
 	}
 
+	private static string GetItemName(ItemTemplateSummary template)
+	{
+		return template.GetClientName() ?? template.Name;
+	}
+
 	private static InventoryItem? GetEquippedItemByObjectId(IReadOnlyList<InventoryItem> inventoryItems, int objectId)
 	{
 		return inventoryItems.FirstOrDefault(item => item.Location == CubeStorageId && item.IsEquipped && item.ObjectId == objectId);
@@ -360,6 +398,17 @@ public static class EquipmentService
 	}
 }
 
+public enum EquipmentChangeFailure
+{
+	None,
+	InventoryFull,
+	InvalidClass,
+	TooLowLevel,
+	TooHighLevel,
+	InvalidRace,
+	InvalidGender,
+}
+
 public sealed record EquipmentChangeResult(
 	bool Changed,
 	bool InventoryFull,
@@ -367,7 +416,11 @@ public sealed record EquipmentChangeResult(
 	bool RefreshStats,
 	IReadOnlyList<InventoryItem> InventoryItems,
 	IReadOnlyList<InventoryItem> PersistedItems,
-	IReadOnlyList<InventoryItem> InventoryUpdateItems)
+	IReadOnlyList<InventoryItem> InventoryUpdateItems,
+	EquipmentChangeFailure Failure = EquipmentChangeFailure.None,
+	int RequiredLevel = 0,
+	int MaxLevel = 0,
+	string ItemName = "")
 {
 	public static EquipmentChangeResult NoChange()
 	{
@@ -383,7 +436,42 @@ public sealed record EquipmentChangeResult(
 
 	public static EquipmentChangeResult FullInventoryFailure()
 	{
-		return NoChange() with { InventoryFull = true };
+		return NoChange() with { InventoryFull = true, Failure = EquipmentChangeFailure.InventoryFull };
+	}
+
+	public static EquipmentChangeResult InvalidClassFailure()
+	{
+		return NoChange() with { Failure = EquipmentChangeFailure.InvalidClass };
+	}
+
+	public static EquipmentChangeResult TooLowLevelFailure(string itemName, int requiredLevel)
+	{
+		return NoChange() with
+		{
+			Failure = EquipmentChangeFailure.TooLowLevel,
+			ItemName = itemName,
+			RequiredLevel = requiredLevel,
+		};
+	}
+
+	public static EquipmentChangeResult TooHighLevelFailure(string itemName, int maxLevel)
+	{
+		return NoChange() with
+		{
+			Failure = EquipmentChangeFailure.TooHighLevel,
+			ItemName = itemName,
+			MaxLevel = maxLevel,
+		};
+	}
+
+	public static EquipmentChangeResult InvalidRaceFailure()
+	{
+		return NoChange() with { Failure = EquipmentChangeFailure.InvalidRace };
+	}
+
+	public static EquipmentChangeResult InvalidGenderFailure()
+	{
+		return NoChange() with { Failure = EquipmentChangeFailure.InvalidGender };
 	}
 
 	public static EquipmentChangeResult Success(

@@ -130,6 +130,9 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(6, staticData.ItemTemplates.GetItemTemplate(100000216)?.DispositionItemCount);
 		Assert.True(staticData.ItemTemplates.GetItemTemplate(169500916)?.IsClassSpecific("RANGER"));
 		Assert.False(staticData.ItemTemplates.GetItemTemplate(169500916)?.IsClassSpecific("ASSASSIN"));
+		Assert.Equal(25, staticData.ItemTemplates.GetItemTemplate(100001115)?.GetRequiredLevel("GLADIATOR"));
+		Assert.Equal(39, staticData.ItemTemplates.GetItemTemplate(100001115)?.GetMaxLevelRestrict("GLADIATOR"));
+		Assert.Equal("FEMALE", staticData.ItemTemplates.GetItemTemplate(110900040)?.GenderPermitted);
 		Assert.Equal(155000001, staticData.ItemTemplates.GetItemTemplate(152200001)?.CraftLearnRecipeId);
 		Assert.Equal(1, staticData.ItemTemplates.GetItemTemplate(152000065)?.ActivationCount);
 		Assert.Equal(1, staticData.ItemTemplates.GetItemTemplate(100000895)?.ExpireTimeMinutes);
@@ -146,6 +149,8 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(10000, chargeTemplate.Improvement?.Price1);
 		Assert.Equal(0, chargeTemplate.Improvement?.Price2);
 		Assert.Equal(4, chargeTemplate.RecommendRank);
+		Assert.Equal(3, chargeTemplate.MinRank);
+		Assert.Equal(18, chargeTemplate.MaxRank);
 		var fireSword = staticData.ItemTemplates.GetItemTemplate(100000125);
 		Assert.NotNull(fireSword);
 		Assert.Equal("PHYSICAL", fireSword.AttackType);

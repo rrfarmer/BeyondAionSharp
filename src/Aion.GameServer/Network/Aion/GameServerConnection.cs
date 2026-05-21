@@ -1258,11 +1258,11 @@ public sealed class GameServerConnection : BaseClientConnection
 			packet.Slot,
 			packet.ItemObjectId,
 			itemTemplates,
-			staticData.SkillTemplates);
+			staticData.SkillTemplates,
+			staticData.PlayerExperienceTable);
 		if (!change.Changed)
 		{
-			if (change.InventoryFull)
-				await SendPacketAsync(SmSystemMessage.UiInventoryFull());
+			await SendEquipFailureMessageAsync(change);
 			return;
 		}
 
@@ -1288,6 +1288,32 @@ public sealed class GameServerConnection : BaseClientConnection
 				await _connectionRegistry.BroadcastToVisiblePlayersAsync(player.Position, player.ObjectId, appearancePacket, includeSourcePlayer: true);
 			else
 				await SendPacketAsync(appearancePacket);
+		}
+	}
+
+	private async Task SendEquipFailureMessageAsync(EquipmentChangeResult change)
+	{
+		// Java parity: model/gameobjects/player/Equipment.equipItem emits SM_SYSTEM_MESSAGE for validation failures.
+		switch (change.Failure)
+		{
+			case EquipmentChangeFailure.InventoryFull:
+				await SendPacketAsync(SmSystemMessage.UiInventoryFull());
+				break;
+			case EquipmentChangeFailure.InvalidClass:
+				await SendPacketAsync(SmSystemMessage.CannotUseItemInvalidClass());
+				break;
+			case EquipmentChangeFailure.TooLowLevel:
+				await SendPacketAsync(SmSystemMessage.CannotUseItemTooLowLevel(change.ItemName, change.RequiredLevel));
+				break;
+			case EquipmentChangeFailure.TooHighLevel:
+				await SendPacketAsync(SmSystemMessage.CannotUseItemTooHighLevel(change.MaxLevel, change.ItemName));
+				break;
+			case EquipmentChangeFailure.InvalidRace:
+				await SendPacketAsync(SmSystemMessage.CannotUseItemInvalidRace());
+				break;
+			case EquipmentChangeFailure.InvalidGender:
+				await SendPacketAsync(SmSystemMessage.CannotUseItemInvalidGender());
+				break;
 		}
 	}
 

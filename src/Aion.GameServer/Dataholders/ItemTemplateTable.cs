@@ -56,7 +56,12 @@ public sealed record ItemTemplateSummary(
 	ItemGodstoneInfo? GodstoneInfo = null,
 	ItemImprovement? Improvement = null,
 	int RecommendRank = 0,
-	ItemIdianInfo? IdianInfo = null)
+	ItemIdianInfo? IdianInfo = null,
+	IReadOnlyDictionary<string, int>? RequiredLevels = null,
+	IReadOnlyDictionary<string, int>? MaxLevelRestrictions = null,
+	string GenderPermitted = "",
+	int MinRank = 1,
+	int MaxRank = 18)
 {
 	private const int CanPolishMask = 1 << 17;
 
@@ -125,15 +130,53 @@ public sealed record ItemTemplateSummary(
 	public bool IsClassSpecific(string playerClass)
 	{
 		// Java parity: model/templates/item/ItemTemplate.isClassSpecific.
-		if (ClassRestrictions == null || ClassRestrictions.Count == 0)
+		var classRestrictions = ClassRestrictions ?? RequiredLevels?.Keys.ToHashSet(StringComparer.Ordinal);
+		if (classRestrictions == null || classRestrictions.Count == 0)
 			return false;
 
 		var normalizedClass = playerClass.ToUpperInvariant();
-		if (ClassRestrictions.Contains(normalizedClass))
+		if (classRestrictions.Contains(normalizedClass))
 			return true;
 
 		return StartingClasses.TryGetValue(normalizedClass, out var startingClass)
-			&& ClassRestrictions.Contains(startingClass);
+			&& classRestrictions.Contains(startingClass);
+	}
+
+	public int GetRequiredLevel(string playerClass)
+	{
+		// Java parity: model/templates/item/ItemTemplate.getRequiredLevel.
+		if (RequiredLevels == null || RequiredLevels.Count == 0)
+			return -1;
+
+		var normalizedClass = playerClass.ToUpperInvariant();
+		return RequiredLevels.TryGetValue(normalizedClass, out var requiredLevel) && requiredLevel > 0
+			? requiredLevel
+			: -1;
+	}
+
+	public int GetMaxLevelRestrict(string playerClass)
+	{
+		// Java parity: model/templates/item/ItemTemplate.getMaxLevelRestrict.
+		if (MaxLevelRestrictions == null || MaxLevelRestrictions.Count == 0)
+			return 0;
+
+		var normalizedClass = playerClass.ToUpperInvariant();
+		return MaxLevelRestrictions.GetValueOrDefault(normalizedClass);
+	}
+
+	public bool IsRacePermitted(string playerRace)
+	{
+		// Java parity: model/gameobjects/player/Equipment.equipItem race guard.
+		return string.IsNullOrEmpty(Race)
+			|| string.Equals(Race, "PC_ALL", StringComparison.Ordinal)
+			|| string.Equals(Race, playerRace, StringComparison.Ordinal);
+	}
+
+	public bool IsGenderPermitted(string playerGender)
+	{
+		// Java parity: model/templates/item/ItemUseLimits.getGenderPermitted.
+		return string.IsNullOrEmpty(GenderPermitted)
+			|| string.Equals(GenderPermitted, playerGender, StringComparison.Ordinal);
 	}
 
 	public string? GetClientName()

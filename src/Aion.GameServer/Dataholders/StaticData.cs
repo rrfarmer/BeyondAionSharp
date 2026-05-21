@@ -326,6 +326,7 @@ public sealed class StaticData
 
 			if (reader.Depth == 2 && reader.LocalName == "item_template")
 			{
+				var requiredLevels = ReadLevelRestrictions(reader.GetAttribute("restrict"));
 				currentItemTemplate = new ItemTemplateBuilder(
 					ReadRequiredIntAttribute(reader, "id"),
 					reader.GetAttribute("name") ?? string.Empty,
@@ -340,7 +341,8 @@ public sealed class StaticData
 					ReadOptionalIntAttribute(reader, "max_stack_count", 1),
 					ReadLongAttribute(reader, "price"),
 					GetItemGroupSlots(reader.GetAttribute("item_group")),
-					ReadClassRestrictions(reader.GetAttribute("restrict")),
+					requiredLevels,
+					ReadLevelRestrictions(reader.GetAttribute("restrict_max")),
 					ReadIntAttribute(reader, "activate_count"),
 					ReadIntAttribute(reader, "expire_time"),
 					ReadIntAttribute(reader, "enchant_type"),
@@ -555,6 +557,9 @@ public sealed class StaticData
 
 			if (reader.Depth == 3 && reader.LocalName == "uselimits" && currentItemTemplate != null)
 			{
+				currentItemTemplate.GenderPermitted = reader.GetAttribute("gender") ?? string.Empty;
+				currentItemTemplate.MinRank = ReadOptionalIntAttribute(reader, "rank_min", 1);
+				currentItemTemplate.MaxRank = ReadOptionalIntAttribute(reader, "rank_max", 18);
 				currentItemTemplate.RecommendRank = ReadIntAttribute(reader, "recommend_rank");
 				continue;
 			}
@@ -1205,7 +1210,8 @@ public sealed class StaticData
 			int maxStackCount,
 			long price,
 			long validEquipmentSlots,
-			IReadOnlySet<string> classRestrictions,
+			IReadOnlyDictionary<string, int> requiredLevels,
+			IReadOnlyDictionary<string, int> maxLevelRestrictions,
 			int activationCount,
 			int expireTimeMinutes,
 			int enchantType,
@@ -1229,7 +1235,9 @@ public sealed class StaticData
 			MaxStackCount = maxStackCount;
 			Price = price;
 			ValidEquipmentSlots = validEquipmentSlots;
-			ClassRestrictions = classRestrictions;
+			RequiredLevels = requiredLevels;
+			MaxLevelRestrictions = maxLevelRestrictions;
+			ClassRestrictions = requiredLevels.Keys.ToHashSet(StringComparer.Ordinal);
 			ActivationCount = activationCount;
 			ExpireTimeMinutes = expireTimeMinutes;
 			EnchantType = enchantType;
@@ -1266,6 +1274,10 @@ public sealed class StaticData
 		private long ValidEquipmentSlots { get; }
 
 		private IReadOnlySet<string> ClassRestrictions { get; }
+
+		private IReadOnlyDictionary<string, int> RequiredLevels { get; }
+
+		private IReadOnlyDictionary<string, int> MaxLevelRestrictions { get; }
 
 		private int ActivationCount { get; }
 
@@ -1306,6 +1318,12 @@ public sealed class StaticData
 		public int ChargeActionMaxLevel { get; set; }
 
 		public int RecommendRank { get; set; }
+
+		public string GenderPermitted { get; set; } = string.Empty;
+
+		public int MinRank { get; set; } = 1;
+
+		public int MaxRank { get; set; } = 18;
 
 		public void AddModifier(ItemStatModifier modifier)
 		{
@@ -1362,7 +1380,12 @@ public sealed class StaticData
 				GodstoneInfo,
 				Improvement,
 				RecommendRank,
-				IdianInfo);
+				IdianInfo,
+				RequiredLevels,
+				MaxLevelRestrictions,
+				GenderPermitted,
+				MinRank,
+				MaxRank);
 		}
 
 		private static bool CalculateCanTune(
@@ -1531,21 +1554,21 @@ public sealed class StaticData
 		};
 	}
 
-	private static IReadOnlySet<string> ReadClassRestrictions(string? restrict)
+	private static IReadOnlyDictionary<string, int> ReadLevelRestrictions(string? restrict)
 	{
 		// Java parity: model/templates/item/ItemTemplate.levelRestrictions ordinal order from PlayerClass.
 		if (string.IsNullOrWhiteSpace(restrict))
-			return new HashSet<string>(StringComparer.Ordinal);
+			return new Dictionary<string, int>(StringComparer.Ordinal);
 
 		var restrictions = restrict.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-		var classRestrictions = new HashSet<string>(StringComparer.Ordinal);
+		var levelRestrictions = new Dictionary<string, int>(StringComparer.Ordinal);
 		for (var i = 0; i < restrictions.Length && i < PlayerClasses.Length; i++)
 		{
 			if (int.TryParse(restrictions[i], out var requiredLevel) && requiredLevel > 0)
-				classRestrictions.Add(PlayerClasses[i]);
+				levelRestrictions[PlayerClasses[i]] = requiredLevel;
 		}
 
-		return classRestrictions;
+		return levelRestrictions;
 	}
 
 	private static float ReadFloatAttribute(XmlReader reader, string attributeName)

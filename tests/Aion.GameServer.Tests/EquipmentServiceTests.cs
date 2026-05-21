@@ -100,28 +100,219 @@ public sealed class EquipmentServiceTests
 		Assert.True(change.InventoryFull);
 	}
 
-	private static Player CreatePlayer()
+	[Fact]
+	public void ChangeEquipment_RejectsItemForInvalidClass()
+	{
+		var player = CreatePlayer(playerClass: "WARRIOR");
+		player.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 1001, ItemId = RestrictedSwordId, Location = 0, Slot = 65535 },
+		];
+
+		var change = EquipmentService.ChangeEquipment(
+			player,
+			action: 0,
+			slotRead: 1,
+			itemObjectId: 1001,
+			CreateItemTemplates(new ItemTemplateSummary(
+				RestrictedSwordId,
+				"Mage Sword",
+				0,
+				1,
+				1,
+				"SWORD",
+				"NORMAL",
+				"COMMON",
+				"PC_ALL",
+				1,
+				0,
+				3,
+				RequiredLevels: RequiredLevels(("MAGE", 1)))),
+			skillTemplates: null);
+
+		Assert.False(change.Changed);
+		Assert.Equal(EquipmentChangeFailure.InvalidClass, change.Failure);
+	}
+
+	[Fact]
+	public void ChangeEquipment_RejectsItemWhenPlayerLevelIsTooLow()
+	{
+		var player = CreatePlayer(exp: 0);
+		player.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 1001, ItemId = RestrictedSwordId, Location = 0, Slot = 65535 },
+		];
+
+		var change = EquipmentService.ChangeEquipment(
+			player,
+			action: 0,
+			slotRead: 1,
+			itemObjectId: 1001,
+			CreateItemTemplates(new ItemTemplateSummary(
+				RestrictedSwordId,
+				"Level Ten Sword",
+				0,
+				1,
+				10,
+				"SWORD",
+				"NORMAL",
+				"COMMON",
+				"PC_ALL",
+				1,
+				0,
+				3,
+				RequiredLevels: RequiredLevels(10))),
+			skillTemplates: null,
+			experienceTable: new PlayerExperienceTable([0, 1000]));
+
+		Assert.False(change.Changed);
+		Assert.Equal(EquipmentChangeFailure.TooLowLevel, change.Failure);
+		Assert.Equal(10, change.RequiredLevel);
+		Assert.Equal("Level Ten Sword", change.ItemName);
+	}
+
+	[Fact]
+	public void ChangeEquipment_RejectsItemWhenPlayerLevelIsTooHigh()
+	{
+		var player = CreatePlayer(exp: 1000);
+		player.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 1001, ItemId = RestrictedSwordId, Location = 0, Slot = 65535 },
+		];
+
+		var change = EquipmentService.ChangeEquipment(
+			player,
+			action: 0,
+			slotRead: 1,
+			itemObjectId: 1001,
+			CreateItemTemplates(new ItemTemplateSummary(
+				RestrictedSwordId,
+				"Lowbie Sword",
+				0,
+				1,
+				1,
+				"SWORD",
+				"NORMAL",
+				"COMMON",
+				"PC_ALL",
+				1,
+				0,
+				3,
+				RequiredLevels: RequiredLevels(1),
+				MaxLevelRestrictions: RequiredLevels(2))),
+			skillTemplates: null,
+			experienceTable: new PlayerExperienceTable([0, 500, 1000, 2000]));
+
+		Assert.False(change.Changed);
+		Assert.Equal(EquipmentChangeFailure.TooHighLevel, change.Failure);
+		Assert.Equal(2, change.MaxLevel);
+		Assert.Equal("Lowbie Sword", change.ItemName);
+	}
+
+	[Fact]
+	public void ChangeEquipment_RejectsItemForInvalidRace()
+	{
+		var player = CreatePlayer(race: "ASMODIANS");
+		player.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 1001, ItemId = RestrictedSwordId, Location = 0, Slot = 65535 },
+		];
+
+		var change = EquipmentService.ChangeEquipment(
+			player,
+			action: 0,
+			slotRead: 1,
+			itemObjectId: 1001,
+			CreateItemTemplates(new ItemTemplateSummary(
+				RestrictedSwordId,
+				"Elyos Sword",
+				0,
+				1,
+				1,
+				"SWORD",
+				"NORMAL",
+				"COMMON",
+				"ELYOS",
+				1,
+				0,
+				3,
+				RequiredLevels: RequiredLevels(1))),
+			skillTemplates: null);
+
+		Assert.False(change.Changed);
+		Assert.Equal(EquipmentChangeFailure.InvalidRace, change.Failure);
+	}
+
+	[Fact]
+	public void ChangeEquipment_RejectsItemForInvalidGender()
+	{
+		var player = CreatePlayer(gender: "MALE");
+		player.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 1001, ItemId = RestrictedSwordId, Location = 0, Slot = 65535 },
+		];
+
+		var change = EquipmentService.ChangeEquipment(
+			player,
+			action: 0,
+			slotRead: 1,
+			itemObjectId: 1001,
+			CreateItemTemplates(new ItemTemplateSummary(
+				RestrictedSwordId,
+				"Dress",
+				0,
+				1,
+				1,
+				"CL_TORSO",
+				"NORMAL",
+				"COMMON",
+				"PC_ALL",
+				1,
+				0,
+				8,
+				RequiredLevels: RequiredLevels(1),
+				GenderPermitted: "FEMALE")),
+			skillTemplates: null);
+
+		Assert.False(change.Changed);
+		Assert.Equal(EquipmentChangeFailure.InvalidGender, change.Failure);
+	}
+
+	private static Player CreatePlayer(string playerClass = "WARRIOR", string race = "ELYOS", string gender = "MALE", long exp = 0)
 	{
 		return new Player
 		{
 			ObjectId = 7001,
 			AccountId = 10,
 			Name = "EquipTester",
-			PlayerClass = "WARRIOR",
-			Race = "ELYOS",
-			Gender = "MALE",
+			PlayerClass = playerClass,
+			Race = race,
+			Gender = gender,
+			Exp = exp,
 			Position = new WorldPosition(210010000, 1, 2, 3, 0),
 		};
 	}
 
-	private static ItemTemplateTable CreateItemTemplates()
+	private static ItemTemplateTable CreateItemTemplates(params ItemTemplateSummary[] extraTemplates)
 	{
-		return new ItemTemplateTable(
-		[
-			new ItemTemplateSummary(SwordId, "Practice Sword", 0, 1, 1, "SWORD", "NORMAL", "COMMON", "PC_ALL", 1, 0, 3),
-			new ItemTemplateSummary(GreatswordId, "Practice Greatsword", 0, 1, 1, "GREATSWORD", "NORMAL", "COMMON", "PC_ALL", 1, 0, 3),
-			new ItemTemplateSummary(RobeId, "Practice Robe", 0, 1, 1, "CL_TORSO", "NORMAL", "COMMON", "PC_ALL", 1, 0, 8),
-		]);
+		var templates = new List<ItemTemplateSummary>
+		{
+			new(SwordId, "Practice Sword", 0, 1, 1, "SWORD", "NORMAL", "COMMON", "PC_ALL", 1, 0, 3, RequiredLevels: RequiredLevels(1)),
+			new(GreatswordId, "Practice Greatsword", 0, 1, 1, "GREATSWORD", "NORMAL", "COMMON", "PC_ALL", 1, 0, 3, RequiredLevels: RequiredLevels(1)),
+			new(RobeId, "Practice Robe", 0, 1, 1, "CL_TORSO", "NORMAL", "COMMON", "PC_ALL", 1, 0, 8, RequiredLevels: RequiredLevels(1)),
+		};
+		templates.AddRange(extraTemplates);
+		return new ItemTemplateTable(templates);
+	}
+
+	private static IReadOnlyDictionary<string, int> RequiredLevels(int level)
+	{
+		return PlayerClasses.ToDictionary(playerClass => playerClass, _ => level, StringComparer.Ordinal);
+	}
+
+	private static IReadOnlyDictionary<string, int> RequiredLevels(params (string PlayerClass, int Level)[] entries)
+	{
+		return entries.ToDictionary(entry => entry.PlayerClass, entry => entry.Level, StringComparer.Ordinal);
 	}
 
 	private static SkillTemplateTable CreateSkillTemplates()
@@ -146,4 +337,25 @@ public sealed class EquipmentServiceTests
 	private const int SwordId = 100000001;
 	private const int GreatswordId = 100100001;
 	private const int RobeId = 110100001;
+	private const int RestrictedSwordId = 100000002;
+	private static readonly string[] PlayerClasses =
+	[
+		"WARRIOR",
+		"GLADIATOR",
+		"TEMPLAR",
+		"SCOUT",
+		"ASSASSIN",
+		"RANGER",
+		"MAGE",
+		"SORCERER",
+		"SPIRIT_MASTER",
+		"PRIEST",
+		"CLERIC",
+		"CHANTER",
+		"ENGINEER",
+		"RIDER",
+		"GUNNER",
+		"ARTIST",
+		"BARD",
+	];
 }

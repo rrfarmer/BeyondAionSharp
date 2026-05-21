@@ -133,6 +133,36 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300042);
 	}
 
+	public static SmSystemMessage CannotUseItemInvalidClass()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_CANNOT_USE_ITEM_INVALID_CLASS.
+		return new SmSystemMessage(1300371);
+	}
+
+	public static SmSystemMessage CannotUseItemTooLowLevel(string itemName, int requiredLevel)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_CANNOT_USE_ITEM_TOO_LOW_LEVEL_MUST_BE_THIS_LEVEL.
+		return new SmSystemMessage(1300372, requiredLevel.ToString(System.Globalization.CultureInfo.InvariantCulture), itemName);
+	}
+
+	public static SmSystemMessage CannotUseItemInvalidRace()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_CANNOT_USE_ITEM_INVALID_RACE.
+		return new SmSystemMessage(1300373);
+	}
+
+	public static SmSystemMessage CannotUseItemInvalidGender()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_CANNOT_USE_ITEM_INVALID_GENDER.
+		return new SmSystemMessage(1300375);
+	}
+
+	public static SmSystemMessage CannotUseItemTooHighLevel(int maxLevel, string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_CANNOT_USE_ITEM_TOO_HIGH_LEVEL.
+		return new SmSystemMessage(1400267, maxLevel.ToString(System.Globalization.CultureInfo.InvariantCulture), itemName);
+	}
+
 	public static SmSystemMessage ExchangeFullInventory()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_EXCHANGE_FULL_INVENTORY.

@@ -527,6 +527,12 @@ public class GamePacketTests
 		Assert.Equal(0, (int)systemMessageReader.ReadC());
 		Assert.Equal(0, systemMessageReader.Remaining);
 		AssertSystemMessage(SmSystemMessage.FullInventory(), 1300762);
+		AssertSystemMessage(SmSystemMessage.UiInventoryFull(), 1300042);
+		AssertSystemMessage(SmSystemMessage.CannotUseItemInvalidClass(), 1300371);
+		AssertSystemMessage(SmSystemMessage.CannotUseItemTooLowLevel("item", 10), 1300372, "10", "item");
+		AssertSystemMessage(SmSystemMessage.CannotUseItemInvalidRace(), 1300373);
+		AssertSystemMessage(SmSystemMessage.CannotUseItemInvalidGender(), 1300375);
+		AssertSystemMessage(SmSystemMessage.CannotUseItemTooHighLevel(39, "item"), 1400267, "39", "item");
 		AssertSystemMessage(SmSystemMessage.ExchangeFullInventory(), 1300366);
 		AssertSystemMessage(SmSystemMessage.MailTakeAllCancel(), 1402251);
 		AssertSystemMessage(SmSystemMessage.NoSuchUser("Kahrun"), 1300627, "Kahrun");
