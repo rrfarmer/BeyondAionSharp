@@ -7,6 +7,44 @@ namespace Aion.GameServer.Tests;
 public sealed class StigmaServiceTests
 {
 	[Fact]
+	public void ApplyAutoLearnOnLogin_WithMembershipAddsTemporaryStigmaSkillsThroughPlayerLevel()
+	{
+		var player = CreatePlayer();
+		player.AccountMembership = 10;
+
+		var result = StigmaService.ApplyAutoLearnOnLogin(
+			player,
+			CreateSkillTree(),
+			CreateExperienceTable(),
+			stigmaAutoLearnMembership: 10);
+
+		Assert.True(result.Changed);
+		Assert.Equal([(500, 1, 1), (662, 1, 3)], result.AddedSkills.Select(skill => (skill.SkillId, skill.SkillLevel, skill.SkillType)).ToArray());
+		Assert.Equal([(500, 1, 1), (662, 1, 3)], result.Skills.Select(skill => (skill.SkillId, skill.SkillLevel, skill.SkillType)).ToArray());
+	}
+
+	[Fact]
+	public void ApplyAutoLearnOnLogin_WithoutMembershipLeavesSkillsUnchanged()
+	{
+		var player = CreatePlayer();
+		player.AccountMembership = 0;
+		player.Skills =
+		[
+			new PlayerSkill { SkillId = 500, SkillLevel = 1, SkillType = 1 },
+		];
+
+		var result = StigmaService.ApplyAutoLearnOnLogin(
+			player,
+			CreateSkillTree(),
+			CreateExperienceTable(),
+			stigmaAutoLearnMembership: 10);
+
+		Assert.False(result.Changed);
+		Assert.Empty(result.AddedSkills);
+		Assert.Same(player.Skills, result.Skills);
+	}
+
+	[Fact]
 	public void CreateChargePlan_SuccessConsumesStoneAndRaisesEquippedStigmaSkillLevel()
 	{
 		var player = CreatePlayer();

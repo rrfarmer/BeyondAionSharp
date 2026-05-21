@@ -754,6 +754,19 @@ public sealed class GameServerConnection : BaseClientConnection
 					_activePlayer.AccessLevel = _accessLevel;
 					_activePlayer.AccountMembership = _membership;
 					_connectionRegistry?.RegisterPlayerConnection(_activePlayer.ObjectId, this);
+
+					var staticData = _runtimeContext?.DataManager?.StaticData;
+					if (staticData != null)
+					{
+						// Java parity: services/StigmaService.onPlayerLogin runs before SM_ENTER_WORLD_CHECK/SM_SKILL_LIST.
+						var stigmaAutoLearn = StigmaService.ApplyAutoLearnOnLogin(
+							_activePlayer,
+							staticData.SkillTree,
+							staticData.PlayerExperienceTable,
+							_options.Membership.StigmaAutoLearn);
+						if (stigmaAutoLearn.Changed)
+							_activePlayer.Skills = stigmaAutoLearn.Skills;
+					}
 				}
 				await SendPacketAsync(new SmEnterWorldCheck(enterWorldResult.Message));
 				if (enterWorldResult is { Message: EnterWorldCheckMessage.Ok, Player: not null })

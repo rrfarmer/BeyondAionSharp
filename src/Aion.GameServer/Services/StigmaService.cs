@@ -94,6 +94,37 @@ public static class StigmaService
 		return StigmaUnequipResult.Success(skills, removal.RemovedSkills, removal.RemovedSkillNames);
 	}
 
+	public static StigmaAutoLearnResult ApplyAutoLearnOnLogin(
+		Player player,
+		SkillTreeTable skillTree,
+		PlayerExperienceTable? experienceTable,
+		byte stigmaAutoLearnMembership = 10)
+	{
+		// Java parity: services/StigmaService.onPlayerLogin membership autolearn branch.
+		if (!HasPermission(player, stigmaAutoLearnMembership))
+			return StigmaAutoLearnResult.NoChange(player.Skills);
+
+		var playerLevel = Math.Max(1, experienceTable?.GetLevelForExp(player.Exp) ?? 1);
+		var skills = player.Skills.ToList();
+		var addedSkills = new List<PlayerSkill>();
+		for (var level = 20; level <= playerLevel; level++)
+		{
+			foreach (var template in skillTree.GetTemplatesFor(player.PlayerClass, level, player.Race))
+			{
+				if (!template.IsStigma)
+					continue;
+
+				var learned = AddOrUpgradeTemporarySkill(skills, template.SkillId, template.SkillLevel, template.IsLinkedStigma ? 3 : 1);
+				if (learned != null)
+					addedSkills.Add(learned);
+			}
+		}
+
+		return addedSkills.Count == 0
+			? StigmaAutoLearnResult.NoChange(player.Skills)
+			: new StigmaAutoLearnResult(true, skills, addedSkills);
+	}
+
 	public static StigmaChargePlan CreateChargePlan(
 		Player player,
 		int targetItemObjectId,
@@ -625,6 +656,17 @@ public sealed record StigmaUnequipResult(
 		IReadOnlyList<string> removedSkillNames)
 	{
 		return new StigmaUnequipResult(skills, removedSkills, removedSkillNames);
+	}
+}
+
+public sealed record StigmaAutoLearnResult(
+	bool Changed,
+	IReadOnlyList<PlayerSkill> Skills,
+	IReadOnlyList<PlayerSkill> AddedSkills)
+{
+	public static StigmaAutoLearnResult NoChange(IReadOnlyList<PlayerSkill> skills)
+	{
+		return new StigmaAutoLearnResult(false, skills, Array.Empty<PlayerSkill>());
 	}
 }
 
