@@ -96,6 +96,11 @@ public interface IPlayerEnterWorldRepository
 		int? deletedSourceItemObjectId,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveEquipmentMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<InventoryItem> items,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SavePlayerLogoutAsync(Player player, DateTime lastOnline, CancellationToken cancellationToken = default);
 }
 
@@ -276,6 +281,14 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		IReadOnlyList<InventoryItem> chargedItems,
 		InventoryItem? sourceItemUpdate,
 		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> SaveEquipmentMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<InventoryItem> items,
 		CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(true);
@@ -656,6 +669,45 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not save charge action mutation for player {PlayerObjectId}", playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SaveEquipmentMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<InventoryItem> items,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/InventoryDAO.store updated equipped flag and equipment slot after Equipment equip/unequip/switch.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			foreach (var item in items)
+			{
+				await using var command = connection.CreateCommand();
+				command.Transaction = transaction;
+				command.CommandText = "UPDATE inventory SET is_equipped = ?, slot = ? WHERE item_unique_id = ? AND item_owner = ?";
+				command.Parameters.AddRange(
+					new[]
+					{
+						new MySqlParameter { Value = item.IsEquipped },
+						new MySqlParameter { Value = item.Slot },
+						new MySqlParameter { Value = item.ObjectId },
+						new MySqlParameter { Value = playerObjectId },
+					});
+				if (await command.ExecuteNonQueryAsync(cancellationToken) <= 0)
+					return false;
+			}
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save equipment mutation for player {PlayerObjectId}", playerObjectId);
 			return false;
 		}
 	}

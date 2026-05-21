@@ -10,6 +10,7 @@ public sealed class SmInventoryUpdateItem : GameServerPacket
 	public const int IncreaseKinahCollect = 0x1A;
 	public const int DecreaseItemUse = 0x16;
 	public const int DecreaseKinahBuy = 0x1D;
+	public const int EquipUnequip = -1;
 	public const int Charge = -2;
 	public const int PolishCharge = -3;
 

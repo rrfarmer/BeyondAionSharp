@@ -127,6 +127,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300762);
 	}
 
+	public static SmSystemMessage UiInventoryFull()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_UI_INVENTORY_FULL.
+		return new SmSystemMessage(1300042);
+	}
+
 	public static SmSystemMessage ExchangeFullInventory()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_EXCHANGE_FULL_INVENTORY.

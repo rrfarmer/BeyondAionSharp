@@ -222,6 +222,15 @@ public sealed class PlayerEnterWorldService
 			cancellationToken);
 	}
 
+	public Task<bool> SaveEquipmentMutationAsync(
+		Player player,
+		IReadOnlyList<InventoryItem> items,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: model/gameobjects/player/Equipment.setPersistentState(UPDATE_REQUIRED) persisted by InventoryDAO.store.
+		return _repository.SaveEquipmentMutationAsync(player.ObjectId, items, cancellationToken);
+	}
+
 	public async Task LeaveWorldAsync(Player player, CancellationToken cancellationToken = default)
 	{
 		// Java parity: services/player/PlayerLeaveWorldService.leaveWorld baseline persistence.

@@ -479,6 +479,26 @@ public class GamePacketTests
 		Assert.Equal(299999, polishChargeInventoryUpdateReader.ReadD());
 		Assert.Equal(0, polishChargeInventoryUpdateReader.Remaining);
 
+		var appearancePayload = SerializeUnencryptedPayload(
+			new SmUpdatePlayerAppearance(
+				new Player
+				{
+					ObjectId = 7001,
+					InventoryItems =
+					[
+						new InventoryItem { ObjectId = 93, ItemId = 100100001, IsEquipped = true, Location = 0, Slot = 3, ItemSkin = 100100002, Enchant = 5 },
+					],
+				}));
+		using var appearanceReader = new PacketBuffer(appearancePayload);
+		Assert.Equal(7001, appearanceReader.ReadD());
+		Assert.Equal(1, appearanceReader.ReadD());
+		Assert.Equal(100100002, appearanceReader.ReadD());
+		Assert.Equal(0, appearanceReader.ReadD());
+		Assert.Equal(0, appearanceReader.ReadD());
+		Assert.Equal(5, appearanceReader.ReadH());
+		Assert.Equal(0, appearanceReader.ReadH());
+		Assert.Equal(0, appearanceReader.Remaining);
+
 		var itemUsagePayload = SerializeUnencryptedPayload(new SmItemUsageAnimation(7001, 9001, 166050001, 0, 1, 1));
 		using var itemUsageReader = new PacketBuffer(itemUsagePayload);
 		Assert.Equal(7001, itemUsageReader.ReadD());
@@ -2740,6 +2760,23 @@ public class GamePacketTests
 		Assert.Equal(2, chargeItem.ChargeLevel);
 		Assert.Equal([101, 102], chargeItem.ItemObjectIds);
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(78, _ => { }), GameConnectionState.Authed));
+	}
+
+	[Fact]
+	public void ClientPacketFactory_ParsesEquipItem()
+	{
+		var equipItem = Assert.IsType<CmEquipItem>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(38, b =>
+			{
+				b.WriteC(0);
+				b.WriteQ(2);
+				b.WriteD(9001);
+			}), GameConnectionState.InGame));
+
+		Assert.Equal(0, equipItem.Action);
+		Assert.Equal(2, equipItem.Slot);
+		Assert.Equal(9001, equipItem.ItemObjectId);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(38, _ => { }), GameConnectionState.Authed));
 	}
 
 	[Fact]

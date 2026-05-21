@@ -412,6 +412,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleChargeItemAsync(_activePlayer, chargeItem);
 				break;
+			case CmEquipItem equipItem:
+				if (_activePlayer != null)
+					await HandleEquipItemAsync(_activePlayer, equipItem);
+				break;
 			case CmDialogSelect dialogSelect:
 				if (_activePlayer != null)
 					await HandleDialogSelectAsync(_activePlayer, dialogSelect);
@@ -1237,6 +1241,53 @@ public sealed class GameServerConnection : BaseClientConnection
 				chargeWay == 1
 					? SmSystemMessage.ItemChargeAllComplete()
 					: SmSystemMessage.ItemCharge2AllComplete());
+		}
+	}
+
+	private async Task HandleEquipItemAsync(Player player, CmEquipItem packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_EQUIP_ITEM.runImpl -> model/gameobjects/player/Equipment.
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var itemTemplates = staticData?.ItemTemplates;
+		if (staticData == null || itemTemplates == null)
+			return;
+
+		var change = EquipmentService.ChangeEquipment(
+			player,
+			packet.Action,
+			packet.Slot,
+			packet.ItemObjectId,
+			itemTemplates,
+			staticData.SkillTemplates);
+		if (!change.Changed)
+		{
+			if (change.InventoryFull)
+				await SendPacketAsync(SmSystemMessage.UiInventoryFull());
+			return;
+		}
+
+		var saved = _playerEnterWorldService == null
+			|| change.PersistedItems.Count == 0
+			|| await _playerEnterWorldService.SaveEquipmentMutationAsync(player, change.PersistedItems);
+		if (!saved)
+			return;
+
+		player.InventoryItems = change.InventoryItems;
+		foreach (var update in change.InventoryUpdateItems)
+		{
+			if (itemTemplates.GetItemTemplate(update.ItemId) is { } template)
+				await SendPacketAsync(new SmInventoryUpdateItem(update, template, SmInventoryUpdateItem.EquipUnequip));
+		}
+
+		if (change.RefreshStats)
+			await SendPacketAsync(CreateStatsInfoPacket(player, staticData));
+		if (change.BroadcastAppearance)
+		{
+			var appearancePacket = new SmUpdatePlayerAppearance(player);
+			if (_connectionRegistry != null)
+				await _connectionRegistry.BroadcastToVisiblePlayersAsync(player.Position, player.ObjectId, appearancePacket, includeSourcePlayer: true);
+			else
+				await SendPacketAsync(appearancePacket);
 		}
 	}
 

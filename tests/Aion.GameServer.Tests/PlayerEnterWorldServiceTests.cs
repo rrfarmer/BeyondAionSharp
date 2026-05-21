@@ -411,6 +411,10 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public int? ChargeActionDeletedSourceItemObjectId { get; private set; }
 
+		public int SaveEquipmentMutationCalls { get; private set; }
+
+		public IReadOnlyList<InventoryItem> EquipmentItems { get; private set; } = Array.Empty<InventoryItem>();
+
 		public Task<Player?> LoadPlayerAsync(int accountId, int playerObjectId, CancellationToken cancellationToken = default)
 		{
 			return Task.FromResult(Player);
@@ -635,6 +639,16 @@ public sealed class PlayerEnterWorldServiceTests
 			ChargeActionChargedItems = chargedItems;
 			ChargeActionSourceItemUpdate = sourceItemUpdate;
 			ChargeActionDeletedSourceItemObjectId = deletedSourceItemObjectId;
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> SaveEquipmentMutationAsync(
+			int playerObjectId,
+			IReadOnlyList<InventoryItem> items,
+			CancellationToken cancellationToken = default)
+		{
+			SaveEquipmentMutationCalls++;
+			EquipmentItems = items;
 			return Task.FromResult(true);
 		}
 
