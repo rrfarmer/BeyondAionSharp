@@ -7,11 +7,13 @@ public sealed class HouseAuctionTimingService
 {
 	private static readonly TimeSpan ProlongationTime = TimeSpan.FromMinutes(5);
 	private static readonly TimeSpan MaxProlongationTime = TimeSpan.FromMinutes(30);
+	private readonly JavaCronSchedule _auctionEndSchedule;
 	private readonly TimeProvider _timeProvider;
 	private readonly ConcurrentDictionary<int, DateTimeOffset> _prolongedAuctionEnds = new();
 
 	public HouseAuctionTimingService(GameServerOptions? options = null, TimeProvider? timeProvider = null)
 	{
+		_auctionEndSchedule = JavaCronSchedule.WeeklyOrDefault(options?.Housing.AuctionEndTime, DayOfWeek.Sunday, 12);
 		_timeProvider = timeProvider ?? TimeProvider.System;
 	}
 
@@ -80,12 +82,8 @@ public sealed class HouseAuctionTimingService
 
 	private DateTimeOffset GetNextRegularAuctionEnd(DateTimeOffset now)
 	{
-		// Java parity: taskmanager/tasks/housing/AuctionEndTask default HOUSE_AUCTION_END_TIME cron (Sunday noon).
-		var daysUntilSunday = ((int)DayOfWeek.Sunday - (int)now.DayOfWeek + 7) % 7;
-		var auctionEnd = new DateTimeOffset(now.Year, now.Month, now.Day, 12, 0, 0, now.Offset).AddDays(daysUntilSunday);
-		if (auctionEnd <= now)
-			auctionEnd = auctionEnd.AddDays(7);
-		return auctionEnd;
+		// Java parity: taskmanager/tasks/housing/AuctionEndTask uses HousingConfig.HOUSE_AUCTION_END_TIME.
+		return _auctionEndSchedule.GetNextRunAfter(now);
 	}
 
 	private DateTimeOffset GetNow()

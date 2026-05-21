@@ -46,6 +46,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly ISocialRepository _socialRepository;
 	private readonly IHouseAuctionRepository _houseAuctionRepository;
 	private readonly HouseAuctionTimingService _houseAuctionTiming;
+	private readonly JavaCronSchedule _housingMaintenanceSchedule;
 	private readonly IMotionRepository _motionRepository;
 	private readonly IGameClientConnectionRegistry? _connectionRegistry;
 	private readonly IDFactory? _idFactory;
@@ -103,6 +104,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_socialRepository = socialRepository ?? new EmptySocialRepository();
 		_houseAuctionRepository = houseAuctionRepository ?? new EmptyHouseAuctionRepository();
 		_houseAuctionTiming = houseAuctionTiming ?? new HouseAuctionTimingService();
+		_housingMaintenanceSchedule = JavaCronSchedule.WeeklyOrDefault(_options.Housing.MaintenanceTime, DayOfWeek.Monday, 0);
 		_motionRepository = motionRepository ?? new EmptyMotionRepository();
 		_connectionRegistry = connectionRegistry;
 		_idFactory = idFactory;
@@ -2045,21 +2047,16 @@ public sealed class GameServerConnection : BaseClientConnection
 			: from <= today && to >= today;
 	}
 
-	private static DateTime GetNextHousingMaintenanceRun()
+	private DateTime GetNextHousingMaintenanceRun()
 	{
-		// Java parity: MaintenanceTask default HOUSE_MAINTENANCE_TIME cron (Monday midnight).
+		// Java parity: MaintenanceTask uses HousingConfig.HOUSE_MAINTENANCE_TIME.
 		return GetNextHousingMaintenanceRunAfter(DateTime.Now);
 	}
 
-	private static DateTime GetNextHousingMaintenanceRunAfter(DateTime date)
+	private DateTime GetNextHousingMaintenanceRunAfter(DateTime date)
 	{
-		// Java parity: AbstractCronTask.getNextRunAfter for HousingConfig.HOUSE_MAINTENANCE_TIME default.
-		var next = date.Date;
-		var daysUntilMonday = ((int)DayOfWeek.Monday - (int)next.DayOfWeek + 7) % 7;
-		next = next.AddDays(daysUntilMonday);
-		if (next <= date)
-			next = next.AddDays(7);
-		return next;
+		// Java parity: AbstractCronTask.getNextRunAfter for HousingConfig.HOUSE_MAINTENANCE_TIME.
+		return _housingMaintenanceSchedule.GetNextRunAfter(date);
 	}
 
 	private static long GetPaidHousingMaintenanceWeeks(DateTime nextPay)

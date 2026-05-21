@@ -38,6 +38,23 @@ public sealed class HouseAuctionTimingServiceTests
 	}
 
 	[Fact]
+	public void GetRemainingAuctionSeconds_UsesConfiguredAuctionEndCron()
+	{
+		var clock = new MutableTimeProvider(new DateTimeOffset(2026, 5, 19, 18, 0, 0, TimeSpan.Zero));
+		var service = new HouseAuctionTimingService(
+			new GameServerOptions { Housing = new GameServerHousingOptions { AuctionEndTime = "0 30 18 ? * TUE" } },
+			clock);
+
+		Assert.Equal(1800, service.GetRemainingAuctionSeconds(1001));
+		Assert.True(service.TryProlongAuction(1001));
+		Assert.Equal(1800, service.GetRemainingAuctionSeconds(1001));
+
+		clock.SetUtcNow(new DateTimeOffset(2026, 5, 19, 18, 26, 0, TimeSpan.Zero));
+		Assert.True(service.TryProlongAuction(1001));
+		Assert.Equal(540, service.GetRemainingAuctionSeconds(1001));
+	}
+
+	[Fact]
 	public void TryProlongAuction_RepeatedBidsCapAtThirtyMinutesAfterRegularEnd()
 	{
 		var clock = new MutableTimeProvider(new DateTimeOffset(2026, 5, 24, 11, 58, 0, TimeSpan.Zero));
