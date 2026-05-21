@@ -1756,6 +1756,50 @@ public sealed class GameServerConnection : BaseClientConnection
 				0,
 				0));
 
+		await SchedulePendingItemUseAsync(
+			player,
+			itemObjectId: packet.StoneObjectId,
+			itemTemplateId: sourceTemplate.TemplateId,
+			targetItemName: plan.ItemName,
+			isEnchantmentStone: false,
+			delay: TimeSpan.FromMilliseconds(2000),
+			completeAsync: async cancellationToken =>
+			{
+				if (cancellationToken.IsCancellationRequested)
+					return;
+
+				if (!player.InventoryItems.Any(item => item.ObjectId == packet.TargetItemObjectId))
+				{
+					await SendPacketAsync(SmSystemMessage.EnchantItemNoTargetItem(), cancellationToken);
+					await BroadcastItemUsageAnimationAsync(
+						player,
+						new SmItemUsageAnimation(
+							player.ObjectId,
+							packet.StoneObjectId,
+							sourceTemplate.TemplateId,
+							0,
+							2,
+							0));
+					return;
+				}
+
+				await CompleteSocketManastoneAsync(player, packet, plan, sourceTemplate, targetTemplate, staticData, cancellationToken);
+			});
+	}
+
+	private async Task CompleteSocketManastoneAsync(
+		Player player,
+		CmManastone packet,
+		ManastoneSocketPlan plan,
+		ItemTemplateSummary sourceTemplate,
+		ItemTemplateSummary targetTemplate,
+		StaticData staticData,
+		CancellationToken cancellationToken)
+	{
+		if (plan.TargetItemUpdate == null)
+			return;
+
+		var itemTemplates = staticData.ItemTemplates;
 		var saved = _playerEnterWorldService == null
 			|| await _playerEnterWorldService.SaveManastoneSocketMutationAsync(
 				player,
@@ -1765,7 +1809,8 @@ public sealed class GameServerConnection : BaseClientConnection
 				plan.SourceItemUpdate,
 				plan.DeletedSourceItemObjectId,
 				plan.SupplementItemUpdates,
-				plan.DeletedSupplementItemObjectIds);
+				plan.DeletedSupplementItemObjectIds,
+				cancellationToken);
 		if (!saved)
 			return;
 
