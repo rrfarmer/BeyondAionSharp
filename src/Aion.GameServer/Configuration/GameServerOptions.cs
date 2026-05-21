@@ -202,6 +202,8 @@ public sealed class GameServerOptions
 			{
 				CharacterAdditionalEnable = GetByteWithEnvironment(loader, "gameserver.character.additional.enable", 10),
 				CharacterAdditionalCount = GetByteWithEnvironment(loader, "gameserver.character.additional.count", 8),
+				StigmaSlotQuest = GetByteWithEnvironment(loader, "gameserver.quest.stigma.slot", 10),
+				StigmaAutoLearn = GetByteWithEnvironment(loader, "gameserver.autolearn.stigma", 10),
 			},
 			Administration = new GameServerAdministrationOptions
 			{
@@ -469,6 +471,10 @@ public sealed class GameServerMembershipOptions
 	public byte CharacterAdditionalEnable { get; init; } = 10;
 
 	public byte CharacterAdditionalCount { get; init; } = 8;
+
+	public byte StigmaSlotQuest { get; init; } = 10;
+
+	public byte StigmaAutoLearn { get; init; } = 10;
 }
 
 public sealed class GameServerAdministrationOptions

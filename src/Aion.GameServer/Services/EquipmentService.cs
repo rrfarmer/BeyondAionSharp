@@ -25,12 +25,13 @@ public static class EquipmentService
 		SkillTemplateTable? skillTemplates,
 		PlayerExperienceTable? experienceTable = null,
 		bool soulBindConfirmed = false,
-		SkillTreeTable? skillTree = null)
+		SkillTreeTable? skillTree = null,
+		byte stigmaSlotQuestMembership = 10)
 	{
 		// Java parity: network/aion/clientpackets/CM_EQUIP_ITEM.runImpl action routing.
 		return action switch
 		{
-			0 => EquipItem(player, slotRead, itemObjectId, itemTemplates, skillTemplates, experienceTable, soulBindConfirmed, skillTree),
+			0 => EquipItem(player, slotRead, itemObjectId, itemTemplates, skillTemplates, experienceTable, soulBindConfirmed, skillTree, stigmaSlotQuestMembership),
 			1 => UnEquipItem(player, itemObjectId, itemTemplates, skillTemplates, skillTree),
 			2 => SwitchHands(player, itemTemplates),
 			_ => EquipmentChangeResult.NoChange(),
@@ -45,7 +46,8 @@ public static class EquipmentService
 		SkillTemplateTable? skillTemplates,
 		PlayerExperienceTable? experienceTable,
 		bool soulBindConfirmed,
-		SkillTreeTable? skillTree)
+		SkillTreeTable? skillTree,
+		byte stigmaSlotQuestMembership)
 	{
 		// Java parity: model/gameobjects/player/Equipment.equipItem.
 		var inventoryItems = player.InventoryItems.ToList();
@@ -95,7 +97,8 @@ public static class EquipmentService
 				itemTemplates,
 				skillTemplates,
 				skillTree,
-				experienceTable);
+				experienceTable,
+				stigmaSlotQuestMembership);
 			if (!stigma.Allowed)
 				return stigma.Failure == StigmaEquipFailure.NotEnoughKinah
 					? EquipmentChangeResult.StigmaNotEnoughKinahFailure()

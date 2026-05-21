@@ -428,6 +428,31 @@ public sealed class EquipmentServiceTests
 	}
 
 	[Fact]
+	public void ChangeEquipment_MembershipPermissionUnlocksStigmaSlotsWithoutQuest()
+	{
+		var player = CreatePlayer(playerClass: "GLADIATOR", exp: 46, membership: 10);
+		player.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 77, ItemId = KinahItemId, Count = 50_000, Location = 0 },
+			new InventoryItem { ObjectId = 1001, ItemId = StigmaId, Location = 0, Slot = 65535 },
+		];
+
+		var change = EquipmentService.ChangeEquipment(
+			player,
+			action: 0,
+			slotRead: StigmaSlot1,
+			itemObjectId: 1001,
+			CreateItemTemplates(),
+			CreateStigmaSkillTemplates(),
+			CreateExperienceTable(),
+			skillTree: CreateStigmaSkillTree(),
+			stigmaSlotQuestMembership: 10);
+
+		Assert.True(change.Changed);
+		Assert.Contains(change.InventoryItems, item => item.ObjectId == 1001 && item.IsEquipped);
+	}
+
+	[Fact]
 	public void ChangeEquipment_EquipsSixthChargeableStigmaAndAddsLinkedSkill()
 	{
 		var player = CreatePlayer(playerClass: "GLADIATOR", exp: 60);
@@ -522,7 +547,8 @@ public sealed class EquipmentServiceTests
 		string race = "ELYOS",
 		string gender = "MALE",
 		long exp = 0,
-		int rank = 1)
+		int rank = 1,
+		byte membership = 0)
 	{
 		return new Player
 		{
@@ -532,6 +558,7 @@ public sealed class EquipmentServiceTests
 			PlayerClass = playerClass,
 			Race = race,
 			Gender = gender,
+			AccountMembership = membership,
 			Exp = exp,
 			Position = new WorldPosition(210010000, 1, 2, 3, 0),
 			AbyssRank = PlayerAbyssRank.Default() with { Rank = rank, MaxRank = rank },

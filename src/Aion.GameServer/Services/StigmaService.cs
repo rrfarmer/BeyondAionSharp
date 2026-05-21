@@ -19,7 +19,8 @@ public static class StigmaService
 		ItemTemplateTable itemTemplates,
 		SkillTemplateTable skillTemplates,
 		SkillTreeTable skillTree,
-		PlayerExperienceTable? experienceTable = null)
+		PlayerExperienceTable? experienceTable = null,
+		byte stigmaSlotQuestMembership = 10)
 	{
 		// Java parity: services/StigmaService.notifyEquipAction.
 		if (resultTemplate.StigmaInfo == null)
@@ -54,9 +55,9 @@ public static class StigmaService
 
 		if (!replace)
 		{
-			if (IsRegularStigma(slot) && GetPossibleStigmaCount(player, experienceTable) <= GetEquippedStigmas(inventoryItems, itemTemplates).Count(stigma => IsRegularStigma(stigma.Item.Slot)))
+			if (IsRegularStigma(slot) && GetPossibleStigmaCount(player, experienceTable, stigmaSlotQuestMembership) <= GetEquippedStigmas(inventoryItems, itemTemplates).Count(stigma => IsRegularStigma(stigma.Item.Slot)))
 				return StigmaEquipResult.Failed(StigmaEquipFailure.Denied);
-			if (IsAdvancedStigma(slot) && GetPossibleAdvancedStigmaCount(player, experienceTable) <= GetEquippedStigmas(inventoryItems, itemTemplates).Count(stigma => IsAdvancedStigma(stigma.Item.Slot)))
+			if (IsAdvancedStigma(slot) && GetPossibleAdvancedStigmaCount(player, experienceTable, stigmaSlotQuestMembership) <= GetEquippedStigmas(inventoryItems, itemTemplates).Count(stigma => IsAdvancedStigma(stigma.Item.Slot)))
 				return StigmaEquipResult.Failed(StigmaEquipFailure.Denied);
 		}
 
@@ -438,9 +439,12 @@ public static class StigmaService
 		return equippedCount == neededCount;
 	}
 
-	private static int GetPossibleStigmaCount(Player player, PlayerExperienceTable? experienceTable)
+	private static int GetPossibleStigmaCount(Player player, PlayerExperienceTable? experienceTable, byte stigmaSlotQuestMembership)
 	{
-		// Java parity: services/StigmaService.getPossibleStigmaCount without membership override until account permission parity exists.
+		// Java parity: services/StigmaService.getPossibleStigmaCount + Player.hasPermission(MembershipConfig.STIGMA_SLOT_QUEST).
+		if (HasPermission(player, stigmaSlotQuestMembership))
+			return 3;
+
 		var playerLevel = Math.Max(1, experienceTable?.GetLevelForExp(player.Exp) ?? 1);
 		if (!IsCompleteStigmaQuest(player))
 			return 0;
@@ -449,9 +453,12 @@ public static class StigmaService
 		return playerLevel < 40 ? 2 : 3;
 	}
 
-	private static int GetPossibleAdvancedStigmaCount(Player player, PlayerExperienceTable? experienceTable)
+	private static int GetPossibleAdvancedStigmaCount(Player player, PlayerExperienceTable? experienceTable, byte stigmaSlotQuestMembership)
 	{
-		// Java parity: services/StigmaService.getPossibleAdvancedStigmaCount without membership override until account permission parity exists.
+		// Java parity: services/StigmaService.getPossibleAdvancedStigmaCount + Player.hasPermission(MembershipConfig.STIGMA_SLOT_QUEST).
+		if (HasPermission(player, stigmaSlotQuestMembership))
+			return 3;
+
 		var playerLevel = Math.Max(1, experienceTable?.GetLevelForExp(player.Exp) ?? 1);
 		if (!IsCompleteStigmaQuest(player))
 			return 0;
@@ -474,6 +481,12 @@ public static class StigmaService
 		return quest.IsComplete
 			|| quest.IsCompletedAtLeastOnce
 			|| (string.Equals(quest.Status, "START", StringComparison.Ordinal) && quest.QuestVars == transitionalQuestVar);
+	}
+
+	private static bool HasPermission(Player player, byte permissionLevel)
+	{
+		// Java parity: model/gameobjects/player/Player.hasPermission.
+		return player.AccountMembership >= permissionLevel;
 	}
 
 	private static long GetStigmaEquipPrice(Player player, ItemTemplateSummary itemTemplate)

@@ -1264,7 +1264,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			itemTemplates,
 			staticData.SkillTemplates,
 			staticData.PlayerExperienceTable,
-			skillTree: staticData.SkillTree);
+			skillTree: staticData.SkillTree,
+			stigmaSlotQuestMembership: _options.Membership.StigmaSlotQuest);
 		if (!change.Changed)
 		{
 			if (change.Failure == EquipmentChangeFailure.SoulBindRequired)
@@ -1472,7 +1473,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			staticData.SkillTemplates,
 			staticData.PlayerExperienceTable,
 			soulBindConfirmed: true,
-			skillTree: staticData.SkillTree);
+			skillTree: staticData.SkillTree,
+			stigmaSlotQuestMembership: _options.Membership.StigmaSlotQuest);
 		if (!change.Changed)
 			return;
 
