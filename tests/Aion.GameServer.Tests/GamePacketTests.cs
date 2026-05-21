@@ -2481,6 +2481,16 @@ public class GamePacketTests
 		Assert.Equal(9002, useItem.TargetItemObjectId);
 		Assert.Equal(0, useItem.SyncId);
 		Assert.Equal(0, useItem.IndexReturn);
+
+		var untargetedUseItem = Assert.IsType<CmUseItem>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(37, b =>
+			{
+				b.WriteD(9003);
+				b.WriteC(0);
+			}), GameConnectionState.InGame));
+		Assert.Equal(9003, untargetedUseItem.SourceItemObjectId);
+		Assert.Equal(0, untargetedUseItem.Type);
+		Assert.Equal(0, untargetedUseItem.TargetItemObjectId);
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(37, _ => { }), GameConnectionState.Authed));
 	}
 

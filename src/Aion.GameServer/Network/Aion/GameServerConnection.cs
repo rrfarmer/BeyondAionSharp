@@ -1175,10 +1175,7 @@ public sealed class GameServerConnection : BaseClientConnection
 
 	private async Task HandleUseItemAsync(Player player, CmUseItem packet)
 	{
-		// Java parity: network/aion/clientpackets/CM_USE_ITEM.runImpl. This slice wires the PolishAction branch.
-		if (packet.Type != 2)
-			return;
-
+		// Java parity: network/aion/clientpackets/CM_USE_ITEM.runImpl. Implemented item actions are routed by template action metadata.
 		var staticData = _runtimeContext?.DataManager?.StaticData;
 		var itemTemplates = staticData?.ItemTemplates;
 		var itemRandomBonuses = staticData?.ItemRandomBonuses;
@@ -1191,25 +1188,32 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		var sourceTemplate = itemTemplates.GetItemTemplate(sourceItem.ItemId);
-		if (sourceTemplate == null || sourceTemplate.PolishSetId <= 0)
+		if (sourceTemplate == null)
 			return;
 
-		var targetItem = packet.TargetItemObjectId == 0
-			? null
-			: inventoryItems.FirstOrDefault(item => item.ObjectId == packet.TargetItemObjectId);
-		var polishPlan = IdianPolishService.CreatePolishPlan(sourceItem, targetItem, itemTemplates, itemRandomBonuses);
-		switch (polishPlan.Result)
+		if (sourceTemplate.PolishSetId > 0 && packet.Type == 2)
 		{
-			case IdianPolishResult.Success:
-				await ApplyIdianPolishPlanAsync(player, inventoryItems, sourceItem, polishPlan, staticData, success: true);
-				break;
-			case IdianPolishResult.NoRandomBonus:
-				await ApplyIdianPolishPlanAsync(player, inventoryItems, sourceItem, polishPlan, staticData, success: false);
-				break;
-			case IdianPolishResult.WrongLevel:
-				await SendPacketAsync(SmSystemMessage.PolishWrongLevel());
-				break;
+			var targetItem = packet.TargetItemObjectId == 0
+				? null
+				: inventoryItems.FirstOrDefault(item => item.ObjectId == packet.TargetItemObjectId);
+			var polishPlan = IdianPolishService.CreatePolishPlan(sourceItem, targetItem, itemTemplates, itemRandomBonuses);
+			switch (polishPlan.Result)
+			{
+				case IdianPolishResult.Success:
+					await ApplyIdianPolishPlanAsync(player, inventoryItems, sourceItem, polishPlan, staticData, success: true);
+					break;
+				case IdianPolishResult.NoRandomBonus:
+					await ApplyIdianPolishPlanAsync(player, inventoryItems, sourceItem, polishPlan, staticData, success: false);
+					break;
+				case IdianPolishResult.WrongLevel:
+					await SendPacketAsync(SmSystemMessage.PolishWrongLevel());
+					break;
+			}
+			return;
 		}
+
+		if (sourceTemplate.ChargeActionMaxLevel > 0)
+			await HandleChargeUseItemAsync(player, inventoryItems, sourceItem, sourceTemplate, staticData);
 	}
 
 	private async Task ApplyIdianPolishPlanAsync(
@@ -1273,6 +1277,89 @@ public sealed class GameServerConnection : BaseClientConnection
 			await _connectionRegistry.BroadcastToVisiblePlayersAsync(player.Position, player.ObjectId, packet, includeSourcePlayer: true);
 		else
 			await SendPacketAsync(packet);
+	}
+
+	private async Task HandleChargeUseItemAsync(
+		Player player,
+		List<InventoryItem> inventoryItems,
+		InventoryItem sourceItem,
+		ItemTemplateSummary sourceTemplate,
+		StaticData staticData)
+	{
+		// Java parity: model/templates/item/actions/ChargeAction.canAct + act.
+		var itemTemplates = staticData.ItemTemplates;
+		var chargeWay = sourceTemplate.Improvement?.ChargeWay ?? 0;
+		if (chargeWay == 0)
+			return;
+
+		var chargePlans = inventoryItems
+			.Where(item => item.IsEquipped)
+			.Select(item => ItemChargeService.CreateChargePlan(
+				player,
+				item,
+				itemTemplates,
+				sourceTemplate.ChargeActionMaxLevel,
+				ignoreRankRequirement: false,
+				requirePayment: false))
+			.Where(plan => plan is { } && plan.ChargeWay == chargeWay)
+			.Cast<ItemChargePlan>()
+			.ToArray();
+		if (chargePlans.Length == 0)
+			return;
+
+		var chargedItems = chargePlans
+			.Select(plan => CopyInventoryItem(plan.Item, charge: plan.TargetChargePoints))
+			.ToArray();
+		var sourceItemUpdate = sourceItem.Count > 1 ? CopyInventoryItem(sourceItem, count: sourceItem.Count - 1) : null;
+		int? deletedSourceObjectId = sourceItem.Count <= 1 ? sourceItem.ObjectId : null;
+		var saved = _playerEnterWorldService == null
+			|| await _playerEnterWorldService.SaveItemChargeActionMutationAsync(
+				player,
+				chargedItems,
+				sourceItemUpdate,
+				deletedSourceObjectId);
+		if (!saved)
+			return;
+
+		await BroadcastItemUsageAnimationAsync(
+			player,
+			new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 1, 0));
+
+		if (deletedSourceObjectId.HasValue)
+		{
+			inventoryItems.RemoveAll(item => item.ObjectId == sourceItem.ObjectId);
+			await SendPacketAsync(new SmDeleteItem(sourceItem.ObjectId, SmDeleteItem.UseDeleteType));
+		}
+		else if (sourceItemUpdate != null)
+		{
+			ReplaceInventoryItem(inventoryItems, sourceItemUpdate);
+			await SendPacketAsync(new SmInventoryUpdateItem(sourceItemUpdate, sourceTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+		}
+
+		var completedChargeWays = new HashSet<int>();
+		foreach (var (plan, chargedItem) in chargePlans.Zip(chargedItems))
+		{
+			ReplaceInventoryItem(inventoryItems, chargedItem);
+			if (GetChargeBarStep(plan.Item.Charge) != GetChargeBarStep(chargedItem.Charge))
+				await SendPacketAsync(new SmInventoryUpdateItem(chargedItem, plan.Template, SmInventoryUpdateItem.Charge));
+
+			var itemName = plan.Template.GetClientName() ?? plan.Template.Name;
+			await SendPacketAsync(
+				plan.ChargeWay == 1
+					? SmSystemMessage.ItemChargeSuccess(itemName, plan.Level)
+					: SmSystemMessage.ItemCharge2Success(itemName, plan.Level));
+			completedChargeWays.Add(plan.ChargeWay);
+		}
+
+		player.InventoryItems = inventoryItems.ToArray();
+		await SendPacketAsync(CreateStatsInfoPacket(player, staticData));
+		foreach (var chargeWayComplete in completedChargeWays)
+		{
+			await SendPacketAsync(
+				chargeWayComplete == 1
+					? SmSystemMessage.ItemChargeAllComplete()
+					: SmSystemMessage.ItemCharge2AllComplete());
+		}
 	}
 
 	private static int GetChargeBarStep(int charge)

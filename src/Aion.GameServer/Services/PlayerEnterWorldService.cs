@@ -195,6 +195,22 @@ public sealed class PlayerEnterWorldService
 			cancellationToken);
 	}
 
+	public Task<bool> SaveItemChargeActionMutationAsync(
+		Player player,
+		IReadOnlyList<InventoryItem> chargedItems,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: model/templates/item/actions/ChargeAction delayed consume + services/item/ItemChargeService.chargeItems.
+		return _repository.SaveItemChargeActionMutationAsync(
+			player.ObjectId,
+			chargedItems,
+			sourceItemUpdate,
+			deletedSourceItemObjectId,
+			cancellationToken);
+	}
+
 	public async Task LeaveWorldAsync(Player player, CancellationToken cancellationToken = default)
 	{
 		// Java parity: services/player/PlayerLeaveWorldService.leaveWorld baseline persistence.

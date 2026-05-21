@@ -169,6 +169,8 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(3, staticData.ItemTemplates.GetItemTemplate(166050001)?.PolishSetId);
 		Assert.Contains(staticData.ItemRandomBonuses.GetModifiers("POLISH", 3, 1), modifier => modifier is { Operation: "add", Name: "MAXHP", Value: 347, Bonus: true });
 		Assert.Equal(1, staticData.ItemRandomBonuses.SelectRandomBonusNumber("POLISH", 3, () => 0));
+		Assert.Equal(2, staticData.ItemTemplates.GetItemTemplate(168300003)?.ChargeActionMaxLevel);
+		Assert.Equal(1, staticData.ItemTemplates.GetItemTemplate(168300003)?.Improvement?.ChargeWay);
 		var testGodstone = staticData.ItemTemplates.GetItemTemplate(168000001);
 		Assert.NotNull(testGodstone);
 		Assert.Equal(8255, testGodstone.GodstoneInfo?.SkillId);

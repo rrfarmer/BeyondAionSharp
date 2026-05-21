@@ -52,6 +52,7 @@ public sealed record ItemTemplateSummary(
 	string EnchantName = "",
 	string TemperingName = "",
 	int PolishSetId = 0,
+	int ChargeActionMaxLevel = 0,
 	ItemGodstoneInfo? GodstoneInfo = null,
 	ItemImprovement? Improvement = null,
 	int RecommendRank = 0,

@@ -543,6 +543,12 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 4 && reader.LocalName == "charge" && currentItemTemplate != null)
+			{
+				currentItemTemplate.ChargeActionMaxLevel = ReadIntAttribute(reader, "capacity");
+				continue;
+			}
+
 			if (reader.Depth == 4 && reader.LocalName == "craftlearn" && currentItemTemplate != null)
 			{
 				currentItemTemplate.CraftLearnRecipeId = ReadIntAttribute(reader, "recipeid");
@@ -1036,6 +1042,8 @@ public sealed class StaticData
 
 		public int PolishSetId { get; set; }
 
+		public int ChargeActionMaxLevel { get; set; }
+
 		public int RecommendRank { get; set; }
 
 		public void AddModifier(ItemStatModifier modifier)
@@ -1089,6 +1097,7 @@ public sealed class StaticData
 				EnchantName,
 				TemperingName,
 				PolishSetId,
+				ChargeActionMaxLevel,
 				GodstoneInfo,
 				Improvement,
 				RecommendRank,

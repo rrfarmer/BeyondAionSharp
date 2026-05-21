@@ -82,6 +82,13 @@ public interface IPlayerEnterWorldRepository
 		int? deletedSourceItemObjectId,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveItemChargeActionMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<InventoryItem> chargedItems,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SavePlayerLogoutAsync(Player player, DateTime lastOnline, CancellationToken cancellationToken = default);
 }
 
@@ -240,6 +247,16 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	public Task<bool> SaveIdianPolishMutationAsync(
 		int playerObjectId,
 		InventoryItem? targetItem,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> SaveItemChargeActionMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<InventoryItem> chargedItems,
 		InventoryItem? sourceItemUpdate,
 		int? deletedSourceItemObjectId,
 		CancellationToken cancellationToken = default)
@@ -528,6 +545,55 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not save idian polish mutation for player {PlayerObjectId}", playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SaveItemChargeActionMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<InventoryItem> chargedItems,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: model/templates/item/actions/ChargeAction consumes the charge item, then ItemChargeService.chargeItems mutates equipped item charge.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			foreach (var chargedItem in chargedItems)
+			{
+				await using var chargeCommand = connection.CreateCommand();
+				chargeCommand.Transaction = transaction;
+				chargeCommand.CommandText = "UPDATE inventory SET charge = ? WHERE item_unique_id = ? AND item_owner = ?";
+				chargeCommand.Parameters.AddRange(
+					new[]
+					{
+						new MySqlParameter { Value = chargedItem.Charge },
+						new MySqlParameter { Value = chargedItem.ObjectId },
+						new MySqlParameter { Value = playerObjectId },
+					});
+				if (await chargeCommand.ExecuteNonQueryAsync(cancellationToken) <= 0)
+					return false;
+			}
+
+			if (sourceItemUpdate != null && !await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, sourceItemUpdate, cancellationToken))
+				return false;
+
+			if (deletedSourceItemObjectId.HasValue
+				&& !await DeleteInventoryItemAsync(connection, transaction, playerObjectId, deletedSourceItemObjectId.Value, cancellationToken))
+			{
+				return false;
+			}
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save charge action mutation for player {PlayerObjectId}", playerObjectId);
 			return false;
 		}
 	}

@@ -395,6 +395,14 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public int? IdianPolishDeletedSourceItemObjectId { get; private set; }
 
+		public int SaveItemChargeActionMutationCalls { get; private set; }
+
+		public IReadOnlyList<InventoryItem> ChargeActionChargedItems { get; private set; } = Array.Empty<InventoryItem>();
+
+		public InventoryItem? ChargeActionSourceItemUpdate { get; private set; }
+
+		public int? ChargeActionDeletedSourceItemObjectId { get; private set; }
+
 		public Task<Player?> LoadPlayerAsync(int accountId, int playerObjectId, CancellationToken cancellationToken = default)
 		{
 			return Task.FromResult(Player);
@@ -591,6 +599,20 @@ public sealed class PlayerEnterWorldServiceTests
 			IdianPolishTargetItem = targetItem;
 			IdianPolishSourceItemUpdate = sourceItemUpdate;
 			IdianPolishDeletedSourceItemObjectId = deletedSourceItemObjectId;
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> SaveItemChargeActionMutationAsync(
+			int playerObjectId,
+			IReadOnlyList<InventoryItem> chargedItems,
+			InventoryItem? sourceItemUpdate,
+			int? deletedSourceItemObjectId,
+			CancellationToken cancellationToken = default)
+		{
+			SaveItemChargeActionMutationCalls++;
+			ChargeActionChargedItems = chargedItems;
+			ChargeActionSourceItemUpdate = sourceItemUpdate;
+			ChargeActionDeletedSourceItemObjectId = deletedSourceItemObjectId;
 			return Task.FromResult(true);
 		}
 
