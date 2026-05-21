@@ -470,6 +470,10 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.BuddyListNoBlockedCharacter(), 1300884);
 		AssertSystemMessage(SmSystemMessage.RejectedFriend("Friend"), 1390119, "Friend");
 		AssertSystemMessage(SmSystemMessage.AccuseInfoNormal(), 1400076);
+		AssertSystemMessage(SmSystemMessage.DoNotAccuse(), 1400020);
+		AssertSystemMessage(SmSystemMessage.InvalidTarget(), 1300823);
+		AssertSystemMessage(SmSystemMessage.AccuseSubmit("Reported", "\u221e"), 1390258, "Reported", "\u221e");
+		AssertSystemMessage(SmSystemMessage.AccuseCountInfo("\u221e"), 1400091, "\u221e");
 		AssertSystemMessage(SmSystemMessage.NotEnoughKinah(12345), 901285, "12345");
 		AssertSystemMessage(SmSystemMessage.HousingBidSuccess(6001), 1401265, "6001");
 		AssertSystemMessage(SmSystemMessage.HousingBidFail(), 1401348);
@@ -2443,6 +2447,21 @@ public class GamePacketTests
 		Assert.IsType<CmShowRestrictions>(
 			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(194, _ => { }), GameConnectionState.InGame));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(194, _ => { }), GameConnectionState.Authed));
+	}
+
+	[Fact]
+	public void ClientPacketFactory_ParsesReportPlayerPacket()
+	{
+		var reportPlayer = Assert.IsType<CmReportPlayer>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(191, buffer =>
+			{
+				buffer.WriteC(0);
+				buffer.WriteS("Reported");
+			}), GameConnectionState.InGame));
+
+		Assert.Equal(0, reportPlayer.ReportType);
+		Assert.Equal("Reported", reportPlayer.PlayerName);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(191, buffer => buffer.WriteC(1)), GameConnectionState.Authed));
 	}
 
 	[Fact]

@@ -617,6 +617,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleMacroDeleteAsync(_activePlayer, macroDelete);
 				break;
+			case CmReportPlayer reportPlayer:
+				if (_activePlayer != null)
+					await HandleReportPlayerAsync(_activePlayer, reportPlayer);
+				break;
 			case CmInstanceInfo instanceInfo:
 				if (_activePlayer != null)
 				{
@@ -994,6 +998,44 @@ public sealed class GameServerConnection : BaseClientConnection
 				.OrderBy(macro => macro.Id)
 				.ToArray();
 		await SendPacketAsync(SmMacroResult.Deleted);
+	}
+
+	private async Task HandleReportPlayerAsync(Player player, CmReportPlayer packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_REPORT_PLAYER.runImpl.
+		const string UnlimitedReports = "\u221e";
+		switch (packet.ReportType)
+		{
+			case 0:
+				var reportedName = GetRealCharacterName(packet.PlayerName);
+				Player? reportedPlayer = null;
+				_connectionRegistry?.TryGetOnlinePlayerByName(reportedName, out reportedPlayer);
+				if (reportedPlayer != null && !string.Equals(reportedPlayer.Race, player.Race, StringComparison.OrdinalIgnoreCase))
+				{
+					await SendPacketAsync(SmSystemMessage.DoNotAccuse());
+				}
+				else if (reportedPlayer != null && reportedPlayer.ObjectId == player.ObjectId)
+				{
+					await SendPacketAsync(SmSystemMessage.InvalidTarget());
+				}
+				else
+				{
+					_logger.LogInformation("Player {PlayerName} ({PlayerObjectId}) reported player {ReportedPlayer}", player.Name, player.ObjectId, packet.PlayerName);
+					await SendPacketAsync(SmSystemMessage.AccuseSubmit(packet.PlayerName, UnlimitedReports));
+				}
+				break;
+			case 1:
+				await SendPacketAsync(SmSystemMessage.AccuseCountInfo(UnlimitedReports));
+				break;
+			default:
+				_logger.LogWarning(
+					"Player {PlayerName} ({PlayerObjectId}) sent unhandled report type {ReportType} for {ReportedPlayer}",
+					player.Name,
+					player.ObjectId,
+					packet.ReportType,
+					packet.PlayerName);
+				break;
+		}
 	}
 
 	private void HandleUiSettings(Player player, CmUiSettings packet)

@@ -349,6 +349,30 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1400076);
 	}
 
+	public static SmSystemMessage DoNotAccuse()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_DO_NOT_ACCUSE.
+		return new SmSystemMessage(1400020);
+	}
+
+	public static SmSystemMessage InvalidTarget()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_INVALID_TARGET.
+		return new SmSystemMessage(1300823);
+	}
+
+	public static SmSystemMessage AccuseSubmit(string playerName, string remainingReports)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ACCUSE_SUBMIT.
+		return new SmSystemMessage(1390258, playerName, remainingReports);
+	}
+
+	public static SmSystemMessage AccuseCountInfo(string remainingReports)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ACCUSE_COUNT_INFO.
+		return new SmSystemMessage(1400091, remainingReports);
+	}
+
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.writeImpl.

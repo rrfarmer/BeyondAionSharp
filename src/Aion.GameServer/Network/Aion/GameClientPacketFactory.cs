@@ -75,6 +75,7 @@ public static class GameClientPacketFactory
 		Register(183, states => new CmReconnectAuth(183, states), GameConnectionState.Authed);
 		Register(186, states => new CmMayLoginIntoGame(186, states), GameConnectionState.Authed);
 		Register(189, states => new CmMacAddress(189, states), GameConnectionState.Connected);
+		Register(191, states => new CmReportPlayer(191, states), GameConnectionState.InGame);
 		Register(192, states => new CmInstanceInfo(192, states), GameConnectionState.InGame);
 		Register(194, states => new CmShowRestrictions(194, states), GameConnectionState.InGame);
 		Register(210, states => new CmCharacterPasskey(210, states), GameConnectionState.Authed);
