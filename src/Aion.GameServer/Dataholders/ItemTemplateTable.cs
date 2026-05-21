@@ -64,6 +64,7 @@ public sealed record ItemTemplateSummary(
 	int MaxRank = 18)
 {
 	private const int CanPolishMask = 1 << 17;
+	private const int SoulBoundMask = 1 << 7;
 
 	private static readonly HashSet<string> WeaponGroups = new(StringComparer.Ordinal)
 	{
@@ -166,6 +167,8 @@ public sealed record ItemTemplateSummary(
 	public bool IsTwoHandWeapon => TwoHandWeaponGroups.Contains(ItemGroup);
 
 	public bool IsTradeable => (Mask & (1 << 1)) == (1 << 1);
+
+	public bool IsSoulBound => (Mask & SoulBoundMask) == SoulBoundMask;
 
 	public bool CanPolish => (Mask & CanPolishMask) == CanPolishMask;
 

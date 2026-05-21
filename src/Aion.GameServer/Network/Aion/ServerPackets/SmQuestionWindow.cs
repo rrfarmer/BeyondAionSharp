@@ -6,6 +6,7 @@ public sealed class SmQuestionWindow : GameServerPacket
 {
 	public const int PacketOpCode = 52;
 	public const int BuddyListAddBuddyRequest = 1401498;
+	public const int SoulBoundItemConfirm = 95006;
 	public const int ItemChargeAllConfirm = 903026;
 	public const int ItemCharge2AllConfirm = 904039;
 	private const int MaxParameterCount = 3;

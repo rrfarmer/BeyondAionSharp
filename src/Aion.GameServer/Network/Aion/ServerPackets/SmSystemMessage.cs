@@ -169,6 +169,24 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1400267, maxLevel.ToString(System.Globalization.CultureInfo.InvariantCulture), itemName);
 	}
 
+	public static SmSystemMessage SoulBoundItemSucceed(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_ITEM_SUCCEED.
+		return new SmSystemMessage(1300485, itemName);
+	}
+
+	public static SmSystemMessage SoulBoundItemCanceled(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_ITEM_CANCELED.
+		return new SmSystemMessage(1300487, itemName);
+	}
+
+	public static SmSystemMessage SoulBoundCloseOtherMsgBoxAndRetry()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_CLOSE_OTHER_MSG_BOX_AND_RETRY.
+		return new SmSystemMessage(1300488);
+	}
+
 	public static SmSystemMessage ExchangeFullInventory()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_EXCHANGE_FULL_INVENTORY.

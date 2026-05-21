@@ -23,12 +23,13 @@ public static class EquipmentService
 		int itemObjectId,
 		ItemTemplateTable itemTemplates,
 		SkillTemplateTable? skillTemplates,
-		PlayerExperienceTable? experienceTable = null)
+		PlayerExperienceTable? experienceTable = null,
+		bool soulBindConfirmed = false)
 	{
 		// Java parity: network/aion/clientpackets/CM_EQUIP_ITEM.runImpl action routing.
 		return action switch
 		{
-			0 => EquipItem(player, slotRead, itemObjectId, itemTemplates, skillTemplates, experienceTable),
+			0 => EquipItem(player, slotRead, itemObjectId, itemTemplates, skillTemplates, experienceTable, soulBindConfirmed),
 			1 => UnEquipItem(player, itemObjectId, itemTemplates),
 			2 => SwitchHands(player, itemTemplates),
 			_ => EquipmentChangeResult.NoChange(),
@@ -41,7 +42,8 @@ public static class EquipmentService
 		int itemObjectId,
 		ItemTemplateTable itemTemplates,
 		SkillTemplateTable? skillTemplates,
-		PlayerExperienceTable? experienceTable)
+		PlayerExperienceTable? experienceTable,
+		bool soulBindConfirmed)
 	{
 		// Java parity: model/gameobjects/player/Equipment.equipItem.
 		var inventoryItems = player.InventoryItems.ToList();
@@ -74,6 +76,15 @@ public static class EquipmentService
 
 		if (!item.IsIdentified)
 			return EquipmentChangeResult.UnidentifiedItemFailure();
+
+		if (template.IsSoulBound && !item.IsSoulBound)
+		{
+			if (!soulBindConfirmed)
+				return EquipmentChangeResult.SoulBindRequiredFailure(item.ObjectId, slot, GetItemName(template));
+
+			item = CopyInventoryItem(item, isSoulBound: true);
+			ReplaceInventoryItem(inventoryItems, item);
+		}
 
 		var updates = new List<InventoryItem>();
 		var persisted = new List<InventoryItem>();
@@ -374,7 +385,8 @@ public static class EquipmentService
 	private static InventoryItem CopyInventoryItem(
 		InventoryItem item,
 		long? slot = null,
-		bool? isEquipped = null)
+		bool? isEquipped = null,
+		bool? isSoulBound = null)
 	{
 		var copy = new InventoryItem
 		{
@@ -388,7 +400,7 @@ public static class EquipmentService
 			ActivationCount = item.ActivationCount,
 			OwnerId = item.OwnerId,
 			IsEquipped = isEquipped ?? item.IsEquipped,
-			IsSoulBound = item.IsSoulBound,
+			IsSoulBound = isSoulBound ?? item.IsSoulBound,
 			Slot = slot ?? item.Slot,
 			Location = item.Location,
 			Enchant = item.Enchant,
@@ -427,6 +439,7 @@ public enum EquipmentChangeFailure
 	InvalidRank,
 	MissingRequiredSkill,
 	UnidentifiedItem,
+	SoulBindRequired,
 }
 
 public sealed record EquipmentChangeResult(
@@ -441,7 +454,9 @@ public sealed record EquipmentChangeResult(
 	int RequiredLevel = 0,
 	int MaxLevel = 0,
 	string RankName = "",
-	string ItemName = "")
+	string ItemName = "",
+	int SoulBindItemObjectId = 0,
+	long SoulBindSlot = 0)
 {
 	public static EquipmentChangeResult NoChange()
 	{
@@ -509,6 +524,18 @@ public sealed record EquipmentChangeResult(
 	{
 		// Java parity: model/gameobjects/player/Equipment.equip logs and silently rejects unidentified items.
 		return NoChange() with { Failure = EquipmentChangeFailure.UnidentifiedItem };
+	}
+
+	public static EquipmentChangeResult SoulBindRequiredFailure(int itemObjectId, long slot, string itemName)
+	{
+		// Java parity: model/gameobjects/player/Equipment.soulBindItem response request.
+		return NoChange() with
+		{
+			Failure = EquipmentChangeFailure.SoulBindRequired,
+			SoulBindItemObjectId = itemObjectId,
+			SoulBindSlot = slot,
+			ItemName = itemName,
+		};
 	}
 
 	public static EquipmentChangeResult Success(

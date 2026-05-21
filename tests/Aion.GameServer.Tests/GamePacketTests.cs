@@ -534,6 +534,9 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.CannotUseItemInvalidRace(), 1300373);
 		AssertSystemMessage(SmSystemMessage.CannotUseItemInvalidGender(), 1300375);
 		AssertSystemMessage(SmSystemMessage.CannotUseItemTooHighLevel(39, "item"), 1400267, "39", "item");
+		AssertSystemMessage(SmSystemMessage.SoulBoundItemSucceed("item"), 1300485, "item");
+		AssertSystemMessage(SmSystemMessage.SoulBoundItemCanceled("item"), 1300487, "item");
+		AssertSystemMessage(SmSystemMessage.SoulBoundCloseOtherMsgBoxAndRetry(), 1300488);
 		AssertSystemMessage(SmSystemMessage.ExchangeFullInventory(), 1300366);
 		AssertSystemMessage(SmSystemMessage.MailTakeAllCancel(), 1402251);
 		AssertSystemMessage(SmSystemMessage.NoSuchUser("Kahrun"), 1300627, "Kahrun");
@@ -1040,6 +1043,19 @@ public class GamePacketTests
 		Assert.Equal(1001, questionWindowReader.ReadD());
 		Assert.Equal(0, questionWindowReader.ReadD());
 		Assert.Equal(0, questionWindowReader.Remaining);
+
+		var soulBindQuestionPayload = SerializeUnencryptedPayload(
+			new SmQuestionWindow(SmQuestionWindow.SoulBoundItemConfirm, 0, 0, "item"));
+		using var soulBindQuestionReader = new PacketBuffer(soulBindQuestionPayload);
+		Assert.Equal(SmQuestionWindow.SoulBoundItemConfirm, soulBindQuestionReader.ReadD());
+		Assert.Equal("item", soulBindQuestionReader.ReadS());
+		Assert.Equal(string.Empty, soulBindQuestionReader.ReadS());
+		Assert.Equal(string.Empty, soulBindQuestionReader.ReadS());
+		Assert.Equal(0, soulBindQuestionReader.ReadD());
+		Assert.Equal(0, (int)soulBindQuestionReader.ReadC());
+		Assert.Equal(0, soulBindQuestionReader.ReadD());
+		Assert.Equal(0, soulBindQuestionReader.ReadD());
+		Assert.Equal(0, soulBindQuestionReader.Remaining);
 
 		var instanceInfoPayload = SerializeUnencryptedPayload(
 			new SmInstanceInfo(

@@ -1262,10 +1262,36 @@ public sealed class GameServerConnection : BaseClientConnection
 			staticData.PlayerExperienceTable);
 		if (!change.Changed)
 		{
-			await SendEquipFailureMessageAsync(change);
+			if (change.Failure == EquipmentChangeFailure.SoulBindRequired)
+				await StartSoulBindRequestAsync(player, change);
+			else
+				await SendEquipFailureMessageAsync(change);
 			return;
 		}
 
+		await ApplyEquipmentChangeAsync(player, change, itemTemplates, staticData);
+	}
+
+	private async Task StartSoulBindRequestAsync(Player player, EquipmentChangeResult change)
+	{
+		// Java parity: model/gameobjects/player/Equipment.soulBindItem putRequest + SM_QUESTION_WINDOW.
+		if (player.PendingSoulBindRequest != null)
+		{
+			await SendPacketAsync(SmSystemMessage.SoulBoundCloseOtherMsgBoxAndRetry());
+			return;
+		}
+
+		player.PendingSoulBindRequest = new PendingSoulBindRequest(change.SoulBindItemObjectId, change.SoulBindSlot, change.ItemName);
+		await SendPacketAsync(new SmQuestionWindow(SmQuestionWindow.SoulBoundItemConfirm, 0, 0, change.ItemName));
+	}
+
+	private async Task ApplyEquipmentChangeAsync(
+		Player player,
+		EquipmentChangeResult change,
+		ItemTemplateTable itemTemplates,
+		StaticData staticData)
+	{
+		// Java parity: model/gameobjects/player/Equipment.equip/unEquip/switchHands persistence and fanout.
 		var saved = _playerEnterWorldService == null
 			|| change.PersistedItems.Count == 0
 			|| await _playerEnterWorldService.SaveEquipmentMutationAsync(player, change.PersistedItems);
@@ -1289,6 +1315,55 @@ public sealed class GameServerConnection : BaseClientConnection
 			else
 				await SendPacketAsync(appearancePacket);
 		}
+	}
+
+	private async Task HandleSoulBindQuestionResponseAsync(Player player, CmQuestionResponse packet)
+	{
+		// Java parity: ResponseRequester handler registered by Equipment.soulBindItem.
+		var request = player.PendingSoulBindRequest;
+		if (request == null || packet.QuestionId != SmQuestionWindow.SoulBoundItemConfirm)
+			return;
+
+		player.PendingSoulBindRequest = null;
+		if (packet.Response == 0)
+		{
+			await SendPacketAsync(SmSystemMessage.SoulBoundItemCanceled(request.ItemName));
+			return;
+		}
+
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var itemTemplates = staticData?.ItemTemplates;
+		if (staticData == null || itemTemplates == null)
+			return;
+
+		var currentItem = player.InventoryItems.FirstOrDefault(item =>
+			item.ObjectId == request.ItemObjectId
+			&& item.Location == CubeStorageId
+			&& !item.IsEquipped);
+		if (currentItem == null)
+			return;
+
+		await BroadcastItemUsageAnimationAsync(
+			player,
+			new SmItemUsageAnimation(player.ObjectId, currentItem.ObjectId, currentItem.ItemId, 5000, 4, 0));
+
+		var change = EquipmentService.ChangeEquipment(
+			player,
+			action: 0,
+			slotRead: request.Slot,
+			itemObjectId: request.ItemObjectId,
+			itemTemplates,
+			staticData.SkillTemplates,
+			staticData.PlayerExperienceTable,
+			soulBindConfirmed: true);
+		if (!change.Changed)
+			return;
+
+		await SendPacketAsync(SmSystemMessage.SoulBoundItemSucceed(request.ItemName));
+		await BroadcastItemUsageAnimationAsync(
+			player,
+			new SmItemUsageAnimation(player.ObjectId, currentItem.ObjectId, currentItem.ItemId, 0, 6, 0));
+		await ApplyEquipmentChangeAsync(player, change, itemTemplates, staticData);
 	}
 
 	private async Task SendEquipFailureMessageAsync(EquipmentChangeResult change)
@@ -1889,6 +1964,12 @@ public sealed class GameServerConnection : BaseClientConnection
 	private async Task HandleQuestionResponseAsync(Player responder, CmQuestionResponse packet)
 	{
 		// Java parity: network/aion/clientpackets/CM_QUESTION_RESPONSE.runImpl.
+		if (packet.QuestionId == SmQuestionWindow.SoulBoundItemConfirm)
+		{
+			await HandleSoulBindQuestionResponseAsync(responder, packet);
+			return;
+		}
+
 		if (IsChargeAllQuestion(packet.QuestionId))
 		{
 			await HandleChargeAllQuestionResponseAsync(responder, packet);

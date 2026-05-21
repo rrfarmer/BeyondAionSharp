@@ -689,11 +689,12 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			{
 				await using var command = connection.CreateCommand();
 				command.Transaction = transaction;
-				command.CommandText = "UPDATE inventory SET is_equipped = ?, slot = ? WHERE item_unique_id = ? AND item_owner = ?";
+				command.CommandText = "UPDATE inventory SET is_equipped = ?, is_soul_bound = ?, slot = ? WHERE item_unique_id = ? AND item_owner = ?";
 				command.Parameters.AddRange(
 					new[]
 					{
 						new MySqlParameter { Value = item.IsEquipped },
+						new MySqlParameter { Value = item.IsSoulBound },
 						new MySqlParameter { Value = item.Slot },
 						new MySqlParameter { Value = item.ObjectId },
 						new MySqlParameter { Value = playerObjectId },

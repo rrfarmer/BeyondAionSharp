@@ -353,6 +353,49 @@ public sealed class EquipmentServiceTests
 		Assert.Empty(change.InventoryUpdateItems);
 	}
 
+	[Fact]
+	public void ChangeEquipment_RequestsSoulBindBeforeEquippingUnboundSoulBoundItem()
+	{
+		var player = CreatePlayer();
+		player.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 1001, ItemId = SoulBoundSwordId, Location = 0, Slot = 65535 },
+		];
+
+		var change = EquipmentService.ChangeEquipment(player, action: 0, slotRead: 1, itemObjectId: 1001, CreateItemTemplates(), skillTemplates: null);
+
+		Assert.False(change.Changed);
+		Assert.Equal(EquipmentChangeFailure.SoulBindRequired, change.Failure);
+		Assert.Equal(1001, change.SoulBindItemObjectId);
+		Assert.Equal(1, change.SoulBindSlot);
+		Assert.Equal("Practice Soulbound Sword", change.ItemName);
+	}
+
+	[Fact]
+	public void ChangeEquipment_SoulBindsAndEquipsWhenConfirmed()
+	{
+		var player = CreatePlayer();
+		player.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 1001, ItemId = SoulBoundSwordId, Location = 0, Slot = 65535 },
+		];
+
+		var change = EquipmentService.ChangeEquipment(
+			player,
+			action: 0,
+			slotRead: 1,
+			itemObjectId: 1001,
+			CreateItemTemplates(),
+			skillTemplates: null,
+			soulBindConfirmed: true);
+
+		Assert.True(change.Changed);
+		var sword = Assert.Single(change.InventoryItems);
+		Assert.True(sword.IsSoulBound);
+		Assert.True(sword.IsEquipped);
+		Assert.Equal([(1001, true, true, 1L)], change.PersistedItems.Select(item => (item.ObjectId, item.IsSoulBound, item.IsEquipped, item.Slot)).ToArray());
+	}
+
 	private static Player CreatePlayer(
 		string playerClass = "WARRIOR",
 		string race = "ELYOS",
@@ -385,6 +428,7 @@ public sealed class EquipmentServiceTests
 		var templates = new List<ItemTemplateSummary>
 		{
 			new(SwordId, "Practice Sword", 0, 1, 1, "SWORD", "NORMAL", "COMMON", "PC_ALL", 1, 0, 3, RequiredLevels: RequiredLevels(1)),
+			new(SoulBoundSwordId, "Practice Soulbound Sword", 0, 1 << 7, 1, "SWORD", "NORMAL", "COMMON", "PC_ALL", 1, 0, 3, RequiredLevels: RequiredLevels(1)),
 			new(GreatswordId, "Practice Greatsword", 0, 1, 1, "GREATSWORD", "NORMAL", "COMMON", "PC_ALL", 1, 0, 3, RequiredLevels: RequiredLevels(1)),
 			new(RobeId, "Practice Robe", 0, 1, 1, "CL_TORSO", "NORMAL", "COMMON", "PC_ALL", 1, 0, 8, RequiredLevels: RequiredLevels(1)),
 		};
@@ -422,6 +466,7 @@ public sealed class EquipmentServiceTests
 	}
 
 	private const int SwordId = 100000001;
+	private const int SoulBoundSwordId = 100000003;
 	private const int GreatswordId = 100100001;
 	private const int RobeId = 110100001;
 	private const int RestrictedSwordId = 100000002;

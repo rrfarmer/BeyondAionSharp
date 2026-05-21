@@ -150,6 +150,8 @@ public sealed class Player
 
 	public PendingChargeAllRequest? PendingChargeAllRequest { get; set; }
 
+	public PendingSoulBindRequest? PendingSoulBindRequest { get; set; }
+
 	public IReadOnlyList<PlayerBlockedUser> BlockedUsers { get; set; } = Array.Empty<PlayerBlockedUser>();
 
 	public PlayerAbyssRank AbyssRank { get; set; } = PlayerAbyssRank.Default();
