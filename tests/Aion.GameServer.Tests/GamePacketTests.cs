@@ -1562,7 +1562,8 @@ public class GamePacketTests
 					new ItemStatModifier("add", "MAXHP", 33, Bonus: true),
 					new ItemStatModifier("add", "PHYSICAL_ATTACK", 7, Bonus: true),
 				],
-				StatBonusSetId: 10),
+				StatBonusSetId: 10,
+				EnchantName: "TRAINING_ENCHANT"),
 			new ItemTemplateSummary(
 				300,
 				"Training Breastplate",
@@ -1684,6 +1685,29 @@ public class GamePacketTests
 						new ItemStatModifier("add", "MAXHP", 46, Bonus: true),
 					])),
 		]);
+		var enchantTemplates = new EnchantTable(
+		[
+			new EnchantGroupSummary(
+				"TRAINING_ENCHANT",
+				[
+					new EnchantLevelSummary(
+						1,
+						[
+							new EnchantStatSummary("PHYSICAL_ATTACK", 3),
+						]),
+					new EnchantLevelSummary(
+						2,
+						[
+							new EnchantStatSummary("PHYSICAL_ATTACK", 9),
+							new EnchantStatSummary("PHYSICAL_ACCURACY", 6),
+						]),
+					new EnchantLevelSummary(
+						3,
+						[
+							new EnchantStatSummary("PHYSICAL_ATTACK", 1),
+						]),
+				]),
+		]);
 
 		var payload = SerializeUnencryptedPayload(
 			new SmStatsInfo(
@@ -1700,6 +1724,7 @@ public class GamePacketTests
 							Location = 0,
 							IsEquipped = true,
 							Slot = 1,
+							Enchant = 2,
 							FusionedItem = 500,
 							RandomBonus = 1,
 							FusionRandomBonus = 1,
@@ -1713,7 +1738,8 @@ public class GamePacketTests
 				gameMinutes: 321,
 				templates,
 				randomBonuses,
-				itemSets));
+				itemSets,
+				enchantTemplates));
 
 		using var reader = new PacketBuffer(payload);
 		Assert.Equal(1001, reader.ReadD());
@@ -1738,7 +1764,7 @@ public class GamePacketTests
 		Assert.Equal(60, reader.ReadD());
 		Assert.Equal(0, (int)reader.ReadC());
 		Assert.Equal(0, (int)reader.ReadC());
-		Assert.Equal(37, reader.ReadH());
+		Assert.Equal(47, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(35, reader.ReadD());
@@ -1754,7 +1780,7 @@ public class GamePacketTests
 		Assert.Equal(83, reader.ReadH());
 		Assert.Equal(52, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
-		Assert.Equal(262, reader.ReadH());
+		Assert.Equal(268, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(1, reader.ReadH());
 		Assert.Equal(24, reader.ReadH());

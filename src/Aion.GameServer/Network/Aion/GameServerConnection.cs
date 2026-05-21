@@ -825,7 +825,8 @@ public sealed class GameServerConnection : BaseClientConnection
 							_gameTimeService?.GameMinutes ?? 0,
 							staticData?.ItemTemplates,
 							staticData?.ItemRandomBonuses,
-							staticData?.ItemSets));
+							staticData?.ItemSets,
+							staticData?.EnchantTemplates));
 					// Java parity: services/mail/MailService.onPlayerLogin sends mailbox state before macro/recipe restore.
 					await SendPacketAsync(new SmMailService(enterWorldResult.Player.Mailbox));
 					foreach (var housingBidSystemMessage in SmReceiveBids.CreateLoginSystemMessages(enterWorldResult.Player))

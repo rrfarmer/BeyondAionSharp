@@ -16,6 +16,7 @@ public sealed class StaticData
 		ItemTemplateTable itemTemplates,
 		ItemRandomBonusTable itemRandomBonuses,
 		ItemSetTable itemSets,
+		EnchantTable enchantTemplates,
 		NpcTemplateTable npcTemplates,
 		SkillTemplateTable skillTemplates,
 		RecipeTemplateTable recipeTemplates,
@@ -34,6 +35,7 @@ public sealed class StaticData
 		ItemTemplates = itemTemplates;
 		ItemRandomBonuses = itemRandomBonuses;
 		ItemSets = itemSets;
+		EnchantTemplates = enchantTemplates;
 		NpcTemplates = npcTemplates;
 		SkillTemplates = skillTemplates;
 		RecipeTemplates = recipeTemplates;
@@ -63,6 +65,8 @@ public sealed class StaticData
 	public ItemRandomBonusTable ItemRandomBonuses { get; }
 
 	public ItemSetTable ItemSets { get; }
+
+	public EnchantTable EnchantTemplates { get; }
 
 	public NpcTemplateTable NpcTemplates { get; }
 
@@ -99,6 +103,7 @@ public sealed class StaticData
 		var itemTemplates = new List<ItemTemplateSummary>();
 		var itemRandomBonuses = new List<ItemRandomBonusSummary>();
 		var itemSets = new List<ItemSetSummary>();
+		var enchantGroups = new List<EnchantGroupSummary>();
 		var npcTemplates = new List<NpcTemplateSummary>();
 		var skillTemplates = new List<SkillTemplateSummary>();
 		var recipeTemplates = new List<RecipeTemplateSummary>();
@@ -115,6 +120,7 @@ public sealed class StaticData
 		ItemTemplateBuilder? currentItemTemplate = null;
 		ItemRandomBonusBuilder? currentItemRandomBonus = null;
 		ItemSetBuilder? currentItemSet = null;
+		EnchantGroupBuilder? currentEnchantGroup = null;
 		NpcTemplateBuilder? currentNpcTemplate = null;
 		int currentHousingLandId = 0;
 		int currentHousingManagerNpcId = 0;
@@ -159,6 +165,15 @@ public sealed class StaticData
 
 				if (reader.Depth == 3 && currentItemSet != null && reader.LocalName is "partbonus" or "fullbonus")
 					currentItemSet.EndBonus();
+
+				if (reader.Depth == 2 && reader.LocalName == "enchant_list" && currentEnchantGroup != null)
+				{
+					enchantGroups.Add(currentEnchantGroup.ToSummary());
+					currentEnchantGroup = null;
+				}
+
+				if (reader.Depth == 3 && reader.LocalName == "enchant_data" && currentEnchantGroup != null)
+					currentEnchantGroup.EndLevel();
 
 				if (reader.Depth == 2 && reader.LocalName == "npc_template" && currentNpcTemplate != null)
 				{
@@ -292,7 +307,8 @@ public sealed class StaticData
 					ReadIntAttribute(reader, "max_enchant_bonus"),
 					ReadIntAttribute(reader, "option_slot_bonus"),
 					ReadIntAttribute(reader, "rnd_bonus"),
-					ReadOptionalIntAttribute(reader, "rnd_count", -1));
+					ReadOptionalIntAttribute(reader, "rnd_count", -1),
+					reader.GetAttribute("enchant_name") ?? string.Empty);
 				if (reader.IsEmptyElement)
 				{
 					itemTemplates.Add(currentItemTemplate.ToSummary());
@@ -318,6 +334,12 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 2 && reader.LocalName == "enchant_list")
+			{
+				currentEnchantGroup = new EnchantGroupBuilder(reader.GetAttribute("item_group") ?? string.Empty);
+				continue;
+			}
+
 			if (reader.Depth == 3 && reader.LocalName == "itempart" && currentItemSet != null)
 			{
 				currentItemSet.AddItemPart(ReadRequiredIntAttribute(reader, "itemid"));
@@ -333,6 +355,12 @@ public sealed class StaticData
 			if (reader.Depth == 3 && reader.LocalName == "fullbonus" && currentItemSet != null)
 			{
 				currentItemSet.StartFullBonus();
+				continue;
+			}
+
+			if (reader.Depth == 3 && reader.LocalName == "enchant_data" && currentEnchantGroup != null)
+			{
+				currentEnchantGroup.StartLevel(ReadRequiredIntAttribute(reader, "level"));
 				continue;
 			}
 
@@ -401,6 +429,15 @@ public sealed class StaticData
 						reader.GetAttribute("name") ?? string.Empty,
 						ReadIntAttribute(reader, "value"),
 						ReadBoolAttribute(reader, "bonus")));
+				continue;
+			}
+
+			if (reader.Depth == 4 && reader.LocalName == "enchant_stat" && currentEnchantGroup != null)
+			{
+				currentEnchantGroup.AddStat(
+					new EnchantStatSummary(
+						reader.GetAttribute("stat") ?? string.Empty,
+						ReadIntAttribute(reader, "value")));
 				continue;
 			}
 
@@ -553,6 +590,7 @@ public sealed class StaticData
 			new ItemTemplateTable(itemTemplates.AsReadOnly()),
 			new ItemRandomBonusTable(itemRandomBonuses.AsReadOnly()),
 			new ItemSetTable(itemSets.AsReadOnly()),
+			new EnchantTable(enchantGroups.AsReadOnly()),
 			new NpcTemplateTable(npcTemplates.AsReadOnly()),
 			new SkillTemplateTable(skillTemplates.AsReadOnly()),
 			new RecipeTemplateTable(recipeTemplates.AsReadOnly()),
@@ -707,6 +745,47 @@ public sealed class StaticData
 		}
 	}
 
+	private sealed class EnchantGroupBuilder
+	{
+		private readonly List<EnchantLevelSummary> _levels = [];
+		private List<EnchantStatSummary>? _currentStats;
+		private int _currentLevelIndex = -1;
+
+		public EnchantGroupBuilder(string itemGroup)
+		{
+			ItemGroup = itemGroup;
+		}
+
+		private string ItemGroup { get; }
+
+		public void StartLevel(int level)
+		{
+			_currentStats = [];
+			_currentLevelIndex = _levels.Count;
+			_levels.Add(new EnchantLevelSummary(level, _currentStats));
+		}
+
+		public void AddStat(EnchantStatSummary stat)
+		{
+			_currentStats ??= [];
+			_currentStats.Add(stat);
+			if (_currentLevelIndex >= 0)
+				_levels[_currentLevelIndex] = _levels[_currentLevelIndex] with { Stats = _currentStats };
+		}
+
+		public void EndLevel()
+		{
+			_currentStats = null;
+			_currentLevelIndex = -1;
+		}
+
+		public EnchantGroupSummary ToSummary()
+		{
+			// Java parity: model/enchants/EnchantList item_group mapped by dataholders/EnchantData.afterUnmarshal.
+			return new EnchantGroupSummary(ItemGroup, _levels.AsReadOnly());
+		}
+	}
+
 	private sealed class ItemTemplateBuilder
 	{
 		public ItemTemplateBuilder(
@@ -730,7 +809,8 @@ public sealed class StaticData
 			int maxEnchantBonus,
 			int optionSlotBonus,
 			int randomBonusId,
-			int maxTuneCount)
+			int maxTuneCount,
+			string enchantName)
 		{
 			TemplateId = templateId;
 			Name = name;
@@ -750,6 +830,7 @@ public sealed class StaticData
 			ExpireTimeMinutes = expireTimeMinutes;
 			EnchantType = enchantType;
 			StatBonusSetId = randomBonusId;
+			EnchantName = enchantName;
 			CanTune = CalculateCanTune(validEquipmentSlots, maxTuneCount, maxEnchantBonus, optionSlotBonus, randomBonusId);
 		}
 
@@ -788,6 +869,8 @@ public sealed class StaticData
 		private int EnchantType { get; }
 
 		private int StatBonusSetId { get; }
+
+		private string EnchantName { get; }
 
 		private bool CanTune { get; }
 
@@ -831,7 +914,8 @@ public sealed class StaticData
 				AttackType,
 				WeaponStats,
 				Modifiers.AsReadOnly(),
-				StatBonusSetId);
+				StatBonusSetId,
+				EnchantName);
 		}
 
 		private static bool CalculateCanTune(

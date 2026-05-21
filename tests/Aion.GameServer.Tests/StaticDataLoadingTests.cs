@@ -120,6 +120,7 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(staticData.GetElementCount("recipe_template"), staticData.RecipeTemplates.Count);
 		Assert.Equal(staticData.GetElementCount("random_bonus"), staticData.ItemRandomBonuses.Count);
 		Assert.Equal(staticData.GetElementCount("itemset"), staticData.ItemSets.Count);
+		Assert.Equal(staticData.GetElementCount("enchant_list"), staticData.EnchantTemplates.Count);
 		Assert.Equal(staticData.GetElementCount("instance_cooltime"), staticData.InstanceCooltimes.Count);
 		Assert.Equal("SWORD", staticData.ItemTemplates.GetItemTemplate(100000001)?.ItemGroup);
 		Assert.Equal(3, staticData.ItemTemplates.GetItemTemplate(100000094)?.ValidEquipmentSlots);
@@ -140,6 +141,8 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(70, fireSword.WeaponStats?.MeanDamage);
 		Assert.Equal(1400, fireSword.WeaponStats?.AttackSpeed);
 		Assert.Contains(fireSword.StatModifiers, modifier => modifier is { Operation: "add", Name: "PHYSICAL_ATTACK", Value: 7, Bonus: true });
+		Assert.Equal("WEAPON_TEST", staticData.ItemTemplates.GetItemTemplate(100001673)?.EnchantName);
+		Assert.Contains(staticData.EnchantTemplates.GetModifiers(fireSword, 2, 1), modifier => modifier is { Operation: "add", Name: "PHYSICAL_ATTACK", Value: 4, Bonus: false });
 		var hpManastone = staticData.ItemTemplates.GetItemTemplate(167000226);
 		Assert.NotNull(hpManastone);
 		Assert.Contains(hpManastone.StatModifiers, modifier => modifier is { Operation: "add", Name: "MAXHP", Value: 20, Bonus: true });
