@@ -246,6 +246,56 @@ public sealed class WorldNpcWalkerRouteWalkingServiceTests
 	}
 
 	[Fact]
+	public async Task StartRouteWalkingAsync_InterpolatesNpcPositionBeforeMoveArrival()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-walk-interpolate-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		try
+		{
+			var context = await CreateRuntimeContextWithWalkerDataAsync(tempPath, pool: 1, formation: "POINT", rows: "");
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			var npc = CreateNpc(1, new WorldPosition(210010000, 9, 0, 0, 3), walkerId: "route-a", walkerIndex: 0, runSpeed: 0.5f);
+			Assert.True(world.TryAddObject(npc.ObjectId, npc));
+			var cache = CreateCache(context, [npc]);
+			var registry = new CapturingConnectionRegistry();
+			var service = CreateService(context, world, cache, registry, threadPoolManager);
+
+			var start = await service.StartRouteWalkingAsync(npc.ObjectId);
+
+			Assert.True(start.Started);
+			Assert.Equal(1, service.PendingArrivalTaskCount);
+			Assert.Equal(1, service.PendingMovementTickTaskCount);
+			await WaitUntilAsync(() =>
+			{
+				if (!world.TryGetObject(npc.ObjectId, out var movedObject) || movedObject is not WorldNpc movedNpc)
+					return false;
+
+				return movedNpc.Position.X > 9 && movedNpc.Position.X < 10 && registry.Broadcasts.Count == 1;
+			});
+
+			Assert.True(world.TryGetObject(npc.ObjectId, out var interpolatedObject));
+			var interpolatedNpc = Assert.IsType<WorldNpc>(interpolatedObject);
+			Assert.InRange(interpolatedNpc.Position.X, 9.05f, 9.95f);
+			Assert.Equal(0, interpolatedNpc.Position.Y);
+			Assert.Equal(0, interpolatedNpc.Position.Z);
+			Assert.Equal(3, interpolatedNpc.Position.Heading);
+			Assert.Single(registry.Broadcasts);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
+	[Fact]
 	public async Task TargetReachedAsync_UpdatesNpcPositionToReachedTargetBeforeNextBroadcast()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-walk-target-position-" + Guid.NewGuid().ToString("N"));

@@ -23,6 +23,7 @@ public sealed class WorldNpcWalkerRouteWalkingService
 	private readonly ConcurrentDictionary<WorldNpcWalkerFormationKey, WorldNpcWalkerFormationRuntimeState> _formationStates = new();
 	private readonly ConcurrentDictionary<int, ScheduledTask> _pendingRestTasks = new();
 	private readonly ConcurrentDictionary<int, ScheduledTask> _pendingArrivalTasks = new();
+	private readonly ConcurrentDictionary<int, ScheduledTask> _pendingMovementTickTasks = new();
 
 	public WorldNpcWalkerRouteWalkingService(
 		GameServerRuntimeContext runtimeContext,
@@ -51,6 +52,8 @@ public sealed class WorldNpcWalkerRouteWalkingService
 	public int PendingRestTaskCount => _pendingRestTasks.Count;
 
 	public int PendingArrivalTaskCount => _pendingArrivalTasks.Count;
+
+	public int PendingMovementTickTaskCount => _pendingMovementTickTasks.Count;
 
 	public bool TryGetActiveState(int objectId, out WorldNpcWalkerMovementState? state)
 	{
@@ -135,6 +138,7 @@ public sealed class WorldNpcWalkerRouteWalkingService
 			return WorldNpcWalkerRouteWalkingTargetReachedResult.NotHandled(WorldNpcWalkerRouteWalkingTargetReachedStatus.MissingState);
 
 		CancelPendingArrivalTask(objectId);
+		CancelPendingMovementTickTask(objectId);
 		var staticData = _runtimeContext.DataManager?.StaticData;
 		if (staticData == null)
 			return WorldNpcWalkerRouteWalkingTargetReachedResult.NotHandled(WorldNpcWalkerRouteWalkingTargetReachedStatus.MissingStaticData);
@@ -162,6 +166,7 @@ public sealed class WorldNpcWalkerRouteWalkingService
 		{
 			CancelPendingRestTask(objectId);
 			CancelPendingArrivalTask(objectId);
+			CancelPendingMovementTickTask(objectId);
 			_activeStates.TryRemove(objectId, out _);
 			_npcAiStates?.StopWalking(objectId);
 			return WorldNpcWalkerRouteWalkingTargetReachedResult.Stopped();
@@ -359,6 +364,7 @@ public sealed class WorldNpcWalkerRouteWalkingService
 			return;
 
 		CancelPendingArrivalTask(objectId);
+		CancelPendingMovementTickTask(objectId);
 		ScheduledTask? scheduledTask = null;
 		scheduledTask = _threadPoolManager.Schedule(
 			async taskCancellationToken =>
@@ -371,8 +377,46 @@ public sealed class WorldNpcWalkerRouteWalkingService
 			arrivalDelay.Value,
 			cancellationToken);
 		_pendingArrivalTasks[objectId] = scheduledTask;
+		ScheduleMovementTick(objectId, state, arrivalDelay.Value, cancellationToken);
 		_ = scheduledTask.Completion.ContinueWith(
 			_ => RemovePendingArrivalTask(objectId, scheduledTask),
+			CancellationToken.None,
+			TaskContinuationOptions.ExecuteSynchronously,
+			TaskScheduler.Default);
+	}
+
+	private void ScheduleMovementTick(
+		int objectId,
+		WorldNpcWalkerMovementState state,
+		TimeSpan arrivalDelay,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: taskmanager/tasks/MoveTaskManager updates moving NPC positions every 200 ms before checking destination arrival.
+		if (_threadPoolManager == null || arrivalDelay <= MoveTaskUpdatePeriod)
+			return;
+
+		CancelPendingMovementTickTask(objectId);
+		ScheduledTask? scheduledTask = null;
+		scheduledTask = _threadPoolManager.Schedule(
+			_ =>
+			{
+				if (scheduledTask != null)
+					RemovePendingMovementTickTask(objectId, scheduledTask);
+
+				if (TryAdvanceNpcPositionTowardsTarget(objectId, state))
+				{
+					var nextArrivalDelay = CalculateArrivalDelay(objectId, state);
+					if (nextArrivalDelay is { } delay && delay > MoveTaskUpdatePeriod)
+						ScheduleMovementTick(objectId, state, delay, cancellationToken);
+				}
+
+				return ValueTask.CompletedTask;
+			},
+			MoveTaskUpdatePeriod,
+			cancellationToken);
+		_pendingMovementTickTasks[objectId] = scheduledTask;
+		_ = scheduledTask.Completion.ContinueWith(
+			_ => RemovePendingMovementTickTask(objectId, scheduledTask),
 			CancellationToken.None,
 			TaskContinuationOptions.ExecuteSynchronously,
 			TaskScheduler.Default);
@@ -411,6 +455,12 @@ public sealed class WorldNpcWalkerRouteWalkingService
 			scheduledTask.Cancel();
 	}
 
+	private void CancelPendingMovementTickTask(int objectId)
+	{
+		if (_pendingMovementTickTasks.TryRemove(objectId, out var scheduledTask))
+			scheduledTask.Cancel();
+	}
+
 	private void CancelPendingRestTasks(IReadOnlyList<WorldNpcWalkerMovementState> states)
 	{
 		foreach (var state in states)
@@ -429,6 +479,12 @@ public sealed class WorldNpcWalkerRouteWalkingService
 			new KeyValuePair<int, ScheduledTask>(objectId, scheduledTask));
 	}
 
+	private void RemovePendingMovementTickTask(int objectId, ScheduledTask scheduledTask)
+	{
+		((ICollection<KeyValuePair<int, ScheduledTask>>)_pendingMovementTickTasks).Remove(
+			new KeyValuePair<int, ScheduledTask>(objectId, scheduledTask));
+	}
+
 	private bool TryUpdateNpcPositionToReachedTarget(
 		int objectId,
 		WorldNpcWalkerMovementState currentState)
@@ -444,6 +500,42 @@ public sealed class WorldNpcWalkerRouteWalkingService
 				X = currentState.Target.X,
 				Y = currentState.Target.Y,
 				Z = currentState.Target.Z,
+			},
+		};
+		return _world.TryUpdateObject(objectId, updatedNpc);
+	}
+
+	private bool TryAdvanceNpcPositionTowardsTarget(
+		int objectId,
+		WorldNpcWalkerMovementState state)
+	{
+		// Java parity: controllers/movement/NpcMoveController.moveToLocation advances by movementSpeed * elapsedMillis / 1000.
+		if (!_activeStates.TryGetValue(objectId, out var activeState) || activeState != state)
+			return false;
+		if (!_world.TryGetObject(objectId, out var gameObject) || gameObject is not WorldNpc npc)
+			return false;
+
+		var speed = npc.Template.RunSpeed;
+		if (speed <= 0)
+			return false;
+
+		var distance = CalculateDistance(npc.Position, state.Target);
+		if (distance <= MoveOffset)
+			return false;
+
+		var stepDistance = speed * MoveTaskUpdatePeriod.TotalSeconds;
+		var travelDistance = Math.Min(stepDistance, Math.Max(0d, distance - MoveOffset));
+		if (travelDistance <= 0)
+			return false;
+
+		var fraction = travelDistance / distance;
+		var updatedNpc = npc with
+		{
+			Position = npc.Position with
+			{
+				X = (float)((state.Target.X - npc.Position.X) * fraction + npc.Position.X),
+				Y = (float)((state.Target.Y - npc.Position.Y) * fraction + npc.Position.Y),
+				Z = (float)((state.Target.Z - npc.Position.Z) * fraction + npc.Position.Z),
 			},
 		};
 		return _world.TryUpdateObject(objectId, updatedNpc);
