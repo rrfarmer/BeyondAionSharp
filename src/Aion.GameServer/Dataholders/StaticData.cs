@@ -23,6 +23,7 @@ public sealed class StaticData
 		EnchantTable enchantTemplates,
 		TemperingTable temperingTemplates,
 		NpcTemplateTable npcTemplates,
+		NpcSpawnTable npcSpawns,
 		SkillTemplateTable skillTemplates,
 		TitleTemplateTable titleTemplates,
 		RecipeTemplateTable recipeTemplates,
@@ -49,6 +50,7 @@ public sealed class StaticData
 		EnchantTemplates = enchantTemplates;
 		TemperingTemplates = temperingTemplates;
 		NpcTemplates = npcTemplates;
+		NpcSpawns = npcSpawns;
 		SkillTemplates = skillTemplates;
 		TitleTemplates = titleTemplates;
 		RecipeTemplates = recipeTemplates;
@@ -94,6 +96,8 @@ public sealed class StaticData
 
 	public NpcTemplateTable NpcTemplates { get; }
 
+	public NpcSpawnTable NpcSpawns { get; }
+
 	public SkillTemplateTable SkillTemplates { get; }
 
 	public TitleTemplateTable TitleTemplates { get; }
@@ -138,6 +142,7 @@ public sealed class StaticData
 		var enchantGroups = new List<EnchantGroupSummary>();
 		var temperingGroups = new List<TemperingGroupSummary>();
 		var npcTemplates = new List<NpcTemplateSummary>();
+		var npcSpawns = new List<NpcSpawnSummary>();
 		var skillTemplates = new List<SkillTemplateSummary>();
 		var titleTemplates = new List<TitleTemplateSummary>();
 		var recipeTemplates = new List<RecipeTemplateSummary>();
@@ -162,6 +167,9 @@ public sealed class StaticData
 		EnchantGroupBuilder? currentEnchantGroup = null;
 		TemperingGroupBuilder? currentTemperingGroup = null;
 		NpcTemplateBuilder? currentNpcTemplate = null;
+		NpcSpawnBuilder? currentNpcSpawn = null;
+		int currentNpcSpawnMapId = 0;
+		int currentNpcSpawnDepth = -1;
 		SkillTemplateBuilder? currentSkillTemplate = null;
 		TitleTemplateBuilder? currentTitleTemplate = null;
 		CosmeticItemBuilder? currentCosmeticItem = null;
@@ -253,6 +261,15 @@ public sealed class StaticData
 					currentNpcTemplate = null;
 				}
 
+				if (reader.Depth == currentNpcSpawnDepth && reader.LocalName == "spawn")
+				{
+					currentNpcSpawn = null;
+					currentNpcSpawnDepth = -1;
+				}
+
+				if (reader.Depth == 2 && reader.LocalName == "spawn_map" && elementPath.GetValueOrDefault(1) == "spawns")
+					currentNpcSpawnMapId = 0;
+
 				if (reader.Depth == 2 && reader.LocalName == "skill_template" && currentSkillTemplate != null)
 				{
 					skillTemplates.Add(currentSkillTemplate.ToSummary());
@@ -314,6 +331,38 @@ public sealed class StaticData
 					var twinCount = int.TryParse(reader.GetAttribute("twin_count"), out var parsedTwinCount) ? parsedTwinCount : 0;
 					worldMaps.Add(new WorldMapSummary(mapId, isInstance, twinCount));
 				}
+			}
+
+			if (reader.Depth == 2 && reader.LocalName == "spawn_map" && elementPath.GetValueOrDefault(1) == "spawns")
+			{
+				currentNpcSpawnMapId = ReadRequiredIntAttribute(reader, "map_id");
+				continue;
+			}
+
+			if (currentNpcSpawnMapId != 0
+				&& reader.LocalName == "spawn"
+				&& elementPath.GetValueOrDefault(reader.Depth - 1) == "spawn_map")
+			{
+				// Java parity: dataholders/SpawnsData loads direct Spawn groups from static_data/spawns/*.xml.
+				currentNpcSpawn = new NpcSpawnBuilder(
+					currentNpcSpawnMapId,
+					ReadRequiredIntAttribute(reader, "npc_id"),
+					ReadIntAttribute(reader, "respawn_time"),
+					ReadIntAttribute(reader, "pool"),
+					reader.GetAttribute("handler") ?? string.Empty,
+					ReadBoolAttribute(reader, "custom"));
+				currentNpcSpawnDepth = reader.Depth;
+				continue;
+			}
+
+			if (currentNpcSpawn != null
+				&& reader.LocalName == "spot"
+				&& reader.Depth == currentNpcSpawnDepth + 1
+				&& elementPath.GetValueOrDefault(reader.Depth - 1) == "spawn")
+			{
+				// Java parity: model/templates/spawns/SpawnSpotTemplate spot coordinates and movement metadata.
+				npcSpawns.Add(currentNpcSpawn.ToSummary(reader));
+				continue;
 			}
 
 			if (reader.Depth == 2
@@ -1278,6 +1327,7 @@ public sealed class StaticData
 			new EnchantTable(enchantGroups.AsReadOnly()),
 			new TemperingTable(temperingGroups.AsReadOnly()),
 			new NpcTemplateTable(npcTemplates.AsReadOnly()),
+			new NpcSpawnTable(npcSpawns.AsReadOnly()),
 			new SkillTemplateTable(skillTemplates.AsReadOnly()),
 			new TitleTemplateTable(titleTemplates.AsReadOnly()),
 			new RecipeTemplateTable(recipeTemplates.AsReadOnly()),
@@ -2414,6 +2464,56 @@ public sealed class StaticData
 				Math.Max(BoundRadiusFront, BoundRadiusSide),
 				TalkDistance,
 				FunctionDialogIds.Count == 0 ? null : FunctionDialogIds.ToArray());
+		}
+	}
+
+	private sealed class NpcSpawnBuilder
+	{
+		public NpcSpawnBuilder(
+			int mapId,
+			int npcId,
+			int respawnSeconds,
+			int poolSize,
+			string handler,
+			bool custom)
+		{
+			MapId = mapId;
+			NpcId = npcId;
+			RespawnSeconds = respawnSeconds;
+			PoolSize = poolSize;
+			Handler = handler;
+			Custom = custom;
+		}
+
+		private int MapId { get; }
+
+		private int NpcId { get; }
+
+		private int RespawnSeconds { get; }
+
+		private int PoolSize { get; }
+
+		private string Handler { get; }
+
+		private bool Custom { get; }
+
+		public NpcSpawnSummary ToSummary(XmlReader reader)
+		{
+			// Java parity: model/templates/spawns/SpawnTemplate inherits group npc/respawn/handler metadata.
+			return new NpcSpawnSummary(
+				MapId,
+				NpcId,
+				ReadFloatAttribute(reader, "x"),
+				ReadFloatAttribute(reader, "y"),
+				ReadFloatAttribute(reader, "z"),
+				(byte)ReadOptionalIntAttribute(reader, "h", 0),
+				RespawnSeconds,
+				PoolSize,
+				Handler,
+				ReadIntAttribute(reader, "static_id"),
+				reader.GetAttribute("walker_id") ?? string.Empty,
+				ReadIntAttribute(reader, "walker_index"),
+				Custom);
 		}
 	}
 

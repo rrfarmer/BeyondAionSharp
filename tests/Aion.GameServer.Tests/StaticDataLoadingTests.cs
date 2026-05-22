@@ -97,6 +97,62 @@ public sealed class StaticDataLoadingTests
 	}
 
 	[Fact]
+	public async Task StaticData_LoadsRegularNpcSpawnSpotSummaries()
+	{
+		using var temp = TempDirectory.Create();
+		var cacheFile = Path.Combine(temp.Path, "static_data.xml");
+		File.WriteAllText(
+			cacheFile,
+			"""
+			<?xml version="1.0" encoding="UTF-8"?>
+			<static_data>
+				<spawns>
+					<spawn_map map_id="210010000">
+						<spawn npc_id="203000" respawn_time="295">
+							<spot x="10.5" y="20.25" z="30.75" h="44" walker_id="path-a" walker_index="3" />
+						</spawn>
+						<spawn npc_id="150000015" handler="STATIC">
+							<spot x="1" y="2" z="3" static_id="107" />
+						</spawn>
+						<rift_spawn id="1" world="210010000">
+							<spawn npc_id="203001" respawn_time="60">
+								<spot x="4" y="5" z="6" />
+							</spawn>
+						</rift_spawn>
+					</spawn_map>
+				</spawns>
+				<town_spawns_data>
+					<spawn_map map_id="700010000">
+						<town_spawn town_id="1001">
+							<town_level level="1">
+								<spawn npc_id="831222" respawn_time="295">
+									<spot x="7" y="8" z="9" />
+								</spawn>
+							</town_level>
+						</town_spawn>
+					</spawn_map>
+				</town_spawns_data>
+			</static_data>
+			""");
+
+		var staticData = await StaticData.LoadFromCacheAsync(cacheFile, []);
+
+		Assert.Equal(2, staticData.NpcSpawns.Count);
+		var spawn = Assert.Single(staticData.NpcSpawns.GetSpawnsForMap(210010000), spot => spot.NpcId == 203000);
+		Assert.Equal(10.5f, spawn.X);
+		Assert.Equal(20.25f, spawn.Y);
+		Assert.Equal(30.75f, spawn.Z);
+		Assert.Equal((byte)44, spawn.Heading);
+		Assert.Equal(295, spawn.RespawnSeconds);
+		Assert.Equal("path-a", spawn.WalkerId);
+		Assert.Equal(3, spawn.WalkerIndex);
+		var staticSpawn = Assert.Single(staticData.NpcSpawns.GetSpawnsForMap(210010000), spot => spot.NpcId == 150000015);
+		Assert.Equal("STATIC", staticSpawn.Handler);
+		Assert.Equal(107, staticSpawn.StaticId);
+		Assert.Empty(staticData.NpcSpawns.GetSpawnsForMap(700010000));
+	}
+
+	[Fact]
 	public async Task DataManager_LoadsRealJavaStaticDataManifestCounts()
 	{
 		using var temp = TempDirectory.Create();
@@ -348,6 +404,13 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal([33], brokerNpc.FunctionDialogIds);
 		Assert.True(brokerNpc.SupportsDialogAction(33));
 		Assert.False(brokerNpc.SupportsDialogAction(2));
+		Assert.True(staticData.NpcSpawns.Count > 60000, $"NpcSpawns.Count={staticData.NpcSpawns.Count}");
+		var brokerSpawn = Assert.Single(staticData.NpcSpawns.GetSpawnsForMap(220070000), spawn => spawn.NpcId == 799211);
+		Assert.Equal(1887.75f, brokerSpawn.X);
+		Assert.Equal(2878.98f, brokerSpawn.Y);
+		Assert.Equal(532.835f, brokerSpawn.Z);
+		Assert.Equal((byte)70, brokerSpawn.Heading);
+		Assert.Equal(295, brokerSpawn.RespawnSeconds);
 		Assert.Equal(8, staticData.SkillTemplates.GetSkillTemplatesByGroup("RA_WHITETIGER").Count);
 		var clothMastery = staticData.SkillTemplates.GetSkillTemplate(40);
 		Assert.NotNull(clothMastery);

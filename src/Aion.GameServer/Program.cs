@@ -36,10 +36,13 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<IHouseDoorStateService, HouseDoorStateService>();
 			services.AddSingleton<PeriodicSaveService>();
 			services.AddSingleton<HousingWorldService>();
+			services.AddSingleton<WorldNpcSpawnService>();
 			services.AddSingleton<Aion.GameServer.Model.GameEngine>(
 				serviceProvider => serviceProvider.GetRequiredService<PeriodicSaveService>());
 			services.AddSingleton<Aion.GameServer.Model.GameEngine>(
 				serviceProvider => serviceProvider.GetRequiredService<HousingWorldService>());
+			services.AddSingleton<Aion.GameServer.Model.GameEngine>(
+				serviceProvider => serviceProvider.GetRequiredService<WorldNpcSpawnService>());
 			services.AddSingleton<ExpirableTaskService>();
 			services.AddSingleton<HousingVisibilityService>();
 			services.AddSingleton<HouseAuctionTimingService>();
