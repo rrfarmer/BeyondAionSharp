@@ -9,10 +9,12 @@ namespace Aion.GameServer.Services;
 public sealed class WorldNpcLootService
 {
 	private readonly WorldNpcDropRegistrationService _dropRegistrationService;
+	private readonly WorldNpcSpawnService? _worldNpcSpawnService;
 
-	public WorldNpcLootService(WorldNpcDropRegistrationService dropRegistrationService)
+	public WorldNpcLootService(WorldNpcDropRegistrationService dropRegistrationService, WorldNpcSpawnService? worldNpcSpawnService = null)
 	{
 		_dropRegistrationService = dropRegistrationService;
+		_worldNpcSpawnService = worldNpcSpawnService;
 	}
 
 	public WorldNpcLootResult RequestDropList(Player? player, int npcObjectId)
@@ -42,6 +44,10 @@ public sealed class WorldNpcLootService
 			return new WorldNpcLootResult(WorldNpcLootStatus.AlreadyLooted, packets, visiblePackets);
 		}
 
+		var remainingDecayTime = _worldNpcSpawnService?.CancelDecay(npcObjectId);
+		if (remainingDecayTime != null)
+			registration.RemainingDecayTimeMillis = (long)remainingDecayTime.Value.TotalMilliseconds;
+
 		var dropItems = _dropRegistrationService.GetCurrentDrops(npcObjectId);
 		packets.Add(new SmLootItemList(npcObjectId, dropItems, player));
 		packets.Add(new SmLootStatus(npcObjectId, SmLootStatusType.OpenDropList));
@@ -70,6 +76,7 @@ public sealed class WorldNpcLootService
 		if (!wasLootingThisNpc || !registration.ClearLootingPlayer(player.ObjectId))
 			return new WorldNpcLootResult(WorldNpcLootStatus.CloseRejected, Array.Empty<GameServerPacket>(), visiblePackets);
 
+		ResumeDecayAfterClose(npcObjectId, registration);
 		return new WorldNpcLootResult(WorldNpcLootStatus.Closed, Array.Empty<GameServerPacket>(), visiblePackets);
 	}
 
@@ -143,6 +150,22 @@ public sealed class WorldNpcLootService
 			.Select(drop => drop.LootEffectId)
 			.FirstOrDefault(effectId => effectId != 0);
 		return new SmLootStatus(npcObjectId, SmLootStatusType.LootEnable, lootEffectId);
+	}
+
+	private void ResumeDecayAfterClose(int npcObjectId, WorldNpcDropRegistration registration)
+	{
+		// Java parity: DropService.closeDropList resumes RespawnService.scheduleDecayTask with the remaining delay.
+		if (_worldNpcSpawnService == null
+			|| registration.RemainingDecayTimeMillis <= 0
+			|| _dropRegistrationService.GetCurrentDrops(npcObjectId).Count == 0)
+		{
+			return;
+		}
+
+		_worldNpcSpawnService.TryScheduleWorldNpcDecayTask(
+			npcObjectId,
+			hasRegisteredDrops: true,
+			TimeSpan.FromMilliseconds(registration.RemainingDecayTimeMillis));
 	}
 
 	private static void ApplyInventoryPlan(Player player, InventoryAddPlan addPlan)

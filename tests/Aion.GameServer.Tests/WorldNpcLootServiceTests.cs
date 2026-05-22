@@ -3,6 +3,11 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
+using Aion.GameServer.Utils;
+using Aion.GameServer.Utils.IdFactory;
+using Aion.GameServer.World;
+using Microsoft.Extensions.Logging.Abstractions;
+using GameWorld = Aion.GameServer.World.World;
 
 namespace Aion.GameServer.Tests;
 
@@ -173,6 +178,55 @@ public sealed class WorldNpcLootServiceTests
 		Assert.Equal(WorldNpcLootStatus.TeamDistributionPending, result.Status);
 		Assert.Empty(player.InventoryItems);
 		Assert.Single(dropRegistration.GetCurrentDrops(5001));
+	}
+
+	[Fact]
+	public async Task RequestDropList_CancelsDecayAndCloseDropListResumesRemainingDecay()
+	{
+		var dropRegistration = new WorldNpcDropRegistrationService();
+		dropRegistration.RegisterDrop(5001, looterObjectId: 1001, drops: [new WorldNpcDropItem(1, 182400002, 1)]);
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		try
+		{
+			var spawnService = new WorldNpcSpawnService(
+				new GameServerRuntimeContext(),
+				world,
+				new IDFactory(),
+				gameTimeService: null,
+				threadPoolManager: threadPoolManager,
+				connectionRegistry: null,
+				staticPlaceables: null,
+				walkerSpawnPlans: null,
+				walkerPlacementApplication: null,
+				logger: NullLogger<WorldNpcSpawnService>.Instance);
+			var npc = new WorldNpc(
+				5001,
+				203001,
+				new NpcTemplateSummary(203001, "loot_npc", 0, 1, "NORMAL", "NORMAL", "NONE", "NONE", "NON_ATTACKABLE"),
+				new WorldPosition(210010000, 1, 2, 3, 0));
+			Assert.True(world.TryAddObject(npc.ObjectId, npc));
+			Assert.True(spawnService.TryScheduleWorldNpcDecayTask(5001, hasRegisteredDrops: true, TimeSpan.FromMilliseconds(500)));
+			var service = new WorldNpcLootService(dropRegistration, spawnService);
+			var player = CreatePlayer(1001);
+
+			var open = service.RequestDropList(player, 5001);
+
+			Assert.Equal(WorldNpcLootStatus.Opened, open.Status);
+			Assert.False(spawnService.HasDecayTask(5001));
+			Assert.True(dropRegistration.TryGetRegistration(5001, out var registration));
+			Assert.True(registration!.RemainingDecayTimeMillis > 0);
+
+			var close = service.CloseDropList(player, 5001);
+
+			Assert.Equal(WorldNpcLootStatus.Closed, close.Status);
+			Assert.True(spawnService.HasDecayTask(5001));
+			Assert.Equal(1, spawnService.PendingDecayCount);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
 	}
 
 	private static Player CreatePlayer(int objectId)

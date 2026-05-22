@@ -679,6 +679,39 @@ public sealed class WorldNpcSpawnServiceTests
 	}
 
 	[Fact]
+	public async Task CancelDecay_CancelsTrackedDecayAndReturnsRemainingDelay()
+	{
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		try
+		{
+			var service = CreateService(world, new StaticPlaceableStateService(), threadPoolManager);
+			var spawns = new NpcSpawnTable([CreateSpawn(210010000, 203077)]);
+			var templates = new NpcTemplateTable([CreateTemplate(203077)]);
+
+			service.SpawnWorldNpcs(spawns, templates, [210010000]);
+			var scheduled = service.TryScheduleWorldNpcDecayTask(1, hasRegisteredDrops: true, TimeSpan.FromMilliseconds(500));
+
+			Assert.True(scheduled);
+			Assert.True(service.HasDecayTask(1));
+			Assert.Equal(1, service.PendingDecayCount);
+
+			var remainingDelay = service.CancelDecay(1);
+
+			Assert.NotNull(remainingDelay);
+			Assert.True(remainingDelay.Value > TimeSpan.Zero);
+			Assert.False(service.HasDecayTask(1));
+			Assert.Equal(0, service.PendingDecayCount);
+			await Task.Delay(100);
+			Assert.Single(world.GetNpcs());
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
 	public async Task TryDeleteAndScheduleRespawn_SkipsNoRespawnSpawns()
 	{
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);

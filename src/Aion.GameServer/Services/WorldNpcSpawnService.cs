@@ -32,6 +32,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 	private readonly ConcurrentDictionary<int, SpawnedWorldNpcRegistration> _spawnedWorldNpcs = new();
 	private readonly ConcurrentDictionary<int, WorldNpc> _inactiveWalkerVariants = new();
 	private readonly ConcurrentDictionary<int, PendingWorldNpcRespawn> _pendingRespawns = new();
+	private readonly ConcurrentDictionary<int, PendingWorldNpcDecay> _pendingDecays = new();
 	private int _loadedCount;
 	private int _skippedCount;
 
@@ -105,6 +106,8 @@ public sealed class WorldNpcSpawnService : GameEngine
 	public int SkippedCount => Volatile.Read(ref _skippedCount);
 
 	public int PendingRespawnCount => _pendingRespawns.Count;
+
+	public int PendingDecayCount => _pendingDecays.Count;
 
 	public int InactiveWalkerVariantCount => _inactiveWalkerVariants.Count;
 
@@ -631,13 +634,20 @@ public sealed class WorldNpcSpawnService : GameEngine
 		if (_threadPoolManager == null)
 			return TryDespawnWorldNpc(objectId);
 
-		_threadPoolManager.Schedule(
-			_ =>
+		decayDelay = decayDelay <= TimeSpan.Zero ? ImmediateDecayDelay : decayDelay;
+		var pendingDecay = new PendingWorldNpcDecay(DateTimeOffset.UtcNow + decayDelay);
+		pendingDecay.ScheduledTask = _threadPoolManager.Schedule(
+			cancellationToken =>
 			{
-				TryDespawnWorldNpc(objectId);
+				RunDecayAsync(objectId, pendingDecay, cancellationToken);
 				return ValueTask.CompletedTask;
 			},
-			decayDelay <= TimeSpan.Zero ? ImmediateDecayDelay : decayDelay);
+			decayDelay);
+		if (!_pendingDecays.TryAdd(objectId, pendingDecay))
+		{
+			pendingDecay.ScheduledTask.Cancel();
+			return false;
+		}
 		return true;
 	}
 
@@ -664,6 +674,23 @@ public sealed class WorldNpcSpawnService : GameEngine
 		return _pendingRespawns.ContainsKey(objectId);
 	}
 
+	public bool HasDecayTask(int objectId)
+	{
+		// Java parity: controllers/CreatureController TaskId.DECAY lookup used by DropService.
+		return _pendingDecays.ContainsKey(objectId);
+	}
+
+	public TimeSpan? CancelDecay(int objectId)
+	{
+		// Java parity: DropService.requestDropList cancels TaskId.DECAY and stores remaining delay.
+		if (!_pendingDecays.TryRemove(objectId, out var pendingDecay))
+			return null;
+
+		pendingDecay.ScheduledTask?.Cancel();
+		var remaining = pendingDecay.DueAt - DateTimeOffset.UtcNow;
+		return remaining > TimeSpan.Zero ? remaining : TimeSpan.Zero;
+	}
+
 	public bool CancelRespawn(int objectId)
 	{
 		// Java parity: services/RespawnService.cancelRespawn unregisters a pending respawn task.
@@ -681,12 +708,28 @@ public sealed class WorldNpcSpawnService : GameEngine
 		return _dropRegistrationLookup?.HasRegisteredDrops(objectId) == true;
 	}
 
+	private void RunDecayAsync(int objectId, PendingWorldNpcDecay pendingDecay, CancellationToken cancellationToken)
+	{
+		// Java parity: RespawnService.scheduleDecayTask delayed delete removes the DECAY task before deleting the corpse.
+		if (!_pendingDecays.TryGetValue(objectId, out var currentDecay)
+			|| !ReferenceEquals(currentDecay, pendingDecay)
+			|| !_pendingDecays.TryRemove(objectId, out _)
+			|| cancellationToken.IsCancellationRequested)
+		{
+			return;
+		}
+
+		TryDespawnWorldNpc(objectId);
+	}
+
 	private bool TryDespawnWorldNpc(int objectId, bool releaseObjectId)
 	{
 		if (!_world.TryRemoveObject(objectId, out var gameObject) || gameObject is not WorldNpc worldNpc)
 			return false;
 
 		_spawnedWorldNpcs.TryRemove(objectId, out _);
+		if (_pendingDecays.TryRemove(objectId, out var pendingDecay))
+			pendingDecay.ScheduledTask?.Cancel();
 		_inactiveWalkerVariants.TryRemove(objectId, out _);
 		_staticPlaceables?.DespawnPlaceableObject(worldNpc.Position.WorldId, worldNpc.StaticId);
 		if (releaseObjectId)
@@ -1002,6 +1045,18 @@ public sealed class WorldNpcSpawnService : GameEngine
 		public SpawnedWorldNpcRegistration Registration { get; }
 
 		public bool ReleaseOldObjectIdBeforeSpawn { get; }
+
+		public ScheduledTask? ScheduledTask { get; set; }
+	}
+
+	private sealed class PendingWorldNpcDecay
+	{
+		public PendingWorldNpcDecay(DateTimeOffset dueAt)
+		{
+			DueAt = dueAt;
+		}
+
+		public DateTimeOffset DueAt { get; }
 
 		public ScheduledTask? ScheduledTask { get; set; }
 	}
