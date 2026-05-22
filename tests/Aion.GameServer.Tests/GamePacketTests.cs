@@ -762,6 +762,9 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.PolishSuccess("weapon"), 1401650, "weapon");
 		AssertSystemMessage(SmSystemMessage.PolishChargeEnd("weapon"), 1401652, "weapon");
 		AssertSystemMessage(SmSystemMessage.PolishNeedIdentify(), 1401750);
+		AssertSystemMessage(SmSystemMessage.HousingObjectOccupiedByOther(), 1401256);
+		AssertSystemMessage(SmSystemMessage.HousingObjectUse("object"), 1401257, "object");
+		AssertSystemMessage(SmSystemMessage.HousingObjectCancelUse(), 1401258);
 		AssertSystemMessage(SmSystemMessage.HousingBidSuccess(6001), 1401265, "6001");
 		AssertSystemMessage(SmSystemMessage.HousingBidFail(), 1401348);
 		AssertSystemMessage(SmSystemMessage.HousingCantOwnNotCompleteQuest(18802), 1401277, "18802");
@@ -777,6 +780,8 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.HousingCantBidNotEnoughMoney(500000), 1401283, "500000");
 		AssertSystemMessage(SmSystemMessage.HousingCantBidExcessAccount(), 1401497);
 		AssertSystemMessage(SmSystemMessage.HousingCantBidLower(), 1401307);
+		AssertSystemMessage(SmSystemMessage.HousingObjectTooFarToUse(), 1401297);
+		AssertSystemMessage(SmSystemMessage.HousingObjectOnlyForOwnerValid(), 1401298);
 		AssertSystemMessage(SmSystemMessage.HousingPriceChange(750000), 1401324, "750000");
 		AssertSystemMessage(SmSystemMessage.HousingCantAuctionTimeout(), 1401308);
 		AssertSystemMessage(SmSystemMessage.HousingCantAuctionOverdue(), 1401317);
@@ -1272,6 +1277,16 @@ public class GamePacketTests
 		Assert.Equal(1, (int)storageUseUpdateReader.ReadC());
 		Assert.Equal(9904, storageUseUpdateReader.ReadD());
 		Assert.Equal(0, storageUseUpdateReader.Remaining);
+
+		var mailDialogPayload = SerializeUnencryptedPayload(
+			new SmDialogWindow(9905, SmDialogWindow.MailPageId, dialogContextId: Player.MailboxRegularState));
+		using var mailDialogReader = new PacketBuffer(mailDialogPayload);
+		Assert.Equal(9905, mailDialogReader.ReadD());
+		Assert.Equal(SmDialogWindow.MailPageId, mailDialogReader.ReadH());
+		Assert.Equal(0, mailDialogReader.ReadD());
+		Assert.Equal(0, mailDialogReader.ReadH());
+		Assert.Equal(Player.MailboxRegularState, mailDialogReader.ReadH());
+		Assert.Equal(0, mailDialogReader.Remaining);
 
 		var houseObjectsPayload = SerializeUnencryptedPayload(
 			new SmHouseObjects(

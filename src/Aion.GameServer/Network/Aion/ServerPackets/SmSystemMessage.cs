@@ -797,6 +797,24 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300899);
 	}
 
+	public static SmSystemMessage HousingObjectOccupiedByOther()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_OBJECT_OCCUPIED_BY_OTHER.
+		return new SmSystemMessage(1401256);
+	}
+
+	public static SmSystemMessage HousingObjectUse(string? objectName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_OBJECT_USE.
+		return new SmSystemMessage(1401257, objectName);
+	}
+
+	public static SmSystemMessage HousingObjectCancelUse()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_OBJECT_CANCEL_USE.
+		return new SmSystemMessage(1401258);
+	}
+
 	public static SmSystemMessage HousingBidCancel()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_BID_CANCEL.
@@ -897,6 +915,18 @@ public sealed class SmSystemMessage : GameServerPacket
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_CANT_BID_LOWER.
 		return new SmSystemMessage(1401307);
+	}
+
+	public static SmSystemMessage HousingObjectTooFarToUse()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_OBJECT_TOO_FAR_TO_USE.
+		return new SmSystemMessage(1401297);
+	}
+
+	public static SmSystemMessage HousingObjectOnlyForOwnerValid()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_OBJECT_IS_ONLY_FOR_OWNER_VALID.
+		return new SmSystemMessage(1401298);
 	}
 
 	public static SmSystemMessage HousingPriceChange(long kinah)

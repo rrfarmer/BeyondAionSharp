@@ -539,7 +539,9 @@ public sealed class StaticData
 						DelayMilliseconds: ReadIntAttribute(reader, "delay"),
 						UseCount: ReadIntAttribute(reader, "use_count"),
 						RequiredItemId: ReadIntAttribute(reader, "required_item"),
-						EmblemLevel: ReadIntAttribute(reader, "level")));
+						EmblemLevel: ReadIntAttribute(reader, "level"),
+						NameId: ReadIntAttribute(reader, "name_id"),
+						TalkingDistance: ReadFloatAttribute(reader, "talking_distance")));
 				continue;
 			}
 

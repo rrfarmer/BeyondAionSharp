@@ -45,4 +45,6 @@ public sealed record HousingObjectTemplateSummary(
 	int UseActionCheckType = 0,
 	int UseActionRemoveCount = 0,
 	int UseActionRewardId = 0,
-	int UseActionFinalRewardId = 0);
+	int UseActionFinalRewardId = 0,
+	int NameId = 0,
+	float TalkingDistance = 0);

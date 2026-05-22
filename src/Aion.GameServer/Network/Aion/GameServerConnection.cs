@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
@@ -36,6 +37,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private const int MaxBlockedUsers = 100;
 	private const string PowerShardItemGroup = "POWER_SHARDS";
 	private static readonly TimeSpan ClientPingInterval = TimeSpan.FromMilliseconds(180000);
+	private static readonly ConcurrentDictionary<int, int> HouseObjectOccupants = new();
 	private readonly GamePacketProcessor<string> _packetProcessor;
 	private readonly GameCrypt _crypt;
 	private readonly GameServerOptions _options;
@@ -705,6 +707,14 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmReadExpressMail readExpressMail:
 				if (_activePlayer != null)
 					await HandleReadExpressMailAsync(_activePlayer, readExpressMail);
+				break;
+			case CmUseHouseObject useHouseObject:
+				if (_activePlayer != null)
+					await HandleUseHouseObjectAsync(_activePlayer, useHouseObject);
+				break;
+			case CmReleaseObject releaseObject:
+				if (_activePlayer != null)
+					await HandleReleaseObjectAsync(_activePlayer, releaseObject);
 				break;
 			case CmBlockAdd blockAdd:
 				if (_activePlayer != null)
@@ -5364,6 +5374,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			await _chatServer.SendPlayerLogoutAsync(player.ObjectId);
 		_expirableTaskService?.UnregisterPlayer(player);
 		await DismissPostmanAsync(player, notifyClient: notifyPostmanClient);
+		ReleaseHouseObjectOccupants(player.ObjectId);
 		if (_connectionRegistry != null)
 			await _connectionRegistry.BroadcastToVisiblePlayersAsync(player.Position, player.ObjectId, new SmDelete(player.ObjectId));
 		_connectionRegistry?.UnregisterPlayerConnection(player.ObjectId, this);
@@ -5776,6 +5787,178 @@ public sealed class GameServerConnection : BaseClientConnection
 				_logger.LogWarning("Player {PlayerObjectId} sent unknown read express mail action type {Action}", player.ObjectId, packet.Action);
 				break;
 		}
+	}
+
+	private async Task HandleUseHouseObjectAsync(Player player, CmUseHouseObject packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_USE_HOUSE_OBJECT delegates to PlaceableObjectController.onDialogRequest.
+		var target = await FindHouseObjectUseTargetAsync(player, packet.ObjectId);
+		if (target == null)
+			return;
+		if (!target.IsInTalkRange)
+		{
+			await SendPacketAsync(SmSystemMessage.HousingObjectTooFarToUse());
+			return;
+		}
+
+		switch (target.Template.TypeId)
+		{
+			case 2:
+				await HandleUseStorageObjectAsync(player, target);
+				break;
+			case 3:
+				await HandleUsePostboxObjectAsync(player, target);
+				break;
+		}
+	}
+
+	private async Task HandleUseStorageObjectAsync(Player player, HouseObjectUseTarget target)
+	{
+		// Java parity: model/gameobjects/StorageObject.onUse.
+		if (player.ObjectId != target.House.OwnerObjectId)
+		{
+			await SendPacketAsync(SmSystemMessage.HousingObjectOnlyForOwnerValid());
+			return;
+		}
+
+		if (!TryOccupyHouseObject(target.HouseObject.ObjectId, player.ObjectId))
+		{
+			await SendPacketAsync(SmSystemMessage.HousingObjectOccupiedByOther());
+			return;
+		}
+
+		await SendPacketAsync(SmSystemMessage.HousingObjectUse(ChatUtil.L10n(target.Template.NameId)));
+		await SendPacketAsync(new SmObjectUseUpdate(player.ObjectId, 0, 0, target.HouseObject));
+	}
+
+	private async Task HandleUsePostboxObjectAsync(Player player, HouseObjectUseTarget target)
+	{
+		// Java parity: model/gameobjects/PostboxObject.onUse.
+		if (!TryOccupyHouseObject(target.HouseObject.ObjectId, player.ObjectId))
+		{
+			await SendPacketAsync(SmSystemMessage.HousingObjectOccupiedByOther());
+			return;
+		}
+
+		player.MailboxState = Player.MailboxRegularState;
+		await SendPacketAsync(SmSystemMessage.HousingObjectUse(ChatUtil.L10n(target.Template.NameId)));
+		await SendPacketAsync(new SmDialogWindow(
+			target.HouseObject.ObjectId,
+			SmDialogWindow.MailPageId,
+			dialogContextId: player.MailboxState));
+		await SendPacketAsync(new SmObjectUseUpdate(player.ObjectId, 0, 0, target.HouseObject));
+	}
+
+	private async Task HandleReleaseObjectAsync(Player player, CmReleaseObject packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_RELEASE_OBJECT.
+		var target = await FindHouseObjectUseTargetAsync(player, packet.TargetObjectId);
+		if (target == null || !ReleaseHouseObjectOccupant(target.HouseObject.ObjectId, player.ObjectId))
+			return;
+
+		if (target.Template.TypeId == 1)
+			await SendPacketAsync(new SmUseObject(player.ObjectId, target.HouseObject.ObjectId, 0, 9));
+		if (target.Template.TypeId is 1 or 3)
+			await SendPacketAsync(SmSystemMessage.HousingObjectCancelUse());
+	}
+
+	private async Task<HouseObjectUseTarget?> FindHouseObjectUseTargetAsync(Player player, int objectId)
+	{
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		if (staticData == null || objectId == 0)
+			return null;
+
+		if (_world != null)
+		{
+			foreach (var house in _world.GetHouses())
+			{
+				if (TryCreateHouseObjectUseTarget(player, house, objectId, staticData.HousingObjectTemplates, out var target))
+					return target;
+			}
+		}
+
+		var activeHouse = GetActiveHouse(player);
+		if (activeHouse == null)
+			return null;
+
+		var registry = await LoadHouseRegistryAsync(player, activeHouse);
+		var houseWithRegistry = player.Houses.FirstOrDefault(house => house.ObjectId == activeHouse.ObjectId) ?? activeHouse with { Registry = registry };
+		if (!WorldHouse.TryCreate(player, houseWithRegistry, staticData.HousingTemplates, out var worldHouse) || worldHouse == null)
+			return null;
+
+		return TryCreateHouseObjectUseTarget(player, worldHouse, objectId, staticData.HousingObjectTemplates, out var ownedTarget)
+			? ownedTarget
+			: null;
+	}
+
+	private static bool TryCreateHouseObjectUseTarget(
+		Player player,
+		WorldHouse house,
+		int objectId,
+		HousingObjectTemplateTable templates,
+		out HouseObjectUseTarget? target)
+	{
+		target = null;
+		var houseObject = house.Registry?.GetObject(objectId);
+		if (houseObject == null || !houseObject.IsSpawnedByPlayer)
+			return false;
+
+		var template = templates.GetTemplate(houseObject.TemplateId);
+		if (template == null)
+			return false;
+
+		target = new HouseObjectUseTarget(
+			house,
+			houseObject,
+			template,
+			IsInHouseObjectTalkRange(player, house, houseObject, template));
+		return true;
+	}
+
+	private static bool IsInHouseObjectTalkRange(
+		Player player,
+		WorldHouse house,
+		RegisteredHouseObjectSummary houseObject,
+		HousingObjectTemplateSummary template)
+	{
+		// Java parity: PositionUtil.isInTalkRange(player, HouseObject) uses template talkingDistance + 1.
+		var playerPosition = player.Position;
+		if (playerPosition.WorldId != house.Position.WorldId)
+			return false;
+
+		var range = template.TalkingDistance > 0
+			? template.TalkingDistance + 1
+			: WorldVisibility.DefaultVisibleDistance;
+		var deltaX = playerPosition.X - houseObject.X;
+		var deltaY = playerPosition.Y - houseObject.Y;
+		var deltaZ = playerPosition.Z - houseObject.Z;
+		return deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ <= range * range;
+	}
+
+	private static bool TryOccupyHouseObject(int objectId, int playerObjectId)
+	{
+		// Java parity: UseableHouseObject.setOccupant compare-and-set semantics.
+		while (true)
+		{
+			if (HouseObjectOccupants.TryAdd(objectId, playerObjectId))
+				return true;
+			if (!HouseObjectOccupants.TryGetValue(objectId, out var occupantObjectId))
+				continue;
+			return occupantObjectId == playerObjectId;
+		}
+	}
+
+	private static bool ReleaseHouseObjectOccupant(int objectId, int playerObjectId)
+	{
+		// Java parity: UseableHouseObject.releaseOccupant only frees the current player's object.
+		return ((ICollection<KeyValuePair<int, int>>)HouseObjectOccupants)
+			.Remove(new KeyValuePair<int, int>(objectId, playerObjectId));
+	}
+
+	private static void ReleaseHouseObjectOccupants(int playerObjectId)
+	{
+		foreach (var pair in HouseObjectOccupants.Where(pair => pair.Value == playerObjectId).ToArray())
+			((ICollection<KeyValuePair<int, int>>)HouseObjectOccupants).Remove(pair);
 	}
 
 	private async Task SpawnPostmanAsync(Player player)
@@ -7562,6 +7745,12 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		return buffer;
 	}
+
+	private sealed record HouseObjectUseTarget(
+		WorldHouse House,
+		RegisteredHouseObjectSummary HouseObject,
+		HousingObjectTemplateSummary Template,
+		bool IsInTalkRange);
 
 	private sealed record PendingItemUse(
 		ScheduledTask Task,

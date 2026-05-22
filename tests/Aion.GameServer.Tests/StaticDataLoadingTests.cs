@@ -443,6 +443,8 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal((byte)2, storageObject.TypeId);
 		Assert.Equal(1, storageObject.WarehouseId);
 		Assert.Equal("STORAGE", storageObject.Limit);
+		Assert.Equal(360007, storageObject.NameId);
+		Assert.Equal(5.0f, storageObject.TalkingDistance);
 		var npcObject = staticData.HousingObjectTemplates.GetTemplate(3001000);
 		Assert.NotNull(npcObject);
 		Assert.Equal((byte)7, npcObject.TypeId);
@@ -453,6 +455,7 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal((byte)1, useObject.TypeId);
 		Assert.True(useObject.OwnerOnly);
 		Assert.Equal(3000, useObject.DelayMilliseconds);
+		Assert.Equal(2.0f, useObject.TalkingDistance);
 		Assert.Equal(186000166, useObject.RequiredItemId);
 		Assert.Equal(2, useObject.UseActionCheckType);
 		Assert.Equal(1, useObject.UseActionRemoveCount);
