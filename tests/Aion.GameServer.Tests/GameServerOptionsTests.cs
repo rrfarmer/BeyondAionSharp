@@ -50,6 +50,12 @@ public class GameServerOptionsTests
 		Assert.True(options.GeoData.MaterialsEnabled);
 		Assert.False(options.GeoData.MaterialsShowDetails);
 
+		Assert.True(options.Ai.NpcMovementEnabled);
+		Assert.Equal(3, options.Ai.NpcMovementMinimumDelaySeconds);
+		Assert.Equal(15, options.Ai.NpcMovementMaximumDelaySeconds);
+		Assert.False(options.Ai.NpcShoutsEnabled);
+		Assert.Equal("./data/handlers/ai", options.Ai.HandlerDirectory);
+
 		Assert.True(options.Housing.AuctionsEnabled);
 		Assert.True(options.Housing.PayEnabled);
 		Assert.Equal(200f, options.Housing.VisibilityDistance, 0.001f);

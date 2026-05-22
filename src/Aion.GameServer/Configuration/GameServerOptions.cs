@@ -13,6 +13,8 @@ public sealed class GameServerOptions
 
 	public GeoDataOptions GeoData { get; init; } = new();
 
+	public GameServerAiOptions Ai { get; init; } = new();
+
 	public GameServerHousingOptions Housing { get; init; } = new();
 
 	public GameServerCustomOptions Custom { get; init; } = new();
@@ -33,7 +35,7 @@ public sealed class GameServerOptions
 
 	public static GameServerOptions LoadFromJavaConfig(string startDirectory)
 	{
-		// Java parity: configs/main GSConfig, NetworkConfig, GeoDataConfig, CustomConfig, MembershipConfig.
+		// Java parity: configs/main GSConfig, NetworkConfig, GeoDataConfig, AIConfig, CustomConfig, MembershipConfig.
 		var loader = LoadProperties(startDirectory);
 		var clientSocket = GetWithEnvironment(loader, "gameserver.network.client.socket_address", "0.0.0.0:7777");
 		var clientConnect = GetWithEnvironment(loader, "gameserver.network.client.connect_address", clientSocket);
@@ -99,6 +101,14 @@ public sealed class GameServerOptions
 				MaterialsEnabled = GetBoolWithEnvironment(loader, "gameserver.geodata.materials.enable", true),
 				MaterialsShowDetails = GetBoolWithEnvironment(loader, "gameserver.geodata.materials.showdetails", false),
 				ShieldsEnabled = GetBoolWithEnvironment(loader, "gameserver.geodata.shields.enable", true),
+			},
+			Ai = new GameServerAiOptions
+			{
+				NpcMovementEnabled = GetBoolWithEnvironment(loader, "gameserver.npcmovement.enable", true),
+				NpcMovementMinimumDelaySeconds = GetIntWithEnvironment(loader, "gameserver.npcmovement.delay.minimum", 3),
+				NpcMovementMaximumDelaySeconds = GetIntWithEnvironment(loader, "gameserver.npcmovement.delay.maximum", 15),
+				NpcShoutsEnabled = GetBoolWithEnvironment(loader, "gameserver.npcshouts.enable", false),
+				HandlerDirectory = GetWithEnvironment(loader, "gameserver.ai.handler_directory", "./data/handlers/ai"),
 			},
 			Housing = new GameServerHousingOptions
 			{
@@ -612,6 +622,19 @@ public sealed class GeoDataOptions
 	public bool MaterialsShowDetails { get; init; }
 
 	public bool ShieldsEnabled { get; init; } = true;
+}
+
+public sealed class GameServerAiOptions
+{
+	public bool NpcMovementEnabled { get; init; } = true;
+
+	public int NpcMovementMinimumDelaySeconds { get; init; } = 3;
+
+	public int NpcMovementMaximumDelaySeconds { get; init; } = 15;
+
+	public bool NpcShoutsEnabled { get; init; }
+
+	public string HandlerDirectory { get; init; } = "./data/handlers/ai";
 }
 
 public sealed class GameServerHousingOptions
