@@ -543,6 +543,21 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 3
+				&& reader.LocalName == "action"
+				&& elementPath.GetValueOrDefault(1) == "housing_objects"
+				&& elementPath.GetValueOrDefault(2) == "use_item"
+				&& housingObjectTemplates.Count > 0)
+			{
+				// Java parity: model/templates/housing/UseItemAction.checkType serialized by UseableItemObject.writeUsageData.
+				var lastIndex = housingObjectTemplates.Count - 1;
+				housingObjectTemplates[lastIndex] = housingObjectTemplates[lastIndex] with
+				{
+					UseActionCheckType = ReadIntAttribute(reader, "check_type"),
+				};
+				continue;
+			}
+
 			if (reader.Depth == 3 && reader.LocalName == "maxcount" && currentInstanceCooltime != null)
 			{
 				var value = await ReadElementTextAsync(reader, cancellationToken);

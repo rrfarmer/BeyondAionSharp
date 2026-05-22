@@ -43,7 +43,7 @@ public sealed class PlayerHouseTests
 		var objectTemplates = new HousingObjectTemplateTable(
 			[
 				new HousingObjectTemplateSummary(3001000, 7, "npc", "EXTERIOR", "FLOOR", "NONE", "NPC", 30, false),
-				new HousingObjectTemplateSummary(3190001, 1, "use_item", "INTERIOR", "FLOOR", "NONE", "USE_ITEM", 0, false, UseCount: 3),
+				new HousingObjectTemplateSummary(3190001, 1, "use_item", "INTERIOR", "FLOOR", "NONE", "USE_ITEM", 0, false, UseCount: 3, UseActionCheckType: 2),
 			]);
 		var registry = HouseRegistrySummary.FromRows(
 			353000,
@@ -68,7 +68,7 @@ public sealed class PlayerHouseTests
 		Assert.Equal(30, notSpawnedWithCooldown.CooldownSeconds);
 		var spawned = Assert.Single(registry.Objects, obj => obj.IsSpawnedByPlayer);
 		Assert.Equal(180, spawned.Rotation);
-		Assert.Equal(new byte[] { 3, 0, 0, 0, 0 }, spawned.UsageData);
+		Assert.Equal(new byte[] { 3, 0, 0, 0, 2 }, spawned.UsageData);
 		var placedObject = Assert.Single(
 			registry.GetSpawnedObjects(
 				new PlayerHouse(50, 700100, 353000, DateTime.UtcNow, null, IsInactive: false, Registry: registry),

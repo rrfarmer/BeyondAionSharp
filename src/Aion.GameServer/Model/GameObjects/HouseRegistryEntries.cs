@@ -195,7 +195,7 @@ public sealed record HouseRegistrySummary(
 
 		var data = new byte[5];
 		BinaryPrimitives.WriteInt32LittleEndian(data, template.UseCount == 0 ? 0 : row.OwnerUseCount + row.VisitorUseCount);
-		data[4] = 0;
+		data[4] = (byte)template.UseActionCheckType;
 		return data;
 	}
 

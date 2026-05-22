@@ -41,4 +41,5 @@ public sealed record HousingObjectTemplateSummary(
 	int DelayMilliseconds = 0,
 	int UseCount = 0,
 	int RequiredItemId = 0,
-	int EmblemLevel = 0);
+	int EmblemLevel = 0,
+	int UseActionCheckType = 0);

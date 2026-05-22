@@ -448,6 +448,7 @@ public sealed class StaticDataLoadingTests
 		Assert.True(useObject.OwnerOnly);
 		Assert.Equal(3000, useObject.DelayMilliseconds);
 		Assert.Equal(186000166, useObject.RequiredItemId);
+		Assert.Equal(2, useObject.UseActionCheckType);
 		Assert.Equal(5, staticData.InstanceCooltimes.GetInstanceCooltimeByWorldId(300030000)?.MaxCount);
 		Assert.Contains(staticData.RecipeTemplates.GetAutolearnRecipes("ELYOS", 40009, 1), recipe => recipe.RecipeId == 155000001);
 		var craftPlayer = new Player
