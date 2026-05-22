@@ -108,6 +108,25 @@ public sealed class WorldNpcSpawnServiceTests
 	}
 
 	[Fact]
+	public void SpawnWorldNpcs_FiltersByDifficultId()
+	{
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var service = CreateService(world);
+		var spawns = new NpcSpawnTable(
+		[
+			CreateSpawn(210010000, 203040, x: 1, difficultId: 1),
+			CreateSpawn(210010000, 203040, x: 2, difficultId: 2),
+		]);
+		var templates = new NpcTemplateTable([CreateTemplate(203040)]);
+
+		var result = service.SpawnWorldNpcs(spawns, templates, [210010000], gameMinutes: 0, serverDayOfWeek: DayOfWeek.Friday, difficultId: 1);
+
+		Assert.Equal(new WorldNpcSpawnResult(1, 1), result);
+		var npc = Assert.Single(world.GetNpcs());
+		Assert.Equal(1, npc.Position.X);
+	}
+
+	[Fact]
 	public async Task ProcessTemporarySpawnHourChange_DespawnsThenSpawnsEligibleTemporaryGroups()
 	{
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);
@@ -148,6 +167,7 @@ public sealed class WorldNpcSpawnServiceTests
 		float z = 3,
 		byte heading = 0,
 		int poolSize = 0,
+		byte difficultId = 0,
 		string handler = "",
 		TemporarySpawnSchedule? groupTemporarySchedule = null,
 		TemporarySpawnSchedule? spotTemporarySchedule = null)
@@ -161,6 +181,7 @@ public sealed class WorldNpcSpawnServiceTests
 			heading,
 			295,
 			poolSize,
+			difficultId,
 			handler,
 			0,
 			0,

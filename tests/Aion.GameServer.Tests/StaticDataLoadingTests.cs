@@ -108,7 +108,7 @@ public sealed class StaticDataLoadingTests
 			<static_data>
 				<spawns>
 					<spawn_map map_id="210010000">
-						<spawn npc_id="203000" respawn_time="295">
+						<spawn npc_id="203000" respawn_time="295" difficult_id="1">
 							<spot x="10.5" y="20.25" z="30.75" h="44" random_walk="7" walker_id="path-a" walker_index="3" anchor="anchor-a" state="2" ai="guard_ai" />
 						</spawn>
 						<spawn npc_id="150000015" handler="STATIC">
@@ -153,6 +153,7 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(30.75f, spawn.Z);
 		Assert.Equal((byte)44, spawn.Heading);
 		Assert.Equal(295, spawn.RespawnSeconds);
+		Assert.Equal((byte)1, spawn.DifficultId);
 		Assert.Equal(7, spawn.RandomWalkRange);
 		Assert.Equal("path-a", spawn.WalkerId);
 		Assert.Equal(3, spawn.WalkerIndex);

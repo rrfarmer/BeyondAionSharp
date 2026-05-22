@@ -81,6 +81,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 			TemporarySpawnEvaluationMode.Startup,
 			includeAlwaysOn: true,
 			includeTemporary: true,
+			difficultId: 0,
 			changedMapIds: null,
 			cancellationToken);
 		if (_gameTimeService != null)
@@ -119,6 +120,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 			TemporarySpawnEvaluationMode.Startup,
 			includeAlwaysOn: true,
 			includeTemporary: true,
+			difficultId: 0,
 			changedMapIds: null,
 			cancellationToken);
 	}
@@ -129,6 +131,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		IEnumerable<int>? allowedMapIds,
 		int gameMinutes,
 		DayOfWeek serverDayOfWeek,
+		byte difficultId = 0,
 		CancellationToken cancellationToken = default)
 	{
 		return SpawnWorldNpcs(
@@ -140,6 +143,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 			TemporarySpawnEvaluationMode.Startup,
 			includeAlwaysOn: true,
 			includeTemporary: true,
+			difficultId,
 			changedMapIds: null,
 			cancellationToken);
 	}
@@ -183,6 +187,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 			TemporarySpawnEvaluationMode.HourlySpawn,
 			includeAlwaysOn: false,
 			includeTemporary: true,
+			difficultId: 0,
 			changedMapIds,
 			cancellationToken);
 
@@ -199,6 +204,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		TemporarySpawnEvaluationMode temporarySpawnMode,
 		bool includeAlwaysOn,
 		bool includeTemporary,
+		byte difficultId,
 		ISet<int>? changedMapIds,
 		CancellationToken cancellationToken = default)
 	{
@@ -219,6 +225,12 @@ public sealed class WorldNpcSpawnService : GameEngine
 			}
 
 			if (allowedMaps != null && !allowedMaps.Contains(groupKey.MapId))
+			{
+				skipped += groupSpawns.Length;
+				continue;
+			}
+
+			if (groupKey.DifficultId != 0 && groupKey.DifficultId != difficultId)
 			{
 				skipped += groupSpawns.Length;
 				continue;
@@ -303,6 +315,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 			TemporarySpawnEvaluationMode.Startup,
 			includeAlwaysOn: true,
 			includeTemporary: true,
+			difficultId: 0,
 			changedMapIds: null,
 			cancellationToken);
 	}
@@ -405,6 +418,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 			spawn.NpcId,
 			spawn.RespawnSeconds,
 			spawn.PoolSize,
+			spawn.DifficultId,
 			spawn.Handler,
 			spawn.Custom,
 			spawn.GroupTemporarySchedule);
@@ -415,6 +429,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		int NpcId,
 		int RespawnSeconds,
 		int PoolSize,
+		byte DifficultId,
 		string Handler,
 		bool Custom,
 		TemporarySpawnSchedule? TemporarySchedule);

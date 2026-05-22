@@ -358,6 +358,7 @@ public sealed class StaticData
 					ReadRequiredIntAttribute(reader, "npc_id"),
 					ReadIntAttribute(reader, "respawn_time"),
 					ReadIntAttribute(reader, "pool"),
+					(byte)ReadIntAttribute(reader, "difficult_id"),
 					reader.GetAttribute("handler") ?? string.Empty,
 					ReadBoolAttribute(reader, "custom"));
 				currentNpcSpawnDepth = reader.Depth;
@@ -2516,6 +2517,7 @@ public sealed class StaticData
 			int npcId,
 			int respawnSeconds,
 			int poolSize,
+			byte difficultId,
 			string handler,
 			bool custom)
 		{
@@ -2523,6 +2525,7 @@ public sealed class StaticData
 			NpcId = npcId;
 			RespawnSeconds = respawnSeconds;
 			PoolSize = poolSize;
+			DifficultId = difficultId;
 			Handler = handler;
 			Custom = custom;
 		}
@@ -2534,6 +2537,8 @@ public sealed class StaticData
 		private int RespawnSeconds { get; }
 
 		private int PoolSize { get; }
+
+		private byte DifficultId { get; }
 
 		private string Handler { get; }
 
@@ -2553,6 +2558,7 @@ public sealed class StaticData
 				spot.Heading,
 				RespawnSeconds,
 				PoolSize,
+				DifficultId,
 				Handler,
 				spot.StaticId,
 				spot.RandomWalkRange,

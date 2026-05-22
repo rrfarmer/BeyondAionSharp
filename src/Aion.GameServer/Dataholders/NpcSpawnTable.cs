@@ -36,6 +36,7 @@ public sealed record NpcSpawnSummary(
 	byte Heading,
 	int RespawnSeconds,
 	int PoolSize,
+	byte DifficultId,
 	string Handler,
 	int StaticId,
 	int RandomWalkRange,
