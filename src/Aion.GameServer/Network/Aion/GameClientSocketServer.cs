@@ -190,6 +190,17 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		return false;
 	}
 
+	public void ForEachOnlinePlayer(Action<Player> action)
+	{
+		// Java parity: World.forEachPlayer for broad in-memory player state cleanup.
+		foreach (var connection in _playerConnections.Values)
+		{
+			var player = connection.ActivePlayer;
+			if (player != null)
+				action(player);
+		}
+	}
+
 	public async Task<bool> SendPacketToPlayerAsync(int playerObjectId, GameServerPacket packet)
 	{
 		// Java parity: PacketSendUtility.sendPacket(targetPlayer, packet).

@@ -12,6 +12,8 @@ public interface IGameClientConnectionRegistry
 
 	bool TryGetOnlinePlayerByName(string playerName, out Player? player);
 
+	void ForEachOnlinePlayer(Action<Player> action);
+
 	Task<bool> SendPacketToPlayerAsync(int playerObjectId, GameServerPacket packet);
 
 	Task<int> BroadcastToWorldAsync(GameServerPacket packet, Func<Player, bool>? filter = null);

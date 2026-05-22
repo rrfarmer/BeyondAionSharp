@@ -981,7 +981,9 @@ public sealed class GameServerConnection : BaseClientConnection
 							}
 						},
 						staticData?.TitleTemplates,
-						staticData?.ItemTemplates);
+						staticData?.ItemTemplates,
+						staticData?.HousingObjectTemplates,
+						(house, houseObject, template) => ExpireHouseObjectAsync(enterWorldResult.Player, house, houseObject, template));
 				}
 				break;
 		}
@@ -6093,6 +6095,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		{
 			await SendHouseObjectUseDeletePacketsAsync(player, target, cancellationToken);
 			RemoveHouseObjectFromRegistries(player, target);
+			RemoveHouseObjectCooldownFromOnlinePlayers(player, target.HouseObject.ObjectId);
+			_idFactory?.ReleaseId(target.HouseObject.ObjectId);
 			ReleaseHouseObjectOccupant(target.HouseObject.ObjectId, player.ObjectId);
 			return;
 		}
@@ -6145,6 +6149,53 @@ public sealed class GameServerConnection : BaseClientConnection
 		await SendPacketAsync(
 			SmSystemMessage.HousingObjectDeleteUseCountFinal(ChatUtil.L10n(target.Template.NameId)),
 			cancellationToken);
+	}
+
+	private async Task ExpireHouseObjectAsync(
+		Player player,
+		PlayerHouse house,
+		RegisteredHouseObjectSummary houseObject,
+		HousingObjectTemplateSummary? template)
+	{
+		// Java parity: HouseObject.onExpire -> despawnAndRemoveHouseObject(true).
+		if (!await _housingRepository.DeleteHouseRegisteredObjectAsync(player.ObjectId, houseObject.ObjectId))
+			return;
+
+		await SendExpiredHouseObjectPacketsAsync(player, house, houseObject, template);
+		var updatedRegistry = (house.Registry ?? HouseRegistrySummary.Empty).WithoutObject(houseObject.ObjectId);
+		UpdateHouseRegistry(player, house, updatedRegistry);
+		RemoveHouseObjectCooldownFromOnlinePlayers(player, houseObject.ObjectId);
+		_idFactory?.ReleaseId(houseObject.ObjectId);
+	}
+
+	private async Task SendExpiredHouseObjectPacketsAsync(
+		Player player,
+		PlayerHouse house,
+		RegisteredHouseObjectSummary houseObject,
+		HousingObjectTemplateSummary? template)
+	{
+		if (houseObject.IsSpawnedByPlayer)
+		{
+			await SendPacketAsync(new SmHouseEdit(CmHouseEdit.DespawnObject, 0, houseObject.ObjectId));
+			var deletePacket = new SmDeleteHouseObject(houseObject.ObjectId);
+			var housingTemplates = _runtimeContext?.DataManager?.StaticData.HousingTemplates;
+			var worldId = housingTemplates?.GetAddress(house.AddressId)?.MapId ?? player.Position.WorldId;
+			if (_connectionRegistry != null)
+			{
+				await _connectionRegistry.BroadcastToVisiblePlayersAsync(
+					new global::Aion.GameServer.World.WorldPosition(worldId, houseObject.X, houseObject.Y, houseObject.Z, (byte)houseObject.Heading),
+					player.ObjectId,
+					deletePacket,
+					includeSourcePlayer: true);
+			}
+			else
+			{
+				await SendPacketAsync(deletePacket);
+			}
+		}
+
+		await SendPacketAsync(new SmHouseEdit(CmHouseEdit.DeleteItem, 1, houseObject.ObjectId));
+		await SendPacketAsync(SmSystemMessage.HousingObjectDeleteExpireTime(GetHouseObjectName(houseObject, template)));
 	}
 
 	private static void ApplyHouseObjectUseInventoryMutation(
@@ -6217,6 +6268,42 @@ public sealed class GameServerConnection : BaseClientConnection
 			? DateTimeOffset.UtcNow.AddSeconds(template.CooldownSeconds).ToUnixTimeMilliseconds()
 			: new DateTimeOffset(DateTime.Today.AddDays(1).AddTicks(-1)).ToUnixTimeMilliseconds();
 		player.HouseObjectCooldowns = cooldowns;
+	}
+
+	private static void RemoveHouseObjectCooldown(Player player, int objectId)
+	{
+		if (!player.HouseObjectCooldowns.ContainsKey(objectId))
+			return;
+
+		var cooldowns = player.HouseObjectCooldowns.ToDictionary(pair => pair.Key, pair => pair.Value);
+		cooldowns.Remove(objectId);
+		player.HouseObjectCooldowns = cooldowns;
+	}
+
+	private void RemoveHouseObjectCooldownFromOnlinePlayers(Player owner, int objectId)
+	{
+		// Java parity: HouseRegistry.discard removes useable house-object cooldowns from World.forEachPlayer.
+		var removedFromOwner = false;
+		if (_connectionRegistry != null)
+		{
+			_connectionRegistry.ForEachOnlinePlayer(
+				player =>
+				{
+					if (player.ObjectId == owner.ObjectId)
+						removedFromOwner = true;
+					RemoveHouseObjectCooldown(player, objectId);
+				});
+		}
+
+		if (!removedFromOwner)
+			RemoveHouseObjectCooldown(owner, objectId);
+	}
+
+	private static string GetHouseObjectName(RegisteredHouseObjectSummary houseObject, HousingObjectTemplateSummary? template)
+	{
+		return template?.NameId > 0
+			? ChatUtil.L10n(template.NameId)
+			: houseObject.TemplateId.ToString(System.Globalization.CultureInfo.InvariantCulture);
 	}
 
 	private async Task HandleUseStorageObjectAsync(Player player, HouseObjectUseTarget target)
@@ -7123,6 +7210,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		UpdateHouseRegistry(player, activeHouse, registry.WithoutObject(packet.ItemObjectId));
+		RemoveHouseObjectCooldownFromOnlinePlayers(player, packet.ItemObjectId);
+		_idFactory?.ReleaseId(packet.ItemObjectId);
 		await SendPacketAsync(new SmHouseEdit(CmHouseEdit.DeleteItem, 1, packet.ItemObjectId));
 		await SendPacketAsync(new SmHouseEdit(CmHouseEdit.DeleteItem, 1, packet.ItemObjectId));
 	}
@@ -7170,6 +7259,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		player.Houses = player.Houses
 			.Select(house => house.ObjectId == activeHouse.ObjectId ? house with { Registry = registry } : house)
 			.ToArray();
+		_expirableTaskService?.RegisterHouseObjects(player, player.Houses.First(house => house.ObjectId == activeHouse.ObjectId));
 		if (staticData != null)
 			AddOrUpdateWorldHouse(player, player.Houses.First(house => house.ObjectId == activeHouse.ObjectId), staticData.HousingTemplates);
 	}

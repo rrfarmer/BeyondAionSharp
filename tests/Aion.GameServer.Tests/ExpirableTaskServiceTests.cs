@@ -206,6 +206,55 @@ public sealed class ExpirableTaskServiceTests
 	}
 
 	[Fact]
+	public async Task Tick_ExpiresLoadedActiveHouseObjectsAndDefersFinalRewardObjects()
+	{
+		await using var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		var now = DateTimeOffset.FromUnixTimeSeconds(1000);
+		var service = new ExpirableTaskService(
+			threadPoolManager,
+			new EmptyPlayerEnterWorldRepository(),
+			NullLogger<ExpirableTaskService>.Instance,
+			() => now);
+		var normalObject = new RegisteredHouseObjectSummary(9001, 3001000, ExpirationSeconds: -1, ExpireTimeSeconds: 999);
+		var finalRewardObject = new RegisteredHouseObjectSummary(9002, 3190013, ExpirationSeconds: -1, ExpireTimeSeconds: 999);
+		var emblemObject = new RegisteredHouseObjectSummary(9003, 3200001, ExpirationSeconds: -1, ExpireTimeSeconds: 999);
+		var registry = new HouseRegistrySummary([normalObject, finalRewardObject, emblemObject], Array.Empty<RegisteredHouseDecorationSummary>());
+		var player = new Player
+		{
+			ObjectId = 1001,
+			Name = "Kahrun",
+			Houses = [new PlayerHouse(51, 700100, 353000, DateTime.UtcNow, null, IsInactive: false, Registry: registry)],
+		};
+		var housingObjectTemplates = new HousingObjectTemplateTable(
+		[
+			new HousingObjectTemplateSummary(3001000, 0, "passive", "INTERIOR", "FLOOR", "NONE", "DECORATION", 1, false),
+			new HousingObjectTemplateSummary(3190013, 1, "use_item", "INTERIOR", "STACK", "POT", "DECORATION", 25, false, UseActionFinalRewardId: 188051555),
+			new HousingObjectTemplateSummary(3200001, 11, "emblem", "INTERIOR", "FLOOR", "NONE", "DECORATION", 1, false),
+		]);
+		var expiredObjects = new List<int>();
+
+		service.RegisterPlayerExpirables(
+			player,
+			_ => Task.CompletedTask,
+			housingObjectTemplates: housingObjectTemplates,
+			expireHouseObjectAsync: (house, houseObject, _) =>
+			{
+				expiredObjects.Add(houseObject.ObjectId);
+				player.Houses = player.Houses
+					.Select(existingHouse => existingHouse.ObjectId == house.ObjectId
+						? existingHouse with { Registry = existingHouse.Registry!.WithoutObject(houseObject.ObjectId) }
+						: existingHouse)
+					.ToArray();
+				return Task.CompletedTask;
+			});
+		await service.TickAsync();
+
+		Assert.Equal([9001], expiredObjects);
+		var remainingObjects = Assert.Single(player.Houses).Registry!.Objects.Select(obj => obj.ObjectId).Order().ToArray();
+		Assert.Equal([9002, 9003], remainingObjects);
+	}
+
+	[Fact]
 	public async Task Tick_KeepsExactExpiryAndUnregisteredPlayers()
 	{
 		await using var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
