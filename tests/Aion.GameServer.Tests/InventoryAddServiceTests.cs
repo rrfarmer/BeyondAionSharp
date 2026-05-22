@@ -120,8 +120,32 @@ public sealed class InventoryAddServiceTests
 
 		Assert.False(plan.Succeeded);
 		Assert.Equal(1, plan.RemainingCount);
+		Assert.True(plan.InventoryFull);
 		Assert.Empty(plan.UpdatedItems);
 		Assert.Empty(plan.AddedItems);
+	}
+
+	[Fact]
+	public void CreateAddItemPlan_PreservesPartialStackMergeWhenInventoryFills()
+	{
+		var template = CreateTemplate(200, maxStackCount: 10);
+		var fillerTemplate = CreateTemplate(300, maxStackCount: 1);
+		var itemTemplates = new ItemTemplateTable([template, fillerTemplate]);
+		var player = new Player { ObjectId = 1000 };
+		var inventoryItems = Enumerable.Range(0, 26)
+			.Select(index => new InventoryItem { ObjectId = index + 2, ItemId = 300, Count = 1, OwnerId = player.ObjectId, Location = 0 })
+			.Prepend(new InventoryItem { ObjectId = 1, ItemId = 200, Count = 8, OwnerId = player.ObjectId, Location = 0 })
+			.ToArray();
+
+		var plan = InventoryAddService.CreateAddItemPlan(player, inventoryItems, template, 5, () => 100, itemTemplates: itemTemplates);
+
+		Assert.False(plan.Succeeded);
+		Assert.True(plan.InventoryFull);
+		Assert.Equal(3, plan.RemainingCount);
+		Assert.Empty(plan.AddedItems);
+		var updatedItem = Assert.Single(plan.UpdatedItems);
+		Assert.Equal(1, updatedItem.ObjectId);
+		Assert.Equal(10, updatedItem.Count);
 	}
 
 	[Fact]
@@ -157,6 +181,7 @@ public sealed class InventoryAddServiceTests
 
 		Assert.False(plan.Succeeded);
 		Assert.Equal(1, plan.RemainingCount);
+		Assert.True(plan.InventoryFull);
 		Assert.Empty(plan.AddedItems);
 	}
 

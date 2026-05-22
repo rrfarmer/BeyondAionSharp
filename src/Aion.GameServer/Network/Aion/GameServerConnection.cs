@@ -2786,9 +2786,9 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		await BroadcastItemUsageAnimationAsync(player, new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 1, 0));
 		await SendPacketAsync(SmSystemMessage.AssemblyItemSucceeded());
-		if (mutationPlan.RewardSucceeded)
+		if (HasRewardMutation(mutationPlan.UpdatedRewardItems, mutationPlan.AddedRewardItems))
 			await SendAssemblyRewardPacketsAsync(mutationPlan, rewardTemplate);
-		else
+		if (!mutationPlan.RewardSucceeded && mutationPlan.RewardInventoryFull)
 			await SendPacketAsync(SmSystemMessage.DiceInventoryError());
 	}
 
@@ -2930,9 +2930,9 @@ public sealed class GameServerConnection : BaseClientConnection
 		player.InventoryItems = inventoryItems.ToArray();
 		RegisterExpExtractExpirableAddedItems(player, mutationPlan.AddedRewardItems, validation.RewardTemplate);
 
-		if (mutationPlan.RewardSucceeded)
+		if (HasRewardMutation(mutationPlan.UpdatedRewardItems, mutationPlan.AddedRewardItems))
 			await SendExpExtractRewardPacketsAsync(mutationPlan, validation.RewardTemplate);
-		else
+		if (!mutationPlan.RewardSucceeded && mutationPlan.RewardInventoryFull)
 			await SendPacketAsync(SmSystemMessage.DiceInventoryError());
 
 		await SendPacketAsync(
@@ -2997,6 +2997,11 @@ public sealed class GameServerConnection : BaseClientConnection
 			await SendPacketAsync(new SmInventoryUpdateItem(updatedReward, rewardTemplate, SmInventoryUpdateItem.IncreaseItemCollect));
 		foreach (var addedReward in mutationPlan.AddedRewardItems)
 			await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(addedReward, rewardTemplate));
+	}
+
+	private static bool HasRewardMutation(IReadOnlyCollection<InventoryItem> updatedItems, IReadOnlyCollection<InventoryItem> addedItems)
+	{
+		return updatedItems.Count > 0 || addedItems.Count > 0;
 	}
 
 	private async Task HandleDecomposeUseItemAsync(

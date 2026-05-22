@@ -85,7 +85,8 @@ public static class InventoryAddService
 			Succeeded: remaining == 0,
 			UpdatedItems: updates,
 			AddedItems: addedItems,
-			RemainingCount: remaining);
+			RemainingCount: remaining,
+			InventoryFull: remaining > 0 && !allowInventoryOverflow && addedItems.Count >= freeSlots);
 	}
 
 	private static bool CanMergeIntoStack(InventoryItem item, ItemTemplateSummary itemTemplate, bool allowEquipped)
@@ -155,17 +156,18 @@ public sealed record InventoryAddPlan(
 	bool Succeeded,
 	IReadOnlyList<InventoryItem> UpdatedItems,
 	IReadOnlyList<InventoryItem> AddedItems,
-	long RemainingCount)
+	long RemainingCount,
+	bool InventoryFull)
 {
-	public static InventoryAddPlan Empty { get; } = new(true, Array.Empty<InventoryItem>(), Array.Empty<InventoryItem>(), 0);
+	public static InventoryAddPlan Empty { get; } = new(true, Array.Empty<InventoryItem>(), Array.Empty<InventoryItem>(), 0, false);
 
 	public static InventoryAddPlan Completed(IReadOnlyList<InventoryItem> updatedItems, IReadOnlyList<InventoryItem> addedItems)
 	{
-		return new InventoryAddPlan(true, updatedItems, addedItems, 0);
+		return new InventoryAddPlan(true, updatedItems, addedItems, 0, false);
 	}
 
-	public static InventoryAddPlan Failed(long remainingCount)
+	public static InventoryAddPlan Failed(long remainingCount, bool inventoryFull = false)
 	{
-		return new InventoryAddPlan(false, Array.Empty<InventoryItem>(), Array.Empty<InventoryItem>(), remainingCount);
+		return new InventoryAddPlan(false, Array.Empty<InventoryItem>(), Array.Empty<InventoryItem>(), remainingCount, inventoryFull);
 	}
 }

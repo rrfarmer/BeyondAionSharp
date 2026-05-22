@@ -74,9 +74,10 @@ public static class AssemblyItemService
 		return AssemblyItemMutationPlan.Success(
 			updatedPartsByObjectId.Values.ToArray(),
 			deletedPartObjectIds,
-			addPlan.Succeeded ? addPlan.UpdatedItems : Array.Empty<InventoryItem>(),
-			addPlan.Succeeded ? addPlan.AddedItems : Array.Empty<InventoryItem>(),
-			addPlan.RemainingCount);
+			addPlan.UpdatedItems,
+			addPlan.AddedItems,
+			addPlan.RemainingCount,
+			addPlan.InventoryFull);
 	}
 
 	private static InventoryItem? GetFirstCubeItemByItemId(IReadOnlyList<InventoryItem> inventoryItems, int itemId)
@@ -155,7 +156,8 @@ public sealed record AssemblyItemMutationPlan(
 	IReadOnlyList<int> DeletedPartObjectIds,
 	IReadOnlyList<InventoryItem> UpdatedRewardItems,
 	IReadOnlyList<InventoryItem> AddedRewardItems,
-	long RewardRemainingCount)
+	long RewardRemainingCount,
+	bool RewardInventoryFull)
 {
 	public bool RewardSucceeded => RewardRemainingCount == 0;
 
@@ -164,7 +166,8 @@ public sealed record AssemblyItemMutationPlan(
 		IReadOnlyList<int> deletedPartObjectIds,
 		IReadOnlyList<InventoryItem> updatedRewardItems,
 		IReadOnlyList<InventoryItem> addedRewardItems,
-		long rewardRemainingCount)
+		long rewardRemainingCount,
+		bool rewardInventoryFull)
 	{
 		return new AssemblyItemMutationPlan(
 			true,
@@ -173,7 +176,8 @@ public sealed record AssemblyItemMutationPlan(
 			deletedPartObjectIds,
 			updatedRewardItems,
 			addedRewardItems,
-			rewardRemainingCount);
+			rewardRemainingCount,
+			rewardInventoryFull);
 	}
 
 	public static AssemblyItemMutationPlan Fail(AssemblyItemFailure failure)
@@ -185,7 +189,8 @@ public sealed record AssemblyItemMutationPlan(
 			Array.Empty<int>(),
 			Array.Empty<InventoryItem>(),
 			Array.Empty<InventoryItem>(),
-			0);
+			0,
+			false);
 	}
 }
 

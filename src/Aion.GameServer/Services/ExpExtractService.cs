@@ -75,9 +75,10 @@ public static class ExpExtractService
 		return ExpExtractMutationPlan.Success(
 			sourceItemUpdate,
 			deletedSourceItemObjectId,
-			addPlan.Succeeded ? addPlan.UpdatedItems : Array.Empty<InventoryItem>(),
-			addPlan.Succeeded ? addPlan.AddedItems : Array.Empty<InventoryItem>(),
-			addPlan.RemainingCount);
+			addPlan.UpdatedItems,
+			addPlan.AddedItems,
+			addPlan.RemainingCount,
+			addPlan.InventoryFull);
 	}
 
 	private static long GetRequiredExp(ItemExpExtractActionInfo action, PlayerExperienceTable experienceTable, int level)
@@ -174,7 +175,8 @@ public sealed record ExpExtractMutationPlan(
 	int? DeletedSourceItemObjectId,
 	IReadOnlyList<InventoryItem> UpdatedRewardItems,
 	IReadOnlyList<InventoryItem> AddedRewardItems,
-	long RewardRemainingCount)
+	long RewardRemainingCount,
+	bool RewardInventoryFull)
 {
 	public bool RewardSucceeded => RewardRemainingCount == 0;
 
@@ -183,7 +185,8 @@ public sealed record ExpExtractMutationPlan(
 		int? deletedSourceItemObjectId,
 		IReadOnlyList<InventoryItem> updatedRewardItems,
 		IReadOnlyList<InventoryItem> addedRewardItems,
-		long rewardRemainingCount)
+		long rewardRemainingCount,
+		bool rewardInventoryFull)
 	{
 		return new ExpExtractMutationPlan(
 			true,
@@ -192,7 +195,8 @@ public sealed record ExpExtractMutationPlan(
 			deletedSourceItemObjectId,
 			updatedRewardItems,
 			addedRewardItems,
-			rewardRemainingCount);
+			rewardRemainingCount,
+			rewardInventoryFull);
 	}
 
 	public static ExpExtractMutationPlan Fail(ExpExtractFailure failure)
@@ -204,7 +208,8 @@ public sealed record ExpExtractMutationPlan(
 			null,
 			Array.Empty<InventoryItem>(),
 			Array.Empty<InventoryItem>(),
-			0);
+			0,
+			false);
 	}
 }
 

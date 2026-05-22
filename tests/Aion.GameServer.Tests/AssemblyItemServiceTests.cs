@@ -53,6 +53,7 @@ public sealed class AssemblyItemServiceTests
 
 		Assert.True(plan.Succeeded);
 		Assert.True(plan.RewardSucceeded);
+		Assert.False(plan.RewardInventoryFull);
 		var updatedPart = Assert.Single(plan.UpdatedPartItems);
 		Assert.Equal(1, updatedPart.ObjectId);
 		Assert.Equal(2, updatedPart.Count);
@@ -92,6 +93,7 @@ public sealed class AssemblyItemServiceTests
 
 		Assert.True(plan.Succeeded);
 		Assert.False(plan.RewardSucceeded);
+		Assert.True(plan.RewardInventoryFull);
 		var updatedPart = Assert.Single(plan.UpdatedPartItems);
 		Assert.Equal(1, updatedPart.ObjectId);
 		Assert.Equal(1, updatedPart.Count);

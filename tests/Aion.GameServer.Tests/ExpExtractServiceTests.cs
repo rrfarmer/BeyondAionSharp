@@ -52,6 +52,7 @@ public sealed class ExpExtractServiceTests
 
 		Assert.True(plan.Succeeded);
 		Assert.True(plan.RewardSucceeded);
+		Assert.False(plan.RewardInventoryFull);
 		Assert.Equal(1, plan.SourceItemUpdate?.ObjectId);
 		Assert.Equal(1, plan.SourceItemUpdate?.Count);
 		Assert.Null(plan.DeletedSourceItemObjectId);
