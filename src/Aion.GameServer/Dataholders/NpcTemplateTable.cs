@@ -38,4 +38,13 @@ public sealed record NpcTemplateSummary(
 	int AttackSpeed = 0,
 	int MaxHp = 0,
 	float RunSpeed = 0,
-	float BoundRadius = 0);
+	float BoundRadius = 0,
+	int TalkDistance = 2,
+	IReadOnlyList<int>? FunctionDialogIds = null)
+{
+	public bool SupportsDialogAction(int dialogActionId)
+	{
+		// Java parity: model/templates/npc/NpcTemplate.supportsAction checks TalkInfo.funcDialogIds.
+		return FunctionDialogIds?.Contains(dialogActionId) == true;
+	}
+}

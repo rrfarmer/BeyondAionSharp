@@ -1083,6 +1083,14 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 3 && reader.LocalName == "talk_info" && currentNpcTemplate != null)
+			{
+				// Java parity: model/templates/npc/TalkInfo feeds NpcTemplate.getTalkDistance and supportsAction.
+				currentNpcTemplate.TalkDistance = ReadOptionalIntAttribute(reader, "distance", 2);
+				currentNpcTemplate.FunctionDialogIds.AddRange(ReadIntListAttribute(reader, "func_dialogs"));
+				continue;
+			}
+
 			if (reader.Depth == 2 && reader.LocalName == "skill_template")
 			{
 				currentSkillTemplate = new SkillTemplateBuilder(
@@ -2374,6 +2382,10 @@ public sealed class StaticData
 
 		public float BoundRadiusSide { get; set; }
 
+		public int TalkDistance { get; set; } = 2;
+
+		public List<int> FunctionDialogIds { get; } = [];
+
 		public NpcTemplateSummary ToSummary()
 		{
 			// Java parity: model/templates/npc/NpcTemplate fields consumed by SM_NPC_INFO.
@@ -2392,7 +2404,9 @@ public sealed class StaticData
 				AttackSpeed,
 				MaxHp,
 				RunSpeed,
-				Math.Max(BoundRadiusFront, BoundRadiusSide));
+				Math.Max(BoundRadiusFront, BoundRadiusSide),
+				TalkDistance,
+				FunctionDialogIds.Count == 0 ? null : FunctionDialogIds.ToArray());
 		}
 	}
 

@@ -341,6 +341,12 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(2256, postmanNpc.MaxHp);
 		Assert.Equal(4.23f, postmanNpc.RunSpeed);
 		Assert.Equal(0.595f, postmanNpc.BoundRadius);
+		var brokerNpc = staticData.NpcTemplates.GetNpcTemplate(799211);
+		Assert.NotNull(brokerNpc);
+		Assert.Equal(5, brokerNpc.TalkDistance);
+		Assert.Equal([33], brokerNpc.FunctionDialogIds);
+		Assert.True(brokerNpc.SupportsDialogAction(33));
+		Assert.False(brokerNpc.SupportsDialogAction(2));
 		Assert.Equal(8, staticData.SkillTemplates.GetSkillTemplatesByGroup("RA_WHITETIGER").Count);
 		var clothMastery = staticData.SkillTemplates.GetSkillTemplate(40);
 		Assert.NotNull(clothMastery);
