@@ -100,6 +100,11 @@ public sealed class WorldNpcWalkerRouteWalkingService
 		cancellationToken.ThrowIfCancellationRequested();
 		if (_activeStates.ContainsKey(objectId))
 			return WorldNpcWalkerRouteWalkingStartResult.NotStarted(WorldNpcWalkerRouteWalkingStartStatus.AlreadyWalking);
+		if (_npcAiStates?.TryGetState(objectId, out var aiState) == true
+			&& aiState?.State == WorldNpcAiState.Walking)
+		{
+			return WorldNpcWalkerRouteWalkingStartResult.NotStarted(WorldNpcWalkerRouteWalkingStartStatus.AlreadyWalking);
+		}
 
 		var staticData = _runtimeContext.DataManager?.StaticData;
 		if (staticData == null)

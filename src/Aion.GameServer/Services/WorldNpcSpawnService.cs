@@ -24,6 +24,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 	private readonly IWorldNpcWalkerSpawnPlanCacheService? _walkerSpawnPlans;
 	private readonly WorldNpcWalkerPlacementApplicationService? _walkerPlacementApplication;
 	private readonly WorldNpcWalkerRouteWalkingService? _walkerRouteWalking;
+	private readonly WorldNpcRandomWalkService? _randomWalking;
 	private readonly ILogger<WorldNpcSpawnService> _logger;
 	private readonly ConcurrentDictionary<NpcSpawnSummary, int> _temporarySpawnObjectIds = new();
 	private readonly ConcurrentDictionary<int, SpawnedWorldNpcRegistration> _spawnedWorldNpcs = new();
@@ -43,7 +44,8 @@ public sealed class WorldNpcSpawnService : GameEngine
 		IWorldNpcWalkerSpawnPlanCacheService? walkerSpawnPlans,
 		WorldNpcWalkerPlacementApplicationService? walkerPlacementApplication,
 		ILogger<WorldNpcSpawnService> logger,
-		WorldNpcWalkerRouteWalkingService? walkerRouteWalking = null)
+		WorldNpcWalkerRouteWalkingService? walkerRouteWalking = null,
+		WorldNpcRandomWalkService? randomWalking = null)
 	{
 		_runtimeContext = runtimeContext;
 		_world = world;
@@ -55,6 +57,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		_walkerSpawnPlans = walkerSpawnPlans;
 		_walkerPlacementApplication = walkerPlacementApplication;
 		_walkerRouteWalking = walkerRouteWalking;
+		_randomWalking = randomWalking;
 		_logger = logger;
 	}
 
@@ -247,7 +250,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 			difficultId: 0,
 			changedMapIds: null,
 			cancellationToken);
-		await StartWalkerRouteWalkingForWorldsAsync(
+		await StartNpcWalkingForWorldsAsync(
 			staticData.WorldMaps.Where(map => !map.IsInstance).Select(map => map.MapId),
 			cancellationToken);
 		if (_gameTimeService != null)
@@ -360,7 +363,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 			changedMapIds,
 			cancellationToken);
 
-		await StartWalkerRouteWalkingForWorldsAsync(changedMapIds, cancellationToken);
+		await StartNpcWalkingForWorldsAsync(changedMapIds, cancellationToken);
 		await RefreshNpcVisibilityAsync(changedMapIds, cancellationToken);
 		return new TemporarySpawnHourChangeResult(result.SpawnedCount, despawned, result.SkippedCount);
 	}
@@ -752,17 +755,20 @@ public sealed class WorldNpcSpawnService : GameEngine
 		RefreshWalkerSpawnPlans(staticData.WalkerTemplates, staticData.WalkerVersions, worldIds);
 	}
 
-	private async Task StartWalkerRouteWalkingForWorldsAsync(
+	private async Task StartNpcWalkingForWorldsAsync(
 		IEnumerable<int> worldIds,
 		CancellationToken cancellationToken)
 	{
-		if (_walkerRouteWalking == null)
+		if (_randomWalking == null && _walkerRouteWalking == null)
 			return;
 
 		foreach (var worldId in worldIds.Distinct())
 		{
 			cancellationToken.ThrowIfCancellationRequested();
-			await _walkerRouteWalking.StartWorldRouteWalkingAsync(worldId, cancellationToken);
+			if (_randomWalking != null)
+				await _randomWalking.StartWorldRandomWalkingAsync(worldId, cancellationToken);
+			if (_walkerRouteWalking != null)
+				await _walkerRouteWalking.StartWorldRouteWalkingAsync(worldId, cancellationToken);
 		}
 	}
 

@@ -49,6 +49,25 @@ public sealed class WorldNpcRandomWalkService
 		return _activeStates.TryGetValue(objectId, out state);
 	}
 
+	public async Task<WorldNpcRandomWalkWorldStartResult> StartWorldRandomWalkingAsync(
+		int worldId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: ai/manager/WalkManager.startWalking visits spawned NPCs and starts random walkers before path walkers.
+		cancellationToken.ThrowIfCancellationRequested();
+		var results = new List<WorldNpcRandomWalkStartResult>();
+		foreach (var npc in _world.GetNpcs(worldId).OfType<WorldNpc>())
+		{
+			cancellationToken.ThrowIfCancellationRequested();
+			if (npc.RandomWalkRange <= 0)
+				continue;
+
+			results.Add(await StartRandomWalkingAsync(npc.ObjectId, cancellationToken));
+		}
+
+		return WorldNpcRandomWalkWorldStartResult.FromResults(results);
+	}
+
 	public ValueTask<WorldNpcRandomWalkStartResult> StartRandomWalkingAsync(
 		int objectId,
 		CancellationToken cancellationToken = default)
@@ -218,4 +237,30 @@ public enum WorldNpcRandomWalkStartStatus
 	AlreadyWalking,
 	MissingNpc,
 	NotRandomWalker,
+}
+
+public sealed record WorldNpcRandomWalkWorldStartResult(
+	bool Started,
+	WorldNpcRandomWalkWorldStartStatus Status,
+	int RandomWalkStartCount,
+	IReadOnlyList<WorldNpcRandomWalkStartResult> Results)
+{
+	public static WorldNpcRandomWalkWorldStartResult FromResults(
+		IReadOnlyList<WorldNpcRandomWalkStartResult> results)
+	{
+		var startCount = results.Count(result => result.Started);
+		return new WorldNpcRandomWalkWorldStartResult(
+			Started: startCount > 0,
+			startCount > 0
+				? WorldNpcRandomWalkWorldStartStatus.Started
+				: WorldNpcRandomWalkWorldStartStatus.NoStartedRandomWalks,
+			startCount,
+			results);
+	}
+}
+
+public enum WorldNpcRandomWalkWorldStartStatus
+{
+	Started,
+	NoStartedRandomWalks,
 }

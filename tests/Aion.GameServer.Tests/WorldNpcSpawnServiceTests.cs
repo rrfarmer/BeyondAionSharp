@@ -1,3 +1,4 @@
+using Aion.GameServer.Configuration;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Dataholders.LoadingUtils;
 using Aion.GameServer.Model.GameObjects;
@@ -96,6 +97,85 @@ public sealed class WorldNpcSpawnServiceTests
 		}
 		finally
 		{
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
+	[Fact]
+	public async Task InitAsync_StartsRandomWalkingBeforeRouteWalkingForDualMetadataNpc()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-random-before-route-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		try
+		{
+			var context = await CreateRuntimeContextWithRandomWalkerSpawnDataAsync(tempPath);
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			var walkerPlans = new WorldNpcWalkerSpawnPlanCacheService();
+			var registry = new CapturingConnectionRegistry();
+			var aiStates = new WorldNpcAiStateService();
+			var randomValues = new Queue<float>([6, 4]);
+			var randomWalking = new WorldNpcRandomWalkService(
+				world,
+				registry,
+				new GameServerOptions
+				{
+					Ai = new GameServerAiOptions
+					{
+						NpcMovementMinimumDelaySeconds = 0,
+						NpcMovementMaximumDelaySeconds = 0,
+					},
+				},
+				threadPoolManager,
+				aiStates,
+				maxExclusive =>
+				{
+					Assert.Equal(10, maxExclusive);
+					return randomValues.Dequeue();
+				},
+				(_, _) => 0);
+			var routeWalking = CreateRouteWalkingService(context, world, walkerPlans, registry, aiStates);
+			var service = new WorldNpcSpawnService(
+				context,
+				world,
+				new IDFactory(),
+				gameTimeService: null,
+				threadPoolManager: null,
+				connectionRegistry: registry,
+				staticPlaceables: null,
+				walkerSpawnPlans: walkerPlans,
+				walkerPlacementApplication: new WorldNpcWalkerPlacementApplicationService(),
+				NullLogger<WorldNpcSpawnService>.Instance,
+				routeWalking,
+				randomWalking);
+
+			await service.InitAsync();
+
+			await WaitUntilAsync(() => registry.Broadcasts.Count == 1
+				&& randomWalking.TryGetActiveState(1, out var state)
+				&& state?.Target != null);
+			Assert.Equal(1, randomWalking.ActiveStateCount);
+			Assert.Equal(0, routeWalking.ActiveStateCount);
+			Assert.True(aiStates.TryGetState(1, out var aiState));
+			Assert.NotNull(aiState);
+			Assert.Equal(WorldNpcAiState.Walking, aiState.State);
+			Assert.Equal(WorldNpcAiSubState.WalkRandom, aiState.SubState);
+			Assert.True(randomWalking.TryGetActiveState(1, out var randomState));
+			Assert.NotNull(randomState);
+			Assert.NotNull(randomState.Target);
+			Assert.Equal(1, randomState.Target.X);
+			Assert.Equal(-1, randomState.Target.Y);
+			Assert.Equal(0, randomState.Target.Z);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
 			try
 			{
 				Directory.Delete(tempPath, recursive: true);
@@ -749,7 +829,8 @@ public sealed class WorldNpcSpawnServiceTests
 		GameServerRuntimeContext context,
 		GameWorld world,
 		IWorldNpcWalkerSpawnPlanCacheService walkerPlans,
-		IGameClientConnectionRegistry registry)
+		IGameClientConnectionRegistry registry,
+		WorldNpcAiStateService? aiStates = null)
 	{
 		return new WorldNpcWalkerRouteWalkingService(
 			context,
@@ -757,7 +838,8 @@ public sealed class WorldNpcSpawnServiceTests
 			walkerPlans,
 			new WorldNpcWalkerRouteService(),
 			new WorldNpcWalkerMovementStateService(),
-			new WorldNpcWalkerMovementBroadcastService(world, registry));
+			new WorldNpcWalkerMovementBroadcastService(world, registry),
+			npcAiStates: aiStates);
 	}
 
 	private static NpcSpawnSummary CreateSpawn(
@@ -905,6 +987,52 @@ public sealed class WorldNpcSpawnServiceTests
 					<spawn_map map_id="210010000">
 						<spawn npc_id="203080" respawn_time="295">
 							<spot x="0" y="0" z="0" walker_id="route-a" walker_index="0" />
+						</spawn>
+					</spawn_map>
+				</spawns>
+				<npc_walker>
+					<walker_template route_id="route-a" pool="1" formation="POINT">
+						<routestep x="0" y="0" z="0" />
+						<routestep x="10" y="0" z="0" />
+					</walker_template>
+				</npc_walker>
+			</static_data>
+			""");
+		File.WriteAllText(schemaFile, """<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" />""");
+		var dataManager = await DataManager.LoadAsync(
+			new XmlDataLoaderOptions
+			{
+				MainXmlFilePath = staticDataFile,
+				CacheXmlFilePath = cacheFile,
+				SchemaFilePath = schemaFile,
+				ValidateWhenCacheChanges = false,
+			});
+		var context = new GameServerRuntimeContext();
+		context.SetDataManager(dataManager);
+		return context;
+	}
+
+	private static async Task<GameServerRuntimeContext> CreateRuntimeContextWithRandomWalkerSpawnDataAsync(string tempPath)
+	{
+		var staticDataFile = Path.Combine(tempPath, "static_data.xml");
+		var cacheFile = Path.Combine(tempPath, "cache", "static_data.xml");
+		var schemaFile = Path.Combine(tempPath, "static_data.xsd");
+		Directory.CreateDirectory(Path.GetDirectoryName(cacheFile)!);
+		File.WriteAllText(
+			staticDataFile,
+			"""
+			<?xml version="1.0" encoding="UTF-8"?>
+			<static_data>
+				<world_maps>
+					<map id="210010000" instance="false" twin_count="1" />
+				</world_maps>
+				<npc_templates>
+					<npc_template npc_id="203080" name="random-walker-npc" name_id="203080" level="1" rank="NORMAL" rating="NORMAL" race="ELYOS" tribe="GENERAL" type="GENERAL" />
+				</npc_templates>
+				<spawns>
+					<spawn_map map_id="210010000">
+						<spawn npc_id="203080" respawn_time="295">
+							<spot x="0" y="0" z="0" random_walk="5" walker_id="route-a" walker_index="0" />
 						</spawn>
 					</spawn_map>
 				</spawns>
