@@ -6262,6 +6262,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmHouseEdit.MoveObject:
 				await HandleHouseObjectPlacementAsync(player, activeHouse, packet, moveExisting: true);
 				break;
+			case CmHouseEdit.DeleteItem:
+				await HandleHouseObjectDeleteAsync(player, activeHouse, packet);
+				break;
 			case CmHouseEdit.DespawnObject:
 				await HandleHouseObjectDespawnAsync(player, activeHouse, packet);
 				break;
@@ -6298,6 +6301,22 @@ public sealed class GameServerConnection : BaseClientConnection
 		await SendPacketAsync(new SmHouseEdit(CmHouseEdit.SpawnObject, placedObject));
 		if (!moveExisting)
 			await SendPacketAsync(new SmHouseEdit(CmHouseEdit.DeleteItem, 1, updatedObject.ObjectId));
+	}
+
+	private async Task HandleHouseObjectDeleteAsync(Player player, PlayerHouse activeHouse, CmHouseEdit packet)
+	{
+		// Java parity: CM_HOUSE_EDIT action 4 discards an existing HouseObject from the registry.
+		var registry = await LoadHouseRegistryAsync(player, activeHouse);
+		var houseObject = registry.GetObject(packet.ItemObjectId);
+		if (houseObject == null)
+			return;
+
+		if (!await _housingRepository.DeleteHouseRegisteredObjectAsync(player.ObjectId, packet.ItemObjectId))
+			return;
+
+		UpdateHouseRegistry(player, activeHouse, registry.WithoutObject(packet.ItemObjectId));
+		await SendPacketAsync(new SmHouseEdit(CmHouseEdit.DeleteItem, 1, packet.ItemObjectId));
+		await SendPacketAsync(new SmHouseEdit(CmHouseEdit.DeleteItem, 1, packet.ItemObjectId));
 	}
 
 	private async Task HandleHouseObjectDespawnAsync(Player player, PlayerHouse activeHouse, CmHouseEdit packet)

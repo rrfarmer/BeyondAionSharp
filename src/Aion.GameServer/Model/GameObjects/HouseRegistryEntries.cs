@@ -81,6 +81,17 @@ public sealed record HouseRegistrySummary(
 		};
 	}
 
+	public HouseRegistrySummary WithoutObject(int objectId)
+	{
+		// Java parity: model/house/HouseRegistry.discardObject removes deleted objects after PlayerRegisteredItemsDAO.store.
+		return this with
+		{
+			Objects = Objects
+				.Where(obj => obj.ObjectId != objectId)
+				.ToArray(),
+		};
+	}
+
 	public IReadOnlyList<RegisteredHouseObjectSummary> GetNotSpawnedObjects(
 		IReadOnlyDictionary<int, long> cooldowns,
 		Func<long>? currentUnixTimeMilliseconds = null)

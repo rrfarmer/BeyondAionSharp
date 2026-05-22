@@ -81,5 +81,6 @@ public sealed class PlayerHouseTests
 		Assert.Equal(9101, unusedDecor.ObjectId);
 		Assert.True(registry.HasInvalidDecorations);
 		Assert.Equal(2, registry.Decorations.Count(decor => decor.IsDeleted));
+		Assert.DoesNotContain(registry.WithoutObject(9002).Objects, obj => obj.ObjectId == 9002);
 	}
 }

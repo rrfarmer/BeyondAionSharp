@@ -22,6 +22,11 @@ public interface IHousingRepository
 		int playerObjectId,
 		RegisteredHouseObjectSummary houseObject,
 		CancellationToken cancellationToken = default);
+
+	Task<bool> DeleteHouseRegisteredObjectAsync(
+		int playerObjectId,
+		int itemObjectId,
+		CancellationToken cancellationToken = default);
 }
 
 public sealed class EmptyHousingRepository : IHousingRepository
@@ -44,6 +49,14 @@ public sealed class EmptyHousingRepository : IHousingRepository
 	public Task<bool> SaveHouseObjectPlacementAsync(
 		int playerObjectId,
 		RegisteredHouseObjectSummary houseObject,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> DeleteHouseRegisteredObjectAsync(
+		int playerObjectId,
+		int itemObjectId,
 		CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(true);
@@ -213,6 +226,37 @@ public sealed class MySqlHousingRepository : IHousingRepository
 				ex,
 				"Could not save house object placement {HouseObjectId} for player {PlayerObjectId}",
 				houseObject.ObjectId,
+				playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> DeleteHouseRegisteredObjectAsync(
+		int playerObjectId,
+		int itemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/PlayerRegisteredItemsDAO.DELETE_QUERY for deleted HouseObject rows.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = "DELETE FROM player_registered_items WHERE item_unique_id = ? AND player_id = ?";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = itemObjectId },
+					new MySqlParameter { Value = playerObjectId },
+				});
+			return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(
+				ex,
+				"Could not delete registered house object {HouseObjectId} for player {PlayerObjectId}",
+				itemObjectId,
 				playerObjectId);
 			return false;
 		}
