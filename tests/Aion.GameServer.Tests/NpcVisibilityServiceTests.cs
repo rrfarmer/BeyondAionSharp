@@ -24,17 +24,24 @@ public sealed class NpcVisibilityServiceTests
 		var second = service.UpdateKnownNpcs(player, [visibleNpc, distantNpc, otherMapNpc]);
 		player.Position = player.Position with { X = 200 };
 		var third = service.UpdateKnownNpcs(player, [visibleNpc, distantNpc, otherMapNpc]);
+		var knowsVisibleAfterThird = service.IsKnownNpc(player, visibleNpc.ObjectId);
+		var knowsDistantAfterThird = service.IsKnownNpc(player, distantNpc.ObjectId);
 		service.ClearKnownNpcs(player.ObjectId);
 		player.Position = player.Position with { X = 0 };
 		var afterClear = service.UpdateKnownNpcs(player, [visibleNpc]);
 
 		Assert.Equal([visibleNpc], first.Appeared);
 		Assert.Empty(first.DisappearedObjectIds);
+		Assert.True(service.IsKnownNpc(player.ObjectId, visibleNpc.ObjectId));
+		Assert.False(service.IsKnownNpc(player.ObjectId, distantNpc.ObjectId));
 		Assert.Empty(second.Appeared);
 		Assert.Empty(second.DisappearedObjectIds);
 		Assert.Equal([distantNpc], third.Appeared);
 		Assert.Equal([visibleNpc.ObjectId], third.DisappearedObjectIds);
+		Assert.False(knowsVisibleAfterThird);
+		Assert.True(knowsDistantAfterThird);
 		Assert.Equal([visibleNpc], afterClear.Appeared);
+		Assert.True(service.IsKnownNpc(player, visibleNpc.ObjectId));
 	}
 
 	private static WorldNpc CreateNpc(int objectId, WorldPosition position)

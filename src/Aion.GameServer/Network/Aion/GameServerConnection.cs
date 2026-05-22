@@ -64,6 +64,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly ThreadPoolManager? _threadPoolManager;
 	private readonly IHouseDoorStateService? _houseDoorStateService;
 	private readonly RiftPortalInteractionService? _riftPortalInteractionService;
+	private readonly Func<Player, int, bool>? _isKnownNpc;
 	private readonly SemaphoreSlim _sendLock = new(1, 1);
 	private readonly SemaphoreSlim _closeLock = new(1, 1);
 	private GameConnectionState _state = GameConnectionState.Connected;
@@ -113,6 +114,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		RiftPortalUseService? riftPortalUseService = null,
 		RiftInformerService? riftInformerService = null,
 		VortexLocationService? vortexLocationService = null,
+		Func<Player, int, bool>? isKnownNpc = null,
 		RiftPortalInteractionService? riftPortalInteractionService = null,
 		GameCrypt? crypt = null)
 		: base(logger, client, clientId)
@@ -140,6 +142,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_world = world;
 		_threadPoolManager = threadPoolManager;
 		_houseDoorStateService = houseDoorStateService;
+		_isKnownNpc = isKnownNpc;
 		_riftPortalInteractionService = riftPortalInteractionService
 			?? (riftService == null
 				? null
@@ -149,7 +152,8 @@ public sealed class GameServerConnection : BaseClientConnection
 					riftPortalUseService,
 					riftInformerService ?? (_connectionRegistry == null ? null : new RiftInformerService(riftService, _connectionRegistry)),
 					vortexLocationService,
-					_world));
+					_world,
+					_isKnownNpc));
 		_crypt = crypt ?? new GameCrypt();
 	}
 
@@ -1264,7 +1268,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private async Task HandleShowDialogAsync(Player player, CmShowDialog packet)
 	{
 		// Java parity: network/aion/clientpackets/CM_SHOW_DIALOG.runImpl delegates targeted NPCs to controller.onDialogRequest.
-		var sideEffects = NpcDialogSideEffectService.ApplyShowDialogSideEffects(player, packet.TargetObjectId, _world);
+		var sideEffects = NpcDialogSideEffectService.ApplyShowDialogSideEffects(player, packet.TargetObjectId, _world, _isKnownNpc);
 		if (sideEffects.PlayerStateChanged && _connectionRegistry != null)
 		{
 			await _connectionRegistry.BroadcastToVisiblePlayersAsync(

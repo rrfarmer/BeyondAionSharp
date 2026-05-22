@@ -14,6 +14,7 @@ public sealed class RiftPortalInteractionService
 	private readonly RiftInformerService? _informerService;
 	private readonly VortexLocationService? _vortexLocationService;
 	private readonly GameWorld? _world;
+	private readonly Func<Player, int, bool>? _isKnownNpc;
 	private readonly Func<RiftPortalState, WorldPosition?>? _vortexDestinationResolver;
 
 	public RiftPortalInteractionService(
@@ -23,6 +24,7 @@ public sealed class RiftPortalInteractionService
 		RiftInformerService? informerService = null,
 		VortexLocationService? vortexLocationService = null,
 		GameWorld? world = null,
+		Func<Player, int, bool>? isKnownNpc = null,
 		Func<RiftPortalState, WorldPosition?>? vortexDestinationResolver = null)
 	{
 		_riftService = riftService;
@@ -31,6 +33,7 @@ public sealed class RiftPortalInteractionService
 		_informerService = informerService;
 		_vortexLocationService = vortexLocationService;
 		_world = world;
+		_isKnownNpc = isKnownNpc;
 		_vortexDestinationResolver = vortexDestinationResolver;
 	}
 
@@ -39,7 +42,7 @@ public sealed class RiftPortalInteractionService
 		// Java parity: network/aion/clientpackets/CM_SHOW_DIALOG.runImpl delegates targeted NPCs to controller.onDialogRequest.
 		if (!_riftService.TryGetPortalByMasterObjectId(targetObjectId, out var portal) || portal == null)
 			return RiftPortalDialogResult.NotRequested(RiftPortalDialogStatus.UnknownPortal);
-		if (!IsVisiblePortalMaster(targetObjectId, portal))
+		if (!IsVisiblePortalMaster(player, targetObjectId, portal))
 			return RiftPortalDialogResult.NotRequested(RiftPortalDialogStatus.UnknownPortal);
 
 		var result = _dialogService.CreateDialogRequest(player, portal);
@@ -104,9 +107,11 @@ public sealed class RiftPortalInteractionService
 		return [portal.MasterNpc.Position.WorldId, portal.SlaveNpc.SpawnLocation.WorldId];
 	}
 
-	private bool IsVisiblePortalMaster(int targetObjectId, RiftPortalState portal)
+	private bool IsVisiblePortalMaster(Player player, int targetObjectId, RiftPortalState portal)
 	{
 		// Java parity: CM_SHOW_DIALOG only dispatches when the target object is still an Npc in the player's known list.
+		if (_isKnownNpc?.Invoke(player, targetObjectId) == false)
+			return false;
 		if (_world == null)
 			return true;
 		if (!_world.TryGetObject(targetObjectId, out var target) || target == null)

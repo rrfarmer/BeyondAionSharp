@@ -71,6 +71,29 @@ public sealed class NpcDialogSideEffectServiceTests
 		Assert.True(player.IsAbnormalSet(PlayerAbnormalState.Hide));
 	}
 
+	[Fact]
+	public void ApplyShowDialogSideEffects_KeepsHideForNpcOutsideKnownList()
+	{
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var player = new Player
+		{
+			VisualState = PlayerVisualStates.Hide2,
+			AbnormalState = PlayerAbnormalState.Hide,
+		};
+		world.TryAddObject(5001, CreateNpc(canTalkInvisible: false));
+
+		var result = NpcDialogSideEffectService.ApplyShowDialogSideEffects(
+			player,
+			5001,
+			world,
+			isKnownNpc: (_, _) => false);
+
+		Assert.False(result.ProtectionStopped);
+		Assert.False(result.HideEffectsRemoved);
+		Assert.Equal(PlayerVisualStates.Hide2, player.VisualState);
+		Assert.True(player.IsAbnormalSet(PlayerAbnormalState.Hide));
+	}
+
 	private static WorldNpc CreateNpc(bool canTalkInvisible)
 	{
 		var template = new NpcTemplateSummary(

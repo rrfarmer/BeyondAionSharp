@@ -159,7 +159,8 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 				riftService: _riftService,
 				riftPortalDialogService: _riftPortalDialogService,
 				riftPortalUseService: _riftPortalUseService,
-				vortexLocationService: _vortexLocationService);
+				vortexLocationService: _vortexLocationService,
+				isKnownNpc: (player, npcObjectId) => _npcVisibilityService.IsKnownNpc(player, npcObjectId));
 			_connections[clientId] = connection;
 			await connection.RunAsync();
 		}

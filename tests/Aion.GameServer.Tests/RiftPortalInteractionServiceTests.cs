@@ -106,6 +106,33 @@ public sealed class RiftPortalInteractionServiceTests
 	}
 
 	[Fact]
+	public async Task RequestDialog_IgnoresPortalMasterOutsidePlayerKnownList()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-rift-interaction-known-list-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var (_, riftService, interaction) = await CreateServicesWithWorldAsync(
+				tempPath,
+				isKnownNpc: (_, _) => false);
+			Assert.True(riftService.OpenRifts(2120, guards: false).Succeeded);
+			var portal = Assert.Single(riftService.GetActiveRifts()).Portal;
+			Assert.NotNull(portal);
+			var player = CreatePlayer(level: 30);
+
+			var result = interaction.RequestDialog(player, portal.MasterNpc.ObjectId);
+
+			Assert.False(result.Requested);
+			Assert.Equal(RiftPortalDialogStatus.UnknownPortal, result.Status);
+			Assert.Null(player.PendingRiftPortalRequest);
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
 	public async Task RespondAsync_ForAcceptedVortexQuestion_UsesVortexLocationStartPoint()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-rift-interaction-vortex-" + Guid.NewGuid().ToString("N"));
@@ -209,7 +236,8 @@ public sealed class RiftPortalInteractionServiceTests
 	private static async Task<(GameWorld World, RiftService RiftService, RiftPortalInteractionService Interaction)> CreateServicesWithWorldAsync(
 		string tempPath,
 		IGameClientConnectionRegistry? registry = null,
-		Func<DateTimeOffset>? clock = null)
+		Func<DateTimeOffset>? clock = null,
+		Func<Player, int, bool>? isKnownNpc = null)
 	{
 		var context = await CreateRuntimeContextAsync(tempPath);
 		var idFactory = new IDFactory();
@@ -222,7 +250,8 @@ public sealed class RiftPortalInteractionServiceTests
 			new RiftPortalDialogService(),
 			new RiftPortalUseService(),
 			informer,
-			world: world);
+			world: world,
+			isKnownNpc: isKnownNpc);
 		return (world, riftService, interaction);
 	}
 

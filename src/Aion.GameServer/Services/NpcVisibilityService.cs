@@ -42,6 +42,21 @@ public sealed class NpcVisibilityService
 		_knownNpcObjectIdsByPlayer.TryRemove(playerObjectId, out _);
 	}
 
+	public bool IsKnownNpc(Player player, int npcObjectId)
+	{
+		return IsKnownNpc(player.ObjectId, npcObjectId);
+	}
+
+	public bool IsKnownNpc(int playerObjectId, int npcObjectId)
+	{
+		// Java parity: world/knownlist/KnownList.getObject scopes CM_SHOW_DIALOG dispatch to known visible objects.
+		if (!_knownNpcObjectIdsByPlayer.TryGetValue(playerObjectId, out var knownObjectIds))
+			return false;
+
+		lock (knownObjectIds)
+			return knownObjectIds.Contains(npcObjectId);
+	}
+
 	public bool IsVisibleTo(Player player, IWorldNpcObject npc)
 	{
 		return WorldVisibility.IsVisibleTo(player, npc.Position);
