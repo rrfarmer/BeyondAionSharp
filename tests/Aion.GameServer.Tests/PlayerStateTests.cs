@@ -356,6 +356,42 @@ public sealed class PlayerStateTests
 	}
 
 	[Fact]
+	public void Player_VisualStateMatchesJavaProtectionAndHideSemantics()
+	{
+		var player = new Player();
+
+		Assert.Equal(0, PlayerVisualStates.Visible);
+		Assert.Equal(1, PlayerVisualStates.Hide1);
+		Assert.Equal(2, PlayerVisualStates.Hide2);
+		Assert.Equal(3, PlayerVisualStates.Hide3);
+		Assert.Equal(5, PlayerVisualStates.Hide5);
+		Assert.Equal(10, PlayerVisualStates.Hide10);
+		Assert.Equal(13, PlayerVisualStates.Hide13);
+		Assert.Equal(20, PlayerVisualStates.Hide20);
+		Assert.Equal(64, PlayerVisualStates.Blinking);
+		Assert.False(player.IsProtectionActive());
+		Assert.False(player.IsInAnyHide());
+
+		player.SetVisualState(PlayerVisualStates.Blinking);
+
+		Assert.True(player.IsProtectionActive());
+		Assert.False(player.IsInAnyHide());
+		Assert.True(player.StopProtectionActive());
+		Assert.Equal(PlayerVisualStates.Visible, player.VisualState);
+		Assert.False(player.StopProtectionActive());
+
+		player.SetVisualState(PlayerVisualStates.Hide1);
+		player.SetVisualState(PlayerVisualStates.Blinking);
+		player.AbnormalState = PlayerAbnormalState.Hide | PlayerAbnormalState.Root;
+
+		Assert.True(player.IsInAnyHide());
+		Assert.True(player.RemoveHideEffects());
+		Assert.Equal(PlayerVisualStates.Blinking, player.VisualState);
+		Assert.True(player.IsAbnormalSet(PlayerAbnormalState.Root));
+		Assert.False(player.IsAbnormalSet(PlayerAbnormalState.Hide));
+	}
+
+	[Fact]
 	public void Player_StanceStateMatchesJavaObserverPresence()
 	{
 		var player = new Player();

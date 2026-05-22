@@ -1264,6 +1264,16 @@ public sealed class GameServerConnection : BaseClientConnection
 	private async Task HandleShowDialogAsync(Player player, CmShowDialog packet)
 	{
 		// Java parity: network/aion/clientpackets/CM_SHOW_DIALOG.runImpl delegates targeted NPCs to controller.onDialogRequest.
+		var sideEffects = NpcDialogSideEffectService.ApplyShowDialogSideEffects(player, packet.TargetObjectId, _world);
+		if (sideEffects.PlayerStateChanged && _connectionRegistry != null)
+		{
+			await _connectionRegistry.BroadcastToVisiblePlayersAsync(
+				player.Position,
+				player.ObjectId,
+				new SmPlayerState(player),
+				includeSourcePlayer: true);
+		}
+
 		if (player.IsTrading || _riftPortalInteractionService == null)
 			return;
 

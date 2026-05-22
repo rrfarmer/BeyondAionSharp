@@ -101,6 +101,26 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmPlayerState_WritesJavaPlayerStatePayload()
+	{
+		var player = new Player
+		{
+			ObjectId = 1001,
+			VisualState = PlayerVisualStates.Blinking,
+			SeeState = PlayerVisualStates.Hide2,
+		};
+
+		var payload = SerializeUnencryptedPayload(new SmPlayerState(player));
+		using var reader = new PacketBuffer(payload);
+
+		Assert.Equal(1001, reader.ReadD());
+		Assert.Equal(PlayerVisualStates.Blinking, (int)reader.ReadC());
+		Assert.Equal(PlayerVisualStates.Hide2, (int)reader.ReadC());
+		Assert.Equal(1, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
 	public void SmChatWindow_WritesPlayerInfoAndNoGroupPayloads()
 	{
 		var target = new Player

@@ -1390,6 +1390,7 @@ public sealed class StaticData
 				// Java parity: model/templates/npc/TalkInfo feeds NpcTemplate.getTalkDistance and supportsAction.
 				currentNpcTemplate.TalkDistance = ReadOptionalIntAttribute(reader, "distance", 2);
 				currentNpcTemplate.FunctionDialogIds.AddRange(ReadIntListAttribute(reader, "func_dialogs"));
+				currentNpcTemplate.CanTalkInvisible = ReadOptionalBoolAttribute(reader, "can_talk_invisible", true);
 				continue;
 			}
 
@@ -2785,6 +2786,8 @@ public sealed class StaticData
 
 		public int TalkDistance { get; set; } = 2;
 
+		public bool CanTalkInvisible { get; set; } = true;
+
 		public List<int> FunctionDialogIds { get; } = [];
 
 		public NpcTemplateSummary ToSummary()
@@ -2809,7 +2812,8 @@ public sealed class StaticData
 				TalkDistance,
 				FunctionDialogIds.Count == 0 ? null : FunctionDialogIds.ToArray(),
 				State,
-				AiName);
+				AiName,
+				CanTalkInvisible);
 		}
 	}
 
@@ -3099,6 +3103,11 @@ public sealed class StaticData
 	private static bool ReadBoolAttribute(XmlReader reader, string attributeName)
 	{
 		return bool.TryParse(reader.GetAttribute(attributeName), out var parsed) && parsed;
+	}
+
+	private static bool ReadOptionalBoolAttribute(XmlReader reader, string attributeName, bool defaultValue)
+	{
+		return bool.TryParse(reader.GetAttribute(attributeName), out var parsed) ? parsed : defaultValue;
 	}
 
 	private static bool IsStatModifierElement(string elementName)

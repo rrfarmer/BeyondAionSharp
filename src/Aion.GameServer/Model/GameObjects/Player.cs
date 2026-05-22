@@ -88,6 +88,12 @@ public sealed class Player
 	// Java parity: controllers/effect/EffectController.abnormals queried by CM_EMOTION and action guards.
 	public PlayerAbnormalState AbnormalState { get; set; }
 
+	// Java parity: model/gameobjects/Creature.visualState drives hide/protection visibility packets.
+	public int VisualState { get; set; } = PlayerVisualStates.Visible;
+
+	// Java parity: model/gameobjects/Creature.seeState written by SM_PLAYER_STATE.
+	public int SeeState { get; set; }
+
 	// Java parity: model/actions/PlayerMode.RIDE queried through Player.isInPlayerMode.
 	public bool IsInRideMode { get; set; }
 
@@ -242,6 +248,56 @@ public sealed class Player
 	{
 		// Java parity: controllers/effect/EffectController.isInAnyAbnormalState.
 		return state == PlayerAbnormalState.None ? AbnormalState == PlayerAbnormalState.None : (AbnormalState & state) != 0;
+	}
+
+	public bool IsInVisualState(int state)
+	{
+		// Java parity: model/gameobjects/Creature.isInVisualState.
+		return (VisualState & state) == state;
+	}
+
+	public void SetVisualState(int state)
+	{
+		// Java parity: model/gameobjects/Creature.setVisualState bitwise ORs the visual id.
+		VisualState |= state;
+	}
+
+	public void UnsetVisualState(int state)
+	{
+		// Java parity: model/gameobjects/Creature.unsetVisualState clears the visual id bits.
+		VisualState &= ~state;
+	}
+
+	public bool IsProtectionActive()
+	{
+		// Java parity: model/gameobjects/player/Player.isProtectionActive.
+		return IsInVisualState(PlayerVisualStates.Blinking);
+	}
+
+	public bool StopProtectionActive()
+	{
+		// Java parity: controllers/PlayerController.stopProtectionActiveTask state mutation.
+		if (!IsProtectionActive())
+			return false;
+
+		UnsetVisualState(PlayerVisualStates.Blinking);
+		return true;
+	}
+
+	public bool IsInAnyHide()
+	{
+		// Java parity: model/gameobjects/Creature.isInAnyHide exact visual-state comparison.
+		return VisualState != PlayerVisualStates.Visible && VisualState != PlayerVisualStates.Blinking;
+	}
+
+	public bool RemoveHideEffects()
+	{
+		// Java parity: controllers/effect/EffectController.removeHideEffects side effect needed by CM_SHOW_DIALOG.
+		var visualState = VisualState;
+		var abnormalState = AbnormalState;
+		VisualState &= PlayerVisualStates.Blinking;
+		AbnormalState &= ~PlayerAbnormalState.Hide;
+		return VisualState != visualState || AbnormalState != abnormalState;
 	}
 
 	public bool IsUnderFear()
