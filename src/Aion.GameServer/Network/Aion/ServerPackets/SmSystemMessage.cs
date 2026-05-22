@@ -295,6 +295,42 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300042);
 	}
 
+	public static SmSystemMessage DecomposeItemNoTarget()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_DECOMPOSE_ITEM_NO_TARGET_ITEM.
+		return new SmSystemMessage(1300445);
+	}
+
+	public static SmSystemMessage DecomposeItemCannotDecompose(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_DECOMPOSE_ITEM_IT_CAN_NOT_BE_DECOMPOSED.
+		return new SmSystemMessage(1300446, itemName);
+	}
+
+	public static SmSystemMessage DecomposeItemInventoryFull()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_DECOMPOSE_ITEM_INVENTORY_IS_FULL.
+		return new SmSystemMessage(1300447);
+	}
+
+	public static SmSystemMessage DecomposeItemFailed(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_DECOMPOSE_ITEM_FAILED.
+		return new SmSystemMessage(1300448, itemName);
+	}
+
+	public static SmSystemMessage DecomposeItemSucceed(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_DECOMPOSE_ITEM_SUCCEED.
+		return new SmSystemMessage(1300449, itemName);
+	}
+
+	public static SmSystemMessage DecomposeItemCanceled(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_DECOMPOSE_ITEM_CANCELED.
+		return new SmSystemMessage(1300450, itemName);
+	}
+
 	public static SmSystemMessage CannotUseItemInvalidRank(string rankName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_CANNOT_USE_ITEM_INVALID_RANK.
@@ -365,6 +401,12 @@ public sealed class SmSystemMessage : GameServerPacket
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_GET_CASH_TITLE.
 		return new SmSystemMessage(1390242, titleName);
+	}
+
+	public static SmSystemMessage UncompressCompressedItemSucceeded(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_UNCOMPRESS_COMPRESSED_ITEM_SUCCEEDED.
+		return new SmSystemMessage(1400452, itemName);
 	}
 
 	public static SmSystemMessage DeleteCashTitleByTimeout(string titleName)

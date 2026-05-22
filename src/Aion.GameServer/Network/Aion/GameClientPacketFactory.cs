@@ -105,6 +105,7 @@ public static class GameClientPacketFactory
 		Register(223, states => new CmHousePayRent(223, states), GameConnectionState.InGame);
 		Register(230, states => new CmShowFriendList(230, states), GameConnectionState.InGame);
 		Register(233, states => new CmBonusTitle(233, states), GameConnectionState.InGame);
+		Register(236, states => new CmSelectDecomposable(236, states), GameConnectionState.InGame);
 		Register(239, states => new CmFriendSetMemo(239, states), GameConnectionState.InGame);
 	}
 

@@ -290,6 +290,22 @@ public sealed class PlayerEnterWorldService
 			cancellationToken);
 	}
 
+	public Task<bool> SaveDecomposeActionMutationAsync(
+		Player player,
+		IReadOnlyList<InventoryItem> addedItems,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: DecomposeAction/CM_SELECT_DECOMPOSABLE inventory mutation.
+		return _repository.SaveDecomposeActionMutationAsync(
+			player.ObjectId,
+			addedItems,
+			sourceItemUpdate,
+			deletedSourceItemObjectId,
+			cancellationToken);
+	}
+
 	public Task<bool> SaveItemChargeMutationAsync(
 		Player player,
 		InventoryItem chargedItem,

@@ -442,6 +442,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleUseItemAsync(_activePlayer, useItem);
 				break;
+			case CmSelectDecomposable selectDecomposable:
+				if (_activePlayer != null)
+					await HandleSelectDecomposableAsync(_activePlayer, selectDecomposable);
+				break;
 			case CmAppearance appearance:
 				if (_activePlayer != null)
 					await HandleAppearanceAsync(_activePlayer, appearance);
@@ -1778,6 +1782,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			PendingItemUseCancelMessage.ItemCharge2 => SmSystemMessage.ItemCharge2Canceled(),
 			PendingItemUseCancelMessage.GodstoneSocket => SmSystemMessage.GiveItemProcCancel(pendingItemUse.TargetItemName),
 			PendingItemUseCancelMessage.SoulBind => SmSystemMessage.SoulBoundItemCanceled(pendingItemUse.TargetItemName),
+			PendingItemUseCancelMessage.Decompose => SmSystemMessage.DecomposeItemCanceled(pendingItemUse.TargetItemName),
 			_ => SmSystemMessage.GiveItemOptionCanceled(pendingItemUse.TargetItemName),
 		});
 	}
@@ -2526,6 +2531,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (sourceTemplate.HasDecomposeAction)
+		{
+			await HandleDecomposeUseItemAsync(player, inventoryItems, sourceItem, sourceTemplate, staticData);
+			return;
+		}
+
 		if (sourceTemplate.PolishSetId > 0 && packet.Type == 2)
 		{
 			var targetItem = packet.TargetItemObjectId == 0
@@ -2552,6 +2563,232 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		if (sourceTemplate.ChargeActionMaxLevel > 0)
 			await HandleChargeUseItemAsync(player, inventoryItems, sourceItem, sourceTemplate, staticData);
+	}
+
+	private async Task HandleDecomposeUseItemAsync(
+		Player player,
+		List<InventoryItem> inventoryItems,
+		InventoryItem sourceItem,
+		ItemTemplateSummary sourceTemplate,
+		StaticData staticData)
+	{
+		// Java parity: model/templates/item/actions/DecomposeAction.canAct + act.
+		var canAct = DecomposeService.CanAct(player, sourceItem, staticData);
+		if (!canAct.Succeeded)
+		{
+			await SendDecomposeFailureAsync(canAct.Failure, sourceTemplate);
+			return;
+		}
+
+		if (canAct.IsSelectable)
+		{
+			var selectableItems = DecomposeService.GetSelectableItems(player, staticData.DecomposableItems, sourceItem.ItemId);
+			if (selectableItems == null)
+				return;
+
+			AddItemCooldownIfNeeded(player, sourceTemplate, removeOnCancel: false);
+			await CancelPendingItemUseAsync(player);
+			await SendPacketAsync(new SmFirstShowDecomposable(sourceItem.ObjectId, selectableItems));
+			return;
+		}
+
+		var rewardPlan = DecomposeService.CreateNormalRewardPlan(player, sourceItem, sourceTemplate, staticData);
+		if (!rewardPlan.Succeeded)
+		{
+			await SendDecomposeFailureAsync(rewardPlan.Failure, sourceTemplate);
+			return;
+		}
+
+		var removeCooldownDelayIdOnCancel = AddItemCooldownIfNeeded(player, sourceTemplate, removeOnCancel: true);
+		await CancelPendingItemUseAsync(player);
+		await BroadcastItemUsageAnimationAsync(
+			player,
+			new SmItemUsageAnimation(
+				player.ObjectId,
+				sourceItem.ObjectId,
+				sourceItem.ItemId,
+				DecomposeService.UsageDelayMilliseconds,
+				0,
+				0));
+
+		await SchedulePendingItemUseAsync(
+			player,
+			itemObjectId: sourceItem.ObjectId,
+			itemTemplateId: sourceItem.ItemId,
+			targetItemName: sourceTemplate.GetClientName() ?? sourceTemplate.Name,
+			cancelMessage: PendingItemUseCancelMessage.Decompose,
+			delay: TimeSpan.FromMilliseconds(DecomposeService.UsageDelayMilliseconds),
+			completeAsync: async cancellationToken =>
+			{
+				if (cancellationToken.IsCancellationRequested)
+					return;
+
+				await CompleteDecomposeUseItemAsync(player, sourceItem.ObjectId, sourceTemplate, rewardPlan, staticData, cancellationToken);
+			},
+			cancelEndState: 2,
+			removeCooldownDelayIdOnCancel: removeCooldownDelayIdOnCancel);
+	}
+
+	private async Task CompleteDecomposeUseItemAsync(
+		Player player,
+		int sourceItemObjectId,
+		ItemTemplateSummary sourceTemplate,
+		DecomposeRewardPlan rewardPlan,
+		StaticData staticData,
+		CancellationToken cancellationToken)
+	{
+		var inventoryItems = player.InventoryItems.ToList();
+		var sourceItem = inventoryItems.FirstOrDefault(item => item.ObjectId == sourceItemObjectId && item.Location == CubeStorageId && !item.IsEquipped);
+		if (sourceItem == null)
+		{
+			await SendPacketAsync(SmSystemMessage.DecomposeItemNoTarget());
+			await BroadcastItemUsageAnimationAsync(player, new SmItemUsageAnimation(player.ObjectId, sourceItemObjectId, sourceTemplate.TemplateId, 0, 2, 0));
+			return;
+		}
+
+		var canAct = DecomposeService.CanAct(player, sourceItem, staticData);
+		if (!canAct.Succeeded)
+		{
+			await SendDecomposeFailureAsync(canAct.Failure, sourceTemplate);
+			await BroadcastItemUsageAnimationAsync(player, new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 2, 0));
+			return;
+		}
+
+		var rewardItems = CreateDecomposeRewardItems(player, rewardPlan.Rewards, staticData.ItemTemplates);
+		if (rewardItems == null)
+			return;
+
+		var sourceItemUpdate = sourceItem.Count > 1 ? CopyInventoryItem(sourceItem, count: sourceItem.Count - 1) : null;
+		int? deletedSourceObjectId = sourceItem.Count <= 1 ? sourceItem.ObjectId : null;
+		var saved = _playerEnterWorldService == null
+			|| await _playerEnterWorldService.SaveDecomposeActionMutationAsync(
+				player,
+				rewardItems.Select(item => item.Item).ToArray(),
+				sourceItemUpdate,
+				deletedSourceObjectId,
+				cancellationToken);
+		if (!saved)
+			return;
+
+		await SendPacketAsync(SmSystemMessage.DecomposeItemSucceed(sourceTemplate.GetClientName() ?? sourceTemplate.Name));
+		await ApplySourceItemMutationAsync(inventoryItems, sourceTemplate, sourceItemUpdate, deletedSourceObjectId);
+		foreach (var rewardItem in rewardItems)
+			inventoryItems.Add(rewardItem.Item);
+		player.InventoryItems = inventoryItems.ToArray();
+		await BroadcastItemUsageAnimationAsync(player, new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 1, 0));
+		await SendDecomposeRewardItemsAsync(rewardItems);
+	}
+
+	private async Task HandleSelectDecomposableAsync(Player player, CmSelectDecomposable packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_SELECT_DECOMPOSABLE.runImpl.
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		if (staticData == null)
+			return;
+
+		var inventoryItems = player.InventoryItems.ToList();
+		var sourceItem = inventoryItems.FirstOrDefault(item => item.ObjectId == packet.ObjectId && item.Location == CubeStorageId && !item.IsEquipped);
+		if (sourceItem == null)
+			return;
+
+		var sourceTemplate = staticData.ItemTemplates.GetItemTemplate(sourceItem.ItemId);
+		if (sourceTemplate == null)
+			return;
+
+		var rewardPlan = DecomposeService.CreateSelectableRewardPlan(
+			player,
+			staticData.DecomposableItems,
+			sourceItem.ItemId,
+			packet.Index);
+		if (!rewardPlan.Succeeded)
+			return;
+
+		var rewardItems = CreateDecomposeRewardItems(player, rewardPlan.Rewards, staticData.ItemTemplates);
+		if (rewardItems == null)
+			return;
+
+		var sourceItemUpdate = sourceItem.Count > 1 ? CopyInventoryItem(sourceItem, count: sourceItem.Count - 1) : null;
+		int? deletedSourceObjectId = sourceItem.Count <= 1 ? sourceItem.ObjectId : null;
+		var saved = _playerEnterWorldService == null
+			|| await _playerEnterWorldService.SaveDecomposeActionMutationAsync(
+				player,
+				rewardItems.Select(item => item.Item).ToArray(),
+				sourceItemUpdate,
+				deletedSourceObjectId);
+		if (!saved)
+			return;
+
+		await BroadcastItemUsageAnimationAsync(player, new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 1, 1));
+		await SendPacketAsync(SmSystemMessage.UncompressCompressedItemSucceeded(sourceTemplate.GetClientName() ?? sourceTemplate.Name));
+		await ApplySourceItemMutationAsync(inventoryItems, sourceTemplate, sourceItemUpdate, deletedSourceObjectId);
+		await SendPacketAsync(new SmSecondaryShowDecomposable(sourceItem.ObjectId, Array.Empty<ResultedItemSummary>()));
+		foreach (var rewardItem in rewardItems)
+			inventoryItems.Add(rewardItem.Item);
+		player.InventoryItems = inventoryItems.ToArray();
+		await SendDecomposeRewardItemsAsync(rewardItems);
+	}
+
+	private List<SmInventoryAddItem.InventoryPacketItem>? CreateDecomposeRewardItems(
+		Player player,
+		IReadOnlyList<DecomposeReward> rewards,
+		ItemTemplateTable itemTemplates)
+	{
+		var rewardItems = new List<SmInventoryAddItem.InventoryPacketItem>();
+		foreach (var reward in rewards)
+		{
+			var rewardTemplate = itemTemplates.GetItemTemplate(reward.ItemId);
+			var objectId = _idFactory?.NextId() ?? 0;
+			if (rewardTemplate == null || objectId == 0)
+				return null;
+
+			rewardItems.Add(
+				new SmInventoryAddItem.InventoryPacketItem(
+					CreateNewItem(objectId, rewardTemplate, reward.Count, player.ObjectId, CubeStorageId, FirstAvailableSlot),
+					rewardTemplate));
+		}
+
+		return rewardItems;
+	}
+
+	private async Task SendDecomposeRewardItemsAsync(IReadOnlyList<SmInventoryAddItem.InventoryPacketItem> rewardItems)
+	{
+		if (rewardItems.Count > 0)
+			await SendPacketAsync(SmInventoryAddItem.CreateDecomposable(rewardItems));
+	}
+
+	private async Task SendDecomposeFailureAsync(DecomposeFailure failure, ItemTemplateSummary sourceTemplate)
+	{
+		var itemName = sourceTemplate.GetClientName() ?? sourceTemplate.Name;
+		switch (failure)
+		{
+			case DecomposeFailure.CannotDecompose:
+				await SendPacketAsync(SmSystemMessage.DecomposeItemCannotDecompose(itemName));
+				break;
+			case DecomposeFailure.InventoryFull:
+				await SendPacketAsync(SmSystemMessage.DecomposeItemInventoryFull());
+				break;
+			case DecomposeFailure.Failed:
+				await SendPacketAsync(SmSystemMessage.DecomposeItemFailed(itemName));
+				break;
+		}
+	}
+
+	private async Task ApplySourceItemMutationAsync(
+		List<InventoryItem> inventoryItems,
+		ItemTemplateSummary sourceTemplate,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceObjectId)
+	{
+		if (deletedSourceObjectId.HasValue)
+		{
+			inventoryItems.RemoveAll(item => item.ObjectId == deletedSourceObjectId.Value);
+			await SendPacketAsync(new SmDeleteItem(deletedSourceObjectId.Value, SmDeleteItem.UseDeleteType));
+		}
+		else if (sourceItemUpdate != null)
+		{
+			ReplaceInventoryItem(inventoryItems, sourceItemUpdate);
+			await SendPacketAsync(new SmInventoryUpdateItem(sourceItemUpdate, sourceTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+		}
 	}
 
 	private async Task HandleCraftLearnUseItemAsync(
@@ -5988,5 +6225,6 @@ public sealed class GameServerConnection : BaseClientConnection
 		ManastoneSocket,
 		GodstoneSocket,
 		SoulBind,
+		Decompose,
 	}
 }

@@ -581,6 +581,39 @@ public class GamePacketTests
 		Assert.Equal(1, itemUsageReader.ReadD());
 		Assert.Equal(0, itemUsageReader.Remaining);
 
+		var decomposableItems = new[]
+		{
+			new ResultedItemSummary(125045164, 1, 1, "PC_ALL", new HashSet<string>()),
+			new ResultedItemSummary(188053609, 3, 3, "PC_ALL", new HashSet<string>()),
+		};
+		var firstDecomposePayload = SerializeUnencryptedPayload(new SmFirstShowDecomposable(9001, decomposableItems));
+		using var firstDecomposeReader = new PacketBuffer(firstDecomposePayload);
+		Assert.Equal(9001, firstDecomposeReader.ReadD());
+		Assert.Equal(0, firstDecomposeReader.ReadD());
+		Assert.Equal(2, (int)firstDecomposeReader.ReadC());
+		Assert.Equal(0, (int)firstDecomposeReader.ReadC());
+		Assert.Equal(125045164, firstDecomposeReader.ReadD());
+		Assert.Equal(1, firstDecomposeReader.ReadD());
+		Assert.Equal(0, (int)firstDecomposeReader.ReadC());
+		Assert.Equal(0, (int)firstDecomposeReader.ReadC());
+		Assert.Equal(0, (int)firstDecomposeReader.ReadC());
+		Assert.Equal(1, (int)firstDecomposeReader.ReadC());
+		Assert.Equal(1, (int)firstDecomposeReader.ReadC());
+		Assert.Equal(188053609, firstDecomposeReader.ReadD());
+		Assert.Equal(3, firstDecomposeReader.ReadD());
+		Assert.Equal(0, (int)firstDecomposeReader.ReadC());
+		Assert.Equal(0, (int)firstDecomposeReader.ReadC());
+		Assert.Equal(0, (int)firstDecomposeReader.ReadC());
+		Assert.Equal(1, (int)firstDecomposeReader.ReadC());
+		Assert.Equal(0, firstDecomposeReader.Remaining);
+
+		var secondaryDecomposePayload = SerializeUnencryptedPayload(new SmSecondaryShowDecomposable(9001, Array.Empty<ResultedItemSummary>()));
+		using var secondaryDecomposeReader = new PacketBuffer(secondaryDecomposePayload);
+		Assert.Equal(9001, secondaryDecomposeReader.ReadD());
+		Assert.Equal(0, secondaryDecomposeReader.ReadD());
+		Assert.Equal(0, (int)secondaryDecomposeReader.ReadC());
+		Assert.Equal(0, secondaryDecomposeReader.Remaining);
+
 		Assert.Equal(
 			Convert.FromHexString("0100"),
 			SerializeUnencryptedPayload(SmMailService.CreateMailMessage(SmMailService.MailSendSuccess)));
@@ -596,6 +629,12 @@ public class GamePacketTests
 		Assert.Equal(0, systemMessageReader.Remaining);
 		AssertSystemMessage(SmSystemMessage.FullInventory(), 1300762);
 		AssertSystemMessage(SmSystemMessage.UiInventoryFull(), 1300042);
+		AssertSystemMessage(SmSystemMessage.DecomposeItemNoTarget(), 1300445);
+		AssertSystemMessage(SmSystemMessage.DecomposeItemCannotDecompose("item"), 1300446, "item");
+		AssertSystemMessage(SmSystemMessage.DecomposeItemInventoryFull(), 1300447);
+		AssertSystemMessage(SmSystemMessage.DecomposeItemFailed("item"), 1300448, "item");
+		AssertSystemMessage(SmSystemMessage.DecomposeItemSucceed("item"), 1300449, "item");
+		AssertSystemMessage(SmSystemMessage.DecomposeItemCanceled("item"), 1300450, "item");
 		AssertSystemMessage(SmSystemMessage.CannotUseItemInvalidRank(PlayerAbyssRank.GetRankL10n("ELYOS", 5)), 1300370, PlayerAbyssRank.GetRankL10n("ELYOS", 5));
 		AssertSystemMessage(SmSystemMessage.CannotUseItemInvalidClass(), 1300371);
 		AssertSystemMessage(SmSystemMessage.CannotUseItemTooLowLevel("item", 10), 1300372, "10", "item");
@@ -608,6 +647,7 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.TooltipLearnedEmotion(), 901713);
 		AssertSystemMessage(SmSystemMessage.TooltipLearnedTitle(), 901714);
 		AssertSystemMessage(SmSystemMessage.CashTitle(ChatUtil.L10n(412994)), 1390242, ChatUtil.L10n(412994));
+		AssertSystemMessage(SmSystemMessage.UncompressCompressedItemSucceeded("item"), 1400452, "item");
 		AssertSystemMessage(SmSystemMessage.DeleteCashTitleByTimeout(ChatUtil.L10n(412994)), 1390244, ChatUtil.L10n(412994));
 		AssertSystemMessage(SmSystemMessage.DeleteCashSocialActionByTimeout(), 1390245);
 		AssertSystemMessage(SmSystemMessage.DeleteCashCustomAnimationByTimeout(), 1400917);
@@ -3070,6 +3110,23 @@ public class GamePacketTests
 		Assert.Equal(0, untargetedUseItem.Type);
 		Assert.Equal(0, untargetedUseItem.TargetItemObjectId);
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(37, _ => { }), GameConnectionState.Authed));
+	}
+
+	[Fact]
+	public void ClientPacketFactory_ParsesSelectDecomposablePacket()
+	{
+		var packet = Assert.IsType<CmSelectDecomposable>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(236, b =>
+			{
+				b.WriteD(9001);
+				b.WriteD(0);
+				b.WriteC(2);
+			}), GameConnectionState.InGame));
+
+		Assert.Equal(9001, packet.ObjectId);
+		Assert.Equal(0, packet.Unknown);
+		Assert.Equal(2, packet.Index);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(236, _ => { }), GameConnectionState.Authed));
 	}
 
 	[Fact]

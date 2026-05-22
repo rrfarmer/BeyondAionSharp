@@ -457,6 +457,14 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public int CosmeticDeletedItemObjectId { get; private set; }
 
+		public int SaveDecomposeActionMutationCalls { get; private set; }
+
+		public IReadOnlyList<InventoryItem> DecomposeAddedItems { get; private set; } = Array.Empty<InventoryItem>();
+
+		public InventoryItem? DecomposeSourceItemUpdate { get; private set; }
+
+		public int? DecomposeDeletedSourceItemObjectId { get; private set; }
+
 		public int SaveItemChargeMutationCalls { get; private set; }
 
 		public InventoryItem? ChargedItem { get; private set; }
@@ -713,6 +721,20 @@ public sealed class PlayerEnterWorldServiceTests
 			SaveCosmeticItemActionMutationCalls++;
 			CosmeticAppearance = appearance;
 			CosmeticDeletedItemObjectId = deletedItemObjectId;
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> SaveDecomposeActionMutationAsync(
+			int playerObjectId,
+			IReadOnlyList<InventoryItem> addedItems,
+			InventoryItem? sourceItemUpdate,
+			int? deletedSourceItemObjectId,
+			CancellationToken cancellationToken = default)
+		{
+			SaveDecomposeActionMutationCalls++;
+			DecomposeAddedItems = addedItems;
+			DecomposeSourceItemUpdate = sourceItemUpdate;
+			DecomposeDeletedSourceItemObjectId = deletedSourceItemObjectId;
 			return Task.FromResult(true);
 		}
 

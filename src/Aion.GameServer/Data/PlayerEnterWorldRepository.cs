@@ -101,6 +101,13 @@ public interface IPlayerEnterWorldRepository
 		int deletedItemObjectId,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveDecomposeActionMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<InventoryItem> addedItems,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default);
+
 	Task<IReadOnlyList<PlayerMacro>> LoadPlayerMacrosAsync(int playerObjectId, CancellationToken cancellationToken = default);
 
 	Task<bool> SavePlayerMacroAsync(int playerObjectId, PlayerMacro macro, CancellationToken cancellationToken = default);
@@ -379,6 +386,16 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		int playerObjectId,
 		CharacterAppearance appearance,
 		int deletedItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> SaveDecomposeActionMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<InventoryItem> addedItems,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
 		CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(true);
@@ -1648,6 +1665,58 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		await command.ExecuteNonQueryAsync(cancellationToken);
 	}
 
+	private static async Task InsertInventoryItemAsync(
+		MySqlConnection connection,
+		MySqlTransaction transaction,
+		InventoryItem item,
+		CancellationToken cancellationToken)
+	{
+		await using var command = connection.CreateCommand();
+		command.Transaction = transaction;
+		command.CommandText = """
+			INSERT INTO inventory (
+				item_unique_id, item_id, item_count, item_color, color_expires, item_creator, expire_time, activation_count,
+				item_owner, is_equipped, is_soul_bound, slot, item_location, enchant, enchant_bonus, item_skin,
+				fusioned_item, optional_socket, optional_fusion_socket, charge, tune_count, rnd_bonus, fusion_rnd_bonus,
+				tempering, pack_count, is_amplified, buff_skill, rnd_plume_bonus
+			)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			""";
+		command.Parameters.AddRange(
+			new[]
+			{
+				new MySqlParameter { Value = item.ObjectId },
+				new MySqlParameter { Value = item.ItemId },
+				new MySqlParameter { Value = item.Count },
+				new MySqlParameter { Value = item.Color.HasValue ? item.Color.Value : DBNull.Value },
+				new MySqlParameter { Value = item.ColorExpires },
+				new MySqlParameter { Value = item.Creator ?? (object)DBNull.Value },
+				new MySqlParameter { Value = item.ExpireTime },
+				new MySqlParameter { Value = item.ActivationCount },
+				new MySqlParameter { Value = item.OwnerId },
+				new MySqlParameter { Value = item.IsEquipped },
+				new MySqlParameter { Value = item.IsSoulBound },
+				new MySqlParameter { Value = item.Slot },
+				new MySqlParameter { Value = item.Location },
+				new MySqlParameter { Value = item.Enchant },
+				new MySqlParameter { Value = item.EnchantBonus },
+				new MySqlParameter { Value = item.ItemSkin },
+				new MySqlParameter { Value = item.FusionedItem },
+				new MySqlParameter { Value = item.OptionalSocket },
+				new MySqlParameter { Value = item.OptionalFusionSocket },
+				new MySqlParameter { Value = item.Charge },
+				new MySqlParameter { Value = item.TuneCount },
+				new MySqlParameter { Value = item.RandomBonus },
+				new MySqlParameter { Value = item.FusionRandomBonus },
+				new MySqlParameter { Value = item.Tempering },
+				new MySqlParameter { Value = item.PackCount },
+				new MySqlParameter { Value = item.IsAmplified },
+				new MySqlParameter { Value = item.BuffSkill },
+				new MySqlParameter { Value = item.RandomPlumeBonus },
+			});
+		await command.ExecuteNonQueryAsync(cancellationToken);
+	}
+
 	private static async Task<bool> DeleteInventoryItemAsync(
 		MySqlConnection connection,
 		MySqlTransaction transaction,
@@ -2656,6 +2725,40 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not save cosmetic item action for player {PlayerObjectId}", playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SaveDecomposeActionMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<InventoryItem> addedItems,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: DecomposeAction/CM_SELECT_DECOMPOSABLE source consume plus ItemService.addItem rewards.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			if (sourceItemUpdate != null && !await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, sourceItemUpdate, cancellationToken))
+				return false;
+
+			if (deletedSourceItemObjectId.HasValue
+				&& !await DeleteInventoryItemAsync(connection, transaction, playerObjectId, deletedSourceItemObjectId.Value, cancellationToken))
+				return false;
+
+			foreach (var item in addedItems)
+				await InsertInventoryItemAsync(connection, transaction, item, cancellationToken);
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save decompose action for player {PlayerObjectId}", playerObjectId);
 			return false;
 		}
 	}

@@ -10,6 +10,7 @@ public sealed class SmInventoryAddItem : GameServerPacket
 	public const int ItemCollect = 0x19;
 	public const int BrokerBuy = 0x2E;
 	public const int BrokerReturn = 0x2F;
+	public const int Decomposable = 0x50;
 
 	private readonly int _addType;
 	private readonly IReadOnlyList<InventoryPacketItem> _items;
@@ -38,6 +39,12 @@ public sealed class SmInventoryAddItem : GameServerPacket
 	{
 		// Java parity: ItemPacketService.ItemAddType.ITEM_COLLECT default add type.
 		return new SmInventoryAddItem([new InventoryPacketItem(item, template)], ItemCollect);
+	}
+
+	public static SmInventoryAddItem CreateDecomposable(IReadOnlyList<InventoryPacketItem> items)
+	{
+		// Java parity: ItemService.addItem with ItemPacketService.ItemAddType.DECOMPOSABLE.
+		return new SmInventoryAddItem(items, Decomposable);
 	}
 
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
