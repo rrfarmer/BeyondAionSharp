@@ -47,6 +47,19 @@ public sealed class RiftInformerService
 		return SyncRiftsStateAsync(worldId, [new SmRiftAnnounce(objectId)]);
 	}
 
+	public async Task<int> SendRiftInfoAsync(IReadOnlyList<int> worldIds)
+	{
+		// Java parity: services/rift/RiftInformer.sendRiftInfo(int[]) sends action 3 updates from the first world to every listed world.
+		if (worldIds.Count == 0)
+			return 0;
+
+		var packets = GetEntryUpdatePackets(worldIds[0]);
+		var sent = 0;
+		foreach (var worldId in worldIds)
+			sent += await SyncRiftsStateAsync(worldId, packets);
+		return sent;
+	}
+
 	public RiftAnnounceData GetAnnounceData(int worldId)
 	{
 		// Java parity: services/rift/RiftInformer.getAnnounceData initializes all 12 announce slots before counting master rifts.
@@ -103,6 +116,22 @@ public sealed class RiftInformerService
 				continue;
 
 			packets.Add(new SmRiftAnnounce(portal, isMaster: true, _clock));
+			packets.Add(new SmRiftAnnounce(portal, isMaster: false, _clock));
+		}
+
+		return packets;
+	}
+
+	private IReadOnlyList<SmRiftAnnounce> GetEntryUpdatePackets(int worldId)
+	{
+		// Java parity: RiftInformer.getPackets(worldId, -1) sends action 3 packets for master RVControllers only.
+		var packets = new List<SmRiftAnnounce>();
+		foreach (var rift in _riftService.GetActiveRifts())
+		{
+			var portal = rift.Portal;
+			if (portal == null || portal.MasterNpc.Position.WorldId != worldId)
+				continue;
+
 			packets.Add(new SmRiftAnnounce(portal, isMaster: false, _clock));
 		}
 

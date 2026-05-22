@@ -287,6 +287,71 @@ public sealed class RiftInformerServiceTests
 	}
 
 	[Fact]
+	public async Task SendRiftInfoAsync_BroadcastsEntryUpdatesToListedWorlds()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-rift-informer-entry-update-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var now = DateTimeOffset.FromUnixTimeSeconds(1000);
+			var registry = new RecordingConnectionRegistry();
+			registry.Players.Add(CreatePlayer(100, 210020000));
+			registry.Players.Add(CreatePlayer(101, 220020000));
+			var (service, informer) = await CreateServicesAsync(
+				tempPath,
+				"""<rift_location id="2120" world="210020000" />""",
+				"""
+				<spawn_map map_id="210020000">
+					<rift_spawn id="2120" world="210020000">
+						<spawn npc_id="730100">
+							<spot x="1" y="2" z="3" anchor="ELTNEN_AM" />
+						</spawn>
+					</rift_spawn>
+				</spawn_map>
+				<spawn_map map_id="220020000">
+					<rift_spawn id="2120" world="220020000">
+						<spawn npc_id="730101">
+							<spot x="5" y="6" z="7" anchor="MORHEIM_AS" />
+						</spawn>
+					</rift_spawn>
+				</spawn_map>
+				""",
+				registry,
+				serviceClock: () => now,
+				informerClock: () => now);
+			Assert.True(service.OpenRifts(2120, guards: false).Succeeded);
+			var portal = Assert.Single(service.GetActiveRifts()).Portal;
+			Assert.NotNull(portal);
+			portal.SyncPassed(usePassedPlayerCount: false);
+
+			var sent = await informer.SendRiftInfoAsync([210020000, 220020000]);
+
+			Assert.Equal(2, sent);
+			Assert.Equal([100, 101], registry.BroadcastDeliveries.Select(delivery => delivery.Player.ObjectId).ToArray());
+			Assert.Equal([3, 3], registry.BroadcastDeliveries.Select(delivery => ReadAction(delivery.Packet)).ToArray());
+			foreach (var delivery in registry.BroadcastDeliveries)
+			{
+				var update = ReadPortalEntryUpdatePayload(delivery.Packet);
+				Assert.Equal(portal.MasterNpc.ObjectId, update.ObjectId);
+				Assert.Equal(1, update.UsedEntries);
+				Assert.Equal(3600, update.RemainTime);
+				Assert.Equal(0, update.RiftType);
+				Assert.Equal(0, update.Unknown);
+			}
+		}
+		finally
+		{
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
+	[Fact]
 	public async Task SendRiftDespawnAsync_BroadcastsDespawnPacketOnlyToTargetWorld()
 	{
 		var registry = new RecordingConnectionRegistry();
