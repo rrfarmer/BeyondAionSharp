@@ -40,6 +40,7 @@ public sealed class MySqlHousingRepository : IHousingRepository
 			command.CommandText = """
 				SELECT
 					h.id, h.address, h.building_id, h.player_id, h.acquire_time, h.settings, h.sign_notice,
+					p.id AS owner_row_id,
 					p.name AS owner_name,
 					lm.legion_id, l.name AS legion_name,
 					le.emblem_id AS legion_emblem_id, le.emblem_type AS legion_emblem_type,
@@ -67,6 +68,7 @@ public sealed class MySqlHousingRepository : IHousingRepository
 						ReadDateTime(reader, "acquire_time"),
 						ReadInt(reader, "settings"),
 						ReadString(reader, "sign_notice"),
+						ReadInt(reader, "owner_row_id") != 0,
 						ReadString(reader, "owner_name"),
 						ReadInt(reader, "legion_id"),
 						ReadString(reader, "legion_name"),
@@ -78,7 +80,10 @@ public sealed class MySqlHousingRepository : IHousingRepository
 						(byte)ReadInt(reader, "legion_emblem_color_b")));
 			}
 
-			return rows
+			await RevokeDeletedOwnerHousesAsync(connection, rows, housingTemplates, _logger, cancellationToken);
+			var effectiveRows = rows.Select(row => row.WithDeletedOwnerRevoked(housingTemplates)).ToArray();
+
+			return effectiveRows
 				.GroupBy(row => row.OwnerObjectId)
 				.SelectMany(group => CreateWorldHouses(group, housingTemplates))
 				.ToArray();
@@ -87,6 +92,39 @@ public sealed class MySqlHousingRepository : IHousingRepository
 		{
 			_logger.LogError(ex, "Could not load world houses");
 			return Array.Empty<WorldHouse>();
+		}
+	}
+
+	private static async Task RevokeDeletedOwnerHousesAsync(
+		MySqlConnection connection,
+		IEnumerable<HouseRow> rows,
+		HousingTemplateTable housingTemplates,
+		ILogger logger,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: services/HousingService.revokeOwnershipOfDeletedPlayers -> changeOwner(house, 0).
+		foreach (var row in rows.Where(row => row.HasDeletedOwner))
+		{
+			logger.LogWarning(
+				"Player with ID {PlayerObjectId} got deleted from DB, revoking house ownership for house {AddressId}",
+				row.OwnerObjectId,
+				row.AddressId);
+			var revoked = row.WithDeletedOwnerRevoked(housingTemplates);
+			await using var command = connection.CreateCommand();
+			command.CommandText = """
+				UPDATE houses
+				SET building_id = ?, player_id = 0, acquire_time = NULL, settings = ?, next_pay = NULL, sign_notice = NULL
+				WHERE id = ? AND player_id = ?
+				""";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = revoked.BuildingId },
+					new MySqlParameter { Value = revoked.Settings },
+					new MySqlParameter { Value = row.ObjectId },
+					new MySqlParameter { Value = row.OwnerObjectId },
+				});
+			await command.ExecuteNonQueryAsync(cancellationToken);
 		}
 	}
 
@@ -166,7 +204,8 @@ public sealed class MySqlHousingRepository : IHousingRepository
 		int OwnerObjectId,
 		DateTime? AcquiredTime,
 		int Settings,
-		string SignNotice,
+		string? SignNotice,
+		bool OwnerExists,
 		string OwnerName,
 		int LegionId,
 		string LegionName,
@@ -175,5 +214,33 @@ public sealed class MySqlHousingRepository : IHousingRepository
 		byte LegionEmblemColorA,
 		byte LegionEmblemColorR,
 		byte LegionEmblemColorG,
-		byte LegionEmblemColorB);
+		byte LegionEmblemColorB)
+	{
+		public bool HasDeletedOwner => OwnerObjectId > 0 && !OwnerExists;
+
+		public HouseRow WithDeletedOwnerRevoked(HousingTemplateTable housingTemplates)
+		{
+			if (!HasDeletedOwner)
+				return this;
+
+			var defaultBuildingId = housingTemplates.GetAddress(AddressId)?.DefaultBuildingId ?? 0;
+			return this with
+			{
+				BuildingId = defaultBuildingId == 0 ? BuildingId : defaultBuildingId,
+				OwnerObjectId = 0,
+				AcquiredTime = null,
+				Settings = PlayerHouse.CreateSettings(PlayerHouse.DoorClosed, showOwnerName: true),
+				SignNotice = null,
+				OwnerName = string.Empty,
+				LegionId = 0,
+				LegionName = string.Empty,
+				LegionEmblemId = 0,
+				LegionEmblemType = 0,
+				LegionEmblemColorA = 0,
+				LegionEmblemColorR = 0,
+				LegionEmblemColorG = 0,
+				LegionEmblemColorB = 0,
+			};
+		}
+	}
 }
