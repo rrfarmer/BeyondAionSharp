@@ -185,6 +185,11 @@ public sealed class Player
 
 	public PendingRiftPortalRequest? PendingRiftPortalRequest { get; set; }
 
+	// Java parity: model/gameobjects/player/Player.getCurrentTeam, currently narrowed to the RVController removal boundary until full team models land.
+	public PlayerTeamMembership TeamMembership { get; set; }
+
+	public bool IsInTeam => TeamMembership != PlayerTeamMembership.None;
+
 	// Java parity: Player.usingItem set by SM_ITEM_USAGE_ANIMATION while delayed item use is active.
 	public int UsingItemObjectId { get; set; }
 
@@ -217,6 +222,14 @@ public sealed class Player
 	{
 		// Java parity: model/gameobjects/Creature.setState(state, replace=true).
 		CreatureState = state;
+	}
+
+	public PlayerTeamMembership RemoveCurrentTeam()
+	{
+		// Java parity: PlayerGroupService.removePlayer / PlayerAllianceService.removePlayer clears the responder's current team.
+		var removed = TeamMembership;
+		TeamMembership = PlayerTeamMembership.None;
+		return removed;
 	}
 
 	public bool IsAbnormalSet(PlayerAbnormalState state)

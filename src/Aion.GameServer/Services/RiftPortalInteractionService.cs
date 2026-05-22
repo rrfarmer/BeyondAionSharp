@@ -1,4 +1,5 @@
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.World;
 
@@ -41,7 +42,11 @@ public sealed class RiftPortalInteractionService
 		return result;
 	}
 
-	public async Task<RiftPortalQuestionResponseResult> RespondAsync(Player player, int questionId, byte response)
+	public async Task<RiftPortalQuestionResponseResult> RespondAsync(
+		Player player,
+		int questionId,
+		byte response,
+		Func<GameServerPacket, Task>? sendResponderPacketAsync = null)
 	{
 		// Java parity: CM_QUESTION_RESPONSE executes the matching ResponseRequester handler and removes it.
 		var request = player.PendingRiftPortalRequest;
@@ -59,10 +64,32 @@ public sealed class RiftPortalInteractionService
 		if (!useResult.Accepted)
 			return RiftPortalQuestionResponseResult.Rejected(useResult.Status);
 
+		var removedTeamMembership = PlayerTeamMembership.None;
+		var vortexOpenNoticeRequested = false;
+		var vortexOpenNoticeSent = false;
+		if (portal.IsVortex)
+		{
+			// Java parity: RVController vortex accept removes the responder from group/alliance before teleport notice and syncPassed(true).
+			if (player.IsInTeam)
+				removedTeamMembership = player.RemoveCurrentTeam();
+
+			vortexOpenNoticeRequested = true;
+			if (sendResponderPacketAsync != null)
+			{
+				await sendResponderPacketAsync(SmSystemMessage.InvasionDirectPortalOpenNotice());
+				vortexOpenNoticeSent = true;
+			}
+		}
+
 		var sent = _informerService == null
 			? 0
 			: await _informerService.SendRiftInfoAsync(GetWorldsList(portal));
-		return RiftPortalQuestionResponseResult.CreateAccepted(useResult, sent);
+		return RiftPortalQuestionResponseResult.CreateAccepted(
+			useResult,
+			sent,
+			removedTeamMembership,
+			vortexOpenNoticeRequested,
+			vortexOpenNoticeSent);
 	}
 
 	private static IReadOnlyList<int> GetWorldsList(RiftPortalState portal)
@@ -84,9 +111,17 @@ public sealed record RiftPortalQuestionResponseResult(
 	RiftPortalQuestionResponseStatus Status,
 	RiftPortalUseStatus? UseStatus,
 	int RefreshPacketsSent,
-	WorldPosition? Destination)
+	WorldPosition? Destination,
+	PlayerTeamMembership RemovedTeamMembership,
+	bool VortexOpenNoticeRequested,
+	bool VortexOpenNoticeSent)
 {
-	public static RiftPortalQuestionResponseResult CreateAccepted(RiftPortalUseResult useResult, int refreshPacketsSent)
+	public static RiftPortalQuestionResponseResult CreateAccepted(
+		RiftPortalUseResult useResult,
+		int refreshPacketsSent,
+		PlayerTeamMembership removedTeamMembership,
+		bool vortexOpenNoticeRequested,
+		bool vortexOpenNoticeSent)
 	{
 		return new RiftPortalQuestionResponseResult(
 			Handled: true,
@@ -94,7 +129,10 @@ public sealed record RiftPortalQuestionResponseResult(
 			RiftPortalQuestionResponseStatus.Accepted,
 			RiftPortalUseStatus.Accepted,
 			refreshPacketsSent,
-			useResult.Destination);
+			useResult.Destination,
+			removedTeamMembership,
+			vortexOpenNoticeRequested,
+			vortexOpenNoticeSent);
 	}
 
 	public static RiftPortalQuestionResponseResult Rejected(RiftPortalUseStatus useStatus)
@@ -105,7 +143,10 @@ public sealed record RiftPortalQuestionResponseResult(
 			RiftPortalQuestionResponseStatus.UseRejected,
 			useStatus,
 			RefreshPacketsSent: 0,
-			Destination: null);
+			Destination: null,
+			RemovedTeamMembership: PlayerTeamMembership.None,
+			VortexOpenNoticeRequested: false,
+			VortexOpenNoticeSent: false);
 	}
 
 	public static RiftPortalQuestionResponseResult Declined()
@@ -116,7 +157,10 @@ public sealed record RiftPortalQuestionResponseResult(
 			RiftPortalQuestionResponseStatus.Declined,
 			UseStatus: null,
 			RefreshPacketsSent: 0,
-			Destination: null);
+			Destination: null,
+			RemovedTeamMembership: PlayerTeamMembership.None,
+			VortexOpenNoticeRequested: false,
+			VortexOpenNoticeSent: false);
 	}
 
 	public static RiftPortalQuestionResponseResult NotHandled(RiftPortalQuestionResponseStatus status)
@@ -127,7 +171,10 @@ public sealed record RiftPortalQuestionResponseResult(
 			status,
 			UseStatus: null,
 			RefreshPacketsSent: 0,
-			Destination: null);
+			Destination: null,
+			RemovedTeamMembership: PlayerTeamMembership.None,
+			VortexOpenNoticeRequested: false,
+			VortexOpenNoticeSent: false);
 	}
 }
 

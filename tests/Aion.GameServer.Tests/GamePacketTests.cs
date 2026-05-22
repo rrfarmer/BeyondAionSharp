@@ -800,6 +800,7 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.HousingAuctionMyHouse(6001), 1401268, "6001");
 		AssertSystemMessage(SmSystemMessage.HousingAuctionAlreadyRegistered(), 1401372);
 		AssertSystemMessage(SmSystemMessage.HousingFeeFree(), 1401445);
+		AssertSystemMessage(SmSystemMessage.InvasionDirectPortalOpenNotice(), 1401454);
 		AssertSystemMessage(SmSystemMessage.HousingOrderOpenDoor(), 1401379);
 		AssertSystemMessage(SmSystemMessage.HousingOrderCloseDoorWithoutFriends(), 1401380);
 		AssertSystemMessage(SmSystemMessage.HousingOrderCloseDoorAll(), 1401381);

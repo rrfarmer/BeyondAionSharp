@@ -5080,7 +5080,11 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (_riftPortalInteractionService == null)
 			return;
 
-		await _riftPortalInteractionService.RespondAsync(responder, packet.QuestionId, packet.Response);
+		await _riftPortalInteractionService.RespondAsync(
+			responder,
+			packet.QuestionId,
+			packet.Response,
+			packetToSend => SendPacketAsync(packetToSend));
 	}
 
 	private async Task AcceptFriendRequestAsync(Player requester, Player responder)

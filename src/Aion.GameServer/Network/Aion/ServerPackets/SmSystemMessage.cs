@@ -1049,6 +1049,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1401445);
 	}
 
+	public static SmSystemMessage InvasionDirectPortalOpenNotice()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_INVADE_DIRECT_PORTAL_OPEN_NOTICE.
+		return new SmSystemMessage(1401454);
+	}
+
 	public static SmSystemMessage HousingOrderOpenDoor()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_ORDER_OPEN_DOOR.

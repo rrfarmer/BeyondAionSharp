@@ -66,6 +66,9 @@ public sealed class RiftPortalInteractionServiceTests
 			Assert.Equal(portal.SlaveNpc.SpawnLocation, player.Position);
 			Assert.Null(player.PendingRiftPortalRequest);
 			Assert.Equal(1, portal.UsedEntries);
+			Assert.Equal(PlayerTeamMembership.None, result.RemovedTeamMembership);
+			Assert.False(result.VortexOpenNoticeRequested);
+			Assert.False(result.VortexOpenNoticeSent);
 			Assert.Equal(2, result.RefreshPacketsSent);
 			Assert.Equal([100, 101], registry.BroadcastDeliveries.Select(delivery => delivery.Player.ObjectId).ToArray());
 			Assert.Equal([3, 3], registry.BroadcastDeliveries.Select(delivery => ReadAction(delivery.Packet)).ToArray());
@@ -85,8 +88,11 @@ public sealed class RiftPortalInteractionServiceTests
 		{
 			var registry = new RecordingConnectionRegistry();
 			var player = CreatePlayer(level: 50, objectId: 100, worldId: 110070000);
+			player.TeamMembership = PlayerTeamMembership.Group;
 			registry.Players.Add(player);
 			registry.Players.Add(CreatePlayer(level: 50, objectId: 101, worldId: 120080000));
+			var responderPackets = new List<GameServerPacket>();
+			var noticeBeforeRefresh = false;
 			var now = DateTimeOffset.FromUnixTimeSeconds(1000);
 			var (context, riftService, interaction) = await CreateVortexServicesAsync(tempPath, registry, () => now);
 			Assert.True(riftService.OpenRifts(1170, guards: false).Succeeded);
@@ -98,13 +104,29 @@ public sealed class RiftPortalInteractionServiceTests
 			Assert.Equal(SmQuestionWindow.VortexPortalPassConfirm, request.QuestionWindow?.Code);
 			var expectedDestination = context.DataManager?.StaticData.VortexLocations.GetLocation(1)?.StartPoint;
 
-			var result = await interaction.RespondAsync(player, SmQuestionWindow.VortexPortalPassConfirm, response: 1);
+			var result = await interaction.RespondAsync(
+				player,
+				SmQuestionWindow.VortexPortalPassConfirm,
+				response: 1,
+				packet =>
+				{
+					noticeBeforeRefresh = registry.BroadcastDeliveries.Count == 0;
+					responderPackets.Add(packet);
+					return Task.CompletedTask;
+				});
 
 			Assert.True(result.Handled);
 			Assert.True(result.Accepted);
 			Assert.Equal(RiftPortalQuestionResponseStatus.Accepted, result.Status);
 			Assert.Equal(expectedDestination, player.Position);
 			Assert.Null(player.PendingRiftPortalRequest);
+			Assert.Equal(PlayerTeamMembership.None, player.TeamMembership);
+			Assert.Equal(PlayerTeamMembership.Group, result.RemovedTeamMembership);
+			Assert.True(result.VortexOpenNoticeRequested);
+			Assert.True(result.VortexOpenNoticeSent);
+			Assert.True(noticeBeforeRefresh);
+			var responderPacket = Assert.IsType<SmSystemMessage>(Assert.Single(responderPackets));
+			Assert.Equal(1401454, ReadSystemMessageId(responderPacket));
 			Assert.Equal(1, portal.PassedPlayerCount);
 			Assert.Equal(1, portal.UsedEntries);
 			Assert.Equal(1, result.RefreshPacketsSent);
@@ -316,6 +338,15 @@ public sealed class RiftPortalInteractionServiceTests
 		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
 		reader.ReadH();
 		return reader.ReadC();
+	}
+
+	private static int ReadSystemMessageId(GameServerPacket packet)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		reader.ReadC();
+		reader.ReadC();
+		reader.ReadD();
+		return reader.ReadD();
 	}
 
 	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
