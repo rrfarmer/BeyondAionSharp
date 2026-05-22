@@ -401,6 +401,9 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(new WorldPosition(220050000, 2242.0f, 2797.0f, 75.4f, 0), staticData.VortexLocations.GetLocation(1)?.StartPoint);
 		Assert.Equal(staticData.VortexLocations.GetLocation(0), staticData.VortexLocations.GetLocationByInvasionWorld(210060000));
 		Assert.Equal(staticData.VortexLocations.GetLocation(1), staticData.VortexLocations.GetLocationByInvasionWorld(220050000));
+		Assert.Equal(174, staticData.CustomNpcDrops.Count);
+		Assert.Equal(2, staticData.CustomNpcDrops.GetNpcDrop(210582)?.Groups.Count);
+		Assert.Equal(182400001, staticData.CustomNpcDrops.GetNpcDrop(212928)?.Groups[0].Drops[0].ItemId);
 		Assert.Equal(staticData.GetElementCount("instance_cooltime"), staticData.InstanceCooltimes.Count);
 		Assert.Equal("SWORD", staticData.ItemTemplates.GetItemTemplate(100000001)?.ItemGroup);
 		Assert.Equal([37, 44], staticData.ItemTemplates.GetItemTemplate(100000001)?.RequiredEquipSkills);

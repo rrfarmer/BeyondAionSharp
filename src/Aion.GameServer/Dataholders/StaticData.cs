@@ -29,6 +29,7 @@ public sealed class StaticData
 		NpcTemplateTable npcTemplates,
 		NpcSpawnTable npcSpawns,
 		NpcRiftSpawnTable npcRiftSpawns,
+		CustomNpcDropTable customNpcDrops,
 		SkillTemplateTable skillTemplates,
 		TitleTemplateTable titleTemplates,
 		RecipeTemplateTable recipeTemplates,
@@ -61,6 +62,7 @@ public sealed class StaticData
 		NpcTemplates = npcTemplates;
 		NpcSpawns = npcSpawns;
 		NpcRiftSpawns = npcRiftSpawns;
+		CustomNpcDrops = customNpcDrops;
 		SkillTemplates = skillTemplates;
 		TitleTemplates = titleTemplates;
 		RecipeTemplates = recipeTemplates;
@@ -117,6 +119,8 @@ public sealed class StaticData
 	public NpcSpawnTable NpcSpawns { get; }
 
 	public NpcRiftSpawnTable NpcRiftSpawns { get; }
+
+	public CustomNpcDropTable CustomNpcDrops { get; }
 
 	public SkillTemplateTable SkillTemplates { get; }
 
@@ -1563,6 +1567,7 @@ public sealed class StaticData
 
 		if (experience.Count == 0)
 			experience.AddRange(await LoadExperienceTableFromImportedFilesAsync(importedFiles, cancellationToken));
+		var customNpcDrops = await CustomNpcDropTable.LoadFromImportedFilesAsync(importedFiles, cancellationToken);
 
 		return new StaticData(
 			cacheFilePath,
@@ -1587,6 +1592,7 @@ public sealed class StaticData
 			new NpcTemplateTable(npcTemplates.AsReadOnly()),
 			new NpcSpawnTable(npcSpawns.AsReadOnly()),
 			new NpcRiftSpawnTable(npcRiftSpawns.AsReadOnly()),
+			customNpcDrops,
 			new SkillTemplateTable(skillTemplates.AsReadOnly()),
 			new TitleTemplateTable(titleTemplates.AsReadOnly()),
 			new RecipeTemplateTable(recipeTemplates.AsReadOnly()),

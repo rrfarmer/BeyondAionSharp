@@ -80,7 +80,9 @@ public sealed record WorldNpcDropItem(
 	int ItemId,
 	long Count,
 	IReadOnlySet<int>? PlayerObjectIds = null,
-	int OptionalSocket = 0)
+	int OptionalSocket = 0,
+	int NpcObjectId = 0,
+	bool IsDistributeItem = false)
 {
 	public int LootEffectId
 	{
