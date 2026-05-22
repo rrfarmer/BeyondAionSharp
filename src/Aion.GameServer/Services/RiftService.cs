@@ -1,0 +1,239 @@
+using System.Collections.Concurrent;
+using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Utils.IdFactory;
+using GameWorld = Aion.GameServer.World.World;
+
+namespace Aion.GameServer.Services;
+
+public sealed class RiftService
+{
+	private readonly GameServerRuntimeContext _runtimeContext;
+	private readonly RiftManagerService _riftManager;
+	private readonly GameWorld _world;
+	private readonly IDFactory _idFactory;
+	private readonly ConcurrentDictionary<int, RiftLocationState> _activeRifts = new();
+
+	public RiftService(
+		GameServerRuntimeContext runtimeContext,
+		RiftManagerService riftManager,
+		GameWorld world,
+		IDFactory idFactory)
+	{
+		_runtimeContext = runtimeContext;
+		_riftManager = riftManager;
+		_world = world;
+		_idFactory = idFactory;
+	}
+
+	public int ActiveRiftCount => _activeRifts.Count;
+
+	public bool IsValidId(int id)
+	{
+		// Java parity: services/RiftService.isValidId accepts either one rift id or one owning world id.
+		var locations = _runtimeContext.DataManager?.StaticData?.RiftLocations;
+		if (locations == null)
+			return false;
+
+		return IsRiftId(id)
+			? locations.Contains(id)
+			: locations.GetLocationsForWorld(id).Count > 0;
+	}
+
+	public bool IsRiftOpened(int riftId)
+	{
+		// Java parity: services/RiftService.isRiftOpened checks the active rift map by rift id.
+		return _activeRifts.ContainsKey(riftId);
+	}
+
+	public RiftLocationState? GetActiveRift(int riftId)
+	{
+		return _activeRifts.GetValueOrDefault(riftId);
+	}
+
+	public RiftServiceResult OpenRifts(int id, bool guards)
+	{
+		// Java parity: services/RiftService.openRifts can open one rift id or every closed rift for a world id.
+		if (!TryResolveLocations(id, out var locations, out var failure))
+			return failure;
+
+		var opened = new List<RiftLocationState>();
+		var spawnResults = new List<RiftSpawnResult>();
+		foreach (var location in locations)
+		{
+			if (_activeRifts.ContainsKey(location.Id))
+				continue;
+
+			var state = new RiftLocationState(location) { Opened = true };
+			if (!_activeRifts.TryAdd(location.Id, state))
+				continue;
+
+			var spawnResult = _riftManager.SpawnRift(location.Id, guards);
+			foreach (var npc in spawnResult.SpawnedNpcs)
+				state.AddSpawned(npc);
+
+			opened.Add(state);
+			spawnResults.Add(spawnResult);
+		}
+
+		return opened.Count == 0
+			? RiftServiceResult.NotSucceeded(RiftServiceStatus.AlreadyOpen)
+			: RiftServiceResult.Completed(RiftServiceStatus.Opened, opened, spawnResults);
+	}
+
+	public RiftServiceResult CloseRifts(int id)
+	{
+		// Java parity: services/RiftService.closeRifts can close one rift id or every open rift for a world id.
+		if (!TryResolveLocations(id, out var locations, out var failure))
+			return failure;
+
+		var closed = new List<RiftLocationState>();
+		foreach (var location in locations)
+		{
+			if (!_activeRifts.TryRemove(location.Id, out var state))
+				continue;
+
+			state.Opened = false;
+			foreach (var npc in state.GetSpawnedSnapshot())
+			{
+				_riftManager.RemoveSpawnedRift(npc);
+				if (_world.TryRemoveObject(npc.ObjectId, out var removedObject) && removedObject is WorldNpc)
+					_idFactory.ReleaseId(npc.ObjectId);
+			}
+
+			state.ClearSpawned();
+			closed.Add(state);
+		}
+
+		return closed.Count == 0
+			? RiftServiceResult.NotSucceeded(RiftServiceStatus.NotOpen)
+			: RiftServiceResult.Completed(RiftServiceStatus.Closed, closed, Array.Empty<RiftSpawnResult>());
+	}
+
+	public void CloseAutoCloseableRifts(int worldId)
+	{
+		// Java parity: services/RiftService.closeAutoCloseableRifts only closes open locations marked auto_closeable for the given world id.
+		var locations = _runtimeContext.DataManager?.StaticData?.RiftLocations
+			.GetLocationsForWorld(worldId)
+			.Where(location => location.AutoCloseable)
+			.ToArray();
+		if (locations == null || locations.Length == 0)
+			return;
+
+		foreach (var location in locations)
+			CloseRifts(location.Id);
+	}
+
+	private bool TryResolveLocations(
+		int id,
+		out IReadOnlyList<RiftLocationSummary> locations,
+		out RiftServiceResult failure)
+	{
+		var staticData = _runtimeContext.DataManager?.StaticData;
+		if (staticData == null)
+		{
+			locations = Array.Empty<RiftLocationSummary>();
+			failure = RiftServiceResult.NotSucceeded(RiftServiceStatus.MissingStaticData);
+			return false;
+		}
+
+		if (IsRiftId(id))
+		{
+			var location = staticData.RiftLocations.GetLocation(id);
+			if (location == null)
+			{
+				locations = Array.Empty<RiftLocationSummary>();
+				failure = RiftServiceResult.NotSucceeded(RiftServiceStatus.InvalidId);
+				return false;
+			}
+
+			locations = [location];
+			failure = RiftServiceResult.NotSucceeded(RiftServiceStatus.InvalidId);
+			return true;
+		}
+
+		locations = staticData.RiftLocations.GetLocationsForWorld(id);
+		if (locations.Count == 0)
+		{
+			failure = RiftServiceResult.NotSucceeded(RiftServiceStatus.InvalidId);
+			return false;
+		}
+
+		failure = RiftServiceResult.NotSucceeded(RiftServiceStatus.InvalidId);
+		return true;
+	}
+
+	private static bool IsRiftId(int id)
+	{
+		return id < 10000;
+	}
+}
+
+public sealed class RiftLocationState
+{
+	private readonly ConcurrentDictionary<int, WorldNpc> _spawned = new();
+
+	public RiftLocationState(RiftLocationSummary location)
+	{
+		Location = location;
+	}
+
+	public RiftLocationSummary Location { get; }
+
+	public bool Opened { get; internal set; }
+
+	public int SpawnedCount => _spawned.Count;
+
+	public IReadOnlyList<WorldNpc> Spawned => GetSpawnedSnapshot();
+
+	internal void AddSpawned(WorldNpc npc)
+	{
+		// Java parity: model/rift/RiftLocation.addSpawned stores every rift-owned spawned object by object id.
+		_spawned[npc.ObjectId] = npc;
+	}
+
+	internal IReadOnlyList<WorldNpc> GetSpawnedSnapshot()
+	{
+		return _spawned.Values.OrderBy(npc => npc.ObjectId).ToArray();
+	}
+
+	internal void ClearSpawned()
+	{
+		// Java parity: services/RiftService.closeRift clears RiftLocation.spawned after despawn/cancel-respawn work.
+		_spawned.Clear();
+	}
+}
+
+public sealed record RiftServiceResult(
+	bool Succeeded,
+	RiftServiceStatus Status,
+	IReadOnlyList<RiftLocationState> Locations,
+	IReadOnlyList<RiftSpawnResult> SpawnResults)
+{
+	public static RiftServiceResult Completed(
+		RiftServiceStatus status,
+		IReadOnlyList<RiftLocationState> locations,
+		IReadOnlyList<RiftSpawnResult> spawnResults)
+	{
+		return new RiftServiceResult(true, status, locations, spawnResults);
+	}
+
+	public static RiftServiceResult NotSucceeded(RiftServiceStatus status)
+	{
+		return new RiftServiceResult(
+			false,
+			status,
+			Array.Empty<RiftLocationState>(),
+			Array.Empty<RiftSpawnResult>());
+	}
+}
+
+public enum RiftServiceStatus
+{
+	Opened,
+	Closed,
+	InvalidId,
+	MissingStaticData,
+	AlreadyOpen,
+	NotOpen,
+}
