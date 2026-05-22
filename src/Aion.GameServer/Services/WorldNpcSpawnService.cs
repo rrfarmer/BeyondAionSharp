@@ -26,6 +26,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 	private readonly WorldNpcWalkerRouteWalkingService? _walkerRouteWalking;
 	private readonly WorldNpcRandomWalkService? _randomWalking;
 	private readonly IWorldNpcDropRegistrationLookup? _dropRegistrationLookup;
+	private readonly Func<int, WorldNpc, bool>? _respawnedNpcCallback;
 	private readonly ILogger<WorldNpcSpawnService> _logger;
 	private readonly ConcurrentDictionary<NpcSpawnSummary, int> _temporarySpawnObjectIds = new();
 	private readonly ConcurrentDictionary<int, SpawnedWorldNpcRegistration> _spawnedWorldNpcs = new();
@@ -47,7 +48,8 @@ public sealed class WorldNpcSpawnService : GameEngine
 		ILogger<WorldNpcSpawnService> logger,
 		WorldNpcWalkerRouteWalkingService? walkerRouteWalking = null,
 		WorldNpcRandomWalkService? randomWalking = null,
-		IWorldNpcDropRegistrationLookup? dropRegistrationLookup = null)
+		IWorldNpcDropRegistrationLookup? dropRegistrationLookup = null,
+		Func<int, WorldNpc, bool>? respawnedNpcCallback = null)
 	{
 		_runtimeContext = runtimeContext;
 		_world = world;
@@ -61,6 +63,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		_walkerRouteWalking = walkerRouteWalking;
 		_randomWalking = randomWalking;
 		_dropRegistrationLookup = dropRegistrationLookup;
+		_respawnedNpcCallback = respawnedNpcCallback;
 		_logger = logger;
 	}
 
@@ -727,8 +730,22 @@ public sealed class WorldNpcSpawnService : GameEngine
 		if (newObjectId.HasValue && pendingRespawn.Registration.Spawn.GroupTemporarySchedule != null)
 			_temporarySpawnObjectIds[pendingRespawn.Registration.Spawn] = newObjectId.Value;
 		if (newObjectId.HasValue)
+		{
 			RefreshWalkerSpawnPlansFromStaticData([pendingRespawn.Registration.Spawn.MapId]);
+			NotifyNpcRespawned(oldObjectId, newObjectId.Value);
+		}
 		return ValueTask.CompletedTask;
+	}
+
+	private void NotifyNpcRespawned(int oldObjectId, int newObjectId)
+	{
+		// Java parity: services/RespawnService.RespawnTask.respawn notifies RiftService.updateSpawned after SpawnEngine.spawnObject.
+		if (_respawnedNpcCallback == null)
+			return;
+		if (!_world.TryGetObject(newObjectId, out var gameObject) || gameObject is not WorldNpc respawn)
+			return;
+
+		_respawnedNpcCallback(oldObjectId, respawn);
 	}
 
 	private void CancelPendingRespawns()

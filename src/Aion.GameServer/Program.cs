@@ -1,6 +1,7 @@
 using Aion.Commons.Database;
 using Aion.GameServer.Configuration;
 using Aion.GameServer.Data;
+using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils;
@@ -45,6 +46,8 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<WorldNpcWalkerRouteWalkingService>();
 			services.AddSingleton<Func<int, bool>>(
 				serviceProvider => objectId => serviceProvider.GetRequiredService<WorldNpcSpawnService>().CancelRespawn(objectId));
+			services.AddSingleton<Func<int, WorldNpc, bool>>(
+				serviceProvider => (oldObjectId, respawn) => serviceProvider.GetRequiredService<RiftService>().UpdateSpawned(oldObjectId, respawn));
 			services.AddSingleton<RiftManagerService>();
 			services.AddSingleton<RiftService>();
 			services.AddSingleton<RiftInformerService>();

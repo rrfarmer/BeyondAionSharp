@@ -610,6 +610,47 @@ public sealed class WorldNpcSpawnServiceTests
 	}
 
 	[Fact]
+	public async Task TryScheduleWorldNpcDeath_NotifiesRespawnedNpcCallback()
+	{
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var staticPlaceables = new StaticPlaceableStateService();
+		var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		var respawnNotifications = new List<(int OldObjectId, WorldNpc Respawn)>();
+		try
+		{
+			var service = CreateService(
+				world,
+				staticPlaceables,
+				threadPoolManager,
+				(oldObjectId, respawn) =>
+				{
+					respawnNotifications.Add((oldObjectId, respawn));
+					return true;
+				});
+			var spawns = new NpcSpawnTable([CreateSpawn(210010000, 203076, x: 7, respawnSeconds: 1)]);
+			var templates = new NpcTemplateTable([CreateTemplate(203076)]);
+
+			service.SpawnWorldNpcs(spawns, templates, [210010000]);
+			var scheduledDeath = service.TryScheduleWorldNpcDeath(1, hasRegisteredDrops: false, decayDelay: TimeSpan.FromMilliseconds(50));
+
+			Assert.True(scheduledDeath);
+
+			await WaitUntilAsync(() => respawnNotifications.Count == 1);
+
+			var (oldObjectId, respawn) = Assert.Single(respawnNotifications);
+			Assert.Equal(1, oldObjectId);
+			Assert.Equal(203076, respawn.TemplateId);
+			Assert.Equal(7, respawn.Position.X);
+			Assert.True(world.TryGetObject(respawn.ObjectId, out var stored));
+			Assert.Same(respawn, stored);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
 	public void TryScheduleWorldNpcDeath_UsesRegisteredDropLookupForDefaultDecaySelection()
 	{
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);
@@ -841,7 +882,11 @@ public sealed class WorldNpcSpawnServiceTests
 			NullLogger<WorldNpcSpawnService>.Instance);
 	}
 
-	private static WorldNpcSpawnService CreateService(GameWorld world, IStaticPlaceableStateService staticPlaceables, ThreadPoolManager threadPoolManager)
+	private static WorldNpcSpawnService CreateService(
+		GameWorld world,
+		IStaticPlaceableStateService staticPlaceables,
+		ThreadPoolManager threadPoolManager,
+		Func<int, WorldNpc, bool>? respawnedNpcCallback = null)
 	{
 		return new WorldNpcSpawnService(
 			new GameServerRuntimeContext(),
@@ -849,8 +894,12 @@ public sealed class WorldNpcSpawnServiceTests
 			new IDFactory(),
 			gameTimeService: null,
 			threadPoolManager,
+			connectionRegistry: null,
 			staticPlaceables,
-			NullLogger<WorldNpcSpawnService>.Instance);
+			walkerSpawnPlans: null,
+			walkerPlacementApplication: null,
+			NullLogger<WorldNpcSpawnService>.Instance,
+			respawnedNpcCallback: respawnedNpcCallback);
 	}
 
 	private static WorldNpcSpawnService CreateService(GameWorld world, IWorldNpcDropRegistrationLookup dropRegistrationLookup)
