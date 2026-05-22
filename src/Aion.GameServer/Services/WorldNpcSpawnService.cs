@@ -16,6 +16,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 	private readonly IDFactory _idFactory;
 	private readonly GameTimeService? _gameTimeService;
 	private readonly IGameClientConnectionRegistry? _connectionRegistry;
+	private readonly IStaticPlaceableStateService? _staticPlaceables;
 	private readonly ILogger<WorldNpcSpawnService> _logger;
 	private readonly ConcurrentDictionary<NpcSpawnSummary, int> _temporarySpawnObjectIds = new();
 	private int _loadedCount;
@@ -27,6 +28,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		IDFactory idFactory,
 		GameTimeService? gameTimeService,
 		IGameClientConnectionRegistry? connectionRegistry,
+		IStaticPlaceableStateService? staticPlaceables,
 		ILogger<WorldNpcSpawnService> logger)
 	{
 		_runtimeContext = runtimeContext;
@@ -34,6 +36,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		_idFactory = idFactory;
 		_gameTimeService = gameTimeService;
 		_connectionRegistry = connectionRegistry;
+		_staticPlaceables = staticPlaceables;
 		_logger = logger;
 	}
 
@@ -42,8 +45,19 @@ public sealed class WorldNpcSpawnService : GameEngine
 		GameWorld world,
 		IDFactory idFactory,
 		GameTimeService? gameTimeService,
+		IStaticPlaceableStateService? staticPlaceables,
 		ILogger<WorldNpcSpawnService> logger)
-		: this(runtimeContext, world, idFactory, gameTimeService, null, logger)
+		: this(runtimeContext, world, idFactory, gameTimeService, null, staticPlaceables, logger)
+	{
+	}
+
+	public WorldNpcSpawnService(
+		GameServerRuntimeContext runtimeContext,
+		GameWorld world,
+		IDFactory idFactory,
+		GameTimeService? gameTimeService,
+		ILogger<WorldNpcSpawnService> logger)
+		: this(runtimeContext, world, idFactory, gameTimeService, null, null, logger)
 	{
 	}
 
@@ -52,7 +66,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		GameWorld world,
 		IDFactory idFactory,
 		ILogger<WorldNpcSpawnService> logger)
-		: this(runtimeContext, world, idFactory, null, null, logger)
+		: this(runtimeContext, world, idFactory, null, null, null, logger)
 	{
 	}
 
@@ -342,6 +356,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 			return null;
 		}
 
+		_staticPlaceables?.SpawnPlaceableObject(worldNpc.Position.WorldId, worldNpc.StaticId);
 		return objectId;
 	}
 
@@ -356,8 +371,10 @@ public sealed class WorldNpcSpawnService : GameEngine
 				continue;
 
 			if (_temporarySpawnObjectIds.TryRemove(spawn, out var objectId)
-				&& _world.TryRemoveObject(objectId, out _))
+				&& _world.TryRemoveObject(objectId, out var gameObject))
 			{
+				if (gameObject is WorldNpc worldNpc)
+					_staticPlaceables?.DespawnPlaceableObject(worldNpc.Position.WorldId, worldNpc.StaticId);
 				_idFactory.ReleaseId(objectId);
 				changedMapIds.Add(spawn.MapId);
 				despawned++;

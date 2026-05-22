@@ -54,6 +54,28 @@ public sealed class WorldNpcSpawnServiceTests
 	}
 
 	[Fact]
+	public async Task SpawnWorldNpcs_UpdatesStaticPlaceableState()
+	{
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var staticPlaceables = new StaticPlaceableStateService();
+		var service = CreateService(world, staticPlaceables);
+		var spawns = new NpcSpawnTable(
+		[
+			CreateSpawn(210010000, 203070, x: 1, staticId: 107, groupTemporarySchedule: TemporarySpawnSchedule.FromAttributes(null, "2.*.*", "3.*.*")),
+		]);
+		var templates = new NpcTemplateTable([CreateTemplate(203070)]);
+
+		var startup = service.SpawnWorldNpcs(spawns, templates, [210010000], gameMinutes: 2 * 60, serverDayOfWeek: DayOfWeek.Friday);
+		Assert.Equal(new WorldNpcSpawnResult(1, 0), startup);
+		Assert.Equal(1, staticPlaceables.GetSpawnCount(210010000, 107));
+
+		var despawn = await service.ProcessTemporarySpawnHourChangeAsync(spawns, templates, [210010000], gameMinutes: 3 * 60, serverDayOfWeek: DayOfWeek.Friday);
+
+		Assert.Equal(new TemporarySpawnHourChangeResult(0, 1, 1), despawn);
+		Assert.Equal(0, staticPlaceables.GetSpawnCount(210010000, 107));
+	}
+
+	[Fact]
 	public void SpawnWorldNpcs_ActivatesOnlyPoolSizeSpotsForValidPool()
 	{
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);
@@ -215,6 +237,17 @@ public sealed class WorldNpcSpawnServiceTests
 			new GameServerRuntimeContext(),
 			world,
 			new IDFactory(),
+			NullLogger<WorldNpcSpawnService>.Instance);
+	}
+
+	private static WorldNpcSpawnService CreateService(GameWorld world, IStaticPlaceableStateService staticPlaceables)
+	{
+		return new WorldNpcSpawnService(
+			new GameServerRuntimeContext(),
+			world,
+			new IDFactory(),
+			gameTimeService: null,
+			staticPlaceables,
 			NullLogger<WorldNpcSpawnService>.Instance);
 	}
 

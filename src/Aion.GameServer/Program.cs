@@ -34,6 +34,7 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<GameWorld>();
 			services.AddSingleton<GameTimeService>();
 			services.AddSingleton<IHouseDoorStateService, HouseDoorStateService>();
+			services.AddSingleton<IStaticPlaceableStateService, StaticPlaceableStateService>();
 			services.AddSingleton<PeriodicSaveService>();
 			services.AddSingleton<HousingWorldService>();
 			services.AddSingleton<WorldNpcSpawnService>();
