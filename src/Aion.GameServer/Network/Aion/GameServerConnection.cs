@@ -355,8 +355,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmStartLoot startLoot:
 				await HandleStartLootAsync(startLoot);
 				break;
-			case CmLootItem:
-				// Java parity: network/aion/clientpackets/CM_LOOT_ITEM.runImpl dispatches DropService.requestDropItem; deferred until item collection/distribution is ported.
+			case CmLootItem lootItem:
+				await HandleLootItemAsync(lootItem);
 				break;
 			case CmSubzoneChange:
 				// Java parity: network/aion/clientpackets/CM_SUBZONE_CHANGE.runImpl revalidates zones; deferred until zone instances are ported.
@@ -1315,6 +1315,39 @@ public sealed class GameServerConnection : BaseClientConnection
 			1 => _worldNpcLootService.CloseDropList(_activePlayer, packet.TargetObjectId),
 			_ => WorldNpcLootResult.None(WorldNpcLootStatus.UnknownDrop),
 		};
+
+		foreach (var responsePacket in result.PlayerPackets)
+			await SendPacketAsync(responsePacket);
+
+		foreach (var broadcastPacket in result.VisiblePlayerPackets)
+		{
+			if (_connectionRegistry != null)
+			{
+				await _connectionRegistry.BroadcastToVisiblePlayersAsync(
+					_activePlayer.Position,
+					_activePlayer.ObjectId,
+					broadcastPacket,
+					includeSourcePlayer: true);
+			}
+			else
+			{
+				await SendPacketAsync(broadcastPacket);
+			}
+		}
+	}
+
+	private async Task HandleLootItemAsync(CmLootItem packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_LOOT_ITEM.runImpl dispatches DropService.requestDropItem.
+		if (_activePlayer == null || _worldNpcLootService == null)
+			return;
+
+		var result = _worldNpcLootService.RequestDropItem(
+			_activePlayer,
+			packet.TargetObjectId,
+			packet.Index,
+			_runtimeContext?.DataManager?.StaticData.ItemTemplates,
+			() => _idFactory?.NextId() ?? 0);
 
 		foreach (var responsePacket in result.PlayerPackets)
 			await SendPacketAsync(responsePacket);

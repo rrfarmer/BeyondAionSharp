@@ -1,5 +1,6 @@
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Dataholders;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 
@@ -110,6 +111,70 @@ public sealed class WorldNpcLootServiceTests
 		Assert.Equal(1002, status.LootEffectId);
 	}
 
+	[Fact]
+	public void RequestDropItem_AddsSoloItemAndRefreshesRemainingDropList()
+	{
+		var dropRegistration = new WorldNpcDropRegistrationService();
+		var collectedDrop = new WorldNpcDropItem(1, 182400002, 2);
+		var remainingDrop = new WorldNpcDropItem(2, 182400003, 1);
+		dropRegistration.RegisterDrop(5001, looterObjectId: 1001, drops: [collectedDrop, remainingDrop]);
+		var service = new WorldNpcLootService(dropRegistration);
+		var player = CreatePlayer(1001);
+		Assert.Equal(WorldNpcLootStatus.Opened, service.RequestDropList(player, 5001).Status);
+
+		var result = service.RequestDropItem(player, 5001, itemIndex: 1, CreateItemTemplates(), () => 9001);
+
+		Assert.Equal(WorldNpcLootStatus.ItemCollected, result.Status);
+		var item = Assert.Single(player.InventoryItems);
+		Assert.Equal(9001, item.ObjectId);
+		Assert.Equal(182400002, item.ItemId);
+		Assert.Equal(2, item.Count);
+		Assert.Contains(result.PlayerPackets, packet => packet is SmInventoryAddItem);
+		var itemList = Assert.IsType<SmLootItemList>(result.PlayerPackets.Last());
+		Assert.Equal([remainingDrop], itemList.DropItems);
+		Assert.Equal([remainingDrop], dropRegistration.GetCurrentDrops(5001));
+		Assert.True(player.IsLooting);
+		Assert.Empty(result.VisiblePlayerPackets);
+	}
+
+	[Fact]
+	public void RequestDropItem_ClosesLootListWhenLastDropIsCollected()
+	{
+		var dropRegistration = new WorldNpcDropRegistrationService();
+		dropRegistration.RegisterDrop(5001, looterObjectId: 1001, drops: [new WorldNpcDropItem(1, 182400002, 1)]);
+		var service = new WorldNpcLootService(dropRegistration);
+		var player = CreatePlayer(1001);
+		Assert.Equal(WorldNpcLootStatus.Opened, service.RequestDropList(player, 5001).Status);
+
+		var result = service.RequestDropItem(player, 5001, itemIndex: 1, CreateItemTemplates(), () => 9001);
+
+		Assert.Equal(WorldNpcLootStatus.ItemCollected, result.Status);
+		var closeStatus = Assert.IsType<SmLootStatus>(result.PlayerPackets.Last());
+		Assert.Equal(SmLootStatusType.CloseDropList, closeStatus.Status);
+		Assert.False(player.IsLooting);
+		Assert.Equal(0, player.LootingNpcObjectId);
+		Assert.Empty(dropRegistration.GetCurrentDrops(5001));
+		Assert.True(dropRegistration.TryGetRegistration(5001, out var registration));
+		Assert.Null(registration!.LootingPlayerObjectId);
+		Assert.Single(result.VisiblePlayerPackets);
+	}
+
+	[Fact]
+	public void RequestDropItem_DefersTeamDistribution()
+	{
+		var dropRegistration = new WorldNpcDropRegistrationService();
+		dropRegistration.RegisterDrop(5001, looterObjectId: 1001, drops: [new WorldNpcDropItem(1, 182400002, 1)]);
+		var service = new WorldNpcLootService(dropRegistration);
+		var player = CreatePlayer(1001);
+		player.TeamMembership = PlayerTeamMembership.Group;
+
+		var result = service.RequestDropItem(player, 5001, itemIndex: 1, CreateItemTemplates(), () => 9001);
+
+		Assert.Equal(WorldNpcLootStatus.TeamDistributionPending, result.Status);
+		Assert.Empty(player.InventoryItems);
+		Assert.Single(dropRegistration.GetCurrentDrops(5001));
+	}
+
 	private static Player CreatePlayer(int objectId)
 	{
 		return new Player
@@ -117,5 +182,38 @@ public sealed class WorldNpcLootServiceTests
 			ObjectId = objectId,
 			CreatureState = PlayerCreatureState.Active,
 		};
+	}
+
+	private static ItemTemplateTable CreateItemTemplates()
+	{
+		return new ItemTemplateTable(
+		[
+			new ItemTemplateSummary(
+				TemplateId: 182400002,
+				Name: "drop_item",
+				DescriptionId: 0,
+				Mask: 0,
+				Level: 1,
+				ItemGroup: "NORMAL",
+				ItemType: "NORMAL",
+				Quality: "COMMON",
+				Race: "ALL",
+				MaxStackCount: 100,
+				Price: 0,
+				ValidEquipmentSlots: 0),
+			new ItemTemplateSummary(
+				TemplateId: 182400003,
+				Name: "remaining_item",
+				DescriptionId: 0,
+				Mask: 0,
+				Level: 1,
+				ItemGroup: "NORMAL",
+				ItemType: "NORMAL",
+				Quality: "COMMON",
+				Race: "ALL",
+				MaxStackCount: 100,
+				Price: 0,
+				ValidEquipmentSlots: 0),
+		]);
 	}
 }

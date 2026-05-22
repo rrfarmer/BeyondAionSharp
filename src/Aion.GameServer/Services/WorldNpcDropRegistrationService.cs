@@ -34,6 +34,33 @@ public sealed class WorldNpcDropRegistrationService : IWorldNpcDropRegistrationL
 		return _currentDropMap.TryGetValue(npcObjectId, out var drops) ? drops : Array.Empty<WorldNpcDropItem>();
 	}
 
+	public bool TryGetCurrentDrop(int npcObjectId, int itemIndex, out WorldNpcDropItem? dropItem)
+	{
+		// Java parity: DropService.requestDropItem scans the synchronized currentDropMap set by drop index.
+		if (_currentDropMap.TryGetValue(npcObjectId, out var drops))
+		{
+			dropItem = drops.FirstOrDefault(drop => drop.Index == itemIndex);
+			return dropItem != null;
+		}
+
+		dropItem = null;
+		return false;
+	}
+
+	public IReadOnlyList<WorldNpcDropItem> ApplyCollectedCount(int npcObjectId, int itemIndex, long remainingCount)
+	{
+		// Java parity: DropService.requestDropItem updates DropItem.count and removes it when count reaches zero.
+		if (!_currentDropMap.TryGetValue(npcObjectId, out var drops))
+			return Array.Empty<WorldNpcDropItem>();
+
+		var updatedDrops = drops
+			.Select(drop => drop.Index == itemIndex ? drop with { Count = remainingCount } : drop)
+			.Where(drop => drop.Count > 0)
+			.ToArray();
+		_currentDropMap[npcObjectId] = updatedDrops;
+		return updatedDrops;
+	}
+
 	public bool TryGetRegistration(int npcObjectId, out WorldNpcDropRegistration? registration)
 	{
 		return _dropRegistrationMap.TryGetValue(npcObjectId, out registration);
