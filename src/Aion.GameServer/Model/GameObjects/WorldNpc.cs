@@ -25,7 +25,13 @@ public sealed record WorldNpc(
 	NpcTemplateSummary Template,
 	WorldPosition Position,
 	int State = WorldNpcState.DefaultSpawnState,
-	string AiName = "") : IWorldNpcObject;
+	string AiName = "",
+	int RespawnSeconds = 0,
+	int StaticId = 0,
+	int RandomWalkRange = 0,
+	string WalkerId = "",
+	int WalkerIndex = 0,
+	string Anchor = "") : IWorldNpcObject;
 
 public static class WorldNpcState
 {

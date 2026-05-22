@@ -16,7 +16,7 @@ public sealed class WorldNpcSpawnServiceTests
 		var service = CreateService(world);
 		var spawns = new NpcSpawnTable(
 		[
-			CreateSpawn(210010000, 203000, x: 10, y: 20, z: 30, heading: 40),
+			CreateSpawn(210010000, 203000, x: 10, y: 20, z: 30, heading: 40, staticId: 107, randomWalkRange: 7, walkerId: "path-a", walkerIndex: 3, anchor: "anchor-a"),
 			CreateSpawn(210010000, 400001),
 			CreateSpawn(210010000, 203001, handler: "STATIC"),
 			CreateSpawn(210010000, 203002, poolSize: 2),
@@ -41,6 +41,12 @@ public sealed class WorldNpcSpawnServiceTests
 		Assert.Equal(203000, npc.TemplateId);
 		Assert.Equal(new global::Aion.GameServer.World.WorldPosition(210010000, 10, 20, 30, 40), npc.Position);
 		Assert.Equal(WorldNpcState.DefaultSpawnState, npc.State);
+		Assert.Equal(295, npc.RespawnSeconds);
+		Assert.Equal(107, npc.StaticId);
+		Assert.Equal(7, npc.RandomWalkRange);
+		Assert.Equal("path-a", npc.WalkerId);
+		Assert.Equal(3, npc.WalkerIndex);
+		Assert.Equal("anchor-a", npc.Anchor);
 		Assert.Equal(2, world.GetNpcs().Count);
 		Assert.Contains(world.GetNpcs(), worldNpc => worldNpc.ObjectId == npc.ObjectId);
 		Assert.Equal(2, world.GetNpcs(210010000).Count);
@@ -224,6 +230,11 @@ public sealed class WorldNpcSpawnServiceTests
 		string handler = "",
 		int state = 0,
 		string aiName = "",
+		int staticId = 0,
+		int randomWalkRange = 0,
+		string walkerId = "",
+		int walkerIndex = 0,
+		string anchor = "",
 		TemporarySpawnSchedule? groupTemporarySchedule = null,
 		TemporarySpawnSchedule? spotTemporarySchedule = null)
 	{
@@ -238,11 +249,11 @@ public sealed class WorldNpcSpawnServiceTests
 			poolSize,
 			difficultId,
 			handler,
-			0,
-			0,
-			string.Empty,
-			0,
-			string.Empty,
+			staticId,
+			randomWalkRange,
+			walkerId,
+			walkerIndex,
+			anchor,
 			state,
 			aiName,
 			false,
