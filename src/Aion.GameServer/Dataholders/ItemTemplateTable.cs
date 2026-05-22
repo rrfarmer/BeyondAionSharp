@@ -95,7 +95,8 @@ public sealed record ItemTemplateSummary(
 	ItemDyeActionInfo? DyeAction = null,
 	ItemAnimationActionInfo? AnimationAction = null,
 	string CosmeticActionName = "",
-	bool HasDecomposeAction = false)
+	bool HasDecomposeAction = false,
+	int ExtraInventoryId = -1)
 {
 	private const int CanPolishMask = 1 << 17;
 	private const int SoulBoundMask = 1 << 7;

@@ -673,6 +673,13 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 3 && reader.LocalName == "inventory" && currentItemTemplate != null)
+			{
+				// Java parity: model/templates/item/ExtraInventory id used by Storage.isFullSpecialCube.
+				currentItemTemplate.ExtraInventoryId = ReadIntAttribute(reader, "id");
+				continue;
+			}
+
 			if (reader.Depth == 4 && reader.LocalName == "ride" && currentItemTemplate != null)
 			{
 				// Java parity: model/templates/item/actions/RideAction.npcId.
@@ -1596,6 +1603,8 @@ public sealed class StaticData
 
 		public int DispositionItemCount { get; set; }
 
+		public int ExtraInventoryId { get; set; } = -1;
+
 		public int CraftLearnRecipeId { get; set; }
 
 		public ItemSkillLearnActionInfo? SkillLearnAction { get; set; }
@@ -1730,7 +1739,8 @@ public sealed class StaticData
 				DyeAction,
 				AnimationAction,
 				CosmeticActionName,
-				HasDecomposeAction);
+				HasDecomposeAction,
+				ExtraInventoryId);
 		}
 
 		private static int CalculateMaxTuneCount(

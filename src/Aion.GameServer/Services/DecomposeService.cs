@@ -95,9 +95,28 @@ public static class DecomposeService
 				: DecomposeCanActResult.Failed(DecomposeFailure.CannotDecompose);
 		}
 
-		return InventoryCapacity.HasFreeCubeSlot(player)
-			? DecomposeCanActResult.Success(selectable: false)
-			: DecomposeCanActResult.Failed(DecomposeFailure.InventoryFull);
+		if (!InventoryCapacity.HasFreeCubeSlot(player, staticData.ItemTemplates)
+			|| !InventoryCapacity.HasFreeSpecialCubeSlot(player, staticData.ItemTemplates)
+			&& ContainsSpecialCubeItems(itemGroups, player, staticData))
+		{
+			return DecomposeCanActResult.Failed(DecomposeFailure.InventoryFull);
+		}
+
+		return DecomposeCanActResult.Success(selectable: false);
+	}
+
+	private static bool ContainsSpecialCubeItems(
+		IReadOnlyList<ExtractedItemsCollectionSummary> itemGroups,
+		Player player,
+		StaticData staticData)
+	{
+		// Java parity: DecomposeAction.containsSpecialCubeItems checks level-suitable fixed rewards only.
+		var playerLevel = Math.Max(1, staticData.PlayerExperienceTable.GetLevelForExp(player.Exp));
+		return itemGroups
+			.Where(collection => collection.MinLevel <= playerLevel && collection.MaxLevel >= playerLevel)
+			.SelectMany(collection => collection.Items)
+			.Where(item => IsObtainableFor(player, item))
+			.Any(item => staticData.ItemTemplates.GetItemTemplate(item.ItemId)?.ExtraInventoryId > 0);
 	}
 
 	public static IReadOnlyList<ResultedItemSummary>? GetSelectableItems(Player player, DecomposableItemTable decomposableItems, int itemId)
