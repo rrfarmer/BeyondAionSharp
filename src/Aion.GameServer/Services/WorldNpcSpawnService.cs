@@ -372,11 +372,12 @@ public sealed class WorldNpcSpawnService : GameEngine
 	private int? SpawnNpc(NpcSpawnSummary spawn, NpcTemplateSummary template)
 	{
 		var objectId = _idFactory.NextId();
+		var position = new global::Aion.GameServer.World.WorldPosition(spawn.MapId, spawn.X, spawn.Y, spawn.Z, spawn.Heading);
 		var worldNpc = new WorldNpc(
 			objectId,
 			template.TemplateId,
 			template,
-			new global::Aion.GameServer.World.WorldPosition(spawn.MapId, spawn.X, spawn.Y, spawn.Z, spawn.Heading),
+			position,
 			WorldNpcState.FromTemplateAndSpawn(template, spawn.State),
 			WorldNpcAiName.FromTemplateAndSpawn(template, spawn.AiName),
 			spawn.RespawnSeconds,
@@ -384,7 +385,8 @@ public sealed class WorldNpcSpawnService : GameEngine
 			spawn.RandomWalkRange,
 			spawn.WalkerId,
 			spawn.WalkerIndex,
-			spawn.Anchor);
+			spawn.Anchor,
+			position);
 		if (!_world.TryAddObject(objectId, worldNpc))
 		{
 			_idFactory.ReleaseId(objectId);

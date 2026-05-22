@@ -49,6 +49,7 @@ public sealed class WorldNpcSpawnServiceTests
 		Assert.Equal("path-a", npc.WalkerId);
 		Assert.Equal(3, npc.WalkerIndex);
 		Assert.Equal("anchor-a", npc.Anchor);
+		Assert.Equal(npc.Position, npc.SpawnLocation);
 		Assert.Equal(2, world.GetNpcs().Count);
 		Assert.Contains(world.GetNpcs(), worldNpc => worldNpc.ObjectId == npc.ObjectId);
 		Assert.Equal(2, world.GetNpcs(210010000).Count);

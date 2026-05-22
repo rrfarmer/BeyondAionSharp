@@ -130,7 +130,7 @@ public sealed class WorldNpcWalkerFormationOrganizerService
 		IReadOnlyList<WorldNpcWalkerFormationCandidate> candidates)
 	{
 		return candidates
-			.GroupBy(candidate => GetJavaPositionHash(candidate.Npc.Position.X, candidate.Npc.Position.Y))
+			.GroupBy(candidate => GetJavaPositionHash(candidate.Npc.SpawnLocation.X, candidate.Npc.SpawnLocation.Y))
 			.OrderByDescending(group => group.Count())
 			.FirstOrDefault()
 			?.ToArray()
@@ -193,16 +193,17 @@ public sealed record WorldNpcWalkerSpawnCandidate(
 {
 	public static WorldNpcWalkerSpawnCandidate FromNpc(WorldNpc npc, WorldNpcWalkerRoutePlan routePlan)
 	{
+		var spawnLocation = npc.SpawnLocation;
 		return new WorldNpcWalkerSpawnCandidate(
 			npc.ObjectId,
 			npc.TemplateId,
 			routePlan.RouteId,
 			routePlan.VersionRouteId,
-			npc.Position.X,
-			npc.Position.Y,
-			npc.Position.Z,
+			spawnLocation.X,
+			spawnLocation.Y,
+			spawnLocation.Z,
 			npc.WalkerIndex,
-			npc.Position.Heading);
+			spawnLocation.Heading);
 	}
 }
 

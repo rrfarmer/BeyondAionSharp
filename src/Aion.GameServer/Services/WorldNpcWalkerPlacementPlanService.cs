@@ -30,6 +30,7 @@ public sealed class WorldNpcWalkerPlacementPlanService
 			foreach (var member in formation.Members)
 			{
 				var sourceNpc = npcsByObjectId.GetValueOrDefault(member.ObjectId);
+				var spawnLocation = sourceNpc?.SpawnLocation;
 				placements.Add(new WorldNpcWalkerPlacement(
 					member.ObjectId,
 					member.TemplateId,
@@ -37,8 +38,8 @@ public sealed class WorldNpcWalkerPlacementPlanService
 					IsFormationMember: true,
 					member.X,
 					member.Y,
-					sourceNpc?.Position.Z ?? 0,
-					sourceNpc?.Position.Heading ?? 0));
+					spawnLocation?.Z ?? 0,
+					spawnLocation?.Heading ?? 0));
 			}
 		}
 

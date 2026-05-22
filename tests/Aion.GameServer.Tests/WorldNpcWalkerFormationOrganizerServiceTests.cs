@@ -137,6 +137,26 @@ public sealed class WorldNpcWalkerFormationOrganizerServiceTests
 		Assert.Single(result.ActiveFormations);
 	}
 
+	[Fact]
+	public void Organize_GroupsByOriginalSpawnPositionAfterRuntimePlacement()
+	{
+		var service = new WorldNpcWalkerFormationOrganizerService();
+		var templates = CreateWalkerTemplates(
+			new WalkerTemplateSummary("route-a", 2, "SQUARE", "NORMAL", [2], CreateRouteSteps()));
+		var npcs = new[]
+		{
+			CreateNpc(1, "route-a", walkerIndex: 1, x: 10, y: 20, spawnX: 0, spawnY: 0),
+			CreateNpc(2, "route-a", walkerIndex: 2, x: 11, y: 21, spawnX: 0, spawnY: 0),
+		};
+
+		var result = service.Organize(npcs, templates, EmptyVersions());
+
+		Assert.Empty(result.Warnings);
+		var formation = Assert.Single(result.ActiveFormations);
+		Assert.Equal([2, 1], formation.Members.Select(member => member.ObjectId).ToArray());
+		Assert.Equal(0, formation.Members[0].X, precision: 4);
+	}
+
 	private static WalkerTemplateTable CreateWalkerTemplates(params WalkerTemplateSummary[] templates)
 	{
 		return new WalkerTemplateTable(templates);
@@ -161,8 +181,11 @@ public sealed class WorldNpcWalkerFormationOrganizerServiceTests
 		string walkerId,
 		int walkerIndex,
 		float x = 0,
-		float y = 0)
+		float y = 0,
+		float? spawnX = null,
+		float? spawnY = null)
 	{
+		var position = new WorldPosition(210010000, x, y, 3, 0);
 		return new WorldNpc(
 			ObjectId: objectId,
 			TemplateId: 203000,
@@ -176,8 +199,9 @@ public sealed class WorldNpcWalkerFormationOrganizerServiceTests
 				Race: "ELYOS",
 				Tribe: "GENERAL",
 				Type: "GENERAL"),
-			Position: new WorldPosition(210010000, x, y, 3, 0),
+			Position: position,
 			WalkerId: walkerId,
-			WalkerIndex: walkerIndex);
+			WalkerIndex: walkerIndex,
+			SpawnPosition: spawnX.HasValue || spawnY.HasValue ? new WorldPosition(210010000, spawnX ?? x, spawnY ?? y, 3, 0) : null);
 	}
 }

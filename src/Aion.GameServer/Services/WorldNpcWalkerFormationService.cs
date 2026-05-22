@@ -26,7 +26,7 @@ public sealed class WorldNpcWalkerFormationService
 		var members = npcs
 			.OrderByDescending(npc => npc.WalkerIndex)
 			.ToArray();
-		var origin = new WalkerPoint(members[0].Position.X, members[0].Position.Y);
+		var origin = new WalkerPoint(members[0].SpawnLocation.X, members[0].SpawnLocation.Y);
 		var destination = new WalkerPoint(routePlan.RouteSteps[1].X, routePlan.RouteSteps[1].Y);
 		var formedMembers = routePlan.Rows.Count == 1
 			? FormLine(members, origin, destination)
@@ -188,7 +188,7 @@ public sealed record WorldNpcWalkerFormationResult(
 			status,
 			routeId,
 			versionRouteId,
-			npcs.Select(npc => WorldNpcWalkerFormationMember.FromNpc(npc, new WorldNpcWalkerShift(0, 0), new WalkerPoint(npc.Position.X, npc.Position.Y))).ToArray());
+			npcs.Select(npc => WorldNpcWalkerFormationMember.FromNpc(npc, new WorldNpcWalkerShift(0, 0), new WalkerPoint(npc.SpawnLocation.X, npc.SpawnLocation.Y))).ToArray());
 	}
 }
 

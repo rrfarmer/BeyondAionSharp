@@ -31,7 +31,12 @@ public sealed record WorldNpc(
 	int RandomWalkRange = 0,
 	string WalkerId = "",
 	int WalkerIndex = 0,
-	string Anchor = "") : IWorldNpcObject;
+	string Anchor = "",
+	WorldPosition? SpawnPosition = null) : IWorldNpcObject
+{
+	// Java parity: model/templates/spawns/SpawnTemplate remains the source for walker grouping and respawn placement after runtime position changes.
+	public WorldPosition SpawnLocation => SpawnPosition ?? Position;
+}
 
 public static class WorldNpcState
 {
