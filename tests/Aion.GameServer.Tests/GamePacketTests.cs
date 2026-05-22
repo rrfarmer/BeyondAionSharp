@@ -1051,6 +1051,9 @@ public class GamePacketTests
 		Assert.Equal(
 			Convert.FromHexString("0002"),
 			SerializeUnencryptedPayload(new SmHousePayRent(2)));
+		Assert.Equal(
+			Convert.FromHexString("01"),
+			SerializeUnencryptedPayload(new SmHouseEdit(CmHouseEdit.EnterDecorationMode)));
 		var houseAcquirePayload = SerializeUnencryptedPayload(new SmHouseAcquire(1001, 6001, acquire: true));
 		using var houseAcquireReader = new PacketBuffer(houseAcquirePayload);
 		Assert.Equal(1001, houseAcquireReader.ReadD());
@@ -3940,7 +3943,7 @@ public class GamePacketTests
 	}
 
 	[Fact]
-	public void ClientPacketFactory_ParsesHousingAuctionPackets()
+	public void ClientPacketFactory_ParsesHousingPackets()
 	{
 		var houseSettings = Assert.IsType<CmHouseSettings>(
 			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(73, b =>
@@ -3965,6 +3968,24 @@ public class GamePacketTests
 			}), GameConnectionState.InGame));
 		var payRent = Assert.IsType<CmHousePayRent>(
 			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(223, b => b.WriteC(2)), GameConnectionState.InGame));
+		var enterDecorMode = Assert.IsType<CmHouseEdit>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(82, b => b.WriteC(CmHouseEdit.EnterDecorationMode)), GameConnectionState.InGame));
+		var moveObject = Assert.IsType<CmHouseEdit>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(82, b =>
+			{
+				b.WriteC(CmHouseEdit.MoveObject);
+				b.WriteD(9902);
+				b.WriteF(10.5f);
+				b.WriteF(20.25f);
+				b.WriteF(30.75f);
+				b.WriteH(90);
+			}), GameConnectionState.InGame));
+		var renovate = Assert.IsType<CmHouseEdit>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(82, b =>
+			{
+				b.WriteC(CmHouseEdit.RenovateBuilding);
+				b.WriteD(353000);
+			}), GameConnectionState.InGame));
 
 		Assert.Equal(PlayerHouse.DoorClosedExceptFriends, houseSettings.DoorState);
 		Assert.False(houseSettings.ShowOwnerName);
@@ -3974,7 +3995,17 @@ public class GamePacketTests
 		Assert.Equal(12, placeBid.ListIndex);
 		Assert.Equal(750000, placeBid.BidOffer);
 		Assert.Equal(2, payRent.WeekCount);
+		Assert.Equal(CmHouseEdit.EnterDecorationMode, enterDecorMode.Action);
+		Assert.Equal(CmHouseEdit.MoveObject, moveObject.Action);
+		Assert.Equal(9902, moveObject.ItemObjectId);
+		Assert.Equal(10.5f, moveObject.X);
+		Assert.Equal(20.25f, moveObject.Y);
+		Assert.Equal(30.75f, moveObject.Z);
+		Assert.Equal(90, moveObject.Rotation);
+		Assert.Equal(CmHouseEdit.RenovateBuilding, renovate.Action);
+		Assert.Equal(353000, renovate.BuildingId);
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(73, _ => { }), GameConnectionState.Authed));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(82, b => b.WriteC(1)), GameConnectionState.Authed));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(218, _ => { }), GameConnectionState.Authed));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(223, b => b.WriteC(1)), GameConnectionState.Authed));
 	}

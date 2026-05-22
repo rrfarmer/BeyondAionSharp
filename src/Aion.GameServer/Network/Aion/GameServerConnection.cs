@@ -403,6 +403,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleHouseSettingsAsync(_activePlayer, houseSettings);
 				break;
+			case CmHouseEdit houseEdit:
+				if (_activePlayer != null)
+					await HandleHouseEditAsync(_activePlayer, houseEdit);
+				break;
 			case CmMarkFriendList:
 				if (_activePlayer != null)
 				{
@@ -6214,6 +6218,31 @@ public sealed class GameServerConnection : BaseClientConnection
 			// Java parity: controllers/HouseController.kickVisitors owner notification before CM_HOUSE_SETTINGS door confirmation.
 			await SendPacketAsync(SmSystemMessage.HousingOrderOutAll());
 			await SendPacketAsync(SmSystemMessage.HousingOrderCloseDoorAll());
+		}
+	}
+
+	private async Task HandleHouseEditAsync(Player player, CmHouseEdit packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_HOUSE_EDIT mode entry/exit branches.
+		var activeHouse = GetActiveHouse(player);
+		if (activeHouse == null)
+			return;
+
+		switch (packet.Action)
+		{
+			case CmHouseEdit.EnterDecorationMode:
+			{
+				await SendPacketAsync(new SmHouseEdit(packet.Action));
+				await SendPacketAsync(SmHouseRegistry.CreateRegisteredObjects());
+				var housingTemplates = _runtimeContext?.DataManager?.StaticData.HousingTemplates;
+				await SendPacketAsync(SmHouseRegistry.CreateDecorationItems(housingTemplates, activeHouse.BuildingId));
+				break;
+			}
+			case CmHouseEdit.ExitDecorationMode:
+			case CmHouseEdit.EnterRenovationMode:
+			case CmHouseEdit.ExitRenovationMode:
+				await SendPacketAsync(new SmHouseEdit(packet.Action));
+				break;
 		}
 	}
 
