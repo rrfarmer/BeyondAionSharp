@@ -1,3 +1,4 @@
+using Aion.GameServer.Configuration;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Dataholders.LoadingUtils;
 using Aion.GameServer.Services;
@@ -81,6 +82,110 @@ public sealed class RiftServiceTests
 			var closeAgain = service.CloseRifts(1170);
 			Assert.False(closeAgain.Succeeded);
 			Assert.Equal(RiftServiceStatus.NotOpen, closeAgain.Status);
+		}
+		finally
+		{
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
+	[Fact]
+	public async Task OpenRifts_CreatesJavaShapedPortalState()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-rift-service-portal-state-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(
+				tempPath,
+				"""
+				<rift_location id="1170" world="110070000" />
+				<rift_location id="2176" world="210070000" has_spawns="true" />
+				""",
+				"""
+				<spawn_map map_id="110070000">
+					<rift_spawn id="1170" world="110070000">
+						<spawn npc_id="730100">
+							<spot x="1" y="2" z="3" anchor="KAISINEL_AM" />
+						</spawn>
+					</rift_spawn>
+				</spawn_map>
+				<spawn_map map_id="120080000">
+					<rift_spawn id="1170" world="120080000">
+						<spawn npc_id="730101">
+							<spot x="5" y="6" z="7" anchor="KAISINEL_AS" />
+						</spawn>
+					</rift_spawn>
+				</spawn_map>
+				<spawn_map map_id="210070000">
+					<rift_spawn id="2176" world="210070000">
+						<spawn npc_id="730100">
+							<spot x="11" y="12" z="13" anchor="CYGNEA_GM" />
+						</spawn>
+					</rift_spawn>
+				</spawn_map>
+				<spawn_map map_id="220080000">
+					<rift_spawn id="2176" world="220080000">
+						<spawn npc_id="730101">
+							<spot x="15" y="16" z="17" anchor="ENSHAR_GS" />
+						</spawn>
+					</rift_spawn>
+				</spawn_map>
+				""");
+			var idFactory = new IDFactory();
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			var manager = new RiftManagerService(context, world, idFactory);
+			var options = new GameServerOptions
+			{
+				Custom = new GameServerCustomOptions
+				{
+					RiftDuration = 2,
+					VortexDuration = 3,
+				},
+			};
+			var now = DateTimeOffset.FromUnixTimeSeconds(1000);
+			var service = new RiftService(context, manager, world, idFactory, options, () => now);
+
+			var vortexOpen = service.OpenRifts(1170, guards: false);
+			var volatileOpen = service.OpenRifts(2176, guards: true);
+
+			var vortexPortal = Assert.Single(vortexOpen.Locations).Portal;
+			Assert.NotNull(vortexPortal);
+			Assert.Equal("KAISINEL_AM", vortexPortal.MasterNpc.Anchor);
+			Assert.Equal("KAISINEL_AS", vortexPortal.SlaveNpc.Anchor);
+			Assert.Equal(24, vortexPortal.MaxEntries);
+			Assert.Equal(45, vortexPortal.MinLevel);
+			Assert.Equal(65, vortexPortal.MaxLevel);
+			Assert.Equal("ASMODIANS", vortexPortal.DestinationRace);
+			Assert.True(vortexPortal.IsVortex);
+			Assert.False(vortexPortal.IsVolatile);
+			Assert.False(vortexPortal.IsInvasion);
+			Assert.Equal(1000 + 3 * 3600, vortexPortal.DespawnTimeUnixSeconds);
+			Assert.Equal(3 * 3600, vortexPortal.GetRemainTime(now));
+
+			var volatilePortal = Assert.Single(volatileOpen.Locations).Portal;
+			Assert.NotNull(volatilePortal);
+			Assert.Equal("CYGNEA_GM", volatilePortal.MasterNpc.Anchor);
+			Assert.Equal("ENSHAR_GS", volatilePortal.SlaveNpc.Anchor);
+			Assert.Equal(144, volatilePortal.MaxEntries);
+			Assert.Equal(60, volatilePortal.MinLevel);
+			Assert.Equal(65, volatilePortal.MaxLevel);
+			Assert.False(volatilePortal.IsVortex);
+			Assert.True(volatilePortal.IsVolatile);
+			Assert.False(volatilePortal.IsInvasion);
+			Assert.Equal(1000 + 2 * 3600, volatilePortal.DespawnTimeUnixSeconds);
+			volatilePortal.SyncPassed(isInvasion: false);
+			Assert.Equal(1, volatilePortal.UsedEntries);
+			volatilePortal.SyncPassed(isInvasion: false);
+			Assert.Equal(2, volatilePortal.UsedEntries);
+			volatilePortal.SyncPassed(isInvasion: true, passedPlayerCount: 7);
+			Assert.Equal(7, volatilePortal.UsedEntries);
 		}
 		finally
 		{

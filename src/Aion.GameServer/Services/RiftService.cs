@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Aion.GameServer.Configuration;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Utils.IdFactory;
@@ -12,18 +13,24 @@ public sealed class RiftService
 	private readonly RiftManagerService _riftManager;
 	private readonly GameWorld _world;
 	private readonly IDFactory _idFactory;
+	private readonly GameServerOptions _options;
+	private readonly Func<DateTimeOffset> _nowProvider;
 	private readonly ConcurrentDictionary<int, RiftLocationState> _activeRifts = new();
 
 	public RiftService(
 		GameServerRuntimeContext runtimeContext,
 		RiftManagerService riftManager,
 		GameWorld world,
-		IDFactory idFactory)
+		IDFactory idFactory,
+		GameServerOptions? options = null,
+		Func<DateTimeOffset>? nowProvider = null)
 	{
 		_runtimeContext = runtimeContext;
 		_riftManager = riftManager;
 		_world = world;
 		_idFactory = idFactory;
+		_options = options ?? new GameServerOptions();
+		_nowProvider = nowProvider ?? (() => DateTimeOffset.UtcNow);
 	}
 
 	public int ActiveRiftCount => _activeRifts.Count;
@@ -77,6 +84,7 @@ public sealed class RiftService
 			state.Definition = spawnResult.Definition;
 			foreach (var npc in spawnResult.SpawnedNpcs)
 				state.AddSpawned(npc);
+			state.Portal = CreatePortalState(spawnResult, guards);
 
 			opened.Add(state);
 			spawnResults.Add(spawnResult);
@@ -108,6 +116,7 @@ public sealed class RiftService
 			}
 
 			state.ClearSpawned();
+			state.Portal = null;
 			closed.Add(state);
 		}
 
@@ -173,6 +182,31 @@ public sealed class RiftService
 	{
 		return id < 10000;
 	}
+
+	private RiftPortalState? CreatePortalState(RiftSpawnResult spawnResult, bool guardsRequested)
+	{
+		// Java parity: controllers/RVController constructor copies RiftEnum entry/level/type metadata and computes despawn time.
+		if (!spawnResult.Spawned || spawnResult.Definition == null || spawnResult.SpawnedNpcs.Count < 2)
+			return null;
+
+		var definition = spawnResult.Definition;
+		var slave = spawnResult.SpawnedNpcs
+			.FirstOrDefault(npc => string.Equals(npc.Anchor, definition.SlaveAnchor, StringComparison.Ordinal))
+			?? spawnResult.SpawnedNpcs[0];
+		var master = spawnResult.SpawnedNpcs
+			.FirstOrDefault(npc => string.Equals(npc.Anchor, definition.MasterAnchor, StringComparison.Ordinal))
+			?? spawnResult.SpawnedNpcs[^1];
+		var durationHours = definition.IsVortex
+			? _options.Custom.VortexDuration
+			: _options.Custom.RiftDuration;
+		var despawnTime = _nowProvider().ToUnixTimeSeconds() + durationHours * 3600;
+		return new RiftPortalState(
+			definition,
+			master,
+			slave,
+			guardsRequested,
+			despawnTime);
+	}
 }
 
 public sealed class RiftLocationState
@@ -191,6 +225,8 @@ public sealed class RiftLocationState
 	public bool GuardsRequested { get; internal set; }
 
 	public RiftDefinition? Definition { get; internal set; }
+
+	public RiftPortalState? Portal { get; internal set; }
 
 	public int SpawnedCount => _spawned.Count;
 
@@ -211,6 +247,61 @@ public sealed class RiftLocationState
 	{
 		// Java parity: services/RiftService.closeRift clears RiftLocation.spawned after despawn/cancel-respawn work.
 		_spawned.Clear();
+	}
+}
+
+public sealed class RiftPortalState
+{
+	public RiftPortalState(
+		RiftDefinition definition,
+		WorldNpc masterNpc,
+		WorldNpc slaveNpc,
+		bool guardsRequested,
+		long despawnTimeUnixSeconds)
+	{
+		Definition = definition;
+		MasterNpc = masterNpc;
+		SlaveNpc = slaveNpc;
+		GuardsRequested = guardsRequested;
+		DespawnTimeUnixSeconds = despawnTimeUnixSeconds;
+	}
+
+	public RiftDefinition Definition { get; }
+
+	public WorldNpc MasterNpc { get; }
+
+	public WorldNpc SlaveNpc { get; }
+
+	public bool GuardsRequested { get; }
+
+	public long DespawnTimeUnixSeconds { get; }
+
+	public int MaxEntries => Definition.Entries;
+
+	public int MinLevel => Definition.MinLevel;
+
+	public int MaxLevel => Definition.MaxLevel;
+
+	public string DestinationRace => Definition.DestinationRace;
+
+	public bool IsVortex => Definition.IsVortex;
+
+	public bool IsVolatile => Definition.CanBeVolatile && GuardsRequested;
+
+	public bool IsInvasion => Definition.IsInvasionRift;
+
+	public int UsedEntries { get; private set; }
+
+	public int GetRemainTime(DateTimeOffset now)
+	{
+		// Java parity: controllers/RVController.getRemainTime returns despawnTimeSeconds - currentUnixSeconds.
+		return (int)(DespawnTimeUnixSeconds - now.ToUnixTimeSeconds());
+	}
+
+	public void SyncPassed(bool isInvasion, int passedPlayerCount = 0)
+	{
+		// Java parity: controllers/RVController.syncPassed mutates usedEntries before rift info sync.
+		UsedEntries = isInvasion ? passedPlayerCount : UsedEntries + 1;
 	}
 }
 
