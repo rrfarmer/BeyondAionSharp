@@ -161,6 +161,21 @@ public sealed class WorldNpcLootService
 		return new SmLootStatus(npcObjectId, SmLootStatusType.LootEnable, lootEffectId);
 	}
 
+	public SmLootStatus? CreateLootEnableStatusForSeenNpc(Player? player, IWorldNpcObject? npc)
+	{
+		// Java parity: services/drop/DropService.see sends LOOT_ENABLE when a player sees a dead NPC they can loot.
+		if (player == null
+			|| npc == null
+			|| !_dropRegistrationService.TryGetRegistration(npc.ObjectId, out var registration)
+			|| registration == null
+			|| !registration.IsAllowedToLoot(player.ObjectId))
+		{
+			return null;
+		}
+
+		return CreateLootEnableStatus(npc.ObjectId);
+	}
+
 	private void ResumeDecayAfterClose(int npcObjectId, WorldNpcDropRegistration registration)
 	{
 		// Java parity: DropService.closeDropList resumes RespawnService.scheduleDecayTask with the remaining delay.

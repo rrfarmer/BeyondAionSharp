@@ -353,6 +353,12 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 			{
 				await connection.SendPacketAsync(new SmNpcInfo(npc));
 				sent++;
+				var lootStatus = _worldNpcLootService?.CreateLootEnableStatusForSeenNpc(player, npc);
+				if (lootStatus != null)
+				{
+					await connection.SendPacketAsync(lootStatus);
+					sent++;
+				}
 			}
 
 			foreach (var objectId in delta.DisappearedObjectIds)

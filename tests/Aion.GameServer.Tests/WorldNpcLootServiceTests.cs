@@ -117,6 +117,42 @@ public sealed class WorldNpcLootServiceTests
 	}
 
 	[Fact]
+	public void CreateLootEnableStatusForSeenNpc_SendsStatusWhenPlayerCanLoot()
+	{
+		var dropRegistration = new WorldNpcDropRegistrationService();
+		dropRegistration.RegisterDrop(
+			5001,
+			looterObjectId: 1001,
+			drops: [new WorldNpcDropItem(1, 166020000, 1)]);
+		var service = new WorldNpcLootService(dropRegistration);
+		var player = CreatePlayer(1001);
+		var npc = CreateNpc(5001);
+
+		var status = service.CreateLootEnableStatusForSeenNpc(player, npc);
+
+		Assert.NotNull(status);
+		Assert.Equal(SmLootStatusType.LootEnable, status.Status);
+		Assert.Equal(1003, status.LootEffectId);
+	}
+
+	[Fact]
+	public void CreateLootEnableStatusForSeenNpc_SkipsPlayersWithoutLootRights()
+	{
+		var dropRegistration = new WorldNpcDropRegistrationService();
+		dropRegistration.RegisterDrop(
+			5001,
+			looterObjectId: 1001,
+			drops: [new WorldNpcDropItem(1, 166020000, 1)]);
+		var service = new WorldNpcLootService(dropRegistration);
+		var player = CreatePlayer(1002);
+		var npc = CreateNpc(5001);
+
+		var status = service.CreateLootEnableStatusForSeenNpc(player, npc);
+
+		Assert.Null(status);
+	}
+
+	[Fact]
 	public void RequestDropItem_AddsSoloItemAndRefreshesRemainingDropList()
 	{
 		var dropRegistration = new WorldNpcDropRegistrationService();
@@ -299,6 +335,15 @@ public sealed class WorldNpcLootServiceTests
 			ObjectId = objectId,
 			CreatureState = PlayerCreatureState.Active,
 		};
+	}
+
+	private static WorldNpc CreateNpc(int objectId)
+	{
+		return new WorldNpc(
+			objectId,
+			203001,
+			new NpcTemplateSummary(203001, "loot_npc", 0, 1, "NORMAL", "NORMAL", "NONE", "NONE", "NON_ATTACKABLE"),
+			new WorldPosition(210010000, 1, 2, 3, 0));
 	}
 
 	private static ItemTemplateTable CreateItemTemplates()
