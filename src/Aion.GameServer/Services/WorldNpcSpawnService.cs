@@ -101,6 +101,39 @@ public sealed class WorldNpcSpawnService : GameEngine
 		return _inactiveWalkerVariants.TryGetValue(objectId, out npc);
 	}
 
+	public bool TrySwapInactiveWalkerVariant(int activeObjectId, int inactiveObjectId)
+	{
+		// Java parity: spawnengine/InstanceWalkerFormations.changeWalker spawns one not-spawned version variant, then despawns the current one.
+		if (!_inactiveWalkerVariants.TryGetValue(inactiveObjectId, out var inactiveNpc)
+			|| !_world.TryGetObject(activeObjectId, out var activeObject)
+			|| activeObject is not WorldNpc activeNpc)
+		{
+			return false;
+		}
+
+		var spawnedInactiveNpc = inactiveNpc with { Position = inactiveNpc.SpawnLocation };
+		if (!_world.TryAddObject(inactiveObjectId, spawnedInactiveNpc))
+			return false;
+
+		if (!_inactiveWalkerVariants.TryRemove(inactiveObjectId, out _))
+		{
+			_world.TryRemoveObject(inactiveObjectId, out _);
+			return false;
+		}
+
+		if (!_world.TryRemoveObject(activeObjectId, out _))
+		{
+			_inactiveWalkerVariants[inactiveObjectId] = inactiveNpc;
+			_world.TryRemoveObject(inactiveObjectId, out _);
+			return false;
+		}
+
+		_inactiveWalkerVariants[activeObjectId] = activeNpc;
+		_staticPlaceables?.SpawnPlaceableObject(spawnedInactiveNpc.Position.WorldId, spawnedInactiveNpc.StaticId);
+		_staticPlaceables?.DespawnPlaceableObject(activeNpc.Position.WorldId, activeNpc.StaticId);
+		return true;
+	}
+
 	public ValueTask InitAsync(CancellationToken cancellationToken = default)
 	{
 		// Java parity: GameServer.main calls SpawnEngine.spawnAll after DataManager and HousingService startup.

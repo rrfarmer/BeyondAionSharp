@@ -172,6 +172,63 @@ public sealed class WorldNpcSpawnServiceTests
 	}
 
 	[Fact]
+	public async Task TrySwapInactiveWalkerVariant_SpawnsParkedVariantAndParksCurrentVariant()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-walker-swap-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextWithVersionedWalkerDataAsync(tempPath);
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			var walkerPlans = new WorldNpcWalkerSpawnPlanCacheService(
+				new WorldNpcWalkerFormationOrganizerService(),
+				new WorldNpcWalkerVariantSelectionService(count => count - 1));
+			var service = new WorldNpcSpawnService(
+				context,
+				world,
+				new IDFactory(),
+				gameTimeService: null,
+				threadPoolManager: null,
+				connectionRegistry: null,
+				staticPlaceables: null,
+				walkerSpawnPlans: walkerPlans,
+				walkerPlacementApplication: new WorldNpcWalkerPlacementApplicationService(),
+				NullLogger<WorldNpcSpawnService>.Instance);
+			var spawns = new NpcSpawnTable(
+			[
+				CreateSpawn(210010000, 203081, x: 1, y: 10, walkerId: "route-v1", walkerIndex: 0),
+				CreateSpawn(210010000, 203082, x: 2, y: 20, walkerId: "route-v2", walkerIndex: 0),
+			]);
+			var templates = new NpcTemplateTable([CreateTemplate(203081), CreateTemplate(203082)]);
+
+			service.SpawnWorldNpcs(spawns, templates, [210010000]);
+			var swapped = service.TrySwapInactiveWalkerVariant(activeObjectId: 2, inactiveObjectId: 1);
+
+			Assert.True(swapped);
+			Assert.True(world.TryGetObject(1, out var activatedObject));
+			var activatedNpc = Assert.IsType<WorldNpc>(activatedObject);
+			Assert.Equal("route-v1", activatedNpc.WalkerId);
+			Assert.Equal(1, activatedNpc.Position.X);
+			Assert.Equal(10, activatedNpc.Position.Y);
+			Assert.False(world.TryGetObject(2, out _));
+			Assert.True(service.TryGetInactiveWalkerVariant(2, out var parkedNpc));
+			Assert.NotNull(parkedNpc);
+			Assert.Equal("route-v2", parkedNpc.WalkerId);
+			Assert.Equal(1, service.InactiveWalkerVariantCount);
+		}
+		finally
+		{
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
+	[Fact]
 	public async Task SpawnWorldNpcs_UpdatesStaticPlaceableState()
 	{
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);
