@@ -167,6 +167,19 @@ public sealed class WorldNpcLootService
 		return new SmLootStatus(npcObjectId, SmLootStatusType.LootEnable, lootEffectId);
 	}
 
+	public WorldNpcInitialLootEnableResult CreateInitialLootEnableStatus(int npcObjectId)
+	{
+		// Java parity: services/drop/DropRegistrationService.registerDrop sends SM_LOOT_STATUS.LOOT_ENABLE to every allowed looter after registration.
+		if (!_dropRegistrationService.TryGetRegistration(npcObjectId, out var registration) || registration == null)
+			return WorldNpcInitialLootEnableResult.MissingRegistration();
+
+		var looterObjectIds = registration.AllowedLooters.ToArray();
+		if (looterObjectIds.Length == 0)
+			return WorldNpcInitialLootEnableResult.NoAllowedLooters();
+
+		return WorldNpcInitialLootEnableResult.Created(looterObjectIds, CreateLootEnableStatus(npcObjectId));
+	}
+
 	public SmLootStatus? CreateLootEnableStatusForSeenNpc(Player? player, IWorldNpcObject? npc)
 	{
 		// Java parity: services/drop/DropService.see sends LOOT_ENABLE when a player sees a dead NPC they can loot.
@@ -282,6 +295,45 @@ public sealed record WorldNpcLootResult(
 	{
 		return new WorldNpcLootResult(status, Array.Empty<GameServerPacket>(), Array.Empty<GameServerPacket>());
 	}
+}
+
+public sealed record WorldNpcInitialLootEnableResult(
+	WorldNpcInitialLootEnableStatus Status,
+	IReadOnlyList<int> LooterObjectIds,
+	SmLootStatus? LootStatus)
+{
+	public static WorldNpcInitialLootEnableResult Created(
+		IReadOnlyList<int> looterObjectIds,
+		SmLootStatus lootStatus)
+	{
+		return new WorldNpcInitialLootEnableResult(
+			WorldNpcInitialLootEnableStatus.Created,
+			looterObjectIds,
+			lootStatus);
+	}
+
+	public static WorldNpcInitialLootEnableResult MissingRegistration()
+	{
+		return new WorldNpcInitialLootEnableResult(
+			WorldNpcInitialLootEnableStatus.MissingRegistration,
+			Array.Empty<int>(),
+			null);
+	}
+
+	public static WorldNpcInitialLootEnableResult NoAllowedLooters()
+	{
+		return new WorldNpcInitialLootEnableResult(
+			WorldNpcInitialLootEnableStatus.NoAllowedLooters,
+			Array.Empty<int>(),
+			null);
+	}
+}
+
+public enum WorldNpcInitialLootEnableStatus
+{
+	MissingRegistration,
+	NoAllowedLooters,
+	Created,
 }
 
 public enum WorldNpcLootStatus

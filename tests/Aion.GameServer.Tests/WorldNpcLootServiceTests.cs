@@ -117,6 +117,38 @@ public sealed class WorldNpcLootServiceTests
 	}
 
 	[Fact]
+	public void CreateInitialLootEnableStatus_ReturnsAllowedLootersAndLootStatus()
+	{
+		var dropRegistration = new WorldNpcDropRegistrationService();
+		dropRegistration.RegisterDrop(
+			5001,
+			looterObjectId: 1001,
+			drops: [new WorldNpcDropItem(1, 166020000, 1)],
+			allowedLooterObjectIds: [1002]);
+		var service = new WorldNpcLootService(dropRegistration);
+
+		var result = service.CreateInitialLootEnableStatus(5001);
+
+		Assert.Equal(WorldNpcInitialLootEnableStatus.Created, result.Status);
+		Assert.Equal([1001, 1002], result.LooterObjectIds.Order());
+		Assert.NotNull(result.LootStatus);
+		Assert.Equal(SmLootStatusType.LootEnable, result.LootStatus.Status);
+		Assert.Equal(1003, result.LootStatus.LootEffectId);
+	}
+
+	[Fact]
+	public void CreateInitialLootEnableStatus_SkipsMissingRegistration()
+	{
+		var service = new WorldNpcLootService(new WorldNpcDropRegistrationService());
+
+		var result = service.CreateInitialLootEnableStatus(404);
+
+		Assert.Equal(WorldNpcInitialLootEnableStatus.MissingRegistration, result.Status);
+		Assert.Empty(result.LooterObjectIds);
+		Assert.Null(result.LootStatus);
+	}
+
+	[Fact]
 	public void CreateLootEnableStatusForSeenNpc_SendsStatusWhenPlayerCanLoot()
 	{
 		var dropRegistration = new WorldNpcDropRegistrationService();

@@ -12,6 +12,54 @@ namespace Aion.GameServer.Tests;
 public sealed class WorldNpcLootBroadcastServiceTests
 {
 	[Fact]
+	public async Task SendInitialLootEnableAsync_SendsLootStatusToAllowedLooters()
+	{
+		var dropRegistration = new WorldNpcDropRegistrationService();
+		dropRegistration.RegisterDrop(
+			5001,
+			looterObjectId: 1001,
+			drops: [new WorldNpcDropItem(1, 166020000, 1)],
+			allowedLooterObjectIds: [1002, 1003]);
+		var lootService = new WorldNpcLootService(dropRegistration);
+		var registry = new CapturingConnectionRegistry();
+		registry.OnlinePlayerObjectIds.Add(1001);
+		registry.OnlinePlayerObjectIds.Add(1002);
+		var broadcastService = new WorldNpcLootBroadcastService(lootService, registry);
+
+		var result = await broadcastService.SendInitialLootEnableAsync(5001);
+
+		Assert.Equal(new WorldNpcInitialLootBroadcastResult(
+			Broadcasted: true,
+			TargetCount: 3,
+			SentCount: 2,
+			WorldNpcInitialLootEnableStatus.Created), result);
+		Assert.Equal([1001, 1002], registry.SentPackets.Select(delivery => delivery.PlayerObjectId).Order());
+		foreach (var delivery in registry.SentPackets)
+		{
+			var packet = Assert.IsType<SmLootStatus>(delivery.Packet);
+			Assert.Equal(SmLootStatusType.LootEnable, packet.Status);
+			Assert.Equal(1003, packet.LootEffectId);
+		}
+	}
+
+	[Fact]
+	public async Task SendInitialLootEnableAsync_SkipsMissingRegistration()
+	{
+		var lootService = new WorldNpcLootService(new WorldNpcDropRegistrationService());
+		var registry = new CapturingConnectionRegistry();
+		var broadcastService = new WorldNpcLootBroadcastService(lootService, registry);
+
+		var result = await broadcastService.SendInitialLootEnableAsync(404);
+
+		Assert.Equal(new WorldNpcInitialLootBroadcastResult(
+			Broadcasted: false,
+			TargetCount: 0,
+			SentCount: 0,
+			WorldNpcInitialLootEnableStatus.MissingRegistration), result);
+		Assert.Empty(registry.SentPackets);
+	}
+
+	[Fact]
 	public async Task BroadcastFreeForAllAsync_SendsLootEnableToVisiblePlayersWithRaceFilter()
 	{
 		var dropRegistration = new WorldNpcDropRegistrationService();
@@ -108,6 +156,10 @@ public sealed class WorldNpcLootBroadcastServiceTests
 	{
 		public int SentCount { get; init; } = 1;
 
+		public HashSet<int> OnlinePlayerObjectIds { get; } = [];
+
+		public List<PacketDelivery> SentPackets { get; } = [];
+
 		public WorldPosition? SourcePosition { get; private set; }
 
 		public int SourceObjectId { get; private set; }
@@ -136,7 +188,11 @@ public sealed class WorldNpcLootBroadcastServiceTests
 
 		public Task<bool> SendPacketToPlayerAsync(int playerObjectId, GameServerPacket packet)
 		{
-			return Task.FromResult(false);
+			if (!OnlinePlayerObjectIds.Contains(playerObjectId))
+				return Task.FromResult(false);
+
+			SentPackets.Add(new PacketDelivery(playerObjectId, packet));
+			return Task.FromResult(true);
 		}
 
 		public Task<int> BroadcastToWorldAsync(GameServerPacket packet, Func<Player, bool>? filter = null)
@@ -186,4 +242,6 @@ public sealed class WorldNpcLootBroadcastServiceTests
 			return Task.FromResult(false);
 		}
 	}
+
+	private sealed record PacketDelivery(int PlayerObjectId, GameServerPacket Packet);
 }
