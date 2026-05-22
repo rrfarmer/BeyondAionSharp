@@ -427,6 +427,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300370, rankName);
 	}
 
+	public static SmSystemMessage UnequipRankItem(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_UNEQUIP_RANKITEM.
+		return new SmSystemMessage(1401329, itemName);
+	}
+
 	public static SmSystemMessage CannotUseItemInvalidClass()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_CANNOT_USE_ITEM_INVALID_CLASS.

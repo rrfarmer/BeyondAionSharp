@@ -39,6 +39,71 @@ public static class EquipmentService
 		};
 	}
 
+	public static EquipmentChangeResult CheckRankLimitItems(Player player, ItemTemplateTable itemTemplates)
+	{
+		// Java parity: model/gameobjects/player/Equipment.checkRankLimitItems.
+		var inventoryItems = player.InventoryItems.ToList();
+		var updates = new List<InventoryItem>();
+		var rankLimitedItemNames = new List<string>();
+		var powerShardDeactivated = false;
+
+		foreach (var item in inventoryItems
+			.Where(candidate => candidate.Location == CubeStorageId && candidate.IsEquipped)
+			.GroupBy(candidate => candidate.ObjectId)
+			.Select(group => group.First())
+			.ToArray())
+		{
+			var template = itemTemplates.GetItemTemplate(item.ItemId);
+			if (template == null || VerifyRankLimits(player, item, template, itemTemplates))
+				continue;
+
+			var slotsToUnequip = item.Slot;
+			if (item.Slot == MainHand)
+			{
+				var offHand = GetEquippedItemBySlot(inventoryItems, SubHand);
+				var offHandTemplate = offHand == null ? null : itemTemplates.GetItemTemplate(offHand.ItemId);
+				if (offHandTemplate is { IsWeapon: true })
+				{
+					if (InventoryCapacity.GetFreeCubeSlots(player) < 2)
+					{
+						rankLimitedItemNames.Add(GetItemName(template));
+						continue;
+					}
+
+					slotsToUnequip |= SubHand;
+				}
+			}
+
+			foreach (var unequipped in UnEquipSlots(inventoryItems, slotsToUnequip))
+			{
+				updates.Add(unequipped);
+				var unequippedTemplate = itemTemplates.GetItemTemplate(unequipped.ItemId);
+				powerShardDeactivated |= unequippedTemplate != null
+					&& string.Equals(unequippedTemplate.ItemGroup, PowerShardItemGroup, StringComparison.Ordinal);
+			}
+
+			rankLimitedItemNames.Add(GetItemName(template));
+		}
+
+		return updates.Count == 0 && rankLimitedItemNames.Count == 0
+			? EquipmentChangeResult.NoChange()
+			: EquipmentChangeResult.Success(
+				inventoryItems,
+				updates,
+				updates,
+				powerShardDeactivated: powerShardDeactivated,
+				kinahItemUpdate: null,
+				skills: null,
+				addedSkills: Array.Empty<PlayerSkill>(),
+				removedSkills: Array.Empty<PlayerSkill>(),
+				removedStigmaSkillNames: Array.Empty<string>(),
+				hiddenStigmaSkillDeleteMessages: Array.Empty<StigmaHiddenSkillDeleteMessage>())
+			with
+			{
+				RankLimitedUnequippedItemNames = rankLimitedItemNames,
+			};
+	}
+
 	private static EquipmentChangeResult EquipItem(
 		Player player,
 		long slotRead,
@@ -190,6 +255,21 @@ public static class EquipmentService
 		var requiredSkills = template.RequiredEquipSkills;
 		return requiredSkills.Count == 0
 			|| requiredSkills.Any(requiredSkill => player.Skills.Any(skill => skill.SkillId == requiredSkill));
+	}
+
+	private static bool VerifyRankLimits(
+		Player player,
+		InventoryItem item,
+		ItemTemplateSummary template,
+		ItemTemplateTable itemTemplates)
+	{
+		// Java parity: model/gameobjects/player/Equipment.verifyRankLimits.
+		var rank = player.AbyssRank.Rank;
+		if (!template.VerifyRank(rank))
+			return false;
+
+		var fusionTemplate = item.FusionedItem == 0 ? null : itemTemplates.GetItemTemplate(item.FusionedItem);
+		return fusionTemplate == null || fusionTemplate.VerifyRank(rank);
 	}
 
 	private static EquipmentChangeResult UnEquipItem(
@@ -567,7 +647,8 @@ public sealed record EquipmentChangeResult(
 	IReadOnlyList<PlayerSkill>? AddedSkills = null,
 	IReadOnlyList<PlayerSkill>? RemovedSkills = null,
 	IReadOnlyList<string>? RemovedStigmaSkillNames = null,
-	IReadOnlyList<StigmaHiddenSkillDeleteMessage>? HiddenStigmaSkillDeleteMessages = null)
+	IReadOnlyList<StigmaHiddenSkillDeleteMessage>? HiddenStigmaSkillDeleteMessages = null,
+	IReadOnlyList<string>? RankLimitedUnequippedItemNames = null)
 {
 	public IReadOnlyList<PlayerSkill> FinalSkills => Skills ?? Array.Empty<PlayerSkill>();
 
@@ -579,6 +660,8 @@ public sealed record EquipmentChangeResult(
 
 	public IReadOnlyList<StigmaHiddenSkillDeleteMessage> HiddenStigmaSkillRemoveMessages =>
 		HiddenStigmaSkillDeleteMessages ?? Array.Empty<StigmaHiddenSkillDeleteMessage>();
+
+	public IReadOnlyList<string> RankLimitedUnequipMessages => RankLimitedUnequippedItemNames ?? Array.Empty<string>();
 
 	public static EquipmentChangeResult NoChange()
 	{

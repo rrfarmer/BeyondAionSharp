@@ -675,6 +675,7 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.ChangeItemSkinInvalidItem(), 1400089);
 		AssertSystemMessage(SmSystemMessage.CantChangeSkinOppositeRequirement("keep", "skin"), 1400290, "keep", "skin");
 		AssertSystemMessage(SmSystemMessage.CannotUseItemInvalidRank(PlayerAbyssRank.GetRankL10n("ELYOS", 5)), 1300370, PlayerAbyssRank.GetRankL10n("ELYOS", 5));
+		AssertSystemMessage(SmSystemMessage.UnequipRankItem("item"), 1401329, "item");
 		AssertSystemMessage(SmSystemMessage.CannotUseItemInvalidClass(), 1300371);
 		AssertSystemMessage(SmSystemMessage.CannotUseItemTooLowLevel("item", 10), 1300372, "10", "item");
 		AssertSystemMessage(SmSystemMessage.CannotUseItemInvalidRace(), 1300373);

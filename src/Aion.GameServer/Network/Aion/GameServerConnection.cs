@@ -2293,6 +2293,8 @@ public sealed class GameServerConnection : BaseClientConnection
 				hiddenSkillMessage.SecondSkillName));
 		foreach (var addedSkill in change.SkillListUpdates)
 			await SendPacketAsync(new SmSkillList([addedSkill], addedSkill.SkillType >= 3 ? 1402891 : 1300401));
+		foreach (var itemName in change.RankLimitedUnequipMessages)
+			await SendPacketAsync(SmSystemMessage.UnequipRankItem(itemName));
 
 		if (change.RefreshStats)
 			await SendPacketAsync(CreateStatsInfoPacket(player, staticData));
@@ -3213,13 +3215,20 @@ public sealed class GameServerConnection : BaseClientConnection
 		player.AbyssRank = plan.AbyssRankUpdate;
 		await SendPacketAsync(SmSystemMessage.CombatMyAbyssPointGain(plan.AbyssPoints));
 		await SendPacketAsync(new SmAbyssRank(player.AbyssRank));
-		if (oldAbyssRank != player.AbyssRank.Rank && _connectionRegistry != null)
+		if (oldAbyssRank != player.AbyssRank.Rank)
 		{
-			await _connectionRegistry.BroadcastToVisiblePlayersAsync(
-				player.Position,
-				player.ObjectId,
-				SmAbyssRankUpdate.RankChange(player));
-			// Java parity: AbyssPointsService.onRankChanged also checks rank-limited equipment and AbyssSkillService skills.
+			if (_connectionRegistry != null)
+			{
+				await _connectionRegistry.BroadcastToVisiblePlayersAsync(
+					player.Position,
+					player.ObjectId,
+					SmAbyssRankUpdate.RankChange(player));
+			}
+
+			var rankLimitChange = EquipmentService.CheckRankLimitItems(player, staticData.ItemTemplates);
+			if (rankLimitChange.Changed || rankLimitChange.RankLimitedUnequipMessages.Count > 0)
+				await ApplyEquipmentChangeAsync(player, rankLimitChange, staticData.ItemTemplates, staticData);
+			// Java parity: AbyssPointsService.onRankChanged also updates AbyssSkillService skills.
 		}
 	}
 

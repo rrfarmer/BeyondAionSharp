@@ -338,6 +338,72 @@ public sealed class EquipmentServiceTests
 	}
 
 	[Fact]
+	public void CheckRankLimitItems_UnequipsEquippedItemWhenRankFallsOutOfRange()
+	{
+		var player = CreatePlayer(rank: 1);
+		player.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 1001, ItemId = RestrictedSwordId, Location = 0, IsEquipped = true, Slot = 1 },
+		];
+
+		var change = EquipmentService.CheckRankLimitItems(
+			player,
+			CreateItemTemplates(new ItemTemplateSummary(
+				RestrictedSwordId,
+				"Abyss Sword",
+				0,
+				1,
+				1,
+				"SWORD",
+				"NORMAL",
+				"COMMON",
+				"PC_ALL",
+				1,
+				0,
+				3,
+				RequiredLevels: RequiredLevels(1),
+				MinRank: 5,
+				MaxRank: 9)));
+
+		Assert.True(change.Changed);
+		Assert.Equal([(1001, false, 0L)], change.PersistedItems.Select(item => (item.ObjectId, item.IsEquipped, item.Slot)).ToArray());
+		Assert.Equal(["Abyss Sword"], change.RankLimitedUnequipMessages);
+	}
+
+	[Fact]
+	public void CheckRankLimitItems_UsesFusionedItemRankLimits()
+	{
+		var player = CreatePlayer(rank: 1);
+		player.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 1001, ItemId = SwordId, FusionedItem = RestrictedSwordId, Location = 0, IsEquipped = true, Slot = 1 },
+		];
+
+		var change = EquipmentService.CheckRankLimitItems(
+			player,
+			CreateItemTemplates(new ItemTemplateSummary(
+				RestrictedSwordId,
+				"Fused Abyss Sword",
+				0,
+				1,
+				1,
+				"SWORD",
+				"NORMAL",
+				"COMMON",
+				"PC_ALL",
+				1,
+				0,
+				3,
+				RequiredLevels: RequiredLevels(1),
+				MinRank: 5,
+				MaxRank: 9)));
+
+		Assert.True(change.Changed);
+		Assert.Equal([(1001, false, 0L)], change.InventoryUpdateItems.Select(item => (item.ObjectId, item.IsEquipped, item.Slot)).ToArray());
+		Assert.Equal(["Practice Sword"], change.RankLimitedUnequipMessages);
+	}
+
+	[Fact]
 	public void ChangeEquipment_RejectsItemWhenRequiredEquipSkillIsMissing()
 	{
 		var player = CreatePlayer();
