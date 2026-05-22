@@ -27,6 +27,20 @@ public sealed class WorldNpcLootBroadcastService
 			onStarted: BroadcastScheduledFreeForAllAsync);
 	}
 
+	public async ValueTask<WorldNpcRegisteredDropFanoutResult> StartRegisteredDropFanoutAsync(
+		IWorldNpcObject npc,
+		TimeSpan? freeForAllDelay = null,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: services/drop/DropRegistrationService.registerDrop sends initial LOOT_ENABLE packets, then calls DropService.scheduleFreeForAll.
+		var initialLoot = await SendInitialLootEnableAsync(npc.ObjectId, cancellationToken);
+		var freeForAllTask = ScheduleFreeForAllBroadcast(npc, freeForAllDelay);
+		return new WorldNpcRegisteredDropFanoutResult(
+			initialLoot,
+			FreeForAllScheduled: freeForAllTask != null,
+			freeForAllTask);
+	}
+
 	public async ValueTask<WorldNpcInitialLootBroadcastResult> SendInitialLootEnableAsync(
 		int npcObjectId,
 		CancellationToken cancellationToken = default)
@@ -94,3 +108,8 @@ public readonly record struct WorldNpcInitialLootBroadcastResult(
 	int TargetCount,
 	int SentCount,
 	WorldNpcInitialLootEnableStatus Status);
+
+public sealed record WorldNpcRegisteredDropFanoutResult(
+	WorldNpcInitialLootBroadcastResult InitialLoot,
+	bool FreeForAllScheduled,
+	ScheduledTask? FreeForAllTask);

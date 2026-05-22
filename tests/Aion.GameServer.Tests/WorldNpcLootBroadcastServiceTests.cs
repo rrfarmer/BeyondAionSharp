@@ -12,6 +12,48 @@ namespace Aion.GameServer.Tests;
 public sealed class WorldNpcLootBroadcastServiceTests
 {
 	[Fact]
+	public async Task StartRegisteredDropFanoutAsync_SendsInitialLootThenSchedulesFreeForAll()
+	{
+		var dropRegistration = new WorldNpcDropRegistrationService();
+		dropRegistration.RegisterDrop(
+			5001,
+			looterObjectId: 1001,
+			drops: [new WorldNpcDropItem(1, 166020000, 1)]);
+		var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		try
+		{
+			var lootService = new WorldNpcLootService(dropRegistration, threadPoolManager: threadPoolManager);
+			var registry = new CapturingConnectionRegistry();
+			registry.OnlinePlayerObjectIds.Add(1001);
+			var broadcastService = new WorldNpcLootBroadcastService(lootService, registry);
+			var npc = CreateNpc(5001, race: "NONE");
+
+			var result = await broadcastService.StartRegisteredDropFanoutAsync(
+				npc,
+				freeForAllDelay: TimeSpan.FromMilliseconds(10));
+
+			Assert.Equal(new WorldNpcInitialLootBroadcastResult(
+				Broadcasted: true,
+				TargetCount: 1,
+				SentCount: 1,
+				WorldNpcInitialLootEnableStatus.Created), result.InitialLoot);
+			Assert.True(result.FreeForAllScheduled);
+			Assert.NotNull(result.FreeForAllTask);
+			var completed = await Task.WhenAny(result.FreeForAllTask.Completion, Task.Delay(TimeSpan.FromSeconds(1)));
+			Assert.Same(result.FreeForAllTask.Completion, completed);
+			Assert.True(dropRegistration.TryGetRegistration(5001, out var registration));
+			Assert.True(registration!.IsFreeForAll);
+			Assert.Single(registry.SentPackets);
+			var broadcastPacket = Assert.IsType<SmLootStatus>(registry.Packet);
+			Assert.Equal(SmLootStatusType.LootEnable, broadcastPacket.Status);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
 	public async Task SendInitialLootEnableAsync_SendsLootStatusToAllowedLooters()
 	{
 		var dropRegistration = new WorldNpcDropRegistrationService();
