@@ -22,6 +22,82 @@ public sealed class EnchantServiceTests
 	private const int AssuredSupplementItemId = 166150017;
 	private const int WrongLevelSupplementItemId = 166150099;
 	private const int ManastoneOnlySupplementItemId = 166150018;
+	private const int ExtractionToolItemId = 165000001;
+	private const int ArmorItemId = 110100001;
+	private const int EpsilonExtractionStoneItemId = 166000195;
+
+	[Fact]
+	public void CreateBreakItemPlan_BreaksWeaponAndAddsJavaStoneReward()
+	{
+		var player = CreatePlayer(
+			CreateItem(1001, SwordItemId),
+			CreateItem(2001, ExtractionToolItemId, count: 2));
+
+		var plan = EnchantService.CreateBreakItemPlan(
+			player,
+			targetItemObjectId: 1001,
+			extractionToolObjectId: 2001,
+			CreateItemTemplates(),
+			nextObjectId: () => 9001,
+			rollInclusive: (min, max) => min == 0 && max == 10 ? 10 : 4);
+
+		Assert.True(plan.Succeeded);
+		Assert.True(plan.RewardSucceeded);
+		Assert.Equal(1001, plan.DeletedTargetItemObjectId);
+		Assert.Equal(EpsilonExtractionStoneItemId, plan.RewardItemId);
+		Assert.Equal(4, plan.RewardCount);
+		Assert.Equal(1, plan.SourceItemUpdate?.Count);
+		var reward = Assert.Single(plan.AddedRewardItems);
+		Assert.Equal(9001, reward.ObjectId);
+		Assert.Equal(EpsilonExtractionStoneItemId, reward.ItemId);
+		Assert.Equal(4, reward.Count);
+		Assert.DoesNotContain(plan.InventoryItems, item => item.ObjectId == 1001);
+		Assert.Contains(plan.InventoryItems, item => item.ObjectId == 2001 && item.Count == 1);
+	}
+
+	[Fact]
+	public void CreateBreakItemPlan_BreaksArmorAndConsumesSingleUseTool()
+	{
+		var player = CreatePlayer(
+			CreateItem(1001, ArmorItemId),
+			CreateItem(2001, ExtractionToolItemId));
+
+		var plan = EnchantService.CreateBreakItemPlan(
+			player,
+			targetItemObjectId: 1001,
+			extractionToolObjectId: 2001,
+			CreateItemTemplates(),
+			nextObjectId: () => 9001,
+			rollInclusive: (min, max) => min == 0 && max == 10 ? 0 : 2);
+
+		Assert.True(plan.Succeeded);
+		Assert.Equal(AlphaEnchantStoneItemId, plan.RewardItemId);
+		Assert.Equal(2, plan.RewardCount);
+		Assert.Equal(2001, plan.DeletedSourceItemObjectId);
+		Assert.DoesNotContain(plan.InventoryItems, item => item.ObjectId == 1001);
+		Assert.DoesNotContain(plan.InventoryItems, item => item.ObjectId == 2001);
+		Assert.Contains(plan.InventoryItems, item => item.ItemId == AlphaEnchantStoneItemId && item.Count == 2);
+	}
+
+	[Fact]
+	public void CreateBreakItemPlan_ReturnsJavaShapedGuardFailures()
+	{
+		var templates = CreateItemTemplates();
+		var player = CreatePlayer(
+			CreateItem(1001, UniversalMaterialItemId),
+			CreateItem(1002, SwordItemId, isEquipped: true),
+			CreateItem(2001, ExtractionToolItemId));
+
+		Assert.Equal(
+			BreakItemFailure.MissingItem,
+			EnchantService.CreateBreakItemPlan(player, 404, 2001, templates, () => 9001).Failure);
+		Assert.Equal(
+			BreakItemFailure.MissingItem,
+			EnchantService.CreateBreakItemPlan(player, 1002, 2001, templates, () => 9001).Failure);
+		Assert.Equal(
+			BreakItemFailure.IncompatibleTarget,
+			EnchantService.CreateBreakItemPlan(player, 1001, 2001, templates, () => 9001).Failure);
+	}
 
 	[Fact]
 	public void CreateAmplificationPlan_AmplifiesTargetAndConsumesSources()
@@ -624,7 +700,7 @@ public sealed class EnchantServiceTests
 			new ItemTemplateSummary(UniversalMaterialItemId, "Amplification Material", 0, 0, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
 			new ItemTemplateSummary(InvalidMaterialItemId, "Invalid Material", 0, 0, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
 			new ItemTemplateSummary(ToolItemId, "Amplification Tool", 0, 0, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
-			new ItemTemplateSummary(AlphaEnchantStoneItemId, "Alpha Enchantment Stone", 0, 0, 20, "ENCHANTMENT", "NORMAL", "RARE", "PC_ALL", 1, 0, 0, EnchantAction: new ItemEnchantActionInfo(2, 0, 0, false, 0)),
+			new ItemTemplateSummary(AlphaEnchantStoneItemId, "Alpha Enchantment Stone", 0, 0, 20, "ENCHANTMENT", "NORMAL", "RARE", "PC_ALL", 100, 0, 0, EnchantAction: new ItemEnchantActionInfo(2, 0, 0, false, 0)),
 			new ItemTemplateSummary(DeltaEnchantStoneItemId, "Delta Enchantment Stone", 0, 0, 60, "ENCHANTMENT", "NORMAL", "EPIC", "PC_ALL", 1, 0, 0, EnchantAction: new ItemEnchantActionInfo(2, 0, 0, false, 0)),
 			new ItemTemplateSummary(OmegaEnchantStoneItemId, "Omega Enchantment Stone", 0, 0, 65, "ENCHANTMENT", "NORMAL", "MYTHIC", "PC_ALL", 1, 0, 0, EnchantAction: new ItemEnchantActionInfo(2, 0, 0, false, 0)),
 			new ItemTemplateSummary(ManastoneItemId, "Manastone: HP +20", 0, 0, 50, "MANASTONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0, EnchantAction: new ItemEnchantActionInfo(1, 0, 0, false, 0)),
@@ -633,6 +709,9 @@ public sealed class EnchantServiceTests
 			new ItemTemplateSummary(AssuredSupplementItemId, "Assured Greater Felicitous Socketing (Fabled)", 0, 0, 65, "NONE", "NORMAL", "UNIQUE", "PC_ALL", 1, 0, 0, EnchantAction: new ItemEnchantActionInfo(0, 1, 65, true, 100)),
 			new ItemTemplateSummary(WrongLevelSupplementItemId, "Wrong Level Supplement", 0, 0, 10, "NONE", "NORMAL", "UNIQUE", "PC_ALL", 1, 0, 0, EnchantAction: new ItemEnchantActionInfo(0, 1, 10, true, 100)),
 			new ItemTemplateSummary(ManastoneOnlySupplementItemId, "Manastone-Only Supplement", 0, 0, 65, "NONE", "NORMAL", "UNIQUE", "PC_ALL", 1, 0, 0, EnchantAction: new ItemEnchantActionInfo(0, 1, 65, true, 100)),
+			new ItemTemplateSummary(ExtractionToolItemId, "Extraction Tools", 0, 0, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 100, 0, 0, HasExtractAction: true),
+			new ItemTemplateSummary(ArmorItemId, "Leather Tunic", 0, 1, 20, "LT_TORSO", "NORMAL", "RARE", "PC_ALL", 1, 0, 1),
+			new ItemTemplateSummary(EpsilonExtractionStoneItemId, "Epsilon Enchantment Stone", 0, 0, 65, "ENCHANTMENT", "NORMAL", "MYTHIC", "PC_ALL", 100, 0, 0),
 		]);
 	}
 }

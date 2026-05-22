@@ -20,6 +20,11 @@ public static class EnchantService
 	private const string EnchantmentItemGroup = "ENCHANTMENT";
 	private const string ManastoneItemGroup = "MANASTONE";
 	private const string SpecialManastoneItemGroup = "SPECIAL_MANASTONE";
+	private const int AlphaExtractionStoneItemId = 166000191;
+	private const int BetaExtractionStoneItemId = 166000192;
+	private const int GammaExtractionStoneItemId = 166000193;
+	private const int DeltaExtractionStoneItemId = 166000194;
+	private const int EpsilonExtractionStoneItemId = 166000195;
 
 	private static readonly IReadOnlyDictionary<string, int[]> ExceedEnchantBuffSkillsBySet =
 		new Dictionary<string, int[]>(StringComparer.Ordinal)
@@ -142,6 +147,75 @@ public static class EnchantService
 			["RANK5_SET1_PHYSICAL_SHOES"] = [13245, 13244, 13266],
 			["RANK5_SET1_PHYSICAL_WEAPON"] = [13229, 13234, 13231],
 		};
+
+	public static BreakItemPlan CreateBreakItemPlan(
+		Player player,
+		int targetItemObjectId,
+		int extractionToolObjectId,
+		ItemTemplateTable itemTemplates,
+		Func<int> nextObjectId,
+		Func<int, int, int>? rollInclusive = null)
+	{
+		// Java parity: services/EnchantService.breakItem.
+		var inventoryItems = player.InventoryItems.ToList();
+		var targetItem = FindCubeItem(inventoryItems, targetItemObjectId);
+		var extractionToolItem = FindCubeItem(inventoryItems, extractionToolObjectId);
+		if (targetItem == null || extractionToolItem == null)
+			return BreakItemPlan.Failed(BreakItemFailure.MissingItem);
+
+		var targetTemplate = itemTemplates.GetItemTemplate(targetItem.ItemId);
+		if (targetTemplate == null)
+			return BreakItemPlan.Failed(BreakItemFailure.MissingTargetTemplate);
+
+		if (!targetTemplate.IsArmor && !targetTemplate.IsWeapon)
+			return BreakItemPlan.Failed(BreakItemFailure.IncompatibleTarget, GetItemName(targetItem, itemTemplates));
+
+		var effectiveLevel = CalculateBreakEffectiveLevel(targetTemplate.Quality, targetTemplate.Level);
+		if (effectiveLevel == 0)
+			throw new InvalidOperationException($"Invalid item quality for breaking item {targetTemplate.Quality}.");
+
+		var roll = rollInclusive ?? RandomInclusive;
+		var randomEffectiveLevel = effectiveLevel + roll(0, 10);
+		if (targetTemplate.IsWeapon)
+			randomEffectiveLevel += 5;
+
+		var stoneItemId = GetExtractionStoneItemId(randomEffectiveLevel);
+		var stoneTemplate = itemTemplates.GetItemTemplate(stoneItemId);
+		if (stoneTemplate == null)
+			return BreakItemPlan.Failed(BreakItemFailure.MissingRewardTemplate, GetItemName(targetItem, itemTemplates), stoneItemId);
+
+		inventoryItems.RemoveAll(item => item.ObjectId == targetItem.ObjectId);
+		var sourceMutation = DecreaseItemCount(extractionToolItem);
+		ApplySourceMutation(inventoryItems, sourceMutation);
+
+		var rewardCount = targetTemplate.IsWeapon ? roll(2, 5) : roll(1, 3);
+		var addPlan = InventoryAddService.CreateAddItemPlan(
+			player,
+			inventoryItems,
+			stoneTemplate,
+			rewardCount,
+			nextObjectId,
+			allowInventoryOverflow: false,
+			itemTemplates);
+
+		foreach (var updatedReward in addPlan.UpdatedItems)
+			ReplaceInventoryItem(inventoryItems, updatedReward);
+		inventoryItems.AddRange(addPlan.AddedItems);
+
+		return new BreakItemPlan(
+			BreakItemFailure.None,
+			GetItemName(targetItem, itemTemplates),
+			stoneItemId,
+			rewardCount,
+			inventoryItems,
+			targetItem.ObjectId,
+			sourceMutation.UpdatedItem,
+			sourceMutation.DeletedObjectId,
+			addPlan.UpdatedItems,
+			addPlan.AddedItems,
+			addPlan.RemainingCount,
+			addPlan.InventoryFull);
+	}
 
 	public static EnchantItemPlan CreateEnchantItemPlan(
 		Player player,
@@ -775,6 +849,38 @@ public static class EnchantService
 		return rates[Math.Min(rates.Count - 1, player.AccountMembership)];
 	}
 
+	private static int GetExtractionStoneItemId(int effectiveLevel)
+	{
+		if (effectiveLevel >= CalculateBreakEffectiveLevel("MYTHIC", 65))
+			return EpsilonExtractionStoneItemId;
+		if (effectiveLevel >= CalculateBreakEffectiveLevel("EPIC", 60))
+			return DeltaExtractionStoneItemId;
+		if (effectiveLevel >= CalculateBreakEffectiveLevel("UNIQUE", 55))
+			return GammaExtractionStoneItemId;
+		if (effectiveLevel >= CalculateBreakEffectiveLevel("LEGEND", 40))
+			return BetaExtractionStoneItemId;
+		return AlphaExtractionStoneItemId;
+	}
+
+	private static int CalculateBreakEffectiveLevel(string itemQuality, int itemLevel)
+	{
+		// Java parity: services/EnchantService.calculateEffectiveLevel(ItemQuality, int).
+		return itemQuality switch
+		{
+			"COMMON" or "RARE" => itemLevel + 5,
+			"LEGEND" => itemLevel + 10,
+			"UNIQUE" => itemLevel + 15,
+			"EPIC" => itemLevel + 20,
+			"MYTHIC" => itemLevel + 25,
+			_ => 0,
+		};
+	}
+
+	private static int RandomInclusive(int min, int max)
+	{
+		return Random.Shared.Next(min, max + 1);
+	}
+
 	private static int GetQualityId(string quality)
 	{
 		return quality switch
@@ -986,6 +1092,51 @@ public enum EnchantItemFailure
 	AmplifiedNeedsOmega,
 	InvalidSupplementItem,
 	WrongSupplementLevel,
+}
+
+public enum BreakItemFailure
+{
+	None,
+	MissingItem,
+	MissingTargetTemplate,
+	IncompatibleTarget,
+	MissingRewardTemplate,
+}
+
+public sealed record BreakItemPlan(
+	BreakItemFailure Failure,
+	string TargetItemName,
+	int RewardItemId,
+	long RewardCount,
+	IReadOnlyList<InventoryItem> InventoryItems,
+	int DeletedTargetItemObjectId,
+	InventoryItem? SourceItemUpdate,
+	int? DeletedSourceItemObjectId,
+	IReadOnlyList<InventoryItem> UpdatedRewardItems,
+	IReadOnlyList<InventoryItem> AddedRewardItems,
+	long RewardRemainingCount,
+	bool RewardInventoryFull)
+{
+	public bool Succeeded => Failure == BreakItemFailure.None;
+
+	public bool RewardSucceeded => RewardRemainingCount == 0;
+
+	public static BreakItemPlan Failed(BreakItemFailure failure, string targetItemName = "", int rewardItemId = 0)
+	{
+		return new BreakItemPlan(
+			failure,
+			targetItemName,
+			rewardItemId,
+			RewardCount: 0,
+			InventoryItems: Array.Empty<InventoryItem>(),
+			DeletedTargetItemObjectId: 0,
+			SourceItemUpdate: null,
+			DeletedSourceItemObjectId: null,
+			UpdatedRewardItems: Array.Empty<InventoryItem>(),
+			AddedRewardItems: Array.Empty<InventoryItem>(),
+			RewardRemainingCount: 0,
+			RewardInventoryFull: false);
+	}
 }
 
 public sealed record EnchantItemPlan(
