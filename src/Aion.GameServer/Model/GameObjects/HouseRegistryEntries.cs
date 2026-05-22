@@ -64,6 +64,16 @@ public sealed record HouseRegistrySummary(
 	public IReadOnlyList<RegisteredHouseDecorationSummary> UnusedDecorations =>
 		Decorations.Where(decor => decor.IsUnused).ToArray();
 
+	public IReadOnlyList<RegisteredHouseObjectSummary> GetNotSpawnedObjects(
+		IReadOnlyDictionary<int, long> cooldowns,
+		Func<long>? currentUnixTimeMilliseconds = null)
+	{
+		// Java parity: SM_HOUSE_REGISTRY action 1 writes Player.getHouseObjectCooldowns().remainingSeconds.
+		return NotSpawnedObjects
+			.Select(obj => obj.WithCooldown(cooldowns, currentUnixTimeMilliseconds))
+			.ToArray();
+	}
+
 	public IReadOnlyList<PlacedHouseObjectSummary> GetSpawnedObjects(PlayerHouse house, int ownerPlayerId)
 	{
 		// Java parity: model/house/HouseRegistry.getSpawnedObjects feeds CM_LEVEL_READY SM_HOUSE_OBJECTS.
@@ -79,6 +89,18 @@ public sealed record HouseRegistrySummary(
 		return Objects
 			.Where(obj => obj.IsSpawnedByPlayer)
 			.Select(obj => ToPlacedObject(obj, house.AddressId, house.OwnerObjectId))
+			.ToArray();
+	}
+
+	public IReadOnlyList<PlacedHouseObjectSummary> GetSpawnedObjects(
+		WorldHouse house,
+		IReadOnlyDictionary<int, long> cooldowns,
+		Func<long>? currentUnixTimeMilliseconds = null)
+	{
+		// Java parity: SM_HOUSE_OBJECT writes cooldowns for the receiving player, not for the house owner.
+		return Objects
+			.Where(obj => obj.IsSpawnedByPlayer)
+			.Select(obj => ToPlacedObject(obj.WithCooldown(cooldowns, currentUnixTimeMilliseconds), house.AddressId, house.OwnerObjectId))
 			.ToArray();
 	}
 
@@ -157,6 +179,33 @@ public sealed record HouseRegistrySummary(
 		BinaryPrimitives.WriteInt32LittleEndian(data, template.UseCount == 0 ? 0 : row.OwnerUseCount + row.VisitorUseCount);
 		data[4] = 0;
 		return data;
+	}
+
+}
+
+public static class RegisteredHouseObjectSummaryExtensions
+{
+	public static RegisteredHouseObjectSummary WithCooldown(
+		this RegisteredHouseObjectSummary obj,
+		IReadOnlyDictionary<int, long> cooldowns,
+		Func<long>? currentUnixTimeMilliseconds = null)
+	{
+		return obj with
+		{
+			CooldownSeconds = RemainingSeconds(cooldowns, obj.ObjectId, currentUnixTimeMilliseconds),
+		};
+	}
+
+	private static int RemainingSeconds(
+		IReadOnlyDictionary<int, long> cooldowns,
+		int objectId,
+		Func<long>? currentUnixTimeMilliseconds)
+	{
+		if (!cooldowns.TryGetValue(objectId, out var reuseTimeMillis))
+			return 0;
+
+		var nowMillis = currentUnixTimeMilliseconds?.Invoke() ?? DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+		return reuseTimeMillis <= nowMillis ? 0 : (int)((reuseTimeMillis - nowMillis) / 1000);
 	}
 }
 

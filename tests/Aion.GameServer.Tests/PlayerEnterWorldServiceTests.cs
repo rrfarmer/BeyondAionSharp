@@ -32,6 +32,7 @@ public sealed class PlayerEnterWorldServiceTests
 			BrokerSettlements = new PlayerBrokerSettlementSummary(2, 123456),
 			Houses = [new PlayerHouse(50, 2001, 7001, DateTime.Now.AddDays(-1), null, false)],
 			CraftCooldowns = new Dictionary<int, long> { [8] = 123456 },
+			HouseObjectCooldowns = new Dictionary<int, long> { [9001] = 123456 },
 			PortalCooldowns = new Dictionary<int, PlayerPortalCooldown> { [300030000] = new(300030000, 123456, 2) },
 			LifeStats = new PlayerLifeStats(100, 200, 50),
 			Friends = [new PlayerFriend(2002, "Friend", 0, "WARRIOR", "MALE", 210010000, null, string.Empty, "memo", false)],
@@ -64,6 +65,7 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.True(repository.Player.BrokerSettlements.HasSettledItems);
 		Assert.Single(repository.Player.Houses);
 		Assert.Single(repository.Player.CraftCooldowns);
+		Assert.Single(repository.Player.HouseObjectCooldowns);
 		Assert.Single(repository.Player.PortalCooldowns);
 		Assert.NotNull(repository.Player.LifeStats);
 		Assert.Single(repository.Player.Friends);
@@ -87,6 +89,7 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.Equal(1, repository.LoadBrokerSettlementsCalls);
 		Assert.Equal(1, repository.LoadHousesCalls);
 		Assert.Equal(1, repository.LoadCraftCooldownsCalls);
+		Assert.Equal(1, repository.LoadHouseObjectCooldownsCalls);
 		Assert.Equal(1, repository.LoadPortalCooldownsCalls);
 		Assert.Equal(1, repository.LoadLifeStatsCalls);
 		Assert.Equal(1, repository.LoadFriendsCalls);
@@ -297,6 +300,8 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public IReadOnlyDictionary<int, long> CraftCooldowns { get; init; } = new Dictionary<int, long>();
 
+		public IReadOnlyDictionary<int, long> HouseObjectCooldowns { get; init; } = new Dictionary<int, long>();
+
 		public IReadOnlyDictionary<int, PlayerPortalCooldown> PortalCooldowns { get; init; } = new Dictionary<int, PlayerPortalCooldown>();
 
 		public PlayerLifeStats? LifeStats { get; init; }
@@ -342,6 +347,8 @@ public sealed class PlayerEnterWorldServiceTests
 		public int LoadHousesCalls { get; private set; }
 
 		public int LoadCraftCooldownsCalls { get; private set; }
+
+		public int LoadHouseObjectCooldownsCalls { get; private set; }
 
 		public int LoadPortalCooldownsCalls { get; private set; }
 
@@ -897,6 +904,12 @@ public sealed class PlayerEnterWorldServiceTests
 		{
 			LoadCraftCooldownsCalls++;
 			return Task.FromResult(CraftCooldowns);
+		}
+
+		public Task<IReadOnlyDictionary<int, long>> LoadPlayerHouseObjectCooldownsAsync(int playerObjectId, CancellationToken cancellationToken = default)
+		{
+			LoadHouseObjectCooldownsCalls++;
+			return Task.FromResult(HouseObjectCooldowns);
 		}
 
 		public Task<IReadOnlyDictionary<int, PlayerPortalCooldown>> LoadPlayerPortalCooldownsAsync(int playerObjectId, CancellationToken cancellationToken = default)

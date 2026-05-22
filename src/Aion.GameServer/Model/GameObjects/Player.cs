@@ -162,6 +162,8 @@ public sealed class Player
 
 	public IReadOnlyDictionary<int, long> CraftCooldowns { get; set; } = new Dictionary<int, long>();
 
+	public IReadOnlyDictionary<int, long> HouseObjectCooldowns { get; set; } = new Dictionary<int, long>();
+
 	public IReadOnlyDictionary<int, PlayerPortalCooldown> PortalCooldowns { get; set; } = new Dictionary<int, PlayerPortalCooldown>();
 
 	public PlayerLifeStats? LifeStats { get; set; }

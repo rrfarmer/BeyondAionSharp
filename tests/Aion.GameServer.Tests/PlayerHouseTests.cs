@@ -63,6 +63,9 @@ public sealed class PlayerHouseTests
 		Assert.Equal(9001, notSpawned.ObjectId);
 		Assert.Equal(200, notSpawned.ExpirationSeconds);
 		Assert.Equal((byte)7, notSpawned.TypeId);
+		var notSpawnedWithCooldown = Assert.Single(
+			registry.GetNotSpawnedObjects(new Dictionary<int, long> { [9001] = 130_000 }, () => 100_000));
+		Assert.Equal(30, notSpawnedWithCooldown.CooldownSeconds);
 		var spawned = Assert.Single(registry.Objects, obj => obj.IsSpawnedByPlayer);
 		Assert.Equal(180, spawned.Rotation);
 		Assert.Equal(new byte[] { 3, 0, 0, 0, 0 }, spawned.UsageData);

@@ -76,6 +76,7 @@ public sealed class PlayerEnterWorldService
 			player.BrokerSettlements = await _repository.LoadBrokerSettlementsAsync(playerObjectId, player.Race, cancellationToken);
 			player.Houses = await _repository.LoadPlayerHousesAsync(playerObjectId, cancellationToken);
 			player.CraftCooldowns = await _repository.LoadPlayerCraftCooldownsAsync(playerObjectId, cancellationToken);
+			player.HouseObjectCooldowns = await _repository.LoadPlayerHouseObjectCooldownsAsync(playerObjectId, cancellationToken);
 			player.PortalCooldowns = await _repository.LoadPlayerPortalCooldownsAsync(playerObjectId, cancellationToken);
 			player.LifeStats = await _repository.LoadPlayerLifeStatsAsync(playerObjectId, cancellationToken);
 			player.Friends = await _repository.LoadPlayerFriendsAsync(playerObjectId, cancellationToken);

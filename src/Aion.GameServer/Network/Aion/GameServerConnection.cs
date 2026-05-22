@@ -6247,7 +6247,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				await SendPacketAsync(new SmHouseEdit(packet.Action));
 				var housingTemplates = _runtimeContext?.DataManager?.StaticData.HousingTemplates;
 				var registry = await LoadHouseRegistryAsync(player, activeHouse);
-				await SendPacketAsync(SmHouseRegistry.CreateRegisteredObjects(registry));
+				await SendPacketAsync(SmHouseRegistry.CreateRegisteredObjects(registry, player.HouseObjectCooldowns));
 				await SendPacketAsync(SmHouseRegistry.CreateDecorationItems(housingTemplates, activeHouse.BuildingId, registry));
 				break;
 			}

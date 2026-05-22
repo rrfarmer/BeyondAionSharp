@@ -158,6 +158,8 @@ public interface IPlayerEnterWorldRepository
 
 	Task<IReadOnlyDictionary<int, long>> LoadPlayerCraftCooldownsAsync(int playerObjectId, CancellationToken cancellationToken = default);
 
+	Task<IReadOnlyDictionary<int, long>> LoadPlayerHouseObjectCooldownsAsync(int playerObjectId, CancellationToken cancellationToken = default);
+
 	Task<IReadOnlyDictionary<int, PlayerPortalCooldown>> LoadPlayerPortalCooldownsAsync(int playerObjectId, CancellationToken cancellationToken = default);
 
 	Task<PlayerLifeStats?> LoadPlayerLifeStatsAsync(int playerObjectId, CancellationToken cancellationToken = default);
@@ -523,6 +525,11 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		return Task.FromResult<IReadOnlyDictionary<int, long>>(new Dictionary<int, long>());
 	}
 
+	public Task<IReadOnlyDictionary<int, long>> LoadPlayerHouseObjectCooldownsAsync(int playerObjectId, CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult<IReadOnlyDictionary<int, long>>(new Dictionary<int, long>());
+	}
+
 	public Task<IReadOnlyDictionary<int, PlayerPortalCooldown>> LoadPlayerPortalCooldownsAsync(int playerObjectId, CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult<IReadOnlyDictionary<int, PlayerPortalCooldown>>(new Dictionary<int, PlayerPortalCooldown>());
@@ -839,6 +846,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			var nowMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 			await SavePlayerSkillCooldownsAsync(connection, player.ObjectId, player.SkillCooldowns, nowMillis, cancellationToken);
 			await SavePlayerItemCooldownsAsync(connection, player.ObjectId, player.ItemCooldowns, nowMillis, cancellationToken);
+			await SavePlayerHouseObjectCooldownsAsync(connection, player.ObjectId, player.HouseObjectCooldowns, nowMillis, cancellationToken);
 			await SavePlayerSettingsAsync(connection, player.ObjectId, player.Settings, cancellationToken);
 
 			await using var command = connection.CreateCommand();
@@ -2072,6 +2080,41 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 					new MySqlParameter { Value = entry.Key },
 					new MySqlParameter { Value = entry.Value.UseDelaySeconds },
 					new MySqlParameter { Value = entry.Value.ReuseTimeMillis },
+				});
+			await insertCommand.ExecuteNonQueryAsync(cancellationToken);
+		}
+	}
+
+	private static async Task SavePlayerHouseObjectCooldownsAsync(
+		MySqlConnection connection,
+		int playerObjectId,
+		IReadOnlyDictionary<int, long> cooldowns,
+		long nowMillis,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: dao/HouseObjectCooldownsDAO.storeHouseObjectCooldowns.
+		await using var deleteCommand = connection.CreateCommand();
+		deleteCommand.CommandText = "DELETE FROM house_object_cooldowns WHERE player_id = ?";
+		deleteCommand.Parameters.Add(new MySqlParameter { Value = playerObjectId });
+		await deleteCommand.ExecuteNonQueryAsync(cancellationToken);
+
+		var activeCooldowns = cooldowns
+			.Where(entry => entry.Value > nowMillis)
+			.ToArray();
+		if (activeCooldowns.Length == 0)
+			return;
+
+		await using var insertCommand = connection.CreateCommand();
+		insertCommand.CommandText = "INSERT INTO house_object_cooldowns (player_id, object_id, reuse_time) VALUES (?, ?, ?)";
+		foreach (var (objectId, reuseTime) in activeCooldowns)
+		{
+			insertCommand.Parameters.Clear();
+			insertCommand.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = playerObjectId },
+					new MySqlParameter { Value = objectId },
+					new MySqlParameter { Value = reuseTime },
 				});
 			await insertCommand.ExecuteNonQueryAsync(cancellationToken);
 		}
@@ -3409,6 +3452,38 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not load craft cooldowns for player {PlayerObjectId}", playerObjectId);
+			return new Dictionary<int, long>();
+		}
+	}
+
+	public async Task<IReadOnlyDictionary<int, long>> LoadPlayerHouseObjectCooldownsAsync(int playerObjectId, CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/HouseObjectCooldownsDAO.loadHouseObjectCooldowns through model/gameobjects/player/Cooldowns.put.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = "SELECT object_id, reuse_time FROM house_object_cooldowns WHERE player_id = ?";
+			command.Parameters.Add(new MySqlParameter { Value = playerObjectId });
+
+			var nowMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+			var cooldowns = new Dictionary<int, long>();
+			await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+			while (await reader.ReadAsync(cancellationToken))
+			{
+				var reuseTime = ReadLong(reader, "reuse_time");
+				if (reuseTime <= nowMillis)
+					continue;
+
+				cooldowns[ReadInt(reader, "object_id")] = reuseTime;
+			}
+
+			return cooldowns;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not load house object cooldowns for player {PlayerObjectId}", playerObjectId);
 			return new Dictionary<int, long>();
 		}
 	}

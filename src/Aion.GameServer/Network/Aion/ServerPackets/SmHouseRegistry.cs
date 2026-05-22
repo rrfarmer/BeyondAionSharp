@@ -45,6 +45,14 @@ public sealed class SmHouseRegistry : GameServerPacket
 		return CreateRegisteredObjects(registry.NotSpawnedObjects);
 	}
 
+	public static SmHouseRegistry CreateRegisteredObjects(
+		HouseRegistrySummary registry,
+		IReadOnlyDictionary<int, long> cooldowns)
+	{
+		// Java parity: SM_HOUSE_REGISTRY writes active player house-object cooldown seconds.
+		return CreateRegisteredObjects(registry.GetNotSpawnedObjects(cooldowns));
+	}
+
 	public static SmHouseRegistry CreateDecorationItems(
 		HousingTemplateTable? housingTemplates,
 		int buildingId,

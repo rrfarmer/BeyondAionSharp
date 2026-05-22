@@ -268,7 +268,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 			{
 				await connection.SendPacketAsync(new SmHouseRender(house, housingTemplates));
 				sent++;
-				foreach (var obj in GetVisibleHouseObjects(house))
+				foreach (var obj in GetVisibleHouseObjects(house, player))
 				{
 					await connection.SendPacketAsync(new SmHouseObject(obj));
 					sent++;
@@ -280,7 +280,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 				var house = houses.FirstOrDefault(house => house.AddressId == addressId);
 				if (house != null)
 				{
-					foreach (var obj in GetVisibleHouseObjects(house))
+					foreach (var obj in GetVisibleHouseObjects(house, player))
 					{
 						await connection.SendPacketAsync(new SmDeleteHouseObject(obj.ObjectId));
 						sent++;
@@ -295,13 +295,13 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		return sent;
 	}
 
-	private static IReadOnlyList<PlacedHouseObjectSummary> GetVisibleHouseObjects(WorldHouse house)
+	private static IReadOnlyList<PlacedHouseObjectSummary> GetVisibleHouseObjects(WorldHouse house, Player viewer)
 	{
 		// Java parity: controllers/HouseController.spawnObjects skips inactive houses and exposes spawned registry objects.
 		if (house.IsInactive || house.Registry == null)
 			return Array.Empty<PlacedHouseObjectSummary>();
 
-		return house.Registry.GetSpawnedObjects(house);
+		return house.Registry.GetSpawnedObjects(house, viewer.HouseObjectCooldowns);
 	}
 
 	public async Task<int> BroadcastHouseUpdateAsync(WorldHouse house, HousingTemplateTable? housingTemplates)
