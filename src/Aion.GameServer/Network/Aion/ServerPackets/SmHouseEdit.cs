@@ -12,6 +12,7 @@ public sealed class SmHouseEdit : GameServerPacket
 	private readonly int _ownerPlayerId;
 	private readonly PlacedHouseObjectSummary? _placedObject;
 	private readonly RegisteredHouseObjectSummary? _registryObject;
+	private readonly RegisteredHouseDecorationSummary? _decoration;
 
 	public SmHouseEdit(int action)
 		: base(PacketOpCode)
@@ -26,6 +27,13 @@ public sealed class SmHouseEdit : GameServerPacket
 		_storeId = storeId;
 		_ownerPlayerId = ownerPlayerId;
 		_registryObject = registryObject;
+	}
+
+	public SmHouseEdit(int action, int storeId, RegisteredHouseDecorationSummary decoration)
+		: this(action)
+	{
+		_storeId = storeId;
+		_decoration = decoration;
 	}
 
 	public SmHouseEdit(int action, int storeId, int itemObjectId)
@@ -43,18 +51,18 @@ public sealed class SmHouseEdit : GameServerPacket
 
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
-		if (_action == 3 && _registryObject != null)
+		if (_action == 3 && (_registryObject != null || _decoration != null))
 		{
 			// Java parity: SM_HOUSE_EDIT action 3 adds a registered house item back to the edit inventory.
 			buffer.WriteC(_action);
 			buffer.WriteC(_storeId);
-			buffer.WriteD(_registryObject.ObjectId);
-			buffer.WriteD(_registryObject.TemplateId);
-			buffer.WriteD(_registryObject.ExpirationSeconds);
-			HouseObjectPacketWriter.WriteDyeInfo(buffer, _registryObject.Color);
+			buffer.WriteD(_registryObject?.ObjectId ?? _decoration!.ObjectId);
+			buffer.WriteD(_registryObject?.TemplateId ?? _decoration!.TemplateId);
+			buffer.WriteD(_registryObject?.ExpirationSeconds ?? 0);
+			HouseObjectPacketWriter.WriteDyeInfo(buffer, _registryObject?.Color);
 			buffer.WriteD(0);
-			buffer.WriteC(_registryObject.TypeId);
-			if (_registryObject.TypeId == 1 && _registryObject.UsageData is { Length: > 0 })
+			buffer.WriteC(_registryObject?.TypeId ?? 0);
+			if (_registryObject != null && _registryObject.TypeId == 1 && _registryObject.UsageData is { Length: > 0 })
 			{
 				buffer.WriteD(_ownerPlayerId);
 				buffer.WriteB(_registryObject.UsageData);

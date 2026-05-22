@@ -1222,6 +1222,19 @@ public class GamePacketTests
 		Assert.Equal(7, (int)houseEditAddReader.ReadC());
 		Assert.Equal(0, houseEditAddReader.Remaining);
 
+		var houseEditAddDecorPayload = SerializeUnencryptedPayload(
+			new SmHouseEdit(CmHouseEdit.AddItem, 2, new RegisteredHouseDecorationSummary(9904, 3550000)));
+		using var houseEditAddDecorReader = new PacketBuffer(houseEditAddDecorPayload);
+		Assert.Equal(CmHouseEdit.AddItem, (int)houseEditAddDecorReader.ReadC());
+		Assert.Equal(2, (int)houseEditAddDecorReader.ReadC());
+		Assert.Equal(9904, houseEditAddDecorReader.ReadD());
+		Assert.Equal(3550000, houseEditAddDecorReader.ReadD());
+		Assert.Equal(0, houseEditAddDecorReader.ReadD());
+		Assert.Equal(new byte[] { 0, 0, 0, 0 }, houseEditAddDecorReader.ReadB(4));
+		Assert.Equal(0, houseEditAddDecorReader.ReadD());
+		Assert.Equal(0, (int)houseEditAddDecorReader.ReadC());
+		Assert.Equal(0, houseEditAddDecorReader.Remaining);
+
 		var houseEditDespawnPayload = SerializeUnencryptedPayload(new SmHouseEdit(CmHouseEdit.DespawnObject, 0, 9903));
 		using var houseEditDespawnReader = new PacketBuffer(houseEditDespawnPayload);
 		Assert.Equal(CmHouseEdit.DespawnObject, (int)houseEditDespawnReader.ReadC());

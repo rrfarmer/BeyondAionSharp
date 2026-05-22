@@ -178,6 +178,12 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal("cash_hair_type_li_m_01a", staticData.ItemTemplates.GetItemTemplate(169800003)?.CosmeticActionName);
 		Assert.Equal("test_preset_type_li_m_01a", staticData.ItemTemplates.GetItemTemplate(169890001)?.CosmeticActionName);
 		Assert.Equal(new ItemRemodelActionInfo(1, 0), staticData.ItemTemplates.GetItemTemplate(122001250)?.RemodelAction);
+		Assert.Equal(staticData.GetElementCount("houseobject"), staticData.ItemTemplates.Templates.Count(template => template.HasHouseObjectAction));
+		Assert.Equal(3000001, staticData.ItemTemplates.GetItemTemplate(170000000)?.HouseObjectTemplateId);
+		Assert.Equal(staticData.GetElementCount("housedeco"), staticData.ItemTemplates.Templates.Count(template => template.HasHouseDecorateAction));
+		Assert.True(staticData.ItemTemplates.GetItemTemplate(170000023)?.HasHouseDecorateAction);
+		Assert.Equal(0, staticData.ItemTemplates.GetItemTemplate(170000023)?.HouseDecorateTemplateId);
+		Assert.Equal(3550000, staticData.ItemTemplates.GetItemTemplate(171000000)?.HouseDecorateTemplateId);
 		Assert.Equal(2, staticData.ItemTemplates.GetItemTemplate(122001250)?.ExtraInventoryId);
 		Assert.Equal(-1, staticData.ItemTemplates.GetItemTemplate(152000065)?.ExtraInventoryId);
 		Assert.Equal(staticData.GetElementCount("decompose"), staticData.ItemTemplates.Templates.Count(template => template.HasDecomposeAction));

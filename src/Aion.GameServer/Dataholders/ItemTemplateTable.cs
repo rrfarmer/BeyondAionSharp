@@ -103,7 +103,11 @@ public sealed record ItemTemplateSummary(
 	bool HasExtractAction = false,
 	ItemApExtractActionInfo? ApExtractAction = null,
 	ItemExpExtractActionInfo? ExpExtractAction = null,
-	int RequiredAbyssPoints = 0)
+	int RequiredAbyssPoints = 0,
+	bool HasHouseObjectAction = false,
+	int HouseObjectTemplateId = 0,
+	bool HasHouseDecorateAction = false,
+	int HouseDecorateTemplateId = 0)
 {
 	private const int CanPolishMask = 1 << 17;
 	private const int CanApExtractMask = 1 << 16;

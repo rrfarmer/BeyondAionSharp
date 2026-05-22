@@ -70,14 +70,41 @@ public sealed record HouseRegistrySummary(
 		return Objects.FirstOrDefault(obj => obj.ObjectId == objectId);
 	}
 
+	public RegisteredHouseDecorationSummary? GetDecoration(int objectId)
+	{
+		return Decorations.FirstOrDefault(decor => decor.ObjectId == objectId);
+	}
+
 	public HouseRegistrySummary WithObject(RegisteredHouseObjectSummary updatedObject)
 	{
 		// Java parity: model/house/HouseRegistry keeps objects keyed by item object ID.
+		var objects = Objects.ToList();
+		var index = objects.FindIndex(obj => obj.ObjectId == updatedObject.ObjectId);
+		if (index >= 0)
+			objects[index] = updatedObject;
+		else
+			objects.Add(updatedObject);
+
 		return this with
 		{
-			Objects = Objects
-				.Select(obj => obj.ObjectId == updatedObject.ObjectId ? updatedObject : obj)
-				.ToArray(),
+			Objects = objects.ToArray(),
+		};
+	}
+
+	public HouseRegistrySummary WithDecoration(RegisteredHouseDecorationSummary updatedDecoration)
+	{
+		// Java parity: model/house/HouseRegistry keeps decorations keyed by item object ID.
+		var decorations = Decorations.ToList();
+		var index = decorations.FindIndex(decor => decor.ObjectId == updatedDecoration.ObjectId);
+		if (index >= 0)
+			decorations[index] = updatedDecoration;
+		else
+			decorations.Add(updatedDecoration);
+
+		return this with
+		{
+			Decorations = decorations.ToArray(),
+			HasInvalidDecorations = decorations.Any(decor => decor.IsDeleted),
 		};
 	}
 
@@ -177,6 +204,41 @@ public sealed record HouseRegistrySummary(
 		}
 
 		return new HouseRegistrySummary(objects, decorations, decorations.Any(decor => decor.IsDeleted));
+	}
+
+	public static RegisteredHouseObjectSummary CreateObjectFromTemplate(
+		int objectId,
+		HousingObjectTemplateSummary template,
+		int? expireTimeSeconds,
+		Func<long>? currentUnixTimeSeconds = null)
+	{
+		// Java parity: services/item/HouseObjectFactory.createNew(House, ItemTemplate) initializes a fresh unspawned HouseObject.
+		var now = currentUnixTimeSeconds?.Invoke() ?? DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+		var expirationSeconds = template.UseDays > 0 && expireTimeSeconds.HasValue
+			? expireTimeSeconds.Value - (int)now
+			: 0;
+		var row = new HouseRegisteredItemRow(
+			objectId,
+			template.TemplateId,
+			expireTimeSeconds,
+			null,
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
+			"NONE",
+			0);
+		return new RegisteredHouseObjectSummary(
+			objectId,
+			template.TemplateId,
+			ExpirationSeconds: expirationSeconds,
+			TypeId: template.TypeId,
+			UsageData: CreateUsageData(template, row),
+			NpcObjectId: template.NpcId,
+			Area: template.Area);
 	}
 
 	private static PlacedHouseObjectSummary ToPlacedObject(RegisteredHouseObjectSummary obj, int addressId, int ownerPlayerId)

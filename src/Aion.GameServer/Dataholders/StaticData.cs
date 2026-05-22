@@ -967,6 +967,22 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 4 && reader.LocalName == "houseobject" && currentItemTemplate != null)
+			{
+				// Java parity: model/templates/item/actions/SummonHouseObjectAction id consumed by CM_HOUSE_EDIT action 3.
+				currentItemTemplate.HasHouseObjectAction = true;
+				currentItemTemplate.HouseObjectTemplateId = ReadIntAttribute(reader, "id");
+				continue;
+			}
+
+			if (reader.Depth == 4 && reader.LocalName == "housedeco" && currentItemTemplate != null)
+			{
+				// Java parity: model/templates/item/actions/DecorateAction allows an absent id, yielding template 0.
+				currentItemTemplate.HasHouseDecorateAction = true;
+				currentItemTemplate.HouseDecorateTemplateId = ReadIntAttribute(reader, "id");
+				continue;
+			}
+
 			if (reader.Depth == 4 && reader.LocalName == "decompose" && currentItemTemplate != null)
 			{
 				// Java parity: model/templates/item/actions/DecomposeAction marker.
@@ -2003,6 +2019,14 @@ public sealed class StaticData
 
 		public int UseDelayMillis { get; set; }
 
+		public bool HasHouseObjectAction { get; set; }
+
+		public int HouseObjectTemplateId { get; set; }
+
+		public bool HasHouseDecorateAction { get; set; }
+
+		public int HouseDecorateTemplateId { get; set; }
+
 		public void AddModifier(ItemStatModifier modifier)
 		{
 			Modifiers.Add(modifier);
@@ -2095,7 +2119,11 @@ public sealed class StaticData
 				HasExtractAction,
 				ApExtractAction,
 				ExpExtractAction,
-				RequiredAbyssPoints);
+				RequiredAbyssPoints,
+				HasHouseObjectAction,
+				HouseObjectTemplateId,
+				HasHouseDecorateAction,
+				HouseDecorateTemplateId);
 		}
 
 		private static int CalculateMaxTuneCount(

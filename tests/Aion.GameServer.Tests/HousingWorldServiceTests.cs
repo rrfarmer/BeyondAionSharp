@@ -236,6 +236,25 @@ public sealed class HousingWorldServiceTests
 			return Task.FromResult(true);
 		}
 
+		public Task<bool> RegisterHouseObjectFromInventoryAsync(
+			int playerObjectId,
+			int sourceItemObjectId,
+			RegisteredHouseObjectSummary houseObject,
+			int? expireTimeSeconds,
+			CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> RegisterHouseDecorationFromInventoryAsync(
+			int playerObjectId,
+			int sourceItemObjectId,
+			RegisteredHouseDecorationSummary decoration,
+			CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult(true);
+		}
+
 		public Task<bool> DeleteHouseRegisteredObjectAsync(
 			int playerObjectId,
 			int itemObjectId,

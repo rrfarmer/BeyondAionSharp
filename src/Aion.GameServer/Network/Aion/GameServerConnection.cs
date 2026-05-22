@@ -6256,6 +6256,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmHouseEdit.ExitRenovationMode:
 				await SendPacketAsync(new SmHouseEdit(packet.Action));
 				break;
+			case CmHouseEdit.AddItem:
+				await HandleHouseItemRegistrationAsync(player, activeHouse, packet);
+				break;
 			case CmHouseEdit.SpawnObject:
 				await HandleHouseObjectPlacementAsync(player, activeHouse, packet, moveExisting: false);
 				break;
@@ -6269,6 +6272,70 @@ public sealed class GameServerConnection : BaseClientConnection
 				await HandleHouseObjectDespawnAsync(player, activeHouse, packet);
 				break;
 		}
+	}
+
+	private async Task HandleHouseItemRegistrationAsync(Player player, PlayerHouse activeHouse, CmHouseEdit packet)
+	{
+		// Java parity: CM_HOUSE_EDIT action 3 transfers a cube item into HouseRegistry via item DecorateAction/SummonHouseObjectAction.
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		if (staticData == null || _idFactory == null)
+			return;
+
+		var sourceItem = player.InventoryItems.FirstOrDefault(item =>
+			item.ObjectId == packet.ItemObjectId
+			&& item.Location == CubeStorageId
+			&& !item.IsEquipped);
+		var itemTemplate = sourceItem == null ? null : staticData.ItemTemplates.GetItemTemplate(sourceItem.ItemId);
+		if (sourceItem == null || itemTemplate == null)
+			return;
+
+		var registry = await LoadHouseRegistryAsync(player, activeHouse);
+		if (itemTemplate.HasHouseDecorateAction)
+		{
+			var decorationObjectId = _idFactory.NextId();
+			var decoration = new RegisteredHouseDecorationSummary(decorationObjectId, itemTemplate.HouseDecorateTemplateId);
+			if (!await _housingRepository.RegisterHouseDecorationFromInventoryAsync(player.ObjectId, sourceItem.ObjectId, decoration))
+			{
+				_idFactory.ReleaseId(decorationObjectId);
+				return;
+			}
+
+			player.InventoryItems = player.InventoryItems
+				.Where(item => item.ObjectId != sourceItem.ObjectId)
+				.ToArray();
+			UpdateHouseRegistry(player, activeHouse, registry.WithDecoration(decoration));
+			await SendPacketAsync(new SmHouseEdit(CmHouseEdit.AddItem, 2, decoration));
+			return;
+		}
+
+		if (!itemTemplate.HasHouseObjectAction)
+			return;
+
+		var objectTemplate = staticData.HousingObjectTemplates.GetTemplate(itemTemplate.HouseObjectTemplateId);
+		if (objectTemplate == null)
+			return;
+
+		var objectId = _idFactory.NextId();
+		var nowSeconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+		var expireTimeSeconds = objectTemplate.UseDays > 0
+			? (int?)(int)(nowSeconds + objectTemplate.UseDays * 86_400L)
+			: null;
+		var houseObject = HouseRegistrySummary.CreateObjectFromTemplate(
+			objectId,
+			objectTemplate,
+			expireTimeSeconds,
+			() => nowSeconds);
+		if (!await _housingRepository.RegisterHouseObjectFromInventoryAsync(player.ObjectId, sourceItem.ObjectId, houseObject, expireTimeSeconds))
+		{
+			_idFactory.ReleaseId(objectId);
+			return;
+		}
+
+		player.InventoryItems = player.InventoryItems
+			.Where(item => item.ObjectId != sourceItem.ObjectId)
+			.ToArray();
+		UpdateHouseRegistry(player, activeHouse, registry.WithObject(houseObject));
+		await SendPacketAsync(new SmHouseEdit(CmHouseEdit.AddItem, 1, houseObject.WithCooldown(player.HouseObjectCooldowns), player.ObjectId));
 	}
 
 	private async Task HandleHouseObjectPlacementAsync(Player player, PlayerHouse activeHouse, CmHouseEdit packet, bool moveExisting)
