@@ -102,6 +102,7 @@ public sealed class GameServerOptions
 			},
 			Housing = new GameServerHousingOptions
 			{
+				VisibilityDistance = GetFloatWithEnvironment(loader, "gameserver.housing.visibility.distance", 200f),
 				AuctionsEnabled = GetBoolWithEnvironment(loader, "gameserver.housing.auction.enable", true),
 				PayEnabled = GetBoolWithEnvironment(loader, "gameserver.housing.pay.enable", true),
 				AuctionEndTime = GetWithEnvironment(loader, "gameserver.housing.auction.end_time", "0 0 12 ? * SUN"),
@@ -615,6 +616,8 @@ public sealed class GeoDataOptions
 
 public sealed class GameServerHousingOptions
 {
+	public float VisibilityDistance { get; init; } = 200f;
+
 	public bool AuctionsEnabled { get; init; } = true;
 
 	public bool PayEnabled { get; init; } = true;
