@@ -63,6 +63,20 @@ public sealed class RiftService
 		return _activeRifts.Values.OrderBy(rift => rift.Location.Id).ToArray();
 	}
 
+	public bool TryGetPortalByMasterObjectId(int objectId, out RiftPortalState? portal)
+	{
+		// Java parity: CM_SHOW_DIALOG reaches RVController through the targeted master rift NPC owner.
+		foreach (var rift in _activeRifts.Values)
+		{
+			portal = rift.Portal;
+			if (portal?.MasterNpc.ObjectId == objectId)
+				return true;
+		}
+
+		portal = null;
+		return false;
+	}
+
 	public RiftServiceResult OpenRifts(int id, bool guards)
 	{
 		// Java parity: services/RiftService.openRifts can open one rift id or every closed rift for a world id.

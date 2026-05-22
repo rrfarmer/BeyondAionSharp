@@ -63,6 +63,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly GameWorld? _world;
 	private readonly ThreadPoolManager? _threadPoolManager;
 	private readonly IHouseDoorStateService? _houseDoorStateService;
+	private readonly RiftPortalInteractionService? _riftPortalInteractionService;
 	private readonly SemaphoreSlim _sendLock = new(1, 1);
 	private readonly SemaphoreSlim _closeLock = new(1, 1);
 	private GameConnectionState _state = GameConnectionState.Connected;
@@ -107,6 +108,11 @@ public sealed class GameServerConnection : BaseClientConnection
 		GameWorld? world = null,
 		ThreadPoolManager? threadPoolManager = null,
 		IHouseDoorStateService? houseDoorStateService = null,
+		RiftService? riftService = null,
+		RiftPortalDialogService? riftPortalDialogService = null,
+		RiftPortalUseService? riftPortalUseService = null,
+		RiftInformerService? riftInformerService = null,
+		RiftPortalInteractionService? riftPortalInteractionService = null,
 		GameCrypt? crypt = null)
 		: base(logger, client, clientId)
 	{
@@ -133,6 +139,14 @@ public sealed class GameServerConnection : BaseClientConnection
 		_world = world;
 		_threadPoolManager = threadPoolManager;
 		_houseDoorStateService = houseDoorStateService;
+		_riftPortalInteractionService = riftPortalInteractionService
+			?? (riftService == null
+				? null
+				: new RiftPortalInteractionService(
+					riftService,
+					riftPortalDialogService,
+					riftPortalUseService,
+					riftInformerService ?? (_connectionRegistry == null ? null : new RiftInformerService(riftService, _connectionRegistry))));
 		_crypt = crypt ?? new GameCrypt();
 	}
 
@@ -495,6 +509,10 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmQuestionResponse questionResponse:
 				if (_activePlayer != null)
 					await HandleQuestionResponseAsync(_activePlayer, questionResponse);
+				break;
+			case CmShowDialog showDialog:
+				if (_activePlayer != null)
+					await HandleShowDialogAsync(_activePlayer, showDialog);
 				break;
 			case CmCharacterList characterList:
 				await SendPacketAsync(CreateAccountPropertiesPacket());
@@ -1238,6 +1256,17 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		await StartChargingEquippedItemsAsync(player, packet.TargetObjectId, chargeWay);
+	}
+
+	private async Task HandleShowDialogAsync(Player player, CmShowDialog packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_SHOW_DIALOG.runImpl delegates targeted NPCs to controller.onDialogRequest.
+		if (player.IsTrading || _riftPortalInteractionService == null)
+			return;
+
+		var result = _riftPortalInteractionService.RequestDialog(player, packet.TargetObjectId);
+		if (result.Requested && result.QuestionWindow != null)
+			await SendPacketAsync(result.QuestionWindow);
 	}
 
 	private async Task StartChargingEquippedItemsAsync(Player player, int senderObjectId, int chargeWay)
@@ -4985,6 +5014,11 @@ public sealed class GameServerConnection : BaseClientConnection
 		return questionId is SmQuestionWindow.ItemChargeAllConfirm or SmQuestionWindow.ItemCharge2AllConfirm;
 	}
 
+	private static bool IsRiftPortalQuestion(int questionId)
+	{
+		return questionId is SmQuestionWindow.DirectPortalPassConfirm or SmQuestionWindow.VortexPortalPassConfirm;
+	}
+
 	private static int GetChargeAllQuestionId(int chargeWay)
 	{
 		return chargeWay == 1 ? SmQuestionWindow.ItemChargeAllConfirm : SmQuestionWindow.ItemCharge2AllConfirm;
@@ -5002,6 +5036,12 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (IsChargeAllQuestion(packet.QuestionId))
 		{
 			await HandleChargeAllQuestionResponseAsync(responder, packet);
+			return;
+		}
+
+		if (IsRiftPortalQuestion(packet.QuestionId))
+		{
+			await HandleRiftPortalQuestionResponseAsync(responder, packet);
 			return;
 		}
 
@@ -5030,6 +5070,15 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		await AcceptFriendRequestAsync(requester, responder);
+	}
+
+	private async Task HandleRiftPortalQuestionResponseAsync(Player responder, CmQuestionResponse packet)
+	{
+		// Java parity: controllers/RVController.RequestResponseHandler.acceptRequest executes portal use after SM_QUESTION_WINDOW accept.
+		if (_riftPortalInteractionService == null)
+			return;
+
+		await _riftPortalInteractionService.RespondAsync(responder, packet.QuestionId, packet.Response);
 	}
 
 	private async Task AcceptFriendRequestAsync(Player requester, Player responder)

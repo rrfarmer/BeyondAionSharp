@@ -46,6 +46,8 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<RiftManagerService>();
 			services.AddSingleton<RiftService>();
 			services.AddSingleton<RiftInformerService>();
+			services.AddSingleton<RiftPortalDialogService>();
+			services.AddSingleton<RiftPortalUseService>();
 			services.AddSingleton<PeriodicSaveService>();
 			services.AddSingleton<HousingWorldService>();
 			services.AddSingleton<WorldNpcSpawnService>();

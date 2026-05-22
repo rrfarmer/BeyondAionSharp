@@ -30,6 +30,8 @@ public sealed class SmQuestionWindow : GameServerPacket
 		_parameters = parameters;
 	}
 
+	public int Code => _code;
+
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
 		// Java parity: network/aion/serverpackets/SM_QUESTION_WINDOW.writeImpl.

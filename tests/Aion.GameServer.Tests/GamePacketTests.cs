@@ -3453,6 +3453,16 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesShowDialog()
+	{
+		var showDialog = Assert.IsType<CmShowDialog>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(52, b => b.WriteD(7001)), GameConnectionState.InGame));
+
+		Assert.Equal(7001, showDialog.TargetObjectId);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(52, _ => { }), GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesDialogSelect()
 	{
 		var dialogSelect = Assert.IsType<CmDialogSelect>(

@@ -55,5 +55,6 @@ public sealed record RiftPortalDialogResult(
 public enum RiftPortalDialogStatus
 {
 	Requested,
+	UnknownPortal,
 	InvasionRaceMismatch,
 }

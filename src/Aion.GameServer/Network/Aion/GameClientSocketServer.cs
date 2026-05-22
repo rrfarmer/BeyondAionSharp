@@ -44,6 +44,9 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 	private readonly ThreadPoolManager? _threadPoolManager;
 	private readonly GameWorld? _world;
 	private readonly IHouseDoorStateService? _houseDoorStateService;
+	private readonly RiftService? _riftService;
+	private readonly RiftPortalDialogService? _riftPortalDialogService;
+	private readonly RiftPortalUseService? _riftPortalUseService;
 	private readonly ConcurrentDictionary<string, GameServerConnection> _connections = new();
 	private readonly ConcurrentDictionary<int, GameServerConnection> _playerConnections = new();
 	private long _nextClientId;
@@ -73,7 +76,10 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		GameTimeService? gameTimeService = null,
 		ThreadPoolManager? threadPoolManager = null,
 		GameWorld? world = null,
-		IHouseDoorStateService? houseDoorStateService = null)
+		IHouseDoorStateService? houseDoorStateService = null,
+		RiftService? riftService = null,
+		RiftPortalDialogService? riftPortalDialogService = null,
+		RiftPortalUseService? riftPortalUseService = null)
 		: base(
 			logger,
 			"Aion Game Client Server",
@@ -106,6 +112,9 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		_threadPoolManager = threadPoolManager;
 		_world = world;
 		_houseDoorStateService = houseDoorStateService;
+		_riftService = riftService;
+		_riftPortalDialogService = riftPortalDialogService;
+		_riftPortalUseService = riftPortalUseService;
 	}
 
 	public IPEndPoint? LocalEndPoint => _listener?.LocalEndpoint as IPEndPoint;
@@ -143,7 +152,10 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 				_gameTimeService,
 				_world,
 				threadPoolManager: _threadPoolManager,
-				houseDoorStateService: _houseDoorStateService);
+				houseDoorStateService: _houseDoorStateService,
+				riftService: _riftService,
+				riftPortalDialogService: _riftPortalDialogService,
+				riftPortalUseService: _riftPortalUseService);
 			_connections[clientId] = connection;
 			await connection.RunAsync();
 		}

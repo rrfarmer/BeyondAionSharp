@@ -183,6 +183,8 @@ public sealed class Player
 
 	public PendingSoulBindRequest? PendingSoulBindRequest { get; set; }
 
+	public PendingRiftPortalRequest? PendingRiftPortalRequest { get; set; }
+
 	// Java parity: Player.usingItem set by SM_ITEM_USAGE_ANIMATION while delayed item use is active.
 	public int UsingItemObjectId { get; set; }
 
