@@ -944,7 +944,8 @@ public sealed class GameServerConnection : BaseClientConnection
 									includeSourcePlayer: true);
 							}
 						},
-						staticData?.TitleTemplates);
+						staticData?.TitleTemplates,
+						staticData?.ItemTemplates);
 				}
 				break;
 		}
@@ -2778,6 +2779,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		await ApplySourceItemMutationAsync(inventoryItems, sourceTemplate, sourceItemUpdate, deletedSourceObjectId);
 		ApplyRewardInventoryMutation(inventoryItems, rewardInventoryPlan);
 		player.InventoryItems = inventoryItems.ToArray();
+		RegisterExpirableAddedItems(player, rewardInventoryPlan.Packets);
 		await BroadcastItemUsageAnimationAsync(player, new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 1, 0));
 		await SendDecomposeRewardItemsAsync(rewardInventoryPlan.Packets);
 	}
@@ -2830,6 +2832,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		await SendPacketAsync(new SmSecondaryShowDecomposable(sourceItem.ObjectId, Array.Empty<ResultedItemSummary>()));
 		ApplyRewardInventoryMutation(inventoryItems, rewardInventoryPlan);
 		player.InventoryItems = inventoryItems.ToArray();
+		RegisterExpirableAddedItems(player, rewardInventoryPlan.Packets);
 		await SendDecomposeRewardItemsAsync(rewardInventoryPlan.Packets);
 	}
 
@@ -2882,6 +2885,13 @@ public sealed class GameServerConnection : BaseClientConnection
 		foreach (var updatedItem in rewardInventoryPlan.UpdatedItems)
 			ReplaceInventoryItem(inventoryItems, updatedItem);
 		inventoryItems.AddRange(rewardInventoryPlan.AddedItems);
+	}
+
+	private void RegisterExpirableAddedItems(Player player, IReadOnlyList<DecomposeRewardPacket> rewardPackets)
+	{
+		// Java parity: services/item/ItemService.addNonStackableItem registers newly created expirable items.
+		foreach (var rewardPacket in rewardPackets.Where(packet => packet is { IsNewItem: true, Template.MaxStackCount: <= 1 }))
+			_expirableTaskService?.RegisterInventoryItem(player, rewardPacket.Item);
 	}
 
 	private async Task SendDecomposeRewardItemsAsync(IReadOnlyList<DecomposeRewardPacket> rewardPackets)

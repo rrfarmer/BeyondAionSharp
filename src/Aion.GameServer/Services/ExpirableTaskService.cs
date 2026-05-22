@@ -14,6 +14,10 @@ public sealed class ExpirableTaskService
 {
 	private static readonly TimeSpan InitialDelay = TimeSpan.FromMilliseconds(500);
 	private static readonly TimeSpan Period = TimeSpan.FromSeconds(1);
+	private static readonly HashSet<int> ItemBeforeExpireWarningSeconds = [1800, 900, 600, 300, 60];
+	private const int CubeStorageId = 0;
+	private const int RegularWarehouseStorageId = 1;
+	private const int AccountWarehouseStorageId = 2;
 
 	private readonly ConcurrentDictionary<int, PlayerExpirableRegistration> _registrations = new();
 	private readonly IPlayerEnterWorldRepository _repository;
@@ -48,12 +52,19 @@ public sealed class ExpirableTaskService
 		Player player,
 		Func<GameServerPacket, Task> sendPacketAsync,
 		Func<GameServerPacket, Task>? broadcastVisibleAsync = null,
-		TitleTemplateTable? titleTemplates = null)
+		TitleTemplateTable? titleTemplates = null,
+		ItemTemplateTable? itemTemplates = null)
 	{
-		// Java parity: services/player/PlayerEnterWorldService registers loaded motions, emotions, and titles.
+		// Java parity: services/player/PlayerEnterWorldService registers loaded storage items, motions, emotions, and titles.
 		UnregisterPlayer(player);
-		var registration = new PlayerExpirableRegistration(player, sendPacketAsync, broadcastVisibleAsync, titleTemplates);
+		var registration = new PlayerExpirableRegistration(player, sendPacketAsync, broadcastVisibleAsync, titleTemplates, itemTemplates);
 		_registrations[player.ObjectId] = registration;
+		foreach (var item in player.InventoryItems)
+			AddExpirable(registration, ExpirableKind.Item, item.ObjectId, item.ExpireTime);
+		foreach (var item in player.WarehouseItems)
+			AddExpirable(registration, ExpirableKind.Item, item.ObjectId, item.ExpireTime);
+		foreach (var item in player.AccountWarehouseItems)
+			AddExpirable(registration, ExpirableKind.Item, item.ObjectId, item.ExpireTime);
 		foreach (var emotion in player.Emotions)
 			AddExpirable(registration, ExpirableKind.Emotion, emotion.Id, emotion.ExpireTimeSeconds);
 		foreach (var title in player.Titles)
@@ -83,6 +94,13 @@ public sealed class ExpirableTaskService
 			AddExpirable(registration, ExpirableKind.Motion, motion.Id, motion.ExpireTimeSeconds);
 	}
 
+	public void RegisterInventoryItem(Player player, InventoryItem item)
+	{
+		// Java parity: services/item/ItemService.addNonStackableItem registers newly created expirable items.
+		if (_registrations.TryGetValue(player.ObjectId, out var registration))
+			AddExpirable(registration, ExpirableKind.Item, item.ObjectId, item.ExpireTime);
+	}
+
 	public void UnregisterPlayer(Player player)
 	{
 		// Java parity: services/player/PlayerLeaveWorldService -> ExpireTimerTask.unregisterExpirables.
@@ -101,7 +119,11 @@ public sealed class ExpirableTaskService
 
 				var remainingSeconds = expirable.ExpireTimeSeconds - (int)now.ToUnixTimeSeconds();
 				if (remainingSeconds >= 0)
+				{
+					if (ItemBeforeExpireWarningSeconds.Contains(remainingSeconds))
+						await BeforeExpireAsync(registration, expirable, remainingSeconds / 60, cancellationToken);
 					continue;
+				}
 
 				if (!_registrations.TryGetValue(registration.Player.ObjectId, out var currentRegistration)
 					|| !ReferenceEquals(currentRegistration, registration)
@@ -145,11 +167,36 @@ public sealed class ExpirableTaskService
 				case ExpirableKind.Motion:
 					await ExpireMotionAsync(registration, expirable.Id, cancellationToken);
 					break;
+				case ExpirableKind.Item:
+					await ExpireItemAsync(registration, expirable.Id, cancellationToken);
+					break;
 			}
 		}
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not expire {ExpirableKind} {ExpirableId} for player {PlayerObjectId}", expirable.Kind, expirable.Id, registration.Player.ObjectId);
+		}
+	}
+
+	private async Task BeforeExpireAsync(
+		PlayerExpirableRegistration registration,
+		ExpirableKey expirable,
+		int remainingMinutes,
+		CancellationToken cancellationToken)
+	{
+		try
+		{
+			if (expirable.Kind != ExpirableKind.Item)
+				return;
+
+			if (FindInventoryItem(registration.Player, expirable.Id) is not { } item)
+				return;
+
+			await registration.SendPacketAsync(SmSystemMessage.CashItemTimeLeft(GetItemName(registration, item), remainingMinutes));
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not send before-expire notice for {ExpirableKind} {ExpirableId} for player {PlayerObjectId}", expirable.Kind, expirable.Id, registration.Player.ObjectId);
 		}
 	}
 
@@ -251,6 +298,65 @@ public sealed class ExpirableTaskService
 		await registration.SendPacketAsync(SmSystemMessage.DeleteCashCustomAnimationByTimeout());
 	}
 
+	private async Task ExpireItemAsync(
+		PlayerExpirableRegistration registration,
+		int itemObjectId,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: model/gameobjects/Item.onExpire.
+		var player = registration.Player;
+		InventoryItem? expiredItem = null;
+		lock (registration.SyncRoot)
+		{
+			expiredItem = FindInventoryItem(player, itemObjectId);
+			if (expiredItem == null)
+				return;
+
+			player.InventoryItems = player.InventoryItems.Where(item => item.ObjectId != itemObjectId).ToArray();
+			player.WarehouseItems = player.WarehouseItems.Where(item => item.ObjectId != itemObjectId).ToArray();
+			player.AccountWarehouseItems = player.AccountWarehouseItems.Where(item => item.ObjectId != itemObjectId).ToArray();
+		}
+
+		await _repository.DeleteInventoryItemAsync(expiredItem.OwnerId, expiredItem.ObjectId, cancellationToken);
+		await SendExpiredItemPacketsAsync(registration, expiredItem);
+	}
+
+	private static async Task SendExpiredItemPacketsAsync(PlayerExpirableRegistration registration, InventoryItem expiredItem)
+	{
+		var itemName = GetItemName(registration, expiredItem);
+		switch (expiredItem.Location)
+		{
+			case CubeStorageId:
+				await registration.SendPacketAsync(new SmDeleteItem(expiredItem.ObjectId));
+				await registration.SendPacketAsync(SmCubeUpdate.CubeSize(registration.Player));
+				await registration.SendPacketAsync(SmSystemMessage.DeleteCashItemByTimeout(itemName));
+				break;
+			case RegularWarehouseStorageId:
+				await registration.SendPacketAsync(new SmDeleteWarehouseItem(RegularWarehouseStorageId, expiredItem.ObjectId));
+				await registration.SendPacketAsync(SmCubeUpdate.RegularWarehouseSize(registration.Player));
+				await registration.SendPacketAsync(SmSystemMessage.DeleteCashItemByTimeoutInWarehouse(itemName));
+				break;
+			case AccountWarehouseStorageId:
+				await registration.SendPacketAsync(new SmDeleteWarehouseItem(AccountWarehouseStorageId, expiredItem.ObjectId));
+				await registration.SendPacketAsync(SmCubeUpdate.AccountWarehouseSize());
+				await registration.SendPacketAsync(SmSystemMessage.DeleteCashItemByTimeoutInWarehouse(itemName));
+				break;
+		}
+	}
+
+	private static InventoryItem? FindInventoryItem(Player player, int itemObjectId)
+	{
+		return player.InventoryItems.FirstOrDefault(item => item.ObjectId == itemObjectId)
+			?? player.WarehouseItems.FirstOrDefault(item => item.ObjectId == itemObjectId)
+			?? player.AccountWarehouseItems.FirstOrDefault(item => item.ObjectId == itemObjectId);
+	}
+
+	private static string GetItemName(PlayerExpirableRegistration registration, InventoryItem item)
+	{
+		var itemTemplate = registration.ItemTemplates?.GetItemTemplate(item.ItemId);
+		return itemTemplate?.GetClientName() ?? item.ItemId.ToString(CultureInfo.InvariantCulture);
+	}
+
 	private static string GetTitleName(PlayerExpirableRegistration registration, int titleId)
 	{
 		var titleTemplate = registration.TitleTemplates?.GetTitleTemplate(titleId);
@@ -265,12 +371,14 @@ public sealed class ExpirableTaskService
 			Player player,
 			Func<GameServerPacket, Task> sendPacketAsync,
 			Func<GameServerPacket, Task>? broadcastVisibleAsync,
-			TitleTemplateTable? titleTemplates)
+			TitleTemplateTable? titleTemplates,
+			ItemTemplateTable? itemTemplates)
 		{
 			Player = player;
 			SendPacketAsync = sendPacketAsync;
 			BroadcastVisibleAsync = broadcastVisibleAsync;
 			TitleTemplates = titleTemplates;
+			ItemTemplates = itemTemplates;
 		}
 
 		public Player Player { get; }
@@ -280,6 +388,8 @@ public sealed class ExpirableTaskService
 		public Func<GameServerPacket, Task>? BroadcastVisibleAsync { get; }
 
 		public TitleTemplateTable? TitleTemplates { get; }
+
+		public ItemTemplateTable? ItemTemplates { get; }
 
 		public object SyncRoot { get; } = new();
 
@@ -293,5 +403,6 @@ public sealed class ExpirableTaskService
 		Emotion,
 		Title,
 		Motion,
+		Item,
 	}
 }

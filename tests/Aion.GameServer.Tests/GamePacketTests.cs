@@ -500,6 +500,13 @@ public class GamePacketTests
 		Assert.Equal(0, (int)deleteItemReader.ReadC());
 		Assert.Equal(0, deleteItemReader.Remaining);
 
+		var deleteWarehouseItemPayload = SerializeUnencryptedPayload(new SmDeleteWarehouseItem(1, 91));
+		using var deleteWarehouseItemReader = new PacketBuffer(deleteWarehouseItemPayload);
+		Assert.Equal(1, (int)deleteWarehouseItemReader.ReadC());
+		Assert.Equal(91, deleteWarehouseItemReader.ReadD());
+		Assert.Equal(0, (int)deleteWarehouseItemReader.ReadC());
+		Assert.Equal(0, deleteWarehouseItemReader.Remaining);
+
 		var inventoryUpdatePayload = SerializeUnencryptedPayload(
 			new SmInventoryUpdateItem(attachedItem, attachedTemplate, SmInventoryUpdateItem.DecreaseItemUse));
 		using var inventoryUpdateReader = new PacketBuffer(inventoryUpdatePayload);
@@ -660,6 +667,9 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.DeleteCashTitleByTimeout(ChatUtil.L10n(412994)), 1390244, ChatUtil.L10n(412994));
 		AssertSystemMessage(SmSystemMessage.DeleteCashSocialActionByTimeout(), 1390245);
 		AssertSystemMessage(SmSystemMessage.DeleteCashCustomAnimationByTimeout(), 1400917);
+		AssertSystemMessage(SmSystemMessage.DeleteCashItemByTimeout("item"), 1400034, "item");
+		AssertSystemMessage(SmSystemMessage.DeleteCashItemByTimeoutInWarehouse("item"), 1400406, "item");
+		AssertSystemMessage(SmSystemMessage.CashItemTimeLeft("item", 5), 1400481, "item", "5min");
 		AssertSystemMessage(SmSystemMessage.InventoryCantExtendMore(), 1300430);
 		AssertSystemMessage(SmSystemMessage.InventorySizeExtended(9), 1300431, "9");
 		AssertSystemMessage(SmSystemMessage.WarehouseCantExtendMore(), 1300432);

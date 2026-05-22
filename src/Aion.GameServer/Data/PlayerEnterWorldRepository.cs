@@ -44,6 +44,8 @@ public interface IPlayerEnterWorldRepository
 
 	Task<bool> DeletePlayerMotionAsync(int playerObjectId, int motionId, CancellationToken cancellationToken = default);
 
+	Task<bool> DeleteInventoryItemAsync(int itemOwnerId, int itemObjectId, CancellationToken cancellationToken = default);
+
 	Task<bool> SaveCraftLearnActionMutationAsync(
 		int playerObjectId,
 		int recipeId,
@@ -315,6 +317,11 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	}
 
 	public Task<bool> DeletePlayerMotionAsync(int playerObjectId, int motionId, CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> DeleteInventoryItemAsync(int itemOwnerId, int itemObjectId, CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(true);
 	}
@@ -2428,6 +2435,25 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not delete motion {MotionId} for player {PlayerObjectId}", motionId, playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> DeleteInventoryItemAsync(int itemOwnerId, int itemObjectId, CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/InventoryDAO.store deleted Item, including item_stones cleanup.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+			var deleted = await DeleteInventoryItemAsync(connection, transaction, itemOwnerId, itemObjectId, cancellationToken);
+			await transaction.CommitAsync(cancellationToken);
+			return deleted;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not delete inventory item {ItemObjectId} for owner {ItemOwnerId}", itemObjectId, itemOwnerId);
 			return false;
 		}
 	}

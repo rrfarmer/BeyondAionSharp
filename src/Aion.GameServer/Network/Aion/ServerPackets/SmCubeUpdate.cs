@@ -8,6 +8,9 @@ public sealed class SmCubeUpdate : GameServerPacket
 	public const int PacketOpCode = 130;
 	private const int CubeStorageId = 0;
 	private const int CubeStorageOrdinal = 0;
+	private const int RegularWarehouseStorageId = 1;
+	private const int RegularWarehouseStorageOrdinal = 1;
+	private const int AccountWarehouseStorageOrdinal = 2;
 	private const int KinahItemId = 182400001;
 
 	private readonly int _action;
@@ -34,6 +37,19 @@ public sealed class SmCubeUpdate : GameServerPacket
 		// Java parity: SM_CUBE_UPDATE.cubeSize(StorageType.CUBE, Player).
 		var itemsCount = player.InventoryItems.Count(item => item.Location == CubeStorageId && item.ItemId != KinahItemId);
 		return new SmCubeUpdate(0, CubeStorageOrdinal, itemsCount, player.NpcExpands, player.QuestExpands, player.ItemExpands);
+	}
+
+	public static SmCubeUpdate RegularWarehouseSize(Player player)
+	{
+		// Java parity: SM_CUBE_UPDATE.cubeSize(StorageType.REGULAR_WAREHOUSE, Player).
+		var itemsCount = player.WarehouseItems.Count(item => item.Location == RegularWarehouseStorageId && item.ItemId != KinahItemId);
+		return new SmCubeUpdate(0, RegularWarehouseStorageOrdinal, itemsCount, player.WarehouseNpcExpands, player.WarehouseBonusExpands, 0);
+	}
+
+	public static SmCubeUpdate AccountWarehouseSize()
+	{
+		// Java parity: SM_CUBE_UPDATE.cubeSize(StorageType.ACCOUNT_WAREHOUSE, Player) falls through to zero counts.
+		return new SmCubeUpdate(0, AccountWarehouseStorageOrdinal, 0, 0, 0, 0);
 	}
 
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)

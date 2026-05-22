@@ -82,6 +82,130 @@ public sealed class ExpirableTaskServiceTests
 	}
 
 	[Fact]
+	public async Task Tick_RemovesExpiredInventoryAndWarehouseItems()
+	{
+		await using var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		var now = DateTimeOffset.FromUnixTimeSeconds(1000);
+		var service = new ExpirableTaskService(
+			threadPoolManager,
+			new EmptyPlayerEnterWorldRepository(),
+			NullLogger<ExpirableTaskService>.Instance,
+			() => now);
+		var player = new Player
+		{
+			ObjectId = 1001,
+			AccountId = 77,
+			Name = "Kahrun",
+			InventoryItems =
+			[
+				new InventoryItem { ObjectId = 10, ItemId = 100, Count = 1, OwnerId = 1001, Location = 0, ExpireTime = 999 },
+				new InventoryItem { ObjectId = 11, ItemId = 101, Count = 1, OwnerId = 1001, Location = 0 },
+			],
+			WarehouseItems =
+			[
+				new InventoryItem { ObjectId = 20, ItemId = 102, Count = 1, OwnerId = 1001, Location = 1, ExpireTime = 999 },
+			],
+			AccountWarehouseItems =
+			[
+				new InventoryItem { ObjectId = 30, ItemId = 103, Count = 1, OwnerId = 77, Location = 2, ExpireTime = 999 },
+			],
+		};
+		var sentPackets = new List<GameServerPacket>();
+		var itemTemplates = new ItemTemplateTable(
+		[
+			CreateTemplate(100),
+			CreateTemplate(101),
+			CreateTemplate(102),
+			CreateTemplate(103),
+		]);
+
+		service.RegisterPlayerExpirables(
+			player,
+			packet =>
+			{
+				sentPackets.Add(packet);
+				return Task.CompletedTask;
+			},
+			itemTemplates: itemTemplates);
+		await service.TickAsync();
+
+		Assert.Equal([11], player.InventoryItems.Select(item => item.ObjectId).ToArray());
+		Assert.Empty(player.WarehouseItems);
+		Assert.Empty(player.AccountWarehouseItems);
+		Assert.Contains(sentPackets, packet => packet is SmDeleteItem);
+		Assert.Equal(2, sentPackets.Count(packet => packet is SmDeleteWarehouseItem));
+		Assert.Contains(sentPackets, packet => packet is SmCubeUpdate);
+		Assert.Equal(3, sentPackets.Count(packet => packet is SmSystemMessage));
+	}
+
+	[Fact]
+	public async Task Tick_SendsItemBeforeExpireNoticeAtJavaMinuteThreshold()
+	{
+		await using var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		var now = DateTimeOffset.FromUnixTimeSeconds(1000);
+		var service = new ExpirableTaskService(
+			threadPoolManager,
+			new EmptyPlayerEnterWorldRepository(),
+			NullLogger<ExpirableTaskService>.Instance,
+			() => now);
+		var player = new Player
+		{
+			ObjectId = 1001,
+			Name = "Kahrun",
+			InventoryItems =
+			[
+				new InventoryItem { ObjectId = 10, ItemId = 100, Count = 1, OwnerId = 1001, Location = 0, ExpireTime = 1300 },
+			],
+		};
+		var sentPackets = new List<GameServerPacket>();
+		var itemTemplates = new ItemTemplateTable([CreateTemplate(100)]);
+
+		service.RegisterPlayerExpirables(
+			player,
+			packet =>
+			{
+				sentPackets.Add(packet);
+				return Task.CompletedTask;
+			},
+			itemTemplates: itemTemplates);
+		await service.TickAsync();
+
+		Assert.Equal([10], player.InventoryItems.Select(item => item.ObjectId).ToArray());
+		Assert.Single(sentPackets);
+		Assert.IsType<SmSystemMessage>(sentPackets[0]);
+	}
+
+	[Fact]
+	public async Task RegisterInventoryItem_TracksNewExpirableItems()
+	{
+		await using var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		var now = DateTimeOffset.FromUnixTimeSeconds(1000);
+		var service = new ExpirableTaskService(
+			threadPoolManager,
+			new EmptyPlayerEnterWorldRepository(),
+			NullLogger<ExpirableTaskService>.Instance,
+			() => now);
+		var player = new Player { ObjectId = 1001, Name = "Kahrun" };
+		var addedItem = new InventoryItem { ObjectId = 10, ItemId = 100, Count = 1, OwnerId = 1001, Location = 0, ExpireTime = 999 };
+		var sentPackets = new List<GameServerPacket>();
+
+		service.RegisterPlayerExpirables(
+			player,
+			packet =>
+			{
+				sentPackets.Add(packet);
+				return Task.CompletedTask;
+			},
+			itemTemplates: new ItemTemplateTable([CreateTemplate(100)]));
+		player.InventoryItems = [addedItem];
+		service.RegisterInventoryItem(player, addedItem);
+		await service.TickAsync();
+
+		Assert.Empty(player.InventoryItems);
+		Assert.Contains(sentPackets, packet => packet is SmDeleteItem);
+	}
+
+	[Fact]
 	public async Task Tick_KeepsExactExpiryAndUnregisteredPlayers()
 	{
 		await using var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
@@ -111,5 +235,22 @@ public sealed class ExpirableTaskServiceTests
 
 		Assert.Equal([64], exactExpiryPlayer.Emotions.Select(emotion => emotion.Id).ToArray());
 		Assert.Equal([65], unregisteredPlayer.Emotions.Select(emotion => emotion.Id).ToArray());
+	}
+
+	private static ItemTemplateSummary CreateTemplate(int itemId)
+	{
+		return new ItemTemplateSummary(
+			itemId,
+			"Reward",
+			DescriptionId: 1,
+			Mask: 0,
+			Level: 1,
+			ItemGroup: "NONE",
+			ItemType: "NORMAL",
+			Quality: "COMMON",
+			Race: "PC_ALL",
+			MaxStackCount: 1,
+			Price: 0,
+			ValidEquipmentSlots: 0);
 	}
 }
