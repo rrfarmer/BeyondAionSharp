@@ -132,6 +132,42 @@ public sealed class WorldNpcSpawnServiceTests
 	}
 
 	[Fact]
+	public async Task TryScheduleWorldNpcDeath_DecaysCorpseAndRespawnsFromOriginalSpawn()
+	{
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var staticPlaceables = new StaticPlaceableStateService();
+		var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		try
+		{
+			var service = CreateService(world, staticPlaceables, threadPoolManager);
+			var spawns = new NpcSpawnTable([CreateSpawn(210010000, 203074, x: 5, staticId: 107, respawnSeconds: 1)]);
+			var templates = new NpcTemplateTable([CreateTemplate(203074)]);
+
+			service.SpawnWorldNpcs(spawns, templates, [210010000]);
+			var scheduledDeath = service.TryScheduleWorldNpcDeath(1, hasRegisteredDrops: false, decayDelay: TimeSpan.FromMilliseconds(50));
+
+			Assert.True(scheduledDeath);
+			Assert.True(service.HasRespawnTask(1));
+			Assert.Equal(1, service.PendingRespawnCount);
+			Assert.Single(world.GetNpcs());
+			Assert.Equal(0, staticPlaceables.GetSpawnCount(210010000, 107));
+
+			await WaitUntilAsync(() => world.GetNpcs().Count == 0 && service.HasRespawnTask(1));
+			await WaitUntilAsync(() => service.PendingRespawnCount == 0 && world.GetNpcs().Count == 1);
+
+			var respawnedNpc = Assert.Single(world.GetNpcs());
+			Assert.Equal(1, respawnedNpc.ObjectId);
+			Assert.Equal(203074, respawnedNpc.TemplateId);
+			Assert.Equal(5, respawnedNpc.Position.X);
+			Assert.Equal(1, staticPlaceables.GetSpawnCount(210010000, 107));
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
 	public async Task TryDeleteAndScheduleRespawn_SkipsNoRespawnSpawns()
 	{
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);

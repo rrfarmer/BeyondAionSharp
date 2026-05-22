@@ -12,6 +12,8 @@ namespace Aion.GameServer.Services;
 
 public sealed class WorldNpcSpawnService : GameEngine
 {
+	private static readonly TimeSpan ImmediateDecayDelay = TimeSpan.FromSeconds(2);
+	private static readonly TimeSpan WithDropDecayDelay = TimeSpan.FromMinutes(5);
 	private readonly GameServerRuntimeContext _runtimeContext;
 	private readonly GameWorld _world;
 	private readonly IDFactory _idFactory;
@@ -122,7 +124,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 	{
 		if (_gameTimeService != null)
 			_gameTimeService.HourChanged -= OnGameHourChangedAsync;
-		CancelPendingRespawns(releaseObjectIds: true);
+		CancelPendingRespawns();
 		_temporarySpawnObjectIds.Clear();
 		_spawnedWorldNpcs.Clear();
 		Volatile.Write(ref _loadedCount, 0);
@@ -391,8 +393,56 @@ public sealed class WorldNpcSpawnService : GameEngine
 			return false;
 
 		if (shouldScheduleRespawn)
-			ScheduleRespawn(objectId, registration);
+			ScheduleRespawn(objectId, registration, releaseOldObjectIdBeforeSpawn: true);
 
+		return true;
+	}
+
+	public bool TryScheduleRespawn(int objectId)
+	{
+		// Java parity: services/RespawnService.scheduleRespawn called while an NPC corpse can still be spawned.
+		if (!_world.TryGetObject(objectId, out var gameObject)
+			|| gameObject is not WorldNpc worldNpc
+			|| worldNpc.RespawnSeconds <= 0
+			|| _threadPoolManager == null
+			|| HasRespawnTask(objectId)
+			|| !_spawnedWorldNpcs.TryGetValue(objectId, out var registration))
+		{
+			return false;
+		}
+
+		ScheduleRespawn(objectId, registration, releaseOldObjectIdBeforeSpawn: false);
+		return true;
+	}
+
+	public bool TryScheduleWorldNpcDeath(int objectId, bool hasRegisteredDrops, TimeSpan? decayDelay = null)
+	{
+		// Java parity: controllers/NpcController.onDie schedules respawn before delayed decay deletion.
+		if (!_world.TryGetObject(objectId, out var gameObject) || gameObject is not WorldNpc worldNpc)
+			return false;
+
+		TryScheduleRespawn(objectId);
+		_staticPlaceables?.DespawnPlaceableObject(worldNpc.Position.WorldId, worldNpc.StaticId);
+		return TryScheduleWorldNpcDecayTask(objectId, hasRegisteredDrops, decayDelay);
+	}
+
+	public bool TryScheduleWorldNpcDecayTask(int objectId, bool hasRegisteredDrops, TimeSpan? delay = null)
+	{
+		// Java parity: services/RespawnService.scheduleDecayTask chooses 2s without drops and 5m with drops.
+		if (!_world.TryGetObject(objectId, out var gameObject) || gameObject is not WorldNpc)
+			return false;
+
+		var decayDelay = delay ?? (hasRegisteredDrops ? WithDropDecayDelay : ImmediateDecayDelay);
+		if (_threadPoolManager == null)
+			return TryDespawnWorldNpc(objectId);
+
+		_threadPoolManager.Schedule(
+			_ =>
+			{
+				TryDespawnWorldNpc(objectId);
+				return ValueTask.CompletedTask;
+			},
+			decayDelay <= TimeSpan.Zero ? ImmediateDecayDelay : decayDelay);
 		return true;
 	}
 
@@ -409,7 +459,8 @@ public sealed class WorldNpcSpawnService : GameEngine
 			return false;
 
 		pendingRespawn.ScheduledTask?.Cancel();
-		_idFactory.ReleaseId(objectId);
+		if (pendingRespawn.ReleaseOldObjectIdBeforeSpawn)
+			_idFactory.ReleaseId(objectId);
 		return true;
 	}
 
@@ -425,12 +476,12 @@ public sealed class WorldNpcSpawnService : GameEngine
 		return true;
 	}
 
-	private void ScheduleRespawn(int oldObjectId, SpawnedWorldNpcRegistration registration)
+	private void ScheduleRespawn(int oldObjectId, SpawnedWorldNpcRegistration registration, bool releaseOldObjectIdBeforeSpawn)
 	{
 		if (_threadPoolManager == null)
 			return;
 
-		var pendingRespawn = new PendingWorldNpcRespawn(registration);
+		var pendingRespawn = new PendingWorldNpcRespawn(registration, releaseOldObjectIdBeforeSpawn);
 		pendingRespawn.ScheduledTask = _threadPoolManager.Schedule(
 			cancellationToken => RunRespawnAsync(oldObjectId, pendingRespawn, cancellationToken),
 			TimeSpan.FromSeconds(registration.Spawn.RespawnSeconds));
@@ -451,7 +502,8 @@ public sealed class WorldNpcSpawnService : GameEngine
 			return ValueTask.CompletedTask;
 		}
 
-		_idFactory.ReleaseId(oldObjectId);
+		if (pendingRespawn.ReleaseOldObjectIdBeforeSpawn)
+			_idFactory.ReleaseId(oldObjectId);
 		if (cancellationToken.IsCancellationRequested)
 			return ValueTask.CompletedTask;
 
@@ -461,7 +513,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		return ValueTask.CompletedTask;
 	}
 
-	private void CancelPendingRespawns(bool releaseObjectIds)
+	private void CancelPendingRespawns()
 	{
 		foreach (var pair in _pendingRespawns.ToArray())
 		{
@@ -469,7 +521,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 				continue;
 
 			pendingRespawn.ScheduledTask?.Cancel();
-			if (releaseObjectIds)
+			if (pendingRespawn.ReleaseOldObjectIdBeforeSpawn)
 				_idFactory.ReleaseId(pair.Key);
 		}
 	}
@@ -580,12 +632,15 @@ public sealed class WorldNpcSpawnService : GameEngine
 
 	private sealed class PendingWorldNpcRespawn
 	{
-		public PendingWorldNpcRespawn(SpawnedWorldNpcRegistration registration)
+		public PendingWorldNpcRespawn(SpawnedWorldNpcRegistration registration, bool releaseOldObjectIdBeforeSpawn)
 		{
 			Registration = registration;
+			ReleaseOldObjectIdBeforeSpawn = releaseOldObjectIdBeforeSpawn;
 		}
 
 		public SpawnedWorldNpcRegistration Registration { get; }
+
+		public bool ReleaseOldObjectIdBeforeSpawn { get; }
 
 		public ScheduledTask? ScheduledTask { get; set; }
 	}
