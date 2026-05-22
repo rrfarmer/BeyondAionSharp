@@ -1,5 +1,6 @@
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Services;
+using Aion.GameServer.Dataholders;
 
 namespace Aion.GameServer.Tests;
 
@@ -26,5 +27,48 @@ public sealed class PlayerHouseTests
 		var graceSeconds = house.GetGraceSeconds(() => acquiredTime, schedule);
 
 		Assert.Equal(606600, graceSeconds);
+	}
+
+	[Fact]
+	public void HouseRegistrySummary_LoadsJavaRowsAndFiltersInvalidDecor()
+	{
+		var housingTemplates = new HousingTemplateTable(
+			Array.Empty<HousingAddressSummary>(),
+			[new HousingBuildingSummary(353000, "HOUSE", 1, PartsMatch: "CP_C")],
+			[
+				new HousingPartSummary(3520000, "ROOF", new HashSet<string>(["CP_C"], StringComparer.OrdinalIgnoreCase)),
+				new HousingPartSummary(3500000, "ROOF", new HashSet<string>(["CP_A"], StringComparer.OrdinalIgnoreCase)),
+				new HousingPartSummary(3524000, "INWALL_ANY", new HashSet<string>(["CP_C"], StringComparer.OrdinalIgnoreCase)),
+			]);
+		var objectTemplates = new HousingObjectTemplateTable(
+			[
+				new HousingObjectTemplateSummary(3001000, 7, "npc", "EXTERIOR", "FLOOR", "NONE", "NPC", 30, false),
+				new HousingObjectTemplateSummary(3190001, 1, "use_item", "INTERIOR", "FLOOR", "NONE", "USE_ITEM", 0, false, UseCount: 3),
+			]);
+		var registry = HouseRegistrySummary.FromRows(
+			353000,
+			housingTemplates,
+			objectTemplates,
+			[
+				new HouseRegisteredItemRow(9001, 3001000, 1_200, 0x112233, 0, 0, 0, 0, 0, 0, 0, "NONE", 0),
+				new HouseRegisteredItemRow(9002, 3190001, null, null, 0, 1, 2, 10, 20, 30, 60, "INTERIOR", 0),
+				new HouseRegisteredItemRow(9101, 3520000, null, null, 0, 0, 0, 0, 0, 0, 0, "DECOR", -1),
+				new HouseRegisteredItemRow(9102, 3524000, null, null, 0, 0, 0, 0, 0, 0, 0, "DECOR", 1),
+				new HouseRegisteredItemRow(9103, 3500000, null, null, 0, 0, 0, 0, 0, 0, 0, "DECOR", -1),
+			],
+			() => 1_000);
+
+		Assert.Equal(2, registry.Objects.Count);
+		var notSpawned = Assert.Single(registry.NotSpawnedObjects);
+		Assert.Equal(9001, notSpawned.ObjectId);
+		Assert.Equal(200, notSpawned.ExpirationSeconds);
+		Assert.Equal((byte)7, notSpawned.TypeId);
+		var spawned = Assert.Single(registry.Objects, obj => obj.IsSpawnedByPlayer);
+		Assert.Equal(180, spawned.Rotation);
+		Assert.Equal(new byte[] { 3, 0, 0, 0, 0 }, spawned.UsageData);
+		var unusedDecor = Assert.Single(registry.UnusedDecorations);
+		Assert.Equal(9101, unusedDecor.ObjectId);
+		Assert.True(registry.HasInvalidDecorations);
+		Assert.Equal(2, registry.Decorations.Count(decor => decor.IsDeleted));
 	}
 }

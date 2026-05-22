@@ -49,6 +49,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly IBrokerRepository? _brokerRepository;
 	private readonly ISocialRepository _socialRepository;
 	private readonly IHouseAuctionRepository _houseAuctionRepository;
+	private readonly IHousingRepository _housingRepository;
 	private readonly HouseAuctionTimingService _houseAuctionTiming;
 	private readonly HouseMaintenanceTimingService _houseMaintenanceTiming;
 	private readonly IMotionRepository _motionRepository;
@@ -90,6 +91,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		IBrokerRepository? brokerRepository = null,
 		ISocialRepository? socialRepository = null,
 		IHouseAuctionRepository? houseAuctionRepository = null,
+		IHousingRepository? housingRepository = null,
 		HouseAuctionTimingService? houseAuctionTiming = null,
 		HouseMaintenanceTimingService? houseMaintenanceTiming = null,
 		IMotionRepository? motionRepository = null,
@@ -114,6 +116,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_brokerRepository = brokerRepository;
 		_socialRepository = socialRepository ?? new EmptySocialRepository();
 		_houseAuctionRepository = houseAuctionRepository ?? new EmptyHouseAuctionRepository();
+		_housingRepository = housingRepository ?? new EmptyHousingRepository();
 		_houseAuctionTiming = houseAuctionTiming ?? new HouseAuctionTimingService();
 		_houseMaintenanceTiming = houseMaintenanceTiming ?? new HouseMaintenanceTimingService(_options);
 		_motionRepository = motionRepository ?? new EmptyMotionRepository();
@@ -6233,9 +6236,10 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmHouseEdit.EnterDecorationMode:
 			{
 				await SendPacketAsync(new SmHouseEdit(packet.Action));
-				await SendPacketAsync(SmHouseRegistry.CreateRegisteredObjects());
 				var housingTemplates = _runtimeContext?.DataManager?.StaticData.HousingTemplates;
-				await SendPacketAsync(SmHouseRegistry.CreateDecorationItems(housingTemplates, activeHouse.BuildingId));
+				var registry = await LoadHouseRegistryAsync(player, activeHouse);
+				await SendPacketAsync(SmHouseRegistry.CreateRegisteredObjects(registry));
+				await SendPacketAsync(SmHouseRegistry.CreateDecorationItems(housingTemplates, activeHouse.BuildingId, registry));
 				break;
 			}
 			case CmHouseEdit.ExitDecorationMode:
@@ -6244,6 +6248,27 @@ public sealed class GameServerConnection : BaseClientConnection
 				await SendPacketAsync(new SmHouseEdit(packet.Action));
 				break;
 		}
+	}
+
+	private async Task<HouseRegistrySummary> LoadHouseRegistryAsync(Player player, PlayerHouse activeHouse)
+	{
+		// Java parity: model/house/House.getRegistry lazy-loads PlayerRegisteredItemsDAO data for the active house owner.
+		if (activeHouse.Registry != null)
+			return activeHouse.Registry;
+
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		if (staticData == null)
+			return HouseRegistrySummary.Empty;
+
+		var registry = await _housingRepository.LoadHouseRegistryAsync(
+			player.ObjectId,
+			activeHouse.BuildingId,
+			staticData.HousingTemplates,
+			staticData.HousingObjectTemplates);
+		player.Houses = player.Houses
+			.Select(house => house.ObjectId == activeHouse.ObjectId ? house with { Registry = registry } : house)
+			.ToArray();
+		return registry;
 	}
 
 	private async Task<bool> CanOwnHouseForAuctionAsync(Player player)

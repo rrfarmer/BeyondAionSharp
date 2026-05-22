@@ -13,7 +13,8 @@ public sealed record PlayerHouse(
 	byte DoorState = PlayerHouse.DoorOpen,
 	bool ShowOwnerName = true,
 	string? SignNotice = null,
-	int TownLevel = 0)
+	int TownLevel = 0,
+	HouseRegistrySummary? Registry = null)
 {
 	public const int SignNoticeMaxLength = 64;
 	public const byte DoorOpen = 1;

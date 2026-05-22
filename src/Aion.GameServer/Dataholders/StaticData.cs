@@ -147,6 +147,7 @@ public sealed class StaticData
 		var housingLandFirstBuildingIds = new Dictionary<int, int>();
 		var housingLandDefaultBuildingIds = new Dictionary<int, int>();
 		var housingBuildings = new List<HousingBuildingSummary>();
+		var housingParts = new List<HousingPartSummary>();
 		var housingObjectTemplates = new List<HousingObjectTemplateSummary>();
 		var instanceCooltimes = new List<InstanceCooltimeSummary>();
 		var skillTree = new List<SkillLearnSummary>();
@@ -489,7 +490,8 @@ public sealed class StaticData
 					ReadRequiredIntAttribute(reader, "id"),
 					size,
 					GetHouseTypeId(size),
-					reader.GetAttribute("type") ?? string.Empty);
+					reader.GetAttribute("type") ?? string.Empty,
+					reader.GetAttribute("parts_match") ?? string.Empty);
 				continue;
 			}
 
@@ -498,6 +500,19 @@ public sealed class StaticData
 				var partName = reader.LocalName;
 				var value = await ReadElementTextAsync(reader, cancellationToken);
 				currentHousingBuilding.SetDefaultPart(partName, int.TryParse(value, out var parsedPartId) ? parsedPartId : 0);
+				continue;
+			}
+
+			if (reader.Depth == 2
+				&& elementPath.GetValueOrDefault(1) == "house_parts"
+				&& reader.LocalName == "house_part")
+			{
+				// Java parity: dataholders/HousePartsData indexes HousePart by id for decoration validation.
+				housingParts.Add(
+					new HousingPartSummary(
+						ReadRequiredIntAttribute(reader, "id"),
+						reader.GetAttribute("type") ?? string.Empty,
+						SplitHousePartTags(reader.GetAttribute("building_tags"))));
 				continue;
 			}
 
@@ -1240,7 +1255,8 @@ public sealed class StaticData
 								?.BuildingType ?? string.Empty,
 						})
 					.ToArray(),
-				housingBuildings.AsReadOnly()),
+				housingBuildings.AsReadOnly(),
+				housingParts.AsReadOnly()),
 			new HousingObjectTemplateTable(housingObjectTemplates.AsReadOnly()),
 			new InstanceCooltimeTable(instanceCooltimes.AsReadOnly()),
 			new PlayerInitialDataTable(
@@ -1257,12 +1273,13 @@ public sealed class StaticData
 	{
 		private readonly Dictionary<string, int> _defaultParts = new(StringComparer.OrdinalIgnoreCase);
 
-		public HousingBuildingBuilder(int buildingId, string size, int houseTypeId, string buildingType)
+		public HousingBuildingBuilder(int buildingId, string size, int houseTypeId, string buildingType, string partsMatch)
 		{
 			BuildingId = buildingId;
 			Size = size;
 			HouseTypeId = houseTypeId;
 			BuildingType = buildingType;
+			PartsMatch = partsMatch;
 		}
 
 		private int BuildingId { get; }
@@ -1272,6 +1289,8 @@ public sealed class StaticData
 		private int HouseTypeId { get; }
 
 		private string BuildingType { get; }
+
+		private string PartsMatch { get; }
 
 		public void SetDefaultPart(string partName, int partId)
 		{
@@ -1290,7 +1309,8 @@ public sealed class StaticData
 				HouseTypeId,
 				BuildingType,
 				BuildDefaultDecorIds(),
-				BuildDefaultPartIds());
+				BuildDefaultPartIds(),
+				PartsMatch);
 		}
 
 		private int[] BuildDefaultPartIds()
@@ -1348,6 +1368,17 @@ public sealed class StaticData
 	{
 		// Java parity: model/templates/housing/Building.Parts fields serialized from housing/house_buildings.xml.
 		return elementName is "roof" or "outwall" or "frame" or "door" or "garden" or "fence" or "inwall" or "infloor" or "addon";
+	}
+
+	private static IReadOnlySet<string> SplitHousePartTags(string? buildingTags)
+	{
+		// Java parity: model/templates/housing/HousePart.buildingTags JAXB Set<String> from whitespace-separated XML attribute values.
+		if (string.IsNullOrWhiteSpace(buildingTags))
+			return new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+		return buildingTags
+			.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+			.ToHashSet(StringComparer.OrdinalIgnoreCase);
 	}
 
 	private static bool IsHousingObjectTemplateElement(string elementName)

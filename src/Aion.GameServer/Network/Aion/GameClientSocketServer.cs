@@ -32,6 +32,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 	private readonly IBrokerRepository? _brokerRepository;
 	private readonly ISocialRepository? _socialRepository;
 	private readonly IHouseAuctionRepository? _houseAuctionRepository;
+	private readonly IHousingRepository? _housingRepository;
 	private readonly HouseAuctionTimingService? _houseAuctionTiming;
 	private readonly HouseMaintenanceTimingService? _houseMaintenanceTiming;
 	private readonly IMotionRepository? _motionRepository;
@@ -59,6 +60,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		IBrokerRepository? brokerRepository = null,
 		ISocialRepository? socialRepository = null,
 		IHouseAuctionRepository? houseAuctionRepository = null,
+		IHousingRepository? housingRepository = null,
 		HouseAuctionTimingService? houseAuctionTiming = null,
 		HouseMaintenanceTimingService? houseMaintenanceTiming = null,
 		IMotionRepository? motionRepository = null,
@@ -87,6 +89,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		_brokerRepository = brokerRepository;
 		_socialRepository = socialRepository;
 		_houseAuctionRepository = houseAuctionRepository;
+		_housingRepository = housingRepository;
 		_houseAuctionTiming = houseAuctionTiming;
 		_houseMaintenanceTiming = houseMaintenanceTiming;
 		_motionRepository = motionRepository;
@@ -124,6 +127,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 				_brokerRepository,
 				_socialRepository,
 				_houseAuctionRepository,
+				_housingRepository,
 				_houseAuctionTiming,
 				_houseMaintenanceTiming,
 				_motionRepository,

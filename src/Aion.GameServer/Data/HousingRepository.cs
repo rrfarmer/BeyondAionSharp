@@ -10,6 +10,13 @@ namespace Aion.GameServer.Data;
 public interface IHousingRepository
 {
 	Task<IReadOnlyList<WorldHouse>> LoadWorldHousesAsync(HousingTemplateTable housingTemplates, CancellationToken cancellationToken = default);
+
+	Task<HouseRegistrySummary> LoadHouseRegistryAsync(
+		int playerObjectId,
+		int buildingId,
+		HousingTemplateTable housingTemplates,
+		HousingObjectTemplateTable housingObjectTemplates,
+		CancellationToken cancellationToken = default);
 }
 
 public sealed class EmptyHousingRepository : IHousingRepository
@@ -17,6 +24,16 @@ public sealed class EmptyHousingRepository : IHousingRepository
 	public Task<IReadOnlyList<WorldHouse>> LoadWorldHousesAsync(HousingTemplateTable housingTemplates, CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult<IReadOnlyList<WorldHouse>>(Array.Empty<WorldHouse>());
+	}
+
+	public Task<HouseRegistrySummary> LoadHouseRegistryAsync(
+		int playerObjectId,
+		int buildingId,
+		HousingTemplateTable housingTemplates,
+		HousingObjectTemplateTable housingObjectTemplates,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(HouseRegistrySummary.Empty);
 	}
 }
 
@@ -92,6 +109,58 @@ public sealed class MySqlHousingRepository : IHousingRepository
 		{
 			_logger.LogError(ex, "Could not load world houses");
 			return Array.Empty<WorldHouse>();
+		}
+	}
+
+	public async Task<HouseRegistrySummary> LoadHouseRegistryAsync(
+		int playerObjectId,
+		int buildingId,
+		HousingTemplateTable housingTemplates,
+		HousingObjectTemplateTable housingObjectTemplates,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/PlayerRegisteredItemsDAO.loadRegistry.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = """
+				SELECT item_unique_id, item_id, expire_time, color, color_expires, owner_use_count,
+					visitor_use_count, x, y, z, h, area, room
+				FROM player_registered_items
+				WHERE player_id = ?
+				ORDER BY item_unique_id, item_id
+				""";
+			command.Parameters.Add(new MySqlParameter { Value = playerObjectId });
+
+			var rows = new List<HouseRegisteredItemRow>();
+			await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+			while (await reader.ReadAsync(cancellationToken))
+			{
+				rows.Add(
+					new HouseRegisteredItemRow(
+						ReadInt(reader, "item_unique_id"),
+						ReadInt(reader, "item_id"),
+						ReadNullableInt(reader, "expire_time"),
+						ReadNullableInt(reader, "color"),
+						ReadInt(reader, "color_expires"),
+						ReadInt(reader, "owner_use_count"),
+						ReadInt(reader, "visitor_use_count"),
+						ReadFloat(reader, "x"),
+						ReadFloat(reader, "y"),
+						ReadFloat(reader, "z"),
+						ReadInt(reader, "h"),
+						ReadString(reader, "area"),
+						ReadInt(reader, "room")));
+			}
+
+			return HouseRegistrySummary.FromRows(buildingId, housingTemplates, housingObjectTemplates, rows);
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not load house registry for player {PlayerObjectId}", playerObjectId);
+			return HouseRegistrySummary.Empty;
 		}
 	}
 
@@ -177,6 +246,18 @@ public sealed class MySqlHousingRepository : IHousingRepository
 	{
 		var ordinal = reader.GetOrdinal(column);
 		return reader.IsDBNull(ordinal) ? 0 : Convert.ToInt32(reader.GetValue(ordinal));
+	}
+
+	private static int? ReadNullableInt(MySqlDataReader reader, string column)
+	{
+		var ordinal = reader.GetOrdinal(column);
+		return reader.IsDBNull(ordinal) ? null : Convert.ToInt32(reader.GetValue(ordinal));
+	}
+
+	private static float ReadFloat(MySqlDataReader reader, string column)
+	{
+		var ordinal = reader.GetOrdinal(column);
+		return reader.IsDBNull(ordinal) ? 0 : Convert.ToSingle(reader.GetValue(ordinal));
 	}
 
 	private static DateTime? ReadDateTime(MySqlDataReader reader, string column)

@@ -6,26 +6,35 @@ public sealed class HousingTemplateTable
 {
 	private readonly IReadOnlyDictionary<int, HousingAddressSummary> _addressesById;
 	private readonly IReadOnlyDictionary<int, HousingBuildingSummary> _buildingsById;
+	private readonly IReadOnlyDictionary<int, HousingPartSummary> _partsById;
 
 	public HousingTemplateTable(
 		IReadOnlyList<HousingAddressSummary> addresses,
-		IReadOnlyList<HousingBuildingSummary> buildings)
+		IReadOnlyList<HousingBuildingSummary> buildings,
+		IReadOnlyList<HousingPartSummary>? parts = null)
 	{
 		Addresses = addresses;
 		Buildings = buildings;
+		Parts = parts ?? Array.Empty<HousingPartSummary>();
 		_addressesById = new ReadOnlyDictionary<int, HousingAddressSummary>(
 			addresses.ToDictionary(address => address.AddressId));
 		_buildingsById = new ReadOnlyDictionary<int, HousingBuildingSummary>(
 			buildings.ToDictionary(building => building.BuildingId));
+		_partsById = new ReadOnlyDictionary<int, HousingPartSummary>(
+			Parts.ToDictionary(part => part.PartId));
 	}
 
 	public IReadOnlyList<HousingAddressSummary> Addresses { get; }
 
 	public IReadOnlyList<HousingBuildingSummary> Buildings { get; }
 
+	public IReadOnlyList<HousingPartSummary> Parts { get; }
+
 	public int AddressCount => Addresses.Count;
 
 	public int BuildingCount => Buildings.Count;
+
+	public int PartCount => Parts.Count;
 
 	public HousingAddressSummary? GetAddress(int addressId)
 	{
@@ -41,6 +50,27 @@ public sealed class HousingTemplateTable
 	public HousingBuildingSummary? GetBuilding(int buildingId)
 	{
 		return _buildingsById.GetValueOrDefault(buildingId);
+	}
+
+	public HousingPartSummary? GetPart(int partId)
+	{
+		return _partsById.GetValueOrDefault(partId);
+	}
+
+	public bool IsPartValidForBuilding(int partId, int buildingId)
+	{
+		// Java parity: model/templates/housing/HousePart.isForBuilding.
+		var part = GetPart(partId);
+		var building = GetBuilding(buildingId);
+		return part != null
+			&& building != null
+			&& part.BuildingTags.Any(tag => string.Equals(tag, building.PartsMatch, StringComparison.OrdinalIgnoreCase));
+	}
+
+	public bool IsPalaceBuilding(int buildingId)
+	{
+		// Java parity: dao/PlayerRegisteredItemsDAO.createDecoration room guard uses HouseType.PALACE.
+		return GetHouseTypeId(buildingId) == 4;
 	}
 
 	public IReadOnlyList<int> GetDefaultDecorIds(int buildingId)
@@ -88,4 +118,10 @@ public sealed record HousingBuildingSummary(
 	int HouseTypeId,
 	string BuildingType = "",
 	IReadOnlyList<int>? DefaultDecorIds = null,
-	IReadOnlyList<int>? DefaultPartIds = null);
+	IReadOnlyList<int>? DefaultPartIds = null,
+	string PartsMatch = "");
+
+public sealed record HousingPartSummary(
+	int PartId,
+	string Type,
+	IReadOnlySet<string> BuildingTags);

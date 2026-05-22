@@ -155,5 +155,15 @@ public sealed class HousingWorldServiceTests
 			Templates = housingTemplates;
 			return Task.FromResult(_houses);
 		}
+
+		public Task<HouseRegistrySummary> LoadHouseRegistryAsync(
+			int playerObjectId,
+			int buildingId,
+			HousingTemplateTable housingTemplates,
+			HousingObjectTemplateTable housingObjectTemplates,
+			CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult(HouseRegistrySummary.Empty);
+		}
 	}
 }

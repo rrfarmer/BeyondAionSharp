@@ -404,6 +404,10 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(4_000_000, staticData.HousingTemplates.GetAddress(6001)?.MaintenanceFee);
 		Assert.Equal(4, staticData.HousingTemplates.GetHouseTypeId(350000));
 		Assert.Equal(1, staticData.HousingTemplates.GetHouseTypeId(353000));
+		Assert.Equal(276, staticData.HousingTemplates.PartCount);
+		Assert.Equal("CP_C", staticData.HousingTemplates.GetBuilding(353000)?.PartsMatch);
+		Assert.True(staticData.HousingTemplates.IsPartValidForBuilding(3520000, 353000));
+		Assert.False(staticData.HousingTemplates.IsPartValidForBuilding(3500000, 353000));
 		var houseDefaultDecor = staticData.HousingTemplates.GetDefaultDecorIds(353000);
 		Assert.Equal(19, houseDefaultDecor.Count);
 		Assert.Equal(3520000, houseDefaultDecor[0]);

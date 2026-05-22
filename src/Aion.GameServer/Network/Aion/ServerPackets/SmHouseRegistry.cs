@@ -39,6 +39,12 @@ public sealed class SmHouseRegistry : GameServerPacket
 			Array.Empty<RegisteredHouseDecorationSummary>());
 	}
 
+	public static SmHouseRegistry CreateRegisteredObjects(HouseRegistrySummary registry)
+	{
+		// Java parity: model/house/HouseRegistry.getNotSpawnedObjects.
+		return CreateRegisteredObjects(registry.NotSpawnedObjects);
+	}
+
 	public static SmHouseRegistry CreateDecorationItems(
 		HousingTemplateTable? housingTemplates,
 		int buildingId,
@@ -50,6 +56,15 @@ public sealed class SmHouseRegistry : GameServerPacket
 			Array.Empty<RegisteredHouseObjectSummary>(),
 			housingTemplates?.GetDefaultPartIds(buildingId) ?? Array.Empty<int>(),
 			unusedDecorations ?? Array.Empty<RegisteredHouseDecorationSummary>());
+	}
+
+	public static SmHouseRegistry CreateDecorationItems(
+		HousingTemplateTable? housingTemplates,
+		int buildingId,
+		HouseRegistrySummary registry)
+	{
+		// Java parity: model/house/HouseRegistry.getUnusedDecors.
+		return CreateDecorationItems(housingTemplates, buildingId, registry.UnusedDecorations);
 	}
 
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
