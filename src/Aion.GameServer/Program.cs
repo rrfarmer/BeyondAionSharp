@@ -46,6 +46,7 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<RiftManagerService>();
 			services.AddSingleton<RiftService>();
 			services.AddSingleton<RiftInformerService>();
+			services.AddSingleton<RiftScheduleService>();
 			services.AddSingleton<RiftPortalDialogService>();
 			services.AddSingleton<RiftPortalUseService>();
 			services.AddSingleton<VortexLocationService>();
@@ -58,6 +59,8 @@ var builder = Host.CreateDefaultBuilder(args)
 				serviceProvider => serviceProvider.GetRequiredService<HousingWorldService>());
 			services.AddSingleton<Aion.GameServer.Model.GameEngine>(
 				serviceProvider => serviceProvider.GetRequiredService<WorldNpcSpawnService>());
+			services.AddSingleton<Aion.GameServer.Model.GameEngine>(
+				serviceProvider => serviceProvider.GetRequiredService<RiftScheduleService>());
 			services.AddSingleton<ExpirableTaskService>();
 			services.AddSingleton<HousingVisibilityService>();
 			services.AddSingleton<NpcVisibilityService>();
