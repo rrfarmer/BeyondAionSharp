@@ -205,6 +205,8 @@ public sealed class HousingWorldServiceTests
 
 		public int RegistryBuildingId { get; private set; }
 
+		public RegisteredHouseObjectSummary? SavedHouseObject { get; private set; }
+
 		public Task<IReadOnlyList<WorldHouse>> LoadWorldHousesAsync(HousingTemplateTable housingTemplates, CancellationToken cancellationToken = default)
 		{
 			Templates = housingTemplates;
@@ -221,6 +223,15 @@ public sealed class HousingWorldServiceTests
 			RegistryPlayerObjectId = playerObjectId;
 			RegistryBuildingId = buildingId;
 			return Task.FromResult(Registry);
+		}
+
+		public Task<bool> SaveHouseObjectPlacementAsync(
+			int playerObjectId,
+			RegisteredHouseObjectSummary houseObject,
+			CancellationToken cancellationToken = default)
+		{
+			SavedHouseObject = houseObject;
+			return Task.FromResult(true);
 		}
 	}
 }

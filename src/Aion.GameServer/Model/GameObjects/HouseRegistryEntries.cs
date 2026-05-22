@@ -19,7 +19,8 @@ public sealed record RegisteredHouseObjectSummary(
 	int OwnerUseCount = 0,
 	int VisitorUseCount = 0,
 	int ColorExpires = 0,
-	int NpcObjectId = 0)
+	int NpcObjectId = 0,
+	string Area = "NONE")
 {
 	public bool IsSpawnedByPlayer => X != 0 || Y != 0 || Z != 0;
 
@@ -63,6 +64,22 @@ public sealed record HouseRegistrySummary(
 
 	public IReadOnlyList<RegisteredHouseDecorationSummary> UnusedDecorations =>
 		Decorations.Where(decor => decor.IsUnused).ToArray();
+
+	public RegisteredHouseObjectSummary? GetObject(int objectId)
+	{
+		return Objects.FirstOrDefault(obj => obj.ObjectId == objectId);
+	}
+
+	public HouseRegistrySummary WithObject(RegisteredHouseObjectSummary updatedObject)
+	{
+		// Java parity: model/house/HouseRegistry keeps objects keyed by item object ID.
+		return this with
+		{
+			Objects = Objects
+				.Select(obj => obj.ObjectId == updatedObject.ObjectId ? updatedObject : obj)
+				.ToArray(),
+		};
+	}
 
 	public IReadOnlyList<RegisteredHouseObjectSummary> GetNotSpawnedObjects(
 		IReadOnlyDictionary<int, long> cooldowns,
@@ -144,7 +161,8 @@ public sealed record HouseRegistrySummary(
 					OwnerUseCount: row.OwnerUseCount,
 					VisitorUseCount: row.VisitorUseCount,
 					ColorExpires: row.ColorExpires,
-					NpcObjectId: template?.NpcId ?? 0));
+					NpcObjectId: template?.NpcId ?? 0,
+					Area: template?.Area ?? row.Area));
 		}
 
 		return new HouseRegistrySummary(objects, decorations, decorations.Any(decor => decor.IsDeleted));

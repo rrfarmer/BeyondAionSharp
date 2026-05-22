@@ -6256,7 +6256,66 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmHouseEdit.ExitRenovationMode:
 				await SendPacketAsync(new SmHouseEdit(packet.Action));
 				break;
+			case CmHouseEdit.SpawnObject:
+				await HandleHouseObjectPlacementAsync(player, activeHouse, packet, moveExisting: false);
+				break;
+			case CmHouseEdit.MoveObject:
+				await HandleHouseObjectPlacementAsync(player, activeHouse, packet, moveExisting: true);
+				break;
+			case CmHouseEdit.DespawnObject:
+				await HandleHouseObjectDespawnAsync(player, activeHouse, packet);
+				break;
 		}
+	}
+
+	private async Task HandleHouseObjectPlacementAsync(Player player, PlayerHouse activeHouse, CmHouseEdit packet, bool moveExisting)
+	{
+		// Java parity: CM_HOUSE_EDIT action 5/6 mutates HouseObject position and sends SM_HOUSE_EDIT spawn/move packets.
+		var registry = await LoadHouseRegistryAsync(player, activeHouse);
+		var houseObject = registry.GetObject(packet.ItemObjectId);
+		if (houseObject == null)
+			return;
+
+		var updatedObject = houseObject with
+		{
+			X = packet.X,
+			Y = packet.Y,
+			Z = packet.Z,
+			Heading = ConvertAngleToHeading(packet.Rotation),
+		};
+		if (!await _housingRepository.SaveHouseObjectPlacementAsync(player.ObjectId, updatedObject))
+			return;
+
+		registry = registry.WithObject(updatedObject);
+		UpdateHouseRegistry(player, activeHouse, registry);
+		var placedObject = registry.GetSpawnedObjects(GetActiveHouse(player) ?? activeHouse, player.ObjectId)
+			.FirstOrDefault(obj => obj.ObjectId == updatedObject.ObjectId);
+		if (placedObject == null)
+			return;
+
+		if (moveExisting)
+			await SendPacketAsync(new SmHouseEdit(CmHouseEdit.DespawnObject, 0, updatedObject.ObjectId));
+		await SendPacketAsync(new SmHouseEdit(CmHouseEdit.SpawnObject, placedObject));
+		if (!moveExisting)
+			await SendPacketAsync(new SmHouseEdit(CmHouseEdit.DeleteItem, 1, updatedObject.ObjectId));
+	}
+
+	private async Task HandleHouseObjectDespawnAsync(Player player, PlayerHouse activeHouse, CmHouseEdit packet)
+	{
+		// Java parity: CM_HOUSE_EDIT action 7 removes a spawned HouseObject from the house and places it back into edit inventory.
+		var registry = await LoadHouseRegistryAsync(player, activeHouse);
+		var houseObject = registry.GetObject(packet.ItemObjectId);
+		if (houseObject == null)
+			return;
+
+		var updatedObject = houseObject with { X = 0, Y = 0, Z = 0, Heading = 0 };
+		if (!await _housingRepository.SaveHouseObjectPlacementAsync(player.ObjectId, updatedObject))
+			return;
+
+		registry = registry.WithObject(updatedObject);
+		UpdateHouseRegistry(player, activeHouse, registry);
+		await SendPacketAsync(new SmHouseEdit(CmHouseEdit.DespawnObject, 0, updatedObject.ObjectId));
+		await SendPacketAsync(new SmHouseEdit(CmHouseEdit.AddItem, 1, updatedObject.WithCooldown(player.HouseObjectCooldowns), player.ObjectId));
 	}
 
 	private async Task<HouseRegistrySummary> LoadHouseRegistryAsync(Player player, PlayerHouse activeHouse)
@@ -6274,11 +6333,24 @@ public sealed class GameServerConnection : BaseClientConnection
 			activeHouse.BuildingId,
 			staticData.HousingTemplates,
 			staticData.HousingObjectTemplates);
+		UpdateHouseRegistry(player, activeHouse, registry);
+		return registry;
+	}
+
+	private void UpdateHouseRegistry(Player player, PlayerHouse activeHouse, HouseRegistrySummary registry)
+	{
+		var staticData = _runtimeContext?.DataManager?.StaticData;
 		player.Houses = player.Houses
 			.Select(house => house.ObjectId == activeHouse.ObjectId ? house with { Registry = registry } : house)
 			.ToArray();
-		AddOrUpdateWorldHouse(player, player.Houses.First(house => house.ObjectId == activeHouse.ObjectId), staticData.HousingTemplates);
-		return registry;
+		if (staticData != null)
+			AddOrUpdateWorldHouse(player, player.Houses.First(house => house.ObjectId == activeHouse.ObjectId), staticData.HousingTemplates);
+	}
+
+	private static int ConvertAngleToHeading(int angle)
+	{
+		// Java parity: utils/PositionUtil.convertAngleToHeading truncates angle / 3 into a byte.
+		return (byte)(angle / 3);
 	}
 
 	private async Task<bool> CanOwnHouseForAuctionAsync(Player player)

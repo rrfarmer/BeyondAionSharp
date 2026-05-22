@@ -1179,6 +1179,55 @@ public class GamePacketTests
 		Assert.Equal(810013, houseObjectReader.ReadD());
 		Assert.Equal(0, houseObjectReader.Remaining);
 
+		var houseEditSpawnPayload = SerializeUnencryptedPayload(new SmHouseEdit(CmHouseEdit.SpawnObject, placedHouseObject));
+		using var houseEditSpawnReader = new PacketBuffer(houseEditSpawnPayload);
+		Assert.Equal(CmHouseEdit.SpawnObject, (int)houseEditSpawnReader.ReadC());
+		Assert.Equal(700100, houseEditSpawnReader.ReadD());
+		Assert.Equal(1001, houseEditSpawnReader.ReadD());
+		Assert.Equal(9903, houseEditSpawnReader.ReadD());
+		Assert.Equal(3001000, houseEditSpawnReader.ReadD());
+		Assert.Equal(11.5f, houseEditSpawnReader.ReadF());
+		Assert.Equal(22.25f, houseEditSpawnReader.ReadF());
+		Assert.Equal(33.75f, houseEditSpawnReader.ReadF());
+		Assert.Equal(180, houseEditSpawnReader.ReadH());
+		Assert.Equal(3, houseEditSpawnReader.ReadD());
+		Assert.Equal(7200, houseEditSpawnReader.ReadD());
+		Assert.Equal(new byte[] { 1, 0x44, 0x55, 0x66 }, houseEditSpawnReader.ReadB(4));
+		Assert.Equal(0, houseEditSpawnReader.ReadD());
+		Assert.Equal(7, (int)houseEditSpawnReader.ReadC());
+		Assert.Equal(0, houseEditSpawnReader.Remaining);
+
+		var houseEditRemovePayload = SerializeUnencryptedPayload(
+			new SmHouseEdit(CmHouseEdit.DeleteItem, 1, new RegisteredHouseObjectSummary(9903, 3001000)));
+		using var houseEditRemoveReader = new PacketBuffer(houseEditRemovePayload);
+		Assert.Equal(CmHouseEdit.DeleteItem, (int)houseEditRemoveReader.ReadC());
+		Assert.Equal(1, (int)houseEditRemoveReader.ReadC());
+		Assert.Equal(9903, houseEditRemoveReader.ReadD());
+		Assert.Equal(0, houseEditRemoveReader.Remaining);
+
+		var houseEditAddPayload = SerializeUnencryptedPayload(
+			new SmHouseEdit(
+				CmHouseEdit.AddItem,
+				1,
+				new RegisteredHouseObjectSummary(9903, 3001000, ExpirationSeconds: 7200, Color: 0x445566, TypeId: 7),
+				1001));
+		using var houseEditAddReader = new PacketBuffer(houseEditAddPayload);
+		Assert.Equal(CmHouseEdit.AddItem, (int)houseEditAddReader.ReadC());
+		Assert.Equal(1, (int)houseEditAddReader.ReadC());
+		Assert.Equal(9903, houseEditAddReader.ReadD());
+		Assert.Equal(3001000, houseEditAddReader.ReadD());
+		Assert.Equal(7200, houseEditAddReader.ReadD());
+		Assert.Equal(new byte[] { 1, 0x44, 0x55, 0x66 }, houseEditAddReader.ReadB(4));
+		Assert.Equal(0, houseEditAddReader.ReadD());
+		Assert.Equal(7, (int)houseEditAddReader.ReadC());
+		Assert.Equal(0, houseEditAddReader.Remaining);
+
+		var houseEditDespawnPayload = SerializeUnencryptedPayload(new SmHouseEdit(CmHouseEdit.DespawnObject, 0, 9903));
+		using var houseEditDespawnReader = new PacketBuffer(houseEditDespawnPayload);
+		Assert.Equal(CmHouseEdit.DespawnObject, (int)houseEditDespawnReader.ReadC());
+		Assert.Equal(9903, houseEditDespawnReader.ReadD());
+		Assert.Equal(0, houseEditDespawnReader.Remaining);
+
 		var houseObjectsPayload = SerializeUnencryptedPayload(
 			new SmHouseObjects(
 				[

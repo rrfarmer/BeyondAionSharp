@@ -17,6 +17,11 @@ public interface IHousingRepository
 		HousingTemplateTable housingTemplates,
 		HousingObjectTemplateTable housingObjectTemplates,
 		CancellationToken cancellationToken = default);
+
+	Task<bool> SaveHouseObjectPlacementAsync(
+		int playerObjectId,
+		RegisteredHouseObjectSummary houseObject,
+		CancellationToken cancellationToken = default);
 }
 
 public sealed class EmptyHousingRepository : IHousingRepository
@@ -34,6 +39,14 @@ public sealed class EmptyHousingRepository : IHousingRepository
 		CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(HouseRegistrySummary.Empty);
+	}
+
+	public Task<bool> SaveHouseObjectPlacementAsync(
+		int playerObjectId,
+		RegisteredHouseObjectSummary houseObject,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
 	}
 }
 
@@ -161,6 +174,47 @@ public sealed class MySqlHousingRepository : IHousingRepository
 		{
 			_logger.LogError(ex, "Could not load house registry for player {PlayerObjectId}", playerObjectId);
 			return HouseRegistrySummary.Empty;
+		}
+	}
+
+	public async Task<bool> SaveHouseObjectPlacementAsync(
+		int playerObjectId,
+		RegisteredHouseObjectSummary houseObject,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/PlayerRegisteredItemsDAO.storeObjects update branch for placement fields.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = """
+				UPDATE player_registered_items
+				SET x = ?, y = ?, z = ?, h = ?, area = ?
+				WHERE player_id = ? AND item_unique_id = ? AND item_id = ?
+				""";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = houseObject.X },
+					new MySqlParameter { Value = houseObject.Y },
+					new MySqlParameter { Value = houseObject.Z },
+					new MySqlParameter { Value = houseObject.Heading },
+					new MySqlParameter { Value = houseObject.IsSpawnedByPlayer ? houseObject.Area : "NONE" },
+					new MySqlParameter { Value = playerObjectId },
+					new MySqlParameter { Value = houseObject.ObjectId },
+					new MySqlParameter { Value = houseObject.TemplateId },
+				});
+			return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(
+				ex,
+				"Could not save house object placement {HouseObjectId} for player {PlayerObjectId}",
+				houseObject.ObjectId,
+				playerObjectId);
+			return false;
 		}
 	}
 
