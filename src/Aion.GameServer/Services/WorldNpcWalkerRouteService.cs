@@ -24,6 +24,7 @@ public sealed class WorldNpcWalkerRouteService
 			walkerVersions.GetRouteVersionId(template.RouteId) ?? string.Empty,
 			template.Pool,
 			template.Formation,
+			template.LoopType,
 			template.Rows,
 			template.RouteSteps);
 	}
@@ -35,6 +36,7 @@ public sealed record WorldNpcWalkerRoutePlan(
 	string VersionRouteId,
 	int Pool,
 	string Formation,
+	string LoopType,
 	IReadOnlyList<int> Rows,
 	IReadOnlyList<WalkerRouteStepSummary> RouteSteps)
 {
@@ -45,6 +47,7 @@ public sealed record WorldNpcWalkerRoutePlan(
 			string.Empty,
 			string.Empty,
 			0,
+			string.Empty,
 			string.Empty,
 			Array.Empty<int>(),
 			Array.Empty<WalkerRouteStepSummary>());
@@ -58,6 +61,7 @@ public sealed record WorldNpcWalkerRoutePlan(
 			string.Empty,
 			0,
 			string.Empty,
+			string.Empty,
 			Array.Empty<int>(),
 			Array.Empty<WalkerRouteStepSummary>());
 	}
@@ -67,6 +71,7 @@ public sealed record WorldNpcWalkerRoutePlan(
 		string versionRouteId,
 		int pool,
 		string formation,
+		string loopType,
 		IReadOnlyList<int> rows,
 		IReadOnlyList<WalkerRouteStepSummary> routeSteps)
 	{
@@ -76,6 +81,7 @@ public sealed record WorldNpcWalkerRoutePlan(
 			versionRouteId,
 			pool,
 			formation,
+			loopType,
 			rows,
 			routeSteps);
 	}

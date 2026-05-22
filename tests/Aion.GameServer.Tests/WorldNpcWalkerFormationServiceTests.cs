@@ -106,6 +106,7 @@ public sealed class WorldNpcWalkerFormationServiceTests
 			"route-parent",
 			1,
 			formation,
+			"NORMAL",
 			rows ?? [1],
 			routeSteps ??
 			[

@@ -58,6 +58,7 @@ public sealed class WorldNpcWalkerRouteServiceTests
 		Assert.Equal("route-parent", plan.VersionRouteId);
 		Assert.Equal(3, plan.Pool);
 		Assert.Equal("SQUARE", plan.Formation);
+		Assert.Equal("NORMAL", plan.LoopType);
 		Assert.Equal([1, 2], plan.Rows);
 		Assert.Equal(routeSteps, plan.RouteSteps);
 	}
