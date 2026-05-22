@@ -49,6 +49,12 @@ public sealed class HousingTemplateTable
 		return _buildingsById.GetValueOrDefault(buildingId)?.DefaultDecorIds ?? Array.Empty<int>();
 	}
 
+	public IReadOnlyList<int> GetDefaultPartIds(int buildingId)
+	{
+		// Java parity: model/templates/housing/Building.getDefaultPartIds for SM_HOUSE_REGISTRY action 2.
+		return _buildingsById.GetValueOrDefault(buildingId)?.DefaultPartIds ?? Array.Empty<int>();
+	}
+
 	public IReadOnlyList<HousingAddressSummary> GetCustomFieldAddresses()
 	{
 		// Java parity: services/HousingService.spawnHouses skips PERSONAL_INS studio addresses.
@@ -81,4 +87,5 @@ public sealed record HousingBuildingSummary(
 	string Size,
 	int HouseTypeId,
 	string BuildingType = "",
-	IReadOnlyList<int>? DefaultDecorIds = null);
+	IReadOnlyList<int>? DefaultDecorIds = null,
+	IReadOnlyList<int>? DefaultPartIds = null);

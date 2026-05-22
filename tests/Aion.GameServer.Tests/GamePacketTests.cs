@@ -1072,13 +1072,15 @@ public class GamePacketTests
 			LegionEmblemColorB = 30,
 		};
 		var defaultHouseDecorIds = Enumerable.Range(700001, 19).ToArray();
+		var defaultHousePartIds = new[] { 800001, 800002 };
+		var houseTemplates = new HousingTemplateTable(
+			[new HousingAddressSummary(700100, 1, 798000)],
+			[new HousingBuildingSummary(900100, "MANSION", 4, "PERSONAL_FIELD", defaultHouseDecorIds, defaultHousePartIds)]);
 		var houseUpdatePayload = SerializeUnencryptedPayload(
 			new SmHouseUpdate(
 				houseUpdatePlayer,
 				new PlayerHouse(50, 700100, 900100, houseNow, houseNow.AddDays(14), false, PlayerHouse.DoorClosedExceptFriends, false, "Visitors welcome"),
-				new HousingTemplateTable(
-					[new HousingAddressSummary(700100, 1, 798000)],
-					[new HousingBuildingSummary(900100, "MANSION", 4, "PERSONAL_FIELD", defaultHouseDecorIds)])));
+				houseTemplates));
 		using var houseUpdateReader = new PacketBuffer(houseUpdatePayload);
 		Assert.Equal(1, houseUpdateReader.ReadH());
 		Assert.Equal(0, houseUpdateReader.ReadH());
@@ -1107,10 +1109,39 @@ public class GamePacketTests
 			new SmHouseRender(
 				houseUpdatePlayer,
 				new PlayerHouse(50, 700100, 900100, houseNow, houseNow.AddDays(14), false, PlayerHouse.DoorClosedExceptFriends, false, "Visitors welcome"),
-				new HousingTemplateTable(
-					[new HousingAddressSummary(700100, 1, 798000)],
-					[new HousingBuildingSummary(900100, "MANSION", 4, "PERSONAL_FIELD", defaultHouseDecorIds)])));
+				houseTemplates));
 		Assert.Equal(houseUpdatePayload[6..], houseRenderPayload);
+
+		var registryDecorPayload = SerializeUnencryptedPayload(
+			SmHouseRegistry.CreateDecorationItems(
+				houseTemplates,
+				900100,
+				[new RegisteredHouseDecorationSummary(9901, 810001)]));
+		using var registryDecorReader = new PacketBuffer(registryDecorPayload);
+		Assert.Equal(SmHouseRegistry.DecorationItemsAction, (byte)registryDecorReader.ReadC());
+		Assert.Equal(3, registryDecorReader.ReadH());
+		Assert.Equal(0, registryDecorReader.ReadD());
+		Assert.Equal(800001, registryDecorReader.ReadD());
+		Assert.Equal(0, registryDecorReader.ReadD());
+		Assert.Equal(800002, registryDecorReader.ReadD());
+		Assert.Equal(9901, registryDecorReader.ReadD());
+		Assert.Equal(810001, registryDecorReader.ReadD());
+		Assert.Equal(0, registryDecorReader.Remaining);
+
+		var registryObjectPayload = SerializeUnencryptedPayload(
+			SmHouseRegistry.CreateRegisteredObjects(
+				[new RegisteredHouseObjectSummary(9902, 820001, CooldownSeconds: 12, ExpirationSeconds: 3600, Color: 0x112233, TypeId: 7)]));
+		using var registryObjectReader = new PacketBuffer(registryObjectPayload);
+		Assert.Equal(SmHouseRegistry.RegisteredObjectsAction, (byte)registryObjectReader.ReadC());
+		Assert.Equal(1, registryObjectReader.ReadH());
+		Assert.Equal(9902, registryObjectReader.ReadD());
+		Assert.Equal(820001, registryObjectReader.ReadD());
+		Assert.Equal(12, registryObjectReader.ReadD());
+		Assert.Equal(3600, registryObjectReader.ReadD());
+		Assert.Equal(new byte[] { 1, 0x11, 0x22, 0x33 }, registryObjectReader.ReadB(4));
+		Assert.Equal(0, registryObjectReader.ReadD());
+		Assert.Equal(7, (int)registryObjectReader.ReadC());
+		Assert.Equal(0, registryObjectReader.Remaining);
 
 		var deleteHousePayload = SerializeUnencryptedPayload(new SmDeleteHouse(700100));
 		using var deleteHouseReader = new PacketBuffer(deleteHousePayload);

@@ -1256,7 +1256,27 @@ public sealed class StaticData
 				Size,
 				HouseTypeId,
 				BuildingType,
-				BuildDefaultDecorIds());
+				BuildDefaultDecorIds(),
+				BuildDefaultPartIds());
+		}
+
+		private int[] BuildDefaultPartIds()
+		{
+			// Java parity: model/templates/housing/Building.getDefaultPartIds returns EnumMap values in PartType order without room repeats.
+			return
+			[
+				.. new[]
+				{
+					GetPart("roof"),
+					GetPart("outwall"),
+					GetPart("frame"),
+					GetPart("door"),
+					GetPart("garden"),
+					GetPart("fence"),
+					GetPart("inwall"),
+					GetPart("infloor"),
+				}.Where(partId => partId > 0),
+			];
 		}
 
 		private int[] BuildDefaultDecorIds()

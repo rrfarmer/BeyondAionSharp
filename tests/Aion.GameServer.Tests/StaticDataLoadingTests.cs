@@ -415,6 +415,9 @@ public sealed class StaticDataLoadingTests
 		Assert.All(houseDefaultDecor.Skip(6).Take(6), partId => Assert.Equal(3524000, partId));
 		Assert.All(houseDefaultDecor.Skip(12).Take(6), partId => Assert.Equal(3525000, partId));
 		Assert.Equal(0, houseDefaultDecor[18]);
+		Assert.Equal(
+			[3520000, 3521000, 3522001, 3523000, 3526000, 3527000, 3524000, 3525000],
+			staticData.HousingTemplates.GetDefaultPartIds(353000));
 		Assert.Equal(5, staticData.InstanceCooltimes.GetInstanceCooltimeByWorldId(300030000)?.MaxCount);
 		Assert.Contains(staticData.RecipeTemplates.GetAutolearnRecipes("ELYOS", 40009, 1), recipe => recipe.RecipeId == 155000001);
 		var craftPlayer = new Player
