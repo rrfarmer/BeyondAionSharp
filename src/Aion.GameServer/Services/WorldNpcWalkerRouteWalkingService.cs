@@ -1,12 +1,15 @@
 using System.Collections.Concurrent;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Utils;
+using Aion.GameServer.World;
 using GameWorld = Aion.GameServer.World.World;
 
 namespace Aion.GameServer.Services;
 
 public sealed class WorldNpcWalkerRouteWalkingService
 {
+	private static readonly TimeSpan MoveTaskUpdatePeriod = TimeSpan.FromMilliseconds(200);
+	private const double MoveOffset = 0.05d;
 	private readonly GameServerRuntimeContext _runtimeContext;
 	private readonly GameWorld _world;
 	private readonly IWorldNpcWalkerSpawnPlanCacheService _walkerSpawnPlans;
@@ -18,6 +21,7 @@ public sealed class WorldNpcWalkerRouteWalkingService
 	private readonly ConcurrentDictionary<int, WorldNpcWalkerFormationKey> _formationKeysByObjectId = new();
 	private readonly ConcurrentDictionary<WorldNpcWalkerFormationKey, WorldNpcWalkerFormationRuntimeState> _formationStates = new();
 	private readonly ConcurrentDictionary<int, ScheduledTask> _pendingRestTasks = new();
+	private readonly ConcurrentDictionary<int, ScheduledTask> _pendingArrivalTasks = new();
 
 	public WorldNpcWalkerRouteWalkingService(
 		GameServerRuntimeContext runtimeContext,
@@ -42,6 +46,8 @@ public sealed class WorldNpcWalkerRouteWalkingService
 	public int ActiveFormationStateCount => _formationStates.Count;
 
 	public int PendingRestTaskCount => _pendingRestTasks.Count;
+
+	public int PendingArrivalTaskCount => _pendingArrivalTasks.Count;
 
 	public bool TryGetActiveState(int objectId, out WorldNpcWalkerMovementState? state)
 	{
@@ -125,6 +131,7 @@ public sealed class WorldNpcWalkerRouteWalkingService
 		if (!_activeStates.TryGetValue(objectId, out var currentState))
 			return WorldNpcWalkerRouteWalkingTargetReachedResult.NotHandled(WorldNpcWalkerRouteWalkingTargetReachedStatus.MissingState);
 
+		CancelPendingArrivalTask(objectId);
 		var staticData = _runtimeContext.DataManager?.StaticData;
 		if (staticData == null)
 			return WorldNpcWalkerRouteWalkingTargetReachedResult.NotHandled(WorldNpcWalkerRouteWalkingTargetReachedStatus.MissingStaticData);
@@ -151,6 +158,7 @@ public sealed class WorldNpcWalkerRouteWalkingService
 		if (advance.IsStopped)
 		{
 			CancelPendingRestTask(objectId);
+			CancelPendingArrivalTask(objectId);
 			_activeStates.TryRemove(objectId, out _);
 			return WorldNpcWalkerRouteWalkingTargetReachedResult.Stopped();
 		}
@@ -164,6 +172,7 @@ public sealed class WorldNpcWalkerRouteWalkingService
 		{
 			CancelPendingRestTask(objectId);
 			var broadcast = await _movementBroadcasts.BroadcastWalkerMovementAsync(objectId, nextState, cancellationToken: cancellationToken);
+			ScheduleTargetArrival(objectId, nextState, cancellationToken);
 			return WorldNpcWalkerRouteWalkingTargetReachedResult.Advanced(nextState, broadcast.SentCount);
 		}
 
@@ -211,6 +220,7 @@ public sealed class WorldNpcWalkerRouteWalkingService
 		{
 			CancelPendingRestTasks(advance.State.MemberStates);
 			var sentCount = await BroadcastStatesAsync(advance.State.MemberStates, cancellationToken);
+			ScheduleTargetArrivals(advance.State.MemberStates, cancellationToken);
 			return WorldNpcWalkerRouteWalkingTargetReachedResult.AdvancedGroup(advance.State.MemberStates, sentCount);
 		}
 
@@ -231,6 +241,7 @@ public sealed class WorldNpcWalkerRouteWalkingService
 
 		_activeStates[walker.ObjectId] = state;
 		var broadcast = await _movementBroadcasts.BroadcastWalkerMovementAsync(walker.ObjectId, state, cancellationToken: cancellationToken);
+		ScheduleTargetArrival(walker.ObjectId, state, cancellationToken);
 		return WorldNpcWalkerRouteWalkingStartResult.CreateStarted([state], broadcast.SentCount);
 	}
 
@@ -255,6 +266,7 @@ public sealed class WorldNpcWalkerRouteWalkingService
 			_formationKeysByObjectId[state.ObjectId] = formationKey;
 			_activeStates[state.ObjectId] = state;
 			var broadcast = await _movementBroadcasts.BroadcastWalkerMovementAsync(state.ObjectId, state, cancellationToken: cancellationToken);
+			ScheduleTargetArrival(state.ObjectId, state, cancellationToken);
 			sentCount += broadcast.SentCount;
 		}
 
@@ -297,6 +309,7 @@ public sealed class WorldNpcWalkerRouteWalkingService
 				try
 				{
 					await _movementBroadcasts.BroadcastWalkerMovementAsync(objectId, state, cancellationToken: taskCancellationToken);
+					ScheduleTargetArrival(objectId, state, cancellationToken);
 				}
 				finally
 				{
@@ -314,9 +327,77 @@ public sealed class WorldNpcWalkerRouteWalkingService
 			TaskScheduler.Default);
 	}
 
+	private void ScheduleTargetArrivals(
+		IReadOnlyList<WorldNpcWalkerMovementState> states,
+		CancellationToken cancellationToken)
+	{
+		foreach (var state in states)
+			ScheduleTargetArrival(state.ObjectId, state, cancellationToken);
+	}
+
+	private void ScheduleTargetArrival(
+		int objectId,
+		WorldNpcWalkerMovementState state,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: taskmanager/tasks/MoveTaskManager ticks every 200 ms and sends MOVE_ARRIVED once NpcAI.isDestinationReached sees WalkManager.isArrivedAtPoint.
+		if (_threadPoolManager == null)
+			return;
+
+		var arrivalDelay = CalculateArrivalDelay(objectId, state);
+		if (arrivalDelay == null)
+			return;
+
+		CancelPendingArrivalTask(objectId);
+		ScheduledTask? scheduledTask = null;
+		scheduledTask = _threadPoolManager.Schedule(
+			async taskCancellationToken =>
+			{
+				if (scheduledTask != null)
+					RemovePendingArrivalTask(objectId, scheduledTask);
+
+				await TargetReachedAsync(objectId, taskCancellationToken);
+			},
+			arrivalDelay.Value,
+			cancellationToken);
+		_pendingArrivalTasks[objectId] = scheduledTask;
+		_ = scheduledTask.Completion.ContinueWith(
+			_ => RemovePendingArrivalTask(objectId, scheduledTask),
+			CancellationToken.None,
+			TaskContinuationOptions.ExecuteSynchronously,
+			TaskScheduler.Default);
+	}
+
+	private TimeSpan? CalculateArrivalDelay(
+		int objectId,
+		WorldNpcWalkerMovementState state)
+	{
+		// Java parity: controllers/movement/NpcMoveController.moveToLocation uses owner.getGameStats().getMovementSpeedFloat().
+		if (!_world.TryGetObject(objectId, out var gameObject) || gameObject is not WorldNpc npc)
+			return null;
+
+		var speed = npc.Template.RunSpeed;
+		if (speed <= 0)
+			return null;
+
+		var distance = CalculateDistance(npc.Position, state.Target);
+		if (distance <= MoveOffset)
+			return MoveTaskUpdatePeriod;
+
+		var travelSeconds = Math.Max(0d, distance - MoveOffset) / speed;
+		var delay = TimeSpan.FromMilliseconds(Math.Ceiling(travelSeconds * 1000d));
+		return delay < MoveTaskUpdatePeriod ? MoveTaskUpdatePeriod : delay;
+	}
+
 	private void CancelPendingRestTask(int objectId)
 	{
 		if (_pendingRestTasks.TryRemove(objectId, out var scheduledTask))
+			scheduledTask.Cancel();
+	}
+
+	private void CancelPendingArrivalTask(int objectId)
+	{
+		if (_pendingArrivalTasks.TryRemove(objectId, out var scheduledTask))
 			scheduledTask.Cancel();
 	}
 
@@ -329,6 +410,12 @@ public sealed class WorldNpcWalkerRouteWalkingService
 	private void RemovePendingRestTask(int objectId, ScheduledTask scheduledTask)
 	{
 		((ICollection<KeyValuePair<int, ScheduledTask>>)_pendingRestTasks).Remove(
+			new KeyValuePair<int, ScheduledTask>(objectId, scheduledTask));
+	}
+
+	private void RemovePendingArrivalTask(int objectId, ScheduledTask scheduledTask)
+	{
+		((ICollection<KeyValuePair<int, ScheduledTask>>)_pendingArrivalTasks).Remove(
 			new KeyValuePair<int, ScheduledTask>(objectId, scheduledTask));
 	}
 
@@ -350,6 +437,16 @@ public sealed class WorldNpcWalkerRouteWalkingService
 			},
 		};
 		return _world.TryUpdateObject(objectId, updatedNpc);
+	}
+
+	private static double CalculateDistance(
+		WorldPosition position,
+		WorldNpcWalkerRouteStepTarget target)
+	{
+		var deltaX = position.X - target.X;
+		var deltaY = position.Y - target.Y;
+		var deltaZ = position.Z - target.Z;
+		return Math.Sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
 	}
 
 	private static WorldNpcWalkerFormationKey CreateFormationKey(

@@ -164,6 +164,52 @@ public sealed class WorldNpcWalkerRouteWalkingServiceTests
 	}
 
 	[Fact]
+	public async Task StartRouteWalkingAsync_SchedulesMoveArrivalAndAdvancesSingleWalker()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-walk-arrival-schedule-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		try
+		{
+			var context = await CreateRuntimeContextWithWalkerDataAsync(tempPath, pool: 1, formation: "POINT", rows: "");
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			var npc = CreateNpc(1, new WorldPosition(210010000, 9.9f, 0, 0, 3), walkerId: "route-a", walkerIndex: 0, runSpeed: 1);
+			Assert.True(world.TryAddObject(npc.ObjectId, npc));
+			var cache = CreateCache(context, [npc]);
+			var registry = new CapturingConnectionRegistry();
+			var service = CreateService(context, world, cache, registry, threadPoolManager);
+
+			var start = await service.StartRouteWalkingAsync(npc.ObjectId);
+
+			Assert.True(start.Started);
+			Assert.Equal(1, service.PendingArrivalTaskCount);
+			Assert.Equal(1, start.States[0].TargetStepIndex);
+			await WaitUntilAsync(() => registry.Broadcasts.Count >= 2 && service.PendingArrivalTaskCount == 1);
+			Assert.True(service.TryGetActiveState(npc.ObjectId, out var activeState));
+			Assert.NotNull(activeState);
+			Assert.Equal(0, activeState.TargetStepIndex);
+			Assert.True(world.TryGetObject(npc.ObjectId, out var movedObject));
+			var movedNpc = Assert.IsType<WorldNpc>(movedObject);
+			Assert.Equal(10, movedNpc.Position.X);
+			Assert.Equal(0, movedNpc.Position.Y);
+			Assert.Equal(0, movedNpc.Position.Z);
+			Assert.Equal(3, movedNpc.Position.Heading);
+			Assert.Equal(10, registry.Broadcasts[1].SourcePosition.X);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
+	[Fact]
 	public async Task TargetReachedAsync_UpdatesNpcPositionToReachedTargetBeforeNextBroadcast()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-walk-target-position-" + Guid.NewGuid().ToString("N"));
@@ -617,7 +663,8 @@ public sealed class WorldNpcWalkerRouteWalkingServiceTests
 		int objectId,
 		WorldPosition position,
 		string walkerId,
-		int walkerIndex)
+		int walkerIndex,
+		float runSpeed = 0)
 	{
 		return new WorldNpc(
 			ObjectId: objectId,
@@ -631,7 +678,8 @@ public sealed class WorldNpcWalkerRouteWalkingServiceTests
 				Rating: "NORMAL",
 				Race: "ELYOS",
 				Tribe: "GENERAL",
-				Type: "GENERAL"),
+				Type: "GENERAL",
+				RunSpeed: runSpeed),
 			Position: position,
 			WalkerId: walkerId,
 			WalkerIndex: walkerIndex,
