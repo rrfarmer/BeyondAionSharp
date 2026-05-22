@@ -291,6 +291,23 @@ public sealed class Player
 		TriggerFpRestore();
 	}
 
+	public bool StopGliding()
+	{
+		// Java parity: controllers/FlyController.onStopGliding.
+		if (!IsInState(PlayerCreatureState.Gliding))
+			return false;
+
+		SetCreatureState(PlayerCreatureState.Gliding, enabled: false);
+		if (IsInState(PlayerCreatureState.Flying))
+		{
+			TriggerFpReduce();
+			return false;
+		}
+
+		TriggerFpRestore();
+		return true;
+	}
+
 	public bool CanStartRideSprint()
 	{
 		// Java parity: CM_EMOTION.START_SPRINT guard using PlayerMode.RIDE, current FP, Player.isFlying, and RideInfo.canSprint.

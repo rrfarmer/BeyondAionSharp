@@ -3684,7 +3684,17 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		// Java parity: network/aion/clientpackets/CM_MOVE.runImpl movement-state updates before World.updatePosition.
 		await CancelPendingItemUseOnMoveAsync(player);
-		player.SetCreatureState(PlayerCreatureState.Gliding, packet.IsGliding);
+		if (!packet.IsGliding && player.IsInState(PlayerCreatureState.Gliding))
+		{
+			var shouldBroadcastStopGlide = player.StopGliding();
+			if (shouldBroadcastStopGlide)
+				await BroadcastEmotionAsync(player, new SmEmotion(player, EmotionType.StopGlide));
+		}
+		else
+		{
+			player.SetCreatureState(PlayerCreatureState.Gliding, packet.IsGliding);
+		}
+
 		var movement = player.Movement;
 		movement.Mask = packet.Type;
 

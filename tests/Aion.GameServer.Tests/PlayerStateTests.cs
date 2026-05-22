@@ -183,4 +183,31 @@ public sealed class PlayerStateTests
 		Assert.False(player.IsFpReduceActive);
 		Assert.True(player.IsFpRestoreActive);
 	}
+
+	[Fact]
+	public void Player_StopGlidingMatchesJavaFpTaskAndBroadcastDecision()
+	{
+		var walkingGlider = new Player
+		{
+			CreatureState = PlayerCreatureState.Gliding,
+			IsFpReduceActive = true,
+		};
+
+		Assert.True(walkingGlider.StopGliding());
+		Assert.False(walkingGlider.IsInState(PlayerCreatureState.Gliding));
+		Assert.False(walkingGlider.IsFpReduceActive);
+		Assert.True(walkingGlider.IsFpRestoreActive);
+
+		var flyingGlider = new Player
+		{
+			CreatureState = PlayerCreatureState.Flying | PlayerCreatureState.Gliding,
+			IsFpRestoreActive = true,
+		};
+
+		Assert.False(flyingGlider.StopGliding());
+		Assert.True(flyingGlider.IsInState(PlayerCreatureState.Flying));
+		Assert.False(flyingGlider.IsInState(PlayerCreatureState.Gliding));
+		Assert.True(flyingGlider.IsFpReduceActive);
+		Assert.False(flyingGlider.IsFpRestoreActive);
+	}
 }
