@@ -163,8 +163,12 @@ public sealed class WorldNpcSpawnServiceTests
 			poolSize,
 			handler,
 			0,
+			0,
 			string.Empty,
 			0,
+			string.Empty,
+			0,
+			string.Empty,
 			false,
 			groupTemporarySchedule,
 			spotTemporarySchedule);

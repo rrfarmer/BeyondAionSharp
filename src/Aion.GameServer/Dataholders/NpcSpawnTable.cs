@@ -38,8 +38,12 @@ public sealed record NpcSpawnSummary(
 	int PoolSize,
 	string Handler,
 	int StaticId,
+	int RandomWalkRange,
 	string WalkerId,
 	int WalkerIndex,
+	string Anchor,
+	int State,
+	string AiName,
 	bool Custom,
 	TemporarySpawnSchedule? GroupTemporarySchedule,
 	TemporarySpawnSchedule? SpotTemporarySchedule)

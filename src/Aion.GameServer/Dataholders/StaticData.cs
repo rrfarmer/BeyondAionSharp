@@ -2555,8 +2555,12 @@ public sealed class StaticData
 				PoolSize,
 				Handler,
 				spot.StaticId,
+				spot.RandomWalkRange,
 				spot.WalkerId,
 				spot.WalkerIndex,
+				spot.Anchor,
+				spot.State,
+				spot.AiName,
 				Custom,
 				TemporarySchedule,
 				spot.TemporarySchedule);
@@ -2571,16 +2575,24 @@ public sealed class StaticData
 			float z,
 			byte heading,
 			int staticId,
+			int randomWalkRange,
 			string walkerId,
-			int walkerIndex)
+			int walkerIndex,
+			string anchor,
+			int state,
+			string aiName)
 		{
 			X = x;
 			Y = y;
 			Z = z;
 			Heading = heading;
 			StaticId = staticId;
+			RandomWalkRange = randomWalkRange;
 			WalkerId = walkerId;
 			WalkerIndex = walkerIndex;
+			Anchor = anchor;
+			State = state;
+			AiName = aiName;
 		}
 
 		public float X { get; }
@@ -2593,22 +2605,35 @@ public sealed class StaticData
 
 		public int StaticId { get; }
 
+		public int RandomWalkRange { get; }
+
 		public string WalkerId { get; }
 
 		public int WalkerIndex { get; }
+
+		public string Anchor { get; }
+
+		public int State { get; }
+
+		public string AiName { get; }
 
 		public TemporarySpawnSchedule? TemporarySchedule { get; set; }
 
 		public static NpcSpawnSpotBuilder FromReader(XmlReader reader)
 		{
+			// Java parity: model/templates/spawns/SpawnSpotTemplate coordinates, walker, random-walk, anchor, state, and ai fields.
 			return new NpcSpawnSpotBuilder(
 				ReadFloatAttribute(reader, "x"),
 				ReadFloatAttribute(reader, "y"),
 				ReadFloatAttribute(reader, "z"),
 				(byte)ReadOptionalIntAttribute(reader, "h", 0),
 				ReadIntAttribute(reader, "static_id"),
+				ReadIntAttribute(reader, "random_walk"),
 				reader.GetAttribute("walker_id") ?? string.Empty,
-				ReadIntAttribute(reader, "walker_index"));
+				ReadIntAttribute(reader, "walker_index"),
+				reader.GetAttribute("anchor") ?? string.Empty,
+				ReadIntAttribute(reader, "state"),
+				reader.GetAttribute("ai") ?? string.Empty);
 		}
 	}
 
