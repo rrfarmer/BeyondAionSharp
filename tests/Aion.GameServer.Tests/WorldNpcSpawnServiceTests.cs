@@ -33,15 +33,35 @@ public sealed class WorldNpcSpawnServiceTests
 
 		var result = service.SpawnWorldNpcs(spawns, templates, [210010000]);
 
-		Assert.Equal(new WorldNpcSpawnResult(1, 5), result);
+		Assert.Equal(new WorldNpcSpawnResult(2, 4), result);
 		Assert.True(world.TryGetObject(1, out var gameObject));
 		var npc = Assert.IsType<WorldNpc>(gameObject);
 		Assert.Equal(203000, npc.TemplateId);
 		Assert.Equal(new global::Aion.GameServer.World.WorldPosition(210010000, 10, 20, 30, 40), npc.Position);
-		Assert.Equal([npc], world.GetNpcs());
-		Assert.Equal([npc], world.GetNpcs(210010000));
+		Assert.Equal(2, world.GetNpcs().Count);
+		Assert.Contains(world.GetNpcs(), worldNpc => worldNpc.ObjectId == npc.ObjectId);
+		Assert.Equal(2, world.GetNpcs(210010000).Count);
 		Assert.Empty(world.GetNpcs(220010000));
-		Assert.False(world.TryGetObject(2, out _));
+	}
+
+	[Fact]
+	public void SpawnWorldNpcs_ActivatesOnlyPoolSizeSpotsForValidPool()
+	{
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var service = CreateService(world);
+		var spawns = new NpcSpawnTable(
+		[
+			CreateSpawn(210010000, 203010, x: 1, poolSize: 2),
+			CreateSpawn(210010000, 203010, x: 2, poolSize: 2),
+			CreateSpawn(210010000, 203010, x: 3, poolSize: 2),
+		]);
+		var templates = new NpcTemplateTable([CreateTemplate(203010)]);
+
+		var result = service.SpawnWorldNpcs(spawns, templates, [210010000]);
+
+		Assert.Equal(new WorldNpcSpawnResult(2, 0), result);
+		Assert.Equal(2, world.GetNpcs().Count);
+		Assert.Equal(2, world.GetNpcs().Select(npc => npc.Position.X).Distinct().Count());
 	}
 
 	[Fact]

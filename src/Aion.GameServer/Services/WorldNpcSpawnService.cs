@@ -74,42 +74,37 @@ public sealed class WorldNpcSpawnService : GameEngine
 		var allowedMaps = allowedMapIds?.ToHashSet();
 		var spawned = 0;
 		var skipped = 0;
-		foreach (var spawn in spawns.Spawns)
+		foreach (var group in spawns.Spawns.GroupBy(CreateSpawnGroupKey))
 		{
 			cancellationToken.ThrowIfCancellationRequested();
-			if (allowedMaps != null && !allowedMaps.Contains(spawn.MapId))
+			var groupSpawns = group.ToArray();
+			var groupKey = group.Key;
+			if (allowedMaps != null && !allowedMaps.Contains(groupKey.MapId))
 			{
-				skipped++;
+				skipped += groupSpawns.Length;
 				continue;
 			}
 
-			if (!CanMaterializeAsWorldNpc(spawn))
+			if (!CanMaterializeAsWorldNpc(groupKey))
 			{
-				skipped++;
+				skipped += groupSpawns.Length;
 				continue;
 			}
 
-			var template = npcTemplates.GetNpcTemplate(spawn.NpcId);
+			var template = npcTemplates.GetNpcTemplate(groupKey.NpcId);
 			if (template == null)
 			{
-				skipped++;
+				skipped += groupSpawns.Length;
 				continue;
 			}
 
-			var objectId = _idFactory.NextId();
-			var worldNpc = new WorldNpc(
-				objectId,
-				template.TemplateId,
-				template,
-				new global::Aion.GameServer.World.WorldPosition(spawn.MapId, spawn.X, spawn.Y, spawn.Z, spawn.Heading));
-			if (_world.TryAddObject(objectId, worldNpc))
+			foreach (var spawn in SelectActivePoolSpots(groupSpawns))
 			{
-				spawned++;
-			}
-			else
-			{
-				_idFactory.ReleaseId(objectId);
-				skipped++;
+				cancellationToken.ThrowIfCancellationRequested();
+				if (SpawnNpc(spawn, template))
+					spawned++;
+				else
+					skipped++;
 			}
 		}
 
@@ -129,13 +124,62 @@ public sealed class WorldNpcSpawnService : GameEngine
 			cancellationToken);
 	}
 
-	private static bool CanMaterializeAsWorldNpc(NpcSpawnSummary spawn)
+	private bool SpawnNpc(NpcSpawnSummary spawn, NpcTemplateSummary template)
+	{
+		var objectId = _idFactory.NextId();
+		var worldNpc = new WorldNpc(
+			objectId,
+			template.TemplateId,
+			template,
+			new global::Aion.GameServer.World.WorldPosition(spawn.MapId, spawn.X, spawn.Y, spawn.Z, spawn.Heading));
+		if (!_world.TryAddObject(objectId, worldNpc))
+		{
+			_idFactory.ReleaseId(objectId);
+			return false;
+		}
+
+		return true;
+	}
+
+	private static IReadOnlyList<NpcSpawnSummary> SelectActivePoolSpots(IReadOnlyList<NpcSpawnSummary> groupSpawns)
+	{
+		var poolSize = groupSpawns[0].PoolSize;
+		if (poolSize <= 0 || poolSize >= groupSpawns.Count)
+			return groupSpawns;
+
+		// Java parity: SpawnGroup.reserveRandomFreePoolSpot chooses unique random active spots per instance.
+		return groupSpawns
+			.OrderBy(_ => Random.Shared.Next())
+			.Take(poolSize)
+			.ToArray();
+	}
+
+	private static bool CanMaterializeAsWorldNpc(NpcSpawnGroupKey spawn)
 	{
 		// Java parity: this first C# pass mirrors SpawnEngine's ordinary spawnObject branch only.
-		return spawn.PoolSize == 0
-			&& string.IsNullOrEmpty(spawn.Handler)
+		return string.IsNullOrEmpty(spawn.Handler)
 			&& spawn.NpcId is <= 400000 or >= 499999;
 	}
+
+	private static NpcSpawnGroupKey CreateSpawnGroupKey(NpcSpawnSummary spawn)
+	{
+		// Java parity: SpawnsData unique direct spawn groups are keyed by map, npc_id, and custom flag.
+		return new NpcSpawnGroupKey(
+			spawn.MapId,
+			spawn.NpcId,
+			spawn.RespawnSeconds,
+			spawn.PoolSize,
+			spawn.Handler,
+			spawn.Custom);
+	}
+
+	private readonly record struct NpcSpawnGroupKey(
+		int MapId,
+		int NpcId,
+		int RespawnSeconds,
+		int PoolSize,
+		string Handler,
+		bool Custom);
 }
 
 public readonly record struct WorldNpcSpawnResult(int SpawnedCount, int SkippedCount);
