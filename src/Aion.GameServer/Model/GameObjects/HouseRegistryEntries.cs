@@ -18,7 +18,8 @@ public sealed record RegisteredHouseObjectSummary(
 	int Heading = 0,
 	int OwnerUseCount = 0,
 	int VisitorUseCount = 0,
-	int ColorExpires = 0)
+	int ColorExpires = 0,
+	int NpcObjectId = 0)
 {
 	public bool IsSpawnedByPlayer => X != 0 || Y != 0 || Z != 0;
 
@@ -63,6 +64,24 @@ public sealed record HouseRegistrySummary(
 	public IReadOnlyList<RegisteredHouseDecorationSummary> UnusedDecorations =>
 		Decorations.Where(decor => decor.IsUnused).ToArray();
 
+	public IReadOnlyList<PlacedHouseObjectSummary> GetSpawnedObjects(PlayerHouse house, int ownerPlayerId)
+	{
+		// Java parity: model/house/HouseRegistry.getSpawnedObjects feeds CM_LEVEL_READY SM_HOUSE_OBJECTS.
+		return Objects
+			.Where(obj => obj.IsSpawnedByPlayer)
+			.Select(obj => ToPlacedObject(obj, house.AddressId, ownerPlayerId))
+			.ToArray();
+	}
+
+	public IReadOnlyList<PlacedHouseObjectSummary> GetSpawnedObjects(WorldHouse house)
+	{
+		// Java parity: controllers/HouseController.spawnObjects exposes spawned registry objects from visible House state.
+		return Objects
+			.Where(obj => obj.IsSpawnedByPlayer)
+			.Select(obj => ToPlacedObject(obj, house.AddressId, house.OwnerObjectId))
+			.ToArray();
+	}
+
 	public static HouseRegistrySummary FromRows(
 		int buildingId,
 		HousingTemplateTable housingTemplates,
@@ -102,10 +121,30 @@ public sealed record HouseRegistrySummary(
 					Heading: row.Heading,
 					OwnerUseCount: row.OwnerUseCount,
 					VisitorUseCount: row.VisitorUseCount,
-					ColorExpires: row.ColorExpires));
+					ColorExpires: row.ColorExpires,
+					NpcObjectId: template?.NpcId ?? 0));
 		}
 
 		return new HouseRegistrySummary(objects, decorations, decorations.Any(decor => decor.IsDeleted));
+	}
+
+	private static PlacedHouseObjectSummary ToPlacedObject(RegisteredHouseObjectSummary obj, int addressId, int ownerPlayerId)
+	{
+		return new PlacedHouseObjectSummary(
+			addressId,
+			ownerPlayerId,
+			obj.ObjectId,
+			obj.TemplateId,
+			obj.X,
+			obj.Y,
+			obj.Z,
+			obj.Rotation,
+			obj.CooldownSeconds,
+			obj.ExpirationSeconds,
+			obj.Color,
+			obj.TypeId,
+			obj.NpcObjectId,
+			obj.UsageData);
 	}
 
 	private static byte[]? CreateUsageData(HousingObjectTemplateSummary? template, HouseRegisteredItemRow row)

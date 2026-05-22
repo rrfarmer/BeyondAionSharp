@@ -66,6 +66,14 @@ public sealed class PlayerHouseTests
 		var spawned = Assert.Single(registry.Objects, obj => obj.IsSpawnedByPlayer);
 		Assert.Equal(180, spawned.Rotation);
 		Assert.Equal(new byte[] { 3, 0, 0, 0, 0 }, spawned.UsageData);
+		var placedObject = Assert.Single(
+			registry.GetSpawnedObjects(
+				new PlayerHouse(50, 700100, 353000, DateTime.UtcNow, null, IsInactive: false, Registry: registry),
+				1001));
+		Assert.Equal(700100, placedObject.AddressId);
+		Assert.Equal(1001, placedObject.OwnerPlayerId);
+		Assert.Equal(180, placedObject.Rotation);
+		Assert.Equal(0, placedObject.NpcObjectId);
 		var unusedDecor = Assert.Single(registry.UnusedDecorations);
 		Assert.Equal(9101, unusedDecor.ObjectId);
 		Assert.True(registry.HasInvalidDecorations);

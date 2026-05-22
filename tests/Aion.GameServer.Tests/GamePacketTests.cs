@@ -1202,6 +1202,11 @@ public class GamePacketTests
 		Assert.Equal(700100, deleteHouseReader.ReadD());
 		Assert.Equal(0, deleteHouseReader.Remaining);
 
+		var deleteHouseObjectPayload = SerializeUnencryptedPayload(new SmDeleteHouseObject(9903));
+		using var deleteHouseObjectReader = new PacketBuffer(deleteHouseObjectPayload);
+		Assert.Equal(9903, deleteHouseObjectReader.ReadD());
+		Assert.Equal(0, deleteHouseObjectReader.Remaining);
+
 		var emptyHouseBidsPayload = SerializeUnencryptedPayload(SmHouseBids.CreateEmpty());
 		using var emptyHouseBidsReader = new PacketBuffer(emptyHouseBidsPayload);
 		Assert.Equal(1, (int)emptyHouseBidsReader.ReadC());

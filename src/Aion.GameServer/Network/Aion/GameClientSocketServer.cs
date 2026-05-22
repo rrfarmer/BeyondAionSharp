@@ -268,16 +268,40 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 			{
 				await connection.SendPacketAsync(new SmHouseRender(house, housingTemplates));
 				sent++;
+				foreach (var obj in GetVisibleHouseObjects(house))
+				{
+					await connection.SendPacketAsync(new SmHouseObject(obj));
+					sent++;
+				}
 			}
 
 			foreach (var addressId in delta.DisappearedAddressIds)
 			{
+				var house = houses.FirstOrDefault(house => house.AddressId == addressId);
+				if (house != null)
+				{
+					foreach (var obj in GetVisibleHouseObjects(house))
+					{
+						await connection.SendPacketAsync(new SmDeleteHouseObject(obj.ObjectId));
+						sent++;
+					}
+				}
+
 				await connection.SendPacketAsync(new SmDeleteHouse(addressId));
 				sent++;
 			}
 		}
 
 		return sent;
+	}
+
+	private static IReadOnlyList<PlacedHouseObjectSummary> GetVisibleHouseObjects(WorldHouse house)
+	{
+		// Java parity: controllers/HouseController.spawnObjects skips inactive houses and exposes spawned registry objects.
+		if (house.IsInactive || house.Registry == null)
+			return Array.Empty<PlacedHouseObjectSummary>();
+
+		return house.Registry.GetSpawnedObjects(house);
 	}
 
 	public async Task<int> BroadcastHouseUpdateAsync(WorldHouse house, HousingTemplateTable? housingTemplates)

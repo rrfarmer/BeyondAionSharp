@@ -976,6 +976,15 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		// Java parity: network/aion/clientpackets/CM_LEVEL_READY.runImpl baseline packets after client map load.
 		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var activeHouse = GetActiveHouse(player);
+		if (activeHouse != null)
+		{
+			var registry = await LoadHouseRegistryAsync(player, activeHouse);
+			var spawnedObjects = registry.GetSpawnedObjects(activeHouse, player.ObjectId);
+			if (spawnedObjects.Count > 0)
+				await SendPacketAsync(new SmHouseObjects(spawnedObjects));
+		}
+
 		await SendPacketAsync(new SmPlayerInfo(player, staticData?.PlayerExperienceTable));
 		await SendPacketAsync(CreateAccountPropertiesPacket());
 		await SendPacketAsync(new SmMotion(player.ObjectId, player.Motions));
@@ -6268,6 +6277,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		player.Houses = player.Houses
 			.Select(house => house.ObjectId == activeHouse.ObjectId ? house with { Registry = registry } : house)
 			.ToArray();
+		AddOrUpdateWorldHouse(player, player.Houses.First(house => house.ObjectId == activeHouse.ObjectId), staticData.HousingTemplates);
 		return registry;
 	}
 

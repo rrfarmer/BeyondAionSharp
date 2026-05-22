@@ -39,20 +39,26 @@ public sealed class HousingWorldService : GameEngine
 	{
 		// Java parity: services/HousingService constructor loads persistent houses before maps spawn them.
 		var housingTemplates = _runtimeContext.DataManager?.StaticData.HousingTemplates;
-		if (housingTemplates == null)
+		var housingObjectTemplates = _runtimeContext.DataManager?.StaticData.HousingObjectTemplates;
+		if (housingTemplates == null || housingObjectTemplates == null)
 		{
 			_logger.LogWarning("Housing templates are not loaded; skipping world house load");
 			return;
 		}
 
-		await LoadWorldHousesAsync(housingTemplates, cancellationToken);
+		await LoadWorldHousesAsync(housingTemplates, housingObjectTemplates, cancellationToken);
 	}
 
-	public async Task<int> LoadWorldHousesAsync(HousingTemplateTable housingTemplates, CancellationToken cancellationToken = default)
+	public async Task<int> LoadWorldHousesAsync(
+		HousingTemplateTable housingTemplates,
+		HousingObjectTemplateTable? housingObjectTemplates = null,
+		CancellationToken cancellationToken = default)
 	{
 		// Java parity: services/HousingService.spawnHouses stores spawned custom houses in World.
 		var persistentHouses = await _housingRepository.LoadWorldHousesAsync(housingTemplates, cancellationToken);
 		var houses = AddMissingUnownedCustomHouses(persistentHouses, housingTemplates);
+		if (housingObjectTemplates != null)
+			houses = await AttachRegistriesAsync(houses, housingTemplates, housingObjectTemplates, cancellationToken);
 		foreach (var house in houses)
 			_world.AddOrUpdateHouse(house);
 		Volatile.Write(ref _loadedCount, houses.Count);
@@ -61,6 +67,34 @@ public sealed class HousingWorldService : GameEngine
 			persistentHouses.Count,
 			houses.Count - persistentHouses.Count);
 		return houses.Count;
+	}
+
+	private async Task<IReadOnlyList<WorldHouse>> AttachRegistriesAsync(
+		IEnumerable<WorldHouse> houses,
+		HousingTemplateTable housingTemplates,
+		HousingObjectTemplateTable housingObjectTemplates,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: controllers/HouseController.onAfterSpawn loads HouseRegistry before spawned house objects are exposed.
+		var loaded = new List<WorldHouse>();
+		foreach (var house in houses)
+		{
+			if (house.OwnerObjectId <= 0)
+			{
+				loaded.Add(house);
+				continue;
+			}
+
+			var registry = await _housingRepository.LoadHouseRegistryAsync(
+				house.OwnerObjectId,
+				house.BuildingId,
+				housingTemplates,
+				housingObjectTemplates,
+				cancellationToken);
+			loaded.Add(house with { Registry = registry });
+		}
+
+		return loaded;
 	}
 
 	private IReadOnlyList<WorldHouse> AddMissingUnownedCustomHouses(

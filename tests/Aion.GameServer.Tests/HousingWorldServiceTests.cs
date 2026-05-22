@@ -56,6 +56,55 @@ public sealed class HousingWorldServiceTests
 	}
 
 	[Fact]
+	public async Task LoadWorldHousesAsync_AttachesPersistentHouseRegistries()
+	{
+		var templates = new HousingTemplateTable(
+			[new HousingAddressSummary(700100, 1, 798000, MapId: 210010000, X: 10, Y: 20, Z: 30)],
+			[new HousingBuildingSummary(730001, "HOUSE", 1)]);
+		var objectTemplates = new HousingObjectTemplateTable(
+			[new HousingObjectTemplateSummary(3001000, 7, "npc", "EXTERIOR", "FLOOR", "NONE", "NPC", 0, false, NpcId: 810013)]);
+		var registry = HouseRegistrySummary.FromRows(
+			730001,
+			templates,
+			objectTemplates,
+			[new HouseRegisteredItemRow(9001, 3001000, null, null, 0, 0, 0, 1, 2, 3, 10, "EXTERIOR", 0)]);
+		var worldHouse = new WorldHouse(
+			5001,
+			700100,
+			730001,
+			1001,
+			"Owner",
+			0,
+			string.Empty,
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
+			false,
+			PlayerHouse.DoorOpen,
+			true,
+			"notice",
+			new WorldPosition(210010000, 10, 20, 30, 0));
+		var repository = new CapturingHousingRepository([worldHouse]) { Registry = registry };
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var service = new HousingWorldService(
+			repository,
+			new IDFactory([worldHouse.ObjectId]),
+			new GameServerRuntimeContext(),
+			world,
+			NullLogger<HousingWorldService>.Instance);
+
+		await service.LoadWorldHousesAsync(templates, objectTemplates);
+
+		var storedHouse = Assert.Single(world.GetHouses());
+		Assert.Same(registry, storedHouse.Registry);
+		Assert.Equal(1001, repository.RegistryPlayerObjectId);
+		Assert.Equal(730001, repository.RegistryBuildingId);
+	}
+
+	[Fact]
 	public async Task LoadWorldHousesAsync_SynthesizesOwnerlessCustomHousesMissingFromDb()
 	{
 		var templates = new HousingTemplateTable(
@@ -150,6 +199,12 @@ public sealed class HousingWorldServiceTests
 
 		public HousingTemplateTable? Templates { get; private set; }
 
+		public HouseRegistrySummary Registry { get; init; } = HouseRegistrySummary.Empty;
+
+		public int RegistryPlayerObjectId { get; private set; }
+
+		public int RegistryBuildingId { get; private set; }
+
 		public Task<IReadOnlyList<WorldHouse>> LoadWorldHousesAsync(HousingTemplateTable housingTemplates, CancellationToken cancellationToken = default)
 		{
 			Templates = housingTemplates;
@@ -163,7 +218,9 @@ public sealed class HousingWorldServiceTests
 			HousingObjectTemplateTable housingObjectTemplates,
 			CancellationToken cancellationToken = default)
 		{
-			return Task.FromResult(HouseRegistrySummary.Empty);
+			RegistryPlayerObjectId = playerObjectId;
+			RegistryBuildingId = buildingId;
+			return Task.FromResult(Registry);
 		}
 	}
 }

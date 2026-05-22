@@ -22,7 +22,8 @@ public sealed record WorldHouse(
 	byte DoorState,
 	bool ShowOwnerName,
 	string? SignNotice,
-	WorldPosition Position)
+	WorldPosition Position,
+	HouseRegistrySummary? Registry = null)
 {
 	public static bool TryCreate(Player owner, PlayerHouse house, HousingTemplateTable housingTemplates, out WorldHouse? worldHouse)
 	{
@@ -52,7 +53,8 @@ public sealed record WorldHouse(
 			house.DoorState,
 			house.ShowOwnerName,
 			house.SignNotice,
-			new WorldPosition(address.MapId, address.X, address.Y, address.Z, 0));
+			new WorldPosition(address.MapId, address.X, address.Y, address.Z, 0),
+			house.Registry);
 		return true;
 	}
 
