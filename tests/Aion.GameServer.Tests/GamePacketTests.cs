@@ -1098,6 +1098,20 @@ public class GamePacketTests
 		Assert.Equal(new byte[] { 7, 0x80, 255, 10, 20, 30 }, houseUpdateReader.ReadB(6));
 		Assert.Equal(0, houseUpdateReader.Remaining);
 
+		var houseRenderPayload = SerializeUnencryptedPayload(
+			new SmHouseRender(
+				houseUpdatePlayer,
+				new PlayerHouse(50, 700100, 900100, houseNow, houseNow.AddDays(14), false, PlayerHouse.DoorClosedExceptFriends, false, "Visitors welcome"),
+				new HousingTemplateTable(
+					[new HousingAddressSummary(700100, 1, 798000)],
+					[new HousingBuildingSummary(900100, "MANSION", 4)])));
+		Assert.Equal(houseUpdatePayload[6..], houseRenderPayload);
+
+		var deleteHousePayload = SerializeUnencryptedPayload(new SmDeleteHouse(700100));
+		using var deleteHouseReader = new PacketBuffer(deleteHousePayload);
+		Assert.Equal(700100, deleteHouseReader.ReadD());
+		Assert.Equal(0, deleteHouseReader.Remaining);
+
 		var emptyHouseBidsPayload = SerializeUnencryptedPayload(SmHouseBids.CreateEmpty());
 		using var emptyHouseBidsReader = new PacketBuffer(emptyHouseBidsPayload);
 		Assert.Equal(1, (int)emptyHouseBidsReader.ReadC());
