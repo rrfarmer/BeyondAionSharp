@@ -27,6 +27,7 @@ public sealed class StaticData
 		TitleTemplateTable titleTemplates,
 		RecipeTemplateTable recipeTemplates,
 		HousingTemplateTable housingTemplates,
+		HousingObjectTemplateTable housingObjectTemplates,
 		InstanceCooltimeTable instanceCooltimes,
 		PlayerInitialDataTable playerInitialData,
 		SkillTreeTable skillTree,
@@ -52,6 +53,7 @@ public sealed class StaticData
 		TitleTemplates = titleTemplates;
 		RecipeTemplates = recipeTemplates;
 		HousingTemplates = housingTemplates;
+		HousingObjectTemplates = housingObjectTemplates;
 		InstanceCooltimes = instanceCooltimes;
 		PlayerInitialData = playerInitialData;
 		SkillTree = skillTree;
@@ -100,6 +102,8 @@ public sealed class StaticData
 
 	public HousingTemplateTable HousingTemplates { get; }
 
+	public HousingObjectTemplateTable HousingObjectTemplates { get; }
+
 	public InstanceCooltimeTable InstanceCooltimes { get; }
 
 	public PlayerInitialDataTable PlayerInitialData { get; }
@@ -143,6 +147,7 @@ public sealed class StaticData
 		var housingLandFirstBuildingIds = new Dictionary<int, int>();
 		var housingLandDefaultBuildingIds = new Dictionary<int, int>();
 		var housingBuildings = new List<HousingBuildingSummary>();
+		var housingObjectTemplates = new List<HousingObjectTemplateSummary>();
 		var instanceCooltimes = new List<InstanceCooltimeSummary>();
 		var skillTree = new List<SkillLearnSummary>();
 		var learnableEmotionIds = new HashSet<int>();
@@ -493,6 +498,33 @@ public sealed class StaticData
 				var partName = reader.LocalName;
 				var value = await ReadElementTextAsync(reader, cancellationToken);
 				currentHousingBuilding.SetDefaultPart(partName, int.TryParse(value, out var parsedPartId) ? parsedPartId : 0);
+				continue;
+			}
+
+			if (reader.Depth == 2
+				&& elementPath.GetValueOrDefault(1) == "housing_objects"
+				&& IsHousingObjectTemplateElement(reader.LocalName))
+			{
+				// Java parity: dataholders/HousingObjectData indexes PlaceableHouseObject templates by id.
+				housingObjectTemplates.Add(
+					new HousingObjectTemplateSummary(
+						ReadRequiredIntAttribute(reader, "id"),
+						GetHousingObjectTypeId(reader.LocalName),
+						reader.LocalName,
+						reader.GetAttribute("area") ?? string.Empty,
+						reader.GetAttribute("location") ?? string.Empty,
+						reader.GetAttribute("limit") ?? "NONE",
+						reader.GetAttribute("category") ?? string.Empty,
+						ReadIntAttribute(reader, "use_days"),
+						ReadBoolAttribute(reader, "can_dye"),
+						NpcId: ReadIntAttribute(reader, "npc_id"),
+						WarehouseId: ReadIntAttribute(reader, "warehouse_id"),
+						OwnerOnly: ReadBoolAttribute(reader, "owner"),
+						CooldownSeconds: ReadIntAttribute(reader, "cd"),
+						DelayMilliseconds: ReadIntAttribute(reader, "delay"),
+						UseCount: ReadIntAttribute(reader, "use_count"),
+						RequiredItemId: ReadIntAttribute(reader, "required_item"),
+						EmblemLevel: ReadIntAttribute(reader, "level")));
 				continue;
 			}
 
@@ -1209,6 +1241,7 @@ public sealed class StaticData
 						})
 					.ToArray(),
 				housingBuildings.AsReadOnly()),
+			new HousingObjectTemplateTable(housingObjectTemplates.AsReadOnly()),
 			new InstanceCooltimeTable(instanceCooltimes.AsReadOnly()),
 			new PlayerInitialDataTable(
 				creationItemsByClass.ToDictionary(
@@ -1315,6 +1348,37 @@ public sealed class StaticData
 	{
 		// Java parity: model/templates/housing/Building.Parts fields serialized from housing/house_buildings.xml.
 		return elementName is "roof" or "outwall" or "frame" or "door" or "garden" or "fence" or "inwall" or "infloor" or "addon";
+	}
+
+	private static bool IsHousingObjectTemplateElement(string elementName)
+	{
+		return elementName is "jukebox"
+			or "moviejukebox"
+			or "picture"
+			or "postbox"
+			or "chair"
+			or "storage"
+			or "npc"
+			or "move_item"
+			or "use_item"
+			or "passive"
+			or "emblem";
+	}
+
+	private static byte GetHousingObjectTypeId(string elementName)
+	{
+		// Java parity: concrete model/templates/housing PlaceableHouseObject.getTypeId implementations.
+		return elementName switch
+		{
+			"use_item" => 1,
+			"storage" => 2,
+			"postbox" => 3,
+			"chair" => 5,
+			"jukebox" => 6,
+			"npc" => 7,
+			"emblem" => 11,
+			_ => 0,
+		};
 	}
 
 	private sealed class InstanceCooltimeBuilder

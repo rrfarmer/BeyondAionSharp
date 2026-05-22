@@ -418,6 +418,32 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(
 			[3520000, 3521000, 3522001, 3523000, 3526000, 3527000, 3524000, 3525000],
 			staticData.HousingTemplates.GetDefaultPartIds(353000));
+		Assert.Equal(1511, staticData.HousingObjectTemplates.Count);
+		var chairObject = staticData.HousingObjectTemplates.GetTemplate(3000004);
+		Assert.NotNull(chairObject);
+		Assert.Equal((byte)5, chairObject.TypeId);
+		Assert.Equal("chair", chairObject.Kind);
+		Assert.Equal("INTERIOR", chairObject.Area);
+		Assert.Equal("FLOOR", chairObject.Location);
+		Assert.Equal("CHAIR", chairObject.Category);
+		Assert.Equal(1, chairObject.UseDays);
+		Assert.True(chairObject.CanDye);
+		var storageObject = staticData.HousingObjectTemplates.GetTemplate(3000007);
+		Assert.NotNull(storageObject);
+		Assert.Equal((byte)2, storageObject.TypeId);
+		Assert.Equal(1, storageObject.WarehouseId);
+		Assert.Equal("STORAGE", storageObject.Limit);
+		var npcObject = staticData.HousingObjectTemplates.GetTemplate(3001000);
+		Assert.NotNull(npcObject);
+		Assert.Equal((byte)7, npcObject.TypeId);
+		Assert.Equal(810013, npcObject.NpcId);
+		Assert.Equal(30, npcObject.UseDays);
+		var useObject = staticData.HousingObjectTemplates.GetTemplate(3190001);
+		Assert.NotNull(useObject);
+		Assert.Equal((byte)1, useObject.TypeId);
+		Assert.True(useObject.OwnerOnly);
+		Assert.Equal(3000, useObject.DelayMilliseconds);
+		Assert.Equal(186000166, useObject.RequiredItemId);
 		Assert.Equal(5, staticData.InstanceCooltimes.GetInstanceCooltimeByWorldId(300030000)?.MaxCount);
 		Assert.Contains(staticData.RecipeTemplates.GetAutolearnRecipes("ELYOS", 40009, 1), recipe => recipe.RecipeId == 155000001);
 		var craftPlayer = new Player
