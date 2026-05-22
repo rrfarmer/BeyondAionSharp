@@ -111,7 +111,7 @@ public sealed class EquipmentServiceTests
 		player.CreatureState = PlayerCreatureState.Powershard;
 		player.InventoryItems =
 		[
-			new InventoryItem { ObjectId = 1001, ItemId = PowerShardId, Location = 0, IsEquipped = true, Slot = 1L << 19 },
+			new InventoryItem { ObjectId = 1001, ItemId = PowerShardId, Location = 0, IsEquipped = true, Slot = PowerShardRight },
 		];
 
 		var change = EquipmentService.ChangeEquipment(player, action: 1, slotRead: 0, itemObjectId: 1001, CreateItemTemplates(), skillTemplates: null);
@@ -786,7 +786,7 @@ public sealed class EquipmentServiceTests
 			new(SoulBoundSwordId, "Practice Soulbound Sword", 0, 1 << 7, 1, "SWORD", "NORMAL", "COMMON", "PC_ALL", 1, 0, 3, RequiredLevels: RequiredLevels(1)),
 			new(GreatswordId, "Practice Greatsword", 0, 1, 1, "GREATSWORD", "NORMAL", "COMMON", "PC_ALL", 1, 0, 3, RequiredLevels: RequiredLevels(1)),
 			new(RobeId, "Practice Robe", 0, 1, 1, "CL_TORSO", "NORMAL", "COMMON", "PC_ALL", 1, 0, 8, RequiredLevels: RequiredLevels(1)),
-			new(PowerShardId, "Practice Power Shard", 0, 1, 1, "POWER_SHARDS", "NORMAL", "COMMON", "PC_ALL", 1000, 0, 1L << 19 | 1L << 20, RequiredLevels: RequiredLevels(1)),
+			new(PowerShardId, "Practice Power Shard", 0, 1, 1, "POWER_SHARDS", "NORMAL", "COMMON", "PC_ALL", 1000, 0, PowerShardRight | PowerShardLeft, RequiredLevels: RequiredLevels(1)),
 			new(StigmaId, "Practice Stigma", 0, 1, 20, "STIGMA", "NORMAL", "COMMON", "PC_ALL", 1, 0, StigmaSlot1 | StigmaSlot2 | StigmaSlot3 | AdvancedStigmaSlot1 | AdvancedStigmaSlot2 | AdvancedStigmaSlot3, StigmaInfo: new ItemStigmaInfo(["STIGMA_TEST"], Chargeable: true), RequiredLevels: RequiredLevels(("GLADIATOR", 20))),
 		};
 		templates.AddRange(extraTemplates);
@@ -894,7 +894,8 @@ public sealed class EquipmentServiceTests
 	private const int GreatswordId = 100100001;
 	private const int RobeId = 110100001;
 	private const int PowerShardId = 166000001;
-	private const long PowerShardRight = 1L << 19;
+	private const long PowerShardRight = 1L << 13;
+	private const long PowerShardLeft = 1L << 14;
 	private const int RestrictedSwordId = 100000002;
 	private const int StigmaId = 140001001;
 	private const long StigmaSlot1 = 1L << 30;
