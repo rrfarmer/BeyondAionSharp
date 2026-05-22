@@ -76,7 +76,43 @@ public sealed class InventoryAddServiceTests
 		Assert.Empty(plan.AddedItems);
 	}
 
-	private static ItemTemplateSummary CreateTemplate(int itemId, int maxStackCount)
+	[Fact]
+	public void CreateAddItemPlan_UsesSpecialCubeCapacityForSpecialItems()
+	{
+		var template = CreateTemplate(200, maxStackCount: 1, extraInventoryId: 2);
+		var itemTemplates = new ItemTemplateTable([template]);
+		var player = new Player { ObjectId = 1000 };
+		var inventoryItems = Enumerable.Range(0, 27)
+			.Select(index => new InventoryItem { ObjectId = index + 1, ItemId = 300 + index, Count = 1, OwnerId = player.ObjectId, Location = 0 })
+			.ToArray();
+
+		var plan = InventoryAddService.CreateAddItemPlan(player, inventoryItems, template, 1, () => 100, itemTemplates: itemTemplates);
+
+		Assert.True(plan.Succeeded);
+		var addedItem = Assert.Single(plan.AddedItems);
+		Assert.Equal(200, addedItem.ItemId);
+		Assert.Equal(100, addedItem.ObjectId);
+	}
+
+	[Fact]
+	public void CreateAddItemPlan_ReturnsRemainingWhenSpecialCubeIsFull()
+	{
+		var template = CreateTemplate(200, maxStackCount: 1, extraInventoryId: 2);
+		var fillerTemplate = CreateTemplate(300, maxStackCount: 1, extraInventoryId: 2);
+		var itemTemplates = new ItemTemplateTable([template, fillerTemplate]);
+		var player = new Player { ObjectId = 1000 };
+		var inventoryItems = Enumerable.Range(0, 102)
+			.Select(index => new InventoryItem { ObjectId = index + 1, ItemId = 300, Count = 1, OwnerId = player.ObjectId, Location = 0 })
+			.ToArray();
+
+		var plan = InventoryAddService.CreateAddItemPlan(player, inventoryItems, template, 1, () => 100, itemTemplates: itemTemplates);
+
+		Assert.False(plan.Succeeded);
+		Assert.Equal(1, plan.RemainingCount);
+		Assert.Empty(plan.AddedItems);
+	}
+
+	private static ItemTemplateSummary CreateTemplate(int itemId, int maxStackCount, int extraInventoryId = -1)
 	{
 		return new ItemTemplateSummary(
 			itemId,
@@ -90,6 +126,7 @@ public sealed class InventoryAddServiceTests
 			Race: "PC_ALL",
 			MaxStackCount: maxStackCount,
 			Price: 0,
-			ValidEquipmentSlots: 0);
+			ValidEquipmentSlots: 0,
+			ExtraInventoryId: extraInventoryId);
 	}
 }

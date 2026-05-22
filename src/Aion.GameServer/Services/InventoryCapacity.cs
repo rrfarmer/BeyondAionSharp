@@ -24,13 +24,18 @@ public static class InventoryCapacity
 
 	public static int GetUsedCubeSlots(Player player, ItemTemplateTable itemTemplates)
 	{
-		return player.InventoryItems.Count(item => IsNormalCubeItem(item, itemTemplates));
+		return GetUsedCubeSlots(player.InventoryItems, itemTemplates);
 	}
 
 	public static int GetUsedCubeSlots(IReadOnlyList<InventoryItem> inventoryItems)
 	{
 		// Java parity: model/items/storage/ItemStorage.getCubeItems, excluding kinah and equipped rows in the C# flattened inventory model.
 		return inventoryItems.Count(item => item.Location == CubeStorageId && !item.IsEquipped && item.ItemId != KinahItemId);
+	}
+
+	public static int GetUsedCubeSlots(IReadOnlyList<InventoryItem> inventoryItems, ItemTemplateTable itemTemplates)
+	{
+		return inventoryItems.Count(item => IsNormalCubeItem(item, itemTemplates));
 	}
 
 	public static int GetFreeCubeSlots(Player player)
@@ -48,6 +53,11 @@ public static class InventoryCapacity
 		return Math.Max(0, GetCubeLimit(player) - GetUsedCubeSlots(player, itemTemplates));
 	}
 
+	public static int GetFreeCubeSlots(Player player, IReadOnlyList<InventoryItem> inventoryItems, ItemTemplateTable itemTemplates)
+	{
+		return Math.Max(0, GetCubeLimit(player) - GetUsedCubeSlots(inventoryItems, itemTemplates));
+	}
+
 	public static bool HasFreeCubeSlot(Player player)
 	{
 		return GetFreeCubeSlots(player) > 0;
@@ -60,13 +70,23 @@ public static class InventoryCapacity
 
 	public static int GetUsedSpecialCubeSlots(Player player, ItemTemplateTable itemTemplates)
 	{
+		return GetUsedSpecialCubeSlots(player.InventoryItems, itemTemplates);
+	}
+
+	public static int GetUsedSpecialCubeSlots(IReadOnlyList<InventoryItem> inventoryItems, ItemTemplateTable itemTemplates)
+	{
 		// Java parity: model/items/storage/ItemStorage.getSpecialCubeItems uses ItemTemplate.getExtraInventoryId() > 0.
-		return player.InventoryItems.Count(item => IsSpecialCubeItem(item, itemTemplates));
+		return inventoryItems.Count(item => IsSpecialCubeItem(item, itemTemplates));
 	}
 
 	public static int GetFreeSpecialCubeSlots(Player player, ItemTemplateTable itemTemplates)
 	{
 		return Math.Max(0, SpecialCubeSlots - GetUsedSpecialCubeSlots(player, itemTemplates));
+	}
+
+	public static int GetFreeSpecialCubeSlots(IReadOnlyList<InventoryItem> inventoryItems, ItemTemplateTable itemTemplates)
+	{
+		return Math.Max(0, SpecialCubeSlots - GetUsedSpecialCubeSlots(inventoryItems, itemTemplates));
 	}
 
 	public static bool HasFreeSpecialCubeSlot(Player player, ItemTemplateTable itemTemplates)

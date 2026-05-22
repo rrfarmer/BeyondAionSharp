@@ -14,7 +14,8 @@ public static class InventoryAddService
 		ItemTemplateSummary itemTemplate,
 		long count,
 		Func<int> nextObjectId,
-		bool allowInventoryOverflow = false)
+		bool allowInventoryOverflow = false,
+		ItemTemplateTable? itemTemplates = null)
 	{
 		// Java parity: services/item/ItemService.addItem plus model/items/storage/Storage.increaseItemCount/add.
 		if (count <= 0)
@@ -55,7 +56,7 @@ public static class InventoryAddService
 		}
 
 		var addedItems = new List<InventoryItem>();
-		var freeSlots = InventoryCapacity.GetFreeCubeSlots(player, inventoryItems);
+		var freeSlots = GetFreeSlots(player, inventoryItems, itemTemplate, itemTemplates);
 		while (remaining > 0 && (allowInventoryOverflow || addedItems.Count < freeSlots))
 		{
 			var objectId = nextObjectId();
@@ -86,6 +87,20 @@ public static class InventoryAddService
 			&& item.Location == CubeStorageId
 			&& !item.IsEquipped
 			&& item.Count < itemTemplate.MaxStackCount;
+	}
+
+	private static int GetFreeSlots(
+		Player player,
+		IReadOnlyList<InventoryItem> inventoryItems,
+		ItemTemplateSummary itemTemplate,
+		ItemTemplateTable? itemTemplates)
+	{
+		if (itemTemplates == null)
+			return InventoryCapacity.GetFreeCubeSlots(player, inventoryItems);
+
+		return itemTemplate.ExtraInventoryId > 0
+			? InventoryCapacity.GetFreeSpecialCubeSlots(inventoryItems, itemTemplates)
+			: InventoryCapacity.GetFreeCubeSlots(player, inventoryItems, itemTemplates);
 	}
 
 	private static InventoryItem CopyInventoryItem(InventoryItem item, long count)
