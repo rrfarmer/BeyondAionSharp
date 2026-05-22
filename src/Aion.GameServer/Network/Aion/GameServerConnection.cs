@@ -76,6 +76,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private int _corruptPackets;
 	private DateTimeOffset? _lastPingTime;
 	private PendingItemUse? _pendingItemUse;
+	private PendingHouseObjectUse? _pendingHouseObjectUse;
 
 	public GameServerConnection(
 		ILogger logger,
@@ -5374,6 +5375,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			await _chatServer.SendPlayerLogoutAsync(player.ObjectId);
 		_expirableTaskService?.UnregisterPlayer(player);
 		await DismissPostmanAsync(player, notifyClient: notifyPostmanClient);
+		_pendingHouseObjectUse?.Task.Cancel();
+		_pendingHouseObjectUse = null;
 		ReleaseHouseObjectOccupants(player.ObjectId);
 		if (_connectionRegistry != null)
 			await _connectionRegistry.BroadcastToVisiblePlayersAsync(player.Position, player.ObjectId, new SmDelete(player.ObjectId));
@@ -5803,6 +5806,9 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		switch (target.Template.TypeId)
 		{
+			case 1:
+				await HandleUseUseableItemObjectAsync(player, target);
+				break;
 			case 2:
 				await HandleUseStorageObjectAsync(player, target);
 				break;
@@ -5810,6 +5816,357 @@ public sealed class GameServerConnection : BaseClientConnection
 				await HandleUsePostboxObjectAsync(player, target);
 				break;
 		}
+	}
+
+	private async Task HandleUseUseableItemObjectAsync(Player player, HouseObjectUseTarget target)
+	{
+		// Java parity: model/gameobjects/UseableItemObject.onUse pre-schedule validation.
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		if (staticData == null || _idFactory == null)
+			return;
+
+		var template = target.Template;
+		if (!HasUseItemAction(template) || template.UseActionFinalRewardId > 0)
+		{
+			await SendPacketAsync(SmSystemMessage.HousingObjectAllCantUse());
+			return;
+		}
+
+		var isOwner = target.House.OwnerObjectId == player.ObjectId;
+		if (!isOwner && template.OwnerOnly)
+		{
+			await SendPacketAsync(SmSystemMessage.HousingObjectOnlyForOwnerValid());
+			return;
+		}
+
+		if (HasActiveHouseObjectCooldown(player, target.HouseObject.ObjectId))
+		{
+			await SendPacketAsync(template.CooldownSeconds > 0
+				? SmSystemMessage.HousingCannotUseFlowerpotCooltime()
+				: SmSystemMessage.HousingObjectCantUsePerDay());
+			return;
+		}
+
+		var currentUseCount = target.HouseObject.OwnerUseCount + target.HouseObject.VisitorUseCount;
+		if (template.UseCount > 0
+			&& ((currentUseCount >= template.UseCount && !isOwner) || (currentUseCount > template.UseCount && isOwner)))
+		{
+			await SendPacketAsync(SmSystemMessage.HousingObjectAchieveUseCount());
+			return;
+		}
+
+		if (!ValidateUseableHouseObjectRequirement(player, template, staticData.ItemTemplates, out var failureMessage))
+		{
+			if (failureMessage != null)
+				await SendPacketAsync(failureMessage);
+			return;
+		}
+
+		if (!InventoryCapacity.HasFreeCubeSlot(player, staticData.ItemTemplates))
+		{
+			await SendPacketAsync(SmSystemMessage.WarehouseTooManyItemsInventory());
+			return;
+		}
+
+		if (!TryOccupyHouseObject(target.HouseObject.ObjectId, player.ObjectId))
+		{
+			await SendPacketAsync(SmSystemMessage.HousingObjectOccupiedByOther());
+			return;
+		}
+
+		var usedCount = template.UseCount == 0 ? 0 : currentUseCount + 1;
+		await SendPacketAsync(SmSystemMessage.HousingObjectUse(ChatUtil.L10n(template.NameId)));
+		await SendPacketAsync(new SmUseObject(player.ObjectId, target.HouseObject.ObjectId, template.DelayMilliseconds, 8));
+		ScheduleHouseObjectUseCompletion(player, target, isOwner, usedCount);
+	}
+
+	private bool ValidateUseableHouseObjectRequirement(
+		Player player,
+		HousingObjectTemplateSummary template,
+		ItemTemplateTable itemTemplates,
+		out SmSystemMessage? failureMessage)
+	{
+		failureMessage = null;
+		if (template.RequiredItemId == 0 && template.UseActionRemoveCount == 0)
+			return true;
+		if (template.RequiredItemId == 0 || template.UseActionRemoveCount == 0)
+		{
+			failureMessage = SmSystemMessage.HousingObjectAllCantUse();
+			return false;
+		}
+
+		var requiredTemplate = itemTemplates.GetItemTemplate(template.RequiredItemId);
+		var requiredName = requiredTemplate?.GetClientName() ?? requiredTemplate?.Name ?? template.RequiredItemId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+		if (template.UseActionCheckType == 1)
+		{
+			var equipped = player.InventoryItems.Any(item => item.ItemId == template.RequiredItemId && item.IsEquipped);
+			if (!equipped)
+			{
+				failureMessage = SmSystemMessage.CantUseHouseObjectItemEquip(requiredName);
+				return false;
+			}
+			return true;
+		}
+
+		var available = player.InventoryItems
+			.Where(item => item.ItemId == template.RequiredItemId && item.Location == CubeStorageId && !item.IsEquipped)
+			.Sum(item => item.Count);
+		if (available < template.UseActionRemoveCount)
+		{
+			failureMessage = SmSystemMessage.CantUseHouseObjectItemCheck(requiredName);
+			return false;
+		}
+
+		return true;
+	}
+
+	private void ScheduleHouseObjectUseCompletion(Player player, HouseObjectUseTarget target, bool isOwner, int usedCount)
+	{
+		var delay = TimeSpan.FromMilliseconds(Math.Max(0, target.Template.DelayMilliseconds));
+		if (_pendingHouseObjectUse?.Task.Cancel() == true)
+			ReleaseHouseObjectOccupant(_pendingHouseObjectUse.ObjectId, player.ObjectId);
+
+		if (_threadPoolManager == null || delay <= TimeSpan.Zero)
+		{
+			_ = CompleteUseableHouseObjectAsync(player, target, isOwner, usedCount, CancellationToken.None);
+			return;
+		}
+
+		ScheduledTask? scheduledTask = null;
+		scheduledTask = _threadPoolManager.Schedule(
+			async cancellationToken =>
+			{
+				try
+				{
+					if (cancellationToken.IsCancellationRequested || !ReferenceEquals(_activePlayer, player))
+						return;
+
+					await CompleteUseableHouseObjectAsync(player, target, isOwner, usedCount, cancellationToken);
+				}
+				finally
+				{
+					var pendingUse = _pendingHouseObjectUse;
+					if (pendingUse != null && ReferenceEquals(pendingUse.Task, scheduledTask))
+						_pendingHouseObjectUse = null;
+				}
+			},
+			delay);
+		_pendingHouseObjectUse = new PendingHouseObjectUse(scheduledTask, target.HouseObject.ObjectId);
+	}
+
+	private async Task CompleteUseableHouseObjectAsync(
+		Player player,
+		HouseObjectUseTarget target,
+		bool isOwner,
+		int usedCount,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: UseableItemObject scheduled HOUSE_OBJECT_USE task completion.
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		if (staticData == null || _idFactory == null)
+			return;
+
+		await SendPacketAsync(new SmUseObject(player.ObjectId, target.HouseObject.ObjectId, 0, 9), cancellationToken);
+		var inventoryItems = player.InventoryItems.ToList();
+		InventoryItemConsumption? consumption = null;
+		if (target.Template is { RequiredItemId: > 0, UseActionRemoveCount: > 0 })
+		{
+			consumption = BuildItemCountConsumption(inventoryItems, target.Template.RequiredItemId, target.Template.UseActionRemoveCount);
+			if (consumption == null)
+				return;
+		}
+
+		var rewardId = target.Template.UseActionRewardId;
+		var rewardTemplate = rewardId == 0 ? null : staticData.ItemTemplates.GetItemTemplate(rewardId);
+		var rewardPlan = rewardTemplate == null
+			? InventoryAddPlan.Empty
+			: InventoryAddService.CreateAddItemPlan(player, inventoryItems, rewardTemplate, 1, () => _idFactory.NextId(), itemTemplates: staticData.ItemTemplates);
+		if (!rewardPlan.Succeeded)
+		{
+			await SendPacketAsync(SmSystemMessage.WarehouseTooManyItemsInventory(), cancellationToken);
+			return;
+		}
+
+		var updatedHouseObject = target.HouseObject;
+		var deleteHouseObject = false;
+		if (target.Template.UseCount > 0)
+		{
+			if (usedCount == target.Template.UseCount)
+			{
+				await SendPacketAsync(SmSystemMessage.HousingFlowerpotGoal(ChatUtil.L10n(target.Template.NameId)), cancellationToken);
+				deleteHouseObject = true;
+			}
+			else if (isOwner)
+			{
+				updatedHouseObject = target.HouseObject.WithUseCounts(
+					target.Template,
+					target.HouseObject.OwnerUseCount + 1,
+					target.HouseObject.VisitorUseCount);
+			}
+			else
+			{
+				updatedHouseObject = target.HouseObject.WithUseCounts(
+					target.Template,
+					target.HouseObject.OwnerUseCount,
+					target.HouseObject.VisitorUseCount + 1);
+			}
+		}
+
+		var saved = await _housingRepository.SaveHouseObjectUseAsync(
+			target.House.OwnerObjectId,
+			player.ObjectId,
+			deleteHouseObject ? null : updatedHouseObject,
+			deleteHouseObject ? target.HouseObject.ObjectId : null,
+			consumption?.Updates ?? Array.Empty<InventoryItem>(),
+			consumption?.Deletes.Select(item => item.ObjectId).ToArray() ?? Array.Empty<int>(),
+			rewardPlan.UpdatedItems,
+			rewardPlan.AddedItems,
+			cancellationToken);
+		if (!saved)
+			return;
+
+		await SendConsumedItemPacketsAsync(
+			player.InventoryItems,
+			consumption?.Updates ?? Array.Empty<InventoryItem>(),
+			consumption?.Deletes.Select(item => item.ObjectId).ToArray() ?? Array.Empty<int>(),
+			staticData.ItemTemplates);
+		ApplyHouseObjectUseInventoryMutation(inventoryItems, consumption, rewardPlan);
+		player.InventoryItems = inventoryItems.ToArray();
+		if (rewardTemplate != null)
+		{
+			foreach (var updatedReward in rewardPlan.UpdatedItems)
+				await SendPacketAsync(new SmInventoryUpdateItem(updatedReward, rewardTemplate, SmInventoryUpdateItem.IncreaseItemCollect), cancellationToken);
+			foreach (var addedReward in rewardPlan.AddedItems)
+				await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(addedReward, rewardTemplate), cancellationToken);
+			await SendPacketAsync(
+				SmSystemMessage.HousingObjectRewardItem(ChatUtil.L10n(target.Template.NameId), rewardTemplate.GetClientName() ?? rewardTemplate.Name),
+				cancellationToken);
+		}
+
+		if (!deleteHouseObject && updatedHouseObject != target.HouseObject)
+			UpdateHouseObjectInRegistries(player, target, updatedHouseObject);
+
+		await BroadcastHouseObjectUseUpdateAsync(player, target, usedCount, deleteHouseObject ? target.HouseObject : updatedHouseObject);
+		if (deleteHouseObject)
+		{
+			await SendHouseObjectUseDeletePacketsAsync(player, target, cancellationToken);
+			RemoveHouseObjectFromRegistries(player, target);
+			ReleaseHouseObjectOccupant(target.HouseObject.ObjectId, player.ObjectId);
+			return;
+		}
+
+		AddHouseObjectCooldown(player, target.HouseObject.ObjectId, target.Template);
+	}
+
+	private async Task BroadcastHouseObjectUseUpdateAsync(
+		Player player,
+		HouseObjectUseTarget target,
+		int usedCount,
+		RegisteredHouseObjectSummary houseObject)
+	{
+		var updatePacket = new SmObjectUseUpdate(player.ObjectId, target.House.OwnerObjectId, usedCount, houseObject);
+		if (_connectionRegistry == null)
+		{
+			await SendPacketAsync(updatePacket);
+			return;
+		}
+
+		await _connectionRegistry.BroadcastToVisiblePlayersAsync(
+			new global::Aion.GameServer.World.WorldPosition(target.House.Position.WorldId, houseObject.X, houseObject.Y, houseObject.Z, (byte)houseObject.Heading),
+			player.ObjectId,
+			updatePacket,
+			includeSourcePlayer: true);
+	}
+
+	private async Task SendHouseObjectUseDeletePacketsAsync(Player player, HouseObjectUseTarget target, CancellationToken cancellationToken)
+	{
+		// Java parity: HouseObject.despawnAndRemoveHouseObject(false).
+		if (target.HouseObject.IsSpawnedByPlayer)
+		{
+			await SendPacketAsync(new SmHouseEdit(CmHouseEdit.DespawnObject, 0, target.HouseObject.ObjectId), cancellationToken);
+			var deletePacket = new SmDeleteHouseObject(target.HouseObject.ObjectId);
+			if (_connectionRegistry != null)
+			{
+				await _connectionRegistry.BroadcastToVisiblePlayersAsync(
+					new global::Aion.GameServer.World.WorldPosition(target.House.Position.WorldId, target.HouseObject.X, target.HouseObject.Y, target.HouseObject.Z, (byte)target.HouseObject.Heading),
+					player.ObjectId,
+					deletePacket,
+					includeSourcePlayer: true);
+			}
+			else
+			{
+				await SendPacketAsync(deletePacket, cancellationToken);
+			}
+		}
+
+		await SendPacketAsync(new SmHouseEdit(CmHouseEdit.DeleteItem, 1, target.HouseObject.ObjectId), cancellationToken);
+		await SendPacketAsync(
+			SmSystemMessage.HousingObjectDeleteUseCountFinal(ChatUtil.L10n(target.Template.NameId)),
+			cancellationToken);
+	}
+
+	private static void ApplyHouseObjectUseInventoryMutation(
+		List<InventoryItem> inventoryItems,
+		InventoryItemConsumption? consumption,
+		InventoryAddPlan rewardPlan)
+	{
+		if (consumption != null)
+		{
+			foreach (var updatedConsumedItem in consumption.Updates)
+				ReplaceInventoryItem(inventoryItems, updatedConsumedItem);
+			foreach (var deletedConsumedItem in consumption.Deletes)
+				inventoryItems.RemoveAll(item => item.ObjectId == deletedConsumedItem.ObjectId);
+		}
+
+		foreach (var updatedReward in rewardPlan.UpdatedItems)
+			ReplaceInventoryItem(inventoryItems, updatedReward);
+		inventoryItems.AddRange(rewardPlan.AddedItems);
+	}
+
+	private void UpdateHouseObjectInRegistries(Player player, HouseObjectUseTarget target, RegisteredHouseObjectSummary updatedHouseObject)
+	{
+		var updatedRegistry = (target.House.Registry ?? HouseRegistrySummary.Empty).WithObject(updatedHouseObject);
+		_world?.AddOrUpdateHouse(target.House with { Registry = updatedRegistry });
+		if (target.House.OwnerObjectId == player.ObjectId)
+			UpdateHouseRegistryIfOwned(player, target.House.ObjectId, updatedRegistry);
+	}
+
+	private void RemoveHouseObjectFromRegistries(Player player, HouseObjectUseTarget target)
+	{
+		var updatedRegistry = (target.House.Registry ?? HouseRegistrySummary.Empty).WithoutObject(target.HouseObject.ObjectId);
+		_world?.AddOrUpdateHouse(target.House with { Registry = updatedRegistry });
+		if (target.House.OwnerObjectId == player.ObjectId)
+			UpdateHouseRegistryIfOwned(player, target.House.ObjectId, updatedRegistry);
+	}
+
+	private static void UpdateHouseRegistryIfOwned(Player player, int houseObjectId, HouseRegistrySummary registry)
+	{
+		player.Houses = player.Houses
+			.Select(house => house.ObjectId == houseObjectId ? house with { Registry = registry } : house)
+			.ToArray();
+	}
+
+	private static bool HasUseItemAction(HousingObjectTemplateSummary template)
+	{
+		return template.UseActionCheckType != 0
+			|| template.UseActionRemoveCount != 0
+			|| template.UseActionRewardId != 0
+			|| template.UseActionFinalRewardId != 0;
+	}
+
+	private static bool HasActiveHouseObjectCooldown(Player player, int objectId)
+	{
+		return player.HouseObjectCooldowns.TryGetValue(objectId, out var reuseTimeMillis)
+			&& reuseTimeMillis > DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+	}
+
+	private static void AddHouseObjectCooldown(Player player, int objectId, HousingObjectTemplateSummary template)
+	{
+		var cooldowns = player.HouseObjectCooldowns.ToDictionary(pair => pair.Key, pair => pair.Value);
+		cooldowns[objectId] = template.CooldownSeconds > 0
+			? DateTimeOffset.UtcNow.AddSeconds(template.CooldownSeconds).ToUnixTimeMilliseconds()
+			: new DateTimeOffset(DateTime.Today.AddDays(1).AddTicks(-1)).ToUnixTimeMilliseconds();
+		player.HouseObjectCooldowns = cooldowns;
 	}
 
 	private async Task HandleUseStorageObjectAsync(Player player, HouseObjectUseTarget target)
@@ -5856,10 +6213,21 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (target == null || !ReleaseHouseObjectOccupant(target.HouseObject.ObjectId, player.ObjectId))
 			return;
 
+		var canceledHouseObjectUse = CancelPendingHouseObjectUse(target.HouseObject.ObjectId);
 		if (target.Template.TypeId == 1)
 			await SendPacketAsync(new SmUseObject(player.ObjectId, target.HouseObject.ObjectId, 0, 9));
-		if (target.Template.TypeId is 1 or 3)
+		if (target.Template.TypeId == 3 || canceledHouseObjectUse)
 			await SendPacketAsync(SmSystemMessage.HousingObjectCancelUse());
+	}
+
+	private bool CancelPendingHouseObjectUse(int objectId)
+	{
+		var pendingUse = _pendingHouseObjectUse;
+		if (pendingUse == null || pendingUse.ObjectId != objectId)
+			return false;
+
+		_pendingHouseObjectUse = null;
+		return pendingUse.Task.Cancel();
 	}
 
 	private async Task<HouseObjectUseTarget?> FindHouseObjectUseTargetAsync(Player player, int objectId)
@@ -7751,6 +8119,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		RegisteredHouseObjectSummary HouseObject,
 		HousingObjectTemplateSummary Template,
 		bool IsInTalkRange);
+
+	private sealed record PendingHouseObjectUse(ScheduledTask Task, int ObjectId);
 
 	private sealed record PendingItemUse(
 		ScheduledTask Task,

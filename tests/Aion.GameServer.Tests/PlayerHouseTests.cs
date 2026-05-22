@@ -69,6 +69,10 @@ public sealed class PlayerHouseTests
 		var spawned = Assert.Single(registry.Objects, obj => obj.IsSpawnedByPlayer);
 		Assert.Equal(180, spawned.Rotation);
 		Assert.Equal(new byte[] { 3, 0, 0, 0, 2 }, spawned.UsageData);
+		var usedObject = spawned.WithUseCounts(objectTemplates.GetTemplate(3190001)!, 2, 2);
+		Assert.Equal(2, usedObject.OwnerUseCount);
+		Assert.Equal(2, usedObject.VisitorUseCount);
+		Assert.Equal(new byte[] { 4, 0, 0, 0, 2 }, usedObject.UsageData);
 		var placedObject = Assert.Single(
 			registry.GetSpawnedObjects(
 				new PlayerHouse(50, 700100, 353000, DateTime.UtcNow, null, IsInactive: false, Registry: registry),

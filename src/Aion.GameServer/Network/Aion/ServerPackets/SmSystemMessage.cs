@@ -55,6 +55,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300430);
 	}
 
+	public static SmSystemMessage WarehouseTooManyItemsInventory()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_WAREHOUSE_TOO_MANY_ITEMS_INVENTORY.
+		return new SmSystemMessage(1300416);
+	}
+
 	public static SmSystemMessage InventorySizeExtended(int slots)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_EXTEND_INVENTORY_SIZE_EXTENDED.
@@ -815,6 +821,24 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1401258);
 	}
 
+	public static SmSystemMessage HousingObjectCantUsePerDay()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_OBJECT_CANT_USE_PER_DAY.
+		return new SmSystemMessage(1401260);
+	}
+
+	public static SmSystemMessage HousingObjectRewardItem(string objectName, string rewardName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_OBJECT_REWARD_ITEM.
+		return new SmSystemMessage(1401263, objectName, rewardName);
+	}
+
+	public static SmSystemMessage HousingObjectDeleteUseCountFinal(string objectName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_OBJECT_DELETE_USE_COUNT_FINAL.
+		return new SmSystemMessage(1401470, objectName);
+	}
+
 	public static SmSystemMessage HousingBidCancel()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_BID_CANCEL.
@@ -905,6 +929,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1401283, kinah.ToString(System.Globalization.CultureInfo.InvariantCulture));
 	}
 
+	public static SmSystemMessage HousingCannotUseFlowerpotCooltime()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_CANNOT_USE_FLOWERPOT_COOLTIME.
+		return new SmSystemMessage(1401280);
+	}
+
 	public static SmSystemMessage HousingCantBidExcessAccount()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_CANT_BID_EXCESS_ACCOUNT.
@@ -929,10 +959,40 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1401298);
 	}
 
+	public static SmSystemMessage CantUseHouseObjectItemEquip(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_CANT_USE_HOUSE_OBJECT_ITEM_EQUIP.
+		return new SmSystemMessage(1401294, itemName);
+	}
+
+	public static SmSystemMessage HousingObjectAchieveUseCount()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_OBJECT_ACHIEVE_USE_COUNT.
+		return new SmSystemMessage(1401295);
+	}
+
+	public static SmSystemMessage HousingObjectAllCantUse()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_OBJECT_ALL_CANT_USE.
+		return new SmSystemMessage(1401296);
+	}
+
+	public static SmSystemMessage CantUseHouseObjectItemCheck(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_CANT_USE_HOUSE_OBJECT_ITEM_CHECK.
+		return new SmSystemMessage(1401199, itemName);
+	}
+
 	public static SmSystemMessage HousingPriceChange(long kinah)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_PRICE_CHANGE.
 		return new SmSystemMessage(1401324, kinah.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage HousingFlowerpotGoal(string objectName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_FLOWERPOT_GOAL.
+		return new SmSystemMessage(1401333, objectName);
 	}
 
 	public static SmSystemMessage HousingAuctionSuccess(int address)

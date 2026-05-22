@@ -50,6 +50,17 @@ public interface IHousingRepository
 		IReadOnlyList<int> deletedCouponItemObjectIds,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveHouseObjectUseAsync(
+		int houseOwnerObjectId,
+		int usingPlayerObjectId,
+		RegisteredHouseObjectSummary? updatedHouseObject,
+		int? deletedHouseObjectId,
+		IReadOnlyList<InventoryItem> updatedConsumedItems,
+		IReadOnlyList<int> deletedConsumedObjectIds,
+		IReadOnlyList<InventoryItem> updatedRewardItems,
+		IReadOnlyList<InventoryItem> addedRewardItems,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> DeleteHouseRegisteredObjectAsync(
 		int playerObjectId,
 		int itemObjectId,
@@ -115,6 +126,20 @@ public sealed class EmptyHousingRepository : IHousingRepository
 		int buildingId,
 		IReadOnlyList<InventoryItem> updatedCouponItems,
 		IReadOnlyList<int> deletedCouponItemObjectIds,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> SaveHouseObjectUseAsync(
+		int houseOwnerObjectId,
+		int usingPlayerObjectId,
+		RegisteredHouseObjectSummary? updatedHouseObject,
+		int? deletedHouseObjectId,
+		IReadOnlyList<InventoryItem> updatedConsumedItems,
+		IReadOnlyList<int> deletedConsumedObjectIds,
+		IReadOnlyList<InventoryItem> updatedRewardItems,
+		IReadOnlyList<InventoryItem> addedRewardItems,
 		CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(true);
@@ -477,6 +502,96 @@ public sealed class MySqlHousingRepository : IHousingRepository
 		}
 	}
 
+	public async Task<bool> SaveHouseObjectUseAsync(
+		int houseOwnerObjectId,
+		int usingPlayerObjectId,
+		RegisteredHouseObjectSummary? updatedHouseObject,
+		int? deletedHouseObjectId,
+		IReadOnlyList<InventoryItem> updatedConsumedItems,
+		IReadOnlyList<int> deletedConsumedObjectIds,
+		IReadOnlyList<InventoryItem> updatedRewardItems,
+		IReadOnlyList<InventoryItem> addedRewardItems,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: UseableItemObject scheduled completion mutates InventoryDAO and PlayerRegisteredItemsDAO.store in one use boundary.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			foreach (var consumedItem in updatedConsumedItems)
+			{
+				if (!await SaveInventoryItemCountAsync(connection, transaction, usingPlayerObjectId, consumedItem, cancellationToken))
+					return false;
+			}
+
+			foreach (var deletedConsumedObjectId in deletedConsumedObjectIds)
+			{
+				if (!await DeleteInventoryItemAsync(connection, transaction, usingPlayerObjectId, deletedConsumedObjectId, cancellationToken))
+					return false;
+			}
+
+			foreach (var rewardItem in updatedRewardItems)
+			{
+				if (!await SaveInventoryItemCountAsync(connection, transaction, usingPlayerObjectId, rewardItem, cancellationToken))
+					return false;
+			}
+
+			foreach (var rewardItem in addedRewardItems)
+				await InsertInventoryItemAsync(connection, transaction, rewardItem, cancellationToken);
+
+			if (updatedHouseObject != null)
+			{
+				await using var updateCommand = connection.CreateCommand();
+				updateCommand.Transaction = transaction;
+				updateCommand.CommandText = """
+					UPDATE player_registered_items
+					SET owner_use_count = ?, visitor_use_count = ?
+					WHERE player_id = ? AND item_unique_id = ? AND item_id = ?
+					""";
+				updateCommand.Parameters.AddRange(
+					new[]
+					{
+						new MySqlParameter { Value = updatedHouseObject.OwnerUseCount },
+						new MySqlParameter { Value = updatedHouseObject.VisitorUseCount },
+						new MySqlParameter { Value = houseOwnerObjectId },
+						new MySqlParameter { Value = updatedHouseObject.ObjectId },
+						new MySqlParameter { Value = updatedHouseObject.TemplateId },
+					});
+				if (await updateCommand.ExecuteNonQueryAsync(cancellationToken) <= 0)
+					return false;
+			}
+
+			if (deletedHouseObjectId.HasValue)
+			{
+				await using var deleteCommand = connection.CreateCommand();
+				deleteCommand.Transaction = transaction;
+				deleteCommand.CommandText = "DELETE FROM player_registered_items WHERE item_unique_id = ? AND player_id = ?";
+				deleteCommand.Parameters.AddRange(
+					new[]
+					{
+						new MySqlParameter { Value = deletedHouseObjectId.Value },
+						new MySqlParameter { Value = houseOwnerObjectId },
+					});
+				if (await deleteCommand.ExecuteNonQueryAsync(cancellationToken) <= 0)
+					return false;
+			}
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(
+				ex,
+				"Could not save house object use mutation for object {HouseObjectId} owned by {HouseOwnerObjectId}",
+				updatedHouseObject?.ObjectId ?? deletedHouseObjectId ?? 0,
+				houseOwnerObjectId);
+			return false;
+		}
+	}
+
 	public async Task<bool> DeleteHouseRegisteredObjectAsync(
 		int playerObjectId,
 		int itemObjectId,
@@ -579,6 +694,78 @@ public sealed class MySqlHousingRepository : IHousingRepository
 				playerObjectId);
 			return false;
 		}
+	}
+
+	private static async Task<bool> SaveInventoryItemCountAsync(
+		MySqlConnection connection,
+		MySqlTransaction transaction,
+		int playerObjectId,
+		InventoryItem item,
+		CancellationToken cancellationToken)
+	{
+		await using var command = connection.CreateCommand();
+		command.Transaction = transaction;
+		command.CommandText = "UPDATE inventory SET item_count = ? WHERE item_unique_id = ? AND item_owner = ?";
+		command.Parameters.AddRange(
+			new[]
+			{
+				new MySqlParameter { Value = item.Count },
+				new MySqlParameter { Value = item.ObjectId },
+				new MySqlParameter { Value = playerObjectId },
+			});
+		return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+	}
+
+	private static async Task InsertInventoryItemAsync(
+		MySqlConnection connection,
+		MySqlTransaction transaction,
+		InventoryItem item,
+		CancellationToken cancellationToken)
+	{
+		await using var command = connection.CreateCommand();
+		command.Transaction = transaction;
+		command.CommandText = """
+			INSERT INTO inventory (
+				item_unique_id, item_id, item_count, item_color, color_expires, item_creator, expire_time, activation_count,
+				item_owner, is_equipped, is_soul_bound, slot, item_location, enchant, enchant_bonus, item_skin,
+				fusioned_item, optional_socket, optional_fusion_socket, charge, tune_count, rnd_bonus, fusion_rnd_bonus,
+				tempering, pack_count, is_amplified, buff_skill, rnd_plume_bonus
+			)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			""";
+		command.Parameters.AddRange(
+			new[]
+			{
+				new MySqlParameter { Value = item.ObjectId },
+				new MySqlParameter { Value = item.ItemId },
+				new MySqlParameter { Value = item.Count },
+				new MySqlParameter { Value = item.Color.HasValue ? item.Color.Value : DBNull.Value },
+				new MySqlParameter { Value = item.ColorExpires },
+				new MySqlParameter { Value = item.Creator ?? (object)DBNull.Value },
+				new MySqlParameter { Value = item.ExpireTime },
+				new MySqlParameter { Value = item.ActivationCount },
+				new MySqlParameter { Value = item.OwnerId },
+				new MySqlParameter { Value = item.IsEquipped },
+				new MySqlParameter { Value = item.IsSoulBound },
+				new MySqlParameter { Value = item.Slot },
+				new MySqlParameter { Value = item.Location },
+				new MySqlParameter { Value = item.Enchant },
+				new MySqlParameter { Value = item.EnchantBonus },
+				new MySqlParameter { Value = item.ItemSkin },
+				new MySqlParameter { Value = item.FusionedItem },
+				new MySqlParameter { Value = item.OptionalSocket },
+				new MySqlParameter { Value = item.OptionalFusionSocket },
+				new MySqlParameter { Value = item.Charge },
+				new MySqlParameter { Value = item.TuneCount },
+				new MySqlParameter { Value = item.RandomBonus },
+				new MySqlParameter { Value = item.FusionRandomBonus },
+				new MySqlParameter { Value = item.Tempering },
+				new MySqlParameter { Value = item.PackCount },
+				new MySqlParameter { Value = item.IsAmplified },
+				new MySqlParameter { Value = item.BuffSkill },
+				new MySqlParameter { Value = item.RandomPlumeBonus },
+			});
+		await command.ExecuteNonQueryAsync(cancellationToken);
 	}
 
 	private static async Task<bool> DeleteInventoryItemAsync(

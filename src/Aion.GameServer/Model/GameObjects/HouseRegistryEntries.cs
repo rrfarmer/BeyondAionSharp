@@ -301,6 +301,21 @@ public sealed record HouseRegistrySummary(
 
 public static class RegisteredHouseObjectSummaryExtensions
 {
+	public static RegisteredHouseObjectSummary WithUseCounts(
+		this RegisteredHouseObjectSummary obj,
+		HousingObjectTemplateSummary template,
+		int ownerUseCount,
+		int visitorUseCount)
+	{
+		// Java parity: UseableItemObject.writeUsageData after owner/visitor count mutation.
+		return obj with
+		{
+			OwnerUseCount = ownerUseCount,
+			VisitorUseCount = visitorUseCount,
+			UsageData = CreateUsageData(template, ownerUseCount, visitorUseCount),
+		};
+	}
+
 	public static RegisteredHouseObjectSummary WithCooldown(
 		this RegisteredHouseObjectSummary obj,
 		IReadOnlyDictionary<int, long> cooldowns,
@@ -322,6 +337,17 @@ public static class RegisteredHouseObjectSummaryExtensions
 
 		var nowMillis = currentUnixTimeMilliseconds?.Invoke() ?? DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 		return reuseTimeMillis <= nowMillis ? 0 : (int)((reuseTimeMillis - nowMillis) / 1000);
+	}
+
+	private static byte[]? CreateUsageData(HousingObjectTemplateSummary template, int ownerUseCount, int visitorUseCount)
+	{
+		if (template.TypeId != 1)
+			return null;
+
+		var data = new byte[5];
+		BinaryPrimitives.WriteInt32LittleEndian(data, template.UseCount == 0 ? 0 : ownerUseCount + visitorUseCount);
+		data[4] = (byte)template.UseActionCheckType;
+		return data;
 	}
 }
 

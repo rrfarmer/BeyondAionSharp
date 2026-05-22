@@ -275,6 +275,20 @@ public sealed class HousingWorldServiceTests
 			return Task.FromResult(true);
 		}
 
+		public Task<bool> SaveHouseObjectUseAsync(
+			int houseOwnerObjectId,
+			int usingPlayerObjectId,
+			RegisteredHouseObjectSummary? updatedHouseObject,
+			int? deletedHouseObjectId,
+			IReadOnlyList<InventoryItem> updatedConsumedItems,
+			IReadOnlyList<int> deletedConsumedObjectIds,
+			IReadOnlyList<InventoryItem> updatedRewardItems,
+			IReadOnlyList<InventoryItem> addedRewardItems,
+			CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult(true);
+		}
+
 		public Task<bool> DeleteHouseRegisteredObjectAsync(
 			int playerObjectId,
 			int itemObjectId,
