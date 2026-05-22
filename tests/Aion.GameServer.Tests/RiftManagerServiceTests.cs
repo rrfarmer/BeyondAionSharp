@@ -131,6 +131,57 @@ public sealed class RiftManagerServiceTests
 	}
 
 	[Fact]
+	public async Task SpawnRift_FansOutPortalPairsAcrossWorldMapInstances()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-rift-manager-instance-fanout-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(
+				tempPath,
+				"""
+				<spawn_map map_id="210020000">
+					<spawn npc_id="730100" handler="RIFT">
+						<spot x="1" y="2" z="3" anchor="ELTNEN_AM" />
+					</spawn>
+				</spawn_map>
+				<spawn_map map_id="220020000">
+					<spawn npc_id="730101" handler="RIFT">
+						<spot x="5" y="6" z="7" anchor="MORHEIM_AS" />
+					</spawn>
+				</spawn_map>
+				""",
+				"""
+				<map id="210020000" instance="false" twin_count="3" />
+				<map id="220020000" instance="false" twin_count="3" />
+				""");
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			var service = new RiftManagerService(context, world, new IDFactory());
+
+			var result = service.SpawnRift(2120);
+
+			Assert.True(result.Spawned);
+			Assert.Equal(6, result.SpawnedNpcs.Count);
+			Assert.Equal([1, 2, 3], result.SpawnedNpcs.Where(npc => npc.Anchor == "ELTNEN_AM").Select(npc => npc.Position.InstanceId).ToArray());
+			Assert.Equal([1, 2, 3], result.SpawnedNpcs.Where(npc => npc.Anchor == "MORHEIM_AS").Select(npc => npc.Position.InstanceId).ToArray());
+			Assert.Equal(3, service.GetSpawnedRifts(210020000).Count);
+			Assert.Equal(3, service.GetSpawnedRifts(220020000).Count);
+			Assert.Equal(6, service.SpawnedRiftCount);
+			Assert.Equal(6, world.ObjectCount);
+		}
+		finally
+		{
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
+	[Fact]
 	public async Task RemoveSpawnedRift_RemovesManagerTrackingOnly()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-rift-remove-tracking-" + Guid.NewGuid().ToString("N"));
@@ -291,17 +342,26 @@ public sealed class RiftManagerServiceTests
 
 	private static async Task<GameServerRuntimeContext> CreateRuntimeContextAsync(
 		string tempPath,
-		string spawnMaps)
+		string spawnMaps,
+		string worldMaps = "")
 	{
 		var staticDataFile = Path.Combine(tempPath, "static_data.xml");
 		var cacheFile = Path.Combine(tempPath, "cache", "static_data.xml");
 		var schemaFile = Path.Combine(tempPath, "static_data.xsd");
 		Directory.CreateDirectory(Path.GetDirectoryName(cacheFile)!);
+		var worldMapsSection = string.IsNullOrWhiteSpace(worldMaps)
+			? string.Empty
+			: $$"""
+				<world_maps>
+			{{worldMaps}}
+				</world_maps>
+			""";
 		File.WriteAllText(
 			staticDataFile,
 			$$"""
 			<?xml version="1.0" encoding="UTF-8"?>
 			<static_data>
+			{{worldMapsSection}}
 				<npc_templates>
 					<npc_template npc_id="730100" name="master rift" name_id="730100" level="1" rank="NORMAL" rating="NORMAL" race="ELYOS" tribe="FIELD_OBJECT_ALL" type="GENERAL" state="5" ai="portal" />
 					<npc_template npc_id="730101" name="slave rift" name_id="730101" level="1" rank="NORMAL" rating="NORMAL" race="ASMODIANS" tribe="FIELD_OBJECT_ALL" type="GENERAL" state="6" ai="portal" />

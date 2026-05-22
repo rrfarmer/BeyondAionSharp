@@ -63,23 +63,36 @@ public sealed class RiftManagerService
 		if (!TryGetPortalSpawn(staticData, definition.SlaveAnchor, out var slaveAnchorSpawn))
 			return RiftSpawnResult.NotSpawned(RiftSpawnStatus.MissingSlaveAnchor, definition, isWithGuards);
 
-		var slaveSpawn = SelectSlaveSpawn(slaveAnchorSpawn, staticData.NpcRiftSpawns);
 		var masterTemplate = staticData.NpcTemplates.GetNpcTemplate(masterSpawn.NpcId);
-		var slaveTemplate = staticData.NpcTemplates.GetNpcTemplate(slaveSpawn.NpcId);
+		var slaveTemplate = staticData.NpcTemplates.GetNpcTemplate(slaveAnchorSpawn.NpcId);
 		if (masterTemplate == null || slaveTemplate == null)
 			return RiftSpawnResult.NotSpawned(RiftSpawnStatus.MissingNpcTemplate, definition, isWithGuards);
 
-		if (!TrySpawnRiftNpc(slaveSpawn, slaveTemplate, out var slaveNpc))
-			return RiftSpawnResult.NotSpawned(RiftSpawnStatus.WorldAddFailed, definition, isWithGuards);
-		if (!TrySpawnRiftNpc(masterSpawn, masterTemplate, out var masterNpc))
+		var instanceCount = GetInstanceCount(staticData, masterSpawn.MapId);
+		var spawnedNpcs = new List<WorldNpc>(instanceCount * 2);
+		for (var instanceId = 1; instanceId <= instanceCount; instanceId++)
 		{
-			RollBackSpawnedNpc(slaveNpc);
-			return RiftSpawnResult.NotSpawned(RiftSpawnStatus.WorldAddFailed, definition, isWithGuards);
+			var slaveSpawn = SelectSlaveSpawn(slaveAnchorSpawn, staticData.NpcRiftSpawns);
+			if (!TrySpawnRiftNpc(slaveSpawn, slaveTemplate, instanceId, out var slaveNpc))
+			{
+				RollBackSpawnedNpcs(spawnedNpcs);
+				return RiftSpawnResult.NotSpawned(RiftSpawnStatus.WorldAddFailed, definition, isWithGuards);
+			}
+
+			if (!TrySpawnRiftNpc(masterSpawn, masterTemplate, instanceId, out var masterNpc))
+			{
+				RollBackSpawnedNpc(slaveNpc);
+				RollBackSpawnedNpcs(spawnedNpcs);
+				return RiftSpawnResult.NotSpawned(RiftSpawnStatus.WorldAddFailed, definition, isWithGuards);
+			}
+
+			spawnedNpcs.Add(slaveNpc);
+			spawnedNpcs.Add(masterNpc);
 		}
 
-		AddSpawnedRift(slaveNpc);
-		AddSpawnedRift(masterNpc);
-		return RiftSpawnResult.SpawnedPair(definition, isWithGuards, slaveNpc, masterNpc);
+		foreach (var npc in spawnedNpcs)
+			AddSpawnedRift(npc);
+		return RiftSpawnResult.Completed(definition, isWithGuards, spawnedNpcs);
 	}
 
 	public static bool TryGetRiftDefinition(int riftId, out RiftDefinition? definition)
@@ -135,10 +148,11 @@ public sealed class RiftManagerService
 	private bool TrySpawnRiftNpc(
 		RiftSpawnPoint spawn,
 		NpcTemplateSummary template,
+		int instanceId,
 		out WorldNpc npc)
 	{
 		var objectId = _idFactory.NextId();
-		var position = new global::Aion.GameServer.World.WorldPosition(spawn.MapId, spawn.X, spawn.Y, spawn.Z, spawn.Heading);
+		var position = new global::Aion.GameServer.World.WorldPosition(spawn.MapId, spawn.X, spawn.Y, spawn.Z, spawn.Heading, instanceId);
 		npc = new WorldNpc(
 			objectId,
 			template.TemplateId,
@@ -158,6 +172,13 @@ public sealed class RiftManagerService
 
 		_idFactory.ReleaseId(objectId);
 		return false;
+	}
+
+	private static int GetInstanceCount(StaticData staticData, int worldId)
+	{
+		// Java parity: RiftManager.spawnRift loops from 1 through WorldMap.getInstanceCount().
+		var worldMap = staticData.WorldMaps.FirstOrDefault(map => map.MapId == worldId);
+		return Math.Max(1, worldMap.TwinCount);
 	}
 
 	private readonly record struct RiftSpawnPoint(
@@ -236,6 +257,12 @@ public sealed class RiftManagerService
 	{
 		_world.TryRemoveObject(npc.ObjectId, out _);
 		_idFactory.ReleaseId(npc.ObjectId);
+	}
+
+	private void RollBackSpawnedNpcs(IEnumerable<WorldNpc> npcs)
+	{
+		foreach (var npc in npcs)
+			RollBackSpawnedNpc(npc);
 	}
 
 	private static IReadOnlyList<RiftDefinition> BuildRiftDefinitions()
@@ -329,18 +356,17 @@ public sealed record RiftSpawnResult(
 	bool GuardsRequested,
 	IReadOnlyList<WorldNpc> SpawnedNpcs)
 {
-	public static RiftSpawnResult SpawnedPair(
+	public static RiftSpawnResult Completed(
 		RiftDefinition definition,
 		bool guardsRequested,
-		WorldNpc slaveNpc,
-		WorldNpc masterNpc)
+		IReadOnlyList<WorldNpc> spawnedNpcs)
 	{
 		return new RiftSpawnResult(
 			Spawned: true,
 			RiftSpawnStatus.Spawned,
 			definition,
 			guardsRequested,
-			[slaveNpc, masterNpc]);
+			spawnedNpcs);
 	}
 
 	public static RiftSpawnResult NotSpawned(

@@ -66,19 +66,15 @@ public sealed class RiftInformerService
 		var counts = new int[AnnounceSlotCount];
 		foreach (var rift in _riftService.GetActiveRifts())
 		{
-			var definition = rift.Definition;
-			if (definition == null)
-				continue;
+			foreach (var portal in rift.Portals)
+			{
+				if (portal.MasterNpc.Position.WorldId != worldId)
+					continue;
 
-			var hasMasterInWorld = rift.Spawned.Any(
-				npc => npc.Position.WorldId == worldId
-					&& string.Equals(npc.Anchor, definition.MasterAnchor, StringComparison.Ordinal));
-			if (!hasMasterInWorld)
-				continue;
-
-			var index = GetAnnounceIndex(definition, rift.GuardsRequested);
-			if (index.HasValue)
-				counts[index.Value]++;
+				var index = GetAnnounceIndex(portal.Definition, rift.GuardsRequested);
+				if (index.HasValue)
+					counts[index.Value]++;
+			}
 		}
 
 		return new RiftAnnounceData(counts);
@@ -111,12 +107,14 @@ public sealed class RiftInformerService
 		var packets = new List<SmRiftAnnounce> { new(GetAnnounceData(worldId)) };
 		foreach (var rift in _riftService.GetActiveRifts())
 		{
-			var portal = rift.Portal;
-			if (portal == null || portal.MasterNpc.Position.WorldId != worldId)
-				continue;
+			foreach (var portal in rift.Portals)
+			{
+				if (portal.MasterNpc.Position.WorldId != worldId)
+					continue;
 
-			packets.Add(new SmRiftAnnounce(portal, isMaster: true, _clock));
-			packets.Add(new SmRiftAnnounce(portal, isMaster: false, _clock));
+				packets.Add(new SmRiftAnnounce(portal, isMaster: true, _clock));
+				packets.Add(new SmRiftAnnounce(portal, isMaster: false, _clock));
+			}
 		}
 
 		return packets;
@@ -128,11 +126,13 @@ public sealed class RiftInformerService
 		var packets = new List<SmRiftAnnounce>();
 		foreach (var rift in _riftService.GetActiveRifts())
 		{
-			var portal = rift.Portal;
-			if (portal == null || portal.MasterNpc.Position.WorldId != worldId)
-				continue;
+			foreach (var portal in rift.Portals)
+			{
+				if (portal.MasterNpc.Position.WorldId != worldId)
+					continue;
 
-			packets.Add(new SmRiftAnnounce(portal, isMaster: false, _clock));
+				packets.Add(new SmRiftAnnounce(portal, isMaster: false, _clock));
+			}
 		}
 
 		return packets;

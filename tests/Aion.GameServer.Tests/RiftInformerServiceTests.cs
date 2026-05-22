@@ -287,6 +287,67 @@ public sealed class RiftInformerServiceTests
 	}
 
 	[Fact]
+	public async Task SendRiftsInfoAsync_BroadcastsEachInstancePortalPair()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-rift-informer-instance-pairs-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var now = DateTimeOffset.FromUnixTimeSeconds(1000);
+			var registry = new RecordingConnectionRegistry();
+			registry.Players.Add(CreatePlayer(100, 210020000));
+			var (service, informer) = await CreateServicesAsync(
+				tempPath,
+				"""<rift_location id="2120" world="210020000" />""",
+				"""
+				<spawn_map map_id="210020000">
+					<spawn npc_id="730100" handler="RIFT">
+						<spot x="1" y="2" z="3" anchor="ELTNEN_AM" />
+					</spawn>
+				</spawn_map>
+				<spawn_map map_id="220020000">
+					<spawn npc_id="730101" handler="RIFT">
+						<spot x="5" y="6" z="7" anchor="MORHEIM_AS" />
+					</spawn>
+				</spawn_map>
+				""",
+				registry,
+				serviceClock: () => now,
+				informerClock: () => now,
+				worldMaps:
+				"""
+				<map id="210020000" instance="false" twin_count="2" />
+				<map id="220020000" instance="false" twin_count="2" />
+				""");
+			Assert.True(service.OpenRifts(2120, guards: false).Succeeded);
+			var portals = Assert.Single(service.GetActiveRifts()).Portals;
+
+			var sent = await informer.SendRiftsInfoAsync(210020000);
+
+			Assert.Equal(5, sent);
+			Assert.Equal([0, 2, 3, 2, 3], registry.BroadcastDeliveries.Select(delivery => ReadAction(delivery.Packet)).ToArray());
+			Assert.Equal(2, ReadAggregateCounts(registry.BroadcastDeliveries[0].Packet)[0]);
+			Assert.Equal(
+				portals.Select(portal => portal.MasterNpc.ObjectId).ToArray(),
+				new[]
+				{
+					ReadPortalDetailPayload(registry.BroadcastDeliveries[1].Packet).ObjectId,
+					ReadPortalDetailPayload(registry.BroadcastDeliveries[3].Packet).ObjectId,
+				});
+		}
+		finally
+		{
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
+	[Fact]
 	public async Task SendRiftInfoAsync_BroadcastsEntryUpdatesToListedWorlds()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-rift-informer-entry-update-" + Guid.NewGuid().ToString("N"));
@@ -373,9 +434,10 @@ public sealed class RiftInformerServiceTests
 		string spawnMaps,
 		IGameClientConnectionRegistry? registry = null,
 		Func<DateTimeOffset>? serviceClock = null,
-		Func<DateTimeOffset>? informerClock = null)
+		Func<DateTimeOffset>? informerClock = null,
+		string worldMaps = "")
 	{
-		var context = await CreateRuntimeContextAsync(tempPath, riftLocations, spawnMaps);
+		var context = await CreateRuntimeContextAsync(tempPath, riftLocations, spawnMaps, worldMaps);
 		var idFactory = new IDFactory();
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);
 		var manager = new RiftManagerService(context, world, idFactory);
@@ -395,17 +457,26 @@ public sealed class RiftInformerServiceTests
 	private static async Task<GameServerRuntimeContext> CreateRuntimeContextAsync(
 		string tempPath,
 		string riftLocations,
-		string spawnMaps)
+		string spawnMaps,
+		string worldMaps = "")
 	{
 		var staticDataFile = Path.Combine(tempPath, "static_data.xml");
 		var cacheFile = Path.Combine(tempPath, "cache", "static_data.xml");
 		var schemaFile = Path.Combine(tempPath, "static_data.xsd");
 		Directory.CreateDirectory(Path.GetDirectoryName(cacheFile)!);
+		var worldMapsSection = string.IsNullOrWhiteSpace(worldMaps)
+			? string.Empty
+			: $$"""
+				<world_maps>
+			{{worldMaps}}
+				</world_maps>
+			""";
 		File.WriteAllText(
 			staticDataFile,
 			$$"""
 			<?xml version="1.0" encoding="UTF-8"?>
 			<static_data>
+			{{worldMapsSection}}
 				<rift_locations>
 			{{riftLocations}}
 				</rift_locations>

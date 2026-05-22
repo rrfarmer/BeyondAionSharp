@@ -418,6 +418,52 @@ public sealed class RiftServiceTests
 	}
 
 	[Fact]
+	public async Task OpenRifts_CreatesPortalStateForEachWorldMapInstance()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-rift-service-instance-portals-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(
+				tempPath,
+				"""<rift_location id="2120" world="210020000" />""",
+				CreateEltnenMorheimRiftHandlerSpawns(),
+				"""
+				<map id="210020000" instance="false" twin_count="2" />
+				<map id="220020000" instance="false" twin_count="2" />
+				""");
+			var idFactory = new IDFactory();
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			var manager = new RiftManagerService(context, world, idFactory);
+			var service = new RiftService(context, manager, world, idFactory);
+
+			var open = service.OpenRifts(2120, guards: false);
+
+			Assert.True(open.Succeeded);
+			var state = Assert.Single(open.Locations);
+			Assert.Equal(4, state.SpawnedCount);
+			Assert.Equal(2, state.Portals.Count);
+			Assert.Equal([1, 2], state.Portals.Select(portal => portal.MasterNpc.Position.InstanceId).ToArray());
+			Assert.Equal([1, 2], state.Portals.Select(portal => portal.SlaveNpc.Position.InstanceId).ToArray());
+			Assert.Equal(state.Portals[0], state.Portal);
+			Assert.True(service.TryGetPortalByMasterObjectId(state.Portals[1].MasterNpc.ObjectId, out var secondPortal));
+			Assert.Equal(2, secondPortal?.MasterNpc.Position.InstanceId);
+			Assert.Equal(4, world.ObjectCount);
+			Assert.Equal(4, manager.SpawnedRiftCount);
+		}
+		finally
+		{
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
+	[Fact]
 	public async Task OpenAndCloseRifts_WithWorldId_UsesLocationWorldLookup()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-rift-service-world-" + Guid.NewGuid().ToString("N"));
@@ -645,17 +691,26 @@ public sealed class RiftServiceTests
 	private static async Task<GameServerRuntimeContext> CreateRuntimeContextAsync(
 		string tempPath,
 		string riftLocations,
-		string spawnMaps)
+		string spawnMaps,
+		string worldMaps = "")
 	{
 		var staticDataFile = Path.Combine(tempPath, "static_data.xml");
 		var cacheFile = Path.Combine(tempPath, "cache", "static_data.xml");
 		var schemaFile = Path.Combine(tempPath, "static_data.xsd");
 		Directory.CreateDirectory(Path.GetDirectoryName(cacheFile)!);
+		var worldMapsSection = string.IsNullOrWhiteSpace(worldMaps)
+			? string.Empty
+			: $$"""
+				<world_maps>
+			{{worldMaps}}
+				</world_maps>
+			""";
 		File.WriteAllText(
 			staticDataFile,
 			$$"""
 			<?xml version="1.0" encoding="UTF-8"?>
 			<static_data>
+			{{worldMapsSection}}
 				<rift_locations>
 			{{riftLocations}}
 				</rift_locations>

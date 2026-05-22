@@ -77,9 +77,12 @@ public sealed class RiftService
 		// Java parity: CM_SHOW_DIALOG reaches RVController through the targeted master rift NPC owner.
 		foreach (var rift in _activeRifts.Values)
 		{
-			portal = rift.Portal;
-			if (portal?.MasterNpc.ObjectId == objectId)
-				return true;
+			foreach (var activePortal in rift.Portals)
+			{
+				portal = activePortal;
+				if (portal.MasterNpc.ObjectId == objectId)
+					return true;
+			}
 		}
 
 		portal = null;
@@ -113,7 +116,7 @@ public sealed class RiftService
 			state.Definition = spawnResult.Definition;
 			foreach (var npc in spawnResult.SpawnedNpcs)
 				state.AddSpawned(npc);
-			state.Portal = CreatePortalState(spawnResult, guards);
+			state.SetPortals(CreatePortalStates(spawnResult, guards));
 
 			opened.Add(state);
 			spawnResults.Add(spawnResult);
@@ -153,7 +156,7 @@ public sealed class RiftService
 			}
 
 			state.ClearSpawned();
-			state.Portal = null;
+			state.SetPortals(Array.Empty<RiftPortalState>());
 			closed.Add(state);
 		}
 
@@ -341,29 +344,37 @@ public sealed class RiftService
 			&& visibleNpc.SpawnLocation.Equals(spawnedNpc.SpawnLocation);
 	}
 
-	private RiftPortalState? CreatePortalState(RiftSpawnResult spawnResult, bool guardsRequested)
+	private IReadOnlyList<RiftPortalState> CreatePortalStates(RiftSpawnResult spawnResult, bool guardsRequested)
 	{
 		// Java parity: controllers/RVController constructor copies RiftEnum entry/level/type metadata and computes despawn time.
 		if (!spawnResult.Spawned || spawnResult.Definition == null || spawnResult.SpawnedNpcs.Count < 2)
-			return null;
+			return Array.Empty<RiftPortalState>();
 
 		var definition = spawnResult.Definition;
-		var slave = spawnResult.SpawnedNpcs
-			.FirstOrDefault(npc => string.Equals(npc.Anchor, definition.SlaveAnchor, StringComparison.Ordinal))
-			?? spawnResult.SpawnedNpcs[0];
-		var master = spawnResult.SpawnedNpcs
-			.FirstOrDefault(npc => string.Equals(npc.Anchor, definition.MasterAnchor, StringComparison.Ordinal))
-			?? spawnResult.SpawnedNpcs[^1];
 		var durationHours = definition.IsVortex
 			? _options.Custom.VortexDuration
 			: _options.Custom.RiftDuration;
 		var despawnTime = _nowProvider().ToUnixTimeSeconds() + durationHours * 3600;
-		return new RiftPortalState(
-			definition,
-			master,
-			slave,
-			guardsRequested,
-			despawnTime);
+		return spawnResult.SpawnedNpcs
+			.GroupBy(npc => npc.Position.InstanceId)
+			.OrderBy(group => group.Key)
+			.Select(group =>
+			{
+				var groupNpcs = group.ToArray();
+				var slave = groupNpcs
+					.FirstOrDefault(npc => string.Equals(npc.Anchor, definition.SlaveAnchor, StringComparison.Ordinal))
+					?? groupNpcs[0];
+				var master = groupNpcs
+					.FirstOrDefault(npc => string.Equals(npc.Anchor, definition.MasterAnchor, StringComparison.Ordinal))
+					?? groupNpcs[^1];
+				return new RiftPortalState(
+					definition,
+					master,
+					slave,
+					guardsRequested,
+					despawnTime);
+			})
+			.ToArray();
 	}
 }
 
@@ -384,7 +395,9 @@ public sealed class RiftLocationState
 
 	public RiftDefinition? Definition { get; internal set; }
 
-	public RiftPortalState? Portal { get; internal set; }
+	public RiftPortalState? Portal { get; private set; }
+
+	public IReadOnlyList<RiftPortalState> Portals { get; private set; } = Array.Empty<RiftPortalState>();
 
 	public int SpawnedCount => _spawned.Count;
 
@@ -415,6 +428,13 @@ public sealed class RiftLocationState
 	{
 		// Java parity: services/RiftService.closeRift clears RiftLocation.spawned after despawn/cancel-respawn work.
 		_spawned.Clear();
+	}
+
+	internal void SetPortals(IReadOnlyList<RiftPortalState> portals)
+	{
+		// Java parity: RiftManager.spawnRift creates one RVController pair per world-map instance.
+		Portals = portals;
+		Portal = portals.FirstOrDefault();
 	}
 }
 
