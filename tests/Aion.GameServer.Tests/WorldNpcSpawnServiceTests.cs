@@ -76,6 +76,26 @@ public sealed class WorldNpcSpawnServiceTests
 	}
 
 	[Fact]
+	public void TryDespawnWorldNpc_ClearsWorldStateStaticPlaceableAndObjectId()
+	{
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var staticPlaceables = new StaticPlaceableStateService();
+		var service = CreateService(world, staticPlaceables);
+		var spawns = new NpcSpawnTable([CreateSpawn(210010000, 203071, staticId: 107)]);
+		var templates = new NpcTemplateTable([CreateTemplate(203071)]);
+
+		var result = service.SpawnWorldNpcs(spawns, templates, [210010000]);
+		var despawned = service.TryDespawnWorldNpc(1);
+
+		Assert.Equal(new WorldNpcSpawnResult(1, 0), result);
+		Assert.True(despawned);
+		Assert.False(world.TryGetObject(1, out _));
+		Assert.Equal(0, staticPlaceables.GetSpawnCount(210010000, 107));
+		service.SpawnWorldNpcs(spawns, templates, [210010000]);
+		Assert.True(world.TryGetObject(1, out _));
+	}
+
+	[Fact]
 	public void SpawnWorldNpcs_ActivatesOnlyPoolSizeSpotsForValidPool()
 	{
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);

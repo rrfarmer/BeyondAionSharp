@@ -360,6 +360,17 @@ public sealed class WorldNpcSpawnService : GameEngine
 		return objectId;
 	}
 
+	public bool TryDespawnWorldNpc(int objectId)
+	{
+		// Java parity: controllers/VisibleObjectController.delete removes spawned objects and runs onDespawn cleanup first.
+		if (!_world.TryRemoveObject(objectId, out var gameObject) || gameObject is not WorldNpc worldNpc)
+			return false;
+
+		_staticPlaceables?.DespawnPlaceableObject(worldNpc.Position.WorldId, worldNpc.StaticId);
+		_idFactory.ReleaseId(objectId);
+		return true;
+	}
+
 	private int DespawnTemporaryNpcs(int gameMinutes, DayOfWeek serverDayOfWeek, ISet<int> changedMapIds)
 	{
 		var despawned = 0;
@@ -371,11 +382,8 @@ public sealed class WorldNpcSpawnService : GameEngine
 				continue;
 
 			if (_temporarySpawnObjectIds.TryRemove(spawn, out var objectId)
-				&& _world.TryRemoveObject(objectId, out var gameObject))
+				&& TryDespawnWorldNpc(objectId))
 			{
-				if (gameObject is WorldNpc worldNpc)
-					_staticPlaceables?.DespawnPlaceableObject(worldNpc.Position.WorldId, worldNpc.StaticId);
-				_idFactory.ReleaseId(objectId);
 				changedMapIds.Add(spawn.MapId);
 				despawned++;
 			}
