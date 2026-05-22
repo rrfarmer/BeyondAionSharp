@@ -1311,6 +1311,14 @@ public class GamePacketTests
 		Assert.Equal(0, (int)abyssRankReader.ReadC());
 		Assert.Equal(0, abyssRankReader.Remaining);
 
+		var abyssRankUpdatePayload = SerializeUnencryptedPayload(
+			SmAbyssRankUpdate.RankChange(new Player { ObjectId = 1001, AbyssRank = PlayerAbyssRank.Default() with { Rank = 5 } }));
+		using var abyssRankUpdateReader = new PacketBuffer(abyssRankUpdatePayload);
+		Assert.Equal(0, (int)abyssRankUpdateReader.ReadC());
+		Assert.Equal(1001, abyssRankUpdateReader.ReadD());
+		Assert.Equal(5, abyssRankUpdateReader.ReadD());
+		Assert.Equal(0, abyssRankUpdateReader.Remaining);
+
 		var recipeListPayload = SerializeUnencryptedPayload(new SmRecipeList([155000001, 155000002]));
 		using var recipeListReader = new PacketBuffer(recipeListPayload);
 		Assert.Equal(2, recipeListReader.ReadH());

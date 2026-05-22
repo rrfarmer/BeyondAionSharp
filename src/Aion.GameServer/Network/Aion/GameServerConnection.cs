@@ -3205,6 +3205,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (!saved)
 			return;
 
+		var oldAbyssRank = player.AbyssRank.Rank;
 		var inventoryItems = player.InventoryItems.ToList();
 		await SendApExtractConsumedItemPacketsAsync(inventoryItems, plan, sourceTemplate);
 		ApplyApExtractInventoryMutation(inventoryItems, plan);
@@ -3212,6 +3213,14 @@ public sealed class GameServerConnection : BaseClientConnection
 		player.AbyssRank = plan.AbyssRankUpdate;
 		await SendPacketAsync(SmSystemMessage.CombatMyAbyssPointGain(plan.AbyssPoints));
 		await SendPacketAsync(new SmAbyssRank(player.AbyssRank));
+		if (oldAbyssRank != player.AbyssRank.Rank && _connectionRegistry != null)
+		{
+			await _connectionRegistry.BroadcastToVisiblePlayersAsync(
+				player.Position,
+				player.ObjectId,
+				SmAbyssRankUpdate.RankChange(player));
+			// Java parity: AbyssPointsService.onRankChanged also checks rank-limited equipment and AbyssSkillService skills.
+		}
 	}
 
 	private async Task SendApExtractConsumedItemPacketsAsync(
