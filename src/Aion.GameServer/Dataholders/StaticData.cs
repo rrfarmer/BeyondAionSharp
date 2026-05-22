@@ -23,6 +23,7 @@ public sealed class StaticData
 		EnchantTable enchantTemplates,
 		TemperingTable temperingTemplates,
 		WalkerTemplateTable walkerTemplates,
+		WalkerVersionTable walkerVersions,
 		NpcTemplateTable npcTemplates,
 		NpcSpawnTable npcSpawns,
 		SkillTemplateTable skillTemplates,
@@ -51,6 +52,7 @@ public sealed class StaticData
 		EnchantTemplates = enchantTemplates;
 		TemperingTemplates = temperingTemplates;
 		WalkerTemplates = walkerTemplates;
+		WalkerVersions = walkerVersions;
 		NpcTemplates = npcTemplates;
 		NpcSpawns = npcSpawns;
 		SkillTemplates = skillTemplates;
@@ -97,6 +99,8 @@ public sealed class StaticData
 	public TemperingTable TemperingTemplates { get; }
 
 	public WalkerTemplateTable WalkerTemplates { get; }
+
+	public WalkerVersionTable WalkerVersions { get; }
 
 	public NpcTemplateTable NpcTemplates { get; }
 
@@ -146,6 +150,7 @@ public sealed class StaticData
 		var enchantGroups = new List<EnchantGroupSummary>();
 		var temperingGroups = new List<TemperingGroupSummary>();
 		var walkerTemplates = new List<WalkerTemplateSummary>();
+		var walkerVersionParents = new Dictionary<string, string>(StringComparer.Ordinal);
 		var npcTemplates = new List<NpcTemplateSummary>();
 		var npcSpawns = new List<NpcSpawnSummary>();
 		var skillTemplates = new List<SkillTemplateSummary>();
@@ -178,6 +183,7 @@ public sealed class StaticData
 		int currentNpcSpawnMapId = 0;
 		int currentNpcSpawnDepth = -1;
 		int currentNpcSpawnSpotDepth = -1;
+		string currentWalkerParentRouteId = string.Empty;
 		SkillTemplateBuilder? currentSkillTemplate = null;
 		TitleTemplateBuilder? currentTitleTemplate = null;
 		CosmeticItemBuilder? currentCosmeticItem = null;
@@ -269,6 +275,9 @@ public sealed class StaticData
 					currentWalkerTemplate = null;
 				}
 
+				if (reader.Depth == 2 && reader.LocalName == "walk_parent" && elementPath.GetValueOrDefault(1) == "walker_versions")
+					currentWalkerParentRouteId = string.Empty;
+
 				if (reader.Depth == 2 && reader.LocalName == "npc_template" && currentNpcTemplate != null)
 				{
 					npcTemplates.Add(currentNpcTemplate.ToSummary());
@@ -357,6 +366,24 @@ public sealed class StaticData
 			if (reader.Depth == 2 && reader.LocalName == "spawn_map" && elementPath.GetValueOrDefault(1) == "spawns")
 			{
 				currentNpcSpawnMapId = ReadRequiredIntAttribute(reader, "map_id");
+				continue;
+			}
+
+			if (reader.Depth == 2 && reader.LocalName == "walk_parent" && elementPath.GetValueOrDefault(1) == "walker_versions")
+			{
+				// Java parity: dataholders/WalkerVersionsData groups route variants by parent route id.
+				currentWalkerParentRouteId = reader.GetAttribute("id") ?? string.Empty;
+				continue;
+			}
+
+			if (reader.Depth == 3
+				&& reader.LocalName == "version"
+				&& elementPath.GetValueOrDefault(2) == "walk_parent"
+				&& !string.IsNullOrEmpty(currentWalkerParentRouteId))
+			{
+				var versionRouteId = reader.GetAttribute("id");
+				if (!string.IsNullOrWhiteSpace(versionRouteId))
+					walkerVersionParents[versionRouteId] = currentWalkerParentRouteId;
 				continue;
 			}
 
@@ -1415,6 +1442,7 @@ public sealed class StaticData
 			new EnchantTable(enchantGroups.AsReadOnly()),
 			new TemperingTable(temperingGroups.AsReadOnly()),
 			new WalkerTemplateTable(walkerTemplates.AsReadOnly()),
+			new WalkerVersionTable(new ReadOnlyDictionary<string, string>(walkerVersionParents)),
 			new NpcTemplateTable(npcTemplates.AsReadOnly()),
 			new NpcSpawnTable(npcSpawns.AsReadOnly()),
 			new SkillTemplateTable(skillTemplates.AsReadOnly()),

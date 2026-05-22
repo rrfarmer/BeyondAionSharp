@@ -206,6 +206,12 @@ public sealed class StaticDataLoadingTests
 						<routestep x="13" y="14" z="15" />
 					</walker_template>
 				</npc_walker>
+				<walker_versions>
+					<walk_parent id="route-parent">
+						<version id="route-a" />
+						<version id="route-b" />
+					</walk_parent>
+				</walker_versions>
 			</static_data>
 			""");
 
@@ -232,6 +238,10 @@ public sealed class StaticDataLoadingTests
 		Assert.NotNull(missingRows);
 		Assert.Equal("POINT", missingRows.Formation);
 		Assert.Empty(missingRows.Rows);
+		Assert.Equal(2, staticData.WalkerVersions.Count);
+		Assert.True(staticData.WalkerVersions.IsRouteVersioned("route-a"));
+		Assert.Equal("route-parent", staticData.WalkerVersions.GetRouteVersionId("route-b"));
+		Assert.False(staticData.WalkerVersions.IsRouteVersioned("route-c"));
 	}
 
 	[Fact]
@@ -267,6 +277,8 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(staticData.GetElementCount("tempering_list"), staticData.TemperingTemplates.Count);
 		Assert.Equal(staticData.GetElementCount("walker_template"), staticData.WalkerTemplates.Count);
 		Assert.NotNull(staticData.WalkerTemplates.GetWalkerTemplate("2B608BDFBB378B8479A1DB5321532BEC54C38823"));
+		Assert.Equal(staticData.GetElementCount("version"), staticData.WalkerVersions.Count);
+		Assert.Equal("1B5A84B85B8F8499B49A0840E90A25E686B00802", staticData.WalkerVersions.GetRouteVersionId("6E6042737F819C39511F6C5C4C85AD54B51C6D83"));
 		Assert.Equal(staticData.GetElementCount("instance_cooltime"), staticData.InstanceCooltimes.Count);
 		Assert.Equal("SWORD", staticData.ItemTemplates.GetItemTemplate(100000001)?.ItemGroup);
 		Assert.Equal([37, 44], staticData.ItemTemplates.GetItemTemplate(100000001)?.RequiredEquipSkills);
