@@ -2654,16 +2654,19 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
-		var rewardItems = CreateDecomposeRewardItems(player, rewardPlan.Rewards, staticData.ItemTemplates);
-		if (rewardItems == null)
-			return;
-
 		var sourceItemUpdate = sourceItem.Count > 1 ? CopyInventoryItem(sourceItem, count: sourceItem.Count - 1) : null;
 		int? deletedSourceObjectId = sourceItem.Count <= 1 ? sourceItem.ObjectId : null;
+		var rewardBaseItems = inventoryItems.ToList();
+		ApplySourceInventoryMutation(rewardBaseItems, sourceItemUpdate, deletedSourceObjectId);
+		var rewardInventoryPlan = CreateDecomposeRewardInventoryPlan(player, rewardBaseItems, rewardPlan.Rewards, staticData.ItemTemplates);
+		if (rewardInventoryPlan == null)
+			return;
+
 		var saved = _playerEnterWorldService == null
 			|| await _playerEnterWorldService.SaveDecomposeActionMutationAsync(
 				player,
-				rewardItems.Select(item => item.Item).ToArray(),
+				rewardInventoryPlan.UpdatedItems,
+				rewardInventoryPlan.AddedItems,
 				sourceItemUpdate,
 				deletedSourceObjectId,
 				cancellationToken);
@@ -2672,11 +2675,10 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		await SendPacketAsync(SmSystemMessage.DecomposeItemSucceed(sourceTemplate.GetClientName() ?? sourceTemplate.Name));
 		await ApplySourceItemMutationAsync(inventoryItems, sourceTemplate, sourceItemUpdate, deletedSourceObjectId);
-		foreach (var rewardItem in rewardItems)
-			inventoryItems.Add(rewardItem.Item);
+		ApplyRewardInventoryMutation(inventoryItems, rewardInventoryPlan);
 		player.InventoryItems = inventoryItems.ToArray();
 		await BroadcastItemUsageAnimationAsync(player, new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 1, 0));
-		await SendDecomposeRewardItemsAsync(rewardItems);
+		await SendDecomposeRewardItemsAsync(rewardInventoryPlan.Packets);
 	}
 
 	private async Task HandleSelectDecomposableAsync(Player player, CmSelectDecomposable packet)
@@ -2703,16 +2705,19 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (!rewardPlan.Succeeded)
 			return;
 
-		var rewardItems = CreateDecomposeRewardItems(player, rewardPlan.Rewards, staticData.ItemTemplates);
-		if (rewardItems == null)
-			return;
-
 		var sourceItemUpdate = sourceItem.Count > 1 ? CopyInventoryItem(sourceItem, count: sourceItem.Count - 1) : null;
 		int? deletedSourceObjectId = sourceItem.Count <= 1 ? sourceItem.ObjectId : null;
+		var rewardBaseItems = inventoryItems.ToList();
+		ApplySourceInventoryMutation(rewardBaseItems, sourceItemUpdate, deletedSourceObjectId);
+		var rewardInventoryPlan = CreateDecomposeRewardInventoryPlan(player, rewardBaseItems, rewardPlan.Rewards, staticData.ItemTemplates);
+		if (rewardInventoryPlan == null)
+			return;
+
 		var saved = _playerEnterWorldService == null
 			|| await _playerEnterWorldService.SaveDecomposeActionMutationAsync(
 				player,
-				rewardItems.Select(item => item.Item).ToArray(),
+				rewardInventoryPlan.UpdatedItems,
+				rewardInventoryPlan.AddedItems,
 				sourceItemUpdate,
 				deletedSourceObjectId);
 		if (!saved)
@@ -2722,38 +2727,79 @@ public sealed class GameServerConnection : BaseClientConnection
 		await SendPacketAsync(SmSystemMessage.UncompressCompressedItemSucceeded(sourceTemplate.GetClientName() ?? sourceTemplate.Name));
 		await ApplySourceItemMutationAsync(inventoryItems, sourceTemplate, sourceItemUpdate, deletedSourceObjectId);
 		await SendPacketAsync(new SmSecondaryShowDecomposable(sourceItem.ObjectId, Array.Empty<ResultedItemSummary>()));
-		foreach (var rewardItem in rewardItems)
-			inventoryItems.Add(rewardItem.Item);
+		ApplyRewardInventoryMutation(inventoryItems, rewardInventoryPlan);
 		player.InventoryItems = inventoryItems.ToArray();
-		await SendDecomposeRewardItemsAsync(rewardItems);
+		await SendDecomposeRewardItemsAsync(rewardInventoryPlan.Packets);
 	}
 
-	private List<SmInventoryAddItem.InventoryPacketItem>? CreateDecomposeRewardItems(
+	private DecomposeRewardInventoryPlan? CreateDecomposeRewardInventoryPlan(
 		Player player,
+		IReadOnlyList<InventoryItem> inventoryItems,
 		IReadOnlyList<DecomposeReward> rewards,
 		ItemTemplateTable itemTemplates)
 	{
-		var rewardItems = new List<SmInventoryAddItem.InventoryPacketItem>();
+		var workingItems = inventoryItems.ToList();
+		var updatedItemsByObjectId = new Dictionary<int, InventoryItem>();
+		var addedItems = new List<InventoryItem>();
+		var packets = new List<DecomposeRewardPacket>();
 		foreach (var reward in rewards)
 		{
 			var rewardTemplate = itemTemplates.GetItemTemplate(reward.ItemId);
-			var objectId = _idFactory?.NextId() ?? 0;
-			if (rewardTemplate == null || objectId == 0)
+			if (rewardTemplate == null)
 				return null;
 
-			rewardItems.Add(
-				new SmInventoryAddItem.InventoryPacketItem(
-					CreateNewItem(objectId, rewardTemplate, reward.Count, player.ObjectId, CubeStorageId, FirstAvailableSlot),
-					rewardTemplate));
+			var addPlan = InventoryAddService.CreateAddItemPlan(
+				player,
+				workingItems,
+				rewardTemplate,
+				reward.Count,
+				() => _idFactory?.NextId() ?? 0,
+				allowInventoryOverflow: true);
+			if (!addPlan.Succeeded)
+				return null;
+
+			foreach (var updatedItem in addPlan.UpdatedItems)
+			{
+				updatedItemsByObjectId[updatedItem.ObjectId] = updatedItem;
+				ReplaceInventoryItem(workingItems, updatedItem);
+				packets.Add(new DecomposeRewardPacket(updatedItem, rewardTemplate, IsNewItem: false));
+			}
+
+			foreach (var addedItem in addPlan.AddedItems)
+			{
+				addedItems.Add(addedItem);
+				workingItems.Add(addedItem);
+				packets.Add(new DecomposeRewardPacket(addedItem, rewardTemplate, IsNewItem: true));
+			}
 		}
 
-		return rewardItems;
+		return new DecomposeRewardInventoryPlan(updatedItemsByObjectId.Values.ToArray(), addedItems, packets);
 	}
 
-	private async Task SendDecomposeRewardItemsAsync(IReadOnlyList<SmInventoryAddItem.InventoryPacketItem> rewardItems)
+	private static void ApplyRewardInventoryMutation(List<InventoryItem> inventoryItems, DecomposeRewardInventoryPlan rewardInventoryPlan)
 	{
-		if (rewardItems.Count > 0)
-			await SendPacketAsync(SmInventoryAddItem.CreateDecomposable(rewardItems));
+		foreach (var updatedItem in rewardInventoryPlan.UpdatedItems)
+			ReplaceInventoryItem(inventoryItems, updatedItem);
+		inventoryItems.AddRange(rewardInventoryPlan.AddedItems);
+	}
+
+	private async Task SendDecomposeRewardItemsAsync(IReadOnlyList<DecomposeRewardPacket> rewardPackets)
+	{
+		foreach (var rewardPacket in rewardPackets)
+		{
+			if (rewardPacket.IsNewItem)
+			{
+				await SendPacketAsync(
+					SmInventoryAddItem.CreateDecomposable(
+					[
+						new SmInventoryAddItem.InventoryPacketItem(rewardPacket.Item, rewardPacket.Template),
+					]));
+			}
+			else
+			{
+				await SendPacketAsync(new SmInventoryUpdateItem(rewardPacket.Item, rewardPacket.Template, SmInventoryUpdateItem.IncreaseItemCollect));
+			}
+		}
 	}
 
 	private async Task SendDecomposeFailureAsync(DecomposeFailure failure, ItemTemplateSummary sourceTemplate)
@@ -2781,14 +2827,25 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		if (deletedSourceObjectId.HasValue)
 		{
-			inventoryItems.RemoveAll(item => item.ObjectId == deletedSourceObjectId.Value);
+			ApplySourceInventoryMutation(inventoryItems, sourceItemUpdate, deletedSourceObjectId);
 			await SendPacketAsync(new SmDeleteItem(deletedSourceObjectId.Value, SmDeleteItem.UseDeleteType));
 		}
 		else if (sourceItemUpdate != null)
 		{
-			ReplaceInventoryItem(inventoryItems, sourceItemUpdate);
+			ApplySourceInventoryMutation(inventoryItems, sourceItemUpdate, deletedSourceObjectId);
 			await SendPacketAsync(new SmInventoryUpdateItem(sourceItemUpdate, sourceTemplate, SmInventoryUpdateItem.DecreaseItemUse));
 		}
+	}
+
+	private static void ApplySourceInventoryMutation(
+		List<InventoryItem> inventoryItems,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceObjectId)
+	{
+		if (deletedSourceObjectId.HasValue)
+			inventoryItems.RemoveAll(item => item.ObjectId == deletedSourceObjectId.Value);
+		else if (sourceItemUpdate != null)
+			ReplaceInventoryItem(inventoryItems, sourceItemUpdate);
 	}
 
 	private async Task HandleCraftLearnUseItemAsync(
@@ -5978,32 +6035,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		int location,
 		long slot)
 	{
-		// Java parity: services/item/ItemFactory.newItem(itemId, count) default item state and count clamp.
-		var expireTime = itemTemplate.ExpireTimeMinutes == 0
-			? 0
-			: (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds() + itemTemplate.ExpireTimeMinutes * 60 - 1;
-
-		return new InventoryItem
-		{
-			ObjectId = objectId,
-			ItemId = itemTemplate.TemplateId,
-			Count = CalculateNewItemCount(itemTemplate, count),
-			OwnerId = ownerId,
-			Location = location,
-			Slot = slot,
-			ExpireTime = expireTime,
-			ActivationCount = itemTemplate.ActivationCount,
-			TuneCount = itemTemplate.CanTune ? -1 : 0,
-			IsAmplified = itemTemplate.EnchantType == 1,
-		};
-	}
-
-	private static long CalculateNewItemCount(ItemTemplateSummary itemTemplate, long count)
-	{
-		// Java parity: ItemFactory.calculateCount exempts kinah from max-stack clamping.
-		return count > itemTemplate.MaxStackCount && itemTemplate.TemplateId != KinahItemId
-			? itemTemplate.MaxStackCount
-			: count;
+		return InventoryItemFactory.CreateNewItem(objectId, itemTemplate, count, ownerId, location, slot);
 	}
 
 	private static double GetQualityPriceRate(ItemTemplateSummary template)
@@ -6022,6 +6054,13 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		public static InventoryItemConsumption Empty { get; } = new(Array.Empty<InventoryItem>(), Array.Empty<InventoryItem>());
 	}
+
+	private sealed record DecomposeRewardInventoryPlan(
+		IReadOnlyList<InventoryItem> UpdatedItems,
+		IReadOnlyList<InventoryItem> AddedItems,
+		IReadOnlyList<DecomposeRewardPacket> Packets);
+
+	private sealed record DecomposeRewardPacket(InventoryItem Item, ItemTemplateSummary Template, bool IsNewItem);
 
 	private static IReadOnlyList<InventoryItem> IncreaseInventoryKinah(
 		IReadOnlyList<InventoryItem> inventoryItems,

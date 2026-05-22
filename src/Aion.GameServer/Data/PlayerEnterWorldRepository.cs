@@ -103,6 +103,7 @@ public interface IPlayerEnterWorldRepository
 
 	Task<bool> SaveDecomposeActionMutationAsync(
 		int playerObjectId,
+		IReadOnlyList<InventoryItem> updatedItems,
 		IReadOnlyList<InventoryItem> addedItems,
 		InventoryItem? sourceItemUpdate,
 		int? deletedSourceItemObjectId,
@@ -393,6 +394,7 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public Task<bool> SaveDecomposeActionMutationAsync(
 		int playerObjectId,
+		IReadOnlyList<InventoryItem> updatedItems,
 		IReadOnlyList<InventoryItem> addedItems,
 		InventoryItem? sourceItemUpdate,
 		int? deletedSourceItemObjectId,
@@ -2731,6 +2733,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public async Task<bool> SaveDecomposeActionMutationAsync(
 		int playerObjectId,
+		IReadOnlyList<InventoryItem> updatedItems,
 		IReadOnlyList<InventoryItem> addedItems,
 		InventoryItem? sourceItemUpdate,
 		int? deletedSourceItemObjectId,
@@ -2749,6 +2752,12 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			if (deletedSourceItemObjectId.HasValue
 				&& !await DeleteInventoryItemAsync(connection, transaction, playerObjectId, deletedSourceItemObjectId.Value, cancellationToken))
 				return false;
+
+			foreach (var item in updatedItems)
+			{
+				if (!await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, item, cancellationToken))
+					return false;
+			}
 
 			foreach (var item in addedItems)
 				await InsertInventoryItemAsync(connection, transaction, item, cancellationToken);

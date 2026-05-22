@@ -510,6 +510,7 @@ public class GamePacketTests
 		inventoryUpdateReader.ReadB(updateBlobSize);
 		Assert.Equal(SmInventoryUpdateItem.DecreaseItemUse, inventoryUpdateReader.ReadH());
 		Assert.Equal(0, inventoryUpdateReader.Remaining);
+		Assert.Equal(0x19, SmInventoryUpdateItem.IncreaseItemCollect);
 
 		var chargeUpdateItem = new InventoryItem
 		{

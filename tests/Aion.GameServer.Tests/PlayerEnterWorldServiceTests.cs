@@ -459,6 +459,8 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public int SaveDecomposeActionMutationCalls { get; private set; }
 
+		public IReadOnlyList<InventoryItem> DecomposeUpdatedItems { get; private set; } = Array.Empty<InventoryItem>();
+
 		public IReadOnlyList<InventoryItem> DecomposeAddedItems { get; private set; } = Array.Empty<InventoryItem>();
 
 		public InventoryItem? DecomposeSourceItemUpdate { get; private set; }
@@ -726,12 +728,14 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public Task<bool> SaveDecomposeActionMutationAsync(
 			int playerObjectId,
+			IReadOnlyList<InventoryItem> updatedItems,
 			IReadOnlyList<InventoryItem> addedItems,
 			InventoryItem? sourceItemUpdate,
 			int? deletedSourceItemObjectId,
 			CancellationToken cancellationToken = default)
 		{
 			SaveDecomposeActionMutationCalls++;
+			DecomposeUpdatedItems = updatedItems;
 			DecomposeAddedItems = addedItems;
 			DecomposeSourceItemUpdate = sourceItemUpdate;
 			DecomposeDeletedSourceItemObjectId = deletedSourceItemObjectId;

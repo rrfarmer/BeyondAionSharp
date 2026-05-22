@@ -17,13 +17,23 @@ public static class InventoryCapacity
 
 	public static int GetUsedCubeSlots(Player player)
 	{
+		return GetUsedCubeSlots(player.InventoryItems);
+	}
+
+	public static int GetUsedCubeSlots(IReadOnlyList<InventoryItem> inventoryItems)
+	{
 		// Java parity: model/items/storage/ItemStorage.getCubeItems, excluding kinah and equipped rows in the C# flattened inventory model.
-		return player.InventoryItems.Count(item => item.Location == CubeStorageId && !item.IsEquipped && item.ItemId != KinahItemId);
+		return inventoryItems.Count(item => item.Location == CubeStorageId && !item.IsEquipped && item.ItemId != KinahItemId);
 	}
 
 	public static int GetFreeCubeSlots(Player player)
 	{
-		return Math.Max(0, GetCubeLimit(player) - GetUsedCubeSlots(player));
+		return GetFreeCubeSlots(player, player.InventoryItems);
+	}
+
+	public static int GetFreeCubeSlots(Player player, IReadOnlyList<InventoryItem> inventoryItems)
+	{
+		return Math.Max(0, GetCubeLimit(player) - GetUsedCubeSlots(inventoryItems));
 	}
 
 	public static bool HasFreeCubeSlot(Player player)

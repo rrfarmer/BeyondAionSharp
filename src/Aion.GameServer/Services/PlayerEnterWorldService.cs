@@ -292,6 +292,7 @@ public sealed class PlayerEnterWorldService
 
 	public Task<bool> SaveDecomposeActionMutationAsync(
 		Player player,
+		IReadOnlyList<InventoryItem> updatedItems,
 		IReadOnlyList<InventoryItem> addedItems,
 		InventoryItem? sourceItemUpdate,
 		int? deletedSourceItemObjectId,
@@ -300,6 +301,7 @@ public sealed class PlayerEnterWorldService
 		// Java parity: DecomposeAction/CM_SELECT_DECOMPOSABLE inventory mutation.
 		return _repository.SaveDecomposeActionMutationAsync(
 			player.ObjectId,
+			updatedItems,
 			addedItems,
 			sourceItemUpdate,
 			deletedSourceItemObjectId,
