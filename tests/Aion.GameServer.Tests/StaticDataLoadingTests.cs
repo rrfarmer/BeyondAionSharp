@@ -114,6 +114,15 @@ public sealed class StaticDataLoadingTests
 						<spawn npc_id="150000015" handler="STATIC">
 							<spot x="1" y="2" z="3" static_id="107" />
 						</spawn>
+						<spawn npc_id="203010" respawn_time="60">
+							<temporary_spawn spawn_time="21.*.*" despawn_time="4.*.*" />
+							<spot x="11" y="12" z="13" />
+						</spawn>
+						<spawn npc_id="203011" respawn_time="60">
+							<spot x="14" y="15" z="16">
+								<temporary_spawn spawn_time="5.*.*" despawn_time="20.*.*" />
+							</spot>
+						</spawn>
 						<rift_spawn id="1" world="210010000">
 							<spawn npc_id="203001" respawn_time="60">
 								<spot x="4" y="5" z="6" />
@@ -137,7 +146,7 @@ public sealed class StaticDataLoadingTests
 
 		var staticData = await StaticData.LoadFromCacheAsync(cacheFile, []);
 
-		Assert.Equal(2, staticData.NpcSpawns.Count);
+		Assert.Equal(4, staticData.NpcSpawns.Count);
 		var spawn = Assert.Single(staticData.NpcSpawns.GetSpawnsForMap(210010000), spot => spot.NpcId == 203000);
 		Assert.Equal(10.5f, spawn.X);
 		Assert.Equal(20.25f, spawn.Y);
@@ -146,9 +155,15 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(295, spawn.RespawnSeconds);
 		Assert.Equal("path-a", spawn.WalkerId);
 		Assert.Equal(3, spawn.WalkerIndex);
+		Assert.False(spawn.HasTemporarySchedule);
 		var staticSpawn = Assert.Single(staticData.NpcSpawns.GetSpawnsForMap(210010000), spot => spot.NpcId == 150000015);
 		Assert.Equal("STATIC", staticSpawn.Handler);
 		Assert.Equal(107, staticSpawn.StaticId);
+		Assert.False(staticSpawn.HasTemporarySchedule);
+		var temporaryGroupSpawn = Assert.Single(staticData.NpcSpawns.GetSpawnsForMap(210010000), spot => spot.NpcId == 203010);
+		Assert.True(temporaryGroupSpawn.HasTemporarySchedule);
+		var temporarySpotSpawn = Assert.Single(staticData.NpcSpawns.GetSpawnsForMap(210010000), spot => spot.NpcId == 203011);
+		Assert.True(temporarySpotSpawn.HasTemporarySchedule);
 		Assert.Empty(staticData.NpcSpawns.GetSpawnsForMap(700010000));
 	}
 

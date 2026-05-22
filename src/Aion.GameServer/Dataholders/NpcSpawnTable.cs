@@ -40,4 +40,5 @@ public sealed record NpcSpawnSummary(
 	int StaticId,
 	string WalkerId,
 	int WalkerIndex,
-	bool Custom);
+	bool Custom,
+	bool HasTemporarySchedule);

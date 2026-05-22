@@ -168,8 +168,10 @@ public sealed class StaticData
 		TemperingGroupBuilder? currentTemperingGroup = null;
 		NpcTemplateBuilder? currentNpcTemplate = null;
 		NpcSpawnBuilder? currentNpcSpawn = null;
+		NpcSpawnSpotBuilder? currentNpcSpawnSpot = null;
 		int currentNpcSpawnMapId = 0;
 		int currentNpcSpawnDepth = -1;
+		int currentNpcSpawnSpotDepth = -1;
 		SkillTemplateBuilder? currentSkillTemplate = null;
 		TitleTemplateBuilder? currentTitleTemplate = null;
 		CosmeticItemBuilder? currentCosmeticItem = null;
@@ -267,6 +269,13 @@ public sealed class StaticData
 					currentNpcSpawnDepth = -1;
 				}
 
+				if (reader.Depth == currentNpcSpawnSpotDepth && reader.LocalName == "spot" && currentNpcSpawn != null && currentNpcSpawnSpot != null)
+				{
+					npcSpawns.Add(currentNpcSpawn.ToSummary(currentNpcSpawnSpot));
+					currentNpcSpawnSpot = null;
+					currentNpcSpawnSpotDepth = -1;
+				}
+
 				if (reader.Depth == 2 && reader.LocalName == "spawn_map" && elementPath.GetValueOrDefault(1) == "spawns")
 					currentNpcSpawnMapId = 0;
 
@@ -356,12 +365,39 @@ public sealed class StaticData
 			}
 
 			if (currentNpcSpawn != null
+				&& reader.LocalName == "temporary_spawn"
+				&& reader.Depth == currentNpcSpawnDepth + 1
+				&& elementPath.GetValueOrDefault(reader.Depth - 1) == "spawn")
+			{
+				// Java parity: model/templates/spawns/Spawn.temporary_spawn registers a group with TemporarySpawnEngine.
+				currentNpcSpawn.HasTemporarySchedule = true;
+				continue;
+			}
+
+			if (currentNpcSpawn != null
 				&& reader.LocalName == "spot"
 				&& reader.Depth == currentNpcSpawnDepth + 1
 				&& elementPath.GetValueOrDefault(reader.Depth - 1) == "spawn")
 			{
 				// Java parity: model/templates/spawns/SpawnSpotTemplate spot coordinates and movement metadata.
-				npcSpawns.Add(currentNpcSpawn.ToSummary(reader));
+				currentNpcSpawnSpot = NpcSpawnSpotBuilder.FromReader(reader);
+				currentNpcSpawnSpotDepth = reader.Depth;
+				if (reader.IsEmptyElement)
+				{
+					npcSpawns.Add(currentNpcSpawn.ToSummary(currentNpcSpawnSpot));
+					currentNpcSpawnSpot = null;
+					currentNpcSpawnSpotDepth = -1;
+				}
+				continue;
+			}
+
+			if (currentNpcSpawnSpot != null
+				&& reader.LocalName == "temporary_spawn"
+				&& reader.Depth == currentNpcSpawnSpotDepth + 1
+				&& elementPath.GetValueOrDefault(reader.Depth - 1) == "spot")
+			{
+				// Java parity: model/templates/spawns/SpawnSpotTemplate.temporary_spawn gates only this spot.
+				currentNpcSpawnSpot.HasTemporarySchedule = true;
 				continue;
 			}
 
@@ -2497,23 +2533,75 @@ public sealed class StaticData
 
 		private bool Custom { get; }
 
-		public NpcSpawnSummary ToSummary(XmlReader reader)
+		public bool HasTemporarySchedule { get; set; }
+
+		public NpcSpawnSummary ToSummary(NpcSpawnSpotBuilder spot)
 		{
 			// Java parity: model/templates/spawns/SpawnTemplate inherits group npc/respawn/handler metadata.
 			return new NpcSpawnSummary(
 				MapId,
 				NpcId,
+				spot.X,
+				spot.Y,
+				spot.Z,
+				spot.Heading,
+				RespawnSeconds,
+				PoolSize,
+				Handler,
+				spot.StaticId,
+				spot.WalkerId,
+				spot.WalkerIndex,
+				Custom,
+				HasTemporarySchedule || spot.HasTemporarySchedule);
+		}
+	}
+
+	private sealed class NpcSpawnSpotBuilder
+	{
+		private NpcSpawnSpotBuilder(
+			float x,
+			float y,
+			float z,
+			byte heading,
+			int staticId,
+			string walkerId,
+			int walkerIndex)
+		{
+			X = x;
+			Y = y;
+			Z = z;
+			Heading = heading;
+			StaticId = staticId;
+			WalkerId = walkerId;
+			WalkerIndex = walkerIndex;
+		}
+
+		public float X { get; }
+
+		public float Y { get; }
+
+		public float Z { get; }
+
+		public byte Heading { get; }
+
+		public int StaticId { get; }
+
+		public string WalkerId { get; }
+
+		public int WalkerIndex { get; }
+
+		public bool HasTemporarySchedule { get; set; }
+
+		public static NpcSpawnSpotBuilder FromReader(XmlReader reader)
+		{
+			return new NpcSpawnSpotBuilder(
 				ReadFloatAttribute(reader, "x"),
 				ReadFloatAttribute(reader, "y"),
 				ReadFloatAttribute(reader, "z"),
 				(byte)ReadOptionalIntAttribute(reader, "h", 0),
-				RespawnSeconds,
-				PoolSize,
-				Handler,
 				ReadIntAttribute(reader, "static_id"),
 				reader.GetAttribute("walker_id") ?? string.Empty,
-				ReadIntAttribute(reader, "walker_index"),
-				Custom);
+				ReadIntAttribute(reader, "walker_index"));
 		}
 	}
 

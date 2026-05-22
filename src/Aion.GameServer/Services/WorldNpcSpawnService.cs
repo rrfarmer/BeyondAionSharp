@@ -98,7 +98,12 @@ public sealed class WorldNpcSpawnService : GameEngine
 				continue;
 			}
 
-			foreach (var spawn in SelectActivePoolSpots(groupSpawns))
+			// Java parity: Spawn.temporary_spawn and SpawnSpotTemplate.temporary_spawn are owned by TemporarySpawnEngine,
+			// so scheduled groups/spots must not be materialized by SpawnEngine.spawnAll's always-on pass.
+			var alwaysOnSpawns = groupSpawns.Where(spawn => !spawn.HasTemporarySchedule).ToArray();
+			skipped += groupSpawns.Length - alwaysOnSpawns.Length;
+
+			foreach (var spawn in SelectActivePoolSpots(alwaysOnSpawns))
 			{
 				cancellationToken.ThrowIfCancellationRequested();
 				if (SpawnNpc(spawn, template))
@@ -143,6 +148,9 @@ public sealed class WorldNpcSpawnService : GameEngine
 
 	private static IReadOnlyList<NpcSpawnSummary> SelectActivePoolSpots(IReadOnlyList<NpcSpawnSummary> groupSpawns)
 	{
+		if (groupSpawns.Count == 0)
+			return Array.Empty<NpcSpawnSummary>();
+
 		var poolSize = groupSpawns[0].PoolSize;
 		if (poolSize <= 0 || poolSize >= groupSpawns.Count)
 			return groupSpawns;

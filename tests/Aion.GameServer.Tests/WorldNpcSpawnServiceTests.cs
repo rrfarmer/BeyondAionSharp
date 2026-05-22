@@ -22,6 +22,7 @@ public sealed class WorldNpcSpawnServiceTests
 			CreateSpawn(210010000, 203002, poolSize: 2),
 			CreateSpawn(300030000, 203003),
 			CreateSpawn(210010000, 299999),
+			CreateSpawn(210010000, 203004, hasTemporarySchedule: true),
 		]);
 		var templates = new NpcTemplateTable(
 		[
@@ -29,11 +30,12 @@ public sealed class WorldNpcSpawnServiceTests
 			CreateTemplate(203001),
 			CreateTemplate(203002),
 			CreateTemplate(203003),
+			CreateTemplate(203004),
 		]);
 
 		var result = service.SpawnWorldNpcs(spawns, templates, [210010000]);
 
-		Assert.Equal(new WorldNpcSpawnResult(2, 4), result);
+		Assert.Equal(new WorldNpcSpawnResult(2, 5), result);
 		Assert.True(world.TryGetObject(1, out var gameObject));
 		var npc = Assert.IsType<WorldNpc>(gameObject);
 		Assert.Equal(203000, npc.TemplateId);
@@ -62,6 +64,25 @@ public sealed class WorldNpcSpawnServiceTests
 		Assert.Equal(new WorldNpcSpawnResult(2, 0), result);
 		Assert.Equal(2, world.GetNpcs().Count);
 		Assert.Equal(2, world.GetNpcs().Select(npc => npc.Position.X).Distinct().Count());
+	}
+
+	[Fact]
+	public void SpawnWorldNpcs_SkipsTemporaryScheduledSpawnsUntilSchedulerExists()
+	{
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var service = CreateService(world);
+		var spawns = new NpcSpawnTable(
+		[
+			CreateSpawn(210010000, 203020, x: 1, hasTemporarySchedule: true),
+			CreateSpawn(210010000, 203020, x: 2),
+		]);
+		var templates = new NpcTemplateTable([CreateTemplate(203020)]);
+
+		var result = service.SpawnWorldNpcs(spawns, templates, [210010000]);
+
+		Assert.Equal(new WorldNpcSpawnResult(1, 1), result);
+		var npc = Assert.Single(world.GetNpcs());
+		Assert.Equal(2, npc.Position.X);
 	}
 
 	[Fact]
@@ -102,7 +123,8 @@ public sealed class WorldNpcSpawnServiceTests
 		float z = 3,
 		byte heading = 0,
 		int poolSize = 0,
-		string handler = "")
+		string handler = "",
+		bool hasTemporarySchedule = false)
 	{
 		return new NpcSpawnSummary(
 			mapId,
@@ -117,7 +139,8 @@ public sealed class WorldNpcSpawnServiceTests
 			0,
 			string.Empty,
 			0,
-			false);
+			false,
+			hasTemporarySchedule);
 	}
 
 	private static NpcTemplateSummary CreateTemplate(int templateId)
