@@ -6139,6 +6139,11 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		await SendPacketAsync(new SmHouseAcquire(player.ObjectId, activeHouse.AddressId, acquire: true));
+		var houseUpdate = new SmHouseUpdate(player, updatedHouse, _runtimeContext?.DataManager?.StaticData.HousingTemplates);
+		if (_connectionRegistry != null)
+			await _connectionRegistry.BroadcastToVisiblePlayersAsync(player.Position, player.ObjectId, houseUpdate, includeSourcePlayer: true);
+		else
+			await SendPacketAsync(houseUpdate);
 
 		if (!hasValidDoorState)
 			return;

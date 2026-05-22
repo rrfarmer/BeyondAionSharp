@@ -1054,6 +1054,50 @@ public class GamePacketTests
 		Assert.Equal(1, houseAcquireReader.ReadD());
 		Assert.Equal(0, houseAcquireReader.Remaining);
 
+		var houseUpdatePlayer = new Player
+		{
+			ObjectId = 1001,
+			Name = "HouseOwner",
+			LegionId = 101,
+			LegionName = "Codeguard",
+			LegionEmblemId = 7,
+			LegionEmblemType = 0x80,
+			LegionEmblemColorA = 255,
+			LegionEmblemColorR = 10,
+			LegionEmblemColorG = 20,
+			LegionEmblemColorB = 30,
+		};
+		var houseUpdatePayload = SerializeUnencryptedPayload(
+			new SmHouseUpdate(
+				houseUpdatePlayer,
+				new PlayerHouse(50, 700100, 900100, houseNow, houseNow.AddDays(14), false, PlayerHouse.DoorClosedExceptFriends, false, "Visitors welcome"),
+				new HousingTemplateTable(
+					[new HousingAddressSummary(700100, 1, 798000)],
+					[new HousingBuildingSummary(900100, "MANSION", 4)])));
+		using var houseUpdateReader = new PacketBuffer(houseUpdatePayload);
+		Assert.Equal(1, houseUpdateReader.ReadH());
+		Assert.Equal(0, houseUpdateReader.ReadH());
+		Assert.Equal(1, houseUpdateReader.ReadH());
+		Assert.Equal(0, houseUpdateReader.ReadD());
+		Assert.Equal(700100, houseUpdateReader.ReadD());
+		Assert.Equal(1001, houseUpdateReader.ReadD());
+		Assert.Equal(4, houseUpdateReader.ReadD());
+		Assert.Equal(1, (int)houseUpdateReader.ReadC());
+		Assert.Equal(900100, houseUpdateReader.ReadD());
+		Assert.Equal(5, (int)houseUpdateReader.ReadC());
+		Assert.Equal(PlayerHouse.DoorClosedExceptFriends, (byte)houseUpdateReader.ReadC());
+		Assert.Equal("HouseOwner", houseUpdateReader.ReadS());
+		Assert.Equal(101, houseUpdateReader.ReadD());
+		Assert.Equal(0, (int)houseUpdateReader.ReadC());
+		Assert.Equal("Visitors welcome", houseUpdateReader.ReadS());
+		for (var i = 0; i < 19; i++)
+			Assert.Equal(0, houseUpdateReader.ReadD());
+		Assert.Equal(0, houseUpdateReader.ReadD());
+		Assert.Equal(0, houseUpdateReader.ReadD());
+		Assert.Equal(0, (int)houseUpdateReader.ReadC());
+		Assert.Equal(new byte[] { 7, 0x80, 255, 10, 20, 30 }, houseUpdateReader.ReadB(6));
+		Assert.Equal(0, houseUpdateReader.Remaining);
+
 		var emptyHouseBidsPayload = SerializeUnencryptedPayload(SmHouseBids.CreateEmpty());
 		using var emptyHouseBidsReader = new PacketBuffer(emptyHouseBidsPayload);
 		Assert.Equal(1, (int)emptyHouseBidsReader.ReadC());
