@@ -43,6 +43,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300965, abyssPoints.ToString(System.Globalization.CultureInfo.InvariantCulture));
 	}
 
+	public static SmSystemMessage CombatMyAbyssPointGain(int abyssPoints)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_COMBAT_MY_ABYSS_POINT_GAIN.
+		return new SmSystemMessage(1320000, abyssPoints.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
 	public static SmSystemMessage InventoryCantExtendMore()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_EXTEND_INVENTORY_CANT_EXTEND_MORE.

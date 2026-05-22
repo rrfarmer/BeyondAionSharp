@@ -2823,6 +2823,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (sourceTemplate.ApExtractAction != null)
+		{
+			await HandleApExtractUseItemAsync(player, sourceItem, sourceTemplate, packet.TargetItemObjectId, staticData);
+			return;
+		}
+
 		if (sourceTemplate.HasExtractAction)
 		{
 			await HandleExtractUseItemAsync(player, sourceItem, sourceTemplate, packet.TargetItemObjectId, staticData);
@@ -3175,6 +3181,64 @@ public sealed class GameServerConnection : BaseClientConnection
 			await SendPacketAsync(new SmInventoryUpdateItem(updatedReward, rewardTemplate, SmInventoryUpdateItem.IncreaseItemCollect));
 		foreach (var addedReward in mutationPlan.AddedRewardItems)
 			await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(addedReward, rewardTemplate));
+	}
+
+	private async Task HandleApExtractUseItemAsync(
+		Player player,
+		InventoryItem sourceItem,
+		ItemTemplateSummary sourceTemplate,
+		int targetItemObjectId,
+		StaticData staticData)
+	{
+		// Java parity: model/templates/item/actions/ApExtractAction.canAct + act.
+		var plan = ApExtractService.CreateMutationPlan(
+			player,
+			sourceItem.ObjectId,
+			targetItemObjectId,
+			staticData.ItemTemplates);
+		if (!plan.Succeeded || plan.AbyssRankUpdate == null)
+			return;
+
+		AddItemCooldownIfNeeded(player, sourceTemplate, removeOnCancel: false);
+		var saved = _playerEnterWorldService == null
+			|| await _playerEnterWorldService.SaveApExtractActionMutationAsync(player, plan);
+		if (!saved)
+			return;
+
+		var inventoryItems = player.InventoryItems.ToList();
+		await SendApExtractConsumedItemPacketsAsync(inventoryItems, plan, sourceTemplate);
+		ApplyApExtractInventoryMutation(inventoryItems, plan);
+		player.InventoryItems = inventoryItems.ToArray();
+		player.AbyssRank = plan.AbyssRankUpdate;
+		await SendPacketAsync(SmSystemMessage.CombatMyAbyssPointGain(plan.AbyssPoints));
+		await SendPacketAsync(new SmAbyssRank(player.AbyssRank));
+	}
+
+	private async Task SendApExtractConsumedItemPacketsAsync(
+		IReadOnlyList<InventoryItem> inventoryItems,
+		ApExtractPlan plan,
+		ItemTemplateSummary sourceTemplate)
+	{
+		if (inventoryItems.Any(item => item.ObjectId == plan.DeletedTargetItemObjectId))
+			await SendPacketAsync(new SmDeleteItem(plan.DeletedTargetItemObjectId, SmDeleteItem.UseDeleteType));
+
+		if (plan.SourceItemUpdate != null)
+		{
+			await SendPacketAsync(new SmInventoryUpdateItem(plan.SourceItemUpdate, sourceTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+		}
+		else if (plan.DeletedSourceItemObjectId.HasValue && inventoryItems.Any(item => item.ObjectId == plan.DeletedSourceItemObjectId.Value))
+		{
+			await SendPacketAsync(new SmDeleteItem(plan.DeletedSourceItemObjectId.Value, SmDeleteItem.UseDeleteType));
+		}
+	}
+
+	private static void ApplyApExtractInventoryMutation(List<InventoryItem> inventoryItems, ApExtractPlan plan)
+	{
+		inventoryItems.RemoveAll(item => item.ObjectId == plan.DeletedTargetItemObjectId);
+		if (plan.SourceItemUpdate != null)
+			ReplaceInventoryItem(inventoryItems, plan.SourceItemUpdate);
+		if (plan.DeletedSourceItemObjectId.HasValue)
+			inventoryItems.RemoveAll(item => item.ObjectId == plan.DeletedSourceItemObjectId.Value);
 	}
 
 	private async Task HandleExtractUseItemAsync(

@@ -489,6 +489,16 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public IReadOnlyList<InventoryItem> ExpExtractAddedRewardItems { get; private set; } = Array.Empty<InventoryItem>();
 
+		public int SaveApExtractActionMutationCalls { get; private set; }
+
+		public PlayerAbyssRank? ApExtractAbyssRank { get; private set; }
+
+		public InventoryItem? ApExtractSourceItemUpdate { get; private set; }
+
+		public int? ApExtractDeletedSourceItemObjectId { get; private set; }
+
+		public int ApExtractDeletedTargetItemObjectId { get; private set; }
+
 		public int SaveItemRemodelMutationCalls { get; private set; }
 
 		public InventoryItem? RemodelTargetItemUpdate { get; private set; }
@@ -810,6 +820,22 @@ public sealed class PlayerEnterWorldServiceTests
 			ExpExtractDeletedSourceItemObjectId = deletedSourceItemObjectId;
 			ExpExtractUpdatedRewardItems = updatedRewardItems;
 			ExpExtractAddedRewardItems = addedRewardItems;
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> SaveApExtractActionMutationAsync(
+			int playerObjectId,
+			PlayerAbyssRank abyssRank,
+			InventoryItem? sourceItemUpdate,
+			int? deletedSourceItemObjectId,
+			int deletedTargetItemObjectId,
+			CancellationToken cancellationToken = default)
+		{
+			SaveApExtractActionMutationCalls++;
+			ApExtractAbyssRank = abyssRank;
+			ApExtractSourceItemUpdate = sourceItemUpdate;
+			ApExtractDeletedSourceItemObjectId = deletedSourceItemObjectId;
+			ApExtractDeletedTargetItemObjectId = deletedTargetItemObjectId;
 			return Task.FromResult(true);
 		}
 

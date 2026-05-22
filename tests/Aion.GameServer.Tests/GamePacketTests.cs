@@ -749,6 +749,7 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.DiceCustomOther("Roller", 7, 100), 1400127, "Roller", "7", "100");
 		AssertSystemMessage(SmSystemMessage.NotEnoughKinah(12345), 901285, "12345");
 		AssertSystemMessage(SmSystemMessage.UseAbyssPoint(1234), 1300965, "1234");
+		AssertSystemMessage(SmSystemMessage.CombatMyAbyssPointGain(980), 1320000, "980");
 		AssertSystemMessage(SmSystemMessage.ItemChargeSuccess("item", 1), 1400887, "item", "1");
 		AssertSystemMessage(SmSystemMessage.ItemCharge2Success("item", 2), 1401335, "item", "2");
 		AssertSystemMessage(SmSystemMessage.ItemChargeAllComplete(), 1400892);

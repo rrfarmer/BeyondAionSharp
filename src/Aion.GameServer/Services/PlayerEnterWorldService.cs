@@ -383,6 +383,23 @@ public sealed class PlayerEnterWorldService
 			cancellationToken);
 	}
 
+	public Task<bool> SaveApExtractActionMutationAsync(
+		Player player,
+		ApExtractPlan plan,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: ApExtractAction deletes target, consumes extraction tool, then AbyssPointsService.addAp.
+		return plan.AbyssRankUpdate == null
+			? Task.FromResult(false)
+			: _repository.SaveApExtractActionMutationAsync(
+				player.ObjectId,
+				plan.AbyssRankUpdate,
+				plan.SourceItemUpdate,
+				plan.DeletedSourceItemObjectId,
+				plan.DeletedTargetItemObjectId,
+				cancellationToken);
+	}
+
 	public Task<bool> SaveItemRemodelMutationAsync(
 		Player player,
 		InventoryItem targetItemUpdate,

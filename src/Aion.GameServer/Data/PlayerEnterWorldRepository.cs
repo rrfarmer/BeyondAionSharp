@@ -128,6 +128,14 @@ public interface IPlayerEnterWorldRepository
 		IReadOnlyList<InventoryItem> addedRewardItems,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveApExtractActionMutationAsync(
+		int playerObjectId,
+		PlayerAbyssRank abyssRank,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		int deletedTargetItemObjectId,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SaveItemRemodelMutationAsync(
 		int playerObjectId,
 		InventoryItem targetItemUpdate,
@@ -453,6 +461,17 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		int? deletedSourceItemObjectId,
 		IReadOnlyList<InventoryItem> updatedRewardItems,
 		IReadOnlyList<InventoryItem> addedRewardItems,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> SaveApExtractActionMutationAsync(
+		int playerObjectId,
+		PlayerAbyssRank abyssRank,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		int deletedTargetItemObjectId,
 		CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(true);
@@ -2975,6 +2994,43 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not save experience extraction action for player {PlayerObjectId}", playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SaveApExtractActionMutationAsync(
+		int playerObjectId,
+		PlayerAbyssRank abyssRank,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		int deletedTargetItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: ApExtractAction inventory.delete(target), inventory.decreaseByObjectId(source), AbyssRankDAO.storeAbyssRank.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			if (!await DeleteInventoryItemAsync(connection, transaction, playerObjectId, deletedTargetItemObjectId, cancellationToken))
+				return false;
+
+			if (sourceItemUpdate != null && !await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, sourceItemUpdate, cancellationToken))
+				return false;
+
+			if (deletedSourceItemObjectId.HasValue
+				&& !await DeleteInventoryItemAsync(connection, transaction, playerObjectId, deletedSourceItemObjectId.Value, cancellationToken))
+				return false;
+
+			await SaveAbyssRankAsync(connection, transaction, playerObjectId, abyssRank, cancellationToken);
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save AP extraction action for player {PlayerObjectId}", playerObjectId);
 			return false;
 		}
 	}
