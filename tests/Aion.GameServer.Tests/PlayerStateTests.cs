@@ -87,4 +87,43 @@ public sealed class PlayerStateTests
 
 		Assert.False(player.IsUnderStance());
 	}
+
+	[Fact]
+	public void Player_RideSprintMatchesJavaGuardAndFpTaskIntent()
+	{
+		var player = new Player
+		{
+			LifeStats = new PlayerLifeStats(100, 100, 50),
+			IsInRideMode = true,
+			RideInfo = new PlayerRideInfo(NpcId: 9001, StartFp: 30, CostFp: 1, SprintSpeed: 12.0f, FlySpeed: 0, MoveSpeed: 9.0f),
+		};
+
+		Assert.True(player.RideInfo.CanSprint());
+		Assert.True(player.CanStartRideSprint());
+
+		player.StartRideSprint();
+
+		Assert.True(player.IsInSprintMode);
+		Assert.True(player.IsFpReduceActive);
+		Assert.False(player.IsFpRestoreActive);
+		Assert.True(player.CanEndRideSprint());
+
+		player.EndRideSprint();
+
+		Assert.False(player.IsInSprintMode);
+		Assert.False(player.IsFpReduceActive);
+		Assert.True(player.IsFpRestoreActive);
+
+		player.LifeStats = new PlayerLifeStats(100, 100, 29);
+		Assert.False(player.CanStartRideSprint());
+
+		player.LifeStats = new PlayerLifeStats(100, 100, 50);
+		player.SetCreatureState(PlayerCreatureState.Flying, enabled: true);
+		Assert.False(player.CanStartRideSprint());
+
+		player.SetCreatureState(PlayerCreatureState.Flying, enabled: false);
+		player.RideInfo = player.RideInfo with { SprintSpeed = 0 };
+		Assert.False(player.RideInfo.CanSprint());
+		Assert.False(player.CanStartRideSprint());
+	}
 }

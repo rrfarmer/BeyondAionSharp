@@ -3367,6 +3367,14 @@ public class GamePacketTests
 			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(37)), GameConnectionState.InGame));
 		var openDoor = Assert.IsType<CmEmotion>(
 			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(31)), GameConnectionState.InGame));
+		var startSprint = Assert.IsType<CmEmotion>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b =>
+			{
+				b.WriteC(53);
+				b.WriteD(0);
+			}), GameConnectionState.InGame));
+		var endSprint = Assert.IsType<CmEmotion>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(54)), GameConnectionState.InGame));
 		var emote = Assert.IsType<CmEmotion>(
 			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b =>
 			{
@@ -3391,6 +3399,8 @@ public class GamePacketTests
 		Assert.Equal(EmotionType.PowershardOn, powershardOn.EmotionType);
 		Assert.Equal(EmotionType.PowershardOff, powershardOff.EmotionType);
 		Assert.Equal(EmotionType.OpenDoor, openDoor.EmotionType);
+		Assert.Equal(EmotionType.StartSprint, startSprint.EmotionType);
+		Assert.Equal(EmotionType.EndSprint, endSprint.EmotionType);
 		Assert.Equal(EmotionType.Emote, emote.EmotionType);
 		Assert.Equal(101, emote.Emotion);
 		Assert.Equal(7001, emote.TargetObjectId);

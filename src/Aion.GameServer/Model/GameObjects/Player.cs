@@ -88,6 +88,17 @@ public sealed class Player
 	// Java parity: model/actions/PlayerMode.RIDE queried through Player.isInPlayerMode.
 	public bool IsInRideMode { get; set; }
 
+	// Java parity: model/gameobjects/player/Player.ride stores the active RideInfo while mounted.
+	public PlayerRideInfo? RideInfo { get; set; }
+
+	// Java parity: model/gameobjects/player/Player.isInSprintMode toggled by CM_EMOTION START_SPRINT/END_SPRINT.
+	public bool IsInSprintMode { get; set; }
+
+	// Java parity: PlayerLifeStats.triggerFpReduce/triggerFpRestore task intent; timer execution is a later Phase 6 slice.
+	public bool IsFpReduceActive { get; set; }
+
+	public bool IsFpRestoreActive { get; set; }
+
 	// Java parity: controllers/PlayerController.stanceObserver represented by its active stance skill id.
 	public int StanceSkillId { get; set; }
 
@@ -226,6 +237,59 @@ public sealed class Player
 	{
 		// Java parity: controllers/PlayerController.isUnderStance.
 		return StanceSkillId != 0;
+	}
+
+	public bool IsFlying()
+	{
+		// Java parity: model/gameobjects/player/Player.isFlying, represented by current C# flying/gliding creature-state bits.
+		return IsInState(PlayerCreatureState.Flying) || IsInState(PlayerCreatureState.Gliding);
+	}
+
+	public bool CanStartRideSprint()
+	{
+		// Java parity: CM_EMOTION.START_SPRINT guard using PlayerMode.RIDE, current FP, Player.isFlying, and RideInfo.canSprint.
+		return IsInRideMode
+			&& RideInfo is { } rideInfo
+			&& (LifeStats?.GetCurrentFp() ?? 0) >= rideInfo.StartFp
+			&& !IsFlying()
+			&& rideInfo.CanSprint();
+	}
+
+	public bool CanEndRideSprint()
+	{
+		// Java parity: CM_EMOTION.END_SPRINT guard using PlayerMode.RIDE, RideInfo.canSprint, and Player.isInSprintMode.
+		return IsInRideMode
+			&& RideInfo is { } rideInfo
+			&& rideInfo.CanSprint()
+			&& IsInSprintMode;
+	}
+
+	public void StartRideSprint()
+	{
+		// Java parity: CM_EMOTION.START_SPRINT -> Player.setSprintMode(true) + PlayerLifeStats.triggerFpReduce.
+		IsInSprintMode = true;
+		TriggerFpReduce();
+	}
+
+	public void EndRideSprint()
+	{
+		// Java parity: CM_EMOTION.END_SPRINT -> Player.setSprintMode(false) + PlayerLifeStats.triggerFpRestore.
+		IsInSprintMode = false;
+		TriggerFpRestore();
+	}
+
+	public void TriggerFpReduce()
+	{
+		// Java parity: PlayerLifeStats.triggerFpReduce cancels FP restore before starting FP reduce.
+		IsFpRestoreActive = false;
+		IsFpReduceActive = true;
+	}
+
+	public void TriggerFpRestore()
+	{
+		// Java parity: PlayerLifeStats.triggerFpRestore cancels FP reduce before starting FP restore.
+		IsFpReduceActive = false;
+		IsFpRestoreActive = true;
 	}
 
 	public void AddItemCooldown(int delayId, int useDelayMillis, DateTimeOffset now)

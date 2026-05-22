@@ -3527,6 +3527,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (player.IsInState(PlayerCreatureState.PrivateShop))
 					return;
 				player.IsInRideMode = false;
+				player.RideInfo = null;
 				player.SetCreatureState(PlayerCreatureState.Resting, enabled: true);
 				break;
 			case EmotionType.Stand:
@@ -3581,6 +3582,16 @@ public sealed class GameServerConnection : BaseClientConnection
 				await SendPacketAsync(SmSystemMessage.WeaponBoostEnded());
 				player.SetCreatureState(PlayerCreatureState.Powershard, enabled: false);
 				break;
+			case EmotionType.StartSprint:
+				if (!player.CanStartRideSprint())
+					return;
+				player.StartRideSprint();
+				break;
+			case EmotionType.EndSprint:
+				if (!player.CanEndRideSprint())
+					return;
+				player.EndRideSprint();
+				break;
 			case EmotionType.Emote:
 				if (!CanUseEmotion(player, packet.Emotion, _runtimeContext?.DataManager?.StaticData.ItemTemplates))
 					return;
@@ -3613,6 +3624,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			or EmotionType.CloseDoor
 			or EmotionType.PowershardOn
 			or EmotionType.PowershardOff
+			or EmotionType.StartSprint
+			or EmotionType.EndSprint
 			or EmotionType.Emote;
 	}
 
