@@ -180,6 +180,34 @@ public sealed class WorldNpcLootServiceTests
 		Assert.Single(dropRegistration.GetCurrentDrops(5001));
 	}
 
+	[Theory]
+	[InlineData(true)]
+	[InlineData(false)]
+	public void RequestDropItem_RejectsLimitOneItemAlreadyOwned(bool ownedInInventory)
+	{
+		var dropRegistration = new WorldNpcDropRegistrationService();
+		var drop = new WorldNpcDropItem(1, 182400004, 1);
+		dropRegistration.RegisterDrop(5001, looterObjectId: 1001, drops: [drop]);
+		var service = new WorldNpcLootService(dropRegistration);
+		var player = CreatePlayer(1001);
+		if (ownedInInventory)
+		{
+			player.InventoryItems = [new InventoryItem { ObjectId = 8001, ItemId = 182400004, Count = 1, Location = 0 }];
+		}
+		else
+		{
+			player.WarehouseItems = [new InventoryItem { ObjectId = 8002, ItemId = 182400004, Count = 1, Location = 1 }];
+		}
+
+		var result = service.RequestDropItem(player, 5001, itemIndex: 1, CreateItemTemplates(), () => 9001);
+
+		Assert.Equal(WorldNpcLootStatus.LimitOneAlreadyOwned, result.Status);
+		var message = Assert.IsType<SmSystemMessage>(Assert.Single(result.PlayerPackets));
+		Assert.Equal(1300422, message.MessageId);
+		Assert.DoesNotContain(player.InventoryItems, item => item.ObjectId == 9001);
+		Assert.Equal([drop], dropRegistration.GetCurrentDrops(5001));
+	}
+
 	[Fact]
 	public async Task RequestDropList_CancelsDecayAndCloseDropListResumesRemainingDecay()
 	{
@@ -288,6 +316,19 @@ public sealed class WorldNpcLootServiceTests
 				Quality: "COMMON",
 				Race: "ALL",
 				MaxStackCount: 100,
+				Price: 0,
+				ValidEquipmentSlots: 0),
+			new ItemTemplateSummary(
+				TemplateId: 182400004,
+				Name: "limit_one_item",
+				DescriptionId: 0,
+				Mask: 1,
+				Level: 1,
+				ItemGroup: "NORMAL",
+				ItemType: "NORMAL",
+				Quality: "COMMON",
+				Race: "ALL",
+				MaxStackCount: 1,
 				Price: 0,
 				ValidEquipmentSlots: 0),
 			new ItemTemplateSummary(

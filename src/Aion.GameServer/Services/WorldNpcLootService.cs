@@ -109,6 +109,14 @@ public sealed class WorldNpcLootService
 		if (template == null)
 			return WorldNpcLootResult.None(WorldNpcLootStatus.MissingItemTemplate);
 
+		if (PlayerAlreadyOwnsLimitOneItem(player, template))
+		{
+			return new WorldNpcLootResult(
+				WorldNpcLootStatus.LimitOneAlreadyOwned,
+				[SmSystemMessage.CannotGetLoreItem(template.GetClientName() ?? template.Name)],
+				Array.Empty<GameServerPacket>());
+		}
+
 		var addPlan = InventoryAddService.CreateAddItemPlan(
 			player,
 			player.InventoryItems,
@@ -204,6 +212,14 @@ public sealed class WorldNpcLootService
 		foreach (var addedItem in addPlan.AddedItems)
 			yield return SmInventoryAddItem.CreateItemCollect(addedItem, template);
 	}
+
+	private static bool PlayerAlreadyOwnsLimitOneItem(Player player, ItemTemplateSummary template)
+	{
+		// Java parity: DropService.requestDropItem checks ItemTemplate.hasLimitOne against inventory and regular warehouse.
+		return template.IsLimitOne
+			&& (player.InventoryItems.Any(item => item.ItemId == template.TemplateId)
+				|| player.WarehouseItems.Any(item => item.ItemId == template.TemplateId));
+	}
 }
 
 public sealed record WorldNpcLootResult(
@@ -231,5 +247,6 @@ public enum WorldNpcLootStatus
 	MissingItemTemplate,
 	InventoryFull,
 	TeamDistributionPending,
+	LimitOneAlreadyOwned,
 	ItemCollected,
 }

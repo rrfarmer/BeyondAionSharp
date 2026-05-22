@@ -39,6 +39,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300419);
 	}
 
+	public static SmSystemMessage CannotGetLoreItem(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_CAN_NOT_GET_LORE_ITEM.
+		return new SmSystemMessage(1300422, itemName);
+	}
+
 	public static SmSystemMessage LootFailOnLooting()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_LOOT_FAIL_ONLOOTING.

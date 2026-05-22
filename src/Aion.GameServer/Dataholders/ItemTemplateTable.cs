@@ -112,6 +112,7 @@ public sealed record ItemTemplateSummary(
 {
 	private const int CanPolishMask = 1 << 17;
 	private const int CanApExtractMask = 1 << 16;
+	private const int LimitOneMask = 1;
 	private const int SoulBoundMask = 1 << 7;
 	private const int NoEnchantMask = 1 << 9;
 	private const int CanProcEnchantMask = 1 << 10;
@@ -218,6 +219,8 @@ public sealed record ItemTemplateSummary(
 	public bool IsTwoHandWeapon => TwoHandWeaponGroups.Contains(ItemGroup);
 
 	public bool IsTradeable => (Mask & (1 << 1)) == (1 << 1);
+
+	public bool IsLimitOne => (Mask & LimitOneMask) == LimitOneMask;
 
 	public bool IsRemodelable => (Mask & (1 << 12)) == (1 << 12);
 

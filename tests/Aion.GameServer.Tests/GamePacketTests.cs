@@ -105,6 +105,7 @@ public class GamePacketTests
 	{
 		AssertSystemMessage(SmSystemMessage.DialogTooFarToTalk(), 1300346);
 		AssertSystemMessage(SmSystemMessage.WarehouseTooFarFromNpc(), 1300419);
+		AssertSystemMessage(SmSystemMessage.CannotGetLoreItem("item"), 1300422, "item");
 		AssertSystemMessage(SmSystemMessage.LootFailOnLooting(), 1300829);
 		AssertSystemMessage(SmSystemMessage.LootNoRight(), 901338);
 	}
