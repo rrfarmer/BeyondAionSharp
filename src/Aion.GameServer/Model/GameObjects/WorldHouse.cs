@@ -55,4 +55,35 @@ public sealed record WorldHouse(
 			new WorldPosition(address.MapId, address.X, address.Y, address.Z, 0));
 		return true;
 	}
+
+	public static bool TryCreateUnowned(HousingAddressSummary address, Func<int> nextObjectId, out WorldHouse? worldHouse)
+	{
+		// Java parity: services/HousingService.spawnHouses creates new House(address, instanceId) when no DB row exists.
+		if (address.DefaultBuildingId == 0 || address.MapId == 0)
+		{
+			worldHouse = null;
+			return false;
+		}
+
+		worldHouse = new WorldHouse(
+			nextObjectId(),
+			address.AddressId,
+			address.DefaultBuildingId,
+			0,
+			string.Empty,
+			0,
+			string.Empty,
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
+			false,
+			PlayerHouse.DoorClosed,
+			true,
+			null,
+			new WorldPosition(address.MapId, address.X, address.Y, address.Z, 0));
+		return true;
+	}
 }

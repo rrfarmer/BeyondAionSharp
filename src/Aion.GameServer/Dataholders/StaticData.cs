@@ -140,6 +140,8 @@ public sealed class StaticData
 		var housingAddresses = new List<HousingAddressSummary>();
 		var housingLandMinLevels = new Dictionary<int, int>();
 		var housingLandMaintenanceFees = new Dictionary<int, long>();
+		var housingLandFirstBuildingIds = new Dictionary<int, int>();
+		var housingLandDefaultBuildingIds = new Dictionary<int, int>();
 		var housingBuildings = new List<HousingBuildingSummary>();
 		var instanceCooltimes = new List<InstanceCooltimeSummary>();
 		var skillTree = new List<SkillLearnSummary>();
@@ -261,6 +263,11 @@ public sealed class StaticData
 
 				if (reader.Depth == 2 && reader.LocalName == "player_data")
 					currentPlayerCreationClass = null;
+				if (reader.Depth == 2 && reader.LocalName == "land")
+				{
+					currentHousingLandId = 0;
+					currentHousingManagerNpcId = 0;
+				}
 				elementPath.Remove(reader.Depth);
 				continue;
 			}
@@ -431,6 +438,19 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 4
+				&& reader.LocalName == "building"
+				&& currentHousingLandId != 0
+				&& elementPath.GetValueOrDefault(3) == "buildings")
+			{
+				// Java parity: model/templates/housing/HousingLand.getDefaultBuilding.
+				var buildingId = ReadRequiredIntAttribute(reader, "id");
+				housingLandFirstBuildingIds.TryAdd(currentHousingLandId, buildingId);
+				if (ReadBoolAttribute(reader, "default") && !housingLandDefaultBuildingIds.ContainsKey(currentHousingLandId))
+					housingLandDefaultBuildingIds[currentHousingLandId] = buildingId;
+				continue;
+			}
+
 			if (reader.Depth == 3 && reader.LocalName == "sale" && currentHousingLandId != 0)
 			{
 				// Java parity: model/templates/housing/Sale.level used as fallback minimum bid level.
@@ -457,7 +477,8 @@ public sealed class StaticData
 					new HousingBuildingSummary(
 						ReadRequiredIntAttribute(reader, "id"),
 						size,
-						GetHouseTypeId(size)));
+						GetHouseTypeId(size),
+						reader.GetAttribute("type") ?? string.Empty));
 				continue;
 			}
 
@@ -1160,6 +1181,17 @@ public sealed class StaticData
 						{
 							MinLevel = housingLandMinLevels.GetValueOrDefault(address.LandId),
 							MaintenanceFee = housingLandMaintenanceFees.GetValueOrDefault(address.LandId),
+							DefaultBuildingId = GetDefaultBuildingId(
+								address.LandId,
+								housingLandDefaultBuildingIds,
+								housingLandFirstBuildingIds),
+							DefaultBuildingType = housingBuildings
+								.FirstOrDefault(
+									building => building.BuildingId == GetDefaultBuildingId(
+										address.LandId,
+										housingLandDefaultBuildingIds,
+										housingLandFirstBuildingIds))
+								?.BuildingType ?? string.Empty,
 						})
 					.ToArray(),
 				housingBuildings.AsReadOnly()),
@@ -2186,6 +2218,15 @@ public sealed class StaticData
 			"PALACE" => 4,
 			_ => 0,
 		};
+	}
+
+	private static int GetDefaultBuildingId(
+		int landId,
+		IReadOnlyDictionary<int, int> defaultBuildingIds,
+		IReadOnlyDictionary<int, int> firstBuildingIds)
+	{
+		// Java parity: model/templates/housing/HousingLand.getDefaultBuilding defaults to the first listed building.
+		return defaultBuildingIds.GetValueOrDefault(landId, firstBuildingIds.GetValueOrDefault(landId));
 	}
 
 	private static IReadOnlyDictionary<string, int> ReadLevelRestrictions(string? restrict)

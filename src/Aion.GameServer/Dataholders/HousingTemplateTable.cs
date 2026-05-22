@@ -37,6 +37,19 @@ public sealed class HousingTemplateTable
 		// Java parity: model/templates/housing/HouseType ids written by SM_HOUSE_BIDS.
 		return _buildingsById.GetValueOrDefault(buildingId)?.HouseTypeId ?? 0;
 	}
+
+	public HousingBuildingSummary? GetBuilding(int buildingId)
+	{
+		return _buildingsById.GetValueOrDefault(buildingId);
+	}
+
+	public IReadOnlyList<HousingAddressSummary> GetCustomFieldAddresses()
+	{
+		// Java parity: services/HousingService.spawnHouses skips PERSONAL_INS studio addresses.
+		return Addresses
+			.Where(address => address.MapId != 0 && !string.Equals(address.DefaultBuildingType, "PERSONAL_INS", StringComparison.OrdinalIgnoreCase))
+			.ToArray();
+	}
 }
 
 public sealed record HousingAddressSummary(
@@ -53,6 +66,8 @@ public sealed record HousingAddressSummary(
 	int? ExitMapId = null,
 	float? ExitX = null,
 	float? ExitY = null,
-	float? ExitZ = null);
+	float? ExitZ = null,
+	int DefaultBuildingId = 0,
+	string DefaultBuildingType = "");
 
-public sealed record HousingBuildingSummary(int BuildingId, string Size, int HouseTypeId);
+public sealed record HousingBuildingSummary(int BuildingId, string Size, int HouseTypeId, string BuildingType = "");

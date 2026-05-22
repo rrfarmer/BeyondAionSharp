@@ -2,6 +2,7 @@ using Aion.GameServer.Data;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Services;
+using Aion.GameServer.Utils.IdFactory;
 using Aion.GameServer.World;
 using Microsoft.Extensions.Logging.Abstractions;
 using GameWorld = Aion.GameServer.World.World;
@@ -39,6 +40,7 @@ public sealed class HousingWorldServiceTests
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);
 		var service = new HousingWorldService(
 			repository,
+			new IDFactory([worldHouse.ObjectId]),
 			new GameServerRuntimeContext(),
 			world,
 			NullLogger<HousingWorldService>.Instance);
@@ -51,6 +53,90 @@ public sealed class HousingWorldServiceTests
 		Assert.Same(worldHouse, Assert.Single(world.GetHouses()));
 		Assert.True(world.TryGetObject(worldHouse.ObjectId, out var stored));
 		Assert.Same(worldHouse, stored);
+	}
+
+	[Fact]
+	public async Task LoadWorldHousesAsync_SynthesizesOwnerlessCustomHousesMissingFromDb()
+	{
+		var templates = new HousingTemplateTable(
+			[
+				new HousingAddressSummary(
+					700100,
+					1,
+					798000,
+					MapId: 210010000,
+					X: 10,
+					Y: 20,
+					Z: 30,
+					DefaultBuildingId: 730001,
+					DefaultBuildingType: "PERSONAL_FIELD"),
+				new HousingAddressSummary(
+					700101,
+					1,
+					798000,
+					MapId: 210010000,
+					X: 40,
+					Y: 50,
+					Z: 60,
+					DefaultBuildingId: 730001,
+					DefaultBuildingType: "PERSONAL_FIELD"),
+				new HousingAddressSummary(
+					2001,
+					2,
+					798001,
+					MapId: 720010000,
+					X: 70,
+					Y: 80,
+					Z: 90,
+					DefaultBuildingId: 735001,
+					DefaultBuildingType: "PERSONAL_INS"),
+			],
+			[
+				new HousingBuildingSummary(730001, "HOUSE", 1, "PERSONAL_FIELD"),
+				new HousingBuildingSummary(735001, "STUDIO", 0, "PERSONAL_INS"),
+			]);
+		var persistentHouse = new WorldHouse(
+			5001,
+			700100,
+			730001,
+			1001,
+			"Owner",
+			0,
+			string.Empty,
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
+			false,
+			PlayerHouse.DoorOpen,
+			true,
+			null,
+			new WorldPosition(210010000, 10, 20, 30, 0));
+		var repository = new CapturingHousingRepository([persistentHouse]);
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var service = new HousingWorldService(
+			repository,
+			new IDFactory([persistentHouse.ObjectId]),
+			new GameServerRuntimeContext(),
+			world,
+			NullLogger<HousingWorldService>.Instance);
+
+		var loaded = await service.LoadWorldHousesAsync(templates);
+
+		Assert.Equal(2, loaded);
+		var houses = world.GetHouses().OrderBy(house => house.AddressId).ToArray();
+		Assert.Equal([700100, 700101], houses.Select(house => house.AddressId).ToArray());
+		var ownerlessHouse = houses[1];
+		Assert.Equal(730001, ownerlessHouse.BuildingId);
+		Assert.Equal(0, ownerlessHouse.OwnerObjectId);
+		Assert.Equal(PlayerHouse.DoorClosed, ownerlessHouse.DoorState);
+		Assert.True(ownerlessHouse.ShowOwnerName);
+		Assert.Equal(new WorldPosition(210010000, 40, 50, 60, 0), ownerlessHouse.Position);
+		Assert.True(world.TryGetObject(ownerlessHouse.ObjectId, out var stored));
+		Assert.Same(ownerlessHouse, stored);
+		Assert.DoesNotContain(world.GetHouses(), house => house.AddressId == 2001);
 	}
 
 	private sealed class CapturingHousingRepository : IHousingRepository

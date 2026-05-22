@@ -1,6 +1,8 @@
 using Aion.GameServer.Data;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
+using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Utils.IdFactory;
 using Microsoft.Extensions.Logging;
 using GameWorld = Aion.GameServer.World.World;
 
@@ -9,6 +11,7 @@ namespace Aion.GameServer.Services;
 public sealed class HousingWorldService : GameEngine
 {
 	private readonly IHousingRepository _housingRepository;
+	private readonly IDFactory _idFactory;
 	private readonly GameServerRuntimeContext _runtimeContext;
 	private readonly GameWorld _world;
 	private readonly ILogger<HousingWorldService> _logger;
@@ -16,11 +19,13 @@ public sealed class HousingWorldService : GameEngine
 
 	public HousingWorldService(
 		IHousingRepository housingRepository,
+		IDFactory idFactory,
 		GameServerRuntimeContext runtimeContext,
 		GameWorld world,
 		ILogger<HousingWorldService> logger)
 	{
 		_housingRepository = housingRepository;
+		_idFactory = idFactory;
 		_runtimeContext = runtimeContext;
 		_world = world;
 		_logger = logger;
@@ -46,12 +51,38 @@ public sealed class HousingWorldService : GameEngine
 	public async Task<int> LoadWorldHousesAsync(HousingTemplateTable housingTemplates, CancellationToken cancellationToken = default)
 	{
 		// Java parity: services/HousingService.spawnHouses stores spawned custom houses in World.
-		var houses = await _housingRepository.LoadWorldHousesAsync(housingTemplates, cancellationToken);
+		var persistentHouses = await _housingRepository.LoadWorldHousesAsync(housingTemplates, cancellationToken);
+		var houses = AddMissingUnownedCustomHouses(persistentHouses, housingTemplates);
 		foreach (var house in houses)
 			_world.AddOrUpdateHouse(house);
 		Volatile.Write(ref _loadedCount, houses.Count);
-		_logger.LogInformation("Loaded {Count} persistent houses into world visibility", houses.Count);
+		_logger.LogInformation(
+			"Loaded {PersistentCount} persistent and {SyntheticCount} unowned houses into world visibility",
+			persistentHouses.Count,
+			houses.Count - persistentHouses.Count);
 		return houses.Count;
+	}
+
+	private IReadOnlyList<WorldHouse> AddMissingUnownedCustomHouses(
+		IReadOnlyList<WorldHouse> persistentHouses,
+		HousingTemplateTable housingTemplates)
+	{
+		// Java parity: services/HousingService.spawnHouses creates ownerless custom houses for static addresses absent from DB.
+		var houses = new List<WorldHouse>(persistentHouses);
+		var knownAddresses = persistentHouses.Select(house => house.AddressId).ToHashSet();
+		foreach (var address in housingTemplates.GetCustomFieldAddresses())
+		{
+			if (knownAddresses.Contains(address.AddressId))
+				continue;
+
+			if (WorldHouse.TryCreateUnowned(address, _idFactory.NextId, out var worldHouse) && worldHouse != null)
+			{
+				houses.Add(worldHouse);
+				knownAddresses.Add(address.AddressId);
+			}
+		}
+
+		return houses;
 	}
 
 	public ValueTask ShutdownAsync(CancellationToken cancellationToken = default)
