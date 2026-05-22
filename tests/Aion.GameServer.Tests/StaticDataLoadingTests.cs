@@ -167,6 +167,43 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(new ItemAnimationActionInfo(1, 2, 3, 4, null, 60), staticData.ItemTemplates.GetItemTemplate(188500000)?.AnimationAction);
 		Assert.Equal("cash_hair_type_li_m_01a", staticData.ItemTemplates.GetItemTemplate(169800003)?.CosmeticActionName);
 		Assert.Equal("test_preset_type_li_m_01a", staticData.ItemTemplates.GetItemTemplate(169890001)?.CosmeticActionName);
+		Assert.Equal(staticData.GetElementCount("decompose"), staticData.ItemTemplates.Templates.Count(template => template.HasDecomposeAction));
+		Assert.True(staticData.ItemTemplates.GetItemTemplate(152000065)?.HasDecomposeAction);
+		Assert.Equal(staticData.GetElementCount("decomposable"), staticData.DecomposableItems.Count);
+		Assert.True(staticData.DecomposableItems.NormalCount > staticData.DecomposableItems.SelectableCount);
+		var pepentoRewards = staticData.DecomposableItems.GetInfoByItemId(152000065);
+		Assert.NotNull(pepentoRewards);
+		var pepentoGroup = Assert.Single(pepentoRewards);
+		Assert.Equal(100f, pepentoGroup.Chance);
+		Assert.Equal(0, pepentoGroup.MinLevel);
+		Assert.Equal(99, pepentoGroup.MaxLevel);
+		var pepentoItem = Assert.Single(pepentoGroup.Items);
+		Assert.Equal(152000064, pepentoItem.ItemId);
+		Assert.Equal(2, pepentoItem.MinCount);
+		Assert.Equal(2, pepentoItem.MaxCount);
+		Assert.Equal("PC_ALL", pepentoItem.Race);
+		Assert.Empty(pepentoItem.PlayerClasses);
+		var selectableRewards = staticData.DecomposableItems.GetSelectableItems(188051090);
+		Assert.NotNull(selectableRewards);
+		Assert.Contains(selectableRewards, item => item.ItemId == 125045164 && item.MinCount == 1 && item.MaxCount == 1);
+		Assert.Contains(selectableRewards, item => item.ItemId == 188053609 && item.MinCount == 3 && item.MaxCount == 3);
+		Assert.Null(staticData.DecomposableItems.GetInfoByItemId(188051090));
+		var levelGatedRewards = staticData.DecomposableItems.GetInfoByItemId(188051162);
+		Assert.NotNull(levelGatedRewards);
+		Assert.Contains(
+			levelGatedRewards,
+			group => group is { Chance: 88f, MinLevel: 1, MaxLevel: 20 }
+				&& group.Items.Any(item => item is { ItemId: 186000001, MinCount: 2, MaxCount: 3, Race: "ELYOS" }));
+		var classRestrictedRewards = staticData.DecomposableItems.GetInfoByItemId(188051413);
+		Assert.NotNull(classRestrictedRewards);
+		Assert.Contains(
+			classRestrictedRewards.SelectMany(group => group.Items),
+			item => item.ItemId == 113600836 && item.HasClassRestrictions && item.PlayerClasses.SetEquals(["GLADIATOR", "TEMPLAR"]));
+		var randomRewards = staticData.DecomposableItems.GetInfoByItemId(188050584);
+		Assert.NotNull(randomRewards);
+		Assert.Contains(
+			randomRewards.SelectMany(group => group.RandomItems),
+			item => item is { Type: "ENCHANTMENT", MinCount: 1, MaxCount: 3 });
 		var hairCosmetic = staticData.CosmeticItems.GetCosmeticItemTemplate("cash_hair_type_li_m_01a");
 		Assert.NotNull(hairCosmetic);
 		Assert.Equal("hair_type", hairCosmetic.Type);

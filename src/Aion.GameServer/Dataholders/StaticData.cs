@@ -15,6 +15,7 @@ public sealed class StaticData
 		PlayerExperienceTable playerExperienceTable,
 		ItemTemplateTable itemTemplates,
 		CosmeticItemTable cosmeticItems,
+		DecomposableItemTable decomposableItems,
 		RideTable rideInfos,
 		ItemRandomBonusTable itemRandomBonuses,
 		ItemSetTable itemSets,
@@ -38,6 +39,7 @@ public sealed class StaticData
 		PlayerExperienceTable = playerExperienceTable;
 		ItemTemplates = itemTemplates;
 		CosmeticItems = cosmeticItems;
+		DecomposableItems = decomposableItems;
 		RideInfos = rideInfos;
 		ItemRandomBonuses = itemRandomBonuses;
 		ItemSets = itemSets;
@@ -71,6 +73,8 @@ public sealed class StaticData
 	public ItemTemplateTable ItemTemplates { get; }
 
 	public CosmeticItemTable CosmeticItems { get; }
+
+	public DecomposableItemTable DecomposableItems { get; }
 
 	public RideTable RideInfos { get; }
 
@@ -118,6 +122,7 @@ public sealed class StaticData
 		var experience = new List<long>();
 		var itemTemplates = new List<ItemTemplateSummary>();
 		var cosmeticItems = new List<CosmeticItemSummary>();
+		var decomposableItems = new List<DecomposableItemSummary>();
 		var rideInfos = new List<RideInfoSummary>();
 		var itemRandomBonuses = new List<ItemRandomBonusSummary>();
 		var itemSets = new List<ItemSetSummary>();
@@ -147,6 +152,7 @@ public sealed class StaticData
 		SkillTemplateBuilder? currentSkillTemplate = null;
 		TitleTemplateBuilder? currentTitleTemplate = null;
 		CosmeticItemBuilder? currentCosmeticItem = null;
+		DecomposableItemBuilder? currentDecomposableItem = null;
 		int currentHousingLandId = 0;
 		int currentHousingManagerNpcId = 0;
 		var elementPath = new Dictionary<int, string>();
@@ -181,6 +187,15 @@ public sealed class StaticData
 					cosmeticItems.Add(currentCosmeticItem.ToSummary());
 					currentCosmeticItem = null;
 				}
+
+				if (reader.Depth == 2 && reader.LocalName == "decomposable" && currentDecomposableItem != null)
+				{
+					decomposableItems.Add(currentDecomposableItem.ToSummary());
+					currentDecomposableItem = null;
+				}
+
+				if (reader.Depth == 3 && reader.LocalName == "items" && currentDecomposableItem != null)
+					currentDecomposableItem.EndCollection();
 
 				if (reader.Depth == 2 && reader.LocalName == "random_bonus" && currentItemRandomBonus != null)
 				{
@@ -297,6 +312,69 @@ public sealed class StaticData
 				var presetField = reader.LocalName;
 				var value = await ReadElementTextAsync(reader, cancellationToken);
 				currentCosmeticItem.SetPresetValue(presetField, value);
+				continue;
+			}
+
+			if (reader.Depth == 2 && reader.LocalName == "decomposable")
+			{
+				currentDecomposableItem = new DecomposableItemBuilder(
+					ReadRequiredIntAttribute(reader, "item_id"),
+					ReadBoolAttribute(reader, "selectable"));
+				if (reader.IsEmptyElement)
+				{
+					decomposableItems.Add(currentDecomposableItem.ToSummary());
+					currentDecomposableItem = null;
+				}
+
+				continue;
+			}
+
+			if (reader.Depth == 3 && reader.LocalName == "items" && currentDecomposableItem != null)
+			{
+				// Java parity: model/templates/rewards/ExtractedItemsCollection default chance/min/max values.
+				currentDecomposableItem.StartCollection(
+					ReadOptionalFloatAttribute(reader, "chance", 100f),
+					ReadOptionalIntAttribute(reader, "minlevel", 0),
+					ReadOptionalIntAttribute(reader, "maxlevel", 99));
+				if (reader.IsEmptyElement)
+					currentDecomposableItem.EndCollection();
+
+				continue;
+			}
+
+			if (reader.Depth == 4
+				&& reader.LocalName == "item"
+				&& currentDecomposableItem != null
+				&& elementPath.GetValueOrDefault(3) == "items")
+			{
+				var minCount = ReadOptionalIntAttribute(reader, "min_count", 1);
+				var maxCount = ReadOptionalIntAttribute(reader, "max_count", minCount);
+				if (maxCount == 0)
+					maxCount = minCount;
+				currentDecomposableItem.AddItem(
+					new ResultedItemSummary(
+						ReadRequiredIntAttribute(reader, "id"),
+						minCount,
+						maxCount,
+						reader.GetAttribute("race") ?? "PC_ALL",
+						ReadPlayerClasses(reader.GetAttribute("player_classes"))));
+				continue;
+			}
+
+			if (reader.Depth == 4
+				&& reader.LocalName == "random_item"
+				&& currentDecomposableItem != null
+				&& elementPath.GetValueOrDefault(3) == "items")
+			{
+				var minCount = ReadOptionalIntAttribute(reader, "min_count", 1);
+				var maxCount = ReadOptionalIntAttribute(reader, "max_count", minCount);
+				if (maxCount == 0)
+					maxCount = minCount;
+				currentDecomposableItem.AddRandomItem(
+					new RandomItemSummary(
+						reader.GetAttribute("type") ?? string.Empty,
+						minCount,
+						maxCount));
 				continue;
 			}
 
@@ -719,6 +797,13 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 4 && reader.LocalName == "decompose" && currentItemTemplate != null)
+			{
+				// Java parity: model/templates/item/actions/DecomposeAction marker.
+				currentItemTemplate.HasDecomposeAction = true;
+				continue;
+			}
+
 			if (reader.Depth == 4 && reader.LocalName == "cosmetic" && currentItemTemplate != null)
 			{
 				// Java parity: model/templates/item/actions/CosmeticItemAction cosmetic-name metadata.
@@ -970,6 +1055,7 @@ public sealed class StaticData
 			new PlayerExperienceTable(experience.AsReadOnly()),
 			new ItemTemplateTable(itemTemplates.AsReadOnly(), learnableEmotionIds),
 			new CosmeticItemTable(cosmeticItems.AsReadOnly()),
+			new DecomposableItemTable(decomposableItems.AsReadOnly()),
 			new RideTable(rideInfos.AsReadOnly()),
 			new ItemRandomBonusTable(itemRandomBonuses.AsReadOnly()),
 			new ItemSetTable(itemSets.AsReadOnly()),
@@ -1520,6 +1606,8 @@ public sealed class StaticData
 
 		public ItemAnimationActionInfo? AnimationAction { get; set; }
 
+		public bool HasDecomposeAction { get; set; }
+
 		public string CosmeticActionName { get; set; } = string.Empty;
 
 		public int ConditioningMaxLevel { get; set; }
@@ -1641,7 +1729,8 @@ public sealed class StaticData
 				ExpandInventoryAction,
 				DyeAction,
 				AnimationAction,
-				CosmeticActionName);
+				CosmeticActionName,
+				HasDecomposeAction);
 		}
 
 		private static int CalculateMaxTuneCount(
@@ -1745,6 +1834,83 @@ public sealed class StaticData
 		private static int ParseInt(string value)
 		{
 			return int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed) ? parsed : 0;
+		}
+	}
+
+	private sealed class DecomposableItemBuilder
+	{
+		private readonly List<ExtractedItemsCollectionBuilder> _collections = [];
+		private ExtractedItemsCollectionBuilder? _currentCollection;
+
+		public DecomposableItemBuilder(int itemId, bool isSelectable)
+		{
+			ItemId = itemId;
+			IsSelectable = isSelectable;
+		}
+
+		private int ItemId { get; }
+
+		private bool IsSelectable { get; }
+
+		public void StartCollection(float chance, int minLevel, int maxLevel)
+		{
+			_currentCollection = new ExtractedItemsCollectionBuilder(chance, minLevel, maxLevel);
+			_collections.Add(_currentCollection);
+		}
+
+		public void AddItem(ResultedItemSummary item)
+		{
+			_currentCollection?.Items.Add(item);
+		}
+
+		public void AddRandomItem(RandomItemSummary item)
+		{
+			_currentCollection?.RandomItems.Add(item);
+		}
+
+		public void EndCollection()
+		{
+			_currentCollection = null;
+		}
+
+		public DecomposableItemSummary ToSummary()
+		{
+			// Java parity: dataholders/DecomposableItemsData maps normal groups separately from selectable rewards.
+			return new DecomposableItemSummary(
+				ItemId,
+				IsSelectable,
+				_collections.Select(collection => collection.ToSummary()).ToArray());
+		}
+	}
+
+	private sealed class ExtractedItemsCollectionBuilder
+	{
+		public ExtractedItemsCollectionBuilder(float chance, int minLevel, int maxLevel)
+		{
+			Chance = chance;
+			MinLevel = minLevel;
+			MaxLevel = maxLevel;
+		}
+
+		private float Chance { get; }
+
+		private int MinLevel { get; }
+
+		private int MaxLevel { get; }
+
+		public List<ResultedItemSummary> Items { get; } = [];
+
+		public List<RandomItemSummary> RandomItems { get; } = [];
+
+		public ExtractedItemsCollectionSummary ToSummary()
+		{
+			// Java parity: model/templates/rewards/ResultedItemsCollection fixed items plus random_item entries.
+			return new ExtractedItemsCollectionSummary(
+				Chance,
+				MinLevel,
+				MaxLevel,
+				Items.ToArray(),
+				RandomItems.ToArray());
 		}
 	}
 
@@ -1862,6 +2028,13 @@ public sealed class StaticData
 		return int.TryParse(reader.GetAttribute(attributeName), out var parsed) ? parsed : defaultValue;
 	}
 
+	private static float ReadOptionalFloatAttribute(XmlReader reader, string attributeName, float defaultValue)
+	{
+		return float.TryParse(reader.GetAttribute(attributeName), NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed)
+			? parsed
+			: defaultValue;
+	}
+
 	private static int? ReadNullableIntAttribute(XmlReader reader, string attributeName)
 	{
 		return int.TryParse(reader.GetAttribute(attributeName), out var parsed) ? parsed : null;
@@ -1911,6 +2084,14 @@ public sealed class StaticData
 		}
 
 		return levelRestrictions;
+	}
+
+	private static IReadOnlySet<string> ReadPlayerClasses(string? playerClasses)
+	{
+		// Java parity: model/templates/rewards/ResultedItem.player_classes.
+		return string.IsNullOrWhiteSpace(playerClasses)
+			? new HashSet<string>(StringComparer.Ordinal)
+			: playerClasses.Split(' ', StringSplitOptions.RemoveEmptyEntries).ToHashSet(StringComparer.Ordinal);
 	}
 
 	private static float ReadFloatAttribute(XmlReader reader, string attributeName)
