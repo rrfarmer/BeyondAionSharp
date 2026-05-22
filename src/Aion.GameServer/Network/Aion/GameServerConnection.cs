@@ -1280,7 +1280,7 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		var staticData = _runtimeContext?.DataManager?.StaticData;
 		var itemTemplates = staticData?.ItemTemplates;
-		if (itemTemplates == null || packet.ItemObjectIds.Count == 0)
+		if (staticData == null || itemTemplates == null || packet.ItemObjectIds.Count == 0)
 			return;
 
 		var selectedObjectIds = packet.ItemObjectIds.ToHashSet();
@@ -1299,6 +1299,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				continue;
 
 			var chargedItem = CopyInventoryItem(currentItem, charge: plan.TargetChargePoints);
+			var oldAbyssRank = player.AbyssRank.Rank;
 			InventoryItem? kinahUpdate = null;
 			PlayerAbyssRank? abyssRankUpdate = null;
 			switch (plan.ChargeWay)
@@ -1341,6 +1342,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			{
 				await SendPacketAsync(SmSystemMessage.UseAbyssPoint(plan.PaymentAmount));
 				await SendPacketAsync(new SmAbyssRank(player.AbyssRank));
+				await ApplyAbyssRankChangedSideEffectsAsync(player, oldAbyssRank, staticData);
 			}
 
 			if (GetChargeBarStep(currentItem.Charge) != GetChargeBarStep(chargedItem.Charge))
@@ -2355,6 +2357,36 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 	}
 
+	private async Task ApplyAbyssRankChangedSideEffectsAsync(Player player, int oldAbyssRank, StaticData staticData)
+	{
+		// Java parity: services/abyss/AbyssPointsService.onRankChanged.
+		if (oldAbyssRank == player.AbyssRank.Rank)
+			return;
+
+		if (_connectionRegistry != null)
+		{
+			await _connectionRegistry.BroadcastToVisiblePlayersAsync(
+				player.Position,
+				player.ObjectId,
+				SmAbyssRankUpdate.RankChange(player));
+		}
+
+		var rankLimitChange = EquipmentService.CheckRankLimitItems(player, staticData.ItemTemplates);
+		if (rankLimitChange.Changed || rankLimitChange.RankLimitedUnequipMessages.Count > 0)
+			await ApplyEquipmentChangeAsync(player, rankLimitChange, staticData.ItemTemplates, staticData);
+
+		var abyssSkillUpdate = AbyssSkillService.UpdateSkills(player, _options.Custom.TopRankingXformMinRank);
+		if (abyssSkillUpdate.Changed)
+		{
+			player.Skills = abyssSkillUpdate.Skills;
+			foreach (var removedSkill in abyssSkillUpdate.RemovedSkills)
+				await SendPacketAsync(new SmSkillRemove(removedSkill));
+			foreach (var addedSkill in abyssSkillUpdate.AddedSkills)
+				await SendPacketAsync(new SmSkillList([addedSkill], 1300050));
+			// Java parity: full passive SkillEngine effect apply/remove fanout remains a later SkillEngine slice.
+		}
+	}
+
 	private async Task HandleSoulBindQuestionResponseAsync(Player player, CmQuestionResponse packet)
 	{
 		// Java parity: ResponseRequester handler registered by Equipment.soulBindItem.
@@ -3262,31 +3294,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		player.AbyssRank = plan.AbyssRankUpdate;
 		await SendPacketAsync(SmSystemMessage.CombatMyAbyssPointGain(plan.AbyssPoints));
 		await SendPacketAsync(new SmAbyssRank(player.AbyssRank));
-		if (oldAbyssRank != player.AbyssRank.Rank)
-		{
-			if (_connectionRegistry != null)
-			{
-				await _connectionRegistry.BroadcastToVisiblePlayersAsync(
-					player.Position,
-					player.ObjectId,
-					SmAbyssRankUpdate.RankChange(player));
-			}
-
-			var rankLimitChange = EquipmentService.CheckRankLimitItems(player, staticData.ItemTemplates);
-			if (rankLimitChange.Changed || rankLimitChange.RankLimitedUnequipMessages.Count > 0)
-				await ApplyEquipmentChangeAsync(player, rankLimitChange, staticData.ItemTemplates, staticData);
-
-			var abyssSkillUpdate = AbyssSkillService.UpdateSkills(player, _options.Custom.TopRankingXformMinRank);
-			if (abyssSkillUpdate.Changed)
-			{
-				player.Skills = abyssSkillUpdate.Skills;
-				foreach (var removedSkill in abyssSkillUpdate.RemovedSkills)
-					await SendPacketAsync(new SmSkillRemove(removedSkill));
-				foreach (var addedSkill in abyssSkillUpdate.AddedSkills)
-					await SendPacketAsync(new SmSkillList([addedSkill], 1300050));
-				// Java parity: full passive SkillEngine effect apply/remove fanout remains a later SkillEngine slice.
-			}
-		}
+		await ApplyAbyssRankChangedSideEffectsAsync(player, oldAbyssRank, staticData);
 	}
 
 	private async Task SendApExtractConsumedItemPacketsAsync(
@@ -4883,6 +4891,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		var inventoryItems = player.InventoryItems.ToList();
+		var oldAbyssRank = player.AbyssRank.Rank;
 		InventoryItem? kinahUpdate = null;
 		PlayerAbyssRank? abyssRankUpdate = null;
 		switch (request.ChargeWay)
@@ -4955,6 +4964,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		player.InventoryItems = inventoryItems.ToArray();
+		if (abyssRankUpdate != null)
+			await ApplyAbyssRankChangedSideEffectsAsync(player, oldAbyssRank, staticData);
 		await SendPacketAsync(CreateStatsInfoPacket(player, staticData));
 		await SendPacketAsync(
 			request.ChargeWay == 1
