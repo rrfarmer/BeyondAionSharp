@@ -17,6 +17,7 @@ public sealed class RiftService
 	private readonly Func<DateTimeOffset> _nowProvider;
 	private readonly Func<bool> _nextBoolean;
 	private readonly Func<int, int, int> _randomInclusive;
+	private readonly Func<int, bool>? _cancelRespawn;
 	private readonly ConcurrentDictionary<int, RiftLocationState> _activeRifts = new();
 
 	public RiftService(
@@ -27,7 +28,8 @@ public sealed class RiftService
 		GameServerOptions? options = null,
 		Func<DateTimeOffset>? nowProvider = null,
 		Func<bool>? nextBoolean = null,
-		Func<int, int, int>? randomInclusive = null)
+		Func<int, int, int>? randomInclusive = null,
+		Func<int, bool>? cancelRespawn = null)
 	{
 		_runtimeContext = runtimeContext;
 		_riftManager = riftManager;
@@ -37,6 +39,7 @@ public sealed class RiftService
 		_nowProvider = nowProvider ?? (() => DateTimeOffset.UtcNow);
 		_nextBoolean = nextBoolean ?? (() => Random.Shared.Next(2) == 0);
 		_randomInclusive = randomInclusive ?? ((minInclusive, maxInclusive) => Random.Shared.Next(minInclusive, maxInclusive + 1));
+		_cancelRespawn = cancelRespawn;
 	}
 
 	public int ActiveRiftCount => _activeRifts.Count;
@@ -136,9 +139,17 @@ public sealed class RiftService
 			state.Opened = false;
 			foreach (var npc in state.GetSpawnedSnapshot())
 			{
+				// Java parity: RiftService.closeRift deletes live rift NPCs and cancels pending respawns for stale object ids.
+				_cancelRespawn?.Invoke(npc.ObjectId);
 				_riftManager.RemoveSpawnedRift(npc);
-				if (_world.TryRemoveObject(npc.ObjectId, out var removedObject) && removedObject is WorldNpc)
+				if (_world.TryGetObject(npc.ObjectId, out var visibleObject)
+					&& visibleObject != null
+					&& IsSameRiftOwnedNpc(visibleObject, npc)
+					&& _world.TryRemoveObject(npc.ObjectId, out var removedObject)
+					&& removedObject is WorldNpc)
+				{
 					_idFactory.ReleaseId(npc.ObjectId);
+				}
 			}
 
 			state.ClearSpawned();
@@ -317,6 +328,17 @@ public sealed class RiftService
 	private static bool IsRiftId(int id)
 	{
 		return id < 10000;
+	}
+
+	private static bool IsSameRiftOwnedNpc(object visibleObject, WorldNpc spawnedNpc)
+	{
+		// Java parity: closeRift only deletes the visible object if it still belongs to the stored rift SpawnTemplate.
+		return ReferenceEquals(visibleObject, spawnedNpc)
+			|| visibleObject is WorldNpc visibleNpc
+			&& visibleNpc.ObjectId == spawnedNpc.ObjectId
+			&& visibleNpc.TemplateId == spawnedNpc.TemplateId
+			&& string.Equals(visibleNpc.Anchor, spawnedNpc.Anchor, StringComparison.Ordinal)
+			&& visibleNpc.SpawnLocation.Equals(spawnedNpc.SpawnLocation);
 	}
 
 	private RiftPortalState? CreatePortalState(RiftSpawnResult spawnResult, bool guardsRequested)

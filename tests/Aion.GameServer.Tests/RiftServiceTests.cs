@@ -547,6 +547,76 @@ public sealed class RiftServiceTests
 		}
 	}
 
+	[Fact]
+	public async Task CloseRifts_CancelsPendingRespawnsForSpawnedRiftNpcs()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-rift-service-close-respawn-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(
+				tempPath,
+				"""<rift_location id="1170" world="110070000" />""",
+				"""
+				<spawn_map map_id="110070000">
+					<rift_spawn id="1170" world="110070000">
+						<spawn npc_id="730100">
+							<spot x="1" y="2" z="3" anchor="KAISINEL_AM" />
+						</spawn>
+					</rift_spawn>
+				</spawn_map>
+				<spawn_map map_id="120080000">
+					<rift_spawn id="1170" world="120080000">
+						<spawn npc_id="730101">
+							<spot x="5" y="6" z="7" anchor="KAISINEL_AS" />
+						</spawn>
+					</rift_spawn>
+				</spawn_map>
+				""");
+			var canceledRespawns = new List<int>();
+			var idFactory = new IDFactory();
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			var manager = new RiftManagerService(context, world, idFactory);
+			var service = new RiftService(
+				context,
+				manager,
+				world,
+				idFactory,
+				cancelRespawn: objectId =>
+				{
+					canceledRespawns.Add(objectId);
+					return true;
+			});
+			var open = service.OpenRifts(1170, guards: false);
+			var state = Assert.Single(open.Locations);
+			var spawnedObjectIds = state.Spawned.Select(npc => npc.ObjectId).Order().ToArray();
+			var staleSpawnedNpc = state.Spawned[0];
+			var movedSpawnedNpc = state.Spawned.First(npc => npc.ObjectId != staleSpawnedNpc.ObjectId);
+			Assert.True(world.TryRemoveObject(staleSpawnedNpc.ObjectId, out _));
+			Assert.True(world.TryUpdateObject(
+				movedSpawnedNpc.ObjectId,
+				movedSpawnedNpc with { Position = movedSpawnedNpc.Position with { X = movedSpawnedNpc.Position.X + 10 } }));
+
+			var close = service.CloseRifts(1170);
+
+			Assert.True(close.Succeeded);
+			Assert.Equal(spawnedObjectIds, canceledRespawns.Order().ToArray());
+			Assert.False(service.IsRiftOpened(1170));
+			Assert.Equal(0, world.ObjectCount);
+			Assert.Equal(0, manager.SpawnedRiftCount);
+		}
+		finally
+		{
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
 	private static string CreateEltnenMorheimRiftHandlerSpawns()
 	{
 		return

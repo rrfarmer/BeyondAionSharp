@@ -43,6 +43,8 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<WorldNpcAiStateService>();
 			services.AddSingleton<WorldNpcRandomWalkService>();
 			services.AddSingleton<WorldNpcWalkerRouteWalkingService>();
+			services.AddSingleton<Func<int, bool>>(
+				serviceProvider => objectId => serviceProvider.GetRequiredService<WorldNpcSpawnService>().CancelRespawn(objectId));
 			services.AddSingleton<RiftManagerService>();
 			services.AddSingleton<RiftService>();
 			services.AddSingleton<RiftInformerService>();
