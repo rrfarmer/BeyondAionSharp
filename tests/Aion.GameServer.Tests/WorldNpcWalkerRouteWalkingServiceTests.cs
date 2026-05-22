@@ -65,6 +65,42 @@ public sealed class WorldNpcWalkerRouteWalkingServiceTests
 	}
 
 	[Fact]
+	public async Task StartRouteWalkingAsync_SetsNpcAiStateToWalkPath()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-walk-ai-start-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextWithWalkerDataAsync(tempPath, pool: 1, formation: "POINT", rows: "");
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			var npc = CreateNpc(1, new WorldPosition(210010000, 8, 0, 0, 7), walkerId: "route-a", walkerIndex: 0);
+			Assert.True(world.TryAddObject(npc.ObjectId, npc));
+			var cache = CreateCache(context, [npc]);
+			var registry = new CapturingConnectionRegistry();
+			var aiStates = new WorldNpcAiStateService();
+			var service = CreateService(context, world, cache, registry, aiStates: aiStates);
+
+			var result = await service.StartRouteWalkingAsync(npc.ObjectId);
+
+			Assert.True(result.Started);
+			Assert.True(aiStates.TryGetState(npc.ObjectId, out var aiState));
+			Assert.NotNull(aiState);
+			Assert.Equal(WorldNpcAiState.Walking, aiState.State);
+			Assert.Equal(WorldNpcAiSubState.WalkPath, aiState.SubState);
+		}
+		finally
+		{
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
+	[Fact]
 	public async Task StartRouteWalkingAsync_StartsWholeFormationFromOneMember()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-walk-start-formation-" + Guid.NewGuid().ToString("N"));
@@ -379,7 +415,8 @@ public sealed class WorldNpcWalkerRouteWalkingServiceTests
 			Assert.True(world.TryAddObject(second.ObjectId, second));
 			var cache = CreateCache(context, [first, second]);
 			var registry = new CapturingConnectionRegistry();
-			var service = CreateService(context, world, cache, registry);
+			var aiStates = new WorldNpcAiStateService();
+			var service = CreateService(context, world, cache, registry, aiStates: aiStates);
 			var start = await service.StartRouteWalkingAsync(first.ObjectId);
 			Assert.True(start.Started);
 
@@ -392,6 +429,13 @@ public sealed class WorldNpcWalkerRouteWalkingServiceTests
 			Assert.Equal(2, service.ActiveStateCount);
 			Assert.Equal(1, service.ActiveFormationStateCount);
 			Assert.Equal(2, registry.Broadcasts.Count);
+			Assert.True(aiStates.TryGetState(first.ObjectId, out var firstWaitingState));
+			Assert.NotNull(firstWaitingState);
+			Assert.Equal(WorldNpcAiState.Walking, firstWaitingState.State);
+			Assert.Equal(WorldNpcAiSubState.WalkWaitGroup, firstWaitingState.SubState);
+			Assert.True(aiStates.TryGetState(second.ObjectId, out var secondWalkingState));
+			Assert.NotNull(secondWalkingState);
+			Assert.Equal(WorldNpcAiSubState.WalkPath, secondWalkingState.SubState);
 
 			var advanced = await service.TargetReachedAsync(second.ObjectId);
 
@@ -409,6 +453,12 @@ public sealed class WorldNpcWalkerRouteWalkingServiceTests
 				Assert.Equal(state, activeState);
 			});
 			Assert.Equal(4, registry.Broadcasts.Count);
+			Assert.True(aiStates.TryGetState(first.ObjectId, out var firstResumedState));
+			Assert.NotNull(firstResumedState);
+			Assert.Equal(WorldNpcAiSubState.WalkPath, firstResumedState.SubState);
+			Assert.True(aiStates.TryGetState(second.ObjectId, out var secondResumedState));
+			Assert.NotNull(secondResumedState);
+			Assert.Equal(WorldNpcAiSubState.WalkPath, secondResumedState.SubState);
 		}
 		finally
 		{
@@ -593,7 +643,8 @@ public sealed class WorldNpcWalkerRouteWalkingServiceTests
 		GameWorld world,
 		IWorldNpcWalkerSpawnPlanCacheService cache,
 		IGameClientConnectionRegistry registry,
-		ThreadPoolManager? threadPoolManager = null)
+		ThreadPoolManager? threadPoolManager = null,
+		WorldNpcAiStateService? aiStates = null)
 	{
 		var routeService = new WorldNpcWalkerRouteService();
 		var movementStateService = new WorldNpcWalkerMovementStateService();
@@ -605,7 +656,8 @@ public sealed class WorldNpcWalkerRouteWalkingServiceTests
 			routeService,
 			movementStateService,
 			broadcastService,
-			threadPoolManager);
+			threadPoolManager,
+			aiStates);
 	}
 
 	private static WorldNpcWalkerSpawnPlanCacheService CreateCache(

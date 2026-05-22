@@ -17,6 +17,7 @@ public sealed class WorldNpcWalkerRouteWalkingService
 	private readonly WorldNpcWalkerMovementStateService _movementStates;
 	private readonly WorldNpcWalkerMovementBroadcastService _movementBroadcasts;
 	private readonly ThreadPoolManager? _threadPoolManager;
+	private readonly WorldNpcAiStateService? _npcAiStates;
 	private readonly ConcurrentDictionary<int, WorldNpcWalkerMovementState> _activeStates = new();
 	private readonly ConcurrentDictionary<int, WorldNpcWalkerFormationKey> _formationKeysByObjectId = new();
 	private readonly ConcurrentDictionary<WorldNpcWalkerFormationKey, WorldNpcWalkerFormationRuntimeState> _formationStates = new();
@@ -30,7 +31,8 @@ public sealed class WorldNpcWalkerRouteWalkingService
 		WorldNpcWalkerRouteService routeService,
 		WorldNpcWalkerMovementStateService movementStates,
 		WorldNpcWalkerMovementBroadcastService movementBroadcasts,
-		ThreadPoolManager? threadPoolManager = null)
+		ThreadPoolManager? threadPoolManager = null,
+		WorldNpcAiStateService? npcAiStates = null)
 	{
 		_runtimeContext = runtimeContext;
 		_world = world;
@@ -39,6 +41,7 @@ public sealed class WorldNpcWalkerRouteWalkingService
 		_movementStates = movementStates;
 		_movementBroadcasts = movementBroadcasts;
 		_threadPoolManager = threadPoolManager;
+		_npcAiStates = npcAiStates;
 	}
 
 	public int ActiveStateCount => _activeStates.Count;
@@ -160,6 +163,7 @@ public sealed class WorldNpcWalkerRouteWalkingService
 			CancelPendingRestTask(objectId);
 			CancelPendingArrivalTask(objectId);
 			_activeStates.TryRemove(objectId, out _);
+			_npcAiStates?.StopWalking(objectId);
 			return WorldNpcWalkerRouteWalkingTargetReachedResult.Stopped();
 		}
 
@@ -200,6 +204,7 @@ public sealed class WorldNpcWalkerRouteWalkingService
 		WorldNpcWalkerFormationMovementAdvance advance;
 		lock (runtimeState.SyncRoot)
 		{
+			_npcAiStates?.WaitForFormationGroup(objectId);
 			runtimeState.ArrivedObjectIds.Add(objectId);
 			if (runtimeState.ArrivedObjectIds.Count < formation.Members.Count)
 			{
@@ -213,7 +218,10 @@ public sealed class WorldNpcWalkerRouteWalkingService
 			runtimeState.MovementState = advance.State;
 			runtimeState.ArrivedObjectIds.Clear();
 			foreach (var memberState in advance.State.MemberStates)
+			{
 				_activeStates[memberState.ObjectId] = memberState;
+				_npcAiStates?.ResumeRouteWalking(memberState.ObjectId);
+			}
 		}
 
 		if (advance.RestDelay <= TimeSpan.Zero)
@@ -240,6 +248,7 @@ public sealed class WorldNpcWalkerRouteWalkingService
 			return WorldNpcWalkerRouteWalkingStartResult.NotStarted(WorldNpcWalkerRouteWalkingStartStatus.MissingMovementTarget);
 
 		_activeStates[walker.ObjectId] = state;
+		_npcAiStates?.StartRouteWalking(walker.ObjectId);
 		var broadcast = await _movementBroadcasts.BroadcastWalkerMovementAsync(walker.ObjectId, state, cancellationToken: cancellationToken);
 		ScheduleTargetArrival(walker.ObjectId, state, cancellationToken);
 		return WorldNpcWalkerRouteWalkingStartResult.CreateStarted([state], broadcast.SentCount);
@@ -265,6 +274,7 @@ public sealed class WorldNpcWalkerRouteWalkingService
 			cancellationToken.ThrowIfCancellationRequested();
 			_formationKeysByObjectId[state.ObjectId] = formationKey;
 			_activeStates[state.ObjectId] = state;
+			_npcAiStates?.StartRouteWalking(state.ObjectId);
 			var broadcast = await _movementBroadcasts.BroadcastWalkerMovementAsync(state.ObjectId, state, cancellationToken: cancellationToken);
 			ScheduleTargetArrival(state.ObjectId, state, cancellationToken);
 			sentCount += broadcast.SentCount;
