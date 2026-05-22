@@ -53,7 +53,8 @@ public sealed class SmNpcInfo : GameServerPacket
 		buffer.WriteF(position.Y);
 		buffer.WriteF(position.Z);
 		buffer.WriteC(0);
-		buffer.WriteH(0);
+		// Java parity: SM_NPC_INFO writes npc.getSpawn().getStaticId().
+		buffer.WriteH((_npc as WorldNpc)?.StaticId ?? 0);
 		buffer.WriteC(0);
 		buffer.WriteC(0);
 		buffer.WriteC(0);
