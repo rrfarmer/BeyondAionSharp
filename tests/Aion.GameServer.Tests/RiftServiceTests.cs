@@ -163,6 +163,157 @@ public sealed class RiftServiceTests
 	}
 
 	[Fact]
+	public async Task PrepareRiftOpening_ForNonGuardWorld_CanSkipByJavaRandomGate()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-rift-service-prepare-skip-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(
+				tempPath,
+				"""<rift_location id="2120" world="210020000" />""",
+				CreateEltnenMorheimRiftHandlerSpawns());
+			var idFactory = new IDFactory();
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			var manager = new RiftManagerService(context, world, idFactory);
+			var service = new RiftService(
+				context,
+				manager,
+				world,
+				idFactory,
+				nextBoolean: () => true,
+				randomInclusive: (_, _) => 1);
+
+			var result = service.PrepareRiftOpening(210020000, guards: false);
+
+			Assert.False(result.Succeeded);
+			Assert.Equal(RiftPrepareOpeningStatus.SkippedByRandom, result.Status);
+			Assert.Equal(0, service.ActiveRiftCount);
+			Assert.Equal(0, world.ObjectCount);
+		}
+		finally
+		{
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
+	[Fact]
+	public async Task PrepareRiftOpening_FiltersGuardAndNonGuardAutoCloseableLocations()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-rift-service-prepare-filter-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(
+				tempPath,
+				"""
+				<rift_location id="2120" world="210020000" />
+				<rift_location id="2121" world="210020000" has_spawns="true" />
+				<rift_location id="2122" world="210020000" has_spawns="true" auto_closeable="false" />
+				""",
+				$$"""
+				{{CreateEltnenMorheimRiftHandlerSpawns()}}
+				<spawn_map map_id="210020000">
+					<rift_spawn id="2121" world="210020000">
+						<spawn npc_id="730200" respawn_time="1800">
+							<spot x="11" y="12" z="13" />
+						</spawn>
+					</rift_spawn>
+				</spawn_map>
+				""");
+			var idFactory = new IDFactory();
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			var manager = new RiftManagerService(context, world, idFactory);
+			var service = new RiftService(
+				context,
+				manager,
+				world,
+				idFactory,
+				nextBoolean: () => false,
+				randomInclusive: (_, _) => 1);
+
+			var ordinary = service.PrepareRiftOpening(210020000, guards: false);
+			var guarded = service.PrepareRiftOpening(210020000, guards: true);
+
+			Assert.True(ordinary.Succeeded);
+			Assert.Equal(RiftPrepareOpeningStatus.Opened, ordinary.Status);
+			Assert.Equal([2120], ordinary.Locations.Select(location => location.Location.Id).ToArray());
+			Assert.True(guarded.Succeeded);
+			Assert.Equal([2121], guarded.Locations.Select(location => location.Location.Id).ToArray());
+			Assert.True(service.IsRiftOpened(2120));
+			Assert.True(service.IsRiftOpened(2121));
+			Assert.False(service.IsRiftOpened(2122));
+			Assert.Equal(3, guarded.Locations[0].SpawnedCount);
+			Assert.Equal(5, world.ObjectCount);
+			Assert.Equal(4, manager.SpawnedRiftCount);
+		}
+		finally
+		{
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
+	[Fact]
+	public async Task PrepareRiftOpening_CapsNonGuardLocationsWithJavaRandomRemoval()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-rift-service-prepare-cap-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(
+				tempPath,
+				"""
+				<rift_location id="2120" world="210020000" />
+				<rift_location id="2121" world="210020000" />
+				<rift_location id="2122" world="210020000" />
+				<rift_location id="2123" world="210020000" />
+				<rift_location id="2124" world="210020000" />
+				""",
+				CreateEltnenMorheimRiftHandlerSpawns());
+			var randomValues = new Queue<int>([2, 0, 0, 0]);
+			var idFactory = new IDFactory();
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			var manager = new RiftManagerService(context, world, idFactory);
+			var service = new RiftService(
+				context,
+				manager,
+				world,
+				idFactory,
+				nextBoolean: () => false,
+				randomInclusive: (_, _) => randomValues.Dequeue());
+
+			var result = service.PrepareRiftOpening(210020000, guards: false);
+
+			Assert.True(result.Succeeded);
+			Assert.Equal([2123, 2124], result.Locations.Select(location => location.Location.Id).Order().ToArray());
+			Assert.Equal(2, service.ActiveRiftCount);
+			Assert.Equal(4, world.ObjectCount);
+		}
+		finally
+		{
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
+	[Fact]
 	public async Task OpenRifts_CreatesJavaShapedPortalState()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-rift-service-portal-state-" + Guid.NewGuid().ToString("N"));
@@ -394,6 +545,31 @@ public sealed class RiftServiceTests
 			{
 			}
 		}
+	}
+
+	private static string CreateEltnenMorheimRiftHandlerSpawns()
+	{
+		return
+			"""
+			<spawn_map map_id="210020000">
+				<spawn npc_id="730100" handler="RIFT">
+					<spot x="1" y="2" z="3" anchor="ELTNEN_AM" />
+					<spot x="2" y="3" z="4" anchor="ELTNEN_BM" />
+					<spot x="3" y="4" z="5" anchor="ELTNEN_CM" />
+					<spot x="4" y="5" z="6" anchor="ELTNEN_DM" />
+					<spot x="5" y="6" z="7" anchor="ELTNEN_EM" />
+				</spawn>
+			</spawn_map>
+			<spawn_map map_id="220020000">
+				<spawn npc_id="730101" handler="RIFT">
+					<spot x="11" y="12" z="13" anchor="MORHEIM_AS" />
+					<spot x="12" y="13" z="14" anchor="MORHEIM_BS" />
+					<spot x="13" y="14" z="15" anchor="MORHEIM_CS" />
+					<spot x="14" y="15" z="16" anchor="MORHEIM_DS" />
+					<spot x="15" y="16" z="17" anchor="MORHEIM_ES" />
+				</spawn>
+			</spawn_map>
+			""";
 	}
 
 	private static async Task<GameServerRuntimeContext> CreateRuntimeContextAsync(

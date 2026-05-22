@@ -15,6 +15,8 @@ public sealed class RiftService
 	private readonly IDFactory _idFactory;
 	private readonly GameServerOptions _options;
 	private readonly Func<DateTimeOffset> _nowProvider;
+	private readonly Func<bool> _nextBoolean;
+	private readonly Func<int, int, int> _randomInclusive;
 	private readonly ConcurrentDictionary<int, RiftLocationState> _activeRifts = new();
 
 	public RiftService(
@@ -23,7 +25,9 @@ public sealed class RiftService
 		GameWorld world,
 		IDFactory idFactory,
 		GameServerOptions? options = null,
-		Func<DateTimeOffset>? nowProvider = null)
+		Func<DateTimeOffset>? nowProvider = null,
+		Func<bool>? nextBoolean = null,
+		Func<int, int, int>? randomInclusive = null)
 	{
 		_runtimeContext = runtimeContext;
 		_riftManager = riftManager;
@@ -31,6 +35,8 @@ public sealed class RiftService
 		_idFactory = idFactory;
 		_options = options ?? new GameServerOptions();
 		_nowProvider = nowProvider ?? (() => DateTimeOffset.UtcNow);
+		_nextBoolean = nextBoolean ?? (() => Random.Shared.Next(2) == 0);
+		_randomInclusive = randomInclusive ?? ((minInclusive, maxInclusive) => Random.Shared.Next(minInclusive, maxInclusive + 1));
 	}
 
 	public int ActiveRiftCount => _activeRifts.Count;
@@ -157,6 +163,56 @@ public sealed class RiftService
 
 		foreach (var location in locations)
 			CloseRifts(location.Id);
+	}
+
+	public RiftPrepareOpeningResult PrepareRiftOpening(int worldId, bool guards)
+	{
+		// Java parity: services/RiftService.prepareRiftOpening filters possible locations, randomly caps them, then opens each chosen rift.
+		if (worldId is not 210070000 and not 220080000 && !guards && _nextBoolean())
+			return RiftPrepareOpeningResult.NotOpened(RiftPrepareOpeningStatus.SkippedByRandom);
+
+		var staticData = _runtimeContext.DataManager?.StaticData;
+		if (staticData == null)
+			return RiftPrepareOpeningResult.NotOpened(RiftPrepareOpeningStatus.MissingStaticData);
+
+		var possibleLocations = staticData.RiftLocations
+			.GetLocationsForWorld(worldId)
+			.Where(location => location.AutoCloseable && (guards ? location.HasSpawns : !location.HasSpawns))
+			.ToList();
+		if (possibleLocations.Count == 0)
+			return RiftPrepareOpeningResult.NotOpened(RiftPrepareOpeningStatus.NoLocations);
+
+		var maxCount = guards
+			? 1
+			: worldId is 210050000 or 220070000
+				? 3
+				: 4;
+		var count = _randomInclusive(1, maxCount);
+		if (count < 1)
+			count = 1;
+		while (possibleLocations.Count > count)
+		{
+			var index = _randomInclusive(0, possibleLocations.Count - 1);
+			if (index < 0 || index >= possibleLocations.Count)
+				index = 0;
+			possibleLocations.RemoveAt(index);
+		}
+
+		var opened = new List<RiftLocationState>();
+		var spawnResults = new List<RiftSpawnResult>();
+		foreach (var location in possibleLocations)
+		{
+			var result = OpenRifts(location.Id, guards);
+			if (!result.Succeeded)
+				continue;
+
+			opened.AddRange(result.Locations);
+			spawnResults.AddRange(result.SpawnResults);
+		}
+
+		return opened.Count == 0
+			? RiftPrepareOpeningResult.NotOpened(RiftPrepareOpeningStatus.AlreadyOpen)
+			: RiftPrepareOpeningResult.Opened(opened, spawnResults);
 	}
 
 	public bool UpdateSpawned(int oldObjectId, WorldNpc respawn)
@@ -437,4 +493,36 @@ public enum RiftServiceStatus
 	MissingStaticData,
 	AlreadyOpen,
 	NotOpen,
+}
+
+public sealed record RiftPrepareOpeningResult(
+	bool Succeeded,
+	RiftPrepareOpeningStatus Status,
+	IReadOnlyList<RiftLocationState> Locations,
+	IReadOnlyList<RiftSpawnResult> SpawnResults)
+{
+	public static RiftPrepareOpeningResult Opened(
+		IReadOnlyList<RiftLocationState> locations,
+		IReadOnlyList<RiftSpawnResult> spawnResults)
+	{
+		return new RiftPrepareOpeningResult(true, RiftPrepareOpeningStatus.Opened, locations, spawnResults);
+	}
+
+	public static RiftPrepareOpeningResult NotOpened(RiftPrepareOpeningStatus status)
+	{
+		return new RiftPrepareOpeningResult(
+			false,
+			status,
+			Array.Empty<RiftLocationState>(),
+			Array.Empty<RiftSpawnResult>());
+	}
+}
+
+public enum RiftPrepareOpeningStatus
+{
+	Opened,
+	SkippedByRandom,
+	NoLocations,
+	AlreadyOpen,
+	MissingStaticData,
 }
