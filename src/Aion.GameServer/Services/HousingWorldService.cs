@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Aion.GameServer.Data;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
@@ -16,7 +17,9 @@ public sealed class HousingWorldService : GameEngine
 	private readonly GameWorld _world;
 	private readonly IHouseDoorStateService? _houseDoorStateService;
 	private readonly ILogger<HousingWorldService> _logger;
+	private readonly ConcurrentDictionary<int, WorldHouse> _studiosByOwnerObjectId = new();
 	private int _loadedCount;
+	private int _loadedStudioCount;
 
 	public HousingWorldService(
 		IHousingRepository housingRepository,
@@ -38,6 +41,8 @@ public sealed class HousingWorldService : GameEngine
 
 	public int LoadedCount => Volatile.Read(ref _loadedCount);
 
+	public int LoadedStudioCount => Volatile.Read(ref _loadedStudioCount);
+
 	public async ValueTask InitAsync(CancellationToken cancellationToken = default)
 	{
 		// Java parity: services/HousingService constructor loads persistent houses before maps spawn them.
@@ -50,6 +55,7 @@ public sealed class HousingWorldService : GameEngine
 		}
 
 		await LoadWorldHousesAsync(housingTemplates, housingObjectTemplates, cancellationToken);
+		await LoadWorldStudiosAsync(housingTemplates, housingObjectTemplates, cancellationToken);
 	}
 
 	public async Task<int> LoadWorldHousesAsync(
@@ -74,6 +80,46 @@ public sealed class HousingWorldService : GameEngine
 			persistentHouses.Count,
 			houses.Count - persistentHouses.Count);
 		return houses.Count;
+	}
+
+	public async Task<int> LoadWorldStudiosAsync(
+		HousingTemplateTable housingTemplates,
+		HousingObjectTemplateTable? housingObjectTemplates = null,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: services/HousingService constructor keeps PERSONAL_INS studios in a separate owner-keyed map.
+		var persistentStudios = await _housingRepository.LoadWorldStudiosAsync(housingTemplates, cancellationToken);
+		var studios = ValidatePersistentWorldStudios(persistentStudios, housingTemplates);
+		if (housingObjectTemplates != null)
+			studios = await AttachRegistriesAsync(studios, housingTemplates, housingObjectTemplates, cancellationToken);
+
+		_studiosByOwnerObjectId.Clear();
+		foreach (var studio in studios)
+			_studiosByOwnerObjectId[studio.OwnerObjectId] = studio;
+
+		Volatile.Write(ref _loadedStudioCount, _studiosByOwnerObjectId.Count);
+		_logger.LogInformation("Loaded {StudioCount} studios into owner-keyed housing cache", _studiosByOwnerObjectId.Count);
+		return _studiosByOwnerObjectId.Count;
+	}
+
+	public bool TryGetPlayerStudio(int playerObjectId, out WorldHouse? studio)
+	{
+		// Java parity: services/HousingService.getPlayerStudio.
+		return _studiosByOwnerObjectId.TryGetValue(playerObjectId, out studio);
+	}
+
+	public bool TrySpawnStudio(int playerObjectId, int worldId, out WorldHouse? studio)
+	{
+		// Java parity: services/HousingService.spawnStudio spawns the owner studio only for the matching studio world.
+		if (!TryGetPlayerStudio(playerObjectId, out studio) || studio == null || studio.Position.WorldId != worldId)
+		{
+			studio = null;
+			return false;
+		}
+
+		_world.AddOrUpdateHouse(studio);
+		_houseDoorStateService?.SetHouseDoorState(studio.Position.WorldId, studio.AddressId, studio.DoorState);
+		return true;
 	}
 
 	private async Task<IReadOnlyList<WorldHouse>> AttachRegistriesAsync(
@@ -137,6 +183,52 @@ public sealed class HousingWorldService : GameEngine
 		return houses;
 	}
 
+	private IReadOnlyList<WorldHouse> ValidatePersistentWorldStudios(
+		IReadOnlyList<WorldHouse> persistentStudios,
+		HousingTemplateTable housingTemplates)
+	{
+		// Java parity: dao/HousesDAO.loadHouses(..., true) keys studios by owner, not by shared studio address.
+		var studios = new List<WorldHouse>();
+		var knownOwners = new HashSet<int>();
+		foreach (var studio in persistentStudios)
+		{
+			if (studio.OwnerObjectId <= 0)
+			{
+				_logger.LogWarning("Skipping studio {HouseObjectId} without an owner", studio.ObjectId);
+				continue;
+			}
+
+			var address = housingTemplates.GetAddress(studio.AddressId);
+			if (address == null)
+			{
+				_logger.LogWarning("Skipping DB studio {HouseObjectId} with unknown address {AddressId}", studio.ObjectId, studio.AddressId);
+				continue;
+			}
+
+			if (!string.Equals(address.DefaultBuildingType, "PERSONAL_INS", StringComparison.OrdinalIgnoreCase))
+			{
+				_logger.LogWarning("Skipping DB studio {HouseObjectId} with non-studio address {AddressId}", studio.ObjectId, studio.AddressId);
+				continue;
+			}
+
+			if (housingTemplates.GetBuilding(studio.BuildingId) == null)
+			{
+				_logger.LogWarning("Skipping DB studio {HouseObjectId} with unknown building {BuildingId}", studio.ObjectId, studio.BuildingId);
+				continue;
+			}
+
+			if (!knownOwners.Add(studio.OwnerObjectId))
+			{
+				_logger.LogWarning("Skipping duplicate DB studio owner {OwnerObjectId} for house {HouseObjectId}", studio.OwnerObjectId, studio.ObjectId);
+				continue;
+			}
+
+			studios.Add(studio);
+		}
+
+		return studios;
+	}
+
 	private IReadOnlyList<WorldHouse> AddMissingUnownedCustomHouses(
 		IReadOnlyList<WorldHouse> persistentHouses,
 		HousingTemplateTable housingTemplates)
@@ -163,6 +255,8 @@ public sealed class HousingWorldService : GameEngine
 	{
 		// Java parity: House persistence is still handled by the existing settings/rent writes until periodic House.save is ported.
 		Volatile.Write(ref _loadedCount, 0);
+		Volatile.Write(ref _loadedStudioCount, 0);
+		_studiosByOwnerObjectId.Clear();
 		return ValueTask.CompletedTask;
 	}
 }

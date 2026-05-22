@@ -11,6 +11,8 @@ public interface IHousingRepository
 {
 	Task<IReadOnlyList<WorldHouse>> LoadWorldHousesAsync(HousingTemplateTable housingTemplates, CancellationToken cancellationToken = default);
 
+	Task<IReadOnlyList<WorldHouse>> LoadWorldStudiosAsync(HousingTemplateTable housingTemplates, CancellationToken cancellationToken = default);
+
 	Task<HouseRegistrySummary> LoadHouseRegistryAsync(
 		int playerObjectId,
 		int buildingId,
@@ -70,6 +72,11 @@ public interface IHousingRepository
 public sealed class EmptyHousingRepository : IHousingRepository
 {
 	public Task<IReadOnlyList<WorldHouse>> LoadWorldHousesAsync(HousingTemplateTable housingTemplates, CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult<IReadOnlyList<WorldHouse>>(Array.Empty<WorldHouse>());
+	}
+
+	public Task<IReadOnlyList<WorldHouse>> LoadWorldStudiosAsync(HousingTemplateTable housingTemplates, CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult<IReadOnlyList<WorldHouse>>(Array.Empty<WorldHouse>());
 	}
@@ -163,7 +170,22 @@ public sealed class MySqlHousingRepository : IHousingRepository
 		_logger = logger;
 	}
 
-	public async Task<IReadOnlyList<WorldHouse>> LoadWorldHousesAsync(HousingTemplateTable housingTemplates, CancellationToken cancellationToken = default)
+	public Task<IReadOnlyList<WorldHouse>> LoadWorldHousesAsync(HousingTemplateTable housingTemplates, CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/HousesDAO.loadHouses(..., false) excludes studio addresses.
+		return LoadWorldHouseRowsAsync(housingTemplates, studios: false, cancellationToken);
+	}
+
+	public Task<IReadOnlyList<WorldHouse>> LoadWorldStudiosAsync(HousingTemplateTable housingTemplates, CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/HousesDAO.loadHouses(..., true) loads studio addresses into the owner-keyed studio map.
+		return LoadWorldHouseRowsAsync(housingTemplates, studios: true, cancellationToken);
+	}
+
+	private async Task<IReadOnlyList<WorldHouse>> LoadWorldHouseRowsAsync(
+		HousingTemplateTable housingTemplates,
+		bool studios,
+		CancellationToken cancellationToken)
 	{
 		// Java parity: dao/HousesDAO.loadHouses plus services/HousingService.updateInactiveStateForAllHouses for spawned custom houses.
 		try
@@ -185,9 +207,12 @@ public sealed class MySqlHousingRepository : IHousingRepository
 					LEFT JOIN legion_members lm ON lm.player_id = p.id
 					LEFT JOIN legions l ON l.id = lm.legion_id
 					LEFT JOIN legion_emblems le ON le.legion_id = lm.legion_id
-				WHERE h.address <> 2001 AND h.address <> 3001
+				WHERE __HOUSE_ADDRESS_FILTER__
 				ORDER BY h.player_id, h.acquire_time, h.address
-				""";
+				""".Replace(
+				"__HOUSE_ADDRESS_FILTER__",
+				studios ? "h.address = 2001 OR h.address = 3001" : "h.address <> 2001 AND h.address <> 3001",
+				StringComparison.Ordinal);
 
 			var rows = new List<HouseRow>();
 			await using var reader = await command.ExecuteReaderAsync(cancellationToken);
@@ -217,14 +242,17 @@ public sealed class MySqlHousingRepository : IHousingRepository
 			await RevokeDeletedOwnerHousesAsync(connection, rows, housingTemplates, _logger, cancellationToken);
 			var effectiveRows = rows.Select(row => row.WithDeletedOwnerRevoked(housingTemplates)).ToArray();
 
-			return effectiveRows
+			var visibleRows = studios
+				? effectiveRows.Where(row => row.OwnerObjectId > 0)
+				: effectiveRows;
+			return visibleRows
 				.GroupBy(row => row.OwnerObjectId)
 				.SelectMany(group => CreateWorldHouses(group, housingTemplates))
 				.ToArray();
 		}
 		catch (Exception ex)
 		{
-			_logger.LogError(ex, "Could not load world houses");
+			_logger.LogError(ex, "Could not load world {HouseKind}", studios ? "studios" : "houses");
 			return Array.Empty<WorldHouse>();
 		}
 	}

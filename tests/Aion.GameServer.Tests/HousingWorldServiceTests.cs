@@ -260,6 +260,122 @@ public sealed class HousingWorldServiceTests
 		Assert.DoesNotContain(world.GetHouses(), house => house.AddressId == 2001);
 	}
 
+	[Fact]
+	public async Task LoadWorldStudiosAsync_CachesStudiosByOwnerWithoutSpawningThem()
+	{
+		var templates = CreateStudioTemplates();
+		var studio = CreateStudio(ownerObjectId: 1001, objectId: 6001);
+		var repository = new CapturingHousingRepository([]) { Studios = [studio] };
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var service = new HousingWorldService(
+			repository,
+			new IDFactory([studio.ObjectId]),
+			new GameServerRuntimeContext(),
+			world,
+			NullLogger<HousingWorldService>.Instance);
+
+		var loaded = await service.LoadWorldStudiosAsync(templates);
+
+		Assert.Equal(1, loaded);
+		Assert.Equal(1, service.LoadedStudioCount);
+		Assert.True(service.TryGetPlayerStudio(1001, out var cachedStudio));
+		Assert.Same(studio, cachedStudio);
+		Assert.Empty(world.GetHouses());
+		Assert.False(world.TryGetObject(studio.ObjectId, out _));
+	}
+
+	[Fact]
+	public async Task TrySpawnStudio_StoresCachedStudioOnlyForMatchingWorld()
+	{
+		var templates = CreateStudioTemplates();
+		var studio = CreateStudio(ownerObjectId: 1001, objectId: 6001);
+		var repository = new CapturingHousingRepository([]) { Studios = [studio] };
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var doorStates = new HouseDoorStateService();
+		var service = new HousingWorldService(
+			repository,
+			new IDFactory([studio.ObjectId]),
+			new GameServerRuntimeContext(),
+			world,
+			NullLogger<HousingWorldService>.Instance,
+			doorStates);
+		await service.LoadWorldStudiosAsync(templates);
+
+		var wrongWorld = service.TrySpawnStudio(1001, 210010000, out var missingStudio);
+		var spawned = service.TrySpawnStudio(1001, 720010000, out var spawnedStudio);
+
+		Assert.False(wrongWorld);
+		Assert.Null(missingStudio);
+		Assert.True(spawned);
+		Assert.Same(studio, spawnedStudio);
+		Assert.True(world.TryGetObject(studio.ObjectId, out var stored));
+		Assert.Same(studio, stored);
+		Assert.Equal(PlayerHouse.DoorOpen, doorStates.GetHouseDoorState(720010000, studio.AddressId));
+	}
+
+	[Fact]
+	public async Task LoadWorldStudiosAsync_AllowsSharedStudioAddressForDifferentOwners()
+	{
+		var templates = CreateStudioTemplates();
+		var firstStudio = CreateStudio(ownerObjectId: 1001, objectId: 6001);
+		var secondStudio = CreateStudio(ownerObjectId: 1002, objectId: 6002);
+		var repository = new CapturingHousingRepository([]) { Studios = [firstStudio, secondStudio] };
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var service = new HousingWorldService(
+			repository,
+			new IDFactory([firstStudio.ObjectId, secondStudio.ObjectId]),
+			new GameServerRuntimeContext(),
+			world,
+			NullLogger<HousingWorldService>.Instance);
+
+		var loaded = await service.LoadWorldStudiosAsync(templates);
+
+		Assert.Equal(2, loaded);
+		Assert.True(service.TryGetPlayerStudio(1001, out var cachedFirst));
+		Assert.True(service.TryGetPlayerStudio(1002, out var cachedSecond));
+		Assert.Same(firstStudio, cachedFirst);
+		Assert.Same(secondStudio, cachedSecond);
+	}
+
+	private static HousingTemplateTable CreateStudioTemplates()
+	{
+		return new HousingTemplateTable(
+			[new HousingAddressSummary(
+				2001,
+				2,
+				798001,
+				MapId: 720010000,
+				X: 70,
+				Y: 80,
+				Z: 90,
+				DefaultBuildingId: 735001,
+				DefaultBuildingType: "PERSONAL_INS")],
+			[new HousingBuildingSummary(735001, "STUDIO", 0, "PERSONAL_INS")]);
+	}
+
+	private static WorldHouse CreateStudio(int ownerObjectId, int objectId)
+	{
+		return new WorldHouse(
+			objectId,
+			2001,
+			735001,
+			ownerObjectId,
+			$"Owner{ownerObjectId}",
+			0,
+			string.Empty,
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
+			false,
+			PlayerHouse.DoorOpen,
+			true,
+			null,
+			new WorldPosition(720010000, 70, 80, 90, 0));
+	}
+
 	private sealed class CapturingHousingRepository : IHousingRepository
 	{
 		private readonly IReadOnlyList<WorldHouse> _houses;
@@ -273,6 +389,8 @@ public sealed class HousingWorldServiceTests
 
 		public HouseRegistrySummary Registry { get; init; } = HouseRegistrySummary.Empty;
 
+		public IReadOnlyList<WorldHouse> Studios { get; init; } = Array.Empty<WorldHouse>();
+
 		public int RegistryPlayerObjectId { get; private set; }
 
 		public int RegistryBuildingId { get; private set; }
@@ -285,6 +403,12 @@ public sealed class HousingWorldServiceTests
 		{
 			Templates = housingTemplates;
 			return Task.FromResult(_houses);
+		}
+
+		public Task<IReadOnlyList<WorldHouse>> LoadWorldStudiosAsync(HousingTemplateTable housingTemplates, CancellationToken cancellationToken = default)
+		{
+			Templates = housingTemplates;
+			return Task.FromResult(Studios);
 		}
 
 		public Task<HouseRegistrySummary> LoadHouseRegistryAsync(
