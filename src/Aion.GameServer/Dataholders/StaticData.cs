@@ -14,6 +14,7 @@ public sealed class StaticData
 		IReadOnlyList<WorldMapSummary> worldMaps,
 		PlayerExperienceTable playerExperienceTable,
 		ItemTemplateTable itemTemplates,
+		RideTable rideInfos,
 		ItemRandomBonusTable itemRandomBonuses,
 		ItemSetTable itemSets,
 		EnchantTable enchantTemplates,
@@ -35,6 +36,7 @@ public sealed class StaticData
 		WorldMaps = worldMaps;
 		PlayerExperienceTable = playerExperienceTable;
 		ItemTemplates = itemTemplates;
+		RideInfos = rideInfos;
 		ItemRandomBonuses = itemRandomBonuses;
 		ItemSets = itemSets;
 		EnchantTemplates = enchantTemplates;
@@ -65,6 +67,8 @@ public sealed class StaticData
 	public PlayerExperienceTable PlayerExperienceTable { get; }
 
 	public ItemTemplateTable ItemTemplates { get; }
+
+	public RideTable RideInfos { get; }
 
 	public ItemRandomBonusTable ItemRandomBonuses { get; }
 
@@ -109,6 +113,7 @@ public sealed class StaticData
 		var worldMaps = new List<WorldMapSummary>();
 		var experience = new List<long>();
 		var itemTemplates = new List<ItemTemplateSummary>();
+		var rideInfos = new List<RideInfoSummary>();
 		var itemRandomBonuses = new List<ItemRandomBonusSummary>();
 		var itemSets = new List<ItemSetSummary>();
 		var enchantGroups = new List<EnchantGroupSummary>();
@@ -445,6 +450,20 @@ public sealed class StaticData
 					ReadIntAttribute(reader, "attack_range"),
 					ReadIntAttribute(reader, "hit_count"),
 					ReadIntAttribute(reader, "reduce_max"));
+				continue;
+			}
+
+			if (reader.LocalName == "ride_info")
+			{
+				rideInfos.Add(
+					new RideInfoSummary(
+						ReadRequiredIntAttribute(reader, "id"),
+						ReadIntAttribute(reader, "type"),
+						ReadFloatAttribute(reader, "move_speed"),
+						ReadFloatAttribute(reader, "fly_speed"),
+						ReadFloatAttribute(reader, "sprint_speed"),
+						ReadIntAttribute(reader, "start_fp"),
+						ReadIntAttribute(reader, "cost_fp")));
 				continue;
 			}
 
@@ -840,6 +859,7 @@ public sealed class StaticData
 			worldMaps.AsReadOnly(),
 			new PlayerExperienceTable(experience.AsReadOnly()),
 			new ItemTemplateTable(itemTemplates.AsReadOnly(), learnableEmotionIds),
+			new RideTable(rideInfos.AsReadOnly()),
 			new ItemRandomBonusTable(itemRandomBonuses.AsReadOnly()),
 			new ItemSetTable(itemSets.AsReadOnly()),
 			new EnchantTable(enchantGroups.AsReadOnly()),

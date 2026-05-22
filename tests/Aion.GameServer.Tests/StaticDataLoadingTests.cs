@@ -119,6 +119,7 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(staticData.GetElementCount("skill_template"), staticData.SkillTemplates.Count);
 		Assert.Equal(300, staticData.TitleTemplates.Count);
 		Assert.Equal(staticData.GetElementCount("recipe_template"), staticData.RecipeTemplates.Count);
+		Assert.Equal(staticData.GetElementCount("ride_info"), staticData.RideInfos.Count);
 		Assert.Equal(staticData.GetElementCount("random_bonus"), staticData.ItemRandomBonuses.Count);
 		Assert.Equal(staticData.GetElementCount("itemset"), staticData.ItemSets.Count);
 		Assert.Equal(staticData.GetElementCount("enchant_list"), staticData.EnchantTemplates.Count);
@@ -143,6 +144,15 @@ public sealed class StaticDataLoadingTests
 		Assert.True(staticData.ItemTemplates.IsLearnableEmotion(64));
 		Assert.True(staticData.ItemTemplates.IsLearnableEmotion(155));
 		Assert.False(staticData.ItemTemplates.IsLearnableEmotion(140));
+		var sprintRide = staticData.RideInfos.GetRideInfo(2000000);
+		Assert.NotNull(sprintRide);
+		Assert.Equal(12.0f, sprintRide.MoveSpeed);
+		Assert.Equal(16.0f, sprintRide.FlySpeed);
+		Assert.Equal(15.0f, sprintRide.SprintSpeed);
+		Assert.Equal(10, sprintRide.StartFp);
+		Assert.Equal(10, sprintRide.CostFp);
+		Assert.True(sprintRide.CanSprint());
+		Assert.False(staticData.RideInfos.GetRideInfo(2000010)?.CanSprint());
 		Assert.Equal(1, staticData.ItemTemplates.GetItemTemplate(100000714)?.EnchantType);
 		Assert.Equal(15, staticData.ItemTemplates.GetItemTemplate(100100860)?.MaxEnchantLevel);
 		Assert.True(staticData.ItemTemplates.GetItemTemplate(100100860)?.CanExceedEnchant);
