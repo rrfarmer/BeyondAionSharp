@@ -3623,8 +3623,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			case EmotionType.Sit:
 				if (player.IsInState(PlayerCreatureState.PrivateShop))
 					return;
-				player.IsInRideMode = false;
-				player.RideInfo = null;
+				if (player.IsInRideMode)
+					await DismountRideAsync(player);
 				player.SetCreatureState(PlayerCreatureState.Resting, enabled: true);
 				break;
 			case EmotionType.Stand:
