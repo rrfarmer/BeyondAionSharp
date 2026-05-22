@@ -391,6 +391,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1401211, stateName);
 	}
 
+	public static SmSystemMessage ItemRestrictionRide()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ITEM_RESTRICTION_RIDE.
+		return new SmSystemMessage(1401094);
+	}
+
 	public static SmSystemMessage UnrideAbnormalState()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_UNRIDE_ABNORMAL_STATE.

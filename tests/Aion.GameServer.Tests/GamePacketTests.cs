@@ -616,6 +616,7 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.WarehouseCantExtendMore(), 1300432);
 		AssertSystemMessage(SmSystemMessage.WarehouseSizeExtended(8), 1300433, "8");
 		AssertSystemMessage(SmSystemMessage.CannotRide(ChatUtil.L10n(1400057)), 1401211, ChatUtil.L10n(1400057));
+		AssertSystemMessage(SmSystemMessage.ItemRestrictionRide(), 1401094);
 		AssertSystemMessage(SmSystemMessage.UnrideAbnormalState(), 1401254);
 		AssertSystemMessage(SmSystemMessage.CannotRideAbnormalState(), 1401255);
 		AssertSystemMessage(SmSystemMessage.RecipeItemCannotUseNoRecipe(), 1300621);
@@ -3069,6 +3070,36 @@ public class GamePacketTests
 		Assert.Equal(0, untargetedUseItem.Type);
 		Assert.Equal(0, untargetedUseItem.TargetItemObjectId);
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(37, _ => { }), GameConnectionState.Authed));
+	}
+
+	[Fact]
+	public void ClientPacketFactory_ParsesAppearancePackets()
+	{
+		var cosmetic = Assert.IsType<CmAppearance>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(197, b =>
+			{
+				b.WriteC(2);
+				b.WriteC(0);
+				b.WriteH(0);
+				b.WriteD(9001);
+			}), GameConnectionState.InGame));
+		var rename = Assert.IsType<CmAppearance>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(197, b =>
+			{
+				b.WriteC(0);
+				b.WriteC(0);
+				b.WriteH(0);
+				b.WriteD(9002);
+				b.WriteS("Newname");
+			}), GameConnectionState.InGame));
+
+		Assert.Equal(2, (int)cosmetic.Type);
+		Assert.Equal(9001, cosmetic.ItemObjectId);
+		Assert.Equal(string.Empty, cosmetic.NewName);
+		Assert.Equal(0, (int)rename.Type);
+		Assert.Equal(9002, rename.ItemObjectId);
+		Assert.Equal("Newname", rename.NewName);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(197, _ => { }), GameConnectionState.Authed));
 	}
 
 	[Fact]

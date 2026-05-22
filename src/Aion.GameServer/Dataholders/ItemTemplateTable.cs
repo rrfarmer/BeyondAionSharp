@@ -93,7 +93,8 @@ public sealed record ItemTemplateSummary(
 	bool HasTitleAddMinutes = false,
 	ItemExpandInventoryActionInfo? ExpandInventoryAction = null,
 	ItemDyeActionInfo? DyeAction = null,
-	ItemAnimationActionInfo? AnimationAction = null)
+	ItemAnimationActionInfo? AnimationAction = null,
+	string CosmeticActionName = "")
 {
 	private const int CanPolishMask = 1 << 17;
 	private const int SoulBoundMask = 1 << 7;

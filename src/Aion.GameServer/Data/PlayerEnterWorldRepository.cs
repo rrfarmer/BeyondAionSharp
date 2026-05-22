@@ -95,6 +95,12 @@ public interface IPlayerEnterWorldRepository
 		int? deletedSourceItemObjectId,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveCosmeticItemActionMutationAsync(
+		int playerObjectId,
+		CharacterAppearance appearance,
+		int deletedItemObjectId,
+		CancellationToken cancellationToken = default);
+
 	Task<IReadOnlyList<PlayerMacro>> LoadPlayerMacrosAsync(int playerObjectId, CancellationToken cancellationToken = default);
 
 	Task<bool> SavePlayerMacroAsync(int playerObjectId, PlayerMacro macro, CancellationToken cancellationToken = default);
@@ -364,6 +370,15 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		IReadOnlyList<int> deactivatedMotionIds,
 		InventoryItem? sourceItemUpdate,
 		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> SaveCosmeticItemActionMutationAsync(
+		int playerObjectId,
+		CharacterAppearance appearance,
+		int deletedItemObjectId,
 		CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(true);
@@ -1320,6 +1335,88 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 		await ReplacePlayerSettingAsync(connection, playerObjectId, -1, settings.Display, cancellationToken);
 		await ReplacePlayerSettingAsync(connection, playerObjectId, -2, settings.Deny, cancellationToken);
+	}
+
+	private static async Task SavePlayerAppearanceAsync(
+		MySqlConnection connection,
+		MySqlTransaction transaction,
+		int playerObjectId,
+		CharacterAppearance appearance,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: dao/PlayerAppearanceDAO.store.
+		await using var command = connection.CreateCommand();
+		command.Transaction = transaction;
+		command.CommandText = """
+			REPLACE INTO player_appearance (
+				player_id, face, hair, deco, tattoo, face_contour, expression, jaw_line, skin_rgb, hair_rgb, lip_rgb, eye_rgb,
+				face_shape, forehead, eye_height, eye_space, eye_width, eye_size, eye_shape, eye_angle,
+				brow_height, brow_angle, brow_shape, nose, nose_bridge, nose_width, nose_tip, cheek, lip_height, mouth_size,
+				lip_size, smile, lip_shape, jaw_height, chin_jut, ear_shape, head_size, neck, neck_length, shoulders,
+				shoulder_size, torso, chest, waist, hips, arm_thickness, arm_length, hand_size, leg_thickness, leg_length,
+				foot_size, facial_rate, voice, height)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+				?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			""";
+		command.Parameters.AddRange(
+			new[]
+			{
+				new MySqlParameter { Value = playerObjectId },
+				new MySqlParameter { Value = appearance.Face },
+				new MySqlParameter { Value = appearance.Hair },
+				new MySqlParameter { Value = appearance.Deco },
+				new MySqlParameter { Value = appearance.Tattoo },
+				new MySqlParameter { Value = appearance.FaceContour },
+				new MySqlParameter { Value = appearance.Expression },
+				new MySqlParameter { Value = appearance.JawLine },
+				new MySqlParameter { Value = appearance.SkinRgb },
+				new MySqlParameter { Value = appearance.HairRgb },
+				new MySqlParameter { Value = appearance.LipRgb },
+				new MySqlParameter { Value = appearance.EyeRgb },
+				new MySqlParameter { Value = appearance.FaceShape },
+				new MySqlParameter { Value = appearance.Forehead },
+				new MySqlParameter { Value = appearance.EyeHeight },
+				new MySqlParameter { Value = appearance.EyeSpace },
+				new MySqlParameter { Value = appearance.EyeWidth },
+				new MySqlParameter { Value = appearance.EyeSize },
+				new MySqlParameter { Value = appearance.EyeShape },
+				new MySqlParameter { Value = appearance.EyeAngle },
+				new MySqlParameter { Value = appearance.BrowHeight },
+				new MySqlParameter { Value = appearance.BrowAngle },
+				new MySqlParameter { Value = appearance.BrowShape },
+				new MySqlParameter { Value = appearance.Nose },
+				new MySqlParameter { Value = appearance.NoseBridge },
+				new MySqlParameter { Value = appearance.NoseWidth },
+				new MySqlParameter { Value = appearance.NoseTip },
+				new MySqlParameter { Value = appearance.Cheek },
+				new MySqlParameter { Value = appearance.LipHeight },
+				new MySqlParameter { Value = appearance.MouthSize },
+				new MySqlParameter { Value = appearance.LipSize },
+				new MySqlParameter { Value = appearance.Smile },
+				new MySqlParameter { Value = appearance.LipShape },
+				new MySqlParameter { Value = appearance.JawHeight },
+				new MySqlParameter { Value = appearance.ChinJut },
+				new MySqlParameter { Value = appearance.EarShape },
+				new MySqlParameter { Value = appearance.HeadSize },
+				new MySqlParameter { Value = appearance.Neck },
+				new MySqlParameter { Value = appearance.NeckLength },
+				new MySqlParameter { Value = appearance.Shoulders },
+				new MySqlParameter { Value = appearance.ShoulderSize },
+				new MySqlParameter { Value = appearance.Torso },
+				new MySqlParameter { Value = appearance.Chest },
+				new MySqlParameter { Value = appearance.Waist },
+				new MySqlParameter { Value = appearance.Hips },
+				new MySqlParameter { Value = appearance.ArmThickness },
+				new MySqlParameter { Value = appearance.ArmLength },
+				new MySqlParameter { Value = appearance.HandSize },
+				new MySqlParameter { Value = appearance.LegThickness },
+				new MySqlParameter { Value = appearance.LegLength },
+				new MySqlParameter { Value = appearance.FootSize },
+				new MySqlParameter { Value = appearance.FacialRate },
+				new MySqlParameter { Value = appearance.Voice },
+				new MySqlParameter { Value = appearance.Height },
+			});
+		await command.ExecuteNonQueryAsync(cancellationToken);
 	}
 
 	private static async Task ReplacePlayerSettingAsync(
@@ -2532,6 +2629,33 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not save animation-add action for player {PlayerObjectId}", playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SaveCosmeticItemActionMutationAsync(
+		int playerObjectId,
+		CharacterAppearance appearance,
+		int deletedItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: CosmeticItemAction.act -> PlayerAppearanceDAO.store + Inventory.delete(targetItem).
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			await SavePlayerAppearanceAsync(connection, transaction, playerObjectId, appearance, cancellationToken);
+			if (!await DeleteInventoryItemAsync(connection, transaction, playerObjectId, deletedItemObjectId, cancellationToken))
+				return false;
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save cosmetic item action for player {PlayerObjectId}", playerObjectId);
 			return false;
 		}
 	}

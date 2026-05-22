@@ -451,6 +451,12 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public int? AnimationDeletedSourceItemObjectId { get; private set; }
 
+		public int SaveCosmeticItemActionMutationCalls { get; private set; }
+
+		public Aion.GameServer.Model.Account.CharacterAppearance? CosmeticAppearance { get; private set; }
+
+		public int CosmeticDeletedItemObjectId { get; private set; }
+
 		public int SaveItemChargeMutationCalls { get; private set; }
 
 		public InventoryItem? ChargedItem { get; private set; }
@@ -695,6 +701,18 @@ public sealed class PlayerEnterWorldServiceTests
 			AnimationDeactivatedMotionIds = deactivatedMotionIds;
 			AnimationSourceItemUpdate = sourceItemUpdate;
 			AnimationDeletedSourceItemObjectId = deletedSourceItemObjectId;
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> SaveCosmeticItemActionMutationAsync(
+			int playerObjectId,
+			Aion.GameServer.Model.Account.CharacterAppearance appearance,
+			int deletedItemObjectId,
+			CancellationToken cancellationToken = default)
+		{
+			SaveCosmeticItemActionMutationCalls++;
+			CosmeticAppearance = appearance;
+			CosmeticDeletedItemObjectId = deletedItemObjectId;
 			return Task.FromResult(true);
 		}
 

@@ -277,6 +277,19 @@ public sealed class PlayerEnterWorldService
 			cancellationToken);
 	}
 
+	public Task<bool> SaveCosmeticItemActionMutationAsync(
+		Player player,
+		Model.Account.CharacterAppearance appearance,
+		int deletedItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		return _repository.SaveCosmeticItemActionMutationAsync(
+			player.ObjectId,
+			appearance,
+			deletedItemObjectId,
+			cancellationToken);
+	}
+
 	public Task<bool> SaveItemChargeMutationAsync(
 		Player player,
 		InventoryItem chargedItem,

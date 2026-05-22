@@ -14,6 +14,7 @@ public sealed class StaticData
 		IReadOnlyList<WorldMapSummary> worldMaps,
 		PlayerExperienceTable playerExperienceTable,
 		ItemTemplateTable itemTemplates,
+		CosmeticItemTable cosmeticItems,
 		RideTable rideInfos,
 		ItemRandomBonusTable itemRandomBonuses,
 		ItemSetTable itemSets,
@@ -36,6 +37,7 @@ public sealed class StaticData
 		WorldMaps = worldMaps;
 		PlayerExperienceTable = playerExperienceTable;
 		ItemTemplates = itemTemplates;
+		CosmeticItems = cosmeticItems;
 		RideInfos = rideInfos;
 		ItemRandomBonuses = itemRandomBonuses;
 		ItemSets = itemSets;
@@ -67,6 +69,8 @@ public sealed class StaticData
 	public PlayerExperienceTable PlayerExperienceTable { get; }
 
 	public ItemTemplateTable ItemTemplates { get; }
+
+	public CosmeticItemTable CosmeticItems { get; }
 
 	public RideTable RideInfos { get; }
 
@@ -113,6 +117,7 @@ public sealed class StaticData
 		var worldMaps = new List<WorldMapSummary>();
 		var experience = new List<long>();
 		var itemTemplates = new List<ItemTemplateSummary>();
+		var cosmeticItems = new List<CosmeticItemSummary>();
 		var rideInfos = new List<RideInfoSummary>();
 		var itemRandomBonuses = new List<ItemRandomBonusSummary>();
 		var itemSets = new List<ItemSetSummary>();
@@ -141,6 +146,7 @@ public sealed class StaticData
 		NpcTemplateBuilder? currentNpcTemplate = null;
 		SkillTemplateBuilder? currentSkillTemplate = null;
 		TitleTemplateBuilder? currentTitleTemplate = null;
+		CosmeticItemBuilder? currentCosmeticItem = null;
 		int currentHousingLandId = 0;
 		int currentHousingManagerNpcId = 0;
 		var elementPath = new Dictionary<int, string>();
@@ -168,6 +174,12 @@ public sealed class StaticData
 				{
 					itemTemplates.Add(currentItemTemplate.ToSummary());
 					currentItemTemplate = null;
+				}
+
+				if (reader.Depth == 2 && reader.LocalName == "cosmetic_item" && currentCosmeticItem != null)
+				{
+					cosmeticItems.Add(currentCosmeticItem.ToSummary());
+					currentCosmeticItem = null;
 				}
 
 				if (reader.Depth == 2 && reader.LocalName == "random_bonus" && currentItemRandomBonus != null)
@@ -262,6 +274,30 @@ public sealed class StaticData
 					var twinCount = int.TryParse(reader.GetAttribute("twin_count"), out var parsedTwinCount) ? parsedTwinCount : 0;
 					worldMaps.Add(new WorldMapSummary(mapId, isInstance, twinCount));
 				}
+			}
+
+			if (reader.Depth == 2 && reader.LocalName == "cosmetic_item")
+			{
+				currentCosmeticItem = new CosmeticItemBuilder(
+					reader.GetAttribute("type") ?? string.Empty,
+					reader.GetAttribute("cosmetic_name") ?? string.Empty,
+					ReadIntAttribute(reader, "id"),
+					reader.GetAttribute("race") ?? string.Empty,
+					reader.GetAttribute("gender_permitted") ?? string.Empty);
+				if (reader.IsEmptyElement)
+				{
+					cosmeticItems.Add(currentCosmeticItem.ToSummary());
+					currentCosmeticItem = null;
+				}
+				continue;
+			}
+
+			if (reader.Depth == 4 && currentCosmeticItem != null && elementPath.GetValueOrDefault(3) == "preset")
+			{
+				var presetField = reader.LocalName;
+				var value = await ReadElementTextAsync(reader, cancellationToken);
+				currentCosmeticItem.SetPresetValue(presetField, value);
+				continue;
 			}
 
 			if (reader.Depth == 2 && reader.LocalName == "instance_cooltime")
@@ -683,6 +719,13 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 4 && reader.LocalName == "cosmetic" && currentItemTemplate != null)
+			{
+				// Java parity: model/templates/item/actions/CosmeticItemAction cosmetic-name metadata.
+				currentItemTemplate.CosmeticActionName = reader.GetAttribute("name") ?? string.Empty;
+				continue;
+			}
+
 			if (reader.Depth == 4 && reader.LocalName == "titleadd" && currentItemTemplate != null)
 			{
 				// Java parity: model/templates/item/actions/TitleAddAction titleid/minutes metadata.
@@ -926,6 +969,7 @@ public sealed class StaticData
 			worldMaps.AsReadOnly(),
 			new PlayerExperienceTable(experience.AsReadOnly()),
 			new ItemTemplateTable(itemTemplates.AsReadOnly(), learnableEmotionIds),
+			new CosmeticItemTable(cosmeticItems.AsReadOnly()),
 			new RideTable(rideInfos.AsReadOnly()),
 			new ItemRandomBonusTable(itemRandomBonuses.AsReadOnly()),
 			new ItemSetTable(itemSets.AsReadOnly()),
@@ -1476,6 +1520,8 @@ public sealed class StaticData
 
 		public ItemAnimationActionInfo? AnimationAction { get; set; }
 
+		public string CosmeticActionName { get; set; } = string.Empty;
+
 		public int ConditioningMaxLevel { get; set; }
 
 		public int PolishSetId { get; set; }
@@ -1594,7 +1640,8 @@ public sealed class StaticData
 				HasTitleAddMinutes,
 				ExpandInventoryAction,
 				DyeAction,
-				AnimationAction);
+				AnimationAction,
+				CosmeticActionName);
 		}
 
 		private static int CalculateMaxTuneCount(
@@ -1612,6 +1659,92 @@ public sealed class StaticData
 				return 0;
 
 			return maxTuneCount;
+		}
+	}
+
+	private sealed class CosmeticItemBuilder
+	{
+		public CosmeticItemBuilder(string type, string cosmeticName, int id, string race, string genderPermitted)
+		{
+			Type = type;
+			CosmeticName = cosmeticName;
+			Id = id;
+			Race = race;
+			GenderPermitted = genderPermitted;
+		}
+
+		private string Type { get; }
+
+		private string CosmeticName { get; }
+
+		private int Id { get; }
+
+		private string Race { get; }
+
+		private string GenderPermitted { get; }
+
+		private float Scale { get; set; }
+
+		private int HairType { get; set; }
+
+		private int FaceType { get; set; }
+
+		private int HairColor { get; set; }
+
+		private int LipColor { get; set; }
+
+		private int EyeColor { get; set; }
+
+		private int SkinColor { get; set; }
+
+		private bool HasPreset { get; set; }
+
+		public void SetPresetValue(string name, string value)
+		{
+			// Java parity: model/templates/cosmeticitems/CosmeticItemTemplate.Preset JAXB fields.
+			HasPreset = true;
+			switch (name)
+			{
+				case "scale":
+					Scale = float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsedScale) ? parsedScale : 0f;
+					break;
+				case "hair_type":
+					HairType = ParseInt(value);
+					break;
+				case "face_type":
+					FaceType = ParseInt(value);
+					break;
+				case "hair_color":
+					HairColor = ParseInt(value);
+					break;
+				case "lip_color":
+					LipColor = ParseInt(value);
+					break;
+				case "eye_color":
+					EyeColor = ParseInt(value);
+					break;
+				case "skin_color":
+					SkinColor = ParseInt(value);
+					break;
+			}
+		}
+
+		public CosmeticItemSummary ToSummary()
+		{
+			return new CosmeticItemSummary(
+				Type,
+				CosmeticName,
+				Id,
+				Race,
+				GenderPermitted,
+				HasPreset
+					? new CosmeticPresetSummary(Scale, HairType, FaceType, HairColor, LipColor, EyeColor, SkinColor)
+					: null);
+		}
+
+		private static int ParseInt(string value)
+		{
+			return int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed) ? parsed : 0;
 		}
 	}
 

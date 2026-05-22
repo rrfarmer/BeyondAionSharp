@@ -442,6 +442,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleUseItemAsync(_activePlayer, useItem);
 				break;
+			case CmAppearance appearance:
+				if (_activePlayer != null)
+					await HandleAppearanceAsync(_activePlayer, appearance);
+				break;
 			case CmTitleSet titleSet:
 				if (_activePlayer != null)
 					await HandleTitleSetAsync(_activePlayer, titleSet);
@@ -2387,6 +2391,71 @@ public sealed class GameServerConnection : BaseClientConnection
 				break;
 			case EquipmentChangeFailure.SoulBindInvalidStance:
 				await SendPacketAsync(SmSystemMessage.SoulBoundInvalidStance(ChatUtil.L10n(change.SoulBindInvalidStanceL10nId)));
+				break;
+		}
+	}
+
+	private async Task HandleAppearanceAsync(Player player, CmAppearance packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_APPEARANCE.runImpl type 2 cosmetic branch.
+		if (packet.Type != 2)
+		{
+			// Character and legion rename coupons remain deferred until rename/world-cache services are ported.
+			return;
+		}
+
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var itemTemplates = staticData?.ItemTemplates;
+		if (staticData == null || itemTemplates == null)
+			return;
+
+		var inventoryItems = player.InventoryItems.ToList();
+		var sourceItem = inventoryItems.FirstOrDefault(item => item.ObjectId == packet.ItemObjectId && item.Location == CubeStorageId && !item.IsEquipped);
+		if (sourceItem == null)
+			return;
+
+		var sourceTemplate = itemTemplates.GetItemTemplate(sourceItem.ItemId);
+		if (sourceTemplate == null || sourceTemplate.CosmeticActionName.Length == 0)
+			return;
+
+		var cosmeticTemplate = staticData.CosmeticItems.GetCosmeticItemTemplate(sourceTemplate.CosmeticActionName);
+		var plan = CosmeticItemService.CreatePlan(player, cosmeticTemplate);
+		if (!plan.Succeeded)
+		{
+			await SendCosmeticItemFailureAsync(plan.Failure);
+			return;
+		}
+
+		var saved = _playerEnterWorldService == null
+			|| await _playerEnterWorldService.SaveCosmeticItemActionMutationAsync(player, plan.Appearance!, sourceItem.ObjectId);
+		if (!saved)
+			return;
+
+		player.Appearance = plan.Appearance!;
+		inventoryItems.RemoveAll(item => item.ObjectId == sourceItem.ObjectId);
+		player.InventoryItems = inventoryItems.ToArray();
+		await SendPacketAsync(new SmDeleteItem(sourceItem.ObjectId));
+
+		// Java parity: PlayerController.onChangedPlayerAttributes refreshes known-list player attributes after appearance mutation.
+		var playerInfo = new SmPlayerInfo(player, staticData.PlayerExperienceTable);
+		if (_connectionRegistry != null)
+			await _connectionRegistry.BroadcastToVisiblePlayersAsync(player.Position, player.ObjectId, playerInfo, includeSourcePlayer: true);
+		else
+			await SendPacketAsync(playerInfo);
+	}
+
+	private async Task SendCosmeticItemFailureAsync(CosmeticItemFailure failure)
+	{
+		switch (failure)
+		{
+			case CosmeticItemFailure.InvalidRace:
+				await SendPacketAsync(SmSystemMessage.CannotUseItemInvalidRace());
+				break;
+			case CosmeticItemFailure.InvalidGender:
+				await SendPacketAsync(SmSystemMessage.CannotUseItemInvalidGender());
+				break;
+			case CosmeticItemFailure.Ride:
+				await SendPacketAsync(SmSystemMessage.ItemRestrictionRide());
 				break;
 		}
 	}

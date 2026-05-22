@@ -1,4 +1,5 @@
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Model.Account;
 using Aion.GameServer.Services;
 using Aion.GameServer.Dataholders;
 
@@ -207,6 +208,70 @@ public sealed class PlayerStateTests
 		Assert.True(temporaryRemoval.Succeeded);
 		Assert.Null(temporaryRemoval.Color);
 		Assert.Equal(1_300, temporaryRemoval.ColorExpires);
+	}
+
+	[Fact]
+	public void CosmeticItemService_MatchesJavaGuardsAndAppearanceMutation()
+	{
+		var player = new Player
+		{
+			Race = "ELYOS",
+			Gender = "MALE",
+			Appearance = new CharacterAppearance
+			{
+				Face = 3,
+				Hair = 4,
+				SkinRgb = 10,
+				HairRgb = 11,
+				EyeRgb = 12,
+				LipRgb = 13,
+				Voice = 2,
+				Height = 1.2f,
+			},
+		};
+
+		Assert.Equal(CosmeticItemFailure.MissingTemplate, CosmeticItemService.CreatePlan(player, null).Failure);
+		Assert.Equal(
+			CosmeticItemFailure.InvalidRace,
+			CosmeticItemService.CreatePlan(player, new CosmeticItemSummary("hair_type", "wrong_race", 1, "ASMODIANS", "MALE", null)).Failure);
+		Assert.Equal(
+			CosmeticItemFailure.InvalidGender,
+			CosmeticItemService.CreatePlan(player, new CosmeticItemSummary("hair_type", "wrong_gender", 1, "ELYOS", "FEMALE", null)).Failure);
+
+		player.IsInRideMode = true;
+		Assert.Equal(
+			CosmeticItemFailure.Ride,
+			CosmeticItemService.CreatePlan(player, new CosmeticItemSummary("hair_type", "ride", 1, "ELYOS", "MALE", null)).Failure);
+		player.IsInRideMode = false;
+
+		var hairPlan = CosmeticItemService.CreatePlan(player, new CosmeticItemSummary("hair_type", "hair", 21, "ELYOS", "MALE", null));
+
+		Assert.True(hairPlan.Succeeded);
+		Assert.Equal(21, hairPlan.Appearance?.Hair);
+		Assert.Equal(3, hairPlan.Appearance?.Face);
+		Assert.Equal(10, hairPlan.Appearance?.SkinRgb);
+
+		var presetPlan = CosmeticItemService.CreatePlan(
+			player,
+			new CosmeticItemSummary(
+				"preset_name",
+				"preset",
+				0,
+				"ELYOS",
+				"ALL",
+				new CosmeticPresetSummary(1.05f, 6, 7, 100, 101, 102, 103)));
+
+		Assert.True(presetPlan.Succeeded);
+		Assert.Equal(6, presetPlan.Appearance?.Hair);
+		Assert.Equal(7, presetPlan.Appearance?.Face);
+		Assert.Equal(100, presetPlan.Appearance?.HairRgb);
+		Assert.Equal(101, presetPlan.Appearance?.LipRgb);
+		Assert.Equal(102, presetPlan.Appearance?.EyeRgb);
+		Assert.Equal(102, presetPlan.Appearance?.SkinRgb);
+		Assert.Equal(1.05f, presetPlan.Appearance?.Height);
+		Assert.Equal(CosmeticItemFailure.UnsupportedType, CosmeticItemService.CreatePlan(
+			player,
+			new CosmeticItemSummary("unknown", "unknown", 0, "ELYOS", "MALE", null)).Failure);
 	}
 
 	[Fact]
