@@ -273,6 +273,24 @@ public sealed class Player
 		FlightPathType = null;
 	}
 
+	public void StartFlying()
+	{
+		// Java parity: controllers/FlyController.startFly state and FP-reduce side effects.
+		SetCreatureState(PlayerCreatureState.Flying, enabled: true);
+		if (IsInRideMode)
+			SetCreatureState(PlayerCreatureState.FloatingCorpse, enabled: true);
+		TriggerFpReduce();
+	}
+
+	public void EndFlying()
+	{
+		// Java parity: controllers/FlyController.endFly state and FP-restore side effects.
+		SetCreatureState(PlayerCreatureState.Flying, enabled: false);
+		SetCreatureState(PlayerCreatureState.Gliding, enabled: false);
+		SetCreatureState(PlayerCreatureState.FloatingCorpse, enabled: false);
+		TriggerFpRestore();
+	}
+
 	public bool CanStartRideSprint()
 	{
 		// Java parity: CM_EMOTION.START_SPRINT guard using PlayerMode.RIDE, current FP, Player.isFlying, and RideInfo.canSprint.

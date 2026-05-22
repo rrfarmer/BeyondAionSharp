@@ -158,4 +158,29 @@ public sealed class PlayerStateTests
 		Assert.False(transporterPlayer.IsFpReduceActive);
 		Assert.Null(transporterPlayer.FlightPathType);
 	}
+
+	[Fact]
+	public void Player_StartAndEndFlyingMatchJavaFpTaskIntent()
+	{
+		var player = new Player
+		{
+			IsInRideMode = true,
+			CreatureState = PlayerCreatureState.Active,
+		};
+
+		player.StartFlying();
+
+		Assert.True(player.IsInState(PlayerCreatureState.Flying));
+		Assert.True(player.IsInState(PlayerCreatureState.FloatingCorpse));
+		Assert.True(player.IsFpReduceActive);
+		Assert.False(player.IsFpRestoreActive);
+
+		player.EndFlying();
+
+		Assert.False(player.IsInState(PlayerCreatureState.Flying));
+		Assert.False(player.IsInState(PlayerCreatureState.Gliding));
+		Assert.False(player.IsInState(PlayerCreatureState.FloatingCorpse));
+		Assert.False(player.IsFpReduceActive);
+		Assert.True(player.IsFpRestoreActive);
+	}
 }

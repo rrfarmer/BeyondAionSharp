@@ -3544,16 +3544,11 @@ public sealed class GameServerConnection : BaseClientConnection
 				player.CompleteFlyTeleport();
 				break;
 			case EmotionType.Fly:
-				// Java parity: controllers/FlyController.startFly state side effects; zone/fly-time checks remain future controller work.
-				player.SetCreatureState(PlayerCreatureState.Flying, enabled: true);
-				if (player.IsInRideMode)
-					player.SetCreatureState(PlayerCreatureState.FloatingCorpse, enabled: true);
+				// Java parity: controllers/FlyController.startFly baseline state/FP side effects; zone/cooldown checks remain future controller work.
+				player.StartFlying();
 				break;
 			case EmotionType.Land:
-				// Java parity: controllers/FlyController.endFly creature-state cleanup.
-				player.SetCreatureState(PlayerCreatureState.Flying, enabled: false);
-				player.SetCreatureState(PlayerCreatureState.Gliding, enabled: false);
-				player.SetCreatureState(PlayerCreatureState.FloatingCorpse, enabled: false);
+				player.EndFlying();
 				break;
 			case EmotionType.AttackModeInMove:
 			case EmotionType.AttackModeInStanding:
