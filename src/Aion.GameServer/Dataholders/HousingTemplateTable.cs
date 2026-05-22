@@ -43,6 +43,12 @@ public sealed class HousingTemplateTable
 		return _buildingsById.GetValueOrDefault(buildingId);
 	}
 
+	public IReadOnlyList<int> GetDefaultDecorIds(int buildingId)
+	{
+		// Java parity: model/house/HouseRegistry.getUsedDecorId falls back to Building.getDefaultDecorId.
+		return _buildingsById.GetValueOrDefault(buildingId)?.DefaultDecorIds ?? Array.Empty<int>();
+	}
+
 	public IReadOnlyList<HousingAddressSummary> GetCustomFieldAddresses()
 	{
 		// Java parity: services/HousingService.spawnHouses skips PERSONAL_INS studio addresses.
@@ -70,4 +76,9 @@ public sealed record HousingAddressSummary(
 	int DefaultBuildingId = 0,
 	string DefaultBuildingType = "");
 
-public sealed record HousingBuildingSummary(int BuildingId, string Size, int HouseTypeId, string BuildingType = "");
+public sealed record HousingBuildingSummary(
+	int BuildingId,
+	string Size,
+	int HouseTypeId,
+	string BuildingType = "",
+	IReadOnlyList<int>? DefaultDecorIds = null);

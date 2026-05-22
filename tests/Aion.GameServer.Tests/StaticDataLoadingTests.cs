@@ -404,6 +404,17 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(4_000_000, staticData.HousingTemplates.GetAddress(6001)?.MaintenanceFee);
 		Assert.Equal(4, staticData.HousingTemplates.GetHouseTypeId(350000));
 		Assert.Equal(1, staticData.HousingTemplates.GetHouseTypeId(353000));
+		var houseDefaultDecor = staticData.HousingTemplates.GetDefaultDecorIds(353000);
+		Assert.Equal(19, houseDefaultDecor.Count);
+		Assert.Equal(3520000, houseDefaultDecor[0]);
+		Assert.Equal(3521000, houseDefaultDecor[1]);
+		Assert.Equal(3522001, houseDefaultDecor[2]);
+		Assert.Equal(3523000, houseDefaultDecor[3]);
+		Assert.Equal(3526000, houseDefaultDecor[4]);
+		Assert.Equal(3527000, houseDefaultDecor[5]);
+		Assert.All(houseDefaultDecor.Skip(6).Take(6), partId => Assert.Equal(3524000, partId));
+		Assert.All(houseDefaultDecor.Skip(12).Take(6), partId => Assert.Equal(3525000, partId));
+		Assert.Equal(0, houseDefaultDecor[18]);
 		Assert.Equal(5, staticData.InstanceCooltimes.GetInstanceCooltimeByWorldId(300030000)?.MaxCount);
 		Assert.Contains(staticData.RecipeTemplates.GetAutolearnRecipes("ELYOS", 40009, 1), recipe => recipe.RecipeId == 155000001);
 		var craftPlayer = new Player

@@ -49,8 +49,10 @@ internal static class HouseInfoPacketWriter
 		buffer.WriteC(house.ShowOwnerName ? 1 : 0);
 		buffer.WriteS(Truncate(house.SignNotice ?? string.Empty, SignNoticeMaxLength));
 
+		// Java parity: PartType.values() packet order, including six wall/floor room decor lines.
+		var defaultDecorIds = housingTemplates?.GetDefaultDecorIds(house.BuildingId) ?? Array.Empty<int>();
 		for (var i = 0; i < HouseDecorLineCount; i++)
-			buffer.WriteD(0);
+			buffer.WriteD(i < defaultDecorIds.Count ? defaultDecorIds[i] : 0);
 
 		buffer.WriteD(0);
 		buffer.WriteD(0);

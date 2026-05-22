@@ -1071,13 +1071,14 @@ public class GamePacketTests
 			LegionEmblemColorG = 20,
 			LegionEmblemColorB = 30,
 		};
+		var defaultHouseDecorIds = Enumerable.Range(700001, 19).ToArray();
 		var houseUpdatePayload = SerializeUnencryptedPayload(
 			new SmHouseUpdate(
 				houseUpdatePlayer,
 				new PlayerHouse(50, 700100, 900100, houseNow, houseNow.AddDays(14), false, PlayerHouse.DoorClosedExceptFriends, false, "Visitors welcome"),
 				new HousingTemplateTable(
 					[new HousingAddressSummary(700100, 1, 798000)],
-					[new HousingBuildingSummary(900100, "MANSION", 4)])));
+					[new HousingBuildingSummary(900100, "MANSION", 4, "PERSONAL_FIELD", defaultHouseDecorIds)])));
 		using var houseUpdateReader = new PacketBuffer(houseUpdatePayload);
 		Assert.Equal(1, houseUpdateReader.ReadH());
 		Assert.Equal(0, houseUpdateReader.ReadH());
@@ -1094,8 +1095,8 @@ public class GamePacketTests
 		Assert.Equal(101, houseUpdateReader.ReadD());
 		Assert.Equal(0, (int)houseUpdateReader.ReadC());
 		Assert.Equal("Visitors welcome", houseUpdateReader.ReadS());
-		for (var i = 0; i < 19; i++)
-			Assert.Equal(0, houseUpdateReader.ReadD());
+		foreach (var decorId in defaultHouseDecorIds)
+			Assert.Equal(decorId, houseUpdateReader.ReadD());
 		Assert.Equal(0, houseUpdateReader.ReadD());
 		Assert.Equal(0, houseUpdateReader.ReadD());
 		Assert.Equal(0, (int)houseUpdateReader.ReadC());
@@ -1108,7 +1109,7 @@ public class GamePacketTests
 				new PlayerHouse(50, 700100, 900100, houseNow, houseNow.AddDays(14), false, PlayerHouse.DoorClosedExceptFriends, false, "Visitors welcome"),
 				new HousingTemplateTable(
 					[new HousingAddressSummary(700100, 1, 798000)],
-					[new HousingBuildingSummary(900100, "MANSION", 4)])));
+					[new HousingBuildingSummary(900100, "MANSION", 4, "PERSONAL_FIELD", defaultHouseDecorIds)])));
 		Assert.Equal(houseUpdatePayload[6..], houseRenderPayload);
 
 		var deleteHousePayload = SerializeUnencryptedPayload(new SmDeleteHouse(700100));

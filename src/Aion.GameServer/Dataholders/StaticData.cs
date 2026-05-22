@@ -160,6 +160,7 @@ public sealed class StaticData
 		TitleTemplateBuilder? currentTitleTemplate = null;
 		CosmeticItemBuilder? currentCosmeticItem = null;
 		DecomposableItemBuilder? currentDecomposableItem = null;
+		HousingBuildingBuilder? currentHousingBuilding = null;
 		int currentHousingLandId = 0;
 		int currentHousingManagerNpcId = 0;
 		var elementPath = new Dictionary<int, string>();
@@ -256,6 +257,12 @@ public sealed class StaticData
 				{
 					titleTemplates.Add(currentTitleTemplate.ToSummary());
 					currentTitleTemplate = null;
+				}
+
+				if (reader.Depth == 2 && reader.LocalName == "building" && currentHousingBuilding != null)
+				{
+					housingBuildings.Add(currentHousingBuilding.ToSummary());
+					currentHousingBuilding = null;
 				}
 
 				if (reader.Depth == 4 && reader.LocalName is "armormastery" or "wpnmastery" or "shieldmastery")
@@ -471,14 +478,21 @@ public sealed class StaticData
 				&& elementPath.TryGetValue(1, out var rootElement)
 				&& rootElement == "buildings")
 			{
-				// Java parity: model/templates/housing/Building.size -> HouseType id written in SM_HOUSE_BIDS.
+				// Java parity: model/templates/housing/Building fields from housing/house_buildings.xml.
 				var size = reader.GetAttribute("size") ?? string.Empty;
-				housingBuildings.Add(
-					new HousingBuildingSummary(
-						ReadRequiredIntAttribute(reader, "id"),
-						size,
-						GetHouseTypeId(size),
-						reader.GetAttribute("type") ?? string.Empty));
+				currentHousingBuilding = new HousingBuildingBuilder(
+					ReadRequiredIntAttribute(reader, "id"),
+					size,
+					GetHouseTypeId(size),
+					reader.GetAttribute("type") ?? string.Empty);
+				continue;
+			}
+
+			if (currentHousingBuilding != null && IsHousingBuildingPartElement(reader.LocalName))
+			{
+				var partName = reader.LocalName;
+				var value = await ReadElementTextAsync(reader, cancellationToken);
+				currentHousingBuilding.SetDefaultPart(partName, int.TryParse(value, out var parsedPartId) ? parsedPartId : 0);
 				continue;
 			}
 
@@ -1204,6 +1218,83 @@ public sealed class StaticData
 				spawnLocationsByRace),
 			new SkillTreeTable(skillTree.AsReadOnly(), new SkillTemplateTable(skillTemplates.AsReadOnly())),
 			validationTask);
+	}
+
+	private sealed class HousingBuildingBuilder
+	{
+		private readonly Dictionary<string, int> _defaultParts = new(StringComparer.OrdinalIgnoreCase);
+
+		public HousingBuildingBuilder(int buildingId, string size, int houseTypeId, string buildingType)
+		{
+			BuildingId = buildingId;
+			Size = size;
+			HouseTypeId = houseTypeId;
+			BuildingType = buildingType;
+		}
+
+		private int BuildingId { get; }
+
+		private string Size { get; }
+
+		private int HouseTypeId { get; }
+
+		private string BuildingType { get; }
+
+		public void SetDefaultPart(string partName, int partId)
+		{
+			if (partId <= 0)
+				return;
+
+			_defaultParts[partName] = partId;
+		}
+
+		public HousingBuildingSummary ToSummary()
+		{
+			// Java parity: model/templates/housing/Building.partsByType consumed by HouseRegistry default decor fallback.
+			return new HousingBuildingSummary(
+				BuildingId,
+				Size,
+				HouseTypeId,
+				BuildingType,
+				BuildDefaultDecorIds());
+		}
+
+		private int[] BuildDefaultDecorIds()
+		{
+			return
+			[
+				GetPart("roof"),
+				GetPart("outwall"),
+				GetPart("frame"),
+				GetPart("door"),
+				GetPart("garden"),
+				GetPart("fence"),
+				GetPart("inwall"),
+				GetPart("inwall"),
+				GetPart("inwall"),
+				GetPart("inwall"),
+				GetPart("inwall"),
+				GetPart("inwall"),
+				GetPart("infloor"),
+				GetPart("infloor"),
+				GetPart("infloor"),
+				GetPart("infloor"),
+				GetPart("infloor"),
+				GetPart("infloor"),
+				GetPart("addon"),
+			];
+		}
+
+		private int GetPart(string partName)
+		{
+			return _defaultParts.GetValueOrDefault(partName);
+		}
+	}
+
+	private static bool IsHousingBuildingPartElement(string elementName)
+	{
+		// Java parity: model/templates/housing/Building.Parts fields serialized from housing/house_buildings.xml.
+		return elementName is "roof" or "outwall" or "frame" or "door" or "garden" or "fence" or "inwall" or "infloor" or "addon";
 	}
 
 	private sealed class InstanceCooltimeBuilder
