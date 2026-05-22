@@ -3228,7 +3228,17 @@ public sealed class GameServerConnection : BaseClientConnection
 			var rankLimitChange = EquipmentService.CheckRankLimitItems(player, staticData.ItemTemplates);
 			if (rankLimitChange.Changed || rankLimitChange.RankLimitedUnequipMessages.Count > 0)
 				await ApplyEquipmentChangeAsync(player, rankLimitChange, staticData.ItemTemplates, staticData);
-			// Java parity: AbyssPointsService.onRankChanged also updates AbyssSkillService skills.
+
+			var abyssSkillUpdate = AbyssSkillService.UpdateSkills(player);
+			if (abyssSkillUpdate.Changed)
+			{
+				player.Skills = abyssSkillUpdate.Skills;
+				foreach (var removedSkill in abyssSkillUpdate.RemovedSkills)
+					await SendPacketAsync(new SmSkillRemove(removedSkill));
+				foreach (var addedSkill in abyssSkillUpdate.AddedSkills)
+					await SendPacketAsync(new SmSkillList([addedSkill], 1300050));
+				// Java parity: full passive SkillEngine effect apply/remove fanout remains a later SkillEngine slice.
+			}
 		}
 	}
 
