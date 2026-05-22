@@ -80,6 +80,32 @@ public sealed class RiftPortalInteractionServiceTests
 	}
 
 	[Fact]
+	public async Task RequestDialog_IgnoresPortalMasterNoLongerVisibleInWorld()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-rift-interaction-stale-master-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var (world, riftService, interaction) = await CreateServicesWithWorldAsync(tempPath);
+			Assert.True(riftService.OpenRifts(2120, guards: false).Succeeded);
+			var portal = Assert.Single(riftService.GetActiveRifts()).Portal;
+			Assert.NotNull(portal);
+			Assert.True(world.TryRemoveObject(portal.MasterNpc.ObjectId, out _));
+			var player = CreatePlayer(level: 30);
+
+			var result = interaction.RequestDialog(player, portal.MasterNpc.ObjectId);
+
+			Assert.False(result.Requested);
+			Assert.Equal(RiftPortalDialogStatus.UnknownPortal, result.Status);
+			Assert.Null(player.PendingRiftPortalRequest);
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
 	public async Task RespondAsync_ForAcceptedVortexQuestion_UsesVortexLocationStartPoint()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-rift-interaction-vortex-" + Guid.NewGuid().ToString("N"));
@@ -176,6 +202,15 @@ public sealed class RiftPortalInteractionServiceTests
 		IGameClientConnectionRegistry? registry = null,
 		Func<DateTimeOffset>? clock = null)
 	{
+		var (_, riftService, interaction) = await CreateServicesWithWorldAsync(tempPath, registry, clock);
+		return (riftService, interaction);
+	}
+
+	private static async Task<(GameWorld World, RiftService RiftService, RiftPortalInteractionService Interaction)> CreateServicesWithWorldAsync(
+		string tempPath,
+		IGameClientConnectionRegistry? registry = null,
+		Func<DateTimeOffset>? clock = null)
+	{
 		var context = await CreateRuntimeContextAsync(tempPath);
 		var idFactory = new IDFactory();
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);
@@ -186,8 +221,9 @@ public sealed class RiftPortalInteractionServiceTests
 			riftService,
 			new RiftPortalDialogService(),
 			new RiftPortalUseService(),
-			informer);
-		return (riftService, interaction);
+			informer,
+			world: world);
+		return (world, riftService, interaction);
 	}
 
 	private static async Task<(GameServerRuntimeContext Context, RiftService RiftService, RiftPortalInteractionService Interaction)> CreateVortexServicesAsync(
@@ -206,7 +242,8 @@ public sealed class RiftPortalInteractionServiceTests
 			new RiftPortalDialogService(),
 			new RiftPortalUseService(),
 			informer,
-			new VortexLocationService(context));
+			new VortexLocationService(context),
+			world);
 		return (context, riftService, interaction);
 	}
 

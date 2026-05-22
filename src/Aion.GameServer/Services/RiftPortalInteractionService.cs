@@ -2,6 +2,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.World;
+using GameWorld = Aion.GameServer.World.World;
 
 namespace Aion.GameServer.Services;
 
@@ -12,6 +13,7 @@ public sealed class RiftPortalInteractionService
 	private readonly RiftPortalUseService _useService;
 	private readonly RiftInformerService? _informerService;
 	private readonly VortexLocationService? _vortexLocationService;
+	private readonly GameWorld? _world;
 	private readonly Func<RiftPortalState, WorldPosition?>? _vortexDestinationResolver;
 
 	public RiftPortalInteractionService(
@@ -20,6 +22,7 @@ public sealed class RiftPortalInteractionService
 		RiftPortalUseService? useService = null,
 		RiftInformerService? informerService = null,
 		VortexLocationService? vortexLocationService = null,
+		GameWorld? world = null,
 		Func<RiftPortalState, WorldPosition?>? vortexDestinationResolver = null)
 	{
 		_riftService = riftService;
@@ -27,6 +30,7 @@ public sealed class RiftPortalInteractionService
 		_useService = useService ?? new RiftPortalUseService();
 		_informerService = informerService;
 		_vortexLocationService = vortexLocationService;
+		_world = world;
 		_vortexDestinationResolver = vortexDestinationResolver;
 	}
 
@@ -34,6 +38,8 @@ public sealed class RiftPortalInteractionService
 	{
 		// Java parity: network/aion/clientpackets/CM_SHOW_DIALOG.runImpl delegates targeted NPCs to controller.onDialogRequest.
 		if (!_riftService.TryGetPortalByMasterObjectId(targetObjectId, out var portal) || portal == null)
+			return RiftPortalDialogResult.NotRequested(RiftPortalDialogStatus.UnknownPortal);
+		if (!IsVisiblePortalMaster(targetObjectId, portal))
 			return RiftPortalDialogResult.NotRequested(RiftPortalDialogStatus.UnknownPortal);
 
 		var result = _dialogService.CreateDialogRequest(player, portal);
@@ -96,6 +102,21 @@ public sealed class RiftPortalInteractionService
 	{
 		// Java parity: controllers/RVController.getWorldsList returns master and slave worlds for master controllers.
 		return [portal.MasterNpc.Position.WorldId, portal.SlaveNpc.SpawnLocation.WorldId];
+	}
+
+	private bool IsVisiblePortalMaster(int targetObjectId, RiftPortalState portal)
+	{
+		// Java parity: CM_SHOW_DIALOG only dispatches when the target object is still an Npc in the player's known list.
+		if (_world == null)
+			return true;
+		if (!_world.TryGetObject(targetObjectId, out var target) || target == null)
+			return false;
+		return ReferenceEquals(target, portal.MasterNpc)
+			|| target is WorldNpc npc
+			&& npc.ObjectId == portal.MasterNpc.ObjectId
+			&& npc.TemplateId == portal.MasterNpc.TemplateId
+			&& string.Equals(npc.Anchor, portal.MasterNpc.Anchor, StringComparison.Ordinal)
+			&& npc.SpawnLocation.Equals(portal.MasterNpc.SpawnLocation);
 	}
 
 	private WorldPosition? ResolveVortexDestination(RiftPortalState portal)

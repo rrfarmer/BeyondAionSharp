@@ -148,7 +148,8 @@ public sealed class GameServerConnection : BaseClientConnection
 					riftPortalDialogService,
 					riftPortalUseService,
 					riftInformerService ?? (_connectionRegistry == null ? null : new RiftInformerService(riftService, _connectionRegistry)),
-					vortexLocationService));
+					vortexLocationService,
+					_world));
 		_crypt = crypt ?? new GameCrypt();
 	}
 
