@@ -105,6 +105,41 @@ public class GamePacketTests
 	{
 		AssertSystemMessage(SmSystemMessage.DialogTooFarToTalk(), 1300346);
 		AssertSystemMessage(SmSystemMessage.WarehouseTooFarFromNpc(), 1300419);
+		AssertSystemMessage(SmSystemMessage.LootFailOnLooting(), 1300829);
+		AssertSystemMessage(SmSystemMessage.LootNoRight(), 901338);
+	}
+
+	[Fact]
+	public void SmLootPackets_WriteJavaLootPayloads()
+	{
+		var player = new Player { ObjectId = 1001 };
+		var visibleDrop = new WorldNpcDropItem(
+			Index: 1,
+			ItemId: 182400001,
+			Count: 25,
+			PlayerObjectIds: new HashSet<int> { 1001 },
+			OptionalSocket: -1);
+		var hiddenDrop = new WorldNpcDropItem(Index: 2, ItemId: 166020000, Count: 1, PlayerObjectIds: new HashSet<int> { 1002 });
+
+		var statusPayload = SerializeUnencryptedPayload(new SmLootStatus(5001, SmLootStatusType.LootEnable, lootEffectId: 1003));
+		using var statusReader = new PacketBuffer(statusPayload);
+		Assert.Equal(5001, statusReader.ReadD());
+		Assert.Equal(0, (int)statusReader.ReadC());
+		Assert.Equal(1003, statusReader.ReadD());
+		Assert.Equal(0, statusReader.Remaining);
+
+		var itemListPayload = SerializeUnencryptedPayload(new SmLootItemList(5001, [visibleDrop, hiddenDrop], player));
+		using var itemListReader = new PacketBuffer(itemListPayload);
+		Assert.Equal(5001, itemListReader.ReadD());
+		Assert.Equal(1, (int)itemListReader.ReadC());
+		Assert.Equal(1, (int)itemListReader.ReadC());
+		Assert.Equal(182400001, itemListReader.ReadD());
+		Assert.Equal(25, itemListReader.ReadD());
+		Assert.Equal(255, (int)itemListReader.ReadC());
+		Assert.Equal(0, (int)itemListReader.ReadC());
+		Assert.Equal(0, (int)itemListReader.ReadC());
+		Assert.Equal(0, (int)itemListReader.ReadC());
+		Assert.Equal(0, itemListReader.Remaining);
 	}
 
 	[Fact]

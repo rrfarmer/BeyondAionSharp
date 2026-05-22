@@ -196,6 +196,11 @@ public sealed class Player
 
 	public bool IsInTeam => TeamMembership != PlayerTeamMembership.None;
 
+	// Java parity: model/gameobjects/player/Player.isLooting / getLootingNpcOid used by DropService request/close list.
+	public int LootingNpcObjectId { get; set; }
+
+	public bool IsLooting => IsInState(PlayerCreatureState.Looting);
+
 	// Java parity: Player.usingItem set by SM_ITEM_USAGE_ANIMATION while delayed item use is active.
 	public int UsingItemObjectId { get; set; }
 
@@ -228,6 +233,22 @@ public sealed class Player
 	{
 		// Java parity: model/gameobjects/Creature.setState(state, replace=true).
 		CreatureState = state;
+	}
+
+	public void StartLooting(int npcObjectId)
+	{
+		// Java parity: DropService.requestDropList unsets ACTIVE, sets LOOTING, and stores the looting NPC oid.
+		SetCreatureState(PlayerCreatureState.Active, false);
+		SetCreatureState(PlayerCreatureState.Looting, true);
+		LootingNpcObjectId = npcObjectId;
+	}
+
+	public void StopLooting()
+	{
+		// Java parity: DropService.closeDropList unsets LOOTING, sets ACTIVE, and clears the looting NPC oid.
+		SetCreatureState(PlayerCreatureState.Looting, false);
+		SetCreatureState(PlayerCreatureState.Active, true);
+		LootingNpcObjectId = 0;
 	}
 
 	public PlayerTeamMembership RemoveCurrentTeam()

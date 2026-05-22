@@ -15,4 +15,5 @@ public enum PlayerCreatureState
 	Chair = Flying | Resting,
 	Dead = Active | Flying | Resting,
 	PrivateShop = Active | Flying | FloatingCorpse,
+	Looting = Resting | FloatingCorpse,
 }

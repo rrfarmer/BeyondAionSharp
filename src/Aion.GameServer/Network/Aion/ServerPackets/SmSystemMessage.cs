@@ -39,6 +39,18 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300419);
 	}
 
+	public static SmSystemMessage LootFailOnLooting()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_LOOT_FAIL_ONLOOTING.
+		return new SmSystemMessage(1300829);
+	}
+
+	public static SmSystemMessage LootNoRight()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_LOOT_NO_RIGHT.
+		return new SmSystemMessage(901338);
+	}
+
 	public static SmSystemMessage NotEnoughMoney()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_NOT_ENOUGH_MONEY.

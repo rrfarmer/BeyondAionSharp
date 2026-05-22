@@ -52,18 +52,45 @@ public sealed record WorldNpcDropItem(
 	int Index,
 	int ItemId,
 	long Count,
-	IReadOnlySet<int>? PlayerObjectIds = null)
+	IReadOnlySet<int>? PlayerObjectIds = null,
+	int OptionalSocket = 0)
 {
+	public int LootEffectId
+	{
+		get
+		{
+			// Java parity: model/drop/DropItem.getLootEffectId.
+			return ItemId switch
+			{
+				166020000 or 166020001 or 166020002 or 166020003 => 1003,
+				168000034 or 168000035 or 168000073 or 168000074 or 168000117 or 168000118 or 168000120 or 168000121
+					or 168000161 or 168000162 or 168000164 or 168000165 or 168000213 or 168000216 or 168000223
+					or 168000228 or 168000230 or 168000233 or 168000240 or 168000245 => 1003,
+				188053083 => 1003,
+				188053547 or 188053548 or 188053646 or 188053647 => 1002,
+				190100004 or 190100052 => 1003,
+				_ => 0,
+			};
+		}
+	}
+
 	public bool CanViewDropItem(int playerObjectId)
 	{
 		// Java parity: model/drop/DropItem.canViewDropItem.
 		return PlayerObjectIds == null || PlayerObjectIds.Count == 0 || PlayerObjectIds.Contains(playerObjectId);
+	}
+
+	public bool IsOnlyPossibleLooter(int playerObjectId)
+	{
+		// Java parity: model/drop/DropItem.isOnlyPossibleLooter.
+		return PlayerObjectIds is { Count: 1 } && PlayerObjectIds.Contains(playerObjectId);
 	}
 }
 
 public sealed class WorldNpcDropRegistration
 {
 	private readonly HashSet<int> _allowedLooters;
+	private readonly object _sync = new();
 
 	public WorldNpcDropRegistration(int npcObjectId, IEnumerable<int> allowedLooters)
 	{
@@ -80,15 +107,53 @@ public sealed class WorldNpcDropRegistration
 
 	public IReadOnlySet<int> AllowedLooters => _allowedLooters;
 
+	public int? LootingPlayerObjectId { get; private set; }
+
+	public bool IsBeingLooted => LootingPlayerObjectId != null;
+
 	public bool IsAllowedToLoot(int playerObjectId)
 	{
-		return IsFreeForAll || _allowedLooters.Contains(playerObjectId);
+		lock (_sync)
+		{
+			return IsFreeForAll || _allowedLooters.Contains(playerObjectId);
+		}
+	}
+
+	public bool TryBeginLooting(int playerObjectId, out int? currentLootingPlayerObjectId)
+	{
+		// Java parity: model/gameobjects/DropNpc.setLootingPlayer plus isBeingLooted guard in DropService.requestDropList.
+		lock (_sync)
+		{
+			currentLootingPlayerObjectId = LootingPlayerObjectId;
+			if (currentLootingPlayerObjectId != null && currentLootingPlayerObjectId.Value != playerObjectId)
+				return false;
+
+			LootingPlayerObjectId = playerObjectId;
+			currentLootingPlayerObjectId = playerObjectId;
+			return true;
+		}
+	}
+
+	public bool ClearLootingPlayer(int playerObjectId)
+	{
+		// Java parity: DropService.closeDropList only clears the looting player that opened the corpse.
+		lock (_sync)
+		{
+			if (LootingPlayerObjectId != playerObjectId)
+				return false;
+
+			LootingPlayerObjectId = null;
+			return true;
+		}
 	}
 
 	public void StartFreeForAll()
 	{
 		// Java parity: model/gameobjects/DropNpc.startFreeForAll clears explicit looters and opens looting.
-		IsFreeForAll = true;
-		_allowedLooters.Clear();
+		lock (_sync)
+		{
+			IsFreeForAll = true;
+			_allowedLooters.Clear();
+		}
 	}
 }

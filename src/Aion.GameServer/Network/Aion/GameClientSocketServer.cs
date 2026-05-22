@@ -48,6 +48,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 	private readonly RiftPortalDialogService? _riftPortalDialogService;
 	private readonly RiftPortalUseService? _riftPortalUseService;
 	private readonly VortexLocationService? _vortexLocationService;
+	private readonly WorldNpcLootService? _worldNpcLootService;
 	private readonly ConcurrentDictionary<string, GameServerConnection> _connections = new();
 	private readonly ConcurrentDictionary<int, GameServerConnection> _playerConnections = new();
 	private long _nextClientId;
@@ -81,7 +82,8 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		RiftService? riftService = null,
 		RiftPortalDialogService? riftPortalDialogService = null,
 		RiftPortalUseService? riftPortalUseService = null,
-		VortexLocationService? vortexLocationService = null)
+		VortexLocationService? vortexLocationService = null,
+		WorldNpcLootService? worldNpcLootService = null)
 		: base(
 			logger,
 			"Aion Game Client Server",
@@ -118,6 +120,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		_riftPortalDialogService = riftPortalDialogService;
 		_riftPortalUseService = riftPortalUseService;
 		_vortexLocationService = vortexLocationService;
+		_worldNpcLootService = worldNpcLootService;
 	}
 
 	public IPEndPoint? LocalEndPoint => _listener?.LocalEndpoint as IPEndPoint;
@@ -160,6 +163,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 				riftPortalDialogService: _riftPortalDialogService,
 				riftPortalUseService: _riftPortalUseService,
 				vortexLocationService: _vortexLocationService,
+				worldNpcLootService: _worldNpcLootService,
 				isKnownNpc: (player, npcObjectId) => _npcVisibilityService.IsKnownNpc(player, npcObjectId));
 			_connections[clientId] = connection;
 			await connection.RunAsync();

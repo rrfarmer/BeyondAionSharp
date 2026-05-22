@@ -64,6 +64,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly ThreadPoolManager? _threadPoolManager;
 	private readonly IHouseDoorStateService? _houseDoorStateService;
 	private readonly RiftPortalInteractionService? _riftPortalInteractionService;
+	private readonly WorldNpcLootService? _worldNpcLootService;
 	private readonly Func<Player, int, bool>? _isKnownNpc;
 	private readonly SemaphoreSlim _sendLock = new(1, 1);
 	private readonly SemaphoreSlim _closeLock = new(1, 1);
@@ -114,6 +115,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		RiftPortalUseService? riftPortalUseService = null,
 		RiftInformerService? riftInformerService = null,
 		VortexLocationService? vortexLocationService = null,
+		WorldNpcLootService? worldNpcLootService = null,
 		Func<Player, int, bool>? isKnownNpc = null,
 		RiftPortalInteractionService? riftPortalInteractionService = null,
 		GameCrypt? crypt = null)
@@ -142,6 +144,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_world = world;
 		_threadPoolManager = threadPoolManager;
 		_houseDoorStateService = houseDoorStateService;
+		_worldNpcLootService = worldNpcLootService;
 		_isKnownNpc = isKnownNpc;
 		_riftPortalInteractionService = riftPortalInteractionService
 			?? (riftService == null
@@ -349,9 +352,11 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmQuestionnaire:
 				// Java parity: network/aion/clientpackets/CM_QUESTIONNAIRE.runImpl dispatches HTMLService rewards; deferred until questionnaire rewards are ported.
 				break;
-			case CmStartLoot:
+			case CmStartLoot startLoot:
+				await HandleStartLootAsync(startLoot);
+				break;
 			case CmLootItem:
-				// Java parity: network/aion/clientpackets/CM_START_LOOT/CM_LOOT_ITEM.runImpl dispatch DropService; deferred until loot/drop systems are ported.
+				// Java parity: network/aion/clientpackets/CM_LOOT_ITEM.runImpl dispatches DropService.requestDropItem; deferred until item collection/distribution is ported.
 				break;
 			case CmSubzoneChange:
 				// Java parity: network/aion/clientpackets/CM_SUBZONE_CHANGE.runImpl revalidates zones; deferred until zone instances are ported.
@@ -1296,6 +1301,39 @@ public sealed class GameServerConnection : BaseClientConnection
 		var npcDialogResult = NpcDialogRequestService.RequestDialog(player, packet.TargetObjectId, _world, _isKnownNpc);
 		if (npcDialogResult.ResponsePacket != null)
 			await SendPacketAsync(npcDialogResult.ResponsePacket);
+	}
+
+	private async Task HandleStartLootAsync(CmStartLoot packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_START_LOOT.runImpl dispatches DropService open/close.
+		if (_activePlayer == null || _worldNpcLootService == null)
+			return;
+
+		var result = packet.Action switch
+		{
+			0 => _worldNpcLootService.RequestDropList(_activePlayer, packet.TargetObjectId),
+			1 => _worldNpcLootService.CloseDropList(_activePlayer, packet.TargetObjectId),
+			_ => WorldNpcLootResult.None(WorldNpcLootStatus.UnknownDrop),
+		};
+
+		foreach (var responsePacket in result.PlayerPackets)
+			await SendPacketAsync(responsePacket);
+
+		foreach (var broadcastPacket in result.VisiblePlayerPackets)
+		{
+			if (_connectionRegistry != null)
+			{
+				await _connectionRegistry.BroadcastToVisiblePlayersAsync(
+					_activePlayer.Position,
+					_activePlayer.ObjectId,
+					broadcastPacket,
+					includeSourcePlayer: true);
+			}
+			else
+			{
+				await SendPacketAsync(broadcastPacket);
+			}
+		}
 	}
 
 	private async Task StartChargingEquippedItemsAsync(Player player, int senderObjectId, int chargeWay)
