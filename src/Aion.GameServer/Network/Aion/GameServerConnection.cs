@@ -112,6 +112,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		RiftPortalDialogService? riftPortalDialogService = null,
 		RiftPortalUseService? riftPortalUseService = null,
 		RiftInformerService? riftInformerService = null,
+		VortexLocationService? vortexLocationService = null,
 		RiftPortalInteractionService? riftPortalInteractionService = null,
 		GameCrypt? crypt = null)
 		: base(logger, client, clientId)
@@ -146,7 +147,8 @@ public sealed class GameServerConnection : BaseClientConnection
 					riftService,
 					riftPortalDialogService,
 					riftPortalUseService,
-					riftInformerService ?? (_connectionRegistry == null ? null : new RiftInformerService(riftService, _connectionRegistry))));
+					riftInformerService ?? (_connectionRegistry == null ? null : new RiftInformerService(riftService, _connectionRegistry)),
+					vortexLocationService));
 		_crypt = crypt ?? new GameCrypt();
 	}
 

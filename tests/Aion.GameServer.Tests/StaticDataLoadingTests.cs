@@ -3,6 +3,7 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Dataholders.LoadingUtils;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Services;
+using Aion.GameServer.World;
 
 namespace Aion.GameServer.Tests;
 
@@ -245,6 +246,51 @@ public sealed class StaticDataLoadingTests
 	}
 
 	[Fact]
+	public async Task StaticData_LoadsVortexLocations()
+	{
+		using var temp = TempDirectory.Create();
+		var cacheFile = Path.Combine(temp.Path, "static_data.xml");
+		File.WriteAllText(
+			cacheFile,
+			"""
+			<?xml version="1.0" encoding="UTF-8"?>
+			<static_data>
+				<dimensional_vortex>
+					<vortex_location id="0" defends_race="ELYOS" offence_race="ASMODIANS">
+						<home_point map="120080000" x="559.4" y="207.8" z="93.5" h="0" />
+						<resurrection_point map="210060000" x="951.0" y="2433.0" z="107.0" h="0" />
+						<start_point map="210060000" x="951.0" y="2433.0" z="107.0" h="0" />
+					</vortex_location>
+					<vortex_location id="1" defends_race="ASMODIANS" offence_race="ELYOS">
+						<home_point map="110070000" x="452.6" y="237.1" z="127.0" h="0" />
+						<resurrection_point map="220050000" x="2237.3" y="2801.5" z="73.3" h="0" />
+						<start_point map="220050000" x="2242.0" y="2797.0" z="75.4" h="0" />
+					</vortex_location>
+				</dimensional_vortex>
+			</static_data>
+			""");
+
+		var staticData = await StaticData.LoadFromCacheAsync(cacheFile, []);
+
+		Assert.Equal(2, staticData.VortexLocations.Count);
+		Assert.Equal(staticData.GetElementCount("vortex_location"), staticData.VortexLocations.Count);
+		var theobomos = staticData.VortexLocations.GetLocation(0);
+		Assert.NotNull(theobomos);
+		Assert.Equal("ELYOS", theobomos.DefendersRace);
+		Assert.Equal("ASMODIANS", theobomos.InvadersRace);
+		Assert.Equal(new WorldPosition(120080000, 559.4f, 207.8f, 93.5f, 0), theobomos.HomePoint);
+		Assert.Equal(new WorldPosition(210060000, 951.0f, 2433.0f, 107.0f, 0), theobomos.ResurrectionPoint);
+		Assert.Equal(new WorldPosition(210060000, 951.0f, 2433.0f, 107.0f, 0), theobomos.StartPoint);
+		Assert.Equal(120080000, theobomos.HomeWorldId);
+		Assert.Equal(210060000, theobomos.InvasionWorldId);
+		Assert.Equal(theobomos, staticData.VortexLocations.GetLocationByInvasionWorld(210060000));
+		var brusthonin = staticData.VortexLocations.GetLocation(1);
+		Assert.NotNull(brusthonin);
+		Assert.Equal(new WorldPosition(220050000, 2242.0f, 2797.0f, 75.4f, 0), brusthonin.StartPoint);
+		Assert.Null(staticData.VortexLocations.GetLocationByInvasionWorld(400010000));
+	}
+
+	[Fact]
 	public async Task StaticData_LoadsWalkerTemplates()
 	{
 		using var temp = TempDirectory.Create();
@@ -345,6 +391,12 @@ public sealed class StaticDataLoadingTests
 		Assert.True(staticData.RiftLocations.GetLocation(2153)?.HasSpawns);
 		Assert.False(staticData.RiftLocations.GetLocation(2189)?.AutoCloseable);
 		Assert.Contains(staticData.RiftLocations.GetLocationsForWorld(210070000), location => location.Id == 2176 && location.HasSpawns);
+		Assert.Equal(staticData.GetElementCount("vortex_location"), staticData.VortexLocations.Count);
+		Assert.Equal(2, staticData.VortexLocations.Count);
+		Assert.Equal(new WorldPosition(210060000, 951.0f, 2433.0f, 107.0f, 0), staticData.VortexLocations.GetLocation(0)?.StartPoint);
+		Assert.Equal(new WorldPosition(220050000, 2242.0f, 2797.0f, 75.4f, 0), staticData.VortexLocations.GetLocation(1)?.StartPoint);
+		Assert.Equal(staticData.VortexLocations.GetLocation(0), staticData.VortexLocations.GetLocationByInvasionWorld(210060000));
+		Assert.Equal(staticData.VortexLocations.GetLocation(1), staticData.VortexLocations.GetLocationByInvasionWorld(220050000));
 		Assert.Equal(staticData.GetElementCount("instance_cooltime"), staticData.InstanceCooltimes.Count);
 		Assert.Equal("SWORD", staticData.ItemTemplates.GetItemTemplate(100000001)?.ItemGroup);
 		Assert.Equal([37, 44], staticData.ItemTemplates.GetItemTemplate(100000001)?.RequiredEquipSkills);

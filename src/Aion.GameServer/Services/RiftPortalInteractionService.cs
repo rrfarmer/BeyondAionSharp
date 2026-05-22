@@ -10,6 +10,7 @@ public sealed class RiftPortalInteractionService
 	private readonly RiftPortalDialogService _dialogService;
 	private readonly RiftPortalUseService _useService;
 	private readonly RiftInformerService? _informerService;
+	private readonly VortexLocationService? _vortexLocationService;
 	private readonly Func<RiftPortalState, WorldPosition?>? _vortexDestinationResolver;
 
 	public RiftPortalInteractionService(
@@ -17,12 +18,14 @@ public sealed class RiftPortalInteractionService
 		RiftPortalDialogService? dialogService = null,
 		RiftPortalUseService? useService = null,
 		RiftInformerService? informerService = null,
+		VortexLocationService? vortexLocationService = null,
 		Func<RiftPortalState, WorldPosition?>? vortexDestinationResolver = null)
 	{
 		_riftService = riftService;
 		_dialogService = dialogService ?? new RiftPortalDialogService();
 		_useService = useService ?? new RiftPortalUseService();
 		_informerService = informerService;
+		_vortexLocationService = vortexLocationService;
 		_vortexDestinationResolver = vortexDestinationResolver;
 	}
 
@@ -52,7 +55,7 @@ public sealed class RiftPortalInteractionService
 		if (!_riftService.TryGetPortalByMasterObjectId(request.PortalObjectId, out var portal) || portal == null)
 			return RiftPortalQuestionResponseResult.NotHandled(RiftPortalQuestionResponseStatus.UnknownPortal);
 
-		var useResult = _useService.AcceptPortal(player, portal, _vortexDestinationResolver);
+		var useResult = _useService.AcceptPortal(player, portal, ResolveVortexDestination);
 		if (!useResult.Accepted)
 			return RiftPortalQuestionResponseResult.Rejected(useResult.Status);
 
@@ -66,6 +69,12 @@ public sealed class RiftPortalInteractionService
 	{
 		// Java parity: controllers/RVController.getWorldsList returns master and slave worlds for master controllers.
 		return [portal.MasterNpc.Position.WorldId, portal.SlaveNpc.SpawnLocation.WorldId];
+	}
+
+	private WorldPosition? ResolveVortexDestination(RiftPortalState portal)
+	{
+		return _vortexDestinationResolver?.Invoke(portal)
+			?? _vortexLocationService?.ResolveStartPoint(portal);
 	}
 }
 

@@ -47,6 +47,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 	private readonly RiftService? _riftService;
 	private readonly RiftPortalDialogService? _riftPortalDialogService;
 	private readonly RiftPortalUseService? _riftPortalUseService;
+	private readonly VortexLocationService? _vortexLocationService;
 	private readonly ConcurrentDictionary<string, GameServerConnection> _connections = new();
 	private readonly ConcurrentDictionary<int, GameServerConnection> _playerConnections = new();
 	private long _nextClientId;
@@ -79,7 +80,8 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		IHouseDoorStateService? houseDoorStateService = null,
 		RiftService? riftService = null,
 		RiftPortalDialogService? riftPortalDialogService = null,
-		RiftPortalUseService? riftPortalUseService = null)
+		RiftPortalUseService? riftPortalUseService = null,
+		VortexLocationService? vortexLocationService = null)
 		: base(
 			logger,
 			"Aion Game Client Server",
@@ -115,6 +117,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		_riftService = riftService;
 		_riftPortalDialogService = riftPortalDialogService;
 		_riftPortalUseService = riftPortalUseService;
+		_vortexLocationService = vortexLocationService;
 	}
 
 	public IPEndPoint? LocalEndPoint => _listener?.LocalEndpoint as IPEndPoint;
@@ -155,7 +158,8 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 				houseDoorStateService: _houseDoorStateService,
 				riftService: _riftService,
 				riftPortalDialogService: _riftPortalDialogService,
-				riftPortalUseService: _riftPortalUseService);
+				riftPortalUseService: _riftPortalUseService,
+				vortexLocationService: _vortexLocationService);
 			_connections[clientId] = connection;
 			await connection.RunAsync();
 		}

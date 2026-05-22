@@ -25,6 +25,7 @@ public sealed class StaticData
 		WalkerTemplateTable walkerTemplates,
 		WalkerVersionTable walkerVersions,
 		RiftLocationTable riftLocations,
+		VortexLocationTable vortexLocations,
 		NpcTemplateTable npcTemplates,
 		NpcSpawnTable npcSpawns,
 		NpcRiftSpawnTable npcRiftSpawns,
@@ -56,6 +57,7 @@ public sealed class StaticData
 		WalkerTemplates = walkerTemplates;
 		WalkerVersions = walkerVersions;
 		RiftLocations = riftLocations;
+		VortexLocations = vortexLocations;
 		NpcTemplates = npcTemplates;
 		NpcSpawns = npcSpawns;
 		NpcRiftSpawns = npcRiftSpawns;
@@ -107,6 +109,8 @@ public sealed class StaticData
 	public WalkerVersionTable WalkerVersions { get; }
 
 	public RiftLocationTable RiftLocations { get; }
+
+	public VortexLocationTable VortexLocations { get; }
 
 	public NpcTemplateTable NpcTemplates { get; }
 
@@ -160,6 +164,7 @@ public sealed class StaticData
 		var walkerTemplates = new List<WalkerTemplateSummary>();
 		var walkerVersionParents = new Dictionary<string, string>(StringComparer.Ordinal);
 		var riftLocations = new List<RiftLocationSummary>();
+		var vortexLocations = new List<VortexLocationSummary>();
 		var npcTemplates = new List<NpcTemplateSummary>();
 		var npcSpawns = new List<NpcSpawnSummary>();
 		var npcRiftSpawns = new List<NpcRiftSpawnSummary>();
@@ -192,6 +197,7 @@ public sealed class StaticData
 		NpcSpawnSpotBuilder? currentNpcSpawnSpot = null;
 		NpcRiftSpawnBuilder? currentNpcRiftSpawn = null;
 		NpcSpawnSpotBuilder? currentNpcRiftSpawnSpot = null;
+		VortexLocationBuilder? currentVortexLocation = null;
 		int currentNpcSpawnMapId = 0;
 		int currentNpcSpawnDepth = -1;
 		int currentNpcSpawnSpotDepth = -1;
@@ -334,6 +340,12 @@ public sealed class StaticData
 					currentNpcRiftSpawnGroupIndex = 0;
 				}
 
+				if (reader.Depth == 2 && reader.LocalName == "vortex_location" && currentVortexLocation != null)
+				{
+					vortexLocations.Add(currentVortexLocation.ToSummary());
+					currentVortexLocation = null;
+				}
+
 				if (reader.Depth == 2 && reader.LocalName == "spawn_map" && elementPath.GetValueOrDefault(1) == "spawns")
 					currentNpcSpawnMapId = 0;
 
@@ -416,6 +428,35 @@ public sealed class StaticData
 						ReadRequiredIntAttribute(reader, "world"),
 						ReadBoolAttribute(reader, "has_spawns"),
 						string.IsNullOrEmpty(autoCloseableAttribute) || bool.TryParse(autoCloseableAttribute, out var autoCloseable) && autoCloseable));
+				continue;
+			}
+
+			if (reader.Depth == 2 && reader.LocalName == "vortex_location" && elementPath.GetValueOrDefault(1) == "dimensional_vortex")
+			{
+				// Java parity: dataholders/VortexData.afterUnmarshal converts every VortexTemplate into a VortexLocation keyed by id.
+				currentVortexLocation = new VortexLocationBuilder(
+					ReadRequiredIntAttribute(reader, "id"),
+					reader.GetAttribute("defends_race") ?? string.Empty,
+					reader.GetAttribute("offence_race") ?? string.Empty);
+				continue;
+			}
+
+			if (currentVortexLocation != null && reader.Depth == 3 && elementPath.GetValueOrDefault(2) == "vortex_location")
+			{
+				var point = ReadVortexPoint(reader);
+				switch (reader.LocalName)
+				{
+					case "home_point":
+						currentVortexLocation.HomePoint = point;
+						break;
+					case "resurrection_point":
+						currentVortexLocation.ResurrectionPoint = point;
+						break;
+					case "start_point":
+						currentVortexLocation.StartPoint = point;
+						break;
+				}
+
 				continue;
 			}
 
@@ -1539,6 +1580,7 @@ public sealed class StaticData
 			new WalkerTemplateTable(walkerTemplates.AsReadOnly()),
 			new WalkerVersionTable(new ReadOnlyDictionary<string, string>(walkerVersionParents)),
 			new RiftLocationTable(riftLocations.AsReadOnly()),
+			new VortexLocationTable(vortexLocations.AsReadOnly()),
 			new NpcTemplateTable(npcTemplates.AsReadOnly()),
 			new NpcSpawnTable(npcSpawns.AsReadOnly()),
 			new NpcRiftSpawnTable(npcRiftSpawns.AsReadOnly()),
@@ -2970,6 +3012,50 @@ public sealed class StaticData
 			ReadFloatAttribute(reader, "y"),
 			ReadFloatAttribute(reader, "z"),
 			ReadIntAttribute(reader, "heading"));
+	}
+
+	private static global::Aion.GameServer.World.WorldPosition ReadVortexPoint(XmlReader reader)
+	{
+		// Java parity: model/templates/vortex/HomePoint|ResurrectionPoint|StartPoint world position attributes.
+		return new global::Aion.GameServer.World.WorldPosition(
+			ReadRequiredIntAttribute(reader, "map"),
+			ReadFloatAttribute(reader, "x"),
+			ReadFloatAttribute(reader, "y"),
+			ReadFloatAttribute(reader, "z"),
+			(byte)ReadOptionalIntAttribute(reader, "h", 0));
+	}
+
+	private sealed class VortexLocationBuilder
+	{
+		public VortexLocationBuilder(int id, string defendersRace, string invadersRace)
+		{
+			Id = id;
+			DefendersRace = defendersRace;
+			InvadersRace = invadersRace;
+		}
+
+		private int Id { get; }
+
+		private string DefendersRace { get; }
+
+		private string InvadersRace { get; }
+
+		public global::Aion.GameServer.World.WorldPosition? HomePoint { get; set; }
+
+		public global::Aion.GameServer.World.WorldPosition? ResurrectionPoint { get; set; }
+
+		public global::Aion.GameServer.World.WorldPosition? StartPoint { get; set; }
+
+		public VortexLocationSummary ToSummary()
+		{
+			return new VortexLocationSummary(
+				Id,
+				DefendersRace,
+				InvadersRace,
+				HomePoint ?? throw new FormatException($"Vortex location {Id} is missing home_point."),
+				ResurrectionPoint ?? throw new FormatException($"Vortex location {Id} is missing resurrection_point."),
+				StartPoint ?? throw new FormatException($"Vortex location {Id} is missing start_point."));
+		}
 	}
 
 	private static int ReadRequiredIntAttribute(XmlReader reader, string attributeName)
