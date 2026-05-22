@@ -25,6 +25,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 	private readonly WorldNpcWalkerPlacementApplicationService? _walkerPlacementApplication;
 	private readonly WorldNpcWalkerRouteWalkingService? _walkerRouteWalking;
 	private readonly WorldNpcRandomWalkService? _randomWalking;
+	private readonly IWorldNpcDropRegistrationLookup? _dropRegistrationLookup;
 	private readonly ILogger<WorldNpcSpawnService> _logger;
 	private readonly ConcurrentDictionary<NpcSpawnSummary, int> _temporarySpawnObjectIds = new();
 	private readonly ConcurrentDictionary<int, SpawnedWorldNpcRegistration> _spawnedWorldNpcs = new();
@@ -45,7 +46,8 @@ public sealed class WorldNpcSpawnService : GameEngine
 		WorldNpcWalkerPlacementApplicationService? walkerPlacementApplication,
 		ILogger<WorldNpcSpawnService> logger,
 		WorldNpcWalkerRouteWalkingService? walkerRouteWalking = null,
-		WorldNpcRandomWalkService? randomWalking = null)
+		WorldNpcRandomWalkService? randomWalking = null,
+		IWorldNpcDropRegistrationLookup? dropRegistrationLookup = null)
 	{
 		_runtimeContext = runtimeContext;
 		_world = world;
@@ -58,6 +60,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		_walkerPlacementApplication = walkerPlacementApplication;
 		_walkerRouteWalking = walkerRouteWalking;
 		_randomWalking = randomWalking;
+		_dropRegistrationLookup = dropRegistrationLookup;
 		_logger = logger;
 	}
 
@@ -609,13 +612,19 @@ public sealed class WorldNpcSpawnService : GameEngine
 		return TryScheduleWorldNpcDecayTask(objectId, hasRegisteredDrops, decayDelay);
 	}
 
+	public bool TryScheduleWorldNpcDeath(int objectId, TimeSpan? decayDelay = null)
+	{
+		// Java parity: controllers/NpcController.onDie -> RespawnService.scheduleDecayTask reads the current drop map.
+		return TryScheduleWorldNpcDeath(objectId, HasRegisteredDrops(objectId), decayDelay);
+	}
+
 	public bool TryScheduleWorldNpcDecayTask(int objectId, bool hasRegisteredDrops, TimeSpan? delay = null)
 	{
 		// Java parity: services/RespawnService.scheduleDecayTask chooses 2s without drops and 5m with drops.
 		if (!_world.TryGetObject(objectId, out var gameObject) || gameObject is not WorldNpc)
 			return false;
 
-		var decayDelay = delay ?? (hasRegisteredDrops ? WithDropDecayDelay : ImmediateDecayDelay);
+		var decayDelay = delay ?? SelectWorldNpcDecayDelay(hasRegisteredDrops);
 		if (_threadPoolManager == null)
 			return TryDespawnWorldNpc(objectId);
 
@@ -627,6 +636,23 @@ public sealed class WorldNpcSpawnService : GameEngine
 			},
 			decayDelay <= TimeSpan.Zero ? ImmediateDecayDelay : decayDelay);
 		return true;
+	}
+
+	public bool TryScheduleWorldNpcDecayTask(int objectId, TimeSpan? delay = null)
+	{
+		// Java parity: services/RespawnService.scheduleDecayTask(Npc) derives delay from registered drops.
+		return TryScheduleWorldNpcDecayTask(objectId, HasRegisteredDrops(objectId), delay);
+	}
+
+	public TimeSpan SelectWorldNpcDecayDelay(int objectId)
+	{
+		return SelectWorldNpcDecayDelay(HasRegisteredDrops(objectId));
+	}
+
+	public static TimeSpan SelectWorldNpcDecayDelay(bool hasRegisteredDrops)
+	{
+		// Java parity: services/RespawnService.IMMEDIATE_DECAY / WITH_DROP_DECAY.
+		return hasRegisteredDrops ? WithDropDecayDelay : ImmediateDecayDelay;
 	}
 
 	public bool HasRespawnTask(int objectId)
@@ -645,6 +671,11 @@ public sealed class WorldNpcSpawnService : GameEngine
 		if (pendingRespawn.ReleaseOldObjectIdBeforeSpawn)
 			_idFactory.ReleaseId(objectId);
 		return true;
+	}
+
+	private bool HasRegisteredDrops(int objectId)
+	{
+		return _dropRegistrationLookup?.HasRegisteredDrops(objectId) == true;
 	}
 
 	private bool TryDespawnWorldNpc(int objectId, bool releaseObjectId)

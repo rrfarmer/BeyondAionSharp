@@ -610,6 +610,34 @@ public sealed class WorldNpcSpawnServiceTests
 	}
 
 	[Fact]
+	public void TryScheduleWorldNpcDeath_UsesRegisteredDropLookupForDefaultDecaySelection()
+	{
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var dropLookup = new FakeWorldNpcDropRegistrationLookup([1]);
+		var service = CreateService(world, dropLookup);
+		var spawns = new NpcSpawnTable([CreateSpawn(210010000, 203075)]);
+		var templates = new NpcTemplateTable([CreateTemplate(203075)]);
+
+		service.SpawnWorldNpcs(spawns, templates, [210010000]);
+
+		Assert.Equal(TimeSpan.FromMinutes(5), service.SelectWorldNpcDecayDelay(1));
+		Assert.Equal([1], dropLookup.QueriedObjectIds);
+
+		var scheduledDeath = service.TryScheduleWorldNpcDeath(1);
+
+		Assert.True(scheduledDeath);
+		Assert.Equal([1, 1], dropLookup.QueriedObjectIds);
+		Assert.Empty(world.GetNpcs());
+	}
+
+	[Fact]
+	public void SelectWorldNpcDecayDelay_MatchesJavaDropIntervals()
+	{
+		Assert.Equal(TimeSpan.FromSeconds(2), WorldNpcSpawnService.SelectWorldNpcDecayDelay(hasRegisteredDrops: false));
+		Assert.Equal(TimeSpan.FromMinutes(5), WorldNpcSpawnService.SelectWorldNpcDecayDelay(hasRegisteredDrops: true));
+	}
+
+	[Fact]
 	public async Task TryDeleteAndScheduleRespawn_SkipsNoRespawnSpawns()
 	{
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);
@@ -823,6 +851,22 @@ public sealed class WorldNpcSpawnServiceTests
 			threadPoolManager,
 			staticPlaceables,
 			NullLogger<WorldNpcSpawnService>.Instance);
+	}
+
+	private static WorldNpcSpawnService CreateService(GameWorld world, IWorldNpcDropRegistrationLookup dropRegistrationLookup)
+	{
+		return new WorldNpcSpawnService(
+			new GameServerRuntimeContext(),
+			world,
+			new IDFactory(),
+			gameTimeService: null,
+			threadPoolManager: null,
+			connectionRegistry: null,
+			staticPlaceables: null,
+			walkerSpawnPlans: null,
+			walkerPlacementApplication: null,
+			logger: NullLogger<WorldNpcSpawnService>.Instance,
+			dropRegistrationLookup: dropRegistrationLookup);
 	}
 
 	private static WorldNpcWalkerRouteWalkingService CreateRouteWalkingService(
@@ -1158,6 +1202,24 @@ public sealed class WorldNpcSpawnServiceTests
 			Type: "GENERAL",
 			State: state,
 			AiName: aiName);
+	}
+
+	private sealed class FakeWorldNpcDropRegistrationLookup : IWorldNpcDropRegistrationLookup
+	{
+		private readonly HashSet<int> _objectIdsWithDrops;
+
+		public FakeWorldNpcDropRegistrationLookup(IEnumerable<int> objectIdsWithDrops)
+		{
+			_objectIdsWithDrops = objectIdsWithDrops.ToHashSet();
+		}
+
+		public List<int> QueriedObjectIds { get; } = [];
+
+		public bool HasRegisteredDrops(int npcObjectId)
+		{
+			QueriedObjectIds.Add(npcObjectId);
+			return _objectIdsWithDrops.Contains(npcObjectId);
+		}
 	}
 
 	private sealed class CapturingConnectionRegistry : IGameClientConnectionRegistry
