@@ -52,6 +52,13 @@ public interface IPlayerEnterWorldRepository
 		int? deletedSourceItemObjectId,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveTitleAddActionMutationAsync(
+		int playerObjectId,
+		PlayerTitle title,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default);
+
 	Task<IReadOnlyList<PlayerMacro>> LoadPlayerMacrosAsync(int playerObjectId, CancellationToken cancellationToken = default);
 
 	Task<bool> SavePlayerMacroAsync(int playerObjectId, PlayerMacro macro, CancellationToken cancellationToken = default);
@@ -252,6 +259,16 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	public Task<bool> SaveEmotionLearnActionMutationAsync(
 		int playerObjectId,
 		PlayerEmotion emotion,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> SaveTitleAddActionMutationAsync(
+		int playerObjectId,
+		PlayerTitle title,
 		InventoryItem? sourceItemUpdate,
 		int? deletedSourceItemObjectId,
 		CancellationToken cancellationToken = default)
@@ -2092,6 +2109,49 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not save emotion-learn action for player {PlayerObjectId} and emotion {EmotionId}", playerObjectId, emotion.Id);
+			return false;
+		}
+	}
+
+	public async Task<bool> SaveTitleAddActionMutationAsync(
+		int playerObjectId,
+		PlayerTitle title,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: TitleAddAction.act -> PlayerTitleListDAO.storeTitles + inventory.delete/decrease.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.Transaction = transaction;
+			command.CommandText = "INSERT INTO player_titles (player_id, title_id, remaining) VALUES (?, ?, ?)";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = playerObjectId },
+					new MySqlParameter { Value = title.Id },
+					new MySqlParameter { Value = title.ExpireTimeSeconds },
+				});
+			if (await command.ExecuteNonQueryAsync(cancellationToken) <= 0)
+				return false;
+
+			if (sourceItemUpdate != null && !await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, sourceItemUpdate, cancellationToken))
+				return false;
+
+			if (deletedSourceItemObjectId.HasValue
+				&& !await DeleteInventoryItemAsync(connection, transaction, playerObjectId, deletedSourceItemObjectId.Value, cancellationToken))
+				return false;
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save title-add action for player {PlayerObjectId} and title {TitleId}", playerObjectId, title.Id);
 			return false;
 		}
 	}

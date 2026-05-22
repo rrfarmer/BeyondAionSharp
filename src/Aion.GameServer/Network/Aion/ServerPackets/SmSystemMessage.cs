@@ -319,6 +319,18 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(901713);
 	}
 
+	public static SmSystemMessage TooltipLearnedTitle()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_TOOLTIP_LEARNED_TITLE.
+		return new SmSystemMessage(901714);
+	}
+
+	public static SmSystemMessage CashTitle(string titleName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_GET_CASH_TITLE.
+		return new SmSystemMessage(1390242, titleName);
+	}
+
 	public static SmSystemMessage CannotRide(string stateName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_CANT_RIDE.

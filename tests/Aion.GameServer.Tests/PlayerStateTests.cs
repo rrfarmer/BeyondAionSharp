@@ -1,5 +1,6 @@
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Services;
+using Aion.GameServer.Dataholders;
 
 namespace Aion.GameServer.Tests;
 
@@ -43,6 +44,37 @@ public sealed class PlayerStateTests
 		Assert.True(temporary.Succeeded);
 		Assert.Equal(new PlayerEmotion(66, 1_300), temporary.Emotion);
 		Assert.Equal(300, temporary.Emotion!.SecondsUntilExpiration(now));
+	}
+
+	[Fact]
+	public void TitleAddService_MatchesJavaDuplicateRaceAndExpirationRules()
+	{
+		var now = DateTimeOffset.FromUnixTimeSeconds(1_000);
+		var titles = new TitleTemplateTable(
+			[
+				new TitleTemplateSummary(269, 412994, string.Empty, "PC_ALL", Array.Empty<ItemStatModifier>()),
+				new TitleTemplateSummary(270, 412995, string.Empty, "ASMODIANS", Array.Empty<ItemStatModifier>()),
+			]);
+		var player = new Player
+		{
+			Race = "ELYOS",
+			Titles = [new PlayerTitle(1, 0)],
+		};
+
+		Assert.Equal(TitleAddFailure.InvalidItem, TitleAddService.ValidateCanAct(player, 0).Failure);
+		Assert.Equal(TitleAddFailure.AlreadyKnown, TitleAddService.ValidateCanAct(player, 1).Failure);
+
+		var permanent = TitleAddService.CreateTitle(player, 269, 0, hasMinutes: false, titles, now);
+		Assert.True(permanent.Succeeded);
+		Assert.Equal(new PlayerTitle(269, 0), permanent.Title);
+
+		var temporary = TitleAddService.CreateTitle(player, 269, 5, hasMinutes: true, titles, now);
+		Assert.True(temporary.Succeeded);
+		Assert.Equal(new PlayerTitle(269, 1_300), temporary.Title);
+		Assert.Equal(300, temporary.Title!.SecondsUntilExpiration(now));
+
+		Assert.Equal(TitleAddFailure.InvalidRace, TitleAddService.CreateTitle(player, 270, 0, false, titles, now).Failure);
+		Assert.Equal(TitleAddFailure.InvalidTitle, TitleAddService.CreateTitle(player, 999, 0, false, titles, now).Failure);
 	}
 
 	[Fact]

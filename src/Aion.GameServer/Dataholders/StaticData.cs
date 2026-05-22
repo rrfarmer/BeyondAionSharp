@@ -640,6 +640,19 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 4 && reader.LocalName == "titleadd" && currentItemTemplate != null)
+			{
+				// Java parity: model/templates/item/actions/TitleAddAction titleid/minutes metadata.
+				currentItemTemplate.HasTitleAddAction = true;
+				currentItemTemplate.TitleAddTitleId = ReadIntAttribute(reader, "titleid");
+				if (reader.GetAttribute("minutes") != null)
+				{
+					currentItemTemplate.HasTitleAddMinutes = true;
+					currentItemTemplate.TitleAddMinutes = ReadIntAttribute(reader, "minutes");
+				}
+				continue;
+			}
+
 			if (reader.Depth == 4 && reader.LocalName == "learnemotion" && currentItemTemplate != null)
 			{
 				// Java parity: model/templates/item/actions/EmotionLearnAction.afterUnmarshal.
@@ -1428,6 +1441,14 @@ public sealed class StaticData
 
 		public bool HasEmotionLearnAction { get; set; }
 
+		public int TitleAddTitleId { get; set; }
+
+		public int TitleAddMinutes { get; set; }
+
+		public bool HasTitleAddAction { get; set; }
+
+		public bool HasTitleAddMinutes { get; set; }
+
 		public int RecommendRank { get; set; }
 
 		public string GenderPermitted { get; set; } = string.Empty;
@@ -1514,7 +1535,11 @@ public sealed class StaticData
 				RideNpcId,
 				EmotionLearnId,
 				EmotionLearnMinutes,
-				HasEmotionLearnAction);
+				HasEmotionLearnAction,
+				TitleAddTitleId,
+				TitleAddMinutes,
+				HasTitleAddAction,
+				HasTitleAddMinutes);
 		}
 
 		private static int CalculateMaxTuneCount(

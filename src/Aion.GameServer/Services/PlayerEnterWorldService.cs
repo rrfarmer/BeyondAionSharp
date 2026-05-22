@@ -198,6 +198,21 @@ public sealed class PlayerEnterWorldService
 			cancellationToken);
 	}
 
+	public Task<bool> SaveTitleAddActionMutationAsync(
+		Player player,
+		PlayerTitle title,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		return _repository.SaveTitleAddActionMutationAsync(
+			player.ObjectId,
+			title,
+			sourceItemUpdate,
+			deletedSourceItemObjectId,
+			cancellationToken);
+	}
+
 	public Task<bool> SaveItemChargeMutationAsync(
 		Player player,
 		InventoryItem chargedItem,

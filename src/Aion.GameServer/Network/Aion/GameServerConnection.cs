@@ -2403,6 +2403,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (sourceTemplate.HasTitleAddAction)
+		{
+			await HandleTitleAddUseItemAsync(player, inventoryItems, sourceItem, sourceTemplate, staticData);
+			return;
+		}
+
 		if (sourceTemplate.HasEmotionLearnAction)
 		{
 			await HandleEmotionLearnUseItemAsync(player, inventoryItems, sourceItem, sourceTemplate);
@@ -2485,6 +2491,88 @@ public sealed class GameServerConnection : BaseClientConnection
 		await SendPacketAsync(new SmLearnRecipe(recipeTemplate.RecipeId));
 		await SendPacketAsync(SmSystemMessage.CraftRecipeLearn(recipeTemplate.RecipeId, player.Name));
 		await SendPacketAsync(new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 1, 1));
+	}
+
+	private async Task HandleTitleAddUseItemAsync(
+		Player player,
+		List<InventoryItem> inventoryItems,
+		InventoryItem sourceItem,
+		ItemTemplateSummary sourceTemplate,
+		StaticData staticData)
+	{
+		// Java parity: model/templates/item/actions/TitleAddAction.canAct + act.
+		var canAct = TitleAddService.ValidateCanAct(player, sourceTemplate.TitleAddTitleId);
+		if (!canAct.Succeeded)
+		{
+			await SendTitleAddFailureAsync(canAct);
+			return;
+		}
+
+		AddItemCooldownIfNeeded(player, sourceTemplate, removeOnCancel: false);
+		await BroadcastItemUsageAnimationAsync(
+			player,
+			new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 1, 1));
+
+		var validation = TitleAddService.CreateTitle(
+			player,
+			sourceTemplate.TitleAddTitleId,
+			sourceTemplate.TitleAddMinutes,
+			sourceTemplate.HasTitleAddMinutes,
+			staticData.TitleTemplates,
+			DateTimeOffset.UtcNow);
+		if (!validation.Succeeded)
+		{
+			await SendTitleAddFailureAsync(validation);
+			return;
+		}
+
+		var title = validation.Title!;
+		var sourceItemUpdate = sourceItem.Count > 1 ? CopyInventoryItem(sourceItem, count: sourceItem.Count - 1) : null;
+		int? deletedSourceObjectId = sourceItem.Count <= 1 ? sourceItem.ObjectId : null;
+		var saved = _playerEnterWorldService == null
+			|| await _playerEnterWorldService.SaveTitleAddActionMutationAsync(
+				player,
+				title,
+				sourceItemUpdate,
+				deletedSourceObjectId);
+		if (!saved)
+			return;
+
+		player.Titles = player.Titles
+			.Where(existing => existing.Id != title.Id)
+			.Append(title)
+			.ToArray();
+		await SendPacketAsync(SmSystemMessage.CashTitle(ChatUtil.L10n(validation.TitleTemplate!.NameId)));
+		await SendPacketAsync(new SmTitleInfo(player.Titles));
+
+		if (deletedSourceObjectId.HasValue)
+		{
+			inventoryItems.RemoveAll(item => item.ObjectId == deletedSourceObjectId.Value);
+			await SendPacketAsync(new SmDeleteItem(deletedSourceObjectId.Value, SmDeleteItem.UseDeleteType));
+		}
+		else if (sourceItemUpdate != null)
+		{
+			ReplaceInventoryItem(inventoryItems, sourceItemUpdate);
+			await SendPacketAsync(new SmInventoryUpdateItem(sourceItemUpdate, sourceTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+		}
+
+		player.InventoryItems = inventoryItems.ToArray();
+	}
+
+	private async Task SendTitleAddFailureAsync(TitleAddValidation validation)
+	{
+		switch (validation.Failure)
+		{
+			case TitleAddFailure.InvalidItem:
+				await SendPacketAsync(SmSystemMessage.ItemColorError());
+				break;
+			case TitleAddFailure.AlreadyKnown:
+				await SendPacketAsync(SmSystemMessage.TooltipLearnedTitle());
+				break;
+			case TitleAddFailure.InvalidRace:
+				await SendPacketAsync(new SmMessage("This title is not available for your race."));
+				break;
+		}
 	}
 
 	private async Task HandleEmotionLearnUseItemAsync(

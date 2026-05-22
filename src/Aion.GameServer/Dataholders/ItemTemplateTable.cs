@@ -85,7 +85,11 @@ public sealed record ItemTemplateSummary(
 	int RideNpcId = 0,
 	int EmotionLearnId = 0,
 	int EmotionLearnMinutes = 0,
-	bool HasEmotionLearnAction = false)
+	bool HasEmotionLearnAction = false,
+	int TitleAddTitleId = 0,
+	int TitleAddMinutes = 0,
+	bool HasTitleAddAction = false,
+	bool HasTitleAddMinutes = false)
 {
 	private const int CanPolishMask = 1 << 17;
 	private const int SoulBoundMask = 1 << 7;

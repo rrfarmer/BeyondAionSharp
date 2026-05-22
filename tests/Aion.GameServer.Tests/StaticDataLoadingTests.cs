@@ -152,6 +152,11 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(64, staticData.ItemTemplates.GetItemTemplate(169600009)?.EmotionLearnId);
 		Assert.Equal(5, staticData.ItemTemplates.GetItemTemplate(169600009)?.EmotionLearnMinutes);
 		Assert.True(staticData.ItemTemplates.GetItemTemplate(169600009)?.HasEmotionLearnAction);
+		Assert.True(staticData.ItemTemplates.GetItemTemplate(169945000)?.HasTitleAddAction);
+		Assert.Equal(269, staticData.ItemTemplates.GetItemTemplate(169945000)?.TitleAddTitleId);
+		Assert.False(staticData.ItemTemplates.GetItemTemplate(169945000)?.HasTitleAddMinutes);
+		Assert.True(staticData.ItemTemplates.GetItemTemplate(169945001)?.HasTitleAddMinutes);
+		Assert.Equal(10081, staticData.ItemTemplates.GetItemTemplate(169945001)?.TitleAddMinutes);
 		var sprintRide = staticData.RideInfos.GetRideInfo(2000000);
 		Assert.NotNull(sprintRide);
 		Assert.Equal(12.0f, sprintRide.MoveSpeed);

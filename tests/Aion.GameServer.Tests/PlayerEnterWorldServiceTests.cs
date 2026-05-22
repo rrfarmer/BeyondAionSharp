@@ -395,6 +395,14 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public int? EmotionLearnDeletedSourceItemObjectId { get; private set; }
 
+		public int SaveTitleAddActionMutationCalls { get; private set; }
+
+		public PlayerTitle? AddedTitle { get; private set; }
+
+		public InventoryItem? TitleAddSourceItemUpdate { get; private set; }
+
+		public int? TitleAddDeletedSourceItemObjectId { get; private set; }
+
 		public int SaveItemChargeMutationCalls { get; private set; }
 
 		public InventoryItem? ChargedItem { get; private set; }
@@ -544,6 +552,20 @@ public sealed class PlayerEnterWorldServiceTests
 			LearnedEmotion = emotion;
 			EmotionLearnSourceItemUpdate = sourceItemUpdate;
 			EmotionLearnDeletedSourceItemObjectId = deletedSourceItemObjectId;
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> SaveTitleAddActionMutationAsync(
+			int playerObjectId,
+			PlayerTitle title,
+			InventoryItem? sourceItemUpdate,
+			int? deletedSourceItemObjectId,
+			CancellationToken cancellationToken = default)
+		{
+			SaveTitleAddActionMutationCalls++;
+			AddedTitle = title;
+			TitleAddSourceItemUpdate = sourceItemUpdate;
+			TitleAddDeletedSourceItemObjectId = deletedSourceItemObjectId;
 			return Task.FromResult(true);
 		}
 
