@@ -2951,6 +2951,64 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmMove_WritesNpcTargetCoordinatesFromWalkerMovementState()
+	{
+		var npc = CreateWorldNpc(
+			objectId: 5678,
+			position: new WorldPosition(210010000, 1.25f, 2.5f, 3.75f, 9));
+		var movementState = WorldNpcWalkerMovementState.ForTarget(
+			npc.ObjectId,
+			"route-a",
+			string.Empty,
+			isFormationMember: false,
+			new WorldNpcWalkerRouteStepTarget(npc.ObjectId, StepIndex: 1, X: 11, Y: 22, Z: 33, RestTime: 0, IsLastStep: false, ShouldStop: false),
+			restDelay: TimeSpan.Zero,
+			groupStep: 0,
+			sagittalShift: 0,
+			coronalShift: 0);
+
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(new SmMove(npc, movementState)));
+
+		Assert.Equal(5678, reader.ReadD());
+		Assert.Equal(1.25f, reader.ReadF());
+		Assert.Equal(2.5f, reader.ReadF());
+		Assert.Equal(3.75f, reader.ReadF());
+		Assert.Equal(9, (int)reader.ReadC());
+		Assert.Equal(MovementMask.NpcStartMove, reader.ReadC());
+		Assert.Equal(11, reader.ReadF());
+		Assert.Equal(22, reader.ReadF());
+		Assert.Equal(33, reader.ReadF());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void SmMove_WritesZeroGlideFlagForNpcMoveMasks()
+	{
+		var npc = CreateWorldNpc(
+			objectId: 5679,
+			position: new WorldPosition(210010000, 10, 20, 30, 40));
+
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(new SmMove(
+			npc,
+			MovementMask.NpcRunSlow,
+			targetX: 12,
+			targetY: 24,
+			targetZ: 36)));
+
+		Assert.Equal(5679, reader.ReadD());
+		Assert.Equal(10, reader.ReadF());
+		Assert.Equal(20, reader.ReadF());
+		Assert.Equal(30, reader.ReadF());
+		Assert.Equal(40, (int)reader.ReadC());
+		Assert.Equal(MovementMask.NpcRunSlow, reader.ReadC());
+		Assert.Equal(12, reader.ReadF());
+		Assert.Equal(24, reader.ReadF());
+		Assert.Equal(36, reader.ReadF());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
 	public void SmPlayerInfo_WritesJavaShapedBaseline()
 	{
 		var player = new Player
@@ -4720,6 +4778,24 @@ public class GamePacketTests
 		var bytes = new byte[48];
 		Encoding.Unicode.GetBytes(value, bytes);
 		buffer.WriteB(bytes);
+	}
+
+	private static WorldNpc CreateWorldNpc(int objectId, WorldPosition position)
+	{
+		return new WorldNpc(
+			ObjectId: objectId,
+			TemplateId: 203000,
+			Template: new NpcTemplateSummary(
+				203000,
+				"walker-npc",
+				NameId: 203000,
+				Level: 1,
+				Rank: "NORMAL",
+				Rating: "NORMAL",
+				Race: "ELYOS",
+				Tribe: "GENERAL",
+				Type: "GENERAL"),
+			Position: position);
 	}
 
 	private static ItemTemplateSummary CreateBrokerTemplate(
