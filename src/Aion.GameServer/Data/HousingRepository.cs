@@ -547,12 +547,13 @@ public sealed class MySqlHousingRepository : IHousingRepository
 				updateCommand.Transaction = transaction;
 				updateCommand.CommandText = """
 					UPDATE player_registered_items
-					SET owner_use_count = ?, visitor_use_count = ?
+					SET expire_time = ?, owner_use_count = ?, visitor_use_count = ?
 					WHERE player_id = ? AND item_unique_id = ? AND item_id = ?
 					""";
 				updateCommand.Parameters.AddRange(
 					new[]
 					{
+						new MySqlParameter { Value = updatedHouseObject.ExpireTimeSeconds > 0 ? updatedHouseObject.ExpireTimeSeconds : (object)DBNull.Value },
 						new MySqlParameter { Value = updatedHouseObject.OwnerUseCount },
 						new MySqlParameter { Value = updatedHouseObject.VisitorUseCount },
 						new MySqlParameter { Value = houseOwnerObjectId },

@@ -5826,7 +5826,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		var template = target.Template;
-		if (!HasUseItemAction(template) || template.UseActionFinalRewardId > 0)
+		if (!HasUseItemAction(template))
 		{
 			await SendPacketAsync(SmSystemMessage.HousingObjectAllCantUse());
 			return;
@@ -5848,11 +5848,32 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		var currentUseCount = target.HouseObject.OwnerUseCount + target.HouseObject.VisitorUseCount;
+		var mustGiveLastReward = MustGiveLastReward(template, target.HouseObject);
 		if (template.UseCount > 0
 			&& ((currentUseCount >= template.UseCount && !isOwner) || (currentUseCount > template.UseCount && isOwner)))
 		{
-			await SendPacketAsync(SmSystemMessage.HousingObjectAchieveUseCount());
+			if (!mustGiveLastReward || !isOwner)
+			{
+				await SendPacketAsync(SmSystemMessage.HousingObjectAchieveUseCount());
+				return;
+			}
+		}
+
+		if (mustGiveLastReward && !isOwner)
+		{
+			await SendPacketAsync(SmSystemMessage.HousingObjectDeleteExpireTime(ChatUtil.L10n(template.NameId)));
 			return;
+		}
+
+		if (string.Equals(template.Limit, "COOKING", StringComparison.OrdinalIgnoreCase) && template.UseActionRewardId > 0)
+		{
+			var rewardTemplate = staticData.ItemTemplates.GetItemTemplate(template.UseActionRewardId);
+			if (player.InventoryItems.Any(item => item.ItemId == template.UseActionRewardId))
+			{
+				var rewardName = rewardTemplate?.GetClientName() ?? rewardTemplate?.Name ?? template.UseActionRewardId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+				await SendPacketAsync(SmSystemMessage.CannotUseAlreadyHaveRewardItem(rewardName, ChatUtil.L10n(template.NameId)));
+				return;
+			}
 		}
 
 		if (!ValidateUseableHouseObjectRequirement(player, template, staticData.ItemTemplates, out var failureMessage))
@@ -5976,7 +5997,34 @@ public sealed class GameServerConnection : BaseClientConnection
 				return;
 		}
 
-		var rewardId = target.Template.UseActionRewardId;
+		var rewardId = 0;
+		var deleteHouseObject = false;
+		var markFinalRewardPending = false;
+		if (target.Template.UseCount > 0)
+		{
+			if (target.Template.UseActionFinalRewardId > 0 && target.Template.UseCount + 1 == usedCount)
+			{
+				rewardId = target.Template.UseActionFinalRewardId;
+				deleteHouseObject = true;
+			}
+			else if (target.Template.UseActionRewardId > 0)
+			{
+				rewardId = target.Template.UseActionRewardId;
+				if (target.Template.UseCount == usedCount)
+				{
+					await SendPacketAsync(SmSystemMessage.HousingFlowerpotGoal(ChatUtil.L10n(target.Template.NameId)), cancellationToken);
+					if (target.Template.UseActionFinalRewardId == 0)
+						deleteHouseObject = true;
+					else
+						markFinalRewardPending = true;
+				}
+			}
+		}
+		else if (target.Template.UseActionRewardId > 0)
+		{
+			rewardId = target.Template.UseActionRewardId;
+		}
+
 		var rewardTemplate = rewardId == 0 ? null : staticData.ItemTemplates.GetItemTemplate(rewardId);
 		var rewardPlan = rewardTemplate == null
 			? InventoryAddPlan.Empty
@@ -5988,27 +6036,21 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		var updatedHouseObject = target.HouseObject;
-		var deleteHouseObject = false;
-		if (target.Template.UseCount > 0)
+		if (usedCount > 0 && !deleteHouseObject)
 		{
-			if (usedCount == target.Template.UseCount)
-			{
-				await SendPacketAsync(SmSystemMessage.HousingFlowerpotGoal(ChatUtil.L10n(target.Template.NameId)), cancellationToken);
-				deleteHouseObject = true;
-			}
-			else if (isOwner)
-			{
-				updatedHouseObject = target.HouseObject.WithUseCounts(
+			updatedHouseObject = isOwner
+				? target.HouseObject.WithUseCounts(
 					target.Template,
 					target.HouseObject.OwnerUseCount + 1,
-					target.HouseObject.VisitorUseCount);
-			}
-			else
-			{
-				updatedHouseObject = target.HouseObject.WithUseCounts(
+					target.HouseObject.VisitorUseCount)
+				: target.HouseObject.WithUseCounts(
 					target.Template,
 					target.HouseObject.OwnerUseCount,
 					target.HouseObject.VisitorUseCount + 1);
+			if (markFinalRewardPending)
+			{
+				var nowSeconds = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+				updatedHouseObject = updatedHouseObject.WithExpireTimeSeconds(nowSeconds, () => nowSeconds);
 			}
 		}
 
@@ -6152,6 +6194,14 @@ public sealed class GameServerConnection : BaseClientConnection
 			|| template.UseActionRemoveCount != 0
 			|| template.UseActionRewardId != 0
 			|| template.UseActionFinalRewardId != 0;
+	}
+
+	private static bool MustGiveLastReward(HousingObjectTemplateSummary template, RegisteredHouseObjectSummary houseObject)
+	{
+		// Java parity: UseableItemObject.mustGiveLastReward is restored when a final-reward object has expired.
+		return template.UseActionFinalRewardId > 0
+			&& houseObject.ExpireTimeSeconds > 0
+			&& houseObject.ExpireTimeSeconds <= DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 	}
 
 	private static bool HasActiveHouseObjectCooldown(Player player, int objectId)

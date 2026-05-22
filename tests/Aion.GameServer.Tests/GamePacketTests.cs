@@ -768,6 +768,7 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.HousingObjectUse("object"), 1401257, "object");
 		AssertSystemMessage(SmSystemMessage.HousingObjectCancelUse(), 1401258);
 		AssertSystemMessage(SmSystemMessage.HousingObjectCantUsePerDay(), 1401260);
+		AssertSystemMessage(SmSystemMessage.HousingObjectDeleteExpireTime("object"), 1401261, "object");
 		AssertSystemMessage(SmSystemMessage.HousingObjectRewardItem("object", "reward"), 1401263, "object", "reward");
 		AssertSystemMessage(SmSystemMessage.HousingObjectDeleteUseCountFinal("object"), 1401470, "object");
 		AssertSystemMessage(SmSystemMessage.HousingBidSuccess(6001), 1401265, "6001");
@@ -804,6 +805,7 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.HousingOrderOutWithoutFriends(), 1401382);
 		AssertSystemMessage(SmSystemMessage.HousingOrderOutAll(), 1401383);
 		AssertSystemMessage(SmSystemMessage.HousingRequestOut(), 1401384);
+		AssertSystemMessage(SmSystemMessage.CannotUseAlreadyHaveRewardItem("reward", "object"), 1401396, "reward", "object");
 		AssertSystemMessage(SmSystemMessage.HousingChangeOwner(), 1401385);
 
 		var attachmentStatePayload = SerializeUnencryptedPayload(SmMailService.CreateAttachmentState(letterId: 123, attachmentType: 1));

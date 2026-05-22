@@ -62,6 +62,7 @@ public sealed class PlayerHouseTests
 		var notSpawned = Assert.Single(registry.NotSpawnedObjects);
 		Assert.Equal(9001, notSpawned.ObjectId);
 		Assert.Equal(200, notSpawned.ExpirationSeconds);
+		Assert.Equal(1_200, notSpawned.ExpireTimeSeconds);
 		Assert.Equal((byte)7, notSpawned.TypeId);
 		var notSpawnedWithCooldown = Assert.Single(
 			registry.GetNotSpawnedObjects(new Dictionary<int, long> { [9001] = 130_000 }, () => 100_000));
@@ -73,6 +74,9 @@ public sealed class PlayerHouseTests
 		Assert.Equal(2, usedObject.OwnerUseCount);
 		Assert.Equal(2, usedObject.VisitorUseCount);
 		Assert.Equal(new byte[] { 4, 0, 0, 0, 2 }, usedObject.UsageData);
+		var expiredForFinalReward = usedObject.WithExpireTimeSeconds(1_005, () => 1_010);
+		Assert.Equal(1_005, expiredForFinalReward.ExpireTimeSeconds);
+		Assert.Equal(-5, expiredForFinalReward.ExpirationSeconds);
 		var placedObject = Assert.Single(
 			registry.GetSpawnedObjects(
 				new PlayerHouse(50, 700100, 353000, DateTime.UtcNow, null, IsInactive: false, Registry: registry),

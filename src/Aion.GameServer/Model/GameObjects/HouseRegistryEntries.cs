@@ -20,7 +20,8 @@ public sealed record RegisteredHouseObjectSummary(
 	int VisitorUseCount = 0,
 	int ColorExpires = 0,
 	int NpcObjectId = 0,
-	string Area = "NONE")
+	string Area = "NONE",
+	int ExpireTimeSeconds = 0)
 {
 	public bool IsSpawnedByPlayer => X != 0 || Y != 0 || Z != 0;
 
@@ -225,7 +226,8 @@ public sealed record HouseRegistrySummary(
 					VisitorUseCount: row.VisitorUseCount,
 					ColorExpires: row.ColorExpires,
 					NpcObjectId: template?.NpcId ?? 0,
-					Area: template?.Area ?? row.Area));
+					Area: template?.Area ?? row.Area,
+					ExpireTimeSeconds: row.ExpireTimeSeconds ?? 0));
 		}
 
 		return new HouseRegistrySummary(objects, decorations, decorations.Any(decor => decor.IsDeleted));
@@ -263,7 +265,8 @@ public sealed record HouseRegistrySummary(
 			TypeId: template.TypeId,
 			UsageData: CreateUsageData(template, row),
 			NpcObjectId: template.NpcId,
-			Area: template.Area);
+			Area: template.Area,
+			ExpireTimeSeconds: expireTimeSeconds ?? 0);
 	}
 
 	private static PlacedHouseObjectSummary ToPlacedObject(RegisteredHouseObjectSummary obj, int addressId, int ownerPlayerId)
@@ -324,6 +327,20 @@ public static class RegisteredHouseObjectSummaryExtensions
 		return obj with
 		{
 			CooldownSeconds = RemainingSeconds(cooldowns, obj.ObjectId, currentUnixTimeMilliseconds),
+		};
+	}
+
+	public static RegisteredHouseObjectSummary WithExpireTimeSeconds(
+		this RegisteredHouseObjectSummary obj,
+		int expireTimeSeconds,
+		Func<long>? currentUnixTimeSeconds = null)
+	{
+		// Java parity: HouseObject.setExpireTime stores absolute epoch seconds while packets write remaining seconds.
+		var nowSeconds = currentUnixTimeSeconds?.Invoke() ?? DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+		return obj with
+		{
+			ExpireTimeSeconds = expireTimeSeconds,
+			ExpirationSeconds = expireTimeSeconds > 0 ? expireTimeSeconds - (int)nowSeconds : 0,
 		};
 	}
 

@@ -827,6 +827,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1401260);
 	}
 
+	public static SmSystemMessage HousingObjectDeleteExpireTime(string objectName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_OBJECT_DELETE_EXPIRE_TIME.
+		return new SmSystemMessage(1401261, objectName);
+	}
+
 	public static SmSystemMessage HousingObjectRewardItem(string objectName, string rewardName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_OBJECT_REWARD_ITEM.
@@ -1071,6 +1077,12 @@ public sealed class SmSystemMessage : GameServerPacket
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_REQUEST_OUT.
 		return new SmSystemMessage(1401384);
+	}
+
+	public static SmSystemMessage CannotUseAlreadyHaveRewardItem(string rewardName, string objectName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_CANNOT_USE_ALREADY_HAVE_REWARD_ITEM.
+		return new SmSystemMessage(1401396, rewardName, objectName);
 	}
 
 	public static SmSystemMessage HousingChangeOwner()
