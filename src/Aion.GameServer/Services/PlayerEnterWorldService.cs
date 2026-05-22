@@ -364,6 +364,25 @@ public sealed class PlayerEnterWorldService
 			cancellationToken);
 	}
 
+	public Task<bool> SaveBreakItemActionMutationAsync(
+		Player player,
+		BreakItemPlan plan,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: ExtractAction -> EnchantService.breakItem target delete, tool consume, then ItemService.addItem.
+		IReadOnlyList<InventoryItem> updatedConsumedItems = plan.SourceItemUpdate == null ? Array.Empty<InventoryItem>() : [plan.SourceItemUpdate];
+		var deletedConsumedObjectIds = plan.DeletedSourceItemObjectId.HasValue
+			? new[] { plan.DeletedTargetItemObjectId, plan.DeletedSourceItemObjectId.Value }
+			: [plan.DeletedTargetItemObjectId];
+		return _repository.SaveAssemblyItemActionMutationAsync(
+			player.ObjectId,
+			updatedConsumedItems,
+			deletedConsumedObjectIds,
+			plan.UpdatedRewardItems,
+			plan.AddedRewardItems,
+			cancellationToken);
+	}
+
 	public Task<bool> SaveItemRemodelMutationAsync(
 		Player player,
 		InventoryItem targetItemUpdate,

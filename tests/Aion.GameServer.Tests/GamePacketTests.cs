@@ -665,6 +665,7 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.DecomposeItemFailed("item"), 1300448, "item");
 		AssertSystemMessage(SmSystemMessage.DecomposeItemSucceed("item"), 1300449, "item");
 		AssertSystemMessage(SmSystemMessage.DecomposeItemCanceled("item"), 1300450, "item");
+		AssertSystemMessage(SmSystemMessage.DecomposeEquippedItemCannotDecompose(), 1400279);
 		AssertSystemMessage(SmSystemMessage.ChangeItemSkinPcLevelLimit(), 1300476);
 		AssertSystemMessage(SmSystemMessage.ChangeItemSkinNotSkinChangeable("item"), 1300478, "item");
 		AssertSystemMessage(SmSystemMessage.ChangeItemSkinNotCompatible("keep", "skin"), 1300480, "keep", "skin");

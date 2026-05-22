@@ -361,6 +361,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300450, itemName);
 	}
 
+	public static SmSystemMessage DecomposeEquippedItemCannotDecompose()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_DECOMPOSE_EQUIP_ITEM_CAN_NOT_BE_DECOMPOSED.
+		return new SmSystemMessage(1400279);
+	}
+
 	public static SmSystemMessage ChangeItemSkinPcLevelLimit()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_CHANGE_ITEM_SKIN_PC_LEVEL_LIMIT.

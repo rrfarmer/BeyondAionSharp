@@ -2823,6 +2823,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (sourceTemplate.HasExtractAction)
+		{
+			await HandleExtractUseItemAsync(player, sourceItem, sourceTemplate, packet.TargetItemObjectId, staticData);
+			return;
+		}
+
 		if (sourceTemplate.HasDecomposeAction)
 		{
 			await HandleDecomposeUseItemAsync(player, inventoryItems, sourceItem, sourceTemplate, staticData);
@@ -3168,6 +3174,160 @@ public sealed class GameServerConnection : BaseClientConnection
 		foreach (var updatedReward in mutationPlan.UpdatedRewardItems)
 			await SendPacketAsync(new SmInventoryUpdateItem(updatedReward, rewardTemplate, SmInventoryUpdateItem.IncreaseItemCollect));
 		foreach (var addedReward in mutationPlan.AddedRewardItems)
+			await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(addedReward, rewardTemplate));
+	}
+
+	private async Task HandleExtractUseItemAsync(
+		Player player,
+		InventoryItem sourceItem,
+		ItemTemplateSummary sourceTemplate,
+		int targetItemObjectId,
+		StaticData staticData)
+	{
+		// Java parity: model/templates/item/actions/ExtractAction.canAct + act.
+		var inventoryItems = player.InventoryItems.ToList();
+		var targetItem = targetItemObjectId == 0
+			? null
+			: inventoryItems.FirstOrDefault(item => item.ObjectId == targetItemObjectId);
+		if (targetItem == null)
+		{
+			await SendPacketAsync(SmSystemMessage.DecomposeItemNoTarget());
+			return;
+		}
+
+		var targetTemplate = staticData.ItemTemplates.GetItemTemplate(targetItem.ItemId);
+		var targetItemName = targetTemplate?.GetClientName()
+			?? targetTemplate?.Name
+			?? targetItem.ItemId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+		if (targetTemplate == null || (!targetTemplate.IsArmor && !targetTemplate.IsWeapon))
+		{
+			await SendPacketAsync(SmSystemMessage.DecomposeItemCannotDecompose(targetItemName));
+			return;
+		}
+
+		if (targetItem.IsEquipped)
+		{
+			await SendPacketAsync(SmSystemMessage.DecomposeEquippedItemCannotDecompose());
+			return;
+		}
+
+		AddItemCooldownIfNeeded(player, sourceTemplate, removeOnCancel: false);
+		await CancelPendingItemUseAsync(player);
+		await SendPacketAsync(
+			new SmItemUsageAnimation(
+				player.ObjectId,
+				sourceItem.ObjectId,
+				sourceItem.ItemId,
+				5000,
+				0,
+				0));
+
+		await SchedulePendingItemUseAsync(
+			player,
+			itemObjectId: sourceItem.ObjectId,
+			itemTemplateId: sourceItem.ItemId,
+			targetItemName: targetItemName,
+			cancelMessage: PendingItemUseCancelMessage.Decompose,
+			delay: TimeSpan.FromMilliseconds(5000),
+			completeAsync: async cancellationToken =>
+			{
+				if (cancellationToken.IsCancellationRequested)
+					return;
+
+				await CompleteExtractUseItemAsync(player, sourceItem.ObjectId, sourceTemplate, targetItem.ObjectId, staticData, cancellationToken);
+			},
+			cancelEndState: 2,
+			cancelAnimationToSelfOnly: true);
+	}
+
+	private async Task CompleteExtractUseItemAsync(
+		Player player,
+		int sourceItemObjectId,
+		ItemTemplateSummary sourceTemplate,
+		int targetItemObjectId,
+		StaticData staticData,
+		CancellationToken cancellationToken)
+	{
+		var inventoryItems = player.InventoryItems.ToList();
+		var plan = EnchantService.CreateBreakItemPlan(
+			player,
+			targetItemObjectId,
+			sourceItemObjectId,
+			staticData.ItemTemplates,
+			() => _idFactory?.NextId() ?? 0,
+			RandomInclusive);
+		if (!plan.Succeeded)
+		{
+			await SendPacketAsync(new SmItemUsageAnimation(player.ObjectId, sourceItemObjectId, sourceTemplate.TemplateId, 0, 2, 0));
+			return;
+		}
+
+		var saved = _playerEnterWorldService == null
+			|| await _playerEnterWorldService.SaveBreakItemActionMutationAsync(player, plan, cancellationToken);
+		if (!saved)
+			return;
+
+		await SendExtractConsumedItemPacketsAsync(inventoryItems, plan, sourceTemplate);
+		ApplyBreakItemInventoryMutation(inventoryItems, plan);
+		player.InventoryItems = inventoryItems.ToArray();
+
+		if (staticData.ItemTemplates.GetItemTemplate(plan.RewardItemId) is { } rewardTemplate)
+		{
+			RegisterExtractExpirableAddedItems(player, plan.AddedRewardItems, rewardTemplate);
+			if (HasRewardMutation(plan.UpdatedRewardItems, plan.AddedRewardItems))
+				await SendExtractRewardPacketsAsync(plan, rewardTemplate);
+		}
+
+		if (!plan.RewardSucceeded && plan.RewardInventoryFull)
+			await SendPacketAsync(SmSystemMessage.DiceInventoryError());
+		await SendPacketAsync(new SmItemUsageAnimation(player.ObjectId, sourceItemObjectId, sourceTemplate.TemplateId, 0, 1, 0));
+	}
+
+	private async Task SendExtractConsumedItemPacketsAsync(
+		IReadOnlyList<InventoryItem> inventoryItems,
+		BreakItemPlan plan,
+		ItemTemplateSummary sourceTemplate)
+	{
+		if (inventoryItems.Any(item => item.ObjectId == plan.DeletedTargetItemObjectId))
+			await SendPacketAsync(new SmDeleteItem(plan.DeletedTargetItemObjectId, SmDeleteItem.UseDeleteType));
+
+		if (plan.SourceItemUpdate != null)
+		{
+			await SendPacketAsync(new SmInventoryUpdateItem(plan.SourceItemUpdate, sourceTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+		}
+		else if (plan.DeletedSourceItemObjectId.HasValue && inventoryItems.Any(item => item.ObjectId == plan.DeletedSourceItemObjectId.Value))
+		{
+			await SendPacketAsync(new SmDeleteItem(plan.DeletedSourceItemObjectId.Value, SmDeleteItem.UseDeleteType));
+		}
+	}
+
+	private static void ApplyBreakItemInventoryMutation(List<InventoryItem> inventoryItems, BreakItemPlan plan)
+	{
+		inventoryItems.RemoveAll(item => item.ObjectId == plan.DeletedTargetItemObjectId);
+		if (plan.SourceItemUpdate != null)
+			ReplaceInventoryItem(inventoryItems, plan.SourceItemUpdate);
+		if (plan.DeletedSourceItemObjectId.HasValue)
+			inventoryItems.RemoveAll(item => item.ObjectId == plan.DeletedSourceItemObjectId.Value);
+		foreach (var updatedReward in plan.UpdatedRewardItems)
+			ReplaceInventoryItem(inventoryItems, updatedReward);
+		inventoryItems.AddRange(plan.AddedRewardItems);
+	}
+
+	private void RegisterExtractExpirableAddedItems(Player player, IReadOnlyList<InventoryItem> addedRewardItems, ItemTemplateSummary rewardTemplate)
+	{
+		// Java parity: services/item/ItemService.addNonStackableItem registers newly created expirable items.
+		if (rewardTemplate.MaxStackCount > 1)
+			return;
+
+		foreach (var addedRewardItem in addedRewardItems)
+			_expirableTaskService?.RegisterInventoryItem(player, addedRewardItem);
+	}
+
+	private async Task SendExtractRewardPacketsAsync(BreakItemPlan plan, ItemTemplateSummary rewardTemplate)
+	{
+		foreach (var updatedReward in plan.UpdatedRewardItems)
+			await SendPacketAsync(new SmInventoryUpdateItem(updatedReward, rewardTemplate, SmInventoryUpdateItem.IncreaseItemCollect));
+		foreach (var addedReward in plan.AddedRewardItems)
 			await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(addedReward, rewardTemplate));
 	}
 
