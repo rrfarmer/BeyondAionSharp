@@ -589,6 +589,9 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.CannotUseItemInvalidRace(), 1300373);
 		AssertSystemMessage(SmSystemMessage.CannotUseItemInvalidGender(), 1300375);
 		AssertSystemMessage(SmSystemMessage.CannotUseItemTooHighLevel(39, "item"), 1400267, "39", "item");
+		AssertSystemMessage(SmSystemMessage.CannotRide(ChatUtil.L10n(1400057)), 1401211, ChatUtil.L10n(1400057));
+		AssertSystemMessage(SmSystemMessage.UnrideAbnormalState(), 1401254);
+		AssertSystemMessage(SmSystemMessage.CannotRideAbnormalState(), 1401255);
 		AssertSystemMessage(SmSystemMessage.EnchantItemCanceled("item"), 1300457, "item");
 		AssertSystemMessage(SmSystemMessage.GiveItemOptionCanceled("item"), 1300464, "item");
 		AssertSystemMessage(SmSystemMessage.GiveItemProcCancel("item"), 1402238, "item");

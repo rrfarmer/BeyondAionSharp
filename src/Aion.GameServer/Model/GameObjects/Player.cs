@@ -308,6 +308,47 @@ public sealed class Player
 		return true;
 	}
 
+	public bool CanStartRide()
+	{
+		// Java parity: model/templates/item/actions/RideAction.canAct baseline guards before mounting.
+		return !IsInRideMode
+			&& !IsInState(PlayerCreatureState.Resting)
+			&& !IsInAnyAbnormalState(PlayerAbnormalState.DismountRide);
+	}
+
+	public void MountRide(PlayerRideInfo rideInfo)
+	{
+		// Java parity: RideAction.act completion + PlayerActions.setPlayerMode(PlayerMode.RIDE).
+		SetCreatureState(PlayerCreatureState.Active, enabled: false);
+		SetCreatureState(PlayerCreatureState.Resting, enabled: true);
+		if (IsFlying())
+			SetCreatureState(PlayerCreatureState.FloatingCorpse, enabled: true);
+
+		IsInRideMode = true;
+		RideInfo = rideInfo;
+	}
+
+	public bool DismountRide()
+	{
+		// Java parity: PlayerActions.unsetPlayerMode(PlayerMode.RIDE).
+		if (!IsInRideMode)
+			return false;
+
+		IsInRideMode = false;
+		RideInfo = null;
+		if (IsInSprintMode)
+		{
+			if (!IsFlying())
+				TriggerFpRestore();
+			IsInSprintMode = false;
+		}
+
+		SetCreatureState(PlayerCreatureState.Resting, enabled: false);
+		SetCreatureState(PlayerCreatureState.FloatingCorpse, enabled: false);
+		SetCreatureState(PlayerCreatureState.Active, enabled: true);
+		return true;
+	}
+
 	public bool CanStartRideSprint()
 	{
 		// Java parity: CM_EMOTION.START_SPRINT guard using PlayerMode.RIDE, current FP, Player.isFlying, and RideInfo.canSprint.

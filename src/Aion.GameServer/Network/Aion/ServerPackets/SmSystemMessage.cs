@@ -307,6 +307,24 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1400267, maxLevel.ToString(System.Globalization.CultureInfo.InvariantCulture), itemName);
 	}
 
+	public static SmSystemMessage CannotRide(string stateName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_CANT_RIDE.
+		return new SmSystemMessage(1401211, stateName);
+	}
+
+	public static SmSystemMessage UnrideAbnormalState()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_UNRIDE_ABNORMAL_STATE.
+		return new SmSystemMessage(1401254);
+	}
+
+	public static SmSystemMessage CannotRideAbnormalState()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_CANNOT_RIDE_ABNORMAL_STATE.
+		return new SmSystemMessage(1401255);
+	}
+
 	public static SmSystemMessage SoulBoundItemSucceed(string itemName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_ITEM_SUCCEED.

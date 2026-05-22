@@ -2386,6 +2386,12 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (sourceTemplate == null)
 			return;
 
+		if (sourceTemplate.RideNpcId > 0)
+		{
+			await HandleRideUseItemAsync(player, sourceItem, sourceTemplate, staticData);
+			return;
+		}
+
 		if (sourceTemplate.PolishSetId > 0 && packet.Type == 2)
 		{
 			var targetItem = packet.TargetItemObjectId == 0
@@ -2412,6 +2418,91 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		if (sourceTemplate.ChargeActionMaxLevel > 0)
 			await HandleChargeUseItemAsync(player, inventoryItems, sourceItem, sourceTemplate, staticData);
+	}
+
+	private async Task HandleRideUseItemAsync(
+		Player player,
+		InventoryItem sourceItem,
+		ItemTemplateSummary sourceTemplate,
+		StaticData staticData)
+	{
+		// Java parity: model/templates/item/actions/RideAction.canAct + act.
+		if (player.IsInRideMode)
+		{
+			AddItemCooldownIfNeeded(player, sourceTemplate, removeOnCancel: false);
+			await DismountRideAsync(player);
+			return;
+		}
+
+		var rideInfo = staticData.RideInfos.GetRideInfo(sourceTemplate.RideNpcId);
+		if (rideInfo == null)
+			return;
+
+		if (player.IsInState(PlayerCreatureState.Resting))
+		{
+			await SendPacketAsync(SmSystemMessage.CannotRide(ChatUtil.L10n(1400057)));
+			return;
+		}
+
+		if (player.IsInAnyAbnormalState(PlayerAbnormalState.DismountRide))
+		{
+			await SendPacketAsync(SmSystemMessage.CannotRideAbnormalState());
+			return;
+		}
+
+		var removeCooldownDelayIdOnCancel = AddItemCooldownIfNeeded(player, sourceTemplate, removeOnCancel: true);
+		await BroadcastItemUsageAnimationAsync(
+			player,
+			new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 3000, 0, 0));
+
+		await SchedulePendingItemUseAsync(
+			player,
+			itemObjectId: sourceItem.ObjectId,
+			itemTemplateId: sourceItem.ItemId,
+			targetItemName: sourceTemplate.GetClientName() ?? sourceTemplate.Name,
+			cancelMessage: PendingItemUseCancelMessage.Item,
+			delay: TimeSpan.FromMilliseconds(3000),
+			completeAsync: async cancellationToken =>
+			{
+				if (cancellationToken.IsCancellationRequested)
+					return;
+
+				await CompleteRideUseItemAsync(player, sourceItem, rideInfo);
+			},
+			cancelEndState: 3,
+			removeCooldownDelayIdOnCancel: removeCooldownDelayIdOnCancel);
+	}
+
+	private async Task CompleteRideUseItemAsync(Player player, InventoryItem sourceItem, RideInfoSummary rideInfo)
+	{
+		// Java parity: RideAction delayed TaskId.ITEM_USE completion. QuestEngine.rideAction remains future quest-engine work.
+		player.MountRide(ToPlayerRideInfo(rideInfo));
+		await BroadcastEmotionAsync(player, new SmEmotion(player, EmotionType.ChangeSpeed, 0, 0));
+		await BroadcastEmotionAsync(player, new SmEmotion(player, EmotionType.Ride, 0, rideInfo.NpcId));
+		await BroadcastItemUsageAnimationAsync(
+			player,
+			new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 1, 1));
+	}
+
+	private async Task DismountRideAsync(Player player)
+	{
+		if (!player.DismountRide())
+			return;
+
+		await BroadcastEmotionAsync(player, new SmEmotion(player, EmotionType.ChangeSpeed, 0, 0));
+		await BroadcastEmotionAsync(player, new SmEmotion(player, EmotionType.RideEnd));
+	}
+
+	private static PlayerRideInfo ToPlayerRideInfo(RideInfoSummary rideInfo)
+	{
+		// Java parity: model/templates/ride/RideInfo projected into Player.ride runtime state.
+		return new PlayerRideInfo(
+			rideInfo.NpcId,
+			rideInfo.StartFp,
+			rideInfo.CostFp,
+			rideInfo.SprintSpeed,
+			rideInfo.FlySpeed,
+			rideInfo.MoveSpeed);
 	}
 
 	private async Task ScheduleIdianPolishAsync(

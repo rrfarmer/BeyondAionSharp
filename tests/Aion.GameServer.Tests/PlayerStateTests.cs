@@ -128,6 +128,44 @@ public sealed class PlayerStateTests
 	}
 
 	[Fact]
+	public void Player_RideMountAndDismountMatchJavaPlayerActions()
+	{
+		var player = new Player
+		{
+			CreatureState = PlayerCreatureState.Active | PlayerCreatureState.Flying,
+			LifeStats = new PlayerLifeStats(100, 100, 50),
+		};
+		var rideInfo = new PlayerRideInfo(NpcId: 2000000, StartFp: 10, CostFp: 10, SprintSpeed: 15.0f, FlySpeed: 16.0f, MoveSpeed: 12.0f);
+
+		Assert.True(player.CanStartRide());
+
+		player.MountRide(rideInfo);
+
+		Assert.True(player.IsInRideMode);
+		Assert.Same(rideInfo, player.RideInfo);
+		Assert.False(player.IsInState(PlayerCreatureState.Active));
+		Assert.True(player.IsInState(PlayerCreatureState.Resting));
+		Assert.True(player.IsInState(PlayerCreatureState.FloatingCorpse));
+
+		player.StartRideSprint();
+		Assert.True(player.IsInSprintMode);
+
+		Assert.True(player.DismountRide());
+
+		Assert.False(player.IsInRideMode);
+		Assert.Null(player.RideInfo);
+		Assert.False(player.IsInSprintMode);
+		Assert.False(player.IsInState(PlayerCreatureState.Resting));
+		Assert.False(player.IsInState(PlayerCreatureState.FloatingCorpse));
+		Assert.True(player.IsInState(PlayerCreatureState.Active));
+		Assert.False(player.IsFpRestoreActive);
+		Assert.False(player.DismountRide());
+
+		player.AbnormalState = PlayerAbnormalState.Root;
+		Assert.False(player.CanStartRide());
+	}
+
+	[Fact]
 	public void Player_CompleteFlyTeleportMatchesJavaWindstreamAndTransporterState()
 	{
 		var windstreamPlayer = new Player
