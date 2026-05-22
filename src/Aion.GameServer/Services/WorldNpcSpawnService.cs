@@ -26,6 +26,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 	private readonly ILogger<WorldNpcSpawnService> _logger;
 	private readonly ConcurrentDictionary<NpcSpawnSummary, int> _temporarySpawnObjectIds = new();
 	private readonly ConcurrentDictionary<int, SpawnedWorldNpcRegistration> _spawnedWorldNpcs = new();
+	private readonly ConcurrentDictionary<int, WorldNpc> _inactiveWalkerVariants = new();
 	private readonly ConcurrentDictionary<int, PendingWorldNpcRespawn> _pendingRespawns = new();
 	private int _loadedCount;
 	private int _skippedCount;
@@ -93,6 +94,13 @@ public sealed class WorldNpcSpawnService : GameEngine
 
 	public int PendingRespawnCount => _pendingRespawns.Count;
 
+	public int InactiveWalkerVariantCount => _inactiveWalkerVariants.Count;
+
+	public bool TryGetInactiveWalkerVariant(int objectId, out WorldNpc? npc)
+	{
+		return _inactiveWalkerVariants.TryGetValue(objectId, out npc);
+	}
+
 	public ValueTask InitAsync(CancellationToken cancellationToken = default)
 	{
 		// Java parity: GameServer.main calls SpawnEngine.spawnAll after DataManager and HousingService startup.
@@ -133,6 +141,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		CancelPendingRespawns();
 		_temporarySpawnObjectIds.Clear();
 		_spawnedWorldNpcs.Clear();
+		_inactiveWalkerVariants.Clear();
 		_walkerSpawnPlans?.Clear();
 		Volatile.Write(ref _loadedCount, 0);
 		Volatile.Write(ref _skippedCount, 0);
@@ -346,6 +355,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		var plans = _walkerSpawnPlans.RefreshWorldPlans(
 			_world.GetNpcs()
 				.OfType<WorldNpc>()
+				.Concat(_inactiveWalkerVariants.Values)
 				.ToArray(),
 			walkerTemplates,
 			walkerVersions,
@@ -353,7 +363,16 @@ public sealed class WorldNpcSpawnService : GameEngine
 		if (_walkerPlacementApplication != null)
 		{
 			foreach (var plan in plans)
-				_walkerPlacementApplication.ApplyActivePlacements(_world, plan.PlacementPlan);
+			{
+				var result = _walkerPlacementApplication.ApplyActivePlacements(_world, plan.PlacementPlan);
+				foreach (var objectId in result.UpdatedObjectIds)
+					_inactiveWalkerVariants.TryRemove(objectId, out _);
+				foreach (var inactiveNpc in result.RemovedInactiveNpcs)
+				{
+					_inactiveWalkerVariants[inactiveNpc.ObjectId] = inactiveNpc;
+					_staticPlaceables?.DespawnPlaceableObject(inactiveNpc.Position.WorldId, inactiveNpc.StaticId);
+				}
+			}
 		}
 
 		return plans;
@@ -504,6 +523,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 			return false;
 
 		_spawnedWorldNpcs.TryRemove(objectId, out _);
+		_inactiveWalkerVariants.TryRemove(objectId, out _);
 		_staticPlaceables?.DespawnPlaceableObject(worldNpc.Position.WorldId, worldNpc.StaticId);
 		if (releaseObjectId)
 			_idFactory.ReleaseId(objectId);

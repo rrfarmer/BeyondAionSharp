@@ -10,9 +10,10 @@ public sealed class WorldNpcWalkerPlacementApplicationService
 		GameWorld world,
 		WorldNpcWalkerPlacementPlan placementPlan)
 	{
-		// Java parity: spawnengine/WalkerGroup.spawn brings active members into the world at formed ClusteredNpc coordinates.
+		// Java parity: spawnengine/InstanceWalkerFormations spawns selected variants and leaves unselected variants unspawned.
 		var updatedObjectIds = new List<int>();
 		var missingObjectIds = new List<int>();
+		var removedInactiveNpcs = new List<WorldNpc>();
 		foreach (var placement in placementPlan.ActivePlacements)
 		{
 			if (!world.TryGetObject(placement.ObjectId, out var gameObject) || gameObject is not WorldNpc npc)
@@ -36,10 +37,17 @@ public sealed class WorldNpcWalkerPlacementApplicationService
 				missingObjectIds.Add(placement.ObjectId);
 		}
 
-		return new WorldNpcWalkerPlacementApplicationResult(updatedObjectIds, missingObjectIds);
+		foreach (var objectId in placementPlan.InactiveVariantObjectIds)
+		{
+			if (world.TryRemoveObject(objectId, out var gameObject) && gameObject is WorldNpc npc)
+				removedInactiveNpcs.Add(npc);
+		}
+
+		return new WorldNpcWalkerPlacementApplicationResult(updatedObjectIds, missingObjectIds, removedInactiveNpcs);
 	}
 }
 
 public sealed record WorldNpcWalkerPlacementApplicationResult(
 	IReadOnlyList<int> UpdatedObjectIds,
-	IReadOnlyList<int> MissingObjectIds);
+	IReadOnlyList<int> MissingObjectIds,
+	IReadOnlyList<WorldNpc> RemovedInactiveNpcs);

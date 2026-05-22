@@ -116,6 +116,62 @@ public sealed class WorldNpcSpawnServiceTests
 	}
 
 	[Fact]
+	public async Task SpawnWorldNpcs_HidesInactiveWalkerVersionVariants()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-walker-variants-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextWithVersionedWalkerDataAsync(tempPath);
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			var walkerPlans = new WorldNpcWalkerSpawnPlanCacheService(
+				new WorldNpcWalkerFormationOrganizerService(),
+				new WorldNpcWalkerVariantSelectionService(count => count - 1));
+			var service = new WorldNpcSpawnService(
+				context,
+				world,
+				new IDFactory(),
+				gameTimeService: null,
+				threadPoolManager: null,
+				connectionRegistry: null,
+				staticPlaceables: null,
+				walkerSpawnPlans: walkerPlans,
+				walkerPlacementApplication: new WorldNpcWalkerPlacementApplicationService(),
+				NullLogger<WorldNpcSpawnService>.Instance);
+			var spawns = new NpcSpawnTable(
+			[
+				CreateSpawn(210010000, 203081, x: 1, walkerId: "route-v1", walkerIndex: 0),
+				CreateSpawn(210010000, 203082, x: 2, walkerId: "route-v2", walkerIndex: 0),
+			]);
+			var templates = new NpcTemplateTable([CreateTemplate(203081), CreateTemplate(203082)]);
+
+			var result = service.SpawnWorldNpcs(spawns, templates, [210010000]);
+
+			Assert.Equal(new WorldNpcSpawnResult(2, 0), result);
+			var liveNpc = Assert.Single(world.GetNpcs().OfType<WorldNpc>());
+			Assert.Equal(2, liveNpc.ObjectId);
+			Assert.False(world.TryGetObject(1, out _));
+			Assert.True(service.TryGetInactiveWalkerVariant(1, out var inactiveNpc));
+			Assert.NotNull(inactiveNpc);
+			Assert.Equal("route-v1", inactiveNpc.WalkerId);
+			Assert.Equal(1, service.InactiveWalkerVariantCount);
+			var worldPlan = walkerPlans.GetWorldPlan(210010000);
+			Assert.NotNull(worldPlan);
+			Assert.Equal([1], worldPlan.PlacementPlan.InactiveVariantObjectIds);
+		}
+		finally
+		{
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
+	[Fact]
 	public async Task SpawnWorldNpcs_UpdatesStaticPlaceableState()
 	{
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);
@@ -519,6 +575,49 @@ public sealed class WorldNpcSpawnServiceTests
 						<routestep x="10" y="0" z="0" />
 					</walker_template>
 				</npc_walker>
+			</static_data>
+			""");
+		File.WriteAllText(schemaFile, """<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" />""");
+		var dataManager = await DataManager.LoadAsync(
+			new XmlDataLoaderOptions
+			{
+				MainXmlFilePath = staticDataFile,
+				CacheXmlFilePath = cacheFile,
+				SchemaFilePath = schemaFile,
+				ValidateWhenCacheChanges = false,
+			});
+		var context = new GameServerRuntimeContext();
+		context.SetDataManager(dataManager);
+		return context;
+	}
+
+	private static async Task<GameServerRuntimeContext> CreateRuntimeContextWithVersionedWalkerDataAsync(string tempPath)
+	{
+		var staticDataFile = Path.Combine(tempPath, "static_data.xml");
+		var cacheFile = Path.Combine(tempPath, "cache", "static_data.xml");
+		var schemaFile = Path.Combine(tempPath, "static_data.xsd");
+		Directory.CreateDirectory(Path.GetDirectoryName(cacheFile)!);
+		File.WriteAllText(
+			staticDataFile,
+			"""
+			<?xml version="1.0" encoding="UTF-8"?>
+			<static_data>
+				<npc_walker>
+					<walker_template route_id="route-v1" formation="POINT">
+						<routestep x="1" y="0" z="0" />
+						<routestep x="10" y="0" z="0" />
+					</walker_template>
+					<walker_template route_id="route-v2" formation="POINT">
+						<routestep x="2" y="0" z="0" />
+						<routestep x="20" y="0" z="0" />
+					</walker_template>
+				</npc_walker>
+				<walker_versions>
+					<walk_parent id="route-parent">
+						<version id="route-v1" />
+						<version id="route-v2" />
+					</walk_parent>
+				</walker_versions>
 			</static_data>
 			""");
 		File.WriteAllText(schemaFile, """<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" />""");

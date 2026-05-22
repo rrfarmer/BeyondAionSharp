@@ -16,20 +16,24 @@ public sealed class WorldNpcWalkerPlacementApplicationServiceTests
 		var service = new WorldNpcWalkerPlacementApplicationService();
 		var originalSpawn = new WorldPosition(210010000, 0, 0, 3, 44);
 		world.TryAddObject(1, Npc(1, originalSpawn));
+		world.TryAddObject(2, Npc(2, originalSpawn));
 		var placementPlan = new WorldNpcWalkerPlacementPlan(
 			[
 				new WorldNpcWalkerPlacement(1, 203000, "route-a", IsFormationMember: true, X: 10, Y: 20, Z: 30, Heading: 60),
 			],
-			[]);
+			[2]);
 
 		var result = service.ApplyActivePlacements(world, placementPlan);
 
 		Assert.Equal([1], result.UpdatedObjectIds);
 		Assert.Empty(result.MissingObjectIds);
+		var removedNpc = Assert.Single(result.RemovedInactiveNpcs);
+		Assert.Equal(2, removedNpc.ObjectId);
 		Assert.True(world.TryGetObject(1, out var gameObject));
 		var npc = Assert.IsType<WorldNpc>(gameObject);
 		Assert.Equal(new WorldPosition(210010000, 10, 20, 30, 60), npc.Position);
 		Assert.Equal(originalSpawn, npc.SpawnLocation);
+		Assert.False(world.TryGetObject(2, out _));
 	}
 
 	[Fact]
@@ -47,6 +51,7 @@ public sealed class WorldNpcWalkerPlacementApplicationServiceTests
 
 		Assert.Empty(result.UpdatedObjectIds);
 		Assert.Equal([99], result.MissingObjectIds);
+		Assert.Empty(result.RemovedInactiveNpcs);
 	}
 
 	private static WorldNpc Npc(int objectId, WorldPosition spawnPosition)
