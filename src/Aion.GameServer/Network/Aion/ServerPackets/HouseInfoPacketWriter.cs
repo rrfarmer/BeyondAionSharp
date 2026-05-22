@@ -19,16 +19,33 @@ internal static class HouseInfoPacketWriter
 		HousingTemplateTable? housingTemplates)
 	{
 		// Java parity: network/aion/serverpackets/AbstractHouseInfoPacket.writeCommonInfo.
+		WriteCommonInfo(buffer, HouseInfoView.From(player, house), housingTemplates);
+	}
+
+	public static void WriteCommonInfo(
+		PacketBuffer buffer,
+		WorldHouse house,
+		HousingTemplateTable? housingTemplates)
+	{
+		// Java parity: network/aion/serverpackets/AbstractHouseInfoPacket.writeCommonInfo for spawned House snapshots.
+		WriteCommonInfo(buffer, HouseInfoView.From(house), housingTemplates);
+	}
+
+	private static void WriteCommonInfo(
+		PacketBuffer buffer,
+		HouseInfoView house,
+		HousingTemplateTable? housingTemplates)
+	{
 		buffer.WriteD(0);
 		buffer.WriteD(house.AddressId);
-		buffer.WriteD(player.ObjectId);
+		buffer.WriteD(house.OwnerObjectId);
 		buffer.WriteD(housingTemplates?.GetHouseTypeId(house.BuildingId) ?? 0);
 		buffer.WriteC(1);
 		buffer.WriteD(house.BuildingId);
 		buffer.WriteC(house.IsInactive ? BiddingAllowed : HasOwner | BiddingAllowed);
 		buffer.WriteC(house.DoorState);
-		buffer.WriteS(Truncate(player.Name, CharacterNameMaxLength));
-		buffer.WriteD(player.LegionId);
+		buffer.WriteS(Truncate(house.OwnerName, CharacterNameMaxLength));
+		buffer.WriteD(house.LegionId);
 		buffer.WriteC(house.ShowOwnerName ? 1 : 0);
 		buffer.WriteS(Truncate(house.SignNotice ?? string.Empty, SignNoticeMaxLength));
 
@@ -38,28 +55,89 @@ internal static class HouseInfoPacketWriter
 		buffer.WriteD(0);
 		buffer.WriteD(0);
 		buffer.WriteC(0);
-		WriteLegionEmblem(buffer, player);
+		WriteLegionEmblem(buffer, house);
 	}
 
-	private static void WriteLegionEmblem(PacketBuffer buffer, Player player)
+	private static void WriteLegionEmblem(PacketBuffer buffer, HouseInfoView house)
 	{
-		if (player.LegionId <= 0 || player.LegionName.Length == 0)
+		if (house.LegionId <= 0 || house.LegionName.Length == 0)
 		{
 			for (var i = 0; i < 6; i++)
 				buffer.WriteC(0);
 			return;
 		}
 
-		buffer.WriteC(player.LegionEmblemId);
-		buffer.WriteC(player.LegionEmblemType);
-		buffer.WriteC(player.LegionEmblemColorA);
-		buffer.WriteC(player.LegionEmblemColorR);
-		buffer.WriteC(player.LegionEmblemColorG);
-		buffer.WriteC(player.LegionEmblemColorB);
+		buffer.WriteC(house.LegionEmblemId);
+		buffer.WriteC(house.LegionEmblemType);
+		buffer.WriteC(house.LegionEmblemColorA);
+		buffer.WriteC(house.LegionEmblemColorR);
+		buffer.WriteC(house.LegionEmblemColorG);
+		buffer.WriteC(house.LegionEmblemColorB);
 	}
 
 	private static string Truncate(string value, int maxLength)
 	{
 		return value.Length <= maxLength ? value : value[..maxLength];
+	}
+
+	private sealed record HouseInfoView(
+		int AddressId,
+		int BuildingId,
+		int OwnerObjectId,
+		string OwnerName,
+		int LegionId,
+		string LegionName,
+		byte LegionEmblemId,
+		byte LegionEmblemType,
+		byte LegionEmblemColorA,
+		byte LegionEmblemColorR,
+		byte LegionEmblemColorG,
+		byte LegionEmblemColorB,
+		bool IsInactive,
+		byte DoorState,
+		bool ShowOwnerName,
+		string? SignNotice)
+	{
+		public static HouseInfoView From(Player player, PlayerHouse house)
+		{
+			return new HouseInfoView(
+				house.AddressId,
+				house.BuildingId,
+				player.ObjectId,
+				player.Name,
+				player.LegionId,
+				player.LegionName,
+				player.LegionEmblemId,
+				player.LegionEmblemType,
+				player.LegionEmblemColorA,
+				player.LegionEmblemColorR,
+				player.LegionEmblemColorG,
+				player.LegionEmblemColorB,
+				house.IsInactive,
+				house.DoorState,
+				house.ShowOwnerName,
+				house.SignNotice);
+		}
+
+		public static HouseInfoView From(WorldHouse house)
+		{
+			return new HouseInfoView(
+				house.AddressId,
+				house.BuildingId,
+				house.OwnerObjectId,
+				house.OwnerName,
+				house.LegionId,
+				house.LegionName,
+				house.LegionEmblemId,
+				house.LegionEmblemType,
+				house.LegionEmblemColorA,
+				house.LegionEmblemColorR,
+				house.LegionEmblemColorG,
+				house.LegionEmblemColorB,
+				house.IsInactive,
+				house.DoorState,
+				house.ShowOwnerName,
+				house.SignNotice);
+		}
 	}
 }

@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using Aion.Commons.Network.Server;
 using Aion.GameServer.Configuration;
 using Aion.GameServer.Data;
+using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
@@ -35,6 +36,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 	private readonly HouseMaintenanceTimingService? _houseMaintenanceTiming;
 	private readonly IMotionRepository? _motionRepository;
 	private readonly ExpirableTaskService? _expirableTaskService;
+	private readonly HousingVisibilityService _housingVisibilityService;
 	private readonly IDFactory? _idFactory;
 	private readonly GameTimeService? _gameTimeService;
 	private readonly ThreadPoolManager? _threadPoolManager;
@@ -61,6 +63,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		HouseMaintenanceTimingService? houseMaintenanceTiming = null,
 		IMotionRepository? motionRepository = null,
 		ExpirableTaskService? expirableTaskService = null,
+		HousingVisibilityService? housingVisibilityService = null,
 		IDFactory? idFactory = null,
 		GameTimeService? gameTimeService = null,
 		ThreadPoolManager? threadPoolManager = null,
@@ -88,6 +91,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		_houseMaintenanceTiming = houseMaintenanceTiming;
 		_motionRepository = motionRepository;
 		_expirableTaskService = expirableTaskService;
+		_housingVisibilityService = housingVisibilityService ?? new HousingVisibilityService(options);
 		_idFactory = idFactory;
 		_gameTimeService = gameTimeService;
 		_gameTimeService?.SetWorldBroadcaster((packet, _) => BroadcastToWorldAsync(packet));
@@ -162,7 +166,10 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		// Java parity: online player leaves World lookup on disconnect/logout.
 		if (_playerConnections.TryGetValue(playerObjectId, out var registeredConnection)
 			&& ReferenceEquals(registeredConnection, connection))
+		{
 			_playerConnections.TryRemove(playerObjectId, out _);
+			_housingVisibilityService.ClearKnownHouses(playerObjectId);
+		}
 	}
 
 	public bool TryGetOnlinePlayerByName(string playerName, out Player? player)
@@ -230,6 +237,56 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 				continue;
 
 			await connection.SendPacketAsync(packet);
+			sent++;
+		}
+
+		return sent;
+	}
+
+	public async Task<int> RefreshHousingVisibilityAsync(
+		IReadOnlyList<WorldHouse> houses,
+		HousingTemplateTable? housingTemplates,
+		int? playerObjectId = null)
+	{
+		// Java parity: PlayerController.see/notSee sends SM_HOUSE_RENDER/SM_DELETE_HOUSE from KnownList deltas.
+		var sent = 0;
+		foreach (var pair in _playerConnections)
+		{
+			if (playerObjectId != null && pair.Key != playerObjectId.Value)
+				continue;
+			var connection = pair.Value;
+			var player = connection.ActivePlayer;
+			if (player == null)
+				continue;
+
+			var delta = _housingVisibilityService.UpdateKnownHouses(player, houses);
+			foreach (var house in delta.Appeared)
+			{
+				await connection.SendPacketAsync(new SmHouseRender(house, housingTemplates));
+				sent++;
+			}
+
+			foreach (var addressId in delta.DisappearedAddressIds)
+			{
+				await connection.SendPacketAsync(new SmDeleteHouse(addressId));
+				sent++;
+			}
+		}
+
+		return sent;
+	}
+
+	public async Task<int> BroadcastHouseUpdateAsync(WorldHouse house, HousingTemplateTable? housingTemplates)
+	{
+		// Java parity: HouseController.updateAppearance broadcasts SM_HOUSE_UPDATE to known players.
+		var sent = 0;
+		foreach (var connection in _playerConnections.Values)
+		{
+			var player = connection.ActivePlayer;
+			if (player == null || !_housingVisibilityService.IsVisibleTo(player, house))
+				continue;
+
+			await connection.SendPacketAsync(new SmHouseUpdate(house, housingTemplates));
 			sent++;
 		}
 

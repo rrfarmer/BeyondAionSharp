@@ -863,6 +863,7 @@ public sealed class GameServerConnection : BaseClientConnection
 					await SendPacketAsync(new SmChannelInfo(enterWorldResult.Player.Position, staticData?.WorldMaps ?? Array.Empty<WorldMapSummary>()));
 					await SendPacketAsync(CreateBindPointPacket(enterWorldResult.Player, staticData));
 					await SendPacketAsync(new SmPlayerSpawn(enterWorldResult.Player));
+					RegisterLoadedHouses(enterWorldResult.Player, staticData?.HousingTemplates);
 					if (_connectionRegistry != null)
 					{
 						await _connectionRegistry.BroadcastToVisiblePlayersAsync(
@@ -873,6 +874,8 @@ public sealed class GameServerConnection : BaseClientConnection
 							enterWorldResult.Player.Position,
 							enterWorldResult.Player.ObjectId,
 							new SmMotion(enterWorldResult.Player.ObjectId, enterWorldResult.Player.Motions));
+						if (_world != null && staticData?.HousingTemplates != null)
+							await _connectionRegistry.RefreshHousingVisibilityAsync(_world.GetHouses(), staticData.HousingTemplates);
 					}
 					await SendPacketAsync(new SmGameTime(_gameTimeService?.GameMinutes ?? 0));
 					if (itemTemplates != null)
@@ -5262,6 +5265,38 @@ public sealed class GameServerConnection : BaseClientConnection
 		return player.Houses.FirstOrDefault(house => !house.IsInactive);
 	}
 
+	private void RegisterLoadedHouses(Player player, HousingTemplateTable? housingTemplates)
+	{
+		// Java parity: services/HousingService.spawnHouses brings House objects into World before KnownList scans.
+		if (_world == null || housingTemplates == null)
+			return;
+
+		foreach (var house in player.Houses)
+			AddOrUpdateWorldHouse(player, house, housingTemplates);
+	}
+
+	private WorldHouse? AddOrUpdateWorldHouse(Player player, PlayerHouse house, HousingTemplateTable? housingTemplates)
+	{
+		// Java parity: House positions are derived from model/templates/housing/HouseAddress.
+		if (_world == null || housingTemplates == null)
+			return null;
+		if (!WorldHouse.TryCreate(player, house, housingTemplates, out var worldHouse) || worldHouse == null)
+			return null;
+
+		_world.AddOrUpdateHouse(worldHouse);
+		return worldHouse;
+	}
+
+	private async Task RefreshHousingVisibilityForPlayerAsync(Player player)
+	{
+		// Java parity: VisibleObject.updateKnownlist after movement includes player-aware House objects.
+		var housingTemplates = _runtimeContext?.DataManager?.StaticData.HousingTemplates;
+		if (_connectionRegistry == null || _world == null || housingTemplates == null)
+			return;
+
+		await _connectionRegistry.RefreshHousingVisibilityAsync(_world.GetHouses(), housingTemplates, player.ObjectId);
+	}
+
 	private static string GetRealCharacterName(string name)
 	{
 		// Java parity: utils/ChatUtil.getRealCharName with default Util.convertName behavior.
@@ -5675,6 +5710,7 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		if (_connectionRegistry != null && (MovementMask.HasManualPosition(packet.Type) || packet.Type == MovementMask.Immediate))
 			await _connectionRegistry.BroadcastToVisiblePlayersAsync(player.Position, player.ObjectId, new SmMove(player));
+		await RefreshHousingVisibilityForPlayerAsync(player);
 	}
 
 	private static void HandleMoveInAir(Player player, CmMoveInAir packet)
@@ -6146,9 +6182,18 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		await SendPacketAsync(new SmHouseAcquire(player.ObjectId, activeHouse.AddressId, acquire: true));
-		var houseUpdate = new SmHouseUpdate(player, updatedHouse, _runtimeContext?.DataManager?.StaticData.HousingTemplates);
+		var housingTemplates = _runtimeContext?.DataManager?.StaticData.HousingTemplates;
+		var worldHouse = AddOrUpdateWorldHouse(player, updatedHouse, housingTemplates);
+		var houseUpdate = worldHouse != null
+			? new SmHouseUpdate(worldHouse, housingTemplates)
+			: new SmHouseUpdate(player, updatedHouse, housingTemplates);
 		if (_connectionRegistry != null)
-			await _connectionRegistry.BroadcastToVisiblePlayersAsync(player.Position, player.ObjectId, houseUpdate, includeSourcePlayer: true);
+		{
+			if (worldHouse != null)
+				await _connectionRegistry.BroadcastHouseUpdateAsync(worldHouse, housingTemplates);
+			else
+				await _connectionRegistry.BroadcastToVisiblePlayersAsync(player.Position, player.ObjectId, houseUpdate, includeSourcePlayer: true);
+		}
 		else
 			await SendPacketAsync(houseUpdate);
 

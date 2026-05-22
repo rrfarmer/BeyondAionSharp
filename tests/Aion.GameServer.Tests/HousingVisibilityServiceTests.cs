@@ -91,6 +91,7 @@ public sealed class HousingVisibilityServiceTests
 			1001,
 			"Owner",
 			0,
+			string.Empty,
 			0,
 			0,
 			0,

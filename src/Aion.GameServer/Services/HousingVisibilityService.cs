@@ -54,7 +54,7 @@ public sealed class HousingVisibilityService
 		_knownHouseAddressesByPlayer.TryRemove(playerObjectId, out _);
 	}
 
-	private bool IsVisibleTo(Player player, WorldHouse house)
+	public bool IsVisibleTo(Player player, WorldHouse house)
 	{
 		var playerPosition = player.Position;
 		var housePosition = house.Position;
