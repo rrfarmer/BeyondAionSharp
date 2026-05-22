@@ -24,6 +24,7 @@ public sealed class StaticData
 		TemperingTable temperingTemplates,
 		WalkerTemplateTable walkerTemplates,
 		WalkerVersionTable walkerVersions,
+		RiftLocationTable riftLocations,
 		NpcTemplateTable npcTemplates,
 		NpcSpawnTable npcSpawns,
 		NpcRiftSpawnTable npcRiftSpawns,
@@ -54,6 +55,7 @@ public sealed class StaticData
 		TemperingTemplates = temperingTemplates;
 		WalkerTemplates = walkerTemplates;
 		WalkerVersions = walkerVersions;
+		RiftLocations = riftLocations;
 		NpcTemplates = npcTemplates;
 		NpcSpawns = npcSpawns;
 		NpcRiftSpawns = npcRiftSpawns;
@@ -103,6 +105,8 @@ public sealed class StaticData
 	public WalkerTemplateTable WalkerTemplates { get; }
 
 	public WalkerVersionTable WalkerVersions { get; }
+
+	public RiftLocationTable RiftLocations { get; }
 
 	public NpcTemplateTable NpcTemplates { get; }
 
@@ -155,6 +159,7 @@ public sealed class StaticData
 		var temperingGroups = new List<TemperingGroupSummary>();
 		var walkerTemplates = new List<WalkerTemplateSummary>();
 		var walkerVersionParents = new Dictionary<string, string>(StringComparer.Ordinal);
+		var riftLocations = new List<RiftLocationSummary>();
 		var npcTemplates = new List<NpcTemplateSummary>();
 		var npcSpawns = new List<NpcSpawnSummary>();
 		var npcRiftSpawns = new List<NpcRiftSpawnSummary>();
@@ -398,6 +403,19 @@ public sealed class StaticData
 			if (reader.Depth == 2 && reader.LocalName == "spawn_map" && elementPath.GetValueOrDefault(1) == "spawns")
 			{
 				currentNpcSpawnMapId = ReadRequiredIntAttribute(reader, "map_id");
+				continue;
+			}
+
+			if (reader.Depth == 2 && reader.LocalName == "rift_location" && elementPath.GetValueOrDefault(1) == "rift_locations")
+			{
+				// Java parity: dataholders/RiftData converts every RiftTemplate into a RiftLocation keyed by id.
+				var autoCloseableAttribute = reader.GetAttribute("auto_closeable");
+				riftLocations.Add(
+					new RiftLocationSummary(
+						ReadRequiredIntAttribute(reader, "id"),
+						ReadRequiredIntAttribute(reader, "world"),
+						ReadBoolAttribute(reader, "has_spawns"),
+						string.IsNullOrEmpty(autoCloseableAttribute) || bool.TryParse(autoCloseableAttribute, out var autoCloseable) && autoCloseable));
 				continue;
 			}
 
@@ -1520,6 +1538,7 @@ public sealed class StaticData
 			new TemperingTable(temperingGroups.AsReadOnly()),
 			new WalkerTemplateTable(walkerTemplates.AsReadOnly()),
 			new WalkerVersionTable(new ReadOnlyDictionary<string, string>(walkerVersionParents)),
+			new RiftLocationTable(riftLocations.AsReadOnly()),
 			new NpcTemplateTable(npcTemplates.AsReadOnly()),
 			new NpcSpawnTable(npcSpawns.AsReadOnly()),
 			new NpcRiftSpawnTable(npcRiftSpawns.AsReadOnly()),

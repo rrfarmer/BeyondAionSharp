@@ -206,6 +206,45 @@ public sealed class StaticDataLoadingTests
 	}
 
 	[Fact]
+	public async Task StaticData_LoadsRiftLocations()
+	{
+		using var temp = TempDirectory.Create();
+		var cacheFile = Path.Combine(temp.Path, "static_data.xml");
+		File.WriteAllText(
+			cacheFile,
+			"""
+			<?xml version="1.0" encoding="UTF-8"?>
+			<static_data>
+				<rift_locations>
+					<rift_location id="2120" world="210020000" />
+					<rift_location id="2153" world="210050000" has_spawns="true" />
+					<rift_location id="2189" world="210070000" auto_closeable="false" />
+				</rift_locations>
+			</static_data>
+			""");
+
+		var staticData = await StaticData.LoadFromCacheAsync(cacheFile, []);
+
+		Assert.Equal(3, staticData.RiftLocations.Count);
+		Assert.True(staticData.RiftLocations.Contains(2120));
+		var defaultRift = staticData.RiftLocations.GetLocation(2120);
+		Assert.NotNull(defaultRift);
+		Assert.Equal(210020000, defaultRift.WorldId);
+		Assert.False(defaultRift.HasSpawns);
+		Assert.True(defaultRift.AutoCloseable);
+		var guardedRift = staticData.RiftLocations.GetLocation(2153);
+		Assert.NotNull(guardedRift);
+		Assert.True(guardedRift.HasSpawns);
+		Assert.True(guardedRift.AutoCloseable);
+		var invasionRift = staticData.RiftLocations.GetLocation(2189);
+		Assert.NotNull(invasionRift);
+		Assert.False(invasionRift.AutoCloseable);
+		var worldRift = Assert.Single(staticData.RiftLocations.GetLocationsForWorld(210020000));
+		Assert.Equal(defaultRift, worldRift);
+		Assert.Empty(staticData.RiftLocations.GetLocationsForWorld(220020000));
+	}
+
+	[Fact]
 	public async Task StaticData_LoadsWalkerTemplates()
 	{
 		using var temp = TempDirectory.Create();
@@ -301,6 +340,11 @@ public sealed class StaticDataLoadingTests
 		Assert.NotNull(staticData.WalkerTemplates.GetWalkerTemplate("2B608BDFBB378B8479A1DB5321532BEC54C38823"));
 		Assert.Equal(staticData.GetElementCount("version"), staticData.WalkerVersions.Count);
 		Assert.Equal("1B5A84B85B8F8499B49A0840E90A25E686B00802", staticData.WalkerVersions.GetRouteVersionId("6E6042737F819C39511F6C5C4C85AD54B51C6D83"));
+		Assert.Equal(staticData.GetElementCount("rift_location"), staticData.RiftLocations.Count);
+		Assert.Equal(210050000, staticData.RiftLocations.GetLocation(2153)?.WorldId);
+		Assert.True(staticData.RiftLocations.GetLocation(2153)?.HasSpawns);
+		Assert.False(staticData.RiftLocations.GetLocation(2189)?.AutoCloseable);
+		Assert.Contains(staticData.RiftLocations.GetLocationsForWorld(210070000), location => location.Id == 2176 && location.HasSpawns);
 		Assert.Equal(staticData.GetElementCount("instance_cooltime"), staticData.InstanceCooltimes.Count);
 		Assert.Equal("SWORD", staticData.ItemTemplates.GetItemTemplate(100000001)?.ItemGroup);
 		Assert.Equal([37, 44], staticData.ItemTemplates.GetItemTemplate(100000001)?.RequiredEquipSkills);
