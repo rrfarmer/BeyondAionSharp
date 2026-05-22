@@ -34,6 +34,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 	private readonly HouseAuctionTimingService? _houseAuctionTiming;
 	private readonly HouseMaintenanceTimingService? _houseMaintenanceTiming;
 	private readonly IMotionRepository? _motionRepository;
+	private readonly ExpirableTaskService? _expirableTaskService;
 	private readonly IDFactory? _idFactory;
 	private readonly GameTimeService? _gameTimeService;
 	private readonly ThreadPoolManager? _threadPoolManager;
@@ -59,6 +60,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		HouseAuctionTimingService? houseAuctionTiming = null,
 		HouseMaintenanceTimingService? houseMaintenanceTiming = null,
 		IMotionRepository? motionRepository = null,
+		ExpirableTaskService? expirableTaskService = null,
 		IDFactory? idFactory = null,
 		GameTimeService? gameTimeService = null,
 		ThreadPoolManager? threadPoolManager = null,
@@ -85,6 +87,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		_houseAuctionTiming = houseAuctionTiming;
 		_houseMaintenanceTiming = houseMaintenanceTiming;
 		_motionRepository = motionRepository;
+		_expirableTaskService = expirableTaskService;
 		_idFactory = idFactory;
 		_gameTimeService = gameTimeService;
 		_gameTimeService?.SetWorldBroadcaster((packet, _) => BroadcastToWorldAsync(packet));
@@ -120,6 +123,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 				_houseAuctionTiming,
 				_houseMaintenanceTiming,
 				_motionRepository,
+				_expirableTaskService,
 				this,
 				_idFactory,
 				_gameTimeService,

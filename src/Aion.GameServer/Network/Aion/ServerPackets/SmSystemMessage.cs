@@ -367,6 +367,24 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1390242, titleName);
 	}
 
+	public static SmSystemMessage DeleteCashTitleByTimeout(string titleName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_DELETE_CASH_TITLE_BY_TIMEOUT.
+		return new SmSystemMessage(1390244, titleName);
+	}
+
+	public static SmSystemMessage DeleteCashSocialActionByTimeout()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_DELETE_CASH_SOCIALACTION_BY_TIMEOUT().
+		return new SmSystemMessage(1390245);
+	}
+
+	public static SmSystemMessage DeleteCashCustomAnimationByTimeout()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_DELETE_CASH_CUSTOMANIMATION_BY_TIMEOUT().
+		return new SmSystemMessage(1400917);
+	}
+
 	public static SmSystemMessage CannotRide(string stateName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_CANT_RIDE.

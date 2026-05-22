@@ -52,6 +52,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly HouseAuctionTimingService _houseAuctionTiming;
 	private readonly HouseMaintenanceTimingService _houseMaintenanceTiming;
 	private readonly IMotionRepository _motionRepository;
+	private readonly ExpirableTaskService? _expirableTaskService;
 	private readonly IGameClientConnectionRegistry? _connectionRegistry;
 	private readonly IDFactory? _idFactory;
 	private readonly GameTimeService? _gameTimeService;
@@ -92,6 +93,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		HouseAuctionTimingService? houseAuctionTiming = null,
 		HouseMaintenanceTimingService? houseMaintenanceTiming = null,
 		IMotionRepository? motionRepository = null,
+		ExpirableTaskService? expirableTaskService = null,
 		IGameClientConnectionRegistry? connectionRegistry = null,
 		IDFactory? idFactory = null,
 		GameTimeService? gameTimeService = null,
@@ -115,6 +117,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_houseAuctionTiming = houseAuctionTiming ?? new HouseAuctionTimingService();
 		_houseMaintenanceTiming = houseMaintenanceTiming ?? new HouseMaintenanceTimingService(_options);
 		_motionRepository = motionRepository ?? new EmptyMotionRepository();
+		_expirableTaskService = expirableTaskService;
 		_connectionRegistry = connectionRegistry;
 		_idFactory = idFactory;
 		_gameTimeService = gameTimeService;
@@ -915,6 +918,21 @@ public sealed class GameServerConnection : BaseClientConnection
 					}
 					// Java parity: services/HousingService.onPlayerLogin sends house owner profile info.
 					await SendPacketAsync(new SmHouseOwnerInfo(enterWorldResult.Player, auctionEndSchedule: _houseAuctionTiming.AuctionEndSchedule));
+					_expirableTaskService?.RegisterPlayerExpirables(
+						enterWorldResult.Player,
+						packet => SendPacketAsync(packet),
+						async packet =>
+						{
+							if (_connectionRegistry != null)
+							{
+								await _connectionRegistry.BroadcastToVisiblePlayersAsync(
+									enterWorldResult.Player.Position,
+									enterWorldResult.Player.ObjectId,
+									packet,
+									includeSourcePlayer: true);
+							}
+						},
+						staticData?.TitleTemplates);
 				}
 				break;
 		}
@@ -2613,6 +2631,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			.Where(existing => existing.Id != title.Id)
 			.Append(title)
 			.ToArray();
+		_expirableTaskService?.RegisterTitle(player, title);
 		await SendPacketAsync(SmSystemMessage.CashTitle(ChatUtil.L10n(validation.TitleTemplate!.NameId)));
 		await SendPacketAsync(new SmTitleInfo(player.Titles));
 
@@ -2685,6 +2704,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			.Where(existing => existing.Id != emotion.Id)
 			.Append(emotion)
 			.ToArray();
+		_expirableTaskService?.RegisterEmotion(player, emotion);
 		await SendPacketAsync(new SmEmotionList(1, [emotion]));
 
 		if (deletedSourceObjectId.HasValue)
@@ -2936,6 +2956,8 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		player.InventoryItems = inventoryItems.ToArray();
 		player.Motions = plan.Motions;
+		foreach (var motion in plan.AddedMotions)
+			_expirableTaskService?.RegisterMotion(player, motion);
 		var now = DateTimeOffset.UtcNow;
 		foreach (var motion in plan.AddedMotions)
 			await SendPacketAsync(new SmMotion(motion.Id, motion.SecondsUntilExpiration(now)));
@@ -4043,6 +4065,7 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		if (_chatServer != null)
 			await _chatServer.SendPlayerLogoutAsync(player.ObjectId);
+		_expirableTaskService?.UnregisterPlayer(player);
 		await DismissPostmanAsync(player, notifyClient: notifyPostmanClient);
 		if (_connectionRegistry != null)
 			await _connectionRegistry.BroadcastToVisiblePlayersAsync(player.Position, player.ObjectId, new SmDelete(player.ObjectId));

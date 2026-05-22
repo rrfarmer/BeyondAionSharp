@@ -36,6 +36,7 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<PeriodicSaveService>();
 			services.AddSingleton<Aion.GameServer.Model.GameEngine>(
 				serviceProvider => serviceProvider.GetRequiredService<PeriodicSaveService>());
+			services.AddSingleton<ExpirableTaskService>();
 			services.AddSingleton<HouseAuctionTimingService>();
 			services.AddSingleton<HouseMaintenanceTimingService>();
 			services.AddSingleton<ShutdownHook>();

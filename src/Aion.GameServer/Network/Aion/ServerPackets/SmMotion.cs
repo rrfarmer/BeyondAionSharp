@@ -51,6 +51,18 @@ public sealed class SmMotion : GameServerPacket
 		_remainingTime = 0;
 	}
 
+	private SmMotion(int motionId, byte action, bool _)
+		: base(PacketOpCode)
+	{
+		// Java parity: network/aion/serverpackets/SM_MOTION(short motionId) remove branch.
+		_motionId = motionId;
+		_motions = Array.Empty<PlayerMotion>();
+		_clock = () => DateTimeOffset.Now;
+		_action = action;
+		_motionType = 0;
+		_remainingTime = 0;
+	}
+
 	public SmMotion(int playerObjectId, IReadOnlyList<PlayerMotion> motions, Func<DateTimeOffset>? clock = null)
 		: base(PacketOpCode)
 	{
@@ -62,6 +74,11 @@ public sealed class SmMotion : GameServerPacket
 		_motionId = 0;
 		_motionType = 0;
 		_remainingTime = 0;
+	}
+
+	public static SmMotion Remove(int motionId)
+	{
+		return new SmMotion(motionId, action: 6, _: true);
 	}
 
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
@@ -81,6 +98,12 @@ public sealed class SmMotion : GameServerPacket
 		{
 			buffer.WriteH(_motionId);
 			buffer.WriteC(_motionType);
+			return;
+		}
+
+		if (_action == 6)
+		{
+			buffer.WriteH(_motionId);
 			return;
 		}
 

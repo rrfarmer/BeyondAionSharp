@@ -263,6 +263,9 @@ public class GamePacketTests
 			Convert.FromHexString("020B000A000000"),
 			SerializeUnencryptedPayload(new SmMotion(11, 10)));
 		Assert.Equal(
+			Convert.FromHexString("060B00"),
+			SerializeUnencryptedPayload(SmMotion.Remove(11)));
+		Assert.Equal(
 			Convert.FromHexString("07E90300000B0000000D0000000000"),
 			SerializeUnencryptedPayload(
 				new SmMotion(
@@ -605,6 +608,9 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.TooltipLearnedEmotion(), 901713);
 		AssertSystemMessage(SmSystemMessage.TooltipLearnedTitle(), 901714);
 		AssertSystemMessage(SmSystemMessage.CashTitle(ChatUtil.L10n(412994)), 1390242, ChatUtil.L10n(412994));
+		AssertSystemMessage(SmSystemMessage.DeleteCashTitleByTimeout(ChatUtil.L10n(412994)), 1390244, ChatUtil.L10n(412994));
+		AssertSystemMessage(SmSystemMessage.DeleteCashSocialActionByTimeout(), 1390245);
+		AssertSystemMessage(SmSystemMessage.DeleteCashCustomAnimationByTimeout(), 1400917);
 		AssertSystemMessage(SmSystemMessage.InventoryCantExtendMore(), 1300430);
 		AssertSystemMessage(SmSystemMessage.InventorySizeExtended(9), 1300431, "9");
 		AssertSystemMessage(SmSystemMessage.WarehouseCantExtendMore(), 1300432);

@@ -38,6 +38,12 @@ public interface IPlayerEnterWorldRepository
 
 	Task<bool> DeletePlayerRecipeAsync(int playerObjectId, int recipeId, CancellationToken cancellationToken = default);
 
+	Task<bool> DeletePlayerEmotionAsync(int playerObjectId, int emotionId, CancellationToken cancellationToken = default);
+
+	Task<bool> DeletePlayerTitleAsync(int playerObjectId, int titleId, CancellationToken cancellationToken = default);
+
+	Task<bool> DeletePlayerMotionAsync(int playerObjectId, int motionId, CancellationToken cancellationToken = default);
+
 	Task<bool> SaveCraftLearnActionMutationAsync(
 		int playerObjectId,
 		int recipeId,
@@ -272,6 +278,21 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	}
 
 	public Task<bool> DeletePlayerRecipeAsync(int playerObjectId, int recipeId, CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> DeletePlayerEmotionAsync(int playerObjectId, int emotionId, CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> DeletePlayerTitleAsync(int playerObjectId, int titleId, CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> DeletePlayerMotionAsync(int playerObjectId, int motionId, CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(true);
 	}
@@ -2118,6 +2139,81 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not delete recipe {RecipeId} for player {PlayerObjectId}", recipeId, playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> DeletePlayerEmotionAsync(int playerObjectId, int emotionId, CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/PlayerEmotionListDAO.deleteEmotion.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = "DELETE FROM player_emotions WHERE player_id = ? AND emotion = ?";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = playerObjectId },
+					new MySqlParameter { Value = emotionId },
+				});
+			await command.ExecuteNonQueryAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not delete emotion {EmotionId} for player {PlayerObjectId}", emotionId, playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> DeletePlayerTitleAsync(int playerObjectId, int titleId, CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/PlayerTitleListDAO.removeTitle.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = "DELETE FROM player_titles WHERE player_id = ? AND title_id = ?";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = playerObjectId },
+					new MySqlParameter { Value = titleId },
+				});
+			await command.ExecuteNonQueryAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not delete title {TitleId} for player {PlayerObjectId}", titleId, playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> DeletePlayerMotionAsync(int playerObjectId, int motionId, CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/MotionDAO.deleteMotion.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = "DELETE FROM player_motions WHERE player_id = ? AND motion_id = ?";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = playerObjectId },
+					new MySqlParameter { Value = motionId },
+				});
+			await command.ExecuteNonQueryAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not delete motion {MotionId} for player {PlayerObjectId}", motionId, playerObjectId);
 			return false;
 		}
 	}

@@ -379,6 +379,18 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public int DeletedRecipeId { get; private set; }
 
+		public int DeleteEmotionCalls { get; private set; }
+
+		public int DeletedEmotionId { get; private set; }
+
+		public int DeleteTitleCalls { get; private set; }
+
+		public int DeletedTitleId { get; private set; }
+
+		public int DeleteMotionCalls { get; private set; }
+
+		public int DeletedMotionId { get; private set; }
+
 		public int SaveCraftLearnActionMutationCalls { get; private set; }
 
 		public int CraftLearnRecipeId { get; private set; }
@@ -560,6 +572,27 @@ public sealed class PlayerEnterWorldServiceTests
 		{
 			DeleteRecipeCalls++;
 			DeletedRecipeId = recipeId;
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> DeletePlayerEmotionAsync(int playerObjectId, int emotionId, CancellationToken cancellationToken = default)
+		{
+			DeleteEmotionCalls++;
+			DeletedEmotionId = emotionId;
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> DeletePlayerTitleAsync(int playerObjectId, int titleId, CancellationToken cancellationToken = default)
+		{
+			DeleteTitleCalls++;
+			DeletedTitleId = titleId;
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> DeletePlayerMotionAsync(int playerObjectId, int motionId, CancellationToken cancellationToken = default)
+		{
+			DeleteMotionCalls++;
+			DeletedMotionId = motionId;
 			return Task.FromResult(true);
 		}
 
