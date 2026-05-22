@@ -1674,7 +1674,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		int? cancelTargetObjectId = null,
 		int cancelEndState = 3,
 		int cancelUnknown3 = 0,
-		int? removeCooldownDelayIdOnCancel = null)
+		int? removeCooldownDelayIdOnCancel = null,
+		bool preserveOnEmotion = false)
 	{
 		// Java parity: controllers/CreatureController.addTask(TaskId.ITEM_USE) + ThreadPoolManager.schedule.
 		if (_threadPoolManager == null || delay <= TimeSpan.Zero)
@@ -1718,7 +1719,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			cancelTargetObjectId,
 			cancelEndState,
 			cancelUnknown3,
-			removeCooldownDelayIdOnCancel);
+			removeCooldownDelayIdOnCancel,
+			preserveOnEmotion);
 	}
 
 	private async Task CancelPendingItemUseOnMoveAsync(Player player)
@@ -1730,7 +1732,10 @@ public sealed class GameServerConnection : BaseClientConnection
 	private async Task CancelPendingItemUseOnEmotionAsync(Player player)
 	{
 		// Java parity: network/aion/clientpackets/CM_EMOTION.runImpl -> PlayerController.cancelUseItem.
-		// TODO Phase 6: preserve the ride-action exception after ride item actions are ported.
+		// RideAction is the Java exception: emotions do not cancel getting on a mount.
+		if (_pendingItemUse?.PreserveOnEmotion == true)
+			return;
+
 		await CancelPendingItemUseAsync(player);
 	}
 
@@ -2470,7 +2475,8 @@ public sealed class GameServerConnection : BaseClientConnection
 				await CompleteRideUseItemAsync(player, sourceItem, rideInfo);
 			},
 			cancelEndState: 3,
-			removeCooldownDelayIdOnCancel: removeCooldownDelayIdOnCancel);
+			removeCooldownDelayIdOnCancel: removeCooldownDelayIdOnCancel,
+			preserveOnEmotion: true);
 	}
 
 	private async Task CompleteRideUseItemAsync(Player player, InventoryItem sourceItem, RideInfoSummary rideInfo)
@@ -5322,7 +5328,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		int? CancelTargetObjectId,
 		int CancelEndState,
 		int CancelUnknown3,
-		int? RemoveCooldownDelayIdOnCancel);
+		int? RemoveCooldownDelayIdOnCancel,
+		bool PreserveOnEmotion);
 
 	private enum PendingItemUseCancelMessage
 	{
