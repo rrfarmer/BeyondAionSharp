@@ -177,6 +177,25 @@ public sealed class WorldNpcLootServiceTests
 	}
 
 	[Fact]
+	public void StartFreeForAll_AppliesFriendlyNpcRaceBroadcastFilter()
+	{
+		var dropRegistration = new WorldNpcDropRegistrationService();
+		dropRegistration.RegisterDrop(
+			5001,
+			looterObjectId: 1001,
+			drops: [new WorldNpcDropItem(1, 166020000, 1)]);
+		var service = new WorldNpcLootService(dropRegistration);
+		var asmodianNpc = CreateNpc(5001, race: "ASMODIANS");
+		var asmodianPlayer = CreatePlayer(1001, race: "ASMODIANS");
+		var elyosPlayer = CreatePlayer(1002, race: "ELYOS");
+
+		var result = service.StartFreeForAll(5001, asmodianNpc);
+
+		Assert.False(result.CanBroadcastTo(asmodianPlayer));
+		Assert.True(result.CanBroadcastTo(elyosPlayer));
+	}
+
+	[Fact]
 	public async Task ScheduleFreeForAll_StartsAfterDelay()
 	{
 		var dropRegistration = new WorldNpcDropRegistrationService();
@@ -192,8 +211,8 @@ public sealed class WorldNpcLootServiceTests
 
 			var scheduled = service.ScheduleFreeForAll(
 				5001,
-				TimeSpan.FromMilliseconds(10),
-				result =>
+				delay: TimeSpan.FromMilliseconds(10),
+				onStarted: result =>
 				{
 					completion.SetResult(result);
 					return ValueTask.CompletedTask;
@@ -389,21 +408,22 @@ public sealed class WorldNpcLootServiceTests
 		Assert.Empty(dropRegistration.GetCurrentDrops(5001));
 	}
 
-	private static Player CreatePlayer(int objectId)
+	private static Player CreatePlayer(int objectId, string race = "")
 	{
 		return new Player
 		{
 			ObjectId = objectId,
+			Race = race,
 			CreatureState = PlayerCreatureState.Active,
 		};
 	}
 
-	private static WorldNpc CreateNpc(int objectId)
+	private static WorldNpc CreateNpc(int objectId, string race = "NONE")
 	{
 		return new WorldNpc(
 			objectId,
 			203001,
-			new NpcTemplateSummary(203001, "loot_npc", 0, 1, "NORMAL", "NORMAL", "NONE", "NONE", "NON_ATTACKABLE"),
+			new NpcTemplateSummary(203001, "loot_npc", 0, 1, "NORMAL", "NORMAL", race, "NONE", "NON_ATTACKABLE"),
 			new WorldPosition(210010000, 1, 2, 3, 0));
 	}
 

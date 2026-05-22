@@ -182,18 +182,19 @@ public sealed class WorldNpcLootService
 		return CreateLootEnableStatus(npc.ObjectId);
 	}
 
-	public WorldNpcFreeForAllResult StartFreeForAll(int npcObjectId)
+	public WorldNpcFreeForAllResult StartFreeForAll(int npcObjectId, IWorldNpcObject? npc = null)
 	{
 		// Java parity: services/drop/DropService.scheduleFreeForAll delayed body calls DropNpc.startFreeForAll and broadcasts LOOT_ENABLE.
 		if (!_dropRegistrationService.TryGetRegistration(npcObjectId, out var registration) || registration == null)
 			return WorldNpcFreeForAllResult.MissingRegistration();
 
 		registration.StartFreeForAll();
-		return WorldNpcFreeForAllResult.Started(CreateLootEnableStatus(npcObjectId));
+		return WorldNpcFreeForAllResult.Started(CreateLootEnableStatus(npcObjectId), npc);
 	}
 
 	public ScheduledTask? ScheduleFreeForAll(
 		int npcObjectId,
+		IWorldNpcObject? npc = null,
 		TimeSpan? delay = null,
 		Func<WorldNpcFreeForAllResult, ValueTask>? onStarted = null)
 	{
@@ -204,7 +205,7 @@ public sealed class WorldNpcLootService
 		return _threadPoolManager.Schedule(
 			async cancellationToken =>
 			{
-				var result = StartFreeForAll(npcObjectId);
+				var result = StartFreeForAll(npcObjectId, npc);
 				if (!cancellationToken.IsCancellationRequested && onStarted != null)
 					await onStarted(result);
 			},
@@ -303,16 +304,38 @@ public enum WorldNpcLootStatus
 
 public sealed record WorldNpcFreeForAllResult(
 	WorldNpcFreeForAllStatus Status,
-	SmLootStatus? LootStatus)
+	SmLootStatus? LootStatus,
+	IWorldNpcObject? Npc)
 {
-	public static WorldNpcFreeForAllResult Started(SmLootStatus lootStatus)
+	public bool CanBroadcastTo(Player player)
 	{
-		return new WorldNpcFreeForAllResult(WorldNpcFreeForAllStatus.Started, lootStatus);
+		// Java parity: DropService.scheduleFreeForAll skips same-race players when the lootable NPC is Elyos/Asmodian.
+		if (Npc == null)
+			return true;
+
+		var npcRace = NormalizeRace(Npc.Template.Race);
+		return npcRace switch
+		{
+			"ELYOS" or "ASMODIANS" => !string.Equals(npcRace, NormalizeRace(player.Race), StringComparison.Ordinal),
+			_ => true,
+		};
+	}
+
+	public static WorldNpcFreeForAllResult Started(SmLootStatus lootStatus, IWorldNpcObject? npc)
+	{
+		return new WorldNpcFreeForAllResult(WorldNpcFreeForAllStatus.Started, lootStatus, npc);
 	}
 
 	public static WorldNpcFreeForAllResult MissingRegistration()
 	{
-		return new WorldNpcFreeForAllResult(WorldNpcFreeForAllStatus.MissingRegistration, null);
+		return new WorldNpcFreeForAllResult(WorldNpcFreeForAllStatus.MissingRegistration, null, null);
+	}
+
+	private static string NormalizeRace(string race)
+	{
+		return string.Equals(race, "ASMODIAN", StringComparison.OrdinalIgnoreCase)
+			? "ASMODIANS"
+			: race.ToUpperInvariant();
 	}
 }
 
