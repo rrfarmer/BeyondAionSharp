@@ -554,6 +554,9 @@ public sealed class StaticData
 				housingObjectTemplates[lastIndex] = housingObjectTemplates[lastIndex] with
 				{
 					UseActionCheckType = ReadIntAttribute(reader, "check_type"),
+					UseActionRemoveCount = ReadIntAttribute(reader, "remove_count"),
+					UseActionRewardId = ReadIntAttribute(reader, "reward_id"),
+					UseActionFinalRewardId = ReadIntAttribute(reader, "final_reward_id"),
 				};
 				continue;
 			}

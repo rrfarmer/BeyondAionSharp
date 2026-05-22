@@ -42,4 +42,7 @@ public sealed record HousingObjectTemplateSummary(
 	int UseCount = 0,
 	int RequiredItemId = 0,
 	int EmblemLevel = 0,
-	int UseActionCheckType = 0);
+	int UseActionCheckType = 0,
+	int UseActionRemoveCount = 0,
+	int UseActionRewardId = 0,
+	int UseActionFinalRewardId = 0);

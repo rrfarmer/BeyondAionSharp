@@ -107,6 +107,8 @@ public static class GameClientPacketFactory
 		Register(219, states => new CmRegisterHouse(219, states), GameConnectionState.InGame);
 		Register(221, states => new CmPlaceBid(221, states), GameConnectionState.InGame);
 		Register(223, states => new CmHousePayRent(223, states), GameConnectionState.InGame);
+		Register(224, states => new CmUseHouseObject(224, states), GameConnectionState.InGame);
+		Register(225, states => new CmReleaseObject(225, states), GameConnectionState.InGame);
 		Register(230, states => new CmShowFriendList(230, states), GameConnectionState.InGame);
 		Register(233, states => new CmBonusTitle(233, states), GameConnectionState.InGame);
 		Register(236, states => new CmSelectDecomposable(236, states), GameConnectionState.InGame);

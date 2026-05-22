@@ -455,6 +455,12 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(3000, useObject.DelayMilliseconds);
 		Assert.Equal(186000166, useObject.RequiredItemId);
 		Assert.Equal(2, useObject.UseActionCheckType);
+		Assert.Equal(1, useObject.UseActionRemoveCount);
+		Assert.Equal(188051519, useObject.UseActionRewardId);
+		var finalRewardUseObject = staticData.HousingObjectTemplates.GetTemplate(3190013);
+		Assert.NotNull(finalRewardUseObject);
+		Assert.Equal(188051562, finalRewardUseObject.UseActionRewardId);
+		Assert.Equal(188051555, finalRewardUseObject.UseActionFinalRewardId);
 		Assert.Equal(5, staticData.InstanceCooltimes.GetInstanceCooltimeByWorldId(300030000)?.MaxCount);
 		Assert.Contains(staticData.RecipeTemplates.GetAutolearnRecipes("ELYOS", 40009, 1), recipe => recipe.RecipeId == 155000001);
 		var craftPlayer = new Player

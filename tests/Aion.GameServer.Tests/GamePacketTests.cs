@@ -1241,6 +1241,38 @@ public class GamePacketTests
 		Assert.Equal(9903, houseEditDespawnReader.ReadD());
 		Assert.Equal(0, houseEditDespawnReader.Remaining);
 
+		var useObjectPayload = SerializeUnencryptedPayload(new SmUseObject(1001, 9903, 3000, 8));
+		using var useObjectReader = new PacketBuffer(useObjectPayload);
+		Assert.Equal(1001, useObjectReader.ReadD());
+		Assert.Equal(9903, useObjectReader.ReadD());
+		Assert.Equal(3000, useObjectReader.ReadD());
+		Assert.Equal(8, (int)useObjectReader.ReadC());
+		Assert.Equal(0, useObjectReader.Remaining);
+
+		var useItemUpdatePayload = SerializeUnencryptedPayload(
+			new SmObjectUseUpdate(
+				1001,
+				2002,
+				3,
+				new RegisteredHouseObjectSummary(9903, 3190001, TypeId: 1, UsageData: [3, 0, 0, 0, 2])));
+		using var useItemUpdateReader = new PacketBuffer(useItemUpdatePayload);
+		Assert.Equal(1, (int)useItemUpdateReader.ReadC());
+		Assert.Equal(1001, useItemUpdateReader.ReadD());
+		Assert.Equal(2002, useItemUpdateReader.ReadD());
+		Assert.Equal(9903, useItemUpdateReader.ReadD());
+		Assert.Equal(3, useItemUpdateReader.ReadD());
+		Assert.Equal(2, (int)useItemUpdateReader.ReadC());
+		Assert.Equal(0, useItemUpdateReader.Remaining);
+
+		var storageUseUpdatePayload = SerializeUnencryptedPayload(
+			new SmObjectUseUpdate(1001, 0, 0, new RegisteredHouseObjectSummary(9904, 3000007, TypeId: 2)));
+		using var storageUseUpdateReader = new PacketBuffer(storageUseUpdatePayload);
+		Assert.Equal(2, (int)storageUseUpdateReader.ReadC());
+		Assert.Equal(1001, storageUseUpdateReader.ReadD());
+		Assert.Equal(1, (int)storageUseUpdateReader.ReadC());
+		Assert.Equal(9904, storageUseUpdateReader.ReadD());
+		Assert.Equal(0, storageUseUpdateReader.Remaining);
+
 		var houseObjectsPayload = SerializeUnencryptedPayload(
 			new SmHouseObjects(
 				[
@@ -4086,6 +4118,10 @@ public class GamePacketTests
 			}), GameConnectionState.InGame));
 		var payRent = Assert.IsType<CmHousePayRent>(
 			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(223, b => b.WriteC(2)), GameConnectionState.InGame));
+		var useHouseObject = Assert.IsType<CmUseHouseObject>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(224, b => b.WriteD(9903)), GameConnectionState.InGame));
+		var releaseObject = Assert.IsType<CmReleaseObject>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(225, b => b.WriteD(9903)), GameConnectionState.InGame));
 		var houseDecorate = Assert.IsType<CmHouseDecorate>(
 			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(75, b =>
 			{
@@ -4120,6 +4156,8 @@ public class GamePacketTests
 		Assert.Equal(12, placeBid.ListIndex);
 		Assert.Equal(750000, placeBid.BidOffer);
 		Assert.Equal(2, payRent.WeekCount);
+		Assert.Equal(9903, useHouseObject.ObjectId);
+		Assert.Equal(9903, releaseObject.TargetObjectId);
 		Assert.Equal(9101, houseDecorate.ObjectId);
 		Assert.Equal(3504000, houseDecorate.TemplateId);
 		Assert.Equal(8, houseDecorate.LineNumber);
@@ -4136,6 +4174,7 @@ public class GamePacketTests
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(82, b => b.WriteC(1)), GameConnectionState.Authed));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(218, _ => { }), GameConnectionState.Authed));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(223, b => b.WriteC(1)), GameConnectionState.Authed));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(224, b => b.WriteD(1)), GameConnectionState.Authed));
 	}
 
 	[Fact]
