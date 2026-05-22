@@ -48,4 +48,27 @@ public sealed class PlayerStateTests
 		Assert.True(player.IsInState(PlayerCreatureState.PrivateShop));
 		Assert.False(player.IsInState(PlayerCreatureState.Chair));
 	}
+
+	[Fact]
+	public void Player_AbnormalStateMatchesJavaBitAndCompoundSemantics()
+	{
+		var player = new Player
+		{
+			AbnormalState = PlayerAbnormalState.Root | PlayerAbnormalState.Fear | PlayerAbnormalState.Confuse,
+		};
+
+		Assert.Equal(16, (int)PlayerAbnormalState.Root);
+		Assert.Equal(512, (int)PlayerAbnormalState.Fear);
+		Assert.Equal(2048, (int)PlayerAbnormalState.Confuse);
+		Assert.True(player.IsAbnormalSet(PlayerAbnormalState.Root));
+		Assert.True(player.IsInAnyAbnormalState(PlayerAbnormalState.CantMoveState));
+		Assert.True(player.IsUnderFear());
+		Assert.True(player.IsConfused());
+		Assert.False(player.IsAbnormalSet(PlayerAbnormalState.CantMoveState));
+
+		player.AbnormalState = PlayerAbnormalState.None;
+
+		Assert.True(player.IsAbnormalSet(PlayerAbnormalState.None));
+		Assert.True(player.IsInAnyAbnormalState(PlayerAbnormalState.None));
+	}
 }

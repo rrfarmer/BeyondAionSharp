@@ -3497,7 +3497,12 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (!IsHandledEmotion(packet.EmotionType))
 			return;
 
-		// TODO Phase 6: apply EffectController abnormal-state/fear/confuse and stance guards once those models are ported.
+		// Java parity: network/aion/clientpackets/CM_EMOTION.runImpl abnormal movement guard before item-use cancellation.
+		if (!BypassesEmotionAbnormalGuard(packet.EmotionType)
+			&& (player.IsInAnyAbnormalState(PlayerAbnormalState.CantMoveState) || player.IsUnderFear() || player.IsConfused()))
+			return;
+
+		// TODO Phase 6: apply PlayerController stance guard once stance state is ported.
 		if (player.IsInState(PlayerCreatureState.PrivateShop)
 			|| (player.IsInState(PlayerCreatureState.WeaponEquipped)
 				&& packet.EmotionType is EmotionType.ChairSit or EmotionType.Jump))
@@ -3600,6 +3605,16 @@ public sealed class GameServerConnection : BaseClientConnection
 			or EmotionType.PowershardOn
 			or EmotionType.PowershardOff
 			or EmotionType.Emote;
+	}
+
+	private static bool BypassesEmotionAbnormalGuard(EmotionType emotionType)
+	{
+		// Java parity: CM_EMOTION skips the abnormal guard only for target select and weapon mode toggles.
+		return emotionType is EmotionType.SelectTarget
+			or EmotionType.AttackModeInMove
+			or EmotionType.AttackModeInStanding
+			or EmotionType.NeutralModeInMove
+			or EmotionType.NeutralModeInStanding;
 	}
 
 	private static bool CanUseEmotion(Player player, int emotionId, ItemTemplateTable? itemTemplates)

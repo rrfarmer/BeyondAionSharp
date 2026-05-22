@@ -82,6 +82,9 @@ public sealed class Player
 	// Java parity: model/gameobjects/Creature.state queried through Creature.isInState(CreatureState).
 	public PlayerCreatureState CreatureState { get; set; }
 
+	// Java parity: controllers/effect/EffectController.abnormals queried by CM_EMOTION and action guards.
+	public PlayerAbnormalState AbnormalState { get; set; }
+
 	// Java parity: model/actions/PlayerMode.RIDE queried through Player.isInPlayerMode.
 	public bool IsInRideMode { get; set; }
 
@@ -190,6 +193,30 @@ public sealed class Player
 	{
 		// Java parity: model/gameobjects/Creature.setState(state, replace=true).
 		CreatureState = state;
+	}
+
+	public bool IsAbnormalSet(PlayerAbnormalState state)
+	{
+		// Java parity: controllers/effect/EffectController.isAbnormalSet.
+		return state == PlayerAbnormalState.None ? AbnormalState == PlayerAbnormalState.None : (AbnormalState & state) == state;
+	}
+
+	public bool IsInAnyAbnormalState(PlayerAbnormalState state)
+	{
+		// Java parity: controllers/effect/EffectController.isInAnyAbnormalState.
+		return state == PlayerAbnormalState.None ? AbnormalState == PlayerAbnormalState.None : (AbnormalState & state) != 0;
+	}
+
+	public bool IsUnderFear()
+	{
+		// Java parity: controllers/effect/EffectController.isUnderFear.
+		return IsAbnormalSet(PlayerAbnormalState.Fear);
+	}
+
+	public bool IsConfused()
+	{
+		// Java parity: controllers/effect/EffectController.isConfused.
+		return IsAbnormalSet(PlayerAbnormalState.Confuse);
 	}
 
 	public void AddItemCooldown(int delayId, int useDelayMillis, DateTimeOffset now)

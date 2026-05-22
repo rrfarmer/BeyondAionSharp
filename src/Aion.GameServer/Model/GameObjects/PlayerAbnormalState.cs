@@ -1,0 +1,47 @@
+namespace Aion.GameServer.Model.GameObjects;
+
+[Flags]
+public enum PlayerAbnormalState
+{
+	// Java parity: skillengine/effect/AbnormalState bit ids and compound masks.
+	None = 0,
+	Poison = 1 << 0,
+	Bleed = 1 << 1,
+	Paralyze = 1 << 2,
+	Sleep = 1 << 3,
+	Root = 1 << 4,
+	Blind = 1 << 5,
+	Charm = 1 << 6,
+	Disease = 1 << 7,
+	Silence = 1 << 8,
+	Fear = 1 << 9,
+	Curse = 1 << 10,
+	Confuse = 1 << 11,
+	Stun = 1 << 12,
+	Petrification = 1 << 13,
+	Stumble = 1 << 14,
+	Stagger = 1 << 15,
+	OpenAerial = 1 << 16,
+	Snare = 1 << 17,
+	Slow = 1 << 18,
+	Spin = 1 << 19,
+	Bind = 1 << 20,
+	Deform = 1 << 21,
+	Pulled = 1 << 22,
+	NoFly = 1 << 23,
+	SimpleMoveBack = 1 << 24,
+	StunLike = 1 << 25,
+	CantMoveOrAttack = 1 << 26,
+	Unknown = 1 << 27,
+	Unknown2 = 1 << 28,
+	Hide = 1 << 29,
+	InvulnerableWing = 1 << 30,
+	Sanctuary = 1 << 31,
+
+	CantAttackState = Spin | Sleep | Stun | Stumble | Stagger | OpenAerial | Paralyze | Fear | Pulled | Sanctuary | Confuse,
+	StanceOff = Spin | Stun | Stumble | Stagger | OpenAerial | Paralyze | Fear | Pulled | Sanctuary | Confuse,
+	CantMoveState = Spin | Root | Sleep | Stumble | Stun | Stagger | OpenAerial | Paralyze | Pulled | Sanctuary,
+	DismountRide = Spin | Root | Sleep | Stumble | Stun | Stagger | OpenAerial | Paralyze | Pulled | Fear | Snare | Deform | Confuse,
+	AutomaticallyStandUp = Paralyze | Sleep | Fear | Stun | Stagger | OpenAerial | Spin | Deform | Pulled | Confuse,
+	AnyStun = Spin | Stun | Stumble | Stagger,
+}
