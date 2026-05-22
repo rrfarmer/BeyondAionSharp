@@ -98,7 +98,8 @@ public sealed record ItemTemplateSummary(
 	string CosmeticActionName = "",
 	bool HasDecomposeAction = false,
 	int ExtraInventoryId = -1,
-	int AssemblyItemId = 0)
+	int AssemblyItemId = 0,
+	ItemExpExtractActionInfo? ExpExtractAction = null)
 {
 	private const int CanPolishMask = 1 << 17;
 	private const int SoulBoundMask = 1 << 7;
@@ -352,6 +353,9 @@ public sealed record ItemSkillLearnActionInfo(int SkillId, int Level, string Pla
 
 // Java parity: model/templates/item/actions/ExpandInventoryAction.
 public sealed record ItemExpandInventoryActionInfo(int Level, string Storage);
+
+// Java parity: model/templates/item/actions/ExpExtractAction.
+public sealed record ItemExpExtractActionInfo(int ItemId, bool IsPercent, long Cost);
 
 // Java parity: model/templates/item/actions/DyeAction.
 public sealed record ItemDyeActionInfo(int? Color, int Minutes, bool HasMinutes);

@@ -162,6 +162,9 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(new ItemSkillLearnActionInfo(1, 10, "RANGER"), staticData.ItemTemplates.GetItemTemplate(169500916)?.SkillLearnAction);
 		Assert.Equal(new ItemExpandInventoryActionInfo(1, "CUBE"), staticData.ItemTemplates.GetItemTemplate(169630000)?.ExpandInventoryAction);
 		Assert.Equal(new ItemExpandInventoryActionInfo(1, "WAREHOUSE"), staticData.ItemTemplates.GetItemTemplate(169640000)?.ExpandInventoryAction);
+		Assert.Equal(staticData.GetElementCount("expextract"), staticData.ItemTemplates.Templates.Count(template => template.ExpExtractAction != null));
+		Assert.Equal(new ItemExpExtractActionInfo(188052060, false, 33725505), staticData.ItemTemplates.GetItemTemplate(188920011)?.ExpExtractAction);
+		Assert.Equal(new ItemExpExtractActionInfo(188052060, true, 100), staticData.ItemTemplates.GetItemTemplate(188920012)?.ExpExtractAction);
 		Assert.Equal(new ItemDyeActionInfo(null, 0, false), staticData.ItemTemplates.GetItemTemplate(169100000)?.DyeAction);
 		Assert.Equal(new ItemDyeActionInfo(0xc22626, 0, false), staticData.ItemTemplates.GetItemTemplate(169120000)?.DyeAction);
 		Assert.Equal(new ItemAnimationActionInfo(1, 2, 3, 4, null, 60), staticData.ItemTemplates.GetItemTemplate(188500000)?.AnimationAction);

@@ -794,6 +794,16 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 4 && reader.LocalName == "expextract" && currentItemTemplate != null)
+			{
+				// Java parity: model/templates/item/actions/ExpExtractAction item_id/percent/cost metadata.
+				currentItemTemplate.ExpExtractAction = new ItemExpExtractActionInfo(
+					ReadIntAttribute(reader, "item_id"),
+					ReadBoolAttribute(reader, "percent"),
+					ReadLongAttribute(reader, "cost"));
+				continue;
+			}
+
 			if (reader.Depth == 4 && reader.LocalName == "dye" && currentItemTemplate != null)
 			{
 				// Java parity: model/templates/item/actions/DyeAction color/minutes metadata.
@@ -1644,6 +1654,8 @@ public sealed class StaticData
 
 		public ItemExpandInventoryActionInfo? ExpandInventoryAction { get; set; }
 
+		public ItemExpExtractActionInfo? ExpExtractAction { get; set; }
+
 		public ItemDyeActionInfo? DyeAction { get; set; }
 
 		public ItemAnimationActionInfo? AnimationAction { get; set; }
@@ -1779,7 +1791,8 @@ public sealed class StaticData
 				CosmeticActionName,
 				HasDecomposeAction,
 				ExtraInventoryId,
-				AssemblyItemId);
+				AssemblyItemId,
+				ExpExtractAction);
 		}
 
 		private static int CalculateMaxTuneCount(
