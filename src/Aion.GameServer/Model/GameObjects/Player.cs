@@ -48,6 +48,9 @@ public sealed class Player
 
 	public CharacterAppearance Appearance { get; set; } = new();
 
+	// Java parity: model/gameobjects/player/Player.getLevel consumed by portal and action guards.
+	public int Level { get; set; } = 1;
+
 	public long Exp { get; set; }
 
 	public long RecoverableExp { get; init; }

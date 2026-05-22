@@ -252,6 +252,8 @@ public sealed class RiftLocationState
 
 public sealed class RiftPortalState
 {
+	private readonly HashSet<int> _passedPlayerObjectIds = [];
+
 	public RiftPortalState(
 		RiftDefinition definition,
 		WorldNpc masterNpc,
@@ -292,16 +294,24 @@ public sealed class RiftPortalState
 
 	public int UsedEntries { get; private set; }
 
+	public int PassedPlayerCount => _passedPlayerObjectIds.Count;
+
+	public bool AddPassedPlayer(int playerObjectId)
+	{
+		// Java parity: controllers/RVController.passedPlayers stores vortex passers by player object id.
+		return _passedPlayerObjectIds.Add(playerObjectId);
+	}
+
 	public int GetRemainTime(DateTimeOffset now)
 	{
 		// Java parity: controllers/RVController.getRemainTime returns despawnTimeSeconds - currentUnixSeconds.
 		return (int)(DespawnTimeUnixSeconds - now.ToUnixTimeSeconds());
 	}
 
-	public void SyncPassed(bool isInvasion, int passedPlayerCount = 0)
+	public void SyncPassed(bool usePassedPlayerCount, int passedPlayerCount = 0)
 	{
 		// Java parity: controllers/RVController.syncPassed mutates usedEntries before rift info sync.
-		UsedEntries = isInvasion ? passedPlayerCount : UsedEntries + 1;
+		UsedEntries = usePassedPlayerCount ? passedPlayerCount : UsedEntries + 1;
 	}
 }
 

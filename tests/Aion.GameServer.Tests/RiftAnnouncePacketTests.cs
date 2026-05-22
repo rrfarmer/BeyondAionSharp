@@ -96,8 +96,8 @@ public sealed class RiftAnnouncePacketTests
 			new RiftDefinition(2176, "CYGNEA", "CYGNEA_GM", "ENSHAR_GS", 144, 60, 65, "ASMODIANS", CanBeVolatile: true),
 			guardsRequested: true,
 			despawnTimeUnixSeconds: 2000 + 7200);
-		portal.SyncPassed(isInvasion: false);
-		portal.SyncPassed(isInvasion: false);
+		portal.SyncPassed(usePassedPlayerCount: false);
+		portal.SyncPassed(usePassedPlayerCount: false);
 		var packet = new SmRiftAnnounce(portal, isMaster: false, () => now);
 
 		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));

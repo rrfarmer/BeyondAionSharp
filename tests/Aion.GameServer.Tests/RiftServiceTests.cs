@@ -180,11 +180,11 @@ public sealed class RiftServiceTests
 			Assert.True(volatilePortal.IsVolatile);
 			Assert.False(volatilePortal.IsInvasion);
 			Assert.Equal(1000 + 2 * 3600, volatilePortal.DespawnTimeUnixSeconds);
-			volatilePortal.SyncPassed(isInvasion: false);
+			volatilePortal.SyncPassed(usePassedPlayerCount: false);
 			Assert.Equal(1, volatilePortal.UsedEntries);
-			volatilePortal.SyncPassed(isInvasion: false);
+			volatilePortal.SyncPassed(usePassedPlayerCount: false);
 			Assert.Equal(2, volatilePortal.UsedEntries);
-			volatilePortal.SyncPassed(isInvasion: true, passedPlayerCount: 7);
+			volatilePortal.SyncPassed(usePassedPlayerCount: true, passedPlayerCount: 7);
 			Assert.Equal(7, volatilePortal.UsedEntries);
 		}
 		finally
