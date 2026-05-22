@@ -102,9 +102,11 @@ public sealed record ItemTemplateSummary(
 	int AssemblyItemId = 0,
 	bool HasExtractAction = false,
 	ItemApExtractActionInfo? ApExtractAction = null,
-	ItemExpExtractActionInfo? ExpExtractAction = null)
+	ItemExpExtractActionInfo? ExpExtractAction = null,
+	int RequiredAbyssPoints = 0)
 {
 	private const int CanPolishMask = 1 << 17;
+	private const int CanApExtractMask = 1 << 16;
 	private const int SoulBoundMask = 1 << 7;
 	private const int NoEnchantMask = 1 << 9;
 	private const int CanProcEnchantMask = 1 << 10;
@@ -219,6 +221,8 @@ public sealed record ItemTemplateSummary(
 	public bool IsNoEnchant => (Mask & NoEnchantMask) == NoEnchantMask;
 
 	public bool CanPolish => (Mask & CanPolishMask) == CanPolishMask;
+
+	public bool CanApExtract => (Mask & CanApExtractMask) == CanApExtractMask;
 
 	public bool CanSocketGodstone => (Mask & CanProcEnchantMask) == CanProcEnchantMask;
 

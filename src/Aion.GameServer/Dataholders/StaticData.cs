@@ -696,6 +696,13 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 3 && reader.LocalName == "acquisition" && currentItemTemplate != null)
+			{
+				// Java parity: model/templates/item/Acquisition.getRequiredAp consumed by ApExtractAction.act.
+				currentItemTemplate.RequiredAbyssPoints = ReadIntAttribute(reader, "ap");
+				continue;
+			}
+
 			if (reader.Depth == 4 && reader.LocalName == "ride" && currentItemTemplate != null)
 			{
 				// Java parity: model/templates/item/actions/RideAction.npcId.
@@ -1683,6 +1690,8 @@ public sealed class StaticData
 
 		public ItemApExtractActionInfo? ApExtractAction { get; set; }
 
+		public int RequiredAbyssPoints { get; set; }
+
 		public ItemDyeActionInfo? DyeAction { get; set; }
 
 		public ItemAnimationActionInfo? AnimationAction { get; set; }
@@ -1824,7 +1833,8 @@ public sealed class StaticData
 				AssemblyItemId,
 				HasExtractAction,
 				ApExtractAction,
-				ExpExtractAction);
+				ExpExtractAction,
+				RequiredAbyssPoints);
 		}
 
 		private static int CalculateMaxTuneCount(
