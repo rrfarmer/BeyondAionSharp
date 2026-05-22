@@ -7,6 +7,9 @@ public static class IdianPolishService
 {
 	public const int FullPolishCharge = 1_000_000;
 	public const int LowPolishChargeThreshold = 300_000;
+	private const int CubeStorageId = 0;
+	private const long MainOffHand = 1L << 17;
+	private const long SubOffHand = 1L << 18;
 
 	public static IdianPolishPlan CreatePolishPlan(
 		InventoryItem sourceItem,
@@ -94,6 +97,41 @@ public static class IdianPolishService
 		return new IdianPolishBurnResult(itemUpdate, updateKind, burnAmount);
 	}
 
+	public static IdianPolishBurnPlan BurnEquippedWeaponPolishCharge(
+		Player player,
+		ItemTemplateTable itemTemplates,
+		int skillValue)
+	{
+		// Java parity: skillengine/condition/PolishChargeCondition.validate.
+		var inventoryItems = player.InventoryItems.ToList();
+		var burns = new List<IdianPolishBurnResult>();
+		foreach (var item in inventoryItems.ToArray())
+		{
+			if (item.Location != CubeStorageId
+				|| !item.IsEquipped
+				|| item.IdianStone == null
+				|| (item.Slot & (MainOffHand | SubOffHand)) != 0)
+			{
+				continue;
+			}
+
+			var template = itemTemplates.GetItemTemplate(item.ItemId);
+			if (template is not { IsWeapon: true })
+				continue;
+
+			var burn = DecreasePolishCharge(item, template, skillValue: skillValue);
+			if (burn == null)
+				continue;
+
+			ReplaceInventoryItem(inventoryItems, burn.ItemUpdate);
+			burns.Add(burn);
+		}
+
+		return burns.Count == 0
+			? IdianPolishBurnPlan.NoChange()
+			: new IdianPolishBurnPlan(true, inventoryItems, burns);
+	}
+
 	private static InventoryItem CopyInventoryItem(InventoryItem item, long? count = null)
 	{
 		var copy = new InventoryItem
@@ -132,6 +170,15 @@ public static class IdianPolishService
 		copy.Godstone = item.Godstone;
 		copy.IdianStone = item.IdianStone;
 		return copy;
+	}
+
+	private static void ReplaceInventoryItem(List<InventoryItem> items, InventoryItem update)
+	{
+		var index = items.FindIndex(item => item.ObjectId == update.ObjectId);
+		if (index >= 0)
+			items[index] = update;
+		else
+			items.Add(update);
 	}
 }
 
@@ -173,3 +220,14 @@ public sealed record IdianPolishBurnResult(
 	InventoryItem ItemUpdate,
 	IdianPolishBurnUpdateKind UpdateKind,
 	int BurnAmount);
+
+public sealed record IdianPolishBurnPlan(
+	bool Changed,
+	IReadOnlyList<InventoryItem> InventoryItems,
+	IReadOnlyList<IdianPolishBurnResult> Burns)
+{
+	public static IdianPolishBurnPlan NoChange()
+	{
+		return new IdianPolishBurnPlan(false, Array.Empty<InventoryItem>(), Array.Empty<IdianPolishBurnResult>());
+	}
+}

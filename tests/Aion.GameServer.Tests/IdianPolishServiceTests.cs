@@ -111,6 +111,63 @@ public sealed class IdianPolishServiceTests
 		Assert.Null(exhausted.ItemUpdate.IdianStone);
 	}
 
+	[Fact]
+	public void BurnEquippedWeaponPolishCharge_BurnsMainWeaponIdiansAndSkipsOffHands()
+	{
+		var itemTemplates = new ItemTemplateTable(
+		[
+			CreateTemplate(100, level: 20, itemGroup: "SWORD", mask: 1 << 17, idianInfo: new ItemIdianInfo(60_000, 12)),
+			CreateTemplate(101, level: 20, itemGroup: "DAGGER", mask: 1 << 17, idianInfo: new ItemIdianInfo(60_000, 12)),
+			CreateTemplate(102, level: 20, itemGroup: "CL_TORSO", mask: 1 << 17, idianInfo: new ItemIdianInfo(60_000, 12)),
+		]);
+		var player = new Player
+		{
+			InventoryItems =
+			[
+				CreateItem(100, objectId: 20, polishCharge: 500_000, isEquipped: true, slot: 1),
+				CreateItem(101, objectId: 21, polishCharge: 500_000, isEquipped: true, slot: 2),
+				CreateItem(100, objectId: 22, polishCharge: 500_000, isEquipped: true, slot: 1L << 17),
+				CreateItem(102, objectId: 23, polishCharge: 500_000, isEquipped: true, slot: 8),
+				CreateItem(100, objectId: 24, polishCharge: 500_000, isEquipped: false, slot: 65535),
+			],
+		};
+
+		var plan = IdianPolishService.BurnEquippedWeaponPolishCharge(player, itemTemplates, skillValue: 250_000);
+
+		Assert.True(plan.Changed);
+		Assert.Equal([20, 21], plan.Burns.Select(burn => burn.ItemUpdate.ObjectId));
+		Assert.All(plan.Burns, burn => Assert.Equal(IdianPolishBurnUpdateKind.LowCharge, burn.UpdateKind));
+		Assert.Equal(250_000, plan.InventoryItems.First(item => item.ObjectId == 20).IdianStone?.PolishCharge);
+		Assert.Equal(250_000, plan.InventoryItems.First(item => item.ObjectId == 21).IdianStone?.PolishCharge);
+		Assert.Equal(500_000, plan.InventoryItems.First(item => item.ObjectId == 22).IdianStone?.PolishCharge);
+		Assert.Equal(500_000, plan.InventoryItems.First(item => item.ObjectId == 23).IdianStone?.PolishCharge);
+		Assert.Equal(500_000, plan.InventoryItems.First(item => item.ObjectId == 24).IdianStone?.PolishCharge);
+	}
+
+	[Fact]
+	public void BurnEquippedWeaponPolishCharge_RemovesExhaustedIdian()
+	{
+		var itemTemplates = new ItemTemplateTable(
+		[
+			CreateTemplate(100, level: 20, itemGroup: "SWORD", mask: 1 << 17, idianInfo: new ItemIdianInfo(60_000, 12)),
+		]);
+		var player = new Player
+		{
+			InventoryItems =
+			[
+				CreateItem(100, objectId: 20, polishCharge: 200_000, isEquipped: true, slot: 1),
+			],
+		};
+
+		var plan = IdianPolishService.BurnEquippedWeaponPolishCharge(player, itemTemplates, skillValue: 250_000);
+
+		Assert.True(plan.Changed);
+		var burn = Assert.Single(plan.Burns);
+		Assert.Equal(IdianPolishBurnUpdateKind.Exhausted, burn.UpdateKind);
+		Assert.Null(burn.ItemUpdate.IdianStone);
+		Assert.Null(Assert.Single(plan.InventoryItems).IdianStone);
+	}
+
 	private static ItemTemplateSummary CreateTemplate(
 		int templateId,
 		int level = 1,
@@ -136,7 +193,14 @@ public sealed class IdianPolishServiceTests
 			IdianInfo: idianInfo);
 	}
 
-	private static InventoryItem CreateItem(int itemId, int objectId, long count = 1, int polishCharge = 0, int tuneCount = 0)
+	private static InventoryItem CreateItem(
+		int itemId,
+		int objectId,
+		long count = 1,
+		int polishCharge = 0,
+		int tuneCount = 0,
+		bool isEquipped = false,
+		long slot = 0)
 	{
 		var item = new InventoryItem
 		{
@@ -145,6 +209,8 @@ public sealed class IdianPolishServiceTests
 			Count = count,
 			Location = 0,
 			TuneCount = tuneCount,
+			IsEquipped = isEquipped,
+			Slot = slot,
 		};
 		if (polishCharge > 0)
 			item.IdianStone = new PlayerIdianStone(600, 1, polishCharge);
