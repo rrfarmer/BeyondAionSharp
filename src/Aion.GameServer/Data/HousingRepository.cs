@@ -36,6 +36,12 @@ public interface IHousingRepository
 		RegisteredHouseDecorationSummary decoration,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveHouseDecorationMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<RegisteredHouseDecorationSummary> updatedDecorations,
+		IReadOnlyList<int> deletedDecorationObjectIds,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> DeleteHouseRegisteredObjectAsync(
 		int playerObjectId,
 		int itemObjectId,
@@ -81,6 +87,15 @@ public sealed class EmptyHousingRepository : IHousingRepository
 		int playerObjectId,
 		int sourceItemObjectId,
 		RegisteredHouseDecorationSummary decoration,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> SaveHouseDecorationMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<RegisteredHouseDecorationSummary> updatedDecorations,
+		IReadOnlyList<int> deletedDecorationObjectIds,
 		CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(true);
@@ -316,6 +331,64 @@ public sealed class MySqlHousingRepository : IHousingRepository
 			decoration.Room,
 			"house decoration",
 			cancellationToken);
+	}
+
+	public async Task<bool> SaveHouseDecorationMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<RegisteredHouseDecorationSummary> updatedDecorations,
+		IReadOnlyList<int> deletedDecorationObjectIds,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: PlayerRegisteredItemsDAO.storeDecors update/delete branches after HouseRegistry.setUsed/discardDecor.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			foreach (var decoration in updatedDecorations)
+			{
+				await using var updateCommand = connection.CreateCommand();
+				updateCommand.Transaction = transaction;
+				updateCommand.CommandText = """
+					UPDATE player_registered_items
+					SET room = ?
+					WHERE player_id = ? AND item_unique_id = ? AND area = 'DECOR'
+					""";
+				updateCommand.Parameters.AddRange(
+					new[]
+					{
+						new MySqlParameter { Value = decoration.Room },
+						new MySqlParameter { Value = playerObjectId },
+						new MySqlParameter { Value = decoration.ObjectId },
+					});
+				if (await updateCommand.ExecuteNonQueryAsync(cancellationToken) <= 0)
+					return false;
+			}
+
+			foreach (var deletedObjectId in deletedDecorationObjectIds.Distinct())
+			{
+				await using var deleteCommand = connection.CreateCommand();
+				deleteCommand.Transaction = transaction;
+				deleteCommand.CommandText = "DELETE FROM player_registered_items WHERE player_id = ? AND item_unique_id = ? AND area = 'DECOR'";
+				deleteCommand.Parameters.AddRange(
+					new[]
+					{
+						new MySqlParameter { Value = playerObjectId },
+						new MySqlParameter { Value = deletedObjectId },
+					});
+				if (await deleteCommand.ExecuteNonQueryAsync(cancellationToken) <= 0)
+					return false;
+			}
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save house decoration mutation for player {PlayerObjectId}", playerObjectId);
+			return false;
+		}
 	}
 
 	public async Task<bool> DeleteHouseRegisteredObjectAsync(

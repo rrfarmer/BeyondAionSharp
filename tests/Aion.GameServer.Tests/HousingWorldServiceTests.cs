@@ -255,6 +255,15 @@ public sealed class HousingWorldServiceTests
 			return Task.FromResult(true);
 		}
 
+		public Task<bool> SaveHouseDecorationMutationAsync(
+			int playerObjectId,
+			IReadOnlyList<RegisteredHouseDecorationSummary> updatedDecorations,
+			IReadOnlyList<int> deletedDecorationObjectIds,
+			CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult(true);
+		}
+
 		public Task<bool> DeleteHouseRegisteredObjectAsync(
 			int playerObjectId,
 			int itemObjectId,

@@ -50,7 +50,7 @@ internal static class HouseInfoPacketWriter
 		buffer.WriteS(Truncate(house.SignNotice ?? string.Empty, SignNoticeMaxLength));
 
 		// Java parity: PartType.values() packet order, including six wall/floor room decor lines.
-		var defaultDecorIds = housingTemplates?.GetDefaultDecorIds(house.BuildingId) ?? Array.Empty<int>();
+		var defaultDecorIds = housingTemplates?.GetDecorIds(house.BuildingId, house.Registry) ?? Array.Empty<int>();
 		for (var i = 0; i < HouseDecorLineCount; i++)
 			buffer.WriteD(i < defaultDecorIds.Count ? defaultDecorIds[i] : 0);
 
@@ -98,7 +98,8 @@ internal static class HouseInfoPacketWriter
 		bool IsInactive,
 		byte DoorState,
 		bool ShowOwnerName,
-		string? SignNotice)
+		string? SignNotice,
+		HouseRegistrySummary? Registry)
 	{
 		public static HouseInfoView From(Player player, PlayerHouse house)
 		{
@@ -118,7 +119,8 @@ internal static class HouseInfoPacketWriter
 				house.IsInactive,
 				house.DoorState,
 				house.ShowOwnerName,
-				house.SignNotice);
+				house.SignNotice,
+				house.Registry);
 		}
 
 		public static HouseInfoView From(WorldHouse house)
@@ -139,7 +141,8 @@ internal static class HouseInfoPacketWriter
 				house.IsInactive,
 				house.DoorState,
 				house.ShowOwnerName,
-				house.SignNotice);
+				house.SignNotice,
+				house.Registry);
 		}
 	}
 }

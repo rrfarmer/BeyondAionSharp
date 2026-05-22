@@ -4086,6 +4086,13 @@ public class GamePacketTests
 			}), GameConnectionState.InGame));
 		var payRent = Assert.IsType<CmHousePayRent>(
 			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(223, b => b.WriteC(2)), GameConnectionState.InGame));
+		var houseDecorate = Assert.IsType<CmHouseDecorate>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(75, b =>
+			{
+				b.WriteD(9101);
+				b.WriteD(3504000);
+				b.WriteH(8);
+			}), GameConnectionState.InGame));
 		var enterDecorMode = Assert.IsType<CmHouseEdit>(
 			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(82, b => b.WriteC(CmHouseEdit.EnterDecorationMode)), GameConnectionState.InGame));
 		var moveObject = Assert.IsType<CmHouseEdit>(
@@ -4113,6 +4120,9 @@ public class GamePacketTests
 		Assert.Equal(12, placeBid.ListIndex);
 		Assert.Equal(750000, placeBid.BidOffer);
 		Assert.Equal(2, payRent.WeekCount);
+		Assert.Equal(9101, houseDecorate.ObjectId);
+		Assert.Equal(3504000, houseDecorate.TemplateId);
+		Assert.Equal(8, houseDecorate.LineNumber);
 		Assert.Equal(CmHouseEdit.EnterDecorationMode, enterDecorMode.Action);
 		Assert.Equal(CmHouseEdit.MoveObject, moveObject.Action);
 		Assert.Equal(9902, moveObject.ItemObjectId);

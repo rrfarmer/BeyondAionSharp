@@ -108,6 +108,31 @@ public sealed record HouseRegistrySummary(
 		};
 	}
 
+	public HouseRegistrySummary WithDecorationMutation(
+		IReadOnlyList<RegisteredHouseDecorationSummary> updatedDecorations,
+		IReadOnlyList<int> deletedDecorationObjectIds)
+	{
+		// Java parity: PlayerRegisteredItemsDAO.store discards deleted decor rows from the live registry after saving.
+		var deletedIds = deletedDecorationObjectIds.ToHashSet();
+		var decorations = Decorations
+			.Where(decor => !deletedIds.Contains(decor.ObjectId))
+			.ToList();
+		foreach (var updatedDecoration in updatedDecorations)
+		{
+			var index = decorations.FindIndex(decor => decor.ObjectId == updatedDecoration.ObjectId);
+			if (index >= 0)
+				decorations[index] = updatedDecoration;
+			else
+				decorations.Add(updatedDecoration);
+		}
+
+		return this with
+		{
+			Decorations = decorations.ToArray(),
+			HasInvalidDecorations = decorations.Any(decor => decor.IsDeleted),
+		};
+	}
+
 	public HouseRegistrySummary WithoutObject(int objectId)
 	{
 		// Java parity: model/house/HouseRegistry.discardObject removes deleted objects after PlayerRegisteredItemsDAO.store.

@@ -83,4 +83,57 @@ public sealed class PlayerHouseTests
 		Assert.Equal(2, registry.Decorations.Count(decor => decor.IsDeleted));
 		Assert.DoesNotContain(registry.WithoutObject(9002).Objects, obj => obj.ObjectId == 9002);
 	}
+
+	[Fact]
+	public void HousingTemplateTable_ResolvesUsedDecorationPacketLines()
+	{
+		var housingTemplates = new HousingTemplateTable(
+			Array.Empty<HousingAddressSummary>(),
+			[
+				new HousingBuildingSummary(
+					353000,
+					"HOUSE",
+					1,
+					DefaultDecorIds: [3500000, 3501000, 3502000, 3503000, 3505000, 3506000, 3504000, 3504000, 3504000, 3504000, 3504000, 3504000, 3507000, 3507000, 3507000, 3507000, 3507000, 3507000, 3508000]),
+			],
+			[
+				new HousingPartSummary(3524000, "INWALL_ANY", new HashSet<string>(["CP_C"], StringComparer.OrdinalIgnoreCase)),
+				new HousingPartSummary(3527000, "INFLOOR_ANY", new HashSet<string>(["CP_C"], StringComparer.OrdinalIgnoreCase)),
+			]);
+		var registry = new HouseRegistrySummary(
+			Array.Empty<RegisteredHouseObjectSummary>(),
+			[
+				new RegisteredHouseDecorationSummary(9101, 3524000, 1),
+				new RegisteredHouseDecorationSummary(9102, 3527000, 5),
+			]);
+
+		Assert.True(HousingTemplateTable.TryGetDecorLine(9, out var partType, out var room));
+		Assert.Equal("INWALL_ANY", partType);
+		Assert.Equal(1, room);
+		Assert.True(HousingTemplateTable.TryGetDecorPacketIndex("INFLOOR_ANY", 5, out var floorIndex));
+		Assert.Equal(17, floorIndex);
+		var decorIds = housingTemplates.GetDecorIds(353000, registry);
+
+		Assert.Equal(3524000, decorIds[7]);
+		Assert.Equal(3527000, decorIds[17]);
+		Assert.Equal(3504000, decorIds[6]);
+	}
+
+	[Fact]
+	public void HouseRegistrySummary_AppliesDecorationMutation()
+	{
+		var registry = new HouseRegistrySummary(
+			Array.Empty<RegisteredHouseObjectSummary>(),
+			[
+				new RegisteredHouseDecorationSummary(9101, 3524000, -1),
+				new RegisteredHouseDecorationSummary(9102, 3504000, 2),
+			]);
+
+		var updated = registry.WithDecorationMutation(
+			[new RegisteredHouseDecorationSummary(9101, 3524000, 2)],
+			[9102]);
+
+		Assert.Equal(2, updated.GetDecoration(9101)?.Room);
+		Assert.Null(updated.GetDecoration(9102));
+	}
 }

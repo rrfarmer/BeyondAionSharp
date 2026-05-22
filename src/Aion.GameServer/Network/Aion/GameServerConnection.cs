@@ -406,6 +406,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleHouseSettingsAsync(_activePlayer, houseSettings);
 				break;
+			case CmHouseDecorate houseDecorate:
+				if (_activePlayer != null)
+					await HandleHouseDecorateAsync(_activePlayer, houseDecorate);
+				break;
 			case CmHouseEdit houseEdit:
 				if (_activePlayer != null)
 					await HandleHouseEditAsync(_activePlayer, houseEdit);
@@ -6233,6 +6237,81 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 	}
 
+	private async Task HandleHouseDecorateAsync(Player player, CmHouseDecorate packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_HOUSE_DECORATE applies registered decor or reverts a part line to default.
+		var activeHouse = GetActiveHouse(player);
+		var housingTemplates = _runtimeContext?.DataManager?.StaticData.HousingTemplates;
+		if (activeHouse == null || housingTemplates == null)
+			return;
+
+		if (!HousingTemplateTable.TryGetDecorLine(packet.LineNumber, out var packetPartType, out var room))
+			return;
+
+		var registry = await LoadHouseRegistryAsync(player, activeHouse);
+		var updatedDecorations = new List<RegisteredHouseDecorationSummary>();
+		var deletedDecorationIds = new HashSet<int>();
+		if (packet.ObjectId == 0)
+		{
+			CollectAppliedDecorDeletes(registry, housingTemplates, packetPartType, room, deletedDecorationIds);
+		}
+		else
+		{
+			var decoration = registry.GetDecoration(packet.ObjectId);
+			if (decoration == null || decoration.IsDeleted)
+				return;
+
+			var part = housingTemplates.GetPart(decoration.TemplateId);
+			if (part == null)
+				return;
+
+			if (decoration.Room != room)
+			{
+				CollectAppliedDecorDeletes(registry, housingTemplates, part.Type, room, deletedDecorationIds, decoration.ObjectId);
+				var defaultDecorId = housingTemplates.GetDefaultDecorId(activeHouse.BuildingId, part.Type);
+				if (defaultDecorId == decoration.TemplateId)
+					deletedDecorationIds.Add(decoration.ObjectId);
+				else
+					updatedDecorations.Add(decoration with { Room = room });
+			}
+		}
+
+		if (!await _housingRepository.SaveHouseDecorationMutationAsync(
+			player.ObjectId,
+			updatedDecorations,
+			deletedDecorationIds.ToArray()))
+		{
+			return;
+		}
+
+		var updatedRegistry = registry.WithDecorationMutation(updatedDecorations, deletedDecorationIds.ToArray());
+		UpdateHouseRegistry(player, activeHouse, updatedRegistry);
+		var updatedHouse = player.Houses.First(house => house.ObjectId == activeHouse.ObjectId);
+		if (packet.ObjectId != 0)
+			await SendPacketAsync(new SmHouseEdit(CmHouseEdit.DeleteItem, 2, packet.ObjectId));
+		await SendPacketAsync(new SmHouseEdit(CmHouseEdit.DeleteItem, 2, packet.ObjectId));
+		await BroadcastHouseAppearanceAsync(player, updatedHouse);
+	}
+
+	private static void CollectAppliedDecorDeletes(
+		HouseRegistrySummary registry,
+		HousingTemplateTable housingTemplates,
+		string partType,
+		int room,
+		ISet<int> deletedDecorationIds,
+		int excludedObjectId = 0)
+	{
+		foreach (var decoration in registry.Decorations)
+		{
+			if (decoration.ObjectId == excludedObjectId || decoration.IsDeleted || decoration.Room != room)
+				continue;
+
+			var part = housingTemplates.GetPart(decoration.TemplateId);
+			if (part != null && string.Equals(part.Type, partType, StringComparison.OrdinalIgnoreCase))
+				deletedDecorationIds.Add(decoration.ObjectId);
+		}
+	}
+
 	private async Task HandleHouseEditAsync(Player player, CmHouseEdit packet)
 	{
 		// Java parity: network/aion/clientpackets/CM_HOUSE_EDIT mode entry/exit branches.
@@ -6431,6 +6510,24 @@ public sealed class GameServerConnection : BaseClientConnection
 			.ToArray();
 		if (staticData != null)
 			AddOrUpdateWorldHouse(player, player.Houses.First(house => house.ObjectId == activeHouse.ObjectId), staticData.HousingTemplates);
+	}
+
+	private async Task BroadcastHouseAppearanceAsync(Player player, PlayerHouse house)
+	{
+		var housingTemplates = _runtimeContext?.DataManager?.StaticData.HousingTemplates;
+		var worldHouse = AddOrUpdateWorldHouse(player, house, housingTemplates);
+		var houseUpdate = worldHouse != null
+			? new SmHouseUpdate(worldHouse, housingTemplates)
+			: new SmHouseUpdate(player, house, housingTemplates);
+		if (_connectionRegistry != null)
+		{
+			if (worldHouse != null)
+				await _connectionRegistry.BroadcastHouseUpdateAsync(worldHouse, housingTemplates);
+			else
+				await _connectionRegistry.BroadcastToVisiblePlayersAsync(player.Position, player.ObjectId, houseUpdate, includeSourcePlayer: true);
+		}
+		else
+			await SendPacketAsync(houseUpdate);
 	}
 
 	private static int ConvertAngleToHeading(int angle)
