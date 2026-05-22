@@ -6586,10 +6586,6 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (targeting == NpcDialogTargetingResult.Valid)
 			return true;
 
-		// TODO Phase 6: remove this compatibility fallback once ordinary NPC spawn data is loaded into World.
-		if (targeting == NpcDialogTargetingResult.UnknownTarget && brokerObjectId > 0 && player.TargetObjectId == brokerObjectId)
-			return true;
-
 		_logger.LogWarning(
 			"Player {PlayerObjectId} tried to {Action} without targeting broker {BrokerObjectId}; current target is {TargetObjectId}, validation result {ValidationResult}",
 			player.ObjectId,
