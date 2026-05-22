@@ -109,6 +109,14 @@ public interface IPlayerEnterWorldRepository
 		int? deletedSourceItemObjectId,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveItemRemodelMutationAsync(
+		int playerObjectId,
+		InventoryItem targetItemUpdate,
+		InventoryItem kinahItemUpdate,
+		InventoryItem? extractItemUpdate,
+		int? deletedExtractItemObjectId,
+		CancellationToken cancellationToken = default);
+
 	Task<IReadOnlyList<PlayerMacro>> LoadPlayerMacrosAsync(int playerObjectId, CancellationToken cancellationToken = default);
 
 	Task<bool> SavePlayerMacroAsync(int playerObjectId, PlayerMacro macro, CancellationToken cancellationToken = default);
@@ -398,6 +406,17 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		IReadOnlyList<InventoryItem> addedItems,
 		InventoryItem? sourceItemUpdate,
 		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> SaveItemRemodelMutationAsync(
+		int playerObjectId,
+		InventoryItem targetItemUpdate,
+		InventoryItem kinahItemUpdate,
+		InventoryItem? extractItemUpdate,
+		int? deletedExtractItemObjectId,
 		CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(true);
@@ -1542,6 +1561,33 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		command.Parameters.AddRange(
 			new[]
 			{
+				new MySqlParameter { Value = item.Color.HasValue ? item.Color.Value : DBNull.Value },
+				new MySqlParameter { Value = item.ColorExpires },
+				new MySqlParameter { Value = item.ObjectId },
+				new MySqlParameter { Value = playerObjectId },
+			});
+		return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+	}
+
+	private static async Task<bool> SaveInventoryItemRemodelStateAsync(
+		MySqlConnection connection,
+		MySqlTransaction transaction,
+		int playerObjectId,
+		InventoryItem item,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: ItemRemodelService.remodelItem marks item_skin and transferred item_color dirty.
+		await using var command = connection.CreateCommand();
+		command.Transaction = transaction;
+		command.CommandText = """
+			UPDATE inventory
+			SET item_skin = ?, item_color = ?, color_expires = ?
+			WHERE item_unique_id = ? AND item_owner = ?
+			""";
+		command.Parameters.AddRange(
+			new[]
+			{
+				new MySqlParameter { Value = item.ItemSkin },
 				new MySqlParameter { Value = item.Color.HasValue ? item.Color.Value : DBNull.Value },
 				new MySqlParameter { Value = item.ColorExpires },
 				new MySqlParameter { Value = item.ObjectId },
@@ -2768,6 +2814,44 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not save decompose action for player {PlayerObjectId}", playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SaveItemRemodelMutationAsync(
+		int playerObjectId,
+		InventoryItem targetItemUpdate,
+		InventoryItem kinahItemUpdate,
+		InventoryItem? extractItemUpdate,
+		int? deletedExtractItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: ItemRemodelService.remodelItem target skin/color update, Kinah payment, and extract consumption.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			if (!await SaveInventoryItemRemodelStateAsync(connection, transaction, playerObjectId, targetItemUpdate, cancellationToken))
+				return false;
+
+			if (!await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, kinahItemUpdate, cancellationToken))
+				return false;
+
+			if (extractItemUpdate != null && !await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, extractItemUpdate, cancellationToken))
+				return false;
+
+			if (deletedExtractItemObjectId.HasValue
+				&& !await DeleteInventoryItemAsync(connection, transaction, playerObjectId, deletedExtractItemObjectId.Value, cancellationToken))
+				return false;
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save item remodel mutation for player {PlayerObjectId}", playerObjectId);
 			return false;
 		}
 	}

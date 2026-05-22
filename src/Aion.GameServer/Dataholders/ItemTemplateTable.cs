@@ -207,6 +207,8 @@ public sealed record ItemTemplateSummary(
 
 	public bool IsTradeable => (Mask & (1 << 1)) == (1 << 1);
 
+	public bool IsRemodelable => (Mask & (1 << 12)) == (1 << 12);
+
 	public bool IsSoulBound => (Mask & SoulBoundMask) == SoulBoundMask;
 
 	public bool IsNoEnchant => (Mask & NoEnchantMask) == NoEnchantMask;

@@ -636,6 +636,14 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.DecomposeItemFailed("item"), 1300448, "item");
 		AssertSystemMessage(SmSystemMessage.DecomposeItemSucceed("item"), 1300449, "item");
 		AssertSystemMessage(SmSystemMessage.DecomposeItemCanceled("item"), 1300450, "item");
+		AssertSystemMessage(SmSystemMessage.ChangeItemSkinPcLevelLimit(), 1300476);
+		AssertSystemMessage(SmSystemMessage.ChangeItemSkinNotSkinChangeable("item"), 1300478, "item");
+		AssertSystemMessage(SmSystemMessage.ChangeItemSkinNotCompatible("keep", "skin"), 1300480, "keep", "skin");
+		AssertSystemMessage(SmSystemMessage.ChangeItemSkinNotEnoughGold("item"), 1300481, "item");
+		AssertSystemMessage(SmSystemMessage.ChangeItemSkinCannotRemoveSkinItem("item"), 1300482, "item");
+		AssertSystemMessage(SmSystemMessage.ChangeItemSkinSucceed("item"), 1300483, "item");
+		AssertSystemMessage(SmSystemMessage.ChangeItemSkinInvalidItem(), 1400089);
+		AssertSystemMessage(SmSystemMessage.CantChangeSkinOppositeRequirement("keep", "skin"), 1400290, "keep", "skin");
 		AssertSystemMessage(SmSystemMessage.CannotUseItemInvalidRank(PlayerAbyssRank.GetRankL10n("ELYOS", 5)), 1300370, PlayerAbyssRank.GetRankL10n("ELYOS", 5));
 		AssertSystemMessage(SmSystemMessage.CannotUseItemInvalidClass(), 1300371);
 		AssertSystemMessage(SmSystemMessage.CannotUseItemTooLowLevel("item", 10), 1300372, "10", "item");

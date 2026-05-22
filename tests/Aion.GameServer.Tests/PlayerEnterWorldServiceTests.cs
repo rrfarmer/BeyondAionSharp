@@ -467,6 +467,16 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public int? DecomposeDeletedSourceItemObjectId { get; private set; }
 
+		public int SaveItemRemodelMutationCalls { get; private set; }
+
+		public InventoryItem? RemodelTargetItemUpdate { get; private set; }
+
+		public InventoryItem? RemodelKinahItemUpdate { get; private set; }
+
+		public InventoryItem? RemodelExtractItemUpdate { get; private set; }
+
+		public int? RemodelDeletedExtractItemObjectId { get; private set; }
+
 		public int SaveItemChargeMutationCalls { get; private set; }
 
 		public InventoryItem? ChargedItem { get; private set; }
@@ -739,6 +749,22 @@ public sealed class PlayerEnterWorldServiceTests
 			DecomposeAddedItems = addedItems;
 			DecomposeSourceItemUpdate = sourceItemUpdate;
 			DecomposeDeletedSourceItemObjectId = deletedSourceItemObjectId;
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> SaveItemRemodelMutationAsync(
+			int playerObjectId,
+			InventoryItem targetItemUpdate,
+			InventoryItem kinahItemUpdate,
+			InventoryItem? extractItemUpdate,
+			int? deletedExtractItemObjectId,
+			CancellationToken cancellationToken = default)
+		{
+			SaveItemRemodelMutationCalls++;
+			RemodelTargetItemUpdate = targetItemUpdate;
+			RemodelKinahItemUpdate = kinahItemUpdate;
+			RemodelExtractItemUpdate = extractItemUpdate;
+			RemodelDeletedExtractItemObjectId = deletedExtractItemObjectId;
 			return Task.FromResult(true);
 		}
 

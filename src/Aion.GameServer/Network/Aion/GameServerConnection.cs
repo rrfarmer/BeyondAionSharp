@@ -434,8 +434,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleManastoneAsync(_activePlayer, manastone);
 				break;
-			case CmItemRemodel:
-				// Java parity: network/aion/clientpackets/CM_ITEM_REMODEL parser is wired; ItemRemodelService runtime is a later Phase 6 slice.
+			case CmItemRemodel itemRemodel:
+				if (_activePlayer != null)
+					await HandleItemRemodelAsync(_activePlayer, itemRemodel);
 				break;
 			case CmDialogSelect dialogSelect:
 				if (_activePlayer != null)
@@ -2450,6 +2451,103 @@ public sealed class GameServerConnection : BaseClientConnection
 			await _connectionRegistry.BroadcastToVisiblePlayersAsync(player.Position, player.ObjectId, playerInfo, includeSourcePlayer: true);
 		else
 			await SendPacketAsync(playerInfo);
+	}
+
+	private async Task HandleItemRemodelAsync(Player player, CmItemRemodel packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_ITEM_REMODEL.runImpl -> ItemRemodelService.remodelItem.
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		if (staticData == null)
+			return;
+
+		var itemTemplates = staticData.ItemTemplates;
+		var inventoryItems = player.InventoryItems.ToList();
+		var keepItem = inventoryItems.FirstOrDefault(item => item.ObjectId == packet.KeepItemObjectId && item.Location == CubeStorageId && !item.IsEquipped);
+		var extractItem = inventoryItems.FirstOrDefault(item => item.ObjectId == packet.ExtractItemObjectId && item.Location == CubeStorageId && !item.IsEquipped);
+		if (keepItem == null || extractItem == null)
+			return;
+
+		var keepTemplate = itemTemplates.GetItemTemplate(keepItem.ItemId);
+		var extractTemplate = itemTemplates.GetItemTemplate(extractItem.ItemId);
+		var extractSkinTemplate = itemTemplates.GetItemTemplate(extractItem.ItemSkin == 0 ? extractItem.ItemId : extractItem.ItemSkin);
+		var kinahItem = inventoryItems.FirstOrDefault(item => item.ItemId == KinahItemId && item.Location == CubeStorageId);
+		var kinahTemplate = itemTemplates.GetItemTemplate(KinahItemId);
+		if (keepTemplate == null || extractTemplate == null || extractSkinTemplate == null || kinahTemplate == null)
+			return;
+
+		var playerLevel = Math.Max(1, staticData.PlayerExperienceTable.GetLevelForExp(player.Exp));
+		var plan = ItemRemodelService.CreateRemodelPlan(
+			player,
+			keepItem,
+			keepTemplate,
+			extractItem,
+			extractTemplate,
+			extractSkinTemplate,
+			kinahItem,
+			playerLevel);
+		if (!plan.Succeeded)
+		{
+			await SendItemRemodelFailureAsync(plan);
+			return;
+		}
+
+		var saved = _playerEnterWorldService == null
+			|| await _playerEnterWorldService.SaveItemRemodelMutationAsync(
+				player,
+				plan.TargetItemUpdate!,
+				plan.KinahItemUpdate!,
+				plan.ExtractItemUpdate,
+				plan.DeletedExtractItemObjectId);
+		if (!saved)
+			return;
+
+		ReplaceInventoryItem(inventoryItems, plan.TargetItemUpdate!);
+		ReplaceInventoryItem(inventoryItems, plan.KinahItemUpdate!);
+		await SendPacketAsync(new SmInventoryUpdateItem(plan.KinahItemUpdate!, kinahTemplate, SmInventoryUpdateItem.DecreaseKinahBuy));
+		if (plan.DeletedExtractItemObjectId.HasValue)
+		{
+			inventoryItems.RemoveAll(item => item.ObjectId == plan.DeletedExtractItemObjectId.Value);
+			await SendPacketAsync(new SmDeleteItem(plan.DeletedExtractItemObjectId.Value, SmDeleteItem.UseDeleteType));
+		}
+		else if (plan.ExtractItemUpdate != null)
+		{
+			ReplaceInventoryItem(inventoryItems, plan.ExtractItemUpdate);
+			await SendPacketAsync(new SmInventoryUpdateItem(plan.ExtractItemUpdate, extractTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+		}
+
+		player.InventoryItems = inventoryItems.ToArray();
+		await SendPacketAsync(new SmInventoryUpdateItem(plan.TargetItemUpdate!, keepTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+		await SendPacketAsync(SmSystemMessage.ChangeItemSkinSucceed(keepTemplate.GetClientName() ?? keepTemplate.Name));
+	}
+
+	private async Task SendItemRemodelFailureAsync(ItemRemodelPlan plan)
+	{
+		var itemName = plan.FailureItem?.GetClientName() ?? plan.FailureItem?.Name ?? string.Empty;
+		var otherItemName = plan.FailureOtherItem?.GetClientName() ?? plan.FailureOtherItem?.Name ?? string.Empty;
+		switch (plan.Failure)
+		{
+			case ItemRemodelFailure.LevelLimit:
+				await SendPacketAsync(SmSystemMessage.ChangeItemSkinPcLevelLimit());
+				break;
+			case ItemRemodelFailure.OppositeRequirement:
+				await SendPacketAsync(SmSystemMessage.CantChangeSkinOppositeRequirement(itemName, otherItemName));
+				break;
+			case ItemRemodelFailure.NotEnoughKinah:
+				await SendPacketAsync(SmSystemMessage.ChangeItemSkinNotEnoughGold(itemName));
+				break;
+			case ItemRemodelFailure.NotSkinnedItem:
+				await SendPacketAsync(new SmMessage("That item does not have a remodeled skin to remove."));
+				break;
+			case ItemRemodelFailure.NotCompatible:
+				await SendPacketAsync(SmSystemMessage.ChangeItemSkinNotCompatible(itemName, otherItemName));
+				break;
+			case ItemRemodelFailure.NotSkinChangeable:
+				await SendPacketAsync(SmSystemMessage.ChangeItemSkinNotSkinChangeable(itemName));
+				break;
+			case ItemRemodelFailure.CannotRemoveSkinItem:
+				await SendPacketAsync(SmSystemMessage.ChangeItemSkinCannotRemoveSkinItem(itemName));
+				break;
+		}
 	}
 
 	private async Task SendCosmeticItemFailureAsync(CosmeticItemFailure failure)
@@ -6101,6 +6199,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		bool? isEquipped = null,
 		int? packCount = null,
 		int? charge = null,
+		int? itemSkin = null,
 		int? color = null,
 		bool setColor = false,
 		int? colorExpires = null)
@@ -6122,7 +6221,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			Location = location ?? item.Location,
 			Enchant = item.Enchant,
 			EnchantBonus = item.EnchantBonus,
-			ItemSkin = item.ItemSkin,
+			ItemSkin = itemSkin ?? item.ItemSkin,
 			FusionedItem = item.FusionedItem,
 			OptionalSocket = item.OptionalSocket,
 			OptionalFusionSocket = item.OptionalFusionSocket,

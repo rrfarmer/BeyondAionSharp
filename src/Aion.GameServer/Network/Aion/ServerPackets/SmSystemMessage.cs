@@ -331,6 +331,54 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300450, itemName);
 	}
 
+	public static SmSystemMessage ChangeItemSkinPcLevelLimit()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_CHANGE_ITEM_SKIN_PC_LEVEL_LIMIT.
+		return new SmSystemMessage(1300476);
+	}
+
+	public static SmSystemMessage ChangeItemSkinNotSkinChangeable(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_CHANGE_ITEM_SKIN_NOT_SKIN_CHANGABLE_ITEM.
+		return new SmSystemMessage(1300478, itemName);
+	}
+
+	public static SmSystemMessage ChangeItemSkinNotCompatible(string keepItemName, string extractItemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_CHANGE_ITEM_SKIN_NOT_COMPATIBLE.
+		return new SmSystemMessage(1300480, keepItemName, extractItemName);
+	}
+
+	public static SmSystemMessage ChangeItemSkinNotEnoughGold(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_CHANGE_ITEM_SKIN_NOT_ENOUGH_GOLD.
+		return new SmSystemMessage(1300481, itemName);
+	}
+
+	public static SmSystemMessage ChangeItemSkinCannotRemoveSkinItem(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_CHANGE_ITEM_SKIN_CAN_NOT_REMOVE_SKIN_ITEM.
+		return new SmSystemMessage(1300482, itemName);
+	}
+
+	public static SmSystemMessage ChangeItemSkinSucceed(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_CHANGE_ITEM_SKIN_SUCCEED.
+		return new SmSystemMessage(1300483, itemName);
+	}
+
+	public static SmSystemMessage ChangeItemSkinInvalidItem()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_CHANGE_ITEM_SKIN_CANNOT_INVALID_ITEM.
+		return new SmSystemMessage(1400089);
+	}
+
+	public static SmSystemMessage CantChangeSkinOppositeRequirement(string keepItemName, string extractItemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_CANT_CHANGE_SKIN_OPPOSITE_REQUIREMENT.
+		return new SmSystemMessage(1400290, keepItemName, extractItemName);
+	}
+
 	public static SmSystemMessage CannotUseItemInvalidRank(string rankName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_CANNOT_USE_ITEM_INVALID_RANK.

@@ -308,6 +308,24 @@ public sealed class PlayerEnterWorldService
 			cancellationToken);
 	}
 
+	public Task<bool> SaveItemRemodelMutationAsync(
+		Player player,
+		InventoryItem targetItemUpdate,
+		InventoryItem kinahItemUpdate,
+		InventoryItem? extractItemUpdate,
+		int? deletedExtractItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: services/item/ItemRemodelService.remodelItem inventory side effects.
+		return _repository.SaveItemRemodelMutationAsync(
+			player.ObjectId,
+			targetItemUpdate,
+			kinahItemUpdate,
+			extractItemUpdate,
+			deletedExtractItemObjectId,
+			cancellationToken);
+	}
+
 	public Task<bool> SaveItemChargeMutationAsync(
 		Player player,
 		InventoryItem chargedItem,
