@@ -3540,6 +3540,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (player.IsInState(PlayerCreatureState.Chair))
 					player.ReplaceCreatureState(PlayerCreatureState.Active);
 				break;
+			case EmotionType.LandFlyTeleport:
+				player.CompleteFlyTeleport();
+				break;
 			case EmotionType.Fly:
 				// Java parity: controllers/FlyController.startFly state side effects; zone/fly-time checks remain future controller work.
 				player.SetCreatureState(PlayerCreatureState.Flying, enabled: true);
@@ -3612,6 +3615,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			or EmotionType.Stand
 			or EmotionType.ChairSit
 			or EmotionType.ChairUp
+			or EmotionType.LandFlyTeleport
 			or EmotionType.Fly
 			or EmotionType.Land
 			or EmotionType.AttackModeInMove

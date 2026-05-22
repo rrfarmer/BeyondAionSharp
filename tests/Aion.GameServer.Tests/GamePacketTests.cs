@@ -3357,6 +3357,8 @@ public class GamePacketTests
 			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(0)), GameConnectionState.InGame));
 		var jump = Assert.IsType<CmEmotion>(
 			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(1)), GameConnectionState.InGame));
+		var landFlyTeleport = Assert.IsType<CmEmotion>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(7)), GameConnectionState.InGame));
 		var fly = Assert.IsType<CmEmotion>(
 			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(13)), GameConnectionState.InGame));
 		var land = Assert.IsType<CmEmotion>(
@@ -3394,6 +3396,7 @@ public class GamePacketTests
 
 		Assert.Equal(EmotionType.SelectTarget, selectTarget.EmotionType);
 		Assert.Equal(EmotionType.Jump, jump.EmotionType);
+		Assert.Equal(EmotionType.LandFlyTeleport, landFlyTeleport.EmotionType);
 		Assert.Equal(EmotionType.Fly, fly.EmotionType);
 		Assert.Equal(EmotionType.Land, land.EmotionType);
 		Assert.Equal(EmotionType.PowershardOn, powershardOn.EmotionType);

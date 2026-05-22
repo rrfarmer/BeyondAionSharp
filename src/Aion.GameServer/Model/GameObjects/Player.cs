@@ -94,6 +94,9 @@ public sealed class Player
 	// Java parity: model/gameobjects/player/Player.isInSprintMode toggled by CM_EMOTION START_SPRINT/END_SPRINT.
 	public bool IsInSprintMode { get; set; }
 
+	// Java parity: model/gameobjects/player/Player.flightPath stores active transporter/windstream mode.
+	public PlayerFlightPathType? FlightPathType { get; set; }
+
 	// Java parity: PlayerLifeStats.triggerFpReduce/triggerFpRestore task intent; timer execution is a later Phase 6 slice.
 	public bool IsFpReduceActive { get; set; }
 
@@ -243,6 +246,31 @@ public sealed class Player
 	{
 		// Java parity: model/gameobjects/player/Player.isFlying, represented by current C# flying/gliding creature-state bits.
 		return IsInState(PlayerCreatureState.Flying) || IsInState(PlayerCreatureState.Gliding);
+	}
+
+	public bool IsUsingFlightPath(PlayerFlightPathType type)
+	{
+		// Java parity: model/gameobjects/player/Player.isUsingFlightPath.
+		return FlightPathType == type && IsInState(PlayerCreatureState.Flying);
+	}
+
+	public void CompleteFlyTeleport()
+	{
+		// Java parity: controllers/PlayerController.onFlyTeleportEnd.
+		if (IsUsingFlightPath(PlayerFlightPathType.Windstream))
+		{
+			SetCreatureState(PlayerCreatureState.Flying, enabled: false);
+			SetCreatureState(PlayerCreatureState.Active, enabled: true);
+			SetCreatureState(PlayerCreatureState.Gliding, enabled: true);
+			TriggerFpReduce();
+		}
+		else
+		{
+			SetCreatureState(PlayerCreatureState.Flying, enabled: false);
+			SetCreatureState(PlayerCreatureState.Active, enabled: true);
+		}
+
+		FlightPathType = null;
 	}
 
 	public bool CanStartRideSprint()

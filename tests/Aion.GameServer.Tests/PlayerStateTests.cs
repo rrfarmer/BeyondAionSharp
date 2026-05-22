@@ -126,4 +126,36 @@ public sealed class PlayerStateTests
 		Assert.False(player.RideInfo.CanSprint());
 		Assert.False(player.CanStartRideSprint());
 	}
+
+	[Fact]
+	public void Player_CompleteFlyTeleportMatchesJavaWindstreamAndTransporterState()
+	{
+		var windstreamPlayer = new Player
+		{
+			CreatureState = PlayerCreatureState.Flying,
+			FlightPathType = PlayerFlightPathType.Windstream,
+		};
+
+		windstreamPlayer.CompleteFlyTeleport();
+
+		Assert.False(windstreamPlayer.IsInState(PlayerCreatureState.Flying));
+		Assert.True(windstreamPlayer.IsInState(PlayerCreatureState.Active));
+		Assert.True(windstreamPlayer.IsInState(PlayerCreatureState.Gliding));
+		Assert.True(windstreamPlayer.IsFpReduceActive);
+		Assert.Null(windstreamPlayer.FlightPathType);
+
+		var transporterPlayer = new Player
+		{
+			CreatureState = PlayerCreatureState.Flying,
+			FlightPathType = PlayerFlightPathType.FlightTransporter,
+		};
+
+		transporterPlayer.CompleteFlyTeleport();
+
+		Assert.False(transporterPlayer.IsInState(PlayerCreatureState.Flying));
+		Assert.True(transporterPlayer.IsInState(PlayerCreatureState.Active));
+		Assert.False(transporterPlayer.IsInState(PlayerCreatureState.Gliding));
+		Assert.False(transporterPlayer.IsFpReduceActive);
+		Assert.Null(transporterPlayer.FlightPathType);
+	}
 }
