@@ -260,6 +260,63 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.Equal([12], repository.PowerShardDeletedItemObjectIds);
 	}
 
+	[Fact]
+	public async Task SaveIdianPolishBurnMutation_PersistsOnlyExhaustedBurnDeletes()
+	{
+		var player = CreatePlayer();
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var service = CreateService(repository, CreateWorld());
+		var lowChargeUpdate = new InventoryItem
+		{
+			ObjectId = 20,
+			ItemId = 100000094,
+			IdianStone = new PlayerIdianStone(166050001, 1, 250_000),
+		};
+		var exhaustedUpdate = new InventoryItem
+		{
+			ObjectId = 21,
+			ItemId = 100000095,
+			IdianStone = null,
+		};
+		var plan = new IdianPolishBurnPlan(
+			Changed: true,
+			InventoryItems: [lowChargeUpdate, exhaustedUpdate],
+			Burns:
+			[
+				new IdianPolishBurnResult(lowChargeUpdate, IdianPolishBurnUpdateKind.LowCharge, 100_000),
+				new IdianPolishBurnResult(exhaustedUpdate, IdianPolishBurnUpdateKind.Exhausted, 250_000),
+			]);
+
+		var saved = await service.SaveIdianPolishBurnMutationAsync(player, plan);
+
+		Assert.True(saved);
+		Assert.Equal(1, repository.SaveIdianPolishBurnMutationCalls);
+		Assert.Equal([21], repository.IdianPolishBurnItemUpdates.Select(item => item.ObjectId));
+	}
+
+	[Fact]
+	public async Task SaveIdianPolishBurnMutation_SkipsRepositoryWhenNothingExhausted()
+	{
+		var player = CreatePlayer();
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var service = CreateService(repository, CreateWorld());
+		var lowChargeUpdate = new InventoryItem
+		{
+			ObjectId = 20,
+			ItemId = 100000094,
+			IdianStone = new PlayerIdianStone(166050001, 1, 250_000),
+		};
+		var plan = new IdianPolishBurnPlan(
+			Changed: true,
+			InventoryItems: [lowChargeUpdate],
+			Burns: [new IdianPolishBurnResult(lowChargeUpdate, IdianPolishBurnUpdateKind.LowCharge, 100_000)]);
+
+		var saved = await service.SaveIdianPolishBurnMutationAsync(player, plan);
+
+		Assert.True(saved);
+		Assert.Equal(0, repository.SaveIdianPolishBurnMutationCalls);
+	}
+
 	private static PlayerEnterWorldService CreateService(CapturingEnterWorldRepository repository, GameWorld world)
 	{
 		return new PlayerEnterWorldService(
@@ -571,6 +628,10 @@ public sealed class PlayerEnterWorldServiceTests
 		public InventoryItem? IdianPolishSourceItemUpdate { get; private set; }
 
 		public int? IdianPolishDeletedSourceItemObjectId { get; private set; }
+
+		public int SaveIdianPolishBurnMutationCalls { get; private set; }
+
+		public IReadOnlyList<InventoryItem> IdianPolishBurnItemUpdates { get; private set; } = Array.Empty<InventoryItem>();
 
 		public int SaveItemChargeActionMutationCalls { get; private set; }
 
@@ -1040,6 +1101,16 @@ public sealed class PlayerEnterWorldServiceTests
 			IdianPolishTargetItem = targetItem;
 			IdianPolishSourceItemUpdate = sourceItemUpdate;
 			IdianPolishDeletedSourceItemObjectId = deletedSourceItemObjectId;
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> SaveIdianPolishBurnMutationAsync(
+			int playerObjectId,
+			IReadOnlyList<InventoryItem> exhaustedItemUpdates,
+			CancellationToken cancellationToken = default)
+		{
+			SaveIdianPolishBurnMutationCalls++;
+			IdianPolishBurnItemUpdates = exhaustedItemUpdates;
 			return Task.FromResult(true);
 		}
 

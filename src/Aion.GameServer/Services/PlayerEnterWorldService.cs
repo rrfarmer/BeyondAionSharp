@@ -457,6 +457,21 @@ public sealed class PlayerEnterWorldService
 			cancellationToken);
 	}
 
+	public Task<bool> SaveIdianPolishBurnMutationAsync(
+		Player player,
+		IdianPolishBurnPlan plan,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: model/items/IdianStone.decreasePolishCharge only persists ItemStoneListDAO deletion when charge reaches zero.
+		var exhaustedItemUpdates = plan.Burns
+			.Where(burn => burn.UpdateKind == IdianPolishBurnUpdateKind.Exhausted)
+			.Select(burn => burn.ItemUpdate)
+			.ToArray();
+		return exhaustedItemUpdates.Length == 0
+			? Task.FromResult(true)
+			: _repository.SaveIdianPolishBurnMutationAsync(player.ObjectId, exhaustedItemUpdates, cancellationToken);
+	}
+
 	public Task<bool> SaveItemChargeActionMutationAsync(
 		Player player,
 		IReadOnlyList<InventoryItem> chargedItems,

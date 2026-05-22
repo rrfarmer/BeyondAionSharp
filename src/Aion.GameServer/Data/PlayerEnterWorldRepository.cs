@@ -197,6 +197,11 @@ public interface IPlayerEnterWorldRepository
 		int? deletedSourceItemObjectId,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveIdianPolishBurnMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<InventoryItem> exhaustedItemUpdates,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SaveItemChargeActionMutationAsync(
 		int playerObjectId,
 		IReadOnlyList<InventoryItem> chargedItems,
@@ -602,6 +607,14 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		InventoryItem? targetItem,
 		InventoryItem? sourceItemUpdate,
 		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> SaveIdianPolishBurnMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<InventoryItem> exhaustedItemUpdates,
 		CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(true);
@@ -1034,6 +1047,39 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not save idian polish mutation for player {PlayerObjectId}", playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SaveIdianPolishBurnMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<InventoryItem> exhaustedItemUpdates,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: model/items/IdianStone.decreasePolishCharge stores only exhausted idian deletions immediately.
+		if (exhaustedItemUpdates.Count == 0)
+			return true;
+
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			foreach (var item in exhaustedItemUpdates)
+			{
+				if (!await InventoryItemExistsAsync(connection, transaction, playerObjectId, item.ObjectId, cancellationToken))
+					return false;
+
+				await SaveIdianStoneAsync(connection, transaction, item, cancellationToken);
+			}
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save idian polish burn mutation for player {PlayerObjectId}", playerObjectId);
 			return false;
 		}
 	}
