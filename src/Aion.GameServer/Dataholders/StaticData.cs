@@ -559,6 +559,13 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 4 && reader.LocalName == "ride" && currentItemTemplate != null)
+			{
+				// Java parity: model/templates/item/actions/RideAction.npcId.
+				currentItemTemplate.RideNpcId = ReadIntAttribute(reader, "npc_id");
+				continue;
+			}
+
 			if (reader.Depth == 3 && reader.LocalName == "improve" && currentItemTemplate != null)
 			{
 				currentItemTemplate.Improvement = new ItemImprovement(
@@ -1409,6 +1416,8 @@ public sealed class StaticData
 
 		public ItemEnchantActionInfo? EnchantAction { get; set; }
 
+		public int RideNpcId { get; set; }
+
 		public int RecommendRank { get; set; }
 
 		public string GenderPermitted { get; set; } = string.Empty;
@@ -1491,7 +1500,8 @@ public sealed class StaticData
 				ExceedEnchantSkill,
 				EnchantAction,
 				UseDelayId,
-				UseDelayMillis);
+				UseDelayMillis,
+				RideNpcId);
 		}
 
 		private static int CalculateMaxTuneCount(

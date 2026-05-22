@@ -81,7 +81,8 @@ public sealed record ItemTemplateSummary(
 	string ExceedEnchantSkill = "",
 	ItemEnchantActionInfo? EnchantAction = null,
 	int UseDelayId = 0,
-	int UseDelayMillis = 0)
+	int UseDelayMillis = 0,
+	int RideNpcId = 0)
 {
 	private const int CanPolishMask = 1 << 17;
 	private const int SoulBoundMask = 1 << 7;
