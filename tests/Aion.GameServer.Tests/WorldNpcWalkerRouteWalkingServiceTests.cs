@@ -164,6 +164,61 @@ public sealed class WorldNpcWalkerRouteWalkingServiceTests
 	}
 
 	[Fact]
+	public async Task TargetReachedAsync_UpdatesNpcPositionToReachedTargetBeforeNextBroadcast()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-walk-target-position-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextWithWalkerDataAsync(tempPath, pool: 1, formation: "POINT", rows: "");
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			var npc = CreateNpc(1, new WorldPosition(210010000, 8, 0, 0, 7), walkerId: "route-a", walkerIndex: 0);
+			Assert.True(world.TryAddObject(npc.ObjectId, npc));
+			var cache = CreateCache(context, [npc]);
+			var registry = new CapturingConnectionRegistry();
+			var service = CreateService(context, world, cache, registry);
+			var start = await service.StartRouteWalkingAsync(npc.ObjectId);
+			Assert.True(start.Started);
+			Assert.Equal(1, start.States[0].TargetStepIndex);
+
+			var result = await service.TargetReachedAsync(npc.ObjectId);
+
+			Assert.True(result.Handled);
+			Assert.Equal(WorldNpcWalkerRouteWalkingTargetReachedStatus.Advanced, result.Status);
+			Assert.NotNull(result.State);
+			Assert.Equal(0, result.State.TargetStepIndex);
+			Assert.True(world.TryGetObject(npc.ObjectId, out var movedObject));
+			var movedNpc = Assert.IsType<WorldNpc>(movedObject);
+			Assert.Equal(10, movedNpc.Position.X);
+			Assert.Equal(0, movedNpc.Position.Y);
+			Assert.Equal(0, movedNpc.Position.Z);
+			Assert.Equal(7, movedNpc.Position.Heading);
+			Assert.Equal(10, registry.Broadcasts[1].SourcePosition.X);
+			using var reader = new PacketBuffer(SerializeUnencryptedPayload(registry.Broadcasts[1].Packet));
+			Assert.Equal(npc.ObjectId, reader.ReadD());
+			Assert.Equal(10, reader.ReadF());
+			Assert.Equal(0, reader.ReadF());
+			Assert.Equal(0, reader.ReadF());
+			Assert.Equal(7, (int)reader.ReadC());
+			Assert.Equal(0xE0, (int)reader.ReadC());
+			Assert.Equal(0, reader.ReadF());
+			Assert.Equal(0, reader.ReadF());
+			Assert.Equal(0, reader.ReadF());
+			Assert.Equal(0, reader.Remaining);
+		}
+		finally
+		{
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
+	[Fact]
 	public async Task TargetReachedAsync_SchedulesBroadcastAfterRestTime()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-walk-rest-schedule-" + Guid.NewGuid().ToString("N"));
@@ -360,7 +415,8 @@ public sealed class WorldNpcWalkerRouteWalkingServiceTests
 
 			await WaitUntilAsync(() => registry.Broadcasts.Count == 4 && service.PendingRestTaskCount == 0);
 
-			Assert.Equal([2, 1, 2, 1], registry.Broadcasts.Select(broadcast => broadcast.SourceObjectId).ToArray());
+			Assert.Equal([2, 1], registry.Broadcasts.Take(2).Select(broadcast => broadcast.SourceObjectId).ToArray());
+			Assert.Equal([1, 2], registry.Broadcasts.Skip(2).Select(broadcast => broadcast.SourceObjectId).OrderBy(objectId => objectId).ToArray());
 		}
 		finally
 		{
@@ -528,7 +584,17 @@ public sealed class WorldNpcWalkerRouteWalkingServiceTests
 
 	private sealed class CapturingConnectionRegistry : IGameClientConnectionRegistry
 	{
-		public List<BroadcastRecord> Broadcasts { get; } = [];
+		private readonly object _gate = new();
+		private readonly List<BroadcastRecord> _broadcasts = [];
+
+		public IReadOnlyList<BroadcastRecord> Broadcasts
+		{
+			get
+			{
+				lock (_gate)
+					return _broadcasts.ToArray();
+			}
+		}
 
 		public void RegisterPlayerConnection(int playerObjectId, GameServerConnection connection)
 		{
@@ -565,7 +631,8 @@ public sealed class WorldNpcWalkerRouteWalkingServiceTests
 			bool includeSourcePlayer = false,
 			Func<Player, bool>? filter = null)
 		{
-			Broadcasts.Add(new BroadcastRecord(sourcePosition, sourceObjectId, packet));
+			lock (_gate)
+				_broadcasts.Add(new BroadcastRecord(sourcePosition, sourceObjectId, packet));
 			return Task.FromResult(1);
 		}
 

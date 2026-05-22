@@ -103,6 +103,8 @@ public sealed class WorldNpcWalkerRouteWalkingService
 		var worldPlan = _walkerSpawnPlans.GetWorldPlan(npc.Position.WorldId);
 		if (worldPlan == null)
 			return WorldNpcWalkerRouteWalkingTargetReachedResult.NotHandled(WorldNpcWalkerRouteWalkingTargetReachedStatus.MissingWorldPlan);
+		if (!TryUpdateNpcPositionToReachedTarget(objectId, currentState))
+			return WorldNpcWalkerRouteWalkingTargetReachedResult.NotHandled(WorldNpcWalkerRouteWalkingTargetReachedStatus.MissingNpc);
 		if (currentState.IsFormationMember)
 			return await TargetReachedFormationMemberAsync(objectId, currentState, routePlan, worldPlan, cancellationToken);
 
@@ -253,10 +255,19 @@ public sealed class WorldNpcWalkerRouteWalkingService
 			return;
 		}
 
-		var scheduledTask = _threadPoolManager.Schedule(
+		ScheduledTask? scheduledTask = null;
+		scheduledTask = _threadPoolManager.Schedule(
 			async taskCancellationToken =>
 			{
-				await _movementBroadcasts.BroadcastWalkerMovementAsync(objectId, state, cancellationToken: taskCancellationToken);
+				try
+				{
+					await _movementBroadcasts.BroadcastWalkerMovementAsync(objectId, state, cancellationToken: taskCancellationToken);
+				}
+				finally
+				{
+					if (scheduledTask != null)
+						RemovePendingRestTask(objectId, scheduledTask);
+				}
 			},
 			restDelay,
 			cancellationToken);
@@ -284,6 +295,26 @@ public sealed class WorldNpcWalkerRouteWalkingService
 	{
 		((ICollection<KeyValuePair<int, ScheduledTask>>)_pendingRestTasks).Remove(
 			new KeyValuePair<int, ScheduledTask>(objectId, scheduledTask));
+	}
+
+	private bool TryUpdateNpcPositionToReachedTarget(
+		int objectId,
+		WorldNpcWalkerMovementState currentState)
+	{
+		// Java parity: controllers/movement/NpcMoveController.updatePosition has moved the owner to pointX/Y/Z before targetReached fires.
+		if (!_world.TryGetObject(objectId, out var gameObject) || gameObject is not WorldNpc npc)
+			return false;
+
+		var updatedNpc = npc with
+		{
+			Position = npc.Position with
+			{
+				X = currentState.Target.X,
+				Y = currentState.Target.Y,
+				Z = currentState.Target.Z,
+			},
+		};
+		return _world.TryUpdateObject(objectId, updatedNpc);
 	}
 
 	private static WorldNpcWalkerFormationKey CreateFormationKey(
