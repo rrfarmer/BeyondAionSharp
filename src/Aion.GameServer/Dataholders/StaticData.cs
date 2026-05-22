@@ -1388,9 +1388,11 @@ public sealed class StaticData
 			if (reader.Depth == 3 && reader.LocalName == "talk_info" && currentNpcTemplate != null)
 			{
 				// Java parity: model/templates/npc/TalkInfo feeds NpcTemplate.getTalkDistance and supportsAction.
+				currentNpcTemplate.HasTalkInfo = true;
 				currentNpcTemplate.TalkDistance = ReadOptionalIntAttribute(reader, "distance", 2);
 				currentNpcTemplate.FunctionDialogIds.AddRange(ReadIntListAttribute(reader, "func_dialogs"));
 				currentNpcTemplate.CanTalkInvisible = ReadOptionalBoolAttribute(reader, "can_talk_invisible", true);
+				currentNpcTemplate.IsDialogNpc = ReadBoolAttribute(reader, "is_dialog");
 				continue;
 			}
 
@@ -2788,6 +2790,10 @@ public sealed class StaticData
 
 		public bool CanTalkInvisible { get; set; } = true;
 
+		public bool HasTalkInfo { get; set; }
+
+		public bool IsDialogNpc { get; set; }
+
 		public List<int> FunctionDialogIds { get; } = [];
 
 		public NpcTemplateSummary ToSummary()
@@ -2813,7 +2819,9 @@ public sealed class StaticData
 				FunctionDialogIds.Count == 0 ? null : FunctionDialogIds.ToArray(),
 				State,
 				AiName,
-				CanTalkInvisible);
+				CanTalkInvisible,
+				HasTalkInfo,
+				IsDialogNpc);
 		}
 	}
 

@@ -25,6 +25,20 @@ public sealed class SmSystemMessage : GameServerPacket
 		_specialParameters = specialParameters;
 	}
 
+	public int MessageId => _messageId;
+
+	public static SmSystemMessage DialogTooFarToTalk()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_DIALOG_TOO_FAR_TO_TALK.
+		return new SmSystemMessage(1300346);
+	}
+
+	public static SmSystemMessage WarehouseTooFarFromNpc()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_WAREHOUSE_TOO_FAR_FROM_NPC.
+		return new SmSystemMessage(1300419);
+	}
+
 	public static SmSystemMessage NotEnoughMoney()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_NOT_ENOUGH_MONEY.

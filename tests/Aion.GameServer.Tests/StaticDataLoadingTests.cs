@@ -619,6 +619,8 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(0, postmanNpc.State);
 		Assert.Equal("deliveryman", postmanNpc.AiName);
 		Assert.False(postmanNpc.CanTalkInvisible);
+		Assert.True(postmanNpc.CanInteract);
+		Assert.False(postmanNpc.IsDialogNpc);
 		Assert.Equal(6, staticData.NpcTemplates.GetNpcTemplate(203072)?.State);
 		var brokerNpc = staticData.NpcTemplates.GetNpcTemplate(799211);
 		Assert.NotNull(brokerNpc);
@@ -626,6 +628,8 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal([33], brokerNpc.FunctionDialogIds);
 		Assert.Equal("general", brokerNpc.AiName);
 		Assert.False(brokerNpc.CanTalkInvisible);
+		Assert.True(brokerNpc.CanInteract);
+		Assert.True(brokerNpc.IsDialogNpc);
 		Assert.True(brokerNpc.SupportsDialogAction(33));
 		Assert.False(brokerNpc.SupportsDialogAction(2));
 		Assert.True(staticData.NpcSpawns.Count > 60000, $"NpcSpawns.Count={staticData.NpcSpawns.Count}");

@@ -43,8 +43,12 @@ public sealed record NpcTemplateSummary(
 	IReadOnlyList<int>? FunctionDialogIds = null,
 	int State = 0,
 	string AiName = "",
-	bool CanTalkInvisible = true)
+	bool CanTalkInvisible = true,
+	bool HasTalkInfo = false,
+	bool IsDialogNpc = false)
 {
+	public bool CanInteract => HasTalkInfo;
+
 	public bool SupportsDialogAction(int dialogActionId)
 	{
 		// Java parity: model/templates/npc/NpcTemplate.supportsAction checks TalkInfo.funcDialogIds.

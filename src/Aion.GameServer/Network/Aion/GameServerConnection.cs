@@ -1278,12 +1278,24 @@ public sealed class GameServerConnection : BaseClientConnection
 				includeSourcePlayer: true);
 		}
 
-		if (player.IsTrading || _riftPortalInteractionService == null)
+		if (player.IsTrading)
 			return;
 
-		var result = _riftPortalInteractionService.RequestDialog(player, packet.TargetObjectId);
-		if (result.Requested && result.QuestionWindow != null)
-			await SendPacketAsync(result.QuestionWindow);
+		if (_riftPortalInteractionService != null)
+		{
+			var result = _riftPortalInteractionService.RequestDialog(player, packet.TargetObjectId);
+			if (result.Requested && result.QuestionWindow != null)
+			{
+				await SendPacketAsync(result.QuestionWindow);
+				return;
+			}
+			if (result.Status != RiftPortalDialogStatus.UnknownPortal)
+				return;
+		}
+
+		var npcDialogResult = NpcDialogRequestService.RequestDialog(player, packet.TargetObjectId, _world, _isKnownNpc);
+		if (npcDialogResult.ResponsePacket != null)
+			await SendPacketAsync(npcDialogResult.ResponsePacket);
 	}
 
 	private async Task StartChargingEquippedItemsAsync(Player player, int senderObjectId, int chargeWay)

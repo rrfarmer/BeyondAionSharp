@@ -101,6 +101,13 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmSystemMessage_WritesDialogTooFarMessages()
+	{
+		AssertSystemMessage(SmSystemMessage.DialogTooFarToTalk(), 1300346);
+		AssertSystemMessage(SmSystemMessage.WarehouseTooFarFromNpc(), 1300419);
+	}
+
+	[Fact]
 	public void SmPlayerState_WritesJavaPlayerStatePayload()
 	{
 		var player = new Player
