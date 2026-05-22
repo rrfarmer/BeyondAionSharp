@@ -40,6 +40,7 @@ public sealed class WorldNpcSpawnServiceTests
 		var npc = Assert.IsType<WorldNpc>(gameObject);
 		Assert.Equal(203000, npc.TemplateId);
 		Assert.Equal(new global::Aion.GameServer.World.WorldPosition(210010000, 10, 20, 30, 40), npc.Position);
+		Assert.Equal(WorldNpcState.DefaultSpawnState, npc.State);
 		Assert.Equal(2, world.GetNpcs().Count);
 		Assert.Contains(world.GetNpcs(), worldNpc => worldNpc.ObjectId == npc.ObjectId);
 		Assert.Equal(2, world.GetNpcs(210010000).Count);
@@ -127,6 +128,32 @@ public sealed class WorldNpcSpawnServiceTests
 	}
 
 	[Fact]
+	public void SpawnWorldNpcs_AppliesTemplateAndSpawnStatesLikeJava()
+	{
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var service = CreateService(world);
+		var spawns = new NpcSpawnTable(
+		[
+			CreateSpawn(210010000, 203050, x: 1),
+			CreateSpawn(210010000, 203051, x: 2),
+			CreateSpawn(210010000, 203052, x: 3, state: 6),
+		]);
+		var templates = new NpcTemplateTable(
+		[
+			CreateTemplate(203050),
+			CreateTemplate(203051, state: 32),
+			CreateTemplate(203052, state: 32),
+		]);
+
+		var result = service.SpawnWorldNpcs(spawns, templates, [210010000]);
+
+		Assert.Equal(new WorldNpcSpawnResult(3, 0), result);
+		Assert.Equal(
+			[WorldNpcState.DefaultSpawnState, 32, 6],
+			world.GetNpcs().OrderBy(npc => npc.Position.X).Select(npc => npc.State).ToArray());
+	}
+
+	[Fact]
 	public async Task ProcessTemporarySpawnHourChange_DespawnsThenSpawnsEligibleTemporaryGroups()
 	{
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);
@@ -169,6 +196,7 @@ public sealed class WorldNpcSpawnServiceTests
 		int poolSize = 0,
 		byte difficultId = 0,
 		string handler = "",
+		int state = 0,
 		TemporarySpawnSchedule? groupTemporarySchedule = null,
 		TemporarySpawnSchedule? spotTemporarySchedule = null)
 	{
@@ -188,14 +216,14 @@ public sealed class WorldNpcSpawnServiceTests
 			string.Empty,
 			0,
 			string.Empty,
-			0,
+			state,
 			string.Empty,
 			false,
 			groupTemporarySchedule,
 			spotTemporarySchedule);
 	}
 
-	private static NpcTemplateSummary CreateTemplate(int templateId)
+	private static NpcTemplateSummary CreateTemplate(int templateId, int state = 0)
 	{
 		return new NpcTemplateSummary(
 			templateId,
@@ -206,6 +234,7 @@ public sealed class WorldNpcSpawnServiceTests
 			Rating: "NORMAL",
 			Race: "ELYOS",
 			Tribe: "GENERAL",
-			Type: "GENERAL");
+			Type: "GENERAL",
+			State: state);
 	}
 }

@@ -327,7 +327,8 @@ public sealed class WorldNpcSpawnService : GameEngine
 			objectId,
 			template.TemplateId,
 			template,
-			new global::Aion.GameServer.World.WorldPosition(spawn.MapId, spawn.X, spawn.Y, spawn.Z, spawn.Heading));
+			new global::Aion.GameServer.World.WorldPosition(spawn.MapId, spawn.X, spawn.Y, spawn.Z, spawn.Heading),
+			WorldNpcState.FromTemplateAndSpawn(template, spawn.State));
 		if (!_world.TryAddObject(objectId, worldNpc))
 		{
 			_idFactory.ReleaseId(objectId);

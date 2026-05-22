@@ -40,7 +40,8 @@ public sealed record NpcTemplateSummary(
 	float RunSpeed = 0,
 	float BoundRadius = 0,
 	int TalkDistance = 2,
-	IReadOnlyList<int>? FunctionDialogIds = null)
+	IReadOnlyList<int>? FunctionDialogIds = null,
+	int State = 0)
 {
 	public bool SupportsDialogAction(int dialogActionId)
 	{

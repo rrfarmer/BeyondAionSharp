@@ -1788,7 +1788,7 @@ public class GamePacketTests
 		Assert.Equal(798100, npcReader.ReadD());
 		Assert.Equal(798100, npcReader.ReadD());
 		Assert.Equal(38, (int)npcReader.ReadC());
-		Assert.Equal(1, npcReader.ReadH());
+		Assert.Equal(WorldNpcState.DefaultSpawnState, npcReader.ReadH());
 		Assert.Equal(0, (int)npcReader.ReadC());
 		Assert.Equal(350579, npcReader.ReadD());
 
@@ -1815,7 +1815,12 @@ public class GamePacketTests
 			BoundRadius: 0.6f,
 			TalkDistance: 5,
 			FunctionDialogIds: [33]);
-		var brokerNpc = new WorldNpc(5001, brokerTemplate.TemplateId, brokerTemplate, new WorldPosition(220070000, 1887.75f, 2878.98f, 532.835f, 70));
+		var brokerNpc = new WorldNpc(
+			5001,
+			brokerTemplate.TemplateId,
+			brokerTemplate,
+			new WorldPosition(220070000, 1887.75f, 2878.98f, 532.835f, 70),
+			State: 6);
 		var brokerNpcPayload = SerializeUnencryptedPayload(new SmNpcInfo(brokerNpc));
 		using var brokerNpcReader = new PacketBuffer(brokerNpcPayload);
 		Assert.Equal(1887.75f, brokerNpcReader.ReadF());
@@ -1825,7 +1830,7 @@ public class GamePacketTests
 		Assert.Equal(799211, brokerNpcReader.ReadD());
 		Assert.Equal(799211, brokerNpcReader.ReadD());
 		Assert.Equal(38, (int)brokerNpcReader.ReadC());
-		Assert.Equal(1, brokerNpcReader.ReadH());
+		Assert.Equal(6, brokerNpcReader.ReadH());
 		Assert.Equal(70, (int)brokerNpcReader.ReadC());
 		Assert.Equal(354711, brokerNpcReader.ReadD());
 		Assert.Equal(350419, brokerNpcReader.ReadD());

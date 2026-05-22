@@ -13,10 +13,29 @@ public interface IWorldNpcObject
 	NpcTemplateSummary Template { get; }
 
 	WorldPosition Position { get; }
+
+	int State { get; }
 }
 
 public sealed record WorldNpc(
 	int ObjectId,
 	int TemplateId,
 	NpcTemplateSummary Template,
-	WorldPosition Position) : IWorldNpcObject;
+	WorldPosition Position,
+	int State = WorldNpcState.DefaultSpawnState) : IWorldNpcObject;
+
+public static class WorldNpcState
+{
+	public const int Active = 1;
+	public const int WalkMode = 1 << 6;
+	public const int DefaultSpawnState = Active | WalkMode;
+
+	public static int FromTemplateAndSpawn(NpcTemplateSummary template, int spawnState)
+	{
+		// Java parity: controllers/NpcController.onBeforeSpawn applies template state, then SpawnTemplate state.
+		if (spawnState > 0)
+			return spawnState;
+
+		return template.State > 0 ? template.State : DefaultSpawnState;
+	}
+}

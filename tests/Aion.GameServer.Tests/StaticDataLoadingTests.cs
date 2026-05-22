@@ -106,6 +106,9 @@ public sealed class StaticDataLoadingTests
 			"""
 			<?xml version="1.0" encoding="UTF-8"?>
 			<static_data>
+				<npc_templates>
+					<npc_template npc_id="203072" name="feira" name_id="351010" level="10" rank="DISCIPLINED" rating="NORMAL" race="ELYOS" tribe="GENERAL" type="GENERAL" state="6" />
+				</npc_templates>
 				<spawns>
 					<spawn_map map_id="210010000">
 						<spawn npc_id="203000" respawn_time="295" difficult_id="1">
@@ -146,6 +149,7 @@ public sealed class StaticDataLoadingTests
 
 		var staticData = await StaticData.LoadFromCacheAsync(cacheFile, []);
 
+		Assert.Equal(6, staticData.NpcTemplates.GetNpcTemplate(203072)?.State);
 		Assert.Equal(4, staticData.NpcSpawns.Count);
 		var spawn = Assert.Single(staticData.NpcSpawns.GetSpawnsForMap(210010000), spot => spot.NpcId == 203000);
 		Assert.Equal(10.5f, spawn.X);
@@ -424,6 +428,8 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(2256, postmanNpc.MaxHp);
 		Assert.Equal(4.23f, postmanNpc.RunSpeed);
 		Assert.Equal(0.595f, postmanNpc.BoundRadius);
+		Assert.Equal(0, postmanNpc.State);
+		Assert.Equal(6, staticData.NpcTemplates.GetNpcTemplate(203072)?.State);
 		var brokerNpc = staticData.NpcTemplates.GetNpcTemplate(799211);
 		Assert.NotNull(brokerNpc);
 		Assert.Equal(5, brokerNpc.TalkDistance);

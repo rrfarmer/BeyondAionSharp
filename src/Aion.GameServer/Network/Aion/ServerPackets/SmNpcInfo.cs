@@ -7,7 +7,6 @@ public sealed class SmNpcInfo : GameServerPacket
 {
 	public const int PacketOpCode = 14;
 	private const int FriendCreatureType = 38;
-	private const int ActiveState = 1;
 	private const int NormalNpcObjectType = 1;
 
 	private readonly IWorldNpcObject _npc;
@@ -31,7 +30,7 @@ public sealed class SmNpcInfo : GameServerPacket
 		buffer.WriteD(template.TemplateId);
 		buffer.WriteD(template.TemplateId);
 		buffer.WriteC(FriendCreatureType);
-		buffer.WriteH(ActiveState);
+		buffer.WriteH(_npc.State);
 		buffer.WriteC(position.Heading);
 		buffer.WriteD(template.NameId);
 		buffer.WriteD(template.TitleId);

@@ -1148,7 +1148,8 @@ public sealed class StaticData
 					reader.GetAttribute("type") ?? string.Empty,
 					ReadIntAttribute(reader, "title_id"),
 					ReadFloatAttribute(reader, "height"),
-					ReadIntAttribute(reader, "attack_speed"));
+					ReadIntAttribute(reader, "attack_speed"),
+					ReadIntAttribute(reader, "state"));
 				if (reader.IsEmptyElement)
 				{
 					npcTemplates.Add(currentNpcTemplate.ToSummary());
@@ -2434,7 +2435,8 @@ public sealed class StaticData
 			string type,
 			int titleId,
 			float height,
-			int attackSpeed)
+			int attackSpeed,
+			int state)
 		{
 			TemplateId = templateId;
 			Name = name;
@@ -2448,6 +2450,7 @@ public sealed class StaticData
 			TitleId = titleId;
 			Height = height;
 			AttackSpeed = attackSpeed;
+			State = state;
 		}
 
 		private int TemplateId { get; }
@@ -2473,6 +2476,8 @@ public sealed class StaticData
 		private float Height { get; }
 
 		private int AttackSpeed { get; }
+
+		private int State { get; }
 
 		public int MaxHp { get; set; }
 
@@ -2506,7 +2511,8 @@ public sealed class StaticData
 				RunSpeed,
 				Math.Max(BoundRadiusFront, BoundRadiusSide),
 				TalkDistance,
-				FunctionDialogIds.Count == 0 ? null : FunctionDialogIds.ToArray());
+				FunctionDialogIds.Count == 0 ? null : FunctionDialogIds.ToArray(),
+				State);
 		}
 	}
 
