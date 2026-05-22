@@ -53,6 +53,7 @@ public sealed class WorldNpcWalkerSpawnPlanCacheServiceTests
 		var choice = Assert.Single(variantPlan.SpawnPlan.VariantChoices);
 		Assert.Equal("route-parent", choice.VersionRouteId);
 		Assert.Equal(1, choice.SelectedIndex);
+		Assert.Equal([4], choice.ObjectIds);
 	}
 
 	[Fact]
@@ -70,6 +71,43 @@ public sealed class WorldNpcWalkerSpawnPlanCacheServiceTests
 
 		Assert.Equal(0, cache.CachedWorldCount);
 		Assert.Null(cache.GetWorldPlan(210010000));
+	}
+
+	[Fact]
+	public void RefreshWorldPlans_PreservesSpawnedVariantChoiceAcrossRefreshes()
+	{
+		var chooseLast = true;
+		var cache = new WorldNpcWalkerSpawnPlanCacheService(
+			new WorldNpcWalkerFormationOrganizerService(),
+			new WorldNpcWalkerVariantSelectionService(count => chooseLast ? count - 1 : 0));
+		var templates = new WalkerTemplateTable(
+		[
+			new WalkerTemplateSummary("route-v1", 1, "POINT", "NORMAL", [], CreateRouteSteps()),
+			new WalkerTemplateSummary("route-v2", 1, "POINT", "NORMAL", [], CreateRouteSteps()),
+		]);
+		var versions = new WalkerVersionTable(
+			new Dictionary<string, string>
+			{
+				["route-v1"] = "route-parent",
+				["route-v2"] = "route-parent",
+			});
+		var npcs = new[]
+		{
+			CreateNpc(1, 210010000, "route-v1", walkerIndex: 0),
+			CreateNpc(2, 210010000, "route-v2", walkerIndex: 0),
+		};
+
+		cache.RefreshWorldPlans(npcs, templates, versions);
+		chooseLast = false;
+		cache.RefreshWorldPlans(npcs, templates, versions, [210010000]);
+
+		var plan = cache.GetWorldPlan(210010000);
+		Assert.NotNull(plan);
+		var selectedWalker = Assert.Single(plan.SpawnPlan.Walkers);
+		Assert.Equal(2, selectedWalker.ObjectId);
+		var choice = Assert.Single(plan.SpawnPlan.VariantChoices);
+		Assert.Equal(1, choice.SelectedIndex);
+		Assert.Equal([2], choice.ObjectIds);
 	}
 
 	private static IReadOnlyList<WalkerRouteStepSummary> CreateRouteSteps()

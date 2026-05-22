@@ -70,7 +70,8 @@ public sealed class WorldNpcWalkerSpawnPlanCacheService : IWorldNpcWalkerSpawnPl
 			}
 
 			var organization = _organizer.Organize(worldNpcs, walkerTemplates, walkerVersions);
-			var spawnPlan = _variantSelection.CreateSpawnPlan(organization);
+			_plansByWorldId.TryGetValue(worldId, out var previousPlan);
+			var spawnPlan = _variantSelection.CreateSpawnPlan(organization, previousPlan?.SpawnPlan);
 			var placementPlan = _placementPlans.CreatePlacementPlan(organization, spawnPlan, worldNpcs);
 			var worldPlan = new WorldNpcWalkerWorldSpawnPlan(worldId, organization, spawnPlan, placementPlan);
 			_plansByWorldId[worldId] = worldPlan;
