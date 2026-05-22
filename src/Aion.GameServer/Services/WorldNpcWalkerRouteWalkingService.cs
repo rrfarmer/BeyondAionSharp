@@ -48,12 +48,47 @@ public sealed class WorldNpcWalkerRouteWalkingService
 		return _activeStates.TryGetValue(objectId, out state);
 	}
 
+	public async Task<WorldNpcWalkerRouteWalkingWorldStartResult> StartWorldRouteWalkingAsync(
+		int worldId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: ai/manager/WalkManager.startWalking delegates spawned path-walker owners into startRouteWalking.
+		cancellationToken.ThrowIfCancellationRequested();
+		var staticData = _runtimeContext.DataManager?.StaticData;
+		if (staticData == null)
+			return WorldNpcWalkerRouteWalkingWorldStartResult.NotStarted(WorldNpcWalkerRouteWalkingWorldStartStatus.MissingStaticData);
+
+		var worldPlan = _walkerSpawnPlans.GetWorldPlan(worldId);
+		if (worldPlan == null)
+			return WorldNpcWalkerRouteWalkingWorldStartResult.NotStarted(WorldNpcWalkerRouteWalkingWorldStartStatus.MissingWorldPlan);
+
+		var results = new List<WorldNpcWalkerRouteWalkingStartResult>();
+		foreach (var walker in worldPlan.SpawnPlan.Walkers)
+		{
+			cancellationToken.ThrowIfCancellationRequested();
+			results.Add(await StartRouteWalkingAsync(walker.ObjectId, cancellationToken));
+		}
+
+		foreach (var formation in worldPlan.SpawnPlan.Formations)
+		{
+			cancellationToken.ThrowIfCancellationRequested();
+			var firstMember = formation.Members.FirstOrDefault();
+			if (firstMember != null)
+				results.Add(await StartRouteWalkingAsync(firstMember.ObjectId, cancellationToken));
+		}
+
+		return WorldNpcWalkerRouteWalkingWorldStartResult.FromResults(results);
+	}
+
 	public async Task<WorldNpcWalkerRouteWalkingStartResult> StartRouteWalkingAsync(
 		int objectId,
 		CancellationToken cancellationToken = default)
 	{
 		// Java parity: ai/manager/WalkManager.startRouteWalking starts only spawned path walkers and initializes their route target.
 		cancellationToken.ThrowIfCancellationRequested();
+		if (_activeStates.ContainsKey(objectId))
+			return WorldNpcWalkerRouteWalkingStartResult.NotStarted(WorldNpcWalkerRouteWalkingStartStatus.AlreadyWalking);
+
 		var staticData = _runtimeContext.DataManager?.StaticData;
 		if (staticData == null)
 			return WorldNpcWalkerRouteWalkingStartResult.NotStarted(WorldNpcWalkerRouteWalkingStartStatus.MissingStaticData);
@@ -380,12 +415,57 @@ public sealed record WorldNpcWalkerRouteWalkingStartResult(
 public enum WorldNpcWalkerRouteWalkingStartStatus
 {
 	Started,
+	AlreadyWalking,
 	MissingStaticData,
 	MissingNpc,
 	MissingRoute,
 	MissingWorldPlan,
 	NotActiveWalker,
 	MissingMovementTarget,
+}
+
+public sealed record WorldNpcWalkerRouteWalkingWorldStartResult(
+	bool Started,
+	WorldNpcWalkerRouteWalkingWorldStartStatus Status,
+	int RouteStartCount,
+	int StateCount,
+	int BroadcastCount,
+	IReadOnlyList<WorldNpcWalkerRouteWalkingStartResult> Results)
+{
+	public static WorldNpcWalkerRouteWalkingWorldStartResult FromResults(
+		IReadOnlyList<WorldNpcWalkerRouteWalkingStartResult> results)
+	{
+		var startedResults = results.Where(result => result.Started).ToArray();
+		return new WorldNpcWalkerRouteWalkingWorldStartResult(
+			Started: startedResults.Length > 0,
+			startedResults.Length > 0
+				? WorldNpcWalkerRouteWalkingWorldStartStatus.Started
+				: WorldNpcWalkerRouteWalkingWorldStartStatus.NoStartedRoutes,
+			startedResults.Length,
+			startedResults.Sum(result => result.States.Count),
+			startedResults.Sum(result => result.BroadcastCount),
+			results);
+	}
+
+	public static WorldNpcWalkerRouteWalkingWorldStartResult NotStarted(
+		WorldNpcWalkerRouteWalkingWorldStartStatus status)
+	{
+		return new WorldNpcWalkerRouteWalkingWorldStartResult(
+			Started: false,
+			status,
+			RouteStartCount: 0,
+			StateCount: 0,
+			BroadcastCount: 0,
+			Results: Array.Empty<WorldNpcWalkerRouteWalkingStartResult>());
+	}
+}
+
+public enum WorldNpcWalkerRouteWalkingWorldStartStatus
+{
+	Started,
+	NoStartedRoutes,
+	MissingStaticData,
+	MissingWorldPlan,
 }
 
 public sealed record WorldNpcWalkerRouteWalkingTargetReachedResult(

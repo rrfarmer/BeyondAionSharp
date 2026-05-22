@@ -432,6 +432,84 @@ public sealed class WorldNpcWalkerRouteWalkingServiceTests
 	}
 
 	[Fact]
+	public async Task StartWorldRouteWalkingAsync_StartsEachFormationOnce()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-walk-start-world-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextWithWalkerDataAsync(tempPath, pool: 2, formation: "SQUARE", rows: "2");
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			var first = CreateNpc(1, new WorldPosition(210010000, 0, 0, 0, 0), walkerId: "route-a", walkerIndex: 1);
+			var second = CreateNpc(2, new WorldPosition(210010000, 0, 0, 0, 0), walkerId: "route-a", walkerIndex: 2);
+			Assert.True(world.TryAddObject(first.ObjectId, first));
+			Assert.True(world.TryAddObject(second.ObjectId, second));
+			var cache = CreateCache(context, [first, second]);
+			var registry = new CapturingConnectionRegistry();
+			var service = CreateService(context, world, cache, registry);
+
+			var result = await service.StartWorldRouteWalkingAsync(210010000);
+
+			Assert.True(result.Started);
+			Assert.Equal(WorldNpcWalkerRouteWalkingWorldStartStatus.Started, result.Status);
+			Assert.Equal(1, result.RouteStartCount);
+			Assert.Equal(2, result.StateCount);
+			Assert.Equal(2, result.BroadcastCount);
+			var start = Assert.Single(result.Results);
+			Assert.True(start.Started);
+			Assert.Equal(2, service.ActiveStateCount);
+			Assert.Equal(1, service.ActiveFormationStateCount);
+			Assert.Equal([2, 1], registry.Broadcasts.Select(broadcast => broadcast.SourceObjectId).ToArray());
+		}
+		finally
+		{
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
+	[Fact]
+	public async Task StartRouteWalkingAsync_DoesNotRestartAlreadyActiveWalker()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-walk-start-active-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextWithWalkerDataAsync(tempPath, pool: 1, formation: "POINT", rows: "");
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			var npc = CreateNpc(1, new WorldPosition(210010000, 8, 0, 0, 7), walkerId: "route-a", walkerIndex: 0);
+			Assert.True(world.TryAddObject(npc.ObjectId, npc));
+			var cache = CreateCache(context, [npc]);
+			var registry = new CapturingConnectionRegistry();
+			var service = CreateService(context, world, cache, registry);
+			var firstStart = await service.StartRouteWalkingAsync(npc.ObjectId);
+			Assert.True(firstStart.Started);
+
+			var secondStart = await service.StartRouteWalkingAsync(npc.ObjectId);
+
+			Assert.False(secondStart.Started);
+			Assert.Equal(WorldNpcWalkerRouteWalkingStartStatus.AlreadyWalking, secondStart.Status);
+			Assert.Equal(1, service.ActiveStateCount);
+			Assert.Single(registry.Broadcasts);
+		}
+		finally
+		{
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
+	[Fact]
 	public async Task StartRouteWalkingAsync_RequiresCachedActiveWalkerPlan()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-walk-start-missing-cache-" + Guid.NewGuid().ToString("N"));
