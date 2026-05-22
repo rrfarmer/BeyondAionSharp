@@ -9,7 +9,7 @@ public sealed record PostmanNpc(
 	NpcTemplateSummary Template,
 	WorldPosition Position,
 	int CreatorId,
-	string MasterName)
+	string MasterName) : IWorldNpcObject
 {
 	public static PostmanNpc Create(Player owner, int objectId, NpcTemplateSummary template)
 	{

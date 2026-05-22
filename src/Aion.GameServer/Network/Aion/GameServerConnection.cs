@@ -35,6 +35,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private const int FirstAvailableSlot = 65535;
 	private const int NoTitleId = 0xFFFF;
 	private const int MaxBlockedUsers = 100;
+	private const int OpenVendorDialogAction = 33;
 	private const string PowerShardItemGroup = "POWER_SHARDS";
 	private static readonly TimeSpan ClientPingInterval = TimeSpan.FromMilliseconds(180000);
 	private static readonly ConcurrentDictionary<int, int> HouseObjectOccupants = new();
@@ -6569,16 +6570,21 @@ public sealed class GameServerConnection : BaseClientConnection
 	private bool IsTargetingBroker(Player player, int brokerObjectId, string action)
 	{
 		// Java parity: Player.isTargetingNpcWithFunction(brokerObjId, DialogAction.OPEN_VENDOR) in CM_BROKER_* runImpl methods.
-		// TODO Phase 6: replace this object-id guard with real NPC template function + KnownList visibility validation.
-		if (brokerObjectId > 0 && player.TargetObjectId == brokerObjectId)
+		var targeting = NpcDialogTargetingService.ValidateTargetingNpcWithFunction(player, brokerObjectId, OpenVendorDialogAction, _world);
+		if (targeting == NpcDialogTargetingResult.Valid)
+			return true;
+
+		// TODO Phase 6: remove this compatibility fallback once ordinary NPC spawn data is loaded into World.
+		if (targeting == NpcDialogTargetingResult.UnknownTarget && brokerObjectId > 0 && player.TargetObjectId == brokerObjectId)
 			return true;
 
 		_logger.LogWarning(
-			"Player {PlayerObjectId} tried to {Action} without targeting broker {BrokerObjectId}; current target is {TargetObjectId}",
+			"Player {PlayerObjectId} tried to {Action} without targeting broker {BrokerObjectId}; current target is {TargetObjectId}, validation result {ValidationResult}",
 			player.ObjectId,
 			action,
 			brokerObjectId,
-			player.TargetObjectId);
+			player.TargetObjectId,
+			targeting);
 		return false;
 	}
 
