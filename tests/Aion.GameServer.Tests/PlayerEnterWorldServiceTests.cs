@@ -387,6 +387,14 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public int? CraftLearnDeletedSourceItemObjectId { get; private set; }
 
+		public int SaveEmotionLearnActionMutationCalls { get; private set; }
+
+		public PlayerEmotion? LearnedEmotion { get; private set; }
+
+		public InventoryItem? EmotionLearnSourceItemUpdate { get; private set; }
+
+		public int? EmotionLearnDeletedSourceItemObjectId { get; private set; }
+
 		public int SaveItemChargeMutationCalls { get; private set; }
 
 		public InventoryItem? ChargedItem { get; private set; }
@@ -522,6 +530,20 @@ public sealed class PlayerEnterWorldServiceTests
 			CraftLearnRecipeId = recipeId;
 			CraftLearnSourceItemUpdate = sourceItemUpdate;
 			CraftLearnDeletedSourceItemObjectId = deletedSourceItemObjectId;
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> SaveEmotionLearnActionMutationAsync(
+			int playerObjectId,
+			PlayerEmotion emotion,
+			InventoryItem? sourceItemUpdate,
+			int? deletedSourceItemObjectId,
+			CancellationToken cancellationToken = default)
+		{
+			SaveEmotionLearnActionMutationCalls++;
+			LearnedEmotion = emotion;
+			EmotionLearnSourceItemUpdate = sourceItemUpdate;
+			EmotionLearnDeletedSourceItemObjectId = deletedSourceItemObjectId;
 			return Task.FromResult(true);
 		}
 

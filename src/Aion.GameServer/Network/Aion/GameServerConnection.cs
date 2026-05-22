@@ -2403,6 +2403,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (sourceTemplate.HasEmotionLearnAction)
+		{
+			await HandleEmotionLearnUseItemAsync(player, inventoryItems, sourceItem, sourceTemplate);
+			return;
+		}
+
 		if (sourceTemplate.PolishSetId > 0 && packet.Type == 2)
 		{
 			var targetItem = packet.TargetItemObjectId == 0
@@ -2479,6 +2485,74 @@ public sealed class GameServerConnection : BaseClientConnection
 		await SendPacketAsync(new SmLearnRecipe(recipeTemplate.RecipeId));
 		await SendPacketAsync(SmSystemMessage.CraftRecipeLearn(recipeTemplate.RecipeId, player.Name));
 		await SendPacketAsync(new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 1, 1));
+	}
+
+	private async Task HandleEmotionLearnUseItemAsync(
+		Player player,
+		List<InventoryItem> inventoryItems,
+		InventoryItem sourceItem,
+		ItemTemplateSummary sourceTemplate)
+	{
+		// Java parity: model/templates/item/actions/EmotionLearnAction.canAct + act.
+		var validation = EmotionLearnService.ValidateNewEmotion(
+			player,
+			sourceTemplate.EmotionLearnId,
+			sourceTemplate.EmotionLearnMinutes,
+			DateTimeOffset.UtcNow);
+		if (!validation.Succeeded)
+		{
+			await SendEmotionLearnFailureAsync(validation.Failure);
+			return;
+		}
+
+		AddItemCooldownIfNeeded(player, sourceTemplate, removeOnCancel: false);
+		var emotion = validation.Emotion!;
+		var sourceItemUpdate = sourceItem.Count > 1 ? CopyInventoryItem(sourceItem, count: sourceItem.Count - 1) : null;
+		int? deletedSourceObjectId = sourceItem.Count <= 1 ? sourceItem.ObjectId : null;
+		var saved = _playerEnterWorldService == null
+			|| await _playerEnterWorldService.SaveEmotionLearnActionMutationAsync(
+				player,
+				emotion,
+				sourceItemUpdate,
+				deletedSourceObjectId);
+		if (!saved)
+			return;
+
+		await BroadcastItemUsageAnimationAsync(
+			player,
+			new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 1, 1));
+
+		player.Emotions = player.Emotions
+			.Where(existing => existing.Id != emotion.Id)
+			.Append(emotion)
+			.ToArray();
+		await SendPacketAsync(new SmEmotionList(1, [emotion]));
+
+		if (deletedSourceObjectId.HasValue)
+		{
+			inventoryItems.RemoveAll(item => item.ObjectId == deletedSourceObjectId.Value);
+			await SendPacketAsync(new SmDeleteItem(deletedSourceObjectId.Value, SmDeleteItem.UseDeleteType));
+		}
+		else if (sourceItemUpdate != null)
+		{
+			ReplaceInventoryItem(inventoryItems, sourceItemUpdate);
+			await SendPacketAsync(new SmInventoryUpdateItem(sourceItemUpdate, sourceTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+		}
+
+		player.InventoryItems = inventoryItems.ToArray();
+	}
+
+	private async Task SendEmotionLearnFailureAsync(EmotionLearnFailure failure)
+	{
+		switch (failure)
+		{
+			case EmotionLearnFailure.InvalidItem:
+				await SendPacketAsync(SmSystemMessage.ItemColorError());
+				break;
+			case EmotionLearnFailure.AlreadyKnown:
+				await SendPacketAsync(SmSystemMessage.TooltipLearnedEmotion());
+				break;
+		}
 	}
 
 	private async Task SendCraftLearnFailureAsync(CraftLearnValidation validation)

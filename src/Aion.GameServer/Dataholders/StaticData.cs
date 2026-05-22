@@ -645,6 +645,7 @@ public sealed class StaticData
 				// Java parity: model/templates/item/actions/EmotionLearnAction.afterUnmarshal.
 				var emotionId = ReadRequiredIntAttribute(reader, "emotionid");
 				learnableEmotionIds.Add(emotionId);
+				currentItemTemplate.HasEmotionLearnAction = true;
 				currentItemTemplate.EmotionLearnId = emotionId;
 				currentItemTemplate.EmotionLearnMinutes = ReadIntAttribute(reader, "minutes");
 				continue;
@@ -1425,6 +1426,8 @@ public sealed class StaticData
 
 		public int EmotionLearnMinutes { get; set; }
 
+		public bool HasEmotionLearnAction { get; set; }
+
 		public int RecommendRank { get; set; }
 
 		public string GenderPermitted { get; set; } = string.Empty;
@@ -1510,7 +1513,8 @@ public sealed class StaticData
 				UseDelayMillis,
 				RideNpcId,
 				EmotionLearnId,
-				EmotionLearnMinutes);
+				EmotionLearnMinutes,
+				HasEmotionLearnAction);
 		}
 
 		private static int CalculateMaxTuneCount(

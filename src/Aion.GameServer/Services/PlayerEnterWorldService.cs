@@ -183,6 +183,21 @@ public sealed class PlayerEnterWorldService
 			cancellationToken);
 	}
 
+	public Task<bool> SaveEmotionLearnActionMutationAsync(
+		Player player,
+		PlayerEmotion emotion,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		return _repository.SaveEmotionLearnActionMutationAsync(
+			player.ObjectId,
+			emotion,
+			sourceItemUpdate,
+			deletedSourceItemObjectId,
+			cancellationToken);
+	}
+
 	public Task<bool> SaveItemChargeMutationAsync(
 		Player player,
 		InventoryItem chargedItem,

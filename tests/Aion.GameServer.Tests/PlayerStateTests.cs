@@ -1,4 +1,5 @@
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Services;
 
 namespace Aion.GameServer.Tests;
 
@@ -20,6 +21,28 @@ public sealed class PlayerStateTests
 		player.RemoveItemCooldown(21);
 
 		Assert.Empty(player.ItemCooldowns);
+	}
+
+	[Fact]
+	public void EmotionLearnService_MatchesJavaDuplicateAndExpirationRules()
+	{
+		var now = DateTimeOffset.FromUnixTimeSeconds(1_000);
+		var player = new Player
+		{
+			Emotions = [new PlayerEmotion(64, 0)],
+		};
+
+		Assert.Equal(EmotionLearnFailure.InvalidItem, EmotionLearnService.ValidateNewEmotion(player, 0, 0, now).Failure);
+		Assert.Equal(EmotionLearnFailure.AlreadyKnown, EmotionLearnService.ValidateNewEmotion(player, 64, 0, now).Failure);
+
+		var permanent = EmotionLearnService.ValidateNewEmotion(player, 65, 0, now);
+		Assert.True(permanent.Succeeded);
+		Assert.Equal(new PlayerEmotion(65, 0), permanent.Emotion);
+
+		var temporary = EmotionLearnService.ValidateNewEmotion(player, 66, 5, now);
+		Assert.True(temporary.Succeeded);
+		Assert.Equal(new PlayerEmotion(66, 1_300), temporary.Emotion);
+		Assert.Equal(300, temporary.Emotion!.SecondsUntilExpiration(now));
 	}
 
 	[Fact]

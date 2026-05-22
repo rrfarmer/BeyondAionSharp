@@ -278,6 +278,13 @@ public class GamePacketTests
 					[new PlayerEmotion(10, 1010)],
 					() => DateTimeOffset.FromUnixTimeSeconds(1000))));
 		Assert.Equal(
+			Convert.FromHexString("010100400000002C01"),
+			SerializeUnencryptedPayload(
+				new SmEmotionList(
+					1,
+					[new PlayerEmotion(64, 1300)],
+					() => DateTimeOffset.FromUnixTimeSeconds(1000))));
+		Assert.Equal(
 			Convert.FromHexString("E903000024800000000000"),
 			SerializeUnencryptedPayload(
 				new SmEmotion(
@@ -589,6 +596,8 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.CannotUseItemInvalidRace(), 1300373);
 		AssertSystemMessage(SmSystemMessage.CannotUseItemInvalidGender(), 1300375);
 		AssertSystemMessage(SmSystemMessage.CannotUseItemTooHighLevel(39, "item"), 1400267, "39", "item");
+		AssertSystemMessage(SmSystemMessage.ItemColorError(), 1300514);
+		AssertSystemMessage(SmSystemMessage.TooltipLearnedEmotion(), 901713);
 		AssertSystemMessage(SmSystemMessage.CannotRide(ChatUtil.L10n(1400057)), 1401211, ChatUtil.L10n(1400057));
 		AssertSystemMessage(SmSystemMessage.UnrideAbnormalState(), 1401254);
 		AssertSystemMessage(SmSystemMessage.CannotRideAbnormalState(), 1401255);
