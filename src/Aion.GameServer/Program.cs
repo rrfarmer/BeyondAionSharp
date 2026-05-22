@@ -41,6 +41,7 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<WorldNpcWalkerMovementStateService>();
 			services.AddSingleton<WorldNpcWalkerMovementBroadcastService>();
 			services.AddSingleton<WorldNpcAiStateService>();
+			services.AddSingleton<WorldNpcRandomWalkService>();
 			services.AddSingleton<WorldNpcWalkerRouteWalkingService>();
 			services.AddSingleton<PeriodicSaveService>();
 			services.AddSingleton<HousingWorldService>();

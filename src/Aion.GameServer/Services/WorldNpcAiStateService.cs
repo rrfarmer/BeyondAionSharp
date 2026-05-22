@@ -17,6 +17,12 @@ public sealed class WorldNpcAiStateService
 		return SetState(objectId, WorldNpcAiState.Walking, WorldNpcAiSubState.WalkPath);
 	}
 
+	public WorldNpcAiRuntimeState StartRandomWalking(int objectId)
+	{
+		// Java parity: ai/manager/WalkManager.startRandomWalking sets AIState.WALKING and AISubState.WALK_RANDOM.
+		return SetState(objectId, WorldNpcAiState.Walking, WorldNpcAiSubState.WalkRandom);
+	}
+
 	public WorldNpcAiRuntimeState WaitForFormationGroup(int objectId)
 	{
 		// Java parity: spawnengine/WalkerGroup.targetReached marks arrived members as AISubState.WALK_WAIT_GROUP.
