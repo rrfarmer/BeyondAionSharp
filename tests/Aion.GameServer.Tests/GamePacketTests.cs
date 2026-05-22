@@ -589,6 +589,23 @@ public class GamePacketTests
 		Assert.Equal(1, itemUsageReader.ReadD());
 		Assert.Equal(0, itemUsageReader.Remaining);
 
+		var statUpdateExpPayload = SerializeUnencryptedPayload(
+			new SmStatUpdateExp(
+				new Player
+				{
+					Exp = 1500,
+					RecoverableExp = 50,
+					ReposeEnergy = 25,
+				},
+				new PlayerExperienceTable([0, 1000, 3000])));
+		using var statUpdateExpReader = new PacketBuffer(statUpdateExpPayload);
+		Assert.Equal(500, statUpdateExpReader.ReadQ());
+		Assert.Equal(50, statUpdateExpReader.ReadQ());
+		Assert.Equal(2000, statUpdateExpReader.ReadQ());
+		Assert.Equal(25, statUpdateExpReader.ReadQ());
+		Assert.Equal(0, statUpdateExpReader.ReadQ());
+		Assert.Equal(0, statUpdateExpReader.Remaining);
+
 		var decomposableItems = new[]
 		{
 			new ResultedItemSummary(125045164, 1, 1, "PC_ALL", new HashSet<string>()),
@@ -639,6 +656,9 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.UiInventoryFull(), 1300042);
 		AssertSystemMessage(SmSystemMessage.DiceInventoryError(), 1390182);
 		AssertSystemMessage(SmSystemMessage.AssemblyItemSucceeded(), 1401122);
+		AssertSystemMessage(SmSystemMessage.DecompressInventoryFull(), 1400363);
+		AssertSystemMessage(SmSystemMessage.ExpExtractionUse("extract", 123, "reward"), 1401705, "extract", "123", "reward");
+		AssertSystemMessage(SmSystemMessage.ExpExtractionUseNotEnoughExp(), 1401706);
 		AssertSystemMessage(SmSystemMessage.DecomposeItemNoTarget(), 1300445);
 		AssertSystemMessage(SmSystemMessage.DecomposeItemCannotDecompose("item"), 1300446, "item");
 		AssertSystemMessage(SmSystemMessage.DecomposeItemInventoryFull(), 1300447);

@@ -1706,7 +1706,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		int cancelEndState = 3,
 		int cancelUnknown3 = 0,
 		int? removeCooldownDelayIdOnCancel = null,
-		bool preserveOnEmotion = false)
+		bool preserveOnEmotion = false,
+		bool cancelAnimationToSelfOnly = false)
 	{
 		// Java parity: controllers/CreatureController.addTask(TaskId.ITEM_USE) + ThreadPoolManager.schedule.
 		if (_threadPoolManager == null || delay <= TimeSpan.Zero)
@@ -1751,7 +1752,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			cancelEndState,
 			cancelUnknown3,
 			removeCooldownDelayIdOnCancel,
-			preserveOnEmotion);
+			preserveOnEmotion,
+			cancelAnimationToSelfOnly);
 	}
 
 	private async Task CancelPendingItemUseOnMoveAsync(Player player)
@@ -1778,7 +1780,11 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		_pendingItemUse = null;
 		CleanupPendingItemUse(player, pendingItemUse, canceled: true);
-		await BroadcastItemUsageAnimationAsync(player, CreateCancelItemUsageAnimation(player, pendingItemUse));
+		var cancelAnimation = CreateCancelItemUsageAnimation(player, pendingItemUse);
+		if (pendingItemUse.CancelAnimationToSelfOnly)
+			await SendPacketAsync(cancelAnimation);
+		else
+			await BroadcastItemUsageAnimationAsync(player, cancelAnimation);
 		await SendPacketAsync(pendingItemUse.CancelMessage switch
 		{
 			PendingItemUseCancelMessage.EnchantItem => SmSystemMessage.EnchantItemCanceled(pendingItemUse.TargetItemName),
@@ -2639,6 +2645,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (sourceTemplate.ExpExtractAction != null)
+		{
+			await HandleExpExtractUseItemAsync(player, sourceItem, sourceTemplate, staticData);
+			return;
+		}
+
 		if (sourceTemplate.HasDecomposeAction)
 		{
 			await HandleDecomposeUseItemAsync(player, inventoryItems, sourceItem, sourceTemplate, staticData);
@@ -2821,6 +2833,165 @@ public sealed class GameServerConnection : BaseClientConnection
 	}
 
 	private async Task SendAssemblyRewardPacketsAsync(AssemblyItemMutationPlan mutationPlan, ItemTemplateSummary rewardTemplate)
+	{
+		foreach (var updatedReward in mutationPlan.UpdatedRewardItems)
+			await SendPacketAsync(new SmInventoryUpdateItem(updatedReward, rewardTemplate, SmInventoryUpdateItem.IncreaseItemCollect));
+		foreach (var addedReward in mutationPlan.AddedRewardItems)
+			await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(addedReward, rewardTemplate));
+	}
+
+	private async Task HandleExpExtractUseItemAsync(
+		Player player,
+		InventoryItem sourceItem,
+		ItemTemplateSummary sourceTemplate,
+		StaticData staticData)
+	{
+		// Java parity: model/templates/item/actions/ExpExtractAction.canAct + act.
+		var validation = ExpExtractService.Validate(player, sourceTemplate, staticData);
+		if (!validation.Succeeded)
+		{
+			await SendExpExtractFailureAsync(validation.Failure);
+			return;
+		}
+
+		AddItemCooldownIfNeeded(player, sourceTemplate, removeOnCancel: false);
+		await CancelPendingItemUseAsync(player);
+		await SendPacketAsync(
+			new SmItemUsageAnimation(
+				player.ObjectId,
+				sourceItem.ObjectId,
+				sourceItem.ItemId,
+				ExpExtractService.UsageDelayMilliseconds,
+				0,
+				0));
+
+		await SchedulePendingItemUseAsync(
+			player,
+			itemObjectId: sourceItem.ObjectId,
+			itemTemplateId: sourceItem.ItemId,
+			targetItemName: sourceTemplate.GetClientName() ?? sourceTemplate.Name,
+			cancelMessage: PendingItemUseCancelMessage.Decompose,
+			delay: TimeSpan.FromMilliseconds(ExpExtractService.UsageDelayMilliseconds),
+			completeAsync: async cancellationToken =>
+			{
+				if (cancellationToken.IsCancellationRequested)
+					return;
+
+				await CompleteExpExtractUseItemAsync(player, sourceTemplate, staticData, cancellationToken);
+			},
+			cancelEndState: 2,
+			cancelAnimationToSelfOnly: true);
+	}
+
+	private async Task CompleteExpExtractUseItemAsync(
+		Player player,
+		ItemTemplateSummary sourceTemplate,
+		StaticData staticData,
+		CancellationToken cancellationToken)
+	{
+		var validation = ExpExtractService.Validate(player, sourceTemplate, staticData);
+		if (!validation.Succeeded || validation.RewardTemplate == null)
+		{
+			await SendExpExtractFailureAsync(validation.Failure);
+			await SendPacketAsync(new SmItemUsageAnimation(player.ObjectId, player.UsingItemObjectId, sourceTemplate.TemplateId, 0, 2, 0));
+			return;
+		}
+
+		var inventoryItems = player.InventoryItems.ToList();
+		var mutationPlan = ExpExtractService.CreateMutationPlan(
+			player,
+			inventoryItems,
+			sourceTemplate,
+			validation,
+			staticData.ItemTemplates,
+			() => _idFactory?.NextId() ?? 0);
+		if (!mutationPlan.Succeeded)
+		{
+			await SendPacketAsync(new SmItemUsageAnimation(player.ObjectId, player.UsingItemObjectId, sourceTemplate.TemplateId, 0, 2, 0));
+			return;
+		}
+
+		var saved = _playerEnterWorldService == null
+			|| await _playerEnterWorldService.SaveExpExtractActionMutationAsync(
+				player,
+				validation.NewExp,
+				mutationPlan.SourceItemUpdate,
+				mutationPlan.DeletedSourceItemObjectId,
+				mutationPlan.UpdatedRewardItems,
+				mutationPlan.AddedRewardItems,
+				cancellationToken);
+		if (!saved)
+			return;
+
+		await ApplyExpExtractSourceMutationAsync(inventoryItems, sourceTemplate, mutationPlan.SourceItemUpdate, mutationPlan.DeletedSourceItemObjectId);
+		player.Exp = validation.NewExp;
+		await SendPacketAsync(new SmStatUpdateExp(player, staticData.PlayerExperienceTable));
+		ApplyExpExtractRewardMutation(inventoryItems, mutationPlan);
+		player.InventoryItems = inventoryItems.ToArray();
+		RegisterExpExtractExpirableAddedItems(player, mutationPlan.AddedRewardItems, validation.RewardTemplate);
+
+		if (mutationPlan.RewardSucceeded)
+			await SendExpExtractRewardPacketsAsync(mutationPlan, validation.RewardTemplate);
+		else
+			await SendPacketAsync(SmSystemMessage.DiceInventoryError());
+
+		await SendPacketAsync(
+			SmSystemMessage.ExpExtractionUse(
+				sourceTemplate.GetClientName() ?? sourceTemplate.Name,
+				validation.RequiredExp,
+				validation.RewardTemplate.GetClientName() ?? validation.RewardTemplate.Name));
+		await SendPacketAsync(new SmItemUsageAnimation(player.ObjectId, player.UsingItemObjectId, sourceTemplate.TemplateId, 0, 1, 0));
+	}
+
+	private async Task SendExpExtractFailureAsync(ExpExtractFailure failure)
+	{
+		switch (failure)
+		{
+			case ExpExtractFailure.InventoryFull:
+				await SendPacketAsync(SmSystemMessage.DecompressInventoryFull());
+				break;
+			case ExpExtractFailure.NotEnoughExp:
+				await SendPacketAsync(SmSystemMessage.ExpExtractionUseNotEnoughExp());
+				break;
+		}
+	}
+
+	private async Task ApplyExpExtractSourceMutationAsync(
+		List<InventoryItem> inventoryItems,
+		ItemTemplateSummary sourceTemplate,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId)
+	{
+		if (deletedSourceItemObjectId.HasValue)
+		{
+			inventoryItems.RemoveAll(item => item.ObjectId == deletedSourceItemObjectId.Value);
+			await SendPacketAsync(new SmDeleteItem(deletedSourceItemObjectId.Value, SmDeleteItem.UseDeleteType));
+		}
+		else if (sourceItemUpdate != null)
+		{
+			ReplaceInventoryItem(inventoryItems, sourceItemUpdate);
+			await SendPacketAsync(new SmInventoryUpdateItem(sourceItemUpdate, sourceTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+		}
+	}
+
+	private static void ApplyExpExtractRewardMutation(List<InventoryItem> inventoryItems, ExpExtractMutationPlan mutationPlan)
+	{
+		foreach (var updatedReward in mutationPlan.UpdatedRewardItems)
+			ReplaceInventoryItem(inventoryItems, updatedReward);
+		inventoryItems.AddRange(mutationPlan.AddedRewardItems);
+	}
+
+	private void RegisterExpExtractExpirableAddedItems(Player player, IReadOnlyList<InventoryItem> addedRewardItems, ItemTemplateSummary rewardTemplate)
+	{
+		// Java parity: services/item/ItemService.addNonStackableItem registers newly created expirable items.
+		if (rewardTemplate.MaxStackCount > 1)
+			return;
+
+		foreach (var addedRewardItem in addedRewardItems)
+			_expirableTaskService?.RegisterInventoryItem(player, addedRewardItem);
+	}
+
+	private async Task SendExpExtractRewardPacketsAsync(ExpExtractMutationPlan mutationPlan, ItemTemplateSummary rewardTemplate)
 	{
 		foreach (var updatedReward in mutationPlan.UpdatedRewardItems)
 			await SendPacketAsync(new SmInventoryUpdateItem(updatedReward, rewardTemplate, SmInventoryUpdateItem.IncreaseItemCollect));
@@ -6526,7 +6697,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		int CancelEndState,
 		int CancelUnknown3,
 		int? RemoveCooldownDelayIdOnCancel,
-		bool PreserveOnEmotion);
+		bool PreserveOnEmotion,
+		bool CancelAnimationToSelfOnly);
 
 	private enum PendingItemUseCancelMessage
 	{

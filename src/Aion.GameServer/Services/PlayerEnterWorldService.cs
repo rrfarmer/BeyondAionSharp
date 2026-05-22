@@ -326,6 +326,26 @@ public sealed class PlayerEnterWorldService
 			cancellationToken);
 	}
 
+	public Task<bool> SaveExpExtractActionMutationAsync(
+		Player player,
+		long newExp,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		IReadOnlyList<InventoryItem> updatedRewardItems,
+		IReadOnlyList<InventoryItem> addedRewardItems,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: ExpExtractAction PlayerCommonData.exp/source consume/reward mutation.
+		return _repository.SaveExpExtractActionMutationAsync(
+			player.ObjectId,
+			newExp,
+			sourceItemUpdate,
+			deletedSourceItemObjectId,
+			updatedRewardItems,
+			addedRewardItems,
+			cancellationToken);
+	}
+
 	public Task<bool> SaveItemRemodelMutationAsync(
 		Player player,
 		InventoryItem targetItemUpdate,

@@ -325,6 +325,24 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300447);
 	}
 
+	public static SmSystemMessage DecompressInventoryFull()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_DECOMPRESS_INVENTORY_IS_FULL.
+		return new SmSystemMessage(1400363);
+	}
+
+	public static SmSystemMessage ExpExtractionUse(string extractionItem, long exp, string rewardItem)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_EXP_EXTRACTION_USE.
+		return new SmSystemMessage(1401705, extractionItem, exp.ToString(System.Globalization.CultureInfo.InvariantCulture), rewardItem);
+	}
+
+	public static SmSystemMessage ExpExtractionUseNotEnoughExp()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_EXP_EXTRACTION_USE_NOT_ENOUGH_EXP.
+		return new SmSystemMessage(1401706);
+	}
+
 	public static SmSystemMessage DecomposeItemFailed(string itemName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_DECOMPOSE_ITEM_FAILED.

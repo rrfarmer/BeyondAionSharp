@@ -48,7 +48,7 @@ public sealed class Player
 
 	public CharacterAppearance Appearance { get; set; } = new();
 
-	public long Exp { get; init; }
+	public long Exp { get; set; }
 
 	public long RecoverableExp { get; init; }
 

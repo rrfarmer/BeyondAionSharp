@@ -477,6 +477,18 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public IReadOnlyList<InventoryItem> AssemblyAddedRewardItems { get; private set; } = Array.Empty<InventoryItem>();
 
+		public int SaveExpExtractActionMutationCalls { get; private set; }
+
+		public long ExpExtractNewExp { get; private set; }
+
+		public InventoryItem? ExpExtractSourceItemUpdate { get; private set; }
+
+		public int? ExpExtractDeletedSourceItemObjectId { get; private set; }
+
+		public IReadOnlyList<InventoryItem> ExpExtractUpdatedRewardItems { get; private set; } = Array.Empty<InventoryItem>();
+
+		public IReadOnlyList<InventoryItem> ExpExtractAddedRewardItems { get; private set; } = Array.Empty<InventoryItem>();
+
 		public int SaveItemRemodelMutationCalls { get; private set; }
 
 		public InventoryItem? RemodelTargetItemUpdate { get; private set; }
@@ -780,6 +792,24 @@ public sealed class PlayerEnterWorldServiceTests
 			AssemblyDeletedPartObjectIds = deletedPartObjectIds;
 			AssemblyUpdatedRewardItems = updatedRewardItems;
 			AssemblyAddedRewardItems = addedRewardItems;
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> SaveExpExtractActionMutationAsync(
+			int playerObjectId,
+			long newExp,
+			InventoryItem? sourceItemUpdate,
+			int? deletedSourceItemObjectId,
+			IReadOnlyList<InventoryItem> updatedRewardItems,
+			IReadOnlyList<InventoryItem> addedRewardItems,
+			CancellationToken cancellationToken = default)
+		{
+			SaveExpExtractActionMutationCalls++;
+			ExpExtractNewExp = newExp;
+			ExpExtractSourceItemUpdate = sourceItemUpdate;
+			ExpExtractDeletedSourceItemObjectId = deletedSourceItemObjectId;
+			ExpExtractUpdatedRewardItems = updatedRewardItems;
+			ExpExtractAddedRewardItems = addedRewardItems;
 			return Task.FromResult(true);
 		}
 
