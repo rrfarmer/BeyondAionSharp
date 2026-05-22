@@ -1,6 +1,8 @@
+using System.Collections.Concurrent;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Utils.IdFactory;
 using Microsoft.Extensions.Logging;
 using GameWorld = Aion.GameServer.World.World;
@@ -13,7 +15,9 @@ public sealed class WorldNpcSpawnService : GameEngine
 	private readonly GameWorld _world;
 	private readonly IDFactory _idFactory;
 	private readonly GameTimeService? _gameTimeService;
+	private readonly IGameClientConnectionRegistry? _connectionRegistry;
 	private readonly ILogger<WorldNpcSpawnService> _logger;
+	private readonly ConcurrentDictionary<NpcSpawnSummary, int> _temporarySpawnObjectIds = new();
 	private int _loadedCount;
 	private int _skippedCount;
 
@@ -22,12 +26,14 @@ public sealed class WorldNpcSpawnService : GameEngine
 		GameWorld world,
 		IDFactory idFactory,
 		GameTimeService? gameTimeService,
+		IGameClientConnectionRegistry? connectionRegistry,
 		ILogger<WorldNpcSpawnService> logger)
 	{
 		_runtimeContext = runtimeContext;
 		_world = world;
 		_idFactory = idFactory;
 		_gameTimeService = gameTimeService;
+		_connectionRegistry = connectionRegistry;
 		_logger = logger;
 	}
 
@@ -35,8 +41,18 @@ public sealed class WorldNpcSpawnService : GameEngine
 		GameServerRuntimeContext runtimeContext,
 		GameWorld world,
 		IDFactory idFactory,
+		GameTimeService? gameTimeService,
 		ILogger<WorldNpcSpawnService> logger)
-		: this(runtimeContext, world, idFactory, null, logger)
+		: this(runtimeContext, world, idFactory, gameTimeService, null, logger)
+	{
+	}
+
+	public WorldNpcSpawnService(
+		GameServerRuntimeContext runtimeContext,
+		GameWorld world,
+		IDFactory idFactory,
+		ILogger<WorldNpcSpawnService> logger)
+		: this(runtimeContext, world, idFactory, null, null, logger)
 	{
 	}
 
@@ -62,7 +78,13 @@ public sealed class WorldNpcSpawnService : GameEngine
 			staticData.WorldMaps.Where(map => !map.IsInstance).Select(map => map.MapId),
 			_gameTimeService?.GameMinutes ?? 0,
 			DateTimeOffset.Now.DayOfWeek,
+			TemporarySpawnEvaluationMode.Startup,
+			includeAlwaysOn: true,
+			includeTemporary: true,
+			changedMapIds: null,
 			cancellationToken);
+		if (_gameTimeService != null)
+			_gameTimeService.HourChanged += OnGameHourChangedAsync;
 		Volatile.Write(ref _loadedCount, result.SpawnedCount);
 		Volatile.Write(ref _skippedCount, result.SkippedCount);
 		_logger.LogInformation(
@@ -74,6 +96,9 @@ public sealed class WorldNpcSpawnService : GameEngine
 
 	public ValueTask ShutdownAsync(CancellationToken cancellationToken = default)
 	{
+		if (_gameTimeService != null)
+			_gameTimeService.HourChanged -= OnGameHourChangedAsync;
+		_temporarySpawnObjectIds.Clear();
 		Volatile.Write(ref _loadedCount, 0);
 		Volatile.Write(ref _skippedCount, 0);
 		return ValueTask.CompletedTask;
@@ -91,6 +116,10 @@ public sealed class WorldNpcSpawnService : GameEngine
 			allowedMapIds,
 			_gameTimeService?.GameMinutes ?? 0,
 			DateTimeOffset.Now.DayOfWeek,
+			TemporarySpawnEvaluationMode.Startup,
+			includeAlwaysOn: true,
+			includeTemporary: true,
+			changedMapIds: null,
 			cancellationToken);
 	}
 
@@ -102,6 +131,77 @@ public sealed class WorldNpcSpawnService : GameEngine
 		DayOfWeek serverDayOfWeek,
 		CancellationToken cancellationToken = default)
 	{
+		return SpawnWorldNpcs(
+			spawns,
+			npcTemplates,
+			allowedMapIds,
+			gameMinutes,
+			serverDayOfWeek,
+			TemporarySpawnEvaluationMode.Startup,
+			includeAlwaysOn: true,
+			includeTemporary: true,
+			changedMapIds: null,
+			cancellationToken);
+	}
+
+	public async ValueTask<TemporarySpawnHourChangeResult> ProcessTemporarySpawnHourChangeAsync(
+		int gameMinutes,
+		DayOfWeek serverDayOfWeek,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: spawnengine/TemporarySpawnEngine.onHourChange despawns first, then spawns newly eligible groups.
+		var staticData = _runtimeContext.DataManager?.StaticData;
+		if (staticData == null)
+			return new TemporarySpawnHourChangeResult(SpawnedCount: 0, DespawnedCount: 0, SkippedCount: 0);
+
+		return await ProcessTemporarySpawnHourChangeAsync(
+			staticData.NpcSpawns,
+			staticData.NpcTemplates,
+			staticData.WorldMaps.Where(map => !map.IsInstance).Select(map => map.MapId),
+			gameMinutes,
+			serverDayOfWeek,
+			cancellationToken);
+	}
+
+	public async ValueTask<TemporarySpawnHourChangeResult> ProcessTemporarySpawnHourChangeAsync(
+		NpcSpawnTable spawns,
+		NpcTemplateTable npcTemplates,
+		IEnumerable<int>? allowedMapIds,
+		int gameMinutes,
+		DayOfWeek serverDayOfWeek,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: spawnengine/TemporarySpawnEngine.onHourChange despawns first, then spawns newly eligible groups.
+		var changedMapIds = new HashSet<int>();
+		var despawned = DespawnTemporaryNpcs(gameMinutes, serverDayOfWeek, changedMapIds);
+		var result = SpawnWorldNpcs(
+			spawns,
+			npcTemplates,
+			allowedMapIds,
+			gameMinutes,
+			serverDayOfWeek,
+			TemporarySpawnEvaluationMode.HourlySpawn,
+			includeAlwaysOn: false,
+			includeTemporary: true,
+			changedMapIds,
+			cancellationToken);
+
+		await RefreshNpcVisibilityAsync(changedMapIds, cancellationToken);
+		return new TemporarySpawnHourChangeResult(result.SpawnedCount, despawned, result.SkippedCount);
+	}
+
+	private WorldNpcSpawnResult SpawnWorldNpcs(
+		NpcSpawnTable spawns,
+		NpcTemplateTable npcTemplates,
+		IEnumerable<int>? allowedMapIds,
+		int gameMinutes,
+		DayOfWeek serverDayOfWeek,
+		TemporarySpawnEvaluationMode temporarySpawnMode,
+		bool includeAlwaysOn,
+		bool includeTemporary,
+		ISet<int>? changedMapIds,
+		CancellationToken cancellationToken = default)
+	{
 		var allowedMaps = allowedMapIds?.ToHashSet();
 		var spawned = 0;
 		var skipped = 0;
@@ -110,6 +210,14 @@ public sealed class WorldNpcSpawnService : GameEngine
 			cancellationToken.ThrowIfCancellationRequested();
 			var groupSpawns = group.ToArray();
 			var groupKey = group.Key;
+			var isTemporaryGroup = groupKey.TemporarySchedule != null;
+			var hasTemporarySpot = groupSpawns.Any(spawn => spawn.SpotTemporarySchedule != null);
+			if ((!includeAlwaysOn && !isTemporaryGroup) || (!includeTemporary && (isTemporaryGroup || hasTemporarySpot)))
+			{
+				skipped += groupSpawns.Length;
+				continue;
+			}
+
 			if (allowedMaps != null && !allowedMaps.Contains(groupKey.MapId))
 			{
 				skipped += groupSpawns.Length;
@@ -129,7 +237,16 @@ public sealed class WorldNpcSpawnService : GameEngine
 				continue;
 			}
 
-			if (groupKey.TemporarySchedule != null && !groupKey.TemporarySchedule.IsInSpawnTime(gameMinutes, serverDayOfWeek))
+			if (groupKey.TemporarySchedule != null
+				&& !IsTemporaryScheduleActive(groupKey.TemporarySchedule, gameMinutes, serverDayOfWeek, temporarySpawnMode))
+			{
+				skipped += groupSpawns.Length;
+				continue;
+			}
+
+			if (temporarySpawnMode == TemporarySpawnEvaluationMode.HourlySpawn
+				&& groupKey.PoolSize > 0
+				&& groupSpawns.Any(spawn => _temporarySpawnObjectIds.ContainsKey(spawn)))
 			{
 				skipped += groupSpawns.Length;
 				continue;
@@ -140,17 +257,31 @@ public sealed class WorldNpcSpawnService : GameEngine
 				? groupSpawns
 				: groupSpawns
 					.Where(spawn => spawn.SpotTemporarySchedule == null
-						|| spawn.SpotTemporarySchedule.IsInSpawnTime(gameMinutes, serverDayOfWeek))
+						|| IsTemporaryScheduleActive(spawn.SpotTemporarySchedule, gameMinutes, serverDayOfWeek, temporarySpawnMode))
 					.ToArray();
 			skipped += groupSpawns.Length - activeSpawns.Length;
 
 			foreach (var spawn in SelectActivePoolSpots(activeSpawns))
 			{
 				cancellationToken.ThrowIfCancellationRequested();
-				if (SpawnNpc(spawn, template))
-					spawned++;
-				else
+				if (spawn.GroupTemporarySchedule != null && _temporarySpawnObjectIds.ContainsKey(spawn))
+				{
 					skipped++;
+					continue;
+				}
+
+				var objectId = SpawnNpc(spawn, template);
+				if (objectId.HasValue)
+				{
+					spawned++;
+					if (spawn.GroupTemporarySchedule != null)
+						_temporarySpawnObjectIds[spawn] = objectId.Value;
+					changedMapIds?.Add(spawn.MapId);
+				}
+				else
+				{
+					skipped++;
+				}
 			}
 		}
 
@@ -169,10 +300,14 @@ public sealed class WorldNpcSpawnService : GameEngine
 			[mapId],
 			_gameTimeService?.GameMinutes ?? 0,
 			DateTimeOffset.Now.DayOfWeek,
+			TemporarySpawnEvaluationMode.Startup,
+			includeAlwaysOn: true,
+			includeTemporary: true,
+			changedMapIds: null,
 			cancellationToken);
 	}
 
-	private bool SpawnNpc(NpcSpawnSummary spawn, NpcTemplateSummary template)
+	private int? SpawnNpc(NpcSpawnSummary spawn, NpcTemplateSummary template)
 	{
 		var objectId = _idFactory.NextId();
 		var worldNpc = new WorldNpc(
@@ -183,10 +318,49 @@ public sealed class WorldNpcSpawnService : GameEngine
 		if (!_world.TryAddObject(objectId, worldNpc))
 		{
 			_idFactory.ReleaseId(objectId);
-			return false;
+			return null;
 		}
 
-		return true;
+		return objectId;
+	}
+
+	private int DespawnTemporaryNpcs(int gameMinutes, DayOfWeek serverDayOfWeek, ISet<int> changedMapIds)
+	{
+		var despawned = 0;
+		foreach (var pair in _temporarySpawnObjectIds.ToArray())
+		{
+			var spawn = pair.Key;
+			var schedule = spawn.SpotTemporarySchedule ?? spawn.GroupTemporarySchedule;
+			if (schedule == null || !schedule.CanDespawn(gameMinutes, serverDayOfWeek))
+				continue;
+
+			if (_temporarySpawnObjectIds.TryRemove(spawn, out var objectId)
+				&& _world.TryRemoveObject(objectId, out _))
+			{
+				_idFactory.ReleaseId(objectId);
+				changedMapIds.Add(spawn.MapId);
+				despawned++;
+			}
+		}
+
+		return despawned;
+	}
+
+	private async ValueTask RefreshNpcVisibilityAsync(IReadOnlySet<int> changedMapIds, CancellationToken cancellationToken)
+	{
+		if (_connectionRegistry == null)
+			return;
+
+		foreach (var mapId in changedMapIds)
+		{
+			cancellationToken.ThrowIfCancellationRequested();
+			await _connectionRegistry.RefreshNpcVisibilityAsync(_world.GetNpcs(mapId));
+		}
+	}
+
+	private async ValueTask OnGameHourChangedAsync(int gameMinutes, CancellationToken cancellationToken)
+	{
+		await ProcessTemporarySpawnHourChangeAsync(gameMinutes, DateTimeOffset.Now.DayOfWeek, cancellationToken);
 	}
 
 	private static IReadOnlyList<NpcSpawnSummary> SelectActivePoolSpots(IReadOnlyList<NpcSpawnSummary> groupSpawns)
@@ -212,6 +386,17 @@ public sealed class WorldNpcSpawnService : GameEngine
 			&& spawn.NpcId is <= 400000 or >= 499999;
 	}
 
+	private static bool IsTemporaryScheduleActive(
+		TemporarySpawnSchedule schedule,
+		int gameMinutes,
+		DayOfWeek serverDayOfWeek,
+		TemporarySpawnEvaluationMode mode)
+	{
+		return mode == TemporarySpawnEvaluationMode.HourlySpawn
+			? schedule.CanSpawn(gameMinutes, serverDayOfWeek)
+			: schedule.IsInSpawnTime(gameMinutes, serverDayOfWeek);
+	}
+
 	private static NpcSpawnGroupKey CreateSpawnGroupKey(NpcSpawnSummary spawn)
 	{
 		// Java parity: SpawnsData unique direct spawn groups are keyed by map, npc_id, and custom flag.
@@ -233,6 +418,14 @@ public sealed class WorldNpcSpawnService : GameEngine
 		string Handler,
 		bool Custom,
 		TemporarySpawnSchedule? TemporarySchedule);
+
+	private enum TemporarySpawnEvaluationMode
+	{
+		Startup,
+		HourlySpawn,
+	}
 }
 
 public readonly record struct WorldNpcSpawnResult(int SpawnedCount, int SkippedCount);
+
+public readonly record struct TemporarySpawnHourChangeResult(int SpawnedCount, int DespawnedCount, int SkippedCount);

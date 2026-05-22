@@ -107,6 +107,30 @@ public sealed class WorldNpcSpawnServiceTests
 		Assert.Equal(220010000, npc.Position.WorldId);
 	}
 
+	[Fact]
+	public async Task ProcessTemporarySpawnHourChange_DespawnsThenSpawnsEligibleTemporaryGroups()
+	{
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var service = CreateService(world);
+		var groupSchedule = TemporarySpawnSchedule.FromAttributes(null, null, null);
+		var spawns = new NpcSpawnTable(
+		[
+			CreateSpawn(210010000, 203030, x: 1, groupTemporarySchedule: groupSchedule, spotTemporarySchedule: TemporarySpawnSchedule.FromAttributes(null, "2.*.*", "3.*.*")),
+			CreateSpawn(210010000, 203030, x: 2, groupTemporarySchedule: groupSchedule, spotTemporarySchedule: TemporarySpawnSchedule.FromAttributes(null, "4.*.*", "5.*.*")),
+			CreateSpawn(210010000, 203031, x: 3),
+		]);
+		var templates = new NpcTemplateTable([CreateTemplate(203030), CreateTemplate(203031)]);
+
+		var startup = service.SpawnWorldNpcs(spawns, templates, [210010000], gameMinutes: 2 * 60, serverDayOfWeek: DayOfWeek.Friday);
+		var despawn = await service.ProcessTemporarySpawnHourChangeAsync(spawns, templates, [210010000], gameMinutes: 3 * 60, serverDayOfWeek: DayOfWeek.Friday);
+		var respawn = await service.ProcessTemporarySpawnHourChangeAsync(spawns, templates, [210010000], gameMinutes: 4 * 60, serverDayOfWeek: DayOfWeek.Friday);
+
+		Assert.Equal(new WorldNpcSpawnResult(2, 1), startup);
+		Assert.Equal(new TemporarySpawnHourChangeResult(0, 1, 3), despawn);
+		Assert.Equal(new TemporarySpawnHourChangeResult(1, 0, 2), respawn);
+		Assert.Equal([2, 3], world.GetNpcs().Select(npc => npc.Position.X).OrderBy(x => x).ToArray());
+	}
+
 	private static WorldNpcSpawnService CreateService(GameWorld world)
 	{
 		return new WorldNpcSpawnService(

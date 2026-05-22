@@ -28,6 +28,8 @@ public sealed class GameTimeService : GameEngine
 	private Task? _saveTask;
 	private Func<GameServerPacket, CancellationToken, Task<int>>? _broadcastToWorld;
 
+	public event Func<int, CancellationToken, ValueTask>? HourChanged;
+
 	public GameTimeService(ILogger<GameTimeService> logger, ThreadPoolManager threadPoolManager)
 		: this(logger, threadPoolManager, null, DefaultTickDelay, DefaultTickPeriod, DefaultSaveDelay, DefaultSavePeriod)
 	{
@@ -97,10 +99,11 @@ public sealed class GameTimeService : GameEngine
 			throw new InvalidOperationException("Tried to start game time twice.");
 
 		_clockTask = _threadPoolManager.ScheduleAtFixedRate(
-			_ =>
+			async cancellationToken =>
 			{
-				Interlocked.Increment(ref _gameMinutes);
-				return ValueTask.CompletedTask;
+				var gameMinutes = Interlocked.Increment(ref _gameMinutes);
+				if (gameMinutes % 60 == 0)
+					await NotifyHourChangedAsync(gameMinutes, cancellationToken);
 			},
 			_tickDelay,
 			_tickPeriod);
@@ -138,5 +141,16 @@ public sealed class GameTimeService : GameEngine
 	{
 		Volatile.Write(ref _isStarted, 0);
 		await SaveGameTimeAsync(cancellationToken);
+	}
+
+	private async ValueTask NotifyHourChangedAsync(int gameMinutes, CancellationToken cancellationToken)
+	{
+		// Java parity: utils/time/gametime/GameTime.onHourChange -> TemporarySpawnEngine.onHourChange.
+		var handlers = HourChanged;
+		if (handlers == null)
+			return;
+
+		foreach (var handler in handlers.GetInvocationList().Cast<Func<int, CancellationToken, ValueTask>>())
+			await handler(gameMinutes, cancellationToken);
 	}
 }

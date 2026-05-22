@@ -75,6 +75,8 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<PlayerEnterWorldService>();
 			services.AddHostedService<GameServerBootstrapService>();
 			services.AddSingleton<GameClientSocketServer>();
+			services.AddSingleton<IGameClientConnectionRegistry>(
+				serviceProvider => serviceProvider.GetRequiredService<GameClientSocketServer>());
 			services.AddHostedService<GameServerHostedService>();
 			services.AddHostedService<GameBridgeHostedService>();
 		}
