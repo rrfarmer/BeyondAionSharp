@@ -26,6 +26,7 @@ public sealed class StaticData
 		WalkerVersionTable walkerVersions,
 		NpcTemplateTable npcTemplates,
 		NpcSpawnTable npcSpawns,
+		NpcRiftSpawnTable npcRiftSpawns,
 		SkillTemplateTable skillTemplates,
 		TitleTemplateTable titleTemplates,
 		RecipeTemplateTable recipeTemplates,
@@ -55,6 +56,7 @@ public sealed class StaticData
 		WalkerVersions = walkerVersions;
 		NpcTemplates = npcTemplates;
 		NpcSpawns = npcSpawns;
+		NpcRiftSpawns = npcRiftSpawns;
 		SkillTemplates = skillTemplates;
 		TitleTemplates = titleTemplates;
 		RecipeTemplates = recipeTemplates;
@@ -106,6 +108,8 @@ public sealed class StaticData
 
 	public NpcSpawnTable NpcSpawns { get; }
 
+	public NpcRiftSpawnTable NpcRiftSpawns { get; }
+
 	public SkillTemplateTable SkillTemplates { get; }
 
 	public TitleTemplateTable TitleTemplates { get; }
@@ -153,6 +157,7 @@ public sealed class StaticData
 		var walkerVersionParents = new Dictionary<string, string>(StringComparer.Ordinal);
 		var npcTemplates = new List<NpcTemplateSummary>();
 		var npcSpawns = new List<NpcSpawnSummary>();
+		var npcRiftSpawns = new List<NpcRiftSpawnSummary>();
 		var skillTemplates = new List<SkillTemplateSummary>();
 		var titleTemplates = new List<TitleTemplateSummary>();
 		var recipeTemplates = new List<RecipeTemplateSummary>();
@@ -180,9 +185,16 @@ public sealed class StaticData
 		NpcTemplateBuilder? currentNpcTemplate = null;
 		NpcSpawnBuilder? currentNpcSpawn = null;
 		NpcSpawnSpotBuilder? currentNpcSpawnSpot = null;
+		NpcRiftSpawnBuilder? currentNpcRiftSpawn = null;
+		NpcSpawnSpotBuilder? currentNpcRiftSpawnSpot = null;
 		int currentNpcSpawnMapId = 0;
 		int currentNpcSpawnDepth = -1;
 		int currentNpcSpawnSpotDepth = -1;
+		int currentNpcRiftSpawnId = 0;
+		int currentNpcRiftSpawnDepth = -1;
+		int currentNpcRiftSpawnGroupIndex = 0;
+		int currentNpcRiftSpawnGroupDepth = -1;
+		int currentNpcRiftSpawnSpotDepth = -1;
 		string currentWalkerParentRouteId = string.Empty;
 		SkillTemplateBuilder? currentSkillTemplate = null;
 		TitleTemplateBuilder? currentTitleTemplate = null;
@@ -297,6 +309,26 @@ public sealed class StaticData
 					currentNpcSpawnSpotDepth = -1;
 				}
 
+				if (reader.Depth == currentNpcRiftSpawnGroupDepth && reader.LocalName == "spawn")
+				{
+					currentNpcRiftSpawn = null;
+					currentNpcRiftSpawnGroupDepth = -1;
+				}
+
+				if (reader.Depth == currentNpcRiftSpawnSpotDepth && reader.LocalName == "spot" && currentNpcRiftSpawn != null && currentNpcRiftSpawnSpot != null)
+				{
+					npcRiftSpawns.Add(currentNpcRiftSpawn.ToSummary(currentNpcRiftSpawnSpot));
+					currentNpcRiftSpawnSpot = null;
+					currentNpcRiftSpawnSpotDepth = -1;
+				}
+
+				if (reader.Depth == currentNpcRiftSpawnDepth && reader.LocalName == "rift_spawn")
+				{
+					currentNpcRiftSpawnId = 0;
+					currentNpcRiftSpawnDepth = -1;
+					currentNpcRiftSpawnGroupIndex = 0;
+				}
+
 				if (reader.Depth == 2 && reader.LocalName == "spawn_map" && elementPath.GetValueOrDefault(1) == "spawns")
 					currentNpcSpawnMapId = 0;
 
@@ -369,6 +401,17 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (currentNpcSpawnMapId != 0
+				&& reader.LocalName == "rift_spawn"
+				&& elementPath.GetValueOrDefault(reader.Depth - 1) == "spawn_map")
+			{
+				// Java parity: dataholders/SpawnsData.addRiftSpawns groups rift_spawn entries by id before RiftManager indexes their anchors.
+				currentNpcRiftSpawnId = ReadRequiredIntAttribute(reader, "id");
+				currentNpcRiftSpawnDepth = reader.Depth;
+				currentNpcRiftSpawnGroupIndex = 0;
+				continue;
+			}
+
 			if (reader.Depth == 2 && reader.LocalName == "walk_parent" && elementPath.GetValueOrDefault(1) == "walker_versions")
 			{
 				// Java parity: dataholders/WalkerVersionsData groups route variants by parent route id.
@@ -435,6 +478,23 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (currentNpcRiftSpawnId != 0
+				&& reader.LocalName == "spawn"
+				&& reader.Depth == currentNpcRiftSpawnDepth + 1
+				&& elementPath.GetValueOrDefault(reader.Depth - 1) == "rift_spawn")
+			{
+				// Java parity: model/templates/spawns/riftspawns/RiftSpawn nested Spawn groups keep ordinary spawn metadata plus the rift id.
+				currentNpcRiftSpawn = new NpcRiftSpawnBuilder(
+					currentNpcSpawnMapId,
+					currentNpcRiftSpawnId,
+					currentNpcRiftSpawnGroupIndex++,
+					ReadRequiredIntAttribute(reader, "npc_id"),
+					ReadIntAttribute(reader, "respawn_time"),
+					ReadIntAttribute(reader, "pool"));
+				currentNpcRiftSpawnGroupDepth = reader.Depth;
+				continue;
+			}
+
 			if (currentNpcSpawn != null
 				&& reader.LocalName == "temporary_spawn"
 				&& reader.Depth == currentNpcSpawnDepth + 1
@@ -461,6 +521,23 @@ public sealed class StaticData
 					npcSpawns.Add(currentNpcSpawn.ToSummary(currentNpcSpawnSpot));
 					currentNpcSpawnSpot = null;
 					currentNpcSpawnSpotDepth = -1;
+				}
+				continue;
+			}
+
+			if (currentNpcRiftSpawn != null
+				&& reader.LocalName == "spot"
+				&& reader.Depth == currentNpcRiftSpawnGroupDepth + 1
+				&& elementPath.GetValueOrDefault(reader.Depth - 1) == "spawn")
+			{
+				// Java parity: RiftSpawnTemplate extends SpawnTemplate, preserving spot anchor metadata for RiftManager.
+				currentNpcRiftSpawnSpot = NpcSpawnSpotBuilder.FromReader(reader);
+				currentNpcRiftSpawnSpotDepth = reader.Depth;
+				if (reader.IsEmptyElement)
+				{
+					npcRiftSpawns.Add(currentNpcRiftSpawn.ToSummary(currentNpcRiftSpawnSpot));
+					currentNpcRiftSpawnSpot = null;
+					currentNpcRiftSpawnSpotDepth = -1;
 				}
 				continue;
 			}
@@ -1445,6 +1522,7 @@ public sealed class StaticData
 			new WalkerVersionTable(new ReadOnlyDictionary<string, string>(walkerVersionParents)),
 			new NpcTemplateTable(npcTemplates.AsReadOnly()),
 			new NpcSpawnTable(npcSpawns.AsReadOnly()),
+			new NpcRiftSpawnTable(npcRiftSpawns.AsReadOnly()),
 			new SkillTemplateTable(skillTemplates.AsReadOnly()),
 			new TitleTemplateTable(titleTemplates.AsReadOnly()),
 			new RecipeTemplateTable(recipeTemplates.AsReadOnly()),
@@ -2734,6 +2812,63 @@ public sealed class StaticData
 				Custom,
 				TemporarySchedule,
 				spot.TemporarySchedule);
+		}
+	}
+
+	private sealed class NpcRiftSpawnBuilder
+	{
+		private int _nextSpotIndex;
+
+		public NpcRiftSpawnBuilder(
+			int mapId,
+			int riftId,
+			int spawnGroupIndex,
+			int npcId,
+			int respawnSeconds,
+			int poolSize)
+		{
+			MapId = mapId;
+			RiftId = riftId;
+			SpawnGroupIndex = spawnGroupIndex;
+			NpcId = npcId;
+			RespawnSeconds = respawnSeconds;
+			PoolSize = poolSize;
+		}
+
+		private int MapId { get; }
+
+		private int RiftId { get; }
+
+		private int SpawnGroupIndex { get; }
+
+		private int NpcId { get; }
+
+		private int RespawnSeconds { get; }
+
+		private int PoolSize { get; }
+
+		public NpcRiftSpawnSummary ToSummary(NpcSpawnSpotBuilder spot)
+		{
+			// Java parity: model/templates/spawns/riftspawns/RiftSpawnTemplate wraps ordinary SpawnTemplate spot metadata with a rift id.
+			return new NpcRiftSpawnSummary(
+				MapId,
+				RiftId,
+				SpawnGroupIndex,
+				_nextSpotIndex++,
+				NpcId,
+				spot.X,
+				spot.Y,
+				spot.Z,
+				spot.Heading,
+				RespawnSeconds,
+				PoolSize,
+				spot.StaticId,
+				spot.RandomWalkRange,
+				spot.WalkerId,
+				spot.WalkerIndex,
+				spot.Anchor,
+				spot.State,
+				spot.AiName);
 		}
 	}
 

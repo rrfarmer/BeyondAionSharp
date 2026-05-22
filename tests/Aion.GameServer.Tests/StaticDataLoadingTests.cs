@@ -128,7 +128,12 @@ public sealed class StaticDataLoadingTests
 						</spawn>
 						<rift_spawn id="1" world="210010000">
 							<spawn npc_id="203001" respawn_time="60">
-								<spot x="4" y="5" z="6" />
+								<spot x="4" y="5" z="6" h="7" anchor="rift-master" />
+								<spot x="8" y="9" z="10" h="11" anchor="rift-slave" />
+							</spawn>
+							<spawn npc_id="203002" respawn_time="90" pool="2">
+								<spot x="14" y="15" z="16" anchor="rift-pooled-a" />
+								<spot x="17" y="18" z="19" anchor="rift-pooled-b" />
 							</spawn>
 						</rift_spawn>
 					</spawn_map>
@@ -180,6 +185,23 @@ public sealed class StaticDataLoadingTests
 		Assert.NotNull(temporarySpotSpawn.SpotTemporarySchedule);
 		Assert.True(temporarySpotSpawn.SpotTemporarySchedule.IsInSpawnTime(5 * 60, DayOfWeek.Friday));
 		Assert.False(temporarySpotSpawn.SpotTemporarySchedule.IsInSpawnTime(21 * 60, DayOfWeek.Friday));
+		Assert.Equal(4, staticData.NpcRiftSpawns.Count);
+		var riftSpawns = staticData.NpcRiftSpawns.GetSpawnsForRift(1);
+		Assert.Equal(4, riftSpawns.Count);
+		var masterRiftSpawn = Assert.Single(riftSpawns, spawn => spawn.Anchor == "rift-master");
+		Assert.Equal(210010000, masterRiftSpawn.MapId);
+		Assert.Equal(203001, masterRiftSpawn.NpcId);
+		Assert.Equal(4, masterRiftSpawn.X);
+		Assert.Equal(5, masterRiftSpawn.Y);
+		Assert.Equal(6, masterRiftSpawn.Z);
+		Assert.Equal((byte)7, masterRiftSpawn.Heading);
+		Assert.True(staticData.NpcRiftSpawns.TryGetSpawnByAnchor("rift-master", out var anchoredMaster));
+		Assert.Equal(masterRiftSpawn, anchoredMaster);
+		Assert.True(staticData.NpcRiftSpawns.TryGetSpawnByAnchor("rift-slave", out var anchoredSlave));
+		Assert.Equal(1, anchoredSlave?.SpotIndex);
+		Assert.True(staticData.NpcRiftSpawns.TryGetSpawnByAnchor("rift-pooled-a", out var anchoredPooled));
+		Assert.Equal(2, anchoredPooled?.PoolSize);
+		Assert.False(staticData.NpcRiftSpawns.TryGetSpawnByAnchor("rift-pooled-b", out _));
 		Assert.Empty(staticData.NpcSpawns.GetSpawnsForMap(700010000));
 	}
 

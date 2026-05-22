@@ -52,6 +52,80 @@ public sealed record NpcSpawnSummary(
 	public bool HasTemporarySchedule => GroupTemporarySchedule != null || SpotTemporarySchedule != null;
 }
 
+public sealed class NpcRiftSpawnTable
+{
+	private readonly IReadOnlyDictionary<int, IReadOnlyList<NpcRiftSpawnSummary>> _spawnsByRiftId;
+	private readonly IReadOnlyDictionary<string, NpcRiftSpawnSummary> _spawnsByAnchor;
+
+	public NpcRiftSpawnTable(IReadOnlyList<NpcRiftSpawnSummary> spawns)
+	{
+		Spawns = spawns;
+		_spawnsByRiftId = new ReadOnlyDictionary<int, IReadOnlyList<NpcRiftSpawnSummary>>(
+			spawns
+				.GroupBy(spawn => spawn.RiftId)
+				.ToDictionary(
+					group => group.Key,
+					group => (IReadOnlyList<NpcRiftSpawnSummary>)group.ToArray()));
+		_spawnsByAnchor = new ReadOnlyDictionary<string, NpcRiftSpawnSummary>(
+			BuildAnchorLookup(spawns));
+	}
+
+	public IReadOnlyList<NpcRiftSpawnSummary> Spawns { get; }
+
+	public int Count => Spawns.Count;
+
+	public IReadOnlyList<NpcRiftSpawnSummary> GetSpawnsForRift(int riftId)
+	{
+		return _spawnsByRiftId.GetValueOrDefault(riftId) ?? Array.Empty<NpcRiftSpawnSummary>();
+	}
+
+	public bool TryGetSpawnByAnchor(string anchor, out NpcRiftSpawnSummary? spawn)
+	{
+		return _spawnsByAnchor.TryGetValue(anchor, out spawn);
+	}
+
+	private static Dictionary<string, NpcRiftSpawnSummary> BuildAnchorLookup(
+		IReadOnlyList<NpcRiftSpawnSummary> spawns)
+	{
+		// Java parity: services/rift/RiftManager.addRiftSpawnTemplate maps every anchor, except pooled groups map only their first template.
+		var anchors = new Dictionary<string, NpcRiftSpawnSummary>(StringComparer.Ordinal);
+		foreach (var group in spawns.GroupBy(spawn => new { spawn.MapId, spawn.RiftId, spawn.SpawnGroupIndex }))
+		{
+			var orderedGroup = group.OrderBy(spawn => spawn.SpotIndex).ToArray();
+			var candidates = orderedGroup[0].PoolSize > 0
+				? orderedGroup.Take(1)
+				: orderedGroup;
+			foreach (var candidate in candidates)
+			{
+				if (!string.IsNullOrEmpty(candidate.Anchor))
+					anchors[candidate.Anchor] = candidate;
+			}
+		}
+
+		return anchors;
+	}
+}
+
+public sealed record NpcRiftSpawnSummary(
+	int MapId,
+	int RiftId,
+	int SpawnGroupIndex,
+	int SpotIndex,
+	int NpcId,
+	float X,
+	float Y,
+	float Z,
+	byte Heading,
+	int RespawnSeconds,
+	int PoolSize,
+	int StaticId,
+	int RandomWalkRange,
+	string WalkerId,
+	int WalkerIndex,
+	string Anchor,
+	int State,
+	string AiName);
+
 public sealed record TemporarySpawnSchedule(
 	int WeekdayMask,
 	int? SpawnHour,
