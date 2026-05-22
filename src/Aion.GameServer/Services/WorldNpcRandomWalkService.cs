@@ -12,6 +12,8 @@ namespace Aion.GameServer.Services;
 
 public sealed class WorldNpcRandomWalkService
 {
+	private static readonly TimeSpan MoveTaskUpdatePeriod = TimeSpan.FromMilliseconds(200);
+	private const double MoveOffset = 0.05d;
 	private readonly GameWorld _world;
 	private readonly IGameClientConnectionRegistry _connectionRegistry;
 	private readonly GameServerOptions _options;
@@ -21,6 +23,8 @@ public sealed class WorldNpcRandomWalkService
 	private readonly Func<int, int, int> _nextDelaySeconds;
 	private readonly ConcurrentDictionary<int, WorldNpcRandomWalkRuntimeState> _activeStates = new();
 	private readonly ConcurrentDictionary<int, ScheduledTask> _pendingTargetTasks = new();
+	private readonly ConcurrentDictionary<int, ScheduledTask> _pendingArrivalTasks = new();
+	private readonly ConcurrentDictionary<int, ScheduledTask> _pendingMovementTickTasks = new();
 
 	public WorldNpcRandomWalkService(
 		GameWorld world,
@@ -43,6 +47,10 @@ public sealed class WorldNpcRandomWalkService
 	public int ActiveStateCount => _activeStates.Count;
 
 	public int PendingTargetTaskCount => _pendingTargetTasks.Count;
+
+	public int PendingArrivalTaskCount => _pendingArrivalTasks.Count;
+
+	public int PendingMovementTickTaskCount => _pendingMovementTickTasks.Count;
 
 	public bool TryGetActiveState(int objectId, out WorldNpcRandomWalkRuntimeState? state)
 	{
@@ -104,8 +112,46 @@ public sealed class WorldNpcRandomWalkService
 	{
 		// Java parity: ai/manager/WalkManager.stopWalking aborts movement and returns the NPC to IDLE.
 		CancelPendingTargetTask(objectId);
+		CancelPendingArrivalTask(objectId);
+		CancelPendingMovementTickTask(objectId);
 		_npcAiStates?.StopWalking(objectId);
 		return _activeStates.TryRemove(objectId, out _);
+	}
+
+	public ValueTask<WorldNpcRandomWalkTargetReachedResult> TargetReachedAsync(
+		int objectId,
+		CancellationToken cancellationToken = default)
+	{
+		return TargetReachedCoreAsync(objectId, cancellationToken, cancellationToken);
+	}
+
+	private ValueTask<WorldNpcRandomWalkTargetReachedResult> TargetReachedCoreAsync(
+		int objectId,
+		CancellationToken cancellationToken,
+		CancellationToken scheduleCancellationToken)
+	{
+		// Java parity: ai/manager/WalkManager.targetReached handles WALK_RANDOM by choosing the next random point.
+		cancellationToken.ThrowIfCancellationRequested();
+		CancelPendingArrivalTask(objectId);
+		CancelPendingMovementTickTask(objectId);
+		if (!_activeStates.TryGetValue(objectId, out var state) || state.Target == null)
+			return ValueTask.FromResult(WorldNpcRandomWalkTargetReachedResult.NotHandled(WorldNpcRandomWalkTargetReachedStatus.MissingTarget));
+		if (!TryUpdateNpcPositionToTarget(objectId, state.Target))
+			return ValueTask.FromResult(WorldNpcRandomWalkTargetReachedResult.NotHandled(WorldNpcRandomWalkTargetReachedStatus.MissingNpc));
+		if (!IsStillWalking(objectId))
+		{
+			_activeStates.TryRemove(objectId, out _);
+			return ValueTask.FromResult(WorldNpcRandomWalkTargetReachedResult.NotHandled(WorldNpcRandomWalkTargetReachedStatus.NotWalking));
+		}
+
+		var delay = GetNextRandomWalkDelay();
+		_activeStates[objectId] = state with
+		{
+			Delay = delay,
+			Target = null,
+		};
+		ScheduleRandomPointSelection(objectId, delay, scheduleCancellationToken);
+		return ValueTask.FromResult(WorldNpcRandomWalkTargetReachedResult.ScheduledNext(delay));
 	}
 
 	private void ScheduleRandomPointSelection(
@@ -121,7 +167,7 @@ public sealed class WorldNpcRandomWalkService
 				if (scheduledTask != null)
 					RemovePendingTargetTask(objectId, scheduledTask);
 
-				await ChooseNextRandomPointAsync(objectId, taskCancellationToken);
+				await ChooseNextRandomPointAsync(objectId, taskCancellationToken, cancellationToken);
 			},
 			delay,
 			cancellationToken);
@@ -135,7 +181,8 @@ public sealed class WorldNpcRandomWalkService
 
 	private async Task ChooseNextRandomPointAsync(
 		int objectId,
-		CancellationToken cancellationToken)
+		CancellationToken cancellationToken,
+		CancellationToken scheduleCancellationToken)
 	{
 		// Java parity: ai/manager/WalkManager.chooseNextRandomPoint chooses x/y inside spawn random_walk range and moveToPoint(..., owner.getZ()).
 		cancellationToken.ThrowIfCancellationRequested();
@@ -163,7 +210,81 @@ public sealed class WorldNpcRandomWalkService
 
 		var packet = new SmMove(npc, MovementMask.NpcStartMove, target.X, target.Y, target.Z);
 		var sentCount = await _connectionRegistry.BroadcastToVisiblePlayersAsync(npc.Position, npc.ObjectId, packet);
-		_activeStates[objectId] = nextState with { BroadcastCount = sentCount };
+		var broadcastState = nextState with { BroadcastCount = sentCount };
+		_activeStates[objectId] = broadcastState;
+		ScheduleTargetArrival(objectId, broadcastState, scheduleCancellationToken);
+	}
+
+	private void ScheduleTargetArrival(
+		int objectId,
+		WorldNpcRandomWalkRuntimeState state,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: taskmanager/tasks/MoveTaskManager emits MOVE_ARRIVED once WALK_RANDOM reaches its moveToPoint target.
+		if (_threadPoolManager == null || state.Target == null)
+			return;
+
+		var arrivalDelay = CalculateArrivalDelay(objectId, state.Target);
+		if (arrivalDelay == null)
+			return;
+
+		CancelPendingArrivalTask(objectId);
+		CancelPendingMovementTickTask(objectId);
+		ScheduledTask? scheduledTask = null;
+		scheduledTask = _threadPoolManager.Schedule(
+			async taskCancellationToken =>
+			{
+				if (scheduledTask != null)
+					RemovePendingArrivalTask(objectId, scheduledTask);
+
+				await TargetReachedCoreAsync(objectId, taskCancellationToken, cancellationToken);
+			},
+			arrivalDelay.Value,
+			cancellationToken);
+		_pendingArrivalTasks[objectId] = scheduledTask;
+		ScheduleMovementTick(objectId, state, arrivalDelay.Value, cancellationToken);
+		_ = scheduledTask.Completion.ContinueWith(
+			_ => RemovePendingArrivalTask(objectId, scheduledTask),
+			CancellationToken.None,
+			TaskContinuationOptions.ExecuteSynchronously,
+			TaskScheduler.Default);
+	}
+
+	private void ScheduleMovementTick(
+		int objectId,
+		WorldNpcRandomWalkRuntimeState state,
+		TimeSpan arrivalDelay,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: controllers/movement/NpcMoveController.moveToLocation advances by speed on each 200 ms MoveTaskManager tick.
+		if (_threadPoolManager == null || arrivalDelay <= MoveTaskUpdatePeriod)
+			return;
+
+		CancelPendingMovementTickTask(objectId);
+		ScheduledTask? scheduledTask = null;
+		scheduledTask = _threadPoolManager.Schedule(
+			_ =>
+			{
+				if (scheduledTask != null)
+					RemovePendingMovementTickTask(objectId, scheduledTask);
+
+				if (TryAdvanceNpcPositionTowardsTarget(objectId, state))
+				{
+					var nextArrivalDelay = state.Target == null ? null : CalculateArrivalDelay(objectId, state.Target);
+					if (nextArrivalDelay is { } delay && delay > MoveTaskUpdatePeriod)
+						ScheduleMovementTick(objectId, state, delay, cancellationToken);
+				}
+
+				return ValueTask.CompletedTask;
+			},
+			MoveTaskUpdatePeriod,
+			cancellationToken);
+		_pendingMovementTickTasks[objectId] = scheduledTask;
+		_ = scheduledTask.Completion.ContinueWith(
+			_ => RemovePendingMovementTickTask(objectId, scheduledTask),
+			CancellationToken.None,
+			TaskContinuationOptions.ExecuteSynchronously,
+			TaskScheduler.Default);
 	}
 
 	private bool IsStillWalking(int objectId)
@@ -181,9 +302,42 @@ public sealed class WorldNpcRandomWalkService
 		return TimeSpan.FromSeconds(_nextDelaySeconds(minimum, maximum));
 	}
 
+	private TimeSpan? CalculateArrivalDelay(
+		int objectId,
+		WorldNpcRandomWalkTarget target)
+	{
+		// Java parity: controllers/movement/NpcMoveController.moveToLocation uses owner.getGameStats().getMovementSpeedFloat().
+		if (!_world.TryGetObject(objectId, out var gameObject) || gameObject is not WorldNpc npc)
+			return null;
+
+		var speed = npc.Template.RunSpeed;
+		if (speed <= 0)
+			return null;
+
+		var distance = CalculateDistance(npc.Position, target);
+		if (distance <= MoveOffset)
+			return MoveTaskUpdatePeriod;
+
+		var travelSeconds = Math.Max(0d, distance - MoveOffset) / speed;
+		var delay = TimeSpan.FromMilliseconds(Math.Ceiling(travelSeconds * 1000d));
+		return delay < MoveTaskUpdatePeriod ? MoveTaskUpdatePeriod : delay;
+	}
+
 	private void CancelPendingTargetTask(int objectId)
 	{
 		if (_pendingTargetTasks.TryRemove(objectId, out var scheduledTask))
+			scheduledTask.Cancel();
+	}
+
+	private void CancelPendingArrivalTask(int objectId)
+	{
+		if (_pendingArrivalTasks.TryRemove(objectId, out var scheduledTask))
+			scheduledTask.Cancel();
+	}
+
+	private void CancelPendingMovementTickTask(int objectId)
+	{
+		if (_pendingMovementTickTasks.TryRemove(objectId, out var scheduledTask))
 			scheduledTask.Cancel();
 	}
 
@@ -191,6 +345,84 @@ public sealed class WorldNpcRandomWalkService
 	{
 		((ICollection<KeyValuePair<int, ScheduledTask>>)_pendingTargetTasks).Remove(
 			new KeyValuePair<int, ScheduledTask>(objectId, scheduledTask));
+	}
+
+	private void RemovePendingArrivalTask(int objectId, ScheduledTask scheduledTask)
+	{
+		((ICollection<KeyValuePair<int, ScheduledTask>>)_pendingArrivalTasks).Remove(
+			new KeyValuePair<int, ScheduledTask>(objectId, scheduledTask));
+	}
+
+	private void RemovePendingMovementTickTask(int objectId, ScheduledTask scheduledTask)
+	{
+		((ICollection<KeyValuePair<int, ScheduledTask>>)_pendingMovementTickTasks).Remove(
+			new KeyValuePair<int, ScheduledTask>(objectId, scheduledTask));
+	}
+
+	private bool TryUpdateNpcPositionToTarget(
+		int objectId,
+		WorldNpcRandomWalkTarget target)
+	{
+		if (!_world.TryGetObject(objectId, out var gameObject) || gameObject is not WorldNpc npc)
+			return false;
+
+		var updatedNpc = npc with
+		{
+			Position = npc.Position with
+			{
+				X = target.X,
+				Y = target.Y,
+				Z = target.Z,
+			},
+		};
+		return _world.TryUpdateObject(objectId, updatedNpc);
+	}
+
+	private bool TryAdvanceNpcPositionTowardsTarget(
+		int objectId,
+		WorldNpcRandomWalkRuntimeState state)
+	{
+		if (state.Target == null)
+			return false;
+		if (!_activeStates.TryGetValue(objectId, out var activeState) || activeState != state)
+			return false;
+		if (!_world.TryGetObject(objectId, out var gameObject) || gameObject is not WorldNpc npc)
+			return false;
+
+		var speed = npc.Template.RunSpeed;
+		if (speed <= 0)
+			return false;
+
+		var distance = CalculateDistance(npc.Position, state.Target);
+		if (distance <= MoveOffset)
+			return false;
+
+		var stepDistance = speed * MoveTaskUpdatePeriod.TotalSeconds;
+		var travelDistance = Math.Min(stepDistance, Math.Max(0d, distance - MoveOffset));
+		if (travelDistance <= 0)
+			return false;
+
+		var fraction = travelDistance / distance;
+		var updatedNpc = npc with
+		{
+			Position = npc.Position with
+			{
+				X = (float)((state.Target.X - npc.Position.X) * fraction + npc.Position.X),
+				Y = (float)((state.Target.Y - npc.Position.Y) * fraction + npc.Position.Y),
+				Z = (float)((state.Target.Z - npc.Position.Z) * fraction + npc.Position.Z),
+			},
+		};
+		return _world.TryUpdateObject(objectId, updatedNpc);
+	}
+
+	private static double CalculateDistance(
+		WorldPosition position,
+		WorldNpcRandomWalkTarget target)
+	{
+		var deltaX = position.X - target.X;
+		var deltaY = position.Y - target.Y;
+		var deltaZ = position.Z - target.Z;
+		return Math.Sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
 	}
 }
 
@@ -237,6 +469,36 @@ public enum WorldNpcRandomWalkStartStatus
 	AlreadyWalking,
 	MissingNpc,
 	NotRandomWalker,
+}
+
+public sealed record WorldNpcRandomWalkTargetReachedResult(
+	bool Handled,
+	WorldNpcRandomWalkTargetReachedStatus Status,
+	TimeSpan NextDelay)
+{
+	public static WorldNpcRandomWalkTargetReachedResult ScheduledNext(TimeSpan nextDelay)
+	{
+		return new WorldNpcRandomWalkTargetReachedResult(
+			Handled: true,
+			WorldNpcRandomWalkTargetReachedStatus.ScheduledNext,
+			nextDelay);
+	}
+
+	public static WorldNpcRandomWalkTargetReachedResult NotHandled(WorldNpcRandomWalkTargetReachedStatus status)
+	{
+		return new WorldNpcRandomWalkTargetReachedResult(
+			Handled: false,
+			status,
+			NextDelay: TimeSpan.Zero);
+	}
+}
+
+public enum WorldNpcRandomWalkTargetReachedStatus
+{
+	ScheduledNext,
+	MissingTarget,
+	MissingNpc,
+	NotWalking,
 }
 
 public sealed record WorldNpcRandomWalkWorldStartResult(

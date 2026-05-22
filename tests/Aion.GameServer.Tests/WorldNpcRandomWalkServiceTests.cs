@@ -25,8 +25,7 @@ public sealed class WorldNpcRandomWalkServiceTests
 			var npc = CreateNpc(
 				objectId: 1,
 				position: new WorldPosition(210010000, 100, 200, 10, 3),
-				randomWalkRange: 10,
-				runSpeed: 6);
+				randomWalkRange: 10);
 			Assert.True(world.TryAddObject(npc.ObjectId, npc));
 			var registry = new CapturingConnectionRegistry();
 			var aiStates = new WorldNpcAiStateService();
@@ -70,6 +69,8 @@ public sealed class WorldNpcRandomWalkServiceTests
 			Assert.Equal(194, state.Target.Y);
 			Assert.Equal(10, state.Target.Z);
 			Assert.Equal(1, state.BroadcastCount);
+			Assert.Equal(0, service.PendingArrivalTaskCount);
+			Assert.Equal(0, service.PendingMovementTickTaskCount);
 			Assert.Equal(npc.ObjectId, registry.Broadcasts[0].SourceObjectId);
 			Assert.Equal(npc.Position, registry.Broadcasts[0].SourcePosition);
 
@@ -84,6 +85,98 @@ public sealed class WorldNpcRandomWalkServiceTests
 			Assert.Equal(194, reader.ReadF());
 			Assert.Equal(10, reader.ReadF());
 			Assert.Equal(0, reader.Remaining);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
+	public async Task StartRandomWalkingAsync_InterpolatesToTargetAndSchedulesNextRandomPointAfterArrival()
+	{
+		var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		try
+		{
+			var options = CreateOptions(minimumDelaySeconds: 0, maximumDelaySeconds: 60);
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			var npc = CreateNpc(
+				objectId: 1,
+				position: new WorldPosition(210010000, 0, 0, 0, 3),
+				randomWalkRange: 1,
+				runSpeed: 1);
+			Assert.True(world.TryAddObject(npc.ObjectId, npc));
+			var registry = new CapturingConnectionRegistry();
+			var aiStates = new WorldNpcAiStateService();
+			var randomValues = new Queue<float>([1.5f, 1f]);
+			var delays = new Queue<int>([0, 60]);
+			var service = new WorldNpcRandomWalkService(
+				world,
+				registry,
+				options,
+				threadPoolManager,
+				aiStates,
+				maxExclusive =>
+				{
+					Assert.Equal(2, maxExclusive);
+					return randomValues.Dequeue();
+				},
+				(minimum, maximum) =>
+				{
+					Assert.Equal(0, minimum);
+					Assert.Equal(60, maximum);
+					return delays.Dequeue();
+				});
+
+			var result = await service.StartRandomWalkingAsync(npc.ObjectId);
+
+			Assert.True(result.Started);
+			Assert.Equal(TimeSpan.Zero, result.Delay);
+			await WaitUntilAsync(() => registry.Broadcasts.Count == 1
+				&& service.TryGetActiveState(npc.ObjectId, out var activeState)
+				&& activeState?.Target != null
+				&& service.PendingArrivalTaskCount == 1);
+
+			Assert.Equal(1, service.PendingMovementTickTaskCount);
+			await WaitUntilAsync(() =>
+			{
+				if (!world.TryGetObject(npc.ObjectId, out var movedObject) || movedObject is not WorldNpc movedNpc)
+					return false;
+
+				return movedNpc.Position.X > 0 && movedNpc.Position.X < 0.5f;
+			});
+
+			Assert.True(world.TryGetObject(npc.ObjectId, out var interpolatedObject));
+			var interpolatedNpc = Assert.IsType<WorldNpc>(interpolatedObject);
+			Assert.InRange(interpolatedNpc.Position.X, 0.05f, 0.49f);
+			Assert.Equal(0, interpolatedNpc.Position.Y);
+			Assert.Equal(0, interpolatedNpc.Position.Z);
+
+			await WaitUntilAsync(() =>
+			{
+				if (!world.TryGetObject(npc.ObjectId, out var reachedObject) || reachedObject is not WorldNpc reachedNpc)
+					return false;
+
+				return Math.Abs(reachedNpc.Position.X - 0.5f) < 0.0001f
+					&& service.PendingTargetTaskCount == 1
+					&& service.PendingArrivalTaskCount == 0
+					&& service.PendingMovementTickTaskCount == 0;
+			});
+
+			Assert.True(service.TryGetActiveState(npc.ObjectId, out var state));
+			Assert.NotNull(state);
+			Assert.Null(state.Target);
+			Assert.Equal(TimeSpan.FromSeconds(60), state.Delay);
+			Assert.Single(registry.Broadcasts);
+			Assert.True(aiStates.TryGetState(npc.ObjectId, out var aiState));
+			Assert.NotNull(aiState);
+			Assert.Equal(WorldNpcAiState.Walking, aiState.State);
+			Assert.Equal(WorldNpcAiSubState.WalkRandom, aiState.SubState);
+			Assert.True(world.TryGetObject(npc.ObjectId, out var reachedObject));
+			var reachedNpc = Assert.IsType<WorldNpc>(reachedObject);
+			Assert.Equal(0.5f, reachedNpc.Position.X);
+			Assert.Equal(0, reachedNpc.Position.Y);
+			Assert.Equal(0, reachedNpc.Position.Z);
 		}
 		finally
 		{
