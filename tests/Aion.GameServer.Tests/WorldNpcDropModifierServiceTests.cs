@@ -1,0 +1,60 @@
+using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Services;
+using Aion.GameServer.World;
+
+namespace Aion.GameServer.Tests;
+
+public sealed class WorldNpcDropModifierServiceTests
+{
+	[Theory]
+	[InlineData(-11, 0)]
+	[InlineData(-10, 0)]
+	[InlineData(-9, 40)]
+	[InlineData(-8, 60)]
+	[InlineData(-7, 70)]
+	[InlineData(-6, 80)]
+	[InlineData(-5, 100)]
+	[InlineData(0, 100)]
+	public void GetDropRewardPercent_MatchesJavaDropRewardEnum(int levelDifference, int expectedPercent)
+	{
+		Assert.Equal(expectedPercent, WorldNpcDropModifierService.GetDropRewardPercent(levelDifference));
+	}
+
+	[Theory]
+	[InlineData(10, 20, 0f)]
+	[InlineData(11, 20, 0.4f)]
+	[InlineData(12, 20, 0.6f)]
+	[InlineData(13, 20, 0.7f)]
+	[InlineData(14, 20, 0.8f)]
+	[InlineData(15, 20, null)]
+	public void GetReductionDropRate_MatchesJavaDropRewardReduction(int npcLevel, int highestLevel, float? expectedRate)
+	{
+		Assert.Equal(expectedRate, WorldNpcDropModifierService.GetReductionDropRate(npcLevel, highestLevel));
+	}
+
+	[Fact]
+	public void CreateModifiers_UsesLooterRaceAndNpcLevelReduction()
+	{
+		var service = new WorldNpcDropModifierService();
+		var npc = CreateNpc(level: 12);
+		var looter = new Player { ObjectId = 1001, Race = "ASMODIANS", Level = 20 };
+
+		var modifiers = service.CreateModifiers(npc, looter, boostDropRate: 1.5f);
+
+		Assert.Equal("ASMODIANS", modifiers.DropRace);
+		Assert.Equal(1.5f, modifiers.BoostDropRate);
+		Assert.Equal(0.6f, modifiers.ReductionDropRate);
+		Assert.Equal(45f, modifiers.CalculateDropChance(50f, allowReductionDropRate: true), precision: 3);
+		Assert.Equal(75f, modifiers.CalculateDropChance(50f, allowReductionDropRate: false), precision: 3);
+	}
+
+	private static WorldNpc CreateNpc(int level)
+	{
+		return new WorldNpc(
+			5001,
+			203001,
+			new NpcTemplateSummary(203001, "drop_npc", 0, level, "NORMAL", "NORMAL", "NONE", "NONE", "GENERAL"),
+			new WorldPosition(210010000, 1, 2, 3, 0));
+	}
+}

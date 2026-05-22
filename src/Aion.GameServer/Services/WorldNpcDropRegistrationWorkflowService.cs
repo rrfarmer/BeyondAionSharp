@@ -7,21 +7,25 @@ public sealed class WorldNpcDropRegistrationWorkflowService
 	private readonly WorldNpcCustomDropService _customDropService;
 	private readonly WorldNpcDropRegistrationService _dropRegistrationService;
 	private readonly WorldNpcLootBroadcastService _lootBroadcastService;
+	private readonly WorldNpcDropModifierService _dropModifierService;
 
 	public WorldNpcDropRegistrationWorkflowService(
 		WorldNpcCustomDropService customDropService,
 		WorldNpcDropRegistrationService dropRegistrationService,
-		WorldNpcLootBroadcastService lootBroadcastService)
+		WorldNpcLootBroadcastService lootBroadcastService,
+		WorldNpcDropModifierService? dropModifierService = null)
 	{
 		_customDropService = customDropService;
 		_dropRegistrationService = dropRegistrationService;
 		_lootBroadcastService = lootBroadcastService;
+		_dropModifierService = dropModifierService ?? new WorldNpcDropModifierService();
 	}
 
 	public async ValueTask<WorldNpcDropRegistrationWorkflowResult> RegisterCustomDropsAsync(
 		IWorldNpcObject? npc,
 		Player? looter,
 		WorldNpcDropModifiers? dropModifiers = null,
+		int? highestLevel = null,
 		TimeSpan? freeForAllDelay = null,
 		CancellationToken cancellationToken = default)
 	{
@@ -34,7 +38,7 @@ public sealed class WorldNpcDropRegistrationWorkflowService
 		var generated = _customDropService.CreateDrops(
 			npc.ObjectId,
 			npc.TemplateId,
-			dropModifiers ?? new WorldNpcDropModifiers(looter.Race));
+			dropModifiers ?? _dropModifierService.CreateModifiers(npc, looter, highestLevel));
 		if (generated.Drops.Count == 0)
 			return WorldNpcDropRegistrationWorkflowResult.Skipped(WorldNpcDropRegistrationWorkflowStatus.NoGeneratedDrops);
 
