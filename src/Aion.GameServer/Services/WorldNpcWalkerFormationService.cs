@@ -13,15 +13,15 @@ public sealed class WorldNpcWalkerFormationService
 	{
 		// Java parity: spawnengine/WalkerGroup.form handles SQUARE clusters after InstanceWalkerFormations groups same-position candidates.
 		if (npcs.Count == 0)
-			return WorldNpcWalkerFormationResult.Empty(routePlan.RouteId);
+			return WorldNpcWalkerFormationResult.Empty(routePlan.RouteId, routePlan.VersionRouteId);
 		if (routePlan.Status != WorldNpcWalkerRouteStatus.Ready)
-			return WorldNpcWalkerFormationResult.Unchanged(routePlan.RouteId, WorldNpcWalkerFormationStatus.MissingRoute, npcs);
+			return WorldNpcWalkerFormationResult.Unchanged(routePlan.RouteId, routePlan.VersionRouteId, WorldNpcWalkerFormationStatus.MissingRoute, npcs);
 		if (!string.Equals(routePlan.Formation, "SQUARE", StringComparison.Ordinal))
-			return WorldNpcWalkerFormationResult.Unchanged(routePlan.RouteId, WorldNpcWalkerFormationStatus.PointFormation, npcs);
+			return WorldNpcWalkerFormationResult.Unchanged(routePlan.RouteId, routePlan.VersionRouteId, WorldNpcWalkerFormationStatus.PointFormation, npcs);
 		if (routePlan.RouteSteps.Count < 2)
-			return WorldNpcWalkerFormationResult.Unchanged(routePlan.RouteId, WorldNpcWalkerFormationStatus.InsufficientRoute, npcs);
+			return WorldNpcWalkerFormationResult.Unchanged(routePlan.RouteId, routePlan.VersionRouteId, WorldNpcWalkerFormationStatus.InsufficientRoute, npcs);
 		if (routePlan.Rows.Count == 0)
-			return WorldNpcWalkerFormationResult.Unchanged(routePlan.RouteId, WorldNpcWalkerFormationStatus.PointFormation, npcs);
+			return WorldNpcWalkerFormationResult.Unchanged(routePlan.RouteId, routePlan.VersionRouteId, WorldNpcWalkerFormationStatus.PointFormation, npcs);
 
 		var members = npcs
 			.OrderByDescending(npc => npc.WalkerIndex)
@@ -169,24 +169,25 @@ public sealed record WorldNpcWalkerFormationResult(
 	string VersionRouteId,
 	IReadOnlyList<WorldNpcWalkerFormationMember> Members)
 {
-	public static WorldNpcWalkerFormationResult Empty(string routeId)
+	public static WorldNpcWalkerFormationResult Empty(string routeId, string versionRouteId = "")
 	{
 		return new WorldNpcWalkerFormationResult(
 			WorldNpcWalkerFormationStatus.Empty,
 			routeId,
-			string.Empty,
+			versionRouteId,
 			Array.Empty<WorldNpcWalkerFormationMember>());
 	}
 
 	public static WorldNpcWalkerFormationResult Unchanged(
 		string routeId,
+		string versionRouteId,
 		WorldNpcWalkerFormationStatus status,
 		IReadOnlyList<WorldNpc> npcs)
 	{
 		return new WorldNpcWalkerFormationResult(
 			status,
 			routeId,
-			string.Empty,
+			versionRouteId,
 			npcs.Select(npc => WorldNpcWalkerFormationMember.FromNpc(npc, new WorldNpcWalkerShift(0, 0), new WalkerPoint(npc.Position.X, npc.Position.Y))).ToArray());
 	}
 }

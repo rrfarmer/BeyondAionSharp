@@ -62,6 +62,7 @@ public sealed class WorldNpcWalkerFormationServiceTests
 		var result = service.FormSquareGroup(npcs, plan);
 
 		Assert.Equal(WorldNpcWalkerFormationStatus.PointFormation, result.Status);
+		Assert.Equal("route-parent", result.VersionRouteId);
 		var member = Assert.Single(result.Members);
 		AssertFormationMember(member, objectId: 1, sagittal: 0, coronal: 0, x: 7, y: 8);
 	}
@@ -103,6 +104,7 @@ public sealed class WorldNpcWalkerFormationServiceTests
 		return WorldNpcWalkerRoutePlan.Ready(
 			"route-a",
 			"route-parent",
+			1,
 			formation,
 			rows ?? [1],
 			routeSteps ??
