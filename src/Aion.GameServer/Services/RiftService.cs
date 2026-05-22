@@ -51,6 +51,11 @@ public sealed class RiftService
 		return _activeRifts.GetValueOrDefault(riftId);
 	}
 
+	public IReadOnlyList<RiftLocationState> GetActiveRifts()
+	{
+		return _activeRifts.Values.OrderBy(rift => rift.Location.Id).ToArray();
+	}
+
 	public RiftServiceResult OpenRifts(int id, bool guards)
 	{
 		// Java parity: services/RiftService.openRifts can open one rift id or every closed rift for a world id.
@@ -64,11 +69,12 @@ public sealed class RiftService
 			if (_activeRifts.ContainsKey(location.Id))
 				continue;
 
-			var state = new RiftLocationState(location) { Opened = true };
+			var state = new RiftLocationState(location) { Opened = true, GuardsRequested = guards };
 			if (!_activeRifts.TryAdd(location.Id, state))
 				continue;
 
 			var spawnResult = _riftManager.SpawnRift(location.Id, guards);
+			state.Definition = spawnResult.Definition;
 			foreach (var npc in spawnResult.SpawnedNpcs)
 				state.AddSpawned(npc);
 
@@ -181,6 +187,10 @@ public sealed class RiftLocationState
 	public RiftLocationSummary Location { get; }
 
 	public bool Opened { get; internal set; }
+
+	public bool GuardsRequested { get; internal set; }
+
+	public RiftDefinition? Definition { get; internal set; }
 
 	public int SpawnedCount => _spawned.Count;
 

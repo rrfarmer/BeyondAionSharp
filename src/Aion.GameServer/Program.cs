@@ -45,6 +45,7 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<WorldNpcWalkerRouteWalkingService>();
 			services.AddSingleton<RiftManagerService>();
 			services.AddSingleton<RiftService>();
+			services.AddSingleton<RiftInformerService>();
 			services.AddSingleton<PeriodicSaveService>();
 			services.AddSingleton<HousingWorldService>();
 			services.AddSingleton<WorldNpcSpawnService>();
