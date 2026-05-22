@@ -1,6 +1,8 @@
 using System.Xml.Linq;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Dataholders.LoadingUtils;
+using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Services;
 
 namespace Aion.GameServer.Tests;
 
@@ -294,6 +296,15 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(1, staticData.HousingTemplates.GetHouseTypeId(353000));
 		Assert.Equal(5, staticData.InstanceCooltimes.GetInstanceCooltimeByWorldId(300030000)?.MaxCount);
 		Assert.Contains(staticData.RecipeTemplates.GetAutolearnRecipes("ELYOS", 40009, 1), recipe => recipe.RecipeId == 155000001);
+		var craftPlayer = new Player
+		{
+			Name = "Kahrun",
+			Race = "ELYOS",
+			Skills = [new PlayerSkill { SkillId = 40009, SkillLevel = 1 }],
+		};
+		Assert.True(CraftLearnService.ValidateNewRecipe(craftPlayer, 155000001, staticData).Succeeded);
+		craftPlayer.Recipes = [155000001];
+		Assert.Equal(CraftLearnFailure.AlreadyKnown, CraftLearnService.ValidateNewRecipe(craftPlayer, 155000001, staticData).Failure);
 		Assert.Equal(6, staticData.PlayerInitialData.Count);
 		Assert.Equal(210010000, staticData.PlayerInitialData.GetSpawnLocation("ELYOS")?.MapId);
 		Assert.Equal(220010000, staticData.PlayerInitialData.GetSpawnLocation("ASMODIANS")?.MapId);

@@ -325,6 +325,42 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1401255);
 	}
 
+	public static SmSystemMessage RecipeItemCannotUseNoRecipe()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_RECIPEITEM_CANT_USE_NO_RECIPE.
+		return new SmSystemMessage(1300621);
+	}
+
+	public static SmSystemMessage CraftRecipeRaceCheck()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_CRAFTRECIPE_RACE_CHECK.
+		return new SmSystemMessage(1300876);
+	}
+
+	public static SmSystemMessage CraftRecipeLearnedAlready()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_CRAFT_RECIPE_LEARNED_ALREADY.
+		return new SmSystemMessage(1330060);
+	}
+
+	public static SmSystemMessage CraftRecipeLearn(int recipeId, string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_CRAFT_RECIPE_LEARN.
+		return new SmSystemMessage(1330061, $"[recipe_ex:{recipeId};{playerName}]");
+	}
+
+	public static SmSystemMessage CraftRecipeCantLearnSkill(string skillName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_CRAFT_RECIPE_CANT_LEARN_SKILL.
+		return new SmSystemMessage(1330062, skillName);
+	}
+
+	public static SmSystemMessage CraftRecipeCantLearnSkillPoint()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_CRAFT_RECIPE_CANT_LEARN_SKILLPOINT.
+		return new SmSystemMessage(1330063);
+	}
+
 	public static SmSystemMessage SoulBoundItemSucceed(string itemName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_ITEM_SUCCEED.

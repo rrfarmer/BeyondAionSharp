@@ -38,6 +38,13 @@ public interface IPlayerEnterWorldRepository
 
 	Task<bool> DeletePlayerRecipeAsync(int playerObjectId, int recipeId, CancellationToken cancellationToken = default);
 
+	Task<bool> SaveCraftLearnActionMutationAsync(
+		int playerObjectId,
+		int recipeId,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default);
+
 	Task<IReadOnlyList<PlayerMacro>> LoadPlayerMacrosAsync(int playerObjectId, CancellationToken cancellationToken = default);
 
 	Task<bool> SavePlayerMacroAsync(int playerObjectId, PlayerMacro macro, CancellationToken cancellationToken = default);
@@ -221,6 +228,16 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	}
 
 	public Task<bool> DeletePlayerRecipeAsync(int playerObjectId, int recipeId, CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> SaveCraftLearnActionMutationAsync(
+		int playerObjectId,
+		int recipeId,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(true);
 	}
@@ -1973,6 +1990,48 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not delete recipe {RecipeId} for player {PlayerObjectId}", recipeId, playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SaveCraftLearnActionMutationAsync(
+		int playerObjectId,
+		int recipeId,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: CraftLearnAction.act -> PlayerRecipesDAO.addRecipe + inventory.decreaseByObjectId.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.Transaction = transaction;
+			command.CommandText = "INSERT INTO player_recipes (player_id, recipe_id) VALUES (?, ?)";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = playerObjectId },
+					new MySqlParameter { Value = recipeId },
+				});
+			if (await command.ExecuteNonQueryAsync(cancellationToken) <= 0)
+				return false;
+
+			if (sourceItemUpdate != null && !await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, sourceItemUpdate, cancellationToken))
+				return false;
+
+			if (deletedSourceItemObjectId.HasValue
+				&& !await DeleteInventoryItemAsync(connection, transaction, playerObjectId, deletedSourceItemObjectId.Value, cancellationToken))
+				return false;
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save craft-learn action for player {PlayerObjectId} and recipe {RecipeId}", playerObjectId, recipeId);
 			return false;
 		}
 	}

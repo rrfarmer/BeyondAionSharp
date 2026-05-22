@@ -379,6 +379,14 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public int DeletedRecipeId { get; private set; }
 
+		public int SaveCraftLearnActionMutationCalls { get; private set; }
+
+		public int CraftLearnRecipeId { get; private set; }
+
+		public InventoryItem? CraftLearnSourceItemUpdate { get; private set; }
+
+		public int? CraftLearnDeletedSourceItemObjectId { get; private set; }
+
 		public int SaveItemChargeMutationCalls { get; private set; }
 
 		public InventoryItem? ChargedItem { get; private set; }
@@ -500,6 +508,20 @@ public sealed class PlayerEnterWorldServiceTests
 		{
 			DeleteRecipeCalls++;
 			DeletedRecipeId = recipeId;
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> SaveCraftLearnActionMutationAsync(
+			int playerObjectId,
+			int recipeId,
+			InventoryItem? sourceItemUpdate,
+			int? deletedSourceItemObjectId,
+			CancellationToken cancellationToken = default)
+		{
+			SaveCraftLearnActionMutationCalls++;
+			CraftLearnRecipeId = recipeId;
+			CraftLearnSourceItemUpdate = sourceItemUpdate;
+			CraftLearnDeletedSourceItemObjectId = deletedSourceItemObjectId;
 			return Task.FromResult(true);
 		}
 

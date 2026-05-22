@@ -168,6 +168,21 @@ public sealed class PlayerEnterWorldService
 		return true;
 	}
 
+	public Task<bool> SaveCraftLearnActionMutationAsync(
+		Player player,
+		int recipeId,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		return _repository.SaveCraftLearnActionMutationAsync(
+			player.ObjectId,
+			recipeId,
+			sourceItemUpdate,
+			deletedSourceItemObjectId,
+			cancellationToken);
+	}
+
 	public Task<bool> SaveItemChargeMutationAsync(
 		Player player,
 		InventoryItem chargedItem,

@@ -2397,6 +2397,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (sourceTemplate.CraftLearnRecipeId > 0)
+		{
+			await HandleCraftLearnUseItemAsync(player, inventoryItems, sourceItem, sourceTemplate, staticData);
+			return;
+		}
+
 		if (sourceTemplate.PolishSetId > 0 && packet.Type == 2)
 		{
 			var targetItem = packet.TargetItemObjectId == 0
@@ -2423,6 +2429,81 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		if (sourceTemplate.ChargeActionMaxLevel > 0)
 			await HandleChargeUseItemAsync(player, inventoryItems, sourceItem, sourceTemplate, staticData);
+	}
+
+	private async Task HandleCraftLearnUseItemAsync(
+		Player player,
+		List<InventoryItem> inventoryItems,
+		InventoryItem sourceItem,
+		ItemTemplateSummary sourceTemplate,
+		StaticData staticData)
+	{
+		// Java parity: model/templates/item/actions/CraftLearnAction.canAct + act.
+		var validation = CraftLearnService.ValidateNewRecipe(player, sourceTemplate.CraftLearnRecipeId, staticData);
+		if (!validation.Succeeded)
+		{
+			await SendCraftLearnFailureAsync(validation);
+			return;
+		}
+
+		AddItemCooldownIfNeeded(player, sourceTemplate, removeOnCancel: false);
+		var sourceItemUpdate = sourceItem.Count > 1 ? CopyInventoryItem(sourceItem, count: sourceItem.Count - 1) : null;
+		int? deletedSourceObjectId = sourceItem.Count <= 1 ? sourceItem.ObjectId : null;
+		var saved = _playerEnterWorldService == null
+			|| await _playerEnterWorldService.SaveCraftLearnActionMutationAsync(
+				player,
+				validation.RecipeTemplate!.RecipeId,
+				sourceItemUpdate,
+				deletedSourceObjectId);
+		if (!saved)
+			return;
+
+		var recipeTemplate = validation.RecipeTemplate!;
+		if (deletedSourceObjectId.HasValue)
+		{
+			inventoryItems.RemoveAll(item => item.ObjectId == deletedSourceObjectId.Value);
+			await SendPacketAsync(new SmDeleteItem(deletedSourceObjectId.Value, SmDeleteItem.UseDeleteType));
+		}
+		else if (sourceItemUpdate != null)
+		{
+			ReplaceInventoryItem(inventoryItems, sourceItemUpdate);
+			await SendPacketAsync(new SmInventoryUpdateItem(sourceItemUpdate, sourceTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+		}
+
+		player.InventoryItems = inventoryItems.ToArray();
+		player.Recipes = player.Recipes
+			.Append(recipeTemplate.RecipeId)
+			.Distinct()
+			.Order()
+			.ToArray();
+		await SendPacketAsync(new SmLearnRecipe(recipeTemplate.RecipeId));
+		await SendPacketAsync(SmSystemMessage.CraftRecipeLearn(recipeTemplate.RecipeId, player.Name));
+		await SendPacketAsync(new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 1, 1));
+	}
+
+	private async Task SendCraftLearnFailureAsync(CraftLearnValidation validation)
+	{
+		switch (validation.Failure)
+		{
+			case CraftLearnFailure.RecipeListFull:
+				await SendPacketAsync(new SmMessage("You are unable to have more than 1600 recipes at the same time."));
+				break;
+			case CraftLearnFailure.MissingRecipe:
+				await SendPacketAsync(SmSystemMessage.RecipeItemCannotUseNoRecipe());
+				break;
+			case CraftLearnFailure.InvalidRace:
+				await SendPacketAsync(SmSystemMessage.CraftRecipeRaceCheck());
+				break;
+			case CraftLearnFailure.AlreadyKnown:
+				await SendPacketAsync(SmSystemMessage.CraftRecipeLearnedAlready());
+				break;
+			case CraftLearnFailure.MissingSkill:
+				await SendPacketAsync(SmSystemMessage.CraftRecipeCantLearnSkill(validation.SkillName));
+				break;
+			case CraftLearnFailure.SkillPointTooLow:
+				await SendPacketAsync(SmSystemMessage.CraftRecipeCantLearnSkillPoint());
+				break;
+		}
 	}
 
 	private async Task HandleRideUseItemAsync(

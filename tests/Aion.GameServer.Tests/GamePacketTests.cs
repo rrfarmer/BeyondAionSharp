@@ -592,6 +592,12 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.CannotRide(ChatUtil.L10n(1400057)), 1401211, ChatUtil.L10n(1400057));
 		AssertSystemMessage(SmSystemMessage.UnrideAbnormalState(), 1401254);
 		AssertSystemMessage(SmSystemMessage.CannotRideAbnormalState(), 1401255);
+		AssertSystemMessage(SmSystemMessage.RecipeItemCannotUseNoRecipe(), 1300621);
+		AssertSystemMessage(SmSystemMessage.CraftRecipeRaceCheck(), 1300876);
+		AssertSystemMessage(SmSystemMessage.CraftRecipeLearnedAlready(), 1330060);
+		AssertSystemMessage(SmSystemMessage.CraftRecipeLearn(155000001, "Kahrun"), 1330061, "[recipe_ex:155000001;Kahrun]");
+		AssertSystemMessage(SmSystemMessage.CraftRecipeCantLearnSkill("skill"), 1330062, "skill");
+		AssertSystemMessage(SmSystemMessage.CraftRecipeCantLearnSkillPoint(), 1330063);
 		AssertSystemMessage(SmSystemMessage.EnchantItemCanceled("item"), 1300457, "item");
 		AssertSystemMessage(SmSystemMessage.GiveItemOptionCanceled("item"), 1300464, "item");
 		AssertSystemMessage(SmSystemMessage.GiveItemProcCancel("item"), 1402238, "item");
@@ -1203,6 +1209,12 @@ public class GamePacketTests
 		Assert.Equal(155000002, recipeListReader.ReadD());
 		Assert.Equal(0, (int)recipeListReader.ReadC());
 		Assert.Equal(0, recipeListReader.Remaining);
+
+		var learnRecipePayload = SerializeUnencryptedPayload(new SmLearnRecipe(155000001));
+		using var learnRecipeReader = new PacketBuffer(learnRecipePayload);
+		Assert.Equal(155000001, learnRecipeReader.ReadD());
+		Assert.Equal(0, (int)learnRecipeReader.ReadC());
+		Assert.Equal(0, learnRecipeReader.Remaining);
 
 		Assert.Equal(
 			Convert.FromHexString("7B000000"),
