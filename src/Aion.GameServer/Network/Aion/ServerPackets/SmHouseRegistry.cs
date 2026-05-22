@@ -75,7 +75,7 @@ public sealed class SmHouseRegistry : GameServerPacket
 			buffer.WriteD(obj.TemplateId);
 			buffer.WriteD(obj.CooldownSeconds);
 			buffer.WriteD(obj.ExpirationSeconds);
-			WriteDyeInfo(buffer, obj.Color);
+			HouseObjectPacketWriter.WriteDyeInfo(buffer, obj.Color);
 			buffer.WriteD(0);
 			buffer.WriteC(obj.TypeId);
 			if (obj.TypeId == UseItemTypeId && obj.UsageData is { Length: > 0 })
@@ -100,18 +100,4 @@ public sealed class SmHouseRegistry : GameServerPacket
 		}
 	}
 
-	private static void WriteDyeInfo(PacketBuffer buffer, int? rgb)
-	{
-		// Java parity: network/PacketWriteHelper.writeDyeInfo.
-		if (!rgb.HasValue)
-		{
-			buffer.WriteD(0);
-			return;
-		}
-
-		buffer.WriteC(1);
-		buffer.WriteC((rgb.Value & 0xFF0000) >> 16);
-		buffer.WriteC((rgb.Value & 0xFF00) >> 8);
-		buffer.WriteC(rgb.Value & 0xFF);
-	}
 }

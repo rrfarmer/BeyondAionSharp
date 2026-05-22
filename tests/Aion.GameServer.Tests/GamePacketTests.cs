@@ -1146,6 +1146,57 @@ public class GamePacketTests
 		Assert.Equal(7, (int)registryObjectReader.ReadC());
 		Assert.Equal(0, registryObjectReader.Remaining);
 
+		var placedHouseObject = new PlacedHouseObjectSummary(
+			AddressId: 700100,
+			OwnerPlayerId: 1001,
+			ObjectId: 9903,
+			TemplateId: 3001000,
+			X: 11.5f,
+			Y: 22.25f,
+			Z: 33.75f,
+			Rotation: 180,
+			CooldownSeconds: 3,
+			ExpirationSeconds: 7200,
+			Color: 0x445566,
+			TypeId: 7,
+			NpcObjectId: 810013);
+		var houseObjectPayload = SerializeUnencryptedPayload(new SmHouseObject(placedHouseObject));
+		using var houseObjectReader = new PacketBuffer(houseObjectPayload);
+		Assert.Equal(700100, houseObjectReader.ReadD());
+		Assert.Equal(1001, houseObjectReader.ReadD());
+		Assert.Equal(9903, houseObjectReader.ReadD());
+		Assert.Equal(9903, houseObjectReader.ReadD());
+		Assert.Equal(3001000, houseObjectReader.ReadD());
+		Assert.Equal(11.5f, houseObjectReader.ReadF());
+		Assert.Equal(22.25f, houseObjectReader.ReadF());
+		Assert.Equal(33.75f, houseObjectReader.ReadF());
+		Assert.Equal(180, houseObjectReader.ReadH());
+		Assert.Equal(3, houseObjectReader.ReadD());
+		Assert.Equal(7200, houseObjectReader.ReadD());
+		Assert.Equal(new byte[] { 1, 0x44, 0x55, 0x66 }, houseObjectReader.ReadB(4));
+		Assert.Equal(0, houseObjectReader.ReadD());
+		Assert.Equal(7, (int)houseObjectReader.ReadC());
+		Assert.Equal(810013, houseObjectReader.ReadD());
+		Assert.Equal(0, houseObjectReader.Remaining);
+
+		var houseObjectsPayload = SerializeUnencryptedPayload(
+			new SmHouseObjects(
+				[
+					placedHouseObject,
+					placedHouseObject with { TemplateId = 3000004, X = 44.5f, Y = 55.25f, Z = 66.75f },
+				]));
+		using var houseObjectsReader = new PacketBuffer(houseObjectsPayload);
+		Assert.Equal(2, houseObjectsReader.ReadH());
+		Assert.Equal(3001000, houseObjectsReader.ReadD());
+		Assert.Equal(11.5f, houseObjectsReader.ReadF());
+		Assert.Equal(22.25f, houseObjectsReader.ReadF());
+		Assert.Equal(33.75f, houseObjectsReader.ReadF());
+		Assert.Equal(3000004, houseObjectsReader.ReadD());
+		Assert.Equal(44.5f, houseObjectsReader.ReadF());
+		Assert.Equal(55.25f, houseObjectsReader.ReadF());
+		Assert.Equal(66.75f, houseObjectsReader.ReadF());
+		Assert.Equal(0, houseObjectsReader.Remaining);
+
 		var deleteHousePayload = SerializeUnencryptedPayload(new SmDeleteHouse(700100));
 		using var deleteHouseReader = new PacketBuffer(deleteHousePayload);
 		Assert.Equal(700100, deleteHouseReader.ReadD());
