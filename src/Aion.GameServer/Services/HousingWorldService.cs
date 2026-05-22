@@ -56,7 +56,8 @@ public sealed class HousingWorldService : GameEngine
 	{
 		// Java parity: services/HousingService.spawnHouses stores spawned custom houses in World.
 		var persistentHouses = await _housingRepository.LoadWorldHousesAsync(housingTemplates, cancellationToken);
-		var houses = AddMissingUnownedCustomHouses(persistentHouses, housingTemplates);
+		var validatedHouses = ValidatePersistentWorldHouses(persistentHouses, housingTemplates);
+		var houses = AddMissingUnownedCustomHouses(validatedHouses, housingTemplates);
 		if (housingObjectTemplates != null)
 			houses = await AttachRegistriesAsync(houses, housingTemplates, housingObjectTemplates, cancellationToken);
 		foreach (var house in houses)
@@ -95,6 +96,39 @@ public sealed class HousingWorldService : GameEngine
 		}
 
 		return loaded;
+	}
+
+	private IReadOnlyList<WorldHouse> ValidatePersistentWorldHouses(
+		IReadOnlyList<WorldHouse> persistentHouses,
+		HousingTemplateTable housingTemplates)
+	{
+		// Java parity: dao/HousesDAO.loadHouses skips missing building templates and duplicate custom-house addresses.
+		var houses = new List<WorldHouse>();
+		var knownAddresses = new HashSet<int>();
+		foreach (var house in persistentHouses)
+		{
+			if (housingTemplates.GetAddress(house.AddressId) == null)
+			{
+				_logger.LogWarning("Skipping DB house {HouseObjectId} with unknown address {AddressId}", house.ObjectId, house.AddressId);
+				continue;
+			}
+
+			if (housingTemplates.GetBuilding(house.BuildingId) == null)
+			{
+				_logger.LogWarning("Skipping DB house {HouseObjectId} with unknown building {BuildingId}", house.ObjectId, house.BuildingId);
+				continue;
+			}
+
+			if (!knownAddresses.Add(house.AddressId))
+			{
+				_logger.LogWarning("Skipping duplicate DB house address {AddressId} for house {HouseObjectId}", house.AddressId, house.ObjectId);
+				continue;
+			}
+
+			houses.Add(house);
+		}
+
+		return houses;
 	}
 
 	private IReadOnlyList<WorldHouse> AddMissingUnownedCustomHouses(

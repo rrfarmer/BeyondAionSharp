@@ -105,6 +105,75 @@ public sealed class HousingWorldServiceTests
 	}
 
 	[Fact]
+	public async Task LoadWorldHousesAsync_SkipsInvalidAndDuplicatePersistentRows()
+	{
+		var templates = new HousingTemplateTable(
+			[
+				new HousingAddressSummary(
+					700100,
+					1,
+					798000,
+					MapId: 210010000,
+					X: 10,
+					Y: 20,
+					Z: 30,
+					DefaultBuildingId: 730001,
+					DefaultBuildingType: "PERSONAL_FIELD"),
+				new HousingAddressSummary(
+					700101,
+					1,
+					798000,
+					MapId: 210010000,
+					X: 40,
+					Y: 50,
+					Z: 60,
+					DefaultBuildingId: 730001,
+					DefaultBuildingType: "PERSONAL_FIELD"),
+			],
+			[new HousingBuildingSummary(730001, "HOUSE", 1, "PERSONAL_FIELD")]);
+		var validHouse = new WorldHouse(
+			5001,
+			700100,
+			730001,
+			1001,
+			"Owner",
+			0,
+			string.Empty,
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
+			false,
+			PlayerHouse.DoorOpen,
+			true,
+			null,
+			new WorldPosition(210010000, 10, 20, 30, 0));
+		var duplicateAddressHouse = validHouse with { ObjectId = 5002, OwnerObjectId = 1002, OwnerName = "Duplicate" };
+		var missingBuildingHouse = validHouse with { ObjectId = 5003, AddressId = 700101, BuildingId = 739999, OwnerObjectId = 1003 };
+		var missingAddressHouse = validHouse with { ObjectId = 5004, AddressId = 799999, OwnerObjectId = 1004 };
+		var repository = new CapturingHousingRepository([validHouse, duplicateAddressHouse, missingBuildingHouse, missingAddressHouse]);
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var service = new HousingWorldService(
+			repository,
+			new IDFactory([5001, 5002, 5003, 5004]),
+			new GameServerRuntimeContext(),
+			world,
+			NullLogger<HousingWorldService>.Instance);
+
+		var loaded = await service.LoadWorldHousesAsync(templates);
+
+		Assert.Equal(2, loaded);
+		Assert.Equal(2, service.LoadedCount);
+		var houses = world.GetHouses().OrderBy(house => house.AddressId).ToArray();
+		Assert.Equal([700100, 700101], houses.Select(house => house.AddressId).ToArray());
+		Assert.Equal(5001, houses[0].ObjectId);
+		Assert.Equal(0, houses[1].OwnerObjectId);
+		Assert.DoesNotContain(world.GetHouses(), house => house.ObjectId is 5002 or 5003 or 5004);
+	}
+
+	[Fact]
 	public async Task LoadWorldHousesAsync_SynthesizesOwnerlessCustomHousesMissingFromDb()
 	{
 		var templates = new HousingTemplateTable(
