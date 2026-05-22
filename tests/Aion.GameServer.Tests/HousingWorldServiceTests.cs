@@ -38,12 +38,14 @@ public sealed class HousingWorldServiceTests
 			new WorldPosition(210010000, 10, 20, 30, 0));
 		var repository = new CapturingHousingRepository([worldHouse]);
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var doorStates = new HouseDoorStateService();
 		var service = new HousingWorldService(
 			repository,
 			new IDFactory([worldHouse.ObjectId]),
 			new GameServerRuntimeContext(),
 			world,
-			NullLogger<HousingWorldService>.Instance);
+			NullLogger<HousingWorldService>.Instance,
+			doorStates);
 
 		var loaded = await service.LoadWorldHousesAsync(templates);
 
@@ -53,6 +55,7 @@ public sealed class HousingWorldServiceTests
 		Assert.Same(worldHouse, Assert.Single(world.GetHouses()));
 		Assert.True(world.TryGetObject(worldHouse.ObjectId, out var stored));
 		Assert.Same(worldHouse, stored);
+		Assert.Equal(PlayerHouse.DoorOpen, doorStates.GetHouseDoorState(210010000, 700100));
 	}
 
 	[Fact]

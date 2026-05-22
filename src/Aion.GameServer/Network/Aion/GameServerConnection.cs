@@ -61,6 +61,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly GameTimeService? _gameTimeService;
 	private readonly GameWorld? _world;
 	private readonly ThreadPoolManager? _threadPoolManager;
+	private readonly IHouseDoorStateService? _houseDoorStateService;
 	private readonly SemaphoreSlim _sendLock = new(1, 1);
 	private readonly SemaphoreSlim _closeLock = new(1, 1);
 	private GameConnectionState _state = GameConnectionState.Connected;
@@ -104,6 +105,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		GameTimeService? gameTimeService = null,
 		GameWorld? world = null,
 		ThreadPoolManager? threadPoolManager = null,
+		IHouseDoorStateService? houseDoorStateService = null,
 		GameCrypt? crypt = null)
 		: base(logger, client, clientId)
 	{
@@ -129,6 +131,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_gameTimeService = gameTimeService;
 		_world = world;
 		_threadPoolManager = threadPoolManager;
+		_houseDoorStateService = houseDoorStateService;
 		_crypt = crypt ?? new GameCrypt();
 	}
 
@@ -5318,6 +5321,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			return null;
 
 		_world.AddOrUpdateHouse(worldHouse);
+		_houseDoorStateService?.SetHouseDoorState(worldHouse.Position.WorldId, worldHouse.AddressId, worldHouse.DoorState);
 		return worldHouse;
 	}
 

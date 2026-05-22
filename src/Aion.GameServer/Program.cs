@@ -33,6 +33,7 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<GameServerRuntimeContext>();
 			services.AddSingleton<GameWorld>();
 			services.AddSingleton<GameTimeService>();
+			services.AddSingleton<IHouseDoorStateService, HouseDoorStateService>();
 			services.AddSingleton<PeriodicSaveService>();
 			services.AddSingleton<HousingWorldService>();
 			services.AddSingleton<Aion.GameServer.Model.GameEngine>(

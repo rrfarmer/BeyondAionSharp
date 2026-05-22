@@ -42,6 +42,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 	private readonly GameTimeService? _gameTimeService;
 	private readonly ThreadPoolManager? _threadPoolManager;
 	private readonly GameWorld? _world;
+	private readonly IHouseDoorStateService? _houseDoorStateService;
 	private readonly ConcurrentDictionary<string, GameServerConnection> _connections = new();
 	private readonly ConcurrentDictionary<int, GameServerConnection> _playerConnections = new();
 	private long _nextClientId;
@@ -69,7 +70,8 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		IDFactory? idFactory = null,
 		GameTimeService? gameTimeService = null,
 		ThreadPoolManager? threadPoolManager = null,
-		GameWorld? world = null)
+		GameWorld? world = null,
+		IHouseDoorStateService? houseDoorStateService = null)
 		: base(
 			logger,
 			"Aion Game Client Server",
@@ -100,6 +102,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		_gameTimeService?.SetWorldBroadcaster((packet, _) => BroadcastToWorldAsync(packet));
 		_threadPoolManager = threadPoolManager;
 		_world = world;
+		_houseDoorStateService = houseDoorStateService;
 	}
 
 	public IPEndPoint? LocalEndPoint => _listener?.LocalEndpoint as IPEndPoint;
@@ -136,7 +139,8 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 				_idFactory,
 				_gameTimeService,
 				_world,
-				threadPoolManager: _threadPoolManager);
+				threadPoolManager: _threadPoolManager,
+				houseDoorStateService: _houseDoorStateService);
 			_connections[clientId] = connection;
 			await connection.RunAsync();
 		}

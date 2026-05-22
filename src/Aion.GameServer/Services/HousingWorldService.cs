@@ -14,6 +14,7 @@ public sealed class HousingWorldService : GameEngine
 	private readonly IDFactory _idFactory;
 	private readonly GameServerRuntimeContext _runtimeContext;
 	private readonly GameWorld _world;
+	private readonly IHouseDoorStateService? _houseDoorStateService;
 	private readonly ILogger<HousingWorldService> _logger;
 	private int _loadedCount;
 
@@ -22,12 +23,14 @@ public sealed class HousingWorldService : GameEngine
 		IDFactory idFactory,
 		GameServerRuntimeContext runtimeContext,
 		GameWorld world,
-		ILogger<HousingWorldService> logger)
+		ILogger<HousingWorldService> logger,
+		IHouseDoorStateService? houseDoorStateService = null)
 	{
 		_housingRepository = housingRepository;
 		_idFactory = idFactory;
 		_runtimeContext = runtimeContext;
 		_world = world;
+		_houseDoorStateService = houseDoorStateService;
 		_logger = logger;
 	}
 
@@ -61,7 +64,10 @@ public sealed class HousingWorldService : GameEngine
 		if (housingObjectTemplates != null)
 			houses = await AttachRegistriesAsync(houses, housingTemplates, housingObjectTemplates, cancellationToken);
 		foreach (var house in houses)
+		{
 			_world.AddOrUpdateHouse(house);
+			_houseDoorStateService?.SetHouseDoorState(house.Position.WorldId, house.AddressId, house.DoorState);
+		}
 		Volatile.Write(ref _loadedCount, houses.Count);
 		_logger.LogInformation(
 			"Loaded {PersistentCount} persistent and {SyntheticCount} unowned houses into world visibility",
