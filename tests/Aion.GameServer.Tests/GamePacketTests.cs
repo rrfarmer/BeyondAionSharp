@@ -637,6 +637,8 @@ public class GamePacketTests
 		Assert.Equal(0, systemMessageReader.Remaining);
 		AssertSystemMessage(SmSystemMessage.FullInventory(), 1300762);
 		AssertSystemMessage(SmSystemMessage.UiInventoryFull(), 1300042);
+		AssertSystemMessage(SmSystemMessage.DiceInventoryError(), 1390182);
+		AssertSystemMessage(SmSystemMessage.AssemblyItemSucceeded(), 1401122);
 		AssertSystemMessage(SmSystemMessage.DecomposeItemNoTarget(), 1300445);
 		AssertSystemMessage(SmSystemMessage.DecomposeItemCannotDecompose("item"), 1300446, "item");
 		AssertSystemMessage(SmSystemMessage.DecomposeItemInventoryFull(), 1300447);

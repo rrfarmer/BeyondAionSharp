@@ -467,6 +467,16 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public int? DecomposeDeletedSourceItemObjectId { get; private set; }
 
+		public int SaveAssemblyItemActionMutationCalls { get; private set; }
+
+		public IReadOnlyList<InventoryItem> AssemblyUpdatedPartItems { get; private set; } = Array.Empty<InventoryItem>();
+
+		public IReadOnlyList<int> AssemblyDeletedPartObjectIds { get; private set; } = Array.Empty<int>();
+
+		public IReadOnlyList<InventoryItem> AssemblyUpdatedRewardItems { get; private set; } = Array.Empty<InventoryItem>();
+
+		public IReadOnlyList<InventoryItem> AssemblyAddedRewardItems { get; private set; } = Array.Empty<InventoryItem>();
+
 		public int SaveItemRemodelMutationCalls { get; private set; }
 
 		public InventoryItem? RemodelTargetItemUpdate { get; private set; }
@@ -754,6 +764,22 @@ public sealed class PlayerEnterWorldServiceTests
 			DecomposeAddedItems = addedItems;
 			DecomposeSourceItemUpdate = sourceItemUpdate;
 			DecomposeDeletedSourceItemObjectId = deletedSourceItemObjectId;
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> SaveAssemblyItemActionMutationAsync(
+			int playerObjectId,
+			IReadOnlyList<InventoryItem> updatedPartItems,
+			IReadOnlyList<int> deletedPartObjectIds,
+			IReadOnlyList<InventoryItem> updatedRewardItems,
+			IReadOnlyList<InventoryItem> addedRewardItems,
+			CancellationToken cancellationToken = default)
+		{
+			SaveAssemblyItemActionMutationCalls++;
+			AssemblyUpdatedPartItems = updatedPartItems;
+			AssemblyDeletedPartObjectIds = deletedPartObjectIds;
+			AssemblyUpdatedRewardItems = updatedRewardItems;
+			AssemblyAddedRewardItems = addedRewardItems;
 			return Task.FromResult(true);
 		}
 

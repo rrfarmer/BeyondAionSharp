@@ -295,6 +295,18 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300042);
 	}
 
+	public static SmSystemMessage DiceInventoryError()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_DICE_INVEN_ERROR.
+		return new SmSystemMessage(1390182);
+	}
+
+	public static SmSystemMessage AssemblyItemSucceeded()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_ASSEMBLY_ITEM_SUCCEEDED.
+		return new SmSystemMessage(1401122);
+	}
+
 	public static SmSystemMessage DecomposeItemNoTarget()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_DECOMPOSE_ITEM_NO_TARGET_ITEM.

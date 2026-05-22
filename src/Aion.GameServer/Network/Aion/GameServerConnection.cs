@@ -2633,6 +2633,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (sourceTemplate.AssemblyItemId != 0)
+		{
+			await HandleAssemblyUseItemAsync(player, sourceItem, sourceTemplate, staticData);
+			return;
+		}
+
 		if (sourceTemplate.HasDecomposeAction)
 		{
 			await HandleDecomposeUseItemAsync(player, inventoryItems, sourceItem, sourceTemplate, staticData);
@@ -2665,6 +2671,161 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		if (sourceTemplate.ChargeActionMaxLevel > 0)
 			await HandleChargeUseItemAsync(player, inventoryItems, sourceItem, sourceTemplate, staticData);
+	}
+
+	private async Task HandleAssemblyUseItemAsync(
+		Player player,
+		InventoryItem sourceItem,
+		ItemTemplateSummary sourceTemplate,
+		StaticData staticData)
+	{
+		// Java parity: model/templates/item/actions/AssemblyItemAction.canAct + act.
+		var validation = AssemblyItemService.CanAct(player, sourceTemplate, staticData.AssemblyItems);
+		if (!validation.Succeeded)
+			return;
+
+		var removeCooldownDelayIdOnCancel = AddItemCooldownIfNeeded(player, sourceTemplate, removeOnCancel: true);
+		await CancelPendingItemUseAsync(player);
+		await BroadcastItemUsageAnimationAsync(
+			player,
+			new SmItemUsageAnimation(
+				player.ObjectId,
+				sourceItem.ObjectId,
+				sourceItem.ItemId,
+				AssemblyItemService.UsageDelayMilliseconds,
+				0,
+				0));
+
+		await SchedulePendingItemUseAsync(
+			player,
+			itemObjectId: sourceItem.ObjectId,
+			itemTemplateId: sourceItem.ItemId,
+			targetItemName: sourceTemplate.GetClientName() ?? sourceTemplate.Name,
+			cancelMessage: PendingItemUseCancelMessage.Item,
+			delay: TimeSpan.FromMilliseconds(AssemblyItemService.UsageDelayMilliseconds),
+			completeAsync: async cancellationToken =>
+			{
+				if (cancellationToken.IsCancellationRequested)
+					return;
+
+				await CompleteAssemblyUseItemAsync(player, sourceItem.ObjectId, sourceTemplate, staticData, cancellationToken);
+			},
+			cancelEndState: 2,
+			removeCooldownDelayIdOnCancel: removeCooldownDelayIdOnCancel);
+	}
+
+	private async Task CompleteAssemblyUseItemAsync(
+		Player player,
+		int sourceItemObjectId,
+		ItemTemplateSummary sourceTemplate,
+		StaticData staticData,
+		CancellationToken cancellationToken)
+	{
+		var inventoryItems = player.InventoryItems.ToList();
+		var sourceItem = inventoryItems.FirstOrDefault(item => item.ObjectId == sourceItemObjectId && item.Location == CubeStorageId && !item.IsEquipped);
+		if (sourceItem == null)
+		{
+			await BroadcastItemUsageAnimationAsync(player, new SmItemUsageAnimation(player.ObjectId, sourceItemObjectId, sourceTemplate.TemplateId, 0, 2, 0));
+			return;
+		}
+
+		var validation = AssemblyItemService.CanAct(player, sourceTemplate, staticData.AssemblyItems);
+		if (!validation.Succeeded || validation.AssemblyItem == null)
+		{
+			await BroadcastItemUsageAnimationAsync(player, new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 2, 0));
+			return;
+		}
+
+		var rewardTemplate = staticData.ItemTemplates.GetItemTemplate(validation.AssemblyItem.ItemId);
+		if (rewardTemplate == null)
+		{
+			await BroadcastItemUsageAnimationAsync(player, new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 2, 0));
+			return;
+		}
+
+		var mutationPlan = AssemblyItemService.CreateMutationPlan(
+			player,
+			inventoryItems,
+			validation.AssemblyItem,
+			rewardTemplate,
+			staticData.ItemTemplates,
+			() => _idFactory?.NextId() ?? 0);
+		if (!mutationPlan.Succeeded)
+		{
+			await BroadcastItemUsageAnimationAsync(player, new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 2, 0));
+			return;
+		}
+
+		var saved = _playerEnterWorldService == null
+			|| await _playerEnterWorldService.SaveAssemblyItemActionMutationAsync(
+				player,
+				mutationPlan.UpdatedPartItems,
+				mutationPlan.DeletedPartObjectIds,
+				mutationPlan.UpdatedRewardItems,
+				mutationPlan.AddedRewardItems,
+				cancellationToken);
+		if (!saved)
+			return;
+
+		await SendAssemblyConsumedPartPacketsAsync(inventoryItems, mutationPlan, staticData.ItemTemplates);
+		ApplyAssemblyInventoryMutation(inventoryItems, mutationPlan);
+		player.InventoryItems = inventoryItems.ToArray();
+		RegisterAssemblyExpirableAddedItems(player, mutationPlan.AddedRewardItems, rewardTemplate);
+
+		await BroadcastItemUsageAnimationAsync(player, new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 1, 0));
+		await SendPacketAsync(SmSystemMessage.AssemblyItemSucceeded());
+		if (mutationPlan.RewardSucceeded)
+			await SendAssemblyRewardPacketsAsync(mutationPlan, rewardTemplate);
+		else
+			await SendPacketAsync(SmSystemMessage.DiceInventoryError());
+	}
+
+	private async Task SendAssemblyConsumedPartPacketsAsync(
+		IReadOnlyList<InventoryItem> inventoryItems,
+		AssemblyItemMutationPlan mutationPlan,
+		ItemTemplateTable itemTemplates)
+	{
+		foreach (var updatedPart in mutationPlan.UpdatedPartItems)
+		{
+			var template = itemTemplates.GetItemTemplate(updatedPart.ItemId);
+			if (template != null)
+				await SendPacketAsync(new SmInventoryUpdateItem(updatedPart, template, SmInventoryUpdateItem.DecreaseItemUse));
+		}
+
+		foreach (var deletedPartObjectId in mutationPlan.DeletedPartObjectIds)
+		{
+			if (inventoryItems.Any(item => item.ObjectId == deletedPartObjectId))
+				await SendPacketAsync(new SmDeleteItem(deletedPartObjectId, SmDeleteItem.UseDeleteType));
+		}
+	}
+
+	private static void ApplyAssemblyInventoryMutation(List<InventoryItem> inventoryItems, AssemblyItemMutationPlan mutationPlan)
+	{
+		foreach (var updatedPart in mutationPlan.UpdatedPartItems)
+			ReplaceInventoryItem(inventoryItems, updatedPart);
+		foreach (var deletedPartObjectId in mutationPlan.DeletedPartObjectIds)
+			inventoryItems.RemoveAll(item => item.ObjectId == deletedPartObjectId);
+		foreach (var updatedReward in mutationPlan.UpdatedRewardItems)
+			ReplaceInventoryItem(inventoryItems, updatedReward);
+		inventoryItems.AddRange(mutationPlan.AddedRewardItems);
+	}
+
+	private void RegisterAssemblyExpirableAddedItems(Player player, IReadOnlyList<InventoryItem> addedRewardItems, ItemTemplateSummary rewardTemplate)
+	{
+		// Java parity: services/item/ItemService.addNonStackableItem registers newly created expirable items.
+		if (rewardTemplate.MaxStackCount > 1)
+			return;
+
+		foreach (var addedRewardItem in addedRewardItems)
+			_expirableTaskService?.RegisterInventoryItem(player, addedRewardItem);
+	}
+
+	private async Task SendAssemblyRewardPacketsAsync(AssemblyItemMutationPlan mutationPlan, ItemTemplateSummary rewardTemplate)
+	{
+		foreach (var updatedReward in mutationPlan.UpdatedRewardItems)
+			await SendPacketAsync(new SmInventoryUpdateItem(updatedReward, rewardTemplate, SmInventoryUpdateItem.IncreaseItemCollect));
+		foreach (var addedReward in mutationPlan.AddedRewardItems)
+			await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(addedReward, rewardTemplate));
 	}
 
 	private async Task HandleDecomposeUseItemAsync(

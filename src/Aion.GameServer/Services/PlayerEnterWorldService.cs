@@ -308,6 +308,24 @@ public sealed class PlayerEnterWorldService
 			cancellationToken);
 	}
 
+	public Task<bool> SaveAssemblyItemActionMutationAsync(
+		Player player,
+		IReadOnlyList<InventoryItem> updatedPartItems,
+		IReadOnlyList<int> deletedPartObjectIds,
+		IReadOnlyList<InventoryItem> updatedRewardItems,
+		IReadOnlyList<InventoryItem> addedRewardItems,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: AssemblyItemAction item-id part consumption plus ItemService.addItem reward.
+		return _repository.SaveAssemblyItemActionMutationAsync(
+			player.ObjectId,
+			updatedPartItems,
+			deletedPartObjectIds,
+			updatedRewardItems,
+			addedRewardItems,
+			cancellationToken);
+	}
+
 	public Task<bool> SaveItemRemodelMutationAsync(
 		Player player,
 		InventoryItem targetItemUpdate,

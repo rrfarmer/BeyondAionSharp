@@ -111,6 +111,14 @@ public interface IPlayerEnterWorldRepository
 		int? deletedSourceItemObjectId,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveAssemblyItemActionMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<InventoryItem> updatedPartItems,
+		IReadOnlyList<int> deletedPartObjectIds,
+		IReadOnlyList<InventoryItem> updatedRewardItems,
+		IReadOnlyList<InventoryItem> addedRewardItems,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SaveItemRemodelMutationAsync(
 		int playerObjectId,
 		InventoryItem targetItemUpdate,
@@ -413,6 +421,17 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		IReadOnlyList<InventoryItem> addedItems,
 		InventoryItem? sourceItemUpdate,
 		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> SaveAssemblyItemActionMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<InventoryItem> updatedPartItems,
+		IReadOnlyList<int> deletedPartObjectIds,
+		IReadOnlyList<InventoryItem> updatedRewardItems,
+		IReadOnlyList<InventoryItem> addedRewardItems,
 		CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(true);
@@ -2840,6 +2859,52 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not save decompose action for player {PlayerObjectId}", playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SaveAssemblyItemActionMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<InventoryItem> updatedPartItems,
+		IReadOnlyList<int> deletedPartObjectIds,
+		IReadOnlyList<InventoryItem> updatedRewardItems,
+		IReadOnlyList<InventoryItem> addedRewardItems,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: AssemblyItemAction part consumption plus ItemService.addItem reward mutation.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			foreach (var item in updatedPartItems)
+			{
+				if (!await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, item, cancellationToken))
+					return false;
+			}
+
+			foreach (var deletedPartObjectId in deletedPartObjectIds)
+			{
+				if (!await DeleteInventoryItemAsync(connection, transaction, playerObjectId, deletedPartObjectId, cancellationToken))
+					return false;
+			}
+
+			foreach (var item in updatedRewardItems)
+			{
+				if (!await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, item, cancellationToken))
+					return false;
+			}
+
+			foreach (var item in addedRewardItems)
+				await InsertInventoryItemAsync(connection, transaction, item, cancellationToken);
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save assembly item action for player {PlayerObjectId}", playerObjectId);
 			return false;
 		}
 	}
