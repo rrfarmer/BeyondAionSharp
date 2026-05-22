@@ -165,6 +165,11 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(staticData.GetElementCount("expextract"), staticData.ItemTemplates.Templates.Count(template => template.ExpExtractAction != null));
 		Assert.Equal(new ItemExpExtractActionInfo(188052060, false, 33725505), staticData.ItemTemplates.GetItemTemplate(188920011)?.ExpExtractAction);
 		Assert.Equal(new ItemExpExtractActionInfo(188052060, true, 100), staticData.ItemTemplates.GetItemTemplate(188920012)?.ExpExtractAction);
+		Assert.Equal(staticData.GetElementCount("extract"), staticData.ItemTemplates.Templates.Count(template => template.HasExtractAction));
+		Assert.True(staticData.ItemTemplates.GetItemTemplate(165000001)?.HasExtractAction);
+		Assert.Equal(staticData.GetElementCount("apextract"), staticData.ItemTemplates.Templates.Count(template => template.ApExtractAction != null));
+		Assert.Equal(new ItemApExtractActionInfo(0.2f, "WEAPON"), staticData.ItemTemplates.GetItemTemplate(165005000)?.ApExtractAction);
+		Assert.Equal(new ItemApExtractActionInfo(0.5f, "ARMOR"), staticData.ItemTemplates.GetItemTemplate(165005001)?.ApExtractAction);
 		Assert.Equal(new ItemDyeActionInfo(null, 0, false), staticData.ItemTemplates.GetItemTemplate(169100000)?.DyeAction);
 		Assert.Equal(new ItemDyeActionInfo(0xc22626, 0, false), staticData.ItemTemplates.GetItemTemplate(169120000)?.DyeAction);
 		Assert.Equal(new ItemAnimationActionInfo(1, 2, 3, 4, null, 60), staticData.ItemTemplates.GetItemTemplate(188500000)?.AnimationAction);

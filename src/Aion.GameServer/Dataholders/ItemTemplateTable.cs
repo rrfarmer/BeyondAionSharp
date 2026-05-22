@@ -100,6 +100,8 @@ public sealed record ItemTemplateSummary(
 	bool HasCompositionAction = false,
 	int ExtraInventoryId = -1,
 	int AssemblyItemId = 0,
+	bool HasExtractAction = false,
+	ItemApExtractActionInfo? ApExtractAction = null,
 	ItemExpExtractActionInfo? ExpExtractAction = null)
 {
 	private const int CanPolishMask = 1 << 17;
@@ -357,6 +359,9 @@ public sealed record ItemExpandInventoryActionInfo(int Level, string Storage);
 
 // Java parity: model/templates/item/actions/ExpExtractAction.
 public sealed record ItemExpExtractActionInfo(int ItemId, bool IsPercent, long Cost);
+
+// Java parity: model/templates/item/actions/ApExtractAction.
+public sealed record ItemApExtractActionInfo(float Rate, string Target);
 
 // Java parity: model/templates/item/actions/DyeAction.
 public sealed record ItemDyeActionInfo(int? Color, int Minutes, bool HasMinutes);

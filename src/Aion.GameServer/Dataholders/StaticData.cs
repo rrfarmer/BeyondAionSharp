@@ -804,6 +804,22 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 4 && reader.LocalName == "extract" && currentItemTemplate != null)
+			{
+				// Java parity: model/templates/item/actions/ExtractAction marker.
+				currentItemTemplate.HasExtractAction = true;
+				continue;
+			}
+
+			if (reader.Depth == 4 && reader.LocalName == "apextract" && currentItemTemplate != null)
+			{
+				// Java parity: model/templates/item/actions/ApExtractAction target/rate metadata.
+				currentItemTemplate.ApExtractAction = new ItemApExtractActionInfo(
+					ReadFloatAttribute(reader, "rate"),
+					reader.GetAttribute("target") ?? string.Empty);
+				continue;
+			}
+
 			if (reader.Depth == 4 && reader.LocalName == "dye" && currentItemTemplate != null)
 			{
 				// Java parity: model/templates/item/actions/DyeAction color/minutes metadata.
@@ -1663,6 +1679,10 @@ public sealed class StaticData
 
 		public ItemExpExtractActionInfo? ExpExtractAction { get; set; }
 
+		public bool HasExtractAction { get; set; }
+
+		public ItemApExtractActionInfo? ApExtractAction { get; set; }
+
 		public ItemDyeActionInfo? DyeAction { get; set; }
 
 		public ItemAnimationActionInfo? AnimationAction { get; set; }
@@ -1802,6 +1822,8 @@ public sealed class StaticData
 				HasCompositionAction,
 				ExtraInventoryId,
 				AssemblyItemId,
+				HasExtractAction,
+				ApExtractAction,
 				ExpExtractAction);
 		}
 
