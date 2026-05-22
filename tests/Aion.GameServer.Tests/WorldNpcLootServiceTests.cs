@@ -229,6 +229,41 @@ public sealed class WorldNpcLootServiceTests
 		}
 	}
 
+	[Fact]
+	public void RequestDropItem_DeletesWorldCorpseAndUnregistersDropsWhenLastItemIsCollected()
+	{
+		var dropRegistration = new WorldNpcDropRegistrationService();
+		dropRegistration.RegisterDrop(5001, looterObjectId: 1001, drops: [new WorldNpcDropItem(1, 182400002, 1)]);
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var spawnService = new WorldNpcSpawnService(
+			new GameServerRuntimeContext(),
+			world,
+			new IDFactory(),
+			gameTimeService: null,
+			threadPoolManager: null,
+			connectionRegistry: null,
+			staticPlaceables: null,
+			walkerSpawnPlans: null,
+			walkerPlacementApplication: null,
+			logger: NullLogger<WorldNpcSpawnService>.Instance);
+		var npc = new WorldNpc(
+			5001,
+			203001,
+			new NpcTemplateSummary(203001, "loot_npc", 0, 1, "NORMAL", "NORMAL", "NONE", "NONE", "NON_ATTACKABLE"),
+			new WorldPosition(210010000, 1, 2, 3, 0));
+		Assert.True(world.TryAddObject(npc.ObjectId, npc));
+		var service = new WorldNpcLootService(dropRegistration, spawnService);
+		var player = CreatePlayer(1001);
+		Assert.Equal(WorldNpcLootStatus.Opened, service.RequestDropList(player, 5001).Status);
+
+		var result = service.RequestDropItem(player, 5001, itemIndex: 1, CreateItemTemplates(), () => 9001);
+
+		Assert.Equal(WorldNpcLootStatus.ItemCollected, result.Status);
+		Assert.False(world.TryGetObject(5001, out _));
+		Assert.False(dropRegistration.TryGetRegistration(5001, out _));
+		Assert.Empty(dropRegistration.GetCurrentDrops(5001));
+	}
+
 	private static Player CreatePlayer(int objectId)
 	{
 		return new Player

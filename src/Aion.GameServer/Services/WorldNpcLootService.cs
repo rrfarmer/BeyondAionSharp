@@ -134,6 +134,7 @@ public sealed class WorldNpcLootService
 			player.StopLooting();
 			visiblePackets.Add(new SmEmotion(player, EmotionType.EndLoot, 0, npcObjectId));
 			registration.ClearLootingPlayer(player.ObjectId);
+			DeleteEmptyDropCorpse(npcObjectId);
 		}
 		else if (registration.LootingPlayerObjectId == player.ObjectId)
 		{
@@ -166,6 +167,13 @@ public sealed class WorldNpcLootService
 			npcObjectId,
 			hasRegisteredDrops: true,
 			TimeSpan.FromMilliseconds(registration.RemainingDecayTimeMillis));
+	}
+
+	private void DeleteEmptyDropCorpse(int npcObjectId)
+	{
+		// Java parity: DropService.resendDropList deletes the NPC when the current drop set becomes empty; NpcController.onDespawn unregisters drops.
+		if (_worldNpcSpawnService?.TryDespawnWorldNpc(npcObjectId) == true)
+			_dropRegistrationService.UnregisterDrop(npcObjectId);
 	}
 
 	private static void ApplyInventoryPlan(Player player, InventoryAddPlan addPlan)
