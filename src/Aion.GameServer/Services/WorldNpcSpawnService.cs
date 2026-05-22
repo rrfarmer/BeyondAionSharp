@@ -21,6 +21,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 	private readonly ThreadPoolManager? _threadPoolManager;
 	private readonly IGameClientConnectionRegistry? _connectionRegistry;
 	private readonly IStaticPlaceableStateService? _staticPlaceables;
+	private readonly IWorldNpcWalkerSpawnPlanCacheService? _walkerSpawnPlans;
 	private readonly ILogger<WorldNpcSpawnService> _logger;
 	private readonly ConcurrentDictionary<NpcSpawnSummary, int> _temporarySpawnObjectIds = new();
 	private readonly ConcurrentDictionary<int, SpawnedWorldNpcRegistration> _spawnedWorldNpcs = new();
@@ -36,6 +37,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		ThreadPoolManager? threadPoolManager,
 		IGameClientConnectionRegistry? connectionRegistry,
 		IStaticPlaceableStateService? staticPlaceables,
+		IWorldNpcWalkerSpawnPlanCacheService? walkerSpawnPlans,
 		ILogger<WorldNpcSpawnService> logger)
 	{
 		_runtimeContext = runtimeContext;
@@ -45,6 +47,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		_threadPoolManager = threadPoolManager;
 		_connectionRegistry = connectionRegistry;
 		_staticPlaceables = staticPlaceables;
+		_walkerSpawnPlans = walkerSpawnPlans;
 		_logger = logger;
 	}
 
@@ -56,7 +59,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		ThreadPoolManager? threadPoolManager,
 		IStaticPlaceableStateService? staticPlaceables,
 		ILogger<WorldNpcSpawnService> logger)
-		: this(runtimeContext, world, idFactory, gameTimeService, threadPoolManager, null, staticPlaceables, logger)
+		: this(runtimeContext, world, idFactory, gameTimeService, threadPoolManager, null, staticPlaceables, null, logger)
 	{
 	}
 
@@ -66,7 +69,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		IDFactory idFactory,
 		GameTimeService? gameTimeService,
 		ILogger<WorldNpcSpawnService> logger)
-		: this(runtimeContext, world, idFactory, gameTimeService, null, null, null, logger)
+		: this(runtimeContext, world, idFactory, gameTimeService, null, null, null, null, logger)
 	{
 	}
 
@@ -75,7 +78,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		GameWorld world,
 		IDFactory idFactory,
 		ILogger<WorldNpcSpawnService> logger)
-		: this(runtimeContext, world, idFactory, null, null, null, null, logger)
+		: this(runtimeContext, world, idFactory, null, null, null, null, null, logger)
 	{
 	}
 
@@ -127,6 +130,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		CancelPendingRespawns();
 		_temporarySpawnObjectIds.Clear();
 		_spawnedWorldNpcs.Clear();
+		_walkerSpawnPlans?.Clear();
 		Volatile.Write(ref _loadedCount, 0);
 		Volatile.Write(ref _skippedCount, 0);
 		return ValueTask.CompletedTask;
@@ -324,7 +328,25 @@ public sealed class WorldNpcSpawnService : GameEngine
 			}
 		}
 
+		RefreshWalkerSpawnPlansFromStaticData(allowedMaps);
 		return new WorldNpcSpawnResult(spawned, skipped);
+	}
+
+	public IReadOnlyList<WorldNpcWalkerWorldSpawnPlan> RefreshWalkerSpawnPlans(
+		WalkerTemplateTable walkerTemplates,
+		WalkerVersionTable walkerVersions,
+		IEnumerable<int>? worldIds = null)
+	{
+		if (_walkerSpawnPlans == null)
+			return Array.Empty<WorldNpcWalkerWorldSpawnPlan>();
+
+		return _walkerSpawnPlans.RefreshWorldPlans(
+			_world.GetNpcs()
+				.OfType<WorldNpc>()
+				.ToArray(),
+			walkerTemplates,
+			walkerVersions,
+			worldIds);
 	}
 
 	public WorldNpcSpawnResult SpawnWorldNpcsForMap(
@@ -473,6 +495,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		_staticPlaceables?.DespawnPlaceableObject(worldNpc.Position.WorldId, worldNpc.StaticId);
 		if (releaseObjectId)
 			_idFactory.ReleaseId(objectId);
+		RefreshWalkerSpawnPlansFromStaticData([worldNpc.Position.WorldId]);
 		return true;
 	}
 
@@ -510,6 +533,8 @@ public sealed class WorldNpcSpawnService : GameEngine
 		var newObjectId = SpawnNpc(pendingRespawn.Registration.Spawn, pendingRespawn.Registration.Template);
 		if (newObjectId.HasValue && pendingRespawn.Registration.Spawn.GroupTemporarySchedule != null)
 			_temporarySpawnObjectIds[pendingRespawn.Registration.Spawn] = newObjectId.Value;
+		if (newObjectId.HasValue)
+			RefreshWalkerSpawnPlansFromStaticData([pendingRespawn.Registration.Spawn.MapId]);
 		return ValueTask.CompletedTask;
 	}
 
@@ -557,6 +582,15 @@ public sealed class WorldNpcSpawnService : GameEngine
 			cancellationToken.ThrowIfCancellationRequested();
 			await _connectionRegistry.RefreshNpcVisibilityAsync(_world.GetNpcs(mapId));
 		}
+	}
+
+	private void RefreshWalkerSpawnPlansFromStaticData(IEnumerable<int>? worldIds)
+	{
+		var staticData = _runtimeContext.DataManager?.StaticData;
+		if (staticData == null || _walkerSpawnPlans == null)
+			return;
+
+		RefreshWalkerSpawnPlans(staticData.WalkerTemplates, staticData.WalkerVersions, worldIds);
 	}
 
 	private async ValueTask OnGameHourChangedAsync(int gameMinutes, CancellationToken cancellationToken)

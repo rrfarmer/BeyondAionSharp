@@ -1,4 +1,5 @@
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Dataholders.LoadingUtils;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils;
@@ -52,6 +53,54 @@ public sealed class WorldNpcSpawnServiceTests
 		Assert.Contains(world.GetNpcs(), worldNpc => worldNpc.ObjectId == npc.ObjectId);
 		Assert.Equal(2, world.GetNpcs(210010000).Count);
 		Assert.Empty(world.GetNpcs(220010000));
+	}
+
+	[Fact]
+	public async Task SpawnWorldNpcs_RefreshesWalkerSpawnPlanCacheFromLiveWorldNpcs()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-walker-cache-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextWithWalkerDataAsync(tempPath);
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			var walkerPlans = new WorldNpcWalkerSpawnPlanCacheService();
+			var service = new WorldNpcSpawnService(
+				context,
+				world,
+				new IDFactory(),
+				gameTimeService: null,
+				threadPoolManager: null,
+				connectionRegistry: null,
+				staticPlaceables: null,
+				walkerPlans,
+				NullLogger<WorldNpcSpawnService>.Instance);
+			var spawns = new NpcSpawnTable(
+			[
+				CreateSpawn(210010000, 203080, walkerId: "route-a", walkerIndex: 1),
+				CreateSpawn(210010000, 203080, walkerId: "route-a", walkerIndex: 2),
+			]);
+			var templates = new NpcTemplateTable([CreateTemplate(203080)]);
+
+			var result = service.SpawnWorldNpcs(spawns, templates, [210010000]);
+
+			Assert.Equal(new WorldNpcSpawnResult(2, 0), result);
+			var worldPlan = walkerPlans.GetWorldPlan(210010000);
+			Assert.NotNull(worldPlan);
+			var formation = Assert.Single(worldPlan.SpawnPlan.Formations);
+			Assert.Equal("route-a", formation.RouteId);
+			Assert.Equal([2, 1], formation.Members.Select(member => member.ObjectId).ToArray());
+		}
+		finally
+		{
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
 	}
 
 	[Fact]
@@ -439,6 +488,39 @@ public sealed class WorldNpcSpawnServiceTests
 		}
 
 		Assert.True(condition(), "Condition was not met before the timeout.");
+	}
+
+	private static async Task<GameServerRuntimeContext> CreateRuntimeContextWithWalkerDataAsync(string tempPath)
+	{
+		var staticDataFile = Path.Combine(tempPath, "static_data.xml");
+		var cacheFile = Path.Combine(tempPath, "cache", "static_data.xml");
+		var schemaFile = Path.Combine(tempPath, "static_data.xsd");
+		Directory.CreateDirectory(Path.GetDirectoryName(cacheFile)!);
+		File.WriteAllText(
+			staticDataFile,
+			"""
+			<?xml version="1.0" encoding="UTF-8"?>
+			<static_data>
+				<npc_walker>
+					<walker_template route_id="route-a" pool="2" formation="SQUARE" rows="2">
+						<routestep x="0" y="0" z="0" />
+						<routestep x="10" y="0" z="0" />
+					</walker_template>
+				</npc_walker>
+			</static_data>
+			""");
+		File.WriteAllText(schemaFile, """<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" />""");
+		var dataManager = await DataManager.LoadAsync(
+			new XmlDataLoaderOptions
+			{
+				MainXmlFilePath = staticDataFile,
+				CacheXmlFilePath = cacheFile,
+				SchemaFilePath = schemaFile,
+				ValidateWhenCacheChanges = false,
+			});
+		var context = new GameServerRuntimeContext();
+		context.SetDataManager(dataManager);
+		return context;
 	}
 
 	private static NpcTemplateSummary CreateTemplate(int templateId, int state = 0, string aiName = "")
