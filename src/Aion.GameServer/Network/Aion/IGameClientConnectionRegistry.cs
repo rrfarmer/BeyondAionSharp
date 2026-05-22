@@ -30,6 +30,8 @@ public interface IGameClientConnectionRegistry
 		HousingTemplateTable? housingTemplates,
 		int? playerObjectId = null);
 
+	Task<int> RefreshNpcVisibilityAsync(IReadOnlyList<IWorldNpcObject> npcs, int? playerObjectId = null);
+
 	Task<int> BroadcastHouseUpdateAsync(WorldHouse house, HousingTemplateTable? housingTemplates);
 
 	Task<bool> NotifyMailReceivedAsync(int recipientObjectId, PlayerMail mail);

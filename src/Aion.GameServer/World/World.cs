@@ -50,6 +50,21 @@ public sealed class World
 		return _housesByAddress.Values.ToArray();
 	}
 
+	public IReadOnlyList<IWorldNpcObject> GetNpcs()
+	{
+		// Java parity: World.forEachObject over spawned Npc visible objects for KnownList scans.
+		return _objects.Values.OfType<IWorldNpcObject>().ToArray();
+	}
+
+	public IReadOnlyList<IWorldNpcObject> GetNpcs(int worldId)
+	{
+		// Java parity: WorldMapInstance visible-object scans are scoped to the player's world map.
+		return _objects.Values
+			.OfType<IWorldNpcObject>()
+			.Where(npc => npc.Position.WorldId == worldId)
+			.ToArray();
+	}
+
 	public bool TryRemoveObject(int objectId, out object? gameObject)
 	{
 		var removed = _objects.TryRemove(objectId, out gameObject);

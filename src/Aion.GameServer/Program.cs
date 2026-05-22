@@ -45,6 +45,7 @@ var builder = Host.CreateDefaultBuilder(args)
 				serviceProvider => serviceProvider.GetRequiredService<WorldNpcSpawnService>());
 			services.AddSingleton<ExpirableTaskService>();
 			services.AddSingleton<HousingVisibilityService>();
+			services.AddSingleton<NpcVisibilityService>();
 			services.AddSingleton<HouseAuctionTimingService>();
 			services.AddSingleton<HouseMaintenanceTimingService>();
 			services.AddSingleton<ShutdownHook>();

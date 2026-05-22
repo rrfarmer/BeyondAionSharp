@@ -10,9 +10,9 @@ public sealed class SmNpcInfo : GameServerPacket
 	private const int ActiveState = 1;
 	private const int NormalNpcObjectType = 1;
 
-	private readonly PostmanNpc _npc;
+	private readonly IWorldNpcObject _npc;
 
-	public SmNpcInfo(PostmanNpc npc)
+	public SmNpcInfo(IWorldNpcObject npc)
 		: base(PacketOpCode)
 	{
 		// Java parity: network/aion/serverpackets/SM_NPC_INFO(Npc, Player).
@@ -23,6 +23,7 @@ public sealed class SmNpcInfo : GameServerPacket
 	{
 		var position = _npc.Position;
 		var template = _npc.Template;
+		var postman = _npc as PostmanNpc;
 		buffer.WriteF(position.X);
 		buffer.WriteF(position.Y);
 		buffer.WriteF(position.Z);
@@ -37,8 +38,8 @@ public sealed class SmNpcInfo : GameServerPacket
 		buffer.WriteH(0);
 		buffer.WriteC(0);
 		buffer.WriteD(0);
-		buffer.WriteD(_npc.CreatorId);
-		buffer.WriteS(_npc.MasterName);
+		buffer.WriteD(postman?.CreatorId ?? 0);
+		buffer.WriteS(postman?.MasterName ?? string.Empty);
 		buffer.WriteC(100);
 		buffer.WriteD(template.MaxHp);
 		buffer.WriteC(template.Level);

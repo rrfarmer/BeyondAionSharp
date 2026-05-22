@@ -38,6 +38,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 	private readonly IMotionRepository? _motionRepository;
 	private readonly ExpirableTaskService? _expirableTaskService;
 	private readonly HousingVisibilityService _housingVisibilityService;
+	private readonly NpcVisibilityService _npcVisibilityService;
 	private readonly IDFactory? _idFactory;
 	private readonly GameTimeService? _gameTimeService;
 	private readonly ThreadPoolManager? _threadPoolManager;
@@ -67,6 +68,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		IMotionRepository? motionRepository = null,
 		ExpirableTaskService? expirableTaskService = null,
 		HousingVisibilityService? housingVisibilityService = null,
+		NpcVisibilityService? npcVisibilityService = null,
 		IDFactory? idFactory = null,
 		GameTimeService? gameTimeService = null,
 		ThreadPoolManager? threadPoolManager = null,
@@ -97,6 +99,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		_motionRepository = motionRepository;
 		_expirableTaskService = expirableTaskService;
 		_housingVisibilityService = housingVisibilityService ?? new HousingVisibilityService(options);
+		_npcVisibilityService = npcVisibilityService ?? new NpcVisibilityService();
 		_idFactory = idFactory;
 		_gameTimeService = gameTimeService;
 		_gameTimeService?.SetWorldBroadcaster((packet, _) => BroadcastToWorldAsync(packet));
@@ -177,6 +180,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		{
 			_playerConnections.TryRemove(playerObjectId, out _);
 			_housingVisibilityService.ClearKnownHouses(playerObjectId);
+			_npcVisibilityService.ClearKnownNpcs(playerObjectId);
 		}
 	}
 
@@ -303,6 +307,36 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 				}
 
 				await connection.SendPacketAsync(new SmDeleteHouse(addressId));
+				sent++;
+			}
+		}
+
+		return sent;
+	}
+
+	public async Task<int> RefreshNpcVisibilityAsync(IReadOnlyList<IWorldNpcObject> npcs, int? playerObjectId = null)
+	{
+		// Java parity: PlayerController.see/notSee sends SM_NPC_INFO/SM_DELETE from KnownList deltas.
+		var sent = 0;
+		foreach (var pair in _playerConnections)
+		{
+			if (playerObjectId != null && pair.Key != playerObjectId.Value)
+				continue;
+			var connection = pair.Value;
+			var player = connection.ActivePlayer;
+			if (player == null)
+				continue;
+
+			var delta = _npcVisibilityService.UpdateKnownNpcs(player, npcs);
+			foreach (var npc in delta.Appeared)
+			{
+				await connection.SendPacketAsync(new SmNpcInfo(npc));
+				sent++;
+			}
+
+			foreach (var objectId in delta.DisappearedObjectIds)
+			{
+				await connection.SendPacketAsync(new SmDelete(objectId));
 				sent++;
 			}
 		}

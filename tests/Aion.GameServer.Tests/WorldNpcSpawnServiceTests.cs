@@ -38,6 +38,9 @@ public sealed class WorldNpcSpawnServiceTests
 		var npc = Assert.IsType<WorldNpc>(gameObject);
 		Assert.Equal(203000, npc.TemplateId);
 		Assert.Equal(new global::Aion.GameServer.World.WorldPosition(210010000, 10, 20, 30, 40), npc.Position);
+		Assert.Equal([npc], world.GetNpcs());
+		Assert.Equal([npc], world.GetNpcs(210010000));
+		Assert.Empty(world.GetNpcs(220010000));
 		Assert.False(world.TryGetObject(2, out _));
 	}
 

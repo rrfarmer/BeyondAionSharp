@@ -902,6 +902,8 @@ public sealed class GameServerConnection : BaseClientConnection
 							new SmMotion(enterWorldResult.Player.ObjectId, enterWorldResult.Player.Motions));
 						if (_world != null && staticData?.HousingTemplates != null)
 							await _connectionRegistry.RefreshHousingVisibilityAsync(_world.GetHouses(), staticData.HousingTemplates);
+						if (_world != null)
+							await _connectionRegistry.RefreshNpcVisibilityAsync(_world.GetNpcs(enterWorldResult.Player.Position.WorldId), enterWorldResult.Player.ObjectId);
 					}
 					await SendPacketAsync(new SmGameTime(_gameTimeService?.GameMinutes ?? 0));
 					if (itemTemplates != null)
@@ -5347,6 +5349,15 @@ public sealed class GameServerConnection : BaseClientConnection
 		await _connectionRegistry.RefreshHousingVisibilityAsync(_world.GetHouses(), housingTemplates, player.ObjectId);
 	}
 
+	private async Task RefreshNpcVisibilityForPlayerAsync(Player player)
+	{
+		// Java parity: VisibleObject.updateKnownlist after movement includes visible Npc objects.
+		if (_connectionRegistry == null || _world == null)
+			return;
+
+		await _connectionRegistry.RefreshNpcVisibilityAsync(_world.GetNpcs(player.Position.WorldId), player.ObjectId);
+	}
+
 	private static string GetRealCharacterName(string name)
 	{
 		// Java parity: utils/ChatUtil.getRealCharName with default Util.convertName behavior.
@@ -5764,6 +5775,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (_connectionRegistry != null && (MovementMask.HasManualPosition(packet.Type) || packet.Type == MovementMask.Immediate))
 			await _connectionRegistry.BroadcastToVisiblePlayersAsync(player.Position, player.ObjectId, new SmMove(player));
 		await RefreshHousingVisibilityForPlayerAsync(player);
+		await RefreshNpcVisibilityForPlayerAsync(player);
 	}
 
 	private static void HandleMoveInAir(Player player, CmMoveInAir packet)
