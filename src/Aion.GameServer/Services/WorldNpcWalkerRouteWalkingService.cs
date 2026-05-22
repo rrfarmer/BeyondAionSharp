@@ -15,6 +15,8 @@ public sealed class WorldNpcWalkerRouteWalkingService
 	private readonly WorldNpcWalkerMovementBroadcastService _movementBroadcasts;
 	private readonly ThreadPoolManager? _threadPoolManager;
 	private readonly ConcurrentDictionary<int, WorldNpcWalkerMovementState> _activeStates = new();
+	private readonly ConcurrentDictionary<int, WorldNpcWalkerFormationKey> _formationKeysByObjectId = new();
+	private readonly ConcurrentDictionary<WorldNpcWalkerFormationKey, WorldNpcWalkerFormationRuntimeState> _formationStates = new();
 	private readonly ConcurrentDictionary<int, ScheduledTask> _pendingRestTasks = new();
 
 	public WorldNpcWalkerRouteWalkingService(
@@ -36,6 +38,8 @@ public sealed class WorldNpcWalkerRouteWalkingService
 	}
 
 	public int ActiveStateCount => _activeStates.Count;
+
+	public int ActiveFormationStateCount => _formationStates.Count;
 
 	public int PendingRestTaskCount => _pendingRestTasks.Count;
 
@@ -72,7 +76,7 @@ public sealed class WorldNpcWalkerRouteWalkingService
 		var formation = worldPlan.SpawnPlan.Formations.FirstOrDefault(formation =>
 			formation.Members.Any(member => member.ObjectId == objectId));
 		if (formation != null)
-			return await StartFormationAsync(formation, routePlan, cancellationToken);
+			return await StartFormationAsync(worldPlan.WorldId, formation, routePlan, cancellationToken);
 
 		return WorldNpcWalkerRouteWalkingStartResult.NotStarted(WorldNpcWalkerRouteWalkingStartStatus.NotActiveWalker);
 	}
@@ -85,8 +89,6 @@ public sealed class WorldNpcWalkerRouteWalkingService
 		cancellationToken.ThrowIfCancellationRequested();
 		if (!_activeStates.TryGetValue(objectId, out var currentState))
 			return WorldNpcWalkerRouteWalkingTargetReachedResult.NotHandled(WorldNpcWalkerRouteWalkingTargetReachedStatus.MissingState);
-		if (currentState.IsFormationMember)
-			return WorldNpcWalkerRouteWalkingTargetReachedResult.NotHandled(WorldNpcWalkerRouteWalkingTargetReachedStatus.FormationMember);
 
 		var staticData = _runtimeContext.DataManager?.StaticData;
 		if (staticData == null)
@@ -101,6 +103,9 @@ public sealed class WorldNpcWalkerRouteWalkingService
 		var worldPlan = _walkerSpawnPlans.GetWorldPlan(npc.Position.WorldId);
 		if (worldPlan == null)
 			return WorldNpcWalkerRouteWalkingTargetReachedResult.NotHandled(WorldNpcWalkerRouteWalkingTargetReachedStatus.MissingWorldPlan);
+		if (currentState.IsFormationMember)
+			return await TargetReachedFormationMemberAsync(objectId, currentState, routePlan, worldPlan, cancellationToken);
+
 		var walker = worldPlan.SpawnPlan.Walkers.FirstOrDefault(walker => walker.ObjectId == objectId);
 		if (walker == null)
 			return WorldNpcWalkerRouteWalkingTargetReachedResult.NotHandled(WorldNpcWalkerRouteWalkingTargetReachedStatus.NotActiveWalker);
@@ -129,6 +134,54 @@ public sealed class WorldNpcWalkerRouteWalkingService
 		return WorldNpcWalkerRouteWalkingTargetReachedResult.Scheduled(nextState, advance.RestDelay);
 	}
 
+	private async Task<WorldNpcWalkerRouteWalkingTargetReachedResult> TargetReachedFormationMemberAsync(
+		int objectId,
+		WorldNpcWalkerMovementState currentState,
+		WorldNpcWalkerRoutePlan routePlan,
+		WorldNpcWalkerWorldSpawnPlan worldPlan,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: spawnengine/WalkerGroup.targetReached waits until every member is in WALK_WAIT_GROUP before advancing the route.
+		var formation = worldPlan.SpawnPlan.Formations.FirstOrDefault(formation =>
+			formation.Members.Any(member => member.ObjectId == objectId));
+		if (formation == null)
+			return WorldNpcWalkerRouteWalkingTargetReachedResult.NotHandled(WorldNpcWalkerRouteWalkingTargetReachedStatus.NotActiveWalker);
+		if (!_formationKeysByObjectId.TryGetValue(objectId, out var formationKey))
+			formationKey = CreateFormationKey(worldPlan.WorldId, formation);
+		if (!_formationStates.TryGetValue(formationKey, out var runtimeState))
+			return WorldNpcWalkerRouteWalkingTargetReachedResult.NotHandled(WorldNpcWalkerRouteWalkingTargetReachedStatus.MissingFormationState);
+
+		WorldNpcWalkerFormationMovementAdvance advance;
+		lock (runtimeState.SyncRoot)
+		{
+			runtimeState.ArrivedObjectIds.Add(objectId);
+			if (runtimeState.ArrivedObjectIds.Count < formation.Members.Count)
+			{
+				return WorldNpcWalkerRouteWalkingTargetReachedResult.WaitingGroup(
+					currentState,
+					runtimeState.ArrivedObjectIds.Count,
+					formation.Members.Count);
+			}
+
+			advance = _movementStates.AdvanceFormationRouteWalking(runtimeState.MovementState, formation, routePlan);
+			runtimeState.MovementState = advance.State;
+			runtimeState.ArrivedObjectIds.Clear();
+			foreach (var memberState in advance.State.MemberStates)
+				_activeStates[memberState.ObjectId] = memberState;
+		}
+
+		if (advance.RestDelay <= TimeSpan.Zero)
+		{
+			CancelPendingRestTasks(advance.State.MemberStates);
+			var sentCount = await BroadcastStatesAsync(advance.State.MemberStates, cancellationToken);
+			return WorldNpcWalkerRouteWalkingTargetReachedResult.AdvancedGroup(advance.State.MemberStates, sentCount);
+		}
+
+		foreach (var memberState in advance.State.MemberStates)
+			ScheduleRestedBroadcast(memberState.ObjectId, memberState, advance.RestDelay, cancellationToken);
+		return WorldNpcWalkerRouteWalkingTargetReachedResult.ScheduledGroup(advance.State.MemberStates, advance.RestDelay);
+	}
+
 	private async Task<WorldNpcWalkerRouteWalkingStartResult> StartSingleWalkerAsync(
 		WorldNpcWalkerSpawnCandidate walker,
 		WorldNpc npc,
@@ -145,6 +198,7 @@ public sealed class WorldNpcWalkerRouteWalkingService
 	}
 
 	private async Task<WorldNpcWalkerRouteWalkingStartResult> StartFormationAsync(
+		int worldId,
 		WorldNpcWalkerFormationResult formation,
 		WorldNpcWalkerRoutePlan routePlan,
 		CancellationToken cancellationToken)
@@ -155,16 +209,34 @@ public sealed class WorldNpcWalkerRouteWalkingService
 			routePlan,
 			currentStepIndex: 0,
 			targetStepIndex: 0);
+		var formationKey = CreateFormationKey(worldId, formation);
+		_formationStates[formationKey] = new WorldNpcWalkerFormationRuntimeState(formationState);
 		var sentCount = 0;
 		foreach (var state in formationState.MemberStates)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
+			_formationKeysByObjectId[state.ObjectId] = formationKey;
 			_activeStates[state.ObjectId] = state;
 			var broadcast = await _movementBroadcasts.BroadcastWalkerMovementAsync(state.ObjectId, state, cancellationToken: cancellationToken);
 			sentCount += broadcast.SentCount;
 		}
 
 		return WorldNpcWalkerRouteWalkingStartResult.CreateStarted(formationState.MemberStates, sentCount);
+	}
+
+	private async Task<int> BroadcastStatesAsync(
+		IReadOnlyList<WorldNpcWalkerMovementState> states,
+		CancellationToken cancellationToken)
+	{
+		var sentCount = 0;
+		foreach (var state in states)
+		{
+			cancellationToken.ThrowIfCancellationRequested();
+			var broadcast = await _movementBroadcasts.BroadcastWalkerMovementAsync(state.ObjectId, state, cancellationToken: cancellationToken);
+			sentCount += broadcast.SentCount;
+		}
+
+		return sentCount;
 	}
 
 	private void ScheduleRestedBroadcast(
@@ -202,11 +274,48 @@ public sealed class WorldNpcWalkerRouteWalkingService
 			scheduledTask.Cancel();
 	}
 
+	private void CancelPendingRestTasks(IReadOnlyList<WorldNpcWalkerMovementState> states)
+	{
+		foreach (var state in states)
+			CancelPendingRestTask(state.ObjectId);
+	}
+
 	private void RemovePendingRestTask(int objectId, ScheduledTask scheduledTask)
 	{
 		((ICollection<KeyValuePair<int, ScheduledTask>>)_pendingRestTasks).Remove(
 			new KeyValuePair<int, ScheduledTask>(objectId, scheduledTask));
 	}
+
+	private static WorldNpcWalkerFormationKey CreateFormationKey(
+		int worldId,
+		WorldNpcWalkerFormationResult formation)
+	{
+		return new WorldNpcWalkerFormationKey(
+			worldId,
+			formation.RouteId,
+			formation.VersionRouteId,
+			string.Join(",", formation.Members.Select(member => member.ObjectId).OrderBy(objectId => objectId)));
+	}
+
+	private sealed class WorldNpcWalkerFormationRuntimeState
+	{
+		public WorldNpcWalkerFormationRuntimeState(WorldNpcWalkerFormationMovementState movementState)
+		{
+			MovementState = movementState;
+		}
+
+		public object SyncRoot { get; } = new();
+
+		public WorldNpcWalkerFormationMovementState MovementState { get; set; }
+
+		public HashSet<int> ArrivedObjectIds { get; } = [];
+	}
+
+	private readonly record struct WorldNpcWalkerFormationKey(
+		int WorldId,
+		string RouteId,
+		string VersionRouteId,
+		string MemberObjectIds);
 }
 
 public sealed record WorldNpcWalkerRouteWalkingStartResult(
@@ -252,8 +361,11 @@ public sealed record WorldNpcWalkerRouteWalkingTargetReachedResult(
 	bool Handled,
 	WorldNpcWalkerRouteWalkingTargetReachedStatus Status,
 	WorldNpcWalkerMovementState? State,
+	IReadOnlyList<WorldNpcWalkerMovementState> States,
 	TimeSpan RestDelay,
-	int BroadcastCount)
+	int BroadcastCount,
+	int ArrivedCount,
+	int ExpectedArrivalCount)
 {
 	public static WorldNpcWalkerRouteWalkingTargetReachedResult Advanced(
 		WorldNpcWalkerMovementState state,
@@ -263,8 +375,26 @@ public sealed record WorldNpcWalkerRouteWalkingTargetReachedResult(
 			Handled: true,
 			WorldNpcWalkerRouteWalkingTargetReachedStatus.Advanced,
 			state,
+			[state],
 			RestDelay: TimeSpan.Zero,
-			broadcastCount);
+			broadcastCount,
+			ArrivedCount: 0,
+			ExpectedArrivalCount: 0);
+	}
+
+	public static WorldNpcWalkerRouteWalkingTargetReachedResult AdvancedGroup(
+		IReadOnlyList<WorldNpcWalkerMovementState> states,
+		int broadcastCount)
+	{
+		return new WorldNpcWalkerRouteWalkingTargetReachedResult(
+			Handled: true,
+			WorldNpcWalkerRouteWalkingTargetReachedStatus.Advanced,
+			State: null,
+			states,
+			RestDelay: TimeSpan.Zero,
+			broadcastCount,
+			ArrivedCount: states.Count,
+			ExpectedArrivalCount: states.Count);
 	}
 
 	public static WorldNpcWalkerRouteWalkingTargetReachedResult Scheduled(
@@ -275,8 +405,42 @@ public sealed record WorldNpcWalkerRouteWalkingTargetReachedResult(
 			Handled: true,
 			WorldNpcWalkerRouteWalkingTargetReachedStatus.Scheduled,
 			state,
+			[state],
 			restDelay,
-			BroadcastCount: 0);
+			BroadcastCount: 0,
+			ArrivedCount: 0,
+			ExpectedArrivalCount: 0);
+	}
+
+	public static WorldNpcWalkerRouteWalkingTargetReachedResult ScheduledGroup(
+		IReadOnlyList<WorldNpcWalkerMovementState> states,
+		TimeSpan restDelay)
+	{
+		return new WorldNpcWalkerRouteWalkingTargetReachedResult(
+			Handled: true,
+			WorldNpcWalkerRouteWalkingTargetReachedStatus.Scheduled,
+			State: null,
+			states,
+			restDelay,
+			BroadcastCount: 0,
+			ArrivedCount: states.Count,
+			ExpectedArrivalCount: states.Count);
+	}
+
+	public static WorldNpcWalkerRouteWalkingTargetReachedResult WaitingGroup(
+		WorldNpcWalkerMovementState state,
+		int arrivedCount,
+		int expectedArrivalCount)
+	{
+		return new WorldNpcWalkerRouteWalkingTargetReachedResult(
+			Handled: true,
+			WorldNpcWalkerRouteWalkingTargetReachedStatus.WaitingGroup,
+			state,
+			[state],
+			RestDelay: TimeSpan.Zero,
+			BroadcastCount: 0,
+			arrivedCount,
+			expectedArrivalCount);
 	}
 
 	public static WorldNpcWalkerRouteWalkingTargetReachedResult Stopped()
@@ -285,8 +449,11 @@ public sealed record WorldNpcWalkerRouteWalkingTargetReachedResult(
 			Handled: true,
 			WorldNpcWalkerRouteWalkingTargetReachedStatus.Stopped,
 			State: null,
+			States: Array.Empty<WorldNpcWalkerMovementState>(),
 			RestDelay: TimeSpan.Zero,
-			BroadcastCount: 0);
+			BroadcastCount: 0,
+			ArrivedCount: 0,
+			ExpectedArrivalCount: 0);
 	}
 
 	public static WorldNpcWalkerRouteWalkingTargetReachedResult NotHandled(
@@ -296,8 +463,11 @@ public sealed record WorldNpcWalkerRouteWalkingTargetReachedResult(
 			Handled: false,
 			status,
 			State: null,
+			States: Array.Empty<WorldNpcWalkerMovementState>(),
 			RestDelay: TimeSpan.Zero,
-			BroadcastCount: 0);
+			BroadcastCount: 0,
+			ArrivedCount: 0,
+			ExpectedArrivalCount: 0);
 	}
 }
 
@@ -305,9 +475,11 @@ public enum WorldNpcWalkerRouteWalkingTargetReachedStatus
 {
 	Advanced,
 	Scheduled,
+	WaitingGroup,
 	Stopped,
 	MissingState,
 	FormationMember,
+	MissingFormationState,
 	MissingStaticData,
 	MissingNpc,
 	MissingRoute,

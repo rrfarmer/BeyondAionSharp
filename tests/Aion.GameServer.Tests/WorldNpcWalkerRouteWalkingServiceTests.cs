@@ -264,7 +264,7 @@ public sealed class WorldNpcWalkerRouteWalkingServiceTests
 	}
 
 	[Fact]
-	public async Task TargetReachedAsync_DoesNotAdvanceFormationMemberDirectly()
+	public async Task TargetReachedAsync_WaitsForAllFormationMembersBeforeAdvancingGroup()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-walk-formation-target-reached-" + Guid.NewGuid().ToString("N"));
 		Directory.CreateDirectory(tempPath);
@@ -282,15 +282,89 @@ public sealed class WorldNpcWalkerRouteWalkingServiceTests
 			var start = await service.StartRouteWalkingAsync(first.ObjectId);
 			Assert.True(start.Started);
 
-			var result = await service.TargetReachedAsync(first.ObjectId);
+			var waiting = await service.TargetReachedAsync(first.ObjectId);
 
-			Assert.False(result.Handled);
-			Assert.Equal(WorldNpcWalkerRouteWalkingTargetReachedStatus.FormationMember, result.Status);
+			Assert.True(waiting.Handled);
+			Assert.Equal(WorldNpcWalkerRouteWalkingTargetReachedStatus.WaitingGroup, waiting.Status);
+			Assert.Equal(1, waiting.ArrivedCount);
+			Assert.Equal(2, waiting.ExpectedArrivalCount);
 			Assert.Equal(2, service.ActiveStateCount);
+			Assert.Equal(1, service.ActiveFormationStateCount);
 			Assert.Equal(2, registry.Broadcasts.Count);
+
+			var advanced = await service.TargetReachedAsync(second.ObjectId);
+
+			Assert.True(advanced.Handled);
+			Assert.Equal(WorldNpcWalkerRouteWalkingTargetReachedStatus.Advanced, advanced.Status);
+			Assert.Equal(2, advanced.BroadcastCount);
+			Assert.Equal(2, advanced.States.Count);
+			Assert.Equal([2, 1], advanced.States.Select(state => state.ObjectId).ToArray());
+			Assert.All(advanced.States, state =>
+			{
+				Assert.True(state.IsFormationMember);
+				Assert.Equal(1, state.TargetStepIndex);
+				Assert.Equal(1, state.GroupStep);
+				Assert.True(service.TryGetActiveState(state.ObjectId, out var activeState));
+				Assert.Equal(state, activeState);
+			});
+			Assert.Equal(4, registry.Broadcasts.Count);
 		}
 		finally
 		{
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
+	[Fact]
+	public async Task TargetReachedAsync_SchedulesFormationMovementAfterRestTime()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-walk-formation-rest-schedule-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		try
+		{
+			var context = await CreateRuntimeContextWithWalkerDataAsync(
+				tempPath,
+				pool: 2,
+				formation: "SQUARE",
+				rows: "2",
+				firstRestTime: 25);
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			var first = CreateNpc(1, new WorldPosition(210010000, 0, 0, 0, 0), walkerId: "route-a", walkerIndex: 1);
+			var second = CreateNpc(2, new WorldPosition(210010000, 0, 0, 0, 0), walkerId: "route-a", walkerIndex: 2);
+			Assert.True(world.TryAddObject(first.ObjectId, first));
+			Assert.True(world.TryAddObject(second.ObjectId, second));
+			var cache = CreateCache(context, [first, second]);
+			var registry = new CapturingConnectionRegistry();
+			var service = CreateService(context, world, cache, registry, threadPoolManager);
+			var start = await service.StartRouteWalkingAsync(first.ObjectId);
+			Assert.True(start.Started);
+			var waiting = await service.TargetReachedAsync(first.ObjectId);
+			Assert.Equal(WorldNpcWalkerRouteWalkingTargetReachedStatus.WaitingGroup, waiting.Status);
+
+			var scheduled = await service.TargetReachedAsync(second.ObjectId);
+
+			Assert.True(scheduled.Handled);
+			Assert.Equal(WorldNpcWalkerRouteWalkingTargetReachedStatus.Scheduled, scheduled.Status);
+			Assert.Equal(TimeSpan.FromMilliseconds(25), scheduled.RestDelay);
+			Assert.Equal(0, scheduled.BroadcastCount);
+			Assert.Equal(2, scheduled.States.Count);
+			Assert.Equal(2, service.PendingRestTaskCount);
+			Assert.Equal(2, registry.Broadcasts.Count);
+
+			await WaitUntilAsync(() => registry.Broadcasts.Count == 4 && service.PendingRestTaskCount == 0);
+
+			Assert.Equal([2, 1, 2, 1], registry.Broadcasts.Select(broadcast => broadcast.SourceObjectId).ToArray());
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
 			try
 			{
 				Directory.Delete(tempPath, recursive: true);
