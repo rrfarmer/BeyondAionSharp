@@ -167,6 +167,7 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(new ItemAnimationActionInfo(1, 2, 3, 4, null, 60), staticData.ItemTemplates.GetItemTemplate(188500000)?.AnimationAction);
 		Assert.Equal("cash_hair_type_li_m_01a", staticData.ItemTemplates.GetItemTemplate(169800003)?.CosmeticActionName);
 		Assert.Equal("test_preset_type_li_m_01a", staticData.ItemTemplates.GetItemTemplate(169890001)?.CosmeticActionName);
+		Assert.Equal(new ItemRemodelActionInfo(1, 0), staticData.ItemTemplates.GetItemTemplate(122001250)?.RemodelAction);
 		Assert.Equal(2, staticData.ItemTemplates.GetItemTemplate(122001250)?.ExtraInventoryId);
 		Assert.Equal(-1, staticData.ItemTemplates.GetItemTemplate(152000065)?.ExtraInventoryId);
 		Assert.Equal(staticData.GetElementCount("decompose"), staticData.ItemTemplates.Templates.Count(template => template.HasDecomposeAction));

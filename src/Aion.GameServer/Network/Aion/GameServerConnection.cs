@@ -434,6 +434,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleManastoneAsync(_activePlayer, manastone);
 				break;
+			case CmItemRemodel:
+				// Java parity: network/aion/clientpackets/CM_ITEM_REMODEL parser is wired; ItemRemodelService runtime is a later Phase 6 slice.
+				break;
 			case CmDialogSelect dialogSelect:
 				if (_activePlayer != null)
 					await HandleDialogSelectAsync(_activePlayer, dialogSelect);

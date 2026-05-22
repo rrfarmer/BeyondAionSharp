@@ -45,6 +45,7 @@ public static class GameClientPacketFactory
 		Register(80, states => new CmDeleteQuest(80, states), GameConnectionState.InGame);
 		Register(81, states => new CmPlayMovieEnd(81, states), GameConnectionState.InGame);
 		Register(89, states => new CmRecipeDelete(89, states), GameConnectionState.InGame);
+		Register(90, states => new CmItemRemodel(90, states), GameConnectionState.InGame);
 		Register(92, states => new CmSecurityToken(92, states), GameConnectionState.Connected, GameConnectionState.Authed, GameConnectionState.InGame);
 		Register(103, states => new CmPingRequest(103, states), GameConnectionState.InGame);
 		Register(107, states => new CmClientCommandRoll(107, states), GameConnectionState.InGame);

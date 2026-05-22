@@ -804,6 +804,15 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 4 && reader.LocalName == "remodel" && currentItemTemplate != null)
+			{
+				// Java parity: model/templates/item/actions/RemodelAction type/minutes metadata.
+				currentItemTemplate.RemodelAction = new ItemRemodelActionInfo(
+					ReadIntAttribute(reader, "type"),
+					ReadIntAttribute(reader, "minutes"));
+				continue;
+			}
+
 			if (reader.Depth == 4 && reader.LocalName == "decompose" && currentItemTemplate != null)
 			{
 				// Java parity: model/templates/item/actions/DecomposeAction marker.
@@ -1615,6 +1624,8 @@ public sealed class StaticData
 
 		public ItemAnimationActionInfo? AnimationAction { get; set; }
 
+		public ItemRemodelActionInfo? RemodelAction { get; set; }
+
 		public bool HasDecomposeAction { get; set; }
 
 		public string CosmeticActionName { get; set; } = string.Empty;
@@ -1738,6 +1749,7 @@ public sealed class StaticData
 				ExpandInventoryAction,
 				DyeAction,
 				AnimationAction,
+				RemodelAction,
 				CosmeticActionName,
 				HasDecomposeAction,
 				ExtraInventoryId);

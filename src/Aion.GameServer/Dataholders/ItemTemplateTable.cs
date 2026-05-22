@@ -94,6 +94,7 @@ public sealed record ItemTemplateSummary(
 	ItemExpandInventoryActionInfo? ExpandInventoryAction = null,
 	ItemDyeActionInfo? DyeAction = null,
 	ItemAnimationActionInfo? AnimationAction = null,
+	ItemRemodelActionInfo? RemodelAction = null,
 	string CosmeticActionName = "",
 	bool HasDecomposeAction = false,
 	int ExtraInventoryId = -1)
@@ -366,6 +367,9 @@ public sealed record ItemAnimationActionInfo(
 		.Select(id => id!.Value)
 		.ToArray();
 }
+
+// Java parity: model/templates/item/actions/RemodelAction.
+public sealed record ItemRemodelActionInfo(int ExtractType, int ExpireMinutes);
 
 public sealed record ItemStatModifier(
 	string Operation,
