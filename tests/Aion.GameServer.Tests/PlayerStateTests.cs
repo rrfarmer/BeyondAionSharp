@@ -210,6 +210,37 @@ public sealed class PlayerStateTests
 	}
 
 	[Fact]
+	public void MotionLearnService_MatchesJavaActiveReplacementAndExpirationRules()
+	{
+		var now = DateTimeOffset.FromUnixTimeSeconds(1_000);
+		var player = new Player
+		{
+			Motions =
+			[
+				new PlayerMotion(1, 0, true),
+				new PlayerMotion(6, 0, true),
+			],
+		};
+		var action = new ItemAnimationActionInfo(5, 6, 7, 8, null, 5);
+
+		var plan = MotionLearnService.CreatePlan(player, action, now);
+
+		Assert.True(plan.Succeeded);
+		Assert.Equal([5, 6, 7, 8], plan.AddedMotions.Select(motion => motion.Id));
+		Assert.Equal(1_300, plan.AddedMotions[0].ExpireTimeSeconds);
+		Assert.Equal([1], plan.DeactivatedMotionIds);
+		Assert.Contains(plan.Motions, motion => motion.Id == 1 && !motion.IsActive);
+		Assert.Contains(plan.Motions, motion => motion.Id == 5 && motion.IsActive);
+		Assert.Contains(plan.Motions, motion => motion.Id == 6 && motion.IsActive);
+		Assert.Contains(plan.Motions, motion => motion.Id == 7 && motion.IsActive);
+		Assert.Contains(plan.Motions, motion => motion.Id == 8 && motion.IsActive);
+
+		var permanent = MotionLearnService.CreatePlan(player, new ItemAnimationActionInfo(1, null, null, null, null, 0), now);
+		Assert.True(permanent.Succeeded);
+		Assert.Equal(0, Assert.Single(permanent.AddedMotions).ExpireTimeSeconds);
+	}
+
+	[Fact]
 	public void Player_CreatureStateMatchesJavaBitAndExactMultibitSemantics()
 	{
 		var player = new Player();

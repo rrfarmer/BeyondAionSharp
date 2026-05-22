@@ -92,7 +92,8 @@ public sealed record ItemTemplateSummary(
 	bool HasTitleAddAction = false,
 	bool HasTitleAddMinutes = false,
 	ItemExpandInventoryActionInfo? ExpandInventoryAction = null,
-	ItemDyeActionInfo? DyeAction = null)
+	ItemDyeActionInfo? DyeAction = null,
+	ItemAnimationActionInfo? AnimationAction = null)
 {
 	private const int CanPolishMask = 1 << 17;
 	private const int SoulBoundMask = 1 << 7;
@@ -347,6 +348,21 @@ public sealed record ItemExpandInventoryActionInfo(int Level, string Storage);
 
 // Java parity: model/templates/item/actions/DyeAction.
 public sealed record ItemDyeActionInfo(int? Color, int Minutes, bool HasMinutes);
+
+// Java parity: model/templates/item/actions/AnimationAddAction.
+public sealed record ItemAnimationActionInfo(
+	int? Idle,
+	int? Run,
+	int? Jump,
+	int? Rest,
+	int? Shop,
+	int Minutes)
+{
+	public IReadOnlyList<int> MotionIds => new[] { Idle, Run, Jump, Rest, Shop }
+		.Where(id => id.HasValue)
+		.Select(id => id!.Value)
+		.ToArray();
+}
 
 public sealed record ItemStatModifier(
 	string Operation,

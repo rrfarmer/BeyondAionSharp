@@ -429,6 +429,16 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public int? DyeDeletedSourceItemObjectId { get; private set; }
 
+		public int SaveAnimationAddActionMutationCalls { get; private set; }
+
+		public IReadOnlyList<PlayerMotion> AnimationAddedMotions { get; private set; } = Array.Empty<PlayerMotion>();
+
+		public IReadOnlyList<int> AnimationDeactivatedMotionIds { get; private set; } = Array.Empty<int>();
+
+		public InventoryItem? AnimationSourceItemUpdate { get; private set; }
+
+		public int? AnimationDeletedSourceItemObjectId { get; private set; }
+
 		public int SaveItemChargeMutationCalls { get; private set; }
 
 		public InventoryItem? ChargedItem { get; private set; }
@@ -636,6 +646,22 @@ public sealed class PlayerEnterWorldServiceTests
 			DyeTargetItemUpdate = targetItemUpdate;
 			DyeSourceItemUpdate = sourceItemUpdate;
 			DyeDeletedSourceItemObjectId = deletedSourceItemObjectId;
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> SaveAnimationAddActionMutationAsync(
+			int playerObjectId,
+			IReadOnlyList<PlayerMotion> motions,
+			IReadOnlyList<int> deactivatedMotionIds,
+			InventoryItem? sourceItemUpdate,
+			int? deletedSourceItemObjectId,
+			CancellationToken cancellationToken = default)
+		{
+			SaveAnimationAddActionMutationCalls++;
+			AnimationAddedMotions = motions;
+			AnimationDeactivatedMotionIds = deactivatedMotionIds;
+			AnimationSourceItemUpdate = sourceItemUpdate;
+			AnimationDeletedSourceItemObjectId = deletedSourceItemObjectId;
 			return Task.FromResult(true);
 		}
 

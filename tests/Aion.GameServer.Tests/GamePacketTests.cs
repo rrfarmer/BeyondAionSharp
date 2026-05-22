@@ -258,7 +258,10 @@ public class GamePacketTests
 					() => DateTimeOffset.FromUnixTimeSeconds(1000))));
 		Assert.Equal(
 			Convert.FromHexString("050B0001"),
-			SerializeUnencryptedPayload(new SmMotion(11, 1)));
+			SerializeUnencryptedPayload(new SmMotion(11, (byte)1)));
+		Assert.Equal(
+			Convert.FromHexString("020B000A000000"),
+			SerializeUnencryptedPayload(new SmMotion(11, 10)));
 		Assert.Equal(
 			Convert.FromHexString("07E90300000B0000000D0000000000"),
 			SerializeUnencryptedPayload(

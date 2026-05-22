@@ -81,6 +81,14 @@ public interface IPlayerEnterWorldRepository
 		int? deletedSourceItemObjectId,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveAnimationAddActionMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<PlayerMotion> motions,
+		IReadOnlyList<int> deactivatedMotionIds,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default);
+
 	Task<IReadOnlyList<PlayerMacro>> LoadPlayerMacrosAsync(int playerObjectId, CancellationToken cancellationToken = default);
 
 	Task<bool> SavePlayerMacroAsync(int playerObjectId, PlayerMacro macro, CancellationToken cancellationToken = default);
@@ -322,6 +330,17 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	public Task<bool> SaveDyeItemActionMutationAsync(
 		int playerObjectId,
 		InventoryItem targetItemUpdate,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> SaveAnimationAddActionMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<PlayerMotion> motions,
+		IReadOnlyList<int> deactivatedMotionIds,
 		InventoryItem? sourceItemUpdate,
 		int? deletedSourceItemObjectId,
 		CancellationToken cancellationToken = default)
@@ -2353,6 +2372,70 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not save dye item action for player {PlayerObjectId}", playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SaveAnimationAddActionMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<PlayerMotion> motions,
+		IReadOnlyList<int> deactivatedMotionIds,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: AnimationAddAction.run -> MotionDAO.storeMotion plus inventory.decreaseItemCount.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			foreach (var motionId in deactivatedMotionIds)
+			{
+				await using var updateCommand = connection.CreateCommand();
+				updateCommand.Transaction = transaction;
+				updateCommand.CommandText = "UPDATE player_motions SET active = ? WHERE player_id = ? AND motion_id = ?";
+				updateCommand.Parameters.AddRange(
+					new[]
+					{
+						new MySqlParameter { Value = false },
+						new MySqlParameter { Value = playerObjectId },
+						new MySqlParameter { Value = motionId },
+					});
+				await updateCommand.ExecuteNonQueryAsync(cancellationToken);
+			}
+
+			foreach (var motion in motions)
+			{
+				await using var insertCommand = connection.CreateCommand();
+				insertCommand.Transaction = transaction;
+				insertCommand.CommandText = "REPLACE INTO player_motions (player_id, motion_id, active, time) VALUES (?, ?, ?, ?)";
+				insertCommand.Parameters.AddRange(
+					new[]
+					{
+						new MySqlParameter { Value = playerObjectId },
+						new MySqlParameter { Value = motion.Id },
+						new MySqlParameter { Value = motion.IsActive },
+						new MySqlParameter { Value = motion.ExpireTimeSeconds },
+					});
+				if (await insertCommand.ExecuteNonQueryAsync(cancellationToken) <= 0)
+					return false;
+			}
+
+			if (sourceItemUpdate != null && !await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, sourceItemUpdate, cancellationToken))
+				return false;
+
+			if (deletedSourceItemObjectId.HasValue
+				&& !await DeleteInventoryItemAsync(connection, transaction, playerObjectId, deletedSourceItemObjectId.Value, cancellationToken))
+				return false;
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save animation-add action for player {PlayerObjectId}", playerObjectId);
 			return false;
 		}
 	}

@@ -163,6 +163,7 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(new ItemExpandInventoryActionInfo(1, "WAREHOUSE"), staticData.ItemTemplates.GetItemTemplate(169640000)?.ExpandInventoryAction);
 		Assert.Equal(new ItemDyeActionInfo(null, 0, false), staticData.ItemTemplates.GetItemTemplate(169100000)?.DyeAction);
 		Assert.Equal(new ItemDyeActionInfo(0xc22626, 0, false), staticData.ItemTemplates.GetItemTemplate(169120000)?.DyeAction);
+		Assert.Equal(new ItemAnimationActionInfo(1, 2, 3, 4, null, 60), staticData.ItemTemplates.GetItemTemplate(188500000)?.AnimationAction);
 		var sprintRide = staticData.RideInfos.GetRideInfo(2000000);
 		Assert.NotNull(sprintRide);
 		Assert.Equal(12.0f, sprintRide.MoveSpeed);

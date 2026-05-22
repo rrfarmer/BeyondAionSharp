@@ -2433,6 +2433,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (sourceTemplate.AnimationAction != null)
+		{
+			await HandleAnimationAddUseItemAsync(player, inventoryItems, sourceItem, sourceTemplate);
+			return;
+		}
+
 		if (sourceTemplate.PolishSetId > 0 && packet.Type == 2)
 		{
 			var targetItem = packet.TargetItemObjectId == 0
@@ -2860,6 +2866,91 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		await SendPacketAsync(new SmInventoryUpdateItem(targetItemUpdate, targetTemplate, updateType: 0));
+	}
+
+	private async Task HandleAnimationAddUseItemAsync(
+		Player player,
+		List<InventoryItem> inventoryItems,
+		InventoryItem sourceItem,
+		ItemTemplateSummary sourceTemplate)
+	{
+		// Java parity: model/templates/item/actions/AnimationAddAction.canAct + delayed act.
+		if (sourceTemplate.AnimationAction?.MotionIds.Count == 0)
+		{
+			await SendPacketAsync(SmSystemMessage.ItemColorError());
+			return;
+		}
+
+		AddItemCooldownIfNeeded(player, sourceTemplate, removeOnCancel: false);
+		await CancelPendingItemUseAsync(player);
+		await SendPacketAsync(new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 1000, 0, 0));
+		await SchedulePendingItemUseAsync(
+			player,
+			itemObjectId: sourceItem.ObjectId,
+			itemTemplateId: sourceItem.ItemId,
+			targetItemName: sourceTemplate.GetClientName() ?? sourceTemplate.Name,
+			cancelMessage: PendingItemUseCancelMessage.Item,
+			delay: TimeSpan.FromMilliseconds(1000),
+			completeAsync: async cancellationToken =>
+			{
+				if (cancellationToken.IsCancellationRequested)
+					return;
+
+				await CompleteAnimationAddUseItemAsync(player, inventoryItems, sourceItem, sourceTemplate);
+			},
+			cancelEndState: 2);
+	}
+
+	private async Task CompleteAnimationAddUseItemAsync(
+		Player player,
+		List<InventoryItem> inventoryItems,
+		InventoryItem sourceItem,
+		ItemTemplateSummary sourceTemplate)
+	{
+		var plan = MotionLearnService.CreatePlan(player, sourceTemplate.AnimationAction, DateTimeOffset.UtcNow);
+		if (!plan.Succeeded)
+			return;
+
+		var sourceItemUpdate = sourceItem.Count > 1 ? CopyInventoryItem(sourceItem, count: sourceItem.Count - 1) : null;
+		int? deletedSourceObjectId = sourceItem.Count <= 1 ? sourceItem.ObjectId : null;
+		var saved = _playerEnterWorldService == null
+			|| await _playerEnterWorldService.SaveAnimationAddActionMutationAsync(
+				player,
+				plan.AddedMotions,
+				plan.DeactivatedMotionIds,
+				sourceItemUpdate,
+				deletedSourceObjectId);
+		if (!saved)
+			return;
+
+		if (deletedSourceObjectId.HasValue)
+		{
+			inventoryItems.RemoveAll(item => item.ObjectId == deletedSourceObjectId.Value);
+			await SendPacketAsync(new SmDeleteItem(deletedSourceObjectId.Value, SmDeleteItem.UseDeleteType));
+		}
+		else if (sourceItemUpdate != null)
+		{
+			ReplaceInventoryItem(inventoryItems, sourceItemUpdate);
+			await SendPacketAsync(new SmInventoryUpdateItem(sourceItemUpdate, sourceTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+		}
+
+		player.InventoryItems = inventoryItems.ToArray();
+		player.Motions = plan.Motions;
+		var now = DateTimeOffset.UtcNow;
+		foreach (var motion in plan.AddedMotions)
+			await SendPacketAsync(new SmMotion(motion.Id, motion.SecondsUntilExpiration(now)));
+
+		await BroadcastItemUsageAnimationAsync(
+			player,
+			new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 1, 0));
+		if (_connectionRegistry != null)
+		{
+			await _connectionRegistry.BroadcastToVisiblePlayersAsync(
+				player.Position,
+				player.ObjectId,
+				new SmMotion(player.ObjectId, player.Motions),
+				includeSourcePlayer: false);
+		}
 	}
 
 	private async Task SendCraftLearnFailureAsync(CraftLearnValidation validation)

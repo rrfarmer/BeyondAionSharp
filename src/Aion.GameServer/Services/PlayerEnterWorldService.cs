@@ -260,6 +260,23 @@ public sealed class PlayerEnterWorldService
 			cancellationToken);
 	}
 
+	public Task<bool> SaveAnimationAddActionMutationAsync(
+		Player player,
+		IReadOnlyList<PlayerMotion> motions,
+		IReadOnlyList<int> deactivatedMotionIds,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		return _repository.SaveAnimationAddActionMutationAsync(
+			player.ObjectId,
+			motions,
+			deactivatedMotionIds,
+			sourceItemUpdate,
+			deletedSourceItemObjectId,
+			cancellationToken);
+	}
+
 	public Task<bool> SaveItemChargeMutationAsync(
 		Player player,
 		InventoryItem chargedItem,
