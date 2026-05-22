@@ -70,6 +70,7 @@ public class GameServerOptionsTests
 		Assert.Equal(2, options.Custom.VortexDuration);
 		Assert.Contains(210020000, options.Custom.ConquerorAndProtectorWorlds);
 		Assert.Equal(8, options.Custom.ConquerorAndProtectorWorlds.Count);
+		Assert.Equal(14, options.Custom.TopRankingXformMinRank);
 		Assert.Equal(2f, options.Custom.PvpMapApMultiplier, 0.001f);
 		Assert.Equal(1f, options.Custom.PvpMapPveApMultiplier, 0.001f);
 		Assert.False(options.Custom.CountSummonEffectsForCumulativeResist);
@@ -116,6 +117,7 @@ public class GameServerOptionsTests
 				gameserver.network.login.gsid = 42
 				gameserver.network.client.socket_address = 127.0.0.1:8888
 				gameserver.network.client.connect_address = ${gameserver.network.client.socket_address}
+				gameserver.topranking.xform.min_rank = COMMANDER
 				"""
 			);
 
@@ -124,6 +126,7 @@ public class GameServerOptionsTests
 			Assert.Equal(42, options.Network.GameServerId);
 			Assert.Equal(new IPEndPoint(IPAddress.Loopback, 8888), options.Network.ClientEndPoint);
 			Assert.Equal(new IPEndPoint(IPAddress.Loopback, 8888), options.Network.ClientConnectEndPoint);
+			Assert.Equal(17, options.Custom.TopRankingXformMinRank);
 		}
 		finally
 		{

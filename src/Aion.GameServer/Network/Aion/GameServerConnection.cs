@@ -3229,7 +3229,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			if (rankLimitChange.Changed || rankLimitChange.RankLimitedUnequipMessages.Count > 0)
 				await ApplyEquipmentChangeAsync(player, rankLimitChange, staticData.ItemTemplates, staticData);
 
-			var abyssSkillUpdate = AbyssSkillService.UpdateSkills(player);
+			var abyssSkillUpdate = AbyssSkillService.UpdateSkills(player, _options.Custom.TopRankingXformMinRank);
 			if (abyssSkillUpdate.Changed)
 			{
 				player.Skills = abyssSkillUpdate.Skills;

@@ -165,6 +165,7 @@ public sealed class GameServerOptions
 				LimitsEnableDynamicCap = GetBoolWithEnvironment(loader, "gameserver.limits.enable_dynamic_cap", false),
 				LimitsUpdate = GetWithEnvironment(loader, "gameserver.limits.update", "0 0 0 ? * *"),
 				AbyssTransformLogout = GetBoolWithEnvironment(loader, "gameserver.abyssxform.afterlogout", false),
+				TopRankingXformMinRank = GetAbyssRankIdWithEnvironment(loader, "gameserver.topranking.xform.min_rank", "STAR5_OFFICER"),
 				EnableRideRestriction = GetBoolWithEnvironment(loader, "gameserver.ride.restriction.enable", true),
 				SellingApItemsEnabled = GetBoolWithEnvironment(loader, "gameserver.selling.apitems.enabled", true),
 				CharacterDeletionTimeMinutes = GetIntWithEnvironment(loader, "character.deletion.time.minutes", 5),
@@ -339,6 +340,37 @@ public sealed class GameServerOptions
 	{
 		var value = GetWithEnvironment(loader, key, defaultValue);
 		return value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+	}
+
+	private static int GetAbyssRankIdWithEnvironment(ConfigLoader loader, string key, string defaultValue)
+	{
+		// Java parity: configs/main/RankingConfig.XFORM_MIN_RANK binds AbyssRankEnum names.
+		var value = GetWithEnvironment(loader, key, defaultValue).Trim();
+		if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var rankId))
+			return rankId;
+
+		return value.ToUpperInvariant() switch
+		{
+			"GRADE9_SOLDIER" => 1,
+			"GRADE8_SOLDIER" => 2,
+			"GRADE7_SOLDIER" => 3,
+			"GRADE6_SOLDIER" => 4,
+			"GRADE5_SOLDIER" => 5,
+			"GRADE4_SOLDIER" => 6,
+			"GRADE3_SOLDIER" => 7,
+			"GRADE2_SOLDIER" => 8,
+			"GRADE1_SOLDIER" => 9,
+			"STAR1_OFFICER" => 10,
+			"STAR2_OFFICER" => 11,
+			"STAR3_OFFICER" => 12,
+			"STAR4_OFFICER" => 13,
+			"STAR5_OFFICER" => 14,
+			"GENERAL" => 15,
+			"GREAT_GENERAL" => 16,
+			"COMMANDER" => 17,
+			"SUPREME_COMMANDER" => 18,
+			_ => 14,
+		};
 	}
 
 	private static IReadOnlySet<int> LoadOperationalItemIds(string startDirectory)
@@ -705,6 +737,8 @@ public sealed class GameServerCustomOptions
 	public string LimitsUpdate { get; init; } = "0 0 0 ? * *";
 
 	public bool AbyssTransformLogout { get; init; }
+
+	public int TopRankingXformMinRank { get; init; } = 14;
 
 	public bool EnableRideRestriction { get; init; } = true;
 

@@ -67,6 +67,17 @@ public sealed class AbyssSkillServiceTests
 		Assert.Equal([11894, 11898, 11902, 11903, 11904, 11905, 11906], result.AddedSkills.Select(skill => skill.SkillId).ToArray());
 	}
 
+	[Fact]
+	public void UpdateSkills_HonorsConfiguredMinimumRank()
+	{
+		var player = CreatePlayer("ELYOS", rank: 14);
+
+		var result = AbyssSkillService.UpdateSkills(player, transformMinRank: 17);
+
+		Assert.False(result.Changed);
+		Assert.Empty(result.Skills);
+	}
+
 	private static Player CreatePlayer(string race, int rank)
 	{
 		return new Player
