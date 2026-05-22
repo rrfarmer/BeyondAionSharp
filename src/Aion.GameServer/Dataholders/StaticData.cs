@@ -643,7 +643,10 @@ public sealed class StaticData
 			if (reader.Depth == 4 && reader.LocalName == "learnemotion" && currentItemTemplate != null)
 			{
 				// Java parity: model/templates/item/actions/EmotionLearnAction.afterUnmarshal.
-				learnableEmotionIds.Add(ReadRequiredIntAttribute(reader, "emotionid"));
+				var emotionId = ReadRequiredIntAttribute(reader, "emotionid");
+				learnableEmotionIds.Add(emotionId);
+				currentItemTemplate.EmotionLearnId = emotionId;
+				currentItemTemplate.EmotionLearnMinutes = ReadIntAttribute(reader, "minutes");
 				continue;
 			}
 
@@ -1418,6 +1421,10 @@ public sealed class StaticData
 
 		public int RideNpcId { get; set; }
 
+		public int EmotionLearnId { get; set; }
+
+		public int EmotionLearnMinutes { get; set; }
+
 		public int RecommendRank { get; set; }
 
 		public string GenderPermitted { get; set; } = string.Empty;
@@ -1501,7 +1508,9 @@ public sealed class StaticData
 				EnchantAction,
 				UseDelayId,
 				UseDelayMillis,
-				RideNpcId);
+				RideNpcId,
+				EmotionLearnId,
+				EmotionLearnMinutes);
 		}
 
 		private static int CalculateMaxTuneCount(
