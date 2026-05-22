@@ -965,6 +965,30 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1401381);
 	}
 
+	public static SmSystemMessage HousingOrderOutWithoutFriends()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_ORDER_OUT_WITHOUT_FRIENDS.
+		return new SmSystemMessage(1401382);
+	}
+
+	public static SmSystemMessage HousingOrderOutAll()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_ORDER_OUT_ALL.
+		return new SmSystemMessage(1401383);
+	}
+
+	public static SmSystemMessage HousingRequestOut()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_REQUEST_OUT.
+		return new SmSystemMessage(1401384);
+	}
+
+	public static SmSystemMessage HousingChangeOwner()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_CHANGE_OWNER.
+		return new SmSystemMessage(1401385);
+	}
+
 	public static SmSystemMessage NoSuchUser(string playerName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_NO_SUCH_USER.

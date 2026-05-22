@@ -6148,11 +6148,21 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (!hasValidDoorState)
 			return;
 		if (doorState == PlayerHouse.DoorOpen)
+		{
 			await SendPacketAsync(SmSystemMessage.HousingOrderOpenDoor());
+		}
 		else if (doorState == PlayerHouse.DoorClosedExceptFriends)
+		{
+			// Java parity: controllers/HouseController.kickVisitors owner notification before CM_HOUSE_SETTINGS door confirmation.
+			await SendPacketAsync(SmSystemMessage.HousingOrderOutWithoutFriends());
 			await SendPacketAsync(SmSystemMessage.HousingOrderCloseDoorWithoutFriends());
+		}
 		else if (doorState == PlayerHouse.DoorClosed)
+		{
+			// Java parity: controllers/HouseController.kickVisitors owner notification before CM_HOUSE_SETTINGS door confirmation.
+			await SendPacketAsync(SmSystemMessage.HousingOrderOutAll());
 			await SendPacketAsync(SmSystemMessage.HousingOrderCloseDoorAll());
+		}
 	}
 
 	private async Task<bool> CanOwnHouseForAuctionAsync(Player player)

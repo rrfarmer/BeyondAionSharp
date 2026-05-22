@@ -786,6 +786,10 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.HousingOrderOpenDoor(), 1401379);
 		AssertSystemMessage(SmSystemMessage.HousingOrderCloseDoorWithoutFriends(), 1401380);
 		AssertSystemMessage(SmSystemMessage.HousingOrderCloseDoorAll(), 1401381);
+		AssertSystemMessage(SmSystemMessage.HousingOrderOutWithoutFriends(), 1401382);
+		AssertSystemMessage(SmSystemMessage.HousingOrderOutAll(), 1401383);
+		AssertSystemMessage(SmSystemMessage.HousingRequestOut(), 1401384);
+		AssertSystemMessage(SmSystemMessage.HousingChangeOwner(), 1401385);
 
 		var attachmentStatePayload = SerializeUnencryptedPayload(SmMailService.CreateAttachmentState(letterId: 123, attachmentType: 1));
 		using var attachmentStateReader = new PacketBuffer(attachmentStatePayload);
