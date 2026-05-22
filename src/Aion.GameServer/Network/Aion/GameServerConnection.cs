@@ -6350,7 +6350,68 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmHouseEdit.DespawnObject:
 				await HandleHouseObjectDespawnAsync(player, activeHouse, packet);
 				break;
+			case CmHouseEdit.RenovateBuilding:
+				await HandleHouseRenovationAsync(player, activeHouse, packet);
+				break;
 		}
+	}
+
+	private async Task HandleHouseRenovationAsync(Player player, PlayerHouse activeHouse, CmHouseEdit packet)
+	{
+		// Java parity: CM_HOUSE_EDIT action 16 removeRenovationCoupon then HousingService.switchHouseBuilding.
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		if (staticData == null || staticData.HousingTemplates.GetBuilding(packet.BuildingId) == null)
+			return;
+
+		var currentHouseTypeId = staticData.HousingTemplates.GetHouseTypeId(activeHouse.BuildingId);
+		if (currentHouseTypeId == 0)
+			return;
+
+		var couponItemId = GetRenovationCouponItemId(player.Race, currentHouseTypeId);
+		var couponConsumption = BuildItemCountConsumption(player.InventoryItems, couponItemId, 1);
+		if (couponConsumption == null)
+			return;
+
+		var deletedCouponObjectIds = couponConsumption.Deletes.Select(item => item.ObjectId).ToArray();
+		if (!await _housingRepository.SaveHouseRenovationAsync(
+			player.ObjectId,
+			activeHouse.ObjectId,
+			packet.BuildingId,
+			couponConsumption.Updates,
+			deletedCouponObjectIds))
+		{
+			return;
+		}
+
+		await SendConsumedItemPacketsAsync(
+			player.InventoryItems,
+			couponConsumption.Updates,
+			deletedCouponObjectIds,
+			staticData.ItemTemplates);
+		var inventoryItems = player.InventoryItems.ToList();
+		foreach (var couponUpdate in couponConsumption.Updates)
+			ReplaceInventoryItem(inventoryItems, couponUpdate);
+		inventoryItems.RemoveAll(item => deletedCouponObjectIds.Contains(item.ObjectId));
+		player.InventoryItems = inventoryItems.ToArray();
+
+		var registry = await _housingRepository.LoadHouseRegistryAsync(
+			player.ObjectId,
+			packet.BuildingId,
+			staticData.HousingTemplates,
+			staticData.HousingObjectTemplates);
+		player.Houses = player.Houses
+			.Select(house => house.ObjectId == activeHouse.ObjectId
+				? house with { BuildingId = packet.BuildingId, Registry = registry }
+				: house)
+			.ToArray();
+		await BroadcastHouseAppearanceAsync(player, player.Houses.First(house => house.ObjectId == activeHouse.ObjectId));
+	}
+
+	private static int GetRenovationCouponItemId(string race, int houseTypeId)
+	{
+		// Java parity: CM_HOUSE_EDIT.removeRenovationCoupon race base item minus HouseType id.
+		var baseItemId = string.Equals(race, "ELYOS", StringComparison.OrdinalIgnoreCase) ? 169661004 : 169661008;
+		return baseItemId - houseTypeId;
 	}
 
 	private async Task HandleHouseItemRegistrationAsync(Player player, PlayerHouse activeHouse, CmHouseEdit packet)

@@ -42,6 +42,14 @@ public interface IHousingRepository
 		IReadOnlyList<int> deletedDecorationObjectIds,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveHouseRenovationAsync(
+		int playerObjectId,
+		int houseObjectId,
+		int buildingId,
+		IReadOnlyList<InventoryItem> updatedCouponItems,
+		IReadOnlyList<int> deletedCouponItemObjectIds,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> DeleteHouseRegisteredObjectAsync(
 		int playerObjectId,
 		int itemObjectId,
@@ -96,6 +104,17 @@ public sealed class EmptyHousingRepository : IHousingRepository
 		int playerObjectId,
 		IReadOnlyList<RegisteredHouseDecorationSummary> updatedDecorations,
 		IReadOnlyList<int> deletedDecorationObjectIds,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> SaveHouseRenovationAsync(
+		int playerObjectId,
+		int houseObjectId,
+		int buildingId,
+		IReadOnlyList<InventoryItem> updatedCouponItems,
+		IReadOnlyList<int> deletedCouponItemObjectIds,
 		CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(true);
@@ -387,6 +406,73 @@ public sealed class MySqlHousingRepository : IHousingRepository
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not save house decoration mutation for player {PlayerObjectId}", playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SaveHouseRenovationAsync(
+		int playerObjectId,
+		int houseObjectId,
+		int buildingId,
+		IReadOnlyList<InventoryItem> updatedCouponItems,
+		IReadOnlyList<int> deletedCouponItemObjectIds,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: CM_HOUSE_EDIT action 16 consumes the renovation coupon, then HousesDAO.storeHouse updates building_id.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			await using (var houseCommand = connection.CreateCommand())
+			{
+				houseCommand.Transaction = transaction;
+				houseCommand.CommandText = "UPDATE houses SET building_id = ? WHERE id = ? AND player_id = ?";
+				houseCommand.Parameters.AddRange(
+					new[]
+					{
+						new MySqlParameter { Value = buildingId },
+						new MySqlParameter { Value = houseObjectId },
+						new MySqlParameter { Value = playerObjectId },
+					});
+				if (await houseCommand.ExecuteNonQueryAsync(cancellationToken) <= 0)
+					return false;
+			}
+
+			foreach (var couponItem in updatedCouponItems)
+			{
+				await using var couponCommand = connection.CreateCommand();
+				couponCommand.Transaction = transaction;
+				couponCommand.CommandText = "UPDATE inventory SET item_count = ? WHERE item_unique_id = ? AND item_owner = ?";
+				couponCommand.Parameters.AddRange(
+					new[]
+					{
+						new MySqlParameter { Value = couponItem.Count },
+						new MySqlParameter { Value = couponItem.ObjectId },
+						new MySqlParameter { Value = playerObjectId },
+					});
+				if (await couponCommand.ExecuteNonQueryAsync(cancellationToken) <= 0)
+					return false;
+			}
+
+			foreach (var deletedCouponObjectId in deletedCouponItemObjectIds)
+			{
+				if (!await DeleteInventoryItemAsync(connection, transaction, playerObjectId, deletedCouponObjectId, cancellationToken))
+					return false;
+			}
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(
+				ex,
+				"Could not renovate house {HouseObjectId} to building {BuildingId} for player {PlayerObjectId}",
+				houseObjectId,
+				buildingId,
+				playerObjectId);
 			return false;
 		}
 	}
