@@ -55,7 +55,8 @@ public sealed class ExpirableTaskService
 		TitleTemplateTable? titleTemplates = null,
 		ItemTemplateTable? itemTemplates = null,
 		HousingObjectTemplateTable? housingObjectTemplates = null,
-		Func<PlayerHouse, RegisteredHouseObjectSummary, HousingObjectTemplateSummary?, Task>? expireHouseObjectAsync = null)
+		Func<PlayerHouse, RegisteredHouseObjectSummary, HousingObjectTemplateSummary?, Task>? expireHouseObjectAsync = null,
+		Func<RegisteredHouseObjectSummary, HousingObjectTemplateSummary?, bool>? canHouseObjectExpireNow = null)
 	{
 		// Java parity: services/player/PlayerEnterWorldService registers loaded storage items, motions, emotions, and titles.
 		UnregisterPlayer(player);
@@ -66,7 +67,8 @@ public sealed class ExpirableTaskService
 			titleTemplates,
 			itemTemplates,
 			housingObjectTemplates,
-			expireHouseObjectAsync);
+			expireHouseObjectAsync,
+			canHouseObjectExpireNow);
 		_registrations[player.ObjectId] = registration;
 		foreach (var item in player.InventoryItems)
 			AddExpirable(registration, ExpirableKind.Item, item.ObjectId, item.ExpireTime);
@@ -366,6 +368,8 @@ public sealed class ExpirableTaskService
 		// Java parity: UseableItemObject.canExpireNow keeps expired final-reward objects for owner recovery.
 		if (template.TypeId == 1 && template.UseActionFinalRewardId > 0 && houseObject.ExpireTimeSeconds <= now.ToUnixTimeSeconds())
 			return false;
+		if (registration.CanHouseObjectExpireNow != null && !registration.CanHouseObjectExpireNow(houseObject, template))
+			return false;
 		return true;
 	}
 
@@ -455,7 +459,8 @@ public sealed class ExpirableTaskService
 			TitleTemplateTable? titleTemplates,
 			ItemTemplateTable? itemTemplates,
 			HousingObjectTemplateTable? housingObjectTemplates,
-			Func<PlayerHouse, RegisteredHouseObjectSummary, HousingObjectTemplateSummary?, Task>? expireHouseObjectAsync)
+			Func<PlayerHouse, RegisteredHouseObjectSummary, HousingObjectTemplateSummary?, Task>? expireHouseObjectAsync,
+			Func<RegisteredHouseObjectSummary, HousingObjectTemplateSummary?, bool>? canHouseObjectExpireNow)
 		{
 			Player = player;
 			SendPacketAsync = sendPacketAsync;
@@ -464,6 +469,7 @@ public sealed class ExpirableTaskService
 			ItemTemplates = itemTemplates;
 			HousingObjectTemplates = housingObjectTemplates;
 			ExpireHouseObjectAsync = expireHouseObjectAsync;
+			CanHouseObjectExpireNow = canHouseObjectExpireNow;
 		}
 
 		public Player Player { get; }
@@ -479,6 +485,8 @@ public sealed class ExpirableTaskService
 		public HousingObjectTemplateTable? HousingObjectTemplates { get; }
 
 		public Func<PlayerHouse, RegisteredHouseObjectSummary, HousingObjectTemplateSummary?, Task>? ExpireHouseObjectAsync { get; }
+
+		public Func<RegisteredHouseObjectSummary, HousingObjectTemplateSummary?, bool>? CanHouseObjectExpireNow { get; }
 
 		public object SyncRoot { get; } = new();
 

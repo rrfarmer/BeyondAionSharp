@@ -983,7 +983,8 @@ public sealed class GameServerConnection : BaseClientConnection
 						staticData?.TitleTemplates,
 						staticData?.ItemTemplates,
 						staticData?.HousingObjectTemplates,
-						(house, houseObject, template) => ExpireHouseObjectAsync(enterWorldResult.Player, house, houseObject, template));
+						(house, houseObject, template) => ExpireHouseObjectAsync(enterWorldResult.Player, house, houseObject, template),
+						CanRuntimeHouseObjectExpireNow);
 				}
 				break;
 		}
@@ -6464,6 +6465,39 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		foreach (var pair in HouseObjectOccupants.Where(pair => pair.Value == playerObjectId).ToArray())
 			((ICollection<KeyValuePair<int, int>>)HouseObjectOccupants).Remove(pair);
+	}
+
+	private bool CanRuntimeHouseObjectExpireNow(RegisteredHouseObjectSummary houseObject, HousingObjectTemplateSummary? template)
+	{
+		if (template == null)
+			return true;
+
+		// Java parity: UseableHouseObject.canExpireNow waits until the current player releases the object.
+		if (template.TypeId is 1 or 2 or 3 && IsHouseObjectOccupied(houseObject.ObjectId))
+			return false;
+		// Java parity: NpcObject.canExpireNow waits while the spawned housing NPC has a target.
+		if (template.TypeId == 7 && houseObject.NpcObjectId != 0 && IsHouseNpcObjectTargeted(houseObject.NpcObjectId))
+			return false;
+		return true;
+	}
+
+	private static bool IsHouseObjectOccupied(int objectId)
+	{
+		return HouseObjectOccupants.ContainsKey(objectId);
+	}
+
+	private bool IsHouseNpcObjectTargeted(int npcObjectId)
+	{
+		if (_connectionRegistry == null)
+			return false;
+
+		var targeted = false;
+		_connectionRegistry.ForEachOnlinePlayer(player =>
+		{
+			if (player.TargetObjectId == npcObjectId)
+				targeted = true;
+		});
+		return targeted;
 	}
 
 	private async Task SpawnPostmanAsync(Player player)
