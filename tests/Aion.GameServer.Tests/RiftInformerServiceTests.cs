@@ -1,7 +1,12 @@
+using Aion.Commons.Network;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Dataholders.LoadingUtils;
+using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils.IdFactory;
+using Aion.GameServer.World;
 using Microsoft.Extensions.Logging.Abstractions;
 using GameWorld = Aion.GameServer.World.World;
 
@@ -145,17 +150,137 @@ public sealed class RiftInformerServiceTests
 		Assert.Equal(0, informer.GetTwinId(400010000));
 	}
 
+	[Fact]
+	public async Task SendRiftsInfoAsync_WithWorldId_BroadcastsCurrentAndTwinAggregatePackets()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-rift-informer-world-fanout-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var registry = new RecordingConnectionRegistry();
+			registry.Players.Add(CreatePlayer(100, 210020000));
+			registry.Players.Add(CreatePlayer(101, 220020000));
+			registry.Players.Add(CreatePlayer(102, 210040000));
+			var (service, informer) = await CreateServicesAsync(
+				tempPath,
+				"""<rift_location id="2120" world="210020000" />""",
+				"""
+				<spawn_map map_id="210020000">
+					<rift_spawn id="2120" world="210020000">
+						<spawn npc_id="730100">
+							<spot x="1" y="2" z="3" anchor="ELTNEN_AM" />
+						</spawn>
+					</rift_spawn>
+				</spawn_map>
+				<spawn_map map_id="220020000">
+					<rift_spawn id="2120" world="220020000">
+						<spawn npc_id="730101">
+							<spot x="5" y="6" z="7" anchor="MORHEIM_AS" />
+						</spawn>
+					</rift_spawn>
+				</spawn_map>
+				""",
+				registry);
+			Assert.True(service.OpenRifts(2120, guards: false).Succeeded);
+
+			var sent = await informer.SendRiftsInfoAsync(210020000);
+
+			Assert.Equal(2, sent);
+			Assert.Equal([100, 101], registry.BroadcastDeliveries.Select(delivery => delivery.Player.ObjectId).ToArray());
+			Assert.Equal(1, ReadAggregateCounts(registry.BroadcastDeliveries[0].Packet)[0]);
+			Assert.All(ReadAggregateCounts(registry.BroadcastDeliveries[1].Packet), count => Assert.Equal(0, count));
+		}
+		finally
+		{
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
+	[Fact]
+	public async Task SendRiftsInfoAsync_WithPlayer_SendsCurrentAndTwinPacketsToSamePlayer()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-rift-informer-player-fanout-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var player = CreatePlayer(100, 210020000);
+			var registry = new RecordingConnectionRegistry();
+			registry.Players.Add(player);
+			var (service, informer) = await CreateServicesAsync(
+				tempPath,
+				"""<rift_location id="2120" world="210020000" />""",
+				"""
+				<spawn_map map_id="210020000">
+					<rift_spawn id="2120" world="210020000">
+						<spawn npc_id="730100">
+							<spot x="1" y="2" z="3" anchor="ELTNEN_AM" />
+						</spawn>
+					</rift_spawn>
+				</spawn_map>
+				<spawn_map map_id="220020000">
+					<rift_spawn id="2120" world="220020000">
+						<spawn npc_id="730101">
+							<spot x="5" y="6" z="7" anchor="MORHEIM_AS" />
+						</spawn>
+					</rift_spawn>
+				</spawn_map>
+				""",
+				registry);
+			Assert.True(service.OpenRifts(2120, guards: false).Succeeded);
+
+			var sent = await informer.SendRiftsInfoAsync(player);
+
+			Assert.Equal(2, sent);
+			Assert.Equal([100, 100], registry.DirectDeliveries.Select(delivery => delivery.PlayerObjectId).ToArray());
+			Assert.Equal(1, ReadAggregateCounts(registry.DirectDeliveries[0].Packet)[0]);
+			Assert.All(ReadAggregateCounts(registry.DirectDeliveries[1].Packet), count => Assert.Equal(0, count));
+		}
+		finally
+		{
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
+	[Fact]
+	public async Task SendRiftDespawnAsync_BroadcastsDespawnPacketOnlyToTargetWorld()
+	{
+		var registry = new RecordingConnectionRegistry();
+		registry.Players.Add(CreatePlayer(100, 210020000));
+		registry.Players.Add(CreatePlayer(101, 220020000));
+		var informer = new RiftInformerService(CreateEmptyRiftService(), registry);
+
+		var sent = await informer.SendRiftDespawnAsync(210020000, 123456);
+
+		Assert.Equal(1, sent);
+		var delivery = Assert.Single(registry.BroadcastDeliveries);
+		Assert.Equal(100, delivery.Player.ObjectId);
+		Assert.Equal((Action: 4, ObjectId: 123456), ReadDespawnPayload(delivery.Packet));
+	}
+
 	private static async Task<(RiftService Service, RiftInformerService Informer)> CreateServicesAsync(
 		string tempPath,
 		string riftLocations,
-		string spawnMaps)
+		string spawnMaps,
+		IGameClientConnectionRegistry? registry = null)
 	{
 		var context = await CreateRuntimeContextAsync(tempPath, riftLocations, spawnMaps);
 		var idFactory = new IDFactory();
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);
 		var manager = new RiftManagerService(context, world, idFactory);
 		var service = new RiftService(context, manager, world, idFactory);
-		return (service, new RiftInformerService(service));
+		return (service, new RiftInformerService(service, registry));
 	}
 
 	private static RiftService CreateEmptyRiftService()
@@ -206,4 +331,131 @@ public sealed class RiftInformerServiceTests
 		context.SetDataManager(dataManager);
 		return context;
 	}
+
+	private static Player CreatePlayer(int objectId, int worldId)
+	{
+		return new Player
+		{
+			ObjectId = objectId,
+			Position = new WorldPosition(worldId, 0, 0, 0, 0),
+		};
+	}
+
+	private static int[] ReadAggregateCounts(GameServerPacket packet)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(49, reader.ReadH());
+		Assert.Equal(0, (int)reader.ReadC());
+		var counts = new int[12];
+		for (var i = 0; i < counts.Length; i++)
+			counts[i] = reader.ReadD();
+		Assert.Equal(0, reader.Remaining);
+		return counts;
+	}
+
+	private static (int Action, int ObjectId) ReadDespawnPayload(GameServerPacket packet)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(5, reader.ReadH());
+		var action = reader.ReadC();
+		var objectId = reader.ReadD();
+		Assert.Equal(0, reader.Remaining);
+		return ((int)action, objectId);
+	}
+
+	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
+	{
+		var crypt = new GameCrypt(() => 0x01020304);
+		crypt.EnableKey();
+		var frame = packet.SerializeFrame(crypt);
+		return frame[7..];
+	}
+
+	private sealed class RecordingConnectionRegistry : IGameClientConnectionRegistry
+	{
+		public List<Player> Players { get; } = [];
+
+		public List<BroadcastDelivery> BroadcastDeliveries { get; } = [];
+
+		public List<DirectDelivery> DirectDeliveries { get; } = [];
+
+		public void RegisterPlayerConnection(int playerObjectId, GameServerConnection connection)
+		{
+		}
+
+		public void UnregisterPlayerConnection(int playerObjectId, GameServerConnection connection)
+		{
+		}
+
+		public bool TryGetOnlinePlayerByName(string playerName, out Player? player)
+		{
+			player = Players.FirstOrDefault(value => string.Equals(value.Name, playerName, StringComparison.OrdinalIgnoreCase));
+			return player != null;
+		}
+
+		public void ForEachOnlinePlayer(Action<Player> action)
+		{
+			foreach (var player in Players)
+				action(player);
+		}
+
+		public Task<bool> SendPacketToPlayerAsync(int playerObjectId, GameServerPacket packet)
+		{
+			if (Players.All(player => player.ObjectId != playerObjectId))
+				return Task.FromResult(false);
+
+			DirectDeliveries.Add(new DirectDelivery(playerObjectId, packet));
+			return Task.FromResult(true);
+		}
+
+		public Task<int> BroadcastToWorldAsync(GameServerPacket packet, Func<Player, bool>? filter = null)
+		{
+			var targets = Players.Where(player => filter?.Invoke(player) ?? true).ToArray();
+			foreach (var player in targets)
+				BroadcastDeliveries.Add(new BroadcastDelivery(player, packet));
+			return Task.FromResult(targets.Length);
+		}
+
+		public Task<int> BroadcastToVisiblePlayersAsync(
+			WorldPosition sourcePosition,
+			int sourceObjectId,
+			GameServerPacket packet,
+			bool includeSourcePlayer = false,
+			Func<Player, bool>? filter = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> RefreshHousingVisibilityAsync(
+			IReadOnlyList<WorldHouse> houses,
+			HousingTemplateTable? housingTemplates,
+			int? playerObjectId = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> RefreshNpcVisibilityAsync(IReadOnlyList<IWorldNpcObject> npcs, int? playerObjectId = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> BroadcastHouseUpdateAsync(WorldHouse house, HousingTemplateTable? housingTemplates)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<bool> NotifyMailReceivedAsync(int recipientObjectId, PlayerMail mail)
+		{
+			return Task.FromResult(false);
+		}
+
+		public Task<bool> NotifyBrokerSettledAsync(int sellerObjectId, long settledKinah)
+		{
+			return Task.FromResult(false);
+		}
+	}
+
+	private sealed record BroadcastDelivery(Player Player, GameServerPacket Packet);
+
+	private sealed record DirectDelivery(int PlayerObjectId, GameServerPacket Packet);
 }

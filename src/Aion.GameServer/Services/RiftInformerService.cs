@@ -1,13 +1,47 @@
+using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion;
+using Aion.GameServer.Network.Aion.ServerPackets;
+
 namespace Aion.GameServer.Services;
 
 public sealed class RiftInformerService
 {
 	private const int AnnounceSlotCount = 12;
 	private readonly RiftService _riftService;
+	private readonly IGameClientConnectionRegistry? _connectionRegistry;
 
-	public RiftInformerService(RiftService riftService)
+	public RiftInformerService(
+		RiftService riftService,
+		IGameClientConnectionRegistry? connectionRegistry = null)
 	{
 		_riftService = riftService;
+		_connectionRegistry = connectionRegistry;
+	}
+
+	public async Task<int> SendRiftsInfoAsync(int worldId)
+	{
+		// Java parity: services/rift/RiftInformer.sendRiftsInfo(int) syncs the requested world and then its twin.
+		var sent = await SyncRiftsStateAsync(worldId, GetPackets(worldId));
+		var twinId = GetTwinId(worldId);
+		if (twinId > 0)
+			sent += await SyncRiftsStateAsync(twinId, GetPackets(twinId));
+		return sent;
+	}
+
+	public async Task<int> SendRiftsInfoAsync(Player player)
+	{
+		// Java parity: services/rift/RiftInformer.sendRiftsInfo(Player) sends current-world and twin-world packets to one player.
+		var sent = await SyncRiftsStateAsync(player, GetPackets(player.Position.WorldId));
+		var twinId = GetTwinId(player.Position.WorldId);
+		if (twinId > 0)
+			sent += await SyncRiftsStateAsync(player, GetPackets(twinId));
+		return sent;
+	}
+
+	public Task<int> SendRiftDespawnAsync(int worldId, int objectId)
+	{
+		// Java parity: services/rift/RiftInformer.sendRiftDespawn sends action 4 only to the despawn world.
+		return SyncRiftsStateAsync(worldId, [new SmRiftAnnounce(objectId)]);
 	}
 
 	public RiftAnnounceData GetAnnounceData(int worldId)
@@ -53,6 +87,45 @@ public sealed class RiftInformerService
 			220080000 => 210070000,
 			_ => 0,
 		};
+	}
+
+	private IReadOnlyList<SmRiftAnnounce> GetPackets(int worldId)
+	{
+		// Java parity: RiftInformer.getPackets(worldId) starts with aggregate data; action 2/3 portal-detail packets follow once RVController state exists.
+		return [new SmRiftAnnounce(GetAnnounceData(worldId))];
+	}
+
+	private async Task<int> SyncRiftsStateAsync(int worldId, IReadOnlyList<SmRiftAnnounce> packets)
+	{
+		// Java parity: RiftInformer.syncRiftsState(int, packets) iterates players in the world's main map instance.
+		if (_connectionRegistry == null)
+			return 0;
+
+		var sent = 0;
+		foreach (var packet in packets)
+		{
+			sent += await _connectionRegistry.BroadcastToWorldAsync(
+				packet,
+				player => player.Position.WorldId == worldId);
+		}
+
+		return sent;
+	}
+
+	private async Task<int> SyncRiftsStateAsync(Player player, IReadOnlyList<SmRiftAnnounce> packets)
+	{
+		// Java parity: RiftInformer.syncRiftsState(Player, packets) sends every generated rift packet directly to one player.
+		if (_connectionRegistry == null)
+			return 0;
+
+		var sent = 0;
+		foreach (var packet in packets)
+		{
+			if (await _connectionRegistry.SendPacketToPlayerAsync(player.ObjectId, packet))
+				sent++;
+		}
+
+		return sent;
 	}
 
 	private static int? GetAnnounceIndex(RiftDefinition definition, bool guardsRequested)
