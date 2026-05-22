@@ -419,7 +419,15 @@ public sealed class StaticData
 						ReadRequiredIntAttribute(reader, "id"),
 						currentHousingLandId,
 						currentHousingManagerNpcId,
-						ReadIntAttribute(reader, "town")));
+						ReadIntAttribute(reader, "town"),
+						MapId: ReadRequiredIntAttribute(reader, "map"),
+						X: ReadFloatAttribute(reader, "x"),
+						Y: ReadFloatAttribute(reader, "y"),
+						Z: ReadFloatAttribute(reader, "z"),
+						ExitMapId: ReadNullableIntAttribute(reader, "exit_map"),
+						ExitX: ReadNullableFloatAttribute(reader, "exit_x"),
+						ExitY: ReadNullableFloatAttribute(reader, "exit_y"),
+						ExitZ: ReadNullableFloatAttribute(reader, "exit_z")));
 				continue;
 			}
 
@@ -2142,6 +2150,13 @@ public sealed class StaticData
 	private static int? ReadNullableIntAttribute(XmlReader reader, string attributeName)
 	{
 		return int.TryParse(reader.GetAttribute(attributeName), out var parsed) ? parsed : null;
+	}
+
+	private static float? ReadNullableFloatAttribute(XmlReader reader, string attributeName)
+	{
+		return float.TryParse(reader.GetAttribute(attributeName), NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed)
+			? parsed
+			: null;
 	}
 
 	private static bool ReadBoolAttribute(XmlReader reader, string attributeName)

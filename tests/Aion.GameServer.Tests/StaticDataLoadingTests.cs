@@ -384,7 +384,18 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(326001, staticData.HousingTemplates.GetAddress(6001)?.LandId);
 		Assert.Equal(810018, staticData.HousingTemplates.GetAddress(6001)?.ManagerNpcId);
 		Assert.Equal(0, staticData.HousingTemplates.GetAddress(6001)?.TownId);
+		Assert.Equal(210040000, staticData.HousingTemplates.GetAddress(6001)?.MapId);
+		Assert.Equal(2668.545166f, staticData.HousingTemplates.GetAddress(6001)?.X);
+		Assert.Equal(645.303955f, staticData.HousingTemplates.GetAddress(6001)?.Y);
+		Assert.Equal(355.70212f, staticData.HousingTemplates.GetAddress(6001)?.Z);
 		Assert.Equal(1001, staticData.HousingTemplates.GetAddress(10001)?.TownId);
+		var studioAddress = staticData.HousingTemplates.GetAddress(2001);
+		Assert.NotNull(studioAddress);
+		Assert.Equal(720010000, studioAddress.MapId);
+		Assert.Equal(700010000, studioAddress.ExitMapId);
+		Assert.Equal(2573.0f, studioAddress.ExitX);
+		Assert.Equal(1961.0f, studioAddress.ExitY);
+		Assert.Equal(185.0f, studioAddress.ExitZ);
 		Assert.Equal(40, staticData.HousingTemplates.GetAddress(6001)?.MinLevel);
 		Assert.Equal(4_000_000, staticData.HousingTemplates.GetAddress(6001)?.MaintenanceFee);
 		Assert.Equal(4, staticData.HousingTemplates.GetHouseTypeId(350000));

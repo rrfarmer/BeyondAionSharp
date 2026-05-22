@@ -45,6 +45,14 @@ public sealed record HousingAddressSummary(
 	int ManagerNpcId,
 	int TownId = 0,
 	int MinLevel = 0,
-	long MaintenanceFee = 0);
+	long MaintenanceFee = 0,
+	int MapId = 0,
+	float X = 0,
+	float Y = 0,
+	float Z = 0,
+	int? ExitMapId = null,
+	float? ExitX = null,
+	float? ExitY = null,
+	float? ExitZ = null);
 
 public sealed record HousingBuildingSummary(int BuildingId, string Size, int HouseTypeId);
