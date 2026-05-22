@@ -4,6 +4,7 @@ using Aion.GameServer.Dataholders.LoadingUtils;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services;
+using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using Microsoft.Extensions.Logging.Abstractions;
 using GameWorld = Aion.GameServer.World.World;
@@ -109,6 +110,198 @@ public sealed class WorldNpcWalkerRouteWalkingServiceTests
 	}
 
 	[Fact]
+	public async Task TargetReachedAsync_AdvancesSingleWalkerAndBroadcastsNextTarget()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-walk-target-reached-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextWithWalkerDataAsync(tempPath, pool: 1, formation: "POINT", rows: "");
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			var npc = CreateNpc(1, new WorldPosition(210010000, 0, 0, 0, 0), walkerId: "route-a", walkerIndex: 0);
+			Assert.True(world.TryAddObject(npc.ObjectId, npc));
+			var cache = CreateCache(context, [npc]);
+			var registry = new CapturingConnectionRegistry();
+			var service = CreateService(context, world, cache, registry);
+			var start = await service.StartRouteWalkingAsync(npc.ObjectId);
+			Assert.True(start.Started);
+
+			var result = await service.TargetReachedAsync(npc.ObjectId);
+
+			Assert.True(result.Handled);
+			Assert.Equal(WorldNpcWalkerRouteWalkingTargetReachedStatus.Advanced, result.Status);
+			Assert.Equal(1, result.BroadcastCount);
+			Assert.Equal(TimeSpan.Zero, result.RestDelay);
+			Assert.NotNull(result.State);
+			Assert.Equal(1, result.State.TargetStepIndex);
+			Assert.Equal(10, result.State.Target.X);
+			Assert.Equal(0, service.PendingRestTaskCount);
+			Assert.True(service.TryGetActiveState(npc.ObjectId, out var activeState));
+			Assert.Equal(result.State, activeState);
+			Assert.Equal(2, registry.Broadcasts.Count);
+			using var reader = new PacketBuffer(SerializeUnencryptedPayload(registry.Broadcasts[1].Packet));
+			Assert.Equal(npc.ObjectId, reader.ReadD());
+			Assert.Equal(0, reader.ReadF());
+			Assert.Equal(0, reader.ReadF());
+			Assert.Equal(0, reader.ReadF());
+			Assert.Equal(0, (int)reader.ReadC());
+			Assert.Equal(0xE0, (int)reader.ReadC());
+			Assert.Equal(10, reader.ReadF());
+			Assert.Equal(0, reader.ReadF());
+			Assert.Equal(0, reader.ReadF());
+			Assert.Equal(0, reader.Remaining);
+		}
+		finally
+		{
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
+	[Fact]
+	public async Task TargetReachedAsync_SchedulesBroadcastAfterRestTime()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-walk-rest-schedule-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		try
+		{
+			var context = await CreateRuntimeContextWithWalkerDataAsync(
+				tempPath,
+				pool: 1,
+				formation: "POINT",
+				rows: "",
+				firstRestTime: 25);
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			var npc = CreateNpc(1, new WorldPosition(210010000, 0, 0, 0, 0), walkerId: "route-a", walkerIndex: 0);
+			Assert.True(world.TryAddObject(npc.ObjectId, npc));
+			var cache = CreateCache(context, [npc]);
+			var registry = new CapturingConnectionRegistry();
+			var service = CreateService(context, world, cache, registry, threadPoolManager);
+			var start = await service.StartRouteWalkingAsync(npc.ObjectId);
+			Assert.True(start.Started);
+
+			var result = await service.TargetReachedAsync(npc.ObjectId);
+
+			Assert.True(result.Handled);
+			Assert.Equal(WorldNpcWalkerRouteWalkingTargetReachedStatus.Scheduled, result.Status);
+			Assert.Equal(TimeSpan.FromMilliseconds(25), result.RestDelay);
+			Assert.Equal(0, result.BroadcastCount);
+			Assert.NotNull(result.State);
+			Assert.Equal(1, result.State.TargetStepIndex);
+			Assert.Equal(1, service.PendingRestTaskCount);
+			Assert.True(service.TryGetActiveState(npc.ObjectId, out var activeState));
+			Assert.Equal(result.State, activeState);
+			Assert.Single(registry.Broadcasts);
+
+			await WaitUntilAsync(() => registry.Broadcasts.Count == 2 && service.PendingRestTaskCount == 0);
+
+			Assert.Equal(npc.ObjectId, registry.Broadcasts[1].SourceObjectId);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
+	[Fact]
+	public async Task TargetReachedAsync_StopsLoopNoneWalkerAtLastStep()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-walk-loop-none-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextWithWalkerDataAsync(
+				tempPath,
+				pool: 1,
+				formation: "POINT",
+				rows: "",
+				loopType: "NONE");
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			var npc = CreateNpc(1, new WorldPosition(210010000, 10, 0, 0, 0), walkerId: "route-a", walkerIndex: 0);
+			Assert.True(world.TryAddObject(npc.ObjectId, npc));
+			var cache = CreateCache(context, [npc]);
+			var registry = new CapturingConnectionRegistry();
+			var service = CreateService(context, world, cache, registry);
+			var start = await service.StartRouteWalkingAsync(npc.ObjectId);
+			Assert.True(start.Started);
+			Assert.True(service.TryGetActiveState(npc.ObjectId, out var startedState));
+			Assert.NotNull(startedState);
+			Assert.True(startedState.Target.ShouldStop);
+
+			var result = await service.TargetReachedAsync(npc.ObjectId);
+
+			Assert.True(result.Handled);
+			Assert.Equal(WorldNpcWalkerRouteWalkingTargetReachedStatus.Stopped, result.Status);
+			Assert.Null(result.State);
+			Assert.Equal(0, result.BroadcastCount);
+			Assert.False(service.TryGetActiveState(npc.ObjectId, out _));
+			Assert.Equal(0, service.ActiveStateCount);
+			Assert.Single(registry.Broadcasts);
+		}
+		finally
+		{
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
+	[Fact]
+	public async Task TargetReachedAsync_DoesNotAdvanceFormationMemberDirectly()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-walk-formation-target-reached-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextWithWalkerDataAsync(tempPath, pool: 2, formation: "SQUARE", rows: "2");
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			var first = CreateNpc(1, new WorldPosition(210010000, 0, 0, 0, 0), walkerId: "route-a", walkerIndex: 1);
+			var second = CreateNpc(2, new WorldPosition(210010000, 0, 0, 0, 0), walkerId: "route-a", walkerIndex: 2);
+			Assert.True(world.TryAddObject(first.ObjectId, first));
+			Assert.True(world.TryAddObject(second.ObjectId, second));
+			var cache = CreateCache(context, [first, second]);
+			var registry = new CapturingConnectionRegistry();
+			var service = CreateService(context, world, cache, registry);
+			var start = await service.StartRouteWalkingAsync(first.ObjectId);
+			Assert.True(start.Started);
+
+			var result = await service.TargetReachedAsync(first.ObjectId);
+
+			Assert.False(result.Handled);
+			Assert.Equal(WorldNpcWalkerRouteWalkingTargetReachedStatus.FormationMember, result.Status);
+			Assert.Equal(2, service.ActiveStateCount);
+			Assert.Equal(2, registry.Broadcasts.Count);
+		}
+		finally
+		{
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
+	[Fact]
 	public async Task StartRouteWalkingAsync_RequiresCachedActiveWalkerPlan()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-walk-start-missing-cache-" + Guid.NewGuid().ToString("N"));
@@ -145,7 +338,8 @@ public sealed class WorldNpcWalkerRouteWalkingServiceTests
 		GameServerRuntimeContext context,
 		GameWorld world,
 		IWorldNpcWalkerSpawnPlanCacheService cache,
-		IGameClientConnectionRegistry registry)
+		IGameClientConnectionRegistry registry,
+		ThreadPoolManager? threadPoolManager = null)
 	{
 		var routeService = new WorldNpcWalkerRouteService();
 		var movementStateService = new WorldNpcWalkerMovementStateService();
@@ -156,7 +350,8 @@ public sealed class WorldNpcWalkerRouteWalkingServiceTests
 			cache,
 			routeService,
 			movementStateService,
-			broadcastService);
+			broadcastService,
+			threadPoolManager);
 	}
 
 	private static WorldNpcWalkerSpawnPlanCacheService CreateCache(
@@ -173,7 +368,10 @@ public sealed class WorldNpcWalkerRouteWalkingServiceTests
 		string tempPath,
 		int pool,
 		string formation,
-		string rows)
+		string rows,
+		string loopType = "NORMAL",
+		int firstRestTime = 0,
+		int secondRestTime = 0)
 	{
 		var staticDataFile = Path.Combine(tempPath, "static_data.xml");
 		var cacheFile = Path.Combine(tempPath, "cache", "static_data.xml");
@@ -186,9 +384,9 @@ public sealed class WorldNpcWalkerRouteWalkingServiceTests
 			<?xml version="1.0" encoding="UTF-8"?>
 			<static_data>
 				<npc_walker>
-					<walker_template route_id="route-a" pool="{pool}" formation="{formation}"{rowsAttribute}>
-						<routestep x="0" y="0" z="0" />
-						<routestep x="10" y="0" z="0" />
+					<walker_template route_id="route-a" pool="{pool}" formation="{formation}" loop_type="{loopType}"{rowsAttribute}>
+						<routestep x="0" y="0" z="0" rest_time="{firstRestTime}" />
+						<routestep x="10" y="0" z="0" rest_time="{secondRestTime}" />
 					</walker_template>
 				</npc_walker>
 			</static_data>
@@ -238,6 +436,20 @@ public sealed class WorldNpcWalkerRouteWalkingServiceTests
 		crypt.EnableKey();
 		var frame = packet.SerializeFrame(crypt);
 		return frame[7..];
+	}
+
+	private static async Task WaitUntilAsync(Func<bool> condition)
+	{
+		var deadline = DateTimeOffset.UtcNow.AddSeconds(3);
+		while (DateTimeOffset.UtcNow < deadline)
+		{
+			if (condition())
+				return;
+
+			await Task.Delay(25);
+		}
+
+		Assert.True(condition(), "Condition was not met before the timeout.");
 	}
 
 	private sealed class CapturingConnectionRegistry : IGameClientConnectionRegistry
