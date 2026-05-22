@@ -159,6 +159,18 @@ public sealed class RiftService
 			CloseRifts(location.Id);
 	}
 
+	public bool UpdateSpawned(int oldObjectId, WorldNpc respawn)
+	{
+		// Java parity: services/RiftService.updateSpawned replaces a respawned rift-owned object id in its RiftLocation spawned map.
+		foreach (var rift in _activeRifts.Values)
+		{
+			if (rift.ReplaceSpawned(oldObjectId, respawn))
+				return true;
+		}
+
+		return false;
+	}
+
 	private bool TryResolveLocations(
 		int id,
 		out IReadOnlyList<RiftLocationSummary> locations,
@@ -309,6 +321,16 @@ public sealed class RiftLocationState
 	internal IReadOnlyList<WorldNpc> GetSpawnedSnapshot()
 	{
 		return _spawned.Values.OrderBy(npc => npc.ObjectId).ToArray();
+	}
+
+	internal bool ReplaceSpawned(int oldObjectId, WorldNpc respawn)
+	{
+		// Java parity: model/rift/RiftLocation.replaceSpawned swaps the old object id for the new respawn object.
+		if (!_spawned.TryRemove(oldObjectId, out _))
+			return false;
+
+		_spawned[respawn.ObjectId] = respawn;
+		return true;
 	}
 
 	internal void ClearSpawned()

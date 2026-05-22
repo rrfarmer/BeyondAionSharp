@@ -133,6 +133,15 @@ public sealed class RiftServiceTests
 			Assert.Contains(state.Spawned, npc => npc.TemplateId == 730200 && npc.Position.WorldId == 210020000);
 			Assert.Contains(state.Spawned, npc => npc.Anchor == "ELTNEN_AM");
 			Assert.Contains(state.Spawned, npc => npc.Anchor == "MORHEIM_AS");
+			var guard = Assert.Single(state.Spawned, npc => npc.TemplateId == 730200);
+			var respawn = guard with { ObjectId = idFactory.NextId() };
+			Assert.True(world.TryRemoveObject(guard.ObjectId, out _));
+			Assert.True(idFactory.ReleaseId(guard.ObjectId));
+			Assert.True(world.TryAddObject(respawn.ObjectId, respawn));
+			Assert.True(service.UpdateSpawned(guard.ObjectId, respawn));
+			Assert.False(service.UpdateSpawned(guard.ObjectId, respawn));
+			Assert.DoesNotContain(state.Spawned, npc => npc.ObjectId == guard.ObjectId);
+			Assert.Contains(state.Spawned, npc => npc.ObjectId == respawn.ObjectId);
 
 			var close = service.CloseRifts(2120);
 
