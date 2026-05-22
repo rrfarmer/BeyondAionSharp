@@ -1149,7 +1149,8 @@ public sealed class StaticData
 					ReadIntAttribute(reader, "title_id"),
 					ReadFloatAttribute(reader, "height"),
 					ReadIntAttribute(reader, "attack_speed"),
-					ReadIntAttribute(reader, "state"));
+					ReadIntAttribute(reader, "state"),
+					reader.GetAttribute("ai") ?? string.Empty);
 				if (reader.IsEmptyElement)
 				{
 					npcTemplates.Add(currentNpcTemplate.ToSummary());
@@ -2436,7 +2437,8 @@ public sealed class StaticData
 			int titleId,
 			float height,
 			int attackSpeed,
-			int state)
+			int state,
+			string aiName)
 		{
 			TemplateId = templateId;
 			Name = name;
@@ -2451,6 +2453,7 @@ public sealed class StaticData
 			Height = height;
 			AttackSpeed = attackSpeed;
 			State = state;
+			AiName = aiName;
 		}
 
 		private int TemplateId { get; }
@@ -2478,6 +2481,8 @@ public sealed class StaticData
 		private int AttackSpeed { get; }
 
 		private int State { get; }
+
+		private string AiName { get; }
 
 		public int MaxHp { get; set; }
 
@@ -2512,7 +2517,8 @@ public sealed class StaticData
 				Math.Max(BoundRadiusFront, BoundRadiusSide),
 				TalkDistance,
 				FunctionDialogIds.Count == 0 ? null : FunctionDialogIds.ToArray(),
-				State);
+				State,
+				AiName);
 		}
 	}
 

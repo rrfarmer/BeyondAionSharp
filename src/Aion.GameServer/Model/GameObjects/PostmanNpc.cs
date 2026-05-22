@@ -10,7 +10,8 @@ public sealed record PostmanNpc(
 	WorldPosition Position,
 	int CreatorId,
 	string MasterName,
-	int State) : IWorldNpcObject
+	int State,
+	string AiName) : IWorldNpcObject
 {
 	public static PostmanNpc Create(Player owner, int objectId, NpcTemplateSummary template)
 	{
@@ -27,6 +28,7 @@ public sealed record PostmanNpc(
 			position,
 			owner.ObjectId,
 			owner.Name,
-			WorldNpcState.FromTemplateAndSpawn(template, spawnState: 0));
+			WorldNpcState.FromTemplateAndSpawn(template, spawnState: 0),
+			WorldNpcAiName.FromTemplateAndSpawn(template, spawnAiName: string.Empty));
 	}
 }

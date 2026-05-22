@@ -154,6 +154,32 @@ public sealed class WorldNpcSpawnServiceTests
 	}
 
 	[Fact]
+	public void SpawnWorldNpcs_AppliesTemplateAndSpawnAiNamesLikeJava()
+	{
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var service = CreateService(world);
+		var spawns = new NpcSpawnTable(
+		[
+			CreateSpawn(210010000, 203060, x: 1),
+			CreateSpawn(210010000, 203061, x: 2, aiName: "spot_ai"),
+			CreateSpawn(210010000, 203062, x: 3, aiName: "__NO_AI__"),
+		]);
+		var templates = new NpcTemplateTable(
+		[
+			CreateTemplate(203060, aiName: "template_ai"),
+			CreateTemplate(203061, aiName: "template_ai"),
+			CreateTemplate(203062, aiName: "template_ai"),
+		]);
+
+		var result = service.SpawnWorldNpcs(spawns, templates, [210010000]);
+
+		Assert.Equal(new WorldNpcSpawnResult(3, 0), result);
+		Assert.Equal(
+			["template_ai", "spot_ai", string.Empty],
+			world.GetNpcs().OrderBy(npc => npc.Position.X).Select(npc => npc.AiName).ToArray());
+	}
+
+	[Fact]
 	public async Task ProcessTemporarySpawnHourChange_DespawnsThenSpawnsEligibleTemporaryGroups()
 	{
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);
@@ -197,6 +223,7 @@ public sealed class WorldNpcSpawnServiceTests
 		byte difficultId = 0,
 		string handler = "",
 		int state = 0,
+		string aiName = "",
 		TemporarySpawnSchedule? groupTemporarySchedule = null,
 		TemporarySpawnSchedule? spotTemporarySchedule = null)
 	{
@@ -217,13 +244,13 @@ public sealed class WorldNpcSpawnServiceTests
 			0,
 			string.Empty,
 			state,
-			string.Empty,
+			aiName,
 			false,
 			groupTemporarySchedule,
 			spotTemporarySchedule);
 	}
 
-	private static NpcTemplateSummary CreateTemplate(int templateId, int state = 0)
+	private static NpcTemplateSummary CreateTemplate(int templateId, int state = 0, string aiName = "")
 	{
 		return new NpcTemplateSummary(
 			templateId,
@@ -235,6 +262,7 @@ public sealed class WorldNpcSpawnServiceTests
 			Race: "ELYOS",
 			Tribe: "GENERAL",
 			Type: "GENERAL",
-			State: state);
+			State: state,
+			AiName: aiName);
 	}
 }
