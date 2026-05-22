@@ -67,12 +67,13 @@ public sealed class GameServerBootstrapService : IHostedService
 			dataManager.StaticData.CacheFilePath,
 			dataManager.StaticData.ImportedFileCount);
 
+		await _gameTimeService.InitAsync(cancellationToken);
+
 		var engineTasks = _engines.Select(engine => InitEngineAsync(engine, cancellationToken).AsTask()).ToArray();
 		if (engineTasks.Length > 0)
 			await Task.WhenAll(engineTasks);
 
 		_world.Initialize();
-		await _gameTimeService.InitAsync(cancellationToken);
 		_gameTimeService.StartClock();
 
 		if (dataManager.StaticData.ValidationTask != null)

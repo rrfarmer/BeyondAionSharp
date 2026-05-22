@@ -370,7 +370,10 @@ public sealed class StaticData
 				&& elementPath.GetValueOrDefault(reader.Depth - 1) == "spawn")
 			{
 				// Java parity: model/templates/spawns/Spawn.temporary_spawn registers a group with TemporarySpawnEngine.
-				currentNpcSpawn.HasTemporarySchedule = true;
+				currentNpcSpawn.TemporarySchedule = TemporarySpawnSchedule.FromAttributes(
+					reader.GetAttribute("weekdays"),
+					reader.GetAttribute("spawn_time"),
+					reader.GetAttribute("despawn_time"));
 				continue;
 			}
 
@@ -397,7 +400,10 @@ public sealed class StaticData
 				&& elementPath.GetValueOrDefault(reader.Depth - 1) == "spot")
 			{
 				// Java parity: model/templates/spawns/SpawnSpotTemplate.temporary_spawn gates only this spot.
-				currentNpcSpawnSpot.HasTemporarySchedule = true;
+				currentNpcSpawnSpot.TemporarySchedule = TemporarySpawnSchedule.FromAttributes(
+					reader.GetAttribute("weekdays"),
+					reader.GetAttribute("spawn_time"),
+					reader.GetAttribute("despawn_time"));
 				continue;
 			}
 
@@ -2533,7 +2539,7 @@ public sealed class StaticData
 
 		private bool Custom { get; }
 
-		public bool HasTemporarySchedule { get; set; }
+		public TemporarySpawnSchedule? TemporarySchedule { get; set; }
 
 		public NpcSpawnSummary ToSummary(NpcSpawnSpotBuilder spot)
 		{
@@ -2552,7 +2558,8 @@ public sealed class StaticData
 				spot.WalkerId,
 				spot.WalkerIndex,
 				Custom,
-				HasTemporarySchedule || spot.HasTemporarySchedule);
+				TemporarySchedule,
+				spot.TemporarySchedule);
 		}
 	}
 
@@ -2590,7 +2597,7 @@ public sealed class StaticData
 
 		public int WalkerIndex { get; }
 
-		public bool HasTemporarySchedule { get; set; }
+		public TemporarySpawnSchedule? TemporarySchedule { get; set; }
 
 		public static NpcSpawnSpotBuilder FromReader(XmlReader reader)
 		{

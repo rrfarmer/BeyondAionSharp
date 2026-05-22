@@ -162,8 +162,14 @@ public sealed class StaticDataLoadingTests
 		Assert.False(staticSpawn.HasTemporarySchedule);
 		var temporaryGroupSpawn = Assert.Single(staticData.NpcSpawns.GetSpawnsForMap(210010000), spot => spot.NpcId == 203010);
 		Assert.True(temporaryGroupSpawn.HasTemporarySchedule);
+		Assert.NotNull(temporaryGroupSpawn.GroupTemporarySchedule);
+		Assert.True(temporaryGroupSpawn.GroupTemporarySchedule.IsInSpawnTime(21 * 60, DayOfWeek.Friday));
+		Assert.False(temporaryGroupSpawn.GroupTemporarySchedule.IsInSpawnTime(20 * 60, DayOfWeek.Friday));
 		var temporarySpotSpawn = Assert.Single(staticData.NpcSpawns.GetSpawnsForMap(210010000), spot => spot.NpcId == 203011);
 		Assert.True(temporarySpotSpawn.HasTemporarySchedule);
+		Assert.NotNull(temporarySpotSpawn.SpotTemporarySchedule);
+		Assert.True(temporarySpotSpawn.SpotTemporarySchedule.IsInSpawnTime(5 * 60, DayOfWeek.Friday));
+		Assert.False(temporarySpotSpawn.SpotTemporarySchedule.IsInSpawnTime(21 * 60, DayOfWeek.Friday));
 		Assert.Empty(staticData.NpcSpawns.GetSpawnsForMap(700010000));
 	}
 

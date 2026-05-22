@@ -22,7 +22,7 @@ public sealed class WorldNpcSpawnServiceTests
 			CreateSpawn(210010000, 203002, poolSize: 2),
 			CreateSpawn(300030000, 203003),
 			CreateSpawn(210010000, 299999),
-			CreateSpawn(210010000, 203004, hasTemporarySchedule: true),
+			CreateSpawn(210010000, 203004, groupTemporarySchedule: TemporarySpawnSchedule.FromAttributes(null, "9.*.*", "10.*.*")),
 		]);
 		var templates = new NpcTemplateTable(
 		[
@@ -67,22 +67,23 @@ public sealed class WorldNpcSpawnServiceTests
 	}
 
 	[Fact]
-	public void SpawnWorldNpcs_SkipsTemporaryScheduledSpawnsUntilSchedulerExists()
+	public void SpawnWorldNpcs_SpawnsOnlyTemporarySchedulesInCurrentWindow()
 	{
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);
 		var service = CreateService(world);
 		var spawns = new NpcSpawnTable(
 		[
-			CreateSpawn(210010000, 203020, x: 1, hasTemporarySchedule: true),
+			CreateSpawn(210010000, 203020, x: 1, groupTemporarySchedule: TemporarySpawnSchedule.FromAttributes(null, "2.*.*", "3.*.*")),
 			CreateSpawn(210010000, 203020, x: 2),
+			CreateSpawn(210010000, 203021, x: 3, spotTemporarySchedule: TemporarySpawnSchedule.FromAttributes(null, "2.*.*", "3.*.*")),
+			CreateSpawn(210010000, 203021, x: 4, spotTemporarySchedule: TemporarySpawnSchedule.FromAttributes(null, "4.*.*", "5.*.*")),
 		]);
-		var templates = new NpcTemplateTable([CreateTemplate(203020)]);
+		var templates = new NpcTemplateTable([CreateTemplate(203020), CreateTemplate(203021)]);
 
-		var result = service.SpawnWorldNpcs(spawns, templates, [210010000]);
+		var result = service.SpawnWorldNpcs(spawns, templates, [210010000], gameMinutes: 2 * 60, serverDayOfWeek: DayOfWeek.Friday);
 
-		Assert.Equal(new WorldNpcSpawnResult(1, 1), result);
-		var npc = Assert.Single(world.GetNpcs());
-		Assert.Equal(2, npc.Position.X);
+		Assert.Equal(new WorldNpcSpawnResult(3, 1), result);
+		Assert.Equal([1, 2, 3], world.GetNpcs().Select(npc => npc.Position.X).OrderBy(x => x).ToArray());
 	}
 
 	[Fact]
@@ -124,7 +125,8 @@ public sealed class WorldNpcSpawnServiceTests
 		byte heading = 0,
 		int poolSize = 0,
 		string handler = "",
-		bool hasTemporarySchedule = false)
+		TemporarySpawnSchedule? groupTemporarySchedule = null,
+		TemporarySpawnSchedule? spotTemporarySchedule = null)
 	{
 		return new NpcSpawnSummary(
 			mapId,
@@ -140,7 +142,8 @@ public sealed class WorldNpcSpawnServiceTests
 			string.Empty,
 			0,
 			false,
-			hasTemporarySchedule);
+			groupTemporarySchedule,
+			spotTemporarySchedule);
 	}
 
 	private static NpcTemplateSummary CreateTemplate(int templateId)

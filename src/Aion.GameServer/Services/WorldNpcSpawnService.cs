@@ -12,6 +12,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 	private readonly GameServerRuntimeContext _runtimeContext;
 	private readonly GameWorld _world;
 	private readonly IDFactory _idFactory;
+	private readonly GameTimeService? _gameTimeService;
 	private readonly ILogger<WorldNpcSpawnService> _logger;
 	private int _loadedCount;
 	private int _skippedCount;
@@ -20,12 +21,23 @@ public sealed class WorldNpcSpawnService : GameEngine
 		GameServerRuntimeContext runtimeContext,
 		GameWorld world,
 		IDFactory idFactory,
+		GameTimeService? gameTimeService,
 		ILogger<WorldNpcSpawnService> logger)
 	{
 		_runtimeContext = runtimeContext;
 		_world = world;
 		_idFactory = idFactory;
+		_gameTimeService = gameTimeService;
 		_logger = logger;
+	}
+
+	public WorldNpcSpawnService(
+		GameServerRuntimeContext runtimeContext,
+		GameWorld world,
+		IDFactory idFactory,
+		ILogger<WorldNpcSpawnService> logger)
+		: this(runtimeContext, world, idFactory, null, logger)
+	{
 	}
 
 	public string Name => "WorldNpcSpawnService";
@@ -48,6 +60,8 @@ public sealed class WorldNpcSpawnService : GameEngine
 			staticData.NpcSpawns,
 			staticData.NpcTemplates,
 			staticData.WorldMaps.Where(map => !map.IsInstance).Select(map => map.MapId),
+			_gameTimeService?.GameMinutes ?? 0,
+			DateTimeOffset.Now.DayOfWeek,
 			cancellationToken);
 		Volatile.Write(ref _loadedCount, result.SpawnedCount);
 		Volatile.Write(ref _skippedCount, result.SkippedCount);
@@ -69,6 +83,23 @@ public sealed class WorldNpcSpawnService : GameEngine
 		NpcSpawnTable spawns,
 		NpcTemplateTable npcTemplates,
 		IEnumerable<int>? allowedMapIds = null,
+		CancellationToken cancellationToken = default)
+	{
+		return SpawnWorldNpcs(
+			spawns,
+			npcTemplates,
+			allowedMapIds,
+			_gameTimeService?.GameMinutes ?? 0,
+			DateTimeOffset.Now.DayOfWeek,
+			cancellationToken);
+	}
+
+	public WorldNpcSpawnResult SpawnWorldNpcs(
+		NpcSpawnTable spawns,
+		NpcTemplateTable npcTemplates,
+		IEnumerable<int>? allowedMapIds,
+		int gameMinutes,
+		DayOfWeek serverDayOfWeek,
 		CancellationToken cancellationToken = default)
 	{
 		var allowedMaps = allowedMapIds?.ToHashSet();
@@ -98,12 +129,22 @@ public sealed class WorldNpcSpawnService : GameEngine
 				continue;
 			}
 
-			// Java parity: Spawn.temporary_spawn and SpawnSpotTemplate.temporary_spawn are owned by TemporarySpawnEngine,
-			// so scheduled groups/spots must not be materialized by SpawnEngine.spawnAll's always-on pass.
-			var alwaysOnSpawns = groupSpawns.Where(spawn => !spawn.HasTemporarySchedule).ToArray();
-			skipped += groupSpawns.Length - alwaysOnSpawns.Length;
+			if (groupKey.TemporarySchedule != null && !groupKey.TemporarySchedule.IsInSpawnTime(gameMinutes, serverDayOfWeek))
+			{
+				skipped += groupSpawns.Length;
+				continue;
+			}
 
-			foreach (var spawn in SelectActivePoolSpots(alwaysOnSpawns))
+			// Java parity: SpawnEngine.spawnInstance checks spot-level TemporarySpawn.isInSpawnTime in the non-pool branch.
+			var activeSpawns = groupKey.PoolSize > 0
+				? groupSpawns
+				: groupSpawns
+					.Where(spawn => spawn.SpotTemporarySchedule == null
+						|| spawn.SpotTemporarySchedule.IsInSpawnTime(gameMinutes, serverDayOfWeek))
+					.ToArray();
+			skipped += groupSpawns.Length - activeSpawns.Length;
+
+			foreach (var spawn in SelectActivePoolSpots(activeSpawns))
 			{
 				cancellationToken.ThrowIfCancellationRequested();
 				if (SpawnNpc(spawn, template))
@@ -126,6 +167,8 @@ public sealed class WorldNpcSpawnService : GameEngine
 			new NpcSpawnTable(spawns.GetSpawnsForMap(mapId)),
 			npcTemplates,
 			[mapId],
+			_gameTimeService?.GameMinutes ?? 0,
+			DateTimeOffset.Now.DayOfWeek,
 			cancellationToken);
 	}
 
@@ -178,7 +221,8 @@ public sealed class WorldNpcSpawnService : GameEngine
 			spawn.RespawnSeconds,
 			spawn.PoolSize,
 			spawn.Handler,
-			spawn.Custom);
+			spawn.Custom,
+			spawn.GroupTemporarySchedule);
 	}
 
 	private readonly record struct NpcSpawnGroupKey(
@@ -187,7 +231,8 @@ public sealed class WorldNpcSpawnService : GameEngine
 		int RespawnSeconds,
 		int PoolSize,
 		string Handler,
-		bool Custom);
+		bool Custom,
+		TemporarySpawnSchedule? TemporarySchedule);
 }
 
 public readonly record struct WorldNpcSpawnResult(int SpawnedCount, int SkippedCount);
