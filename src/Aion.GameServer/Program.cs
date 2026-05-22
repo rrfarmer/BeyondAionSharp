@@ -34,8 +34,11 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<GameWorld>();
 			services.AddSingleton<GameTimeService>();
 			services.AddSingleton<PeriodicSaveService>();
+			services.AddSingleton<HousingWorldService>();
 			services.AddSingleton<Aion.GameServer.Model.GameEngine>(
 				serviceProvider => serviceProvider.GetRequiredService<PeriodicSaveService>());
+			services.AddSingleton<Aion.GameServer.Model.GameEngine>(
+				serviceProvider => serviceProvider.GetRequiredService<HousingWorldService>());
 			services.AddSingleton<ExpirableTaskService>();
 			services.AddSingleton<HousingVisibilityService>();
 			services.AddSingleton<HouseAuctionTimingService>();
@@ -61,6 +64,7 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<IBrokerRepository, MySqlBrokerRepository>();
 			services.AddSingleton<ISocialRepository, MySqlSocialRepository>();
 			services.AddSingleton<IHouseAuctionRepository, MySqlHouseAuctionRepository>();
+			services.AddSingleton<IHousingRepository, MySqlHousingRepository>();
 			services.AddSingleton<IMotionRepository, MySqlMotionRepository>();
 			services.AddSingleton<CharacterCreationService>();
 			services.AddSingleton<PlayerEnterWorldService>();
