@@ -3,6 +3,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
+using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Services;
 
@@ -10,11 +11,16 @@ public sealed class WorldNpcLootService
 {
 	private readonly WorldNpcDropRegistrationService _dropRegistrationService;
 	private readonly WorldNpcSpawnService? _worldNpcSpawnService;
+	private readonly ThreadPoolManager? _threadPoolManager;
 
-	public WorldNpcLootService(WorldNpcDropRegistrationService dropRegistrationService, WorldNpcSpawnService? worldNpcSpawnService = null)
+	public WorldNpcLootService(
+		WorldNpcDropRegistrationService dropRegistrationService,
+		WorldNpcSpawnService? worldNpcSpawnService = null,
+		ThreadPoolManager? threadPoolManager = null)
 	{
 		_dropRegistrationService = dropRegistrationService;
 		_worldNpcSpawnService = worldNpcSpawnService;
+		_threadPoolManager = threadPoolManager;
 	}
 
 	public WorldNpcLootResult RequestDropList(Player? player, int npcObjectId)
@@ -176,6 +182,35 @@ public sealed class WorldNpcLootService
 		return CreateLootEnableStatus(npc.ObjectId);
 	}
 
+	public WorldNpcFreeForAllResult StartFreeForAll(int npcObjectId)
+	{
+		// Java parity: services/drop/DropService.scheduleFreeForAll delayed body calls DropNpc.startFreeForAll and broadcasts LOOT_ENABLE.
+		if (!_dropRegistrationService.TryGetRegistration(npcObjectId, out var registration) || registration == null)
+			return WorldNpcFreeForAllResult.MissingRegistration();
+
+		registration.StartFreeForAll();
+		return WorldNpcFreeForAllResult.Started(CreateLootEnableStatus(npcObjectId));
+	}
+
+	public ScheduledTask? ScheduleFreeForAll(
+		int npcObjectId,
+		TimeSpan? delay = null,
+		Func<WorldNpcFreeForAllResult, ValueTask>? onStarted = null)
+	{
+		// Java parity: services/drop/DropService.scheduleFreeForAll uses a 240000 ms delay after drop registration.
+		if (_threadPoolManager == null)
+			return null;
+
+		return _threadPoolManager.Schedule(
+			async cancellationToken =>
+			{
+				var result = StartFreeForAll(npcObjectId);
+				if (!cancellationToken.IsCancellationRequested && onStarted != null)
+					await onStarted(result);
+			},
+			delay ?? TimeSpan.FromMinutes(4));
+	}
+
 	private void ResumeDecayAfterClose(int npcObjectId, WorldNpcDropRegistration registration)
 	{
 		// Java parity: DropService.closeDropList resumes RespawnService.scheduleDecayTask with the remaining delay.
@@ -264,4 +299,25 @@ public enum WorldNpcLootStatus
 	TeamDistributionPending,
 	LimitOneAlreadyOwned,
 	ItemCollected,
+}
+
+public sealed record WorldNpcFreeForAllResult(
+	WorldNpcFreeForAllStatus Status,
+	SmLootStatus? LootStatus)
+{
+	public static WorldNpcFreeForAllResult Started(SmLootStatus lootStatus)
+	{
+		return new WorldNpcFreeForAllResult(WorldNpcFreeForAllStatus.Started, lootStatus);
+	}
+
+	public static WorldNpcFreeForAllResult MissingRegistration()
+	{
+		return new WorldNpcFreeForAllResult(WorldNpcFreeForAllStatus.MissingRegistration, null);
+	}
+}
+
+public enum WorldNpcFreeForAllStatus
+{
+	MissingRegistration,
+	Started,
 }

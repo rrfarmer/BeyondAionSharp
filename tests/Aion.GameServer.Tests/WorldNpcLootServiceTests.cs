@@ -153,6 +153,67 @@ public sealed class WorldNpcLootServiceTests
 	}
 
 	[Fact]
+	public void StartFreeForAll_ClearsExplicitLootersAndReturnsLootEnableStatus()
+	{
+		var dropRegistration = new WorldNpcDropRegistrationService();
+		dropRegistration.RegisterDrop(
+			5001,
+			looterObjectId: 1001,
+			drops: [new WorldNpcDropItem(1, 166020000, 1)]);
+		Assert.True(dropRegistration.TryGetRegistration(5001, out var registration));
+		Assert.True(registration!.IsAllowedToLoot(1001));
+		Assert.False(registration.IsAllowedToLoot(1002));
+		var service = new WorldNpcLootService(dropRegistration);
+
+		var result = service.StartFreeForAll(5001);
+
+		Assert.Equal(WorldNpcFreeForAllStatus.Started, result.Status);
+		Assert.NotNull(result.LootStatus);
+		Assert.Equal(SmLootStatusType.LootEnable, result.LootStatus.Status);
+		Assert.Equal(1003, result.LootStatus.LootEffectId);
+		Assert.True(registration.IsFreeForAll);
+		Assert.Empty(registration.AllowedLooters);
+		Assert.True(registration.IsAllowedToLoot(1002));
+	}
+
+	[Fact]
+	public async Task ScheduleFreeForAll_StartsAfterDelay()
+	{
+		var dropRegistration = new WorldNpcDropRegistrationService();
+		dropRegistration.RegisterDrop(
+			5001,
+			looterObjectId: 1001,
+			drops: [new WorldNpcDropItem(1, 166020000, 1)]);
+		var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		try
+		{
+			var service = new WorldNpcLootService(dropRegistration, threadPoolManager: threadPoolManager);
+			var completion = new TaskCompletionSource<WorldNpcFreeForAllResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+			var scheduled = service.ScheduleFreeForAll(
+				5001,
+				TimeSpan.FromMilliseconds(10),
+				result =>
+				{
+					completion.SetResult(result);
+					return ValueTask.CompletedTask;
+				});
+
+			Assert.NotNull(scheduled);
+			var completed = await Task.WhenAny(completion.Task, Task.Delay(TimeSpan.FromSeconds(1)));
+			Assert.Same(completion.Task, completed);
+			var result = await completion.Task;
+			Assert.Equal(WorldNpcFreeForAllStatus.Started, result.Status);
+			Assert.True(dropRegistration.TryGetRegistration(5001, out var registration));
+			Assert.True(registration!.IsFreeForAll);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
 	public void RequestDropItem_AddsSoloItemAndRefreshesRemainingDropList()
 	{
 		var dropRegistration = new WorldNpcDropRegistrationService();
