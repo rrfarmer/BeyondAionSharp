@@ -22,6 +22,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 	private readonly IGameClientConnectionRegistry? _connectionRegistry;
 	private readonly IStaticPlaceableStateService? _staticPlaceables;
 	private readonly IWorldNpcWalkerSpawnPlanCacheService? _walkerSpawnPlans;
+	private readonly WorldNpcWalkerPlacementApplicationService? _walkerPlacementApplication;
 	private readonly ILogger<WorldNpcSpawnService> _logger;
 	private readonly ConcurrentDictionary<NpcSpawnSummary, int> _temporarySpawnObjectIds = new();
 	private readonly ConcurrentDictionary<int, SpawnedWorldNpcRegistration> _spawnedWorldNpcs = new();
@@ -38,6 +39,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		IGameClientConnectionRegistry? connectionRegistry,
 		IStaticPlaceableStateService? staticPlaceables,
 		IWorldNpcWalkerSpawnPlanCacheService? walkerSpawnPlans,
+		WorldNpcWalkerPlacementApplicationService? walkerPlacementApplication,
 		ILogger<WorldNpcSpawnService> logger)
 	{
 		_runtimeContext = runtimeContext;
@@ -48,6 +50,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		_connectionRegistry = connectionRegistry;
 		_staticPlaceables = staticPlaceables;
 		_walkerSpawnPlans = walkerSpawnPlans;
+		_walkerPlacementApplication = walkerPlacementApplication;
 		_logger = logger;
 	}
 
@@ -59,7 +62,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		ThreadPoolManager? threadPoolManager,
 		IStaticPlaceableStateService? staticPlaceables,
 		ILogger<WorldNpcSpawnService> logger)
-		: this(runtimeContext, world, idFactory, gameTimeService, threadPoolManager, null, staticPlaceables, null, logger)
+		: this(runtimeContext, world, idFactory, gameTimeService, threadPoolManager, null, staticPlaceables, null, null, logger)
 	{
 	}
 
@@ -69,7 +72,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		IDFactory idFactory,
 		GameTimeService? gameTimeService,
 		ILogger<WorldNpcSpawnService> logger)
-		: this(runtimeContext, world, idFactory, gameTimeService, null, null, null, null, logger)
+		: this(runtimeContext, world, idFactory, gameTimeService, null, null, null, null, null, logger)
 	{
 	}
 
@@ -78,7 +81,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		GameWorld world,
 		IDFactory idFactory,
 		ILogger<WorldNpcSpawnService> logger)
-		: this(runtimeContext, world, idFactory, null, null, null, null, null, logger)
+		: this(runtimeContext, world, idFactory, null, null, null, null, null, null, logger)
 	{
 	}
 
@@ -340,13 +343,20 @@ public sealed class WorldNpcSpawnService : GameEngine
 		if (_walkerSpawnPlans == null)
 			return Array.Empty<WorldNpcWalkerWorldSpawnPlan>();
 
-		return _walkerSpawnPlans.RefreshWorldPlans(
+		var plans = _walkerSpawnPlans.RefreshWorldPlans(
 			_world.GetNpcs()
 				.OfType<WorldNpc>()
 				.ToArray(),
 			walkerTemplates,
 			walkerVersions,
 			worldIds);
+		if (_walkerPlacementApplication != null)
+		{
+			foreach (var plan in plans)
+				_walkerPlacementApplication.ApplyActivePlacements(_world, plan.PlacementPlan);
+		}
+
+		return plans;
 	}
 
 	public WorldNpcSpawnResult SpawnWorldNpcsForMap(

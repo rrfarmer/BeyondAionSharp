@@ -73,6 +73,23 @@ public sealed class World
 		return removed;
 	}
 
+	public bool TryUpdateObject(int objectId, object gameObject)
+	{
+		if (!_objects.TryGetValue(objectId, out var existing) || !_objects.TryUpdate(objectId, gameObject, existing))
+			return false;
+
+		if (existing is WorldHouse oldHouse && gameObject is not WorldHouse)
+			_housesByAddress.TryRemove(oldHouse.AddressId, out _);
+		if (gameObject is WorldHouse newHouse)
+		{
+			if (existing is WorldHouse previousHouse && previousHouse.AddressId != newHouse.AddressId)
+				_housesByAddress.TryRemove(previousHouse.AddressId, out _);
+			_housesByAddress[newHouse.AddressId] = newHouse;
+		}
+
+		return true;
+	}
+
 	public bool TryGetObject(int objectId, out object? gameObject)
 	{
 		return _objects.TryGetValue(objectId, out gameObject);

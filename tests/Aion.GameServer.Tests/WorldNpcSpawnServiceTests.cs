@@ -74,12 +74,13 @@ public sealed class WorldNpcSpawnServiceTests
 				threadPoolManager: null,
 				connectionRegistry: null,
 				staticPlaceables: null,
-				walkerPlans,
+				walkerSpawnPlans: walkerPlans,
+				walkerPlacementApplication: new WorldNpcWalkerPlacementApplicationService(),
 				NullLogger<WorldNpcSpawnService>.Instance);
 			var spawns = new NpcSpawnTable(
 			[
-				CreateSpawn(210010000, 203080, walkerId: "route-a", walkerIndex: 1),
-				CreateSpawn(210010000, 203080, walkerId: "route-a", walkerIndex: 2),
+				CreateSpawn(210010000, 203080, x: 0, y: 0, walkerId: "route-a", walkerIndex: 1),
+				CreateSpawn(210010000, 203080, x: 0, y: 0, walkerId: "route-a", walkerIndex: 2),
 			]);
 			var templates = new NpcTemplateTable([CreateTemplate(203080)]);
 
@@ -93,6 +94,14 @@ public sealed class WorldNpcSpawnServiceTests
 			Assert.Equal([2, 1], formation.Members.Select(member => member.ObjectId).ToArray());
 			Assert.Equal([2, 1], worldPlan.PlacementPlan.ActivePlacements.Select(placement => placement.ObjectId).ToArray());
 			Assert.Empty(worldPlan.PlacementPlan.InactiveVariantObjectIds);
+			var formedNpcs = world.GetNpcs()
+				.OfType<WorldNpc>()
+				.OrderBy(npc => npc.ObjectId)
+				.ToArray();
+			Assert.Equal(-1, formedNpcs[0].Position.Y, precision: 4);
+			Assert.Equal(1, formedNpcs[1].Position.Y, precision: 4);
+			Assert.Equal(0, formedNpcs[0].SpawnLocation.Y, precision: 4);
+			Assert.Equal(0, formedNpcs[1].SpawnLocation.Y, precision: 4);
 		}
 		finally
 		{
