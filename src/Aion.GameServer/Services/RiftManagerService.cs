@@ -58,9 +58,9 @@ public sealed class RiftManagerService
 		var staticData = _runtimeContext.DataManager?.StaticData;
 		if (staticData == null)
 			return RiftSpawnResult.NotSpawned(RiftSpawnStatus.MissingStaticData, definition, isWithGuards);
-		if (!staticData.NpcRiftSpawns.TryGetSpawnByAnchor(definition.MasterAnchor, out var masterSpawn) || masterSpawn == null)
+		if (!TryGetPortalSpawn(staticData, definition.MasterAnchor, out var masterSpawn))
 			return RiftSpawnResult.NotSpawned(RiftSpawnStatus.MissingMasterAnchor, definition, isWithGuards);
-		if (!staticData.NpcRiftSpawns.TryGetSpawnByAnchor(definition.SlaveAnchor, out var slaveAnchorSpawn) || slaveAnchorSpawn == null)
+		if (!TryGetPortalSpawn(staticData, definition.SlaveAnchor, out var slaveAnchorSpawn))
 			return RiftSpawnResult.NotSpawned(RiftSpawnStatus.MissingSlaveAnchor, definition, isWithGuards);
 
 		var slaveSpawn = SelectSlaveSpawn(slaveAnchorSpawn, staticData.NpcRiftSpawns);
@@ -87,19 +87,40 @@ public sealed class RiftManagerService
 		return RiftDefinitions.TryGetValue(riftId, out definition);
 	}
 
-	private NpcRiftSpawnSummary SelectSlaveSpawn(
-		NpcRiftSpawnSummary anchorSpawn,
+	private static bool TryGetPortalSpawn(
+		StaticData staticData,
+		string anchor,
+		out RiftSpawnPoint spawn)
+	{
+		if (staticData.NpcSpawns.TryGetRiftSpawnByAnchor(anchor, out var handlerSpawn) && handlerSpawn != null)
+		{
+			spawn = RiftSpawnPoint.FromNpcSpawn(handlerSpawn);
+			return true;
+		}
+
+		if (staticData.NpcRiftSpawns.TryGetSpawnByAnchor(anchor, out var riftSpawn) && riftSpawn != null)
+		{
+			spawn = RiftSpawnPoint.FromNpcRiftSpawn(riftSpawn);
+			return true;
+		}
+
+		spawn = default;
+		return false;
+	}
+
+	private RiftSpawnPoint SelectSlaveSpawn(
+		RiftSpawnPoint anchorSpawn,
 		NpcRiftSpawnTable riftSpawns)
 	{
 		// Java parity: services/rift/RiftManager.spawnRift calls SpawnTemplate.changeTemplate(instance) for pooled slave templates.
-		if (anchorSpawn.PoolSize <= 0)
+		if (anchorSpawn.PoolSize <= 0 || !anchorSpawn.RiftId.HasValue || !anchorSpawn.SpawnGroupIndex.HasValue)
 			return anchorSpawn;
 
 		var pool = riftSpawns.Spawns
 			.Where(
 				spawn => spawn.MapId == anchorSpawn.MapId
-					&& spawn.RiftId == anchorSpawn.RiftId
-					&& spawn.SpawnGroupIndex == anchorSpawn.SpawnGroupIndex)
+					&& spawn.RiftId == anchorSpawn.RiftId.Value
+					&& spawn.SpawnGroupIndex == anchorSpawn.SpawnGroupIndex.Value)
 			.OrderBy(spawn => spawn.SpotIndex)
 			.ToArray();
 		if (pool.Length == 0)
@@ -108,11 +129,11 @@ public sealed class RiftManagerService
 		var index = _nextPoolIndex(pool.Length);
 		if (index < 0 || index >= pool.Length)
 			index = 0;
-		return pool[index];
+		return RiftSpawnPoint.FromNpcRiftSpawn(pool[index]);
 	}
 
 	private bool TrySpawnRiftNpc(
-		NpcRiftSpawnSummary spawn,
+		RiftSpawnPoint spawn,
 		NpcTemplateSummary template,
 		out WorldNpc npc)
 	{
@@ -137,6 +158,70 @@ public sealed class RiftManagerService
 
 		_idFactory.ReleaseId(objectId);
 		return false;
+	}
+
+	private readonly record struct RiftSpawnPoint(
+		int MapId,
+		int? RiftId,
+		int? SpawnGroupIndex,
+		int NpcId,
+		float X,
+		float Y,
+		float Z,
+		byte Heading,
+		int RespawnSeconds,
+		int PoolSize,
+		int StaticId,
+		int RandomWalkRange,
+		string WalkerId,
+		int WalkerIndex,
+		string Anchor,
+		int State,
+		string AiName)
+	{
+		public static RiftSpawnPoint FromNpcSpawn(NpcSpawnSummary spawn)
+		{
+			return new RiftSpawnPoint(
+				spawn.MapId,
+				RiftId: null,
+				SpawnGroupIndex: null,
+				spawn.NpcId,
+				spawn.X,
+				spawn.Y,
+				spawn.Z,
+				spawn.Heading,
+				spawn.RespawnSeconds,
+				spawn.PoolSize,
+				spawn.StaticId,
+				spawn.RandomWalkRange,
+				spawn.WalkerId,
+				spawn.WalkerIndex,
+				spawn.Anchor,
+				spawn.State,
+				spawn.AiName);
+		}
+
+		public static RiftSpawnPoint FromNpcRiftSpawn(NpcRiftSpawnSummary spawn)
+		{
+			return new RiftSpawnPoint(
+				spawn.MapId,
+				spawn.RiftId,
+				spawn.SpawnGroupIndex,
+				spawn.NpcId,
+				spawn.X,
+				spawn.Y,
+				spawn.Z,
+				spawn.Heading,
+				spawn.RespawnSeconds,
+				spawn.PoolSize,
+				spawn.StaticId,
+				spawn.RandomWalkRange,
+				spawn.WalkerId,
+				spawn.WalkerIndex,
+				spawn.Anchor,
+				spawn.State,
+				spawn.AiName);
+		}
 	}
 
 	private void AddSpawnedRift(WorldNpc npc)

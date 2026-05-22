@@ -391,6 +391,10 @@ public sealed class StaticDataLoadingTests
 		Assert.True(staticData.RiftLocations.GetLocation(2153)?.HasSpawns);
 		Assert.False(staticData.RiftLocations.GetLocation(2189)?.AutoCloseable);
 		Assert.Contains(staticData.RiftLocations.GetLocationsForWorld(210070000), location => location.Id == 2176 && location.HasSpawns);
+		Assert.True(staticData.NpcSpawns.TryGetRiftSpawnByAnchor("ELTNEN_AM", out var eltnenMasterSpawn));
+		Assert.Equal(700137, eltnenMasterSpawn?.NpcId);
+		Assert.True(staticData.NpcSpawns.TryGetRiftSpawnByAnchor("MORHEIM_AS", out var morheimSlaveSpawn));
+		Assert.Equal(700138, morheimSlaveSpawn?.NpcId);
 		Assert.Equal(staticData.GetElementCount("vortex_location"), staticData.VortexLocations.Count);
 		Assert.Equal(2, staticData.VortexLocations.Count);
 		Assert.Equal(new WorldPosition(210060000, 951.0f, 2433.0f, 107.0f, 0), staticData.VortexLocations.GetLocation(0)?.StartPoint);

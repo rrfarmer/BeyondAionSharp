@@ -5,6 +5,7 @@ namespace Aion.GameServer.Dataholders;
 public sealed class NpcSpawnTable
 {
 	private readonly IReadOnlyDictionary<int, IReadOnlyList<NpcSpawnSummary>> _spawnsByMapId;
+	private readonly IReadOnlyDictionary<string, NpcSpawnSummary> _riftSpawnsByAnchor;
 
 	public NpcSpawnTable(IReadOnlyList<NpcSpawnSummary> spawns)
 	{
@@ -15,6 +16,8 @@ public sealed class NpcSpawnTable
 				.ToDictionary(
 					group => group.Key,
 					group => (IReadOnlyList<NpcSpawnSummary>)group.ToArray()));
+		_riftSpawnsByAnchor = new ReadOnlyDictionary<string, NpcSpawnSummary>(
+			BuildRiftAnchorLookup(spawns));
 	}
 
 	public IReadOnlyList<NpcSpawnSummary> Spawns { get; }
@@ -24,6 +27,33 @@ public sealed class NpcSpawnTable
 	public IReadOnlyList<NpcSpawnSummary> GetSpawnsForMap(int mapId)
 	{
 		return _spawnsByMapId.GetValueOrDefault(mapId) ?? Array.Empty<NpcSpawnSummary>();
+	}
+
+	public bool TryGetRiftSpawnByAnchor(string anchor, out NpcSpawnSummary? spawn)
+	{
+		return _riftSpawnsByAnchor.TryGetValue(anchor, out spawn);
+	}
+
+	private static Dictionary<string, NpcSpawnSummary> BuildRiftAnchorLookup(IReadOnlyList<NpcSpawnSummary> spawns)
+	{
+		// Java parity: SpawnEngine registers ordinary spawn groups with handler="RIFT" through RiftManager.addRiftSpawnTemplate.
+		var anchors = new Dictionary<string, NpcSpawnSummary>(StringComparer.Ordinal);
+		foreach (var group in spawns
+			.Where(spawn => string.Equals(spawn.Handler, "RIFT", StringComparison.OrdinalIgnoreCase))
+			.GroupBy(spawn => new { spawn.MapId, spawn.NpcId, spawn.PoolSize }))
+		{
+			var orderedGroup = group.ToArray();
+			var candidates = orderedGroup[0].PoolSize > 0
+				? orderedGroup.Take(1)
+				: orderedGroup;
+			foreach (var candidate in candidates)
+			{
+				if (!string.IsNullOrEmpty(candidate.Anchor))
+					anchors[candidate.Anchor] = candidate;
+			}
+		}
+
+		return anchors;
 	}
 }
 

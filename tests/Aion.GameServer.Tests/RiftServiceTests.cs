@@ -22,18 +22,14 @@ public sealed class RiftServiceTests
 				"""<rift_location id="1170" world="110070000" />""",
 				"""
 				<spawn_map map_id="110070000">
-					<rift_spawn id="1170" world="110070000">
-						<spawn npc_id="730100">
-							<spot x="1" y="2" z="3" anchor="KAISINEL_AM" />
-						</spawn>
-					</rift_spawn>
+					<spawn npc_id="730100" handler="RIFT">
+						<spot x="1" y="2" z="3" anchor="KAISINEL_AM" />
+					</spawn>
 				</spawn_map>
 				<spawn_map map_id="120080000">
-					<rift_spawn id="1170" world="120080000">
-						<spawn npc_id="730101">
-							<spot x="5" y="6" z="7" anchor="KAISINEL_AS" />
-						</spawn>
-					</rift_spawn>
+					<spawn npc_id="730101" handler="RIFT">
+						<spot x="5" y="6" z="7" anchor="KAISINEL_AS" />
+					</spawn>
 				</spawn_map>
 				""");
 			var idFactory = new IDFactory();
@@ -82,6 +78,68 @@ public sealed class RiftServiceTests
 			var closeAgain = service.CloseRifts(1170);
 			Assert.False(closeAgain.Succeeded);
 			Assert.Equal(RiftServiceStatus.NotOpen, closeAgain.Status);
+		}
+		finally
+		{
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
+	[Fact]
+	public async Task OpenRifts_WithGuards_SpawnsRiftLocationGuards()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-rift-service-guards-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(
+				tempPath,
+				"""<rift_location id="2120" world="210020000" has_spawns="true" />""",
+				"""
+				<spawn_map map_id="210020000">
+					<spawn npc_id="730100" handler="RIFT">
+						<spot x="1" y="2" z="3" anchor="ELTNEN_AM" />
+					</spawn>
+					<rift_spawn id="2120" world="210020000">
+						<spawn npc_id="730200" respawn_time="1800">
+							<spot x="11" y="12" z="13" h="14" />
+						</spawn>
+					</rift_spawn>
+				</spawn_map>
+				<spawn_map map_id="220020000">
+					<spawn npc_id="730101" handler="RIFT">
+						<spot x="5" y="6" z="7" anchor="MORHEIM_AS" />
+					</spawn>
+				</spawn_map>
+				""");
+			var idFactory = new IDFactory();
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			var manager = new RiftManagerService(context, world, idFactory);
+			var service = new RiftService(context, manager, world, idFactory);
+
+			var open = service.OpenRifts(2120, guards: true);
+
+			Assert.True(open.Succeeded);
+			var state = Assert.Single(open.Locations);
+			Assert.Equal(3, state.SpawnedCount);
+			Assert.Equal(3, world.ObjectCount);
+			Assert.Equal(2, manager.SpawnedRiftCount);
+			Assert.Contains(state.Spawned, npc => npc.TemplateId == 730200 && npc.Position.WorldId == 210020000);
+			Assert.Contains(state.Spawned, npc => npc.Anchor == "ELTNEN_AM");
+			Assert.Contains(state.Spawned, npc => npc.Anchor == "MORHEIM_AS");
+
+			var close = service.CloseRifts(2120);
+
+			Assert.True(close.Succeeded);
+			Assert.Equal(0, world.ObjectCount);
+			Assert.Equal(0, manager.SpawnedRiftCount);
+			Assert.Equal(1, idFactory.NextId());
 		}
 		finally
 		{
@@ -349,6 +407,7 @@ public sealed class RiftServiceTests
 				<npc_templates>
 					<npc_template npc_id="730100" name="master rift" name_id="730100" level="1" rank="NORMAL" rating="NORMAL" race="ELYOS" tribe="FIELD_OBJECT_ALL" type="GENERAL" state="5" ai="portal" />
 					<npc_template npc_id="730101" name="slave rift" name_id="730101" level="1" rank="NORMAL" rating="NORMAL" race="ASMODIANS" tribe="FIELD_OBJECT_ALL" type="GENERAL" state="6" ai="portal" />
+					<npc_template npc_id="730200" name="rift guard" name_id="730200" level="1" rank="NORMAL" rating="NORMAL" race="ELYOS" tribe="FIELD_OBJECT_ALL" type="GENERAL" state="5" ai="guard" />
 				</npc_templates>
 				<spawns>
 			{{spawnMaps}}

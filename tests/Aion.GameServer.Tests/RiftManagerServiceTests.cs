@@ -85,6 +85,52 @@ public sealed class RiftManagerServiceTests
 	}
 
 	[Fact]
+	public async Task SpawnRift_UsesJavaRiftHandlerAnchors()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-rift-manager-handler-anchors-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(
+				tempPath,
+				"""
+				<spawn_map map_id="110070000">
+					<spawn npc_id="730100" handler="RIFT">
+						<spot x="1" y="2" z="3" h="4" anchor="KAISINEL_AM" state="2" ai="master_ai" />
+					</spawn>
+				</spawn_map>
+				<spawn_map map_id="120080000">
+					<spawn npc_id="730101" handler="RIFT">
+						<spot x="5" y="6" z="7" h="8" anchor="KAISINEL_AS" state="3" ai="slave_ai" />
+					</spawn>
+				</spawn_map>
+				""");
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			var service = new RiftManagerService(context, world, new IDFactory());
+
+			var result = service.SpawnRift(1170);
+
+			Assert.True(result.Spawned);
+			Assert.Equal(RiftSpawnStatus.Spawned, result.Status);
+			Assert.Equal(2, result.SpawnedNpcs.Count);
+			Assert.Equal("KAISINEL_AS", result.SpawnedNpcs[0].Anchor);
+			Assert.Equal("KAISINEL_AM", result.SpawnedNpcs[1].Anchor);
+			Assert.Equal(2, service.SpawnedRiftCount);
+			Assert.Equal(2, world.ObjectCount);
+		}
+		finally
+		{
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
+	[Fact]
 	public async Task RemoveSpawnedRift_RemovesManagerTrackingOnly()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-rift-remove-tracking-" + Guid.NewGuid().ToString("N"));

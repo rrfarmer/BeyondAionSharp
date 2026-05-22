@@ -94,6 +94,12 @@ public sealed class RiftService
 			if (!_activeRifts.TryAdd(location.Id, state))
 				continue;
 
+			if (guards)
+			{
+				foreach (var guardNpc in SpawnGuardNpcs(location))
+					state.AddSpawned(guardNpc);
+			}
+
 			var spawnResult = _riftManager.SpawnRift(location.Id, guards);
 			state.Definition = spawnResult.Definition;
 			foreach (var npc in spawnResult.SpawnedNpcs)
@@ -190,6 +196,54 @@ public sealed class RiftService
 
 		failure = RiftServiceResult.NotSucceeded(RiftServiceStatus.InvalidId);
 		return true;
+	}
+
+	private IReadOnlyList<WorldNpc> SpawnGuardNpcs(RiftLocationSummary location)
+	{
+		var staticData = _runtimeContext.DataManager?.StaticData;
+		if (staticData == null)
+			return Array.Empty<WorldNpc>();
+
+		var spawned = new List<WorldNpc>();
+		foreach (var guardSpawn in staticData.NpcRiftSpawns.GetSpawnsForRift(location.Id))
+		{
+			// Java parity: RiftService.openRifts spawns every SpawnTemplate from SpawnsData.getRiftSpawnsByLocId before the portal pair.
+			var template = staticData.NpcTemplates.GetNpcTemplate(guardSpawn.NpcId);
+			if (template == null)
+				continue;
+			if (TrySpawnRiftOwnedNpc(guardSpawn, template, out var npc))
+				spawned.Add(npc);
+		}
+
+		return spawned;
+	}
+
+	private bool TrySpawnRiftOwnedNpc(
+		NpcRiftSpawnSummary spawn,
+		NpcTemplateSummary template,
+		out WorldNpc npc)
+	{
+		var objectId = _idFactory.NextId();
+		var position = new global::Aion.GameServer.World.WorldPosition(spawn.MapId, spawn.X, spawn.Y, spawn.Z, spawn.Heading);
+		npc = new WorldNpc(
+			objectId,
+			template.TemplateId,
+			template,
+			position,
+			WorldNpcState.FromTemplateAndSpawn(template, spawn.State),
+			WorldNpcAiName.FromTemplateAndSpawn(template, spawn.AiName),
+			spawn.RespawnSeconds,
+			spawn.StaticId,
+			spawn.RandomWalkRange,
+			spawn.WalkerId,
+			spawn.WalkerIndex,
+			spawn.Anchor,
+			position);
+		if (_world.TryAddObject(objectId, npc))
+			return true;
+
+		_idFactory.ReleaseId(objectId);
+		return false;
 	}
 
 	private static bool IsRiftId(int id)
