@@ -134,6 +134,94 @@ public sealed class WorldNpcSpawnService : GameEngine
 		return true;
 	}
 
+	public bool TrySwapInactiveWalkerFormationVariant(
+		IReadOnlyCollection<int> activeObjectIds,
+		IReadOnlyCollection<int> inactiveObjectIds)
+	{
+		// Java parity: spawnengine/InstanceWalkerFormations.changeCluster spawns one not-spawned WalkerGroup, then despawns the current group.
+		var activeIds = activeObjectIds.Distinct().ToArray();
+		var inactiveIds = inactiveObjectIds.Distinct().ToArray();
+		if (activeIds.Length == 0
+			|| inactiveIds.Length == 0
+			|| activeIds.Length != activeObjectIds.Count
+			|| inactiveIds.Length != inactiveObjectIds.Count
+			|| activeIds.Intersect(inactiveIds).Any())
+		{
+			return false;
+		}
+
+		if (!TryGetLiveWalkerNpcs(activeIds, out var activeNpcs)
+			|| !TryGetInactiveWalkerNpcs(inactiveIds, out var inactiveNpcs))
+		{
+			return false;
+		}
+
+		var worldId = inactiveNpcs[0].SpawnLocation.WorldId;
+		if (inactiveNpcs.Any(npc => npc.SpawnLocation.WorldId != worldId)
+			|| activeNpcs.Any(npc => npc.Position.WorldId != worldId))
+		{
+			return false;
+		}
+
+		if (!TryGetInactiveFormationVariantPlacements(worldId, inactiveIds, inactiveNpcs, out var inactivePlacements))
+			return false;
+
+		var spawnedInactiveNpcs = new List<(int ObjectId, WorldNpc Npc)>(inactivePlacements.Count);
+		foreach (var placement in inactivePlacements)
+		{
+			var inactiveNpc = inactiveNpcs.Single(npc => npc.ObjectId == placement.ObjectId);
+			var spawnedInactiveNpc = inactiveNpc with
+			{
+				Position = new global::Aion.GameServer.World.WorldPosition(
+					inactiveNpc.SpawnLocation.WorldId,
+					placement.X,
+					placement.Y,
+					placement.Z,
+					placement.Heading),
+			};
+			if (!_world.TryAddObject(placement.ObjectId, spawnedInactiveNpc))
+			{
+				RollBackSpawnedInactiveVariants(spawnedInactiveNpcs);
+				return false;
+			}
+
+			spawnedInactiveNpcs.Add((placement.ObjectId, spawnedInactiveNpc));
+		}
+
+		var removedInactiveNpcs = new List<WorldNpc>(inactiveIds.Length);
+		foreach (var inactiveId in inactiveIds)
+		{
+			if (!_inactiveWalkerVariants.TryRemove(inactiveId, out var removedInactiveNpc))
+			{
+				RollBackInactiveVariantSpawn(spawnedInactiveNpcs, removedInactiveNpcs);
+				return false;
+			}
+
+			removedInactiveNpcs.Add(removedInactiveNpc);
+		}
+
+		var removedActiveNpcs = new List<(int ObjectId, WorldNpc Npc)>(activeNpcs.Count);
+		foreach (var activeNpc in activeNpcs)
+		{
+			if (!_world.TryRemoveObject(activeNpc.ObjectId, out var removedActiveObject)
+				|| removedActiveObject is not WorldNpc removedActiveNpc)
+			{
+				RollBackFormationSwap(spawnedInactiveNpcs, removedInactiveNpcs, removedActiveNpcs);
+				return false;
+			}
+
+			removedActiveNpcs.Add((activeNpc.ObjectId, removedActiveNpc));
+		}
+
+		foreach (var (objectId, activeNpc) in removedActiveNpcs)
+			_inactiveWalkerVariants[objectId] = activeNpc;
+		foreach (var (_, inactiveNpc) in spawnedInactiveNpcs)
+			_staticPlaceables?.SpawnPlaceableObject(inactiveNpc.Position.WorldId, inactiveNpc.StaticId);
+		foreach (var (_, activeNpc) in removedActiveNpcs)
+			_staticPlaceables?.DespawnPlaceableObject(activeNpc.Position.WorldId, activeNpc.StaticId);
+		return true;
+	}
+
 	public ValueTask InitAsync(CancellationToken cancellationToken = default)
 	{
 		// Java parity: GameServer.main calls SpawnEngine.spawnAll after DataManager and HousingService startup.
@@ -656,6 +744,106 @@ public sealed class WorldNpcSpawnService : GameEngine
 			return;
 
 		RefreshWalkerSpawnPlans(staticData.WalkerTemplates, staticData.WalkerVersions, worldIds);
+	}
+
+	private bool TryGetLiveWalkerNpcs(IReadOnlyList<int> objectIds, out IReadOnlyList<WorldNpc> npcs)
+	{
+		var result = new List<WorldNpc>(objectIds.Count);
+		foreach (var objectId in objectIds)
+		{
+			if (!_world.TryGetObject(objectId, out var gameObject) || gameObject is not WorldNpc npc)
+			{
+				npcs = Array.Empty<WorldNpc>();
+				return false;
+			}
+
+			result.Add(npc);
+		}
+
+		npcs = result;
+		return true;
+	}
+
+	private bool TryGetInactiveWalkerNpcs(IReadOnlyList<int> objectIds, out IReadOnlyList<WorldNpc> npcs)
+	{
+		var result = new List<WorldNpc>(objectIds.Count);
+		foreach (var objectId in objectIds)
+		{
+			if (!_inactiveWalkerVariants.TryGetValue(objectId, out var npc))
+			{
+				npcs = Array.Empty<WorldNpc>();
+				return false;
+			}
+
+			result.Add(npc);
+		}
+
+		npcs = result;
+		return true;
+	}
+
+	private bool TryGetInactiveFormationVariantPlacements(
+		int worldId,
+		IReadOnlyList<int> inactiveObjectIds,
+		IReadOnlyList<WorldNpc> inactiveNpcs,
+		out IReadOnlyList<WorldNpcWalkerPlacement> placements)
+	{
+		placements = Array.Empty<WorldNpcWalkerPlacement>();
+		var worldPlan = _walkerSpawnPlans?.GetWorldPlan(worldId);
+		if (worldPlan == null)
+			return false;
+
+		var inactiveIdSet = inactiveObjectIds.ToHashSet();
+		foreach (var formation in worldPlan.Organization.FormationVariants.Values.SelectMany(variants => variants))
+		{
+			if (!inactiveIdSet.SetEquals(formation.Members.Select(member => member.ObjectId)))
+				continue;
+
+			placements = formation.Members
+				.Select(member =>
+				{
+					var sourceNpc = inactiveNpcs.Single(npc => npc.ObjectId == member.ObjectId);
+					var spawnLocation = sourceNpc.SpawnLocation;
+					return new WorldNpcWalkerPlacement(
+						member.ObjectId,
+						member.TemplateId,
+						formation.RouteId,
+						IsFormationMember: true,
+						member.X,
+						member.Y,
+						spawnLocation.Z,
+						spawnLocation.Heading);
+				})
+				.ToArray();
+			return placements.Count == inactiveObjectIds.Count;
+		}
+
+		return false;
+	}
+
+	private void RollBackSpawnedInactiveVariants(IReadOnlyList<(int ObjectId, WorldNpc Npc)> spawnedInactiveNpcs)
+	{
+		foreach (var (objectId, _) in spawnedInactiveNpcs)
+			_world.TryRemoveObject(objectId, out _);
+	}
+
+	private void RollBackInactiveVariantSpawn(
+		IReadOnlyList<(int ObjectId, WorldNpc Npc)> spawnedInactiveNpcs,
+		IReadOnlyList<WorldNpc> removedInactiveNpcs)
+	{
+		RollBackSpawnedInactiveVariants(spawnedInactiveNpcs);
+		foreach (var inactiveNpc in removedInactiveNpcs)
+			_inactiveWalkerVariants[inactiveNpc.ObjectId] = inactiveNpc;
+	}
+
+	private void RollBackFormationSwap(
+		IReadOnlyList<(int ObjectId, WorldNpc Npc)> spawnedInactiveNpcs,
+		IReadOnlyList<WorldNpc> removedInactiveNpcs,
+		IReadOnlyList<(int ObjectId, WorldNpc Npc)> removedActiveNpcs)
+	{
+		RollBackInactiveVariantSpawn(spawnedInactiveNpcs, removedInactiveNpcs);
+		foreach (var (objectId, activeNpc) in removedActiveNpcs)
+			_world.TryAddObject(objectId, activeNpc);
 	}
 
 	private async ValueTask OnGameHourChangedAsync(int gameMinutes, CancellationToken cancellationToken)

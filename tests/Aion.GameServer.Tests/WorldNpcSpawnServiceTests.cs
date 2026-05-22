@@ -229,6 +229,82 @@ public sealed class WorldNpcSpawnServiceTests
 	}
 
 	[Fact]
+	public async Task TrySwapInactiveWalkerFormationVariant_SpawnsParkedFormationAndParksCurrentFormation()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-walker-formation-swap-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextWithVersionedFormationDataAsync(tempPath);
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			var walkerPlans = new WorldNpcWalkerSpawnPlanCacheService(
+				new WorldNpcWalkerFormationOrganizerService(),
+				new WorldNpcWalkerVariantSelectionService(count => count - 1));
+			var service = new WorldNpcSpawnService(
+				context,
+				world,
+				new IDFactory(),
+				gameTimeService: null,
+				threadPoolManager: null,
+				connectionRegistry: null,
+				staticPlaceables: null,
+				walkerSpawnPlans: walkerPlans,
+				walkerPlacementApplication: new WorldNpcWalkerPlacementApplicationService(),
+				NullLogger<WorldNpcSpawnService>.Instance);
+			var spawns = new NpcSpawnTable(
+			[
+				CreateSpawn(210010000, 203083, x: 1, y: 10, walkerId: "formation-v1", walkerIndex: 1),
+				CreateSpawn(210010000, 203083, x: 1, y: 10, walkerId: "formation-v1", walkerIndex: 2),
+				CreateSpawn(210010000, 203084, x: 20, y: 30, walkerId: "formation-v2", walkerIndex: 1),
+				CreateSpawn(210010000, 203084, x: 20, y: 30, walkerId: "formation-v2", walkerIndex: 2),
+			]);
+			var templates = new NpcTemplateTable([CreateTemplate(203083), CreateTemplate(203084)]);
+
+			service.SpawnWorldNpcs(spawns, templates, [210010000]);
+			var activeIds = world.GetNpcs().OfType<WorldNpc>().Select(npc => npc.ObjectId).OrderBy(id => id).ToArray();
+			var inactiveIds = Enumerable.Range(1, 4)
+				.Where(objectId => service.TryGetInactiveWalkerVariant(objectId, out _))
+				.OrderBy(id => id)
+				.ToArray();
+
+			var swapped = service.TrySwapInactiveWalkerFormationVariant(activeIds, inactiveIds);
+
+			Assert.True(swapped);
+			Assert.Equal(2, activeIds.Length);
+			Assert.Equal(2, inactiveIds.Length);
+			Assert.Equal(inactiveIds, world.GetNpcs().OfType<WorldNpc>().Select(npc => npc.ObjectId).OrderBy(id => id).ToArray());
+			foreach (var objectId in activeIds)
+			{
+				Assert.False(world.TryGetObject(objectId, out _));
+				Assert.True(service.TryGetInactiveWalkerVariant(objectId, out var parkedNpc));
+				Assert.NotNull(parkedNpc);
+			}
+
+			foreach (var objectId in inactiveIds)
+			{
+				Assert.True(world.TryGetObject(objectId, out var activatedObject));
+				var activatedNpc = Assert.IsType<WorldNpc>(activatedObject);
+				Assert.False(service.TryGetInactiveWalkerVariant(objectId, out _));
+				var expectedY = activatedNpc.SpawnLocation.Y + (activatedNpc.WalkerIndex == 2 ? 1 : -1);
+				Assert.Equal(activatedNpc.SpawnLocation.X, activatedNpc.Position.X, precision: 4);
+				Assert.Equal(expectedY, activatedNpc.Position.Y, precision: 4);
+			}
+
+			Assert.Equal(2, service.InactiveWalkerVariantCount);
+		}
+		finally
+		{
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
+	[Fact]
 	public async Task SpawnWorldNpcs_UpdatesStaticPlaceableState()
 	{
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);
@@ -673,6 +749,49 @@ public sealed class WorldNpcSpawnServiceTests
 					<walk_parent id="route-parent">
 						<version id="route-v1" />
 						<version id="route-v2" />
+					</walk_parent>
+				</walker_versions>
+			</static_data>
+			""");
+		File.WriteAllText(schemaFile, """<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" />""");
+		var dataManager = await DataManager.LoadAsync(
+			new XmlDataLoaderOptions
+			{
+				MainXmlFilePath = staticDataFile,
+				CacheXmlFilePath = cacheFile,
+				SchemaFilePath = schemaFile,
+				ValidateWhenCacheChanges = false,
+			});
+		var context = new GameServerRuntimeContext();
+		context.SetDataManager(dataManager);
+		return context;
+	}
+
+	private static async Task<GameServerRuntimeContext> CreateRuntimeContextWithVersionedFormationDataAsync(string tempPath)
+	{
+		var staticDataFile = Path.Combine(tempPath, "static_data.xml");
+		var cacheFile = Path.Combine(tempPath, "cache", "static_data.xml");
+		var schemaFile = Path.Combine(tempPath, "static_data.xsd");
+		Directory.CreateDirectory(Path.GetDirectoryName(cacheFile)!);
+		File.WriteAllText(
+			staticDataFile,
+			"""
+			<?xml version="1.0" encoding="UTF-8"?>
+			<static_data>
+				<npc_walker>
+					<walker_template route_id="formation-v1" pool="2" formation="SQUARE" rows="2">
+						<routestep x="1" y="10" z="0" />
+						<routestep x="11" y="10" z="0" />
+					</walker_template>
+					<walker_template route_id="formation-v2" pool="2" formation="SQUARE" rows="2">
+						<routestep x="20" y="30" z="0" />
+						<routestep x="30" y="30" z="0" />
+					</walker_template>
+				</npc_walker>
+				<walker_versions>
+					<walk_parent id="formation-parent">
+						<version id="formation-v1" />
+						<version id="formation-v2" />
 					</walk_parent>
 				</walker_versions>
 			</static_data>
