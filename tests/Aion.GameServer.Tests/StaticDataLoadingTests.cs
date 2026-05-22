@@ -131,6 +131,7 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal("SWORD", staticData.ItemTemplates.GetItemTemplate(100000001)?.ItemGroup);
 		Assert.Equal([37, 44], staticData.ItemTemplates.GetItemTemplate(100000001)?.RequiredEquipSkills);
 		Assert.Equal(3, staticData.ItemTemplates.GetItemTemplate(100000094)?.ValidEquipmentSlots);
+		Assert.Equal(20, staticData.ItemTemplates.GetItemTemplate(169000005)?.WeaponBoost);
 		Assert.Equal(188950002, staticData.ItemTemplates.GetItemTemplate(100000216)?.DispositionItemId);
 		Assert.Equal(6, staticData.ItemTemplates.GetItemTemplate(100000216)?.DispositionItemCount);
 		Assert.True(staticData.ItemTemplates.GetItemTemplate(169500916)?.IsClassSpecific("RANGER"));

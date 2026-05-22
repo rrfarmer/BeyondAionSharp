@@ -573,6 +573,7 @@ public sealed class StaticData
 			if (reader.Depth == 2 && reader.LocalName == "item_template")
 			{
 				var requiredLevels = ReadLevelRestrictions(reader.GetAttribute("restrict"));
+				// Java parity: model/templates/item/ItemTemplate.weaponBoost feeds PlayerGameStats.getPowerShardDamage.
 				currentItemTemplate = new ItemTemplateBuilder(
 					ReadRequiredIntAttribute(reader, "id"),
 					reader.GetAttribute("name") ?? string.Empty,
@@ -602,7 +603,8 @@ public sealed class StaticData
 					ReadIntAttribute(reader, "rnd_bonus"),
 					ReadOptionalIntAttribute(reader, "rnd_count", -1),
 					reader.GetAttribute("enchant_name") ?? string.Empty,
-					reader.GetAttribute("tempering_name") ?? string.Empty);
+					reader.GetAttribute("tempering_name") ?? string.Empty,
+					ReadIntAttribute(reader, "weapon_boost"));
 				if (reader.IsEmptyElement)
 				{
 					itemTemplates.Add(currentItemTemplate.ToSummary());
@@ -1857,7 +1859,8 @@ public sealed class StaticData
 			int randomBonusId,
 			int maxTuneCount,
 			string enchantName,
-			string temperingName)
+			string temperingName,
+			int weaponBoost)
 		{
 			TemplateId = templateId;
 			Name = name;
@@ -1886,6 +1889,7 @@ public sealed class StaticData
 			StatBonusSetId = randomBonusId;
 			EnchantName = enchantName;
 			TemperingName = temperingName;
+			WeaponBoost = weaponBoost;
 			MaxTuneCount = CalculateMaxTuneCount(validEquipmentSlots, maxTuneCount, maxEnchantBonus, optionSlotBonus, randomBonusId);
 			CanTune = MaxTuneCount != 0;
 		}
@@ -1909,6 +1913,8 @@ public sealed class StaticData
 		private string Race { get; }
 
 		private string AttackType { get; }
+
+		private int WeaponBoost { get; }
 
 		private int MaxStackCount { get; }
 
@@ -2136,7 +2142,8 @@ public sealed class StaticData
 				HasHouseObjectAction,
 				HouseObjectTemplateId,
 				HasHouseDecorateAction,
-				HouseDecorateTemplateId);
+				HouseDecorateTemplateId,
+				WeaponBoost);
 		}
 
 		private static int CalculateMaxTuneCount(
