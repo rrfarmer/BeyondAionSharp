@@ -85,6 +85,59 @@ public sealed class RiftManagerServiceTests
 	}
 
 	[Fact]
+	public async Task RemoveSpawnedRift_RemovesManagerTrackingOnly()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-rift-remove-tracking-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(
+				tempPath,
+				"""
+				<spawn_map map_id="110070000">
+					<rift_spawn id="1170" world="110070000">
+						<spawn npc_id="730100">
+							<spot x="1" y="2" z="3" anchor="KAISINEL_AM" />
+						</spawn>
+					</rift_spawn>
+				</spawn_map>
+				<spawn_map map_id="120080000">
+					<rift_spawn id="1170" world="120080000">
+						<spawn npc_id="730101">
+							<spot x="5" y="6" z="7" anchor="KAISINEL_AS" />
+						</spawn>
+					</rift_spawn>
+				</spawn_map>
+				""");
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			var service = new RiftManagerService(context, world, new IDFactory());
+			var result = service.SpawnRift(1170);
+			var slaveNpc = result.SpawnedNpcs[0];
+			var masterNpc = result.SpawnedNpcs[1];
+
+			var removed = service.RemoveSpawnedRift(slaveNpc);
+
+			Assert.True(removed);
+			Assert.Empty(service.GetSpawnedRifts(slaveNpc.Position.WorldId));
+			Assert.Equal(masterNpc, Assert.Single(service.GetSpawnedRifts(masterNpc.Position.WorldId)));
+			Assert.Equal(1, service.SpawnedRiftCount);
+			Assert.Equal(2, world.ObjectCount);
+			Assert.False(service.RemoveSpawnedRift(slaveNpc));
+			Assert.False(service.RemoveSpawnedRift(slaveNpc.Position.WorldId, masterNpc.ObjectId));
+		}
+		finally
+		{
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
+	[Fact]
 	public async Task SpawnRift_UsesPooledSlaveSpotSelectedFromSlaveGroup()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-rift-pooled-slave-" + Guid.NewGuid().ToString("N"));

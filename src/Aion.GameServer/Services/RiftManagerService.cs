@@ -38,6 +38,17 @@ public sealed class RiftManagerService
 			: Array.Empty<WorldNpc>();
 	}
 
+	public bool RemoveSpawnedRift(WorldNpc rift)
+	{
+		// Java parity: services/rift/RiftManager.removeSpawnedRift removes the despawned rift from tracking only.
+		return RemoveSpawnedRift(rift.Position.WorldId, rift.ObjectId);
+	}
+
+	public bool RemoveSpawnedRift(int worldId, int objectId)
+	{
+		return _riftsPerWorld.TryGetValue(worldId, out var rifts) && rifts.TryRemove(objectId, out _);
+	}
+
 	public RiftSpawnResult SpawnRift(int riftId, bool isWithGuards = false)
 	{
 		// Java parity: services/rift/RiftManager.spawnRift(RiftLocation, boolean) resolves RiftEnum anchors and spawns slave before master.
