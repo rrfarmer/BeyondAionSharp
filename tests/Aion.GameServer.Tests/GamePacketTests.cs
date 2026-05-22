@@ -600,6 +600,10 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.TooltipLearnedEmotion(), 901713);
 		AssertSystemMessage(SmSystemMessage.TooltipLearnedTitle(), 901714);
 		AssertSystemMessage(SmSystemMessage.CashTitle(ChatUtil.L10n(412994)), 1390242, ChatUtil.L10n(412994));
+		AssertSystemMessage(SmSystemMessage.InventoryCantExtendMore(), 1300430);
+		AssertSystemMessage(SmSystemMessage.InventorySizeExtended(9), 1300431, "9");
+		AssertSystemMessage(SmSystemMessage.WarehouseCantExtendMore(), 1300432);
+		AssertSystemMessage(SmSystemMessage.WarehouseSizeExtended(8), 1300433, "8");
 		AssertSystemMessage(SmSystemMessage.CannotRide(ChatUtil.L10n(1400057)), 1401211, ChatUtil.L10n(1400057));
 		AssertSystemMessage(SmSystemMessage.UnrideAbnormalState(), 1401254);
 		AssertSystemMessage(SmSystemMessage.CannotRideAbnormalState(), 1401255);

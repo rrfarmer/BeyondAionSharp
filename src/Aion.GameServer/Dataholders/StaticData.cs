@@ -649,6 +649,14 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 4 && reader.LocalName == "expandinventory" && currentItemTemplate != null)
+			{
+				currentItemTemplate.ExpandInventoryAction = new ItemExpandInventoryActionInfo(
+					ReadIntAttribute(reader, "level"),
+					reader.GetAttribute("storage") ?? string.Empty);
+				continue;
+			}
+
 			if (reader.Depth == 4 && reader.LocalName == "titleadd" && currentItemTemplate != null)
 			{
 				// Java parity: model/templates/item/actions/TitleAddAction titleid/minutes metadata.
@@ -1436,6 +1444,8 @@ public sealed class StaticData
 
 		public ItemSkillLearnActionInfo? SkillLearnAction { get; set; }
 
+		public ItemExpandInventoryActionInfo? ExpandInventoryAction { get; set; }
+
 		public int ConditioningMaxLevel { get; set; }
 
 		public int PolishSetId { get; set; }
@@ -1551,7 +1561,8 @@ public sealed class StaticData
 				TitleAddTitleId,
 				TitleAddMinutes,
 				HasTitleAddAction,
-				HasTitleAddMinutes);
+				HasTitleAddMinutes,
+				ExpandInventoryAction);
 		}
 
 		private static int CalculateMaxTuneCount(

@@ -2421,6 +2421,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (sourceTemplate.ExpandInventoryAction != null)
+		{
+			await HandleInventoryExpansionUseItemAsync(player, inventoryItems, sourceItem, sourceTemplate, itemTemplates);
+			return;
+		}
+
 		if (sourceTemplate.PolishSetId > 0 && packet.Type == 2)
 		{
 			var targetItem = packet.TargetItemObjectId == 0
@@ -2692,6 +2698,82 @@ public sealed class GameServerConnection : BaseClientConnection
 				break;
 			case EmotionLearnFailure.AlreadyKnown:
 				await SendPacketAsync(SmSystemMessage.TooltipLearnedEmotion());
+				break;
+		}
+	}
+
+	private async Task HandleInventoryExpansionUseItemAsync(
+		Player player,
+		List<InventoryItem> inventoryItems,
+		InventoryItem sourceItem,
+		ItemTemplateSummary sourceTemplate,
+		ItemTemplateTable itemTemplates)
+	{
+		// Java parity: model/templates/item/actions/ExpandInventoryAction.canAct + act.
+		var plan = InventoryExpansionService.CreatePlan(
+			player,
+			sourceTemplate.ExpandInventoryAction,
+			_options.Custom.CubeExpansionLimit);
+		if (!plan.Succeeded)
+		{
+			await SendInventoryExpansionFailureAsync(plan.Failure);
+			return;
+		}
+
+		AddItemCooldownIfNeeded(player, sourceTemplate, removeOnCancel: false);
+		var sourceItemUpdate = sourceItem.Count > 1 ? CopyInventoryItem(sourceItem, count: sourceItem.Count - 1) : null;
+		int? deletedSourceObjectId = sourceItem.Count <= 1 ? sourceItem.ObjectId : null;
+		var saved = _playerEnterWorldService == null
+			|| await _playerEnterWorldService.SaveInventoryExpansionMutationAsync(
+				player,
+				plan.NewItemExpands,
+				plan.NewWarehouseBonusExpands,
+				sourceItemUpdate,
+				deletedSourceObjectId);
+		if (!saved)
+			return;
+
+		if (deletedSourceObjectId.HasValue)
+		{
+			inventoryItems.RemoveAll(item => item.ObjectId == deletedSourceObjectId.Value);
+			await SendPacketAsync(new SmDeleteItem(deletedSourceObjectId.Value, SmDeleteItem.UseDeleteType));
+		}
+		else if (sourceItemUpdate != null)
+		{
+			ReplaceInventoryItem(inventoryItems, sourceItemUpdate);
+			await SendPacketAsync(new SmInventoryUpdateItem(sourceItemUpdate, sourceTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+		}
+
+		player.InventoryItems = inventoryItems.ToArray();
+		await BroadcastItemUsageAnimationAsync(
+			player,
+			new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 1, 1));
+
+		player.ItemExpands = plan.NewItemExpands;
+		player.WarehouseBonusExpands = plan.NewWarehouseBonusExpands;
+		switch (plan.Storage)
+		{
+			case InventoryExpansionStorage.Cube:
+				await SendPacketAsync(SmSystemMessage.InventorySizeExtended(InventoryExpansionService.CubeSlotsPerExpansion));
+				await SendPacketAsync(SmCubeUpdate.CubeSize(player));
+				break;
+			case InventoryExpansionStorage.Warehouse:
+				await SendPacketAsync(SmSystemMessage.WarehouseSizeExtended(InventoryExpansionService.WarehouseSlotsPerExpansion));
+				foreach (var packet in SmWarehouseInfo.CreateRegularWarehouseUpdatePackets(player, itemTemplates))
+					await SendPacketAsync(packet);
+				break;
+		}
+	}
+
+	private async Task SendInventoryExpansionFailureAsync(InventoryExpansionFailure failure)
+	{
+		switch (failure)
+		{
+			case InventoryExpansionFailure.CubeCannotExpand:
+				await SendPacketAsync(SmSystemMessage.InventoryCantExtendMore());
+				break;
+			case InventoryExpansionFailure.WarehouseCannotExpand:
+				await SendPacketAsync(SmSystemMessage.WarehouseCantExtendMore());
 				break;
 		}
 	}

@@ -90,7 +90,8 @@ public sealed record ItemTemplateSummary(
 	int TitleAddTitleId = 0,
 	int TitleAddMinutes = 0,
 	bool HasTitleAddAction = false,
-	bool HasTitleAddMinutes = false)
+	bool HasTitleAddMinutes = false,
+	ItemExpandInventoryActionInfo? ExpandInventoryAction = null)
 {
 	private const int CanPolishMask = 1 << 17;
 	private const int SoulBoundMask = 1 << 7;
@@ -336,6 +337,9 @@ public sealed record ItemEnchantActionInfo(int Count, int MinLevel, int MaxLevel
 
 // Java parity: model/templates/item/actions/SkillLearnAction.
 public sealed record ItemSkillLearnActionInfo(int SkillId, int Level, string PlayerClass);
+
+// Java parity: model/templates/item/actions/ExpandInventoryAction.
+public sealed record ItemExpandInventoryActionInfo(int Level, string Storage);
 
 public sealed record ItemStatModifier(
 	string Operation,

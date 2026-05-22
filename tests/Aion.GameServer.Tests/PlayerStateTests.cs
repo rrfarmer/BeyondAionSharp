@@ -128,6 +128,50 @@ public sealed class PlayerStateTests
 	}
 
 	[Fact]
+	public void InventoryExpansionService_MatchesJavaTicketLevelAndQuestGuards()
+	{
+		var cubeTicket = new ItemExpandInventoryActionInfo(1, "CUBE");
+		var cubePlayer = new Player
+		{
+			NpcExpands = 1,
+			QuestExpands = 1,
+			ItemExpands = 0,
+			WarehouseBonusExpands = 2,
+		};
+
+		var cubePlan = InventoryExpansionService.CreatePlan(cubePlayer, cubeTicket, cubeExpansionLimit: 11);
+
+		Assert.True(cubePlan.Succeeded);
+		Assert.Equal(InventoryExpansionStorage.Cube, cubePlan.Storage);
+		Assert.Equal(1, cubePlan.NewItemExpands);
+		Assert.Equal(2, cubePlan.NewWarehouseBonusExpands);
+
+		cubePlayer.ItemExpands = 1;
+		Assert.Equal(
+			InventoryExpansionFailure.CubeCannotExpand,
+			InventoryExpansionService.CreatePlan(cubePlayer, cubeTicket, cubeExpansionLimit: 11).Failure);
+
+		var warehouseTicket = new ItemExpandInventoryActionInfo(1, "WAREHOUSE");
+		var warehousePlayer = new Player
+		{
+			WarehouseNpcExpands = 1,
+			WarehouseBonusExpands = 1,
+			Quests = [new PlayerQuestState(1987, "COMPLETE", 0, 0, 0)],
+		};
+
+		var warehousePlan = InventoryExpansionService.CreatePlan(warehousePlayer, warehouseTicket, cubeExpansionLimit: 11);
+
+		Assert.True(warehousePlan.Succeeded);
+		Assert.Equal(InventoryExpansionStorage.Warehouse, warehousePlan.Storage);
+		Assert.Equal(2, warehousePlan.NewWarehouseBonusExpands);
+
+		warehousePlayer.Quests = [];
+		Assert.Equal(
+			InventoryExpansionFailure.WarehouseCannotExpand,
+			InventoryExpansionService.CreatePlan(warehousePlayer, warehouseTicket, cubeExpansionLimit: 11).Failure);
+	}
+
+	[Fact]
 	public void Player_CreatureStateMatchesJavaBitAndExactMultibitSemantics()
 	{
 		var player = new Player();

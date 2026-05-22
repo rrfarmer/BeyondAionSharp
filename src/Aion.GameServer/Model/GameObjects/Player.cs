@@ -64,11 +64,11 @@ public sealed class Player
 
 	public int QuestExpands { get; init; }
 
-	public int ItemExpands { get; init; }
+	public int ItemExpands { get; set; }
 
 	public int WarehouseNpcExpands { get; init; }
 
-	public int WarehouseBonusExpands { get; init; }
+	public int WarehouseBonusExpands { get; set; }
 
 	public int TitleId { get; set; }
 

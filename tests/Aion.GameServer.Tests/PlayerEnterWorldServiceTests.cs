@@ -411,6 +411,16 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public int? SkillLearnDeletedSourceItemObjectId { get; private set; }
 
+		public int SaveInventoryExpansionMutationCalls { get; private set; }
+
+		public int InventoryExpansionItemExpands { get; private set; }
+
+		public int InventoryExpansionWarehouseBonusExpands { get; private set; }
+
+		public InventoryItem? InventoryExpansionSourceItemUpdate { get; private set; }
+
+		public int? InventoryExpansionDeletedSourceItemObjectId { get; private set; }
+
 		public int SaveItemChargeMutationCalls { get; private set; }
 
 		public InventoryItem? ChargedItem { get; private set; }
@@ -588,6 +598,22 @@ public sealed class PlayerEnterWorldServiceTests
 			LearnedSkills = skills;
 			SkillLearnSourceItemUpdate = sourceItemUpdate;
 			SkillLearnDeletedSourceItemObjectId = deletedSourceItemObjectId;
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> SaveInventoryExpansionMutationAsync(
+			int playerObjectId,
+			int itemExpands,
+			int warehouseBonusExpands,
+			InventoryItem? sourceItemUpdate,
+			int? deletedSourceItemObjectId,
+			CancellationToken cancellationToken = default)
+		{
+			SaveInventoryExpansionMutationCalls++;
+			InventoryExpansionItemExpands = itemExpands;
+			InventoryExpansionWarehouseBonusExpands = warehouseBonusExpands;
+			InventoryExpansionSourceItemUpdate = sourceItemUpdate;
+			InventoryExpansionDeletedSourceItemObjectId = deletedSourceItemObjectId;
 			return Task.FromResult(true);
 		}
 

@@ -228,6 +228,23 @@ public sealed class PlayerEnterWorldService
 			cancellationToken);
 	}
 
+	public Task<bool> SaveInventoryExpansionMutationAsync(
+		Player player,
+		int itemExpands,
+		int warehouseBonusExpands,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		return _repository.SaveInventoryExpansionMutationAsync(
+			player.ObjectId,
+			itemExpands,
+			warehouseBonusExpands,
+			sourceItemUpdate,
+			deletedSourceItemObjectId,
+			cancellationToken);
+	}
+
 	public Task<bool> SaveItemChargeMutationAsync(
 		Player player,
 		InventoryItem chargedItem,

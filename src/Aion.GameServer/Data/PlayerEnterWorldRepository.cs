@@ -66,6 +66,14 @@ public interface IPlayerEnterWorldRepository
 		int? deletedSourceItemObjectId,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveInventoryExpansionMutationAsync(
+		int playerObjectId,
+		int itemExpands,
+		int warehouseBonusExpands,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default);
+
 	Task<IReadOnlyList<PlayerMacro>> LoadPlayerMacrosAsync(int playerObjectId, CancellationToken cancellationToken = default);
 
 	Task<bool> SavePlayerMacroAsync(int playerObjectId, PlayerMacro macro, CancellationToken cancellationToken = default);
@@ -286,6 +294,17 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	public Task<bool> SaveSkillLearnActionMutationAsync(
 		int playerObjectId,
 		IReadOnlyList<PlayerSkill> skills,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> SaveInventoryExpansionMutationAsync(
+		int playerObjectId,
+		int itemExpands,
+		int warehouseBonusExpands,
 		InventoryItem? sourceItemUpdate,
 		int? deletedSourceItemObjectId,
 		CancellationToken cancellationToken = default)
@@ -2216,6 +2235,51 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not save skill-learn action for player {PlayerObjectId}", playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SaveInventoryExpansionMutationAsync(
+		int playerObjectId,
+		int itemExpands,
+		int warehouseBonusExpands,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: ExpandInventoryAction.act -> inventory.decreaseByObjectId followed by
+		// CubeExpandService.itemExpand or WarehouseService.expand(player, false).
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.Transaction = transaction;
+			command.CommandText = "UPDATE players SET item_expands = ?, wh_bonus_expands = ? WHERE id = ?";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = itemExpands },
+					new MySqlParameter { Value = warehouseBonusExpands },
+					new MySqlParameter { Value = playerObjectId },
+				});
+			if (await command.ExecuteNonQueryAsync(cancellationToken) <= 0)
+				return false;
+
+			if (sourceItemUpdate != null && !await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, sourceItemUpdate, cancellationToken))
+				return false;
+
+			if (deletedSourceItemObjectId.HasValue
+				&& !await DeleteInventoryItemAsync(connection, transaction, playerObjectId, deletedSourceItemObjectId.Value, cancellationToken))
+				return false;
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save inventory expansion action for player {PlayerObjectId}", playerObjectId);
 			return false;
 		}
 	}

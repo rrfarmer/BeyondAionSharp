@@ -38,6 +38,15 @@ public sealed class SmWarehouseInfo : GameServerPacket
 		return packets;
 	}
 
+	public static IReadOnlyList<SmWarehouseInfo> CreateRegularWarehouseUpdatePackets(Player player, ItemTemplateTable itemTemplates)
+	{
+		// Java parity: services/WarehouseService.sendWarehouseInfo(player, false).
+		var packets = new List<SmWarehouseInfo>();
+		AddRegularWarehousePackets(packets, player, itemTemplates);
+		packets.Add(new SmWarehouseInfo(AccountWarehouse, expandLevel: 0, isFirstPacket: false, Array.Empty<WarehousePacketItem>()));
+		return packets;
+	}
+
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
 		// Java parity: network/aion/serverpackets/SM_WAREHOUSE_INFO.writeImpl.

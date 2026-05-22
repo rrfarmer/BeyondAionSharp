@@ -43,6 +43,30 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300965, abyssPoints.ToString(System.Globalization.CultureInfo.InvariantCulture));
 	}
 
+	public static SmSystemMessage InventoryCantExtendMore()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_EXTEND_INVENTORY_CANT_EXTEND_MORE.
+		return new SmSystemMessage(1300430);
+	}
+
+	public static SmSystemMessage InventorySizeExtended(int slots)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_EXTEND_INVENTORY_SIZE_EXTENDED.
+		return new SmSystemMessage(1300431, slots.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage WarehouseCantExtendMore()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_EXTEND_CHAR_WAREHOUSE_CANT_EXTEND_MORE.
+		return new SmSystemMessage(1300432);
+	}
+
+	public static SmSystemMessage WarehouseSizeExtended(int slots)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_EXTEND_CHAR_WAREHOUSE_SIZE_EXTENDED.
+		return new SmSystemMessage(1300433, slots.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
 	public static SmSystemMessage ItemChargeSuccess(string itemName, int level)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ITEM_CHARGE_SUCCESS.
