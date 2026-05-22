@@ -349,6 +349,18 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300492);
 	}
 
+	public static SmSystemMessage SkillCannotChangeModeWhileInCurrentStance()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_SKILL_CAN_NOT_CHANGE_MODE__WHILE_IN_CURRENT_STANCE.
+		return new SmSystemMessage(1300124);
+	}
+
+	public static SmSystemMessage SkillCannotTakeOffWhileInCurrentStance()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_SKILL_CAN_NOT_TAKE_OFF__WHILE_IN_CURRENT_STANCE.
+		return new SmSystemMessage(1300147);
+	}
+
 	public static SmSystemMessage StigmaNotEnoughMoney()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_STIGMA_NOT_ENOUGH_MONEY.

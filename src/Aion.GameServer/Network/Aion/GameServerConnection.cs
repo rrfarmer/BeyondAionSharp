@@ -3512,6 +3512,15 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (packet.EmotionType == EmotionType.SelectTarget)
 			return;
 
+		// Java parity: network/aion/clientpackets/CM_EMOTION.runImpl stance guard after cancelUseItem/cancelCurrentSkill.
+		if (player.IsUnderStance())
+		{
+			await SendPacketAsync(packet.EmotionType == EmotionType.Fly
+				? SmSystemMessage.SkillCannotTakeOffWhileInCurrentStance()
+				: SmSystemMessage.SkillCannotChangeModeWhileInCurrentStance());
+			return;
+		}
+
 		switch (packet.EmotionType)
 		{
 			case EmotionType.Sit:

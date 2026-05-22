@@ -71,4 +71,20 @@ public sealed class PlayerStateTests
 		Assert.True(player.IsAbnormalSet(PlayerAbnormalState.None));
 		Assert.True(player.IsInAnyAbnormalState(PlayerAbnormalState.None));
 	}
+
+	[Fact]
+	public void Player_StanceStateMatchesJavaObserverPresence()
+	{
+		var player = new Player();
+
+		Assert.False(player.IsUnderStance());
+
+		player.StanceSkillId = 1234;
+
+		Assert.True(player.IsUnderStance());
+
+		player.StanceSkillId = 0;
+
+		Assert.False(player.IsUnderStance());
+	}
 }

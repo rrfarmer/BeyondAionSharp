@@ -88,6 +88,9 @@ public sealed class Player
 	// Java parity: model/actions/PlayerMode.RIDE queried through Player.isInPlayerMode.
 	public bool IsInRideMode { get; set; }
 
+	// Java parity: controllers/PlayerController.stanceObserver represented by its active stance skill id.
+	public int StanceSkillId { get; set; }
+
 	// Java parity: model/gameobjects/VisibleObject target set by network/aion/clientpackets/CM_TARGET_SELECT.
 	public int TargetObjectId { get; set; }
 
@@ -217,6 +220,12 @@ public sealed class Player
 	{
 		// Java parity: controllers/effect/EffectController.isConfused.
 		return IsAbnormalSet(PlayerAbnormalState.Confuse);
+	}
+
+	public bool IsUnderStance()
+	{
+		// Java parity: controllers/PlayerController.isUnderStance.
+		return StanceSkillId != 0;
 	}
 
 	public void AddItemCooldown(int delayId, int useDelayMillis, DateTimeOffset now)

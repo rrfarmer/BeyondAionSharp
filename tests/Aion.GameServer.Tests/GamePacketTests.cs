@@ -600,6 +600,8 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.WeaponBoostNoBoosterEquipped(), 1300490);
 		AssertSystemMessage(SmSystemMessage.WeaponBoostStarted(), 1300491);
 		AssertSystemMessage(SmSystemMessage.WeaponBoostEnded(), 1300492);
+		AssertSystemMessage(SmSystemMessage.SkillCannotChangeModeWhileInCurrentStance(), 1300124);
+		AssertSystemMessage(SmSystemMessage.SkillCannotTakeOffWhileInCurrentStance(), 1300147);
 		AssertSystemMessage(SmSystemMessage.StigmaNotEnoughMoney(), 1300413);
 		AssertSystemMessage(SmSystemMessage.StigmaSkillUnavailable("skill"), 1300403, "skill");
 		AssertSystemMessage(SmSystemMessage.StigmaEnchantSuccess("stigma"), 1402930, "stigma");
