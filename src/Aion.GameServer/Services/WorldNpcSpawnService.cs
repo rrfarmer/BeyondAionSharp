@@ -618,6 +618,21 @@ public sealed class WorldNpcSpawnService : GameEngine
 		return TryScheduleWorldNpcDecayTask(objectId, hasRegisteredDrops, decayDelay);
 	}
 
+	public bool TryDespawnStaticPlaceableForWorldNpc(int objectId)
+	{
+		// Java parity: controllers/NpcController.onDie despawns static placeables after RespawnService.scheduleDecayTask.
+		if (_staticPlaceables == null
+			|| !_world.TryGetObject(objectId, out var gameObject)
+			|| gameObject is not WorldNpc worldNpc
+			|| worldNpc.StaticId <= 0)
+		{
+			return false;
+		}
+
+		_staticPlaceables.DespawnPlaceableObject(worldNpc.Position.WorldId, worldNpc.StaticId);
+		return true;
+	}
+
 	public bool TryScheduleWorldNpcDeath(int objectId, TimeSpan? decayDelay = null)
 	{
 		// Java parity: controllers/NpcController.onDie -> RespawnService.scheduleDecayTask reads the current drop map.
