@@ -172,6 +172,44 @@ public sealed class PlayerStateTests
 	}
 
 	[Fact]
+	public void DyeService_MatchesJavaTargetAndExpirationRules()
+	{
+		var now = DateTimeOffset.FromUnixTimeSeconds(1_000);
+		var targetItem = new InventoryItem { ObjectId = 1, ItemId = 110900040, Color = 0x112233 };
+		var dyeableTemplate = new ItemTemplateSummary(
+			110900040,
+			"Dress",
+			0,
+			1 << 15,
+			1,
+			"CL_TORSO",
+			"NORMAL",
+			"COMMON",
+			"PC_ALL",
+			1,
+			0,
+			1);
+		var nonDyeableTemplate = dyeableTemplate with { Mask = 0 };
+
+		Assert.Equal(
+			DyeFailure.InvalidTarget,
+			DyeService.CreateItemDyePlan(null, dyeableTemplate, new ItemDyeActionInfo(0xc22626, 0, false), now).Failure);
+		Assert.Equal(
+			DyeFailure.NotDyeable,
+			DyeService.CreateItemDyePlan(targetItem, nonDyeableTemplate, new ItemDyeActionInfo(0xc22626, 0, false), now).Failure);
+
+		var permanent = DyeService.CreateItemDyePlan(targetItem, dyeableTemplate, new ItemDyeActionInfo(0xc22626, 0, false), now);
+		Assert.True(permanent.Succeeded);
+		Assert.Equal(0xc22626, permanent.Color);
+		Assert.Equal(0, permanent.ColorExpires);
+
+		var temporaryRemoval = DyeService.CreateItemDyePlan(targetItem, dyeableTemplate, new ItemDyeActionInfo(null, 5, true), now);
+		Assert.True(temporaryRemoval.Succeeded);
+		Assert.Null(temporaryRemoval.Color);
+		Assert.Equal(1_300, temporaryRemoval.ColorExpires);
+	}
+
+	[Fact]
 	public void Player_CreatureStateMatchesJavaBitAndExactMultibitSemantics()
 	{
 		var player = new Player();

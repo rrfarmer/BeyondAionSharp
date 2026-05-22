@@ -597,6 +597,8 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.CannotUseItemInvalidGender(), 1300375);
 		AssertSystemMessage(SmSystemMessage.CannotUseItemTooHighLevel(39, "item"), 1400267, "39", "item");
 		AssertSystemMessage(SmSystemMessage.ItemColorError(), 1300514);
+		AssertSystemMessage(SmSystemMessage.ItemColorRemoveSucceed("item"), 1300510, "item");
+		AssertSystemMessage(SmSystemMessage.ItemColorChangeSucceed("item", "dye"), 1300511, "item", "dye");
 		AssertSystemMessage(SmSystemMessage.TooltipLearnedEmotion(), 901713);
 		AssertSystemMessage(SmSystemMessage.TooltipLearnedTitle(), 901714);
 		AssertSystemMessage(SmSystemMessage.CashTitle(ChatUtil.L10n(412994)), 1390242, ChatUtil.L10n(412994));

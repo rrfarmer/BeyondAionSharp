@@ -2427,6 +2427,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (sourceTemplate.DyeAction != null)
+		{
+			await HandleDyeUseItemAsync(player, inventoryItems, sourceItem, sourceTemplate, packet.TargetItemObjectId, itemTemplates);
+			return;
+		}
+
 		if (sourceTemplate.PolishSetId > 0 && packet.Type == 2)
 		{
 			var targetItem = packet.TargetItemObjectId == 0
@@ -2776,6 +2782,84 @@ public sealed class GameServerConnection : BaseClientConnection
 				await SendPacketAsync(SmSystemMessage.WarehouseCantExtendMore());
 				break;
 		}
+	}
+
+	private async Task HandleDyeUseItemAsync(
+		Player player,
+		List<InventoryItem> inventoryItems,
+		InventoryItem sourceItem,
+		ItemTemplateSummary sourceTemplate,
+		int targetItemObjectId,
+		ItemTemplateTable itemTemplates)
+	{
+		// Java parity: model/templates/item/actions/DyeAction.canAct + dyeItem item branch.
+		var targetItem = inventoryItems.FirstOrDefault(item => item.ObjectId == targetItemObjectId);
+		var targetTemplate = targetItem == null ? null : itemTemplates.GetItemTemplate(targetItem.ItemId);
+		var targetSkinTemplate = targetItem == null
+			? null
+			: itemTemplates.GetItemTemplate(targetItem.ItemSkin == 0 ? targetItem.ItemId : targetItem.ItemSkin);
+		var plan = DyeService.CreateItemDyePlan(targetItem, targetSkinTemplate, sourceTemplate.DyeAction, DateTimeOffset.UtcNow);
+		if (!plan.Succeeded)
+		{
+			if (plan.Failure == DyeFailure.InvalidTarget)
+				await SendPacketAsync(SmSystemMessage.ItemColorError());
+			return;
+		}
+
+		if (targetTemplate == null)
+			return;
+
+		AddItemCooldownIfNeeded(player, sourceTemplate, removeOnCancel: false);
+		var targetItemUpdate = CopyInventoryItem(
+			targetItem!,
+			color: plan.Color,
+			setColor: true,
+			colorExpires: plan.ColorExpires);
+		var sourceItemUpdate = sourceItem.Count > 1 ? CopyInventoryItem(sourceItem, count: sourceItem.Count - 1) : null;
+		int? deletedSourceObjectId = sourceItem.Count <= 1 ? sourceItem.ObjectId : null;
+		var saved = _playerEnterWorldService == null
+			|| await _playerEnterWorldService.SaveDyeItemActionMutationAsync(
+				player,
+				targetItemUpdate,
+				sourceItemUpdate,
+				deletedSourceObjectId);
+		if (!saved)
+			return;
+
+		if (deletedSourceObjectId.HasValue)
+		{
+			inventoryItems.RemoveAll(item => item.ObjectId == deletedSourceObjectId.Value);
+			await SendPacketAsync(new SmDeleteItem(deletedSourceObjectId.Value, SmDeleteItem.UseDeleteType));
+		}
+		else if (sourceItemUpdate != null)
+		{
+			ReplaceInventoryItem(inventoryItems, sourceItemUpdate);
+			await SendPacketAsync(new SmInventoryUpdateItem(sourceItemUpdate, sourceTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+		}
+
+		ReplaceInventoryItem(inventoryItems, targetItemUpdate);
+		player.InventoryItems = inventoryItems.ToArray();
+		if (targetItemUpdate.Color == null)
+		{
+			await SendPacketAsync(SmSystemMessage.ItemColorRemoveSucceed(targetTemplate.GetClientName() ?? targetTemplate.Name));
+		}
+		else
+		{
+			await SendPacketAsync(SmSystemMessage.ItemColorChangeSucceed(
+				targetTemplate.GetClientName() ?? targetTemplate.Name,
+				sourceTemplate.GetClientName() ?? sourceTemplate.Name));
+		}
+
+		if (targetItemUpdate.IsEquipped)
+		{
+			var appearancePacket = new SmUpdatePlayerAppearance(player);
+			if (_connectionRegistry != null)
+				await _connectionRegistry.BroadcastToVisiblePlayersAsync(player.Position, player.ObjectId, appearancePacket, includeSourcePlayer: true);
+			else
+				await SendPacketAsync(appearancePacket);
+		}
+
+		await SendPacketAsync(new SmInventoryUpdateItem(targetItemUpdate, targetTemplate, updateType: 0));
 	}
 
 	private async Task SendCraftLearnFailureAsync(CraftLearnValidation validation)
@@ -5554,15 +5638,18 @@ public sealed class GameServerConnection : BaseClientConnection
 		int? ownerId = null,
 		bool? isEquipped = null,
 		int? packCount = null,
-		int? charge = null)
+		int? charge = null,
+		int? color = null,
+		bool setColor = false,
+		int? colorExpires = null)
 	{
 		var copy = new InventoryItem
 		{
 			ObjectId = item.ObjectId,
 			ItemId = item.ItemId,
 			Count = count ?? item.Count,
-			Color = item.Color,
-			ColorExpires = item.ColorExpires,
+			Color = setColor ? color : item.Color,
+			ColorExpires = colorExpires ?? item.ColorExpires,
 			Creator = item.Creator,
 			ExpireTime = item.ExpireTime,
 			ActivationCount = item.ActivationCount,

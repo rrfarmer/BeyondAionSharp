@@ -337,6 +337,18 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300514);
 	}
 
+	public static SmSystemMessage ItemColorRemoveSucceed(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_ITEM_COLOR_REMOVE_SUCCEED.
+		return new SmSystemMessage(1300510, itemName);
+	}
+
+	public static SmSystemMessage ItemColorChangeSucceed(string itemName, string dyeName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_ITEM_COLOR_CHANGE_SUCCEED.
+		return new SmSystemMessage(1300511, itemName, dyeName);
+	}
+
 	public static SmSystemMessage TooltipLearnedEmotion()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_TOOLTIP_LEARNED_EMOTION.

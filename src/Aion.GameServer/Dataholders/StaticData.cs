@@ -657,6 +657,19 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 4 && reader.LocalName == "dye" && currentItemTemplate != null)
+			{
+				// Java parity: model/templates/item/actions/DyeAction color/minutes metadata.
+				var color = reader.GetAttribute("color");
+				currentItemTemplate.DyeAction = new ItemDyeActionInfo(
+					string.Equals(color, "no", StringComparison.Ordinal)
+						? null
+						: int.Parse(color ?? "0", NumberStyles.HexNumber, CultureInfo.InvariantCulture),
+					ReadIntAttribute(reader, "minutes"),
+					reader.GetAttribute("minutes") != null);
+				continue;
+			}
+
 			if (reader.Depth == 4 && reader.LocalName == "titleadd" && currentItemTemplate != null)
 			{
 				// Java parity: model/templates/item/actions/TitleAddAction titleid/minutes metadata.
@@ -1446,6 +1459,8 @@ public sealed class StaticData
 
 		public ItemExpandInventoryActionInfo? ExpandInventoryAction { get; set; }
 
+		public ItemDyeActionInfo? DyeAction { get; set; }
+
 		public int ConditioningMaxLevel { get; set; }
 
 		public int PolishSetId { get; set; }
@@ -1562,7 +1577,8 @@ public sealed class StaticData
 				TitleAddMinutes,
 				HasTitleAddAction,
 				HasTitleAddMinutes,
-				ExpandInventoryAction);
+				ExpandInventoryAction,
+				DyeAction);
 		}
 
 		private static int CalculateMaxTuneCount(

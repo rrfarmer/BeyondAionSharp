@@ -91,12 +91,14 @@ public sealed record ItemTemplateSummary(
 	int TitleAddMinutes = 0,
 	bool HasTitleAddAction = false,
 	bool HasTitleAddMinutes = false,
-	ItemExpandInventoryActionInfo? ExpandInventoryAction = null)
+	ItemExpandInventoryActionInfo? ExpandInventoryAction = null,
+	ItemDyeActionInfo? DyeAction = null)
 {
 	private const int CanPolishMask = 1 << 17;
 	private const int SoulBoundMask = 1 << 7;
 	private const int NoEnchantMask = 1 << 9;
 	private const int CanProcEnchantMask = 1 << 10;
+	private const int DyeableMask = 1 << 15;
 
 	private static readonly HashSet<string> WeaponGroups = new(StringComparer.Ordinal)
 	{
@@ -207,6 +209,8 @@ public sealed record ItemTemplateSummary(
 	public bool CanPolish => (Mask & CanPolishMask) == CanPolishMask;
 
 	public bool CanSocketGodstone => (Mask & CanProcEnchantMask) == CanProcEnchantMask;
+
+	public bool IsItemDyePermitted => (Mask & DyeableMask) == DyeableMask;
 
 	public bool IsCloth => IsArmor && ((!IsAccessory && !string.Equals(ItemGroup, "BELT", StringComparison.Ordinal)) || string.Equals(ItemGroup, "HEAD", StringComparison.Ordinal));
 
@@ -340,6 +344,9 @@ public sealed record ItemSkillLearnActionInfo(int SkillId, int Level, string Pla
 
 // Java parity: model/templates/item/actions/ExpandInventoryAction.
 public sealed record ItemExpandInventoryActionInfo(int Level, string Storage);
+
+// Java parity: model/templates/item/actions/DyeAction.
+public sealed record ItemDyeActionInfo(int? Color, int Minutes, bool HasMinutes);
 
 public sealed record ItemStatModifier(
 	string Operation,

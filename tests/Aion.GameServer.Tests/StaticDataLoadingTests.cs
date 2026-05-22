@@ -137,6 +137,7 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(25, staticData.ItemTemplates.GetItemTemplate(100001115)?.GetRequiredLevel("GLADIATOR"));
 		Assert.Equal(39, staticData.ItemTemplates.GetItemTemplate(100001115)?.GetMaxLevelRestrict("GLADIATOR"));
 		Assert.Equal("FEMALE", staticData.ItemTemplates.GetItemTemplate(110900040)?.GenderPermitted);
+		Assert.True(staticData.ItemTemplates.GetItemTemplate(110900040)?.IsItemDyePermitted);
 		Assert.Equal(155000001, staticData.ItemTemplates.GetItemTemplate(152200001)?.CraftLearnRecipeId);
 		Assert.Equal(1, staticData.ItemTemplates.GetItemTemplate(152000065)?.ActivationCount);
 		Assert.Equal(1, staticData.ItemTemplates.GetItemTemplate(100000895)?.ExpireTimeMinutes);
@@ -160,6 +161,8 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(new ItemSkillLearnActionInfo(1, 10, "RANGER"), staticData.ItemTemplates.GetItemTemplate(169500916)?.SkillLearnAction);
 		Assert.Equal(new ItemExpandInventoryActionInfo(1, "CUBE"), staticData.ItemTemplates.GetItemTemplate(169630000)?.ExpandInventoryAction);
 		Assert.Equal(new ItemExpandInventoryActionInfo(1, "WAREHOUSE"), staticData.ItemTemplates.GetItemTemplate(169640000)?.ExpandInventoryAction);
+		Assert.Equal(new ItemDyeActionInfo(null, 0, false), staticData.ItemTemplates.GetItemTemplate(169100000)?.DyeAction);
+		Assert.Equal(new ItemDyeActionInfo(0xc22626, 0, false), staticData.ItemTemplates.GetItemTemplate(169120000)?.DyeAction);
 		var sprintRide = staticData.RideInfos.GetRideInfo(2000000);
 		Assert.NotNull(sprintRide);
 		Assert.Equal(12.0f, sprintRide.MoveSpeed);

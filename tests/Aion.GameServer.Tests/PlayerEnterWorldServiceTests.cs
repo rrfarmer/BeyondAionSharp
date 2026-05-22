@@ -421,6 +421,14 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public int? InventoryExpansionDeletedSourceItemObjectId { get; private set; }
 
+		public int SaveDyeItemActionMutationCalls { get; private set; }
+
+		public InventoryItem? DyeTargetItemUpdate { get; private set; }
+
+		public InventoryItem? DyeSourceItemUpdate { get; private set; }
+
+		public int? DyeDeletedSourceItemObjectId { get; private set; }
+
 		public int SaveItemChargeMutationCalls { get; private set; }
 
 		public InventoryItem? ChargedItem { get; private set; }
@@ -614,6 +622,20 @@ public sealed class PlayerEnterWorldServiceTests
 			InventoryExpansionWarehouseBonusExpands = warehouseBonusExpands;
 			InventoryExpansionSourceItemUpdate = sourceItemUpdate;
 			InventoryExpansionDeletedSourceItemObjectId = deletedSourceItemObjectId;
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> SaveDyeItemActionMutationAsync(
+			int playerObjectId,
+			InventoryItem targetItemUpdate,
+			InventoryItem? sourceItemUpdate,
+			int? deletedSourceItemObjectId,
+			CancellationToken cancellationToken = default)
+		{
+			SaveDyeItemActionMutationCalls++;
+			DyeTargetItemUpdate = targetItemUpdate;
+			DyeSourceItemUpdate = sourceItemUpdate;
+			DyeDeletedSourceItemObjectId = deletedSourceItemObjectId;
 			return Task.FromResult(true);
 		}
 
