@@ -53,7 +53,7 @@ public sealed class NpcDialogTargetingServiceTests
 	}
 
 	[Fact]
-	public void ValidateTargetingNpcWithFunction_RejectsInvisibleNpc()
+	public void ValidateTargetingNpcWithFunction_AcceptsTargetedNpcRegardlessOfDistance()
 	{
 		var world = CreateWorld();
 		var player = CreatePlayer(targetObjectId: 5001);
@@ -66,7 +66,7 @@ public sealed class NpcDialogTargetingServiceTests
 			OpenVendorDialogAction,
 			world);
 
-		Assert.Equal(NpcDialogTargetingResult.NotVisible, result);
+		Assert.Equal(NpcDialogTargetingResult.Valid, result);
 	}
 
 	[Fact]

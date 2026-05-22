@@ -18,9 +18,6 @@ public static class NpcDialogTargetingService
 		if (world == null || !world.TryGetObject(objectId, out var gameObject) || gameObject is not IWorldNpcObject npc)
 			return NpcDialogTargetingResult.UnknownTarget;
 
-		if (!WorldVisibility.IsVisibleTo(player, npc.Position))
-			return NpcDialogTargetingResult.NotVisible;
-
 		return npc.Template.SupportsDialogAction(dialogActionId)
 			? NpcDialogTargetingResult.Valid
 			: NpcDialogTargetingResult.UnsupportedAction;
@@ -32,6 +29,5 @@ public enum NpcDialogTargetingResult
 	Valid,
 	NotTargeted,
 	UnknownTarget,
-	NotVisible,
 	UnsupportedAction,
 }
