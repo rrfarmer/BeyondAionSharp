@@ -23,6 +23,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 	private readonly IStaticPlaceableStateService? _staticPlaceables;
 	private readonly IWorldNpcWalkerSpawnPlanCacheService? _walkerSpawnPlans;
 	private readonly WorldNpcWalkerPlacementApplicationService? _walkerPlacementApplication;
+	private readonly WorldNpcWalkerRouteWalkingService? _walkerRouteWalking;
 	private readonly ILogger<WorldNpcSpawnService> _logger;
 	private readonly ConcurrentDictionary<NpcSpawnSummary, int> _temporarySpawnObjectIds = new();
 	private readonly ConcurrentDictionary<int, SpawnedWorldNpcRegistration> _spawnedWorldNpcs = new();
@@ -41,7 +42,8 @@ public sealed class WorldNpcSpawnService : GameEngine
 		IStaticPlaceableStateService? staticPlaceables,
 		IWorldNpcWalkerSpawnPlanCacheService? walkerSpawnPlans,
 		WorldNpcWalkerPlacementApplicationService? walkerPlacementApplication,
-		ILogger<WorldNpcSpawnService> logger)
+		ILogger<WorldNpcSpawnService> logger,
+		WorldNpcWalkerRouteWalkingService? walkerRouteWalking = null)
 	{
 		_runtimeContext = runtimeContext;
 		_world = world;
@@ -52,6 +54,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		_staticPlaceables = staticPlaceables;
 		_walkerSpawnPlans = walkerSpawnPlans;
 		_walkerPlacementApplication = walkerPlacementApplication;
+		_walkerRouteWalking = walkerRouteWalking;
 		_logger = logger;
 	}
 
@@ -222,14 +225,14 @@ public sealed class WorldNpcSpawnService : GameEngine
 		return true;
 	}
 
-	public ValueTask InitAsync(CancellationToken cancellationToken = default)
+	public async ValueTask InitAsync(CancellationToken cancellationToken = default)
 	{
 		// Java parity: GameServer.main calls SpawnEngine.spawnAll after DataManager and HousingService startup.
 		var staticData = _runtimeContext.DataManager?.StaticData;
 		if (staticData == null)
 		{
 			_logger.LogWarning("Static data is not loaded; skipping NPC world spawn load");
-			return ValueTask.CompletedTask;
+			return;
 		}
 
 		var result = SpawnWorldNpcs(
@@ -244,6 +247,9 @@ public sealed class WorldNpcSpawnService : GameEngine
 			difficultId: 0,
 			changedMapIds: null,
 			cancellationToken);
+		await StartWalkerRouteWalkingForWorldsAsync(
+			staticData.WorldMaps.Where(map => !map.IsInstance).Select(map => map.MapId),
+			cancellationToken);
 		if (_gameTimeService != null)
 			_gameTimeService.HourChanged += OnGameHourChangedAsync;
 		Volatile.Write(ref _loadedCount, result.SpawnedCount);
@@ -252,7 +258,6 @@ public sealed class WorldNpcSpawnService : GameEngine
 			"Loaded {SpawnedCount} regular NPC spawns into world visibility; skipped {SkippedCount} unsupported spawns",
 			result.SpawnedCount,
 			result.SkippedCount);
-		return ValueTask.CompletedTask;
 	}
 
 	public ValueTask ShutdownAsync(CancellationToken cancellationToken = default)
@@ -355,6 +360,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 			changedMapIds,
 			cancellationToken);
 
+		await StartWalkerRouteWalkingForWorldsAsync(changedMapIds, cancellationToken);
 		await RefreshNpcVisibilityAsync(changedMapIds, cancellationToken);
 		return new TemporarySpawnHourChangeResult(result.SpawnedCount, despawned, result.SkippedCount);
 	}
@@ -744,6 +750,20 @@ public sealed class WorldNpcSpawnService : GameEngine
 			return;
 
 		RefreshWalkerSpawnPlans(staticData.WalkerTemplates, staticData.WalkerVersions, worldIds);
+	}
+
+	private async Task StartWalkerRouteWalkingForWorldsAsync(
+		IEnumerable<int> worldIds,
+		CancellationToken cancellationToken)
+	{
+		if (_walkerRouteWalking == null)
+			return;
+
+		foreach (var worldId in worldIds.Distinct())
+		{
+			cancellationToken.ThrowIfCancellationRequested();
+			await _walkerRouteWalking.StartWorldRouteWalkingAsync(worldId, cancellationToken);
+		}
 	}
 
 	private bool TryGetLiveWalkerNpcs(IReadOnlyList<int> objectIds, out IReadOnlyList<WorldNpc> npcs)

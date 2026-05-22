@@ -1,9 +1,11 @@
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Dataholders.LoadingUtils;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.IdFactory;
+using Aion.GameServer.World;
 using Microsoft.Extensions.Logging.Abstractions;
 using GameWorld = Aion.GameServer.World.World;
 
@@ -54,6 +56,116 @@ public sealed class WorldNpcSpawnServiceTests
 		Assert.Contains(world.GetNpcs(), worldNpc => worldNpc.ObjectId == npc.ObjectId);
 		Assert.Equal(2, world.GetNpcs(210010000).Count);
 		Assert.Empty(world.GetNpcs(220010000));
+	}
+
+	[Fact]
+	public async Task InitAsync_StartsRouteWalkingForSpawnedWalkerPlans()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-walker-startup-route-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextWithWalkerSpawnDataAsync(tempPath);
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			var walkerPlans = new WorldNpcWalkerSpawnPlanCacheService();
+			var registry = new CapturingConnectionRegistry();
+			var routeWalking = CreateRouteWalkingService(context, world, walkerPlans, registry);
+			var service = new WorldNpcSpawnService(
+				context,
+				world,
+				new IDFactory(),
+				gameTimeService: null,
+				threadPoolManager: null,
+				connectionRegistry: registry,
+				staticPlaceables: null,
+				walkerSpawnPlans: walkerPlans,
+				walkerPlacementApplication: new WorldNpcWalkerPlacementApplicationService(),
+				NullLogger<WorldNpcSpawnService>.Instance,
+				routeWalking);
+
+			await service.InitAsync();
+
+			Assert.Equal(1, service.LoadedCount);
+			Assert.Equal(0, service.SkippedCount);
+			Assert.Equal(1, routeWalking.ActiveStateCount);
+			Assert.True(routeWalking.TryGetActiveState(1, out var state));
+			Assert.NotNull(state);
+			Assert.Equal(0, state.TargetStepIndex);
+			Assert.Single(registry.Broadcasts);
+			Assert.Equal(1, registry.Broadcasts[0].SourceObjectId);
+		}
+		finally
+		{
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
+	[Fact]
+	public async Task ProcessTemporarySpawnHourChangeAsync_StartsRouteWalkingForNewTemporaryWalkers()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-walker-hour-route-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextWithSingleWalkerDataAsync(tempPath);
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			var walkerPlans = new WorldNpcWalkerSpawnPlanCacheService();
+			var registry = new CapturingConnectionRegistry();
+			var routeWalking = CreateRouteWalkingService(context, world, walkerPlans, registry);
+			var service = new WorldNpcSpawnService(
+				context,
+				world,
+				new IDFactory(),
+				gameTimeService: null,
+				threadPoolManager: null,
+				connectionRegistry: registry,
+				staticPlaceables: null,
+				walkerSpawnPlans: walkerPlans,
+				walkerPlacementApplication: new WorldNpcWalkerPlacementApplicationService(),
+				NullLogger<WorldNpcSpawnService>.Instance,
+				routeWalking);
+			var spawns = new NpcSpawnTable(
+			[
+				CreateSpawn(
+					210010000,
+					203080,
+					x: 0,
+					y: 0,
+					walkerId: "route-a",
+					walkerIndex: 0,
+					groupTemporarySchedule: TemporarySpawnSchedule.FromAttributes(null, "4.*.*", "5.*.*")),
+			]);
+			var templates = new NpcTemplateTable([CreateTemplate(203080)]);
+
+			var result = await service.ProcessTemporarySpawnHourChangeAsync(
+				spawns,
+				templates,
+				[210010000],
+				gameMinutes: 4 * 60,
+				serverDayOfWeek: DayOfWeek.Friday);
+
+			Assert.Equal(new TemporarySpawnHourChangeResult(1, 0, 0), result);
+			Assert.Equal(1, routeWalking.ActiveStateCount);
+			Assert.True(routeWalking.TryGetActiveState(1, out _));
+			Assert.Single(registry.Broadcasts);
+			Assert.Equal(1, registry.Broadcasts[0].SourceObjectId);
+		}
+		finally
+		{
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
 	}
 
 	[Fact]
@@ -633,6 +745,21 @@ public sealed class WorldNpcSpawnServiceTests
 			NullLogger<WorldNpcSpawnService>.Instance);
 	}
 
+	private static WorldNpcWalkerRouteWalkingService CreateRouteWalkingService(
+		GameServerRuntimeContext context,
+		GameWorld world,
+		IWorldNpcWalkerSpawnPlanCacheService walkerPlans,
+		IGameClientConnectionRegistry registry)
+	{
+		return new WorldNpcWalkerRouteWalkingService(
+			context,
+			world,
+			walkerPlans,
+			new WorldNpcWalkerRouteService(),
+			new WorldNpcWalkerMovementStateService(),
+			new WorldNpcWalkerMovementBroadcastService(world, registry));
+	}
+
 	private static NpcSpawnSummary CreateSpawn(
 		int mapId,
 		int npcId,
@@ -704,6 +831,85 @@ public sealed class WorldNpcSpawnServiceTests
 			<static_data>
 				<npc_walker>
 					<walker_template route_id="route-a" pool="2" formation="SQUARE" rows="2">
+						<routestep x="0" y="0" z="0" />
+						<routestep x="10" y="0" z="0" />
+					</walker_template>
+				</npc_walker>
+			</static_data>
+			""");
+		File.WriteAllText(schemaFile, """<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" />""");
+		var dataManager = await DataManager.LoadAsync(
+			new XmlDataLoaderOptions
+			{
+				MainXmlFilePath = staticDataFile,
+				CacheXmlFilePath = cacheFile,
+				SchemaFilePath = schemaFile,
+				ValidateWhenCacheChanges = false,
+			});
+		var context = new GameServerRuntimeContext();
+		context.SetDataManager(dataManager);
+		return context;
+	}
+
+	private static async Task<GameServerRuntimeContext> CreateRuntimeContextWithSingleWalkerDataAsync(string tempPath)
+	{
+		var staticDataFile = Path.Combine(tempPath, "static_data.xml");
+		var cacheFile = Path.Combine(tempPath, "cache", "static_data.xml");
+		var schemaFile = Path.Combine(tempPath, "static_data.xsd");
+		Directory.CreateDirectory(Path.GetDirectoryName(cacheFile)!);
+		File.WriteAllText(
+			staticDataFile,
+			"""
+			<?xml version="1.0" encoding="UTF-8"?>
+			<static_data>
+				<npc_walker>
+					<walker_template route_id="route-a" pool="1" formation="POINT">
+						<routestep x="0" y="0" z="0" />
+						<routestep x="10" y="0" z="0" />
+					</walker_template>
+				</npc_walker>
+			</static_data>
+			""");
+		File.WriteAllText(schemaFile, """<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" />""");
+		var dataManager = await DataManager.LoadAsync(
+			new XmlDataLoaderOptions
+			{
+				MainXmlFilePath = staticDataFile,
+				CacheXmlFilePath = cacheFile,
+				SchemaFilePath = schemaFile,
+				ValidateWhenCacheChanges = false,
+			});
+		var context = new GameServerRuntimeContext();
+		context.SetDataManager(dataManager);
+		return context;
+	}
+
+	private static async Task<GameServerRuntimeContext> CreateRuntimeContextWithWalkerSpawnDataAsync(string tempPath)
+	{
+		var staticDataFile = Path.Combine(tempPath, "static_data.xml");
+		var cacheFile = Path.Combine(tempPath, "cache", "static_data.xml");
+		var schemaFile = Path.Combine(tempPath, "static_data.xsd");
+		Directory.CreateDirectory(Path.GetDirectoryName(cacheFile)!);
+		File.WriteAllText(
+			staticDataFile,
+			"""
+			<?xml version="1.0" encoding="UTF-8"?>
+			<static_data>
+				<world_maps>
+					<map id="210010000" instance="false" twin_count="1" />
+				</world_maps>
+				<npc_templates>
+					<npc_template npc_id="203080" name="walker-npc" name_id="203080" level="1" rank="NORMAL" rating="NORMAL" race="ELYOS" tribe="GENERAL" type="GENERAL" />
+				</npc_templates>
+				<spawns>
+					<spawn_map map_id="210010000">
+						<spawn npc_id="203080" respawn_time="295">
+							<spot x="0" y="0" z="0" walker_id="route-a" walker_index="0" />
+						</spawn>
+					</spawn_map>
+				</spawns>
+				<npc_walker>
+					<walker_template route_id="route-a" pool="1" formation="POINT">
 						<routestep x="0" y="0" z="0" />
 						<routestep x="10" y="0" z="0" />
 					</walker_template>
@@ -825,4 +1031,92 @@ public sealed class WorldNpcSpawnServiceTests
 			State: state,
 			AiName: aiName);
 	}
+
+	private sealed class CapturingConnectionRegistry : IGameClientConnectionRegistry
+	{
+		private readonly object _gate = new();
+		private readonly List<BroadcastRecord> _broadcasts = [];
+
+		public IReadOnlyList<BroadcastRecord> Broadcasts
+		{
+			get
+			{
+				lock (_gate)
+					return _broadcasts.ToArray();
+			}
+		}
+
+		public void RegisterPlayerConnection(int playerObjectId, GameServerConnection connection)
+		{
+		}
+
+		public void UnregisterPlayerConnection(int playerObjectId, GameServerConnection connection)
+		{
+		}
+
+		public bool TryGetOnlinePlayerByName(string playerName, out Player? player)
+		{
+			player = null;
+			return false;
+		}
+
+		public void ForEachOnlinePlayer(Action<Player> action)
+		{
+		}
+
+		public Task<bool> SendPacketToPlayerAsync(int playerObjectId, GameServerPacket packet)
+		{
+			return Task.FromResult(false);
+		}
+
+		public Task<int> BroadcastToWorldAsync(GameServerPacket packet, Func<Player, bool>? filter = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> BroadcastToVisiblePlayersAsync(
+			WorldPosition sourcePosition,
+			int sourceObjectId,
+			GameServerPacket packet,
+			bool includeSourcePlayer = false,
+			Func<Player, bool>? filter = null)
+		{
+			lock (_gate)
+				_broadcasts.Add(new BroadcastRecord(sourcePosition, sourceObjectId, packet));
+			return Task.FromResult(1);
+		}
+
+		public Task<int> RefreshHousingVisibilityAsync(
+			IReadOnlyList<WorldHouse> houses,
+			HousingTemplateTable? housingTemplates,
+			int? playerObjectId = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> RefreshNpcVisibilityAsync(IReadOnlyList<IWorldNpcObject> npcs, int? playerObjectId = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> BroadcastHouseUpdateAsync(WorldHouse house, HousingTemplateTable? housingTemplates)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<bool> NotifyMailReceivedAsync(int recipientObjectId, PlayerMail mail)
+		{
+			return Task.FromResult(false);
+		}
+
+		public Task<bool> NotifyBrokerSettledAsync(int sellerObjectId, long settledKinah)
+		{
+			return Task.FromResult(false);
+		}
+	}
+
+	private sealed record BroadcastRecord(
+		WorldPosition SourcePosition,
+		int SourceObjectId,
+		GameServerPacket Packet);
 }
