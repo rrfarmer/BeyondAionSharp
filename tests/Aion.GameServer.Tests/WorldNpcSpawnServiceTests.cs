@@ -1,6 +1,7 @@
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Services;
+using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.IdFactory;
 using Microsoft.Extensions.Logging.Abstractions;
 using GameWorld = Aion.GameServer.World.World;
@@ -93,6 +94,68 @@ public sealed class WorldNpcSpawnServiceTests
 		Assert.Equal(0, staticPlaceables.GetSpawnCount(210010000, 107));
 		service.SpawnWorldNpcs(spawns, templates, [210010000]);
 		Assert.True(world.TryGetObject(1, out _));
+	}
+
+	[Fact]
+	public async Task TryDeleteAndScheduleRespawn_RestoresNpcAfterRespawnDelay()
+	{
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var staticPlaceables = new StaticPlaceableStateService();
+		var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		try
+		{
+			var service = CreateService(world, staticPlaceables, threadPoolManager);
+			var spawns = new NpcSpawnTable([CreateSpawn(210010000, 203072, staticId: 107, respawnSeconds: 1)]);
+			var templates = new NpcTemplateTable([CreateTemplate(203072)]);
+
+			var result = service.SpawnWorldNpcs(spawns, templates, [210010000]);
+			var deleted = service.TryDeleteAndScheduleRespawn(1);
+
+			Assert.Equal(new WorldNpcSpawnResult(1, 0), result);
+			Assert.True(deleted);
+			Assert.True(service.HasRespawnTask(1));
+			Assert.Equal(1, service.PendingRespawnCount);
+			Assert.Empty(world.GetNpcs());
+			Assert.Equal(0, staticPlaceables.GetSpawnCount(210010000, 107));
+
+			await WaitUntilAsync(() => service.PendingRespawnCount == 0 && world.GetNpcs().Count == 1);
+
+			var respawnedNpc = Assert.Single(world.GetNpcs());
+			Assert.Equal(1, respawnedNpc.ObjectId);
+			Assert.Equal(203072, respawnedNpc.TemplateId);
+			Assert.Equal(1, staticPlaceables.GetSpawnCount(210010000, 107));
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
+	public async Task TryDeleteAndScheduleRespawn_SkipsNoRespawnSpawns()
+	{
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		try
+		{
+			var service = CreateService(world, new StaticPlaceableStateService(), threadPoolManager);
+			var spawns = new NpcSpawnTable([CreateSpawn(210010000, 203073, respawnSeconds: 0)]);
+			var templates = new NpcTemplateTable([CreateTemplate(203073)]);
+
+			service.SpawnWorldNpcs(spawns, templates, [210010000]);
+			var deleted = service.TryDeleteAndScheduleRespawn(1);
+
+			Assert.True(deleted);
+			Assert.False(service.HasRespawnTask(1));
+			Assert.Equal(0, service.PendingRespawnCount);
+			Assert.Empty(world.GetNpcs());
+			service.SpawnWorldNpcs(spawns, templates, [210010000]);
+			Assert.True(world.TryGetObject(1, out _));
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
 	}
 
 	[Fact]
@@ -267,6 +330,19 @@ public sealed class WorldNpcSpawnServiceTests
 			world,
 			new IDFactory(),
 			gameTimeService: null,
+			threadPoolManager: null,
+			staticPlaceables,
+			NullLogger<WorldNpcSpawnService>.Instance);
+	}
+
+	private static WorldNpcSpawnService CreateService(GameWorld world, IStaticPlaceableStateService staticPlaceables, ThreadPoolManager threadPoolManager)
+	{
+		return new WorldNpcSpawnService(
+			new GameServerRuntimeContext(),
+			world,
+			new IDFactory(),
+			gameTimeService: null,
+			threadPoolManager,
 			staticPlaceables,
 			NullLogger<WorldNpcSpawnService>.Instance);
 	}
@@ -281,6 +357,7 @@ public sealed class WorldNpcSpawnServiceTests
 		int poolSize = 0,
 		byte difficultId = 0,
 		string handler = "",
+		int respawnSeconds = 295,
 		int state = 0,
 		string aiName = "",
 		int staticId = 0,
@@ -298,7 +375,7 @@ public sealed class WorldNpcSpawnServiceTests
 			y,
 			z,
 			heading,
-			295,
+			respawnSeconds,
 			poolSize,
 			difficultId,
 			handler,
@@ -312,6 +389,20 @@ public sealed class WorldNpcSpawnServiceTests
 			false,
 			groupTemporarySchedule,
 			spotTemporarySchedule);
+	}
+
+	private static async Task WaitUntilAsync(Func<bool> condition)
+	{
+		var deadline = DateTimeOffset.UtcNow.AddSeconds(3);
+		while (DateTimeOffset.UtcNow < deadline)
+		{
+			if (condition())
+				return;
+
+			await Task.Delay(25);
+		}
+
+		Assert.True(condition(), "Condition was not met before the timeout.");
 	}
 
 	private static NpcTemplateSummary CreateTemplate(int templateId, int state = 0, string aiName = "")

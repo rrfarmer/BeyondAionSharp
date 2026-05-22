@@ -3,6 +3,7 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
+using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.IdFactory;
 using Microsoft.Extensions.Logging;
 using GameWorld = Aion.GameServer.World.World;
@@ -15,10 +16,13 @@ public sealed class WorldNpcSpawnService : GameEngine
 	private readonly GameWorld _world;
 	private readonly IDFactory _idFactory;
 	private readonly GameTimeService? _gameTimeService;
+	private readonly ThreadPoolManager? _threadPoolManager;
 	private readonly IGameClientConnectionRegistry? _connectionRegistry;
 	private readonly IStaticPlaceableStateService? _staticPlaceables;
 	private readonly ILogger<WorldNpcSpawnService> _logger;
 	private readonly ConcurrentDictionary<NpcSpawnSummary, int> _temporarySpawnObjectIds = new();
+	private readonly ConcurrentDictionary<int, SpawnedWorldNpcRegistration> _spawnedWorldNpcs = new();
+	private readonly ConcurrentDictionary<int, PendingWorldNpcRespawn> _pendingRespawns = new();
 	private int _loadedCount;
 	private int _skippedCount;
 
@@ -27,6 +31,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		GameWorld world,
 		IDFactory idFactory,
 		GameTimeService? gameTimeService,
+		ThreadPoolManager? threadPoolManager,
 		IGameClientConnectionRegistry? connectionRegistry,
 		IStaticPlaceableStateService? staticPlaceables,
 		ILogger<WorldNpcSpawnService> logger)
@@ -35,6 +40,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		_world = world;
 		_idFactory = idFactory;
 		_gameTimeService = gameTimeService;
+		_threadPoolManager = threadPoolManager;
 		_connectionRegistry = connectionRegistry;
 		_staticPlaceables = staticPlaceables;
 		_logger = logger;
@@ -45,9 +51,10 @@ public sealed class WorldNpcSpawnService : GameEngine
 		GameWorld world,
 		IDFactory idFactory,
 		GameTimeService? gameTimeService,
+		ThreadPoolManager? threadPoolManager,
 		IStaticPlaceableStateService? staticPlaceables,
 		ILogger<WorldNpcSpawnService> logger)
-		: this(runtimeContext, world, idFactory, gameTimeService, null, staticPlaceables, logger)
+		: this(runtimeContext, world, idFactory, gameTimeService, threadPoolManager, null, staticPlaceables, logger)
 	{
 	}
 
@@ -57,7 +64,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		IDFactory idFactory,
 		GameTimeService? gameTimeService,
 		ILogger<WorldNpcSpawnService> logger)
-		: this(runtimeContext, world, idFactory, gameTimeService, null, null, logger)
+		: this(runtimeContext, world, idFactory, gameTimeService, null, null, null, logger)
 	{
 	}
 
@@ -66,7 +73,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		GameWorld world,
 		IDFactory idFactory,
 		ILogger<WorldNpcSpawnService> logger)
-		: this(runtimeContext, world, idFactory, null, null, null, logger)
+		: this(runtimeContext, world, idFactory, null, null, null, null, logger)
 	{
 	}
 
@@ -75,6 +82,8 @@ public sealed class WorldNpcSpawnService : GameEngine
 	public int LoadedCount => Volatile.Read(ref _loadedCount);
 
 	public int SkippedCount => Volatile.Read(ref _skippedCount);
+
+	public int PendingRespawnCount => _pendingRespawns.Count;
 
 	public ValueTask InitAsync(CancellationToken cancellationToken = default)
 	{
@@ -113,7 +122,9 @@ public sealed class WorldNpcSpawnService : GameEngine
 	{
 		if (_gameTimeService != null)
 			_gameTimeService.HourChanged -= OnGameHourChangedAsync;
+		CancelPendingRespawns(releaseObjectIds: true);
 		_temporarySpawnObjectIds.Clear();
+		_spawnedWorldNpcs.Clear();
 		Volatile.Write(ref _loadedCount, 0);
 		Volatile.Write(ref _skippedCount, 0);
 		return ValueTask.CompletedTask;
@@ -356,6 +367,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 			return null;
 		}
 
+		_spawnedWorldNpcs[objectId] = new SpawnedWorldNpcRegistration(spawn, template);
 		_staticPlaceables?.SpawnPlaceableObject(worldNpc.Position.WorldId, worldNpc.StaticId);
 		return objectId;
 	}
@@ -363,12 +375,103 @@ public sealed class WorldNpcSpawnService : GameEngine
 	public bool TryDespawnWorldNpc(int objectId)
 	{
 		// Java parity: controllers/VisibleObjectController.delete removes spawned objects and runs onDespawn cleanup first.
+		return TryDespawnWorldNpc(objectId, releaseObjectId: true);
+	}
+
+	public bool TryDeleteAndScheduleRespawn(int objectId)
+	{
+		// Java parity: controllers/VisibleObjectController.deleteAndScheduleRespawn.
+		if (!_world.TryGetObject(objectId, out var gameObject) || gameObject is not WorldNpc worldNpc)
+			return false;
+		if (!_spawnedWorldNpcs.TryGetValue(objectId, out var registration))
+			return TryDespawnWorldNpc(objectId);
+
+		var shouldScheduleRespawn = worldNpc.RespawnSeconds > 0 && _threadPoolManager != null && !HasRespawnTask(objectId);
+		if (!TryDespawnWorldNpc(objectId, releaseObjectId: !shouldScheduleRespawn))
+			return false;
+
+		if (shouldScheduleRespawn)
+			ScheduleRespawn(objectId, registration);
+
+		return true;
+	}
+
+	public bool HasRespawnTask(int objectId)
+	{
+		// Java parity: services/RespawnService.hasRespawnTask.
+		return _pendingRespawns.ContainsKey(objectId);
+	}
+
+	public bool CancelRespawn(int objectId)
+	{
+		// Java parity: services/RespawnService.cancelRespawn unregisters a pending respawn task.
+		if (!_pendingRespawns.TryRemove(objectId, out var pendingRespawn))
+			return false;
+
+		pendingRespawn.ScheduledTask?.Cancel();
+		_idFactory.ReleaseId(objectId);
+		return true;
+	}
+
+	private bool TryDespawnWorldNpc(int objectId, bool releaseObjectId)
+	{
 		if (!_world.TryRemoveObject(objectId, out var gameObject) || gameObject is not WorldNpc worldNpc)
 			return false;
 
+		_spawnedWorldNpcs.TryRemove(objectId, out _);
 		_staticPlaceables?.DespawnPlaceableObject(worldNpc.Position.WorldId, worldNpc.StaticId);
-		_idFactory.ReleaseId(objectId);
+		if (releaseObjectId)
+			_idFactory.ReleaseId(objectId);
 		return true;
+	}
+
+	private void ScheduleRespawn(int oldObjectId, SpawnedWorldNpcRegistration registration)
+	{
+		if (_threadPoolManager == null)
+			return;
+
+		var pendingRespawn = new PendingWorldNpcRespawn(registration);
+		pendingRespawn.ScheduledTask = _threadPoolManager.Schedule(
+			cancellationToken => RunRespawnAsync(oldObjectId, pendingRespawn, cancellationToken),
+			TimeSpan.FromSeconds(registration.Spawn.RespawnSeconds));
+		if (!_pendingRespawns.TryAdd(oldObjectId, pendingRespawn))
+		{
+			pendingRespawn.ScheduledTask.Cancel();
+			_idFactory.ReleaseId(oldObjectId);
+		}
+	}
+
+	private ValueTask RunRespawnAsync(int oldObjectId, PendingWorldNpcRespawn pendingRespawn, CancellationToken cancellationToken)
+	{
+		// Java parity: services/RespawnService.RespawnTask.run unregisters, then SpawnEngine.spawnObject.
+		if (!_pendingRespawns.TryGetValue(oldObjectId, out var currentRespawn)
+			|| !ReferenceEquals(currentRespawn, pendingRespawn)
+			|| !_pendingRespawns.TryRemove(oldObjectId, out _))
+		{
+			return ValueTask.CompletedTask;
+		}
+
+		_idFactory.ReleaseId(oldObjectId);
+		if (cancellationToken.IsCancellationRequested)
+			return ValueTask.CompletedTask;
+
+		var newObjectId = SpawnNpc(pendingRespawn.Registration.Spawn, pendingRespawn.Registration.Template);
+		if (newObjectId.HasValue && pendingRespawn.Registration.Spawn.GroupTemporarySchedule != null)
+			_temporarySpawnObjectIds[pendingRespawn.Registration.Spawn] = newObjectId.Value;
+		return ValueTask.CompletedTask;
+	}
+
+	private void CancelPendingRespawns(bool releaseObjectIds)
+	{
+		foreach (var pair in _pendingRespawns.ToArray())
+		{
+			if (!_pendingRespawns.TryRemove(pair.Key, out var pendingRespawn))
+				continue;
+
+			pendingRespawn.ScheduledTask?.Cancel();
+			if (releaseObjectIds)
+				_idFactory.ReleaseId(pair.Key);
+		}
 	}
 
 	private int DespawnTemporaryNpcs(int gameMinutes, DayOfWeek serverDayOfWeek, ISet<int> changedMapIds)
@@ -471,6 +574,20 @@ public sealed class WorldNpcSpawnService : GameEngine
 	{
 		Startup,
 		HourlySpawn,
+	}
+
+	private readonly record struct SpawnedWorldNpcRegistration(NpcSpawnSummary Spawn, NpcTemplateSummary Template);
+
+	private sealed class PendingWorldNpcRespawn
+	{
+		public PendingWorldNpcRespawn(SpawnedWorldNpcRegistration registration)
+		{
+			Registration = registration;
+		}
+
+		public SpawnedWorldNpcRegistration Registration { get; }
+
+		public ScheduledTask? ScheduledTask { get; set; }
 	}
 }
 
