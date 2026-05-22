@@ -403,6 +403,14 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public int? TitleAddDeletedSourceItemObjectId { get; private set; }
 
+		public int SaveSkillLearnActionMutationCalls { get; private set; }
+
+		public IReadOnlyList<PlayerSkill> LearnedSkills { get; private set; } = Array.Empty<PlayerSkill>();
+
+		public InventoryItem? SkillLearnSourceItemUpdate { get; private set; }
+
+		public int? SkillLearnDeletedSourceItemObjectId { get; private set; }
+
 		public int SaveItemChargeMutationCalls { get; private set; }
 
 		public InventoryItem? ChargedItem { get; private set; }
@@ -566,6 +574,20 @@ public sealed class PlayerEnterWorldServiceTests
 			AddedTitle = title;
 			TitleAddSourceItemUpdate = sourceItemUpdate;
 			TitleAddDeletedSourceItemObjectId = deletedSourceItemObjectId;
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> SaveSkillLearnActionMutationAsync(
+			int playerObjectId,
+			IReadOnlyList<PlayerSkill> skills,
+			InventoryItem? sourceItemUpdate,
+			int? deletedSourceItemObjectId,
+			CancellationToken cancellationToken = default)
+		{
+			SaveSkillLearnActionMutationCalls++;
+			LearnedSkills = skills;
+			SkillLearnSourceItemUpdate = sourceItemUpdate;
+			SkillLearnDeletedSourceItemObjectId = deletedSourceItemObjectId;
 			return Task.FromResult(true);
 		}
 

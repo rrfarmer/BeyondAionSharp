@@ -157,6 +157,7 @@ public sealed class StaticDataLoadingTests
 		Assert.False(staticData.ItemTemplates.GetItemTemplate(169945000)?.HasTitleAddMinutes);
 		Assert.True(staticData.ItemTemplates.GetItemTemplate(169945001)?.HasTitleAddMinutes);
 		Assert.Equal(10081, staticData.ItemTemplates.GetItemTemplate(169945001)?.TitleAddMinutes);
+		Assert.Equal(new ItemSkillLearnActionInfo(1, 10, "RANGER"), staticData.ItemTemplates.GetItemTemplate(169500916)?.SkillLearnAction);
 		var sprintRide = staticData.RideInfos.GetRideInfo(2000000);
 		Assert.NotNull(sprintRide);
 		Assert.Equal(12.0f, sprintRide.MoveSpeed);

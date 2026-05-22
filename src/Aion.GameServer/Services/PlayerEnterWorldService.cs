@@ -213,6 +213,21 @@ public sealed class PlayerEnterWorldService
 			cancellationToken);
 	}
 
+	public Task<bool> SaveSkillLearnActionMutationAsync(
+		Player player,
+		IReadOnlyList<PlayerSkill> skills,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		return _repository.SaveSkillLearnActionMutationAsync(
+			player.ObjectId,
+			skills,
+			sourceItemUpdate,
+			deletedSourceItemObjectId,
+			cancellationToken);
+	}
+
 	public Task<bool> SaveItemChargeMutationAsync(
 		Player player,
 		InventoryItem chargedItem,

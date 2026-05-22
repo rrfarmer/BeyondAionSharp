@@ -2403,6 +2403,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (sourceTemplate.SkillLearnAction != null)
+		{
+			await HandleSkillLearnUseItemAsync(player, inventoryItems, sourceItem, sourceTemplate, staticData);
+			return;
+		}
+
 		if (sourceTemplate.HasTitleAddAction)
 		{
 			await HandleTitleAddUseItemAsync(player, inventoryItems, sourceItem, sourceTemplate, staticData);
@@ -2491,6 +2497,53 @@ public sealed class GameServerConnection : BaseClientConnection
 		await SendPacketAsync(new SmLearnRecipe(recipeTemplate.RecipeId));
 		await SendPacketAsync(SmSystemMessage.CraftRecipeLearn(recipeTemplate.RecipeId, player.Name));
 		await SendPacketAsync(new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 1, 1));
+	}
+
+	private async Task HandleSkillLearnUseItemAsync(
+		Player player,
+		List<InventoryItem> inventoryItems,
+		InventoryItem sourceItem,
+		ItemTemplateSummary sourceTemplate,
+		StaticData staticData)
+	{
+		// Java parity: model/templates/item/actions/SkillLearnAction.canAct + act.
+		var plan = SkillLearnService.CreateSkillBookPlan(player, sourceTemplate, staticData);
+		if (!plan.Succeeded)
+			return;
+
+		AddItemCooldownIfNeeded(player, sourceTemplate, removeOnCancel: false);
+		await CancelPendingItemUseAsync(player);
+		await BroadcastItemUsageAnimationAsync(
+			player,
+			new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 1, 1));
+
+		var sourceItemUpdate = sourceItem.Count > 1 ? CopyInventoryItem(sourceItem, count: sourceItem.Count - 1) : null;
+		int? deletedSourceObjectId = sourceItem.Count <= 1 ? sourceItem.ObjectId : null;
+		var saved = _playerEnterWorldService == null
+			|| await _playerEnterWorldService.SaveSkillLearnActionMutationAsync(
+				player,
+				plan.PersistedSkills,
+				sourceItemUpdate,
+				deletedSourceObjectId);
+		if (!saved)
+			return;
+
+		player.Skills = plan.Skills;
+		foreach (var packet in plan.Packets)
+			await SendPacketAsync(new SmSkillList([packet.Skill], packet.MessageId));
+
+		if (deletedSourceObjectId.HasValue)
+		{
+			inventoryItems.RemoveAll(item => item.ObjectId == deletedSourceObjectId.Value);
+			await SendPacketAsync(new SmDeleteItem(deletedSourceObjectId.Value, SmDeleteItem.UseDeleteType));
+		}
+		else if (sourceItemUpdate != null)
+		{
+			ReplaceInventoryItem(inventoryItems, sourceItemUpdate);
+			await SendPacketAsync(new SmInventoryUpdateItem(sourceItemUpdate, sourceTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+		}
+
+		player.InventoryItems = inventoryItems.ToArray();
 	}
 
 	private async Task HandleTitleAddUseItemAsync(

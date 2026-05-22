@@ -50,6 +50,7 @@ public sealed record ItemTemplateSummary(
 	int DispositionItemCount = 0,
 	IReadOnlySet<string>? ClassRestrictions = null,
 	int CraftLearnRecipeId = 0,
+	ItemSkillLearnActionInfo? SkillLearnAction = null,
 	int ActivationCount = 0,
 	int ExpireTimeMinutes = 0,
 	int EnchantType = 0,
@@ -332,6 +333,9 @@ public sealed record ItemStigmaInfo(IReadOnlyList<string> GainSkillGroups, bool 
 
 // Java parity: model/templates/item/actions/EnchantItemAction.
 public sealed record ItemEnchantActionInfo(int Count, int MinLevel, int MaxLevel, bool ManastoneOnly, float Chance);
+
+// Java parity: model/templates/item/actions/SkillLearnAction.
+public sealed record ItemSkillLearnActionInfo(int SkillId, int Level, string PlayerClass);
 
 public sealed record ItemStatModifier(
 	string Operation,

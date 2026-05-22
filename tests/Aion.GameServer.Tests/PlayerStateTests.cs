@@ -78,6 +78,56 @@ public sealed class PlayerStateTests
 	}
 
 	[Fact]
+	public async Task SkillLearnService_MatchesJavaSkillBookGuardsAndNormalLearnMessage()
+	{
+		using var temp = TempDirectory.Create();
+		var manager = await DataManager.LoadAsync(
+			FindRepoRoot(),
+			cacheDirectory: temp.Path,
+			validateWhenCacheChanges: false);
+		var staticData = manager.StaticData;
+		var sourceTemplate = staticData.ItemTemplates.GetItemTemplate(169500916);
+		Assert.NotNull(sourceTemplate);
+		Assert.Equal(new ItemSkillLearnActionInfo(1, 10, "RANGER"), sourceTemplate.SkillLearnAction);
+
+		var player = new Player
+		{
+			Race = "ELYOS",
+			PlayerClass = "RANGER",
+			Exp = staticData.PlayerExperienceTable.GetStartExpForLevel(10),
+		};
+
+		var plan = SkillLearnService.CreateSkillBookPlan(player, sourceTemplate, staticData);
+
+		Assert.True(plan.Succeeded);
+		var packet = Assert.Single(plan.Packets);
+		Assert.Equal(1, packet.Skill.SkillId);
+		Assert.Equal(1, packet.Skill.SkillLevel);
+		Assert.True(packet.IsNew);
+		Assert.Equal(1300050, packet.MessageId);
+		Assert.Contains(plan.PersistedSkills, skill => skill.SkillId == 1 && skill.SkillLevel == 1);
+
+		player.Skills = [new PlayerSkill { SkillId = 1, SkillLevel = 1 }];
+		Assert.Equal(SkillLearnFailure.AlreadyKnown, SkillLearnService.CreateSkillBookPlan(player, sourceTemplate, staticData).Failure);
+
+		var wrongClassPlayer = new Player
+		{
+			Race = "ELYOS",
+			PlayerClass = "ASSASSIN",
+			Exp = staticData.PlayerExperienceTable.GetStartExpForLevel(10),
+		};
+		Assert.Equal(SkillLearnFailure.InvalidClass, SkillLearnService.CreateSkillBookPlan(wrongClassPlayer, sourceTemplate, staticData).Failure);
+
+		var wrongRacePlayer = new Player
+		{
+			Race = "ASMODIANS",
+			PlayerClass = "RANGER",
+			Exp = staticData.PlayerExperienceTable.GetStartExpForLevel(10),
+		};
+		Assert.Equal(SkillLearnFailure.InvalidRace, SkillLearnService.CreateSkillBookPlan(wrongRacePlayer, sourceTemplate, staticData).Failure);
+	}
+
+	[Fact]
 	public void Player_CreatureStateMatchesJavaBitAndExactMultibitSemantics()
 	{
 		var player = new Player();
@@ -302,5 +352,41 @@ public sealed class PlayerStateTests
 		Assert.False(flyingGlider.IsInState(PlayerCreatureState.Gliding));
 		Assert.True(flyingGlider.IsFpReduceActive);
 		Assert.False(flyingGlider.IsFpRestoreActive);
+	}
+
+	private static string FindRepoRoot()
+	{
+		var directory = new DirectoryInfo(AppContext.BaseDirectory);
+		while (directory != null)
+		{
+			if (Directory.Exists(Path.Combine(directory.FullName, "game-server")))
+				return directory.FullName;
+
+			directory = directory.Parent;
+		}
+
+		throw new InvalidOperationException("Could not find repository root.");
+	}
+
+	private sealed class TempDirectory : IDisposable
+	{
+		public TempDirectory()
+		{
+			Path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+			Directory.CreateDirectory(Path);
+		}
+
+		public string Path { get; }
+
+		public static TempDirectory Create()
+		{
+			return new TempDirectory();
+		}
+
+		public void Dispose()
+		{
+			if (Directory.Exists(Path))
+				Directory.Delete(Path, recursive: true);
+		}
 	}
 }

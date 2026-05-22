@@ -640,6 +640,15 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 4 && reader.LocalName == "skilllearn" && currentItemTemplate != null)
+			{
+				currentItemTemplate.SkillLearnAction = new ItemSkillLearnActionInfo(
+					ReadIntAttribute(reader, "skillid"),
+					ReadIntAttribute(reader, "level"),
+					reader.GetAttribute("class") ?? string.Empty);
+				continue;
+			}
+
 			if (reader.Depth == 4 && reader.LocalName == "titleadd" && currentItemTemplate != null)
 			{
 				// Java parity: model/templates/item/actions/TitleAddAction titleid/minutes metadata.
@@ -1425,6 +1434,8 @@ public sealed class StaticData
 
 		public int CraftLearnRecipeId { get; set; }
 
+		public ItemSkillLearnActionInfo? SkillLearnAction { get; set; }
+
 		public int ConditioningMaxLevel { get; set; }
 
 		public int PolishSetId { get; set; }
@@ -1500,6 +1511,7 @@ public sealed class StaticData
 				DispositionItemCount,
 				ClassRestrictions,
 				CraftLearnRecipeId,
+				SkillLearnAction,
 				ActivationCount,
 				ExpireTimeMinutes,
 				EnchantType,
