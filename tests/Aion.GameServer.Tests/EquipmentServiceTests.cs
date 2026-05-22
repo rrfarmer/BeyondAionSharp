@@ -123,6 +123,70 @@ public sealed class EquipmentServiceTests
 	}
 
 	[Fact]
+	public void UsePowerShard_DecreasesEquippedShardStack()
+	{
+		var player = CreatePlayer();
+		player.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 1001, ItemId = PowerShardId, Count = 3, Location = 0, IsEquipped = true, Slot = PowerShardRight },
+		];
+
+		var result = EquipmentService.UsePowerShard(player, powerShardObjectId: 1001, count: 1, itemTemplates: CreateItemTemplates());
+
+		Assert.True(result.Changed);
+		Assert.False(result.PowerShardDeactivated);
+		Assert.Empty(result.DeletedItemObjectIds);
+		Assert.Empty(result.EquipUpdateItems);
+		var update = Assert.Single(result.CountUpdateItems);
+		Assert.Equal((1001, 2L, true, PowerShardRight), (update.ObjectId, update.Count, update.IsEquipped, update.Slot));
+		Assert.Equal(2, Assert.Single(result.InventoryItems).Count);
+	}
+
+	[Fact]
+	public void UsePowerShard_EquipsNextSameStackAfterBurn()
+	{
+		var player = CreatePlayer();
+		player.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 1001, ItemId = PowerShardId, Count = 1, Location = 0, IsEquipped = true, Slot = PowerShardRight },
+			new InventoryItem { ObjectId = 1002, ItemId = PowerShardId, Count = 50, Location = 0, Slot = 65535 },
+			new InventoryItem { ObjectId = 1003, ItemId = RobeId, Count = 1, Location = 0, Slot = 65535 },
+		];
+
+		var result = EquipmentService.UsePowerShard(player, powerShardObjectId: 1001, count: 1, itemTemplates: CreateItemTemplates());
+
+		Assert.True(result.Changed);
+		Assert.False(result.PowerShardDeactivated);
+		Assert.Equal([1001], result.DeletedItemObjectIds);
+		Assert.Empty(result.CountUpdateItems);
+		var replacement = Assert.Single(result.EquipUpdateItems);
+		Assert.Equal((1002, 50L, true, PowerShardRight), (replacement.ObjectId, replacement.Count, replacement.IsEquipped, replacement.Slot));
+		Assert.DoesNotContain(result.InventoryItems, item => item.ObjectId == 1001);
+		Assert.Contains(result.InventoryItems, item => item.ObjectId == 1002 && item.IsEquipped && item.Slot == PowerShardRight);
+	}
+
+	[Fact]
+	public void UsePowerShard_BurnsOutWhenNoReplacementStackExists()
+	{
+		var player = CreatePlayer();
+		player.CreatureState = PlayerCreatureState.Powershard;
+		player.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 1001, ItemId = PowerShardId, Count = 1, Location = 0, IsEquipped = true, Slot = PowerShardRight },
+		];
+
+		var result = EquipmentService.UsePowerShard(player, powerShardObjectId: 1001, count: 5, itemTemplates: CreateItemTemplates());
+
+		Assert.True(result.Changed);
+		Assert.True(result.PowerShardDeactivated);
+		Assert.Equal([1001], result.DeletedItemObjectIds);
+		Assert.Empty(result.CountUpdateItems);
+		Assert.Empty(result.EquipUpdateItems);
+		Assert.Empty(result.InventoryItems);
+		Assert.True(player.IsInState(PlayerCreatureState.Powershard));
+	}
+
+	[Fact]
 	public void ChangeEquipment_RejectsItemForInvalidClass()
 	{
 		var player = CreatePlayer(playerClass: "WARRIOR");
@@ -830,6 +894,7 @@ public sealed class EquipmentServiceTests
 	private const int GreatswordId = 100100001;
 	private const int RobeId = 110100001;
 	private const int PowerShardId = 166000001;
+	private const long PowerShardRight = 1L << 19;
 	private const int RestrictedSwordId = 100000002;
 	private const int StigmaId = 140001001;
 	private const long StigmaSlot1 = 1L << 30;

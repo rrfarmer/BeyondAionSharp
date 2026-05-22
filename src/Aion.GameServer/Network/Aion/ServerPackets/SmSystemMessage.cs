@@ -649,6 +649,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300492);
 	}
 
+	public static SmSystemMessage WeaponBoostBurnOut()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_WEAPON_BOOST_MODE_BURN_OUT.
+		return new SmSystemMessage(1400075);
+	}
+
 	public static SmSystemMessage SkillCannotChangeModeWhileInCurrentStance()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_SKILL_CAN_NOT_CHANGE_MODE__WHILE_IN_CURRENT_STANCE.

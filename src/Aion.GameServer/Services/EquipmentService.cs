@@ -104,6 +104,68 @@ public static class EquipmentService
 			};
 	}
 
+	public static PowerShardUseResult UsePowerShard(
+		Player player,
+		int powerShardObjectId,
+		int count,
+		ItemTemplateTable itemTemplates)
+	{
+		// Java parity: model/gameobjects/player/Equipment.usePowerShard + decreaseEquippedItemCount.
+		if (count <= 0)
+			return PowerShardUseResult.NoChange();
+
+		var inventoryItems = player.InventoryItems.ToList();
+		var equippedShard = GetEquippedItemByObjectId(inventoryItems, powerShardObjectId);
+		var equippedTemplate = equippedShard == null ? null : itemTemplates.GetItemTemplate(equippedShard.ItemId);
+		if (equippedShard == null
+			|| equippedTemplate == null
+			|| !string.Equals(equippedTemplate.ItemGroup, PowerShardItemGroup, StringComparison.Ordinal))
+		{
+			return PowerShardUseResult.NoChange();
+		}
+
+		var remainingCount = Math.Max(0, equippedShard.Count - count);
+		if (remainingCount > 0)
+		{
+			var countUpdate = CopyInventoryItem(equippedShard, count: remainingCount);
+			ReplaceInventoryItem(inventoryItems, countUpdate);
+			return new PowerShardUseResult(
+				Changed: true,
+				InventoryItems: inventoryItems,
+				CountUpdateItems: [countUpdate],
+				EquipUpdateItems: Array.Empty<InventoryItem>(),
+				DeletedItemObjectIds: Array.Empty<int>(),
+				PowerShardDeactivated: false);
+		}
+
+		inventoryItems.RemoveAll(item => item.ObjectId == equippedShard.ObjectId);
+		var replacement = inventoryItems.FirstOrDefault(item =>
+			item.ItemId == equippedShard.ItemId
+			&& item.Location == CubeStorageId
+			&& !item.IsEquipped
+			&& item.Count > 0);
+		if (replacement != null)
+		{
+			var replacementUpdate = CopyInventoryItem(replacement, slot: equippedShard.Slot, isEquipped: true);
+			ReplaceInventoryItem(inventoryItems, replacementUpdate);
+			return new PowerShardUseResult(
+				Changed: true,
+				InventoryItems: inventoryItems,
+				CountUpdateItems: Array.Empty<InventoryItem>(),
+				EquipUpdateItems: [replacementUpdate],
+				DeletedItemObjectIds: [equippedShard.ObjectId],
+				PowerShardDeactivated: false);
+		}
+
+		return new PowerShardUseResult(
+			Changed: true,
+			InventoryItems: inventoryItems,
+			CountUpdateItems: Array.Empty<InventoryItem>(),
+			EquipUpdateItems: Array.Empty<InventoryItem>(),
+			DeletedItemObjectIds: [equippedShard.ObjectId],
+			PowerShardDeactivated: true);
+	}
+
 	private static EquipmentChangeResult EquipItem(
 		Player player,
 		long slotRead,
@@ -564,6 +626,7 @@ public static class EquipmentService
 
 	private static InventoryItem CopyInventoryItem(
 		InventoryItem item,
+		long? count = null,
 		long? slot = null,
 		bool? isEquipped = null,
 		bool? isSoulBound = null)
@@ -572,7 +635,7 @@ public static class EquipmentService
 		{
 			ObjectId = item.ObjectId,
 			ItemId = item.ItemId,
-			Count = item.Count,
+			Count = count ?? item.Count,
 			Color = item.Color,
 			ColorExpires = item.ColorExpires,
 			Creator = item.Creator,
@@ -623,6 +686,26 @@ public enum EquipmentChangeFailure
 	SoulBindInvalidStance,
 	StigmaDenied,
 	StigmaNotEnoughKinah,
+}
+
+public sealed record PowerShardUseResult(
+	bool Changed,
+	IReadOnlyList<InventoryItem> InventoryItems,
+	IReadOnlyList<InventoryItem> CountUpdateItems,
+	IReadOnlyList<InventoryItem> EquipUpdateItems,
+	IReadOnlyList<int> DeletedItemObjectIds,
+	bool PowerShardDeactivated)
+{
+	public static PowerShardUseResult NoChange()
+	{
+		return new PowerShardUseResult(
+			Changed: false,
+			InventoryItems: Array.Empty<InventoryItem>(),
+			CountUpdateItems: Array.Empty<InventoryItem>(),
+			EquipUpdateItems: Array.Empty<InventoryItem>(),
+			DeletedItemObjectIds: Array.Empty<int>(),
+			PowerShardDeactivated: false);
+	}
 }
 
 public sealed record EquipmentChangeResult(

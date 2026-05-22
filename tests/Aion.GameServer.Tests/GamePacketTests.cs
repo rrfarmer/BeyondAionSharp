@@ -719,6 +719,7 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.WeaponBoostNoBoosterEquipped(), 1300490);
 		AssertSystemMessage(SmSystemMessage.WeaponBoostStarted(), 1300491);
 		AssertSystemMessage(SmSystemMessage.WeaponBoostEnded(), 1300492);
+		AssertSystemMessage(SmSystemMessage.WeaponBoostBurnOut(), 1400075);
 		AssertSystemMessage(SmSystemMessage.SkillCannotChangeModeWhileInCurrentStance(), 1300124);
 		AssertSystemMessage(SmSystemMessage.SkillCannotTakeOffWhileInCurrentStance(), 1300147);
 		AssertSystemMessage(SmSystemMessage.StigmaNotEnoughMoney(), 1300413);
