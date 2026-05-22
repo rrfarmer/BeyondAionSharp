@@ -601,6 +601,20 @@ public sealed class PlayerEnterWorldService
 		return _repository.SaveEquipmentMutationAsync(player.ObjectId, items, kinahItem, cancellationToken);
 	}
 
+	public Task<bool> SavePowerShardUseMutationAsync(
+		Player player,
+		IReadOnlyList<PowerShardUseResult> powerShardUses,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: model/gameobjects/player/Equipment.decreaseEquippedItemCount and usePowerShard persistence.
+		return _repository.SavePowerShardUseMutationAsync(
+			player.ObjectId,
+			powerShardUses.SelectMany(use => use.CountUpdateItems).ToArray(),
+			powerShardUses.SelectMany(use => use.EquipUpdateItems).ToArray(),
+			powerShardUses.SelectMany(use => use.DeletedItemObjectIds).Distinct().ToArray(),
+			cancellationToken);
+	}
+
 	public async Task LeaveWorldAsync(Player player, CancellationToken cancellationToken = default)
 	{
 		// Java parity: services/player/PlayerLeaveWorldService.leaveWorld baseline persistence.

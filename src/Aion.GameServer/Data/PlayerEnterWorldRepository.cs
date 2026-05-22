@@ -263,6 +263,13 @@ public interface IPlayerEnterWorldRepository
 		InventoryItem? kinahItem = null,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SavePowerShardUseMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<InventoryItem> countUpdateItems,
+		IReadOnlyList<InventoryItem> equipUpdateItems,
+		IReadOnlyList<int> deletedItemObjectIds,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SavePlayerLogoutAsync(Player player, DateTime lastOnline, CancellationToken cancellationToken = default);
 }
 
@@ -685,6 +692,16 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		int playerObjectId,
 		IReadOnlyList<InventoryItem> items,
 		InventoryItem? kinahItem = null,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> SavePowerShardUseMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<InventoryItem> countUpdateItems,
+		IReadOnlyList<InventoryItem> equipUpdateItems,
+		IReadOnlyList<int> deletedItemObjectIds,
 		CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(true);
@@ -1431,6 +1448,48 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		}
 	}
 
+	public async Task<bool> SavePowerShardUseMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<InventoryItem> countUpdateItems,
+		IReadOnlyList<InventoryItem> equipUpdateItems,
+		IReadOnlyList<int> deletedItemObjectIds,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: model/gameobjects/player/Equipment.decreaseEquippedItemCount + usePowerShard persistence.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			foreach (var item in countUpdateItems)
+			{
+				if (!await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, item, cancellationToken))
+					return false;
+			}
+
+			foreach (var deletedObjectId in deletedItemObjectIds)
+			{
+				if (!await DeleteInventoryItemAsync(connection, transaction, playerObjectId, deletedObjectId, cancellationToken))
+					return false;
+			}
+
+			foreach (var item in equipUpdateItems)
+			{
+				if (!await SaveInventoryItemEquipmentStateAsync(connection, transaction, playerObjectId, item, cancellationToken))
+					return false;
+			}
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save power shard use mutation for player {PlayerObjectId}", playerObjectId);
+			return false;
+		}
+	}
+
 	private static async Task SavePlayerSettingsAsync(
 		MySqlConnection connection,
 		int playerObjectId,
@@ -1615,6 +1674,28 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				new MySqlParameter { Value = item.IsAmplified },
 				new MySqlParameter { Value = item.TuneCount },
 				new MySqlParameter { Value = item.BuffSkill },
+				new MySqlParameter { Value = item.ObjectId },
+				new MySqlParameter { Value = playerObjectId },
+			});
+		return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+	}
+
+	private static async Task<bool> SaveInventoryItemEquipmentStateAsync(
+		MySqlConnection connection,
+		MySqlTransaction transaction,
+		int playerObjectId,
+		InventoryItem item,
+		CancellationToken cancellationToken)
+	{
+		await using var command = connection.CreateCommand();
+		command.Transaction = transaction;
+		command.CommandText = "UPDATE inventory SET is_equipped = ?, is_soul_bound = ?, slot = ? WHERE item_unique_id = ? AND item_owner = ?";
+		command.Parameters.AddRange(
+			new[]
+			{
+				new MySqlParameter { Value = item.IsEquipped },
+				new MySqlParameter { Value = item.IsSoulBound },
+				new MySqlParameter { Value = item.Slot },
 				new MySqlParameter { Value = item.ObjectId },
 				new MySqlParameter { Value = playerObjectId },
 			});

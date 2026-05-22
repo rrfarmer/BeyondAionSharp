@@ -228,6 +228,38 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.Equal(155000001, repository.DeletedRecipeId);
 	}
 
+	[Fact]
+	public async Task SavePowerShardUseMutation_FlattensUseResultsForRepository()
+	{
+		var player = CreatePlayer();
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var service = CreateService(repository, CreateWorld());
+		var countUpdate = new InventoryItem { ObjectId = 10, ItemId = 169000005, Count = 2 };
+		var equipUpdate = new InventoryItem { ObjectId = 11, ItemId = 169000005, IsEquipped = true, Slot = 1L << 13 };
+		var firstUse = new PowerShardUseResult(
+			Changed: true,
+			InventoryItems: Array.Empty<InventoryItem>(),
+			CountUpdateItems: [countUpdate],
+			EquipUpdateItems: Array.Empty<InventoryItem>(),
+			DeletedItemObjectIds: [12],
+			PowerShardDeactivated: false);
+		var secondUse = new PowerShardUseResult(
+			Changed: true,
+			InventoryItems: Array.Empty<InventoryItem>(),
+			CountUpdateItems: Array.Empty<InventoryItem>(),
+			EquipUpdateItems: [equipUpdate],
+			DeletedItemObjectIds: [12],
+			PowerShardDeactivated: false);
+
+		var saved = await service.SavePowerShardUseMutationAsync(player, [firstUse, secondUse]);
+
+		Assert.True(saved);
+		Assert.Equal(1, repository.SavePowerShardUseMutationCalls);
+		Assert.Equal([10], repository.PowerShardCountUpdateItems.Select(item => item.ObjectId));
+		Assert.Equal([11], repository.PowerShardEquipUpdateItems.Select(item => item.ObjectId));
+		Assert.Equal([12], repository.PowerShardDeletedItemObjectIds);
+	}
+
 	private static PlayerEnterWorldService CreateService(CapturingEnterWorldRepository repository, GameWorld world)
 	{
 		return new PlayerEnterWorldService(
@@ -561,6 +593,14 @@ public sealed class PlayerEnterWorldServiceTests
 		public int SaveEquipmentMutationCalls { get; private set; }
 
 		public IReadOnlyList<InventoryItem> EquipmentItems { get; private set; } = Array.Empty<InventoryItem>();
+
+		public int SavePowerShardUseMutationCalls { get; private set; }
+
+		public IReadOnlyList<InventoryItem> PowerShardCountUpdateItems { get; private set; } = Array.Empty<InventoryItem>();
+
+		public IReadOnlyList<InventoryItem> PowerShardEquipUpdateItems { get; private set; } = Array.Empty<InventoryItem>();
+
+		public IReadOnlyList<int> PowerShardDeletedItemObjectIds { get; private set; } = Array.Empty<int>();
 
 		public Task<Player?> LoadPlayerAsync(int accountId, int playerObjectId, CancellationToken cancellationToken = default)
 		{
@@ -1101,6 +1141,20 @@ public sealed class PlayerEnterWorldServiceTests
 		{
 			SaveEquipmentMutationCalls++;
 			EquipmentItems = items;
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> SavePowerShardUseMutationAsync(
+			int playerObjectId,
+			IReadOnlyList<InventoryItem> countUpdateItems,
+			IReadOnlyList<InventoryItem> equipUpdateItems,
+			IReadOnlyList<int> deletedItemObjectIds,
+			CancellationToken cancellationToken = default)
+		{
+			SavePowerShardUseMutationCalls++;
+			PowerShardCountUpdateItems = countUpdateItems;
+			PowerShardEquipUpdateItems = equipUpdateItems;
+			PowerShardDeletedItemObjectIds = deletedItemObjectIds;
 			return Task.FromResult(true);
 		}
 
