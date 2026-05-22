@@ -4161,6 +4161,12 @@ public class GamePacketTests
 	[Fact]
 	public void ClientPacketFactory_ParsesHousingPackets()
 	{
+		var houseKick = Assert.IsType<CmHouseKick>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(72, b =>
+			{
+				b.WriteC(2);
+				b.WriteH(0);
+			}), GameConnectionState.InGame));
 		var houseSettings = Assert.IsType<CmHouseSettings>(
 			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(73, b =>
 			{
@@ -4214,6 +4220,7 @@ public class GamePacketTests
 				b.WriteD(353000);
 			}), GameConnectionState.InGame));
 
+		Assert.Equal(2, houseKick.Option);
 		Assert.Equal(PlayerHouse.DoorClosedExceptFriends, houseSettings.DoorState);
 		Assert.False(houseSettings.ShowOwnerName);
 		Assert.Equal("Visitors welcome", houseSettings.SignNotice);
@@ -4236,6 +4243,7 @@ public class GamePacketTests
 		Assert.Equal(90, moveObject.Rotation);
 		Assert.Equal(CmHouseEdit.RenovateBuilding, renovate.Action);
 		Assert.Equal(353000, renovate.BuildingId);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(72, b => b.WriteC(1)), GameConnectionState.Authed));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(73, _ => { }), GameConnectionState.Authed));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(82, b => b.WriteC(1)), GameConnectionState.Authed));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(218, _ => { }), GameConnectionState.Authed));

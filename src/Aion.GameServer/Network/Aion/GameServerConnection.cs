@@ -413,6 +413,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleHouseSettingsAsync(_activePlayer, houseSettings);
 				break;
+			case CmHouseKick houseKick:
+				if (_activePlayer != null)
+					await HandleHouseKickAsync(_activePlayer, houseKick);
+				break;
 			case CmHouseDecorate houseDecorate:
 				if (_activePlayer != null)
 					await HandleHouseDecorateAsync(_activePlayer, houseDecorate);
@@ -6985,6 +6989,28 @@ public sealed class GameServerConnection : BaseClientConnection
 			// Java parity: controllers/HouseController.kickVisitors owner notification before CM_HOUSE_SETTINGS door confirmation.
 			await SendPacketAsync(SmSystemMessage.HousingOrderOutAll());
 			await SendPacketAsync(SmSystemMessage.HousingOrderCloseDoorAll());
+		}
+	}
+
+	private async Task HandleHouseKickAsync(Player player, CmHouseKick packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_HOUSE_KICK.runImpl -> HouseController.kickVisitors.
+		var activeHouse = player.Houses.FirstOrDefault(house => !house.IsInactive);
+		if (activeHouse == null)
+		{
+			_logger.LogWarning("Player {PlayerObjectId} tried to kick visitors from a house without owning one", player.ObjectId);
+			return;
+		}
+
+		if (packet.Option == 1)
+		{
+			// Java parity: owner notification after kickVisitors(..., kickFriends: false).
+			await SendPacketAsync(SmSystemMessage.HousingOrderOutWithoutFriends());
+		}
+		else if (packet.Option == 2)
+		{
+			// Java parity: owner notification after kickVisitors(..., kickFriends: true).
+			await SendPacketAsync(SmSystemMessage.HousingOrderOutAll());
 		}
 	}
 
