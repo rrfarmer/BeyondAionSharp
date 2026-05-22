@@ -151,12 +151,13 @@ public sealed class RiftInformerServiceTests
 	}
 
 	[Fact]
-	public async Task SendRiftsInfoAsync_WithWorldId_BroadcastsCurrentAndTwinAggregatePackets()
+	public async Task SendRiftsInfoAsync_WithWorldId_BroadcastsCurrentPortalPacketsAndTwinAggregatePackets()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-rift-informer-world-fanout-" + Guid.NewGuid().ToString("N"));
 		Directory.CreateDirectory(tempPath);
 		try
 		{
+			var now = DateTimeOffset.FromUnixTimeSeconds(1000);
 			var registry = new RecordingConnectionRegistry();
 			registry.Players.Add(CreatePlayer(100, 210020000));
 			registry.Players.Add(CreatePlayer(101, 220020000));
@@ -180,15 +181,39 @@ public sealed class RiftInformerServiceTests
 					</rift_spawn>
 				</spawn_map>
 				""",
-				registry);
+				registry,
+				serviceClock: () => now,
+				informerClock: () => now);
 			Assert.True(service.OpenRifts(2120, guards: false).Succeeded);
 
 			var sent = await informer.SendRiftsInfoAsync(210020000);
 
-			Assert.Equal(2, sent);
-			Assert.Equal([100, 101], registry.BroadcastDeliveries.Select(delivery => delivery.Player.ObjectId).ToArray());
+			Assert.Equal(4, sent);
+			Assert.Equal([100, 100, 100, 101], registry.BroadcastDeliveries.Select(delivery => delivery.Player.ObjectId).ToArray());
+			Assert.Equal([0, 2, 3, 0], registry.BroadcastDeliveries.Select(delivery => ReadAction(delivery.Packet)).ToArray());
 			Assert.Equal(1, ReadAggregateCounts(registry.BroadcastDeliveries[0].Packet)[0]);
-			Assert.All(ReadAggregateCounts(registry.BroadcastDeliveries[1].Packet), count => Assert.Equal(0, count));
+			Assert.All(ReadAggregateCounts(registry.BroadcastDeliveries[3].Packet), count => Assert.Equal(0, count));
+
+			var portal = Assert.Single(service.GetActiveRifts()).Portal;
+			Assert.NotNull(portal);
+			var detail = ReadPortalDetailPayload(registry.BroadcastDeliveries[1].Packet);
+			Assert.Equal(portal.MasterNpc.ObjectId, detail.ObjectId);
+			Assert.Equal(portal.MaxEntries, detail.MaxEntries);
+			Assert.Equal(3600, detail.RemainTime);
+			Assert.Equal(portal.MinLevel, detail.MinLevel);
+			Assert.Equal(portal.MaxLevel, detail.MaxLevel);
+			Assert.Equal(portal.MasterNpc.Position.X, detail.X);
+			Assert.Equal(portal.MasterNpc.Position.Y, detail.Y);
+			Assert.Equal(portal.MasterNpc.Position.Z, detail.Z);
+			Assert.Equal(0, detail.RiftType);
+			Assert.Equal(1, detail.Display);
+
+			var update = ReadPortalEntryUpdatePayload(registry.BroadcastDeliveries[2].Packet);
+			Assert.Equal(portal.MasterNpc.ObjectId, update.ObjectId);
+			Assert.Equal(0, update.UsedEntries);
+			Assert.Equal(3600, update.RemainTime);
+			Assert.Equal(0, update.RiftType);
+			Assert.Equal(0, update.Unknown);
 		}
 		finally
 		{
@@ -203,15 +228,17 @@ public sealed class RiftInformerServiceTests
 	}
 
 	[Fact]
-	public async Task SendRiftsInfoAsync_WithPlayer_SendsCurrentAndTwinPacketsToSamePlayer()
+	public async Task SendRiftsInfoAsync_WithPlayer_SendsCurrentPacketsToPlayerAndTwinPacketsToTwinWorld()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-rift-informer-player-fanout-" + Guid.NewGuid().ToString("N"));
 		Directory.CreateDirectory(tempPath);
 		try
 		{
+			var now = DateTimeOffset.FromUnixTimeSeconds(1000);
 			var player = CreatePlayer(100, 210020000);
 			var registry = new RecordingConnectionRegistry();
 			registry.Players.Add(player);
+			registry.Players.Add(CreatePlayer(101, 220020000));
 			var (service, informer) = await CreateServicesAsync(
 				tempPath,
 				"""<rift_location id="2120" world="210020000" />""",
@@ -231,15 +258,21 @@ public sealed class RiftInformerServiceTests
 					</rift_spawn>
 				</spawn_map>
 				""",
-				registry);
+				registry,
+				serviceClock: () => now,
+				informerClock: () => now);
 			Assert.True(service.OpenRifts(2120, guards: false).Succeeded);
 
 			var sent = await informer.SendRiftsInfoAsync(player);
 
-			Assert.Equal(2, sent);
-			Assert.Equal([100, 100], registry.DirectDeliveries.Select(delivery => delivery.PlayerObjectId).ToArray());
+			Assert.Equal(4, sent);
+			Assert.Equal([100, 100, 100], registry.DirectDeliveries.Select(delivery => delivery.PlayerObjectId).ToArray());
+			Assert.Equal([0, 2, 3], registry.DirectDeliveries.Select(delivery => ReadAction(delivery.Packet)).ToArray());
 			Assert.Equal(1, ReadAggregateCounts(registry.DirectDeliveries[0].Packet)[0]);
-			Assert.All(ReadAggregateCounts(registry.DirectDeliveries[1].Packet), count => Assert.Equal(0, count));
+			var broadcast = Assert.Single(registry.BroadcastDeliveries);
+			Assert.Equal(101, broadcast.Player.ObjectId);
+			Assert.Equal(0, ReadAction(broadcast.Packet));
+			Assert.All(ReadAggregateCounts(broadcast.Packet), count => Assert.Equal(0, count));
 		}
 		finally
 		{
@@ -273,14 +306,16 @@ public sealed class RiftInformerServiceTests
 		string tempPath,
 		string riftLocations,
 		string spawnMaps,
-		IGameClientConnectionRegistry? registry = null)
+		IGameClientConnectionRegistry? registry = null,
+		Func<DateTimeOffset>? serviceClock = null,
+		Func<DateTimeOffset>? informerClock = null)
 	{
 		var context = await CreateRuntimeContextAsync(tempPath, riftLocations, spawnMaps);
 		var idFactory = new IDFactory();
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);
 		var manager = new RiftManagerService(context, world, idFactory);
-		var service = new RiftService(context, manager, world, idFactory);
-		return (service, new RiftInformerService(service, registry));
+		var service = new RiftService(context, manager, world, idFactory, nowProvider: serviceClock);
+		return (service, new RiftInformerService(service, registry, informerClock));
 	}
 
 	private static RiftService CreateEmptyRiftService()
@@ -361,6 +396,48 @@ public sealed class RiftInformerServiceTests
 		var objectId = reader.ReadD();
 		Assert.Equal(0, reader.Remaining);
 		return ((int)action, objectId);
+	}
+
+	private static int ReadAction(GameServerPacket packet)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		reader.ReadH();
+		return reader.ReadC();
+	}
+
+	private static PortalDetailPayload ReadPortalDetailPayload(GameServerPacket packet)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(35, reader.ReadH());
+		Assert.Equal(2, (int)reader.ReadC());
+		var payload = new PortalDetailPayload(
+			reader.ReadD(),
+			reader.ReadD(),
+			reader.ReadD(),
+			reader.ReadD(),
+			reader.ReadD(),
+			reader.ReadF(),
+			reader.ReadF(),
+			reader.ReadF(),
+			reader.ReadC(),
+			reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+		return payload;
+	}
+
+	private static PortalEntryUpdatePayload ReadPortalEntryUpdatePayload(GameServerPacket packet)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(15, reader.ReadH());
+		Assert.Equal(3, (int)reader.ReadC());
+		var payload = new PortalEntryUpdatePayload(
+			reader.ReadD(),
+			reader.ReadD(),
+			reader.ReadD(),
+			reader.ReadC(),
+			reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+		return payload;
 	}
 
 	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
@@ -458,4 +535,23 @@ public sealed class RiftInformerServiceTests
 	private sealed record BroadcastDelivery(Player Player, GameServerPacket Packet);
 
 	private sealed record DirectDelivery(int PlayerObjectId, GameServerPacket Packet);
+
+	private sealed record PortalDetailPayload(
+		int ObjectId,
+		int MaxEntries,
+		int RemainTime,
+		int MinLevel,
+		int MaxLevel,
+		float X,
+		float Y,
+		float Z,
+		int RiftType,
+		int Display);
+
+	private sealed record PortalEntryUpdatePayload(
+		int ObjectId,
+		int UsedEntries,
+		int RemainTime,
+		int RiftType,
+		int Unknown);
 }

@@ -9,13 +9,16 @@ public sealed class RiftInformerService
 	private const int AnnounceSlotCount = 12;
 	private readonly RiftService _riftService;
 	private readonly IGameClientConnectionRegistry? _connectionRegistry;
+	private readonly Func<DateTimeOffset> _clock;
 
 	public RiftInformerService(
 		RiftService riftService,
-		IGameClientConnectionRegistry? connectionRegistry = null)
+		IGameClientConnectionRegistry? connectionRegistry = null,
+		Func<DateTimeOffset>? clock = null)
 	{
 		_riftService = riftService;
 		_connectionRegistry = connectionRegistry;
+		_clock = clock ?? (() => DateTimeOffset.UtcNow);
 	}
 
 	public async Task<int> SendRiftsInfoAsync(int worldId)
@@ -30,11 +33,11 @@ public sealed class RiftInformerService
 
 	public async Task<int> SendRiftsInfoAsync(Player player)
 	{
-		// Java parity: services/rift/RiftInformer.sendRiftsInfo(Player) sends current-world and twin-world packets to one player.
+		// Java parity: services/rift/RiftInformer.sendRiftsInfo(Player) sends current-world packets to the player, then broadcasts twin-world packets.
 		var sent = await SyncRiftsStateAsync(player, GetPackets(player.Position.WorldId));
 		var twinId = GetTwinId(player.Position.WorldId);
 		if (twinId > 0)
-			sent += await SyncRiftsStateAsync(player, GetPackets(twinId));
+			sent += await SyncRiftsStateAsync(twinId, GetPackets(twinId));
 		return sent;
 	}
 
@@ -91,8 +94,19 @@ public sealed class RiftInformerService
 
 	private IReadOnlyList<SmRiftAnnounce> GetPackets(int worldId)
 	{
-		// Java parity: RiftInformer.getPackets(worldId) starts with aggregate data; action 2/3 portal-detail packets follow once RVController state exists.
-		return [new SmRiftAnnounce(GetAnnounceData(worldId))];
+		// Java parity: RiftInformer.getPackets(worldId) sends aggregate data, then action 2/3 packets for master RVControllers in that world.
+		var packets = new List<SmRiftAnnounce> { new(GetAnnounceData(worldId)) };
+		foreach (var rift in _riftService.GetActiveRifts())
+		{
+			var portal = rift.Portal;
+			if (portal == null || portal.MasterNpc.Position.WorldId != worldId)
+				continue;
+
+			packets.Add(new SmRiftAnnounce(portal, isMaster: true, _clock));
+			packets.Add(new SmRiftAnnounce(portal, isMaster: false, _clock));
+		}
+
+		return packets;
 	}
 
 	private async Task<int> SyncRiftsStateAsync(int worldId, IReadOnlyList<SmRiftAnnounce> packets)
