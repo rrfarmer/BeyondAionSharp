@@ -207,6 +207,13 @@ public sealed class StaticDataLoadingTests
 		Assert.Contains(
 			randomRewards.SelectMany(group => group.RandomItems),
 			item => item is { Type: "ENCHANTMENT", MinCount: 1, MaxCount: 3 });
+		Assert.Equal(89, staticData.AssemblyItems.Count);
+		Assert.Equal(staticData.GetElementCount("assemble"), staticData.ItemTemplates.Templates.Count(template => template.AssemblyItemId != 0));
+		var assemblyItem = staticData.AssemblyItems.GetAssemblyItem(186000018);
+		Assert.NotNull(assemblyItem);
+		Assert.Equal([188100001, 188100002, 188100003, 188100004, 188100005], assemblyItem.Parts);
+		Assert.Equal(186000018, staticData.ItemTemplates.GetItemTemplate(188100001)?.AssemblyItemId);
+		Assert.Null(staticData.AssemblyItems.GetAssemblyItem(188100001));
 		var hairCosmetic = staticData.CosmeticItems.GetCosmeticItemTemplate("cash_hair_type_li_m_01a");
 		Assert.NotNull(hairCosmetic);
 		Assert.Equal("hair_type", hairCosmetic.Type);

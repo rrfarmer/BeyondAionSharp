@@ -97,7 +97,8 @@ public sealed record ItemTemplateSummary(
 	ItemRemodelActionInfo? RemodelAction = null,
 	string CosmeticActionName = "",
 	bool HasDecomposeAction = false,
-	int ExtraInventoryId = -1)
+	int ExtraInventoryId = -1,
+	int AssemblyItemId = 0)
 {
 	private const int CanPolishMask = 1 << 17;
 	private const int SoulBoundMask = 1 << 7;

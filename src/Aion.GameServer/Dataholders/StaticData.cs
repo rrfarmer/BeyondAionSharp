@@ -16,6 +16,7 @@ public sealed class StaticData
 		ItemTemplateTable itemTemplates,
 		CosmeticItemTable cosmeticItems,
 		DecomposableItemTable decomposableItems,
+		AssemblyItemTable assemblyItems,
 		RideTable rideInfos,
 		ItemRandomBonusTable itemRandomBonuses,
 		ItemSetTable itemSets,
@@ -40,6 +41,7 @@ public sealed class StaticData
 		ItemTemplates = itemTemplates;
 		CosmeticItems = cosmeticItems;
 		DecomposableItems = decomposableItems;
+		AssemblyItems = assemblyItems;
 		RideInfos = rideInfos;
 		ItemRandomBonuses = itemRandomBonuses;
 		ItemSets = itemSets;
@@ -75,6 +77,8 @@ public sealed class StaticData
 	public CosmeticItemTable CosmeticItems { get; }
 
 	public DecomposableItemTable DecomposableItems { get; }
+
+	public AssemblyItemTable AssemblyItems { get; }
 
 	public RideTable RideInfos { get; }
 
@@ -123,6 +127,7 @@ public sealed class StaticData
 		var itemTemplates = new List<ItemTemplateSummary>();
 		var cosmeticItems = new List<CosmeticItemSummary>();
 		var decomposableItems = new List<DecomposableItemSummary>();
+		var assemblyItems = new List<AssemblyItemSummary>();
 		var rideInfos = new List<RideInfoSummary>();
 		var itemRandomBonuses = new List<ItemRandomBonusSummary>();
 		var itemSets = new List<ItemSetSummary>();
@@ -289,6 +294,17 @@ public sealed class StaticData
 					var twinCount = int.TryParse(reader.GetAttribute("twin_count"), out var parsedTwinCount) ? parsedTwinCount : 0;
 					worldMaps.Add(new WorldMapSummary(mapId, isInstance, twinCount));
 				}
+			}
+
+			if (reader.Depth == 2
+				&& reader.LocalName == "item"
+				&& elementPath.GetValueOrDefault(1) == "assembly_items")
+			{
+				// Java parity: data/static_data/items/assembly_items.xml JAXB item id/parts attributes.
+				assemblyItems.Add(new AssemblyItemSummary(
+					ReadRequiredIntAttribute(reader, "id"),
+					ReadIntListAttribute(reader, "parts")));
+				continue;
 			}
 
 			if (reader.Depth == 2 && reader.LocalName == "cosmetic_item")
@@ -820,6 +836,13 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 4 && reader.LocalName == "assemble" && currentItemTemplate != null)
+			{
+				// Java parity: model/templates/item/actions/AssemblyItemAction item attribute.
+				currentItemTemplate.AssemblyItemId = ReadIntAttribute(reader, "item");
+				continue;
+			}
+
 			if (reader.Depth == 4 && reader.LocalName == "cosmetic" && currentItemTemplate != null)
 			{
 				// Java parity: model/templates/item/actions/CosmeticItemAction cosmetic-name metadata.
@@ -1072,6 +1095,7 @@ public sealed class StaticData
 			new ItemTemplateTable(itemTemplates.AsReadOnly(), learnableEmotionIds),
 			new CosmeticItemTable(cosmeticItems.AsReadOnly()),
 			new DecomposableItemTable(decomposableItems.AsReadOnly()),
+			new AssemblyItemTable(assemblyItems.AsReadOnly()),
 			new RideTable(rideInfos.AsReadOnly()),
 			new ItemRandomBonusTable(itemRandomBonuses.AsReadOnly()),
 			new ItemSetTable(itemSets.AsReadOnly()),
@@ -1628,6 +1652,8 @@ public sealed class StaticData
 
 		public bool HasDecomposeAction { get; set; }
 
+		public int AssemblyItemId { get; set; }
+
 		public string CosmeticActionName { get; set; } = string.Empty;
 
 		public int ConditioningMaxLevel { get; set; }
@@ -1752,7 +1778,8 @@ public sealed class StaticData
 				RemodelAction,
 				CosmeticActionName,
 				HasDecomposeAction,
-				ExtraInventoryId);
+				ExtraInventoryId,
+				AssemblyItemId);
 		}
 
 		private static int CalculateMaxTuneCount(
@@ -2114,6 +2141,18 @@ public sealed class StaticData
 		return string.IsNullOrWhiteSpace(playerClasses)
 			? new HashSet<string>(StringComparer.Ordinal)
 			: playerClasses.Split(' ', StringSplitOptions.RemoveEmptyEntries).ToHashSet(StringComparer.Ordinal);
+	}
+
+	private static IReadOnlyList<int> ReadIntListAttribute(XmlReader reader, string attributeName)
+	{
+		var value = reader.GetAttribute(attributeName);
+		if (string.IsNullOrWhiteSpace(value))
+			return Array.Empty<int>();
+
+		return value
+			.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+			.Select(part => int.Parse(part, CultureInfo.InvariantCulture))
+			.ToArray();
 	}
 
 	private static float ReadFloatAttribute(XmlReader reader, string attributeName)
