@@ -934,6 +934,13 @@ public sealed class GameServerConnection : BaseClientConnection
 					}
 					// Java parity: services/HousingService.onPlayerLogin sends house owner profile info.
 					await SendPacketAsync(new SmHouseOwnerInfo(enterWorldResult.Player, auctionEndSchedule: _houseAuctionTiming.AuctionEndSchedule));
+					if (staticData != null)
+					{
+						// Java parity: services/player/PlayerEnterWorldService.onLogin calls Equipment.checkRankLimitItems before expirable registration.
+						var loginRankLimitChange = EquipmentService.CheckRankLimitItems(enterWorldResult.Player, staticData.ItemTemplates);
+						if (loginRankLimitChange.Changed || loginRankLimitChange.RankLimitedUnequipMessages.Count > 0)
+							await ApplyEquipmentChangeAsync(enterWorldResult.Player, loginRankLimitChange, staticData.ItemTemplates, staticData);
+					}
 					_expirableTaskService?.RegisterPlayerExpirables(
 						enterWorldResult.Player,
 						packet => SendPacketAsync(packet),
