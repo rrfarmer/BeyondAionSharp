@@ -22,6 +22,7 @@ public sealed class StaticData
 		ItemSetTable itemSets,
 		EnchantTable enchantTemplates,
 		TemperingTable temperingTemplates,
+		WalkerTemplateTable walkerTemplates,
 		NpcTemplateTable npcTemplates,
 		NpcSpawnTable npcSpawns,
 		SkillTemplateTable skillTemplates,
@@ -49,6 +50,7 @@ public sealed class StaticData
 		ItemSets = itemSets;
 		EnchantTemplates = enchantTemplates;
 		TemperingTemplates = temperingTemplates;
+		WalkerTemplates = walkerTemplates;
 		NpcTemplates = npcTemplates;
 		NpcSpawns = npcSpawns;
 		SkillTemplates = skillTemplates;
@@ -93,6 +95,8 @@ public sealed class StaticData
 	public EnchantTable EnchantTemplates { get; }
 
 	public TemperingTable TemperingTemplates { get; }
+
+	public WalkerTemplateTable WalkerTemplates { get; }
 
 	public NpcTemplateTable NpcTemplates { get; }
 
@@ -141,6 +145,7 @@ public sealed class StaticData
 		var itemSets = new List<ItemSetSummary>();
 		var enchantGroups = new List<EnchantGroupSummary>();
 		var temperingGroups = new List<TemperingGroupSummary>();
+		var walkerTemplates = new List<WalkerTemplateSummary>();
 		var npcTemplates = new List<NpcTemplateSummary>();
 		var npcSpawns = new List<NpcSpawnSummary>();
 		var skillTemplates = new List<SkillTemplateSummary>();
@@ -166,6 +171,7 @@ public sealed class StaticData
 		ItemSetBuilder? currentItemSet = null;
 		EnchantGroupBuilder? currentEnchantGroup = null;
 		TemperingGroupBuilder? currentTemperingGroup = null;
+		WalkerTemplateBuilder? currentWalkerTemplate = null;
 		NpcTemplateBuilder? currentNpcTemplate = null;
 		NpcSpawnBuilder? currentNpcSpawn = null;
 		NpcSpawnSpotBuilder? currentNpcSpawnSpot = null;
@@ -257,6 +263,12 @@ public sealed class StaticData
 				if (reader.Depth == 3 && reader.LocalName == "tempering_data" && currentTemperingGroup != null)
 					currentTemperingGroup.EndLevel();
 
+				if (reader.Depth == 2 && reader.LocalName == "walker_template" && currentWalkerTemplate != null)
+				{
+					walkerTemplates.Add(currentWalkerTemplate.ToSummary());
+					currentWalkerTemplate = null;
+				}
+
 				if (reader.Depth == 2 && reader.LocalName == "npc_template" && currentNpcTemplate != null)
 				{
 					npcTemplates.Add(currentNpcTemplate.ToSummary());
@@ -345,6 +357,37 @@ public sealed class StaticData
 			if (reader.Depth == 2 && reader.LocalName == "spawn_map" && elementPath.GetValueOrDefault(1) == "spawns")
 			{
 				currentNpcSpawnMapId = ReadRequiredIntAttribute(reader, "map_id");
+				continue;
+			}
+
+			if (reader.Depth == 2 && reader.LocalName == "walker_template" && elementPath.GetValueOrDefault(1) == "npc_walker")
+			{
+				// Java parity: dataholders/WalkerData loads npc_walker WalkerTemplate routes by route_id.
+				currentWalkerTemplate = new WalkerTemplateBuilder(
+					reader.GetAttribute("route_id") ?? string.Empty,
+					ReadOptionalIntAttribute(reader, "pool", 1),
+					reader.GetAttribute("formation") ?? "POINT",
+					reader.GetAttribute("loop_type") ?? "NORMAL",
+					reader.GetAttribute("rows") ?? string.Empty);
+				if (reader.IsEmptyElement)
+				{
+					walkerTemplates.Add(currentWalkerTemplate.ToSummary());
+					currentWalkerTemplate = null;
+				}
+				continue;
+			}
+
+			if (reader.Depth == 3
+				&& reader.LocalName == "routestep"
+				&& currentWalkerTemplate != null
+				&& elementPath.GetValueOrDefault(2) == "walker_template")
+			{
+				// Java parity: model/templates/walker/RouteStep x/y/z/rest_time route points.
+				currentWalkerTemplate.AddRouteStep(
+					ReadFloatAttribute(reader, "x"),
+					ReadFloatAttribute(reader, "y"),
+					ReadFloatAttribute(reader, "z"),
+					ReadIntAttribute(reader, "rest_time"));
 				continue;
 			}
 
@@ -1371,6 +1414,7 @@ public sealed class StaticData
 			new ItemSetTable(itemSets.AsReadOnly()),
 			new EnchantTable(enchantGroups.AsReadOnly()),
 			new TemperingTable(temperingGroups.AsReadOnly()),
+			new WalkerTemplateTable(walkerTemplates.AsReadOnly()),
 			new NpcTemplateTable(npcTemplates.AsReadOnly()),
 			new NpcSpawnTable(npcSpawns.AsReadOnly()),
 			new SkillTemplateTable(skillTemplates.AsReadOnly()),
@@ -2389,6 +2433,86 @@ public sealed class StaticData
 				IsSelectable,
 				_collections.Select(collection => collection.ToSummary()).ToArray());
 		}
+	}
+
+	private sealed class WalkerTemplateBuilder
+	{
+		private readonly List<WalkerRouteStepBuilder> _routeSteps = [];
+
+		public WalkerTemplateBuilder(string routeId, int pool, string formation, string loopType, string rows)
+		{
+			RouteId = routeId;
+			Pool = pool;
+			Formation = string.IsNullOrWhiteSpace(formation) ? "POINT" : formation.ToUpperInvariant();
+			LoopType = string.IsNullOrWhiteSpace(loopType) ? "NORMAL" : loopType.ToUpperInvariant();
+			Rows = rows;
+		}
+
+		private string RouteId { get; }
+
+		private int Pool { get; }
+
+		private string Formation { get; set; }
+
+		private string LoopType { get; }
+
+		private string Rows { get; }
+
+		public void AddRouteStep(float x, float y, float z, int restTime)
+		{
+			_routeSteps.Add(new WalkerRouteStepBuilder(x, y, z, restTime));
+		}
+
+		public WalkerTemplateSummary ToSummary()
+		{
+			// Java parity: model/templates/walker/WalkerTemplate.afterUnmarshal expands WALK_BACK routes and normalizes formations.
+			if (LoopType == "WALK_BACK" && _routeSteps.Count > 2)
+			{
+				for (var i = _routeSteps.Count - 2; i > 0; i--)
+				{
+					var step = _routeSteps[i];
+					_routeSteps.Add(new WalkerRouteStepBuilder(step.X, step.Y, step.Z, step.RestTime));
+				}
+			}
+
+			var rows = ResolveRows();
+			var routeSteps = _routeSteps
+				.Select(
+					(step, index) => new WalkerRouteStepSummary(
+						step.X,
+						step.Y,
+						step.Z,
+						step.RestTime,
+						index,
+						index == _routeSteps.Count - 1))
+				.ToArray();
+			return new WalkerTemplateSummary(RouteId, Pool, Formation, LoopType, rows, routeSteps);
+		}
+
+		private IReadOnlyList<int> ResolveRows()
+		{
+			if (Pool == 2)
+			{
+				Formation = "SQUARE";
+				return [2];
+			}
+
+			if (Formation != "SQUARE")
+				return Array.Empty<int>();
+
+			var rows = Rows
+				.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+				.Select(value => int.TryParse(value, out var parsed) ? parsed : 0)
+				.Where(value => value > 0)
+				.ToArray();
+			if (rows.Length > 0)
+				return rows;
+
+			Formation = "POINT";
+			return Array.Empty<int>();
+		}
+
+		private readonly record struct WalkerRouteStepBuilder(float X, float Y, float Z, int RestTime);
 	}
 
 	private sealed class ExtractedItemsCollectionBuilder

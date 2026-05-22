@@ -184,6 +184,57 @@ public sealed class StaticDataLoadingTests
 	}
 
 	[Fact]
+	public async Task StaticData_LoadsWalkerTemplates()
+	{
+		using var temp = TempDirectory.Create();
+		var cacheFile = Path.Combine(temp.Path, "static_data.xml");
+		File.WriteAllText(
+			cacheFile,
+			"""
+			<?xml version="1.0" encoding="UTF-8"?>
+			<static_data>
+				<npc_walker>
+					<walker_template route_id="route-a" pool="2" loop_type="WALK_BACK">
+						<routestep x="1" y="2" z="3" rest_time="7" />
+						<routestep x="4" y="5" z="6" />
+						<routestep x="7" y="8" z="9" />
+					</walker_template>
+					<walker_template route_id="route-b" formation="SQUARE" rows="1,2">
+						<routestep x="10" y="11" z="12" />
+					</walker_template>
+					<walker_template route_id="route-c" formation="SQUARE">
+						<routestep x="13" y="14" z="15" />
+					</walker_template>
+				</npc_walker>
+			</static_data>
+			""");
+
+		var staticData = await StaticData.LoadFromCacheAsync(cacheFile, []);
+
+		Assert.Equal(3, staticData.WalkerTemplates.Count);
+		var walkBack = staticData.WalkerTemplates.GetWalkerTemplate("route-a");
+		Assert.NotNull(walkBack);
+		Assert.Equal(2, walkBack.Pool);
+		Assert.Equal("SQUARE", walkBack.Formation);
+		Assert.Equal([2], walkBack.Rows);
+		Assert.Equal("WALK_BACK", walkBack.LoopType);
+		Assert.Equal(4, walkBack.RouteSteps.Count);
+		Assert.Equal(new WalkerRouteStepSummary(4, 5, 6, 0, 3, true), walkBack.RouteSteps[^1]);
+		Assert.False(walkBack.RouteSteps[0].IsLastStep);
+		Assert.Equal(7, walkBack.RouteSteps[0].RestTime);
+
+		var squareRows = staticData.WalkerTemplates.GetWalkerTemplate("route-b");
+		Assert.NotNull(squareRows);
+		Assert.Equal("SQUARE", squareRows.Formation);
+		Assert.Equal([1, 2], squareRows.Rows);
+
+		var missingRows = staticData.WalkerTemplates.GetWalkerTemplate("route-c");
+		Assert.NotNull(missingRows);
+		Assert.Equal("POINT", missingRows.Formation);
+		Assert.Empty(missingRows.Rows);
+	}
+
+	[Fact]
 	public async Task DataManager_LoadsRealJavaStaticDataManifestCounts()
 	{
 		using var temp = TempDirectory.Create();
@@ -214,6 +265,8 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(staticData.GetElementCount("itemset"), staticData.ItemSets.Count);
 		Assert.Equal(staticData.GetElementCount("enchant_list"), staticData.EnchantTemplates.Count);
 		Assert.Equal(staticData.GetElementCount("tempering_list"), staticData.TemperingTemplates.Count);
+		Assert.Equal(staticData.GetElementCount("walker_template"), staticData.WalkerTemplates.Count);
+		Assert.NotNull(staticData.WalkerTemplates.GetWalkerTemplate("2B608BDFBB378B8479A1DB5321532BEC54C38823"));
 		Assert.Equal(staticData.GetElementCount("instance_cooltime"), staticData.InstanceCooltimes.Count);
 		Assert.Equal("SWORD", staticData.ItemTemplates.GetItemTemplate(100000001)?.ItemGroup);
 		Assert.Equal([37, 44], staticData.ItemTemplates.GetItemTemplate(100000001)?.RequiredEquipSkills);
