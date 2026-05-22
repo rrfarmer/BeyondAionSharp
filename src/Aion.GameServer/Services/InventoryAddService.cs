@@ -40,7 +40,14 @@ public static class InventoryAddService
 
 		if (itemTemplate.MaxStackCount > 1)
 		{
-			foreach (var item in inventoryItems.Where(item => CanMergeIntoStack(item, itemTemplate)))
+			var mergeCandidates = string.Equals(itemTemplate.ItemGroup, "POWER_SHARDS", StringComparison.Ordinal)
+				// Java parity: services/item/ItemService.addStackableItem merges POWER_SHARDS into equipped shards before cube stacks.
+				? inventoryItems
+					.Where(item => CanMergeIntoStack(item, itemTemplate, allowEquipped: true))
+					.OrderByDescending(item => item.IsEquipped)
+				: inventoryItems.Where(item => CanMergeIntoStack(item, itemTemplate, allowEquipped: false));
+
+			foreach (var item in mergeCandidates)
 			{
 				if (remaining == 0)
 					break;
@@ -81,11 +88,11 @@ public static class InventoryAddService
 			RemainingCount: remaining);
 	}
 
-	private static bool CanMergeIntoStack(InventoryItem item, ItemTemplateSummary itemTemplate)
+	private static bool CanMergeIntoStack(InventoryItem item, ItemTemplateSummary itemTemplate, bool allowEquipped)
 	{
 		return item.ItemId == itemTemplate.TemplateId
 			&& item.Location == CubeStorageId
-			&& !item.IsEquipped
+			&& (allowEquipped || !item.IsEquipped)
 			&& item.Count < itemTemplate.MaxStackCount;
 	}
 

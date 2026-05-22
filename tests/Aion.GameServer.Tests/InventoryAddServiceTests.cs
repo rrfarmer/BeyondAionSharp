@@ -60,6 +60,54 @@ public sealed class InventoryAddServiceTests
 	}
 
 	[Fact]
+	public void CreateAddItemPlan_MergesEquippedPowerShardBeforeCubeStack()
+	{
+		var template = CreateTemplate(166000001, maxStackCount: 1000, itemGroup: "POWER_SHARDS");
+		var player = new Player { ObjectId = 1000 };
+		var inventoryItems = new[]
+		{
+			new InventoryItem { ObjectId = 1, ItemId = 166000001, Count = 998, OwnerId = player.ObjectId, Location = 0 },
+			new InventoryItem { ObjectId = 2, ItemId = 166000001, Count = 998, OwnerId = player.ObjectId, Location = 0, IsEquipped = true },
+		};
+
+		var plan = InventoryAddService.CreateAddItemPlan(player, inventoryItems, template, 3, () => 99);
+
+		Assert.True(plan.Succeeded);
+		Assert.Empty(plan.AddedItems);
+		Assert.Collection(
+			plan.UpdatedItems,
+			item =>
+			{
+				Assert.Equal(2, item.ObjectId);
+				Assert.Equal(1000, item.Count);
+			},
+			item =>
+			{
+				Assert.Equal(1, item.ObjectId);
+				Assert.Equal(999, item.Count);
+			});
+	}
+
+	[Fact]
+	public void CreateAddItemPlan_IgnoresEquippedStacksForNormalStackables()
+	{
+		var template = CreateTemplate(200, maxStackCount: 10);
+		var player = new Player { ObjectId = 1000 };
+		var inventoryItems = new[]
+		{
+			new InventoryItem { ObjectId = 1, ItemId = 200, Count = 7, OwnerId = player.ObjectId, Location = 0, IsEquipped = true },
+		};
+
+		var plan = InventoryAddService.CreateAddItemPlan(player, inventoryItems, template, 1, () => 99);
+
+		Assert.True(plan.Succeeded);
+		Assert.Empty(plan.UpdatedItems);
+		var addedItem = Assert.Single(plan.AddedItems);
+		Assert.Equal(99, addedItem.ObjectId);
+		Assert.Equal(1, addedItem.Count);
+	}
+
+	[Fact]
 	public void CreateAddItemPlan_ReturnsRemainingWhenInventoryIsFull()
 	{
 		var template = CreateTemplate(200, maxStackCount: 1);
@@ -112,7 +160,7 @@ public sealed class InventoryAddServiceTests
 		Assert.Empty(plan.AddedItems);
 	}
 
-	private static ItemTemplateSummary CreateTemplate(int itemId, int maxStackCount, int extraInventoryId = -1)
+	private static ItemTemplateSummary CreateTemplate(int itemId, int maxStackCount, int extraInventoryId = -1, string itemGroup = "NONE")
 	{
 		return new ItemTemplateSummary(
 			itemId,
@@ -120,7 +168,7 @@ public sealed class InventoryAddServiceTests
 			DescriptionId: 1,
 			Mask: 0,
 			Level: 1,
-			ItemGroup: "NONE",
+			ItemGroup: itemGroup,
 			ItemType: "NORMAL",
 			Quality: "COMMON",
 			Race: "PC_ALL",
