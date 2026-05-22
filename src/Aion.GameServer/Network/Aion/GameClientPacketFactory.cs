@@ -97,6 +97,7 @@ public static class GameClientPacketFactory
 		Register(194, states => new CmShowRestrictions(194, states), GameConnectionState.InGame);
 		Register(196, states => new CmShowMap(196, states), GameConnectionState.InGame);
 		Register(197, states => new CmAppearance(197, states), GameConnectionState.InGame);
+		Register(208, states => new CmCompositeStones(208, states), GameConnectionState.InGame);
 		Register(209, states => new CmTimeCheckQuit(209, states), GameConnectionState.InGame);
 		Register(210, states => new CmCharacterPasskey(210, states), GameConnectionState.Authed);
 		Register(213, states => new CmCheckMailUnknown(213, states), GameConnectionState.InGame);

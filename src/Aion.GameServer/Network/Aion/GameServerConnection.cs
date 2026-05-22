@@ -446,6 +446,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleUseItemAsync(_activePlayer, useItem);
 				break;
+			case CmCompositeStones compositeStones:
+				if (_activePlayer != null)
+					await HandleCompositeStonesAsync(_activePlayer, compositeStones);
+				break;
 			case CmSelectDecomposable selectDecomposable:
 				if (_activePlayer != null)
 					await HandleSelectDecomposableAsync(_activePlayer, selectDecomposable);
@@ -1785,17 +1789,20 @@ public sealed class GameServerConnection : BaseClientConnection
 			await SendPacketAsync(cancelAnimation);
 		else
 			await BroadcastItemUsageAnimationAsync(player, cancelAnimation);
-		await SendPacketAsync(pendingItemUse.CancelMessage switch
+		if (pendingItemUse.CancelMessage != PendingItemUseCancelMessage.None)
 		{
-			PendingItemUseCancelMessage.EnchantItem => SmSystemMessage.EnchantItemCanceled(pendingItemUse.TargetItemName),
-			PendingItemUseCancelMessage.Item => SmSystemMessage.ItemCanceled(),
-			PendingItemUseCancelMessage.ItemCharge => SmSystemMessage.ItemChargeCanceled(),
-			PendingItemUseCancelMessage.ItemCharge2 => SmSystemMessage.ItemCharge2Canceled(),
-			PendingItemUseCancelMessage.GodstoneSocket => SmSystemMessage.GiveItemProcCancel(pendingItemUse.TargetItemName),
-			PendingItemUseCancelMessage.SoulBind => SmSystemMessage.SoulBoundItemCanceled(pendingItemUse.TargetItemName),
-			PendingItemUseCancelMessage.Decompose => SmSystemMessage.DecomposeItemCanceled(pendingItemUse.TargetItemName),
-			_ => SmSystemMessage.GiveItemOptionCanceled(pendingItemUse.TargetItemName),
-		});
+			await SendPacketAsync(pendingItemUse.CancelMessage switch
+			{
+				PendingItemUseCancelMessage.EnchantItem => SmSystemMessage.EnchantItemCanceled(pendingItemUse.TargetItemName),
+				PendingItemUseCancelMessage.Item => SmSystemMessage.ItemCanceled(),
+				PendingItemUseCancelMessage.ItemCharge => SmSystemMessage.ItemChargeCanceled(),
+				PendingItemUseCancelMessage.ItemCharge2 => SmSystemMessage.ItemCharge2Canceled(),
+				PendingItemUseCancelMessage.GodstoneSocket => SmSystemMessage.GiveItemProcCancel(pendingItemUse.TargetItemName),
+				PendingItemUseCancelMessage.SoulBind => SmSystemMessage.SoulBoundItemCanceled(pendingItemUse.TargetItemName),
+				PendingItemUseCancelMessage.Decompose => SmSystemMessage.DecomposeItemCanceled(pendingItemUse.TargetItemName),
+				_ => SmSystemMessage.GiveItemOptionCanceled(pendingItemUse.TargetItemName),
+			});
+		}
 	}
 
 	private static void CleanupPendingItemUse(Player player, PendingItemUse pendingItemUse, bool canceled)
@@ -2571,6 +2578,171 @@ public sealed class GameServerConnection : BaseClientConnection
 				await SendPacketAsync(SmSystemMessage.ItemRestrictionRide());
 				break;
 		}
+	}
+
+	private async Task HandleCompositeStonesAsync(Player player, CmCompositeStones packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_COMPOSITE_STONES.runImpl.
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var itemTemplates = staticData?.ItemTemplates;
+		if (staticData == null || itemTemplates == null)
+			return;
+
+		var inventoryItems = player.InventoryItems.ToList();
+		var toolItem = inventoryItems.FirstOrDefault(item => item.ObjectId == packet.ToolItemObjectId && item.Location == CubeStorageId && !item.IsEquipped);
+		var firstItem = inventoryItems.FirstOrDefault(item => item.ObjectId == packet.FirstItemObjectId && item.Location == CubeStorageId && !item.IsEquipped);
+		var secondItem = inventoryItems.FirstOrDefault(item => item.ObjectId == packet.SecondItemObjectId && item.Location == CubeStorageId && !item.IsEquipped);
+		if (toolItem == null || firstItem == null || secondItem == null)
+			return;
+
+		var toolTemplate = itemTemplates.GetItemTemplate(toolItem.ItemId);
+		var firstTemplate = itemTemplates.GetItemTemplate(firstItem.ItemId);
+		var secondTemplate = itemTemplates.GetItemTemplate(secondItem.ItemId);
+		if (toolTemplate == null || firstTemplate == null || secondTemplate == null)
+			return;
+
+		var validation = CompositionService.CanAct(toolTemplate, firstItem, firstTemplate, secondItem, secondTemplate);
+		if (!validation.Succeeded)
+			return;
+
+		await CancelPendingItemUseAsync(player);
+		await SendPacketAsync(
+			new SmItemUsageAnimation(
+				player.ObjectId,
+				toolItem.ObjectId,
+				toolItem.ItemId,
+				CompositionService.UsageDelayMilliseconds,
+				0,
+				0));
+
+		await SchedulePendingItemUseAsync(
+			player,
+			itemObjectId: toolItem.ObjectId,
+			itemTemplateId: toolItem.ItemId,
+			targetItemName: toolTemplate.GetClientName() ?? toolTemplate.Name,
+			cancelMessage: PendingItemUseCancelMessage.None,
+			delay: TimeSpan.FromMilliseconds(CompositionService.UsageDelayMilliseconds),
+			completeAsync: async cancellationToken =>
+			{
+				if (cancellationToken.IsCancellationRequested)
+					return;
+
+				await CompleteCompositeStonesAsync(
+					player,
+					toolItem,
+					firstItem.ItemId,
+					firstTemplate.Level,
+					secondItem.ItemId,
+					secondTemplate.Level,
+					staticData,
+					cancellationToken);
+			},
+			cancelEndState: 2,
+			cancelAnimationToSelfOnly: true);
+	}
+
+	private async Task CompleteCompositeStonesAsync(
+		Player player,
+		InventoryItem toolItem,
+		int firstItemId,
+		int firstItemLevel,
+		int secondItemId,
+		int secondItemLevel,
+		StaticData staticData,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: CompositionAction delayed task consumes captured item ids without a second canAct pass.
+		var inventoryItems = player.InventoryItems.ToList();
+		var mutationPlan = CompositionService.CreateMutationPlan(
+			player,
+			inventoryItems,
+			toolItem.ItemId,
+			firstItemId,
+			firstItemLevel,
+			secondItemId,
+			secondItemLevel,
+			staticData.ItemTemplates,
+			RandomInclusive,
+			() => _idFactory?.NextId() ?? 0);
+
+		var saved = _playerEnterWorldService == null
+			|| await _playerEnterWorldService.SaveCompositeStoneActionMutationAsync(
+				player,
+				mutationPlan.UpdatedConsumedItems,
+				mutationPlan.DeletedConsumedObjectIds,
+				mutationPlan.UpdatedRewardItems,
+				mutationPlan.AddedRewardItems,
+				cancellationToken);
+		if (!saved)
+			return;
+
+		await SendConsumedItemPacketsAsync(inventoryItems, mutationPlan.UpdatedConsumedItems, mutationPlan.DeletedConsumedObjectIds, staticData.ItemTemplates);
+		ApplyConsumedAndRewardInventoryMutation(inventoryItems, mutationPlan);
+		player.InventoryItems = inventoryItems.ToArray();
+		if (mutationPlan.RewardItemId != 0 && staticData.ItemTemplates.GetItemTemplate(mutationPlan.RewardItemId) is { } rewardTemplate)
+		{
+			RegisterCompositionExpirableAddedItems(player, mutationPlan.AddedRewardItems, rewardTemplate);
+			if (HasRewardMutation(mutationPlan.UpdatedRewardItems, mutationPlan.AddedRewardItems))
+				await SendCompositionRewardPacketsAsync(mutationPlan, rewardTemplate);
+		}
+
+		if (!mutationPlan.RewardSucceeded && mutationPlan.RewardInventoryFull)
+			await SendPacketAsync(SmSystemMessage.DiceInventoryError());
+		await SendPacketAsync(new SmItemUsageAnimation(player.ObjectId, toolItem.ObjectId, toolItem.ItemId, 0, 1, 0));
+	}
+
+	private async Task SendConsumedItemPacketsAsync(
+		IReadOnlyList<InventoryItem> inventoryItems,
+		IReadOnlyList<InventoryItem> updatedConsumedItems,
+		IReadOnlyList<int> deletedConsumedObjectIds,
+		ItemTemplateTable itemTemplates)
+	{
+		foreach (var updatedItem in updatedConsumedItems)
+		{
+			var template = itemTemplates.GetItemTemplate(updatedItem.ItemId);
+			if (template != null)
+				await SendPacketAsync(new SmInventoryUpdateItem(updatedItem, template, SmInventoryUpdateItem.DecreaseItemUse));
+		}
+
+		foreach (var deletedObjectId in deletedConsumedObjectIds)
+		{
+			if (inventoryItems.Any(item => item.ObjectId == deletedObjectId))
+				await SendPacketAsync(new SmDeleteItem(deletedObjectId, SmDeleteItem.UseDeleteType));
+		}
+	}
+
+	private static void ApplyConsumedAndRewardInventoryMutation(List<InventoryItem> inventoryItems, CompositionMutationPlan mutationPlan)
+	{
+		foreach (var updatedConsumedItem in mutationPlan.UpdatedConsumedItems)
+			ReplaceInventoryItem(inventoryItems, updatedConsumedItem);
+		foreach (var deletedConsumedObjectId in mutationPlan.DeletedConsumedObjectIds)
+			inventoryItems.RemoveAll(item => item.ObjectId == deletedConsumedObjectId);
+		foreach (var updatedReward in mutationPlan.UpdatedRewardItems)
+			ReplaceInventoryItem(inventoryItems, updatedReward);
+		inventoryItems.AddRange(mutationPlan.AddedRewardItems);
+	}
+
+	private void RegisterCompositionExpirableAddedItems(Player player, IReadOnlyList<InventoryItem> addedRewardItems, ItemTemplateSummary rewardTemplate)
+	{
+		// Java parity: services/item/ItemService.addNonStackableItem registers newly created expirable items.
+		if (rewardTemplate.MaxStackCount > 1)
+			return;
+
+		foreach (var addedRewardItem in addedRewardItems)
+			_expirableTaskService?.RegisterInventoryItem(player, addedRewardItem);
+	}
+
+	private async Task SendCompositionRewardPacketsAsync(CompositionMutationPlan mutationPlan, ItemTemplateSummary rewardTemplate)
+	{
+		foreach (var updatedReward in mutationPlan.UpdatedRewardItems)
+			await SendPacketAsync(new SmInventoryUpdateItem(updatedReward, rewardTemplate, SmInventoryUpdateItem.IncreaseItemCollect));
+		foreach (var addedReward in mutationPlan.AddedRewardItems)
+			await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(addedReward, rewardTemplate));
+	}
+
+	private static int RandomInclusive(int min, int max)
+	{
+		return Random.Shared.Next(min, max + 1);
 	}
 
 	private async Task HandleUseItemAsync(Player player, CmUseItem packet)
@@ -6707,6 +6879,7 @@ public sealed class GameServerConnection : BaseClientConnection
 
 	private enum PendingItemUseCancelMessage
 	{
+		None,
 		Item,
 		EnchantItem,
 		ItemCharge,

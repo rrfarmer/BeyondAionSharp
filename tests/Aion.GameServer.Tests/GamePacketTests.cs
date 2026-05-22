@@ -3171,6 +3171,23 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesCompositeStonesPacket()
+	{
+		var packet = Assert.IsType<CmCompositeStones>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(208, b =>
+			{
+				b.WriteD(9001);
+				b.WriteD(9002);
+				b.WriteD(9003);
+			}), GameConnectionState.InGame));
+
+		Assert.Equal(9001, packet.ToolItemObjectId);
+		Assert.Equal(9002, packet.FirstItemObjectId);
+		Assert.Equal(9003, packet.SecondItemObjectId);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(208, _ => { }), GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesItemRemodelPacket()
 	{
 		var packet = Assert.IsType<CmItemRemodel>(

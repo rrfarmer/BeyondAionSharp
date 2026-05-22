@@ -175,6 +175,8 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(-1, staticData.ItemTemplates.GetItemTemplate(152000065)?.ExtraInventoryId);
 		Assert.Equal(staticData.GetElementCount("decompose"), staticData.ItemTemplates.Templates.Count(template => template.HasDecomposeAction));
 		Assert.True(staticData.ItemTemplates.GetItemTemplate(152000065)?.HasDecomposeAction);
+		Assert.Equal(staticData.GetElementCount("composition"), staticData.ItemTemplates.Templates.Count(template => template.HasCompositionAction));
+		Assert.True(staticData.ItemTemplates.GetItemTemplate(165010000)?.HasCompositionAction);
 		Assert.Equal(staticData.GetElementCount("decomposable"), staticData.DecomposableItems.Count);
 		Assert.True(staticData.DecomposableItems.NormalCount > staticData.DecomposableItems.SelectableCount);
 		var pepentoRewards = staticData.DecomposableItems.GetInfoByItemId(152000065);

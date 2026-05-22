@@ -846,6 +846,13 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 4 && reader.LocalName == "composition" && currentItemTemplate != null)
+			{
+				// Java parity: model/templates/item/actions/CompositionAction marker used by CM_COMPOSITE_STONES.
+				currentItemTemplate.HasCompositionAction = true;
+				continue;
+			}
+
 			if (reader.Depth == 4 && reader.LocalName == "assemble" && currentItemTemplate != null)
 			{
 				// Java parity: model/templates/item/actions/AssemblyItemAction item attribute.
@@ -1664,6 +1671,8 @@ public sealed class StaticData
 
 		public bool HasDecomposeAction { get; set; }
 
+		public bool HasCompositionAction { get; set; }
+
 		public int AssemblyItemId { get; set; }
 
 		public string CosmeticActionName { get; set; } = string.Empty;
@@ -1790,6 +1799,7 @@ public sealed class StaticData
 				RemodelAction,
 				CosmeticActionName,
 				HasDecomposeAction,
+				HasCompositionAction,
 				ExtraInventoryId,
 				AssemblyItemId,
 				ExpExtractAction);

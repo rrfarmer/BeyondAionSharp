@@ -346,6 +346,24 @@ public sealed class PlayerEnterWorldService
 			cancellationToken);
 	}
 
+	public Task<bool> SaveCompositeStoneActionMutationAsync(
+		Player player,
+		IReadOnlyList<InventoryItem> updatedConsumedItems,
+		IReadOnlyList<int> deletedConsumedObjectIds,
+		IReadOnlyList<InventoryItem> updatedRewardItems,
+		IReadOnlyList<InventoryItem> addedRewardItems,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: CM_COMPOSITE_STONES tool/stone consumption plus CompositionAction ItemService.addItem reward.
+		return _repository.SaveAssemblyItemActionMutationAsync(
+			player.ObjectId,
+			updatedConsumedItems,
+			deletedConsumedObjectIds,
+			updatedRewardItems,
+			addedRewardItems,
+			cancellationToken);
+	}
+
 	public Task<bool> SaveItemRemodelMutationAsync(
 		Player player,
 		InventoryItem targetItemUpdate,

@@ -97,6 +97,7 @@ public sealed record ItemTemplateSummary(
 	ItemRemodelActionInfo? RemodelAction = null,
 	string CosmeticActionName = "",
 	bool HasDecomposeAction = false,
+	bool HasCompositionAction = false,
 	int ExtraInventoryId = -1,
 	int AssemblyItemId = 0,
 	ItemExpExtractActionInfo? ExpExtractAction = null)
