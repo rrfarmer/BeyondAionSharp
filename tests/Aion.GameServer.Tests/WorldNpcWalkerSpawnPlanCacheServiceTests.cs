@@ -41,10 +41,15 @@ public sealed class WorldNpcWalkerSpawnPlanCacheServiceTests
 		Assert.NotNull(formationPlan);
 		var formation = Assert.Single(formationPlan.SpawnPlan.Formations);
 		Assert.Equal([2, 1], formation.Members.Select(member => member.ObjectId).ToArray());
+		Assert.Empty(formationPlan.PlacementPlan.InactiveVariantObjectIds);
+		Assert.Equal([2, 1], formationPlan.PlacementPlan.ActivePlacements.Select(placement => placement.ObjectId).ToArray());
 		var variantPlan = cache.GetWorldPlan(220010000);
 		Assert.NotNull(variantPlan);
 		var selectedWalker = Assert.Single(variantPlan.SpawnPlan.Walkers);
 		Assert.Equal(4, selectedWalker.ObjectId);
+		var placement = Assert.Single(variantPlan.PlacementPlan.ActivePlacements);
+		Assert.Equal(4, placement.ObjectId);
+		Assert.Equal([3], variantPlan.PlacementPlan.InactiveVariantObjectIds);
 		var choice = Assert.Single(variantPlan.SpawnPlan.VariantChoices);
 		Assert.Equal("route-parent", choice.VersionRouteId);
 		Assert.Equal(1, choice.SelectedIndex);

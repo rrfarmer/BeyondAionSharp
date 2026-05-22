@@ -90,6 +90,8 @@ public sealed class WorldNpcSpawnServiceTests
 			var formation = Assert.Single(worldPlan.SpawnPlan.Formations);
 			Assert.Equal("route-a", formation.RouteId);
 			Assert.Equal([2, 1], formation.Members.Select(member => member.ObjectId).ToArray());
+			Assert.Equal([2, 1], worldPlan.PlacementPlan.ActivePlacements.Select(placement => placement.ObjectId).ToArray());
+			Assert.Empty(worldPlan.PlacementPlan.InactiveVariantObjectIds);
 		}
 		finally
 		{

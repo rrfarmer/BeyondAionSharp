@@ -188,7 +188,8 @@ public sealed record WorldNpcWalkerSpawnCandidate(
 	float X,
 	float Y,
 	float Z,
-	int WalkerIndex)
+	int WalkerIndex,
+	byte Heading = 0)
 {
 	public static WorldNpcWalkerSpawnCandidate FromNpc(WorldNpc npc, WorldNpcWalkerRoutePlan routePlan)
 	{
@@ -200,7 +201,8 @@ public sealed record WorldNpcWalkerSpawnCandidate(
 			npc.Position.X,
 			npc.Position.Y,
 			npc.Position.Z,
-			npc.WalkerIndex);
+			npc.WalkerIndex,
+			npc.Position.Heading);
 	}
 }
 

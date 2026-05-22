@@ -23,19 +23,22 @@ public sealed class WorldNpcWalkerSpawnPlanCacheService : IWorldNpcWalkerSpawnPl
 {
 	private readonly WorldNpcWalkerFormationOrganizerService _organizer;
 	private readonly WorldNpcWalkerVariantSelectionService _variantSelection;
+	private readonly WorldNpcWalkerPlacementPlanService _placementPlans;
 	private readonly ConcurrentDictionary<int, WorldNpcWalkerWorldSpawnPlan> _plansByWorldId = new();
 
 	public WorldNpcWalkerSpawnPlanCacheService()
-		: this(new WorldNpcWalkerFormationOrganizerService(), new WorldNpcWalkerVariantSelectionService())
+		: this(new WorldNpcWalkerFormationOrganizerService(), new WorldNpcWalkerVariantSelectionService(), new WorldNpcWalkerPlacementPlanService())
 	{
 	}
 
 	public WorldNpcWalkerSpawnPlanCacheService(
 		WorldNpcWalkerFormationOrganizerService organizer,
-		WorldNpcWalkerVariantSelectionService variantSelection)
+		WorldNpcWalkerVariantSelectionService variantSelection,
+		WorldNpcWalkerPlacementPlanService? placementPlans = null)
 	{
 		_organizer = organizer;
 		_variantSelection = variantSelection;
+		_placementPlans = placementPlans ?? new WorldNpcWalkerPlacementPlanService();
 	}
 
 	public int CachedWorldCount => _plansByWorldId.Count;
@@ -68,7 +71,8 @@ public sealed class WorldNpcWalkerSpawnPlanCacheService : IWorldNpcWalkerSpawnPl
 
 			var organization = _organizer.Organize(worldNpcs, walkerTemplates, walkerVersions);
 			var spawnPlan = _variantSelection.CreateSpawnPlan(organization);
-			var worldPlan = new WorldNpcWalkerWorldSpawnPlan(worldId, organization, spawnPlan);
+			var placementPlan = _placementPlans.CreatePlacementPlan(organization, spawnPlan, worldNpcs);
+			var worldPlan = new WorldNpcWalkerWorldSpawnPlan(worldId, organization, spawnPlan, placementPlan);
 			_plansByWorldId[worldId] = worldPlan;
 			refreshedPlans.Add(worldPlan);
 		}
@@ -90,4 +94,5 @@ public sealed class WorldNpcWalkerSpawnPlanCacheService : IWorldNpcWalkerSpawnPl
 public sealed record WorldNpcWalkerWorldSpawnPlan(
 	int WorldId,
 	WorldNpcWalkerFormationOrganizationResult Organization,
-	WorldNpcWalkerSpawnPlan SpawnPlan);
+	WorldNpcWalkerSpawnPlan SpawnPlan,
+	WorldNpcWalkerPlacementPlan PlacementPlan);
