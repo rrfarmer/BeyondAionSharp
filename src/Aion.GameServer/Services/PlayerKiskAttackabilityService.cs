@@ -28,6 +28,22 @@ public static class PlayerKiskAttackabilityService
 			: PlayerKiskCreatureType.Support;
 	}
 
+	public static PlayerKiskCreatureType GetCreatureType(
+		Player player,
+		PlayerKiskRuntimeState kisk,
+		int kiskSiegeZoneCount,
+		int kiskPvpZoneCount,
+		int playerSiegeZoneCount,
+		int playerPvpZoneCount)
+	{
+		// Java parity: Kisk.getType(Player) consumes Creature.isInsidePvPZone for both kisk and player.
+		return GetCreatureType(
+			player,
+			kisk,
+			CreaturePvpZoneStateService.IsInsidePvpZone(kiskSiegeZoneCount, kiskPvpZoneCount),
+			CreaturePvpZoneStateService.IsInsidePvpZone(playerSiegeZoneCount, playerPvpZoneCount));
+	}
+
 	private static bool SameRace(string left, string right)
 	{
 		return !string.IsNullOrWhiteSpace(left)
