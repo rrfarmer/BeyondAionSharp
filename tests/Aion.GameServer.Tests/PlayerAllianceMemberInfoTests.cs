@@ -775,6 +775,52 @@ public sealed class PlayerAllianceMemberInfoTests
 	}
 
 	[Fact]
+	public void LeaveWorkflowPlanner_ComposesAllianceLeaveBeforeBaseLeaveLikeJavaOverride()
+	{
+		var planner = new PlayerAllianceLeaveWorkflowPlanner();
+		var remaining = CreateAllianceMember(1001, "Remaining", worldId: 210010000);
+		var leaved = CreateAllianceMember(1002, "Leaved", worldId: 220010000);
+
+		var plan = planner.CreateLeaveWorkflowPlan(
+			88001,
+			leaderObjectId: 1001,
+			[remaining],
+			leaved,
+			currentViceCaptainObjectIds: [1002],
+			PlayerAllianceLeaveReason.Ban,
+			banPersonName: "Captain",
+			wasRegisteredToTeamInstance: true);
+
+		Assert.Equal(88001, plan.AllianceId);
+		Assert.Equal(1002, plan.LeavedPlayerObjectId);
+		Assert.Collection(
+			plan.Steps,
+			step =>
+			{
+				Assert.Equal(0, step.Sequence);
+				Assert.Equal(PlayerAllianceLeaveWorkflowStepKind.AllianceLeave, step.Kind);
+			},
+			step =>
+			{
+				Assert.Equal(1, step.Sequence);
+				Assert.Equal(PlayerAllianceLeaveWorkflowStepKind.BaseLeave, step.Kind);
+			});
+		Assert.Equal(PlayerAllianceLeaveReason.Ban, plan.AllianceLeavePlan.Reason);
+		Assert.Collection(
+			plan.AllianceLeavePlan.PacketIntents,
+			intent => AssertAllianceSystemPacketIntent(intent, sequence: 0, recipientObjectId: 1001, expectedMessageId: 1300980),
+			intent => AssertAllianceLeaveMemberInfoPacketIntent(intent, sequence: 1, recipientObjectId: 1001, subjectObjectId: 1002),
+			intent => AssertAllianceInfoPacketIntent(intent, sequence: 2, recipientObjectId: 1001, expectedAllianceGroupSize: 1, expectedLeaderObjectId: 1001, expectedActivePlayerMapId: 210010000, expectedPaddedViceCaptainIds: [0, 0, 0, 0]),
+			intent => AssertAllianceSystemPacketIntent(intent, sequence: 3, recipientObjectId: 1002, expectedMessageId: 1300979));
+		Assert.Collection(
+			plan.BaseLeavePlan.PacketIntents,
+			intent => AssertBaseLeavePacketIntent(intent, sequence: 0, recipientObjectId: 1002),
+			intent => AssertBaseLeaveSystemMessageIntent(intent, sequence: 1, recipientObjectId: 1002, expectedMessageId: 1400042));
+		Assert.True(plan.BaseLeavePlan.WouldScheduleInstanceKick);
+		Assert.True(plan.BaseLeavePlan.WouldNotifyEventServiceOnLeftTeam);
+	}
+
+	[Fact]
 	public void SmAllianceMemberInfo_RewritesOfflineEnterToEnterOfflineLikeJava()
 	{
 		var member = new Player

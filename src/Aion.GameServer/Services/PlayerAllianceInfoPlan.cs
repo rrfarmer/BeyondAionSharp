@@ -112,6 +112,23 @@ public sealed record PlayerAllianceLeavedPlan(
 	bool WouldBroadcastLeague = false,
 	bool WouldInvokeBaseLeaveEvent = true);
 
+public sealed record PlayerAllianceLeaveWorkflowPlan(
+	int AllianceId,
+	int LeavedPlayerObjectId,
+	PlayerAllianceLeavedPlan AllianceLeavePlan,
+	PlayerBaseLeaveSideEffectPlan BaseLeavePlan,
+	IReadOnlyList<PlayerAllianceLeaveWorkflowStep> Steps);
+
+public enum PlayerAllianceLeaveWorkflowStepKind
+{
+	AllianceLeave,
+	BaseLeave,
+}
+
+public sealed record PlayerAllianceLeaveWorkflowStep(
+	int Sequence,
+	PlayerAllianceLeaveWorkflowStepKind Kind);
+
 public enum PlayerAlliancePacketIntentKind
 {
 	AllianceInfo,
