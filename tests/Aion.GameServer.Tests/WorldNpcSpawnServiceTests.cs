@@ -60,6 +60,46 @@ public sealed class WorldNpcSpawnServiceTests
 	}
 
 	[Fact]
+	public async Task SpawnAndDespawnWorldNpc_RevalidatesCreaturePvpZoneCounters()
+	{
+		var dataManager = await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false);
+		var context = new GameServerRuntimeContext();
+		context.SetDataManager(dataManager);
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var zoneCounterService = new CreaturePvpZoneCounterService();
+		var service = new WorldNpcSpawnService(
+			context,
+			world,
+			new IDFactory(),
+			gameTimeService: null,
+			threadPoolManager: null,
+			connectionRegistry: null,
+			staticPlaceables: null,
+			walkerSpawnPlans: null,
+			walkerPlacementApplication: null,
+			NullLogger<WorldNpcSpawnService>.Instance,
+			creaturePvpZoneCounterService: zoneCounterService);
+		var pvpZonePosition = new WorldPosition(210040000, 2700, 620, 150, 0);
+		var spawns = new NpcSpawnTable([CreateSpawn(pvpZonePosition.WorldId, 203090, pvpZonePosition.X, pvpZonePosition.Y, pvpZonePosition.Z)]);
+		var templates = new NpcTemplateTable([CreateTemplate(203090)]);
+		Assert.Contains(
+			dataManager.StaticData.CreaturePvpZones.GetZonesByMapId(pvpZonePosition.WorldId),
+			zone => zone.Name == "PVP_87_210040000" && zone.Contains(pvpZonePosition));
+
+		var result = service.SpawnWorldNpcs(spawns, templates, [pvpZonePosition.WorldId]);
+		var enteredCounters = zoneCounterService.GetCounters(1);
+		var despawned = service.TryDespawnWorldNpc(1);
+		var staleLeave = zoneCounterService.ApplyZoneLeave(1, "PVP_87_210040000", CreaturePvpZoneCounterType.Pvp);
+
+		Assert.Equal(new WorldNpcSpawnResult(1, 0), result);
+		Assert.Equal(1, enteredCounters.PvpZoneCount);
+		Assert.Equal(0, enteredCounters.SiegeZoneCount);
+		Assert.True(despawned);
+		Assert.Equal(CreaturePvpZoneCounters.Empty, zoneCounterService.GetCounters(1));
+		Assert.Equal(CreaturePvpZoneMembershipTransitionStatus.NotInside, staleLeave.Status);
+	}
+
+	[Fact]
 	public async Task InitAsync_StartsRouteWalkingForSpawnedWalkerPlans()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-walker-startup-route-" + Guid.NewGuid().ToString("N"));
@@ -1106,6 +1146,19 @@ public sealed class WorldNpcSpawnServiceTests
 		}
 
 		Assert.True(condition(), "Condition was not met before the timeout.");
+	}
+
+	private static string FindRepoRoot()
+	{
+		var directory = new DirectoryInfo(AppContext.BaseDirectory);
+		while (directory != null)
+		{
+			if (File.Exists(Path.Combine(directory.FullName, "game-server", "data", "static_data", "static_data.xml")))
+				return directory.FullName;
+			directory = directory.Parent;
+		}
+
+		throw new DirectoryNotFoundException("Could not find repository root from test output directory.");
 	}
 
 	private static async Task<GameServerRuntimeContext> CreateRuntimeContextWithWalkerDataAsync(string tempPath)

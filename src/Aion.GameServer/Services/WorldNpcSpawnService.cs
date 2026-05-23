@@ -30,6 +30,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 	private readonly WorldNpcAiStateService? _npcAiStates;
 	private readonly Action<WorldNpc>? _npcLifeStatsInitialize;
 	private readonly Action<int>? _npcLifeStatsClear;
+	private readonly CreaturePvpZoneCounterService? _creaturePvpZoneCounterService;
 	private readonly ILogger<WorldNpcSpawnService> _logger;
 	private readonly ConcurrentDictionary<NpcSpawnSummary, int> _temporarySpawnObjectIds = new();
 	private readonly ConcurrentDictionary<int, SpawnedWorldNpcRegistration> _spawnedWorldNpcs = new();
@@ -56,7 +57,8 @@ public sealed class WorldNpcSpawnService : GameEngine
 		Func<int, WorldNpc, bool>? respawnedNpcCallback = null,
 		WorldNpcAiStateService? npcAiStates = null,
 		Action<WorldNpc>? npcLifeStatsInitialize = null,
-		Action<int>? npcLifeStatsClear = null)
+		Action<int>? npcLifeStatsClear = null,
+		CreaturePvpZoneCounterService? creaturePvpZoneCounterService = null)
 	{
 		_runtimeContext = runtimeContext;
 		_world = world;
@@ -74,6 +76,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		_npcAiStates = npcAiStates;
 		_npcLifeStatsInitialize = npcLifeStatsInitialize;
 		_npcLifeStatsClear = npcLifeStatsClear;
+		_creaturePvpZoneCounterService = creaturePvpZoneCounterService;
 		_logger = logger;
 	}
 
@@ -587,6 +590,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		}
 
 		_spawnedWorldNpcs[objectId] = new SpawnedWorldNpcRegistration(spawn, template);
+		RevalidateNpcCreaturePvpZones(worldNpc);
 		// Java parity: spawnengine/VisibleObjectSpawner creates a fresh Npc/NpcAI/NpcLifeStats runtime on spawn.
 		_npcAiStates?.Clear(objectId);
 		_npcLifeStatsClear?.Invoke(objectId);
@@ -775,6 +779,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		_spawnedWorldNpcs.TryRemove(objectId, out _);
 		_npcAiStates?.Clear(objectId);
 		_npcLifeStatsClear?.Invoke(objectId);
+		ClearNpcCreaturePvpZones(objectId);
 		if (_pendingDecays.TryRemove(objectId, out var pendingDecay))
 			pendingDecay.ScheduledTask?.Cancel();
 		_inactiveWalkerVariants.TryRemove(objectId, out _);
@@ -783,6 +788,23 @@ public sealed class WorldNpcSpawnService : GameEngine
 			_idFactory.ReleaseId(objectId);
 		RefreshWalkerSpawnPlansFromStaticData([worldNpc.Position.WorldId]);
 		return true;
+	}
+
+	private void RevalidateNpcCreaturePvpZones(WorldNpc npc)
+	{
+		// Java parity: World.spawnObject -> MapRegion.revalidateZones enters zone memberships for spawned creatures.
+		var staticData = _runtimeContext.DataManager?.StaticData;
+		CreaturePvpZoneRevalidationService.Revalidate(
+			npc.ObjectId,
+			npc.Position,
+			staticData?.CreaturePvpZones,
+			_creaturePvpZoneCounterService);
+	}
+
+	private void ClearNpcCreaturePvpZones(int objectId)
+	{
+		// Java parity: World.despawn -> MapRegion.revalidateZones on an unspawned Creature leaves tracked zones.
+		_creaturePvpZoneCounterService?.ClearCounters(objectId);
 	}
 
 	private void ScheduleRespawn(int oldObjectId, SpawnedWorldNpcRegistration registration, bool releaseOldObjectIdBeforeSpawn)
