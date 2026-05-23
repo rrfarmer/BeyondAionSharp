@@ -29,8 +29,11 @@ public sealed class QuestRewardServiceTests
 		Assert.NotNull(result.Change.DpInfoPacket);
 		Assert.NotNull(result.Change.VisualStatsUpdate);
 		Assert.NotNull(result.Change.VisualStatsUpdate.StatsPacket);
+		Assert.NotNull(result.Change.VisualStatsUpdate.SpeedPacket);
 		Assert.NotNull(result.Change.DpStatUpdatePacket);
-		Assert.Same(result.Change.DpInfoPacket, Assert.Single(registry.Broadcasts).Packet);
+		Assert.Equal(2, registry.Broadcasts.Count);
+		Assert.Same(result.Change.DpInfoPacket, registry.Broadcasts[0].Packet);
+		Assert.Same(result.Change.VisualStatsUpdate.SpeedPacket, registry.Broadcasts[1].Packet);
 		Assert.Collection(
 			registry.SentPackets,
 			delivery =>
@@ -47,6 +50,7 @@ public sealed class QuestRewardServiceTests
 			registry.PacketOrder,
 			packet => Assert.Same(result.Change.DpInfoPacket, packet),
 			packet => Assert.Same(result.Change.VisualStatsUpdate!.StatsPacket, packet),
+			packet => Assert.Same(result.Change.VisualStatsUpdate!.SpeedPacket, packet),
 			packet => Assert.Same(result.Change.DpStatUpdatePacket, packet));
 	}
 
@@ -85,7 +89,7 @@ public sealed class QuestRewardServiceTests
 		Assert.Equal(WorldNpcResourceChangeStatus.Increased, liveMax.Change.Status);
 		Assert.Equal(4000, liveMax.Change.MaxValue);
 		Assert.Equal(600, onlinePlayer.Dp);
-		Assert.Single(registry.Broadcasts);
+		Assert.Equal(2, registry.Broadcasts.Count);
 		Assert.Equal(2, registry.SentPackets.Count);
 	}
 

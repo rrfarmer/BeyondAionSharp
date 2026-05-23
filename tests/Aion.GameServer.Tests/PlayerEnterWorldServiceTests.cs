@@ -120,12 +120,14 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.NotNull(result.Player);
 		Assert.Equal(0, result.Player.Dp);
 		Assert.True(result.Player.IsOnline);
-		var broadcast = Assert.Single(registry.Broadcasts);
+		Assert.Equal(2, registry.Broadcasts.Count);
+		var broadcast = registry.Broadcasts[0];
 		Assert.Equal(result.Player.ObjectId, broadcast.SourceObjectId);
 		Assert.True(broadcast.IncludeSourcePlayer);
 		var dpInfo = Assert.IsType<SmDpInfo>(broadcast.Packet);
 		Assert.Equal(result.Player.ObjectId, dpInfo.PlayerObjectId);
 		Assert.Equal(0, dpInfo.CurrentDp);
+		Assert.IsType<SmEmotion>(registry.Broadcasts[1].Packet);
 		Assert.Collection(
 			registry.SentPackets,
 			delivery =>
@@ -143,6 +145,7 @@ public sealed class PlayerEnterWorldServiceTests
 			registry.PacketOrder,
 			packet => Assert.Same(dpInfo, packet),
 			packet => Assert.IsType<SmStatsInfo>(packet),
+			packet => Assert.IsType<SmEmotion>(packet),
 			packet => Assert.IsType<SmStatUpdateDp>(packet));
 	}
 

@@ -136,7 +136,7 @@ public sealed class PlayerVisualStatsUpdateServiceTests
 	}
 
 	[Fact]
-	public async Task UpdateStatsAndSpeedVisuallyAsync_ReportsMissingSpeedSnapshotAfterStatsSend()
+	public async Task UpdateStatsAndSpeedVisuallyAsync_ResolvesClassRunSpeedWhenMissing()
 	{
 		var registry = new CapturingConnectionRegistry();
 		var service = new PlayerVisualStatsUpdateService(registry);
@@ -144,14 +144,42 @@ public sealed class PlayerVisualStatsUpdateServiceTests
 
 		var result = await service.UpdateStatsAndSpeedVisuallyAsync(player, speedSnapshot: null);
 
-		Assert.Equal(PlayerVisualStatsUpdateStatus.SpeedSnapshotMissing, result.Status);
+		Assert.Equal(PlayerVisualStatsUpdateStatus.StatsAndSpeedSent, result.Status);
 		Assert.True(result.StatsPacketSent);
 		Assert.NotNull(result.StatsPacket);
-		Assert.Null(result.SpeedPacket);
-		Assert.Equal(0, result.SpeedBroadcastCount);
+		Assert.NotNull(result.SpeedSnapshot);
+		Assert.Equal(6.0f, result.SpeedSnapshot.MovementSpeed);
+		Assert.NotNull(result.SpeedPacket);
+		Assert.Equal(1, result.SpeedBroadcastCount);
+		Assert.Collection(
+			registry.PacketOrder,
+			packet => Assert.Same(result.StatsPacket, packet),
+			packet => Assert.Same(result.SpeedPacket, packet));
 		var delivery = Assert.Single(registry.SentPackets);
 		Assert.Same(result.StatsPacket, delivery.Packet);
-		Assert.Empty(registry.Broadcasts);
+		Assert.Single(registry.Broadcasts);
+	}
+
+	[Fact]
+	public async Task UpdateStatsAndSpeedVisuallyAsync_UsesClassWalkAndFlySpeeds()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var service = new PlayerVisualStatsUpdateService(registry);
+		var walkingPlayer = CreatePlayer(6108);
+		walkingPlayer.SetCreatureState(PlayerCreatureState.WalkMode, enabled: true);
+		var flyingPlayer = CreatePlayer(6109);
+		flyingPlayer.SetCreatureState(PlayerCreatureState.Flying, enabled: true);
+
+		var walk = await service.UpdateStatsAndSpeedVisuallyAsync(walkingPlayer, speedSnapshot: null);
+		var fly = await service.UpdateStatsAndSpeedVisuallyAsync(flyingPlayer, speedSnapshot: null);
+
+		Assert.Equal(PlayerVisualStatsUpdateStatus.StatsAndSpeedSent, walk.Status);
+		Assert.NotNull(walk.SpeedSnapshot);
+		Assert.Equal(1.5f, walk.SpeedSnapshot.MovementSpeed);
+		Assert.Equal(PlayerVisualStatsUpdateStatus.StatsAndSpeedSent, fly.Status);
+		Assert.NotNull(fly.SpeedSnapshot);
+		Assert.Equal(9.0f, fly.SpeedSnapshot.MovementSpeed);
+		Assert.Equal(2, registry.Broadcasts.Count);
 	}
 
 	[Fact]

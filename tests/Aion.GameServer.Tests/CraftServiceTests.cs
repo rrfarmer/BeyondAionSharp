@@ -31,7 +31,9 @@ public sealed class CraftServiceTests
 		Assert.NotNull(result.Change.DpInfoPacket);
 		Assert.NotNull(result.Change.DpStatUpdatePacket);
 		AssertVisualStatsUpdate(result.Change);
-		Assert.Same(result.Change.DpInfoPacket, Assert.Single(registry.Broadcasts).Packet);
+		Assert.Equal(2, registry.Broadcasts.Count);
+		Assert.Same(result.Change.DpInfoPacket, registry.Broadcasts[0].Packet);
+		Assert.Same(result.Change.VisualStatsUpdate!.SpeedPacket, registry.Broadcasts[1].Packet);
 		Assert.Collection(
 			registry.SentPackets,
 			delivery => Assert.Same(result.Change.VisualStatsUpdate!.StatsPacket, delivery.Packet),
@@ -40,6 +42,7 @@ public sealed class CraftServiceTests
 			registry.PacketOrder,
 			packet => Assert.Same(result.Change.DpInfoPacket, packet),
 			packet => Assert.Same(result.Change.VisualStatsUpdate!.StatsPacket, packet),
+			packet => Assert.Same(result.Change.VisualStatsUpdate!.SpeedPacket, packet),
 			packet => Assert.Same(result.Change.DpStatUpdatePacket, packet));
 	}
 
@@ -83,7 +86,9 @@ public sealed class CraftServiceTests
 		Assert.NotNull(result.Change.DpInfoPacket);
 		Assert.NotNull(result.Change.DpStatUpdatePacket);
 		AssertVisualStatsUpdate(result.Change);
-		Assert.Same(result.Change.DpInfoPacket, Assert.Single(registry.Broadcasts).Packet);
+		Assert.Equal(2, registry.Broadcasts.Count);
+		Assert.Same(result.Change.DpInfoPacket, registry.Broadcasts[0].Packet);
+		Assert.Same(result.Change.VisualStatsUpdate!.SpeedPacket, registry.Broadcasts[1].Packet);
 		Assert.Collection(
 			registry.SentPackets,
 			delivery => Assert.Same(result.Change.VisualStatsUpdate!.StatsPacket, delivery.Packet),
@@ -108,7 +113,7 @@ public sealed class CraftServiceTests
 		Assert.Equal(WorldNpcResourceChangeStatus.Reduced, liveMax.Change.Status);
 		Assert.Equal(4000, liveMax.Change.MaxValue);
 		Assert.Equal(500, player.Dp);
-		Assert.Single(registry.Broadcasts);
+		Assert.Equal(2, registry.Broadcasts.Count);
 		Assert.Equal(2, registry.SentPackets.Count);
 	}
 
@@ -125,11 +130,13 @@ public sealed class CraftServiceTests
 	private static void AssertVisualStatsUpdate(WorldNpcResourceChangeResult change)
 	{
 		Assert.NotNull(change.VisualStatsUpdate);
-		Assert.Equal(PlayerVisualStatsUpdateStatus.SpeedSnapshotMissing, change.VisualStatsUpdate.Status);
+		Assert.Equal(PlayerVisualStatsUpdateStatus.StatsAndSpeedSent, change.VisualStatsUpdate.Status);
 		Assert.True(change.VisualStatsUpdate.StatsPacketSent);
 		Assert.NotNull(change.VisualStatsUpdate.StatsPacket);
-		Assert.Null(change.VisualStatsUpdate.SpeedPacket);
-		Assert.Equal(0, change.VisualStatsUpdate.SpeedBroadcastCount);
+		Assert.NotNull(change.VisualStatsUpdate.SpeedSnapshot);
+		Assert.Equal(6.0f, change.VisualStatsUpdate.SpeedSnapshot.MovementSpeed);
+		Assert.NotNull(change.VisualStatsUpdate.SpeedPacket);
+		Assert.Equal(1, change.VisualStatsUpdate.SpeedBroadcastCount);
 	}
 
 	private static Player CreatePlayer(int objectId, int dp)
