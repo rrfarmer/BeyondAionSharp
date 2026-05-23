@@ -14,7 +14,8 @@ public sealed class WorldNpcDropModifierService
 		return new WorldNpcDropModifiers(
 			looter.Race,
 			boostDropRate,
-			GetReductionDropRate(npc.Template.Level, highestLevel ?? looter.Level));
+			GetReductionDropRate(npc.Template.Level, highestLevel ?? looter.Level),
+			IsDropNpcChest: IsChest(npc));
 	}
 
 	public static float? GetReductionDropRate(int npcLevel, int highestLevel)
@@ -36,5 +37,11 @@ public sealed class WorldNpcDropModifierService
 			-6 => 80,
 			>= -5 => 100,
 		};
+	}
+
+	private static bool IsChest(IWorldNpcObject npc)
+	{
+		// Java parity: services/drop/DropRegistrationService.createDropModifiers chest AI slice, narrowed until group-drop template names exist.
+		return string.Equals(npc.AiName, "chest", StringComparison.OrdinalIgnoreCase);
 	}
 }

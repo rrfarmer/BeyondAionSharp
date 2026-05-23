@@ -179,7 +179,9 @@ public sealed record WorldNpcCustomDropResult(
 public sealed record WorldNpcDropModifiers(
 	string DropRace,
 	float BoostDropRate = 1f,
-	float? ReductionDropRate = null)
+	float? ReductionDropRate = null,
+	bool IsDropNpcChest = false,
+	int? MaxDropsPerGroup = null)
 {
 	public float CalculateDropChance(float chance, bool allowReductionDropRate)
 	{

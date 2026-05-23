@@ -149,6 +149,71 @@ public sealed class WorldNpcDropRegistrationWorkflowServiceTests
 		}
 	}
 
+	[Fact]
+	public async Task RegisterCustomDropsAsync_RegistersGlobalDropsWhenCustomAndQuestDropsAreEmpty()
+	{
+		var dropRegistration = new WorldNpcDropRegistrationService();
+		var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		try
+		{
+			var lootService = new WorldNpcLootService(dropRegistration, threadPoolManager: threadPoolManager);
+			var registry = new CapturingConnectionRegistry();
+			registry.OnlinePlayerObjectIds.Add(1001);
+			var workflow = new WorldNpcDropRegistrationWorkflowService(
+				new WorldNpcCustomDropService(new CustomNpcDropTable([])),
+				dropRegistration,
+				new WorldNpcLootBroadcastService(lootService, registry),
+				questDropService: new WorldNpcQuestDropService(new QuestDropTable([])),
+				globalDropService: new WorldNpcGlobalDropService(
+					new GlobalDropTable(
+					[
+						new GlobalDropRuleSummary(
+							"default-global",
+							Chance: 100,
+							DynamicChance: false,
+							MinDiff: -99,
+							MaxDiff: 99,
+							RestrictionRace: "",
+							UseLevelBasedChanceReduction: false,
+							MemberLimit: 1,
+							MaxDropRule: 1,
+							Items: [new GlobalDropItemSummary(1001, 4, 4, 100)],
+							WorldTypes: new HashSet<string>(StringComparer.OrdinalIgnoreCase),
+							Races: new HashSet<string>(StringComparer.OrdinalIgnoreCase),
+							Ratings: new HashSet<string>(StringComparer.OrdinalIgnoreCase),
+							MapIds: new HashSet<int>(),
+							Tribes: new HashSet<string>(StringComparer.OrdinalIgnoreCase),
+							NpcIds: new HashSet<int>(),
+							NpcNames: [],
+							NpcGroups: new HashSet<string>(StringComparer.OrdinalIgnoreCase),
+							ExcludedNpcIds: new HashSet<int>(),
+							Zones: new HashSet<string>(StringComparer.OrdinalIgnoreCase)),
+					]),
+					new ItemTemplateTable([CreateItem(1001, level: 10, race: "PC_ALL")]),
+					chanceRoll: () => 0f));
+			var looter = new Player { ObjectId = 1001, Race = "ELYOS", Level = 10 };
+
+			var result = await workflow.RegisterCustomDropsAsync(
+				CreateNpc(5001, 203001),
+				looter,
+				freeForAllDelay: TimeSpan.FromMilliseconds(10));
+
+			Assert.Equal(WorldNpcDropRegistrationWorkflowStatus.Registered, result.Status);
+			var drop = Assert.Single(result.Drops);
+			Assert.Equal(1, drop.Index);
+			Assert.Equal(1001, drop.ItemId);
+			Assert.Equal(4, drop.Count);
+			Assert.Equal(result.Drops, dropRegistration.GetCurrentDrops(5001));
+			Assert.True(dropRegistration.TryGetRegistration(5001, out var registration));
+			Assert.True(registration!.IsAllowedToLoot(1001));
+			Assert.Single(registry.SentPackets);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
 	private static WorldNpc CreateNpc(int objectId, int templateId)
 	{
 		return new WorldNpc(
@@ -156,6 +221,23 @@ public sealed class WorldNpcDropRegistrationWorkflowServiceTests
 			templateId,
 			new NpcTemplateSummary(templateId, "loot_npc", 0, 10, "NORMAL", "NORMAL", "NONE", "NONE", "GENERAL"),
 			new WorldPosition(210010000, 1, 2, 3, 0));
+	}
+
+	private static ItemTemplateSummary CreateItem(int itemId, int level, string race)
+	{
+		return new ItemTemplateSummary(
+			itemId,
+			$"item-{itemId}",
+			DescriptionId: 0,
+			Mask: 0,
+			Level: level,
+			ItemGroup: "MISC",
+			ItemType: "NORMAL",
+			Quality: "COMMON",
+			Race: race,
+			MaxStackCount: 100,
+			Price: 0,
+			ValidEquipmentSlots: 0);
 	}
 
 	private sealed class CapturingConnectionRegistry : IGameClientConnectionRegistry

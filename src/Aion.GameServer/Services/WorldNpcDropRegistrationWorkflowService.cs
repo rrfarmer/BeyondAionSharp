@@ -9,19 +9,22 @@ public sealed class WorldNpcDropRegistrationWorkflowService
 	private readonly WorldNpcLootBroadcastService _lootBroadcastService;
 	private readonly WorldNpcDropModifierService _dropModifierService;
 	private readonly WorldNpcQuestDropService? _questDropService;
+	private readonly WorldNpcGlobalDropService? _globalDropService;
 
 	public WorldNpcDropRegistrationWorkflowService(
 		WorldNpcCustomDropService customDropService,
 		WorldNpcDropRegistrationService dropRegistrationService,
 		WorldNpcLootBroadcastService lootBroadcastService,
 		WorldNpcDropModifierService? dropModifierService = null,
-		WorldNpcQuestDropService? questDropService = null)
+		WorldNpcQuestDropService? questDropService = null,
+		WorldNpcGlobalDropService? globalDropService = null)
 	{
 		_customDropService = customDropService;
 		_dropRegistrationService = dropRegistrationService;
 		_lootBroadcastService = lootBroadcastService;
 		_dropModifierService = dropModifierService ?? new WorldNpcDropModifierService();
 		_questDropService = questDropService;
+		_globalDropService = globalDropService;
 	}
 
 	public async ValueTask<WorldNpcDropRegistrationWorkflowResult> RegisterCustomDropsAsync(
@@ -39,13 +42,20 @@ public sealed class WorldNpcDropRegistrationWorkflowService
 		if (looter == null)
 			return WorldNpcDropRegistrationWorkflowResult.Skipped(WorldNpcDropRegistrationWorkflowStatus.MissingLooter);
 
+		var effectiveDropModifiers = dropModifiers ?? _dropModifierService.CreateModifiers(npc, looter, highestLevel);
 		var generated = _customDropService.CreateDrops(
 			npc.ObjectId,
 			npc.TemplateId,
-			dropModifiers ?? _dropModifierService.CreateModifiers(npc, looter, highestLevel));
+			effectiveDropModifiers);
 		var questDrops = _questDropService?.CreateDrops(npc, looter, groupMembers, generated.NextIndex)
 			?? WorldNpcQuestDropResult.Empty(generated.NextIndex);
-		var droppedItems = generated.Drops.Concat(questDrops.Drops).ToArray();
+		var globalDrops = _globalDropService?.CreateDrops(
+			npc,
+			looter,
+			effectiveDropModifiers,
+			groupMembers,
+			questDrops.NextIndex) ?? WorldNpcGlobalDropResult.Empty(questDrops.NextIndex);
+		var droppedItems = generated.Drops.Concat(questDrops.Drops).Concat(globalDrops.Drops).ToArray();
 		if (droppedItems.Length == 0)
 			return WorldNpcDropRegistrationWorkflowResult.Skipped(WorldNpcDropRegistrationWorkflowStatus.NoGeneratedDrops);
 

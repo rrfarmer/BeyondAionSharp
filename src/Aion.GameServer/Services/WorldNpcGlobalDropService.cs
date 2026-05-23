@@ -12,17 +12,23 @@ public sealed class WorldNpcGlobalDropService
 	private readonly GlobalDropTable? _globalDrops;
 	private readonly ItemTemplateTable? _itemTemplates;
 	private readonly GlobalNpcExclusionTable? _globalNpcExclusions;
+	private readonly Func<float> _chanceRoll;
+	private readonly Func<int, int, int> _countRoll;
+	private readonly Func<float, float> _weightedRoll;
 
 	public WorldNpcGlobalDropService(GameServerRuntimeContext runtimeContext)
-		: this(runtimeContext, null, null, null)
+		: this(runtimeContext, null, null, null, null, null, null)
 	{
 	}
 
 	public WorldNpcGlobalDropService(
 		GlobalDropTable globalDrops,
 		ItemTemplateTable itemTemplates,
-		GlobalNpcExclusionTable? globalNpcExclusions = null)
-		: this(null, globalDrops, itemTemplates, globalNpcExclusions)
+		GlobalNpcExclusionTable? globalNpcExclusions = null,
+		Func<float>? chanceRoll = null,
+		Func<int, int, int>? countRoll = null,
+		Func<float, float>? weightedRoll = null)
+		: this(null, globalDrops, itemTemplates, globalNpcExclusions, chanceRoll, countRoll, weightedRoll)
 	{
 	}
 
@@ -30,12 +36,51 @@ public sealed class WorldNpcGlobalDropService
 		GameServerRuntimeContext? runtimeContext,
 		GlobalDropTable? globalDrops,
 		ItemTemplateTable? itemTemplates,
-		GlobalNpcExclusionTable? globalNpcExclusions)
+		GlobalNpcExclusionTable? globalNpcExclusions,
+		Func<float>? chanceRoll,
+		Func<int, int, int>? countRoll,
+		Func<float, float>? weightedRoll)
 	{
 		_runtimeContext = runtimeContext;
 		_globalDrops = globalDrops;
 		_itemTemplates = itemTemplates;
 		_globalNpcExclusions = globalNpcExclusions;
+		_chanceRoll = chanceRoll ?? (() => Random.Shared.NextSingle() * 100f);
+		_countRoll = countRoll ?? ((minInclusive, maxInclusive) => minInclusive == maxInclusive ? minInclusive : Random.Shared.Next(minInclusive, maxInclusive + 1));
+		_weightedRoll = weightedRoll ?? (exclusiveMax => Random.Shared.NextSingle() * exclusiveMax);
+	}
+
+	public WorldNpcGlobalDropResult CreateDrops(
+		IWorldNpcObject? npc,
+		Player? looter,
+		WorldNpcDropModifiers dropModifiers,
+		IReadOnlyList<Player>? groupMembers = null,
+		int startIndex = 1)
+	{
+		// Java parity: services/drop/DropRegistrationService.addGlobalDrops default GLOBAL_DROP_DATA slice.
+		if (npc == null || looter == null)
+			return WorldNpcGlobalDropResult.Empty(startIndex);
+		if (string.Equals(npc.AiName, "quest_use_item", StringComparison.OrdinalIgnoreCase))
+			return WorldNpcGlobalDropResult.Empty(startIndex);
+		if (HasGlobalNpcExclusion(npc))
+			return WorldNpcGlobalDropResult.Empty(startIndex);
+
+		var isAllowedDefaultGlobalDropNpc = IsAllowedDefaultGlobalDropNpc(npc, dropModifiers.IsDropNpcChest);
+		var drops = new List<WorldNpcDropItem>();
+		var index = startIndex;
+		foreach (var rule in GetGlobalDrops().Rules)
+		{
+			if (!isAllowedDefaultGlobalDropNpc && !rule.HasNpcRestriction)
+				continue;
+
+			var chance = CalculateEffectiveChance(rule, npc, dropModifiers);
+			if (_chanceRoll() >= chance)
+				continue;
+
+			index = AddDropItems(index, drops, rule, npc, looter, groupMembers, dropModifiers);
+		}
+
+		return new WorldNpcGlobalDropResult(drops, index);
 	}
 
 	public IReadOnlyList<GlobalDropRuleSummary> GetApplicableRules(
@@ -114,6 +159,30 @@ public sealed class WorldNpcGlobalDropService
 					return levelDiff >= rule.MinDiff && levelDiff <= rule.MaxDiff;
 				})
 			.ToArray();
+	}
+
+	public IReadOnlyList<GlobalDropItemSummary> CollectDrops(
+		GlobalDropRuleSummary rule,
+		IWorldNpcObject npc,
+		WorldNpcDropModifiers dropModifiers)
+	{
+		// Java parity: services/drop/DropRegistrationService.collectDrops, including max_drop weighted selection.
+		var maxDrops = dropModifiers.MaxDropsPerGroup ?? rule.MaxDropRule;
+		var drops = CollectAllowedDrops(rule, npc, dropModifiers).ToList();
+		if (maxDrops <= 0)
+			return Array.Empty<GlobalDropItemSummary>();
+		if (drops.Count <= maxDrops)
+			return drops;
+
+		var selected = new List<GlobalDropItemSummary>();
+		for (var i = 0; i < maxDrops && drops.Count > 0; i++)
+		{
+			var item = SelectWeightedDrop(drops);
+			if (item != null)
+				selected.Add(item);
+		}
+
+		return selected;
 	}
 
 	private bool IsRuleRestrictedToNpc(
@@ -195,6 +264,111 @@ public sealed class WorldNpcGlobalDropService
 		return _globalNpcExclusions ?? _runtimeContext?.DataManager?.StaticData.GlobalNpcExclusions ?? EmptyExclusions;
 	}
 
+	private int AddDropItems(
+		int index,
+		List<WorldNpcDropItem> droppedItems,
+		GlobalDropRuleSummary rule,
+		IWorldNpcObject npc,
+		Player looter,
+		IReadOnlyList<Player>? groupMembers,
+		WorldNpcDropModifiers dropModifiers)
+	{
+		// Java parity: services/drop/DropRegistrationService.addDropItems.
+		var drops = CollectDrops(rule, npc, dropModifiers);
+		if (drops.Count == 0)
+			return index;
+
+		if (rule.MemberLimit > 1 && looter.IsInTeam && groupMembers is { Count: > 0 })
+		{
+			var distributedItems = 0;
+			foreach (var member in groupMembers)
+			{
+				foreach (var drop in drops)
+				{
+					droppedItems.Add(CreateDropItem(
+						index++,
+						npc.ObjectId,
+						drop,
+						GetItemCount(drop, npc),
+						new HashSet<int> { member.ObjectId },
+						isDistributeItem: true));
+				}
+
+				if (++distributedItems >= rule.MemberLimit)
+					break;
+			}
+
+			return index;
+		}
+
+		foreach (var drop in drops)
+		{
+			droppedItems.Add(CreateDropItem(
+				index++,
+				npc.ObjectId,
+				drop,
+				GetItemCount(drop, npc),
+				playerObjectIds: null,
+				isDistributeItem: false));
+		}
+
+		return index;
+	}
+
+	private WorldNpcDropItem CreateDropItem(
+		int index,
+		int npcObjectId,
+		GlobalDropItemSummary drop,
+		long count,
+		IReadOnlySet<int>? playerObjectIds,
+		bool isDistributeItem)
+	{
+		// Java parity: services/drop/DropRegistrationService.regDropItem and member-limit distributed DropItem construction.
+		return new WorldNpcDropItem(
+			index,
+			drop.ItemId,
+			count,
+			playerObjectIds,
+			NpcObjectId: npcObjectId,
+			IsDistributeItem: isDistributeItem);
+	}
+
+	private long GetItemCount(GlobalDropItemSummary item, IWorldNpcObject npc)
+	{
+		// Java parity: services/drop/DropRegistrationService.getItemCount.
+		long count = _countRoll(item.MinCount, item.MaxCount);
+		if (item.ItemId == InventoryItemFactory.KinahItemId)
+		{
+			var rankRating = GetRankModifier(npc.Template.Rank) * GetRatingModifier(npc.Template.Rating);
+			count = (long)(count * npc.Template.Level * Math.Pow(rankRating, 6));
+		}
+
+		return count;
+	}
+
+	private GlobalDropItemSummary? SelectWeightedDrop(List<GlobalDropItemSummary> drops)
+	{
+		// Java parity: model/Chance.selectElement(remove=true).
+		var sumOfChances = drops.Sum(drop => drop.Chance);
+		if (sumOfChances <= 0)
+			return null;
+
+		var randomChance = _weightedRoll(sumOfChances);
+		float luck = 0;
+		for (var i = 0; i < drops.Count; i++)
+		{
+			var drop = drops[i];
+			luck += drop.Chance;
+			if (randomChance > luck)
+				continue;
+
+			drops.RemoveAt(i);
+			return drop;
+		}
+
+		return null;
+	}
+
 	private static float GetRankModifier(string rank)
 	{
 		return rank.ToUpperInvariant() switch
@@ -220,5 +394,15 @@ public sealed class WorldNpcGlobalDropService
 			"LEGENDARY" => 2f,
 			_ => 1f,
 		};
+	}
+}
+
+public sealed record WorldNpcGlobalDropResult(
+	IReadOnlyList<WorldNpcDropItem> Drops,
+	int NextIndex)
+{
+	public static WorldNpcGlobalDropResult Empty(int nextIndex)
+	{
+		return new WorldNpcGlobalDropResult(Array.Empty<WorldNpcDropItem>(), nextIndex);
 	}
 }
