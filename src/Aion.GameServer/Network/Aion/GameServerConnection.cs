@@ -5871,7 +5871,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		return await visualStats.UpdateStatsAndSpeedVisuallyAsync(player, null);
 	}
 
-	private async Task<PlayerZoneRevalidationResult> RevalidatePlayerFlightZonesAsync(Player player)
+	internal async Task<PlayerZoneRevalidationResult> RevalidatePlayerFlightZonesAsync(Player player)
 	{
 		var staticData = _runtimeContext?.DataManager?.StaticData;
 		var result = PlayerZoneStateService.RevalidateFlightZones(
