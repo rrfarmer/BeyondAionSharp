@@ -37,6 +37,35 @@ public sealed class GameClientSocketServerNpcVisibilityTests
 	}
 
 	[Fact]
+	public void CreateNpcInfoPacketForViewerUsesMovementFedPvpZoneCounters()
+	{
+		var runtimeContext = new GameServerRuntimeContext();
+		var zoneCounterService = new CreaturePvpZoneCounterService();
+		var server = CreateServer(runtimeContext, zoneCounterService);
+		var zones = new CreaturePvpZoneTable(
+		[
+			CreateZone("PVP_A_210010000", 0, 0, 20, 20),
+			CreateZone("PVP_B_210010000", 10, 0, 30, 20),
+		]);
+		var kiskNpc = CreateNpc(9001, 700273, new WorldPosition(210010000, 5, 5, 50, 0));
+		runtimeContext.Kisks.RegisterKisk(new PlayerKiskRuntimeState(
+			objectId: kiskNpc.ObjectId,
+			ownerObjectId: 1001,
+			npcId: kiskNpc.TemplateId,
+			ownerRace: "ELYOS"));
+		var enemyViewer = new Player { ObjectId = 1002, Race = "ASMODIANS" };
+
+		CreaturePvpZoneRevalidationService.Revalidate(kiskNpc.ObjectId, kiskNpc.Position, zones, zoneCounterService);
+		var supportPacket = server.CreateNpcInfoPacketForViewer(kiskNpc, enemyViewer);
+		var overlappedKiskNpc = kiskNpc with { Position = new WorldPosition(210010000, 15, 5, 50, 0) };
+		CreaturePvpZoneRevalidationService.Revalidate(overlappedKiskNpc.ObjectId, overlappedKiskNpc.Position, zones, zoneCounterService);
+		var attackablePacket = server.CreateNpcInfoPacketForViewer(overlappedKiskNpc, enemyViewer);
+
+		Assert.Equal((int)PlayerKiskCreatureType.Support, ReadCreatureType(supportPacket));
+		Assert.Equal((int)PlayerKiskCreatureType.Attackable, ReadCreatureType(attackablePacket));
+	}
+
+	[Fact]
 	public void CreateNpcInfoPacketForViewerKeepsDefaultNpcInfoWhenKiskCountersAreUnavailable()
 	{
 		var runtimeContext = new GameServerRuntimeContext();
@@ -88,7 +117,7 @@ public sealed class GameClientSocketServerNpcVisibilityTests
 			creaturePvpZoneCounterService: zoneCounterService);
 	}
 
-	private static WorldNpc CreateNpc(int objectId, int templateId)
+	private static WorldNpc CreateNpc(int objectId, int templateId, WorldPosition? position = null)
 	{
 		var template = new NpcTemplateSummary(
 			templateId,
@@ -109,7 +138,30 @@ public sealed class GameClientSocketServerNpcVisibilityTests
 			objectId,
 			template.TemplateId,
 			template,
-			new WorldPosition(210010000, 10, 20, 30, 90));
+			position ?? new WorldPosition(210010000, 10, 20, 30, 90));
+	}
+
+	private static CreaturePvpZoneSummary CreateZone(
+		string name,
+		float left,
+		float bottom,
+		float right,
+		float top)
+	{
+		return new CreaturePvpZoneSummary(
+			210010000,
+			name,
+			CreaturePvpZoneType.Pvp,
+			Flags: 0,
+			Bottom: 0,
+			Top: 100,
+			Points:
+			[
+				new ZonePoint2D(left, bottom),
+				new ZonePoint2D(right, bottom),
+				new ZonePoint2D(right, top),
+				new ZonePoint2D(left, top),
+			]);
 	}
 
 	private static int ReadCreatureType(SmNpcInfo packet)
