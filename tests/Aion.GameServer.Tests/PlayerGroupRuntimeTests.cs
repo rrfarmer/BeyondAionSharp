@@ -30,6 +30,13 @@ public sealed class PlayerGroupRuntimeTests
 		Assert.Same(snapshot, leader.CurrentGroupSnapshot);
 		Assert.Same(snapshot, member.CurrentGroupSnapshot);
 		Assert.Same(snapshot, runtime.Resolve(leader));
+		Assert.True(runtime.HasMember(99001, 1001));
+		Assert.True(runtime.HasMember(99001, 1002));
+		Assert.False(runtime.HasMember(99001, 1003));
+		Assert.Equal([1001, 1002], runtime.GetMemberObjectIds(99001));
+		Assert.True(runtime.IsLeader(99001, leader));
+		Assert.False(runtime.IsLeader(99001, member));
+		Assert.False(runtime.IsFull(99001));
 	}
 
 	[Fact]
@@ -74,6 +81,23 @@ public sealed class PlayerGroupRuntimeTests
 		Assert.Same(updatedSnapshot, member.CurrentGroupSnapshot);
 		Assert.Same(updatedSnapshot, added.CurrentGroupSnapshot);
 		Assert.Equal([1001, 1002, 1003], added.CurrentTeamMemberObjectIds);
+		Assert.True(runtime.HasMember(99001, 1003));
+		Assert.Equal([1001, 1002, 1003], runtime.GetMemberObjectIds(99001));
+	}
+
+	[Fact]
+	public void AddMember_RejectsDuplicateMemberLikeJavaGeneralTeam()
+	{
+		var runtime = new PlayerGroupRuntime();
+		var leader = new Player { ObjectId = 1001 };
+		var member = new Player { ObjectId = 1002 };
+		runtime.CreateOrUpdateGroup(99001, [leader, member]);
+
+		var exception = Assert.Throws<InvalidOperationException>(() => runtime.AddMember(99001, member));
+
+		Assert.Equal("Team member is already added.", exception.Message);
+		Assert.Equal([1001, 1002], runtime.GetMemberObjectIds(99001));
+		Assert.Same(member.CurrentGroupSnapshot, leader.CurrentGroupSnapshot);
 	}
 
 	[Fact]
@@ -93,6 +117,7 @@ public sealed class PlayerGroupRuntimeTests
 		Assert.Equal(0, rejected.CurrentTeamId);
 		Assert.Empty(rejected.CurrentTeamMemberObjectIds);
 		Assert.Null(rejected.CurrentGroupSnapshot);
+		Assert.True(runtime.IsFull(99001));
 		Assert.Equal([1001, 1002, 1003, 1004, 1005, 1006], members[0].CurrentGroupSnapshot?.MemberObjectIds);
 	}
 
@@ -111,5 +136,32 @@ public sealed class PlayerGroupRuntimeTests
 		Assert.Equal(1001, descriptor.LeaderObjectId);
 		Assert.Equal(PlayerGroupType.Group, descriptor.TeamType);
 		Assert.Equal(6, descriptor.MaxMemberCount);
+		Assert.True(runtime.IsLeader(99001, leader));
+		Assert.False(runtime.HasMember(99001, 1002));
+		Assert.Equal([1001, 1003], runtime.GetMemberObjectIds(99001));
+	}
+
+	[Fact]
+	public void RemoveMember_RejectsMissingMemberLikeJavaGeneralTeam()
+	{
+		var runtime = new PlayerGroupRuntime();
+		var leader = new Player { ObjectId = 1001 };
+		var member = new Player { ObjectId = 1002 };
+		var missing = new Player
+		{
+			ObjectId = 1003,
+			TeamMembership = PlayerTeamMembership.Group,
+			CurrentTeamId = 99001,
+		};
+		runtime.CreateOrUpdateGroup(99001, [leader, member]);
+
+		var exception = Assert.Throws<InvalidOperationException>(() => runtime.RemoveMember(missing));
+
+		Assert.Equal("Team member is already removed.", exception.Message);
+		Assert.Equal(PlayerTeamMembership.Group, missing.TeamMembership);
+		Assert.Equal(99001, missing.CurrentTeamId);
+		Assert.Equal([1001, 1002], runtime.GetMemberObjectIds(99001));
+		Assert.True(runtime.HasMember(99001, 1001));
+		Assert.True(runtime.HasMember(99001, 1002));
 	}
 }

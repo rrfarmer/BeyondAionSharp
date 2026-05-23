@@ -46,7 +46,7 @@ public sealed class PlayerGroupRuntime
 			}
 
 			if (runtimeMembers.Any(existing => existing.ObjectId == member.ObjectId))
-				return ApplySnapshot(teamId, runtimeMembers);
+				throw new InvalidOperationException("Team member is already added.");
 
 			var descriptor = _descriptorsByTeamId[teamId];
 			if (descriptor.IsFull(runtimeMembers.Count))
@@ -64,13 +64,22 @@ public sealed class PlayerGroupRuntime
 		{
 			var teamId = member.CurrentGroupSnapshot?.TeamId
 				?? (member.TeamMembership == PlayerTeamMembership.Group ? member.CurrentTeamId : 0);
-			if (teamId == 0 || !_membersByTeamId.TryGetValue(teamId, out var runtimeMembers))
+			if (teamId == 0)
 			{
 				ClearGroup(member);
 				return null;
 			}
 
-			runtimeMembers.RemoveAll(existing => existing.ObjectId == member.ObjectId);
+			if (!_membersByTeamId.TryGetValue(teamId, out var runtimeMembers))
+			{
+				ClearGroup(member);
+				return null;
+			}
+
+			var removedCount = runtimeMembers.RemoveAll(existing => existing.ObjectId == member.ObjectId);
+			if (removedCount == 0)
+				throw new InvalidOperationException("Team member is already removed.");
+
 			ClearGroup(member);
 
 			if (runtimeMembers.Count == 0)
@@ -93,6 +102,40 @@ public sealed class PlayerGroupRuntime
 		// Java parity: model/team/group/PlayerGroup exposes getTeamId, getLeader, getTeamType, and getMaxMemberCount.
 		lock (_sync)
 			return _descriptorsByTeamId.GetValueOrDefault(teamId);
+	}
+
+	public bool HasMember(int teamId, int objectId)
+	{
+		// Java parity: model/team/GeneralTeam.hasMember.
+		lock (_sync)
+			return _membersByTeamId.TryGetValue(teamId, out var members)
+				&& members.Any(member => member.ObjectId == objectId);
+	}
+
+	public IReadOnlyList<int> GetMemberObjectIds(int teamId)
+	{
+		// Java parity: model/team/GeneralTeam.getMembers mapped to object ids for the snapshot bridge.
+		lock (_sync)
+			return _membersByTeamId.TryGetValue(teamId, out var members)
+				? members.Select(member => member.ObjectId).ToArray()
+				: Array.Empty<int>();
+	}
+
+	public bool IsLeader(int teamId, Player player)
+	{
+		// Java parity: model/team/GeneralTeam.isLeader compares against the leader's Player object.
+		lock (_sync)
+			return _descriptorsByTeamId.TryGetValue(teamId, out var descriptor)
+				&& descriptor.LeaderObjectId == player.ObjectId;
+	}
+
+	public bool IsFull(int teamId)
+	{
+		// Java parity: model/team/GeneralTeam.isFull.
+		lock (_sync)
+			return _membersByTeamId.TryGetValue(teamId, out var members)
+				&& _descriptorsByTeamId.TryGetValue(teamId, out var descriptor)
+				&& descriptor.IsFull(members.Count);
 	}
 
 	public PlayerGroupSnapshot? Resolve(Player player)
