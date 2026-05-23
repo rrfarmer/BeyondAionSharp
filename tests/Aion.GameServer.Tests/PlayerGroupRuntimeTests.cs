@@ -134,6 +134,59 @@ public sealed class PlayerGroupRuntimeTests
 	}
 
 	[Fact]
+	public void UpdateMemberLastOnlineTime_UpdatesGroupedMemberLikeJavaLogout()
+	{
+		var runtime = new PlayerGroupRuntime();
+		var leader = new Player { ObjectId = 1001 };
+		var member = new Player { ObjectId = 1002 };
+		runtime.CreateOrUpdateGroup(99001, [leader, member]);
+		var now = DateTimeOffset.FromUnixTimeMilliseconds(456_789);
+
+		var updated = runtime.UpdateMemberLastOnlineTime(member, now);
+
+		Assert.True(updated);
+		Assert.Equal(456_789, runtime.GetMember(99001, 1002)?.LastOnlineTimeMillis);
+		Assert.Equal(0, runtime.GetMember(99001, 1001)?.LastOnlineTimeMillis);
+		Assert.Equal([1001, 1002], runtime.GetMemberObjectIds(99001));
+	}
+
+	[Fact]
+	public void UpdateMemberLastOnlineTime_ReturnsFalseForPlayerWithoutRuntimeGroup()
+	{
+		var runtime = new PlayerGroupRuntime();
+		var player = new Player { ObjectId = 1001 };
+
+		var updated = runtime.UpdateMemberLastOnlineTime(player, DateTimeOffset.FromUnixTimeMilliseconds(456_789));
+
+		Assert.False(updated);
+		Assert.Null(runtime.GetMember(99001, 1001));
+	}
+
+	[Fact]
+	public void UpdateMemberLastOnlineTime_ReturnsFalseForStaleGroupMetadataWithoutMutatingRuntime()
+	{
+		var runtime = new PlayerGroupRuntime();
+		var leader = new Player { ObjectId = 1001 };
+		var member = new Player { ObjectId = 1002 };
+		var stale = new Player
+		{
+			ObjectId = 1003,
+			TeamMembership = PlayerTeamMembership.Group,
+			CurrentTeamId = 99001,
+		};
+		runtime.CreateOrUpdateGroup(99001, [leader, member]);
+
+		var updated = runtime.UpdateMemberLastOnlineTime(stale, DateTimeOffset.FromUnixTimeMilliseconds(456_789));
+
+		Assert.False(updated);
+		Assert.Equal(PlayerTeamMembership.Group, stale.TeamMembership);
+		Assert.Equal(99001, stale.CurrentTeamId);
+		Assert.Equal([1001, 1002], runtime.GetMemberObjectIds(99001));
+		Assert.Equal(0, runtime.GetMember(99001, 1001)?.LastOnlineTimeMillis);
+		Assert.Equal(0, runtime.GetMember(99001, 1002)?.LastOnlineTimeMillis);
+	}
+
+	[Fact]
 	public void AddMember_RejectsPlayersBeyondJavaGroupCapacityWithoutAttachingRejectedPlayer()
 	{
 		var runtime = new PlayerGroupRuntime();

@@ -147,6 +147,25 @@ public sealed class PlayerGroupRuntime
 				&& descriptor.IsFull(members.Count);
 	}
 
+	public bool UpdateMemberLastOnlineTime(Player player, DateTimeOffset now)
+	{
+		// Java parity: model/team/group/PlayerGroupService.onPlayerLogout updates PlayerGroupMember.lastOnlineTime before PlayerDisconnectedEvent.
+		lock (_sync)
+		{
+			var teamId = player.CurrentGroupSnapshot?.TeamId
+				?? (player.TeamMembership == PlayerTeamMembership.Group ? player.CurrentTeamId : 0);
+			if (teamId == 0 || !_membersByTeamId.TryGetValue(teamId, out var members))
+				return false;
+
+			var member = members.FirstOrDefault(candidate => candidate.ObjectId == player.ObjectId);
+			if (member == null)
+				return false;
+
+			member.UpdateLastOnlineTime(now);
+			return true;
+		}
+	}
+
 	public PlayerGroupSnapshot? Resolve(Player player)
 	{
 		// Java parity: model/gameobjects/player/Player.getPlayerGroup; registry-owned snapshots are attached to the player.
