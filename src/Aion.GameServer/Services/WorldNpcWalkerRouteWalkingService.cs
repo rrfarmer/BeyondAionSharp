@@ -18,6 +18,7 @@ public sealed class WorldNpcWalkerRouteWalkingService
 	private readonly WorldNpcWalkerMovementBroadcastService _movementBroadcasts;
 	private readonly ThreadPoolManager? _threadPoolManager;
 	private readonly WorldNpcAiStateService? _npcAiStates;
+	private readonly CreaturePvpZoneCounterService? _creaturePvpZoneCounterService;
 	private readonly ConcurrentDictionary<int, WorldNpcWalkerMovementState> _activeStates = new();
 	private readonly ConcurrentDictionary<int, WorldNpcWalkerFormationKey> _formationKeysByObjectId = new();
 	private readonly ConcurrentDictionary<WorldNpcWalkerFormationKey, WorldNpcWalkerFormationRuntimeState> _formationStates = new();
@@ -33,7 +34,8 @@ public sealed class WorldNpcWalkerRouteWalkingService
 		WorldNpcWalkerMovementStateService movementStates,
 		WorldNpcWalkerMovementBroadcastService movementBroadcasts,
 		ThreadPoolManager? threadPoolManager = null,
-		WorldNpcAiStateService? npcAiStates = null)
+		WorldNpcAiStateService? npcAiStates = null,
+		CreaturePvpZoneCounterService? creaturePvpZoneCounterService = null)
 	{
 		_runtimeContext = runtimeContext;
 		_world = world;
@@ -43,6 +45,7 @@ public sealed class WorldNpcWalkerRouteWalkingService
 		_movementBroadcasts = movementBroadcasts;
 		_threadPoolManager = threadPoolManager;
 		_npcAiStates = npcAiStates;
+		_creaturePvpZoneCounterService = creaturePvpZoneCounterService;
 	}
 
 	public int ActiveStateCount => _activeStates.Count;
@@ -159,6 +162,7 @@ public sealed class WorldNpcWalkerRouteWalkingService
 			return WorldNpcWalkerRouteWalkingTargetReachedResult.NotHandled(WorldNpcWalkerRouteWalkingTargetReachedStatus.MissingWorldPlan);
 		if (!TryUpdateNpcPositionToReachedTarget(objectId, currentState))
 			return WorldNpcWalkerRouteWalkingTargetReachedResult.NotHandled(WorldNpcWalkerRouteWalkingTargetReachedStatus.MissingNpc);
+		RevalidateNpcCreaturePvpZones(objectId);
 		if (currentState.IsFormationMember)
 			return await TargetReachedFormationMemberAsync(objectId, currentState, routePlan, worldPlan, cancellationToken);
 
@@ -508,6 +512,20 @@ public sealed class WorldNpcWalkerRouteWalkingService
 			},
 		};
 		return _world.TryUpdateObject(objectId, updatedNpc);
+	}
+
+	private void RevalidateNpcCreaturePvpZones(int objectId)
+	{
+		// Java parity: MoveTaskManager destination reached -> ZoneUpdateService.add -> Creature.revalidateZones.
+		if (!_world.TryGetObject(objectId, out var gameObject) || gameObject is not WorldNpc npc)
+			return;
+
+		var staticData = _runtimeContext.DataManager?.StaticData;
+		CreaturePvpZoneRevalidationService.Revalidate(
+			npc.ObjectId,
+			npc.Position,
+			staticData?.CreaturePvpZones,
+			_creaturePvpZoneCounterService);
 	}
 
 	private bool TryAdvanceNpcPositionTowardsTarget(

@@ -351,6 +351,65 @@ public sealed class WorldNpcWalkerRouteWalkingServiceTests
 	}
 
 	[Fact]
+	public async Task TargetReachedAsync_RevalidatesCreaturePvpZoneCountersAfterRouteWalkerArrival()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-walk-target-pvp-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextWithWalkerDataAsync(
+				tempPath,
+				pool: 1,
+				formation: "POINT",
+				rows: "",
+				includePvpZone: true);
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			var startPosition = new WorldPosition(210010000, 8, 0, 0, 7);
+			var npc = CreateNpc(1, startPosition, walkerId: "route-a", walkerIndex: 0);
+			Assert.True(world.TryAddObject(npc.ObjectId, npc));
+			var cache = CreateCache(context, [npc]);
+			var registry = new CapturingConnectionRegistry();
+			var zoneCounterService = new CreaturePvpZoneCounterService();
+			var service = CreateService(
+				context,
+				world,
+				cache,
+				registry,
+				creaturePvpZoneCounterService: zoneCounterService);
+			var zones = context.DataManager!.StaticData.CreaturePvpZones.GetZonesByMapId(startPosition.WorldId);
+			Assert.DoesNotContain(zones, zone => zone.Contains(startPosition));
+			Assert.Contains(zones, zone => zone.ZoneId == "PVP_ROUTE_STEP_210010000"
+				&& zone.Contains(new WorldPosition(210010000, 10, 0, 0, 7)));
+			var start = await service.StartRouteWalkingAsync(npc.ObjectId);
+			Assert.True(start.Started);
+			Assert.Equal(CreaturePvpZoneCounters.Empty, zoneCounterService.GetCounters(npc.ObjectId));
+
+			var result = await service.TargetReachedAsync(npc.ObjectId);
+
+			Assert.True(result.Handled);
+			Assert.Equal(WorldNpcWalkerRouteWalkingTargetReachedStatus.Advanced, result.Status);
+			var counters = zoneCounterService.GetCounters(npc.ObjectId);
+			Assert.Equal(1, counters.PvpZoneCount);
+			Assert.Equal(0, counters.SiegeZoneCount);
+			Assert.True(world.TryGetObject(npc.ObjectId, out var reachedObject));
+			var reachedNpc = Assert.IsType<WorldNpc>(reachedObject);
+			Assert.Equal(10, reachedNpc.Position.X);
+			Assert.Equal(0, reachedNpc.Position.Y);
+			Assert.Equal(0, reachedNpc.Position.Z);
+		}
+		finally
+		{
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
+	[Fact]
 	public async Task TargetReachedAsync_SchedulesBroadcastAfterRestTime()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-walk-rest-schedule-" + Guid.NewGuid().ToString("N"));
@@ -694,7 +753,8 @@ public sealed class WorldNpcWalkerRouteWalkingServiceTests
 		IWorldNpcWalkerSpawnPlanCacheService cache,
 		IGameClientConnectionRegistry registry,
 		ThreadPoolManager? threadPoolManager = null,
-		WorldNpcAiStateService? aiStates = null)
+		WorldNpcAiStateService? aiStates = null,
+		CreaturePvpZoneCounterService? creaturePvpZoneCounterService = null)
 	{
 		var routeService = new WorldNpcWalkerRouteService();
 		var movementStateService = new WorldNpcWalkerMovementStateService();
@@ -707,7 +767,8 @@ public sealed class WorldNpcWalkerRouteWalkingServiceTests
 			movementStateService,
 			broadcastService,
 			threadPoolManager,
-			aiStates);
+			aiStates,
+			creaturePvpZoneCounterService);
 	}
 
 	private static WorldNpcWalkerSpawnPlanCacheService CreateCache(
@@ -727,18 +788,34 @@ public sealed class WorldNpcWalkerRouteWalkingServiceTests
 		string rows,
 		string loopType = "NORMAL",
 		int firstRestTime = 0,
-		int secondRestTime = 0)
+		int secondRestTime = 0,
+		bool includePvpZone = false)
 	{
 		var staticDataFile = Path.Combine(tempPath, "static_data.xml");
 		var cacheFile = Path.Combine(tempPath, "cache", "static_data.xml");
 		var schemaFile = Path.Combine(tempPath, "static_data.xsd");
 		Directory.CreateDirectory(Path.GetDirectoryName(cacheFile)!);
 		var rowsAttribute = string.IsNullOrWhiteSpace(rows) ? string.Empty : $" rows=\"{rows}\"";
+		var pvpZoneXml = includePvpZone
+			? """
+				<zones>
+					<zone name="PVP_ROUTE_STEP_210010000" zone_type="PVP" area_type="POLYGON" mapid="210010000">
+						<points bottom="-10" top="10">
+							<point x="9" y="-1" />
+							<point x="11" y="-1" />
+							<point x="11" y="1" />
+							<point x="9" y="1" />
+						</points>
+					</zone>
+				</zones>
+			"""
+			: string.Empty;
 		File.WriteAllText(
 			staticDataFile,
 			$"""
 			<?xml version="1.0" encoding="UTF-8"?>
 			<static_data>
+			{pvpZoneXml}
 				<npc_walker>
 					<walker_template route_id="route-a" pool="{pool}" formation="{formation}" loop_type="{loopType}"{rowsAttribute}>
 						<routestep x="0" y="0" z="0" rest_time="{firstRestTime}" />

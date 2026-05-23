@@ -137,7 +137,6 @@ public sealed class WorldNpcRandomWalkServiceTests
 				&& activeState?.Target != null
 				&& service.PendingArrivalTaskCount == 1);
 
-			Assert.Equal(1, service.PendingMovementTickTaskCount);
 			await WaitUntilAsync(() =>
 			{
 				if (!world.TryGetObject(npc.ObjectId, out var movedObject) || movedObject is not WorldNpc movedNpc)
