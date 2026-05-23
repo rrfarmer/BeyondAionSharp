@@ -1,6 +1,7 @@
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Services;
 using Aion.GameServer.World;
+using Aion.GameServer.Dataholders;
 
 namespace Aion.GameServer.Tests;
 
@@ -88,6 +89,40 @@ public sealed class PlayerKiskUpdateFanoutServiceTests
 		Assert.Equal(new[] { 3001 }, plan.VisibleSameRaceObjectIds);
 	}
 
+	[Fact]
+	public void CreatePlanUsesNpcVisibilityKnownListForDirectMemberFallback()
+	{
+		var npcVisibility = new NpcVisibilityService();
+		var kiskPosition = new WorldPosition(210010000, 0, 0, 0, 0);
+		var kisk = new PlayerKiskRuntimeState(
+			objectId: 9004,
+			ownerObjectId: 4001,
+			npcId: 700273,
+			ownerRace: "ELYOS");
+		Assert.True(kisk.AddMember(4001));
+		Assert.True(kisk.AddMember(4002));
+		Assert.True(kisk.AddMember(4003));
+		var kiskNpc = CreateKiskNpc(kisk.ObjectId, kiskPosition);
+		var players = new[]
+		{
+			CreatePlayer(4001, "ELYOS", kiskPosition),
+			CreatePlayer(4002, "ELYOS", kiskPosition),
+			CreatePlayer(4003, "ASMODIANS", new WorldPosition(210010000, 250, 0, 0, 0)),
+			CreatePlayer(4004, "ELYOS", new WorldPosition(210010000, 5, 0, 0, 0)),
+		};
+		npcVisibility.UpdateKnownNpcs(players[0], [kiskNpc]);
+		npcVisibility.UpdateKnownNpcs(players[1], [kiskNpc]);
+
+		var plan = PlayerKiskUpdateFanoutService.CreatePlan(
+			kisk,
+			kiskPosition,
+			players,
+			npcVisibility.IsKnownNpc);
+
+		Assert.Equal(new[] { 4003 }, plan.DirectMemberObjectIds);
+		Assert.Equal(new[] { 4001, 4002, 4004 }, plan.VisibleSameRaceObjectIds);
+	}
+
 	private static Player CreatePlayer(int objectId, string race, WorldPosition position)
 	{
 		return new Player
@@ -97,5 +132,21 @@ public sealed class PlayerKiskUpdateFanoutServiceTests
 			Race = race,
 			Position = position,
 		};
+	}
+
+	private static WorldNpc CreateKiskNpc(int objectId, WorldPosition position)
+	{
+		var template = new NpcTemplateSummary(
+			700273,
+			"kisk",
+			NameId: 1,
+			Level: 1,
+			Rank: "NORMAL",
+			Rating: "NORMAL",
+			Race: "ELYOS",
+			Tribe: "GENERAL",
+			Type: "GENERAL",
+			KiskStats: new KiskStatsSummary());
+		return new WorldNpc(objectId, template.TemplateId, template, position);
 	}
 }
