@@ -139,6 +139,7 @@ public sealed class PlayerGroupRuntimeTests
 			Position = new WorldPosition(220010000, 11, 22, 33, 64),
 		};
 		runtime.CreateOrUpdateGroup(99001, [leader, existingMember]);
+		runtime.UpdateBrand(99001, brandId: 3, targetObjectId: 8001);
 		runtime.AddMember(99001, enteringPlayer);
 
 		var plan = Assert.IsType<PlayerGroupEnteredPacketPlan>(runtime.CreateEnteredPacketPlan(99001, enteringPlayer));
@@ -190,6 +191,10 @@ public sealed class PlayerGroupRuntimeTests
 				Assert.Equal(1002, intent.RecipientObjectId);
 				AssertSystemMessage(intent.Message, 1400009, "NewMember");
 			});
+		var brandIntent = Assert.IsType<PlayerGroupBrandIntent>(plan.BrandIntent);
+		Assert.Equal(1003, brandIntent.RecipientObjectId);
+		Assert.Equal(new Dictionary<int, int> { [3] = 8001 }, brandIntent.TargetObjectIdsByBrandId);
+		AssertShowBrandPayload(brandIntent.CreatePacket(), (3, 8001));
 		var abyssRankUpdateIntent = Assert.IsType<PlayerGroupAbyssRankUpdateIntent>(plan.AbyssRankUpdateIntent);
 		Assert.Equal(1003, abyssRankUpdateIntent.PlayerObjectId);
 		Assert.Equal(99001, abyssRankUpdateIntent.TeamObjectId);
@@ -437,6 +442,48 @@ public sealed class PlayerGroupRuntimeTests
 	}
 
 	[Fact]
+	public void UpdateBrand_StoresBrandAndPlansBroadcastLikeJavaTemporaryPlayerTeam()
+	{
+		var runtime = new PlayerGroupRuntime();
+		var leader = new Player { ObjectId = 1001 };
+		var member = new Player { ObjectId = 1002 };
+		runtime.CreateOrUpdateGroup(99001, [leader, member]);
+
+		var plan = Assert.IsType<PlayerGroupBrandUpdatePlan>(runtime.UpdateBrand(99001, brandId: 4, targetObjectId: 8002));
+
+		Assert.Equal(99001, plan.TeamId);
+		Assert.Equal(4, plan.BrandId);
+		Assert.Equal(8002, plan.TargetObjectId);
+		Assert.Collection(
+			plan.BrandBroadcasts,
+			intent =>
+			{
+				Assert.Equal(1001, intent.RecipientObjectId);
+				AssertShowBrandPayload(intent.CreatePacket(), (4, 8002));
+			},
+			intent =>
+			{
+				Assert.Equal(1002, intent.RecipientObjectId);
+				AssertShowBrandPayload(intent.CreatePacket(), (4, 8002));
+			});
+		var enteringPlayer = new Player { ObjectId = 1003 };
+		runtime.AddMember(99001, enteringPlayer);
+		var enteredPlan = Assert.IsType<PlayerGroupEnteredPacketPlan>(runtime.CreateEnteredPacketPlan(99001, enteringPlayer));
+		var brandIntent = Assert.IsType<PlayerGroupBrandIntent>(enteredPlan.BrandIntent);
+		Assert.Equal(new Dictionary<int, int> { [4] = 8002 }, brandIntent.TargetObjectIdsByBrandId);
+	}
+
+	[Fact]
+	public void UpdateBrand_ReturnsNullForUnknownGroup()
+	{
+		var runtime = new PlayerGroupRuntime();
+
+		var plan = runtime.UpdateBrand(99001, brandId: 4, targetObjectId: 8002);
+
+		Assert.Null(plan);
+	}
+
+	[Fact]
 	public void ChangeLootRules_UpdatesDescriptorAndPlansGroupInfoBroadcastLikeJavaEvent()
 	{
 		var runtime = new PlayerGroupRuntime();
@@ -673,6 +720,20 @@ public sealed class PlayerGroupRuntimeTests
 		Assert.Equal(1, (int)reader.ReadC());
 		Assert.Equal(expectedPlayerObjectId, reader.ReadD());
 		Assert.Equal(expectedTeamObjectId, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertShowBrandPayload(GameServerPacket packet, params (int BrandId, int TargetObjectId)[] expectedBrands)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(expectedBrands.Length, reader.ReadH());
+		foreach (var (brandId, targetObjectId) in expectedBrands)
+		{
+			Assert.Equal(1, reader.ReadD());
+			Assert.Equal(brandId, reader.ReadD());
+			Assert.Equal(targetObjectId, reader.ReadD());
+		}
+
 		Assert.Equal(0, reader.Remaining);
 	}
 }

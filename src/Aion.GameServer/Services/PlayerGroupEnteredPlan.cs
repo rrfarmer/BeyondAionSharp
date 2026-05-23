@@ -8,6 +8,7 @@ public sealed record PlayerGroupEnteredPacketPlan(
 	bool SendGroupInfoToEnteringPlayer,
 	PlayerGroupInfoPacketPlan? GroupInfoPlan,
 	IReadOnlyList<PlayerGroupSystemMessageIntent> SystemMessageIntents,
+	PlayerGroupBrandIntent? BrandIntent,
 	PlayerGroupAbyssRankUpdateIntent? AbyssRankUpdateIntent)
 {
 	public SmGroupInfo? CreateGroupInfoPacket()
@@ -22,6 +23,17 @@ public sealed record PlayerGroupEnteredPacketPlan(
 public sealed record PlayerGroupSystemMessageIntent(
 	int RecipientObjectId,
 	SmSystemMessage Message);
+
+public sealed record PlayerGroupBrandIntent(
+	int RecipientObjectId,
+	IReadOnlyDictionary<int, int> TargetObjectIdsByBrandId)
+{
+	public SmShowBrand CreatePacket()
+	{
+		// Java parity: model/team/TemporaryPlayerTeam.sendBrands sends SM_SHOW_BRAND(current brand map) to the entering player.
+		return new SmShowBrand(TargetObjectIdsByBrandId);
+	}
+}
 
 public sealed record PlayerGroupAbyssRankUpdateIntent(
 	int PlayerObjectId,

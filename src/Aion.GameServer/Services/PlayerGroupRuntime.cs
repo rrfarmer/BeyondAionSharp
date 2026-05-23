@@ -9,6 +9,7 @@ public sealed class PlayerGroupRuntime
 	private readonly Lock _sync = new();
 	private readonly Dictionary<int, List<PlayerGroupMember>> _membersByTeamId = [];
 	private readonly Dictionary<int, PlayerGroupDescriptor> _descriptorsByTeamId = [];
+	private readonly Dictionary<int, Dictionary<int, int>> _targetObjectIdsByBrandIdByTeamId = [];
 
 	public PlayerGroupSnapshot CreateOrUpdateGroup(
 		int teamId,
@@ -28,6 +29,7 @@ public sealed class PlayerGroupRuntime
 
 			_membersByTeamId[teamId] = runtimeMembers;
 			_descriptorsByTeamId[teamId] = PlayerGroupDescriptor.FromLeader(teamId, runtimeMembers[0].Player, teamType);
+			_targetObjectIdsByBrandIdByTeamId.TryAdd(teamId, []);
 			return ApplySnapshot(teamId, runtimeMembers);
 		}
 	}
@@ -44,6 +46,7 @@ public sealed class PlayerGroupRuntime
 				runtimeMembers = [];
 				_membersByTeamId.Add(teamId, runtimeMembers);
 				_descriptorsByTeamId[teamId] = PlayerGroupDescriptor.FromLeader(teamId, member);
+				_targetObjectIdsByBrandIdByTeamId.TryAdd(teamId, []);
 			}
 
 			if (runtimeMembers.Any(existing => existing.ObjectId == member.ObjectId))
@@ -76,7 +79,33 @@ public sealed class PlayerGroupRuntime
 				SendGroupInfoToEnteringPlayer: true,
 				PlayerGroupInfoPacketPlan.FromDescriptor(descriptor, enteringPlayer.Position.WorldId),
 				CreateEnteredSystemMessageIntents(enteringPlayer, members),
+				new PlayerGroupBrandIntent(enteringPlayer.ObjectId, GetBrandSnapshot(teamId)),
 				new PlayerGroupAbyssRankUpdateIntent(enteringPlayer.ObjectId, teamId, IncludeSelf: true));
+		}
+	}
+
+	public PlayerGroupBrandUpdatePlan? UpdateBrand(int teamId, int brandId, int targetObjectId)
+	{
+		// Java parity: model/team/TemporaryPlayerTeam.updateBrand stores target id and broadcasts SM_SHOW_BRAND.
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(teamId, 0);
+
+		lock (_sync)
+		{
+			if (!_membersByTeamId.TryGetValue(teamId, out var members))
+				return null;
+
+			if (!_targetObjectIdsByBrandIdByTeamId.TryGetValue(teamId, out var targetObjectIdsByBrandId))
+			{
+				targetObjectIdsByBrandId = [];
+				_targetObjectIdsByBrandIdByTeamId[teamId] = targetObjectIdsByBrandId;
+			}
+
+			targetObjectIdsByBrandId[brandId] = targetObjectId;
+			var intents = members
+				.Select(member => new PlayerGroupBrandIntent(member.ObjectId, new Dictionary<int, int> { [brandId] = targetObjectId }))
+				.ToArray();
+
+			return new PlayerGroupBrandUpdatePlan(teamId, brandId, targetObjectId, intents);
 		}
 	}
 
@@ -132,6 +161,7 @@ public sealed class PlayerGroupRuntime
 			{
 				_membersByTeamId.Remove(teamId);
 				_descriptorsByTeamId.Remove(teamId);
+				_targetObjectIdsByBrandIdByTeamId.Remove(teamId);
 				return null;
 			}
 
@@ -294,6 +324,13 @@ public sealed class PlayerGroupRuntime
 		}
 
 		return intents;
+	}
+
+	private IReadOnlyDictionary<int, int> GetBrandSnapshot(int teamId)
+	{
+		return _targetObjectIdsByBrandIdByTeamId.TryGetValue(teamId, out var targetObjectIdsByBrandId)
+			? new Dictionary<int, int>(targetObjectIdsByBrandId)
+			: new Dictionary<int, int>();
 	}
 
 	private static PlayerGroupReconnectPacketPlan CreateReconnectPacketPlan(

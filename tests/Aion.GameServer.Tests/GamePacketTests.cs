@@ -177,6 +177,29 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmShowBrand_WritesSingleBrandAndEmptyMapResetLikeJava()
+	{
+		var singlePayload = SerializeUnencryptedPayload(new SmShowBrand(3, 7001));
+		using var singleReader = new PacketBuffer(singlePayload);
+		Assert.Equal(1, singleReader.ReadH());
+		Assert.Equal(1, singleReader.ReadD());
+		Assert.Equal(3, singleReader.ReadD());
+		Assert.Equal(7001, singleReader.ReadD());
+		Assert.Equal(0, singleReader.Remaining);
+
+		var resetPayload = SerializeUnencryptedPayload(new SmShowBrand(new Dictionary<int, int>()));
+		using var resetReader = new PacketBuffer(resetPayload);
+		Assert.Equal(16, resetReader.ReadH());
+		for (var brandId = 0; brandId < 16; brandId++)
+		{
+			Assert.Equal(1, resetReader.ReadD());
+			Assert.Equal(brandId, resetReader.ReadD());
+			Assert.Equal(0, resetReader.ReadD());
+		}
+		Assert.Equal(0, resetReader.Remaining);
+	}
+
+	[Fact]
 	public void SmSystemMessage_WritesDialogTooFarMessages()
 	{
 		AssertSystemMessage(SmSystemMessage.DialogTooFarToTalk(), 1300346);
