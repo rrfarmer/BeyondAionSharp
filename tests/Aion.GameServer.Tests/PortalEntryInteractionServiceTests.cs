@@ -1,6 +1,7 @@
 using Aion.GameServer.Configuration;
 using Aion.GameServer.Data;
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
@@ -69,6 +70,7 @@ public sealed class PortalEntryInteractionServiceTests
 			]);
 		var world = CreateWorldWithPortalNpc();
 		var sentPackets = new List<GameServerPacket>();
+		var order = new List<string>();
 		var path = CreatePortalPath(
 			kinah: 500,
 			itemRequirements: [new PortalItemRequirementSummary(RequiredItemId, 3)]);
@@ -87,9 +89,15 @@ public sealed class PortalEntryInteractionServiceTests
 			(packet, _) =>
 			{
 				sentPackets.Add(packet);
+				order.Add(packet.GetType().Name);
 				return Task.CompletedTask;
 			},
-			DateTimeOffset.UnixEpoch);
+			DateTimeOffset.UnixEpoch,
+			sameInstanceTeleportAsync: (_, loc, _) =>
+			{
+				order.Add($"teleport:{loc.WorldId}");
+				return Task.CompletedTask;
+			});
 
 		Assert.True(result.Handled);
 		Assert.Equal(PortalDialogEntryStatus.Ready, result.Status);
@@ -100,6 +108,9 @@ public sealed class PortalEntryInteractionServiceTests
 			packet => Assert.IsType<SmCubeUpdate>(packet),
 			packet => Assert.IsType<SmInventoryUpdateItem>(packet),
 			packet => Assert.IsType<SmInventoryUpdateItem>(packet));
+		Assert.Equal(
+			["SmDeleteItem", "SmCubeUpdate", "SmInventoryUpdateItem", "SmInventoryUpdateItem", $"teleport:{PortalWorldId}"],
+			order);
 		Assert.Collection(
 			player.InventoryItems.OrderBy(item => item.ObjectId),
 			item =>
@@ -112,6 +123,24 @@ public sealed class PortalEntryInteractionServiceTests
 				Assert.Equal(12, item.ObjectId);
 				Assert.Equal(500, item.Count);
 			});
+	}
+
+	[Fact]
+	public void TeleportWithinSameInstance_MutatesPositionAndSetsLandingBeforeSpawnPackets()
+	{
+		var player = CreatePlayer(level: 25, position: new WorldPosition(PortalWorldId, 10, 20, 30, 0, InstanceId: 7));
+		var destination = new WorldPosition(PortalWorldId, 100, 200, 300, 40, InstanceId: 7);
+
+		var result = PlayerTeleportService.TeleportWithinSameInstance(player, destination);
+
+		Assert.Equal(new WorldPosition(PortalWorldId, 10, 20, 30, 0, InstanceId: 7), result.PreviousPosition);
+		Assert.Equal(destination, result.Destination);
+		Assert.True(result.UsesSameWorldSpawnPath);
+		Assert.Equal(destination, player.Position);
+		Assert.Equal(ArrivalAnimation.Landing, player.PortAnimation);
+		Assert.Equal(destination.X, player.Movement.TargetX);
+		Assert.Equal(destination.Y, player.Movement.TargetY);
+		Assert.Equal(destination.Z, player.Movement.TargetZ);
 	}
 
 	[Fact]

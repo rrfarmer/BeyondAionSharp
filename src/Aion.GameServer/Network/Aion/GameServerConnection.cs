@@ -1317,7 +1317,8 @@ public sealed class GameServerConnection : BaseClientConnection
 				staticData?.ItemTemplates,
 				SendPacketAsync,
 				DateTimeOffset.Now,
-				_isKnownNpc);
+				_isKnownNpc,
+				(teleportPlayer, loc, cancellationToken) => TeleportSameInstancePortalAsync(teleportPlayer, loc, staticData, cancellationToken));
 			if (portalResult.Handled)
 				return;
 		}
@@ -4907,6 +4908,38 @@ public sealed class GameServerConnection : BaseClientConnection
 		// Java parity: TeleportService.sendLoc queues SpawnTask under TaskId.TELEPORT, then sends SM_TELEPORT_LOC; position changes after CM_TELEPORT_ANIMATION_DONE.
 		await SendPacketAsync(packet);
 		return new PendingTeleportRequestResult(pendingTeleport, packet);
+	}
+
+	internal async Task<PlayerTeleportResult?> TeleportSameInstancePortalAsync(
+		Player player,
+		PortalLocSummary portalLoc,
+		StaticData? staticData = null,
+		CancellationToken cancellationToken = default)
+	{
+		staticData ??= _runtimeContext?.DataManager?.StaticData;
+		var destination = new WorldPosition(
+			portalLoc.WorldId,
+			portalLoc.X,
+			portalLoc.Y,
+			portalLoc.Z,
+			portalLoc.Heading,
+			player.Position.InstanceId);
+		if (player.Position.WorldId != destination.WorldId || player.Position.InstanceId != destination.InstanceId)
+			return null;
+
+		// Java parity: PortalService.port same-map branch calls TeleportService.teleportTo with TeleportAnimation.NONE.
+		if (_connectionRegistry != null)
+		{
+			await _connectionRegistry.BroadcastToVisiblePlayersAsync(
+				player.Position,
+				player.ObjectId,
+				new SmDelete(player.ObjectId, TeleportAnimation.None.DefaultObjectDeleteAnimation));
+		}
+
+		var teleport = PlayerTeleportService.TeleportWithinSameInstance(player, destination);
+		RevalidatePlayerCreaturePvpZones(player, staticData);
+		await SendDelayedTeleportCompletionPacketsAsync(player, teleport, staticData);
+		return teleport;
 	}
 
 	internal async Task<InstanceEntranceCooldownResult> ApplyInstanceEntranceCooldownAsync(

@@ -29,6 +29,7 @@ public sealed class PortalEntryInteractionService
 		Func<GameServerPacket, CancellationToken, Task> sendPacketAsync,
 		DateTimeOffset now,
 		Func<Player, int, bool>? isKnownNpc = null,
+		Func<Player, PortalLocSummary, CancellationToken, Task>? sameInstanceTeleportAsync = null,
 		CancellationToken cancellationToken = default)
 	{
 		// Java parity: data/handlers/ai/portals/PortalDialogAI.onDialogSelect -> PortalService.port.
@@ -74,6 +75,13 @@ public sealed class PortalEntryInteractionService
 
 		foreach (var packet in preparation.Packets)
 			await sendPacketAsync(packet, cancellationToken);
+
+		if (preparation.EntryPlan.Action == PortalEntryPlanAction.SameInstanceTeleport
+			&& preparation.EntryPlan.PortalLoc != null
+			&& sameInstanceTeleportAsync != null)
+		{
+			await sameInstanceTeleportAsync(player, preparation.EntryPlan.PortalLoc, cancellationToken);
+		}
 
 		return PortalDialogEntryResult.CreateHandled(PortalDialogEntryStatus.Ready, preparation);
 	}
