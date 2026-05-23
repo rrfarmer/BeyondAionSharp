@@ -591,6 +591,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1401211, stateName);
 	}
 
+	public static SmSystemMessage CannotRideInvalidLocation()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_CANNOT_RIDE_INVALID_LOCATION.
+		return new SmSystemMessage(1401099);
+	}
+
 	public static SmSystemMessage ItemRestrictionRide()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ITEM_RESTRICTION_RIDE.

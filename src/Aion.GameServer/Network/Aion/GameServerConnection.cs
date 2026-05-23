@@ -4455,6 +4455,17 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		var restriction = PlayerRideRestrictionService.ValidateStartRide(
+			player,
+			_options.Custom.EnableRideRestriction,
+			staticData.WorldMaps,
+			_runtimeContext?.WorldMapStates);
+		if (!restriction.CanRide)
+		{
+			await SendPacketAsync(SmSystemMessage.CannotRideInvalidLocation());
+			return;
+		}
+
 		var rideInfo = staticData.RideInfos.GetRideInfo(sourceTemplate.RideNpcId);
 		if (rideInfo == null)
 			return;

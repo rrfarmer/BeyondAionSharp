@@ -897,6 +897,7 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.WarehouseCantExtendMore(), 1300432);
 		AssertSystemMessage(SmSystemMessage.WarehouseSizeExtended(8), 1300433, "8");
 		AssertSystemMessage(SmSystemMessage.CannotRide(ChatUtil.L10n(1400057)), 1401211, ChatUtil.L10n(1400057));
+		AssertSystemMessage(SmSystemMessage.CannotRideInvalidLocation(), 1401099);
 		AssertSystemMessage(SmSystemMessage.ItemRestrictionRide(), 1401094);
 		AssertSystemMessage(SmSystemMessage.UnrideAbnormalState(), 1401254);
 		AssertSystemMessage(SmSystemMessage.CannotRideAbnormalState(), 1401255);
