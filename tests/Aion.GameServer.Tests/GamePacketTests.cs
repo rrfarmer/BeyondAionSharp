@@ -142,6 +142,7 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.CannotMakeInstanceCoolTime(), 1400043);
 		AssertSystemMessage(SmSystemMessage.CantInstanceEnterLevel(), 1400179);
 		AssertSystemMessage(SmSystemMessage.MentorCantEnter(300030000), 1400766, "300030000");
+		AssertSystemMessage(SmSystemMessage.MovePortalErrorInvalidRace(), 901354);
 	}
 
 	[Fact]

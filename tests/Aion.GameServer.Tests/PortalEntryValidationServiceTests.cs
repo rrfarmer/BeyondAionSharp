@@ -292,6 +292,104 @@ public sealed class PortalEntryValidationServiceTests
 		Assert.Null(result.FailurePacket);
 	}
 
+	[Fact]
+	public void ValidateRace_AllowsPcAllRaceLikeJavaPortalPathDefault()
+	{
+		var player = new Player { Race = "ELYOS" };
+
+		var result = PortalEntryValidationService.ValidateRace(player, "PC_ALL");
+
+		Assert.True(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.Allowed, result.Status);
+		Assert.Null(result.FailurePacket);
+	}
+
+	[Fact]
+	public void ValidateRace_AllowsMatchingPortalRace()
+	{
+		var player = new Player { Race = "ASMODIANS" };
+
+		var result = PortalEntryValidationService.ValidateRace(player, "ASMODIANS");
+
+		Assert.True(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.Allowed, result.Status);
+		Assert.Null(result.FailurePacket);
+	}
+
+	[Fact]
+	public void ValidateRace_ReturnsNoRightDialogForDialogNpcMismatch()
+	{
+		var player = new Player { Race = "ELYOS" };
+
+		var result = PortalEntryValidationService.ValidateRace(
+			player,
+			"ASMODIANS",
+			npcIsDialogNpc: true,
+			npcObjectId: 4001);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.RaceRestricted, result.Status);
+		var packet = Assert.IsType<SmDialogWindow>(result.FailurePacket);
+		var payload = SerializeUnencryptedPayload(packet);
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(4001, reader.ReadD());
+		Assert.Equal(SmDialogWindow.NoRightPageId, reader.ReadH());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void ValidateRace_ReturnsInvalidRaceSystemMessageForNonDialogNpcMismatch()
+	{
+		var player = new Player { Race = "ELYOS" };
+
+		var result = PortalEntryValidationService.ValidateRace(
+			player,
+			"ASMODIANS",
+			npcIsDialogNpc: false,
+			npcObjectId: 4001);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.RaceRestricted, result.Status);
+		var packet = Assert.IsType<SmSystemMessage>(result.FailurePacket);
+		Assert.Equal(901354, packet.MessageId);
+	}
+
+	[Fact]
+	public void ValidateRace_RejectsWhenSuppliedSiegeOwnershipCheckFails()
+	{
+		var player = new Player { Race = "ELYOS" };
+
+		var result = PortalEntryValidationService.ValidateRace(
+			player,
+			"PC_ALL",
+			siegeOwnerMatchesPlayerRace: false,
+			npcIsDialogNpc: false);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.RaceRestricted, result.Status);
+		var packet = Assert.IsType<SmSystemMessage>(result.FailurePacket);
+		Assert.Equal(901354, packet.MessageId);
+	}
+
+	[Fact]
+	public void ValidateRace_AllowsMembershipBypassLikeJavaPermission()
+	{
+		var player = new Player { Race = "ELYOS" };
+
+		var result = PortalEntryValidationService.ValidateRace(
+			player,
+			"ASMODIANS",
+			siegeOwnerMatchesPlayerRace: false,
+			bypassRaceRequirement: true);
+
+		Assert.True(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.Allowed, result.Status);
+		Assert.Null(result.FailurePacket);
+	}
+
 	private const int WorldId = 300030000;
 
 	private static Player CreatePlayerWithCooldown(long reuseTimeMillis, int entryCount)

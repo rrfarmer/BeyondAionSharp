@@ -93,6 +93,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1400766, worldId.ToString(System.Globalization.CultureInfo.InvariantCulture));
 	}
 
+	public static SmSystemMessage MovePortalErrorInvalidRace()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MOVE_PORTAL_ERROR_INVALID_RACE.
+		return new SmSystemMessage(901354);
+	}
+
 	public static SmSystemMessage NotEnoughKinah(long kinah)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_NOT_ENOUGH_KINA.

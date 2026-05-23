@@ -86,6 +86,29 @@ public static class PortalEntryValidationService
 		return PortalEntryValidationResult.Allowed();
 	}
 
+	public static PortalEntryValidationResult ValidateRace(
+		Player player,
+		string portalRace,
+		bool siegeOwnerMatchesPlayerRace = true,
+		bool npcIsDialogNpc = true,
+		int npcObjectId = 0,
+		bool bypassRaceRequirement = false)
+	{
+		// Java parity: services/teleport/PortalService.checkRace, with SiegeService.checkSiegeId result supplied by caller.
+		if (bypassRaceRequirement)
+			return PortalEntryValidationResult.Allowed();
+
+		var raceRestricted = !string.Equals(portalRace, "PC_ALL", StringComparison.OrdinalIgnoreCase)
+			&& !string.Equals(player.Race, portalRace, StringComparison.OrdinalIgnoreCase);
+		if (!raceRestricted && siegeOwnerMatchesPlayerRace)
+			return PortalEntryValidationResult.Allowed();
+
+		GameServerPacket failurePacket = npcIsDialogNpc
+			? new SmDialogWindow(npcObjectId, SmDialogWindow.NoRightPageId)
+			: SmSystemMessage.MovePortalErrorInvalidRace();
+		return PortalEntryValidationResult.Rejected(PortalEntryValidationStatus.RaceRestricted, failurePacket);
+	}
+
 	private static WorldMapInstanceRuntimeState? ResolveRegisteredInstance(
 		Player player,
 		int worldId,
@@ -124,6 +147,7 @@ public enum PortalEntryValidationStatus
 	CooldownLocked,
 	LevelRestricted,
 	MentorRestricted,
+	RaceRestricted,
 }
 
 public sealed record PortalEntryInstanceValidationResult(
