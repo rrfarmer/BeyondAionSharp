@@ -175,14 +175,16 @@ public sealed class PlayerVisualStatsUpdateService
 		// Java parity: PlayerClass.PlayerStatsTemplate supplies walk=1.5, run=6, fly=9 for ordinary players.
 		if (!player.IsInRideMode || player.RideInfo == null)
 		{
-			if (player.IsFlying())
+			if (player.IsInFlyingState())
 				return DefaultFlySpeed;
+			if (player.IsInState(PlayerCreatureState.Flying) && !player.IsInState(PlayerCreatureState.Resting))
+				return 12.0f;
 			return player.IsInState(PlayerCreatureState.WalkMode)
 				? DefaultWalkSpeed
 				: DefaultRunSpeed;
 		}
 
-		if (player.IsFlying())
+		if (player.IsInState(PlayerCreatureState.Flying))
 			return player.RideInfo.FlySpeed;
 
 		return player.IsInSprintMode && player.RideInfo.CanSprint()

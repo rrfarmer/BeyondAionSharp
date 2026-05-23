@@ -93,6 +93,7 @@ public sealed class PlayerVisualStatsUpdateServiceTests
 		var flyingPlayer = CreatePlayer(6106);
 		flyingPlayer.IsInRideMode = true;
 		flyingPlayer.SetCreatureState(PlayerCreatureState.Flying, enabled: true);
+		flyingPlayer.SetFlyState(PlayerFlyState.Flying);
 		flyingPlayer.RideInfo = new PlayerRideInfo(NpcId: 9002, StartFp: 30, CostFp: 1, SprintSpeed: 12.0f, FlySpeed: 16.0f, MoveSpeed: 9.0f);
 
 		var sprint = await service.UpdateStatsAndSpeedVisuallyAsync(sprintingPlayer, speedSnapshot: null);
@@ -169,6 +170,7 @@ public sealed class PlayerVisualStatsUpdateServiceTests
 		walkingPlayer.SetCreatureState(PlayerCreatureState.WalkMode, enabled: true);
 		var flyingPlayer = CreatePlayer(6109);
 		flyingPlayer.SetCreatureState(PlayerCreatureState.Flying, enabled: true);
+		flyingPlayer.SetFlyState(PlayerFlyState.Flying);
 
 		var walk = await service.UpdateStatsAndSpeedVisuallyAsync(walkingPlayer, speedSnapshot: null);
 		var fly = await service.UpdateStatsAndSpeedVisuallyAsync(flyingPlayer, speedSnapshot: null);
@@ -180,6 +182,22 @@ public sealed class PlayerVisualStatsUpdateServiceTests
 		Assert.NotNull(fly.SpeedSnapshot);
 		Assert.Equal(9.0f, fly.SpeedSnapshot.MovementSpeed);
 		Assert.Equal(2, registry.Broadcasts.Count);
+	}
+
+	[Fact]
+	public async Task UpdateStatsAndSpeedVisuallyAsync_UsesCreatureFlyingFallbackWhenFlyStateMissing()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var service = new PlayerVisualStatsUpdateService(registry);
+		var player = CreatePlayer(6110);
+		player.SetCreatureState(PlayerCreatureState.Flying, enabled: true);
+
+		var result = await service.UpdateStatsAndSpeedVisuallyAsync(player, speedSnapshot: null);
+
+		Assert.Equal(PlayerVisualStatsUpdateStatus.StatsAndSpeedSent, result.Status);
+		Assert.NotNull(result.SpeedSnapshot);
+		Assert.Equal(12.0f, result.SpeedSnapshot.MovementSpeed);
+		Assert.NotNull(result.SpeedPacket);
 	}
 
 	[Fact]

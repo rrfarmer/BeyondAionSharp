@@ -84,7 +84,7 @@ public sealed class SmStatsInfo : GameServerPacket
 		buffer.WriteH(_player.Dp);
 		buffer.WriteD(context.Current.FlyTime);
 		buffer.WriteD(context.CurrentFp);
-		buffer.WriteC(0);
+		buffer.WriteC((byte)_player.FlyState);
 		buffer.WriteC(0);
 
 		WriteCombatStats(buffer, context.Current);

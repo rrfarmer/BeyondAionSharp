@@ -333,6 +333,41 @@ public sealed class PlayerStateTests
 	}
 
 	[Fact]
+	public void Player_FlyStateMatchesJavaBitAndCompoundSemantics()
+	{
+		var player = new Player();
+
+		Assert.Equal(1, (int)PlayerFlyState.Flying);
+		Assert.Equal(2, (int)PlayerFlyState.Gliding);
+		Assert.True(player.IsInFlyState(PlayerFlyState.None));
+		Assert.False(player.IsFlying());
+
+		player.SetFlyState(PlayerFlyState.Flying);
+
+		Assert.True(player.IsFlying());
+		Assert.True(player.IsInFlyingState());
+		Assert.False(player.IsInGlidingState());
+
+		player.SetFlyState(PlayerFlyState.Gliding);
+
+		Assert.True(player.IsFlying());
+		Assert.True(player.IsInFlyingState());
+		Assert.True(player.IsInGlidingState());
+		Assert.Equal(PlayerFlyState.Flying | PlayerFlyState.Gliding, player.FlyState);
+
+		player.UnsetFlyState(PlayerFlyState.Flying);
+
+		Assert.True(player.IsFlying());
+		Assert.False(player.IsInFlyingState());
+		Assert.True(player.IsInGlidingState());
+
+		player.UnsetFlyState(PlayerFlyState.Gliding);
+
+		Assert.False(player.IsFlying());
+		Assert.True(player.IsInFlyState(PlayerFlyState.None));
+	}
+
+	[Fact]
 	public void Player_AbnormalStateMatchesJavaBitAndCompoundSemantics()
 	{
 		var player = new Player
@@ -437,10 +472,10 @@ public sealed class PlayerStateTests
 		Assert.False(player.CanStartRideSprint());
 
 		player.LifeStats = new PlayerLifeStats(100, 100, 50);
-		player.SetCreatureState(PlayerCreatureState.Flying, enabled: true);
+		player.SetFlyState(PlayerFlyState.Flying);
 		Assert.False(player.CanStartRideSprint());
 
-		player.SetCreatureState(PlayerCreatureState.Flying, enabled: false);
+		player.UnsetFlyState(PlayerFlyState.Flying);
 		player.RideInfo = player.RideInfo with { SprintSpeed = 0 };
 		Assert.False(player.RideInfo.CanSprint());
 		Assert.False(player.CanStartRideSprint());
@@ -451,6 +486,7 @@ public sealed class PlayerStateTests
 	{
 		var player = new Player
 		{
+			FlyState = PlayerFlyState.Flying,
 			CreatureState = PlayerCreatureState.Active | PlayerCreatureState.Flying,
 			LifeStats = new PlayerLifeStats(100, 100, 50),
 		};
@@ -489,6 +525,7 @@ public sealed class PlayerStateTests
 	{
 		var windstreamPlayer = new Player
 		{
+			FlyState = PlayerFlyState.Flying,
 			CreatureState = PlayerCreatureState.Flying,
 			FlightPathType = PlayerFlightPathType.Windstream,
 		};
@@ -496,6 +533,8 @@ public sealed class PlayerStateTests
 		windstreamPlayer.CompleteFlyTeleport();
 
 		Assert.False(windstreamPlayer.IsInState(PlayerCreatureState.Flying));
+		Assert.False(windstreamPlayer.IsInFlyingState());
+		Assert.True(windstreamPlayer.IsInGlidingState());
 		Assert.True(windstreamPlayer.IsInState(PlayerCreatureState.Active));
 		Assert.True(windstreamPlayer.IsInState(PlayerCreatureState.Gliding));
 		Assert.True(windstreamPlayer.IsFpReduceActive);
@@ -527,6 +566,7 @@ public sealed class PlayerStateTests
 
 		player.StartFlying();
 
+		Assert.True(player.IsInFlyingState());
 		Assert.True(player.IsInState(PlayerCreatureState.Flying));
 		Assert.True(player.IsInState(PlayerCreatureState.FloatingCorpse));
 		Assert.True(player.IsFpReduceActive);
@@ -534,6 +574,7 @@ public sealed class PlayerStateTests
 
 		player.EndFlying();
 
+		Assert.False(player.IsFlying());
 		Assert.False(player.IsInState(PlayerCreatureState.Flying));
 		Assert.False(player.IsInState(PlayerCreatureState.Gliding));
 		Assert.False(player.IsInState(PlayerCreatureState.FloatingCorpse));
@@ -546,22 +587,27 @@ public sealed class PlayerStateTests
 	{
 		var walkingGlider = new Player
 		{
+			FlyState = PlayerFlyState.Gliding,
 			CreatureState = PlayerCreatureState.Gliding,
 			IsFpReduceActive = true,
 		};
 
 		Assert.True(walkingGlider.StopGliding());
+		Assert.False(walkingGlider.IsInGlidingState());
 		Assert.False(walkingGlider.IsInState(PlayerCreatureState.Gliding));
 		Assert.False(walkingGlider.IsFpReduceActive);
 		Assert.True(walkingGlider.IsFpRestoreActive);
 
 		var flyingGlider = new Player
 		{
+			FlyState = PlayerFlyState.Flying | PlayerFlyState.Gliding,
 			CreatureState = PlayerCreatureState.Flying | PlayerCreatureState.Gliding,
 			IsFpRestoreActive = true,
 		};
 
 		Assert.False(flyingGlider.StopGliding());
+		Assert.True(flyingGlider.IsInFlyingState());
+		Assert.False(flyingGlider.IsInGlidingState());
 		Assert.True(flyingGlider.IsInState(PlayerCreatureState.Flying));
 		Assert.False(flyingGlider.IsInState(PlayerCreatureState.Gliding));
 		Assert.True(flyingGlider.IsFpReduceActive);

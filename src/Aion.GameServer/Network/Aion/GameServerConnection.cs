@@ -5730,7 +5730,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				player.SetCreatureState(PlayerCreatureState.WeaponEquipped, enabled: false);
 				break;
 			case EmotionType.Walk:
-				if (player.IsInState(PlayerCreatureState.Flying) || player.IsInState(PlayerCreatureState.Gliding))
+				if (player.IsFlying())
 					return;
 				player.SetCreatureState(PlayerCreatureState.WalkMode, enabled: true);
 				break;
@@ -5855,7 +5855,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		// Java parity: network/aion/clientpackets/CM_MOVE.runImpl movement-state updates before World.updatePosition.
 		await CancelPendingItemUseOnMoveAsync(player);
-		if (!packet.IsGliding && player.IsInState(PlayerCreatureState.Gliding))
+		if (!packet.IsGliding && player.IsInGlidingState())
 		{
 			var shouldBroadcastStopGlide = player.StopGliding();
 			if (shouldBroadcastStopGlide)
@@ -5863,7 +5863,10 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 		else
 		{
-			player.SetCreatureState(PlayerCreatureState.Gliding, packet.IsGliding);
+			if (packet.IsGliding)
+				player.StartGliding();
+			else
+				player.SetCreatureState(PlayerCreatureState.Gliding, enabled: false);
 		}
 
 		var movement = player.Movement;

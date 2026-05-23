@@ -85,6 +85,9 @@ public sealed class Player
 	// Java parity: model/gameobjects/Creature.state queried through Creature.isInState(CreatureState).
 	public PlayerCreatureState CreatureState { get; set; }
 
+	// Java parity: model/gameobjects/player/Player.flyState queried by Player.isFlying/isInFlyingState.
+	public PlayerFlyState FlyState { get; set; }
+
 	// Java parity: controllers/effect/EffectController.abnormals queried by CM_EMOTION and action guards.
 	public PlayerAbnormalState AbnormalState { get; set; }
 
@@ -341,8 +344,38 @@ public sealed class Player
 
 	public bool IsFlying()
 	{
-		// Java parity: model/gameobjects/player/Player.isFlying, represented by current C# flying/gliding creature-state bits.
-		return IsInState(PlayerCreatureState.Flying) || IsInState(PlayerCreatureState.Gliding);
+		// Java parity: model/gameobjects/player/Player.isFlying returns flyState >= 1.
+		return FlyState != PlayerFlyState.None;
+	}
+
+	public void SetFlyState(PlayerFlyState state)
+	{
+		// Java parity: model/gameobjects/player/Player.setFlyState bitwise ORs FlyState ids.
+		FlyState |= state;
+	}
+
+	public void UnsetFlyState(PlayerFlyState state)
+	{
+		// Java parity: model/gameobjects/player/Player.unsetFlyState clears FlyState ids.
+		FlyState &= ~state;
+	}
+
+	public bool IsInFlyState(PlayerFlyState state)
+	{
+		// Java parity: model/gameobjects/player/Player.isInFlyState.
+		return state == PlayerFlyState.None ? FlyState == PlayerFlyState.None : (FlyState & state) == state;
+	}
+
+	public bool IsInFlyingState()
+	{
+		// Java parity: model/gameobjects/player/Player.isInFlyingState checks FlyState.FLYING only.
+		return IsInFlyState(PlayerFlyState.Flying);
+	}
+
+	public bool IsInGlidingState()
+	{
+		// Java parity: model/gameobjects/player/Player.isInGlidingState checks FlyState.GLIDING only.
+		return IsInFlyState(PlayerFlyState.Gliding);
 	}
 
 	public bool IsUsingFlightPath(PlayerFlightPathType type)
@@ -357,6 +390,8 @@ public sealed class Player
 		if (IsUsingFlightPath(PlayerFlightPathType.Windstream))
 		{
 			SetCreatureState(PlayerCreatureState.Flying, enabled: false);
+			UnsetFlyState(PlayerFlyState.Flying);
+			SetFlyState(PlayerFlyState.Gliding);
 			SetCreatureState(PlayerCreatureState.Active, enabled: true);
 			SetCreatureState(PlayerCreatureState.Gliding, enabled: true);
 			TriggerFpReduce();
@@ -373,6 +408,7 @@ public sealed class Player
 	public void StartFlying()
 	{
 		// Java parity: controllers/FlyController.startFly state and FP-reduce side effects.
+		SetFlyState(PlayerFlyState.Flying);
 		SetCreatureState(PlayerCreatureState.Flying, enabled: true);
 		if (IsInRideMode)
 			SetCreatureState(PlayerCreatureState.FloatingCorpse, enabled: true);
@@ -382,20 +418,35 @@ public sealed class Player
 	public void EndFlying()
 	{
 		// Java parity: controllers/FlyController.endFly state and FP-restore side effects.
+		UnsetFlyState(PlayerFlyState.Flying);
+		UnsetFlyState(PlayerFlyState.Gliding);
 		SetCreatureState(PlayerCreatureState.Flying, enabled: false);
 		SetCreatureState(PlayerCreatureState.Gliding, enabled: false);
 		SetCreatureState(PlayerCreatureState.FloatingCorpse, enabled: false);
 		TriggerFpRestore();
 	}
 
+	public bool StartGliding()
+	{
+		// Java parity: controllers/FlyController.switchToGliding state and FP-reduce side effects.
+		if (IsInGlidingState())
+			return false;
+
+		SetFlyState(PlayerFlyState.Gliding);
+		SetCreatureState(PlayerCreatureState.Gliding, enabled: true);
+		TriggerFpReduce();
+		return true;
+	}
+
 	public bool StopGliding()
 	{
 		// Java parity: controllers/FlyController.onStopGliding.
-		if (!IsInState(PlayerCreatureState.Gliding))
+		if (!IsInGlidingState())
 			return false;
 
+		UnsetFlyState(PlayerFlyState.Gliding);
 		SetCreatureState(PlayerCreatureState.Gliding, enabled: false);
-		if (IsInState(PlayerCreatureState.Flying))
+		if (IsInFlyingState())
 		{
 			TriggerFpReduce();
 			return false;
