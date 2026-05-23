@@ -20,6 +20,9 @@ public class GameServerOptionsTests
 		Assert.Equal(8, options.Membership.CharacterAdditionalCount);
 		Assert.Equal(10, options.Membership.StigmaSlotQuest);
 		Assert.Equal(10, options.Membership.StigmaAutoLearn);
+		Assert.Equal(10, options.Membership.InstancesCooldown);
+		Assert.Equal(1, options.Instance.CooldownRate);
+		Assert.Empty(options.Instance.CooldownRateExcludedMaps);
 		Assert.Equal(1, options.Administration.UnrestrictedItemTradeAccessLevel);
 		Assert.Equal(2, options.Administration.GmPanelAccessLevel);
 		Assert.Equal(1, options.Administration.FreeFlightAccessLevel);

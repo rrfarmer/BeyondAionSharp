@@ -27,6 +27,8 @@ public sealed class GameServerOptions
 
 	public GameServerMembershipOptions Membership { get; init; } = new();
 
+	public GameServerInstanceOptions Instance { get; init; } = new();
+
 	public GameServerAdministrationOptions Administration { get; init; } = new();
 
 	public GameServerRateOptions Rates { get; init; } = new();
@@ -219,6 +221,12 @@ public sealed class GameServerOptions
 				CharacterAdditionalCount = GetByteWithEnvironment(loader, "gameserver.character.additional.count", 8),
 				StigmaSlotQuest = GetByteWithEnvironment(loader, "gameserver.quest.stigma.slot", 10),
 				StigmaAutoLearn = GetByteWithEnvironment(loader, "gameserver.autolearn.stigma", 10),
+				InstancesCooldown = GetByteWithEnvironment(loader, "gameserver.instances.cooldown", 10),
+			},
+			Instance = new GameServerInstanceOptions
+			{
+				CooldownRate = GetIntWithEnvironment(loader, "gameserver.instance.cooldown_rate", 1),
+				CooldownRateExcludedMaps = GetIntSetWithEnvironment(loader, "gameserver.instance.cooldown_rate.excluded_maps", string.Empty),
 			},
 			Administration = new GameServerAdministrationOptions
 			{
@@ -543,6 +551,15 @@ public sealed class GameServerMembershipOptions
 	public byte StigmaSlotQuest { get; init; } = 10;
 
 	public byte StigmaAutoLearn { get; init; } = 10;
+
+	public byte InstancesCooldown { get; init; } = 10;
+}
+
+public sealed class GameServerInstanceOptions
+{
+	public int CooldownRate { get; init; } = 1;
+
+	public IReadOnlySet<int> CooldownRateExcludedMaps { get; init; } = new HashSet<int>();
 }
 
 public sealed class GameServerRateOptions
