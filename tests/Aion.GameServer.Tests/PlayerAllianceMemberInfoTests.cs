@@ -128,6 +128,43 @@ public sealed class PlayerAllianceMemberInfoTests
 		Assert.Equal(0, reader.Remaining);
 	}
 
+	[Fact]
+	public void SmAllianceMemberInfo_WritesNonEmptyEffectEntriesLikeJava()
+	{
+		var member = new Player
+		{
+			ObjectId = 1001,
+			Name = "Effected",
+			IsOnline = true,
+			PlayerClass = "CHANTER",
+			Level = 50,
+			Position = new WorldPosition(220010000, 11, 22, 33, 64),
+		};
+		var fullSlotEffect = new PlayerGroupMemberEffectInfo(
+			EffectorObjectId: 7001,
+			SkillId: 1234,
+			SkillLevel: 3,
+			TargetSlotOrdinal: 2,
+			RemainingTimeToDisplayMillis: 45000);
+		var targetedEffect = new PlayerGroupMemberEffectInfo(
+			EffectorObjectId: 7002,
+			SkillId: 5678,
+			SkillLevel: 1,
+			TargetSlotOrdinal: 4,
+			RemainingTimeToDisplayMillis: 90000);
+		var enterPlan = PlayerAllianceMemberInfoPacketPlan.FromPlayer(88001, member, PlayerAllianceEvent.Enter) with
+		{
+			AbnormalEffects = [fullSlotEffect],
+		};
+		var updateEffectsPlan = PlayerAllianceMemberInfoPacketPlan.FromPlayer(88001, member, PlayerAllianceEvent.UpdateEffects, slot: 4) with
+		{
+			AbnormalEffects = [targetedEffect],
+		};
+
+		AssertAllianceEffectPayload(enterPlan, expectedName: "Effected", expectedSlot: 127, fullSlotEffect);
+		AssertAllianceEffectPayload(updateEffectsPlan, expectedName: null, expectedSlot: 4, targetedEffect);
+	}
+
 	private static void AssertMovementIntent(
 		PlayerAllianceMemberInfoIntent intent,
 		int recipientObjectId,
@@ -150,6 +187,35 @@ public sealed class PlayerAllianceMemberInfoTests
 		Assert.Equal(1, plan.PrefixSnapshot.AlwaysOne);
 		Assert.Equal(0, plan.PrefixSnapshot.AllianceUnknown);
 		AssertAllianceMemberInfoMovementPayload(intent.CreatePacket());
+	}
+
+	private static void AssertAllianceEffectPayload(
+		PlayerAllianceMemberInfoPacketPlan plan,
+		string? expectedName,
+		int expectedSlot,
+		PlayerGroupMemberEffectInfo expectedEffect)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(new SmAllianceMemberInfo(plan)));
+		SkipAllianceMemberInfoPrefix(
+			reader,
+			expectedClassId: 11,
+			expectedGenderId: 0,
+			expectedLevel: 50,
+			expectedEventId: (int)plan.EffectiveEvent);
+		if (expectedName != null)
+			Assert.Equal(expectedName, reader.ReadS());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(expectedSlot, (int)reader.ReadC());
+		Assert.Equal(1, reader.ReadH());
+		Assert.Equal(expectedEffect.EffectorObjectId, reader.ReadD());
+		Assert.Equal(expectedEffect.SkillId, reader.ReadH());
+		Assert.Equal(expectedEffect.SkillLevel, (int)reader.ReadC());
+		Assert.Equal(expectedEffect.TargetSlotOrdinal, (int)reader.ReadC());
+		Assert.Equal(expectedEffect.RemainingTimeToDisplayMillis, reader.ReadD());
+		for (var i = 0; i < 8; i++)
+			Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
 	}
 
 	private static void AssertAllianceMemberInfoMovementPayload(GameServerPacket? packet)
