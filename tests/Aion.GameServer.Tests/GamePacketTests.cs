@@ -1741,6 +1741,21 @@ public class GamePacketTests
 		Assert.Equal(SmFriendNotify.Deleted, friendNotifyReader.ReadC());
 		Assert.Equal(0, friendNotifyReader.Remaining);
 
+		var diePayload = SerializeUnencryptedPayload(
+			new SmDie(
+				allowReviveBySkill: true,
+				allowReviveByItem: false,
+				remainingKiskTimeSeconds: 123,
+				allowInstanceRevive: true,
+				invasion: true));
+		using var dieReader = new PacketBuffer(diePayload);
+		Assert.Equal(1, (int)dieReader.ReadC());
+		Assert.Equal(0, (int)dieReader.ReadC());
+		Assert.Equal(123, dieReader.ReadD());
+		Assert.Equal(1, (int)dieReader.ReadC());
+		Assert.Equal(0x80, (int)dieReader.ReadC());
+		Assert.Equal(0, dieReader.Remaining);
+
 		var questionWindowPayload = SerializeUnencryptedPayload(
 			new SmQuestionWindow(SmQuestionWindow.BuddyListAddBuddyRequest, 1001, 0, "Kahrun", "hello"));
 		using var questionWindowReader = new PacketBuffer(questionWindowPayload);

@@ -4833,6 +4833,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		var playersByObjectId = onlinePlayers.ToDictionary(player => player.ObjectId);
 		var clearBoundObjectIds = plan.ClearBoundObjectIds.ToHashSet();
 		var clearPendingRequestObjectIds = plan.ClearPendingRequestObjectIds.ToHashSet();
+		var resurrectionOptionRefreshObjectIds = plan.ResurrectionOptionRefreshObjectIds.ToHashSet();
 
 		foreach (var player in onlinePlayers)
 		{
@@ -4852,6 +4853,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		{
 			if (playersByObjectId.TryGetValue(playerObjectId, out var player))
 				await _connectionRegistry.SendPacketToPlayerAsync(playerObjectId, CreateBindPointPacket(player, staticData));
+			if (resurrectionOptionRefreshObjectIds.Contains(playerObjectId))
+				await _connectionRegistry.SendPacketToPlayerAsync(playerObjectId, new SmDie());
 		}
 	}
 

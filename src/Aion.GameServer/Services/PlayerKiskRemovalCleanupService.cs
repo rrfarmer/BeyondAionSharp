@@ -14,6 +14,7 @@ public static class PlayerKiskRemovalCleanupService
 		var clearBoundObjectIds = new List<int>();
 		var clearPendingRequestObjectIds = new List<int>();
 		var bindPointResetObjectIds = new List<int>();
+		var resurrectionOptionRefreshObjectIds = new List<int>();
 		int? creatorUpdateObjectId = null;
 
 		foreach (var player in onlinePlayers)
@@ -29,14 +30,25 @@ public static class PlayerKiskRemovalCleanupService
 				clearBoundObjectIds.Add(player.ObjectId);
 
 			if (memberObjectIds.Contains(player.ObjectId) || wasBoundToRemovedKisk)
+			{
 				bindPointResetObjectIds.Add(player.ObjectId);
+				if (IsDead(player))
+					resurrectionOptionRefreshObjectIds.Add(player.ObjectId);
+			}
 		}
 
 		return new PlayerKiskRemovalCleanupPlan(
 			creatorUpdateObjectId,
 			clearBoundObjectIds,
 			clearPendingRequestObjectIds,
-			bindPointResetObjectIds);
+			bindPointResetObjectIds,
+			resurrectionOptionRefreshObjectIds);
+	}
+
+	private static bool IsDead(Player player)
+	{
+		return player.LifeStats?.CurrentHp <= 0
+			|| player.CreatureState == PlayerCreatureState.Dead;
 	}
 }
 
@@ -44,7 +56,8 @@ public sealed record PlayerKiskRemovalCleanupPlan(
 	int? CreatorUpdateObjectId,
 	IReadOnlyList<int> ClearBoundObjectIds,
 	IReadOnlyList<int> ClearPendingRequestObjectIds,
-	IReadOnlyList<int> BindPointResetObjectIds)
+	IReadOnlyList<int> BindPointResetObjectIds,
+	IReadOnlyList<int> ResurrectionOptionRefreshObjectIds)
 {
-	public static PlayerKiskRemovalCleanupPlan Empty { get; } = new(null, [], [], []);
+	public static PlayerKiskRemovalCleanupPlan Empty { get; } = new(null, [], [], [], []);
 }

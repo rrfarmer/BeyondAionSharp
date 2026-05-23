@@ -23,8 +23,8 @@ public sealed class PlayerKiskRemovalCleanupServiceTests
 		{
 			CreatePlayer(1001),
 			CreatePlayer(1002, boundKiskObjectId: 9001, pendingKiskObjectId: 9001),
-			CreatePlayer(1003),
-			CreatePlayer(1004, boundKiskObjectId: 9001),
+			CreatePlayer(1003, currentHp: 0),
+			CreatePlayer(1004, boundKiskObjectId: 9001, currentHp: 0),
 			CreatePlayer(1005, pendingKiskObjectId: 9001),
 			CreatePlayer(1006, boundKiskObjectId: 8001, pendingKiskObjectId: 8001),
 		};
@@ -35,6 +35,7 @@ public sealed class PlayerKiskRemovalCleanupServiceTests
 		Assert.Equal(new[] { 1002, 1004 }, plan.ClearBoundObjectIds);
 		Assert.Equal(new[] { 1002, 1005 }, plan.ClearPendingRequestObjectIds);
 		Assert.Equal(new[] { 1002, 1003, 1004 }, plan.BindPointResetObjectIds);
+		Assert.Equal(new[] { 1003, 1004 }, plan.ResurrectionOptionRefreshObjectIds);
 	}
 
 	[Fact]
@@ -49,14 +50,20 @@ public sealed class PlayerKiskRemovalCleanupServiceTests
 		Assert.Empty(plan.ClearBoundObjectIds);
 		Assert.Empty(plan.ClearPendingRequestObjectIds);
 		Assert.Empty(plan.BindPointResetObjectIds);
+		Assert.Empty(plan.ResurrectionOptionRefreshObjectIds);
 	}
 
-	private static Player CreatePlayer(int objectId, int boundKiskObjectId = 0, int pendingKiskObjectId = 0)
+	private static Player CreatePlayer(
+		int objectId,
+		int boundKiskObjectId = 0,
+		int pendingKiskObjectId = 0,
+		int currentHp = 100)
 	{
 		return new Player
 		{
 			ObjectId = objectId,
 			BoundKiskObjectId = boundKiskObjectId,
+			LifeStats = new PlayerLifeStats(currentHp, CurrentMp: 0, CurrentFp: 0),
 			PendingKiskBindRequest = pendingKiskObjectId == 0
 				? null
 				: new PendingKiskBindRequest(pendingKiskObjectId, 160018),
