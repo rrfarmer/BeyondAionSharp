@@ -306,6 +306,26 @@ public sealed class WorldNpcResourceStatsService
 			UpdateStatsAndSpeedVisually: shouldSendDpPackets);
 	}
 
+	public async ValueTask<WorldNpcDpUseActionResult> SpendPlayerDpForSkillAsync(
+		Player? player,
+		int value,
+		int? maxDp = null)
+	{
+		// Java parity: skillengine/action/DpUseAction.act.
+		if (player == null)
+			return WorldNpcDpUseActionResult.MissingTarget(value);
+
+		var currentDp = player.Dp;
+		if (currentDp <= 0 || currentDp < value)
+		{
+			var (packet, sent) = await SendSkillNotEnoughDpMessageAsync(player, player.IsOnline);
+			return WorldNpcDpUseActionResult.NotEnoughDp(player.ObjectId, value, currentDp, packet, sent);
+		}
+
+		var change = await AddPlayerDpAsync(player, -value, maxDp);
+		return WorldNpcDpUseActionResult.Applied(change, value);
+	}
+
 	public ValueTask<WorldNpcResourceEffectApplicationResult> ApplyResourceOverTimePeriodicResultAsync(
 		WorldNpcSkillResourceOverTimePeriodicActionResult effectResult,
 		WorldNpcResourceMutationTarget target,
@@ -898,6 +918,22 @@ public sealed class WorldNpcResourceStatsService
 		return (packet, sent);
 	}
 
+	private async ValueTask<(SmSystemMessage? Packet, bool Sent)> SendSkillNotEnoughDpMessageAsync(
+		Player player,
+		bool shouldSend)
+	{
+		// Java parity: skillengine/action/DpUseAction.act sends SM_SYSTEM_MESSAGE.STR_SKILL_NOT_ENOUGH_DP.
+		if (!shouldSend)
+			return (null, false);
+
+		var packet = SmSystemMessage.SkillNotEnoughDp();
+		if (_connectionRegistry == null)
+			return (packet, false);
+
+		var sent = await _connectionRegistry.SendPacketToPlayerAsync(player.ObjectId, packet);
+		return (packet, sent);
+	}
+
 	private static bool ShouldSendCreatureLifeStatsPacket(int appliedValue, int skillId, SmAttackStatusType? packetType)
 	{
 		return packetType != null && (appliedValue != 0 || skillId != 0);
@@ -1020,6 +1056,59 @@ public enum WorldNpcResourceEffectApplicationStatus
 	MissingMaxResource,
 	TargetDead,
 	UnsupportedResource,
+}
+
+public sealed record WorldNpcDpUseActionResult(
+	WorldNpcDpUseActionStatus Status,
+	int ObjectId,
+	int RequestedValue,
+	int CurrentDp,
+	WorldNpcResourceChangeResult? Change = null,
+	SmSystemMessage? SystemMessagePacket = null,
+	bool SystemMessageSent = false)
+{
+	public static WorldNpcDpUseActionResult MissingTarget(int requestedValue)
+	{
+		return new WorldNpcDpUseActionResult(
+			WorldNpcDpUseActionStatus.MissingTarget,
+			0,
+			requestedValue,
+			0);
+	}
+
+	public static WorldNpcDpUseActionResult NotEnoughDp(
+		int objectId,
+		int requestedValue,
+		int currentDp,
+		SmSystemMessage? systemMessagePacket,
+		bool systemMessageSent)
+	{
+		return new WorldNpcDpUseActionResult(
+			WorldNpcDpUseActionStatus.NotEnoughDp,
+			objectId,
+			requestedValue,
+			currentDp,
+			null,
+			systemMessagePacket,
+			systemMessageSent);
+	}
+
+	public static WorldNpcDpUseActionResult Applied(WorldNpcResourceChangeResult change, int requestedValue)
+	{
+		return new WorldNpcDpUseActionResult(
+			WorldNpcDpUseActionStatus.Applied,
+			change.ObjectId,
+			requestedValue,
+			change.CurrentValue,
+			change);
+	}
+}
+
+public enum WorldNpcDpUseActionStatus
+{
+	Applied,
+	MissingTarget,
+	NotEnoughDp,
 }
 
 public sealed record WorldNpcResourceChangeResult(

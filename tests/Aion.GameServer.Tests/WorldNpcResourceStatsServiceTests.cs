@@ -455,6 +455,61 @@ public sealed class WorldNpcResourceStatsServiceTests
 	}
 
 	[Fact]
+	public async Task SpendPlayerDpForSkillAsync_SpendsDpThroughPacketedBoundary()
+	{
+		var service = CreateService(out _, out var registry);
+		var player = CreatePlayer(objectId: 1014, currentHp: 100, currentMp: 50, currentFp: 100, playerClass: "RANGER", dp: 1200);
+		player.IsOnline = true;
+
+		var result = await service.SpendPlayerDpForSkillAsync(player, value: 450, maxDp: 4000);
+
+		Assert.Equal(WorldNpcDpUseActionStatus.Applied, result.Status);
+		Assert.Equal(player.ObjectId, result.ObjectId);
+		Assert.Equal(450, result.RequestedValue);
+		Assert.Equal(750, result.CurrentDp);
+		Assert.Null(result.SystemMessagePacket);
+		Assert.False(result.SystemMessageSent);
+		Assert.NotNull(result.Change);
+		Assert.Equal(WorldNpcResourceChangeStatus.Reduced, result.Change.Status);
+		Assert.Equal(1200, result.Change.PreviousValue);
+		Assert.Equal(750, result.Change.CurrentValue);
+		Assert.Equal(450, result.Change.AppliedValue);
+		Assert.Equal(750, player.Dp);
+		Assert.NotNull(result.Change.DpInfoPacket);
+		Assert.NotNull(result.Change.DpStatUpdatePacket);
+		Assert.Same(result.Change.DpInfoPacket, Assert.Single(registry.Broadcasts).Packet);
+		Assert.Same(result.Change.DpStatUpdatePacket, Assert.Single(registry.SentPackets).Packet);
+		Assert.Collection(
+			registry.PacketOrder,
+			packet => Assert.Same(result.Change.DpInfoPacket, packet),
+			packet => Assert.Same(result.Change.DpStatUpdatePacket, packet));
+	}
+
+	[Fact]
+	public async Task SpendPlayerDpForSkillAsync_SendsNotEnoughDpMessageWithoutMutation()
+	{
+		var service = CreateService(out _, out var registry);
+		var player = CreatePlayer(objectId: 1015, currentHp: 100, currentMp: 50, currentFp: 100, playerClass: "RANGER", dp: 300);
+		player.IsOnline = true;
+
+		var result = await service.SpendPlayerDpForSkillAsync(player, value: 450, maxDp: 4000);
+
+		Assert.Equal(WorldNpcDpUseActionStatus.NotEnoughDp, result.Status);
+		Assert.Equal(player.ObjectId, result.ObjectId);
+		Assert.Equal(450, result.RequestedValue);
+		Assert.Equal(300, result.CurrentDp);
+		Assert.Null(result.Change);
+		Assert.NotNull(result.SystemMessagePacket);
+		Assert.Equal(1300016, result.SystemMessagePacket.MessageId);
+		Assert.True(result.SystemMessageSent);
+		Assert.Equal(300, player.Dp);
+		Assert.Empty(registry.Broadcasts);
+		var delivery = Assert.Single(registry.SentPackets);
+		Assert.Equal(player.ObjectId, delivery.PlayerObjectId);
+		Assert.Same(result.SystemMessagePacket, delivery.Packet);
+	}
+
+	[Fact]
 	public async Task ApplyResourceOverTimePeriodicResultAsync_ReducesNpcMpFromStagedMpAttack()
 	{
 		var service = CreateService(out var lifeStats, out _);

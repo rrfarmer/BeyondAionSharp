@@ -63,6 +63,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300388);
 	}
 
+	public static SmSystemMessage SkillNotEnoughDp()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_SKILL_NOT_ENOUGH_DP.
+		return new SmSystemMessage(1300016);
+	}
+
 	public static SmSystemMessage NotEnoughKinah(long kinah)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_NOT_ENOUGH_KINA.
