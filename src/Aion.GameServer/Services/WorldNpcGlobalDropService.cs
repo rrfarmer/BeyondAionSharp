@@ -243,7 +243,7 @@ public sealed class WorldNpcGlobalDropService
 			&& CheckIntRestriction(rule.NpcIds, npc.TemplateId)
 			&& CheckNpcNameRestriction(rule.NpcNames, npc.Template.Name)
 			&& CheckStringRestriction(rule.NpcGroups, npc.Template.GroupDrop)
-			&& CheckStringRestriction(rule.Zones, string.Empty)
+			&& CheckAnyStringRestriction(rule.Zones, dropModifiers.InsideZones)
 			&& !rule.ExcludedNpcIds.Contains(npc.TemplateId);
 	}
 
@@ -286,6 +286,11 @@ public sealed class WorldNpcGlobalDropService
 	private static bool CheckStringRestriction(IReadOnlySet<string> allowedValues, string value)
 	{
 		return allowedValues.Count == 0 || allowedValues.Contains(value);
+	}
+
+	private static bool CheckAnyStringRestriction(IReadOnlySet<string> allowedValues, IReadOnlySet<string>? values)
+	{
+		return allowedValues.Count == 0 || values?.Any(allowedValues.Contains) == true;
 	}
 
 	private static bool CheckIntRestriction(IReadOnlySet<int> allowedValues, int value)

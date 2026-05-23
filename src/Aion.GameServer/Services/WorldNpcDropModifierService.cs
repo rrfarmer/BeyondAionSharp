@@ -11,6 +11,7 @@ public sealed class WorldNpcDropModifierService
 		float boostDropRate = 1f)
 	{
 		// Java parity: services/drop/DropRegistrationService.createDropModifiers, narrowed until live stats/rates/house boosts are modeled.
+		// Zone names stay empty until the future CM_SUBZONE_CHANGE / MapRegion revalidation model can mirror npc.isInsideZone(...).
 		return new WorldNpcDropModifiers(
 			looter.Race,
 			boostDropRate,

@@ -22,17 +22,21 @@ public sealed class WorldNpcGlobalDropServiceTests
 		var wrongNpcGroup = CreateRule("wrong-npc-group", npcGroups: ["DRAKE"]);
 		var worldDropType = CreateRule("elysea-world", worldTypes: ["ELYSEA"]);
 		var wrongWorldDropType = CreateRule("abyss-world", worldTypes: ["ABYSS"]);
+		var zone = CreateRule("zone", zones: ["ELTNEN_FORTRESS_400010000"]);
+		var wrongZone = CreateRule("wrong-zone", zones: ["RESHANTA_CORE_400010000"]);
 		var service = new WorldNpcGlobalDropService(
-			new GlobalDropTable([unrestricted, elyosOnly, wrongMap, excludedNpc, npcName, npcSpecific, npcGroup, wrongNpcGroup, worldDropType, wrongWorldDropType]),
+			new GlobalDropTable([unrestricted, elyosOnly, wrongMap, excludedNpc, npcName, npcSpecific, npcGroup, wrongNpcGroup, worldDropType, wrongWorldDropType, zone, wrongZone]),
 			new ItemTemplateTable([]),
 			worldMaps: [new WorldMapSummary(210010000, IsInstance: false, TwinCount: 1, DropType: "ELYSEA")]);
 		var npc = CreateNpc(210001, "wind_spirit", level: 10, rank: "NOVICE", rating: "NORMAL", race: "MAGICALMONSTER", groupDrop: "SPIRIT");
-		var modifiers = new WorldNpcDropModifiers("ELYOS");
+		var modifiers = new WorldNpcDropModifiers(
+			"ELYOS",
+			InsideZones: new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "ELTNEN_FORTRESS_400010000" });
 
 		var defaultRules = service.GetApplicableRules(npc, modifiers, isAllowedDefaultGlobalDropNpc: true);
 		var restrictedRules = service.GetApplicableRules(npc, modifiers, isAllowedDefaultGlobalDropNpc: false);
 
-		Assert.Equal(["default", "elyos", "name", "npc-specific", "npc-group", "elysea-world"], defaultRules.Select(rule => rule.RuleName).ToArray());
+		Assert.Equal(["default", "elyos", "name", "npc-specific", "npc-group", "elysea-world", "zone"], defaultRules.Select(rule => rule.RuleName).ToArray());
 		Assert.Equal(["npc-specific"], restrictedRules.Select(rule => rule.RuleName).ToArray());
 	}
 
@@ -250,7 +254,8 @@ public sealed class WorldNpcGlobalDropServiceTests
 		IEnumerable<int>? npcIds = null,
 		IEnumerable<int>? excludedNpcIds = null,
 		IReadOnlyList<GlobalDropNpcNameSummary>? npcNames = null,
-		IEnumerable<string>? npcGroups = null)
+		IEnumerable<string>? npcGroups = null,
+		IEnumerable<string>? zones = null)
 	{
 		return new GlobalDropRuleSummary(
 			name,
@@ -272,7 +277,7 @@ public sealed class WorldNpcGlobalDropServiceTests
 			NpcNames: npcNames ?? Array.Empty<GlobalDropNpcNameSummary>(),
 			NpcGroups: npcGroups?.ToHashSet(StringComparer.OrdinalIgnoreCase) ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase),
 			ExcludedNpcIds: excludedNpcIds?.ToHashSet() ?? new HashSet<int>(),
-			Zones: new HashSet<string>(StringComparer.OrdinalIgnoreCase));
+			Zones: zones?.ToHashSet(StringComparer.OrdinalIgnoreCase) ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase));
 	}
 
 	private static ItemTemplateSummary CreateItem(int itemId, int level, string race)

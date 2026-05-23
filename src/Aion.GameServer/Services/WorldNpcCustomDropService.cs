@@ -181,7 +181,8 @@ public sealed record WorldNpcDropModifiers(
 	float BoostDropRate = 1f,
 	float? ReductionDropRate = null,
 	bool IsDropNpcChest = false,
-	int? MaxDropsPerGroup = null)
+	int? MaxDropsPerGroup = null,
+	IReadOnlySet<string>? InsideZones = null)
 {
 	public float CalculateDropChance(float chance, bool allowReductionDropRate)
 	{
