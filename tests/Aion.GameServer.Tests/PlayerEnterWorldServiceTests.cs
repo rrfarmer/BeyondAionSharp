@@ -579,6 +579,12 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public int DeletedMotionId { get; private set; }
 
+		public int SaveItemUseSourceMutationCalls { get; private set; }
+
+		public InventoryItem? ItemUseSourceItemUpdate { get; private set; }
+
+		public int? ItemUseDeletedSourceItemObjectId { get; private set; }
+
 		public int SaveCraftLearnActionMutationCalls { get; private set; }
 
 		public int CraftLearnRecipeId { get; private set; }
@@ -856,6 +862,18 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public Task<bool> DeleteInventoryItemAsync(int itemOwnerId, int itemObjectId, CancellationToken cancellationToken = default)
 		{
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> SaveItemUseSourceMutationAsync(
+			int playerObjectId,
+			InventoryItem? sourceItemUpdate,
+			int? deletedSourceItemObjectId,
+			CancellationToken cancellationToken = default)
+		{
+			SaveItemUseSourceMutationCalls++;
+			ItemUseSourceItemUpdate = sourceItemUpdate;
+			ItemUseDeletedSourceItemObjectId = deletedSourceItemObjectId;
 			return Task.FromResult(true);
 		}
 

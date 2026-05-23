@@ -3003,7 +3003,7 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		if (sourceTemplate.ToyPetSpawnNpcId > 0)
 		{
-			await HandleToyPetSpawnUseItemAsync(player, staticData);
+			await HandleToyPetSpawnUseItemAsync(player, sourceItem, sourceTemplate, staticData);
 			return;
 		}
 
@@ -4523,10 +4523,13 @@ public sealed class GameServerConnection : BaseClientConnection
 			new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 1, 1));
 	}
 
-	private async Task HandleToyPetSpawnUseItemAsync(Player player, StaticData staticData)
+	private async Task HandleToyPetSpawnUseItemAsync(
+		Player player,
+		InventoryItem sourceItem,
+		ItemTemplateSummary sourceTemplate,
+		StaticData staticData)
 	{
 		// Java parity: model/templates/item/actions/ToyPetSpawnAction.canAct guard order.
-		// ToyPetSpawnAction.act delayed kisk spawn remains future KiskService/SpawnEngine work.
 		var restriction = PlayerKiskSpawnRestrictionService.ValidateSpawn(
 			player,
 			_options.Custom.EnableKiskRestriction,
@@ -4549,6 +4552,111 @@ public sealed class GameServerConnection : BaseClientConnection
 				await SendPacketAsync(SmSystemMessage.CannotUseItemInvalidLocation());
 				break;
 		}
+
+		if (!restriction.CanSpawn)
+			return;
+
+		var kiskTemplate = staticData.NpcTemplates.GetNpcTemplate(sourceTemplate.ToyPetSpawnNpcId);
+		if (kiskTemplate == null)
+			return;
+
+		var removeCooldownDelayIdOnCancel = AddItemCooldownIfNeeded(player, sourceTemplate, removeOnCancel: true);
+		await CancelPendingItemUseAsync(player);
+		await BroadcastItemUsageAnimationAsync(
+			player,
+			new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 10000, 0, 0));
+		await SchedulePendingItemUseAsync(
+			player,
+			itemObjectId: sourceItem.ObjectId,
+			itemTemplateId: sourceItem.ItemId,
+			targetItemName: sourceTemplate.GetClientName() ?? sourceTemplate.Name,
+			cancelMessage: PendingItemUseCancelMessage.Item,
+			delay: TimeSpan.FromMilliseconds(10000),
+			completeAsync: async cancellationToken =>
+			{
+				if (cancellationToken.IsCancellationRequested)
+					return;
+
+				await CompleteToyPetSpawnUseItemAsync(player, sourceItem.ObjectId, sourceTemplate, kiskTemplate, cancellationToken);
+			},
+			cancelEndState: 2,
+			removeCooldownDelayIdOnCancel: removeCooldownDelayIdOnCancel);
+	}
+
+	private async Task CompleteToyPetSpawnUseItemAsync(
+		Player player,
+		int sourceItemObjectId,
+		ItemTemplateSummary sourceTemplate,
+		NpcTemplateSummary kiskTemplate,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: ToyPetSpawnAction.act delayed task -> decreaseByObjectId, spawnKisk, KiskService.regKisk.
+		if (_idFactory == null)
+		{
+			_logger.LogWarning("Cannot spawn kisk for player {PlayerObjectId}; IDFactory is unavailable", player.ObjectId);
+			return;
+		}
+
+		var inventoryItems = player.InventoryItems.ToList();
+		var sourceItem = inventoryItems.FirstOrDefault(item =>
+			item.ObjectId == sourceItemObjectId
+			&& item.Location == CubeStorageId
+			&& !item.IsEquipped);
+		if (sourceItem == null)
+		{
+			await BroadcastItemUsageAnimationAsync(
+				player,
+				new SmItemUsageAnimation(player.ObjectId, sourceItemObjectId, sourceTemplate.TemplateId, 0, 2, 0));
+			return;
+		}
+
+		var kiskObjectId = _idFactory.NextId();
+		var plan = PlayerKiskSpawnService.CreatePlan(player, sourceItem, kiskTemplate, kiskObjectId);
+		var addedToWorld = false;
+		if (_world != null)
+		{
+			addedToWorld = _world.TryAddObject(plan.Kisk.ObjectId, plan.Kisk);
+			if (!addedToWorld)
+			{
+				_idFactory.ReleaseId(kiskObjectId);
+				return;
+			}
+		}
+
+		var saved = _playerEnterWorldService == null
+			|| await _playerEnterWorldService.SaveItemUseSourceMutationAsync(
+				player,
+				plan.SourceItemUpdate,
+				plan.DeletedSourceItemObjectId,
+				cancellationToken);
+		if (!saved)
+		{
+			if (addedToWorld)
+				_world?.TryRemoveObject(plan.Kisk.ObjectId, out _);
+			_idFactory.ReleaseId(kiskObjectId);
+			return;
+		}
+
+		await BroadcastItemUsageAnimationAsync(
+			player,
+			new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 1, 1));
+		if (plan.DeletedSourceItemObjectId.HasValue)
+		{
+			inventoryItems.RemoveAll(item => item.ObjectId == plan.DeletedSourceItemObjectId.Value);
+			await SendPacketAsync(new SmDeleteItem(plan.DeletedSourceItemObjectId.Value, SmDeleteItem.UseDeleteType));
+		}
+		else if (plan.SourceItemUpdate != null)
+		{
+			ReplaceInventoryItem(inventoryItems, plan.SourceItemUpdate);
+			await SendPacketAsync(new SmInventoryUpdateItem(plan.SourceItemUpdate, sourceTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+		}
+
+		player.InventoryItems = inventoryItems.ToArray();
+		_runtimeContext?.Kisks.RegisterKisk(plan.Ownership.OwnerObjectId, plan.Ownership.KiskObjectId, plan.Ownership.NpcId);
+		if (_connectionRegistry != null)
+			await _connectionRegistry.RefreshNpcVisibilityAsync([plan.Kisk]);
+		else
+			await SendPacketAsync(new SmNpcInfo(plan.Kisk));
 	}
 
 	private async Task DismountRideAsync(Player player)

@@ -46,6 +46,12 @@ public interface IPlayerEnterWorldRepository
 
 	Task<bool> DeleteInventoryItemAsync(int itemOwnerId, int itemObjectId, CancellationToken cancellationToken = default);
 
+	Task<bool> SaveItemUseSourceMutationAsync(
+		int playerObjectId,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SaveCraftLearnActionMutationAsync(
 		int playerObjectId,
 		int recipeId,
@@ -361,6 +367,15 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	}
 
 	public Task<bool> DeleteInventoryItemAsync(int itemOwnerId, int itemObjectId, CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> SaveItemUseSourceMutationAsync(
+		int playerObjectId,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(true);
 	}
@@ -2683,6 +2698,36 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not delete inventory item {ItemObjectId} for owner {ItemOwnerId}", itemObjectId, itemOwnerId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SaveItemUseSourceMutationAsync(
+		int playerObjectId,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: model/templates/item/actions/ToyPetSpawnAction.act -> inventory.decreaseByObjectId.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			if (sourceItemUpdate != null && !await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, sourceItemUpdate, cancellationToken))
+				return false;
+
+			if (deletedSourceItemObjectId.HasValue
+				&& !await DeleteInventoryItemAsync(connection, transaction, playerObjectId, deletedSourceItemObjectId.Value, cancellationToken))
+				return false;
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save item-use source mutation for player {PlayerObjectId}", playerObjectId);
 			return false;
 		}
 	}

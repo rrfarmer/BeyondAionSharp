@@ -174,6 +174,20 @@ public sealed class PlayerEnterWorldService
 		return true;
 	}
 
+	public Task<bool> SaveItemUseSourceMutationAsync(
+		Player player,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: Storage.decreaseByObjectId for item actions whose remaining side effects are runtime-only.
+		return _repository.SaveItemUseSourceMutationAsync(
+			player.ObjectId,
+			sourceItemUpdate,
+			deletedSourceItemObjectId,
+			cancellationToken);
+	}
+
 	public Task<bool> SaveCraftLearnActionMutationAsync(
 		Player player,
 		int recipeId,
