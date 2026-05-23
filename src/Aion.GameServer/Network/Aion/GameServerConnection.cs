@@ -4738,7 +4738,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		await RemoveRuntimeKiskAsync(kiskObjectId);
 	}
 
-	private async Task RemoveRuntimeKiskAsync(int kiskObjectId)
+	internal async Task RemoveRuntimeKiskAsync(int kiskObjectId)
 	{
 		if (_world == null || _runtimeContext == null)
 			return;
@@ -4747,13 +4747,12 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (!result.RemovedRegistry)
 			return;
 
-		if (_connectionRegistry != null)
-			await PlayerKiskRemovalRuntimeCleanupService.ApplyAsync(
-				result,
-				_connectionRegistry,
-				_runtimeContext,
-				_world,
-				pvpZoneCounterService: _creaturePvpZoneCounterService);
+		await PlayerKiskRemovalRuntimeCleanupService.ApplyAsync(
+			result,
+			_connectionRegistry,
+			_runtimeContext,
+			_world,
+			pvpZoneCounterService: _creaturePvpZoneCounterService);
 	}
 
 	private async Task HandleReviveAsync(Player player, CmRevive packet)

@@ -311,6 +311,45 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 	}
 
 	[Fact]
+	public async Task RemoveRuntimeKiskAsync_ClearsCreaturePvpZoneCountersWithoutConnectionRegistry()
+	{
+		var dataManager = await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false);
+		var runtimeContext = new GameServerRuntimeContext();
+		runtimeContext.SetDataManager(dataManager);
+		var zoneCounterService = new CreaturePvpZoneCounterService();
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var idFactory = new IDFactory([1]);
+		await using var pair = await TestConnectionPair.CreateAsync(
+			registry: null,
+			runtimeContext,
+			zoneCounterService,
+			idFactory,
+			world);
+		var kiskState = new PlayerKiskRuntimeState(
+			objectId: 1,
+			ownerObjectId: 7308,
+			npcId: 700273);
+		runtimeContext.Kisks.RegisterKisk(kiskState);
+		var spawnPosition = new WorldPosition(210040000, 2700, 620, 150, 0);
+		var kiskTemplate = CreateKiskTemplate(700273);
+		var kiskNpc = new WorldNpc(1, 700273, kiskTemplate, spawnPosition);
+		Assert.True(world.TryAddObject(kiskNpc.ObjectId, kiskNpc));
+		CreaturePvpZoneRevalidationService.Revalidate(
+			kiskNpc.ObjectId,
+			kiskNpc.Position,
+			dataManager.StaticData.CreaturePvpZones,
+			zoneCounterService);
+		Assert.Equal(1, zoneCounterService.GetCounters(kiskNpc.ObjectId).PvpZoneCount);
+
+		await pair.Connection.RemoveRuntimeKiskAsync(kiskNpc.ObjectId);
+
+		Assert.False(world.TryGetObject(kiskNpc.ObjectId, out _));
+		Assert.False(runtimeContext.Kisks.HaveKisk(kiskState.OwnerObjectId));
+		Assert.Equal(CreaturePvpZoneCounters.Empty, zoneCounterService.GetCounters(kiskNpc.ObjectId));
+		Assert.Equal(kiskNpc.ObjectId, idFactory.NextId());
+	}
+
+	[Fact]
 	public async Task SpawnAndDismissPostmanAsync_RevalidatesAndClearsCreaturePvpZoneCounters()
 	{
 		var dataManager = await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false);
@@ -570,7 +609,7 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 		public GameServerConnection Connection { get; }
 
 		public static async Task<TestConnectionPair> CreateAsync(
-			IGameClientConnectionRegistry registry,
+			IGameClientConnectionRegistry? registry,
 			GameServerRuntimeContext? runtimeContext = null,
 			CreaturePvpZoneCounterService? creaturePvpZoneCounterService = null,
 			IDFactory? idFactory = null,
