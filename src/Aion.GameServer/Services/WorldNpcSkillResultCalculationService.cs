@@ -182,6 +182,114 @@ public enum WorldNpcSkillAttackStatus
 	OffHandCritical = -37,
 }
 
+public static class WorldNpcSkillAttackStatusExtensions
+{
+	public static int GetJavaId(this WorldNpcSkillAttackStatus status)
+	{
+		return (int)status;
+	}
+
+	public static bool IsCounterSkill(this WorldNpcSkillAttackStatus status)
+	{
+		// Java parity: controllers/attack/AttackStatus.isCounterSkill.
+		return status
+			is WorldNpcSkillAttackStatus.Dodge
+			or WorldNpcSkillAttackStatus.OffHandDodge
+			or WorldNpcSkillAttackStatus.Parry
+			or WorldNpcSkillAttackStatus.OffHandParry
+			or WorldNpcSkillAttackStatus.Block
+			or WorldNpcSkillAttackStatus.OffHandBlock
+			or WorldNpcSkillAttackStatus.Resist
+			or WorldNpcSkillAttackStatus.OffHandResist
+			or WorldNpcSkillAttackStatus.CriticalDodge
+			or WorldNpcSkillAttackStatus.CriticalParry
+			or WorldNpcSkillAttackStatus.CriticalBlock
+			or WorldNpcSkillAttackStatus.CriticalResist
+			or WorldNpcSkillAttackStatus.OffHandCriticalDodge
+			or WorldNpcSkillAttackStatus.OffHandCriticalParry
+			or WorldNpcSkillAttackStatus.OffHandCriticalBlock
+			or WorldNpcSkillAttackStatus.OffHandCriticalResist;
+	}
+
+	public static bool IsCritical(this WorldNpcSkillAttackStatus status)
+	{
+		// Java parity: controllers/attack/AttackStatus.isCritical.
+		return status
+			is WorldNpcSkillAttackStatus.CriticalDodge
+			or WorldNpcSkillAttackStatus.CriticalParry
+			or WorldNpcSkillAttackStatus.CriticalBlock
+			or WorldNpcSkillAttackStatus.CriticalResist
+			or WorldNpcSkillAttackStatus.Critical
+			or WorldNpcSkillAttackStatus.OffHandCriticalDodge
+			or WorldNpcSkillAttackStatus.OffHandCriticalParry
+			or WorldNpcSkillAttackStatus.OffHandCriticalBlock
+			or WorldNpcSkillAttackStatus.OffHandCriticalResist
+			or WorldNpcSkillAttackStatus.OffHandCritical;
+	}
+
+	public static WorldNpcSkillAttackStatus GetOffHandStatus(this WorldNpcSkillAttackStatus status)
+	{
+		// Java parity: controllers/attack/AttackStatus.getOffHandStats.
+		return status switch
+		{
+			WorldNpcSkillAttackStatus.Dodge => WorldNpcSkillAttackStatus.OffHandDodge,
+			WorldNpcSkillAttackStatus.Parry => WorldNpcSkillAttackStatus.OffHandParry,
+			WorldNpcSkillAttackStatus.Block => WorldNpcSkillAttackStatus.OffHandBlock,
+			WorldNpcSkillAttackStatus.Resist => WorldNpcSkillAttackStatus.OffHandResist,
+			WorldNpcSkillAttackStatus.Buf => WorldNpcSkillAttackStatus.OffHandBuf,
+			WorldNpcSkillAttackStatus.NormalHit => WorldNpcSkillAttackStatus.OffHandNormalHit,
+			WorldNpcSkillAttackStatus.Critical => WorldNpcSkillAttackStatus.OffHandCritical,
+			WorldNpcSkillAttackStatus.CriticalDodge => WorldNpcSkillAttackStatus.OffHandCriticalDodge,
+			WorldNpcSkillAttackStatus.CriticalParry => WorldNpcSkillAttackStatus.OffHandCriticalParry,
+			WorldNpcSkillAttackStatus.CriticalBlock => WorldNpcSkillAttackStatus.OffHandCriticalBlock,
+			WorldNpcSkillAttackStatus.CriticalResist => WorldNpcSkillAttackStatus.OffHandCriticalResist,
+			_ => throw new ArgumentOutOfRangeException(nameof(status), status, "Invalid Java main-hand attack status."),
+		};
+	}
+
+	public static WorldNpcSkillAttackStatus GetBaseStatus(this WorldNpcSkillAttackStatus status)
+	{
+		// Java parity: controllers/attack/AttackStatus.getBaseStatus.
+		return status switch
+		{
+			WorldNpcSkillAttackStatus.Dodge
+				or WorldNpcSkillAttackStatus.CriticalDodge
+				or WorldNpcSkillAttackStatus.OffHandDodge
+				or WorldNpcSkillAttackStatus.OffHandCriticalDodge => WorldNpcSkillAttackStatus.Dodge,
+			WorldNpcSkillAttackStatus.Resist
+				or WorldNpcSkillAttackStatus.CriticalResist
+				or WorldNpcSkillAttackStatus.OffHandResist
+				or WorldNpcSkillAttackStatus.OffHandCriticalResist => WorldNpcSkillAttackStatus.Resist,
+			WorldNpcSkillAttackStatus.Parry
+				or WorldNpcSkillAttackStatus.CriticalParry
+				or WorldNpcSkillAttackStatus.OffHandParry
+				or WorldNpcSkillAttackStatus.OffHandCriticalParry => WorldNpcSkillAttackStatus.Parry,
+			WorldNpcSkillAttackStatus.Block
+				or WorldNpcSkillAttackStatus.CriticalBlock
+				or WorldNpcSkillAttackStatus.OffHandBlock
+				or WorldNpcSkillAttackStatus.OffHandCriticalBlock => WorldNpcSkillAttackStatus.Block,
+			_ => status,
+		};
+	}
+
+	public static WorldNpcSkillAttackStatus GetCriticalStatusFor(this WorldNpcSkillAttackStatus status)
+	{
+		// Java parity: controllers/attack/AttackStatus.getCriticalStatusFor.
+		return status switch
+		{
+			WorldNpcSkillAttackStatus.Dodge => WorldNpcSkillAttackStatus.CriticalDodge,
+			WorldNpcSkillAttackStatus.OffHandDodge => WorldNpcSkillAttackStatus.OffHandCriticalDodge,
+			WorldNpcSkillAttackStatus.Parry => WorldNpcSkillAttackStatus.CriticalParry,
+			WorldNpcSkillAttackStatus.OffHandParry => WorldNpcSkillAttackStatus.OffHandCriticalParry,
+			WorldNpcSkillAttackStatus.Block => WorldNpcSkillAttackStatus.CriticalBlock,
+			WorldNpcSkillAttackStatus.OffHandBlock => WorldNpcSkillAttackStatus.OffHandCriticalBlock,
+			WorldNpcSkillAttackStatus.NormalHit => WorldNpcSkillAttackStatus.Critical,
+			WorldNpcSkillAttackStatus.OffHandNormalHit => WorldNpcSkillAttackStatus.OffHandCritical,
+			_ => status,
+		};
+	}
+}
+
 public enum WorldNpcSkillHitType
 {
 	EveryHit,

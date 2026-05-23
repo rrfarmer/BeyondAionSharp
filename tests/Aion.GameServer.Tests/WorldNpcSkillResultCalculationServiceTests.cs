@@ -154,4 +154,75 @@ public sealed class WorldNpcSkillResultCalculationServiceTests
 		Assert.False(result.EffectReserved.IsDamage);
 		Assert.Equal(-25, result.EffectReserved.ValueToSend);
 	}
+
+	[Theory]
+	[InlineData(WorldNpcSkillAttackStatus.Dodge, 0, true, false)]
+	[InlineData(WorldNpcSkillAttackStatus.OffHandDodge, 1, true, false)]
+	[InlineData(WorldNpcSkillAttackStatus.NormalHit, 10, false, false)]
+	[InlineData(WorldNpcSkillAttackStatus.CriticalDodge, -64, true, true)]
+	[InlineData(WorldNpcSkillAttackStatus.Critical, -54, false, true)]
+	[InlineData(WorldNpcSkillAttackStatus.OffHandCritical, -37, false, true)]
+	public void AttackStatusHelpers_MirrorJavaIdsAndFlags(
+		WorldNpcSkillAttackStatus status,
+		int expectedJavaId,
+		bool expectedCounter,
+		bool expectedCritical)
+	{
+		Assert.Equal(expectedJavaId, status.GetJavaId());
+		Assert.Equal(expectedCounter, status.IsCounterSkill());
+		Assert.Equal(expectedCritical, status.IsCritical());
+	}
+
+	[Theory]
+	[InlineData(WorldNpcSkillAttackStatus.Dodge, WorldNpcSkillAttackStatus.OffHandDodge)]
+	[InlineData(WorldNpcSkillAttackStatus.Parry, WorldNpcSkillAttackStatus.OffHandParry)]
+	[InlineData(WorldNpcSkillAttackStatus.Block, WorldNpcSkillAttackStatus.OffHandBlock)]
+	[InlineData(WorldNpcSkillAttackStatus.Resist, WorldNpcSkillAttackStatus.OffHandResist)]
+	[InlineData(WorldNpcSkillAttackStatus.Buf, WorldNpcSkillAttackStatus.OffHandBuf)]
+	[InlineData(WorldNpcSkillAttackStatus.NormalHit, WorldNpcSkillAttackStatus.OffHandNormalHit)]
+	[InlineData(WorldNpcSkillAttackStatus.Critical, WorldNpcSkillAttackStatus.OffHandCritical)]
+	[InlineData(WorldNpcSkillAttackStatus.CriticalDodge, WorldNpcSkillAttackStatus.OffHandCriticalDodge)]
+	public void GetOffHandStatus_MirrorsJavaMainHandMapping(
+		WorldNpcSkillAttackStatus status,
+		WorldNpcSkillAttackStatus expected)
+	{
+		Assert.Equal(expected, status.GetOffHandStatus());
+	}
+
+	[Fact]
+	public void GetOffHandStatus_RejectsJavaInvalidMainHandStatus()
+	{
+		Assert.Throws<ArgumentOutOfRangeException>(() => WorldNpcSkillAttackStatus.OffHandDodge.GetOffHandStatus());
+	}
+
+	[Theory]
+	[InlineData(WorldNpcSkillAttackStatus.CriticalDodge, WorldNpcSkillAttackStatus.Dodge)]
+	[InlineData(WorldNpcSkillAttackStatus.OffHandCriticalDodge, WorldNpcSkillAttackStatus.Dodge)]
+	[InlineData(WorldNpcSkillAttackStatus.CriticalResist, WorldNpcSkillAttackStatus.Resist)]
+	[InlineData(WorldNpcSkillAttackStatus.OffHandParry, WorldNpcSkillAttackStatus.Parry)]
+	[InlineData(WorldNpcSkillAttackStatus.OffHandCriticalBlock, WorldNpcSkillAttackStatus.Block)]
+	[InlineData(WorldNpcSkillAttackStatus.Critical, WorldNpcSkillAttackStatus.Critical)]
+	public void GetBaseStatus_MirrorsJavaBaseStatusMapping(
+		WorldNpcSkillAttackStatus status,
+		WorldNpcSkillAttackStatus expected)
+	{
+		Assert.Equal(expected, status.GetBaseStatus());
+	}
+
+	[Theory]
+	[InlineData(WorldNpcSkillAttackStatus.Dodge, WorldNpcSkillAttackStatus.CriticalDodge)]
+	[InlineData(WorldNpcSkillAttackStatus.OffHandDodge, WorldNpcSkillAttackStatus.OffHandCriticalDodge)]
+	[InlineData(WorldNpcSkillAttackStatus.Parry, WorldNpcSkillAttackStatus.CriticalParry)]
+	[InlineData(WorldNpcSkillAttackStatus.OffHandParry, WorldNpcSkillAttackStatus.OffHandCriticalParry)]
+	[InlineData(WorldNpcSkillAttackStatus.Block, WorldNpcSkillAttackStatus.CriticalBlock)]
+	[InlineData(WorldNpcSkillAttackStatus.OffHandBlock, WorldNpcSkillAttackStatus.OffHandCriticalBlock)]
+	[InlineData(WorldNpcSkillAttackStatus.NormalHit, WorldNpcSkillAttackStatus.Critical)]
+	[InlineData(WorldNpcSkillAttackStatus.OffHandNormalHit, WorldNpcSkillAttackStatus.OffHandCritical)]
+	[InlineData(WorldNpcSkillAttackStatus.Resist, WorldNpcSkillAttackStatus.Resist)]
+	public void GetCriticalStatusFor_MirrorsJavaCriticalMapping(
+		WorldNpcSkillAttackStatus status,
+		WorldNpcSkillAttackStatus expected)
+	{
+		Assert.Equal(expected, status.GetCriticalStatusFor());
+	}
 }
