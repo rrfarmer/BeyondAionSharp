@@ -109,16 +109,18 @@ public sealed record AllocatedInstancePortalTransferResult(
 
 public sealed record PortalContinueTransferResult(
 	PortalContinueTransferKind Kind,
-	PendingTeleportRequestResult Teleport,
+	PendingTeleportRequestResult? Teleport,
 	InstanceEntranceCooldownResult? Cooldown,
 	InstancePortalRuntimePlan? AllocatedRuntimePlan,
-	WorldMapInstanceRuntimeState? RegisteredInstance)
+	WorldMapInstanceRuntimeState? RegisteredInstance,
+	PortalTeamEntryPlan? TeamPlan)
 {
 	public static PortalContinueTransferResult OpenWorld(PendingTeleportRequestResult teleport)
 	{
 		return new PortalContinueTransferResult(
 			PortalContinueTransferKind.OpenWorld,
 			teleport,
+			null,
 			null,
 			null,
 			null);
@@ -133,7 +135,8 @@ public sealed record PortalContinueTransferResult(
 			transfer.Teleport,
 			transfer.Cooldown,
 			null,
-			instance);
+			instance,
+			null);
 	}
 
 	public static PortalContinueTransferResult AllocatedInstance(AllocatedInstancePortalTransferResult transfer)
@@ -143,7 +146,19 @@ public sealed record PortalContinueTransferResult(
 			transfer.Transfer.Teleport,
 			transfer.Transfer.Cooldown,
 			transfer.RuntimePlan,
+			null,
 			null);
+	}
+
+	public static PortalContinueTransferResult UnsupportedTeamPortal(PortalTeamEntryPlan teamPlan)
+	{
+		return new PortalContinueTransferResult(
+			PortalContinueTransferKind.UnsupportedTeamPortal,
+			null,
+			null,
+			null,
+			teamPlan.RegisteredInstance,
+			teamPlan);
 	}
 }
 
@@ -152,4 +167,5 @@ public enum PortalContinueTransferKind
 	OpenWorld,
 	RegisteredInstance,
 	AllocatedInstance,
+	UnsupportedTeamPortal,
 }

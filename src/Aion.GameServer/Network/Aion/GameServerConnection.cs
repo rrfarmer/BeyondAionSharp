@@ -4965,6 +4965,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		var portalLoc = preparation.EntryPlan.PortalLoc;
 		if (portalLoc == null || instanceCooltimes == null || worldMapStates == null)
 			return null;
+		if (preparation.EntryPlan.TeamPlan != null)
+			return PortalContinueTransferResult.UnsupportedTeamPortal(preparation.EntryPlan.TeamPlan);
 		if (preparation.EntryPlan.Action != PortalEntryPlanAction.Continue)
 			return null;
 
