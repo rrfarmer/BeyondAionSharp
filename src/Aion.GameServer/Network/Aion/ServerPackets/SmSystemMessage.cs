@@ -105,6 +105,30 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1400766, worldId.ToString(System.Globalization.CultureInfo.InvariantCulture));
 	}
 
+	public static SmSystemMessage MentorStart()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_MENTOR_START.
+		return new SmSystemMessage(1400762);
+	}
+
+	public static SmSystemMessage MentorStartPartyMessage(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_MENTOR_START_PARTYMSG(String).
+		return new SmSystemMessage(1400763, playerName);
+	}
+
+	public static SmSystemMessage MentorEnd()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_MENTOR_END.
+		return new SmSystemMessage(1400764);
+	}
+
+	public static SmSystemMessage MentorEndPartyMessage(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_MENTOR_END_PARTYMSG(String).
+		return new SmSystemMessage(1400765, playerName);
+	}
+
 	public static SmSystemMessage MovePortalErrorInvalidRace()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MOVE_PORTAL_ERROR_INVALID_RACE.

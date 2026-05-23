@@ -117,6 +117,47 @@ public sealed class PlayerGroupRuntime
 		}
 	}
 
+	public PlayerGroupMentorStatusChangePlan? CreateMentorStatusChangePlan(
+		int teamId,
+		Player player,
+		bool isMentor)
+	{
+		// Java parity: model/team/group/events/PlayerStartMentoringEvent and PlayerGroupStopMentoringEvent.
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(teamId, 0);
+
+		lock (_sync)
+		{
+			if (!_membersByTeamId.TryGetValue(teamId, out var members))
+				return null;
+
+			var mentorMember = members.FirstOrDefault(member => member.ObjectId == player.ObjectId);
+			if (mentorMember == null)
+				return null;
+
+			if (isMentor && !members.Any(member => member.ObjectId != player.ObjectId && member.Player.Level + 10 <= player.Level))
+				return null;
+
+			player.IsMentor = isMentor;
+			var packetPlan = PlayerGroupMemberInfoPacketPlan.FromMember(teamId, mentorMember, PlayerGroupEvent.Movement);
+			var systemMessages = CreateMentorSystemMessageIntents(player, members, isMentor);
+			var memberInfoIntents = members
+				.Select(member => new PlayerGroupMemberInfoIntent(
+					member.ObjectId,
+					player.ObjectId,
+					PlayerGroupEvent.Movement,
+					packetPlan))
+				.ToArray();
+
+			return new PlayerGroupMentorStatusChangePlan(
+				teamId,
+				player.ObjectId,
+				isMentor,
+				systemMessages,
+				memberInfoIntents,
+				new PlayerGroupMentorAbyssRankUpdateIntent(player.ObjectId, isMentor));
+		}
+	}
+
 	public PlayerGroupBrandUpdatePlan? UpdateBrand(int teamId, int brandId, int targetObjectId)
 	{
 		// Java parity: model/team/TemporaryPlayerTeam.updateBrand stores target id and broadcasts SM_SHOW_BRAND.
@@ -391,6 +432,33 @@ public sealed class PlayerGroupRuntime
 				member.ObjectId,
 				PlayerGroupEvent.Enter,
 				PlayerGroupMemberInfoPacketPlan.FromMember(teamId, member, PlayerGroupEvent.Enter)));
+		}
+
+		return intents;
+	}
+
+	private static IReadOnlyList<PlayerGroupSystemMessageIntent> CreateMentorSystemMessageIntents(
+		Player player,
+		IReadOnlyList<PlayerGroupMember> members,
+		bool isMentor)
+	{
+		// Java parity: mentoring events send a self message, then party messages to every other group member.
+		var playerObjectId = player.ObjectId;
+		var intents = new List<PlayerGroupSystemMessageIntent>
+		{
+			new(playerObjectId, isMentor ? SmSystemMessage.MentorStart() : SmSystemMessage.MentorEnd()),
+		};
+
+		foreach (var member in members)
+		{
+			if (member.ObjectId == playerObjectId)
+				continue;
+
+			intents.Add(new PlayerGroupSystemMessageIntent(
+				member.ObjectId,
+				isMentor
+					? SmSystemMessage.MentorStartPartyMessage(player.Name)
+					: SmSystemMessage.MentorEndPartyMessage(player.Name)));
 		}
 
 		return intents;

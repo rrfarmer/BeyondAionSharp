@@ -49,6 +49,25 @@ public sealed record PlayerGroupMemberInfoUpdatePlan(
 	int Slot,
 	IReadOnlyList<PlayerGroupMemberInfoIntent> MemberInfoIntents);
 
+public sealed record PlayerGroupMentorStatusChangePlan(
+	int TeamId,
+	int MentorObjectId,
+	bool IsMentor,
+	IReadOnlyList<PlayerGroupSystemMessageIntent> SystemMessageIntents,
+	IReadOnlyList<PlayerGroupMemberInfoIntent> MemberInfoIntents,
+	PlayerGroupMentorAbyssRankUpdateIntent? AbyssRankUpdateIntent);
+
+public sealed record PlayerGroupMentorAbyssRankUpdateIntent(
+	int PlayerObjectId,
+	bool IsMentor)
+{
+	public SmAbyssRankUpdate CreatePacket()
+	{
+		// Java parity: mentoring events broadcast SM_ABYSS_RANK_UPDATE(2, player).
+		return SmAbyssRankUpdate.MentorStatusChange(PlayerObjectId, IsMentor);
+	}
+}
+
 public sealed record PlayerGroupMemberInfoPacketPlan(
 	int GroupId,
 	int MemberObjectId,

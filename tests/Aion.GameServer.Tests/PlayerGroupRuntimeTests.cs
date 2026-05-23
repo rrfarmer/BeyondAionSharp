@@ -301,6 +301,95 @@ public sealed class PlayerGroupRuntimeTests
 	}
 
 	[Fact]
+	public void CreateMentorStatusChangePlan_StartsMentoringLikeJavaPlayerStartMentoringEvent()
+	{
+		var runtime = new PlayerGroupRuntime();
+		var mentor = new Player { ObjectId = 1001, Name = "Mentor", IsOnline = true, Level = 30 };
+		var mentee = new Player { ObjectId = 1002, Name = "Mentee", IsOnline = true, Level = 10 };
+		var peer = new Player { ObjectId = 1003, Name = "Peer", IsOnline = true, Level = 29 };
+		runtime.CreateOrUpdateGroup(99001, [mentor, mentee, peer]);
+
+		var plan = Assert.IsType<PlayerGroupMentorStatusChangePlan>(
+			runtime.CreateMentorStatusChangePlan(99001, mentor, isMentor: true));
+
+		Assert.True(mentor.IsMentor);
+		Assert.Equal(99001, plan.TeamId);
+		Assert.Equal(1001, plan.MentorObjectId);
+		Assert.True(plan.IsMentor);
+		Assert.Collection(
+			plan.SystemMessageIntents,
+			intent =>
+			{
+				Assert.Equal(1001, intent.RecipientObjectId);
+				AssertSystemMessage(intent.Message, 1400762);
+			},
+			intent =>
+			{
+				Assert.Equal(1002, intent.RecipientObjectId);
+				AssertSystemMessage(intent.Message, 1400763, "Mentor");
+			},
+			intent =>
+			{
+				Assert.Equal(1003, intent.RecipientObjectId);
+				AssertSystemMessage(intent.Message, 1400763, "Mentor");
+			});
+		Assert.Collection(
+			plan.MemberInfoIntents,
+			intent => AssertMentorMovementIntent(intent, recipientObjectId: 1001, mentorObjectId: 1001, expectedMentorFlag: 1),
+			intent => AssertMentorMovementIntent(intent, recipientObjectId: 1002, mentorObjectId: 1001, expectedMentorFlag: 1),
+			intent => AssertMentorMovementIntent(intent, recipientObjectId: 1003, mentorObjectId: 1001, expectedMentorFlag: 1));
+		var abyssRankUpdateIntent = Assert.IsType<PlayerGroupMentorAbyssRankUpdateIntent>(plan.AbyssRankUpdateIntent);
+		Assert.Equal(1001, abyssRankUpdateIntent.PlayerObjectId);
+		Assert.True(abyssRankUpdateIntent.IsMentor);
+		AssertAbyssRankUpdateMentorPayload(abyssRankUpdateIntent.CreatePacket(), expectedPlayerObjectId: 1001, isMentor: true);
+	}
+
+	[Fact]
+	public void CreateMentorStatusChangePlan_StopsMentoringLikeJavaPlayerGroupStopMentoringEvent()
+	{
+		var runtime = new PlayerGroupRuntime();
+		var mentor = new Player { ObjectId = 1001, Name = "Mentor", IsOnline = true, IsMentor = true, Level = 30 };
+		var member = new Player { ObjectId = 1002, Name = "Member", IsOnline = true, Level = 10 };
+		runtime.CreateOrUpdateGroup(99001, [mentor, member]);
+
+		var plan = Assert.IsType<PlayerGroupMentorStatusChangePlan>(
+			runtime.CreateMentorStatusChangePlan(99001, mentor, isMentor: false));
+
+		Assert.False(mentor.IsMentor);
+		Assert.False(plan.IsMentor);
+		Assert.Collection(
+			plan.SystemMessageIntents,
+			intent =>
+			{
+				Assert.Equal(1001, intent.RecipientObjectId);
+				AssertSystemMessage(intent.Message, 1400764);
+			},
+			intent =>
+			{
+				Assert.Equal(1002, intent.RecipientObjectId);
+				AssertSystemMessage(intent.Message, 1400765, "Mentor");
+			});
+		Assert.Collection(
+			plan.MemberInfoIntents,
+			intent => AssertMentorMovementIntent(intent, recipientObjectId: 1001, mentorObjectId: 1001, expectedMentorFlag: 0),
+			intent => AssertMentorMovementIntent(intent, recipientObjectId: 1002, mentorObjectId: 1001, expectedMentorFlag: 0));
+		var abyssRankUpdateIntent = Assert.IsType<PlayerGroupMentorAbyssRankUpdateIntent>(plan.AbyssRankUpdateIntent);
+		AssertAbyssRankUpdateMentorPayload(abyssRankUpdateIntent.CreatePacket(), expectedPlayerObjectId: 1001, isMentor: false);
+	}
+
+	[Fact]
+	public void CreateMentorStatusChangePlan_RejectsFakeStartWhenNoMenteeQualifiesLikeJavaPredicate()
+	{
+		var runtime = new PlayerGroupRuntime();
+		var mentor = new Player { ObjectId = 1001, Name = "Mentor", IsOnline = true, Level = 30 };
+		var peer = new Player { ObjectId = 1002, Name = "Peer", IsOnline = true, Level = 25 };
+		runtime.CreateOrUpdateGroup(99001, [mentor, peer]);
+
+		Assert.Null(runtime.CreateMentorStatusChangePlan(99001, mentor, isMentor: true));
+		Assert.False(mentor.IsMentor);
+	}
+
+	[Fact]
 	public void AddMember_RejectsDuplicateMemberLikeJavaGeneralTeam()
 	{
 		var runtime = new PlayerGroupRuntime();
@@ -1096,6 +1185,15 @@ public sealed class PlayerGroupRuntimeTests
 		Assert.Equal(0, reader.Remaining);
 	}
 
+	private static void AssertAbyssRankUpdateMentorPayload(GameServerPacket packet, int expectedPlayerObjectId, bool isMentor)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(2, (int)reader.ReadC());
+		Assert.Equal(expectedPlayerObjectId, reader.ReadD());
+		Assert.Equal(isMentor ? 1 : 0, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
 	private static void AssertShowBrandPayload(GameServerPacket packet, params (int BrandId, int TargetObjectId)[] expectedBrands)
 	{
 		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
@@ -1110,12 +1208,35 @@ public sealed class PlayerGroupRuntimeTests
 		Assert.Equal(0, reader.Remaining);
 	}
 
+	private static void AssertMentorMovementIntent(
+		PlayerGroupMemberInfoIntent intent,
+		int recipientObjectId,
+		int mentorObjectId,
+		int expectedMentorFlag)
+	{
+		Assert.Equal(recipientObjectId, intent.RecipientObjectId);
+		Assert.Equal(mentorObjectId, intent.SubjectObjectId);
+		Assert.Equal(PlayerGroupEvent.Movement, intent.Event);
+		var plan = Assert.IsType<PlayerGroupMemberInfoPacketPlan>(intent.PacketPlan);
+		AssertMemberInfoPlan(plan, 99001, mentorObjectId, PlayerGroupEvent.Movement, PlayerGroupEvent.Movement, isOnline: true, writesName: false, writesEffects: false);
+		Assert.Equal(expectedMentorFlag, plan.PrefixSnapshot.MentorFlag);
+		AssertGroupMemberInfoMovementPayload(intent.CreatePacket());
+	}
+
 	private static void AssertGroupMemberInfoJoinNamePayload(GameServerPacket? packet, string expectedName)
 	{
 		var actual = Assert.IsType<Network.Aion.ServerPackets.SmGroupMemberInfo>(packet);
 		using var reader = new PacketBuffer(SerializeUnencryptedPayload(actual));
 		SkipGroupMemberInfoPrefix(reader);
 		Assert.Equal(expectedName, reader.ReadS());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertGroupMemberInfoMovementPayload(GameServerPacket? packet)
+	{
+		var actual = Assert.IsType<Network.Aion.ServerPackets.SmGroupMemberInfo>(packet);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(actual));
+		SkipGroupMemberInfoPrefix(reader);
 		Assert.Equal(0, reader.Remaining);
 	}
 
