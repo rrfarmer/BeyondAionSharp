@@ -320,6 +320,128 @@ public sealed class WorldNpcSkillResultCalculationServiceTests
 	}
 
 	[Fact]
+	public void Calculate_FinalizationAppliesSkillResultTailOrder()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 120,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				Finalization: new WorldNpcSkillFinalizationOptions(
+					EffectorIsNpc: true,
+					EffectorNpcOwnerDamageMultiplier: 1.5f,
+					HasSkill: true,
+					EffectedListCount: 3,
+					TemplateIsShared: true,
+					PvpPveMultiplier: 0.5f,
+					EffectedIsNpc: true,
+					EffectedNpcDamageMultiplier: 2f))));
+
+		Assert.Equal(60, result.FinalDamage);
+		Assert.Equal(60, result.AttackResult.Damage);
+		Assert.Equal(60, result.EffectReserved.Value);
+		Assert.True(result.Finalization.Applied);
+		Assert.Equal(120, result.Finalization.OriginalDamage);
+		Assert.Equal(180f, result.Finalization.DamageAfterEffectorNpc, precision: 3);
+		Assert.Equal(60f, result.Finalization.DamageAfterShared, precision: 3);
+		Assert.Equal(30f, result.Finalization.DamageAfterPvpPve, precision: 3);
+		Assert.Equal(30f, result.Finalization.DamageAfterZeroClamp, precision: 3);
+		Assert.Equal(60f, result.Finalization.ExactFinalDamage, precision: 3);
+		Assert.True(result.Finalization.EffectorNpcApplied);
+		Assert.True(result.Finalization.SharedDamageApplied);
+		Assert.True(result.Finalization.PvpPveApplied);
+		Assert.True(result.Finalization.EffectedNpcApplied);
+	}
+
+	[Fact]
+	public void Calculate_FinalizationClampsNegativeBeforeEffectedNpc()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 10,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				Finalization: new WorldNpcSkillFinalizationOptions(
+					PvpPveMultiplier: -0.1f,
+					EffectedIsNpc: true,
+					EffectedNpcDamageMultiplier: 2f))));
+
+		Assert.Equal(0, result.FinalDamage);
+		Assert.Equal(0, result.AttackResult.Damage);
+		Assert.Equal(0, result.EffectReserved.Value);
+		Assert.True(result.Finalization.Applied);
+		Assert.Equal(-1f, result.Finalization.DamageAfterPvpPve, precision: 3);
+		Assert.Equal(0f, result.Finalization.DamageAfterZeroClamp, precision: 3);
+		Assert.True(result.Finalization.ZeroClampApplied);
+		Assert.True(result.Finalization.EffectedNpcApplied);
+	}
+
+	[Theory]
+	[InlineData(1, true)]
+	[InlineData(3, false)]
+	public void Calculate_FinalizationSkipsSharedWhenSingleTargetOrTemplateNotShared(int effectedListCount, bool templateIsShared)
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 90,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				Finalization: new WorldNpcSkillFinalizationOptions(
+					HasSkill: true,
+					EffectedListCount: effectedListCount,
+					TemplateIsShared: templateIsShared,
+					PvpPveMultiplier: 1f))));
+
+		Assert.Equal(90, result.FinalDamage);
+		Assert.True(result.Finalization.Applied);
+		Assert.False(result.Finalization.SharedDamageApplied);
+		Assert.Equal(90f, result.Finalization.DamageAfterShared, precision: 3);
+	}
+
+	[Fact]
+	public void Calculate_FinalizationRecordsMissingInputs()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 100,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				Finalization: new WorldNpcSkillFinalizationOptions(
+					EffectorIsNpc: true,
+					HasSkill: true,
+					TemplateIsShared: true,
+					EffectedIsNpc: true))));
+
+		Assert.Equal(100, result.FinalDamage);
+		Assert.False(result.Finalization.Applied);
+		Assert.True(result.Finalization.HasUnresolvedInputs);
+		Assert.True(result.Finalization.EffectorNpcHookMissing);
+		Assert.True(result.Finalization.SharedTargetCountMissing);
+		Assert.True(result.Finalization.PvpPveInputMissing);
+		Assert.True(result.Finalization.EffectedNpcHookMissing);
+	}
+
+	[Fact]
 	public void Calculate_CreatesJavaAttackResultAndEffectReservedSurface()
 	{
 		var service = new WorldNpcSkillResultCalculationService();

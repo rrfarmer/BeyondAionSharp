@@ -28,8 +28,10 @@ public sealed class WorldNpcSkillResultCalculationService
 		var damageAfterBlocked = blockedDamage.Applied ? blockedDamage.FinalDamage : damageAfterCritical;
 		var damageModifier = CalculateDamageModifier(options.DamageModifier, attackStatus.FinalStatus, damageAfterBlocked);
 		var resultDamage = damageModifier.Applied ? damageModifier.FinalDamage : damageAfterBlocked;
+		var finalization = CalculateFinalization(options.Finalization, resultDamage);
+		var damageAfterFinalization = finalization.Applied ? finalization.FinalDamage : resultDamage;
 		var attackResult = new WorldNpcSkillAttackResult(
-			resultDamage,
+			damageAfterFinalization,
 			attackStatus.FinalStatus,
 			options.HitType,
 			ShieldChecked: !request.IgnoreShield);
@@ -78,6 +80,7 @@ public sealed class WorldNpcSkillResultCalculationService
 			blockedDamage,
 			attackStatus,
 			damageModifier,
+			finalization,
 			npcAiDamageModifier,
 			shieldObserver,
 			finalAttackResult,
@@ -381,6 +384,67 @@ public sealed class WorldNpcSkillResultCalculationService
 			reduceRatio,
 			reduceMax,
 			blockReduction);
+	}
+
+	private static WorldNpcSkillFinalizationResult CalculateFinalization(
+		WorldNpcSkillFinalizationOptions? options,
+		int damage)
+	{
+		if (options == null)
+			return WorldNpcSkillFinalizationResult.FromNotRequested(damage);
+
+		// Java parity: controllers/attack/AttackUtil.calculateSkillResult tail after block/parry handling.
+		var effectorNpcHookMissing = options.EffectorIsNpc && options.EffectorNpcOwnerDamageMultiplier == null;
+		var sharedTargetCountMissing = options.HasSkill && options.TemplateIsShared && options.EffectedListCount == null;
+		var pvpPveInputMissing = options.PvpPveMultiplier == null;
+		var effectedNpcHookMissing = options.EffectedIsNpc && options.EffectedNpcDamageMultiplier == null;
+		if (effectorNpcHookMissing || sharedTargetCountMissing || pvpPveInputMissing || effectedNpcHookMissing)
+		{
+			return WorldNpcSkillFinalizationResult.FromUnresolved(
+				damage,
+				options,
+				effectorNpcHookMissing,
+				sharedTargetCountMissing,
+				pvpPveInputMissing,
+				effectedNpcHookMissing);
+		}
+
+		var exactDamage = (float)damage;
+		var effectorNpcApplied = options.EffectorIsNpc;
+		if (effectorNpcApplied)
+			exactDamage *= options.EffectorNpcOwnerDamageMultiplier!.Value;
+		var damageAfterEffectorNpc = exactDamage;
+
+		var sharedDamageApplied = options.HasSkill && options.TemplateIsShared && options.EffectedListCount > 1;
+		if (sharedDamageApplied)
+			exactDamage /= options.EffectedListCount!.Value;
+		var damageAfterShared = exactDamage;
+
+		exactDamage *= options.PvpPveMultiplier!.Value;
+		var damageAfterPvpPve = exactDamage;
+
+		var zeroClampApplied = exactDamage < 0;
+		if (zeroClampApplied)
+			exactDamage = 0;
+		var damageAfterZeroClamp = exactDamage;
+
+		var effectedNpcApplied = options.EffectedIsNpc;
+		if (effectedNpcApplied)
+			exactDamage *= options.EffectedNpcDamageMultiplier!.Value;
+
+		return WorldNpcSkillFinalizationResult.FromApplied(
+			damage,
+			(int)exactDamage,
+			exactDamage,
+			damageAfterEffectorNpc,
+			damageAfterShared,
+			damageAfterPvpPve,
+			damageAfterZeroClamp,
+			effectorNpcApplied,
+			sharedDamageApplied,
+			zeroClampApplied,
+			effectedNpcApplied,
+			options);
 	}
 
 	private static WorldNpcSkillAdditionalHitResult CalculateAdditionalHits(
@@ -740,6 +804,7 @@ public sealed record WorldNpcSkillResultCalculationOptions(
 	WorldNpcSkillBlockedDamageOptions? BlockedDamage = null,
 	WorldNpcSkillAttackStatusCalculationOptions? AttackStatusCalculation = null,
 	WorldNpcSkillDamageModifierOptions? DamageModifier = null,
+	WorldNpcSkillFinalizationOptions? Finalization = null,
 	WorldNpcSkillAdditionalHitOptions? AdditionalHits = null,
 	WorldNpcSkillNpcAiDamageModifierOptions? NpcAiDamageModifier = null,
 	WorldNpcSkillShieldObserverOptions? ShieldObserver = null,
@@ -770,6 +835,7 @@ public sealed record WorldNpcSkillResultCalculationResult(
 	WorldNpcSkillBlockedDamageResult BlockedDamage,
 	WorldNpcSkillAttackStatusCalculationResult AttackStatusCalculation,
 	WorldNpcSkillDamageModifierResult DamageModifier,
+	WorldNpcSkillFinalizationResult Finalization,
 	WorldNpcSkillNpcAiDamageModifierResult NpcAiDamageModifier,
 	WorldNpcSkillShieldObserverResult ShieldObserver,
 	WorldNpcSkillAttackResult AttackResult,
@@ -1373,6 +1439,188 @@ public sealed record WorldNpcSkillAdditionalHitResult(
 			MainHandRollMissing: false,
 			OffHandRollMissing: false,
 			OffHandDamageMissing: false);
+	}
+}
+
+public sealed record WorldNpcSkillFinalizationOptions(
+	bool EffectorIsNpc = false,
+	float? EffectorNpcOwnerDamageMultiplier = null,
+	bool HasSkill = false,
+	int? EffectedListCount = null,
+	bool TemplateIsShared = false,
+	float? PvpPveMultiplier = null,
+	bool EffectedIsNpc = false,
+	float? EffectedNpcDamageMultiplier = null);
+
+public sealed record WorldNpcSkillFinalizationResult(
+	bool WasRequested,
+	bool Applied,
+	int OriginalDamage,
+	int FinalDamage,
+	float ExactFinalDamage,
+	bool EffectorIsNpc,
+	float? EffectorNpcOwnerDamageMultiplier,
+	bool HasSkill,
+	int? EffectedListCount,
+	bool TemplateIsShared,
+	float? PvpPveMultiplier,
+	bool EffectedIsNpc,
+	float? EffectedNpcDamageMultiplier,
+	float DamageAfterEffectorNpc,
+	float DamageAfterShared,
+	float DamageAfterPvpPve,
+	float DamageAfterZeroClamp,
+	bool EffectorNpcApplied,
+	bool SharedDamageApplied,
+	bool PvpPveApplied,
+	bool ZeroClampApplied,
+	bool EffectedNpcApplied,
+	bool EffectorNpcHookMissing,
+	bool SharedTargetCountMissing,
+	bool PvpPveInputMissing,
+	bool EffectedNpcHookMissing)
+{
+	public bool HasUnresolvedInputs =>
+		EffectorNpcHookMissing || SharedTargetCountMissing || PvpPveInputMissing || EffectedNpcHookMissing;
+
+	public static WorldNpcSkillFinalizationResult FromNotRequested(int damage)
+	{
+		return Create(
+			WasRequested: false,
+			Applied: false,
+			OriginalDamage: damage,
+			FinalDamage: damage,
+			ExactFinalDamage: damage,
+			DamageAfterEffectorNpc: damage,
+			DamageAfterShared: damage,
+			DamageAfterPvpPve: damage,
+			DamageAfterZeroClamp: damage,
+			EffectorNpcApplied: false,
+			SharedDamageApplied: false,
+			PvpPveApplied: false,
+			ZeroClampApplied: false,
+			EffectedNpcApplied: false,
+			Options: null,
+			EffectorNpcHookMissing: false,
+			SharedTargetCountMissing: false,
+			PvpPveInputMissing: false,
+			EffectedNpcHookMissing: false);
+	}
+
+	public static WorldNpcSkillFinalizationResult FromUnresolved(
+		int damage,
+		WorldNpcSkillFinalizationOptions options,
+		bool effectorNpcHookMissing,
+		bool sharedTargetCountMissing,
+		bool pvpPveInputMissing,
+		bool effectedNpcHookMissing)
+	{
+		return Create(
+			WasRequested: true,
+			Applied: false,
+			OriginalDamage: damage,
+			FinalDamage: damage,
+			ExactFinalDamage: damage,
+			DamageAfterEffectorNpc: damage,
+			DamageAfterShared: damage,
+			DamageAfterPvpPve: damage,
+			DamageAfterZeroClamp: damage,
+			EffectorNpcApplied: false,
+			SharedDamageApplied: false,
+			PvpPveApplied: false,
+			ZeroClampApplied: false,
+			EffectedNpcApplied: false,
+			Options: options,
+			EffectorNpcHookMissing: effectorNpcHookMissing,
+			SharedTargetCountMissing: sharedTargetCountMissing,
+			PvpPveInputMissing: pvpPveInputMissing,
+			EffectedNpcHookMissing: effectedNpcHookMissing);
+	}
+
+	public static WorldNpcSkillFinalizationResult FromApplied(
+		int originalDamage,
+		int finalDamage,
+		float exactFinalDamage,
+		float damageAfterEffectorNpc,
+		float damageAfterShared,
+		float damageAfterPvpPve,
+		float damageAfterZeroClamp,
+		bool effectorNpcApplied,
+		bool sharedDamageApplied,
+		bool zeroClampApplied,
+		bool effectedNpcApplied,
+		WorldNpcSkillFinalizationOptions options)
+	{
+		return Create(
+			WasRequested: true,
+			Applied: true,
+			OriginalDamage: originalDamage,
+			FinalDamage: finalDamage,
+			ExactFinalDamage: exactFinalDamage,
+			DamageAfterEffectorNpc: damageAfterEffectorNpc,
+			DamageAfterShared: damageAfterShared,
+			DamageAfterPvpPve: damageAfterPvpPve,
+			DamageAfterZeroClamp: damageAfterZeroClamp,
+			EffectorNpcApplied: effectorNpcApplied,
+			SharedDamageApplied: sharedDamageApplied,
+			PvpPveApplied: true,
+			ZeroClampApplied: zeroClampApplied,
+			EffectedNpcApplied: effectedNpcApplied,
+			Options: options,
+			EffectorNpcHookMissing: false,
+			SharedTargetCountMissing: false,
+			PvpPveInputMissing: false,
+			EffectedNpcHookMissing: false);
+	}
+
+	private static WorldNpcSkillFinalizationResult Create(
+		bool WasRequested,
+		bool Applied,
+		int OriginalDamage,
+		int FinalDamage,
+		float ExactFinalDamage,
+		float DamageAfterEffectorNpc,
+		float DamageAfterShared,
+		float DamageAfterPvpPve,
+		float DamageAfterZeroClamp,
+		bool EffectorNpcApplied,
+		bool SharedDamageApplied,
+		bool PvpPveApplied,
+		bool ZeroClampApplied,
+		bool EffectedNpcApplied,
+		WorldNpcSkillFinalizationOptions? Options,
+		bool EffectorNpcHookMissing,
+		bool SharedTargetCountMissing,
+		bool PvpPveInputMissing,
+		bool EffectedNpcHookMissing)
+	{
+		return new WorldNpcSkillFinalizationResult(
+			WasRequested: WasRequested,
+			Applied: Applied,
+			OriginalDamage: OriginalDamage,
+			FinalDamage: FinalDamage,
+			ExactFinalDamage: ExactFinalDamage,
+			EffectorIsNpc: Options?.EffectorIsNpc ?? false,
+			EffectorNpcOwnerDamageMultiplier: Options?.EffectorNpcOwnerDamageMultiplier,
+			HasSkill: Options?.HasSkill ?? false,
+			EffectedListCount: Options?.EffectedListCount,
+			TemplateIsShared: Options?.TemplateIsShared ?? false,
+			PvpPveMultiplier: Options?.PvpPveMultiplier,
+			EffectedIsNpc: Options?.EffectedIsNpc ?? false,
+			EffectedNpcDamageMultiplier: Options?.EffectedNpcDamageMultiplier,
+			DamageAfterEffectorNpc: DamageAfterEffectorNpc,
+			DamageAfterShared: DamageAfterShared,
+			DamageAfterPvpPve: DamageAfterPvpPve,
+			DamageAfterZeroClamp: DamageAfterZeroClamp,
+			EffectorNpcApplied: EffectorNpcApplied,
+			SharedDamageApplied: SharedDamageApplied,
+			PvpPveApplied: PvpPveApplied,
+			ZeroClampApplied: ZeroClampApplied,
+			EffectedNpcApplied: EffectedNpcApplied,
+			EffectorNpcHookMissing: EffectorNpcHookMissing,
+			SharedTargetCountMissing: SharedTargetCountMissing,
+			PvpPveInputMissing: PvpPveInputMissing,
+			EffectedNpcHookMissing: EffectedNpcHookMissing);
 	}
 }
 
