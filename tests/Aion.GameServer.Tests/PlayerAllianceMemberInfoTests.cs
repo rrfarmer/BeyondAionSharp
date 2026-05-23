@@ -215,6 +215,134 @@ public sealed class PlayerAllianceMemberInfoTests
 	}
 
 	[Fact]
+	public void ViceCaptainAssignmentPlanner_PlansPromoteAllianceInfoBroadcastLikeJavaAssignViceCaptainEvent()
+	{
+		var planner = new PlayerAllianceViceCaptainAssignmentPlanner();
+		var leader = CreateAllianceMember(1001, "Leader", worldId: 210010000);
+		var target = CreateAllianceMember(1002, "Target", worldId: 220010000);
+		var other = CreateAllianceMember(1003, "Other", worldId: 230010000);
+
+		var plan = planner.CreateAssignmentPlan(
+			88001,
+			leaderObjectId: 1001,
+			[leader, target, other],
+			currentViceCaptainObjectIds: [],
+			eventPlayerObjectId: 1002,
+			PlayerAllianceAssignType.Promote);
+
+		Assert.Equal(PlayerAllianceRolePlanStatus.Planned, plan.Status);
+		Assert.Equal([1002], plan.ViceCaptainObjectIdsAfterEvent);
+		Assert.Null(plan.SystemMessageIntent);
+		Assert.Collection(
+			plan.AllianceInfoIntents,
+			intent => AssertViceCaptainInfoIntent(intent, 1001, 3, 88001, 1001, 210010000, [1002, 0, 0, 0], PlayerAllianceInfoPacketPlan.ViceCaptainPromoteMessageId, "Target"),
+			intent => AssertViceCaptainInfoIntent(intent, 1002, 3, 88001, 1001, 220010000, [1002, 0, 0, 0], PlayerAllianceInfoPacketPlan.ViceCaptainPromoteMessageId, "Target"),
+			intent => AssertViceCaptainInfoIntent(intent, 1003, 3, 88001, 1001, 230010000, [1002, 0, 0, 0], PlayerAllianceInfoPacketPlan.ViceCaptainPromoteMessageId, "Target"));
+	}
+
+	[Fact]
+	public void ViceCaptainAssignmentPlanner_PlansDemoteAllianceInfoBroadcastLikeJavaAssignViceCaptainEvent()
+	{
+		var planner = new PlayerAllianceViceCaptainAssignmentPlanner();
+		var leader = CreateAllianceMember(1001, "Leader", worldId: 210010000);
+		var target = CreateAllianceMember(1002, "Target", worldId: 220010000);
+
+		var plan = planner.CreateAssignmentPlan(
+			88001,
+			leaderObjectId: 1001,
+			[leader, target],
+			currentViceCaptainObjectIds: [1002, 1004],
+			eventPlayerObjectId: 1002,
+			PlayerAllianceAssignType.Demote);
+
+		Assert.Equal(PlayerAllianceRolePlanStatus.Planned, plan.Status);
+		Assert.Equal([1004], plan.ViceCaptainObjectIdsAfterEvent);
+		Assert.Collection(
+			plan.AllianceInfoIntents,
+			intent => AssertViceCaptainInfoIntent(intent, 1001, 2, 88001, 1001, 210010000, [1004, 0, 0, 0], PlayerAllianceInfoPacketPlan.ViceCaptainDemoteMessageId, "Target"),
+			intent => AssertViceCaptainInfoIntent(intent, 1002, 2, 88001, 1001, 220010000, [1004, 0, 0, 0], PlayerAllianceInfoPacketPlan.ViceCaptainDemoteMessageId, "Target"));
+	}
+
+	[Fact]
+	public void ViceCaptainAssignmentPlanner_PlansCaptainDemotionWithEmptyMessageLikeJavaAssignViceCaptainEvent()
+	{
+		var planner = new PlayerAllianceViceCaptainAssignmentPlanner();
+		var leader = CreateAllianceMember(1001, "Leader", worldId: 210010000);
+		var oldLeader = CreateAllianceMember(1002, "OldLeader", worldId: 220010000);
+
+		var plan = planner.CreateAssignmentPlan(
+			88001,
+			leaderObjectId: 1001,
+			[leader, oldLeader],
+			currentViceCaptainObjectIds: [1003, 1004],
+			eventPlayerObjectId: 1002,
+			PlayerAllianceAssignType.DemoteCaptainToViceCaptain,
+			isInLeague: true,
+			leagueId: 77001);
+
+		Assert.Equal(PlayerAllianceRolePlanStatus.Planned, plan.Status);
+		Assert.True(plan.WouldBroadcastLeague);
+		Assert.Equal([1003, 1004, 1002], plan.ViceCaptainObjectIdsAfterEvent);
+		Assert.Collection(
+			plan.AllianceInfoIntents,
+			intent => AssertViceCaptainInfoIntent(intent, 1001, 2, 88001, 1001, 210010000, [1003, 1004, 1002, 0], messageId: 0, expectedMessage: string.Empty, expectedLeagueId: 77001),
+			intent => AssertViceCaptainInfoIntent(intent, 1002, 2, 88001, 1001, 220010000, [1003, 1004, 1002, 0], messageId: 0, expectedMessage: string.Empty, expectedLeagueId: 77001));
+	}
+
+	[Fact]
+	public void ViceCaptainAssignmentPlanner_ReturnsLeaderSystemMessageWhenPromoteLimitReachedLikeJava()
+	{
+		var planner = new PlayerAllianceViceCaptainAssignmentPlanner();
+		var leader = CreateAllianceMember(1001, "Leader", worldId: 210010000);
+		var target = CreateAllianceMember(1002, "Target", worldId: 220010000);
+
+		var plan = planner.CreateAssignmentPlan(
+			88001,
+			leaderObjectId: 1001,
+			[leader, target],
+			currentViceCaptainObjectIds: [1003, 1004, 1005, 1006],
+			eventPlayerObjectId: 1002,
+			PlayerAllianceAssignType.Promote);
+
+		Assert.Equal(PlayerAllianceRolePlanStatus.PromoteLimitReached, plan.Status);
+		Assert.Empty(plan.AllianceInfoIntents);
+		var systemMessage = Assert.IsType<PlayerAllianceSystemMessageIntent>(plan.SystemMessageIntent);
+		Assert.Equal(1001, systemMessage.RecipientObjectId);
+		Assert.Equal(1301061, systemMessage.Message.MessageId);
+	}
+
+	[Fact]
+	public void ViceCaptainAssignmentPlanner_SkipsMissingOrOfflineEventPlayerLikeJavaCheckCondition()
+	{
+		var planner = new PlayerAllianceViceCaptainAssignmentPlanner();
+		var leader = CreateAllianceMember(1001, "Leader", worldId: 210010000);
+		var offlineTarget = CreateAllianceMember(1002, "Target", worldId: 220010000);
+		offlineTarget.IsOnline = false;
+
+		var missingPlan = planner.CreateAssignmentPlan(
+			88001,
+			leaderObjectId: 1001,
+			[leader],
+			currentViceCaptainObjectIds: [1003],
+			eventPlayerObjectId: 404,
+			PlayerAllianceAssignType.Demote);
+		var offlinePlan = planner.CreateAssignmentPlan(
+			88001,
+			leaderObjectId: 1001,
+			[leader, offlineTarget],
+			currentViceCaptainObjectIds: [1002],
+			eventPlayerObjectId: 1002,
+			PlayerAllianceAssignType.Demote);
+
+		Assert.Equal(PlayerAllianceRolePlanStatus.EventPlayerMissing, missingPlan.Status);
+		Assert.Empty(missingPlan.AllianceInfoIntents);
+		Assert.Equal([1003], missingPlan.ViceCaptainObjectIdsAfterEvent);
+		Assert.Equal(PlayerAllianceRolePlanStatus.EventPlayerOffline, offlinePlan.Status);
+		Assert.Empty(offlinePlan.AllianceInfoIntents);
+		Assert.Equal([1002], offlinePlan.ViceCaptainObjectIdsAfterEvent);
+	}
+
+	[Fact]
 	public void SmAllianceMemberInfo_RewritesOfflineEnterToEnterOfflineLikeJava()
 	{
 		var member = new Player
@@ -360,6 +488,55 @@ public sealed class PlayerAllianceMemberInfoTests
 			expectedEventId: (int)PlayerAllianceEvent.MemberGroupChange);
 		Assert.Equal(expectedName, reader.ReadS());
 		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertViceCaptainInfoIntent(
+		PlayerAllianceInfoIntent intent,
+		int expectedRecipientObjectId,
+		int expectedAllianceGroupSize,
+		int expectedAllianceId,
+		int expectedLeaderObjectId,
+		int expectedActivePlayerMapId,
+		IReadOnlyList<int> expectedPaddedViceCaptainIds,
+		int messageId,
+		string expectedMessage,
+		int expectedLeagueId = 0)
+	{
+		Assert.Equal(expectedRecipientObjectId, intent.RecipientObjectId);
+		Assert.Equal(expectedAllianceGroupSize, intent.PacketPlan.AllianceGroupSize);
+		Assert.Equal(expectedAllianceId, intent.PacketPlan.AllianceId);
+		Assert.Equal(expectedLeaderObjectId, intent.PacketPlan.LeaderObjectId);
+		Assert.Equal(expectedActivePlayerMapId, intent.PacketPlan.ActivePlayerMapId);
+		Assert.Equal(expectedPaddedViceCaptainIds, intent.PacketPlan.PaddedViceCaptainObjectIds);
+		Assert.Equal(PlayerGroupLootRuleType.RoundRobin, intent.PacketPlan.LootRules.LootRule);
+		Assert.Equal(0x02, intent.PacketPlan.ConstantGroupInfoMarker);
+		Assert.Equal(0x00, intent.PacketPlan.UnknownByte);
+		Assert.Equal(0x3F, intent.PacketPlan.TeamType);
+		Assert.Equal(0, intent.PacketPlan.TeamSubType);
+		Assert.Equal(expectedLeagueId, intent.PacketPlan.LeagueId);
+		Assert.Equal(
+			[
+				new PlayerAllianceInfoGroupPlaceholder(0, 1000),
+				new PlayerAllianceInfoGroupPlaceholder(1, 1001),
+				new PlayerAllianceInfoGroupPlaceholder(2, 1002),
+				new PlayerAllianceInfoGroupPlaceholder(3, 1003),
+			],
+			intent.PacketPlan.GroupPlaceholders);
+		Assert.Equal(messageId, intent.PacketPlan.MessageId);
+		Assert.Equal(expectedMessage, intent.PacketPlan.Message);
+	}
+
+	private static Player CreateAllianceMember(int objectId, string name, int worldId)
+	{
+		return new Player
+		{
+			ObjectId = objectId,
+			Name = name,
+			IsOnline = true,
+			PlayerClass = "RANGER",
+			Level = 40,
+			Position = new WorldPosition(worldId, 11, 22, 33, 64),
+		};
 	}
 
 	private static void AssertAllianceMemberInfoMovementPayload(GameServerPacket? packet)

@@ -159,6 +159,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1400544);
 	}
 
+	public static SmSystemMessage ForceCannotPromoteManager()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_FORCE_CANNOT_PROMOTE_MANAGER.
+		return new SmSystemMessage(1301061);
+	}
+
 	public static SmSystemMessage EnterOnlyUnionDon()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ENTER_ONLY_UNION_DON.
