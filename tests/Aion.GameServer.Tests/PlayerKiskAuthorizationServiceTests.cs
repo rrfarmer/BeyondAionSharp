@@ -43,6 +43,38 @@ public sealed class PlayerKiskAuthorizationServiceTests
 		Assert.Equal(PlayerKiskBindAuthorizationStatus.NoAuthority, PlayerKiskAuthorizationService.ValidateBind(groupedPlayer, allianceKisk).Status);
 	}
 
+	[Fact]
+	public void ValidateBindMatchesJavaGroupAndAllianceUseMasksWhenMembershipResolversAreAvailable()
+	{
+		var groupMember = new Player { ObjectId = 1002, TeamMembership = PlayerTeamMembership.Group };
+		var allianceMember = new Player { ObjectId = 1003, TeamMembership = PlayerTeamMembership.Alliance };
+		var soloPlayer = new Player { ObjectId = 1004 };
+		var groupKisk = CreateKisk(useMask: 4);
+		var allianceKisk = CreateKisk(useMask: 5);
+
+		var allowedGroup = PlayerKiskAuthorizationService.ValidateBind(
+			groupMember,
+			groupKisk,
+			hasCurrentGroupMember: (_, ownerObjectId) => ownerObjectId == groupKisk.OwnerObjectId);
+		var deniedGroup = PlayerKiskAuthorizationService.ValidateBind(
+			groupMember,
+			groupKisk,
+			hasCurrentGroupMember: (_, _) => false);
+		var allowedAlliance = PlayerKiskAuthorizationService.ValidateBind(
+			allianceMember,
+			allianceKisk,
+			hasCurrentTeamMember: (_, ownerObjectId) => ownerObjectId == allianceKisk.OwnerObjectId);
+		var deniedAllianceWithoutTeamState = PlayerKiskAuthorizationService.ValidateBind(
+			soloPlayer,
+			allianceKisk,
+			hasCurrentTeamMember: (_, _) => true);
+
+		Assert.Equal(PlayerKiskBindAuthorizationStatus.Allowed, allowedGroup.Status);
+		Assert.Equal(PlayerKiskBindAuthorizationStatus.NoAuthority, deniedGroup.Status);
+		Assert.Equal(PlayerKiskBindAuthorizationStatus.Allowed, allowedAlliance.Status);
+		Assert.Equal(PlayerKiskBindAuthorizationStatus.NoAuthority, deniedAllianceWithoutTeamState.Status);
+	}
+
 	private static PlayerKiskRuntimeState CreateKisk(
 		int useMask,
 		int maxMembers = 6,

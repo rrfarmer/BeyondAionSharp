@@ -4,7 +4,11 @@ namespace Aion.GameServer.Services;
 
 public static class PlayerKiskAuthorizationService
 {
-	public static PlayerKiskBindAuthorization ValidateBind(Player player, PlayerKiskRuntimeState kisk)
+	public static PlayerKiskBindAuthorization ValidateBind(
+		Player player,
+		PlayerKiskRuntimeState kisk,
+		Func<Player, int, bool>? hasCurrentGroupMember = null,
+		Func<Player, int, bool>? hasCurrentTeamMember = null)
 	{
 		// Java parity: model/gameobjects/Kisk.canBind checks duplicate/full state before use-mask permissions.
 		if (player.BoundKiskObjectId == kisk.ObjectId || kisk.CurrentMemberIds.Contains(player.ObjectId))
@@ -13,12 +17,16 @@ public static class PlayerKiskAuthorizationService
 		if (kisk.CurrentMemberCount >= kisk.MaxMembers)
 			return PlayerKiskBindAuthorization.Full();
 
-		return IsUseAllowed(player, kisk)
+		return IsUseAllowed(player, kisk, hasCurrentGroupMember, hasCurrentTeamMember)
 			? PlayerKiskBindAuthorization.Allowed()
 			: PlayerKiskBindAuthorization.NoAuthority();
 	}
 
-	public static bool IsUseAllowed(Player player, PlayerKiskRuntimeState kisk)
+	public static bool IsUseAllowed(
+		Player player,
+		PlayerKiskRuntimeState kisk,
+		Func<Player, int, bool>? hasCurrentGroupMember = null,
+		Func<Player, int, bool>? hasCurrentTeamMember = null)
 	{
 		// Java parity: model/gameobjects/Kisk.isUseAllowed.
 		return kisk.UseMask switch
@@ -27,8 +35,10 @@ public static class PlayerKiskAuthorizationService
 			1 => SameRace(player.Race, kisk.OwnerRace),
 			2 => player.ObjectId == kisk.OwnerObjectId || (kisk.OwnerLegionId != 0 && player.LegionId == kisk.OwnerLegionId),
 			3 => player.ObjectId == kisk.OwnerObjectId,
-			4 => player.ObjectId == kisk.OwnerObjectId,
-			5 => player.ObjectId == kisk.OwnerObjectId,
+			4 => player.ObjectId == kisk.OwnerObjectId
+				|| (player.IsInTeam && hasCurrentGroupMember?.Invoke(player, kisk.OwnerObjectId) == true),
+			5 => player.ObjectId == kisk.OwnerObjectId
+				|| (player.IsInTeam && hasCurrentTeamMember?.Invoke(player, kisk.OwnerObjectId) == true),
 			_ => false,
 		};
 	}
