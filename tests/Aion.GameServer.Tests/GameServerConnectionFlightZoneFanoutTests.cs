@@ -75,6 +75,40 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 		});
 	}
 
+	[Fact]
+	public async Task RevalidatePlayerFlightZonesAsync_FeedsCreaturePvpZoneCountersFromStaticData()
+	{
+		var dataManager = await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false);
+		var runtimeContext = new GameServerRuntimeContext();
+		runtimeContext.SetDataManager(dataManager);
+		var zoneCounterService = new CreaturePvpZoneCounterService();
+		var registry = new CapturingConnectionRegistry();
+		await using var pair = await TestConnectionPair.CreateAsync(registry, runtimeContext, zoneCounterService);
+		var player = new Player
+		{
+			ObjectId = 7301,
+			Name = "pvp-zone-player",
+			Race = "ELYOS",
+			PlayerClass = "RANGER",
+			Level = 10,
+			Position = new WorldPosition(210040000, 2700, 620, 150, 0),
+			LifeStats = new PlayerLifeStats(CurrentHp: 111, CurrentMp: 205, CurrentFp: 55),
+		};
+		Assert.Contains(
+			dataManager.StaticData.CreaturePvpZones.GetZonesByMapId(player.Position.WorldId),
+			zone => zone.Name == "PVP_87_210040000" && zone.Contains(player.Position));
+
+		await pair.Connection.RevalidatePlayerFlightZonesAsync(player);
+		var enteredCounters = zoneCounterService.GetCounters(player.ObjectId);
+		player.Position = player.Position with { X = 100, Y = 100, Z = 150 };
+		await pair.Connection.RevalidatePlayerFlightZonesAsync(player);
+
+		Assert.Equal(1, enteredCounters.PvpZoneCount);
+		Assert.Equal(0, enteredCounters.SiegeZoneCount);
+		Assert.Equal(CreaturePvpZoneCounters.Empty, zoneCounterService.GetCounters(player.ObjectId));
+		Assert.Empty(registry.PacketOrder);
+	}
+
 	private static Player CreateFlyingPlayer(int objectId)
 	{
 		var player = new Player
@@ -107,6 +141,19 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 		crypt.EnableKey();
 		var frame = packet.SerializeFrame(crypt);
 		return frame[7..];
+	}
+
+	private static string FindRepoRoot()
+	{
+		var directory = new DirectoryInfo(AppContext.BaseDirectory);
+		while (directory != null)
+		{
+			if (File.Exists(Path.Combine(directory.FullName, "game-server", "data", "static_data", "static_data.xml")))
+				return directory.FullName;
+			directory = directory.Parent;
+		}
+
+		throw new DirectoryNotFoundException("Could not find repository root from test output directory.");
 	}
 
 	private sealed class CapturingConnectionRegistry : IGameClientConnectionRegistry
@@ -203,7 +250,10 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 
 		public GameServerConnection Connection { get; }
 
-		public static async Task<TestConnectionPair> CreateAsync(IGameClientConnectionRegistry registry)
+		public static async Task<TestConnectionPair> CreateAsync(
+			IGameClientConnectionRegistry registry,
+			GameServerRuntimeContext? runtimeContext = null,
+			CreaturePvpZoneCounterService? creaturePvpZoneCounterService = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -220,7 +270,9 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 					"flight-zone-fanout-test",
 					new GamePacketProcessor<string>((_, _) => Task.CompletedTask),
 					options: new GameServerOptions(),
-					connectionRegistry: registry);
+					runtimeContext: runtimeContext,
+					connectionRegistry: registry,
+					creaturePvpZoneCounterService: creaturePvpZoneCounterService);
 				return new TestConnectionPair(client, connection);
 			}
 			finally

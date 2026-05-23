@@ -6353,6 +6353,12 @@ public sealed class GameServerConnection : BaseClientConnection
 	internal async Task<PlayerZoneRevalidationResult> RevalidatePlayerFlightZonesAsync(Player player)
 	{
 		var staticData = _runtimeContext?.DataManager?.StaticData;
+		// Java parity: CM_MOVE.notifyControllers -> ZoneUpdateService.revalidateZones updates all zone memberships after movement.
+		CreaturePvpZoneRevalidationService.Revalidate(
+			player.ObjectId,
+			player.Position,
+			staticData?.CreaturePvpZones,
+			_creaturePvpZoneCounterService);
 		var result = PlayerZoneStateService.RevalidateFlightZones(
 			player,
 			staticData?.WorldMaps ?? Array.Empty<WorldMapSummary>(),
