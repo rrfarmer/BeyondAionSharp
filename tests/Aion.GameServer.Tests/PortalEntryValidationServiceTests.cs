@@ -232,6 +232,37 @@ public sealed class PortalEntryValidationServiceTests
 	}
 
 	[Fact]
+	public void ValidateEnterLevel_UsesLoadedPortalPathSummaryFields()
+	{
+		var player = new Player { Race = "ELYOS", Level = 24 };
+		var cooltimes = CreateCooltimesWithLevels(
+			elyosMin: 25,
+			elyosMax: 50,
+			asmodianMin: 30,
+			asmodianMax: 55);
+		var portalPath = CreatePortalPath(minLevel: 25, errLevel: 1011);
+
+		var result = PortalEntryValidationService.ValidateEnterLevel(
+			player,
+			WorldId,
+			cooltimes,
+			portalPath,
+			npcObjectId: 4001);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.LevelRestricted, result.Status);
+		var packet = Assert.IsType<SmDialogWindow>(result.FailurePacket);
+		var payload = SerializeUnencryptedPayload(packet);
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(4001, reader.ReadD());
+		Assert.Equal(1011, reader.ReadH());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
 	public void ValidateEnterLevel_AllowsMembershipBypassLikeJavaPermission()
 	{
 		var player = new Player { Race = "ELYOS", Level = 1 };
@@ -341,6 +372,24 @@ public sealed class PortalEntryValidationServiceTests
 	}
 
 	[Fact]
+	public void ValidateRace_UsesLoadedPortalPathSummaryRace()
+	{
+		var player = new Player { Race = "ELYOS" };
+		var portalPath = CreatePortalPath(race: "ASMODIANS");
+
+		var result = PortalEntryValidationService.ValidateRace(
+			player,
+			portalPath,
+			npcIsDialogNpc: false,
+			npcObjectId: 4001);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.RaceRestricted, result.Status);
+		var packet = Assert.IsType<SmSystemMessage>(result.FailurePacket);
+		Assert.Equal(901354, packet.MessageId);
+	}
+
+	[Fact]
 	public void ValidateRace_ReturnsInvalidRaceSystemMessageForNonDialogNpcMismatch()
 	{
 		var player = new Player { Race = "ELYOS" };
@@ -435,6 +484,27 @@ public sealed class PortalEntryValidationServiceTests
 	}
 
 	[Fact]
+	public void ValidateRank_UsesLoadedPortalPathSummaryMinimumRank()
+	{
+		var player = new Player { AbyssRank = PlayerAbyssRank.Default() with { Rank = 4 } };
+		var portalPath = CreatePortalPath(minRank: 5);
+
+		var result = PortalEntryValidationService.ValidateRank(player, portalPath, npcObjectId: 4001);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.RankRestricted, result.Status);
+		var packet = Assert.IsType<SmDialogWindow>(result.FailurePacket);
+		var payload = SerializeUnencryptedPayload(packet);
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(4001, reader.ReadD());
+		Assert.Equal(SmDialogWindow.NoRightPageId, reader.ReadH());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
 	public void ValidateTitle_AllowsWhenJavaPortalTitleRequirementIsMissing()
 	{
 		var player = new Player { TitleId = 7 };
@@ -483,6 +553,27 @@ public sealed class PortalEntryValidationServiceTests
 	}
 
 	[Fact]
+	public void ValidateTitle_UsesLoadedPortalPathSummaryTitleId()
+	{
+		var player = new Player { TitleId = 6 };
+		var portalPath = CreatePortalPath(titleId: 7);
+
+		var result = PortalEntryValidationService.ValidateTitle(player, portalPath, npcObjectId: 4001);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.TitleRestricted, result.Status);
+		var packet = Assert.IsType<SmDialogWindow>(result.FailurePacket);
+		var payload = SerializeUnencryptedPayload(packet);
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(4001, reader.ReadD());
+		Assert.Equal(SmDialogWindow.NoRightPageId, reader.ReadH());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
 	public void ValidateTitle_AllowsMembershipBypassLikeJavaPermission()
 	{
 		var player = new Player { TitleId = 6 };
@@ -499,6 +590,29 @@ public sealed class PortalEntryValidationServiceTests
 	}
 
 	private const int WorldId = 300030000;
+
+	private static PortalPathSummary CreatePortalPath(
+		string race = "PC_ALL",
+		int minLevel = 0,
+		int minRank = 0,
+		int titleId = 0,
+		int errLevel = 0)
+	{
+		return new PortalPathSummary(
+			PortalPathSource.Dialog,
+			NpcId: 730000,
+			ScrollName: string.Empty,
+			Dialog: 10000,
+			LocId: WorldId / 100,
+			SiegeId: 0,
+			Race: race,
+			MinLevel: minLevel,
+			MinRank: minRank,
+			Kinah: 0,
+			TitleId: titleId,
+			ErrGroup: 0,
+			ErrLevel: errLevel);
+	}
 
 	private static Player CreatePlayerWithCooldown(long reuseTimeMillis, int entryCount)
 	{

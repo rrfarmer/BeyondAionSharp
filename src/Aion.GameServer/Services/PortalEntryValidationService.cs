@@ -48,6 +48,25 @@ public static class PortalEntryValidationService
 		Player player,
 		int worldId,
 		InstanceCooltimeTable instanceCooltimes,
+		PortalPathSummary portalPath,
+		int npcObjectId = 0,
+		bool bypassLevelRequirement = false)
+	{
+		// Java parity: PortalService.checkEnterLevel consumes PortalPath.getMinLevel and getErrLevel.
+		return ValidateEnterLevel(
+			player,
+			worldId,
+			instanceCooltimes,
+			portalPath.MinLevel,
+			portalPath.ErrLevel,
+			npcObjectId,
+			bypassLevelRequirement);
+	}
+
+	public static PortalEntryValidationResult ValidateEnterLevel(
+		Player player,
+		int worldId,
+		InstanceCooltimeTable instanceCooltimes,
 		int portalPathMinLevel = 0,
 		int portalPathErrLevel = 0,
 		int npcObjectId = 0,
@@ -88,6 +107,24 @@ public static class PortalEntryValidationService
 
 	public static PortalEntryValidationResult ValidateRace(
 		Player player,
+		PortalPathSummary portalPath,
+		bool siegeOwnerMatchesPlayerRace = true,
+		bool npcIsDialogNpc = true,
+		int npcObjectId = 0,
+		bool bypassRaceRequirement = false)
+	{
+		// Java parity: PortalService.checkRace consumes PortalPath.getRace and getSiegeId.
+		return ValidateRace(
+			player,
+			portalPath.Race,
+			siegeOwnerMatchesPlayerRace,
+			npcIsDialogNpc,
+			npcObjectId,
+			bypassRaceRequirement);
+	}
+
+	public static PortalEntryValidationResult ValidateRace(
+		Player player,
 		string portalRace,
 		bool siegeOwnerMatchesPlayerRace = true,
 		bool npcIsDialogNpc = true,
@@ -111,6 +148,15 @@ public static class PortalEntryValidationService
 
 	public static PortalEntryValidationResult ValidateRank(
 		Player player,
+		PortalPathSummary portalPath,
+		int npcObjectId)
+	{
+		// Java parity: PortalService.checkRank consumes PortalPath.getMinRank.
+		return ValidateRank(player, portalPath.MinRank, npcObjectId);
+	}
+
+	public static PortalEntryValidationResult ValidateRank(
+		Player player,
 		int portalPathMinRank,
 		int npcObjectId)
 	{
@@ -121,6 +167,16 @@ public static class PortalEntryValidationService
 		return PortalEntryValidationResult.Rejected(
 			PortalEntryValidationStatus.RankRestricted,
 			new SmDialogWindow(npcObjectId, SmDialogWindow.NoRightPageId));
+	}
+
+	public static PortalEntryValidationResult ValidateTitle(
+		Player player,
+		PortalPathSummary portalPath,
+		int npcObjectId,
+		bool bypassTitleRequirement = false)
+	{
+		// Java parity: PortalService.checkTitle consumes PortalPath.getTitleId.
+		return ValidateTitle(player, portalPath.TitleId, npcObjectId, bypassTitleRequirement);
 	}
 
 	public static PortalEntryValidationResult ValidateTitle(
