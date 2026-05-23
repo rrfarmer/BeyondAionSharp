@@ -939,6 +939,115 @@ public sealed class PortalEntryValidationServiceTests
 	}
 
 	[Fact]
+	public void CreateRequiredItemsAndKinahApplication_AppliesJavaDeleteUpdateAndKinahPackets()
+	{
+		var itemStackA = new InventoryItem { ObjectId = 10, ItemId = 185000077, Count = 1, Location = 0 };
+		var itemStackB = new InventoryItem { ObjectId = 11, ItemId = 185000077, Count = 3, Location = 0 };
+		var kinahStack = new InventoryItem { ObjectId = 12, ItemId = KinahItemId, Count = 1_000, Location = 0 };
+		var player = new Player
+		{
+			NpcExpands = 2,
+			QuestExpands = 1,
+			ItemExpands = 3,
+			InventoryItems = [itemStackA, itemStackB, kinahStack],
+		};
+		var portalPath = CreatePortalPath(
+			kinah: 500,
+			itemRequirements: [new PortalItemRequirementSummary(185000077, ItemCount: 3)]);
+		var consumptionPlan = PortalEntryValidationService.CreateRequiredItemsAndKinahConsumptionPlan(player, portalPath);
+
+		var application = PortalEntryValidationService.CreateRequiredItemsAndKinahApplication(
+			player,
+			consumptionPlan,
+			CreateItemTemplates(185000077, KinahItemId));
+
+		Assert.True(application.Applied);
+		Assert.Empty(application.MissingTemplateIds);
+		Assert.Equal([11, 12], application.InventoryItems.Select(item => item.ObjectId).ToArray());
+		Assert.Contains(application.InventoryItems, item => item.ObjectId == 11 && item.Count == 1);
+		Assert.Contains(application.InventoryItems, item => item.ObjectId == 12 && item.Count == 500);
+		Assert.Equal(4, application.Packets.Count);
+
+		var deletePacket = Assert.IsType<SmDeleteItem>(application.Packets[0]);
+		var deletePayload = SerializeUnencryptedPayload(deletePacket);
+		using var deleteReader = new PacketBuffer(deletePayload);
+		Assert.Equal(10, deleteReader.ReadD());
+		Assert.Equal(SmDeleteItem.UseDeleteType, (int)deleteReader.ReadC());
+		Assert.Equal(0, deleteReader.Remaining);
+
+		var cubePayload = SerializeUnencryptedPayload(application.Packets[1]);
+		using var cubeReader = new PacketBuffer(cubePayload);
+		Assert.Equal(0, (int)cubeReader.ReadC());
+		Assert.Equal(0, (int)cubeReader.ReadC());
+		Assert.Equal(1, cubeReader.ReadD());
+		Assert.Equal(2, (int)cubeReader.ReadC());
+		Assert.Equal(1, (int)cubeReader.ReadC());
+		Assert.Equal(3, (int)cubeReader.ReadC());
+		Assert.Equal(0, cubeReader.Remaining);
+
+		var itemUpdatePayload = SerializeUnencryptedPayload(application.Packets[2]);
+		using var itemUpdateReader = new PacketBuffer(itemUpdatePayload);
+		Assert.Equal(11, itemUpdateReader.ReadD());
+		Assert.Equal(CreateItemTemplate(185000077).GetClientName()?.TrimEnd('\0'), itemUpdateReader.ReadS());
+		AssertPacketEndsWithUpdateType(itemUpdatePayload, SmInventoryUpdateItem.DecreaseItemUse);
+
+		var kinahUpdatePayload = SerializeUnencryptedPayload(application.Packets[3]);
+		using var kinahUpdateReader = new PacketBuffer(kinahUpdatePayload);
+		Assert.Equal(12, kinahUpdateReader.ReadD());
+		Assert.Equal(CreateItemTemplate(KinahItemId).GetClientName()?.TrimEnd('\0'), kinahUpdateReader.ReadS());
+		AssertPacketEndsWithUpdateType(kinahUpdatePayload, SmInventoryUpdateItem.DecreaseKinahBuy);
+
+		Assert.Equal(1, itemStackA.Count);
+		Assert.Equal(3, itemStackB.Count);
+		Assert.Equal(1_000, kinahStack.Count);
+		Assert.Equal([10, 11, 12], player.InventoryItems.Select(item => item.ObjectId).ToArray());
+	}
+
+	[Fact]
+	public void CreateRequiredItemsAndKinahApplication_ReturnsNoPacketsForFailedConsumptionPlan()
+	{
+		var player = new Player
+		{
+			InventoryItems = [new InventoryItem { ObjectId = 10, ItemId = 185000077, Count = 1 }],
+		};
+		var portalPath = CreatePortalPath(
+			itemRequirements: [new PortalItemRequirementSummary(185000077, ItemCount: 2)]);
+		var consumptionPlan = PortalEntryValidationService.CreateRequiredItemsAndKinahConsumptionPlan(player, portalPath);
+
+		var application = PortalEntryValidationService.CreateRequiredItemsAndKinahApplication(
+			player,
+			consumptionPlan,
+			CreateItemTemplates(185000077));
+
+		Assert.False(application.Applied);
+		Assert.Empty(application.Packets);
+		Assert.Empty(application.MissingTemplateIds);
+		Assert.Same(player.InventoryItems, application.InventoryItems);
+	}
+
+	[Fact]
+	public void CreateRequiredItemsAndKinahApplication_ReturnsNoPacketsWhenUpdateTemplateIsMissing()
+	{
+		var player = new Player
+		{
+			InventoryItems = [new InventoryItem { ObjectId = 11, ItemId = 185000077, Count = 3 }],
+		};
+		var portalPath = CreatePortalPath(
+			itemRequirements: [new PortalItemRequirementSummary(185000077, ItemCount: 1)]);
+		var consumptionPlan = PortalEntryValidationService.CreateRequiredItemsAndKinahConsumptionPlan(player, portalPath);
+
+		var application = PortalEntryValidationService.CreateRequiredItemsAndKinahApplication(
+			player,
+			consumptionPlan,
+			new ItemTemplateTable([]));
+
+		Assert.False(application.Applied);
+		Assert.Empty(application.Packets);
+		Assert.Equal([185000077], application.MissingTemplateIds);
+		Assert.Same(player.InventoryItems, application.InventoryItems);
+	}
+
+	[Fact]
 	public void ValidatePortalEntryPlan_ReturnsMissingLocationBeforeAnyGuardLikeJava()
 	{
 		var player = CreatePlayerWithCooldown(reuseTimeMillis: 200_000, entryCount: 2);
@@ -1242,6 +1351,28 @@ public sealed class PortalEntryValidationServiceTests
 		return var0 & 0x3F;
 	}
 
+	private static ItemTemplateTable CreateItemTemplates(params int[] itemIds)
+	{
+		return new ItemTemplateTable(itemIds.Select(CreateItemTemplate).ToArray());
+	}
+
+	private static ItemTemplateSummary CreateItemTemplate(int itemId)
+	{
+		return new ItemTemplateSummary(
+			itemId,
+			itemId == KinahItemId ? "Kinah" : "Portal Item",
+			DescriptionId: itemId == KinahItemId ? 12350 : 20001,
+			Mask: 0,
+			Level: 1,
+			ItemGroup: itemId == KinahItemId ? "NONE" : "NORMAL",
+			ItemType: "NORMAL",
+			Quality: "COMMON",
+			Race: "PC_ALL",
+			MaxStackCount: 1000,
+			Price: 0,
+			ValidEquipmentSlots: 0);
+	}
+
 	private static Player CreatePlayerWithCooldown(long reuseTimeMillis, int entryCount, string race = "")
 	{
 		return new Player
@@ -1347,5 +1478,11 @@ public sealed class PortalEntryValidationServiceTests
 		crypt.EnableKey();
 		var frame = packet.SerializeFrame(crypt);
 		return frame[7..];
+	}
+
+	private static void AssertPacketEndsWithUpdateType(byte[] payload, int updateType)
+	{
+		var actual = payload[^2] | (payload[^1] << 8);
+		Assert.Equal(updateType, actual);
 	}
 }

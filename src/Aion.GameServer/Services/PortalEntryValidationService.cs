@@ -407,6 +407,51 @@ public static class PortalEntryValidationService
 			consumptionSteps);
 	}
 
+	public static PortalRequirementConsumptionApplication CreateRequiredItemsAndKinahApplication(
+		Player player,
+		PortalRequirementConsumptionPlan consumptionPlan,
+		ItemTemplateTable itemTemplates)
+	{
+		// Java parity: services/item/ItemPacketService.sendItemPacket over PortalService.checkAndRemoveRequiredItems mutations.
+		if (!consumptionPlan.Succeeded)
+			return PortalRequirementConsumptionApplication.NotApplied(player.InventoryItems);
+
+		var updatedItemsByObjectId = consumptionPlan.UpdatedItems.ToDictionary(item => item.ObjectId);
+		var deletedObjectIds = consumptionPlan.DeletedObjectIds.ToHashSet();
+		var neededTemplateIds = consumptionPlan.ConsumptionSteps
+			.Where(step => !deletedObjectIds.Contains(step.ObjectId))
+			.Select(step => step.ItemId)
+			.Distinct()
+			.Where(itemId => itemTemplates.GetItemTemplate(itemId) == null)
+			.ToArray();
+		if (neededTemplateIds.Length > 0)
+			return PortalRequirementConsumptionApplication.MissingTemplates(player.InventoryItems, neededTemplateIds);
+
+		var workingItems = player.InventoryItems.ToList();
+		var packets = new List<GameServerPacket>();
+
+		foreach (var step in consumptionPlan.ConsumptionSteps)
+		{
+			if (deletedObjectIds.Contains(step.ObjectId))
+			{
+				workingItems.RemoveAll(item => item.ObjectId == step.ObjectId);
+				packets.Add(new SmDeleteItem(step.ObjectId, SmDeleteItem.UseDeleteType));
+				packets.Add(SmCubeUpdate.CubeSize(CreatePacketPlayer(player, workingItems)));
+				continue;
+			}
+
+			var updatedItem = updatedItemsByObjectId[step.ObjectId];
+			ReplaceInventoryItem(workingItems, updatedItem);
+			var template = itemTemplates.GetItemTemplate(step.ItemId)!;
+			var updateType = step.IsKinah
+				? SmInventoryUpdateItem.DecreaseKinahBuy
+				: SmInventoryUpdateItem.DecreaseItemUse;
+			packets.Add(new SmInventoryUpdateItem(updatedItem, template, updateType));
+		}
+
+		return PortalRequirementConsumptionApplication.Success(workingItems, packets);
+	}
+
 	private static long GetInventoryCount(Player player, int itemId)
 	{
 		return GetInventoryCount(player.InventoryItems, itemId);
@@ -462,6 +507,18 @@ public static class PortalEntryValidationService
 		var index = items.FindIndex(item => item.ObjectId == replacement.ObjectId);
 		if (index >= 0)
 			items[index] = replacement;
+	}
+
+	private static Player CreatePacketPlayer(Player player, IReadOnlyList<InventoryItem> inventoryItems)
+	{
+		return new Player
+		{
+			ObjectId = player.ObjectId,
+			InventoryItems = inventoryItems,
+			NpcExpands = player.NpcExpands,
+			QuestExpands = player.QuestExpands,
+			ItemExpands = player.ItemExpands,
+		};
 	}
 
 	private static InventoryItem CopyInventoryItem(InventoryItem item, long count)
@@ -581,6 +638,44 @@ public sealed record PortalRequirementConsumptionStep(
 	long ConsumedCount,
 	long RemainingItemCount,
 	bool IsKinah);
+
+public sealed record PortalRequirementConsumptionApplication(
+	bool Applied,
+	IReadOnlyList<InventoryItem> InventoryItems,
+	IReadOnlyList<GameServerPacket> Packets,
+	IReadOnlyList<int> MissingTemplateIds)
+{
+	public static PortalRequirementConsumptionApplication Success(
+		IReadOnlyList<InventoryItem> inventoryItems,
+		IReadOnlyList<GameServerPacket> packets)
+	{
+		return new PortalRequirementConsumptionApplication(
+			true,
+			inventoryItems,
+			packets,
+			Array.Empty<int>());
+	}
+
+	public static PortalRequirementConsumptionApplication NotApplied(IReadOnlyList<InventoryItem> inventoryItems)
+	{
+		return new PortalRequirementConsumptionApplication(
+			false,
+			inventoryItems,
+			Array.Empty<GameServerPacket>(),
+			Array.Empty<int>());
+	}
+
+	public static PortalRequirementConsumptionApplication MissingTemplates(
+		IReadOnlyList<InventoryItem> inventoryItems,
+		IReadOnlyList<int> missingTemplateIds)
+	{
+		return new PortalRequirementConsumptionApplication(
+			false,
+			inventoryItems,
+			Array.Empty<GameServerPacket>(),
+			missingTemplateIds);
+	}
+}
 
 public enum PortalEntryValidationStatus
 {
