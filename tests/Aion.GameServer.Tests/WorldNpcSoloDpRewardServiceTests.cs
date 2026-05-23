@@ -115,7 +115,7 @@ public sealed class WorldNpcSoloDpRewardServiceTests
 	}
 
 	[Fact]
-	public async Task ApplySoloDpRewardAsync_SkipsMissingDeadAndBoundaryCases()
+	public async Task ApplySoloDpRewardAsync_SkipsMissingDeadAndUsesOnlineMaxDp()
 	{
 		var service = CreateService(out var registry);
 		var npc = CreateNpc(objectId: 2402, level: 12, rating: "ELITE");
@@ -126,23 +126,24 @@ public sealed class WorldNpcSoloDpRewardServiceTests
 		var missingPlayer = await service.ApplySoloDpRewardAsync(null, npc, damagePercent: 1f, maxDp: 4000);
 		var missingNpc = await service.ApplySoloDpRewardAsync(player, null, damagePercent: 1f, maxDp: 4000);
 		var playerDead = await service.ApplySoloDpRewardAsync(deadPlayer, npc, damagePercent: 1f, maxDp: 4000);
-		var missingMax = await service.ApplySoloDpRewardAsync(player, npc, damagePercent: 1f);
+		var liveMax = await service.ApplySoloDpRewardAsync(player, npc, damagePercent: 1f);
 		var startingClass = await service.ApplySoloDpRewardAsync(startingClassPlayer, npc, damagePercent: 1f, maxDp: 4000);
 
 		Assert.Equal(WorldNpcSoloDpRewardStatus.MissingPlayer, missingPlayer.Status);
 		Assert.Equal(WorldNpcSoloDpRewardStatus.MissingNpc, missingNpc.Status);
 		Assert.Equal(WorldNpcSoloDpRewardStatus.PlayerDead, playerDead.Status);
-		Assert.Equal(WorldNpcSoloDpRewardStatus.DpBoundarySkipped, missingMax.Status);
-		Assert.NotNull(missingMax.Change);
-		Assert.Equal(WorldNpcResourceChangeStatus.MissingMaxResource, missingMax.Change.Status);
+		Assert.Equal(WorldNpcSoloDpRewardStatus.Applied, liveMax.Status);
+		Assert.NotNull(liveMax.Change);
+		Assert.Equal(WorldNpcResourceChangeStatus.Increased, liveMax.Change.Status);
+		Assert.Equal(4000, liveMax.Change.MaxValue);
 		Assert.Equal(WorldNpcSoloDpRewardStatus.DpBoundarySkipped, startingClass.Status);
 		Assert.NotNull(startingClass.Change);
 		Assert.Equal(WorldNpcResourceChangeStatus.StartingClass, startingClass.Change.Status);
-		Assert.Equal(500, player.Dp);
+		Assert.Equal(539, player.Dp);
 		Assert.Equal(500, deadPlayer.Dp);
 		Assert.Equal(500, startingClassPlayer.Dp);
-		Assert.Empty(registry.Broadcasts);
-		Assert.Empty(registry.SentPackets);
+		Assert.Single(registry.Broadcasts);
+		Assert.Equal(2, registry.SentPackets.Count);
 	}
 
 	private static WorldNpcSoloDpRewardService CreateService(out CapturingConnectionRegistry registry)

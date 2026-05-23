@@ -133,7 +133,7 @@ public sealed class PvpDpRewardServiceTests
 	}
 
 	[Fact]
-	public async Task ApplyMemberDpRewardAsync_SkipsMissingInputsAndBoundaryCases()
+	public async Task ApplyMemberDpRewardAsync_SkipsMissingInputsAndUsesOnlineMaxDp()
 	{
 		var service = CreateService(out var registry);
 		var member = CreatePlayer(objectId: 1502, playerClass: "RANGER", level: 18, rank: 3, dp: 100);
@@ -167,7 +167,7 @@ public sealed class PvpDpRewardServiceTests
 			eligibleMemberCount: 0,
 			underDailyKillLimit: true,
 			maxDp: 4000);
-		var missingMax = await service.ApplyMemberDpRewardAsync(
+		var liveMax = await service.ApplyMemberDpRewardAsync(
 			member,
 			victim,
 			maxRank: 3,
@@ -188,16 +188,18 @@ public sealed class PvpDpRewardServiceTests
 		Assert.Equal(PvpDpRewardStatus.MissingMember, missingMember.Status);
 		Assert.Equal(PvpDpRewardStatus.MissingVictim, missingVictim.Status);
 		Assert.Equal(PvpDpRewardStatus.NoEligibleMembers, noEligibleMembers.Status);
-		Assert.Equal(PvpDpRewardStatus.DpBoundarySkipped, missingMax.Status);
-		Assert.NotNull(missingMax.Change);
-		Assert.Equal(WorldNpcResourceChangeStatus.MissingMaxResource, missingMax.Change.Status);
+		Assert.Equal(PvpDpRewardStatus.Applied, liveMax.Status);
+		Assert.NotNull(liveMax.Change);
+		Assert.Equal(WorldNpcResourceChangeStatus.Increased, liveMax.Change.Status);
+		Assert.Equal(4000, liveMax.Change.MaxValue);
+		Assert.Equal(240, liveMax.MemberDpGain);
 		Assert.Equal(PvpDpRewardStatus.DpBoundarySkipped, startingClass.Status);
 		Assert.NotNull(startingClass.Change);
 		Assert.Equal(WorldNpcResourceChangeStatus.StartingClass, startingClass.Change.Status);
-		Assert.Equal(100, member.Dp);
+		Assert.Equal(340, member.Dp);
 		Assert.Equal(100, startingClassMember.Dp);
-		Assert.Empty(registry.Broadcasts);
-		Assert.Empty(registry.SentPackets);
+		Assert.Single(registry.Broadcasts);
+		Assert.Equal(2, registry.SentPackets.Count);
 	}
 
 	private static PvpDpRewardService CreateService(out CapturingConnectionRegistry registry)

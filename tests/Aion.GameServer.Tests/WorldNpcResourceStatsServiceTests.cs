@@ -396,13 +396,14 @@ public sealed class WorldNpcResourceStatsServiceTests
 		var player = CreatePlayer(objectId: 1003, currentHp: 100, currentMp: 50, currentFp: 100, playerClass: "RANGER", dp: 3900);
 		player.IsOnline = true;
 
-		var result = await service.AddPlayerDpAsync(player, value: 250, maxDp: 4000);
+		var result = await service.AddPlayerDpAsync(player, value: 250);
 
 		Assert.Equal(WorldNpcResourceChangeStatus.Increased, result.Status);
 		Assert.Equal(WorldNpcEffectResourceType.Dp, result.ResourceType);
 		Assert.Equal(3900, result.PreviousValue);
 		Assert.Equal(4000, result.CurrentValue);
 		Assert.Equal(100, result.AppliedValue);
+		Assert.Equal(4000, result.MaxValue);
 		Assert.True(result.BroadcastDpInfo);
 		Assert.NotNull(result.DpInfoPacket);
 		Assert.Equal(player.ObjectId, result.DpInfoPacket.PlayerObjectId);
@@ -447,10 +448,11 @@ public sealed class WorldNpcResourceStatsServiceTests
 		player.IsInRideMode = true;
 		player.RideInfo = new PlayerRideInfo(NpcId: 9001, StartFp: 30, CostFp: 1, SprintSpeed: 12.0f, FlySpeed: 16.0f, MoveSpeed: 9.0f);
 
-		var result = await service.AddPlayerDpAsync(player, value: 50, maxDp: 4000);
+		var result = await service.AddPlayerDpAsync(player, value: 50);
 
 		Assert.Equal(WorldNpcResourceChangeStatus.Increased, result.Status);
 		Assert.Equal(1050, result.CurrentValue);
+		Assert.Equal(4000, result.MaxValue);
 		Assert.NotNull(result.VisualStatsUpdate);
 		Assert.Equal(PlayerVisualStatsUpdateStatus.StatsAndSpeedSent, result.VisualStatsUpdate.Status);
 		Assert.NotNull(result.VisualStatsUpdate.SpeedSnapshot);
@@ -473,7 +475,7 @@ public sealed class WorldNpcResourceStatsServiceTests
 	}
 
 	[Fact]
-	public async Task AddPlayerDpAsync_SkipsStartingClassAndRequiresOnlineMaxDp()
+	public async Task AddPlayerDpAsync_SkipsStartingClassAndResolvesOnlineMaxDp()
 	{
 		var service = CreateService(out _, out var registry);
 		var startingClass = CreatePlayer(objectId: 1004, currentHp: 100, currentMp: 50, currentFp: 100, playerClass: "WARRIOR", dp: 500);
@@ -486,17 +488,20 @@ public sealed class WorldNpcResourceStatsServiceTests
 		Assert.Null(skipped.DpInfoPacket);
 		Assert.Null(skipped.DpStatUpdatePacket);
 
-		var missingMax = CreatePlayer(objectId: 1005, currentHp: 100, currentMp: 50, currentFp: 100, playerClass: "RANGER", dp: 500);
-		missingMax.IsOnline = true;
+		var onlinePlayer = CreatePlayer(objectId: 1005, currentHp: 100, currentMp: 50, currentFp: 100, playerClass: "RANGER", dp: 3990);
+		onlinePlayer.IsOnline = true;
 
-		var unresolved = await service.AddPlayerDpAsync(missingMax, value: 100);
+		var resolved = await service.AddPlayerDpAsync(onlinePlayer, value: 50);
 
-		Assert.Equal(WorldNpcResourceChangeStatus.MissingMaxResource, unresolved.Status);
-		Assert.Equal(500, missingMax.Dp);
-		Assert.Null(unresolved.DpInfoPacket);
-		Assert.Null(unresolved.DpStatUpdatePacket);
-		Assert.Empty(registry.Broadcasts);
-		Assert.Empty(registry.SentPackets);
+		Assert.Equal(WorldNpcResourceChangeStatus.Increased, resolved.Status);
+		Assert.Equal(4000, resolved.MaxValue);
+		Assert.Equal(4000, resolved.CurrentValue);
+		Assert.Equal(10, resolved.AppliedValue);
+		Assert.Equal(4000, onlinePlayer.Dp);
+		Assert.NotNull(resolved.DpInfoPacket);
+		Assert.NotNull(resolved.DpStatUpdatePacket);
+		Assert.Single(registry.Broadcasts);
+		Assert.Equal(2, registry.SentPackets.Count);
 	}
 
 	[Fact]

@@ -91,7 +91,7 @@ public sealed class CraftServiceTests
 	}
 
 	[Fact]
-	public async Task SpendRecipeDpForCraftStartAsync_RequiresPlayerRecipeAndOnlineMaxDp()
+	public async Task SpendRecipeDpForCraftStartAsync_RequiresPlayerRecipeAndUsesOnlineMaxDp()
 	{
 		var service = CreateService(out var registry);
 		var player = CreatePlayer(objectId: 1103, dp: 600);
@@ -99,16 +99,17 @@ public sealed class CraftServiceTests
 
 		var missingPlayer = await service.SpendRecipeDpForCraftStartAsync(player: null, recipe, maxDp: 4000);
 		var missingRecipe = await service.SpendRecipeDpForCraftStartAsync(player, recipeTemplate: null, maxDp: 4000);
-		var missingMax = await service.SpendRecipeDpForCraftStartAsync(player, recipe);
+		var liveMax = await service.SpendRecipeDpForCraftStartAsync(player, recipe);
 
 		Assert.Equal(CraftStartDpCostStatus.MissingPlayer, missingPlayer.Status);
 		Assert.Equal(CraftStartDpCostStatus.MissingRecipe, missingRecipe.Status);
-		Assert.Equal(CraftStartDpCostStatus.DpBoundarySkipped, missingMax.Status);
-		Assert.NotNull(missingMax.Change);
-		Assert.Equal(WorldNpcResourceChangeStatus.MissingMaxResource, missingMax.Change.Status);
-		Assert.Equal(600, player.Dp);
-		Assert.Empty(registry.Broadcasts);
-		Assert.Empty(registry.SentPackets);
+		Assert.Equal(CraftStartDpCostStatus.Applied, liveMax.Status);
+		Assert.NotNull(liveMax.Change);
+		Assert.Equal(WorldNpcResourceChangeStatus.Reduced, liveMax.Change.Status);
+		Assert.Equal(4000, liveMax.Change.MaxValue);
+		Assert.Equal(500, player.Dp);
+		Assert.Single(registry.Broadcasts);
+		Assert.Equal(2, registry.SentPackets.Count);
 	}
 
 	private static CraftService CreateService(out CapturingConnectionRegistry registry)

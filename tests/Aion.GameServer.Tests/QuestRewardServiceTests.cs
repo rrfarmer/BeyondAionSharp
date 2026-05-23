@@ -70,22 +70,23 @@ public sealed class QuestRewardServiceTests
 	}
 
 	[Fact]
-	public async Task ApplyDpRewardAsync_RequiresPlayerAndOnlineMaxDp()
+	public async Task ApplyDpRewardAsync_RequiresPlayerAndUsesOnlineMaxDp()
 	{
 		var service = CreateService(out var registry);
 		var onlinePlayer = CreatePlayer(objectId: 1302, playerClass: "RANGER", dp: 500);
 
 		var missingPlayer = await service.ApplyDpRewardAsync(player: null, rewardDp: 100, maxDp: 4000);
-		var missingMax = await service.ApplyDpRewardAsync(onlinePlayer, rewardDp: 100);
+		var liveMax = await service.ApplyDpRewardAsync(onlinePlayer, rewardDp: 100);
 
 		Assert.Equal(QuestDpRewardStatus.MissingPlayer, missingPlayer.Status);
 		Assert.Equal(100, missingPlayer.RewardDp);
-		Assert.Equal(QuestDpRewardStatus.DpBoundarySkipped, missingMax.Status);
-		Assert.NotNull(missingMax.Change);
-		Assert.Equal(WorldNpcResourceChangeStatus.MissingMaxResource, missingMax.Change.Status);
-		Assert.Equal(500, onlinePlayer.Dp);
-		Assert.Empty(registry.Broadcasts);
-		Assert.Empty(registry.SentPackets);
+		Assert.Equal(QuestDpRewardStatus.Applied, liveMax.Status);
+		Assert.NotNull(liveMax.Change);
+		Assert.Equal(WorldNpcResourceChangeStatus.Increased, liveMax.Change.Status);
+		Assert.Equal(4000, liveMax.Change.MaxValue);
+		Assert.Equal(600, onlinePlayer.Dp);
+		Assert.Single(registry.Broadcasts);
+		Assert.Equal(2, registry.SentPackets.Count);
 	}
 
 	[Fact]

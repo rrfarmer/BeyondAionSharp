@@ -7,6 +7,8 @@ namespace Aion.GameServer.Services;
 
 public sealed class WorldNpcResourceStatsService
 {
+	private const int DefaultMaxDp = 4000;
+
 	private readonly WorldNpcLifeStatsService _npcLifeStats;
 	private readonly IGameClientConnectionRegistry? _connectionRegistry;
 	private readonly PlayerVisualStatsUpdateService? _playerVisualStats;
@@ -264,23 +266,11 @@ public sealed class WorldNpcResourceStatsService
 				CurrentValue: player.Dp,
 				MaxValue: maxDp);
 		}
-		if (player.IsOnline && maxDp == null)
-		{
-			return WorldNpcResourceChangeResult.FromResourceMutation(
-				WorldNpcResourceChangeStatus.MissingMaxResource,
-				player.ObjectId,
-				WorldNpcEffectResourceType.Dp,
-				WorldNpcResourceChangeKind.Increase,
-				value,
-				AppliedValue: 0,
-				PreviousValue: player.Dp,
-				CurrentValue: player.Dp,
-				MaxValue: null);
-		}
+		var resolvedMaxDp = maxDp ?? ResolveOnlineMaxDp(player);
 
 		var previousDp = player.Dp;
 		var requestedDp = previousDp + value;
-		var currentDp = maxDp is { } cap && requestedDp > cap
+		var currentDp = resolvedMaxDp is { } cap && requestedDp > cap
 			? cap
 			: requestedDp;
 		player.Dp = currentDp;
@@ -300,7 +290,7 @@ public sealed class WorldNpcResourceStatsService
 			Math.Abs(currentDp - previousDp),
 			previousDp,
 			currentDp,
-			maxDp,
+			resolvedMaxDp,
 			BroadcastDpInfo: shouldSendDpPackets,
 			SendDpStatUpdate: shouldSendDpPackets,
 			DpInfoPacket: dpInfoPacket,
@@ -966,6 +956,16 @@ public sealed class WorldNpcResourceStatsService
 		if (!shouldSend || _playerVisualStats == null)
 			return null;
 		return await _playerVisualStats.UpdateStatsAndSpeedVisuallyAsync(player, speedSnapshot: null);
+	}
+
+	private static int? ResolveOnlineMaxDp(Player player)
+	{
+		// Java parity: PlayerCommonData.setDp asks PlayerGameStats.getMaxDp().getCurrent() for online players.
+		if (!player.IsOnline)
+			return null;
+
+		// Java parity: PlayerGameStats.getMaxDp() -> getStat(StatEnum.MAXDP, 4000). Full MAXDP modifiers remain deferred.
+		return DefaultMaxDp;
 	}
 
 	private async ValueTask<(SmSystemMessage? Packet, bool Sent)> SendSkillNotEnoughDpMessageAsync(
