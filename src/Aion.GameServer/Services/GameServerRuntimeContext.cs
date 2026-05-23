@@ -7,6 +7,8 @@ public sealed class GameServerRuntimeContext
 {
 	public DataManager? DataManager { get; private set; }
 
+	public PlayerKiskRegistry Kisks { get; } = new();
+
 	public WorldMapRuntimeStateTable WorldMapStates { get; private set; } = WorldMapRuntimeStateTable.Empty;
 
 	public void SetDataManager(DataManager dataManager)

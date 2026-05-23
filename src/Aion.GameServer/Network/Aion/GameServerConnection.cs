@@ -4526,11 +4526,11 @@ public sealed class GameServerConnection : BaseClientConnection
 	private async Task HandleToyPetSpawnUseItemAsync(Player player, StaticData staticData)
 	{
 		// Java parity: model/templates/item/actions/ToyPetSpawnAction.canAct guard order.
-		// KiskService.haveKisk and ToyPetSpawnAction.act delayed kisk spawn are future KiskService/SpawnEngine work.
+		// ToyPetSpawnAction.act delayed kisk spawn remains future KiskService/SpawnEngine work.
 		var restriction = PlayerKiskSpawnRestrictionService.ValidateSpawn(
 			player,
 			_options.Custom.EnableKiskRestriction,
-			hasKisk: false,
+			_runtimeContext?.Kisks.HaveKisk(player.ObjectId) ?? false,
 			staticData.WorldMaps,
 			_runtimeContext?.WorldMapStates);
 
