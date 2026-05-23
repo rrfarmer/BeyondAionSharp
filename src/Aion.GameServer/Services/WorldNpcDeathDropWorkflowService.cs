@@ -6,13 +6,16 @@ public sealed class WorldNpcDeathDropWorkflowService
 {
 	private readonly WorldNpcSpawnService _spawnService;
 	private readonly WorldNpcDropRegistrationWorkflowService _dropRegistrationWorkflow;
+	private readonly WorldNpcAiStateService? _npcAiStates;
 
 	public WorldNpcDeathDropWorkflowService(
 		WorldNpcSpawnService spawnService,
-		WorldNpcDropRegistrationWorkflowService dropRegistrationWorkflow)
+		WorldNpcDropRegistrationWorkflowService dropRegistrationWorkflow,
+		WorldNpcAiStateService? npcAiStates = null)
 	{
 		_spawnService = spawnService;
 		_dropRegistrationWorkflow = dropRegistrationWorkflow;
+		_npcAiStates = npcAiStates;
 	}
 
 	public async ValueTask<WorldNpcDeathDropWorkflowResult> HandleCustomDropDeathAsync(
@@ -56,6 +59,7 @@ public sealed class WorldNpcDeathDropWorkflowService
 				freeForAllDelay: freeForAllDelay,
 				cancellationToken: cancellationToken)
 			: WorldNpcDropRegistrationWorkflowResult.Skipped(WorldNpcDropRegistrationWorkflowStatus.LootRewardDisabled);
+		var aiMarkedDied = _npcAiStates?.MarkDied(npc.ObjectId) != null;
 		var decayScheduled = false;
 		var staticPlaceableDespawned = false;
 		var deletedImmediately = false;
@@ -76,7 +80,8 @@ public sealed class WorldNpcDeathDropWorkflowService
 			respawnScheduled,
 			decayScheduled,
 			staticPlaceableDespawned,
-			deletedImmediately);
+			deletedImmediately,
+			aiMarkedDied);
 	}
 }
 
@@ -97,7 +102,8 @@ public sealed record WorldNpcDeathDropWorkflowResult(
 	bool RespawnScheduled,
 	bool DecayScheduled,
 	bool StaticPlaceableDespawned,
-	bool DeletedImmediately = false)
+	bool DeletedImmediately = false,
+	bool AiMarkedDied = false)
 {
 	public static WorldNpcDeathDropWorkflowResult MissingNpc()
 	{
@@ -107,7 +113,8 @@ public sealed record WorldNpcDeathDropWorkflowResult(
 			RespawnScheduled: false,
 			DecayScheduled: false,
 			StaticPlaceableDespawned: false,
-			DeletedImmediately: false);
+			DeletedImmediately: false,
+			AiMarkedDied: false);
 	}
 }
 

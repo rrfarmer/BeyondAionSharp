@@ -539,6 +539,41 @@ public sealed class WorldNpcSpawnServiceTests
 	}
 
 	[Fact]
+	public void TryDespawnWorldNpc_ClearsAiRuntimeState()
+	{
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var staticPlaceables = new StaticPlaceableStateService();
+		var aiStates = new WorldNpcAiStateService();
+		var service = CreateService(world, staticPlaceables, aiStates);
+		var spawns = new NpcSpawnTable([CreateSpawn(210010000, 203073)]);
+		var templates = new NpcTemplateTable([CreateTemplate(203073)]);
+
+		service.SpawnWorldNpcs(spawns, templates, [210010000]);
+		aiStates.StartRandomWalking(1);
+		var despawned = service.TryDespawnWorldNpc(1);
+
+		Assert.True(despawned);
+		Assert.False(aiStates.TryGetState(1, out _));
+	}
+
+	[Fact]
+	public void SpawnWorldNpcs_ClearsStaleAiRuntimeStateForReusedObjectId()
+	{
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var staticPlaceables = new StaticPlaceableStateService();
+		var aiStates = new WorldNpcAiStateService();
+		var service = CreateService(world, staticPlaceables, aiStates);
+		var spawns = new NpcSpawnTable([CreateSpawn(210010000, 203079)]);
+		var templates = new NpcTemplateTable([CreateTemplate(203079)]);
+
+		aiStates.MarkDied(1);
+		service.SpawnWorldNpcs(spawns, templates, [210010000]);
+
+		Assert.True(world.TryGetObject(1, out _));
+		Assert.False(aiStates.TryGetState(1, out _));
+	}
+
+	[Fact]
 	public async Task TryDeleteAndScheduleRespawn_RestoresNpcAfterRespawnDelay()
 	{
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);
@@ -903,7 +938,10 @@ public sealed class WorldNpcSpawnServiceTests
 			NullLogger<WorldNpcSpawnService>.Instance);
 	}
 
-	private static WorldNpcSpawnService CreateService(GameWorld world, IStaticPlaceableStateService staticPlaceables)
+	private static WorldNpcSpawnService CreateService(
+		GameWorld world,
+		IStaticPlaceableStateService staticPlaceables,
+		WorldNpcAiStateService? aiStates = null)
 	{
 		return new WorldNpcSpawnService(
 			new GameServerRuntimeContext(),
@@ -912,7 +950,8 @@ public sealed class WorldNpcSpawnServiceTests
 			gameTimeService: null,
 			threadPoolManager: null,
 			staticPlaceables,
-			NullLogger<WorldNpcSpawnService>.Instance);
+			NullLogger<WorldNpcSpawnService>.Instance,
+			npcAiStates: aiStates);
 	}
 
 	private static WorldNpcSpawnService CreateService(

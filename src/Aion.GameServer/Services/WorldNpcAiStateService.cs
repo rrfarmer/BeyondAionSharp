@@ -46,6 +46,12 @@ public sealed class WorldNpcAiStateService
 				: new WorldNpcAiRuntimeState(WorldNpcAiState.Idle, WorldNpcAiSubState.None));
 	}
 
+	public WorldNpcAiRuntimeState MarkDied(int objectId)
+	{
+		// Java parity: ai/handler/DiedEventHandler.onDie transitions NPC AI to AIState.DIED.
+		return SetState(objectId, WorldNpcAiState.Died, WorldNpcAiSubState.None);
+	}
+
 	public void Clear(int objectId)
 	{
 		_states.TryRemove(objectId, out _);

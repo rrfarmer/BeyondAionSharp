@@ -197,6 +197,48 @@ public sealed class WorldNpcDeathDropWorkflowServiceTests
 	}
 
 	[Fact]
+	public async Task HandleDeathAsync_MarksAiDiedBeforeDecayCleanup()
+	{
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var dropRegistration = new WorldNpcDropRegistrationService();
+		var staticPlaceables = new StaticPlaceableStateService();
+		var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		try
+		{
+			var spawnService = CreateSpawnService(world, staticPlaceables, threadPoolManager, dropRegistration);
+			var spawns = new NpcSpawnTable([CreateSpawn(210010000, 203006, respawnSeconds: 30)]);
+			var templates = new NpcTemplateTable([CreateTemplate(203006)]);
+			spawnService.SpawnWorldNpcs(spawns, templates, [210010000]);
+			var npc = Assert.Single(world.GetNpcs());
+			var aiStates = new WorldNpcAiStateService();
+			aiStates.StartRandomWalking(npc.ObjectId);
+			var workflow = CreateDeathWorkflow(
+				spawnService,
+				dropRegistration,
+				threadPoolManager,
+				new CapturingConnectionRegistry(),
+				CreateCustomDropService(203006),
+				aiStates);
+
+			var result = await workflow.HandleDeathAsync(
+				npc,
+				new Player { ObjectId = 1001, Race = "ELYOS", Level = 10 },
+				options: WorldNpcDeathDropOptions.Default with { RewardLoot = false });
+
+			Assert.True(result.AiMarkedDied);
+			Assert.True(aiStates.TryGetState(npc.ObjectId, out var state));
+			Assert.Equal(WorldNpcAiState.Died, state!.State);
+			Assert.Equal(WorldNpcAiSubState.None, state.SubState);
+			Assert.True(result.DecayScheduled);
+			Assert.NotNull(spawnService.CancelDecay(npc.ObjectId));
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
 	public async Task HandleDeathAsync_SkipsDropRegistrationWhenRewardLootDisabled()
 	{
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);
@@ -292,12 +334,13 @@ public sealed class WorldNpcDeathDropWorkflowServiceTests
 		WorldNpcDropRegistrationService dropRegistration,
 		ThreadPoolManager threadPoolManager,
 		CapturingConnectionRegistry registry,
-		WorldNpcCustomDropService customDropService)
+		WorldNpcCustomDropService customDropService,
+		WorldNpcAiStateService? aiStates = null)
 	{
 		var lootService = new WorldNpcLootService(dropRegistration, spawnService, threadPoolManager);
 		var broadcastService = new WorldNpcLootBroadcastService(lootService, registry);
 		var dropWorkflow = new WorldNpcDropRegistrationWorkflowService(customDropService, dropRegistration, broadcastService);
-		return new WorldNpcDeathDropWorkflowService(spawnService, dropWorkflow);
+		return new WorldNpcDeathDropWorkflowService(spawnService, dropWorkflow, aiStates);
 	}
 
 	private static WorldNpcSpawnService CreateSpawnService(

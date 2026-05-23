@@ -27,6 +27,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 	private readonly WorldNpcRandomWalkService? _randomWalking;
 	private readonly IWorldNpcDropRegistrationLookup? _dropRegistrationLookup;
 	private readonly Func<int, WorldNpc, bool>? _respawnedNpcCallback;
+	private readonly WorldNpcAiStateService? _npcAiStates;
 	private readonly ILogger<WorldNpcSpawnService> _logger;
 	private readonly ConcurrentDictionary<NpcSpawnSummary, int> _temporarySpawnObjectIds = new();
 	private readonly ConcurrentDictionary<int, SpawnedWorldNpcRegistration> _spawnedWorldNpcs = new();
@@ -50,7 +51,8 @@ public sealed class WorldNpcSpawnService : GameEngine
 		WorldNpcWalkerRouteWalkingService? walkerRouteWalking = null,
 		WorldNpcRandomWalkService? randomWalking = null,
 		IWorldNpcDropRegistrationLookup? dropRegistrationLookup = null,
-		Func<int, WorldNpc, bool>? respawnedNpcCallback = null)
+		Func<int, WorldNpc, bool>? respawnedNpcCallback = null,
+		WorldNpcAiStateService? npcAiStates = null)
 	{
 		_runtimeContext = runtimeContext;
 		_world = world;
@@ -65,6 +67,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		_randomWalking = randomWalking;
 		_dropRegistrationLookup = dropRegistrationLookup;
 		_respawnedNpcCallback = respawnedNpcCallback;
+		_npcAiStates = npcAiStates;
 		_logger = logger;
 	}
 
@@ -75,8 +78,9 @@ public sealed class WorldNpcSpawnService : GameEngine
 		GameTimeService? gameTimeService,
 		ThreadPoolManager? threadPoolManager,
 		IStaticPlaceableStateService? staticPlaceables,
-		ILogger<WorldNpcSpawnService> logger)
-		: this(runtimeContext, world, idFactory, gameTimeService, threadPoolManager, null, staticPlaceables, null, null, logger)
+		ILogger<WorldNpcSpawnService> logger,
+		WorldNpcAiStateService? npcAiStates = null)
+		: this(runtimeContext, world, idFactory, gameTimeService, threadPoolManager, null, staticPlaceables, null, null, logger, npcAiStates: npcAiStates)
 	{
 	}
 
@@ -562,6 +566,8 @@ public sealed class WorldNpcSpawnService : GameEngine
 		}
 
 		_spawnedWorldNpcs[objectId] = new SpawnedWorldNpcRegistration(spawn, template);
+		// Java parity: spawnengine/VisibleObjectSpawner creates a fresh Npc/NpcAI/NpcLifeStats runtime on spawn.
+		_npcAiStates?.Clear(objectId);
 		_staticPlaceables?.SpawnPlaceableObject(worldNpc.Position.WorldId, worldNpc.StaticId);
 		return objectId;
 	}
@@ -743,6 +749,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 			return false;
 
 		_spawnedWorldNpcs.TryRemove(objectId, out _);
+		_npcAiStates?.Clear(objectId);
 		if (_pendingDecays.TryRemove(objectId, out var pendingDecay))
 			pendingDecay.ScheduledTask?.Cancel();
 		_inactiveWalkerVariants.TryRemove(objectId, out _);
