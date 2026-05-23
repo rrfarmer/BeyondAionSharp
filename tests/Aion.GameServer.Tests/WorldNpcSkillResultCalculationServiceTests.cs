@@ -442,6 +442,134 @@ public sealed class WorldNpcSkillResultCalculationServiceTests
 	}
 
 	[Fact]
+	public void CalculateMagicalOverTime_AppliesNonTrapJavaOrder()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.CalculateMagicalOverTime(new WorldNpcSkillMagicalOverTimeRequest(
+			SkillDamage: 100,
+			UseMagicBoost: true,
+			Options: new WorldNpcSkillMagicalOverTimeOptions(
+				MagicalSkillDamage: 120,
+				BaseMagicalDamageMultiplier: 1.5f,
+				InitialAttackStatus: WorldNpcSkillAttackStatus.NormalHit,
+				TemplatePosition: 1,
+				AttackStatusCalculation: new WorldNpcSkillAttackStatusCalculationOptions(
+					WorldNpcSkillAttackStatusCalculationKind.Magical,
+					CriticalResult: true),
+				CriticalDamage: new WorldNpcSkillCriticalDamageOptions(
+					Element: WorldNpcSkillDamageModifierElement.Magical,
+					CriticalAddDamage: 20),
+				PvpPveMultiplier: 0.5f,
+				EffectedIsNpc: true,
+				EffectedNpcDamageMultiplier: 2f)));
+
+		Assert.True(result.Applied);
+		Assert.True(result.UseMagicBoost);
+		Assert.Equal(WorldNpcSkillAttackStatus.Critical, result.FinalAttackStatus);
+		Assert.True(result.AttackStatusCalculation.CriticalUpgraded);
+		Assert.True(result.CriticalDamage.Applied);
+		Assert.Equal(120f, result.DamageAfterMagicalSkill, precision: 3);
+		Assert.Equal(180f, result.DamageAfterBaseMultiplier, precision: 3);
+		Assert.Equal(306f, result.DamageAfterCritical, precision: 3);
+		Assert.Equal(153f, result.DamageAfterPvpPve, precision: 3);
+		Assert.Equal(153f, result.DamageAfterMinimumFloor, precision: 3);
+		Assert.Equal(306, result.FinalDamage);
+		Assert.Equal(306f, result.ExactFinalDamage, precision: 3);
+		Assert.True(result.EffectedNpcApplied);
+	}
+
+	[Fact]
+	public void CalculateMagicalOverTime_TrapSkipsMagicalStatStatusAndPvpBranches()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.CalculateMagicalOverTime(new WorldNpcSkillMagicalOverTimeRequest(
+			SkillDamage: 0.4f,
+			UseMagicBoost: false,
+			Options: new WorldNpcSkillMagicalOverTimeOptions(
+				EffectorIsTrap: true,
+				EffectedIsNpc: true,
+				EffectedNpcDamageMultiplier: 3f)));
+
+		Assert.True(result.Applied);
+		Assert.True(result.EffectorIsTrap);
+		Assert.False(result.AttackStatusCalculation.WasRequested);
+		Assert.False(result.CriticalDamage.WasRequested);
+		Assert.False(result.PvpPveInputMissing);
+		Assert.Equal(0.4f, result.DamageAfterPvpPve, precision: 3);
+		Assert.True(result.MinimumFloorApplied);
+		Assert.Equal(1f, result.DamageAfterMinimumFloor, precision: 3);
+		Assert.Equal(3, result.FinalDamage);
+		Assert.Equal(3f, result.ExactFinalDamage, precision: 3);
+	}
+
+	[Fact]
+	public void CalculateMagicalOverTime_UsesForcedStatusWithoutRecalculation()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.CalculateMagicalOverTime(new WorldNpcSkillMagicalOverTimeRequest(
+			SkillDamage: 50,
+			UseMagicBoost: true,
+			Options: new WorldNpcSkillMagicalOverTimeOptions(
+				MagicalSkillDamage: 100,
+				BaseMagicalDamageMultiplier: 1f,
+				InitialAttackStatus: WorldNpcSkillAttackStatus.Critical,
+				TemplatePosition: 1,
+				CriticalDamage: new WorldNpcSkillCriticalDamageOptions(Element: WorldNpcSkillDamageModifierElement.Magical),
+				PvpPveMultiplier: 1f)));
+
+		Assert.True(result.Applied);
+		Assert.Equal(WorldNpcSkillAttackStatus.Critical, result.FinalAttackStatus);
+		Assert.False(result.AttackStatusCalculation.WasRequested);
+		Assert.True(result.CriticalDamage.Applied);
+		Assert.Equal(150, result.FinalDamage);
+		Assert.Equal(150f, result.ExactFinalDamage, precision: 3);
+	}
+
+	[Fact]
+	public void CalculateMagicalOverTime_RecordsMissingInputs()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var missingStatus = service.CalculateMagicalOverTime(new WorldNpcSkillMagicalOverTimeRequest(
+			SkillDamage: 100,
+			UseMagicBoost: true,
+			Options: new WorldNpcSkillMagicalOverTimeOptions(
+				InitialAttackStatus: WorldNpcSkillAttackStatus.NormalHit,
+				TemplatePosition: 1,
+				EffectedIsNpc: true)));
+
+		Assert.False(missingStatus.Applied);
+		Assert.True(missingStatus.HasUnresolvedInputs);
+		Assert.True(missingStatus.MagicalSkillDamageInputMissing);
+		Assert.True(missingStatus.BaseMagicalDamageMultiplierInputMissing);
+		Assert.True(missingStatus.AttackStatusCalculationInputMissing);
+		Assert.True(missingStatus.PvpPveInputMissing);
+		Assert.True(missingStatus.EffectedNpcHookMissing);
+
+		var missingCritical = service.CalculateMagicalOverTime(new WorldNpcSkillMagicalOverTimeRequest(
+			SkillDamage: 100,
+			UseMagicBoost: true,
+			Options: new WorldNpcSkillMagicalOverTimeOptions(
+				MagicalSkillDamage: 100,
+				BaseMagicalDamageMultiplier: 1f,
+				InitialAttackStatus: WorldNpcSkillAttackStatus.NormalHit,
+				TemplatePosition: 1,
+				AttackStatusCalculation: new WorldNpcSkillAttackStatusCalculationOptions(
+					WorldNpcSkillAttackStatusCalculationKind.Magical,
+					CriticalResult: true),
+				PvpPveMultiplier: 1f)));
+
+		Assert.False(missingCritical.Applied);
+		Assert.True(missingCritical.HasUnresolvedInputs);
+		Assert.Equal(WorldNpcSkillAttackStatus.Critical, missingCritical.FinalAttackStatus);
+		Assert.True(missingCritical.AttackStatusCalculation.CriticalUpgraded);
+		Assert.True(missingCritical.CriticalDamageInputMissing);
+	}
+
+	[Fact]
 	public void Calculate_CreatesJavaAttackResultAndEffectReservedSurface()
 	{
 		var service = new WorldNpcSkillResultCalculationService();

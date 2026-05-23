@@ -88,6 +88,107 @@ public sealed class WorldNpcSkillResultCalculationService
 			effectReserved);
 	}
 
+	public WorldNpcSkillMagicalOverTimeResult CalculateMagicalOverTime(WorldNpcSkillMagicalOverTimeRequest request)
+	{
+		// Java parity: controllers/attack/AttackUtil.calculateMagicalOverTimeSkillResult.
+		var options = request.Options ?? WorldNpcSkillMagicalOverTimeOptions.Default;
+		var statusCalculation = WorldNpcSkillAttackStatusCalculationResult.NotRequested(options.InitialAttackStatus);
+		var finalStatus = options.InitialAttackStatus;
+		var statusCalculationRequired = !options.EffectorIsTrap &&
+			options.InitialAttackStatus == WorldNpcSkillAttackStatus.NormalHit &&
+			options.TemplatePosition == 1;
+		var attackStatusCalculationInputMissing = statusCalculationRequired && options.AttackStatusCalculation == null;
+		if (statusCalculationRequired && options.AttackStatusCalculation != null)
+		{
+			statusCalculation = CalculateAttackStatus(options.AttackStatusCalculation, options.InitialAttackStatus);
+			finalStatus = statusCalculation.FinalStatus;
+		}
+
+		var criticalDamageInputMissing = !options.EffectorIsTrap && finalStatus.IsCritical() && options.CriticalDamage == null;
+		var criticalDamageReduceInputMissing = !options.EffectorIsTrap &&
+			finalStatus.IsCritical() &&
+			options.CriticalDamage?.TargetIsPlayer == true &&
+			options.CriticalDamage.AppliesFortitudeStat &&
+			options.CriticalDamage.CriticalDamageReduce == null;
+		var criticalDamage = criticalDamageReduceInputMissing
+			? WorldNpcSkillCriticalDamageResult.Unresolved((int)request.SkillDamage, finalStatus, options.CriticalDamage!)
+			: WorldNpcSkillCriticalDamageResult.NotRequested((int)request.SkillDamage, finalStatus);
+		var magicalSkillDamageInputMissing = !options.EffectorIsTrap && options.MagicalSkillDamage == null;
+		var baseMagicalDamageMultiplierInputMissing = !options.EffectorIsTrap && options.BaseMagicalDamageMultiplier == null;
+		var pvpPveInputMissing = !options.EffectorIsTrap && options.PvpPveMultiplier == null;
+		var effectedNpcHookMissing = options.EffectedIsNpc && options.EffectedNpcDamageMultiplier == null;
+		var unresolved = magicalSkillDamageInputMissing ||
+			baseMagicalDamageMultiplierInputMissing ||
+			attackStatusCalculationInputMissing ||
+			statusCalculation.HasUnresolvedProbabilityInputs ||
+			criticalDamageInputMissing ||
+			criticalDamageReduceInputMissing ||
+			pvpPveInputMissing ||
+			effectedNpcHookMissing;
+		if (unresolved)
+		{
+			return WorldNpcSkillMagicalOverTimeResult.FromUnresolved(
+				request.SkillDamage,
+				request.UseMagicBoost,
+				options,
+				finalStatus,
+				statusCalculation,
+				criticalDamage,
+				magicalSkillDamageInputMissing,
+				baseMagicalDamageMultiplierInputMissing,
+				attackStatusCalculationInputMissing,
+				criticalDamageInputMissing,
+				pvpPveInputMissing,
+				effectedNpcHookMissing);
+		}
+
+		var damageAfterMagicalSkill = request.SkillDamage;
+		var damageAfterBaseMultiplier = request.SkillDamage;
+		var damageAfterCritical = request.SkillDamage;
+		var damageAfterPvpPve = request.SkillDamage;
+		var exactDamage = request.SkillDamage;
+
+		if (!options.EffectorIsTrap)
+		{
+			damageAfterMagicalSkill = options.MagicalSkillDamage!.Value;
+			damageAfterBaseMultiplier = damageAfterMagicalSkill * options.BaseMagicalDamageMultiplier!.Value;
+			exactDamage = damageAfterBaseMultiplier;
+			criticalDamage = options.CriticalDamage == null
+				? WorldNpcSkillCriticalDamageResult.NotRequested((int)exactDamage, finalStatus)
+				: CalculateSkillCriticalDamageFromExact(options.CriticalDamage, finalStatus, exactDamage);
+			if (criticalDamage.Applied)
+				exactDamage = criticalDamage.ExactFinalDamage;
+			damageAfterCritical = exactDamage;
+			exactDamage *= options.PvpPveMultiplier!.Value;
+			damageAfterPvpPve = exactDamage;
+		}
+
+		var minimumFloorApplied = exactDamage < 1f;
+		if (minimumFloorApplied)
+			exactDamage = 1f;
+		var damageAfterMinimumFloor = exactDamage;
+		var effectedNpcApplied = options.EffectedIsNpc;
+		if (effectedNpcApplied)
+			exactDamage *= options.EffectedNpcDamageMultiplier!.Value;
+
+		return WorldNpcSkillMagicalOverTimeResult.FromApplied(
+			request.SkillDamage,
+			request.UseMagicBoost,
+			options,
+			finalStatus,
+			statusCalculation,
+			criticalDamage,
+			damageAfterMagicalSkill,
+			damageAfterBaseMultiplier,
+			damageAfterCritical,
+			damageAfterPvpPve,
+			damageAfterMinimumFloor,
+			(int)exactDamage,
+			exactDamage,
+			minimumFloorApplied,
+			effectedNpcApplied);
+	}
+
 	private static WorldNpcSkillAttackStatusCalculationResult CalculateAttackStatus(
 		WorldNpcSkillAttackStatusCalculationOptions? options,
 		WorldNpcSkillAttackStatus fallbackStatus)
@@ -658,6 +759,41 @@ public sealed class WorldNpcSkillResultCalculationService
 			coefficient);
 	}
 
+	private static WorldNpcSkillCriticalDamageResult CalculateSkillCriticalDamageFromExact(
+		WorldNpcSkillCriticalDamageOptions options,
+		WorldNpcSkillAttackStatus status,
+		float damage)
+	{
+		// Java parity: controllers/attack/AttackUtil.calculateWeaponCritical keeps float damage until final cast.
+		if (!status.IsCritical())
+			return WorldNpcSkillCriticalDamageResult.FromSkippedStatus((int)damage, status);
+
+		if (options.TargetIsPlayer && options.AppliesFortitudeStat && options.CriticalDamageReduce == null)
+			return WorldNpcSkillCriticalDamageResult.Unresolved((int)damage, status, options);
+
+		var coefficient = 1.5f;
+		if (options.Element == WorldNpcSkillDamageModifierElement.Physical && options.WeaponGroup != null)
+			coefficient = options.WeaponGroup.Value.GetJavaCriticalMultiplier();
+
+		if (options.TargetIsPlayer && options.AppliesFortitudeStat)
+		{
+			var fortitudeModifier = options.CriticalDamageReduce!.Value / 1000f;
+			coefficient = options.IsMainHand
+				? coefficient - fortitudeModifier
+				: coefficient + fortitudeModifier;
+		}
+
+		coefficient += options.CriticalAddDamage / 100f;
+		var exactDamage = damage * coefficient;
+		return WorldNpcSkillCriticalDamageResult.AppliedResult(
+			(int)damage,
+			(int)exactDamage,
+			exactDamage,
+			status,
+			options,
+			coefficient);
+	}
+
 	private static WorldNpcSkillBlockedDamageResult CalculateSkillBlockedDamage(
 		WorldNpcSkillBlockedDamageOptions? options,
 		WorldNpcSkillAttackStatus status,
@@ -783,6 +919,205 @@ public sealed class WorldNpcSkillResultCalculationService
 	}
 
 	private readonly record struct RandomMultiplierResult(float Multiplier, WorldNpcSkillResultCalculationStatus Status);
+}
+
+public sealed record WorldNpcSkillMagicalOverTimeRequest(
+	float SkillDamage,
+	bool UseMagicBoost,
+	WorldNpcSkillMagicalOverTimeOptions? Options = null);
+
+public sealed record WorldNpcSkillMagicalOverTimeOptions(
+	bool EffectorIsTrap = false,
+	float? MagicalSkillDamage = null,
+	float? BaseMagicalDamageMultiplier = null,
+	WorldNpcSkillAttackStatus InitialAttackStatus = WorldNpcSkillAttackStatus.NormalHit,
+	int TemplatePosition = 0,
+	WorldNpcSkillAttackStatusCalculationOptions? AttackStatusCalculation = null,
+	WorldNpcSkillCriticalDamageOptions? CriticalDamage = null,
+	float? PvpPveMultiplier = null,
+	bool EffectedIsNpc = false,
+	float? EffectedNpcDamageMultiplier = null)
+{
+	public static WorldNpcSkillMagicalOverTimeOptions Default { get; } = new();
+}
+
+public sealed record WorldNpcSkillMagicalOverTimeResult(
+	bool Applied,
+	float SkillDamage,
+	bool UseMagicBoost,
+	bool EffectorIsTrap,
+	float? MagicalSkillDamage,
+	float? BaseMagicalDamageMultiplier,
+	WorldNpcSkillAttackStatus InitialAttackStatus,
+	WorldNpcSkillAttackStatus FinalAttackStatus,
+	int TemplatePosition,
+	float? PvpPveMultiplier,
+	bool EffectedIsNpc,
+	float? EffectedNpcDamageMultiplier,
+	float DamageAfterMagicalSkill,
+	float DamageAfterBaseMultiplier,
+	float DamageAfterCritical,
+	float DamageAfterPvpPve,
+	float DamageAfterMinimumFloor,
+	int FinalDamage,
+	float ExactFinalDamage,
+	bool MinimumFloorApplied,
+	bool EffectedNpcApplied,
+	WorldNpcSkillAttackStatusCalculationResult AttackStatusCalculation,
+	WorldNpcSkillCriticalDamageResult CriticalDamage,
+	bool MagicalSkillDamageInputMissing,
+	bool BaseMagicalDamageMultiplierInputMissing,
+	bool AttackStatusCalculationInputMissing,
+	bool CriticalDamageInputMissing,
+	bool PvpPveInputMissing,
+	bool EffectedNpcHookMissing)
+{
+	public bool HasUnresolvedInputs =>
+		MagicalSkillDamageInputMissing ||
+		BaseMagicalDamageMultiplierInputMissing ||
+		AttackStatusCalculationInputMissing ||
+		AttackStatusCalculation.HasUnresolvedProbabilityInputs ||
+		CriticalDamageInputMissing ||
+		CriticalDamage.HasUnresolvedInputs ||
+		PvpPveInputMissing ||
+		EffectedNpcHookMissing;
+
+	public static WorldNpcSkillMagicalOverTimeResult FromUnresolved(
+		float skillDamage,
+		bool useMagicBoost,
+		WorldNpcSkillMagicalOverTimeOptions options,
+		WorldNpcSkillAttackStatus finalStatus,
+		WorldNpcSkillAttackStatusCalculationResult attackStatusCalculation,
+		WorldNpcSkillCriticalDamageResult criticalDamage,
+		bool magicalSkillDamageInputMissing,
+		bool baseMagicalDamageMultiplierInputMissing,
+		bool attackStatusCalculationInputMissing,
+		bool criticalDamageInputMissing,
+		bool pvpPveInputMissing,
+		bool effectedNpcHookMissing)
+	{
+		return Create(
+			Applied: false,
+			SkillDamage: skillDamage,
+			UseMagicBoost: useMagicBoost,
+			Options: options,
+			FinalAttackStatus: finalStatus,
+			AttackStatusCalculation: attackStatusCalculation,
+			CriticalDamage: criticalDamage,
+			DamageAfterMagicalSkill: skillDamage,
+			DamageAfterBaseMultiplier: skillDamage,
+			DamageAfterCritical: skillDamage,
+			DamageAfterPvpPve: skillDamage,
+			DamageAfterMinimumFloor: skillDamage,
+			FinalDamage: (int)skillDamage,
+			ExactFinalDamage: skillDamage,
+			MinimumFloorApplied: false,
+			EffectedNpcApplied: false,
+			MagicalSkillDamageInputMissing: magicalSkillDamageInputMissing,
+			BaseMagicalDamageMultiplierInputMissing: baseMagicalDamageMultiplierInputMissing,
+			AttackStatusCalculationInputMissing: attackStatusCalculationInputMissing,
+			CriticalDamageInputMissing: criticalDamageInputMissing,
+			PvpPveInputMissing: pvpPveInputMissing,
+			EffectedNpcHookMissing: effectedNpcHookMissing);
+	}
+
+	public static WorldNpcSkillMagicalOverTimeResult FromApplied(
+		float skillDamage,
+		bool useMagicBoost,
+		WorldNpcSkillMagicalOverTimeOptions options,
+		WorldNpcSkillAttackStatus finalStatus,
+		WorldNpcSkillAttackStatusCalculationResult attackStatusCalculation,
+		WorldNpcSkillCriticalDamageResult criticalDamage,
+		float damageAfterMagicalSkill,
+		float damageAfterBaseMultiplier,
+		float damageAfterCritical,
+		float damageAfterPvpPve,
+		float damageAfterMinimumFloor,
+		int finalDamage,
+		float exactFinalDamage,
+		bool minimumFloorApplied,
+		bool effectedNpcApplied)
+	{
+		return Create(
+			Applied: true,
+			SkillDamage: skillDamage,
+			UseMagicBoost: useMagicBoost,
+			Options: options,
+			FinalAttackStatus: finalStatus,
+			AttackStatusCalculation: attackStatusCalculation,
+			CriticalDamage: criticalDamage,
+			DamageAfterMagicalSkill: damageAfterMagicalSkill,
+			DamageAfterBaseMultiplier: damageAfterBaseMultiplier,
+			DamageAfterCritical: damageAfterCritical,
+			DamageAfterPvpPve: damageAfterPvpPve,
+			DamageAfterMinimumFloor: damageAfterMinimumFloor,
+			FinalDamage: finalDamage,
+			ExactFinalDamage: exactFinalDamage,
+			MinimumFloorApplied: minimumFloorApplied,
+			EffectedNpcApplied: effectedNpcApplied,
+			MagicalSkillDamageInputMissing: false,
+			BaseMagicalDamageMultiplierInputMissing: false,
+			AttackStatusCalculationInputMissing: false,
+			CriticalDamageInputMissing: false,
+			PvpPveInputMissing: false,
+			EffectedNpcHookMissing: false);
+	}
+
+	private static WorldNpcSkillMagicalOverTimeResult Create(
+		bool Applied,
+		float SkillDamage,
+		bool UseMagicBoost,
+		WorldNpcSkillMagicalOverTimeOptions Options,
+		WorldNpcSkillAttackStatus FinalAttackStatus,
+		WorldNpcSkillAttackStatusCalculationResult AttackStatusCalculation,
+		WorldNpcSkillCriticalDamageResult CriticalDamage,
+		float DamageAfterMagicalSkill,
+		float DamageAfterBaseMultiplier,
+		float DamageAfterCritical,
+		float DamageAfterPvpPve,
+		float DamageAfterMinimumFloor,
+		int FinalDamage,
+		float ExactFinalDamage,
+		bool MinimumFloorApplied,
+		bool EffectedNpcApplied,
+		bool MagicalSkillDamageInputMissing,
+		bool BaseMagicalDamageMultiplierInputMissing,
+		bool AttackStatusCalculationInputMissing,
+		bool CriticalDamageInputMissing,
+		bool PvpPveInputMissing,
+		bool EffectedNpcHookMissing)
+	{
+		return new WorldNpcSkillMagicalOverTimeResult(
+			Applied: Applied,
+			SkillDamage: SkillDamage,
+			UseMagicBoost: UseMagicBoost,
+			EffectorIsTrap: Options.EffectorIsTrap,
+			MagicalSkillDamage: Options.MagicalSkillDamage,
+			BaseMagicalDamageMultiplier: Options.BaseMagicalDamageMultiplier,
+			InitialAttackStatus: Options.InitialAttackStatus,
+			FinalAttackStatus: FinalAttackStatus,
+			TemplatePosition: Options.TemplatePosition,
+			PvpPveMultiplier: Options.PvpPveMultiplier,
+			EffectedIsNpc: Options.EffectedIsNpc,
+			EffectedNpcDamageMultiplier: Options.EffectedNpcDamageMultiplier,
+			DamageAfterMagicalSkill: DamageAfterMagicalSkill,
+			DamageAfterBaseMultiplier: DamageAfterBaseMultiplier,
+			DamageAfterCritical: DamageAfterCritical,
+			DamageAfterPvpPve: DamageAfterPvpPve,
+			DamageAfterMinimumFloor: DamageAfterMinimumFloor,
+			FinalDamage: FinalDamage,
+			ExactFinalDamage: ExactFinalDamage,
+			MinimumFloorApplied: MinimumFloorApplied,
+			EffectedNpcApplied: EffectedNpcApplied,
+			AttackStatusCalculation: AttackStatusCalculation,
+			CriticalDamage: CriticalDamage,
+			MagicalSkillDamageInputMissing: MagicalSkillDamageInputMissing,
+			BaseMagicalDamageMultiplierInputMissing: BaseMagicalDamageMultiplierInputMissing,
+			AttackStatusCalculationInputMissing: AttackStatusCalculationInputMissing,
+			CriticalDamageInputMissing: CriticalDamageInputMissing,
+			PvpPveInputMissing: PvpPveInputMissing,
+			EffectedNpcHookMissing: EffectedNpcHookMissing);
+	}
 }
 
 public sealed record WorldNpcSkillResultCalculationRequest(
