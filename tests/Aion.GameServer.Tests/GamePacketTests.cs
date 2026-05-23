@@ -179,6 +179,61 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmAttackStatus_WritesJavaHealAliasPayloadsWithPositiveValues()
+	{
+		var hpPayload = SerializeUnencryptedPayload(new SmAttackStatus(
+			creatureObjectId: 5003,
+			SmAttackStatusType.Hp,
+			skillId: 456,
+			value: 20,
+			hpOrMpPercentage: 100,
+			SmAttackStatusLog.Heal,
+			usesNegativeValue: false));
+		using var hpReader = new PacketBuffer(hpPayload);
+		Assert.Equal(5003, hpReader.ReadD());
+		Assert.Equal(20, hpReader.ReadD());
+		Assert.Equal(7, (int)hpReader.ReadC());
+		Assert.Equal(100, (int)hpReader.ReadC());
+		Assert.Equal(456, hpReader.ReadH());
+		Assert.Equal(3, hpReader.ReadH());
+		Assert.Equal(0, hpReader.Remaining);
+
+		var fpPayload = SerializeUnencryptedPayload(new SmAttackStatus(
+			creatureObjectId: 5004,
+			SmAttackStatusType.Fp,
+			skillId: 789,
+			value: 10,
+			hpOrMpPercentage: 85,
+			SmAttackStatusLog.FpHeal,
+			usesNegativeValue: false));
+		using var fpReader = new PacketBuffer(fpPayload);
+		Assert.Equal(5004, fpReader.ReadD());
+		Assert.Equal(10, fpReader.ReadD());
+		Assert.Equal(26, (int)fpReader.ReadC());
+		Assert.Equal(85, (int)fpReader.ReadC());
+		Assert.Equal(789, fpReader.ReadH());
+		Assert.Equal(134, fpReader.ReadH());
+		Assert.Equal(0, fpReader.Remaining);
+
+		var mpPayload = SerializeUnencryptedPayload(new SmAttackStatus(
+			creatureObjectId: 5005,
+			SmAttackStatusType.AbsorbedMp,
+			skillId: 321,
+			value: 12,
+			hpOrMpPercentage: 65,
+			SmAttackStatusLog.MpHeal,
+			usesNegativeValue: false));
+		using var mpReader = new PacketBuffer(mpPayload);
+		Assert.Equal(5005, mpReader.ReadD());
+		Assert.Equal(12, mpReader.ReadD());
+		Assert.Equal(20, (int)mpReader.ReadC());
+		Assert.Equal(65, (int)mpReader.ReadC());
+		Assert.Equal(321, mpReader.ReadH());
+		Assert.Equal(4, mpReader.ReadH());
+		Assert.Equal(0, mpReader.Remaining);
+	}
+
+	[Fact]
 	public void SmPlayerState_WritesJavaPlayerStatePayload()
 	{
 		var player = new Player

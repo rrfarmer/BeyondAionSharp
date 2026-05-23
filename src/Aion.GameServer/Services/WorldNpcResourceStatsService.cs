@@ -96,6 +96,146 @@ public sealed class WorldNpcResourceStatsService
 		return ApplyPlayerFpChangeAsync(player, maxHp, maxFp, WorldNpcResourceChangeKind.Increase, value, skillId, packetType, packetLog, cancellationToken);
 	}
 
+	public async ValueTask<WorldNpcResourceChangeResult> IncreaseNpcHpAsync(
+		IWorldNpcObject? npc,
+		int value,
+		int skillId = 0,
+		SmAttackStatusType? packetType = SmAttackStatusType.Hp,
+		SmAttackStatusLog? packetLog = SmAttackStatusLog.Heal,
+		bool targetHasDisease = false,
+		int? killingBlow = null,
+		Player? effector = null,
+		WorldNpcDeathDropOptions? deathOptions = null,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: model/stats/container/CreatureLifeStats.increaseHp.
+		if (npc == null)
+			return WorldNpcResourceChangeResult.MissingTarget(WorldNpcEffectResourceType.Hp, WorldNpcResourceChangeKind.Increase, value);
+		if (value < 0)
+			return await ApplyNpcNegativeHealAsDamageAsync(npc, -value, skillId, packetType, packetLog, effector, deathOptions, cancellationToken);
+
+		var mutation = _npcLifeStats.ApplyHpIncrease(npc.ObjectId, value, targetHasDisease, killingBlow);
+		var previousValue = mutation.Previous?.CurrentHp ?? 0;
+		var currentValue = mutation.Current?.CurrentHp ?? previousValue;
+		var maxValue = mutation.Current?.MaxHp;
+		var shouldSend = mutation.Status is not WorldNpcResourceChangeStatus.MissingStats
+			and not WorldNpcResourceChangeStatus.BlockedByDisease
+			and not WorldNpcResourceChangeStatus.AlreadyDead
+			&& ShouldSendCreatureLifeStatsPacket(mutation.AppliedValue, skillId, packetType);
+		var (packet, broadcastCount) = await BroadcastAttackStatusAsync(
+			npc.Position,
+			npc.ObjectId,
+			packetType,
+			packetLog,
+			skillId,
+			mutation.AppliedValue,
+			mutation.Current?.GetHpPercentage() ?? 0,
+			shouldSend,
+			cancellationToken,
+			usesNegativeValue: false);
+		return WorldNpcResourceChangeResult.FromResourceMutation(
+			mutation.Status,
+			npc.ObjectId,
+			WorldNpcEffectResourceType.Hp,
+			WorldNpcResourceChangeKind.Increase,
+			value,
+			mutation.AppliedValue,
+			previousValue,
+			currentValue,
+			maxValue,
+			packetType,
+			packetLog,
+			packet,
+			broadcastCount,
+			NotifyHpObservers: mutation.AppliedValue != 0,
+			KillingBlowReset: mutation.KillingBlowReset);
+	}
+
+	public async ValueTask<WorldNpcResourceChangeResult> IncreasePlayerHpAsync(
+		Player? player,
+		int maxHp,
+		int value,
+		int skillId = 0,
+		SmAttackStatusType? packetType = SmAttackStatusType.Hp,
+		SmAttackStatusLog? packetLog = SmAttackStatusLog.Heal,
+		int? killingBlow = null,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: model/stats/container/PlayerLifeStats inherits CreatureLifeStats.increaseHp and adds player side effects in onHpChanged.
+		if (player == null)
+			return WorldNpcResourceChangeResult.MissingTarget(WorldNpcEffectResourceType.Hp, WorldNpcResourceChangeKind.Increase, value);
+		if (player.LifeStats == null)
+			return WorldNpcResourceChangeResult.MissingStats(player.ObjectId, WorldNpcEffectResourceType.Hp, WorldNpcResourceChangeKind.Increase, value);
+		if (value < 0)
+			return await ApplyPlayerNegativeHealAsDamageAsync(player, maxHp, -value, skillId, packetType, packetLog, cancellationToken);
+		if (player.IsAbnormalSet(PlayerAbnormalState.Disease))
+		{
+			var blockedHp = player.LifeStats.GetCurrentHp(Math.Max(0, maxHp));
+			return WorldNpcResourceChangeResult.FromResourceMutation(
+				WorldNpcResourceChangeStatus.BlockedByDisease,
+				player.ObjectId,
+				WorldNpcEffectResourceType.Hp,
+				WorldNpcResourceChangeKind.Increase,
+				value,
+				AppliedValue: 0,
+				PreviousValue: blockedHp,
+				CurrentValue: blockedHp,
+				MaxValue: Math.Max(0, maxHp));
+		}
+		if (player.LifeStats.CurrentHp <= 0)
+		{
+			return WorldNpcResourceChangeResult.FromResourceMutation(
+				WorldNpcResourceChangeStatus.AlreadyDead,
+				player.ObjectId,
+				WorldNpcEffectResourceType.Hp,
+				WorldNpcResourceChangeKind.Increase,
+				value,
+				AppliedValue: 0,
+				PreviousValue: player.LifeStats.CurrentHp,
+				CurrentValue: player.LifeStats.CurrentHp,
+				MaxValue: Math.Max(0, maxHp));
+		}
+
+		var normalizedMaxHp = Math.Max(0, maxHp);
+		var previousHp = player.LifeStats.GetCurrentHp(normalizedMaxHp);
+		var currentHp = Math.Min(previousHp + value, normalizedMaxHp);
+		var appliedValue = Math.Max(0, currentHp - previousHp);
+		var killingBlowReset = killingBlow is > 0 && currentHp > killingBlow.Value;
+		if (appliedValue != 0)
+			player.LifeStats = player.LifeStats with { CurrentHp = currentHp };
+		var shouldSend = ShouldSendCreatureLifeStatsPacket(appliedValue, skillId, packetType);
+		var (packet, broadcastCount) = await BroadcastAttackStatusAsync(
+			player.Position,
+			player.ObjectId,
+			packetType,
+			packetLog,
+			skillId,
+			appliedValue,
+			GetHpPercentage(currentHp, normalizedMaxHp),
+			shouldSend,
+			cancellationToken,
+			usesNegativeValue: false);
+		return WorldNpcResourceChangeResult.FromResourceMutation(
+			appliedValue == 0 ? WorldNpcResourceChangeStatus.NoChange : WorldNpcResourceChangeStatus.Increased,
+			player.ObjectId,
+			WorldNpcEffectResourceType.Hp,
+			WorldNpcResourceChangeKind.Increase,
+			value,
+			appliedValue,
+			previousHp,
+			currentHp,
+			normalizedMaxHp,
+			packetType,
+			packetLog,
+			packet,
+			broadcastCount,
+			SendHpStatUpdate: player.IsOnline && appliedValue != 0,
+			SendGroupStatUpdate: player.IsOnline && player.IsInTeam && appliedValue != 0,
+			NotifyHpObservers: appliedValue != 0,
+			ClearAggroOnFullHp: appliedValue != 0 && currentHp == normalizedMaxHp,
+			KillingBlowReset: killingBlowReset);
+	}
+
 	public WorldNpcResourceChangeResult AddPlayerDp(
 		Player? player,
 		int value,
@@ -240,6 +380,147 @@ public sealed class WorldNpcResourceStatsService
 		}
 	}
 
+	private async ValueTask<WorldNpcResourceChangeResult> ApplyNpcNegativeHealAsDamageAsync(
+		IWorldNpcObject npc,
+		int damage,
+		int skillId,
+		SmAttackStatusType? packetType,
+		SmAttackStatusLog? packetLog,
+		Player? effector,
+		WorldNpcDeathDropOptions? deathOptions,
+		CancellationToken cancellationToken)
+	{
+		if (!_npcLifeStats.TryGetStats(npc.ObjectId, out var stats) || stats == null)
+			return WorldNpcResourceChangeResult.MissingStats(npc.ObjectId, WorldNpcEffectResourceType.Hp, WorldNpcResourceChangeKind.Reduce, damage);
+
+		SmAttackStatus? attackStatusPacket = null;
+		var attackStatusBroadcastCount = 0;
+		var damageResult = await _npcLifeStats.ReduceHpAsync(
+			npc,
+			damage,
+			stats.MaxHp,
+			stats.MaxMp,
+			effector,
+			deathOptions: deathOptions,
+			cancellationToken: cancellationToken,
+			beforeDeathAsync: async (previous, current, token) =>
+			{
+				(attackStatusPacket, attackStatusBroadcastCount) = await BroadcastAttackStatusAsync(
+					npc.Position,
+					npc.ObjectId,
+					packetType,
+					packetLog,
+					skillId,
+					previous.CurrentHp - current.CurrentHp,
+					current.GetHpPercentage(),
+					ShouldSendCreatureLifeStatsPacket(previous.CurrentHp - current.CurrentHp, skillId, packetType),
+					token,
+					usesNegativeValue: true);
+			});
+		if (attackStatusPacket == null && damageResult.Previous != null && damageResult.Current != null)
+		{
+			var appliedDamage = damageResult.Previous.CurrentHp - damageResult.Current.CurrentHp;
+			(attackStatusPacket, attackStatusBroadcastCount) = await BroadcastAttackStatusAsync(
+				npc.Position,
+				npc.ObjectId,
+				packetType,
+				packetLog,
+				skillId,
+				appliedDamage,
+				damageResult.Current.GetHpPercentage(),
+				ShouldSendCreatureLifeStatsPacket(appliedDamage, skillId, packetType),
+				cancellationToken,
+				usesNegativeValue: true);
+		}
+
+		var previousValue = damageResult.Previous?.CurrentHp ?? 0;
+		var currentValue = damageResult.Current?.CurrentHp ?? previousValue;
+		var appliedValue = Math.Max(0, previousValue - currentValue);
+		return WorldNpcResourceChangeResult.FromResourceMutation(
+			MapHpDamageStatus(damageResult.Status),
+			npc.ObjectId,
+			WorldNpcEffectResourceType.Hp,
+			WorldNpcResourceChangeKind.Reduce,
+			damage,
+			appliedValue,
+			previousValue,
+			currentValue,
+			damageResult.Current?.MaxHp ?? stats.MaxHp,
+			packetType,
+			packetLog,
+			attackStatusPacket,
+			attackStatusBroadcastCount,
+			NotifyHpObservers: appliedValue != 0,
+			RoutedNegativeHealToDamage: true);
+	}
+
+	private async ValueTask<WorldNpcResourceChangeResult> ApplyPlayerNegativeHealAsDamageAsync(
+		Player player,
+		int maxHp,
+		int damage,
+		int skillId,
+		SmAttackStatusType? packetType,
+		SmAttackStatusLog? packetLog,
+		CancellationToken cancellationToken)
+	{
+		var normalizedMaxHp = Math.Max(0, maxHp);
+		if (player.LifeStats == null)
+			return WorldNpcResourceChangeResult.MissingStats(player.ObjectId, WorldNpcEffectResourceType.Hp, WorldNpcResourceChangeKind.Reduce, damage);
+		if (player.LifeStats.CurrentHp <= 0)
+		{
+			return WorldNpcResourceChangeResult.FromResourceMutation(
+				WorldNpcResourceChangeStatus.AlreadyDead,
+				player.ObjectId,
+				WorldNpcEffectResourceType.Hp,
+				WorldNpcResourceChangeKind.Reduce,
+				damage,
+				AppliedValue: 0,
+				PreviousValue: player.LifeStats.CurrentHp,
+				CurrentValue: player.LifeStats.CurrentHp,
+				MaxValue: normalizedMaxHp,
+				RoutedNegativeHealToDamage: true);
+		}
+
+		var previousHp = player.LifeStats.GetCurrentHp(normalizedMaxHp);
+		var currentHp = Math.Min(previousHp, Math.Max(previousHp - damage, 0));
+		var appliedValue = previousHp - currentHp;
+		player.LifeStats = player.LifeStats with
+		{
+			CurrentHp = currentHp,
+			CurrentMp = currentHp == 0 ? 0 : player.LifeStats.CurrentMp,
+		};
+		var (packet, broadcastCount) = await BroadcastAttackStatusAsync(
+			player.Position,
+			player.ObjectId,
+			packetType,
+			packetLog,
+			skillId,
+			appliedValue,
+			GetHpPercentage(currentHp, normalizedMaxHp),
+			ShouldSendCreatureLifeStatsPacket(appliedValue, skillId, packetType),
+			cancellationToken,
+			usesNegativeValue: true);
+		return WorldNpcResourceChangeResult.FromResourceMutation(
+			currentHp == 0 ? WorldNpcResourceChangeStatus.Died : appliedValue == 0 ? WorldNpcResourceChangeStatus.NoChange : WorldNpcResourceChangeStatus.Reduced,
+			player.ObjectId,
+			WorldNpcEffectResourceType.Hp,
+			WorldNpcResourceChangeKind.Reduce,
+			damage,
+			appliedValue,
+			previousHp,
+			currentHp,
+			normalizedMaxHp,
+			packetType,
+			packetLog,
+			packet,
+			broadcastCount,
+			SendHpStatUpdate: player.IsOnline && appliedValue != 0,
+			SendGroupStatUpdate: player.IsOnline && player.IsInTeam && appliedValue != 0,
+			TriggerRestoreTask: player.IsOnline && appliedValue != 0,
+			NotifyHpObservers: appliedValue != 0,
+			RoutedNegativeHealToDamage: true);
+	}
+
 	private async ValueTask<WorldNpcResourceChangeResult> ApplyNpcMpChangeAsync(
 		IWorldNpcObject? npc,
 		WorldNpcResourceChangeKind kind,
@@ -265,7 +546,8 @@ public sealed class WorldNpcResourceStatsService
 			mutation.AppliedValue,
 			mutation.Current?.GetMpPercentage() ?? 0,
 			ShouldSendCreatureLifeStatsPacket(mutation.AppliedValue, skillId, packetType),
-			cancellationToken);
+			cancellationToken,
+			usesNegativeValue: kind == WorldNpcResourceChangeKind.Reduce);
 		return WorldNpcResourceChangeResult.FromResourceMutation(
 			mutation.Status,
 			npc.ObjectId,
@@ -332,7 +614,8 @@ public sealed class WorldNpcResourceStatsService
 			appliedValue,
 			mpPercentage,
 			ShouldSendCreatureLifeStatsPacket(appliedValue, skillId, packetType),
-			cancellationToken);
+			cancellationToken,
+			usesNegativeValue: kind == WorldNpcResourceChangeKind.Reduce);
 		return WorldNpcResourceChangeResult.FromResourceMutation(
 			status,
 			player.ObjectId,
@@ -411,7 +694,8 @@ public sealed class WorldNpcResourceStatsService
 			valueToSend,
 			hpPercentage,
 			shouldSendPacket,
-			cancellationToken);
+			cancellationToken,
+			usesNegativeValue: kind == WorldNpcResourceChangeKind.Reduce);
 		return WorldNpcResourceChangeResult.FromResourceMutation(
 			GetStatus(kind, previousFp, currentFp),
 			player.ObjectId,
@@ -438,7 +722,8 @@ public sealed class WorldNpcResourceStatsService
 		int value,
 		int hpOrMpPercentage,
 		bool shouldSend,
-		CancellationToken cancellationToken)
+		CancellationToken cancellationToken,
+		bool? usesNegativeValue = null)
 	{
 		if (!shouldSend || packetType == null)
 			return (null, 0);
@@ -449,7 +734,8 @@ public sealed class WorldNpcResourceStatsService
 			skillId,
 			value,
 			hpOrMpPercentage,
-			packetLog ?? SmAttackStatusLog.Regular);
+			packetLog ?? SmAttackStatusLog.Regular,
+			usesNegativeValue);
 		if (_connectionRegistry == null)
 			return (packet, 0);
 
@@ -474,6 +760,19 @@ public sealed class WorldNpcResourceStatsService
 		return kind == WorldNpcResourceChangeKind.Reduce
 			? WorldNpcResourceChangeStatus.Reduced
 			: WorldNpcResourceChangeStatus.Increased;
+	}
+
+	private static WorldNpcResourceChangeStatus MapHpDamageStatus(WorldNpcLifeStatsDamageStatus status)
+	{
+		return status switch
+		{
+			WorldNpcLifeStatsDamageStatus.NoChange => WorldNpcResourceChangeStatus.NoChange,
+			WorldNpcLifeStatsDamageStatus.Reduced => WorldNpcResourceChangeStatus.Reduced,
+			WorldNpcLifeStatsDamageStatus.Died => WorldNpcResourceChangeStatus.Died,
+			WorldNpcLifeStatsDamageStatus.AlreadyDead => WorldNpcResourceChangeStatus.AlreadyDead,
+			WorldNpcLifeStatsDamageStatus.MissingNpc => WorldNpcResourceChangeStatus.MissingTarget,
+			_ => WorldNpcResourceChangeStatus.MissingStats,
+		};
 	}
 
 	private static int GetHpPercentage(int currentHp, int maxHp)
@@ -514,6 +813,8 @@ public sealed record WorldNpcResourceEffectApplicationResult(
 			WorldNpcResourceChangeStatus.MissingStats => WorldNpcResourceEffectApplicationStatus.MissingStats,
 			WorldNpcResourceChangeStatus.MissingMaxResource => WorldNpcResourceEffectApplicationStatus.MissingMaxResource,
 			WorldNpcResourceChangeStatus.AlreadyDead => WorldNpcResourceEffectApplicationStatus.TargetDead,
+			WorldNpcResourceChangeStatus.Died => WorldNpcResourceEffectApplicationStatus.TargetDead,
+			WorldNpcResourceChangeStatus.BlockedByDisease => WorldNpcResourceEffectApplicationStatus.EffectSkipped,
 			_ => WorldNpcResourceEffectApplicationStatus.Applied,
 		};
 		return new WorldNpcResourceEffectApplicationResult(status, change.ResourceType, skillId == 0 ? change.AttackStatusPacket?.SkillId ?? 0 : skillId, change);
@@ -584,7 +885,15 @@ public sealed record WorldNpcResourceChangeResult(
 	bool SendFlyTimeUpdate = false,
 	bool BroadcastDpInfo = false,
 	bool SendDpStatUpdate = false,
-	bool UpdateStatsAndSpeedVisually = false)
+	bool UpdateStatsAndSpeedVisually = false,
+	bool SendHpStatUpdate = false,
+	bool SendGroupStatUpdate = false,
+	bool TriggerRestoreTask = false,
+	bool TriggerFpRestore = false,
+	bool NotifyHpObservers = false,
+	bool ClearAggroOnFullHp = false,
+	bool KillingBlowReset = false,
+	bool RoutedNegativeHealToDamage = false)
 {
 	public bool Mutated => PreviousValue != CurrentValue;
 
@@ -640,7 +949,15 @@ public sealed record WorldNpcResourceChangeResult(
 		bool SendFlyTimeUpdate = false,
 		bool BroadcastDpInfo = false,
 		bool SendDpStatUpdate = false,
-		bool UpdateStatsAndSpeedVisually = false)
+		bool UpdateStatsAndSpeedVisually = false,
+		bool SendHpStatUpdate = false,
+		bool SendGroupStatUpdate = false,
+		bool TriggerRestoreTask = false,
+		bool TriggerFpRestore = false,
+		bool NotifyHpObservers = false,
+		bool ClearAggroOnFullHp = false,
+		bool KillingBlowReset = false,
+		bool RoutedNegativeHealToDamage = false)
 	{
 		return new WorldNpcResourceChangeResult(
 			status,
@@ -659,7 +976,15 @@ public sealed record WorldNpcResourceChangeResult(
 			SendFlyTimeUpdate,
 			BroadcastDpInfo,
 			SendDpStatUpdate,
-			UpdateStatsAndSpeedVisually);
+			UpdateStatsAndSpeedVisually,
+			SendHpStatUpdate,
+			SendGroupStatUpdate,
+			TriggerRestoreTask,
+			TriggerFpRestore,
+			NotifyHpObservers,
+			ClearAggroOnFullHp,
+			KillingBlowReset,
+			RoutedNegativeHealToDamage);
 	}
 }
 
@@ -674,9 +999,11 @@ public enum WorldNpcResourceChangeStatus
 	MissingTarget,
 	MissingStats,
 	MissingMaxResource,
+	BlockedByDisease,
 	AlreadyDead,
 	StartingClass,
 	NoChange,
 	Reduced,
+	Died,
 	Increased,
 }

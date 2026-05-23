@@ -67,6 +67,179 @@ public sealed class WorldNpcResourceStatsServiceTests
 	}
 
 	[Fact]
+	public async Task IncreaseNpcHpAsync_CapsToMaxAndBroadcastsHealPacket()
+	{
+		var service = CreateService(out var lifeStats, out var registry);
+		var npc = CreateNpc(objectId: 14, maxHp: 100);
+		lifeStats.Initialize(npc, maxHp: 100, maxMp: 40);
+		await lifeStats.ReduceHpAsync(npc, damage: 30, maxHp: 100, maxMp: 40, attacker: CreatePlayer(objectId: 2001, currentHp: 100, currentMp: 50, currentFp: 100));
+
+		var result = await service.IncreaseNpcHpAsync(npc, value: 50, skillId: 7501, killingBlow: 90);
+
+		Assert.Equal(WorldNpcResourceChangeStatus.Increased, result.Status);
+		Assert.Equal(WorldNpcEffectResourceType.Hp, result.ResourceType);
+		Assert.Equal(WorldNpcResourceChangeKind.Increase, result.ChangeKind);
+		Assert.Equal(70, result.PreviousValue);
+		Assert.Equal(100, result.CurrentValue);
+		Assert.Equal(30, result.AppliedValue);
+		Assert.Equal(100, result.MaxValue);
+		Assert.True(result.NotifyHpObservers);
+		Assert.True(result.KillingBlowReset);
+		Assert.NotNull(result.AttackStatusPacket);
+		Assert.Equal(SmAttackStatusType.Hp, result.AttackStatusPacket.Type);
+		Assert.Equal(SmAttackStatusLog.Heal, result.AttackStatusPacket.Log);
+		Assert.Equal(30, result.AttackStatusPacket.Value);
+		Assert.Equal(100, result.AttackStatusPacket.HpOrMpPercentage);
+		Assert.Equal(1, result.AttackStatusBroadcastCount);
+		Assert.Single(registry.Broadcasts);
+		Assert.True(lifeStats.TryGetStats(npc.ObjectId, out var stored));
+		Assert.Equal(100, stored!.CurrentHp);
+	}
+
+	[Fact]
+	public async Task IncreaseNpcHpAsync_BlocksDiseaseBeforePacketEvenForSkillHeal()
+	{
+		var service = CreateService(out var lifeStats, out var registry);
+		var npc = CreateNpc(objectId: 15, maxHp: 100);
+		lifeStats.Initialize(npc, maxHp: 100, maxMp: 40);
+		await lifeStats.ReduceHpAsync(npc, damage: 30, maxHp: 100, maxMp: 40, attacker: CreatePlayer(objectId: 2002, currentHp: 100, currentMp: 50, currentFp: 100));
+
+		var result = await service.IncreaseNpcHpAsync(npc, value: 25, skillId: 7502, targetHasDisease: true);
+
+		Assert.Equal(WorldNpcResourceChangeStatus.BlockedByDisease, result.Status);
+		Assert.Equal(70, result.PreviousValue);
+		Assert.Equal(70, result.CurrentValue);
+		Assert.Equal(0, result.AppliedValue);
+		Assert.False(result.NotifyHpObservers);
+		Assert.Null(result.AttackStatusPacket);
+		Assert.Empty(registry.Broadcasts);
+		Assert.True(lifeStats.TryGetStats(npc.ObjectId, out var stored));
+		Assert.Equal(70, stored!.CurrentHp);
+	}
+
+	[Fact]
+	public async Task IncreaseNpcHpAsync_RoutesNegativeHealToHpDamage()
+	{
+		var service = CreateService(out var lifeStats, out var registry);
+		var npc = CreateNpc(objectId: 16, maxHp: 100);
+		lifeStats.Initialize(npc, maxHp: 100, maxMp: 40);
+
+		var result = await service.IncreaseNpcHpAsync(npc, value: -25, skillId: 7503);
+
+		Assert.Equal(WorldNpcResourceChangeStatus.Reduced, result.Status);
+		Assert.Equal(WorldNpcEffectResourceType.Hp, result.ResourceType);
+		Assert.Equal(WorldNpcResourceChangeKind.Reduce, result.ChangeKind);
+		Assert.Equal(100, result.PreviousValue);
+		Assert.Equal(75, result.CurrentValue);
+		Assert.Equal(25, result.AppliedValue);
+		Assert.True(result.NotifyHpObservers);
+		Assert.True(result.RoutedNegativeHealToDamage);
+		Assert.NotNull(result.AttackStatusPacket);
+		Assert.Equal(SmAttackStatusType.Hp, result.AttackStatusPacket.Type);
+		Assert.Equal(SmAttackStatusLog.Heal, result.AttackStatusPacket.Log);
+		Assert.Equal(25, result.AttackStatusPacket.Value);
+		Assert.Equal(75, result.AttackStatusPacket.HpOrMpPercentage);
+		Assert.Single(registry.Broadcasts);
+		Assert.True(lifeStats.TryGetStats(npc.ObjectId, out var stored));
+		Assert.Equal(75, stored!.CurrentHp);
+	}
+
+	[Fact]
+	public async Task IncreaseNpcHpAsync_SendsSkillPacketWhenHealDoesNotChangeHp()
+	{
+		var service = CreateService(out var lifeStats, out var registry);
+		var npc = CreateNpc(objectId: 17, maxHp: 100);
+		lifeStats.Initialize(npc, maxHp: 100, maxMp: 40);
+
+		var result = await service.IncreaseNpcHpAsync(npc, value: 5, skillId: 7506);
+
+		Assert.Equal(WorldNpcResourceChangeStatus.NoChange, result.Status);
+		Assert.Equal(100, result.PreviousValue);
+		Assert.Equal(100, result.CurrentValue);
+		Assert.Equal(0, result.AppliedValue);
+		Assert.False(result.NotifyHpObservers);
+		Assert.NotNull(result.AttackStatusPacket);
+		Assert.Equal(0, result.AttackStatusPacket.Value);
+		Assert.Equal(7506, result.AttackStatusPacket.SkillId);
+		Assert.Single(registry.Broadcasts);
+	}
+
+	[Fact]
+	public async Task IncreasePlayerHpAsync_CapsHealAndRecordsPlayerSideEffectIntents()
+	{
+		var service = CreateService(out _, out var registry);
+		var player = CreatePlayer(objectId: 1000, currentHp: 80, currentMp: 40, currentFp: 100);
+		player.IsOnline = true;
+		player.TeamMembership = PlayerTeamMembership.Group;
+
+		var result = await service.IncreasePlayerHpAsync(player, maxHp: 100, value: 30, skillId: 7504, killingBlow: 90);
+
+		Assert.Equal(WorldNpcResourceChangeStatus.Increased, result.Status);
+		Assert.Equal(WorldNpcEffectResourceType.Hp, result.ResourceType);
+		Assert.Equal(WorldNpcResourceChangeKind.Increase, result.ChangeKind);
+		Assert.Equal(80, result.PreviousValue);
+		Assert.Equal(100, result.CurrentValue);
+		Assert.Equal(20, result.AppliedValue);
+		Assert.True(result.SendHpStatUpdate);
+		Assert.True(result.SendGroupStatUpdate);
+		Assert.True(result.NotifyHpObservers);
+		Assert.True(result.ClearAggroOnFullHp);
+		Assert.True(result.KillingBlowReset);
+		Assert.Equal(100, player.LifeStats!.CurrentHp);
+		Assert.NotNull(result.AttackStatusPacket);
+		Assert.Equal(SmAttackStatusType.Hp, result.AttackStatusPacket.Type);
+		Assert.Equal(SmAttackStatusLog.Heal, result.AttackStatusPacket.Log);
+		Assert.Equal(20, result.AttackStatusPacket.Value);
+		Assert.Single(registry.Broadcasts);
+	}
+
+	[Fact]
+	public async Task IncreasePlayerHpAsync_RoutesNegativeHealToHpDamage()
+	{
+		var service = CreateService(out _, out var registry);
+		var player = CreatePlayer(objectId: 1011, currentHp: 80, currentMp: 40, currentFp: 100);
+		player.IsOnline = true;
+
+		var result = await service.IncreasePlayerHpAsync(player, maxHp: 100, value: -90, skillId: 7507);
+
+		Assert.Equal(WorldNpcResourceChangeStatus.Died, result.Status);
+		Assert.Equal(WorldNpcResourceChangeKind.Reduce, result.ChangeKind);
+		Assert.Equal(80, result.PreviousValue);
+		Assert.Equal(0, result.CurrentValue);
+		Assert.Equal(80, result.AppliedValue);
+		Assert.True(result.RoutedNegativeHealToDamage);
+		Assert.True(result.SendHpStatUpdate);
+		Assert.True(result.TriggerRestoreTask);
+		Assert.True(result.NotifyHpObservers);
+		Assert.Equal(0, player.LifeStats!.CurrentHp);
+		Assert.Equal(0, player.LifeStats.CurrentMp);
+		Assert.NotNull(result.AttackStatusPacket);
+		Assert.Equal(SmAttackStatusType.Hp, result.AttackStatusPacket.Type);
+		Assert.Equal(0, result.AttackStatusPacket.HpOrMpPercentage);
+		Assert.Single(registry.Broadcasts);
+	}
+
+	[Fact]
+	public async Task IncreasePlayerHpAsync_BlocksDiseaseAndDoesNotMutate()
+	{
+		var service = CreateService(out _, out var registry);
+		var player = CreatePlayer(objectId: 1010, currentHp: 80, currentMp: 40, currentFp: 100);
+		player.AbnormalState = PlayerAbnormalState.Disease;
+
+		var result = await service.IncreasePlayerHpAsync(player, maxHp: 100, value: 30, skillId: 7505);
+
+		Assert.Equal(WorldNpcResourceChangeStatus.BlockedByDisease, result.Status);
+		Assert.Equal(80, result.PreviousValue);
+		Assert.Equal(80, result.CurrentValue);
+		Assert.Equal(0, result.AppliedValue);
+		Assert.Equal(80, player.LifeStats!.CurrentHp);
+		Assert.False(result.SendHpStatUpdate);
+		Assert.False(result.NotifyHpObservers);
+		Assert.Null(result.AttackStatusPacket);
+		Assert.Empty(registry.Broadcasts);
+	}
+
+	[Fact]
 	public async Task ReducePlayerFpAsync_ClampsToZeroAndUsesHpPercentageWithFlyTimeIntent()
 	{
 		var service = CreateService(out _, out var registry);
@@ -304,7 +477,7 @@ public sealed class WorldNpcResourceStatsServiceTests
 	}
 
 	[Fact]
-	public async Task ApplyResourceOverTimePeriodicResultAsync_KeepsHpHealUnsupportedUntilHpBoundaryExists()
+	public async Task ApplyResourceOverTimePeriodicResultAsync_KeepsHpHealUnsupportedUntilEffectRuntimeWiresHpBoundary()
 	{
 		var service = CreateService(out _, out _);
 		var skillDamage = CreateSkillDamageService();

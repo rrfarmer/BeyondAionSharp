@@ -12,6 +12,7 @@ public sealed class SmAttackStatus : GameServerPacket
 	private readonly int _value;
 	private readonly int _hpOrMpPercentage;
 	private readonly SmAttackStatusLog _log;
+	private readonly bool? _usesNegativeValueOverride;
 
 	public SmAttackStatus(
 		int creatureObjectId,
@@ -19,7 +20,8 @@ public sealed class SmAttackStatus : GameServerPacket
 		int skillId,
 		int value,
 		int hpOrMpPercentage,
-		SmAttackStatusLog log = SmAttackStatusLog.Regular)
+		SmAttackStatusLog log = SmAttackStatusLog.Regular,
+		bool? usesNegativeValue = null)
 		: base(PacketOpCode)
 	{
 		// Java parity: network/aion/serverpackets/SM_ATTACK_STATUS.writeImpl.
@@ -29,6 +31,7 @@ public sealed class SmAttackStatus : GameServerPacket
 		_value = value;
 		_hpOrMpPercentage = Math.Clamp(hpOrMpPercentage, 0, 100);
 		_log = log;
+		_usesNegativeValueOverride = usesNegativeValue;
 	}
 
 	public int CreatureObjectId => _creatureObjectId;
@@ -46,7 +49,7 @@ public sealed class SmAttackStatus : GameServerPacket
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
 		buffer.WriteD(_creatureObjectId);
-		buffer.WriteD(UsesNegativeValue(_type) ? -_value : _value);
+		buffer.WriteD((_usesNegativeValueOverride ?? UsesNegativeValue(_type)) ? -_value : _value);
 		buffer.WriteC((int)_type);
 		buffer.WriteC(_hpOrMpPercentage);
 		buffer.WriteH(_skillId);

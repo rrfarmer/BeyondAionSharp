@@ -91,6 +91,66 @@ public sealed class WorldNpcLifeStatsService
 			current);
 	}
 
+	public WorldNpcLifeStatsResourceMutationResult ApplyHpIncrease(
+		int objectId,
+		int value,
+		bool targetHasDisease = false,
+		int? killingBlow = null)
+	{
+		// Java parity: model/stats/container/CreatureLifeStats.increaseHp positive-heal branch.
+		WorldNpcLifeStats previous;
+		WorldNpcLifeStats current;
+		var killingBlowReset = false;
+		lock (_sync)
+		{
+			if (!_stats.TryGetValue(objectId, out var existing))
+				return WorldNpcLifeStatsResourceMutationResult.MissingStats(objectId, WorldNpcResourceChangeKind.Increase, WorldNpcEffectResourceType.Hp, value);
+			previous = existing;
+			if (targetHasDisease)
+			{
+				return new WorldNpcLifeStatsResourceMutationResult(
+					WorldNpcResourceChangeStatus.BlockedByDisease,
+					objectId,
+					WorldNpcEffectResourceType.Hp,
+					WorldNpcResourceChangeKind.Increase,
+					value,
+					AppliedValue: 0,
+					Previous: previous,
+					Current: previous);
+			}
+			if (previous.IsDead)
+			{
+				return new WorldNpcLifeStatsResourceMutationResult(
+					WorldNpcResourceChangeStatus.AlreadyDead,
+					objectId,
+					WorldNpcEffectResourceType.Hp,
+					WorldNpcResourceChangeKind.Increase,
+					value,
+					AppliedValue: 0,
+					Previous: previous,
+					Current: previous);
+			}
+
+			var nextHp = Math.Min(previous.CurrentHp + value, previous.MaxHp);
+			current = previous with { CurrentHp = nextHp };
+			killingBlowReset = killingBlow is > 0 && nextHp > killingBlow.Value;
+			if (nextHp != previous.CurrentHp)
+				_stats[objectId] = current;
+		}
+
+		var appliedValue = current.CurrentHp - previous.CurrentHp;
+		return new WorldNpcLifeStatsResourceMutationResult(
+			appliedValue == 0 ? WorldNpcResourceChangeStatus.NoChange : WorldNpcResourceChangeStatus.Increased,
+			objectId,
+			WorldNpcEffectResourceType.Hp,
+			WorldNpcResourceChangeKind.Increase,
+			value,
+			appliedValue,
+			previous,
+			current,
+			killingBlowReset);
+	}
+
 	public async ValueTask<WorldNpcLifeStatsDamageResult> ReduceHpAsync(
 		IWorldNpcObject? npc,
 		int damage,
@@ -222,7 +282,8 @@ public sealed record WorldNpcLifeStatsResourceMutationResult(
 	int RequestedValue,
 	int AppliedValue,
 	WorldNpcLifeStats? Previous,
-	WorldNpcLifeStats? Current)
+	WorldNpcLifeStats? Current,
+	bool KillingBlowReset = false)
 {
 	public static WorldNpcLifeStatsResourceMutationResult MissingStats(
 		int objectId,
