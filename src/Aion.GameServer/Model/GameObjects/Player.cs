@@ -478,6 +478,45 @@ public sealed class Player
 		return true;
 	}
 
+	public bool EnterFlyArea()
+	{
+		// Java parity: controllers/PlayerController.onEnterFlyArea -> PlayerLifeStats.triggerFpReduce.
+		if (!IsFlying() && !IsInSprintMode)
+			return false;
+
+		TriggerFpReduce();
+		return true;
+	}
+
+	public PlayerLeaveFlyAreaStatus LeaveFlyArea(int freeFlightAccessLevel)
+	{
+		// Java parity: controllers/PlayerController.onLeaveFlyArea state and FP-task intent; packet/audit fanout remains in GameServerConnection.
+		if (AccessLevel >= freeFlightAccessLevel)
+			return PlayerLeaveFlyAreaStatus.FreeFlightAccess;
+
+		if (IsInFlyingState())
+		{
+			if (IsInGlidingState())
+			{
+				UnsetFlyState(PlayerFlyState.Flying);
+				SetCreatureState(PlayerCreatureState.Flying, enabled: false);
+				TriggerFpReduce();
+				return PlayerLeaveFlyAreaStatus.ContinueGliding;
+			}
+
+			EndFlying();
+			return PlayerLeaveFlyAreaStatus.EndedFlying;
+		}
+
+		if (IsInGlidingState())
+		{
+			TriggerFpReduce();
+			return PlayerLeaveFlyAreaStatus.GlidingOutsideFlyArea;
+		}
+
+		return PlayerLeaveFlyAreaStatus.NoChange;
+	}
+
 	public bool CanStartRide()
 	{
 		// Java parity: model/templates/item/actions/RideAction.canAct baseline guards before mounting.
@@ -589,4 +628,13 @@ public sealed class Player
 		cooldowns.Remove(delayId);
 		ItemCooldowns = cooldowns;
 	}
+}
+
+public enum PlayerLeaveFlyAreaStatus
+{
+	NoChange,
+	FreeFlightAccess,
+	ContinueGliding,
+	EndedFlying,
+	GlidingOutsideFlyArea,
 }

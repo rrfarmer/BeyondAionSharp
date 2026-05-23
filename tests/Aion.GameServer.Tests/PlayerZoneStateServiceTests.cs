@@ -104,4 +104,101 @@ public sealed class PlayerZoneStateServiceTests
 		Assert.False(aboveZonePlayer.IsInsideFlyZone);
 		Assert.False(aboveZonePlayer.IsInsideNoFlyZone);
 	}
+
+	[Fact]
+	public void ApplyFlightZoneTransitionIntentMatchesJavaFlyAreaFpTaskSlice()
+	{
+		var worldMaps = new[]
+		{
+			new WorldMapSummary(400020000, IsInstance: false, TwinCount: 1, Flags: WorldZoneAttributes.Fly | WorldZoneAttributes.Glide),
+		};
+		var noFlyZones = new FlightZoneTable(
+		[
+			new FlightZoneSummary(
+				400020000,
+				"GAB1_01_FLYING_ZONE01_400020000",
+				FlightZoneType.NoFly,
+				Flags: 48,
+				Bottom: 0,
+				Top: 100,
+				Points: [new ZonePoint2D(20, 20), new ZonePoint2D(30, 20), new ZonePoint2D(30, 30), new ZonePoint2D(20, 30)]),
+		]);
+		var flyingIntoNoFly = new Player
+		{
+			Position = new WorldPosition(400020000, 25, 25, 50, 0),
+			IsInsideFlyZone = true,
+			FlyState = PlayerFlyState.Flying,
+			CreatureState = PlayerCreatureState.Flying,
+			IsFpReduceActive = true,
+		};
+		var glidingIntoNoFly = new Player
+		{
+			Position = new WorldPosition(400020000, 25, 25, 50, 0),
+			IsInsideFlyZone = true,
+			FlyState = PlayerFlyState.Flying | PlayerFlyState.Gliding,
+			CreatureState = PlayerCreatureState.Flying | PlayerCreatureState.Gliding,
+			IsFpRestoreActive = true,
+		};
+		var leavingNoFly = new Player
+		{
+			Position = new WorldPosition(400020000, 10, 10, 50, 0),
+			IsInsideFlyZone = true,
+			IsInsideNoFlyZone = true,
+			FlyState = PlayerFlyState.Gliding,
+			CreatureState = PlayerCreatureState.Gliding,
+			IsFpRestoreActive = true,
+		};
+		var walkingIntoFlyArea = new Player { Position = new WorldPosition(400020000, 10, 10, 50, 0) };
+		var freeFlightAdmin = new Player
+		{
+			AccessLevel = 1,
+			Position = new WorldPosition(400020000, 25, 25, 50, 0),
+			IsInsideFlyZone = true,
+			FlyState = PlayerFlyState.Flying,
+			CreatureState = PlayerCreatureState.Flying,
+			IsFpReduceActive = true,
+		};
+
+		var flyingNoFlyResult = PlayerZoneStateService.RevalidateFlightZones(flyingIntoNoFly, worldMaps, noFlyZones);
+		var flyingNoFlyIntent = PlayerZoneStateService.ApplyFlightZoneTransitionIntent(flyingIntoNoFly, flyingNoFlyResult);
+		Assert.True(flyingNoFlyIntent.LeftValidFlyArea);
+		Assert.Equal(PlayerLeaveFlyAreaStatus.EndedFlying, flyingNoFlyIntent.LeaveStatus);
+		Assert.False(flyingIntoNoFly.IsFlying());
+		Assert.False(flyingIntoNoFly.IsInState(PlayerCreatureState.Flying));
+		Assert.False(flyingIntoNoFly.IsFpReduceActive);
+		Assert.True(flyingIntoNoFly.IsFpRestoreActive);
+
+		var glidingNoFlyResult = PlayerZoneStateService.RevalidateFlightZones(glidingIntoNoFly, worldMaps, noFlyZones);
+		var glidingNoFlyIntent = PlayerZoneStateService.ApplyFlightZoneTransitionIntent(glidingIntoNoFly, glidingNoFlyResult);
+		Assert.True(glidingNoFlyIntent.LeftValidFlyArea);
+		Assert.Equal(PlayerLeaveFlyAreaStatus.ContinueGliding, glidingNoFlyIntent.LeaveStatus);
+		Assert.False(glidingIntoNoFly.IsInFlyingState());
+		Assert.True(glidingIntoNoFly.IsInGlidingState());
+		Assert.False(glidingIntoNoFly.IsInState(PlayerCreatureState.Flying));
+		Assert.True(glidingIntoNoFly.IsInState(PlayerCreatureState.Gliding));
+		Assert.True(glidingNoFlyIntent.FpReduceTriggered);
+		Assert.True(glidingIntoNoFly.IsFpReduceActive);
+		Assert.False(glidingIntoNoFly.IsFpRestoreActive);
+
+		var leavingNoFlyResult = PlayerZoneStateService.RevalidateFlightZones(leavingNoFly, worldMaps, noFlyZones);
+		var leavingNoFlyIntent = PlayerZoneStateService.ApplyFlightZoneTransitionIntent(leavingNoFly, leavingNoFlyResult);
+		Assert.True(leavingNoFlyIntent.EnteredValidFlyArea);
+		Assert.True(leavingNoFlyIntent.FpReduceTriggered);
+		Assert.True(leavingNoFly.IsFpReduceActive);
+		Assert.False(leavingNoFly.IsFpRestoreActive);
+
+		var walkingFlyResult = PlayerZoneStateService.RevalidateFlightZones(walkingIntoFlyArea, worldMaps, noFlyZones);
+		var walkingFlyIntent = PlayerZoneStateService.ApplyFlightZoneTransitionIntent(walkingIntoFlyArea, walkingFlyResult);
+		Assert.True(walkingFlyIntent.EnteredValidFlyArea);
+		Assert.False(walkingFlyIntent.FpReduceTriggered);
+		Assert.False(walkingIntoFlyArea.IsFpReduceActive);
+		Assert.False(walkingIntoFlyArea.IsFpRestoreActive);
+
+		var freeFlightResult = PlayerZoneStateService.RevalidateFlightZones(freeFlightAdmin, worldMaps, noFlyZones);
+		var freeFlightIntent = PlayerZoneStateService.ApplyFlightZoneTransitionIntent(freeFlightAdmin, freeFlightResult);
+		Assert.Equal(PlayerLeaveFlyAreaStatus.FreeFlightAccess, freeFlightIntent.LeaveStatus);
+		Assert.True(freeFlightAdmin.IsInFlyingState());
+		Assert.True(freeFlightAdmin.IsFpReduceActive);
+		Assert.False(freeFlightAdmin.IsFpRestoreActive);
+	}
 }

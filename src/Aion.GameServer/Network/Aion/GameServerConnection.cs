@@ -5874,10 +5874,15 @@ public sealed class GameServerConnection : BaseClientConnection
 	private PlayerZoneRevalidationResult RevalidatePlayerFlightZones(Player player)
 	{
 		var staticData = _runtimeContext?.DataManager?.StaticData;
-		return PlayerZoneStateService.RevalidateFlightZones(
+		var result = PlayerZoneStateService.RevalidateFlightZones(
 			player,
 			staticData?.WorldMaps ?? Array.Empty<WorldMapSummary>(),
 			staticData?.FlightZones);
+		PlayerZoneStateService.ApplyFlightZoneTransitionIntent(
+			player,
+			result,
+			_options.Administration.FreeFlightAccessLevel);
+		return result;
 	}
 
 	private static bool HasEquippedPowerShard(Player player, ItemTemplateTable? itemTemplates)

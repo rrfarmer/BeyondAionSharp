@@ -38,6 +38,35 @@ public static class PlayerZoneStateService
 			wasInsideNoFlyZone,
 			player.IsInsideNoFlyZone);
 	}
+
+	public static PlayerFlightZoneTransitionResult ApplyFlightZoneTransitionIntent(
+		Player player,
+		PlayerZoneRevalidationResult result,
+		int freeFlightAccessLevel = 1)
+	{
+		// Java parity: FlyZoneInstance/NoFlyZoneInstance call PlayerController.onEnterFlyArea/onLeaveFlyArea.
+		if (result.LeftValidFlyArea)
+		{
+			var status = player.LeaveFlyArea(freeFlightAccessLevel);
+			return new PlayerFlightZoneTransitionResult(
+				EnteredValidFlyArea: false,
+				LeftValidFlyArea: true,
+				FpReduceTriggered: status is PlayerLeaveFlyAreaStatus.ContinueGliding or PlayerLeaveFlyAreaStatus.GlidingOutsideFlyArea,
+				LeaveStatus: status);
+		}
+
+		if (result.EnteredValidFlyArea)
+		{
+			var fpReduceTriggered = player.EnterFlyArea();
+			return new PlayerFlightZoneTransitionResult(
+				EnteredValidFlyArea: true,
+				LeftValidFlyArea: false,
+				FpReduceTriggered: fpReduceTriggered,
+				LeaveStatus: PlayerLeaveFlyAreaStatus.NoChange);
+		}
+
+		return PlayerFlightZoneTransitionResult.None;
+	}
 }
 
 public sealed record PlayerZoneRevalidationResult(
@@ -47,6 +76,10 @@ public sealed record PlayerZoneRevalidationResult(
 	bool WasInsideNoFlyZone,
 	bool IsInsideNoFlyZone)
 {
+	public bool WasInsideValidFlyArea => WasInsideFlyZone && !WasInsideNoFlyZone;
+
+	public bool IsInsideValidFlyArea => IsInsideFlyZone && !IsInsideNoFlyZone;
+
 	public bool EnteredFlyZone => !WasInsideFlyZone && IsInsideFlyZone;
 
 	public bool LeftFlyZone => WasInsideFlyZone && !IsInsideFlyZone;
@@ -54,4 +87,21 @@ public sealed record PlayerZoneRevalidationResult(
 	public bool EnteredNoFlyZone => !WasInsideNoFlyZone && IsInsideNoFlyZone;
 
 	public bool LeftNoFlyZone => WasInsideNoFlyZone && !IsInsideNoFlyZone;
+
+	public bool EnteredValidFlyArea => !WasInsideValidFlyArea && IsInsideValidFlyArea;
+
+	public bool LeftValidFlyArea => WasInsideValidFlyArea && !IsInsideValidFlyArea;
+}
+
+public sealed record PlayerFlightZoneTransitionResult(
+	bool EnteredValidFlyArea,
+	bool LeftValidFlyArea,
+	bool FpReduceTriggered,
+	PlayerLeaveFlyAreaStatus LeaveStatus)
+{
+	public static PlayerFlightZoneTransitionResult None { get; } = new(
+		EnteredValidFlyArea: false,
+		LeftValidFlyArea: false,
+		FpReduceTriggered: false,
+		LeaveStatus: PlayerLeaveFlyAreaStatus.NoChange);
 }
