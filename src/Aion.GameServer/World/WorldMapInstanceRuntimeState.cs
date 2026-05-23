@@ -53,6 +53,21 @@ public sealed class WorldMapInstanceRuntimeState
 		}
 	}
 
+	public int? RegisteredTeamId { get; private set; }
+
+	public void RegisterTeamId(int teamId)
+	{
+		// Java parity: WorldMapInstance.registerTeam stores one team id and also registers that id for instance lookup.
+		lock (_sync)
+		{
+			if (RegisteredTeamId.HasValue)
+				throw new InvalidOperationException($"A team for instance {InstanceId} is already registered.");
+
+			RegisteredTeamId = teamId;
+			_registeredObjectIds.Add(teamId);
+		}
+	}
+
 	public void Register(int objectId)
 	{
 		// Java parity: WorldMapInstance.register stores player or team object ids in registeredObjects.

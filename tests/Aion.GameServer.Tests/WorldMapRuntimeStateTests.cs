@@ -128,6 +128,22 @@ public sealed class WorldMapRuntimeStateTests
 	}
 
 	[Fact]
+	public void WorldMapInstanceRuntimeState_RegisterTeamIdMirrorsJavaRegisterTeamStorage()
+	{
+		var instance = new WorldMapInstanceRuntimeState(instanceId: 7, maxPlayers: 6);
+
+		instance.RegisterTeamId(88001);
+
+		Assert.Equal(88001, instance.RegisteredTeamId);
+		Assert.True(instance.IsRegistered(88001));
+		Assert.Equal(1, instance.RegisteredCount);
+		var error = Assert.Throws<InvalidOperationException>(() => instance.RegisterTeamId(88002));
+		Assert.Contains("already registered", error.Message);
+		Assert.Equal(88001, instance.RegisteredTeamId);
+		Assert.False(instance.IsRegistered(88002));
+	}
+
+	[Fact]
 	public void WorldMapRuntimeStateTable_AllocatesNextInstanceIdsLikeJavaWorldMap()
 	{
 		var table = new WorldMapRuntimeStateTable(

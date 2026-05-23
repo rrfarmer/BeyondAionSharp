@@ -1426,7 +1426,7 @@ public sealed class PortalEntryValidationServiceTests
 		var worldMaps = CreateWorldMaps();
 		var registered = worldMaps.AddWorldMapInstance(WorldId, instanceId: 7, maxPlayers: 6);
 		Assert.NotNull(registered);
-		registered.Register(88001);
+		registered.RegisterTeamId(88001);
 
 		var result = PortalEntryValidationService.ValidatePortalEntryPlan(
 			player,
@@ -1463,7 +1463,7 @@ public sealed class PortalEntryValidationServiceTests
 		var worldMaps = CreateWorldMaps();
 		var registered = worldMaps.AddWorldMapInstance(WorldId, instanceId: 7, maxPlayers: 6);
 		Assert.NotNull(registered);
-		registered.Register(88001);
+		registered.RegisterTeamId(88001);
 		registered.Register(1001);
 
 		var result = PortalEntryValidationService.ValidatePortalEntryPlan(
