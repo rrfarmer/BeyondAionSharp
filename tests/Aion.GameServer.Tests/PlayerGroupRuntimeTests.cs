@@ -127,6 +127,54 @@ public sealed class PlayerGroupRuntimeTests
 	}
 
 	[Fact]
+	public void CreateEnteredPacketPlan_ReturnsNonSendingGroupInfoPlanLikeJavaPlayerGroupEnteredEvent()
+	{
+		var runtime = new PlayerGroupRuntime();
+		var leader = new Player { ObjectId = 1001 };
+		var existingMember = new Player { ObjectId = 1002 };
+		var enteringPlayer = new Player
+		{
+			ObjectId = 1003,
+			Position = new WorldPosition(220010000, 11, 22, 33, 64),
+		};
+		runtime.CreateOrUpdateGroup(99001, [leader, existingMember]);
+		runtime.AddMember(99001, enteringPlayer);
+
+		var plan = Assert.IsType<PlayerGroupEnteredPacketPlan>(runtime.CreateEnteredPacketPlan(99001, enteringPlayer));
+
+		Assert.Equal(99001, plan.TeamId);
+		Assert.Equal(1003, plan.EnteringPlayerObjectId);
+		Assert.True(plan.SendGroupInfoToEnteringPlayer);
+		var groupInfoPlan = Assert.IsType<PlayerGroupInfoPacketPlan>(plan.GroupInfoPlan);
+		Assert.Equal(99001, groupInfoPlan.TeamId);
+		Assert.Equal(1001, groupInfoPlan.LeaderObjectId);
+		Assert.Equal(220010000, groupInfoPlan.ActivePlayerMapId);
+		Assert.Equal(PlayerGroupLootRuleType.RoundRobin, groupInfoPlan.LootRules.LootRule);
+		Assert.Equal(0x3F, groupInfoPlan.TeamType);
+		Assert.Equal(0, groupInfoPlan.TeamSubType);
+		var groupInfoPacket = Assert.IsType<Network.Aion.ServerPackets.SmGroupInfo>(plan.CreateGroupInfoPacket());
+		using var groupInfoReader = new PacketBuffer(SerializeUnencryptedPayload(groupInfoPacket));
+		Assert.Equal(99001, groupInfoReader.ReadD());
+		Assert.Equal(1001, groupInfoReader.ReadD());
+		Assert.Equal(220010000, groupInfoReader.ReadD());
+		Assert.Equal(1, groupInfoReader.ReadD());
+		Assert.Equal(0, groupInfoReader.ReadD());
+		Assert.Equal(0, groupInfoReader.ReadD());
+		Assert.Equal(2, groupInfoReader.ReadD());
+		Assert.Equal(2, groupInfoReader.ReadD());
+		Assert.Equal(2, groupInfoReader.ReadD());
+		Assert.Equal(2, groupInfoReader.ReadD());
+		Assert.Equal(2, groupInfoReader.ReadD());
+		Assert.Equal(0x02, groupInfoReader.ReadD());
+		Assert.Equal(0, (int)groupInfoReader.ReadC());
+		Assert.Equal(0x3F, groupInfoReader.ReadD());
+		Assert.Equal(0, groupInfoReader.ReadD());
+		Assert.Equal(0, groupInfoReader.ReadD());
+		Assert.Equal(string.Empty, groupInfoReader.ReadS());
+		Assert.Equal(0, groupInfoReader.Remaining);
+	}
+
+	[Fact]
 	public void AddMember_RejectsDuplicateMemberLikeJavaGeneralTeam()
 	{
 		var runtime = new PlayerGroupRuntime();
@@ -391,6 +439,27 @@ public sealed class PlayerGroupRuntimeTests
 		var result = runtime.ReconnectMember(unknown);
 		Assert.False(result.Reconnected);
 		Assert.Null(result.PacketPlan);
+	}
+
+	[Fact]
+	public void CreateEnteredPacketPlan_ReturnsNullForPlayerOutsideGroup()
+	{
+		var runtime = new PlayerGroupRuntime();
+		var leader = new Player { ObjectId = 1001 };
+		var member = new Player { ObjectId = 1002 };
+		var outsider = new Player
+		{
+			ObjectId = 1003,
+			Position = new WorldPosition(220010000, 11, 22, 33, 64),
+		};
+		runtime.CreateOrUpdateGroup(99001, [leader, member]);
+
+		var plan = runtime.CreateEnteredPacketPlan(99001, outsider);
+
+		Assert.Null(plan);
+		Assert.Equal(PlayerTeamMembership.None, outsider.TeamMembership);
+		Assert.Null(outsider.CurrentGroupSnapshot);
+		Assert.Equal([1001, 1002], runtime.GetMemberObjectIds(99001));
 	}
 
 	[Fact]

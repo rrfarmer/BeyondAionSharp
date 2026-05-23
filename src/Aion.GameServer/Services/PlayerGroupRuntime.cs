@@ -57,6 +57,26 @@ public sealed class PlayerGroupRuntime
 		}
 	}
 
+	public PlayerGroupEnteredPacketPlan? CreateEnteredPacketPlan(int teamId, Player enteringPlayer)
+	{
+		// Java parity: model/team/group/events/PlayerGroupEnteredEvent sends SM_GROUP_INFO after PlayerGroupService.addPlayerToGroup.
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(teamId, 0);
+
+		lock (_sync)
+		{
+			if (!_membersByTeamId.TryGetValue(teamId, out var members)
+				|| !_descriptorsByTeamId.TryGetValue(teamId, out var descriptor)
+				|| members.All(member => member.ObjectId != enteringPlayer.ObjectId))
+				return null;
+
+			return new PlayerGroupEnteredPacketPlan(
+				teamId,
+				enteringPlayer.ObjectId,
+				SendGroupInfoToEnteringPlayer: true,
+				PlayerGroupInfoPacketPlan.FromDescriptor(descriptor, enteringPlayer.Position.WorldId));
+		}
+	}
+
 	public PlayerGroupSnapshot? RemoveMember(Player member)
 	{
 		// Java parity: model/team/group/PlayerGroupService.removePlayer delegates to PlayerGroup.onRemoveMember, which clears Player.playerGroup.
