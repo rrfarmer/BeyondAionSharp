@@ -67,7 +67,7 @@ public static class PortalEntryValidationService
 		}
 
 		if (maxPlayers != 0 && maxPlayers != 1)
-			return PortalEntryPlanResult.UnsupportedTeamPortal(loc, CreateUnsupportedTeamPlan(player, maxPlayers));
+			return PortalEntryPlanResult.UnsupportedTeamPortal(loc, CreateUnsupportedTeamPlan(player, loc.WorldId, maxPlayers, worldMaps));
 
 		var instanceValidation = ValidateCooldownForRegisteredInstance(
 			player,
@@ -621,30 +621,60 @@ public static class PortalEntryValidationService
 		};
 	}
 
-	private static PortalTeamEntryPlan? CreateUnsupportedTeamPlan(Player player, int maxPlayers)
+	private static PortalTeamEntryPlan? CreateUnsupportedTeamPlan(
+		Player player,
+		int worldId,
+		int maxPlayers,
+		WorldMapRuntimeStateTable worldMaps)
 	{
 		// Java parity: services/teleport/PortalService.port preserves team id/member context before group/alliance transfer fanout.
 		if (maxPlayers is 3 or 6 && player.TeamMembership == PlayerTeamMembership.Group)
 		{
+			var registeredInstance = player.CurrentTeamId == 0 ? null : worldMaps.GetRegisteredInstance(worldId, player.CurrentTeamId);
 			return new PortalTeamEntryPlan(
 				PortalTeamEntryKind.Group,
 				player.CurrentTeamId,
 				player.CurrentTeamMemberObjectIds,
 				maxPlayers,
+				GetTeamEntryDisposition(registeredInstance),
+				registeredInstance,
+				IsRegisteredReentry(player, worldId, registeredInstance),
 				FanoutSupported: false);
 		}
 
 		if (maxPlayers > 6 && maxPlayers <= 24 && player.TeamMembership == PlayerTeamMembership.Alliance)
 		{
+			var registeredInstance = player.CurrentTeamId == 0 ? null : worldMaps.GetRegisteredInstance(worldId, player.CurrentTeamId);
 			return new PortalTeamEntryPlan(
 				PortalTeamEntryKind.Alliance,
 				player.CurrentTeamId,
 				player.CurrentTeamMemberObjectIds,
 				maxPlayers,
+				GetTeamEntryDisposition(registeredInstance),
+				registeredInstance,
+				IsRegisteredReentry(player, worldId, registeredInstance),
 				FanoutSupported: false);
 		}
 
 		return null;
+	}
+
+	private static PortalTeamEntryDisposition GetTeamEntryDisposition(WorldMapInstanceRuntimeState? registeredInstance)
+	{
+		return registeredInstance == null
+			? PortalTeamEntryDisposition.FreshInstanceAllocationNeeded
+			: PortalTeamEntryDisposition.RegisteredInstanceTransfer;
+	}
+
+	private static bool IsRegisteredReentry(
+		Player player,
+		int worldId,
+		WorldMapInstanceRuntimeState? registeredInstance)
+	{
+		// Java parity: PortalService.port only sets reenter from the early registered-instance check when the player object id is registered.
+		return registeredInstance != null
+			&& registeredInstance.IsRegistered(player.ObjectId)
+			&& (player.Position.WorldId != worldId || player.Position.InstanceId != registeredInstance.InstanceId);
 	}
 }
 
@@ -870,6 +900,9 @@ public sealed record PortalTeamEntryPlan(
 	int TeamId,
 	IReadOnlyList<int> MemberObjectIds,
 	int MaxPlayers,
+	PortalTeamEntryDisposition Disposition,
+	WorldMapInstanceRuntimeState? RegisteredInstance,
+	bool Reenter,
 	bool FanoutSupported);
 
 public enum PortalTeamEntryKind
@@ -877,6 +910,12 @@ public enum PortalTeamEntryKind
 	Group,
 	Alliance,
 	League,
+}
+
+public enum PortalTeamEntryDisposition
+{
+	FreshInstanceAllocationNeeded,
+	RegisteredInstanceTransfer,
 }
 
 public enum PortalEntryPlanAction
