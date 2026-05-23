@@ -70,6 +70,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly WorldNpcLootService? _worldNpcLootService;
 	private readonly Func<Player, int, bool>? _isKnownNpc;
 	private readonly CreaturePvpZoneCounterService? _creaturePvpZoneCounterService;
+	private readonly PlayerAllianceRuntime _playerAllianceRuntime;
 	private readonly PlayerShowBrandCommandPlanner _showBrandCommandPlanner;
 	private readonly SemaphoreSlim _sendLock = new(1, 1);
 	private readonly SemaphoreSlim _closeLock = new(1, 1);
@@ -158,8 +159,9 @@ public sealed class GameServerConnection : BaseClientConnection
 		_worldNpcLootService = worldNpcLootService;
 		_isKnownNpc = isKnownNpc;
 		_creaturePvpZoneCounterService = creaturePvpZoneCounterService;
+		_playerAllianceRuntime = playerAllianceRuntime ?? new PlayerAllianceRuntime();
 		_showBrandCommandPlanner = showBrandCommandPlanner
-			?? new PlayerShowBrandCommandPlanner(playerGroupRuntime ?? new PlayerGroupRuntime(), playerAllianceRuntime ?? new PlayerAllianceRuntime());
+			?? new PlayerShowBrandCommandPlanner(playerGroupRuntime ?? new PlayerGroupRuntime(), _playerAllianceRuntime);
 		_riftPortalInteractionService = riftPortalInteractionService
 			?? (riftService == null
 				? null
@@ -394,6 +396,10 @@ public sealed class GameServerConnection : BaseClientConnection
 					// Java parity: network/aion/clientpackets/CM_SECURITY_TOKEN.runImpl -> SecurityTokenService.generateToken + SM_SECURITY_TOKEN.
 					await SendPacketAsync(new SmSecurityToken(GetOrCreateSecurityToken()));
 				}
+				break;
+			case CmPlayerStatusInfo playerStatusInfo:
+				if (_activePlayer != null)
+					await HandlePlayerStatusInfoAsync(_activePlayer, playerStatusInfo);
 				break;
 			case CmCheckPak:
 				// Java parity: network/aion/clientpackets/CM_CHECK_PAK.runImpl only audit-logs suspicious pak status; deferred until audit logging policy is ported.
@@ -5753,6 +5759,44 @@ public sealed class GameServerConnection : BaseClientConnection
 	private async Task SendShowBrandAsync(
 		int recipientObjectId,
 		SmShowBrand packet,
+		CancellationToken cancellationToken)
+	{
+		if (_connectionRegistry != null && await _connectionRegistry.SendPacketToPlayerAsync(recipientObjectId, packet))
+			return;
+
+		if (_activePlayer?.ObjectId == recipientObjectId)
+			await SendPacketAsync(packet, cancellationToken);
+	}
+
+	internal async Task<PlayerAllianceReadyCheckPlan?> HandlePlayerStatusInfoAsync(
+		Player player,
+		CmPlayerStatusInfo packet,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: network/aion/clientpackets/CM_PLAYER_STATUS_INFO.runImpl delegates ready-check commands through PlayerTeamCommandService -> PlayerAllianceService.checkReady.
+		if (!Enum.IsDefined(typeof(PlayerAllianceReadyCheckCommand), packet.CommandCode))
+			return null;
+
+		var alliance = _playerAllianceRuntime.Resolve(player);
+		if (alliance == null)
+			return null;
+
+		var plan = _playerAllianceRuntime.CheckReady(
+			alliance.AllianceId,
+			player,
+			(PlayerAllianceReadyCheckCommand)packet.CommandCode);
+		if (plan == null)
+			return null;
+
+		foreach (var intent in plan.PacketIntents.OrderBy(intent => intent.Sequence))
+			await SendAllianceReadyCheckAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+
+		return plan;
+	}
+
+	private async Task SendAllianceReadyCheckAsync(
+		int recipientObjectId,
+		GameServerPacket packet,
 		CancellationToken cancellationToken)
 	{
 		if (_connectionRegistry != null && await _connectionRegistry.SendPacketToPlayerAsync(recipientObjectId, packet))

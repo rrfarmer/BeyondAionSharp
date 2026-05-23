@@ -4557,6 +4557,31 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesPlayerStatusInfoPacket()
+	{
+		var playerStatusInfo = Assert.IsType<CmPlayerStatusInfo>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(96, b =>
+			{
+				b.WriteC(21);
+				b.WriteD(1002);
+				b.WriteD(1001);
+				b.WriteD(1003);
+			}), GameConnectionState.InGame));
+
+		Assert.Equal(21, playerStatusInfo.CommandCode);
+		Assert.Equal(1002, playerStatusInfo.SelectedObjectId);
+		Assert.Equal(1001, playerStatusInfo.AllianceGroupId);
+		Assert.Equal(1003, playerStatusInfo.SecondObjectId);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(96, b =>
+		{
+			b.WriteC(21);
+			b.WriteD(1002);
+			b.WriteD(1001);
+			b.WriteD(1003);
+		}), GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesSocialListPackets()
 	{
 		var questionResponse = Assert.IsType<CmQuestionResponse>(
