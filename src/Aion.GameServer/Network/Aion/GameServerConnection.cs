@@ -4776,8 +4776,13 @@ public sealed class GameServerConnection : BaseClientConnection
 		{
 			case PlayerKiskBindStatus.Bound:
 				if (previousKisk != null && bindResult.RemovedOldKiskObjectId.HasValue)
+				{
 					await SendPacketAsync(new SmKiskUpdate(previousKisk));
+					if (TryGetKiskPosition(previousKisk.ObjectId, out var previousKiskPosition))
+						await BroadcastKiskUpdateAsync(previousKisk, previousKiskPosition, excludedPlayerObjectId: player.ObjectId);
+				}
 				await SendPacketAsync(new SmKiskUpdate(kisk));
+				await BroadcastKiskUpdateAsync(kisk, position, excludedPlayerObjectId: player.ObjectId);
 				await SendPacketAsync(SmBindPointInfo.Kisk(position, kisk.ObjectId));
 				await SendPacketAsync(SmSystemMessage.BindstoneRegister());
 				await BroadcastActionAnimationAsync(player, new SmActionAnimation(player.ObjectId, SmActionAnimation.BindKisk));
@@ -4798,6 +4803,35 @@ public sealed class GameServerConnection : BaseClientConnection
 			return null;
 
 		return _runtimeContext?.Kisks.GetKiskState(player.BoundKiskObjectId);
+	}
+
+	private async Task BroadcastKiskUpdateAsync(
+		PlayerKiskRuntimeState kisk,
+		WorldPosition position,
+		int? excludedPlayerObjectId = null)
+	{
+		if (_connectionRegistry == null)
+			return;
+
+		// Java parity: model/gameobjects/Kisk.broadcastKiskUpdate fans SM_KISK_UPDATE to members outside the kisk known list,
+		// then to same-race players who can see the kisk.
+		var onlinePlayers = new List<Player>();
+		_connectionRegistry.ForEachOnlinePlayer(onlinePlayers.Add);
+		var fanout = PlayerKiskUpdateFanoutService.CreatePlan(kisk, position, onlinePlayers, _isKnownNpc, excludedPlayerObjectId);
+
+		foreach (var playerObjectId in fanout.DirectMemberObjectIds)
+			await _connectionRegistry.SendPacketToPlayerAsync(playerObjectId, new SmKiskUpdate(kisk));
+
+		if (fanout.VisibleSameRaceObjectIds.Count == 0)
+			return;
+
+		var visibleTargets = fanout.VisibleSameRaceObjectIds.ToHashSet();
+		await _connectionRegistry.BroadcastToVisiblePlayersAsync(
+			position,
+			kisk.ObjectId,
+			new SmKiskUpdate(kisk),
+			includeSourcePlayer: true,
+			filter: player => visibleTargets.Contains(player.ObjectId));
 	}
 
 	private bool TryGetKiskPosition(int kiskObjectId, out WorldPosition position)
