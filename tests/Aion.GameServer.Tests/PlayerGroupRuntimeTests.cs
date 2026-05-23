@@ -39,6 +39,17 @@ public sealed class PlayerGroupRuntimeTests
 		Assert.Equal(2, descriptor.LootRules.EternalItemAbove);
 		Assert.Equal(2, descriptor.LootRules.MythicItemAbove);
 		Assert.Equal(2, descriptor.LootRules.AutoDistributionId);
+		var groupInfoPlan = PlayerGroupInfoPacketPlan.FromDescriptor(descriptor, activePlayerMapId: 210010000);
+		Assert.Equal(99001, groupInfoPlan.TeamId);
+		Assert.Equal(1001, groupInfoPlan.LeaderObjectId);
+		Assert.Equal(210010000, groupInfoPlan.ActivePlayerMapId);
+		Assert.Same(descriptor.LootRules, groupInfoPlan.LootRules);
+		Assert.Equal(0x02, groupInfoPlan.ConstantGroupInfoMarker);
+		Assert.Equal(0x00, groupInfoPlan.UnknownByte);
+		Assert.Equal(0x02, groupInfoPlan.TeamType);
+		Assert.Equal(1, groupInfoPlan.TeamSubType);
+		Assert.Equal(0, groupInfoPlan.MessageId);
+		Assert.Equal(string.Empty, groupInfoPlan.Name);
 		Assert.Equal(PlayerTeamMembership.Group, leader.TeamMembership);
 		Assert.Equal(PlayerTeamMembership.Group, member.TeamMembership);
 		Assert.Equal(99001, leader.CurrentTeamId);
@@ -319,6 +330,13 @@ public sealed class PlayerGroupRuntimeTests
 		Assert.Equal(2, rules.AutoDistributionId);
 		Assert.Equal(3, (rules with { MythicItemAbove = 3 }).AutoDistributionId);
 		Assert.Equal(0, (rules with { MythicItemAbove = 0 }).AutoDistributionId);
+	}
+
+	[Fact]
+	public void PlayerGroupType_JavaPacketFieldsMatchTeamType()
+	{
+		Assert.Equal((0x3F, 0), PlayerGroupType.Group.ToJavaPacketFields());
+		Assert.Equal((0x02, 1), PlayerGroupType.AutoGroup.ToJavaPacketFields());
 	}
 
 	[Fact]
