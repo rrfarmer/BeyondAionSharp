@@ -1155,6 +1155,25 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 3 && reader.LocalName == "type" && currentInstanceCooltime != null)
+			{
+				currentInstanceCooltime.CoolTimeType = await ReadElementTextAsync(reader, cancellationToken);
+				continue;
+			}
+
+			if (reader.Depth == 3 && reader.LocalName == "typevalue" && currentInstanceCooltime != null)
+			{
+				currentInstanceCooltime.TypeValue = await ReadElementTextAsync(reader, cancellationToken);
+				continue;
+			}
+
+			if (reader.Depth == 3 && reader.LocalName == "ent_cool_time" && currentInstanceCooltime != null)
+			{
+				var value = await ReadElementTextAsync(reader, cancellationToken);
+				currentInstanceCooltime.EntCoolTime = int.TryParse(value, out var parsedEntCoolTime) ? parsedEntCoolTime : 0;
+				continue;
+			}
+
 			if (reader.Depth == 3 && reader.LocalName == "maxcount" && currentInstanceCooltime != null)
 			{
 				var value = await ReadElementTextAsync(reader, cancellationToken);
@@ -2331,10 +2350,25 @@ public sealed class StaticData
 
 		public int MaxMemberDark { get; set; }
 
+		public string CoolTimeType { get; set; } = string.Empty;
+
+		public string TypeValue { get; set; } = string.Empty;
+
+		public int EntCoolTime { get; set; }
+
 		public InstanceCooltimeSummary ToSummary()
 		{
 			// Java parity: model/templates/InstanceCooltime fields consumed by SM_INSTANCE_INFO and InstanceCooltimeData.getMaxMemberCount.
-			return new InstanceCooltimeSummary(Id, WorldId, Race, MaxCount, MaxMemberLight, MaxMemberDark);
+			return new InstanceCooltimeSummary(
+				Id,
+				WorldId,
+				Race,
+				MaxCount,
+				MaxMemberLight,
+				MaxMemberDark,
+				CoolTimeType,
+				TypeValue,
+				EntCoolTime);
 		}
 	}
 

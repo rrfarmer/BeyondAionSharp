@@ -222,4 +222,63 @@ public sealed class WorldMapRuntimeStateTests
 		Assert.True(asmodianInstance.IsRegistered(2002));
 		Assert.NotSame(elyosInstance, asmodianInstance);
 	}
+
+	[Fact]
+	public void InstanceCooltimeTable_CalculatesRelativeEntranceCooldownLikeJava()
+	{
+		var now = new DateTimeOffset(2026, 5, 23, 8, 30, 0, TimeSpan.FromHours(-4));
+		var cooltimes = new InstanceCooltimeTable(
+		[
+			new InstanceCooltimeSummary(1, 300030000, "PC_ALL", MaxCount: 5, CoolTimeType: "RELATIVE", EntCoolTime: 30),
+			new InstanceCooltimeSummary(2, 300040000, "PC_ALL", MaxCount: 5, CoolTimeType: "RELATIVE", EntCoolTime: 0),
+		]);
+
+		Assert.Equal(now.AddMinutes(30).ToUnixTimeMilliseconds(), cooltimes.CalculateInstanceEntranceCooltime(300030000, now));
+		Assert.Equal(now.AddMinutes(15).ToUnixTimeMilliseconds(), cooltimes.CalculateInstanceEntranceCooltime(300030000, now, instanceCooldownRate: 2));
+		Assert.Equal(0, cooltimes.CalculateInstanceEntranceCooltime(300040000, now));
+		Assert.Equal(0, cooltimes.CalculateInstanceEntranceCooltime(123, now));
+	}
+
+	[Fact]
+	public void InstanceCooltimeTable_CalculatesDailyEntranceCooldownLikeJava()
+	{
+		var beforeReset = new DateTimeOffset(2026, 5, 23, 8, 30, 0, TimeSpan.FromHours(-4));
+		var afterReset = new DateTimeOffset(2026, 5, 23, 10, 0, 0, TimeSpan.FromHours(-4));
+		var cooltimes = new InstanceCooltimeTable(
+		[
+			new InstanceCooltimeSummary(1, 300030000, "PC_ALL", MaxCount: 5, CoolTimeType: "DAILY", EntCoolTime: 900),
+		]);
+
+		Assert.Equal(
+			new DateTimeOffset(2026, 5, 23, 9, 0, 0, TimeSpan.FromHours(-4)).ToUnixTimeMilliseconds(),
+			cooltimes.CalculateInstanceEntranceCooltime(300030000, beforeReset));
+		Assert.Equal(
+			new DateTimeOffset(2026, 5, 24, 9, 0, 0, TimeSpan.FromHours(-4)).ToUnixTimeMilliseconds(),
+			cooltimes.CalculateInstanceEntranceCooltime(300030000, afterReset));
+	}
+
+	[Fact]
+	public void InstanceCooltimeTable_CalculatesWeeklyEntranceCooldownLikeJava()
+	{
+		var tuesdayAfterReset = new DateTimeOffset(2026, 5, 19, 10, 0, 0, TimeSpan.FromHours(-4));
+		var wednesdayAfterReset = new DateTimeOffset(2026, 5, 20, 10, 0, 0, TimeSpan.FromHours(-4));
+		var cooltimes = new InstanceCooltimeTable(
+		[
+			new InstanceCooltimeSummary(
+				1,
+				300030000,
+				"PC_ALL",
+				MaxCount: 5,
+				CoolTimeType: "WEEKLY",
+				TypeValue: "Mon,Wed",
+				EntCoolTime: 900),
+		]);
+
+		Assert.Equal(
+			new DateTimeOffset(2026, 5, 20, 9, 0, 0, TimeSpan.FromHours(-4)).ToUnixTimeMilliseconds(),
+			cooltimes.CalculateInstanceEntranceCooltime(300030000, tuesdayAfterReset));
+		Assert.Equal(
+			new DateTimeOffset(2026, 5, 25, 9, 0, 0, TimeSpan.FromHours(-4)).ToUnixTimeMilliseconds(),
+			cooltimes.CalculateInstanceEntranceCooltime(300030000, wednesdayAfterReset));
+	}
 }

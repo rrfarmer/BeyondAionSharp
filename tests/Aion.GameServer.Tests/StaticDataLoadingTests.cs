@@ -917,6 +917,8 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(5, staticData.InstanceCooltimes.GetInstanceCooltimeByWorldId(300030000)?.MaxCount);
 		Assert.Equal(6, staticData.InstanceCooltimes.GetInstanceCooltimeByWorldId(300030000)?.MaxMemberLight);
 		Assert.Equal(6, staticData.InstanceCooltimes.GetMaxMemberCount(300030000, "ASMODIANS"));
+		Assert.Equal("DAILY", staticData.InstanceCooltimes.GetInstanceCooltimeByWorldId(300030000)?.CoolTimeType);
+		Assert.Equal(900, staticData.InstanceCooltimes.GetInstanceCooltimeByWorldId(300030000)?.EntCoolTime);
 		Assert.Contains(staticData.RecipeTemplates.GetAutolearnRecipes("ELYOS", 40009, 1), recipe => recipe.RecipeId == 155000001);
 		var craftPlayer = new Player
 		{
