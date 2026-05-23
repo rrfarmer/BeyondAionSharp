@@ -190,6 +190,11 @@ public sealed class PlayerGroupRuntimeTests
 				Assert.Equal(1002, intent.RecipientObjectId);
 				AssertSystemMessage(intent.Message, 1400009, "NewMember");
 			});
+		var abyssRankUpdateIntent = Assert.IsType<PlayerGroupAbyssRankUpdateIntent>(plan.AbyssRankUpdateIntent);
+		Assert.Equal(1003, abyssRankUpdateIntent.PlayerObjectId);
+		Assert.Equal(99001, abyssRankUpdateIntent.TeamObjectId);
+		Assert.True(abyssRankUpdateIntent.IncludeSelf);
+		AssertAbyssRankUpdateTeamPayload(abyssRankUpdateIntent.CreatePacket(), expectedPlayerObjectId: 1003, expectedTeamObjectId: 99001);
 	}
 
 	[Fact]
@@ -659,6 +664,15 @@ public sealed class PlayerGroupRuntimeTests
 		foreach (var expectedParameter in expectedParameters)
 			Assert.Equal(expectedParameter, reader.ReadS());
 		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertAbyssRankUpdateTeamPayload(GameServerPacket packet, int expectedPlayerObjectId, int expectedTeamObjectId)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(1, (int)reader.ReadC());
+		Assert.Equal(expectedPlayerObjectId, reader.ReadD());
+		Assert.Equal(expectedTeamObjectId, reader.ReadD());
 		Assert.Equal(0, reader.Remaining);
 	}
 }

@@ -7,7 +7,8 @@ public sealed record PlayerGroupEnteredPacketPlan(
 	int EnteringPlayerObjectId,
 	bool SendGroupInfoToEnteringPlayer,
 	PlayerGroupInfoPacketPlan? GroupInfoPlan,
-	IReadOnlyList<PlayerGroupSystemMessageIntent> SystemMessageIntents)
+	IReadOnlyList<PlayerGroupSystemMessageIntent> SystemMessageIntents,
+	PlayerGroupAbyssRankUpdateIntent? AbyssRankUpdateIntent)
 {
 	public SmGroupInfo? CreateGroupInfoPacket()
 	{
@@ -21,3 +22,15 @@ public sealed record PlayerGroupEnteredPacketPlan(
 public sealed record PlayerGroupSystemMessageIntent(
 	int RecipientObjectId,
 	SmSystemMessage Message);
+
+public sealed record PlayerGroupAbyssRankUpdateIntent(
+	int PlayerObjectId,
+	int TeamObjectId,
+	bool IncludeSelf)
+{
+	public SmAbyssRankUpdate CreatePacket()
+	{
+		// Java parity: model/team/group/events/PlayerGroupEnteredEvent broadcasts SM_ABYSS_RANK_UPDATE(1, player), includeSelf=true.
+		return SmAbyssRankUpdate.TeamObjectId(PlayerObjectId, TeamObjectId);
+	}
+}

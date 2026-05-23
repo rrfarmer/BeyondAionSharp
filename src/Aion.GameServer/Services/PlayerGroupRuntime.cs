@@ -75,7 +75,8 @@ public sealed class PlayerGroupRuntime
 				enteringPlayer.ObjectId,
 				SendGroupInfoToEnteringPlayer: true,
 				PlayerGroupInfoPacketPlan.FromDescriptor(descriptor, enteringPlayer.Position.WorldId),
-				CreateEnteredSystemMessageIntents(enteringPlayer, members));
+				CreateEnteredSystemMessageIntents(enteringPlayer, members),
+				new PlayerGroupAbyssRankUpdateIntent(enteringPlayer.ObjectId, teamId, IncludeSelf: true));
 		}
 	}
 
