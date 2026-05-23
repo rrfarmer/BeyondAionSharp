@@ -4915,6 +4915,26 @@ public sealed class GameServerConnection : BaseClientConnection
 		return result;
 	}
 
+	internal async Task<InstancePortalTransferResult> QueueInstancePortalTransferAsync(
+		Player player,
+		WorldPosition destination,
+		bool reenter,
+		InstanceCooltimeTable instanceCooltimes,
+		TeleportAnimation? animation = null,
+		StaticData? staticData = null,
+		DateTimeOffset? now = null)
+	{
+		// Java parity: services/teleport/PortalService.transfer calls TeleportService.teleportTo before adding portal cooldown.
+		var teleport = await QueueDelayedTeleportAsync(player, destination, animation, staticData);
+		var cooldown = await ApplyInstanceEntranceCooldownAsync(
+			player,
+			destination.WorldId,
+			reenter,
+			instanceCooltimes,
+			now);
+		return new InstancePortalTransferResult(teleport, cooldown);
+	}
+
 	private void ClearReviveTargets(Player player)
 	{
 		if (_connectionRegistry == null)

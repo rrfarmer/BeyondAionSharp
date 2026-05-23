@@ -4,11 +4,13 @@ using Aion.Commons.Network;
 using Aion.GameServer.Configuration;
 using Aion.GameServer.Data;
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using GameWorld = Aion.GameServer.World.World;
+using Aion.GameServer.World;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Aion.GameServer.Tests;
@@ -101,6 +103,59 @@ public sealed class GameServerConnectionInstanceCooldownTests
 		Assert.False(result.Added);
 		Assert.Empty(pair.SentPackets);
 		Assert.Empty(player.PortalCooldowns);
+	}
+
+	[Fact]
+	public async Task QueueInstancePortalTransferAsync_SendsTeleportBeforeCooldownLikeJavaPortalTransfer()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var pair = await TestConnectionPair.CreateAsync(
+			new GameServerOptions
+			{
+				Membership = new GameServerMembershipOptions { InstancesCooldown = 10 },
+				Instance = new GameServerInstanceOptions { CooldownRate = 1 },
+			},
+			new PlayerEnterWorldService(
+				new GameServerOptions(),
+				repository,
+				new GameWorld(NullLogger<GameWorld>.Instance),
+				NullLogger<PlayerEnterWorldService>.Instance));
+		var now = DateTimeOffset.FromUnixTimeMilliseconds(100_000);
+		var player = new Player
+		{
+			ObjectId = 1001,
+			Name = "Character",
+			Race = "ELYOS",
+			AccountMembership = 10,
+			Position = new WorldPosition(110010000, 1, 1, 1, 0, 0),
+		};
+		var destination = new WorldPosition(300030000, 10, 20, 30, 90, 2);
+		var cooltimes = new InstanceCooltimeTable(
+		[
+			new InstanceCooltimeSummary(8, 300030000, "PC_ALL", MaxCount: 5, CoolTimeType: "RELATIVE", EntCoolTime: 30),
+		]);
+		var result = await pair.Connection.QueueInstancePortalTransferAsync(
+			player,
+			destination,
+			reenter: false,
+			cooltimes,
+			TeleportAnimation.FadeOutBeam,
+			staticData: null,
+			now);
+
+		Assert.Equal(destination, result.Teleport.PendingTeleport.Destination);
+		Assert.True(result.Cooldown.Added);
+		Assert.Equal(now.AddMinutes(30).ToUnixTimeMilliseconds(), result.Cooldown.ReuseTimeMillis);
+		Assert.Collection(
+			pair.SentPackets,
+			packet => Assert.IsType<SmTeleportLoc>(packet),
+			packet => Assert.IsType<SmInstanceInfo>(packet));
+		var savedCooldowns = repository.SavedPortalCooldowns;
+		Assert.NotNull(savedCooldowns);
+		var savedCooldown = Assert.Single(savedCooldowns);
+		Assert.Equal(300030000, savedCooldown.Key);
+		Assert.Equal(result.Cooldown.ReuseTimeMillis, savedCooldown.Value.ReuseTimeMillis);
+		Assert.Equal(1, savedCooldown.Value.EntryCount);
 	}
 
 	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)

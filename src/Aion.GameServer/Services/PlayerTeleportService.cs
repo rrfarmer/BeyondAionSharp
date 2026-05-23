@@ -84,3 +84,7 @@ public sealed record PlayerTeleportResult(
 public sealed record PendingTeleportRequestResult(
 	PendingPlayerTeleport PendingTeleport,
 	GameServerPacket Packet);
+
+public sealed record InstancePortalTransferResult(
+	PendingTeleportRequestResult Teleport,
+	InstanceEntranceCooldownResult Cooldown);
