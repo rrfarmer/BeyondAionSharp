@@ -434,6 +434,70 @@ public sealed class PortalEntryValidationServiceTests
 		Assert.Equal(0, reader.Remaining);
 	}
 
+	[Fact]
+	public void ValidateTitle_AllowsWhenJavaPortalTitleRequirementIsMissing()
+	{
+		var player = new Player { TitleId = 7 };
+
+		var result = PortalEntryValidationService.ValidateTitle(player, portalPathTitleId: 0, npcObjectId: 4001);
+
+		Assert.True(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.Allowed, result.Status);
+		Assert.Null(result.FailurePacket);
+	}
+
+	[Fact]
+	public void ValidateTitle_AllowsWhenActiveJavaCommonDataTitleMatches()
+	{
+		var player = new Player { TitleId = 7 };
+
+		var result = PortalEntryValidationService.ValidateTitle(player, portalPathTitleId: 7, npcObjectId: 4001);
+
+		Assert.True(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.Allowed, result.Status);
+		Assert.Null(result.FailurePacket);
+	}
+
+	[Fact]
+	public void ValidateTitle_ReturnsNoRightDialogWhenActiveTitleDiffers()
+	{
+		var player = new Player
+		{
+			TitleId = 6,
+			Titles = [new PlayerTitle(7, ExpireTimeSeconds: 0)],
+		};
+
+		var result = PortalEntryValidationService.ValidateTitle(player, portalPathTitleId: 7, npcObjectId: 4001);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.TitleRestricted, result.Status);
+		var packet = Assert.IsType<SmDialogWindow>(result.FailurePacket);
+		var payload = SerializeUnencryptedPayload(packet);
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(4001, reader.ReadD());
+		Assert.Equal(SmDialogWindow.NoRightPageId, reader.ReadH());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void ValidateTitle_AllowsMembershipBypassLikeJavaPermission()
+	{
+		var player = new Player { TitleId = 6 };
+
+		var result = PortalEntryValidationService.ValidateTitle(
+			player,
+			portalPathTitleId: 7,
+			npcObjectId: 4001,
+			bypassTitleRequirement: true);
+
+		Assert.True(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.Allowed, result.Status);
+		Assert.Null(result.FailurePacket);
+	}
+
 	private const int WorldId = 300030000;
 
 	private static Player CreatePlayerWithCooldown(long reuseTimeMillis, int entryCount)

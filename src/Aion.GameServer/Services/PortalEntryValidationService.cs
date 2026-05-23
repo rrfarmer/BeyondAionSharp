@@ -123,6 +123,21 @@ public static class PortalEntryValidationService
 			new SmDialogWindow(npcObjectId, SmDialogWindow.NoRightPageId));
 	}
 
+	public static PortalEntryValidationResult ValidateTitle(
+		Player player,
+		int portalPathTitleId,
+		int npcObjectId,
+		bool bypassTitleRequirement = false)
+	{
+		// Java parity: services/teleport/PortalService.checkTitle compares PlayerCommonData.titleId.
+		if (bypassTitleRequirement || portalPathTitleId == 0 || player.TitleId == portalPathTitleId)
+			return PortalEntryValidationResult.Allowed();
+
+		return PortalEntryValidationResult.Rejected(
+			PortalEntryValidationStatus.TitleRestricted,
+			new SmDialogWindow(npcObjectId, SmDialogWindow.NoRightPageId));
+	}
+
 	private static WorldMapInstanceRuntimeState? ResolveRegisteredInstance(
 		Player player,
 		int worldId,
@@ -163,6 +178,7 @@ public enum PortalEntryValidationStatus
 	MentorRestricted,
 	RaceRestricted,
 	RankRestricted,
+	TitleRestricted,
 }
 
 public sealed record PortalEntryInstanceValidationResult(
