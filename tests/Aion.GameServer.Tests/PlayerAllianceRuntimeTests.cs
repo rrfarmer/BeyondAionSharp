@@ -1,4 +1,7 @@
+using Aion.Commons.Network;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.World;
 
@@ -280,6 +283,131 @@ public sealed class PlayerAllianceRuntimeTests
 		Assert.Null(plan.SystemMessageIntent);
 	}
 
+	[Fact]
+	public void AllianceReadyCheckCommand_JavaCodesMatchTeamCommand()
+	{
+		Assert.Equal(20, (int)PlayerAllianceReadyCheckCommand.Cancel);
+		Assert.Equal(21, (int)PlayerAllianceReadyCheckCommand.Start);
+		Assert.Equal(22, (int)PlayerAllianceReadyCheckCommand.AutoCancel);
+		Assert.Equal(23, (int)PlayerAllianceReadyCheckCommand.Ready);
+		Assert.Equal(24, (int)PlayerAllianceReadyCheckCommand.NotReady);
+	}
+
+	[Fact]
+	public void SmAllianceReadyCheck_WritesJavaPayload()
+	{
+		var packet = new SmAllianceReadyCheck(playerObjectId: 1001, statusCode: 5);
+
+		Assert.Equal(250, SmAllianceReadyCheck.PacketOpCode);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(1001, reader.ReadD());
+		Assert.Equal(5, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void CheckReady_StartSetsOnlineMemberCountMinusOneAndBroadcastsStartPacketsLikeJava()
+	{
+		var runtime = new PlayerAllianceRuntime();
+		var leader = CreatePlayer(1001, "Leader", worldId: 210010000);
+		var onlineMember = CreatePlayer(1002, "Online", worldId: 220010000);
+		var offlineMember = CreatePlayer(1003, "Offline", worldId: 230010000);
+		offlineMember.IsOnline = false;
+		runtime.CreateAlliance(88001, leader);
+		runtime.AddMember(88001, onlineMember);
+		runtime.AddMember(88001, offlineMember);
+
+		var plan = Assert.IsType<PlayerAllianceReadyCheckPlan>(
+			runtime.CheckReady(88001, leader, PlayerAllianceReadyCheckCommand.Start));
+
+		Assert.Equal(0, plan.ReadyStatusBefore);
+		Assert.Equal(1, plan.ReadyStatusAfter);
+		Assert.Equal(1, runtime.GetAllianceReadyStatus(88001));
+		AssertReadyIntent(plan.PacketIntents[0], sequence: 0, recipientObjectId: 1001, playerObjectId: 1001, statusCode: 5);
+		AssertReadyIntent(plan.PacketIntents[1], sequence: 1, recipientObjectId: 1001, playerObjectId: 1001, statusCode: 1);
+		AssertReadyIntent(plan.PacketIntents[2], sequence: 2, recipientObjectId: 1002, playerObjectId: 1001, statusCode: 5);
+		AssertReadyIntent(plan.PacketIntents[3], sequence: 3, recipientObjectId: 1002, playerObjectId: 1001, statusCode: 1);
+		AssertReadyIntent(plan.PacketIntents[4], sequence: 4, recipientObjectId: 1003, playerObjectId: 1001, statusCode: 5);
+		AssertReadyIntent(plan.PacketIntents[5], sequence: 5, recipientObjectId: 1003, playerObjectId: 1001, statusCode: 1);
+	}
+
+	[Fact]
+	public void CheckReady_ReadyAndNotReadyDecrementAndSendCompletionWhenStatusReachesZero()
+	{
+		var runtime = new PlayerAllianceRuntime();
+		var leader = CreatePlayer(1001, "Leader", worldId: 210010000);
+		var readyMember = CreatePlayer(1002, "Ready", worldId: 220010000);
+		runtime.CreateAlliance(88001, leader);
+		runtime.AddMember(88001, readyMember);
+		runtime.CheckReady(88001, leader, PlayerAllianceReadyCheckCommand.Start);
+
+		var readyPlan = Assert.IsType<PlayerAllianceReadyCheckPlan>(
+			runtime.CheckReady(88001, readyMember, PlayerAllianceReadyCheckCommand.Ready));
+		runtime.CheckReady(88001, leader, PlayerAllianceReadyCheckCommand.Start);
+		var notReadyPlan = Assert.IsType<PlayerAllianceReadyCheckPlan>(
+			runtime.CheckReady(88001, readyMember, PlayerAllianceReadyCheckCommand.NotReady));
+
+		Assert.Equal(1, readyPlan.ReadyStatusBefore);
+		Assert.Equal(0, readyPlan.ReadyStatusAfter);
+		Assert.Collection(
+			readyPlan.PacketIntents,
+			intent => AssertReadyIntent(intent, sequence: 0, recipientObjectId: 1001, playerObjectId: 1002, statusCode: 5),
+			intent => AssertReadyIntent(intent, sequence: 1, recipientObjectId: 1001, playerObjectId: 0, statusCode: 3),
+			intent => AssertReadyIntent(intent, sequence: 2, recipientObjectId: 1002, playerObjectId: 1002, statusCode: 5),
+			intent => AssertReadyIntent(intent, sequence: 3, recipientObjectId: 1002, playerObjectId: 0, statusCode: 3));
+		Assert.Equal(1, notReadyPlan.ReadyStatusBefore);
+		Assert.Equal(0, notReadyPlan.ReadyStatusAfter);
+		Assert.Collection(
+			notReadyPlan.PacketIntents,
+			intent => AssertReadyIntent(intent, sequence: 0, recipientObjectId: 1001, playerObjectId: 1002, statusCode: 4),
+			intent => AssertReadyIntent(intent, sequence: 1, recipientObjectId: 1001, playerObjectId: 0, statusCode: 3),
+			intent => AssertReadyIntent(intent, sequence: 2, recipientObjectId: 1002, playerObjectId: 1002, statusCode: 4),
+			intent => AssertReadyIntent(intent, sequence: 3, recipientObjectId: 1002, playerObjectId: 0, statusCode: 3));
+	}
+
+	[Fact]
+	public void CheckReady_CancelAndAutoCancelResetStatusLikeJava()
+	{
+		var runtime = new PlayerAllianceRuntime();
+		var leader = CreatePlayer(1001, "Leader", worldId: 210010000);
+		var member = CreatePlayer(1002, "Member", worldId: 220010000);
+		runtime.CreateAlliance(88001, leader);
+		runtime.AddMember(88001, member);
+		runtime.CheckReady(88001, leader, PlayerAllianceReadyCheckCommand.Start);
+
+		var cancelPlan = Assert.IsType<PlayerAllianceReadyCheckPlan>(
+			runtime.CheckReady(88001, leader, PlayerAllianceReadyCheckCommand.Cancel));
+		runtime.CheckReady(88001, leader, PlayerAllianceReadyCheckCommand.Start);
+		var autoCancelPlan = Assert.IsType<PlayerAllianceReadyCheckPlan>(
+			runtime.CheckReady(88001, leader, PlayerAllianceReadyCheckCommand.AutoCancel));
+
+		Assert.Equal(1, cancelPlan.ReadyStatusBefore);
+		Assert.Equal(0, cancelPlan.ReadyStatusAfter);
+		Assert.Equal(0, runtime.GetAllianceReadyStatus(88001));
+		Assert.Collection(
+			cancelPlan.PacketIntents,
+			intent => AssertReadyIntent(intent, sequence: 0, recipientObjectId: 1001, playerObjectId: 1001, statusCode: 0),
+			intent => AssertReadyIntent(intent, sequence: 1, recipientObjectId: 1002, playerObjectId: 1001, statusCode: 0));
+		Assert.Equal(1, autoCancelPlan.ReadyStatusBefore);
+		Assert.Equal(0, autoCancelPlan.ReadyStatusAfter);
+		Assert.Collection(
+			autoCancelPlan.PacketIntents,
+			intent => AssertReadyIntent(intent, sequence: 0, recipientObjectId: 1001, playerObjectId: 1001, statusCode: 2),
+			intent => AssertReadyIntent(intent, sequence: 1, recipientObjectId: 1002, playerObjectId: 1001, statusCode: 2));
+	}
+
+	[Fact]
+	public void CheckReady_ReturnsNullForMissingAllianceOrPlayer()
+	{
+		var runtime = new PlayerAllianceRuntime();
+		var leader = CreatePlayer(1001, "Leader", worldId: 210010000);
+		var outsider = CreatePlayer(1002, "Outsider", worldId: 220010000);
+		runtime.CreateAlliance(88001, leader);
+
+		Assert.Null(runtime.CheckReady(88001, outsider, PlayerAllianceReadyCheckCommand.Start));
+		Assert.Null(runtime.CheckReady(99001, leader, PlayerAllianceReadyCheckCommand.Start));
+	}
+
 	private static Player CreatePlayer(int objectId, string name, int worldId)
 	{
 		return new Player
@@ -308,5 +436,31 @@ public sealed class PlayerAllianceRuntimeTests
 		Assert.False(plan.WritesAbnormalEffects);
 		Assert.False(plan.WritesSlotTimers);
 		Assert.Equal(expectedName, plan.PrefixSnapshot.Name);
+	}
+
+	private static void AssertReadyIntent(
+		PlayerAllianceReadyCheckPacketIntent intent,
+		int sequence,
+		int recipientObjectId,
+		int playerObjectId,
+		int statusCode)
+	{
+		Assert.Equal(sequence, intent.Sequence);
+		Assert.Equal(recipientObjectId, intent.RecipientObjectId);
+		Assert.Equal(playerObjectId, intent.PlayerObjectId);
+		Assert.Equal(statusCode, intent.StatusCode);
+		var packet = Assert.IsType<SmAllianceReadyCheck>(intent.CreatePacket());
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(playerObjectId, reader.ReadD());
+		Assert.Equal(statusCode, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
+	{
+		var crypt = new GameCrypt(() => 0x01020304);
+		crypt.EnableKey();
+		var frame = packet.SerializeFrame(crypt);
+		return frame[7..];
 	}
 }

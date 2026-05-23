@@ -9,6 +9,7 @@ public sealed class PlayerAllianceRuntime
 	private readonly Dictionary<int, List<PlayerAllianceMember>> _membersByAllianceId = [];
 	private readonly Dictionary<int, PlayerAllianceDescriptor> _descriptorsByAllianceId = [];
 	private readonly Dictionary<int, List<int>> _viceCaptainObjectIdsByAllianceId = [];
+	private readonly Dictionary<int, int> _allianceReadyStatusByAllianceId = [];
 	private readonly PlayerAllianceMemberGroupChangePlanner _groupChangePlanner = new();
 
 	public PlayerAllianceSnapshot CreateAlliance(
@@ -33,6 +34,7 @@ public sealed class PlayerAllianceRuntime
 			_membersByAllianceId[allianceId] = members;
 			_descriptorsByAllianceId[allianceId] = descriptor;
 			_viceCaptainObjectIdsByAllianceId[allianceId] = [];
+			_allianceReadyStatusByAllianceId[allianceId] = 0;
 
 			return ApplySnapshot(allianceId, members, descriptor);
 		}
@@ -97,6 +99,7 @@ public sealed class PlayerAllianceRuntime
 				_membersByAllianceId.Remove(allianceId);
 				_descriptorsByAllianceId.Remove(allianceId);
 				_viceCaptainObjectIdsByAllianceId.Remove(allianceId);
+				_allianceReadyStatusByAllianceId.Remove(allianceId);
 				return null;
 			}
 
@@ -208,6 +211,40 @@ public sealed class PlayerAllianceRuntime
 		}
 	}
 
+	public PlayerAllianceReadyCheckPlan? CheckReady(int allianceId, Player player, PlayerAllianceReadyCheckCommand command)
+	{
+		// Java parity: model/team/alliance/events/CheckAllianceReadyEvent updates allianceReadyStatus and broadcasts SM_ALLIANCE_READY_CHECK.
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(allianceId, 0);
+
+		lock (_sync)
+		{
+			if (!_membersByAllianceId.TryGetValue(allianceId, out var members)
+				|| members.All(member => member.ObjectId != player.ObjectId))
+				return null;
+
+			var readyStatusBefore = _allianceReadyStatusByAllianceId.GetValueOrDefault(allianceId);
+			var readyStatusAfter = command switch
+			{
+				PlayerAllianceReadyCheckCommand.Cancel => 0,
+				PlayerAllianceReadyCheckCommand.Start => members.Count(member => member.IsOnline) - 1,
+				PlayerAllianceReadyCheckCommand.AutoCancel => 0,
+				PlayerAllianceReadyCheckCommand.Ready => readyStatusBefore - 1,
+				PlayerAllianceReadyCheckCommand.NotReady => readyStatusBefore - 1,
+				_ => throw new ArgumentOutOfRangeException(nameof(command), command, "Unsupported alliance ready-check command."),
+			};
+			_allianceReadyStatusByAllianceId[allianceId] = readyStatusAfter;
+
+			var intents = CreateReadyCheckIntents(members, player.ObjectId, command, readyStatusAfter);
+			return new PlayerAllianceReadyCheckPlan(
+				allianceId,
+				player.ObjectId,
+				command,
+				readyStatusBefore,
+				readyStatusAfter,
+				intents);
+		}
+	}
+
 	public PlayerAllianceMemberGroupChangePlan? ChangeMemberGroup(
 		int allianceId,
 		int firstMemberObjectId,
@@ -261,6 +298,13 @@ public sealed class PlayerAllianceRuntime
 		return player.TeamMembership == PlayerTeamMembership.Alliance ? player.CurrentAllianceSnapshot : null;
 	}
 
+	public int GetAllianceReadyStatus(int allianceId)
+	{
+		// Java parity: model/team/alliance/PlayerAlliance.getAllianceReadyStatus.
+		lock (_sync)
+			return _allianceReadyStatusByAllianceId.GetValueOrDefault(allianceId);
+	}
+
 	private static int GetOpenAllianceGroupId(IReadOnlyList<PlayerAllianceMember> members, PlayerAllianceDescriptor descriptor)
 	{
 		foreach (var allianceGroupId in descriptor.AllianceGroupIds)
@@ -270,6 +314,46 @@ public sealed class PlayerAllianceRuntime
 		}
 
 		throw new InvalidOperationException("Player alliance has no open Java alliance group.");
+	}
+
+	private static IReadOnlyList<PlayerAllianceReadyCheckPacketIntent> CreateReadyCheckIntents(
+		IReadOnlyList<PlayerAllianceMember> members,
+		int playerObjectId,
+		PlayerAllianceReadyCheckCommand command,
+		int readyStatusAfter)
+	{
+		var intents = new List<PlayerAllianceReadyCheckPacketIntent>();
+		var sequence = 0;
+		foreach (var member in members)
+		{
+			switch (command)
+			{
+				case PlayerAllianceReadyCheckCommand.Cancel:
+					intents.Add(new PlayerAllianceReadyCheckPacketIntent(sequence++, member.ObjectId, playerObjectId, 0));
+					break;
+				case PlayerAllianceReadyCheckCommand.Start:
+					intents.Add(new PlayerAllianceReadyCheckPacketIntent(sequence++, member.ObjectId, playerObjectId, 5));
+					intents.Add(new PlayerAllianceReadyCheckPacketIntent(sequence++, member.ObjectId, playerObjectId, 1));
+					break;
+				case PlayerAllianceReadyCheckCommand.AutoCancel:
+					intents.Add(new PlayerAllianceReadyCheckPacketIntent(sequence++, member.ObjectId, playerObjectId, 2));
+					break;
+				case PlayerAllianceReadyCheckCommand.Ready:
+					intents.Add(new PlayerAllianceReadyCheckPacketIntent(sequence++, member.ObjectId, playerObjectId, 5));
+					if (readyStatusAfter == 0)
+						intents.Add(new PlayerAllianceReadyCheckPacketIntent(sequence++, member.ObjectId, PlayerObjectId: 0, StatusCode: 3));
+					break;
+				case PlayerAllianceReadyCheckCommand.NotReady:
+					intents.Add(new PlayerAllianceReadyCheckPacketIntent(sequence++, member.ObjectId, playerObjectId, 4));
+					if (readyStatusAfter == 0)
+						intents.Add(new PlayerAllianceReadyCheckPacketIntent(sequence++, member.ObjectId, PlayerObjectId: 0, StatusCode: 3));
+					break;
+				default:
+					throw new ArgumentOutOfRangeException(nameof(command), command, "Unsupported alliance ready-check command.");
+			}
+		}
+
+		return intents;
 	}
 
 	private PlayerAllianceSnapshot ApplySnapshot(
