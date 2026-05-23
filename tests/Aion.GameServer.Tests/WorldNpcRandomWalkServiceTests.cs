@@ -185,6 +185,78 @@ public sealed class WorldNpcRandomWalkServiceTests
 	}
 
 	[Fact]
+	public async Task TargetReachedAsync_RevalidatesCreaturePvpZoneCountersAfterRandomWalkArrival()
+	{
+		var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		try
+		{
+			var dataManager = await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false);
+			var runtimeContext = new GameServerRuntimeContext();
+			runtimeContext.SetDataManager(dataManager);
+			var options = CreateOptions(minimumDelaySeconds: 0, maximumDelaySeconds: 60);
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			var startPosition = new WorldPosition(210040000, 100, 100, 150, 0);
+			var targetPosition = new WorldPosition(210040000, 2700, 620, 150, 0);
+			var npc = CreateNpc(
+				objectId: 1,
+				position: startPosition,
+				randomWalkRange: 3000);
+			Assert.True(world.TryAddObject(npc.ObjectId, npc));
+			var registry = new CapturingConnectionRegistry();
+			var aiStates = new WorldNpcAiStateService();
+			var zoneCounterService = new CreaturePvpZoneCounterService();
+			var randomValues = new Queue<float>([5600, 3520]);
+			var delays = new Queue<int>([0, 60]);
+			var zones = dataManager.StaticData.CreaturePvpZones.GetZonesByMapId(targetPosition.WorldId);
+			Assert.DoesNotContain(zones, zone => zone.Contains(startPosition));
+			Assert.Contains(zones, zone => zone.Name == "PVP_87_210040000" && zone.Contains(targetPosition));
+			var service = new WorldNpcRandomWalkService(
+				world,
+				registry,
+				options,
+				threadPoolManager,
+				aiStates,
+				maxExclusive =>
+				{
+					Assert.Equal(6000, maxExclusive);
+					return randomValues.Dequeue();
+				},
+				(minimum, maximum) =>
+				{
+					Assert.Equal(0, minimum);
+					Assert.Equal(60, maximum);
+					return delays.Dequeue();
+				},
+				runtimeContext,
+				zoneCounterService);
+
+			var start = await service.StartRandomWalkingAsync(npc.ObjectId);
+			await WaitUntilAsync(() => registry.Broadcasts.Count == 1
+				&& service.TryGetActiveState(npc.ObjectId, out var activeState)
+				&& activeState?.Target != null);
+			Assert.True(start.Started);
+			Assert.Equal(CreaturePvpZoneCounters.Empty, zoneCounterService.GetCounters(npc.ObjectId));
+
+			var reached = await service.TargetReachedAsync(npc.ObjectId);
+
+			Assert.True(reached.Handled);
+			Assert.Equal(WorldNpcRandomWalkTargetReachedStatus.ScheduledNext, reached.Status);
+			var counters = zoneCounterService.GetCounters(npc.ObjectId);
+			Assert.Equal(1, counters.PvpZoneCount);
+			Assert.Equal(0, counters.SiegeZoneCount);
+			Assert.True(world.TryGetObject(npc.ObjectId, out var reachedObject));
+			var reachedNpc = Assert.IsType<WorldNpc>(reachedObject);
+			Assert.Equal(targetPosition.X, reachedNpc.Position.X);
+			Assert.Equal(targetPosition.Y, reachedNpc.Position.Y);
+			Assert.Equal(targetPosition.Z, reachedNpc.Position.Z);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
 	public async Task StartRandomWalkingAsync_RequiresMovementEnabled()
 	{
 		var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
@@ -305,6 +377,19 @@ public sealed class WorldNpcRandomWalkServiceTests
 		}
 
 		Assert.True(condition(), "Condition was not met before the timeout.");
+	}
+
+	private static string FindRepoRoot()
+	{
+		var directory = new DirectoryInfo(AppContext.BaseDirectory);
+		while (directory != null)
+		{
+			if (File.Exists(Path.Combine(directory.FullName, "game-server", "data", "static_data", "static_data.xml")))
+				return directory.FullName;
+			directory = directory.Parent;
+		}
+
+		throw new DirectoryNotFoundException("Could not find repository root from test output directory.");
 	}
 
 	private sealed class CapturingConnectionRegistry : IGameClientConnectionRegistry

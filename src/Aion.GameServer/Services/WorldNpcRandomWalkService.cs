@@ -19,6 +19,8 @@ public sealed class WorldNpcRandomWalkService
 	private readonly GameServerOptions _options;
 	private readonly ThreadPoolManager? _threadPoolManager;
 	private readonly WorldNpcAiStateService? _npcAiStates;
+	private readonly GameServerRuntimeContext? _runtimeContext;
+	private readonly CreaturePvpZoneCounterService? _creaturePvpZoneCounterService;
 	private readonly Func<float, float> _nextFloat;
 	private readonly Func<int, int, int> _nextDelaySeconds;
 	private readonly ConcurrentDictionary<int, WorldNpcRandomWalkRuntimeState> _activeStates = new();
@@ -33,13 +35,17 @@ public sealed class WorldNpcRandomWalkService
 		ThreadPoolManager? threadPoolManager = null,
 		WorldNpcAiStateService? npcAiStates = null,
 		Func<float, float>? nextFloat = null,
-		Func<int, int, int>? nextDelaySeconds = null)
+		Func<int, int, int>? nextDelaySeconds = null,
+		GameServerRuntimeContext? runtimeContext = null,
+		CreaturePvpZoneCounterService? creaturePvpZoneCounterService = null)
 	{
 		_world = world;
 		_connectionRegistry = connectionRegistry;
 		_options = options;
 		_threadPoolManager = threadPoolManager;
 		_npcAiStates = npcAiStates;
+		_runtimeContext = runtimeContext;
+		_creaturePvpZoneCounterService = creaturePvpZoneCounterService;
 		_nextFloat = nextFloat ?? (maxExclusive => (float)(Random.Shared.NextDouble() * maxExclusive));
 		_nextDelaySeconds = nextDelaySeconds ?? ((minimum, maximum) => Random.Shared.Next(minimum, maximum + 1));
 	}
@@ -138,6 +144,7 @@ public sealed class WorldNpcRandomWalkService
 			return ValueTask.FromResult(WorldNpcRandomWalkTargetReachedResult.NotHandled(WorldNpcRandomWalkTargetReachedStatus.MissingTarget));
 		if (!TryUpdateNpcPositionToTarget(objectId, state.Target))
 			return ValueTask.FromResult(WorldNpcRandomWalkTargetReachedResult.NotHandled(WorldNpcRandomWalkTargetReachedStatus.MissingNpc));
+		RevalidateNpcCreaturePvpZones(objectId);
 		if (!IsStillWalking(objectId))
 		{
 			_activeStates.TryRemove(objectId, out _);
@@ -376,6 +383,20 @@ public sealed class WorldNpcRandomWalkService
 			},
 		};
 		return _world.TryUpdateObject(objectId, updatedNpc);
+	}
+
+	private void RevalidateNpcCreaturePvpZones(int objectId)
+	{
+		// Java parity: MoveTaskManager destination reached -> ZoneUpdateService.add -> Creature.revalidateZones.
+		if (!_world.TryGetObject(objectId, out var gameObject) || gameObject is not WorldNpc npc)
+			return;
+
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		CreaturePvpZoneRevalidationService.Revalidate(
+			npc.ObjectId,
+			npc.Position,
+			staticData?.CreaturePvpZones,
+			_creaturePvpZoneCounterService);
 	}
 
 	private bool TryAdvanceNpcPositionTowardsTarget(
