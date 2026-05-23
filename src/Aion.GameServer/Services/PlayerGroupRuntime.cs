@@ -186,7 +186,7 @@ public sealed class PlayerGroupRuntime
 				ClearGroup(previousMember.Player);
 				members[index] = new PlayerGroupMember(player);
 				ApplySnapshot(teamId, members);
-				return new PlayerGroupReconnectResult(true, CreateReconnectPacketPlan(teamId, player.ObjectId, members));
+				return new PlayerGroupReconnectResult(true, CreateReconnectPacketPlan(teamId, player, members, _descriptorsByTeamId[teamId]));
 			}
 
 			return PlayerGroupReconnectResult.NotFound();
@@ -230,10 +230,12 @@ public sealed class PlayerGroupRuntime
 
 	private static PlayerGroupReconnectPacketPlan CreateReconnectPacketPlan(
 		int teamId,
-		int reconnectingPlayerObjectId,
-		IReadOnlyList<PlayerGroupMember> members)
+		Player reconnectingPlayer,
+		IReadOnlyList<PlayerGroupMember> members,
+		PlayerGroupDescriptor descriptor)
 	{
 		// Java parity: model/team/group/events/PlayerConnectedEvent sends SM_GROUP_INFO and SM_GROUP_MEMBER_INFO JOIN/ENTER packets.
+		var reconnectingPlayerObjectId = reconnectingPlayer.ObjectId;
 		var intents = new List<PlayerGroupMemberInfoIntent>
 		{
 			new(reconnectingPlayerObjectId, reconnectingPlayerObjectId, PlayerGroupEvent.Join),
@@ -252,7 +254,8 @@ public sealed class PlayerGroupRuntime
 			teamId,
 			reconnectingPlayerObjectId,
 			SendGroupInfoToReconnectingPlayer: true,
-			intents);
+			intents,
+			PlayerGroupInfoPacketPlan.FromDescriptor(descriptor, reconnectingPlayer.Position.WorldId));
 	}
 
 	private static void ClearGroup(Player member)

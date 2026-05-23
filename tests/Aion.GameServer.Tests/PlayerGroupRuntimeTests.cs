@@ -1,4 +1,6 @@
+using Aion.Commons.Network;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services;
 using Aion.GameServer.World;
 
@@ -253,7 +255,11 @@ public sealed class PlayerGroupRuntimeTests
 		var offlineMember = new Player { ObjectId = 1002 };
 		var otherMember = new Player { ObjectId = 1003 };
 		runtime.CreateOrUpdateGroup(99001, [leader, offlineMember, otherMember]);
-		var loggingInMember = new Player { ObjectId = 1002 };
+		var loggingInMember = new Player
+		{
+			ObjectId = 1002,
+			Position = new WorldPosition(210010000, 100, 200, 300, 32),
+		};
 
 		var result = runtime.ReconnectMember(loggingInMember);
 
@@ -262,6 +268,33 @@ public sealed class PlayerGroupRuntimeTests
 		Assert.Equal(99001, plan.TeamId);
 		Assert.Equal(1002, plan.ReconnectingPlayerObjectId);
 		Assert.True(plan.SendGroupInfoToReconnectingPlayer);
+		var groupInfoPlan = Assert.IsType<PlayerGroupInfoPacketPlan>(plan.GroupInfoPlan);
+		Assert.Equal(99001, groupInfoPlan.TeamId);
+		Assert.Equal(1001, groupInfoPlan.LeaderObjectId);
+		Assert.Equal(210010000, groupInfoPlan.ActivePlayerMapId);
+		Assert.Equal(PlayerGroupLootRuleType.RoundRobin, groupInfoPlan.LootRules.LootRule);
+		Assert.Equal(0x3F, groupInfoPlan.TeamType);
+		Assert.Equal(0, groupInfoPlan.TeamSubType);
+		var groupInfoPacket = Assert.IsType<Network.Aion.ServerPackets.SmGroupInfo>(plan.CreateGroupInfoPacket());
+		using var groupInfoReader = new PacketBuffer(SerializeUnencryptedPayload(groupInfoPacket));
+		Assert.Equal(99001, groupInfoReader.ReadD());
+		Assert.Equal(1001, groupInfoReader.ReadD());
+		Assert.Equal(210010000, groupInfoReader.ReadD());
+		Assert.Equal(1, groupInfoReader.ReadD());
+		Assert.Equal(0, groupInfoReader.ReadD());
+		Assert.Equal(0, groupInfoReader.ReadD());
+		Assert.Equal(2, groupInfoReader.ReadD());
+		Assert.Equal(2, groupInfoReader.ReadD());
+		Assert.Equal(2, groupInfoReader.ReadD());
+		Assert.Equal(2, groupInfoReader.ReadD());
+		Assert.Equal(2, groupInfoReader.ReadD());
+		Assert.Equal(0x02, groupInfoReader.ReadD());
+		Assert.Equal(0, (int)groupInfoReader.ReadC());
+		Assert.Equal(0x3F, groupInfoReader.ReadD());
+		Assert.Equal(0, groupInfoReader.ReadD());
+		Assert.Equal(0, groupInfoReader.ReadD());
+		Assert.Equal(string.Empty, groupInfoReader.ReadS());
+		Assert.Equal(0, groupInfoReader.Remaining);
 		Assert.Collection(
 			plan.MemberInfoIntents,
 			intent =>
@@ -423,5 +456,12 @@ public sealed class PlayerGroupRuntimeTests
 		Assert.Equal([1001, 1002], runtime.GetMemberObjectIds(99001));
 		Assert.True(runtime.HasMember(99001, 1001));
 		Assert.True(runtime.HasMember(99001, 1002));
+	}
+	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
+	{
+		var crypt = new GameCrypt(() => 0x01020304);
+		crypt.EnableKey();
+		var frame = packet.SerializeFrame(crypt);
+		return frame[7..];
 	}
 }
