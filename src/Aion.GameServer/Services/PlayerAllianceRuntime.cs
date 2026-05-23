@@ -10,6 +10,7 @@ public sealed class PlayerAllianceRuntime
 	private readonly Dictionary<int, PlayerAllianceDescriptor> _descriptorsByAllianceId = [];
 	private readonly Dictionary<int, List<int>> _viceCaptainObjectIdsByAllianceId = [];
 	private readonly Dictionary<int, int> _allianceReadyStatusByAllianceId = [];
+	private readonly Dictionary<int, Dictionary<int, int>> _targetObjectIdsByBrandIdByAllianceId = [];
 	private readonly PlayerAllianceMemberGroupChangePlanner _groupChangePlanner = new();
 
 	public PlayerAllianceSnapshot CreateAlliance(
@@ -35,6 +36,7 @@ public sealed class PlayerAllianceRuntime
 			_descriptorsByAllianceId[allianceId] = descriptor;
 			_viceCaptainObjectIdsByAllianceId[allianceId] = [];
 			_allianceReadyStatusByAllianceId[allianceId] = 0;
+			_targetObjectIdsByBrandIdByAllianceId[allianceId] = [];
 
 			return ApplySnapshot(allianceId, members, descriptor);
 		}
@@ -100,6 +102,7 @@ public sealed class PlayerAllianceRuntime
 				_descriptorsByAllianceId.Remove(allianceId);
 				_viceCaptainObjectIdsByAllianceId.Remove(allianceId);
 				_allianceReadyStatusByAllianceId.Remove(allianceId);
+				_targetObjectIdsByBrandIdByAllianceId.Remove(allianceId);
 				return null;
 			}
 
@@ -242,6 +245,46 @@ public sealed class PlayerAllianceRuntime
 				readyStatusBefore,
 				readyStatusAfter,
 				intents);
+		}
+	}
+
+	public PlayerAllianceBrandUpdatePlan? UpdateBrand(int allianceId, int brandId, int targetObjectId)
+	{
+		// Java parity: model/team/TemporaryPlayerTeam.updateBrand stores target id and broadcasts SM_SHOW_BRAND.
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(allianceId, 0);
+
+		lock (_sync)
+		{
+			if (!_membersByAllianceId.TryGetValue(allianceId, out var members))
+				return null;
+
+			if (!_targetObjectIdsByBrandIdByAllianceId.TryGetValue(allianceId, out var targetObjectIdsByBrandId))
+			{
+				targetObjectIdsByBrandId = [];
+				_targetObjectIdsByBrandIdByAllianceId[allianceId] = targetObjectIdsByBrandId;
+			}
+
+			targetObjectIdsByBrandId[brandId] = targetObjectId;
+			var broadcasts = members
+				.Select(member => new PlayerAllianceBrandIntent(member.ObjectId, new Dictionary<int, int> { [brandId] = targetObjectId }))
+				.ToArray();
+
+			return new PlayerAllianceBrandUpdatePlan(allianceId, brandId, targetObjectId, broadcasts);
+		}
+	}
+
+	public PlayerAllianceBrandIntent? CreateSendBrandsIntent(int allianceId, Player recipient)
+	{
+		// Java parity: model/team/TemporaryPlayerTeam.sendBrands sends SM_SHOW_BRAND(targetIdsByBrandId) to a single member.
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(allianceId, 0);
+
+		lock (_sync)
+		{
+			if (!_membersByAllianceId.TryGetValue(allianceId, out var members)
+				|| members.All(member => member.ObjectId != recipient.ObjectId))
+				return null;
+
+			return new PlayerAllianceBrandIntent(recipient.ObjectId, GetBrandSnapshot(allianceId));
 		}
 	}
 
@@ -398,6 +441,13 @@ public sealed class PlayerAllianceRuntime
 			viceCaptainIds,
 			descriptor.TeamType,
 			descriptor.LootRules);
+	}
+
+	private IReadOnlyDictionary<int, int> GetBrandSnapshot(int allianceId)
+	{
+		return _targetObjectIdsByBrandIdByAllianceId.TryGetValue(allianceId, out var targetObjectIdsByBrandId)
+			? new Dictionary<int, int>(targetObjectIdsByBrandId)
+			: new Dictionary<int, int>();
 	}
 
 	private static void ClearAlliance(Player member)

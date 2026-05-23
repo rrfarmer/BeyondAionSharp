@@ -408,6 +408,72 @@ public sealed class PlayerAllianceRuntimeTests
 		Assert.Null(runtime.CheckReady(99001, leader, PlayerAllianceReadyCheckCommand.Start));
 	}
 
+	[Fact]
+	public void UpdateBrand_StoresBrandAndPlansAllianceBroadcastLikeJavaTemporaryPlayerTeam()
+	{
+		var runtime = new PlayerAllianceRuntime();
+		var leader = CreatePlayer(1001, "Leader", worldId: 210010000);
+		var member = CreatePlayer(1002, "Member", worldId: 220010000);
+		runtime.CreateAlliance(88001, leader);
+		runtime.AddMember(88001, member);
+
+		var plan = Assert.IsType<PlayerAllianceBrandUpdatePlan>(runtime.UpdateBrand(88001, brandId: 4, targetObjectId: 8002));
+
+		Assert.Equal(88001, plan.AllianceId);
+		Assert.Equal(4, plan.BrandId);
+		Assert.Equal(8002, plan.TargetObjectId);
+		Assert.Collection(
+			plan.BrandBroadcasts,
+			intent =>
+			{
+				Assert.Equal(1001, intent.RecipientObjectId);
+				AssertShowBrandPayload(intent.CreatePacket(), (4, 8002));
+			},
+			intent =>
+			{
+				Assert.Equal(1002, intent.RecipientObjectId);
+				AssertShowBrandPayload(intent.CreatePacket(), (4, 8002));
+			});
+		var sendBrandsIntent = Assert.IsType<PlayerAllianceBrandIntent>(runtime.CreateSendBrandsIntent(88001, member));
+		Assert.Equal(1002, sendBrandsIntent.RecipientObjectId);
+		Assert.Equal(new Dictionary<int, int> { [4] = 8002 }, sendBrandsIntent.TargetObjectIdsByBrandId);
+		AssertShowBrandPayload(sendBrandsIntent.CreatePacket(), (4, 8002));
+	}
+
+	[Fact]
+	public void CreateSendBrandsIntent_EmptyAllianceBrandMapResetsAllJavaBrands()
+	{
+		var runtime = new PlayerAllianceRuntime();
+		var leader = CreatePlayer(1001, "Leader", worldId: 210010000);
+		runtime.CreateAlliance(88001, leader);
+
+		var intent = Assert.IsType<PlayerAllianceBrandIntent>(runtime.CreateSendBrandsIntent(88001, leader));
+
+		Assert.Empty(intent.TargetObjectIdsByBrandId);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(intent.CreatePacket()));
+		Assert.Equal(16, reader.ReadH());
+		for (var brandId = 0; brandId < 16; brandId++)
+		{
+			Assert.Equal(1, reader.ReadD());
+			Assert.Equal(brandId, reader.ReadD());
+			Assert.Equal(0, reader.ReadD());
+		}
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void AllianceBrandRuntime_ReturnsNullForUnknownAllianceOrRecipient()
+	{
+		var runtime = new PlayerAllianceRuntime();
+		var leader = CreatePlayer(1001, "Leader", worldId: 210010000);
+		var outsider = CreatePlayer(1002, "Outsider", worldId: 220010000);
+		runtime.CreateAlliance(88001, leader);
+
+		Assert.Null(runtime.UpdateBrand(99001, brandId: 4, targetObjectId: 8002));
+		Assert.Null(runtime.CreateSendBrandsIntent(88001, outsider));
+		Assert.Null(runtime.CreateSendBrandsIntent(99001, leader));
+	}
+
 	private static Player CreatePlayer(int objectId, string name, int worldId)
 	{
 		return new Player
@@ -453,6 +519,19 @@ public sealed class PlayerAllianceRuntimeTests
 		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
 		Assert.Equal(playerObjectId, reader.ReadD());
 		Assert.Equal(statusCode, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertShowBrandPayload(GameServerPacket packet, params (int BrandId, int TargetObjectId)[] expectedBrands)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(expectedBrands.Length, reader.ReadH());
+		foreach (var (brandId, targetObjectId) in expectedBrands)
+		{
+			Assert.Equal(1, reader.ReadD());
+			Assert.Equal(brandId, reader.ReadD());
+			Assert.Equal(targetObjectId, reader.ReadD());
+		}
 		Assert.Equal(0, reader.Remaining);
 	}
 
