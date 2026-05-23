@@ -721,7 +721,9 @@ public sealed class PlayerEnterWorldService
 			siegeOwnerMatchesPlayerRace,
 			npcIsDialogNpc);
 		if (!entryPlan.CanEnter)
-			return PortalEntryPreparationResult.Rejected(entryPlan);
+			return entryPlan.TeamPlan == null
+				? PortalEntryPreparationResult.Rejected(entryPlan)
+				: PortalEntryPreparationResult.UnsupportedTeamPortal(entryPlan);
 		if (entryPlan.Reenter)
 			return PortalEntryPreparationResult.Ready(entryPlan, null, Array.Empty<GameServerPacket>());
 
@@ -824,6 +826,16 @@ public sealed record PortalEntryPreparationResult(
 			Array.Empty<GameServerPacket>());
 	}
 
+	public static PortalEntryPreparationResult UnsupportedTeamPortal(PortalEntryPlanResult entryPlan)
+	{
+		return new PortalEntryPreparationResult(
+			false,
+			PortalEntryPreparationStatus.UnsupportedTeamPortal,
+			entryPlan,
+			null,
+			Array.Empty<GameServerPacket>());
+	}
+
 	public static PortalEntryPreparationResult ApplicationFailed(
 		PortalEntryPlanResult entryPlan,
 		PortalRequirementConsumptionApplication application)
@@ -853,6 +865,7 @@ public enum PortalEntryPreparationStatus
 {
 	Ready,
 	ValidationRejected,
+	UnsupportedTeamPortal,
 	RequirementApplicationFailed,
 	RequirementPersistenceFailed,
 }

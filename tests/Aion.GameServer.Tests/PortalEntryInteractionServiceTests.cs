@@ -235,6 +235,49 @@ public sealed class PortalEntryInteractionServiceTests
 		Assert.Equal(1390256, message.MessageId);
 	}
 
+	[Fact]
+	public async Task HandleDialogSelect_ReturnsUnsupportedTeamPortalForGroupedPlayerWithoutPackets()
+	{
+		var service = CreateService();
+		var player = CreatePlayer(level: 25);
+		player.TeamMembership = PlayerTeamMembership.Group;
+		player.CurrentTeamId = 88001;
+		player.CurrentTeamMemberObjectIds = [PlayerObjectId, 1002];
+		var world = CreateWorldWithPortalNpc();
+		var sentPackets = new List<GameServerPacket>();
+		var worldMaps = CreateWorldMaps(isInstance: true);
+		var registered = worldMaps.AddWorldMapInstance(PortalWorldId, instanceId: 7, maxPlayers: 6);
+		Assert.NotNull(registered);
+		registered.RegisterTeamId(88001);
+
+		var result = await service.HandleDialogSelectAsync(
+			player,
+			NpcObjectId,
+			DialogActionId,
+			questId: 0,
+			world,
+			CreatePortalPaths(CreatePortalPath()),
+			CreatePortalLocs(),
+			CreatePortalCooltimes(maxPlayers: 6),
+			worldMaps,
+			CreateItemTemplates(KinahItemId),
+			(packet, _) =>
+			{
+				sentPackets.Add(packet);
+				return Task.CompletedTask;
+			},
+			DateTimeOffset.UnixEpoch);
+
+		Assert.True(result.Handled);
+		Assert.Equal(PortalDialogEntryStatus.UnsupportedTeamPortal, result.Status);
+		Assert.Equal(PortalEntryPreparationStatus.UnsupportedTeamPortal, result.Preparation?.Status);
+		Assert.Equal(PortalEntryValidationStatus.UnsupportedTeamPortal, result.Preparation?.EntryPlan.Status);
+		Assert.NotNull(result.Preparation?.EntryPlan.TeamPlan);
+		Assert.Equal(PortalTeamEntryDisposition.RegisteredInstanceTransfer, result.Preparation.EntryPlan.TeamPlan.Disposition);
+		Assert.Same(registered, result.Preparation.EntryPlan.TeamPlan.RegisteredInstance);
+		Assert.Empty(sentPackets);
+	}
+
 	private static PortalEntryInteractionService CreateService()
 	{
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);

@@ -70,6 +70,8 @@ public sealed class PortalEntryInteractionService
 				await sendPacketAsync(preparation.EntryPlan.FailurePacket, cancellationToken);
 			return PortalDialogEntryResult.CreateHandled(PortalDialogEntryStatus.ValidationRejected, preparation);
 		}
+		if (preparation.Status == PortalEntryPreparationStatus.UnsupportedTeamPortal)
+			return PortalDialogEntryResult.CreateHandled(PortalDialogEntryStatus.UnsupportedTeamPortal, preparation);
 
 		if (preparation.Status != PortalEntryPreparationStatus.Ready)
 			return PortalDialogEntryResult.CreateHandled(MapPreparationFailure(preparation.Status), preparation);
@@ -138,6 +140,7 @@ public enum PortalDialogEntryStatus
 {
 	Ready,
 	ValidationRejected,
+	UnsupportedTeamPortal,
 	RequirementApplicationFailed,
 	RequirementPersistenceFailed,
 	MissingStaticData,
