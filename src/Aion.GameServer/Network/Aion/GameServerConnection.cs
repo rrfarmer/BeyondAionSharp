@@ -3001,6 +3001,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (sourceTemplate.ToyPetSpawnNpcId > 0)
+		{
+			await HandleToyPetSpawnUseItemAsync(player, staticData);
+			return;
+		}
+
 		if (sourceTemplate.CraftLearnRecipeId > 0)
 		{
 			await HandleCraftLearnUseItemAsync(player, inventoryItems, sourceItem, sourceTemplate, staticData);
@@ -4515,6 +4521,34 @@ public sealed class GameServerConnection : BaseClientConnection
 		await BroadcastItemUsageAnimationAsync(
 			player,
 			new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 1, 1));
+	}
+
+	private async Task HandleToyPetSpawnUseItemAsync(Player player, StaticData staticData)
+	{
+		// Java parity: model/templates/item/actions/ToyPetSpawnAction.canAct guard order.
+		// KiskService.haveKisk and ToyPetSpawnAction.act delayed kisk spawn are future KiskService/SpawnEngine work.
+		var restriction = PlayerKiskSpawnRestrictionService.ValidateSpawn(
+			player,
+			_options.Custom.EnableKiskRestriction,
+			hasKisk: false,
+			staticData.WorldMaps,
+			_runtimeContext?.WorldMapStates);
+
+		switch (restriction.Status)
+		{
+			case PlayerKiskSpawnRestrictionStatus.Flying:
+				await SendPacketAsync(SmSystemMessage.CannotUseBindstoneItemWhileFlying());
+				break;
+			case PlayerKiskSpawnRestrictionStatus.Instance:
+				await SendPacketAsync(SmSystemMessage.CannotRegisterBindstoneFarFromNpc());
+				break;
+			case PlayerKiskSpawnRestrictionStatus.AlreadyInstalled:
+				await SendPacketAsync(SmSystemMessage.BindstoneAlreadyInstalled());
+				break;
+			case PlayerKiskSpawnRestrictionStatus.InvalidLocation:
+				await SendPacketAsync(SmSystemMessage.CannotUseItemInvalidLocation());
+				break;
+		}
 	}
 
 	private async Task DismountRideAsync(Player player)

@@ -879,6 +879,7 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.CannotUseItemInvalidRace(), 1300373);
 		AssertSystemMessage(SmSystemMessage.CannotUseItemInvalidGender(), 1300375);
 		AssertSystemMessage(SmSystemMessage.CannotUseItemTooHighLevel(39, "item"), 1400267, "39", "item");
+		AssertSystemMessage(SmSystemMessage.CannotUseItemInvalidLocation(), 1300426);
 		AssertSystemMessage(SmSystemMessage.ItemColorError(), 1300514);
 		AssertSystemMessage(SmSystemMessage.ItemColorRemoveSucceed("item"), 1300510, "item");
 		AssertSystemMessage(SmSystemMessage.ItemColorChangeSucceed("item", "dye"), 1300511, "item", "dye");
@@ -901,6 +902,9 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.ItemRestrictionRide(), 1401094);
 		AssertSystemMessage(SmSystemMessage.UnrideAbnormalState(), 1401254);
 		AssertSystemMessage(SmSystemMessage.CannotRideAbnormalState(), 1401255);
+		AssertSystemMessage(SmSystemMessage.CannotRegisterBindstoneFarFromNpc(), 1300800);
+		AssertSystemMessage(SmSystemMessage.CannotUseBindstoneItemWhileFlying(), 1300806);
+		AssertSystemMessage(SmSystemMessage.BindstoneAlreadyInstalled(), 1390160);
 		AssertSystemMessage(SmSystemMessage.RecipeItemCannotUseNoRecipe(), 1300621);
 		AssertSystemMessage(SmSystemMessage.CraftRecipeRaceCheck(), 1300876);
 		AssertSystemMessage(SmSystemMessage.CraftRecipeLearnedAlready(), 1330060);

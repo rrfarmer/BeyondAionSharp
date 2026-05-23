@@ -507,6 +507,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1400267, maxLevel.ToString(System.Globalization.CultureInfo.InvariantCulture), itemName);
 	}
 
+	public static SmSystemMessage CannotUseItemInvalidLocation()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_CANNOT_USE_ITEM_INVALID_LOCATION.
+		return new SmSystemMessage(1300426);
+	}
+
 	public static SmSystemMessage ItemColorError()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_ITEM_COLOR_ERROR.
@@ -613,6 +619,24 @@ public sealed class SmSystemMessage : GameServerPacket
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_CANNOT_RIDE_ABNORMAL_STATE.
 		return new SmSystemMessage(1401255);
+	}
+
+	public static SmSystemMessage CannotRegisterBindstoneFarFromNpc()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_CANNOT_REGISTER_BINDSTONE_FAR_FROM_NPC.
+		return new SmSystemMessage(1300800);
+	}
+
+	public static SmSystemMessage CannotUseBindstoneItemWhileFlying()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_CANNOT_USE_BINDSTONE_ITEM_WHILE_FLYING.
+		return new SmSystemMessage(1300806);
+	}
+
+	public static SmSystemMessage BindstoneAlreadyInstalled()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_BINDSTONE_ALREADY_INSTALLED.
+		return new SmSystemMessage(1390160);
 	}
 
 	public static SmSystemMessage RecipeItemCannotUseNoRecipe()

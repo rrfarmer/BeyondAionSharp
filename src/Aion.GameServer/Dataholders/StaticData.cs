@@ -1398,6 +1398,14 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 4 && reader.LocalName == "toypetspawn" && currentItemTemplate != null)
+			{
+				// Java parity: model/templates/item/actions/ToyPetSpawnAction.npcid/time.
+				currentItemTemplate.ToyPetSpawnNpcId = ReadIntAttribute(reader, "npcid");
+				currentItemTemplate.ToyPetSpawnTime = ReadIntAttribute(reader, "time");
+				continue;
+			}
+
 			if (reader.Depth == 3 && reader.LocalName == "improve" && currentItemTemplate != null)
 			{
 				currentItemTemplate.Improvement = new ItemImprovement(
@@ -2738,6 +2746,10 @@ public sealed class StaticData
 
 		public int RideNpcId { get; set; }
 
+		public int ToyPetSpawnNpcId { get; set; }
+
+		public int ToyPetSpawnTime { get; set; }
+
 		public int EmotionLearnId { get; set; }
 
 		public int EmotionLearnMinutes { get; set; }
@@ -2869,7 +2881,9 @@ public sealed class StaticData
 				HouseObjectTemplateId,
 				HasHouseDecorateAction,
 				HouseDecorateTemplateId,
-				WeaponBoost);
+				WeaponBoost,
+				ToyPetSpawnNpcId,
+				ToyPetSpawnTime);
 		}
 
 		private static int CalculateMaxTuneCount(

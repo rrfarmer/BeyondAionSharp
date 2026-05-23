@@ -108,7 +108,9 @@ public sealed record ItemTemplateSummary(
 	int HouseObjectTemplateId = 0,
 	bool HasHouseDecorateAction = false,
 	int HouseDecorateTemplateId = 0,
-	int WeaponBoost = 0)
+	int WeaponBoost = 0,
+	int ToyPetSpawnNpcId = 0,
+	int ToyPetSpawnTime = 0)
 {
 	private const int CanPolishMask = 1 << 17;
 	private const int CanApExtractMask = 1 << 16;

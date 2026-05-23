@@ -673,6 +673,9 @@ public sealed class StaticDataLoadingTests
 		Assert.False(staticData.RideInfos.GetRideInfo(2000010)?.CanSprint());
 		Assert.Equal(staticData.GetElementCount("ride"), staticData.ItemTemplates.Templates.Count(template => template.RideNpcId != 0));
 		Assert.Equal(2000000, staticData.ItemTemplates.GetItemTemplate(190100000)?.RideNpcId);
+		Assert.Equal(staticData.GetElementCount("toypetspawn"), staticData.ItemTemplates.Templates.Count(template => template.ToyPetSpawnNpcId != 0));
+		Assert.Equal(700273, staticData.ItemTemplates.GetItemTemplate(184000011)?.ToyPetSpawnNpcId);
+		Assert.Equal(0, staticData.ItemTemplates.GetItemTemplate(184000011)?.ToyPetSpawnTime);
 		Assert.Equal(1, staticData.ItemTemplates.GetItemTemplate(100000714)?.EnchantType);
 		Assert.Equal(15, staticData.ItemTemplates.GetItemTemplate(100100860)?.MaxEnchantLevel);
 		Assert.True(staticData.ItemTemplates.GetItemTemplate(100100860)?.CanExceedEnchant);
