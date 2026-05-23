@@ -75,7 +75,8 @@ public sealed record PlayerAllianceEnteredPlan(
 	IReadOnlyList<PlayerAlliancePacketIntent> PacketIntents,
 	bool WouldSendBrands,
 	bool WouldBroadcastAbyssRank,
-	bool WouldBroadcastLeague);
+	bool WouldBroadcastLeague,
+	PlayerAllianceBrandIntent? BrandIntent = null);
 
 public enum PlayerAllianceDisconnectedPlanStatus
 {

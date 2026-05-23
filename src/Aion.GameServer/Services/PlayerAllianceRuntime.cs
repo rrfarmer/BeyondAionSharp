@@ -12,6 +12,7 @@ public sealed class PlayerAllianceRuntime
 	private readonly Dictionary<int, int> _allianceReadyStatusByAllianceId = [];
 	private readonly Dictionary<int, Dictionary<int, int>> _targetObjectIdsByBrandIdByAllianceId = [];
 	private readonly PlayerAllianceMemberGroupChangePlanner _groupChangePlanner = new();
+	private readonly PlayerAllianceEnteredPlanner _enteredPlanner = new();
 
 	public PlayerAllianceSnapshot CreateAlliance(
 		int allianceId,
@@ -285,6 +286,32 @@ public sealed class PlayerAllianceRuntime
 				return null;
 
 			return new PlayerAllianceBrandIntent(recipient.ObjectId, GetBrandSnapshot(allianceId));
+		}
+	}
+
+	public PlayerAllianceEnteredPlan? CreateEnteredPlan(int allianceId, Player invitedPlayer)
+	{
+		// Java parity: model/team/alliance/events/PlayerAllianceEnteredEvent sends team.sendBrands(player) after the invited player's join packets.
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(allianceId, 0);
+
+		lock (_sync)
+		{
+			if (!_membersByAllianceId.TryGetValue(allianceId, out var members)
+				|| !_descriptorsByAllianceId.TryGetValue(allianceId, out var descriptor)
+				|| members.All(member => member.ObjectId != invitedPlayer.ObjectId))
+				return null;
+
+			var brandIntent = new PlayerAllianceBrandIntent(invitedPlayer.ObjectId, GetBrandSnapshot(allianceId));
+			return _enteredPlanner.CreateEnteredPlan(
+				allianceId,
+				descriptor.LeaderObjectId,
+				members.Select(member => member.Player).ToArray(),
+				_viceCaptainObjectIdsByAllianceId.GetValueOrDefault(allianceId) ?? [],
+				invitedPlayer.ObjectId,
+				descriptor.LootRules,
+				descriptor.TeamType,
+				isInLeague: false,
+				brandIntent);
 		}
 	}
 

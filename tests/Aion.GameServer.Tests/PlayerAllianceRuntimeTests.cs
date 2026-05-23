@@ -475,6 +475,29 @@ public sealed class PlayerAllianceRuntimeTests
 	}
 
 	[Fact]
+	public void CreateEnteredPlan_IncludesCurrentBrandsIntentLikeJavaPlayerAllianceEnteredEvent()
+	{
+		var runtime = new PlayerAllianceRuntime();
+		var leader = CreatePlayer(1001, "Leader", worldId: 210010000);
+		var invited = CreatePlayer(1002, "Invited", worldId: 220010000);
+		runtime.CreateAlliance(88001, leader);
+		runtime.UpdateBrand(88001, brandId: 4, targetObjectId: 8002);
+		runtime.AddMember(88001, invited);
+
+		var plan = Assert.IsType<PlayerAllianceEnteredPlan>(runtime.CreateEnteredPlan(88001, invited));
+
+		Assert.True(plan.WouldSendBrands);
+		var brandIntent = Assert.IsType<PlayerAllianceBrandIntent>(plan.BrandIntent);
+		Assert.Equal(invited.ObjectId, brandIntent.RecipientObjectId);
+		Assert.Equal(new Dictionary<int, int> { [4] = 8002 }, brandIntent.TargetObjectIdsByBrandId);
+		AssertShowBrandPayload(brandIntent.CreatePacket(), (4, 8002));
+		Assert.Equal(0, plan.PacketIntents[0].Sequence);
+		Assert.Equal(PlayerAlliancePacketIntentKind.AllianceInfo, plan.PacketIntents[0].Kind);
+		Assert.Equal(2, plan.PacketIntents[2].Sequence);
+		Assert.Equal(PlayerAlliancePacketIntentKind.MemberInfo, plan.PacketIntents[2].Kind);
+	}
+
+	[Fact]
 	public void ShowBrandCommandPlanner_EchoesSoloBrandLikeJavaCmShowBrand()
 	{
 		var planner = new PlayerShowBrandCommandPlanner(new PlayerGroupRuntime(), new PlayerAllianceRuntime());

@@ -13,7 +13,8 @@ public sealed class PlayerAllianceEnteredPlanner
 		int invitedPlayerObjectId,
 		PlayerGroupLootRules? lootRules = null,
 		PlayerAllianceTeamType teamType = PlayerAllianceTeamType.Alliance,
-		bool isInLeague = false)
+		bool isInLeague = false,
+		PlayerAllianceBrandIntent? brandIntent = null)
 	{
 		// Java parity: model/team/alliance/events/PlayerAllianceEnteredEvent sends ordered info/member/system packets after addPlayerToAlliance.
 		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(allianceId, 0);
@@ -95,6 +96,7 @@ public sealed class PlayerAllianceEnteredPlanner
 			intents,
 			WouldSendBrands: true,
 			WouldBroadcastAbyssRank: true,
-			WouldBroadcastLeague: isInLeague);
+			WouldBroadcastLeague: isInLeague,
+			BrandIntent: brandIntent);
 	}
 }

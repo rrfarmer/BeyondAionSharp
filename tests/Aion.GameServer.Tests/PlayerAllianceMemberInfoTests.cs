@@ -554,6 +554,7 @@ public sealed class PlayerAllianceMemberInfoTests
 		Assert.Equal(88001, plan.AllianceId);
 		Assert.Equal(1002, plan.InvitedPlayerObjectId);
 		Assert.True(plan.WouldSendBrands);
+		Assert.Null(plan.BrandIntent);
 		Assert.True(plan.WouldBroadcastAbyssRank);
 		Assert.False(plan.WouldBroadcastLeague);
 		Assert.Collection(
