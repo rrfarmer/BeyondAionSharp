@@ -130,6 +130,53 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmGroupInfo_WritesSourceDerivedJavaFieldOrder()
+	{
+		var plan = new PlayerGroupInfoPacketPlan(
+			TeamId: 400100,
+			LeaderObjectId: 700200,
+			ActivePlayerMapId: 210010000,
+			LootRules: new PlayerGroupLootRules(
+				PlayerGroupLootRuleType.Leader,
+				Misc: 1,
+				CommonItemAbove: 0,
+				SuperiorItemAbove: 2,
+				HeroicItemAbove: 3,
+				FabledItemAbove: 4,
+				EternalItemAbove: 5,
+				MythicItemAbove: 6),
+			ConstantGroupInfoMarker: 0x02,
+			UnknownByte: 0,
+			TeamType: 0x3F,
+			TeamSubType: 0,
+			MessageId: 0,
+			Name: string.Empty);
+
+		var payload = SerializeUnencryptedPayload(new SmGroupInfo(plan));
+		using var reader = new PacketBuffer(payload);
+
+		Assert.Equal(400100, reader.ReadD());
+		Assert.Equal(700200, reader.ReadD());
+		Assert.Equal(210010000, reader.ReadD());
+		Assert.Equal(2, reader.ReadD());
+		Assert.Equal(1, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(2, reader.ReadD());
+		Assert.Equal(3, reader.ReadD());
+		Assert.Equal(4, reader.ReadD());
+		Assert.Equal(5, reader.ReadD());
+		Assert.Equal(6, reader.ReadD());
+		Assert.Equal(0x02, reader.ReadD());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0x3F, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(string.Empty, reader.ReadS());
+		Assert.Equal(0, reader.Remaining);
+		Assert.Equal(63, payload.Length);
+	}
+
+	[Fact]
 	public void SmSystemMessage_WritesDialogTooFarMessages()
 	{
 		AssertSystemMessage(SmSystemMessage.DialogTooFarToTalk(), 1300346);
