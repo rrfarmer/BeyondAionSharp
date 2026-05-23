@@ -1,4 +1,5 @@
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 
 namespace Aion.GameServer.Services;
@@ -62,6 +63,39 @@ public sealed record PlayerAllianceLeaderChangePlan(
 	IReadOnlyList<PlayerAllianceInfoIntent> AllianceInfoIntents,
 	IReadOnlyList<PlayerAllianceSystemMessageIntent> SystemMessageIntents,
 	bool WouldBroadcastLeague = false);
+
+public sealed record PlayerAllianceConnectedPlan(
+	int AllianceId,
+	int ConnectedPlayerObjectId,
+	IReadOnlyList<PlayerAlliancePacketIntent> PacketIntents);
+
+public enum PlayerAlliancePacketIntentKind
+{
+	AllianceInfo,
+	MemberInfo,
+	SystemMessage,
+}
+
+public sealed record PlayerAlliancePacketIntent(
+	int Sequence,
+	int RecipientObjectId,
+	PlayerAlliancePacketIntentKind Kind,
+	PlayerAllianceInfoPacketPlan? AllianceInfoPlan = null,
+	PlayerAllianceMemberInfoPacketPlan? MemberInfoPlan = null,
+	SmSystemMessage? SystemMessage = null)
+{
+	public GameServerPacket CreatePacket()
+	{
+		// Java parity: alliance event planners preserve mixed packet ordering before socket fanout is ported.
+		return Kind switch
+		{
+			PlayerAlliancePacketIntentKind.AllianceInfo when AllianceInfoPlan != null => new SmAllianceInfo(AllianceInfoPlan),
+			PlayerAlliancePacketIntentKind.MemberInfo when MemberInfoPlan != null => new SmAllianceMemberInfo(MemberInfoPlan),
+			PlayerAlliancePacketIntentKind.SystemMessage when SystemMessage != null => SystemMessage,
+			_ => throw new InvalidOperationException("Alliance packet intent is missing packet metadata."),
+		};
+	}
+}
 
 public sealed record PlayerAllianceInfoIntent(
 	int RecipientObjectId,
