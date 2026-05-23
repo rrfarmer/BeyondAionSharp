@@ -23,7 +23,12 @@ public static class PlayerFlightActionService
 		if (!ignoreFlightCooldown)
 		{
 			if (player.FlyReuseTimeMillis > nowMillis)
-				return PlayerFlightActionResult.Failed(PlayerFlightActionStatus.Cooldown);
+			{
+				var remainingSeconds = (player.FlyReuseTimeMillis - nowMillis) / 1000;
+				return PlayerFlightActionResult.Failed(
+					PlayerFlightActionStatus.Cooldown,
+					auditMessage: $"possibly using fly cooldown hack. Left cooldown time: {remainingSeconds}s");
+			}
 
 			player.FlyReuseTimeMillis = nowMillis + FlyReuseTimeMillis - FlyStartReuseAdjustmentMillis;
 		}
@@ -106,7 +111,8 @@ public static class PlayerFlightActionService
 
 public sealed record PlayerFlightActionResult(
 	PlayerFlightActionStatus Status,
-	SmSystemMessage? SystemMessage)
+	SmSystemMessage? SystemMessage,
+	string? AuditMessage = null)
 {
 	public bool Succeeded => Status == PlayerFlightActionStatus.Success;
 
@@ -115,9 +121,12 @@ public sealed record PlayerFlightActionResult(
 		return new PlayerFlightActionResult(PlayerFlightActionStatus.Success, null);
 	}
 
-	public static PlayerFlightActionResult Failed(PlayerFlightActionStatus status, SmSystemMessage? systemMessage = null)
+	public static PlayerFlightActionResult Failed(
+		PlayerFlightActionStatus status,
+		SmSystemMessage? systemMessage = null,
+		string? auditMessage = null)
 	{
-		return new PlayerFlightActionResult(status, systemMessage);
+		return new PlayerFlightActionResult(status, systemMessage, auditMessage);
 	}
 }
 

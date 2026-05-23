@@ -5727,6 +5727,12 @@ public sealed class GameServerConnection : BaseClientConnection
 					freeFlightAccessLevel: _options.Administration.FreeFlightAccessLevel);
 				if (!flyResult.Succeeded)
 				{
+					if (flyResult.AuditMessage != null)
+						_logger.LogWarning(
+							"Player {PlayerName} ({PlayerObjectId}) {AuditMessage}",
+							player.Name,
+							player.ObjectId,
+							flyResult.AuditMessage);
 					if (flyResult.SystemMessage != null)
 						await SendPacketAsync(flyResult.SystemMessage);
 					return;

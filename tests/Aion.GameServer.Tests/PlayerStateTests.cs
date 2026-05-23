@@ -632,6 +632,7 @@ public sealed class PlayerStateTests
 		Assert.False(privateShop.IsFlying());
 		Assert.Equal(PlayerFlightActionStatus.Cooldown, cooldownResult.Status);
 		Assert.Null(cooldownResult.SystemMessage);
+		Assert.Equal("possibly using fly cooldown hack. Left cooldown time: 0s", cooldownResult.AuditMessage);
 		Assert.False(onCooldown.IsFlying());
 
 		Assert.True(success.Succeeded);
@@ -692,6 +693,7 @@ public sealed class PlayerStateTests
 		Assert.False(transformedMovementBlocked.IsInGlidingState());
 		Assert.Equal(PlayerFlightActionStatus.Cooldown, cooldownResult.Status);
 		Assert.Null(cooldownResult.SystemMessage);
+		Assert.Null(cooldownResult.AuditMessage);
 		Assert.False(onCooldown.IsInGlidingState());
 
 		Assert.True(walkingSuccess.Succeeded);
