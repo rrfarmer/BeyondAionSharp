@@ -475,6 +475,16 @@ public sealed class GameServerConnectionInstanceCooldownTests
 		Assert.Equal(
 			GroupPortalAllocationBlockedReason.RegisteredTeamInstanceAlreadyResolved,
 			groupPlan.AllocationPlan.BlockedReason);
+		Assert.Equal(7, groupPlan.ExecutionPlan.TargetInstanceId);
+		Assert.Equal(new WorldPosition(300030000, 10, 20, 30, 90, InstanceId: 7), groupPlan.ExecutionPlan.StartPosition);
+		Assert.Equal(1001, groupPlan.ExecutionPlan.PlayerObjectIdToRegister);
+		Assert.False(groupPlan.ExecutionPlan.Reenter);
+		Assert.Equal(TeleportAnimation.FadeOutBeam, groupPlan.ExecutionPlan.TeleportAnimation);
+		Assert.Equal(GroupPortalCooldownPreviewState.WouldEvaluateAfterTeleport, groupPlan.ExecutionPlan.CooldownState);
+		Assert.Equal(GroupPortalExecutionState.WouldTransferToRegisteredInstance, groupPlan.ExecutionPlan.State);
+		Assert.Equal(GroupPortalExecutionBlockedReason.GroupFanoutNotImplemented, groupPlan.ExecutionPlan.BlockedReason);
+		Assert.Null(registeredInstance.StartPosition);
+		Assert.False(registeredInstance.IsRegistered(1001));
 		Assert.Empty(pair.SentPackets);
 		Assert.Null(player.PendingTeleport);
 		Assert.Null(repository.SavedPortalCooldowns);
@@ -565,6 +575,14 @@ public sealed class GameServerConnectionInstanceCooldownTests
 		Assert.Equal(GroupPortalAllocationState.WouldAllocateAndRegisterTeam, groupPlan.AllocationPlan.State);
 		Assert.Equal(GroupPortalAllocationBlockedReason.InstanceAllocationNotPorted, groupPlan.AllocationPlan.BlockedReason);
 		Assert.False(worldMaps.GetMap(300030000)!.TryGetWorldMapInstance(instanceId: 2, out _));
+		Assert.Null(groupPlan.ExecutionPlan.TargetInstanceId);
+		Assert.Equal(new WorldPosition(300030000, 10, 20, 30, 90), groupPlan.ExecutionPlan.StartPosition);
+		Assert.Equal(1001, groupPlan.ExecutionPlan.PlayerObjectIdToRegister);
+		Assert.False(groupPlan.ExecutionPlan.Reenter);
+		Assert.Equal(TeleportAnimation.FadeOutBeam, groupPlan.ExecutionPlan.TeleportAnimation);
+		Assert.Equal(GroupPortalCooldownPreviewState.UnknownUntilTransfer, groupPlan.ExecutionPlan.CooldownState);
+		Assert.Equal(GroupPortalExecutionState.BlockedUntilInstanceAllocation, groupPlan.ExecutionPlan.State);
+		Assert.Equal(GroupPortalExecutionBlockedReason.InstanceAllocationNotPorted, groupPlan.ExecutionPlan.BlockedReason);
 		Assert.Empty(pair.SentPackets);
 		Assert.Null(player.PendingTeleport);
 		Assert.Null(repository.SavedPortalCooldowns);
@@ -655,6 +673,14 @@ public sealed class GameServerConnectionInstanceCooldownTests
 		Assert.Equal(GroupPortalAllocationState.BlockedInvalidTeamId, groupPlan.AllocationPlan.State);
 		Assert.Equal(GroupPortalAllocationBlockedReason.MissingTeamId, groupPlan.AllocationPlan.BlockedReason);
 		Assert.False(worldMaps.GetMap(300030000)!.TryGetWorldMapInstance(instanceId: 2, out _));
+		Assert.Null(groupPlan.ExecutionPlan.TargetInstanceId);
+		Assert.Equal(new WorldPosition(300030000, 10, 20, 30, 90), groupPlan.ExecutionPlan.StartPosition);
+		Assert.Null(groupPlan.ExecutionPlan.PlayerObjectIdToRegister);
+		Assert.False(groupPlan.ExecutionPlan.Reenter);
+		Assert.Equal(TeleportAnimation.FadeOutBeam, groupPlan.ExecutionPlan.TeleportAnimation);
+		Assert.Equal(GroupPortalCooldownPreviewState.UnknownUntilTransfer, groupPlan.ExecutionPlan.CooldownState);
+		Assert.Equal(GroupPortalExecutionState.BlockedInvalidTeamId, groupPlan.ExecutionPlan.State);
+		Assert.Equal(GroupPortalExecutionBlockedReason.MissingTeamId, groupPlan.ExecutionPlan.BlockedReason);
 		Assert.Empty(pair.SentPackets);
 		Assert.Null(player.PendingTeleport);
 		Assert.Null(repository.SavedPortalCooldowns);

@@ -155,7 +155,10 @@ public sealed record PortalContinueTransferResult(
 			null);
 	}
 
-	public static PortalContinueTransferResult UnsupportedTeamPortal(PortalTeamEntryPlan teamPlan, PortalLocSummary? portalLoc = null)
+	public static PortalContinueTransferResult UnsupportedTeamPortal(
+		PortalTeamEntryPlan teamPlan,
+		PortalLocSummary? portalLoc = null,
+		int? playerObjectId = null)
 	{
 		return new PortalContinueTransferResult(
 			PortalContinueTransferKind.UnsupportedTeamPortal,
@@ -164,7 +167,7 @@ public sealed record PortalContinueTransferResult(
 			null,
 			teamPlan.RegisteredInstance,
 			teamPlan,
-			GroupPortalTransferPlan.FromTeamPlan(teamPlan, portalLoc));
+			GroupPortalTransferPlan.FromTeamPlan(teamPlan, portalLoc, playerObjectId));
 	}
 }
 
@@ -185,9 +188,13 @@ public sealed record GroupPortalTransferPlan(
 	GroupPortalTransferBlockedReason BlockedReason,
 	GroupPortalMemberInstanceScanPlan MemberInstanceScanPlan,
 	GroupPortalCapacityPlan CapacityPlan,
-	GroupPortalAllocationPlan AllocationPlan)
+	GroupPortalAllocationPlan AllocationPlan,
+	GroupPortalExecutionPlan ExecutionPlan)
 {
-	public static GroupPortalTransferPlan? FromTeamPlan(PortalTeamEntryPlan teamPlan, PortalLocSummary? portalLoc = null)
+	public static GroupPortalTransferPlan? FromTeamPlan(
+		PortalTeamEntryPlan teamPlan,
+		PortalLocSummary? portalLoc = null,
+		int? playerObjectId = null)
 	{
 		if (teamPlan.Kind != PortalTeamEntryKind.Group)
 			return null;
@@ -214,7 +221,13 @@ public sealed record GroupPortalTransferPlan(
 					teamPlan,
 					portalLoc,
 					GroupPortalAllocationState.BlockedInvalidTeamId,
-					GroupPortalAllocationBlockedReason.MissingTeamId));
+					GroupPortalAllocationBlockedReason.MissingTeamId),
+				CreateExecutionPlan(
+					teamPlan,
+					portalLoc,
+					playerObjectId,
+					GroupPortalExecutionState.BlockedInvalidTeamId,
+					GroupPortalExecutionBlockedReason.MissingTeamId));
 		}
 
 		var state = teamPlan.RegisteredInstance == null
@@ -229,7 +242,8 @@ public sealed record GroupPortalTransferPlan(
 			GroupPortalTransferBlockedReason.GroupFanoutNotImplemented,
 			CreateMemberInstanceScanPlan(teamPlan, state),
 			CreateCapacityPlan(teamPlan, state),
-			CreateAllocationPlan(teamPlan, portalLoc, state));
+			CreateAllocationPlan(teamPlan, portalLoc, state),
+			CreateExecutionPlan(teamPlan, portalLoc, playerObjectId, state));
 	}
 
 	private static GroupPortalMemberInstanceScanPlan CreateMemberInstanceScanPlan(
@@ -356,6 +370,76 @@ public sealed record GroupPortalTransferPlan(
 			state,
 			blockedReason);
 	}
+
+	private static GroupPortalExecutionPlan CreateExecutionPlan(
+		PortalTeamEntryPlan teamPlan,
+		PortalLocSummary? portalLoc,
+		int? playerObjectId,
+		GroupPortalTransferState transferState)
+	{
+		if (transferState == GroupPortalTransferState.RegisteredInstanceTransfer
+			&& teamPlan.RegisteredInstance != null
+			&& portalLoc != null)
+		{
+			// Java parity: PortalService.transfer sets start position, registers the player, teleports with FADE_OUT_BEAM, then applies cooldown if not reentering.
+			var destination = new WorldPosition(
+				portalLoc.WorldId,
+				portalLoc.X,
+				portalLoc.Y,
+				portalLoc.Z,
+				portalLoc.Heading,
+				teamPlan.RegisteredInstance.InstanceId);
+			var cooldownState = teamPlan.Reenter
+				? GroupPortalCooldownPreviewState.SkippedForReentry
+				: GroupPortalCooldownPreviewState.WouldEvaluateAfterTeleport;
+			return new GroupPortalExecutionPlan(
+				teamPlan.RegisteredInstance.InstanceId,
+				destination,
+				playerObjectId,
+				teamPlan.Reenter,
+				TeleportAnimation.FadeOutBeam,
+				cooldownState,
+				GroupPortalExecutionState.WouldTransferToRegisteredInstance,
+				GroupPortalExecutionBlockedReason.GroupFanoutNotImplemented);
+		}
+
+		if (transferState == GroupPortalTransferState.FreshInstanceAllocationNeeded)
+		{
+			return CreateExecutionPlan(
+				teamPlan,
+				portalLoc,
+				playerObjectId,
+				GroupPortalExecutionState.BlockedUntilInstanceAllocation,
+				GroupPortalExecutionBlockedReason.InstanceAllocationNotPorted);
+		}
+
+		return CreateExecutionPlan(
+			teamPlan,
+			portalLoc,
+			playerObjectId,
+			GroupPortalExecutionState.BlockedInvalidTeamId,
+			GroupPortalExecutionBlockedReason.MissingTeamId);
+	}
+
+	private static GroupPortalExecutionPlan CreateExecutionPlan(
+		PortalTeamEntryPlan teamPlan,
+		PortalLocSummary? portalLoc,
+		int? playerObjectId,
+		GroupPortalExecutionState state,
+		GroupPortalExecutionBlockedReason blockedReason)
+	{
+		return new GroupPortalExecutionPlan(
+			TargetInstanceId: null,
+			StartPosition: portalLoc == null
+				? null
+				: new WorldPosition(portalLoc.WorldId, portalLoc.X, portalLoc.Y, portalLoc.Z, portalLoc.Heading),
+			PlayerObjectIdToRegister: state == GroupPortalExecutionState.BlockedUntilInstanceAllocation ? playerObjectId : null,
+			teamPlan.Reenter,
+			TeleportAnimation.FadeOutBeam,
+			GroupPortalCooldownPreviewState.UnknownUntilTransfer,
+			state,
+			blockedReason);
+	}
 }
 
 public sealed record GroupPortalMemberInstanceScanPlan(
@@ -376,6 +460,16 @@ public sealed record GroupPortalAllocationPlan(
 	int? IntendedRegisteredTeamId,
 	GroupPortalAllocationState State,
 	GroupPortalAllocationBlockedReason BlockedReason);
+
+public sealed record GroupPortalExecutionPlan(
+	int? TargetInstanceId,
+	WorldPosition? StartPosition,
+	int? PlayerObjectIdToRegister,
+	bool Reenter,
+	TeleportAnimation TeleportAnimation,
+	GroupPortalCooldownPreviewState CooldownState,
+	GroupPortalExecutionState State,
+	GroupPortalExecutionBlockedReason BlockedReason);
 
 public enum GroupPortalTransferState
 {
@@ -434,4 +528,25 @@ public enum GroupPortalAllocationBlockedReason
 	RegisteredTeamInstanceAlreadyResolved,
 	InstanceAllocationNotPorted,
 	MissingTeamId,
+}
+
+public enum GroupPortalExecutionState
+{
+	WouldTransferToRegisteredInstance,
+	BlockedUntilInstanceAllocation,
+	BlockedInvalidTeamId,
+}
+
+public enum GroupPortalExecutionBlockedReason
+{
+	GroupFanoutNotImplemented,
+	InstanceAllocationNotPorted,
+	MissingTeamId,
+}
+
+public enum GroupPortalCooldownPreviewState
+{
+	WouldEvaluateAfterTeleport,
+	SkippedForReentry,
+	UnknownUntilTransfer,
 }
