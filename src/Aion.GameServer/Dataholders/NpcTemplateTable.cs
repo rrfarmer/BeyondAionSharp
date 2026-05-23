@@ -47,7 +47,8 @@ public sealed record NpcTemplateSummary(
 	bool HasTalkInfo = false,
 	bool IsDialogNpc = false,
 	string GroupDrop = "",
-	string AbyssType = "NONE")
+	string AbyssType = "NONE",
+	KiskStatsSummary? KiskStats = null)
 {
 	public bool CanInteract => HasTalkInfo;
 
@@ -57,3 +58,8 @@ public sealed record NpcTemplateSummary(
 		return FunctionDialogIds?.Contains(dialogActionId) == true;
 	}
 }
+
+public sealed record KiskStatsSummary(
+	int UseMask = 4,
+	int MaxMembers = 6,
+	int MaxResurrects = 18);

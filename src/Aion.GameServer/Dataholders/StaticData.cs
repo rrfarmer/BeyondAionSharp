@@ -1660,6 +1660,16 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 3 && reader.LocalName == "kisk_stats" && currentNpcTemplate != null)
+			{
+				// Java parity: model/templates/stats/KiskStatsTemplate.
+				currentNpcTemplate.KiskStats = new KiskStatsSummary(
+					ReadOptionalIntAttribute(reader, "usemask", 4),
+					ReadOptionalIntAttribute(reader, "members", 6),
+					ReadOptionalIntAttribute(reader, "resurrects", 18));
+				continue;
+			}
+
 			if (reader.Depth == 4 && reader.LocalName == "speeds" && currentNpcTemplate != null)
 			{
 				currentNpcTemplate.RunSpeed = ReadFloatAttribute(reader, "run");
@@ -3217,6 +3227,8 @@ public sealed class StaticData
 
 		private string AbyssType { get; }
 
+		public KiskStatsSummary? KiskStats { get; set; }
+
 		public int MaxHp { get; set; }
 
 		public float RunSpeed { get; set; }
@@ -3262,7 +3274,8 @@ public sealed class StaticData
 				HasTalkInfo,
 				IsDialogNpc,
 				GroupDrop,
-				AbyssType);
+				AbyssType,
+				KiskStats);
 		}
 	}
 

@@ -4652,7 +4652,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		player.InventoryItems = inventoryItems.ToArray();
-		_runtimeContext?.Kisks.RegisterKisk(plan.Ownership.OwnerObjectId, plan.Ownership.KiskObjectId, plan.Ownership.NpcId);
+		_runtimeContext?.Kisks.RegisterKisk(plan.RuntimeState);
 		if (_connectionRegistry != null)
 			await _connectionRegistry.RefreshNpcVisibilityAsync([plan.Kisk]);
 		else

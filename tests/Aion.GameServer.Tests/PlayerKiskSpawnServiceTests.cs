@@ -16,7 +16,7 @@ public sealed class PlayerKiskSpawnServiceTests
 			Position = new WorldPosition(210010000, 10.25f, 20.5f, 30.75f, 70, InstanceId: 3),
 		};
 		var sourceItem = CreateSourceItem(count: 3);
-		var template = CreateKiskTemplate(700273);
+		var template = CreateKiskTemplate(700273, new KiskStatsSummary(UseMask: 0, MaxMembers: 6, MaxResurrects: 18));
 
 		var plan = PlayerKiskSpawnService.CreatePlan(player, sourceItem, template, kiskObjectId: 9001);
 
@@ -26,6 +26,10 @@ public sealed class PlayerKiskSpawnServiceTests
 		Assert.Equal(new WorldPosition(210010000, 10.25f, 20.5f, 30.75f, 10, InstanceId: 3), plan.Kisk.Position);
 		Assert.Equal(plan.Kisk.Position, plan.Kisk.SpawnLocation);
 		Assert.Equal(new PlayerKiskOwnership(9001, 1001, 700273), plan.Ownership);
+		Assert.Equal(0, plan.RuntimeState.UseMask);
+		Assert.Equal(6, plan.RuntimeState.MaxMembers);
+		Assert.Equal(18, plan.RuntimeState.RemainingResurrects);
+		Assert.Equal(18, plan.RuntimeState.MaxResurrects);
 		Assert.NotNull(plan.SourceItemUpdate);
 		Assert.Equal(2, plan.SourceItemUpdate.Count);
 		Assert.Equal(sourceItem.ObjectId, plan.SourceItemUpdate.ObjectId);
@@ -49,6 +53,9 @@ public sealed class PlayerKiskSpawnServiceTests
 		Assert.Null(plan.SourceItemUpdate);
 		Assert.Equal(sourceItem.ObjectId, plan.DeletedSourceItemObjectId);
 		Assert.Equal(new PlayerKiskOwnership(9002, 1001, 700274), plan.Ownership);
+		Assert.Equal(PlayerKiskRuntimeState.DefaultUseMask, plan.RuntimeState.UseMask);
+		Assert.Equal(PlayerKiskRuntimeState.DefaultMaxMembers, plan.RuntimeState.MaxMembers);
+		Assert.Equal(PlayerKiskRuntimeState.DefaultMaxResurrects, plan.RuntimeState.MaxResurrects);
 	}
 
 	private static InventoryItem CreateSourceItem(long count)
@@ -67,7 +74,7 @@ public sealed class PlayerKiskSpawnServiceTests
 		};
 	}
 
-	private static NpcTemplateSummary CreateKiskTemplate(int npcId)
+	private static NpcTemplateSummary CreateKiskTemplate(int npcId, KiskStatsSummary? kiskStats = null)
 	{
 		return new NpcTemplateSummary(
 			npcId,
@@ -82,6 +89,7 @@ public sealed class PlayerKiskSpawnServiceTests
 			MaxHp: 1000,
 			Height: 2.5f,
 			BoundRadius: 1.2f,
-			State: WorldNpcState.DefaultSpawnState);
+			State: WorldNpcState.DefaultSpawnState,
+			KiskStats: kiskStats);
 	}
 }

@@ -758,6 +758,29 @@ public class GamePacketTests
 		Assert.Equal(1, itemUsageReader.ReadD());
 		Assert.Equal(0, itemUsageReader.Remaining);
 
+		var kiskSpawnedAt = new DateTimeOffset(2026, 5, 23, 12, 0, 0, TimeSpan.Zero);
+		var kisk = new PlayerKiskRuntimeState(
+			objectId: 9001,
+			ownerObjectId: 1001,
+			npcId: 700273,
+			useMask: 4,
+			maxMembers: 6,
+			maxResurrects: 18,
+			spawnedAt: kiskSpawnedAt);
+		Assert.True(kisk.AddMember(1001));
+		Assert.True(kisk.UseResurrection());
+		var kiskUpdatePayload = SerializeUnencryptedPayload(new SmKiskUpdate(kisk, kiskSpawnedAt.AddSeconds(30)));
+		using var kiskUpdateReader = new PacketBuffer(kiskUpdatePayload);
+		Assert.Equal(9001, kiskUpdateReader.ReadD());
+		Assert.Equal(1001, kiskUpdateReader.ReadD());
+		Assert.Equal(4, kiskUpdateReader.ReadD());
+		Assert.Equal(1, kiskUpdateReader.ReadD());
+		Assert.Equal(6, kiskUpdateReader.ReadD());
+		Assert.Equal(17, kiskUpdateReader.ReadD());
+		Assert.Equal(18, kiskUpdateReader.ReadD());
+		Assert.Equal(7170, kiskUpdateReader.ReadD());
+		Assert.Equal(0, kiskUpdateReader.Remaining);
+
 		var statUpdateHpPayload = SerializeUnencryptedPayload(new SmStatUpdateHp(currentHp: 1234, maxHp: 5678));
 		using var statUpdateHpReader = new PacketBuffer(statUpdateHpPayload);
 		Assert.Equal(1234, statUpdateHpReader.ReadD());

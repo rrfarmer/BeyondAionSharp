@@ -755,6 +755,10 @@ public sealed class StaticDataLoadingTests
 		Assert.Contains(swordShieldSet.FullBonus!.Modifiers, modifier => modifier is { Operation: "add", Name: "MAXMP", Value: 100, Bonus: true });
 		Assert.Equal("kamikaze worm", staticData.NpcTemplates.GetNpcTemplate(201000)?.Name);
 		Assert.Equal("SPAKY", staticData.NpcTemplates.GetNpcTemplate(201002)?.GroupDrop);
+		var smallKiskNpc = staticData.NpcTemplates.GetNpcTemplate(700273);
+		Assert.NotNull(smallKiskNpc);
+		Assert.Equal(new KiskStatsSummary(UseMask: 0, MaxMembers: 6, MaxResurrects: 18), smallKiskNpc.KiskStats);
+		Assert.Equal(new KiskStatsSummary(UseMask: 3, MaxMembers: 1, MaxResurrects: 3), staticData.NpcTemplates.GetNpcTemplate(700403)?.KiskStats);
 		var abyssBossNpc = staticData.NpcTemplates.GetNpcTemplate(218246);
 		Assert.NotNull(abyssBossNpc);
 		Assert.Equal("DRAGON", abyssBossNpc.GroupDrop);

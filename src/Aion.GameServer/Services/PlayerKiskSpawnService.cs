@@ -27,7 +27,7 @@ public static class PlayerKiskSpawnService
 
 		return new PlayerKiskSpawnPlan(
 			kisk,
-			new PlayerKiskOwnership(kiskObjectId, player.ObjectId, kiskTemplate.TemplateId),
+			PlayerKiskRuntimeState.FromTemplate(kiskObjectId, player.ObjectId, kiskTemplate),
 			sourceItemUpdate,
 			deletedSourceItemObjectId);
 	}
@@ -79,6 +79,9 @@ public static class PlayerKiskSpawnService
 
 public sealed record PlayerKiskSpawnPlan(
 	WorldNpc Kisk,
-	PlayerKiskOwnership Ownership,
+	PlayerKiskRuntimeState RuntimeState,
 	InventoryItem? SourceItemUpdate,
-	int? DeletedSourceItemObjectId);
+	int? DeletedSourceItemObjectId)
+{
+	public PlayerKiskOwnership Ownership => RuntimeState.Ownership;
+}
