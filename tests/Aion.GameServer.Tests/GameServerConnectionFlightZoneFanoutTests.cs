@@ -259,6 +259,50 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 	}
 
 	[Fact]
+	public async Task QueueDelayedTeleportAsync_SendsTeleportLocAndPendingStateCompletesOnAnimationDone()
+	{
+		var dataManager = await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false);
+		var runtimeContext = new GameServerRuntimeContext();
+		runtimeContext.SetDataManager(dataManager);
+		var zoneCounterService = new CreaturePvpZoneCounterService();
+		var registry = new CapturingConnectionRegistry();
+		await using var pair = await TestConnectionPair.CreateAsync(registry, runtimeContext, zoneCounterService);
+		var startPosition = new WorldPosition(210040000, 100, 100, 150, 0);
+		var destination = new WorldPosition(210040000, 2700, 620, 150, 32);
+		var player = CreateTeleportingPlayer(7311, startPosition);
+		Assert.Contains(
+			dataManager.StaticData.CreaturePvpZones.GetZonesByMapId(destination.WorldId),
+			zone => zone.Name == "PVP_87_210040000" && zone.Contains(destination));
+
+		var request = await pair.Connection.QueueDelayedTeleportAsync(
+			player,
+			destination,
+			TeleportAnimation.FadeOutBeam,
+			dataManager.StaticData);
+		var teleportPacket = Assert.IsType<SmTeleportLoc>(request.Packet);
+		using var teleportReader = new PacketBuffer(SerializeUnencryptedPayload(teleportPacket));
+		var queuedPosition = player.Position;
+		var completed = await pair.Connection.HandleTeleportAnimationDoneAsync(player);
+
+		Assert.Equal(destination, request.PendingTeleport.Destination);
+		Assert.Equal(destination, player.Position);
+		Assert.Equal(startPosition, queuedPosition);
+		Assert.NotNull(completed);
+		Assert.Equal(startPosition, completed.PreviousPosition);
+		Assert.Equal(destination, completed.Destination);
+		Assert.Null(player.PendingTeleport);
+		Assert.Equal(1, zoneCounterService.GetCounters(player.ObjectId).PvpZoneCount);
+		Assert.Equal((byte)TeleportAnimation.FadeOutBeam, teleportReader.ReadC());
+		Assert.Equal(destination.WorldId, teleportReader.ReadD());
+		Assert.Equal(destination.WorldId, teleportReader.ReadD());
+		Assert.Equal(destination.X, teleportReader.ReadF());
+		Assert.Equal(destination.Y, teleportReader.ReadF());
+		Assert.Equal(destination.Z, teleportReader.ReadF());
+		Assert.Equal(destination.Heading, teleportReader.ReadC());
+		Assert.Equal(0, teleportReader.Remaining);
+	}
+
+	[Fact]
 	public async Task CompleteToyPetSpawnUseItemAsync_RevalidatesCreaturePvpZoneCountersForSpawnedKisk()
 	{
 		var dataManager = await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false);

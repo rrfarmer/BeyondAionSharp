@@ -4826,6 +4826,23 @@ public sealed class GameServerConnection : BaseClientConnection
 		return teleport;
 	}
 
+	internal async Task<PendingTeleportRequestResult> QueueDelayedTeleportAsync(
+		Player player,
+		WorldPosition destination,
+		TeleportAnimation animation = TeleportAnimation.FadeOutBeam,
+		StaticData? staticData = null)
+	{
+		staticData ??= _runtimeContext?.DataManager?.StaticData;
+		var pendingTeleport = PlayerTeleportService.QueuePendingTeleport(player, destination);
+		var packet = new SmTeleportLoc(
+			pendingTeleport.Destination,
+			animation,
+			staticData?.WorldMaps ?? Array.Empty<WorldMapSummary>());
+		// Java parity: TeleportService.sendLoc queues SpawnTask under TaskId.TELEPORT, then sends SM_TELEPORT_LOC; position changes after CM_TELEPORT_ANIMATION_DONE.
+		await SendPacketAsync(packet);
+		return new PendingTeleportRequestResult(pendingTeleport, packet);
+	}
+
 	private void ClearReviveTargets(Player player)
 	{
 		if (_connectionRegistry == null)

@@ -1,5 +1,6 @@
 using Aion.GameServer.Controllers.Movement;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion;
 using Aion.GameServer.World;
 
 namespace Aion.GameServer.Services;
@@ -66,3 +67,7 @@ public sealed record PlayerTeleportResult(
 	WorldPosition PreviousPosition,
 	WorldPosition Destination,
 	bool UsesSameWorldSpawnPath);
+
+public sealed record PendingTeleportRequestResult(
+	PendingPlayerTeleport PendingTeleport,
+	GameServerPacket Packet);

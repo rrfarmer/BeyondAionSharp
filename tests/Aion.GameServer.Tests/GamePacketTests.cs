@@ -1998,6 +1998,20 @@ public class GamePacketTests
 		Assert.Equal(
 			Convert.FromHexString("0000000005000000"),
 			SerializeUnencryptedPayload(new SmChannelInfo(new WorldPosition(210010000, 1, 2, 3, 32), [new WorldMapSummary(210010000, false, 5)])));
+		var teleportPayload = SerializeUnencryptedPayload(
+			new SmTeleportLoc(
+				new WorldPosition(300030000, 100.5f, 200.25f, 300.75f, 64, InstanceId: 7),
+				TeleportAnimation.FadeOutBeam,
+				[new WorldMapSummary(300030000, true, 1)]));
+		using var teleportReader = new PacketBuffer(teleportPayload);
+		Assert.Equal((byte)TeleportAnimation.FadeOutBeam, teleportReader.ReadC());
+		Assert.Equal(300030000, teleportReader.ReadD());
+		Assert.Equal(7, teleportReader.ReadD());
+		Assert.Equal(100.5f, teleportReader.ReadF());
+		Assert.Equal(200.25f, teleportReader.ReadF());
+		Assert.Equal(300.75f, teleportReader.ReadF());
+		Assert.Equal(64, (int)teleportReader.ReadC());
+		Assert.Equal(0, teleportReader.Remaining);
 		Assert.Equal(
 			Convert.FromHexString("7B000000"),
 			SerializeUnencryptedPayload(new SmGameTime(123)));
