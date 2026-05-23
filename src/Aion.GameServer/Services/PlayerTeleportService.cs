@@ -181,7 +181,8 @@ public sealed record GroupPortalTransferPlan(
 	int MaxPlayers,
 	GroupPortalTransferState State,
 	WorldMapInstanceRuntimeState? RegisteredInstance,
-	GroupPortalTransferBlockedReason BlockedReason)
+	GroupPortalTransferBlockedReason BlockedReason,
+	GroupPortalMemberInstanceScanPlan MemberInstanceScanPlan)
 {
 	public static GroupPortalTransferPlan? FromTeamPlan(PortalTeamEntryPlan teamPlan)
 	{
@@ -197,7 +198,11 @@ public sealed record GroupPortalTransferPlan(
 				teamPlan.MaxPlayers,
 				GroupPortalTransferState.InvalidTeamId,
 				null,
-				GroupPortalTransferBlockedReason.MissingTeamId);
+				GroupPortalTransferBlockedReason.MissingTeamId,
+				CreateMemberInstanceScanPlan(
+					teamPlan,
+					GroupPortalMemberInstanceScanState.BlockedInvalidTeamId,
+					GroupPortalMemberInstanceScanBlockedReason.MissingTeamId));
 		}
 
 		var state = teamPlan.RegisteredInstance == null
@@ -209,9 +214,53 @@ public sealed record GroupPortalTransferPlan(
 			teamPlan.MaxPlayers,
 			state,
 			teamPlan.RegisteredInstance,
-			GroupPortalTransferBlockedReason.GroupFanoutNotImplemented);
+			GroupPortalTransferBlockedReason.GroupFanoutNotImplemented,
+			CreateMemberInstanceScanPlan(teamPlan, state));
+	}
+
+	private static GroupPortalMemberInstanceScanPlan CreateMemberInstanceScanPlan(
+		PortalTeamEntryPlan teamPlan,
+		GroupPortalTransferState transferState)
+	{
+		if (transferState == GroupPortalTransferState.RegisteredInstanceTransfer)
+		{
+			return CreateMemberInstanceScanPlan(
+				teamPlan,
+				GroupPortalMemberInstanceScanState.NotNeededRegisteredTeamInstance,
+				GroupPortalMemberInstanceScanBlockedReason.RegisteredTeamInstanceAlreadyResolved);
+		}
+
+		if (teamPlan.MemberObjectIds.Count == 0)
+		{
+			return CreateMemberInstanceScanPlan(
+				teamPlan,
+				GroupPortalMemberInstanceScanState.BlockedNoMemberCandidates,
+				GroupPortalMemberInstanceScanBlockedReason.NoMemberObjectIds);
+		}
+
+		// Java parity: PortalService.port can scan group.getMembers() for member solo registrations when instanceGroupReq is false.
+		return CreateMemberInstanceScanPlan(
+			teamPlan,
+			GroupPortalMemberInstanceScanState.WouldScanMemberObjectIds,
+			GroupPortalMemberInstanceScanBlockedReason.LiveGroupAggregateNotPorted);
+	}
+
+	private static GroupPortalMemberInstanceScanPlan CreateMemberInstanceScanPlan(
+		PortalTeamEntryPlan teamPlan,
+		GroupPortalMemberInstanceScanState state,
+		GroupPortalMemberInstanceScanBlockedReason blockedReason)
+	{
+		var candidates = state == GroupPortalMemberInstanceScanState.WouldScanMemberObjectIds
+			? teamPlan.MemberObjectIds
+			: Array.Empty<int>();
+		return new GroupPortalMemberInstanceScanPlan(candidates, state, blockedReason);
 	}
 }
+
+public sealed record GroupPortalMemberInstanceScanPlan(
+	IReadOnlyList<int> CandidateObjectIds,
+	GroupPortalMemberInstanceScanState State,
+	GroupPortalMemberInstanceScanBlockedReason BlockedReason);
 
 public enum GroupPortalTransferState
 {
@@ -224,4 +273,20 @@ public enum GroupPortalTransferBlockedReason
 {
 	MissingTeamId,
 	GroupFanoutNotImplemented,
+}
+
+public enum GroupPortalMemberInstanceScanState
+{
+	NotNeededRegisteredTeamInstance,
+	WouldScanMemberObjectIds,
+	BlockedInvalidTeamId,
+	BlockedNoMemberCandidates,
+}
+
+public enum GroupPortalMemberInstanceScanBlockedReason
+{
+	RegisteredTeamInstanceAlreadyResolved,
+	LiveGroupAggregateNotPorted,
+	MissingTeamId,
+	NoMemberObjectIds,
 }

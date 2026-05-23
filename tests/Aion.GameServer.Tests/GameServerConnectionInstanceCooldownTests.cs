@@ -455,6 +455,13 @@ public sealed class GameServerConnectionInstanceCooldownTests
 		Assert.Equal(GroupPortalTransferState.RegisteredInstanceTransfer, groupPlan.State);
 		Assert.Same(registeredInstance, groupPlan.RegisteredInstance);
 		Assert.Equal(GroupPortalTransferBlockedReason.GroupFanoutNotImplemented, groupPlan.BlockedReason);
+		Assert.Empty(groupPlan.MemberInstanceScanPlan.CandidateObjectIds);
+		Assert.Equal(
+			GroupPortalMemberInstanceScanState.NotNeededRegisteredTeamInstance,
+			groupPlan.MemberInstanceScanPlan.State);
+		Assert.Equal(
+			GroupPortalMemberInstanceScanBlockedReason.RegisteredTeamInstanceAlreadyResolved,
+			groupPlan.MemberInstanceScanPlan.BlockedReason);
 		Assert.Empty(pair.SentPackets);
 		Assert.Null(player.PendingTeleport);
 		Assert.Null(repository.SavedPortalCooldowns);
@@ -527,6 +534,13 @@ public sealed class GameServerConnectionInstanceCooldownTests
 		Assert.Equal(GroupPortalTransferState.FreshInstanceAllocationNeeded, groupPlan.State);
 		Assert.Null(groupPlan.RegisteredInstance);
 		Assert.Equal(GroupPortalTransferBlockedReason.GroupFanoutNotImplemented, groupPlan.BlockedReason);
+		Assert.Equal([1001, 1002], groupPlan.MemberInstanceScanPlan.CandidateObjectIds);
+		Assert.Equal(
+			GroupPortalMemberInstanceScanState.WouldScanMemberObjectIds,
+			groupPlan.MemberInstanceScanPlan.State);
+		Assert.Equal(
+			GroupPortalMemberInstanceScanBlockedReason.LiveGroupAggregateNotPorted,
+			groupPlan.MemberInstanceScanPlan.BlockedReason);
 		Assert.Empty(pair.SentPackets);
 		Assert.Null(player.PendingTeleport);
 		Assert.Null(repository.SavedPortalCooldowns);
@@ -599,6 +613,13 @@ public sealed class GameServerConnectionInstanceCooldownTests
 		Assert.Equal(GroupPortalTransferState.InvalidTeamId, groupPlan.State);
 		Assert.Null(groupPlan.RegisteredInstance);
 		Assert.Equal(GroupPortalTransferBlockedReason.MissingTeamId, groupPlan.BlockedReason);
+		Assert.Empty(groupPlan.MemberInstanceScanPlan.CandidateObjectIds);
+		Assert.Equal(
+			GroupPortalMemberInstanceScanState.BlockedInvalidTeamId,
+			groupPlan.MemberInstanceScanPlan.State);
+		Assert.Equal(
+			GroupPortalMemberInstanceScanBlockedReason.MissingTeamId,
+			groupPlan.MemberInstanceScanPlan.BlockedReason);
 		Assert.Empty(pair.SentPackets);
 		Assert.Null(player.PendingTeleport);
 		Assert.Null(repository.SavedPortalCooldowns);
