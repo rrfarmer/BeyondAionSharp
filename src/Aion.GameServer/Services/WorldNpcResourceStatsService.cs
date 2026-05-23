@@ -344,6 +344,25 @@ public sealed class WorldNpcResourceStatsService
 		return WorldNpcDpTransferEffectResult.Applied(reservedDp, effectedChange, effectorChange);
 	}
 
+	public async ValueTask<WorldNpcReviveDpResetResult> ResetPlayerDpForReviveAsync(
+		Player? player,
+		bool hasNoResurrectPenalty,
+		int? maxDp = null)
+	{
+		// Java parity: services/player/PlayerReviveService.revive DP reset branch.
+		if (player == null)
+			return WorldNpcReviveDpResetResult.MissingTarget(hasNoResurrectPenalty);
+
+		var previousDp = player.Dp;
+		if (hasNoResurrectPenalty)
+			return WorldNpcReviveDpResetResult.NoResurrectPenalty(player.ObjectId, previousDp);
+		if (previousDp <= 0)
+			return WorldNpcReviveDpResetResult.NoDp(player.ObjectId, previousDp);
+
+		var change = await AddPlayerDpAsync(player, -previousDp, maxDp);
+		return WorldNpcReviveDpResetResult.FromDpChange(change, previousDp, hasNoResurrectPenalty);
+	}
+
 	public ValueTask<WorldNpcResourceEffectApplicationResult> ApplyResourceOverTimePeriodicResultAsync(
 		WorldNpcSkillResourceOverTimePeriodicActionResult effectResult,
 		WorldNpcResourceMutationTarget target,
@@ -1175,6 +1194,71 @@ public enum WorldNpcDpTransferEffectStatus
 	Applied,
 	MissingEffected,
 	MissingEffector,
+}
+
+public sealed record WorldNpcReviveDpResetResult(
+	WorldNpcReviveDpResetStatus Status,
+	int ObjectId,
+	int PreviousDp,
+	int CurrentDp,
+	bool HasNoResurrectPenalty,
+	WorldNpcResourceChangeResult? Change = null)
+{
+	public static WorldNpcReviveDpResetResult MissingTarget(bool hasNoResurrectPenalty)
+	{
+		return new WorldNpcReviveDpResetResult(
+			WorldNpcReviveDpResetStatus.MissingTarget,
+			0,
+			PreviousDp: 0,
+			CurrentDp: 0,
+			hasNoResurrectPenalty);
+	}
+
+	public static WorldNpcReviveDpResetResult NoResurrectPenalty(int objectId, int currentDp)
+	{
+		return new WorldNpcReviveDpResetResult(
+			WorldNpcReviveDpResetStatus.NoResurrectPenalty,
+			objectId,
+			currentDp,
+			currentDp,
+			HasNoResurrectPenalty: true);
+	}
+
+	public static WorldNpcReviveDpResetResult NoDp(int objectId, int currentDp)
+	{
+		return new WorldNpcReviveDpResetResult(
+			WorldNpcReviveDpResetStatus.NoDp,
+			objectId,
+			currentDp,
+			currentDp,
+			HasNoResurrectPenalty: false);
+	}
+
+	public static WorldNpcReviveDpResetResult FromDpChange(
+		WorldNpcResourceChangeResult change,
+		int previousDp,
+		bool hasNoResurrectPenalty)
+	{
+		var status = change.Status == WorldNpcResourceChangeStatus.Reduced
+			? WorldNpcReviveDpResetStatus.Applied
+			: WorldNpcReviveDpResetStatus.DpBoundarySkipped;
+		return new WorldNpcReviveDpResetResult(
+			status,
+			change.ObjectId,
+			previousDp,
+			change.CurrentValue,
+			hasNoResurrectPenalty,
+			change);
+	}
+}
+
+public enum WorldNpcReviveDpResetStatus
+{
+	Applied,
+	MissingTarget,
+	NoResurrectPenalty,
+	NoDp,
+	DpBoundarySkipped,
 }
 
 public sealed record WorldNpcResourceChangeResult(

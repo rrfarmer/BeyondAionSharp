@@ -564,6 +564,62 @@ public sealed class WorldNpcResourceStatsServiceTests
 	}
 
 	[Fact]
+	public async Task ResetPlayerDpForReviveAsync_ClearsDpThroughPacketedBoundary()
+	{
+		var service = CreateService(out _, out var registry);
+		var player = CreatePlayer(objectId: 1019, currentHp: 0, currentMp: 0, currentFp: 100, playerClass: "RANGER", dp: 900);
+		player.IsOnline = true;
+
+		var result = await service.ResetPlayerDpForReviveAsync(player, hasNoResurrectPenalty: false, maxDp: 4000);
+
+		Assert.Equal(WorldNpcReviveDpResetStatus.Applied, result.Status);
+		Assert.Equal(player.ObjectId, result.ObjectId);
+		Assert.Equal(900, result.PreviousDp);
+		Assert.Equal(0, result.CurrentDp);
+		Assert.False(result.HasNoResurrectPenalty);
+		Assert.NotNull(result.Change);
+		Assert.Equal(WorldNpcResourceChangeStatus.Reduced, result.Change.Status);
+		Assert.Equal(900, result.Change.AppliedValue);
+		Assert.Equal(0, result.Change.CurrentValue);
+		Assert.Equal(0, player.Dp);
+		Assert.NotNull(result.Change.DpInfoPacket);
+		Assert.NotNull(result.Change.DpStatUpdatePacket);
+		Assert.Same(result.Change.DpInfoPacket, Assert.Single(registry.Broadcasts).Packet);
+		Assert.Same(result.Change.DpStatUpdatePacket, Assert.Single(registry.SentPackets).Packet);
+		Assert.Collection(
+			registry.PacketOrder,
+			packet => Assert.Same(result.Change.DpInfoPacket, packet),
+			packet => Assert.Same(result.Change.DpStatUpdatePacket, packet));
+	}
+
+	[Fact]
+	public async Task ResetPlayerDpForReviveAsync_SkipsPenaltyNoDpAndMissingTarget()
+	{
+		var service = CreateService(out _, out var registry);
+		var penaltyPlayer = CreatePlayer(objectId: 1020, currentHp: 0, currentMp: 0, currentFp: 100, playerClass: "RANGER", dp: 900);
+		var emptyDpPlayer = CreatePlayer(objectId: 1021, currentHp: 0, currentMp: 0, currentFp: 100, playerClass: "RANGER", dp: 0);
+		penaltyPlayer.IsOnline = true;
+		emptyDpPlayer.IsOnline = true;
+
+		var penalty = await service.ResetPlayerDpForReviveAsync(penaltyPlayer, hasNoResurrectPenalty: true, maxDp: 4000);
+		var noDp = await service.ResetPlayerDpForReviveAsync(emptyDpPlayer, hasNoResurrectPenalty: false, maxDp: 4000);
+		var missing = await service.ResetPlayerDpForReviveAsync(player: null, hasNoResurrectPenalty: false, maxDp: 4000);
+
+		Assert.Equal(WorldNpcReviveDpResetStatus.NoResurrectPenalty, penalty.Status);
+		Assert.True(penalty.HasNoResurrectPenalty);
+		Assert.Equal(900, penalty.CurrentDp);
+		Assert.Equal(900, penaltyPlayer.Dp);
+		Assert.Null(penalty.Change);
+		Assert.Equal(WorldNpcReviveDpResetStatus.NoDp, noDp.Status);
+		Assert.Equal(0, noDp.CurrentDp);
+		Assert.Equal(0, emptyDpPlayer.Dp);
+		Assert.Null(noDp.Change);
+		Assert.Equal(WorldNpcReviveDpResetStatus.MissingTarget, missing.Status);
+		Assert.Empty(registry.Broadcasts);
+		Assert.Empty(registry.SentPackets);
+	}
+
+	[Fact]
 	public async Task ApplyResourceOverTimePeriodicResultAsync_ReducesNpcMpFromStagedMpAttack()
 	{
 		var service = CreateService(out var lifeStats, out _);
