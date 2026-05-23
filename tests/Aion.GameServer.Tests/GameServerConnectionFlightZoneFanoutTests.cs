@@ -167,11 +167,13 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 		Assert.Equal(CreaturePvpZoneCounters.Empty, zoneCounterService.GetCounters(player.ObjectId));
 
 		player.Position = insidePvpZone;
+		player.PortAnimation = ArrivalAnimation.FadeInBeam;
 		await pair.Connection.HandleLevelReadyAsync(player);
 		var counters = zoneCounterService.GetCounters(player.ObjectId);
 
 		Assert.Equal(1, counters.PvpZoneCount);
 		Assert.Equal(0, counters.SiegeZoneCount);
+		Assert.Equal(ArrivalAnimation.None, player.PortAnimation);
 	}
 
 	[Fact]
