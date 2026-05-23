@@ -460,13 +460,13 @@ public sealed class PlayerGroupRuntimeTests
 		var offlinePlan = PlayerGroupMemberInfoPacketPlan.FromMember(99001, offlineMember, PlayerGroupEvent.Enter);
 
 		var online = onlinePlan.PrefixSnapshot;
-		Assert.Null(online.MaxHp);
+		Assert.Equal(3454, online.MaxHp);
 		Assert.Equal(111, online.CurrentHp);
-		Assert.Null(online.MaxMp);
+		Assert.Equal(4198, online.MaxMp);
 		Assert.Equal(222, online.CurrentMp);
-		Assert.Null(online.MaxFp);
+		Assert.Equal(60, online.MaxFp);
 		Assert.Equal(0, online.CurrentFp);
-		Assert.False(online.HasKnownOnlineMaximums);
+		Assert.True(online.HasKnownLifeStatMaximums);
 		Assert.Equal(0, online.Unknown3Point5);
 		Assert.Equal(220010000, online.MapId);
 		Assert.Equal(220010002, online.MapInstanceId);
@@ -489,12 +489,15 @@ public sealed class PlayerGroupRuntimeTests
 		Assert.Equal(222, withKnownMaximums.CurrentMp);
 		Assert.Equal(60, withKnownMaximums.MaxFp);
 		Assert.Equal(0, withKnownMaximums.CurrentFp);
-		Assert.True(withKnownMaximums.HasKnownOnlineMaximums);
+		Assert.True(withKnownMaximums.HasKnownLifeStatMaximums);
 
 		var offline = offlinePlan.PrefixSnapshot;
 		Assert.Equal(PlayerGroupEvent.EnterOffline, offlinePlan.EffectiveEvent);
+		Assert.Equal(0, offline.MaxHp);
 		Assert.Equal(0, offline.CurrentHp);
+		Assert.Equal(0, offline.MaxMp);
 		Assert.Equal(0, offline.CurrentMp);
+		Assert.Equal(0, offline.MaxFp);
 		Assert.Equal(0, offline.CurrentFp);
 		Assert.Equal(210010000, offline.MapId);
 		Assert.Equal(210010000, offline.MapInstanceId);
@@ -504,6 +507,28 @@ public sealed class PlayerGroupRuntimeTests
 		Assert.Equal(7, offline.EventId);
 		Assert.Equal(0, offline.FlyState);
 		Assert.Equal(0, offline.MentorFlag);
+	}
+
+	[Fact]
+	public void PlayerGroupMemberInfoResourceMaximums_UsesStatsInfoLevelBasedMaxStats()
+	{
+		var member = new PlayerGroupMember(new Player
+		{
+			ObjectId = 1004,
+			IsOnline = true,
+			PlayerClass = "GLADIATOR",
+			Level = 10,
+			LifeStats = new PlayerLifeStats(CurrentHp: 10_000, CurrentMp: -5, CurrentFp: 100),
+		});
+
+		var plan = PlayerGroupMemberInfoPacketPlan.FromMember(99001, member, PlayerGroupEvent.Update);
+
+		Assert.Equal(819, plan.PrefixSnapshot.MaxHp);
+		Assert.Equal(819, plan.PrefixSnapshot.CurrentHp);
+		Assert.Equal(840, plan.PrefixSnapshot.MaxMp);
+		Assert.Equal(0, plan.PrefixSnapshot.CurrentMp);
+		Assert.Equal(60, plan.PrefixSnapshot.MaxFp);
+		Assert.Equal(100, plan.PrefixSnapshot.CurrentFp);
 	}
 
 	[Fact]

@@ -75,13 +75,26 @@ public sealed record PlayerGroupMemberInfoPacketPlan(
 			effectiveEvent,
 			slot,
 			member.IsOnline,
-			PlayerGroupMemberInfoPrefixSnapshot.FromMember(member, effectiveEvent),
+			PlayerGroupMemberInfoPrefixSnapshot.FromMember(
+				member,
+				effectiveEvent,
+				PlayerGroupMemberInfoResourceMaximums.FromStatsInfo(member.Player)),
 			WritesLifeStatsBlock: true,
 			WritesPositionBlock: true,
 			WritesCommonDataBlock: true,
 			writesName,
 			writesEffects,
 			WritesSlotTimers: writesEffects);
+	}
+}
+
+public sealed record PlayerGroupMemberInfoResourceMaximums(int MaxHp, int MaxMp, int MaxFp)
+{
+	public static PlayerGroupMemberInfoResourceMaximums FromStatsInfo(Player player)
+	{
+		// Java parity: model/stats/container/CreatureLifeStats.getMaxHp/getMaxMp and PlayerLifeStats.getMaxFp read current game stats.
+		var maxStats = SmStatsInfo.CalculateCurrentResourceMaxStats(player);
+		return new PlayerGroupMemberInfoResourceMaximums(maxStats.MaxHp, maxStats.MaxMp, maxStats.MaxFp);
 	}
 }
 
@@ -107,23 +120,29 @@ public sealed record PlayerGroupMemberInfoPrefixSnapshot(
 	int MentorFlag,
 	string Name)
 {
-	public bool HasKnownOnlineMaximums => MaxHp.HasValue && MaxMp.HasValue && MaxFp.HasValue;
+	public bool HasKnownLifeStatMaximums => MaxHp.HasValue && MaxMp.HasValue && MaxFp.HasValue;
 
-	public static PlayerGroupMemberInfoPrefixSnapshot FromMember(PlayerGroupMember member, PlayerGroupEvent effectiveEvent)
+	public static PlayerGroupMemberInfoPrefixSnapshot FromMember(
+		PlayerGroupMember member,
+		PlayerGroupEvent effectiveEvent,
+		PlayerGroupMemberInfoResourceMaximums? resourceMaximums = null)
 	{
 		// Java parity: network/aion/serverpackets/SM_GROUP_MEMBER_INFO.writeImpl fixed prefix after group/member ids.
 		var player = member.Player;
 		var lifeStats = player.LifeStats;
 		var position = player.Position;
 		var isOnline = member.IsOnline;
+		var maxHp = isOnline ? resourceMaximums?.MaxHp : 0;
+		var maxMp = isOnline ? resourceMaximums?.MaxMp : 0;
+		var maxFp = isOnline ? resourceMaximums?.MaxFp : 0;
 
 		return new PlayerGroupMemberInfoPrefixSnapshot(
-			MaxHp: null,
-			CurrentHp: isOnline ? lifeStats?.CurrentHp ?? 0 : 0,
-			MaxMp: null,
-			CurrentMp: isOnline ? lifeStats?.CurrentMp ?? 0 : 0,
-			MaxFp: null,
-			CurrentFp: isOnline ? lifeStats?.GetCurrentFp() ?? 0 : 0,
+			MaxHp: maxHp,
+			CurrentHp: isOnline ? GetCurrentHp(lifeStats, maxHp) : 0,
+			MaxMp: maxMp,
+			CurrentMp: isOnline ? GetCurrentMp(lifeStats, maxMp) : 0,
+			MaxFp: maxFp,
+			CurrentFp: isOnline ? GetCurrentFp(lifeStats) : 0,
 			Unknown3Point5: 0,
 			MapId: position.WorldId,
 			MapInstanceId: position.WorldId + position.InstanceId - 1,
@@ -151,6 +170,25 @@ public sealed record PlayerGroupMemberInfoPrefixSnapshot(
 			CurrentMp = Math.Clamp(CurrentMp, 0, Math.Max(0, maxMp)),
 			CurrentFp = Math.Max(0, CurrentFp),
 		};
+	}
+
+	private static int GetCurrentHp(PlayerLifeStats? lifeStats, int? maxHp)
+	{
+		if (lifeStats == null)
+			return maxHp ?? 0;
+		return maxHp.HasValue ? lifeStats.GetCurrentHp(maxHp.Value) : Math.Max(0, lifeStats.CurrentHp);
+	}
+
+	private static int GetCurrentMp(PlayerLifeStats? lifeStats, int? maxMp)
+	{
+		if (lifeStats == null)
+			return maxMp ?? 0;
+		return maxMp.HasValue ? lifeStats.GetCurrentMp(maxMp.Value) : Math.Max(0, lifeStats.CurrentMp);
+	}
+
+	private static int GetCurrentFp(PlayerLifeStats? lifeStats)
+	{
+		return lifeStats?.GetCurrentFp() ?? 0;
 	}
 
 	private static int ToJavaClassId(string playerClass)

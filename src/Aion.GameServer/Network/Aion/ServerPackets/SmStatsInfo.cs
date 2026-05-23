@@ -274,7 +274,7 @@ public sealed class SmStatsInfo : GameServerPacket
 		{
 			// Java parity: PlayerCommonData.setExp/updateMaxRepose plus PlayerClass.createStatsTemplate.
 			var classStats = PlayerClassStats.Get(player.PlayerClass);
-			var level = Math.Max(1, experienceTable?.GetLevelForExp(player.Exp) ?? 1);
+			var level = Math.Max(1, experienceTable?.GetLevelForExp(player.Exp) ?? player.Level);
 			var expStart = GetStartExp(experienceTable, level);
 			var expNeed = GetExpNeed(experienceTable, level);
 			var maxRepose = level >= 10 ? (long)(expNeed * 0.25f) : 0;
