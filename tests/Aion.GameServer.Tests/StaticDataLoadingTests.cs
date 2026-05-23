@@ -156,6 +156,39 @@ public sealed class StaticDataLoadingTests
 	}
 
 	[Fact]
+	public async Task StaticData_LoadsPortalLocSummaries()
+	{
+		using var temp = TempDirectory.Create();
+		var cacheFile = Path.Combine(temp.Path, "static_data.xml");
+		File.WriteAllText(
+			cacheFile,
+			"""
+			<?xml version="1.0" encoding="UTF-8"?>
+			<static_data>
+				<portal_locs>
+					<portal_loc world_id="110010000" loc_id="1100100" x="1476.3" y="1595.5" z="572.9" />
+					<portal_loc world_id="110010000" loc_id="1100101" x="2006.8076" y="1478.2644" z="592.2286" h="53" />
+				</portal_locs>
+			</static_data>
+			""");
+
+		var staticData = await StaticData.LoadFromCacheAsync(cacheFile, Array.Empty<string>());
+
+		Assert.Equal(2, staticData.PortalLocs.Count);
+		var defaultHeading = staticData.PortalLocs.GetPortalLoc(1100100);
+		Assert.NotNull(defaultHeading);
+		Assert.Equal(110010000, defaultHeading.WorldId);
+		Assert.Equal(1476.3f, defaultHeading.X);
+		Assert.Equal(1595.5f, defaultHeading.Y);
+		Assert.Equal(572.9f, defaultHeading.Z);
+		Assert.Equal((byte)0, defaultHeading.Heading);
+		var explicitHeading = staticData.PortalLocs.GetPortalLoc(1100101);
+		Assert.NotNull(explicitHeading);
+		Assert.Equal((byte)53, explicitHeading.Heading);
+		Assert.Null(staticData.PortalLocs.GetPortalLoc(1));
+	}
+
+	[Fact]
 	public async Task StaticData_LoadsRegularNpcSpawnSpotSummaries()
 	{
 		using var temp = TempDirectory.Create();
@@ -990,6 +1023,17 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(1011, staticData.PortalPaths.GetTeleportDialogId(832997));
 		Assert.Equal(3006300, staticData.PortalPaths.GetPortalDialogPath(832998, 10000, "ELYOS")?.LocId);
 		Assert.Equal(1100100, staticData.PortalPaths.GetPortalScroll("LC1_RETURN_AREA_1")?.LocId);
+		Assert.Equal(staticData.GetElementCount("portal_loc"), staticData.PortalLocs.Count);
+		var sanctumPortalLoc = staticData.PortalLocs.GetPortalLoc(1100100);
+		Assert.NotNull(sanctumPortalLoc);
+		Assert.Equal(110010000, sanctumPortalLoc.WorldId);
+		Assert.Equal(1476.3f, sanctumPortalLoc.X);
+		Assert.Equal(1595.5f, sanctumPortalLoc.Y);
+		Assert.Equal(572.9f, sanctumPortalLoc.Z);
+		Assert.Equal((byte)0, sanctumPortalLoc.Heading);
+		var secretLibraryExit = staticData.PortalLocs.GetPortalLoc(1100101);
+		Assert.NotNull(secretLibraryExit);
+		Assert.Equal((byte)53, secretLibraryExit.Heading);
 		Assert.Contains(staticData.RecipeTemplates.GetAutolearnRecipes("ELYOS", 40009, 1), recipe => recipe.RecipeId == 155000001);
 		var craftPlayer = new Player
 		{

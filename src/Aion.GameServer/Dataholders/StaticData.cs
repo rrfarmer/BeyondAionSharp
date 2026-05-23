@@ -43,6 +43,7 @@ public sealed class StaticData
 		HousingObjectTemplateTable housingObjectTemplates,
 		InstanceCooltimeTable instanceCooltimes,
 		PortalPathTable portalPaths,
+		PortalLocTable portalLocs,
 		PlayerInitialDataTable playerInitialData,
 		SkillTreeTable skillTree,
 		Task? validationTask)
@@ -83,6 +84,7 @@ public sealed class StaticData
 		HousingObjectTemplates = housingObjectTemplates;
 		InstanceCooltimes = instanceCooltimes;
 		PortalPaths = portalPaths;
+		PortalLocs = portalLocs;
 		PlayerInitialData = playerInitialData;
 		SkillTree = skillTree;
 		ValidationTask = validationTask;
@@ -162,6 +164,8 @@ public sealed class StaticData
 
 	public PortalPathTable PortalPaths { get; }
 
+	public PortalLocTable PortalLocs { get; }
+
 	public PlayerInitialDataTable PlayerInitialData { get; }
 
 	public SkillTreeTable SkillTree { get; }
@@ -226,6 +230,7 @@ public sealed class StaticData
 		var portalDialogPaths = new List<PortalPathSummary>();
 		var portalScrollPaths = new List<PortalPathSummary>();
 		var portalDialogTeleportIds = new Dictionary<int, int>();
+		var portalLocs = new List<PortalLocSummary>();
 		var skillTree = new List<SkillLearnSummary>();
 		var learnableEmotionIds = new HashSet<int>();
 		var creationItemsByClass = new Dictionary<string, List<StartingItem>>(StringComparer.OrdinalIgnoreCase);
@@ -568,6 +573,20 @@ public sealed class StaticData
 						break;
 				}
 
+				continue;
+			}
+
+			if (reader.Depth == 2 && reader.LocalName == "portal_loc")
+			{
+				// Java parity: model/templates/portal/PortalLoc scalar JAXB attributes consumed by PortalLocData.
+				portalLocs.Add(
+					new PortalLocSummary(
+						ReadIntAttribute(reader, "world_id"),
+						ReadIntAttribute(reader, "loc_id"),
+						ReadFloatAttribute(reader, "x"),
+						ReadFloatAttribute(reader, "y"),
+						ReadFloatAttribute(reader, "z"),
+						(byte)ReadIntAttribute(reader, "h")));
 				continue;
 			}
 
@@ -2089,6 +2108,7 @@ public sealed class StaticData
 				portalDialogTeleportIds,
 				portalUsePaths.AsReadOnly(),
 				portalScrollPaths.AsReadOnly()),
+			new PortalLocTable(portalLocs.AsReadOnly()),
 			new PlayerInitialDataTable(
 				creationItemsByClass.ToDictionary(
 					pair => pair.Key,
