@@ -7,6 +7,7 @@ public sealed class WorldMapRuntimeState
 	private WorldZoneAttributes _currentFlags;
 	private readonly object _instanceLock = new();
 	private readonly HashSet<int> _removedInstanceIds = new();
+	private readonly Dictionary<int, WorldMapInstanceRuntimeState> _instances = new();
 
 	public WorldMapRuntimeState(WorldMapSummary summary)
 	{
@@ -71,18 +72,43 @@ public sealed class WorldMapRuntimeState
 		return true;
 	}
 
+	public WorldMapInstanceRuntimeState AddWorldMapInstance(int instanceId, int ownerId = 0, int maxPlayers = 0)
+	{
+		// Java parity: WorldMap.addInstance stores the instance by normalized id.
+		var normalizedInstanceId = NormalizeInstanceId(instanceId);
+		lock (_instanceLock)
+		{
+			_removedInstanceIds.Remove(normalizedInstanceId);
+			var instance = new WorldMapInstanceRuntimeState(normalizedInstanceId, ownerId, maxPlayers);
+			_instances[normalizedInstanceId] = instance;
+			return instance;
+		}
+	}
+
+	public bool TryGetWorldMapInstance(int instanceId, out WorldMapInstanceRuntimeState? instance)
+	{
+		// Java parity: WorldMap.getWorldMapInstance returns the stored instance object or null.
+		var normalizedInstanceId = NormalizeInstanceId(instanceId);
+		lock (_instanceLock)
+			return _instances.TryGetValue(normalizedInstanceId, out instance);
+	}
+
+	public WorldMapInstanceRuntimeState? GetRegisteredInstance(int objectId)
+	{
+		// Java parity: InstanceService.getRegisteredInstance scans instances and returns the first registered match.
+		lock (_instanceLock)
+			return _instances.Values.FirstOrDefault(instance => instance.IsRegistered(objectId));
+	}
+
 	public void RemoveWorldMapInstance(int instanceId)
 	{
 		// Java parity: world/WorldMap.removeWorldMapInstance removes the normalized instance id from the map's instance table.
+		var normalizedInstanceId = NormalizeInstanceId(instanceId);
 		lock (_instanceLock)
-			_removedInstanceIds.Add(NormalizeInstanceId(instanceId));
-	}
-
-	public void AddWorldMapInstance(int instanceId)
-	{
-		// Java parity: world/WorldMap.addInstance makes the normalized instance id available again.
-		lock (_instanceLock)
-			_removedInstanceIds.Remove(NormalizeInstanceId(instanceId));
+		{
+			_removedInstanceIds.Add(normalizedInstanceId);
+			_instances.Remove(normalizedInstanceId);
+		}
 	}
 
 	private static int NormalizeInstanceId(int instanceId)

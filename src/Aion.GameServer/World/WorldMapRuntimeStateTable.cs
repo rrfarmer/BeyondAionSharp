@@ -68,12 +68,28 @@ public sealed class WorldMapRuntimeStateTable
 		return true;
 	}
 
-	public bool AddWorldMapInstance(int mapId, int instanceId)
+	public WorldMapInstanceRuntimeState? AddWorldMapInstance(int mapId, int instanceId, int ownerId = 0, int maxPlayers = 0)
 	{
 		if (!_statesByMapId.TryGetValue(mapId, out var state))
-			return false;
+			return null;
 
-		state.AddWorldMapInstance(instanceId);
-		return true;
+		return state.AddWorldMapInstance(instanceId, ownerId, maxPlayers);
+	}
+
+	public bool TryGetWorldMapInstance(int mapId, int instanceId, out WorldMapInstanceRuntimeState? instance)
+	{
+		if (!_statesByMapId.TryGetValue(mapId, out var state))
+		{
+			instance = null;
+			return false;
+		}
+
+		return state.TryGetWorldMapInstance(instanceId, out instance);
+	}
+
+	public WorldMapInstanceRuntimeState? GetRegisteredInstance(int mapId, int objectId)
+	{
+		// Java parity: InstanceService.getRegisteredInstance(worldId, objectId).
+		return _statesByMapId.TryGetValue(mapId, out var state) ? state.GetRegisteredInstance(objectId) : null;
 	}
 }

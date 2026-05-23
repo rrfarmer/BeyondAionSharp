@@ -76,13 +76,46 @@ public sealed class WorldMapRuntimeStateTests
 		Assert.True(table.InstanceExists(300030000, 2));
 		Assert.True(table.RemoveWorldMapInstance(300030000, 2));
 		Assert.False(table.InstanceExists(300030000, 2));
-		Assert.True(table.AddWorldMapInstance(300030000, 2));
+		Assert.NotNull(table.AddWorldMapInstance(300030000, 2));
 		Assert.True(table.InstanceExists(300030000, 2));
 
 		Assert.True(table.RemoveWorldMapInstance(300030000, 0));
 		Assert.False(table.InstanceExists(300030000, 1));
 		Assert.False(table.InstanceExists(123, 1));
 		Assert.False(table.RemoveWorldMapInstance(123, 1));
-		Assert.False(table.AddWorldMapInstance(123, 1));
+		Assert.Null(table.AddWorldMapInstance(123, 1));
+	}
+
+	[Fact]
+	public void WorldMapRuntimeStateTable_TracksInstanceRegistrationAndCapacitySlice()
+	{
+		var table = new WorldMapRuntimeStateTable(
+		[
+			new WorldMapSummary(300030000, IsInstance: true, TwinCount: 1),
+		]);
+
+		var instance = table.AddWorldMapInstance(300030000, 7, ownerId: 1001, maxPlayers: 2);
+
+		Assert.NotNull(instance);
+		Assert.Equal(7, instance.InstanceId);
+		Assert.Equal(1001, instance.OwnerId);
+		Assert.True(instance.IsPersonal);
+		Assert.False(instance.IsFull);
+		instance.Register(1001);
+		instance.Register(2002);
+		Assert.Equal(2, instance.RegisteredCount);
+		Assert.True(instance.IsRegistered(1001));
+		Assert.Same(instance, table.GetRegisteredInstance(300030000, 2002));
+		Assert.Null(table.GetRegisteredInstance(300030000, 3003));
+
+		instance.AddPlayer(1001);
+		Assert.False(instance.IsFull);
+		instance.AddPlayer(2002);
+		Assert.True(instance.IsFull);
+		instance.RemovePlayer(1001);
+		Assert.False(instance.IsFull);
+		Assert.True(table.TryGetWorldMapInstance(300030000, 7, out var stored));
+		Assert.Same(instance, stored);
+		Assert.False(table.TryGetWorldMapInstance(123, 7, out _));
 	}
 }
