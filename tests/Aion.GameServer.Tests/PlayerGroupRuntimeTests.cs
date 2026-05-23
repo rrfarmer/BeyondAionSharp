@@ -651,6 +651,36 @@ public sealed class PlayerGroupRuntimeTests
 	}
 
 	[Fact]
+	public void SmGroupMemberInfo_WritesNonEmptyEffectEntriesLikeJava()
+	{
+		var member = new PlayerGroupMember(new Player
+		{
+			ObjectId = 1004,
+			IsOnline = true,
+			Name = "Effected",
+			PlayerClass = "GLADIATOR",
+			Level = 10,
+		});
+		var effect = new PlayerGroupMemberEffectInfo(
+			EffectorObjectId: 7001,
+			SkillId: 12345,
+			SkillLevel: 3,
+			TargetSlotOrdinal: 2,
+			RemainingTimeToDisplayMillis: 654321);
+		var enterPlan = PlayerGroupMemberInfoPacketPlan.FromMember(99001, member, PlayerGroupEvent.Enter) with
+		{
+			AbnormalEffects = [effect],
+		};
+		var updateEffectsPlan = PlayerGroupMemberInfoPacketPlan.FromMember(99001, member, PlayerGroupEvent.UpdateEffects, slot: 4) with
+		{
+			AbnormalEffects = [effect],
+		};
+
+		AssertEffectMemberInfoPayload(enterPlan, expectedName: "Effected", expectedFullSlotByte: 127, effect);
+		AssertEffectMemberInfoPayload(updateEffectsPlan, expectedName: null, expectedFullSlotByte: 4, effect);
+	}
+
+	[Fact]
 	public void PlayerGroupEvent_IdsMatchJavaGroupEvent()
 	{
 		Assert.Equal(0, (int)PlayerGroupEvent.Leave);
@@ -1035,6 +1065,30 @@ public sealed class PlayerGroupRuntimeTests
 		Assert.Equal(0, reader.ReadD());
 		Assert.Equal(127, (int)reader.ReadC());
 		Assert.Equal(0, reader.ReadH());
+		for (var i = 0; i < 8; i++)
+			Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertEffectMemberInfoPayload(
+		PlayerGroupMemberInfoPacketPlan plan,
+		string? expectedName,
+		int expectedFullSlotByte,
+		PlayerGroupMemberEffectInfo expectedEffect)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(new Network.Aion.ServerPackets.SmGroupMemberInfo(plan)));
+		SkipGroupMemberInfoPrefix(reader);
+		if (expectedName != null)
+			Assert.Equal(expectedName, reader.ReadS());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(expectedFullSlotByte, (int)reader.ReadC());
+		Assert.Equal(1, reader.ReadH());
+		Assert.Equal(expectedEffect.EffectorObjectId, reader.ReadD());
+		Assert.Equal(expectedEffect.SkillId, reader.ReadH());
+		Assert.Equal(expectedEffect.SkillLevel, (int)reader.ReadC());
+		Assert.Equal(expectedEffect.TargetSlotOrdinal, (int)reader.ReadC());
+		Assert.Equal(expectedEffect.RemainingTimeToDisplayMillis, reader.ReadD());
 		for (var i = 0; i < 8; i++)
 			Assert.Equal(0, reader.ReadD());
 		Assert.Equal(0, reader.Remaining);

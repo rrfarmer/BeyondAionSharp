@@ -48,7 +48,8 @@ public sealed record PlayerGroupMemberInfoPacketPlan(
 	bool WritesCommonDataBlock,
 	bool WritesName,
 	bool WritesAbnormalEffects,
-	bool WritesSlotTimers)
+	bool WritesSlotTimers,
+	IReadOnlyList<PlayerGroupMemberEffectInfo>? AbnormalEffects = null)
 {
 	public static PlayerGroupMemberInfoPacketPlan FromMember(
 		int groupId,
@@ -87,6 +88,13 @@ public sealed record PlayerGroupMemberInfoPacketPlan(
 			WritesSlotTimers: writesEffects);
 	}
 }
+
+public sealed record PlayerGroupMemberEffectInfo(
+	int EffectorObjectId,
+	int SkillId,
+	int SkillLevel,
+	int TargetSlotOrdinal,
+	int RemainingTimeToDisplayMillis);
 
 public sealed record PlayerGroupMemberInfoResourceMaximums(int MaxHp, int MaxMp, int MaxFp)
 {

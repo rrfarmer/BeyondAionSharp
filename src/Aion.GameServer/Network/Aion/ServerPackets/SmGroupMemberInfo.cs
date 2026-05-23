@@ -65,9 +65,8 @@ public sealed class SmGroupMemberInfo : GameServerPacket
 			buffer.WriteD(0);
 			buffer.WriteD(0);
 			buffer.WriteC(FullSkillTargetSlots);
-			buffer.WriteH(0);
-			foreach (var _ in JavaSkillTargetSlotIds)
-				buffer.WriteD(0);
+			WriteEffects(buffer);
+			WriteSlotTimerPlaceholders(buffer);
 			return;
 		}
 
@@ -76,13 +75,32 @@ public sealed class SmGroupMemberInfo : GameServerPacket
 			buffer.WriteD(0);
 			buffer.WriteD(0);
 			buffer.WriteC(_plan.Slot);
-			buffer.WriteH(0);
-			foreach (var _ in JavaSkillTargetSlotIds)
-				buffer.WriteD(0);
+			WriteEffects(buffer);
+			WriteSlotTimerPlaceholders(buffer);
 			return;
 		}
 
 		throw new NotSupportedException(
 			$"SM_GROUP_MEMBER_INFO branch {_plan.EffectiveEvent} is not ported yet; name/effect/slot-timer payloads are pending.");
+	}
+
+	private void WriteEffects(PacketBuffer buffer)
+	{
+		var effects = _plan.AbnormalEffects ?? Array.Empty<PlayerGroupMemberEffectInfo>();
+		buffer.WriteH(effects.Count);
+		foreach (var effect in effects)
+		{
+			buffer.WriteD(effect.EffectorObjectId);
+			buffer.WriteH(effect.SkillId);
+			buffer.WriteC(effect.SkillLevel);
+			buffer.WriteC(effect.TargetSlotOrdinal);
+			buffer.WriteD(effect.RemainingTimeToDisplayMillis);
+		}
+	}
+
+	private static void WriteSlotTimerPlaceholders(PacketBuffer buffer)
+	{
+		foreach (var _ in JavaSkillTargetSlotIds)
+			buffer.WriteD(0);
 	}
 }
