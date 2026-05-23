@@ -126,6 +126,44 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 		Assert.All(registry.SentPackets, send => Assert.IsType<SmAllianceMemberInfo>(send.Packet));
 	}
 
+	[Fact]
+	public async Task HandlePlayerStatusInfoAsync_GroupMentoringCommandsToggleMentorAndSendGroupPackets()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var groups = new PlayerGroupRuntime();
+		var mentor = new Player { ObjectId = 1001, Name = "Mentor", Level = 30 };
+		var mentee = new Player { ObjectId = 1002, Name = "Mentee", Level = 10 };
+		groups.CreateOrUpdateGroup(99001, [mentor, mentee]);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, new PlayerAllianceRuntime(), groups);
+
+		await pair.Connection.HandlePlayerStatusInfoAsync(
+			mentor,
+			CreatePacket(commandCode: 10, selectedObjectId: 0));
+
+		Assert.True(mentor.IsMentor);
+		Assert.Equal([1001, 1002, 1001, 1002], registry.SentPackets.Select(send => send.PlayerObjectId));
+		Assert.Collection(
+			registry.SentPackets,
+			send => Assert.Equal(1400762, Assert.IsType<SmSystemMessage>(send.Packet).MessageId),
+			send => Assert.Equal(1400763, Assert.IsType<SmSystemMessage>(send.Packet).MessageId),
+			send => Assert.IsType<SmGroupMemberInfo>(send.Packet),
+			send => Assert.IsType<SmGroupMemberInfo>(send.Packet));
+
+		registry.SentPackets.Clear();
+		await pair.Connection.HandlePlayerStatusInfoAsync(
+			mentor,
+			CreatePacket(commandCode: 11, selectedObjectId: 0));
+
+		Assert.False(mentor.IsMentor);
+		Assert.Equal([1001, 1002, 1001, 1002], registry.SentPackets.Select(send => send.PlayerObjectId));
+		Assert.Collection(
+			registry.SentPackets,
+			send => Assert.Equal(1400764, Assert.IsType<SmSystemMessage>(send.Packet).MessageId),
+			send => Assert.Equal(1400765, Assert.IsType<SmSystemMessage>(send.Packet).MessageId),
+			send => Assert.IsType<SmGroupMemberInfo>(send.Packet),
+			send => Assert.IsType<SmGroupMemberInfo>(send.Packet));
+	}
+
 	private static CmPlayerStatusInfo CreatePacket(
 		PlayerAllianceReadyCheckCommand command,
 		int selectedObjectId)
@@ -165,7 +203,8 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 
 		public static async Task<TestConnectionPair> CreateAsync(
 			IGameClientConnectionRegistry registry,
-			PlayerAllianceRuntime playerAllianceRuntime)
+			PlayerAllianceRuntime playerAllianceRuntime,
+			PlayerGroupRuntime? playerGroupRuntime = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -183,6 +222,7 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 					new GamePacketProcessor<string>((_, _) => Task.CompletedTask),
 					options: new GameServerOptions(),
 					connectionRegistry: registry,
+					playerGroupRuntime: playerGroupRuntime,
 					playerAllianceRuntime: playerAllianceRuntime);
 				return new TestConnectionPair(client, connection);
 			}

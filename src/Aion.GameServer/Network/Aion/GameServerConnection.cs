@@ -70,6 +70,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly WorldNpcLootService? _worldNpcLootService;
 	private readonly Func<Player, int, bool>? _isKnownNpc;
 	private readonly CreaturePvpZoneCounterService? _creaturePvpZoneCounterService;
+	private readonly PlayerGroupRuntime _playerGroupRuntime;
 	private readonly PlayerAllianceRuntime _playerAllianceRuntime;
 	private readonly PlayerAllianceGroupChangeServicePlanner _playerAllianceGroupChangeServicePlanner;
 	private readonly PlayerShowBrandCommandPlanner _showBrandCommandPlanner;
@@ -160,10 +161,11 @@ public sealed class GameServerConnection : BaseClientConnection
 		_worldNpcLootService = worldNpcLootService;
 		_isKnownNpc = isKnownNpc;
 		_creaturePvpZoneCounterService = creaturePvpZoneCounterService;
+		_playerGroupRuntime = playerGroupRuntime ?? new PlayerGroupRuntime();
 		_playerAllianceRuntime = playerAllianceRuntime ?? new PlayerAllianceRuntime();
 		_playerAllianceGroupChangeServicePlanner = new PlayerAllianceGroupChangeServicePlanner(_playerAllianceRuntime);
 		_showBrandCommandPlanner = showBrandCommandPlanner
-			?? new PlayerShowBrandCommandPlanner(playerGroupRuntime ?? new PlayerGroupRuntime(), _playerAllianceRuntime);
+			?? new PlayerShowBrandCommandPlanner(_playerGroupRuntime, _playerAllianceRuntime);
 		_riftPortalInteractionService = riftPortalInteractionService
 			?? (riftService == null
 				? null
@@ -5783,6 +5785,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return null;
 		}
 
+		if (packet.CommandCode is 10 or 11)
+		{
+			await HandleGroupMentorStatusAsync(player, isMentor: packet.CommandCode == 10, cancellationToken);
+			return null;
+		}
+
 		if (packet.CommandCode == 27)
 		{
 			await HandleAllianceGroupChangeAsync(player, packet, cancellationToken);
@@ -5810,6 +5818,45 @@ public sealed class GameServerConnection : BaseClientConnection
 	}
 
 	private async Task SendAllianceReadyCheckAsync(
+		int recipientObjectId,
+		GameServerPacket packet,
+		CancellationToken cancellationToken)
+	{
+		if (_connectionRegistry != null && await _connectionRegistry.SendPacketToPlayerAsync(recipientObjectId, packet))
+			return;
+
+		if (_activePlayer?.ObjectId == recipientObjectId)
+			await SendPacketAsync(packet, cancellationToken);
+	}
+
+	private async Task<PlayerGroupMentorStatusChangePlan?> HandleGroupMentorStatusAsync(
+		Player player,
+		bool isMentor,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: PlayerTeamCommandService GROUP_START_MENTORING/GROUP_END_MENTORING -> PlayerGroupService mentoring events.
+		var group = _playerGroupRuntime.Resolve(player);
+		if (group == null)
+			return null;
+
+		var plan = _playerGroupRuntime.CreateMentorStatusChangePlan(group.TeamId, player, isMentor);
+		if (plan == null)
+			return null;
+
+		foreach (var intent in plan.SystemMessageIntents)
+			await SendGroupMentorPacketAsync(intent.RecipientObjectId, intent.Message, cancellationToken);
+
+		foreach (var intent in plan.MemberInfoIntents)
+		{
+			var packet = intent.CreatePacket();
+			if (packet != null)
+				await SendGroupMentorPacketAsync(intent.RecipientObjectId, packet, cancellationToken);
+		}
+
+		return plan;
+	}
+
+	private async Task SendGroupMentorPacketAsync(
 		int recipientObjectId,
 		GameServerPacket packet,
 		CancellationToken cancellationToken)
