@@ -4761,6 +4761,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			staticData?.TemperingTemplates,
 			staticData?.SkillTemplates,
 			staticData?.TitleTemplates);
+		ClearReviveTargets(player);
 		PlayerReviveRestoreService.ApplyKiskReviveRestore(player, resourceMaxStats.MaxHp, resourceMaxStats.MaxMp);
 		await BroadcastEmotionAsync(player, new SmEmotion(player, EmotionType.Resurrect));
 		await UpdatePlayerStatsAndSpeedVisuallyAsync(player);
@@ -4768,9 +4769,23 @@ public sealed class GameServerConnection : BaseClientConnection
 		await SendKiskReviveTeleportPacketsAsync(player, teleport, staticData);
 
 		// Full Java PlayerReviveService.revive + TeleportService.teleportTo side effects remain queued:
-		// no-resurrect-penalty effect detection, soul-sickness handling, target/aggro cleanup,
+		// no-resurrect-penalty effect detection, soul-sickness handling, aggro cleanup,
 		// group/alliance movement updates, flying-before-death state restoration, full world despawn/spawn
 		// ownership, protection tasks, instance/legion leave callbacks, and exact socket ordering need the broader revive/teleport model.
+	}
+
+	private void ClearReviveTargets(Player player)
+	{
+		if (_connectionRegistry == null)
+			return;
+
+		var revivePosition = player.Position;
+		var onlinePlayers = new List<Player>();
+		_connectionRegistry.ForEachOnlinePlayer(onlinePlayers.Add);
+		PlayerReviveTargetCleanupService.ClearKnownPlayerTargets(
+			player,
+			onlinePlayers,
+			(candidate, _) => WorldVisibility.IsVisibleTo(candidate, revivePosition));
 	}
 
 	private async Task SendKiskReviveTeleportPacketsAsync(Player player, PlayerTeleportResult teleport, StaticData? staticData)
