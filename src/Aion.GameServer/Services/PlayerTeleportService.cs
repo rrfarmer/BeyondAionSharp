@@ -1,4 +1,5 @@
 using Aion.GameServer.Controllers.Movement;
+using Aion.GameServer.Configuration;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
@@ -158,7 +159,10 @@ public sealed record PortalContinueTransferResult(
 	public static PortalContinueTransferResult UnsupportedTeamPortal(
 		PortalTeamEntryPlan teamPlan,
 		PortalLocSummary? portalLoc = null,
-		int? playerObjectId = null)
+		Player? player = null,
+		InstanceCooltimeTable? instanceCooltimes = null,
+		GameServerOptions? options = null,
+		DateTimeOffset? now = null)
 	{
 		return new PortalContinueTransferResult(
 			PortalContinueTransferKind.UnsupportedTeamPortal,
@@ -167,7 +171,7 @@ public sealed record PortalContinueTransferResult(
 			null,
 			teamPlan.RegisteredInstance,
 			teamPlan,
-			GroupPortalTransferPlan.FromTeamPlan(teamPlan, portalLoc, playerObjectId));
+			GroupPortalTransferPlan.FromTeamPlan(teamPlan, portalLoc, player, instanceCooltimes, options, now));
 	}
 }
 
@@ -194,7 +198,10 @@ public sealed record GroupPortalTransferPlan(
 	public static GroupPortalTransferPlan? FromTeamPlan(
 		PortalTeamEntryPlan teamPlan,
 		PortalLocSummary? portalLoc = null,
-		int? playerObjectId = null)
+		Player? player = null,
+		InstanceCooltimeTable? instanceCooltimes = null,
+		GameServerOptions? options = null,
+		DateTimeOffset? now = null)
 	{
 		if (teamPlan.Kind != PortalTeamEntryKind.Group)
 			return null;
@@ -225,7 +232,10 @@ public sealed record GroupPortalTransferPlan(
 				CreateExecutionPlan(
 					teamPlan,
 					portalLoc,
-					playerObjectId,
+					player,
+					instanceCooltimes,
+					options,
+					now,
 					GroupPortalExecutionState.BlockedInvalidTeamId,
 					GroupPortalExecutionBlockedReason.MissingTeamId));
 		}
@@ -243,7 +253,7 @@ public sealed record GroupPortalTransferPlan(
 			CreateMemberInstanceScanPlan(teamPlan, state),
 			CreateCapacityPlan(teamPlan, state),
 			CreateAllocationPlan(teamPlan, portalLoc, state),
-			CreateExecutionPlan(teamPlan, portalLoc, playerObjectId, state));
+			CreateExecutionPlan(teamPlan, portalLoc, player, instanceCooltimes, options, now, state));
 	}
 
 	private static GroupPortalMemberInstanceScanPlan CreateMemberInstanceScanPlan(
@@ -374,7 +384,10 @@ public sealed record GroupPortalTransferPlan(
 	private static GroupPortalExecutionPlan CreateExecutionPlan(
 		PortalTeamEntryPlan teamPlan,
 		PortalLocSummary? portalLoc,
-		int? playerObjectId,
+		Player? player,
+		InstanceCooltimeTable? instanceCooltimes,
+		GameServerOptions? options,
+		DateTimeOffset? now,
 		GroupPortalTransferState transferState)
 	{
 		if (transferState == GroupPortalTransferState.RegisteredInstanceTransfer
@@ -389,16 +402,17 @@ public sealed record GroupPortalTransferPlan(
 				portalLoc.Z,
 				portalLoc.Heading,
 				teamPlan.RegisteredInstance.InstanceId);
-			var cooldownState = teamPlan.Reenter
-				? GroupPortalCooldownPreviewState.SkippedForReentry
-				: GroupPortalCooldownPreviewState.WouldEvaluateAfterTeleport;
+			var cooldownPreview = CreateCooldownPreview(player, portalLoc.WorldId, teamPlan.Reenter, instanceCooltimes, options, now);
 			return new GroupPortalExecutionPlan(
 				teamPlan.RegisteredInstance.InstanceId,
 				destination,
-				playerObjectId,
+				player?.ObjectId,
 				teamPlan.Reenter,
 				TeleportAnimation.FadeOutBeam,
-				cooldownState,
+				cooldownPreview.State,
+				cooldownPreview.ReuseTimeMillis,
+				cooldownPreview.InstanceCooldownRate,
+				cooldownPreview.WouldAddCooldown,
 				GroupPortalExecutionState.WouldTransferToRegisteredInstance,
 				GroupPortalExecutionBlockedReason.GroupFanoutNotImplemented);
 		}
@@ -408,7 +422,10 @@ public sealed record GroupPortalTransferPlan(
 			return CreateExecutionPlan(
 				teamPlan,
 				portalLoc,
-				playerObjectId,
+				player,
+				instanceCooltimes,
+				options,
+				now,
 				GroupPortalExecutionState.BlockedUntilInstanceAllocation,
 				GroupPortalExecutionBlockedReason.InstanceAllocationNotPorted);
 		}
@@ -416,7 +433,10 @@ public sealed record GroupPortalTransferPlan(
 		return CreateExecutionPlan(
 			teamPlan,
 			portalLoc,
-			playerObjectId,
+			player,
+			instanceCooltimes,
+			options,
+			now,
 			GroupPortalExecutionState.BlockedInvalidTeamId,
 			GroupPortalExecutionBlockedReason.MissingTeamId);
 	}
@@ -424,23 +444,66 @@ public sealed record GroupPortalTransferPlan(
 	private static GroupPortalExecutionPlan CreateExecutionPlan(
 		PortalTeamEntryPlan teamPlan,
 		PortalLocSummary? portalLoc,
-		int? playerObjectId,
+		Player? player,
+		InstanceCooltimeTable? instanceCooltimes,
+		GameServerOptions? options,
+		DateTimeOffset? now,
 		GroupPortalExecutionState state,
 		GroupPortalExecutionBlockedReason blockedReason)
 	{
+		var cooldownPreview = state == GroupPortalExecutionState.BlockedUntilInstanceAllocation
+			|| state == GroupPortalExecutionState.BlockedInvalidTeamId
+				? new GroupPortalCooldownPreview(GroupPortalCooldownPreviewState.UnknownUntilTransfer, null, null, WouldAddCooldown: null)
+				: CreateCooldownPreview(player, portalLoc?.WorldId, teamPlan.Reenter, instanceCooltimes, options, now);
 		return new GroupPortalExecutionPlan(
 			TargetInstanceId: null,
 			StartPosition: portalLoc == null
 				? null
 				: new WorldPosition(portalLoc.WorldId, portalLoc.X, portalLoc.Y, portalLoc.Z, portalLoc.Heading),
-			PlayerObjectIdToRegister: state == GroupPortalExecutionState.BlockedUntilInstanceAllocation ? playerObjectId : null,
+			PlayerObjectIdToRegister: state == GroupPortalExecutionState.BlockedUntilInstanceAllocation ? player?.ObjectId : null,
 			teamPlan.Reenter,
 			TeleportAnimation.FadeOutBeam,
-			GroupPortalCooldownPreviewState.UnknownUntilTransfer,
+			cooldownPreview.State,
+			cooldownPreview.ReuseTimeMillis,
+			cooldownPreview.InstanceCooldownRate,
+			cooldownPreview.WouldAddCooldown,
 			state,
 			blockedReason);
 	}
+
+	private static GroupPortalCooldownPreview CreateCooldownPreview(
+		Player? player,
+		int? worldId,
+		bool reenter,
+		InstanceCooltimeTable? instanceCooltimes,
+		GameServerOptions? options,
+		DateTimeOffset? now)
+	{
+		if (reenter)
+			return new GroupPortalCooldownPreview(GroupPortalCooldownPreviewState.SkippedForReentry, null, null, WouldAddCooldown: false);
+
+		if (player == null || worldId == null || instanceCooltimes == null || options == null || now == null)
+			return new GroupPortalCooldownPreview(GroupPortalCooldownPreviewState.UnknownUntilTransfer, null, null, WouldAddCooldown: null);
+
+		var preview = InstanceEntranceCooldownService.PreviewEntranceCooldown(
+			player,
+			worldId.Value,
+			reenter,
+			instanceCooltimes,
+			options,
+			now.Value);
+		var state = preview.Added
+			? GroupPortalCooldownPreviewState.WouldAddCooldown
+			: GroupPortalCooldownPreviewState.NoCooldownToAdd;
+		return new GroupPortalCooldownPreview(state, preview.ReuseTimeMillis, preview.InstanceCooldownRate, preview.Added);
+	}
 }
+
+public sealed record GroupPortalCooldownPreview(
+	GroupPortalCooldownPreviewState State,
+	long? ReuseTimeMillis,
+	int? InstanceCooldownRate,
+	bool? WouldAddCooldown);
 
 public sealed record GroupPortalMemberInstanceScanPlan(
 	IReadOnlyList<int> CandidateObjectIds,
@@ -468,6 +531,9 @@ public sealed record GroupPortalExecutionPlan(
 	bool Reenter,
 	TeleportAnimation TeleportAnimation,
 	GroupPortalCooldownPreviewState CooldownState,
+	long? CooldownReuseTimeMillis,
+	int? InstanceCooldownRate,
+	bool? WouldAddCooldown,
 	GroupPortalExecutionState State,
 	GroupPortalExecutionBlockedReason BlockedReason);
 
@@ -546,7 +612,8 @@ public enum GroupPortalExecutionBlockedReason
 
 public enum GroupPortalCooldownPreviewState
 {
-	WouldEvaluateAfterTeleport,
+	WouldAddCooldown,
+	NoCooldownToAdd,
 	SkippedForReentry,
 	UnknownUntilTransfer,
 }

@@ -480,7 +480,10 @@ public sealed class GameServerConnectionInstanceCooldownTests
 		Assert.Equal(1001, groupPlan.ExecutionPlan.PlayerObjectIdToRegister);
 		Assert.False(groupPlan.ExecutionPlan.Reenter);
 		Assert.Equal(TeleportAnimation.FadeOutBeam, groupPlan.ExecutionPlan.TeleportAnimation);
-		Assert.Equal(GroupPortalCooldownPreviewState.WouldEvaluateAfterTeleport, groupPlan.ExecutionPlan.CooldownState);
+		Assert.Equal(GroupPortalCooldownPreviewState.WouldAddCooldown, groupPlan.ExecutionPlan.CooldownState);
+		Assert.Equal(DateTimeOffset.FromUnixTimeMilliseconds(100_000).AddMinutes(30).ToUnixTimeMilliseconds(), groupPlan.ExecutionPlan.CooldownReuseTimeMillis);
+		Assert.Equal(1, groupPlan.ExecutionPlan.InstanceCooldownRate);
+		Assert.True(groupPlan.ExecutionPlan.WouldAddCooldown);
 		Assert.Equal(GroupPortalExecutionState.WouldTransferToRegisteredInstance, groupPlan.ExecutionPlan.State);
 		Assert.Equal(GroupPortalExecutionBlockedReason.GroupFanoutNotImplemented, groupPlan.ExecutionPlan.BlockedReason);
 		Assert.Null(registeredInstance.StartPosition);
@@ -488,6 +491,77 @@ public sealed class GameServerConnectionInstanceCooldownTests
 		Assert.Empty(pair.SentPackets);
 		Assert.Null(player.PendingTeleport);
 		Assert.Null(repository.SavedPortalCooldowns);
+	}
+
+	[Fact]
+	public async Task QueuePortalContinueTransferAsync_RegisteredGroupReentryPreviewSkipsCooldownWithoutSaving()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var pair = await TestConnectionPair.CreateAsync(
+			new GameServerOptions(),
+			new PlayerEnterWorldService(
+				new GameServerOptions(),
+				repository,
+				new GameWorld(NullLogger<GameWorld>.Instance),
+				NullLogger<PlayerEnterWorldService>.Instance));
+		var player = new Player
+		{
+			ObjectId = 1001,
+			Name = "Character",
+			Race = "ELYOS",
+			Position = new WorldPosition(110010000, 1, 1, 1, 0),
+		};
+		var worldMaps = new WorldMapRuntimeStateTable([new WorldMapSummary(300030000, IsInstance: true, TwinCount: 1)]);
+		var registeredInstance = worldMaps.AddWorldMapInstance(300030000, instanceId: 7, maxPlayers: 6);
+		Assert.NotNull(registeredInstance);
+		registeredInstance.RegisterTeamId(88001);
+		var cooltimes = new InstanceCooltimeTable(
+		[
+			new InstanceCooltimeSummary(
+				Id: 8,
+				WorldId: 300030000,
+				Race: "PC_ALL",
+				MaxCount: 5,
+				MaxMemberLight: 6,
+				MaxMemberDark: 6,
+				CoolTimeType: "RELATIVE",
+				EntCoolTime: 30),
+		]);
+		var portalLoc = new PortalLocSummary(300030000, LocId: 1, 10, 20, 30, 90);
+		var teamPlan = new PortalTeamEntryPlan(
+			PortalTeamEntryKind.Group,
+			TeamId: 88001,
+			MemberObjectIds: [1001, 1002],
+			MaxPlayers: 6,
+			PortalTeamEntryDisposition.RegisteredInstanceTransfer,
+			registeredInstance,
+			Reenter: true,
+			FanoutSupported: false);
+		var preparation = PortalEntryPreparationResult.Ready(
+			PortalEntryPlanResult.UnsupportedTeamPortal(portalLoc, teamPlan),
+			requirementApplication: null,
+			Array.Empty<GameServerPacket>());
+
+		var result = await pair.Connection.QueuePortalContinueTransferAsync(
+			player,
+			preparation,
+			worldMapStates: worldMaps,
+			instanceCooltimes: cooltimes,
+			now: DateTimeOffset.FromUnixTimeMilliseconds(100_000));
+
+		Assert.NotNull(result);
+		var groupPlan = Assert.IsType<GroupPortalTransferPlan>(result.GroupTransferPlan);
+		Assert.Equal(GroupPortalExecutionState.WouldTransferToRegisteredInstance, groupPlan.ExecutionPlan.State);
+		Assert.True(groupPlan.ExecutionPlan.Reenter);
+		Assert.Equal(GroupPortalCooldownPreviewState.SkippedForReentry, groupPlan.ExecutionPlan.CooldownState);
+		Assert.Null(groupPlan.ExecutionPlan.CooldownReuseTimeMillis);
+		Assert.Null(groupPlan.ExecutionPlan.InstanceCooldownRate);
+		Assert.False(groupPlan.ExecutionPlan.WouldAddCooldown);
+		Assert.Empty(pair.SentPackets);
+		Assert.Null(player.PendingTeleport);
+		Assert.Null(repository.SavedPortalCooldowns);
+		Assert.Null(registeredInstance.StartPosition);
+		Assert.False(registeredInstance.IsRegistered(1001));
 	}
 
 	[Fact]
@@ -581,6 +655,9 @@ public sealed class GameServerConnectionInstanceCooldownTests
 		Assert.False(groupPlan.ExecutionPlan.Reenter);
 		Assert.Equal(TeleportAnimation.FadeOutBeam, groupPlan.ExecutionPlan.TeleportAnimation);
 		Assert.Equal(GroupPortalCooldownPreviewState.UnknownUntilTransfer, groupPlan.ExecutionPlan.CooldownState);
+		Assert.Null(groupPlan.ExecutionPlan.CooldownReuseTimeMillis);
+		Assert.Null(groupPlan.ExecutionPlan.InstanceCooldownRate);
+		Assert.Null(groupPlan.ExecutionPlan.WouldAddCooldown);
 		Assert.Equal(GroupPortalExecutionState.BlockedUntilInstanceAllocation, groupPlan.ExecutionPlan.State);
 		Assert.Equal(GroupPortalExecutionBlockedReason.InstanceAllocationNotPorted, groupPlan.ExecutionPlan.BlockedReason);
 		Assert.Empty(pair.SentPackets);
@@ -679,6 +756,9 @@ public sealed class GameServerConnectionInstanceCooldownTests
 		Assert.False(groupPlan.ExecutionPlan.Reenter);
 		Assert.Equal(TeleportAnimation.FadeOutBeam, groupPlan.ExecutionPlan.TeleportAnimation);
 		Assert.Equal(GroupPortalCooldownPreviewState.UnknownUntilTransfer, groupPlan.ExecutionPlan.CooldownState);
+		Assert.Null(groupPlan.ExecutionPlan.CooldownReuseTimeMillis);
+		Assert.Null(groupPlan.ExecutionPlan.InstanceCooldownRate);
+		Assert.Null(groupPlan.ExecutionPlan.WouldAddCooldown);
 		Assert.Equal(GroupPortalExecutionState.BlockedInvalidTeamId, groupPlan.ExecutionPlan.State);
 		Assert.Equal(GroupPortalExecutionBlockedReason.MissingTeamId, groupPlan.ExecutionPlan.BlockedReason);
 		Assert.Empty(pair.SentPackets);

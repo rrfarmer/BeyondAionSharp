@@ -7,6 +7,20 @@ namespace Aion.GameServer.Services;
 
 public static class InstanceEntranceCooldownService
 {
+	public static InstanceEntranceCooldownResult PreviewEntranceCooldown(
+		Player player,
+		int worldId,
+		bool reenter,
+		InstanceCooltimeTable instanceCooltimes,
+		GameServerOptions options,
+		DateTimeOffset now)
+	{
+		// Java parity: PortalService.transfer calculates the cooldown before deciding whether PortalCooldownList.addPortalCooldown will run.
+		var rate = InstanceCooldownRateService.GetInstanceRate(player, worldId, options);
+		var reuseTimeMillis = instanceCooltimes.CalculateInstanceEntranceCooltime(worldId, now, rate);
+		return new InstanceEntranceCooldownResult(worldId, reuseTimeMillis, rate, Added: reuseTimeMillis > 0 && !reenter);
+	}
+
 	public static InstanceEntranceCooldownResult ApplyEntranceCooldown(
 		Player player,
 		int worldId,
@@ -16,15 +30,14 @@ public static class InstanceEntranceCooldownService
 		DateTimeOffset now)
 	{
 		// Java parity: PortalService.transfer and AutoInstance.onPressEnter calculate instance entrance cooldowns after entry.
-		var rate = InstanceCooldownRateService.GetInstanceRate(player, worldId, options);
-		var reuseTimeMillis = instanceCooltimes.CalculateInstanceEntranceCooltime(worldId, now, rate);
-		if (reuseTimeMillis > 0 && !reenter)
+		var preview = PreviewEntranceCooldown(player, worldId, reenter, instanceCooltimes, options, now);
+		if (preview.Added)
 		{
-			PlayerPortalCooldownService.AddPortalCooldown(player, worldId, reuseTimeMillis);
-			return new InstanceEntranceCooldownResult(worldId, reuseTimeMillis, rate, Added: true);
+			PlayerPortalCooldownService.AddPortalCooldown(player, worldId, preview.ReuseTimeMillis);
+			return preview;
 		}
 
-		return new InstanceEntranceCooldownResult(worldId, reuseTimeMillis, rate, Added: false);
+		return preview;
 	}
 
 	public static SmInstanceInfo? CreateEntryInfoPacket(
