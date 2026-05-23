@@ -8,12 +8,14 @@ public sealed class WorldMapRuntimeState
 	private readonly object _instanceLock = new();
 	private readonly HashSet<int> _removedInstanceIds = new();
 	private readonly Dictionary<int, WorldMapInstanceRuntimeState> _instances = new();
+	private int _nextInstanceId;
 
 	public WorldMapRuntimeState(WorldMapSummary summary)
 	{
 		// Java parity: world/WorldMap constructor initializes worldOptions from WorldMapTemplate.flags.
 		Summary = summary;
 		_currentFlags = summary.Flags;
+		_nextInstanceId = GetInitialInstanceCount(summary);
 	}
 
 	public WorldMapSummary Summary { get; }
@@ -72,6 +74,18 @@ public sealed class WorldMapRuntimeState
 		return true;
 	}
 
+	public int GetNextInstanceId()
+	{
+		// Java parity: WorldMap.getNextInstanceId increments the map-local AtomicInteger.
+		return Interlocked.Increment(ref _nextInstanceId);
+	}
+
+	public WorldMapInstanceRuntimeState CreateNextWorldMapInstance(int ownerId = 0, int maxPlayers = 0)
+	{
+		// Java parity: WorldMapInstanceFactory.createWorldMapInstance uses WorldMap.getNextInstanceId, then WorldMap.addInstance.
+		return AddWorldMapInstance(GetNextInstanceId(), ownerId, maxPlayers);
+	}
+
 	public WorldMapInstanceRuntimeState AddWorldMapInstance(int instanceId, int ownerId = 0, int maxPlayers = 0)
 	{
 		// Java parity: WorldMap.addInstance stores the instance by normalized id.
@@ -114,5 +128,11 @@ public sealed class WorldMapRuntimeState
 	private static int NormalizeInstanceId(int instanceId)
 	{
 		return instanceId == 0 ? 1 : instanceId;
+	}
+
+	private static int GetInitialInstanceCount(WorldMapSummary summary)
+	{
+		// Java parity: WorldMap.getInstanceCount returns twin_count or 1; beginner twins are not in the current C# summary.
+		return summary.TwinCount == 0 ? 1 : summary.TwinCount;
 	}
 }

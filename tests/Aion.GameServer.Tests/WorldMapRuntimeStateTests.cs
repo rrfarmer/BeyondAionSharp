@@ -1,4 +1,5 @@
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Services;
 using Aion.GameServer.World;
 
 namespace Aion.GameServer.Tests;
@@ -117,5 +118,67 @@ public sealed class WorldMapRuntimeStateTests
 		Assert.True(table.TryGetWorldMapInstance(300030000, 7, out var stored));
 		Assert.Same(instance, stored);
 		Assert.False(table.TryGetWorldMapInstance(123, 7, out _));
+	}
+
+	[Fact]
+	public void WorldMapRuntimeStateTable_AllocatesNextInstanceIdsLikeJavaWorldMap()
+	{
+		var table = new WorldMapRuntimeStateTable(
+		[
+			new WorldMapSummary(300030000, IsInstance: true, TwinCount: 1),
+			new WorldMapSummary(210010000, IsInstance: false, TwinCount: 3),
+		]);
+
+		var instance = table.CreateNextWorldMapInstance(300030000, ownerId: 1001, maxPlayers: 6);
+		var second = table.CreateNextWorldMapInstance(300030000);
+		var nonInstanceNext = table.CreateNextWorldMapInstance(210010000);
+
+		Assert.NotNull(instance);
+		Assert.Equal(2, instance.InstanceId);
+		Assert.Equal(1001, instance.OwnerId);
+		Assert.Equal(6, instance.MaxPlayers);
+		Assert.NotNull(second);
+		Assert.Equal(3, second.InstanceId);
+		Assert.NotNull(nonInstanceNext);
+		Assert.Equal(4, nonInstanceNext.InstanceId);
+		Assert.Null(table.CreateNextWorldMapInstance(123));
+	}
+
+	[Fact]
+	public void InstanceRuntimeService_CreatesAndReusesRegisteredInstances()
+	{
+		var table = new WorldMapRuntimeStateTable(
+		[
+			new WorldMapSummary(300030000, IsInstance: true, TwinCount: 1),
+			new WorldMapSummary(210010000, IsInstance: false, TwinCount: 1),
+		]);
+
+		var created = InstanceRuntimeService.GetNextAvailableInstanceForPlayer(
+			table,
+			300030000,
+			playerObjectId: 1001,
+			maxPlayers: 3);
+		var reused = InstanceRuntimeService.GetOrRegisterInstance(
+			table,
+			300030000,
+			playerObjectId: 1001,
+			maxPlayers: 3);
+		var other = InstanceRuntimeService.GetOrRegisterInstance(
+			table,
+			300030000,
+			playerObjectId: 1002,
+			maxPlayers: 3);
+
+		Assert.Equal(2, created.InstanceId);
+		Assert.True(created.IsRegistered(1001));
+		Assert.Same(created, reused);
+		Assert.NotSame(created, other);
+		Assert.Equal(3, other.InstanceId);
+		Assert.True(other.IsRegistered(1002));
+		var error = Assert.Throws<UnsupportedOperationException>(() =>
+			InstanceRuntimeService.GetNextAvailableInstance(table, 210010000));
+		Assert.Contains("210010000", error.Message);
+		Assert.Throws<InvalidOperationException>(() =>
+			InstanceRuntimeService.GetNextAvailableInstance(table, 123));
 	}
 }

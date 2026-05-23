@@ -76,6 +76,14 @@ public sealed class WorldMapRuntimeStateTable
 		return state.AddWorldMapInstance(instanceId, ownerId, maxPlayers);
 	}
 
+	public WorldMapInstanceRuntimeState? CreateNextWorldMapInstance(int mapId, int ownerId = 0, int maxPlayers = 0)
+	{
+		if (!_statesByMapId.TryGetValue(mapId, out var state))
+			return null;
+
+		return state.CreateNextWorldMapInstance(ownerId, maxPlayers);
+	}
+
 	public bool TryGetWorldMapInstance(int mapId, int instanceId, out WorldMapInstanceRuntimeState? instance)
 	{
 		if (!_statesByMapId.TryGetValue(mapId, out var state))
