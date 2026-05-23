@@ -4,7 +4,8 @@ public sealed record PlayerGroupDescriptor(
 	int TeamId,
 	int LeaderObjectId,
 	PlayerGroupType TeamType,
-	int MaxMemberCount)
+	int MaxMemberCount,
+	PlayerGroupLootRules LootRules)
 {
 	public const int JavaMaxMemberCount = 6;
 
@@ -18,9 +19,10 @@ public sealed record PlayerGroupDescriptor(
 		int teamId,
 		Player leader,
 		PlayerGroupType teamType = PlayerGroupType.Group,
-		int maxMemberCount = JavaMaxMemberCount)
+		int maxMemberCount = JavaMaxMemberCount,
+		PlayerGroupLootRules? lootRules = null)
 	{
 		// Java parity: model/team/group/PlayerGroup constructor stores TeamType and calls GeneralTeam.setLeader.
-		return new PlayerGroupDescriptor(teamId, leader.ObjectId, teamType, maxMemberCount);
+		return new PlayerGroupDescriptor(teamId, leader.ObjectId, teamType, maxMemberCount, lootRules ?? PlayerGroupLootRules.Default());
 	}
 }

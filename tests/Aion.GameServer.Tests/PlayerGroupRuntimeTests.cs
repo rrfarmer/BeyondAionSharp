@@ -29,6 +29,16 @@ public sealed class PlayerGroupRuntimeTests
 		Assert.Equal(1001, descriptor.LeaderObjectId);
 		Assert.Equal(PlayerGroupType.AutoGroup, descriptor.TeamType);
 		Assert.Equal(6, descriptor.MaxMemberCount);
+		Assert.Equal(PlayerGroupLootRuleType.RoundRobin, descriptor.LootRules.LootRule);
+		Assert.Equal(1, (int)descriptor.LootRules.LootRule);
+		Assert.Equal(0, descriptor.LootRules.Misc);
+		Assert.Equal(0, descriptor.LootRules.CommonItemAbove);
+		Assert.Equal(2, descriptor.LootRules.SuperiorItemAbove);
+		Assert.Equal(2, descriptor.LootRules.HeroicItemAbove);
+		Assert.Equal(2, descriptor.LootRules.FabledItemAbove);
+		Assert.Equal(2, descriptor.LootRules.EternalItemAbove);
+		Assert.Equal(2, descriptor.LootRules.MythicItemAbove);
+		Assert.Equal(2, descriptor.LootRules.AutoDistributionId);
 		Assert.Equal(PlayerTeamMembership.Group, leader.TeamMembership);
 		Assert.Equal(PlayerTeamMembership.Group, member.TeamMembership);
 		Assert.Equal(99001, leader.CurrentTeamId);
@@ -288,6 +298,27 @@ public sealed class PlayerGroupRuntimeTests
 		Assert.Equal(13, (int)PlayerGroupEvent.Enter);
 		Assert.Equal(13, (int)PlayerGroupEvent.Update);
 		Assert.Equal(65, (int)PlayerGroupEvent.UpdateEffects);
+	}
+
+	[Fact]
+	public void PlayerGroupLootRules_DefaultsMatchJavaLootGroupRules()
+	{
+		var rules = PlayerGroupLootRules.Default();
+
+		Assert.Equal(PlayerGroupLootRuleType.RoundRobin, rules.LootRule);
+		Assert.Equal(0, (int)PlayerGroupLootRuleType.FreeForAll);
+		Assert.Equal(1, (int)PlayerGroupLootRuleType.RoundRobin);
+		Assert.Equal(2, (int)PlayerGroupLootRuleType.Leader);
+		Assert.Equal(0, rules.Misc);
+		Assert.Equal(0, rules.CommonItemAbove);
+		Assert.Equal(2, rules.SuperiorItemAbove);
+		Assert.Equal(2, rules.HeroicItemAbove);
+		Assert.Equal(2, rules.FabledItemAbove);
+		Assert.Equal(2, rules.EternalItemAbove);
+		Assert.Equal(2, rules.MythicItemAbove);
+		Assert.Equal(2, rules.AutoDistributionId);
+		Assert.Equal(3, (rules with { MythicItemAbove = 3 }).AutoDistributionId);
+		Assert.Equal(0, (rules with { MythicItemAbove = 0 }).AutoDistributionId);
 	}
 
 	[Fact]
