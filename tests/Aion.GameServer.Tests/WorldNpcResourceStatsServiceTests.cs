@@ -439,6 +439,40 @@ public sealed class WorldNpcResourceStatsServiceTests
 	}
 
 	[Fact]
+	public async Task AddPlayerDpAsync_BroadcastsChangeSpeedForResolvedRideSnapshotInJavaOrder()
+	{
+		var service = CreateService(out _, out var registry);
+		var player = CreatePlayer(objectId: 1013, currentHp: 100, currentMp: 50, currentFp: 100, playerClass: "RANGER", dp: 1000);
+		player.IsOnline = true;
+		player.IsInRideMode = true;
+		player.RideInfo = new PlayerRideInfo(NpcId: 9001, StartFp: 30, CostFp: 1, SprintSpeed: 12.0f, FlySpeed: 16.0f, MoveSpeed: 9.0f);
+
+		var result = await service.AddPlayerDpAsync(player, value: 50, maxDp: 4000);
+
+		Assert.Equal(WorldNpcResourceChangeStatus.Increased, result.Status);
+		Assert.Equal(1050, result.CurrentValue);
+		Assert.NotNull(result.VisualStatsUpdate);
+		Assert.Equal(PlayerVisualStatsUpdateStatus.StatsAndSpeedSent, result.VisualStatsUpdate.Status);
+		Assert.NotNull(result.VisualStatsUpdate.SpeedSnapshot);
+		Assert.Equal(9.0f, result.VisualStatsUpdate.SpeedSnapshot.MovementSpeed);
+		Assert.NotNull(result.VisualStatsUpdate.SpeedPacket);
+		Assert.Equal(1, result.VisualStatsUpdate.SpeedBroadcastCount);
+		Assert.Equal(2, registry.Broadcasts.Count);
+		Assert.Same(result.DpInfoPacket, registry.Broadcasts[0].Packet);
+		Assert.Same(result.VisualStatsUpdate.SpeedPacket, registry.Broadcasts[1].Packet);
+		Assert.Collection(
+			registry.SentPackets,
+			delivery => Assert.Same(result.VisualStatsUpdate!.StatsPacket, delivery.Packet),
+			delivery => Assert.Same(result.DpStatUpdatePacket, delivery.Packet));
+		Assert.Collection(
+			registry.PacketOrder,
+			packet => Assert.Same(result.DpInfoPacket, packet),
+			packet => Assert.Same(result.VisualStatsUpdate!.StatsPacket, packet),
+			packet => Assert.Same(result.VisualStatsUpdate!.SpeedPacket, packet),
+			packet => Assert.Same(result.DpStatUpdatePacket, packet));
+	}
+
+	[Fact]
 	public async Task AddPlayerDpAsync_SkipsStartingClassAndRequiresOnlineMaxDp()
 	{
 		var service = CreateService(out _, out var registry);

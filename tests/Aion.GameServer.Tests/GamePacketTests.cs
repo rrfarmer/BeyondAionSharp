@@ -495,6 +495,21 @@ public class GamePacketTests
 					101,
 					7001)));
 		Assert.Equal(
+			Convert.FromHexString("E90300002301000000D840DC05B00400"),
+			SerializeUnencryptedPayload(
+				new SmEmotion(
+					new Player
+					{
+						ObjectId = 1001,
+						CreatureState = PlayerCreatureState.Active,
+					},
+					EmotionType.ChangeSpeed,
+					0,
+					0,
+					speed: 6.75f,
+					baseAttackSpeed: 1500,
+					currentAttackSpeed: 1200)));
+		Assert.Equal(
 			Convert.FromHexString("646464"),
 			SerializeUnencryptedPayload(new SmPrices()));
 		Assert.Equal(

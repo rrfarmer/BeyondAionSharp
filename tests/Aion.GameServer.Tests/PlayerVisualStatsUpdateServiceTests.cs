@@ -57,6 +57,85 @@ public sealed class PlayerVisualStatsUpdateServiceTests
 	}
 
 	[Fact]
+	public async Task UpdateStatsAndSpeedVisuallyAsync_ResolvesRideSpeedSnapshotWhenMissing()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var service = new PlayerVisualStatsUpdateService(registry);
+		var player = CreatePlayer(6104);
+		player.IsInRideMode = true;
+		player.RideInfo = new PlayerRideInfo(NpcId: 9001, StartFp: 30, CostFp: 1, SprintSpeed: 12.0f, FlySpeed: 16.0f, MoveSpeed: 9.0f);
+
+		var result = await service.UpdateStatsAndSpeedVisuallyAsync(player, speedSnapshot: null);
+
+		Assert.Equal(PlayerVisualStatsUpdateStatus.StatsAndSpeedSent, result.Status);
+		Assert.True(result.StatsPacketSent);
+		Assert.NotNull(result.SpeedSnapshot);
+		Assert.Equal(9.0f, result.SpeedSnapshot.MovementSpeed);
+		Assert.Equal(1500, result.SpeedSnapshot.BaseAttackSpeed);
+		Assert.Equal(1500, result.SpeedSnapshot.CurrentAttackSpeed);
+		Assert.NotNull(result.SpeedPacket);
+		Assert.Equal(1, result.SpeedBroadcastCount);
+		Assert.Collection(
+			registry.PacketOrder,
+			packet => Assert.Same(result.StatsPacket, packet),
+			packet => Assert.Same(result.SpeedPacket, packet));
+	}
+
+	[Fact]
+	public async Task UpdateStatsAndSpeedVisuallyAsync_UsesRideSprintAndFlightSpeeds()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var service = new PlayerVisualStatsUpdateService(registry);
+		var sprintingPlayer = CreatePlayer(6105);
+		sprintingPlayer.IsInRideMode = true;
+		sprintingPlayer.IsInSprintMode = true;
+		sprintingPlayer.RideInfo = new PlayerRideInfo(NpcId: 9001, StartFp: 30, CostFp: 1, SprintSpeed: 12.0f, FlySpeed: 16.0f, MoveSpeed: 9.0f);
+		var flyingPlayer = CreatePlayer(6106);
+		flyingPlayer.IsInRideMode = true;
+		flyingPlayer.SetCreatureState(PlayerCreatureState.Flying, enabled: true);
+		flyingPlayer.RideInfo = new PlayerRideInfo(NpcId: 9002, StartFp: 30, CostFp: 1, SprintSpeed: 12.0f, FlySpeed: 16.0f, MoveSpeed: 9.0f);
+
+		var sprint = await service.UpdateStatsAndSpeedVisuallyAsync(sprintingPlayer, speedSnapshot: null);
+		var flight = await service.UpdateStatsAndSpeedVisuallyAsync(flyingPlayer, speedSnapshot: null);
+
+		Assert.Equal(PlayerVisualStatsUpdateStatus.StatsAndSpeedSent, sprint.Status);
+		Assert.NotNull(sprint.SpeedSnapshot);
+		Assert.Equal(12.0f, sprint.SpeedSnapshot.MovementSpeed);
+		Assert.Equal(PlayerVisualStatsUpdateStatus.StatsAndSpeedSent, flight.Status);
+		Assert.NotNull(flight.SpeedSnapshot);
+		Assert.Equal(16.0f, flight.SpeedSnapshot.MovementSpeed);
+		Assert.Equal(2, registry.Broadcasts.Count);
+	}
+
+	[Fact]
+	public async Task UpdateStatsAndSpeedVisuallyAsync_SkipsUnchangedResolvedSpeedAfterCacheWarm()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var service = new PlayerVisualStatsUpdateService(registry);
+		var player = CreatePlayer(6107);
+		player.IsInRideMode = true;
+		player.RideInfo = new PlayerRideInfo(NpcId: 9001, StartFp: 30, CostFp: 1, SprintSpeed: 12.0f, FlySpeed: 16.0f, MoveSpeed: 9.0f);
+
+		var first = await service.UpdateStatsAndSpeedVisuallyAsync(player, speedSnapshot: null);
+		var second = await service.UpdateStatsAndSpeedVisuallyAsync(player, speedSnapshot: null);
+
+		Assert.Equal(PlayerVisualStatsUpdateStatus.StatsAndSpeedSent, first.Status);
+		Assert.Equal(PlayerVisualStatsUpdateStatus.SpeedUnchanged, second.Status);
+		Assert.True(second.StatsPacketSent);
+		Assert.NotNull(second.StatsPacket);
+		Assert.NotNull(second.SpeedSnapshot);
+		Assert.Null(second.SpeedPacket);
+		Assert.Equal(0, second.SpeedBroadcastCount);
+		Assert.Single(registry.Broadcasts);
+		Assert.Equal(2, registry.SentPackets.Count);
+		Assert.Collection(
+			registry.PacketOrder,
+			packet => Assert.Same(first.StatsPacket, packet),
+			packet => Assert.Same(first.SpeedPacket, packet),
+			packet => Assert.Same(second.StatsPacket, packet));
+	}
+
+	[Fact]
 	public async Task UpdateStatsAndSpeedVisuallyAsync_ReportsMissingSpeedSnapshotAfterStatsSend()
 	{
 		var registry = new CapturingConnectionRegistry();
