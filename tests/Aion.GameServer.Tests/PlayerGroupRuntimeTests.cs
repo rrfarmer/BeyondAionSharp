@@ -414,6 +414,79 @@ public sealed class PlayerGroupRuntimeTests
 	}
 
 	[Fact]
+	public void ChangeLootRules_UpdatesDescriptorAndPlansGroupInfoBroadcastLikeJavaEvent()
+	{
+		var runtime = new PlayerGroupRuntime();
+		var leader = new Player
+		{
+			ObjectId = 1001,
+			Position = new WorldPosition(210010000, 10, 20, 30, 64),
+		};
+		var member = new Player
+		{
+			ObjectId = 1002,
+			Position = new WorldPosition(220010000, 40, 50, 60, 32),
+		};
+		runtime.CreateOrUpdateGroup(99001, [leader, member]);
+		var changedRules = new PlayerGroupLootRules(
+			PlayerGroupLootRuleType.Leader,
+			Misc: 9,
+			CommonItemAbove: 1,
+			SuperiorItemAbove: 2,
+			HeroicItemAbove: 3,
+			FabledItemAbove: 4,
+			EternalItemAbove: 5,
+			MythicItemAbove: 6);
+
+		var plan = Assert.IsType<PlayerGroupLootRulesChangedPacketPlan>(runtime.ChangeLootRules(99001, changedRules));
+
+		Assert.Equal(99001, plan.TeamId);
+		var descriptor = Assert.IsType<PlayerGroupDescriptor>(runtime.GetDescriptor(99001));
+		Assert.Same(changedRules, descriptor.LootRules);
+		Assert.Collection(
+			plan.GroupInfoBroadcasts,
+			intent =>
+			{
+				Assert.Equal(1001, intent.RecipientObjectId);
+				Assert.Same(changedRules, intent.GroupInfoPlan.LootRules);
+				Assert.Equal(210010000, intent.GroupInfoPlan.ActivePlayerMapId);
+				AssertChangedLootRulesGroupInfoPayload(intent.CreateGroupInfoPacket(), expectedMapId: 210010000);
+			},
+			intent =>
+			{
+				Assert.Equal(1002, intent.RecipientObjectId);
+				Assert.Same(changedRules, intent.GroupInfoPlan.LootRules);
+				Assert.Equal(220010000, intent.GroupInfoPlan.ActivePlayerMapId);
+				AssertChangedLootRulesGroupInfoPayload(intent.CreateGroupInfoPacket(), expectedMapId: 220010000);
+			});
+	}
+
+	[Fact]
+	public void ChangeLootRules_ReturnsNullForUnknownGroupWithoutChangingKnownGroups()
+	{
+		var runtime = new PlayerGroupRuntime();
+		var leader = new Player { ObjectId = 1001 };
+		runtime.CreateOrUpdateGroup(99001, [leader]);
+		var changedRules = new PlayerGroupLootRules(
+			PlayerGroupLootRuleType.Leader,
+			Misc: 9,
+			CommonItemAbove: 1,
+			SuperiorItemAbove: 2,
+			HeroicItemAbove: 3,
+			FabledItemAbove: 4,
+			EternalItemAbove: 5,
+			MythicItemAbove: 6);
+
+		var plan = runtime.ChangeLootRules(99002, changedRules);
+
+		Assert.Null(plan);
+		var descriptor = Assert.IsType<PlayerGroupDescriptor>(runtime.GetDescriptor(99001));
+		Assert.Equal(PlayerGroupLootRuleType.RoundRobin, descriptor.LootRules.LootRule);
+		Assert.Equal(0, descriptor.LootRules.Misc);
+		Assert.Equal([1001], runtime.GetMemberObjectIds(99001));
+	}
+
+	[Fact]
 	public void PlayerGroupType_JavaPacketFieldsMatchTeamType()
 	{
 		Assert.Equal((0x3F, 0), PlayerGroupType.Group.ToJavaPacketFields());
@@ -532,5 +605,28 @@ public sealed class PlayerGroupRuntimeTests
 		crypt.EnableKey();
 		var frame = packet.SerializeFrame(crypt);
 		return frame[7..];
+	}
+
+	private static void AssertChangedLootRulesGroupInfoPayload(GameServerPacket packet, int expectedMapId)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(99001, reader.ReadD());
+		Assert.Equal(1001, reader.ReadD());
+		Assert.Equal(expectedMapId, reader.ReadD());
+		Assert.Equal(2, reader.ReadD());
+		Assert.Equal(9, reader.ReadD());
+		Assert.Equal(1, reader.ReadD());
+		Assert.Equal(2, reader.ReadD());
+		Assert.Equal(3, reader.ReadD());
+		Assert.Equal(4, reader.ReadD());
+		Assert.Equal(5, reader.ReadD());
+		Assert.Equal(6, reader.ReadD());
+		Assert.Equal(0x02, reader.ReadD());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0x3F, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(string.Empty, reader.ReadS());
+		Assert.Equal(0, reader.Remaining);
 	}
 }

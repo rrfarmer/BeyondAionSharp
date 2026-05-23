@@ -77,6 +77,29 @@ public sealed class PlayerGroupRuntime
 		}
 	}
 
+	public PlayerGroupLootRulesChangedPacketPlan? ChangeLootRules(int teamId, PlayerGroupLootRules lootRules)
+	{
+		// Java parity: model/team/group/events/ChangeGroupLootRulesEvent sets LootGroupRules and broadcasts SM_GROUP_INFO.
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(teamId, 0);
+
+		lock (_sync)
+		{
+			if (!_membersByTeamId.TryGetValue(teamId, out var members)
+				|| !_descriptorsByTeamId.TryGetValue(teamId, out var descriptor))
+				return null;
+
+			var updatedDescriptor = descriptor with { LootRules = lootRules };
+			_descriptorsByTeamId[teamId] = updatedDescriptor;
+			var broadcasts = members
+				.Select(member => new PlayerGroupInfoBroadcastIntent(
+					member.ObjectId,
+					PlayerGroupInfoPacketPlan.FromDescriptor(updatedDescriptor, member.Player.Position.WorldId)))
+				.ToArray();
+
+			return new PlayerGroupLootRulesChangedPacketPlan(teamId, broadcasts);
+		}
+	}
+
 	public PlayerGroupSnapshot? RemoveMember(Player member)
 	{
 		// Java parity: model/team/group/PlayerGroupService.removePlayer delegates to PlayerGroup.onRemoveMember, which clears Player.playerGroup.
