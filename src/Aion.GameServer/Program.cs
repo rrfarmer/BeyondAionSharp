@@ -64,6 +64,7 @@ var builder = Host.CreateDefaultBuilder(args)
 				});
 			services.AddSingleton<Action<int>>(
 				serviceProvider => objectId => serviceProvider.GetRequiredService<WorldNpcLifeStatsService>().Clear(objectId));
+			services.AddSingleton<WorldNpcDamageService>();
 			services.AddSingleton<WorldNpcLootService>();
 			services.AddSingleton<WorldNpcLootBroadcastService>();
 			services.AddSingleton<WorldNpcRandomWalkService>();

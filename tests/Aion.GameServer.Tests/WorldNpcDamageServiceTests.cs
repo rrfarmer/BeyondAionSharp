@@ -1,0 +1,331 @@
+using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion;
+using Aion.GameServer.Network.Aion.ServerPackets;
+using Aion.GameServer.Services;
+using Aion.GameServer.Utils;
+using Aion.GameServer.Utils.IdFactory;
+using Aion.GameServer.World;
+using Microsoft.Extensions.Logging.Abstractions;
+using GameWorld = Aion.GameServer.World.World;
+
+namespace Aion.GameServer.Tests;
+
+public sealed class WorldNpcDamageServiceTests
+{
+	[Fact]
+	public async Task ApplyDamageAsync_ReducesSpawnedNpcHpViaLifeStats()
+	{
+		var damageService = CreateDamageService(out var spawnService, out var world, out var lifeStats, out var threadPoolManager, out _);
+		try
+		{
+			SpawnNpc(spawnService, world, npcTemplateId: 203090, maxHp: 100);
+			var npc = Assert.Single(world.GetNpcs());
+
+			var result = await damageService.ApplyDamageAsync(npc, CreatePlayer(), damage: 25);
+
+			Assert.Equal(WorldNpcDamageStatus.Damaged, result.Status);
+			Assert.Equal(25, result.Damage);
+			Assert.True(result.NotifyAttack);
+			Assert.NotNull(result.LifeStats);
+			Assert.Equal(WorldNpcLifeStatsDamageStatus.Reduced, result.LifeStats.Status);
+			Assert.Equal(new WorldNpcLifeStats(100, 0, 75, 0), result.LifeStats.Current);
+			Assert.True(lifeStats.TryGetStats(npc.ObjectId, out var stored));
+			Assert.Equal(75, stored!.CurrentHp);
+			Assert.False(spawnService.HasRespawnTask(npc.ObjectId));
+			Assert.False(spawnService.HasDecayTask(npc.ObjectId));
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
+	public async Task ApplyDamageAsync_TriggersDeathWorkflowForLethalDamage()
+	{
+		var damageService = CreateDamageService(out var spawnService, out var world, out _, out var threadPoolManager, out var aiStates);
+		try
+		{
+			SpawnNpc(spawnService, world, npcTemplateId: 203091, maxHp: 100);
+			var npc = Assert.Single(world.GetNpcs());
+
+			var result = await damageService.ApplyDamageAsync(
+				npc,
+				CreatePlayer(),
+				damage: 150,
+				new WorldNpcDamageOptions(
+					NotifyAttack: true,
+					DeathOptions: WorldNpcDeathDropOptions.Default with { RewardLoot = false }));
+
+			Assert.Equal(WorldNpcDamageStatus.Died, result.Status);
+			Assert.NotNull(result.LifeStats);
+			Assert.Equal(WorldNpcLifeStatsDamageStatus.Died, result.LifeStats.Status);
+			Assert.Equal(new WorldNpcLifeStats(100, 0, 0, 0), result.LifeStats.Current);
+			Assert.NotNull(result.LifeStats.DeathResult);
+			Assert.True(result.LifeStats.DeathResult.RespawnScheduled);
+			Assert.True(result.LifeStats.DeathResult.DecayScheduled);
+			Assert.True(result.LifeStats.DeathResult.AiMarkedDied);
+			Assert.True(spawnService.HasRespawnTask(npc.ObjectId));
+			Assert.True(spawnService.HasDecayTask(npc.ObjectId));
+			Assert.True(aiStates.TryGetState(npc.ObjectId, out var state));
+			Assert.Equal(WorldNpcAiState.Died, state!.State);
+
+			var duplicate = await damageService.ApplyDamageAsync(
+				npc,
+				CreatePlayer(),
+				damage: 1,
+				new WorldNpcDamageOptions(
+					NotifyAttack: true,
+					DeathOptions: WorldNpcDeathDropOptions.Default with { RewardLoot = false }));
+
+			Assert.Equal(WorldNpcDamageStatus.AlreadyDead, duplicate.Status);
+			Assert.NotNull(duplicate.LifeStats);
+			Assert.Equal(WorldNpcLifeStatsDamageStatus.AlreadyDead, duplicate.LifeStats.Status);
+			Assert.Null(duplicate.LifeStats.DeathResult);
+			Assert.Equal(1, spawnService.PendingDecayCount);
+			Assert.NotNull(spawnService.CancelDecay(npc.ObjectId));
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
+	public async Task ApplyDamageAsync_ReturnsNotSpawnedBeforeCreatingStats()
+	{
+		var damageService = CreateDamageService(out _, out _, out var lifeStats, out var threadPoolManager, out _);
+		try
+		{
+			var npc = CreateWorldNpc(objectId: 77, maxHp: 100);
+
+			var result = await damageService.ApplyDamageAsync(npc, CreatePlayer(), damage: 10);
+
+			Assert.Equal(WorldNpcDamageStatus.NotSpawned, result.Status);
+			Assert.Null(result.LifeStats);
+			Assert.False(lifeStats.TryGetStats(npc.ObjectId, out _));
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
+	public async Task ApplyDamageAsync_ReturnsMissingAttackerWithoutReducingHp()
+	{
+		var damageService = CreateDamageService(out var spawnService, out var world, out var lifeStats, out var threadPoolManager, out _);
+		try
+		{
+			SpawnNpc(spawnService, world, npcTemplateId: 203092, maxHp: 100);
+			var npc = Assert.Single(world.GetNpcs());
+
+			var result = await damageService.ApplyDamageAsync(npc, attacker: null, damage: 10);
+
+			Assert.Equal(WorldNpcDamageStatus.MissingAttacker, result.Status);
+			Assert.Null(result.LifeStats);
+			Assert.True(lifeStats.TryGetStats(npc.ObjectId, out var stored));
+			Assert.Equal(100, stored!.CurrentHp);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
+	public async Task ApplyDamageAsync_ReturnsMissingLifeStatsWhenMaxHpUnavailable()
+	{
+		var damageService = CreateDamageService(out var spawnService, out var world, out var lifeStats, out var threadPoolManager, out _);
+		try
+		{
+			SpawnNpc(spawnService, world, npcTemplateId: 203093, maxHp: 0);
+			var npc = Assert.Single(world.GetNpcs());
+
+			var result = await damageService.ApplyDamageAsync(npc, CreatePlayer(), damage: 10);
+
+			Assert.Equal(WorldNpcDamageStatus.MissingLifeStats, result.Status);
+			Assert.Null(result.LifeStats);
+			Assert.False(lifeStats.TryGetStats(npc.ObjectId, out _));
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	private static WorldNpcDamageService CreateDamageService(
+		out WorldNpcSpawnService spawnService,
+		out GameWorld world,
+		out WorldNpcLifeStatsService lifeStats,
+		out ThreadPoolManager threadPoolManager,
+		out WorldNpcAiStateService aiStates)
+	{
+		world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var dropRegistration = new WorldNpcDropRegistrationService();
+		threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		aiStates = new WorldNpcAiStateService();
+		var staticPlaceables = new StaticPlaceableStateService();
+		WorldNpcLifeStatsService? stagedLifeStats = null;
+		spawnService = new WorldNpcSpawnService(
+			new GameServerRuntimeContext(),
+			world,
+			new IDFactory(),
+			gameTimeService: null,
+			threadPoolManager,
+			connectionRegistry: null,
+			staticPlaceables,
+			walkerSpawnPlans: null,
+			walkerPlacementApplication: null,
+			NullLogger<WorldNpcSpawnService>.Instance,
+			dropRegistrationLookup: dropRegistration,
+			npcAiStates: aiStates,
+			npcLifeStatsInitialize: npc => stagedLifeStats!.Initialize(npc, npc.Template.MaxHp),
+			npcLifeStatsClear: objectId => stagedLifeStats!.Clear(objectId));
+		var lootService = new WorldNpcLootService(dropRegistration, spawnService, threadPoolManager);
+		var broadcastService = new WorldNpcLootBroadcastService(lootService, new NullConnectionRegistry());
+		var dropWorkflow = new WorldNpcDropRegistrationWorkflowService(
+			new WorldNpcCustomDropService(new CustomNpcDropTable([])),
+			dropRegistration,
+			broadcastService);
+		var deathWorkflow = new WorldNpcDeathDropWorkflowService(spawnService, dropWorkflow, aiStates);
+		stagedLifeStats = new WorldNpcLifeStatsService(deathWorkflow);
+		lifeStats = stagedLifeStats;
+		return new WorldNpcDamageService(world, lifeStats);
+	}
+
+	private static void SpawnNpc(WorldNpcSpawnService spawnService, GameWorld world, int npcTemplateId, int maxHp)
+	{
+		var spawns = new NpcSpawnTable([CreateSpawn(210010000, npcTemplateId, respawnSeconds: 30)]);
+		var templates = new NpcTemplateTable([CreateTemplate(npcTemplateId, maxHp)]);
+		spawnService.SpawnWorldNpcs(spawns, templates, [210010000]);
+		Assert.Single(world.GetNpcs());
+	}
+
+	private static WorldNpc CreateWorldNpc(int objectId, int maxHp)
+	{
+		return new WorldNpc(
+			objectId,
+			203094,
+			CreateTemplate(203094, maxHp),
+			new WorldPosition(210010000, 1, 2, 3, 0));
+	}
+
+	private static Player CreatePlayer()
+	{
+		return new Player { ObjectId = 1001, Race = "ELYOS", Level = 10 };
+	}
+
+	private static NpcSpawnSummary CreateSpawn(
+		int mapId,
+		int npcId,
+		int respawnSeconds)
+	{
+		return new NpcSpawnSummary(
+			mapId,
+			npcId,
+			X: 1,
+			Y: 2,
+			Z: 3,
+			Heading: 0,
+			RespawnSeconds: respawnSeconds,
+			PoolSize: 0,
+			DifficultId: 0,
+			Handler: string.Empty,
+			StaticId: 0,
+			RandomWalkRange: 0,
+			WalkerId: string.Empty,
+			WalkerIndex: 0,
+			Anchor: string.Empty,
+			State: 0,
+			AiName: string.Empty,
+			Custom: false,
+			GroupTemporarySchedule: null,
+			SpotTemporarySchedule: null);
+	}
+
+	private static NpcTemplateSummary CreateTemplate(int templateId, int maxHp)
+	{
+		return new NpcTemplateSummary(
+			templateId,
+			$"npc-{templateId}",
+			NameId: templateId,
+			Level: 10,
+			Rank: "NORMAL",
+			Rating: "NORMAL",
+			Race: "ELYOS",
+			Tribe: "GENERAL",
+			Type: "GENERAL",
+			MaxHp: maxHp);
+	}
+
+	private sealed class NullConnectionRegistry : IGameClientConnectionRegistry
+	{
+		public void RegisterPlayerConnection(int playerObjectId, GameServerConnection connection)
+		{
+		}
+
+		public void UnregisterPlayerConnection(int playerObjectId, GameServerConnection connection)
+		{
+		}
+
+		public bool TryGetOnlinePlayerByName(string playerName, out Player? player)
+		{
+			player = null;
+			return false;
+		}
+
+		public void ForEachOnlinePlayer(Action<Player> action)
+		{
+		}
+
+		public Task<bool> SendPacketToPlayerAsync(int playerObjectId, GameServerPacket packet)
+		{
+			return Task.FromResult(false);
+		}
+
+		public Task<int> BroadcastToWorldAsync(GameServerPacket packet, Func<Player, bool>? filter = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> BroadcastToVisiblePlayersAsync(
+			WorldPosition sourcePosition,
+			int sourceObjectId,
+			GameServerPacket packet,
+			bool includeSourcePlayer = false,
+			Func<Player, bool>? filter = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> RefreshHousingVisibilityAsync(
+			IReadOnlyList<WorldHouse> houses,
+			HousingTemplateTable? housingTemplates,
+			int? playerObjectId = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> RefreshNpcVisibilityAsync(IReadOnlyList<IWorldNpcObject> npcs, int? playerObjectId = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> BroadcastHouseUpdateAsync(WorldHouse house, HousingTemplateTable? housingTemplates)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<bool> NotifyMailReceivedAsync(int recipientObjectId, PlayerMail mail)
+		{
+			return Task.FromResult(false);
+		}
+
+		public Task<bool> NotifyBrokerSettledAsync(int sellerObjectId, long settledKinah)
+		{
+			return Task.FromResult(false);
+		}
+	}
+}
