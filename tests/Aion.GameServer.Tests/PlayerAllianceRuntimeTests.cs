@@ -129,6 +129,76 @@ public sealed class PlayerAllianceRuntimeTests
 			infoPlan.GroupPlaceholders);
 	}
 
+	[Fact]
+	public void ChangeMemberGroup_MovesMemberToTargetJavaAllianceGroupAndReturnsBroadcastPlan()
+	{
+		var runtime = new PlayerAllianceRuntime();
+		var leader = CreatePlayer(1001, "Leader", worldId: 210010000);
+		var moved = CreatePlayer(1002, "Moved", worldId: 220010000);
+		runtime.CreateAlliance(88001, leader);
+		runtime.AddMember(88001, moved);
+
+		var plan = Assert.IsType<PlayerAllianceMemberGroupChangePlan>(
+			runtime.ChangeMemberGroup(88001, firstMemberObjectId: 1002, secondMemberObjectId: 0, targetAllianceGroupId: 1003));
+
+		Assert.Equal(88001, plan.AllianceId);
+		Assert.Equal(1002, plan.FirstMemberObjectId);
+		Assert.Equal(0, plan.SecondMemberObjectId);
+		Assert.Equal(1003, plan.TargetAllianceGroupId);
+		Assert.Equal([1001], runtime.GetMemberObjectIdsByGroupId(88001, 1000));
+		Assert.Empty(runtime.GetMemberObjectIdsByGroupId(88001, 1001));
+		Assert.Empty(runtime.GetMemberObjectIdsByGroupId(88001, 1002));
+		Assert.Equal([1002], runtime.GetMemberObjectIdsByGroupId(88001, 1003));
+		Assert.Equal(1003, Assert.IsType<PlayerAllianceMember>(runtime.GetMember(88001, 1002)).AllianceGroupId);
+		Assert.Collection(
+			plan.MemberInfoIntents,
+			intent => AssertGroupChangeIntent(intent, expectedSubjectObjectId: 1002, expectedName: "Moved"));
+		Assert.Equal([1001, 1002], moved.CurrentAllianceSnapshot?.MemberObjectIds);
+		Assert.Equal([1002], moved.CurrentAllianceSnapshot?.MemberObjectIdsByGroupId[1003]);
+	}
+
+	[Fact]
+	public void ChangeMemberGroup_SwapsMemberGroupsLikeJavaEvent()
+	{
+		var runtime = new PlayerAllianceRuntime();
+		var leader = CreatePlayer(1001, "Leader", worldId: 210010000);
+		var first = CreatePlayer(1002, "First", worldId: 220010000);
+		var second = CreatePlayer(1003, "Second", worldId: 230010000);
+		runtime.CreateAlliance(88001, leader);
+		runtime.AddMember(88001, first);
+		runtime.AddMember(88001, second);
+		runtime.ChangeMemberGroup(88001, firstMemberObjectId: 1003, secondMemberObjectId: 0, targetAllianceGroupId: 1002);
+
+		var plan = Assert.IsType<PlayerAllianceMemberGroupChangePlan>(
+			runtime.ChangeMemberGroup(88001, firstMemberObjectId: 1002, secondMemberObjectId: 1003, targetAllianceGroupId: 0));
+
+		Assert.Equal([1001, 1003], runtime.GetMemberObjectIdsByGroupId(88001, 1000));
+		Assert.Empty(runtime.GetMemberObjectIdsByGroupId(88001, 1001));
+		Assert.Equal([1002], runtime.GetMemberObjectIdsByGroupId(88001, 1002));
+		Assert.Empty(runtime.GetMemberObjectIdsByGroupId(88001, 1003));
+		Assert.Equal(1002, Assert.IsType<PlayerAllianceMember>(runtime.GetMember(88001, 1002)).AllianceGroupId);
+		Assert.Equal(1000, Assert.IsType<PlayerAllianceMember>(runtime.GetMember(88001, 1003)).AllianceGroupId);
+		Assert.Collection(
+			plan.MemberInfoIntents,
+			intent => AssertGroupChangeIntent(intent, expectedSubjectObjectId: 1002, expectedName: "First"),
+			intent => AssertGroupChangeIntent(intent, expectedSubjectObjectId: 1003, expectedName: "Second"));
+	}
+
+	[Fact]
+	public void ChangeMemberGroup_ReturnsNullWhenEventMemberLeftBeforeHandling()
+	{
+		var runtime = new PlayerAllianceRuntime();
+		var leader = CreatePlayer(1001, "Leader", worldId: 210010000);
+		var member = CreatePlayer(1002, "Member", worldId: 220010000);
+		runtime.CreateAlliance(88001, leader);
+		runtime.AddMember(88001, member);
+
+		Assert.Null(runtime.ChangeMemberGroup(88001, firstMemberObjectId: 404, secondMemberObjectId: 0, targetAllianceGroupId: 1001));
+		Assert.Null(runtime.ChangeMemberGroup(88001, firstMemberObjectId: 1001, secondMemberObjectId: 404, targetAllianceGroupId: 0));
+		Assert.Throws<InvalidOperationException>(() => runtime.ChangeMemberGroup(88001, firstMemberObjectId: 1001, secondMemberObjectId: 0, targetAllianceGroupId: 404));
+		Assert.Equal([1001, 1002], runtime.GetMemberObjectIdsByGroupId(88001, 1000));
+	}
+
 	private static Player CreatePlayer(int objectId, string name, int worldId)
 	{
 		return new Player
@@ -140,5 +210,22 @@ public sealed class PlayerAllianceRuntimeTests
 			Level = 40,
 			Position = new WorldPosition(worldId, 11, 22, 33, 64),
 		};
+	}
+
+	private static void AssertGroupChangeIntent(
+		PlayerAllianceMemberInfoIntent intent,
+		int expectedSubjectObjectId,
+		string expectedName)
+	{
+		Assert.Equal(0, intent.RecipientObjectId);
+		Assert.Equal(expectedSubjectObjectId, intent.SubjectObjectId);
+		Assert.Equal(PlayerAllianceEvent.MemberGroupChange, intent.Event);
+		var plan = Assert.IsType<PlayerAllianceMemberInfoPacketPlan>(intent.PacketPlan);
+		Assert.Equal(PlayerAllianceMemberInfoEventKind.MemberGroupChange, plan.RequestedEventKind);
+		Assert.Equal(PlayerAllianceMemberInfoEventKind.MemberGroupChange, plan.EffectiveEventKind);
+		Assert.True(plan.WritesName);
+		Assert.False(plan.WritesAbnormalEffects);
+		Assert.False(plan.WritesSlotTimers);
+		Assert.Equal(expectedName, plan.PrefixSnapshot.Name);
 	}
 }

@@ -9,6 +9,7 @@ public sealed class PlayerAllianceRuntime
 	private readonly Dictionary<int, List<PlayerAllianceMember>> _membersByAllianceId = [];
 	private readonly Dictionary<int, PlayerAllianceDescriptor> _descriptorsByAllianceId = [];
 	private readonly Dictionary<int, List<int>> _viceCaptainObjectIdsByAllianceId = [];
+	private readonly PlayerAllianceMemberGroupChangePlanner _groupChangePlanner = new();
 
 	public PlayerAllianceSnapshot CreateAlliance(
 		int allianceId,
@@ -204,6 +205,53 @@ public sealed class PlayerAllianceRuntime
 				.ToList();
 
 			return ApplySnapshot(allianceId, members, descriptor);
+		}
+	}
+
+	public PlayerAllianceMemberGroupChangePlan? ChangeMemberGroup(
+		int allianceId,
+		int firstMemberObjectId,
+		int secondMemberObjectId,
+		int targetAllianceGroupId)
+	{
+		// Java parity: model/team/alliance/events/ChangeMemberGroupEvent mutates PlayerAllianceGroup membership before broadcasting member-info packets.
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(allianceId, 0);
+
+		lock (_sync)
+		{
+			if (!_membersByAllianceId.TryGetValue(allianceId, out var members)
+				|| !_descriptorsByAllianceId.TryGetValue(allianceId, out var descriptor))
+				return null;
+
+			var firstMember = members.FirstOrDefault(member => member.ObjectId == firstMemberObjectId);
+			if (firstMember == null)
+				return null;
+
+			if (secondMemberObjectId != 0)
+			{
+				var secondMember = members.FirstOrDefault(member => member.ObjectId == secondMemberObjectId);
+				if (secondMember == null)
+					return null;
+
+				var firstAllianceGroupId = firstMember.AllianceGroupId;
+				firstMember.MoveToAllianceGroup(secondMember.AllianceGroupId);
+				secondMember.MoveToAllianceGroup(firstAllianceGroupId);
+			}
+			else
+			{
+				if (!descriptor.AllianceGroupIds.Contains(targetAllianceGroupId))
+					throw new InvalidOperationException("Player alliance group does not exist.");
+
+				firstMember.MoveToAllianceGroup(targetAllianceGroupId);
+			}
+
+			ApplySnapshot(allianceId, members, descriptor);
+			return _groupChangePlanner.CreateMemberGroupChangePlan(
+				allianceId,
+				members.Select(member => member.Player).ToArray(),
+				firstMemberObjectId,
+				secondMemberObjectId,
+				targetAllianceGroupId);
 		}
 	}
 
