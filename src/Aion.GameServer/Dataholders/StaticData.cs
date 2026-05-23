@@ -31,6 +31,8 @@ public sealed class StaticData
 		NpcRiftSpawnTable npcRiftSpawns,
 		CustomNpcDropTable customNpcDrops,
 		QuestDropTable questDrops,
+		GlobalDropTable globalDrops,
+		GlobalNpcExclusionTable globalNpcExclusions,
 		SkillTemplateTable skillTemplates,
 		TitleTemplateTable titleTemplates,
 		RecipeTemplateTable recipeTemplates,
@@ -65,6 +67,8 @@ public sealed class StaticData
 		NpcRiftSpawns = npcRiftSpawns;
 		CustomNpcDrops = customNpcDrops;
 		QuestDrops = questDrops;
+		GlobalDrops = globalDrops;
+		GlobalNpcExclusions = globalNpcExclusions;
 		SkillTemplates = skillTemplates;
 		TitleTemplates = titleTemplates;
 		RecipeTemplates = recipeTemplates;
@@ -126,6 +130,10 @@ public sealed class StaticData
 
 	public QuestDropTable QuestDrops { get; }
 
+	public GlobalDropTable GlobalDrops { get; }
+
+	public GlobalNpcExclusionTable GlobalNpcExclusions { get; }
+
 	public SkillTemplateTable SkillTemplates { get; }
 
 	public TitleTemplateTable TitleTemplates { get; }
@@ -177,6 +185,12 @@ public sealed class StaticData
 		var npcSpawns = new List<NpcSpawnSummary>();
 		var npcRiftSpawns = new List<NpcRiftSpawnSummary>();
 		var questDrops = new List<QuestDropSummary>();
+		var globalDropRules = new List<GlobalDropRuleSummary>();
+		var globalNpcExclusionNpcIds = new HashSet<int>();
+		var globalNpcExclusionNpcNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+		var globalNpcExclusionNpcTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+		var globalNpcExclusionNpcTribes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+		var globalNpcExclusionNpcAbyssTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 		var skillTemplates = new List<SkillTemplateSummary>();
 		var titleTemplates = new List<TitleTemplateSummary>();
 		var recipeTemplates = new List<RecipeTemplateSummary>();
@@ -208,6 +222,8 @@ public sealed class StaticData
 		NpcSpawnSpotBuilder? currentNpcRiftSpawnSpot = null;
 		VortexLocationBuilder? currentVortexLocation = null;
 		QuestDropBuilder? currentQuestDropBuilder = null;
+		GlobalDropRuleBuilder? currentGlobalDropRule = null;
+		int currentGlobalDropRuleDepth = -1;
 		int currentNpcSpawnMapId = 0;
 		int currentNpcSpawnDepth = -1;
 		int currentNpcSpawnSpotDepth = -1;
@@ -362,6 +378,13 @@ public sealed class StaticData
 					currentQuestDropBuilder = null;
 				}
 
+				if (reader.Depth == currentGlobalDropRuleDepth && reader.LocalName == "gd_rule" && currentGlobalDropRule != null)
+				{
+					globalDropRules.Add(currentGlobalDropRule.ToSummary());
+					currentGlobalDropRule = null;
+					currentGlobalDropRuleDepth = -1;
+				}
+
 				if (reader.Depth == 2 && reader.LocalName == "spawn_map" && elementPath.GetValueOrDefault(1) == "spawns")
 					currentNpcSpawnMapId = 0;
 
@@ -494,6 +517,107 @@ public sealed class StaticData
 					ReadRequiredIntAttribute(reader, "item_id"),
 					ReadOptionalIntAttribute(reader, "count", 1));
 				continue;
+			}
+
+			if (IsInsideElement(elementPath, reader.Depth, "global_npc_exclusions"))
+			{
+				// Java parity: dataholders/GlobalNpcExclusionData JAXB whitespace-list elements.
+				var localName = reader.LocalName;
+				var value = await ReadElementTextAsync(reader, cancellationToken);
+				switch (localName)
+				{
+					case "npc_ids":
+						globalNpcExclusionNpcIds.UnionWith(ParseIntSet(value));
+						break;
+					case "npc_names":
+						globalNpcExclusionNpcNames.UnionWith(ParseStringSet(value));
+						break;
+					case "npc_types":
+						globalNpcExclusionNpcTypes.UnionWith(ParseStringSet(value));
+						break;
+					case "npc_tribes":
+						globalNpcExclusionNpcTribes.UnionWith(ParseStringSet(value));
+						break;
+					case "npc_abyss_types":
+						globalNpcExclusionNpcAbyssTypes.UnionWith(ParseStringSet(value));
+						break;
+				}
+				continue;
+			}
+
+			if (reader.LocalName == "gd_rule" && IsInsideElement(elementPath, reader.Depth, "global_rules"))
+			{
+				// Java parity: dataholders/GlobalDropData loads every GlobalRule from global_drops/rules.
+				currentGlobalDropRule = new GlobalDropRuleBuilder(
+					reader.GetAttribute("rule_name") ?? string.Empty,
+					ReadFloatAttribute(reader, "chance"),
+					ReadBoolAttribute(reader, "dynamic_chance"),
+					ReadOptionalIntAttribute(reader, "min_diff", -99),
+					ReadOptionalIntAttribute(reader, "max_diff", 99),
+					reader.GetAttribute("restriction_race") ?? string.Empty,
+					ReadBoolAttribute(reader, "level_based_chance_reduction"),
+					ReadOptionalIntAttribute(reader, "member_limit", 1),
+					ReadOptionalIntAttribute(reader, "max_drop_rule", 1));
+				currentGlobalDropRuleDepth = reader.Depth;
+				if (reader.IsEmptyElement)
+				{
+					globalDropRules.Add(currentGlobalDropRule.ToSummary());
+					currentGlobalDropRule = null;
+					currentGlobalDropRuleDepth = -1;
+				}
+				continue;
+			}
+
+			if (currentGlobalDropRule != null && reader.Depth > currentGlobalDropRuleDepth)
+			{
+				switch (reader.LocalName)
+				{
+					case "gd_item":
+						var minCount = ReadOptionalIntAttribute(reader, "min_count", 1);
+						var maxCount = ReadOptionalIntAttribute(reader, "max_count", minCount);
+						if (maxCount == 0)
+							maxCount = minCount;
+						currentGlobalDropRule.AddItem(
+							new GlobalDropItemSummary(
+								ReadRequiredIntAttribute(reader, "id"),
+								minCount,
+								maxCount,
+								ReadOptionalFloatAttribute(reader, "chance", 100f)));
+						continue;
+					case "gd_world":
+						currentGlobalDropRule.WorldTypes.Add(reader.GetAttribute("wd_type") ?? string.Empty);
+						continue;
+					case "gd_race":
+						currentGlobalDropRule.Races.Add(reader.GetAttribute("race") ?? string.Empty);
+						continue;
+					case "gd_rating":
+						currentGlobalDropRule.Ratings.Add(reader.GetAttribute("rating") ?? string.Empty);
+						continue;
+					case "gd_map":
+						currentGlobalDropRule.MapIds.Add(ReadRequiredIntAttribute(reader, "map_id"));
+						continue;
+					case "gd_tribe":
+						currentGlobalDropRule.Tribes.Add(reader.GetAttribute("tribe") ?? string.Empty);
+						continue;
+					case "gd_npc":
+						currentGlobalDropRule.NpcIds.Add(ReadRequiredIntAttribute(reader, "npc_id"));
+						continue;
+					case "gd_npc_name":
+						currentGlobalDropRule.NpcNames.Add(
+							new GlobalDropNpcNameSummary(
+								reader.GetAttribute("function") ?? string.Empty,
+								reader.GetAttribute("value") ?? string.Empty));
+						continue;
+					case "gd_npc_group":
+						currentGlobalDropRule.NpcGroups.Add(reader.GetAttribute("group") ?? string.Empty);
+						continue;
+					case "gd_excluded_npcs":
+						currentGlobalDropRule.ExcludedNpcIds.UnionWith(ReadIntListAttribute(reader, "npc_ids"));
+						continue;
+					case "gd_zone":
+						currentGlobalDropRule.Zones.Add(reader.GetAttribute("zone") ?? string.Empty);
+						continue;
+				}
 			}
 
 			if (currentVortexLocation != null && reader.Depth == 3 && elementPath.GetValueOrDefault(2) == "vortex_location")
@@ -1645,6 +1769,13 @@ public sealed class StaticData
 			new NpcRiftSpawnTable(npcRiftSpawns.AsReadOnly()),
 			customNpcDrops,
 			new QuestDropTable(questDrops.AsReadOnly()),
+			new GlobalDropTable(globalDropRules.AsReadOnly()),
+			new GlobalNpcExclusionTable(
+				globalNpcExclusionNpcIds,
+				globalNpcExclusionNpcNames,
+				globalNpcExclusionNpcTypes,
+				globalNpcExclusionNpcTribes,
+				globalNpcExclusionNpcAbyssTypes),
 			new SkillTemplateTable(skillTemplates.AsReadOnly()),
 			new TitleTemplateTable(titleTemplates.AsReadOnly()),
 			new RecipeTemplateTable(recipeTemplates.AsReadOnly()),
@@ -3144,6 +3275,101 @@ public sealed class StaticData
 		private sealed record PendingQuestDrop(int NpcId, int ItemId, int Chance, int DropEachMember, int CollectingStep);
 	}
 
+	private sealed class GlobalDropRuleBuilder
+	{
+		public GlobalDropRuleBuilder(
+			string ruleName,
+			float chance,
+			bool dynamicChance,
+			int minDiff,
+			int maxDiff,
+			string restrictionRace,
+			bool useLevelBasedChanceReduction,
+			int memberLimit,
+			int maxDropRule)
+		{
+			RuleName = ruleName;
+			Chance = chance;
+			DynamicChance = dynamicChance;
+			MinDiff = minDiff;
+			MaxDiff = maxDiff;
+			RestrictionRace = restrictionRace;
+			UseLevelBasedChanceReduction = useLevelBasedChanceReduction;
+			MemberLimit = memberLimit;
+			MaxDropRule = maxDropRule;
+		}
+
+		private string RuleName { get; }
+
+		private float Chance { get; }
+
+		private bool DynamicChance { get; }
+
+		private int MinDiff { get; }
+
+		private int MaxDiff { get; }
+
+		private string RestrictionRace { get; }
+
+		private bool UseLevelBasedChanceReduction { get; }
+
+		private int MemberLimit { get; }
+
+		private int MaxDropRule { get; }
+
+		public List<GlobalDropItemSummary> Items { get; } = [];
+
+		public HashSet<string> WorldTypes { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+		public HashSet<string> Races { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+		public HashSet<string> Ratings { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+		public HashSet<int> MapIds { get; } = [];
+
+		public HashSet<string> Tribes { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+		public HashSet<int> NpcIds { get; } = [];
+
+		public List<GlobalDropNpcNameSummary> NpcNames { get; } = [];
+
+		public HashSet<string> NpcGroups { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+		public HashSet<int> ExcludedNpcIds { get; } = [];
+
+		public HashSet<string> Zones { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+		public void AddItem(GlobalDropItemSummary item)
+		{
+			Items.Add(item);
+		}
+
+		public GlobalDropRuleSummary ToSummary()
+		{
+			return new GlobalDropRuleSummary(
+				RuleName,
+				Chance,
+				DynamicChance,
+				MinDiff,
+				MaxDiff,
+				RestrictionRace,
+				UseLevelBasedChanceReduction,
+				MemberLimit,
+				MaxDropRule,
+				Items.ToArray(),
+				WorldTypes.ToHashSet(StringComparer.OrdinalIgnoreCase),
+				Races.ToHashSet(StringComparer.OrdinalIgnoreCase),
+				Ratings.ToHashSet(StringComparer.OrdinalIgnoreCase),
+				MapIds.ToHashSet(),
+				Tribes.ToHashSet(StringComparer.OrdinalIgnoreCase),
+				NpcIds.ToHashSet(),
+				NpcNames.ToArray(),
+				NpcGroups.ToHashSet(StringComparer.OrdinalIgnoreCase),
+				ExcludedNpcIds.ToHashSet(),
+				Zones.ToHashSet(StringComparer.OrdinalIgnoreCase));
+		}
+	}
+
 	private sealed class VortexLocationBuilder
 	{
 		public VortexLocationBuilder(int id, string defendersRace, string invadersRace)
@@ -3293,6 +3519,30 @@ public sealed class StaticData
 			.Split(' ', StringSplitOptions.RemoveEmptyEntries)
 			.Select(part => int.Parse(part, CultureInfo.InvariantCulture))
 			.ToArray();
+	}
+
+	private static IReadOnlySet<int> ParseIntSet(string value)
+	{
+		return string.IsNullOrWhiteSpace(value)
+			? new HashSet<int>()
+			: value
+				.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+				.Select(part => int.Parse(part, CultureInfo.InvariantCulture))
+				.ToHashSet();
+	}
+
+	private static IReadOnlySet<string> ParseStringSet(string value)
+	{
+		return string.IsNullOrWhiteSpace(value)
+			? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+			: value
+				.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+				.ToHashSet(StringComparer.OrdinalIgnoreCase);
+	}
+
+	private static bool IsInsideElement(IReadOnlyDictionary<int, string> elementPath, int depth, string elementName)
+	{
+		return elementPath.Any(pair => pair.Key < depth && pair.Value == elementName);
 	}
 
 	private static float ReadFloatAttribute(XmlReader reader, string attributeName)
