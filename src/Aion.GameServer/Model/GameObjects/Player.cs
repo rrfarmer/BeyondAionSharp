@@ -241,6 +241,9 @@ public sealed class Player
 	// Java parity: PlayerGroup.getMembers used by PortalService group instance reuse/fanout; currently only plan metadata.
 	public IReadOnlyList<int> CurrentTeamMemberObjectIds { get; set; } = Array.Empty<int>();
 
+	// Java parity: Player.getPlayerGroup returns a live PlayerGroup; this snapshot is a narrow bridge until team lifecycle is ported.
+	public PlayerGroupSnapshot? CurrentGroupSnapshot { get; set; }
+
 	// Java parity: model/gameobjects/player/Player.isLooting / getLootingNpcOid used by DropService request/close list.
 	public int LootingNpcObjectId { get; set; }
 
@@ -301,6 +304,7 @@ public sealed class Player
 		// Java parity: PlayerGroupService.removePlayer / PlayerAllianceService.removePlayer clears the responder's current team.
 		var removed = TeamMembership;
 		TeamMembership = PlayerTeamMembership.None;
+		CurrentGroupSnapshot = null;
 		return removed;
 	}
 

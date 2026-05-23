@@ -1411,6 +1411,51 @@ public sealed class PortalEntryValidationServiceTests
 	}
 
 	[Fact]
+	public void ValidatePortalEntryPlan_GroupSnapshotOverridesFallbackTeamMetadataBeforeBlockedFanout()
+	{
+		var snapshot = PlayerGroupSnapshot.FromMembers(
+			teamId: 99001,
+			[
+				new Player { ObjectId = 1001 },
+				new Player { ObjectId = 1003 },
+				new Player { ObjectId = 1005 },
+			]);
+		var player = new Player
+		{
+			ObjectId = 1001,
+			Race = "ELYOS",
+			Level = 25,
+			TeamMembership = PlayerTeamMembership.Group,
+			CurrentTeamId = 88001,
+			CurrentTeamMemberObjectIds = [1001, 1002],
+			CurrentGroupSnapshot = snapshot,
+		};
+		var worldMaps = CreateWorldMaps();
+		var registered = worldMaps.AddWorldMapInstance(WorldId, instanceId: 7, maxPlayers: 6);
+		Assert.NotNull(registered);
+		registered.RegisterTeamId(99001);
+
+		var result = PortalEntryValidationService.ValidatePortalEntryPlan(
+			player,
+			CreatePortalPath(minLevel: 25),
+			CreatePortalLocs(),
+			CreatePortalCooltimes(maxPlayers: 6, maxCount: 1),
+			worldMaps,
+			DateTimeOffset.FromUnixTimeMilliseconds(100_000),
+			npcObjectId: 4001);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.UnsupportedTeamPortal, result.Status);
+		Assert.NotNull(result.TeamPlan);
+		Assert.Equal(PortalTeamEntryKind.Group, result.TeamPlan.Kind);
+		Assert.Equal(99001, result.TeamPlan.TeamId);
+		Assert.Equal([1001, 1003, 1005], result.TeamPlan.MemberObjectIds);
+		Assert.Equal(PortalTeamEntryDisposition.RegisteredInstanceTransfer, result.TeamPlan.Disposition);
+		Assert.Same(registered, result.TeamPlan.RegisteredInstance);
+		Assert.False(result.TeamPlan.FanoutSupported);
+	}
+
+	[Fact]
 	public void ValidatePortalEntryPlan_GroupMemberFindsRegisteredTeamInstanceBeforeBlockedFanout()
 	{
 		var player = new Player

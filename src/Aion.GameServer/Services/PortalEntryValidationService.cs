@@ -630,11 +630,14 @@ public static class PortalEntryValidationService
 		// Java parity: services/teleport/PortalService.port preserves team id/member context before group/alliance transfer fanout.
 		if (maxPlayers is 3 or 6 && player.TeamMembership == PlayerTeamMembership.Group)
 		{
-			var registeredInstance = player.CurrentTeamId == 0 ? null : worldMaps.GetRegisteredInstance(worldId, player.CurrentTeamId);
+			var groupSnapshot = PlayerGroupSnapshotResolver.Resolve(player);
+			var teamId = groupSnapshot?.TeamId ?? 0;
+			var memberObjectIds = groupSnapshot?.MemberObjectIds ?? Array.Empty<int>();
+			var registeredInstance = teamId == 0 ? null : worldMaps.GetRegisteredInstance(worldId, teamId);
 			return new PortalTeamEntryPlan(
 				PortalTeamEntryKind.Group,
-				player.CurrentTeamId,
-				player.CurrentTeamMemberObjectIds,
+				teamId,
+				memberObjectIds,
 				maxPlayers,
 				GetTeamEntryDisposition(registeredInstance),
 				registeredInstance,
