@@ -1318,7 +1318,14 @@ public sealed class GameServerConnection : BaseClientConnection
 				SendPacketAsync,
 				DateTimeOffset.Now,
 				_isKnownNpc,
-				(teleportPlayer, loc, cancellationToken) => TeleportSameInstancePortalAsync(teleportPlayer, loc, staticData, cancellationToken));
+				(teleportPlayer, loc, cancellationToken) => TeleportSameInstancePortalAsync(teleportPlayer, loc, staticData, cancellationToken),
+				(transferPlayer, preparation, cancellationToken) => QueuePortalContinueTransferAsync(
+					transferPlayer,
+					preparation,
+					staticData,
+					_runtimeContext?.WorldMapStates,
+					now: DateTimeOffset.Now,
+					cancellationToken: cancellationToken));
 			if (portalResult.Handled)
 				return;
 		}
@@ -4940,6 +4947,75 @@ public sealed class GameServerConnection : BaseClientConnection
 		RevalidatePlayerCreaturePvpZones(player, staticData);
 		await SendDelayedTeleportCompletionPacketsAsync(player, teleport, staticData);
 		return teleport;
+	}
+
+	internal async Task<PortalContinueTransferResult?> QueuePortalContinueTransferAsync(
+		Player player,
+		PortalEntryPreparationResult preparation,
+		StaticData? staticData = null,
+		WorldMapRuntimeStateTable? worldMapStates = null,
+		InstanceCooltimeTable? instanceCooltimes = null,
+		DateTimeOffset? now = null,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: services/teleport/PortalService.port maxPlayers 0/1 continuation after checkAndRemoveRequiredItems.
+		staticData ??= _runtimeContext?.DataManager?.StaticData;
+		worldMapStates ??= _runtimeContext?.WorldMapStates;
+		instanceCooltimes ??= staticData?.InstanceCooltimes;
+		var portalLoc = preparation.EntryPlan.PortalLoc;
+		if (portalLoc == null || instanceCooltimes == null || worldMapStates == null)
+			return null;
+		if (preparation.EntryPlan.Action != PortalEntryPlanAction.Continue)
+			return null;
+
+		var targetMap = worldMapStates.GetMap(portalLoc.WorldId);
+		var portalLocation = new WorldPosition(
+			portalLoc.WorldId,
+			portalLoc.X,
+			portalLoc.Y,
+			portalLoc.Z,
+			portalLoc.Heading);
+		var maxPlayers = instanceCooltimes.GetMaxMemberCount(portalLoc.WorldId, player.Race);
+		var registeredInstance = preparation.EntryPlan.RegisteredInstance;
+
+		if (registeredInstance != null && portalLoc.WorldId != player.Position.WorldId)
+		{
+			// Java parity: PortalService.transfer reuses the registered solo instance and applies cooldown after sendLoc.
+			registeredInstance.SetStartPositionIfMissing(portalLocation with { InstanceId = registeredInstance.InstanceId });
+			registeredInstance.Register(player.ObjectId);
+			var transfer = await QueueInstancePortalTransferAsync(
+				player,
+				portalLocation with { InstanceId = registeredInstance.InstanceId },
+				preparation.EntryPlan.Reenter,
+				instanceCooltimes,
+				TeleportAnimation.FadeOutBeam,
+				staticData,
+				now);
+			return PortalContinueTransferResult.FromRegisteredInstance(transfer, registeredInstance);
+		}
+
+		if (targetMap?.Summary.IsInstance == true)
+		{
+			var transfer = await QueueAllocatedInstancePortalTransferAsync(
+				player,
+				portalLocation,
+				preparation.EntryPlan.Reenter,
+				worldMapStates,
+				instanceCooltimes,
+				ownerId: IsPersonalWorld(portalLoc.WorldId) ? player.ObjectId : 0,
+				maxPlayers: maxPlayers,
+				TeleportAnimation.FadeOutBeam,
+				staticData,
+				now);
+			return PortalContinueTransferResult.AllocatedInstance(transfer);
+		}
+
+		var teleport = await QueueDelayedTeleportAsync(
+			player,
+			portalLocation,
+			TeleportAnimation.FadeOutBeam,
+			staticData);
+		return PortalContinueTransferResult.OpenWorld(teleport);
 	}
 
 	internal async Task<InstanceEntranceCooldownResult> ApplyInstanceEntranceCooldownAsync(

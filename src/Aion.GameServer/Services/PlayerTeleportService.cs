@@ -106,3 +106,50 @@ public sealed record InstancePortalTransferResult(
 public sealed record AllocatedInstancePortalTransferResult(
 	InstancePortalRuntimePlan RuntimePlan,
 	InstancePortalTransferResult Transfer);
+
+public sealed record PortalContinueTransferResult(
+	PortalContinueTransferKind Kind,
+	PendingTeleportRequestResult Teleport,
+	InstanceEntranceCooldownResult? Cooldown,
+	InstancePortalRuntimePlan? AllocatedRuntimePlan,
+	WorldMapInstanceRuntimeState? RegisteredInstance)
+{
+	public static PortalContinueTransferResult OpenWorld(PendingTeleportRequestResult teleport)
+	{
+		return new PortalContinueTransferResult(
+			PortalContinueTransferKind.OpenWorld,
+			teleport,
+			null,
+			null,
+			null);
+	}
+
+	public static PortalContinueTransferResult FromRegisteredInstance(
+		InstancePortalTransferResult transfer,
+		WorldMapInstanceRuntimeState instance)
+	{
+		return new PortalContinueTransferResult(
+			PortalContinueTransferKind.RegisteredInstance,
+			transfer.Teleport,
+			transfer.Cooldown,
+			null,
+			instance);
+	}
+
+	public static PortalContinueTransferResult AllocatedInstance(AllocatedInstancePortalTransferResult transfer)
+	{
+		return new PortalContinueTransferResult(
+			PortalContinueTransferKind.AllocatedInstance,
+			transfer.Transfer.Teleport,
+			transfer.Transfer.Cooldown,
+			transfer.RuntimePlan,
+			null);
+	}
+}
+
+public enum PortalContinueTransferKind
+{
+	OpenWorld,
+	RegisteredInstance,
+	AllocatedInstance,
+}

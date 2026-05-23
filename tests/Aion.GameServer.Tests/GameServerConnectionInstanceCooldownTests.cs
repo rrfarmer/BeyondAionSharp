@@ -217,6 +217,174 @@ public sealed class GameServerConnectionInstanceCooldownTests
 			packet => Assert.IsType<SmInstanceInfo>(packet));
 	}
 
+	[Fact]
+	public async Task QueuePortalContinueTransferAsync_OpenWorldQueuesTeleportWithoutCooldown()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var pair = await TestConnectionPair.CreateAsync(
+			new GameServerOptions(),
+			new PlayerEnterWorldService(
+				new GameServerOptions(),
+				repository,
+				new GameWorld(NullLogger<GameWorld>.Instance),
+				NullLogger<PlayerEnterWorldService>.Instance));
+		var player = new Player
+		{
+			ObjectId = 1001,
+			Name = "Character",
+			Race = "ELYOS",
+			Position = new WorldPosition(110010000, 1, 1, 1, 0),
+		};
+		var worldMaps = new WorldMapRuntimeStateTable([new WorldMapSummary(210010000, IsInstance: false, TwinCount: 1)]);
+		var cooltimes = new InstanceCooltimeTable(Array.Empty<InstanceCooltimeSummary>());
+		var portalLoc = new PortalLocSummary(210010000, LocId: 1, 10, 20, 30, 90);
+		var preparation = PortalEntryPreparationResult.Ready(
+			PortalEntryPlanResult.Allowed(portalLoc, registeredInstance: null, reenter: false),
+			requirementApplication: null,
+			Array.Empty<GameServerPacket>());
+
+		var result = await pair.Connection.QueuePortalContinueTransferAsync(
+			player,
+			preparation,
+			worldMapStates: worldMaps,
+			instanceCooltimes: cooltimes,
+			now: DateTimeOffset.FromUnixTimeMilliseconds(100_000));
+
+		Assert.NotNull(result);
+		Assert.Equal(PortalContinueTransferKind.OpenWorld, result.Kind);
+		Assert.Equal(new WorldPosition(210010000, 10, 20, 30, 90), result.Teleport.PendingTeleport.Destination);
+		Assert.Null(result.Cooldown);
+		Assert.Null(repository.SavedPortalCooldowns);
+		Assert.Collection(pair.SentPackets, packet => Assert.IsType<SmTeleportLoc>(packet));
+	}
+
+	[Fact]
+	public async Task QueuePortalContinueTransferAsync_SoloInstanceAllocatesRegistersAndAppliesCooldownAfterTeleport()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var pair = await TestConnectionPair.CreateAsync(
+			new GameServerOptions
+			{
+				Membership = new GameServerMembershipOptions { InstancesCooldown = 10 },
+				Instance = new GameServerInstanceOptions { CooldownRate = 1 },
+			},
+			new PlayerEnterWorldService(
+				new GameServerOptions(),
+				repository,
+				new GameWorld(NullLogger<GameWorld>.Instance),
+				NullLogger<PlayerEnterWorldService>.Instance));
+		var player = new Player
+		{
+			ObjectId = 1001,
+			Name = "Character",
+			Race = "ELYOS",
+			AccountMembership = 10,
+			Position = new WorldPosition(110010000, 1, 1, 1, 0),
+		};
+		var worldMaps = new WorldMapRuntimeStateTable([new WorldMapSummary(300030000, IsInstance: true, TwinCount: 1)]);
+		var cooltimes = new InstanceCooltimeTable(
+		[
+			new InstanceCooltimeSummary(
+				Id: 8,
+				WorldId: 300030000,
+				Race: "PC_ALL",
+				MaxCount: 5,
+				MaxMemberLight: 1,
+				MaxMemberDark: 1,
+				CoolTimeType: "RELATIVE",
+				EntCoolTime: 30),
+		]);
+		var portalLoc = new PortalLocSummary(300030000, LocId: 1, 10, 20, 30, 90);
+		var preparation = PortalEntryPreparationResult.Ready(
+			PortalEntryPlanResult.Allowed(portalLoc, registeredInstance: null, reenter: false),
+			requirementApplication: null,
+			Array.Empty<GameServerPacket>());
+		var now = DateTimeOffset.FromUnixTimeMilliseconds(100_000);
+
+		var result = await pair.Connection.QueuePortalContinueTransferAsync(
+			player,
+			preparation,
+			worldMapStates: worldMaps,
+			instanceCooltimes: cooltimes,
+			now: now);
+
+		Assert.NotNull(result);
+		Assert.Equal(PortalContinueTransferKind.AllocatedInstance, result.Kind);
+		Assert.NotNull(result.AllocatedRuntimePlan);
+		Assert.Equal(2, result.AllocatedRuntimePlan.Instance.InstanceId);
+		Assert.True(result.AllocatedRuntimePlan.Instance.IsRegistered(player.ObjectId));
+		Assert.Equal(new WorldPosition(300030000, 10, 20, 30, 90, InstanceId: 2), result.Teleport.PendingTeleport.Destination);
+		Assert.NotNull(result.Cooldown);
+		Assert.True(result.Cooldown.Added);
+		Assert.Equal(now.AddMinutes(30).ToUnixTimeMilliseconds(), result.Cooldown.ReuseTimeMillis);
+		Assert.Collection(
+			pair.SentPackets,
+			packet => Assert.IsType<SmTeleportLoc>(packet),
+			packet => Assert.IsType<SmInstanceInfo>(packet));
+	}
+
+	[Fact]
+	public async Task QueuePortalContinueTransferAsync_RegisteredReentryTransfersWithoutCooldown()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var pair = await TestConnectionPair.CreateAsync(
+			new GameServerOptions
+			{
+				Membership = new GameServerMembershipOptions { InstancesCooldown = 10 },
+				Instance = new GameServerInstanceOptions { CooldownRate = 1 },
+			},
+			new PlayerEnterWorldService(
+				new GameServerOptions(),
+				repository,
+				new GameWorld(NullLogger<GameWorld>.Instance),
+				NullLogger<PlayerEnterWorldService>.Instance));
+		var player = new Player
+		{
+			ObjectId = 1001,
+			Name = "Character",
+			Race = "ELYOS",
+			AccountMembership = 10,
+			Position = new WorldPosition(110010000, 1, 1, 1, 0),
+		};
+		var worldMaps = new WorldMapRuntimeStateTable([new WorldMapSummary(300030000, IsInstance: true, TwinCount: 1)]);
+		var registeredInstance = worldMaps.AddWorldMapInstance(300030000, instanceId: 7, ownerId: player.ObjectId, maxPlayers: 1);
+		Assert.NotNull(registeredInstance);
+		registeredInstance.Register(player.ObjectId);
+		var cooltimes = new InstanceCooltimeTable(
+		[
+			new InstanceCooltimeSummary(
+				Id: 8,
+				WorldId: 300030000,
+				Race: "PC_ALL",
+				MaxCount: 5,
+				MaxMemberLight: 1,
+				MaxMemberDark: 1,
+				CoolTimeType: "RELATIVE",
+				EntCoolTime: 30),
+		]);
+		var portalLoc = new PortalLocSummary(300030000, LocId: 1, 10, 20, 30, 90);
+		var preparation = PortalEntryPreparationResult.Ready(
+			PortalEntryPlanResult.Allowed(portalLoc, registeredInstance, reenter: true),
+			requirementApplication: null,
+			Array.Empty<GameServerPacket>());
+
+		var result = await pair.Connection.QueuePortalContinueTransferAsync(
+			player,
+			preparation,
+			worldMapStates: worldMaps,
+			instanceCooltimes: cooltimes,
+			now: DateTimeOffset.FromUnixTimeMilliseconds(100_000));
+
+		Assert.NotNull(result);
+		Assert.Equal(PortalContinueTransferKind.RegisteredInstance, result.Kind);
+		Assert.Same(registeredInstance, result.RegisteredInstance);
+		Assert.Equal(new WorldPosition(300030000, 10, 20, 30, 90, InstanceId: 7), result.Teleport.PendingTeleport.Destination);
+		Assert.NotNull(result.Cooldown);
+		Assert.False(result.Cooldown.Added);
+		Assert.Null(repository.SavedPortalCooldowns);
+		Assert.Collection(pair.SentPackets, packet => Assert.IsType<SmTeleportLoc>(packet));
+	}
+
 	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
 	{
 		var crypt = new GameCrypt(() => 0x01020304);
