@@ -621,6 +621,118 @@ public sealed class WorldNpcSkillResultCalculationServiceTests
 		Assert.Empty(result.AdditionalHits.GeneratedHits);
 	}
 
+	[Fact]
+	public void Calculate_NpcAiDamageModifierSkipsWhenNoNpcParticipant()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 100,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				NpcAiDamageModifier: new WorldNpcSkillNpcAiDamageModifierOptions())));
+
+		Assert.Equal(100, result.FinalDamage);
+		Assert.True(result.NpcAiDamageModifier.WasRequested);
+		Assert.False(result.NpcAiDamageModifier.Applied);
+		Assert.False(result.NpcAiDamageModifier.HasNpcParticipant);
+		Assert.False(result.NpcAiDamageModifier.HasUnresolvedInputs);
+	}
+
+	[Fact]
+	public void Calculate_NpcAiDamageModifierAppliesAttackerThenAttackedHooks()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 100,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				NpcAiDamageModifier: new WorldNpcSkillNpcAiDamageModifierOptions(
+					AttackerIsNpc: true,
+					AttackedIsNpc: true,
+					AttackerNpcOwnerDamageMultiplier: 1.5f,
+					AttackedNpcDamageMultiplier: 0.5f))));
+
+		Assert.Equal(75, result.FinalDamage);
+		Assert.Equal(75, result.AttackResult.Damage);
+		Assert.Equal(75, result.EffectReserved.Value);
+		Assert.True(result.NpcAiDamageModifier.Applied);
+		Assert.Equal(100, result.NpcAiDamageModifier.PrimaryOriginalDamage);
+		Assert.Equal(75, result.NpcAiDamageModifier.PrimaryFinalDamage);
+		Assert.Equal(75f, result.NpcAiDamageModifier.PrimaryExactFinalDamage, precision: 3);
+	}
+
+	[Fact]
+	public void Calculate_NpcAiDamageModifierAppliesGeneratedAdditionalHits()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 100,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				AdditionalHits: new WorldNpcSkillAdditionalHitOptions(
+					AttackerIsPlayer: true,
+					HasMainHandWeapon: true,
+					MainHandWeaponHitCount: 3,
+					MainHandRoll: 3),
+				NpcAiDamageModifier: new WorldNpcSkillNpcAiDamageModifierOptions(
+					AttackedIsNpc: true,
+					AttackedNpcDamageMultiplier: 2f))));
+
+		Assert.Equal(200, result.FinalDamage);
+		Assert.Collection(
+			result.NpcAiDamageModifier.AdditionalHits,
+			hit =>
+			{
+				Assert.Equal(10, hit.OriginalDamage);
+				Assert.Equal(20, hit.FinalDamage);
+				Assert.False(hit.IsOffHand);
+			},
+			hit =>
+			{
+				Assert.Equal(10, hit.OriginalDamage);
+				Assert.Equal(20, hit.FinalDamage);
+				Assert.False(hit.IsOffHand);
+			});
+	}
+
+	[Fact]
+	public void Calculate_NpcAiDamageModifierRecordsMissingHookInputs()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 100,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				NpcAiDamageModifier: new WorldNpcSkillNpcAiDamageModifierOptions(AttackerIsNpc: true))));
+
+		Assert.Equal(100, result.FinalDamage);
+		Assert.False(result.NpcAiDamageModifier.Applied);
+		Assert.True(result.NpcAiDamageModifier.HasNpcParticipant);
+		Assert.True(result.NpcAiDamageModifier.HasUnresolvedInputs);
+		Assert.True(result.NpcAiDamageModifier.AttackerNpcOwnerHookMissing);
+		Assert.False(result.NpcAiDamageModifier.AttackedNpcHookMissing);
+	}
+
 	[Theory]
 	[InlineData(WorldNpcSkillAttackStatus.Dodge, 0, true, false)]
 	[InlineData(WorldNpcSkillAttackStatus.OffHandDodge, 1, true, false)]

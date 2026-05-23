@@ -22,16 +22,20 @@ public sealed class WorldNpcSkillResultCalculationService
 			attackStatus.FinalStatus,
 			options.HitType,
 			ShieldChecked: !request.IgnoreShield);
+		var additionalHits = CalculateAdditionalHits(options.AdditionalHits, attackStatus.FinalStatus, attackResult);
+		var npcAiDamageModifier = CalculateNpcAiDamageModifier(options.NpcAiDamageModifier, attackResult, additionalHits.GeneratedHits);
+		var finalAttackResult = npcAiDamageModifier.Applied
+			? attackResult with { Damage = npcAiDamageModifier.PrimaryFinalDamage }
+			: attackResult;
 		var effectReserved = new WorldNpcSkillEffectReservedResult(
 			options.EffectPosition,
-			attackResult.Damage,
+			finalAttackResult.Damage,
 			options.ResourceType,
 			options.IsDamage,
 			request.SendResult);
-		var additionalHits = CalculateAdditionalHits(options.AdditionalHits, attackStatus.FinalStatus, attackResult);
 		return new WorldNpcSkillResultCalculationResult(
 			inputDamage,
-			resultDamage,
+			finalAttackResult.Damage,
 			options.RandomDamageType,
 			random.Multiplier,
 			random.Status,
@@ -44,7 +48,8 @@ public sealed class WorldNpcSkillResultCalculationService
 			request.UsesTemplateDamage,
 			attackStatus,
 			damageModifier,
-			attackResult,
+			npcAiDamageModifier,
+			finalAttackResult,
 			additionalHits,
 			effectReserved);
 	}
@@ -425,6 +430,68 @@ public sealed class WorldNpcSkillResultCalculationService
 			generatedHits);
 	}
 
+	private static WorldNpcSkillNpcAiDamageModifierResult CalculateNpcAiDamageModifier(
+		WorldNpcSkillNpcAiDamageModifierOptions? options,
+		WorldNpcSkillAttackResult primaryAttack,
+		IReadOnlyList<WorldNpcSkillAdditionalHitAttackResult> additionalHits)
+	{
+		if (options == null)
+			return WorldNpcSkillNpcAiDamageModifierResult.NotRequested(primaryAttack.Damage);
+
+		// Java parity: controllers/attack/AttackUtil.modifyDamageByNpcAi.
+		var hasNpcParticipant = options.AttackerIsNpc || options.AttackedIsNpc;
+		if (!hasNpcParticipant)
+			return WorldNpcSkillNpcAiDamageModifierResult.Skipped(primaryAttack.Damage, options.AttackerIsNpc, options.AttackedIsNpc);
+
+		var attackerHookMissing = options.AttackerIsNpc && options.AttackerNpcOwnerDamageMultiplier == null;
+		var attackedHookMissing = options.AttackedIsNpc && options.AttackedNpcDamageMultiplier == null;
+		if (attackerHookMissing || attackedHookMissing)
+		{
+			return WorldNpcSkillNpcAiDamageModifierResult.Unresolved(
+				primaryAttack.Damage,
+				options.AttackerIsNpc,
+				options.AttackedIsNpc,
+				attackerHookMissing,
+				attackedHookMissing);
+		}
+
+		var primaryExactDamage = ApplyNpcAiDamage(primaryAttack.Damage, options);
+		var modifiedAdditionalHits = additionalHits
+			.Select((hit, index) =>
+			{
+				var exactDamage = ApplyNpcAiDamage(hit.Damage, options);
+				return new WorldNpcSkillNpcAiDamageModifierHitResult(
+					index,
+					hit.Damage,
+					(int)exactDamage,
+					exactDamage,
+					hit.AttackStatus,
+					hit.HitType,
+					hit.IsOffHand);
+			})
+			.ToArray();
+
+		return WorldNpcSkillNpcAiDamageModifierResult.AppliedResult(
+			primaryAttack.Damage,
+			(int)primaryExactDamage,
+			primaryExactDamage,
+			options.AttackerIsNpc,
+			options.AttackedIsNpc,
+			options.AttackerNpcOwnerDamageMultiplier,
+			options.AttackedNpcDamageMultiplier,
+			modifiedAdditionalHits);
+	}
+
+	private static float ApplyNpcAiDamage(int damage, WorldNpcSkillNpcAiDamageModifierOptions options)
+	{
+		var modifiedDamage = (float)damage;
+		if (options.AttackerIsNpc)
+			modifiedDamage *= options.AttackerNpcOwnerDamageMultiplier!.Value;
+		if (options.AttackedIsNpc)
+			modifiedDamage *= options.AttackedNpcDamageMultiplier!.Value;
+		return modifiedDamage;
+	}
+
 	private readonly record struct RandomMultiplierResult(float Multiplier, WorldNpcSkillResultCalculationStatus Status);
 }
 
@@ -445,6 +512,7 @@ public sealed record WorldNpcSkillResultCalculationOptions(
 	WorldNpcSkillAttackStatusCalculationOptions? AttackStatusCalculation = null,
 	WorldNpcSkillDamageModifierOptions? DamageModifier = null,
 	WorldNpcSkillAdditionalHitOptions? AdditionalHits = null,
+	WorldNpcSkillNpcAiDamageModifierOptions? NpcAiDamageModifier = null,
 	WorldNpcSkillAttackStatus AttackStatus = WorldNpcSkillAttackStatus.NormalHit,
 	WorldNpcSkillHitType HitType = WorldNpcSkillHitType.PhysicalHit,
 	int EffectPosition = 0,
@@ -469,6 +537,7 @@ public sealed record WorldNpcSkillResultCalculationResult(
 	bool UsesTemplateDamage,
 	WorldNpcSkillAttackStatusCalculationResult AttackStatusCalculation,
 	WorldNpcSkillDamageModifierResult DamageModifier,
+	WorldNpcSkillNpcAiDamageModifierResult NpcAiDamageModifier,
 	WorldNpcSkillAttackResult AttackResult,
 	WorldNpcSkillAdditionalHitResult AdditionalHits,
 	WorldNpcSkillEffectReservedResult EffectReserved);
@@ -687,6 +756,124 @@ public sealed record WorldNpcSkillAdditionalHitResult(
 			MainHandRollMissing: false,
 			OffHandRollMissing: false,
 			OffHandDamageMissing: false);
+	}
+}
+
+public sealed record WorldNpcSkillNpcAiDamageModifierOptions(
+	bool AttackerIsNpc = false,
+	bool AttackedIsNpc = false,
+	float? AttackerNpcOwnerDamageMultiplier = null,
+	float? AttackedNpcDamageMultiplier = null);
+
+public sealed record WorldNpcSkillNpcAiDamageModifierHitResult(
+	int Index,
+	int OriginalDamage,
+	int FinalDamage,
+	float ExactFinalDamage,
+	WorldNpcSkillAttackStatus AttackStatus,
+	WorldNpcSkillHitType HitType,
+	bool IsOffHand);
+
+public sealed record WorldNpcSkillNpcAiDamageModifierResult(
+	bool WasRequested,
+	bool Applied,
+	bool HasNpcParticipant,
+	bool AttackerIsNpc,
+	bool AttackedIsNpc,
+	int PrimaryOriginalDamage,
+	int PrimaryFinalDamage,
+	float PrimaryExactFinalDamage,
+	float? AttackerNpcOwnerDamageMultiplier,
+	float? AttackedNpcDamageMultiplier,
+	IReadOnlyList<WorldNpcSkillNpcAiDamageModifierHitResult> AdditionalHits,
+	bool AttackerNpcOwnerHookMissing,
+	bool AttackedNpcHookMissing)
+{
+	public bool HasUnresolvedInputs => AttackerNpcOwnerHookMissing || AttackedNpcHookMissing;
+
+	public static WorldNpcSkillNpcAiDamageModifierResult NotRequested(int primaryDamage)
+	{
+		return new WorldNpcSkillNpcAiDamageModifierResult(
+			WasRequested: false,
+			Applied: false,
+			HasNpcParticipant: false,
+			AttackerIsNpc: false,
+			AttackedIsNpc: false,
+			PrimaryOriginalDamage: primaryDamage,
+			PrimaryFinalDamage: primaryDamage,
+			PrimaryExactFinalDamage: primaryDamage,
+			AttackerNpcOwnerDamageMultiplier: null,
+			AttackedNpcDamageMultiplier: null,
+			AdditionalHits: Array.Empty<WorldNpcSkillNpcAiDamageModifierHitResult>(),
+			AttackerNpcOwnerHookMissing: false,
+			AttackedNpcHookMissing: false);
+	}
+
+	public static WorldNpcSkillNpcAiDamageModifierResult Skipped(int primaryDamage, bool attackerIsNpc, bool attackedIsNpc)
+	{
+		return new WorldNpcSkillNpcAiDamageModifierResult(
+			WasRequested: true,
+			Applied: false,
+			HasNpcParticipant: false,
+			AttackerIsNpc: attackerIsNpc,
+			AttackedIsNpc: attackedIsNpc,
+			PrimaryOriginalDamage: primaryDamage,
+			PrimaryFinalDamage: primaryDamage,
+			PrimaryExactFinalDamage: primaryDamage,
+			AttackerNpcOwnerDamageMultiplier: null,
+			AttackedNpcDamageMultiplier: null,
+			AdditionalHits: Array.Empty<WorldNpcSkillNpcAiDamageModifierHitResult>(),
+			AttackerNpcOwnerHookMissing: false,
+			AttackedNpcHookMissing: false);
+	}
+
+	public static WorldNpcSkillNpcAiDamageModifierResult Unresolved(
+		int primaryDamage,
+		bool attackerIsNpc,
+		bool attackedIsNpc,
+		bool attackerNpcOwnerHookMissing,
+		bool attackedNpcHookMissing)
+	{
+		return new WorldNpcSkillNpcAiDamageModifierResult(
+			WasRequested: true,
+			Applied: false,
+			HasNpcParticipant: true,
+			AttackerIsNpc: attackerIsNpc,
+			AttackedIsNpc: attackedIsNpc,
+			PrimaryOriginalDamage: primaryDamage,
+			PrimaryFinalDamage: primaryDamage,
+			PrimaryExactFinalDamage: primaryDamage,
+			AttackerNpcOwnerDamageMultiplier: null,
+			AttackedNpcDamageMultiplier: null,
+			AdditionalHits: Array.Empty<WorldNpcSkillNpcAiDamageModifierHitResult>(),
+			AttackerNpcOwnerHookMissing: attackerNpcOwnerHookMissing,
+			AttackedNpcHookMissing: attackedNpcHookMissing);
+	}
+
+	public static WorldNpcSkillNpcAiDamageModifierResult AppliedResult(
+		int primaryOriginalDamage,
+		int primaryFinalDamage,
+		float primaryExactFinalDamage,
+		bool attackerIsNpc,
+		bool attackedIsNpc,
+		float? attackerNpcOwnerDamageMultiplier,
+		float? attackedNpcDamageMultiplier,
+		IReadOnlyList<WorldNpcSkillNpcAiDamageModifierHitResult> additionalHits)
+	{
+		return new WorldNpcSkillNpcAiDamageModifierResult(
+			WasRequested: true,
+			Applied: true,
+			HasNpcParticipant: true,
+			AttackerIsNpc: attackerIsNpc,
+			AttackedIsNpc: attackedIsNpc,
+			PrimaryOriginalDamage: primaryOriginalDamage,
+			PrimaryFinalDamage: primaryFinalDamage,
+			PrimaryExactFinalDamage: primaryExactFinalDamage,
+			AttackerNpcOwnerDamageMultiplier: attackerNpcOwnerDamageMultiplier,
+			AttackedNpcDamageMultiplier: attackedNpcDamageMultiplier,
+			AdditionalHits: additionalHits,
+			AttackerNpcOwnerHookMissing: false,
+			AttackedNpcHookMissing: false);
 	}
 }
 
