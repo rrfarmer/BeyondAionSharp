@@ -7,8 +7,12 @@ public sealed class PlayerGroupRuntime
 {
 	private readonly Lock _sync = new();
 	private readonly Dictionary<int, List<Player>> _membersByTeamId = [];
+	private readonly Dictionary<int, PlayerGroupDescriptor> _descriptorsByTeamId = [];
 
-	public PlayerGroupSnapshot CreateOrUpdateGroup(int teamId, IReadOnlyList<Player> members)
+	public PlayerGroupSnapshot CreateOrUpdateGroup(
+		int teamId,
+		IReadOnlyList<Player> members,
+		PlayerGroupType teamType = PlayerGroupType.Group)
 	{
 		// Java parity: model/team/group/PlayerGroupService.createGroup stores PlayerGroup by id, then PlayerGroup.addMember sets Player.playerGroup.
 		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(teamId, 0);
@@ -18,7 +22,11 @@ public sealed class PlayerGroupRuntime
 		lock (_sync)
 		{
 			var runtimeMembers = CopyDistinctMembers(members);
+			if (runtimeMembers.Count > PlayerGroupDescriptor.JavaMaxMemberCount)
+				throw new InvalidOperationException("Player group exceeds Java max member count.");
+
 			_membersByTeamId[teamId] = runtimeMembers;
+			_descriptorsByTeamId[teamId] = PlayerGroupDescriptor.FromLeader(teamId, runtimeMembers[0], teamType);
 			return ApplySnapshot(teamId, runtimeMembers);
 		}
 	}
@@ -34,10 +42,15 @@ public sealed class PlayerGroupRuntime
 			{
 				runtimeMembers = [];
 				_membersByTeamId.Add(teamId, runtimeMembers);
+				_descriptorsByTeamId[teamId] = PlayerGroupDescriptor.FromLeader(teamId, member);
 			}
 
 			if (runtimeMembers.Any(existing => existing.ObjectId == member.ObjectId))
 				return ApplySnapshot(teamId, runtimeMembers);
+
+			var descriptor = _descriptorsByTeamId[teamId];
+			if (descriptor.IsFull(runtimeMembers.Count))
+				throw new InvalidOperationException("Player group is full.");
 
 			runtimeMembers.Add(member);
 			return ApplySnapshot(teamId, runtimeMembers);
@@ -63,11 +76,23 @@ public sealed class PlayerGroupRuntime
 			if (runtimeMembers.Count == 0)
 			{
 				_membersByTeamId.Remove(teamId);
+				_descriptorsByTeamId.Remove(teamId);
 				return null;
 			}
 
+			if (_descriptorsByTeamId.TryGetValue(teamId, out var descriptor)
+				&& descriptor.LeaderObjectId == member.ObjectId)
+				_descriptorsByTeamId[teamId] = descriptor with { LeaderObjectId = runtimeMembers[0].ObjectId };
+
 			return ApplySnapshot(teamId, runtimeMembers);
 		}
+	}
+
+	public PlayerGroupDescriptor? GetDescriptor(int teamId)
+	{
+		// Java parity: model/team/group/PlayerGroup exposes getTeamId, getLeader, getTeamType, and getMaxMemberCount.
+		lock (_sync)
+			return _descriptorsByTeamId.GetValueOrDefault(teamId);
 	}
 
 	public PlayerGroupSnapshot? Resolve(Player player)

@@ -12,10 +12,15 @@ public sealed class PlayerGroupRuntimeTests
 		var leader = new Player { ObjectId = 1001 };
 		var member = new Player { ObjectId = 1002 };
 
-		var snapshot = runtime.CreateOrUpdateGroup(99001, [leader, member]);
+		var snapshot = runtime.CreateOrUpdateGroup(99001, [leader, member], PlayerGroupType.AutoGroup);
 
 		Assert.Equal(99001, snapshot.TeamId);
 		Assert.Equal([1001, 1002], snapshot.MemberObjectIds);
+		var descriptor = Assert.IsType<PlayerGroupDescriptor>(runtime.GetDescriptor(99001));
+		Assert.Equal(99001, descriptor.TeamId);
+		Assert.Equal(1001, descriptor.LeaderObjectId);
+		Assert.Equal(PlayerGroupType.AutoGroup, descriptor.TeamType);
+		Assert.Equal(6, descriptor.MaxMemberCount);
 		Assert.Equal(PlayerTeamMembership.Group, leader.TeamMembership);
 		Assert.Equal(PlayerTeamMembership.Group, member.TeamMembership);
 		Assert.Equal(99001, leader.CurrentTeamId);
@@ -69,5 +74,42 @@ public sealed class PlayerGroupRuntimeTests
 		Assert.Same(updatedSnapshot, member.CurrentGroupSnapshot);
 		Assert.Same(updatedSnapshot, added.CurrentGroupSnapshot);
 		Assert.Equal([1001, 1002, 1003], added.CurrentTeamMemberObjectIds);
+	}
+
+	[Fact]
+	public void AddMember_RejectsPlayersBeyondJavaGroupCapacityWithoutAttachingRejectedPlayer()
+	{
+		var runtime = new PlayerGroupRuntime();
+		var members = Enumerable.Range(1001, PlayerGroupDescriptor.JavaMaxMemberCount)
+			.Select(objectId => new Player { ObjectId = objectId })
+			.ToArray();
+		var rejected = new Player { ObjectId = 2001 };
+		runtime.CreateOrUpdateGroup(99001, members);
+
+		var exception = Assert.Throws<InvalidOperationException>(() => runtime.AddMember(99001, rejected));
+
+		Assert.Equal("Player group is full.", exception.Message);
+		Assert.Equal(PlayerTeamMembership.None, rejected.TeamMembership);
+		Assert.Equal(0, rejected.CurrentTeamId);
+		Assert.Empty(rejected.CurrentTeamMemberObjectIds);
+		Assert.Null(rejected.CurrentGroupSnapshot);
+		Assert.Equal([1001, 1002, 1003, 1004, 1005, 1006], members[0].CurrentGroupSnapshot?.MemberObjectIds);
+	}
+
+	[Fact]
+	public void RemoveMember_PreservesLeaderDescriptorWhenNonLeaderLeaves()
+	{
+		var runtime = new PlayerGroupRuntime();
+		var leader = new Player { ObjectId = 1001 };
+		var removed = new Player { ObjectId = 1002 };
+		var remaining = new Player { ObjectId = 1003 };
+		runtime.CreateOrUpdateGroup(99001, [leader, removed, remaining]);
+
+		runtime.RemoveMember(removed);
+
+		var descriptor = Assert.IsType<PlayerGroupDescriptor>(runtime.GetDescriptor(99001));
+		Assert.Equal(1001, descriptor.LeaderObjectId);
+		Assert.Equal(PlayerGroupType.Group, descriptor.TeamType);
+		Assert.Equal(6, descriptor.MaxMemberCount);
 	}
 }
