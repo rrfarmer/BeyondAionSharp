@@ -8,8 +8,10 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
+using Aion.GameServer.Utils.IdFactory;
 using Aion.GameServer.World;
 using Microsoft.Extensions.Logging.Abstractions;
+using GameWorld = Aion.GameServer.World.World;
 
 namespace Aion.GameServer.Tests;
 
@@ -142,6 +144,60 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 	}
 
 	[Fact]
+	public async Task CompleteToyPetSpawnUseItemAsync_RevalidatesCreaturePvpZoneCountersForSpawnedKisk()
+	{
+		var dataManager = await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false);
+		var runtimeContext = new GameServerRuntimeContext();
+		runtimeContext.SetDataManager(dataManager);
+		var zoneCounterService = new CreaturePvpZoneCounterService();
+		var registry = new CapturingConnectionRegistry();
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var idFactory = new IDFactory();
+		await using var pair = await TestConnectionPair.CreateAsync(
+			registry,
+			runtimeContext,
+			zoneCounterService,
+			idFactory,
+			world);
+		var spawnPosition = new WorldPosition(210040000, 2700, 620, 150, 0);
+		var player = CreateTeleportingPlayer(7304, spawnPosition);
+		var sourceItem = new InventoryItem
+		{
+			ObjectId = 9101,
+			ItemId = 184000011,
+			Count = 1,
+			OwnerId = player.ObjectId,
+			Location = 0,
+			Slot = 4,
+		};
+		player.InventoryItems = [sourceItem];
+		var sourceTemplate = CreateToyPetSpawnItemTemplate(sourceItem.ItemId, toyPetSpawnNpcId: 700273);
+		var kiskTemplate = CreateKiskTemplate(700273);
+		Assert.Contains(
+			dataManager.StaticData.CreaturePvpZones.GetZonesByMapId(spawnPosition.WorldId),
+			zone => zone.Name == "PVP_87_210040000" && zone.Contains(spawnPosition));
+
+		await pair.Connection.CompleteToyPetSpawnUseItemAsync(
+			player,
+			sourceItem.ObjectId,
+			sourceTemplate,
+			kiskTemplate,
+			CancellationToken.None);
+
+		Assert.True(world.TryGetObject(1, out var kiskObject));
+		var kiskNpc = Assert.IsType<WorldNpc>(kiskObject);
+		Assert.Equal(spawnPosition.WorldId, kiskNpc.Position.WorldId);
+		Assert.Equal(spawnPosition.X, kiskNpc.Position.X);
+		Assert.Equal(spawnPosition.Y, kiskNpc.Position.Y);
+		Assert.Equal(spawnPosition.Z, kiskNpc.Position.Z);
+		var counters = zoneCounterService.GetCounters(kiskNpc.ObjectId);
+		Assert.Equal(1, counters.PvpZoneCount);
+		Assert.Equal(0, counters.SiegeZoneCount);
+		Assert.DoesNotContain(player.InventoryItems, item => item.ObjectId == sourceItem.ObjectId);
+		Assert.NotNull(runtimeContext.Kisks.GetKiskState(kiskNpc.ObjectId));
+	}
+
+	[Fact]
 	public async Task LeavePlayerWorldAsync_ClearsCreaturePvpZoneCounters()
 	{
 		var zoneCounterService = new CreaturePvpZoneCounterService();
@@ -190,6 +246,43 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 			Position = position,
 			LifeStats = new PlayerLifeStats(CurrentHp: 111, CurrentMp: 205, CurrentFp: 55),
 		};
+	}
+
+	private static ItemTemplateSummary CreateToyPetSpawnItemTemplate(int itemId, int toyPetSpawnNpcId)
+	{
+		return new ItemTemplateSummary(
+			itemId,
+			"kisk item",
+			DescriptionId: 0,
+			Mask: 0,
+			Level: 1,
+			ItemGroup: "NONE",
+			ItemType: "NORMAL",
+			Quality: "COMMON",
+			Race: "PC_ALL",
+			MaxStackCount: 1,
+			Price: 0,
+			ValidEquipmentSlots: 0,
+			ToyPetSpawnNpcId: toyPetSpawnNpcId);
+	}
+
+	private static NpcTemplateSummary CreateKiskTemplate(int npcId)
+	{
+		return new NpcTemplateSummary(
+			npcId,
+			"test_kisk",
+			NameId: npcId + 100,
+			Level: 10,
+			Rank: "NORMAL",
+			Rating: "NORMAL",
+			Race: "PC_LIGHT_CASTLE_DOOR",
+			Tribe: "KISK",
+			Type: "NPC",
+			MaxHp: 1000,
+			Height: 2.5f,
+			BoundRadius: 1.2f,
+			State: WorldNpcState.DefaultSpawnState,
+			KiskStats: new KiskStatsSummary(UseMask: 0, MaxMembers: 6, MaxResurrects: 18));
 	}
 
 	private static void AssertEmotion(GameServerPacket packet, int expectedObjectId, EmotionType expectedEmotion)
@@ -318,7 +411,9 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 		public static async Task<TestConnectionPair> CreateAsync(
 			IGameClientConnectionRegistry registry,
 			GameServerRuntimeContext? runtimeContext = null,
-			CreaturePvpZoneCounterService? creaturePvpZoneCounterService = null)
+			CreaturePvpZoneCounterService? creaturePvpZoneCounterService = null,
+			IDFactory? idFactory = null,
+			GameWorld? world = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -339,6 +434,8 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 					options: new GameServerOptions(),
 					runtimeContext: runtimeContext,
 					connectionRegistry: registry,
+					idFactory: idFactory,
+					world: world,
 					creaturePvpZoneCounterService: creaturePvpZoneCounterService,
 					crypt: crypt);
 				return new TestConnectionPair(client, connection);

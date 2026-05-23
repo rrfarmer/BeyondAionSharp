@@ -4620,7 +4620,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			removeCooldownDelayIdOnCancel: removeCooldownDelayIdOnCancel);
 	}
 
-	private async Task CompleteToyPetSpawnUseItemAsync(
+	internal async Task CompleteToyPetSpawnUseItemAsync(
 		Player player,
 		int sourceItemObjectId,
 		ItemTemplateSummary sourceTemplate,
@@ -4658,6 +4658,8 @@ public sealed class GameServerConnection : BaseClientConnection
 				_idFactory.ReleaseId(kiskObjectId);
 				return;
 			}
+
+			RevalidateKiskCreaturePvpZones(plan.Kisk);
 		}
 
 		var saved = _playerEnterWorldService == null
@@ -4668,8 +4670,8 @@ public sealed class GameServerConnection : BaseClientConnection
 				cancellationToken);
 		if (!saved)
 		{
-			if (addedToWorld)
-				_world?.TryRemoveObject(plan.Kisk.ObjectId, out _);
+			if (addedToWorld && _world?.TryRemoveObject(plan.Kisk.ObjectId, out _) == true)
+				ClearKiskCreaturePvpZones(plan.Kisk.ObjectId);
 			_idFactory.ReleaseId(kiskObjectId);
 			return;
 		}
@@ -4697,6 +4699,23 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		ScheduleKiskLifetimeDespawn(plan.RuntimeState);
 		await RequestOrBindPlayerToKiskAsync(player, plan.RuntimeState);
+	}
+
+	private void RevalidateKiskCreaturePvpZones(WorldNpc kisk)
+	{
+		// Java parity: ToyPetSpawnAction.spawnKisk -> VisibleObjectSpawner.spawnKisk -> World.spawn -> MapRegion.revalidateZones.
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		CreaturePvpZoneRevalidationService.Revalidate(
+			kisk.ObjectId,
+			kisk.Position,
+			staticData?.CreaturePvpZones,
+			_creaturePvpZoneCounterService);
+	}
+
+	private void ClearKiskCreaturePvpZones(int objectId)
+	{
+		// Java parity: failed kisk spawn cleanup despawns the kisk NPC and leaves its zone memberships.
+		_creaturePvpZoneCounterService?.ClearCounters(objectId);
 	}
 
 	private void ScheduleKiskLifetimeDespawn(PlayerKiskRuntimeState kisk)
