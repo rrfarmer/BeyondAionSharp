@@ -4821,7 +4821,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	internal async Task<PlayerTeleportResult?> HandleTeleportAnimationDoneAsync(Player player)
 	{
 		var staticData = _runtimeContext?.DataManager?.StaticData;
-		if (ShouldFallbackDelayedTeleportToCurrentSpawn(player))
+		if (ShouldFallbackDelayedTeleportToCurrentSpawn(player, _runtimeContext?.WorldMapStates))
 		{
 			var pendingTeleport = PlayerTeleportService.CancelPendingTeleport(player);
 			if (pendingTeleport == null)
@@ -4842,11 +4842,18 @@ public sealed class GameServerConnection : BaseClientConnection
 		return teleport;
 	}
 
-	private static bool ShouldFallbackDelayedTeleportToCurrentSpawn(Player player)
+	private static bool ShouldFallbackDelayedTeleportToCurrentSpawn(Player player, WorldMapRuntimeStateTable? worldMapStates)
 	{
+		var pendingTeleport = player.PendingTeleport;
+		if (pendingTeleport == null)
+			return false;
+
 		// Java parity: TeleportService.SpawnTask.run checks player.isDead() before applying delayed teleport position.
-		return player.PendingTeleport != null
-			&& (player.IsInState(PlayerCreatureState.Dead) || player.LifeStats?.CurrentHp <= 0);
+		if (player.IsInState(PlayerCreatureState.Dead) || player.LifeStats?.CurrentHp <= 0)
+			return true;
+
+		// Java parity: SpawnTask.run falls back if InstanceService.instanceExists(worldId, instanceId) is false.
+		return worldMapStates?.InstanceExists(pendingTeleport.Destination.WorldId, pendingTeleport.Destination.InstanceId) == false;
 	}
 
 	internal async Task<PendingTeleportRequestResult> QueueDelayedTeleportAsync(

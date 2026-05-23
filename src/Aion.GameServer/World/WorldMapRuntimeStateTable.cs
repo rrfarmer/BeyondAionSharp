@@ -52,4 +52,28 @@ public sealed class WorldMapRuntimeStateTable
 		state.RemoveWorldOption(option);
 		return true;
 	}
+
+	public bool InstanceExists(int mapId, int instanceId)
+	{
+		// Java parity: services/instance/InstanceService.instanceExists delegates to WorldMap.getWorldMapInstance(instanceId) != null.
+		return _statesByMapId.TryGetValue(mapId, out var state) && state.InstanceExists(instanceId);
+	}
+
+	public bool RemoveWorldMapInstance(int mapId, int instanceId)
+	{
+		if (!_statesByMapId.TryGetValue(mapId, out var state))
+			return false;
+
+		state.RemoveWorldMapInstance(instanceId);
+		return true;
+	}
+
+	public bool AddWorldMapInstance(int mapId, int instanceId)
+	{
+		if (!_statesByMapId.TryGetValue(mapId, out var state))
+			return false;
+
+		state.AddWorldMapInstance(instanceId);
+		return true;
+	}
 }

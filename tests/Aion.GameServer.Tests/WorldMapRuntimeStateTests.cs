@@ -64,4 +64,25 @@ public sealed class WorldMapRuntimeStateTests
 		Assert.Null(table.GetMap(123));
 		Assert.False(table.SetWorldOption(123, WorldZoneAttributes.Fly));
 	}
+
+	[Fact]
+	public void WorldMapRuntimeStateTable_TracksExplicitInstanceRemovalLikeJavaWorldMap()
+	{
+		var table = new WorldMapRuntimeStateTable(
+		[
+			new WorldMapSummary(300030000, IsInstance: true, TwinCount: 1),
+		]);
+
+		Assert.True(table.InstanceExists(300030000, 2));
+		Assert.True(table.RemoveWorldMapInstance(300030000, 2));
+		Assert.False(table.InstanceExists(300030000, 2));
+		Assert.True(table.AddWorldMapInstance(300030000, 2));
+		Assert.True(table.InstanceExists(300030000, 2));
+
+		Assert.True(table.RemoveWorldMapInstance(300030000, 0));
+		Assert.False(table.InstanceExists(300030000, 1));
+		Assert.False(table.InstanceExists(123, 1));
+		Assert.False(table.RemoveWorldMapInstance(123, 1));
+		Assert.False(table.AddWorldMapInstance(123, 1));
+	}
 }
