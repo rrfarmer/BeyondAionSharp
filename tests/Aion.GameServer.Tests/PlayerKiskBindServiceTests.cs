@@ -28,4 +28,21 @@ public sealed class PlayerKiskBindServiceTests
 		Assert.Equal(PlayerKiskBindStatus.Full, full.Status);
 		Assert.Equal(0, otherPlayer.BoundKiskObjectId);
 	}
+
+	[Fact]
+	public void BindRemovesPlayerFromPreviousKiskBeforeAddingNewKisk()
+	{
+		var player = new Player { ObjectId = 1001, BoundKiskObjectId = 8001 };
+		var previousKisk = new PlayerKiskRuntimeState(objectId: 8001, ownerObjectId: 2001, npcId: 700274);
+		var nextKisk = new PlayerKiskRuntimeState(objectId: 9001, ownerObjectId: 1001, npcId: 700273);
+		Assert.True(previousKisk.AddMember(player.ObjectId));
+
+		var bound = PlayerKiskBindService.Bind(player, nextKisk, previousKisk);
+
+		Assert.Equal(PlayerKiskBindStatus.Bound, bound.Status);
+		Assert.Equal(8001, bound.RemovedOldKiskObjectId);
+		Assert.Equal(9001, player.BoundKiskObjectId);
+		Assert.DoesNotContain(player.ObjectId, previousKisk.CurrentMemberIds);
+		Assert.Contains(player.ObjectId, nextKisk.CurrentMemberIds);
+	}
 }

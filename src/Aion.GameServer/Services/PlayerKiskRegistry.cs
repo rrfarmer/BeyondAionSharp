@@ -47,6 +47,14 @@ public sealed class PlayerKiskRegistry
 		return _ownerKisks.GetValueOrDefault(ownerObjectId);
 	}
 
+	public PlayerKiskRuntimeState? GetKiskState(int kiskObjectId)
+	{
+		// Java parity: Player.getKisk stores a direct Kisk reference; C# resolves the lightweight runtime state by object id.
+		return _ownersByKiskId.TryGetValue(kiskObjectId, out var ownerObjectId)
+			? GetOwnerKiskState(ownerObjectId)
+			: null;
+	}
+
 	public bool RemoveKisk(int kiskObjectId)
 	{
 		// Java parity: services/KiskService.removeKisk removes ownerPlayer entries pointing at the deleted kisk.

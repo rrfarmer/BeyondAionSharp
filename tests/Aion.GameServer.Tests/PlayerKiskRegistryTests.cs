@@ -47,6 +47,7 @@ public sealed class PlayerKiskRegistryTests
 
 		Assert.Same(state, registered);
 		Assert.Same(state, registry.GetOwnerKiskState(1001));
+		Assert.Same(state, registry.GetKiskState(9001));
 		Assert.True(state.AddMember(1001));
 		Assert.False(state.AddMember(1001));
 		Assert.Equal(1, state.CurrentMemberCount);
@@ -55,6 +56,9 @@ public sealed class PlayerKiskRegistryTests
 		Assert.Equal(17, state.RemainingResurrects);
 		Assert.Equal(7190, state.GetRemainingLifetimeSeconds(spawnedAt.AddSeconds(10)));
 		Assert.Equal(0, state.GetRemainingLifetimeSeconds(spawnedAt.AddSeconds(7205)));
+		Assert.True(registry.TryRemoveKisk(9001, out var removed));
+		Assert.Same(state, removed);
+		Assert.Null(registry.GetKiskState(9001));
 	}
 
 	[Fact]

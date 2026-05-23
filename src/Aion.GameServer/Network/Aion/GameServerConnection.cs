@@ -4737,10 +4737,13 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (!TryGetKiskPosition(kisk.ObjectId, out var position))
 			return;
 
-		var bindResult = PlayerKiskBindService.Bind(player, kisk);
+		var previousKisk = GetPreviousBoundKiskState(player, kisk.ObjectId);
+		var bindResult = PlayerKiskBindService.Bind(player, kisk, previousKisk);
 		switch (bindResult.Status)
 		{
 			case PlayerKiskBindStatus.Bound:
+				if (previousKisk != null && bindResult.RemovedOldKiskObjectId.HasValue)
+					await SendPacketAsync(new SmKiskUpdate(previousKisk));
 				await SendPacketAsync(new SmKiskUpdate(kisk));
 				await SendPacketAsync(SmBindPointInfo.Kisk(position, kisk.ObjectId));
 				await SendPacketAsync(SmSystemMessage.BindstoneRegister());
@@ -4753,6 +4756,15 @@ public sealed class GameServerConnection : BaseClientConnection
 				await SendPacketAsync(SmSystemMessage.CannotRegisterBindstoneFull());
 				break;
 		}
+	}
+
+	private PlayerKiskRuntimeState? GetPreviousBoundKiskState(Player player, int newKiskObjectId)
+	{
+		// Java parity: KiskService.onBind removes the player from Player.getKisk() before adding the new Kisk.
+		if (player.BoundKiskObjectId == 0 || player.BoundKiskObjectId == newKiskObjectId)
+			return null;
+
+		return _runtimeContext?.Kisks.GetKiskState(player.BoundKiskObjectId);
 	}
 
 	private bool TryGetKiskPosition(int kiskObjectId, out WorldPosition position)
