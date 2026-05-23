@@ -7,6 +7,8 @@ namespace Aion.GameServer.Network.Aion.ServerPackets;
 public sealed class SmGroupMemberInfo : GameServerPacket
 {
 	public const int PacketOpCode = 91;
+	private const int FullSkillTargetSlots = 127;
+	private static readonly int[] JavaSkillTargetSlotIds = [1, 2, 4, 8, 16, 32, 64, 128];
 	private readonly PlayerGroupMemberInfoPacketPlan _plan;
 
 	public SmGroupMemberInfo(PlayerGroupMemberInfoPacketPlan plan)
@@ -53,6 +55,19 @@ public sealed class SmGroupMemberInfo : GameServerPacket
 			or PlayerGroupEvent.Join)
 		{
 			buffer.WriteS(prefix.Name);
+			return;
+		}
+
+		if (_plan.EffectiveEvent is PlayerGroupEvent.Enter
+			or PlayerGroupEvent.Update)
+		{
+			buffer.WriteS(prefix.Name);
+			buffer.WriteD(0);
+			buffer.WriteD(0);
+			buffer.WriteC(FullSkillTargetSlots);
+			buffer.WriteH(0);
+			foreach (var _ in JavaSkillTargetSlotIds)
+				buffer.WriteD(0);
 			return;
 		}
 

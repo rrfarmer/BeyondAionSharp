@@ -628,6 +628,24 @@ public sealed class PlayerGroupRuntimeTests
 	}
 
 	[Fact]
+	public void SmGroupMemberInfo_WritesEnterAndUpdateZeroEffectSkeletonLikeJava()
+	{
+		var member = new PlayerGroupMember(new Player
+		{
+			ObjectId = 1004,
+			IsOnline = true,
+			Name = "Effectless",
+			PlayerClass = "GLADIATOR",
+			Level = 10,
+		});
+		var enterPlan = PlayerGroupMemberInfoPacketPlan.FromMember(99001, member, PlayerGroupEvent.Enter);
+		var updatePlan = PlayerGroupMemberInfoPacketPlan.FromMember(99001, member, PlayerGroupEvent.Update);
+
+		AssertZeroEffectMemberInfoPayload(enterPlan, "Effectless");
+		AssertZeroEffectMemberInfoPayload(updatePlan, "Effectless");
+	}
+
+	[Fact]
 	public void PlayerGroupEvent_IdsMatchJavaGroupEvent()
 	{
 		Assert.Equal(0, (int)PlayerGroupEvent.Leave);
@@ -1001,5 +1019,19 @@ public sealed class PlayerGroupRuntimeTests
 		reader.ReadF();
 		for (var i = 0; i < 7; i++)
 			reader.ReadC();
+	}
+
+	private static void AssertZeroEffectMemberInfoPayload(PlayerGroupMemberInfoPacketPlan plan, string expectedName)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(new Network.Aion.ServerPackets.SmGroupMemberInfo(plan)));
+		SkipGroupMemberInfoPrefix(reader);
+		Assert.Equal(expectedName, reader.ReadS());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(127, (int)reader.ReadC());
+		Assert.Equal(0, reader.ReadH());
+		for (var i = 0; i < 8; i++)
+			Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
 	}
 }
