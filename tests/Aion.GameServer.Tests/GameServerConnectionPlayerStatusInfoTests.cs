@@ -46,7 +46,7 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 
 		Assert.Null(await pair.Connection.HandlePlayerStatusInfoAsync(
 			player,
-			CreatePacket(commandCode: 27, selectedObjectId: 1002)));
+			CreatePacket(commandCode: 31, selectedObjectId: 1002)));
 		Assert.Null(await pair.Connection.HandlePlayerStatusInfoAsync(
 			player,
 			CreatePacket(PlayerAllianceReadyCheckCommand.Start, selectedObjectId: 1002)));
@@ -72,6 +72,60 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 		Assert.Empty(registry.SentPackets);
 	}
 
+	[Fact]
+	public async Task HandlePlayerStatusInfoAsync_AllianceChangeGroupSendsJavaServiceFailureMessages()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var alliances = new PlayerAllianceRuntime();
+		var leader = new Player { ObjectId = 1001, Name = "Leader" };
+		var member = new Player { ObjectId = 1002, Name = "Member" };
+		alliances.CreateAlliance(88001, leader);
+		alliances.AddMember(88001, member);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, alliances);
+
+		var outsider = new Player { ObjectId = 2001, Name = "Outsider" };
+		await pair.Connection.HandlePlayerStatusInfoAsync(
+			outsider,
+			CreatePacket(commandCode: 27, selectedObjectId: outsider.ObjectId, allianceGroupId: 1001));
+		await pair.Connection.HandlePlayerStatusInfoAsync(
+			member,
+			CreatePacket(commandCode: 27, selectedObjectId: member.ObjectId, allianceGroupId: 1001));
+
+		Assert.Collection(
+			registry.SentPackets,
+			send =>
+			{
+				Assert.Equal(2001, send.PlayerObjectId);
+				Assert.Equal(1301015, Assert.IsType<SmSystemMessage>(send.Packet).MessageId);
+			},
+			send =>
+			{
+				Assert.Equal(1002, send.PlayerObjectId);
+				Assert.Equal(1300976, Assert.IsType<SmSystemMessage>(send.Packet).MessageId);
+			});
+	}
+
+	[Fact]
+	public async Task HandlePlayerStatusInfoAsync_AllianceChangeGroupMovesMemberAndBroadcastsMemberInfo()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var alliances = new PlayerAllianceRuntime();
+		var leader = new Player { ObjectId = 1001, Name = "Leader" };
+		var moved = new Player { ObjectId = 1002, Name = "Moved" };
+		alliances.CreateAlliance(88001, leader);
+		alliances.AddMember(88001, moved);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, alliances);
+
+		await pair.Connection.HandlePlayerStatusInfoAsync(
+			leader,
+			CreatePacket(commandCode: 27, selectedObjectId: moved.ObjectId, allianceGroupId: 1001));
+
+		Assert.Equal([1001], alliances.GetMemberObjectIdsByGroupId(88001, 1000));
+		Assert.Equal([1002], alliances.GetMemberObjectIdsByGroupId(88001, 1001));
+		Assert.Equal([1001, 1002], registry.SentPackets.Select(send => send.PlayerObjectId));
+		Assert.All(registry.SentPackets, send => Assert.IsType<SmAllianceMemberInfo>(send.Packet));
+	}
+
 	private static CmPlayerStatusInfo CreatePacket(
 		PlayerAllianceReadyCheckCommand command,
 		int selectedObjectId)
@@ -79,13 +133,17 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 		return CreatePacket((int)command, selectedObjectId);
 	}
 
-	private static CmPlayerStatusInfo CreatePacket(int commandCode, int selectedObjectId)
+	private static CmPlayerStatusInfo CreatePacket(
+		int commandCode,
+		int selectedObjectId,
+		int allianceGroupId = 0,
+		int secondObjectId = 0)
 	{
 		using var writer = new PacketBuffer();
 		writer.WriteC(commandCode);
 		writer.WriteD(selectedObjectId);
-		writer.WriteD(0);
-		writer.WriteD(0);
+		writer.WriteD(allianceGroupId);
+		writer.WriteD(secondObjectId);
 		var packet = new CmPlayerStatusInfo(96, new HashSet<GameConnectionState> { GameConnectionState.InGame });
 		using var reader = new PacketBuffer(writer.ToArray());
 		packet.ReadFrom(reader);

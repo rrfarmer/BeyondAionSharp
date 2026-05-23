@@ -71,6 +71,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly Func<Player, int, bool>? _isKnownNpc;
 	private readonly CreaturePvpZoneCounterService? _creaturePvpZoneCounterService;
 	private readonly PlayerAllianceRuntime _playerAllianceRuntime;
+	private readonly PlayerAllianceGroupChangeServicePlanner _playerAllianceGroupChangeServicePlanner;
 	private readonly PlayerShowBrandCommandPlanner _showBrandCommandPlanner;
 	private readonly SemaphoreSlim _sendLock = new(1, 1);
 	private readonly SemaphoreSlim _closeLock = new(1, 1);
@@ -160,6 +161,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_isKnownNpc = isKnownNpc;
 		_creaturePvpZoneCounterService = creaturePvpZoneCounterService;
 		_playerAllianceRuntime = playerAllianceRuntime ?? new PlayerAllianceRuntime();
+		_playerAllianceGroupChangeServicePlanner = new PlayerAllianceGroupChangeServicePlanner(_playerAllianceRuntime);
 		_showBrandCommandPlanner = showBrandCommandPlanner
 			?? new PlayerShowBrandCommandPlanner(playerGroupRuntime ?? new PlayerGroupRuntime(), _playerAllianceRuntime);
 		_riftPortalInteractionService = riftPortalInteractionService
@@ -5781,6 +5783,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return null;
 		}
 
+		if (packet.CommandCode == 27)
+		{
+			await HandleAllianceGroupChangeAsync(player, packet, cancellationToken);
+			return null;
+		}
+
 		if (!Enum.IsDefined(typeof(PlayerAllianceReadyCheckCommand), packet.CommandCode))
 			return null;
 
@@ -5802,6 +5810,50 @@ public sealed class GameServerConnection : BaseClientConnection
 	}
 
 	private async Task SendAllianceReadyCheckAsync(
+		int recipientObjectId,
+		GameServerPacket packet,
+		CancellationToken cancellationToken)
+	{
+		if (_connectionRegistry != null && await _connectionRegistry.SendPacketToPlayerAsync(recipientObjectId, packet))
+			return;
+
+		if (_activePlayer?.ObjectId == recipientObjectId)
+			await SendPacketAsync(packet, cancellationToken);
+	}
+
+	private async Task<PlayerAllianceGroupChangeServicePlan> HandleAllianceGroupChangeAsync(
+		Player player,
+		CmPlayerStatusInfo packet,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: CM_PLAYER_STATUS_INFO ALLIANCE_CHANGE_GROUP -> PlayerAllianceService.changeMemberGroup.
+		var plan = _playerAllianceGroupChangeServicePlanner.CreateChangeMemberGroupPlan(
+			player,
+			packet.SelectedObjectId,
+			packet.SecondObjectId,
+			packet.AllianceGroupId);
+
+		if (plan.SystemMessageIntent != null)
+			await SendAllianceGroupChangePacketAsync(plan.SystemMessageIntent.RecipientObjectId, plan.SystemMessageIntent.Message, cancellationToken);
+
+		if (plan.GroupChangePlan != null)
+		{
+			var recipients = _playerAllianceRuntime.GetMemberObjectIds(plan.AllianceId);
+			foreach (var intent in plan.GroupChangePlan.MemberInfoIntents)
+			{
+				var memberInfo = intent.CreatePacket();
+				if (memberInfo == null)
+					continue;
+
+				foreach (var recipientObjectId in recipients)
+					await SendAllianceGroupChangePacketAsync(recipientObjectId, memberInfo, cancellationToken);
+			}
+		}
+
+		return plan;
+	}
+
+	private async Task SendAllianceGroupChangePacketAsync(
 		int recipientObjectId,
 		GameServerPacket packet,
 		CancellationToken cancellationToken)
