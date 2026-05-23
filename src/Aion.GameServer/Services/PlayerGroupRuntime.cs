@@ -6,7 +6,7 @@ namespace Aion.GameServer.Services;
 public sealed class PlayerGroupRuntime
 {
 	private readonly Lock _sync = new();
-	private readonly Dictionary<int, List<Player>> _membersByTeamId = [];
+	private readonly Dictionary<int, List<PlayerGroupMember>> _membersByTeamId = [];
 	private readonly Dictionary<int, PlayerGroupDescriptor> _descriptorsByTeamId = [];
 
 	public PlayerGroupSnapshot CreateOrUpdateGroup(
@@ -26,7 +26,7 @@ public sealed class PlayerGroupRuntime
 				throw new InvalidOperationException("Player group exceeds Java max member count.");
 
 			_membersByTeamId[teamId] = runtimeMembers;
-			_descriptorsByTeamId[teamId] = PlayerGroupDescriptor.FromLeader(teamId, runtimeMembers[0], teamType);
+			_descriptorsByTeamId[teamId] = PlayerGroupDescriptor.FromLeader(teamId, runtimeMembers[0].Player, teamType);
 			return ApplySnapshot(teamId, runtimeMembers);
 		}
 	}
@@ -52,7 +52,7 @@ public sealed class PlayerGroupRuntime
 			if (descriptor.IsFull(runtimeMembers.Count))
 				throw new InvalidOperationException("Player group is full.");
 
-			runtimeMembers.Add(member);
+			runtimeMembers.Add(new PlayerGroupMember(member));
 			return ApplySnapshot(teamId, runtimeMembers);
 		}
 	}
@@ -112,6 +112,15 @@ public sealed class PlayerGroupRuntime
 				&& members.Any(member => member.ObjectId == objectId);
 	}
 
+	public PlayerGroupMember? GetMember(int teamId, int objectId)
+	{
+		// Java parity: model/team/GeneralTeam.getMember returns the stored TeamMember wrapper.
+		lock (_sync)
+			return _membersByTeamId.TryGetValue(teamId, out var members)
+				? members.FirstOrDefault(member => member.ObjectId == objectId)
+				: null;
+	}
+
 	public IReadOnlyList<int> GetMemberObjectIds(int teamId)
 	{
 		// Java parity: model/team/GeneralTeam.getMembers mapped to object ids for the snapshot bridge.
@@ -144,30 +153,30 @@ public sealed class PlayerGroupRuntime
 		return PlayerGroupSnapshotResolver.Resolve(player);
 	}
 
-	private static List<Player> CopyDistinctMembers(IReadOnlyList<Player> members)
+	private static List<PlayerGroupMember> CopyDistinctMembers(IReadOnlyList<Player> members)
 	{
-		var runtimeMembers = new List<Player>(members.Count);
+		var runtimeMembers = new List<PlayerGroupMember>(members.Count);
 		var seenObjectIds = new HashSet<int>();
 		foreach (var member in members)
 		{
 			if (!seenObjectIds.Add(member.ObjectId))
 				throw new ArgumentException($"Duplicate group member object id {member.ObjectId}.", nameof(members));
 
-			runtimeMembers.Add(member);
+			runtimeMembers.Add(new PlayerGroupMember(member));
 		}
 
 		return runtimeMembers;
 	}
 
-	private static PlayerGroupSnapshot ApplySnapshot(int teamId, IReadOnlyList<Player> members)
+	private static PlayerGroupSnapshot ApplySnapshot(int teamId, IReadOnlyList<PlayerGroupMember> members)
 	{
-		var snapshot = PlayerGroupSnapshot.FromMembers(teamId, members);
+		var snapshot = PlayerGroupSnapshot.FromMembers(teamId, members.Select(member => member.Player).ToArray());
 		foreach (var member in members)
 		{
-			member.TeamMembership = PlayerTeamMembership.Group;
-			member.CurrentTeamId = snapshot.TeamId;
-			member.CurrentTeamMemberObjectIds = snapshot.MemberObjectIds;
-			member.CurrentGroupSnapshot = snapshot;
+			member.Player.TeamMembership = PlayerTeamMembership.Group;
+			member.Player.CurrentTeamId = snapshot.TeamId;
+			member.Player.CurrentTeamMemberObjectIds = snapshot.MemberObjectIds;
+			member.Player.CurrentGroupSnapshot = snapshot;
 		}
 
 		return snapshot;

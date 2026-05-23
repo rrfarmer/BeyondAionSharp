@@ -9,8 +9,8 @@ public sealed class PlayerGroupRuntimeTests
 	public void CreateOrUpdateGroup_AttachesSharedSnapshotMetadataToMembers()
 	{
 		var runtime = new PlayerGroupRuntime();
-		var leader = new Player { ObjectId = 1001 };
-		var member = new Player { ObjectId = 1002 };
+		var leader = new Player { ObjectId = 1001, Name = "Leader", IsOnline = true };
+		var member = new Player { ObjectId = 1002, Name = "Member" };
 
 		var snapshot = runtime.CreateOrUpdateGroup(99001, [leader, member], PlayerGroupType.AutoGroup);
 
@@ -33,6 +33,11 @@ public sealed class PlayerGroupRuntimeTests
 		Assert.True(runtime.HasMember(99001, 1001));
 		Assert.True(runtime.HasMember(99001, 1002));
 		Assert.False(runtime.HasMember(99001, 1003));
+		var leaderMember = Assert.IsType<PlayerGroupMember>(runtime.GetMember(99001, 1001));
+		Assert.Equal(1001, leaderMember.ObjectId);
+		Assert.Equal("Leader", leaderMember.Name);
+		Assert.Same(leader, leaderMember.Player);
+		Assert.True(leaderMember.IsOnline);
 		Assert.Equal([1001, 1002], runtime.GetMemberObjectIds(99001));
 		Assert.True(runtime.IsLeader(99001, leader));
 		Assert.False(runtime.IsLeader(99001, member));
@@ -98,6 +103,21 @@ public sealed class PlayerGroupRuntimeTests
 		Assert.Equal("Team member is already added.", exception.Message);
 		Assert.Equal([1001, 1002], runtime.GetMemberObjectIds(99001));
 		Assert.Same(member.CurrentGroupSnapshot, leader.CurrentGroupSnapshot);
+	}
+
+	[Fact]
+	public void GetMember_ReturnsWrapperWithDeterministicLastOnlineUpdate()
+	{
+		var runtime = new PlayerGroupRuntime();
+		var leader = new Player { ObjectId = 1001, Name = "Leader" };
+		runtime.CreateOrUpdateGroup(99001, [leader]);
+		var now = DateTimeOffset.FromUnixTimeMilliseconds(123_456);
+
+		var member = Assert.IsType<PlayerGroupMember>(runtime.GetMember(99001, 1001));
+		member.UpdateLastOnlineTime(now);
+
+		Assert.Equal(123_456, member.LastOnlineTimeMillis);
+		Assert.Null(runtime.GetMember(99001, 9999));
 	}
 
 	[Fact]
