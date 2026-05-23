@@ -156,6 +156,120 @@ public sealed class WorldNpcResourceStatsServiceTests
 		Assert.Equal(500, missingMax.Dp);
 	}
 
+	[Fact]
+	public async Task ApplyResourceOverTimePeriodicResultAsync_ReducesNpcMpFromStagedMpAttack()
+	{
+		var service = CreateService(out var lifeStats, out _);
+		var skillDamage = CreateSkillDamageService();
+		var npc = CreateNpc(objectId: 12, maxHp: 100);
+		lifeStats.Initialize(npc, maxHp: 100, maxMp: 250);
+		var staged = skillDamage.ApplyResourceOverTimePeriodicAction(new WorldNpcSkillResourceOverTimePeriodicActionRequest(
+			WorldNpcSkillResourceOverTimeEffectKind.MpAttack,
+			Value: 20,
+			SkillId: 7401,
+			CurrentResource: 250,
+			MaxResource: 250,
+			Percent: true));
+
+		var result = await service.ApplyResourceOverTimePeriodicResultAsync(
+			staged,
+			new WorldNpcResourceMutationTarget(Npc: npc));
+
+		Assert.Equal(WorldNpcResourceEffectApplicationStatus.Applied, result.Status);
+		Assert.Equal(WorldNpcEffectResourceType.Mp, result.ResourceType);
+		Assert.Equal(7401, result.SkillId);
+		Assert.NotNull(result.Change);
+		Assert.Equal(WorldNpcResourceChangeStatus.Reduced, result.Change.Status);
+		Assert.Equal(50, result.Change.AppliedValue);
+		Assert.Equal(200, result.Change.CurrentValue);
+		Assert.NotNull(result.Change.AttackStatusPacket);
+		Assert.Equal(SmAttackStatusType.DamageMp, result.Change.AttackStatusPacket.Type);
+		Assert.Equal(SmAttackStatusLog.MpAttack, result.Change.AttackStatusPacket.Log);
+		Assert.True(lifeStats.TryGetStats(npc.ObjectId, out var stored));
+		Assert.Equal(200, stored!.CurrentMp);
+	}
+
+	[Fact]
+	public async Task ApplyResourceOverTimePeriodicResultAsync_IncreasesPlayerFpFromStagedFpHeal()
+	{
+		var service = CreateService(out _, out _);
+		var skillDamage = CreateSkillDamageService();
+		var player = CreatePlayer(objectId: 1006, currentHp: 100, currentMp: 40, currentFp: 80);
+		var staged = skillDamage.ApplyResourceOverTimePeriodicAction(new WorldNpcSkillResourceOverTimePeriodicActionRequest(
+			WorldNpcSkillResourceOverTimeEffectKind.FpHeal,
+			Value: 25,
+			SkillId: 7402,
+			CurrentResource: 80,
+			MaxResource: 100,
+			TargetIsPlayer: true));
+
+		var result = await service.ApplyResourceOverTimePeriodicResultAsync(
+			staged,
+			new WorldNpcResourceMutationTarget(Player: player, MaxHp: 100, MaxFp: 100));
+
+		Assert.Equal(WorldNpcResourceEffectApplicationStatus.Applied, result.Status);
+		Assert.NotNull(result.Change);
+		Assert.Equal(WorldNpcResourceChangeStatus.Increased, result.Change.Status);
+		Assert.Equal(20, result.Change.AppliedValue);
+		Assert.Equal(100, player.LifeStats!.CurrentFp);
+		Assert.True(result.Change.SendFlyTimeUpdate);
+		Assert.NotNull(result.Change.AttackStatusPacket);
+		Assert.Equal(SmAttackStatusType.Fp, result.Change.AttackStatusPacket.Type);
+		Assert.Equal(SmAttackStatusLog.FpHeal, result.Change.AttackStatusPacket.Log);
+		Assert.Equal(7402, result.Change.AttackStatusPacket.SkillId);
+	}
+
+	[Fact]
+	public async Task ApplyInstantResourceResultAsync_ReducesPlayerMpFromStagedMpAttack()
+	{
+		var service = CreateService(out _, out _);
+		var skillDamage = CreateSkillDamageService();
+		var player = CreatePlayer(objectId: 1007, currentHp: 100, currentMp: 120, currentFp: 100);
+		var staged = skillDamage.CalculateInstantResourceEffect(new WorldNpcSkillInstantResourceEffectRequest(
+			WorldNpcSkillInstantResourceEffectKind.MpAttackInstant,
+			Value: 25,
+			SkillId: 7403,
+			Position: 1,
+			MaxResource: 200,
+			Percent: true));
+
+		var result = await service.ApplyInstantResourceResultAsync(
+			staged,
+			new WorldNpcResourceMutationTarget(Player: player, MaxMp: 200));
+
+		Assert.Equal(WorldNpcResourceEffectApplicationStatus.Applied, result.Status);
+		Assert.NotNull(result.Change);
+		Assert.Equal(WorldNpcResourceChangeStatus.Reduced, result.Change.Status);
+		Assert.Equal(50, result.Change.AppliedValue);
+		Assert.Equal(70, player.LifeStats!.CurrentMp);
+		Assert.NotNull(result.Change.AttackStatusPacket);
+		Assert.Equal(SmAttackStatusType.DamageMp, result.Change.AttackStatusPacket.Type);
+		Assert.Equal(SmAttackStatusLog.MpAttack, result.Change.AttackStatusPacket.Log);
+		Assert.Equal(35, result.Change.AttackStatusPacket.HpOrMpPercentage);
+	}
+
+	[Fact]
+	public async Task ApplyInstantResourceResultAsync_RequiresPlayerForStagedFpAttack()
+	{
+		var service = CreateService(out _, out _);
+		var skillDamage = CreateSkillDamageService();
+		var npc = CreateNpc(objectId: 13, maxHp: 100);
+		var staged = skillDamage.CalculateInstantResourceEffect(new WorldNpcSkillInstantResourceEffectRequest(
+			WorldNpcSkillInstantResourceEffectKind.FpAttackInstant,
+			Value: 10,
+			SkillId: 7404,
+			Position: 1,
+			MaxResource: 100,
+			TargetIsPlayer: true));
+
+		var result = await service.ApplyInstantResourceResultAsync(
+			staged,
+			new WorldNpcResourceMutationTarget(Npc: npc));
+
+		Assert.Equal(WorldNpcResourceEffectApplicationStatus.MissingTarget, result.Status);
+		Assert.Null(result.Change);
+	}
+
 	private static WorldNpcResourceStatsService CreateService(
 		out WorldNpcLifeStatsService lifeStats,
 		out CapturingConnectionRegistry registry)
@@ -163,6 +277,11 @@ public sealed class WorldNpcResourceStatsServiceTests
 		lifeStats = new WorldNpcLifeStatsService(new WorldNpcDeathDropWorkflowService(null!, null!));
 		registry = new CapturingConnectionRegistry();
 		return new WorldNpcResourceStatsService(lifeStats, registry);
+	}
+
+	private static WorldNpcSkillDamageService CreateSkillDamageService()
+	{
+		return new WorldNpcSkillDamageService(null!);
 	}
 
 	private static WorldNpc CreateNpc(int objectId, int maxHp)

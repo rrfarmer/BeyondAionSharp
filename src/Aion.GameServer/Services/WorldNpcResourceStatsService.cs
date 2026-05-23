@@ -154,6 +154,88 @@ public sealed class WorldNpcResourceStatsService
 			UpdateStatsAndSpeedVisually: player.IsOnline);
 	}
 
+	public ValueTask<WorldNpcResourceEffectApplicationResult> ApplyResourceOverTimePeriodicResultAsync(
+		WorldNpcSkillResourceOverTimePeriodicActionResult effectResult,
+		WorldNpcResourceMutationTarget target,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: skillengine/effect resource periodic actions eventually call CreatureLifeStats/PlayerLifeStats resource mutators.
+		if (!effectResult.Applied)
+			return ValueTask.FromResult(WorldNpcResourceEffectApplicationResult.EffectSkipped(effectResult.ResourceType, effectResult.SkillId));
+
+		var kind = effectResult.IsDamage ? WorldNpcResourceChangeKind.Reduce : WorldNpcResourceChangeKind.Increase;
+		return ApplyStagedResourceMutationAsync(
+			effectResult.ResourceType,
+			kind,
+			effectResult.FinalValue,
+			effectResult.SkillId,
+			effectResult.PacketType,
+			effectResult.PacketLog,
+			target,
+			cancellationToken);
+	}
+
+	public ValueTask<WorldNpcResourceEffectApplicationResult> ApplyInstantResourceResultAsync(
+		WorldNpcSkillInstantResourceEffectResult effectResult,
+		WorldNpcResourceMutationTarget target,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: skillengine/effect/{MpAttackInstant,FpAttackInstant,DelayedFpAtkInstant}Effect live callbacks reduce MP/FP.
+		if (!effectResult.Applied)
+			return ValueTask.FromResult(WorldNpcResourceEffectApplicationResult.EffectSkipped(effectResult.ResourceType, effectResult.SkillId));
+
+		return ApplyStagedResourceMutationAsync(
+			effectResult.ResourceType,
+			WorldNpcResourceChangeKind.Reduce,
+			effectResult.FinalValue,
+			effectResult.SkillId,
+			effectResult.PacketType,
+			effectResult.PacketLog,
+			target,
+			cancellationToken);
+	}
+
+	private async ValueTask<WorldNpcResourceEffectApplicationResult> ApplyStagedResourceMutationAsync(
+		WorldNpcEffectResourceType resourceType,
+		WorldNpcResourceChangeKind kind,
+		int value,
+		int skillId,
+		SmAttackStatusType? packetType,
+		SmAttackStatusLog? packetLog,
+		WorldNpcResourceMutationTarget target,
+		CancellationToken cancellationToken)
+	{
+		WorldNpcResourceChangeResult change;
+		switch (resourceType)
+		{
+			case WorldNpcEffectResourceType.Mp when target.Player != null:
+				if (target.MaxMp == null)
+					return WorldNpcResourceEffectApplicationResult.MissingMaxResource(resourceType, skillId);
+				change = kind == WorldNpcResourceChangeKind.Reduce
+					? await ReducePlayerMpAsync(target.Player, target.MaxMp.Value, value, skillId, packetType, packetLog, cancellationToken)
+					: await IncreasePlayerMpAsync(target.Player, target.MaxMp.Value, value, skillId, packetType, packetLog, cancellationToken);
+				return WorldNpcResourceEffectApplicationResult.FromChange(change, skillId);
+			case WorldNpcEffectResourceType.Mp when target.Npc != null:
+				change = kind == WorldNpcResourceChangeKind.Reduce
+					? await ReduceNpcMpAsync(target.Npc, value, skillId, packetType, packetLog, cancellationToken)
+					: await IncreaseNpcMpAsync(target.Npc, value, skillId, packetType, packetLog, cancellationToken);
+				return WorldNpcResourceEffectApplicationResult.FromChange(change, skillId);
+			case WorldNpcEffectResourceType.Fp:
+				if (target.Player == null)
+					return WorldNpcResourceEffectApplicationResult.MissingTarget(resourceType, skillId);
+				if (target.MaxHp == null || target.MaxFp == null)
+					return WorldNpcResourceEffectApplicationResult.MissingMaxResource(resourceType, skillId);
+				change = kind == WorldNpcResourceChangeKind.Reduce
+					? await ReducePlayerFpAsync(target.Player, target.MaxHp.Value, target.MaxFp.Value, value, skillId, packetType, packetLog, cancellationToken)
+					: await IncreasePlayerFpAsync(target.Player, target.MaxHp.Value, target.MaxFp.Value, value, skillId, packetType, packetLog, cancellationToken);
+				return WorldNpcResourceEffectApplicationResult.FromChange(change, skillId);
+			case WorldNpcEffectResourceType.Hp:
+			case WorldNpcEffectResourceType.Dp:
+			default:
+				return WorldNpcResourceEffectApplicationResult.UnsupportedResource(resourceType, skillId);
+		}
+	}
+
 	private async ValueTask<WorldNpcResourceChangeResult> ApplyNpcMpChangeAsync(
 		IWorldNpcObject? npc,
 		WorldNpcResourceChangeKind kind,
@@ -404,6 +486,81 @@ public sealed class WorldNpcResourceStatsService
 		// Java parity: model/gameobjects/player/PlayerClass.isStartingClass.
 		return playerClass is "WARRIOR" or "SCOUT" or "MAGE" or "PRIEST" or "ENGINEER" or "ARTIST";
 	}
+}
+
+public sealed record WorldNpcResourceMutationTarget(
+	IWorldNpcObject? Npc = null,
+	Player? Player = null,
+	int? MaxHp = null,
+	int? MaxMp = null,
+	int? MaxFp = null,
+	int? MaxDp = null);
+
+public sealed record WorldNpcResourceEffectApplicationResult(
+	WorldNpcResourceEffectApplicationStatus Status,
+	WorldNpcEffectResourceType ResourceType,
+	int SkillId,
+	WorldNpcResourceChangeResult? Change)
+{
+	public static WorldNpcResourceEffectApplicationResult FromChange(WorldNpcResourceChangeResult change, int skillId = 0)
+	{
+		var status = change.Status switch
+		{
+			WorldNpcResourceChangeStatus.MissingTarget => WorldNpcResourceEffectApplicationStatus.MissingTarget,
+			WorldNpcResourceChangeStatus.MissingStats => WorldNpcResourceEffectApplicationStatus.MissingStats,
+			WorldNpcResourceChangeStatus.MissingMaxResource => WorldNpcResourceEffectApplicationStatus.MissingMaxResource,
+			WorldNpcResourceChangeStatus.AlreadyDead => WorldNpcResourceEffectApplicationStatus.TargetDead,
+			_ => WorldNpcResourceEffectApplicationStatus.Applied,
+		};
+		return new WorldNpcResourceEffectApplicationResult(status, change.ResourceType, skillId == 0 ? change.AttackStatusPacket?.SkillId ?? 0 : skillId, change);
+	}
+
+	public static WorldNpcResourceEffectApplicationResult EffectSkipped(WorldNpcEffectResourceType resourceType, int skillId)
+	{
+		return new WorldNpcResourceEffectApplicationResult(
+			WorldNpcResourceEffectApplicationStatus.EffectSkipped,
+			resourceType,
+			skillId,
+			Change: null);
+	}
+
+	public static WorldNpcResourceEffectApplicationResult MissingTarget(WorldNpcEffectResourceType resourceType, int skillId)
+	{
+		return new WorldNpcResourceEffectApplicationResult(
+			WorldNpcResourceEffectApplicationStatus.MissingTarget,
+			resourceType,
+			skillId,
+			Change: null);
+	}
+
+	public static WorldNpcResourceEffectApplicationResult MissingMaxResource(WorldNpcEffectResourceType resourceType, int skillId)
+	{
+		return new WorldNpcResourceEffectApplicationResult(
+			WorldNpcResourceEffectApplicationStatus.MissingMaxResource,
+			resourceType,
+			skillId,
+			Change: null);
+	}
+
+	public static WorldNpcResourceEffectApplicationResult UnsupportedResource(WorldNpcEffectResourceType resourceType, int skillId)
+	{
+		return new WorldNpcResourceEffectApplicationResult(
+			WorldNpcResourceEffectApplicationStatus.UnsupportedResource,
+			resourceType,
+			skillId,
+			Change: null);
+	}
+}
+
+public enum WorldNpcResourceEffectApplicationStatus
+{
+	Applied,
+	EffectSkipped,
+	MissingTarget,
+	MissingStats,
+	MissingMaxResource,
+	TargetDead,
+	UnsupportedResource,
 }
 
 public sealed record WorldNpcResourceChangeResult(

@@ -242,7 +242,8 @@ public sealed class WorldNpcSkillDamageService
 			return CreateSkippedResourceOverTimeResult(
 				WorldNpcSkillResourceOverTimeStatus.TargetNotPlayer,
 				request.Kind,
-				profile);
+				profile,
+				request.SkillId);
 
 		if (profile.IsDamage)
 		{
@@ -252,6 +253,7 @@ public sealed class WorldNpcSkillDamageService
 			return CreateAppliedResourceOverTimeResult(
 				kind: request.Kind,
 				profile: profile,
+				skillId: request.SkillId,
 				valueBeforeCap: value,
 				finalValue: value,
 				healSkillDeboostApplied: false,
@@ -279,6 +281,7 @@ public sealed class WorldNpcSkillDamageService
 				WorldNpcSkillResourceOverTimeStatus.NoResourceChange,
 				request.Kind,
 				profile,
+				request.SkillId,
 				possibleHealValue,
 				valueAfterCap,
 				healSkillDeboostApplied,
@@ -291,6 +294,7 @@ public sealed class WorldNpcSkillDamageService
 		return CreateAppliedResourceOverTimeResult(
 			kind: request.Kind,
 			profile: profile,
+			skillId: request.SkillId,
 			valueBeforeCap: possibleHealValue,
 			finalValue: valueAfterCap,
 			healSkillDeboostApplied: healSkillDeboostApplied,
@@ -577,6 +581,7 @@ public sealed class WorldNpcSkillDamageService
 		WorldNpcSkillResourceOverTimeStatus status,
 		WorldNpcSkillResourceOverTimeEffectKind kind,
 		WorldNpcSkillResourceOverTimeEffectProfile profile,
+		int skillId = 0,
 		int valueBeforeCap = 0,
 		int finalValue = 0,
 		bool healSkillDeboostApplied = false,
@@ -588,6 +593,7 @@ public sealed class WorldNpcSkillDamageService
 		return new WorldNpcSkillResourceOverTimePeriodicActionResult(
 			Status: status,
 			Kind: kind,
+			SkillId: skillId,
 			ResourceType: profile.ResourceType,
 			IsDamage: profile.IsDamage,
 			OriginalValue: 0,
@@ -605,6 +611,7 @@ public sealed class WorldNpcSkillDamageService
 	private static WorldNpcSkillResourceOverTimePeriodicActionResult CreateAppliedResourceOverTimeResult(
 		WorldNpcSkillResourceOverTimeEffectKind kind,
 		WorldNpcSkillResourceOverTimeEffectProfile profile,
+		int skillId,
 		int valueBeforeCap,
 		int finalValue,
 		bool healSkillDeboostApplied,
@@ -616,6 +623,7 @@ public sealed class WorldNpcSkillDamageService
 		return new WorldNpcSkillResourceOverTimePeriodicActionResult(
 			WorldNpcSkillResourceOverTimeStatus.Applied,
 			kind,
+			skillId,
 			profile.ResourceType,
 			profile.IsDamage,
 			OriginalValue: valueBeforeCap,
@@ -930,6 +938,7 @@ public sealed record WorldNpcSkillResourceOverTimePeriodicActionRequest(
 public sealed record WorldNpcSkillResourceOverTimePeriodicActionResult(
 	WorldNpcSkillResourceOverTimeStatus Status,
 	WorldNpcSkillResourceOverTimeEffectKind Kind,
+	int SkillId,
 	WorldNpcEffectResourceType ResourceType,
 	bool IsDamage,
 	int OriginalValue,
