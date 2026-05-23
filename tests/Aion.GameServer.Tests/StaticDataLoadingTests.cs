@@ -98,6 +98,64 @@ public sealed class StaticDataLoadingTests
 	}
 
 	[Fact]
+	public async Task StaticData_LoadsPortalPathSummariesWithJavaRaceFallbacks()
+	{
+		using var temp = TempDirectory.Create();
+		var cacheFile = Path.Combine(temp.Path, "static_data.xml");
+		File.WriteAllText(
+			cacheFile,
+			"""
+			<?xml version="1.0" encoding="UTF-8"?>
+			<static_data>
+				<portal_templates2>
+					<portal_use npc_id="700438">
+						<portal_path loc_id="3000301" race="ELYOS" />
+						<portal_path loc_id="3000302" race="ASMODIANS" />
+					</portal_use>
+					<portal_dialog npc_id="730000" teleport_dialog_id="1012">
+						<portal_path dialog="10000" loc_id="3001001" race="ELYOS" min_level="25" min_rank="4" kinah="500" title_id="7" err_group="9001" err_level="9002" siege_id="101" />
+						<portal_path dialog="10000" loc_id="3001002" race="ASMODIANS" />
+					</portal_dialog>
+					<portal_scroll name="scroll_test">
+						<portal_path loc_id="4000100" />
+					</portal_scroll>
+				</portal_templates2>
+			</static_data>
+			""");
+
+		var staticData = await StaticData.LoadFromCacheAsync(cacheFile, Array.Empty<string>());
+
+		Assert.Equal(3, staticData.PortalPaths.Count);
+		Assert.Equal(5, staticData.PortalPaths.PathCount);
+		Assert.True(staticData.PortalPaths.IsPortalNpc(700438));
+		Assert.True(staticData.PortalPaths.IsPortalNpc(730000));
+		Assert.False(staticData.PortalPaths.IsPortalNpc(700000));
+		var usePath = staticData.PortalPaths.GetPortalUsePath(700438, "ASMODIANS");
+		Assert.NotNull(usePath);
+		Assert.Equal(3000302, usePath.LocId);
+		Assert.Equal("ASMODIANS", usePath.Race);
+		Assert.Equal(3000301, staticData.PortalPaths.GetPortalUsePath(700438, "ELYOS")?.LocId);
+		Assert.Equal(3000302, staticData.PortalPaths.GetPortalUsePath(700438, "BALAUR")?.LocId);
+		var dialogPath = staticData.PortalPaths.GetPortalDialogPath(730000, 10000, "ELYOS");
+		Assert.NotNull(dialogPath);
+		Assert.Equal(3001001, dialogPath.LocId);
+		Assert.Equal(25, dialogPath.MinLevel);
+		Assert.Equal(4, dialogPath.MinRank);
+		Assert.Equal(500, dialogPath.Kinah);
+		Assert.Equal(7, dialogPath.TitleId);
+		Assert.Equal(9001, dialogPath.ErrGroup);
+		Assert.Equal(9002, dialogPath.ErrLevel);
+		Assert.Equal(101, dialogPath.SiegeId);
+		Assert.Equal(1012, staticData.PortalPaths.GetTeleportDialogId(730000));
+		Assert.Equal(1011, staticData.PortalPaths.GetTeleportDialogId(1));
+		var scrollPath = staticData.PortalPaths.GetPortalScroll("scroll_test");
+		Assert.NotNull(scrollPath);
+		Assert.Equal(PortalPathSource.Scroll, scrollPath.Source);
+		Assert.Equal("PC_ALL", scrollPath.Race);
+		Assert.Equal(4000100, scrollPath.LocId);
+	}
+
+	[Fact]
 	public async Task StaticData_LoadsRegularNpcSpawnSpotSummaries()
 	{
 		using var temp = TempDirectory.Create();
@@ -923,6 +981,15 @@ public sealed class StaticDataLoadingTests
 		Assert.True(staticData.InstanceCooltimes.CanEnterMentor(300030000));
 		Assert.Equal("DAILY", staticData.InstanceCooltimes.GetInstanceCooltimeByWorldId(300030000)?.CoolTimeType);
 		Assert.Equal(900, staticData.InstanceCooltimes.GetInstanceCooltimeByWorldId(300030000)?.EntCoolTime);
+		Assert.Equal(staticData.GetElementCount("portal_path"), staticData.PortalPaths.PathCount);
+		Assert.True(staticData.PortalPaths.IsPortalNpc(700438));
+		Assert.Equal(3000301, staticData.PortalPaths.GetPortalUsePath(700438, "ELYOS")?.LocId);
+		Assert.Equal(3000302, staticData.PortalPaths.GetPortalUsePath(700438, "ASMODIANS")?.LocId);
+		Assert.Equal(3000302, staticData.PortalPaths.GetPortalUsePath(700438, "BALAUR")?.LocId);
+		Assert.Equal(1352, staticData.PortalPaths.GetTeleportDialogId(832998));
+		Assert.Equal(1011, staticData.PortalPaths.GetTeleportDialogId(832997));
+		Assert.Equal(3006300, staticData.PortalPaths.GetPortalDialogPath(832998, 10000, "ELYOS")?.LocId);
+		Assert.Equal(1100100, staticData.PortalPaths.GetPortalScroll("LC1_RETURN_AREA_1")?.LocId);
 		Assert.Contains(staticData.RecipeTemplates.GetAutolearnRecipes("ELYOS", 40009, 1), recipe => recipe.RecipeId == 155000001);
 		var craftPlayer = new Player
 		{

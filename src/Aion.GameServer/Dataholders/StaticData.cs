@@ -42,6 +42,7 @@ public sealed class StaticData
 		HousingTemplateTable housingTemplates,
 		HousingObjectTemplateTable housingObjectTemplates,
 		InstanceCooltimeTable instanceCooltimes,
+		PortalPathTable portalPaths,
 		PlayerInitialDataTable playerInitialData,
 		SkillTreeTable skillTree,
 		Task? validationTask)
@@ -81,6 +82,7 @@ public sealed class StaticData
 		HousingTemplates = housingTemplates;
 		HousingObjectTemplates = housingObjectTemplates;
 		InstanceCooltimes = instanceCooltimes;
+		PortalPaths = portalPaths;
 		PlayerInitialData = playerInitialData;
 		SkillTree = skillTree;
 		ValidationTask = validationTask;
@@ -158,6 +160,8 @@ public sealed class StaticData
 
 	public InstanceCooltimeTable InstanceCooltimes { get; }
 
+	public PortalPathTable PortalPaths { get; }
+
 	public PlayerInitialDataTable PlayerInitialData { get; }
 
 	public SkillTreeTable SkillTree { get; }
@@ -218,12 +222,17 @@ public sealed class StaticData
 		var housingParts = new List<HousingPartSummary>();
 		var housingObjectTemplates = new List<HousingObjectTemplateSummary>();
 		var instanceCooltimes = new List<InstanceCooltimeSummary>();
+		var portalUsePaths = new List<PortalPathSummary>();
+		var portalDialogPaths = new List<PortalPathSummary>();
+		var portalScrollPaths = new List<PortalPathSummary>();
+		var portalDialogTeleportIds = new Dictionary<int, int>();
 		var skillTree = new List<SkillLearnSummary>();
 		var learnableEmotionIds = new HashSet<int>();
 		var creationItemsByClass = new Dictionary<string, List<StartingItem>>(StringComparer.OrdinalIgnoreCase);
 		var spawnLocationsByRace = new Dictionary<string, PlayerSpawnLocation>(StringComparer.OrdinalIgnoreCase);
 		string? currentPlayerCreationClass = null;
 		InstanceCooltimeBuilder? currentInstanceCooltime = null;
+		PortalPathParent? currentPortalPathParent = null;
 		ItemTemplateBuilder? currentItemTemplate = null;
 		ItemRandomBonusBuilder? currentItemRandomBonus = null;
 		ItemSetBuilder? currentItemSet = null;
@@ -280,6 +289,9 @@ public sealed class StaticData
 					instanceCooltimes.Add(currentInstanceCooltime.ToSummary());
 					currentInstanceCooltime = null;
 				}
+
+				if (reader.Depth == 2 && reader.LocalName is "portal_use" or "portal_dialog" or "portal_scroll")
+					currentPortalPathParent = null;
 
 				if (reader.Depth == 2 && reader.LocalName == "item_template" && currentItemTemplate != null)
 				{
@@ -495,6 +507,68 @@ public sealed class StaticData
 					var flags = WorldMapSummary.ParseFlags(reader.GetAttribute("flags"));
 					worldMaps.Add(new WorldMapSummary(mapId, isInstance, twinCount, reader.GetAttribute("drop_type") ?? "NONE", flags));
 				}
+			}
+
+			if (reader.Depth == 2 && reader.LocalName == "portal_use")
+			{
+				// Java parity: model/templates/portal/PortalUse grouped by npc_id in dataholders/Portal2Data.
+				currentPortalPathParent = PortalPathParent.ForUse(ReadRequiredIntAttribute(reader, "npc_id"));
+				if (reader.IsEmptyElement)
+					currentPortalPathParent = null;
+
+				continue;
+			}
+
+			if (reader.Depth == 2 && reader.LocalName == "portal_dialog")
+			{
+				// Java parity: model/templates/portal/PortalDialog teleport_dialog_id defaults to 1011.
+				var npcId = ReadRequiredIntAttribute(reader, "npc_id");
+				portalDialogTeleportIds[npcId] = ReadOptionalIntAttribute(reader, "teleport_dialog_id", 1011);
+				currentPortalPathParent = PortalPathParent.ForDialog(npcId);
+				if (reader.IsEmptyElement)
+					currentPortalPathParent = null;
+
+				continue;
+			}
+
+			if (reader.Depth == 2 && reader.LocalName == "portal_scroll")
+			{
+				// Java parity: model/templates/portal/PortalScroll is keyed by scroll template name.
+				currentPortalPathParent = PortalPathParent.ForScroll(reader.GetAttribute("name") ?? string.Empty);
+				if (reader.IsEmptyElement)
+					currentPortalPathParent = null;
+
+				continue;
+			}
+
+			if (reader.Depth == 3 && reader.LocalName == "portal_path" && currentPortalPathParent != null)
+			{
+				// Java parity: model/templates/portal/PortalPath scalar JAXB attributes; quest_req/item_req remain future work.
+				var path = currentPortalPathParent.CreateSummary(
+					ReadIntAttribute(reader, "dialog"),
+					ReadIntAttribute(reader, "loc_id"),
+					ReadIntAttribute(reader, "siege_id"),
+					reader.GetAttribute("race") ?? "PC_ALL",
+					ReadIntAttribute(reader, "min_level"),
+					ReadIntAttribute(reader, "min_rank"),
+					ReadIntAttribute(reader, "kinah"),
+					ReadIntAttribute(reader, "title_id"),
+					ReadIntAttribute(reader, "err_group"),
+					ReadIntAttribute(reader, "err_level"));
+				switch (path.Source)
+				{
+					case PortalPathSource.Use:
+						portalUsePaths.Add(path);
+						break;
+					case PortalPathSource.Dialog:
+						portalDialogPaths.Add(path);
+						break;
+					case PortalPathSource.Scroll:
+						portalScrollPaths.Add(path);
+						break;
+				}
+
+				continue;
 			}
 
 			if (reader.Depth == 2 && reader.LocalName == "zone" && elementPath.GetValueOrDefault(1) == "zones")
@@ -2010,6 +2084,11 @@ public sealed class StaticData
 				housingParts.AsReadOnly()),
 			new HousingObjectTemplateTable(housingObjectTemplates.AsReadOnly()),
 			new InstanceCooltimeTable(instanceCooltimes.AsReadOnly()),
+			new PortalPathTable(
+				portalDialogPaths.AsReadOnly(),
+				portalDialogTeleportIds,
+				portalUsePaths.AsReadOnly(),
+				portalScrollPaths.AsReadOnly()),
 			new PlayerInitialDataTable(
 				creationItemsByClass.ToDictionary(
 					pair => pair.Key,
@@ -2362,6 +2441,52 @@ public sealed class StaticData
 			"emblem" => 11,
 			_ => 0,
 		};
+	}
+
+	private sealed record PortalPathParent(PortalPathSource Source, int NpcId, string ScrollName)
+	{
+		public static PortalPathParent ForUse(int npcId)
+		{
+			return new PortalPathParent(PortalPathSource.Use, npcId, string.Empty);
+		}
+
+		public static PortalPathParent ForDialog(int npcId)
+		{
+			return new PortalPathParent(PortalPathSource.Dialog, npcId, string.Empty);
+		}
+
+		public static PortalPathParent ForScroll(string scrollName)
+		{
+			return new PortalPathParent(PortalPathSource.Scroll, 0, scrollName);
+		}
+
+		public PortalPathSummary CreateSummary(
+			int dialog,
+			int locId,
+			int siegeId,
+			string race,
+			int minLevel,
+			int minRank,
+			int kinah,
+			int titleId,
+			int errGroup,
+			int errLevel)
+		{
+			return new PortalPathSummary(
+				Source,
+				NpcId,
+				ScrollName,
+				dialog,
+				locId,
+				siegeId,
+				string.IsNullOrWhiteSpace(race) ? "PC_ALL" : race,
+				minLevel,
+				minRank,
+				kinah,
+				titleId,
+				errGroup,
+				errLevel);
+		}
 	}
 
 	private sealed class InstanceCooltimeBuilder
