@@ -255,6 +255,62 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 	}
 
 	[Fact]
+	public async Task CompleteToyPetSpawnUseItemAsync_ClearsCreatureSiegeZoneCountersWhenSourceMutationFailsAfterKiskSpawn()
+	{
+		var dataManager = await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false);
+		var runtimeContext = new GameServerRuntimeContext();
+		runtimeContext.SetDataManager(dataManager);
+		var zoneCounterService = new CreaturePvpZoneCounterService();
+		var registry = new CapturingConnectionRegistry();
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var idFactory = new IDFactory();
+		var playerEnterWorldService = new PlayerEnterWorldService(
+			new GameServerOptions(),
+			new EmptyPlayerEnterWorldRepository { SaveItemUseSourceMutationResult = false },
+			world,
+			NullLogger<PlayerEnterWorldService>.Instance);
+		await using var pair = await TestConnectionPair.CreateAsync(
+			registry,
+			runtimeContext,
+			zoneCounterService,
+			idFactory,
+			world,
+			playerEnterWorldService);
+		var spawnPosition = new WorldPosition(210050000, 1750, 2150, 300, 0);
+		var player = CreateTeleportingPlayer(7307, spawnPosition);
+		var sourceItem = new InventoryItem
+		{
+			ObjectId = 9103,
+			ItemId = 184000011,
+			Count = 1,
+			OwnerId = player.ObjectId,
+			Location = 0,
+			Slot = 4,
+		};
+		player.InventoryItems = [sourceItem];
+		var sourceTemplate = CreateToyPetSpawnItemTemplate(sourceItem.ItemId, toyPetSpawnNpcId: 700273);
+		var kiskTemplate = CreateKiskTemplate(700273);
+		Assert.Contains(
+			dataManager.StaticData.CreaturePvpZones.GetZonesByMapId(spawnPosition.WorldId),
+			zone => zone.Name == "ABYSS_CASTLE_AREA_2011_210050000"
+				&& zone.ZoneType == CreaturePvpZoneType.Siege
+				&& zone.Contains(spawnPosition));
+
+		await pair.Connection.CompleteToyPetSpawnUseItemAsync(
+			player,
+			sourceItem.ObjectId,
+			sourceTemplate,
+			kiskTemplate,
+			CancellationToken.None);
+
+		Assert.False(world.TryGetObject(1, out _));
+		Assert.Equal(CreaturePvpZoneCounters.Empty, zoneCounterService.GetCounters(1));
+		Assert.NotNull(player.InventoryItems.SingleOrDefault(item => item.ObjectId == sourceItem.ObjectId));
+		Assert.Null(runtimeContext.Kisks.GetKiskState(1));
+		Assert.Empty(registry.RefreshedNpcs);
+	}
+
+	[Fact]
 	public async Task SpawnAndDismissPostmanAsync_RevalidatesAndClearsCreaturePvpZoneCounters()
 	{
 		var dataManager = await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false);
