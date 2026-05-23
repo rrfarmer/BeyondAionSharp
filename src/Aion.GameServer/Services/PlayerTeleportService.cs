@@ -1,4 +1,5 @@
 using Aion.GameServer.Controllers.Movement;
+using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.World;
@@ -16,10 +17,13 @@ public static class PlayerTeleportService
 		return new PlayerTeleportResult(previousPosition, destination, UsesSameWorldSpawnPath: previousPosition.WorldId == destination.WorldId);
 	}
 
-	public static PendingPlayerTeleport QueuePendingTeleport(Player player, WorldPosition destination)
+	public static PendingPlayerTeleport QueuePendingTeleport(
+		Player player,
+		WorldPosition destination,
+		TeleportAnimation? animation = null)
 	{
 		// Java parity: services/teleport/TeleportService.sendLoc stores SpawnTask under TaskId.TELEPORT until the client sends CM_TELEPORT_ANIMATION_DONE.
-		var pendingTeleport = new PendingPlayerTeleport(destination);
+		var pendingTeleport = new PendingPlayerTeleport(destination, animation ?? TeleportAnimation.FadeOutBeam);
 		player.PendingTeleport = pendingTeleport;
 		return pendingTeleport;
 	}
@@ -34,6 +38,7 @@ public static class PlayerTeleportService
 		player.PendingTeleport = null;
 		var previousPosition = player.Position;
 		player.Position = pendingTeleport.Destination;
+		player.PortAnimation = pendingTeleport.Animation.DefaultArrivalAnimation;
 		ResetMovementToDestination(player, pendingTeleport.Destination);
 		return new PlayerTeleportResult(
 			previousPosition,

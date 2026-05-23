@@ -1,3 +1,4 @@
+using Aion.GameServer.Model;
 using Aion.GameServer.Model.Account;
 using Aion.GameServer.World;
 
@@ -84,6 +85,9 @@ public sealed class Player
 	public int BonusTitleId { get; set; }
 
 	public WorldPosition Position { get; set; }
+
+	// Java parity: model/gameobjects/player/Player.portAnimation is written by SM_PLAYER_INFO and reset after spawn/level-ready fanout.
+	public ArrivalAnimation PortAnimation { get; set; } = ArrivalAnimation.None;
 
 	// Java parity: controllers/movement/PlayerMoveController state mirrored for CM_MOVE/SM_MOVE.
 	public PlayerMovementState Movement { get; } = new();
@@ -653,4 +657,4 @@ public enum PlayerLeaveFlyAreaStatus
 	GlidingOutsideFlyArea,
 }
 
-public sealed record PendingPlayerTeleport(WorldPosition Destination);
+public sealed record PendingPlayerTeleport(WorldPosition Destination, TeleportAnimation Animation);

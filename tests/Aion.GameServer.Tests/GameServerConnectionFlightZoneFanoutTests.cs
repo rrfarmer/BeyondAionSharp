@@ -285,14 +285,22 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 		var completed = await pair.Connection.HandleTeleportAnimationDoneAsync(player);
 
 		Assert.Equal(destination, request.PendingTeleport.Destination);
+		Assert.Equal(TeleportAnimation.FadeOutBeam, request.PendingTeleport.Animation);
 		Assert.Equal(destination, player.Position);
 		Assert.Equal(startPosition, queuedPosition);
 		Assert.NotNull(completed);
 		Assert.Equal(startPosition, completed.PreviousPosition);
 		Assert.Equal(destination, completed.Destination);
 		Assert.Null(player.PendingTeleport);
+		Assert.Equal(ArrivalAnimation.None, player.PortAnimation);
+		var despawn = Assert.Single(registry.Broadcasts, broadcast => broadcast.Packet is SmDelete);
+		Assert.Equal(startPosition, despawn.SourcePosition);
+		using var deleteReader = new PacketBuffer(SerializeUnencryptedPayload(despawn.Packet));
+		Assert.Equal(player.ObjectId, deleteReader.ReadD());
+		Assert.Equal((byte)ObjectDeleteAnimation.FadeOutBeam, deleteReader.ReadC());
+		Assert.Equal(0, deleteReader.Remaining);
 		Assert.Equal(1, zoneCounterService.GetCounters(player.ObjectId).PvpZoneCount);
-		Assert.Equal((byte)TeleportAnimation.FadeOutBeam, teleportReader.ReadC());
+		Assert.Equal(TeleportAnimation.FadeOutBeam.Id, teleportReader.ReadC());
 		Assert.Equal(destination.WorldId, teleportReader.ReadD());
 		Assert.Equal(destination.WorldId, teleportReader.ReadD());
 		Assert.Equal(destination.X, teleportReader.ReadF());

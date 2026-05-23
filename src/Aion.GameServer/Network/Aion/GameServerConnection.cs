@@ -1074,6 +1074,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		await SendPacketAsync(new SmPlayerInfo(player, staticData?.PlayerExperienceTable));
+		player.PortAnimation = ArrivalAnimation.None;
 		await SendPacketAsync(CreateAccountPropertiesPacket());
 		await SendPacketAsync(new SmMotion(player.ObjectId, player.Motions));
 		// Java parity: CM_LEVEL_READY.runImpl spawns the already-moved player into World, then later player.getController().onEnterWorld updates zone state.
@@ -4834,11 +4835,21 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		staticData ??= _runtimeContext?.DataManager?.StaticData;
 		animation ??= TeleportAnimation.FadeOutBeam;
-		var pendingTeleport = PlayerTeleportService.QueuePendingTeleport(player, destination);
+		var selectedAnimation = animation.Value;
+		var pendingTeleport = PlayerTeleportService.QueuePendingTeleport(player, destination, selectedAnimation);
 		var packet = new SmTeleportLoc(
 			pendingTeleport.Destination,
-			animation.Value,
+			selectedAnimation,
 			staticData?.WorldMaps ?? Array.Empty<WorldMapSummary>());
+		// Java parity: TeleportService.sendLoc calls World.despawn(player, animation.getDefaultObjectDeleteAnimation()) before SM_TELEPORT_LOC.
+		if (_connectionRegistry != null)
+		{
+			await _connectionRegistry.BroadcastToVisiblePlayersAsync(
+				player.Position,
+				player.ObjectId,
+				new SmDelete(player.ObjectId, selectedAnimation.DefaultObjectDeleteAnimation));
+		}
+
 		// Java parity: TeleportService.sendLoc queues SpawnTask under TaskId.TELEPORT, then sends SM_TELEPORT_LOC; position changes after CM_TELEPORT_ANIMATION_DONE.
 		await SendPacketAsync(packet);
 		return new PendingTeleportRequestResult(pendingTeleport, packet);
@@ -4897,6 +4908,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			// Java parity: TeleportService.SpawnTask.run same-world+instance branch delegates to spawnOnSameMap.
 			await SendPacketAsync(new SmChannelInfo(player.Position, staticData?.WorldMaps ?? Array.Empty<WorldMapSummary>()));
 			await SendPacketAsync(new SmPlayerInfo(player, staticData?.PlayerExperienceTable));
+			player.PortAnimation = ArrivalAnimation.None;
 			await SendPacketAsync(CreateStatsInfoPacket(player, staticData));
 			await SendPacketAsync(new SmMotion(player.ObjectId, player.Motions));
 			return;

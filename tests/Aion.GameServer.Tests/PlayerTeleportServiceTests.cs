@@ -1,4 +1,5 @@
 using Aion.GameServer.Controllers.Movement;
+using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Services;
 using Aion.GameServer.World;
@@ -57,16 +58,18 @@ public sealed class PlayerTeleportServiceTests
 		var destination = new WorldPosition(210010000, 10, 20, 30, 40, InstanceId: 1);
 		var player = CreateMovingPlayer(previous);
 
-		var pending = PlayerTeleportService.QueuePendingTeleport(player, destination);
+		var pending = PlayerTeleportService.QueuePendingTeleport(player, destination, TeleportAnimation.JumpIn);
 		var result = PlayerTeleportService.CompletePendingTeleport(player);
 		var repeated = PlayerTeleportService.CompletePendingTeleport(player);
 
 		Assert.Equal(destination, pending.Destination);
+		Assert.Equal(TeleportAnimation.JumpIn, pending.Animation);
 		Assert.NotNull(result);
 		Assert.Equal(previous, result.PreviousPosition);
 		Assert.Equal(destination, result.Destination);
 		Assert.True(result.UsesSameWorldSpawnPath);
 		Assert.Equal(destination, player.Position);
+		Assert.Equal(ArrivalAnimation.JumpOutCameraBehind, player.PortAnimation);
 		Assert.Null(player.PendingTeleport);
 		Assert.Null(repeated);
 		Assert.Equal(MovementMask.Immediate, player.Movement.Mask);

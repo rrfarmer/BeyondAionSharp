@@ -1,6 +1,7 @@
 using Aion.Commons.Network;
 using Aion.GameServer.Controllers.Movement;
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Services;
 
@@ -63,7 +64,8 @@ public sealed class SmPlayerInfo : GameServerPacket
 		buffer.WriteF(movementSpeed);
 		buffer.WriteH(0);
 		buffer.WriteH(0);
-		buffer.WriteC(0);
+		// Java parity: SM_PLAYER_INFO.writeImpl writes Player.getPortAnimationId().
+		buffer.WriteC((byte)_player.PortAnimation);
 		buffer.WriteS(string.Empty);
 		WriteMovement(buffer, position, movementSpeed);
 		buffer.WriteC(0);

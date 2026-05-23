@@ -3412,6 +3412,7 @@ public class GamePacketTests
 			AccountMembership = 2,
 			TargetObjectId = 9005,
 			Position = new WorldPosition(210010000, 10, 20, 30, 40),
+			PortAnimation = ArrivalAnimation.FadeInBeam,
 			Settings = new PlayerSettings
 			{
 				Display = 4,
@@ -3506,7 +3507,7 @@ public class GamePacketTests
 		Assert.Equal(9.0f, reader.ReadF());
 		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
-		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal((byte)ArrivalAnimation.FadeInBeam, reader.ReadC());
 		Assert.Equal(string.Empty, reader.ReadS());
 		Assert.Equal(5.4f, reader.ReadF(), precision: 4);
 		Assert.Equal(7.2f, reader.ReadF(), precision: 4);
