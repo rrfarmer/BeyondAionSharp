@@ -16,7 +16,7 @@ public sealed class WorldNpcDamageServiceTests
 	[Fact]
 	public async Task ApplyDamageAsync_ReducesSpawnedNpcHpViaLifeStats()
 	{
-		var damageService = CreateDamageService(out var spawnService, out var world, out var lifeStats, out var threadPoolManager, out _, out var combatStates, out var registry);
+		var damageService = CreateDamageService(out var spawnService, out var world, out var lifeStats, out var threadPoolManager, out _, out var combatStates, out _, out var registry);
 		try
 		{
 			SpawnNpc(spawnService, world, npcTemplateId: 203090, maxHp: 100);
@@ -44,6 +44,12 @@ public sealed class WorldNpcDamageServiceTests
 			Assert.Equal(25, aggro.Hate);
 			Assert.True(aggro.NotifyAttack);
 			Assert.Equal(WorldNpcDamageHopType.Damage, aggro.HopType);
+			Assert.NotNull(result.AttackedObserverNotification);
+			Assert.Equal(npc.ObjectId, result.AttackedObserverNotification.NpcObjectId);
+			Assert.Equal(1001, result.AttackedObserverNotification.AttackerObjectId);
+			Assert.Equal(0, result.AttackedObserverNotification.SkillId);
+			Assert.NotNull(result.SupportAiRequests);
+			Assert.Empty(result.SupportAiRequests);
 			Assert.Equal(WorldNpcLifeStatsDamageStatus.Reduced, result.LifeStats.Status);
 			Assert.Equal(new WorldNpcLifeStats(100, 0, 75, 0), result.LifeStats.Current);
 			Assert.True(lifeStats.TryGetStats(npc.ObjectId, out var stored));
@@ -64,7 +70,7 @@ public sealed class WorldNpcDamageServiceTests
 	[Fact]
 	public async Task ApplyDamageAsync_TriggersDeathWorkflowForLethalDamage()
 	{
-		var damageService = CreateDamageService(out var spawnService, out var world, out _, out var threadPoolManager, out var aiStates, out _, out var registry);
+		var damageService = CreateDamageService(out var spawnService, out var world, out _, out var threadPoolManager, out var aiStates, out _, out _, out var registry);
 		try
 		{
 			SpawnNpc(spawnService, world, npcTemplateId: 203091, maxHp: 100);
@@ -118,9 +124,49 @@ public sealed class WorldNpcDamageServiceTests
 	}
 
 	[Fact]
+	public async Task ApplyDamageAsync_RecordsAttackedObserverAndSupportAiEvents()
+	{
+		var damageService = CreateDamageService(out var spawnService, out var world, out _, out var threadPoolManager, out _, out _, out var combatEvents, out _);
+		try
+		{
+			SpawnNpc(spawnService, world, npcTemplateId: 203095, maxHp: 100);
+			var npc = Assert.Single(world.GetNpcs());
+			AddWorldNpc(world, objectId: 9001, templateId: 203096, position: npc.Position with { X = npc.Position.X + 20 });
+			AddWorldNpc(world, objectId: 9002, templateId: 203097, position: npc.Position with { X = npc.Position.X + 200 });
+			AddWorldNpc(world, objectId: 9003, templateId: 203098, position: npc.Position with { WorldId = 220010000 });
+
+			var result = await damageService.ApplyDamageAsync(
+				npc,
+				CreatePlayer(),
+				damage: 10,
+				new WorldNpcDamageOptions(
+					NotifyAttack: true,
+					SkillId: 1234));
+
+			Assert.Equal(WorldNpcDamageStatus.Damaged, result.Status);
+			Assert.NotNull(result.AttackedObserverNotification);
+			Assert.Equal(npc.ObjectId, result.AttackedObserverNotification.NpcObjectId);
+			Assert.Equal(1001, result.AttackedObserverNotification.AttackerObjectId);
+			Assert.Equal(1234, result.AttackedObserverNotification.SkillId);
+			var supportRequest = Assert.Single(result.SupportAiRequests!);
+			Assert.Equal(9001, supportRequest.SupportNpcObjectId);
+			Assert.Equal(npc.ObjectId, supportRequest.AttackedNpcObjectId);
+			Assert.Equal(WorldNpcAiEventType.CreatureNeedsSupport, supportRequest.EventType);
+			Assert.True(result.AttackedObserverNotification.Sequence < supportRequest.Sequence);
+			Assert.True(combatEvents.TryGetState(npc.ObjectId, out var eventState));
+			Assert.Equal(result.AttackedObserverNotification, Assert.Single(eventState!.AttackedObserverNotifications));
+			Assert.Equal(supportRequest, Assert.Single(eventState.SupportAiRequests));
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
 	public async Task ApplyDamageAsync_ReturnsNotSpawnedBeforeCreatingStats()
 	{
-		var damageService = CreateDamageService(out _, out _, out var lifeStats, out var threadPoolManager, out _, out var combatStates, out _);
+		var damageService = CreateDamageService(out _, out _, out var lifeStats, out var threadPoolManager, out _, out var combatStates, out var combatEvents, out _);
 		try
 		{
 			var npc = CreateWorldNpc(objectId: 77, maxHp: 100);
@@ -131,6 +177,7 @@ public sealed class WorldNpcDamageServiceTests
 			Assert.Null(result.LifeStats);
 			Assert.False(lifeStats.TryGetStats(npc.ObjectId, out _));
 			Assert.False(combatStates.TryGetState(npc.ObjectId, out _));
+			Assert.False(combatEvents.TryGetState(npc.ObjectId, out _));
 		}
 		finally
 		{
@@ -141,7 +188,7 @@ public sealed class WorldNpcDamageServiceTests
 	[Fact]
 	public async Task ApplyDamageAsync_ReturnsMissingAttackerWithoutReducingHp()
 	{
-		var damageService = CreateDamageService(out var spawnService, out var world, out var lifeStats, out var threadPoolManager, out _, out var combatStates, out var registry);
+		var damageService = CreateDamageService(out var spawnService, out var world, out var lifeStats, out var threadPoolManager, out _, out var combatStates, out var combatEvents, out var registry);
 		try
 		{
 			SpawnNpc(spawnService, world, npcTemplateId: 203092, maxHp: 100);
@@ -156,6 +203,7 @@ public sealed class WorldNpcDamageServiceTests
 			Assert.True(lifeStats.TryGetStats(npc.ObjectId, out var stored));
 			Assert.Equal(100, stored!.CurrentHp);
 			Assert.False(combatStates.TryGetState(npc.ObjectId, out _));
+			Assert.False(combatEvents.TryGetState(npc.ObjectId, out _));
 		}
 		finally
 		{
@@ -166,7 +214,7 @@ public sealed class WorldNpcDamageServiceTests
 	[Fact]
 	public async Task ApplyDamageAsync_ReturnsMissingLifeStatsWhenMaxHpUnavailable()
 	{
-		var damageService = CreateDamageService(out var spawnService, out var world, out var lifeStats, out var threadPoolManager, out _, out var combatStates, out _);
+		var damageService = CreateDamageService(out var spawnService, out var world, out var lifeStats, out var threadPoolManager, out _, out var combatStates, out var combatEvents, out _);
 		try
 		{
 			SpawnNpc(spawnService, world, npcTemplateId: 203093, maxHp: 0);
@@ -178,6 +226,7 @@ public sealed class WorldNpcDamageServiceTests
 			Assert.Null(result.LifeStats);
 			Assert.False(lifeStats.TryGetStats(npc.ObjectId, out _));
 			Assert.False(combatStates.TryGetState(npc.ObjectId, out _));
+			Assert.False(combatEvents.TryGetState(npc.ObjectId, out _));
 		}
 		finally
 		{
@@ -192,13 +241,17 @@ public sealed class WorldNpcDamageServiceTests
 		out ThreadPoolManager threadPoolManager,
 		out WorldNpcAiStateService aiStates,
 		out WorldNpcCombatStateService combatStates,
+		out WorldNpcCombatEventService combatEvents,
 		out CapturingConnectionRegistry registry)
 	{
 		world = new GameWorld(NullLogger<GameWorld>.Instance);
 		var dropRegistration = new WorldNpcDropRegistrationService();
 		threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
 		aiStates = new WorldNpcAiStateService();
-		combatStates = new WorldNpcCombatStateService();
+		var stagedCombatStates = new WorldNpcCombatStateService();
+		var stagedCombatEvents = new WorldNpcCombatEventService();
+		combatStates = stagedCombatStates;
+		combatEvents = stagedCombatEvents;
 		var staticPlaceables = new StaticPlaceableStateService();
 		registry = new CapturingConnectionRegistry();
 		WorldNpcLifeStatsService? stagedLifeStats = null;
@@ -216,7 +269,12 @@ public sealed class WorldNpcDamageServiceTests
 			dropRegistrationLookup: dropRegistration,
 			npcAiStates: aiStates,
 			npcLifeStatsInitialize: npc => stagedLifeStats!.Initialize(npc, npc.Template.MaxHp),
-			npcLifeStatsClear: objectId => stagedLifeStats!.Clear(objectId));
+			npcLifeStatsClear: objectId =>
+			{
+				stagedLifeStats!.Clear(objectId);
+				stagedCombatStates.Clear(objectId);
+				stagedCombatEvents.Clear(objectId);
+			});
 		var lootService = new WorldNpcLootService(dropRegistration, spawnService, threadPoolManager);
 		var broadcastService = new WorldNpcLootBroadcastService(lootService, registry);
 		var dropWorkflow = new WorldNpcDropRegistrationWorkflowService(
@@ -226,7 +284,7 @@ public sealed class WorldNpcDamageServiceTests
 		var deathWorkflow = new WorldNpcDeathDropWorkflowService(spawnService, dropWorkflow, aiStates);
 		stagedLifeStats = new WorldNpcLifeStatsService(deathWorkflow);
 		lifeStats = stagedLifeStats;
-		return new WorldNpcDamageService(world, lifeStats, registry, combatStates);
+		return new WorldNpcDamageService(world, lifeStats, registry, combatStates, combatEvents);
 	}
 
 	private static void SpawnNpc(WorldNpcSpawnService spawnService, GameWorld world, int npcTemplateId, int maxHp)
@@ -243,7 +301,18 @@ public sealed class WorldNpcDamageServiceTests
 			objectId,
 			203094,
 			CreateTemplate(203094, maxHp),
-			new WorldPosition(210010000, 1, 2, 3, 0));
+				new WorldPosition(210010000, 1, 2, 3, 0));
+	}
+
+	private static WorldNpc AddWorldNpc(GameWorld world, int objectId, int templateId, WorldPosition position)
+	{
+		var npc = new WorldNpc(
+			objectId,
+			templateId,
+			CreateTemplate(templateId, maxHp: 100),
+			position);
+		Assert.True(world.TryAddObject(objectId, npc));
+		return npc;
 	}
 
 	private static Player CreatePlayer()

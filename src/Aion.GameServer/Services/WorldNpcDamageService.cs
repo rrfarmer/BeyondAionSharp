@@ -11,17 +11,20 @@ public sealed class WorldNpcDamageService
 	private readonly WorldNpcLifeStatsService _lifeStats;
 	private readonly IGameClientConnectionRegistry? _connectionRegistry;
 	private readonly WorldNpcCombatStateService? _combatStates;
+	private readonly WorldNpcCombatEventService? _combatEvents;
 
 	public WorldNpcDamageService(
 		GameWorld world,
 		WorldNpcLifeStatsService lifeStats,
 		IGameClientConnectionRegistry? connectionRegistry = null,
-		WorldNpcCombatStateService? combatStates = null)
+		WorldNpcCombatStateService? combatStates = null,
+		WorldNpcCombatEventService? combatEvents = null)
 	{
 		_world = world;
 		_lifeStats = lifeStats;
 		_connectionRegistry = connectionRegistry;
 		_combatStates = combatStates;
+		_combatEvents = combatEvents;
 	}
 
 	public async ValueTask<WorldNpcDamageResult> ApplyDamageAsync(
@@ -42,12 +45,23 @@ public sealed class WorldNpcDamageService
 			return WorldNpcDamageResult.Skipped(WorldNpcDamageStatus.MissingLifeStats);
 
 		var damageOptions = options ?? WorldNpcDamageOptions.Default;
+		WorldNpcAttackedObserverNotification? attackedObserverNotification = null;
+		if (damage != 0 && damageOptions.NotifyAttack)
+		{
+			attackedObserverNotification = _combatEvents?.NotifyAttackedObservers(
+				spawnedNpc.ObjectId,
+				attacker.ObjectId,
+				damageOptions.SkillId);
+		}
 		_combatStates?.AddDamage(
 			spawnedNpc.ObjectId,
 			attacker.ObjectId,
 			damage,
 			damageOptions.NotifyAttack,
 			damageOptions.HopType);
+		var supportAiRequests = _combatEvents?.NotifyNearbySupportAi(
+			spawnedNpc,
+			_world.GetNpcs(spawnedNpc.Position.WorldId)) ?? Array.Empty<WorldNpcSupportAiRequest>();
 		SmAttackStatus? attackStatusPacket = null;
 		var attackStatusBroadcastCount = 0;
 		var lifeStatsResult = await _lifeStats.ReduceHpAsync(
@@ -67,7 +81,7 @@ public sealed class WorldNpcDamageService
 					spawnedNpc,
 					previous,
 					current,
-				damageOptions);
+					damageOptions);
 			});
 		var combatState = _combatStates?.IncrementAttackedCount(spawnedNpc.ObjectId);
 		if (attackStatusPacket == null && damageOptions.SkillId != 0 && lifeStatsResult.Previous != null && lifeStatsResult.Current != null)
@@ -85,7 +99,9 @@ public sealed class WorldNpcDamageService
 			damageOptions.NotifyAttack,
 			attackStatusPacket,
 			attackStatusBroadcastCount,
-			combatState);
+			combatState,
+			attackedObserverNotification,
+			supportAiRequests);
 	}
 
 	private bool TryResolveMaxStats(IWorldNpcObject npc, out int maxHp, out int maxMp)
@@ -166,7 +182,9 @@ public sealed record WorldNpcDamageResult(
 	bool NotifyAttack,
 	SmAttackStatus? AttackStatusPacket = null,
 	int AttackStatusBroadcastCount = 0,
-	WorldNpcCombatRuntimeState? CombatState = null)
+	WorldNpcCombatRuntimeState? CombatState = null,
+	WorldNpcAttackedObserverNotification? AttackedObserverNotification = null,
+	IReadOnlyList<WorldNpcSupportAiRequest>? SupportAiRequests = null)
 {
 	public static WorldNpcDamageResult Skipped(WorldNpcDamageStatus status)
 	{
@@ -177,7 +195,9 @@ public sealed record WorldNpcDamageResult(
 			NotifyAttack: false,
 			AttackStatusPacket: null,
 			AttackStatusBroadcastCount: 0,
-			CombatState: null);
+			CombatState: null,
+			AttackedObserverNotification: null,
+			SupportAiRequests: Array.Empty<WorldNpcSupportAiRequest>());
 	}
 }
 
