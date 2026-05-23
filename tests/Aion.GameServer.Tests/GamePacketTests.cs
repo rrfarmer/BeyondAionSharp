@@ -4535,6 +4535,28 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesShowBrandPacket()
+	{
+		var showBrand = Assert.IsType<CmShowBrand>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(181, b =>
+			{
+				b.WriteD(2);
+				b.WriteD(7);
+				b.WriteD(9001);
+			}), GameConnectionState.InGame));
+
+		Assert.Equal(2, showBrand.Action);
+		Assert.Equal(7, showBrand.BrandId);
+		Assert.Equal(9001, showBrand.TargetObjectId);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(181, b =>
+		{
+			b.WriteD(2);
+			b.WriteD(7);
+			b.WriteD(9001);
+		}), GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesSocialListPackets()
 	{
 		var questionResponse = Assert.IsType<CmQuestionResponse>(

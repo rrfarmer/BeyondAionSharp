@@ -70,6 +70,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly WorldNpcLootService? _worldNpcLootService;
 	private readonly Func<Player, int, bool>? _isKnownNpc;
 	private readonly CreaturePvpZoneCounterService? _creaturePvpZoneCounterService;
+	private readonly PlayerShowBrandCommandPlanner _showBrandCommandPlanner;
 	private readonly SemaphoreSlim _sendLock = new(1, 1);
 	private readonly SemaphoreSlim _closeLock = new(1, 1);
 	private GameConnectionState _state = GameConnectionState.Connected;
@@ -124,7 +125,10 @@ public sealed class GameServerConnection : BaseClientConnection
 		Func<Player, int, bool>? isKnownNpc = null,
 		RiftPortalInteractionService? riftPortalInteractionService = null,
 		GameCrypt? crypt = null,
-		CreaturePvpZoneCounterService? creaturePvpZoneCounterService = null)
+		CreaturePvpZoneCounterService? creaturePvpZoneCounterService = null,
+		PlayerGroupRuntime? playerGroupRuntime = null,
+		PlayerAllianceRuntime? playerAllianceRuntime = null,
+		PlayerShowBrandCommandPlanner? showBrandCommandPlanner = null)
 		: base(logger, client, clientId)
 	{
 		_packetProcessor = packetProcessor;
@@ -154,6 +158,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		_worldNpcLootService = worldNpcLootService;
 		_isKnownNpc = isKnownNpc;
 		_creaturePvpZoneCounterService = creaturePvpZoneCounterService;
+		_showBrandCommandPlanner = showBrandCommandPlanner
+			?? new PlayerShowBrandCommandPlanner(playerGroupRuntime ?? new PlayerGroupRuntime(), playerAllianceRuntime ?? new PlayerAllianceRuntime());
 		_riftPortalInteractionService = riftPortalInteractionService
 			?? (riftService == null
 				? null
@@ -612,6 +618,10 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmBlockSetReason blockSetReason:
 				if (_activePlayer != null)
 					await HandleBlockSetReasonAsync(_activePlayer, blockSetReason);
+				break;
+			case CmShowBrand showBrand:
+				if (_activePlayer != null)
+					await HandleShowBrandCommandAsync(_activePlayer, showBrand);
 				break;
 			case CmCharacterPasskey characterPasskey:
 				await SendPacketAsync(new SmCharacterSelect(type: 2, messageType: characterPasskey.Type, wrongCount: 0));
@@ -5713,6 +5723,43 @@ public sealed class GameServerConnection : BaseClientConnection
 			includeSourcePlayer: true);
 		if (sent == 0)
 			await SendPacketAsync(response);
+	}
+
+	internal async Task<PlayerShowBrandCommandPlan> HandleShowBrandCommandAsync(
+		Player player,
+		CmShowBrand packet,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: network/aion/clientpackets/CM_SHOW_BRAND.runImpl ignores action and either echoes SM_SHOW_BRAND to solo players or broadcasts via TemporaryPlayerTeam.updateBrand.
+		var plan = _showBrandCommandPlanner.CreatePlan(player, packet.BrandId, packet.TargetObjectId);
+		if (plan.SoloEchoIntent != null)
+			await SendShowBrandAsync(player.ObjectId, plan.SoloEchoIntent.CreatePacket(), cancellationToken);
+
+		if (plan.GroupUpdatePlan != null)
+		{
+			foreach (var intent in plan.GroupUpdatePlan.BrandBroadcasts)
+				await SendShowBrandAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+		}
+
+		if (plan.AllianceUpdatePlan != null)
+		{
+			foreach (var intent in plan.AllianceUpdatePlan.BrandBroadcasts)
+				await SendShowBrandAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+		}
+
+		return plan;
+	}
+
+	private async Task SendShowBrandAsync(
+		int recipientObjectId,
+		SmShowBrand packet,
+		CancellationToken cancellationToken)
+	{
+		if (_connectionRegistry != null && await _connectionRegistry.SendPacketToPlayerAsync(recipientObjectId, packet))
+			return;
+
+		if (_activePlayer?.ObjectId == recipientObjectId)
+			await SendPacketAsync(packet, cancellationToken);
 	}
 
 	private async Task HandleFriendStatusAsync(Player player, CmFriendStatus packet)

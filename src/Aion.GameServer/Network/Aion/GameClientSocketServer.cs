@@ -50,6 +50,8 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 	private readonly VortexLocationService? _vortexLocationService;
 	private readonly WorldNpcLootService? _worldNpcLootService;
 	private readonly CreaturePvpZoneCounterService? _creaturePvpZoneCounterService;
+	private readonly PlayerGroupRuntime _playerGroupRuntime;
+	private readonly PlayerAllianceRuntime _playerAllianceRuntime;
 	private readonly ConcurrentDictionary<string, GameServerConnection> _connections = new();
 	private readonly ConcurrentDictionary<int, GameServerConnection> _playerConnections = new();
 	private long _nextClientId;
@@ -85,7 +87,9 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		RiftPortalUseService? riftPortalUseService = null,
 		VortexLocationService? vortexLocationService = null,
 		WorldNpcLootService? worldNpcLootService = null,
-		CreaturePvpZoneCounterService? creaturePvpZoneCounterService = null)
+		CreaturePvpZoneCounterService? creaturePvpZoneCounterService = null,
+		PlayerGroupRuntime? playerGroupRuntime = null,
+		PlayerAllianceRuntime? playerAllianceRuntime = null)
 		: base(
 			logger,
 			"Aion Game Client Server",
@@ -124,6 +128,8 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		_vortexLocationService = vortexLocationService;
 		_worldNpcLootService = worldNpcLootService;
 		_creaturePvpZoneCounterService = creaturePvpZoneCounterService;
+		_playerGroupRuntime = playerGroupRuntime ?? new PlayerGroupRuntime();
+		_playerAllianceRuntime = playerAllianceRuntime ?? new PlayerAllianceRuntime();
 	}
 
 	public IPEndPoint? LocalEndPoint => _listener?.LocalEndpoint as IPEndPoint;
@@ -168,7 +174,9 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 				vortexLocationService: _vortexLocationService,
 				worldNpcLootService: _worldNpcLootService,
 				isKnownNpc: (player, npcObjectId) => _npcVisibilityService.IsKnownNpc(player, npcObjectId),
-				creaturePvpZoneCounterService: _creaturePvpZoneCounterService);
+				creaturePvpZoneCounterService: _creaturePvpZoneCounterService,
+				playerGroupRuntime: _playerGroupRuntime,
+				playerAllianceRuntime: _playerAllianceRuntime);
 			_connections[clientId] = connection;
 			await connection.RunAsync();
 		}
