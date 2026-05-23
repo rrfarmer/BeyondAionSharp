@@ -112,6 +112,9 @@ public sealed class Player
 	// Java parity: model/gameobjects/player/Player.getTransformModel().getRes6() == 1 blocks fly/glide.
 	public bool TransformForbidsFlight { get; set; }
 
+	// Java parity: model/gameobjects/player/Player.getTransformModel().getBanMovement() == 1 blocks movement.
+	public bool TransformBansMovement { get; set; }
+
 	// Java parity: model/gameobjects/player/Player.flightPath stores active transporter/windstream mode.
 	public PlayerFlightPathType? FlightPathType { get; set; }
 
@@ -340,6 +343,13 @@ public sealed class Player
 	{
 		// Java parity: controllers/effect/EffectController.isConfused.
 		return IsAbnormalSet(PlayerAbnormalState.Confuse);
+	}
+
+	public bool CanPerformMove()
+	{
+		// Java parity: Player.canPerformMove + Creature.canPerformMove; spawned/casting-skill exceptions are future slices.
+		return !TransformBansMovement
+			&& !IsInAnyAbnormalState(PlayerAbnormalState.CantMoveState);
 	}
 
 	public bool IsUnderStance()

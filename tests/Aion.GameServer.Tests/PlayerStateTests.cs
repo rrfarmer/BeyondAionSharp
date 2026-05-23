@@ -382,12 +382,18 @@ public sealed class PlayerStateTests
 		Assert.True(player.IsInAnyAbnormalState(PlayerAbnormalState.CantMoveState));
 		Assert.True(player.IsUnderFear());
 		Assert.True(player.IsConfused());
+		Assert.False(player.CanPerformMove());
 		Assert.False(player.IsAbnormalSet(PlayerAbnormalState.CantMoveState));
 
 		player.AbnormalState = PlayerAbnormalState.None;
 
 		Assert.True(player.IsAbnormalSet(PlayerAbnormalState.None));
 		Assert.True(player.IsInAnyAbnormalState(PlayerAbnormalState.None));
+		Assert.True(player.CanPerformMove());
+
+		player.TransformBansMovement = true;
+
+		Assert.False(player.CanPerformMove());
 	}
 
 	[Fact]
@@ -628,6 +634,69 @@ public sealed class PlayerStateTests
 		Assert.True(ignoredResult.Succeeded);
 		Assert.True(ignoredCooldown.IsInFlyingState());
 		Assert.Equal(now.ToUnixTimeMilliseconds() + 1, ignoredCooldown.FlyReuseTimeMillis);
+	}
+
+	[Fact]
+	public void PlayerFlightActionService_StartGlidingMatchesJavaGuardAndCooldownSlice()
+	{
+		var now = DateTimeOffset.FromUnixTimeMilliseconds(200_000);
+		var startingClass = new Player { PlayerClass = "WARRIOR" };
+		var transformed = new Player { PlayerClass = "RANGER", TransformForbidsFlight = true };
+		var movementBlocked = new Player { PlayerClass = "RANGER", AbnormalState = PlayerAbnormalState.Root };
+		var transformedMovementBlocked = new Player { PlayerClass = "RANGER", TransformBansMovement = true };
+		var onCooldown = new Player { PlayerClass = "RANGER", FlyReuseTimeMillis = now.ToUnixTimeMilliseconds() + 1 };
+		var walkingGlider = new Player { PlayerClass = "RANGER" };
+		var flyingGlider = new Player
+		{
+			PlayerClass = "RANGER",
+			FlyState = PlayerFlyState.Flying,
+			CreatureState = PlayerCreatureState.Flying,
+			FlyReuseTimeMillis = now.ToUnixTimeMilliseconds() + 50_000,
+		};
+		var alreadyGliding = new Player { PlayerClass = "RANGER", FlyState = PlayerFlyState.Gliding };
+
+		var notDaeva = PlayerFlightActionService.StartGliding(startingClass, now);
+		var transformedResult = PlayerFlightActionService.StartGliding(transformed, now);
+		var movementBlockedResult = PlayerFlightActionService.StartGliding(movementBlocked, now);
+		var transformedMovementBlockedResult = PlayerFlightActionService.StartGliding(transformedMovementBlocked, now);
+		var cooldownResult = PlayerFlightActionService.StartGliding(onCooldown, now);
+		var walkingSuccess = PlayerFlightActionService.StartGliding(walkingGlider, now);
+		var flyingSuccess = PlayerFlightActionService.StartGliding(flyingGlider, now);
+		var alreadyGlidingResult = PlayerFlightActionService.StartGliding(alreadyGliding, now);
+
+		Assert.Equal(PlayerFlightActionStatus.NotDaeva, notDaeva.Status);
+		Assert.NotNull(notDaeva.SystemMessage);
+		Assert.False(startingClass.IsInGlidingState());
+		Assert.Equal(PlayerFlightActionStatus.TransformForbidden, transformedResult.Status);
+		Assert.NotNull(transformedResult.SystemMessage);
+		Assert.False(transformed.IsInGlidingState());
+		Assert.Equal(PlayerFlightActionStatus.CannotMove, movementBlockedResult.Status);
+		Assert.Null(movementBlockedResult.SystemMessage);
+		Assert.False(movementBlocked.IsInGlidingState());
+		Assert.Equal(PlayerFlightActionStatus.CannotMove, transformedMovementBlockedResult.Status);
+		Assert.Null(transformedMovementBlockedResult.SystemMessage);
+		Assert.False(transformedMovementBlocked.IsInGlidingState());
+		Assert.Equal(PlayerFlightActionStatus.Cooldown, cooldownResult.Status);
+		Assert.Null(cooldownResult.SystemMessage);
+		Assert.False(onCooldown.IsInGlidingState());
+
+		Assert.True(walkingSuccess.Succeeded);
+		Assert.True(walkingGlider.IsInGlidingState());
+		Assert.True(walkingGlider.IsInState(PlayerCreatureState.Gliding));
+		Assert.True(walkingGlider.IsFpReduceActive);
+		Assert.Equal(now.ToUnixTimeMilliseconds() + 10_000, walkingGlider.FlyReuseTimeMillis);
+
+		Assert.True(flyingSuccess.Succeeded);
+		Assert.True(flyingGlider.IsInFlyingState());
+		Assert.True(flyingGlider.IsInGlidingState());
+		Assert.True(flyingGlider.IsInState(PlayerCreatureState.Flying));
+		Assert.True(flyingGlider.IsInState(PlayerCreatureState.Gliding));
+		Assert.True(flyingGlider.IsFpReduceActive);
+		Assert.Equal(now.ToUnixTimeMilliseconds() + 50_000, flyingGlider.FlyReuseTimeMillis);
+
+		Assert.Equal(PlayerFlightActionStatus.AlreadyGliding, alreadyGlidingResult.Status);
+		Assert.False(alreadyGlidingResult.Succeeded);
+		Assert.Null(alreadyGlidingResult.SystemMessage);
 	}
 
 	[Fact]

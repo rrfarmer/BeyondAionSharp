@@ -31,6 +31,32 @@ public static class PlayerFlightActionService
 		return PlayerFlightActionResult.Success();
 	}
 
+	public static PlayerFlightActionResult StartGliding(Player player, DateTimeOffset now)
+	{
+		// Java parity: controllers/FlyController.switchToGliding(canGlide + walking cooldown + state side effects).
+		if (player.IsInGlidingState())
+			return PlayerFlightActionResult.Failed(PlayerFlightActionStatus.AlreadyGliding);
+
+		if (!player.CanPerformMove())
+			return PlayerFlightActionResult.Failed(PlayerFlightActionStatus.CannotMove);
+
+		var canGlide = CanGlide(player);
+		if (!canGlide.Succeeded)
+			return canGlide;
+
+		var nowMillis = now.ToUnixTimeMilliseconds();
+		if (player.FlyState == PlayerFlyState.None)
+		{
+			if (player.FlyReuseTimeMillis > nowMillis)
+				return PlayerFlightActionResult.Failed(PlayerFlightActionStatus.Cooldown);
+
+			player.FlyReuseTimeMillis = nowMillis + FlyReuseTimeMillis;
+		}
+
+		player.StartGliding();
+		return PlayerFlightActionResult.Success();
+	}
+
 	private static PlayerFlightActionResult CanFly(Player player)
 	{
 		// Java parity: controllers/FlyController.canFly guard order.
@@ -45,6 +71,18 @@ public static class PlayerFlightActionService
 
 		if (player.IsInState(PlayerCreatureState.PrivateShop))
 			return PlayerFlightActionResult.Failed(PlayerFlightActionStatus.PrivateStore);
+
+		return PlayerFlightActionResult.Success();
+	}
+
+	private static PlayerFlightActionResult CanGlide(Player player)
+	{
+		// Java parity: controllers/FlyController.canGlide guard order.
+		if (!IsDaeva(player))
+			return PlayerFlightActionResult.Failed(PlayerFlightActionStatus.NotDaeva, SmSystemMessage.GlideOnlyDaevaCan());
+
+		if (player.TransformForbidsFlight)
+			return PlayerFlightActionResult.Failed(PlayerFlightActionStatus.TransformForbidden, SmSystemMessage.GlideCannotGlidePolymorphStatus());
 
 		return PlayerFlightActionResult.Success();
 	}
@@ -81,4 +119,6 @@ public enum PlayerFlightActionStatus
 	TransformForbidden,
 	PrivateStore,
 	Cooldown,
+	AlreadyGliding,
+	CannotMove,
 }

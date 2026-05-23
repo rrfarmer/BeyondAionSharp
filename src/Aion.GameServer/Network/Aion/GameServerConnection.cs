@@ -5875,7 +5875,16 @@ public sealed class GameServerConnection : BaseClientConnection
 		else
 		{
 			if (packet.IsGliding)
-				player.StartGliding();
+			{
+				var glideResult = PlayerFlightActionService.StartGliding(player, DateTimeOffset.UtcNow);
+				if (glideResult.SystemMessage != null)
+					await SendPacketAsync(glideResult.SystemMessage);
+				else if (glideResult.Succeeded && _connectionRegistry != null)
+				{
+					var visualStats = new PlayerVisualStatsUpdateService(_connectionRegistry, _runtimeContext, _gameTimeService);
+					await visualStats.UpdateStatsAndSpeedVisuallyAsync(player, null);
+				}
+			}
 			else
 				player.SetCreatureState(PlayerCreatureState.Gliding, enabled: false);
 		}
