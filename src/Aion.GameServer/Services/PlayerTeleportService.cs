@@ -113,13 +113,15 @@ public sealed record PortalContinueTransferResult(
 	InstanceEntranceCooldownResult? Cooldown,
 	InstancePortalRuntimePlan? AllocatedRuntimePlan,
 	WorldMapInstanceRuntimeState? RegisteredInstance,
-	PortalTeamEntryPlan? TeamPlan)
+	PortalTeamEntryPlan? TeamPlan,
+	GroupPortalTransferPlan? GroupTransferPlan)
 {
 	public static PortalContinueTransferResult OpenWorld(PendingTeleportRequestResult teleport)
 	{
 		return new PortalContinueTransferResult(
 			PortalContinueTransferKind.OpenWorld,
 			teleport,
+			null,
 			null,
 			null,
 			null,
@@ -136,6 +138,7 @@ public sealed record PortalContinueTransferResult(
 			transfer.Cooldown,
 			null,
 			instance,
+			null,
 			null);
 	}
 
@@ -146,6 +149,7 @@ public sealed record PortalContinueTransferResult(
 			transfer.Transfer.Teleport,
 			transfer.Transfer.Cooldown,
 			transfer.RuntimePlan,
+			null,
 			null,
 			null);
 	}
@@ -158,7 +162,8 @@ public sealed record PortalContinueTransferResult(
 			null,
 			null,
 			teamPlan.RegisteredInstance,
-			teamPlan);
+			teamPlan,
+			GroupPortalTransferPlan.FromTeamPlan(teamPlan));
 	}
 }
 
@@ -168,4 +173,55 @@ public enum PortalContinueTransferKind
 	RegisteredInstance,
 	AllocatedInstance,
 	UnsupportedTeamPortal,
+}
+
+public sealed record GroupPortalTransferPlan(
+	int TeamId,
+	IReadOnlyList<int> MemberObjectIds,
+	int MaxPlayers,
+	GroupPortalTransferState State,
+	WorldMapInstanceRuntimeState? RegisteredInstance,
+	GroupPortalTransferBlockedReason BlockedReason)
+{
+	public static GroupPortalTransferPlan? FromTeamPlan(PortalTeamEntryPlan teamPlan)
+	{
+		if (teamPlan.Kind != PortalTeamEntryKind.Group)
+			return null;
+
+		// Java parity: services/teleport/PortalService.port group branch after checkAndRemoveRequiredItems.
+		if (teamPlan.TeamId <= 0)
+		{
+			return new GroupPortalTransferPlan(
+				teamPlan.TeamId,
+				teamPlan.MemberObjectIds,
+				teamPlan.MaxPlayers,
+				GroupPortalTransferState.InvalidTeamId,
+				null,
+				GroupPortalTransferBlockedReason.MissingTeamId);
+		}
+
+		var state = teamPlan.RegisteredInstance == null
+			? GroupPortalTransferState.FreshInstanceAllocationNeeded
+			: GroupPortalTransferState.RegisteredInstanceTransfer;
+		return new GroupPortalTransferPlan(
+			teamPlan.TeamId,
+			teamPlan.MemberObjectIds,
+			teamPlan.MaxPlayers,
+			state,
+			teamPlan.RegisteredInstance,
+			GroupPortalTransferBlockedReason.GroupFanoutNotImplemented);
+	}
+}
+
+public enum GroupPortalTransferState
+{
+	InvalidTeamId,
+	FreshInstanceAllocationNeeded,
+	RegisteredInstanceTransfer,
+}
+
+public enum GroupPortalTransferBlockedReason
+{
+	MissingTeamId,
+	GroupFanoutNotImplemented,
 }
