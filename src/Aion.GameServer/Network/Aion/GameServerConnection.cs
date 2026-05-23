@@ -7310,7 +7310,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		return targeted;
 	}
 
-	private async Task SpawnPostmanAsync(Player player)
+	internal async Task SpawnPostmanAsync(Player player)
 	{
 		// Java parity: spawnengine/VisibleObjectSpawner.spawnPostman.
 		if (_runtimeContext?.DataManager?.StaticData.NpcTemplates == null || _idFactory == null)
@@ -7330,7 +7330,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		var postman = PostmanNpc.Create(player, _idFactory.NextId(), template);
 		player.Postman = postman;
 		player.HasSummonedPostman = true;
-		_world?.TryAddObject(postman.ObjectId, postman);
+		if (_world?.TryAddObject(postman.ObjectId, postman) == true)
+			RevalidatePostmanCreaturePvpZones(postman);
 		var postmanPacket = new SmNpcInfo(postman);
 		if (_connectionRegistry != null)
 			await _connectionRegistry.BroadcastToVisiblePlayersAsync(postman.Position, postman.ObjectId, postmanPacket, includeSourcePlayer: true);
@@ -7338,7 +7339,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			await SendPacketAsync(postmanPacket);
 	}
 
-	private async Task DismissPostmanAsync(Player player, bool notifyClient = true)
+	internal async Task DismissPostmanAsync(Player player, bool notifyClient = true)
 	{
 		// Java parity: CM_READ_EXPRESS_MAIL action 0 deletes Player.getPostman.
 		var postman = player.Postman;
@@ -7356,9 +7357,27 @@ public sealed class GameServerConnection : BaseClientConnection
 				await SendPacketAsync(deletePacket);
 		}
 
-		_world?.TryRemoveObject(postman.ObjectId, out _);
+		if (_world?.TryRemoveObject(postman.ObjectId, out _) == true)
+			ClearPostmanCreaturePvpZones(postman.ObjectId);
 		if (_idFactory != null)
 			_idFactory.ReleaseId(postman.ObjectId);
+	}
+
+	private void RevalidatePostmanCreaturePvpZones(PostmanNpc postman)
+	{
+		// Java parity: VisibleObjectSpawner.spawnPostman -> SpawnEngine.bringIntoWorld -> World.spawn -> MapRegion.revalidateZones.
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		CreaturePvpZoneRevalidationService.Revalidate(
+			postman.ObjectId,
+			postman.Position,
+			staticData?.CreaturePvpZones,
+			_creaturePvpZoneCounterService);
+	}
+
+	private void ClearPostmanCreaturePvpZones(int objectId)
+	{
+		// Java parity: CM_READ_EXPRESS_MAIL action 0 deletes the postman NPC and leaves its zone memberships.
+		_creaturePvpZoneCounterService?.ClearCounters(objectId);
 	}
 
 	private bool IsTargetingBroker(Player player, int brokerObjectId, string action)

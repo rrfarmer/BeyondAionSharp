@@ -198,6 +198,51 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 	}
 
 	[Fact]
+	public async Task SpawnAndDismissPostmanAsync_RevalidatesAndClearsCreaturePvpZoneCounters()
+	{
+		var dataManager = await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false);
+		var runtimeContext = new GameServerRuntimeContext();
+		runtimeContext.SetDataManager(dataManager);
+		var zoneCounterService = new CreaturePvpZoneCounterService();
+		var registry = new CapturingConnectionRegistry();
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var idFactory = new IDFactory();
+		await using var pair = await TestConnectionPair.CreateAsync(
+			registry,
+			runtimeContext,
+			zoneCounterService,
+			idFactory,
+			world);
+		var postmanPosition = new WorldPosition(210040000, 2700, 620, 150, 0);
+		var player = CreateTeleportingPlayer(7305, postmanPosition with { X = postmanPosition.X - 7 });
+		Assert.Contains(
+			dataManager.StaticData.CreaturePvpZones.GetZonesByMapId(postmanPosition.WorldId),
+			zone => zone.Name == "PVP_87_210040000" && zone.Contains(postmanPosition));
+
+		await pair.Connection.SpawnPostmanAsync(player);
+
+		var postman = Assert.IsType<PostmanNpc>(player.Postman);
+		Assert.True(world.TryGetObject(postman.ObjectId, out var worldObject));
+		Assert.Same(postman, worldObject);
+		Assert.Equal(postmanPosition.WorldId, postman.Position.WorldId);
+		Assert.Equal(postmanPosition.X, postman.Position.X);
+		Assert.Equal(postmanPosition.Y, postman.Position.Y);
+		Assert.Equal(postmanPosition.Z, postman.Position.Z);
+		var counters = zoneCounterService.GetCounters(postman.ObjectId);
+		Assert.Equal(1, counters.PvpZoneCount);
+		Assert.Equal(0, counters.SiegeZoneCount);
+
+		await pair.Connection.DismissPostmanAsync(player, notifyClient: false);
+		var staleLeave = zoneCounterService.ApplyZoneLeave(postman.ObjectId, "PVP_87_210040000", CreaturePvpZoneCounterType.Pvp);
+
+		Assert.Null(player.Postman);
+		Assert.False(player.HasSummonedPostman);
+		Assert.False(world.TryGetObject(postman.ObjectId, out _));
+		Assert.Equal(CreaturePvpZoneCounters.Empty, zoneCounterService.GetCounters(postman.ObjectId));
+		Assert.Equal(CreaturePvpZoneMembershipTransitionStatus.NotInside, staleLeave.Status);
+	}
+
+	[Fact]
 	public async Task LeavePlayerWorldAsync_ClearsCreaturePvpZoneCounters()
 	{
 		var zoneCounterService = new CreaturePvpZoneCounterService();
