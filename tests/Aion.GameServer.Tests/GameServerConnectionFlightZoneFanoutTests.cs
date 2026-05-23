@@ -378,6 +378,37 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 	}
 
 	[Fact]
+	public async Task QueueDelayedTeleportAsync_DeadPlayerFallbackSendsPlayerInfoWithoutMoving()
+	{
+		var dataManager = await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false);
+		var runtimeContext = new GameServerRuntimeContext();
+		runtimeContext.SetDataManager(dataManager);
+		var zoneCounterService = new CreaturePvpZoneCounterService();
+		var registry = new CapturingConnectionRegistry();
+		await using var pair = await TestConnectionPair.CreateAsync(registry, runtimeContext, zoneCounterService);
+		var startPosition = new WorldPosition(210040000, 100, 100, 150, 0, InstanceId: 1);
+		var destination = new WorldPosition(300030000, 270, 620, 150, 32, InstanceId: 2);
+		var player = CreateTeleportingPlayer(7315, startPosition);
+
+		await pair.Connection.QueueDelayedTeleportAsync(
+			player,
+			destination,
+			TeleportAnimation.FadeOutBeam,
+			dataManager.StaticData);
+		player.SetCreatureState(PlayerCreatureState.Dead, true);
+		player.LifeStats = new PlayerLifeStats(CurrentHp: 0, CurrentMp: 205, CurrentFp: 55);
+		var completed = await pair.Connection.HandleTeleportAnimationDoneAsync(player);
+
+		Assert.Null(completed);
+		Assert.Null(player.PendingTeleport);
+		Assert.Equal(startPosition, player.Position);
+		Assert.Equal(ArrivalAnimation.None, player.PortAnimation);
+		Assert.Collection(
+			pair.SentPackets.Skip(1),
+			packet => Assert.IsType<SmPlayerInfo>(packet));
+	}
+
+	[Fact]
 	public async Task QueueDelayedTeleportAsync_MapInstanceChangeKeepsArrivalAnimationUntilLevelReady()
 	{
 		var dataManager = await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false);

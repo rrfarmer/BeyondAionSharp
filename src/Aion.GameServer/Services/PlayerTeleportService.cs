@@ -47,6 +47,14 @@ public static class PlayerTeleportService
 				&& previousPosition.InstanceId == pendingTeleport.Destination.InstanceId);
 	}
 
+	public static PendingPlayerTeleport? CancelPendingTeleport(Player player)
+	{
+		// Java parity: CM_TELEPORT_ANIMATION_DONE consumes TaskId.TELEPORT even when SpawnTask falls back without moving.
+		var pendingTeleport = player.PendingTeleport;
+		player.PendingTeleport = null;
+		return pendingTeleport;
+	}
+
 	private static void ResetMovementToDestination(Player player, WorldPosition destination)
 	{
 		// Java parity breadcrumb: World.setPosition updates the authoritative position before spawn packets are sent.

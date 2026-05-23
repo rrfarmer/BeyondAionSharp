@@ -4821,6 +4821,17 @@ public sealed class GameServerConnection : BaseClientConnection
 	internal async Task<PlayerTeleportResult?> HandleTeleportAnimationDoneAsync(Player player)
 	{
 		var staticData = _runtimeContext?.DataManager?.StaticData;
+		if (ShouldFallbackDelayedTeleportToCurrentSpawn(player))
+		{
+			var pendingTeleport = PlayerTeleportService.CancelPendingTeleport(player);
+			if (pendingTeleport == null)
+				return null;
+
+			// Java parity: TeleportService.SpawnTask.run delayed fallback sends SM_PLAYER_INFO and World.spawn(player) without moving.
+			await SendPacketAsync(new SmPlayerInfo(player, staticData?.PlayerExperienceTable));
+			return null;
+		}
+
 		var teleport = PlayerTeleportService.CompletePendingTeleport(player);
 		if (teleport == null)
 			return null;
@@ -4829,6 +4840,13 @@ public sealed class GameServerConnection : BaseClientConnection
 		RevalidatePlayerCreaturePvpZones(player, staticData);
 		await SendDelayedTeleportCompletionPacketsAsync(player, teleport, staticData);
 		return teleport;
+	}
+
+	private static bool ShouldFallbackDelayedTeleportToCurrentSpawn(Player player)
+	{
+		// Java parity: TeleportService.SpawnTask.run checks player.isDead() before applying delayed teleport position.
+		return player.PendingTeleport != null
+			&& (player.IsInState(PlayerCreatureState.Dead) || player.LifeStats?.CurrentHp <= 0);
 	}
 
 	internal async Task<PendingTeleportRequestResult> QueueDelayedTeleportAsync(
