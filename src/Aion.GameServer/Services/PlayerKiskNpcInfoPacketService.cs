@@ -33,6 +33,26 @@ public static class PlayerKiskNpcInfoPacketService
 			CreatureType: creatureType,
 			MissingZoneCounters: false);
 	}
+
+	public static PlayerKiskNpcInfoPacketPlan CreatePacket(
+		IWorldNpcObject npc,
+		Player viewer,
+		PlayerKiskRegistry? kiskRegistry,
+		CreaturePvpZoneCounterService zoneCounterService)
+	{
+		ArgumentNullException.ThrowIfNull(zoneCounterService);
+		var kiskCounters = zoneCounterService.GetCounters(npc.ObjectId);
+		var playerCounters = zoneCounterService.GetCounters(viewer.ObjectId);
+		return CreatePacket(
+			npc,
+			viewer,
+			kiskRegistry,
+			new PlayerKiskNpcInfoZoneCounters(
+				kiskCounters.SiegeZoneCount,
+				kiskCounters.PvpZoneCount,
+				playerCounters.SiegeZoneCount,
+				playerCounters.PvpZoneCount));
+	}
 }
 
 public sealed record PlayerKiskNpcInfoZoneCounters(

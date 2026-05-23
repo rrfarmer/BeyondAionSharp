@@ -113,6 +113,38 @@ public sealed class PlayerKiskNpcInfoPacketServiceTests
 		Assert.Equal((int)PlayerKiskCreatureType.Support, ReadCreatureType(plan.Packet));
 	}
 
+	[Fact]
+	public void CreatePacketCanReadCreatureCountersFromZoneCounterService()
+	{
+		var registry = new PlayerKiskRegistry();
+		var zoneCounterService = new CreaturePvpZoneCounterService();
+		var kiskNpc = CreateNpc(9001, 700273);
+		registry.RegisterKisk(new PlayerKiskRuntimeState(
+			objectId: kiskNpc.ObjectId,
+			ownerObjectId: 1001,
+			npcId: kiskNpc.TemplateId,
+			ownerRace: "ELYOS"));
+		var enemyViewer = new Player { ObjectId = 1002, Race = "ASMODIANS" };
+		zoneCounterService.EnterZone(kiskNpc.ObjectId, CreaturePvpZoneCounterType.Pvp);
+
+		var blockedPlan = PlayerKiskNpcInfoPacketService.CreatePacket(
+			kiskNpc,
+			enemyViewer,
+			registry,
+			zoneCounterService);
+		zoneCounterService.EnterZone(kiskNpc.ObjectId, CreaturePvpZoneCounterType.Pvp);
+		var attackablePlan = PlayerKiskNpcInfoPacketService.CreatePacket(
+			kiskNpc,
+			enemyViewer,
+			registry,
+			zoneCounterService);
+
+		Assert.Equal(PlayerKiskCreatureType.Support, blockedPlan.CreatureType);
+		Assert.Equal((int)PlayerKiskCreatureType.Support, ReadCreatureType(blockedPlan.Packet));
+		Assert.Equal(PlayerKiskCreatureType.Attackable, attackablePlan.CreatureType);
+		Assert.Equal((int)PlayerKiskCreatureType.Attackable, ReadCreatureType(attackablePlan.Packet));
+	}
+
 	private static WorldNpc CreateNpc(int objectId, int templateId)
 	{
 		var template = new NpcTemplateSummary(
