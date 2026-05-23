@@ -54,6 +54,7 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<WorldNpcDeathDropWorkflowService>();
 			services.AddSingleton<WorldNpcLifeStatsService>();
 			services.AddSingleton<WorldNpcResourceStatsService>();
+			services.AddSingleton<PlayerVisualStatsUpdateService>();
 			services.AddSingleton<WorldNpcCombatStateService>();
 			services.AddSingleton<WorldNpcCombatEventService>();
 			services.AddSingleton<WorldNpcCastingInterruptService>();
