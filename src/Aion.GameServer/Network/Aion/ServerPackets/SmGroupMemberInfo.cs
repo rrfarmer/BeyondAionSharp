@@ -71,6 +71,17 @@ public sealed class SmGroupMemberInfo : GameServerPacket
 			return;
 		}
 
+		if (_plan.EffectiveEvent == PlayerGroupEvent.UpdateEffects)
+		{
+			buffer.WriteD(0);
+			buffer.WriteD(0);
+			buffer.WriteC(_plan.Slot);
+			buffer.WriteH(0);
+			foreach (var _ in JavaSkillTargetSlotIds)
+				buffer.WriteD(0);
+			return;
+		}
+
 		throw new NotSupportedException(
 			$"SM_GROUP_MEMBER_INFO branch {_plan.EffectiveEvent} is not ported yet; name/effect/slot-timer payloads are pending.");
 	}
