@@ -1,6 +1,7 @@
 using Aion.GameServer.Configuration;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion.ServerPackets;
 
 namespace Aion.GameServer.Services;
 
@@ -24,6 +25,18 @@ public static class InstanceEntranceCooldownService
 		}
 
 		return new InstanceEntranceCooldownResult(worldId, reuseTimeMillis, rate, Added: false);
+	}
+
+	public static SmInstanceInfo? CreateEntryInfoPacket(
+		InstanceEntranceCooldownResult result,
+		Player player,
+		InstanceCooltimeTable instanceCooltimes,
+		Func<DateTimeOffset>? clock = null)
+	{
+		// Java parity: model/gameobjects/player/PortalCooldownList.sendEntryInfo sends SM_INSTANCE_INFO mode 2 after addPortalCooldown.
+		return result.Added
+			? new SmInstanceInfo(2, player, instanceCooltimes, result.WorldId, clock)
+			: null;
 	}
 }
 

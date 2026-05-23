@@ -12,6 +12,7 @@ public sealed class SmInstanceInfo : GameServerPacket
 	private readonly Player _player;
 	private readonly IReadOnlyList<InstanceCooltimeSummary> _instanceCooltimes;
 	private readonly Func<DateTimeOffset> _clock;
+	private readonly int _singleInstanceCooldownId;
 
 	public SmInstanceInfo(
 		byte updateType,
@@ -25,13 +26,32 @@ public sealed class SmInstanceInfo : GameServerPacket
 		_player = player;
 		_instanceCooltimes = instanceCooltimes.Templates;
 		_clock = clock ?? (() => DateTimeOffset.Now);
+		_singleInstanceCooldownId = 0;
+	}
+
+	public SmInstanceInfo(
+		byte updateType,
+		Player player,
+		InstanceCooltimeTable instanceCooltimes,
+		int worldId,
+		Func<DateTimeOffset>? clock = null)
+		: base(PacketOpCode)
+	{
+		// Java parity: network/aion/serverpackets/SM_INSTANCE_INFO(byte, Player, Integer...) single-instance update path.
+		_updateType = updateType;
+		_player = player;
+		_instanceCooltimes = instanceCooltimes.Templates
+			.Where(cooltime => cooltime.WorldId == worldId)
+			.ToArray();
+		_clock = clock ?? (() => DateTimeOffset.Now);
+		_singleInstanceCooldownId = _instanceCooltimes.Count == 1 ? _instanceCooltimes[0].Id : 0;
 	}
 
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
 		// Java parity: network/aion/serverpackets/SM_INSTANCE_INFO.writeImpl login all-instance path.
 		buffer.WriteC(_updateType);
-		buffer.WriteD(0);
+		buffer.WriteD(_singleInstanceCooldownId);
 		buffer.WriteC(0);
 		buffer.WriteH(1);
 		buffer.WriteD(_player.ObjectId);
