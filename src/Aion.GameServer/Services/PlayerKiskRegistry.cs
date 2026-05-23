@@ -50,10 +50,17 @@ public sealed class PlayerKiskRegistry
 	public bool RemoveKisk(int kiskObjectId)
 	{
 		// Java parity: services/KiskService.removeKisk removes ownerPlayer entries pointing at the deleted kisk.
+		return TryRemoveKisk(kiskObjectId, out _);
+	}
+
+	public bool TryRemoveKisk(int kiskObjectId, out PlayerKiskRuntimeState? removedKisk)
+	{
+		// Java parity: services/KiskService.removeKisk needs the removed Kisk instance for member cleanup side effects.
+		removedKisk = null;
 		if (!_ownersByKiskId.TryRemove(kiskObjectId, out var ownerObjectId))
 			return false;
 
-		return _ownerKisks.TryRemove(ownerObjectId, out _);
+		return _ownerKisks.TryRemove(ownerObjectId, out removedKisk);
 	}
 }
 

@@ -4659,7 +4659,41 @@ public sealed class GameServerConnection : BaseClientConnection
 		else
 			await SendPacketAsync(new SmNpcInfo(plan.Kisk));
 
+		ScheduleKiskLifetimeDespawn(plan.RuntimeState);
 		await RequestOrBindPlayerToKiskAsync(player, plan.RuntimeState);
+	}
+
+	private void ScheduleKiskLifetimeDespawn(PlayerKiskRuntimeState kisk)
+	{
+		// Java parity: model/gameobjects/Kisk schedules KiskLifeTask for the remaining lifetime.
+		if (_threadPoolManager == null)
+			return;
+
+		var delay = TimeSpan.FromSeconds(kisk.GetRemainingLifetimeSeconds(DateTimeOffset.UtcNow));
+		_threadPoolManager.Schedule(
+			cancellationToken => RunKiskLifetimeDespawnAsync(kisk.ObjectId, cancellationToken),
+			delay);
+	}
+
+	private async ValueTask RunKiskLifetimeDespawnAsync(int kiskObjectId, CancellationToken cancellationToken)
+	{
+		if (cancellationToken.IsCancellationRequested || _world == null || _runtimeContext == null)
+			return;
+
+		var result = PlayerKiskLifetimeService.DespawnExpiredKisk(_world, _runtimeContext.Kisks, _idFactory, kiskObjectId);
+		if (!result.RemovedRegistry)
+			return;
+
+		_connectionRegistry?.ForEachOnlinePlayer(player =>
+		{
+			if (player.BoundKiskObjectId == kiskObjectId)
+				player.BoundKiskObjectId = 0;
+			if (player.PendingKiskBindRequest?.KiskObjectId == kiskObjectId)
+				player.PendingKiskBindRequest = null;
+		});
+
+		if (_connectionRegistry != null && result.WorldId.HasValue)
+			await _connectionRegistry.RefreshNpcVisibilityAsync(_world.GetNpcs(result.WorldId.Value));
 	}
 
 	private async Task RequestOrBindPlayerToKiskAsync(Player player, PlayerKiskRuntimeState kisk)
