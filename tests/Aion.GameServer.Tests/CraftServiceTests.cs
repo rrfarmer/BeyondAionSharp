@@ -30,11 +30,16 @@ public sealed class CraftServiceTests
 		Assert.Equal(600, player.Dp);
 		Assert.NotNull(result.Change.DpInfoPacket);
 		Assert.NotNull(result.Change.DpStatUpdatePacket);
+		AssertVisualStatsUpdate(result.Change);
 		Assert.Same(result.Change.DpInfoPacket, Assert.Single(registry.Broadcasts).Packet);
-		Assert.Same(result.Change.DpStatUpdatePacket, Assert.Single(registry.SentPackets).Packet);
+		Assert.Collection(
+			registry.SentPackets,
+			delivery => Assert.Same(result.Change.VisualStatsUpdate!.StatsPacket, delivery.Packet),
+			delivery => Assert.Same(result.Change.DpStatUpdatePacket, delivery.Packet));
 		Assert.Collection(
 			registry.PacketOrder,
 			packet => Assert.Same(result.Change.DpInfoPacket, packet),
+			packet => Assert.Same(result.Change.VisualStatsUpdate!.StatsPacket, packet),
 			packet => Assert.Same(result.Change.DpStatUpdatePacket, packet));
 	}
 
@@ -77,8 +82,12 @@ public sealed class CraftServiceTests
 		Assert.Equal(300, player.Dp);
 		Assert.NotNull(result.Change.DpInfoPacket);
 		Assert.NotNull(result.Change.DpStatUpdatePacket);
+		AssertVisualStatsUpdate(result.Change);
 		Assert.Same(result.Change.DpInfoPacket, Assert.Single(registry.Broadcasts).Packet);
-		Assert.Same(result.Change.DpStatUpdatePacket, Assert.Single(registry.SentPackets).Packet);
+		Assert.Collection(
+			registry.SentPackets,
+			delivery => Assert.Same(result.Change.VisualStatsUpdate!.StatsPacket, delivery.Packet),
+			delivery => Assert.Same(result.Change.DpStatUpdatePacket, delivery.Packet));
 	}
 
 	[Fact]
@@ -107,8 +116,19 @@ public sealed class CraftServiceTests
 		registry = new CapturingConnectionRegistry();
 		var resourceStats = new WorldNpcResourceStatsService(
 			new WorldNpcLifeStatsService(new WorldNpcDeathDropWorkflowService(null!, null!)),
-			registry);
+			registry,
+			new PlayerVisualStatsUpdateService(registry));
 		return new CraftService(resourceStats);
+	}
+
+	private static void AssertVisualStatsUpdate(WorldNpcResourceChangeResult change)
+	{
+		Assert.NotNull(change.VisualStatsUpdate);
+		Assert.Equal(PlayerVisualStatsUpdateStatus.SpeedSnapshotMissing, change.VisualStatsUpdate.Status);
+		Assert.True(change.VisualStatsUpdate.StatsPacketSent);
+		Assert.NotNull(change.VisualStatsUpdate.StatsPacket);
+		Assert.Null(change.VisualStatsUpdate.SpeedPacket);
+		Assert.Equal(0, change.VisualStatsUpdate.SpeedBroadcastCount);
 	}
 
 	private static Player CreatePlayer(int objectId, int dp)

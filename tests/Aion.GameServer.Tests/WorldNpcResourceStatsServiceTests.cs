@@ -413,17 +413,28 @@ public sealed class WorldNpcResourceStatsServiceTests
 		Assert.NotNull(result.DpStatUpdatePacket);
 		Assert.Equal(4000, result.DpStatUpdatePacket.CurrentDp);
 		Assert.True(result.UpdateStatsAndSpeedVisually);
+		AssertVisualStatsUpdate(result);
 		Assert.Equal(4000, player.Dp);
 		var broadcast = Assert.Single(registry.Broadcasts);
 		Assert.Equal(player.ObjectId, broadcast.SourceObjectId);
 		Assert.True(broadcast.IncludeSourcePlayer);
 		Assert.Same(result.DpInfoPacket, broadcast.Packet);
-		var delivery = Assert.Single(registry.SentPackets);
-		Assert.Equal(player.ObjectId, delivery.PlayerObjectId);
-		Assert.Same(result.DpStatUpdatePacket, delivery.Packet);
+		Assert.Collection(
+			registry.SentPackets,
+			delivery =>
+			{
+				Assert.Equal(player.ObjectId, delivery.PlayerObjectId);
+				Assert.Same(result.VisualStatsUpdate!.StatsPacket, delivery.Packet);
+			},
+			delivery =>
+			{
+				Assert.Equal(player.ObjectId, delivery.PlayerObjectId);
+				Assert.Same(result.DpStatUpdatePacket, delivery.Packet);
+			});
 		Assert.Collection(
 			registry.PacketOrder,
 			packet => Assert.Same(result.DpInfoPacket, packet),
+			packet => Assert.Same(result.VisualStatsUpdate!.StatsPacket, packet),
 			packet => Assert.Same(result.DpStatUpdatePacket, packet));
 	}
 
@@ -477,11 +488,16 @@ public sealed class WorldNpcResourceStatsServiceTests
 		Assert.Equal(750, player.Dp);
 		Assert.NotNull(result.Change.DpInfoPacket);
 		Assert.NotNull(result.Change.DpStatUpdatePacket);
+		AssertVisualStatsUpdate(result.Change);
 		Assert.Same(result.Change.DpInfoPacket, Assert.Single(registry.Broadcasts).Packet);
-		Assert.Same(result.Change.DpStatUpdatePacket, Assert.Single(registry.SentPackets).Packet);
+		Assert.Collection(
+			registry.SentPackets,
+			delivery => Assert.Same(result.Change.VisualStatsUpdate!.StatsPacket, delivery.Packet),
+			delivery => Assert.Same(result.Change.DpStatUpdatePacket, delivery.Packet));
 		Assert.Collection(
 			registry.PacketOrder,
 			packet => Assert.Same(result.Change.DpInfoPacket, packet),
+			packet => Assert.Same(result.Change.VisualStatsUpdate!.StatsPacket, packet),
 			packet => Assert.Same(result.Change.DpStatUpdatePacket, packet));
 	}
 
@@ -537,12 +553,16 @@ public sealed class WorldNpcResourceStatsServiceTests
 		Assert.Equal(700, effected.Dp);
 		Assert.Equal(700, effector.Dp);
 		Assert.Equal(2, registry.Broadcasts.Count);
-		Assert.Equal(2, registry.SentPackets.Count);
+		Assert.Equal(4, registry.SentPackets.Count);
+		AssertVisualStatsUpdate(result.EffectedChange);
+		AssertVisualStatsUpdate(result.EffectorChange);
 		Assert.Collection(
 			registry.PacketOrder,
 			packet => Assert.Same(result.EffectedChange.DpInfoPacket, packet),
+			packet => Assert.Same(result.EffectedChange.VisualStatsUpdate!.StatsPacket, packet),
 			packet => Assert.Same(result.EffectedChange.DpStatUpdatePacket, packet),
 			packet => Assert.Same(result.EffectorChange.DpInfoPacket, packet),
+			packet => Assert.Same(result.EffectorChange.VisualStatsUpdate!.StatsPacket, packet),
 			packet => Assert.Same(result.EffectorChange.DpStatUpdatePacket, packet));
 	}
 
@@ -584,11 +604,16 @@ public sealed class WorldNpcResourceStatsServiceTests
 		Assert.Equal(0, player.Dp);
 		Assert.NotNull(result.Change.DpInfoPacket);
 		Assert.NotNull(result.Change.DpStatUpdatePacket);
+		AssertVisualStatsUpdate(result.Change);
 		Assert.Same(result.Change.DpInfoPacket, Assert.Single(registry.Broadcasts).Packet);
-		Assert.Same(result.Change.DpStatUpdatePacket, Assert.Single(registry.SentPackets).Packet);
+		Assert.Collection(
+			registry.SentPackets,
+			delivery => Assert.Same(result.Change.VisualStatsUpdate!.StatsPacket, delivery.Packet),
+			delivery => Assert.Same(result.Change.DpStatUpdatePacket, delivery.Packet));
 		Assert.Collection(
 			registry.PacketOrder,
 			packet => Assert.Same(result.Change.DpInfoPacket, packet),
+			packet => Assert.Same(result.Change.VisualStatsUpdate!.StatsPacket, packet),
 			packet => Assert.Same(result.Change.DpStatUpdatePacket, packet));
 	}
 
@@ -775,9 +800,13 @@ public sealed class WorldNpcResourceStatsServiceTests
 		Assert.NotNull(result.Change.DpStatUpdatePacket);
 		Assert.Equal(4000, result.Change.DpStatUpdatePacket.CurrentDp);
 		Assert.True(result.Change.UpdateStatsAndSpeedVisually);
+		AssertVisualStatsUpdate(result.Change);
 		Assert.Null(result.Change.AttackStatusPacket);
 		Assert.Same(result.Change.DpInfoPacket, Assert.Single(registry.Broadcasts).Packet);
-		Assert.Same(result.Change.DpStatUpdatePacket, Assert.Single(registry.SentPackets).Packet);
+		Assert.Collection(
+			registry.SentPackets,
+			delivery => Assert.Same(result.Change.VisualStatsUpdate!.StatsPacket, delivery.Packet),
+			delivery => Assert.Same(result.Change.DpStatUpdatePacket, delivery.Packet));
 	}
 
 	[Fact]
@@ -892,7 +921,17 @@ public sealed class WorldNpcResourceStatsServiceTests
 	{
 		lifeStats = new WorldNpcLifeStatsService(new WorldNpcDeathDropWorkflowService(null!, null!));
 		registry = new CapturingConnectionRegistry();
-		return new WorldNpcResourceStatsService(lifeStats, registry);
+		return new WorldNpcResourceStatsService(lifeStats, registry, new PlayerVisualStatsUpdateService(registry));
+	}
+
+	private static void AssertVisualStatsUpdate(WorldNpcResourceChangeResult change)
+	{
+		Assert.NotNull(change.VisualStatsUpdate);
+		Assert.Equal(PlayerVisualStatsUpdateStatus.SpeedSnapshotMissing, change.VisualStatsUpdate.Status);
+		Assert.True(change.VisualStatsUpdate.StatsPacketSent);
+		Assert.NotNull(change.VisualStatsUpdate.StatsPacket);
+		Assert.Null(change.VisualStatsUpdate.SpeedPacket);
+		Assert.Equal(0, change.VisualStatsUpdate.SpeedBroadcastCount);
 	}
 
 	private static WorldNpcSkillDamageService CreateSkillDamageService()

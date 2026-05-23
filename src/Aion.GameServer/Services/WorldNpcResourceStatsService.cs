@@ -9,13 +9,16 @@ public sealed class WorldNpcResourceStatsService
 {
 	private readonly WorldNpcLifeStatsService _npcLifeStats;
 	private readonly IGameClientConnectionRegistry? _connectionRegistry;
+	private readonly PlayerVisualStatsUpdateService? _playerVisualStats;
 
 	public WorldNpcResourceStatsService(
 		WorldNpcLifeStatsService npcLifeStats,
-		IGameClientConnectionRegistry? connectionRegistry = null)
+		IGameClientConnectionRegistry? connectionRegistry = null,
+		PlayerVisualStatsUpdateService? playerVisualStats = null)
 	{
 		_npcLifeStats = npcLifeStats;
 		_connectionRegistry = connectionRegistry;
+		_playerVisualStats = playerVisualStats;
 	}
 
 	public ValueTask<WorldNpcResourceChangeResult> ReduceNpcMpAsync(
@@ -284,6 +287,7 @@ public sealed class WorldNpcResourceStatsService
 		var shouldSendDpPackets = player.IsOnline;
 		var (dpInfoPacket, dpInfoBroadcastCount) = await BroadcastDpInfoAsync(player, currentDp, shouldSendDpPackets);
 		// Java order: PlayerCommonData.setDp broadcasts DP info, updates stats visually, then sends SM_STATUPDATE_DP.
+		var visualStatsUpdate = await UpdatePlayerStatsAndSpeedVisuallyAsync(player, shouldSendDpPackets);
 		var (dpStatUpdatePacket, dpStatUpdateSent) = await SendDpStatUpdateAsync(player, currentDp, shouldSendDpPackets);
 		return WorldNpcResourceChangeResult.FromResourceMutation(
 			currentDp == previousDp
@@ -303,7 +307,8 @@ public sealed class WorldNpcResourceStatsService
 			DpInfoBroadcastCount: dpInfoBroadcastCount,
 			DpStatUpdatePacket: dpStatUpdatePacket,
 			DpStatUpdateSent: dpStatUpdateSent,
-			UpdateStatsAndSpeedVisually: shouldSendDpPackets);
+			UpdateStatsAndSpeedVisually: shouldSendDpPackets,
+			VisualStatsUpdate: visualStatsUpdate);
 	}
 
 	public async ValueTask<WorldNpcDpUseActionResult> SpendPlayerDpForSkillAsync(
@@ -955,6 +960,14 @@ public sealed class WorldNpcResourceStatsService
 		return (packet, sent);
 	}
 
+	private async ValueTask<PlayerVisualStatsUpdateResult?> UpdatePlayerStatsAndSpeedVisuallyAsync(Player player, bool shouldSend)
+	{
+		// Java parity: PlayerCommonData.setDp -> player.getGameStats().updateStatsAndSpeedVisually().
+		if (!shouldSend || _playerVisualStats == null)
+			return null;
+		return await _playerVisualStats.UpdateStatsAndSpeedVisuallyAsync(player, speedSnapshot: null);
+	}
+
 	private async ValueTask<(SmSystemMessage? Packet, bool Sent)> SendSkillNotEnoughDpMessageAsync(
 		Player player,
 		bool shouldSend)
@@ -1283,6 +1296,7 @@ public sealed record WorldNpcResourceChangeResult(
 	SmStatUpdateDp? DpStatUpdatePacket = null,
 	bool DpStatUpdateSent = false,
 	bool UpdateStatsAndSpeedVisually = false,
+	PlayerVisualStatsUpdateResult? VisualStatsUpdate = null,
 	bool SendHpStatUpdate = false,
 	SmStatUpdateHp? HpStatUpdatePacket = null,
 	bool HpStatUpdateSent = false,
@@ -1358,6 +1372,7 @@ public sealed record WorldNpcResourceChangeResult(
 		SmStatUpdateDp? DpStatUpdatePacket = null,
 		bool DpStatUpdateSent = false,
 		bool UpdateStatsAndSpeedVisually = false,
+		PlayerVisualStatsUpdateResult? VisualStatsUpdate = null,
 		bool SendHpStatUpdate = false,
 		SmStatUpdateHp? HpStatUpdatePacket = null,
 		bool HpStatUpdateSent = false,
@@ -1396,6 +1411,7 @@ public sealed record WorldNpcResourceChangeResult(
 			DpStatUpdatePacket,
 			DpStatUpdateSent,
 			UpdateStatsAndSpeedVisually,
+			VisualStatsUpdate,
 			SendHpStatUpdate,
 			HpStatUpdatePacket,
 			HpStatUpdateSent,
