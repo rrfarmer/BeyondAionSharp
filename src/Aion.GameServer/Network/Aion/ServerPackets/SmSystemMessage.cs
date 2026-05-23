@@ -189,6 +189,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1400013, playerName);
 	}
 
+	public static SmSystemMessage ForceHeBecomeOffline(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_FORCE_HE_BECOME_OFFLINE(String).
+		return new SmSystemMessage(1301019, playerName);
+	}
+
 	public static SmSystemMessage EnterOnlyUnionDon()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ENTER_ONLY_UNION_DON.

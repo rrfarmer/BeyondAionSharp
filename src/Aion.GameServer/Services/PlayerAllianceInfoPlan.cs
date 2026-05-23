@@ -77,6 +77,22 @@ public sealed record PlayerAllianceEnteredPlan(
 	bool WouldBroadcastAbyssRank,
 	bool WouldBroadcastLeague);
 
+public enum PlayerAllianceDisconnectedPlanStatus
+{
+	Planned,
+	DisconnectedMemberMissing,
+	LeaderDisconnectDeferred,
+}
+
+public sealed record PlayerAllianceDisconnectedPlan(
+	int AllianceId,
+	int DisconnectedPlayerObjectId,
+	PlayerAllianceDisconnectedPlanStatus Status,
+	IReadOnlyList<PlayerAlliancePacketIntent> PacketIntents,
+	bool WouldTriggerLeaderChange = false,
+	bool WouldDisbandIfNoOnlineMembersRemain = false,
+	bool WouldBroadcastLeague = false);
+
 public enum PlayerAlliancePacketIntentKind
 {
 	AllianceInfo,

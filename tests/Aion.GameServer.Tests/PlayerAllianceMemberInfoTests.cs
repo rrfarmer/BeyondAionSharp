@@ -588,6 +588,65 @@ public sealed class PlayerAllianceMemberInfoTests
 	}
 
 	[Fact]
+	public void DisconnectedPlanner_PlansNonLeaderOfflineFanoutLikeJavaPlayerDisconnectedEvent()
+	{
+		var planner = new PlayerAllianceDisconnectedPlanner();
+		var leader = CreateAllianceMember(1001, "Leader", worldId: 210010000);
+		var disconnected = CreateAllianceMember(1002, "Disconnected", worldId: 220010000);
+		disconnected.IsOnline = false;
+		var other = CreateAllianceMember(1003, "Other", worldId: 230010000);
+
+		var plan = planner.CreateDisconnectedPlan(
+			88001,
+			leaderObjectId: 1001,
+			[leader, disconnected, other],
+			currentViceCaptainObjectIds: [1004],
+			disconnectedPlayerObjectId: 1002);
+
+		Assert.Equal(PlayerAllianceDisconnectedPlanStatus.Planned, plan.Status);
+		Assert.False(plan.WouldTriggerLeaderChange);
+		Assert.False(plan.WouldDisbandIfNoOnlineMembersRemain);
+		Assert.False(plan.WouldBroadcastLeague);
+		Assert.Collection(
+			plan.PacketIntents,
+			intent => AssertAllianceSystemPacketIntent(intent, sequence: 0, recipientObjectId: 1001, expectedMessageId: 1301019),
+			intent => AssertAllianceDisconnectedMemberInfoPacketIntent(intent, sequence: 1, recipientObjectId: 1001, subjectObjectId: 1002),
+			intent => AssertAllianceInfoPacketIntent(intent, sequence: 2, recipientObjectId: 1001, expectedAllianceGroupSize: 3, expectedLeaderObjectId: 1001, expectedActivePlayerMapId: 210010000, expectedPaddedViceCaptainIds: [1004, 0, 0, 0]),
+			intent => AssertAllianceSystemPacketIntent(intent, sequence: 3, recipientObjectId: 1003, expectedMessageId: 1301019),
+			intent => AssertAllianceDisconnectedMemberInfoPacketIntent(intent, sequence: 4, recipientObjectId: 1003, subjectObjectId: 1002),
+			intent => AssertAllianceInfoPacketIntent(intent, sequence: 5, recipientObjectId: 1003, expectedAllianceGroupSize: 3, expectedLeaderObjectId: 1001, expectedActivePlayerMapId: 230010000, expectedPaddedViceCaptainIds: [1004, 0, 0, 0]));
+	}
+
+	[Fact]
+	public void DisconnectedPlanner_DefersLeaderDisconnectAndMissingMemberBranches()
+	{
+		var planner = new PlayerAllianceDisconnectedPlanner();
+		var leader = CreateAllianceMember(1001, "Leader", worldId: 210010000);
+		var other = CreateAllianceMember(1003, "Other", worldId: 230010000);
+
+		var leaderPlan = planner.CreateDisconnectedPlan(
+			88001,
+			leaderObjectId: 1001,
+			[leader, other],
+			currentViceCaptainObjectIds: [],
+			disconnectedPlayerObjectId: 1001,
+			isInLeague: true);
+		var missingPlan = planner.CreateDisconnectedPlan(
+			88001,
+			leaderObjectId: 1001,
+			[leader, other],
+			currentViceCaptainObjectIds: [],
+			disconnectedPlayerObjectId: 404);
+
+		Assert.Equal(PlayerAllianceDisconnectedPlanStatus.LeaderDisconnectDeferred, leaderPlan.Status);
+		Assert.True(leaderPlan.WouldTriggerLeaderChange);
+		Assert.True(leaderPlan.WouldBroadcastLeague);
+		Assert.Empty(leaderPlan.PacketIntents);
+		Assert.Equal(PlayerAllianceDisconnectedPlanStatus.DisconnectedMemberMissing, missingPlan.Status);
+		Assert.Empty(missingPlan.PacketIntents);
+	}
+
+	[Fact]
 	public void SmAllianceMemberInfo_RewritesOfflineEnterToEnterOfflineLikeJava()
 	{
 		var member = new Player
@@ -885,6 +944,27 @@ public sealed class PlayerAllianceMemberInfoTests
 		Assert.Equal(0, reader.ReadH());
 		for (var i = 0; i < 8; i++)
 			Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertAllianceDisconnectedMemberInfoPacketIntent(
+		PlayerAlliancePacketIntent intent,
+		int sequence,
+		int recipientObjectId,
+		int subjectObjectId)
+	{
+		Assert.Equal(sequence, intent.Sequence);
+		Assert.Equal(recipientObjectId, intent.RecipientObjectId);
+		Assert.Equal(PlayerAlliancePacketIntentKind.MemberInfo, intent.Kind);
+		var plan = Assert.IsType<PlayerAllianceMemberInfoPacketPlan>(intent.MemberInfoPlan);
+		Assert.Equal(subjectObjectId, plan.MemberObjectId);
+		Assert.Equal(PlayerAllianceMemberInfoEventKind.Disconnected, plan.RequestedEventKind);
+		Assert.Equal(PlayerAllianceMemberInfoEventKind.Disconnected, plan.EffectiveEventKind);
+		Assert.False(plan.WritesName);
+		Assert.False(plan.WritesAbnormalEffects);
+		Assert.False(plan.WritesSlotTimers);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(Assert.IsType<SmAllianceMemberInfo>(intent.CreatePacket())));
+		SkipAllianceMemberInfoPrefix(reader, expectedClassId: 5, expectedGenderId: 0, expectedLevel: 40, expectedEventId: (int)PlayerAllianceEvent.Disconnected);
 		Assert.Equal(0, reader.Remaining);
 	}
 
