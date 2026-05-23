@@ -28,6 +28,7 @@ public sealed class WorldNpcSkillResultCalculationService
 			options.ResourceType,
 			options.IsDamage,
 			request.SendResult);
+		var additionalHits = CalculateAdditionalHits(options.AdditionalHits, attackStatus.FinalStatus, attackResult);
 		return new WorldNpcSkillResultCalculationResult(
 			inputDamage,
 			resultDamage,
@@ -44,6 +45,7 @@ public sealed class WorldNpcSkillResultCalculationService
 			attackStatus,
 			damageModifier,
 			attackResult,
+			additionalHits,
 			effectReserved);
 	}
 
@@ -345,6 +347,84 @@ public sealed class WorldNpcSkillResultCalculationService
 			blockReduction);
 	}
 
+	private static WorldNpcSkillAdditionalHitResult CalculateAdditionalHits(
+		WorldNpcSkillAdditionalHitOptions? options,
+		WorldNpcSkillAttackStatus status,
+		WorldNpcSkillAttackResult mainHandAttack)
+	{
+		if (options == null)
+			return WorldNpcSkillAdditionalHitResult.NotRequested();
+
+		// Java parity: controllers/attack/AttackUtil.calculateAdditionalHitCount/amplifyDamageByAdditionalHitCount.
+		var skippedByStatus = status is WorldNpcSkillAttackStatus.Dodge or WorldNpcSkillAttackStatus.Resist;
+		var eligible = options.AttackerIsPlayer && !skippedByStatus;
+		if (!eligible)
+			return WorldNpcSkillAdditionalHitResult.Skipped(options.AttackerIsPlayer, skippedByStatus);
+
+		var mainRollMissing = options.HasMainHandWeapon && options.MainHandRoll == null;
+		var offHandEligible = options.HasOffHandAttackResult && options.HasOffHandWeapon && !options.OffHandIsShield;
+		var offHandRollMissing = offHandEligible && options.OffHandRoll == null;
+		var offHandDamageMissing = offHandEligible && (options.OffHandRoll ?? 0) > 0 && options.OffHandDamage == null;
+		if (mainRollMissing || offHandRollMissing || offHandDamageMissing)
+		{
+			return WorldNpcSkillAdditionalHitResult.Unresolved(
+				options.AttackerIsPlayer,
+				options.HasMainHandWeapon,
+				offHandEligible,
+				mainRollMissing,
+				offHandRollMissing,
+				offHandDamageMissing);
+		}
+
+		var mainHandCount = 0;
+		if (options.HasMainHandWeapon)
+		{
+			var normalizedMainRoll = Math.Clamp(options.MainHandRoll!.Value, 0, options.MainHandWeaponHitCount);
+			mainHandCount = normalizedMainRoll - 1;
+		}
+
+		var offHandCount = 0;
+		if (offHandEligible)
+		{
+			var maxOffHandRoll = Math.Max(0, options.OffHandWeaponHitCount - 1);
+			offHandCount = Math.Clamp(options.OffHandRoll!.Value, 0, maxOffHandRoll);
+		}
+
+		var generatedHits = new List<WorldNpcSkillAdditionalHitAttackResult>();
+		var loopCount = mainHandCount + offHandCount;
+		for (var i = 0; i < loopCount; i++)
+		{
+			if (i < mainHandCount)
+			{
+				if (mainHandAttack.Damage >= 10)
+				{
+					generatedHits.Add(new WorldNpcSkillAdditionalHitAttackResult(
+						(int)(mainHandAttack.Damage * 0.1f),
+						WorldNpcSkillAttackStatus.NormalHit,
+						mainHandAttack.HitType,
+						IsOffHand: false));
+				}
+			}
+			else if (options.OffHandDamage is >= 10)
+			{
+				generatedHits.Add(new WorldNpcSkillAdditionalHitAttackResult(
+					(int)(options.OffHandDamage.Value * 0.1f),
+					WorldNpcSkillAttackStatus.OffHandNormalHit,
+					options.OffHandHitType,
+					IsOffHand: true));
+			}
+		}
+
+		return WorldNpcSkillAdditionalHitResult.AppliedResult(
+			options.AttackerIsPlayer,
+			options.HasMainHandWeapon,
+			offHandEligible,
+			mainHandCount,
+			offHandCount,
+			loopCount,
+			generatedHits);
+	}
+
 	private readonly record struct RandomMultiplierResult(float Multiplier, WorldNpcSkillResultCalculationStatus Status);
 }
 
@@ -364,6 +444,7 @@ public sealed record WorldNpcSkillResultCalculationOptions(
 	bool CannotMiss = false,
 	WorldNpcSkillAttackStatusCalculationOptions? AttackStatusCalculation = null,
 	WorldNpcSkillDamageModifierOptions? DamageModifier = null,
+	WorldNpcSkillAdditionalHitOptions? AdditionalHits = null,
 	WorldNpcSkillAttackStatus AttackStatus = WorldNpcSkillAttackStatus.NormalHit,
 	WorldNpcSkillHitType HitType = WorldNpcSkillHitType.PhysicalHit,
 	int EffectPosition = 0,
@@ -389,6 +470,7 @@ public sealed record WorldNpcSkillResultCalculationResult(
 	WorldNpcSkillAttackStatusCalculationResult AttackStatusCalculation,
 	WorldNpcSkillDamageModifierResult DamageModifier,
 	WorldNpcSkillAttackResult AttackResult,
+	WorldNpcSkillAdditionalHitResult AdditionalHits,
 	WorldNpcSkillEffectReservedResult EffectReserved);
 
 public sealed record WorldNpcSkillAttackStatusCalculationOptions(
@@ -485,6 +567,128 @@ public sealed record WorldNpcSkillDamageModifierOptions(
 	WorldNpcSkillWeaponGroup? MainHandWeaponGroup = null,
 	WorldNpcSkillWeaponGroup? OffHandWeaponGroup = null,
 	int CriticalDamageReduce = 0);
+
+public sealed record WorldNpcSkillAdditionalHitOptions(
+	bool AttackerIsPlayer = false,
+	bool HasMainHandWeapon = false,
+	int MainHandWeaponHitCount = 0,
+	int? MainHandRoll = null,
+	bool HasOffHandAttackResult = false,
+	bool HasOffHandWeapon = false,
+	bool OffHandIsShield = false,
+	int OffHandWeaponHitCount = 0,
+	int? OffHandRoll = null,
+	int? OffHandDamage = null,
+	WorldNpcSkillHitType OffHandHitType = WorldNpcSkillHitType.PhysicalHit);
+
+public sealed record WorldNpcSkillAdditionalHitAttackResult(
+	int Damage,
+	WorldNpcSkillAttackStatus AttackStatus,
+	WorldNpcSkillHitType HitType,
+	bool IsOffHand);
+
+public sealed record WorldNpcSkillAdditionalHitResult(
+	bool WasRequested,
+	bool Eligible,
+	bool SkippedByStatus,
+	bool AttackerIsPlayer,
+	bool HasMainHandWeapon,
+	bool HasOffHandAttack,
+	int MainHandAdditionalHitCount,
+	int OffHandAdditionalHitCount,
+	int AmplificationLoopCount,
+	IReadOnlyList<WorldNpcSkillAdditionalHitAttackResult> GeneratedHits,
+	bool MainHandRollMissing,
+	bool OffHandRollMissing,
+	bool OffHandDamageMissing)
+{
+	public bool HasUnresolvedInputs => MainHandRollMissing || OffHandRollMissing || OffHandDamageMissing;
+
+	public static WorldNpcSkillAdditionalHitResult NotRequested()
+	{
+		return new WorldNpcSkillAdditionalHitResult(
+			WasRequested: false,
+			Eligible: false,
+			SkippedByStatus: false,
+			AttackerIsPlayer: false,
+			HasMainHandWeapon: false,
+			HasOffHandAttack: false,
+			MainHandAdditionalHitCount: 0,
+			OffHandAdditionalHitCount: 0,
+			AmplificationLoopCount: 0,
+			GeneratedHits: Array.Empty<WorldNpcSkillAdditionalHitAttackResult>(),
+			MainHandRollMissing: false,
+			OffHandRollMissing: false,
+			OffHandDamageMissing: false);
+	}
+
+	public static WorldNpcSkillAdditionalHitResult Skipped(bool attackerIsPlayer, bool skippedByStatus)
+	{
+		return new WorldNpcSkillAdditionalHitResult(
+			WasRequested: true,
+			Eligible: false,
+			SkippedByStatus: skippedByStatus,
+			AttackerIsPlayer: attackerIsPlayer,
+			HasMainHandWeapon: false,
+			HasOffHandAttack: false,
+			MainHandAdditionalHitCount: 0,
+			OffHandAdditionalHitCount: 0,
+			AmplificationLoopCount: 0,
+			GeneratedHits: Array.Empty<WorldNpcSkillAdditionalHitAttackResult>(),
+			MainHandRollMissing: false,
+			OffHandRollMissing: false,
+			OffHandDamageMissing: false);
+	}
+
+	public static WorldNpcSkillAdditionalHitResult Unresolved(
+		bool attackerIsPlayer,
+		bool hasMainHandWeapon,
+		bool hasOffHandAttack,
+		bool mainHandRollMissing,
+		bool offHandRollMissing,
+		bool offHandDamageMissing)
+	{
+		return new WorldNpcSkillAdditionalHitResult(
+			WasRequested: true,
+			Eligible: true,
+			SkippedByStatus: false,
+			AttackerIsPlayer: attackerIsPlayer,
+			HasMainHandWeapon: hasMainHandWeapon,
+			HasOffHandAttack: hasOffHandAttack,
+			MainHandAdditionalHitCount: 0,
+			OffHandAdditionalHitCount: 0,
+			AmplificationLoopCount: 0,
+			GeneratedHits: Array.Empty<WorldNpcSkillAdditionalHitAttackResult>(),
+			MainHandRollMissing: mainHandRollMissing,
+			OffHandRollMissing: offHandRollMissing,
+			OffHandDamageMissing: offHandDamageMissing);
+	}
+
+	public static WorldNpcSkillAdditionalHitResult AppliedResult(
+		bool attackerIsPlayer,
+		bool hasMainHandWeapon,
+		bool hasOffHandAttack,
+		int mainHandAdditionalHitCount,
+		int offHandAdditionalHitCount,
+		int amplificationLoopCount,
+		IReadOnlyList<WorldNpcSkillAdditionalHitAttackResult> generatedHits)
+	{
+		return new WorldNpcSkillAdditionalHitResult(
+			WasRequested: true,
+			Eligible: true,
+			SkippedByStatus: false,
+			AttackerIsPlayer: attackerIsPlayer,
+			HasMainHandWeapon: hasMainHandWeapon,
+			HasOffHandAttack: hasOffHandAttack,
+			MainHandAdditionalHitCount: mainHandAdditionalHitCount,
+			OffHandAdditionalHitCount: offHandAdditionalHitCount,
+			AmplificationLoopCount: amplificationLoopCount,
+			GeneratedHits: generatedHits,
+			MainHandRollMissing: false,
+			OffHandRollMissing: false,
+			OffHandDamageMissing: false);
+	}
+}
 
 public sealed record WorldNpcSkillDamageModifierResult(
 	bool WasRequested,

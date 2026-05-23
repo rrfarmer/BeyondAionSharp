@@ -462,6 +462,165 @@ public sealed class WorldNpcSkillResultCalculationServiceTests
 		Assert.Equal(2.3f, WorldNpcSkillWeaponGroup.Dagger.GetJavaCriticalMultiplier(), precision: 3);
 	}
 
+	[Fact]
+	public void Calculate_AdditionalHitsSkipExactDodgeAndResistLikeJava()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 100,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				AttackStatus: WorldNpcSkillAttackStatus.Dodge,
+				AdditionalHits: new WorldNpcSkillAdditionalHitOptions(
+					AttackerIsPlayer: true,
+					HasMainHandWeapon: true,
+					MainHandWeaponHitCount: 3,
+					MainHandRoll: 3))));
+
+		Assert.True(result.AdditionalHits.WasRequested);
+		Assert.False(result.AdditionalHits.Eligible);
+		Assert.True(result.AdditionalHits.SkippedByStatus);
+		Assert.Empty(result.AdditionalHits.GeneratedHits);
+	}
+
+	[Fact]
+	public void Calculate_AdditionalHitsGenerateMainHandAmplification()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 100,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				AdditionalHits: new WorldNpcSkillAdditionalHitOptions(
+					AttackerIsPlayer: true,
+					HasMainHandWeapon: true,
+					MainHandWeaponHitCount: 3,
+					MainHandRoll: 3))));
+
+		Assert.True(result.AdditionalHits.Eligible);
+		Assert.Equal(2, result.AdditionalHits.MainHandAdditionalHitCount);
+		Assert.Equal(0, result.AdditionalHits.OffHandAdditionalHitCount);
+		Assert.Equal(2, result.AdditionalHits.AmplificationLoopCount);
+		Assert.Collection(
+			result.AdditionalHits.GeneratedHits,
+			hit =>
+			{
+				Assert.Equal(10, hit.Damage);
+				Assert.Equal(WorldNpcSkillAttackStatus.NormalHit, hit.AttackStatus);
+				Assert.False(hit.IsOffHand);
+			},
+			hit =>
+			{
+				Assert.Equal(10, hit.Damage);
+				Assert.Equal(WorldNpcSkillAttackStatus.NormalHit, hit.AttackStatus);
+				Assert.False(hit.IsOffHand);
+			});
+	}
+
+	[Fact]
+	public void Calculate_AdditionalHitsGenerateOffHandAmplification()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 100,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				AdditionalHits: new WorldNpcSkillAdditionalHitOptions(
+					AttackerIsPlayer: true,
+					HasMainHandWeapon: true,
+					MainHandWeaponHitCount: 3,
+					MainHandRoll: 1,
+					HasOffHandAttackResult: true,
+					HasOffHandWeapon: true,
+					OffHandWeaponHitCount: 3,
+					OffHandRoll: 2,
+					OffHandDamage: 80,
+					OffHandHitType: WorldNpcSkillHitType.MagicalHit))));
+
+		Assert.True(result.AdditionalHits.Eligible);
+		Assert.Equal(0, result.AdditionalHits.MainHandAdditionalHitCount);
+		Assert.Equal(2, result.AdditionalHits.OffHandAdditionalHitCount);
+		Assert.Collection(
+			result.AdditionalHits.GeneratedHits,
+			hit =>
+			{
+				Assert.Equal(8, hit.Damage);
+				Assert.Equal(WorldNpcSkillAttackStatus.OffHandNormalHit, hit.AttackStatus);
+				Assert.Equal(WorldNpcSkillHitType.MagicalHit, hit.HitType);
+				Assert.True(hit.IsOffHand);
+			},
+			hit =>
+			{
+				Assert.Equal(8, hit.Damage);
+				Assert.Equal(WorldNpcSkillAttackStatus.OffHandNormalHit, hit.AttackStatus);
+				Assert.Equal(WorldNpcSkillHitType.MagicalHit, hit.HitType);
+				Assert.True(hit.IsOffHand);
+			});
+	}
+
+	[Fact]
+	public void Calculate_AdditionalHitsRecordLowDamageWithoutGeneratedHit()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 9,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				AdditionalHits: new WorldNpcSkillAdditionalHitOptions(
+					AttackerIsPlayer: true,
+					HasMainHandWeapon: true,
+					MainHandWeaponHitCount: 3,
+					MainHandRoll: 3))));
+
+		Assert.Equal(2, result.AdditionalHits.MainHandAdditionalHitCount);
+		Assert.Equal(2, result.AdditionalHits.AmplificationLoopCount);
+		Assert.Empty(result.AdditionalHits.GeneratedHits);
+	}
+
+	[Fact]
+	public void Calculate_AdditionalHitsRecordMissingRollInputs()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 100,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				AdditionalHits: new WorldNpcSkillAdditionalHitOptions(
+					AttackerIsPlayer: true,
+					HasMainHandWeapon: true,
+					MainHandWeaponHitCount: 3))));
+
+		Assert.True(result.AdditionalHits.Eligible);
+		Assert.True(result.AdditionalHits.HasUnresolvedInputs);
+		Assert.True(result.AdditionalHits.MainHandRollMissing);
+		Assert.Empty(result.AdditionalHits.GeneratedHits);
+	}
+
 	[Theory]
 	[InlineData(WorldNpcSkillAttackStatus.Dodge, 0, true, false)]
 	[InlineData(WorldNpcSkillAttackStatus.OffHandDodge, 1, true, false)]
