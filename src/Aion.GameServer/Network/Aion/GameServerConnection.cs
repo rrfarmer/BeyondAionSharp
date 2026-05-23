@@ -4921,6 +4921,22 @@ public sealed class GameServerConnection : BaseClientConnection
 		// Java parity: TeleportService.SpawnTask.run map/instance-change branch sends channel info and player spawn, then CM_LEVEL_READY completes full map load.
 		await SendPacketAsync(new SmChannelInfo(player.Position, staticData?.WorldMaps ?? Array.Empty<WorldMapSummary>()));
 		await SendPacketAsync(new SmPlayerSpawn(player));
+		if (ShouldSendInstanceDungeonOpenedForSelf(player.Position, staticData?.WorldMaps))
+			await SendPacketAsync(SmSystemMessage.InstanceDungeonOpenedForSelf(player.Position.WorldId));
+	}
+
+	private static bool ShouldSendInstanceDungeonOpenedForSelf(WorldPosition position, IReadOnlyList<WorldMapSummary>? worldMaps)
+	{
+		// Java parity: TeleportService.SpawnTask.run sends STR_MSG_INSTANCE_DUNGEON_OPENED_FOR_SELF
+		// when WORLD_MAPS_DATA marks the destination as instance and WorldMapType.getWorld(worldId).isPersonal() is false.
+		var worldMap = worldMaps?.FirstOrDefault(map => map.MapId == position.WorldId);
+		return worldMap is { IsInstance: true } && !IsPersonalWorld(position.WorldId);
+	}
+
+	private static bool IsPersonalWorld(int worldId)
+	{
+		// Java parity: WorldMapType personal flag is true only for the housing/legion personal worlds.
+		return worldId is 700020000 or 710020000 or 720010000 or 730010000;
 	}
 
 	private async Task RequestOrBindPlayerToKiskAsync(Player player, PlayerKiskRuntimeState kisk)

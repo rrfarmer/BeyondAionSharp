@@ -69,6 +69,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300016);
 	}
 
+	public static SmSystemMessage InstanceDungeonOpenedForSelf(int worldId)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_INSTANCE_DUNGEON_OPENED_FOR_SELF(worldId).
+		return new SmSystemMessage(1400640, worldId.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
 	public static SmSystemMessage NotEnoughKinah(long kinah)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_NOT_ENOUGH_KINA.

@@ -138,6 +138,7 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.LootFailOnLooting(), 1300829);
 		AssertSystemMessage(SmSystemMessage.LootNoRight(), 901338);
 		AssertSystemMessage(SmSystemMessage.SkillNotEnoughDp(), 1300016);
+		AssertSystemMessage(SmSystemMessage.InstanceDungeonOpenedForSelf(300030000), 1400640, "300030000");
 	}
 
 	[Fact]

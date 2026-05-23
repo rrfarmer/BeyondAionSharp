@@ -313,6 +313,71 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 	}
 
 	[Fact]
+	public async Task QueueDelayedTeleportAsync_InstanceMapChangeSendsOpenedForSelfMessage()
+	{
+		var dataManager = await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false);
+		var runtimeContext = new GameServerRuntimeContext();
+		runtimeContext.SetDataManager(dataManager);
+		var zoneCounterService = new CreaturePvpZoneCounterService();
+		var registry = new CapturingConnectionRegistry();
+		await using var pair = await TestConnectionPair.CreateAsync(registry, runtimeContext, zoneCounterService);
+		var startPosition = new WorldPosition(210040000, 100, 100, 150, 0, InstanceId: 1);
+		var destination = new WorldPosition(300030000, 270, 620, 150, 32, InstanceId: 2);
+		var player = CreateTeleportingPlayer(7313, startPosition);
+
+		Assert.Contains(dataManager.StaticData.WorldMaps, map => map.MapId == destination.WorldId && map.IsInstance);
+
+		await pair.Connection.QueueDelayedTeleportAsync(
+			player,
+			destination,
+			TeleportAnimation.FadeOutBeam,
+			dataManager.StaticData);
+		Assert.IsType<SmTeleportLoc>(Assert.Single(pair.SentPackets));
+		var completed = await pair.Connection.HandleTeleportAnimationDoneAsync(player);
+
+		Assert.NotNull(completed);
+		Assert.False(completed.UsesSameWorldSpawnPath);
+		Assert.Equal(destination, player.Position);
+		Assert.Collection(
+			pair.SentPackets.Skip(1),
+			packet => Assert.IsType<SmChannelInfo>(packet),
+			packet => Assert.IsType<SmPlayerSpawn>(packet),
+			packet =>
+			{
+				var message = Assert.IsType<SmSystemMessage>(packet);
+				Assert.Equal(1400640, message.MessageId);
+			});
+	}
+
+	[Fact]
+	public async Task QueueDelayedTeleportAsync_PersonalInstanceMapSkipsOpenedForSelfMessage()
+	{
+		var dataManager = await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false);
+		var runtimeContext = new GameServerRuntimeContext();
+		runtimeContext.SetDataManager(dataManager);
+		var zoneCounterService = new CreaturePvpZoneCounterService();
+		var registry = new CapturingConnectionRegistry();
+		await using var pair = await TestConnectionPair.CreateAsync(registry, runtimeContext, zoneCounterService);
+		var startPosition = new WorldPosition(210040000, 100, 100, 150, 0, InstanceId: 1);
+		var destination = new WorldPosition(720010000, 70, 80, 90, 32, InstanceId: 2);
+		var player = CreateTeleportingPlayer(7314, startPosition);
+
+		Assert.Contains(dataManager.StaticData.WorldMaps, map => map.MapId == destination.WorldId && map.IsInstance);
+
+		await pair.Connection.QueueDelayedTeleportAsync(
+			player,
+			destination,
+			TeleportAnimation.FadeOutBeam,
+			dataManager.StaticData);
+		await pair.Connection.HandleTeleportAnimationDoneAsync(player);
+
+		Assert.Collection(
+			pair.SentPackets.Skip(1),
+			packet => Assert.IsType<SmChannelInfo>(packet),
+			packet => Assert.IsType<SmPlayerSpawn>(packet));
+	}
+
+	[Fact]
 	public async Task QueueDelayedTeleportAsync_MapInstanceChangeKeepsArrivalAnimationUntilLevelReady()
 	{
 		var dataManager = await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false);
