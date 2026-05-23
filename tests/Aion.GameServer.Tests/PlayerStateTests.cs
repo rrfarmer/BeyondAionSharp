@@ -26,6 +26,53 @@ public sealed class PlayerStateTests
 	}
 
 	[Fact]
+	public void PlayerPortalCooldownService_MatchesJavaDisableAndExpirySlice()
+	{
+		var now = DateTimeOffset.FromUnixTimeMilliseconds(100_000);
+		var player = new Player
+		{
+			PortalCooldowns = new Dictionary<int, PlayerPortalCooldown>
+			{
+				[300030000] = new(300030000, 200_000, 1),
+				[300040000] = new(300040000, 99_999, 3),
+			},
+		};
+		var cooltimes = new InstanceCooltimeTable(
+		[
+			new InstanceCooltimeSummary(8, 300030000, "PC_ALL", MaxCount: 2),
+			new InstanceCooltimeSummary(9, 300040000, "PC_ALL", MaxCount: 2),
+		]);
+
+		Assert.False(PlayerPortalCooldownService.IsPortalUseDisabled(player, 300030000, cooltimes, now));
+		Assert.Equal(200_000, PlayerPortalCooldownService.GetPortalCooldownTime(player, 300030000, now));
+
+		PlayerPortalCooldownService.AddPortalCooldown(player, 300030000, reuseTimeMillis: 200_000);
+
+		Assert.True(PlayerPortalCooldownService.IsPortalUseDisabled(player, 300030000, cooltimes, now));
+		Assert.Equal(2, player.PortalCooldowns[300030000].EntryCount);
+		Assert.False(PlayerPortalCooldownService.IsPortalUseDisabled(player, 300040000, cooltimes, now));
+		Assert.False(player.PortalCooldowns.ContainsKey(300040000));
+	}
+
+	[Fact]
+	public void PlayerPortalCooldownService_AddsAndRemovesCooldownLikeJavaList()
+	{
+		var player = new Player { ObjectId = 1, Name = "PortalCooldownTester" };
+
+		PlayerPortalCooldownService.AddPortalCooldown(player, 300030000, reuseTimeMillis: 200_000);
+		PlayerPortalCooldownService.AddPortalCooldown(player, 300030000, reuseTimeMillis: 300_000);
+
+		var cooldown = Assert.Single(player.PortalCooldowns);
+		Assert.Equal(300030000, cooldown.Key);
+		Assert.Equal(200_000, cooldown.Value.ReuseTimeMillis);
+		Assert.Equal(2, cooldown.Value.EntryCount);
+
+		PlayerPortalCooldownService.RemovePortalCooldown(player, 300030000);
+
+		Assert.Empty(player.PortalCooldowns);
+	}
+
+	[Fact]
 	public void EmotionLearnService_MatchesJavaDuplicateAndExpirationRules()
 	{
 		var now = DateTimeOffset.FromUnixTimeSeconds(1_000);
