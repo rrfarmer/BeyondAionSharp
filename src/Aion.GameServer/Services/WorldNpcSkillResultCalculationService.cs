@@ -7,15 +7,17 @@ public sealed class WorldNpcSkillResultCalculationService
 		// Java parity: controllers/attack/AttackUtil.calculateSkillResult stages the EffectReserved damage result.
 		var options = request.Options ?? WorldNpcSkillResultCalculationOptions.Default;
 		var inputDamage = Math.Max(0, request.InputDamage);
-		var canDodgeOrResist = !options.CannotMiss;
+		var cannotMiss = options.CannotMiss || options.AttackStatusCalculation?.CannotMiss == true;
+		var canDodgeOrResist = !cannotMiss;
 		var random = CalculateRandomMultiplier(options);
+		var attackStatus = CalculateAttackStatus(options.AttackStatusCalculation, options.AttackStatus);
 		var finalDamage = random.Status == WorldNpcSkillResultCalculationStatus.Calculated
 			? (int)(inputDamage * random.Multiplier)
 			: inputDamage;
 		var normalizedFinalDamage = Math.Max(0, finalDamage);
 		var attackResult = new WorldNpcSkillAttackResult(
 			normalizedFinalDamage,
-			options.AttackStatus,
+			attackStatus.FinalStatus,
 			options.HitType,
 			ShieldChecked: !request.IgnoreShield);
 		var effectReserved = new WorldNpcSkillEffectReservedResult(
@@ -30,15 +32,155 @@ public sealed class WorldNpcSkillResultCalculationService
 			options.RandomDamageType,
 			random.Multiplier,
 			random.Status,
-			options.CannotMiss,
+			cannotMiss,
 			canDodgeOrResist,
 			request.ShouldApplyAttackerMovementModifier,
 			request.IgnoreShield,
 			request.SendResult,
 			request.ShouldIncreaseByOneTimeBoost,
 			request.UsesTemplateDamage,
+			attackStatus,
 			attackResult,
 			effectReserved);
+	}
+
+	private static WorldNpcSkillAttackStatusCalculationResult CalculateAttackStatus(
+		WorldNpcSkillAttackStatusCalculationOptions? options,
+		WorldNpcSkillAttackStatus fallbackStatus)
+	{
+		return options?.Kind switch
+		{
+			null or WorldNpcSkillAttackStatusCalculationKind.NotRequested => WorldNpcSkillAttackStatusCalculationResult.NotRequested(fallbackStatus),
+			WorldNpcSkillAttackStatusCalculationKind.Physical => CalculatePhysicalStatus(options),
+			WorldNpcSkillAttackStatusCalculationKind.Magical => CalculateMagicalStatus(options),
+			_ => throw new ArgumentOutOfRangeException(nameof(options), options.Kind, "Unhandled staged attack-status calculation kind."),
+		};
+	}
+
+	private static WorldNpcSkillAttackStatusCalculationResult CalculatePhysicalStatus(WorldNpcSkillAttackStatusCalculationOptions options)
+	{
+		// Java parity: controllers/attack/AttackUtil.calculatePhysicalStatus.
+		var status = WorldNpcSkillAttackStatus.NormalHit;
+		var dodgeChecked = options.CannotMiss || !options.IsSkill;
+		var blockChecked = options.CannotMiss;
+		var parryChecked = options.CannotMiss;
+		var dodgeMissing = dodgeChecked && options.DodgeResult == null;
+		var blockMissing = blockChecked && options.BlockResult == null;
+		var parryMissing = parryChecked && options.ParryResult == null;
+
+		if (!options.CannotMiss)
+		{
+			if (!options.IsSkill)
+			{
+				if (options.DodgeResult == true)
+					status = WorldNpcSkillAttackStatus.Dodge;
+			}
+
+			if (status == WorldNpcSkillAttackStatus.NormalHit && options.TargetIsPlayer && options.TargetHasShield)
+			{
+				blockChecked = true;
+				blockMissing = options.BlockResult == null;
+				if (options.BlockResult == true)
+					status = WorldNpcSkillAttackStatus.Block;
+			}
+
+			if (status == WorldNpcSkillAttackStatus.NormalHit && options.TargetIsPlayer)
+			{
+				parryChecked = true;
+				parryMissing = options.ParryResult == null;
+				if (options.ParryResult == true)
+					status = WorldNpcSkillAttackStatus.Parry;
+			}
+		}
+
+		var baseStatus = status;
+		var criticalChecked = true;
+		var criticalMissing = options.CriticalResult == null;
+		var criticalUpgraded = options.CriticalResult == true;
+		if (criticalUpgraded)
+			status = status.GetCriticalStatusFor();
+
+		var offHandConverted = !options.IsMainHand;
+		if (offHandConverted)
+			status = status.GetOffHandStatus();
+
+		return new WorldNpcSkillAttackStatusCalculationResult(
+			WorldNpcSkillAttackStatusCalculationKind.Physical,
+			WorldNpcSkillAttackStatus.NormalHit,
+			baseStatus,
+			status,
+			options.IsMainHand,
+			options.AccuracyModifier,
+			options.CriticalProbability,
+			options.IsSkill,
+			options.CannotMiss,
+			options.ApplyMagicalCritical,
+			options.TargetIsPlayer,
+			options.TargetHasShield,
+			dodgeChecked,
+			blockChecked,
+			parryChecked,
+			MagicalResistChecked: false,
+			criticalChecked,
+			dodgeMissing,
+			blockMissing,
+			parryMissing,
+			MagicalResistInputMissing: false,
+			criticalMissing,
+			criticalUpgraded,
+			offHandConverted,
+			ProbeOnly: options.CannotMiss);
+	}
+
+	private static WorldNpcSkillAttackStatusCalculationResult CalculateMagicalStatus(WorldNpcSkillAttackStatusCalculationOptions options)
+	{
+		// Java parity: controllers/attack/AttackUtil.calculateMagicalStatus.
+		var status = WorldNpcSkillAttackStatus.NormalHit;
+		var magicalResistChecked = !options.IsSkill;
+		var magicalResistMissing = magicalResistChecked && options.MagicalResistResult == null;
+		var criticalChecked = false;
+		var criticalMissing = false;
+		var criticalUpgraded = false;
+
+		if (magicalResistChecked && options.MagicalResistResult == true)
+		{
+			status = WorldNpcSkillAttackStatus.Resist;
+		}
+		else if (options.ApplyMagicalCritical)
+		{
+			criticalChecked = true;
+			criticalMissing = options.CriticalResult == null;
+			criticalUpgraded = options.CriticalResult == true;
+			if (criticalUpgraded)
+				status = WorldNpcSkillAttackStatus.Critical;
+		}
+
+		return new WorldNpcSkillAttackStatusCalculationResult(
+			WorldNpcSkillAttackStatusCalculationKind.Magical,
+			WorldNpcSkillAttackStatus.NormalHit,
+			status.GetBaseStatus(),
+			status,
+			options.IsMainHand,
+			options.AccuracyModifier,
+			options.CriticalProbability,
+			options.IsSkill,
+			options.CannotMiss,
+			options.ApplyMagicalCritical,
+			options.TargetIsPlayer,
+			options.TargetHasShield,
+			DodgeChecked: false,
+			BlockChecked: false,
+			ParryChecked: false,
+			magicalResistChecked,
+			criticalChecked,
+			DodgeInputMissing: false,
+			BlockInputMissing: false,
+			ParryInputMissing: false,
+			magicalResistMissing,
+			criticalMissing,
+			criticalUpgraded,
+			OffHandConverted: false,
+			ProbeOnly: false);
 	}
 
 	private static RandomMultiplierResult CalculateRandomMultiplier(WorldNpcSkillResultCalculationOptions options)
@@ -99,6 +241,7 @@ public sealed record WorldNpcSkillResultCalculationOptions(
 	int? RandomRoll = null,
 	double? RandomChanceRoll = null,
 	bool CannotMiss = false,
+	WorldNpcSkillAttackStatusCalculationOptions? AttackStatusCalculation = null,
 	WorldNpcSkillAttackStatus AttackStatus = WorldNpcSkillAttackStatus.NormalHit,
 	WorldNpcSkillHitType HitType = WorldNpcSkillHitType.PhysicalHit,
 	int EffectPosition = 0,
@@ -121,8 +264,92 @@ public sealed record WorldNpcSkillResultCalculationResult(
 	bool SendResult,
 	bool ShouldIncreaseByOneTimeBoost,
 	bool UsesTemplateDamage,
+	WorldNpcSkillAttackStatusCalculationResult AttackStatusCalculation,
 	WorldNpcSkillAttackResult AttackResult,
 	WorldNpcSkillEffectReservedResult EffectReserved);
+
+public sealed record WorldNpcSkillAttackStatusCalculationOptions(
+	WorldNpcSkillAttackStatusCalculationKind Kind,
+	bool IsMainHand = true,
+	int AccuracyModifier = 0,
+	int CriticalProbability = 100,
+	bool IsSkill = true,
+	bool CannotMiss = false,
+	bool ApplyMagicalCritical = true,
+	bool TargetIsPlayer = false,
+	bool TargetHasShield = false,
+	bool? DodgeResult = null,
+	bool? BlockResult = null,
+	bool? ParryResult = null,
+	bool? MagicalResistResult = null,
+	bool? CriticalResult = null);
+
+public sealed record WorldNpcSkillAttackStatusCalculationResult(
+	WorldNpcSkillAttackStatusCalculationKind Kind,
+	WorldNpcSkillAttackStatus InitialStatus,
+	WorldNpcSkillAttackStatus BaseStatus,
+	WorldNpcSkillAttackStatus FinalStatus,
+	bool IsMainHand,
+	int AccuracyModifier,
+	int CriticalProbability,
+	bool IsSkill,
+	bool CannotMiss,
+	bool ApplyMagicalCritical,
+	bool TargetIsPlayer,
+	bool TargetHasShield,
+	bool DodgeChecked,
+	bool BlockChecked,
+	bool ParryChecked,
+	bool MagicalResistChecked,
+	bool CriticalChecked,
+	bool DodgeInputMissing,
+	bool BlockInputMissing,
+	bool ParryInputMissing,
+	bool MagicalResistInputMissing,
+	bool CriticalInputMissing,
+	bool CriticalUpgraded,
+	bool OffHandConverted,
+	bool ProbeOnly)
+{
+	public bool WasRequested => Kind != WorldNpcSkillAttackStatusCalculationKind.NotRequested;
+
+	public bool HasUnresolvedProbabilityInputs =>
+		DodgeInputMissing ||
+		BlockInputMissing ||
+		ParryInputMissing ||
+		MagicalResistInputMissing ||
+		CriticalInputMissing;
+
+	public static WorldNpcSkillAttackStatusCalculationResult NotRequested(WorldNpcSkillAttackStatus fallbackStatus)
+	{
+		return new WorldNpcSkillAttackStatusCalculationResult(
+			WorldNpcSkillAttackStatusCalculationKind.NotRequested,
+			fallbackStatus,
+			fallbackStatus.GetBaseStatus(),
+			fallbackStatus,
+			IsMainHand: true,
+			AccuracyModifier: 0,
+			CriticalProbability: 100,
+			IsSkill: true,
+			CannotMiss: false,
+			ApplyMagicalCritical: true,
+			TargetIsPlayer: false,
+			TargetHasShield: false,
+			DodgeChecked: false,
+			BlockChecked: false,
+			ParryChecked: false,
+			MagicalResistChecked: false,
+			CriticalChecked: false,
+			DodgeInputMissing: false,
+			BlockInputMissing: false,
+			ParryInputMissing: false,
+			MagicalResistInputMissing: false,
+			CriticalInputMissing: false,
+			CriticalUpgraded: false,
+			OffHandConverted: false,
+			ProbeOnly: false);
+	}
+}
 
 public sealed record WorldNpcSkillAttackResult(
 	int Damage,
@@ -154,6 +381,13 @@ public enum WorldNpcSkillResultCalculationStatus
 	Calculated,
 	RandomRollMissing,
 	RandomChanceMissing,
+}
+
+public enum WorldNpcSkillAttackStatusCalculationKind
+{
+	NotRequested,
+	Physical,
+	Magical,
 }
 
 public enum WorldNpcSkillAttackStatus

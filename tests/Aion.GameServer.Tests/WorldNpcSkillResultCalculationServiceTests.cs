@@ -155,6 +155,183 @@ public sealed class WorldNpcSkillResultCalculationServiceTests
 		Assert.Equal(-25, result.EffectReserved.ValueToSend);
 	}
 
+	[Fact]
+	public void Calculate_PhysicalStatusCalculationMirrorsJavaBlockCriticalOrder()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 40,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				AttackStatusCalculation: new WorldNpcSkillAttackStatusCalculationOptions(
+					WorldNpcSkillAttackStatusCalculationKind.Physical,
+					AccuracyModifier: 15,
+					CriticalProbability: 75,
+					IsSkill: false,
+					TargetIsPlayer: true,
+					TargetHasShield: true,
+					DodgeResult: false,
+					BlockResult: true,
+					ParryResult: true,
+					CriticalResult: true))));
+
+		Assert.Equal(WorldNpcSkillAttackStatus.CriticalBlock, result.AttackResult.AttackStatus);
+		Assert.Equal(WorldNpcSkillAttackStatus.CriticalBlock, result.AttackStatusCalculation.FinalStatus);
+		Assert.Equal(WorldNpcSkillAttackStatus.Block, result.AttackStatusCalculation.BaseStatus);
+		Assert.Equal(15, result.AttackStatusCalculation.AccuracyModifier);
+		Assert.Equal(75, result.AttackStatusCalculation.CriticalProbability);
+		Assert.True(result.AttackStatusCalculation.DodgeChecked);
+		Assert.True(result.AttackStatusCalculation.BlockChecked);
+		Assert.False(result.AttackStatusCalculation.ParryChecked);
+		Assert.True(result.AttackStatusCalculation.CriticalChecked);
+		Assert.True(result.AttackStatusCalculation.CriticalUpgraded);
+		Assert.False(result.AttackStatusCalculation.HasUnresolvedProbabilityInputs);
+	}
+
+	[Fact]
+	public void Calculate_PhysicalStatusCalculationConvertsOffHandAfterCritical()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 40,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				AttackStatusCalculation: new WorldNpcSkillAttackStatusCalculationOptions(
+					WorldNpcSkillAttackStatusCalculationKind.Physical,
+					IsMainHand: false,
+					IsSkill: false,
+					TargetIsPlayer: true,
+					DodgeResult: false,
+					ParryResult: true,
+					CriticalResult: true))));
+
+		Assert.Equal(WorldNpcSkillAttackStatus.OffHandCriticalParry, result.AttackResult.AttackStatus);
+		Assert.Equal(WorldNpcSkillAttackStatus.OffHandCriticalParry, result.AttackStatusCalculation.FinalStatus);
+		Assert.Equal(WorldNpcSkillAttackStatus.Parry, result.AttackStatusCalculation.BaseStatus);
+		Assert.True(result.AttackStatusCalculation.OffHandConverted);
+		Assert.True(result.AttackStatusCalculation.ParryChecked);
+		Assert.True(result.AttackStatusCalculation.CriticalUpgraded);
+	}
+
+	[Fact]
+	public void Calculate_PhysicalCannotMissRecordsJavaProbeOnlyChecks()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 40,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				AttackStatusCalculation: new WorldNpcSkillAttackStatusCalculationOptions(
+					WorldNpcSkillAttackStatusCalculationKind.Physical,
+					CannotMiss: true,
+					CriticalResult: false))));
+
+		Assert.Equal(WorldNpcSkillAttackStatus.NormalHit, result.AttackResult.AttackStatus);
+		Assert.True(result.CannotMiss);
+		Assert.False(result.CanDodgeOrResist);
+		Assert.True(result.AttackStatusCalculation.ProbeOnly);
+		Assert.True(result.AttackStatusCalculation.DodgeChecked);
+		Assert.True(result.AttackStatusCalculation.BlockChecked);
+		Assert.True(result.AttackStatusCalculation.ParryChecked);
+		Assert.True(result.AttackStatusCalculation.DodgeInputMissing);
+		Assert.True(result.AttackStatusCalculation.BlockInputMissing);
+		Assert.True(result.AttackStatusCalculation.ParryInputMissing);
+		Assert.True(result.AttackStatusCalculation.HasUnresolvedProbabilityInputs);
+	}
+
+	[Fact]
+	public void Calculate_MagicalStatusCalculationResistShortCircuitsCritical()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 40,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				AttackStatusCalculation: new WorldNpcSkillAttackStatusCalculationOptions(
+					WorldNpcSkillAttackStatusCalculationKind.Magical,
+					IsSkill: false,
+					MagicalResistResult: true,
+					CriticalResult: true))));
+
+		Assert.Equal(WorldNpcSkillAttackStatus.Resist, result.AttackResult.AttackStatus);
+		Assert.Equal(WorldNpcSkillAttackStatus.Resist, result.AttackStatusCalculation.FinalStatus);
+		Assert.True(result.AttackStatusCalculation.MagicalResistChecked);
+		Assert.False(result.AttackStatusCalculation.CriticalChecked);
+		Assert.False(result.AttackStatusCalculation.CriticalUpgraded);
+	}
+
+	[Fact]
+	public void Calculate_MagicalStatusCalculationAppliesSkillCritical()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 40,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				AttackStatusCalculation: new WorldNpcSkillAttackStatusCalculationOptions(
+					WorldNpcSkillAttackStatusCalculationKind.Magical,
+					CriticalProbability: 150,
+					IsSkill: true,
+					ApplyMagicalCritical: true,
+					CriticalResult: true))));
+
+		Assert.Equal(WorldNpcSkillAttackStatus.Critical, result.AttackResult.AttackStatus);
+		Assert.Equal(150, result.AttackStatusCalculation.CriticalProbability);
+		Assert.False(result.AttackStatusCalculation.MagicalResistChecked);
+		Assert.True(result.AttackStatusCalculation.CriticalChecked);
+		Assert.True(result.AttackStatusCalculation.CriticalUpgraded);
+		Assert.False(result.AttackStatusCalculation.HasUnresolvedProbabilityInputs);
+	}
+
+	[Fact]
+	public void Calculate_MagicalStatusCalculationSkipsCriticalWhenMcritNotApplied()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 40,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				AttackStatusCalculation: new WorldNpcSkillAttackStatusCalculationOptions(
+					WorldNpcSkillAttackStatusCalculationKind.Magical,
+					ApplyMagicalCritical: false,
+					CriticalResult: true))));
+
+		Assert.Equal(WorldNpcSkillAttackStatus.NormalHit, result.AttackResult.AttackStatus);
+		Assert.False(result.AttackStatusCalculation.ApplyMagicalCritical);
+		Assert.False(result.AttackStatusCalculation.CriticalChecked);
+		Assert.False(result.AttackStatusCalculation.CriticalUpgraded);
+	}
+
 	[Theory]
 	[InlineData(WorldNpcSkillAttackStatus.Dodge, 0, true, false)]
 	[InlineData(WorldNpcSkillAttackStatus.OffHandDodge, 1, true, false)]
