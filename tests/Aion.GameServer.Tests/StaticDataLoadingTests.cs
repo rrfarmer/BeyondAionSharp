@@ -114,7 +114,10 @@ public sealed class StaticDataLoadingTests
 					</portal_use>
 					<portal_dialog npc_id="730000" teleport_dialog_id="1012">
 						<portal_path dialog="10000" loc_id="3001001" race="ELYOS" min_level="25" min_rank="4" kinah="500" title_id="7" err_group="9001" err_level="9002" siege_id="101" />
-						<portal_path dialog="10000" loc_id="3001002" race="ASMODIANS" />
+						<portal_path dialog="10000" loc_id="3001002" race="ASMODIANS">
+							<quest_req quest_id="1044" quest_step="3" />
+							<item_req item_id="185000077" item_count="1" />
+						</portal_path>
 					</portal_dialog>
 					<portal_scroll name="scroll_test">
 						<portal_path loc_id="4000100" />
@@ -146,6 +149,14 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(9001, dialogPath.ErrGroup);
 		Assert.Equal(9002, dialogPath.ErrLevel);
 		Assert.Equal(101, dialogPath.SiegeId);
+		var restrictedDialogPath = staticData.PortalPaths.GetPortalDialogPath(730000, 10000, "ASMODIANS");
+		Assert.NotNull(restrictedDialogPath);
+		var questRequirement = Assert.Single(restrictedDialogPath.QuestRequirements);
+		Assert.Equal(1044, questRequirement.QuestId);
+		Assert.Equal(3, questRequirement.QuestStep);
+		var itemRequirement = Assert.Single(restrictedDialogPath.ItemRequirements);
+		Assert.Equal(185000077, itemRequirement.ItemId);
+		Assert.Equal(1, itemRequirement.ItemCount);
 		Assert.Equal(1012, staticData.PortalPaths.GetTeleportDialogId(730000));
 		Assert.Equal(1011, staticData.PortalPaths.GetTeleportDialogId(1));
 		var scrollPath = staticData.PortalPaths.GetPortalScroll("scroll_test");
@@ -1023,6 +1034,16 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(1011, staticData.PortalPaths.GetTeleportDialogId(832997));
 		Assert.Equal(3006300, staticData.PortalPaths.GetPortalDialogPath(832998, 10000, "ELYOS")?.LocId);
 		Assert.Equal(1100100, staticData.PortalPaths.GetPortalScroll("LC1_RETURN_AREA_1")?.LocId);
+		var groggetSafePath = staticData.PortalPaths.GetPortalUsePath(730199, "ELYOS");
+		Assert.NotNull(groggetSafePath);
+		var groggetItemRequirement = Assert.Single(groggetSafePath.ItemRequirements);
+		Assert.Equal(185000077, groggetItemRequirement.ItemId);
+		Assert.Equal(1, groggetItemRequirement.ItemCount);
+		var heironDrakePath = staticData.PortalPaths.GetPortalUsePath(730033, "ELYOS");
+		Assert.NotNull(heironDrakePath);
+		var heironQuestRequirement = Assert.Single(heironDrakePath.QuestRequirements);
+		Assert.Equal(1636, heironQuestRequirement.QuestId);
+		Assert.Equal(3, heironQuestRequirement.QuestStep);
 		Assert.Equal(staticData.GetElementCount("portal_loc"), staticData.PortalLocs.Count);
 		var sanctumPortalLoc = staticData.PortalLocs.GetPortalLoc(1100100);
 		Assert.NotNull(sanctumPortalLoc);

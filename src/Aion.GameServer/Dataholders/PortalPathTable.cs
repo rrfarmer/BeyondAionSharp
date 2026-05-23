@@ -132,7 +132,18 @@ public sealed record PortalPathSummary(
 	int Kinah,
 	int TitleId,
 	int ErrGroup,
-	int ErrLevel);
+	int ErrLevel)
+{
+	public IReadOnlyList<PortalQuestRequirementSummary> QuestRequirements { get; init; } =
+		Array.Empty<PortalQuestRequirementSummary>();
+
+	public IReadOnlyList<PortalItemRequirementSummary> ItemRequirements { get; init; } =
+		Array.Empty<PortalItemRequirementSummary>();
+}
+
+public sealed record PortalQuestRequirementSummary(int QuestId, int QuestStep);
+
+public sealed record PortalItemRequirementSummary(int ItemId, int ItemCount);
 
 public enum PortalPathSource
 {

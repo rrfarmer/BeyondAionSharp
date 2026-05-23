@@ -238,6 +238,7 @@ public sealed class StaticData
 		string? currentPlayerCreationClass = null;
 		InstanceCooltimeBuilder? currentInstanceCooltime = null;
 		PortalPathParent? currentPortalPathParent = null;
+		PortalPathBuilder? currentPortalPath = null;
 		ItemTemplateBuilder? currentItemTemplate = null;
 		ItemRandomBonusBuilder? currentItemRandomBonus = null;
 		ItemSetBuilder? currentItemSet = null;
@@ -297,6 +298,16 @@ public sealed class StaticData
 
 				if (reader.Depth == 2 && reader.LocalName is "portal_use" or "portal_dialog" or "portal_scroll")
 					currentPortalPathParent = null;
+
+				if (reader.Depth == 3 && reader.LocalName == "portal_path" && currentPortalPath != null)
+				{
+					AddPortalPathSummary(
+						currentPortalPath.ToSummary(),
+						portalUsePaths,
+						portalDialogPaths,
+						portalScrollPaths);
+					currentPortalPath = null;
+				}
 
 				if (reader.Depth == 2 && reader.LocalName == "item_template" && currentItemTemplate != null)
 				{
@@ -548,8 +559,8 @@ public sealed class StaticData
 
 			if (reader.Depth == 3 && reader.LocalName == "portal_path" && currentPortalPathParent != null)
 			{
-				// Java parity: model/templates/portal/PortalPath scalar JAXB attributes; quest_req/item_req remain future work.
-				var path = currentPortalPathParent.CreateSummary(
+				// Java parity: model/templates/portal/PortalPath scalar JAXB attributes plus child requirements.
+				currentPortalPath = currentPortalPathParent.CreateBuilder(
 					ReadIntAttribute(reader, "dialog"),
 					ReadIntAttribute(reader, "loc_id"),
 					ReadIntAttribute(reader, "siege_id"),
@@ -560,19 +571,36 @@ public sealed class StaticData
 					ReadIntAttribute(reader, "title_id"),
 					ReadIntAttribute(reader, "err_group"),
 					ReadIntAttribute(reader, "err_level"));
-				switch (path.Source)
+				if (reader.IsEmptyElement)
 				{
-					case PortalPathSource.Use:
-						portalUsePaths.Add(path);
-						break;
-					case PortalPathSource.Dialog:
-						portalDialogPaths.Add(path);
-						break;
-					case PortalPathSource.Scroll:
-						portalScrollPaths.Add(path);
-						break;
+					AddPortalPathSummary(
+						currentPortalPath.ToSummary(),
+						portalUsePaths,
+						portalDialogPaths,
+						portalScrollPaths);
+					currentPortalPath = null;
 				}
 
+				continue;
+			}
+
+			if (reader.Depth == 4 && reader.LocalName == "quest_req" && currentPortalPath != null)
+			{
+				// Java parity: model/templates/portal/QuestReq child entries are carried structurally for future checkQuests parity.
+				currentPortalPath.AddQuestRequirement(
+					new PortalQuestRequirementSummary(
+						ReadIntAttribute(reader, "quest_id"),
+						ReadIntAttribute(reader, "quest_step")));
+				continue;
+			}
+
+			if (reader.Depth == 4 && reader.LocalName == "item_req" && currentPortalPath != null)
+			{
+				// Java parity: model/templates/portal/ItemReq child entries are carried structurally for future item removal parity.
+				currentPortalPath.AddItemRequirement(
+					new PortalItemRequirementSummary(
+						ReadIntAttribute(reader, "item_id"),
+						ReadIntAttribute(reader, "item_count")));
 				continue;
 			}
 
@@ -2153,6 +2181,26 @@ public sealed class StaticData
 		return processedRules.AsReadOnly();
 	}
 
+	private static void AddPortalPathSummary(
+		PortalPathSummary path,
+		ICollection<PortalPathSummary> portalUsePaths,
+		ICollection<PortalPathSummary> portalDialogPaths,
+		ICollection<PortalPathSummary> portalScrollPaths)
+	{
+		switch (path.Source)
+		{
+			case PortalPathSource.Use:
+				portalUsePaths.Add(path);
+				break;
+			case PortalPathSource.Dialog:
+				portalDialogPaths.Add(path);
+				break;
+			case PortalPathSource.Scroll:
+				portalScrollPaths.Add(path);
+				break;
+		}
+	}
+
 	private static bool MatchesGlobalDropNpcName(GlobalDropNpcNameSummary ruleName, string npcName)
 	{
 		var value = ruleName.Value.ToLowerInvariant();
@@ -2480,7 +2528,7 @@ public sealed class StaticData
 			return new PortalPathParent(PortalPathSource.Scroll, 0, scrollName);
 		}
 
-		public PortalPathSummary CreateSummary(
+		public PortalPathBuilder CreateBuilder(
 			int dialog,
 			int locId,
 			int siegeId,
@@ -2492,7 +2540,7 @@ public sealed class StaticData
 			int errGroup,
 			int errLevel)
 		{
-			return new PortalPathSummary(
+			return new PortalPathBuilder(
 				Source,
 				NpcId,
 				ScrollName,
@@ -2506,6 +2554,88 @@ public sealed class StaticData
 				titleId,
 				errGroup,
 				errLevel);
+		}
+	}
+
+	private sealed class PortalPathBuilder
+	{
+		private readonly List<PortalQuestRequirementSummary> _questRequirements = [];
+		private readonly List<PortalItemRequirementSummary> _itemRequirements = [];
+
+		public PortalPathBuilder(
+			PortalPathSource source,
+			int npcId,
+			string scrollName,
+			int dialog,
+			int locId,
+			int siegeId,
+			string race,
+			int minLevel,
+			int minRank,
+			int kinah,
+			int titleId,
+			int errGroup,
+			int errLevel)
+		{
+			Source = source;
+			NpcId = npcId;
+			ScrollName = scrollName;
+			Dialog = dialog;
+			LocId = locId;
+			SiegeId = siegeId;
+			Race = race;
+			MinLevel = minLevel;
+			MinRank = minRank;
+			Kinah = kinah;
+			TitleId = titleId;
+			ErrGroup = errGroup;
+			ErrLevel = errLevel;
+		}
+
+		private PortalPathSource Source { get; }
+		private int NpcId { get; }
+		private string ScrollName { get; }
+		private int Dialog { get; }
+		private int LocId { get; }
+		private int SiegeId { get; }
+		private string Race { get; }
+		private int MinLevel { get; }
+		private int MinRank { get; }
+		private int Kinah { get; }
+		private int TitleId { get; }
+		private int ErrGroup { get; }
+		private int ErrLevel { get; }
+
+		public void AddQuestRequirement(PortalQuestRequirementSummary requirement)
+		{
+			_questRequirements.Add(requirement);
+		}
+
+		public void AddItemRequirement(PortalItemRequirementSummary requirement)
+		{
+			_itemRequirements.Add(requirement);
+		}
+
+		public PortalPathSummary ToSummary()
+		{
+			return new PortalPathSummary(
+				Source,
+				NpcId,
+				ScrollName,
+				Dialog,
+				LocId,
+				SiegeId,
+				Race,
+				MinLevel,
+				MinRank,
+				Kinah,
+				TitleId,
+				ErrGroup,
+				ErrLevel)
+			{
+				QuestRequirements = _questRequirements.ToArray(),
+				ItemRequirements = _itemRequirements.ToArray(),
+			};
 		}
 	}
 
