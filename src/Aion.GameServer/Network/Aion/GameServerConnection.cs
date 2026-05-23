@@ -931,7 +931,22 @@ public sealed class GameServerConnection : BaseClientConnection
 					// Java parity: CreatureController.onAfterSpawn revalidates zones after the player enters the world.
 					await RevalidatePlayerFlightZonesAsync(enterWorldResult.Player);
 					await SendPacketAsync(new SmChannelInfo(enterWorldResult.Player.Position, staticData?.WorldMaps ?? Array.Empty<WorldMapSummary>()));
+					var restoredKiskBinding = _runtimeContext?.Kisks.RestoreOfflineBinding(enterWorldResult.Player);
 					await SendPacketAsync(CreateBindPointPacket(enterWorldResult.Player, staticData));
+					if (restoredKiskBinding?.Kisk != null)
+					{
+						// Java parity: KiskService.onLogin -> Kisk.addPlayer duplicate branch + TeleportService.sendKiskBindPoint.
+						await SendPacketAsync(new SmKiskUpdate(restoredKiskBinding.Kisk));
+						if (TryGetKiskPosition(restoredKiskBinding.Kisk.ObjectId, out var restoredKiskPosition))
+						{
+							if (restoredKiskBinding.AddedMember)
+								await BroadcastKiskUpdateAsync(
+									restoredKiskBinding.Kisk,
+									restoredKiskPosition,
+									excludedPlayerObjectId: enterWorldResult.Player.ObjectId);
+							await SendPacketAsync(SmBindPointInfo.Kisk(restoredKiskPosition, restoredKiskBinding.Kisk.ObjectId));
+						}
+					}
 					await SendPacketAsync(new SmPlayerSpawn(enterWorldResult.Player));
 					RegisterLoadedHouses(enterWorldResult.Player, staticData?.HousingTemplates);
 					if (_connectionRegistry != null)
@@ -5954,6 +5969,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (_chatServer != null)
 			await _chatServer.SendPlayerLogoutAsync(player.ObjectId);
 		_expirableTaskService?.UnregisterPlayer(player);
+		SaveOfflineKiskBinding(player);
 		await DismissPostmanAsync(player, notifyClient: notifyPostmanClient);
 		_pendingHouseObjectUse?.Task.Cancel();
 		_pendingHouseObjectUse = null;
@@ -5966,6 +5982,15 @@ public sealed class GameServerConnection : BaseClientConnection
 		else
 			_world?.TryRemoveObject(player.ObjectId, out _);
 		_activePlayer = null;
+	}
+
+	private void SaveOfflineKiskBinding(Player player)
+	{
+		// Java parity: services/KiskService.onLogout stores the current Kisk for later onLogin restoration.
+		if (player.BoundKiskObjectId == 0)
+			return;
+
+		_runtimeContext?.Kisks.RegisterOfflineBinding(player.ObjectId, player.BoundKiskObjectId);
 	}
 
 	private void HandleTargetSelect(Player player, CmTargetSelect packet)

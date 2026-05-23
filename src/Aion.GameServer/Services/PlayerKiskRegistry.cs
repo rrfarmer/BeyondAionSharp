@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model.GameObjects;
 
 namespace Aion.GameServer.Services;
 
@@ -7,6 +8,7 @@ public sealed class PlayerKiskRegistry
 {
 	private readonly ConcurrentDictionary<int, PlayerKiskRuntimeState> _ownerKisks = new();
 	private readonly ConcurrentDictionary<int, int> _ownersByKiskId = new();
+	private readonly ConcurrentDictionary<int, int> _offlineBoundKiskIdsByPlayerId = new();
 
 	public PlayerKiskOwnership RegisterKisk(int ownerObjectId, int kiskObjectId, int npcId)
 	{
@@ -68,7 +70,39 @@ public sealed class PlayerKiskRegistry
 		if (!_ownersByKiskId.TryRemove(kiskObjectId, out var ownerObjectId))
 			return false;
 
-		return _ownerKisks.TryRemove(ownerObjectId, out removedKisk);
+		if (!_ownerKisks.TryRemove(ownerObjectId, out removedKisk))
+			return false;
+
+		foreach (var memberObjectId in removedKisk.CurrentMemberIds)
+			_offlineBoundKiskIdsByPlayerId.TryRemove(memberObjectId, out _);
+		return true;
+	}
+
+	public bool RegisterOfflineBinding(int playerObjectId, int kiskObjectId)
+	{
+		// Java parity: services/KiskService.onLogout stores Player.getKisk for offline restore.
+		if (playerObjectId <= 0 || GetKiskState(kiskObjectId) == null)
+			return false;
+
+		_offlineBoundKiskIdsByPlayerId[playerObjectId] = kiskObjectId;
+		return true;
+	}
+
+	public PlayerKiskOfflineBindingRestoreResult RestoreOfflineBinding(Player player)
+	{
+		// Java parity: services/KiskService.onLogin reattaches a player to the stored offline Kisk.
+		if (!_offlineBoundKiskIdsByPlayerId.TryRemove(player.ObjectId, out var kiskObjectId))
+			return PlayerKiskOfflineBindingRestoreResult.NotFound();
+
+		var kisk = GetKiskState(kiskObjectId);
+		if (kisk == null)
+			return PlayerKiskOfflineBindingRestoreResult.Expired(kiskObjectId);
+
+		var addedMember = kisk.AddMember(player.ObjectId);
+		player.BoundKiskObjectId = kisk.ObjectId;
+		return addedMember
+			? PlayerKiskOfflineBindingRestoreResult.RestoredAdded(kisk)
+			: PlayerKiskOfflineBindingRestoreResult.RestoredExisting(kisk);
 	}
 }
 
@@ -76,6 +110,52 @@ public sealed record PlayerKiskOwnership(
 	int KiskObjectId,
 	int OwnerObjectId,
 	int NpcId);
+
+public sealed record PlayerKiskOfflineBindingRestoreResult(
+	PlayerKiskOfflineBindingRestoreStatus Status,
+	int KiskObjectId,
+	PlayerKiskRuntimeState? Kisk,
+	bool AddedMember)
+{
+	public bool Restored => Status is PlayerKiskOfflineBindingRestoreStatus.RestoredAddedMember
+		or PlayerKiskOfflineBindingRestoreStatus.RestoredExistingMember;
+
+	public static PlayerKiskOfflineBindingRestoreResult NotFound()
+	{
+		return new PlayerKiskOfflineBindingRestoreResult(PlayerKiskOfflineBindingRestoreStatus.NotFound, 0, null, false);
+	}
+
+	public static PlayerKiskOfflineBindingRestoreResult Expired(int kiskObjectId)
+	{
+		return new PlayerKiskOfflineBindingRestoreResult(PlayerKiskOfflineBindingRestoreStatus.Expired, kiskObjectId, null, false);
+	}
+
+	public static PlayerKiskOfflineBindingRestoreResult RestoredAdded(PlayerKiskRuntimeState kisk)
+	{
+		return new PlayerKiskOfflineBindingRestoreResult(
+			PlayerKiskOfflineBindingRestoreStatus.RestoredAddedMember,
+			kisk.ObjectId,
+			kisk,
+			true);
+	}
+
+	public static PlayerKiskOfflineBindingRestoreResult RestoredExisting(PlayerKiskRuntimeState kisk)
+	{
+		return new PlayerKiskOfflineBindingRestoreResult(
+			PlayerKiskOfflineBindingRestoreStatus.RestoredExistingMember,
+			kisk.ObjectId,
+			kisk,
+			false);
+	}
+}
+
+public enum PlayerKiskOfflineBindingRestoreStatus
+{
+	NotFound,
+	Expired,
+	RestoredAddedMember,
+	RestoredExistingMember,
+}
 
 public sealed class PlayerKiskRuntimeState
 {

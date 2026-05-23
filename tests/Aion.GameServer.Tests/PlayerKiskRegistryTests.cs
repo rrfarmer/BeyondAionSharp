@@ -1,3 +1,4 @@
+using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Services;
 
 namespace Aion.GameServer.Tests;
@@ -69,5 +70,49 @@ public sealed class PlayerKiskRegistryTests
 		runtimeContext.Kisks.RegisterKisk(ownerObjectId: 1001, kiskObjectId: 9001, npcId: 700273);
 
 		Assert.True(runtimeContext.Kisks.HaveKisk(1001));
+	}
+
+	[Fact]
+	public void OfflineBindingRestoreMatchesJavaKiskServiceLoginLogoutSlice()
+	{
+		var registry = new PlayerKiskRegistry();
+		var kisk = new PlayerKiskRuntimeState(objectId: 9001, ownerObjectId: 1001, npcId: 700273);
+		Assert.True(kisk.AddMember(1002));
+		registry.RegisterKisk(kisk);
+		Assert.True(registry.RegisterOfflineBinding(playerObjectId: 1002, kiskObjectId: 9001));
+		var player = new Player { ObjectId = 1002 };
+
+		var result = registry.RestoreOfflineBinding(player);
+		var secondResult = registry.RestoreOfflineBinding(player);
+
+		Assert.Equal(PlayerKiskOfflineBindingRestoreStatus.RestoredExistingMember, result.Status);
+		Assert.Same(kisk, result.Kisk);
+		Assert.False(result.AddedMember);
+		Assert.Equal(9001, player.BoundKiskObjectId);
+		Assert.Equal(1, kisk.CurrentMemberCount);
+		Assert.Equal(PlayerKiskOfflineBindingRestoreStatus.NotFound, secondResult.Status);
+	}
+
+	[Fact]
+	public void OfflineBindingRestoreAddsMissingMemberAndExpiresWhenKiskIsRemoved()
+	{
+		var registry = new PlayerKiskRegistry();
+		var kisk = new PlayerKiskRuntimeState(objectId: 9001, ownerObjectId: 1001, npcId: 700273);
+		registry.RegisterKisk(kisk);
+		Assert.False(registry.RegisterOfflineBinding(playerObjectId: 1002, kiskObjectId: 8001));
+		Assert.True(registry.RegisterOfflineBinding(playerObjectId: 1002, kiskObjectId: 9001));
+		var player = new Player { ObjectId = 1002 };
+
+		var result = registry.RestoreOfflineBinding(player);
+
+		Assert.Equal(PlayerKiskOfflineBindingRestoreStatus.RestoredAddedMember, result.Status);
+		Assert.True(result.AddedMember);
+		Assert.Contains(1002, kisk.CurrentMemberIds);
+		Assert.Equal(9001, player.BoundKiskObjectId);
+
+		Assert.True(registry.RegisterOfflineBinding(playerObjectId: 1002, kiskObjectId: 9001));
+		Assert.True(registry.TryRemoveKisk(9001, out _));
+		var expiredAfterRemoval = registry.RestoreOfflineBinding(new Player { ObjectId = 1002 });
+		Assert.Equal(PlayerKiskOfflineBindingRestoreStatus.NotFound, expiredAfterRemoval.Status);
 	}
 }
