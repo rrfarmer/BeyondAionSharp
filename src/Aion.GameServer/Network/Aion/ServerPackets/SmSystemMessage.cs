@@ -75,6 +75,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1400640, worldId.ToString(System.Globalization.CultureInfo.InvariantCulture));
 	}
 
+	public static SmSystemMessage CannotMakeInstanceCoolTime()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_CANNOT_MAKE_INSTANCE_COOL_TIME.
+		return new SmSystemMessage(1400043);
+	}
+
 	public static SmSystemMessage NotEnoughKinah(long kinah)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_NOT_ENOUGH_KINA.
