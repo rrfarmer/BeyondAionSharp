@@ -1374,9 +1374,17 @@ public sealed class PortalEntryValidationServiceTests
 	}
 
 	[Fact]
-	public void ValidatePortalEntryPlan_TeamMemberStillStopsBeforeUnsupportedFanout()
+	public void ValidatePortalEntryPlan_GroupMemberStopsWithBlockedTeamPlanBeforeFanout()
 	{
-		var player = new Player { Race = "ELYOS", Level = 25, TeamMembership = PlayerTeamMembership.Group };
+		var player = new Player
+		{
+			ObjectId = 1001,
+			Race = "ELYOS",
+			Level = 25,
+			TeamMembership = PlayerTeamMembership.Group,
+			CurrentTeamId = 88001,
+			CurrentTeamMemberObjectIds = [1001, 1002],
+		};
 
 		var result = PortalEntryValidationService.ValidatePortalEntryPlan(
 			player,
@@ -1391,6 +1399,12 @@ public sealed class PortalEntryValidationServiceTests
 		Assert.Equal(PortalEntryValidationStatus.UnsupportedTeamPortal, result.Status);
 		Assert.NotNull(result.PortalLoc);
 		Assert.Null(result.FailurePacket);
+		Assert.NotNull(result.TeamPlan);
+		Assert.Equal(PortalTeamEntryKind.Group, result.TeamPlan.Kind);
+		Assert.Equal(88001, result.TeamPlan.TeamId);
+		Assert.Equal([1001, 1002], result.TeamPlan.MemberObjectIds);
+		Assert.Equal(6, result.TeamPlan.MaxPlayers);
+		Assert.False(result.TeamPlan.FanoutSupported);
 	}
 
 	private const int WorldId = 300030000;

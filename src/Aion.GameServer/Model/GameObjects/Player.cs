@@ -235,6 +235,12 @@ public sealed class Player
 
 	public bool IsInTeam => TeamMembership != PlayerTeamMembership.None;
 
+	// Java parity: PlayerGroup.getTeamId / PlayerAlliance.getObjectId consumed by PortalService team instance lookup.
+	public int CurrentTeamId { get; set; }
+
+	// Java parity: PlayerGroup.getMembers used by PortalService group instance reuse/fanout; currently only plan metadata.
+	public IReadOnlyList<int> CurrentTeamMemberObjectIds { get; set; } = Array.Empty<int>();
+
 	// Java parity: model/gameobjects/player/Player.isLooting / getLootingNpcOid used by DropService request/close list.
 	public int LootingNpcObjectId { get; set; }
 

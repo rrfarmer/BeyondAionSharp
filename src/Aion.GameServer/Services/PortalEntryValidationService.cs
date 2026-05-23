@@ -67,7 +67,7 @@ public static class PortalEntryValidationService
 		}
 
 		if (maxPlayers != 0 && maxPlayers != 1)
-			return PortalEntryPlanResult.UnsupportedTeamPortal(loc);
+			return PortalEntryPlanResult.UnsupportedTeamPortal(loc, CreateUnsupportedTeamPlan(player, maxPlayers));
 
 		var instanceValidation = ValidateCooldownForRegisteredInstance(
 			player,
@@ -620,6 +620,32 @@ public static class PortalEntryValidationService
 			_ => null,
 		};
 	}
+
+	private static PortalTeamEntryPlan? CreateUnsupportedTeamPlan(Player player, int maxPlayers)
+	{
+		// Java parity: services/teleport/PortalService.port preserves team id/member context before group/alliance transfer fanout.
+		if (maxPlayers is 3 or 6 && player.TeamMembership == PlayerTeamMembership.Group)
+		{
+			return new PortalTeamEntryPlan(
+				PortalTeamEntryKind.Group,
+				player.CurrentTeamId,
+				player.CurrentTeamMemberObjectIds,
+				maxPlayers,
+				FanoutSupported: false);
+		}
+
+		if (maxPlayers > 6 && maxPlayers <= 24 && player.TeamMembership == PlayerTeamMembership.Alliance)
+		{
+			return new PortalTeamEntryPlan(
+				PortalTeamEntryKind.Alliance,
+				player.CurrentTeamId,
+				player.CurrentTeamMemberObjectIds,
+				maxPlayers,
+				FanoutSupported: false);
+		}
+
+		return null;
+	}
 }
 
 public sealed record PortalEntryValidationResult(
@@ -760,6 +786,7 @@ public sealed record PortalEntryPlanResult(
 	PortalLocSummary? PortalLoc,
 	WorldMapInstanceRuntimeState? RegisteredInstance,
 	bool Reenter,
+	PortalTeamEntryPlan? TeamPlan,
 	GameServerPacket? FailurePacket)
 {
 	public static PortalEntryPlanResult Allowed(
@@ -774,6 +801,7 @@ public sealed record PortalEntryPlanResult(
 			portalLoc,
 			registeredInstance,
 			reenter,
+			null,
 			null);
 	}
 
@@ -788,6 +816,7 @@ public sealed record PortalEntryPlanResult(
 			portalLoc,
 			registeredInstance,
 			false,
+			null,
 			null);
 	}
 
@@ -800,10 +829,13 @@ public sealed record PortalEntryPlanResult(
 			null,
 			null,
 			false,
+			null,
 			null);
 	}
 
-	public static PortalEntryPlanResult UnsupportedTeamPortal(PortalLocSummary portalLoc)
+	public static PortalEntryPlanResult UnsupportedTeamPortal(
+		PortalLocSummary portalLoc,
+		PortalTeamEntryPlan? teamPlan = null)
 	{
 		return new PortalEntryPlanResult(
 			false,
@@ -812,6 +844,7 @@ public sealed record PortalEntryPlanResult(
 			portalLoc,
 			null,
 			false,
+			teamPlan,
 			null);
 	}
 
@@ -827,8 +860,23 @@ public sealed record PortalEntryPlanResult(
 			portalLoc,
 			null,
 			false,
+			null,
 			failurePacket);
 	}
+}
+
+public sealed record PortalTeamEntryPlan(
+	PortalTeamEntryKind Kind,
+	int TeamId,
+	IReadOnlyList<int> MemberObjectIds,
+	int MaxPlayers,
+	bool FanoutSupported);
+
+public enum PortalTeamEntryKind
+{
+	Group,
+	Alliance,
+	League,
 }
 
 public enum PortalEntryPlanAction
