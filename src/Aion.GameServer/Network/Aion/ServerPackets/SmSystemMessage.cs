@@ -165,6 +165,18 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1301061);
 	}
 
+	public static SmSystemMessage ForceHeIsNewLeader(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_FORCE_HE_IS_NEW_LEADER(String).
+		return new SmSystemMessage(1300998, playerName);
+	}
+
+	public static SmSystemMessage ForceYouBecomeNewLeader()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_FORCE_YOU_BECOME_NEW_LEADER.
+		return new SmSystemMessage(1300999);
+	}
+
 	public static SmSystemMessage EnterOnlyUnionDon()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ENTER_ONLY_UNION_DON.

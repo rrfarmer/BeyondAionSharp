@@ -53,6 +53,16 @@ public sealed record PlayerAllianceViceCaptainAssignmentPlan(
 	PlayerAllianceSystemMessageIntent? SystemMessageIntent = null,
 	bool WouldBroadcastLeague = false);
 
+public sealed record PlayerAllianceLeaderChangePlan(
+	int AllianceId,
+	int OldLeaderObjectId,
+	int NewLeaderObjectId,
+	bool EventPlayerWasSpecified,
+	IReadOnlyList<int> ViceCaptainObjectIdsAfterEvent,
+	IReadOnlyList<PlayerAllianceInfoIntent> AllianceInfoIntents,
+	IReadOnlyList<PlayerAllianceSystemMessageIntent> SystemMessageIntents,
+	bool WouldBroadcastLeague = false);
+
 public sealed record PlayerAllianceInfoIntent(
 	int RecipientObjectId,
 	PlayerAllianceInfoPacketPlan PacketPlan)

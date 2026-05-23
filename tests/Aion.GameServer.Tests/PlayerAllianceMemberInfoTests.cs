@@ -413,6 +413,85 @@ public sealed class PlayerAllianceMemberInfoTests
 	}
 
 	[Fact]
+	public void LeaderChangePlanner_PlansNonLeagueAllianceInfoAndSystemMessagesLikeJavaChangeAllianceLeaderEvent()
+	{
+		var planner = new PlayerAllianceLeaderChangePlanner();
+		var oldLeader = CreateAllianceMember(1001, "OldLeader", worldId: 210010000);
+		var newLeader = CreateAllianceMember(1002, "NewLeader", worldId: 220010000);
+		var other = CreateAllianceMember(1003, "Other", worldId: 230010000);
+
+		var plan = planner.CreateLeaderChangePlan(
+			88001,
+			oldLeaderObjectId: 1001,
+			[oldLeader, newLeader, other],
+			currentViceCaptainObjectIds: [1002, 1004],
+			newLeaderObjectId: 1002,
+			eventPlayerWasSpecified: true);
+
+		Assert.Equal(88001, plan.AllianceId);
+		Assert.Equal(1001, plan.OldLeaderObjectId);
+		Assert.Equal(1002, plan.NewLeaderObjectId);
+		Assert.True(plan.EventPlayerWasSpecified);
+		Assert.False(plan.WouldBroadcastLeague);
+		Assert.Equal([1004], plan.ViceCaptainObjectIdsAfterEvent);
+		Assert.Collection(
+			plan.AllianceInfoIntents,
+			intent => AssertAllianceInfoIntentAndPacket(intent, 1001, expectedAllianceGroupSize: 3, expectedLeaderObjectId: 1002, expectedActivePlayerMapId: 210010000, expectedPaddedViceCaptainIds: [1004, 0, 0, 0]),
+			intent => AssertAllianceInfoIntentAndPacket(intent, 1002, expectedAllianceGroupSize: 3, expectedLeaderObjectId: 1002, expectedActivePlayerMapId: 220010000, expectedPaddedViceCaptainIds: [1004, 0, 0, 0]),
+			intent => AssertAllianceInfoIntentAndPacket(intent, 1003, expectedAllianceGroupSize: 3, expectedLeaderObjectId: 1002, expectedActivePlayerMapId: 230010000, expectedPaddedViceCaptainIds: [1004, 0, 0, 0]));
+		Assert.Collection(
+			plan.SystemMessageIntents,
+			intent => AssertSystemMessageIntent(intent, 1001, 1300998),
+			intent => AssertSystemMessageIntent(intent, 1002, 1300999),
+			intent => AssertSystemMessageIntent(intent, 1003, 1300998));
+	}
+
+	[Fact]
+	public void LeaderChangePlanner_SkipsHeIsNewLeaderWhenEventPlayerIsMissingLikeJavaLeaveFallback()
+	{
+		var planner = new PlayerAllianceLeaderChangePlanner();
+		var oldLeader = CreateAllianceMember(1001, "OldLeader", worldId: 210010000);
+		var newLeader = CreateAllianceMember(1002, "NewLeader", worldId: 220010000);
+		var other = CreateAllianceMember(1003, "Other", worldId: 230010000);
+
+		var plan = planner.CreateLeaderChangePlan(
+			88001,
+			oldLeaderObjectId: 1001,
+			[oldLeader, newLeader, other],
+			currentViceCaptainObjectIds: [1002, 1004],
+			newLeaderObjectId: 1002,
+			eventPlayerWasSpecified: false);
+
+		Assert.Collection(
+			plan.SystemMessageIntents,
+			intent => AssertSystemMessageIntent(intent, 1002, 1300999));
+	}
+
+	[Fact]
+	public void LeaderChangePlanner_SkipsAllianceInfoWhenLeagueBroadcastWillHandleItLikeJava()
+	{
+		var planner = new PlayerAllianceLeaderChangePlanner();
+		var oldLeader = CreateAllianceMember(1001, "OldLeader", worldId: 210010000);
+		var newLeader = CreateAllianceMember(1002, "NewLeader", worldId: 220010000);
+
+		var plan = planner.CreateLeaderChangePlan(
+			88001,
+			oldLeaderObjectId: 1001,
+			[oldLeader, newLeader],
+			currentViceCaptainObjectIds: [1002],
+			newLeaderObjectId: 1002,
+			eventPlayerWasSpecified: true,
+			isInLeague: true);
+
+		Assert.True(plan.WouldBroadcastLeague);
+		Assert.Empty(plan.AllianceInfoIntents);
+		Assert.Collection(
+			plan.SystemMessageIntents,
+			intent => AssertSystemMessageIntent(intent, 1001, 1300998),
+			intent => AssertSystemMessageIntent(intent, 1002, 1300999));
+	}
+
+	[Fact]
 	public void SmAllianceMemberInfo_RewritesOfflineEnterToEnterOfflineLikeJava()
 	{
 		var member = new Player
@@ -635,6 +714,35 @@ public sealed class PlayerAllianceMemberInfoTests
 		Assert.Equal(expectedMessageId, reader.ReadD());
 		Assert.Equal(expectedMessage, reader.ReadS());
 		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertAllianceInfoIntentAndPacket(
+		PlayerAllianceInfoIntent intent,
+		int expectedRecipientObjectId,
+		int expectedAllianceGroupSize,
+		int expectedLeaderObjectId,
+		int expectedActivePlayerMapId,
+		IReadOnlyList<int> expectedPaddedViceCaptainIds)
+	{
+		Assert.Equal(expectedRecipientObjectId, intent.RecipientObjectId);
+		AssertAllianceInfoPacketPayload(
+			intent.CreatePacket(),
+			expectedAllianceGroupSize,
+			expectedAllianceId: 88001,
+			expectedLeaderObjectId,
+			expectedActivePlayerMapId,
+			expectedPaddedViceCaptainIds,
+			expectedMessageId: 0,
+			expectedMessage: string.Empty);
+	}
+
+	private static void AssertSystemMessageIntent(
+		PlayerAllianceSystemMessageIntent intent,
+		int expectedRecipientObjectId,
+		int expectedMessageId)
+	{
+		Assert.Equal(expectedRecipientObjectId, intent.RecipientObjectId);
+		Assert.Equal(expectedMessageId, intent.Message.MessageId);
 	}
 
 	private static Player CreateAllianceMember(int objectId, string name, int worldId)
