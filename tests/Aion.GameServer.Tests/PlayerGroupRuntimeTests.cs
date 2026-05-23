@@ -301,6 +301,98 @@ public sealed class PlayerGroupRuntimeTests
 	}
 
 	[Fact]
+	public void MovementUpdatePlanner_ModelsScheduledTeamMoveAndStatGroupUpdatesLikeJava()
+	{
+		var runtime = new PlayerGroupRuntime();
+		var planner = new PlayerGroupMovementUpdatePlanner(runtime);
+		var leader = new Player { ObjectId = 1001, Name = "Leader", IsOnline = true };
+		var mover = new Player
+		{
+			ObjectId = 1002,
+			Name = "Mover",
+			IsOnline = true,
+			Position = new WorldPosition(220010000, 11, 22, 33, 64),
+		};
+		var watcher = new Player { ObjectId = 1003, Name = "Watcher", IsOnline = true };
+		runtime.CreateOrUpdateGroup(99001, [leader, mover, watcher]);
+
+		var movePlan = planner.CreateTeamMoveUpdatePlan(mover);
+		var statPlan = planner.CreateTeamStatUpdatePlan(mover);
+
+		AssertMovementUpdateCallerPlan(movePlan, PlayerGroupMovementUpdateTrigger.TeamMoveUpdater, 1002, [1001, 1003]);
+		AssertMovementUpdateCallerPlan(statPlan, PlayerGroupMovementUpdateTrigger.TeamStatUpdater, 1002, [1001, 1003]);
+	}
+
+	[Fact]
+	public void MovementUpdatePlanner_ModelsEffectAndReviveGroupMovementCallersLikeJava()
+	{
+		var runtime = new PlayerGroupRuntime();
+		var planner = new PlayerGroupMovementUpdatePlanner(runtime);
+		var leader = new Player { ObjectId = 1001, Name = "Leader", IsOnline = true };
+		var subject = new Player { ObjectId = 1002, Name = "Subject", IsOnline = true };
+		runtime.CreateOrUpdateGroup(99001, [leader, subject]);
+
+		var effectPlan = planner.CreateEffectMovementUpdatePlan(subject);
+		var revivePlan = planner.CreateReviveMovementUpdatePlan(subject);
+
+		AssertMovementUpdateCallerPlan(effectPlan, PlayerGroupMovementUpdateTrigger.PlayerEffectController, 1002, [1001]);
+		AssertMovementUpdateCallerPlan(revivePlan, PlayerGroupMovementUpdateTrigger.PlayerReviveService, 1002, [1001]);
+	}
+
+	[Fact]
+	public void MovementUpdatePlanner_SkipsOfflineScheduledUpdatesAndDeferredAllianceBranches()
+	{
+		var runtime = new PlayerGroupRuntime();
+		var planner = new PlayerGroupMovementUpdatePlanner(runtime);
+		var leader = new Player { ObjectId = 1001, IsOnline = true };
+		var offlineMember = new Player { ObjectId = 1002, IsOnline = false };
+		runtime.CreateOrUpdateGroup(99001, [leader, offlineMember]);
+		var allianceMember = new Player
+		{
+			ObjectId = 1003,
+			IsOnline = true,
+			TeamMembership = PlayerTeamMembership.Alliance,
+			CurrentTeamId = 88001,
+		};
+
+		var offlinePlan = planner.CreateTeamMoveUpdatePlan(offlineMember);
+		var alliancePlan = planner.CreateTeamStatUpdatePlan(allianceMember);
+
+		Assert.False(offlinePlan.IsPlanned);
+		Assert.Equal(PlayerGroupMovementUpdateTrigger.TeamMoveUpdater, offlinePlan.Trigger);
+		Assert.Equal(1002, offlinePlan.PlayerObjectId);
+		Assert.Equal(PlayerGroupMovementUpdateStatus.Offline, offlinePlan.Status);
+		Assert.Null(offlinePlan.MemberInfoUpdatePlan);
+		Assert.False(alliancePlan.IsPlanned);
+		Assert.Equal(PlayerGroupMovementUpdateTrigger.TeamStatUpdater, alliancePlan.Trigger);
+		Assert.Equal(1003, alliancePlan.PlayerObjectId);
+		Assert.Equal(PlayerGroupMovementUpdateStatus.AllianceDeferred, alliancePlan.Status);
+		Assert.Null(alliancePlan.MemberInfoUpdatePlan);
+	}
+
+	[Fact]
+	public void MovementUpdatePlanner_ReportsMissingRuntimeGroupForDetachedGroupMember()
+	{
+		var runtime = new PlayerGroupRuntime();
+		var planner = new PlayerGroupMovementUpdatePlanner(runtime);
+		var detached = new Player
+		{
+			ObjectId = 1001,
+			IsOnline = true,
+			TeamMembership = PlayerTeamMembership.Group,
+			CurrentTeamId = 99001,
+		};
+
+		var plan = planner.CreateTeamMoveUpdatePlan(detached);
+
+		Assert.False(plan.IsPlanned);
+		Assert.Equal(PlayerGroupMovementUpdateTrigger.TeamMoveUpdater, plan.Trigger);
+		Assert.Equal(1001, plan.PlayerObjectId);
+		Assert.Equal(PlayerGroupMovementUpdateStatus.MissingGroup, plan.Status);
+		Assert.Null(plan.MemberInfoUpdatePlan);
+	}
+
+	[Fact]
 	public void CreateMentorStatusChangePlan_StartsMentoringLikeJavaPlayerStartMentoringEvent()
 	{
 		var runtime = new PlayerGroupRuntime();
@@ -1137,6 +1229,32 @@ public sealed class PlayerGroupRuntimeTests
 		crypt.EnableKey();
 		var frame = packet.SerializeFrame(crypt);
 		return frame[7..];
+	}
+
+	private static void AssertMovementUpdateCallerPlan(
+		PlayerGroupMovementUpdateCallerPlan callerPlan,
+		PlayerGroupMovementUpdateTrigger expectedTrigger,
+		int expectedSubjectObjectId,
+		int[] expectedRecipientObjectIds)
+	{
+		Assert.True(callerPlan.IsPlanned);
+		Assert.Equal(expectedTrigger, callerPlan.Trigger);
+		Assert.Equal(expectedSubjectObjectId, callerPlan.PlayerObjectId);
+		Assert.Equal(PlayerGroupMovementUpdateStatus.Planned, callerPlan.Status);
+		var updatePlan = Assert.IsType<PlayerGroupMemberInfoUpdatePlan>(callerPlan.MemberInfoUpdatePlan);
+		Assert.Equal(99001, updatePlan.TeamId);
+		Assert.Equal(expectedSubjectObjectId, updatePlan.SubjectObjectId);
+		Assert.Equal(PlayerGroupEvent.Movement, updatePlan.Event);
+		Assert.Equal(0, updatePlan.Slot);
+		Assert.Equal(expectedRecipientObjectIds, updatePlan.MemberInfoIntents.Select(intent => intent.RecipientObjectId).ToArray());
+		Assert.DoesNotContain(updatePlan.MemberInfoIntents, intent => intent.RecipientObjectId == expectedSubjectObjectId);
+		foreach (var intent in updatePlan.MemberInfoIntents)
+		{
+			Assert.Equal(expectedSubjectObjectId, intent.SubjectObjectId);
+			Assert.Equal(PlayerGroupEvent.Movement, intent.Event);
+			AssertMemberInfoPlan(intent.PacketPlan, 99001, expectedSubjectObjectId, PlayerGroupEvent.Movement, PlayerGroupEvent.Movement, isOnline: true, writesName: false, writesEffects: false);
+			AssertGroupMemberInfoMovementPayload(intent.CreatePacket());
+		}
 	}
 
 	private static void AssertChangedLootRulesGroupInfoPayload(GameServerPacket packet, int expectedMapId)
