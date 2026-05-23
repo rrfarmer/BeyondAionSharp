@@ -101,6 +101,7 @@ public enum WorldNpcDropRegistrationWorkflowStatus
 {
 	MissingNpc,
 	MissingLooter,
+	LootRewardDisabled,
 	NoGeneratedDrops,
 	Registered,
 }

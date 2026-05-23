@@ -52,6 +52,7 @@ public sealed class WorldNpcDeathDropWorkflowServiceTests
 			Assert.True(result.DecayScheduled);
 			Assert.True(spawnService.HasDecayTask(npc.ObjectId));
 			Assert.True(result.StaticPlaceableDespawned);
+			Assert.False(result.DeletedImmediately);
 			Assert.Equal(0, staticPlaceables.GetSpawnCount(210010000, 107));
 			Assert.Single(registry.SentPackets);
 			var initialPacket = Assert.IsType<SmLootStatus>(registry.SentPackets[0].Packet);
@@ -107,6 +108,7 @@ public sealed class WorldNpcDeathDropWorkflowServiceTests
 			Assert.True(result.DecayScheduled);
 			Assert.True(spawnService.HasDecayTask(npc.ObjectId));
 			Assert.False(result.StaticPlaceableDespawned);
+			Assert.False(result.DeletedImmediately);
 			Assert.Empty(registry.SentPackets);
 			Assert.Null(registry.BroadcastPacket);
 
@@ -145,6 +147,139 @@ public sealed class WorldNpcDeathDropWorkflowServiceTests
 			Assert.False(result.RespawnScheduled);
 			Assert.False(result.DecayScheduled);
 			Assert.False(result.StaticPlaceableDespawned);
+			Assert.False(result.DeletedImmediately);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
+	public async Task HandleDeathAsync_SkipsRespawnWhenAiDisallowsRespawn()
+	{
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var dropRegistration = new WorldNpcDropRegistrationService();
+		var staticPlaceables = new StaticPlaceableStateService();
+		var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		try
+		{
+			var spawnService = CreateSpawnService(world, staticPlaceables, threadPoolManager, dropRegistration);
+			var spawns = new NpcSpawnTable([CreateSpawn(210010000, 203003, respawnSeconds: 30)]);
+			var templates = new NpcTemplateTable([CreateTemplate(203003)]);
+			spawnService.SpawnWorldNpcs(spawns, templates, [210010000]);
+			var npc = Assert.Single(world.GetNpcs());
+			var workflow = CreateDeathWorkflow(
+				spawnService,
+				dropRegistration,
+				threadPoolManager,
+				new CapturingConnectionRegistry(),
+				CreateCustomDropService(203003));
+
+			var result = await workflow.HandleDeathAsync(
+				npc,
+				new Player { ObjectId = 1001, Race = "ELYOS", Level = 10 },
+				options: WorldNpcDeathDropOptions.Default with { AllowRespawn = false });
+
+			Assert.Equal(WorldNpcDeathDropWorkflowStatus.Scheduled, result.Status);
+			Assert.False(result.RespawnScheduled);
+			Assert.False(spawnService.HasRespawnTask(npc.ObjectId));
+			Assert.Equal(WorldNpcDropRegistrationWorkflowStatus.Registered, result.DropRegistration.Status);
+			Assert.True(result.DecayScheduled);
+			Assert.True(spawnService.HasDecayTask(npc.ObjectId));
+			Assert.False(result.DeletedImmediately);
+			Assert.NotNull(spawnService.CancelDecay(npc.ObjectId));
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
+	public async Task HandleDeathAsync_SkipsDropRegistrationWhenRewardLootDisabled()
+	{
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var dropRegistration = new WorldNpcDropRegistrationService();
+		var staticPlaceables = new StaticPlaceableStateService();
+		var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		try
+		{
+			var spawnService = CreateSpawnService(world, staticPlaceables, threadPoolManager, dropRegistration);
+			var spawns = new NpcSpawnTable([CreateSpawn(210010000, 203004, respawnSeconds: 30)]);
+			var templates = new NpcTemplateTable([CreateTemplate(203004)]);
+			spawnService.SpawnWorldNpcs(spawns, templates, [210010000]);
+			var npc = Assert.Single(world.GetNpcs());
+			var registry = new CapturingConnectionRegistry();
+			registry.OnlinePlayerObjectIds.Add(1001);
+			var workflow = CreateDeathWorkflow(
+				spawnService,
+				dropRegistration,
+				threadPoolManager,
+				registry,
+				CreateCustomDropService(203004));
+
+			var result = await workflow.HandleDeathAsync(
+				npc,
+				new Player { ObjectId = 1001, Race = "ELYOS", Level = 10 },
+				options: WorldNpcDeathDropOptions.Default with { RewardLoot = false });
+
+			Assert.Equal(WorldNpcDeathDropWorkflowStatus.Scheduled, result.Status);
+			Assert.True(result.RespawnScheduled);
+			Assert.Equal(WorldNpcDropRegistrationWorkflowStatus.LootRewardDisabled, result.DropRegistration.Status);
+			Assert.False(dropRegistration.HasRegisteredDrops(npc.ObjectId));
+			Assert.True(result.DecayScheduled);
+			Assert.True(spawnService.HasDecayTask(npc.ObjectId));
+			Assert.Empty(registry.SentPackets);
+			Assert.Null(registry.BroadcastPacket);
+
+			var remainingDecay = spawnService.CancelDecay(npc.ObjectId);
+			Assert.NotNull(remainingDecay);
+			Assert.True(remainingDecay.Value <= TimeSpan.FromSeconds(2));
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
+	public async Task HandleDeathAsync_DeletesImmediatelyWhenAiDisallowsDecay()
+	{
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var dropRegistration = new WorldNpcDropRegistrationService();
+		var staticPlaceables = new StaticPlaceableStateService();
+		var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		try
+		{
+			var spawnService = CreateSpawnService(world, staticPlaceables, threadPoolManager, dropRegistration);
+			var spawns = new NpcSpawnTable([CreateSpawn(210010000, 203005, staticId: 107, respawnSeconds: 30)]);
+			var templates = new NpcTemplateTable([CreateTemplate(203005)]);
+			spawnService.SpawnWorldNpcs(spawns, templates, [210010000]);
+			var npc = Assert.Single(world.GetNpcs());
+			Assert.Equal(1, staticPlaceables.GetSpawnCount(210010000, 107));
+			var workflow = CreateDeathWorkflow(
+				spawnService,
+				dropRegistration,
+				threadPoolManager,
+				new CapturingConnectionRegistry(),
+				CreateCustomDropService(203005));
+
+			var result = await workflow.HandleDeathAsync(
+				npc,
+				new Player { ObjectId = 1001, Race = "ELYOS", Level = 10 },
+				options: WorldNpcDeathDropOptions.Default with { RewardLoot = false, AllowDecay = false });
+
+			Assert.Equal(WorldNpcDeathDropWorkflowStatus.Scheduled, result.Status);
+			Assert.True(result.RespawnScheduled);
+			Assert.True(spawnService.HasRespawnTask(npc.ObjectId));
+			Assert.Equal(WorldNpcDropRegistrationWorkflowStatus.LootRewardDisabled, result.DropRegistration.Status);
+			Assert.False(result.DecayScheduled);
+			Assert.False(spawnService.HasDecayTask(npc.ObjectId));
+			Assert.False(result.StaticPlaceableDespawned);
+			Assert.True(result.DeletedImmediately);
+			Assert.False(world.TryGetObject(npc.ObjectId, out _));
+			Assert.Equal(0, staticPlaceables.GetSpawnCount(210010000, 107));
 		}
 		finally
 		{
