@@ -44,7 +44,8 @@ public sealed class WorldNpcLifeStatsService
 		TimeSpan? freeForAllDelay = null,
 		TimeSpan? decayDelay = null,
 		WorldNpcDeathDropOptions? deathOptions = null,
-		CancellationToken cancellationToken = default)
+		CancellationToken cancellationToken = default,
+		Func<WorldNpcLifeStats, WorldNpcLifeStats, CancellationToken, ValueTask>? beforeDeathAsync = null)
 	{
 		// Java parity: model/stats/container/CreatureLifeStats.reduceHp clamps to zero and calls owner.controller.onDie once when HP reaches zero.
 		if (npc == null)
@@ -72,6 +73,9 @@ public sealed class WorldNpcLifeStatsService
 			_stats[npc.ObjectId] = current;
 			status = current.IsDead ? WorldNpcLifeStatsDamageStatus.Died : WorldNpcLifeStatsDamageStatus.Reduced;
 		}
+
+		if (beforeDeathAsync != null)
+			await beforeDeathAsync(previous, current, cancellationToken);
 
 		var deathResult = status == WorldNpcLifeStatsDamageStatus.Died
 			? await _deathWorkflow.HandleDeathAsync(
@@ -104,6 +108,21 @@ public sealed record WorldNpcLifeStats(
 	int CurrentMp)
 {
 	public bool IsDead => CurrentHp == 0;
+
+	public int GetHpPercentage()
+	{
+		// Java parity: model/stats/container/CreatureLifeStats.getHpPercentage returns 0 when dead and at least 1 while alive.
+		if (CurrentHp == 0 || MaxHp <= 0)
+			return 0;
+
+		return Math.Max(1, (int)(100f * CurrentHp / MaxHp));
+	}
+
+	public int GetMpPercentage()
+	{
+		// Java parity: model/stats/container/CreatureLifeStats.getMpPercentage.
+		return MaxMp <= 0 ? 0 : (int)(100f * CurrentMp / MaxMp);
+	}
 
 	public static WorldNpcLifeStats FromMax(int maxHp, int maxMp = 0)
 	{

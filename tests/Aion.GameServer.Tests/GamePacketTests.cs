@@ -144,6 +144,41 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmAttackStatus_WritesJavaHpDamagePayloads()
+	{
+		var regularPayload = SerializeUnencryptedPayload(new SmAttackStatus(
+			creatureObjectId: 5001,
+			SmAttackStatusType.Regular,
+			skillId: 0,
+			value: 25,
+			hpOrMpPercentage: 75));
+		using var regularReader = new PacketBuffer(regularPayload);
+		Assert.Equal(5001, regularReader.ReadD());
+		Assert.Equal(25, regularReader.ReadD());
+		Assert.Equal(5, (int)regularReader.ReadC());
+		Assert.Equal(75, (int)regularReader.ReadC());
+		Assert.Equal(0, regularReader.ReadH());
+		Assert.Equal(191, regularReader.ReadH());
+		Assert.Equal(0, regularReader.Remaining);
+
+		var damagePayload = SerializeUnencryptedPayload(new SmAttackStatus(
+			creatureObjectId: 5002,
+			SmAttackStatusType.Damage,
+			skillId: 123,
+			value: 33,
+			hpOrMpPercentage: 50,
+			SmAttackStatusLog.SpellAttack));
+		using var damageReader = new PacketBuffer(damagePayload);
+		Assert.Equal(5002, damageReader.ReadD());
+		Assert.Equal(-33, damageReader.ReadD());
+		Assert.Equal(7, (int)damageReader.ReadC());
+		Assert.Equal(50, (int)damageReader.ReadC());
+		Assert.Equal(123, damageReader.ReadH());
+		Assert.Equal(1, damageReader.ReadH());
+		Assert.Equal(0, damageReader.Remaining);
+	}
+
+	[Fact]
 	public void SmPlayerState_WritesJavaPlayerStatePayload()
 	{
 		var player = new Player

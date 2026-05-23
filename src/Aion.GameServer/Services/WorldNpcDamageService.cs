@@ -1,4 +1,6 @@
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using GameWorld = Aion.GameServer.World.World;
 
 namespace Aion.GameServer.Services;
@@ -7,11 +9,16 @@ public sealed class WorldNpcDamageService
 {
 	private readonly GameWorld _world;
 	private readonly WorldNpcLifeStatsService _lifeStats;
+	private readonly IGameClientConnectionRegistry? _connectionRegistry;
 
-	public WorldNpcDamageService(GameWorld world, WorldNpcLifeStatsService lifeStats)
+	public WorldNpcDamageService(
+		GameWorld world,
+		WorldNpcLifeStatsService lifeStats,
+		IGameClientConnectionRegistry? connectionRegistry = null)
 	{
 		_world = world;
 		_lifeStats = lifeStats;
+		_connectionRegistry = connectionRegistry;
 	}
 
 	public async ValueTask<WorldNpcDamageResult> ApplyDamageAsync(
@@ -32,6 +39,8 @@ public sealed class WorldNpcDamageService
 			return WorldNpcDamageResult.Skipped(WorldNpcDamageStatus.MissingLifeStats);
 
 		var damageOptions = options ?? WorldNpcDamageOptions.Default;
+		SmAttackStatus? attackStatusPacket = null;
+		var attackStatusBroadcastCount = 0;
 		var lifeStatsResult = await _lifeStats.ReduceHpAsync(
 			spawnedNpc,
 			damage,
@@ -42,12 +51,30 @@ public sealed class WorldNpcDamageService
 			damageOptions.FreeForAllDelay,
 			damageOptions.DecayDelay,
 			damageOptions.DeathOptions,
-			cancellationToken);
+			cancellationToken,
+			beforeDeathAsync: async (previous, current, _) =>
+			{
+				(attackStatusPacket, attackStatusBroadcastCount) = await CreateAndBroadcastAttackStatusAsync(
+					spawnedNpc,
+					previous,
+					current,
+					damageOptions);
+			});
+		if (attackStatusPacket == null && damageOptions.SkillId != 0 && lifeStatsResult.Previous != null && lifeStatsResult.Current != null)
+		{
+			(attackStatusPacket, attackStatusBroadcastCount) = await CreateAndBroadcastAttackStatusAsync(
+				spawnedNpc,
+				lifeStatsResult.Previous,
+				lifeStatsResult.Current,
+				damageOptions);
+		}
 		return new WorldNpcDamageResult(
 			MapStatus(lifeStatsResult.Status),
 			lifeStatsResult,
 			Math.Max(0, damage),
-			damageOptions.NotifyAttack);
+			damageOptions.NotifyAttack,
+			attackStatusPacket,
+			attackStatusBroadcastCount);
 	}
 
 	private bool TryResolveMaxStats(IWorldNpcObject npc, out int maxHp, out int maxMp)
@@ -76,6 +103,35 @@ public sealed class WorldNpcDamageService
 			_ => WorldNpcDamageStatus.MissingLifeStats,
 		};
 	}
+
+	private async ValueTask<(SmAttackStatus? Packet, int BroadcastCount)> CreateAndBroadcastAttackStatusAsync(
+		IWorldNpcObject npc,
+		WorldNpcLifeStats previous,
+		WorldNpcLifeStats current,
+		WorldNpcDamageOptions options)
+	{
+		// Java parity: CreatureLifeStats.reduceHp sends SM_ATTACK_STATUS when HP changes or a skill id is present.
+		var hpDelta = previous.CurrentHp - current.CurrentHp;
+		if (hpDelta == 0 && options.SkillId == 0)
+			return (null, 0);
+
+		var packet = new SmAttackStatus(
+			npc.ObjectId,
+			options.AttackStatusType,
+			options.SkillId,
+			hpDelta,
+			current.GetHpPercentage(),
+			options.AttackStatusLog);
+		if (_connectionRegistry == null)
+			return (packet, 0);
+
+		var broadcastCount = await _connectionRegistry.BroadcastToVisiblePlayersAsync(
+			npc.Position,
+			npc.ObjectId,
+			packet,
+			includeSourcePlayer: true);
+		return (packet, broadcastCount);
+	}
 }
 
 public sealed record WorldNpcDamageOptions(
@@ -83,7 +139,10 @@ public sealed record WorldNpcDamageOptions(
 	IReadOnlyList<Player>? GroupMembers = null,
 	TimeSpan? FreeForAllDelay = null,
 	TimeSpan? DecayDelay = null,
-	WorldNpcDeathDropOptions? DeathOptions = null)
+	WorldNpcDeathDropOptions? DeathOptions = null,
+	SmAttackStatusType AttackStatusType = SmAttackStatusType.Regular,
+	int SkillId = 0,
+	SmAttackStatusLog AttackStatusLog = SmAttackStatusLog.Regular)
 {
 	public static WorldNpcDamageOptions Default { get; } = new(NotifyAttack: true);
 }
@@ -92,11 +151,13 @@ public sealed record WorldNpcDamageResult(
 	WorldNpcDamageStatus Status,
 	WorldNpcLifeStatsDamageResult? LifeStats,
 	int Damage,
-	bool NotifyAttack)
+	bool NotifyAttack,
+	SmAttackStatus? AttackStatusPacket = null,
+	int AttackStatusBroadcastCount = 0)
 {
 	public static WorldNpcDamageResult Skipped(WorldNpcDamageStatus status)
 	{
-		return new WorldNpcDamageResult(status, null, 0, NotifyAttack: false);
+		return new WorldNpcDamageResult(status, null, 0, NotifyAttack: false, AttackStatusPacket: null, AttackStatusBroadcastCount: 0);
 	}
 }
 
