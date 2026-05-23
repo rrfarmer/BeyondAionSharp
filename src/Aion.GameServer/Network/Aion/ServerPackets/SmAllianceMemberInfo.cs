@@ -47,7 +47,7 @@ public sealed class SmAllianceMemberInfo : GameServerPacket
 		if (eventId is 0 or 1 or 3)
 			return;
 
-		if (_plan.EffectiveEvent == PlayerAllianceEvent.UpdateEffects)
+		if (_plan.EffectiveEventKind == PlayerAllianceMemberInfoEventKind.UpdateEffects)
 		{
 			buffer.WriteD(0);
 			buffer.WriteD(0);
@@ -60,6 +60,9 @@ public sealed class SmAllianceMemberInfo : GameServerPacket
 		if (_plan.WritesName)
 		{
 			buffer.WriteS(prefix.Name);
+			if (_plan.EffectiveEventKind == PlayerAllianceMemberInfoEventKind.MemberGroupChange)
+				return;
+
 			buffer.WriteD(0);
 			buffer.WriteD(0);
 			if (_plan.IsOnline)

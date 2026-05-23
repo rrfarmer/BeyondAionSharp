@@ -28,6 +28,8 @@ public sealed record PlayerAllianceMemberInfoPacketPlan(
 	int MemberObjectId,
 	PlayerAllianceEvent RequestedEvent,
 	PlayerAllianceEvent EffectiveEvent,
+	PlayerAllianceMemberInfoEventKind RequestedEventKind,
+	PlayerAllianceMemberInfoEventKind EffectiveEventKind,
 	int Slot,
 	bool IsOnline,
 	PlayerAllianceMemberInfoPrefixSnapshot PrefixSnapshot,
@@ -42,20 +44,40 @@ public sealed record PlayerAllianceMemberInfoPacketPlan(
 		PlayerAllianceEvent requestedEvent,
 		int slot = 0)
 	{
+		return FromPlayer(allianceId, player, PlayerAllianceMemberInfoEvent.FromLegacyEvent(requestedEvent), slot);
+	}
+
+	public static PlayerAllianceMemberInfoPacketPlan FromPlayer(
+		int allianceId,
+		Player player,
+		PlayerAllianceMemberInfoEvent requestedEvent,
+		int slot = 0)
+	{
 		// Java parity: network/aion/serverpackets/SM_ALLIANCE_MEMBER_INFO.writeImpl header and ENTER_OFFLINE rewrite.
-		var effectiveEvent = requestedEvent == PlayerAllianceEvent.Enter && !player.IsOnline
-			? PlayerAllianceEvent.EnterOffline
+		var effectiveEvent = requestedEvent.Kind == PlayerAllianceMemberInfoEventKind.Enter && !player.IsOnline
+			? PlayerAllianceMemberInfoEvent.EnterOffline
 			: requestedEvent;
-		var effectiveEventId = (int)effectiveEvent;
-		var writesName = effectiveEventId is 5 or 7 or 13;
-		var writesEffects = effectiveEvent == PlayerAllianceEvent.UpdateEffects
-			|| writesName && player.IsOnline;
+		var writesName = effectiveEvent.Kind is PlayerAllianceMemberInfoEventKind.Join
+			or PlayerAllianceMemberInfoEventKind.EnterOffline
+			or PlayerAllianceMemberInfoEventKind.Enter
+			or PlayerAllianceMemberInfoEventKind.Update
+			or PlayerAllianceMemberInfoEventKind.Reconnect
+			or PlayerAllianceMemberInfoEventKind.AppointViceCaptain
+			or PlayerAllianceMemberInfoEventKind.DemoteViceCaptain
+			or PlayerAllianceMemberInfoEventKind.AppointCaptain
+			or PlayerAllianceMemberInfoEventKind.MemberGroupChange;
+		var writesEffects = effectiveEvent.Kind == PlayerAllianceMemberInfoEventKind.UpdateEffects
+			|| writesName
+				&& player.IsOnline
+				&& effectiveEvent.Kind != PlayerAllianceMemberInfoEventKind.MemberGroupChange;
 
 		return new PlayerAllianceMemberInfoPacketPlan(
 			allianceId,
 			player.ObjectId,
-			requestedEvent,
-			effectiveEvent,
+			requestedEvent.LegacyEvent,
+			effectiveEvent.LegacyEvent,
+			requestedEvent.Kind,
+			effectiveEvent.Kind,
 			slot,
 			player.IsOnline,
 			PlayerAllianceMemberInfoPrefixSnapshot.FromPlayer(player, effectiveEvent),
@@ -63,6 +85,61 @@ public sealed record PlayerAllianceMemberInfoPacketPlan(
 			writesEffects,
 			WritesSlotTimers: writesEffects);
 	}
+}
+
+public sealed record PlayerAllianceMemberInfoEvent(
+	PlayerAllianceMemberInfoEventKind Kind,
+	int WireId,
+	PlayerAllianceEvent LegacyEvent)
+{
+	public static readonly PlayerAllianceMemberInfoEvent Leave = new(PlayerAllianceMemberInfoEventKind.Leave, 0, PlayerAllianceEvent.Leave);
+	public static readonly PlayerAllianceMemberInfoEvent Banned = new(PlayerAllianceMemberInfoEventKind.Banned, 0, PlayerAllianceEvent.Banned);
+	public static readonly PlayerAllianceMemberInfoEvent Movement = new(PlayerAllianceMemberInfoEventKind.Movement, 1, PlayerAllianceEvent.Movement);
+	public static readonly PlayerAllianceMemberInfoEvent Disconnected = new(PlayerAllianceMemberInfoEventKind.Disconnected, 3, PlayerAllianceEvent.Disconnected);
+	public static readonly PlayerAllianceMemberInfoEvent Join = new(PlayerAllianceMemberInfoEventKind.Join, 5, PlayerAllianceEvent.Join);
+	public static readonly PlayerAllianceMemberInfoEvent EnterOffline = new(PlayerAllianceMemberInfoEventKind.EnterOffline, 7, PlayerAllianceEvent.EnterOffline);
+	public static readonly PlayerAllianceMemberInfoEvent UpdateEffects = new(PlayerAllianceMemberInfoEventKind.UpdateEffects, 65, PlayerAllianceEvent.UpdateEffects);
+	public static readonly PlayerAllianceMemberInfoEvent Reconnect = new(PlayerAllianceMemberInfoEventKind.Reconnect, 13, PlayerAllianceEvent.Reconnect);
+	public static readonly PlayerAllianceMemberInfoEvent Enter = new(PlayerAllianceMemberInfoEventKind.Enter, 13, PlayerAllianceEvent.Enter);
+	public static readonly PlayerAllianceMemberInfoEvent Update = new(PlayerAllianceMemberInfoEventKind.Update, 13, PlayerAllianceEvent.Update);
+	public static readonly PlayerAllianceMemberInfoEvent MemberGroupChange = new(PlayerAllianceMemberInfoEventKind.MemberGroupChange, 5, PlayerAllianceEvent.MemberGroupChange);
+	public static readonly PlayerAllianceMemberInfoEvent AppointViceCaptain = new(PlayerAllianceMemberInfoEventKind.AppointViceCaptain, 13, PlayerAllianceEvent.AppointViceCaptain);
+	public static readonly PlayerAllianceMemberInfoEvent DemoteViceCaptain = new(PlayerAllianceMemberInfoEventKind.DemoteViceCaptain, 13, PlayerAllianceEvent.DemoteViceCaptain);
+	public static readonly PlayerAllianceMemberInfoEvent AppointCaptain = new(PlayerAllianceMemberInfoEventKind.AppointCaptain, 13, PlayerAllianceEvent.AppointCaptain);
+
+	public static PlayerAllianceMemberInfoEvent FromLegacyEvent(PlayerAllianceEvent allianceEvent)
+	{
+		// Java parity: callers that only provide a wire-id-compatible enum get the packet branch used by existing same-id events.
+		return (int)allianceEvent switch
+		{
+			0 => Leave,
+			1 => Movement,
+			3 => Disconnected,
+			5 => Join,
+			7 => EnterOffline,
+			13 => Enter,
+			65 => UpdateEffects,
+			_ => throw new ArgumentOutOfRangeException(nameof(allianceEvent), allianceEvent, "Unsupported alliance event."),
+		};
+	}
+}
+
+public enum PlayerAllianceMemberInfoEventKind
+{
+	Leave,
+	Banned,
+	Movement,
+	Disconnected,
+	Join,
+	EnterOffline,
+	UpdateEffects,
+	Reconnect,
+	Enter,
+	Update,
+	MemberGroupChange,
+	AppointViceCaptain,
+	DemoteViceCaptain,
+	AppointCaptain,
 }
 
 public sealed record PlayerAllianceMemberInfoPrefixSnapshot(
@@ -87,7 +164,7 @@ public sealed record PlayerAllianceMemberInfoPrefixSnapshot(
 	int AllianceUnknown,
 	string Name)
 {
-	public static PlayerAllianceMemberInfoPrefixSnapshot FromPlayer(Player player, PlayerAllianceEvent effectiveEvent)
+	public static PlayerAllianceMemberInfoPrefixSnapshot FromPlayer(Player player, PlayerAllianceMemberInfoEvent effectiveEvent)
 	{
 		// Java parity: SM_ALLIANCE_MEMBER_INFO.writeImpl fixed prefix; the final prefix byte is always 0 for alliance packets.
 		var position = player.Position;
@@ -109,7 +186,7 @@ public sealed record PlayerAllianceMemberInfoPrefixSnapshot(
 			ClassId: ToJavaClassId(player.PlayerClass),
 			GenderId: string.Equals(player.Gender, "FEMALE", StringComparison.OrdinalIgnoreCase) ? 1 : 0,
 			Level: player.Level,
-			EventId: (int)effectiveEvent,
+			EventId: effectiveEvent.WireId,
 			AlwaysOne: 1,
 			FlyState: (int)player.FlyState,
 			AllianceUnknown: 0,

@@ -27,6 +27,18 @@ public sealed class PlayerAllianceMemberInfoTests
 	}
 
 	[Fact]
+	public void PlayerAllianceMemberInfoEvent_PreservesJavaConstantIdentityForSameWireIds()
+	{
+		Assert.Equal(5, PlayerAllianceMemberInfoEvent.Join.WireId);
+		Assert.Equal(5, PlayerAllianceMemberInfoEvent.MemberGroupChange.WireId);
+		Assert.Equal(PlayerAllianceEvent.Join, PlayerAllianceMemberInfoEvent.Join.LegacyEvent);
+		Assert.Equal(PlayerAllianceEvent.MemberGroupChange, PlayerAllianceMemberInfoEvent.MemberGroupChange.LegacyEvent);
+		Assert.Equal(PlayerAllianceMemberInfoEventKind.Join, PlayerAllianceMemberInfoEvent.Join.Kind);
+		Assert.Equal(PlayerAllianceMemberInfoEventKind.MemberGroupChange, PlayerAllianceMemberInfoEvent.MemberGroupChange.Kind);
+		Assert.Equal(PlayerAllianceMemberInfoEventKind.Join, PlayerAllianceMemberInfoEvent.FromLegacyEvent(PlayerAllianceEvent.Join).Kind);
+	}
+
+	[Fact]
 	public void CreateMovementUpdatePlan_ReturnsAllExceptPlayerIntentsLikeJavaPlayerAllianceUpdateEvent()
 	{
 		var planner = new PlayerAllianceMovementUpdatePlanner();
@@ -97,6 +109,36 @@ public sealed class PlayerAllianceMemberInfoTests
 		Assert.Equal(0, reader.ReadH());
 		for (var i = 0; i < 8; i++)
 			Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void SmAllianceMemberInfo_WritesMemberGroupChangeNameOnlyDespiteSharedJoinWireId()
+	{
+		var member = new Player
+		{
+			ObjectId = 1001,
+			Name = "Shifted",
+			IsOnline = true,
+			PlayerClass = "RANGER",
+			Level = 40,
+			Position = new WorldPosition(220010000, 11, 22, 33, 64),
+		};
+		var joinPlan = PlayerAllianceMemberInfoPacketPlan.FromPlayer(88001, member, PlayerAllianceMemberInfoEvent.Join);
+		var groupChangePlan = PlayerAllianceMemberInfoPacketPlan.FromPlayer(88001, member, PlayerAllianceMemberInfoEvent.MemberGroupChange);
+
+		Assert.Equal(PlayerAllianceMemberInfoEventKind.Join, joinPlan.EffectiveEventKind);
+		Assert.Equal(PlayerAllianceMemberInfoEventKind.MemberGroupChange, groupChangePlan.EffectiveEventKind);
+		Assert.Equal((int)PlayerAllianceEvent.Join, joinPlan.PrefixSnapshot.EventId);
+		Assert.Equal((int)PlayerAllianceEvent.MemberGroupChange, groupChangePlan.PrefixSnapshot.EventId);
+		Assert.True(joinPlan.WritesAbnormalEffects);
+		Assert.True(joinPlan.WritesSlotTimers);
+		Assert.False(groupChangePlan.WritesAbnormalEffects);
+		Assert.False(groupChangePlan.WritesSlotTimers);
+
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(new SmAllianceMemberInfo(groupChangePlan)));
+		SkipAllianceMemberInfoPrefix(reader, expectedClassId: 5, expectedGenderId: 0, expectedLevel: 40, expectedEventId: (int)PlayerAllianceEvent.MemberGroupChange);
+		Assert.Equal("Shifted", reader.ReadS());
 		Assert.Equal(0, reader.Remaining);
 	}
 
@@ -180,6 +222,8 @@ public sealed class PlayerAllianceMemberInfoTests
 		Assert.Equal(PlayerAllianceEvent.Movement, plan.EffectiveEvent);
 		Assert.Equal(0, plan.Slot);
 		Assert.True(plan.IsOnline);
+		Assert.Equal(PlayerAllianceMemberInfoEventKind.Movement, plan.RequestedEventKind);
+		Assert.Equal(PlayerAllianceMemberInfoEventKind.Movement, plan.EffectiveEventKind);
 		Assert.Equal(10, plan.PrefixSnapshot.ClassId);
 		Assert.Equal(1, plan.PrefixSnapshot.GenderId);
 		Assert.Equal(45, plan.PrefixSnapshot.Level);
