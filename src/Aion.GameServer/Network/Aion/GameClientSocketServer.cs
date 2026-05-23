@@ -355,7 +355,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 			var delta = _npcVisibilityService.UpdateKnownNpcs(player, npcs);
 			foreach (var npc in delta.Appeared)
 			{
-				await connection.SendPacketAsync(new SmNpcInfo(npc));
+				await connection.SendPacketAsync(CreateNpcInfoPacketForViewer(npc, player));
 				sent++;
 				var lootStatus = _worldNpcLootService?.CreateLootEnableStatusForSeenNpc(player, npc);
 				if (lootStatus != null)
@@ -373,6 +373,19 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		}
 
 		return sent;
+	}
+
+	internal SmNpcInfo CreateNpcInfoPacketForViewer(IWorldNpcObject npc, Player viewer)
+	{
+		// Java parity: PlayerController.see sends SM_NPC_INFO(npc, player), and Kisk.getType(player) is viewer-specific.
+		var kiskRegistry = _runtimeContext?.Kisks;
+		if (kiskRegistry == null)
+			return new SmNpcInfo(npc);
+
+		var plan = _creaturePvpZoneCounterService == null
+			? PlayerKiskNpcInfoPacketService.CreatePacket(npc, viewer, kiskRegistry)
+			: PlayerKiskNpcInfoPacketService.CreatePacket(npc, viewer, kiskRegistry, _creaturePvpZoneCounterService);
+		return plan.Packet;
 	}
 
 	private static IReadOnlyList<PlacedHouseObjectSummary> GetVisibleHouseObjects(WorldHouse house, Player viewer)
