@@ -78,6 +78,9 @@ public static class PortalEntryValidationService
 				bypassLevelRequirement);
 			if (!validation.CanEnter)
 				return PortalEntryPlanResult.Rejected(validation.Status, loc, validation.FailurePacket!);
+
+			if (loc.WorldId == player.Position.WorldId)
+				return PortalEntryPlanResult.SameInstanceTeleport(loc, instanceValidation.RegisteredInstance);
 		}
 
 		return PortalEntryPlanResult.Allowed(loc, instanceValidation.RegisteredInstance, instanceValidation.Reenter);
@@ -317,6 +320,7 @@ public enum PortalEntryValidationStatus
 public sealed record PortalEntryPlanResult(
 	bool CanEnter,
 	PortalEntryValidationStatus Status,
+	PortalEntryPlanAction Action,
 	PortalLocSummary? PortalLoc,
 	WorldMapInstanceRuntimeState? RegisteredInstance,
 	bool Reenter,
@@ -330,20 +334,49 @@ public sealed record PortalEntryPlanResult(
 		return new PortalEntryPlanResult(
 			true,
 			PortalEntryValidationStatus.Allowed,
+			PortalEntryPlanAction.Continue,
 			portalLoc,
 			registeredInstance,
 			reenter,
 			null);
 	}
 
+	public static PortalEntryPlanResult SameInstanceTeleport(
+		PortalLocSummary portalLoc,
+		WorldMapInstanceRuntimeState? registeredInstance)
+	{
+		return new PortalEntryPlanResult(
+			true,
+			PortalEntryValidationStatus.Allowed,
+			PortalEntryPlanAction.SameInstanceTeleport,
+			portalLoc,
+			registeredInstance,
+			false,
+			null);
+	}
+
 	public static PortalEntryPlanResult MissingLocation()
 	{
-		return new PortalEntryPlanResult(false, PortalEntryValidationStatus.MissingPortalLocation, null, null, false, null);
+		return new PortalEntryPlanResult(
+			false,
+			PortalEntryValidationStatus.MissingPortalLocation,
+			PortalEntryPlanAction.None,
+			null,
+			null,
+			false,
+			null);
 	}
 
 	public static PortalEntryPlanResult UnsupportedTeamPortal(PortalLocSummary portalLoc)
 	{
-		return new PortalEntryPlanResult(false, PortalEntryValidationStatus.UnsupportedTeamPortal, portalLoc, null, false, null);
+		return new PortalEntryPlanResult(
+			false,
+			PortalEntryValidationStatus.UnsupportedTeamPortal,
+			PortalEntryPlanAction.None,
+			portalLoc,
+			null,
+			false,
+			null);
 	}
 
 	public static PortalEntryPlanResult Rejected(
@@ -351,8 +384,22 @@ public sealed record PortalEntryPlanResult(
 		PortalLocSummary portalLoc,
 		GameServerPacket failurePacket)
 	{
-		return new PortalEntryPlanResult(false, status, portalLoc, null, false, failurePacket);
+		return new PortalEntryPlanResult(
+			false,
+			status,
+			PortalEntryPlanAction.None,
+			portalLoc,
+			null,
+			false,
+			failurePacket);
 	}
+}
+
+public enum PortalEntryPlanAction
+{
+	None,
+	Continue,
+	SameInstanceTeleport,
 }
 
 public sealed record PortalEntryInstanceValidationResult(

@@ -738,6 +738,37 @@ public sealed class PortalEntryValidationServiceTests
 	}
 
 	[Fact]
+	public void ValidatePortalEntryPlan_PlansSameInstanceTeleportAfterLevelCheck()
+	{
+		var player = new Player
+		{
+			Race = "ELYOS",
+			Level = 25,
+			Position = new WorldPosition(WorldId, 10, 20, 30, 40, InstanceId: 7),
+		};
+
+		var result = PortalEntryValidationService.ValidatePortalEntryPlan(
+			player,
+			CreatePortalPath(minLevel: 25),
+			CreatePortalLocs(),
+			CreatePortalCooltimes(maxPlayers: 0, maxCount: 0),
+			CreateWorldMaps(),
+			DateTimeOffset.FromUnixTimeMilliseconds(100_000),
+			npcObjectId: 4001);
+
+		Assert.True(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.Allowed, result.Status);
+		Assert.Equal(PortalEntryPlanAction.SameInstanceTeleport, result.Action);
+		Assert.Equal(WorldId, result.PortalLoc?.WorldId);
+		Assert.Equal(1, result.PortalLoc?.X);
+		Assert.Equal(2, result.PortalLoc?.Y);
+		Assert.Equal(3, result.PortalLoc?.Z);
+		Assert.Equal((byte)4, result.PortalLoc?.Heading);
+		Assert.False(result.Reenter);
+		Assert.Null(result.FailurePacket);
+	}
+
+	[Fact]
 	public void ValidatePortalEntryPlan_AllowsOpenWorldPlanWithResolvedLocation()
 	{
 		var player = new Player { Race = "ELYOS", Level = 25 };
@@ -753,6 +784,7 @@ public sealed class PortalEntryValidationServiceTests
 
 		Assert.True(result.CanEnter);
 		Assert.Equal(PortalEntryValidationStatus.Allowed, result.Status);
+		Assert.Equal(PortalEntryPlanAction.Continue, result.Action);
 		Assert.Equal(WorldId, result.PortalLoc?.WorldId);
 		Assert.Null(result.RegisteredInstance);
 		Assert.False(result.Reenter);
