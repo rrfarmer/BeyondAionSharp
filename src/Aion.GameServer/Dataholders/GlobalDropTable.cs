@@ -34,7 +34,7 @@ public sealed record GlobalDropRuleSummary(
 	IReadOnlySet<int> ExcludedNpcIds,
 	IReadOnlySet<string> Zones)
 {
-	public bool HasNpcRestriction => NpcIds.Count > 0 || NpcNames.Count > 0;
+	public bool HasNpcRestriction => NpcIds.Count > 0;
 }
 
 public sealed record GlobalDropItemSummary(

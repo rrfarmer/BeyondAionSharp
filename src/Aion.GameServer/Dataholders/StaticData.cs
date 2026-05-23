@@ -1808,6 +1808,7 @@ public sealed class StaticData
 		if (experience.Count == 0)
 			experience.AddRange(await LoadExperienceTableFromImportedFilesAsync(importedFiles, cancellationToken));
 		var customNpcDrops = await CustomNpcDropTable.LoadFromImportedFilesAsync(importedFiles, cancellationToken);
+		var processedGlobalDropRules = ProcessGlobalDropRules(globalDropRules, npcTemplates);
 
 		return new StaticData(
 			cacheFilePath,
@@ -1834,7 +1835,7 @@ public sealed class StaticData
 			new NpcRiftSpawnTable(npcRiftSpawns.AsReadOnly()),
 			customNpcDrops,
 			new QuestDropTable(questDrops.AsReadOnly()),
-			new GlobalDropTable(globalDropRules.AsReadOnly()),
+			new GlobalDropTable(processedGlobalDropRules),
 			new EventDropTable(eventTemplates.AsReadOnly()),
 			new GlobalNpcExclusionTable(
 				globalNpcExclusionNpcIds,
@@ -1877,6 +1878,53 @@ public sealed class StaticData
 				spawnLocationsByRace),
 			new SkillTreeTable(skillTree.AsReadOnly(), new SkillTemplateTable(skillTemplates.AsReadOnly())),
 			validationTask);
+	}
+
+	private static IReadOnlyList<GlobalDropRuleSummary> ProcessGlobalDropRules(
+		IReadOnlyList<GlobalDropRuleSummary> rules,
+		IReadOnlyList<NpcTemplateSummary> npcTemplates)
+	{
+		// Java parity: dataholders/GlobalDropData.processRules expands gd_npc_names into gd_npc ids once NPC templates are loaded.
+		var processedRules = new List<GlobalDropRuleSummary>(rules.Count);
+		foreach (var rule in rules)
+		{
+			if (rule.NpcNames.Count == 0)
+			{
+				processedRules.Add(rule);
+				continue;
+			}
+
+			var allowedNpcIds = rule.NpcIds.ToHashSet();
+			foreach (var npcName in rule.NpcNames)
+			{
+				foreach (var npc in npcTemplates.Where(npc => MatchesGlobalDropNpcName(npcName, npc.Name)))
+					allowedNpcIds.Add(npc.TemplateId);
+			}
+
+			processedRules.Add(
+				allowedNpcIds.Count == 0
+					? rule
+					: rule with
+					{
+						NpcIds = allowedNpcIds,
+						NpcNames = Array.Empty<GlobalDropNpcNameSummary>(),
+					});
+		}
+
+		return processedRules.AsReadOnly();
+	}
+
+	private static bool MatchesGlobalDropNpcName(GlobalDropNpcNameSummary ruleName, string npcName)
+	{
+		var value = ruleName.Value.ToLowerInvariant();
+		return ruleName.Function.ToUpperInvariant() switch
+		{
+			"CONTAINS" => npcName.Contains(value, StringComparison.Ordinal),
+			"END_WITH" => npcName.EndsWith(value, StringComparison.Ordinal),
+			"START_WITH" => npcName.StartsWith(value, StringComparison.Ordinal),
+			"EQUALS" => string.Equals(npcName, ruleName.Value, StringComparison.OrdinalIgnoreCase),
+			_ => false,
+		};
 	}
 
 	private sealed class HousingBuildingBuilder

@@ -422,6 +422,9 @@ public sealed class StaticDataLoadingTests
 		Assert.True(kinahRule.DynamicChance);
 		Assert.Contains("ELYOS", kinahRule.Races);
 		Assert.Contains("ASMODIANS", kinahRule.Races);
+		var spiritRule = staticData.GlobalDrops.Rules.First(rule => rule.RuleName == "Morphable Spirit Essences");
+		Assert.Empty(spiritRule.NpcNames);
+		Assert.Contains(201007, spiritRule.NpcIds);
 		var kinahItem = Assert.Single(kinahRule.Items);
 		Assert.Equal(182400001, kinahItem.ItemId);
 		Assert.Equal(5, kinahItem.MinCount);

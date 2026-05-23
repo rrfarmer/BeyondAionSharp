@@ -17,10 +17,11 @@ public sealed class WorldNpcGlobalDropServiceTests
 		var npcName = CreateRule(
 			"name",
 			npcNames: [new GlobalDropNpcNameSummary("CONTAINS", "spirit")]);
+		var npcSpecific = CreateRule("npc-specific", npcIds: [210001]);
 		var npcGroup = CreateRule("npc-group", npcGroups: ["SPIRIT"]);
 		var wrongNpcGroup = CreateRule("wrong-npc-group", npcGroups: ["DRAKE"]);
 		var service = new WorldNpcGlobalDropService(
-			new GlobalDropTable([unrestricted, elyosOnly, wrongMap, excludedNpc, npcName, npcGroup, wrongNpcGroup]),
+			new GlobalDropTable([unrestricted, elyosOnly, wrongMap, excludedNpc, npcName, npcSpecific, npcGroup, wrongNpcGroup]),
 			new ItemTemplateTable([]));
 		var npc = CreateNpc(210001, "wind_spirit", level: 10, rank: "NOVICE", rating: "NORMAL", race: "MAGICALMONSTER", groupDrop: "SPIRIT");
 		var modifiers = new WorldNpcDropModifiers("ELYOS");
@@ -28,8 +29,8 @@ public sealed class WorldNpcGlobalDropServiceTests
 		var defaultRules = service.GetApplicableRules(npc, modifiers, isAllowedDefaultGlobalDropNpc: true);
 		var restrictedRules = service.GetApplicableRules(npc, modifiers, isAllowedDefaultGlobalDropNpc: false);
 
-		Assert.Equal(["default", "elyos", "name", "npc-group"], defaultRules.Select(rule => rule.RuleName).ToArray());
-		Assert.Equal(["name"], restrictedRules.Select(rule => rule.RuleName).ToArray());
+		Assert.Equal(["default", "elyos", "name", "npc-specific", "npc-group"], defaultRules.Select(rule => rule.RuleName).ToArray());
+		Assert.Equal(["npc-specific"], restrictedRules.Select(rule => rule.RuleName).ToArray());
 	}
 
 	[Fact]
@@ -222,6 +223,7 @@ public sealed class WorldNpcGlobalDropServiceTests
 		bool useLevelReduction = false,
 		IReadOnlyList<GlobalDropItemSummary>? items = null,
 		IEnumerable<int>? mapIds = null,
+		IEnumerable<int>? npcIds = null,
 		IEnumerable<int>? excludedNpcIds = null,
 		IReadOnlyList<GlobalDropNpcNameSummary>? npcNames = null,
 		IEnumerable<string>? npcGroups = null)
@@ -242,7 +244,7 @@ public sealed class WorldNpcGlobalDropServiceTests
 			Ratings: new HashSet<string>(StringComparer.OrdinalIgnoreCase),
 			MapIds: mapIds?.ToHashSet() ?? new HashSet<int>(),
 			Tribes: new HashSet<string>(StringComparer.OrdinalIgnoreCase),
-			NpcIds: new HashSet<int>(),
+			NpcIds: npcIds?.ToHashSet() ?? new HashSet<int>(),
 			NpcNames: npcNames ?? Array.Empty<GlobalDropNpcNameSummary>(),
 			NpcGroups: npcGroups?.ToHashSet(StringComparer.OrdinalIgnoreCase) ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase),
 			ExcludedNpcIds: excludedNpcIds?.ToHashSet() ?? new HashSet<int>(),
