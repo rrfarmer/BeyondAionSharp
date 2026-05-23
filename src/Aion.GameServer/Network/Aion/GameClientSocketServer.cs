@@ -49,6 +49,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 	private readonly RiftPortalUseService? _riftPortalUseService;
 	private readonly VortexLocationService? _vortexLocationService;
 	private readonly WorldNpcLootService? _worldNpcLootService;
+	private readonly CreaturePvpZoneCounterService? _creaturePvpZoneCounterService;
 	private readonly ConcurrentDictionary<string, GameServerConnection> _connections = new();
 	private readonly ConcurrentDictionary<int, GameServerConnection> _playerConnections = new();
 	private long _nextClientId;
@@ -83,7 +84,8 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		RiftPortalDialogService? riftPortalDialogService = null,
 		RiftPortalUseService? riftPortalUseService = null,
 		VortexLocationService? vortexLocationService = null,
-		WorldNpcLootService? worldNpcLootService = null)
+		WorldNpcLootService? worldNpcLootService = null,
+		CreaturePvpZoneCounterService? creaturePvpZoneCounterService = null)
 		: base(
 			logger,
 			"Aion Game Client Server",
@@ -121,6 +123,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		_riftPortalUseService = riftPortalUseService;
 		_vortexLocationService = vortexLocationService;
 		_worldNpcLootService = worldNpcLootService;
+		_creaturePvpZoneCounterService = creaturePvpZoneCounterService;
 	}
 
 	public IPEndPoint? LocalEndPoint => _listener?.LocalEndpoint as IPEndPoint;
@@ -164,7 +167,8 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 				riftPortalUseService: _riftPortalUseService,
 				vortexLocationService: _vortexLocationService,
 				worldNpcLootService: _worldNpcLootService,
-				isKnownNpc: (player, npcObjectId) => _npcVisibilityService.IsKnownNpc(player, npcObjectId));
+				isKnownNpc: (player, npcObjectId) => _npcVisibilityService.IsKnownNpc(player, npcObjectId),
+				creaturePvpZoneCounterService: _creaturePvpZoneCounterService);
 			_connections[clientId] = connection;
 			await connection.RunAsync();
 		}

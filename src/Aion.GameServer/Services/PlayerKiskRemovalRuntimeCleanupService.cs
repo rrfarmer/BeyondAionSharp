@@ -13,10 +13,15 @@ public static class PlayerKiskRemovalRuntimeCleanupService
 		IGameClientConnectionRegistry? connectionRegistry,
 		GameServerRuntimeContext? runtimeContext,
 		GameWorld? world = null,
-		CancellationToken cancellationToken = default)
+		CancellationToken cancellationToken = default,
+		CreaturePvpZoneCounterService? pvpZoneCounterService = null)
 	{
-		if (connectionRegistry == null || result.RemovedKisk == null || cancellationToken.IsCancellationRequested)
+		if (result.RemovedKisk == null || cancellationToken.IsCancellationRequested)
 			return PlayerKiskRemovalRuntimeCleanupResult.NotApplied;
+
+		var clearedZoneCounters = pvpZoneCounterService?.ClearCounters(result.RemovedKisk.ObjectId) == true ? 1 : 0;
+		if (connectionRegistry == null)
+			return PlayerKiskRemovalRuntimeCleanupResult.NotApplied with { ClearedZoneCounters = clearedZoneCounters };
 
 		// Java parity: services/KiskService.removeKisk sends the creator a final SM_KISK_UPDATE,
 		// clears online member kisk references, restores their obelisk bind point, and refreshes revive options.
@@ -77,7 +82,8 @@ public static class PlayerKiskRemovalRuntimeCleanupService
 			DeathOptionRefreshesSent: deathOptionRefreshesSent,
 			ClearedBoundMembers: clearBoundObjectIds.Count,
 			ClearedPendingRequests: clearPendingRequestObjectIds.Count,
-			NpcVisibilityRefreshes: npcVisibilityRefreshes);
+			NpcVisibilityRefreshes: npcVisibilityRefreshes,
+			ClearedZoneCounters: clearedZoneCounters);
 	}
 
 	private static SmBindPointInfo CreateBindPointPacket(Player player, StaticData? staticData)
@@ -100,7 +106,8 @@ public sealed record PlayerKiskRemovalRuntimeCleanupResult(
 	int DeathOptionRefreshesSent,
 	int ClearedBoundMembers,
 	int ClearedPendingRequests,
-	int NpcVisibilityRefreshes)
+	int NpcVisibilityRefreshes,
+	int ClearedZoneCounters = 0)
 {
 	public static PlayerKiskRemovalRuntimeCleanupResult NotApplied { get; } = new(
 		Applied: false,

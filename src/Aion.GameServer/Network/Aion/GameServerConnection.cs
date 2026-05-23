@@ -67,6 +67,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly RiftPortalInteractionService? _riftPortalInteractionService;
 	private readonly WorldNpcLootService? _worldNpcLootService;
 	private readonly Func<Player, int, bool>? _isKnownNpc;
+	private readonly CreaturePvpZoneCounterService? _creaturePvpZoneCounterService;
 	private readonly SemaphoreSlim _sendLock = new(1, 1);
 	private readonly SemaphoreSlim _closeLock = new(1, 1);
 	private GameConnectionState _state = GameConnectionState.Connected;
@@ -119,7 +120,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		WorldNpcLootService? worldNpcLootService = null,
 		Func<Player, int, bool>? isKnownNpc = null,
 		RiftPortalInteractionService? riftPortalInteractionService = null,
-		GameCrypt? crypt = null)
+		GameCrypt? crypt = null,
+		CreaturePvpZoneCounterService? creaturePvpZoneCounterService = null)
 		: base(logger, client, clientId)
 	{
 		_packetProcessor = packetProcessor;
@@ -147,6 +149,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_houseDoorStateService = houseDoorStateService;
 		_worldNpcLootService = worldNpcLootService;
 		_isKnownNpc = isKnownNpc;
+		_creaturePvpZoneCounterService = creaturePvpZoneCounterService;
 		_riftPortalInteractionService = riftPortalInteractionService
 			?? (riftService == null
 				? null
@@ -4726,7 +4729,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		if (_connectionRegistry != null)
-			await PlayerKiskRemovalRuntimeCleanupService.ApplyAsync(result, _connectionRegistry, _runtimeContext, _world);
+			await PlayerKiskRemovalRuntimeCleanupService.ApplyAsync(
+				result,
+				_connectionRegistry,
+				_runtimeContext,
+				_world,
+				pvpZoneCounterService: _creaturePvpZoneCounterService);
 	}
 
 	private async Task HandleReviveAsync(Player player, CmRevive packet)

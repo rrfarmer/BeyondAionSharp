@@ -52,4 +52,18 @@ public sealed class CreaturePvpZoneCounterServiceTests
 		Assert.Equal(0, counters.SiegeZoneCount);
 		Assert.True(counters.IsInsidePvpZone);
 	}
+
+	[Fact]
+	public void ClearCountersRemovesTrackedCreatureState()
+	{
+		var service = new CreaturePvpZoneCounterService();
+		service.EnterZone(1001, CreaturePvpZoneCounterType.Pvp);
+		service.EnterZone(1001, CreaturePvpZoneCounterType.Siege);
+
+		var removed = service.ClearCounters(1001);
+
+		Assert.True(removed);
+		Assert.Equal(CreaturePvpZoneCounters.Empty, service.GetCounters(1001));
+		Assert.False(service.ClearCounters(1001));
+	}
 }

@@ -360,6 +360,9 @@ public sealed class WorldNpcDeathDropWorkflowServiceTests
 			var connectionRegistry = new CapturingConnectionRegistry();
 			connectionRegistry.OnlinePlayers.AddRange([creator, deadMember, pendingResponder]);
 			connectionRegistry.OnlinePlayerObjectIds.UnionWith([1001, 1002, 1003]);
+			var zoneCounterService = new CreaturePvpZoneCounterService();
+			zoneCounterService.EnterZone(kiskObjectId, CreaturePvpZoneCounterType.Pvp);
+			zoneCounterService.EnterZone(kiskObjectId, CreaturePvpZoneCounterType.Siege);
 
 			var workflow = CreateDeathWorkflow(
 				spawnService,
@@ -375,7 +378,8 @@ public sealed class WorldNpcDeathDropWorkflowServiceTests
 						connectionRegistry,
 						runtimeContext,
 						world,
-						cancellationToken));
+						cancellationToken,
+						zoneCounterService));
 
 			Assert.True(world.TryGetObject(kiskObjectId, out var kiskObject));
 			var result = await workflow.HandleDeathAsync(
@@ -402,6 +406,8 @@ public sealed class WorldNpcDeathDropWorkflowServiceTests
 			Assert.Equal(2, result.KiskRemovalCleanup.ClearedBoundMembers);
 			Assert.Equal(1, result.KiskRemovalCleanup.ClearedPendingRequests);
 			Assert.Equal(1, result.KiskRemovalCleanup.NpcVisibilityRefreshes);
+			Assert.Equal(1, result.KiskRemovalCleanup.ClearedZoneCounters);
+			Assert.Equal(CreaturePvpZoneCounters.Empty, zoneCounterService.GetCounters(kiskObjectId));
 			Assert.False(registry.HaveKisk(1001));
 			Assert.False(world.TryGetObject(kiskObjectId, out _));
 			Assert.Equal(kiskObjectId, idFactory.NextId());

@@ -47,6 +47,12 @@ public sealed class CreaturePvpZoneCounterService
 			? counters
 			: CreaturePvpZoneCounters.Empty;
 	}
+
+	public bool ClearCounters(int objectId)
+	{
+		// Java parity: Creature zone counters disappear with the creature instance on despawn/delete.
+		return objectId > 0 && _countersByObjectId.TryRemove(objectId, out _);
+	}
 }
 
 public sealed record CreaturePvpZoneCounters(int SiegeZoneCount = 0, int PvpZoneCount = 0)

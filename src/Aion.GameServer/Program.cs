@@ -69,7 +69,8 @@ var builder = Host.CreateDefaultBuilder(args)
 							serviceProvider.GetService<IGameClientConnectionRegistry>(),
 							serviceProvider.GetRequiredService<GameServerRuntimeContext>(),
 							serviceProvider.GetRequiredService<GameWorld>(),
-							cancellationToken)));
+							cancellationToken,
+							serviceProvider.GetService<CreaturePvpZoneCounterService>())));
 			services.AddSingleton<WorldNpcLifeStatsService>();
 			services.AddSingleton<WorldNpcResourceStatsService>();
 			services.AddSingleton<PlayerVisualStatsUpdateService>();
@@ -128,6 +129,7 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<ExpirableTaskService>();
 			services.AddSingleton<HousingVisibilityService>();
 			services.AddSingleton<NpcVisibilityService>();
+			services.AddSingleton<CreaturePvpZoneCounterService>();
 			services.AddSingleton<HouseAuctionTimingService>();
 			services.AddSingleton<HouseMaintenanceTimingService>();
 			services.AddSingleton<ShutdownHook>();
