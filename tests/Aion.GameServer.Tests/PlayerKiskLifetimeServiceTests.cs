@@ -32,6 +32,7 @@ public sealed class PlayerKiskLifetimeServiceTests
 		Assert.True(result.ReleasedObjectId);
 		Assert.Equal(210010000, result.WorldId);
 		Assert.Equal([1001, 1002], result.MemberObjectIds.Order().ToArray());
+		Assert.Same(kiskState, result.RemovedKisk);
 		Assert.False(registry.HaveKisk(1001));
 		Assert.False(world.TryGetObject(1, out _));
 		Assert.Equal(1, idFactory.NextId());
@@ -50,6 +51,7 @@ public sealed class PlayerKiskLifetimeServiceTests
 		Assert.False(result.RemovedRegistry);
 		Assert.False(result.RemovedWorldObject);
 		Assert.False(result.ReleasedObjectId);
+		Assert.Null(result.RemovedKisk);
 		Assert.True(world.TryGetObject(1, out _));
 		Assert.NotEqual(1, idFactory.NextId());
 	}

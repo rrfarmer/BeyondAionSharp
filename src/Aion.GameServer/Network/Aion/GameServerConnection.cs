@@ -4701,16 +4701,46 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (!result.RemovedRegistry)
 			return;
 
-		_connectionRegistry?.ForEachOnlinePlayer(player =>
-		{
-			if (player.BoundKiskObjectId == kiskObjectId)
-				player.BoundKiskObjectId = 0;
-			if (player.PendingKiskBindRequest?.KiskObjectId == kiskObjectId)
-				player.PendingKiskBindRequest = null;
-		});
+		if (_connectionRegistry != null)
+			await ApplyRemovedKiskCleanupAsync(result);
 
 		if (_connectionRegistry != null && result.WorldId.HasValue)
 			await _connectionRegistry.RefreshNpcVisibilityAsync(_world.GetNpcs(result.WorldId.Value));
+	}
+
+	private async Task ApplyRemovedKiskCleanupAsync(PlayerKiskDespawnResult result)
+	{
+		if (_connectionRegistry == null || result.RemovedKisk == null)
+			return;
+
+		// Java parity: services/KiskService.removeKisk sends the creator a final SM_KISK_UPDATE,
+		// clears online member kisk references, and restores their obelisk bind-point packet.
+		var onlinePlayers = new List<Player>();
+		_connectionRegistry.ForEachOnlinePlayer(onlinePlayers.Add);
+		var plan = PlayerKiskRemovalCleanupService.CreatePlan(result, onlinePlayers);
+		var playersByObjectId = onlinePlayers.ToDictionary(player => player.ObjectId);
+		var clearBoundObjectIds = plan.ClearBoundObjectIds.ToHashSet();
+		var clearPendingRequestObjectIds = plan.ClearPendingRequestObjectIds.ToHashSet();
+
+		foreach (var player in onlinePlayers)
+		{
+			if (clearBoundObjectIds.Contains(player.ObjectId))
+				player.BoundKiskObjectId = 0;
+			if (clearPendingRequestObjectIds.Contains(player.ObjectId))
+				player.PendingKiskBindRequest = null;
+		}
+
+		if (plan.CreatorUpdateObjectId.HasValue)
+			await _connectionRegistry.SendPacketToPlayerAsync(
+				plan.CreatorUpdateObjectId.Value,
+				new SmKiskUpdate(result.RemovedKisk));
+
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		foreach (var playerObjectId in plan.BindPointResetObjectIds)
+		{
+			if (playersByObjectId.TryGetValue(playerObjectId, out var player))
+				await _connectionRegistry.SendPacketToPlayerAsync(playerObjectId, CreateBindPointPacket(player, staticData));
+		}
 	}
 
 	private async Task RequestOrBindPlayerToKiskAsync(Player player, PlayerKiskRuntimeState kisk)
