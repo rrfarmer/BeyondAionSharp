@@ -3293,6 +3293,13 @@ public class GamePacketTests
 				new InventoryItem { ObjectId = 2001, ItemId = 100000001, ItemSkin = 100000099, IsEquipped = true, Location = 0, Slot = 1, Enchant = 5 },
 			],
 		};
+		player.Movement.Mask = MovementMask.Position | MovementMask.Manual | MovementMask.Absolute;
+		player.Movement.TargetX = 13;
+		player.Movement.TargetY = 24;
+		player.Movement.TargetZ = 30;
+		player.Movement.VectorX = 99;
+		player.Movement.VectorY = 88;
+		player.Movement.VectorZ = 77;
 
 		using var reader = new PacketBuffer(SerializeUnencryptedPayload(new SmPlayerInfo(player)));
 
@@ -3343,13 +3350,13 @@ public class GamePacketTests
 		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(0, (int)reader.ReadC());
 		Assert.Equal(string.Empty, reader.ReadS());
-		Assert.Equal(0, reader.ReadF());
-		Assert.Equal(0, reader.ReadF());
+		Assert.Equal(3.6f, reader.ReadF(), precision: 4);
+		Assert.Equal(4.8f, reader.ReadF(), precision: 4);
 		Assert.Equal(0, reader.ReadF());
 		Assert.Equal(10, reader.ReadF());
 		Assert.Equal(20, reader.ReadF());
 		Assert.Equal(30, reader.ReadF());
-		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(MovementMask.Position | MovementMask.Manual, (int)reader.ReadC());
 		Assert.Equal(0, (int)reader.ReadC());
 		Assert.Equal("Looking sharp", reader.ReadS());
 		Assert.Equal(1, reader.ReadH());

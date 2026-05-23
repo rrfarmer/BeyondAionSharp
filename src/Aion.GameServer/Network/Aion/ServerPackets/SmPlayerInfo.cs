@@ -9,6 +9,7 @@ public sealed class SmPlayerInfo : GameServerPacket
 {
 	public const int PacketOpCode = 32;
 	private const int FriendlyCreatureType = 0x26;
+	private const float DefaultVisibleMovementSpeed = 6.0f;
 	private readonly Player _player;
 	private readonly PlayerExperienceTable? _experienceTable;
 
@@ -58,12 +59,13 @@ public sealed class SmPlayerInfo : GameServerPacket
 		buffer.WriteF(appearance.Height);
 		buffer.WriteF(0.25f);
 		buffer.WriteF(2.0f);
-		buffer.WriteF(6.0f);
+		var movementSpeed = DefaultVisibleMovementSpeed;
+		buffer.WriteF(movementSpeed);
 		buffer.WriteH(0);
 		buffer.WriteH(0);
 		buffer.WriteC(0);
 		buffer.WriteS(string.Empty);
-		WriteMovement(buffer, position);
+		WriteMovement(buffer, position, movementSpeed);
 		buffer.WriteC(0);
 		buffer.WriteS(_player.Note);
 		buffer.WriteH(GetLevel());
@@ -168,20 +170,52 @@ public sealed class SmPlayerInfo : GameServerPacket
 		buffer.WriteC(appearance.Voice);
 	}
 
-	private void WriteMovement(PacketBuffer buffer, global::Aion.GameServer.World.WorldPosition position)
+	private void WriteMovement(PacketBuffer buffer, global::Aion.GameServer.World.WorldPosition position, float movementSpeed)
 	{
 		// Java parity: SM_PLAYER_INFO movement-vector/current-position tail.
 		var movement = _player.Movement;
 		var movementMask = movement.Mask;
 		if (MovementMask.Has(movementMask, MovementMask.Absolute))
+		{
+			WriteAbsoluteMovementVector(buffer, movement, position, movementSpeed);
 			movementMask &= unchecked((byte)~MovementMask.Absolute);
-		buffer.WriteF(movement.VectorX);
-		buffer.WriteF(movement.VectorY);
-		buffer.WriteF(movement.VectorZ);
+		}
+		else
+		{
+			buffer.WriteF(movement.VectorX);
+			buffer.WriteF(movement.VectorY);
+			buffer.WriteF(movement.VectorZ);
+		}
+
 		buffer.WriteF(position.X);
 		buffer.WriteF(position.Y);
 		buffer.WriteF(position.Z);
 		buffer.WriteC(movementMask);
+	}
+
+	private static void WriteAbsoluteMovementVector(
+		PacketBuffer buffer,
+		PlayerMovementState movement,
+		global::Aion.GameServer.World.WorldPosition position,
+		float movementSpeed)
+	{
+		// Java parity: SM_PLAYER_INFO uses PlayerMoveController target coords when MovementMask.ABSOLUTE is set.
+		var deltaX = movement.TargetX - position.X;
+		var deltaY = movement.TargetY - position.Y;
+		var deltaZ = movement.TargetZ - position.Z;
+		var length = MathF.Sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
+		if (length <= 0)
+		{
+			buffer.WriteF(0);
+			buffer.WriteF(0);
+			buffer.WriteF(0);
+			return;
+		}
+
+		var scale = movementSpeed / length;
+		buffer.WriteF(deltaX * scale);
+		buffer.WriteF(deltaY * scale);
+		buffer.WriteF(deltaZ * scale);
 	}
 
 	private int GetLevel()
