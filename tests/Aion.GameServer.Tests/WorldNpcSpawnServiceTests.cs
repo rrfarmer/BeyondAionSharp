@@ -600,6 +600,81 @@ public sealed class WorldNpcSpawnServiceTests
 	}
 
 	[Fact]
+	public async Task TrySwapInactiveWalkerFormationVariant_RevalidatesCreaturePvpZoneCountersForActivatedAndParkedFormations()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-walker-formation-swap-pvp-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextWithVersionedFormationDataAsync(tempPath, includePvpZone: true);
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			var zoneCounterService = new CreaturePvpZoneCounterService();
+			var walkerPlans = new WorldNpcWalkerSpawnPlanCacheService(
+				new WorldNpcWalkerFormationOrganizerService(),
+				new WorldNpcWalkerVariantSelectionService(count => count - 1));
+			var service = new WorldNpcSpawnService(
+				context,
+				world,
+				new IDFactory(),
+				gameTimeService: null,
+				threadPoolManager: null,
+				connectionRegistry: null,
+				staticPlaceables: null,
+				walkerSpawnPlans: walkerPlans,
+				walkerPlacementApplication: new WorldNpcWalkerPlacementApplicationService(),
+				NullLogger<WorldNpcSpawnService>.Instance,
+				creaturePvpZoneCounterService: zoneCounterService);
+			var spawns = new NpcSpawnTable(
+			[
+				CreateSpawn(210010000, 203083, x: 1, y: 10, walkerId: "formation-v1", walkerIndex: 1),
+				CreateSpawn(210010000, 203083, x: 1, y: 10, walkerId: "formation-v1", walkerIndex: 2),
+				CreateSpawn(210010000, 203084, x: 20, y: 30, walkerId: "formation-v2", walkerIndex: 1),
+				CreateSpawn(210010000, 203084, x: 20, y: 30, walkerId: "formation-v2", walkerIndex: 2),
+			]);
+			var templates = new NpcTemplateTable([CreateTemplate(203083), CreateTemplate(203084)]);
+			var zones = context.DataManager!.StaticData.CreaturePvpZones.GetZonesByMapId(210010000);
+			Assert.Contains(zones, zone => zone.ZoneId == "PVP_FORMATION_VARIANTS_210010000"
+				&& zone.Contains(new global::Aion.GameServer.World.WorldPosition(210010000, 1, 9, 0, 0))
+				&& zone.Contains(new global::Aion.GameServer.World.WorldPosition(210010000, 20, 31, 0, 0)));
+
+			service.SpawnWorldNpcs(spawns, templates, [210010000]);
+			var activeIds = world.GetNpcs().OfType<WorldNpc>().Select(npc => npc.ObjectId).OrderBy(id => id).ToArray();
+			var inactiveIds = Enumerable.Range(1, 4)
+				.Where(objectId => service.TryGetInactiveWalkerVariant(objectId, out _))
+				.OrderBy(id => id)
+				.ToArray();
+			Assert.Equal([3, 4], activeIds);
+			Assert.Equal([1, 2], inactiveIds);
+			Assert.All(activeIds, objectId => Assert.Equal(1, zoneCounterService.GetCounters(objectId).PvpZoneCount));
+			Assert.All(inactiveIds, objectId => Assert.Equal(CreaturePvpZoneCounters.Empty, zoneCounterService.GetCounters(objectId)));
+
+			var swapped = service.TrySwapInactiveWalkerFormationVariant(activeIds, inactiveIds);
+
+			Assert.True(swapped);
+			Assert.All(activeIds, objectId =>
+			{
+				Assert.False(world.TryGetObject(objectId, out _));
+				Assert.Equal(CreaturePvpZoneCounters.Empty, zoneCounterService.GetCounters(objectId));
+			});
+			Assert.All(inactiveIds, objectId =>
+			{
+				Assert.True(world.TryGetObject(objectId, out _));
+				Assert.Equal(1, zoneCounterService.GetCounters(objectId).PvpZoneCount);
+			});
+		}
+		finally
+		{
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
+	[Fact]
 	public async Task SpawnWorldNpcs_UpdatesStaticPlaceableState()
 	{
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);
@@ -1442,17 +1517,34 @@ public sealed class WorldNpcSpawnServiceTests
 		return context;
 	}
 
-	private static async Task<GameServerRuntimeContext> CreateRuntimeContextWithVersionedFormationDataAsync(string tempPath)
+	private static async Task<GameServerRuntimeContext> CreateRuntimeContextWithVersionedFormationDataAsync(
+		string tempPath,
+		bool includePvpZone = false)
 	{
 		var staticDataFile = Path.Combine(tempPath, "static_data.xml");
 		var cacheFile = Path.Combine(tempPath, "cache", "static_data.xml");
 		var schemaFile = Path.Combine(tempPath, "static_data.xsd");
 		Directory.CreateDirectory(Path.GetDirectoryName(cacheFile)!);
+		var pvpZoneXml = includePvpZone
+			? """
+				<zones>
+					<zone name="PVP_FORMATION_VARIANTS_210010000" zone_type="PVP" area_type="POLYGON" mapid="210010000">
+						<points bottom="-10" top="10">
+							<point x="0" y="8" />
+							<point x="22" y="8" />
+							<point x="22" y="32" />
+							<point x="0" y="32" />
+						</points>
+					</zone>
+				</zones>
+			"""
+			: string.Empty;
 		File.WriteAllText(
 			staticDataFile,
-			"""
+			$$"""
 			<?xml version="1.0" encoding="UTF-8"?>
 			<static_data>
+			{{pvpZoneXml}}
 				<npc_walker>
 					<walker_template route_id="formation-v1" pool="2" formation="SQUARE" rows="2">
 						<routestep x="1" y="10" z="0" />
