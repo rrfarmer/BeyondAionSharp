@@ -53,6 +53,25 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 		Assert.Empty(registry.SentPackets);
 	}
 
+	[Fact]
+	public async Task HandlePlayerStatusInfoAsync_GroupSetLfgTogglesPlayerFlagLikeJava()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var player = new Player { ObjectId = 1001, Name = "Solo" };
+		await using var pair = await TestConnectionPair.CreateAsync(registry, new PlayerAllianceRuntime());
+
+		Assert.Null(await pair.Connection.HandlePlayerStatusInfoAsync(
+			player,
+			CreatePacket(commandCode: 9, selectedObjectId: 2)));
+		Assert.True(player.IsLookingForGroup);
+
+		Assert.Null(await pair.Connection.HandlePlayerStatusInfoAsync(
+			player,
+			CreatePacket(commandCode: 9, selectedObjectId: 1)));
+		Assert.False(player.IsLookingForGroup);
+		Assert.Empty(registry.SentPackets);
+	}
+
 	private static CmPlayerStatusInfo CreatePacket(
 		PlayerAllianceReadyCheckCommand command,
 		int selectedObjectId)

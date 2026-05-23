@@ -5774,6 +5774,13 @@ public sealed class GameServerConnection : BaseClientConnection
 		CancellationToken cancellationToken = default)
 	{
 		// Java parity: network/aion/clientpackets/CM_PLAYER_STATUS_INFO.runImpl delegates ready-check commands through PlayerTeamCommandService -> PlayerAllianceService.checkReady.
+		if (packet.CommandCode == 9)
+		{
+			// Java parity: TeamCommand.GROUP_SET_LFG -> Player.setLookingForGroup(selectedObjectId == 2).
+			player.IsLookingForGroup = packet.SelectedObjectId == 2;
+			return null;
+		}
+
 		if (!Enum.IsDefined(typeof(PlayerAllianceReadyCheckCommand), packet.CommandCode))
 			return null;
 

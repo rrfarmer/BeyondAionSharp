@@ -55,6 +55,9 @@ public sealed class Player
 	// Java parity: model/gameobjects/player/Player.isMentor consumed by portal and quest/drop guards.
 	public bool IsMentor { get; set; }
 
+	// Java parity: model/gameobjects/player/Player.lookingForGroup toggled by CM_PLAYER_STATUS_INFO GROUP_SET_LFG.
+	public bool IsLookingForGroup { get; set; }
+
 	public long Exp { get; set; }
 
 	public long RecoverableExp { get; init; }
