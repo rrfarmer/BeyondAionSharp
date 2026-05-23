@@ -477,25 +477,102 @@ public sealed class WorldNpcResourceStatsServiceTests
 	}
 
 	[Fact]
-	public async Task ApplyResourceOverTimePeriodicResultAsync_KeepsHpHealUnsupportedUntilEffectRuntimeWiresHpBoundary()
+	public async Task ApplyResourceOverTimePeriodicResultAsync_IncreasesNpcHpFromStagedHpHeal()
+	{
+		var service = CreateService(out var lifeStats, out _);
+		var skillDamage = CreateSkillDamageService();
+		var npc = CreateNpc(objectId: 18, maxHp: 100);
+		lifeStats.Initialize(npc, maxHp: 100, maxMp: 40);
+		await lifeStats.ReduceHpAsync(npc, damage: 40, maxHp: 100, maxMp: 40, attacker: CreatePlayer(objectId: 2003, currentHp: 100, currentMp: 50, currentFp: 100));
+		var staged = skillDamage.ApplyResourceOverTimePeriodicAction(new WorldNpcSkillResourceOverTimePeriodicActionRequest(
+			WorldNpcSkillResourceOverTimeEffectKind.HpHeal,
+			Value: 50,
+			SkillId: 7406,
+			CurrentResource: 60,
+			MaxResource: 100));
+
+		var result = await service.ApplyResourceOverTimePeriodicResultAsync(
+			staged,
+			new WorldNpcResourceMutationTarget(Npc: npc, KillingBlow: 90));
+
+		Assert.Equal(WorldNpcResourceEffectApplicationStatus.Applied, result.Status);
+		Assert.Equal(WorldNpcEffectResourceType.Hp, result.ResourceType);
+		Assert.NotNull(result.Change);
+		Assert.Equal(WorldNpcResourceChangeStatus.Increased, result.Change.Status);
+		Assert.Equal(60, result.Change.PreviousValue);
+		Assert.Equal(100, result.Change.CurrentValue);
+		Assert.Equal(40, result.Change.AppliedValue);
+		Assert.True(result.Change.KillingBlowReset);
+		Assert.NotNull(result.Change.AttackStatusPacket);
+		Assert.Equal(SmAttackStatusType.Hp, result.Change.AttackStatusPacket.Type);
+		Assert.Equal(SmAttackStatusLog.Heal, result.Change.AttackStatusPacket.Log);
+		Assert.Equal(7406, result.Change.AttackStatusPacket.SkillId);
+		Assert.True(lifeStats.TryGetStats(npc.ObjectId, out var stored));
+		Assert.Equal(100, stored!.CurrentHp);
+	}
+
+	[Fact]
+	public async Task ApplyResourceOverTimePeriodicResultAsync_IncreasesPlayerHpFromStagedHpHeal()
 	{
 		var service = CreateService(out _, out _);
 		var skillDamage = CreateSkillDamageService();
 		var player = CreatePlayer(objectId: 1009, currentHp: 80, currentMp: 40, currentFp: 100);
+		player.IsOnline = true;
+		player.TeamMembership = PlayerTeamMembership.Group;
 		var staged = skillDamage.ApplyResourceOverTimePeriodicAction(new WorldNpcSkillResourceOverTimePeriodicActionRequest(
 			WorldNpcSkillResourceOverTimeEffectKind.HpHeal,
 			Value: 30,
-			SkillId: 7406,
+			SkillId: 7407,
 			CurrentResource: 80,
 			MaxResource: 100));
 
 		var result = await service.ApplyResourceOverTimePeriodicResultAsync(
 			staged,
-			new WorldNpcResourceMutationTarget(Player: player, MaxHp: 100));
+			new WorldNpcResourceMutationTarget(Player: player, MaxHp: 100, KillingBlow: 90));
 
-		Assert.Equal(WorldNpcResourceEffectApplicationStatus.UnsupportedResource, result.Status);
-		Assert.Equal(WorldNpcEffectResourceType.Hp, result.ResourceType);
-		Assert.Null(result.Change);
+		Assert.Equal(WorldNpcResourceEffectApplicationStatus.Applied, result.Status);
+		Assert.NotNull(result.Change);
+		Assert.Equal(WorldNpcResourceChangeStatus.Increased, result.Change.Status);
+		Assert.Equal(20, result.Change.AppliedValue);
+		Assert.Equal(100, player.LifeStats!.CurrentHp);
+		Assert.True(result.Change.SendHpStatUpdate);
+		Assert.True(result.Change.SendGroupStatUpdate);
+		Assert.True(result.Change.NotifyHpObservers);
+		Assert.True(result.Change.ClearAggroOnFullHp);
+		Assert.True(result.Change.KillingBlowReset);
+		Assert.NotNull(result.Change.AttackStatusPacket);
+		Assert.Equal(SmAttackStatusType.Hp, result.Change.AttackStatusPacket.Type);
+		Assert.Equal(SmAttackStatusLog.Heal, result.Change.AttackStatusPacket.Log);
+		Assert.Equal(7407, result.Change.AttackStatusPacket.SkillId);
+	}
+
+	[Fact]
+	public async Task ApplyResourceOverTimePeriodicResultAsync_BlocksNpcHpHealWhenDiseaseContextIsProvided()
+	{
+		var service = CreateService(out var lifeStats, out var registry);
+		var skillDamage = CreateSkillDamageService();
+		var npc = CreateNpc(objectId: 19, maxHp: 100);
+		lifeStats.Initialize(npc, maxHp: 100, maxMp: 40);
+		await lifeStats.ReduceHpAsync(npc, damage: 20, maxHp: 100, maxMp: 40, attacker: CreatePlayer(objectId: 2004, currentHp: 100, currentMp: 50, currentFp: 100));
+		var staged = skillDamage.ApplyResourceOverTimePeriodicAction(new WorldNpcSkillResourceOverTimePeriodicActionRequest(
+			WorldNpcSkillResourceOverTimeEffectKind.HpHeal,
+			Value: 20,
+			SkillId: 7408,
+			CurrentResource: 80,
+			MaxResource: 100));
+
+		var result = await service.ApplyResourceOverTimePeriodicResultAsync(
+			staged,
+			new WorldNpcResourceMutationTarget(Npc: npc, TargetHasDisease: true));
+
+		Assert.Equal(WorldNpcResourceEffectApplicationStatus.EffectSkipped, result.Status);
+		Assert.NotNull(result.Change);
+		Assert.Equal(WorldNpcResourceChangeStatus.BlockedByDisease, result.Change.Status);
+		Assert.Equal(80, result.Change.CurrentValue);
+		Assert.Null(result.Change.AttackStatusPacket);
+		Assert.Empty(registry.Broadcasts);
+		Assert.True(lifeStats.TryGetStats(npc.ObjectId, out var stored));
+		Assert.Equal(80, stored!.CurrentHp);
 	}
 
 	private static WorldNpcResourceStatsService CreateService(

@@ -375,6 +375,38 @@ public sealed class WorldNpcResourceStatsService
 				change = AddPlayerDp(target.Player, value, target.MaxDp);
 				return WorldNpcResourceEffectApplicationResult.FromChange(change, skillId);
 			case WorldNpcEffectResourceType.Hp:
+				var hpValue = kind == WorldNpcResourceChangeKind.Reduce ? -value : value;
+				if (target.Player != null)
+				{
+					if (target.MaxHp == null)
+						return WorldNpcResourceEffectApplicationResult.MissingMaxResource(resourceType, skillId);
+					change = await IncreasePlayerHpAsync(
+						target.Player,
+						target.MaxHp.Value,
+						hpValue,
+						skillId,
+						packetType,
+						packetLog,
+						target.KillingBlow,
+						cancellationToken);
+					return WorldNpcResourceEffectApplicationResult.FromChange(change, skillId);
+				}
+				if (target.Npc != null)
+				{
+					change = await IncreaseNpcHpAsync(
+						target.Npc,
+						hpValue,
+						skillId,
+						packetType,
+						packetLog,
+						target.TargetHasDisease,
+						target.KillingBlow,
+						target.Effector,
+						target.DeathOptions,
+						cancellationToken);
+					return WorldNpcResourceEffectApplicationResult.FromChange(change, skillId);
+				}
+				return WorldNpcResourceEffectApplicationResult.MissingTarget(resourceType, skillId);
 			default:
 				return WorldNpcResourceEffectApplicationResult.UnsupportedResource(resourceType, skillId);
 		}
@@ -797,7 +829,11 @@ public sealed record WorldNpcResourceMutationTarget(
 	int? MaxHp = null,
 	int? MaxMp = null,
 	int? MaxFp = null,
-	int? MaxDp = null);
+	int? MaxDp = null,
+	bool TargetHasDisease = false,
+	int? KillingBlow = null,
+	Player? Effector = null,
+	WorldNpcDeathDropOptions? DeathOptions = null);
 
 public sealed record WorldNpcResourceEffectApplicationResult(
 	WorldNpcResourceEffectApplicationStatus Status,
