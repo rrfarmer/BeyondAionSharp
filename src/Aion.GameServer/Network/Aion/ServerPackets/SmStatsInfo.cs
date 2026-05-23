@@ -47,6 +47,31 @@ public sealed class SmStatsInfo : GameServerPacket
 		_titleTemplates = titleTemplates;
 	}
 
+	public static PlayerResourceMaxStats CalculateCurrentResourceMaxStats(
+		Player player,
+		PlayerExperienceTable? experienceTable = null,
+		ItemTemplateTable? itemTemplates = null,
+		ItemRandomBonusTable? itemRandomBonuses = null,
+		ItemSetTable? itemSets = null,
+		EnchantTable? enchantTemplates = null,
+		TemperingTable? temperingTemplates = null,
+		SkillTemplateTable? skillTemplates = null,
+		TitleTemplateTable? titleTemplates = null)
+	{
+		// Java parity: PlayerReviveService.revive reads PlayerGameStats max HP/MP before setCurrentHpPercent/setCurrentMpPercent.
+		var context = PlayerStatsContext.Create(
+			player,
+			experienceTable,
+			itemTemplates,
+			itemRandomBonuses,
+			itemSets,
+			enchantTemplates,
+			temperingTemplates,
+			skillTemplates,
+			titleTemplates);
+		return new PlayerResourceMaxStats(context.Current.MaxHp, context.Current.MaxMp, context.Current.FlyTime);
+	}
+
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
 		// Java parity: SM_STATS_INFO.writeImpl. Full effects remain deferred, but equipped item template stats are applied when templates are loaded.
@@ -1018,3 +1043,5 @@ public sealed class SmStatsInfo : GameServerPacket
 		}
 	}
 }
+
+public sealed record PlayerResourceMaxStats(int MaxHp, int MaxMp, int MaxFp);

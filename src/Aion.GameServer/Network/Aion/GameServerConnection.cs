@@ -4750,9 +4750,24 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (result.ShouldDeleteKisk)
 			await RemoveRuntimeKiskAsync(result.Kisk.ObjectId);
 
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var resourceMaxStats = SmStatsInfo.CalculateCurrentResourceMaxStats(
+			player,
+			staticData?.PlayerExperienceTable,
+			staticData?.ItemTemplates,
+			staticData?.ItemRandomBonuses,
+			staticData?.ItemSets,
+			staticData?.EnchantTemplates,
+			staticData?.TemperingTemplates,
+			staticData?.SkillTemplates,
+			staticData?.TitleTemplates);
+		PlayerReviveRestoreService.ApplyKiskReviveRestore(player, resourceMaxStats.MaxHp, resourceMaxStats.MaxMp);
+		await BroadcastEmotionAsync(player, new SmEmotion(player, EmotionType.Resurrect));
+		await UpdatePlayerStatsAndSpeedVisuallyAsync(player);
+
 		// Full Java PlayerReviveService.revive + TeleportService.teleportTo side effects remain queued:
-		// HP/MP percentage restore, DP/soul-sickness handling, stats/speed refresh, resurrection emotion,
-		// and teleport packet/state synchronization need the broader revive/teleport model.
+		// DP/soul-sickness handling, target/aggro cleanup, group/alliance movement updates,
+		// flying-before-death state restoration, and teleport packet/state synchronization need the broader revive/teleport model.
 	}
 
 	private async Task ApplyRemovedKiskCleanupAsync(PlayerKiskDespawnResult result)
