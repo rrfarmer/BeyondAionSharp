@@ -52,6 +52,7 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<WorldNpcDropModifierService>();
 			services.AddSingleton<WorldNpcDropRegistrationWorkflowService>();
 			services.AddSingleton<WorldNpcDeathDropWorkflowService>();
+			services.AddSingleton<WorldNpcLifeStatsService>();
 			services.AddSingleton<WorldNpcLootService>();
 			services.AddSingleton<WorldNpcLootBroadcastService>();
 			services.AddSingleton<WorldNpcRandomWalkService>();
