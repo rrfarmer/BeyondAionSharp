@@ -109,6 +109,20 @@ public static class PortalEntryValidationService
 		return PortalEntryValidationResult.Rejected(PortalEntryValidationStatus.RaceRestricted, failurePacket);
 	}
 
+	public static PortalEntryValidationResult ValidateRank(
+		Player player,
+		int portalPathMinRank,
+		int npcObjectId)
+	{
+		// Java parity: services/teleport/PortalService.checkRank.
+		if (player.AbyssRank.Rank >= portalPathMinRank)
+			return PortalEntryValidationResult.Allowed();
+
+		return PortalEntryValidationResult.Rejected(
+			PortalEntryValidationStatus.RankRestricted,
+			new SmDialogWindow(npcObjectId, SmDialogWindow.NoRightPageId));
+	}
+
 	private static WorldMapInstanceRuntimeState? ResolveRegisteredInstance(
 		Player player,
 		int worldId,
@@ -148,6 +162,7 @@ public enum PortalEntryValidationStatus
 	LevelRestricted,
 	MentorRestricted,
 	RaceRestricted,
+	RankRestricted,
 }
 
 public sealed record PortalEntryInstanceValidationResult(

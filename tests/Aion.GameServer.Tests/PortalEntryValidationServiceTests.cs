@@ -390,6 +390,50 @@ public sealed class PortalEntryValidationServiceTests
 		Assert.Null(result.FailurePacket);
 	}
 
+	[Fact]
+	public void ValidateRank_AllowsWhenJavaAbyssRankMeetsPortalMinimum()
+	{
+		var player = new Player { AbyssRank = PlayerAbyssRank.Default() with { Rank = 5 } };
+
+		var result = PortalEntryValidationService.ValidateRank(player, portalPathMinRank: 5, npcObjectId: 4001);
+
+		Assert.True(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.Allowed, result.Status);
+		Assert.Null(result.FailurePacket);
+	}
+
+	[Fact]
+	public void ValidateRank_AllowsWhenJavaPortalMinimumIsZero()
+	{
+		var player = new Player { AbyssRank = PlayerAbyssRank.Default() };
+
+		var result = PortalEntryValidationService.ValidateRank(player, portalPathMinRank: 0, npcObjectId: 4001);
+
+		Assert.True(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.Allowed, result.Status);
+		Assert.Null(result.FailurePacket);
+	}
+
+	[Fact]
+	public void ValidateRank_ReturnsNoRightDialogWhenRankIsBelowPortalMinimum()
+	{
+		var player = new Player { AbyssRank = PlayerAbyssRank.Default() with { Rank = 4 } };
+
+		var result = PortalEntryValidationService.ValidateRank(player, portalPathMinRank: 5, npcObjectId: 4001);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.RankRestricted, result.Status);
+		var packet = Assert.IsType<SmDialogWindow>(result.FailurePacket);
+		var payload = SerializeUnencryptedPayload(packet);
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(4001, reader.ReadD());
+		Assert.Equal(SmDialogWindow.NoRightPageId, reader.ReadH());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.Remaining);
+	}
+
 	private const int WorldId = 300030000;
 
 	private static Player CreatePlayerWithCooldown(long reuseTimeMillis, int entryCount)
