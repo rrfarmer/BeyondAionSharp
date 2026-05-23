@@ -442,6 +442,196 @@ public sealed class WorldNpcDamageServiceTests
 	}
 
 	[Fact]
+	public async Task StartOverTimeEffect_BleedReservesDamageAndSchedulesAbnormal()
+	{
+		var damageService = CreateDamageService(out _, out _, out _, out var threadPoolManager, out _, out _, out _, out _, out _);
+		var skillDamageService = new WorldNpcSkillDamageService(damageService);
+		try
+		{
+			var result = skillDamageService.StartOverTimeEffect(new WorldNpcSkillOverTimeEffectStartRequest(
+				WorldNpcSkillOverTimeEffectKind.Bleed,
+				BaseValue: 30,
+				SkillId: 7001,
+				Position: 2,
+				CheckTime: TimeSpan.FromSeconds(1),
+				MagicalOverTime: new WorldNpcSkillMagicalOverTimeOptions(
+					MagicalSkillDamage: 40,
+					BaseMagicalDamageMultiplier: 1.5f,
+					PvpPveMultiplier: 1f)));
+
+			Assert.Equal(WorldNpcSkillOverTimeEffectCallerStatus.Applied, result.Status);
+			Assert.False(result.UseMagicBoost);
+			Assert.Equal(PlayerAbnormalState.Bleed, result.AbnormalState);
+			Assert.True(result.AppliesAbnormalState);
+			Assert.True(result.ReserveDamageOnStart);
+			Assert.True(result.SchedulesPeriodicTask);
+			Assert.Equal(TimeSpan.FromMilliseconds(1300), result.InitialDelay);
+			Assert.NotNull(result.Reserved);
+			Assert.Equal(2, result.Reserved.Position);
+			Assert.Equal(60, result.Reserved.Value);
+			Assert.Equal(WorldNpcEffectResourceType.Hp, result.Reserved.Type);
+			Assert.True(result.Reserved.IsDamage);
+			Assert.False(result.Reserved.Send);
+			Assert.NotNull(result.CalculationResult);
+			Assert.True(result.CalculationResult.Applied);
+			Assert.Equal(60, result.CalculationResult.FinalDamage);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
+	public async Task StartOverTimeEffect_SpellAttackUsesShugoVenomMagicBoostExclusion()
+	{
+		var damageService = CreateDamageService(out _, out _, out _, out var threadPoolManager, out _, out _, out _, out _, out _);
+		var skillDamageService = new WorldNpcSkillDamageService(damageService);
+		try
+		{
+			var result = skillDamageService.StartOverTimeEffect(new WorldNpcSkillOverTimeEffectStartRequest(
+				WorldNpcSkillOverTimeEffectKind.SpellAttack,
+				BaseValue: 7,
+				SkillId: 21110,
+				Position: 1,
+				CheckTime: TimeSpan.Zero,
+				MagicalOverTime: new WorldNpcSkillMagicalOverTimeOptions(EffectorIsTrap: true)));
+
+			Assert.Equal(WorldNpcSkillOverTimeEffectCallerStatus.Applied, result.Status);
+			Assert.False(result.UseMagicBoost);
+			Assert.Equal(PlayerAbnormalState.None, result.AbnormalState);
+			Assert.False(result.AppliesAbnormalState);
+			Assert.False(result.SchedulesPeriodicTask);
+			Assert.Null(result.InitialDelay);
+			Assert.NotNull(result.Reserved);
+			Assert.Equal(7, result.Reserved.Value);
+			Assert.NotNull(result.CalculationResult);
+			Assert.False(result.CalculationResult.UseMagicBoost);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
+	public async Task ApplyOverTimePeriodicActionAsync_PoisonUsesReservedDamageAndDotObserver()
+	{
+		var damageService = CreateDamageService(out var spawnService, out var world, out _, out var threadPoolManager, out _, out _, out _, out _, out _);
+		var skillDamageService = new WorldNpcSkillDamageService(damageService);
+		try
+		{
+			SpawnNpc(spawnService, world, npcTemplateId: 203108, maxHp: 100);
+			var npc = Assert.Single(world.GetNpcs());
+
+			var result = await skillDamageService.ApplyOverTimePeriodicActionAsync(new WorldNpcSkillOverTimePeriodicActionRequest(
+				Target: npc,
+				Effector: CreatePlayer(),
+				SkillId: 7002,
+				Kind: WorldNpcSkillOverTimeEffectKind.Poison,
+				ReservedDamage: 15));
+
+			Assert.True(result.Applied);
+			Assert.Equal(WorldNpcSkillDamageKind.PoisonPeriodic, result.DamageKind);
+			Assert.Equal(15, result.Damage);
+			Assert.True(result.UsedReservedDamage);
+			Assert.False(result.RecalculatedDamage);
+			Assert.Null(result.CalculationResult);
+			Assert.NotNull(result.DamageResult);
+			Assert.Equal(WorldNpcSkillDamageKind.PoisonPeriodic, result.DamageResult.Kind);
+			Assert.Equal(WorldNpcDamageStatus.Damaged, result.DamageResult.DamageResult.Status);
+			Assert.False(result.DamageResult.DamageResult.NotifyAttack);
+			Assert.NotNull(result.DamageResult.DamageResult.AttackStatusPacket);
+			Assert.Equal(SmAttackStatusLog.Poison, result.DamageResult.DamageResult.AttackStatusPacket.Log);
+			Assert.Null(result.DamageResult.AttackObserverNotification);
+			Assert.NotNull(result.DamageResult.DotAttackedObserverNotification);
+			Assert.Equal(7002, result.DamageResult.DotAttackedObserverNotification.SkillId);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
+	public async Task ApplyOverTimePeriodicActionAsync_SpellAttackDrainRecalculatesDamageAndDrain()
+	{
+		var damageService = CreateDamageService(out var spawnService, out var world, out _, out var threadPoolManager, out _, out _, out _, out _, out _);
+		var skillDamageService = new WorldNpcSkillDamageService(damageService);
+		try
+		{
+			SpawnNpc(spawnService, world, npcTemplateId: 203109, maxHp: 100);
+			var npc = Assert.Single(world.GetNpcs());
+
+			var result = await skillDamageService.ApplyOverTimePeriodicActionAsync(new WorldNpcSkillOverTimePeriodicActionRequest(
+				Target: npc,
+				Effector: CreatePlayer(),
+				SkillId: 7003,
+				Kind: WorldNpcSkillOverTimeEffectKind.SpellAttackDrain,
+				BaseValue: 20,
+				MagicalOverTime: new WorldNpcSkillMagicalOverTimeOptions(EffectorIsTrap: true),
+				DamageOptions: new WorldNpcSkillDamageOptions(
+					HpDrainPercent: 50,
+					MpDrainPercent: 25)));
+
+			Assert.True(result.Applied);
+			Assert.Equal(WorldNpcSkillDamageKind.SpellAttackDrain, result.DamageKind);
+			Assert.Equal(20, result.Damage);
+			Assert.False(result.UsedReservedDamage);
+			Assert.True(result.RecalculatedDamage);
+			Assert.NotNull(result.CalculationResult);
+			Assert.True(result.CalculationResult.UseMagicBoost);
+			Assert.Equal(20, result.CalculationResult.FinalDamage);
+			Assert.NotNull(result.DamageResult);
+			Assert.Equal(WorldNpcSkillDamageKind.SpellAttackDrain, result.DamageResult.Kind);
+			Assert.NotNull(result.DamageResult.DamageResult.AttackStatusPacket);
+			Assert.Equal(SmAttackStatusLog.SpellAttackDrain, result.DamageResult.DamageResult.AttackStatusPacket.Log);
+			Assert.NotNull(result.DamageResult.AttackObserverNotification);
+			Assert.Null(result.DamageResult.DotAttackedObserverNotification);
+			Assert.NotNull(result.DamageResult.DrainResult);
+			Assert.Equal(10, result.DamageResult.DrainResult.HpAmount);
+			Assert.Equal(5, result.DamageResult.DrainResult.MpAmount);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
+	public async Task ApplyOverTimePeriodicActionAsync_RecordsMissingPeriodicInputs()
+	{
+		var damageService = CreateDamageService(out _, out _, out _, out var threadPoolManager, out _, out _, out _, out _, out _);
+		var skillDamageService = new WorldNpcSkillDamageService(damageService);
+		try
+		{
+			var missingReserved = await skillDamageService.ApplyOverTimePeriodicActionAsync(new WorldNpcSkillOverTimePeriodicActionRequest(
+				Target: null,
+				Effector: null,
+				SkillId: 7004,
+				Kind: WorldNpcSkillOverTimeEffectKind.Bleed));
+
+			Assert.False(missingReserved.Applied);
+			Assert.Equal(WorldNpcSkillOverTimeEffectCallerStatus.MissingReservedDamage, missingReserved.Status);
+			Assert.Null(missingReserved.DamageResult);
+
+			var missingBaseValue = await skillDamageService.ApplyOverTimePeriodicActionAsync(new WorldNpcSkillOverTimePeriodicActionRequest(
+				Target: null,
+				Effector: null,
+				SkillId: 7005,
+				Kind: WorldNpcSkillOverTimeEffectKind.SpellAttackDrain));
+
+			Assert.False(missingBaseValue.Applied);
+			Assert.Equal(WorldNpcSkillOverTimeEffectCallerStatus.MissingBaseValue, missingBaseValue.Status);
+			Assert.Null(missingBaseValue.DamageResult);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
 	public async Task ApplyDamageAsync_RecordsAttackedObserverAndSupportAiEvents()
 	{
 		var damageService = CreateDamageService(out var spawnService, out var world, out _, out var threadPoolManager, out _, out _, out var combatEvents, out _, out _);

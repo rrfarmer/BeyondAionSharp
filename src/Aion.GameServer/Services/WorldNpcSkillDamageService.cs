@@ -86,6 +86,122 @@ public sealed class WorldNpcSkillDamageService
 			calculationResult);
 	}
 
+	public WorldNpcSkillOverTimeEffectStartResult StartOverTimeEffect(WorldNpcSkillOverTimeEffectStartRequest request)
+	{
+		// Java parity: skillengine/effect/{Bleed,Poison,SpellAttack}Effect.startEffect and AbstractOverTimeEffect.startEffect.
+		var profile = GetOverTimeEffectProfile(request.Kind, request.SkillId);
+		WorldNpcSkillMagicalOverTimeResult? calculationResult = null;
+		WorldNpcSkillEffectReservedResult? reserved = null;
+		var status = WorldNpcSkillOverTimeEffectCallerStatus.Applied;
+
+		if (profile.ReserveDamageOnStart)
+		{
+			calculationResult = _resultCalculation.CalculateMagicalOverTime(new WorldNpcSkillMagicalOverTimeRequest(
+				request.BaseValue,
+				profile.UseMagicBoost,
+				request.MagicalOverTime));
+			if (calculationResult.Applied)
+			{
+				reserved = new WorldNpcSkillEffectReservedResult(
+					request.Position,
+					calculationResult.FinalDamage,
+					WorldNpcEffectResourceType.Hp,
+					IsDamage: true,
+					Send: false);
+			}
+			else
+			{
+				status = WorldNpcSkillOverTimeEffectCallerStatus.CalculationUnresolved;
+			}
+		}
+
+		var schedulesPeriodicTask = request.CheckTime > TimeSpan.Zero;
+		var initialDelay = schedulesPeriodicTask
+			? request.CheckTime + TimeSpan.FromMilliseconds(300)
+			: (TimeSpan?)null;
+		return new WorldNpcSkillOverTimeEffectStartResult(
+			status,
+			request.Kind,
+			request.BaseValue,
+			request.SkillId,
+			request.Position,
+			profile.UseMagicBoost,
+			profile.AbnormalState,
+			profile.AbnormalState != PlayerAbnormalState.None,
+			profile.ReserveDamageOnStart,
+			request.CheckTime,
+			schedulesPeriodicTask,
+			initialDelay,
+			reserved,
+			calculationResult);
+	}
+
+	public async ValueTask<WorldNpcSkillOverTimePeriodicActionResult> ApplyOverTimePeriodicActionAsync(
+		WorldNpcSkillOverTimePeriodicActionRequest request,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: periodic onPeriodicAction methods for bleed, poison, spell attack, and spell attack drain.
+		var profile = GetOverTimeEffectProfile(request.Kind, request.SkillId);
+		WorldNpcSkillMagicalOverTimeResult? calculationResult = null;
+		var damage = 0;
+		var usedReservedDamage = false;
+		var recalculatedDamage = false;
+
+		if (profile.RecalculateDamageOnPeriodic)
+		{
+			if (request.BaseValue == null)
+				return WorldNpcSkillOverTimePeriodicActionResult.Skipped(
+					WorldNpcSkillOverTimeEffectCallerStatus.MissingBaseValue,
+					request.Kind,
+					profile.DamageKind);
+
+			calculationResult = _resultCalculation.CalculateMagicalOverTime(new WorldNpcSkillMagicalOverTimeRequest(
+				request.BaseValue.Value,
+				profile.UseMagicBoost,
+				request.MagicalOverTime));
+			if (!calculationResult.Applied)
+			{
+				return WorldNpcSkillOverTimePeriodicActionResult.Skipped(
+					WorldNpcSkillOverTimeEffectCallerStatus.CalculationUnresolved,
+					request.Kind,
+					profile.DamageKind,
+					calculationResult);
+			}
+
+			damage = calculationResult.FinalDamage;
+			recalculatedDamage = true;
+		}
+		else
+		{
+			if (request.ReservedDamage == null)
+				return WorldNpcSkillOverTimePeriodicActionResult.Skipped(
+					WorldNpcSkillOverTimeEffectCallerStatus.MissingReservedDamage,
+					request.Kind,
+					profile.DamageKind);
+
+			damage = request.ReservedDamage.Value;
+			usedReservedDamage = true;
+		}
+
+		var damageResult = await ApplyDamageEffectAsync(
+			new WorldNpcSkillDamageRequest(
+				request.Target,
+				request.Effector,
+				damage,
+				request.SkillId,
+				profile.DamageKind,
+				request.DamageOptions),
+			cancellationToken);
+		return WorldNpcSkillOverTimePeriodicActionResult.AppliedResult(
+			request.Kind,
+			profile.DamageKind,
+			damage,
+			usedReservedDamage,
+			recalculatedDamage,
+			calculationResult,
+			damageResult);
+	}
+
 	private static WorldNpcSkillDamageMapping GetMapping(WorldNpcSkillDamageKind kind)
 	{
 		return kind switch
@@ -117,6 +233,18 @@ public sealed class WorldNpcSkillDamageService
 			WorldNpcSkillDamageKind.BleedPeriodic => new WorldNpcSkillDamageMapping(
 				SmAttackStatusType.Damage,
 				SmAttackStatusLog.Bleed,
+				NotifyAttack: false,
+				NotifyEffectorAttackObservers: false,
+				NotifyDotAttackedObservers: true,
+				ApplyDrain: false,
+				ReportDelay: false,
+				IgnoreShield: false,
+				SendResult: true,
+				ShouldIncreaseByOneTimeBoost: true,
+				ShouldApplyAttackerMovementModifier: true),
+			WorldNpcSkillDamageKind.PoisonPeriodic => new WorldNpcSkillDamageMapping(
+				SmAttackStatusType.Damage,
+				SmAttackStatusLog.Poison,
 				NotifyAttack: false,
 				NotifyEffectorAttackObservers: false,
 				NotifyDotAttackedObservers: true,
@@ -189,6 +317,135 @@ public sealed class WorldNpcSkillDamageService
 		bool SendResult,
 		bool ShouldIncreaseByOneTimeBoost,
 		bool ShouldApplyAttackerMovementModifier);
+
+	private static WorldNpcSkillOverTimeEffectProfile GetOverTimeEffectProfile(
+		WorldNpcSkillOverTimeEffectKind kind,
+		int skillId)
+	{
+		return kind switch
+		{
+			WorldNpcSkillOverTimeEffectKind.Bleed => new WorldNpcSkillOverTimeEffectProfile(
+				DamageKind: WorldNpcSkillDamageKind.BleedPeriodic,
+				UseMagicBoost: false,
+				AbnormalState: PlayerAbnormalState.Bleed,
+				ReserveDamageOnStart: true,
+				RecalculateDamageOnPeriodic: false),
+			WorldNpcSkillOverTimeEffectKind.Poison => new WorldNpcSkillOverTimeEffectProfile(
+				DamageKind: WorldNpcSkillDamageKind.PoisonPeriodic,
+				UseMagicBoost: false,
+				AbnormalState: PlayerAbnormalState.Poison,
+				ReserveDamageOnStart: true,
+				RecalculateDamageOnPeriodic: false),
+			WorldNpcSkillOverTimeEffectKind.SpellAttack => new WorldNpcSkillOverTimeEffectProfile(
+				DamageKind: WorldNpcSkillDamageKind.PeriodicSpellAttack,
+				UseMagicBoost: skillId != 21110,
+				AbnormalState: PlayerAbnormalState.None,
+				ReserveDamageOnStart: true,
+				RecalculateDamageOnPeriodic: false),
+			WorldNpcSkillOverTimeEffectKind.SpellAttackDrain => new WorldNpcSkillOverTimeEffectProfile(
+				DamageKind: WorldNpcSkillDamageKind.SpellAttackDrain,
+				UseMagicBoost: true,
+				AbnormalState: PlayerAbnormalState.None,
+				ReserveDamageOnStart: false,
+				RecalculateDamageOnPeriodic: true),
+			_ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unhandled Java over-time effect kind."),
+		};
+	}
+
+	private sealed record WorldNpcSkillOverTimeEffectProfile(
+		WorldNpcSkillDamageKind DamageKind,
+		bool UseMagicBoost,
+		PlayerAbnormalState AbnormalState,
+		bool ReserveDamageOnStart,
+		bool RecalculateDamageOnPeriodic);
+}
+
+public sealed record WorldNpcSkillOverTimeEffectStartRequest(
+	WorldNpcSkillOverTimeEffectKind Kind,
+	float BaseValue,
+	int SkillId,
+	int Position,
+	TimeSpan CheckTime,
+	WorldNpcSkillMagicalOverTimeOptions? MagicalOverTime = null);
+
+public sealed record WorldNpcSkillOverTimeEffectStartResult(
+	WorldNpcSkillOverTimeEffectCallerStatus Status,
+	WorldNpcSkillOverTimeEffectKind Kind,
+	float BaseValue,
+	int SkillId,
+	int Position,
+	bool UseMagicBoost,
+	PlayerAbnormalState AbnormalState,
+	bool AppliesAbnormalState,
+	bool ReserveDamageOnStart,
+	TimeSpan CheckTime,
+	bool SchedulesPeriodicTask,
+	TimeSpan? InitialDelay,
+	WorldNpcSkillEffectReservedResult? Reserved,
+	WorldNpcSkillMagicalOverTimeResult? CalculationResult)
+{
+	public bool HasUnresolvedInputs => Status == WorldNpcSkillOverTimeEffectCallerStatus.CalculationUnresolved ||
+		CalculationResult?.HasUnresolvedInputs == true;
+}
+
+public sealed record WorldNpcSkillOverTimePeriodicActionRequest(
+	IWorldNpcObject? Target,
+	Player? Effector,
+	int SkillId,
+	WorldNpcSkillOverTimeEffectKind Kind,
+	int? ReservedDamage = null,
+	float? BaseValue = null,
+	WorldNpcSkillMagicalOverTimeOptions? MagicalOverTime = null,
+	WorldNpcSkillDamageOptions? DamageOptions = null);
+
+public sealed record WorldNpcSkillOverTimePeriodicActionResult(
+	WorldNpcSkillOverTimeEffectCallerStatus Status,
+	WorldNpcSkillOverTimeEffectKind Kind,
+	WorldNpcSkillDamageKind DamageKind,
+	int Damage,
+	bool UsedReservedDamage,
+	bool RecalculatedDamage,
+	WorldNpcSkillMagicalOverTimeResult? CalculationResult,
+	WorldNpcSkillDamageResult? DamageResult)
+{
+	public bool Applied => Status == WorldNpcSkillOverTimeEffectCallerStatus.Applied;
+
+	public static WorldNpcSkillOverTimePeriodicActionResult Skipped(
+		WorldNpcSkillOverTimeEffectCallerStatus status,
+		WorldNpcSkillOverTimeEffectKind kind,
+		WorldNpcSkillDamageKind damageKind,
+		WorldNpcSkillMagicalOverTimeResult? calculationResult = null)
+	{
+		return new WorldNpcSkillOverTimePeriodicActionResult(
+			status,
+			kind,
+			damageKind,
+			Damage: 0,
+			UsedReservedDamage: false,
+			RecalculatedDamage: false,
+			CalculationResult: calculationResult,
+			DamageResult: null);
+	}
+
+	public static WorldNpcSkillOverTimePeriodicActionResult AppliedResult(
+		WorldNpcSkillOverTimeEffectKind kind,
+		WorldNpcSkillDamageKind damageKind,
+		int damage,
+		bool usedReservedDamage,
+		bool recalculatedDamage,
+		WorldNpcSkillMagicalOverTimeResult? calculationResult,
+		WorldNpcSkillDamageResult damageResult)
+	{
+		return new WorldNpcSkillOverTimePeriodicActionResult(
+			WorldNpcSkillOverTimeEffectCallerStatus.Applied,
+			kind,
+			damageKind,
+			damage,
+			usedReservedDamage,
+			recalculatedDamage,
+			calculationResult,
+			damageResult);
+	}
 }
 
 public sealed record WorldNpcSkillDamageRequest(
@@ -249,4 +506,21 @@ public enum WorldNpcSkillDamageKind
 	DelayedSpellAttackInstant,
 	ProcAttackInstant,
 	BleedPeriodic,
+	PoisonPeriodic,
+}
+
+public enum WorldNpcSkillOverTimeEffectKind
+{
+	Bleed,
+	Poison,
+	SpellAttack,
+	SpellAttackDrain,
+}
+
+public enum WorldNpcSkillOverTimeEffectCallerStatus
+{
+	Applied,
+	MissingReservedDamage,
+	MissingBaseValue,
+	CalculationUnresolved,
 }
