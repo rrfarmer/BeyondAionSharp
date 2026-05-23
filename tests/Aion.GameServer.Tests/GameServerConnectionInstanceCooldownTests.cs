@@ -407,6 +407,7 @@ public sealed class GameServerConnectionInstanceCooldownTests
 		var registeredInstance = worldMaps.AddWorldMapInstance(300030000, instanceId: 7, maxPlayers: 6);
 		Assert.NotNull(registeredInstance);
 		registeredInstance.RegisterTeamId(88001);
+		registeredInstance.AddPlayer(5001);
 		var cooltimes = new InstanceCooltimeTable(
 		[
 			new InstanceCooltimeSummary(
@@ -462,6 +463,10 @@ public sealed class GameServerConnectionInstanceCooldownTests
 		Assert.Equal(
 			GroupPortalMemberInstanceScanBlockedReason.RegisteredTeamInstanceAlreadyResolved,
 			groupPlan.MemberInstanceScanPlan.BlockedReason);
+		Assert.Equal(6, groupPlan.CapacityPlan.MaxPlayers);
+		Assert.Equal(1, groupPlan.CapacityPlan.CurrentPlayerCount);
+		Assert.Equal(GroupPortalCapacityState.WouldPassCapacityGuard, groupPlan.CapacityPlan.State);
+		Assert.Equal(GroupPortalCapacityBlockedReason.GroupFanoutNotImplemented, groupPlan.CapacityPlan.BlockedReason);
 		Assert.Empty(pair.SentPackets);
 		Assert.Null(player.PendingTeleport);
 		Assert.Null(repository.SavedPortalCooldowns);
@@ -541,6 +546,10 @@ public sealed class GameServerConnectionInstanceCooldownTests
 		Assert.Equal(
 			GroupPortalMemberInstanceScanBlockedReason.LiveGroupAggregateNotPorted,
 			groupPlan.MemberInstanceScanPlan.BlockedReason);
+		Assert.Equal(6, groupPlan.CapacityPlan.MaxPlayers);
+		Assert.Null(groupPlan.CapacityPlan.CurrentPlayerCount);
+		Assert.Equal(GroupPortalCapacityState.UnknownUntilInstanceAllocated, groupPlan.CapacityPlan.State);
+		Assert.Equal(GroupPortalCapacityBlockedReason.InstanceAllocationNotPorted, groupPlan.CapacityPlan.BlockedReason);
 		Assert.Empty(pair.SentPackets);
 		Assert.Null(player.PendingTeleport);
 		Assert.Null(repository.SavedPortalCooldowns);
@@ -620,6 +629,10 @@ public sealed class GameServerConnectionInstanceCooldownTests
 		Assert.Equal(
 			GroupPortalMemberInstanceScanBlockedReason.MissingTeamId,
 			groupPlan.MemberInstanceScanPlan.BlockedReason);
+		Assert.Equal(6, groupPlan.CapacityPlan.MaxPlayers);
+		Assert.Null(groupPlan.CapacityPlan.CurrentPlayerCount);
+		Assert.Equal(GroupPortalCapacityState.BlockedInvalidTeamId, groupPlan.CapacityPlan.State);
+		Assert.Equal(GroupPortalCapacityBlockedReason.MissingTeamId, groupPlan.CapacityPlan.BlockedReason);
 		Assert.Empty(pair.SentPackets);
 		Assert.Null(player.PendingTeleport);
 		Assert.Null(repository.SavedPortalCooldowns);

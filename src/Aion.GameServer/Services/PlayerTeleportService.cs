@@ -182,7 +182,8 @@ public sealed record GroupPortalTransferPlan(
 	GroupPortalTransferState State,
 	WorldMapInstanceRuntimeState? RegisteredInstance,
 	GroupPortalTransferBlockedReason BlockedReason,
-	GroupPortalMemberInstanceScanPlan MemberInstanceScanPlan)
+	GroupPortalMemberInstanceScanPlan MemberInstanceScanPlan,
+	GroupPortalCapacityPlan CapacityPlan)
 {
 	public static GroupPortalTransferPlan? FromTeamPlan(PortalTeamEntryPlan teamPlan)
 	{
@@ -202,7 +203,11 @@ public sealed record GroupPortalTransferPlan(
 				CreateMemberInstanceScanPlan(
 					teamPlan,
 					GroupPortalMemberInstanceScanState.BlockedInvalidTeamId,
-					GroupPortalMemberInstanceScanBlockedReason.MissingTeamId));
+					GroupPortalMemberInstanceScanBlockedReason.MissingTeamId),
+				CreateCapacityPlan(
+					teamPlan,
+					GroupPortalCapacityState.BlockedInvalidTeamId,
+					GroupPortalCapacityBlockedReason.MissingTeamId));
 		}
 
 		var state = teamPlan.RegisteredInstance == null
@@ -215,7 +220,8 @@ public sealed record GroupPortalTransferPlan(
 			state,
 			teamPlan.RegisteredInstance,
 			GroupPortalTransferBlockedReason.GroupFanoutNotImplemented,
-			CreateMemberInstanceScanPlan(teamPlan, state));
+			CreateMemberInstanceScanPlan(teamPlan, state),
+			CreateCapacityPlan(teamPlan, state));
 	}
 
 	private static GroupPortalMemberInstanceScanPlan CreateMemberInstanceScanPlan(
@@ -255,12 +261,59 @@ public sealed record GroupPortalTransferPlan(
 			: Array.Empty<int>();
 		return new GroupPortalMemberInstanceScanPlan(candidates, state, blockedReason);
 	}
+
+	private static GroupPortalCapacityPlan CreateCapacityPlan(
+		PortalTeamEntryPlan teamPlan,
+		GroupPortalTransferState transferState)
+	{
+		if (transferState == GroupPortalTransferState.RegisteredInstanceTransfer
+			&& teamPlan.RegisteredInstance != null)
+		{
+			// Java parity: PortalService.port checks instance.getPlayersInside().size() < maxPlayers before transfer.
+			var playerCount = teamPlan.RegisteredInstance.PlayerCount;
+			var state = playerCount < teamPlan.MaxPlayers
+				? GroupPortalCapacityState.WouldPassCapacityGuard
+				: GroupPortalCapacityState.WouldFailCapacityGuard;
+			var reason = playerCount < teamPlan.MaxPlayers
+				? GroupPortalCapacityBlockedReason.GroupFanoutNotImplemented
+				: GroupPortalCapacityBlockedReason.RegisteredInstanceFull;
+			return new GroupPortalCapacityPlan(teamPlan.MaxPlayers, playerCount, state, reason);
+		}
+
+		if (transferState == GroupPortalTransferState.FreshInstanceAllocationNeeded)
+		{
+			return new GroupPortalCapacityPlan(
+				teamPlan.MaxPlayers,
+				CurrentPlayerCount: null,
+				GroupPortalCapacityState.UnknownUntilInstanceAllocated,
+				GroupPortalCapacityBlockedReason.InstanceAllocationNotPorted);
+		}
+
+		return CreateCapacityPlan(
+			teamPlan,
+			GroupPortalCapacityState.BlockedInvalidTeamId,
+			GroupPortalCapacityBlockedReason.MissingTeamId);
+	}
+
+	private static GroupPortalCapacityPlan CreateCapacityPlan(
+		PortalTeamEntryPlan teamPlan,
+		GroupPortalCapacityState state,
+		GroupPortalCapacityBlockedReason blockedReason)
+	{
+		return new GroupPortalCapacityPlan(teamPlan.MaxPlayers, CurrentPlayerCount: null, state, blockedReason);
+	}
 }
 
 public sealed record GroupPortalMemberInstanceScanPlan(
 	IReadOnlyList<int> CandidateObjectIds,
 	GroupPortalMemberInstanceScanState State,
 	GroupPortalMemberInstanceScanBlockedReason BlockedReason);
+
+public sealed record GroupPortalCapacityPlan(
+	int MaxPlayers,
+	int? CurrentPlayerCount,
+	GroupPortalCapacityState State,
+	GroupPortalCapacityBlockedReason BlockedReason);
 
 public enum GroupPortalTransferState
 {
@@ -289,4 +342,20 @@ public enum GroupPortalMemberInstanceScanBlockedReason
 	LiveGroupAggregateNotPorted,
 	MissingTeamId,
 	NoMemberObjectIds,
+}
+
+public enum GroupPortalCapacityState
+{
+	WouldPassCapacityGuard,
+	WouldFailCapacityGuard,
+	UnknownUntilInstanceAllocated,
+	BlockedInvalidTeamId,
+}
+
+public enum GroupPortalCapacityBlockedReason
+{
+	GroupFanoutNotImplemented,
+	RegisteredInstanceFull,
+	InstanceAllocationNotPorted,
+	MissingTeamId,
 }
