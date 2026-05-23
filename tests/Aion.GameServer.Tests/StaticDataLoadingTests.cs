@@ -386,6 +386,40 @@ public sealed class StaticDataLoadingTests
 	}
 
 	[Fact]
+	public void FlightZoneSummary_CanFlyCanGlideMatchesJavaZoneInstanceOptions()
+	{
+		var flyAndGlideMap = new WorldMapSummary(
+			400010000,
+			IsInstance: false,
+			TwinCount: 1,
+			Flags: WorldZoneAttributes.Fly | WorldZoneAttributes.Glide);
+		var glideOnlyMap = new WorldMapSummary(
+			210010000,
+			IsInstance: false,
+			TwinCount: 5,
+			Flags: WorldZoneAttributes.Glide);
+		var inheritZone = CreateFlightZone(flags: -1);
+		var zeroFlagsZone = CreateFlightZone(flags: 0);
+		var glideOnlyZone = CreateFlightZone(flags: (int)WorldZoneAttributes.Glide);
+		var flyOnlyZone = CreateFlightZone(flags: (int)WorldZoneAttributes.Fly);
+
+		Assert.True(inheritZone.CanFly(flyAndGlideMap, flyAndGlideMap.Flags));
+		Assert.True(inheritZone.CanGlide(flyAndGlideMap, flyAndGlideMap.Flags));
+		Assert.False(zeroFlagsZone.CanFly(glideOnlyMap, glideOnlyMap.Flags));
+		Assert.True(zeroFlagsZone.CanGlide(glideOnlyMap, glideOnlyMap.Flags));
+
+		Assert.False(glideOnlyZone.CanFly(flyAndGlideMap, flyAndGlideMap.Flags));
+		Assert.True(glideOnlyZone.CanGlide(flyAndGlideMap, flyAndGlideMap.Flags));
+		Assert.True(flyOnlyZone.CanFly(glideOnlyMap, glideOnlyMap.Flags));
+		Assert.False(flyOnlyZone.CanGlide(glideOnlyMap, glideOnlyMap.Flags));
+
+		var flyRemovedAtRuntime = flyAndGlideMap.Flags & ~WorldZoneAttributes.Fly;
+		var flyAddedAtRuntime = glideOnlyMap.Flags | WorldZoneAttributes.Fly;
+		Assert.False(flyOnlyZone.CanFly(flyAndGlideMap, flyRemovedAtRuntime));
+		Assert.True(glideOnlyZone.CanFly(glideOnlyMap, flyAddedAtRuntime));
+	}
+
+	[Fact]
 	public async Task DataManager_LoadsRealJavaStaticDataManifestCounts()
 	{
 		using var temp = TempDirectory.Create();
@@ -907,6 +941,18 @@ public sealed class StaticDataLoadingTests
 		}
 
 		throw new DirectoryNotFoundException("Could not find repository root from test output directory.");
+	}
+
+	private static FlightZoneSummary CreateFlightZone(int flags)
+	{
+		return new FlightZoneSummary(
+			210010000,
+			"test_flight_zone",
+			FlightZoneType.Fly,
+			flags,
+			Bottom: 0,
+			Top: 100,
+			Points: [new ZonePoint2D(0, 0), new ZonePoint2D(10, 0), new ZonePoint2D(10, 10)]);
 	}
 
 	private sealed class TempDirectory : IDisposable
