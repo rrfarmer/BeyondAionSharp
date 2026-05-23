@@ -66,6 +66,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly IHouseDoorStateService? _houseDoorStateService;
 	private readonly Action<GameServerPacket>? _sentPacketObserver;
 	private readonly RiftPortalInteractionService? _riftPortalInteractionService;
+	private readonly PortalEntryInteractionService? _portalEntryInteractionService;
 	private readonly WorldNpcLootService? _worldNpcLootService;
 	private readonly Func<Player, int, bool>? _isKnownNpc;
 	private readonly CreaturePvpZoneCounterService? _creaturePvpZoneCounterService;
@@ -164,6 +165,9 @@ public sealed class GameServerConnection : BaseClientConnection
 					vortexLocationService,
 					_world,
 					_isKnownNpc));
+		_portalEntryInteractionService = _playerEnterWorldService == null
+			? null
+			: new PortalEntryInteractionService(_playerEnterWorldService);
 		_crypt = crypt ?? new GameCrypt();
 	}
 
@@ -1293,9 +1297,30 @@ public sealed class GameServerConnection : BaseClientConnection
 
 	private async Task HandleDialogSelectAsync(Player player, CmDialogSelect packet)
 	{
-		// Java parity: network/aion/clientpackets/CM_DIALOG_SELECT.runImpl -> services/DialogService.onDialogSelect narrow charge-all branch.
+		// Java parity: network/aion/clientpackets/CM_DIALOG_SELECT.runImpl -> NpcController.onDialogSelect.
 		if (player.IsTrading)
 			return;
+
+		if (_portalEntryInteractionService != null)
+		{
+			var staticData = _runtimeContext?.DataManager?.StaticData;
+			var portalResult = await _portalEntryInteractionService.HandleDialogSelectAsync(
+				player,
+				packet.TargetObjectId,
+				packet.DialogActionId,
+				packet.QuestId,
+				_world,
+				staticData?.PortalPaths,
+				staticData?.PortalLocs,
+				staticData?.InstanceCooltimes,
+				_runtimeContext?.WorldMapStates,
+				staticData?.ItemTemplates,
+				SendPacketAsync,
+				DateTimeOffset.Now,
+				_isKnownNpc);
+			if (portalResult.Handled)
+				return;
+		}
 
 		var chargeWay = packet.DialogActionId switch
 		{

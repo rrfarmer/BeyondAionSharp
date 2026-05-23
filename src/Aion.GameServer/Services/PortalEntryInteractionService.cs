@@ -1,0 +1,135 @@
+using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion;
+using Aion.GameServer.World;
+using GameWorld = Aion.GameServer.World.World;
+
+namespace Aion.GameServer.Services;
+
+public sealed class PortalEntryInteractionService
+{
+	private readonly PlayerEnterWorldService _playerEnterWorldService;
+
+	public PortalEntryInteractionService(PlayerEnterWorldService playerEnterWorldService)
+	{
+		_playerEnterWorldService = playerEnterWorldService;
+	}
+
+	public async Task<PortalDialogEntryResult> HandleDialogSelectAsync(
+		Player player,
+		int targetObjectId,
+		int dialogActionId,
+		int questId,
+		GameWorld? world,
+		PortalPathTable? portalPaths,
+		PortalLocTable? portalLocs,
+		InstanceCooltimeTable? instanceCooltimes,
+		WorldMapRuntimeStateTable? worldMaps,
+		ItemTemplateTable? itemTemplates,
+		Func<GameServerPacket, CancellationToken, Task> sendPacketAsync,
+		DateTimeOffset now,
+		Func<Player, int, bool>? isKnownNpc = null,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: data/handlers/ai/portals/PortalDialogAI.onDialogSelect -> PortalService.port.
+		if (questId != 0)
+			return PortalDialogEntryResult.NotHandled(PortalDialogEntryStatus.QuestDialog);
+		if (world == null
+			|| (isKnownNpc?.Invoke(player, targetObjectId) == false)
+			|| !world.TryGetObject(targetObjectId, out var target)
+			|| target is not IWorldNpcObject npc)
+		{
+			return PortalDialogEntryResult.NotHandled(PortalDialogEntryStatus.UnknownTarget);
+		}
+		if (!IsInTalkRange(player, npc))
+			return PortalDialogEntryResult.CreateHandled(PortalDialogEntryStatus.TooFar, null);
+		if (portalPaths == null || portalLocs == null || instanceCooltimes == null || worldMaps == null || itemTemplates == null)
+			return PortalDialogEntryResult.CreateHandled(PortalDialogEntryStatus.MissingStaticData, null);
+
+		var portalPath = portalPaths.GetPortalDialogPath(npc.TemplateId, dialogActionId, player.Race);
+		if (portalPath == null)
+			return PortalDialogEntryResult.NotHandled(PortalDialogEntryStatus.NoPortalPath);
+
+		var preparation = await _playerEnterWorldService.PreparePortalEntryAsync(
+			player,
+			portalPath,
+			portalLocs,
+			instanceCooltimes,
+			worldMaps,
+			itemTemplates,
+			now,
+			npc.ObjectId,
+			npcIsDialogNpc: npc.Template.IsDialogNpc,
+			cancellationToken: cancellationToken);
+
+		if (preparation.Status == PortalEntryPreparationStatus.ValidationRejected)
+		{
+			if (preparation.EntryPlan.FailurePacket != null)
+				await sendPacketAsync(preparation.EntryPlan.FailurePacket, cancellationToken);
+			return PortalDialogEntryResult.CreateHandled(PortalDialogEntryStatus.ValidationRejected, preparation);
+		}
+
+		if (preparation.Status != PortalEntryPreparationStatus.Ready)
+			return PortalDialogEntryResult.CreateHandled(MapPreparationFailure(preparation.Status), preparation);
+
+		foreach (var packet in preparation.Packets)
+			await sendPacketAsync(packet, cancellationToken);
+
+		return PortalDialogEntryResult.CreateHandled(PortalDialogEntryStatus.Ready, preparation);
+	}
+
+	private static bool IsInTalkRange(Player player, IWorldNpcObject npc)
+	{
+		// Java parity: controllers/NpcController.onDialogSelect requires PositionUtil.isInTalkRange before AI dispatch.
+		if (player.Position.WorldId != npc.Position.WorldId || player.Position.InstanceId != npc.Position.InstanceId)
+			return false;
+
+		var range = npc.Template.TalkDistance + 1 + npc.Template.BoundRadius;
+		var deltaX = player.Position.X - npc.Position.X;
+		var deltaY = player.Position.Y - npc.Position.Y;
+		var deltaZ = player.Position.Z - npc.Position.Z;
+		return deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ < range * range;
+	}
+
+	private static PortalDialogEntryStatus MapPreparationFailure(PortalEntryPreparationStatus status)
+	{
+		return status switch
+		{
+			PortalEntryPreparationStatus.RequirementApplicationFailed => PortalDialogEntryStatus.RequirementApplicationFailed,
+			PortalEntryPreparationStatus.RequirementPersistenceFailed => PortalDialogEntryStatus.RequirementPersistenceFailed,
+			_ => PortalDialogEntryStatus.UnknownPreparationStatus,
+		};
+	}
+}
+
+public sealed record PortalDialogEntryResult(
+	bool Handled,
+	PortalDialogEntryStatus Status,
+	PortalEntryPreparationResult? Preparation)
+{
+	public static PortalDialogEntryResult CreateHandled(
+		PortalDialogEntryStatus status,
+		PortalEntryPreparationResult? preparation)
+	{
+		return new PortalDialogEntryResult(true, status, preparation);
+	}
+
+	public static PortalDialogEntryResult NotHandled(PortalDialogEntryStatus status)
+	{
+		return new PortalDialogEntryResult(false, status, null);
+	}
+}
+
+public enum PortalDialogEntryStatus
+{
+	Ready,
+	ValidationRejected,
+	RequirementApplicationFailed,
+	RequirementPersistenceFailed,
+	MissingStaticData,
+	TooFar,
+	NoPortalPath,
+	QuestDialog,
+	UnknownTarget,
+	UnknownPreparationStatus,
+}
