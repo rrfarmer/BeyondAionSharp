@@ -924,6 +924,12 @@ public sealed class StaticDataLoadingTests
 		Assert.Contains(staticData.PlayerInitialData.GetPlayerCreationData("WARRIOR")!.Items, item => item.ItemId == 100000094 && item.Count == 1);
 		Assert.Contains(staticData.SkillTree.GetAutoLearnSkills("WARRIOR", "ELYOS", 1, 1), skill => skill.SkillId == 37 && skill.SkillLevel > 0);
 		Assert.Equal(staticData.GetElementCount("map"), staticData.WorldMaps.Count);
+		var runtimeContext = new GameServerRuntimeContext();
+		runtimeContext.SetDataManager(manager);
+		Assert.Equal(staticData.WorldMaps.Select(map => map.MapId).Distinct().Count(), runtimeContext.WorldMapStates.Count);
+		Assert.True(runtimeContext.WorldMapStates.TryGetMap(300020000, out var runtimeFlyingMap));
+		Assert.NotNull(runtimeFlyingMap);
+		Assert.True(runtimeFlyingMap.IsFlightAllowed);
 		Assert.True(staticData.PlayerExperienceTable.MaxLevel > 60, $"MaxLevel={staticData.PlayerExperienceTable.MaxLevel}");
 		Assert.Equal(0, staticData.PlayerExperienceTable.GetStartExpForLevel(1));
 		Assert.Equal(11, staticData.PlayerExperienceTable.GetLevelForExp(182252));
