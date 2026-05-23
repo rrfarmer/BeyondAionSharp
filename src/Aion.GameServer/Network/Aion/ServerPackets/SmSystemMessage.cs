@@ -57,6 +57,18 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(901338);
 	}
 
+	public static SmSystemMessage PartyEnteredParty()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_PARTY_ENTERED_PARTY.
+		return new SmSystemMessage(1390262);
+	}
+
+	public static SmSystemMessage PartyHeEnteredParty(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_PARTY_HE_ENTERED_PARTY(String).
+		return new SmSystemMessage(1400009, playerName);
+	}
+
 	public static SmSystemMessage NotEnoughMoney()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_NOT_ENOUGH_MONEY.

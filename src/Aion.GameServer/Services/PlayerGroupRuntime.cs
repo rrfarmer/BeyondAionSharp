@@ -1,4 +1,5 @@
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using System.Threading;
 
 namespace Aion.GameServer.Services;
@@ -73,7 +74,8 @@ public sealed class PlayerGroupRuntime
 				teamId,
 				enteringPlayer.ObjectId,
 				SendGroupInfoToEnteringPlayer: true,
-				PlayerGroupInfoPacketPlan.FromDescriptor(descriptor, enteringPlayer.Position.WorldId));
+				PlayerGroupInfoPacketPlan.FromDescriptor(descriptor, enteringPlayer.Position.WorldId),
+				CreateEnteredSystemMessageIntents(enteringPlayer, members));
 		}
 	}
 
@@ -269,6 +271,28 @@ public sealed class PlayerGroupRuntime
 		}
 
 		return snapshot;
+	}
+
+	private static IReadOnlyList<PlayerGroupSystemMessageIntent> CreateEnteredSystemMessageIntents(
+		Player enteringPlayer,
+		IReadOnlyList<PlayerGroupMember> members)
+	{
+		// Java parity: model/team/group/events/PlayerGroupEnteredEvent sends STR_PARTY_ENTERED_PARTY and STR_PARTY_HE_ENTERED_PARTY.
+		var enteringPlayerObjectId = enteringPlayer.ObjectId;
+		var intents = new List<PlayerGroupSystemMessageIntent>
+		{
+			new(enteringPlayerObjectId, SmSystemMessage.PartyEnteredParty()),
+		};
+
+		foreach (var member in members)
+		{
+			if (member.ObjectId == enteringPlayerObjectId)
+				continue;
+
+			intents.Add(new PlayerGroupSystemMessageIntent(member.ObjectId, SmSystemMessage.PartyHeEnteredParty(enteringPlayer.Name)));
+		}
+
+		return intents;
 	}
 
 	private static PlayerGroupReconnectPacketPlan CreateReconnectPacketPlan(

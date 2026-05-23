@@ -135,6 +135,7 @@ public sealed class PlayerGroupRuntimeTests
 		var enteringPlayer = new Player
 		{
 			ObjectId = 1003,
+			Name = "NewMember",
 			Position = new WorldPosition(220010000, 11, 22, 33, 64),
 		};
 		runtime.CreateOrUpdateGroup(99001, [leader, existingMember]);
@@ -172,6 +173,23 @@ public sealed class PlayerGroupRuntimeTests
 		Assert.Equal(0, groupInfoReader.ReadD());
 		Assert.Equal(string.Empty, groupInfoReader.ReadS());
 		Assert.Equal(0, groupInfoReader.Remaining);
+		Assert.Collection(
+			plan.SystemMessageIntents,
+			intent =>
+			{
+				Assert.Equal(1003, intent.RecipientObjectId);
+				AssertSystemMessage(intent.Message, 1390262);
+			},
+			intent =>
+			{
+				Assert.Equal(1001, intent.RecipientObjectId);
+				AssertSystemMessage(intent.Message, 1400009, "NewMember");
+			},
+			intent =>
+			{
+				Assert.Equal(1002, intent.RecipientObjectId);
+				AssertSystemMessage(intent.Message, 1400009, "NewMember");
+			});
 	}
 
 	[Fact]
@@ -627,6 +645,20 @@ public sealed class PlayerGroupRuntimeTests
 		Assert.Equal(0, reader.ReadD());
 		Assert.Equal(0, reader.ReadD());
 		Assert.Equal(string.Empty, reader.ReadS());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertSystemMessage(GameServerPacket packet, int expectedMessageId, params string[] expectedParameters)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(25, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(expectedMessageId, reader.ReadD());
+		Assert.Equal(expectedParameters.Length, (int)reader.ReadC());
+		foreach (var expectedParameter in expectedParameters)
+			Assert.Equal(expectedParameter, reader.ReadS());
+		Assert.Equal(0, (int)reader.ReadC());
 		Assert.Equal(0, reader.Remaining);
 	}
 }

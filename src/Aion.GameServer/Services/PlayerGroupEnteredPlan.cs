@@ -6,7 +6,8 @@ public sealed record PlayerGroupEnteredPacketPlan(
 	int TeamId,
 	int EnteringPlayerObjectId,
 	bool SendGroupInfoToEnteringPlayer,
-	PlayerGroupInfoPacketPlan? GroupInfoPlan)
+	PlayerGroupInfoPacketPlan? GroupInfoPlan,
+	IReadOnlyList<PlayerGroupSystemMessageIntent> SystemMessageIntents)
 {
 	public SmGroupInfo? CreateGroupInfoPacket()
 	{
@@ -16,3 +17,7 @@ public sealed record PlayerGroupEnteredPacketPlan(
 			: null;
 	}
 }
+
+public sealed record PlayerGroupSystemMessageIntent(
+	int RecipientObjectId,
+	SmSystemMessage Message);
