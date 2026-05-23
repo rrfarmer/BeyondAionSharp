@@ -510,6 +510,60 @@ public sealed class WorldNpcResourceStatsServiceTests
 	}
 
 	[Fact]
+	public async Task TransferPlayerDpAsync_MovesReservedDpInEffectedThenEffectorOrder()
+	{
+		var service = CreateService(out _, out var registry);
+		var effector = CreatePlayer(objectId: 1016, currentHp: 100, currentMp: 50, currentFp: 100, playerClass: "RANGER", dp: 1200);
+		var effected = CreatePlayer(objectId: 1017, currentHp: 100, currentMp: 50, currentFp: 100, playerClass: "CLERIC", dp: 200);
+		effector.IsOnline = true;
+		effected.IsOnline = true;
+
+		var result = await service.TransferPlayerDpAsync(effector, effected, reservedDp: 500, effectorMaxDp: 4000, effectedMaxDp: 4000);
+
+		Assert.Equal(WorldNpcDpTransferEffectStatus.Applied, result.Status);
+		Assert.Equal(500, result.ReservedDp);
+		Assert.Equal(effected.ObjectId, result.EffectedObjectId);
+		Assert.Equal(effector.ObjectId, result.EffectorObjectId);
+		Assert.NotNull(result.EffectedChange);
+		Assert.NotNull(result.EffectorChange);
+		Assert.Equal(WorldNpcResourceChangeStatus.Increased, result.EffectedChange.Status);
+		Assert.Equal(200, result.EffectedChange.PreviousValue);
+		Assert.Equal(700, result.EffectedChange.CurrentValue);
+		Assert.Equal(500, result.EffectedChange.AppliedValue);
+		Assert.Equal(WorldNpcResourceChangeStatus.Reduced, result.EffectorChange.Status);
+		Assert.Equal(1200, result.EffectorChange.PreviousValue);
+		Assert.Equal(700, result.EffectorChange.CurrentValue);
+		Assert.Equal(500, result.EffectorChange.AppliedValue);
+		Assert.Equal(700, effected.Dp);
+		Assert.Equal(700, effector.Dp);
+		Assert.Equal(2, registry.Broadcasts.Count);
+		Assert.Equal(2, registry.SentPackets.Count);
+		Assert.Collection(
+			registry.PacketOrder,
+			packet => Assert.Same(result.EffectedChange.DpInfoPacket, packet),
+			packet => Assert.Same(result.EffectedChange.DpStatUpdatePacket, packet),
+			packet => Assert.Same(result.EffectorChange.DpInfoPacket, packet),
+			packet => Assert.Same(result.EffectorChange.DpStatUpdatePacket, packet));
+	}
+
+	[Fact]
+	public async Task TransferPlayerDpAsync_RequiresEffectedAndEffectorPlayers()
+	{
+		var service = CreateService(out _, out var registry);
+		var player = CreatePlayer(objectId: 1018, currentHp: 100, currentMp: 50, currentFp: 100, playerClass: "RANGER", dp: 1200);
+
+		var missingEffected = await service.TransferPlayerDpAsync(player, effected: null, reservedDp: 500, effectorMaxDp: 4000);
+		var missingEffector = await service.TransferPlayerDpAsync(effector: null, player, reservedDp: 500, effectedMaxDp: 4000);
+
+		Assert.Equal(WorldNpcDpTransferEffectStatus.MissingEffected, missingEffected.Status);
+		Assert.Equal(WorldNpcDpTransferEffectStatus.MissingEffector, missingEffector.Status);
+		Assert.Equal(player.ObjectId, missingEffector.EffectedObjectId);
+		Assert.Equal(1200, player.Dp);
+		Assert.Empty(registry.Broadcasts);
+		Assert.Empty(registry.SentPackets);
+	}
+
+	[Fact]
 	public async Task ApplyResourceOverTimePeriodicResultAsync_ReducesNpcMpFromStagedMpAttack()
 	{
 		var service = CreateService(out var lifeStats, out _);

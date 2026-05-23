@@ -326,6 +326,24 @@ public sealed class WorldNpcResourceStatsService
 		return WorldNpcDpUseActionResult.Applied(change, value);
 	}
 
+	public async ValueTask<WorldNpcDpTransferEffectResult> TransferPlayerDpAsync(
+		Player? effector,
+		Player? effected,
+		int reservedDp,
+		int? effectorMaxDp = null,
+		int? effectedMaxDp = null)
+	{
+		// Java parity: skillengine/effect/DPTransferEffect.applyEffect.
+		if (effected == null)
+			return WorldNpcDpTransferEffectResult.MissingEffected(reservedDp);
+		if (effector == null)
+			return WorldNpcDpTransferEffectResult.MissingEffector(effected.ObjectId, reservedDp);
+
+		var effectedChange = await AddPlayerDpAsync(effected, reservedDp, effectedMaxDp);
+		var effectorChange = await AddPlayerDpAsync(effector, -reservedDp, effectorMaxDp);
+		return WorldNpcDpTransferEffectResult.Applied(reservedDp, effectedChange, effectorChange);
+	}
+
 	public ValueTask<WorldNpcResourceEffectApplicationResult> ApplyResourceOverTimePeriodicResultAsync(
 		WorldNpcSkillResourceOverTimePeriodicActionResult effectResult,
 		WorldNpcResourceMutationTarget target,
@@ -1109,6 +1127,54 @@ public enum WorldNpcDpUseActionStatus
 	Applied,
 	MissingTarget,
 	NotEnoughDp,
+}
+
+public sealed record WorldNpcDpTransferEffectResult(
+	WorldNpcDpTransferEffectStatus Status,
+	int ReservedDp,
+	int EffectedObjectId,
+	int EffectorObjectId,
+	WorldNpcResourceChangeResult? EffectedChange = null,
+	WorldNpcResourceChangeResult? EffectorChange = null)
+{
+	public static WorldNpcDpTransferEffectResult MissingEffected(int reservedDp)
+	{
+		return new WorldNpcDpTransferEffectResult(
+			WorldNpcDpTransferEffectStatus.MissingEffected,
+			reservedDp,
+			EffectedObjectId: 0,
+			EffectorObjectId: 0);
+	}
+
+	public static WorldNpcDpTransferEffectResult MissingEffector(int effectedObjectId, int reservedDp)
+	{
+		return new WorldNpcDpTransferEffectResult(
+			WorldNpcDpTransferEffectStatus.MissingEffector,
+			reservedDp,
+			effectedObjectId,
+			EffectorObjectId: 0);
+	}
+
+	public static WorldNpcDpTransferEffectResult Applied(
+		int reservedDp,
+		WorldNpcResourceChangeResult effectedChange,
+		WorldNpcResourceChangeResult effectorChange)
+	{
+		return new WorldNpcDpTransferEffectResult(
+			WorldNpcDpTransferEffectStatus.Applied,
+			reservedDp,
+			effectedChange.ObjectId,
+			effectorChange.ObjectId,
+			effectedChange,
+			effectorChange);
+	}
+}
+
+public enum WorldNpcDpTransferEffectStatus
+{
+	Applied,
+	MissingEffected,
+	MissingEffector,
 }
 
 public sealed record WorldNpcResourceChangeResult(
