@@ -705,6 +705,115 @@ public sealed class PortalEntryValidationServiceTests
 	}
 
 	[Fact]
+	public void ValidateRequiredItemsAndKinah_AllowsWhenJavaRequirementsAreMet()
+	{
+		var player = new Player
+		{
+			InventoryItems =
+			[
+				new InventoryItem { ItemId = KinahItemId, Count = 1_000 },
+				new InventoryItem { ItemId = 185000077, Count = 1 },
+			],
+		};
+		var portalPath = CreatePortalPath(
+			kinah: 500,
+			itemRequirements: [new PortalItemRequirementSummary(185000077, ItemCount: 1)]);
+
+		var result = PortalEntryValidationService.ValidateRequiredItemsAndKinah(player, portalPath);
+
+		Assert.True(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.Allowed, result.Status);
+		Assert.Null(result.FailurePacket);
+	}
+
+	[Fact]
+	public void ValidateRequiredItemsAndKinah_ReturnsNoRightDialogWhenDialogNpcKinahIsMissing()
+	{
+		var player = new Player
+		{
+			InventoryItems = [new InventoryItem { ItemId = KinahItemId, Count = 499 }],
+		};
+		var portalPath = CreatePortalPath(kinah: 500);
+
+		var result = PortalEntryValidationService.ValidateRequiredItemsAndKinah(
+			player,
+			portalPath,
+			npcIsDialogNpc: true,
+			npcObjectId: 4001);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.KinahRestricted, result.Status);
+		var packet = Assert.IsType<SmDialogWindow>(result.FailurePacket);
+		var payload = SerializeUnencryptedPayload(packet);
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(4001, reader.ReadD());
+		Assert.Equal(SmDialogWindow.NoRightPageId, reader.ReadH());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void ValidateRequiredItemsAndKinah_ReturnsNotEnoughKinahForNonDialogNpc()
+	{
+		var player = new Player();
+		var portalPath = CreatePortalPath(kinah: 500);
+
+		var result = PortalEntryValidationService.ValidateRequiredItemsAndKinah(
+			player,
+			portalPath,
+			npcIsDialogNpc: false,
+			npcObjectId: 4001);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.KinahRestricted, result.Status);
+		var packet = Assert.IsType<SmSystemMessage>(result.FailurePacket);
+		Assert.Equal(901285, packet.MessageId);
+	}
+
+	[Fact]
+	public void ValidateRequiredItemsAndKinah_ReturnsNoRightDialogWhenDialogNpcItemIsMissing()
+	{
+		var player = new Player
+		{
+			InventoryItems = [new InventoryItem { ItemId = KinahItemId, Count = 1_000 }],
+		};
+		var portalPath = CreatePortalPath(
+			kinah: 500,
+			itemRequirements: [new PortalItemRequirementSummary(185000077, ItemCount: 1)]);
+
+		var result = PortalEntryValidationService.ValidateRequiredItemsAndKinah(
+			player,
+			portalPath,
+			npcIsDialogNpc: true,
+			npcObjectId: 4001);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.ItemRestricted, result.Status);
+		Assert.IsType<SmDialogWindow>(result.FailurePacket);
+	}
+
+	[Fact]
+	public void ValidateRequiredItemsAndKinah_ReturnsMissingItemSystemMessageForNonDialogNpc()
+	{
+		var player = new Player();
+		var portalPath = CreatePortalPath(
+			itemRequirements: [new PortalItemRequirementSummary(185000077, ItemCount: 1)]);
+
+		var result = PortalEntryValidationService.ValidateRequiredItemsAndKinah(
+			player,
+			portalPath,
+			npcIsDialogNpc: false,
+			npcObjectId: 4001);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.ItemRestricted, result.Status);
+		var packet = Assert.IsType<SmSystemMessage>(result.FailurePacket);
+		Assert.Equal(1400219, packet.MessageId);
+	}
+
+	[Fact]
 	public void ValidatePortalEntryPlan_ReturnsMissingLocationBeforeAnyGuardLikeJava()
 	{
 		var player = CreatePlayerWithCooldown(reuseTimeMillis: 200_000, entryCount: 2);
@@ -847,6 +956,31 @@ public sealed class PortalEntryValidationServiceTests
 	}
 
 	[Fact]
+	public void ValidatePortalEntryPlan_ItemFailureHappensAfterLevelBeforeSameInstanceTeleport()
+	{
+		var player = new Player
+		{
+			Race = "ELYOS",
+			Level = 25,
+			Position = new WorldPosition(WorldId, 10, 20, 30, 40, InstanceId: 7),
+		};
+
+		var result = PortalEntryValidationService.ValidatePortalEntryPlan(
+			player,
+			CreatePortalPath(itemRequirements: [new PortalItemRequirementSummary(185000077, ItemCount: 1)]),
+			CreatePortalLocs(),
+			CreatePortalCooltimes(maxPlayers: 0, maxCount: 0),
+			CreateWorldMaps(),
+			DateTimeOffset.FromUnixTimeMilliseconds(100_000),
+			npcObjectId: 4001);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.ItemRestricted, result.Status);
+		Assert.Equal(PortalEntryPlanAction.None, result.Action);
+		Assert.IsType<SmDialogWindow>(result.FailurePacket);
+	}
+
+	[Fact]
 	public void ValidatePortalEntryPlan_ReenterSkipsCooldownAndLevelLikeJava()
 	{
 		var player = CreatePlayerWithCooldown(reuseTimeMillis: 200_000, entryCount: 1, race: "ELYOS");
@@ -946,14 +1080,17 @@ public sealed class PortalEntryValidationServiceTests
 	}
 
 	private const int WorldId = 300030000;
+	private const int KinahItemId = 182400001;
 
 	private static PortalPathSummary CreatePortalPath(
 		string race = "PC_ALL",
 		int minLevel = 0,
 		int minRank = 0,
 		int titleId = 0,
+		int kinah = 0,
 		int errLevel = 0,
-		IReadOnlyList<PortalQuestRequirementSummary>? questRequirements = null)
+		IReadOnlyList<PortalQuestRequirementSummary>? questRequirements = null,
+		IReadOnlyList<PortalItemRequirementSummary>? itemRequirements = null)
 	{
 		return new PortalPathSummary(
 			PortalPathSource.Dialog,
@@ -965,12 +1102,13 @@ public sealed class PortalEntryValidationServiceTests
 			Race: race,
 			MinLevel: minLevel,
 			MinRank: minRank,
-			Kinah: 0,
+			Kinah: kinah,
 			TitleId: titleId,
 			ErrGroup: 0,
 			ErrLevel: errLevel)
 		{
 			QuestRequirements = questRequirements ?? Array.Empty<PortalQuestRequirementSummary>(),
+			ItemRequirements = itemRequirements ?? Array.Empty<PortalItemRequirementSummary>(),
 		};
 	}
 

@@ -8,6 +8,8 @@ namespace Aion.GameServer.Services;
 
 public static class PortalEntryValidationService
 {
+	private const int KinahItemId = 182400001;
+
 	public static PortalEntryPlanResult ValidatePortalEntryPlan(
 		Player player,
 		PortalPathSummary portalPath,
@@ -81,6 +83,10 @@ public static class PortalEntryValidationService
 				portalPath,
 				npcObjectId,
 				bypassLevelRequirement);
+			if (!validation.CanEnter)
+				return PortalEntryPlanResult.Rejected(validation.Status, loc, validation.FailurePacket!);
+
+			validation = ValidateRequiredItemsAndKinah(player, portalPath, npcIsDialogNpc, npcObjectId);
 			if (!validation.CanEnter)
 				return PortalEntryPlanResult.Rejected(validation.Status, loc, validation.FailurePacket!);
 
@@ -307,6 +313,40 @@ public static class PortalEntryValidationService
 		return PortalEntryValidationResult.Rejected(PortalEntryValidationStatus.QuestRestricted, failurePacket);
 	}
 
+	public static PortalEntryValidationResult ValidateRequiredItemsAndKinah(
+		Player player,
+		PortalPathSummary portalPath,
+		bool npcIsDialogNpc = true,
+		int npcObjectId = 0)
+	{
+		// Java parity: services/teleport/PortalService.checkAndRemoveRequiredItems, validation-only half.
+		if (GetInventoryCount(player, KinahItemId) < portalPath.Kinah)
+		{
+			GameServerPacket failurePacket = npcIsDialogNpc
+				? new SmDialogWindow(npcObjectId, SmDialogWindow.NoRightPageId)
+				: SmSystemMessage.NotEnoughKinah(portalPath.Kinah);
+			return PortalEntryValidationResult.Rejected(PortalEntryValidationStatus.KinahRestricted, failurePacket);
+		}
+
+		foreach (var requirement in portalPath.ItemRequirements)
+		{
+			if (GetInventoryCount(player, requirement.ItemId) >= requirement.ItemCount)
+				continue;
+
+			GameServerPacket failurePacket = npcIsDialogNpc
+				? new SmDialogWindow(npcObjectId, SmDialogWindow.NoRightPageId)
+				: SmSystemMessage.InstanceCantEnterWithoutItem();
+			return PortalEntryValidationResult.Rejected(PortalEntryValidationStatus.ItemRestricted, failurePacket);
+		}
+
+		return PortalEntryValidationResult.Allowed();
+	}
+
+	private static long GetInventoryCount(Player player, int itemId)
+	{
+		return player.InventoryItems.Where(item => item.ItemId == itemId).Sum(item => item.Count);
+	}
+
 	private static WorldMapInstanceRuntimeState? ResolveRegisteredInstance(
 		Player player,
 		int worldId,
@@ -351,6 +391,8 @@ public enum PortalEntryValidationStatus
 	RankRestricted,
 	TitleRestricted,
 	QuestRestricted,
+	KinahRestricted,
+	ItemRestricted,
 }
 
 public sealed record PortalEntryPlanResult(

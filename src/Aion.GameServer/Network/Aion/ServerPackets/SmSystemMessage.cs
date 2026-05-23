@@ -105,6 +105,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300150);
 	}
 
+	public static SmSystemMessage InstanceCantEnterWithoutItem()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_INSTANCE_CANT_ENTER_WITHOUT_ITEM.
+		return new SmSystemMessage(1400219);
+	}
+
 	public static SmSystemMessage NotEnoughKinah(long kinah)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_NOT_ENOUGH_KINA.
