@@ -632,6 +632,214 @@ public sealed class WorldNpcDamageServiceTests
 	}
 
 	[Fact]
+	public async Task StartResourceOverTimeEffect_MpAttackSchedulesWithoutReservation()
+	{
+		var damageService = CreateDamageService(out _, out _, out _, out var threadPoolManager, out _, out _, out _, out _, out _);
+		var skillDamageService = new WorldNpcSkillDamageService(damageService);
+		try
+		{
+			var result = skillDamageService.StartResourceOverTimeEffect(new WorldNpcSkillResourceOverTimeStartRequest(
+				WorldNpcSkillResourceOverTimeEffectKind.MpAttack,
+				Value: 25,
+				SkillId: 7101,
+				Position: 0,
+				CheckTime: TimeSpan.FromMilliseconds(500)));
+
+			Assert.Equal(WorldNpcSkillResourceOverTimeStatus.Applied, result.Status);
+			Assert.Equal(WorldNpcEffectResourceType.Mp, result.ResourceType);
+			Assert.True(result.IsDamage);
+			Assert.False(result.ReserveValueOnStart);
+			Assert.Null(result.Reserved);
+			Assert.True(result.SchedulesPeriodicTask);
+			Assert.Equal(TimeSpan.FromMilliseconds(800), result.InitialDelay);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
+	public async Task ApplyResourceOverTimePeriodicAction_MpAttackAppliesPercentDamagePacket()
+	{
+		var damageService = CreateDamageService(out _, out _, out _, out var threadPoolManager, out _, out _, out _, out _, out _);
+		var skillDamageService = new WorldNpcSkillDamageService(damageService);
+		try
+		{
+			var result = skillDamageService.ApplyResourceOverTimePeriodicAction(new WorldNpcSkillResourceOverTimePeriodicActionRequest(
+				WorldNpcSkillResourceOverTimeEffectKind.MpAttack,
+				Value: 10,
+				SkillId: 7102,
+				CurrentResource: 200,
+				MaxResource: 250,
+				Percent: true,
+				TargetIsPlayer: false));
+
+			Assert.True(result.Applied);
+			Assert.True(result.IsDamage);
+			Assert.Equal(WorldNpcEffectResourceType.Mp, result.ResourceType);
+			Assert.Equal(25, result.FinalValue);
+			Assert.True(result.PercentApplied);
+			Assert.Equal(SmAttackStatusType.DamageMp, result.PacketType);
+			Assert.Equal(SmAttackStatusLog.MpAttack, result.PacketLog);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
+	public async Task ApplyResourceOverTimePeriodicAction_FpAttackRequiresPlayer()
+	{
+		var damageService = CreateDamageService(out _, out _, out _, out var threadPoolManager, out _, out _, out _, out _, out _);
+		var skillDamageService = new WorldNpcSkillDamageService(damageService);
+		try
+		{
+			var skipped = skillDamageService.ApplyResourceOverTimePeriodicAction(new WorldNpcSkillResourceOverTimePeriodicActionRequest(
+				WorldNpcSkillResourceOverTimeEffectKind.FpAttack,
+				Value: 8,
+				SkillId: 7103,
+				CurrentResource: 100,
+				MaxResource: 200,
+				TargetIsPlayer: false));
+
+			Assert.False(skipped.Applied);
+			Assert.Equal(WorldNpcSkillResourceOverTimeStatus.TargetNotPlayer, skipped.Status);
+
+			var applied = skillDamageService.ApplyResourceOverTimePeriodicAction(new WorldNpcSkillResourceOverTimePeriodicActionRequest(
+				WorldNpcSkillResourceOverTimeEffectKind.FpAttack,
+				Value: 8,
+				SkillId: 7103,
+				CurrentResource: 100,
+				MaxResource: 200,
+				TargetIsPlayer: true));
+
+			Assert.True(applied.Applied);
+			Assert.Equal(8, applied.FinalValue);
+			Assert.Equal(WorldNpcEffectResourceType.Fp, applied.ResourceType);
+			Assert.Equal(SmAttackStatusType.FpDamage, applied.PacketType);
+			Assert.Equal(SmAttackStatusLog.FpAttack, applied.PacketLog);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
+	public async Task StartResourceOverTimeEffect_HpHealReservesNonDamageResource()
+	{
+		var damageService = CreateDamageService(out _, out _, out _, out var threadPoolManager, out _, out _, out _, out _, out _);
+		var skillDamageService = new WorldNpcSkillDamageService(damageService);
+		try
+		{
+			var result = skillDamageService.StartResourceOverTimeEffect(new WorldNpcSkillResourceOverTimeStartRequest(
+				WorldNpcSkillResourceOverTimeEffectKind.HpHeal,
+				Value: 45,
+				SkillId: 7104,
+				Position: 3,
+				CheckTime: TimeSpan.FromSeconds(2)));
+
+			Assert.Equal(WorldNpcSkillResourceOverTimeStatus.Applied, result.Status);
+			Assert.Equal(WorldNpcEffectResourceType.Hp, result.ResourceType);
+			Assert.False(result.IsDamage);
+			Assert.True(result.ReserveValueOnStart);
+			Assert.NotNull(result.Reserved);
+			Assert.Equal(3, result.Reserved.Position);
+			Assert.Equal(45, result.Reserved.Value);
+			Assert.Equal(WorldNpcEffectResourceType.Hp, result.Reserved.Type);
+			Assert.False(result.Reserved.IsDamage);
+			Assert.Equal(-45, result.Reserved.ValueToSend);
+			Assert.Equal(TimeSpan.FromMilliseconds(2300), result.InitialDelay);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
+	public async Task ApplyResourceOverTimePeriodicAction_HpHealAppliesDeboostAndCaps()
+	{
+		var damageService = CreateDamageService(out _, out _, out _, out var threadPoolManager, out _, out _, out _, out _, out _);
+		var skillDamageService = new WorldNpcSkillDamageService(damageService);
+		try
+		{
+			var result = skillDamageService.ApplyResourceOverTimePeriodicAction(new WorldNpcSkillResourceOverTimePeriodicActionRequest(
+				WorldNpcSkillResourceOverTimeEffectKind.HpHeal,
+				Value: 50,
+				SkillId: 7105,
+				CurrentResource: 80,
+				MaxResource: 100,
+				HasItemTemplate: false,
+				HealSkillDeboostedValue: 30));
+
+			Assert.True(result.Applied);
+			Assert.False(result.IsDamage);
+			Assert.Equal(WorldNpcEffectResourceType.Hp, result.ResourceType);
+			Assert.True(result.HealSkillDeboostApplied);
+			Assert.Equal(30, result.ValueBeforeCap);
+			Assert.Equal(20, result.FinalValue);
+			Assert.Equal(SmAttackStatusType.Hp, result.PacketType);
+			Assert.Equal(SmAttackStatusLog.Heal, result.PacketLog);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
+	public async Task ApplyResourceOverTimePeriodicAction_FpAndDpHealRequirePlayerAndSkipFullResource()
+	{
+		var damageService = CreateDamageService(out _, out _, out _, out var threadPoolManager, out _, out _, out _, out _, out _);
+		var skillDamageService = new WorldNpcSkillDamageService(damageService);
+		try
+		{
+			var fpSkipped = skillDamageService.ApplyResourceOverTimePeriodicAction(new WorldNpcSkillResourceOverTimePeriodicActionRequest(
+				WorldNpcSkillResourceOverTimeEffectKind.FpHeal,
+				Value: 10,
+				SkillId: 7106,
+				CurrentResource: 20,
+				MaxResource: 100,
+				TargetIsPlayer: false));
+
+			Assert.False(fpSkipped.Applied);
+			Assert.Equal(WorldNpcSkillResourceOverTimeStatus.TargetNotPlayer, fpSkipped.Status);
+
+			var dpApplied = skillDamageService.ApplyResourceOverTimePeriodicAction(new WorldNpcSkillResourceOverTimePeriodicActionRequest(
+				WorldNpcSkillResourceOverTimeEffectKind.DpHeal,
+				Value: 30,
+				SkillId: 7107,
+				CurrentResource: 50,
+				MaxResource: 100,
+				TargetIsPlayer: true));
+
+			Assert.True(dpApplied.Applied);
+			Assert.Equal(WorldNpcEffectResourceType.Dp, dpApplied.ResourceType);
+			Assert.Null(dpApplied.PacketType);
+			Assert.Null(dpApplied.PacketLog);
+			Assert.Equal(30, dpApplied.FinalValue);
+
+			var fullMp = skillDamageService.ApplyResourceOverTimePeriodicAction(new WorldNpcSkillResourceOverTimePeriodicActionRequest(
+				WorldNpcSkillResourceOverTimeEffectKind.MpHeal,
+				Value: 30,
+				SkillId: 7108,
+				CurrentResource: 100,
+				MaxResource: 100));
+
+			Assert.False(fullMp.Applied);
+			Assert.Equal(WorldNpcSkillResourceOverTimeStatus.NoResourceChange, fullMp.Status);
+			Assert.Equal(0, fullMp.FinalValue);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
 	public async Task ApplyDamageAsync_RecordsAttackedObserverAndSupportAiEvents()
 	{
 		var damageService = CreateDamageService(out var spawnService, out var world, out _, out var threadPoolManager, out _, out _, out var combatEvents, out _, out _);

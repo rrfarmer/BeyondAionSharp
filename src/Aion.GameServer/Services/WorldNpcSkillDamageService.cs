@@ -202,6 +202,104 @@ public sealed class WorldNpcSkillDamageService
 			damageResult);
 	}
 
+	public WorldNpcSkillResourceOverTimeStartResult StartResourceOverTimeEffect(WorldNpcSkillResourceOverTimeStartRequest request)
+	{
+		// Java parity: skillengine/effect/HealOverTimeEffect.startEffect plus inherited AbstractOverTimeEffect.startEffect.
+		var profile = GetResourceOverTimeEffectProfile(request.Kind);
+		var reserved = profile.ReserveValueOnStart
+			? new WorldNpcSkillEffectReservedResult(
+				request.Position,
+				request.Value,
+				profile.ResourceType,
+				IsDamage: false,
+				Send: false)
+			: null;
+		var schedulesPeriodicTask = request.CheckTime > TimeSpan.Zero;
+		var initialDelay = schedulesPeriodicTask
+			? request.CheckTime + TimeSpan.FromMilliseconds(300)
+			: (TimeSpan?)null;
+		return new WorldNpcSkillResourceOverTimeStartResult(
+			WorldNpcSkillResourceOverTimeStatus.Applied,
+			request.Kind,
+			request.Value,
+			request.SkillId,
+			request.Position,
+			profile.ResourceType,
+			profile.IsDamage,
+			profile.ReserveValueOnStart,
+			request.CheckTime,
+			schedulesPeriodicTask,
+			initialDelay,
+			reserved);
+	}
+
+	public WorldNpcSkillResourceOverTimePeriodicActionResult ApplyResourceOverTimePeriodicAction(
+		WorldNpcSkillResourceOverTimePeriodicActionRequest request)
+	{
+		// Java parity: skillengine/effect/{MpAttack,FpAttack,HealOverTime}Effect.onPeriodicAction.
+		var profile = GetResourceOverTimeEffectProfile(request.Kind);
+		if (profile.RequiresPlayerTarget && !request.TargetIsPlayer)
+			return CreateSkippedResourceOverTimeResult(
+				WorldNpcSkillResourceOverTimeStatus.TargetNotPlayer,
+				request.Kind,
+				profile);
+
+		if (profile.IsDamage)
+		{
+			var value = request.Percent
+				? request.MaxResource * request.Value / 100
+				: request.Value;
+			return CreateAppliedResourceOverTimeResult(
+				kind: request.Kind,
+				profile: profile,
+				valueBeforeCap: value,
+				finalValue: value,
+				healSkillDeboostApplied: false,
+				PercentApplied: request.Percent,
+				CurrentResource: request.CurrentResource,
+				MaxResource: request.MaxResource,
+				TargetIsPlayer: request.TargetIsPlayer);
+		}
+
+		var possibleHealValue = request.Value;
+		var healSkillDeboostApplied = false;
+		if (request.Kind == WorldNpcSkillResourceOverTimeEffectKind.HpHeal &&
+			!request.HasItemTemplate &&
+			request.HealSkillDeboostedValue != null)
+		{
+			possibleHealValue = request.HealSkillDeboostedValue.Value;
+			healSkillDeboostApplied = true;
+		}
+
+		var missingCapacity = Math.Max(0, request.MaxResource - request.CurrentResource);
+		var valueAfterCap = Math.Min(missingCapacity, possibleHealValue);
+		if (valueAfterCap <= 0)
+		{
+			return CreateSkippedResourceOverTimeResult(
+				WorldNpcSkillResourceOverTimeStatus.NoResourceChange,
+				request.Kind,
+				profile,
+				possibleHealValue,
+				valueAfterCap,
+				healSkillDeboostApplied,
+				request.Percent,
+				request.CurrentResource,
+				request.MaxResource,
+				request.TargetIsPlayer);
+		}
+
+		return CreateAppliedResourceOverTimeResult(
+			kind: request.Kind,
+			profile: profile,
+			valueBeforeCap: possibleHealValue,
+			finalValue: valueAfterCap,
+			healSkillDeboostApplied: healSkillDeboostApplied,
+			PercentApplied: request.Percent,
+			CurrentResource: request.CurrentResource,
+			MaxResource: request.MaxResource,
+			TargetIsPlayer: request.TargetIsPlayer);
+	}
+
 	private static WorldNpcSkillDamageMapping GetMapping(WorldNpcSkillDamageKind kind)
 	{
 		return kind switch
@@ -358,6 +456,121 @@ public sealed class WorldNpcSkillDamageService
 		PlayerAbnormalState AbnormalState,
 		bool ReserveDamageOnStart,
 		bool RecalculateDamageOnPeriodic);
+
+	private static WorldNpcSkillResourceOverTimeEffectProfile GetResourceOverTimeEffectProfile(WorldNpcSkillResourceOverTimeEffectKind kind)
+	{
+		return kind switch
+		{
+			WorldNpcSkillResourceOverTimeEffectKind.MpAttack => new WorldNpcSkillResourceOverTimeEffectProfile(
+				WorldNpcEffectResourceType.Mp,
+				IsDamage: true,
+				ReserveValueOnStart: false,
+				RequiresPlayerTarget: false,
+				PacketType: SmAttackStatusType.DamageMp,
+				PacketLog: SmAttackStatusLog.MpAttack),
+			WorldNpcSkillResourceOverTimeEffectKind.FpAttack => new WorldNpcSkillResourceOverTimeEffectProfile(
+				WorldNpcEffectResourceType.Fp,
+				IsDamage: true,
+				ReserveValueOnStart: false,
+				RequiresPlayerTarget: true,
+				PacketType: SmAttackStatusType.FpDamage,
+				PacketLog: SmAttackStatusLog.FpAttack),
+			WorldNpcSkillResourceOverTimeEffectKind.HpHeal => new WorldNpcSkillResourceOverTimeEffectProfile(
+				WorldNpcEffectResourceType.Hp,
+				IsDamage: false,
+				ReserveValueOnStart: true,
+				RequiresPlayerTarget: false,
+				PacketType: SmAttackStatusType.Hp,
+				PacketLog: SmAttackStatusLog.Heal),
+			WorldNpcSkillResourceOverTimeEffectKind.MpHeal => new WorldNpcSkillResourceOverTimeEffectProfile(
+				WorldNpcEffectResourceType.Mp,
+				IsDamage: false,
+				ReserveValueOnStart: true,
+				RequiresPlayerTarget: false,
+				PacketType: SmAttackStatusType.Mp,
+				PacketLog: SmAttackStatusLog.MpHeal),
+			WorldNpcSkillResourceOverTimeEffectKind.FpHeal => new WorldNpcSkillResourceOverTimeEffectProfile(
+				WorldNpcEffectResourceType.Fp,
+				IsDamage: false,
+				ReserveValueOnStart: true,
+				RequiresPlayerTarget: true,
+				PacketType: SmAttackStatusType.Fp,
+				PacketLog: SmAttackStatusLog.FpHeal),
+			WorldNpcSkillResourceOverTimeEffectKind.DpHeal => new WorldNpcSkillResourceOverTimeEffectProfile(
+				WorldNpcEffectResourceType.Dp,
+				IsDamage: false,
+				ReserveValueOnStart: true,
+				RequiresPlayerTarget: true,
+				PacketType: null,
+				PacketLog: null),
+			_ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unhandled Java resource over-time effect kind."),
+		};
+	}
+
+	private static WorldNpcSkillResourceOverTimePeriodicActionResult CreateSkippedResourceOverTimeResult(
+		WorldNpcSkillResourceOverTimeStatus status,
+		WorldNpcSkillResourceOverTimeEffectKind kind,
+		WorldNpcSkillResourceOverTimeEffectProfile profile,
+		int valueBeforeCap = 0,
+		int finalValue = 0,
+		bool healSkillDeboostApplied = false,
+		bool percentApplied = false,
+		int currentResource = 0,
+		int maxResource = 0,
+		bool targetIsPlayer = false)
+	{
+		return new WorldNpcSkillResourceOverTimePeriodicActionResult(
+			Status: status,
+			Kind: kind,
+			ResourceType: profile.ResourceType,
+			IsDamage: profile.IsDamage,
+			OriginalValue: 0,
+			ValueBeforeCap: valueBeforeCap,
+			FinalValue: finalValue,
+			CurrentResource: currentResource,
+			MaxResource: maxResource,
+			PercentApplied: percentApplied,
+			TargetIsPlayer: targetIsPlayer,
+			HealSkillDeboostApplied: healSkillDeboostApplied,
+			PacketType: profile.PacketType,
+			PacketLog: profile.PacketLog);
+	}
+
+	private static WorldNpcSkillResourceOverTimePeriodicActionResult CreateAppliedResourceOverTimeResult(
+		WorldNpcSkillResourceOverTimeEffectKind kind,
+		WorldNpcSkillResourceOverTimeEffectProfile profile,
+		int valueBeforeCap,
+		int finalValue,
+		bool healSkillDeboostApplied,
+		bool PercentApplied,
+		int CurrentResource,
+		int MaxResource,
+		bool TargetIsPlayer)
+	{
+		return new WorldNpcSkillResourceOverTimePeriodicActionResult(
+			WorldNpcSkillResourceOverTimeStatus.Applied,
+			kind,
+			profile.ResourceType,
+			profile.IsDamage,
+			OriginalValue: valueBeforeCap,
+			ValueBeforeCap: valueBeforeCap,
+			FinalValue: finalValue,
+			CurrentResource: CurrentResource,
+			MaxResource: MaxResource,
+			PercentApplied: PercentApplied,
+			TargetIsPlayer: TargetIsPlayer,
+			HealSkillDeboostApplied: healSkillDeboostApplied,
+			PacketType: profile.PacketType,
+			PacketLog: profile.PacketLog);
+	}
+
+	private sealed record WorldNpcSkillResourceOverTimeEffectProfile(
+		WorldNpcEffectResourceType ResourceType,
+		bool IsDamage,
+		bool ReserveValueOnStart,
+		bool RequiresPlayerTarget,
+		SmAttackStatusType? PacketType,
+		SmAttackStatusLog? PacketLog);
 }
 
 public sealed record WorldNpcSkillOverTimeEffectStartRequest(
@@ -523,4 +736,72 @@ public enum WorldNpcSkillOverTimeEffectCallerStatus
 	MissingReservedDamage,
 	MissingBaseValue,
 	CalculationUnresolved,
+}
+
+public sealed record WorldNpcSkillResourceOverTimeStartRequest(
+	WorldNpcSkillResourceOverTimeEffectKind Kind,
+	int Value,
+	int SkillId,
+	int Position,
+	TimeSpan CheckTime);
+
+public sealed record WorldNpcSkillResourceOverTimeStartResult(
+	WorldNpcSkillResourceOverTimeStatus Status,
+	WorldNpcSkillResourceOverTimeEffectKind Kind,
+	int Value,
+	int SkillId,
+	int Position,
+	WorldNpcEffectResourceType ResourceType,
+	bool IsDamage,
+	bool ReserveValueOnStart,
+	TimeSpan CheckTime,
+	bool SchedulesPeriodicTask,
+	TimeSpan? InitialDelay,
+	WorldNpcSkillEffectReservedResult? Reserved);
+
+public sealed record WorldNpcSkillResourceOverTimePeriodicActionRequest(
+	WorldNpcSkillResourceOverTimeEffectKind Kind,
+	int Value,
+	int SkillId,
+	int CurrentResource,
+	int MaxResource,
+	bool Percent = false,
+	bool TargetIsPlayer = true,
+	bool HasItemTemplate = false,
+	int? HealSkillDeboostedValue = null);
+
+public sealed record WorldNpcSkillResourceOverTimePeriodicActionResult(
+	WorldNpcSkillResourceOverTimeStatus Status,
+	WorldNpcSkillResourceOverTimeEffectKind Kind,
+	WorldNpcEffectResourceType ResourceType,
+	bool IsDamage,
+	int OriginalValue,
+	int ValueBeforeCap,
+	int FinalValue,
+	int CurrentResource,
+	int MaxResource,
+	bool PercentApplied,
+	bool TargetIsPlayer,
+	bool HealSkillDeboostApplied,
+	SmAttackStatusType? PacketType,
+	SmAttackStatusLog? PacketLog)
+{
+	public bool Applied => Status == WorldNpcSkillResourceOverTimeStatus.Applied;
+}
+
+public enum WorldNpcSkillResourceOverTimeEffectKind
+{
+	MpAttack,
+	FpAttack,
+	HpHeal,
+	MpHeal,
+	FpHeal,
+	DpHeal,
+}
+
+public enum WorldNpcSkillResourceOverTimeStatus
+{
+	Applied,
+	TargetNotPlayer,
+	NoResourceChange,
 }
