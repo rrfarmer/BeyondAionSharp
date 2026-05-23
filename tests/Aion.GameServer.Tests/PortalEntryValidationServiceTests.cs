@@ -590,6 +590,121 @@ public sealed class PortalEntryValidationServiceTests
 	}
 
 	[Fact]
+	public void ValidateQuestRequirements_AllowsWhenJavaPortalHasNoQuestRequirements()
+	{
+		var player = new Player();
+
+		var result = PortalEntryValidationService.ValidateQuestRequirements(player, CreatePortalPath());
+
+		Assert.True(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.Allowed, result.Status);
+		Assert.Null(result.FailurePacket);
+	}
+
+	[Fact]
+	public void ValidateQuestRequirements_AllowsMembershipBypassLikeJavaPermission()
+	{
+		var player = new Player();
+		var portalPath = CreatePortalPath(
+			questRequirements: [new PortalQuestRequirementSummary(1044, QuestStep: 3)]);
+
+		var result = PortalEntryValidationService.ValidateQuestRequirements(
+			player,
+			portalPath,
+			bypassQuestRequirement: true);
+
+		Assert.True(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.Allowed, result.Status);
+		Assert.Null(result.FailurePacket);
+	}
+
+	[Fact]
+	public void ValidateQuestRequirements_AllowsWhenAnyJavaQuestIsComplete()
+	{
+		var player = new Player
+		{
+			Quests = [new PlayerQuestState(1044, "COMPLETE", QuestVars: 0, Flags: 0, CompleteCount: 1)],
+		};
+		var portalPath = CreatePortalPath(
+			questRequirements: [new PortalQuestRequirementSummary(1044, QuestStep: 0)]);
+
+		var result = PortalEntryValidationService.ValidateQuestRequirements(player, portalPath);
+
+		Assert.True(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.Allowed, result.Status);
+		Assert.Null(result.FailurePacket);
+	}
+
+	[Fact]
+	public void ValidateQuestRequirements_AllowsWhenAnyJavaQuestVarMeetsStep()
+	{
+		var player = new Player
+		{
+			Quests = [new PlayerQuestState(1044, "START", QuestVars(var0: 3), Flags: 0, CompleteCount: 0)],
+		};
+		var portalPath = CreatePortalPath(
+			questRequirements:
+			[
+				new PortalQuestRequirementSummary(1044, QuestStep: 4),
+				new PortalQuestRequirementSummary(1044, QuestStep: 3),
+			]);
+
+		var result = PortalEntryValidationService.ValidateQuestRequirements(player, portalPath);
+
+		Assert.True(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.Allowed, result.Status);
+		Assert.Null(result.FailurePacket);
+	}
+
+	[Fact]
+	public void ValidateQuestRequirements_ReturnsNoRightDialogForDialogNpcWhenNoQuestMatches()
+	{
+		var player = new Player
+		{
+			Quests = [new PlayerQuestState(1044, "START", QuestVars(var0: 2), Flags: 0, CompleteCount: 0)],
+		};
+		var portalPath = CreatePortalPath(
+			questRequirements: [new PortalQuestRequirementSummary(1044, QuestStep: 3)]);
+
+		var result = PortalEntryValidationService.ValidateQuestRequirements(
+			player,
+			portalPath,
+			npcIsDialogNpc: true,
+			npcObjectId: 4001);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.QuestRestricted, result.Status);
+		var packet = Assert.IsType<SmDialogWindow>(result.FailurePacket);
+		var payload = SerializeUnencryptedPayload(packet);
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(4001, reader.ReadD());
+		Assert.Equal(SmDialogWindow.NoRightPageId, reader.ReadH());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void ValidateQuestRequirements_ReturnsGroupgateSystemMessageForNonDialogNpcWhenNoQuestMatches()
+	{
+		var player = new Player();
+		var portalPath = CreatePortalPath(
+			questRequirements: [new PortalQuestRequirementSummary(1044, QuestStep: 3)]);
+
+		var result = PortalEntryValidationService.ValidateQuestRequirements(
+			player,
+			portalPath,
+			npcIsDialogNpc: false,
+			npcObjectId: 4001);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.QuestRestricted, result.Status);
+		var packet = Assert.IsType<SmSystemMessage>(result.FailurePacket);
+		Assert.Equal(1300150, packet.MessageId);
+	}
+
+	[Fact]
 	public void ValidatePortalEntryPlan_ReturnsMissingLocationBeforeAnyGuardLikeJava()
 	{
 		var player = CreatePlayerWithCooldown(reuseTimeMillis: 200_000, entryCount: 2);
@@ -713,6 +828,25 @@ public sealed class PortalEntryValidationServiceTests
 	}
 
 	[Fact]
+	public void ValidatePortalEntryPlan_QuestFailureHappensBeforeCooldown()
+	{
+		var player = CreatePlayerWithCooldown(reuseTimeMillis: 200_000, entryCount: 2, race: "ELYOS");
+
+		var result = PortalEntryValidationService.ValidatePortalEntryPlan(
+			player,
+			CreatePortalPath(questRequirements: [new PortalQuestRequirementSummary(1044, QuestStep: 3)]),
+			CreatePortalLocs(),
+			CreatePortalCooltimes(maxPlayers: 1, maxCount: 1),
+			CreateWorldMaps(),
+			DateTimeOffset.FromUnixTimeMilliseconds(100_000),
+			npcObjectId: 4001);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.QuestRestricted, result.Status);
+		Assert.IsType<SmDialogWindow>(result.FailurePacket);
+	}
+
+	[Fact]
 	public void ValidatePortalEntryPlan_ReenterSkipsCooldownAndLevelLikeJava()
 	{
 		var player = CreatePlayerWithCooldown(reuseTimeMillis: 200_000, entryCount: 1, race: "ELYOS");
@@ -818,7 +952,8 @@ public sealed class PortalEntryValidationServiceTests
 		int minLevel = 0,
 		int minRank = 0,
 		int titleId = 0,
-		int errLevel = 0)
+		int errLevel = 0,
+		IReadOnlyList<PortalQuestRequirementSummary>? questRequirements = null)
 	{
 		return new PortalPathSummary(
 			PortalPathSource.Dialog,
@@ -833,7 +968,15 @@ public sealed class PortalEntryValidationServiceTests
 			Kinah: 0,
 			TitleId: titleId,
 			ErrGroup: 0,
-			ErrLevel: errLevel);
+			ErrLevel: errLevel)
+		{
+			QuestRequirements = questRequirements ?? Array.Empty<PortalQuestRequirementSummary>(),
+		};
+	}
+
+	private static int QuestVars(int var0 = 0)
+	{
+		return var0 & 0x3F;
 	}
 
 	private static Player CreatePlayerWithCooldown(long reuseTimeMillis, int entryCount, string race = "")

@@ -143,6 +143,7 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.CantInstanceEnterLevel(), 1400179);
 		AssertSystemMessage(SmSystemMessage.MentorCantEnter(300030000), 1400766, "300030000");
 		AssertSystemMessage(SmSystemMessage.MovePortalErrorInvalidRace(), 901354);
+		AssertSystemMessage(SmSystemMessage.SkillCanNotUseGroupgateNoRight(), 1300150);
 	}
 
 	[Fact]

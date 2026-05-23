@@ -99,6 +99,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(901354);
 	}
 
+	public static SmSystemMessage SkillCanNotUseGroupgateNoRight()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_SKILL_CAN_NOT_USE_GROUPGATE_NO_RIGHT.
+		return new SmSystemMessage(1300150);
+	}
+
 	public static SmSystemMessage NotEnoughKinah(long kinah)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_NOT_ENOUGH_KINA.

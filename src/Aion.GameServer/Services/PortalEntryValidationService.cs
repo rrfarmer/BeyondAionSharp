@@ -20,6 +20,7 @@ public static class PortalEntryValidationService
 		bool bypassLevelRequirement = false,
 		bool bypassRaceRequirement = false,
 		bool bypassTitleRequirement = false,
+		bool bypassQuestRequirement = false,
 		bool siegeOwnerMatchesPlayerRace = true,
 		bool npcIsDialogNpc = true)
 	{
@@ -53,6 +54,10 @@ public static class PortalEntryValidationService
 				return PortalEntryPlanResult.Rejected(validation.Status, loc, validation.FailurePacket!);
 
 			validation = ValidateTitle(player, portalPath, npcObjectId, bypassTitleRequirement);
+			if (!validation.CanEnter)
+				return PortalEntryPlanResult.Rejected(validation.Status, loc, validation.FailurePacket!);
+
+			validation = ValidateQuestRequirements(player, portalPath, npcIsDialogNpc, npcObjectId, bypassQuestRequirement);
 			if (!validation.CanEnter)
 				return PortalEntryPlanResult.Rejected(validation.Status, loc, validation.FailurePacket!);
 		}
@@ -272,6 +277,36 @@ public static class PortalEntryValidationService
 			new SmDialogWindow(npcObjectId, SmDialogWindow.NoRightPageId));
 	}
 
+	public static PortalEntryValidationResult ValidateQuestRequirements(
+		Player player,
+		PortalPathSummary portalPath,
+		bool npcIsDialogNpc = true,
+		int npcObjectId = 0,
+		bool bypassQuestRequirement = false)
+	{
+		// Java parity: services/teleport/PortalService.checkQuests.
+		if (bypassQuestRequirement || portalPath.QuestRequirements.Count == 0)
+			return PortalEntryValidationResult.Allowed();
+
+		foreach (var requirement in portalPath.QuestRequirements)
+		{
+			var quest = player.Quests.FirstOrDefault(state => state.QuestId == requirement.QuestId);
+			if (quest == null)
+				continue;
+
+			if (quest.IsComplete
+				|| (requirement.QuestStep > 0 && quest.GetQuestVarById(0) >= requirement.QuestStep))
+			{
+				return PortalEntryValidationResult.Allowed();
+			}
+		}
+
+		GameServerPacket failurePacket = npcIsDialogNpc
+			? new SmDialogWindow(npcObjectId, SmDialogWindow.NoRightPageId)
+			: SmSystemMessage.SkillCanNotUseGroupgateNoRight();
+		return PortalEntryValidationResult.Rejected(PortalEntryValidationStatus.QuestRestricted, failurePacket);
+	}
+
 	private static WorldMapInstanceRuntimeState? ResolveRegisteredInstance(
 		Player player,
 		int worldId,
@@ -315,6 +350,7 @@ public enum PortalEntryValidationStatus
 	RaceRestricted,
 	RankRestricted,
 	TitleRestricted,
+	QuestRestricted,
 }
 
 public sealed record PortalEntryPlanResult(
