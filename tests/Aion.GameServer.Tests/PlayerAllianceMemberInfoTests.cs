@@ -143,6 +143,78 @@ public sealed class PlayerAllianceMemberInfoTests
 	}
 
 	[Fact]
+	public void MemberGroupChangePlanner_PlansSingleMovePacketLikeJavaChangeMemberGroupEvent()
+	{
+		var planner = new PlayerAllianceMemberGroupChangePlanner();
+		var firstMember = new Player
+		{
+			ObjectId = 1001,
+			Name = "First",
+			IsOnline = true,
+			PlayerClass = "RANGER",
+			Level = 40,
+			Position = new WorldPosition(220010000, 11, 22, 33, 64),
+		};
+		var secondMember = new Player { ObjectId = 1002, Name = "Second", IsOnline = true };
+
+		var plan = Assert.IsType<PlayerAllianceMemberGroupChangePlan>(
+			planner.CreateMemberGroupChangePlan(88001, [firstMember, secondMember], firstMemberObjectId: 1001, secondMemberObjectId: 0, targetAllianceGroupId: 3));
+
+		Assert.Equal(88001, plan.AllianceId);
+		Assert.Equal(1001, plan.FirstMemberObjectId);
+		Assert.Equal(0, plan.SecondMemberObjectId);
+		Assert.Equal(3, plan.TargetAllianceGroupId);
+		Assert.Collection(
+			plan.MemberInfoIntents,
+			intent => AssertMemberGroupChangeIntent(intent, expectedSubjectObjectId: 1001, expectedName: "First"));
+	}
+
+	[Fact]
+	public void MemberGroupChangePlanner_PlansSwapPacketsLikeJavaChangeMemberGroupEvent()
+	{
+		var planner = new PlayerAllianceMemberGroupChangePlanner();
+		var firstMember = new Player
+		{
+			ObjectId = 1001,
+			Name = "First",
+			IsOnline = true,
+			PlayerClass = "RANGER",
+			Level = 40,
+			Position = new WorldPosition(220010000, 11, 22, 33, 64),
+		};
+		var secondMember = new Player
+		{
+			ObjectId = 1002,
+			Name = "Second",
+			IsOnline = true,
+			PlayerClass = "CLERIC",
+			Gender = "FEMALE",
+			Level = 45,
+			Position = new WorldPosition(220010000, 44, 55, 66, 64),
+		};
+
+		var plan = Assert.IsType<PlayerAllianceMemberGroupChangePlan>(
+			planner.CreateMemberGroupChangePlan(88001, [firstMember, secondMember], firstMemberObjectId: 1001, secondMemberObjectId: 1002, targetAllianceGroupId: 0));
+
+		Assert.Equal(1001, plan.FirstMemberObjectId);
+		Assert.Equal(1002, plan.SecondMemberObjectId);
+		Assert.Collection(
+			plan.MemberInfoIntents,
+			intent => AssertMemberGroupChangeIntent(intent, expectedSubjectObjectId: 1001, expectedName: "First"),
+			intent => AssertMemberGroupChangeIntent(intent, expectedSubjectObjectId: 1002, expectedName: "Second", expectedClassId: 10, expectedGenderId: 1, expectedLevel: 45));
+	}
+
+	[Fact]
+	public void MemberGroupChangePlanner_ReturnsNullWhenAffectedMemberIsMissing()
+	{
+		var planner = new PlayerAllianceMemberGroupChangePlanner();
+		var firstMember = new Player { ObjectId = 1001, Name = "First", IsOnline = true };
+
+		Assert.Null(planner.CreateMemberGroupChangePlan(88001, [firstMember], firstMemberObjectId: 404, secondMemberObjectId: 0, targetAllianceGroupId: 3));
+		Assert.Null(planner.CreateMemberGroupChangePlan(88001, [firstMember], firstMemberObjectId: 1001, secondMemberObjectId: 404, targetAllianceGroupId: 0));
+	}
+
+	[Fact]
 	public void SmAllianceMemberInfo_RewritesOfflineEnterToEnterOfflineLikeJava()
 	{
 		var member = new Player
@@ -259,6 +331,34 @@ public sealed class PlayerAllianceMemberInfoTests
 		Assert.Equal(expectedEffect.RemainingTimeToDisplayMillis, reader.ReadD());
 		for (var i = 0; i < 8; i++)
 			Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertMemberGroupChangeIntent(
+		PlayerAllianceMemberInfoIntent intent,
+		int expectedSubjectObjectId,
+		string expectedName,
+		int expectedClassId = 5,
+		int expectedGenderId = 0,
+		int expectedLevel = 40)
+	{
+		Assert.Equal(0, intent.RecipientObjectId);
+		Assert.Equal(expectedSubjectObjectId, intent.SubjectObjectId);
+		Assert.Equal(PlayerAllianceEvent.MemberGroupChange, intent.Event);
+		var plan = Assert.IsType<PlayerAllianceMemberInfoPacketPlan>(intent.PacketPlan);
+		Assert.Equal(PlayerAllianceMemberInfoEventKind.MemberGroupChange, plan.RequestedEventKind);
+		Assert.Equal(PlayerAllianceMemberInfoEventKind.MemberGroupChange, plan.EffectiveEventKind);
+		Assert.True(plan.WritesName);
+		Assert.False(plan.WritesAbnormalEffects);
+		Assert.False(plan.WritesSlotTimers);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(Assert.IsType<SmAllianceMemberInfo>(intent.CreatePacket())));
+		SkipAllianceMemberInfoPrefix(
+			reader,
+			expectedClassId,
+			expectedGenderId,
+			expectedLevel,
+			expectedEventId: (int)PlayerAllianceEvent.MemberGroupChange);
+		Assert.Equal(expectedName, reader.ReadS());
 		Assert.Equal(0, reader.Remaining);
 	}
 

@@ -10,6 +10,13 @@ public sealed record PlayerAllianceMemberInfoUpdatePlan(
 	int Slot,
 	IReadOnlyList<PlayerAllianceMemberInfoIntent> MemberInfoIntents);
 
+public sealed record PlayerAllianceMemberGroupChangePlan(
+	int AllianceId,
+	int FirstMemberObjectId,
+	int SecondMemberObjectId,
+	int TargetAllianceGroupId,
+	IReadOnlyList<PlayerAllianceMemberInfoIntent> MemberInfoIntents);
+
 public sealed record PlayerAllianceMemberInfoIntent(
 	int RecipientObjectId,
 	int SubjectObjectId,
