@@ -390,13 +390,13 @@ public sealed class WorldNpcResourceStatsServiceTests
 	}
 
 	[Fact]
-	public void AddPlayerDp_CapsOnlinePlayerAndRecordsDpPacketIntents()
+	public async Task AddPlayerDpAsync_CapsOnlinePlayerAndSendsDpPacketsInJavaOrder()
 	{
-		var service = CreateService(out _, out _);
+		var service = CreateService(out _, out var registry);
 		var player = CreatePlayer(objectId: 1003, currentHp: 100, currentMp: 50, currentFp: 100, playerClass: "RANGER", dp: 3900);
 		player.IsOnline = true;
 
-		var result = service.AddPlayerDp(player, value: 250, maxDp: 4000);
+		var result = await service.AddPlayerDpAsync(player, value: 250, maxDp: 4000);
 
 		Assert.Equal(WorldNpcResourceChangeStatus.Increased, result.Status);
 		Assert.Equal(WorldNpcEffectResourceType.Dp, result.ResourceType);
@@ -404,30 +404,54 @@ public sealed class WorldNpcResourceStatsServiceTests
 		Assert.Equal(4000, result.CurrentValue);
 		Assert.Equal(100, result.AppliedValue);
 		Assert.True(result.BroadcastDpInfo);
+		Assert.NotNull(result.DpInfoPacket);
+		Assert.Equal(player.ObjectId, result.DpInfoPacket.PlayerObjectId);
+		Assert.Equal(4000, result.DpInfoPacket.CurrentDp);
+		Assert.Equal(1, result.DpInfoBroadcastCount);
 		Assert.True(result.SendDpStatUpdate);
+		Assert.True(result.DpStatUpdateSent);
+		Assert.NotNull(result.DpStatUpdatePacket);
+		Assert.Equal(4000, result.DpStatUpdatePacket.CurrentDp);
 		Assert.True(result.UpdateStatsAndSpeedVisually);
 		Assert.Equal(4000, player.Dp);
+		var broadcast = Assert.Single(registry.Broadcasts);
+		Assert.Equal(player.ObjectId, broadcast.SourceObjectId);
+		Assert.True(broadcast.IncludeSourcePlayer);
+		Assert.Same(result.DpInfoPacket, broadcast.Packet);
+		var delivery = Assert.Single(registry.SentPackets);
+		Assert.Equal(player.ObjectId, delivery.PlayerObjectId);
+		Assert.Same(result.DpStatUpdatePacket, delivery.Packet);
+		Assert.Collection(
+			registry.PacketOrder,
+			packet => Assert.Same(result.DpInfoPacket, packet),
+			packet => Assert.Same(result.DpStatUpdatePacket, packet));
 	}
 
 	[Fact]
-	public void AddPlayerDp_SkipsStartingClassAndRequiresOnlineMaxDp()
+	public async Task AddPlayerDpAsync_SkipsStartingClassAndRequiresOnlineMaxDp()
 	{
-		var service = CreateService(out _, out _);
+		var service = CreateService(out _, out var registry);
 		var startingClass = CreatePlayer(objectId: 1004, currentHp: 100, currentMp: 50, currentFp: 100, playerClass: "WARRIOR", dp: 500);
 		startingClass.IsOnline = true;
 
-		var skipped = service.AddPlayerDp(startingClass, value: 100, maxDp: 4000);
+		var skipped = await service.AddPlayerDpAsync(startingClass, value: 100, maxDp: 4000);
 
 		Assert.Equal(WorldNpcResourceChangeStatus.StartingClass, skipped.Status);
 		Assert.Equal(500, startingClass.Dp);
+		Assert.Null(skipped.DpInfoPacket);
+		Assert.Null(skipped.DpStatUpdatePacket);
 
 		var missingMax = CreatePlayer(objectId: 1005, currentHp: 100, currentMp: 50, currentFp: 100, playerClass: "RANGER", dp: 500);
 		missingMax.IsOnline = true;
 
-		var unresolved = service.AddPlayerDp(missingMax, value: 100);
+		var unresolved = await service.AddPlayerDpAsync(missingMax, value: 100);
 
 		Assert.Equal(WorldNpcResourceChangeStatus.MissingMaxResource, unresolved.Status);
 		Assert.Equal(500, missingMax.Dp);
+		Assert.Null(unresolved.DpInfoPacket);
+		Assert.Null(unresolved.DpStatUpdatePacket);
+		Assert.Empty(registry.Broadcasts);
+		Assert.Empty(registry.SentPackets);
 	}
 
 	[Fact]
@@ -552,7 +576,7 @@ public sealed class WorldNpcResourceStatsServiceTests
 	[Fact]
 	public async Task ApplyResourceOverTimePeriodicResultAsync_AddsDpFromStagedDpHealWithPacketIntents()
 	{
-		var service = CreateService(out _, out _);
+		var service = CreateService(out _, out var registry);
 		var skillDamage = CreateSkillDamageService();
 		var player = CreatePlayer(objectId: 1008, currentHp: 100, currentMp: 40, currentFp: 100, dp: 3800);
 		player.IsOnline = true;
@@ -577,9 +601,18 @@ public sealed class WorldNpcResourceStatsServiceTests
 		Assert.Equal(4000, result.Change.CurrentValue);
 		Assert.Equal(4000, player.Dp);
 		Assert.True(result.Change.BroadcastDpInfo);
+		Assert.NotNull(result.Change.DpInfoPacket);
+		Assert.Equal(player.ObjectId, result.Change.DpInfoPacket.PlayerObjectId);
+		Assert.Equal(4000, result.Change.DpInfoPacket.CurrentDp);
+		Assert.Equal(1, result.Change.DpInfoBroadcastCount);
 		Assert.True(result.Change.SendDpStatUpdate);
+		Assert.True(result.Change.DpStatUpdateSent);
+		Assert.NotNull(result.Change.DpStatUpdatePacket);
+		Assert.Equal(4000, result.Change.DpStatUpdatePacket.CurrentDp);
 		Assert.True(result.Change.UpdateStatsAndSpeedVisually);
 		Assert.Null(result.Change.AttackStatusPacket);
+		Assert.Same(result.Change.DpInfoPacket, Assert.Single(registry.Broadcasts).Packet);
+		Assert.Same(result.Change.DpStatUpdatePacket, Assert.Single(registry.SentPackets).Packet);
 	}
 
 	[Fact]
@@ -752,6 +785,8 @@ public sealed class WorldNpcResourceStatsServiceTests
 
 		public List<PacketDelivery> SentPackets { get; } = [];
 
+		public List<GameServerPacket> PacketOrder { get; } = [];
+
 		public void RegisterPlayerConnection(int playerObjectId, GameServerConnection connection)
 		{
 		}
@@ -772,6 +807,7 @@ public sealed class WorldNpcResourceStatsServiceTests
 
 		public Task<bool> SendPacketToPlayerAsync(int playerObjectId, GameServerPacket packet)
 		{
+			PacketOrder.Add(packet);
 			SentPackets.Add(new PacketDelivery(playerObjectId, packet));
 			return Task.FromResult(true);
 		}
@@ -788,6 +824,7 @@ public sealed class WorldNpcResourceStatsServiceTests
 			bool includeSourcePlayer = false,
 			Func<Player, bool>? filter = null)
 		{
+			PacketOrder.Add(packet);
 			Broadcasts.Add(new BroadcastRecord(sourcePosition, sourceObjectId, packet, includeSourcePlayer));
 			return Task.FromResult(1);
 		}

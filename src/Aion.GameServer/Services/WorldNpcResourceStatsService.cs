@@ -240,7 +240,7 @@ public sealed class WorldNpcResourceStatsService
 			KillingBlowReset: killingBlowReset);
 	}
 
-	public WorldNpcResourceChangeResult AddPlayerDp(
+	public async ValueTask<WorldNpcResourceChangeResult> AddPlayerDpAsync(
 		Player? player,
 		int value,
 		int? maxDp = null)
@@ -281,6 +281,10 @@ public sealed class WorldNpcResourceStatsService
 			? cap
 			: requestedDp;
 		player.Dp = currentDp;
+		var shouldSendDpPackets = player.IsOnline;
+		var (dpInfoPacket, dpInfoBroadcastCount) = await BroadcastDpInfoAsync(player, currentDp, shouldSendDpPackets);
+		// Java order: PlayerCommonData.setDp broadcasts DP info, updates stats visually, then sends SM_STATUPDATE_DP.
+		var (dpStatUpdatePacket, dpStatUpdateSent) = await SendDpStatUpdateAsync(player, currentDp, shouldSendDpPackets);
 		return WorldNpcResourceChangeResult.FromResourceMutation(
 			currentDp == previousDp
 				? WorldNpcResourceChangeStatus.NoChange
@@ -293,9 +297,13 @@ public sealed class WorldNpcResourceStatsService
 			previousDp,
 			currentDp,
 			maxDp,
-			BroadcastDpInfo: player.IsOnline,
-			SendDpStatUpdate: player.IsOnline,
-			UpdateStatsAndSpeedVisually: player.IsOnline);
+			BroadcastDpInfo: shouldSendDpPackets,
+			SendDpStatUpdate: shouldSendDpPackets,
+			DpInfoPacket: dpInfoPacket,
+			DpInfoBroadcastCount: dpInfoBroadcastCount,
+			DpStatUpdatePacket: dpStatUpdatePacket,
+			DpStatUpdateSent: dpStatUpdateSent,
+			UpdateStatsAndSpeedVisually: shouldSendDpPackets);
 	}
 
 	public ValueTask<WorldNpcResourceEffectApplicationResult> ApplyResourceOverTimePeriodicResultAsync(
@@ -376,7 +384,7 @@ public sealed class WorldNpcResourceStatsService
 			case WorldNpcEffectResourceType.Dp:
 				if (target.Player == null)
 					return WorldNpcResourceEffectApplicationResult.MissingTarget(resourceType, skillId);
-				change = AddPlayerDp(target.Player, value, target.MaxDp);
+				change = await AddPlayerDpAsync(target.Player, value, target.MaxDp);
 				return WorldNpcResourceEffectApplicationResult.FromChange(change, skillId);
 			case WorldNpcEffectResourceType.Hp:
 				var hpValue = kind == WorldNpcResourceChangeKind.Reduce ? -value : value;
@@ -852,6 +860,44 @@ public sealed class WorldNpcResourceStatsService
 		return (packet, sent);
 	}
 
+	private async ValueTask<(SmDpInfo? Packet, int BroadcastCount)> BroadcastDpInfoAsync(
+		Player player,
+		int currentDp,
+		bool shouldBroadcast)
+	{
+		// Java parity: model/gameobjects/player/PlayerCommonData.setDp -> PacketSendUtility.broadcastPacket(..., true).
+		if (!shouldBroadcast)
+			return (null, 0);
+
+		var packet = new SmDpInfo(player.ObjectId, currentDp);
+		if (_connectionRegistry == null)
+			return (packet, 0);
+
+		var count = await _connectionRegistry.BroadcastToVisiblePlayersAsync(
+			player.Position,
+			player.ObjectId,
+			packet,
+			includeSourcePlayer: true);
+		return (packet, count);
+	}
+
+	private async ValueTask<(SmStatUpdateDp? Packet, bool Sent)> SendDpStatUpdateAsync(
+		Player player,
+		int currentDp,
+		bool shouldSend)
+	{
+		// Java parity: model/gameobjects/player/PlayerCommonData.setDp -> PacketSendUtility.sendPacket.
+		if (!shouldSend)
+			return (null, false);
+
+		var packet = new SmStatUpdateDp(currentDp);
+		if (_connectionRegistry == null)
+			return (packet, false);
+
+		var sent = await _connectionRegistry.SendPacketToPlayerAsync(player.ObjectId, packet);
+		return (packet, sent);
+	}
+
 	private static bool ShouldSendCreatureLifeStatsPacket(int appliedValue, int skillId, SmAttackStatusType? packetType)
 	{
 		return packetType != null && (appliedValue != 0 || skillId != 0);
@@ -993,6 +1039,10 @@ public sealed record WorldNpcResourceChangeResult(
 	bool SendFlyTimeUpdate = false,
 	bool BroadcastDpInfo = false,
 	bool SendDpStatUpdate = false,
+	SmDpInfo? DpInfoPacket = null,
+	int DpInfoBroadcastCount = 0,
+	SmStatUpdateDp? DpStatUpdatePacket = null,
+	bool DpStatUpdateSent = false,
 	bool UpdateStatsAndSpeedVisually = false,
 	bool SendHpStatUpdate = false,
 	SmStatUpdateHp? HpStatUpdatePacket = null,
@@ -1064,6 +1114,10 @@ public sealed record WorldNpcResourceChangeResult(
 		bool SendFlyTimeUpdate = false,
 		bool BroadcastDpInfo = false,
 		bool SendDpStatUpdate = false,
+		SmDpInfo? DpInfoPacket = null,
+		int DpInfoBroadcastCount = 0,
+		SmStatUpdateDp? DpStatUpdatePacket = null,
+		bool DpStatUpdateSent = false,
 		bool UpdateStatsAndSpeedVisually = false,
 		bool SendHpStatUpdate = false,
 		SmStatUpdateHp? HpStatUpdatePacket = null,
@@ -1098,6 +1152,10 @@ public sealed record WorldNpcResourceChangeResult(
 			SendFlyTimeUpdate,
 			BroadcastDpInfo,
 			SendDpStatUpdate,
+			DpInfoPacket,
+			DpInfoBroadcastCount,
+			DpStatUpdatePacket,
+			DpStatUpdateSent,
 			UpdateStatsAndSpeedVisually,
 			SendHpStatUpdate,
 			HpStatUpdatePacket,

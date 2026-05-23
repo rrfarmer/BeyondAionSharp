@@ -754,6 +754,17 @@ public class GamePacketTests
 		Assert.Equal(333, statUpdateMpReader.ReadD());
 		Assert.Equal(0, statUpdateMpReader.Remaining);
 
+		var statUpdateDpPayload = SerializeUnencryptedPayload(new SmStatUpdateDp(currentDp: 3210));
+		using var statUpdateDpReader = new PacketBuffer(statUpdateDpPayload);
+		Assert.Equal(3210, statUpdateDpReader.ReadH());
+		Assert.Equal(0, statUpdateDpReader.Remaining);
+
+		var dpInfoPayload = SerializeUnencryptedPayload(new SmDpInfo(playerObjectId: 1003, currentDp: 4000));
+		using var dpInfoReader = new PacketBuffer(dpInfoPayload);
+		Assert.Equal(1003, dpInfoReader.ReadD());
+		Assert.Equal(4000, dpInfoReader.ReadH());
+		Assert.Equal(0, dpInfoReader.Remaining);
+
 		var flyTimePayload = SerializeUnencryptedPayload(new SmFlyTime(currentFp: 44, maxFp: 99));
 		using var flyTimeReader = new PacketBuffer(flyTimePayload);
 		Assert.Equal(44, flyTimeReader.ReadD());
