@@ -474,6 +474,100 @@ public sealed class PlayerAllianceRuntimeTests
 		Assert.Null(runtime.CreateSendBrandsIntent(99001, leader));
 	}
 
+	[Fact]
+	public void ShowBrandCommandPlanner_EchoesSoloBrandLikeJavaCmShowBrand()
+	{
+		var planner = new PlayerShowBrandCommandPlanner(new PlayerGroupRuntime(), new PlayerAllianceRuntime());
+		var player = CreatePlayer(1001, "Solo", worldId: 210010000);
+
+		var plan = planner.CreatePlan(player, brandId: 7, targetObjectId: 9001);
+
+		Assert.Equal(PlayerShowBrandCommandPlanStatus.SoloEcho, plan.Status);
+		Assert.Equal(1001, plan.CallerObjectId);
+		Assert.Equal(7, plan.BrandId);
+		Assert.Equal(9001, plan.TargetObjectId);
+		Assert.Null(plan.GroupUpdatePlan);
+		Assert.Null(plan.AllianceUpdatePlan);
+		var intent = Assert.IsType<PlayerShowBrandIntent>(plan.SoloEchoIntent);
+		Assert.Equal(1001, intent.RecipientObjectId);
+		AssertShowBrandPayload(intent.CreatePacket(), (7, 9001));
+	}
+
+	[Fact]
+	public void ShowBrandCommandPlanner_GroupLeaderUpdatesGroupAndMemberIsIgnoredLikeJavaCmShowBrand()
+	{
+		var groups = new PlayerGroupRuntime();
+		var alliances = new PlayerAllianceRuntime();
+		var planner = new PlayerShowBrandCommandPlanner(groups, alliances);
+		var leader = CreatePlayer(1001, "Leader", worldId: 210010000);
+		var member = CreatePlayer(1002, "Member", worldId: 220010000);
+		groups.CreateOrUpdateGroup(99001, [leader, member]);
+
+		var leaderPlan = planner.CreatePlan(leader, brandId: 3, targetObjectId: 8001);
+		var memberPlan = planner.CreatePlan(member, brandId: 4, targetObjectId: 8002);
+
+		Assert.Equal(PlayerShowBrandCommandPlanStatus.GroupUpdated, leaderPlan.Status);
+		var updatePlan = Assert.IsType<PlayerGroupBrandUpdatePlan>(leaderPlan.GroupUpdatePlan);
+		Assert.Null(leaderPlan.SoloEchoIntent);
+		Assert.Null(leaderPlan.AllianceUpdatePlan);
+		Assert.Collection(
+			updatePlan.BrandBroadcasts,
+			intent => AssertShowBrandPayload(intent.CreatePacket(), (3, 8001)),
+			intent => AssertShowBrandPayload(intent.CreatePacket(), (3, 8001)));
+		Assert.Equal(PlayerShowBrandCommandPlanStatus.NotAuthorized, memberPlan.Status);
+		Assert.Null(memberPlan.SoloEchoIntent);
+		Assert.Null(memberPlan.GroupUpdatePlan);
+		Assert.Null(memberPlan.AllianceUpdatePlan);
+	}
+
+	[Fact]
+	public void ShowBrandCommandPlanner_AllianceLeaderAndViceCaptainUpdateAllianceLikeJavaCmShowBrand()
+	{
+		var groups = new PlayerGroupRuntime();
+		var alliances = new PlayerAllianceRuntime();
+		var planner = new PlayerShowBrandCommandPlanner(groups, alliances);
+		var leader = CreatePlayer(1001, "Leader", worldId: 210010000);
+		var viceCaptain = CreatePlayer(1002, "Vice", worldId: 220010000);
+		var member = CreatePlayer(1003, "Member", worldId: 230010000);
+		alliances.CreateAlliance(88001, leader);
+		alliances.AddMember(88001, viceCaptain);
+		alliances.AddMember(88001, member);
+		alliances.SetViceCaptains(88001, [1002]);
+
+		var leaderPlan = planner.CreatePlan(leader, brandId: 5, targetObjectId: 8005);
+		var viceCaptainPlan = planner.CreatePlan(viceCaptain, brandId: 6, targetObjectId: 8006);
+		var memberPlan = planner.CreatePlan(member, brandId: 7, targetObjectId: 8007);
+
+		Assert.Equal(PlayerShowBrandCommandPlanStatus.AllianceUpdated, leaderPlan.Status);
+		Assert.Equal(3, Assert.IsType<PlayerAllianceBrandUpdatePlan>(leaderPlan.AllianceUpdatePlan).BrandBroadcasts.Count);
+		Assert.Equal(PlayerShowBrandCommandPlanStatus.AllianceUpdated, viceCaptainPlan.Status);
+		var viceUpdate = Assert.IsType<PlayerAllianceBrandUpdatePlan>(viceCaptainPlan.AllianceUpdatePlan);
+		Assert.Collection(
+			viceUpdate.BrandBroadcasts,
+			intent => AssertShowBrandPayload(intent.CreatePacket(), (6, 8006)),
+			intent => AssertShowBrandPayload(intent.CreatePacket(), (6, 8006)),
+			intent => AssertShowBrandPayload(intent.CreatePacket(), (6, 8006)));
+		Assert.Equal(PlayerShowBrandCommandPlanStatus.NotAuthorized, memberPlan.Status);
+		Assert.Null(memberPlan.AllianceUpdatePlan);
+	}
+
+	[Fact]
+	public void ShowBrandCommandPlanner_ReportsTeamMissingForStaleCurrentTeam()
+	{
+		var planner = new PlayerShowBrandCommandPlanner(new PlayerGroupRuntime(), new PlayerAllianceRuntime());
+		var player = CreatePlayer(1001, "Stale", worldId: 210010000);
+		player.TeamMembership = PlayerTeamMembership.Group;
+		player.CurrentTeamId = 99001;
+		player.CurrentTeamMemberObjectIds = [1001];
+
+		var plan = planner.CreatePlan(player, brandId: 3, targetObjectId: 8001);
+
+		Assert.Equal(PlayerShowBrandCommandPlanStatus.TeamMissing, plan.Status);
+		Assert.Null(plan.SoloEchoIntent);
+		Assert.Null(plan.GroupUpdatePlan);
+		Assert.Null(plan.AllianceUpdatePlan);
+	}
+
 	private static Player CreatePlayer(int objectId, string name, int worldId)
 	{
 		return new Player
