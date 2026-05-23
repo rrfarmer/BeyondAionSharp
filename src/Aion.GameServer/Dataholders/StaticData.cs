@@ -1223,6 +1223,13 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 3 && reader.LocalName == "can_enter_mentor" && currentInstanceCooltime != null)
+			{
+				var value = await ReadElementTextAsync(reader, cancellationToken);
+				currentInstanceCooltime.CanEnterMentor = bool.TryParse(value, out var parsedCanEnterMentor) && parsedCanEnterMentor;
+				continue;
+			}
+
 			if (reader.Depth == 2 && reader.LocalName == "item_template")
 			{
 				var requiredLevels = ReadLevelRestrictions(reader.GetAttribute("restrict"));
@@ -2386,6 +2393,8 @@ public sealed class StaticData
 
 		public int EnterMaxLevelDark { get; set; }
 
+		public bool CanEnterMentor { get; set; }
+
 		public string CoolTimeType { get; set; } = string.Empty;
 
 		public string TypeValue { get; set; } = string.Empty;
@@ -2406,6 +2415,7 @@ public sealed class StaticData
 				EnterMaxLevelLight,
 				EnterMinLevelDark,
 				EnterMaxLevelDark,
+				CanEnterMentor,
 				CoolTimeType,
 				TypeValue,
 				EntCoolTime);

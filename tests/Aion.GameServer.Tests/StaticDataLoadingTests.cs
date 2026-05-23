@@ -920,6 +920,7 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(25, staticData.InstanceCooltimes.GetEnterMinLevel(300030000, "ELYOS"));
 		Assert.Equal(25, staticData.InstanceCooltimes.GetEnterMinLevel(300030000, "ASMODIANS"));
 		Assert.Equal(0, staticData.InstanceCooltimes.GetEnterMaxLevel(300030000, "ELYOS"));
+		Assert.True(staticData.InstanceCooltimes.CanEnterMentor(300030000));
 		Assert.Equal("DAILY", staticData.InstanceCooltimes.GetInstanceCooltimeByWorldId(300030000)?.CoolTimeType);
 		Assert.Equal(900, staticData.InstanceCooltimes.GetInstanceCooltimeByWorldId(300030000)?.EntCoolTime);
 		Assert.Contains(staticData.RecipeTemplates.GetAutolearnRecipes("ELYOS", 40009, 1), recipe => recipe.RecipeId == 155000001);

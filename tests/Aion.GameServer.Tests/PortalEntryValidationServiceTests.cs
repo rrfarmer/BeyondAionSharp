@@ -252,6 +252,46 @@ public sealed class PortalEntryValidationServiceTests
 		Assert.Null(result.FailurePacket);
 	}
 
+	[Fact]
+	public void ValidateMentor_AllowsNonMentorWhenInstanceDisallowsMentors()
+	{
+		var player = new Player { IsMentor = false };
+		var cooltimes = CreateCooltimesWithMentor(canEnterMentor: false);
+
+		var result = PortalEntryValidationService.ValidateMentor(player, WorldId, cooltimes);
+
+		Assert.True(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.Allowed, result.Status);
+		Assert.Null(result.FailurePacket);
+	}
+
+	[Fact]
+	public void ValidateMentor_RejectsMentorWhenJavaTemplateDisallowsMentors()
+	{
+		var player = new Player { IsMentor = true };
+		var cooltimes = CreateCooltimesWithMentor(canEnterMentor: false);
+
+		var result = PortalEntryValidationService.ValidateMentor(player, WorldId, cooltimes);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.MentorRestricted, result.Status);
+		var packet = Assert.IsType<SmSystemMessage>(result.FailurePacket);
+		Assert.Equal(1400766, packet.MessageId);
+	}
+
+	[Fact]
+	public void ValidateMentor_AllowsMentorWhenJavaTemplateAllowsMentors()
+	{
+		var player = new Player { IsMentor = true };
+		var cooltimes = CreateCooltimesWithMentor(canEnterMentor: true);
+
+		var result = PortalEntryValidationService.ValidateMentor(player, WorldId, cooltimes);
+
+		Assert.True(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.Allowed, result.Status);
+		Assert.Null(result.FailurePacket);
+	}
+
 	private const int WorldId = 300030000;
 
 	private static Player CreatePlayerWithCooldown(long reuseTimeMillis, int entryCount)
@@ -291,6 +331,19 @@ public sealed class PortalEntryValidationServiceTests
 				EnterMaxLevelLight: elyosMax,
 				EnterMinLevelDark: asmodianMin,
 				EnterMaxLevelDark: asmodianMax),
+		]);
+	}
+
+	private static InstanceCooltimeTable CreateCooltimesWithMentor(bool canEnterMentor)
+	{
+		return new InstanceCooltimeTable(
+		[
+			new InstanceCooltimeSummary(
+				8,
+				WorldId,
+				"PC_ALL",
+				MaxCount: 2,
+				CanEnterMentor: canEnterMentor),
 		]);
 	}
 

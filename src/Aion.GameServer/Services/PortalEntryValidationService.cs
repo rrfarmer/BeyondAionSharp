@@ -71,6 +71,21 @@ public static class PortalEntryValidationService
 		return PortalEntryValidationResult.Rejected(PortalEntryValidationStatus.LevelRestricted, failurePacket);
 	}
 
+	public static PortalEntryValidationResult ValidateMentor(
+		Player player,
+		int worldId,
+		InstanceCooltimeTable instanceCooltimes)
+	{
+		// Java parity: services/teleport/PortalService.checkMentor.
+		var template = instanceCooltimes.GetInstanceCooltimeByWorldId(worldId);
+		if (template != null && player.IsMentor && !template.CanEnterMentor)
+			return PortalEntryValidationResult.Rejected(
+				PortalEntryValidationStatus.MentorRestricted,
+				SmSystemMessage.MentorCantEnter(worldId));
+
+		return PortalEntryValidationResult.Allowed();
+	}
+
 	private static WorldMapInstanceRuntimeState? ResolveRegisteredInstance(
 		Player player,
 		int worldId,
@@ -108,6 +123,7 @@ public enum PortalEntryValidationStatus
 	Allowed,
 	CooldownLocked,
 	LevelRestricted,
+	MentorRestricted,
 }
 
 public sealed record PortalEntryInstanceValidationResult(

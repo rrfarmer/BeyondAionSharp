@@ -52,6 +52,9 @@ public sealed class Player
 	// Java parity: model/gameobjects/player/Player.getLevel consumed by portal and action guards.
 	public int Level { get; set; } = 1;
 
+	// Java parity: model/gameobjects/player/Player.isMentor consumed by portal and quest/drop guards.
+	public bool IsMentor { get; set; }
+
 	public long Exp { get; set; }
 
 	public long RecoverableExp { get; init; }

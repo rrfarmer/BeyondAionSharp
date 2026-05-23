@@ -58,6 +58,12 @@ public sealed class InstanceCooltimeTable
 			: template.EnterMaxLevelDark;
 	}
 
+	public bool CanEnterMentor(int worldId)
+	{
+		// Java parity: model/templates/InstanceCooltime.getCanEnterMentor.
+		return GetInstanceCooltimeByWorldId(worldId)?.CanEnterMentor ?? false;
+	}
+
 	public long CalculateInstanceEntranceCooltime(
 		int worldId,
 		DateTimeOffset now,
@@ -156,6 +162,7 @@ public sealed record InstanceCooltimeSummary(
 	int EnterMaxLevelLight = 0,
 	int EnterMinLevelDark = 0,
 	int EnterMaxLevelDark = 0,
+	bool CanEnterMentor = false,
 	string CoolTimeType = "",
 	string TypeValue = "",
 	int EntCoolTime = 0);

@@ -230,6 +230,20 @@ public sealed class WorldMapRuntimeStateTests
 	}
 
 	[Fact]
+	public void InstanceCooltimeTable_MatchesJavaCanEnterMentorLookup()
+	{
+		var cooltimes = new InstanceCooltimeTable(
+		[
+			new InstanceCooltimeSummary(8, 300030000, "PC_ALL", 5, CanEnterMentor: true),
+			new InstanceCooltimeSummary(9, 300040000, "PC_ALL", 5, CanEnterMentor: false),
+		]);
+
+		Assert.True(cooltimes.CanEnterMentor(300030000));
+		Assert.False(cooltimes.CanEnterMentor(300040000));
+		Assert.False(cooltimes.CanEnterMentor(123));
+	}
+
+	[Fact]
 	public void InstanceRuntimeService_PlayerOverloadUsesInstanceCooltimeMaxMembers()
 	{
 		var table = new WorldMapRuntimeStateTable(

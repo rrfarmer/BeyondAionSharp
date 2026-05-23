@@ -87,6 +87,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1400179);
 	}
 
+	public static SmSystemMessage MentorCantEnter(int worldId)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_MENTOR_CANT_ENTER(worldId).
+		return new SmSystemMessage(1400766, worldId.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
 	public static SmSystemMessage NotEnoughKinah(long kinah)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_NOT_ENOUGH_KINA.
