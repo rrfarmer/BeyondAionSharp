@@ -313,6 +313,38 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 	}
 
 	[Fact]
+	public async Task QueueDelayedTeleportAsync_MapInstanceChangeKeepsArrivalAnimationUntilLevelReady()
+	{
+		var dataManager = await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false);
+		var runtimeContext = new GameServerRuntimeContext();
+		runtimeContext.SetDataManager(dataManager);
+		var zoneCounterService = new CreaturePvpZoneCounterService();
+		var registry = new CapturingConnectionRegistry();
+		await using var pair = await TestConnectionPair.CreateAsync(registry, runtimeContext, zoneCounterService);
+		var startPosition = new WorldPosition(210040000, 100, 100, 150, 0, InstanceId: 1);
+		var destination = new WorldPosition(210040000, 2700, 620, 150, 32, InstanceId: 2);
+		var player = CreateTeleportingPlayer(7312, startPosition);
+
+		await pair.Connection.QueueDelayedTeleportAsync(
+			player,
+			destination,
+			TeleportAnimation.FadeOutBeam,
+			dataManager.StaticData);
+		var completed = await pair.Connection.HandleTeleportAnimationDoneAsync(player);
+
+		Assert.NotNull(completed);
+		Assert.False(completed.UsesSameWorldSpawnPath);
+		Assert.Equal(destination, player.Position);
+		Assert.Equal(ArrivalAnimation.FadeInBeam, player.PortAnimation);
+		Assert.Equal(1, zoneCounterService.GetCounters(player.ObjectId).PvpZoneCount);
+
+		await pair.Connection.HandleLevelReadyAsync(player);
+
+		Assert.Equal(ArrivalAnimation.None, player.PortAnimation);
+		Assert.Equal(1, zoneCounterService.GetCounters(player.ObjectId).PvpZoneCount);
+	}
+
+	[Fact]
 	public async Task CompleteToyPetSpawnUseItemAsync_RevalidatesCreaturePvpZoneCountersForSpawnedKisk()
 	{
 		var dataManager = await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false);
