@@ -574,6 +574,45 @@ public sealed class WorldNpcSpawnServiceTests
 	}
 
 	[Fact]
+	public void SpawnWorldNpcs_InitializesNpcLifeStatsFromTemplateMaxHp()
+	{
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var staticPlaceables = new StaticPlaceableStateService();
+		var initialized = new List<(int ObjectId, int MaxHp)>();
+		var service = CreateService(
+			world,
+			staticPlaceables,
+			npcLifeStatsInitialize: npc => initialized.Add((npc.ObjectId, npc.Template.MaxHp)));
+		var spawns = new NpcSpawnTable([CreateSpawn(210010000, 203083)]);
+		var templates = new NpcTemplateTable([CreateTemplate(203083, maxHp: 321)]);
+
+		service.SpawnWorldNpcs(spawns, templates, [210010000]);
+
+		Assert.Equal([(1, 321)], initialized);
+	}
+
+	[Fact]
+	public void TryDespawnWorldNpc_ClearsNpcLifeStatsRuntimeState()
+	{
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var staticPlaceables = new StaticPlaceableStateService();
+		var cleared = new List<int>();
+		var service = CreateService(
+			world,
+			staticPlaceables,
+			npcLifeStatsClear: objectId => cleared.Add(objectId));
+		var spawns = new NpcSpawnTable([CreateSpawn(210010000, 203084)]);
+		var templates = new NpcTemplateTable([CreateTemplate(203084, maxHp: 321)]);
+
+		service.SpawnWorldNpcs(spawns, templates, [210010000]);
+		cleared.Clear();
+		var despawned = service.TryDespawnWorldNpc(1);
+
+		Assert.True(despawned);
+		Assert.Equal([1], cleared);
+	}
+
+	[Fact]
 	public async Task TryDeleteAndScheduleRespawn_RestoresNpcAfterRespawnDelay()
 	{
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);
@@ -941,7 +980,9 @@ public sealed class WorldNpcSpawnServiceTests
 	private static WorldNpcSpawnService CreateService(
 		GameWorld world,
 		IStaticPlaceableStateService staticPlaceables,
-		WorldNpcAiStateService? aiStates = null)
+		WorldNpcAiStateService? aiStates = null,
+		Action<WorldNpc>? npcLifeStatsInitialize = null,
+		Action<int>? npcLifeStatsClear = null)
 	{
 		return new WorldNpcSpawnService(
 			new GameServerRuntimeContext(),
@@ -951,7 +992,9 @@ public sealed class WorldNpcSpawnServiceTests
 			threadPoolManager: null,
 			staticPlaceables,
 			NullLogger<WorldNpcSpawnService>.Instance,
-			npcAiStates: aiStates);
+			npcAiStates: aiStates,
+			npcLifeStatsInitialize: npcLifeStatsInitialize,
+			npcLifeStatsClear: npcLifeStatsClear);
 	}
 
 	private static WorldNpcSpawnService CreateService(
@@ -1309,7 +1352,7 @@ public sealed class WorldNpcSpawnServiceTests
 		return context;
 	}
 
-	private static NpcTemplateSummary CreateTemplate(int templateId, int state = 0, string aiName = "")
+	private static NpcTemplateSummary CreateTemplate(int templateId, int state = 0, string aiName = "", int maxHp = 0)
 	{
 		return new NpcTemplateSummary(
 			templateId,
@@ -1321,6 +1364,7 @@ public sealed class WorldNpcSpawnServiceTests
 			Race: "ELYOS",
 			Tribe: "GENERAL",
 			Type: "GENERAL",
+			MaxHp: maxHp,
 			State: state,
 			AiName: aiName);
 	}

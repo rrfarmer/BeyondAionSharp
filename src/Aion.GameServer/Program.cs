@@ -53,6 +53,17 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<WorldNpcDropRegistrationWorkflowService>();
 			services.AddSingleton<WorldNpcDeathDropWorkflowService>();
 			services.AddSingleton<WorldNpcLifeStatsService>();
+			services.AddSingleton<Action<WorldNpc>>(
+				serviceProvider => npc =>
+				{
+					var lifeStats = serviceProvider.GetRequiredService<WorldNpcLifeStatsService>();
+					if (npc.Template.MaxHp > 0)
+						lifeStats.Initialize(npc, npc.Template.MaxHp);
+					else
+						lifeStats.Clear(npc.ObjectId);
+				});
+			services.AddSingleton<Action<int>>(
+				serviceProvider => objectId => serviceProvider.GetRequiredService<WorldNpcLifeStatsService>().Clear(objectId));
 			services.AddSingleton<WorldNpcLootService>();
 			services.AddSingleton<WorldNpcLootBroadcastService>();
 			services.AddSingleton<WorldNpcRandomWalkService>();
