@@ -84,6 +84,14 @@ public enum PlayerAllianceDisconnectedPlanStatus
 	LeaderDisconnectDeferred,
 }
 
+public enum PlayerAllianceLeaveReason
+{
+	Ban,
+	Leave,
+	LeaveTimeout,
+	Disband,
+}
+
 public sealed record PlayerAllianceDisconnectedPlan(
 	int AllianceId,
 	int DisconnectedPlayerObjectId,
@@ -92,6 +100,17 @@ public sealed record PlayerAllianceDisconnectedPlan(
 	bool WouldTriggerLeaderChange = false,
 	bool WouldDisbandIfNoOnlineMembersRemain = false,
 	bool WouldBroadcastLeague = false);
+
+public sealed record PlayerAllianceLeavedPlan(
+	int AllianceId,
+	int LeavedPlayerObjectId,
+	PlayerAllianceLeaveReason Reason,
+	IReadOnlyList<int> ViceCaptainObjectIdsAfterEvent,
+	IReadOnlyList<PlayerAlliancePacketIntent> PacketIntents,
+	bool WouldTriggerLeaderChange = false,
+	bool WouldDisband = false,
+	bool WouldBroadcastLeague = false,
+	bool WouldInvokeBaseLeaveEvent = true);
 
 public enum PlayerAlliancePacketIntentKind
 {

@@ -195,6 +195,36 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1301019, playerName);
 	}
 
+	public static SmSystemMessage PartyAllianceDispersed()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_PARTY_ALLIANCE_DISPERSED.
+		return new SmSystemMessage(1300201);
+	}
+
+	public static SmSystemMessage PartyAllianceHeLeavedPartyOfflineTimeout(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_PARTY_ALLIANCE_HE_LEAVED_PARTY_OFFLINE_TIMEOUT(String).
+		return new SmSystemMessage(1300203, playerName);
+	}
+
+	public static SmSystemMessage ForceLeaveHim(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_FORCE_LEAVE_HIM(String).
+		return new SmSystemMessage(1300978, playerName);
+	}
+
+	public static SmSystemMessage ForceBanMe(string banPersonName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_FORCE_BAN_ME(String).
+		return new SmSystemMessage(1300979, banPersonName);
+	}
+
+	public static SmSystemMessage ForceBanHim(string banPersonName, string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_FORCE_BAN_HIM(String, String).
+		return new SmSystemMessage(1300980, banPersonName, playerName);
+	}
+
 	public static SmSystemMessage EnterOnlyUnionDon()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ENTER_ONLY_UNION_DON.

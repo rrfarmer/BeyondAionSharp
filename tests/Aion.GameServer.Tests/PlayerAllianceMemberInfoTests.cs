@@ -647,6 +647,95 @@ public sealed class PlayerAllianceMemberInfoTests
 	}
 
 	[Fact]
+	public void LeavedPlanner_PlansLeaveFanoutLikeJavaPlayerAllianceLeavedEvent()
+	{
+		var planner = new PlayerAllianceLeavedPlanner();
+		var remaining = CreateAllianceMember(1001, "Remaining", worldId: 210010000);
+		var leaved = CreateAllianceMember(1002, "Leaved", worldId: 220010000);
+		var other = CreateAllianceMember(1003, "Other", worldId: 230010000);
+
+		var plan = planner.CreateLeavedPlan(
+			88001,
+			leaderObjectId: 1001,
+			[remaining, other],
+			leaved,
+			currentViceCaptainObjectIds: [1002, 1004],
+			PlayerAllianceLeaveReason.Leave,
+			shouldDisband: true,
+			isInLeague: true);
+
+		Assert.Equal(88001, plan.AllianceId);
+		Assert.Equal(1002, plan.LeavedPlayerObjectId);
+		Assert.Equal(PlayerAllianceLeaveReason.Leave, plan.Reason);
+		Assert.Equal([1004], plan.ViceCaptainObjectIdsAfterEvent);
+		Assert.True(plan.WouldDisband);
+		Assert.True(plan.WouldBroadcastLeague);
+		Assert.True(plan.WouldInvokeBaseLeaveEvent);
+		Assert.Collection(
+			plan.PacketIntents,
+			intent => AssertAllianceSystemPacketIntent(intent, sequence: 0, recipientObjectId: 1001, expectedMessageId: 1300978),
+			intent => AssertAllianceLeaveMemberInfoPacketIntent(intent, sequence: 1, recipientObjectId: 1001, subjectObjectId: 1002),
+			intent => AssertAllianceInfoPacketIntentMetadata(intent, sequence: 2, recipientObjectId: 1001, expectedAllianceGroupSize: 2, expectedLeaderObjectId: 1001, expectedActivePlayerMapId: 210010000, expectedPaddedViceCaptainIds: [1004, 0, 0, 0], expectedLeagueId: 1),
+			intent => AssertAllianceSystemPacketIntent(intent, sequence: 3, recipientObjectId: 1003, expectedMessageId: 1300978),
+			intent => AssertAllianceLeaveMemberInfoPacketIntent(intent, sequence: 4, recipientObjectId: 1003, subjectObjectId: 1002),
+			intent => AssertAllianceInfoPacketIntentMetadata(intent, sequence: 5, recipientObjectId: 1003, expectedAllianceGroupSize: 2, expectedLeaderObjectId: 1001, expectedActivePlayerMapId: 230010000, expectedPaddedViceCaptainIds: [1004, 0, 0, 0], expectedLeagueId: 1));
+	}
+
+	[Fact]
+	public void LeavedPlanner_PlansBanTimeoutAndDisbandReasonMessagesLikeJava()
+	{
+		var planner = new PlayerAllianceLeavedPlanner();
+		var remaining = CreateAllianceMember(1001, "Remaining", worldId: 210010000);
+		var leaved = CreateAllianceMember(1002, "Leaved", worldId: 220010000);
+
+		var banPlan = planner.CreateLeavedPlan(
+			88001,
+			leaderObjectId: 1001,
+			[remaining],
+			leaved,
+			currentViceCaptainObjectIds: [],
+			PlayerAllianceLeaveReason.Ban,
+			banPersonName: "Captain");
+		var timeoutPlan = planner.CreateLeavedPlan(
+			88001,
+			leaderObjectId: 1001,
+			[remaining],
+			leaved,
+			currentViceCaptainObjectIds: [],
+			PlayerAllianceLeaveReason.LeaveTimeout);
+		var disbandPlan = planner.CreateLeavedPlan(
+			88001,
+			leaderObjectId: 1001,
+			[remaining],
+			leaved,
+			currentViceCaptainObjectIds: [],
+			PlayerAllianceLeaveReason.Disband,
+			leavedPlayerWasLeader: true,
+			shouldDisband: true,
+			isInLeague: true);
+
+		Assert.Collection(
+			banPlan.PacketIntents,
+			intent => AssertAllianceSystemPacketIntent(intent, sequence: 0, recipientObjectId: 1001, expectedMessageId: 1300980),
+			intent => AssertAllianceLeaveMemberInfoPacketIntent(intent, sequence: 1, recipientObjectId: 1001, subjectObjectId: 1002),
+			intent => AssertAllianceInfoPacketIntent(intent, sequence: 2, recipientObjectId: 1001, expectedAllianceGroupSize: 1, expectedLeaderObjectId: 1001, expectedActivePlayerMapId: 210010000, expectedPaddedViceCaptainIds: [0, 0, 0, 0]),
+			intent => AssertAllianceSystemPacketIntent(intent, sequence: 3, recipientObjectId: 1002, expectedMessageId: 1300979));
+		Assert.Collection(
+			timeoutPlan.PacketIntents,
+			intent => AssertAllianceSystemPacketIntent(intent, sequence: 0, recipientObjectId: 1001, expectedMessageId: 1300203),
+			intent => AssertAllianceLeaveMemberInfoPacketIntent(intent, sequence: 1, recipientObjectId: 1001, subjectObjectId: 1002),
+			intent => AssertAllianceInfoPacketIntent(intent, sequence: 2, recipientObjectId: 1001, expectedAllianceGroupSize: 1, expectedLeaderObjectId: 1001, expectedActivePlayerMapId: 210010000, expectedPaddedViceCaptainIds: [0, 0, 0, 0]));
+		Assert.True(disbandPlan.WouldInvokeBaseLeaveEvent);
+		Assert.False(disbandPlan.WouldTriggerLeaderChange);
+		Assert.False(disbandPlan.WouldDisband);
+		Assert.False(disbandPlan.WouldBroadcastLeague);
+		Assert.Collection(
+			disbandPlan.PacketIntents,
+			intent => AssertAllianceSystemPacketIntent(intent, sequence: 0, recipientObjectId: 1001, expectedMessageId: 1300201),
+			intent => AssertAllianceSystemPacketIntent(intent, sequence: 1, recipientObjectId: 1002, expectedMessageId: 1300201));
+	}
+
+	[Fact]
 	public void SmAllianceMemberInfo_RewritesOfflineEnterToEnterOfflineLikeJava()
 	{
 		var member = new Player
@@ -917,6 +1006,30 @@ public sealed class PlayerAllianceMemberInfoTests
 			expectedMessage: string.Empty);
 	}
 
+	private static void AssertAllianceInfoPacketIntentMetadata(
+		PlayerAlliancePacketIntent intent,
+		int sequence,
+		int recipientObjectId,
+		int expectedAllianceGroupSize,
+		int expectedLeaderObjectId,
+		int expectedActivePlayerMapId,
+		IReadOnlyList<int> expectedPaddedViceCaptainIds,
+		int expectedLeagueId)
+	{
+		Assert.Equal(sequence, intent.Sequence);
+		Assert.Equal(recipientObjectId, intent.RecipientObjectId);
+		Assert.Equal(PlayerAlliancePacketIntentKind.AllianceInfo, intent.Kind);
+		var plan = Assert.IsType<PlayerAllianceInfoPacketPlan>(intent.AllianceInfoPlan);
+		Assert.Equal(expectedAllianceGroupSize, plan.AllianceGroupSize);
+		Assert.Equal(88001, plan.AllianceId);
+		Assert.Equal(expectedLeaderObjectId, plan.LeaderObjectId);
+		Assert.Equal(expectedActivePlayerMapId, plan.ActivePlayerMapId);
+		Assert.Equal(expectedPaddedViceCaptainIds, plan.PaddedViceCaptainObjectIds);
+		Assert.Equal(expectedLeagueId, plan.LeagueId);
+		Assert.Equal(0, plan.MessageId);
+		Assert.Equal(string.Empty, plan.Message);
+	}
+
 	private static void AssertAllianceMemberInfoPacketIntent(
 		PlayerAlliancePacketIntent intent,
 		int sequence,
@@ -944,6 +1057,27 @@ public sealed class PlayerAllianceMemberInfoTests
 		Assert.Equal(0, reader.ReadH());
 		for (var i = 0; i < 8; i++)
 			Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertAllianceLeaveMemberInfoPacketIntent(
+		PlayerAlliancePacketIntent intent,
+		int sequence,
+		int recipientObjectId,
+		int subjectObjectId)
+	{
+		Assert.Equal(sequence, intent.Sequence);
+		Assert.Equal(recipientObjectId, intent.RecipientObjectId);
+		Assert.Equal(PlayerAlliancePacketIntentKind.MemberInfo, intent.Kind);
+		var plan = Assert.IsType<PlayerAllianceMemberInfoPacketPlan>(intent.MemberInfoPlan);
+		Assert.Equal(subjectObjectId, plan.MemberObjectId);
+		Assert.Equal(PlayerAllianceMemberInfoEventKind.Leave, plan.RequestedEventKind);
+		Assert.Equal(PlayerAllianceMemberInfoEventKind.Leave, plan.EffectiveEventKind);
+		Assert.False(plan.WritesName);
+		Assert.False(plan.WritesAbnormalEffects);
+		Assert.False(plan.WritesSlotTimers);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(Assert.IsType<SmAllianceMemberInfo>(intent.CreatePacket())));
+		SkipAllianceMemberInfoPrefix(reader, expectedClassId: 5, expectedGenderId: 0, expectedLevel: 40, expectedEventId: (int)PlayerAllianceEvent.Leave);
 		Assert.Equal(0, reader.Remaining);
 	}
 
