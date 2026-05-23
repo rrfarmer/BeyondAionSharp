@@ -22,8 +22,12 @@ public sealed class WorldNpcSkillResultCalculationService
 			? (int)(damageBeforeRandom * random.Multiplier)
 			: damageBeforeRandom;
 		var normalizedFinalDamage = Math.Max(0, finalDamage);
-		var damageModifier = CalculateDamageModifier(options.DamageModifier, attackStatus.FinalStatus, normalizedFinalDamage);
-		var resultDamage = damageModifier.Applied ? damageModifier.FinalDamage : normalizedFinalDamage;
+		var criticalDamage = CalculateSkillCriticalDamage(options.CriticalDamage, attackStatus.FinalStatus, normalizedFinalDamage);
+		var damageAfterCritical = criticalDamage.Applied ? criticalDamage.FinalDamage : normalizedFinalDamage;
+		var blockedDamage = CalculateSkillBlockedDamage(options.BlockedDamage, attackStatus.FinalStatus, damageAfterCritical);
+		var damageAfterBlocked = blockedDamage.Applied ? blockedDamage.FinalDamage : damageAfterCritical;
+		var damageModifier = CalculateDamageModifier(options.DamageModifier, attackStatus.FinalStatus, damageAfterBlocked);
+		var resultDamage = damageModifier.Applied ? damageModifier.FinalDamage : damageAfterBlocked;
 		var attackResult = new WorldNpcSkillAttackResult(
 			resultDamage,
 			attackStatus.FinalStatus,
@@ -70,6 +74,8 @@ public sealed class WorldNpcSkillResultCalculationService
 			request.ShouldIncreaseByOneTimeBoost,
 			request.UsesTemplateDamage,
 			baseDamageMultiplier,
+			criticalDamage,
+			blockedDamage,
 			attackStatus,
 			damageModifier,
 			npcAiDamageModifier,
@@ -550,6 +556,83 @@ public sealed class WorldNpcSkillResultCalculationService
 			observerMultipliers.Count);
 	}
 
+	private static WorldNpcSkillCriticalDamageResult CalculateSkillCriticalDamage(
+		WorldNpcSkillCriticalDamageOptions? options,
+		WorldNpcSkillAttackStatus status,
+		int damage)
+	{
+		if (options == null)
+			return WorldNpcSkillCriticalDamageResult.NotRequested(damage, status);
+
+		// Java parity: controllers/attack/AttackUtil.calculateWeaponCritical.
+		if (!status.IsCritical())
+			return WorldNpcSkillCriticalDamageResult.FromSkippedStatus(damage, status);
+
+		if (options.TargetIsPlayer && options.AppliesFortitudeStat && options.CriticalDamageReduce == null)
+			return WorldNpcSkillCriticalDamageResult.Unresolved(damage, status, options);
+
+		var coefficient = 1.5f;
+		if (options.Element == WorldNpcSkillDamageModifierElement.Physical && options.WeaponGroup != null)
+			coefficient = options.WeaponGroup.Value.GetJavaCriticalMultiplier();
+
+		if (options.TargetIsPlayer && options.AppliesFortitudeStat)
+		{
+			var fortitudeModifier = options.CriticalDamageReduce!.Value / 1000f;
+			coefficient = options.IsMainHand
+				? coefficient - fortitudeModifier
+				: coefficient + fortitudeModifier;
+		}
+
+		coefficient += options.CriticalAddDamage / 100f;
+		var exactDamage = damage * coefficient;
+		return WorldNpcSkillCriticalDamageResult.AppliedResult(
+			damage,
+			(int)exactDamage,
+			exactDamage,
+			status,
+			options,
+			coefficient);
+	}
+
+	private static WorldNpcSkillBlockedDamageResult CalculateSkillBlockedDamage(
+		WorldNpcSkillBlockedDamageOptions? options,
+		WorldNpcSkillAttackStatus status,
+		int damage)
+	{
+		if (options == null)
+			return WorldNpcSkillBlockedDamageResult.NotRequested(damage, status);
+
+		// Java parity: controllers/attack/AttackUtil.calculateBlockedDamage.
+		if (status.GetBaseStatus() != WorldNpcSkillAttackStatus.Block)
+			return WorldNpcSkillBlockedDamageResult.FromSkippedStatus(damage, status);
+
+		var shieldReduceMaxMissing = options.TargetIsPlayer && options.HasShield && options.ShieldReduceMax == null;
+		if (options.DamageReduceStat == null || shieldReduceMaxMissing)
+			return WorldNpcSkillBlockedDamageResult.Unresolved(damage, status, options, shieldReduceMaxMissing);
+
+		var reduceValue = damage - damage * options.DamageReduceStat.Value / 100f;
+		var cappedByShield = false;
+		if (options.TargetIsPlayer && options.HasShield)
+		{
+			var reduceMax = options.ShieldReduceMax!.Value;
+			if (reduceMax > 0 && reduceMax < reduceValue)
+			{
+				reduceValue = reduceMax;
+				cappedByShield = true;
+			}
+		}
+
+		var exactDamage = damage - reduceValue;
+		return WorldNpcSkillBlockedDamageResult.AppliedResult(
+			damage,
+			(int)exactDamage,
+			exactDamage,
+			status,
+			options,
+			reduceValue,
+			cappedByShield);
+	}
+
 	private static WorldNpcSkillShieldObserverResult CalculateShieldObserver(
 		bool ignoreShield,
 		WorldNpcSkillShieldObserverOptions? options,
@@ -653,6 +736,8 @@ public sealed record WorldNpcSkillResultCalculationOptions(
 	double? RandomChanceRoll = null,
 	bool CannotMiss = false,
 	WorldNpcSkillBaseDamageMultiplierOptions? BaseDamageMultiplier = null,
+	WorldNpcSkillCriticalDamageOptions? CriticalDamage = null,
+	WorldNpcSkillBlockedDamageOptions? BlockedDamage = null,
 	WorldNpcSkillAttackStatusCalculationOptions? AttackStatusCalculation = null,
 	WorldNpcSkillDamageModifierOptions? DamageModifier = null,
 	WorldNpcSkillAdditionalHitOptions? AdditionalHits = null,
@@ -681,6 +766,8 @@ public sealed record WorldNpcSkillResultCalculationResult(
 	bool ShouldIncreaseByOneTimeBoost,
 	bool UsesTemplateDamage,
 	WorldNpcSkillBaseDamageMultiplierResult BaseDamageMultiplier,
+	WorldNpcSkillCriticalDamageResult CriticalDamage,
+	WorldNpcSkillBlockedDamageResult BlockedDamage,
 	WorldNpcSkillAttackStatusCalculationResult AttackStatusCalculation,
 	WorldNpcSkillDamageModifierResult DamageModifier,
 	WorldNpcSkillNpcAiDamageModifierResult NpcAiDamageModifier,
@@ -789,6 +876,283 @@ public sealed record WorldNpcSkillBaseDamageMultiplierOptions(
 	bool IsSkill = true,
 	bool ObserverMultipliersKnown = true,
 	IReadOnlyList<float>? ObserverMultipliers = null);
+
+public sealed record WorldNpcSkillCriticalDamageOptions(
+	WorldNpcSkillDamageModifierElement Element = WorldNpcSkillDamageModifierElement.Physical,
+	WorldNpcSkillWeaponGroup? WeaponGroup = null,
+	int CriticalAddDamage = 0,
+	bool TargetIsPlayer = false,
+	bool AppliesFortitudeStat = true,
+	int? CriticalDamageReduce = null,
+	bool IsMainHand = true);
+
+public sealed record WorldNpcSkillCriticalDamageResult(
+	bool WasRequested,
+	bool Applied,
+	bool SkippedByStatus,
+	WorldNpcSkillAttackStatus AttackStatus,
+	WorldNpcSkillDamageModifierElement Element,
+	WorldNpcSkillWeaponGroup? WeaponGroup,
+	int CriticalAddDamage,
+	bool TargetIsPlayer,
+	bool AppliesFortitudeStat,
+	int? CriticalDamageReduce,
+	bool IsMainHand,
+	int OriginalDamage,
+	int FinalDamage,
+	float ExactFinalDamage,
+	float Coefficient,
+	bool CriticalDamageReduceInputMissing)
+{
+	public bool HasUnresolvedInputs => CriticalDamageReduceInputMissing;
+
+	public static WorldNpcSkillCriticalDamageResult NotRequested(int damage, WorldNpcSkillAttackStatus status)
+	{
+		return Create(
+			WasRequested: false,
+			Applied: false,
+			SkippedByStatus: false,
+			status,
+			WorldNpcSkillCriticalDamageOptionsDefaults.Default,
+			damage,
+			damage,
+			damage,
+			Coefficient: 1f,
+			CriticalDamageReduceInputMissing: false);
+	}
+
+	public static WorldNpcSkillCriticalDamageResult FromSkippedStatus(int damage, WorldNpcSkillAttackStatus status)
+	{
+		return Create(
+			WasRequested: true,
+			Applied: false,
+			SkippedByStatus: true,
+			status,
+			WorldNpcSkillCriticalDamageOptionsDefaults.Default,
+			damage,
+			damage,
+			damage,
+			Coefficient: 1f,
+			CriticalDamageReduceInputMissing: false);
+	}
+
+	public static WorldNpcSkillCriticalDamageResult Unresolved(
+		int damage,
+		WorldNpcSkillAttackStatus status,
+		WorldNpcSkillCriticalDamageOptions options)
+	{
+		return Create(
+			WasRequested: true,
+			Applied: false,
+			SkippedByStatus: false,
+			status,
+			options,
+			damage,
+			damage,
+			damage,
+			Coefficient: 1f,
+			CriticalDamageReduceInputMissing: true);
+	}
+
+	public static WorldNpcSkillCriticalDamageResult AppliedResult(
+		int originalDamage,
+		int finalDamage,
+		float exactFinalDamage,
+		WorldNpcSkillAttackStatus status,
+		WorldNpcSkillCriticalDamageOptions options,
+		float coefficient)
+	{
+		return Create(
+			WasRequested: true,
+			Applied: true,
+			SkippedByStatus: false,
+			status,
+			options,
+			originalDamage,
+			finalDamage,
+			exactFinalDamage,
+			coefficient,
+			CriticalDamageReduceInputMissing: false);
+	}
+
+	private static WorldNpcSkillCriticalDamageResult Create(
+		bool WasRequested,
+		bool Applied,
+		bool SkippedByStatus,
+		WorldNpcSkillAttackStatus status,
+		WorldNpcSkillCriticalDamageOptions options,
+		int originalDamage,
+		int finalDamage,
+		float exactFinalDamage,
+		float Coefficient,
+		bool CriticalDamageReduceInputMissing)
+	{
+		return new WorldNpcSkillCriticalDamageResult(
+			WasRequested,
+			Applied,
+			SkippedByStatus,
+			status,
+			options.Element,
+			options.WeaponGroup,
+			options.CriticalAddDamage,
+			options.TargetIsPlayer,
+			options.AppliesFortitudeStat,
+			options.CriticalDamageReduce,
+			options.IsMainHand,
+			originalDamage,
+			finalDamage,
+			exactFinalDamage,
+			Coefficient,
+			CriticalDamageReduceInputMissing);
+	}
+}
+
+internal static class WorldNpcSkillCriticalDamageOptionsDefaults
+{
+	public static WorldNpcSkillCriticalDamageOptions Default { get; } = new();
+}
+
+public sealed record WorldNpcSkillBlockedDamageOptions(
+	bool TargetIsPlayer = false,
+	bool HasShield = false,
+	float? DamageReduceStat = null,
+	int? ShieldReduceMax = null);
+
+public sealed record WorldNpcSkillBlockedDamageResult(
+	bool WasRequested,
+	bool Applied,
+	bool SkippedByStatus,
+	WorldNpcSkillAttackStatus AttackStatus,
+	int OriginalDamage,
+	int FinalDamage,
+	float ExactFinalDamage,
+	bool TargetIsPlayer,
+	bool HasShield,
+	float? DamageReduceStat,
+	int? ShieldReduceMax,
+	float ReduceValue,
+	bool CappedByShield,
+	bool DamageReduceStatInputMissing,
+	bool ShieldReduceMaxInputMissing)
+{
+	public bool HasUnresolvedInputs => DamageReduceStatInputMissing || ShieldReduceMaxInputMissing;
+
+	public static WorldNpcSkillBlockedDamageResult NotRequested(int damage, WorldNpcSkillAttackStatus status)
+	{
+		return Create(
+			WasRequested: false,
+			Applied: false,
+			SkippedByStatus: false,
+			status,
+			WorldNpcSkillBlockedDamageOptionsDefaults.Default,
+			damage,
+			damage,
+			damage,
+			ReduceValue: 0f,
+			CappedByShield: false,
+			DamageReduceStatInputMissing: false,
+			ShieldReduceMaxInputMissing: false);
+	}
+
+	public static WorldNpcSkillBlockedDamageResult FromSkippedStatus(int damage, WorldNpcSkillAttackStatus status)
+	{
+		return Create(
+			WasRequested: true,
+			Applied: false,
+			SkippedByStatus: true,
+			status,
+			WorldNpcSkillBlockedDamageOptionsDefaults.Default,
+			damage,
+			damage,
+			damage,
+			ReduceValue: 0f,
+			CappedByShield: false,
+			DamageReduceStatInputMissing: false,
+			ShieldReduceMaxInputMissing: false);
+	}
+
+	public static WorldNpcSkillBlockedDamageResult Unresolved(
+		int damage,
+		WorldNpcSkillAttackStatus status,
+		WorldNpcSkillBlockedDamageOptions options,
+		bool shieldReduceMaxMissing)
+	{
+		return Create(
+			WasRequested: true,
+			Applied: false,
+			SkippedByStatus: false,
+			status,
+			options,
+			damage,
+			damage,
+			damage,
+			ReduceValue: 0f,
+			CappedByShield: false,
+			DamageReduceStatInputMissing: options.DamageReduceStat == null,
+			ShieldReduceMaxInputMissing: shieldReduceMaxMissing);
+	}
+
+	public static WorldNpcSkillBlockedDamageResult AppliedResult(
+		int originalDamage,
+		int finalDamage,
+		float exactFinalDamage,
+		WorldNpcSkillAttackStatus status,
+		WorldNpcSkillBlockedDamageOptions options,
+		float reduceValue,
+		bool cappedByShield)
+	{
+		return Create(
+			WasRequested: true,
+			Applied: true,
+			SkippedByStatus: false,
+			status,
+			options,
+			originalDamage,
+			finalDamage,
+			exactFinalDamage,
+			reduceValue,
+			cappedByShield,
+			DamageReduceStatInputMissing: false,
+			ShieldReduceMaxInputMissing: false);
+	}
+
+	private static WorldNpcSkillBlockedDamageResult Create(
+		bool WasRequested,
+		bool Applied,
+		bool SkippedByStatus,
+		WorldNpcSkillAttackStatus status,
+		WorldNpcSkillBlockedDamageOptions options,
+		int originalDamage,
+		int finalDamage,
+		float exactFinalDamage,
+		float ReduceValue,
+		bool CappedByShield,
+		bool DamageReduceStatInputMissing,
+		bool ShieldReduceMaxInputMissing)
+	{
+		return new WorldNpcSkillBlockedDamageResult(
+			WasRequested,
+			Applied,
+			SkippedByStatus,
+			status,
+			originalDamage,
+			finalDamage,
+			exactFinalDamage,
+			options.TargetIsPlayer,
+			options.HasShield,
+			options.DamageReduceStat,
+			options.ShieldReduceMax,
+			ReduceValue,
+			CappedByShield,
+			DamageReduceStatInputMissing,
+			ShieldReduceMaxInputMissing);
+	}
+}
+
+internal static class WorldNpcSkillBlockedDamageOptionsDefaults
+{
+	public static WorldNpcSkillBlockedDamageOptions Default { get; } = new();
+}
 
 public sealed record WorldNpcSkillBaseDamageMultiplierResult(
 	bool WasRequested,

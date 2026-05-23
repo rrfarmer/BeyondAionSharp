@@ -199,6 +199,127 @@ public sealed class WorldNpcSkillResultCalculationServiceTests
 	}
 
 	[Fact]
+	public void Calculate_CriticalDamageAppliesJavaWeaponMultiplierFortitudeAndCritAdd()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 100,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				AttackStatus: WorldNpcSkillAttackStatus.Critical,
+				CriticalDamage: new WorldNpcSkillCriticalDamageOptions(
+					Element: WorldNpcSkillDamageModifierElement.Physical,
+					WeaponGroup: WorldNpcSkillWeaponGroup.Dagger,
+					CriticalAddDamage: 20,
+					TargetIsPlayer: true,
+					CriticalDamageReduce: 300))));
+
+		Assert.Equal(220, result.FinalDamage);
+		Assert.True(result.CriticalDamage.Applied);
+		Assert.Equal(2.2f, result.CriticalDamage.Coefficient, precision: 3);
+		Assert.Equal(220f, result.CriticalDamage.ExactFinalDamage, precision: 3);
+	}
+
+	[Fact]
+	public void Calculate_CriticalDamageSkipsNonCriticalStatus()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 100,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				AttackStatus: WorldNpcSkillAttackStatus.NormalHit,
+				CriticalDamage: new WorldNpcSkillCriticalDamageOptions(CriticalAddDamage: 50))));
+
+		Assert.Equal(100, result.FinalDamage);
+		Assert.False(result.CriticalDamage.Applied);
+		Assert.True(result.CriticalDamage.SkippedByStatus);
+	}
+
+	[Fact]
+	public void Calculate_CriticalDamageRecordsMissingFortitudeInput()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 100,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				AttackStatus: WorldNpcSkillAttackStatus.Critical,
+				CriticalDamage: new WorldNpcSkillCriticalDamageOptions(TargetIsPlayer: true))));
+
+		Assert.Equal(100, result.FinalDamage);
+		Assert.False(result.CriticalDamage.Applied);
+		Assert.True(result.CriticalDamage.HasUnresolvedInputs);
+		Assert.True(result.CriticalDamage.CriticalDamageReduceInputMissing);
+	}
+
+	[Fact]
+	public void Calculate_BlockedDamageAppliesJavaShieldCap()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 100,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				AttackStatus: WorldNpcSkillAttackStatus.Block,
+				BlockedDamage: new WorldNpcSkillBlockedDamageOptions(
+					TargetIsPlayer: true,
+					HasShield: true,
+					DamageReduceStat: 50f,
+					ShieldReduceMax: 20))));
+
+		Assert.Equal(80, result.FinalDamage);
+		Assert.True(result.BlockedDamage.Applied);
+		Assert.Equal(20f, result.BlockedDamage.ReduceValue);
+		Assert.True(result.BlockedDamage.CappedByShield);
+	}
+
+	[Fact]
+	public void Calculate_BlockedDamageRecordsMissingReductionInputs()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 100,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				AttackStatus: WorldNpcSkillAttackStatus.Block,
+				BlockedDamage: new WorldNpcSkillBlockedDamageOptions(
+					TargetIsPlayer: true,
+					HasShield: true))));
+
+		Assert.Equal(100, result.FinalDamage);
+		Assert.False(result.BlockedDamage.Applied);
+		Assert.True(result.BlockedDamage.HasUnresolvedInputs);
+		Assert.True(result.BlockedDamage.DamageReduceStatInputMissing);
+		Assert.True(result.BlockedDamage.ShieldReduceMaxInputMissing);
+	}
+
+	[Fact]
 	public void Calculate_CreatesJavaAttackResultAndEffectReservedSurface()
 	{
 		var service = new WorldNpcSkillResultCalculationService();
