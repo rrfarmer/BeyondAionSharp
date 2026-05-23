@@ -217,6 +217,9 @@ public sealed class Player
 
 	public PendingKiskBindRequest? PendingKiskBindRequest { get; set; }
 
+	// Java parity: controllers/CreatureController TaskId.TELEPORT stores TeleportService.SpawnTask until CM_TELEPORT_ANIMATION_DONE.
+	public PendingPlayerTeleport? PendingTeleport { get; set; }
+
 	// Java parity: model/gameobjects/player/Player.kisk points at the currently bound Kisk.
 	public int BoundKiskObjectId { get; set; }
 
@@ -649,3 +652,5 @@ public enum PlayerLeaveFlyAreaStatus
 	EndedFlying,
 	GlidingOutsideFlyArea,
 }
+
+public sealed record PendingPlayerTeleport(WorldPosition Destination);

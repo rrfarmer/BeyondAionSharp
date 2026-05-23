@@ -15,6 +15,32 @@ public static class PlayerTeleportService
 		return new PlayerTeleportResult(previousPosition, destination, UsesSameWorldSpawnPath: previousPosition.WorldId == destination.WorldId);
 	}
 
+	public static PendingPlayerTeleport QueuePendingTeleport(Player player, WorldPosition destination)
+	{
+		// Java parity: services/teleport/TeleportService.sendLoc stores SpawnTask under TaskId.TELEPORT until the client sends CM_TELEPORT_ANIMATION_DONE.
+		var pendingTeleport = new PendingPlayerTeleport(destination);
+		player.PendingTeleport = pendingTeleport;
+		return pendingTeleport;
+	}
+
+	public static PlayerTeleportResult? CompletePendingTeleport(Player player)
+	{
+		// Java parity: CM_TELEPORT_ANIMATION_DONE.runImpl getAndRemoveTask(TaskId.TELEPORT), then run the pending SpawnTask at most once.
+		var pendingTeleport = player.PendingTeleport;
+		if (pendingTeleport == null)
+			return null;
+
+		player.PendingTeleport = null;
+		var previousPosition = player.Position;
+		player.Position = pendingTeleport.Destination;
+		ResetMovementToDestination(player, pendingTeleport.Destination);
+		return new PlayerTeleportResult(
+			previousPosition,
+			pendingTeleport.Destination,
+			UsesSameWorldSpawnPath: previousPosition.WorldId == pendingTeleport.Destination.WorldId
+				&& previousPosition.InstanceId == pendingTeleport.Destination.InstanceId);
+	}
+
 	private static void ResetMovementToDestination(Player player, WorldPosition destination)
 	{
 		// Java parity breadcrumb: World.setPosition updates the authoritative position before spawn packets are sent.

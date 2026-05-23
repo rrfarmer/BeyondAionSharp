@@ -50,6 +50,43 @@ public sealed class PlayerTeleportServiceTests
 		Assert.Equal(destination, player.Position);
 	}
 
+	[Fact]
+	public void CompletePendingTeleportConsumesTaskOnceAndResetsMovement()
+	{
+		var previous = new WorldPosition(210010000, 1, 2, 3, 4, InstanceId: 1);
+		var destination = new WorldPosition(210010000, 10, 20, 30, 40, InstanceId: 1);
+		var player = CreateMovingPlayer(previous);
+
+		var pending = PlayerTeleportService.QueuePendingTeleport(player, destination);
+		var result = PlayerTeleportService.CompletePendingTeleport(player);
+		var repeated = PlayerTeleportService.CompletePendingTeleport(player);
+
+		Assert.Equal(destination, pending.Destination);
+		Assert.NotNull(result);
+		Assert.Equal(previous, result.PreviousPosition);
+		Assert.Equal(destination, result.Destination);
+		Assert.True(result.UsesSameWorldSpawnPath);
+		Assert.Equal(destination, player.Position);
+		Assert.Null(player.PendingTeleport);
+		Assert.Null(repeated);
+		Assert.Equal(MovementMask.Immediate, player.Movement.Mask);
+		Assert.Equal(destination.X, player.Movement.TargetX);
+		Assert.Equal(destination.Y, player.Movement.TargetY);
+		Assert.Equal(destination.Z, player.Movement.TargetZ);
+		Assert.Equal(0f, player.Movement.VectorX);
+		Assert.Equal(0f, player.Movement.VectorY);
+		Assert.Equal(0f, player.Movement.VectorZ);
+		Assert.Equal(GlideFlag.None, player.Movement.GlideFlag);
+		Assert.Equal(0, player.Movement.GeyserLocationId);
+		Assert.Equal(0, player.Movement.VehicleUnk1);
+		Assert.Equal(0, player.Movement.VehicleUnk2);
+		Assert.Equal(0f, player.Movement.VehicleX);
+		Assert.Equal(0f, player.Movement.VehicleY);
+		Assert.Equal(0f, player.Movement.VehicleZ);
+		Assert.False(player.Movement.IsJumping);
+		Assert.Equal(0, player.Movement.FlightDistance);
+	}
+
 	private static Player CreateMovingPlayer(WorldPosition position)
 	{
 		var player = new Player { Position = position };

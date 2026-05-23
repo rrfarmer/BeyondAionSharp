@@ -346,7 +346,8 @@ public sealed class GameServerConnection : BaseClientConnection
 				// Java parity: network/aion/clientpackets/CM_REJECT_REVIVE.runImpl has no side effect.
 				break;
 			case CmTeleportAnimationDone:
-				// Java parity: network/aion/clientpackets/CM_TELEPORT_ANIMATION_DONE.runImpl executes a pending teleport task; deferred until teleport task state is ported.
+				if (_activePlayer != null)
+					await HandleTeleportAnimationDoneAsync(_activePlayer);
 				break;
 			case CmPositionSelf:
 				// Java parity: network/aion/clientpackets/CM_POSITION_SELF.runImpl has no side effect.
@@ -4812,6 +4813,19 @@ public sealed class GameServerConnection : BaseClientConnection
 		return teleport;
 	}
 
+	internal async Task<PlayerTeleportResult?> HandleTeleportAnimationDoneAsync(Player player)
+	{
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var teleport = PlayerTeleportService.CompletePendingTeleport(player);
+		if (teleport == null)
+			return null;
+
+		// Java parity: CM_TELEPORT_ANIMATION_DONE.runImpl executes TeleportService.SpawnTask.run; SpawnTask mutates World.setPosition before spawn packets and zone callbacks.
+		RevalidatePlayerCreaturePvpZones(player, staticData);
+		await SendDelayedTeleportCompletionPacketsAsync(player, teleport, staticData);
+		return teleport;
+	}
+
 	private void ClearReviveTargets(Player player)
 	{
 		if (_connectionRegistry == null)
@@ -4856,6 +4870,23 @@ public sealed class GameServerConnection : BaseClientConnection
 			new SmMotion(player.ObjectId, player.Motions));
 		await RefreshHousingVisibilityForPlayerAsync(player);
 		await RefreshNpcVisibilityForPlayerAsync(player);
+	}
+
+	private async Task SendDelayedTeleportCompletionPacketsAsync(Player player, PlayerTeleportResult teleport, StaticData? staticData)
+	{
+		if (teleport.UsesSameWorldSpawnPath)
+		{
+			// Java parity: TeleportService.SpawnTask.run same-world+instance branch delegates to spawnOnSameMap.
+			await SendPacketAsync(new SmChannelInfo(player.Position, staticData?.WorldMaps ?? Array.Empty<WorldMapSummary>()));
+			await SendPacketAsync(new SmPlayerInfo(player, staticData?.PlayerExperienceTable));
+			await SendPacketAsync(CreateStatsInfoPacket(player, staticData));
+			await SendPacketAsync(new SmMotion(player.ObjectId, player.Motions));
+			return;
+		}
+
+		// Java parity: TeleportService.SpawnTask.run map/instance-change branch sends channel info and player spawn, then CM_LEVEL_READY completes full map load.
+		await SendPacketAsync(new SmChannelInfo(player.Position, staticData?.WorldMaps ?? Array.Empty<WorldMapSummary>()));
+		await SendPacketAsync(new SmPlayerSpawn(player));
 	}
 
 	private async Task RequestOrBindPlayerToKiskAsync(Player player, PlayerKiskRuntimeState kisk)

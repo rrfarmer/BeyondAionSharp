@@ -175,6 +175,48 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 	}
 
 	[Fact]
+	public async Task HandleTeleportAnimationDoneAsync_CompletesPendingTeleportAndRevalidatesCreaturePvpZoneCounters()
+	{
+		var dataManager = await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false);
+		var runtimeContext = new GameServerRuntimeContext();
+		runtimeContext.SetDataManager(dataManager);
+		var zoneCounterService = new CreaturePvpZoneCounterService();
+		var registry = new CapturingConnectionRegistry();
+		await using var pair = await TestConnectionPair.CreateAsync(registry, runtimeContext, zoneCounterService);
+		var insidePvpZone = new WorldPosition(210040000, 2700, 620, 150, 0);
+		var outsidePvpZone = new WorldPosition(210040000, 100, 100, 150, 0);
+		var player = CreateTeleportingPlayer(7309, insidePvpZone);
+		var pvpZones = dataManager.StaticData.CreaturePvpZones.GetZonesByMapId(insidePvpZone.WorldId);
+		Assert.Contains(pvpZones, zone => zone.Name == "PVP_87_210040000" && zone.Contains(insidePvpZone));
+		Assert.DoesNotContain(pvpZones, zone => zone.Contains(outsidePvpZone));
+		CreaturePvpZoneRevalidationService.Revalidate(
+			player.ObjectId,
+			player.Position,
+			dataManager.StaticData.CreaturePvpZones,
+			zoneCounterService);
+		Assert.Equal(1, zoneCounterService.GetCounters(player.ObjectId).PvpZoneCount);
+
+		PlayerTeleportService.QueuePendingTeleport(player, outsidePvpZone);
+		var left = await pair.Connection.HandleTeleportAnimationDoneAsync(player);
+		var leftCounters = zoneCounterService.GetCounters(player.ObjectId);
+		PlayerTeleportService.QueuePendingTeleport(player, insidePvpZone);
+		var reentered = await pair.Connection.HandleTeleportAnimationDoneAsync(player);
+		var repeated = await pair.Connection.HandleTeleportAnimationDoneAsync(player);
+
+		Assert.NotNull(left);
+		Assert.Equal(outsidePvpZone, left.Destination);
+		Assert.Equal(CreaturePvpZoneCounters.Empty, leftCounters);
+		Assert.NotNull(reentered);
+		Assert.Equal(insidePvpZone, reentered.Destination);
+		Assert.Equal(insidePvpZone, player.Position);
+		Assert.Null(repeated);
+		Assert.Null(player.PendingTeleport);
+		var counters = zoneCounterService.GetCounters(player.ObjectId);
+		Assert.Equal(1, counters.PvpZoneCount);
+		Assert.Equal(0, counters.SiegeZoneCount);
+	}
+
+	[Fact]
 	public async Task CompleteToyPetSpawnUseItemAsync_RevalidatesCreaturePvpZoneCountersForSpawnedKisk()
 	{
 		var dataManager = await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false);
