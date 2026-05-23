@@ -1756,6 +1756,13 @@ public class GamePacketTests
 		Assert.Equal(0x80, (int)dieReader.ReadC());
 		Assert.Equal(0, dieReader.Remaining);
 
+		var resurrectPayload = SerializeUnencryptedPayload(new SmResurrect("Kahrun", skillId: 1155));
+		using var resurrectReader = new PacketBuffer(resurrectPayload);
+		Assert.Equal("Kahrun", resurrectReader.ReadS());
+		Assert.Equal(1155, resurrectReader.ReadH());
+		Assert.Equal(0, resurrectReader.ReadD());
+		Assert.Equal(0, resurrectReader.Remaining);
+
 		var questionWindowPayload = SerializeUnencryptedPayload(
 			new SmQuestionWindow(SmQuestionWindow.BuddyListAddBuddyRequest, 1001, 0, "Kahrun", "hello"));
 		using var questionWindowReader = new PacketBuffer(questionWindowPayload);
