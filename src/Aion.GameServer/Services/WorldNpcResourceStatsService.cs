@@ -656,6 +656,8 @@ public sealed class WorldNpcResourceStatsService
 			ShouldSendCreatureLifeStatsPacket(appliedValue, skillId, packetType),
 			cancellationToken,
 			usesNegativeValue: kind == WorldNpcResourceChangeKind.Reduce);
+		var sendMpStatUpdate = player.IsOnline && appliedValue != 0;
+		var (mpStatUpdatePacket, mpStatUpdateSent) = await SendMpStatUpdateAsync(player, currentMp, normalizedMaxMp, sendMpStatUpdate);
 		return WorldNpcResourceChangeResult.FromResourceMutation(
 			status,
 			player.ObjectId,
@@ -669,7 +671,12 @@ public sealed class WorldNpcResourceStatsService
 			packetType,
 			packetLog,
 			packet,
-			broadcastCount);
+			broadcastCount,
+			SendMpStatUpdate: sendMpStatUpdate,
+			MpStatUpdatePacket: mpStatUpdatePacket,
+			MpStatUpdateSent: mpStatUpdateSent,
+			SendGroupStatUpdate: player.IsOnline && player.IsInTeam && appliedValue != 0,
+			TriggerRestoreTask: player.IsOnline && currentMp < previousMp);
 	}
 
 	private async ValueTask<WorldNpcResourceChangeResult> ApplyPlayerFpChangeAsync(
@@ -799,6 +806,24 @@ public sealed class WorldNpcResourceStatsService
 			return (null, false);
 
 		var packet = new SmStatUpdateHp(currentHp, maxHp);
+		if (_connectionRegistry == null)
+			return (packet, false);
+
+		var sent = await _connectionRegistry.SendPacketToPlayerAsync(player.ObjectId, packet);
+		return (packet, sent);
+	}
+
+	private async ValueTask<(SmStatUpdateMp? Packet, bool Sent)> SendMpStatUpdateAsync(
+		Player player,
+		int currentMp,
+		int maxMp,
+		bool shouldSend)
+	{
+		// Java parity: model/stats/container/PlayerLifeStats.sendMpPacketUpdate.
+		if (!shouldSend)
+			return (null, false);
+
+		var packet = new SmStatUpdateMp(currentMp, maxMp);
 		if (_connectionRegistry == null)
 			return (packet, false);
 
@@ -951,6 +976,9 @@ public sealed record WorldNpcResourceChangeResult(
 	bool SendHpStatUpdate = false,
 	SmStatUpdateHp? HpStatUpdatePacket = null,
 	bool HpStatUpdateSent = false,
+	bool SendMpStatUpdate = false,
+	SmStatUpdateMp? MpStatUpdatePacket = null,
+	bool MpStatUpdateSent = false,
 	bool SendGroupStatUpdate = false,
 	bool TriggerRestoreTask = false,
 	bool TriggerFpRestore = false,
@@ -1017,6 +1045,9 @@ public sealed record WorldNpcResourceChangeResult(
 		bool SendHpStatUpdate = false,
 		SmStatUpdateHp? HpStatUpdatePacket = null,
 		bool HpStatUpdateSent = false,
+		bool SendMpStatUpdate = false,
+		SmStatUpdateMp? MpStatUpdatePacket = null,
+		bool MpStatUpdateSent = false,
 		bool SendGroupStatUpdate = false,
 		bool TriggerRestoreTask = false,
 		bool TriggerFpRestore = false,
@@ -1046,6 +1077,9 @@ public sealed record WorldNpcResourceChangeResult(
 			SendHpStatUpdate,
 			HpStatUpdatePacket,
 			HpStatUpdateSent,
+			SendMpStatUpdate,
+			MpStatUpdatePacket,
+			MpStatUpdateSent,
 			SendGroupStatUpdate,
 			TriggerRestoreTask,
 			TriggerFpRestore,

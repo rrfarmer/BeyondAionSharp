@@ -67,6 +67,72 @@ public sealed class WorldNpcResourceStatsServiceTests
 	}
 
 	[Fact]
+	public async Task ReducePlayerMpAsync_SendsMpStatUpdateAndRestoreIntent()
+	{
+		var service = CreateService(out _, out var registry);
+		var player = CreatePlayer(objectId: 1012, currentHp: 100, currentMp: 80, currentFp: 100);
+		player.IsOnline = true;
+		player.TeamMembership = PlayerTeamMembership.Group;
+
+		var result = await service.ReducePlayerMpAsync(player, maxMp: 100, value: 30, skillId: 7508);
+
+		Assert.Equal(WorldNpcResourceChangeStatus.Reduced, result.Status);
+		Assert.Equal(WorldNpcEffectResourceType.Mp, result.ResourceType);
+		Assert.Equal(WorldNpcResourceChangeKind.Reduce, result.ChangeKind);
+		Assert.Equal(80, result.PreviousValue);
+		Assert.Equal(50, result.CurrentValue);
+		Assert.Equal(30, result.AppliedValue);
+		Assert.True(result.SendMpStatUpdate);
+		Assert.True(result.MpStatUpdateSent);
+		Assert.NotNull(result.MpStatUpdatePacket);
+		Assert.Equal(50, result.MpStatUpdatePacket.CurrentMp);
+		Assert.Equal(100, result.MpStatUpdatePacket.MaxMp);
+		Assert.True(result.SendGroupStatUpdate);
+		Assert.True(result.TriggerRestoreTask);
+		Assert.NotNull(result.AttackStatusPacket);
+		Assert.Equal(SmAttackStatusType.DamageMp, result.AttackStatusPacket.Type);
+		Assert.Equal(SmAttackStatusLog.MpAttack, result.AttackStatusPacket.Log);
+		Assert.Equal(30, result.AttackStatusPacket.Value);
+		Assert.Equal(50, player.LifeStats!.CurrentMp);
+		var delivery = Assert.Single(registry.SentPackets);
+		Assert.Equal(player.ObjectId, delivery.PlayerObjectId);
+		Assert.Same(result.MpStatUpdatePacket, delivery.Packet);
+	}
+
+	[Fact]
+	public async Task IncreasePlayerMpAsync_SendsMpStatUpdateWithoutRestoreIntent()
+	{
+		var service = CreateService(out _, out var registry);
+		var player = CreatePlayer(objectId: 1013, currentHp: 100, currentMp: 50, currentFp: 100);
+		player.IsOnline = true;
+		player.TeamMembership = PlayerTeamMembership.Group;
+
+		var result = await service.IncreasePlayerMpAsync(player, maxMp: 100, value: 25, skillId: 7509);
+
+		Assert.Equal(WorldNpcResourceChangeStatus.Increased, result.Status);
+		Assert.Equal(WorldNpcEffectResourceType.Mp, result.ResourceType);
+		Assert.Equal(WorldNpcResourceChangeKind.Increase, result.ChangeKind);
+		Assert.Equal(50, result.PreviousValue);
+		Assert.Equal(75, result.CurrentValue);
+		Assert.Equal(25, result.AppliedValue);
+		Assert.True(result.SendMpStatUpdate);
+		Assert.True(result.MpStatUpdateSent);
+		Assert.NotNull(result.MpStatUpdatePacket);
+		Assert.Equal(75, result.MpStatUpdatePacket.CurrentMp);
+		Assert.Equal(100, result.MpStatUpdatePacket.MaxMp);
+		Assert.True(result.SendGroupStatUpdate);
+		Assert.False(result.TriggerRestoreTask);
+		Assert.NotNull(result.AttackStatusPacket);
+		Assert.Equal(SmAttackStatusType.Mp, result.AttackStatusPacket.Type);
+		Assert.Equal(SmAttackStatusLog.MpHeal, result.AttackStatusPacket.Log);
+		Assert.Equal(25, result.AttackStatusPacket.Value);
+		Assert.Equal(75, player.LifeStats!.CurrentMp);
+		var delivery = Assert.Single(registry.SentPackets);
+		Assert.Equal(player.ObjectId, delivery.PlayerObjectId);
+		Assert.Same(result.MpStatUpdatePacket, delivery.Packet);
+	}
+
+	[Fact]
 	public async Task IncreaseNpcHpAsync_CapsToMaxAndBroadcastsHealPacket()
 	{
 		var service = CreateService(out var lifeStats, out var registry);

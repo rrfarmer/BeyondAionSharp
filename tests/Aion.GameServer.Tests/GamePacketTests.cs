@@ -748,6 +748,12 @@ public class GamePacketTests
 		Assert.Equal(5678, statUpdateHpReader.ReadD());
 		Assert.Equal(0, statUpdateHpReader.Remaining);
 
+		var statUpdateMpPayload = SerializeUnencryptedPayload(new SmStatUpdateMp(currentMp: 222, maxMp: 333));
+		using var statUpdateMpReader = new PacketBuffer(statUpdateMpPayload);
+		Assert.Equal(222, statUpdateMpReader.ReadD());
+		Assert.Equal(333, statUpdateMpReader.ReadD());
+		Assert.Equal(0, statUpdateMpReader.Remaining);
+
 		var statUpdateExpPayload = SerializeUnencryptedPayload(
 			new SmStatUpdateExp(
 				new Player
