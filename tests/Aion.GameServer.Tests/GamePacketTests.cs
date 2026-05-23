@@ -3300,6 +3300,7 @@ public class GamePacketTests
 		player.Movement.VectorX = 99;
 		player.Movement.VectorY = 88;
 		player.Movement.VectorZ = 77;
+		player.SetFlyState(PlayerFlyState.Flying);
 
 		using var reader = new PacketBuffer(SerializeUnencryptedPayload(new SmPlayerInfo(player)));
 
@@ -3345,13 +3346,13 @@ public class GamePacketTests
 		Assert.Equal(1.2f, reader.ReadF());
 		Assert.Equal(0.25f, reader.ReadF());
 		Assert.Equal(2.0f, reader.ReadF());
-		Assert.Equal(6.0f, reader.ReadF());
+		Assert.Equal(9.0f, reader.ReadF());
 		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(0, (int)reader.ReadC());
 		Assert.Equal(string.Empty, reader.ReadS());
-		Assert.Equal(3.6f, reader.ReadF(), precision: 4);
-		Assert.Equal(4.8f, reader.ReadF(), precision: 4);
+		Assert.Equal(5.4f, reader.ReadF(), precision: 4);
+		Assert.Equal(7.2f, reader.ReadF(), precision: 4);
 		Assert.Equal(0, reader.ReadF());
 		Assert.Equal(10, reader.ReadF());
 		Assert.Equal(20, reader.ReadF());

@@ -2,6 +2,7 @@ using Aion.Commons.Network;
 using Aion.GameServer.Controllers.Movement;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Services;
 
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 
@@ -9,7 +10,6 @@ public sealed class SmPlayerInfo : GameServerPacket
 {
 	public const int PacketOpCode = 32;
 	private const int FriendlyCreatureType = 0x26;
-	private const float DefaultVisibleMovementSpeed = 6.0f;
 	private readonly Player _player;
 	private readonly PlayerExperienceTable? _experienceTable;
 
@@ -59,7 +59,7 @@ public sealed class SmPlayerInfo : GameServerPacket
 		buffer.WriteF(appearance.Height);
 		buffer.WriteF(0.25f);
 		buffer.WriteF(2.0f);
-		var movementSpeed = DefaultVisibleMovementSpeed;
+		var movementSpeed = PlayerMovementSpeedResolver.ResolveKnownMovementSpeed(_player);
 		buffer.WriteF(movementSpeed);
 		buffer.WriteH(0);
 		buffer.WriteH(0);
