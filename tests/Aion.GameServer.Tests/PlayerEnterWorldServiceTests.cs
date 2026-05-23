@@ -357,6 +357,62 @@ public sealed class PlayerEnterWorldServiceTests
 	}
 
 	[Fact]
+	public async Task SavePortalRequirementConsumptionMutation_PersistsUpdatedAndDeletedRows()
+	{
+		var player = CreatePlayer();
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var service = CreateService(repository, CreateWorld());
+		var updatedItem = new InventoryItem { ObjectId = 10, ItemId = 185000077, Count = 1 };
+		var kinahUpdate = new InventoryItem { ObjectId = 11, ItemId = 182400001, Count = 500 };
+		var application = PortalRequirementConsumptionApplication.Success(
+			inventoryItems: [updatedItem, kinahUpdate],
+			packets: Array.Empty<GameServerPacket>(),
+			updatedItems: [updatedItem, kinahUpdate],
+			deletedObjectIds: [12]);
+
+		var saved = await service.SavePortalRequirementConsumptionMutationAsync(player, application);
+
+		Assert.True(saved);
+		Assert.Equal(1, repository.SaveAssemblyItemActionMutationCalls);
+		Assert.Equal([10, 11], repository.AssemblyUpdatedPartItems.Select(item => item.ObjectId));
+		Assert.Equal([12], repository.AssemblyDeletedPartObjectIds);
+		Assert.Empty(repository.AssemblyUpdatedRewardItems);
+		Assert.Empty(repository.AssemblyAddedRewardItems);
+	}
+
+	[Fact]
+	public async Task SavePortalRequirementConsumptionMutation_SkipsRepositoryWhenNoRowsChanged()
+	{
+		var player = CreatePlayer();
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var service = CreateService(repository, CreateWorld());
+		var application = PortalRequirementConsumptionApplication.Success(
+			inventoryItems: Array.Empty<InventoryItem>(),
+			packets: Array.Empty<GameServerPacket>(),
+			updatedItems: Array.Empty<InventoryItem>(),
+			deletedObjectIds: Array.Empty<int>());
+
+		var saved = await service.SavePortalRequirementConsumptionMutationAsync(player, application);
+
+		Assert.True(saved);
+		Assert.Equal(0, repository.SaveAssemblyItemActionMutationCalls);
+	}
+
+	[Fact]
+	public async Task SavePortalRequirementConsumptionMutation_RejectsUnappliedApplication()
+	{
+		var player = CreatePlayer();
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var service = CreateService(repository, CreateWorld());
+		var application = PortalRequirementConsumptionApplication.NotApplied(player.InventoryItems);
+
+		var saved = await service.SavePortalRequirementConsumptionMutationAsync(player, application);
+
+		Assert.False(saved);
+		Assert.Equal(0, repository.SaveAssemblyItemActionMutationCalls);
+	}
+
+	[Fact]
 	public async Task SaveIdianPolishBurnMutation_PersistsOnlyExhaustedBurnDeletes()
 	{
 		var player = CreatePlayer();

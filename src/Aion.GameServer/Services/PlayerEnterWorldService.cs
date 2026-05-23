@@ -398,6 +398,26 @@ public sealed class PlayerEnterWorldService
 			cancellationToken);
 	}
 
+	public Task<bool> SavePortalRequirementConsumptionMutationAsync(
+		Player player,
+		PortalRequirementConsumptionApplication application,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: PortalService.checkAndRemoveRequiredItems Storage.decreaseByItemId/decreaseKinah persistence side effects.
+		if (!application.Applied)
+			return Task.FromResult(false);
+		if (application.UpdatedItems.Count == 0 && application.DeletedObjectIds.Count == 0)
+			return Task.FromResult(true);
+
+		return _repository.SaveAssemblyItemActionMutationAsync(
+			player.ObjectId,
+			application.UpdatedItems,
+			application.DeletedObjectIds,
+			Array.Empty<InventoryItem>(),
+			Array.Empty<InventoryItem>(),
+			cancellationToken);
+	}
+
 	public Task<bool> SaveBreakItemActionMutationAsync(
 		Player player,
 		BreakItemPlan plan,

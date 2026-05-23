@@ -449,7 +449,11 @@ public static class PortalEntryValidationService
 			packets.Add(new SmInventoryUpdateItem(updatedItem, template, updateType));
 		}
 
-		return PortalRequirementConsumptionApplication.Success(workingItems, packets);
+		return PortalRequirementConsumptionApplication.Success(
+			workingItems,
+			packets,
+			consumptionPlan.UpdatedItems,
+			consumptionPlan.DeletedObjectIds);
 	}
 
 	private static long GetInventoryCount(Player player, int itemId)
@@ -643,16 +647,22 @@ public sealed record PortalRequirementConsumptionApplication(
 	bool Applied,
 	IReadOnlyList<InventoryItem> InventoryItems,
 	IReadOnlyList<GameServerPacket> Packets,
+	IReadOnlyList<InventoryItem> UpdatedItems,
+	IReadOnlyList<int> DeletedObjectIds,
 	IReadOnlyList<int> MissingTemplateIds)
 {
 	public static PortalRequirementConsumptionApplication Success(
 		IReadOnlyList<InventoryItem> inventoryItems,
-		IReadOnlyList<GameServerPacket> packets)
+		IReadOnlyList<GameServerPacket> packets,
+		IReadOnlyList<InventoryItem> updatedItems,
+		IReadOnlyList<int> deletedObjectIds)
 	{
 		return new PortalRequirementConsumptionApplication(
 			true,
 			inventoryItems,
 			packets,
+			updatedItems,
+			deletedObjectIds,
 			Array.Empty<int>());
 	}
 
@@ -662,6 +672,8 @@ public sealed record PortalRequirementConsumptionApplication(
 			false,
 			inventoryItems,
 			Array.Empty<GameServerPacket>(),
+			Array.Empty<InventoryItem>(),
+			Array.Empty<int>(),
 			Array.Empty<int>());
 	}
 
@@ -673,6 +685,8 @@ public sealed record PortalRequirementConsumptionApplication(
 			false,
 			inventoryItems,
 			Array.Empty<GameServerPacket>(),
+			Array.Empty<InventoryItem>(),
+			Array.Empty<int>(),
 			missingTemplateIds);
 	}
 }
