@@ -168,6 +168,11 @@ public sealed class PlayerGroupRuntime
 
 	public bool TryReconnectMember(Player player)
 	{
+		return ReconnectMember(player).Reconnected;
+	}
+
+	public PlayerGroupReconnectResult ReconnectMember(Player player)
+	{
 		// Java parity: model/team/group/events/PlayerConnectedEvent replaces the stored PlayerGroupMember with the logging-in Player.
 		lock (_sync)
 		{
@@ -181,10 +186,10 @@ public sealed class PlayerGroupRuntime
 				ClearGroup(previousMember.Player);
 				members[index] = new PlayerGroupMember(player);
 				ApplySnapshot(teamId, members);
-				return true;
+				return new PlayerGroupReconnectResult(true, CreateReconnectPacketPlan(teamId, player.ObjectId, members));
 			}
 
-			return false;
+			return PlayerGroupReconnectResult.NotFound();
 		}
 	}
 
@@ -221,6 +226,33 @@ public sealed class PlayerGroupRuntime
 		}
 
 		return snapshot;
+	}
+
+	private static PlayerGroupReconnectPacketPlan CreateReconnectPacketPlan(
+		int teamId,
+		int reconnectingPlayerObjectId,
+		IReadOnlyList<PlayerGroupMember> members)
+	{
+		// Java parity: model/team/group/events/PlayerConnectedEvent sends SM_GROUP_INFO and SM_GROUP_MEMBER_INFO JOIN/ENTER packets.
+		var intents = new List<PlayerGroupMemberInfoIntent>
+		{
+			new(reconnectingPlayerObjectId, reconnectingPlayerObjectId, PlayerGroupMemberInfoEvent.Join),
+		};
+
+		foreach (var member in members)
+		{
+			if (member.ObjectId == reconnectingPlayerObjectId)
+				continue;
+
+			intents.Add(new PlayerGroupMemberInfoIntent(member.ObjectId, reconnectingPlayerObjectId, PlayerGroupMemberInfoEvent.Enter));
+			intents.Add(new PlayerGroupMemberInfoIntent(reconnectingPlayerObjectId, member.ObjectId, PlayerGroupMemberInfoEvent.Enter));
+		}
+
+		return new PlayerGroupReconnectPacketPlan(
+			teamId,
+			reconnectingPlayerObjectId,
+			SendGroupInfoToReconnectingPlayer: true,
+			intents);
 	}
 
 	private static void ClearGroup(Player member)

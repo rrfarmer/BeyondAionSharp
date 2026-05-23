@@ -225,6 +225,57 @@ public sealed class PlayerGroupRuntimeTests
 	}
 
 	[Fact]
+	public void ReconnectMember_ReturnsNonSendingPacketIntentPlanLikeJavaPlayerConnectedEvent()
+	{
+		var runtime = new PlayerGroupRuntime();
+		var leader = new Player { ObjectId = 1001 };
+		var offlineMember = new Player { ObjectId = 1002 };
+		var otherMember = new Player { ObjectId = 1003 };
+		runtime.CreateOrUpdateGroup(99001, [leader, offlineMember, otherMember]);
+		var loggingInMember = new Player { ObjectId = 1002 };
+
+		var result = runtime.ReconnectMember(loggingInMember);
+
+		Assert.True(result.Reconnected);
+		var plan = Assert.IsType<PlayerGroupReconnectPacketPlan>(result.PacketPlan);
+		Assert.Equal(99001, plan.TeamId);
+		Assert.Equal(1002, plan.ReconnectingPlayerObjectId);
+		Assert.True(plan.SendGroupInfoToReconnectingPlayer);
+		Assert.Collection(
+			plan.MemberInfoIntents,
+			intent =>
+			{
+				Assert.Equal(1002, intent.RecipientObjectId);
+				Assert.Equal(1002, intent.SubjectObjectId);
+				Assert.Equal(PlayerGroupMemberInfoEvent.Join, intent.Event);
+			},
+			intent =>
+			{
+				Assert.Equal(1001, intent.RecipientObjectId);
+				Assert.Equal(1002, intent.SubjectObjectId);
+				Assert.Equal(PlayerGroupMemberInfoEvent.Enter, intent.Event);
+			},
+			intent =>
+			{
+				Assert.Equal(1002, intent.RecipientObjectId);
+				Assert.Equal(1001, intent.SubjectObjectId);
+				Assert.Equal(PlayerGroupMemberInfoEvent.Enter, intent.Event);
+			},
+			intent =>
+			{
+				Assert.Equal(1003, intent.RecipientObjectId);
+				Assert.Equal(1002, intent.SubjectObjectId);
+				Assert.Equal(PlayerGroupMemberInfoEvent.Enter, intent.Event);
+			},
+			intent =>
+			{
+				Assert.Equal(1002, intent.RecipientObjectId);
+				Assert.Equal(1003, intent.SubjectObjectId);
+				Assert.Equal(PlayerGroupMemberInfoEvent.Enter, intent.Event);
+			});
+	}
+
+	[Fact]
 	public void TryReconnectMember_ReturnsFalseForUnknownPlayerWithoutMutatingRuntime()
 	{
 		var runtime = new PlayerGroupRuntime();
@@ -240,6 +291,9 @@ public sealed class PlayerGroupRuntimeTests
 		Assert.Null(unknown.CurrentGroupSnapshot);
 		Assert.Equal([1001, 1002], runtime.GetMemberObjectIds(99001));
 		Assert.Same(member, runtime.GetMember(99001, 1002)?.Player);
+		var result = runtime.ReconnectMember(unknown);
+		Assert.False(result.Reconnected);
+		Assert.Null(result.PacketPlan);
 	}
 
 	[Fact]
