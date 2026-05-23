@@ -231,6 +231,29 @@ public sealed class PlayerEnterWorldServiceTests
 	}
 
 	[Fact]
+	public async Task EnterWorld_ClearsCreaturePvpZoneCountersWhenOnlineUpdateRollbackRemovesPlayer()
+	{
+		var repository = new CapturingEnterWorldRepository
+		{
+			Player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5)),
+			MarkOnlineResult = false,
+		};
+		var world = CreateWorld();
+		var zoneCounterService = new CreaturePvpZoneCounterService();
+		zoneCounterService.ApplyZoneEnter(1001, "PVP_87_210040000", CreaturePvpZoneCounterType.Pvp);
+		zoneCounterService.ApplyZoneEnter(1001, "FORT_210040000", CreaturePvpZoneCounterType.Siege);
+		var service = CreateService(repository, world, creaturePvpZoneCounterService: zoneCounterService);
+
+		var result = await service.EnterWorldAsync(accountId: 10, playerObjectId: 1001);
+		var staleLeave = zoneCounterService.ApplyZoneLeave(1001, "PVP_87_210040000", CreaturePvpZoneCounterType.Pvp);
+
+		Assert.Equal(EnterWorldCheckMessage.ConnectionError, result.Message);
+		Assert.False(world.TryGetObject(1001, out _));
+		Assert.Equal(CreaturePvpZoneCounters.Empty, zoneCounterService.GetCounters(1001));
+		Assert.Equal(CreaturePvpZoneMembershipTransitionStatus.NotInside, staleLeave.Status);
+	}
+
+	[Fact]
 	public async Task LeaveWorld_RemovesPlayerFromWorldAndPersistsLogoutState()
 	{
 		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
@@ -398,7 +421,8 @@ public sealed class PlayerEnterWorldServiceTests
 	private static PlayerEnterWorldService CreateService(
 		CapturingEnterWorldRepository repository,
 		GameWorld world,
-		out CapturingConnectionRegistry registry)
+		out CapturingConnectionRegistry registry,
+		CreaturePvpZoneCounterService? creaturePvpZoneCounterService = null)
 	{
 		registry = new CapturingConnectionRegistry();
 		var resourceStats = new WorldNpcResourceStatsService(
@@ -410,7 +434,16 @@ public sealed class PlayerEnterWorldServiceTests
 			repository,
 			world,
 			NullLogger<PlayerEnterWorldService>.Instance,
-			resourceStats);
+			resourceStats,
+			creaturePvpZoneCounterService);
+	}
+
+	private static PlayerEnterWorldService CreateService(
+		CapturingEnterWorldRepository repository,
+		GameWorld world,
+		CreaturePvpZoneCounterService creaturePvpZoneCounterService)
+	{
+		return CreateService(repository, world, out _, creaturePvpZoneCounterService);
 	}
 
 	private static GameWorld CreateWorld()

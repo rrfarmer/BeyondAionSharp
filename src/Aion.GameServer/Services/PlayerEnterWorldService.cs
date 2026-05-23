@@ -13,6 +13,7 @@ public sealed class PlayerEnterWorldService
 	private readonly IPlayerEnterWorldRepository _repository;
 	private readonly GameWorld _world;
 	private readonly WorldNpcResourceStatsService? _resourceStats;
+	private readonly CreaturePvpZoneCounterService? _creaturePvpZoneCounterService;
 	private readonly ConcurrentDictionary<int, byte> _enteringWorld = new();
 	private readonly ILogger<PlayerEnterWorldService> _logger;
 
@@ -21,12 +22,14 @@ public sealed class PlayerEnterWorldService
 		IPlayerEnterWorldRepository repository,
 		GameWorld world,
 		ILogger<PlayerEnterWorldService> logger,
-		WorldNpcResourceStatsService? resourceStats = null)
+		WorldNpcResourceStatsService? resourceStats = null,
+		CreaturePvpZoneCounterService? creaturePvpZoneCounterService = null)
 	{
 		_options = options;
 		_repository = repository;
 		_world = world;
 		_resourceStats = resourceStats;
+		_creaturePvpZoneCounterService = creaturePvpZoneCounterService;
 		_logger = logger;
 	}
 
@@ -94,7 +97,8 @@ public sealed class PlayerEnterWorldService
 			var now = DateTime.Now;
 			if (!await _repository.MarkPlayerOnlineAsync(playerObjectId, now, cancellationToken))
 			{
-				_world.TryRemoveObject(playerObjectId, out _);
+				if (_world.TryRemoveObject(playerObjectId, out _))
+					ClearPlayerCreaturePvpZones(playerObjectId);
 				return new PlayerEnterWorldResult(EnterWorldCheckMessage.ConnectionError);
 			}
 
@@ -106,7 +110,8 @@ public sealed class PlayerEnterWorldService
 		}
 		catch (Exception ex)
 		{
-			_world.TryRemoveObject(playerObjectId, out _);
+			if (_world.TryRemoveObject(playerObjectId, out _))
+				ClearPlayerCreaturePvpZones(playerObjectId);
 			_logger.LogError(ex, "Error during enter-world of player {PlayerObjectId}", playerObjectId);
 			return new PlayerEnterWorldResult(EnterWorldCheckMessage.ConnectionError);
 		}
@@ -655,7 +660,8 @@ public sealed class PlayerEnterWorldService
 		var lastOnline = DateTime.Now;
 		player.IsOnline = false;
 		player.LastOnline = lastOnline;
-		_world.TryRemoveObject(player.ObjectId, out _);
+		if (_world.TryRemoveObject(player.ObjectId, out _))
+			ClearPlayerCreaturePvpZones(player.ObjectId);
 		var saved = await _repository.SavePlayerLogoutAsync(player, lastOnline, cancellationToken);
 		if (saved)
 			_logger.LogInformation("Player {PlayerName} ({PlayerObjectId}) logged off", player.Name, player.ObjectId);
@@ -668,6 +674,12 @@ public sealed class PlayerEnterWorldService
 		// Java parity: PlayerEnterWorldService lastOnline vs GSConfig.CHARACTER_REENTRY_TIME check.
 		return lastOnline.HasValue
 			&& DateTime.Now - lastOnline.Value < TimeSpan.FromSeconds(_options.Core.CharacterReentryTimeSeconds);
+	}
+
+	private void ClearPlayerCreaturePvpZones(int playerObjectId)
+	{
+		// Java parity: PlayerEnterWorldService failure/logout paths delete the player controller and leave map-region zone memberships.
+		_creaturePvpZoneCounterService?.ClearCounters(playerObjectId);
 	}
 
 	private async ValueTask ApplyOfflineDpResetAsync(Player player, DateTime? previousLastOnline, DateTime now)
