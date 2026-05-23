@@ -5728,9 +5728,11 @@ public sealed class GameServerConnection : BaseClientConnection
 						await SendPacketAsync(flyResult.SystemMessage);
 					return;
 				}
+				await UpdatePlayerStatsAndSpeedVisuallyAsync(player);
 				break;
 			case EmotionType.Land:
 				player.EndFlying();
+				await UpdatePlayerStatsAndSpeedVisuallyAsync(player);
 				break;
 			case EmotionType.AttackModeInMove:
 			case EmotionType.AttackModeInStanding:
@@ -5841,6 +5843,16 @@ public sealed class GameServerConnection : BaseClientConnection
 			await SendPacketAsync(packet);
 	}
 
+	private async Task<PlayerVisualStatsUpdateResult?> UpdatePlayerStatsAndSpeedVisuallyAsync(Player player)
+	{
+		// Java parity: model/stats/container/PlayerGameStats.updateStatsAndSpeedVisually.
+		if (_connectionRegistry == null)
+			return null;
+
+		var visualStats = new PlayerVisualStatsUpdateService(_connectionRegistry, _runtimeContext, _gameTimeService);
+		return await visualStats.UpdateStatsAndSpeedVisuallyAsync(player, null);
+	}
+
 	private static bool HasEquippedPowerShard(Player player, ItemTemplateTable? itemTemplates)
 	{
 		// Java parity: model/gameobjects/player/Equipment.isPowerShardEquipped.
@@ -5871,6 +5883,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			var shouldBroadcastStopGlide = player.StopGliding();
 			if (shouldBroadcastStopGlide)
 				await BroadcastEmotionAsync(player, new SmEmotion(player, EmotionType.StopGlide));
+			await UpdatePlayerStatsAndSpeedVisuallyAsync(player);
 		}
 		else
 		{
@@ -5880,10 +5893,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (glideResult.SystemMessage != null)
 					await SendPacketAsync(glideResult.SystemMessage);
 				else if (glideResult.Succeeded && _connectionRegistry != null)
-				{
-					var visualStats = new PlayerVisualStatsUpdateService(_connectionRegistry, _runtimeContext, _gameTimeService);
-					await visualStats.UpdateStatsAndSpeedVisuallyAsync(player, null);
-				}
+					await UpdatePlayerStatsAndSpeedVisuallyAsync(player);
 			}
 			else
 				player.SetCreatureState(PlayerCreatureState.Gliding, enabled: false);
