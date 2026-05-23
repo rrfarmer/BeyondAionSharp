@@ -119,6 +119,12 @@ public sealed class WorldMapRuntimeStateTests
 		Assert.True(table.TryGetWorldMapInstance(300030000, 7, out var stored));
 		Assert.Same(instance, stored);
 		Assert.False(table.TryGetWorldMapInstance(123, 7, out _));
+
+		var firstStart = new WorldPosition(300030000, 10, 20, 30, 40, InstanceId: 7);
+		var secondStart = new WorldPosition(300030000, 50, 60, 70, 80, InstanceId: 7);
+		Assert.Equal(firstStart, instance.SetStartPositionIfMissing(firstStart));
+		Assert.Equal(firstStart, instance.SetStartPositionIfMissing(secondStart));
+		Assert.Equal(firstStart, instance.StartPosition);
 	}
 
 	[Fact]
@@ -221,6 +227,35 @@ public sealed class WorldMapRuntimeStateTests
 		Assert.Equal(12, asmodianInstance.MaxPlayers);
 		Assert.True(asmodianInstance.IsRegistered(2002));
 		Assert.NotSame(elyosInstance, asmodianInstance);
+	}
+
+	[Fact]
+	public void InstanceRuntimeService_CreatesPortalTransferInstanceWithStartPosition()
+	{
+		var table = new WorldMapRuntimeStateTable(
+		[
+			new WorldMapSummary(300030000, IsInstance: true, TwinCount: 1),
+			new WorldMapSummary(210010000, IsInstance: false, TwinCount: 1),
+		]);
+		var player = new Player { ObjectId = 1001 };
+		var portalLocation = new WorldPosition(300030000, 10, 20, 30, 40, InstanceId: 1);
+
+		var plan = InstanceRuntimeService.CreatePortalTransferInstance(
+			table,
+			player,
+			portalLocation,
+			ownerId: player.ObjectId,
+			maxPlayers: 6);
+
+		Assert.Equal(2, plan.Instance.InstanceId);
+		Assert.Equal(player.ObjectId, plan.Instance.OwnerId);
+		Assert.Equal(6, plan.Instance.MaxPlayers);
+		Assert.True(plan.Instance.IsRegistered(player.ObjectId));
+		Assert.Equal(portalLocation with { InstanceId = 2 }, plan.Destination);
+		Assert.Equal(plan.Destination, plan.Instance.StartPosition);
+		Assert.Same(plan.Instance, table.GetRegisteredInstance(300030000, player.ObjectId));
+		Assert.Throws<UnsupportedOperationException>(() =>
+			InstanceRuntimeService.CreatePortalTransferInstance(table, player, new WorldPosition(210010000, 1, 2, 3, 4)));
 	}
 
 	[Fact]

@@ -65,6 +65,21 @@ public static class InstanceRuntimeService
 		return worldMaps.GetRegisteredInstance(worldId, player.ObjectId)
 			?? GetNextAvailableInstanceForPlayer(worldMaps, worldId, player, instanceCooltimes);
 	}
+
+	public static InstancePortalRuntimePlan CreatePortalTransferInstance(
+		WorldMapRuntimeStateTable worldMaps,
+		Player player,
+		WorldPosition portalLocation,
+		int ownerId = 0,
+		int maxPlayers = 0)
+	{
+		// Java parity: PortalService.port creates the next instance, registers requester, then PortalService.transfer sets startPos.
+		var instance = GetNextAvailableInstance(worldMaps, portalLocation.WorldId, ownerId, maxPlayers);
+		instance.Register(player.ObjectId);
+		var startPosition = portalLocation with { InstanceId = instance.InstanceId };
+		instance.SetStartPositionIfMissing(startPosition);
+		return new InstancePortalRuntimePlan(instance, startPosition);
+	}
 }
 
 public sealed class UnsupportedOperationException : InvalidOperationException
@@ -74,3 +89,7 @@ public sealed class UnsupportedOperationException : InvalidOperationException
 	{
 	}
 }
+
+public sealed record InstancePortalRuntimePlan(
+	WorldMapInstanceRuntimeState Instance,
+	WorldPosition Destination);

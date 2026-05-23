@@ -22,6 +22,8 @@ public sealed class WorldMapInstanceRuntimeState
 
 	public bool IsPersonal => OwnerId != 0;
 
+	public WorldPosition? StartPosition { get; private set; }
+
 	public int RegisteredCount
 	{
 		get
@@ -63,6 +65,16 @@ public sealed class WorldMapInstanceRuntimeState
 		// Java parity: WorldMapInstance.isRegistered.
 		lock (_sync)
 			return _registeredObjectIds.Contains(objectId);
+	}
+
+	public WorldPosition SetStartPositionIfMissing(WorldPosition startPosition)
+	{
+		// Java parity: PortalService.transfer initializes WorldMapInstance.startPos only when it is null.
+		lock (_sync)
+		{
+			StartPosition ??= startPosition;
+			return StartPosition.Value;
+		}
 	}
 
 	public void AddPlayer(int objectId)
