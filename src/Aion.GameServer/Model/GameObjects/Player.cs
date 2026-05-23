@@ -57,6 +57,12 @@ public sealed class Player
 
 	public int Dp { get; set; }
 
+	// Java parity: model/gameobjects/player/Player.setPlayerResActivate cleared by PlayerReviveService.revive.
+	public bool IsPlayerResurrectionActive { get; set; }
+
+	// Java parity: model/gameobjects/player/Player.resurrectionSkill reset by PlayerReviveService.revive.
+	public int ResurrectionSkillId { get; set; }
+
 	public long ReposeEnergy { get; init; }
 
 	public bool IsOnline { get; set; }

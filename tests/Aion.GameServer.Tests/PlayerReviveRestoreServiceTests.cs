@@ -12,6 +12,9 @@ public sealed class PlayerReviveRestoreServiceTests
 		var player = new Player
 		{
 			CreatureState = PlayerCreatureState.Dead | PlayerCreatureState.WalkMode | PlayerCreatureState.Powershard,
+			Dp = 900,
+			IsPlayerResurrectionActive = true,
+			ResurrectionSkillId = 4456,
 			LifeStats = new PlayerLifeStats(CurrentHp: 0, CurrentMp: 7, CurrentFp: 42),
 		};
 
@@ -26,6 +29,16 @@ public sealed class PlayerReviveRestoreServiceTests
 		Assert.True(player.IsInState(PlayerCreatureState.Powershard));
 		Assert.Equal(PlayerReviveRestoreService.KiskReviveHpPercent, result.HpPercent);
 		Assert.Equal(PlayerReviveRestoreService.KiskReviveMpPercent, result.MpPercent);
+		Assert.False(result.HasNoResurrectPenalty);
+		Assert.Equal(900, result.PreviousDp);
+		Assert.Equal(0, result.CurrentDp);
+		Assert.Equal(0, player.Dp);
+		Assert.True(result.PreviousPlayerResurrectionActive);
+		Assert.False(result.CurrentPlayerResurrectionActive);
+		Assert.False(player.IsPlayerResurrectionActive);
+		Assert.Equal(4456, result.PreviousResurrectionSkillId);
+		Assert.Equal(0, result.CurrentResurrectionSkillId);
+		Assert.Equal(0, player.ResurrectionSkillId);
 	}
 
 	[Fact]
@@ -51,6 +64,40 @@ public sealed class PlayerReviveRestoreServiceTests
 		Assert.Equal(100, result.MaxMp);
 		Assert.False(player.IsInState(PlayerCreatureState.Dead));
 		Assert.True(player.IsInState(PlayerCreatureState.Active));
+	}
+
+	[Fact]
+	public void ApplyReviveRestoreHonorsNoResurrectPenaltyForResourcesAndDp()
+	{
+		var player = new Player
+		{
+			CreatureState = PlayerCreatureState.Dead,
+			Dp = 1200,
+			IsPlayerResurrectionActive = true,
+			ResurrectionSkillId = 9872,
+			LifeStats = new PlayerLifeStats(CurrentHp: 0, CurrentMp: 0, CurrentFp: 10),
+		};
+
+		var result = PlayerReviveRestoreService.ApplyReviveRestore(
+			player,
+			maxHp: 333,
+			maxMp: 222,
+			hpPercent: 30,
+			mpPercent: 30,
+			hasNoResurrectPenalty: true);
+
+		Assert.True(result.HasNoResurrectPenalty);
+		Assert.Equal(100, result.HpPercent);
+		Assert.Equal(100, result.MpPercent);
+		Assert.Equal(333, result.CurrentLifeStats.CurrentHp);
+		Assert.Equal(222, result.CurrentLifeStats.CurrentMp);
+		Assert.Equal(1200, result.PreviousDp);
+		Assert.Equal(1200, result.CurrentDp);
+		Assert.Equal(1200, player.Dp);
+		Assert.True(result.PreviousPlayerResurrectionActive);
+		Assert.False(result.CurrentPlayerResurrectionActive);
+		Assert.Equal(9872, result.PreviousResurrectionSkillId);
+		Assert.Equal(0, result.CurrentResurrectionSkillId);
 	}
 
 	[Fact]

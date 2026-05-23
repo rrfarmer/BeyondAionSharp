@@ -4768,9 +4768,9 @@ public sealed class GameServerConnection : BaseClientConnection
 		await SendKiskReviveTeleportPacketsAsync(player, teleport, staticData);
 
 		// Full Java PlayerReviveService.revive + TeleportService.teleportTo side effects remain queued:
-		// DP/soul-sickness handling, target/aggro cleanup, group/alliance movement updates,
-		// flying-before-death state restoration, full world despawn/spawn ownership, protection tasks,
-		// instance/legion leave callbacks, and exact socket ordering need the broader revive/teleport model.
+		// no-resurrect-penalty effect detection, soul-sickness handling, target/aggro cleanup,
+		// group/alliance movement updates, flying-before-death state restoration, full world despawn/spawn
+		// ownership, protection tasks, instance/legion leave callbacks, and exact socket ordering need the broader revive/teleport model.
 	}
 
 	private async Task SendKiskReviveTeleportPacketsAsync(Player player, PlayerTeleportResult teleport, StaticData? staticData)

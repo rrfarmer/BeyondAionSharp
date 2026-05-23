@@ -7,10 +7,14 @@ public static class PlayerReviveRestoreService
 	public const int KiskReviveHpPercent = 30;
 	public const int KiskReviveMpPercent = 30;
 
-	public static PlayerReviveRestoreResult ApplyKiskReviveRestore(Player player, int maxHp, int maxMp)
+	public static PlayerReviveRestoreResult ApplyKiskReviveRestore(
+		Player player,
+		int maxHp,
+		int maxMp,
+		bool hasNoResurrectPenalty = false)
 	{
 		// Java parity: services/player/PlayerReviveService.kiskRevive -> revive(player, 30, 30, false, skillId).
-		return ApplyReviveRestore(player, maxHp, maxMp, KiskReviveHpPercent, KiskReviveMpPercent);
+		return ApplyReviveRestore(player, maxHp, maxMp, KiskReviveHpPercent, KiskReviveMpPercent, hasNoResurrectPenalty);
 	}
 
 	public static PlayerReviveRestoreResult ApplyReviveRestore(
@@ -18,19 +22,29 @@ public static class PlayerReviveRestoreService
 		int maxHp,
 		int maxMp,
 		int hpPercent,
-		int mpPercent)
+		int mpPercent,
+		bool hasNoResurrectPenalty = false)
 	{
-		// Java parity: PlayerReviveService.revive sets HP percent, then MP percent, then PlayerController.onBeforeSpawn clears DEAD state.
+		// Java parity: PlayerReviveService.revive handles no-resurrect-penalty, clears player-res state/skill, then PlayerController.onBeforeSpawn clears DEAD state.
 		var previousLifeStats = player.LifeStats ?? new PlayerLifeStats(CurrentHp: 0, CurrentMp: 0, CurrentFp: 0);
 		var previousState = player.CreatureState;
+		var previousDp = player.Dp;
+		var previousPlayerResurrectionActive = player.IsPlayerResurrectionActive;
+		var previousResurrectionSkillId = player.ResurrectionSkillId;
 		var normalizedMaxHp = Math.Max(0, maxHp);
 		var normalizedMaxMp = Math.Max(0, maxMp);
+		var effectiveHpPercent = hasNoResurrectPenalty ? 100 : hpPercent;
+		var effectiveMpPercent = hasNoResurrectPenalty ? 100 : mpPercent;
 		var nextLifeStats = previousLifeStats with
 		{
-			CurrentHp = CalculatePercentValue(normalizedMaxHp, hpPercent),
-			CurrentMp = CalculatePercentValue(normalizedMaxMp, mpPercent),
+			CurrentHp = CalculatePercentValue(normalizedMaxHp, effectiveHpPercent),
+			CurrentMp = CalculatePercentValue(normalizedMaxMp, effectiveMpPercent),
 		};
 
+		player.IsPlayerResurrectionActive = false;
+		if (!hasNoResurrectPenalty && player.Dp > 0)
+			player.Dp = 0;
+		player.ResurrectionSkillId = 0;
 		player.LifeStats = nextLifeStats;
 		if (player.IsInState(PlayerCreatureState.Dead))
 			player.SetCreatureState(PlayerCreatureState.Dead, enabled: false);
@@ -43,8 +57,15 @@ public static class PlayerReviveRestoreService
 			player.CreatureState,
 			normalizedMaxHp,
 			normalizedMaxMp,
-			hpPercent,
-			mpPercent);
+			effectiveHpPercent,
+			effectiveMpPercent,
+			hasNoResurrectPenalty,
+			previousDp,
+			player.Dp,
+			previousPlayerResurrectionActive,
+			player.IsPlayerResurrectionActive,
+			previousResurrectionSkillId,
+			player.ResurrectionSkillId);
 	}
 
 	private static int CalculatePercentValue(int maxValue, int percent)
@@ -62,4 +83,11 @@ public sealed record PlayerReviveRestoreResult(
 	int MaxHp,
 	int MaxMp,
 	int HpPercent,
-	int MpPercent);
+	int MpPercent,
+	bool HasNoResurrectPenalty,
+	int PreviousDp,
+	int CurrentDp,
+	bool PreviousPlayerResurrectionActive,
+	bool CurrentPlayerResurrectionActive,
+	int PreviousResurrectionSkillId,
+	int CurrentResurrectionSkillId);
