@@ -18,6 +18,16 @@ public sealed class PlayerGroupMember
 
 	public bool IsOnline => Player.IsOnline;
 
+	public float X => Player.Position.X;
+
+	public float Y => Player.Position.Y;
+
+	public float Z => Player.Position.Z;
+
+	public byte Heading => Player.Position.Heading;
+
+	public int Level => Player.Level;
+
 	public void UpdateLastOnlineTime(DateTimeOffset now)
 	{
 		// Java parity: model/team/PlayerTeamMember.updateLastOnlineTime uses System.currentTimeMillis().

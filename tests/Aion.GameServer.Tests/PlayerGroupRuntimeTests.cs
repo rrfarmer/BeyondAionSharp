@@ -1,5 +1,6 @@
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Services;
+using Aion.GameServer.World;
 
 namespace Aion.GameServer.Tests;
 
@@ -9,7 +10,14 @@ public sealed class PlayerGroupRuntimeTests
 	public void CreateOrUpdateGroup_AttachesSharedSnapshotMetadataToMembers()
 	{
 		var runtime = new PlayerGroupRuntime();
-		var leader = new Player { ObjectId = 1001, Name = "Leader", IsOnline = true };
+		var leader = new Player
+		{
+			ObjectId = 1001,
+			Name = "Leader",
+			IsOnline = true,
+			Level = 25,
+			Position = new WorldPosition(210010000, 10.5f, 20.25f, 30.75f, 64),
+		};
 		var member = new Player { ObjectId = 1002, Name = "Member" };
 
 		var snapshot = runtime.CreateOrUpdateGroup(99001, [leader, member], PlayerGroupType.AutoGroup);
@@ -38,6 +46,11 @@ public sealed class PlayerGroupRuntimeTests
 		Assert.Equal("Leader", leaderMember.Name);
 		Assert.Same(leader, leaderMember.Player);
 		Assert.True(leaderMember.IsOnline);
+		Assert.Equal(10.5f, leaderMember.X);
+		Assert.Equal(20.25f, leaderMember.Y);
+		Assert.Equal(30.75f, leaderMember.Z);
+		Assert.Equal(64, leaderMember.Heading);
+		Assert.Equal(25, leaderMember.Level);
 		Assert.Equal([1001, 1002], runtime.GetMemberObjectIds(99001));
 		Assert.True(runtime.IsLeader(99001, leader));
 		Assert.False(runtime.IsLeader(99001, member));
