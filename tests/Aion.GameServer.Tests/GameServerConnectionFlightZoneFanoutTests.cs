@@ -109,6 +109,38 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 		Assert.Empty(registry.PacketOrder);
 	}
 
+	[Fact]
+	public async Task TeleportPlayerToKiskPositionAsync_RevalidatesCreaturePvpZoneCountersAfterTeleport()
+	{
+		var dataManager = await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false);
+		var runtimeContext = new GameServerRuntimeContext();
+		runtimeContext.SetDataManager(dataManager);
+		var zoneCounterService = new CreaturePvpZoneCounterService();
+		var registry = new CapturingConnectionRegistry();
+		await using var pair = await TestConnectionPair.CreateAsync(registry, runtimeContext, zoneCounterService);
+		var insidePvpZone = new WorldPosition(210040000, 2700, 620, 150, 0);
+		var outsidePvpZone = new WorldPosition(210040000, 100, 100, 150, 0);
+		var pvpZones = dataManager.StaticData.CreaturePvpZones.GetZonesByMapId(insidePvpZone.WorldId);
+		var player = CreateTeleportingPlayer(7302, insidePvpZone);
+		CreaturePvpZoneRevalidationService.Revalidate(
+			player.ObjectId,
+			player.Position,
+			dataManager.StaticData.CreaturePvpZones,
+			zoneCounterService);
+		Assert.Contains(pvpZones, zone => zone.Name == "PVP_87_210040000" && zone.Contains(insidePvpZone));
+		Assert.DoesNotContain(pvpZones, zone => zone.Contains(outsidePvpZone));
+		Assert.Equal(1, zoneCounterService.GetCounters(player.ObjectId).PvpZoneCount);
+
+		await pair.Connection.TeleportPlayerToKiskPositionAsync(player, outsidePvpZone, dataManager.StaticData);
+		var leftCounters = zoneCounterService.GetCounters(player.ObjectId);
+		await pair.Connection.TeleportPlayerToKiskPositionAsync(player, insidePvpZone, dataManager.StaticData);
+		var reenteredCounters = zoneCounterService.GetCounters(player.ObjectId);
+
+		Assert.Equal(CreaturePvpZoneCounters.Empty, leftCounters);
+		Assert.Equal(1, reenteredCounters.PvpZoneCount);
+		Assert.Equal(0, reenteredCounters.SiegeZoneCount);
+	}
+
 	private static Player CreateFlyingPlayer(int objectId)
 	{
 		var player = new Player
@@ -125,6 +157,20 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 		player.SetFlyState(PlayerFlyState.Flying);
 		player.SetCreatureState(PlayerCreatureState.Flying, enabled: true);
 		return player;
+	}
+
+	private static Player CreateTeleportingPlayer(int objectId, WorldPosition position)
+	{
+		return new Player
+		{
+			ObjectId = objectId,
+			Name = $"teleport-zone-{objectId}",
+			Race = "ELYOS",
+			PlayerClass = "RANGER",
+			Level = 10,
+			Position = position,
+			LifeStats = new PlayerLifeStats(CurrentHp: 111, CurrentMp: 205, CurrentFp: 55),
+		};
 	}
 
 	private static void AssertEmotion(GameServerPacket packet, int expectedObjectId, EmotionType expectedEmotion)
@@ -264,6 +310,8 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 				var acceptTask = listener.AcceptTcpClientAsync();
 				await client.ConnectAsync(endpoint.Address, endpoint.Port);
 				var serverClient = await acceptTask;
+				var crypt = new GameCrypt(() => 0x01020304);
+				crypt.EnableKey();
 				var connection = new GameServerConnection(
 					NullLogger.Instance,
 					serverClient,
@@ -272,7 +320,8 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 					options: new GameServerOptions(),
 					runtimeContext: runtimeContext,
 					connectionRegistry: registry,
-					creaturePvpZoneCounterService: creaturePvpZoneCounterService);
+					creaturePvpZoneCounterService: creaturePvpZoneCounterService,
+					crypt: crypt);
 				return new TestConnectionPair(client, connection);
 			}
 			finally

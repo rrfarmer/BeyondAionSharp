@@ -4770,13 +4770,26 @@ public sealed class GameServerConnection : BaseClientConnection
 		PlayerReviveRestoreService.ApplyKiskReviveRestore(player, resourceMaxStats.MaxHp, resourceMaxStats.MaxMp);
 		await BroadcastEmotionAsync(player, new SmEmotion(player, EmotionType.Resurrect));
 		await UpdatePlayerStatsAndSpeedVisuallyAsync(player);
-		var teleport = PlayerTeleportService.TeleportToKiskPosition(player, result.KiskPosition.Value);
-		await SendKiskReviveTeleportPacketsAsync(player, teleport, staticData);
+		await TeleportPlayerToKiskPositionAsync(player, result.KiskPosition.Value, staticData);
 
 		// Full Java PlayerReviveService.revive + TeleportService.teleportTo side effects remain queued:
 		// no-resurrect-penalty effect detection, soul-sickness handling, aggro cleanup,
 		// group/alliance movement updates, flying-before-death state restoration, full world despawn/spawn
 		// ownership, protection tasks, instance/legion leave callbacks, and exact socket ordering need the broader revive/teleport model.
+	}
+
+	internal async Task<PlayerTeleportResult> TeleportPlayerToKiskPositionAsync(
+		Player player,
+		WorldPosition destination,
+		StaticData? staticData = null)
+	{
+		staticData ??= _runtimeContext?.DataManager?.StaticData;
+		var teleport = PlayerTeleportService.TeleportToKiskPosition(player, destination);
+		// Java parity: PlayerReviveService.kiskRevive -> TeleportService.teleportTo(kisk.getPosition);
+		// same-map TeleportService.spawnOnSameMap calls PlayerController.updateZone after World.setPosition.
+		RevalidatePlayerCreaturePvpZones(player, staticData);
+		await SendKiskReviveTeleportPacketsAsync(player, teleport, staticData);
+		return teleport;
 	}
 
 	private void ClearReviveTargets(Player player)
@@ -6354,11 +6367,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		var staticData = _runtimeContext?.DataManager?.StaticData;
 		// Java parity: CM_MOVE.notifyControllers -> ZoneUpdateService.revalidateZones updates all zone memberships after movement.
-		CreaturePvpZoneRevalidationService.Revalidate(
-			player.ObjectId,
-			player.Position,
-			staticData?.CreaturePvpZones,
-			_creaturePvpZoneCounterService);
+		RevalidatePlayerCreaturePvpZones(player, staticData);
 		var result = PlayerZoneStateService.RevalidateFlightZones(
 			player,
 			staticData?.WorldMaps ?? Array.Empty<WorldMapSummary>(),
@@ -6370,6 +6379,16 @@ public sealed class GameServerConnection : BaseClientConnection
 			_options.Administration.FreeFlightAccessLevel);
 		await ApplyFlightZoneTransitionFanoutAsync(player, result, transition);
 		return result;
+	}
+
+	private void RevalidatePlayerCreaturePvpZones(Player player, StaticData? staticData)
+	{
+		// Java parity: Creature.revalidateZones -> MapRegion.revalidateZones -> ZoneInstance enter/leave callbacks.
+		CreaturePvpZoneRevalidationService.Revalidate(
+			player.ObjectId,
+			player.Position,
+			staticData?.CreaturePvpZones,
+			_creaturePvpZoneCounterService);
 	}
 
 	private async Task ApplyFlightZoneTransitionFanoutAsync(
