@@ -55,6 +55,7 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<WorldNpcLifeStatsService>();
 			services.AddSingleton<WorldNpcCombatStateService>();
 			services.AddSingleton<WorldNpcCombatEventService>();
+			services.AddSingleton<WorldNpcCastingInterruptService>();
 			services.AddSingleton<Action<WorldNpc>>(
 				serviceProvider => npc =>
 				{
@@ -70,6 +71,7 @@ var builder = Host.CreateDefaultBuilder(args)
 					serviceProvider.GetRequiredService<WorldNpcLifeStatsService>().Clear(objectId);
 					serviceProvider.GetRequiredService<WorldNpcCombatStateService>().Clear(objectId);
 					serviceProvider.GetRequiredService<WorldNpcCombatEventService>().Clear(objectId);
+					serviceProvider.GetRequiredService<WorldNpcCastingInterruptService>().Clear(objectId);
 				});
 			services.AddSingleton<WorldNpcDamageService>();
 			services.AddSingleton<WorldNpcLootService>();

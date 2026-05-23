@@ -12,19 +12,22 @@ public sealed class WorldNpcDamageService
 	private readonly IGameClientConnectionRegistry? _connectionRegistry;
 	private readonly WorldNpcCombatStateService? _combatStates;
 	private readonly WorldNpcCombatEventService? _combatEvents;
+	private readonly WorldNpcCastingInterruptService? _castingInterrupts;
 
 	public WorldNpcDamageService(
 		GameWorld world,
 		WorldNpcLifeStatsService lifeStats,
 		IGameClientConnectionRegistry? connectionRegistry = null,
 		WorldNpcCombatStateService? combatStates = null,
-		WorldNpcCombatEventService? combatEvents = null)
+		WorldNpcCombatEventService? combatEvents = null,
+		WorldNpcCastingInterruptService? castingInterrupts = null)
 	{
 		_world = world;
 		_lifeStats = lifeStats;
 		_connectionRegistry = connectionRegistry;
 		_combatStates = combatStates;
 		_combatEvents = combatEvents;
+		_castingInterrupts = castingInterrupts;
 	}
 
 	public async ValueTask<WorldNpcDamageResult> ApplyDamageAsync(
@@ -45,6 +48,17 @@ public sealed class WorldNpcDamageService
 			return WorldNpcDamageResult.Skipped(WorldNpcDamageStatus.MissingLifeStats);
 
 		var damageOptions = options ?? WorldNpcDamageOptions.Default;
+		WorldNpcCastingInterruptResult? castingInterrupt = null;
+		if (damage != 0 && damageOptions.NotifyAttack)
+		{
+			castingInterrupt = _castingInterrupts?.EvaluateIncomingDamage(
+				spawnedNpc.ObjectId,
+				attacker.ObjectId,
+				damage,
+				damageOptions.NotifyAttack,
+				maxHp,
+				damageOptions.CastingInterruptOptions);
+		}
 		WorldNpcAttackedObserverNotification? attackedObserverNotification = null;
 		if (damage != 0 && damageOptions.NotifyAttack)
 		{
@@ -101,7 +115,8 @@ public sealed class WorldNpcDamageService
 			attackStatusBroadcastCount,
 			combatState,
 			attackedObserverNotification,
-			supportAiRequests);
+			supportAiRequests,
+			castingInterrupt);
 	}
 
 	private bool TryResolveMaxStats(IWorldNpcObject npc, out int maxHp, out int maxMp)
@@ -170,7 +185,8 @@ public sealed record WorldNpcDamageOptions(
 	SmAttackStatusType AttackStatusType = SmAttackStatusType.Regular,
 	int SkillId = 0,
 	SmAttackStatusLog AttackStatusLog = SmAttackStatusLog.Regular,
-	WorldNpcDamageHopType HopType = WorldNpcDamageHopType.Damage)
+	WorldNpcDamageHopType HopType = WorldNpcDamageHopType.Damage,
+	WorldNpcCastingInterruptOptions? CastingInterruptOptions = null)
 {
 	public static WorldNpcDamageOptions Default { get; } = new(NotifyAttack: true);
 }
@@ -184,7 +200,8 @@ public sealed record WorldNpcDamageResult(
 	int AttackStatusBroadcastCount = 0,
 	WorldNpcCombatRuntimeState? CombatState = null,
 	WorldNpcAttackedObserverNotification? AttackedObserverNotification = null,
-	IReadOnlyList<WorldNpcSupportAiRequest>? SupportAiRequests = null)
+	IReadOnlyList<WorldNpcSupportAiRequest>? SupportAiRequests = null,
+	WorldNpcCastingInterruptResult? CastingInterrupt = null)
 {
 	public static WorldNpcDamageResult Skipped(WorldNpcDamageStatus status)
 	{
@@ -197,7 +214,8 @@ public sealed record WorldNpcDamageResult(
 			AttackStatusBroadcastCount: 0,
 			CombatState: null,
 			AttackedObserverNotification: null,
-			SupportAiRequests: Array.Empty<WorldNpcSupportAiRequest>());
+			SupportAiRequests: Array.Empty<WorldNpcSupportAiRequest>(),
+			CastingInterrupt: null);
 	}
 }
 
