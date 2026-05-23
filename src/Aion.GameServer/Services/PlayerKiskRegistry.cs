@@ -93,7 +93,9 @@ public sealed class PlayerKiskRuntimeState
 		int useMask = DefaultUseMask,
 		int maxMembers = DefaultMaxMembers,
 		int maxResurrects = DefaultMaxResurrects,
-		DateTimeOffset? spawnedAt = null)
+		DateTimeOffset? spawnedAt = null,
+		string ownerRace = "",
+		int ownerLegionId = 0)
 	{
 		ObjectId = objectId;
 		OwnerObjectId = ownerObjectId;
@@ -103,6 +105,8 @@ public sealed class PlayerKiskRuntimeState
 		MaxResurrects = maxResurrects;
 		RemainingResurrects = maxResurrects;
 		SpawnedAt = spawnedAt ?? DateTimeOffset.UtcNow;
+		OwnerRace = ownerRace;
+		OwnerLegionId = ownerLegionId;
 	}
 
 	public int ObjectId { get; }
@@ -121,6 +125,10 @@ public sealed class PlayerKiskRuntimeState
 
 	public DateTimeOffset SpawnedAt { get; }
 
+	public string OwnerRace { get; }
+
+	public int OwnerLegionId { get; }
+
 	public PlayerKiskOwnership Ownership => new(ObjectId, OwnerObjectId, NpcId);
 
 	public int CurrentMemberCount => _memberIds.Count;
@@ -131,6 +139,8 @@ public sealed class PlayerKiskRuntimeState
 		int objectId,
 		int ownerObjectId,
 		NpcTemplateSummary template,
+		string ownerRace = "",
+		int ownerLegionId = 0,
 		DateTimeOffset? spawnedAt = null)
 	{
 		// Java parity: model/gameobjects/Kisk constructor uses NpcTemplate.kiskStatsTemplate or KiskStatsTemplate defaults.
@@ -142,7 +152,9 @@ public sealed class PlayerKiskRuntimeState
 			stats.UseMask,
 			stats.MaxMembers,
 			stats.MaxResurrects,
-			spawnedAt);
+			spawnedAt,
+			ownerRace,
+			ownerLegionId);
 	}
 
 	public int GetRemainingLifetimeSeconds(DateTimeOffset now)

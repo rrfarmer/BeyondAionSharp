@@ -4737,6 +4737,20 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (!TryGetKiskPosition(kisk.ObjectId, out var position))
 			return;
 
+		var authorization = PlayerKiskAuthorizationService.ValidateBind(player, kisk);
+		switch (authorization.Status)
+		{
+			case PlayerKiskBindAuthorizationStatus.AlreadyRegistered:
+				await SendPacketAsync(SmSystemMessage.BindstoneAlreadyRegistered());
+				return;
+			case PlayerKiskBindAuthorizationStatus.Full:
+				await SendPacketAsync(SmSystemMessage.CannotRegisterBindstoneFull());
+				return;
+			case PlayerKiskBindAuthorizationStatus.NoAuthority:
+				await SendPacketAsync(SmSystemMessage.CannotRegisterBindstoneHaveNoAuthority());
+				return;
+		}
+
 		var previousKisk = GetPreviousBoundKiskState(player, kisk.ObjectId);
 		var bindResult = PlayerKiskBindService.Bind(player, kisk, previousKisk);
 		switch (bindResult.Status)

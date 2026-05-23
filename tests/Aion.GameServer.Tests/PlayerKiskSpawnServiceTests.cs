@@ -13,6 +13,8 @@ public sealed class PlayerKiskSpawnServiceTests
 		var player = new Player
 		{
 			ObjectId = 1001,
+			Race = "ELYOS",
+			LegionId = 77,
 			Position = new WorldPosition(210010000, 10.25f, 20.5f, 30.75f, 70, InstanceId: 3),
 		};
 		var sourceItem = CreateSourceItem(count: 3);
@@ -30,6 +32,8 @@ public sealed class PlayerKiskSpawnServiceTests
 		Assert.Equal(6, plan.RuntimeState.MaxMembers);
 		Assert.Equal(18, plan.RuntimeState.RemainingResurrects);
 		Assert.Equal(18, plan.RuntimeState.MaxResurrects);
+		Assert.Equal("ELYOS", plan.RuntimeState.OwnerRace);
+		Assert.Equal(77, plan.RuntimeState.OwnerLegionId);
 		Assert.NotNull(plan.SourceItemUpdate);
 		Assert.Equal(2, plan.SourceItemUpdate.Count);
 		Assert.Equal(sourceItem.ObjectId, plan.SourceItemUpdate.ObjectId);

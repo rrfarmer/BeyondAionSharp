@@ -27,7 +27,7 @@ public static class PlayerKiskSpawnService
 
 		return new PlayerKiskSpawnPlan(
 			kisk,
-			PlayerKiskRuntimeState.FromTemplate(kiskObjectId, player.ObjectId, kiskTemplate),
+			PlayerKiskRuntimeState.FromTemplate(kiskObjectId, player.ObjectId, kiskTemplate, player.Race, player.LegionId),
 			sourceItemUpdate,
 			deletedSourceItemObjectId);
 	}
