@@ -244,6 +244,63 @@ public sealed class PlayerGroupRuntimeTests
 	}
 
 	[Fact]
+	public void CreateMemberInfoUpdatePlan_ReturnsAllExceptPlayerIntentsLikeJavaPlayerGroupUpdateEvent()
+	{
+		var runtime = new PlayerGroupRuntime();
+		var leader = new Player { ObjectId = 1001, Name = "Leader", IsOnline = true };
+		var subject = new Player
+		{
+			ObjectId = 1002,
+			Name = "Subject",
+			IsOnline = true,
+			PlayerClass = "GLADIATOR",
+			Level = 10,
+			Position = new WorldPosition(220010000, 11, 22, 33, 64),
+		};
+		var otherMember = new Player { ObjectId = 1003, Name = "Other", IsOnline = true };
+		runtime.CreateOrUpdateGroup(99001, [leader, subject, otherMember]);
+
+		var plan = Assert.IsType<PlayerGroupMemberInfoUpdatePlan>(
+			runtime.CreateMemberInfoUpdatePlan(99001, subject, PlayerGroupEvent.UpdateEffects, slot: 4));
+
+		Assert.Equal(99001, plan.TeamId);
+		Assert.Equal(1002, plan.SubjectObjectId);
+		Assert.Equal(PlayerGroupEvent.UpdateEffects, plan.Event);
+		Assert.Equal(4, plan.Slot);
+		Assert.Collection(
+			plan.MemberInfoIntents,
+			intent =>
+			{
+				Assert.Equal(1001, intent.RecipientObjectId);
+				Assert.Equal(1002, intent.SubjectObjectId);
+				Assert.Equal(PlayerGroupEvent.UpdateEffects, intent.Event);
+				AssertMemberInfoPlan(intent.PacketPlan, 99001, 1002, PlayerGroupEvent.UpdateEffects, PlayerGroupEvent.UpdateEffects, isOnline: true, writesName: false, writesEffects: true, slot: 4);
+				AssertGroupMemberInfoUpdateEffectsZeroPayload(intent.CreatePacket(), expectedSlot: 4);
+			},
+			intent =>
+			{
+				Assert.Equal(1003, intent.RecipientObjectId);
+				Assert.Equal(1002, intent.SubjectObjectId);
+				Assert.Equal(PlayerGroupEvent.UpdateEffects, intent.Event);
+				AssertMemberInfoPlan(intent.PacketPlan, 99001, 1002, PlayerGroupEvent.UpdateEffects, PlayerGroupEvent.UpdateEffects, isOnline: true, writesName: false, writesEffects: true, slot: 4);
+				AssertGroupMemberInfoUpdateEffectsZeroPayload(intent.CreatePacket(), expectedSlot: 4);
+			});
+		Assert.DoesNotContain(plan.MemberInfoIntents, intent => intent.RecipientObjectId == subject.ObjectId);
+	}
+
+	[Fact]
+	public void CreateMemberInfoUpdatePlan_ReturnsNullWhenGroupOrSubjectIsMissing()
+	{
+		var runtime = new PlayerGroupRuntime();
+		var leader = new Player { ObjectId = 1001, IsOnline = true };
+		var outsider = new Player { ObjectId = 1002, IsOnline = true };
+		runtime.CreateOrUpdateGroup(99001, [leader]);
+
+		Assert.Null(runtime.CreateMemberInfoUpdatePlan(99001, outsider, PlayerGroupEvent.Update));
+		Assert.Null(runtime.CreateMemberInfoUpdatePlan(99002, leader, PlayerGroupEvent.Update));
+	}
+
+	[Fact]
 	public void AddMember_RejectsDuplicateMemberLikeJavaGeneralTeam()
 	{
 		var runtime = new PlayerGroupRuntime();
@@ -1059,6 +1116,20 @@ public sealed class PlayerGroupRuntimeTests
 		using var reader = new PacketBuffer(SerializeUnencryptedPayload(actual));
 		SkipGroupMemberInfoPrefix(reader);
 		Assert.Equal(expectedName, reader.ReadS());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertGroupMemberInfoUpdateEffectsZeroPayload(GameServerPacket? packet, int expectedSlot)
+	{
+		var actual = Assert.IsType<Network.Aion.ServerPackets.SmGroupMemberInfo>(packet);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(actual));
+		SkipGroupMemberInfoPrefix(reader);
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(expectedSlot, (int)reader.ReadC());
+		Assert.Equal(0, reader.ReadH());
+		for (var i = 0; i < 8; i++)
+			Assert.Equal(0, reader.ReadD());
 		Assert.Equal(0, reader.Remaining);
 	}
 

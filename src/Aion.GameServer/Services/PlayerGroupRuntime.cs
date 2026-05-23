@@ -85,6 +85,38 @@ public sealed class PlayerGroupRuntime
 		}
 	}
 
+	public PlayerGroupMemberInfoUpdatePlan? CreateMemberInfoUpdatePlan(
+		int teamId,
+		Player player,
+		PlayerGroupEvent groupEvent,
+		int slot = 0)
+	{
+		// Java parity: model/team/group/events/PlayerGroupUpdateEvent sends SM_GROUP_MEMBER_INFO to Predicates.Players.allExcept(player).
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(teamId, 0);
+
+		lock (_sync)
+		{
+			if (!_membersByTeamId.TryGetValue(teamId, out var members))
+				return null;
+
+			var subjectMember = members.FirstOrDefault(member => member.ObjectId == player.ObjectId);
+			if (subjectMember == null)
+				return null;
+
+			var packetPlan = PlayerGroupMemberInfoPacketPlan.FromMember(teamId, subjectMember, groupEvent, slot);
+			var intents = members
+				.Where(member => member.ObjectId != player.ObjectId)
+				.Select(member => new PlayerGroupMemberInfoIntent(
+					member.ObjectId,
+					player.ObjectId,
+					groupEvent,
+					packetPlan))
+				.ToArray();
+
+			return new PlayerGroupMemberInfoUpdatePlan(teamId, player.ObjectId, groupEvent, slot, intents);
+		}
+	}
+
 	public PlayerGroupBrandUpdatePlan? UpdateBrand(int teamId, int brandId, int targetObjectId)
 	{
 		// Java parity: model/team/TemporaryPlayerTeam.updateBrand stores target id and broadcasts SM_SHOW_BRAND.

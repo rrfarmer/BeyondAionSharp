@@ -42,6 +42,13 @@ public sealed record PlayerGroupMemberInfoIntent(
 	}
 }
 
+public sealed record PlayerGroupMemberInfoUpdatePlan(
+	int TeamId,
+	int SubjectObjectId,
+	PlayerGroupEvent Event,
+	int Slot,
+	IReadOnlyList<PlayerGroupMemberInfoIntent> MemberInfoIntents);
+
 public sealed record PlayerGroupMemberInfoPacketPlan(
 	int GroupId,
 	int MemberObjectId,
