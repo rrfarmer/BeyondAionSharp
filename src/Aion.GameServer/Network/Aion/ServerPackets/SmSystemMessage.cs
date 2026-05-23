@@ -705,6 +705,36 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300147);
 	}
 
+	public static SmSystemMessage FlyingForbiddenHere()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_FLYING_FORBIDDEN_HERE.
+		return new SmSystemMessage(1300960);
+	}
+
+	public static SmSystemMessage CantFlyNowDueToNoFly()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_CANT_FLY_NOW_DUE_TO_NOFLY.
+		return new SmSystemMessage(1301032);
+	}
+
+	public static SmSystemMessage GlideOnlyDaevaCan()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GLIDE_ONLY_DEVA_CAN.
+		return new SmSystemMessage(1301059);
+	}
+
+	public static SmSystemMessage GlideCannotGlidePolymorphStatus()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GLIDE_CANNOT_GLIDE_POLYMORPH_STATUS.
+		return new SmSystemMessage(1400872);
+	}
+
+	public static SmSystemMessage FlyCannotFlyPolymorphStatus()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_FLY_CANNOT_FLY_POLYMORPH_STATUS.
+		return new SmSystemMessage(1400873);
+	}
+
 	public static SmSystemMessage StigmaNotEnoughMoney()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_STIGMA_NOT_ENOUGH_MONEY.

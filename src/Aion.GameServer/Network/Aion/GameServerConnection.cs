@@ -5721,8 +5721,13 @@ public sealed class GameServerConnection : BaseClientConnection
 				player.CompleteFlyTeleport();
 				break;
 			case EmotionType.Fly:
-				// Java parity: controllers/FlyController.startFly baseline state/FP side effects; zone/cooldown checks remain future controller work.
-				player.StartFlying();
+				var flyResult = PlayerFlightActionService.StartFlying(player, DateTimeOffset.UtcNow);
+				if (!flyResult.Succeeded)
+				{
+					if (flyResult.SystemMessage != null)
+						await SendPacketAsync(flyResult.SystemMessage);
+					return;
+				}
 				break;
 			case EmotionType.Land:
 				player.EndFlying();

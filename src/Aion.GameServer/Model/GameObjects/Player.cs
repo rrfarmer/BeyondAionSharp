@@ -106,6 +106,12 @@ public sealed class Player
 	// Java parity: model/gameobjects/player/Player.isInSprintMode toggled by CM_EMOTION START_SPRINT/END_SPRINT.
 	public bool IsInSprintMode { get; set; }
 
+	// Java parity: model/gameobjects/player/Player.flyReuseTime used by FlyController start/glide cooldown checks.
+	public long FlyReuseTimeMillis { get; set; }
+
+	// Java parity: model/gameobjects/player/Player.getTransformModel().getRes6() == 1 blocks fly/glide.
+	public bool TransformForbidsFlight { get; set; }
+
 	// Java parity: model/gameobjects/player/Player.flightPath stores active transporter/windstream mode.
 	public PlayerFlightPathType? FlightPathType { get; set; }
 

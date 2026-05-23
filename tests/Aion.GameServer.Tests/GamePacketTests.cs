@@ -920,6 +920,11 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.WeaponBoostBurnOut(), 1400075);
 		AssertSystemMessage(SmSystemMessage.SkillCannotChangeModeWhileInCurrentStance(), 1300124);
 		AssertSystemMessage(SmSystemMessage.SkillCannotTakeOffWhileInCurrentStance(), 1300147);
+		AssertSystemMessage(SmSystemMessage.FlyingForbiddenHere(), 1300960);
+		AssertSystemMessage(SmSystemMessage.CantFlyNowDueToNoFly(), 1301032);
+		AssertSystemMessage(SmSystemMessage.GlideOnlyDaevaCan(), 1301059);
+		AssertSystemMessage(SmSystemMessage.GlideCannotGlidePolymorphStatus(), 1400872);
+		AssertSystemMessage(SmSystemMessage.FlyCannotFlyPolymorphStatus(), 1400873);
 		AssertSystemMessage(SmSystemMessage.StigmaNotEnoughMoney(), 1300413);
 		AssertSystemMessage(SmSystemMessage.StigmaSkillUnavailable("skill"), 1300403, "skill");
 		AssertSystemMessage(SmSystemMessage.StigmaEnchantSuccess("stigma"), 1402930, "stigma");

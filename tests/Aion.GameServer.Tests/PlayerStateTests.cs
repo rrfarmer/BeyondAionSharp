@@ -583,6 +583,54 @@ public sealed class PlayerStateTests
 	}
 
 	[Fact]
+	public void PlayerFlightActionService_StartFlyingMatchesJavaGuardAndCooldownSlice()
+	{
+		var now = DateTimeOffset.FromUnixTimeMilliseconds(100_000);
+		var startingClass = new Player { PlayerClass = "WARRIOR" };
+		var noFly = new Player { PlayerClass = "RANGER", AbnormalState = PlayerAbnormalState.NoFly };
+		var transformed = new Player { PlayerClass = "RANGER", TransformForbidsFlight = true };
+		var privateShop = new Player { PlayerClass = "RANGER", CreatureState = PlayerCreatureState.PrivateShop };
+		var onCooldown = new Player { PlayerClass = "RANGER", FlyReuseTimeMillis = now.ToUnixTimeMilliseconds() + 1 };
+		var flying = new Player { PlayerClass = "RANGER" };
+
+		var notDaeva = PlayerFlightActionService.StartFlying(startingClass, now);
+		var noFlyResult = PlayerFlightActionService.StartFlying(noFly, now);
+		var transformedResult = PlayerFlightActionService.StartFlying(transformed, now);
+		var privateShopResult = PlayerFlightActionService.StartFlying(privateShop, now);
+		var cooldownResult = PlayerFlightActionService.StartFlying(onCooldown, now);
+		var success = PlayerFlightActionService.StartFlying(flying, now);
+
+		Assert.Equal(PlayerFlightActionStatus.NotDaeva, notDaeva.Status);
+		Assert.NotNull(notDaeva.SystemMessage);
+		Assert.False(startingClass.IsFlying());
+		Assert.Equal(PlayerFlightActionStatus.NoFlyAbnormal, noFlyResult.Status);
+		Assert.NotNull(noFlyResult.SystemMessage);
+		Assert.False(noFly.IsFlying());
+		Assert.Equal(PlayerFlightActionStatus.TransformForbidden, transformedResult.Status);
+		Assert.NotNull(transformedResult.SystemMessage);
+		Assert.False(transformed.IsFlying());
+		Assert.Equal(PlayerFlightActionStatus.PrivateStore, privateShopResult.Status);
+		Assert.Null(privateShopResult.SystemMessage);
+		Assert.False(privateShop.IsFlying());
+		Assert.Equal(PlayerFlightActionStatus.Cooldown, cooldownResult.Status);
+		Assert.Null(cooldownResult.SystemMessage);
+		Assert.False(onCooldown.IsFlying());
+
+		Assert.True(success.Succeeded);
+		Assert.True(flying.IsInFlyingState());
+		Assert.True(flying.IsInState(PlayerCreatureState.Flying));
+		Assert.True(flying.IsFpReduceActive);
+		Assert.Equal(now.ToUnixTimeMilliseconds() + 9_900, flying.FlyReuseTimeMillis);
+
+		var ignoredCooldown = new Player { PlayerClass = "RANGER", FlyReuseTimeMillis = now.ToUnixTimeMilliseconds() + 1 };
+		var ignoredResult = PlayerFlightActionService.StartFlying(ignoredCooldown, now, ignoreFlightCooldown: true);
+
+		Assert.True(ignoredResult.Succeeded);
+		Assert.True(ignoredCooldown.IsInFlyingState());
+		Assert.Equal(now.ToUnixTimeMilliseconds() + 1, ignoredCooldown.FlyReuseTimeMillis);
+	}
+
+	[Fact]
 	public void Player_StopGlidingMatchesJavaFpTaskAndBroadcastDecision()
 	{
 		var walkingGlider = new Player
