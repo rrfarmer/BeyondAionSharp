@@ -1314,6 +1314,23 @@ public sealed class GameServerConnection : BaseClientConnection
 				return;
 		}
 
+		if (_runtimeContext != null)
+		{
+			var kiskDialogResult = PlayerKiskDialogService.RequestDialog(
+				player,
+				packet.TargetObjectId,
+				_world,
+				_runtimeContext.Kisks,
+				_isKnownNpc);
+			if (kiskDialogResult.ResponsePacket != null)
+			{
+				await SendPacketAsync(kiskDialogResult.ResponsePacket);
+				return;
+			}
+			if (kiskDialogResult.Handled)
+				return;
+		}
+
 		var npcDialogResult = NpcDialogRequestService.RequestDialog(player, packet.TargetObjectId, _world, _isKnownNpc);
 		if (npcDialogResult.ResponsePacket != null)
 			await SendPacketAsync(npcDialogResult.ResponsePacket);
@@ -4725,14 +4742,14 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (packet.SenderObjectId != 0 && packet.SenderObjectId != request.KiskObjectId)
 			return;
 
-		var kisk = _runtimeContext?.Kisks.GetOwnerKiskState(responder.ObjectId);
+		var kisk = _runtimeContext?.Kisks.GetKiskState(request.KiskObjectId);
 		if (kisk == null || kisk.ObjectId != request.KiskObjectId)
 			return;
 
-		await BindPlayerToKiskAsync(responder, kisk);
+		await BindPlayerToKiskAsync(responder, kisk, fullFailureAsNoAuthority: true);
 	}
 
-	private async Task BindPlayerToKiskAsync(Player player, PlayerKiskRuntimeState kisk)
+	private async Task BindPlayerToKiskAsync(Player player, PlayerKiskRuntimeState kisk, bool fullFailureAsNoAuthority = false)
 	{
 		if (!TryGetKiskPosition(kisk.ObjectId, out var position))
 			return;
@@ -4744,7 +4761,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				await SendPacketAsync(SmSystemMessage.BindstoneAlreadyRegistered());
 				return;
 			case PlayerKiskBindAuthorizationStatus.Full:
-				await SendPacketAsync(SmSystemMessage.CannotRegisterBindstoneFull());
+				await SendPacketAsync(fullFailureAsNoAuthority
+					? SmSystemMessage.CannotRegisterBindstoneHaveNoAuthority()
+					: SmSystemMessage.CannotRegisterBindstoneFull());
 				return;
 			case PlayerKiskBindAuthorizationStatus.NoAuthority:
 				await SendPacketAsync(SmSystemMessage.CannotRegisterBindstoneHaveNoAuthority());
