@@ -286,6 +286,8 @@ public interface IPlayerEnterWorldRepository
 
 public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepository
 {
+	public bool SaveItemUseSourceMutationResult { get; init; } = true;
+
 	public Task<Player?> LoadPlayerAsync(int accountId, int playerObjectId, CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult<Player?>(null);
@@ -377,7 +379,7 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		int? deletedSourceItemObjectId,
 		CancellationToken cancellationToken = default)
 	{
-		return Task.FromResult(true);
+		return Task.FromResult(SaveItemUseSourceMutationResult);
 	}
 
 	public Task<bool> SaveCraftLearnActionMutationAsync(
