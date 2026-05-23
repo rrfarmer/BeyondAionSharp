@@ -362,11 +362,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 				{
 					// Java parity: network/aion/clientpackets/CM_SUBZONE_CHANGE.runImpl -> Player.revalidateZones.
-					var staticData = _runtimeContext?.DataManager?.StaticData;
-					PlayerZoneStateService.RevalidateFlightZones(
-						_activePlayer,
-						staticData?.WorldMaps ?? Array.Empty<WorldMapSummary>(),
-						staticData?.FlightZones);
+					RevalidatePlayerFlightZones(_activePlayer);
 				}
 				break;
 			case CmChangeChannel:
@@ -524,7 +520,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				break;
 			case CmMoveInAir moveInAir:
 				if (_activePlayer != null)
+				{
 					HandleMoveInAir(_activePlayer, moveInAir);
+					RevalidatePlayerFlightZones(_activePlayer);
+				}
 				break;
 			case CmQuestionResponse questionResponse:
 				if (_activePlayer != null)
@@ -929,10 +928,7 @@ public sealed class GameServerConnection : BaseClientConnection
 
 					var staticData = _runtimeContext?.DataManager?.StaticData;
 					// Java parity: CreatureController.onAfterSpawn revalidates zones after the player enters the world.
-					PlayerZoneStateService.RevalidateFlightZones(
-						enterWorldResult.Player,
-						staticData?.WorldMaps ?? Array.Empty<WorldMapSummary>(),
-						staticData?.FlightZones);
+					RevalidatePlayerFlightZones(enterWorldResult.Player);
 					await SendPacketAsync(new SmChannelInfo(enterWorldResult.Player.Position, staticData?.WorldMaps ?? Array.Empty<WorldMapSummary>()));
 					await SendPacketAsync(CreateBindPointPacket(enterWorldResult.Player, staticData));
 					await SendPacketAsync(new SmPlayerSpawn(enterWorldResult.Player));
@@ -5875,6 +5871,15 @@ public sealed class GameServerConnection : BaseClientConnection
 		return await visualStats.UpdateStatsAndSpeedVisuallyAsync(player, null);
 	}
 
+	private PlayerZoneRevalidationResult RevalidatePlayerFlightZones(Player player)
+	{
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		return PlayerZoneStateService.RevalidateFlightZones(
+			player,
+			staticData?.WorldMaps ?? Array.Empty<WorldMapSummary>(),
+			staticData?.FlightZones);
+	}
+
 	private static bool HasEquippedPowerShard(Player player, ItemTemplateTable? itemTemplates)
 	{
 		// Java parity: model/gameobjects/player/Equipment.isPowerShardEquipped.
@@ -5983,6 +5988,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			Z = packet.Z,
 			Heading = packet.Heading,
 		};
+		// Java parity: CM_MOVE.notifyControllers -> CreatureController.onMove/onStopMove -> ZoneUpdateService.revalidateZones.
+		RevalidatePlayerFlightZones(player);
 
 		if (_connectionRegistry != null && (MovementMask.HasManualPosition(packet.Type) || packet.Type == MovementMask.Immediate))
 			await _connectionRegistry.BroadcastToVisiblePlayersAsync(player.Position, player.ObjectId, new SmMove(player));

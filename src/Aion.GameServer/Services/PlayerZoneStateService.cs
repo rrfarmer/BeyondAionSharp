@@ -5,12 +5,14 @@ namespace Aion.GameServer.Services;
 
 public static class PlayerZoneStateService
 {
-	public static bool RevalidateFlightZones(
+	public static PlayerZoneRevalidationResult RevalidateFlightZones(
 		Player player,
 		IReadOnlyList<WorldMapSummary> worldMaps,
 		FlightZoneTable? flightZones = null)
 	{
 		// Java parity: WorldMapInstance.addObject plus ZoneService FlyZoneInstance/NoFlyZoneInstance membership checks.
+		var wasInsideFlyZone = player.IsInsideFlyZone;
+		var wasInsideNoFlyZone = player.IsInsideNoFlyZone;
 		var worldMap = worldMaps.FirstOrDefault(map => map.MapId == player.Position.WorldId);
 		var foundWorldMap = worldMap.MapId != 0;
 		var zones = (flightZones ?? FlightZoneTable.Empty).GetZonesByMapId(player.Position.WorldId);
@@ -29,6 +31,27 @@ public static class PlayerZoneStateService
 
 		player.IsInsideFlyZone = insideFlyZone;
 		player.IsInsideNoFlyZone = insideNoFlyZone;
-		return foundWorldMap;
+		return new PlayerZoneRevalidationResult(
+			foundWorldMap,
+			wasInsideFlyZone,
+			player.IsInsideFlyZone,
+			wasInsideNoFlyZone,
+			player.IsInsideNoFlyZone);
 	}
+}
+
+public sealed record PlayerZoneRevalidationResult(
+	bool FoundWorldMap,
+	bool WasInsideFlyZone,
+	bool IsInsideFlyZone,
+	bool WasInsideNoFlyZone,
+	bool IsInsideNoFlyZone)
+{
+	public bool EnteredFlyZone => !WasInsideFlyZone && IsInsideFlyZone;
+
+	public bool LeftFlyZone => WasInsideFlyZone && !IsInsideFlyZone;
+
+	public bool EnteredNoFlyZone => !WasInsideNoFlyZone && IsInsideNoFlyZone;
+
+	public bool LeftNoFlyZone => WasInsideNoFlyZone && !IsInsideNoFlyZone;
 }

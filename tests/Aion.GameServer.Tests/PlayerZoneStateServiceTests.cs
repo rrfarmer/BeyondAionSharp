@@ -33,15 +33,23 @@ public sealed class PlayerZoneStateServiceTests
 			IsInsideNoFlyZone = true,
 		};
 
-		Assert.True(PlayerZoneStateService.RevalidateFlightZones(flyMapPlayer, worldMaps));
+		var flyMapResult = PlayerZoneStateService.RevalidateFlightZones(flyMapPlayer, worldMaps);
+		Assert.True(flyMapResult.FoundWorldMap);
+		Assert.True(flyMapResult.EnteredFlyZone);
 		Assert.True(flyMapPlayer.IsInsideFlyZone);
 		Assert.False(flyMapPlayer.IsInsideNoFlyZone);
 
-		Assert.True(PlayerZoneStateService.RevalidateFlightZones(nonFlyMapPlayer, worldMaps));
+		var nonFlyMapResult = PlayerZoneStateService.RevalidateFlightZones(nonFlyMapPlayer, worldMaps);
+		Assert.True(nonFlyMapResult.FoundWorldMap);
+		Assert.True(nonFlyMapResult.LeftFlyZone);
+		Assert.True(nonFlyMapResult.LeftNoFlyZone);
 		Assert.False(nonFlyMapPlayer.IsInsideFlyZone);
 		Assert.False(nonFlyMapPlayer.IsInsideNoFlyZone);
 
-		Assert.False(PlayerZoneStateService.RevalidateFlightZones(unknownMapPlayer, worldMaps));
+		var unknownMapResult = PlayerZoneStateService.RevalidateFlightZones(unknownMapPlayer, worldMaps);
+		Assert.False(unknownMapResult.FoundWorldMap);
+		Assert.True(unknownMapResult.LeftFlyZone);
+		Assert.True(unknownMapResult.LeftNoFlyZone);
 		Assert.False(unknownMapPlayer.IsInsideFlyZone);
 		Assert.False(unknownMapPlayer.IsInsideNoFlyZone);
 	}
@@ -77,15 +85,22 @@ public sealed class PlayerZoneStateServiceTests
 		var abyssNoFlyPlayer = new Player { Position = new WorldPosition(400020000, 25, 25, 50, 0) };
 		var aboveZonePlayer = new Player { Position = new WorldPosition(210020000, 5, 5, 150, 0) };
 
-		Assert.True(PlayerZoneStateService.RevalidateFlightZones(localFlyPlayer, worldMaps, flightZones));
+		var localFlyResult = PlayerZoneStateService.RevalidateFlightZones(localFlyPlayer, worldMaps, flightZones);
+		Assert.True(localFlyResult.FoundWorldMap);
+		Assert.True(localFlyResult.EnteredFlyZone);
 		Assert.True(localFlyPlayer.IsInsideFlyZone);
 		Assert.False(localFlyPlayer.IsInsideNoFlyZone);
 
-		Assert.True(PlayerZoneStateService.RevalidateFlightZones(abyssNoFlyPlayer, worldMaps, flightZones));
+		var abyssNoFlyResult = PlayerZoneStateService.RevalidateFlightZones(abyssNoFlyPlayer, worldMaps, flightZones);
+		Assert.True(abyssNoFlyResult.FoundWorldMap);
+		Assert.True(abyssNoFlyResult.EnteredFlyZone);
+		Assert.True(abyssNoFlyResult.EnteredNoFlyZone);
 		Assert.True(abyssNoFlyPlayer.IsInsideFlyZone);
 		Assert.True(abyssNoFlyPlayer.IsInsideNoFlyZone);
 
-		Assert.True(PlayerZoneStateService.RevalidateFlightZones(aboveZonePlayer, worldMaps, flightZones));
+		var aboveZoneResult = PlayerZoneStateService.RevalidateFlightZones(aboveZonePlayer, worldMaps, flightZones);
+		Assert.True(aboveZoneResult.FoundWorldMap);
+		Assert.False(aboveZoneResult.EnteredFlyZone);
 		Assert.False(aboveZonePlayer.IsInsideFlyZone);
 		Assert.False(aboveZonePlayer.IsInsideNoFlyZone);
 	}
