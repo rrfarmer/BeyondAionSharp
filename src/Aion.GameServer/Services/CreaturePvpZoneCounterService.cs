@@ -5,6 +5,7 @@ namespace Aion.GameServer.Services;
 public sealed class CreaturePvpZoneCounterService
 {
 	private readonly ConcurrentDictionary<int, CreaturePvpZoneCounters> _countersByObjectId = new();
+	private readonly ConcurrentDictionary<CreaturePvpZoneMembershipKey, byte> _memberships = new();
 
 	public CreaturePvpZoneCounters EnterZone(int objectId, CreaturePvpZoneCounterType zoneType)
 	{
@@ -51,7 +52,53 @@ public sealed class CreaturePvpZoneCounterService
 	public bool ClearCounters(int objectId)
 	{
 		// Java parity: Creature zone counters disappear with the creature instance on despawn/delete.
+		foreach (var key in _memberships.Keys.Where(key => key.ObjectId == objectId).ToArray())
+			_memberships.TryRemove(key, out _);
 		return objectId > 0 && _countersByObjectId.TryRemove(objectId, out _);
+	}
+
+	public CreaturePvpZoneMembershipTransition ApplyZoneEnter(
+		int objectId,
+		string zoneId,
+		CreaturePvpZoneCounterType zoneType)
+	{
+		// Java parity: ZoneInstance.onEnter returns false when the creature is already in that zone instance.
+		if (objectId <= 0 || string.IsNullOrWhiteSpace(zoneId))
+			return new CreaturePvpZoneMembershipTransition(
+				CreaturePvpZoneMembershipTransitionStatus.Invalid,
+				CreaturePvpZoneCounters.Empty);
+
+		var key = new CreaturePvpZoneMembershipKey(objectId, zoneId, zoneType);
+		if (!_memberships.TryAdd(key, 0))
+			return new CreaturePvpZoneMembershipTransition(
+				CreaturePvpZoneMembershipTransitionStatus.AlreadyInside,
+				GetCounters(objectId));
+
+		return new CreaturePvpZoneMembershipTransition(
+			CreaturePvpZoneMembershipTransitionStatus.Entered,
+			EnterZone(objectId, zoneType));
+	}
+
+	public CreaturePvpZoneMembershipTransition ApplyZoneLeave(
+		int objectId,
+		string zoneId,
+		CreaturePvpZoneCounterType zoneType)
+	{
+		// Java parity: ZoneInstance.onLeave returns false when the creature is not in that zone instance.
+		if (objectId <= 0 || string.IsNullOrWhiteSpace(zoneId))
+			return new CreaturePvpZoneMembershipTransition(
+				CreaturePvpZoneMembershipTransitionStatus.Invalid,
+				CreaturePvpZoneCounters.Empty);
+
+		var key = new CreaturePvpZoneMembershipKey(objectId, zoneId, zoneType);
+		if (!_memberships.TryRemove(key, out _))
+			return new CreaturePvpZoneMembershipTransition(
+				CreaturePvpZoneMembershipTransitionStatus.NotInside,
+				GetCounters(objectId));
+
+		return new CreaturePvpZoneMembershipTransition(
+			CreaturePvpZoneMembershipTransitionStatus.Left,
+			LeaveZone(objectId, zoneType));
 	}
 }
 
@@ -92,3 +139,25 @@ public enum CreaturePvpZoneCounterType
 	// Java parity: model/templates/zone/ZoneType.PVP.
 	Pvp,
 }
+
+public sealed record CreaturePvpZoneMembershipTransition(
+	CreaturePvpZoneMembershipTransitionStatus Status,
+	CreaturePvpZoneCounters Counters)
+{
+	public bool Applied => Status is CreaturePvpZoneMembershipTransitionStatus.Entered
+		or CreaturePvpZoneMembershipTransitionStatus.Left;
+}
+
+public enum CreaturePvpZoneMembershipTransitionStatus
+{
+	Invalid,
+	AlreadyInside,
+	NotInside,
+	Entered,
+	Left,
+}
+
+internal sealed record CreaturePvpZoneMembershipKey(
+	int ObjectId,
+	string ZoneId,
+	CreaturePvpZoneCounterType ZoneType);

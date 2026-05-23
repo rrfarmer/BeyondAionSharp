@@ -57,13 +57,55 @@ public sealed class CreaturePvpZoneCounterServiceTests
 	public void ClearCountersRemovesTrackedCreatureState()
 	{
 		var service = new CreaturePvpZoneCounterService();
-		service.EnterZone(1001, CreaturePvpZoneCounterType.Pvp);
-		service.EnterZone(1001, CreaturePvpZoneCounterType.Siege);
+		service.ApplyZoneEnter(1001, "pvp-zone", CreaturePvpZoneCounterType.Pvp);
+		service.ApplyZoneEnter(1001, "siege-zone", CreaturePvpZoneCounterType.Siege);
 
 		var removed = service.ClearCounters(1001);
+		var ignoredLeave = service.ApplyZoneLeave(1001, "pvp-zone", CreaturePvpZoneCounterType.Pvp);
 
 		Assert.True(removed);
 		Assert.Equal(CreaturePvpZoneCounters.Empty, service.GetCounters(1001));
+		Assert.Equal(CreaturePvpZoneMembershipTransitionStatus.NotInside, ignoredLeave.Status);
 		Assert.False(service.ClearCounters(1001));
+	}
+
+	[Fact]
+	public void ApplyZoneEnterIgnoresDuplicateZoneMembership()
+	{
+		var service = new CreaturePvpZoneCounterService();
+
+		var entered = service.ApplyZoneEnter(1001, "pvp-zone", CreaturePvpZoneCounterType.Pvp);
+		var duplicateEnter = service.ApplyZoneEnter(1001, "pvp-zone", CreaturePvpZoneCounterType.Pvp);
+		var left = service.ApplyZoneLeave(1001, "pvp-zone", CreaturePvpZoneCounterType.Pvp);
+		var duplicateLeave = service.ApplyZoneLeave(1001, "pvp-zone", CreaturePvpZoneCounterType.Pvp);
+
+		Assert.Equal(CreaturePvpZoneMembershipTransitionStatus.Entered, entered.Status);
+		Assert.True(entered.Applied);
+		Assert.Equal(1, entered.Counters.PvpZoneCount);
+		Assert.Equal(CreaturePvpZoneMembershipTransitionStatus.AlreadyInside, duplicateEnter.Status);
+		Assert.False(duplicateEnter.Applied);
+		Assert.Equal(1, duplicateEnter.Counters.PvpZoneCount);
+		Assert.Equal(CreaturePvpZoneMembershipTransitionStatus.Left, left.Status);
+		Assert.True(left.Applied);
+		Assert.Equal(0, left.Counters.PvpZoneCount);
+		Assert.Equal(CreaturePvpZoneMembershipTransitionStatus.NotInside, duplicateLeave.Status);
+		Assert.False(duplicateLeave.Applied);
+	}
+
+	[Fact]
+	public void ApplyZoneMembershipTracksNestedDifferentZones()
+	{
+		var service = new CreaturePvpZoneCounterService();
+
+		var firstZone = service.ApplyZoneEnter(1001, "pvp-zone-a", CreaturePvpZoneCounterType.Pvp);
+		var secondZone = service.ApplyZoneEnter(1001, "pvp-zone-b", CreaturePvpZoneCounterType.Pvp);
+		var afterLeavingFirst = service.ApplyZoneLeave(1001, "pvp-zone-a", CreaturePvpZoneCounterType.Pvp);
+
+		Assert.Equal(1, firstZone.Counters.PvpZoneCount);
+		Assert.False(firstZone.Counters.IsInsidePvpZone);
+		Assert.Equal(2, secondZone.Counters.PvpZoneCount);
+		Assert.True(secondZone.Counters.IsInsidePvpZone);
+		Assert.Equal(1, afterLeavingFirst.Counters.PvpZoneCount);
+		Assert.False(afterLeavingFirst.Counters.IsInsidePvpZone);
 	}
 }
