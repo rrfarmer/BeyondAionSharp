@@ -229,8 +229,12 @@ public sealed class WorldNpcResourceStatsService
 					? await ReducePlayerFpAsync(target.Player, target.MaxHp.Value, target.MaxFp.Value, value, skillId, packetType, packetLog, cancellationToken)
 					: await IncreasePlayerFpAsync(target.Player, target.MaxHp.Value, target.MaxFp.Value, value, skillId, packetType, packetLog, cancellationToken);
 				return WorldNpcResourceEffectApplicationResult.FromChange(change, skillId);
-			case WorldNpcEffectResourceType.Hp:
 			case WorldNpcEffectResourceType.Dp:
+				if (target.Player == null)
+					return WorldNpcResourceEffectApplicationResult.MissingTarget(resourceType, skillId);
+				change = AddPlayerDp(target.Player, value, target.MaxDp);
+				return WorldNpcResourceEffectApplicationResult.FromChange(change, skillId);
+			case WorldNpcEffectResourceType.Hp:
 			default:
 				return WorldNpcResourceEffectApplicationResult.UnsupportedResource(resourceType, skillId);
 		}

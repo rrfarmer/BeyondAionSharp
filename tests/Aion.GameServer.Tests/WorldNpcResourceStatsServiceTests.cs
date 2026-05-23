@@ -270,6 +270,61 @@ public sealed class WorldNpcResourceStatsServiceTests
 		Assert.Null(result.Change);
 	}
 
+	[Fact]
+	public async Task ApplyResourceOverTimePeriodicResultAsync_AddsDpFromStagedDpHealWithPacketIntents()
+	{
+		var service = CreateService(out _, out _);
+		var skillDamage = CreateSkillDamageService();
+		var player = CreatePlayer(objectId: 1008, currentHp: 100, currentMp: 40, currentFp: 100, dp: 3800);
+		player.IsOnline = true;
+		var staged = skillDamage.ApplyResourceOverTimePeriodicAction(new WorldNpcSkillResourceOverTimePeriodicActionRequest(
+			WorldNpcSkillResourceOverTimeEffectKind.DpHeal,
+			Value: 300,
+			SkillId: 7405,
+			CurrentResource: 3800,
+			MaxResource: 4000,
+			TargetIsPlayer: true));
+
+		var result = await service.ApplyResourceOverTimePeriodicResultAsync(
+			staged,
+			new WorldNpcResourceMutationTarget(Player: player, MaxDp: 4000));
+
+		Assert.Equal(WorldNpcResourceEffectApplicationStatus.Applied, result.Status);
+		Assert.NotNull(result.Change);
+		Assert.Equal(WorldNpcEffectResourceType.Dp, result.ResourceType);
+		Assert.Equal(7405, result.SkillId);
+		Assert.Equal(WorldNpcResourceChangeStatus.Increased, result.Change.Status);
+		Assert.Equal(200, result.Change.AppliedValue);
+		Assert.Equal(4000, result.Change.CurrentValue);
+		Assert.Equal(4000, player.Dp);
+		Assert.True(result.Change.BroadcastDpInfo);
+		Assert.True(result.Change.SendDpStatUpdate);
+		Assert.True(result.Change.UpdateStatsAndSpeedVisually);
+		Assert.Null(result.Change.AttackStatusPacket);
+	}
+
+	[Fact]
+	public async Task ApplyResourceOverTimePeriodicResultAsync_KeepsHpHealUnsupportedUntilHpBoundaryExists()
+	{
+		var service = CreateService(out _, out _);
+		var skillDamage = CreateSkillDamageService();
+		var player = CreatePlayer(objectId: 1009, currentHp: 80, currentMp: 40, currentFp: 100);
+		var staged = skillDamage.ApplyResourceOverTimePeriodicAction(new WorldNpcSkillResourceOverTimePeriodicActionRequest(
+			WorldNpcSkillResourceOverTimeEffectKind.HpHeal,
+			Value: 30,
+			SkillId: 7406,
+			CurrentResource: 80,
+			MaxResource: 100));
+
+		var result = await service.ApplyResourceOverTimePeriodicResultAsync(
+			staged,
+			new WorldNpcResourceMutationTarget(Player: player, MaxHp: 100));
+
+		Assert.Equal(WorldNpcResourceEffectApplicationStatus.UnsupportedResource, result.Status);
+		Assert.Equal(WorldNpcEffectResourceType.Hp, result.ResourceType);
+		Assert.Null(result.Change);
+	}
+
 	private static WorldNpcResourceStatsService CreateService(
 		out WorldNpcLifeStatsService lifeStats,
 		out CapturingConnectionRegistry registry)
