@@ -1046,7 +1046,12 @@ public sealed class GameServerConnection : BaseClientConnection
 		await SendPacketAsync(new SmPlayerInfo(player, staticData?.PlayerExperienceTable));
 		await SendPacketAsync(CreateAccountPropertiesPacket());
 		await SendPacketAsync(new SmMotion(player.ObjectId, player.Motions));
-		await PlayerLevelReadyFlightNotifier.NotifyIfFlyingAsync(player, _connectionRegistry);
+		await PlayerLevelReadyFlightNotifier.NotifyIfFlyingAsync(
+			player,
+			_connectionRegistry,
+			_connectionRegistry == null
+				? null
+				: new PlayerVisualStatsUpdateService(_connectionRegistry, _runtimeContext, _gameTimeService));
 		await SendPacketAsync(SmCubeUpdate.CubeSize(player));
 	}
 

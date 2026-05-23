@@ -206,22 +206,34 @@ public sealed class PlayerVisualStatsUpdateServiceTests
 	public async Task LevelReadyFlightNotifier_RestartsFlyingAndBroadcastsFlyEmotion()
 	{
 		var registry = new CapturingConnectionRegistry();
+		var visualStats = new PlayerVisualStatsUpdateService(registry);
 		var player = CreatePlayer(6111);
 		player.SetFlyState(PlayerFlyState.Flying);
 
-		var result = await PlayerLevelReadyFlightNotifier.NotifyIfFlyingAsync(player, registry);
+		var result = await PlayerLevelReadyFlightNotifier.NotifyIfFlyingAsync(player, registry, visualStats);
 
 		Assert.True(result.WasFlying);
 		Assert.True(player.IsInFlyingState());
 		Assert.True(player.IsInState(PlayerCreatureState.Flying));
 		Assert.True(player.IsFpReduceActive);
+		Assert.NotNull(result.VisualStatsUpdate);
+		Assert.Equal(PlayerVisualStatsUpdateStatus.StatsAndSpeedSent, result.VisualStatsUpdate.Status);
+		Assert.True(result.VisualStatsUpdate.StatsPacketSent);
+		Assert.NotNull(result.VisualStatsUpdate.SpeedPacket);
 		Assert.NotNull(result.Packet);
 		Assert.Equal(1, result.BroadcastCount);
-		var broadcast = Assert.Single(registry.Broadcasts);
-		Assert.Equal(player.Position, broadcast.SourcePosition);
-		Assert.Equal(player.ObjectId, broadcast.SourceObjectId);
-		Assert.True(broadcast.IncludeSourcePlayer);
-		Assert.Same(result.Packet, broadcast.Packet);
+		Assert.Collection(
+			registry.PacketOrder,
+			packet => Assert.Same(result.VisualStatsUpdate.StatsPacket, packet),
+			packet => Assert.Same(result.VisualStatsUpdate.SpeedPacket, packet),
+			packet => Assert.Same(result.Packet, packet));
+		Assert.Equal(2, registry.Broadcasts.Count);
+		var flyBroadcast = registry.Broadcasts[1];
+		var flyPacket = Assert.IsType<SmEmotion>(flyBroadcast.Packet);
+		Assert.Same(result.Packet, flyPacket);
+		Assert.Equal(player.Position, flyBroadcast.SourcePosition);
+		Assert.Equal(player.ObjectId, flyBroadcast.SourceObjectId);
+		Assert.True(flyBroadcast.IncludeSourcePlayer);
 
 		using var reader = new PacketBuffer(SerializeUnencryptedPayload(result.Packet));
 		Assert.Equal(player.ObjectId, reader.ReadD());
@@ -234,7 +246,8 @@ public sealed class PlayerVisualStatsUpdateServiceTests
 		Assert.False(skipped.WasFlying);
 		Assert.Null(skipped.Packet);
 		Assert.Equal(0, skipped.BroadcastCount);
-		Assert.Single(registry.Broadcasts);
+		Assert.Null(skipped.VisualStatsUpdate);
+		Assert.Equal(2, registry.Broadcasts.Count);
 	}
 
 	[Fact]
