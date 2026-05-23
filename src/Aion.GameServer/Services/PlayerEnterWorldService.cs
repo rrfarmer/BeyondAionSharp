@@ -12,6 +12,7 @@ public sealed class PlayerEnterWorldService
 	private readonly GameServerOptions _options;
 	private readonly IPlayerEnterWorldRepository _repository;
 	private readonly GameWorld _world;
+	private readonly WorldNpcResourceStatsService? _resourceStats;
 	private readonly ConcurrentDictionary<int, byte> _enteringWorld = new();
 	private readonly ILogger<PlayerEnterWorldService> _logger;
 
@@ -19,11 +20,13 @@ public sealed class PlayerEnterWorldService
 		GameServerOptions options,
 		IPlayerEnterWorldRepository repository,
 		GameWorld world,
-		ILogger<PlayerEnterWorldService> logger)
+		ILogger<PlayerEnterWorldService> logger,
+		WorldNpcResourceStatsService? resourceStats = null)
 	{
 		_options = options;
 		_repository = repository;
 		_world = world;
+		_resourceStats = resourceStats;
 		_logger = logger;
 	}
 
@@ -96,7 +99,7 @@ public sealed class PlayerEnterWorldService
 			}
 
 			player.IsOnline = true;
-			ApplyOfflineDpReset(player, previousLastOnline, now);
+			await ApplyOfflineDpResetAsync(player, previousLastOnline, now);
 			player.LastOnline = now;
 			_logger.LogInformation("Player {PlayerName} ({PlayerObjectId}) logged on", player.Name, playerObjectId);
 			return new PlayerEnterWorldResult(EnterWorldCheckMessage.Ok, player);
@@ -653,7 +656,7 @@ public sealed class PlayerEnterWorldService
 			&& DateTime.Now - lastOnline.Value < TimeSpan.FromSeconds(_options.Core.CharacterReentryTimeSeconds);
 	}
 
-	private static void ApplyOfflineDpReset(Player player, DateTime? previousLastOnline, DateTime now)
+	private async ValueTask ApplyOfflineDpResetAsync(Player player, DateTime? previousLastOnline, DateTime now)
 	{
 		// Java parity: services/player/PlayerEnterWorldService.enterWorld -> PlayerCommonData.setDp(0) after >5 minutes offline.
 		if (!previousLastOnline.HasValue
@@ -661,7 +664,13 @@ public sealed class PlayerEnterWorldService
 			|| IsStartingClass(player.PlayerClass))
 			return;
 
-		player.Dp = 0;
+		if (_resourceStats == null)
+		{
+			player.Dp = 0;
+			return;
+		}
+
+		await _resourceStats.AddPlayerDpAsync(player, -player.Dp, maxDp: Math.Max(0, player.Dp));
 	}
 
 	private static bool IsStartingClass(string playerClass)
