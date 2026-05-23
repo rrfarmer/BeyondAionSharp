@@ -335,8 +335,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleLevelReadyAsync(_activePlayer);
 				break;
-			case CmRevive:
-				// Java parity: network/aion/clientpackets/CM_REVIVE.runImpl dispatches PlayerReviveService; deferred until revive/combat state is ported.
+			case CmRevive revive:
+				if (_activePlayer != null)
+					await HandleReviveAsync(_activePlayer, revive);
 				break;
 			case CmRejectRevive:
 				// Java parity: network/aion/clientpackets/CM_REJECT_REVIVE.runImpl has no side effect.
@@ -4712,6 +4713,14 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (cancellationToken.IsCancellationRequested || _world == null || _runtimeContext == null)
 			return;
 
+		await RemoveRuntimeKiskAsync(kiskObjectId);
+	}
+
+	private async Task RemoveRuntimeKiskAsync(int kiskObjectId)
+	{
+		if (_world == null || _runtimeContext == null)
+			return;
+
 		var result = PlayerKiskLifetimeService.DespawnExpiredKisk(_world, _runtimeContext.Kisks, _idFactory, kiskObjectId);
 		if (!result.RemovedRegistry)
 			return;
@@ -4721,6 +4730,29 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		if (_connectionRegistry != null && result.WorldId.HasValue)
 			await _connectionRegistry.RefreshNpcVisibilityAsync(_world.GetNpcs(result.WorldId.Value));
+	}
+
+	private async Task HandleReviveAsync(Player player, CmRevive packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_REVIVE.runImpl routes ReviveType.KISK_REVIVE to PlayerReviveService.kiskRevive.
+		if (packet.ReviveId != PlayerKiskReviveService.KiskReviveId)
+			return;
+
+		var result = PlayerKiskReviveService.TryUseKiskRevive(
+			player,
+			_runtimeContext?.Kisks,
+			kiskObjectId => TryGetKiskPosition(kiskObjectId, out var position) ? position : null);
+		if (!result.UsedKisk || result.Kisk == null || result.KiskPosition == null)
+			return;
+
+		await SendPacketAsync(new SmKiskUpdate(result.Kisk));
+		await BroadcastKiskUpdateAsync(result.Kisk, result.KiskPosition.Value, excludedPlayerObjectId: player.ObjectId);
+		if (result.ShouldDeleteKisk)
+			await RemoveRuntimeKiskAsync(result.Kisk.ObjectId);
+
+		// Full Java PlayerReviveService.revive + TeleportService.teleportTo side effects remain queued:
+		// HP/MP percentage restore, DP/soul-sickness handling, stats/speed refresh, resurrection emotion,
+		// and teleport packet/state synchronization need the broader revive/teleport model.
 	}
 
 	private async Task ApplyRemovedKiskCleanupAsync(PlayerKiskDespawnResult result)
