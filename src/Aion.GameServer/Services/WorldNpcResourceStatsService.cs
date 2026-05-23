@@ -743,6 +743,7 @@ public sealed class WorldNpcResourceStatsService
 			shouldSendPacket,
 			cancellationToken,
 			usesNegativeValue: kind == WorldNpcResourceChangeKind.Reduce);
+		var (flyTimePacket, flyTimeSent) = await SendFlyTimeUpdateAsync(player, currentFp, normalizedMaxFp, shouldSendFlyTimeUpdate && player.IsOnline);
 		return WorldNpcResourceChangeResult.FromResourceMutation(
 			GetStatus(kind, previousFp, currentFp),
 			player.ObjectId,
@@ -757,7 +758,9 @@ public sealed class WorldNpcResourceStatsService
 			packetLog,
 			packet,
 			broadcastCount,
-			SendFlyTimeUpdate: shouldSendFlyTimeUpdate);
+			SendFlyTimeUpdate: shouldSendFlyTimeUpdate,
+			FlyTimePacket: flyTimePacket,
+			FlyTimeSent: flyTimeSent);
 	}
 
 	private async ValueTask<(SmAttackStatus? Packet, int BroadcastCount)> BroadcastAttackStatusAsync(
@@ -824,6 +827,24 @@ public sealed class WorldNpcResourceStatsService
 			return (null, false);
 
 		var packet = new SmStatUpdateMp(currentMp, maxMp);
+		if (_connectionRegistry == null)
+			return (packet, false);
+
+		var sent = await _connectionRegistry.SendPacketToPlayerAsync(player.ObjectId, packet);
+		return (packet, sent);
+	}
+
+	private async ValueTask<(SmFlyTime? Packet, bool Sent)> SendFlyTimeUpdateAsync(
+		Player player,
+		int currentFp,
+		int maxFp,
+		bool shouldSend)
+	{
+		// Java parity: model/stats/container/PlayerLifeStats.sendFpPacketUpdate.
+		if (!shouldSend)
+			return (null, false);
+
+		var packet = new SmFlyTime(currentFp, maxFp);
 		if (_connectionRegistry == null)
 			return (packet, false);
 
@@ -979,6 +1000,8 @@ public sealed record WorldNpcResourceChangeResult(
 	bool SendMpStatUpdate = false,
 	SmStatUpdateMp? MpStatUpdatePacket = null,
 	bool MpStatUpdateSent = false,
+	SmFlyTime? FlyTimePacket = null,
+	bool FlyTimeSent = false,
 	bool SendGroupStatUpdate = false,
 	bool TriggerRestoreTask = false,
 	bool TriggerFpRestore = false,
@@ -1048,6 +1071,8 @@ public sealed record WorldNpcResourceChangeResult(
 		bool SendMpStatUpdate = false,
 		SmStatUpdateMp? MpStatUpdatePacket = null,
 		bool MpStatUpdateSent = false,
+		SmFlyTime? FlyTimePacket = null,
+		bool FlyTimeSent = false,
 		bool SendGroupStatUpdate = false,
 		bool TriggerRestoreTask = false,
 		bool TriggerFpRestore = false,
@@ -1080,6 +1105,8 @@ public sealed record WorldNpcResourceChangeResult(
 			SendMpStatUpdate,
 			MpStatUpdatePacket,
 			MpStatUpdateSent,
+			FlyTimePacket,
+			FlyTimeSent,
 			SendGroupStatUpdate,
 			TriggerRestoreTask,
 			TriggerFpRestore,

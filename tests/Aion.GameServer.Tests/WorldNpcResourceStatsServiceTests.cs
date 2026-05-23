@@ -327,6 +327,7 @@ public sealed class WorldNpcResourceStatsServiceTests
 	{
 		var service = CreateService(out _, out var registry);
 		var player = CreatePlayer(objectId: 1001, currentHp: 80, currentMp: 40, currentFp: 10);
+		player.IsOnline = true;
 
 		var result = await service.ReducePlayerFpAsync(player, maxHp: 100, maxFp: 100, value: 25, skillId: 7304);
 
@@ -336,6 +337,10 @@ public sealed class WorldNpcResourceStatsServiceTests
 		Assert.Equal(0, result.CurrentValue);
 		Assert.Equal(10, result.AppliedValue);
 		Assert.True(result.SendFlyTimeUpdate);
+		Assert.True(result.FlyTimeSent);
+		Assert.NotNull(result.FlyTimePacket);
+		Assert.Equal(0, result.FlyTimePacket.CurrentFp);
+		Assert.Equal(100, result.FlyTimePacket.MaxFp);
 		Assert.NotNull(result.AttackStatusPacket);
 		Assert.Equal(SmAttackStatusType.FpDamage, result.AttackStatusPacket.Type);
 		Assert.Equal(SmAttackStatusLog.FpAttack, result.AttackStatusPacket.Log);
@@ -343,6 +348,9 @@ public sealed class WorldNpcResourceStatsServiceTests
 		Assert.Equal(80, result.AttackStatusPacket.HpOrMpPercentage);
 		Assert.Equal(0, player.LifeStats!.CurrentFp);
 		Assert.Single(registry.Broadcasts);
+		var delivery = Assert.Single(registry.SentPackets);
+		Assert.Equal(player.ObjectId, delivery.PlayerObjectId);
+		Assert.Same(result.FlyTimePacket, delivery.Packet);
 	}
 
 	[Fact]
@@ -350,6 +358,7 @@ public sealed class WorldNpcResourceStatsServiceTests
 	{
 		var service = CreateService(out _, out var registry);
 		var player = CreatePlayer(objectId: 1002, currentHp: 100, currentMp: 50, currentFp: 90);
+		player.IsOnline = true;
 
 		var capped = await service.IncreasePlayerFpAsync(player, maxHp: 100, maxFp: 100, value: 25, skillId: 7305);
 
@@ -358,6 +367,10 @@ public sealed class WorldNpcResourceStatsServiceTests
 		Assert.Equal(100, capped.CurrentValue);
 		Assert.Equal(10, capped.AppliedValue);
 		Assert.True(capped.SendFlyTimeUpdate);
+		Assert.True(capped.FlyTimeSent);
+		Assert.NotNull(capped.FlyTimePacket);
+		Assert.Equal(100, capped.FlyTimePacket.CurrentFp);
+		Assert.Equal(100, capped.FlyTimePacket.MaxFp);
 		Assert.NotNull(capped.AttackStatusPacket);
 		Assert.Equal(SmAttackStatusType.Fp, capped.AttackStatusPacket.Type);
 		Assert.Equal(SmAttackStatusLog.FpHeal, capped.AttackStatusPacket.Log);
@@ -367,8 +380,13 @@ public sealed class WorldNpcResourceStatsServiceTests
 
 		Assert.Equal(WorldNpcResourceChangeStatus.NoChange, full.Status);
 		Assert.False(full.SendFlyTimeUpdate);
+		Assert.Null(full.FlyTimePacket);
+		Assert.False(full.FlyTimeSent);
 		Assert.Null(full.AttackStatusPacket);
 		Assert.Single(registry.Broadcasts);
+		var delivery = Assert.Single(registry.SentPackets);
+		Assert.Equal(player.ObjectId, delivery.PlayerObjectId);
+		Assert.Same(capped.FlyTimePacket, delivery.Packet);
 	}
 
 	[Fact]
@@ -451,6 +469,7 @@ public sealed class WorldNpcResourceStatsServiceTests
 		var service = CreateService(out _, out _);
 		var skillDamage = CreateSkillDamageService();
 		var player = CreatePlayer(objectId: 1006, currentHp: 100, currentMp: 40, currentFp: 80);
+		player.IsOnline = true;
 		var staged = skillDamage.ApplyResourceOverTimePeriodicAction(new WorldNpcSkillResourceOverTimePeriodicActionRequest(
 			WorldNpcSkillResourceOverTimeEffectKind.FpHeal,
 			Value: 25,
@@ -469,6 +488,10 @@ public sealed class WorldNpcResourceStatsServiceTests
 		Assert.Equal(20, result.Change.AppliedValue);
 		Assert.Equal(100, player.LifeStats!.CurrentFp);
 		Assert.True(result.Change.SendFlyTimeUpdate);
+		Assert.True(result.Change.FlyTimeSent);
+		Assert.NotNull(result.Change.FlyTimePacket);
+		Assert.Equal(100, result.Change.FlyTimePacket.CurrentFp);
+		Assert.Equal(100, result.Change.FlyTimePacket.MaxFp);
 		Assert.NotNull(result.Change.AttackStatusPacket);
 		Assert.Equal(SmAttackStatusType.Fp, result.Change.AttackStatusPacket.Type);
 		Assert.Equal(SmAttackStatusLog.FpHeal, result.Change.AttackStatusPacket.Log);
