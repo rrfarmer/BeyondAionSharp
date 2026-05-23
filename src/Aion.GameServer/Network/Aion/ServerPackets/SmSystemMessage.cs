@@ -225,6 +225,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300980, banPersonName, playerName);
 	}
 
+	public static SmSystemMessage LeaveInstanceNotParty()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LEAVE_INSTANCE_NOT_PARTY.
+		return new SmSystemMessage(1400042);
+	}
+
 	public static SmSystemMessage EnterOnlyUnionDon()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ENTER_ONLY_UNION_DON.

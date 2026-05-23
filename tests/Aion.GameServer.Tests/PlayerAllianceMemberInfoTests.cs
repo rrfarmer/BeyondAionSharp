@@ -736,6 +736,45 @@ public sealed class PlayerAllianceMemberInfoTests
 	}
 
 	[Fact]
+	public void BaseLeavePlanner_PlansOnlineLeavePacketsAndInstanceKickBoundaryLikeJavaPlayerLeavedEvent()
+	{
+		var planner = new PlayerBaseLeavePlanner();
+
+		var plan = planner.CreateLeaveSideEffectPlan(
+			playerObjectId: 1002,
+			isOnline: true,
+			wasRegisteredToTeamInstance: true);
+
+		Assert.Equal(1002, plan.PlayerObjectId);
+		Assert.True(plan.IsOnline);
+		Assert.True(plan.WasRegisteredToTeamInstance);
+		Assert.True(plan.WouldScheduleInstanceKick);
+		Assert.Equal(TimeSpan.FromSeconds(30), plan.InstanceKickDelay);
+		Assert.True(plan.WouldNotifyEventServiceOnLeftTeam);
+		Assert.Collection(
+			plan.PacketIntents,
+			intent => AssertBaseLeavePacketIntent(intent, sequence: 0, recipientObjectId: 1002),
+			intent => AssertBaseLeaveSystemMessageIntent(intent, sequence: 1, recipientObjectId: 1002, expectedMessageId: 1400042));
+	}
+
+	[Fact]
+	public void BaseLeavePlanner_OfflineLeaveOnlyNotifiesEventServiceLikeJavaPlayerLeavedEvent()
+	{
+		var planner = new PlayerBaseLeavePlanner();
+
+		var plan = planner.CreateLeaveSideEffectPlan(
+			playerObjectId: 1002,
+			isOnline: false,
+			wasRegisteredToTeamInstance: true);
+
+		Assert.False(plan.IsOnline);
+		Assert.Empty(plan.PacketIntents);
+		Assert.False(plan.WouldScheduleInstanceKick);
+		Assert.Null(plan.InstanceKickDelay);
+		Assert.True(plan.WouldNotifyEventServiceOnLeftTeam);
+	}
+
+	[Fact]
 	public void SmAllianceMemberInfo_RewritesOfflineEnterToEnterOfflineLikeJava()
 	{
 		var member = new Player
@@ -1113,6 +1152,37 @@ public sealed class PlayerAllianceMemberInfoTests
 		Assert.Equal(PlayerAlliancePacketIntentKind.SystemMessage, intent.Kind);
 		Assert.Null(intent.AllianceInfoPlan);
 		Assert.Null(intent.MemberInfoPlan);
+		var message = Assert.IsType<SmSystemMessage>(intent.CreatePacket());
+		Assert.Equal(expectedMessageId, message.MessageId);
+	}
+
+	private static void AssertBaseLeavePacketIntent(
+		PlayerBaseLeavePacketIntent intent,
+		int sequence,
+		int recipientObjectId)
+	{
+		Assert.Equal(sequence, intent.Sequence);
+		Assert.Equal(recipientObjectId, intent.RecipientObjectId);
+		Assert.Equal(PlayerBaseLeavePacketIntentKind.LeaveGroupMember, intent.Kind);
+		var packet = Assert.IsType<SmLeaveGroupMember>(intent.CreatePacket());
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0x3F, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertBaseLeaveSystemMessageIntent(
+		PlayerBaseLeavePacketIntent intent,
+		int sequence,
+		int recipientObjectId,
+		int expectedMessageId)
+	{
+		Assert.Equal(sequence, intent.Sequence);
+		Assert.Equal(recipientObjectId, intent.RecipientObjectId);
+		Assert.Equal(PlayerBaseLeavePacketIntentKind.SystemMessage, intent.Kind);
 		var message = Assert.IsType<SmSystemMessage>(intent.CreatePacket());
 		Assert.Equal(expectedMessageId, message.MessageId);
 	}
