@@ -92,6 +92,63 @@ public sealed class WorldNpcDropRegistrationWorkflowServiceTests
 		Assert.Null(result.Fanout);
 	}
 
+	[Fact]
+	public async Task RegisterCustomDropsAsync_RegistersQuestDropsWhenCustomDropsAreEmpty()
+	{
+		var dropRegistration = new WorldNpcDropRegistrationService();
+		var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		try
+		{
+			var lootService = new WorldNpcLootService(dropRegistration, threadPoolManager: threadPoolManager);
+			var registry = new CapturingConnectionRegistry();
+			registry.OnlinePlayerObjectIds.Add(1001);
+			var workflow = new WorldNpcDropRegistrationWorkflowService(
+				new WorldNpcCustomDropService(new CustomNpcDropTable([])),
+				dropRegistration,
+				new WorldNpcLootBroadcastService(lootService, registry),
+				questDropService: new WorldNpcQuestDropService(
+					new QuestDropTable(
+					[
+						new QuestDropSummary(
+							9100,
+							203001,
+							182200001,
+							Chance: 100,
+							DropEachMember: 0,
+							CollectingStep: 0,
+							Target: "NONE",
+							MentorType: "NONE",
+							CollectItems: []),
+					]),
+					chanceRoll: () => 0f));
+			var looter = new Player
+			{
+				ObjectId = 1001,
+				Race = "ELYOS",
+				Quests = [new PlayerQuestState(9100, "START", QuestVars: 0, Flags: 0, CompleteCount: 0)],
+			};
+
+			var result = await workflow.RegisterCustomDropsAsync(
+				CreateNpc(5001, 203001),
+				looter,
+				freeForAllDelay: TimeSpan.FromMilliseconds(10));
+
+			Assert.Equal(WorldNpcDropRegistrationWorkflowStatus.Registered, result.Status);
+			var drop = Assert.Single(result.Drops);
+			Assert.Equal(1, drop.Index);
+			Assert.Equal(182200001, drop.ItemId);
+			Assert.True(drop.CanViewDropItem(1001));
+			Assert.Equal(result.Drops, dropRegistration.GetCurrentDrops(5001));
+			Assert.True(dropRegistration.TryGetRegistration(5001, out var registration));
+			Assert.True(registration!.IsAllowedToLoot(1001));
+			Assert.Single(registry.SentPackets);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
 	private static WorldNpc CreateNpc(int objectId, int templateId)
 	{
 		return new WorldNpc(

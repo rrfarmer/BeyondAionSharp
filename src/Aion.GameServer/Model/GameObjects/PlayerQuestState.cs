@@ -30,6 +30,12 @@ public sealed record PlayerQuestState(
 		return QuestVars | (Flags << 24);
 	}
 
+	public int GetQuestVarById(int id)
+	{
+		// Java parity: questEngine/model/QuestVars stores six 6-bit quest vars in quest_vars.
+		return id is < 0 or > 5 ? 0 : (QuestVars >> (id * 6)) & 0x3F;
+	}
+
 	public int GetClientCompleteCount()
 	{
 		return Math.Min(CompleteCount, 255);

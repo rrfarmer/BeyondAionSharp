@@ -404,6 +404,17 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(174, staticData.CustomNpcDrops.Count);
 		Assert.Equal(2, staticData.CustomNpcDrops.GetNpcDrop(210582)?.Groups.Count);
 		Assert.Equal(182400001, staticData.CustomNpcDrops.GetNpcDrop(212928)?.Groups[0].Drops[0].ItemId);
+		Assert.Equal(staticData.GetElementCount("quest_drop"), staticData.QuestDrops.Count);
+		Assert.Equal(6090, staticData.QuestDrops.Count);
+		var kerubimDrop = Assert.Single(staticData.QuestDrops.GetQuestDrops(210671));
+		Assert.Equal(1001, kerubimDrop.QuestId);
+		Assert.Equal(182200001, kerubimDrop.ItemId);
+		Assert.Equal(100, kerubimDrop.Chance);
+		Assert.Equal(1, kerubimDrop.DropEachMember);
+		Assert.Equal(7, kerubimDrop.CollectingStep);
+		var kerubimCollectItem = Assert.Single(kerubimDrop.CollectItems);
+		Assert.Equal(182200001, kerubimCollectItem.ItemId);
+		Assert.Equal(3, kerubimCollectItem.Count);
 		Assert.Equal(staticData.GetElementCount("instance_cooltime"), staticData.InstanceCooltimes.Count);
 		Assert.Equal("SWORD", staticData.ItemTemplates.GetItemTemplate(100000001)?.ItemGroup);
 		Assert.Equal([37, 44], staticData.ItemTemplates.GetItemTemplate(100000001)?.RequiredEquipSkills);

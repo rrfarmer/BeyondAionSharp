@@ -18,6 +18,7 @@ public sealed class WorldNpcDeathDropWorkflowService
 	public async ValueTask<WorldNpcDeathDropWorkflowResult> HandleCustomDropDeathAsync(
 		IWorldNpcObject? npc,
 		Player? looter,
+		IReadOnlyList<Player>? groupMembers = null,
 		TimeSpan? freeForAllDelay = null,
 		TimeSpan? decayDelay = null,
 		CancellationToken cancellationToken = default)
@@ -30,6 +31,7 @@ public sealed class WorldNpcDeathDropWorkflowService
 		var dropRegistration = await _dropRegistrationWorkflow.RegisterCustomDropsAsync(
 			npc,
 			looter,
+			groupMembers,
 			freeForAllDelay: freeForAllDelay,
 			cancellationToken: cancellationToken);
 		var decayScheduled = _spawnService.TryScheduleWorldNpcDecayTask(npc.ObjectId, decayDelay);

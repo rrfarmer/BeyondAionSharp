@@ -8,22 +8,26 @@ public sealed class WorldNpcDropRegistrationWorkflowService
 	private readonly WorldNpcDropRegistrationService _dropRegistrationService;
 	private readonly WorldNpcLootBroadcastService _lootBroadcastService;
 	private readonly WorldNpcDropModifierService _dropModifierService;
+	private readonly WorldNpcQuestDropService? _questDropService;
 
 	public WorldNpcDropRegistrationWorkflowService(
 		WorldNpcCustomDropService customDropService,
 		WorldNpcDropRegistrationService dropRegistrationService,
 		WorldNpcLootBroadcastService lootBroadcastService,
-		WorldNpcDropModifierService? dropModifierService = null)
+		WorldNpcDropModifierService? dropModifierService = null,
+		WorldNpcQuestDropService? questDropService = null)
 	{
 		_customDropService = customDropService;
 		_dropRegistrationService = dropRegistrationService;
 		_lootBroadcastService = lootBroadcastService;
 		_dropModifierService = dropModifierService ?? new WorldNpcDropModifierService();
+		_questDropService = questDropService;
 	}
 
 	public async ValueTask<WorldNpcDropRegistrationWorkflowResult> RegisterCustomDropsAsync(
 		IWorldNpcObject? npc,
 		Player? looter,
+		IReadOnlyList<Player>? groupMembers = null,
 		WorldNpcDropModifiers? dropModifiers = null,
 		int? highestLevel = null,
 		TimeSpan? freeForAllDelay = null,
@@ -39,12 +43,15 @@ public sealed class WorldNpcDropRegistrationWorkflowService
 			npc.ObjectId,
 			npc.TemplateId,
 			dropModifiers ?? _dropModifierService.CreateModifiers(npc, looter, highestLevel));
-		if (generated.Drops.Count == 0)
+		var questDrops = _questDropService?.CreateDrops(npc, looter, groupMembers, generated.NextIndex)
+			?? WorldNpcQuestDropResult.Empty(generated.NextIndex);
+		var droppedItems = generated.Drops.Concat(questDrops.Drops).ToArray();
+		if (droppedItems.Length == 0)
 			return WorldNpcDropRegistrationWorkflowResult.Skipped(WorldNpcDropRegistrationWorkflowStatus.NoGeneratedDrops);
 
-		_dropRegistrationService.RegisterDrop(npc.ObjectId, looter.ObjectId, generated.Drops);
+		_dropRegistrationService.RegisterDrop(npc.ObjectId, looter.ObjectId, droppedItems, questDrops.AllowedLooterObjectIds);
 		var fanout = await _lootBroadcastService.StartRegisteredDropFanoutAsync(npc, freeForAllDelay, cancellationToken);
-		return WorldNpcDropRegistrationWorkflowResult.Registered(generated.Drops, fanout);
+		return WorldNpcDropRegistrationWorkflowResult.Registered(droppedItems, fanout);
 	}
 }
 
