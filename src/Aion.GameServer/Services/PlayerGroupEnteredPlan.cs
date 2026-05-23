@@ -8,6 +8,7 @@ public sealed record PlayerGroupEnteredPacketPlan(
 	bool SendGroupInfoToEnteringPlayer,
 	PlayerGroupInfoPacketPlan? GroupInfoPlan,
 	IReadOnlyList<PlayerGroupSystemMessageIntent> SystemMessageIntents,
+	IReadOnlyList<PlayerGroupMemberInfoIntent> MemberInfoIntents,
 	PlayerGroupBrandIntent? BrandIntent,
 	PlayerGroupAbyssRankUpdateIntent? AbyssRankUpdateIntent)
 {

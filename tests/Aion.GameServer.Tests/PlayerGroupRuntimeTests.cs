@@ -136,6 +136,7 @@ public sealed class PlayerGroupRuntimeTests
 		{
 			ObjectId = 1003,
 			Name = "NewMember",
+			IsOnline = true,
 			Position = new WorldPosition(220010000, 11, 22, 33, 64),
 		};
 		runtime.CreateOrUpdateGroup(99001, [leader, existingMember]);
@@ -174,6 +175,46 @@ public sealed class PlayerGroupRuntimeTests
 		Assert.Equal(0, groupInfoReader.ReadD());
 		Assert.Equal(string.Empty, groupInfoReader.ReadS());
 		Assert.Equal(0, groupInfoReader.Remaining);
+		Assert.Collection(
+			plan.MemberInfoIntents,
+			intent =>
+			{
+				Assert.Equal(1003, intent.RecipientObjectId);
+				Assert.Equal(1003, intent.SubjectObjectId);
+				Assert.Equal(PlayerGroupEvent.Join, intent.Event);
+				AssertMemberInfoPlan(intent.PacketPlan, 99001, 1003, PlayerGroupEvent.Join, PlayerGroupEvent.Join, isOnline: true, writesName: true, writesEffects: false);
+				AssertGroupMemberInfoJoinNamePayload(intent.CreatePacket(), "NewMember");
+			},
+			intent =>
+			{
+				Assert.Equal(1001, intent.RecipientObjectId);
+				Assert.Equal(1003, intent.SubjectObjectId);
+				Assert.Equal(PlayerGroupEvent.Enter, intent.Event);
+				AssertMemberInfoPlan(intent.PacketPlan, 99001, 1003, PlayerGroupEvent.Enter, PlayerGroupEvent.Enter, isOnline: true, writesName: true, writesEffects: true);
+				AssertZeroEffectMemberInfoPayload(Assert.IsType<PlayerGroupMemberInfoPacketPlan>(intent.PacketPlan), "NewMember");
+			},
+			intent =>
+			{
+				Assert.Equal(1003, intent.RecipientObjectId);
+				Assert.Equal(1001, intent.SubjectObjectId);
+				Assert.Equal(PlayerGroupEvent.Enter, intent.Event);
+				AssertMemberInfoPlan(intent.PacketPlan, 99001, 1001, PlayerGroupEvent.Enter, PlayerGroupEvent.EnterOffline, isOnline: false, writesName: true, writesEffects: false);
+			},
+			intent =>
+			{
+				Assert.Equal(1002, intent.RecipientObjectId);
+				Assert.Equal(1003, intent.SubjectObjectId);
+				Assert.Equal(PlayerGroupEvent.Enter, intent.Event);
+				AssertMemberInfoPlan(intent.PacketPlan, 99001, 1003, PlayerGroupEvent.Enter, PlayerGroupEvent.Enter, isOnline: true, writesName: true, writesEffects: true);
+				AssertZeroEffectMemberInfoPayload(Assert.IsType<PlayerGroupMemberInfoPacketPlan>(intent.PacketPlan), "NewMember");
+			},
+			intent =>
+			{
+				Assert.Equal(1003, intent.RecipientObjectId);
+				Assert.Equal(1002, intent.SubjectObjectId);
+				Assert.Equal(PlayerGroupEvent.Enter, intent.Event);
+				AssertMemberInfoPlan(intent.PacketPlan, 99001, 1002, PlayerGroupEvent.Enter, PlayerGroupEvent.EnterOffline, isOnline: false, writesName: true, writesEffects: false);
+			});
 		Assert.Collection(
 			plan.SystemMessageIntents,
 			intent =>
@@ -334,6 +375,7 @@ public sealed class PlayerGroupRuntimeTests
 		var loggingInMember = new Player
 		{
 			ObjectId = 1002,
+			Name = "Online",
 			IsOnline = true,
 			Position = new WorldPosition(210010000, 100, 200, 300, 32),
 		};
@@ -381,6 +423,7 @@ public sealed class PlayerGroupRuntimeTests
 				Assert.Equal(PlayerGroupEvent.Join, intent.Event);
 				Assert.Equal(5, (int)intent.Event);
 				AssertMemberInfoPlan(intent.PacketPlan, 99001, 1002, PlayerGroupEvent.Join, PlayerGroupEvent.Join, isOnline: true, writesName: true, writesEffects: false);
+				AssertGroupMemberInfoJoinNamePayload(intent.CreatePacket(), "Online");
 			},
 			intent =>
 			{
@@ -1007,6 +1050,15 @@ public sealed class PlayerGroupRuntimeTests
 			Assert.Equal(targetObjectId, reader.ReadD());
 		}
 
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertGroupMemberInfoJoinNamePayload(GameServerPacket? packet, string expectedName)
+	{
+		var actual = Assert.IsType<Network.Aion.ServerPackets.SmGroupMemberInfo>(packet);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(actual));
+		SkipGroupMemberInfoPrefix(reader);
+		Assert.Equal(expectedName, reader.ReadS());
 		Assert.Equal(0, reader.Remaining);
 	}
 

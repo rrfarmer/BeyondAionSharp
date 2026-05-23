@@ -79,6 +79,7 @@ public sealed class PlayerGroupRuntime
 				SendGroupInfoToEnteringPlayer: true,
 				PlayerGroupInfoPacketPlan.FromDescriptor(descriptor, enteringPlayer.Position.WorldId),
 				CreateEnteredSystemMessageIntents(enteringPlayer, members),
+				CreateEnteredMemberInfoIntents(teamId, enteringPlayer, members),
 				new PlayerGroupBrandIntent(enteringPlayer.ObjectId, GetBrandSnapshot(teamId)),
 				new PlayerGroupAbyssRankUpdateIntent(enteringPlayer.ObjectId, teamId, IncludeSelf: true));
 		}
@@ -321,6 +322,43 @@ public sealed class PlayerGroupRuntime
 				continue;
 
 			intents.Add(new PlayerGroupSystemMessageIntent(member.ObjectId, SmSystemMessage.PartyHeEnteredParty(enteringPlayer.Name)));
+		}
+
+		return intents;
+	}
+
+	private static IReadOnlyList<PlayerGroupMemberInfoIntent> CreateEnteredMemberInfoIntents(
+		int teamId,
+		Player enteringPlayer,
+		IReadOnlyList<PlayerGroupMember> members)
+	{
+		// Java parity: model/team/group/events/PlayerGroupEnteredEvent sends JOIN to entering player and ENTER pairs with existing members.
+		var enteringPlayerObjectId = enteringPlayer.ObjectId;
+		var enteringMember = members.First(member => member.ObjectId == enteringPlayerObjectId);
+		var intents = new List<PlayerGroupMemberInfoIntent>
+		{
+			new(
+				enteringPlayerObjectId,
+				enteringPlayerObjectId,
+				PlayerGroupEvent.Join,
+				PlayerGroupMemberInfoPacketPlan.FromMember(teamId, enteringMember, PlayerGroupEvent.Join)),
+		};
+
+		foreach (var member in members)
+		{
+			if (member.ObjectId == enteringPlayerObjectId)
+				continue;
+
+			intents.Add(new PlayerGroupMemberInfoIntent(
+				member.ObjectId,
+				enteringPlayerObjectId,
+				PlayerGroupEvent.Enter,
+				PlayerGroupMemberInfoPacketPlan.FromMember(teamId, enteringMember, PlayerGroupEvent.Enter)));
+			intents.Add(new PlayerGroupMemberInfoIntent(
+				enteringPlayerObjectId,
+				member.ObjectId,
+				PlayerGroupEvent.Enter,
+				PlayerGroupMemberInfoPacketPlan.FromMember(teamId, member, PlayerGroupEvent.Enter)));
 		}
 
 		return intents;

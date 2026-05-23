@@ -33,7 +33,14 @@ public sealed record PlayerGroupMemberInfoIntent(
 	int RecipientObjectId,
 	int SubjectObjectId,
 	PlayerGroupEvent Event,
-	PlayerGroupMemberInfoPacketPlan? PacketPlan = null);
+	PlayerGroupMemberInfoPacketPlan? PacketPlan = null)
+{
+	public SmGroupMemberInfo? CreatePacket()
+	{
+		// Java parity: callers send SM_GROUP_MEMBER_INFO when packet planning metadata is available.
+		return PacketPlan == null ? null : new SmGroupMemberInfo(PacketPlan);
+	}
+}
 
 public sealed record PlayerGroupMemberInfoPacketPlan(
 	int GroupId,
