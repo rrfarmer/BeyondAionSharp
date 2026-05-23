@@ -413,6 +413,97 @@ public sealed class PlayerEnterWorldServiceTests
 	}
 
 	[Fact]
+	public async Task PreparePortalEntry_PersistsRequirementsAndReturnsPacketsWithoutTeleporting()
+	{
+		var player = CreatePlayer();
+		player.Level = 25;
+		player.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 10, ItemId = 185000077, Count = 1, Location = 0 },
+			new InventoryItem { ObjectId = 11, ItemId = 185000077, Count = 3, Location = 0 },
+			new InventoryItem { ObjectId = 12, ItemId = KinahItemId, Count = 1_000, Location = 0 },
+		];
+		player.Position = new WorldPosition(PortalWorldId, 10, 20, 30, 40, InstanceId: 7);
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var service = CreateService(repository, CreateWorld());
+
+		var result = await service.PreparePortalEntryAsync(
+			player,
+			CreatePortalPath(kinah: 500, itemRequirements: [new PortalItemRequirementSummary(185000077, 3)]),
+			CreatePortalLocs(),
+			CreatePortalCooltimes(maxPlayers: 0),
+			CreateWorldMaps(),
+			CreateItemTemplates(185000077, KinahItemId),
+			DateTimeOffset.FromUnixTimeMilliseconds(100_000),
+			npcObjectId: 4001);
+
+		Assert.True(result.CanEnter);
+		Assert.Equal(PortalEntryPreparationStatus.Ready, result.Status);
+		Assert.Equal(PortalEntryPlanAction.SameInstanceTeleport, result.EntryPlan.Action);
+		Assert.NotNull(result.RequirementApplication);
+		Assert.Equal(4, result.Packets.Count);
+		Assert.Equal([11, 12], player.InventoryItems.Select(item => item.ObjectId).ToArray());
+		Assert.Contains(player.InventoryItems, item => item.ObjectId == 11 && item.Count == 1);
+		Assert.Contains(player.InventoryItems, item => item.ObjectId == 12 && item.Count == 500);
+		Assert.Equal(1, repository.SaveAssemblyItemActionMutationCalls);
+		Assert.Equal([11, 12], repository.AssemblyUpdatedPartItems.Select(item => item.ObjectId));
+		Assert.Equal([10], repository.AssemblyDeletedPartObjectIds);
+	}
+
+	[Fact]
+	public async Task PreparePortalEntry_ReturnsValidationFailureWithoutRequirementPersistence()
+	{
+		var player = CreatePlayer();
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var service = CreateService(repository, CreateWorld());
+
+		var result = await service.PreparePortalEntryAsync(
+			player,
+			CreatePortalPath(),
+			new PortalLocTable([]),
+			CreatePortalCooltimes(maxPlayers: 0),
+			CreateWorldMaps(),
+			CreateItemTemplates(),
+			DateTimeOffset.FromUnixTimeMilliseconds(100_000),
+			npcObjectId: 4001);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryPreparationStatus.ValidationRejected, result.Status);
+		Assert.Equal(PortalEntryValidationStatus.MissingPortalLocation, result.EntryPlan.Status);
+		Assert.Null(result.RequirementApplication);
+		Assert.Empty(result.Packets);
+		Assert.Equal(0, repository.SaveAssemblyItemActionMutationCalls);
+	}
+
+	[Fact]
+	public async Task PreparePortalEntry_SkipsRequirementConsumptionForJavaReentry()
+	{
+		var player = CreatePlayer();
+		player.Level = 25;
+		player.Position = new WorldPosition(210010000, 10, 20, 30, 40, InstanceId: 1);
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var service = CreateService(repository, CreateWorld());
+		var worldMaps = CreateWorldMapsWithRegisteredSoloInstance(player.ObjectId);
+
+		var result = await service.PreparePortalEntryAsync(
+			player,
+			CreatePortalPath(kinah: 1, itemRequirements: [new PortalItemRequirementSummary(185000077, 1)]),
+			CreatePortalLocs(),
+			CreatePortalCooltimes(maxPlayers: 1),
+			worldMaps,
+			CreateItemTemplates(185000077, KinahItemId),
+			DateTimeOffset.FromUnixTimeMilliseconds(100_000),
+			npcObjectId: 4001);
+
+		Assert.True(result.CanEnter);
+		Assert.Equal(PortalEntryPreparationStatus.Ready, result.Status);
+		Assert.True(result.EntryPlan.Reenter);
+		Assert.Null(result.RequirementApplication);
+		Assert.Empty(result.Packets);
+		Assert.Equal(0, repository.SaveAssemblyItemActionMutationCalls);
+	}
+
+	[Fact]
 	public async Task SaveIdianPolishBurnMutation_PersistsOnlyExhaustedBurnDeletes()
 	{
 		var player = CreatePlayer();
@@ -530,6 +621,88 @@ public sealed class PlayerEnterWorldServiceTests
 			Dp = dp,
 			Position = new WorldPosition(210010000, 1, 2, 3, 32),
 		};
+	}
+
+	private const int PortalWorldId = 300030000;
+	private const int KinahItemId = 182400001;
+
+	private static PortalPathSummary CreatePortalPath(
+		int kinah = 0,
+		IReadOnlyList<PortalItemRequirementSummary>? itemRequirements = null)
+	{
+		return new PortalPathSummary(
+			PortalPathSource.Dialog,
+			NpcId: 730000,
+			ScrollName: string.Empty,
+			Dialog: 10000,
+			LocId: PortalWorldId / 100,
+			SiegeId: 0,
+			Race: "PC_ALL",
+			MinLevel: 0,
+			MinRank: 0,
+			Kinah: kinah,
+			TitleId: 0,
+			ErrGroup: 0,
+			ErrLevel: 0)
+		{
+			ItemRequirements = itemRequirements ?? Array.Empty<PortalItemRequirementSummary>(),
+		};
+	}
+
+	private static PortalLocTable CreatePortalLocs()
+	{
+		return new PortalLocTable([new PortalLocSummary(PortalWorldId, PortalWorldId / 100, X: 1, Y: 2, Z: 3, Heading: 4)]);
+	}
+
+	private static InstanceCooltimeTable CreatePortalCooltimes(int maxPlayers)
+	{
+		return new InstanceCooltimeTable(
+		[
+			new InstanceCooltimeSummary(
+				8,
+				PortalWorldId,
+				"PC_ALL",
+				MaxCount: 1,
+				MaxMemberLight: maxPlayers,
+				MaxMemberDark: maxPlayers,
+				EnterMinLevelLight: 25,
+				EnterMinLevelDark: 25),
+		]);
+	}
+
+	private static WorldMapRuntimeStateTable CreateWorldMaps()
+	{
+		return new WorldMapRuntimeStateTable([new WorldMapSummary(PortalWorldId, IsInstance: true, TwinCount: 1)]);
+	}
+
+	private static WorldMapRuntimeStateTable CreateWorldMapsWithRegisteredSoloInstance(int playerObjectId)
+	{
+		var worldMaps = CreateWorldMaps();
+		var instance = worldMaps.AddWorldMapInstance(PortalWorldId, instanceId: 2, ownerId: 0, maxPlayers: 1)!;
+		instance.Register(playerObjectId);
+		return worldMaps;
+	}
+
+	private static ItemTemplateTable CreateItemTemplates(params int[] itemIds)
+	{
+		return new ItemTemplateTable(itemIds.Select(CreateItemTemplate).ToArray());
+	}
+
+	private static ItemTemplateSummary CreateItemTemplate(int itemId)
+	{
+		return new ItemTemplateSummary(
+			itemId,
+			itemId == KinahItemId ? "Kinah" : "Portal Item",
+			DescriptionId: itemId == KinahItemId ? 12350 : 20001,
+			Mask: 0,
+			Level: 1,
+			ItemGroup: itemId == KinahItemId ? "NONE" : "NORMAL",
+			ItemType: "NORMAL",
+			Quality: "COMMON",
+			Race: "PC_ALL",
+			MaxStackCount: 1000,
+			Price: 0,
+			ValidEquipmentSlots: 0);
 	}
 
 	private sealed class CapturingEnterWorldRepository : IPlayerEnterWorldRepository

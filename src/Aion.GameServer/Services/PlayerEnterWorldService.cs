@@ -1,7 +1,10 @@
 using System.Collections.Concurrent;
 using Aion.GameServer.Configuration;
 using Aion.GameServer.Data;
+using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion;
+using Aion.GameServer.World;
 using Microsoft.Extensions.Logging;
 using GameWorld = Aion.GameServer.World.World;
 
@@ -683,6 +686,58 @@ public sealed class PlayerEnterWorldService
 			cancellationToken);
 	}
 
+	public async Task<PortalEntryPreparationResult> PreparePortalEntryAsync(
+		Player player,
+		PortalPathSummary portalPath,
+		PortalLocTable portalLocs,
+		InstanceCooltimeTable instanceCooltimes,
+		WorldMapRuntimeStateTable worldMaps,
+		ItemTemplateTable itemTemplates,
+		DateTimeOffset now,
+		int npcObjectId = 0,
+		bool adminBypassRequirements = false,
+		bool bypassLevelRequirement = false,
+		bool bypassRaceRequirement = false,
+		bool bypassTitleRequirement = false,
+		bool bypassQuestRequirement = false,
+		bool siegeOwnerMatchesPlayerRace = true,
+		bool npcIsDialogNpc = true,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: services/teleport/PortalService.port supported solo/open-world guard + required-item side-effect boundary.
+		var entryPlan = PortalEntryValidationService.ValidatePortalEntryPlan(
+			player,
+			portalPath,
+			portalLocs,
+			instanceCooltimes,
+			worldMaps,
+			now,
+			npcObjectId,
+			adminBypassRequirements,
+			bypassLevelRequirement,
+			bypassRaceRequirement,
+			bypassTitleRequirement,
+			bypassQuestRequirement,
+			siegeOwnerMatchesPlayerRace,
+			npcIsDialogNpc);
+		if (!entryPlan.CanEnter)
+			return PortalEntryPreparationResult.Rejected(entryPlan);
+		if (entryPlan.Reenter)
+			return PortalEntryPreparationResult.Ready(entryPlan, null, Array.Empty<GameServerPacket>());
+
+		var consumptionPlan = PortalEntryValidationService.CreateRequiredItemsAndKinahConsumptionPlan(player, portalPath);
+		var application = PortalEntryValidationService.CreateRequiredItemsAndKinahApplication(player, consumptionPlan, itemTemplates);
+		if (!application.Applied)
+			return PortalEntryPreparationResult.ApplicationFailed(entryPlan, application);
+
+		var persisted = await SavePortalRequirementConsumptionMutationAsync(player, application, cancellationToken);
+		if (!persisted)
+			return PortalEntryPreparationResult.PersistenceFailed(entryPlan, application);
+
+		player.InventoryItems = application.InventoryItems;
+		return PortalEntryPreparationResult.Ready(entryPlan, application, application.Packets);
+	}
+
 	public async Task LeaveWorldAsync(Player player, CancellationToken cancellationToken = default)
 	{
 		// Java parity: services/player/PlayerLeaveWorldService.leaveWorld baseline persistence.
@@ -737,4 +792,67 @@ public sealed class PlayerEnterWorldService
 			|| string.Equals(playerClass, "TECHNIST", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(playerClass, "MUSE", StringComparison.OrdinalIgnoreCase);
 	}
+}
+
+public sealed record PortalEntryPreparationResult(
+	bool CanEnter,
+	PortalEntryPreparationStatus Status,
+	PortalEntryPlanResult EntryPlan,
+	PortalRequirementConsumptionApplication? RequirementApplication,
+	IReadOnlyList<GameServerPacket> Packets)
+{
+	public static PortalEntryPreparationResult Ready(
+		PortalEntryPlanResult entryPlan,
+		PortalRequirementConsumptionApplication? requirementApplication,
+		IReadOnlyList<GameServerPacket> packets)
+	{
+		return new PortalEntryPreparationResult(
+			true,
+			PortalEntryPreparationStatus.Ready,
+			entryPlan,
+			requirementApplication,
+			packets);
+	}
+
+	public static PortalEntryPreparationResult Rejected(PortalEntryPlanResult entryPlan)
+	{
+		return new PortalEntryPreparationResult(
+			false,
+			PortalEntryPreparationStatus.ValidationRejected,
+			entryPlan,
+			null,
+			Array.Empty<GameServerPacket>());
+	}
+
+	public static PortalEntryPreparationResult ApplicationFailed(
+		PortalEntryPlanResult entryPlan,
+		PortalRequirementConsumptionApplication application)
+	{
+		return new PortalEntryPreparationResult(
+			false,
+			PortalEntryPreparationStatus.RequirementApplicationFailed,
+			entryPlan,
+			application,
+			Array.Empty<GameServerPacket>());
+	}
+
+	public static PortalEntryPreparationResult PersistenceFailed(
+		PortalEntryPlanResult entryPlan,
+		PortalRequirementConsumptionApplication application)
+	{
+		return new PortalEntryPreparationResult(
+			false,
+			PortalEntryPreparationStatus.RequirementPersistenceFailed,
+			entryPlan,
+			application,
+			Array.Empty<GameServerPacket>());
+	}
+}
+
+public enum PortalEntryPreparationStatus
+{
+	Ready,
+	ValidationRejected,
+	RequirementApplicationFailed,
+	RequirementPersistenceFailed,
 }
