@@ -340,10 +340,77 @@ public sealed class RiftManagerServiceTests
 		}
 	}
 
+	[Fact]
+	public async Task SpawnRift_ClearsCreaturePvpZoneCountersWhenRollingBackPartialSpawn()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-rift-rollback-pvp-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(
+				tempPath,
+				"""
+				<spawn_map map_id="110070000">
+					<rift_spawn id="1170" world="110070000">
+						<spawn npc_id="730100">
+							<spot x="1" y="2" z="3" anchor="KAISINEL_AM" />
+						</spawn>
+					</rift_spawn>
+				</spawn_map>
+				<spawn_map map_id="120080000">
+					<rift_spawn id="1170" world="120080000">
+						<spawn npc_id="730101">
+							<spot x="5" y="6" z="7" anchor="KAISINEL_AS" />
+						</spawn>
+					</rift_spawn>
+				</spawn_map>
+				""",
+				zones:
+				"""
+				<zone name="PVP_RIFT_ROLLBACK_120080000" zone_type="PVP" area_type="POLYGON" mapid="120080000">
+					<points bottom="0" top="10">
+						<point x="4" y="5" />
+						<point x="6" y="5" />
+						<point x="6" y="7" />
+						<point x="4" y="7" />
+					</points>
+				</zone>
+				""");
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			Assert.True(world.TryAddObject(2, new object()));
+			var zoneCounterService = new CreaturePvpZoneCounterService();
+			var service = new RiftManagerService(
+				context,
+				world,
+				new IDFactory(),
+				creaturePvpZoneCounterService: zoneCounterService);
+
+			var result = service.SpawnRift(1170);
+
+			Assert.False(result.Spawned);
+			Assert.Equal(RiftSpawnStatus.WorldAddFailed, result.Status);
+			Assert.False(world.TryGetObject(1, out _));
+			Assert.True(world.TryGetObject(2, out _));
+			Assert.Equal(1, world.ObjectCount);
+			Assert.Equal(CreaturePvpZoneCounters.Empty, zoneCounterService.GetCounters(1));
+		}
+		finally
+		{
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
 	private static async Task<GameServerRuntimeContext> CreateRuntimeContextAsync(
 		string tempPath,
 		string spawnMaps,
-		string worldMaps = "")
+		string worldMaps = "",
+		string zones = "")
 	{
 		var staticDataFile = Path.Combine(tempPath, "static_data.xml");
 		var cacheFile = Path.Combine(tempPath, "cache", "static_data.xml");
@@ -356,12 +423,20 @@ public sealed class RiftManagerServiceTests
 			{{worldMaps}}
 				</world_maps>
 			""";
+		var zonesSection = string.IsNullOrWhiteSpace(zones)
+			? string.Empty
+			: $$"""
+				<zones>
+			{{zones}}
+				</zones>
+			""";
 		File.WriteAllText(
 			staticDataFile,
 			$$"""
 			<?xml version="1.0" encoding="UTF-8"?>
 			<static_data>
 			{{worldMapsSection}}
+			{{zonesSection}}
 				<npc_templates>
 					<npc_template npc_id="730100" name="master rift" name_id="730100" level="1" rank="NORMAL" rating="NORMAL" race="ELYOS" tribe="FIELD_OBJECT_ALL" type="GENERAL" state="5" ai="portal" />
 					<npc_template npc_id="730101" name="slave rift" name_id="730101" level="1" rank="NORMAL" rating="NORMAL" race="ASMODIANS" tribe="FIELD_OBJECT_ALL" type="GENERAL" state="6" ai="portal" />

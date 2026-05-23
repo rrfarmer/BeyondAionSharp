@@ -18,6 +18,7 @@ public sealed class RiftService
 	private readonly Func<bool> _nextBoolean;
 	private readonly Func<int, int, int> _randomInclusive;
 	private readonly Func<int, bool>? _cancelRespawn;
+	private readonly CreaturePvpZoneCounterService? _creaturePvpZoneCounterService;
 	private readonly ConcurrentDictionary<int, RiftLocationState> _activeRifts = new();
 
 	public RiftService(
@@ -29,7 +30,8 @@ public sealed class RiftService
 		Func<DateTimeOffset>? nowProvider = null,
 		Func<bool>? nextBoolean = null,
 		Func<int, int, int>? randomInclusive = null,
-		Func<int, bool>? cancelRespawn = null)
+		Func<int, bool>? cancelRespawn = null,
+		CreaturePvpZoneCounterService? creaturePvpZoneCounterService = null)
 	{
 		_runtimeContext = runtimeContext;
 		_riftManager = riftManager;
@@ -40,6 +42,7 @@ public sealed class RiftService
 		_nextBoolean = nextBoolean ?? (() => Random.Shared.Next(2) == 0);
 		_randomInclusive = randomInclusive ?? ((minInclusive, maxInclusive) => Random.Shared.Next(minInclusive, maxInclusive + 1));
 		_cancelRespawn = cancelRespawn;
+		_creaturePvpZoneCounterService = creaturePvpZoneCounterService;
 	}
 
 	public int ActiveRiftCount => _activeRifts.Count;
@@ -145,6 +148,7 @@ public sealed class RiftService
 				// Java parity: RiftService.closeRift deletes live rift NPCs and cancels pending respawns for stale object ids.
 				_cancelRespawn?.Invoke(npc.ObjectId);
 				_riftManager.RemoveSpawnedRift(npc);
+				var clearZoneCounters = false;
 				if (_world.TryGetObject(npc.ObjectId, out var visibleObject)
 					&& visibleObject != null
 					&& IsSameRiftOwnedNpc(visibleObject, npc)
@@ -152,7 +156,15 @@ public sealed class RiftService
 					&& removedObject is WorldNpc)
 				{
 					_idFactory.ReleaseId(npc.ObjectId);
+					clearZoneCounters = true;
 				}
+				else if (visibleObject == null)
+				{
+					clearZoneCounters = true;
+				}
+
+				if (clearZoneCounters)
+					ClearRiftNpcCreaturePvpZones(npc.ObjectId);
 			}
 
 			state.ClearSpawned();
@@ -322,10 +334,30 @@ public sealed class RiftService
 			spawn.Anchor,
 			position);
 		if (_world.TryAddObject(objectId, npc))
+		{
+			RevalidateRiftNpcCreaturePvpZones(npc);
 			return true;
+		}
 
 		_idFactory.ReleaseId(objectId);
 		return false;
+	}
+
+	private void RevalidateRiftNpcCreaturePvpZones(WorldNpc npc)
+	{
+		// Java parity: RiftService.openRifts guard spawns enter zones through World.spawn -> MapRegion.revalidateZones.
+		var staticData = _runtimeContext.DataManager?.StaticData;
+		CreaturePvpZoneRevalidationService.Revalidate(
+			npc.ObjectId,
+			npc.Position,
+			staticData?.CreaturePvpZones,
+			_creaturePvpZoneCounterService);
+	}
+
+	private void ClearRiftNpcCreaturePvpZones(int objectId)
+	{
+		// Java parity: RiftService.closeRift deletes spawned rift NPCs and leaves their zone memberships.
+		_creaturePvpZoneCounterService?.ClearCounters(objectId);
 	}
 
 	private static bool IsRiftId(int id)

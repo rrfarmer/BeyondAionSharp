@@ -92,6 +92,97 @@ public sealed class RiftServiceTests
 	}
 
 	[Fact]
+	public async Task OpenAndCloseRifts_RevalidatesCreaturePvpZoneCountersForRiftNpcs()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-rift-service-pvp-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(
+				tempPath,
+				"""<rift_location id="1170" world="110070000" has_spawns="true" />""",
+				"""
+				<spawn_map map_id="110070000">
+					<spawn npc_id="730100" handler="RIFT">
+						<spot x="1" y="2" z="3" anchor="KAISINEL_AM" />
+					</spawn>
+					<rift_spawn id="1170" world="110070000">
+						<spawn npc_id="730200">
+							<spot x="2" y="2" z="3" />
+						</spawn>
+					</rift_spawn>
+				</spawn_map>
+				<spawn_map map_id="120080000">
+					<spawn npc_id="730101" handler="RIFT">
+						<spot x="5" y="6" z="7" anchor="KAISINEL_AS" />
+					</spawn>
+				</spawn_map>
+				""",
+				zones:
+				"""
+				<zone name="PVP_RIFT_MASTER_110070000" zone_type="PVP" area_type="POLYGON" mapid="110070000">
+					<points bottom="0" top="10">
+						<point x="0" y="1" />
+						<point x="3" y="1" />
+						<point x="3" y="3" />
+						<point x="0" y="3" />
+					</points>
+				</zone>
+				<zone name="PVP_RIFT_SLAVE_120080000" zone_type="PVP" area_type="POLYGON" mapid="120080000">
+					<points bottom="0" top="10">
+						<point x="4" y="5" />
+						<point x="6" y="5" />
+						<point x="6" y="7" />
+						<point x="4" y="7" />
+					</points>
+				</zone>
+				""");
+			var idFactory = new IDFactory();
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			var zoneCounterService = new CreaturePvpZoneCounterService();
+			var manager = new RiftManagerService(
+				context,
+				world,
+				idFactory,
+				creaturePvpZoneCounterService: zoneCounterService);
+			var service = new RiftService(
+				context,
+				manager,
+				world,
+				idFactory,
+				creaturePvpZoneCounterService: zoneCounterService);
+
+			var open = service.OpenRifts(1170, guards: true);
+
+			Assert.True(open.Succeeded);
+			var state = Assert.Single(open.Locations);
+			Assert.Equal(3, state.SpawnedCount);
+			Assert.All(state.Spawned, npc =>
+			{
+				var counters = zoneCounterService.GetCounters(npc.ObjectId);
+				Assert.Equal(1, counters.PvpZoneCount);
+				Assert.Equal(0, counters.SiegeZoneCount);
+			});
+
+			var close = service.CloseRifts(1170);
+
+			Assert.True(close.Succeeded);
+			Assert.Equal(0, world.ObjectCount);
+			Assert.All(state.Spawned, npc => Assert.Equal(CreaturePvpZoneCounters.Empty, zoneCounterService.GetCounters(npc.ObjectId)));
+		}
+		finally
+		{
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
+	[Fact]
 	public async Task OpenRifts_WithGuards_SpawnsRiftLocationGuards()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-rift-service-guards-" + Guid.NewGuid().ToString("N"));
@@ -692,7 +783,8 @@ public sealed class RiftServiceTests
 		string tempPath,
 		string riftLocations,
 		string spawnMaps,
-		string worldMaps = "")
+		string worldMaps = "",
+		string zones = "")
 	{
 		var staticDataFile = Path.Combine(tempPath, "static_data.xml");
 		var cacheFile = Path.Combine(tempPath, "cache", "static_data.xml");
@@ -705,12 +797,20 @@ public sealed class RiftServiceTests
 			{{worldMaps}}
 				</world_maps>
 			""";
+		var zonesSection = string.IsNullOrWhiteSpace(zones)
+			? string.Empty
+			: $$"""
+				<zones>
+			{{zones}}
+				</zones>
+			""";
 		File.WriteAllText(
 			staticDataFile,
 			$$"""
 			<?xml version="1.0" encoding="UTF-8"?>
 			<static_data>
 			{{worldMapsSection}}
+			{{zonesSection}}
 				<rift_locations>
 			{{riftLocations}}
 				</rift_locations>

@@ -14,18 +14,21 @@ public sealed class RiftManagerService
 	private readonly GameWorld _world;
 	private readonly IDFactory _idFactory;
 	private readonly Func<int, int> _nextPoolIndex;
+	private readonly CreaturePvpZoneCounterService? _creaturePvpZoneCounterService;
 	private readonly ConcurrentDictionary<int, ConcurrentDictionary<int, WorldNpc>> _riftsPerWorld = new();
 
 	public RiftManagerService(
 		GameServerRuntimeContext runtimeContext,
 		GameWorld world,
 		IDFactory idFactory,
-		Func<int, int>? nextPoolIndex = null)
+		Func<int, int>? nextPoolIndex = null,
+		CreaturePvpZoneCounterService? creaturePvpZoneCounterService = null)
 	{
 		_runtimeContext = runtimeContext;
 		_world = world;
 		_idFactory = idFactory;
 		_nextPoolIndex = nextPoolIndex ?? (count => Random.Shared.Next(count));
+		_creaturePvpZoneCounterService = creaturePvpZoneCounterService;
 	}
 
 	public int SpawnedRiftCount => _riftsPerWorld.Values.Sum(worldRifts => worldRifts.Count);
@@ -168,7 +171,10 @@ public sealed class RiftManagerService
 			spawn.Anchor,
 			position);
 		if (_world.TryAddObject(objectId, npc))
+		{
+			RevalidateRiftNpcCreaturePvpZones(npc);
 			return true;
+		}
 
 		_idFactory.ReleaseId(objectId);
 		return false;
@@ -255,7 +261,8 @@ public sealed class RiftManagerService
 
 	private void RollBackSpawnedNpc(WorldNpc npc)
 	{
-		_world.TryRemoveObject(npc.ObjectId, out _);
+		if (_world.TryRemoveObject(npc.ObjectId, out _))
+			ClearRiftNpcCreaturePvpZones(npc.ObjectId);
 		_idFactory.ReleaseId(npc.ObjectId);
 	}
 
@@ -263,6 +270,23 @@ public sealed class RiftManagerService
 	{
 		foreach (var npc in npcs)
 			RollBackSpawnedNpc(npc);
+	}
+
+	private void RevalidateRiftNpcCreaturePvpZones(WorldNpc npc)
+	{
+		// Java parity: RiftManager.spawnRift ultimately spawns visible NPCs through World.spawn -> MapRegion.revalidateZones.
+		var staticData = _runtimeContext.DataManager?.StaticData;
+		CreaturePvpZoneRevalidationService.Revalidate(
+			npc.ObjectId,
+			npc.Position,
+			staticData?.CreaturePvpZones,
+			_creaturePvpZoneCounterService);
+	}
+
+	private void ClearRiftNpcCreaturePvpZones(int objectId)
+	{
+		// Java parity: failed rift spawn rollback despawns already-created NPCs and leaves their zone memberships.
+		_creaturePvpZoneCounterService?.ClearCounters(objectId);
 	}
 
 	private static IReadOnlyList<RiftDefinition> BuildRiftDefinitions()
