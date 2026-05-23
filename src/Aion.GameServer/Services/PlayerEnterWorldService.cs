@@ -87,6 +87,7 @@ public sealed class PlayerEnterWorldService
 			if (!_world.TryAddObject(playerObjectId, player))
 				return new PlayerEnterWorldResult(EnterWorldCheckMessage.ConnectionError);
 
+			var previousLastOnline = player.LastOnline;
 			var now = DateTime.Now;
 			if (!await _repository.MarkPlayerOnlineAsync(playerObjectId, now, cancellationToken))
 			{
@@ -95,6 +96,7 @@ public sealed class PlayerEnterWorldService
 			}
 
 			player.IsOnline = true;
+			ApplyOfflineDpReset(player, previousLastOnline, now);
 			player.LastOnline = now;
 			_logger.LogInformation("Player {PlayerName} ({PlayerObjectId}) logged on", player.Name, playerObjectId);
 			return new PlayerEnterWorldResult(EnterWorldCheckMessage.Ok, player);
@@ -649,5 +651,26 @@ public sealed class PlayerEnterWorldService
 		// Java parity: PlayerEnterWorldService lastOnline vs GSConfig.CHARACTER_REENTRY_TIME check.
 		return lastOnline.HasValue
 			&& DateTime.Now - lastOnline.Value < TimeSpan.FromSeconds(_options.Core.CharacterReentryTimeSeconds);
+	}
+
+	private static void ApplyOfflineDpReset(Player player, DateTime? previousLastOnline, DateTime now)
+	{
+		// Java parity: services/player/PlayerEnterWorldService.enterWorld -> PlayerCommonData.setDp(0) after >5 minutes offline.
+		if (!previousLastOnline.HasValue
+			|| now - previousLastOnline.Value <= TimeSpan.FromMinutes(5)
+			|| IsStartingClass(player.PlayerClass))
+			return;
+
+		player.Dp = 0;
+	}
+
+	private static bool IsStartingClass(string playerClass)
+	{
+		return string.Equals(playerClass, "WARRIOR", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(playerClass, "SCOUT", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(playerClass, "MAGE", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(playerClass, "PRIEST", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(playerClass, "TECHNIST", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(playerClass, "MUSE", StringComparison.OrdinalIgnoreCase);
 	}
 }

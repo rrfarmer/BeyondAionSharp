@@ -103,6 +103,49 @@ public sealed class PlayerEnterWorldServiceTests
 	}
 
 	[Fact]
+	public async Task EnterWorld_ResetsDpAfterFiveMinutesOfflineForAdvancedClass()
+	{
+		var repository = new CapturingEnterWorldRepository
+		{
+			Player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-6), playerClass: "RANGER", dp: 1200),
+		};
+		var service = CreateService(repository, CreateWorld());
+
+		var result = await service.EnterWorldAsync(accountId: 10, playerObjectId: 1001);
+
+		Assert.Equal(EnterWorldCheckMessage.Ok, result.Message);
+		Assert.NotNull(result.Player);
+		Assert.Equal(0, result.Player.Dp);
+		Assert.True(result.Player.IsOnline);
+	}
+
+	[Fact]
+	public async Task EnterWorld_KeepsDpForRecentOfflineOrStartingClass()
+	{
+		var recentRepository = new CapturingEnterWorldRepository
+		{
+			Player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-4), playerClass: "RANGER", dp: 1200),
+		};
+		var recentService = CreateService(recentRepository, CreateWorld());
+
+		var recent = await recentService.EnterWorldAsync(accountId: 10, playerObjectId: 1001);
+
+		Assert.Equal(EnterWorldCheckMessage.Ok, recent.Message);
+		Assert.Equal(1200, recent.Player!.Dp);
+
+		var startingRepository = new CapturingEnterWorldRepository
+		{
+			Player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-6), playerClass: "WARRIOR", dp: 1200),
+		};
+		var startingService = CreateService(startingRepository, CreateWorld());
+
+		var starting = await startingService.EnterWorldAsync(accountId: 10, playerObjectId: 1001);
+
+		Assert.Equal(EnterWorldCheckMessage.Ok, starting.Message);
+		Assert.Equal(1200, starting.Player!.Dp);
+	}
+
+	[Fact]
 	public async Task EnterWorld_ReturnsConnectionErrorWhenPlayerIsMissingOrDuplicate()
 	{
 		var repository = new CapturingEnterWorldRepository();
@@ -333,20 +376,25 @@ public sealed class PlayerEnterWorldServiceTests
 		return world;
 	}
 
-	private static Player CreatePlayer(bool isOnline = false, DateTime? lastOnline = null)
+	private static Player CreatePlayer(
+		bool isOnline = false,
+		DateTime? lastOnline = null,
+		string playerClass = "WARRIOR",
+		int dp = 0)
 	{
 		return new Player
 		{
 			ObjectId = 1001,
 			AccountId = 10,
 			Name = "Character",
-			PlayerClass = "WARRIOR",
+			PlayerClass = playerClass,
 			Race = "ELYOS",
 			Gender = "MALE",
 			WarehouseNpcExpands = 1,
 			WarehouseBonusExpands = 2,
 			IsOnline = isOnline,
 			LastOnline = lastOnline,
+			Dp = dp,
 			Position = new WorldPosition(210010000, 1, 2, 3, 32),
 		};
 	}
