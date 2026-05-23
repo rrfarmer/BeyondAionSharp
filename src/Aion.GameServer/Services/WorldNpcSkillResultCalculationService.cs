@@ -9,11 +9,18 @@ public sealed class WorldNpcSkillResultCalculationService
 		var inputDamage = Math.Max(0, request.InputDamage);
 		var cannotMiss = options.CannotMiss || options.AttackStatusCalculation?.CannotMiss == true;
 		var canDodgeOrResist = !cannotMiss;
+		var baseDamageMultiplier = CalculateBaseDamageMultiplier(
+			options.BaseDamageMultiplier,
+			request.ShouldIncreaseByOneTimeBoost,
+			inputDamage);
+		var damageBeforeRandom = baseDamageMultiplier.Applied
+			? baseDamageMultiplier.FinalDamage
+			: inputDamage;
 		var random = CalculateRandomMultiplier(options);
 		var attackStatus = CalculateAttackStatus(options.AttackStatusCalculation, options.AttackStatus);
 		var finalDamage = random.Status == WorldNpcSkillResultCalculationStatus.Calculated
-			? (int)(inputDamage * random.Multiplier)
-			: inputDamage;
+			? (int)(damageBeforeRandom * random.Multiplier)
+			: damageBeforeRandom;
 		var normalizedFinalDamage = Math.Max(0, finalDamage);
 		var damageModifier = CalculateDamageModifier(options.DamageModifier, attackStatus.FinalStatus, normalizedFinalDamage);
 		var resultDamage = damageModifier.Applied ? damageModifier.FinalDamage : normalizedFinalDamage;
@@ -62,6 +69,7 @@ public sealed class WorldNpcSkillResultCalculationService
 			request.SendResult,
 			request.ShouldIncreaseByOneTimeBoost,
 			request.UsesTemplateDamage,
+			baseDamageMultiplier,
 			attackStatus,
 			damageModifier,
 			npcAiDamageModifier,
@@ -509,6 +517,39 @@ public sealed class WorldNpcSkillResultCalculationService
 		return modifiedDamage;
 	}
 
+	private static WorldNpcSkillBaseDamageMultiplierResult CalculateBaseDamageMultiplier(
+		WorldNpcSkillBaseDamageMultiplierOptions? options,
+		bool shouldIncreaseByOneTimeBoost,
+		int damage)
+	{
+		if (options == null)
+			return WorldNpcSkillBaseDamageMultiplierResult.NotRequested(damage);
+
+		// Java parity: controllers/ObserveController.getBasePhysicalDamageMultiplier/getBaseMagicalDamageMultiplier.
+		var skippedByOneTimeBoost = options.Kind == WorldNpcSkillBaseDamageMultiplierKind.Magical && !shouldIncreaseByOneTimeBoost;
+		if (skippedByOneTimeBoost)
+			return WorldNpcSkillBaseDamageMultiplierResult.Skipped(damage, options.Kind, shouldIncreaseByOneTimeBoost);
+
+		if (!options.ObserverMultipliersKnown)
+			return WorldNpcSkillBaseDamageMultiplierResult.Unresolved(damage, options.Kind, shouldIncreaseByOneTimeBoost, options.IsSkill);
+
+		var observerMultipliers = options.ObserverMultipliers ?? Array.Empty<float>();
+		var multiplier = 1f;
+		foreach (var observerMultiplier in observerMultipliers)
+			multiplier *= observerMultiplier;
+
+		var exactDamage = damage * multiplier;
+		return WorldNpcSkillBaseDamageMultiplierResult.AppliedResult(
+			damage,
+			(int)exactDamage,
+			exactDamage,
+			multiplier,
+			options.Kind,
+			shouldIncreaseByOneTimeBoost,
+			options.IsSkill,
+			observerMultipliers.Count);
+	}
+
 	private static WorldNpcSkillShieldObserverResult CalculateShieldObserver(
 		bool ignoreShield,
 		WorldNpcSkillShieldObserverOptions? options,
@@ -611,6 +652,7 @@ public sealed record WorldNpcSkillResultCalculationOptions(
 	int? RandomRoll = null,
 	double? RandomChanceRoll = null,
 	bool CannotMiss = false,
+	WorldNpcSkillBaseDamageMultiplierOptions? BaseDamageMultiplier = null,
 	WorldNpcSkillAttackStatusCalculationOptions? AttackStatusCalculation = null,
 	WorldNpcSkillDamageModifierOptions? DamageModifier = null,
 	WorldNpcSkillAdditionalHitOptions? AdditionalHits = null,
@@ -638,6 +680,7 @@ public sealed record WorldNpcSkillResultCalculationResult(
 	bool SendResult,
 	bool ShouldIncreaseByOneTimeBoost,
 	bool UsesTemplateDamage,
+	WorldNpcSkillBaseDamageMultiplierResult BaseDamageMultiplier,
 	WorldNpcSkillAttackStatusCalculationResult AttackStatusCalculation,
 	WorldNpcSkillDamageModifierResult DamageModifier,
 	WorldNpcSkillNpcAiDamageModifierResult NpcAiDamageModifier,
@@ -740,6 +783,112 @@ public sealed record WorldNpcSkillDamageModifierOptions(
 	WorldNpcSkillWeaponGroup? MainHandWeaponGroup = null,
 	WorldNpcSkillWeaponGroup? OffHandWeaponGroup = null,
 	int CriticalDamageReduce = 0);
+
+public sealed record WorldNpcSkillBaseDamageMultiplierOptions(
+	WorldNpcSkillBaseDamageMultiplierKind Kind,
+	bool IsSkill = true,
+	bool ObserverMultipliersKnown = true,
+	IReadOnlyList<float>? ObserverMultipliers = null);
+
+public sealed record WorldNpcSkillBaseDamageMultiplierResult(
+	bool WasRequested,
+	bool Applied,
+	bool SkippedByOneTimeBoost,
+	WorldNpcSkillBaseDamageMultiplierKind Kind,
+	bool ShouldIncreaseByOneTimeBoost,
+	bool IsSkill,
+	int OriginalDamage,
+	int FinalDamage,
+	float ExactFinalDamage,
+	float Multiplier,
+	int ObserverMultiplierCount,
+	bool ObserverMultipliersInputMissing)
+{
+	public bool HasUnresolvedInputs => ObserverMultipliersInputMissing;
+
+	public static WorldNpcSkillBaseDamageMultiplierResult NotRequested(int damage)
+	{
+		return new WorldNpcSkillBaseDamageMultiplierResult(
+			WasRequested: false,
+			Applied: false,
+			SkippedByOneTimeBoost: false,
+			Kind: WorldNpcSkillBaseDamageMultiplierKind.Physical,
+			ShouldIncreaseByOneTimeBoost: true,
+			IsSkill: true,
+			OriginalDamage: damage,
+			FinalDamage: damage,
+			ExactFinalDamage: damage,
+			Multiplier: 1f,
+			ObserverMultiplierCount: 0,
+			ObserverMultipliersInputMissing: false);
+	}
+
+	public static WorldNpcSkillBaseDamageMultiplierResult Skipped(
+		int damage,
+		WorldNpcSkillBaseDamageMultiplierKind kind,
+		bool shouldIncreaseByOneTimeBoost)
+	{
+		return new WorldNpcSkillBaseDamageMultiplierResult(
+			WasRequested: true,
+			Applied: false,
+			SkippedByOneTimeBoost: true,
+			Kind: kind,
+			ShouldIncreaseByOneTimeBoost: shouldIncreaseByOneTimeBoost,
+			IsSkill: true,
+			OriginalDamage: damage,
+			FinalDamage: damage,
+			ExactFinalDamage: damage,
+			Multiplier: 1f,
+			ObserverMultiplierCount: 0,
+			ObserverMultipliersInputMissing: false);
+	}
+
+	public static WorldNpcSkillBaseDamageMultiplierResult Unresolved(
+		int damage,
+		WorldNpcSkillBaseDamageMultiplierKind kind,
+		bool shouldIncreaseByOneTimeBoost,
+		bool isSkill)
+	{
+		return new WorldNpcSkillBaseDamageMultiplierResult(
+			WasRequested: true,
+			Applied: false,
+			SkippedByOneTimeBoost: false,
+			Kind: kind,
+			ShouldIncreaseByOneTimeBoost: shouldIncreaseByOneTimeBoost,
+			IsSkill: isSkill,
+			OriginalDamage: damage,
+			FinalDamage: damage,
+			ExactFinalDamage: damage,
+			Multiplier: 1f,
+			ObserverMultiplierCount: 0,
+			ObserverMultipliersInputMissing: true);
+	}
+
+	public static WorldNpcSkillBaseDamageMultiplierResult AppliedResult(
+		int originalDamage,
+		int finalDamage,
+		float exactFinalDamage,
+		float multiplier,
+		WorldNpcSkillBaseDamageMultiplierKind kind,
+		bool shouldIncreaseByOneTimeBoost,
+		bool isSkill,
+		int observerMultiplierCount)
+	{
+		return new WorldNpcSkillBaseDamageMultiplierResult(
+			WasRequested: true,
+			Applied: true,
+			SkippedByOneTimeBoost: false,
+			Kind: kind,
+			ShouldIncreaseByOneTimeBoost: shouldIncreaseByOneTimeBoost,
+			IsSkill: isSkill,
+			OriginalDamage: originalDamage,
+			FinalDamage: finalDamage,
+			ExactFinalDamage: exactFinalDamage,
+			Multiplier: multiplier,
+			ObserverMultiplierCount: observerMultiplierCount,
+			ObserverMultipliersInputMissing: false);
+	}
+}
 
 public sealed record WorldNpcSkillAdditionalHitOptions(
 	bool AttackerIsPlayer = false,
@@ -1341,6 +1490,12 @@ public enum WorldNpcSkillResultCalculationStatus
 public enum WorldNpcSkillAttackStatusCalculationKind
 {
 	NotRequested,
+	Physical,
+	Magical,
+}
+
+public enum WorldNpcSkillBaseDamageMultiplierKind
+{
 	Physical,
 	Magical,
 }

@@ -103,6 +103,102 @@ public sealed class WorldNpcSkillResultCalculationServiceTests
 	}
 
 	[Fact]
+	public void Calculate_BasePhysicalDamageMultiplierAppliesBeforeRandomDamage()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 100,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				RandomDamageType: 1,
+				RandomRoll: 0,
+				BaseDamageMultiplier: new WorldNpcSkillBaseDamageMultiplierOptions(
+					WorldNpcSkillBaseDamageMultiplierKind.Physical,
+					ObserverMultipliers: new[] { 1.5f, 2f }))));
+
+		Assert.Equal(150, result.FinalDamage);
+		Assert.True(result.BaseDamageMultiplier.Applied);
+		Assert.Equal(300, result.BaseDamageMultiplier.FinalDamage);
+		Assert.Equal(3f, result.BaseDamageMultiplier.Multiplier);
+		Assert.Equal(2, result.BaseDamageMultiplier.ObserverMultiplierCount);
+		Assert.Equal(0.5f, result.RandomDamageMultiplier);
+	}
+
+	[Fact]
+	public void Calculate_BaseMagicalDamageMultiplierHonorsOneTimeBoostGate()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 100,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: false,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				BaseDamageMultiplier: new WorldNpcSkillBaseDamageMultiplierOptions(
+					WorldNpcSkillBaseDamageMultiplierKind.Magical,
+					ObserverMultipliers: new[] { 2f }))));
+
+		Assert.Equal(100, result.FinalDamage);
+		Assert.False(result.BaseDamageMultiplier.Applied);
+		Assert.True(result.BaseDamageMultiplier.SkippedByOneTimeBoost);
+		Assert.Equal(1f, result.BaseDamageMultiplier.Multiplier);
+	}
+
+	[Fact]
+	public void Calculate_BaseMagicalDamageMultiplierAppliesWhenOneTimeBoostAllowed()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 80,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				BaseDamageMultiplier: new WorldNpcSkillBaseDamageMultiplierOptions(
+					WorldNpcSkillBaseDamageMultiplierKind.Magical,
+					ObserverMultipliers: new[] { 1.25f }))));
+
+		Assert.Equal(100, result.FinalDamage);
+		Assert.True(result.BaseDamageMultiplier.Applied);
+		Assert.Equal(100f, result.BaseDamageMultiplier.ExactFinalDamage, precision: 3);
+		Assert.Equal(1.25f, result.BaseDamageMultiplier.Multiplier);
+	}
+
+	[Fact]
+	public void Calculate_BaseDamageMultiplierRecordsUnknownObserverInputs()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 100,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				BaseDamageMultiplier: new WorldNpcSkillBaseDamageMultiplierOptions(
+					WorldNpcSkillBaseDamageMultiplierKind.Physical,
+					ObserverMultipliersKnown: false))));
+
+		Assert.Equal(100, result.FinalDamage);
+		Assert.False(result.BaseDamageMultiplier.Applied);
+		Assert.True(result.BaseDamageMultiplier.HasUnresolvedInputs);
+		Assert.True(result.BaseDamageMultiplier.ObserverMultipliersInputMissing);
+	}
+
+	[Fact]
 	public void Calculate_CreatesJavaAttackResultAndEffectReservedSurface()
 	{
 		var service = new WorldNpcSkillResultCalculationService();
