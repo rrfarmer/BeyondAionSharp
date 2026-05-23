@@ -61,46 +61,78 @@ public sealed class WorldNpcSkillDamageService
 				damageResult.Damage * Math.Max(0, options.HpDrainPercent) / 100,
 				damageResult.Damage * Math.Max(0, options.MpDrainPercent) / 100)
 			: null;
+		var delayResult = mapping.ReportDelay
+			? new WorldNpcSkillDelayResult(options.Delay ?? TimeSpan.Zero)
+			: null;
 		return new WorldNpcSkillDamageResult(
 			request.Kind,
 			damageResult,
 			attackObserverNotification,
 			dotAttackedObserverNotification,
-			drainResult);
+			drainResult,
+			delayResult);
 	}
 
 	private static WorldNpcSkillDamageMapping GetMapping(WorldNpcSkillDamageKind kind)
 	{
 		return kind switch
 		{
+			WorldNpcSkillDamageKind.DelayedSpellAttackInstant => new WorldNpcSkillDamageMapping(
+				SmAttackStatusType.DelayDamage,
+				SmAttackStatusLog.DelayedSpellAttackInstant,
+				NotifyAttack: true,
+				NotifyEffectorAttackObservers: true,
+				NotifyDotAttackedObservers: false,
+				ApplyDrain: false,
+				ReportDelay: true),
+			WorldNpcSkillDamageKind.ProcAttackInstant => new WorldNpcSkillDamageMapping(
+				SmAttackStatusType.Damage,
+				SmAttackStatusLog.ProcAttackInstant,
+				NotifyAttack: true,
+				NotifyEffectorAttackObservers: false,
+				NotifyDotAttackedObservers: false,
+				ApplyDrain: false,
+				ReportDelay: false),
+			WorldNpcSkillDamageKind.BleedPeriodic => new WorldNpcSkillDamageMapping(
+				SmAttackStatusType.Damage,
+				SmAttackStatusLog.Bleed,
+				NotifyAttack: false,
+				NotifyEffectorAttackObservers: false,
+				NotifyDotAttackedObservers: true,
+				ApplyDrain: false,
+				ReportDelay: false),
 			WorldNpcSkillDamageKind.PeriodicSpellAttack => new WorldNpcSkillDamageMapping(
 				SmAttackStatusType.Damage,
 				SmAttackStatusLog.SpellAttack,
 				NotifyAttack: false,
 				NotifyEffectorAttackObservers: false,
 				NotifyDotAttackedObservers: true,
-				ApplyDrain: false),
+				ApplyDrain: false,
+				ReportDelay: false),
 			WorldNpcSkillDamageKind.SpellAttackDrain => new WorldNpcSkillDamageMapping(
 				SmAttackStatusType.Damage,
 				SmAttackStatusLog.SpellAttackDrain,
 				NotifyAttack: true,
 				NotifyEffectorAttackObservers: true,
 				NotifyDotAttackedObservers: false,
-				ApplyDrain: true),
+				ApplyDrain: true,
+				ReportDelay: false),
 			WorldNpcSkillDamageKind.ProvokedDamageEffect => new WorldNpcSkillDamageMapping(
 				SmAttackStatusType.Damage,
 				SmAttackStatusLog.ProcAttackInstant,
 				NotifyAttack: true,
 				NotifyEffectorAttackObservers: false,
 				NotifyDotAttackedObservers: false,
-				ApplyDrain: false),
+				ApplyDrain: false,
+				ReportDelay: false),
 			_ => new WorldNpcSkillDamageMapping(
 				SmAttackStatusType.Regular,
 				SmAttackStatusLog.Regular,
 				NotifyAttack: true,
 				NotifyEffectorAttackObservers: true,
 				NotifyDotAttackedObservers: false,
-				ApplyDrain: false),
+				ApplyDrain: false,
+				ReportDelay: false),
 		};
 	}
 
@@ -110,7 +142,8 @@ public sealed class WorldNpcSkillDamageService
 		bool NotifyAttack,
 		bool NotifyEffectorAttackObservers,
 		bool NotifyDotAttackedObservers,
-		bool ApplyDrain);
+		bool ApplyDrain,
+		bool ReportDelay);
 }
 
 public sealed record WorldNpcSkillDamageRequest(
@@ -129,7 +162,8 @@ public sealed record WorldNpcSkillDamageOptions(
 	WorldNpcDamageHopType HopType = WorldNpcDamageHopType.Damage,
 	WorldNpcCastingInterruptOptions? CastingInterruptOptions = null,
 	int HpDrainPercent = 0,
-	int MpDrainPercent = 0)
+	int MpDrainPercent = 0,
+	TimeSpan? Delay = null)
 {
 	public static WorldNpcSkillDamageOptions Default { get; } = new();
 }
@@ -139,7 +173,8 @@ public sealed record WorldNpcSkillDamageResult(
 	WorldNpcDamageResult DamageResult,
 	WorldNpcSkillAttackObserverNotification? AttackObserverNotification,
 	WorldNpcSkillDotAttackedObserverNotification? DotAttackedObserverNotification = null,
-	WorldNpcSkillDrainResult? DrainResult = null);
+	WorldNpcSkillDrainResult? DrainResult = null,
+	WorldNpcSkillDelayResult? DelayResult = null);
 
 public sealed record WorldNpcSkillAttackObserverNotification(
 	int EffectorObjectId,
@@ -155,10 +190,15 @@ public sealed record WorldNpcSkillDrainResult(
 	int HpAmount,
 	int MpAmount);
 
+public sealed record WorldNpcSkillDelayResult(TimeSpan Delay);
+
 public enum WorldNpcSkillDamageKind
 {
 	RegularDamageEffect,
 	ProvokedDamageEffect,
 	PeriodicSpellAttack,
 	SpellAttackDrain,
+	DelayedSpellAttackInstant,
+	ProcAttackInstant,
+	BleedPeriodic,
 }

@@ -296,6 +296,104 @@ public sealed class WorldNpcDamageServiceTests
 	}
 
 	[Fact]
+	public async Task ApplyDamageEffectAsync_MapsDelayedSpellAttackToDelayDamageAndAttackObserver()
+	{
+		var damageService = CreateDamageService(out var spawnService, out var world, out _, out var threadPoolManager, out _, out _, out _, out _, out _);
+		var skillDamageService = new WorldNpcSkillDamageService(damageService);
+		try
+		{
+			SpawnNpc(spawnService, world, npcTemplateId: 203104, maxHp: 100);
+			var npc = Assert.Single(world.GetNpcs());
+
+			var result = await skillDamageService.ApplyDamageEffectAsync(new WorldNpcSkillDamageRequest(
+				Target: npc,
+				Effector: CreatePlayer(),
+				Damage: 20,
+				SkillId: 5005,
+				Kind: WorldNpcSkillDamageKind.DelayedSpellAttackInstant,
+				Options: new WorldNpcSkillDamageOptions(Delay: TimeSpan.FromMilliseconds(750))));
+
+			Assert.Equal(WorldNpcSkillDamageKind.DelayedSpellAttackInstant, result.Kind);
+			Assert.Equal(WorldNpcDamageStatus.Damaged, result.DamageResult.Status);
+			Assert.NotNull(result.DamageResult.AttackStatusPacket);
+			Assert.Equal(SmAttackStatusType.DelayDamage, result.DamageResult.AttackStatusPacket.Type);
+			Assert.Equal(SmAttackStatusLog.DelayedSpellAttackInstant, result.DamageResult.AttackStatusPacket.Log);
+			Assert.NotNull(result.AttackObserverNotification);
+			Assert.Null(result.DotAttackedObserverNotification);
+			Assert.NotNull(result.DelayResult);
+			Assert.Equal(TimeSpan.FromMilliseconds(750), result.DelayResult.Delay);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
+	public async Task ApplyDamageEffectAsync_MapsProcAttackInstantWithoutAttackObserver()
+	{
+		var damageService = CreateDamageService(out var spawnService, out var world, out _, out var threadPoolManager, out _, out _, out _, out _, out _);
+		var skillDamageService = new WorldNpcSkillDamageService(damageService);
+		try
+		{
+			SpawnNpc(spawnService, world, npcTemplateId: 203105, maxHp: 100);
+			var npc = Assert.Single(world.GetNpcs());
+
+			var result = await skillDamageService.ApplyDamageEffectAsync(new WorldNpcSkillDamageRequest(
+				Target: npc,
+				Effector: CreatePlayer(),
+				Damage: 20,
+				SkillId: 5006,
+				Kind: WorldNpcSkillDamageKind.ProcAttackInstant));
+
+			Assert.Equal(WorldNpcSkillDamageKind.ProcAttackInstant, result.Kind);
+			Assert.Equal(WorldNpcDamageStatus.Damaged, result.DamageResult.Status);
+			Assert.NotNull(result.DamageResult.AttackStatusPacket);
+			Assert.Equal(SmAttackStatusType.Damage, result.DamageResult.AttackStatusPacket.Type);
+			Assert.Equal(SmAttackStatusLog.ProcAttackInstant, result.DamageResult.AttackStatusPacket.Log);
+			Assert.Null(result.AttackObserverNotification);
+			Assert.Null(result.DotAttackedObserverNotification);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
+	public async Task ApplyDamageEffectAsync_MapsBleedPeriodicToDotObserver()
+	{
+		var damageService = CreateDamageService(out var spawnService, out var world, out _, out var threadPoolManager, out _, out _, out _, out _, out _);
+		var skillDamageService = new WorldNpcSkillDamageService(damageService);
+		try
+		{
+			SpawnNpc(spawnService, world, npcTemplateId: 203106, maxHp: 100);
+			var npc = Assert.Single(world.GetNpcs());
+
+			var result = await skillDamageService.ApplyDamageEffectAsync(new WorldNpcSkillDamageRequest(
+				Target: npc,
+				Effector: CreatePlayer(),
+				Damage: 15,
+				SkillId: 5007,
+				Kind: WorldNpcSkillDamageKind.BleedPeriodic));
+
+			Assert.Equal(WorldNpcSkillDamageKind.BleedPeriodic, result.Kind);
+			Assert.Equal(WorldNpcDamageStatus.Damaged, result.DamageResult.Status);
+			Assert.False(result.DamageResult.NotifyAttack);
+			Assert.NotNull(result.DamageResult.AttackStatusPacket);
+			Assert.Equal(SmAttackStatusType.Damage, result.DamageResult.AttackStatusPacket.Type);
+			Assert.Equal(SmAttackStatusLog.Bleed, result.DamageResult.AttackStatusPacket.Log);
+			Assert.Null(result.AttackObserverNotification);
+			Assert.NotNull(result.DotAttackedObserverNotification);
+			Assert.Equal(5007, result.DotAttackedObserverNotification.SkillId);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
 	public async Task ApplyDamageAsync_RecordsAttackedObserverAndSupportAiEvents()
 	{
 		var damageService = CreateDamageService(out var spawnService, out var world, out _, out var threadPoolManager, out _, out _, out var combatEvents, out _, out _);
