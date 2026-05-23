@@ -168,6 +168,12 @@ public interface IPlayerEnterWorldRepository
 
 	Task<IReadOnlyDictionary<int, PlayerPortalCooldown>> LoadPlayerPortalCooldownsAsync(int playerObjectId, CancellationToken cancellationToken = default);
 
+	Task<bool> SavePlayerPortalCooldownsAsync(
+		int playerObjectId,
+		IReadOnlyDictionary<int, PlayerPortalCooldown> cooldowns,
+		long? nowMillis = null,
+		CancellationToken cancellationToken = default);
+
 	Task<PlayerLifeStats?> LoadPlayerLifeStatsAsync(int playerObjectId, CancellationToken cancellationToken = default);
 
 	Task<IReadOnlyList<PlayerFriend>> LoadPlayerFriendsAsync(int playerObjectId, CancellationToken cancellationToken = default);
@@ -564,6 +570,18 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		return Task.FromResult<IReadOnlyDictionary<int, PlayerPortalCooldown>>(new Dictionary<int, PlayerPortalCooldown>());
 	}
 
+	public IReadOnlyDictionary<int, PlayerPortalCooldown>? SavedPortalCooldowns { get; private set; }
+
+	public Task<bool> SavePlayerPortalCooldownsAsync(
+		int playerObjectId,
+		IReadOnlyDictionary<int, PlayerPortalCooldown> cooldowns,
+		long? nowMillis = null,
+		CancellationToken cancellationToken = default)
+	{
+		SavedPortalCooldowns = cooldowns;
+		return Task.FromResult(true);
+	}
+
 	public Task<PlayerLifeStats?> LoadPlayerLifeStatsAsync(int playerObjectId, CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult<PlayerLifeStats?>(null);
@@ -894,6 +912,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			await SavePlayerSkillCooldownsAsync(connection, player.ObjectId, player.SkillCooldowns, nowMillis, cancellationToken);
 			await SavePlayerItemCooldownsAsync(connection, player.ObjectId, player.ItemCooldowns, nowMillis, cancellationToken);
 			await SavePlayerHouseObjectCooldownsAsync(connection, player.ObjectId, player.HouseObjectCooldowns, nowMillis, cancellationToken);
+			await SavePlayerPortalCooldownsAsync(connection, player.ObjectId, player.PortalCooldowns, nowMillis, cancellationToken);
 			await SavePlayerSettingsAsync(connection, player.ObjectId, player.Settings, cancellationToken);
 
 			await using var command = connection.CreateCommand();
@@ -2259,6 +2278,68 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 					new MySqlParameter { Value = playerObjectId },
 					new MySqlParameter { Value = objectId },
 					new MySqlParameter { Value = reuseTime },
+				});
+			await insertCommand.ExecuteNonQueryAsync(cancellationToken);
+		}
+	}
+
+	public async Task<bool> SavePlayerPortalCooldownsAsync(
+		int playerObjectId,
+		IReadOnlyDictionary<int, PlayerPortalCooldown> cooldowns,
+		long? nowMillis = null,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/PortalCooldownsDAO.storePortalCooldowns.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await SavePlayerPortalCooldownsAsync(
+				connection,
+				playerObjectId,
+				cooldowns,
+				nowMillis ?? DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+				cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save portal cooldowns for player {PlayerObjectId}", playerObjectId);
+			return false;
+		}
+	}
+
+	private static async Task SavePlayerPortalCooldownsAsync(
+		MySqlConnection connection,
+		int playerObjectId,
+		IReadOnlyDictionary<int, PlayerPortalCooldown> cooldowns,
+		long nowMillis,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: dao/PortalCooldownsDAO.storePortalCooldowns deletes all rows, then inserts active cooldowns.
+		await using var deleteCommand = connection.CreateCommand();
+		deleteCommand.CommandText = "DELETE FROM portal_cooldowns WHERE player_id = ?";
+		deleteCommand.Parameters.Add(new MySqlParameter { Value = playerObjectId });
+		await deleteCommand.ExecuteNonQueryAsync(cancellationToken);
+
+		var activeCooldowns = cooldowns
+			.Where(entry => entry.Value.ReuseTimeMillis > nowMillis)
+			.ToArray();
+		if (activeCooldowns.Length == 0)
+			return;
+
+		await using var insertCommand = connection.CreateCommand();
+		insertCommand.CommandText = "INSERT INTO portal_cooldowns (player_id, world_id, reuse_time, entry_count) VALUES (?, ?, ?, ?)";
+		foreach (var entry in activeCooldowns)
+		{
+			insertCommand.Parameters.Clear();
+			insertCommand.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = playerObjectId },
+					new MySqlParameter { Value = entry.Key },
+					new MySqlParameter { Value = entry.Value.ReuseTimeMillis },
+					new MySqlParameter { Value = entry.Value.EntryCount },
 				});
 			await insertCommand.ExecuteNonQueryAsync(cancellationToken);
 		}

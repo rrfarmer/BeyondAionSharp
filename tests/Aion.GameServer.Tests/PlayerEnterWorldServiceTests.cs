@@ -566,6 +566,12 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public int LoadPortalCooldownsCalls { get; private set; }
 
+		public int SavePortalCooldownsCalls { get; private set; }
+
+		public IReadOnlyDictionary<int, PlayerPortalCooldown>? SavedPortalCooldowns { get; private set; }
+
+		public long? SavePortalCooldownsNowMillis { get; private set; }
+
 		public int LoadLifeStatsCalls { get; private set; }
 
 		public int LoadFriendsCalls { get; private set; }
@@ -1160,6 +1166,18 @@ public sealed class PlayerEnterWorldServiceTests
 		{
 			LoadPortalCooldownsCalls++;
 			return Task.FromResult(PortalCooldowns);
+		}
+
+		public Task<bool> SavePlayerPortalCooldownsAsync(
+			int playerObjectId,
+			IReadOnlyDictionary<int, PlayerPortalCooldown> cooldowns,
+			long? nowMillis = null,
+			CancellationToken cancellationToken = default)
+		{
+			SavePortalCooldownsCalls++;
+			SavedPortalCooldowns = cooldowns;
+			SavePortalCooldownsNowMillis = nowMillis;
+			return Task.FromResult(true);
 		}
 
 		public Task<PlayerLifeStats?> LoadPlayerLifeStatsAsync(int playerObjectId, CancellationToken cancellationToken = default)

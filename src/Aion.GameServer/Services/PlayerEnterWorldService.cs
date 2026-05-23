@@ -160,6 +160,15 @@ public sealed class PlayerEnterWorldService
 		return await _repository.DeletePlayerMacroAsync(player.ObjectId, macroId, cancellationToken);
 	}
 
+	public Task<bool> SavePortalCooldownsAsync(
+		Player player,
+		long? nowMillis = null,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/PortalCooldownsDAO.storePortalCooldowns called immediately by PortalCooldownList.addPortalCooldown.
+		return _repository.SavePlayerPortalCooldownsAsync(player.ObjectId, player.PortalCooldowns, nowMillis, cancellationToken);
+	}
+
 	public async Task<bool> DeleteRecipeAsync(
 		Player player,
 		int recipeId,

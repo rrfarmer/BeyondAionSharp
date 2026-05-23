@@ -2,10 +2,13 @@ using System.Net;
 using System.Net.Sockets;
 using Aion.Commons.Network;
 using Aion.GameServer.Configuration;
+using Aion.GameServer.Data;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
+using Aion.GameServer.Services;
+using GameWorld = Aion.GameServer.World.World;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Aion.GameServer.Tests;
@@ -15,12 +18,18 @@ public sealed class GameServerConnectionInstanceCooldownTests
 	[Fact]
 	public async Task ApplyInstanceEntranceCooldownAsync_SendsJavaEntryInfoPacketToOwner()
 	{
+		var repository = new EmptyPlayerEnterWorldRepository();
 		await using var pair = await TestConnectionPair.CreateAsync(
 			new GameServerOptions
 			{
 				Membership = new GameServerMembershipOptions { InstancesCooldown = 10 },
 				Instance = new GameServerInstanceOptions { CooldownRate = 2 },
-			});
+			},
+			new PlayerEnterWorldService(
+				new GameServerOptions(),
+				repository,
+				new GameWorld(NullLogger<GameWorld>.Instance),
+				NullLogger<PlayerEnterWorldService>.Instance));
 		var now = DateTimeOffset.FromUnixTimeMilliseconds(100_000);
 		var player = new Player
 		{
@@ -42,6 +51,12 @@ public sealed class GameServerConnectionInstanceCooldownTests
 			now);
 
 		Assert.True(result.Added);
+		var savedCooldowns = repository.SavedPortalCooldowns;
+		Assert.NotNull(savedCooldowns);
+		var savedCooldown = Assert.Single(savedCooldowns);
+		Assert.Equal(300030000, savedCooldown.Key);
+		Assert.Equal(result.ReuseTimeMillis, savedCooldown.Value.ReuseTimeMillis);
+		Assert.Equal(1, savedCooldown.Value.EntryCount);
 		var packet = Assert.IsType<SmInstanceInfo>(Assert.Single(pair.SentPackets));
 		var payload = SerializeUnencryptedPayload(packet);
 		using var reader = new PacketBuffer(payload);
@@ -116,6 +131,13 @@ public sealed class GameServerConnectionInstanceCooldownTests
 
 		public static async Task<TestConnectionPair> CreateAsync(GameServerOptions options)
 		{
+			return await CreateAsync(options, playerEnterWorldService: null);
+		}
+
+		public static async Task<TestConnectionPair> CreateAsync(
+			GameServerOptions options,
+			PlayerEnterWorldService? playerEnterWorldService)
+		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
 			try
@@ -134,6 +156,7 @@ public sealed class GameServerConnectionInstanceCooldownTests
 					"instance-cooldown-test",
 					new GamePacketProcessor<string>((_, _) => Task.CompletedTask),
 					options: options,
+					playerEnterWorldService: playerEnterWorldService,
 					sentPacketObserver: sentPackets.Add,
 					crypt: crypt);
 				return new TestConnectionPair(client, connection, sentPackets);

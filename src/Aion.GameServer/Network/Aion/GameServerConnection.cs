@@ -4904,6 +4904,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			player,
 			instanceCooltimes,
 			() => effectiveNow);
+		if (result.Added && _playerEnterWorldService != null)
+			await _playerEnterWorldService.SavePortalCooldownsAsync(player, effectiveNow.ToUnixTimeMilliseconds());
 		if (packet != null)
 		{
 			// Java parity: PortalCooldownList.addPortalCooldown -> sendEntryInfo owner-only branch via PacketSendUtility.sendPacket.
