@@ -362,9 +362,11 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 				{
 					// Java parity: network/aion/clientpackets/CM_SUBZONE_CHANGE.runImpl -> Player.revalidateZones.
-					PlayerZoneStateService.RevalidateFlightZonesFromWorldMap(
+					var staticData = _runtimeContext?.DataManager?.StaticData;
+					PlayerZoneStateService.RevalidateFlightZones(
 						_activePlayer,
-						_runtimeContext?.DataManager?.StaticData.WorldMaps ?? Array.Empty<WorldMapSummary>());
+						staticData?.WorldMaps ?? Array.Empty<WorldMapSummary>(),
+						staticData?.FlightZones);
 				}
 				break;
 			case CmChangeChannel:
@@ -927,9 +929,10 @@ public sealed class GameServerConnection : BaseClientConnection
 
 					var staticData = _runtimeContext?.DataManager?.StaticData;
 					// Java parity: CreatureController.onAfterSpawn revalidates zones after the player enters the world.
-					PlayerZoneStateService.RevalidateFlightZonesFromWorldMap(
+					PlayerZoneStateService.RevalidateFlightZones(
 						enterWorldResult.Player,
-						staticData?.WorldMaps ?? Array.Empty<WorldMapSummary>());
+						staticData?.WorldMaps ?? Array.Empty<WorldMapSummary>(),
+						staticData?.FlightZones);
 					await SendPacketAsync(new SmChannelInfo(enterWorldResult.Player.Position, staticData?.WorldMaps ?? Array.Empty<WorldMapSummary>()));
 					await SendPacketAsync(CreateBindPointPacket(enterWorldResult.Player, staticData));
 					await SendPacketAsync(new SmPlayerSpawn(enterWorldResult.Player));

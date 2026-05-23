@@ -856,6 +856,18 @@ public sealed class StaticDataLoadingTests
 		var flyingMap = Assert.Single(staticData.WorldMaps, map => map.MapId == 300020000);
 		Assert.True(flyingMap.AllowsFlight);
 		Assert.True(flyingMap.AllowsGlide);
+		Assert.Equal(56, staticData.FlightZones.Count);
+		var eltnenFlyZone = Assert.Single(staticData.FlightZones.GetZonesByMapId(210020000), zone => zone.Name == "FLYINGZONESHAPE1_4_210020000");
+		Assert.Equal(FlightZoneType.Fly, eltnenFlyZone.ZoneType);
+		Assert.Equal(-1, eltnenFlyZone.Flags);
+		Assert.Equal(87.14319f, eltnenFlyZone.Bottom);
+		Assert.Equal(317.1432f, eltnenFlyZone.Top);
+		Assert.Equal(9, eltnenFlyZone.Points.Count);
+		Assert.True(eltnenFlyZone.Contains(300f, 2700f, 100f));
+		var belusNoFlyZone = Assert.Single(staticData.FlightZones.GetZonesByMapId(400020000), zone => zone.Name == "GAB1_01_FLYING_ZONE01_400020000");
+		Assert.Equal(FlightZoneType.NoFly, belusNoFlyZone.ZoneType);
+		Assert.Equal(48, belusNoFlyZone.Flags);
+		Assert.False(belusNoFlyZone.Contains(1030f, 1000f, 1800f));
 		Assert.Contains("item_templates", staticData.TopLevelElements);
 		Assert.DoesNotContain("import", staticData.TopLevelElements);
 	}

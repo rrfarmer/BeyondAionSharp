@@ -12,6 +12,7 @@ public sealed class StaticData
 		IReadOnlyDictionary<string, int> elementCounts,
 		IReadOnlyList<string> topLevelElements,
 		IReadOnlyList<WorldMapSummary> worldMaps,
+		FlightZoneTable flightZones,
 		PlayerExperienceTable playerExperienceTable,
 		ItemTemplateTable itemTemplates,
 		CosmeticItemTable cosmeticItems,
@@ -49,6 +50,7 @@ public sealed class StaticData
 		ElementCounts = elementCounts;
 		TopLevelElements = topLevelElements;
 		WorldMaps = worldMaps;
+		FlightZones = flightZones;
 		PlayerExperienceTable = playerExperienceTable;
 		ItemTemplates = itemTemplates;
 		CosmeticItems = cosmeticItems;
@@ -93,6 +95,8 @@ public sealed class StaticData
 	public IReadOnlyList<string> TopLevelElements { get; }
 
 	public IReadOnlyList<WorldMapSummary> WorldMaps { get; }
+
+	public FlightZoneTable FlightZones { get; }
 
 	public PlayerExperienceTable PlayerExperienceTable { get; }
 
@@ -171,6 +175,7 @@ public sealed class StaticData
 		var counts = new Dictionary<string, int>(StringComparer.Ordinal);
 		var topLevelElements = new List<string>();
 		var worldMaps = new List<WorldMapSummary>();
+		var flightZones = new List<FlightZoneSummary>();
 		var experience = new List<long>();
 		var itemTemplates = new List<ItemTemplateSummary>();
 		var cosmeticItems = new List<CosmeticItemSummary>();
@@ -246,6 +251,7 @@ public sealed class StaticData
 		CosmeticItemBuilder? currentCosmeticItem = null;
 		DecomposableItemBuilder? currentDecomposableItem = null;
 		HousingBuildingBuilder? currentHousingBuilding = null;
+		FlightZoneBuilder? currentFlightZone = null;
 		int currentHousingLandId = 0;
 		int currentHousingManagerNpcId = 0;
 		var elementPath = new Dictionary<int, string>();
@@ -330,6 +336,13 @@ public sealed class StaticData
 				{
 					walkerTemplates.Add(currentWalkerTemplate.ToSummary());
 					currentWalkerTemplate = null;
+				}
+
+				if (reader.Depth == 2 && reader.LocalName == "zone" && currentFlightZone != null)
+				{
+					if (currentFlightZone.HasEnoughPoints)
+						flightZones.Add(currentFlightZone.ToSummary());
+					currentFlightZone = null;
 				}
 
 				if (reader.Depth == 2 && reader.LocalName == "walk_parent" && elementPath.GetValueOrDefault(1) == "walker_versions")
@@ -469,6 +482,28 @@ public sealed class StaticData
 					var flags = WorldMapSummary.ParseFlags(reader.GetAttribute("flags"));
 					worldMaps.Add(new WorldMapSummary(mapId, isInstance, twinCount, reader.GetAttribute("drop_type") ?? "NONE", flags));
 				}
+			}
+
+			if (reader.Depth == 2 && reader.LocalName == "zone" && elementPath.GetValueOrDefault(1) == "zones")
+			{
+				currentFlightZone = FlightZoneBuilder.TryCreate(reader);
+				continue;
+			}
+
+			if (reader.Depth == 3 && reader.LocalName == "points" && currentFlightZone != null)
+			{
+				currentFlightZone.SetVerticalBounds(
+					ReadFloatAttribute(reader, "bottom"),
+					ReadFloatAttribute(reader, "top"));
+				continue;
+			}
+
+			if (reader.Depth == 4 && reader.LocalName == "point" && currentFlightZone != null)
+			{
+				currentFlightZone.AddPoint(
+					ReadFloatAttribute(reader, "x"),
+					ReadFloatAttribute(reader, "y"));
+				continue;
 			}
 
 			if (reader.Depth == 2 && reader.LocalName == "spawn_map" && elementPath.GetValueOrDefault(1) == "spawns")
@@ -1817,6 +1852,7 @@ public sealed class StaticData
 			new ReadOnlyDictionary<string, int>(counts),
 			topLevelElements.AsReadOnly(),
 			worldMaps.AsReadOnly(),
+			new FlightZoneTable(flightZones.AsReadOnly()),
 			new PlayerExperienceTable(experience.AsReadOnly()),
 			new ItemTemplateTable(itemTemplates.AsReadOnly(), learnableEmotionIds),
 			new CosmeticItemTable(cosmeticItems.AsReadOnly()),
@@ -1926,6 +1962,83 @@ public sealed class StaticData
 			"EQUALS" => string.Equals(npcName, ruleName.Value, StringComparison.OrdinalIgnoreCase),
 			_ => false,
 		};
+	}
+
+	private sealed class FlightZoneBuilder
+	{
+		private readonly List<ZonePoint2D> _points = [];
+		private float _bottom;
+		private float _top;
+
+		private FlightZoneBuilder(int mapId, string name, FlightZoneType zoneType, int flags)
+		{
+			MapId = mapId;
+			Name = name;
+			ZoneType = zoneType;
+			Flags = flags;
+		}
+
+		private int MapId { get; }
+
+		private string Name { get; }
+
+		private FlightZoneType ZoneType { get; }
+
+		private int Flags { get; }
+
+		public bool HasEnoughPoints => _points.Count >= 3;
+
+		public static FlightZoneBuilder? TryCreate(XmlReader reader)
+		{
+			// Java parity: model/templates/zone/ZoneTemplate restricted to ZoneClassName.FLY/NO_FLY polygon areas for this Phase 6 slice.
+			if (!TryReadZoneType(reader.GetAttribute("zone_type"), out var zoneType))
+				return null;
+
+			var areaType = reader.GetAttribute("area_type") ?? "POLYGON";
+			if (!string.Equals(areaType, "POLYGON", StringComparison.Ordinal))
+				return null;
+
+			if (!int.TryParse(reader.GetAttribute("mapid"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var mapId))
+				return null;
+
+			return new FlightZoneBuilder(
+				mapId,
+				reader.GetAttribute("name") ?? string.Empty,
+				zoneType,
+				ReadOptionalIntAttribute(reader, "flags", -1));
+		}
+
+		public void SetVerticalBounds(float bottom, float top)
+		{
+			_bottom = bottom;
+			_top = top;
+		}
+
+		public void AddPoint(float x, float y)
+		{
+			_points.Add(new ZonePoint2D(x, y));
+		}
+
+		public FlightZoneSummary ToSummary()
+		{
+			return new FlightZoneSummary(MapId, Name, ZoneType, Flags, _bottom, _top, _points.ToArray());
+		}
+
+		private static bool TryReadZoneType(string? value, out FlightZoneType zoneType)
+		{
+			switch (value)
+			{
+				case "FLY":
+					zoneType = FlightZoneType.Fly;
+					return true;
+				case "NO_FLY":
+					zoneType = FlightZoneType.NoFly;
+					return true;
+				default:
+					zoneType = default;
+					return false;
+			}
+		}
 	}
 
 	private sealed class HousingBuildingBuilder
