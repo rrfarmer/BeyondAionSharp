@@ -74,6 +74,7 @@ var builder = Host.CreateDefaultBuilder(args)
 					serviceProvider.GetRequiredService<WorldNpcCastingInterruptService>().Clear(objectId);
 				});
 			services.AddSingleton<WorldNpcDamageService>();
+			services.AddSingleton<WorldNpcSkillDamageService>();
 			services.AddSingleton<WorldNpcLootService>();
 			services.AddSingleton<WorldNpcLootBroadcastService>();
 			services.AddSingleton<WorldNpcRandomWalkService>();

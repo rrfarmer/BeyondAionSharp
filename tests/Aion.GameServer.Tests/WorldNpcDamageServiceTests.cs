@@ -157,6 +157,70 @@ public sealed class WorldNpcDamageServiceTests
 	}
 
 	[Fact]
+	public async Task ApplyDamageEffectAsync_MapsRegularDamageEffectToNpcDamageOptions()
+	{
+		var damageService = CreateDamageService(out var spawnService, out var world, out _, out var threadPoolManager, out _, out _, out _, out _, out _);
+		var skillDamageService = new WorldNpcSkillDamageService(damageService);
+		try
+		{
+			SpawnNpc(spawnService, world, npcTemplateId: 203100, maxHp: 100);
+			var npc = Assert.Single(world.GetNpcs());
+
+			var result = await skillDamageService.ApplyDamageEffectAsync(new WorldNpcSkillDamageRequest(
+				Target: npc,
+				Effector: CreatePlayer(),
+				Damage: 20,
+				SkillId: 5001));
+
+			Assert.Equal(WorldNpcSkillDamageKind.RegularDamageEffect, result.Kind);
+			Assert.Equal(WorldNpcDamageStatus.Damaged, result.DamageResult.Status);
+			Assert.NotNull(result.DamageResult.AttackStatusPacket);
+			Assert.Equal(SmAttackStatusType.Regular, result.DamageResult.AttackStatusPacket.Type);
+			Assert.Equal(SmAttackStatusLog.Regular, result.DamageResult.AttackStatusPacket.Log);
+			Assert.Equal(5001, result.DamageResult.AttackStatusPacket.SkillId);
+			Assert.NotNull(result.AttackObserverNotification);
+			Assert.Equal(1001, result.AttackObserverNotification.EffectorObjectId);
+			Assert.Equal(npc.ObjectId, result.AttackObserverNotification.TargetObjectId);
+			Assert.Equal(5001, result.AttackObserverNotification.SkillId);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
+	public async Task ApplyDamageEffectAsync_MapsProvokedDamageEffectToDamageTypeWithoutAttackObserver()
+	{
+		var damageService = CreateDamageService(out var spawnService, out var world, out _, out var threadPoolManager, out _, out _, out _, out _, out _);
+		var skillDamageService = new WorldNpcSkillDamageService(damageService);
+		try
+		{
+			SpawnNpc(spawnService, world, npcTemplateId: 203101, maxHp: 100);
+			var npc = Assert.Single(world.GetNpcs());
+
+			var result = await skillDamageService.ApplyDamageEffectAsync(new WorldNpcSkillDamageRequest(
+				Target: npc,
+				Effector: CreatePlayer(),
+				Damage: 20,
+				SkillId: 5002,
+				Kind: WorldNpcSkillDamageKind.ProvokedDamageEffect));
+
+			Assert.Equal(WorldNpcSkillDamageKind.ProvokedDamageEffect, result.Kind);
+			Assert.Equal(WorldNpcDamageStatus.Damaged, result.DamageResult.Status);
+			Assert.NotNull(result.DamageResult.AttackStatusPacket);
+			Assert.Equal(SmAttackStatusType.Damage, result.DamageResult.AttackStatusPacket.Type);
+			Assert.Equal(SmAttackStatusLog.ProcAttackInstant, result.DamageResult.AttackStatusPacket.Log);
+			Assert.Equal(5002, result.DamageResult.AttackStatusPacket.SkillId);
+			Assert.Null(result.AttackObserverNotification);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
 	public async Task ApplyDamageAsync_RecordsAttackedObserverAndSupportAiEvents()
 	{
 		var damageService = CreateDamageService(out var spawnService, out var world, out _, out var threadPoolManager, out _, out _, out var combatEvents, out _, out _);
