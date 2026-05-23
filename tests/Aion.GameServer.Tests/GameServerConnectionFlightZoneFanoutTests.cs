@@ -141,6 +141,25 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 		Assert.Equal(0, reenteredCounters.SiegeZoneCount);
 	}
 
+	[Fact]
+	public async Task LeavePlayerWorldAsync_ClearsCreaturePvpZoneCounters()
+	{
+		var zoneCounterService = new CreaturePvpZoneCounterService();
+		var registry = new CapturingConnectionRegistry();
+		await using var pair = await TestConnectionPair.CreateAsync(registry, creaturePvpZoneCounterService: zoneCounterService);
+		var player = CreateTeleportingPlayer(7303, new WorldPosition(210040000, 2700, 620, 150, 0));
+		zoneCounterService.ApplyZoneEnter(player.ObjectId, "PVP_87_210040000", CreaturePvpZoneCounterType.Pvp);
+		zoneCounterService.ApplyZoneEnter(player.ObjectId, "FORT_210040000", CreaturePvpZoneCounterType.Siege);
+		Assert.Equal(new CreaturePvpZoneCounters(SiegeZoneCount: 1, PvpZoneCount: 1), zoneCounterService.GetCounters(player.ObjectId));
+
+		await pair.Connection.LeavePlayerWorldAsync(player, notifyPostmanClient: false);
+		var staleLeave = zoneCounterService.ApplyZoneLeave(player.ObjectId, "PVP_87_210040000", CreaturePvpZoneCounterType.Pvp);
+
+		Assert.Equal(CreaturePvpZoneCounters.Empty, zoneCounterService.GetCounters(player.ObjectId));
+		Assert.Equal(CreaturePvpZoneMembershipTransitionStatus.NotInside, staleLeave.Status);
+		Assert.Contains(registry.Broadcasts, broadcast => broadcast.SourceObjectId == player.ObjectId && broadcast.Packet is SmDelete);
+	}
+
 	private static Player CreateFlyingPlayer(int objectId)
 	{
 		var player = new Player

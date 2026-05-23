@@ -6046,6 +6046,12 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (player == null)
 			return;
 
+		await LeavePlayerWorldAsync(player, notifyPostmanClient);
+		_activePlayer = null;
+	}
+
+	internal async Task LeavePlayerWorldAsync(Player player, bool notifyPostmanClient)
+	{
 		if (_chatServer != null)
 			await _chatServer.SendPlayerLogoutAsync(player.ObjectId);
 		_expirableTaskService?.UnregisterPlayer(player);
@@ -6057,11 +6063,12 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (_connectionRegistry != null)
 			await _connectionRegistry.BroadcastToVisiblePlayersAsync(player.Position, player.ObjectId, new SmDelete(player.ObjectId));
 		_connectionRegistry?.UnregisterPlayerConnection(player.ObjectId, this);
+		// Java parity: World.despawn -> MapRegion.revalidateZones on an unspawned Creature leaves tracked zones.
+		_creaturePvpZoneCounterService?.ClearCounters(player.ObjectId);
 		if (_playerEnterWorldService != null)
 			await _playerEnterWorldService.LeaveWorldAsync(player);
 		else
 			_world?.TryRemoveObject(player.ObjectId, out _);
-		_activePlayer = null;
 	}
 
 	private void SaveOfflineKiskBinding(Player player)
