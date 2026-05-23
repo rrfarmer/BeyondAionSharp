@@ -467,6 +467,14 @@ public sealed class GameServerConnectionInstanceCooldownTests
 		Assert.Equal(1, groupPlan.CapacityPlan.CurrentPlayerCount);
 		Assert.Equal(GroupPortalCapacityState.WouldPassCapacityGuard, groupPlan.CapacityPlan.State);
 		Assert.Equal(GroupPortalCapacityBlockedReason.GroupFanoutNotImplemented, groupPlan.CapacityPlan.BlockedReason);
+		Assert.Equal(300030000, groupPlan.AllocationPlan.TargetWorldId);
+		Assert.Null(groupPlan.AllocationPlan.DifficultyId);
+		Assert.Equal(6, groupPlan.AllocationPlan.MaxPlayers);
+		Assert.Null(groupPlan.AllocationPlan.IntendedRegisteredTeamId);
+		Assert.Equal(GroupPortalAllocationState.NotNeededRegisteredTeamInstance, groupPlan.AllocationPlan.State);
+		Assert.Equal(
+			GroupPortalAllocationBlockedReason.RegisteredTeamInstanceAlreadyResolved,
+			groupPlan.AllocationPlan.BlockedReason);
 		Assert.Empty(pair.SentPackets);
 		Assert.Null(player.PendingTeleport);
 		Assert.Null(repository.SavedPortalCooldowns);
@@ -550,6 +558,13 @@ public sealed class GameServerConnectionInstanceCooldownTests
 		Assert.Null(groupPlan.CapacityPlan.CurrentPlayerCount);
 		Assert.Equal(GroupPortalCapacityState.UnknownUntilInstanceAllocated, groupPlan.CapacityPlan.State);
 		Assert.Equal(GroupPortalCapacityBlockedReason.InstanceAllocationNotPorted, groupPlan.CapacityPlan.BlockedReason);
+		Assert.Equal(300030000, groupPlan.AllocationPlan.TargetWorldId);
+		Assert.Null(groupPlan.AllocationPlan.DifficultyId);
+		Assert.Equal(6, groupPlan.AllocationPlan.MaxPlayers);
+		Assert.Equal(88001, groupPlan.AllocationPlan.IntendedRegisteredTeamId);
+		Assert.Equal(GroupPortalAllocationState.WouldAllocateAndRegisterTeam, groupPlan.AllocationPlan.State);
+		Assert.Equal(GroupPortalAllocationBlockedReason.InstanceAllocationNotPorted, groupPlan.AllocationPlan.BlockedReason);
+		Assert.False(worldMaps.GetMap(300030000)!.TryGetWorldMapInstance(instanceId: 2, out _));
 		Assert.Empty(pair.SentPackets);
 		Assert.Null(player.PendingTeleport);
 		Assert.Null(repository.SavedPortalCooldowns);
@@ -633,6 +648,13 @@ public sealed class GameServerConnectionInstanceCooldownTests
 		Assert.Null(groupPlan.CapacityPlan.CurrentPlayerCount);
 		Assert.Equal(GroupPortalCapacityState.BlockedInvalidTeamId, groupPlan.CapacityPlan.State);
 		Assert.Equal(GroupPortalCapacityBlockedReason.MissingTeamId, groupPlan.CapacityPlan.BlockedReason);
+		Assert.Equal(300030000, groupPlan.AllocationPlan.TargetWorldId);
+		Assert.Null(groupPlan.AllocationPlan.DifficultyId);
+		Assert.Equal(6, groupPlan.AllocationPlan.MaxPlayers);
+		Assert.Null(groupPlan.AllocationPlan.IntendedRegisteredTeamId);
+		Assert.Equal(GroupPortalAllocationState.BlockedInvalidTeamId, groupPlan.AllocationPlan.State);
+		Assert.Equal(GroupPortalAllocationBlockedReason.MissingTeamId, groupPlan.AllocationPlan.BlockedReason);
+		Assert.False(worldMaps.GetMap(300030000)!.TryGetWorldMapInstance(instanceId: 2, out _));
 		Assert.Empty(pair.SentPackets);
 		Assert.Null(player.PendingTeleport);
 		Assert.Null(repository.SavedPortalCooldowns);

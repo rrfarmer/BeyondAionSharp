@@ -1,4 +1,5 @@
 using Aion.GameServer.Controllers.Movement;
+using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
@@ -154,7 +155,7 @@ public sealed record PortalContinueTransferResult(
 			null);
 	}
 
-	public static PortalContinueTransferResult UnsupportedTeamPortal(PortalTeamEntryPlan teamPlan)
+	public static PortalContinueTransferResult UnsupportedTeamPortal(PortalTeamEntryPlan teamPlan, PortalLocSummary? portalLoc = null)
 	{
 		return new PortalContinueTransferResult(
 			PortalContinueTransferKind.UnsupportedTeamPortal,
@@ -163,7 +164,7 @@ public sealed record PortalContinueTransferResult(
 			null,
 			teamPlan.RegisteredInstance,
 			teamPlan,
-			GroupPortalTransferPlan.FromTeamPlan(teamPlan));
+			GroupPortalTransferPlan.FromTeamPlan(teamPlan, portalLoc));
 	}
 }
 
@@ -183,9 +184,10 @@ public sealed record GroupPortalTransferPlan(
 	WorldMapInstanceRuntimeState? RegisteredInstance,
 	GroupPortalTransferBlockedReason BlockedReason,
 	GroupPortalMemberInstanceScanPlan MemberInstanceScanPlan,
-	GroupPortalCapacityPlan CapacityPlan)
+	GroupPortalCapacityPlan CapacityPlan,
+	GroupPortalAllocationPlan AllocationPlan)
 {
-	public static GroupPortalTransferPlan? FromTeamPlan(PortalTeamEntryPlan teamPlan)
+	public static GroupPortalTransferPlan? FromTeamPlan(PortalTeamEntryPlan teamPlan, PortalLocSummary? portalLoc = null)
 	{
 		if (teamPlan.Kind != PortalTeamEntryKind.Group)
 			return null;
@@ -207,7 +209,12 @@ public sealed record GroupPortalTransferPlan(
 				CreateCapacityPlan(
 					teamPlan,
 					GroupPortalCapacityState.BlockedInvalidTeamId,
-					GroupPortalCapacityBlockedReason.MissingTeamId));
+					GroupPortalCapacityBlockedReason.MissingTeamId),
+				CreateAllocationPlan(
+					teamPlan,
+					portalLoc,
+					GroupPortalAllocationState.BlockedInvalidTeamId,
+					GroupPortalAllocationBlockedReason.MissingTeamId));
 		}
 
 		var state = teamPlan.RegisteredInstance == null
@@ -221,7 +228,8 @@ public sealed record GroupPortalTransferPlan(
 			teamPlan.RegisteredInstance,
 			GroupPortalTransferBlockedReason.GroupFanoutNotImplemented,
 			CreateMemberInstanceScanPlan(teamPlan, state),
-			CreateCapacityPlan(teamPlan, state));
+			CreateCapacityPlan(teamPlan, state),
+			CreateAllocationPlan(teamPlan, portalLoc, state));
 	}
 
 	private static GroupPortalMemberInstanceScanPlan CreateMemberInstanceScanPlan(
@@ -302,6 +310,52 @@ public sealed record GroupPortalTransferPlan(
 	{
 		return new GroupPortalCapacityPlan(teamPlan.MaxPlayers, CurrentPlayerCount: null, state, blockedReason);
 	}
+
+	private static GroupPortalAllocationPlan CreateAllocationPlan(
+		PortalTeamEntryPlan teamPlan,
+		PortalLocSummary? portalLoc,
+		GroupPortalTransferState transferState)
+	{
+		if (transferState == GroupPortalTransferState.RegisteredInstanceTransfer)
+		{
+			return CreateAllocationPlan(
+				teamPlan,
+				portalLoc,
+				GroupPortalAllocationState.NotNeededRegisteredTeamInstance,
+				GroupPortalAllocationBlockedReason.RegisteredTeamInstanceAlreadyResolved);
+		}
+
+		if (transferState == GroupPortalTransferState.FreshInstanceAllocationNeeded)
+		{
+			// Java parity: PortalService.port group allocation calls InstanceService.getNextAvailableInstance(mapId, difficult, maxPlayers), then registerTeam(group).
+			return CreateAllocationPlan(
+				teamPlan,
+				portalLoc,
+				GroupPortalAllocationState.WouldAllocateAndRegisterTeam,
+				GroupPortalAllocationBlockedReason.InstanceAllocationNotPorted);
+		}
+
+		return CreateAllocationPlan(
+			teamPlan,
+			portalLoc,
+			GroupPortalAllocationState.BlockedInvalidTeamId,
+			GroupPortalAllocationBlockedReason.MissingTeamId);
+	}
+
+	private static GroupPortalAllocationPlan CreateAllocationPlan(
+		PortalTeamEntryPlan teamPlan,
+		PortalLocSummary? portalLoc,
+		GroupPortalAllocationState state,
+		GroupPortalAllocationBlockedReason blockedReason)
+	{
+		return new GroupPortalAllocationPlan(
+			portalLoc?.WorldId,
+			DifficultyId: null,
+			teamPlan.MaxPlayers,
+			IntendedRegisteredTeamId: state == GroupPortalAllocationState.WouldAllocateAndRegisterTeam ? teamPlan.TeamId : null,
+			state,
+			blockedReason);
+	}
 }
 
 public sealed record GroupPortalMemberInstanceScanPlan(
@@ -314,6 +368,14 @@ public sealed record GroupPortalCapacityPlan(
 	int? CurrentPlayerCount,
 	GroupPortalCapacityState State,
 	GroupPortalCapacityBlockedReason BlockedReason);
+
+public sealed record GroupPortalAllocationPlan(
+	int? TargetWorldId,
+	byte? DifficultyId,
+	int MaxPlayers,
+	int? IntendedRegisteredTeamId,
+	GroupPortalAllocationState State,
+	GroupPortalAllocationBlockedReason BlockedReason);
 
 public enum GroupPortalTransferState
 {
@@ -356,6 +418,20 @@ public enum GroupPortalCapacityBlockedReason
 {
 	GroupFanoutNotImplemented,
 	RegisteredInstanceFull,
+	InstanceAllocationNotPorted,
+	MissingTeamId,
+}
+
+public enum GroupPortalAllocationState
+{
+	NotNeededRegisteredTeamInstance,
+	WouldAllocateAndRegisterTeam,
+	BlockedInvalidTeamId,
+}
+
+public enum GroupPortalAllocationBlockedReason
+{
+	RegisteredTeamInstanceAlreadyResolved,
 	InstanceAllocationNotPorted,
 	MissingTeamId,
 }
