@@ -247,32 +247,47 @@ public sealed class PlayerGroupRuntimeTests
 			{
 				Assert.Equal(1002, intent.RecipientObjectId);
 				Assert.Equal(1002, intent.SubjectObjectId);
-				Assert.Equal(PlayerGroupMemberInfoEvent.Join, intent.Event);
+				Assert.Equal(PlayerGroupEvent.Join, intent.Event);
+				Assert.Equal(5, (int)intent.Event);
 			},
 			intent =>
 			{
 				Assert.Equal(1001, intent.RecipientObjectId);
 				Assert.Equal(1002, intent.SubjectObjectId);
-				Assert.Equal(PlayerGroupMemberInfoEvent.Enter, intent.Event);
+				Assert.Equal(PlayerGroupEvent.Enter, intent.Event);
+				Assert.Equal(13, (int)intent.Event);
 			},
 			intent =>
 			{
 				Assert.Equal(1002, intent.RecipientObjectId);
 				Assert.Equal(1001, intent.SubjectObjectId);
-				Assert.Equal(PlayerGroupMemberInfoEvent.Enter, intent.Event);
+				Assert.Equal(PlayerGroupEvent.Enter, intent.Event);
 			},
 			intent =>
 			{
 				Assert.Equal(1003, intent.RecipientObjectId);
 				Assert.Equal(1002, intent.SubjectObjectId);
-				Assert.Equal(PlayerGroupMemberInfoEvent.Enter, intent.Event);
+				Assert.Equal(PlayerGroupEvent.Enter, intent.Event);
 			},
 			intent =>
 			{
 				Assert.Equal(1002, intent.RecipientObjectId);
 				Assert.Equal(1003, intent.SubjectObjectId);
-				Assert.Equal(PlayerGroupMemberInfoEvent.Enter, intent.Event);
+				Assert.Equal(PlayerGroupEvent.Enter, intent.Event);
 			});
+	}
+
+	[Fact]
+	public void PlayerGroupEvent_IdsMatchJavaGroupEvent()
+	{
+		Assert.Equal(0, (int)PlayerGroupEvent.Leave);
+		Assert.Equal(1, (int)PlayerGroupEvent.Movement);
+		Assert.Equal(3, (int)PlayerGroupEvent.Disconnected);
+		Assert.Equal(5, (int)PlayerGroupEvent.Join);
+		Assert.Equal(7, (int)PlayerGroupEvent.EnterOffline);
+		Assert.Equal(13, (int)PlayerGroupEvent.Enter);
+		Assert.Equal(13, (int)PlayerGroupEvent.Update);
+		Assert.Equal(65, (int)PlayerGroupEvent.UpdateEffects);
 	}
 
 	[Fact]

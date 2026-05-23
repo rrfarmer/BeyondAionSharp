@@ -1,3 +1,5 @@
+using Aion.GameServer.Model.GameObjects;
+
 namespace Aion.GameServer.Services;
 
 public sealed record PlayerGroupReconnectResult(
@@ -19,10 +21,4 @@ public sealed record PlayerGroupReconnectPacketPlan(
 public sealed record PlayerGroupMemberInfoIntent(
 	int RecipientObjectId,
 	int SubjectObjectId,
-	PlayerGroupMemberInfoEvent Event);
-
-public enum PlayerGroupMemberInfoEvent
-{
-	Join,
-	Enter,
-}
+	PlayerGroupEvent Event);
