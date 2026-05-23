@@ -532,6 +532,69 @@ public sealed class PlayerGroupRuntimeTests
 	}
 
 	[Fact]
+	public void SmGroupMemberInfo_WritesBranchlessFixedPrefixLikeJava()
+	{
+		var member = new PlayerGroupMember(new Player
+		{
+			ObjectId = 1004,
+			IsOnline = true,
+			Name = "Mover",
+			PlayerClass = "GLADIATOR",
+			Gender = "FEMALE",
+			Level = 10,
+			IsMentor = true,
+			FlyState = PlayerFlyState.Flying,
+			LifeStats = new PlayerLifeStats(CurrentHp: 777, CurrentMp: 333, CurrentFp: 44),
+			Position = new WorldPosition(220010000, 10.5f, 20.25f, 30.75f, 64, InstanceId: 2),
+		});
+		var plan = PlayerGroupMemberInfoPacketPlan.FromMember(99001, member, PlayerGroupEvent.Movement);
+
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(new Network.Aion.ServerPackets.SmGroupMemberInfo(plan)));
+
+		Assert.Equal(99001, reader.ReadD());
+		Assert.Equal(1004, reader.ReadD());
+		Assert.Equal(819, reader.ReadD());
+		Assert.Equal(777, reader.ReadD());
+		Assert.Equal(840, reader.ReadD());
+		Assert.Equal(333, reader.ReadD());
+		Assert.Equal(60, reader.ReadD());
+		Assert.Equal(44, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(220010000, reader.ReadD());
+		Assert.Equal(220010001, reader.ReadD());
+		Assert.Equal(10.5f, reader.ReadF());
+		Assert.Equal(20.25f, reader.ReadF());
+		Assert.Equal(30.75f, reader.ReadF());
+		Assert.Equal(1, (int)reader.ReadC());
+		Assert.Equal(1, (int)reader.ReadC());
+		Assert.Equal(10, (int)reader.ReadC());
+		Assert.Equal(1, (int)reader.ReadC());
+		Assert.Equal(1, (int)reader.ReadC());
+		Assert.Equal(1, (int)reader.ReadC());
+		Assert.Equal(1, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void SmGroupMemberInfo_ThrowsForUnportedNameAndEffectBranches()
+	{
+		var member = new PlayerGroupMember(new Player
+		{
+			ObjectId = 1004,
+			IsOnline = true,
+			Name = "Joiner",
+			PlayerClass = "GLADIATOR",
+			Level = 10,
+		});
+		var plan = PlayerGroupMemberInfoPacketPlan.FromMember(99001, member, PlayerGroupEvent.Join);
+
+		var exception = Assert.Throws<NotSupportedException>(() =>
+			SerializeUnencryptedPayload(new Network.Aion.ServerPackets.SmGroupMemberInfo(plan)));
+
+		Assert.Contains("SM_GROUP_MEMBER_INFO branch Join is not ported yet", exception.Message);
+	}
+
+	[Fact]
 	public void PlayerGroupEvent_IdsMatchJavaGroupEvent()
 	{
 		Assert.Equal(0, (int)PlayerGroupEvent.Leave);
