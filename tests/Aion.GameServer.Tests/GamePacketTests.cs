@@ -2371,15 +2371,17 @@ public class GamePacketTests
 	[Fact]
 	public void SmStatsInfo_WritesPlayerFlyStateByte()
 	{
+		var player = new Player
+		{
+			ObjectId = 1002,
+			PlayerClass = "RANGER",
+			FlyState = PlayerFlyState.Flying | PlayerFlyState.Gliding,
+			LifeStats = new PlayerLifeStats(111, 205, 55),
+		};
+		player.Movement.Mask = MovementMask.Position | MovementMask.Manual;
 		var payload = SerializeUnencryptedPayload(
 			new SmStatsInfo(
-				new Player
-				{
-					ObjectId = 1002,
-					PlayerClass = "RANGER",
-					FlyState = PlayerFlyState.Flying | PlayerFlyState.Gliding,
-					LifeStats = new PlayerLifeStats(111, 205, 55),
-				},
+				player,
 				new PlayerExperienceTable([0, 400]),
 				gameMinutes: 321));
 
@@ -2387,6 +2389,7 @@ public class GamePacketTests
 		reader.ReadB(96);
 
 		Assert.Equal((int)(PlayerFlyState.Flying | PlayerFlyState.Gliding), (int)reader.ReadC());
+		Assert.Equal(MovementMask.Position | MovementMask.Manual, (byte)reader.ReadC());
 	}
 
 	[Fact]
