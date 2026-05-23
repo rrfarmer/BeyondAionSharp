@@ -15,8 +15,10 @@ public sealed class WorldNpcSkillResultCalculationService
 			? (int)(inputDamage * random.Multiplier)
 			: inputDamage;
 		var normalizedFinalDamage = Math.Max(0, finalDamage);
+		var damageModifier = CalculateDamageModifier(options.DamageModifier, attackStatus.FinalStatus, normalizedFinalDamage);
+		var resultDamage = damageModifier.Applied ? damageModifier.FinalDamage : normalizedFinalDamage;
 		var attackResult = new WorldNpcSkillAttackResult(
-			normalizedFinalDamage,
+			resultDamage,
 			attackStatus.FinalStatus,
 			options.HitType,
 			ShieldChecked: !request.IgnoreShield);
@@ -28,7 +30,7 @@ public sealed class WorldNpcSkillResultCalculationService
 			request.SendResult);
 		return new WorldNpcSkillResultCalculationResult(
 			inputDamage,
-			normalizedFinalDamage,
+			resultDamage,
 			options.RandomDamageType,
 			random.Multiplier,
 			random.Status,
@@ -40,6 +42,7 @@ public sealed class WorldNpcSkillResultCalculationService
 			request.ShouldIncreaseByOneTimeBoost,
 			request.UsesTemplateDamage,
 			attackStatus,
+			damageModifier,
 			attackResult,
 			effectReserved);
 	}
@@ -224,6 +227,124 @@ public sealed class WorldNpcSkillResultCalculationService
 		return new RandomMultiplierResult(multiplier, WorldNpcSkillResultCalculationStatus.Calculated);
 	}
 
+	private static WorldNpcSkillDamageModifierResult CalculateDamageModifier(
+		WorldNpcSkillDamageModifierOptions? options,
+		WorldNpcSkillAttackStatus status,
+		int damage)
+	{
+		if (options == null)
+			return WorldNpcSkillDamageModifierResult.NotRequested(damage, status);
+
+		// Java parity: controllers/attack/AttackUtil.adjustDamageByStatModifiers.
+		var baseStatus = status.GetBaseStatus();
+		var skippedForStatus = baseStatus is WorldNpcSkillAttackStatus.Dodge or WorldNpcSkillAttackStatus.Resist;
+		var mainMultiplier = 1f;
+		var offMultiplier = 1f;
+		var reduceRatio = 0f;
+		var reduceMax = int.MaxValue;
+		var blockInputMissing = false;
+
+		if (skippedForStatus)
+		{
+			return WorldNpcSkillDamageModifierResult.Skipped(
+				damage,
+				status,
+				baseStatus,
+				options.Element,
+				SkippedForCounterStatus: true);
+		}
+
+		if (baseStatus == WorldNpcSkillAttackStatus.Block)
+		{
+			if (options.TargetIsPlayer)
+			{
+				blockInputMissing = options.BlockReduceRatio == null || options.BlockReduceMax == null;
+				if (!blockInputMissing)
+				{
+					reduceRatio = options.BlockReduceRatio!.Value;
+					reduceMax = options.BlockReduceMax!.Value;
+				}
+			}
+			else
+			{
+				reduceRatio = 10f;
+			}
+		}
+		else if (baseStatus == WorldNpcSkillAttackStatus.Parry)
+		{
+			mainMultiplier *= 0.6f;
+			offMultiplier *= 0.6f;
+		}
+
+		if (status.IsCritical())
+		{
+			mainMultiplier = 1.5f;
+			if (options.Element == WorldNpcSkillDamageModifierElement.Physical && options.MainHandWeaponGroup != null)
+			{
+				mainMultiplier = options.MainHandWeaponGroup.Value.GetJavaCriticalMultiplier();
+				if (options.OffHandWeaponGroup != null)
+					offMultiplier = options.OffHandWeaponGroup.Value.GetJavaCriticalMultiplier();
+			}
+
+			if (options.TargetIsPlayer)
+			{
+				var fortitudeModifier = options.CriticalDamageReduce / 1000f;
+				mainMultiplier -= fortitudeModifier;
+				offMultiplier += fortitudeModifier;
+			}
+		}
+
+		var defenseMissing = options.Defense == null;
+		var pvpPveMissing = options.PvpPveMultiplier == null;
+		if (defenseMissing || pvpPveMissing || blockInputMissing)
+		{
+			return WorldNpcSkillDamageModifierResult.Unresolved(
+				damage,
+				status,
+				baseStatus,
+				options.Element,
+				mainMultiplier,
+				offMultiplier,
+				reduceRatio,
+				reduceMax,
+				defenseMissing,
+				pvpPveMissing,
+				blockInputMissing);
+		}
+
+		var exactDamage = damage - options.Defense!.Value / 10f;
+		exactDamage *= mainMultiplier;
+		exactDamage *= options.AttackerMovementMultiplier;
+		var blockReduction = 0f;
+		if (reduceRatio > 0)
+		{
+			blockReduction = exactDamage - exactDamage * reduceRatio;
+			if (blockReduction > reduceMax)
+				blockReduction = reduceMax;
+			exactDamage -= blockReduction;
+		}
+
+		exactDamage *= options.PvpPveMultiplier!.Value;
+		if (exactDamage < 1)
+			exactDamage = 1;
+
+		return WorldNpcSkillDamageModifierResult.AppliedResult(
+			damage,
+			status,
+			baseStatus,
+			options.Element,
+			(int)exactDamage,
+			exactDamage,
+			mainMultiplier,
+			offMultiplier,
+			options.Defense.Value,
+			options.AttackerMovementMultiplier,
+			options.PvpPveMultiplier.Value,
+			reduceRatio,
+			reduceMax,
+			blockReduction);
+	}
+
 	private readonly record struct RandomMultiplierResult(float Multiplier, WorldNpcSkillResultCalculationStatus Status);
 }
 
@@ -242,6 +363,7 @@ public sealed record WorldNpcSkillResultCalculationOptions(
 	double? RandomChanceRoll = null,
 	bool CannotMiss = false,
 	WorldNpcSkillAttackStatusCalculationOptions? AttackStatusCalculation = null,
+	WorldNpcSkillDamageModifierOptions? DamageModifier = null,
 	WorldNpcSkillAttackStatus AttackStatus = WorldNpcSkillAttackStatus.NormalHit,
 	WorldNpcSkillHitType HitType = WorldNpcSkillHitType.PhysicalHit,
 	int EffectPosition = 0,
@@ -265,6 +387,7 @@ public sealed record WorldNpcSkillResultCalculationResult(
 	bool ShouldIncreaseByOneTimeBoost,
 	bool UsesTemplateDamage,
 	WorldNpcSkillAttackStatusCalculationResult AttackStatusCalculation,
+	WorldNpcSkillDamageModifierResult DamageModifier,
 	WorldNpcSkillAttackResult AttackResult,
 	WorldNpcSkillEffectReservedResult EffectReserved);
 
@@ -351,6 +474,160 @@ public sealed record WorldNpcSkillAttackStatusCalculationResult(
 	}
 }
 
+public sealed record WorldNpcSkillDamageModifierOptions(
+	WorldNpcSkillDamageModifierElement Element = WorldNpcSkillDamageModifierElement.Physical,
+	float? Defense = null,
+	float AttackerMovementMultiplier = 1f,
+	float? PvpPveMultiplier = null,
+	bool TargetIsPlayer = false,
+	float? BlockReduceRatio = null,
+	int? BlockReduceMax = null,
+	WorldNpcSkillWeaponGroup? MainHandWeaponGroup = null,
+	WorldNpcSkillWeaponGroup? OffHandWeaponGroup = null,
+	int CriticalDamageReduce = 0);
+
+public sealed record WorldNpcSkillDamageModifierResult(
+	bool WasRequested,
+	bool Applied,
+	bool SkippedForCounterStatus,
+	WorldNpcSkillAttackStatus AttackStatus,
+	WorldNpcSkillAttackStatus BaseStatus,
+	WorldNpcSkillDamageModifierElement Element,
+	int OriginalDamage,
+	int FinalDamage,
+	float ExactFinalDamage,
+	float MainMultiplier,
+	float OffMultiplier,
+	float? Defense,
+	float AttackerMovementMultiplier,
+	float? PvpPveMultiplier,
+	float BlockReduceRatio,
+	int BlockReduceMax,
+	float BlockReduction,
+	bool DefenseInputMissing,
+	bool PvpPveInputMissing,
+	bool BlockReductionInputMissing)
+{
+	public bool HasUnresolvedInputs => DefenseInputMissing || PvpPveInputMissing || BlockReductionInputMissing;
+
+	public static WorldNpcSkillDamageModifierResult NotRequested(int damage, WorldNpcSkillAttackStatus status)
+	{
+		return Skipped(
+			damage,
+			status,
+			status.GetBaseStatus(),
+			WorldNpcSkillDamageModifierElement.Physical,
+			SkippedForCounterStatus: false,
+			WasRequested: false);
+	}
+
+	public static WorldNpcSkillDamageModifierResult Skipped(
+		int damage,
+		WorldNpcSkillAttackStatus status,
+		WorldNpcSkillAttackStatus baseStatus,
+		WorldNpcSkillDamageModifierElement element,
+		bool SkippedForCounterStatus,
+		bool WasRequested = true)
+	{
+		return new WorldNpcSkillDamageModifierResult(
+			WasRequested: WasRequested,
+			Applied: false,
+			SkippedForCounterStatus: SkippedForCounterStatus,
+			AttackStatus: status,
+			BaseStatus: baseStatus,
+			Element: element,
+			OriginalDamage: damage,
+			FinalDamage: damage,
+			ExactFinalDamage: damage,
+			MainMultiplier: 1f,
+			OffMultiplier: 1f,
+			Defense: null,
+			AttackerMovementMultiplier: 1f,
+			PvpPveMultiplier: null,
+			BlockReduceRatio: 0f,
+			BlockReduceMax: int.MaxValue,
+			BlockReduction: 0f,
+			DefenseInputMissing: false,
+			PvpPveInputMissing: false,
+			BlockReductionInputMissing: false);
+	}
+
+	public static WorldNpcSkillDamageModifierResult Unresolved(
+		int damage,
+		WorldNpcSkillAttackStatus status,
+		WorldNpcSkillAttackStatus baseStatus,
+		WorldNpcSkillDamageModifierElement element,
+		float mainMultiplier,
+		float offMultiplier,
+		float blockReduceRatio,
+		int blockReduceMax,
+		bool defenseInputMissing,
+		bool pvpPveInputMissing,
+		bool blockReductionInputMissing)
+	{
+		return new WorldNpcSkillDamageModifierResult(
+			WasRequested: true,
+			Applied: false,
+			SkippedForCounterStatus: false,
+			AttackStatus: status,
+			BaseStatus: baseStatus,
+			Element: element,
+			OriginalDamage: damage,
+			FinalDamage: damage,
+			ExactFinalDamage: damage,
+			MainMultiplier: mainMultiplier,
+			OffMultiplier: offMultiplier,
+			Defense: null,
+			AttackerMovementMultiplier: 1f,
+			PvpPveMultiplier: null,
+			BlockReduceRatio: blockReduceRatio,
+			BlockReduceMax: blockReduceMax,
+			BlockReduction: 0f,
+			DefenseInputMissing: defenseInputMissing,
+			PvpPveInputMissing: pvpPveInputMissing,
+			BlockReductionInputMissing: blockReductionInputMissing);
+	}
+
+	public static WorldNpcSkillDamageModifierResult AppliedResult(
+		int originalDamage,
+		WorldNpcSkillAttackStatus status,
+		WorldNpcSkillAttackStatus baseStatus,
+		WorldNpcSkillDamageModifierElement element,
+		int finalDamage,
+		float exactFinalDamage,
+		float mainMultiplier,
+		float offMultiplier,
+		float defense,
+		float attackerMovementMultiplier,
+		float pvpPveMultiplier,
+		float blockReduceRatio,
+		int blockReduceMax,
+		float blockReduction)
+	{
+		return new WorldNpcSkillDamageModifierResult(
+			WasRequested: true,
+			Applied: true,
+			SkippedForCounterStatus: false,
+			AttackStatus: status,
+			BaseStatus: baseStatus,
+			Element: element,
+			OriginalDamage: originalDamage,
+			FinalDamage: finalDamage,
+			ExactFinalDamage: exactFinalDamage,
+			MainMultiplier: mainMultiplier,
+			OffMultiplier: offMultiplier,
+			Defense: defense,
+			AttackerMovementMultiplier: attackerMovementMultiplier,
+			PvpPveMultiplier: pvpPveMultiplier,
+			BlockReduceRatio: blockReduceRatio,
+			BlockReduceMax: blockReduceMax,
+			BlockReduction: blockReduction,
+			DefenseInputMissing: false,
+			PvpPveInputMissing: false,
+			BlockReductionInputMissing: false);
+	}
+}
+
 public sealed record WorldNpcSkillAttackResult(
 	int Damage,
 	WorldNpcSkillAttackStatus AttackStatus,
@@ -388,6 +665,41 @@ public enum WorldNpcSkillAttackStatusCalculationKind
 	NotRequested,
 	Physical,
 	Magical,
+}
+
+public enum WorldNpcSkillDamageModifierElement
+{
+	Physical,
+	Magical,
+}
+
+public enum WorldNpcSkillWeaponGroup
+{
+	Dagger,
+	Sword,
+	Mace,
+	Greatsword,
+	Polearm,
+	Staff,
+	Bow,
+	Other,
+}
+
+public static class WorldNpcSkillWeaponGroupExtensions
+{
+	public static float GetJavaCriticalMultiplier(this WorldNpcSkillWeaponGroup group)
+	{
+		// Java parity: controllers/attack/AttackUtil.getWeaponMultiplier.
+		return group switch
+		{
+			WorldNpcSkillWeaponGroup.Dagger => 2.3f,
+			WorldNpcSkillWeaponGroup.Sword => 2.2f,
+			WorldNpcSkillWeaponGroup.Mace => 2f,
+			WorldNpcSkillWeaponGroup.Greatsword or WorldNpcSkillWeaponGroup.Polearm => 1.8f,
+			WorldNpcSkillWeaponGroup.Staff or WorldNpcSkillWeaponGroup.Bow => 1.7f,
+			_ => 1.5f,
+		};
+	}
 }
 
 public enum WorldNpcSkillAttackStatus

@@ -332,6 +332,136 @@ public sealed class WorldNpcSkillResultCalculationServiceTests
 		Assert.False(result.AttackStatusCalculation.CriticalUpgraded);
 	}
 
+	[Fact]
+	public void Calculate_DamageModifierSkipsDodgeAndResistLikeJava()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 100,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				AttackStatus: WorldNpcSkillAttackStatus.Dodge,
+				DamageModifier: new WorldNpcSkillDamageModifierOptions())));
+
+		Assert.Equal(100, result.FinalDamage);
+		Assert.Equal(100, result.AttackResult.Damage);
+		Assert.True(result.DamageModifier.WasRequested);
+		Assert.False(result.DamageModifier.Applied);
+		Assert.True(result.DamageModifier.SkippedForCounterStatus);
+		Assert.False(result.DamageModifier.HasUnresolvedInputs);
+		Assert.Equal(WorldNpcSkillAttackStatus.Dodge, result.DamageModifier.BaseStatus);
+	}
+
+	[Fact]
+	public void Calculate_DamageModifierRecordsUnresolvedStatInputs()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 100,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				DamageModifier: new WorldNpcSkillDamageModifierOptions())));
+
+		Assert.Equal(100, result.FinalDamage);
+		Assert.False(result.DamageModifier.Applied);
+		Assert.True(result.DamageModifier.HasUnresolvedInputs);
+		Assert.True(result.DamageModifier.DefenseInputMissing);
+		Assert.True(result.DamageModifier.PvpPveInputMissing);
+	}
+
+	[Fact]
+	public void Calculate_DamageModifierAppliesJavaParryMultiplier()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 100,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				AttackStatus: WorldNpcSkillAttackStatus.Parry,
+				DamageModifier: new WorldNpcSkillDamageModifierOptions(
+					Defense: 10f,
+					PvpPveMultiplier: 1f))));
+
+		Assert.Equal(59, result.FinalDamage);
+		Assert.Equal(59, result.AttackResult.Damage);
+		Assert.True(result.DamageModifier.Applied);
+		Assert.Equal(0.6f, result.DamageModifier.MainMultiplier);
+		Assert.Equal(0.6f, result.DamageModifier.OffMultiplier);
+		Assert.Equal(59.4f, result.DamageModifier.ExactFinalDamage, precision: 3);
+	}
+
+	[Fact]
+	public void Calculate_DamageModifierAppliesJavaBlockReductionCap()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 100,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				AttackStatus: WorldNpcSkillAttackStatus.Block,
+				DamageModifier: new WorldNpcSkillDamageModifierOptions(
+					Defense: 0f,
+					PvpPveMultiplier: 1f,
+					TargetIsPlayer: true,
+					BlockReduceRatio: 0.5f,
+					BlockReduceMax: 20))));
+
+		Assert.Equal(80, result.FinalDamage);
+		Assert.True(result.DamageModifier.Applied);
+		Assert.Equal(0.5f, result.DamageModifier.BlockReduceRatio);
+		Assert.Equal(20, result.DamageModifier.BlockReduceMax);
+		Assert.Equal(20f, result.DamageModifier.BlockReduction);
+	}
+
+	[Fact]
+	public void Calculate_DamageModifierAppliesJavaWeaponCriticalMultiplierAndFortitude()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 50,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				AttackStatus: WorldNpcSkillAttackStatus.Critical,
+				DamageModifier: new WorldNpcSkillDamageModifierOptions(
+					Defense: 0f,
+					PvpPveMultiplier: 1f,
+					TargetIsPlayer: true,
+					MainHandWeaponGroup: WorldNpcSkillWeaponGroup.Dagger,
+					CriticalDamageReduce: 300))));
+
+		Assert.Equal(100, result.FinalDamage);
+		Assert.True(result.DamageModifier.Applied);
+		Assert.Equal(2.0f, result.DamageModifier.MainMultiplier, precision: 3);
+		Assert.Equal(1.3f, result.DamageModifier.OffMultiplier, precision: 3);
+		Assert.Equal(100f, result.DamageModifier.ExactFinalDamage, precision: 3);
+		Assert.Equal(2.3f, WorldNpcSkillWeaponGroup.Dagger.GetJavaCriticalMultiplier(), precision: 3);
+	}
+
 	[Theory]
 	[InlineData(WorldNpcSkillAttackStatus.Dodge, 0, true, false)]
 	[InlineData(WorldNpcSkillAttackStatus.OffHandDodge, 1, true, false)]
