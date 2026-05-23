@@ -27,7 +27,7 @@ public sealed class SmTeleportLoc : GameServerPacket
 
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
-		buffer.WriteC((byte)_animation);
+		buffer.WriteC(_animation.Id);
 		buffer.WriteD(_destination.WorldId);
 		buffer.WriteD(_isInstance ? _destination.InstanceId : _destination.WorldId);
 		buffer.WriteF(_destination.X);

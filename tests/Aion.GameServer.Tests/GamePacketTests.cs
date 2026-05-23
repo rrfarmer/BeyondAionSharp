@@ -18,6 +18,35 @@ namespace Aion.GameServer.Tests;
 public class GamePacketTests
 {
 	[Fact]
+	public void TeleportAnimation_PreservesJavaIdsAndDefaultMappings()
+	{
+		Assert.Equal(0, TeleportAnimation.None.Id);
+		Assert.Equal(1, TeleportAnimation.FadeOutBeam.Id);
+		Assert.Equal(2, TeleportAnimation.FadeOut.Id);
+		Assert.Equal(3, TeleportAnimation.JumpIn.Id);
+		Assert.Equal(4, TeleportAnimation.JumpInStatue.Id);
+		Assert.Equal(8, TeleportAnimation.JumpInGate.Id);
+		Assert.Equal(0, TeleportAnimation.Battleground.Id);
+		Assert.NotEqual(TeleportAnimation.None, TeleportAnimation.Battleground);
+
+		Assert.Equal(ArrivalAnimation.Landing, TeleportAnimation.None.DefaultArrivalAnimation);
+		Assert.Equal(ArrivalAnimation.FadeInBeam, TeleportAnimation.FadeOutBeam.DefaultArrivalAnimation);
+		Assert.Equal(ArrivalAnimation.Landing, TeleportAnimation.FadeOut.DefaultArrivalAnimation);
+		Assert.Equal(ArrivalAnimation.JumpOutCameraBehind, TeleportAnimation.JumpIn.DefaultArrivalAnimation);
+		Assert.Equal(ArrivalAnimation.JumpOutCameraFront, TeleportAnimation.JumpInStatue.DefaultArrivalAnimation);
+		Assert.Equal(ArrivalAnimation.JumpOutCameraBehind, TeleportAnimation.JumpInGate.DefaultArrivalAnimation);
+		Assert.Equal(ArrivalAnimation.LandingGlow, TeleportAnimation.Battleground.DefaultArrivalAnimation);
+
+		Assert.Equal(ObjectDeleteAnimation.FadeOut, TeleportAnimation.None.DefaultObjectDeleteAnimation);
+		Assert.Equal(ObjectDeleteAnimation.FadeOutBeam, TeleportAnimation.FadeOutBeam.DefaultObjectDeleteAnimation);
+		Assert.Equal(ObjectDeleteAnimation.FadeOut, TeleportAnimation.FadeOut.DefaultObjectDeleteAnimation);
+		Assert.Equal(ObjectDeleteAnimation.JumpIn, TeleportAnimation.JumpIn.DefaultObjectDeleteAnimation);
+		Assert.Equal(ObjectDeleteAnimation.JumpIn, TeleportAnimation.JumpInStatue.DefaultObjectDeleteAnimation);
+		Assert.Equal(ObjectDeleteAnimation.JumpIn, TeleportAnimation.JumpInGate.DefaultObjectDeleteAnimation);
+		Assert.Equal(ObjectDeleteAnimation.FadeOut, TeleportAnimation.Battleground.DefaultObjectDeleteAnimation);
+	}
+
+	[Fact]
 	public void SmKey_SerializesJavaShapedUnencryptedFirstFrame()
 	{
 		var crypt = new GameCrypt(() => 0x01020304);
@@ -2003,8 +2032,11 @@ public class GamePacketTests
 				new WorldPosition(300030000, 100.5f, 200.25f, 300.75f, 64, InstanceId: 7),
 				TeleportAnimation.FadeOutBeam,
 				[new WorldMapSummary(300030000, true, 1)]));
+		Assert.Equal(
+			Convert.FromHexString("013018E211070000000000C942004048430060964340"),
+			teleportPayload);
 		using var teleportReader = new PacketBuffer(teleportPayload);
-		Assert.Equal((byte)TeleportAnimation.FadeOutBeam, teleportReader.ReadC());
+		Assert.Equal(TeleportAnimation.FadeOutBeam.Id, teleportReader.ReadC());
 		Assert.Equal(300030000, teleportReader.ReadD());
 		Assert.Equal(7, teleportReader.ReadD());
 		Assert.Equal(100.5f, teleportReader.ReadF());
@@ -2012,6 +2044,13 @@ public class GamePacketTests
 		Assert.Equal(300.75f, teleportReader.ReadF());
 		Assert.Equal(64, (int)teleportReader.ReadC());
 		Assert.Equal(0, teleportReader.Remaining);
+		Assert.Equal(
+			Convert.FromHexString("00907F840C907F840C0000C03F000020400000604020"),
+			SerializeUnencryptedPayload(
+				new SmTeleportLoc(
+					new WorldPosition(210010000, 1.5f, 2.5f, 3.5f, 32, InstanceId: 99),
+					TeleportAnimation.None,
+					[new WorldMapSummary(210010000, false, 1)])));
 		Assert.Equal(
 			Convert.FromHexString("7B000000"),
 			SerializeUnencryptedPayload(new SmGameTime(123)));
@@ -2109,7 +2148,10 @@ public class GamePacketTests
 		var deletePayload = SerializeUnencryptedPayload(new SmDelete(9001));
 		using var deleteReader = new PacketBuffer(deletePayload);
 		Assert.Equal(9001, deleteReader.ReadD());
-		Assert.Equal(1, (int)deleteReader.ReadC());
+		Assert.Equal((byte)ObjectDeleteAnimation.FadeOut, deleteReader.ReadC());
+		Assert.Equal(
+			Convert.FromHexString("292300000B"),
+			SerializeUnencryptedPayload(new SmDelete(9001, ObjectDeleteAnimation.JumpIn)));
 
 		var brokerTemplate = new NpcTemplateSummary(
 			799211,

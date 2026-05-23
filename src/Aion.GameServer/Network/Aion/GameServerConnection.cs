@@ -4829,14 +4829,15 @@ public sealed class GameServerConnection : BaseClientConnection
 	internal async Task<PendingTeleportRequestResult> QueueDelayedTeleportAsync(
 		Player player,
 		WorldPosition destination,
-		TeleportAnimation animation = TeleportAnimation.FadeOutBeam,
+		TeleportAnimation? animation = null,
 		StaticData? staticData = null)
 	{
 		staticData ??= _runtimeContext?.DataManager?.StaticData;
+		animation ??= TeleportAnimation.FadeOutBeam;
 		var pendingTeleport = PlayerTeleportService.QueuePendingTeleport(player, destination);
 		var packet = new SmTeleportLoc(
 			pendingTeleport.Destination,
-			animation,
+			animation.Value,
 			staticData?.WorldMaps ?? Array.Empty<WorldMapSummary>());
 		// Java parity: TeleportService.sendLoc queues SpawnTask under TaskId.TELEPORT, then sends SM_TELEPORT_LOC; position changes after CM_TELEPORT_ANIMATION_DONE.
 		await SendPacketAsync(packet);
