@@ -69,6 +69,14 @@ public sealed record PlayerAllianceConnectedPlan(
 	int ConnectedPlayerObjectId,
 	IReadOnlyList<PlayerAlliancePacketIntent> PacketIntents);
 
+public sealed record PlayerAllianceEnteredPlan(
+	int AllianceId,
+	int InvitedPlayerObjectId,
+	IReadOnlyList<PlayerAlliancePacketIntent> PacketIntents,
+	bool WouldSendBrands,
+	bool WouldBroadcastAbyssRank,
+	bool WouldBroadcastLeague);
+
 public enum PlayerAlliancePacketIntentKind
 {
 	AllianceInfo,

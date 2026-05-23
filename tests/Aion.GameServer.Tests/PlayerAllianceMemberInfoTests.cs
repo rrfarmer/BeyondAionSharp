@@ -512,11 +512,11 @@ public sealed class PlayerAllianceMemberInfoTests
 		Assert.Collection(
 			plan.PacketIntents,
 			intent => AssertAllianceInfoPacketIntent(intent, sequence: 0, recipientObjectId: 1002, expectedAllianceGroupSize: 3, expectedLeaderObjectId: 1001, expectedActivePlayerMapId: 220010000, expectedPaddedViceCaptainIds: [1004, 0, 0, 0]),
-			intent => AssertAllianceMemberInfoPacketIntent(intent, sequence: 1, recipientObjectId: 1002, subjectObjectId: 1002, expectedName: "Connected"),
-			intent => AssertAllianceMemberInfoPacketIntent(intent, sequence: 2, recipientObjectId: 1001, subjectObjectId: 1002, expectedName: "Connected"),
-			intent => AssertAllianceMemberInfoPacketIntent(intent, sequence: 3, recipientObjectId: 1002, subjectObjectId: 1001, expectedName: "Leader"),
-			intent => AssertAllianceMemberInfoPacketIntent(intent, sequence: 4, recipientObjectId: 1003, subjectObjectId: 1002, expectedName: "Connected"),
-			intent => AssertAllianceMemberInfoPacketIntent(intent, sequence: 5, recipientObjectId: 1002, subjectObjectId: 1003, expectedName: "Other"));
+			intent => AssertAllianceMemberInfoPacketIntent(intent, sequence: 1, recipientObjectId: 1002, subjectObjectId: 1002, expectedName: "Connected", expectedEventKind: PlayerAllianceMemberInfoEventKind.Reconnect),
+			intent => AssertAllianceMemberInfoPacketIntent(intent, sequence: 2, recipientObjectId: 1001, subjectObjectId: 1002, expectedName: "Connected", expectedEventKind: PlayerAllianceMemberInfoEventKind.Reconnect),
+			intent => AssertAllianceMemberInfoPacketIntent(intent, sequence: 3, recipientObjectId: 1002, subjectObjectId: 1001, expectedName: "Leader", expectedEventKind: PlayerAllianceMemberInfoEventKind.Reconnect),
+			intent => AssertAllianceMemberInfoPacketIntent(intent, sequence: 4, recipientObjectId: 1003, subjectObjectId: 1002, expectedName: "Connected", expectedEventKind: PlayerAllianceMemberInfoEventKind.Reconnect),
+			intent => AssertAllianceMemberInfoPacketIntent(intent, sequence: 5, recipientObjectId: 1002, subjectObjectId: 1003, expectedName: "Other", expectedEventKind: PlayerAllianceMemberInfoEventKind.Reconnect));
 	}
 
 	[Fact]
@@ -531,6 +531,58 @@ public sealed class PlayerAllianceMemberInfoTests
 			[leader],
 			currentViceCaptainObjectIds: [],
 			connectedPlayerObjectId: 404);
+
+		Assert.Null(plan);
+	}
+
+	[Fact]
+	public void EnteredPlanner_PlansJoinAndBackfillPacketOrderLikeJavaPlayerAllianceEnteredEvent()
+	{
+		var planner = new PlayerAllianceEnteredPlanner();
+		var leader = CreateAllianceMember(1001, "Leader", worldId: 210010000);
+		var invited = CreateAllianceMember(1002, "Invited", worldId: 220010000);
+		var other = CreateAllianceMember(1003, "Other", worldId: 230010000);
+
+		var plan = Assert.IsType<PlayerAllianceEnteredPlan>(
+			planner.CreateEnteredPlan(
+				88001,
+				leaderObjectId: 1001,
+				[leader, invited, other],
+				currentViceCaptainObjectIds: [1004],
+				invitedPlayerObjectId: 1002));
+
+		Assert.Equal(88001, plan.AllianceId);
+		Assert.Equal(1002, plan.InvitedPlayerObjectId);
+		Assert.True(plan.WouldSendBrands);
+		Assert.True(plan.WouldBroadcastAbyssRank);
+		Assert.False(plan.WouldBroadcastLeague);
+		Assert.Collection(
+			plan.PacketIntents,
+			intent => AssertAllianceInfoPacketIntent(intent, sequence: 0, recipientObjectId: 1002, expectedAllianceGroupSize: 3, expectedLeaderObjectId: 1001, expectedActivePlayerMapId: 220010000, expectedPaddedViceCaptainIds: [1004, 0, 0, 0]),
+			intent => AssertAllianceSystemPacketIntent(intent, sequence: 1, recipientObjectId: 1002, expectedMessageId: 1390263),
+			intent => AssertAllianceMemberInfoPacketIntent(intent, sequence: 2, recipientObjectId: 1002, subjectObjectId: 1002, expectedName: "Invited", expectedEventKind: PlayerAllianceMemberInfoEventKind.Join),
+			intent => AssertAllianceMemberInfoPacketIntent(intent, sequence: 3, recipientObjectId: 1001, subjectObjectId: 1002, expectedName: "Invited", expectedEventKind: PlayerAllianceMemberInfoEventKind.Join),
+			intent => AssertAllianceSystemPacketIntent(intent, sequence: 4, recipientObjectId: 1001, expectedMessageId: 1400013),
+			intent => AssertAllianceInfoPacketIntent(intent, sequence: 5, recipientObjectId: 1001, expectedAllianceGroupSize: 3, expectedLeaderObjectId: 1001, expectedActivePlayerMapId: 210010000, expectedPaddedViceCaptainIds: [1004, 0, 0, 0]),
+			intent => AssertAllianceMemberInfoPacketIntent(intent, sequence: 6, recipientObjectId: 1002, subjectObjectId: 1001, expectedName: "Leader", expectedEventKind: PlayerAllianceMemberInfoEventKind.Enter),
+			intent => AssertAllianceMemberInfoPacketIntent(intent, sequence: 7, recipientObjectId: 1003, subjectObjectId: 1002, expectedName: "Invited", expectedEventKind: PlayerAllianceMemberInfoEventKind.Join),
+			intent => AssertAllianceSystemPacketIntent(intent, sequence: 8, recipientObjectId: 1003, expectedMessageId: 1400013),
+			intent => AssertAllianceInfoPacketIntent(intent, sequence: 9, recipientObjectId: 1003, expectedAllianceGroupSize: 3, expectedLeaderObjectId: 1001, expectedActivePlayerMapId: 230010000, expectedPaddedViceCaptainIds: [1004, 0, 0, 0]),
+			intent => AssertAllianceMemberInfoPacketIntent(intent, sequence: 10, recipientObjectId: 1002, subjectObjectId: 1003, expectedName: "Other", expectedEventKind: PlayerAllianceMemberInfoEventKind.Enter));
+	}
+
+	[Fact]
+	public void EnteredPlanner_ReturnsNullWhenInvitedMemberSnapshotIsMissing()
+	{
+		var planner = new PlayerAllianceEnteredPlanner();
+		var leader = CreateAllianceMember(1001, "Leader", worldId: 210010000);
+
+		var plan = planner.CreateEnteredPlan(
+			88001,
+			leaderObjectId: 1001,
+			[leader],
+			currentViceCaptainObjectIds: [],
+			invitedPlayerObjectId: 404);
 
 		Assert.Null(plan);
 	}
@@ -811,20 +863,21 @@ public sealed class PlayerAllianceMemberInfoTests
 		int sequence,
 		int recipientObjectId,
 		int subjectObjectId,
-		string expectedName)
+		string expectedName,
+		PlayerAllianceMemberInfoEventKind expectedEventKind)
 	{
 		Assert.Equal(sequence, intent.Sequence);
 		Assert.Equal(recipientObjectId, intent.RecipientObjectId);
 		Assert.Equal(PlayerAlliancePacketIntentKind.MemberInfo, intent.Kind);
 		var plan = Assert.IsType<PlayerAllianceMemberInfoPacketPlan>(intent.MemberInfoPlan);
 		Assert.Equal(subjectObjectId, plan.MemberObjectId);
-		Assert.Equal(PlayerAllianceMemberInfoEventKind.Reconnect, plan.RequestedEventKind);
-		Assert.Equal(PlayerAllianceMemberInfoEventKind.Reconnect, plan.EffectiveEventKind);
+		Assert.Equal(expectedEventKind, plan.RequestedEventKind);
+		Assert.Equal(expectedEventKind, plan.EffectiveEventKind);
 		Assert.True(plan.WritesName);
 		Assert.True(plan.WritesAbnormalEffects);
 		Assert.True(plan.WritesSlotTimers);
 		using var reader = new PacketBuffer(SerializeUnencryptedPayload(Assert.IsType<SmAllianceMemberInfo>(intent.CreatePacket())));
-		SkipAllianceMemberInfoPrefix(reader, expectedClassId: 5, expectedGenderId: 0, expectedLevel: 40, expectedEventId: (int)PlayerAllianceEvent.Reconnect);
+		SkipAllianceMemberInfoPrefix(reader, expectedClassId: 5, expectedGenderId: 0, expectedLevel: 40, expectedEventId: plan.PrefixSnapshot.EventId);
 		Assert.Equal(expectedName, reader.ReadS());
 		Assert.Equal(0, reader.ReadD());
 		Assert.Equal(0, reader.ReadD());
@@ -833,6 +886,21 @@ public sealed class PlayerAllianceMemberInfoTests
 		for (var i = 0; i < 8; i++)
 			Assert.Equal(0, reader.ReadD());
 		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertAllianceSystemPacketIntent(
+		PlayerAlliancePacketIntent intent,
+		int sequence,
+		int recipientObjectId,
+		int expectedMessageId)
+	{
+		Assert.Equal(sequence, intent.Sequence);
+		Assert.Equal(recipientObjectId, intent.RecipientObjectId);
+		Assert.Equal(PlayerAlliancePacketIntentKind.SystemMessage, intent.Kind);
+		Assert.Null(intent.AllianceInfoPlan);
+		Assert.Null(intent.MemberInfoPlan);
+		var message = Assert.IsType<SmSystemMessage>(intent.CreatePacket());
+		Assert.Equal(expectedMessageId, message.MessageId);
 	}
 
 	private static void AssertSystemMessageIntent(

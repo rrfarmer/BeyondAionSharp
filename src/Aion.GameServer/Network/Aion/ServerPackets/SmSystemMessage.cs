@@ -177,6 +177,18 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300999);
 	}
 
+	public static SmSystemMessage ForceEnteredForce()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_FORCE_ENTERED_FORCE.
+		return new SmSystemMessage(1390263);
+	}
+
+	public static SmSystemMessage ForceHeEnteredForce(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_FORCE_HE_ENTERED_FORCE(String).
+		return new SmSystemMessage(1400013, playerName);
+	}
+
 	public static SmSystemMessage EnterOnlyUnionDon()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ENTER_ONLY_UNION_DON.
