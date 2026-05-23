@@ -10,15 +10,18 @@ public sealed class WorldNpcDamageService
 	private readonly GameWorld _world;
 	private readonly WorldNpcLifeStatsService _lifeStats;
 	private readonly IGameClientConnectionRegistry? _connectionRegistry;
+	private readonly WorldNpcCombatStateService? _combatStates;
 
 	public WorldNpcDamageService(
 		GameWorld world,
 		WorldNpcLifeStatsService lifeStats,
-		IGameClientConnectionRegistry? connectionRegistry = null)
+		IGameClientConnectionRegistry? connectionRegistry = null,
+		WorldNpcCombatStateService? combatStates = null)
 	{
 		_world = world;
 		_lifeStats = lifeStats;
 		_connectionRegistry = connectionRegistry;
+		_combatStates = combatStates;
 	}
 
 	public async ValueTask<WorldNpcDamageResult> ApplyDamageAsync(
@@ -39,6 +42,12 @@ public sealed class WorldNpcDamageService
 			return WorldNpcDamageResult.Skipped(WorldNpcDamageStatus.MissingLifeStats);
 
 		var damageOptions = options ?? WorldNpcDamageOptions.Default;
+		_combatStates?.AddDamage(
+			spawnedNpc.ObjectId,
+			attacker.ObjectId,
+			damage,
+			damageOptions.NotifyAttack,
+			damageOptions.HopType);
 		SmAttackStatus? attackStatusPacket = null;
 		var attackStatusBroadcastCount = 0;
 		var lifeStatsResult = await _lifeStats.ReduceHpAsync(
@@ -58,8 +67,9 @@ public sealed class WorldNpcDamageService
 					spawnedNpc,
 					previous,
 					current,
-					damageOptions);
+				damageOptions);
 			});
+		var combatState = _combatStates?.IncrementAttackedCount(spawnedNpc.ObjectId);
 		if (attackStatusPacket == null && damageOptions.SkillId != 0 && lifeStatsResult.Previous != null && lifeStatsResult.Current != null)
 		{
 			(attackStatusPacket, attackStatusBroadcastCount) = await CreateAndBroadcastAttackStatusAsync(
@@ -74,7 +84,8 @@ public sealed class WorldNpcDamageService
 			Math.Max(0, damage),
 			damageOptions.NotifyAttack,
 			attackStatusPacket,
-			attackStatusBroadcastCount);
+			attackStatusBroadcastCount,
+			combatState);
 	}
 
 	private bool TryResolveMaxStats(IWorldNpcObject npc, out int maxHp, out int maxMp)
@@ -142,7 +153,8 @@ public sealed record WorldNpcDamageOptions(
 	WorldNpcDeathDropOptions? DeathOptions = null,
 	SmAttackStatusType AttackStatusType = SmAttackStatusType.Regular,
 	int SkillId = 0,
-	SmAttackStatusLog AttackStatusLog = SmAttackStatusLog.Regular)
+	SmAttackStatusLog AttackStatusLog = SmAttackStatusLog.Regular,
+	WorldNpcDamageHopType HopType = WorldNpcDamageHopType.Damage)
 {
 	public static WorldNpcDamageOptions Default { get; } = new(NotifyAttack: true);
 }
@@ -153,11 +165,19 @@ public sealed record WorldNpcDamageResult(
 	int Damage,
 	bool NotifyAttack,
 	SmAttackStatus? AttackStatusPacket = null,
-	int AttackStatusBroadcastCount = 0)
+	int AttackStatusBroadcastCount = 0,
+	WorldNpcCombatRuntimeState? CombatState = null)
 {
 	public static WorldNpcDamageResult Skipped(WorldNpcDamageStatus status)
 	{
-		return new WorldNpcDamageResult(status, null, 0, NotifyAttack: false, AttackStatusPacket: null, AttackStatusBroadcastCount: 0);
+		return new WorldNpcDamageResult(
+			status,
+			null,
+			0,
+			NotifyAttack: false,
+			AttackStatusPacket: null,
+			AttackStatusBroadcastCount: 0,
+			CombatState: null);
 	}
 }
 
