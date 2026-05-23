@@ -1,4 +1,6 @@
+using Aion.Commons.Network;
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
@@ -201,6 +203,41 @@ public sealed class PlayerVisualStatsUpdateServiceTests
 	}
 
 	[Fact]
+	public async Task LevelReadyFlightNotifier_RestartsFlyingAndBroadcastsFlyEmotion()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var player = CreatePlayer(6111);
+		player.SetFlyState(PlayerFlyState.Flying);
+
+		var result = await PlayerLevelReadyFlightNotifier.NotifyIfFlyingAsync(player, registry);
+
+		Assert.True(result.WasFlying);
+		Assert.True(player.IsInFlyingState());
+		Assert.True(player.IsInState(PlayerCreatureState.Flying));
+		Assert.True(player.IsFpReduceActive);
+		Assert.NotNull(result.Packet);
+		Assert.Equal(1, result.BroadcastCount);
+		var broadcast = Assert.Single(registry.Broadcasts);
+		Assert.Equal(player.Position, broadcast.SourcePosition);
+		Assert.Equal(player.ObjectId, broadcast.SourceObjectId);
+		Assert.True(broadcast.IncludeSourcePlayer);
+		Assert.Same(result.Packet, broadcast.Packet);
+
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(result.Packet));
+		Assert.Equal(player.ObjectId, reader.ReadD());
+		Assert.Equal((int)EmotionType.Fly, (int)reader.ReadC());
+		Assert.Equal((int)PlayerCreatureState.Flying, reader.ReadH());
+		Assert.Equal(0, reader.ReadF());
+		Assert.Equal(0, reader.Remaining);
+
+		var skipped = await PlayerLevelReadyFlightNotifier.NotifyIfFlyingAsync(CreatePlayer(6112), registry);
+		Assert.False(skipped.WasFlying);
+		Assert.Null(skipped.Packet);
+		Assert.Equal(0, skipped.BroadcastCount);
+		Assert.Single(registry.Broadcasts);
+	}
+
+	[Fact]
 	public async Task UpdateStatsVisuallyAsync_ReportsMissingPlayer()
 	{
 		var registry = new CapturingConnectionRegistry();
@@ -226,6 +263,14 @@ public sealed class PlayerVisualStatsUpdateServiceTests
 			Position = new WorldPosition(210010000, 10, 20, 30, 0),
 			LifeStats = new PlayerLifeStats(CurrentHp: 111, CurrentMp: 205, CurrentFp: 55),
 		};
+	}
+
+	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
+	{
+		var crypt = new GameCrypt(() => 0x01020304);
+		crypt.EnableKey();
+		var frame = packet.SerializeFrame(crypt);
+		return frame[7..];
 	}
 
 	private sealed class CapturingConnectionRegistry : IGameClientConnectionRegistry
