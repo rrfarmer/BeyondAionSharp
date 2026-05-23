@@ -8,6 +8,81 @@ namespace Aion.GameServer.Services;
 
 public static class PortalEntryValidationService
 {
+	public static PortalEntryPlanResult ValidatePortalEntryPlan(
+		Player player,
+		PortalPathSummary portalPath,
+		PortalLocTable portalLocs,
+		InstanceCooltimeTable instanceCooltimes,
+		WorldMapRuntimeStateTable worldMaps,
+		DateTimeOffset now,
+		int npcObjectId = 0,
+		bool adminBypassRequirements = false,
+		bool bypassLevelRequirement = false,
+		bool bypassRaceRequirement = false,
+		bool bypassTitleRequirement = false,
+		bool siegeOwnerMatchesPlayerRace = true,
+		bool npcIsDialogNpc = true)
+	{
+		// Java parity: services/teleport/PortalService.port early location lookup and solo/open-world guard ordering.
+		var loc = portalLocs.GetPortalLoc(portalPath.LocId);
+		if (loc == null)
+			return PortalEntryPlanResult.MissingLocation();
+
+		var maxPlayers = instanceCooltimes.GetMaxMemberCount(loc.WorldId, player.Race);
+		if (maxPlayers != 0 && maxPlayers != 1)
+			return PortalEntryPlanResult.UnsupportedTeamPortal(loc);
+
+		if (!adminBypassRequirements)
+		{
+			var validation = ValidateMentor(player, loc.WorldId, instanceCooltimes);
+			if (!validation.CanEnter)
+				return PortalEntryPlanResult.Rejected(validation.Status, loc, validation.FailurePacket!);
+
+			validation = ValidateRace(
+				player,
+				portalPath,
+				siegeOwnerMatchesPlayerRace,
+				npcIsDialogNpc,
+				npcObjectId,
+				bypassRaceRequirement);
+			if (!validation.CanEnter)
+				return PortalEntryPlanResult.Rejected(validation.Status, loc, validation.FailurePacket!);
+
+			validation = ValidateRank(player, portalPath, npcObjectId);
+			if (!validation.CanEnter)
+				return PortalEntryPlanResult.Rejected(validation.Status, loc, validation.FailurePacket!);
+
+			validation = ValidateTitle(player, portalPath, npcObjectId, bypassTitleRequirement);
+			if (!validation.CanEnter)
+				return PortalEntryPlanResult.Rejected(validation.Status, loc, validation.FailurePacket!);
+		}
+
+		var instanceValidation = ValidateCooldownForRegisteredInstance(
+			player,
+			loc.WorldId,
+			maxPlayers,
+			worldMaps,
+			instanceCooltimes,
+			now);
+		if (!instanceValidation.CanEnter)
+			return PortalEntryPlanResult.Rejected(instanceValidation.Status, loc, instanceValidation.FailurePacket!);
+
+		if (!instanceValidation.Reenter)
+		{
+			var validation = ValidateEnterLevel(
+				player,
+				loc.WorldId,
+				instanceCooltimes,
+				portalPath,
+				npcObjectId,
+				bypassLevelRequirement);
+			if (!validation.CanEnter)
+				return PortalEntryPlanResult.Rejected(validation.Status, loc, validation.FailurePacket!);
+		}
+
+		return PortalEntryPlanResult.Allowed(loc, instanceValidation.RegisteredInstance, instanceValidation.Reenter);
+	}
+
 	public static PortalEntryValidationResult ValidateCooldown(
 		Player player,
 		int worldId,
@@ -229,12 +304,55 @@ public sealed record PortalEntryValidationResult(
 public enum PortalEntryValidationStatus
 {
 	Allowed,
+	MissingPortalLocation,
+	UnsupportedTeamPortal,
 	CooldownLocked,
 	LevelRestricted,
 	MentorRestricted,
 	RaceRestricted,
 	RankRestricted,
 	TitleRestricted,
+}
+
+public sealed record PortalEntryPlanResult(
+	bool CanEnter,
+	PortalEntryValidationStatus Status,
+	PortalLocSummary? PortalLoc,
+	WorldMapInstanceRuntimeState? RegisteredInstance,
+	bool Reenter,
+	GameServerPacket? FailurePacket)
+{
+	public static PortalEntryPlanResult Allowed(
+		PortalLocSummary portalLoc,
+		WorldMapInstanceRuntimeState? registeredInstance,
+		bool reenter)
+	{
+		return new PortalEntryPlanResult(
+			true,
+			PortalEntryValidationStatus.Allowed,
+			portalLoc,
+			registeredInstance,
+			reenter,
+			null);
+	}
+
+	public static PortalEntryPlanResult MissingLocation()
+	{
+		return new PortalEntryPlanResult(false, PortalEntryValidationStatus.MissingPortalLocation, null, null, false, null);
+	}
+
+	public static PortalEntryPlanResult UnsupportedTeamPortal(PortalLocSummary portalLoc)
+	{
+		return new PortalEntryPlanResult(false, PortalEntryValidationStatus.UnsupportedTeamPortal, portalLoc, null, false, null);
+	}
+
+	public static PortalEntryPlanResult Rejected(
+		PortalEntryValidationStatus status,
+		PortalLocSummary portalLoc,
+		GameServerPacket failurePacket)
+	{
+		return new PortalEntryPlanResult(false, status, portalLoc, null, false, failurePacket);
+	}
 }
 
 public sealed record PortalEntryInstanceValidationResult(

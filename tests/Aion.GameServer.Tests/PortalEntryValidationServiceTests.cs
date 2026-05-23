@@ -589,6 +589,196 @@ public sealed class PortalEntryValidationServiceTests
 		Assert.Null(result.FailurePacket);
 	}
 
+	[Fact]
+	public void ValidatePortalEntryPlan_ReturnsMissingLocationBeforeAnyGuardLikeJava()
+	{
+		var player = CreatePlayerWithCooldown(reuseTimeMillis: 200_000, entryCount: 2);
+		player.IsMentor = true;
+		var result = PortalEntryValidationService.ValidatePortalEntryPlan(
+			player,
+			CreatePortalPath(),
+			new PortalLocTable([]),
+			CreatePortalCooltimes(maxPlayers: 1, maxCount: 1, canEnterMentor: false),
+			CreateWorldMaps(),
+			DateTimeOffset.FromUnixTimeMilliseconds(100_000),
+			npcObjectId: 4001);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.MissingPortalLocation, result.Status);
+		Assert.Null(result.PortalLoc);
+		Assert.Null(result.FailurePacket);
+	}
+
+	[Fact]
+	public void ValidatePortalEntryPlan_MentorFailureHappensBeforeCooldown()
+	{
+		var player = CreatePlayerWithCooldown(reuseTimeMillis: 200_000, entryCount: 2);
+		player.IsMentor = true;
+
+		var result = PortalEntryValidationService.ValidatePortalEntryPlan(
+			player,
+			CreatePortalPath(),
+			CreatePortalLocs(),
+			CreatePortalCooltimes(maxPlayers: 1, maxCount: 1, canEnterMentor: false),
+			CreateWorldMaps(),
+			DateTimeOffset.FromUnixTimeMilliseconds(100_000),
+			npcObjectId: 4001);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.MentorRestricted, result.Status);
+		var packet = Assert.IsType<SmSystemMessage>(result.FailurePacket);
+		Assert.Equal(1400766, packet.MessageId);
+	}
+
+	[Fact]
+	public void ValidatePortalEntryPlan_RaceFailureHappensBeforeCooldown()
+	{
+		var player = CreatePlayerWithCooldown(reuseTimeMillis: 200_000, entryCount: 2, race: "ELYOS");
+
+		var result = PortalEntryValidationService.ValidatePortalEntryPlan(
+			player,
+			CreatePortalPath(race: "ASMODIANS"),
+			CreatePortalLocs(),
+			CreatePortalCooltimes(maxPlayers: 1, maxCount: 1),
+			CreateWorldMaps(),
+			DateTimeOffset.FromUnixTimeMilliseconds(100_000),
+			npcObjectId: 4001,
+			npcIsDialogNpc: false);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.RaceRestricted, result.Status);
+		var packet = Assert.IsType<SmSystemMessage>(result.FailurePacket);
+		Assert.Equal(901354, packet.MessageId);
+	}
+
+	[Fact]
+	public void ValidatePortalEntryPlan_RankFailureHappensBeforeCooldown()
+	{
+		var player = CreatePlayerWithCooldown(reuseTimeMillis: 200_000, entryCount: 2, race: "ELYOS");
+		player.AbyssRank = PlayerAbyssRank.Default() with { Rank = 4 };
+
+		var result = PortalEntryValidationService.ValidatePortalEntryPlan(
+			player,
+			CreatePortalPath(minRank: 5),
+			CreatePortalLocs(),
+			CreatePortalCooltimes(maxPlayers: 1, maxCount: 1),
+			CreateWorldMaps(),
+			DateTimeOffset.FromUnixTimeMilliseconds(100_000),
+			npcObjectId: 4001);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.RankRestricted, result.Status);
+		Assert.IsType<SmDialogWindow>(result.FailurePacket);
+	}
+
+	[Fact]
+	public void ValidatePortalEntryPlan_TitleFailureHappensBeforeCooldown()
+	{
+		var player = CreatePlayerWithCooldown(reuseTimeMillis: 200_000, entryCount: 2, race: "ELYOS");
+		player.TitleId = 6;
+
+		var result = PortalEntryValidationService.ValidatePortalEntryPlan(
+			player,
+			CreatePortalPath(titleId: 7),
+			CreatePortalLocs(),
+			CreatePortalCooltimes(maxPlayers: 1, maxCount: 1),
+			CreateWorldMaps(),
+			DateTimeOffset.FromUnixTimeMilliseconds(100_000),
+			npcObjectId: 4001);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.TitleRestricted, result.Status);
+		Assert.IsType<SmDialogWindow>(result.FailurePacket);
+	}
+
+	[Fact]
+	public void ValidatePortalEntryPlan_CooldownFailureHappensBeforeLevelCheck()
+	{
+		var player = CreatePlayerWithCooldown(reuseTimeMillis: 200_000, entryCount: 1, race: "ELYOS");
+		player.Level = 1;
+
+		var result = PortalEntryValidationService.ValidatePortalEntryPlan(
+			player,
+			CreatePortalPath(minLevel: 25, errLevel: 1011),
+			CreatePortalLocs(),
+			CreatePortalCooltimes(maxPlayers: 1, maxCount: 1),
+			CreateWorldMaps(),
+			DateTimeOffset.FromUnixTimeMilliseconds(100_000),
+			npcObjectId: 4001);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.CooldownLocked, result.Status);
+		var packet = Assert.IsType<SmSystemMessage>(result.FailurePacket);
+		Assert.Equal(1400043, packet.MessageId);
+	}
+
+	[Fact]
+	public void ValidatePortalEntryPlan_ReenterSkipsCooldownAndLevelLikeJava()
+	{
+		var player = CreatePlayerWithCooldown(reuseTimeMillis: 200_000, entryCount: 1, race: "ELYOS");
+		player.Level = 1;
+		player.Position = new WorldPosition(210010000, 1, 2, 3, 4, InstanceId: 1);
+		var worldMaps = CreateWorldMapsWithRegisteredSoloInstance(player.ObjectId, out var instance);
+
+		var result = PortalEntryValidationService.ValidatePortalEntryPlan(
+			player,
+			CreatePortalPath(minLevel: 25, errLevel: 1011),
+			CreatePortalLocs(),
+			CreatePortalCooltimes(maxPlayers: 1, maxCount: 1),
+			worldMaps,
+			DateTimeOffset.FromUnixTimeMilliseconds(100_000),
+			npcObjectId: 4001);
+
+		Assert.True(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.Allowed, result.Status);
+		Assert.Same(instance, result.RegisteredInstance);
+		Assert.True(result.Reenter);
+		Assert.NotNull(result.PortalLoc);
+		Assert.Null(result.FailurePacket);
+	}
+
+	[Fact]
+	public void ValidatePortalEntryPlan_AllowsOpenWorldPlanWithResolvedLocation()
+	{
+		var player = new Player { Race = "ELYOS", Level = 25 };
+
+		var result = PortalEntryValidationService.ValidatePortalEntryPlan(
+			player,
+			CreatePortalPath(minLevel: 25),
+			CreatePortalLocs(),
+			CreatePortalCooltimes(maxPlayers: 0, maxCount: 0),
+			CreateWorldMaps(),
+			DateTimeOffset.FromUnixTimeMilliseconds(100_000),
+			npcObjectId: 4001);
+
+		Assert.True(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.Allowed, result.Status);
+		Assert.Equal(WorldId, result.PortalLoc?.WorldId);
+		Assert.Null(result.RegisteredInstance);
+		Assert.False(result.Reenter);
+		Assert.Null(result.FailurePacket);
+	}
+
+	[Fact]
+	public void ValidatePortalEntryPlan_LeavesTeamPortalsExplicitlyUnsupported()
+	{
+		var player = new Player { Race = "ELYOS", Level = 25 };
+
+		var result = PortalEntryValidationService.ValidatePortalEntryPlan(
+			player,
+			CreatePortalPath(minLevel: 25),
+			CreatePortalLocs(),
+			CreatePortalCooltimes(maxPlayers: 6, maxCount: 1),
+			CreateWorldMaps(),
+			DateTimeOffset.FromUnixTimeMilliseconds(100_000),
+			npcObjectId: 4001);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.UnsupportedTeamPortal, result.Status);
+		Assert.NotNull(result.PortalLoc);
+		Assert.Null(result.FailurePacket);
+	}
+
 	private const int WorldId = 300030000;
 
 	private static PortalPathSummary CreatePortalPath(
@@ -614,11 +804,12 @@ public sealed class PortalEntryValidationServiceTests
 			ErrLevel: errLevel);
 	}
 
-	private static Player CreatePlayerWithCooldown(long reuseTimeMillis, int entryCount)
+	private static Player CreatePlayerWithCooldown(long reuseTimeMillis, int entryCount, string race = "")
 	{
 		return new Player
 		{
 			ObjectId = 1001,
+			Race = race,
 			PortalCooldowns = new Dictionary<int, PlayerPortalCooldown>
 			{
 				[WorldId] = new(WorldId, reuseTimeMillis, entryCount),
@@ -665,6 +856,41 @@ public sealed class PortalEntryValidationServiceTests
 				MaxCount: 2,
 				CanEnterMentor: canEnterMentor),
 		]);
+	}
+
+	private static InstanceCooltimeTable CreatePortalCooltimes(
+		int maxPlayers,
+		int maxCount,
+		bool canEnterMentor = true)
+	{
+		return new InstanceCooltimeTable(
+		[
+			new InstanceCooltimeSummary(
+				8,
+				WorldId,
+				"PC_ALL",
+				MaxCount: maxCount,
+				MaxMemberLight: maxPlayers,
+				MaxMemberDark: maxPlayers,
+				EnterMinLevelLight: 25,
+				EnterMaxLevelLight: 0,
+				EnterMinLevelDark: 25,
+				EnterMaxLevelDark: 0,
+				CanEnterMentor: canEnterMentor),
+		]);
+	}
+
+	private static PortalLocTable CreatePortalLocs()
+	{
+		return new PortalLocTable(
+		[
+			new PortalLocSummary(WorldId, WorldId / 100, X: 1, Y: 2, Z: 3, Heading: 4),
+		]);
+	}
+
+	private static WorldMapRuntimeStateTable CreateWorldMaps()
+	{
+		return new WorldMapRuntimeStateTable([new WorldMapSummary(WorldId, IsInstance: true, TwinCount: 1)]);
 	}
 
 	private static WorldMapRuntimeStateTable CreateWorldMapsWithRegisteredSoloInstance(
