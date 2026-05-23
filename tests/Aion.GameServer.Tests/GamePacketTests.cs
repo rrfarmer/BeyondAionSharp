@@ -2081,6 +2081,17 @@ public class GamePacketTests
 		Assert.Equal(0, (int)npcReader.ReadC());
 		Assert.Equal(350579, npcReader.ReadD());
 
+		var attackableNpcPayload = SerializeUnencryptedPayload(
+			new SmNpcInfo(postman, creatureTypeId: (int)PlayerKiskCreatureType.Attackable));
+		using var attackableNpcReader = new PacketBuffer(attackableNpcPayload);
+		attackableNpcReader.ReadF();
+		attackableNpcReader.ReadF();
+		attackableNpcReader.ReadF();
+		attackableNpcReader.ReadD();
+		attackableNpcReader.ReadD();
+		attackableNpcReader.ReadD();
+		Assert.Equal((int)PlayerKiskCreatureType.Attackable, (int)attackableNpcReader.ReadC());
+
 		var deletePayload = SerializeUnencryptedPayload(new SmDelete(9001));
 		using var deleteReader = new PacketBuffer(deletePayload);
 		Assert.Equal(9001, deleteReader.ReadD());

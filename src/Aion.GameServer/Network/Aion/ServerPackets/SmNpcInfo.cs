@@ -10,12 +10,14 @@ public sealed class SmNpcInfo : GameServerPacket
 	private const int NormalNpcObjectType = 1;
 
 	private readonly IWorldNpcObject _npc;
+	private readonly int _creatureTypeId;
 
-	public SmNpcInfo(IWorldNpcObject npc)
+	public SmNpcInfo(IWorldNpcObject npc, int creatureTypeId = FriendCreatureType)
 		: base(PacketOpCode)
 	{
 		// Java parity: network/aion/serverpackets/SM_NPC_INFO(Npc, Player).
 		_npc = npc;
+		_creatureTypeId = creatureTypeId;
 	}
 
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
@@ -29,7 +31,7 @@ public sealed class SmNpcInfo : GameServerPacket
 		buffer.WriteD(_npc.ObjectId);
 		buffer.WriteD(template.TemplateId);
 		buffer.WriteD(template.TemplateId);
-		buffer.WriteC(FriendCreatureType);
+		buffer.WriteC(_creatureTypeId);
 		buffer.WriteH(_npc.State);
 		buffer.WriteC(position.Heading);
 		buffer.WriteD(template.NameId);
