@@ -16,6 +16,26 @@ public readonly record struct WorldMapSummary(
 		return (Flags & attribute) != 0;
 	}
 
+	public bool HasOverriddenOption(WorldZoneAttributes option, WorldZoneAttributes currentFlags)
+	{
+		// Java parity: world/WorldMap.hasOverridenOption compares mutable worldOptions against WorldMapTemplate.flags.
+		if ((Flags & option) == 0)
+			return (currentFlags & option) != 0;
+		return (currentFlags & option) == 0;
+	}
+
+	public bool IsFlightAllowed(WorldZoneAttributes currentFlags)
+	{
+		// Java parity: world/WorldMap.isFlightAllowed reads mutable worldOptions.
+		return (currentFlags & WorldZoneAttributes.Fly) != 0;
+	}
+
+	public bool CanGlide(WorldZoneAttributes currentFlags)
+	{
+		// Java parity: world/WorldMap.canGlide reads mutable worldOptions.
+		return (currentFlags & WorldZoneAttributes.Glide) != 0;
+	}
+
 	public static WorldZoneAttributes ParseFlags(string? flags)
 	{
 		// Java parity: world/zone/ZoneAttributes.fromList over WorldMapTemplate.flags.

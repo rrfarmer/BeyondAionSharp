@@ -362,6 +362,30 @@ public sealed class StaticDataLoadingTests
 	}
 
 	[Fact]
+	public void WorldMapSummary_HasOverriddenOptionMatchesJavaWorldMap()
+	{
+		var flyMap = new WorldMapSummary(
+			400010000,
+			IsInstance: false,
+			TwinCount: 1,
+			Flags: WorldZoneAttributes.Fly | WorldZoneAttributes.Glide);
+		var glideOnlyMap = new WorldMapSummary(
+			210010000,
+			IsInstance: false,
+			TwinCount: 5,
+			Flags: WorldZoneAttributes.Glide);
+
+		Assert.False(flyMap.HasOverriddenOption(WorldZoneAttributes.Fly, flyMap.Flags));
+		Assert.True(flyMap.HasOverriddenOption(WorldZoneAttributes.Fly, flyMap.Flags & ~WorldZoneAttributes.Fly));
+		Assert.False(flyMap.IsFlightAllowed(flyMap.Flags & ~WorldZoneAttributes.Fly));
+
+		Assert.False(glideOnlyMap.HasOverriddenOption(WorldZoneAttributes.Fly, glideOnlyMap.Flags));
+		Assert.True(glideOnlyMap.HasOverriddenOption(WorldZoneAttributes.Fly, glideOnlyMap.Flags | WorldZoneAttributes.Fly));
+		Assert.True(glideOnlyMap.IsFlightAllowed(glideOnlyMap.Flags | WorldZoneAttributes.Fly));
+		Assert.True(glideOnlyMap.CanGlide(glideOnlyMap.Flags));
+	}
+
+	[Fact]
 	public async Task DataManager_LoadsRealJavaStaticDataManifestCounts()
 	{
 		using var temp = TempDirectory.Create();
