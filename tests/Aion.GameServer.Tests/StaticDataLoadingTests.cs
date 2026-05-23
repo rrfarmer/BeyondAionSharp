@@ -420,6 +420,36 @@ public sealed class StaticDataLoadingTests
 	}
 
 	[Fact]
+	public void WorldMapSummary_OptionReadersMatchJavaWorldMap()
+	{
+		var worldMap = new WorldMapSummary(
+			400010000,
+			IsInstance: false,
+			TwinCount: 1,
+			Flags: WorldMapSummary.ParseFlags("BIND RECALL GLIDE FLY RIDE FLY_RIDE PVP DUEL_SAME_RACE DUEL_OTHER_RACE NO_RETURN_BATTLE"));
+		var flags = worldMap.Flags;
+
+		Assert.True(worldMap.CanPutKisk(flags));
+		Assert.True(worldMap.CanRecall(flags));
+		Assert.True(worldMap.CanGlide(flags));
+		Assert.True(worldMap.IsFlightAllowed(flags));
+		Assert.True(worldMap.CanRide(flags));
+		Assert.True(worldMap.CanFlyRide(flags));
+		Assert.True(worldMap.IsPvpAllowed(flags));
+		Assert.True(worldMap.IsSameRaceDuelsAllowed(flags));
+		Assert.True(worldMap.IsOtherRaceDuelsAllowed(flags));
+		Assert.False(worldMap.CanReturnToBattle(flags));
+
+		flags = worldMap.RemoveWorldOption(flags, WorldZoneAttributes.Ride | WorldZoneAttributes.NoReturnBattle);
+		Assert.False(worldMap.CanRide(flags));
+		Assert.True(worldMap.CanReturnToBattle(flags));
+
+		flags = worldMap.SetWorldOption(flags, WorldZoneAttributes.Ride | WorldZoneAttributes.NoReturnBattle);
+		Assert.True(worldMap.CanRide(flags));
+		Assert.False(worldMap.CanReturnToBattle(flags));
+	}
+
+	[Fact]
 	public async Task DataManager_LoadsRealJavaStaticDataManifestCounts()
 	{
 		using var temp = TempDirectory.Create();

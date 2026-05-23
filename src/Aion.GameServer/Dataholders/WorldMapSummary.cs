@@ -36,6 +36,66 @@ public readonly record struct WorldMapSummary(
 		return (currentFlags & WorldZoneAttributes.Glide) != 0;
 	}
 
+	public bool CanPutKisk(WorldZoneAttributes currentFlags)
+	{
+		// Java parity: world/WorldMap.canPutKisk reads mutable worldOptions.
+		return (currentFlags & WorldZoneAttributes.Bind) != 0;
+	}
+
+	public bool CanRecall(WorldZoneAttributes currentFlags)
+	{
+		// Java parity: world/WorldMap.canRecall reads mutable worldOptions.
+		return (currentFlags & WorldZoneAttributes.Recall) != 0;
+	}
+
+	public bool CanRide(WorldZoneAttributes currentFlags)
+	{
+		// Java parity: world/WorldMap.canRide reads mutable worldOptions.
+		return (currentFlags & WorldZoneAttributes.Ride) != 0;
+	}
+
+	public bool CanFlyRide(WorldZoneAttributes currentFlags)
+	{
+		// Java parity: world/WorldMap.canFlyRide reads mutable worldOptions.
+		return (currentFlags & WorldZoneAttributes.FlyRide) != 0;
+	}
+
+	public bool IsPvpAllowed(WorldZoneAttributes currentFlags)
+	{
+		// Java parity: world/WorldMap.isPvpAllowed reads mutable worldOptions.
+		return (currentFlags & WorldZoneAttributes.PvpEnabled) != 0;
+	}
+
+	public bool IsSameRaceDuelsAllowed(WorldZoneAttributes currentFlags)
+	{
+		// Java parity: world/WorldMap.isSameRaceDuelsAllowed reads mutable worldOptions.
+		return (currentFlags & WorldZoneAttributes.DuelSameRaceEnabled) != 0;
+	}
+
+	public bool IsOtherRaceDuelsAllowed(WorldZoneAttributes currentFlags)
+	{
+		// Java parity: world/WorldMap.isOtherRaceDuelsAllowed reads mutable worldOptions.
+		return (currentFlags & WorldZoneAttributes.DuelOtherRaceEnabled) != 0;
+	}
+
+	public bool CanReturnToBattle(WorldZoneAttributes currentFlags)
+	{
+		// Java parity: world/WorldMap.canReturnToBattle inverts NO_RETURN_BATTLE.
+		return (currentFlags & WorldZoneAttributes.NoReturnBattle) == 0;
+	}
+
+	public WorldZoneAttributes SetWorldOption(WorldZoneAttributes currentFlags, WorldZoneAttributes option)
+	{
+		// Java parity: world/WorldMap.setWorldOption mutates worldOptions; C# returns the updated immutable flag value.
+		return currentFlags | option;
+	}
+
+	public WorldZoneAttributes RemoveWorldOption(WorldZoneAttributes currentFlags, WorldZoneAttributes option)
+	{
+		// Java parity: world/WorldMap.removeWorldOption mutates worldOptions; C# returns the updated immutable flag value.
+		return currentFlags & ~option;
+	}
+
 	public static WorldZoneAttributes ParseFlags(string? flags)
 	{
 		// Java parity: world/zone/ZoneAttributes.fromList over WorldMapTemplate.flags.
