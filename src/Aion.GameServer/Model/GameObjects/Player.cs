@@ -244,6 +244,9 @@ public sealed class Player
 	// Java parity: Player.getPlayerGroup returns a live PlayerGroup; this snapshot is a narrow bridge until team lifecycle is ported.
 	public PlayerGroupSnapshot? CurrentGroupSnapshot { get; set; }
 
+	// Java parity: Player.getPlayerAlliance returns a live PlayerAlliance; this snapshot is a narrow bridge until alliance lifecycle is ported.
+	public PlayerAllianceSnapshot? CurrentAllianceSnapshot { get; set; }
+
 	// Java parity: model/gameobjects/player/Player.isLooting / getLootingNpcOid used by DropService request/close list.
 	public int LootingNpcObjectId { get; set; }
 
@@ -305,6 +308,7 @@ public sealed class Player
 		var removed = TeamMembership;
 		TeamMembership = PlayerTeamMembership.None;
 		CurrentGroupSnapshot = null;
+		CurrentAllianceSnapshot = null;
 		return removed;
 	}
 
