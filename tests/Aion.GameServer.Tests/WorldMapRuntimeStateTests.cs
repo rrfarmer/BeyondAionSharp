@@ -1,4 +1,5 @@
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Services;
 using Aion.GameServer.World;
 
@@ -180,5 +181,45 @@ public sealed class WorldMapRuntimeStateTests
 		Assert.Contains("210010000", error.Message);
 		Assert.Throws<InvalidOperationException>(() =>
 			InstanceRuntimeService.GetNextAvailableInstance(table, 123));
+	}
+
+	[Fact]
+	public void InstanceCooltimeTable_MatchesJavaRaceSpecificMaxMemberLookup()
+	{
+		var cooltimes = new InstanceCooltimeTable(
+		[
+			new InstanceCooltimeSummary(8, 300030000, "PC_ALL", 5, MaxMemberLight: 6, MaxMemberDark: 12),
+		]);
+
+		Assert.Equal(6, cooltimes.GetMaxMemberCount(300030000, "ELYOS"));
+		Assert.Equal(12, cooltimes.GetMaxMemberCount(300030000, "ASMODIANS"));
+		Assert.Equal(12, cooltimes.GetMaxMemberCount(300030000, "UNKNOWN"));
+		Assert.Equal(0, cooltimes.GetMaxMemberCount(123, "ELYOS"));
+	}
+
+	[Fact]
+	public void InstanceRuntimeService_PlayerOverloadUsesInstanceCooltimeMaxMembers()
+	{
+		var table = new WorldMapRuntimeStateTable(
+		[
+			new WorldMapSummary(300030000, IsInstance: true, TwinCount: 1),
+		]);
+		var cooltimes = new InstanceCooltimeTable(
+		[
+			new InstanceCooltimeSummary(8, 300030000, "PC_ALL", 5, MaxMemberLight: 6, MaxMemberDark: 12),
+		]);
+		var elyos = new Player { ObjectId = 1001, Race = "ELYOS" };
+		var asmodian = new Player { ObjectId = 2002, Race = "ASMODIANS" };
+
+		var elyosInstance = InstanceRuntimeService.GetNextAvailableInstanceForPlayer(table, 300030000, elyos, cooltimes);
+		var reused = InstanceRuntimeService.GetOrRegisterInstance(table, 300030000, elyos, cooltimes);
+		var asmodianInstance = InstanceRuntimeService.GetOrRegisterInstance(table, 300030000, asmodian, cooltimes);
+
+		Assert.Equal(6, elyosInstance.MaxPlayers);
+		Assert.True(elyosInstance.IsRegistered(1001));
+		Assert.Same(elyosInstance, reused);
+		Assert.Equal(12, asmodianInstance.MaxPlayers);
+		Assert.True(asmodianInstance.IsRegistered(2002));
+		Assert.NotSame(elyosInstance, asmodianInstance);
 	}
 }

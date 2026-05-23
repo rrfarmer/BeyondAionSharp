@@ -1,3 +1,5 @@
+using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.World;
 
 namespace Aion.GameServer.Services;
@@ -31,6 +33,17 @@ public static class InstanceRuntimeService
 		return instance;
 	}
 
+	public static WorldMapInstanceRuntimeState GetNextAvailableInstanceForPlayer(
+		WorldMapRuntimeStateTable worldMaps,
+		int worldId,
+		Player player,
+		InstanceCooltimeTable instanceCooltimes)
+	{
+		// Java parity: InstanceService.getNextAvailableInstance(worldId, player) derives max players from InstanceCooltimeData.getMaxMemberCount.
+		var maxPlayers = instanceCooltimes.GetMaxMemberCount(worldId, player.Race);
+		return GetNextAvailableInstanceForPlayer(worldMaps, worldId, player.ObjectId, maxPlayers);
+	}
+
 	public static WorldMapInstanceRuntimeState GetOrRegisterInstance(
 		WorldMapRuntimeStateTable worldMaps,
 		int worldId,
@@ -40,6 +53,17 @@ public static class InstanceRuntimeService
 		// Java parity: InstanceService.getOrRegisterInstance returns a registered instance or creates/registers a new one.
 		return worldMaps.GetRegisteredInstance(worldId, playerObjectId)
 			?? GetNextAvailableInstanceForPlayer(worldMaps, worldId, playerObjectId, maxPlayers);
+	}
+
+	public static WorldMapInstanceRuntimeState GetOrRegisterInstance(
+		WorldMapRuntimeStateTable worldMaps,
+		int worldId,
+		Player player,
+		InstanceCooltimeTable instanceCooltimes)
+	{
+		// Java parity: InstanceService.getOrRegisterInstance(worldId, player) reuses existing registration before allocating a player-scoped instance.
+		return worldMaps.GetRegisteredInstance(worldId, player.ObjectId)
+			?? GetNextAvailableInstanceForPlayer(worldMaps, worldId, player, instanceCooltimes);
 	}
 }
 

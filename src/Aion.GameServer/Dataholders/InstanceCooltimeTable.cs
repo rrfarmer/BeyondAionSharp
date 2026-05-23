@@ -21,6 +21,24 @@ public sealed class InstanceCooltimeTable
 	{
 		return _templatesByWorldId.GetValueOrDefault(worldId);
 	}
+
+	public int GetMaxMemberCount(int worldId, string race)
+	{
+		// Java parity: InstanceCooltimeData.getMaxMemberCount returns light capacity only for Race.ELYOS.
+		var template = GetInstanceCooltimeByWorldId(worldId);
+		if (template == null)
+			return 0;
+
+		return string.Equals(race, "ELYOS", StringComparison.OrdinalIgnoreCase)
+			? template.MaxMemberLight
+			: template.MaxMemberDark;
+	}
 }
 
-public sealed record InstanceCooltimeSummary(int Id, int WorldId, string Race, int MaxCount);
+public sealed record InstanceCooltimeSummary(
+	int Id,
+	int WorldId,
+	string Race,
+	int MaxCount,
+	int MaxMemberLight = 0,
+	int MaxMemberDark = 0);

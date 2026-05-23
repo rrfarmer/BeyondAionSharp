@@ -1162,6 +1162,20 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 3 && reader.LocalName == "max_member_light" && currentInstanceCooltime != null)
+			{
+				var value = await ReadElementTextAsync(reader, cancellationToken);
+				currentInstanceCooltime.MaxMemberLight = int.TryParse(value, out var parsedMaxMemberLight) ? parsedMaxMemberLight : 0;
+				continue;
+			}
+
+			if (reader.Depth == 3 && reader.LocalName == "max_member_dark" && currentInstanceCooltime != null)
+			{
+				var value = await ReadElementTextAsync(reader, cancellationToken);
+				currentInstanceCooltime.MaxMemberDark = int.TryParse(value, out var parsedMaxMemberDark) ? parsedMaxMemberDark : 0;
+				continue;
+			}
+
 			if (reader.Depth == 2 && reader.LocalName == "item_template")
 			{
 				var requiredLevels = ReadLevelRestrictions(reader.GetAttribute("restrict"));
@@ -2313,10 +2327,14 @@ public sealed class StaticData
 
 		public int MaxCount { get; set; }
 
+		public int MaxMemberLight { get; set; }
+
+		public int MaxMemberDark { get; set; }
+
 		public InstanceCooltimeSummary ToSummary()
 		{
-			// Java parity: model/templates/InstanceCooltime fields consumed by SM_INSTANCE_INFO.
-			return new InstanceCooltimeSummary(Id, WorldId, Race, MaxCount);
+			// Java parity: model/templates/InstanceCooltime fields consumed by SM_INSTANCE_INFO and InstanceCooltimeData.getMaxMemberCount.
+			return new InstanceCooltimeSummary(Id, WorldId, Race, MaxCount, MaxMemberLight, MaxMemberDark);
 		}
 	}
 
