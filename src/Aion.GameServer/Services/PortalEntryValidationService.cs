@@ -342,9 +342,166 @@ public static class PortalEntryValidationService
 		return PortalEntryValidationResult.Allowed();
 	}
 
+	public static PortalRequirementConsumptionPlan CreateRequiredItemsAndKinahConsumptionPlan(
+		Player player,
+		PortalPathSummary portalPath)
+	{
+		// Java parity: services/teleport/PortalService.checkAndRemoveRequiredItems consumes item requirements first, then kinah.
+		var workingItems = player.InventoryItems.ToList();
+		var updatedItemsByObjectId = new Dictionary<int, InventoryItem>();
+		var deletedObjectIds = new List<int>();
+		var consumptionSteps = new List<PortalRequirementConsumptionStep>();
+
+		var availableKinah = GetInventoryCount(workingItems, KinahItemId);
+		if (availableKinah < portalPath.Kinah)
+		{
+			return PortalRequirementConsumptionPlan.Failed(
+				KinahItemId,
+				portalPath.Kinah - availableKinah,
+				updatedItemsByObjectId.Values.ToArray(),
+				deletedObjectIds,
+				consumptionSteps);
+		}
+
+		foreach (var requirement in portalPath.ItemRequirements)
+		{
+			var availableCount = GetInventoryCount(workingItems, requirement.ItemId);
+			if (availableCount < requirement.ItemCount)
+			{
+				return PortalRequirementConsumptionPlan.Failed(
+					requirement.ItemId,
+					requirement.ItemCount - availableCount,
+					updatedItemsByObjectId.Values.ToArray(),
+					deletedObjectIds,
+					consumptionSteps);
+			}
+		}
+
+		foreach (var requirement in portalPath.ItemRequirements)
+		{
+			PlanDecreaseByItemId(
+				workingItems,
+				requirement.ItemId,
+				requirement.ItemCount,
+				deleteWhenZero: true,
+				updatedItemsByObjectId,
+				deletedObjectIds,
+				consumptionSteps);
+		}
+
+		if (portalPath.Kinah > 0)
+		{
+			PlanDecreaseByItemId(
+				workingItems,
+				KinahItemId,
+				portalPath.Kinah,
+				deleteWhenZero: false,
+				updatedItemsByObjectId,
+				deletedObjectIds,
+				consumptionSteps);
+		}
+
+		return PortalRequirementConsumptionPlan.Success(
+			updatedItemsByObjectId.Values.ToArray(),
+			deletedObjectIds,
+			consumptionSteps);
+	}
+
 	private static long GetInventoryCount(Player player, int itemId)
 	{
-		return player.InventoryItems.Where(item => item.ItemId == itemId).Sum(item => item.Count);
+		return GetInventoryCount(player.InventoryItems, itemId);
+	}
+
+	private static long GetInventoryCount(IReadOnlyList<InventoryItem> inventoryItems, int itemId)
+	{
+		return inventoryItems.Where(item => item.ItemId == itemId).Sum(item => item.Count);
+	}
+
+	private static void PlanDecreaseByItemId(
+		List<InventoryItem> workingItems,
+		int itemId,
+		long count,
+		bool deleteWhenZero,
+		Dictionary<int, InventoryItem> updatedItemsByObjectId,
+		List<int> deletedObjectIds,
+		List<PortalRequirementConsumptionStep> consumptionSteps)
+	{
+		var remaining = count;
+		foreach (var item in workingItems.Where(candidate => candidate.ItemId == itemId && candidate.Count > 0).ToArray())
+		{
+			if (remaining == 0)
+				break;
+
+			var consumed = Math.Min(item.Count, remaining);
+			var newCount = item.Count - consumed;
+			if (newCount == 0 && deleteWhenZero)
+			{
+				updatedItemsByObjectId.Remove(item.ObjectId);
+				deletedObjectIds.Add(item.ObjectId);
+				workingItems.RemoveAll(candidate => candidate.ObjectId == item.ObjectId);
+			}
+			else
+			{
+				var updatedItem = CopyInventoryItem(item, newCount);
+				updatedItemsByObjectId[updatedItem.ObjectId] = updatedItem;
+				ReplaceInventoryItem(workingItems, updatedItem);
+			}
+
+			consumptionSteps.Add(new PortalRequirementConsumptionStep(
+				itemId,
+				item.ObjectId,
+				consumed,
+				newCount,
+				IsKinah: itemId == KinahItemId));
+			remaining -= consumed;
+		}
+	}
+
+	private static void ReplaceInventoryItem(List<InventoryItem> items, InventoryItem replacement)
+	{
+		var index = items.FindIndex(item => item.ObjectId == replacement.ObjectId);
+		if (index >= 0)
+			items[index] = replacement;
+	}
+
+	private static InventoryItem CopyInventoryItem(InventoryItem item, long count)
+	{
+		var copy = new InventoryItem
+		{
+			ObjectId = item.ObjectId,
+			ItemId = item.ItemId,
+			Count = count,
+			Color = item.Color,
+			ColorExpires = item.ColorExpires,
+			Creator = item.Creator,
+			ExpireTime = item.ExpireTime,
+			ActivationCount = item.ActivationCount,
+			OwnerId = item.OwnerId,
+			IsEquipped = item.IsEquipped,
+			IsSoulBound = item.IsSoulBound,
+			Slot = item.Slot,
+			Location = item.Location,
+			Enchant = item.Enchant,
+			EnchantBonus = item.EnchantBonus,
+			ItemSkin = item.ItemSkin,
+			FusionedItem = item.FusionedItem,
+			OptionalSocket = item.OptionalSocket,
+			OptionalFusionSocket = item.OptionalFusionSocket,
+			Charge = item.Charge,
+			TuneCount = item.TuneCount,
+			RandomBonus = item.RandomBonus,
+			FusionRandomBonus = item.FusionRandomBonus,
+			Tempering = item.Tempering,
+			PackCount = item.PackCount,
+			IsAmplified = item.IsAmplified,
+			BuffSkill = item.BuffSkill,
+			RandomPlumeBonus = item.RandomPlumeBonus,
+		};
+		copy.ManaStones = item.ManaStones;
+		copy.FusionStones = item.FusionStones;
+		copy.Godstone = item.Godstone;
+		copy.IdianStone = item.IdianStone;
+		return copy;
 	}
 
 	private static WorldMapInstanceRuntimeState? ResolveRegisteredInstance(
@@ -378,6 +535,52 @@ public sealed record PortalEntryValidationResult(
 		return new PortalEntryValidationResult(false, status, failurePacket);
 	}
 }
+
+public sealed record PortalRequirementConsumptionPlan(
+	bool Succeeded,
+	IReadOnlyList<InventoryItem> UpdatedItems,
+	IReadOnlyList<int> DeletedObjectIds,
+	IReadOnlyList<PortalRequirementConsumptionStep> ConsumptionSteps,
+	int? MissingItemId,
+	long MissingCount)
+{
+	public static PortalRequirementConsumptionPlan Success(
+		IReadOnlyList<InventoryItem> updatedItems,
+		IReadOnlyList<int> deletedObjectIds,
+		IReadOnlyList<PortalRequirementConsumptionStep> consumptionSteps)
+	{
+		return new PortalRequirementConsumptionPlan(
+			true,
+			updatedItems,
+			deletedObjectIds,
+			consumptionSteps,
+			null,
+			0);
+	}
+
+	public static PortalRequirementConsumptionPlan Failed(
+		int missingItemId,
+		long missingCount,
+		IReadOnlyList<InventoryItem> updatedItems,
+		IReadOnlyList<int> deletedObjectIds,
+		IReadOnlyList<PortalRequirementConsumptionStep> consumptionSteps)
+	{
+		return new PortalRequirementConsumptionPlan(
+			false,
+			updatedItems,
+			deletedObjectIds,
+			consumptionSteps,
+			missingItemId,
+			missingCount);
+	}
+}
+
+public sealed record PortalRequirementConsumptionStep(
+	int ItemId,
+	int ObjectId,
+	long ConsumedCount,
+	long RemainingItemCount,
+	bool IsKinah);
 
 public enum PortalEntryValidationStatus
 {

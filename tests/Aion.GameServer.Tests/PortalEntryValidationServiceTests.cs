@@ -814,6 +814,131 @@ public sealed class PortalEntryValidationServiceTests
 	}
 
 	[Fact]
+	public void CreateRequiredItemsAndKinahConsumptionPlan_PlansJavaItemThenKinahConsumptionAcrossStacks()
+	{
+		var itemStackA = new InventoryItem { ObjectId = 10, ItemId = 185000077, Count = 1 };
+		var itemStackB = new InventoryItem { ObjectId = 11, ItemId = 185000077, Count = 3 };
+		var kinahStack = new InventoryItem { ObjectId = 12, ItemId = KinahItemId, Count = 1_000 };
+		var player = new Player
+		{
+			InventoryItems = [itemStackA, itemStackB, kinahStack],
+		};
+		var portalPath = CreatePortalPath(
+			kinah: 500,
+			itemRequirements: [new PortalItemRequirementSummary(185000077, ItemCount: 3)]);
+
+		var plan = PortalEntryValidationService.CreateRequiredItemsAndKinahConsumptionPlan(player, portalPath);
+
+		Assert.True(plan.Succeeded);
+		Assert.Null(plan.MissingItemId);
+		Assert.Equal(3, plan.ConsumptionSteps.Count);
+		Assert.Equal(new[] { 10 }, plan.DeletedObjectIds);
+		Assert.Contains(plan.UpdatedItems, item => item.ObjectId == 11 && item.Count == 1);
+		Assert.Contains(plan.UpdatedItems, item => item.ObjectId == 12 && item.Count == 500);
+		Assert.Collection(
+			plan.ConsumptionSteps,
+			step =>
+			{
+				Assert.Equal(185000077, step.ItemId);
+				Assert.Equal(10, step.ObjectId);
+				Assert.Equal(1, step.ConsumedCount);
+				Assert.Equal(0, step.RemainingItemCount);
+				Assert.False(step.IsKinah);
+			},
+			step =>
+			{
+				Assert.Equal(185000077, step.ItemId);
+				Assert.Equal(11, step.ObjectId);
+				Assert.Equal(2, step.ConsumedCount);
+				Assert.Equal(1, step.RemainingItemCount);
+				Assert.False(step.IsKinah);
+			},
+			step =>
+			{
+				Assert.Equal(KinahItemId, step.ItemId);
+				Assert.Equal(12, step.ObjectId);
+				Assert.Equal(500, step.ConsumedCount);
+				Assert.Equal(500, step.RemainingItemCount);
+				Assert.True(step.IsKinah);
+			});
+		Assert.Equal(1, itemStackA.Count);
+		Assert.Equal(3, itemStackB.Count);
+		Assert.Equal(1_000, kinahStack.Count);
+	}
+
+	[Fact]
+	public void CreateRequiredItemsAndKinahConsumptionPlan_KeepsKinahRowAtZeroLikeJavaStorage()
+	{
+		var player = new Player
+		{
+			InventoryItems = [new InventoryItem { ObjectId = 12, ItemId = KinahItemId, Count = 500 }],
+		};
+		var portalPath = CreatePortalPath(kinah: 500);
+
+		var plan = PortalEntryValidationService.CreateRequiredItemsAndKinahConsumptionPlan(player, portalPath);
+
+		Assert.True(plan.Succeeded);
+		Assert.Empty(plan.DeletedObjectIds);
+		var kinahUpdate = Assert.Single(plan.UpdatedItems);
+		Assert.Equal(12, kinahUpdate.ObjectId);
+		Assert.Equal(0, kinahUpdate.Count);
+		var step = Assert.Single(plan.ConsumptionSteps);
+		Assert.Equal(KinahItemId, step.ItemId);
+		Assert.True(step.IsKinah);
+		Assert.Equal(0, step.RemainingItemCount);
+	}
+
+	[Fact]
+	public void CreateRequiredItemsAndKinahConsumptionPlan_FailsBeforePlanningWhenJavaKinahCheckFails()
+	{
+		var player = new Player
+		{
+			InventoryItems =
+			[
+				new InventoryItem { ObjectId = 10, ItemId = 185000077, Count = 1 },
+				new InventoryItem { ObjectId = 12, ItemId = KinahItemId, Count = 499 },
+			],
+		};
+		var portalPath = CreatePortalPath(
+			kinah: 500,
+			itemRequirements: [new PortalItemRequirementSummary(185000077, ItemCount: 1)]);
+
+		var plan = PortalEntryValidationService.CreateRequiredItemsAndKinahConsumptionPlan(player, portalPath);
+
+		Assert.False(plan.Succeeded);
+		Assert.Equal(KinahItemId, plan.MissingItemId);
+		Assert.Equal(1, plan.MissingCount);
+		Assert.Empty(plan.UpdatedItems);
+		Assert.Empty(plan.DeletedObjectIds);
+		Assert.Empty(plan.ConsumptionSteps);
+	}
+
+	[Fact]
+	public void CreateRequiredItemsAndKinahConsumptionPlan_FailsBeforePlanningWhenAnyJavaItemCheckFails()
+	{
+		var player = new Player
+		{
+			InventoryItems =
+			[
+				new InventoryItem { ObjectId = 10, ItemId = 185000077, Count = 1 },
+				new InventoryItem { ObjectId = 12, ItemId = KinahItemId, Count = 1_000 },
+			],
+		};
+		var portalPath = CreatePortalPath(
+			kinah: 500,
+			itemRequirements: [new PortalItemRequirementSummary(185000077, ItemCount: 2)]);
+
+		var plan = PortalEntryValidationService.CreateRequiredItemsAndKinahConsumptionPlan(player, portalPath);
+
+		Assert.False(plan.Succeeded);
+		Assert.Equal(185000077, plan.MissingItemId);
+		Assert.Equal(1, plan.MissingCount);
+		Assert.Empty(plan.UpdatedItems);
+		Assert.Empty(plan.DeletedObjectIds);
+		Assert.Empty(plan.ConsumptionSteps);
+	}
+
+	[Fact]
 	public void ValidatePortalEntryPlan_ReturnsMissingLocationBeforeAnyGuardLikeJava()
 	{
 		var player = CreatePlayerWithCooldown(reuseTimeMillis: 200_000, entryCount: 2);
