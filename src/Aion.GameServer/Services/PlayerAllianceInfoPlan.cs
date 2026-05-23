@@ -55,7 +55,14 @@ public sealed record PlayerAllianceViceCaptainAssignmentPlan(
 
 public sealed record PlayerAllianceInfoIntent(
 	int RecipientObjectId,
-	PlayerAllianceInfoPacketPlan PacketPlan);
+	PlayerAllianceInfoPacketPlan PacketPlan)
+{
+	public SmAllianceInfo CreatePacket()
+	{
+		// Java parity: model/team/alliance/events/AssignViceCaptainEvent sends SM_ALLIANCE_INFO after role updates.
+		return new SmAllianceInfo(PacketPlan);
+	}
+}
 
 public sealed record PlayerAllianceSystemMessageIntent(
 	int RecipientObjectId,

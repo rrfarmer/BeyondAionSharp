@@ -343,6 +343,76 @@ public sealed class PlayerAllianceMemberInfoTests
 	}
 
 	[Fact]
+	public void SmAllianceInfo_WritesViceCaptainPromotePayloadLikeJava()
+	{
+		var planner = new PlayerAllianceViceCaptainAssignmentPlanner();
+		var leader = CreateAllianceMember(1001, "Leader", worldId: 210010000);
+		var target = CreateAllianceMember(1002, "Target", worldId: 220010000);
+		var other = CreateAllianceMember(1003, "Other", worldId: 230010000);
+		var plan = planner.CreateAssignmentPlan(
+			88001,
+			leaderObjectId: 1001,
+			[leader, target, other],
+			currentViceCaptainObjectIds: [],
+			eventPlayerObjectId: 1002,
+			PlayerAllianceAssignType.Promote);
+
+		var packet = Assert.IsType<SmAllianceInfo>(plan.AllianceInfoIntents[0].CreatePacket());
+		AssertAllianceInfoPacketPayload(
+			packet,
+			expectedAllianceGroupSize: 3,
+			expectedAllianceId: 88001,
+			expectedLeaderObjectId: 1001,
+			expectedActivePlayerMapId: 210010000,
+			expectedPaddedViceCaptainIds: [1002, 0, 0, 0],
+			expectedMessageId: PlayerAllianceInfoPacketPlan.ViceCaptainPromoteMessageId,
+			expectedMessage: "Target");
+	}
+
+	[Fact]
+	public void SmAllianceInfo_WritesMessageIdZeroEmptyMessageLikeJava()
+	{
+		var plan = PlayerAllianceInfoPacketPlan.FromSnapshot(
+			allianceId: 88001,
+			leaderObjectId: 1001,
+			allianceGroupSize: 2,
+			activePlayerMapId: 210010000,
+			viceCaptainObjectIds: [1003, 1004, 1002],
+			PlayerGroupLootRules.Default(),
+			PlayerAllianceTeamType.Alliance,
+			messageId: 0,
+			message: "OldLeader");
+
+		AssertAllianceInfoPacketPayload(
+			new SmAllianceInfo(plan),
+			expectedAllianceGroupSize: 2,
+			expectedAllianceId: 88001,
+			expectedLeaderObjectId: 1001,
+			expectedActivePlayerMapId: 210010000,
+			expectedPaddedViceCaptainIds: [1003, 1004, 1002, 0],
+			expectedMessageId: 0,
+			expectedMessage: string.Empty);
+	}
+
+	[Fact]
+	public void SmAllianceInfo_RejectsLeagueRowsUntilPorted()
+	{
+		var plan = PlayerAllianceInfoPacketPlan.FromSnapshot(
+			allianceId: 88001,
+			leaderObjectId: 1001,
+			allianceGroupSize: 2,
+			activePlayerMapId: 210010000,
+			viceCaptainObjectIds: [1003],
+			PlayerGroupLootRules.Default(),
+			PlayerAllianceTeamType.Alliance,
+			messageId: PlayerAllianceInfoPacketPlan.ViceCaptainPromoteMessageId,
+			message: "Target",
+			leagueId: 77001);
+
+		Assert.Throws<NotSupportedException>(() => SerializeUnencryptedPayload(new SmAllianceInfo(plan)));
+	}
+
+	[Fact]
 	public void SmAllianceMemberInfo_RewritesOfflineEnterToEnterOfflineLikeJava()
 	{
 		var member = new Player
@@ -524,6 +594,47 @@ public sealed class PlayerAllianceMemberInfoTests
 			intent.PacketPlan.GroupPlaceholders);
 		Assert.Equal(messageId, intent.PacketPlan.MessageId);
 		Assert.Equal(expectedMessage, intent.PacketPlan.Message);
+	}
+
+	private static void AssertAllianceInfoPacketPayload(
+		SmAllianceInfo packet,
+		int expectedAllianceGroupSize,
+		int expectedAllianceId,
+		int expectedLeaderObjectId,
+		int expectedActivePlayerMapId,
+		IReadOnlyList<int> expectedPaddedViceCaptainIds,
+		int expectedMessageId,
+		string expectedMessage)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(expectedAllianceGroupSize, reader.ReadH());
+		Assert.Equal(expectedAllianceId, reader.ReadD());
+		Assert.Equal(expectedLeaderObjectId, reader.ReadD());
+		Assert.Equal(expectedActivePlayerMapId, reader.ReadD());
+		for (var i = 0; i < 4; i++)
+			Assert.Equal(expectedPaddedViceCaptainIds[i], reader.ReadD());
+		Assert.Equal((int)PlayerGroupLootRuleType.RoundRobin, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(2, reader.ReadD());
+		Assert.Equal(2, reader.ReadD());
+		Assert.Equal(2, reader.ReadD());
+		Assert.Equal(2, reader.ReadD());
+		Assert.Equal(2, reader.ReadD());
+		Assert.Equal(0x02, reader.ReadD());
+		Assert.Equal(0x00, (int)reader.ReadC());
+		Assert.Equal(0x3F, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		for (var i = 0; i < 4; i++)
+		{
+			Assert.Equal(i, reader.ReadD());
+			Assert.Equal(1000 + i, reader.ReadD());
+		}
+
+		Assert.Equal(expectedMessageId, reader.ReadD());
+		Assert.Equal(expectedMessage, reader.ReadS());
+		Assert.Equal(0, reader.Remaining);
 	}
 
 	private static Player CreateAllianceMember(int objectId, string name, int worldId)
