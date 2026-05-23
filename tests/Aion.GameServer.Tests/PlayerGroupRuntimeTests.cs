@@ -187,6 +187,62 @@ public sealed class PlayerGroupRuntimeTests
 	}
 
 	[Fact]
+	public void TryReconnectMember_ReplacesStoredWrapperWithLoggingInPlayerAndRefreshesSnapshot()
+	{
+		var runtime = new PlayerGroupRuntime();
+		var leader = new Player { ObjectId = 1001 };
+		var offlineMember = new Player
+		{
+			ObjectId = 1002,
+			Name = "Offline",
+			IsOnline = false,
+		};
+		runtime.CreateOrUpdateGroup(99001, [leader, offlineMember]);
+		runtime.UpdateMemberLastOnlineTime(offlineMember, DateTimeOffset.FromUnixTimeMilliseconds(456_789));
+		var loggingInMember = new Player
+		{
+			ObjectId = 1002,
+			Name = "Online",
+			IsOnline = true,
+			Level = 27,
+		};
+
+		var reconnected = runtime.TryReconnectMember(loggingInMember);
+
+		Assert.True(reconnected);
+		var wrapper = Assert.IsType<PlayerGroupMember>(runtime.GetMember(99001, 1002));
+		Assert.Same(loggingInMember, wrapper.Player);
+		Assert.Equal("Online", wrapper.Name);
+		Assert.True(wrapper.IsOnline);
+		Assert.Equal(27, wrapper.Level);
+		Assert.Equal(0, wrapper.LastOnlineTimeMillis);
+		Assert.Equal(PlayerTeamMembership.None, offlineMember.TeamMembership);
+		Assert.Null(offlineMember.CurrentGroupSnapshot);
+		Assert.Equal(PlayerTeamMembership.Group, loggingInMember.TeamMembership);
+		Assert.Equal(99001, loggingInMember.CurrentTeamId);
+		Assert.Equal([1001, 1002], loggingInMember.CurrentTeamMemberObjectIds);
+		Assert.Equal([1001, 1002], runtime.GetMemberObjectIds(99001));
+	}
+
+	[Fact]
+	public void TryReconnectMember_ReturnsFalseForUnknownPlayerWithoutMutatingRuntime()
+	{
+		var runtime = new PlayerGroupRuntime();
+		var leader = new Player { ObjectId = 1001 };
+		var member = new Player { ObjectId = 1002 };
+		var unknown = new Player { ObjectId = 9999 };
+		runtime.CreateOrUpdateGroup(99001, [leader, member]);
+
+		var reconnected = runtime.TryReconnectMember(unknown);
+
+		Assert.False(reconnected);
+		Assert.Equal(PlayerTeamMembership.None, unknown.TeamMembership);
+		Assert.Null(unknown.CurrentGroupSnapshot);
+		Assert.Equal([1001, 1002], runtime.GetMemberObjectIds(99001));
+		Assert.Same(member, runtime.GetMember(99001, 1002)?.Player);
+	}
+
+	[Fact]
 	public void AddMember_RejectsPlayersBeyondJavaGroupCapacityWithoutAttachingRejectedPlayer()
 	{
 		var runtime = new PlayerGroupRuntime();

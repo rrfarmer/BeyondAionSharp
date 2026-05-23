@@ -166,6 +166,28 @@ public sealed class PlayerGroupRuntime
 		}
 	}
 
+	public bool TryReconnectMember(Player player)
+	{
+		// Java parity: model/team/group/events/PlayerConnectedEvent replaces the stored PlayerGroupMember with the logging-in Player.
+		lock (_sync)
+		{
+			foreach (var (teamId, members) in _membersByTeamId)
+			{
+				var index = members.FindIndex(member => member.ObjectId == player.ObjectId);
+				if (index < 0)
+					continue;
+
+				var previousMember = members[index];
+				ClearGroup(previousMember.Player);
+				members[index] = new PlayerGroupMember(player);
+				ApplySnapshot(teamId, members);
+				return true;
+			}
+
+			return false;
+		}
+	}
+
 	public PlayerGroupSnapshot? Resolve(Player player)
 	{
 		// Java parity: model/gameobjects/player/Player.getPlayerGroup; registry-owned snapshots are attached to the player.
