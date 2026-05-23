@@ -5877,7 +5877,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		var result = PlayerZoneStateService.RevalidateFlightZones(
 			player,
 			staticData?.WorldMaps ?? Array.Empty<WorldMapSummary>(),
-			staticData?.FlightZones);
+			staticData?.FlightZones,
+			_runtimeContext?.WorldMapStates);
 		var transition = PlayerZoneStateService.ApplyFlightZoneTransitionIntent(
 			player,
 			result,

@@ -1,5 +1,6 @@
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.World;
 
 namespace Aion.GameServer.Services;
 
@@ -8,15 +9,17 @@ public static class PlayerZoneStateService
 	public static PlayerZoneRevalidationResult RevalidateFlightZones(
 		Player player,
 		IReadOnlyList<WorldMapSummary> worldMaps,
-		FlightZoneTable? flightZones = null)
+		FlightZoneTable? flightZones = null,
+		WorldMapRuntimeStateTable? worldMapStates = null)
 	{
 		// Java parity: WorldMapInstance.addObject plus ZoneService FlyZoneInstance/NoFlyZoneInstance membership checks.
 		var wasInsideFlyZone = player.IsInsideFlyZone;
 		var wasInsideNoFlyZone = player.IsInsideNoFlyZone;
-		var worldMap = worldMaps.FirstOrDefault(map => map.MapId == player.Position.WorldId);
-		var foundWorldMap = worldMap.MapId != 0;
+		var worldMapState = worldMapStates?.GetMap(player.Position.WorldId);
+		var worldMap = worldMapState?.Summary ?? worldMaps.FirstOrDefault(map => map.MapId == player.Position.WorldId);
+		var foundWorldMap = worldMapState != null || worldMap.MapId != 0;
 		var zones = (flightZones ?? FlightZoneTable.Empty).GetZonesByMapId(player.Position.WorldId);
-		var insideFlyZone = foundWorldMap && worldMap.AllowsFlight;
+		var insideFlyZone = foundWorldMap && (worldMapState?.IsFlightAllowed ?? worldMap.IsFlightAllowed(worldMap.Flags));
 		var insideNoFlyZone = false;
 		foreach (var zone in zones)
 		{

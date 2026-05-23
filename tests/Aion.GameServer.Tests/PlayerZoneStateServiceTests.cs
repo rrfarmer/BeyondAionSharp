@@ -106,6 +106,35 @@ public sealed class PlayerZoneStateServiceTests
 	}
 
 	[Fact]
+	public void RevalidateFlightZonesReadsJavaWorldMapRuntimeOptionsForMapDefaultFly()
+	{
+		var worldMaps = new[]
+		{
+			new WorldMapSummary(400010000, IsInstance: false, TwinCount: 1, Flags: WorldZoneAttributes.Fly | WorldZoneAttributes.Glide),
+			new WorldMapSummary(210010000, IsInstance: false, TwinCount: 5, Flags: WorldZoneAttributes.Glide),
+		};
+		var runtimeMaps = new WorldMapRuntimeStateTable(worldMaps);
+		Assert.True(runtimeMaps.RemoveWorldOption(400010000, WorldZoneAttributes.Fly));
+		Assert.True(runtimeMaps.SetWorldOption(210010000, WorldZoneAttributes.Fly));
+		var removedFlyPlayer = new Player { Position = new WorldPosition(400010000, 0, 0, 0, 0), IsInsideFlyZone = true };
+		var addedFlyPlayer = new Player { Position = new WorldPosition(210010000, 0, 0, 0, 0) };
+
+		var removedFlyResult = PlayerZoneStateService.RevalidateFlightZones(
+			removedFlyPlayer,
+			worldMaps,
+			worldMapStates: runtimeMaps);
+		var addedFlyResult = PlayerZoneStateService.RevalidateFlightZones(
+			addedFlyPlayer,
+			worldMaps,
+			worldMapStates: runtimeMaps);
+
+		Assert.True(removedFlyResult.LeftFlyZone);
+		Assert.False(removedFlyPlayer.IsInsideFlyZone);
+		Assert.True(addedFlyResult.EnteredFlyZone);
+		Assert.True(addedFlyPlayer.IsInsideFlyZone);
+	}
+
+	[Fact]
 	public void ApplyFlightZoneTransitionIntentMatchesJavaFlyAreaFpTaskSlice()
 	{
 		var worldMaps = new[]
