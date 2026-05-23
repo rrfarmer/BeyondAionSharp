@@ -185,12 +185,19 @@ public sealed class WorldNpcResourceStatsServiceTests
 		Assert.True(result.NotifyHpObservers);
 		Assert.True(result.ClearAggroOnFullHp);
 		Assert.True(result.KillingBlowReset);
+		Assert.True(result.HpStatUpdateSent);
+		Assert.NotNull(result.HpStatUpdatePacket);
+		Assert.Equal(100, result.HpStatUpdatePacket.CurrentHp);
+		Assert.Equal(100, result.HpStatUpdatePacket.MaxHp);
 		Assert.Equal(100, player.LifeStats!.CurrentHp);
 		Assert.NotNull(result.AttackStatusPacket);
 		Assert.Equal(SmAttackStatusType.Hp, result.AttackStatusPacket.Type);
 		Assert.Equal(SmAttackStatusLog.Heal, result.AttackStatusPacket.Log);
 		Assert.Equal(20, result.AttackStatusPacket.Value);
 		Assert.Single(registry.Broadcasts);
+		var delivery = Assert.Single(registry.SentPackets);
+		Assert.Equal(player.ObjectId, delivery.PlayerObjectId);
+		Assert.Same(result.HpStatUpdatePacket, delivery.Packet);
 	}
 
 	[Fact]
@@ -211,12 +218,19 @@ public sealed class WorldNpcResourceStatsServiceTests
 		Assert.True(result.SendHpStatUpdate);
 		Assert.True(result.TriggerRestoreTask);
 		Assert.True(result.NotifyHpObservers);
+		Assert.True(result.HpStatUpdateSent);
+		Assert.NotNull(result.HpStatUpdatePacket);
+		Assert.Equal(0, result.HpStatUpdatePacket.CurrentHp);
+		Assert.Equal(100, result.HpStatUpdatePacket.MaxHp);
 		Assert.Equal(0, player.LifeStats!.CurrentHp);
 		Assert.Equal(0, player.LifeStats.CurrentMp);
 		Assert.NotNull(result.AttackStatusPacket);
 		Assert.Equal(SmAttackStatusType.Hp, result.AttackStatusPacket.Type);
 		Assert.Equal(0, result.AttackStatusPacket.HpOrMpPercentage);
 		Assert.Single(registry.Broadcasts);
+		var delivery = Assert.Single(registry.SentPackets);
+		Assert.Equal(player.ObjectId, delivery.PlayerObjectId);
+		Assert.Same(result.HpStatUpdatePacket, delivery.Packet);
 	}
 
 	[Fact]
@@ -234,9 +248,12 @@ public sealed class WorldNpcResourceStatsServiceTests
 		Assert.Equal(0, result.AppliedValue);
 		Assert.Equal(80, player.LifeStats!.CurrentHp);
 		Assert.False(result.SendHpStatUpdate);
+		Assert.Null(result.HpStatUpdatePacket);
+		Assert.False(result.HpStatUpdateSent);
 		Assert.False(result.NotifyHpObservers);
 		Assert.Null(result.AttackStatusPacket);
 		Assert.Empty(registry.Broadcasts);
+		Assert.Empty(registry.SentPackets);
 	}
 
 	[Fact]
@@ -514,7 +531,7 @@ public sealed class WorldNpcResourceStatsServiceTests
 	[Fact]
 	public async Task ApplyResourceOverTimePeriodicResultAsync_IncreasesPlayerHpFromStagedHpHeal()
 	{
-		var service = CreateService(out _, out _);
+		var service = CreateService(out _, out var registry);
 		var skillDamage = CreateSkillDamageService();
 		var player = CreatePlayer(objectId: 1009, currentHp: 80, currentMp: 40, currentFp: 100);
 		player.IsOnline = true;
@@ -540,10 +557,17 @@ public sealed class WorldNpcResourceStatsServiceTests
 		Assert.True(result.Change.NotifyHpObservers);
 		Assert.True(result.Change.ClearAggroOnFullHp);
 		Assert.True(result.Change.KillingBlowReset);
+		Assert.True(result.Change.HpStatUpdateSent);
+		Assert.NotNull(result.Change.HpStatUpdatePacket);
+		Assert.Equal(100, result.Change.HpStatUpdatePacket.CurrentHp);
+		Assert.Equal(100, result.Change.HpStatUpdatePacket.MaxHp);
 		Assert.NotNull(result.Change.AttackStatusPacket);
 		Assert.Equal(SmAttackStatusType.Hp, result.Change.AttackStatusPacket.Type);
 		Assert.Equal(SmAttackStatusLog.Heal, result.Change.AttackStatusPacket.Log);
 		Assert.Equal(7407, result.Change.AttackStatusPacket.SkillId);
+		var delivery = Assert.Single(registry.SentPackets);
+		Assert.Equal(player.ObjectId, delivery.PlayerObjectId);
+		Assert.Same(result.Change.HpStatUpdatePacket, delivery.Packet);
 	}
 
 	[Fact]
@@ -637,6 +661,8 @@ public sealed class WorldNpcResourceStatsServiceTests
 	{
 		public List<BroadcastRecord> Broadcasts { get; } = [];
 
+		public List<PacketDelivery> SentPackets { get; } = [];
+
 		public void RegisterPlayerConnection(int playerObjectId, GameServerConnection connection)
 		{
 		}
@@ -657,7 +683,8 @@ public sealed class WorldNpcResourceStatsServiceTests
 
 		public Task<bool> SendPacketToPlayerAsync(int playerObjectId, GameServerPacket packet)
 		{
-			return Task.FromResult(false);
+			SentPackets.Add(new PacketDelivery(playerObjectId, packet));
+			return Task.FromResult(true);
 		}
 
 		public Task<int> BroadcastToWorldAsync(GameServerPacket packet, Func<Player, bool>? filter = null)
@@ -710,4 +737,6 @@ public sealed class WorldNpcResourceStatsServiceTests
 		int SourceObjectId,
 		GameServerPacket Packet,
 		bool IncludeSourcePlayer);
+
+	private sealed record PacketDelivery(int PlayerObjectId, GameServerPacket Packet);
 }

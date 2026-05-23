@@ -215,6 +215,8 @@ public sealed class WorldNpcResourceStatsService
 			shouldSend,
 			cancellationToken,
 			usesNegativeValue: false);
+		var sendHpStatUpdate = player.IsOnline && appliedValue != 0;
+		var (hpStatUpdatePacket, hpStatUpdateSent) = await SendHpStatUpdateAsync(player, currentHp, normalizedMaxHp, sendHpStatUpdate);
 		return WorldNpcResourceChangeResult.FromResourceMutation(
 			appliedValue == 0 ? WorldNpcResourceChangeStatus.NoChange : WorldNpcResourceChangeStatus.Increased,
 			player.ObjectId,
@@ -229,7 +231,9 @@ public sealed class WorldNpcResourceStatsService
 			packetLog,
 			packet,
 			broadcastCount,
-			SendHpStatUpdate: player.IsOnline && appliedValue != 0,
+			SendHpStatUpdate: sendHpStatUpdate,
+			HpStatUpdatePacket: hpStatUpdatePacket,
+			HpStatUpdateSent: hpStatUpdateSent,
 			SendGroupStatUpdate: player.IsOnline && player.IsInTeam && appliedValue != 0,
 			NotifyHpObservers: appliedValue != 0,
 			ClearAggroOnFullHp: appliedValue != 0 && currentHp == normalizedMaxHp,
@@ -532,6 +536,8 @@ public sealed class WorldNpcResourceStatsService
 			ShouldSendCreatureLifeStatsPacket(appliedValue, skillId, packetType),
 			cancellationToken,
 			usesNegativeValue: true);
+		var sendHpStatUpdate = player.IsOnline && appliedValue != 0;
+		var (hpStatUpdatePacket, hpStatUpdateSent) = await SendHpStatUpdateAsync(player, currentHp, normalizedMaxHp, sendHpStatUpdate);
 		return WorldNpcResourceChangeResult.FromResourceMutation(
 			currentHp == 0 ? WorldNpcResourceChangeStatus.Died : appliedValue == 0 ? WorldNpcResourceChangeStatus.NoChange : WorldNpcResourceChangeStatus.Reduced,
 			player.ObjectId,
@@ -546,7 +552,9 @@ public sealed class WorldNpcResourceStatsService
 			packetLog,
 			packet,
 			broadcastCount,
-			SendHpStatUpdate: player.IsOnline && appliedValue != 0,
+			SendHpStatUpdate: sendHpStatUpdate,
+			HpStatUpdatePacket: hpStatUpdatePacket,
+			HpStatUpdateSent: hpStatUpdateSent,
 			SendGroupStatUpdate: player.IsOnline && player.IsInTeam && appliedValue != 0,
 			TriggerRestoreTask: player.IsOnline && appliedValue != 0,
 			NotifyHpObservers: appliedValue != 0,
@@ -780,6 +788,24 @@ public sealed class WorldNpcResourceStatsService
 		return (packet, count);
 	}
 
+	private async ValueTask<(SmStatUpdateHp? Packet, bool Sent)> SendHpStatUpdateAsync(
+		Player player,
+		int currentHp,
+		int maxHp,
+		bool shouldSend)
+	{
+		// Java parity: model/stats/container/PlayerLifeStats.sendHpPacketUpdate.
+		if (!shouldSend)
+			return (null, false);
+
+		var packet = new SmStatUpdateHp(currentHp, maxHp);
+		if (_connectionRegistry == null)
+			return (packet, false);
+
+		var sent = await _connectionRegistry.SendPacketToPlayerAsync(player.ObjectId, packet);
+		return (packet, sent);
+	}
+
 	private static bool ShouldSendCreatureLifeStatsPacket(int appliedValue, int skillId, SmAttackStatusType? packetType)
 	{
 		return packetType != null && (appliedValue != 0 || skillId != 0);
@@ -923,6 +949,8 @@ public sealed record WorldNpcResourceChangeResult(
 	bool SendDpStatUpdate = false,
 	bool UpdateStatsAndSpeedVisually = false,
 	bool SendHpStatUpdate = false,
+	SmStatUpdateHp? HpStatUpdatePacket = null,
+	bool HpStatUpdateSent = false,
 	bool SendGroupStatUpdate = false,
 	bool TriggerRestoreTask = false,
 	bool TriggerFpRestore = false,
@@ -987,6 +1015,8 @@ public sealed record WorldNpcResourceChangeResult(
 		bool SendDpStatUpdate = false,
 		bool UpdateStatsAndSpeedVisually = false,
 		bool SendHpStatUpdate = false,
+		SmStatUpdateHp? HpStatUpdatePacket = null,
+		bool HpStatUpdateSent = false,
 		bool SendGroupStatUpdate = false,
 		bool TriggerRestoreTask = false,
 		bool TriggerFpRestore = false,
@@ -1014,6 +1044,8 @@ public sealed record WorldNpcResourceChangeResult(
 			SendDpStatUpdate,
 			UpdateStatsAndSpeedVisually,
 			SendHpStatUpdate,
+			HpStatUpdatePacket,
+			HpStatUpdateSent,
 			SendGroupStatUpdate,
 			TriggerRestoreTask,
 			TriggerFpRestore,
