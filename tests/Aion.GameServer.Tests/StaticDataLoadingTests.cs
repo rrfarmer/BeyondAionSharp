@@ -352,6 +352,16 @@ public sealed class StaticDataLoadingTests
 	}
 
 	[Fact]
+	public void WorldMapSummary_ParseFlagsMatchesJavaZoneAttributes()
+	{
+		var flags = WorldMapSummary.ParseFlags("BIND RECALL GLIDE FLY RIDE FLY_RIDE PVP DUEL_SAME_RACE DUEL_OTHER_RACE NO_RETURN_BATTLE");
+
+		Assert.Equal((WorldZoneAttributes)1023, flags);
+		Assert.True((flags & WorldZoneAttributes.Fly) != 0);
+		Assert.True((flags & WorldZoneAttributes.NoReturnBattle) != 0);
+	}
+
+	[Fact]
 	public async Task DataManager_LoadsRealJavaStaticDataManifestCounts()
 	{
 		using var temp = TempDirectory.Create();
@@ -829,8 +839,23 @@ public sealed class StaticDataLoadingTests
 		Assert.True(staticData.PlayerExperienceTable.MaxLevel > 60, $"MaxLevel={staticData.PlayerExperienceTable.MaxLevel}");
 		Assert.Equal(0, staticData.PlayerExperienceTable.GetStartExpForLevel(1));
 		Assert.Equal(11, staticData.PlayerExperienceTable.GetLevelForExp(182252));
-		Assert.Contains(new Aion.GameServer.Dataholders.WorldMapSummary(210010000, IsInstance: false, TwinCount: 5, DropType: "ELYSEA"), staticData.WorldMaps);
-		Assert.Contains(new Aion.GameServer.Dataholders.WorldMapSummary(300030000, IsInstance: true, TwinCount: 0, DropType: "ABYSS_INSTANCE"), staticData.WorldMaps);
+		Assert.Contains(new WorldMapSummary(
+			210010000,
+			IsInstance: false,
+			TwinCount: 5,
+			DropType: "ELYSEA",
+			Flags: WorldZoneAttributes.Bind | WorldZoneAttributes.Recall | WorldZoneAttributes.Glide | WorldZoneAttributes.PvpEnabled | WorldZoneAttributes.DuelSameRaceEnabled),
+			staticData.WorldMaps);
+		Assert.Contains(new WorldMapSummary(
+			300030000,
+			IsInstance: true,
+			TwinCount: 0,
+			DropType: "ABYSS_INSTANCE",
+			Flags: WorldZoneAttributes.Glide | WorldZoneAttributes.PvpEnabled | WorldZoneAttributes.DuelSameRaceEnabled | WorldZoneAttributes.NoReturnBattle),
+			staticData.WorldMaps);
+		var flyingMap = Assert.Single(staticData.WorldMaps, map => map.MapId == 300020000);
+		Assert.True(flyingMap.AllowsFlight);
+		Assert.True(flyingMap.AllowsGlide);
 		Assert.Contains("item_templates", staticData.TopLevelElements);
 		Assert.DoesNotContain("import", staticData.TopLevelElements);
 	}

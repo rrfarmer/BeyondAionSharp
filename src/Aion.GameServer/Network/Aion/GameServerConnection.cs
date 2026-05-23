@@ -359,7 +359,13 @@ public sealed class GameServerConnection : BaseClientConnection
 				await HandleLootItemAsync(lootItem);
 				break;
 			case CmSubzoneChange:
-				// Java parity: network/aion/clientpackets/CM_SUBZONE_CHANGE.runImpl revalidates zones; deferred until zone instances are ported.
+				if (_activePlayer != null)
+				{
+					// Java parity: network/aion/clientpackets/CM_SUBZONE_CHANGE.runImpl -> Player.revalidateZones.
+					PlayerZoneStateService.RevalidateFlightZonesFromWorldMap(
+						_activePlayer,
+						_runtimeContext?.DataManager?.StaticData.WorldMaps ?? Array.Empty<WorldMapSummary>());
+				}
 				break;
 			case CmChangeChannel:
 				// Java parity: network/aion/clientpackets/CM_CHANGE_CHANNEL.runImpl dispatches TeleportService.changeChannel; deferred until channel instances are ported.
@@ -920,6 +926,10 @@ public sealed class GameServerConnection : BaseClientConnection
 					}
 
 					var staticData = _runtimeContext?.DataManager?.StaticData;
+					// Java parity: CreatureController.onAfterSpawn revalidates zones after the player enters the world.
+					PlayerZoneStateService.RevalidateFlightZonesFromWorldMap(
+						enterWorldResult.Player,
+						staticData?.WorldMaps ?? Array.Empty<WorldMapSummary>());
 					await SendPacketAsync(new SmChannelInfo(enterWorldResult.Player.Position, staticData?.WorldMaps ?? Array.Empty<WorldMapSummary>()));
 					await SendPacketAsync(CreateBindPointPacket(enterWorldResult.Player, staticData));
 					await SendPacketAsync(new SmPlayerSpawn(enterWorldResult.Player));
