@@ -55,7 +55,7 @@ public sealed class Player
 
 	public long RecoverableExp { get; init; }
 
-	public int Dp { get; init; }
+	public int Dp { get; set; }
 
 	public long ReposeEnergy { get; init; }
 

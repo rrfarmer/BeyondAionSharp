@@ -34,6 +34,63 @@ public sealed class WorldNpcLifeStatsService
 		return stats;
 	}
 
+	public WorldNpcLifeStatsResourceMutationResult ApplyMpChange(
+		int objectId,
+		WorldNpcResourceChangeKind kind,
+		int value)
+	{
+		// Java parity: model/stats/container/CreatureLifeStats.reduceMp/increaseMp mutates existing creature MP only.
+		WorldNpcLifeStats previous;
+		WorldNpcLifeStats current;
+		lock (_sync)
+		{
+			if (!_stats.TryGetValue(objectId, out var existing))
+				return WorldNpcLifeStatsResourceMutationResult.MissingStats(objectId, kind, WorldNpcEffectResourceType.Mp, value);
+			previous = existing;
+			if (previous.IsDead)
+			{
+				return new WorldNpcLifeStatsResourceMutationResult(
+					WorldNpcResourceChangeStatus.AlreadyDead,
+					objectId,
+					WorldNpcEffectResourceType.Mp,
+					kind,
+					value,
+					AppliedValue: 0,
+					Previous: previous,
+					Current: previous);
+			}
+
+			var nextMp = kind switch
+			{
+				WorldNpcResourceChangeKind.Reduce => Math.Min(previous.CurrentMp, Math.Max(previous.CurrentMp - value, 0)),
+				WorldNpcResourceChangeKind.Increase => Math.Max(previous.CurrentMp, Math.Min(previous.CurrentMp + value, previous.MaxMp)),
+				_ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unhandled Java MP resource change kind."),
+			};
+			var appliedValue = kind == WorldNpcResourceChangeKind.Reduce
+				? previous.CurrentMp - nextMp
+				: nextMp - previous.CurrentMp;
+			current = previous with { CurrentMp = nextMp };
+			if (appliedValue != 0)
+				_stats[objectId] = current;
+		}
+
+		var status = kind switch
+		{
+			WorldNpcResourceChangeKind.Reduce when previous.CurrentMp != current.CurrentMp => WorldNpcResourceChangeStatus.Reduced,
+			WorldNpcResourceChangeKind.Increase when previous.CurrentMp != current.CurrentMp => WorldNpcResourceChangeStatus.Increased,
+			_ => WorldNpcResourceChangeStatus.NoChange,
+		};
+		return new WorldNpcLifeStatsResourceMutationResult(
+			status,
+			objectId,
+			WorldNpcEffectResourceType.Mp,
+			kind,
+			value,
+			Math.Abs(current.CurrentMp - previous.CurrentMp),
+			previous,
+			current);
+	}
+
 	public async ValueTask<WorldNpcLifeStatsDamageResult> ReduceHpAsync(
 		IWorldNpcObject? npc,
 		int damage,
@@ -155,4 +212,32 @@ public enum WorldNpcLifeStatsDamageStatus
 	Reduced,
 	Died,
 	AlreadyDead,
+}
+
+public sealed record WorldNpcLifeStatsResourceMutationResult(
+	WorldNpcResourceChangeStatus Status,
+	int ObjectId,
+	WorldNpcEffectResourceType ResourceType,
+	WorldNpcResourceChangeKind ChangeKind,
+	int RequestedValue,
+	int AppliedValue,
+	WorldNpcLifeStats? Previous,
+	WorldNpcLifeStats? Current)
+{
+	public static WorldNpcLifeStatsResourceMutationResult MissingStats(
+		int objectId,
+		WorldNpcResourceChangeKind kind,
+		WorldNpcEffectResourceType resourceType,
+		int requestedValue)
+	{
+		return new WorldNpcLifeStatsResourceMutationResult(
+			WorldNpcResourceChangeStatus.MissingStats,
+			objectId,
+			resourceType,
+			kind,
+			requestedValue,
+			AppliedValue: 0,
+			Previous: null,
+			Current: null);
+	}
 }
