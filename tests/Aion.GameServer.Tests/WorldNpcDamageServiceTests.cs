@@ -365,6 +365,11 @@ public sealed class WorldNpcDamageServiceTests
 			Assert.Null(result.DotAttackedObserverNotification);
 			Assert.NotNull(result.DelayResult);
 			Assert.Equal(TimeSpan.FromMilliseconds(750), result.DelayResult.Delay);
+			Assert.NotNull(result.CalculationResult);
+			Assert.True(result.CalculationResult.IgnoreShield);
+			Assert.False(result.CalculationResult.SendResult);
+			Assert.False(result.CalculationResult.AttackResult.ShieldChecked);
+			Assert.False(result.CalculationResult.EffectReserved.Send);
 		}
 		finally
 		{

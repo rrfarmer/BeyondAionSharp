@@ -12,9 +12,21 @@ public sealed class WorldNpcSkillResultCalculationService
 		var finalDamage = random.Status == WorldNpcSkillResultCalculationStatus.Calculated
 			? (int)(inputDamage * random.Multiplier)
 			: inputDamage;
+		var normalizedFinalDamage = Math.Max(0, finalDamage);
+		var attackResult = new WorldNpcSkillAttackResult(
+			normalizedFinalDamage,
+			options.AttackStatus,
+			options.HitType,
+			ShieldChecked: !request.IgnoreShield);
+		var effectReserved = new WorldNpcSkillEffectReservedResult(
+			options.EffectPosition,
+			attackResult.Damage,
+			options.ResourceType,
+			options.IsDamage,
+			request.SendResult);
 		return new WorldNpcSkillResultCalculationResult(
 			inputDamage,
-			Math.Max(0, finalDamage),
+			normalizedFinalDamage,
 			options.RandomDamageType,
 			random.Multiplier,
 			random.Status,
@@ -24,7 +36,9 @@ public sealed class WorldNpcSkillResultCalculationService
 			request.IgnoreShield,
 			request.SendResult,
 			request.ShouldIncreaseByOneTimeBoost,
-			request.UsesTemplateDamage);
+			request.UsesTemplateDamage,
+			attackResult,
+			effectReserved);
 	}
 
 	private static RandomMultiplierResult CalculateRandomMultiplier(WorldNpcSkillResultCalculationOptions options)
@@ -84,7 +98,12 @@ public sealed record WorldNpcSkillResultCalculationOptions(
 	int RandomDamageType = 0,
 	int? RandomRoll = null,
 	double? RandomChanceRoll = null,
-	bool CannotMiss = false)
+	bool CannotMiss = false,
+	WorldNpcSkillAttackStatus AttackStatus = WorldNpcSkillAttackStatus.NormalHit,
+	WorldNpcSkillHitType HitType = WorldNpcSkillHitType.PhysicalHit,
+	int EffectPosition = 0,
+	WorldNpcEffectResourceType ResourceType = WorldNpcEffectResourceType.Hp,
+	bool IsDamage = true)
 {
 	public static WorldNpcSkillResultCalculationOptions Default { get; } = new();
 }
@@ -101,11 +120,83 @@ public sealed record WorldNpcSkillResultCalculationResult(
 	bool IgnoreShield,
 	bool SendResult,
 	bool ShouldIncreaseByOneTimeBoost,
-	bool UsesTemplateDamage);
+	bool UsesTemplateDamage,
+	WorldNpcSkillAttackResult AttackResult,
+	WorldNpcSkillEffectReservedResult EffectReserved);
+
+public sealed record WorldNpcSkillAttackResult(
+	int Damage,
+	WorldNpcSkillAttackStatus AttackStatus,
+	WorldNpcSkillHitType HitType,
+	bool ShieldChecked,
+	int ShieldType = 0,
+	int ReflectedDamage = 0,
+	int ReflectedSkillId = 0,
+	int ProtectedSkillId = 0,
+	int ProtectedDamage = 0,
+	int ProtectorId = 0,
+	int MpAbsorbed = 0,
+	int MpShieldSkillId = 0,
+	bool LaunchSubEffect = true);
+
+public sealed record WorldNpcSkillEffectReservedResult(
+	int Position,
+	int Value,
+	WorldNpcEffectResourceType Type,
+	bool IsDamage,
+	bool Send)
+{
+	public int ValueToSend => IsDamage ? Value : -Value;
+}
 
 public enum WorldNpcSkillResultCalculationStatus
 {
 	Calculated,
 	RandomRollMissing,
 	RandomChanceMissing,
+}
+
+public enum WorldNpcSkillAttackStatus
+{
+	Dodge = 0,
+	OffHandDodge = 1,
+	Parry = 2,
+	OffHandParry = 3,
+	Block = 4,
+	OffHandBlock = 5,
+	Resist = 6,
+	OffHandResist = 7,
+	Buf = 8,
+	OffHandBuf = 9,
+	NormalHit = 10,
+	OffHandNormalHit = 11,
+	CriticalDodge = -64,
+	CriticalParry = -62,
+	CriticalBlock = -60,
+	CriticalResist = -58,
+	Critical = -54,
+	OffHandCriticalDodge = -47,
+	OffHandCriticalParry = -45,
+	OffHandCriticalBlock = -43,
+	OffHandCriticalResist = -41,
+	OffHandCritical = -37,
+}
+
+public enum WorldNpcSkillHitType
+{
+	EveryHit,
+	NormalAttack,
+	MagicalHit,
+	PhysicalHit,
+	Fear,
+	Skill,
+	BackAttack,
+}
+
+public enum WorldNpcEffectResourceType
+{
+	Hp = 0,
+	Mp = 1,
+	Fp = 2,
+	Dp = 3,
 }

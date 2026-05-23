@@ -74,6 +74,13 @@ public sealed class WorldNpcSkillResultCalculationServiceTests
 		Assert.False(result.SendResult);
 		Assert.False(result.ShouldIncreaseByOneTimeBoost);
 		Assert.True(result.UsesTemplateDamage);
+		Assert.Equal(WorldNpcSkillAttackStatus.NormalHit, result.AttackResult.AttackStatus);
+		Assert.Equal(WorldNpcSkillHitType.PhysicalHit, result.AttackResult.HitType);
+		Assert.False(result.AttackResult.ShieldChecked);
+		Assert.True(result.AttackResult.LaunchSubEffect);
+		Assert.Equal(42, result.EffectReserved.Value);
+		Assert.Equal(WorldNpcEffectResourceType.Hp, result.EffectReserved.Type);
+		Assert.False(result.EffectReserved.Send);
 	}
 
 	[Fact]
@@ -93,5 +100,58 @@ public sealed class WorldNpcSkillResultCalculationServiceTests
 		Assert.Equal(WorldNpcSkillResultCalculationStatus.RandomRollMissing, result.Status);
 		Assert.Equal(42, result.FinalDamage);
 		Assert.Equal(1f, result.RandomDamageMultiplier);
+	}
+
+	[Fact]
+	public void Calculate_CreatesJavaAttackResultAndEffectReservedSurface()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 55,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				AttackStatus: WorldNpcSkillAttackStatus.Critical,
+				HitType: WorldNpcSkillHitType.MagicalHit,
+				EffectPosition: 2)));
+
+		Assert.Equal(55, result.AttackResult.Damage);
+		Assert.Equal(WorldNpcSkillAttackStatus.Critical, result.AttackResult.AttackStatus);
+		Assert.Equal(WorldNpcSkillHitType.MagicalHit, result.AttackResult.HitType);
+		Assert.True(result.AttackResult.ShieldChecked);
+		Assert.Equal(0, result.AttackResult.ReflectedDamage);
+		Assert.Equal(0, result.AttackResult.ProtectedDamage);
+		Assert.True(result.AttackResult.LaunchSubEffect);
+		Assert.Equal(2, result.EffectReserved.Position);
+		Assert.Equal(55, result.EffectReserved.Value);
+		Assert.Equal(55, result.EffectReserved.ValueToSend);
+		Assert.Equal(WorldNpcEffectResourceType.Hp, result.EffectReserved.Type);
+		Assert.True(result.EffectReserved.IsDamage);
+		Assert.True(result.EffectReserved.Send);
+	}
+
+	[Fact]
+	public void Calculate_EffectReservedValueToSendIsNegativeForNonDamage()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 25,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				ResourceType: WorldNpcEffectResourceType.Mp,
+				IsDamage: false)));
+
+		Assert.Equal(WorldNpcEffectResourceType.Mp, result.EffectReserved.Type);
+		Assert.False(result.EffectReserved.IsDamage);
+		Assert.Equal(-25, result.EffectReserved.ValueToSend);
 	}
 }
