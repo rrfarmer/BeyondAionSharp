@@ -1059,7 +1059,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 	}
 
-	private async Task HandleLevelReadyAsync(Player player)
+	internal async Task HandleLevelReadyAsync(Player player)
 	{
 		// Java parity: network/aion/clientpackets/CM_LEVEL_READY.runImpl baseline packets after client map load.
 		var staticData = _runtimeContext?.DataManager?.StaticData;
@@ -1075,6 +1075,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		await SendPacketAsync(new SmPlayerInfo(player, staticData?.PlayerExperienceTable));
 		await SendPacketAsync(CreateAccountPropertiesPacket());
 		await SendPacketAsync(new SmMotion(player.ObjectId, player.Motions));
+		// Java parity: CM_LEVEL_READY.runImpl spawns the already-moved player into World, then later player.getController().onEnterWorld updates zone state.
+		RevalidatePlayerCreaturePvpZones(player, staticData);
 		await PlayerLevelReadyFlightNotifier.NotifyIfFlyingAsync(
 			player,
 			_connectionRegistry,
