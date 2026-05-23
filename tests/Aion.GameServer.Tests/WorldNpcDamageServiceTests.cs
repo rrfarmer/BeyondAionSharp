@@ -840,6 +840,171 @@ public sealed class WorldNpcDamageServiceTests
 	}
 
 	[Fact]
+	public async Task CalculateInstantResourceEffect_MpAttackInstantReservesPercentMp()
+	{
+		var damageService = CreateDamageService(out _, out _, out _, out var threadPoolManager, out _, out _, out _, out _, out _);
+		var skillDamageService = new WorldNpcSkillDamageService(damageService);
+		try
+		{
+			var result = skillDamageService.CalculateInstantResourceEffect(new WorldNpcSkillInstantResourceEffectRequest(
+				WorldNpcSkillInstantResourceEffectKind.MpAttackInstant,
+				Value: 20,
+				SkillId: 7201,
+				Position: 4,
+				MaxResource: 250,
+				Percent: true));
+
+			Assert.True(result.Applied);
+			Assert.Equal(50, result.FinalValue);
+			Assert.Equal(WorldNpcEffectResourceType.Mp, result.ResourceType);
+			Assert.True(result.ReserveValueOnCalculate);
+			Assert.NotNull(result.Reserved);
+			Assert.Equal(4, result.Reserved.Position);
+			Assert.Equal(50, result.Reserved.Value);
+			Assert.Equal(WorldNpcEffectResourceType.Mp, result.Reserved.Type);
+			Assert.True(result.Reserved.IsDamage);
+			Assert.True(result.Reserved.Send);
+			Assert.Equal(SmAttackStatusType.DamageMp, result.PacketType);
+			Assert.Equal(SmAttackStatusLog.MpAttack, result.PacketLog);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
+	public async Task CalculateInstantResourceEffect_FpAttackInstantRequiresPlayer()
+	{
+		var damageService = CreateDamageService(out _, out _, out _, out var threadPoolManager, out _, out _, out _, out _, out _);
+		var skillDamageService = new WorldNpcSkillDamageService(damageService);
+		try
+		{
+			var skipped = skillDamageService.CalculateInstantResourceEffect(new WorldNpcSkillInstantResourceEffectRequest(
+				WorldNpcSkillInstantResourceEffectKind.FpAttackInstant,
+				Value: 12,
+				SkillId: 7202,
+				Position: 1,
+				MaxResource: 100,
+				TargetIsPlayer: false));
+
+			Assert.False(skipped.Applied);
+			Assert.Equal(WorldNpcSkillInstantEffectStatus.TargetNotPlayer, skipped.Status);
+			Assert.Null(skipped.Reserved);
+
+			var applied = skillDamageService.CalculateInstantResourceEffect(new WorldNpcSkillInstantResourceEffectRequest(
+				WorldNpcSkillInstantResourceEffectKind.FpAttackInstant,
+				Value: 12,
+				SkillId: 7202,
+				Position: 1,
+				MaxResource: 100,
+				TargetIsPlayer: true));
+
+			Assert.True(applied.Applied);
+			Assert.Equal(12, applied.FinalValue);
+			Assert.Equal(WorldNpcEffectResourceType.Fp, applied.ResourceType);
+			Assert.Equal(SmAttackStatusType.FpDamage, applied.PacketType);
+			Assert.Equal(SmAttackStatusLog.FpAttack, applied.PacketLog);
+			Assert.NotNull(applied.Reserved);
+			Assert.Equal(WorldNpcEffectResourceType.Fp, applied.Reserved.Type);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
+	public async Task CalculateInstantResourceEffect_DelayedFpAttackRecordsDelayAndEnemyGate()
+	{
+		var damageService = CreateDamageService(out _, out _, out _, out var threadPoolManager, out _, out _, out _, out _, out _);
+		var skillDamageService = new WorldNpcSkillDamageService(damageService);
+		try
+		{
+			var skipped = skillDamageService.CalculateInstantResourceEffect(new WorldNpcSkillInstantResourceEffectRequest(
+				WorldNpcSkillInstantResourceEffectKind.DelayedFpAttackInstant,
+				Value: 10,
+				SkillId: 7203,
+				Position: 0,
+				MaxResource: 300,
+				Percent: true,
+				TargetIsPlayer: true,
+				IsEnemy: false,
+				Delay: TimeSpan.FromMilliseconds(750)));
+
+			Assert.False(skipped.Applied);
+			Assert.Equal(WorldNpcSkillInstantEffectStatus.NotEnemy, skipped.Status);
+			Assert.True(skipped.SchedulesDelayedAction);
+			Assert.Equal(TimeSpan.FromMilliseconds(750), skipped.Delay);
+			Assert.Null(skipped.Reserved);
+
+			var applied = skillDamageService.CalculateInstantResourceEffect(new WorldNpcSkillInstantResourceEffectRequest(
+				WorldNpcSkillInstantResourceEffectKind.DelayedFpAttackInstant,
+				Value: 10,
+				SkillId: 7203,
+				Position: 0,
+				MaxResource: 300,
+				Percent: true,
+				TargetIsPlayer: true,
+				IsEnemy: true,
+				Delay: TimeSpan.FromMilliseconds(750)));
+
+			Assert.True(applied.Applied);
+			Assert.Equal(30, applied.FinalValue);
+			Assert.True(applied.SchedulesDelayedAction);
+			Assert.Equal(TimeSpan.FromMilliseconds(750), applied.Delay);
+			Assert.False(applied.ReserveValueOnCalculate);
+			Assert.Null(applied.Reserved);
+			Assert.Equal(SmAttackStatusType.FpDamage, applied.PacketType);
+			Assert.Equal(SmAttackStatusLog.FpAttack, applied.PacketLog);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
+	public async Task CalculateInstantDrainEffect_RecordsSkillAndSpellDrainMetadata()
+	{
+		var damageService = CreateDamageService(out _, out _, out _, out var threadPoolManager, out _, out _, out _, out _, out _);
+		var skillDamageService = new WorldNpcSkillDamageService(damageService);
+		try
+		{
+			var skillDrain = skillDamageService.CalculateInstantDrainEffect(new WorldNpcSkillInstantDrainEffectRequest(
+				WorldNpcSkillInstantDrainEffectKind.SkillAttackDrainInstant,
+				ReservedDamage: 80,
+				HpPercent: 50,
+				MpPercent: 25));
+
+			Assert.True(skillDrain.Applied);
+			Assert.Equal(40, skillDrain.HpAmount);
+			Assert.Equal(20, skillDrain.MpAmount);
+			Assert.Equal(TimeSpan.FromSeconds(1), skillDrain.Delay);
+			Assert.Equal(SmAttackStatusType.AbsorbedHp, skillDrain.HpPacketType);
+			Assert.Equal(SmAttackStatusType.Mp, skillDrain.MpPacketType);
+			Assert.Equal(SmAttackStatusLog.SkillAttackDrainInstant, skillDrain.PacketLog);
+
+			var spellDrain = skillDamageService.CalculateInstantDrainEffect(new WorldNpcSkillInstantDrainEffectRequest(
+				WorldNpcSkillInstantDrainEffectKind.SpellAttackDrainInstant,
+				ReservedDamage: 80,
+				HpPercent: 50,
+				MpPercent: 25));
+
+			Assert.True(spellDrain.Applied);
+			Assert.Equal(40, spellDrain.HpAmount);
+			Assert.Equal(20, spellDrain.MpAmount);
+			Assert.Equal(SmAttackStatusType.Hp, spellDrain.HpPacketType);
+			Assert.Equal(SmAttackStatusType.AbsorbedMp, spellDrain.MpPacketType);
+			Assert.Equal(SmAttackStatusLog.SpellAttackDrainInstant, spellDrain.PacketLog);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
 	public async Task ApplyDamageAsync_RecordsAttackedObserverAndSupportAiEvents()
 	{
 		var damageService = CreateDamageService(out var spawnService, out var world, out _, out var threadPoolManager, out _, out _, out var combatEvents, out _, out _);

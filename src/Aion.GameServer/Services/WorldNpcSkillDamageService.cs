@@ -300,6 +300,72 @@ public sealed class WorldNpcSkillDamageService
 			TargetIsPlayer: request.TargetIsPlayer);
 	}
 
+	public WorldNpcSkillInstantResourceEffectResult CalculateInstantResourceEffect(WorldNpcSkillInstantResourceEffectRequest request)
+	{
+		// Java parity: skillengine/effect/{MpAttackInstant,FpAttackInstant,DelayedFpAtkInstant}Effect.
+		var profile = GetInstantResourceEffectProfile(request.Kind);
+		if (profile.RequiresPlayerTarget && !request.TargetIsPlayer)
+			return CreateSkippedInstantResourceEffectResult(
+				WorldNpcSkillInstantEffectStatus.TargetNotPlayer,
+				request,
+				profile);
+		if (profile.RequiresEnemyTarget && !request.IsEnemy)
+			return CreateSkippedInstantResourceEffectResult(
+				WorldNpcSkillInstantEffectStatus.NotEnemy,
+				request,
+				profile);
+
+		var value = request.Percent
+			? request.MaxResource * request.Value / 100
+			: request.Value;
+		var reserved = profile.ReserveValueOnCalculate
+			? new WorldNpcSkillEffectReservedResult(
+				request.Position,
+				value,
+				profile.ResourceType,
+				IsDamage: true,
+				Send: true)
+			: null;
+		return new WorldNpcSkillInstantResourceEffectResult(
+			WorldNpcSkillInstantEffectStatus.Applied,
+			request.Kind,
+			request.Value,
+			value,
+			request.SkillId,
+			request.Position,
+			profile.ResourceType,
+			request.Percent,
+			request.MaxResource,
+			request.TargetIsPlayer,
+			request.IsEnemy,
+			profile.ReserveValueOnCalculate,
+			profile.SchedulesDelayedAction,
+			profile.SchedulesDelayedAction ? request.Delay ?? TimeSpan.Zero : null,
+			reserved,
+			profile.PacketType,
+			profile.PacketLog);
+	}
+
+	public WorldNpcSkillInstantDrainEffectResult CalculateInstantDrainEffect(WorldNpcSkillInstantDrainEffectRequest request)
+	{
+		// Java parity: skillengine/effect/{SkillAtkDrainInstant,SpellAtkDrainInstant}Effect.
+		var profile = GetInstantDrainEffectProfile(request.Kind);
+		var hpAmount = request.ReservedDamage * Math.Max(0, request.HpPercent) / 100;
+		var mpAmount = request.ReservedDamage * Math.Max(0, request.MpPercent) / 100;
+		return new WorldNpcSkillInstantDrainEffectResult(
+			Status: WorldNpcSkillInstantEffectStatus.Applied,
+			Kind: request.Kind,
+			ReservedDamage: request.ReservedDamage,
+			HpPercent: request.HpPercent,
+			MpPercent: request.MpPercent,
+			HpAmount: hpAmount,
+			MpAmount: mpAmount,
+			Delay: TimeSpan.FromSeconds(1),
+			HpPacketType: profile.HpPacketType,
+			MpPacketType: profile.MpPacketType,
+			PacketLog: profile.PacketLog);
+	}
+
 	private static WorldNpcSkillDamageMapping GetMapping(WorldNpcSkillDamageKind kind)
 	{
 		return kind switch
@@ -571,6 +637,97 @@ public sealed class WorldNpcSkillDamageService
 		bool RequiresPlayerTarget,
 		SmAttackStatusType? PacketType,
 		SmAttackStatusLog? PacketLog);
+
+	private static WorldNpcSkillInstantResourceEffectProfile GetInstantResourceEffectProfile(WorldNpcSkillInstantResourceEffectKind kind)
+	{
+		return kind switch
+		{
+			WorldNpcSkillInstantResourceEffectKind.MpAttackInstant => new WorldNpcSkillInstantResourceEffectProfile(
+				ResourceType: WorldNpcEffectResourceType.Mp,
+				RequiresPlayerTarget: false,
+				RequiresEnemyTarget: false,
+				ReserveValueOnCalculate: true,
+				SchedulesDelayedAction: false,
+				Delay: null,
+				PacketType: SmAttackStatusType.DamageMp,
+				PacketLog: SmAttackStatusLog.MpAttack),
+			WorldNpcSkillInstantResourceEffectKind.FpAttackInstant => new WorldNpcSkillInstantResourceEffectProfile(
+				ResourceType: WorldNpcEffectResourceType.Fp,
+				RequiresPlayerTarget: true,
+				RequiresEnemyTarget: false,
+				ReserveValueOnCalculate: true,
+				SchedulesDelayedAction: false,
+				Delay: null,
+				PacketType: SmAttackStatusType.FpDamage,
+				PacketLog: SmAttackStatusLog.FpAttack),
+			WorldNpcSkillInstantResourceEffectKind.DelayedFpAttackInstant => new WorldNpcSkillInstantResourceEffectProfile(
+				ResourceType: WorldNpcEffectResourceType.Fp,
+				RequiresPlayerTarget: true,
+				RequiresEnemyTarget: true,
+				ReserveValueOnCalculate: false,
+				SchedulesDelayedAction: true,
+				Delay: null,
+				PacketType: SmAttackStatusType.FpDamage,
+				PacketLog: SmAttackStatusLog.FpAttack),
+			_ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unhandled Java instant resource effect kind."),
+		};
+	}
+
+	private static WorldNpcSkillInstantResourceEffectResult CreateSkippedInstantResourceEffectResult(
+		WorldNpcSkillInstantEffectStatus status,
+		WorldNpcSkillInstantResourceEffectRequest request,
+		WorldNpcSkillInstantResourceEffectProfile profile)
+	{
+		return new WorldNpcSkillInstantResourceEffectResult(
+			Status: status,
+			Kind: request.Kind,
+			OriginalValue: request.Value,
+			FinalValue: 0,
+			SkillId: request.SkillId,
+			Position: request.Position,
+			ResourceType: profile.ResourceType,
+			PercentApplied: request.Percent,
+			MaxResource: request.MaxResource,
+			TargetIsPlayer: request.TargetIsPlayer,
+			IsEnemy: request.IsEnemy,
+			ReserveValueOnCalculate: profile.ReserveValueOnCalculate,
+			SchedulesDelayedAction: profile.SchedulesDelayedAction,
+			Delay: profile.SchedulesDelayedAction ? request.Delay ?? TimeSpan.Zero : null,
+			Reserved: null,
+			PacketType: profile.PacketType,
+			PacketLog: profile.PacketLog);
+	}
+
+	private static WorldNpcSkillInstantDrainEffectProfile GetInstantDrainEffectProfile(WorldNpcSkillInstantDrainEffectKind kind)
+	{
+		return kind switch
+		{
+			WorldNpcSkillInstantDrainEffectKind.SkillAttackDrainInstant => new WorldNpcSkillInstantDrainEffectProfile(
+				HpPacketType: SmAttackStatusType.AbsorbedHp,
+				MpPacketType: SmAttackStatusType.Mp,
+				PacketLog: SmAttackStatusLog.SkillAttackDrainInstant),
+			WorldNpcSkillInstantDrainEffectKind.SpellAttackDrainInstant => new WorldNpcSkillInstantDrainEffectProfile(
+				HpPacketType: SmAttackStatusType.Hp,
+				MpPacketType: SmAttackStatusType.AbsorbedMp,
+				PacketLog: SmAttackStatusLog.SpellAttackDrainInstant),
+			_ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unhandled Java instant drain effect kind."),
+		};
+	}
+
+	private sealed record WorldNpcSkillInstantResourceEffectProfile(
+		WorldNpcEffectResourceType ResourceType,
+		bool RequiresPlayerTarget,
+		bool RequiresEnemyTarget,
+		bool ReserveValueOnCalculate,
+		bool SchedulesDelayedAction,
+		TimeSpan? Delay,
+		SmAttackStatusType PacketType,
+		SmAttackStatusLog PacketLog);
+
+	private sealed record WorldNpcSkillInstantDrainEffectProfile(
+		SmAttackStatusType HpPacketType,
+		SmAttackStatusType MpPacketType,
+		SmAttackStatusLog PacketLog);
 }
 
 public sealed record WorldNpcSkillOverTimeEffectStartRequest(
@@ -804,4 +961,79 @@ public enum WorldNpcSkillResourceOverTimeStatus
 	Applied,
 	TargetNotPlayer,
 	NoResourceChange,
+}
+
+public sealed record WorldNpcSkillInstantResourceEffectRequest(
+	WorldNpcSkillInstantResourceEffectKind Kind,
+	int Value,
+	int SkillId,
+	int Position,
+	int MaxResource,
+	bool Percent = false,
+	bool TargetIsPlayer = true,
+	bool IsEnemy = true,
+	TimeSpan? Delay = null);
+
+public sealed record WorldNpcSkillInstantResourceEffectResult(
+	WorldNpcSkillInstantEffectStatus Status,
+	WorldNpcSkillInstantResourceEffectKind Kind,
+	int OriginalValue,
+	int FinalValue,
+	int SkillId,
+	int Position,
+	WorldNpcEffectResourceType ResourceType,
+	bool PercentApplied,
+	int MaxResource,
+	bool TargetIsPlayer,
+	bool IsEnemy,
+	bool ReserveValueOnCalculate,
+	bool SchedulesDelayedAction,
+	TimeSpan? Delay,
+	WorldNpcSkillEffectReservedResult? Reserved,
+	SmAttackStatusType PacketType,
+	SmAttackStatusLog PacketLog)
+{
+	public bool Applied => Status == WorldNpcSkillInstantEffectStatus.Applied;
+}
+
+public sealed record WorldNpcSkillInstantDrainEffectRequest(
+	WorldNpcSkillInstantDrainEffectKind Kind,
+	int ReservedDamage,
+	int HpPercent = 0,
+	int MpPercent = 0);
+
+public sealed record WorldNpcSkillInstantDrainEffectResult(
+	WorldNpcSkillInstantEffectStatus Status,
+	WorldNpcSkillInstantDrainEffectKind Kind,
+	int ReservedDamage,
+	int HpPercent,
+	int MpPercent,
+	int HpAmount,
+	int MpAmount,
+	TimeSpan Delay,
+	SmAttackStatusType HpPacketType,
+	SmAttackStatusType MpPacketType,
+	SmAttackStatusLog PacketLog)
+{
+	public bool Applied => Status == WorldNpcSkillInstantEffectStatus.Applied;
+}
+
+public enum WorldNpcSkillInstantResourceEffectKind
+{
+	MpAttackInstant,
+	FpAttackInstant,
+	DelayedFpAttackInstant,
+}
+
+public enum WorldNpcSkillInstantDrainEffectKind
+{
+	SkillAttackDrainInstant,
+	SpellAttackDrainInstant,
+}
+
+public enum WorldNpcSkillInstantEffectStatus
+{
+	Applied,
+	TargetNotPlayer,
+	NotEnemy,
 }
