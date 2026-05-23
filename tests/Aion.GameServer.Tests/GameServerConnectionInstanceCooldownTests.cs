@@ -385,6 +385,48 @@ public sealed class GameServerConnectionInstanceCooldownTests
 		Assert.Collection(pair.SentPackets, packet => Assert.IsType<SmTeleportLoc>(packet));
 	}
 
+	[Fact]
+	public async Task QueuePortalContinueTransferAsync_CompletesPendingTeleportOnAnimationDone()
+	{
+		await using var pair = await TestConnectionPair.CreateAsync(new GameServerOptions());
+		var player = new Player
+		{
+			ObjectId = 1001,
+			Name = "Character",
+			Race = "ELYOS",
+			Position = new WorldPosition(110010000, 1, 1, 1, 0),
+		};
+		var worldMaps = new WorldMapRuntimeStateTable([new WorldMapSummary(210010000, IsInstance: false, TwinCount: 1)]);
+		var cooltimes = new InstanceCooltimeTable(Array.Empty<InstanceCooltimeSummary>());
+		var portalLoc = new PortalLocSummary(210010000, LocId: 1, 10, 20, 30, 90);
+		var destination = new WorldPosition(210010000, 10, 20, 30, 90);
+		var preparation = PortalEntryPreparationResult.Ready(
+			PortalEntryPlanResult.Allowed(portalLoc, registeredInstance: null, reenter: false),
+			requirementApplication: null,
+			Array.Empty<GameServerPacket>());
+
+		var queued = await pair.Connection.QueuePortalContinueTransferAsync(
+			player,
+			preparation,
+			worldMapStates: worldMaps,
+			instanceCooltimes: cooltimes,
+			now: DateTimeOffset.FromUnixTimeMilliseconds(100_000));
+		var completed = await pair.Connection.HandleTeleportAnimationDoneAsync(player);
+
+		Assert.NotNull(queued);
+		Assert.NotNull(completed);
+		Assert.Equal(destination, queued.Teleport.PendingTeleport.Destination);
+		Assert.Equal(destination, completed.Destination);
+		Assert.Equal(destination, player.Position);
+		Assert.Null(player.PendingTeleport);
+		Assert.False(completed.UsesSameWorldSpawnPath);
+		Assert.Collection(
+			pair.SentPackets,
+			packet => Assert.IsType<SmTeleportLoc>(packet),
+			packet => Assert.IsType<SmChannelInfo>(packet),
+			packet => Assert.IsType<SmPlayerSpawn>(packet));
+	}
+
 	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
 	{
 		var crypt = new GameCrypt(() => 0x01020304);
