@@ -34,6 +34,30 @@ public sealed class InstanceCooltimeTable
 			: template.MaxMemberDark;
 	}
 
+	public int GetEnterMinLevel(int worldId, string race)
+	{
+		// Java parity: model/templates/InstanceCooltime enterMinLevelLight/enterMinLevelDark.
+		var template = GetInstanceCooltimeByWorldId(worldId);
+		if (template == null)
+			return 0;
+
+		return string.Equals(race, "ELYOS", StringComparison.OrdinalIgnoreCase)
+			? template.EnterMinLevelLight
+			: template.EnterMinLevelDark;
+	}
+
+	public int GetEnterMaxLevel(int worldId, string race)
+	{
+		// Java parity: model/templates/InstanceCooltime enterMaxLevelLight/enterMaxLevelDark.
+		var template = GetInstanceCooltimeByWorldId(worldId);
+		if (template == null)
+			return 0;
+
+		return string.Equals(race, "ELYOS", StringComparison.OrdinalIgnoreCase)
+			? template.EnterMaxLevelLight
+			: template.EnterMaxLevelDark;
+	}
+
 	public long CalculateInstanceEntranceCooltime(
 		int worldId,
 		DateTimeOffset now,
@@ -128,6 +152,10 @@ public sealed record InstanceCooltimeSummary(
 	int MaxCount,
 	int MaxMemberLight = 0,
 	int MaxMemberDark = 0,
+	int EnterMinLevelLight = 0,
+	int EnterMaxLevelLight = 0,
+	int EnterMinLevelDark = 0,
+	int EnterMaxLevelDark = 0,
 	string CoolTimeType = "",
 	string TypeValue = "",
 	int EntCoolTime = 0);

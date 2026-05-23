@@ -1195,6 +1195,34 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 3 && reader.LocalName == "enter_min_level_light" && currentInstanceCooltime != null)
+			{
+				var value = await ReadElementTextAsync(reader, cancellationToken);
+				currentInstanceCooltime.EnterMinLevelLight = int.TryParse(value, out var parsedEnterMinLevelLight) ? parsedEnterMinLevelLight : 0;
+				continue;
+			}
+
+			if (reader.Depth == 3 && reader.LocalName == "enter_max_level_light" && currentInstanceCooltime != null)
+			{
+				var value = await ReadElementTextAsync(reader, cancellationToken);
+				currentInstanceCooltime.EnterMaxLevelLight = int.TryParse(value, out var parsedEnterMaxLevelLight) ? parsedEnterMaxLevelLight : 0;
+				continue;
+			}
+
+			if (reader.Depth == 3 && reader.LocalName == "enter_min_level_dark" && currentInstanceCooltime != null)
+			{
+				var value = await ReadElementTextAsync(reader, cancellationToken);
+				currentInstanceCooltime.EnterMinLevelDark = int.TryParse(value, out var parsedEnterMinLevelDark) ? parsedEnterMinLevelDark : 0;
+				continue;
+			}
+
+			if (reader.Depth == 3 && reader.LocalName == "enter_max_level_dark" && currentInstanceCooltime != null)
+			{
+				var value = await ReadElementTextAsync(reader, cancellationToken);
+				currentInstanceCooltime.EnterMaxLevelDark = int.TryParse(value, out var parsedEnterMaxLevelDark) ? parsedEnterMaxLevelDark : 0;
+				continue;
+			}
+
 			if (reader.Depth == 2 && reader.LocalName == "item_template")
 			{
 				var requiredLevels = ReadLevelRestrictions(reader.GetAttribute("restrict"));
@@ -2350,6 +2378,14 @@ public sealed class StaticData
 
 		public int MaxMemberDark { get; set; }
 
+		public int EnterMinLevelLight { get; set; }
+
+		public int EnterMaxLevelLight { get; set; }
+
+		public int EnterMinLevelDark { get; set; }
+
+		public int EnterMaxLevelDark { get; set; }
+
 		public string CoolTimeType { get; set; } = string.Empty;
 
 		public string TypeValue { get; set; } = string.Empty;
@@ -2366,6 +2402,10 @@ public sealed class StaticData
 				MaxCount,
 				MaxMemberLight,
 				MaxMemberDark,
+				EnterMinLevelLight,
+				EnterMaxLevelLight,
+				EnterMinLevelDark,
+				EnterMaxLevelDark,
 				CoolTimeType,
 				TypeValue,
 				EntCoolTime);

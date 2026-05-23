@@ -204,6 +204,32 @@ public sealed class WorldMapRuntimeStateTests
 	}
 
 	[Fact]
+	public void InstanceCooltimeTable_MatchesJavaRaceSpecificEnterLevelLookup()
+	{
+		var cooltimes = new InstanceCooltimeTable(
+		[
+			new InstanceCooltimeSummary(
+				8,
+				300030000,
+				"PC_ALL",
+				5,
+				EnterMinLevelLight: 41,
+				EnterMaxLevelLight: 50,
+				EnterMinLevelDark: 42,
+				EnterMaxLevelDark: 51),
+		]);
+
+		Assert.Equal(41, cooltimes.GetEnterMinLevel(300030000, "ELYOS"));
+		Assert.Equal(50, cooltimes.GetEnterMaxLevel(300030000, "ELYOS"));
+		Assert.Equal(42, cooltimes.GetEnterMinLevel(300030000, "ASMODIANS"));
+		Assert.Equal(51, cooltimes.GetEnterMaxLevel(300030000, "ASMODIANS"));
+		Assert.Equal(42, cooltimes.GetEnterMinLevel(300030000, "UNKNOWN"));
+		Assert.Equal(51, cooltimes.GetEnterMaxLevel(300030000, "UNKNOWN"));
+		Assert.Equal(0, cooltimes.GetEnterMinLevel(123, "ELYOS"));
+		Assert.Equal(0, cooltimes.GetEnterMaxLevel(123, "ELYOS"));
+	}
+
+	[Fact]
 	public void InstanceRuntimeService_PlayerOverloadUsesInstanceCooltimeMaxMembers()
 	{
 		var table = new WorldMapRuntimeStateTable(
