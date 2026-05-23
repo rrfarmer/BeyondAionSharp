@@ -362,7 +362,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 				{
 					// Java parity: network/aion/clientpackets/CM_SUBZONE_CHANGE.runImpl -> Player.revalidateZones.
-					RevalidatePlayerFlightZones(_activePlayer);
+					await RevalidatePlayerFlightZonesAsync(_activePlayer);
 				}
 				break;
 			case CmChangeChannel:
@@ -522,7 +522,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 				{
 					HandleMoveInAir(_activePlayer, moveInAir);
-					RevalidatePlayerFlightZones(_activePlayer);
+					await RevalidatePlayerFlightZonesAsync(_activePlayer);
 				}
 				break;
 			case CmQuestionResponse questionResponse:
@@ -928,7 +928,7 @@ public sealed class GameServerConnection : BaseClientConnection
 
 					var staticData = _runtimeContext?.DataManager?.StaticData;
 					// Java parity: CreatureController.onAfterSpawn revalidates zones after the player enters the world.
-					RevalidatePlayerFlightZones(enterWorldResult.Player);
+					await RevalidatePlayerFlightZonesAsync(enterWorldResult.Player);
 					await SendPacketAsync(new SmChannelInfo(enterWorldResult.Player.Position, staticData?.WorldMaps ?? Array.Empty<WorldMapSummary>()));
 					await SendPacketAsync(CreateBindPointPacket(enterWorldResult.Player, staticData));
 					await SendPacketAsync(new SmPlayerSpawn(enterWorldResult.Player));
@@ -5871,18 +5871,45 @@ public sealed class GameServerConnection : BaseClientConnection
 		return await visualStats.UpdateStatsAndSpeedVisuallyAsync(player, null);
 	}
 
-	private PlayerZoneRevalidationResult RevalidatePlayerFlightZones(Player player)
+	private async Task<PlayerZoneRevalidationResult> RevalidatePlayerFlightZonesAsync(Player player)
 	{
 		var staticData = _runtimeContext?.DataManager?.StaticData;
 		var result = PlayerZoneStateService.RevalidateFlightZones(
 			player,
 			staticData?.WorldMaps ?? Array.Empty<WorldMapSummary>(),
 			staticData?.FlightZones);
-		PlayerZoneStateService.ApplyFlightZoneTransitionIntent(
+		var transition = PlayerZoneStateService.ApplyFlightZoneTransitionIntent(
 			player,
 			result,
 			_options.Administration.FreeFlightAccessLevel);
+		await ApplyFlightZoneTransitionFanoutAsync(player, result, transition);
 		return result;
+	}
+
+	private async Task ApplyFlightZoneTransitionFanoutAsync(
+		Player player,
+		PlayerZoneRevalidationResult revalidation,
+		PlayerFlightZoneTransitionResult transition)
+	{
+		switch (transition.LeaveStatus)
+		{
+			case PlayerLeaveFlyAreaStatus.ContinueGliding:
+				// Java parity: PlayerController.onLeaveFlyArea flying+gliding branch -> updateStatsAndSpeedVisually + SM_EMOTION(STOP_FLY).
+				await UpdatePlayerStatsAndSpeedVisuallyAsync(player);
+				await BroadcastEmotionAsync(player, new SmEmotion(player, EmotionType.StopFly));
+				break;
+			case PlayerLeaveFlyAreaStatus.EndedFlying:
+				// Java parity: PlayerController.onLeaveFlyArea flying branch -> FlyController.endFly(true) + optional AuditLogger.log.
+				await UpdatePlayerStatsAndSpeedVisuallyAsync(player);
+				await BroadcastEmotionAsync(player, new SmEmotion(player, EmotionType.Land));
+				if (!revalidation.IsInsideFlyZone)
+					_logger.LogWarning(
+						"Player {PlayerName} ({PlayerObjectId}) left fly zone in fly state at {Position}",
+						player.Name,
+						player.ObjectId,
+						player.Position);
+				break;
+		}
 	}
 
 	private static bool HasEquippedPowerShard(Player player, ItemTemplateTable? itemTemplates)
@@ -5994,7 +6021,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			Heading = packet.Heading,
 		};
 		// Java parity: CM_MOVE.notifyControllers -> CreatureController.onMove/onStopMove -> ZoneUpdateService.revalidateZones.
-		RevalidatePlayerFlightZones(player);
+		await RevalidatePlayerFlightZonesAsync(player);
 
 		if (_connectionRegistry != null && (MovementMask.HasManualPosition(packet.Type) || packet.Type == MovementMask.Immediate))
 			await _connectionRegistry.BroadcastToVisiblePlayersAsync(player.Position, player.ObjectId, new SmMove(player));
