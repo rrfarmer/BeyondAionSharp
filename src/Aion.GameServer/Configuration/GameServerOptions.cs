@@ -224,6 +224,7 @@ public sealed class GameServerOptions
 			{
 				UnrestrictedItemTradeAccessLevel = GetIntWithEnvironment(loader, "gameserver.administration.unrestricted_itemtrade", 1),
 				GmPanelAccessLevel = GetIntWithEnvironment(loader, "gameserver.administration.gm_panel", 2),
+				FreeFlightAccessLevel = GetIntWithEnvironment(loader, "gameserver.administration.flight.free_fly", 1),
 				OperationalItemIds = LoadOperationalItemIds(startDirectory),
 			},
 			Rates = new GameServerRateOptions
@@ -558,6 +559,8 @@ public sealed class GameServerAdministrationOptions
 	public int UnrestrictedItemTradeAccessLevel { get; init; } = 1;
 
 	public int GmPanelAccessLevel { get; init; } = 2;
+
+	public int FreeFlightAccessLevel { get; init; } = 1;
 
 	public IReadOnlySet<int> OperationalItemIds { get; init; } = new HashSet<int>();
 }

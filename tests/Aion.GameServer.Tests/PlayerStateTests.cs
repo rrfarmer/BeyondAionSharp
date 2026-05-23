@@ -593,22 +593,34 @@ public sealed class PlayerStateTests
 	{
 		var now = DateTimeOffset.FromUnixTimeMilliseconds(100_000);
 		var startingClass = new Player { PlayerClass = "WARRIOR" };
-		var noFly = new Player { PlayerClass = "RANGER", AbnormalState = PlayerAbnormalState.NoFly };
-		var transformed = new Player { PlayerClass = "RANGER", TransformForbidsFlight = true };
-		var privateShop = new Player { PlayerClass = "RANGER", CreatureState = PlayerCreatureState.PrivateShop };
-		var onCooldown = new Player { PlayerClass = "RANGER", FlyReuseTimeMillis = now.ToUnixTimeMilliseconds() + 1 };
-		var flying = new Player { PlayerClass = "RANGER" };
+		var outsideFlyZone = new Player { PlayerClass = "RANGER" };
+		var insideNoFlyZone = new Player { PlayerClass = "RANGER", IsInsideFlyZone = true, IsInsideNoFlyZone = true };
+		var noFly = new Player { PlayerClass = "RANGER", IsInsideFlyZone = true, AbnormalState = PlayerAbnormalState.NoFly };
+		var transformed = new Player { PlayerClass = "RANGER", IsInsideFlyZone = true, TransformForbidsFlight = true };
+		var privateShop = new Player { PlayerClass = "RANGER", IsInsideFlyZone = true, CreatureState = PlayerCreatureState.PrivateShop };
+		var onCooldown = new Player { PlayerClass = "RANGER", IsInsideFlyZone = true, FlyReuseTimeMillis = now.ToUnixTimeMilliseconds() + 1 };
+		var flying = new Player { PlayerClass = "RANGER", IsInsideFlyZone = true };
+		var freeFlightAdmin = new Player { PlayerClass = "RANGER", AccessLevel = 1 };
 
 		var notDaeva = PlayerFlightActionService.StartFlying(startingClass, now);
+		var outsideFlyZoneResult = PlayerFlightActionService.StartFlying(outsideFlyZone, now);
+		var noFlyZoneResult = PlayerFlightActionService.StartFlying(insideNoFlyZone, now);
 		var noFlyResult = PlayerFlightActionService.StartFlying(noFly, now);
 		var transformedResult = PlayerFlightActionService.StartFlying(transformed, now);
 		var privateShopResult = PlayerFlightActionService.StartFlying(privateShop, now);
 		var cooldownResult = PlayerFlightActionService.StartFlying(onCooldown, now);
 		var success = PlayerFlightActionService.StartFlying(flying, now);
+		var freeFlightAdminResult = PlayerFlightActionService.StartFlying(freeFlightAdmin, now);
 
 		Assert.Equal(PlayerFlightActionStatus.NotDaeva, notDaeva.Status);
 		Assert.NotNull(notDaeva.SystemMessage);
 		Assert.False(startingClass.IsFlying());
+		Assert.Equal(PlayerFlightActionStatus.FlyingForbiddenHere, outsideFlyZoneResult.Status);
+		Assert.NotNull(outsideFlyZoneResult.SystemMessage);
+		Assert.False(outsideFlyZone.IsFlying());
+		Assert.Equal(PlayerFlightActionStatus.FlyingForbiddenHere, noFlyZoneResult.Status);
+		Assert.NotNull(noFlyZoneResult.SystemMessage);
+		Assert.False(insideNoFlyZone.IsFlying());
 		Assert.Equal(PlayerFlightActionStatus.NoFlyAbnormal, noFlyResult.Status);
 		Assert.NotNull(noFlyResult.SystemMessage);
 		Assert.False(noFly.IsFlying());
@@ -627,8 +639,10 @@ public sealed class PlayerStateTests
 		Assert.True(flying.IsInState(PlayerCreatureState.Flying));
 		Assert.True(flying.IsFpReduceActive);
 		Assert.Equal(now.ToUnixTimeMilliseconds() + 9_900, flying.FlyReuseTimeMillis);
+		Assert.True(freeFlightAdminResult.Succeeded);
+		Assert.True(freeFlightAdmin.IsInFlyingState());
 
-		var ignoredCooldown = new Player { PlayerClass = "RANGER", FlyReuseTimeMillis = now.ToUnixTimeMilliseconds() + 1 };
+		var ignoredCooldown = new Player { PlayerClass = "RANGER", IsInsideFlyZone = true, FlyReuseTimeMillis = now.ToUnixTimeMilliseconds() + 1 };
 		var ignoredResult = PlayerFlightActionService.StartFlying(ignoredCooldown, now, ignoreFlightCooldown: true);
 
 		Assert.True(ignoredResult.Succeeded);

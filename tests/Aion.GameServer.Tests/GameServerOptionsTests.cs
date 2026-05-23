@@ -22,6 +22,7 @@ public class GameServerOptionsTests
 		Assert.Equal(10, options.Membership.StigmaAutoLearn);
 		Assert.Equal(1, options.Administration.UnrestrictedItemTradeAccessLevel);
 		Assert.Equal(2, options.Administration.GmPanelAccessLevel);
+		Assert.Equal(1, options.Administration.FreeFlightAccessLevel);
 		Assert.Contains(10000001, options.Administration.OperationalItemIds);
 		Assert.Contains(10000002, options.Administration.OperationalItemIds);
 		Assert.Equal([75f, 75f], options.Rates.ManastoneChances);

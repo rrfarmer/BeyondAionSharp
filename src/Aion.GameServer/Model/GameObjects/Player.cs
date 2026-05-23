@@ -109,6 +109,12 @@ public sealed class Player
 	// Java parity: model/gameobjects/player/Player.flyReuseTime used by FlyController start/glide cooldown checks.
 	public long FlyReuseTimeMillis { get; set; }
 
+	// Java parity: model/templates/zone/ZoneType.FLY membership queried by FlyController.canFly.
+	public bool IsInsideFlyZone { get; set; }
+
+	// Java parity: model/templates/zone/ZoneType.NO_FLY membership queried by FlyController.canFly.
+	public bool IsInsideNoFlyZone { get; set; }
+
 	// Java parity: model/gameobjects/player/Player.getTransformModel().getRes6() == 1 blocks fly/glide.
 	public bool TransformForbidsFlight { get; set; }
 

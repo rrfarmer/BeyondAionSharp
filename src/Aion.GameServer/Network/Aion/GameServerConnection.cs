@@ -5721,7 +5721,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				player.CompleteFlyTeleport();
 				break;
 			case EmotionType.Fly:
-				var flyResult = PlayerFlightActionService.StartFlying(player, DateTimeOffset.UtcNow);
+				var flyResult = PlayerFlightActionService.StartFlying(
+					player,
+					DateTimeOffset.UtcNow,
+					freeFlightAccessLevel: _options.Administration.FreeFlightAccessLevel);
 				if (!flyResult.Succeeded)
 				{
 					if (flyResult.SystemMessage != null)

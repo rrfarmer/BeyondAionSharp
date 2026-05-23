@@ -11,10 +11,11 @@ public static class PlayerFlightActionService
 	public static PlayerFlightActionResult StartFlying(
 		Player player,
 		DateTimeOffset now,
-		bool ignoreFlightCooldown = false)
+		bool ignoreFlightCooldown = false,
+		int freeFlightAccessLevel = 1)
 	{
 		// Java parity: controllers/FlyController.startFly(canFly + cooldown + state side effects).
-		var canFly = CanFly(player);
+		var canFly = CanFly(player, freeFlightAccessLevel);
 		if (!canFly.Succeeded)
 			return canFly;
 
@@ -57,11 +58,14 @@ public static class PlayerFlightActionService
 		return PlayerFlightActionResult.Success();
 	}
 
-	private static PlayerFlightActionResult CanFly(Player player)
+	private static PlayerFlightActionResult CanFly(Player player, int freeFlightAccessLevel)
 	{
 		// Java parity: controllers/FlyController.canFly guard order.
 		if (!IsDaeva(player))
 			return PlayerFlightActionResult.Failed(PlayerFlightActionStatus.NotDaeva, SmSystemMessage.GlideOnlyDaevaCan());
+
+		if (!HasAccess(player, freeFlightAccessLevel) && (player.IsInsideNoFlyZone || !player.IsInsideFlyZone))
+			return PlayerFlightActionResult.Failed(PlayerFlightActionStatus.FlyingForbiddenHere, SmSystemMessage.FlyingForbiddenHere());
 
 		if (player.IsAbnormalSet(PlayerAbnormalState.NoFly))
 			return PlayerFlightActionResult.Failed(PlayerFlightActionStatus.NoFlyAbnormal, SmSystemMessage.CantFlyNowDueToNoFly());
@@ -92,6 +96,12 @@ public static class PlayerFlightActionService
 		// Java parity: PlayerCommonData.isDaeva rejects only starting classes in the current C# model.
 		return player.PlayerClass is not ("WARRIOR" or "SCOUT" or "MAGE" or "PRIEST" or "ENGINEER" or "ARTIST");
 	}
+
+	private static bool HasAccess(Player player, int accessLevel)
+	{
+		// Java parity: model/gameobjects/player/Player.hasAccess.
+		return player.AccessLevel >= accessLevel;
+	}
 }
 
 public sealed record PlayerFlightActionResult(
@@ -115,6 +125,7 @@ public enum PlayerFlightActionStatus
 {
 	Success,
 	NotDaeva,
+	FlyingForbiddenHere,
 	NoFlyAbnormal,
 	TransformForbidden,
 	PrivateStore,
