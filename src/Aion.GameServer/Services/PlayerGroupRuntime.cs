@@ -341,9 +341,15 @@ public sealed class PlayerGroupRuntime
 	{
 		// Java parity: model/team/group/events/PlayerConnectedEvent sends SM_GROUP_INFO and SM_GROUP_MEMBER_INFO JOIN/ENTER packets.
 		var reconnectingPlayerObjectId = reconnectingPlayer.ObjectId;
+		var membersByObjectId = members.ToDictionary(member => member.ObjectId);
+		var reconnectingMember = membersByObjectId[reconnectingPlayerObjectId];
 		var intents = new List<PlayerGroupMemberInfoIntent>
 		{
-			new(reconnectingPlayerObjectId, reconnectingPlayerObjectId, PlayerGroupEvent.Join),
+			new(
+				reconnectingPlayerObjectId,
+				reconnectingPlayerObjectId,
+				PlayerGroupEvent.Join,
+				PlayerGroupMemberInfoPacketPlan.FromMember(teamId, reconnectingMember, PlayerGroupEvent.Join)),
 		};
 
 		foreach (var member in members)
@@ -351,8 +357,16 @@ public sealed class PlayerGroupRuntime
 			if (member.ObjectId == reconnectingPlayerObjectId)
 				continue;
 
-			intents.Add(new PlayerGroupMemberInfoIntent(member.ObjectId, reconnectingPlayerObjectId, PlayerGroupEvent.Enter));
-			intents.Add(new PlayerGroupMemberInfoIntent(reconnectingPlayerObjectId, member.ObjectId, PlayerGroupEvent.Enter));
+			intents.Add(new PlayerGroupMemberInfoIntent(
+				member.ObjectId,
+				reconnectingPlayerObjectId,
+				PlayerGroupEvent.Enter,
+				PlayerGroupMemberInfoPacketPlan.FromMember(teamId, reconnectingMember, PlayerGroupEvent.Enter)));
+			intents.Add(new PlayerGroupMemberInfoIntent(
+				reconnectingPlayerObjectId,
+				member.ObjectId,
+				PlayerGroupEvent.Enter,
+				PlayerGroupMemberInfoPacketPlan.FromMember(teamId, member, PlayerGroupEvent.Enter)));
 		}
 
 		return new PlayerGroupReconnectPacketPlan(

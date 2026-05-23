@@ -334,6 +334,7 @@ public sealed class PlayerGroupRuntimeTests
 		var loggingInMember = new Player
 		{
 			ObjectId = 1002,
+			IsOnline = true,
 			Position = new WorldPosition(210010000, 100, 200, 300, 32),
 		};
 
@@ -379,6 +380,7 @@ public sealed class PlayerGroupRuntimeTests
 				Assert.Equal(1002, intent.SubjectObjectId);
 				Assert.Equal(PlayerGroupEvent.Join, intent.Event);
 				Assert.Equal(5, (int)intent.Event);
+				AssertMemberInfoPlan(intent.PacketPlan, 99001, 1002, PlayerGroupEvent.Join, PlayerGroupEvent.Join, isOnline: true, writesName: true, writesEffects: false);
 			},
 			intent =>
 			{
@@ -386,25 +388,44 @@ public sealed class PlayerGroupRuntimeTests
 				Assert.Equal(1002, intent.SubjectObjectId);
 				Assert.Equal(PlayerGroupEvent.Enter, intent.Event);
 				Assert.Equal(13, (int)intent.Event);
+				AssertMemberInfoPlan(intent.PacketPlan, 99001, 1002, PlayerGroupEvent.Enter, PlayerGroupEvent.Enter, isOnline: true, writesName: true, writesEffects: true);
 			},
 			intent =>
 			{
 				Assert.Equal(1002, intent.RecipientObjectId);
 				Assert.Equal(1001, intent.SubjectObjectId);
 				Assert.Equal(PlayerGroupEvent.Enter, intent.Event);
+				AssertMemberInfoPlan(intent.PacketPlan, 99001, 1001, PlayerGroupEvent.Enter, PlayerGroupEvent.EnterOffline, isOnline: false, writesName: true, writesEffects: false);
 			},
 			intent =>
 			{
 				Assert.Equal(1003, intent.RecipientObjectId);
 				Assert.Equal(1002, intent.SubjectObjectId);
 				Assert.Equal(PlayerGroupEvent.Enter, intent.Event);
+				AssertMemberInfoPlan(intent.PacketPlan, 99001, 1002, PlayerGroupEvent.Enter, PlayerGroupEvent.Enter, isOnline: true, writesName: true, writesEffects: true);
 			},
 			intent =>
 			{
 				Assert.Equal(1002, intent.RecipientObjectId);
 				Assert.Equal(1003, intent.SubjectObjectId);
 				Assert.Equal(PlayerGroupEvent.Enter, intent.Event);
+				AssertMemberInfoPlan(intent.PacketPlan, 99001, 1003, PlayerGroupEvent.Enter, PlayerGroupEvent.EnterOffline, isOnline: false, writesName: true, writesEffects: false);
 			});
+	}
+
+	[Fact]
+	public void PlayerGroupMemberInfoPacketPlan_ModelsStableJavaHeaderAndEventBranches()
+	{
+		var offlineMember = new PlayerGroupMember(new Player { ObjectId = 1001, IsOnline = false });
+		var onlineMember = new PlayerGroupMember(new Player { ObjectId = 1002, IsOnline = true });
+
+		var offlineEnter = PlayerGroupMemberInfoPacketPlan.FromMember(99001, offlineMember, PlayerGroupEvent.Enter);
+		var updateEffects = PlayerGroupMemberInfoPacketPlan.FromMember(99001, onlineMember, PlayerGroupEvent.UpdateEffects, slot: 4);
+		var movement = PlayerGroupMemberInfoPacketPlan.FromMember(99001, onlineMember, PlayerGroupEvent.Movement);
+
+		AssertMemberInfoPlan(offlineEnter, 99001, 1001, PlayerGroupEvent.Enter, PlayerGroupEvent.EnterOffline, isOnline: false, writesName: true, writesEffects: false);
+		AssertMemberInfoPlan(updateEffects, 99001, 1002, PlayerGroupEvent.UpdateEffects, PlayerGroupEvent.UpdateEffects, isOnline: true, writesName: false, writesEffects: true, slot: 4);
+		AssertMemberInfoPlan(movement, 99001, 1002, PlayerGroupEvent.Movement, PlayerGroupEvent.Movement, isOnline: true, writesName: false, writesEffects: false);
 	}
 
 	[Fact]
@@ -735,5 +756,32 @@ public sealed class PlayerGroupRuntimeTests
 		}
 
 		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertMemberInfoPlan(
+		PlayerGroupMemberInfoPacketPlan? plan,
+		int expectedGroupId,
+		int expectedMemberObjectId,
+		PlayerGroupEvent expectedRequestedEvent,
+		PlayerGroupEvent expectedEffectiveEvent,
+		bool isOnline,
+		bool writesName,
+		bool writesEffects,
+		int slot = 0)
+	{
+		var actual = Assert.IsType<PlayerGroupMemberInfoPacketPlan>(plan);
+		Assert.Equal(expectedGroupId, actual.GroupId);
+		Assert.Equal(expectedMemberObjectId, actual.MemberObjectId);
+		Assert.Equal(expectedRequestedEvent, actual.RequestedEvent);
+		Assert.Equal(expectedEffectiveEvent, actual.EffectiveEvent);
+		Assert.Equal((int)expectedEffectiveEvent, (int)actual.EffectiveEvent);
+		Assert.Equal(slot, actual.Slot);
+		Assert.Equal(isOnline, actual.IsOnline);
+		Assert.True(actual.WritesLifeStatsBlock);
+		Assert.True(actual.WritesPositionBlock);
+		Assert.True(actual.WritesCommonDataBlock);
+		Assert.Equal(writesName, actual.WritesName);
+		Assert.Equal(writesEffects, actual.WritesAbnormalEffects);
+		Assert.Equal(writesEffects, actual.WritesSlotTimers);
 	}
 }
