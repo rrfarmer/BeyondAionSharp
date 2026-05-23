@@ -1,5 +1,6 @@
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.World;
 
@@ -43,6 +44,33 @@ public static class PortalEntryValidationService
 		return PortalEntryInstanceValidationResult.Allowed(registeredInstance, reenter);
 	}
 
+	public static PortalEntryValidationResult ValidateEnterLevel(
+		Player player,
+		int worldId,
+		InstanceCooltimeTable instanceCooltimes,
+		int portalPathMinLevel = 0,
+		int portalPathErrLevel = 0,
+		int npcObjectId = 0,
+		bool bypassLevelRequirement = false)
+	{
+		// Java parity: services/teleport/PortalService.checkEnterLevel.
+		if (bypassLevelRequirement)
+			return PortalEntryValidationResult.Allowed();
+
+		var enterMinLevel = portalPathMinLevel;
+		if (enterMinLevel == 0)
+			enterMinLevel = instanceCooltimes.GetEnterMinLevel(worldId, player.Race);
+		var enterMaxLevel = instanceCooltimes.GetEnterMaxLevel(worldId, player.Race);
+
+		if (player.Level >= enterMinLevel && (enterMaxLevel <= 0 || player.Level <= enterMaxLevel))
+			return PortalEntryValidationResult.Allowed();
+
+		GameServerPacket failurePacket = portalPathErrLevel != 0
+			? new SmDialogWindow(npcObjectId, portalPathErrLevel)
+			: SmSystemMessage.CantInstanceEnterLevel();
+		return PortalEntryValidationResult.Rejected(PortalEntryValidationStatus.LevelRestricted, failurePacket);
+	}
+
 	private static WorldMapInstanceRuntimeState? ResolveRegisteredInstance(
 		Player player,
 		int worldId,
@@ -60,7 +88,7 @@ public static class PortalEntryValidationService
 public sealed record PortalEntryValidationResult(
 	bool CanEnter,
 	PortalEntryValidationStatus Status,
-	SmSystemMessage? FailurePacket)
+	GameServerPacket? FailurePacket)
 {
 	public static PortalEntryValidationResult Allowed()
 	{
@@ -69,7 +97,7 @@ public sealed record PortalEntryValidationResult(
 
 	public static PortalEntryValidationResult Rejected(
 		PortalEntryValidationStatus status,
-		SmSystemMessage failurePacket)
+		GameServerPacket failurePacket)
 	{
 		return new PortalEntryValidationResult(false, status, failurePacket);
 	}
@@ -79,6 +107,7 @@ public enum PortalEntryValidationStatus
 {
 	Allowed,
 	CooldownLocked,
+	LevelRestricted,
 }
 
 public sealed record PortalEntryInstanceValidationResult(
@@ -86,7 +115,7 @@ public sealed record PortalEntryInstanceValidationResult(
 	PortalEntryValidationStatus Status,
 	WorldMapInstanceRuntimeState? RegisteredInstance,
 	bool Reenter,
-	SmSystemMessage? FailurePacket)
+	GameServerPacket? FailurePacket)
 {
 	public static PortalEntryInstanceValidationResult Allowed(
 		WorldMapInstanceRuntimeState? registeredInstance,
@@ -102,7 +131,7 @@ public sealed record PortalEntryInstanceValidationResult(
 
 	public static PortalEntryInstanceValidationResult Rejected(
 		PortalEntryValidationStatus status,
-		SmSystemMessage failurePacket)
+		GameServerPacket failurePacket)
 	{
 		return new PortalEntryInstanceValidationResult(false, status, null, false, failurePacket);
 	}

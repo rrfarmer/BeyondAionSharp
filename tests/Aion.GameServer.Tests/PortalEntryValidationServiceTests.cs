@@ -1,5 +1,7 @@
+using Aion.Commons.Network;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.World;
@@ -126,6 +128,130 @@ public sealed class PortalEntryValidationServiceTests
 		Assert.Equal(1400043, packet.MessageId);
 	}
 
+	[Fact]
+	public void ValidateEnterLevel_UsesJavaInstanceCooltimeLevelsWhenPortalPathMinIsMissing()
+	{
+		var player = new Player { Race = "ELYOS", Level = 25 };
+		var cooltimes = CreateCooltimesWithLevels(
+			elyosMin: 25,
+			elyosMax: 50,
+			asmodianMin: 30,
+			asmodianMax: 55);
+
+		var result = PortalEntryValidationService.ValidateEnterLevel(player, WorldId, cooltimes);
+
+		Assert.True(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.Allowed, result.Status);
+		Assert.Null(result.FailurePacket);
+	}
+
+	[Fact]
+	public void ValidateEnterLevel_RejectsBelowJavaMinimumWithSystemMessage()
+	{
+		var player = new Player { Race = "ELYOS", Level = 24 };
+		var cooltimes = CreateCooltimesWithLevels(
+			elyosMin: 25,
+			elyosMax: 50,
+			asmodianMin: 30,
+			asmodianMax: 55);
+
+		var result = PortalEntryValidationService.ValidateEnterLevel(player, WorldId, cooltimes);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.LevelRestricted, result.Status);
+		var packet = Assert.IsType<SmSystemMessage>(result.FailurePacket);
+		Assert.Equal(1400179, packet.MessageId);
+	}
+
+	[Fact]
+	public void ValidateEnterLevel_RejectsAboveJavaMaximum()
+	{
+		var player = new Player { Race = "ASMODIANS", Level = 56 };
+		var cooltimes = CreateCooltimesWithLevels(
+			elyosMin: 25,
+			elyosMax: 50,
+			asmodianMin: 30,
+			asmodianMax: 55);
+
+		var result = PortalEntryValidationService.ValidateEnterLevel(player, WorldId, cooltimes);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.LevelRestricted, result.Status);
+		var packet = Assert.IsType<SmSystemMessage>(result.FailurePacket);
+		Assert.Equal(1400179, packet.MessageId);
+	}
+
+	[Fact]
+	public void ValidateEnterLevel_UsesPortalPathMinimumBeforeInstanceCooltimeMinimum()
+	{
+		var player = new Player { Race = "ELYOS", Level = 18 };
+		var cooltimes = CreateCooltimesWithLevels(
+			elyosMin: 25,
+			elyosMax: 50,
+			asmodianMin: 30,
+			asmodianMax: 55);
+
+		var result = PortalEntryValidationService.ValidateEnterLevel(
+			player,
+			WorldId,
+			cooltimes,
+			portalPathMinLevel: 18);
+
+		Assert.True(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.Allowed, result.Status);
+	}
+
+	[Fact]
+	public void ValidateEnterLevel_ReturnsJavaErrLevelDialogWhenPortalPathProvidesOne()
+	{
+		var player = new Player { Race = "ELYOS", Level = 24 };
+		var cooltimes = CreateCooltimesWithLevels(
+			elyosMin: 25,
+			elyosMax: 50,
+			asmodianMin: 30,
+			asmodianMax: 55);
+
+		var result = PortalEntryValidationService.ValidateEnterLevel(
+			player,
+			WorldId,
+			cooltimes,
+			portalPathErrLevel: 1011,
+			npcObjectId: 4001);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.LevelRestricted, result.Status);
+		var packet = Assert.IsType<SmDialogWindow>(result.FailurePacket);
+		var payload = SerializeUnencryptedPayload(packet);
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(4001, reader.ReadD());
+		Assert.Equal(1011, reader.ReadH());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void ValidateEnterLevel_AllowsMembershipBypassLikeJavaPermission()
+	{
+		var player = new Player { Race = "ELYOS", Level = 1 };
+		var cooltimes = CreateCooltimesWithLevels(
+			elyosMin: 25,
+			elyosMax: 50,
+			asmodianMin: 30,
+			asmodianMax: 55);
+
+		var result = PortalEntryValidationService.ValidateEnterLevel(
+			player,
+			WorldId,
+			cooltimes,
+			bypassLevelRequirement: true);
+
+		Assert.True(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.Allowed, result.Status);
+		Assert.Null(result.FailurePacket);
+	}
+
 	private const int WorldId = 300030000;
 
 	private static Player CreatePlayerWithCooldown(long reuseTimeMillis, int entryCount)
@@ -148,6 +274,26 @@ public sealed class PortalEntryValidationServiceTests
 		]);
 	}
 
+	private static InstanceCooltimeTable CreateCooltimesWithLevels(
+		int elyosMin,
+		int elyosMax,
+		int asmodianMin,
+		int asmodianMax)
+	{
+		return new InstanceCooltimeTable(
+		[
+			new InstanceCooltimeSummary(
+				8,
+				WorldId,
+				"PC_ALL",
+				MaxCount: 2,
+				EnterMinLevelLight: elyosMin,
+				EnterMaxLevelLight: elyosMax,
+				EnterMinLevelDark: asmodianMin,
+				EnterMaxLevelDark: asmodianMax),
+		]);
+	}
+
 	private static WorldMapRuntimeStateTable CreateWorldMapsWithRegisteredSoloInstance(
 		int playerObjectId,
 		out WorldMapInstanceRuntimeState instance)
@@ -156,5 +302,13 @@ public sealed class PortalEntryValidationServiceTests
 		instance = worldMaps.AddWorldMapInstance(WorldId, instanceId: 2, ownerId: 0, maxPlayers: 1)!;
 		instance.Register(playerObjectId);
 		return worldMaps;
+	}
+
+	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
+	{
+		var crypt = new GameCrypt(() => 0x01020304);
+		crypt.EnableKey();
+		var frame = packet.SerializeFrame(crypt);
+		return frame[7..];
 	}
 }

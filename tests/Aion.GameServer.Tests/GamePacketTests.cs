@@ -140,6 +140,7 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.SkillNotEnoughDp(), 1300016);
 		AssertSystemMessage(SmSystemMessage.InstanceDungeonOpenedForSelf(300030000), 1400640, "300030000");
 		AssertSystemMessage(SmSystemMessage.CannotMakeInstanceCoolTime(), 1400043);
+		AssertSystemMessage(SmSystemMessage.CantInstanceEnterLevel(), 1400179);
 	}
 
 	[Fact]

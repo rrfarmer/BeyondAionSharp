@@ -81,6 +81,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1400043);
 	}
 
+	public static SmSystemMessage CantInstanceEnterLevel()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_CANT_INSTANCE_ENTER_LEVEL.
+		return new SmSystemMessage(1400179);
+	}
+
 	public static SmSystemMessage NotEnoughKinah(long kinah)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_NOT_ENOUGH_KINA.
