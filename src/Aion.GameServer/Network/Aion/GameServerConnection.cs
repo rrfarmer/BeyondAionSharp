@@ -4884,6 +4884,35 @@ public sealed class GameServerConnection : BaseClientConnection
 		return new PendingTeleportRequestResult(pendingTeleport, packet);
 	}
 
+	internal async Task<InstanceEntranceCooldownResult> ApplyInstanceEntranceCooldownAsync(
+		Player player,
+		int worldId,
+		bool reenter,
+		InstanceCooltimeTable instanceCooltimes,
+		DateTimeOffset? now = null)
+	{
+		var effectiveNow = now ?? DateTimeOffset.Now;
+		var result = InstanceEntranceCooldownService.ApplyEntranceCooldown(
+			player,
+			worldId,
+			reenter,
+			instanceCooltimes,
+			_options,
+			effectiveNow);
+		var packet = InstanceEntranceCooldownService.CreateEntryInfoPacket(
+			result,
+			player,
+			instanceCooltimes,
+			() => effectiveNow);
+		if (packet != null)
+		{
+			// Java parity: PortalCooldownList.addPortalCooldown -> sendEntryInfo owner-only branch via PacketSendUtility.sendPacket.
+			await SendPacketAsync(packet);
+		}
+
+		return result;
+	}
+
 	private void ClearReviveTargets(Player player)
 	{
 		if (_connectionRegistry == null)
