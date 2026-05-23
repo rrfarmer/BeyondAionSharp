@@ -278,6 +278,80 @@ public sealed class PortalEntryInteractionServiceTests
 		Assert.Empty(sentPackets);
 	}
 
+	[Fact]
+	public async Task HandleDialogSelect_UsesRuntimeGroupSnapshotAndKeepsUnsupportedTeamPortalSideEffectFree()
+	{
+		var service = CreateService();
+		var player = CreatePlayer(
+			level: 25,
+			items:
+			[
+				new InventoryItem { ObjectId = 10, ItemId = RequiredItemId, Count = 1, OwnerId = PlayerObjectId },
+				new InventoryItem { ObjectId = 12, ItemId = KinahItemId, Count = 1000, OwnerId = PlayerObjectId },
+			]);
+		var originalPosition = player.Position;
+		var member = new Player { ObjectId = 1002 };
+		var runtime = new PlayerGroupRuntime();
+		runtime.CreateOrUpdateGroup(99001, [player, member]);
+		var world = CreateWorldWithPortalNpc();
+		var sentPackets = new List<GameServerPacket>();
+		var worldMaps = CreateWorldMaps(isInstance: true);
+		var registered = worldMaps.AddWorldMapInstance(PortalWorldId, instanceId: 7, maxPlayers: 6);
+		Assert.NotNull(registered);
+		registered.RegisterTeamId(99001);
+		var teleported = false;
+
+		var result = await service.HandleDialogSelectAsync(
+			player,
+			NpcObjectId,
+			DialogActionId,
+			questId: 0,
+			world,
+			CreatePortalPaths(CreatePortalPath(
+				kinah: 500,
+				itemRequirements: [new PortalItemRequirementSummary(RequiredItemId, 1)])),
+			CreatePortalLocs(),
+			CreatePortalCooltimes(maxPlayers: 6),
+			worldMaps,
+			CreateItemTemplates(RequiredItemId, KinahItemId),
+			(packet, _) =>
+			{
+				sentPackets.Add(packet);
+				return Task.CompletedTask;
+			},
+			DateTimeOffset.UnixEpoch,
+			sameInstanceTeleportAsync: (_, _, _) =>
+			{
+				teleported = true;
+				return Task.CompletedTask;
+			});
+
+		Assert.True(result.Handled);
+		Assert.Equal(PortalDialogEntryStatus.UnsupportedTeamPortal, result.Status);
+		Assert.Equal(PortalEntryValidationStatus.UnsupportedTeamPortal, result.Preparation?.EntryPlan.Status);
+		Assert.NotNull(result.Preparation?.EntryPlan.TeamPlan);
+		Assert.Equal(99001, result.Preparation.EntryPlan.TeamPlan.TeamId);
+		Assert.Equal([PlayerObjectId, 1002], result.Preparation.EntryPlan.TeamPlan.MemberObjectIds);
+		Assert.Equal(PortalTeamEntryDisposition.RegisteredInstanceTransfer, result.Preparation.EntryPlan.TeamPlan.Disposition);
+		Assert.Same(registered, result.Preparation.EntryPlan.TeamPlan.RegisteredInstance);
+		Assert.Equal(originalPosition, player.Position);
+		Assert.False(teleported);
+		Assert.Empty(player.PortalCooldowns);
+		Assert.Empty(sentPackets);
+		Assert.Collection(
+			player.InventoryItems.OrderBy(item => item.ObjectId),
+			item =>
+			{
+				Assert.Equal(10, item.ObjectId);
+				Assert.Equal(1, item.Count);
+			},
+			item =>
+			{
+				Assert.Equal(12, item.ObjectId);
+				Assert.Equal(1000, item.Count);
+			});
+	}
+
 	private static PortalEntryInteractionService CreateService()
 	{
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);
