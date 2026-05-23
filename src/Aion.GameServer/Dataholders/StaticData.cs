@@ -466,7 +466,7 @@ public sealed class StaticData
 				{
 					var isInstance = bool.TryParse(reader.GetAttribute("instance"), out var parsedInstance) && parsedInstance;
 					var twinCount = int.TryParse(reader.GetAttribute("twin_count"), out var parsedTwinCount) ? parsedTwinCount : 0;
-					worldMaps.Add(new WorldMapSummary(mapId, isInstance, twinCount));
+					worldMaps.Add(new WorldMapSummary(mapId, isInstance, twinCount, reader.GetAttribute("drop_type") ?? "NONE"));
 				}
 			}
 

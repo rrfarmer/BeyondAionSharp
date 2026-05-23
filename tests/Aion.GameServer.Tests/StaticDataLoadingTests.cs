@@ -829,8 +829,8 @@ public sealed class StaticDataLoadingTests
 		Assert.True(staticData.PlayerExperienceTable.MaxLevel > 60, $"MaxLevel={staticData.PlayerExperienceTable.MaxLevel}");
 		Assert.Equal(0, staticData.PlayerExperienceTable.GetStartExpForLevel(1));
 		Assert.Equal(11, staticData.PlayerExperienceTable.GetLevelForExp(182252));
-		Assert.Contains(new Aion.GameServer.Dataholders.WorldMapSummary(210010000, IsInstance: false, TwinCount: 5), staticData.WorldMaps);
-		Assert.Contains(new Aion.GameServer.Dataholders.WorldMapSummary(300030000, IsInstance: true, TwinCount: 0), staticData.WorldMaps);
+		Assert.Contains(new Aion.GameServer.Dataholders.WorldMapSummary(210010000, IsInstance: false, TwinCount: 5, DropType: "ELYSEA"), staticData.WorldMaps);
+		Assert.Contains(new Aion.GameServer.Dataholders.WorldMapSummary(300030000, IsInstance: true, TwinCount: 0, DropType: "ABYSS_INSTANCE"), staticData.WorldMaps);
 		Assert.Contains("item_templates", staticData.TopLevelElements);
 		Assert.DoesNotContain("import", staticData.TopLevelElements);
 	}

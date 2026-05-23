@@ -8,16 +8,18 @@ public sealed class WorldNpcGlobalDropService
 	private static readonly GlobalDropTable EmptyGlobalDrops = new([]);
 	private static readonly ItemTemplateTable EmptyItemTemplates = new([]);
 	private static readonly GlobalNpcExclusionTable EmptyExclusions = GlobalNpcExclusionTable.Empty;
+	private static readonly IReadOnlyList<WorldMapSummary> EmptyWorldMaps = Array.Empty<WorldMapSummary>();
 	private readonly GameServerRuntimeContext? _runtimeContext;
 	private readonly GlobalDropTable? _globalDrops;
 	private readonly ItemTemplateTable? _itemTemplates;
 	private readonly GlobalNpcExclusionTable? _globalNpcExclusions;
+	private readonly IReadOnlyList<WorldMapSummary>? _worldMaps;
 	private readonly Func<float> _chanceRoll;
 	private readonly Func<int, int, int> _countRoll;
 	private readonly Func<float, float> _weightedRoll;
 
 	public WorldNpcGlobalDropService(GameServerRuntimeContext runtimeContext)
-		: this(runtimeContext, null, null, null, null, null, null)
+		: this(runtimeContext, null, null, null, null, null, null, null)
 	{
 	}
 
@@ -25,10 +27,11 @@ public sealed class WorldNpcGlobalDropService
 		GlobalDropTable globalDrops,
 		ItemTemplateTable itemTemplates,
 		GlobalNpcExclusionTable? globalNpcExclusions = null,
+		IReadOnlyList<WorldMapSummary>? worldMaps = null,
 		Func<float>? chanceRoll = null,
 		Func<int, int, int>? countRoll = null,
 		Func<float, float>? weightedRoll = null)
-		: this(null, globalDrops, itemTemplates, globalNpcExclusions, chanceRoll, countRoll, weightedRoll)
+		: this(null, globalDrops, itemTemplates, globalNpcExclusions, worldMaps, chanceRoll, countRoll, weightedRoll)
 	{
 	}
 
@@ -37,6 +40,7 @@ public sealed class WorldNpcGlobalDropService
 		GlobalDropTable? globalDrops,
 		ItemTemplateTable? itemTemplates,
 		GlobalNpcExclusionTable? globalNpcExclusions,
+		IReadOnlyList<WorldMapSummary>? worldMaps,
 		Func<float>? chanceRoll,
 		Func<int, int, int>? countRoll,
 		Func<float, float>? weightedRoll)
@@ -45,6 +49,7 @@ public sealed class WorldNpcGlobalDropService
 		_globalDrops = globalDrops;
 		_itemTemplates = itemTemplates;
 		_globalNpcExclusions = globalNpcExclusions;
+		_worldMaps = worldMaps;
 		_chanceRoll = chanceRoll ?? (() => Random.Shared.NextSingle() * 100f);
 		_countRoll = countRoll ?? ((minInclusive, maxInclusive) => minInclusive == maxInclusive ? minInclusive : Random.Shared.Next(minInclusive, maxInclusive + 1));
 		_weightedRoll = weightedRoll ?? (exclusiveMax => Random.Shared.NextSingle() * exclusiveMax);
@@ -63,6 +68,8 @@ public sealed class WorldNpcGlobalDropService
 		if (string.Equals(npc.AiName, "quest_use_item", StringComparison.OrdinalIgnoreCase))
 			return WorldNpcGlobalDropResult.Empty(startIndex);
 		if (HasGlobalNpcExclusion(npc))
+			return WorldNpcGlobalDropResult.Empty(startIndex);
+		if (string.Equals(GetWorldDropType(npc.Position.WorldId), "NONE", StringComparison.OrdinalIgnoreCase))
 			return WorldNpcGlobalDropResult.Empty(startIndex);
 
 		return CreateDropsFromRules(GetGlobalDrops().Rules, npc, looter, dropModifiers, groupMembers, startIndex);
@@ -228,7 +235,7 @@ public sealed class WorldNpcGlobalDropService
 		WorldNpcDropModifiers dropModifiers)
 	{
 		return CheckRestrictionRace(rule, dropModifiers.DropRace)
-			&& CheckStringRestriction(rule.WorldTypes, string.Empty)
+			&& CheckStringRestriction(rule.WorldTypes, GetWorldDropType(npc.Position.WorldId))
 			&& CheckIntRestriction(rule.MapIds, npc.Position.WorldId)
 			&& CheckStringRestriction(rule.Ratings, npc.Template.Rating)
 			&& CheckStringRestriction(rule.Races, npc.Template.Race)
@@ -299,6 +306,18 @@ public sealed class WorldNpcGlobalDropService
 	private GlobalNpcExclusionTable GetGlobalNpcExclusions()
 	{
 		return _globalNpcExclusions ?? _runtimeContext?.DataManager?.StaticData.GlobalNpcExclusions ?? EmptyExclusions;
+	}
+
+	private IReadOnlyList<WorldMapSummary> GetWorldMaps()
+	{
+		return _worldMaps ?? _runtimeContext?.DataManager?.StaticData.WorldMaps ?? EmptyWorldMaps;
+	}
+
+	private string GetWorldDropType(int worldId)
+	{
+		// Java parity: model/gameobjects/VisibleObject.getWorldDropType reads WorldMapTemplate.drop_type.
+		var worldMap = GetWorldMaps().FirstOrDefault(map => map.MapId == worldId);
+		return worldMap.MapId == 0 || string.IsNullOrWhiteSpace(worldMap.DropType) ? string.Empty : worldMap.DropType;
 	}
 
 	private int AddDropItems(

@@ -20,16 +20,19 @@ public sealed class WorldNpcGlobalDropServiceTests
 		var npcSpecific = CreateRule("npc-specific", npcIds: [210001]);
 		var npcGroup = CreateRule("npc-group", npcGroups: ["SPIRIT"]);
 		var wrongNpcGroup = CreateRule("wrong-npc-group", npcGroups: ["DRAKE"]);
+		var worldDropType = CreateRule("elysea-world", worldTypes: ["ELYSEA"]);
+		var wrongWorldDropType = CreateRule("abyss-world", worldTypes: ["ABYSS"]);
 		var service = new WorldNpcGlobalDropService(
-			new GlobalDropTable([unrestricted, elyosOnly, wrongMap, excludedNpc, npcName, npcSpecific, npcGroup, wrongNpcGroup]),
-			new ItemTemplateTable([]));
+			new GlobalDropTable([unrestricted, elyosOnly, wrongMap, excludedNpc, npcName, npcSpecific, npcGroup, wrongNpcGroup, worldDropType, wrongWorldDropType]),
+			new ItemTemplateTable([]),
+			worldMaps: [new WorldMapSummary(210010000, IsInstance: false, TwinCount: 1, DropType: "ELYSEA")]);
 		var npc = CreateNpc(210001, "wind_spirit", level: 10, rank: "NOVICE", rating: "NORMAL", race: "MAGICALMONSTER", groupDrop: "SPIRIT");
 		var modifiers = new WorldNpcDropModifiers("ELYOS");
 
 		var defaultRules = service.GetApplicableRules(npc, modifiers, isAllowedDefaultGlobalDropNpc: true);
 		var restrictedRules = service.GetApplicableRules(npc, modifiers, isAllowedDefaultGlobalDropNpc: false);
 
-		Assert.Equal(["default", "elyos", "name", "npc-specific", "npc-group"], defaultRules.Select(rule => rule.RuleName).ToArray());
+		Assert.Equal(["default", "elyos", "name", "npc-specific", "npc-group", "elysea-world"], defaultRules.Select(rule => rule.RuleName).ToArray());
 		Assert.Equal(["npc-specific"], restrictedRules.Select(rule => rule.RuleName).ToArray());
 	}
 
@@ -178,6 +181,26 @@ public sealed class WorldNpcGlobalDropServiceTests
 	}
 
 	[Fact]
+	public void CreateDrops_SkipsDefaultGlobalsForKnownNoneWorldDropType()
+	{
+		var service = new WorldNpcGlobalDropService(
+			new GlobalDropTable(
+			[
+				CreateRule("global", items: [new GlobalDropItemSummary(1001, 1, 1, 100f)]),
+			]),
+			new ItemTemplateTable([CreateItem(1001, level: 10, race: "PC_ALL")]),
+			worldMaps: [new WorldMapSummary(300360000, IsInstance: true, TwinCount: 0, DropType: "NONE")],
+			chanceRoll: () => 0f);
+		var npc = CreateNpc(210001, "arena_npc", level: 10, worldId: 300360000);
+		var looter = new Player { ObjectId = 1001, Race = "ELYOS", Level = 10 };
+
+		var result = service.CreateDrops(npc, looter, new WorldNpcDropModifiers("ELYOS"));
+
+		Assert.Empty(result.Drops);
+		Assert.Equal(1, result.NextIndex);
+	}
+
+	[Fact]
 	public void HasGlobalNpcExclusion_UsesNpcIdentityTypeTribeAndAbyssType()
 	{
 		var service = new WorldNpcGlobalDropService(
@@ -222,6 +245,7 @@ public sealed class WorldNpcGlobalDropServiceTests
 		string restrictionRace = "",
 		bool useLevelReduction = false,
 		IReadOnlyList<GlobalDropItemSummary>? items = null,
+		IEnumerable<string>? worldTypes = null,
 		IEnumerable<int>? mapIds = null,
 		IEnumerable<int>? npcIds = null,
 		IEnumerable<int>? excludedNpcIds = null,
@@ -239,7 +263,7 @@ public sealed class WorldNpcGlobalDropServiceTests
 			memberLimit,
 			maxDropRule,
 			items ?? Array.Empty<GlobalDropItemSummary>(),
-			WorldTypes: new HashSet<string>(StringComparer.OrdinalIgnoreCase),
+			WorldTypes: worldTypes?.ToHashSet(StringComparer.OrdinalIgnoreCase) ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase),
 			Races: new HashSet<string>(StringComparer.OrdinalIgnoreCase),
 			Ratings: new HashSet<string>(StringComparer.OrdinalIgnoreCase),
 			MapIds: mapIds?.ToHashSet() ?? new HashSet<int>(),
