@@ -111,6 +111,24 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1400219);
 	}
 
+	public static SmSystemMessage EnterOnlyPartyDon()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ENTER_ONLY_PARTY_DON.
+		return new SmSystemMessage(1390256);
+	}
+
+	public static SmSystemMessage EnterOnlyForceDon()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ENTER_ONLY_FORCE_DON.
+		return new SmSystemMessage(1400544);
+	}
+
+	public static SmSystemMessage EnterOnlyUnionDon()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ENTER_ONLY_UNION_DON.
+		return new SmSystemMessage(1401251);
+	}
+
 	public static SmSystemMessage NotEnoughKinah(long kinah)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_NOT_ENOUGH_KINA.

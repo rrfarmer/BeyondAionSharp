@@ -201,6 +201,40 @@ public sealed class PortalEntryInteractionServiceTests
 			});
 	}
 
+	[Fact]
+	public async Task HandleDialogSelect_SendsTeamRequirementFailurePacketBeforeUnsupportedFanout()
+	{
+		var service = CreateService();
+		var player = CreatePlayer(level: 25);
+		var world = CreateWorldWithPortalNpc();
+		var sentPackets = new List<GameServerPacket>();
+
+		var result = await service.HandleDialogSelectAsync(
+			player,
+			NpcObjectId,
+			DialogActionId,
+			questId: 0,
+			world,
+			CreatePortalPaths(CreatePortalPath()),
+			CreatePortalLocs(),
+			CreatePortalCooltimes(maxPlayers: 3),
+			CreateWorldMaps(isInstance: true),
+			CreateItemTemplates(KinahItemId),
+			(packet, _) =>
+			{
+				sentPackets.Add(packet);
+				return Task.CompletedTask;
+			},
+			DateTimeOffset.UnixEpoch);
+
+		Assert.True(result.Handled);
+		Assert.Equal(PortalDialogEntryStatus.ValidationRejected, result.Status);
+		Assert.Equal(PortalEntryValidationStatus.GroupRequired, result.Preparation?.EntryPlan.Status);
+		var packet = Assert.Single(sentPackets);
+		var message = Assert.IsType<SmSystemMessage>(packet);
+		Assert.Equal(1390256, message.MessageId);
+	}
+
 	private static PortalEntryInteractionService CreateService()
 	{
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);

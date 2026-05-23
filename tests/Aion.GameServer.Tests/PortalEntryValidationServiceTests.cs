@@ -1294,9 +1294,89 @@ public sealed class PortalEntryValidationServiceTests
 	}
 
 	[Fact]
-	public void ValidatePortalEntryPlan_LeavesTeamPortalsExplicitlyUnsupported()
+	public void ValidatePortalEntryPlan_GroupPortalWithoutGroupReturnsErrGroupDialogLikeJava()
 	{
 		var player = new Player { Race = "ELYOS", Level = 25 };
+
+		var result = PortalEntryValidationService.ValidatePortalEntryPlan(
+			player,
+			CreatePortalPath(minLevel: 25, errGroup: 9001),
+			CreatePortalLocs(),
+			CreatePortalCooltimes(maxPlayers: 6, maxCount: 1),
+			CreateWorldMaps(),
+			DateTimeOffset.FromUnixTimeMilliseconds(100_000),
+			npcObjectId: 4001);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.GroupRequired, result.Status);
+		Assert.NotNull(result.PortalLoc);
+		Assert.IsType<SmDialogWindow>(result.FailurePacket);
+	}
+
+	[Fact]
+	public void ValidatePortalEntryPlan_GroupPortalWithoutErrGroupReturnsPartySystemMessageLikeJava()
+	{
+		var player = new Player { Race = "ELYOS", Level = 25 };
+
+		var result = PortalEntryValidationService.ValidatePortalEntryPlan(
+			player,
+			CreatePortalPath(minLevel: 25),
+			CreatePortalLocs(),
+			CreatePortalCooltimes(maxPlayers: 3, maxCount: 1),
+			CreateWorldMaps(),
+			DateTimeOffset.FromUnixTimeMilliseconds(100_000),
+			npcObjectId: 4001);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.GroupRequired, result.Status);
+		var packet = Assert.IsType<SmSystemMessage>(result.FailurePacket);
+		Assert.Equal(1390256, packet.MessageId);
+	}
+
+	[Fact]
+	public void ValidatePortalEntryPlan_AlliancePortalWithoutAllianceReturnsForceSystemMessageLikeJava()
+	{
+		var player = new Player { Race = "ELYOS", Level = 25 };
+
+		var result = PortalEntryValidationService.ValidatePortalEntryPlan(
+			player,
+			CreatePortalPath(minLevel: 25),
+			CreatePortalLocs(),
+			CreatePortalCooltimes(maxPlayers: 12, maxCount: 1),
+			CreateWorldMaps(),
+			DateTimeOffset.FromUnixTimeMilliseconds(100_000),
+			npcObjectId: 4001);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.AllianceRequired, result.Status);
+		var packet = Assert.IsType<SmSystemMessage>(result.FailurePacket);
+		Assert.Equal(1400544, packet.MessageId);
+	}
+
+	[Fact]
+	public void ValidatePortalEntryPlan_LeaguePortalReturnsUnionSystemMessageUntilLeagueModelExists()
+	{
+		var player = new Player { Race = "ELYOS", Level = 25 };
+
+		var result = PortalEntryValidationService.ValidatePortalEntryPlan(
+			player,
+			CreatePortalPath(minLevel: 25),
+			CreatePortalLocs(),
+			CreatePortalCooltimes(maxPlayers: 48, maxCount: 1),
+			CreateWorldMaps(),
+			DateTimeOffset.FromUnixTimeMilliseconds(100_000),
+			npcObjectId: 4001);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.LeagueRequired, result.Status);
+		var packet = Assert.IsType<SmSystemMessage>(result.FailurePacket);
+		Assert.Equal(1401251, packet.MessageId);
+	}
+
+	[Fact]
+	public void ValidatePortalEntryPlan_TeamMemberStillStopsBeforeUnsupportedFanout()
+	{
+		var player = new Player { Race = "ELYOS", Level = 25, TeamMembership = PlayerTeamMembership.Group };
 
 		var result = PortalEntryValidationService.ValidatePortalEntryPlan(
 			player,
@@ -1323,6 +1403,7 @@ public sealed class PortalEntryValidationServiceTests
 		int titleId = 0,
 		int kinah = 0,
 		int errLevel = 0,
+		int errGroup = 0,
 		IReadOnlyList<PortalQuestRequirementSummary>? questRequirements = null,
 		IReadOnlyList<PortalItemRequirementSummary>? itemRequirements = null)
 	{
@@ -1338,7 +1419,7 @@ public sealed class PortalEntryValidationServiceTests
 			MinRank: minRank,
 			Kinah: kinah,
 			TitleId: titleId,
-			ErrGroup: 0,
+			ErrGroup: errGroup,
 			ErrLevel: errLevel)
 		{
 			QuestRequirements = questRequirements ?? Array.Empty<PortalQuestRequirementSummary>(),

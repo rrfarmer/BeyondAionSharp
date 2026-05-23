@@ -32,8 +32,6 @@ public static class PortalEntryValidationService
 			return PortalEntryPlanResult.MissingLocation();
 
 		var maxPlayers = instanceCooltimes.GetMaxMemberCount(loc.WorldId, player.Race);
-		if (maxPlayers != 0 && maxPlayers != 1)
-			return PortalEntryPlanResult.UnsupportedTeamPortal(loc);
 
 		if (!adminBypassRequirements)
 		{
@@ -62,7 +60,14 @@ public static class PortalEntryValidationService
 			validation = ValidateQuestRequirements(player, portalPath, npcIsDialogNpc, npcObjectId, bypassQuestRequirement);
 			if (!validation.CanEnter)
 				return PortalEntryPlanResult.Rejected(validation.Status, loc, validation.FailurePacket!);
+
+			validation = ValidatePlayerSize(player, portalPath, maxPlayers, npcObjectId);
+			if (!validation.CanEnter)
+				return PortalEntryPlanResult.Rejected(validation.Status, loc, validation.FailurePacket!);
 		}
+
+		if (maxPlayers != 0 && maxPlayers != 1)
+			return PortalEntryPlanResult.UnsupportedTeamPortal(loc);
 
 		var instanceValidation = ValidateCooldownForRegisteredInstance(
 			player,
@@ -337,6 +342,44 @@ public static class PortalEntryValidationService
 				? new SmDialogWindow(npcObjectId, SmDialogWindow.NoRightPageId)
 				: SmSystemMessage.InstanceCantEnterWithoutItem();
 			return PortalEntryValidationResult.Rejected(PortalEntryValidationStatus.ItemRestricted, failurePacket);
+		}
+
+		return PortalEntryValidationResult.Allowed();
+	}
+
+	public static PortalEntryValidationResult ValidatePlayerSize(
+		Player player,
+		PortalPathSummary portalPath,
+		int maxPlayers,
+		int npcObjectId = 0)
+	{
+		// Java parity: services/teleport/PortalService.checkPlayerSize.
+		if (maxPlayers is 3 or 6)
+		{
+			if (player.TeamMembership == PlayerTeamMembership.Group)
+				return PortalEntryValidationResult.Allowed();
+
+			GameServerPacket failurePacket = portalPath.ErrGroup != 0
+				? new SmDialogWindow(npcObjectId, portalPath.ErrGroup)
+				: SmSystemMessage.EnterOnlyPartyDon();
+			return PortalEntryValidationResult.Rejected(PortalEntryValidationStatus.GroupRequired, failurePacket);
+		}
+
+		if (maxPlayers > 6 && maxPlayers <= 24)
+		{
+			if (player.TeamMembership == PlayerTeamMembership.Alliance)
+				return PortalEntryValidationResult.Allowed();
+
+			return PortalEntryValidationResult.Rejected(
+				PortalEntryValidationStatus.AllianceRequired,
+				SmSystemMessage.EnterOnlyForceDon());
+		}
+
+		if (maxPlayers > 24)
+		{
+			return PortalEntryValidationResult.Rejected(
+				PortalEntryValidationStatus.LeagueRequired,
+				SmSystemMessage.EnterOnlyUnionDon());
 		}
 
 		return PortalEntryValidationResult.Allowed();
@@ -696,6 +739,9 @@ public enum PortalEntryValidationStatus
 	Allowed,
 	MissingPortalLocation,
 	UnsupportedTeamPortal,
+	GroupRequired,
+	AllianceRequired,
+	LeagueRequired,
 	CooldownLocked,
 	LevelRestricted,
 	MentorRestricted,
