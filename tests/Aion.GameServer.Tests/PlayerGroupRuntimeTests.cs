@@ -429,6 +429,84 @@ public sealed class PlayerGroupRuntimeTests
 	}
 
 	[Fact]
+	public void PlayerGroupMemberInfoPrefixSnapshot_ModelsJavaLifeCommonAndPositionPrefix()
+	{
+		var onlineMember = new PlayerGroupMember(new Player
+		{
+			ObjectId = 1002,
+			Name = "Singer",
+			IsOnline = true,
+			PlayerClass = "BARD",
+			Gender = "FEMALE",
+			Level = 44,
+			IsMentor = true,
+			FlyState = PlayerFlyState.Gliding,
+			LifeStats = new PlayerLifeStats(CurrentHp: 111, CurrentMp: 222, CurrentFp: -5),
+			Position = new WorldPosition(220010000, 12.5f, 23.25f, 34.75f, 64, InstanceId: 3),
+		});
+		var offlineMember = new PlayerGroupMember(new Player
+		{
+			ObjectId = 1003,
+			Name = "Offline",
+			IsOnline = false,
+			PlayerClass = "RIDER",
+			Gender = "MALE",
+			Level = 12,
+			LifeStats = new PlayerLifeStats(CurrentHp: 999, CurrentMp: 888, CurrentFp: 777),
+			Position = new WorldPosition(210010000, 1, 2, 3, 0, InstanceId: 1),
+		});
+
+		var onlinePlan = PlayerGroupMemberInfoPacketPlan.FromMember(99001, onlineMember, PlayerGroupEvent.Enter);
+		var offlinePlan = PlayerGroupMemberInfoPacketPlan.FromMember(99001, offlineMember, PlayerGroupEvent.Enter);
+
+		var online = onlinePlan.PrefixSnapshot;
+		Assert.Null(online.MaxHp);
+		Assert.Equal(111, online.CurrentHp);
+		Assert.Null(online.MaxMp);
+		Assert.Equal(222, online.CurrentMp);
+		Assert.Null(online.MaxFp);
+		Assert.Equal(0, online.CurrentFp);
+		Assert.False(online.HasKnownOnlineMaximums);
+		Assert.Equal(0, online.Unknown3Point5);
+		Assert.Equal(220010000, online.MapId);
+		Assert.Equal(220010002, online.MapInstanceId);
+		Assert.Equal(12.5f, online.X);
+		Assert.Equal(23.25f, online.Y);
+		Assert.Equal(34.75f, online.Z);
+		Assert.Equal(16, online.ClassId);
+		Assert.Equal(1, online.GenderId);
+		Assert.Equal(44, online.Level);
+		Assert.Equal(13, online.EventId);
+		Assert.Equal(1, online.AlwaysOne);
+		Assert.Equal(2, online.FlyState);
+		Assert.Equal(1, online.MentorFlag);
+		Assert.Equal("Singer", online.Name);
+
+		var withKnownMaximums = online.WithKnownMaximums(maxHp: 100, maxMp: 300, maxFp: 60);
+		Assert.Equal(100, withKnownMaximums.MaxHp);
+		Assert.Equal(100, withKnownMaximums.CurrentHp);
+		Assert.Equal(300, withKnownMaximums.MaxMp);
+		Assert.Equal(222, withKnownMaximums.CurrentMp);
+		Assert.Equal(60, withKnownMaximums.MaxFp);
+		Assert.Equal(0, withKnownMaximums.CurrentFp);
+		Assert.True(withKnownMaximums.HasKnownOnlineMaximums);
+
+		var offline = offlinePlan.PrefixSnapshot;
+		Assert.Equal(PlayerGroupEvent.EnterOffline, offlinePlan.EffectiveEvent);
+		Assert.Equal(0, offline.CurrentHp);
+		Assert.Equal(0, offline.CurrentMp);
+		Assert.Equal(0, offline.CurrentFp);
+		Assert.Equal(210010000, offline.MapId);
+		Assert.Equal(210010000, offline.MapInstanceId);
+		Assert.Equal(13, offline.ClassId);
+		Assert.Equal(0, offline.GenderId);
+		Assert.Equal(12, offline.Level);
+		Assert.Equal(7, offline.EventId);
+		Assert.Equal(0, offline.FlyState);
+		Assert.Equal(0, offline.MentorFlag);
+	}
+
+	[Fact]
 	public void PlayerGroupEvent_IdsMatchJavaGroupEvent()
 	{
 		Assert.Equal(0, (int)PlayerGroupEvent.Leave);
@@ -780,6 +858,14 @@ public sealed class PlayerGroupRuntimeTests
 		Assert.True(actual.WritesLifeStatsBlock);
 		Assert.True(actual.WritesPositionBlock);
 		Assert.True(actual.WritesCommonDataBlock);
+		if (!isOnline)
+		{
+			Assert.Equal(0, actual.PrefixSnapshot.CurrentHp);
+			Assert.Equal(0, actual.PrefixSnapshot.CurrentMp);
+			Assert.Equal(0, actual.PrefixSnapshot.CurrentFp);
+		}
+		Assert.Equal((int)expectedEffectiveEvent, actual.PrefixSnapshot.EventId);
+		Assert.Equal(1, actual.PrefixSnapshot.AlwaysOne);
 		Assert.Equal(writesName, actual.WritesName);
 		Assert.Equal(writesEffects, actual.WritesAbnormalEffects);
 		Assert.Equal(writesEffects, actual.WritesSlotTimers);
