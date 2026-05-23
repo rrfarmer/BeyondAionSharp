@@ -80,6 +80,7 @@ public class GameServerOptionsTests
 		Assert.Equal(14, options.Custom.TopRankingXformMinRank);
 		Assert.Equal(2f, options.Custom.PvpMapApMultiplier, 0.001f);
 		Assert.Equal(1f, options.Custom.PvpMapPveApMultiplier, 0.001f);
+		Assert.Empty(options.Custom.DisabledEventNames);
 		Assert.False(options.Custom.CountSummonEffectsForCumulativeResist);
 
 		Assert.False(options.Cleaning.Enabled);
@@ -125,6 +126,7 @@ public class GameServerOptionsTests
 				gameserver.network.client.socket_address = 127.0.0.1:8888
 				gameserver.network.client.connect_address = ${gameserver.network.client.socket_address}
 				gameserver.topranking.xform.min_rank = COMMANDER
+				gameserver.event.service.disabled_events = Broken Hearts, Ice Festival
 				"""
 			);
 
@@ -134,6 +136,9 @@ public class GameServerOptionsTests
 			Assert.Equal(new IPEndPoint(IPAddress.Loopback, 8888), options.Network.ClientEndPoint);
 			Assert.Equal(new IPEndPoint(IPAddress.Loopback, 8888), options.Network.ClientConnectEndPoint);
 			Assert.Equal(17, options.Custom.TopRankingXformMinRank);
+			Assert.Equal(2, options.Custom.DisabledEventNames.Count);
+			Assert.Contains("Broken Hearts", options.Custom.DisabledEventNames);
+			Assert.Contains("ice festival", options.Custom.DisabledEventNames);
 		}
 		finally
 		{

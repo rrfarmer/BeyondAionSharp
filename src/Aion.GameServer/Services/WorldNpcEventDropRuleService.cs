@@ -1,3 +1,4 @@
+using Aion.GameServer.Configuration;
 using Aion.GameServer.Dataholders;
 
 namespace Aion.GameServer.Services;
@@ -12,6 +13,11 @@ public sealed class WorldNpcEventDropRuleService
 
 	public WorldNpcEventDropRuleService(GameServerRuntimeContext runtimeContext)
 		: this(runtimeContext, null, null, null)
+	{
+	}
+
+	public WorldNpcEventDropRuleService(GameServerRuntimeContext runtimeContext, GameServerOptions options)
+		: this(runtimeContext, null, null, options.Custom.DisabledEventNames)
 	{
 	}
 

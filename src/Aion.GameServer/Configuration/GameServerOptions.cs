@@ -189,6 +189,7 @@ public sealed class GameServerOptions
 				PvpMapRandomBossSchedule = GetWithEnvironment(loader, "gameserver.pvpmap.random_boss.time", "0 30 14,18,21 ? * *"),
 				GodstoneActivationRate = GetFloatWithEnvironment(loader, "gameserver.rates.godstone.activation.rate", 1.0f),
 				GodstoneEvaluationCooldownMillis = GetIntWithEnvironment(loader, "gameserver.rates.godstone.evaluation.cooldown_millis", 750),
+				DisabledEventNames = GetStringSetWithEnvironment(loader, "gameserver.event.service.disabled_events", string.Empty),
 				CountSummonEffectsForCumulativeResist = GetBoolWithEnvironment(loader, "gameserver.pvp.cumulative_resist.count_summon_effects", false),
 			},
 			Cleaning = new CleaningOptions
@@ -351,6 +352,13 @@ public sealed class GameServerOptions
 	{
 		var value = GetWithEnvironment(loader, key, defaultValue);
 		return value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+	}
+
+	private static IReadOnlySet<string> GetStringSetWithEnvironment(ConfigLoader loader, string key, string defaultValue)
+	{
+		var value = GetWithEnvironment(loader, key, defaultValue);
+		return value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+			.ToHashSet(StringComparer.OrdinalIgnoreCase);
 	}
 
 	private static int GetAbyssRankIdWithEnvironment(ConfigLoader loader, string key, string defaultValue)
@@ -789,6 +797,8 @@ public sealed class GameServerCustomOptions
 	public float GodstoneActivationRate { get; init; } = 1f;
 
 	public int GodstoneEvaluationCooldownMillis { get; init; } = 750;
+
+	public IReadOnlySet<string> DisabledEventNames { get; init; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
 	public bool CountSummonEffectsForCumulativeResist { get; init; }
 }
