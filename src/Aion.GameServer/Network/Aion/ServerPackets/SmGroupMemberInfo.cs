@@ -49,6 +49,13 @@ public sealed class SmGroupMemberInfo : GameServerPacket
 			return;
 		}
 
+		if (_plan.EffectiveEvent is PlayerGroupEvent.EnterOffline
+			or PlayerGroupEvent.Join)
+		{
+			buffer.WriteS(prefix.Name);
+			return;
+		}
+
 		throw new NotSupportedException(
 			$"SM_GROUP_MEMBER_INFO branch {_plan.EffectiveEvent} is not ported yet; name/effect/slot-timer payloads are pending.");
 	}

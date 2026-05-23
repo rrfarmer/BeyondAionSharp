@@ -521,7 +521,7 @@ public sealed class PlayerGroupRuntimeTests
 			LifeStats = new PlayerLifeStats(CurrentHp: 10_000, CurrentMp: -5, CurrentFp: 100),
 		});
 
-		var plan = PlayerGroupMemberInfoPacketPlan.FromMember(99001, member, PlayerGroupEvent.Update);
+		var plan = PlayerGroupMemberInfoPacketPlan.FromMember(99001, member, PlayerGroupEvent.UpdateEffects);
 
 		Assert.Equal(819, plan.PrefixSnapshot.MaxHp);
 		Assert.Equal(819, plan.PrefixSnapshot.CurrentHp);
@@ -576,9 +576,28 @@ public sealed class PlayerGroupRuntimeTests
 	}
 
 	[Fact]
-	public void SmGroupMemberInfo_ThrowsForUnportedNameAndEffectBranches()
+	public void SmGroupMemberInfo_ThrowsForUnportedEffectBranches()
 	{
 		var member = new PlayerGroupMember(new Player
+		{
+			ObjectId = 1004,
+			IsOnline = true,
+			Name = "Updater",
+			PlayerClass = "GLADIATOR",
+			Level = 10,
+		});
+		var plan = PlayerGroupMemberInfoPacketPlan.FromMember(99001, member, PlayerGroupEvent.UpdateEffects);
+
+		var exception = Assert.Throws<NotSupportedException>(() =>
+			SerializeUnencryptedPayload(new Network.Aion.ServerPackets.SmGroupMemberInfo(plan)));
+
+		Assert.Contains("SM_GROUP_MEMBER_INFO branch UpdateEffects is not ported yet", exception.Message);
+	}
+
+	[Fact]
+	public void SmGroupMemberInfo_WritesJoinAndEnterOfflineNameBranchesLikeJava()
+	{
+		var joiningMember = new PlayerGroupMember(new Player
 		{
 			ObjectId = 1004,
 			IsOnline = true,
@@ -586,12 +605,26 @@ public sealed class PlayerGroupRuntimeTests
 			PlayerClass = "GLADIATOR",
 			Level = 10,
 		});
-		var plan = PlayerGroupMemberInfoPacketPlan.FromMember(99001, member, PlayerGroupEvent.Join);
+		var offlineMember = new PlayerGroupMember(new Player
+		{
+			ObjectId = 1005,
+			IsOnline = false,
+			Name = "Offline",
+			PlayerClass = "RIDER",
+			Level = 20,
+		});
+		var joinPlan = PlayerGroupMemberInfoPacketPlan.FromMember(99001, joiningMember, PlayerGroupEvent.Join);
+		var offlinePlan = PlayerGroupMemberInfoPacketPlan.FromMember(99001, offlineMember, PlayerGroupEvent.Enter);
 
-		var exception = Assert.Throws<NotSupportedException>(() =>
-			SerializeUnencryptedPayload(new Network.Aion.ServerPackets.SmGroupMemberInfo(plan)));
+		using var joinReader = new PacketBuffer(SerializeUnencryptedPayload(new Network.Aion.ServerPackets.SmGroupMemberInfo(joinPlan)));
+		SkipGroupMemberInfoPrefix(joinReader);
+		Assert.Equal("Joiner", joinReader.ReadS());
+		Assert.Equal(0, joinReader.Remaining);
 
-		Assert.Contains("SM_GROUP_MEMBER_INFO branch Join is not ported yet", exception.Message);
+		using var offlineReader = new PacketBuffer(SerializeUnencryptedPayload(new Network.Aion.ServerPackets.SmGroupMemberInfo(offlinePlan)));
+		SkipGroupMemberInfoPrefix(offlineReader);
+		Assert.Equal("Offline", offlineReader.ReadS());
+		Assert.Equal(0, offlineReader.Remaining);
 	}
 
 	[Fact]
@@ -957,5 +990,16 @@ public sealed class PlayerGroupRuntimeTests
 		Assert.Equal(writesName, actual.WritesName);
 		Assert.Equal(writesEffects, actual.WritesAbnormalEffects);
 		Assert.Equal(writesEffects, actual.WritesSlotTimers);
+	}
+
+	private static void SkipGroupMemberInfoPrefix(PacketBuffer reader)
+	{
+		for (var i = 0; i < 11; i++)
+			reader.ReadD();
+		reader.ReadF();
+		reader.ReadF();
+		reader.ReadF();
+		for (var i = 0; i < 7; i++)
+			reader.ReadC();
 	}
 }
