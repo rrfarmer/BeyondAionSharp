@@ -165,6 +165,18 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1301061);
 	}
 
+	public static SmSystemMessage ForceRightNotHave()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_FORCE_RIGHT_NOT_HAVE.
+		return new SmSystemMessage(1300976);
+	}
+
+	public static SmSystemMessage ForceYouAreNotForceMember()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_FORCE_YOU_ARE_NOT_FORCE_MEMBER.
+		return new SmSystemMessage(1301015);
+	}
+
 	public static SmSystemMessage ForceHeIsNewLeader(string playerName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_FORCE_HE_IS_NEW_LEADER(String).

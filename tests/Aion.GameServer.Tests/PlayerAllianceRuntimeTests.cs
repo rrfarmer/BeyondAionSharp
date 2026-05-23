@@ -199,6 +199,87 @@ public sealed class PlayerAllianceRuntimeTests
 		Assert.Equal([1001, 1002], runtime.GetMemberObjectIdsByGroupId(88001, 1000));
 	}
 
+	[Fact]
+	public void GroupChangeServicePlanner_ReturnsNotAllianceMemberMessageLikeJavaService()
+	{
+		var runtime = new PlayerAllianceRuntime();
+		var planner = new PlayerAllianceGroupChangeServicePlanner(runtime);
+		var caller = CreatePlayer(1001, "Caller", worldId: 210010000);
+
+		var plan = planner.CreateChangeMemberGroupPlan(caller, firstMemberObjectId: 1001, secondMemberObjectId: 0, targetAllianceGroupId: 1001);
+
+		Assert.Equal(PlayerAllianceGroupChangeServicePlanStatus.NotAllianceMember, plan.Status);
+		Assert.Equal(0, plan.AllianceId);
+		Assert.Equal(1001, plan.CallerObjectId);
+		Assert.Null(plan.GroupChangePlan);
+		var systemMessage = Assert.IsType<PlayerAllianceSystemMessageIntent>(plan.SystemMessageIntent);
+		Assert.Equal(1001, systemMessage.RecipientObjectId);
+		Assert.Equal(1301015, systemMessage.Message.MessageId);
+	}
+
+	[Fact]
+	public void GroupChangeServicePlanner_ReturnsNoRightsMessageForNonCaptainLikeJavaService()
+	{
+		var runtime = new PlayerAllianceRuntime();
+		var planner = new PlayerAllianceGroupChangeServicePlanner(runtime);
+		var leader = CreatePlayer(1001, "Leader", worldId: 210010000);
+		var caller = CreatePlayer(1002, "Caller", worldId: 220010000);
+		runtime.CreateAlliance(88001, leader);
+		runtime.AddMember(88001, caller);
+
+		var plan = planner.CreateChangeMemberGroupPlan(caller, firstMemberObjectId: 1002, secondMemberObjectId: 0, targetAllianceGroupId: 1003);
+
+		Assert.Equal(PlayerAllianceGroupChangeServicePlanStatus.NotAuthorized, plan.Status);
+		Assert.Equal(88001, plan.AllianceId);
+		Assert.Null(plan.GroupChangePlan);
+		var systemMessage = Assert.IsType<PlayerAllianceSystemMessageIntent>(plan.SystemMessageIntent);
+		Assert.Equal(1002, systemMessage.RecipientObjectId);
+		Assert.Equal(1300976, systemMessage.Message.MessageId);
+		Assert.Equal([1001, 1002], runtime.GetMemberObjectIdsByGroupId(88001, 1000));
+		Assert.Empty(runtime.GetMemberObjectIdsByGroupId(88001, 1003));
+	}
+
+	[Fact]
+	public void GroupChangeServicePlanner_DispatchesForLeaderAndViceCaptainLikeJavaService()
+	{
+		var runtime = new PlayerAllianceRuntime();
+		var planner = new PlayerAllianceGroupChangeServicePlanner(runtime);
+		var leader = CreatePlayer(1001, "Leader", worldId: 210010000);
+		var viceCaptain = CreatePlayer(1002, "Vice", worldId: 220010000);
+		var moved = CreatePlayer(1003, "Moved", worldId: 230010000);
+		runtime.CreateAlliance(88001, leader);
+		runtime.AddMember(88001, viceCaptain);
+		runtime.AddMember(88001, moved);
+
+		var leaderPlan = planner.CreateChangeMemberGroupPlan(leader, firstMemberObjectId: 1003, secondMemberObjectId: 0, targetAllianceGroupId: 1001);
+		runtime.SetViceCaptains(88001, [1002]);
+		var viceCaptainPlan = planner.CreateChangeMemberGroupPlan(viceCaptain, firstMemberObjectId: 1003, secondMemberObjectId: 0, targetAllianceGroupId: 1002);
+
+		Assert.Equal(PlayerAllianceGroupChangeServicePlanStatus.Dispatched, leaderPlan.Status);
+		Assert.NotNull(leaderPlan.GroupChangePlan);
+		Assert.Null(leaderPlan.SystemMessageIntent);
+		Assert.Equal([1003], runtime.GetMemberObjectIdsByGroupId(88001, 1002));
+		Assert.Equal(PlayerAllianceGroupChangeServicePlanStatus.Dispatched, viceCaptainPlan.Status);
+		Assert.NotNull(viceCaptainPlan.GroupChangePlan);
+		Assert.Null(viceCaptainPlan.SystemMessageIntent);
+	}
+
+	[Fact]
+	public void GroupChangeServicePlanner_ReportsSkippedWhenJavaEventTargetAlreadyLeft()
+	{
+		var runtime = new PlayerAllianceRuntime();
+		var planner = new PlayerAllianceGroupChangeServicePlanner(runtime);
+		var leader = CreatePlayer(1001, "Leader", worldId: 210010000);
+		runtime.CreateAlliance(88001, leader);
+
+		var plan = planner.CreateChangeMemberGroupPlan(leader, firstMemberObjectId: 404, secondMemberObjectId: 0, targetAllianceGroupId: 1001);
+
+		Assert.Equal(PlayerAllianceGroupChangeServicePlanStatus.EventSkipped, plan.Status);
+		Assert.Equal(88001, plan.AllianceId);
+		Assert.Null(plan.GroupChangePlan);
+		Assert.Null(plan.SystemMessageIntent);
+	}
+
 	private static Player CreatePlayer(int objectId, string name, int worldId)
 	{
 		return new Player
