@@ -35,33 +35,72 @@ public sealed class WorldNpcSkillDamageService
 				HopType: options.HopType,
 				CastingInterruptOptions: options.CastingInterruptOptions),
 			cancellationToken);
+		var hasAttackResult = damageResult.Status is WorldNpcDamageStatus.NoDamage or WorldNpcDamageStatus.Damaged or WorldNpcDamageStatus.Died or WorldNpcDamageStatus.AlreadyDead;
 		var shouldNotifyAttackObserver = mapping.NotifyEffectorAttackObservers
 			&& request.Effector != null
 			&& request.Target != null
-			&& damageResult.Status is WorldNpcDamageStatus.NoDamage or WorldNpcDamageStatus.Damaged or WorldNpcDamageStatus.Died or WorldNpcDamageStatus.AlreadyDead;
+			&& hasAttackResult;
 		var attackObserverNotification = shouldNotifyAttackObserver
 			? new WorldNpcSkillAttackObserverNotification(
 				request.Effector!.ObjectId,
 				request.Target!.ObjectId,
 				request.SkillId)
 			: null;
-		return new WorldNpcSkillDamageResult(request.Kind, damageResult, attackObserverNotification);
+		var shouldNotifyDotAttackedObserver = mapping.NotifyDotAttackedObservers
+			&& request.Effector != null
+			&& request.Target != null
+			&& hasAttackResult;
+		var dotAttackedObserverNotification = shouldNotifyDotAttackedObserver
+			? new WorldNpcSkillDotAttackedObserverNotification(
+				request.Effector!.ObjectId,
+				request.Target!.ObjectId,
+				request.SkillId)
+			: null;
+		var drainResult = mapping.ApplyDrain
+			? new WorldNpcSkillDrainResult(
+				damageResult.Damage * Math.Max(0, options.HpDrainPercent) / 100,
+				damageResult.Damage * Math.Max(0, options.MpDrainPercent) / 100)
+			: null;
+		return new WorldNpcSkillDamageResult(
+			request.Kind,
+			damageResult,
+			attackObserverNotification,
+			dotAttackedObserverNotification,
+			drainResult);
 	}
 
 	private static WorldNpcSkillDamageMapping GetMapping(WorldNpcSkillDamageKind kind)
 	{
 		return kind switch
 		{
+			WorldNpcSkillDamageKind.PeriodicSpellAttack => new WorldNpcSkillDamageMapping(
+				SmAttackStatusType.Damage,
+				SmAttackStatusLog.SpellAttack,
+				NotifyAttack: false,
+				NotifyEffectorAttackObservers: false,
+				NotifyDotAttackedObservers: true,
+				ApplyDrain: false),
+			WorldNpcSkillDamageKind.SpellAttackDrain => new WorldNpcSkillDamageMapping(
+				SmAttackStatusType.Damage,
+				SmAttackStatusLog.SpellAttackDrain,
+				NotifyAttack: true,
+				NotifyEffectorAttackObservers: true,
+				NotifyDotAttackedObservers: false,
+				ApplyDrain: true),
 			WorldNpcSkillDamageKind.ProvokedDamageEffect => new WorldNpcSkillDamageMapping(
 				SmAttackStatusType.Damage,
 				SmAttackStatusLog.ProcAttackInstant,
 				NotifyAttack: true,
-				NotifyEffectorAttackObservers: false),
+				NotifyEffectorAttackObservers: false,
+				NotifyDotAttackedObservers: false,
+				ApplyDrain: false),
 			_ => new WorldNpcSkillDamageMapping(
 				SmAttackStatusType.Regular,
 				SmAttackStatusLog.Regular,
 				NotifyAttack: true,
-				NotifyEffectorAttackObservers: true),
+				NotifyEffectorAttackObservers: true,
+				NotifyDotAttackedObservers: false,
+				ApplyDrain: false),
 		};
 	}
 
@@ -69,7 +108,9 @@ public sealed class WorldNpcSkillDamageService
 		SmAttackStatusType AttackStatusType,
 		SmAttackStatusLog AttackStatusLog,
 		bool NotifyAttack,
-		bool NotifyEffectorAttackObservers);
+		bool NotifyEffectorAttackObservers,
+		bool NotifyDotAttackedObservers,
+		bool ApplyDrain);
 }
 
 public sealed record WorldNpcSkillDamageRequest(
@@ -86,7 +127,9 @@ public sealed record WorldNpcSkillDamageOptions(
 	TimeSpan? DecayDelay = null,
 	WorldNpcDeathDropOptions? DeathOptions = null,
 	WorldNpcDamageHopType HopType = WorldNpcDamageHopType.Damage,
-	WorldNpcCastingInterruptOptions? CastingInterruptOptions = null)
+	WorldNpcCastingInterruptOptions? CastingInterruptOptions = null,
+	int HpDrainPercent = 0,
+	int MpDrainPercent = 0)
 {
 	public static WorldNpcSkillDamageOptions Default { get; } = new();
 }
@@ -94,15 +137,28 @@ public sealed record WorldNpcSkillDamageOptions(
 public sealed record WorldNpcSkillDamageResult(
 	WorldNpcSkillDamageKind Kind,
 	WorldNpcDamageResult DamageResult,
-	WorldNpcSkillAttackObserverNotification? AttackObserverNotification);
+	WorldNpcSkillAttackObserverNotification? AttackObserverNotification,
+	WorldNpcSkillDotAttackedObserverNotification? DotAttackedObserverNotification = null,
+	WorldNpcSkillDrainResult? DrainResult = null);
 
 public sealed record WorldNpcSkillAttackObserverNotification(
 	int EffectorObjectId,
 	int TargetObjectId,
 	int SkillId);
 
+public sealed record WorldNpcSkillDotAttackedObserverNotification(
+	int EffectorObjectId,
+	int TargetObjectId,
+	int SkillId);
+
+public sealed record WorldNpcSkillDrainResult(
+	int HpAmount,
+	int MpAmount);
+
 public enum WorldNpcSkillDamageKind
 {
 	RegularDamageEffect,
 	ProvokedDamageEffect,
+	PeriodicSpellAttack,
+	SpellAttackDrain,
 }
