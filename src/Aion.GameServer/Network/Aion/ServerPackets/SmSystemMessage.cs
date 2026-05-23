@@ -627,16 +627,40 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300800);
 	}
 
+	public static SmSystemMessage CannotRegisterBindstoneHaveNoAuthority()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_CANNOT_REGISTER_BINDSTONE_HAVE_NO_AUTHORITY.
+		return new SmSystemMessage(1300799);
+	}
+
 	public static SmSystemMessage CannotUseBindstoneItemWhileFlying()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_CANNOT_USE_BINDSTONE_ITEM_WHILE_FLYING.
 		return new SmSystemMessage(1300806);
 	}
 
+	public static SmSystemMessage BindstoneRegister()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_BINDSTONE_REGISTER.
+		return new SmSystemMessage(1390159);
+	}
+
 	public static SmSystemMessage BindstoneAlreadyInstalled()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_BINDSTONE_ALREADY_INSTALLED.
 		return new SmSystemMessage(1390160);
+	}
+
+	public static SmSystemMessage BindstoneAlreadyRegistered()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_BINDSTONE_ALREADY_REGISTERED.
+		return new SmSystemMessage(1390161);
+	}
+
+	public static SmSystemMessage CannotRegisterBindstoneFull()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_CANNOT_REGISTER_BINDSTONE_FULL.
+		return new SmSystemMessage(1400247);
 	}
 
 	public static SmSystemMessage RecipeItemCannotUseNoRecipe()

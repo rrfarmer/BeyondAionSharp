@@ -781,6 +781,13 @@ public class GamePacketTests
 		Assert.Equal(7170, kiskUpdateReader.ReadD());
 		Assert.Equal(0, kiskUpdateReader.Remaining);
 
+		var actionAnimationPayload = SerializeUnencryptedPayload(new SmActionAnimation(1001, SmActionAnimation.BindKisk));
+		using var actionAnimationReader = new PacketBuffer(actionAnimationPayload);
+		Assert.Equal(1001, actionAnimationReader.ReadD());
+		Assert.Equal(SmActionAnimation.BindKisk, actionAnimationReader.ReadH());
+		Assert.Equal(0, actionAnimationReader.ReadD());
+		Assert.Equal(0, actionAnimationReader.Remaining);
+
 		var statUpdateHpPayload = SerializeUnencryptedPayload(new SmStatUpdateHp(currentHp: 1234, maxHp: 5678));
 		using var statUpdateHpReader = new PacketBuffer(statUpdateHpPayload);
 		Assert.Equal(1234, statUpdateHpReader.ReadD());
@@ -925,9 +932,13 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.ItemRestrictionRide(), 1401094);
 		AssertSystemMessage(SmSystemMessage.UnrideAbnormalState(), 1401254);
 		AssertSystemMessage(SmSystemMessage.CannotRideAbnormalState(), 1401255);
+		AssertSystemMessage(SmSystemMessage.CannotRegisterBindstoneHaveNoAuthority(), 1300799);
 		AssertSystemMessage(SmSystemMessage.CannotRegisterBindstoneFarFromNpc(), 1300800);
 		AssertSystemMessage(SmSystemMessage.CannotUseBindstoneItemWhileFlying(), 1300806);
+		AssertSystemMessage(SmSystemMessage.BindstoneRegister(), 1390159);
 		AssertSystemMessage(SmSystemMessage.BindstoneAlreadyInstalled(), 1390160);
+		AssertSystemMessage(SmSystemMessage.BindstoneAlreadyRegistered(), 1390161);
+		AssertSystemMessage(SmSystemMessage.CannotRegisterBindstoneFull(), 1400247);
 		AssertSystemMessage(SmSystemMessage.RecipeItemCannotUseNoRecipe(), 1300621);
 		AssertSystemMessage(SmSystemMessage.CraftRecipeRaceCheck(), 1300876);
 		AssertSystemMessage(SmSystemMessage.CraftRecipeLearnedAlready(), 1330060);
@@ -1743,6 +1754,19 @@ public class GamePacketTests
 		Assert.Equal(0, questionWindowReader.ReadD());
 		Assert.Equal(0, questionWindowReader.Remaining);
 
+		var bindstoneQuestionPayload = SerializeUnencryptedPayload(
+			new SmQuestionWindow(SmQuestionWindow.RegisterBindstone, 9001, 5));
+		using var bindstoneQuestionReader = new PacketBuffer(bindstoneQuestionPayload);
+		Assert.Equal(SmQuestionWindow.RegisterBindstone, bindstoneQuestionReader.ReadD());
+		Assert.Equal(string.Empty, bindstoneQuestionReader.ReadS());
+		Assert.Equal(string.Empty, bindstoneQuestionReader.ReadS());
+		Assert.Equal(string.Empty, bindstoneQuestionReader.ReadS());
+		Assert.Equal(0, bindstoneQuestionReader.ReadD());
+		Assert.Equal(1, (int)bindstoneQuestionReader.ReadC());
+		Assert.Equal(9001, bindstoneQuestionReader.ReadD());
+		Assert.Equal(5, bindstoneQuestionReader.ReadD());
+		Assert.Equal(0, bindstoneQuestionReader.Remaining);
+
 		var soulBindQuestionPayload = SerializeUnencryptedPayload(
 			new SmQuestionWindow(SmQuestionWindow.SoulBoundItemConfirm, 0, 0, "item"));
 		using var soulBindQuestionReader = new PacketBuffer(soulBindQuestionPayload);
@@ -1966,6 +1990,17 @@ public class GamePacketTests
 		Assert.Equal(3.5f, bindPointReader.ReadF());
 		Assert.Equal(0, bindPointReader.ReadD());
 		Assert.Equal(0, bindPointReader.Remaining);
+
+		var kiskBindPointPayload = SerializeUnencryptedPayload(SmBindPointInfo.Kisk(new WorldPosition(210010000, 11.5f, 22.5f, 33.5f, 9), 9001));
+		using var kiskBindPointReader = new PacketBuffer(kiskBindPointPayload);
+		Assert.Equal(4, (int)kiskBindPointReader.ReadC());
+		Assert.Equal(1, (int)kiskBindPointReader.ReadC());
+		Assert.Equal(210010000, kiskBindPointReader.ReadD());
+		Assert.Equal(11.5f, kiskBindPointReader.ReadF());
+		Assert.Equal(22.5f, kiskBindPointReader.ReadF());
+		Assert.Equal(33.5f, kiskBindPointReader.ReadF());
+		Assert.Equal(9001, kiskBindPointReader.ReadD());
+		Assert.Equal(0, kiskBindPointReader.Remaining);
 
 		var spawnPayload = SerializeUnencryptedPayload(
 			new SmPlayerSpawn(

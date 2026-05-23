@@ -209,6 +209,11 @@ public sealed class Player
 
 	public PendingRiftPortalRequest? PendingRiftPortalRequest { get; set; }
 
+	public PendingKiskBindRequest? PendingKiskBindRequest { get; set; }
+
+	// Java parity: model/gameobjects/player/Player.kisk points at the currently bound Kisk.
+	public int BoundKiskObjectId { get; set; }
+
 	// Java parity: model/gameobjects/player/Player.getCurrentTeam, currently narrowed to the RVController removal boundary until full team models land.
 	public PlayerTeamMembership TeamMembership { get; set; }
 

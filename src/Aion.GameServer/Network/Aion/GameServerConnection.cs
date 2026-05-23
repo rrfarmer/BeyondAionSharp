@@ -17,6 +17,7 @@ using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.IdFactory;
+using Aion.GameServer.World;
 using AccountAuthResult = Aion.GameServer.Network.LoginServer.AccountAuthResult;
 using GameChatServer = Aion.GameServer.Network.ChatServer.ChatServer;
 using GameLoginServer = Aion.GameServer.Network.LoginServer.LoginServer;
@@ -4657,6 +4658,81 @@ public sealed class GameServerConnection : BaseClientConnection
 			await _connectionRegistry.RefreshNpcVisibilityAsync([plan.Kisk]);
 		else
 			await SendPacketAsync(new SmNpcInfo(plan.Kisk));
+
+		await RequestOrBindPlayerToKiskAsync(player, plan.RuntimeState);
+	}
+
+	private async Task RequestOrBindPlayerToKiskAsync(Player player, PlayerKiskRuntimeState kisk)
+	{
+		// Java parity: ToyPetSpawnAction.act -> kisk.getController().onDialogRequest(player) or KiskService.onBind.
+		if (kisk.MaxMembers > 1)
+		{
+			if (player.PendingKiskBindRequest != null)
+				return;
+
+			player.PendingKiskBindRequest = new PendingKiskBindRequest(kisk.ObjectId, SmQuestionWindow.RegisterBindstone);
+			await SendPacketAsync(new SmQuestionWindow(SmQuestionWindow.RegisterBindstone, kisk.ObjectId, rangeOrCooldownSeconds: 5));
+			return;
+		}
+
+		await BindPlayerToKiskAsync(player, kisk);
+	}
+
+	private async Task HandleKiskBindQuestionResponseAsync(Player responder, CmQuestionResponse packet)
+	{
+		// Java parity: KiskAI acceptRequest -> KiskService.onBind for the pending bindstone dialog.
+		var request = responder.PendingKiskBindRequest;
+		if (request == null || packet.QuestionId != request.QuestionId)
+			return;
+
+		responder.PendingKiskBindRequest = null;
+		if (packet.Response == 0)
+			return;
+		if (packet.SenderObjectId != 0 && packet.SenderObjectId != request.KiskObjectId)
+			return;
+
+		var kisk = _runtimeContext?.Kisks.GetOwnerKiskState(responder.ObjectId);
+		if (kisk == null || kisk.ObjectId != request.KiskObjectId)
+			return;
+
+		await BindPlayerToKiskAsync(responder, kisk);
+	}
+
+	private async Task BindPlayerToKiskAsync(Player player, PlayerKiskRuntimeState kisk)
+	{
+		if (!TryGetKiskPosition(kisk.ObjectId, out var position))
+			return;
+
+		var bindResult = PlayerKiskBindService.Bind(player, kisk);
+		switch (bindResult.Status)
+		{
+			case PlayerKiskBindStatus.Bound:
+				await SendPacketAsync(new SmKiskUpdate(kisk));
+				await SendPacketAsync(SmBindPointInfo.Kisk(position, kisk.ObjectId));
+				await SendPacketAsync(SmSystemMessage.BindstoneRegister());
+				await BroadcastActionAnimationAsync(player, new SmActionAnimation(player.ObjectId, SmActionAnimation.BindKisk));
+				break;
+			case PlayerKiskBindStatus.AlreadyRegistered:
+				await SendPacketAsync(SmSystemMessage.BindstoneAlreadyRegistered());
+				break;
+			case PlayerKiskBindStatus.Full:
+				await SendPacketAsync(SmSystemMessage.CannotRegisterBindstoneFull());
+				break;
+		}
+	}
+
+	private bool TryGetKiskPosition(int kiskObjectId, out WorldPosition position)
+	{
+		if (_world != null
+			&& _world.TryGetObject(kiskObjectId, out var gameObject)
+			&& gameObject is IWorldNpcObject kiskNpc)
+		{
+			position = kiskNpc.Position;
+			return true;
+		}
+
+		position = default;
+		return false;
 	}
 
 	private async Task DismountRideAsync(Player player)
@@ -5310,6 +5386,12 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (IsRiftPortalQuestion(packet.QuestionId))
 		{
 			await HandleRiftPortalQuestionResponseAsync(responder, packet);
+			return;
+		}
+
+		if (packet.QuestionId == SmQuestionWindow.RegisterBindstone)
+		{
+			await HandleKiskBindQuestionResponseAsync(responder, packet);
 			return;
 		}
 
@@ -6008,6 +6090,15 @@ public sealed class GameServerConnection : BaseClientConnection
 	private async Task BroadcastEmotionAsync(Player player, SmEmotion packet)
 	{
 		// Java parity: PacketSendUtility.broadcastToSightedPlayers(player, SM_EMOTION, true).
+		if (_connectionRegistry != null)
+			await _connectionRegistry.BroadcastToVisiblePlayersAsync(player.Position, player.ObjectId, packet, includeSourcePlayer: true);
+		else
+			await SendPacketAsync(packet);
+	}
+
+	private async Task BroadcastActionAnimationAsync(Player player, SmActionAnimation packet)
+	{
+		// Java parity: PacketSendUtility.broadcastPacket(player, SM_ACTION_ANIMATION, true).
 		if (_connectionRegistry != null)
 			await _connectionRegistry.BroadcastToVisiblePlayersAsync(player.Position, player.ObjectId, packet, includeSourcePlayer: true);
 		else
