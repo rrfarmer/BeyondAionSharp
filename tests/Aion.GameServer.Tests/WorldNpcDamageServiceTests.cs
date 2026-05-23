@@ -182,6 +182,49 @@ public sealed class WorldNpcDamageServiceTests
 			Assert.Equal(1001, result.AttackObserverNotification.EffectorObjectId);
 			Assert.Equal(npc.ObjectId, result.AttackObserverNotification.TargetObjectId);
 			Assert.Equal(5001, result.AttackObserverNotification.SkillId);
+			Assert.NotNull(result.CalculationResult);
+			Assert.Equal(20, result.CalculationResult.InputDamage);
+			Assert.Equal(20, result.CalculationResult.FinalDamage);
+			Assert.True(result.CalculationResult.ShouldApplyAttackerMovementModifier);
+			Assert.False(result.CalculationResult.IgnoreShield);
+			Assert.True(result.CalculationResult.SendResult);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
+	public async Task ApplyDamageEffectAsync_UsesStagedSkillResultCalculation()
+	{
+		var damageService = CreateDamageService(out var spawnService, out var world, out _, out var threadPoolManager, out _, out _, out _, out _, out _);
+		var skillDamageService = new WorldNpcSkillDamageService(damageService, new WorldNpcSkillResultCalculationService());
+		try
+		{
+			SpawnNpc(spawnService, world, npcTemplateId: 203107, maxHp: 100);
+			var npc = Assert.Single(world.GetNpcs());
+
+			var result = await skillDamageService.ApplyDamageEffectAsync(new WorldNpcSkillDamageRequest(
+				Target: npc,
+				Effector: CreatePlayer(),
+				Damage: 20,
+				SkillId: 5008,
+				Options: new WorldNpcSkillDamageOptions(
+					ResultCalculation: new WorldNpcSkillResultCalculationOptions(
+						RandomDamageType: 1,
+						RandomRoll: 13,
+						CannotMiss: true))));
+
+			Assert.Equal(WorldNpcDamageStatus.Damaged, result.DamageResult.Status);
+			Assert.Equal(30, result.DamageResult.Damage);
+			Assert.NotNull(result.CalculationResult);
+			Assert.Equal(WorldNpcSkillResultCalculationStatus.Calculated, result.CalculationResult.Status);
+			Assert.Equal(20, result.CalculationResult.InputDamage);
+			Assert.Equal(30, result.CalculationResult.FinalDamage);
+			Assert.Equal(1.5f, result.CalculationResult.RandomDamageMultiplier);
+			Assert.True(result.CalculationResult.CannotMiss);
+			Assert.False(result.CalculationResult.CanDodgeOrResist);
 		}
 		finally
 		{

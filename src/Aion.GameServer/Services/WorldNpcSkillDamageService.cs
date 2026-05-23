@@ -6,10 +6,14 @@ namespace Aion.GameServer.Services;
 public sealed class WorldNpcSkillDamageService
 {
 	private readonly WorldNpcDamageService _damageService;
+	private readonly WorldNpcSkillResultCalculationService _resultCalculation;
 
-	public WorldNpcSkillDamageService(WorldNpcDamageService damageService)
+	public WorldNpcSkillDamageService(
+		WorldNpcDamageService damageService,
+		WorldNpcSkillResultCalculationService? resultCalculation = null)
 	{
 		_damageService = damageService;
+		_resultCalculation = resultCalculation ?? new WorldNpcSkillResultCalculationService();
 	}
 
 	public async ValueTask<WorldNpcSkillDamageResult> ApplyDamageEffectAsync(
@@ -19,10 +23,18 @@ public sealed class WorldNpcSkillDamageService
 		// Java parity: skillengine/effect/DamageEffect.applyEffect delegates to effected.controller.onAttack.
 		var mapping = GetMapping(request.Kind);
 		var options = request.Options ?? WorldNpcSkillDamageOptions.Default;
+		var calculationResult = _resultCalculation.Calculate(new WorldNpcSkillResultCalculationRequest(
+			request.Damage,
+			mapping.ShouldApplyAttackerMovementModifier,
+			mapping.IgnoreShield,
+			mapping.SendResult,
+			mapping.ShouldIncreaseByOneTimeBoost,
+			options.UsesTemplateDamage,
+			options.ResultCalculation));
 		var damageResult = await _damageService.ApplyDamageAsync(
 			request.Target,
 			request.Effector,
-			request.Damage,
+			calculationResult.FinalDamage,
 			new WorldNpcDamageOptions(
 				NotifyAttack: mapping.NotifyAttack,
 				GroupMembers: options.GroupMembers,
@@ -70,7 +82,8 @@ public sealed class WorldNpcSkillDamageService
 			attackObserverNotification,
 			dotAttackedObserverNotification,
 			drainResult,
-			delayResult);
+			delayResult,
+			calculationResult);
 	}
 
 	private static WorldNpcSkillDamageMapping GetMapping(WorldNpcSkillDamageKind kind)
@@ -84,7 +97,11 @@ public sealed class WorldNpcSkillDamageService
 				NotifyEffectorAttackObservers: true,
 				NotifyDotAttackedObservers: false,
 				ApplyDrain: false,
-				ReportDelay: true),
+				ReportDelay: true,
+				IgnoreShield: true,
+				SendResult: false,
+				ShouldIncreaseByOneTimeBoost: true,
+				ShouldApplyAttackerMovementModifier: true),
 			WorldNpcSkillDamageKind.ProcAttackInstant => new WorldNpcSkillDamageMapping(
 				SmAttackStatusType.Damage,
 				SmAttackStatusLog.ProcAttackInstant,
@@ -92,7 +109,11 @@ public sealed class WorldNpcSkillDamageService
 				NotifyEffectorAttackObservers: false,
 				NotifyDotAttackedObservers: false,
 				ApplyDrain: false,
-				ReportDelay: false),
+				ReportDelay: false,
+				IgnoreShield: false,
+				SendResult: false,
+				ShouldIncreaseByOneTimeBoost: false,
+				ShouldApplyAttackerMovementModifier: false),
 			WorldNpcSkillDamageKind.BleedPeriodic => new WorldNpcSkillDamageMapping(
 				SmAttackStatusType.Damage,
 				SmAttackStatusLog.Bleed,
@@ -100,7 +121,11 @@ public sealed class WorldNpcSkillDamageService
 				NotifyEffectorAttackObservers: false,
 				NotifyDotAttackedObservers: true,
 				ApplyDrain: false,
-				ReportDelay: false),
+				ReportDelay: false,
+				IgnoreShield: false,
+				SendResult: true,
+				ShouldIncreaseByOneTimeBoost: true,
+				ShouldApplyAttackerMovementModifier: true),
 			WorldNpcSkillDamageKind.PeriodicSpellAttack => new WorldNpcSkillDamageMapping(
 				SmAttackStatusType.Damage,
 				SmAttackStatusLog.SpellAttack,
@@ -108,7 +133,11 @@ public sealed class WorldNpcSkillDamageService
 				NotifyEffectorAttackObservers: false,
 				NotifyDotAttackedObservers: true,
 				ApplyDrain: false,
-				ReportDelay: false),
+				ReportDelay: false,
+				IgnoreShield: false,
+				SendResult: true,
+				ShouldIncreaseByOneTimeBoost: true,
+				ShouldApplyAttackerMovementModifier: true),
 			WorldNpcSkillDamageKind.SpellAttackDrain => new WorldNpcSkillDamageMapping(
 				SmAttackStatusType.Damage,
 				SmAttackStatusLog.SpellAttackDrain,
@@ -116,7 +145,11 @@ public sealed class WorldNpcSkillDamageService
 				NotifyEffectorAttackObservers: true,
 				NotifyDotAttackedObservers: false,
 				ApplyDrain: true,
-				ReportDelay: false),
+				ReportDelay: false,
+				IgnoreShield: false,
+				SendResult: true,
+				ShouldIncreaseByOneTimeBoost: true,
+				ShouldApplyAttackerMovementModifier: true),
 			WorldNpcSkillDamageKind.ProvokedDamageEffect => new WorldNpcSkillDamageMapping(
 				SmAttackStatusType.Damage,
 				SmAttackStatusLog.ProcAttackInstant,
@@ -124,7 +157,11 @@ public sealed class WorldNpcSkillDamageService
 				NotifyEffectorAttackObservers: false,
 				NotifyDotAttackedObservers: false,
 				ApplyDrain: false,
-				ReportDelay: false),
+				ReportDelay: false,
+				IgnoreShield: false,
+				SendResult: true,
+				ShouldIncreaseByOneTimeBoost: true,
+				ShouldApplyAttackerMovementModifier: true),
 			_ => new WorldNpcSkillDamageMapping(
 				SmAttackStatusType.Regular,
 				SmAttackStatusLog.Regular,
@@ -132,7 +169,11 @@ public sealed class WorldNpcSkillDamageService
 				NotifyEffectorAttackObservers: true,
 				NotifyDotAttackedObservers: false,
 				ApplyDrain: false,
-				ReportDelay: false),
+				ReportDelay: false,
+				IgnoreShield: false,
+				SendResult: true,
+				ShouldIncreaseByOneTimeBoost: true,
+				ShouldApplyAttackerMovementModifier: true),
 		};
 	}
 
@@ -143,7 +184,11 @@ public sealed class WorldNpcSkillDamageService
 		bool NotifyEffectorAttackObservers,
 		bool NotifyDotAttackedObservers,
 		bool ApplyDrain,
-		bool ReportDelay);
+		bool ReportDelay,
+		bool IgnoreShield,
+		bool SendResult,
+		bool ShouldIncreaseByOneTimeBoost,
+		bool ShouldApplyAttackerMovementModifier);
 }
 
 public sealed record WorldNpcSkillDamageRequest(
@@ -163,7 +208,9 @@ public sealed record WorldNpcSkillDamageOptions(
 	WorldNpcCastingInterruptOptions? CastingInterruptOptions = null,
 	int HpDrainPercent = 0,
 	int MpDrainPercent = 0,
-	TimeSpan? Delay = null)
+	TimeSpan? Delay = null,
+	bool UsesTemplateDamage = false,
+	WorldNpcSkillResultCalculationOptions? ResultCalculation = null)
 {
 	public static WorldNpcSkillDamageOptions Default { get; } = new();
 }
@@ -174,7 +221,8 @@ public sealed record WorldNpcSkillDamageResult(
 	WorldNpcSkillAttackObserverNotification? AttackObserverNotification,
 	WorldNpcSkillDotAttackedObserverNotification? DotAttackedObserverNotification = null,
 	WorldNpcSkillDrainResult? DrainResult = null,
-	WorldNpcSkillDelayResult? DelayResult = null);
+	WorldNpcSkillDelayResult? DelayResult = null,
+	WorldNpcSkillResultCalculationResult? CalculationResult = null);
 
 public sealed record WorldNpcSkillAttackObserverNotification(
 	int EffectorObjectId,
