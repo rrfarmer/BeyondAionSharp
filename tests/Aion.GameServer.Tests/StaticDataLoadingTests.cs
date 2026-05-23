@@ -426,6 +426,15 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(182400001, kinahItem.ItemId);
 		Assert.Equal(5, kinahItem.MinCount);
 		Assert.Equal(25, kinahItem.MaxCount);
+		Assert.Equal(75, staticData.EventDrops.Count);
+		Assert.Equal(119, staticData.EventDrops.Events.Sum(template => template.DropRules.Count));
+		var brokenHearts = staticData.EventDrops.Events.First(template => template.Name == "Broken Hearts");
+		Assert.Equal(new DateTime(2026, 2, 9, 0, 0, 0), brokenHearts.StartDate);
+		Assert.Equal(new DateTime(2026, 2, 22, 23, 59, 59), brokenHearts.EndDate);
+		Assert.Equal("VALENTINE", brokenHearts.Theme);
+		Assert.Equal(4, brokenHearts.DropRules.Count);
+		Assert.Contains(staticData.EventDrops.GetActiveDropRules(new DateTime(2026, 2, 10, 12, 0, 0)), rule => rule.RuleName == "Broken Hearts L");
+		Assert.DoesNotContain(staticData.EventDrops.GetActiveDropRules(new DateTime(2026, 2, 10, 12, 0, 0), new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Broken Hearts" }), rule => rule.RuleName == "Broken Hearts L");
 		Assert.False(staticData.GlobalNpcExclusions.IsEmpty);
 		Assert.Contains(219501, staticData.GlobalNpcExclusions.NpcIds);
 		Assert.Contains("SUMMON_PET", staticData.GlobalNpcExclusions.NpcTemplateTypes);

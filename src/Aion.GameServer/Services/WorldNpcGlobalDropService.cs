@@ -65,10 +65,40 @@ public sealed class WorldNpcGlobalDropService
 		if (HasGlobalNpcExclusion(npc))
 			return WorldNpcGlobalDropResult.Empty(startIndex);
 
+		return CreateDropsFromRules(GetGlobalDrops().Rules, npc, looter, dropModifiers, groupMembers, startIndex);
+	}
+
+	public WorldNpcGlobalDropResult CreateEventDrops(
+		IReadOnlyList<GlobalDropRuleSummary> eventRules,
+		IWorldNpcObject? npc,
+		Player? looter,
+		WorldNpcDropModifiers dropModifiers,
+		IReadOnlyList<Player>? groupMembers = null,
+		int startIndex = 1)
+	{
+		// Java parity: services/drop/DropRegistrationService.registerDrop event active-drop branch after default global drops.
+		if (npc == null || looter == null || eventRules.Count == 0)
+			return WorldNpcGlobalDropResult.Empty(startIndex);
+		if (string.Equals(npc.AiName, "quest_use_item", StringComparison.OrdinalIgnoreCase))
+			return WorldNpcGlobalDropResult.Empty(startIndex);
+		if (HasGlobalNpcExclusion(npc) && !dropModifiers.IsDropNpcChest)
+			return WorldNpcGlobalDropResult.Empty(startIndex);
+
+		return CreateDropsFromRules(eventRules, npc, looter, dropModifiers, groupMembers, startIndex);
+	}
+
+	private WorldNpcGlobalDropResult CreateDropsFromRules(
+		IReadOnlyList<GlobalDropRuleSummary> rules,
+		IWorldNpcObject npc,
+		Player looter,
+		WorldNpcDropModifiers dropModifiers,
+		IReadOnlyList<Player>? groupMembers,
+		int startIndex)
+	{
 		var isAllowedDefaultGlobalDropNpc = IsAllowedDefaultGlobalDropNpc(npc, dropModifiers.IsDropNpcChest);
 		var drops = new List<WorldNpcDropItem>();
 		var index = startIndex;
-		foreach (var rule in GetGlobalDrops().Rules)
+		foreach (var rule in rules)
 		{
 			if (!isAllowedDefaultGlobalDropNpc && !rule.HasNpcRestriction)
 				continue;

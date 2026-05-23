@@ -32,6 +32,7 @@ public sealed class StaticData
 		CustomNpcDropTable customNpcDrops,
 		QuestDropTable questDrops,
 		GlobalDropTable globalDrops,
+		EventDropTable eventDrops,
 		GlobalNpcExclusionTable globalNpcExclusions,
 		SkillTemplateTable skillTemplates,
 		TitleTemplateTable titleTemplates,
@@ -68,6 +69,7 @@ public sealed class StaticData
 		CustomNpcDrops = customNpcDrops;
 		QuestDrops = questDrops;
 		GlobalDrops = globalDrops;
+		EventDrops = eventDrops;
 		GlobalNpcExclusions = globalNpcExclusions;
 		SkillTemplates = skillTemplates;
 		TitleTemplates = titleTemplates;
@@ -132,6 +134,8 @@ public sealed class StaticData
 
 	public GlobalDropTable GlobalDrops { get; }
 
+	public EventDropTable EventDrops { get; }
+
 	public GlobalNpcExclusionTable GlobalNpcExclusions { get; }
 
 	public SkillTemplateTable SkillTemplates { get; }
@@ -186,6 +190,7 @@ public sealed class StaticData
 		var npcRiftSpawns = new List<NpcRiftSpawnSummary>();
 		var questDrops = new List<QuestDropSummary>();
 		var globalDropRules = new List<GlobalDropRuleSummary>();
+		var eventTemplates = new List<EventTemplateSummary>();
 		var globalNpcExclusionNpcIds = new HashSet<int>();
 		var globalNpcExclusionNpcNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 		var globalNpcExclusionNpcTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -222,8 +227,11 @@ public sealed class StaticData
 		NpcSpawnSpotBuilder? currentNpcRiftSpawnSpot = null;
 		VortexLocationBuilder? currentVortexLocation = null;
 		QuestDropBuilder? currentQuestDropBuilder = null;
+		EventTemplateBuilder? currentEventTemplate = null;
+		int currentEventTemplateDepth = -1;
 		GlobalDropRuleBuilder? currentGlobalDropRule = null;
 		int currentGlobalDropRuleDepth = -1;
+		bool currentGlobalDropRuleIsEventDrop = false;
 		int currentNpcSpawnMapId = 0;
 		int currentNpcSpawnDepth = -1;
 		int currentNpcSpawnSpotDepth = -1;
@@ -380,9 +388,20 @@ public sealed class StaticData
 
 				if (reader.Depth == currentGlobalDropRuleDepth && reader.LocalName == "gd_rule" && currentGlobalDropRule != null)
 				{
-					globalDropRules.Add(currentGlobalDropRule.ToSummary());
+					if (currentGlobalDropRuleIsEventDrop && currentEventTemplate != null)
+						currentEventTemplate.AddDropRule(currentGlobalDropRule.ToSummary());
+					else
+						globalDropRules.Add(currentGlobalDropRule.ToSummary());
 					currentGlobalDropRule = null;
 					currentGlobalDropRuleDepth = -1;
+					currentGlobalDropRuleIsEventDrop = false;
+				}
+
+				if (reader.Depth == currentEventTemplateDepth && reader.LocalName == "event" && currentEventTemplate != null)
+				{
+					eventTemplates.Add(currentEventTemplate.ToSummary());
+					currentEventTemplate = null;
+					currentEventTemplateDepth = -1;
 				}
 
 				if (reader.Depth == 2 && reader.LocalName == "spawn_map" && elementPath.GetValueOrDefault(1) == "spawns")
@@ -495,6 +514,24 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.LocalName == "event" && elementPath.GetValueOrDefault(reader.Depth - 1) == "timed_events")
+			{
+				// Java parity: dataholders/EventData loads timed EventTemplate rows and validates date windows.
+				currentEventTemplate = new EventTemplateBuilder(
+					reader.GetAttribute("name") ?? string.Empty,
+					ReadDateTimeAttribute(reader, "start"),
+					ReadDateTimeAttribute(reader, "end"),
+					reader.GetAttribute("theme") ?? string.Empty);
+				currentEventTemplateDepth = reader.Depth;
+				if (reader.IsEmptyElement)
+				{
+					eventTemplates.Add(currentEventTemplate.ToSummary());
+					currentEventTemplate = null;
+					currentEventTemplateDepth = -1;
+				}
+				continue;
+			}
+
 			if (reader.Depth == 3 && reader.LocalName == "quest_drop" && currentQuestDropBuilder != null)
 			{
 				// Java parity: model/templates/quest/QuestDrop defaults chance to 100 and collecting_step/drop_each_member to 0.
@@ -559,11 +596,37 @@ public sealed class StaticData
 					ReadOptionalIntAttribute(reader, "member_limit", 1),
 					ReadOptionalIntAttribute(reader, "max_drop_rule", 1));
 				currentGlobalDropRuleDepth = reader.Depth;
+				currentGlobalDropRuleIsEventDrop = false;
 				if (reader.IsEmptyElement)
 				{
 					globalDropRules.Add(currentGlobalDropRule.ToSummary());
 					currentGlobalDropRule = null;
 					currentGlobalDropRuleDepth = -1;
+				}
+				continue;
+			}
+
+			if (reader.LocalName == "gd_rule" && currentEventTemplate != null && IsInsideElement(elementPath, reader.Depth, "event_drops"))
+			{
+				// Java parity: model/templates/event/EventTemplate.eventDropRules stores timed event gd_rule entries.
+				currentGlobalDropRule = new GlobalDropRuleBuilder(
+					reader.GetAttribute("rule_name") ?? string.Empty,
+					ReadFloatAttribute(reader, "chance"),
+					ReadBoolAttribute(reader, "dynamic_chance"),
+					ReadOptionalIntAttribute(reader, "min_diff", -99),
+					ReadOptionalIntAttribute(reader, "max_diff", 99),
+					reader.GetAttribute("restriction_race") ?? string.Empty,
+					ReadBoolAttribute(reader, "level_based_chance_reduction"),
+					ReadOptionalIntAttribute(reader, "member_limit", 1),
+					ReadOptionalIntAttribute(reader, "max_drop_rule", 1));
+				currentGlobalDropRuleDepth = reader.Depth;
+				currentGlobalDropRuleIsEventDrop = true;
+				if (reader.IsEmptyElement)
+				{
+					currentEventTemplate.AddDropRule(currentGlobalDropRule.ToSummary());
+					currentGlobalDropRule = null;
+					currentGlobalDropRuleDepth = -1;
+					currentGlobalDropRuleIsEventDrop = false;
 				}
 				continue;
 			}
@@ -1770,6 +1833,7 @@ public sealed class StaticData
 			customNpcDrops,
 			new QuestDropTable(questDrops.AsReadOnly()),
 			new GlobalDropTable(globalDropRules.AsReadOnly()),
+			new EventDropTable(eventTemplates.AsReadOnly()),
 			new GlobalNpcExclusionTable(
 				globalNpcExclusionNpcIds,
 				globalNpcExclusionNpcNames,
@@ -3275,6 +3339,40 @@ public sealed class StaticData
 		private sealed record PendingQuestDrop(int NpcId, int ItemId, int Chance, int DropEachMember, int CollectingStep);
 	}
 
+	private sealed class EventTemplateBuilder
+	{
+		private readonly List<GlobalDropRuleSummary> _dropRules = [];
+
+		public EventTemplateBuilder(string name, DateTime? startDate, DateTime? endDate, string theme)
+		{
+			if (startDate != null && endDate != null && startDate.Value >= endDate.Value)
+				throw new FormatException($"Event \"{name}\" has an invalid start or end date: start date must be before end date.");
+
+			Name = name;
+			StartDate = startDate;
+			EndDate = endDate;
+			Theme = theme;
+		}
+
+		private string Name { get; }
+
+		private DateTime? StartDate { get; }
+
+		private DateTime? EndDate { get; }
+
+		private string Theme { get; }
+
+		public void AddDropRule(GlobalDropRuleSummary rule)
+		{
+			_dropRules.Add(rule);
+		}
+
+		public EventTemplateSummary ToSummary()
+		{
+			return new EventTemplateSummary(Name, StartDate, EndDate, Theme, _dropRules.ToArray());
+		}
+	}
+
 	private sealed class GlobalDropRuleBuilder
 	{
 		public GlobalDropRuleBuilder(
@@ -3449,6 +3547,17 @@ public sealed class StaticData
 	private static bool ReadOptionalBoolAttribute(XmlReader reader, string attributeName, bool defaultValue)
 	{
 		return bool.TryParse(reader.GetAttribute(attributeName), out var parsed) ? parsed : defaultValue;
+	}
+
+	private static DateTime? ReadDateTimeAttribute(XmlReader reader, string attributeName)
+	{
+		return DateTime.TryParse(
+			reader.GetAttribute(attributeName),
+			CultureInfo.InvariantCulture,
+			DateTimeStyles.None,
+			out var parsed)
+			? parsed
+			: null;
 	}
 
 	private static bool IsStatModifierElement(string elementName)
