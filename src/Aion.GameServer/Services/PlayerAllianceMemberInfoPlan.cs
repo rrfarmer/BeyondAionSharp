@@ -30,7 +30,11 @@ public sealed record PlayerAllianceMemberInfoPacketPlan(
 	PlayerAllianceEvent EffectiveEvent,
 	int Slot,
 	bool IsOnline,
-	PlayerAllianceMemberInfoPrefixSnapshot PrefixSnapshot)
+	PlayerAllianceMemberInfoPrefixSnapshot PrefixSnapshot,
+	bool WritesName,
+	bool WritesAbnormalEffects,
+	bool WritesSlotTimers,
+	IReadOnlyList<PlayerGroupMemberEffectInfo>? AbnormalEffects = null)
 {
 	public static PlayerAllianceMemberInfoPacketPlan FromPlayer(
 		int allianceId,
@@ -42,6 +46,10 @@ public sealed record PlayerAllianceMemberInfoPacketPlan(
 		var effectiveEvent = requestedEvent == PlayerAllianceEvent.Enter && !player.IsOnline
 			? PlayerAllianceEvent.EnterOffline
 			: requestedEvent;
+		var effectiveEventId = (int)effectiveEvent;
+		var writesName = effectiveEventId is 5 or 7 or 13;
+		var writesEffects = effectiveEvent == PlayerAllianceEvent.UpdateEffects
+			|| writesName && player.IsOnline;
 
 		return new PlayerAllianceMemberInfoPacketPlan(
 			allianceId,
@@ -50,7 +58,10 @@ public sealed record PlayerAllianceMemberInfoPacketPlan(
 			effectiveEvent,
 			slot,
 			player.IsOnline,
-			PlayerAllianceMemberInfoPrefixSnapshot.FromPlayer(player, effectiveEvent));
+			PlayerAllianceMemberInfoPrefixSnapshot.FromPlayer(player, effectiveEvent),
+			writesName,
+			writesEffects,
+			WritesSlotTimers: writesEffects);
 	}
 }
 

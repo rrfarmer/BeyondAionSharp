@@ -69,6 +69,65 @@ public sealed class PlayerAllianceMemberInfoTests
 		Assert.Null(plan);
 	}
 
+	[Fact]
+	public void SmAllianceMemberInfo_WritesOnlineNameZeroEffectBranchesLikeJava()
+	{
+		var member = new Player
+		{
+			ObjectId = 1001,
+			Name = "Online",
+			IsOnline = true,
+			PlayerClass = "RANGER",
+			Level = 40,
+			Position = new WorldPosition(220010000, 11, 22, 33, 64),
+		};
+		var plan = PlayerAllianceMemberInfoPacketPlan.FromPlayer(88001, member, PlayerAllianceEvent.Join);
+
+		Assert.Equal(PlayerAllianceEvent.Join, plan.RequestedEvent);
+		Assert.Equal(PlayerAllianceEvent.Join, plan.EffectiveEvent);
+		Assert.True(plan.WritesName);
+		Assert.True(plan.WritesAbnormalEffects);
+		Assert.True(plan.WritesSlotTimers);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(new SmAllianceMemberInfo(plan)));
+		SkipAllianceMemberInfoPrefix(reader, expectedClassId: 5, expectedGenderId: 0, expectedLevel: 40, expectedEventId: (int)PlayerAllianceEvent.Join);
+		Assert.Equal("Online", reader.ReadS());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(127, (int)reader.ReadC());
+		Assert.Equal(0, reader.ReadH());
+		for (var i = 0; i < 8; i++)
+			Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void SmAllianceMemberInfo_RewritesOfflineEnterToEnterOfflineLikeJava()
+	{
+		var member = new Player
+		{
+			ObjectId = 1001,
+			Name = "Offline",
+			IsOnline = false,
+			PlayerClass = "RANGER",
+			Level = 40,
+			Position = new WorldPosition(220010000, 11, 22, 33, 64),
+		};
+		var plan = PlayerAllianceMemberInfoPacketPlan.FromPlayer(88001, member, PlayerAllianceEvent.Enter);
+
+		Assert.Equal(PlayerAllianceEvent.Enter, plan.RequestedEvent);
+		Assert.Equal(PlayerAllianceEvent.EnterOffline, plan.EffectiveEvent);
+		Assert.True(plan.WritesName);
+		Assert.False(plan.WritesAbnormalEffects);
+		Assert.False(plan.WritesSlotTimers);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(new SmAllianceMemberInfo(plan)));
+		SkipAllianceMemberInfoPrefix(reader, expectedClassId: 5, expectedGenderId: 0, expectedLevel: 40, expectedEventId: (int)PlayerAllianceEvent.EnterOffline);
+		Assert.Equal("Offline", reader.ReadS());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.Remaining);
+	}
+
 	private static void AssertMovementIntent(
 		PlayerAllianceMemberInfoIntent intent,
 		int recipientObjectId,
@@ -97,19 +156,29 @@ public sealed class PlayerAllianceMemberInfoTests
 	{
 		var actual = Assert.IsType<SmAllianceMemberInfo>(packet);
 		using var reader = new PacketBuffer(SerializeUnencryptedPayload(actual));
+		SkipAllianceMemberInfoPrefix(reader);
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void SkipAllianceMemberInfoPrefix(
+		PacketBuffer reader,
+		int expectedClassId = 10,
+		int expectedGenderId = 1,
+		int expectedLevel = 45,
+		int expectedEventId = (int)PlayerAllianceEvent.Movement)
+	{
 		for (var i = 0; i < 11; i++)
 			reader.ReadD();
 		reader.ReadF();
 		reader.ReadF();
 		reader.ReadF();
-		Assert.Equal(10, (int)reader.ReadC());
-		Assert.Equal(1, (int)reader.ReadC());
-		Assert.Equal(45, (int)reader.ReadC());
-		Assert.Equal((int)PlayerAllianceEvent.Movement, (int)reader.ReadC());
+		Assert.Equal(expectedClassId, (int)reader.ReadC());
+		Assert.Equal(expectedGenderId, (int)reader.ReadC());
+		Assert.Equal(expectedLevel, (int)reader.ReadC());
+		Assert.Equal(expectedEventId, (int)reader.ReadC());
 		Assert.Equal(1, (int)reader.ReadC());
 		Assert.Equal(0, (int)reader.ReadC());
 		Assert.Equal(0, (int)reader.ReadC());
-		Assert.Equal(0, reader.Remaining);
 	}
 
 	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)

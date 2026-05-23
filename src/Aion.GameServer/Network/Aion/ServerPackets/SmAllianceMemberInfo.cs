@@ -7,6 +7,7 @@ namespace Aion.GameServer.Network.Aion.ServerPackets;
 public sealed class SmAllianceMemberInfo : GameServerPacket
 {
 	public const int PacketOpCode = 246;
+	private const int FullSlots = 127;
 
 	private readonly PlayerAllianceMemberInfoPacketPlan _plan;
 
@@ -42,12 +43,59 @@ public sealed class SmAllianceMemberInfo : GameServerPacket
 		buffer.WriteC(prefix.FlyState);
 		buffer.WriteC(prefix.AllianceUnknown);
 
-		if (_plan.EffectiveEvent is PlayerAllianceEvent.Leave
-			or PlayerAllianceEvent.Banned
-			or PlayerAllianceEvent.Movement
-			or PlayerAllianceEvent.Disconnected)
+		var eventId = (int)_plan.EffectiveEvent;
+		if (eventId is 0 or 1 or 3)
 			return;
 
+		if (_plan.EffectiveEvent == PlayerAllianceEvent.UpdateEffects)
+		{
+			buffer.WriteD(0);
+			buffer.WriteD(0);
+			buffer.WriteC(_plan.Slot);
+			WriteEffects(buffer);
+			WriteSlotTimers(buffer);
+			return;
+		}
+
+		if (_plan.WritesName)
+		{
+			buffer.WriteS(prefix.Name);
+			buffer.WriteD(0);
+			buffer.WriteD(0);
+			if (_plan.IsOnline)
+			{
+				buffer.WriteC(FullSlots);
+				WriteEffects(buffer);
+				WriteSlotTimers(buffer);
+			}
+			else
+			{
+				buffer.WriteH(0);
+			}
+
+			return;
+		}
+
 		throw new NotSupportedException($"Alliance member info event {_plan.EffectiveEvent} is not ported yet.");
+	}
+
+	private void WriteEffects(PacketBuffer buffer)
+	{
+		var effects = _plan.AbnormalEffects ?? Array.Empty<PlayerGroupMemberEffectInfo>();
+		buffer.WriteH(effects.Count);
+		foreach (var effect in effects)
+		{
+			buffer.WriteD(effect.EffectorObjectId);
+			buffer.WriteH(effect.SkillId);
+			buffer.WriteC(effect.SkillLevel);
+			buffer.WriteC(effect.TargetSlotOrdinal);
+			buffer.WriteD(effect.RemainingTimeToDisplayMillis);
+		}
+	}
+
+	private static void WriteSlotTimers(PacketBuffer buffer)
+	{
+		for (var i = 0; i < 8; i++)
+			buffer.WriteD(0);
 	}
 }
