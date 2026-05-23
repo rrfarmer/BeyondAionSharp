@@ -102,6 +102,7 @@ public enum WorldNpcDropRegistrationWorkflowStatus
 	MissingNpc,
 	MissingLooter,
 	LootRewardDisabled,
+	KiskRemoved,
 	NoGeneratedDrops,
 	Registered,
 }

@@ -7,15 +7,21 @@ public sealed class WorldNpcDeathDropWorkflowService
 	private readonly WorldNpcSpawnService _spawnService;
 	private readonly WorldNpcDropRegistrationWorkflowService _dropRegistrationWorkflow;
 	private readonly WorldNpcAiStateService? _npcAiStates;
+	private readonly Func<IWorldNpcObject, CancellationToken, ValueTask<PlayerKiskDespawnResult?>>? _kiskDeathCleanup;
+	private readonly Func<PlayerKiskDespawnResult, CancellationToken, ValueTask<PlayerKiskRemovalRuntimeCleanupResult>>? _kiskRemovalCleanup;
 
 	public WorldNpcDeathDropWorkflowService(
 		WorldNpcSpawnService spawnService,
 		WorldNpcDropRegistrationWorkflowService dropRegistrationWorkflow,
-		WorldNpcAiStateService? npcAiStates = null)
+		WorldNpcAiStateService? npcAiStates = null,
+		Func<IWorldNpcObject, CancellationToken, ValueTask<PlayerKiskDespawnResult?>>? kiskDeathCleanup = null,
+		Func<PlayerKiskDespawnResult, CancellationToken, ValueTask<PlayerKiskRemovalRuntimeCleanupResult>>? kiskRemovalCleanup = null)
 	{
 		_spawnService = spawnService;
 		_dropRegistrationWorkflow = dropRegistrationWorkflow;
 		_npcAiStates = npcAiStates;
+		_kiskDeathCleanup = kiskDeathCleanup;
+		_kiskRemovalCleanup = kiskRemovalCleanup;
 	}
 
 	public async ValueTask<WorldNpcDeathDropWorkflowResult> HandleCustomDropDeathAsync(
@@ -48,6 +54,17 @@ public sealed class WorldNpcDeathDropWorkflowService
 		// Java parity: controllers/NpcController.onDie asks ALLOW_RESPAWN, REWARD_LOOT, and ALLOW_DECAY around reward/drop registration.
 		if (npc == null)
 			return WorldNpcDeathDropWorkflowResult.MissingNpc();
+
+		var kiskDespawn = _kiskDeathCleanup == null
+			? null
+			: await _kiskDeathCleanup(npc, cancellationToken);
+		if (kiskDespawn?.RemovedRegistry == true)
+		{
+			var kiskCleanup = _kiskRemovalCleanup == null
+				? PlayerKiskRemovalRuntimeCleanupResult.NotApplied
+				: await _kiskRemovalCleanup(kiskDespawn, cancellationToken);
+			return WorldNpcDeathDropWorkflowResult.KiskRemoved(kiskDespawn, kiskCleanup);
+		}
 
 		var deathOptions = options ?? WorldNpcDeathDropOptions.Default;
 		var respawnScheduled = deathOptions.AllowRespawn && _spawnService.TryScheduleRespawn(npc.ObjectId);
@@ -103,7 +120,9 @@ public sealed record WorldNpcDeathDropWorkflowResult(
 	bool DecayScheduled,
 	bool StaticPlaceableDespawned,
 	bool DeletedImmediately = false,
-	bool AiMarkedDied = false)
+	bool AiMarkedDied = false,
+	PlayerKiskDespawnResult? KiskDespawn = null,
+	PlayerKiskRemovalRuntimeCleanupResult? KiskRemovalCleanup = null)
 {
 	public static WorldNpcDeathDropWorkflowResult MissingNpc()
 	{
@@ -116,10 +135,27 @@ public sealed record WorldNpcDeathDropWorkflowResult(
 			DeletedImmediately: false,
 			AiMarkedDied: false);
 	}
+
+	public static WorldNpcDeathDropWorkflowResult KiskRemoved(
+		PlayerKiskDespawnResult kiskDespawn,
+		PlayerKiskRemovalRuntimeCleanupResult kiskRemovalCleanup)
+	{
+		return new WorldNpcDeathDropWorkflowResult(
+			WorldNpcDeathDropWorkflowStatus.KiskRemoved,
+			WorldNpcDropRegistrationWorkflowResult.Skipped(WorldNpcDropRegistrationWorkflowStatus.KiskRemoved),
+			RespawnScheduled: false,
+			DecayScheduled: false,
+			StaticPlaceableDespawned: false,
+			DeletedImmediately: true,
+			AiMarkedDied: false,
+			kiskDespawn,
+			kiskRemovalCleanup);
+	}
 }
 
 public enum WorldNpcDeathDropWorkflowStatus
 {
 	MissingNpc,
+	KiskRemoved,
 	Scheduled,
 }

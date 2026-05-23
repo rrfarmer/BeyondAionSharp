@@ -4726,10 +4726,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		if (_connectionRegistry != null)
-			await ApplyRemovedKiskCleanupAsync(result);
-
-		if (_connectionRegistry != null && result.WorldId.HasValue)
-			await _connectionRegistry.RefreshNpcVisibilityAsync(_world.GetNpcs(result.WorldId.Value));
+			await PlayerKiskRemovalRuntimeCleanupService.ApplyAsync(result, _connectionRegistry, _runtimeContext, _world);
 	}
 
 	private async Task HandleReviveAsync(Player player, CmRevive packet)
@@ -4818,44 +4815,6 @@ public sealed class GameServerConnection : BaseClientConnection
 			new SmMotion(player.ObjectId, player.Motions));
 		await RefreshHousingVisibilityForPlayerAsync(player);
 		await RefreshNpcVisibilityForPlayerAsync(player);
-	}
-
-	private async Task ApplyRemovedKiskCleanupAsync(PlayerKiskDespawnResult result)
-	{
-		if (_connectionRegistry == null || result.RemovedKisk == null)
-			return;
-
-		// Java parity: services/KiskService.removeKisk sends the creator a final SM_KISK_UPDATE,
-		// clears online member kisk references, and restores their obelisk bind-point packet.
-		var onlinePlayers = new List<Player>();
-		_connectionRegistry.ForEachOnlinePlayer(onlinePlayers.Add);
-		var plan = PlayerKiskRemovalCleanupService.CreatePlan(result, onlinePlayers);
-		var playersByObjectId = onlinePlayers.ToDictionary(player => player.ObjectId);
-		var clearBoundObjectIds = plan.ClearBoundObjectIds.ToHashSet();
-		var clearPendingRequestObjectIds = plan.ClearPendingRequestObjectIds.ToHashSet();
-		var resurrectionOptionRefreshObjectIds = plan.ResurrectionOptionRefreshObjectIds.ToHashSet();
-
-		foreach (var player in onlinePlayers)
-		{
-			if (clearBoundObjectIds.Contains(player.ObjectId))
-				player.BoundKiskObjectId = 0;
-			if (clearPendingRequestObjectIds.Contains(player.ObjectId))
-				player.PendingKiskBindRequest = null;
-		}
-
-		if (plan.CreatorUpdateObjectId.HasValue)
-			await _connectionRegistry.SendPacketToPlayerAsync(
-				plan.CreatorUpdateObjectId.Value,
-				new SmKiskUpdate(result.RemovedKisk));
-
-		var staticData = _runtimeContext?.DataManager?.StaticData;
-		foreach (var playerObjectId in plan.BindPointResetObjectIds)
-		{
-			if (playersByObjectId.TryGetValue(playerObjectId, out var player))
-				await _connectionRegistry.SendPacketToPlayerAsync(playerObjectId, CreateBindPointPacket(player, staticData));
-			if (resurrectionOptionRefreshObjectIds.Contains(playerObjectId))
-				await _connectionRegistry.SendPacketToPlayerAsync(playerObjectId, new SmDie());
-		}
 	}
 
 	private async Task RequestOrBindPlayerToKiskAsync(Player player, PlayerKiskRuntimeState kisk)

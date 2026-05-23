@@ -329,18 +329,114 @@ public sealed class WorldNpcDeathDropWorkflowServiceTests
 		}
 	}
 
+	[Fact]
+	public async Task HandleDeathAsync_RemovesRuntimeKiskAndRunsMemberCleanup()
+	{
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var dropRegistration = new WorldNpcDropRegistrationService();
+		var staticPlaceables = new StaticPlaceableStateService();
+		var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		try
+		{
+			const int kiskObjectId = 1;
+			var spawnService = CreateSpawnService(world, staticPlaceables, threadPoolManager, dropRegistration);
+			var runtimeContext = new GameServerRuntimeContext();
+			var registry = runtimeContext.Kisks;
+			var idFactory = new IDFactory([kiskObjectId]);
+			var kiskState = new PlayerKiskRuntimeState(
+				objectId: kiskObjectId,
+				ownerObjectId: 1001,
+				npcId: 700273);
+			Assert.True(kiskState.AddMember(1001));
+			Assert.True(kiskState.AddMember(1002));
+			registry.RegisterKisk(kiskState);
+			Assert.True(world.TryAddObject(kiskObjectId, CreateKiskNpc(kiskObjectId, 700273)));
+
+			var creator = CreateOnlinePlayer(1001, boundKiskObjectId: kiskObjectId);
+			var deadMember = CreateOnlinePlayer(1002, boundKiskObjectId: kiskObjectId);
+			deadMember.CreatureState = PlayerCreatureState.Dead;
+			var pendingResponder = CreateOnlinePlayer(1003, boundKiskObjectId: 0);
+			pendingResponder.PendingKiskBindRequest = new PendingKiskBindRequest(kiskObjectId, SmQuestionWindow.RegisterBindstone);
+			var connectionRegistry = new CapturingConnectionRegistry();
+			connectionRegistry.OnlinePlayers.AddRange([creator, deadMember, pendingResponder]);
+			connectionRegistry.OnlinePlayerObjectIds.UnionWith([1001, 1002, 1003]);
+
+			var workflow = CreateDeathWorkflow(
+				spawnService,
+				dropRegistration,
+				threadPoolManager,
+				connectionRegistry,
+				CreateCustomDropService(700273),
+				kiskDeathCleanup: (npc, _) =>
+					ValueTask.FromResult(PlayerKiskDeathCleanupService.TryRemoveDiedKisk(npc, world, registry, idFactory)),
+				kiskRemovalCleanup: (despawn, cancellationToken) =>
+					PlayerKiskRemovalRuntimeCleanupService.ApplyAsync(
+						despawn,
+						connectionRegistry,
+						runtimeContext,
+						world,
+						cancellationToken));
+
+			Assert.True(world.TryGetObject(kiskObjectId, out var kiskObject));
+			var result = await workflow.HandleDeathAsync(
+				Assert.IsAssignableFrom<IWorldNpcObject>(kiskObject),
+				creator);
+
+			Assert.Equal(WorldNpcDeathDropWorkflowStatus.KiskRemoved, result.Status);
+			Assert.Equal(WorldNpcDropRegistrationWorkflowStatus.KiskRemoved, result.DropRegistration.Status);
+			Assert.True(result.DeletedImmediately);
+			Assert.False(result.RespawnScheduled);
+			Assert.False(result.DecayScheduled);
+			Assert.False(spawnService.HasRespawnTask(kiskObjectId));
+			Assert.False(spawnService.HasDecayTask(kiskObjectId));
+			Assert.NotNull(result.KiskDespawn);
+			Assert.True(result.KiskDespawn.RemovedRegistry);
+			Assert.True(result.KiskDespawn.RemovedWorldObject);
+			Assert.True(result.KiskDespawn.ReleasedObjectId);
+			Assert.Equal(210010000, result.KiskDespawn.WorldId);
+			Assert.NotNull(result.KiskRemovalCleanup);
+			Assert.True(result.KiskRemovalCleanup.Applied);
+			Assert.Equal(1, result.KiskRemovalCleanup.CreatorUpdatesSent);
+			Assert.Equal(2, result.KiskRemovalCleanup.BindPointResetsSent);
+			Assert.Equal(1, result.KiskRemovalCleanup.DeathOptionRefreshesSent);
+			Assert.Equal(2, result.KiskRemovalCleanup.ClearedBoundMembers);
+			Assert.Equal(1, result.KiskRemovalCleanup.ClearedPendingRequests);
+			Assert.Equal(1, result.KiskRemovalCleanup.NpcVisibilityRefreshes);
+			Assert.False(registry.HaveKisk(1001));
+			Assert.False(world.TryGetObject(kiskObjectId, out _));
+			Assert.Equal(kiskObjectId, idFactory.NextId());
+			Assert.Equal(0, creator.BoundKiskObjectId);
+			Assert.Equal(0, deadMember.BoundKiskObjectId);
+			Assert.Null(pendingResponder.PendingKiskBindRequest);
+			Assert.Contains(connectionRegistry.SentPackets, delivery => delivery.PlayerObjectId == 1001 && delivery.Packet is SmKiskUpdate);
+			Assert.Equal(2, connectionRegistry.SentPackets.Count(delivery => delivery.Packet is SmBindPointInfo));
+			Assert.Single(connectionRegistry.SentPackets, delivery => delivery.PlayerObjectId == 1002 && delivery.Packet is SmDie);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
 	private static WorldNpcDeathDropWorkflowService CreateDeathWorkflow(
 		WorldNpcSpawnService spawnService,
 		WorldNpcDropRegistrationService dropRegistration,
 		ThreadPoolManager threadPoolManager,
 		CapturingConnectionRegistry registry,
 		WorldNpcCustomDropService customDropService,
-		WorldNpcAiStateService? aiStates = null)
+		WorldNpcAiStateService? aiStates = null,
+		Func<IWorldNpcObject, CancellationToken, ValueTask<PlayerKiskDespawnResult?>>? kiskDeathCleanup = null,
+		Func<PlayerKiskDespawnResult, CancellationToken, ValueTask<PlayerKiskRemovalRuntimeCleanupResult>>? kiskRemovalCleanup = null)
 	{
 		var lootService = new WorldNpcLootService(dropRegistration, spawnService, threadPoolManager);
 		var broadcastService = new WorldNpcLootBroadcastService(lootService, registry);
 		var dropWorkflow = new WorldNpcDropRegistrationWorkflowService(customDropService, dropRegistration, broadcastService);
-		return new WorldNpcDeathDropWorkflowService(spawnService, dropWorkflow, aiStates);
+		return new WorldNpcDeathDropWorkflowService(
+			spawnService,
+			dropWorkflow,
+			aiStates,
+			kiskDeathCleanup,
+			kiskRemovalCleanup);
 	}
 
 	private static WorldNpcSpawnService CreateSpawnService(
@@ -429,13 +525,53 @@ public sealed class WorldNpcDeathDropWorkflowServiceTests
 			Type: "GENERAL");
 	}
 
+	private static WorldNpc CreateKiskNpc(int objectId, int npcId)
+	{
+		var template = new NpcTemplateSummary(
+			npcId,
+			"test_kisk",
+			NameId: npcId + 100,
+			Level: 10,
+			Rank: "NORMAL",
+			Rating: "NORMAL",
+			Race: "PC_LIGHT_CASTLE_DOOR",
+			Tribe: "KISK",
+			Type: "NPC",
+			MaxHp: 1000,
+			Height: 2.5f,
+			BoundRadius: 1.2f,
+			State: WorldNpcState.DefaultSpawnState);
+		return new WorldNpc(
+			objectId,
+			npcId,
+			template,
+			new WorldPosition(210010000, 1, 2, 3, 4));
+	}
+
+	private static Player CreateOnlinePlayer(int objectId, int boundKiskObjectId)
+	{
+		return new Player
+		{
+			ObjectId = objectId,
+			Name = $"player-{objectId}",
+			Race = "ELYOS",
+			Position = new WorldPosition(210010000, 10, 20, 30, 0),
+			BoundKiskObjectId = boundKiskObjectId,
+			LifeStats = new PlayerLifeStats(CurrentHp: 100, CurrentMp: 100, CurrentFp: 100),
+		};
+	}
+
 	private sealed class CapturingConnectionRegistry : IGameClientConnectionRegistry
 	{
 		public HashSet<int> OnlinePlayerObjectIds { get; } = [];
 
+		public List<Player> OnlinePlayers { get; } = [];
+
 		public List<PacketDelivery> SentPackets { get; } = [];
 
 		public GameServerPacket? BroadcastPacket { get; private set; }
+
+		public int NpcVisibilityRefreshes { get; private set; }
 
 		public void RegisterPlayerConnection(int playerObjectId, GameServerConnection connection)
 		{
@@ -453,6 +589,8 @@ public sealed class WorldNpcDeathDropWorkflowServiceTests
 
 		public void ForEachOnlinePlayer(Action<Player> action)
 		{
+			foreach (var player in OnlinePlayers)
+				action(player);
 		}
 
 		public Task<bool> SendPacketToPlayerAsync(int playerObjectId, GameServerPacket packet)
@@ -490,7 +628,8 @@ public sealed class WorldNpcDeathDropWorkflowServiceTests
 
 		public Task<int> RefreshNpcVisibilityAsync(IReadOnlyList<IWorldNpcObject> npcs, int? playerObjectId = null)
 		{
-			return Task.FromResult(0);
+			NpcVisibilityRefreshes++;
+			return Task.FromResult(1);
 		}
 
 		public Task<int> BroadcastHouseUpdateAsync(WorldHouse house, HousingTemplateTable? housingTemplates)

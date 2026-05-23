@@ -51,7 +51,25 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<WorldNpcEventDropRuleService>();
 			services.AddSingleton<WorldNpcDropModifierService>();
 			services.AddSingleton<WorldNpcDropRegistrationWorkflowService>();
-			services.AddSingleton<WorldNpcDeathDropWorkflowService>();
+			services.AddSingleton<WorldNpcDeathDropWorkflowService>(
+				serviceProvider => new WorldNpcDeathDropWorkflowService(
+					serviceProvider.GetRequiredService<WorldNpcSpawnService>(),
+					serviceProvider.GetRequiredService<WorldNpcDropRegistrationWorkflowService>(),
+					serviceProvider.GetService<WorldNpcAiStateService>(),
+					(npc, _) =>
+						ValueTask.FromResult(
+							PlayerKiskDeathCleanupService.TryRemoveDiedKisk(
+								npc,
+								serviceProvider.GetRequiredService<GameWorld>(),
+								serviceProvider.GetRequiredService<GameServerRuntimeContext>().Kisks,
+								serviceProvider.GetService<IDFactory>())),
+					(despawn, cancellationToken) =>
+						PlayerKiskRemovalRuntimeCleanupService.ApplyAsync(
+							despawn,
+							serviceProvider.GetService<IGameClientConnectionRegistry>(),
+							serviceProvider.GetRequiredService<GameServerRuntimeContext>(),
+							serviceProvider.GetRequiredService<GameWorld>(),
+							cancellationToken)));
 			services.AddSingleton<WorldNpcLifeStatsService>();
 			services.AddSingleton<WorldNpcResourceStatsService>();
 			services.AddSingleton<PlayerVisualStatsUpdateService>();
