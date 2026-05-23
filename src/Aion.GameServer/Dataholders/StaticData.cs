@@ -1598,7 +1598,9 @@ public sealed class StaticData
 					ReadFloatAttribute(reader, "height"),
 					ReadIntAttribute(reader, "attack_speed"),
 					ReadIntAttribute(reader, "state"),
-					reader.GetAttribute("ai") ?? string.Empty);
+					reader.GetAttribute("ai") ?? string.Empty,
+					reader.GetAttribute("group_drop") ?? string.Empty,
+					reader.GetAttribute("abyss_type") ?? "NONE");
 				if (reader.IsEmptyElement)
 				{
 					npcTemplates.Add(currentNpcTemplate.ToSummary());
@@ -2985,7 +2987,9 @@ public sealed class StaticData
 			float height,
 			int attackSpeed,
 			int state,
-			string aiName)
+			string aiName,
+			string groupDrop,
+			string abyssType)
 		{
 			TemplateId = templateId;
 			Name = name;
@@ -3001,6 +3005,8 @@ public sealed class StaticData
 			AttackSpeed = attackSpeed;
 			State = state;
 			AiName = aiName;
+			GroupDrop = groupDrop;
+			AbyssType = abyssType;
 		}
 
 		private int TemplateId { get; }
@@ -3030,6 +3036,10 @@ public sealed class StaticData
 		private int State { get; }
 
 		private string AiName { get; }
+
+		private string GroupDrop { get; }
+
+		private string AbyssType { get; }
 
 		public int MaxHp { get; set; }
 
@@ -3074,7 +3084,9 @@ public sealed class StaticData
 				AiName,
 				CanTalkInvisible,
 				HasTalkInfo,
-				IsDialogNpc);
+				IsDialogNpc,
+				GroupDrop,
+				AbyssType);
 		}
 	}
 

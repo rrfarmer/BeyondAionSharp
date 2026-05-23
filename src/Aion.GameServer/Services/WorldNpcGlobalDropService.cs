@@ -134,12 +134,13 @@ public sealed class WorldNpcGlobalDropService
 		return exclusions.NpcIds.Contains(npc.TemplateId)
 			|| exclusions.NpcNames.Contains(npc.Template.Name)
 			|| exclusions.NpcTemplateTypes.Contains(npc.Template.Type)
-			|| exclusions.NpcTribes.Contains(npc.Template.Tribe);
+			|| exclusions.NpcTribes.Contains(npc.Template.Tribe)
+			|| exclusions.NpcAbyssTypes.Contains(npc.Template.AbyssType);
 	}
 
 	public bool IsAllowedDefaultGlobalDropNpc(IWorldNpcObject npc, bool isChest)
 	{
-		// Java parity: services/drop/DropRegistrationService.isAllowedDefaultGlobalDropNpc, narrowed until siege/base/abyss spawn models exist.
+		// Java parity: services/drop/DropRegistrationService.isAllowedDefaultGlobalDropNpc, narrowed until siege/base spawn models exist.
 		if (npc.Template.Level < 2
 			&& !isChest
 			&& npc.Position.WorldId is not 210010000 and not 220010000)
@@ -147,7 +148,13 @@ public sealed class WorldNpcGlobalDropService
 			return false;
 		}
 
-		return !isChest;
+		if (isChest)
+			return false;
+
+		var abyssType = npc.Template.AbyssType;
+		return string.IsNullOrWhiteSpace(abyssType)
+			|| string.Equals(abyssType, "NONE", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(abyssType, "DEFENDER", StringComparison.OrdinalIgnoreCase);
 	}
 
 	public float CalculateEffectiveChance(
@@ -228,7 +235,7 @@ public sealed class WorldNpcGlobalDropService
 			&& CheckStringRestriction(rule.Tribes, npc.Template.Tribe)
 			&& CheckIntRestriction(rule.NpcIds, npc.TemplateId)
 			&& CheckNpcNameRestriction(rule.NpcNames, npc.Template.Name)
-			&& CheckStringRestriction(rule.NpcGroups, string.Empty)
+			&& CheckStringRestriction(rule.NpcGroups, npc.Template.GroupDrop)
 			&& CheckStringRestriction(rule.Zones, string.Empty)
 			&& !rule.ExcludedNpcIds.Contains(npc.TemplateId);
 	}

@@ -17,16 +17,18 @@ public sealed class WorldNpcGlobalDropServiceTests
 		var npcName = CreateRule(
 			"name",
 			npcNames: [new GlobalDropNpcNameSummary("CONTAINS", "spirit")]);
+		var npcGroup = CreateRule("npc-group", npcGroups: ["SPIRIT"]);
+		var wrongNpcGroup = CreateRule("wrong-npc-group", npcGroups: ["DRAKE"]);
 		var service = new WorldNpcGlobalDropService(
-			new GlobalDropTable([unrestricted, elyosOnly, wrongMap, excludedNpc, npcName]),
+			new GlobalDropTable([unrestricted, elyosOnly, wrongMap, excludedNpc, npcName, npcGroup, wrongNpcGroup]),
 			new ItemTemplateTable([]));
-		var npc = CreateNpc(210001, "wind_spirit", level: 10, rank: "NOVICE", rating: "NORMAL", race: "MAGICALMONSTER");
+		var npc = CreateNpc(210001, "wind_spirit", level: 10, rank: "NOVICE", rating: "NORMAL", race: "MAGICALMONSTER", groupDrop: "SPIRIT");
 		var modifiers = new WorldNpcDropModifiers("ELYOS");
 
 		var defaultRules = service.GetApplicableRules(npc, modifiers, isAllowedDefaultGlobalDropNpc: true);
 		var restrictedRules = service.GetApplicableRules(npc, modifiers, isAllowedDefaultGlobalDropNpc: false);
 
-		Assert.Equal(["default", "elyos", "name"], defaultRules.Select(rule => rule.RuleName).ToArray());
+		Assert.Equal(["default", "elyos", "name", "npc-group"], defaultRules.Select(rule => rule.RuleName).ToArray());
 		Assert.Equal(["name"], restrictedRules.Select(rule => rule.RuleName).ToArray());
 	}
 
@@ -175,7 +177,7 @@ public sealed class WorldNpcGlobalDropServiceTests
 	}
 
 	[Fact]
-	public void HasGlobalNpcExclusion_UsesNpcIdentityTypeAndTribe()
+	public void HasGlobalNpcExclusion_UsesNpcIdentityTypeTribeAndAbyssType()
 	{
 		var service = new WorldNpcGlobalDropService(
 			new GlobalDropTable([]),
@@ -185,24 +187,27 @@ public sealed class WorldNpcGlobalDropServiceTests
 				new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "blocked_name" },
 				new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "SUMMON_PET" },
 				new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "PET" },
-				new HashSet<string>(StringComparer.OrdinalIgnoreCase)));
+				new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "DOOR" }));
 
 		Assert.True(service.HasGlobalNpcExclusion(CreateNpc(210001, "normal")));
 		Assert.True(service.HasGlobalNpcExclusion(CreateNpc(210002, "blocked_name")));
 		Assert.True(service.HasGlobalNpcExclusion(CreateNpc(210003, "normal", type: "SUMMON_PET")));
 		Assert.True(service.HasGlobalNpcExclusion(CreateNpc(210004, "normal", tribe: "PET")));
-		Assert.False(service.HasGlobalNpcExclusion(CreateNpc(210005, "normal")));
+		Assert.True(service.HasGlobalNpcExclusion(CreateNpc(210005, "normal", abyssType: "DOOR")));
+		Assert.False(service.HasGlobalNpcExclusion(CreateNpc(210006, "normal")));
 	}
 
 	[Fact]
-	public void IsAllowedDefaultGlobalDropNpc_AppliesChestAndMissingStatsLevelGuard()
+	public void IsAllowedDefaultGlobalDropNpc_AppliesChestMissingStatsAndAbyssGuard()
 	{
 		var service = new WorldNpcGlobalDropService(new GlobalDropTable([]), new ItemTemplateTable([]));
 
 		Assert.False(service.IsAllowedDefaultGlobalDropNpc(CreateNpc(210001, "chest", level: 10), isChest: true));
 		Assert.False(service.IsAllowedDefaultGlobalDropNpc(CreateNpc(210002, "low", level: 1, worldId: 210020000), isChest: false));
+		Assert.False(service.IsAllowedDefaultGlobalDropNpc(CreateNpc(210005, "abyss-boss", level: 10, abyssType: "BOSS"), isChest: false));
 		Assert.True(service.IsAllowedDefaultGlobalDropNpc(CreateNpc(210003, "poeta-low", level: 1, worldId: 210010000), isChest: false));
 		Assert.True(service.IsAllowedDefaultGlobalDropNpc(CreateNpc(210004, "normal", level: 10), isChest: false));
+		Assert.True(service.IsAllowedDefaultGlobalDropNpc(CreateNpc(210006, "defender", level: 10, abyssType: "DEFENDER"), isChest: false));
 	}
 
 	private static GlobalDropRuleSummary CreateRule(
@@ -218,7 +223,8 @@ public sealed class WorldNpcGlobalDropServiceTests
 		IReadOnlyList<GlobalDropItemSummary>? items = null,
 		IEnumerable<int>? mapIds = null,
 		IEnumerable<int>? excludedNpcIds = null,
-		IReadOnlyList<GlobalDropNpcNameSummary>? npcNames = null)
+		IReadOnlyList<GlobalDropNpcNameSummary>? npcNames = null,
+		IEnumerable<string>? npcGroups = null)
 	{
 		return new GlobalDropRuleSummary(
 			name,
@@ -238,7 +244,7 @@ public sealed class WorldNpcGlobalDropServiceTests
 			Tribes: new HashSet<string>(StringComparer.OrdinalIgnoreCase),
 			NpcIds: new HashSet<int>(),
 			NpcNames: npcNames ?? Array.Empty<GlobalDropNpcNameSummary>(),
-			NpcGroups: new HashSet<string>(StringComparer.OrdinalIgnoreCase),
+			NpcGroups: npcGroups?.ToHashSet(StringComparer.OrdinalIgnoreCase) ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase),
 			ExcludedNpcIds: excludedNpcIds?.ToHashSet() ?? new HashSet<int>(),
 			Zones: new HashSet<string>(StringComparer.OrdinalIgnoreCase));
 	}
@@ -269,12 +275,25 @@ public sealed class WorldNpcGlobalDropServiceTests
 		string rating = "NORMAL",
 		string race = "ELYOS",
 		string tribe = "GENERAL",
-		string type = "GENERAL")
+		string type = "GENERAL",
+		string groupDrop = "",
+		string abyssType = "NONE")
 	{
 		return new WorldNpc(
 			ObjectId: templateId + 1000000,
 			TemplateId: templateId,
-			Template: new NpcTemplateSummary(templateId, name, 0, level, rank, rating, race, tribe, type),
+			Template: new NpcTemplateSummary(
+				templateId,
+				name,
+				0,
+				level,
+				rank,
+				rating,
+				race,
+				tribe,
+				type,
+				GroupDrop: groupDrop,
+				AbyssType: abyssType),
 			Position: new WorldPosition(worldId, 1, 2, 3, 0));
 	}
 }

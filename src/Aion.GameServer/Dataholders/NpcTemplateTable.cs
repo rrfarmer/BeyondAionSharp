@@ -45,7 +45,9 @@ public sealed record NpcTemplateSummary(
 	string AiName = "",
 	bool CanTalkInvisible = true,
 	bool HasTalkInfo = false,
-	bool IsDialogNpc = false)
+	bool IsDialogNpc = false,
+	string GroupDrop = "",
+	string AbyssType = "NONE")
 {
 	public bool CanInteract => HasTalkInfo;
 

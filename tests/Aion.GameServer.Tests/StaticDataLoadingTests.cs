@@ -650,6 +650,11 @@ public sealed class StaticDataLoadingTests
 		Assert.Contains(swordShieldSet.PartBonuses, bonus => bonus.Count == 2 && bonus.Modifiers.Any(modifier => modifier is { Operation: "add", Name: "MAXHP", Value: 100, Bonus: true }));
 		Assert.Contains(swordShieldSet.FullBonus!.Modifiers, modifier => modifier is { Operation: "add", Name: "MAXMP", Value: 100, Bonus: true });
 		Assert.Equal("kamikaze worm", staticData.NpcTemplates.GetNpcTemplate(201000)?.Name);
+		Assert.Equal("SPAKY", staticData.NpcTemplates.GetNpcTemplate(201002)?.GroupDrop);
+		var abyssBossNpc = staticData.NpcTemplates.GetNpcTemplate(218246);
+		Assert.NotNull(abyssBossNpc);
+		Assert.Equal("DRAGON", abyssBossNpc.GroupDrop);
+		Assert.Equal("BOSS", abyssBossNpc.AbyssType);
 		var postmanNpc = staticData.NpcTemplates.GetNpcTemplate(798100);
 		Assert.NotNull(postmanNpc);
 		Assert.Equal(2256, postmanNpc.MaxHp);
