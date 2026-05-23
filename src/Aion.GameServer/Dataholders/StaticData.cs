@@ -13,6 +13,7 @@ public sealed class StaticData
 		IReadOnlyList<string> topLevelElements,
 		IReadOnlyList<WorldMapSummary> worldMaps,
 		FlightZoneTable flightZones,
+		CreaturePvpZoneTable creaturePvpZones,
 		PlayerExperienceTable playerExperienceTable,
 		ItemTemplateTable itemTemplates,
 		CosmeticItemTable cosmeticItems,
@@ -51,6 +52,7 @@ public sealed class StaticData
 		TopLevelElements = topLevelElements;
 		WorldMaps = worldMaps;
 		FlightZones = flightZones;
+		CreaturePvpZones = creaturePvpZones;
 		PlayerExperienceTable = playerExperienceTable;
 		ItemTemplates = itemTemplates;
 		CosmeticItems = cosmeticItems;
@@ -97,6 +99,8 @@ public sealed class StaticData
 	public IReadOnlyList<WorldMapSummary> WorldMaps { get; }
 
 	public FlightZoneTable FlightZones { get; }
+
+	public CreaturePvpZoneTable CreaturePvpZones { get; }
 
 	public PlayerExperienceTable PlayerExperienceTable { get; }
 
@@ -176,6 +180,7 @@ public sealed class StaticData
 		var topLevelElements = new List<string>();
 		var worldMaps = new List<WorldMapSummary>();
 		var flightZones = new List<FlightZoneSummary>();
+		var creaturePvpZones = new List<CreaturePvpZoneSummary>();
 		var experience = new List<long>();
 		var itemTemplates = new List<ItemTemplateSummary>();
 		var cosmeticItems = new List<CosmeticItemSummary>();
@@ -252,6 +257,7 @@ public sealed class StaticData
 		DecomposableItemBuilder? currentDecomposableItem = null;
 		HousingBuildingBuilder? currentHousingBuilding = null;
 		FlightZoneBuilder? currentFlightZone = null;
+		CreaturePvpZoneBuilder? currentCreaturePvpZone = null;
 		int currentHousingLandId = 0;
 		int currentHousingManagerNpcId = 0;
 		var elementPath = new Dictionary<int, string>();
@@ -343,6 +349,13 @@ public sealed class StaticData
 					if (currentFlightZone.HasEnoughPoints)
 						flightZones.Add(currentFlightZone.ToSummary());
 					currentFlightZone = null;
+				}
+
+				if (reader.Depth == 2 && reader.LocalName == "zone" && currentCreaturePvpZone != null)
+				{
+					if (currentCreaturePvpZone.HasEnoughPoints)
+						creaturePvpZones.Add(currentCreaturePvpZone.ToSummary());
+					currentCreaturePvpZone = null;
 				}
 
 				if (reader.Depth == 2 && reader.LocalName == "walk_parent" && elementPath.GetValueOrDefault(1) == "walker_versions")
@@ -487,22 +500,25 @@ public sealed class StaticData
 			if (reader.Depth == 2 && reader.LocalName == "zone" && elementPath.GetValueOrDefault(1) == "zones")
 			{
 				currentFlightZone = FlightZoneBuilder.TryCreate(reader);
+				currentCreaturePvpZone = CreaturePvpZoneBuilder.TryCreate(reader);
 				continue;
 			}
 
-			if (reader.Depth == 3 && reader.LocalName == "points" && currentFlightZone != null)
+			if (reader.Depth == 3 && reader.LocalName == "points" && (currentFlightZone != null || currentCreaturePvpZone != null))
 			{
-				currentFlightZone.SetVerticalBounds(
-					ReadFloatAttribute(reader, "bottom"),
-					ReadFloatAttribute(reader, "top"));
+				var bottom = ReadFloatAttribute(reader, "bottom");
+				var top = ReadFloatAttribute(reader, "top");
+				currentFlightZone?.SetVerticalBounds(bottom, top);
+				currentCreaturePvpZone?.SetVerticalBounds(bottom, top);
 				continue;
 			}
 
-			if (reader.Depth == 4 && reader.LocalName == "point" && currentFlightZone != null)
+			if (reader.Depth == 4 && reader.LocalName == "point" && (currentFlightZone != null || currentCreaturePvpZone != null))
 			{
-				currentFlightZone.AddPoint(
-					ReadFloatAttribute(reader, "x"),
-					ReadFloatAttribute(reader, "y"));
+				var x = ReadFloatAttribute(reader, "x");
+				var y = ReadFloatAttribute(reader, "y");
+				currentFlightZone?.AddPoint(x, y);
+				currentCreaturePvpZone?.AddPoint(x, y);
 				continue;
 			}
 
@@ -1871,6 +1887,7 @@ public sealed class StaticData
 			topLevelElements.AsReadOnly(),
 			worldMaps.AsReadOnly(),
 			new FlightZoneTable(flightZones.AsReadOnly()),
+			new CreaturePvpZoneTable(creaturePvpZones.AsReadOnly()),
 			new PlayerExperienceTable(experience.AsReadOnly()),
 			new ItemTemplateTable(itemTemplates.AsReadOnly(), learnableEmotionIds),
 			new CosmeticItemTable(cosmeticItems.AsReadOnly()),
@@ -2051,6 +2068,83 @@ public sealed class StaticData
 					return true;
 				case "NO_FLY":
 					zoneType = FlightZoneType.NoFly;
+					return true;
+				default:
+					zoneType = default;
+					return false;
+			}
+		}
+	}
+
+	private sealed class CreaturePvpZoneBuilder
+	{
+		private readonly List<ZonePoint2D> _points = [];
+		private float _bottom;
+		private float _top;
+
+		private CreaturePvpZoneBuilder(int mapId, string name, CreaturePvpZoneType zoneType, int flags)
+		{
+			MapId = mapId;
+			Name = name;
+			ZoneType = zoneType;
+			Flags = flags;
+		}
+
+		private int MapId { get; }
+
+		private string Name { get; }
+
+		private CreaturePvpZoneType ZoneType { get; }
+
+		private int Flags { get; }
+
+		public bool HasEnoughPoints => _points.Count >= 3;
+
+		public static CreaturePvpZoneBuilder? TryCreate(XmlReader reader)
+		{
+			// Java parity: ZoneService creates PvPZoneInstance for PVP and SiegeZoneInstance + FortressLocation for FORT.
+			if (!TryReadZoneType(reader.GetAttribute("zone_type"), out var zoneType))
+				return null;
+
+			var areaType = reader.GetAttribute("area_type") ?? "POLYGON";
+			if (!string.Equals(areaType, "POLYGON", StringComparison.Ordinal))
+				return null;
+
+			if (!int.TryParse(reader.GetAttribute("mapid"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var mapId))
+				return null;
+
+			return new CreaturePvpZoneBuilder(
+				mapId,
+				reader.GetAttribute("name") ?? string.Empty,
+				zoneType,
+				ReadOptionalIntAttribute(reader, "flags", -1));
+		}
+
+		public void SetVerticalBounds(float bottom, float top)
+		{
+			_bottom = bottom;
+			_top = top;
+		}
+
+		public void AddPoint(float x, float y)
+		{
+			_points.Add(new ZonePoint2D(x, y));
+		}
+
+		public CreaturePvpZoneSummary ToSummary()
+		{
+			return new CreaturePvpZoneSummary(MapId, Name, ZoneType, Flags, _bottom, _top, _points.ToArray());
+		}
+
+		private static bool TryReadZoneType(string? value, out CreaturePvpZoneType zoneType)
+		{
+			switch (value)
+			{
+				case "PVP":
+					zoneType = CreaturePvpZoneType.Pvp;
+					return true;
+				case "FORT":
+					zoneType = CreaturePvpZoneType.Siege;
 					return true;
 				default:
 					zoneType = default;

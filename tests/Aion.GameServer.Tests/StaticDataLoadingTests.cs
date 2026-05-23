@@ -969,6 +969,17 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(FlightZoneType.NoFly, belusNoFlyZone.ZoneType);
 		Assert.Equal(48, belusNoFlyZone.Flags);
 		Assert.False(belusNoFlyZone.Contains(1030f, 1000f, 1800f));
+		Assert.Equal(152, staticData.CreaturePvpZones.Count);
+		Assert.Equal(132, staticData.CreaturePvpZones.Zones.Count(zone => zone.ZoneType == CreaturePvpZoneType.Pvp));
+		Assert.Equal(20, staticData.CreaturePvpZones.Zones.Count(zone => zone.ZoneType == CreaturePvpZoneType.Siege));
+		var heironPvpZone = Assert.Single(staticData.CreaturePvpZones.GetZonesByMapId(210040000), zone => zone.Name == "PVP_87_210040000");
+		Assert.Equal(CreaturePvpZoneType.Pvp, heironPvpZone.ZoneType);
+		Assert.Equal("PVP_87_210040000", heironPvpZone.ZoneId);
+		Assert.Equal(0, heironPvpZone.Flags);
+		Assert.Equal(15, heironPvpZone.Points.Count);
+		var upperAbyssFortressZone = Assert.Single(staticData.CreaturePvpZones.GetZonesByMapId(210050000), zone => zone.Name == "ABYSS_CASTLE_AREA_2011_210050000");
+		Assert.Equal(CreaturePvpZoneType.Siege, upperAbyssFortressZone.ZoneType);
+		Assert.Equal(55, upperAbyssFortressZone.Flags);
 		Assert.Contains("item_templates", staticData.TopLevelElements);
 		Assert.DoesNotContain("import", staticData.TopLevelElements);
 	}
