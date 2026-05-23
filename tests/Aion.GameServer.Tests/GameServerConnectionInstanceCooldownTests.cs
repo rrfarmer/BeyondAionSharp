@@ -158,6 +158,65 @@ public sealed class GameServerConnectionInstanceCooldownTests
 		Assert.Equal(1, savedCooldown.Value.EntryCount);
 	}
 
+	[Fact]
+	public async Task QueueAllocatedInstancePortalTransferAsync_AllocatesRegistersAndTransfers()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var pair = await TestConnectionPair.CreateAsync(
+			new GameServerOptions
+			{
+				Membership = new GameServerMembershipOptions { InstancesCooldown = 10 },
+				Instance = new GameServerInstanceOptions { CooldownRate = 1 },
+			},
+			new PlayerEnterWorldService(
+				new GameServerOptions(),
+				repository,
+				new GameWorld(NullLogger<GameWorld>.Instance),
+				NullLogger<PlayerEnterWorldService>.Instance));
+		var player = new Player
+		{
+			ObjectId = 1001,
+			Name = "Character",
+			Race = "ELYOS",
+			AccountMembership = 10,
+			Position = new WorldPosition(110010000, 1, 1, 1, 0, 0),
+		};
+		var worldMaps = new WorldMapRuntimeStateTable(
+		[
+			new WorldMapSummary(300030000, IsInstance: true, TwinCount: 1),
+		]);
+		var cooltimes = new InstanceCooltimeTable(
+		[
+			new InstanceCooltimeSummary(8, 300030000, "PC_ALL", MaxCount: 5, CoolTimeType: "RELATIVE", EntCoolTime: 30),
+		]);
+		var portalLocation = new WorldPosition(300030000, 10, 20, 30, 90, InstanceId: 1);
+		var now = DateTimeOffset.FromUnixTimeMilliseconds(100_000);
+
+		var result = await pair.Connection.QueueAllocatedInstancePortalTransferAsync(
+			player,
+			portalLocation,
+			reenter: false,
+			worldMaps,
+			cooltimes,
+			ownerId: player.ObjectId,
+			maxPlayers: 6,
+			TeleportAnimation.FadeOutBeam,
+			staticData: null,
+			now);
+
+		Assert.Equal(2, result.RuntimePlan.Instance.InstanceId);
+		Assert.Equal(player.ObjectId, result.RuntimePlan.Instance.OwnerId);
+		Assert.Equal(6, result.RuntimePlan.Instance.MaxPlayers);
+		Assert.True(result.RuntimePlan.Instance.IsRegistered(player.ObjectId));
+		Assert.Equal(portalLocation with { InstanceId = 2 }, result.RuntimePlan.Destination);
+		Assert.Equal(result.RuntimePlan.Destination, result.Transfer.Teleport.PendingTeleport.Destination);
+		Assert.True(result.Transfer.Cooldown.Added);
+		Assert.Collection(
+			pair.SentPackets,
+			packet => Assert.IsType<SmTeleportLoc>(packet),
+			packet => Assert.IsType<SmInstanceInfo>(packet));
+	}
+
 	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
 	{
 		var crypt = new GameCrypt(() => 0x01020304);

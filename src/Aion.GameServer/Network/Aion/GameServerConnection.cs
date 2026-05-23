@@ -4935,6 +4935,36 @@ public sealed class GameServerConnection : BaseClientConnection
 		return new InstancePortalTransferResult(teleport, cooldown);
 	}
 
+	internal async Task<AllocatedInstancePortalTransferResult> QueueAllocatedInstancePortalTransferAsync(
+		Player player,
+		WorldPosition portalLocation,
+		bool reenter,
+		WorldMapRuntimeStateTable worldMapStates,
+		InstanceCooltimeTable instanceCooltimes,
+		int ownerId = 0,
+		int maxPlayers = 0,
+		TeleportAnimation? animation = null,
+		StaticData? staticData = null,
+		DateTimeOffset? now = null)
+	{
+		// Java parity: PortalService.port allocates/registers the instance before PortalService.transfer teleports and adds cooldown.
+		var runtimePlan = InstanceRuntimeService.CreatePortalTransferInstance(
+			worldMapStates,
+			player,
+			portalLocation,
+			ownerId,
+			maxPlayers);
+		var transfer = await QueueInstancePortalTransferAsync(
+			player,
+			runtimePlan.Destination,
+			reenter,
+			instanceCooltimes,
+			animation,
+			staticData,
+			now);
+		return new AllocatedInstancePortalTransferResult(runtimePlan, transfer);
+	}
+
 	private void ClearReviveTargets(Player player)
 	{
 		if (_connectionRegistry == null)

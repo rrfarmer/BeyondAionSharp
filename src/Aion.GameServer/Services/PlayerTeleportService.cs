@@ -88,3 +88,7 @@ public sealed record PendingTeleportRequestResult(
 public sealed record InstancePortalTransferResult(
 	PendingTeleportRequestResult Teleport,
 	InstanceEntranceCooldownResult Cooldown);
+
+public sealed record AllocatedInstancePortalTransferResult(
+	InstancePortalRuntimePlan RuntimePlan,
+	InstancePortalTransferResult Transfer);
