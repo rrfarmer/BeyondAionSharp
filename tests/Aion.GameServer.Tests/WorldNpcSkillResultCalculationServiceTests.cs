@@ -733,6 +733,172 @@ public sealed class WorldNpcSkillResultCalculationServiceTests
 		Assert.False(result.NpcAiDamageModifier.AttackedNpcHookMissing);
 	}
 
+	[Fact]
+	public void Calculate_ShieldObserverSkipsWhenIgnoreShield()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 100,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: true,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				ShieldObserver: new WorldNpcSkillShieldObserverOptions(
+					Outputs: new[]
+					{
+						new WorldNpcSkillShieldObserverOutput(WorldNpcSkillShieldType.Normal, FinalDamage: 25),
+					}))));
+
+		Assert.Equal(100, result.FinalDamage);
+		Assert.False(result.AttackResult.ShieldChecked);
+		Assert.False(result.ShieldObserver.WasChecked);
+		Assert.False(result.ShieldObserver.Applied);
+		Assert.True(result.ShieldObserver.SkippedByIgnoreShield);
+		Assert.Equal(100, result.EffectReserved.Value);
+	}
+
+	[Fact]
+	public void Calculate_ShieldObserverAppliesMpShieldOutput()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 100,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				ShieldObserver: new WorldNpcSkillShieldObserverOptions(
+					Outputs: new[]
+					{
+						new WorldNpcSkillShieldObserverOutput(
+							WorldNpcSkillShieldType.MpShield,
+							FinalDamage: 70,
+							MpAbsorbed: 12,
+							MpShieldSkillId: 7101,
+							LaunchSubEffect: false),
+					}))));
+
+		Assert.Equal(70, result.FinalDamage);
+		Assert.Equal(70, result.AttackResult.Damage);
+		Assert.Equal(70, result.EffectReserved.Value);
+		Assert.True(result.ShieldObserver.WasChecked);
+		Assert.True(result.ShieldObserver.Applied);
+		Assert.Equal(16, result.AttackResult.ShieldType);
+		Assert.Equal(12, result.AttackResult.MpAbsorbed);
+		Assert.Equal(7101, result.AttackResult.MpShieldSkillId);
+		Assert.False(result.AttackResult.LaunchSubEffect);
+		Assert.Equal(16, WorldNpcSkillShieldType.MpShield.GetJavaId());
+	}
+
+	[Fact]
+	public void Calculate_ShieldObserverOrsShieldTypesAndRecordsReflectProtectFields()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 100,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				ShieldObserver: new WorldNpcSkillShieldObserverOptions(
+					Outputs: new[]
+					{
+						new WorldNpcSkillShieldObserverOutput(WorldNpcSkillShieldType.Normal, FinalDamage: 85),
+						new WorldNpcSkillShieldObserverOutput(
+							WorldNpcSkillShieldType.Reflector,
+							ReflectedDamage: 22,
+							ReflectedSkillId: 3001,
+							SchedulesReflectedAttack: true),
+						new WorldNpcSkillShieldObserverOutput(
+							WorldNpcSkillShieldType.Protect,
+							FinalDamage: 50,
+							ProtectedSkillId: 4100,
+							ProtectedDamage: 35,
+							ProtectorId: 77,
+							LaunchSubEffect: false),
+					}))));
+
+		Assert.Equal(50, result.FinalDamage);
+		Assert.Equal(11, result.AttackResult.ShieldType);
+		Assert.Equal(22, result.AttackResult.ReflectedDamage);
+		Assert.Equal(3001, result.AttackResult.ReflectedSkillId);
+		Assert.Equal(4100, result.AttackResult.ProtectedSkillId);
+		Assert.Equal(35, result.AttackResult.ProtectedDamage);
+		Assert.Equal(77, result.AttackResult.ProtectorId);
+		Assert.False(result.AttackResult.LaunchSubEffect);
+		Assert.Collection(
+			result.ShieldObserver.Outputs,
+			output => Assert.Equal(85, output.DamageAfter),
+			output =>
+			{
+				Assert.Equal(85, output.DamageBefore);
+				Assert.True(output.SchedulesReflectedAttack);
+			},
+			output =>
+			{
+				Assert.Equal(50, output.DamageAfter);
+				Assert.Equal(11, output.ShieldTypeAfter);
+			});
+	}
+
+	[Fact]
+	public void Calculate_ShieldObserverSkipsCounterStatusesLikeJava()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 100,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				AttackStatus: WorldNpcSkillAttackStatus.Resist,
+				ShieldObserver: new WorldNpcSkillShieldObserverOptions(
+					Outputs: new[]
+					{
+						new WorldNpcSkillShieldObserverOutput(WorldNpcSkillShieldType.Normal, FinalDamage: 0),
+					}))));
+
+		Assert.Equal(100, result.FinalDamage);
+		Assert.True(result.ShieldObserver.WasChecked);
+		Assert.False(result.ShieldObserver.Applied);
+		Assert.True(result.ShieldObserver.SkippedByCounterStatus);
+		Assert.Empty(result.ShieldObserver.Outputs);
+	}
+
+	[Fact]
+	public void Calculate_ShieldObserverRecordsUnknownObserverOutputs()
+	{
+		var service = new WorldNpcSkillResultCalculationService();
+
+		var result = service.Calculate(new WorldNpcSkillResultCalculationRequest(
+			InputDamage: 100,
+			ShouldApplyAttackerMovementModifier: true,
+			IgnoreShield: false,
+			SendResult: true,
+			ShouldIncreaseByOneTimeBoost: true,
+			UsesTemplateDamage: false,
+			Options: new WorldNpcSkillResultCalculationOptions(
+				ShieldObserver: new WorldNpcSkillShieldObserverOptions(ObserverOutputsKnown: false))));
+
+		Assert.Equal(100, result.FinalDamage);
+		Assert.True(result.ShieldObserver.WasChecked);
+		Assert.False(result.ShieldObserver.Applied);
+		Assert.True(result.ShieldObserver.HasUnresolvedInputs);
+		Assert.True(result.ShieldObserver.ObserverOutputInputMissing);
+	}
+
 	[Theory]
 	[InlineData(WorldNpcSkillAttackStatus.Dodge, 0, true, false)]
 	[InlineData(WorldNpcSkillAttackStatus.OffHandDodge, 1, true, false)]

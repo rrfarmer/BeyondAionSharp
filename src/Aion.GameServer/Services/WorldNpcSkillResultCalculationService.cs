@@ -27,6 +27,22 @@ public sealed class WorldNpcSkillResultCalculationService
 		var finalAttackResult = npcAiDamageModifier.Applied
 			? attackResult with { Damage = npcAiDamageModifier.PrimaryFinalDamage }
 			: attackResult;
+		var shieldObserver = CalculateShieldObserver(request.IgnoreShield, options.ShieldObserver, finalAttackResult);
+		finalAttackResult = shieldObserver.Applied
+			? finalAttackResult with
+			{
+				Damage = shieldObserver.FinalDamage,
+				ShieldType = shieldObserver.ShieldType,
+				ReflectedDamage = shieldObserver.ReflectedDamage,
+				ReflectedSkillId = shieldObserver.ReflectedSkillId,
+				ProtectedSkillId = shieldObserver.ProtectedSkillId,
+				ProtectedDamage = shieldObserver.ProtectedDamage,
+				ProtectorId = shieldObserver.ProtectorId,
+				MpAbsorbed = shieldObserver.MpAbsorbed,
+				MpShieldSkillId = shieldObserver.MpShieldSkillId,
+				LaunchSubEffect = shieldObserver.LaunchSubEffect,
+			}
+			: finalAttackResult;
 		var effectReserved = new WorldNpcSkillEffectReservedResult(
 			options.EffectPosition,
 			finalAttackResult.Damage,
@@ -49,6 +65,7 @@ public sealed class WorldNpcSkillResultCalculationService
 			attackStatus,
 			damageModifier,
 			npcAiDamageModifier,
+			shieldObserver,
 			finalAttackResult,
 			additionalHits,
 			effectReserved);
@@ -492,6 +509,91 @@ public sealed class WorldNpcSkillResultCalculationService
 		return modifiedDamage;
 	}
 
+	private static WorldNpcSkillShieldObserverResult CalculateShieldObserver(
+		bool ignoreShield,
+		WorldNpcSkillShieldObserverOptions? options,
+		WorldNpcSkillAttackResult attack)
+	{
+		if (ignoreShield)
+			return WorldNpcSkillShieldObserverResult.FromIgnoreShield(attack);
+
+		if (options == null)
+			return WorldNpcSkillShieldObserverResult.NotRequested(attack);
+
+		// Java parity: controllers/ObserveController.checkShieldStatus and observer/AttackShieldObserver.checkShield.
+		var baseStatus = attack.AttackStatus.GetBaseStatus();
+		if (baseStatus is WorldNpcSkillAttackStatus.Dodge or WorldNpcSkillAttackStatus.Resist)
+			return WorldNpcSkillShieldObserverResult.FromCounterStatus(attack);
+
+		if (!options.ObserverOutputsKnown)
+			return WorldNpcSkillShieldObserverResult.Unresolved(attack);
+
+		var outputs = options.Outputs ?? Array.Empty<WorldNpcSkillShieldObserverOutput>();
+		if (outputs.Count == 0)
+			return WorldNpcSkillShieldObserverResult.CheckedWithoutMutation(attack);
+
+		var damage = attack.Damage;
+		var shieldType = attack.ShieldType;
+		var reflectedDamage = attack.ReflectedDamage;
+		var reflectedSkillId = attack.ReflectedSkillId;
+		var protectedSkillId = attack.ProtectedSkillId;
+		var protectedDamage = attack.ProtectedDamage;
+		var protectorId = attack.ProtectorId;
+		var mpAbsorbed = attack.MpAbsorbed;
+		var mpShieldSkillId = attack.MpShieldSkillId;
+		var launchSubEffect = attack.LaunchSubEffect;
+		var outputResults = new List<WorldNpcSkillShieldObserverOutputResult>(outputs.Count);
+
+		for (var i = 0; i < outputs.Count; i++)
+		{
+			var output = outputs[i];
+			var beforeDamage = damage;
+			shieldType |= output.ShieldType.GetJavaId();
+			if (output.FinalDamage != null)
+				damage = output.FinalDamage.Value;
+			if (output.ReflectedDamage != null)
+				reflectedDamage = output.ReflectedDamage.Value;
+			if (output.ReflectedSkillId != null)
+				reflectedSkillId = output.ReflectedSkillId.Value;
+			if (output.ProtectedSkillId != null)
+				protectedSkillId = output.ProtectedSkillId.Value;
+			if (output.ProtectedDamage != null)
+				protectedDamage = output.ProtectedDamage.Value;
+			if (output.ProtectorId != null)
+				protectorId = output.ProtectorId.Value;
+			if (output.MpAbsorbed != null)
+				mpAbsorbed = output.MpAbsorbed.Value;
+			if (output.MpShieldSkillId != null)
+				mpShieldSkillId = output.MpShieldSkillId.Value;
+			if (output.LaunchSubEffect != null)
+				launchSubEffect = output.LaunchSubEffect.Value;
+
+			outputResults.Add(new WorldNpcSkillShieldObserverOutputResult(
+				i,
+				output.ShieldType,
+				beforeDamage,
+				damage,
+				shieldType,
+				output.EndsShieldEffect,
+				output.SchedulesReflectedAttack,
+				output.ForcesSkillReflection));
+		}
+
+		return WorldNpcSkillShieldObserverResult.AppliedResult(
+			attack,
+			damage,
+			shieldType,
+			reflectedDamage,
+			reflectedSkillId,
+			protectedSkillId,
+			protectedDamage,
+			protectorId,
+			mpAbsorbed,
+			mpShieldSkillId,
+			launchSubEffect,
+			outputResults);
+	}
+
 	private readonly record struct RandomMultiplierResult(float Multiplier, WorldNpcSkillResultCalculationStatus Status);
 }
 
@@ -513,6 +615,7 @@ public sealed record WorldNpcSkillResultCalculationOptions(
 	WorldNpcSkillDamageModifierOptions? DamageModifier = null,
 	WorldNpcSkillAdditionalHitOptions? AdditionalHits = null,
 	WorldNpcSkillNpcAiDamageModifierOptions? NpcAiDamageModifier = null,
+	WorldNpcSkillShieldObserverOptions? ShieldObserver = null,
 	WorldNpcSkillAttackStatus AttackStatus = WorldNpcSkillAttackStatus.NormalHit,
 	WorldNpcSkillHitType HitType = WorldNpcSkillHitType.PhysicalHit,
 	int EffectPosition = 0,
@@ -538,6 +641,7 @@ public sealed record WorldNpcSkillResultCalculationResult(
 	WorldNpcSkillAttackStatusCalculationResult AttackStatusCalculation,
 	WorldNpcSkillDamageModifierResult DamageModifier,
 	WorldNpcSkillNpcAiDamageModifierResult NpcAiDamageModifier,
+	WorldNpcSkillShieldObserverResult ShieldObserver,
 	WorldNpcSkillAttackResult AttackResult,
 	WorldNpcSkillAdditionalHitResult AdditionalHits,
 	WorldNpcSkillEffectReservedResult EffectReserved);
@@ -877,6 +981,189 @@ public sealed record WorldNpcSkillNpcAiDamageModifierResult(
 	}
 }
 
+public sealed record WorldNpcSkillShieldObserverOptions(
+	bool ObserverOutputsKnown = true,
+	IReadOnlyList<WorldNpcSkillShieldObserverOutput>? Outputs = null);
+
+public sealed record WorldNpcSkillShieldObserverOutput(
+	WorldNpcSkillShieldType ShieldType,
+	int? FinalDamage = null,
+	int? ReflectedDamage = null,
+	int? ReflectedSkillId = null,
+	int? ProtectedSkillId = null,
+	int? ProtectedDamage = null,
+	int? ProtectorId = null,
+	int? MpAbsorbed = null,
+	int? MpShieldSkillId = null,
+	bool? LaunchSubEffect = null,
+	bool EndsShieldEffect = false,
+	bool SchedulesReflectedAttack = false,
+	bool ForcesSkillReflection = false);
+
+public sealed record WorldNpcSkillShieldObserverOutputResult(
+	int Index,
+	WorldNpcSkillShieldType ShieldType,
+	int DamageBefore,
+	int DamageAfter,
+	int ShieldTypeAfter,
+	bool EndsShieldEffect,
+	bool SchedulesReflectedAttack,
+	bool ForcesSkillReflection);
+
+public sealed record WorldNpcSkillShieldObserverResult(
+	bool WasChecked,
+	bool WasRequested,
+	bool Applied,
+	bool SkippedByIgnoreShield,
+	bool SkippedByCounterStatus,
+	bool ObserverOutputInputMissing,
+	int OriginalDamage,
+	int FinalDamage,
+	int ShieldType,
+	int ReflectedDamage,
+	int ReflectedSkillId,
+	int ProtectedSkillId,
+	int ProtectedDamage,
+	int ProtectorId,
+	int MpAbsorbed,
+	int MpShieldSkillId,
+	bool LaunchSubEffect,
+	IReadOnlyList<WorldNpcSkillShieldObserverOutputResult> Outputs)
+{
+	public bool HasUnresolvedInputs => ObserverOutputInputMissing;
+
+	public static WorldNpcSkillShieldObserverResult NotRequested(WorldNpcSkillAttackResult attack)
+	{
+		return Create(
+			WasChecked: true,
+			WasRequested: false,
+			Applied: false,
+			SkippedByIgnoreShield: false,
+			SkippedByCounterStatus: false,
+			ObserverOutputInputMissing: false,
+			attack,
+			Outputs: Array.Empty<WorldNpcSkillShieldObserverOutputResult>());
+	}
+
+	public static WorldNpcSkillShieldObserverResult FromIgnoreShield(WorldNpcSkillAttackResult attack)
+	{
+		return Create(
+			WasChecked: false,
+			WasRequested: false,
+			Applied: false,
+			SkippedByIgnoreShield: true,
+			SkippedByCounterStatus: false,
+			ObserverOutputInputMissing: false,
+			attack,
+			Outputs: Array.Empty<WorldNpcSkillShieldObserverOutputResult>());
+	}
+
+	public static WorldNpcSkillShieldObserverResult FromCounterStatus(WorldNpcSkillAttackResult attack)
+	{
+		return Create(
+			WasChecked: true,
+			WasRequested: true,
+			Applied: false,
+			SkippedByIgnoreShield: false,
+			SkippedByCounterStatus: true,
+			ObserverOutputInputMissing: false,
+			attack,
+			Outputs: Array.Empty<WorldNpcSkillShieldObserverOutputResult>());
+	}
+
+	public static WorldNpcSkillShieldObserverResult Unresolved(WorldNpcSkillAttackResult attack)
+	{
+		return Create(
+			WasChecked: true,
+			WasRequested: true,
+			Applied: false,
+			SkippedByIgnoreShield: false,
+			SkippedByCounterStatus: false,
+			ObserverOutputInputMissing: true,
+			attack,
+			Outputs: Array.Empty<WorldNpcSkillShieldObserverOutputResult>());
+	}
+
+	public static WorldNpcSkillShieldObserverResult CheckedWithoutMutation(WorldNpcSkillAttackResult attack)
+	{
+		return Create(
+			WasChecked: true,
+			WasRequested: true,
+			Applied: false,
+			SkippedByIgnoreShield: false,
+			SkippedByCounterStatus: false,
+			ObserverOutputInputMissing: false,
+			attack,
+			Outputs: Array.Empty<WorldNpcSkillShieldObserverOutputResult>());
+	}
+
+	public static WorldNpcSkillShieldObserverResult AppliedResult(
+		WorldNpcSkillAttackResult attack,
+		int finalDamage,
+		int shieldType,
+		int reflectedDamage,
+		int reflectedSkillId,
+		int protectedSkillId,
+		int protectedDamage,
+		int protectorId,
+		int mpAbsorbed,
+		int mpShieldSkillId,
+		bool launchSubEffect,
+		IReadOnlyList<WorldNpcSkillShieldObserverOutputResult> outputs)
+	{
+		return new WorldNpcSkillShieldObserverResult(
+			WasChecked: true,
+			WasRequested: true,
+			Applied: true,
+			SkippedByIgnoreShield: false,
+			SkippedByCounterStatus: false,
+			ObserverOutputInputMissing: false,
+			OriginalDamage: attack.Damage,
+			FinalDamage: finalDamage,
+			ShieldType: shieldType,
+			ReflectedDamage: reflectedDamage,
+			ReflectedSkillId: reflectedSkillId,
+			ProtectedSkillId: protectedSkillId,
+			ProtectedDamage: protectedDamage,
+			ProtectorId: protectorId,
+			MpAbsorbed: mpAbsorbed,
+			MpShieldSkillId: mpShieldSkillId,
+			LaunchSubEffect: launchSubEffect,
+			Outputs: outputs);
+	}
+
+	private static WorldNpcSkillShieldObserverResult Create(
+		bool WasChecked,
+		bool WasRequested,
+		bool Applied,
+		bool SkippedByIgnoreShield,
+		bool SkippedByCounterStatus,
+		bool ObserverOutputInputMissing,
+		WorldNpcSkillAttackResult attack,
+		IReadOnlyList<WorldNpcSkillShieldObserverOutputResult> Outputs)
+	{
+		return new WorldNpcSkillShieldObserverResult(
+			WasChecked,
+			WasRequested,
+			Applied,
+			SkippedByIgnoreShield,
+			SkippedByCounterStatus,
+			ObserverOutputInputMissing,
+			OriginalDamage: attack.Damage,
+			FinalDamage: attack.Damage,
+			ShieldType: attack.ShieldType,
+			ReflectedDamage: attack.ReflectedDamage,
+			ReflectedSkillId: attack.ReflectedSkillId,
+			ProtectedSkillId: attack.ProtectedSkillId,
+			ProtectedDamage: attack.ProtectedDamage,
+			ProtectorId: attack.ProtectorId,
+			MpAbsorbed: attack.MpAbsorbed,
+			MpShieldSkillId: attack.MpShieldSkillId,
+			LaunchSubEffect: attack.LaunchSubEffect,
+			Outputs: Outputs);
+	}
+}
+
 public sealed record WorldNpcSkillDamageModifierResult(
 	bool WasRequested,
 	bool Applied,
@@ -1062,6 +1349,26 @@ public enum WorldNpcSkillDamageModifierElement
 {
 	Physical,
 	Magical,
+}
+
+public enum WorldNpcSkillShieldType
+{
+	Convert = 0,
+	Reflector = 1,
+	Normal = 2,
+	Unknown = 4,
+	Protect = 8,
+	MpShield = 16,
+	SkillReflector = 32,
+}
+
+public static class WorldNpcSkillShieldTypeExtensions
+{
+	public static int GetJavaId(this WorldNpcSkillShieldType shieldType)
+	{
+		// Java parity: skillengine/model/ShieldType.getId.
+		return (int)shieldType;
+	}
 }
 
 public enum WorldNpcSkillWeaponGroup
