@@ -330,6 +330,7 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 			destination,
 			TeleportAnimation.FadeOutBeam,
 			dataManager.StaticData);
+		Assert.IsType<SmTeleportLoc>(Assert.Single(pair.SentPackets));
 		var completed = await pair.Connection.HandleTeleportAnimationDoneAsync(player);
 
 		Assert.NotNull(completed);
@@ -337,11 +338,21 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 		Assert.Equal(destination, player.Position);
 		Assert.Equal(ArrivalAnimation.FadeInBeam, player.PortAnimation);
 		Assert.Equal(1, zoneCounterService.GetCounters(player.ObjectId).PvpZoneCount);
+		Assert.Collection(
+			pair.SentPackets.Skip(1),
+			packet => Assert.IsType<SmChannelInfo>(packet),
+			packet => Assert.IsType<SmPlayerSpawn>(packet));
 
 		await pair.Connection.HandleLevelReadyAsync(player);
 
 		Assert.Equal(ArrivalAnimation.None, player.PortAnimation);
 		Assert.Equal(1, zoneCounterService.GetCounters(player.ObjectId).PvpZoneCount);
+		Assert.Collection(
+			pair.SentPackets.Skip(3),
+			packet => Assert.IsType<SmPlayerInfo>(packet),
+			packet => Assert.IsType<SmAccountProperties>(packet),
+			packet => Assert.IsType<SmMotion>(packet),
+			packet => Assert.IsType<SmCubeUpdate>(packet));
 	}
 
 	[Fact]
@@ -800,13 +811,19 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 	{
 		private readonly TcpClient _client;
 
-		private TestConnectionPair(TcpClient client, GameServerConnection connection)
+		private TestConnectionPair(
+			TcpClient client,
+			GameServerConnection connection,
+			List<GameServerPacket> sentPackets)
 		{
 			_client = client;
 			Connection = connection;
+			SentPackets = sentPackets;
 		}
 
 		public GameServerConnection Connection { get; }
+
+		public List<GameServerPacket> SentPackets { get; }
 
 		public static async Task<TestConnectionPair> CreateAsync(
 			IGameClientConnectionRegistry? registry,
@@ -827,6 +844,7 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 				var serverClient = await acceptTask;
 				var crypt = new GameCrypt(() => 0x01020304);
 				crypt.EnableKey();
+				var sentPackets = new List<GameServerPacket>();
 				var connection = new GameServerConnection(
 					NullLogger.Instance,
 					serverClient,
@@ -839,8 +857,9 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 					world: world,
 					playerEnterWorldService: playerEnterWorldService,
 					creaturePvpZoneCounterService: creaturePvpZoneCounterService,
+					sentPacketObserver: sentPackets.Add,
 					crypt: crypt);
-				return new TestConnectionPair(client, connection);
+				return new TestConnectionPair(client, connection, sentPackets);
 			}
 			finally
 			{

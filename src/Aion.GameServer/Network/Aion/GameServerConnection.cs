@@ -64,6 +64,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly GameWorld? _world;
 	private readonly ThreadPoolManager? _threadPoolManager;
 	private readonly IHouseDoorStateService? _houseDoorStateService;
+	private readonly Action<GameServerPacket>? _sentPacketObserver;
 	private readonly RiftPortalInteractionService? _riftPortalInteractionService;
 	private readonly WorldNpcLootService? _worldNpcLootService;
 	private readonly Func<Player, int, bool>? _isKnownNpc;
@@ -112,6 +113,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		GameWorld? world = null,
 		ThreadPoolManager? threadPoolManager = null,
 		IHouseDoorStateService? houseDoorStateService = null,
+		Action<GameServerPacket>? sentPacketObserver = null,
 		RiftService? riftService = null,
 		RiftPortalDialogService? riftPortalDialogService = null,
 		RiftPortalUseService? riftPortalUseService = null,
@@ -147,6 +149,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_world = world;
 		_threadPoolManager = threadPoolManager;
 		_houseDoorStateService = houseDoorStateService;
+		_sentPacketObserver = sentPacketObserver;
 		_worldNpcLootService = worldNpcLootService;
 		_isKnownNpc = isKnownNpc;
 		_creaturePvpZoneCounterService = creaturePvpZoneCounterService;
@@ -184,6 +187,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			if (!_isConnected)
 				return;
 
+			_sentPacketObserver?.Invoke(packet);
 			var frame = packet.SerializeFrame(_crypt);
 			await WriteAsync(frame, 0, frame.Length);
 		}
