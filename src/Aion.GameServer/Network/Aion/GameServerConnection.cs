@@ -4764,10 +4764,45 @@ public sealed class GameServerConnection : BaseClientConnection
 		PlayerReviveRestoreService.ApplyKiskReviveRestore(player, resourceMaxStats.MaxHp, resourceMaxStats.MaxMp);
 		await BroadcastEmotionAsync(player, new SmEmotion(player, EmotionType.Resurrect));
 		await UpdatePlayerStatsAndSpeedVisuallyAsync(player);
+		var teleport = PlayerTeleportService.TeleportToKiskPosition(player, result.KiskPosition.Value);
+		await SendKiskReviveTeleportPacketsAsync(player, teleport, staticData);
 
 		// Full Java PlayerReviveService.revive + TeleportService.teleportTo side effects remain queued:
 		// DP/soul-sickness handling, target/aggro cleanup, group/alliance movement updates,
-		// flying-before-death state restoration, and teleport packet/state synchronization need the broader revive/teleport model.
+		// flying-before-death state restoration, full world despawn/spawn ownership, protection tasks,
+		// instance/legion leave callbacks, and exact socket ordering need the broader revive/teleport model.
+	}
+
+	private async Task SendKiskReviveTeleportPacketsAsync(Player player, PlayerTeleportResult teleport, StaticData? staticData)
+	{
+		// Java parity: TeleportService.teleportTo(kisk position) uses TeleportAnimation.NONE; no SM_TELEPORT_LOC fade-out request is sent.
+		if (_connectionRegistry != null)
+			await _connectionRegistry.BroadcastToVisiblePlayersAsync(teleport.PreviousPosition, player.ObjectId, new SmDelete(player.ObjectId));
+
+		await SendPacketAsync(new SmChannelInfo(player.Position, staticData?.WorldMaps ?? Array.Empty<WorldMapSummary>()));
+		await SendPacketAsync(new SmPlayerSpawn(player));
+
+		if (teleport.UsesSameWorldSpawnPath)
+		{
+			// Java parity: TeleportService.spawnOnSameMap sends player info, stats, and active motion after SM_PLAYER_SPAWN.
+			await SendPacketAsync(new SmPlayerInfo(player, staticData?.PlayerExperienceTable));
+			await SendPacketAsync(CreateStatsInfoPacket(player, staticData));
+			await SendPacketAsync(new SmMotion(player.ObjectId, player.Motions));
+		}
+
+		if (_connectionRegistry == null)
+			return;
+
+		await _connectionRegistry.BroadcastToVisiblePlayersAsync(
+			player.Position,
+			player.ObjectId,
+			new SmPlayerInfo(player, staticData?.PlayerExperienceTable));
+		await _connectionRegistry.BroadcastToVisiblePlayersAsync(
+			player.Position,
+			player.ObjectId,
+			new SmMotion(player.ObjectId, player.Motions));
+		await RefreshHousingVisibilityForPlayerAsync(player);
+		await RefreshNpcVisibilityForPlayerAsync(player);
 	}
 
 	private async Task ApplyRemovedKiskCleanupAsync(PlayerKiskDespawnResult result)
