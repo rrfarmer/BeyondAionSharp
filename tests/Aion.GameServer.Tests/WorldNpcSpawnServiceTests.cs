@@ -461,6 +461,69 @@ public sealed class WorldNpcSpawnServiceTests
 	}
 
 	[Fact]
+	public async Task TrySwapInactiveWalkerVariant_RevalidatesCreaturePvpZoneCountersForActivatedAndParkedVariants()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-walker-swap-pvp-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextWithVersionedWalkerDataAsync(tempPath, includePvpZone: true);
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			var zoneCounterService = new CreaturePvpZoneCounterService();
+			var walkerPlans = new WorldNpcWalkerSpawnPlanCacheService(
+				new WorldNpcWalkerFormationOrganizerService(),
+				new WorldNpcWalkerVariantSelectionService(count => count - 1));
+			var service = new WorldNpcSpawnService(
+				context,
+				world,
+				new IDFactory(),
+				gameTimeService: null,
+				threadPoolManager: null,
+				connectionRegistry: null,
+				staticPlaceables: null,
+				walkerSpawnPlans: walkerPlans,
+				walkerPlacementApplication: new WorldNpcWalkerPlacementApplicationService(),
+				NullLogger<WorldNpcSpawnService>.Instance,
+				creaturePvpZoneCounterService: zoneCounterService);
+			var spawns = new NpcSpawnTable(
+			[
+				CreateSpawn(210010000, 203081, x: 1, y: 10, walkerId: "route-v1", walkerIndex: 0),
+				CreateSpawn(210010000, 203082, x: 2, y: 20, walkerId: "route-v2", walkerIndex: 0),
+			]);
+			var templates = new NpcTemplateTable([CreateTemplate(203081), CreateTemplate(203082)]);
+			var zones = context.DataManager!.StaticData.CreaturePvpZones.GetZonesByMapId(210010000);
+			Assert.Contains(zones, zone => zone.ZoneId == "PVP_WALKER_VARIANTS_210010000"
+				&& zone.Contains(new global::Aion.GameServer.World.WorldPosition(210010000, 1, 10, 0, 0))
+				&& zone.Contains(new global::Aion.GameServer.World.WorldPosition(210010000, 2, 20, 0, 0)));
+
+			service.SpawnWorldNpcs(spawns, templates, [210010000]);
+
+			Assert.False(world.TryGetObject(1, out _));
+			Assert.True(world.TryGetObject(2, out _));
+			Assert.Equal(CreaturePvpZoneCounters.Empty, zoneCounterService.GetCounters(1));
+			Assert.Equal(1, zoneCounterService.GetCounters(2).PvpZoneCount);
+
+			var swapped = service.TrySwapInactiveWalkerVariant(activeObjectId: 2, inactiveObjectId: 1);
+
+			Assert.True(swapped);
+			Assert.True(world.TryGetObject(1, out _));
+			Assert.False(world.TryGetObject(2, out _));
+			Assert.Equal(1, zoneCounterService.GetCounters(1).PvpZoneCount);
+			Assert.Equal(CreaturePvpZoneCounters.Empty, zoneCounterService.GetCounters(2));
+		}
+		finally
+		{
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
+	[Fact]
 	public async Task TrySwapInactiveWalkerFormationVariant_SpawnsParkedFormationAndParksCurrentFormation()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-walker-formation-swap-" + Guid.NewGuid().ToString("N"));
@@ -1319,17 +1382,34 @@ public sealed class WorldNpcSpawnServiceTests
 		return context;
 	}
 
-	private static async Task<GameServerRuntimeContext> CreateRuntimeContextWithVersionedWalkerDataAsync(string tempPath)
+	private static async Task<GameServerRuntimeContext> CreateRuntimeContextWithVersionedWalkerDataAsync(
+		string tempPath,
+		bool includePvpZone = false)
 	{
 		var staticDataFile = Path.Combine(tempPath, "static_data.xml");
 		var cacheFile = Path.Combine(tempPath, "cache", "static_data.xml");
 		var schemaFile = Path.Combine(tempPath, "static_data.xsd");
 		Directory.CreateDirectory(Path.GetDirectoryName(cacheFile)!);
+		var pvpZoneXml = includePvpZone
+			? """
+				<zones>
+					<zone name="PVP_WALKER_VARIANTS_210010000" zone_type="PVP" area_type="POLYGON" mapid="210010000">
+						<points bottom="-10" top="10">
+							<point x="0" y="9" />
+							<point x="3" y="9" />
+							<point x="3" y="21" />
+							<point x="0" y="21" />
+						</points>
+					</zone>
+				</zones>
+			"""
+			: string.Empty;
 		File.WriteAllText(
 			staticDataFile,
-			"""
+			$$"""
 			<?xml version="1.0" encoding="UTF-8"?>
 			<static_data>
+			{{pvpZoneXml}}
 				<npc_walker>
 					<walker_template route_id="route-v1" formation="POINT">
 						<routestep x="1" y="0" z="0" />

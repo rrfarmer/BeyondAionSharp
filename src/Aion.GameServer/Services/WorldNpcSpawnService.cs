@@ -172,6 +172,8 @@ public sealed class WorldNpcSpawnService : GameEngine
 		}
 
 		_inactiveWalkerVariants[activeObjectId] = activeNpc;
+		ClearNpcCreaturePvpZones(activeObjectId);
+		RevalidateNpcCreaturePvpZones(spawnedInactiveNpc);
 		_staticPlaceables?.SpawnPlaceableObject(spawnedInactiveNpc.Position.WorldId, spawnedInactiveNpc.StaticId);
 		_staticPlaceables?.DespawnPlaceableObject(activeNpc.Position.WorldId, activeNpc.StaticId);
 		return true;
@@ -258,6 +260,10 @@ public sealed class WorldNpcSpawnService : GameEngine
 
 		foreach (var (objectId, activeNpc) in removedActiveNpcs)
 			_inactiveWalkerVariants[objectId] = activeNpc;
+		foreach (var (objectId, _) in removedActiveNpcs)
+			ClearNpcCreaturePvpZones(objectId);
+		foreach (var (_, inactiveNpc) in spawnedInactiveNpcs)
+			RevalidateNpcCreaturePvpZones(inactiveNpc);
 		foreach (var (_, inactiveNpc) in spawnedInactiveNpcs)
 			_staticPlaceables?.SpawnPlaceableObject(inactiveNpc.Position.WorldId, inactiveNpc.StaticId);
 		foreach (var (_, activeNpc) in removedActiveNpcs)
@@ -533,10 +539,15 @@ public sealed class WorldNpcSpawnService : GameEngine
 			{
 				var result = _walkerPlacementApplication.ApplyActivePlacements(_world, plan.PlacementPlan);
 				foreach (var objectId in result.UpdatedObjectIds)
+				{
 					_inactiveWalkerVariants.TryRemove(objectId, out _);
+					RevalidateNpcCreaturePvpZones(objectId);
+				}
+
 				foreach (var inactiveNpc in result.RemovedInactiveNpcs)
 				{
 					_inactiveWalkerVariants[inactiveNpc.ObjectId] = inactiveNpc;
+					ClearNpcCreaturePvpZones(inactiveNpc.ObjectId);
 					_staticPlaceables?.DespawnPlaceableObject(inactiveNpc.Position.WorldId, inactiveNpc.StaticId);
 				}
 			}
@@ -799,6 +810,13 @@ public sealed class WorldNpcSpawnService : GameEngine
 			npc.Position,
 			staticData?.CreaturePvpZones,
 			_creaturePvpZoneCounterService);
+	}
+
+	private void RevalidateNpcCreaturePvpZones(int objectId)
+	{
+		// Java parity: spawnengine/InstanceWalkerFormations may move the selected walker variant before it starts walking.
+		if (_world.TryGetObject(objectId, out var gameObject) && gameObject is WorldNpc npc)
+			RevalidateNpcCreaturePvpZones(npc);
 	}
 
 	private void ClearNpcCreaturePvpZones(int objectId)
