@@ -30,7 +30,13 @@ public sealed class PlayerSummonCastSpellService
 			return PlayerSummonCastSpellResult.TargetMismatch(packet.SummonObjectId, packet.TargetObjectId, order);
 
 		var skillMismatch = order.SkillId != packet.SkillId || order.SkillLevel != packet.SkillLevel;
-		return PlayerSummonCastSpellResult.Executed(packet.SummonObjectId, packet.TargetObjectId, order, skillMismatch);
+		return PlayerSummonCastSpellResult.Executed(
+			packet.SummonObjectId,
+			packet.TargetObjectId,
+			order,
+			skillMismatch,
+			packet.SkillId,
+			packet.SkillLevel);
 	}
 
 	private static PlayerSummonCastSpellResult? ValidateTarget(
@@ -58,6 +64,7 @@ public sealed record PlayerSummonCastSpellResult(
 	PlayerPetSkillOrder? ExecutedOrder = null,
 	bool SkillMismatch = false,
 	PlayerSummonCastSpellAudit? Audit = null,
+	PlayerSummonCastSpellWarning? Warning = null,
 	PlayerSummonOrMercenaryKind ActorKind = PlayerSummonOrMercenaryKind.PetSummon)
 {
 	public static PlayerSummonCastSpellResult PetRequired(int summonObjectId, PlayerSummonOrMercenaryKind actorKind)
@@ -124,14 +131,20 @@ public sealed record PlayerSummonCastSpellResult(
 		int summonObjectId,
 		int targetObjectId,
 		PlayerPetSkillOrder order,
-		bool skillMismatch)
+		bool skillMismatch,
+		int packetSkillId,
+		int packetSkillLevel)
 	{
+		var warning = skillMismatch
+			? PlayerSummonCastSpellWarning.SkillMismatch(packetSkillId, packetSkillLevel, order.SkillId, order.SkillLevel)
+			: null;
 		return new PlayerSummonCastSpellResult(
 			PlayerSummonCastSpellStatus.Executed,
 			summonObjectId,
 			targetObjectId,
 			order,
-			skillMismatch);
+			skillMismatch,
+			Warning: warning);
 	}
 }
 
@@ -154,6 +167,34 @@ public sealed record PlayerSummonCastSpellAudit(
 public enum PlayerSummonCastSpellAuditKind
 {
 	WrongTarget,
+}
+
+public sealed record PlayerSummonCastSpellWarning(
+	PlayerSummonCastSpellWarningKind Kind,
+	int PacketSkillId,
+	int PacketSkillLevel,
+	int QueuedSkillId,
+	int QueuedSkillLevel)
+{
+	public static PlayerSummonCastSpellWarning SkillMismatch(
+		int packetSkillId,
+		int packetSkillLevel,
+		int queuedSkillId,
+		int queuedSkillLevel)
+	{
+		// Java parity: CM_SUMMON_CASTSPELL logs when packet skill id/level differ from the queued SkillOrder.
+		return new PlayerSummonCastSpellWarning(
+			PlayerSummonCastSpellWarningKind.SkillMismatch,
+			packetSkillId,
+			packetSkillLevel,
+			queuedSkillId,
+			queuedSkillLevel);
+	}
+}
+
+public enum PlayerSummonCastSpellWarningKind
+{
+	SkillMismatch,
 }
 
 public sealed record PlayerSummonCastSpellConnectionResult(

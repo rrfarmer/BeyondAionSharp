@@ -20,6 +20,7 @@ public class PlayerSummonCastSpellServiceTests
 
 		Assert.Equal(PlayerSummonCastSpellStatus.Executed, result.Status);
 		Assert.False(result.SkillMismatch);
+		Assert.Null(result.Warning);
 		var order = Assert.IsType<PlayerPetSkillOrder>(result.ExecutedOrder);
 		Assert.Equal(22107, order.SkillId);
 		Assert.Equal(1, order.SkillLevel);
@@ -43,6 +44,12 @@ public class PlayerSummonCastSpellServiceTests
 		Assert.True(result.SkillMismatch);
 		Assert.Equal(22107, result.ExecutedOrder?.SkillId);
 		Assert.Equal(1, result.ExecutedOrder?.SkillLevel);
+		var warning = Assert.IsType<PlayerSummonCastSpellWarning>(result.Warning);
+		Assert.Equal(PlayerSummonCastSpellWarningKind.SkillMismatch, warning.Kind);
+		Assert.Equal(9999, warning.PacketSkillId);
+		Assert.Equal(3, warning.PacketSkillLevel);
+		Assert.Equal(22107, warning.QueuedSkillId);
+		Assert.Equal(1, warning.QueuedSkillLevel);
 		Assert.Empty(player.PetSkillOrders);
 	}
 
@@ -59,6 +66,7 @@ public class PlayerSummonCastSpellServiceTests
 		Assert.Equal(PlayerSummonCastSpellStatus.TargetMismatch, result.Status);
 		Assert.Equal(7002, result.TargetObjectId);
 		Assert.Equal(7001, result.ExecutedOrder?.TargetObjectId);
+		Assert.Null(result.Warning);
 		Assert.Empty(player.PetSkillOrders);
 	}
 
