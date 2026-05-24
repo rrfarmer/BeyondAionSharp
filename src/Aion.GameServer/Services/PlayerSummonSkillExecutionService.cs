@@ -256,6 +256,40 @@ public sealed class PlayerSummonSkillExecutionService
 			lastTimeUsedMilliseconds);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillCandidate ProjectMercenaryNpcSkillCandidate(
+		PlayerSummonKnownObjectNpcSkillCandidateMetadata candidate,
+		int hpPercentage,
+		long elapsedFightTimeMilliseconds,
+		long currentTimeMilliseconds,
+		bool ownerExists = true,
+		bool ownerIsDead = false,
+		bool ownerIsAboutToDie = false)
+	{
+		// Java parity: adapts NpcSkillTemplateEntry template/lastTimeUsed state into the represented chooseNextSkill candidate.
+		var projection = ProjectMercenaryNpcSkillTemplate(
+			candidate.Template,
+			candidate.LastTimeUsedMilliseconds);
+		var entryTimingReadiness = EvaluateMercenaryNpcSkillEntryReadiness(
+			projection.EntryTiming,
+			hpPercentage,
+			elapsedFightTimeMilliseconds,
+			currentTimeMilliseconds,
+			candidate.ChanceReady);
+		var entryConditionReadiness = EvaluateMercenaryNpcSkillConditionReadiness(
+			projection.ConditionTemplate,
+			candidate.ConditionTarget,
+			ownerExists,
+			ownerIsDead,
+			ownerIsAboutToDie);
+
+		return new PlayerSummonKnownObjectNpcSkillCandidate(
+			candidate.Position,
+			projection,
+			entryTimingReadiness,
+			entryConditionReadiness,
+			candidate.TargetRangeReadiness);
+	}
+
 	public PlayerSummonKnownObjectSkillTargetMode ResolveMercenaryNpcSkillTargetMode(PlayerSummonKnownObjectNpcSkillTargetAttribute target)
 	{
 		return target switch
@@ -1453,6 +1487,14 @@ public sealed record PlayerSummonKnownObjectNpcSkillTemplateProjection(
 	int ChainId,
 	int MaxChainTimeMilliseconds,
 	bool IsPostSpawn);
+
+public sealed record PlayerSummonKnownObjectNpcSkillCandidateMetadata(
+	int Position,
+	PlayerSummonKnownObjectNpcSkillTemplateMetadata Template,
+	long LastTimeUsedMilliseconds = 0,
+	bool ChanceReady = true,
+	PlayerSummonKnownObjectNpcSkillConditionTarget? ConditionTarget = null,
+	PlayerSummonKnownObjectTargetRangeReadiness? TargetRangeReadiness = null);
 
 public sealed record PlayerSummonKnownObjectNpcSkillCandidate(
 	int Position,

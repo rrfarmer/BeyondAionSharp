@@ -73,6 +73,73 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void ProjectMercenaryNpcSkillCandidate_AdaptsStaticTemplateEntryIntoSelectableCandidate()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var knownObject = new PlayerSummonKnownObject(
+			ObjectId: 8008,
+			Kind: PlayerSummonKnownObjectKind.Creature,
+			CreatorObjectId: 1,
+			NpcTemplateId: 833288,
+			NpcTemplateType: PlayerSummonKnownNpcTemplateType.Mercenary);
+		var condition = new PlayerSummonKnownObjectNpcSkillConditionMetadata(
+			PlayerSummonKnownObjectNpcSkillCondition.TargetIsInRange,
+			RangeMeters: 12);
+		var target = service.ProjectMercenaryNpcSkillConditionTarget(
+			PlayerSummonKnownObjectNpcSkillConditionTargetKind.Npc,
+			condition,
+			distanceMeters: 10);
+		var targetRangeReadiness = service.EvaluateMercenaryTargetRange(
+			knownObject,
+			PlayerSummonKnownObjectSkillTargetMode.CreatureTarget,
+			hasCreatureTarget: true,
+			isInRange: true);
+		var template = new PlayerSummonKnownObjectNpcSkillTemplateMetadata(
+			Priority: 9,
+			MinHpPercentage: 30,
+			MaxHpPercentage: 80,
+			MinTimeMilliseconds: 1000,
+			MaxTimeMilliseconds: 5000,
+			CooldownMilliseconds: 4000,
+			ConditionTemplate: condition,
+			Target: PlayerSummonKnownObjectNpcSkillTargetAttribute.Random);
+		var blockedTemplate = template with { Priority = 20 };
+
+		var blockedCandidate = service.ProjectMercenaryNpcSkillCandidate(
+			new PlayerSummonKnownObjectNpcSkillCandidateMetadata(
+				Position: 0,
+				Template: blockedTemplate,
+				LastTimeUsedMilliseconds: 3000,
+				ConditionTarget: target),
+			hpPercentage: 50,
+			elapsedFightTimeMilliseconds: 2500,
+			currentTimeMilliseconds: 6000);
+		var candidate = service.ProjectMercenaryNpcSkillCandidate(
+			new PlayerSummonKnownObjectNpcSkillCandidateMetadata(
+				Position: 1,
+				Template: template,
+				LastTimeUsedMilliseconds: 1000,
+				ConditionTarget: target,
+				TargetRangeReadiness: targetRangeReadiness),
+			hpPercentage: 50,
+			elapsedFightTimeMilliseconds: 2500,
+			currentTimeMilliseconds: 6000);
+		var selected = service.SelectMercenaryNpcSkillCandidate([blockedCandidate, candidate]);
+
+		Assert.Equal(1, candidate.Position);
+		Assert.Equal(9, candidate.Projection.Priority);
+		Assert.Equal(PlayerSummonKnownObjectSkillTargetMode.CreatureTarget, candidate.Projection.TargetMode);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEntryReadinessStatus.Ready, candidate.EntryTimingReadiness.Status);
+		Assert.True(candidate.EntryTimingReadiness.HpReady);
+		Assert.True(candidate.EntryTimingReadiness.TimeReady);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.Ready, candidate.EntryConditionReadiness.Status);
+		Assert.Same(targetRangeReadiness, candidate.TargetRangeReadiness);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEntryReadinessStatus.OnCooldown, blockedCandidate.EntryTimingReadiness.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionStatus.Ready, selected.Status);
+		Assert.Equal(1, selected.Candidate?.Position);
+	}
+
+	[Fact]
 	public void ResolveMercenaryNpcSkillTargetMode_MapsJavaNpcSkillTargetAttributes()
 	{
 		var service = new PlayerSummonSkillExecutionService();
