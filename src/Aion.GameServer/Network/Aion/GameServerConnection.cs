@@ -3212,7 +3212,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		return Random.Shared.Next(min, max + 1);
 	}
 
-	private async Task HandleUseItemAsync(Player player, CmUseItem packet)
+	internal async Task HandleUseItemAsync(Player player, CmUseItem packet)
 	{
 		// Java parity: network/aion/clientpackets/CM_USE_ITEM.runImpl. Implemented item actions are routed by template action metadata.
 		var staticData = _runtimeContext?.DataManager?.StaticData;
