@@ -118,6 +118,23 @@ public sealed class PlayerSummonSkillExecutionService
 			: PlayerSummonKnownObjectNextSkillDelayResult.MissingKnownObject(mercenaryObjectId, nextSkillDelayMilliseconds);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillPreviewCaptureResult CaptureMercenaryNpcSkillPreview(
+		Player player,
+		int mercenaryObjectId,
+		PlayerSummonKnownObjectNpcSkillCandidateListProjection? skillListProjection,
+		PlayerSummonKnownObjectNpcSkillSelectionPreview? selectionPreview,
+		PlayerSummonKnownObjectNpcSkillActionPreview? actionPreview)
+	{
+		// Java parity: represents owner Npc skill-list/chooseNextSkill/skillAction state without invoking live AI or controller effects.
+		return player.TryStoreSummonKnownObjectNpcSkillPreview(
+				mercenaryObjectId,
+				skillListProjection,
+				selectionPreview,
+				actionPreview)
+			? PlayerSummonKnownObjectNpcSkillPreviewCaptureResult.Captured(mercenaryObjectId)
+			: PlayerSummonKnownObjectNpcSkillPreviewCaptureResult.MissingKnownObject(mercenaryObjectId);
+	}
+
 	public PlayerSummonKnownObjectSkillReadiness EvaluateMercenarySkillReadiness(
 		PlayerSummonKnownObject knownObject,
 		SkillTemplateSummary? skillTemplate,
@@ -1409,6 +1426,31 @@ public enum PlayerSummonKnownObjectNextSkillDelayStatus
 	Set,
 	MissingKnownObject,
 	RandomDelayUnsupported,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillPreviewCaptureResult(
+	PlayerSummonKnownObjectNpcSkillPreviewCaptureStatus Status,
+	int MercenaryObjectId)
+{
+	public static PlayerSummonKnownObjectNpcSkillPreviewCaptureResult Captured(int mercenaryObjectId)
+	{
+		return new PlayerSummonKnownObjectNpcSkillPreviewCaptureResult(
+			PlayerSummonKnownObjectNpcSkillPreviewCaptureStatus.Captured,
+			mercenaryObjectId);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillPreviewCaptureResult MissingKnownObject(int mercenaryObjectId)
+	{
+		return new PlayerSummonKnownObjectNpcSkillPreviewCaptureResult(
+			PlayerSummonKnownObjectNpcSkillPreviewCaptureStatus.MissingKnownObject,
+			mercenaryObjectId);
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillPreviewCaptureStatus
+{
+	Captured,
+	MissingKnownObject,
 }
 
 public sealed record PlayerSummonKnownObjectSkillReadiness(

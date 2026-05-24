@@ -204,6 +204,73 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void CaptureMercenaryNpcSkillPreview_StoresRepresentedSelectionAndActionState()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var player = new Player { ObjectId = 1 };
+		var knownObject = new PlayerSummonKnownObject(
+			ObjectId: 8010,
+			Kind: PlayerSummonKnownObjectKind.Creature,
+			CreatorObjectId: 1,
+			NpcTemplateId: 833288,
+			NpcTemplateType: PlayerSummonKnownNpcTemplateType.Mercenary,
+			LastSkillTimeMilliseconds: 10_000,
+			NextSkillDelayMilliseconds: 0);
+		player.SetSummonKnownObject(knownObject);
+		var candidate = new PlayerSummonKnownObjectNpcSkillCandidateMetadata(
+			Position: 0,
+			Template: new PlayerSummonKnownObjectNpcSkillTemplateMetadata(Priority: 9));
+		var listProjection = service.ProjectMercenaryNpcSkillCandidateList(
+			[candidate],
+			hpPercentage: 100,
+			elapsedFightTimeMilliseconds: 2_000,
+			currentTimeMilliseconds: 12_000);
+		var selectionPreview = service.PreviewMercenaryNextNpcSkillSelectionFromCandidateMetadata(
+			knownObject,
+			fightStartingTimeMilliseconds: 10_000,
+			initialSkillDelayMilliseconds: 0,
+			currentTimeMilliseconds: 12_000,
+			isInCastSubState: false,
+			candidates: [candidate],
+			hpPercentage: 100);
+		var actionPreview = service.PreviewMercenaryNpcSkillAction(
+			isInCastSubState: true,
+			shouldResumeFightAfterInterruptedCast: false,
+			hasCreatureTarget: true,
+			targetIsDead: false,
+			hasLastSkill: true,
+			ownerUsesMeleeAggroRange: false,
+			targetInAggroRange: true,
+			skillReadiness: null,
+			targetSelection: service.SelectMercenaryNpcSkillActionTarget(
+				skillFirstTargetIsSelf: false,
+				PlayerSummonKnownObjectNpcSkillTargetAttribute.None),
+			controllerUseSkillSucceeded: true);
+
+		var missing = service.CaptureMercenaryNpcSkillPreview(
+			player,
+			mercenaryObjectId: 9999,
+			listProjection,
+			selectionPreview,
+			actionPreview);
+		var captured = service.CaptureMercenaryNpcSkillPreview(
+			player,
+			mercenaryObjectId: 8010,
+			listProjection,
+			selectionPreview,
+			actionPreview);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillPreviewCaptureStatus.MissingKnownObject, missing.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillPreviewCaptureStatus.Captured, captured.Status);
+		Assert.True(player.TryGetSummonKnownObject(8010, out var storedKnownObject));
+		Assert.Same(listProjection, storedKnownObject.LastNpcSkillListProjection);
+		Assert.Same(selectionPreview, storedKnownObject.LastNpcSkillSelectionPreview);
+		Assert.Same(actionPreview, storedKnownObject.LastNpcSkillActionPreview);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionStatus.Ready, storedKnownObject.LastNpcSkillSelectionPreview?.Selection.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionPreviewStatus.WouldUseSkill, storedKnownObject.LastNpcSkillActionPreview?.Status);
+	}
+
+	[Fact]
 	public void ResolveMercenaryNpcSkillTargetMode_MapsJavaNpcSkillTargetAttributes()
 	{
 		var service = new PlayerSummonSkillExecutionService();

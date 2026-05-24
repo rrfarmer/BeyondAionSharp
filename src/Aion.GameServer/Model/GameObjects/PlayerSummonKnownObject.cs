@@ -1,3 +1,5 @@
+using Aion.GameServer.Services;
+
 namespace Aion.GameServer.Model.GameObjects;
 
 public sealed record PlayerSummonKnownObject(
@@ -9,6 +11,9 @@ public sealed record PlayerSummonKnownObject(
 	IReadOnlySet<int>? DisabledSkillCooldownIds = null,
 	long? LastSkillTimeMilliseconds = null,
 	int? NextSkillDelayMilliseconds = null,
+	PlayerSummonKnownObjectNpcSkillCandidateListProjection? LastNpcSkillListProjection = null,
+	PlayerSummonKnownObjectNpcSkillSelectionPreview? LastNpcSkillSelectionPreview = null,
+	PlayerSummonKnownObjectNpcSkillActionPreview? LastNpcSkillActionPreview = null,
 	PlayerAbnormalState AbnormalState = PlayerAbnormalState.None,
 	bool IsTransformed = false,
 	bool TransformBansSkillUse = false)

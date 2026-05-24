@@ -1,5 +1,6 @@
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.Account;
+using Aion.GameServer.Services;
 using Aion.GameServer.World;
 
 namespace Aion.GameServer.Model.GameObjects;
@@ -300,6 +301,25 @@ public sealed class Player
 		_summonKnownObjects[objectId] = knownObject with
 		{
 			NextSkillDelayMilliseconds = nextSkillDelayMilliseconds,
+		};
+		return true;
+	}
+
+	public bool TryStoreSummonKnownObjectNpcSkillPreview(
+		int objectId,
+		PlayerSummonKnownObjectNpcSkillCandidateListProjection? skillListProjection,
+		PlayerSummonKnownObjectNpcSkillSelectionPreview? selectionPreview,
+		PlayerSummonKnownObjectNpcSkillActionPreview? actionPreview)
+	{
+		// Java parity: represents Npc.getSkillList, SkillAttackManager.chooseNextSkill, and skillAction state without live AI mutation.
+		if (!_summonKnownObjects.TryGetValue(objectId, out var knownObject))
+			return false;
+
+		_summonKnownObjects[objectId] = knownObject with
+		{
+			LastNpcSkillListProjection = skillListProjection,
+			LastNpcSkillSelectionPreview = selectionPreview,
+			LastNpcSkillActionPreview = actionPreview,
 		};
 		return true;
 	}
