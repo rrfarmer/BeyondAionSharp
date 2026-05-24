@@ -1248,6 +1248,92 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void ProjectMercenaryNpcSkillConditionTarget_AdaptsRepresentedKnownObjectFacts()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var condition = new PlayerSummonKnownObjectNpcSkillConditionMetadata(
+			PlayerSummonKnownObjectNpcSkillCondition.TargetIsInRange,
+			HpBelowPercentage: 55,
+			RangeMeters: 10);
+		var knownObject = new PlayerSummonKnownObject(
+			ObjectId: 8801,
+			Kind: PlayerSummonKnownObjectKind.Creature,
+			AbnormalState: PlayerAbnormalState.Stun | PlayerAbnormalState.Poison,
+			IsVisible: true,
+			IsDead: false,
+			IsAboutToDie: false,
+			HpPercentage: 40,
+			IsFlying: true,
+			IsPhysicalClass: false,
+			CarvedSignets:
+			[
+				new PlayerSummonKnownObjectNpcSkillCarvedSignetState("SIGNET1", 4),
+			]);
+		var inertObject = new PlayerSummonKnownObject(
+			ObjectId: 8802,
+			Kind: PlayerSummonKnownObjectKind.VisibleObject,
+			IsVisible: false,
+			IsDead: true,
+			HpPercentage: 100);
+
+		var target = service.ProjectMercenaryNpcSkillConditionTarget(
+			knownObject,
+			condition,
+			distanceMeters: 9.5,
+			geoCanSee: true,
+			isFriend: true);
+		var helpFriend = service.ProjectMercenaryNpcSkillHelpFriendCandidate(
+			knownObject,
+			distanceMeters: 9.5,
+			geoCanSee: true,
+			isFriend: true);
+		var inertTarget = service.ProjectMercenaryNpcSkillConditionTarget(
+			inertObject,
+			condition,
+			distanceMeters: 11);
+		var helpFriendReady = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			new PlayerSummonKnownObjectNpcSkillConditionMetadata(
+				PlayerSummonKnownObjectNpcSkillCondition.HelpFriend,
+				HpBelowPercentage: 55,
+				RangeMeters: 10),
+			target: null,
+			helpFriendCandidates: [helpFriend]);
+		var carvedReady = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			new PlayerSummonKnownObjectNpcSkillConditionMetadata(PlayerSummonKnownObjectNpcSkillCondition.TargetHasCarvedSignetLevelV),
+			target,
+			skillTemplateSignetBurstStacks: ["SIGNET1"]);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionTargetKind.Npc, target.Kind);
+		Assert.Equal(8801, target.ObjectId);
+		Assert.True(target.IsCreature);
+		Assert.True(target.IsVisible);
+		Assert.False(target.IsDead);
+		Assert.False(target.IsAboutToDie);
+		Assert.True(target.IsFlying);
+		Assert.False(target.IsPhysicalClass);
+		Assert.True(target.IsFriend);
+		Assert.False(target.IsSupport);
+		Assert.True(target.GeoCanSee);
+		Assert.True(target.IsInRange);
+		Assert.Equal(40, target.HpPercentage);
+		Assert.Equal(PlayerAbnormalState.Stun | PlayerAbnormalState.Poison, target.AbnormalState);
+		Assert.Equal(new PlayerSummonKnownObjectNpcSkillCarvedSignetState("SIGNET1", 4), Assert.Single(target.CarvedSignets!));
+		Assert.Equal(8801, helpFriend.ObjectId);
+		Assert.True(helpFriend.IsCreature);
+		Assert.True(helpFriend.IsVisible);
+		Assert.True(helpFriend.IsFriend);
+		Assert.True(helpFriend.GeoCanSee);
+		Assert.Equal(40, helpFriend.HpPercentage);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.Ready, helpFriendReady.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.NotReady, carvedReady.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionTargetKind.Unknown, inertTarget.Kind);
+		Assert.False(inertTarget.IsCreature);
+		Assert.False(inertTarget.IsVisible);
+		Assert.True(inertTarget.IsDead);
+		Assert.False(inertTarget.IsInRange);
+	}
+
+	[Fact]
 	public void SelectMercenaryNpcSkillActionTarget_ProjectsJavaSkillActionTargetMutation()
 	{
 		var service = new PlayerSummonSkillExecutionService();

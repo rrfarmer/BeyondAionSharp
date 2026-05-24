@@ -752,6 +752,55 @@ public sealed class PlayerSummonSkillExecutionService
 			distanceMeters <= conditionMetadata.RangeMeters);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillConditionTarget ProjectMercenaryNpcSkillConditionTarget(
+		PlayerSummonKnownObject knownObject,
+		PlayerSummonKnownObjectNpcSkillConditionMetadata conditionMetadata,
+		double distanceMeters,
+		bool? geoCanSee = null,
+		bool isSupport = false,
+		bool isFriend = false)
+	{
+		// Java parity: NpcSkillTemplateEntry.conditionReady reads the current VisibleObject/Creature target and its EffectController state.
+		return new PlayerSummonKnownObjectNpcSkillConditionTarget(
+			ProjectMercenaryNpcSkillConditionTargetKind(knownObject),
+			knownObject.AbnormalState,
+			knownObject.IsFlying,
+			knownObject.IsPhysicalClass,
+			distanceMeters <= conditionMetadata.RangeMeters,
+			ObjectId: knownObject.ObjectId,
+			IsVisible: knownObject.IsVisible,
+			IsCreature: knownObject.IsCreature,
+			IsDead: knownObject.IsDead,
+			IsAboutToDie: knownObject.IsAboutToDie,
+			IsSupport: isSupport,
+			IsFriend: isFriend,
+			HpPercentage: knownObject.HpPercentage,
+			GeoCanSee: geoCanSee,
+			CarvedSignets: knownObject.ActiveCarvedSignets);
+	}
+
+	public PlayerSummonKnownObjectNpcSkillHelpFriendCandidate ProjectMercenaryNpcSkillHelpFriendCandidate(
+		PlayerSummonKnownObject knownObject,
+		double distanceMeters,
+		bool geoCanSee,
+		bool isSupport = false,
+		bool isFriend = false)
+	{
+		// Java parity: HELP_FRIEND tests KnownObject visibility, Creature state, relation flags, HP, range, and GeoService visibility.
+		return new PlayerSummonKnownObjectNpcSkillHelpFriendCandidate(
+			knownObject.ObjectId,
+			ProjectMercenaryNpcSkillConditionTargetKind(knownObject),
+			knownObject.IsVisible,
+			knownObject.IsCreature,
+			knownObject.IsDead,
+			knownObject.IsAboutToDie,
+			isSupport,
+			isFriend,
+			knownObject.HpPercentage,
+			distanceMeters,
+			geoCanSee);
+	}
+
 	public PlayerSummonKnownObjectNpcSkillSelectionResult SelectMercenaryNpcSkillCandidate(
 		IEnumerable<PlayerSummonKnownObjectNpcSkillCandidate> candidates,
 		bool includeChainSkills = false)
@@ -1401,6 +1450,14 @@ public sealed class PlayerSummonSkillExecutionService
 			&& candidate.HpPercentage <= conditionMetadata.HpBelowPercentage
 			&& candidate.DistanceMeters <= conditionMetadata.RangeMeters
 			&& candidate.GeoCanSee;
+	}
+
+	private static PlayerSummonKnownObjectNpcSkillConditionTargetKind ProjectMercenaryNpcSkillConditionTargetKind(
+		PlayerSummonKnownObject knownObject)
+	{
+		return knownObject.Kind == PlayerSummonKnownObjectKind.Creature
+			? PlayerSummonKnownObjectNpcSkillConditionTargetKind.Npc
+			: PlayerSummonKnownObjectNpcSkillConditionTargetKind.Unknown;
 	}
 
 	private static float ConvertJavaHeadingToAngle(byte heading)

@@ -17,11 +17,23 @@ public sealed record PlayerSummonKnownObject(
 	PlayerSummonKnownObjectNpcSkillPostSpawnPreview? LastNpcSkillPostSpawnPreview = null,
 	PlayerAbnormalState AbnormalState = PlayerAbnormalState.None,
 	bool IsTransformed = false,
-	bool TransformBansSkillUse = false)
+	bool TransformBansSkillUse = false,
+	bool IsVisible = true,
+	bool IsDead = false,
+	bool IsAboutToDie = false,
+	int HpPercentage = 100,
+	bool IsFlying = false,
+	bool? IsPhysicalClass = null,
+	IReadOnlyList<PlayerSummonKnownObjectNpcSkillCarvedSignetState>? CarvedSignets = null)
 {
 	private static readonly IReadOnlySet<int> EmptyDisabledCooldowns = new HashSet<int>();
+	private static readonly IReadOnlyList<PlayerSummonKnownObjectNpcSkillCarvedSignetState> EmptyCarvedSignets = [];
 
 	public IReadOnlySet<int> DisabledCooldowns => DisabledSkillCooldownIds ?? EmptyDisabledCooldowns;
+
+	public IReadOnlyList<PlayerSummonKnownObjectNpcSkillCarvedSignetState> ActiveCarvedSignets => CarvedSignets ?? EmptyCarvedSignets;
+
+	public bool IsCreature => Kind == PlayerSummonKnownObjectKind.Creature;
 
 	public bool IsSkillCooldownDisabled(int cooldownId)
 	{
