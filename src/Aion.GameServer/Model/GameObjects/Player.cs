@@ -291,6 +291,19 @@ public sealed class Player
 		return true;
 	}
 
+	public bool TrySetSummonKnownObjectNextSkillDelay(int objectId, int nextSkillDelayMilliseconds)
+	{
+		// Java parity: NpcGameStats.setNextSkillDelay stores already-resolved non-random delays.
+		if (!_summonKnownObjects.TryGetValue(objectId, out var knownObject))
+			return false;
+
+		_summonKnownObjects[objectId] = knownObject with
+		{
+			NextSkillDelayMilliseconds = nextSkillDelayMilliseconds,
+		};
+		return true;
+	}
+
 	public PlayerSummonOrMercenaryKind GetSummonOrMercenaryKind(int objectId)
 	{
 		// Java parity: Player.getSummonOrMercenary first checks the owned summon, then creator-owned mercenary NPCs.

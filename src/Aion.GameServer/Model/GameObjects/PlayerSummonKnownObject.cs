@@ -7,7 +7,8 @@ public sealed record PlayerSummonKnownObject(
 	int NpcTemplateId = 0,
 	PlayerSummonKnownNpcTemplateType NpcTemplateType = PlayerSummonKnownNpcTemplateType.None,
 	IReadOnlySet<int>? DisabledSkillCooldownIds = null,
-	long? LastSkillTimeMilliseconds = null)
+	long? LastSkillTimeMilliseconds = null,
+	int? NextSkillDelayMilliseconds = null)
 {
 	private static readonly IReadOnlySet<int> EmptyDisabledCooldowns = new HashSet<int>();
 

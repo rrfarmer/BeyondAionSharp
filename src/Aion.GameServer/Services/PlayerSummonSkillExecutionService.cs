@@ -102,6 +102,20 @@ public sealed class PlayerSummonSkillExecutionService
 			: PlayerSummonKnownObjectNextSkillReadiness.NotReady(knownObject, nextSkillDelayMilliseconds, currentTimeMilliseconds, readyAt);
 	}
 
+	public PlayerSummonKnownObjectNextSkillDelayResult SetMercenaryNextSkillDelay(
+		Player player,
+		int mercenaryObjectId,
+		int nextSkillDelayMilliseconds)
+	{
+		if (nextSkillDelayMilliseconds < 0)
+			return PlayerSummonKnownObjectNextSkillDelayResult.RandomDelayUnsupported(mercenaryObjectId, nextSkillDelayMilliseconds);
+
+		// Java parity: NpcGameStats.setNextSkillDelay stores concrete delays directly.
+		return player.TrySetSummonKnownObjectNextSkillDelay(mercenaryObjectId, nextSkillDelayMilliseconds)
+			? PlayerSummonKnownObjectNextSkillDelayResult.Set(mercenaryObjectId, nextSkillDelayMilliseconds)
+			: PlayerSummonKnownObjectNextSkillDelayResult.MissingKnownObject(mercenaryObjectId, nextSkillDelayMilliseconds);
+	}
+
 	public PlayerSummonSkillExecutionResult ValidateExecution(
 		Player player,
 		PlayerPetSkillOrder order,
@@ -582,6 +596,49 @@ public enum PlayerSummonKnownObjectNextSkillReadinessStatus
 {
 	Ready,
 	NotReady,
+	RandomDelayUnsupported,
+}
+
+public sealed record PlayerSummonKnownObjectNextSkillDelayResult(
+	PlayerSummonKnownObjectNextSkillDelayStatus Status,
+	int MercenaryObjectId,
+	int RequestedDelayMilliseconds,
+	int? StoredDelayMilliseconds = null)
+{
+	public static PlayerSummonKnownObjectNextSkillDelayResult Set(int mercenaryObjectId, int delayMilliseconds)
+	{
+		return new PlayerSummonKnownObjectNextSkillDelayResult(
+			PlayerSummonKnownObjectNextSkillDelayStatus.Set,
+			mercenaryObjectId,
+			delayMilliseconds,
+			delayMilliseconds);
+	}
+
+	public static PlayerSummonKnownObjectNextSkillDelayResult MissingKnownObject(
+		int mercenaryObjectId,
+		int delayMilliseconds)
+	{
+		return new PlayerSummonKnownObjectNextSkillDelayResult(
+			PlayerSummonKnownObjectNextSkillDelayStatus.MissingKnownObject,
+			mercenaryObjectId,
+			delayMilliseconds);
+	}
+
+	public static PlayerSummonKnownObjectNextSkillDelayResult RandomDelayUnsupported(
+		int mercenaryObjectId,
+		int delayMilliseconds)
+	{
+		return new PlayerSummonKnownObjectNextSkillDelayResult(
+			PlayerSummonKnownObjectNextSkillDelayStatus.RandomDelayUnsupported,
+			mercenaryObjectId,
+			delayMilliseconds);
+	}
+}
+
+public enum PlayerSummonKnownObjectNextSkillDelayStatus
+{
+	Set,
+	MissingKnownObject,
 	RandomDelayUnsupported,
 }
 

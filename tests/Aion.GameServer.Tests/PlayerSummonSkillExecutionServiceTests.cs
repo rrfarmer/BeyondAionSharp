@@ -10,6 +10,38 @@ namespace Aion.GameServer.Tests;
 public class PlayerSummonSkillExecutionServiceTests
 {
 	[Fact]
+	public void SetMercenaryNextSkillDelay_StoresConcreteDelayAndRejectsRandomSentinel()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var player = new Player
+		{
+			ObjectId = 1,
+		};
+		player.SetSummonKnownObject(new PlayerSummonKnownObject(
+			ObjectId: 8002,
+			Kind: PlayerSummonKnownObjectKind.Creature,
+			CreatorObjectId: 1,
+			NpcTemplateId: 833288,
+			NpcTemplateType: PlayerSummonKnownNpcTemplateType.Mercenary));
+
+		var missingKnownObject = service.SetMercenaryNextSkillDelay(player, mercenaryObjectId: 9003, nextSkillDelayMilliseconds: 5_000);
+		var randomDelay = service.SetMercenaryNextSkillDelay(player, mercenaryObjectId: 8002, nextSkillDelayMilliseconds: -1);
+		var zeroDelay = service.SetMercenaryNextSkillDelay(player, mercenaryObjectId: 8002, nextSkillDelayMilliseconds: 0);
+		var concreteDelay = service.SetMercenaryNextSkillDelay(player, mercenaryObjectId: 8002, nextSkillDelayMilliseconds: 5_000);
+
+		Assert.Equal(PlayerSummonKnownObjectNextSkillDelayStatus.MissingKnownObject, missingKnownObject.Status);
+		Assert.Null(missingKnownObject.StoredDelayMilliseconds);
+		Assert.Equal(PlayerSummonKnownObjectNextSkillDelayStatus.RandomDelayUnsupported, randomDelay.Status);
+		Assert.Null(randomDelay.StoredDelayMilliseconds);
+		Assert.Equal(PlayerSummonKnownObjectNextSkillDelayStatus.Set, zeroDelay.Status);
+		Assert.Equal(0, zeroDelay.StoredDelayMilliseconds);
+		Assert.Equal(PlayerSummonKnownObjectNextSkillDelayStatus.Set, concreteDelay.Status);
+		Assert.Equal(5_000, concreteDelay.StoredDelayMilliseconds);
+		Assert.True(player.TryGetSummonKnownObject(8002, out var knownObject));
+		Assert.Equal(5_000, knownObject.NextSkillDelayMilliseconds);
+	}
+
+	[Fact]
 	public void EvaluateMercenaryNextSkillReadiness_ProjectsJavaDelayCheck()
 	{
 		var service = new PlayerSummonSkillExecutionService();
