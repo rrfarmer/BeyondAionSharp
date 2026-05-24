@@ -975,6 +975,10 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal((byte)70, brokerSpawn.Heading);
 		Assert.Equal(295, brokerSpawn.RespawnSeconds);
 		Assert.Equal(8, staticData.SkillTemplates.GetSkillTemplatesByGroup("RA_WHITETIGER").Count);
+		Assert.True(staticData.PetSkills.Count > 0);
+		Assert.True(staticData.PetSkills.IsPetOrderSkill(3835));
+		Assert.Equal(22107, staticData.PetSkills.GetPetOrderSkill(3835, 833288));
+		Assert.True(staticData.PetSkills.PetHasSkill(833288, 22107));
 		var clothMastery = staticData.SkillTemplates.GetSkillTemplate(40);
 		Assert.NotNull(clothMastery);
 		Assert.Equal("PASSIVE", clothMastery.Activation);

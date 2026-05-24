@@ -37,6 +37,7 @@ public sealed class StaticData
 		EventDropTable eventDrops,
 		GlobalNpcExclusionTable globalNpcExclusions,
 		SkillTemplateTable skillTemplates,
+		PetSkillTable petSkills,
 		TitleTemplateTable titleTemplates,
 		RecipeTemplateTable recipeTemplates,
 		HousingTemplateTable housingTemplates,
@@ -80,6 +81,7 @@ public sealed class StaticData
 		EventDrops = eventDrops;
 		GlobalNpcExclusions = globalNpcExclusions;
 		SkillTemplates = skillTemplates;
+		PetSkills = petSkills;
 		TitleTemplates = titleTemplates;
 		RecipeTemplates = recipeTemplates;
 		HousingTemplates = housingTemplates;
@@ -155,6 +157,8 @@ public sealed class StaticData
 	public GlobalNpcExclusionTable GlobalNpcExclusions { get; }
 
 	public SkillTemplateTable SkillTemplates { get; }
+
+	public PetSkillTable PetSkills { get; }
 
 	public TitleTemplateTable TitleTemplates { get; }
 
@@ -239,6 +243,7 @@ public sealed class StaticData
 		var portalScrollPaths = new List<PortalPathSummary>();
 		var portalDialogTeleportIds = new Dictionary<int, int>();
 		var portalLocs = new List<PortalLocSummary>();
+		var petSkills = new List<PetSkillSummary>();
 		var skillTree = new List<SkillLearnSummary>();
 		var cubeExpansionTemplates = new List<StorageExpansionTemplateSummary>();
 		var warehouseExpansionTemplates = new List<StorageExpansionTemplateSummary>();
@@ -2096,6 +2101,16 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.NodeType == XmlNodeType.Element && reader.LocalName == "pet_skill")
+			{
+				// Java parity: dataholders/PetSkillData afterUnmarshal indexes each PetSkillTemplate by order skill and pet id.
+				petSkills.Add(new PetSkillSummary(
+					ReadIntAttribute(reader, "skill_id"),
+					ReadIntAttribute(reader, "pet_id"),
+					ReadIntAttribute(reader, "order_skill")));
+				continue;
+			}
+
 			if (reader.Depth == 2 && reader.LocalName == "elyos_spawn_location")
 			{
 				spawnLocationsByRace["ELYOS"] = ReadSpawnLocation(reader);
@@ -2166,6 +2181,7 @@ public sealed class StaticData
 				globalNpcExclusionNpcTribes,
 				globalNpcExclusionNpcAbyssTypes),
 			new SkillTemplateTable(skillTemplates.AsReadOnly()),
+			new PetSkillTable(petSkills.AsReadOnly()),
 			new TitleTemplateTable(titleTemplates.AsReadOnly()),
 			new RecipeTemplateTable(recipeTemplates.AsReadOnly()),
 			new HousingTemplateTable(

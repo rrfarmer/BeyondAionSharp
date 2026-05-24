@@ -1190,7 +1190,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			player,
 			packet,
 			new PlayerCastSpellEarlyExitOptions(
-				IsPetOrderSkill: skillId => _castSpellHooks.IsPetOrderSkill(player, skillId),
+				IsPetOrderSkill: skillId => IsCastSpellPetOrderSkill(player, skillId),
 				HasPetSummon: _castSpellHooks.HasPetSummon(player),
 				GetSkillTemplate: skillId => ResolveCastSpellSkillTemplate(player, skillId),
 				NextSkillUseMilliseconds: _castSpellHooks.GetNextSkillUseMilliseconds(player),
@@ -1251,6 +1251,12 @@ public sealed class GameServerConnection : BaseClientConnection
 		return staticTemplate == null
 			? null
 			: new PlayerCastSpellSkillTemplate(staticTemplate.SkillId, staticTemplate.IsPassive);
+	}
+
+	private bool IsCastSpellPetOrderSkill(Player player, int skillId)
+	{
+		return _castSpellHooks.IsPetOrderSkill(player, skillId)
+			|| (_runtimeContext?.DataManager?.StaticData.PetSkills.IsPetOrderSkill(skillId) ?? false);
 	}
 
 	private static PlayerCastingSkillSnapshot? CancelCurrentSkillForCastSpell(Player player)

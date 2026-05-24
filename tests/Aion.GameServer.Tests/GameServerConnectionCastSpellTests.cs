@@ -52,6 +52,21 @@ public class GameServerConnectionCastSpellTests
 	}
 
 	[Fact]
+	public async Task HandleCastSpellAsync_UsesRuntimeStaticPetOrderSkillLookupWhenHookDoesNotMatch()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var runtimeContext = await CreateRuntimeContextAsync();
+		await using var pair = await TestConnectionPair.CreateAsync(sentPackets, runtimeContext: runtimeContext);
+		var player = CreatePlayer();
+
+		var result = await pair.Connection.HandleCastSpellAsync(player, CreateCastSpell(3835));
+
+		Assert.Equal(PlayerCastSpellEarlyExitStatus.PetRequired, result.Status);
+		var message = Assert.IsType<SmSystemMessage>(Assert.Single(sentPackets));
+		Assert.Equal(1402918, message.MessageId);
+	}
+
+	[Fact]
 	public async Task HandleCastSpellAsync_ZeroSpellIdClearsCastSkillAndSendsCancelPackets()
 	{
 		var events = new List<string>();
