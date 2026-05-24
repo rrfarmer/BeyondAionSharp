@@ -12,6 +12,7 @@ public class PlayerSummonCastSpellServiceTests
 	public void Handle_ConsumesMatchingQueuedPetOrderForRepresentedSummon()
 	{
 		var player = CreatePlayer();
+		player.SetSummonKnownObject(7001, PlayerSummonKnownObjectKind.Creature);
 		player.AddPetSkillOrder(new PlayerPetSkillOrder(22107, SkillLevel: 1, TargetObjectId: 7001, Hate: 5, Release: true));
 		var packet = CreatePacket(summonObjectId: 8001, skillId: 22107, skillLevel: 1, targetObjectId: 7001);
 
@@ -32,6 +33,7 @@ public class PlayerSummonCastSpellServiceTests
 	public void Handle_UsesQueuedOrderWhenClientSkillDiffersAndMarksMismatch()
 	{
 		var player = CreatePlayer();
+		player.SetSummonKnownObject(7001, PlayerSummonKnownObjectKind.Creature);
 		player.AddPetSkillOrder(new PlayerPetSkillOrder(22107, SkillLevel: 1, TargetObjectId: 7001, Hate: 0, Release: false));
 		var packet = CreatePacket(summonObjectId: 8001, skillId: 9999, skillLevel: 3, targetObjectId: 7001);
 
@@ -48,6 +50,7 @@ public class PlayerSummonCastSpellServiceTests
 	public void Handle_ConsumesQueuedOrderWithoutExecutionWhenTargetDoesNotMatch()
 	{
 		var player = CreatePlayer();
+		player.SetSummonKnownObject(7002, PlayerSummonKnownObjectKind.Creature);
 		player.AddPetSkillOrder(new PlayerPetSkillOrder(22107, SkillLevel: 1, TargetObjectId: 7001, Hate: 0, Release: false));
 		var packet = CreatePacket(summonObjectId: 8001, skillId: 22107, skillLevel: 1, targetObjectId: 7002);
 
@@ -60,13 +63,54 @@ public class PlayerSummonCastSpellServiceTests
 	}
 
 	[Fact]
+	public void Handle_AllowsSummonSelfTargetWithoutKnownListLookup()
+	{
+		var player = CreatePlayer();
+		player.AddPetSkillOrder(new PlayerPetSkillOrder(22107, SkillLevel: 1, TargetObjectId: 8001, Hate: 0, Release: false));
+		var packet = CreatePacket(summonObjectId: 8001, skillId: 22107, skillLevel: 1, targetObjectId: 8001);
+
+		var result = new PlayerSummonCastSpellService().Handle(player, packet);
+
+		Assert.Equal(PlayerSummonCastSpellStatus.Executed, result.Status);
+		Assert.Equal(8001, result.TargetObjectId);
+		Assert.Empty(player.PetSkillOrders);
+	}
+
+	[Fact]
+	public void Handle_UnknownOrNonCreatureKnownTargetReturnsBeforeConsumingOrder()
+	{
+		var service = new PlayerSummonCastSpellService();
+		var unknownTargetPlayer = CreatePlayer();
+		unknownTargetPlayer.AddPetSkillOrder(new PlayerPetSkillOrder(22107, SkillLevel: 1, TargetObjectId: 7001, Hate: 0, Release: false));
+
+		var unknownTarget = service.Handle(
+			unknownTargetPlayer,
+			CreatePacket(summonObjectId: 8001, skillId: 22107, skillLevel: 1, targetObjectId: 7001));
+
+		var nonCreatureTargetPlayer = CreatePlayer();
+		nonCreatureTargetPlayer.SetSummonKnownObject(7001, PlayerSummonKnownObjectKind.VisibleObject);
+		nonCreatureTargetPlayer.AddPetSkillOrder(new PlayerPetSkillOrder(22107, SkillLevel: 1, TargetObjectId: 7001, Hate: 0, Release: false));
+
+		var nonCreatureTarget = service.Handle(
+			nonCreatureTargetPlayer,
+			CreatePacket(summonObjectId: 8001, skillId: 22107, skillLevel: 1, targetObjectId: 7001));
+
+		Assert.Equal(PlayerSummonCastSpellStatus.UnknownTarget, unknownTarget.Status);
+		Assert.Equal(7001, unknownTarget.TargetObjectId);
+		Assert.Single(unknownTargetPlayer.PetSkillOrders);
+		Assert.Equal(PlayerSummonCastSpellStatus.NonCreatureTarget, nonCreatureTarget.Status);
+		Assert.Equal(7001, nonCreatureTarget.TargetObjectId);
+		Assert.Single(nonCreatureTargetPlayer.PetSkillOrders);
+	}
+
+	[Fact]
 	public void Handle_RequiresRepresentedPetSummonAndQueuedOrder()
 	{
 		var service = new PlayerSummonCastSpellService();
 		var noSummon = service.Handle(new Player(), CreatePacket(8001, 22107, 1, 7001));
 
 		var player = CreatePlayer();
-		var noOrder = service.Handle(player, CreatePacket(8001, 22107, 1, 7001));
+		var noOrder = service.Handle(player, CreatePacket(8001, 22107, 1, 8001));
 
 		var wrongSummon = CreatePlayer();
 		wrongSummon.AddPetSkillOrder(new PlayerPetSkillOrder(22107, SkillLevel: 1, TargetObjectId: 7001, Hate: 0, Release: false));

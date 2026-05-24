@@ -325,6 +325,7 @@ public class GameServerConnectionCastSpellTests
 		player.HasPetSummon = true;
 		player.PetSummonObjectId = 8001;
 		player.PetSummonNpcId = 833288;
+		player.SetSummonKnownObject(7001, PlayerSummonKnownObjectKind.Creature);
 		player.AddPetSkillOrder(new PlayerPetSkillOrder(22107, SkillLevel: 1, TargetObjectId: 7001, Hate: 5, Release: true));
 
 		var result = await pair.Connection.HandleSummonCastSpellAsync(
@@ -351,6 +352,7 @@ public class GameServerConnectionCastSpellTests
 		player.HasPetSummon = true;
 		player.PetSummonObjectId = 8001;
 		player.PetSummonNpcId = 833288;
+		player.SetSummonKnownObject(7001, PlayerSummonKnownObjectKind.Creature);
 		player.AddPetSkillOrder(new PlayerPetSkillOrder(9999, SkillLevel: 1, TargetObjectId: 7001, Hate: 0, Release: false));
 
 		var result = await pair.Connection.HandleSummonCastSpellAsync(

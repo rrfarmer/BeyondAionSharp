@@ -220,6 +220,7 @@ public sealed class Player
 	public int PetSummonNpcId { get; set; }
 
 	private readonly List<PlayerPetSkillOrder> _petSkillOrders = [];
+	private readonly Dictionary<int, PlayerSummonKnownObjectKind> _summonKnownObjects = [];
 
 	// Java parity: model/gameobjects/Summon.addSkillOrder represented until the full Summon model exists.
 	public IReadOnlyList<PlayerPetSkillOrder> PetSkillOrders => _petSkillOrders;
@@ -237,6 +238,18 @@ public sealed class Player
 		var order = _petSkillOrders[0];
 		_petSkillOrders.RemoveAt(0);
 		return order;
+	}
+
+	public void SetSummonKnownObject(int objectId, PlayerSummonKnownObjectKind kind)
+	{
+		// Java parity: CM_SUMMON_CASTSPELL resolves target via summon.getKnownList().getObject(targetObjId).
+		_summonKnownObjects[objectId] = kind;
+	}
+
+	public bool TryGetSummonKnownObjectKind(int objectId, out PlayerSummonKnownObjectKind kind)
+	{
+		// Java parity: KnownList returns null for lagged-out or no-longer-visible targets.
+		return _summonKnownObjects.TryGetValue(objectId, out kind);
 	}
 
 	public PlayerBrokerSettlementSummary BrokerSettlements { get; set; } = PlayerBrokerSettlementSummary.Empty;

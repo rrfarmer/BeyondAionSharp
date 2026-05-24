@@ -11,6 +11,10 @@ public sealed class PlayerSummonCastSpellService
 		if (!player.HasPetSummon || player.PetSummonObjectId == 0 || packet.SummonObjectId != player.PetSummonObjectId)
 			return PlayerSummonCastSpellResult.PetRequired(packet.SummonObjectId);
 
+		var targetValidation = ValidateTarget(player, packet);
+		if (targetValidation != null)
+			return targetValidation;
+
 		var order = player.RetrieveNextPetSkillOrder();
 		if (order is null)
 			return PlayerSummonCastSpellResult.NoQueuedOrder(packet.SummonObjectId, packet.TargetObjectId);
@@ -20,6 +24,20 @@ public sealed class PlayerSummonCastSpellService
 
 		var skillMismatch = order.SkillId != packet.SkillId || order.SkillLevel != packet.SkillLevel;
 		return PlayerSummonCastSpellResult.Executed(packet.SummonObjectId, packet.TargetObjectId, order, skillMismatch);
+	}
+
+	private static PlayerSummonCastSpellResult? ValidateTarget(Player player, CmSummonCastSpell packet)
+	{
+		// Java parity: target can be the summon itself, otherwise it must be a Creature from summon.getKnownList().
+		if (packet.TargetObjectId == player.PetSummonObjectId)
+			return null;
+
+		if (!player.TryGetSummonKnownObjectKind(packet.TargetObjectId, out var targetKind))
+			return PlayerSummonCastSpellResult.UnknownTarget(packet.SummonObjectId, packet.TargetObjectId);
+
+		return targetKind == PlayerSummonKnownObjectKind.Creature
+			? null
+			: PlayerSummonCastSpellResult.NonCreatureTarget(packet.SummonObjectId, packet.TargetObjectId);
 	}
 }
 
@@ -38,6 +56,16 @@ public sealed record PlayerSummonCastSpellResult(
 	public static PlayerSummonCastSpellResult NoQueuedOrder(int summonObjectId, int targetObjectId)
 	{
 		return new PlayerSummonCastSpellResult(PlayerSummonCastSpellStatus.NoQueuedOrder, summonObjectId, targetObjectId);
+	}
+
+	public static PlayerSummonCastSpellResult UnknownTarget(int summonObjectId, int targetObjectId)
+	{
+		return new PlayerSummonCastSpellResult(PlayerSummonCastSpellStatus.UnknownTarget, summonObjectId, targetObjectId);
+	}
+
+	public static PlayerSummonCastSpellResult NonCreatureTarget(int summonObjectId, int targetObjectId)
+	{
+		return new PlayerSummonCastSpellResult(PlayerSummonCastSpellStatus.NonCreatureTarget, summonObjectId, targetObjectId);
 	}
 
 	public static PlayerSummonCastSpellResult TargetMismatch(int summonObjectId, int targetObjectId, PlayerPetSkillOrder consumedOrder)
@@ -68,6 +96,8 @@ public enum PlayerSummonCastSpellStatus
 {
 	PetRequired,
 	NoQueuedOrder,
+	UnknownTarget,
+	NonCreatureTarget,
 	TargetMismatch,
 	Executed,
 }
