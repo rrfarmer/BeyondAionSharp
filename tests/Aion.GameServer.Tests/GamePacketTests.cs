@@ -3933,6 +3933,89 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesCastSpellObjectTarget()
+	{
+		var before = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+		var castSpell = Assert.IsType<CmCastSpell>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(33, b =>
+			{
+				b.WriteH(1606);
+				b.WriteC(2);
+				b.WriteC(3);
+				b.WriteD(7001);
+				b.WriteH(900);
+				b.WriteD(42);
+			}), GameConnectionState.InGame));
+		var after = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+		Assert.InRange(castSpell.ReceiveTimeMilliseconds, before, after);
+		Assert.Equal(1606, castSpell.SpellId);
+		Assert.Equal(2, castSpell.Level);
+		Assert.Equal(3, castSpell.TargetType);
+		Assert.Equal(7001, castSpell.TargetObjectId);
+		Assert.Equal(900, castSpell.HitTime);
+		Assert.Equal(42, castSpell.Unknown);
+		Assert.Empty(castSpell.ExtraTargetFloats);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(33, b => b.WriteH(1606)), GameConnectionState.Authed));
+	}
+
+	[Fact]
+	public void ClientPacketFactory_ParsesCastSpellPointTarget()
+	{
+		var castSpell = Assert.IsType<CmCastSpell>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(33, b =>
+			{
+				b.WriteH(1201);
+				b.WriteC(1);
+				b.WriteC(1);
+				b.WriteF(11.25f);
+				b.WriteF(22.5f);
+				b.WriteF(33.75f);
+				b.WriteH(650);
+				b.WriteD(7);
+			}), GameConnectionState.InGame));
+
+		Assert.Equal(1201, castSpell.SpellId);
+		Assert.Equal(1, castSpell.Level);
+		Assert.Equal(1, castSpell.TargetType);
+		Assert.Equal(11.25f, castSpell.X);
+		Assert.Equal(22.5f, castSpell.Y);
+		Assert.Equal(33.75f, castSpell.Z);
+		Assert.Equal(650, castSpell.HitTime);
+		Assert.Equal(7, castSpell.Unknown);
+		Assert.Empty(castSpell.ExtraTargetFloats);
+	}
+
+	[Fact]
+	public void ClientPacketFactory_ParsesCastSpellExtendedPointTarget()
+	{
+		var castSpell = Assert.IsType<CmCastSpell>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(33, b =>
+			{
+				b.WriteH(2202);
+				b.WriteC(4);
+				b.WriteC(2);
+				b.WriteF(1.5f);
+				b.WriteF(2.5f);
+				b.WriteF(3.5f);
+				for (var i = 0; i < 8; i++)
+					b.WriteF(10 + i);
+				b.WriteH(777);
+				b.WriteD(99);
+			}), GameConnectionState.InGame));
+
+		Assert.Equal(2202, castSpell.SpellId);
+		Assert.Equal(4, castSpell.Level);
+		Assert.Equal(2, castSpell.TargetType);
+		Assert.Equal(1.5f, castSpell.X);
+		Assert.Equal(2.5f, castSpell.Y);
+		Assert.Equal(3.5f, castSpell.Z);
+		Assert.Equal([10f, 11f, 12f, 13f, 14f, 15f, 16f, 17f], castSpell.ExtraTargetFloats);
+		Assert.Equal(777, castSpell.HitTime);
+		Assert.Equal(99, castSpell.Unknown);
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesChargeItem()
 	{
 		var chargeItem = Assert.IsType<CmChargeItem>(
