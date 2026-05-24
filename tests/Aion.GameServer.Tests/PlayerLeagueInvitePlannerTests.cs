@@ -98,6 +98,100 @@ public sealed class PlayerLeagueInvitePlannerTests
 	}
 
 	[Fact]
+	public void CreatePendingRequestResponsePlan_DenyClearsRequestAndSendsRejectLikeJavaHandle()
+	{
+		var planner = new PlayerLeagueInvitePlanner();
+		var alliances = new PlayerAllianceRuntime();
+		var leagues = new PlayerLeagueRuntime();
+		var inviter = new Player { ObjectId = 1001, Name = "Inviter", IsOnline = true };
+		var invitedLeader = new Player { ObjectId = 2001, Name = "InvitedLeader", IsOnline = true };
+		alliances.CreateAlliance(88001, inviter);
+		alliances.CreateAlliance(88002, invitedLeader);
+		var setupPlan = planner.CreateRequestSetupPlan(inviter, invitedLeader, alliances);
+		var pendingPlan = planner.TryPutPendingRequest(invitedLeader, setupPlan);
+
+		var responsePlan = planner.CreatePendingRequestResponsePlan(
+			inviter,
+			invitedLeader,
+			SmQuestionWindow.UnionInviteMe,
+			responseCode: 0,
+			leagues,
+			alliances);
+
+		Assert.Equal(PlayerLeagueInviteResponseStatus.Denied, responsePlan.Status);
+		Assert.Equal(SmQuestionWindow.UnionInviteMe, responsePlan.QuestionId);
+		Assert.Equal(0, responsePlan.ResponseCode);
+		Assert.Same(pendingPlan.PendingRequest, responsePlan.PendingRequest);
+		Assert.Null(invitedLeader.PendingLeagueInviteRequest);
+		var denyPlan = Assert.IsType<PlayerLeagueInviteDenyPlan>(responsePlan.DenyPlan);
+		AssertSystemMessagePayload(denyPlan.SystemMessageIntent.Message, 1300190, "InvitedLeader");
+		Assert.Null(responsePlan.AcceptPlan);
+		Assert.Null(responsePlan.CanInvitePlan);
+	}
+
+	[Fact]
+	public void CreatePendingRequestResponsePlan_AcceptJoinsExistingLeagueAndClearsRequestLikeJavaHandle()
+	{
+		var planner = new PlayerLeagueInvitePlanner();
+		var alliances = new PlayerAllianceRuntime();
+		var leagues = new PlayerLeagueRuntime();
+		var inviter = new Player { ObjectId = 1001, Name = "Inviter", IsOnline = true, Position = new WorldPosition(210010000, 1, 2, 3, 0) };
+		var invitedLeader = new Player { ObjectId = 2001, Name = "InvitedLeader", IsOnline = true, Position = new WorldPosition(220010000, 4, 5, 6, 0) };
+		alliances.CreateAlliance(88001, inviter);
+		alliances.CreateAlliance(88002, invitedLeader);
+		leagues.CreateLeague(77001, leaderAllianceId: 88001);
+		var setupPlan = planner.CreateRequestSetupPlan(inviter, invitedLeader, alliances);
+		var pendingPlan = planner.TryPutPendingRequest(invitedLeader, setupPlan);
+
+		var responsePlan = planner.CreatePendingRequestResponsePlan(
+			inviter,
+			invitedLeader,
+			SmQuestionWindow.UnionInviteMe,
+			responseCode: 1,
+			leagues,
+			alliances);
+
+		Assert.Equal(PlayerLeagueInviteResponseStatus.AcceptedJoined, responsePlan.Status);
+		Assert.Equal(1, responsePlan.ResponseCode);
+		Assert.Same(pendingPlan.PendingRequest, responsePlan.PendingRequest);
+		Assert.Null(invitedLeader.PendingLeagueInviteRequest);
+		Assert.Equal(PlayerLeagueCanInviteStatus.PassedRepresentedChecks, responsePlan.CanInvitePlan?.Status);
+		var acceptPlan = Assert.IsType<PlayerLeagueInviteAcceptPlan>(responsePlan.AcceptPlan);
+		Assert.Equal(PlayerLeagueInviteAcceptStatus.Joined, acceptPlan.Status);
+		Assert.Equal([88001, 88002], leagues.GetAllianceIdsByPosition(77001));
+		Assert.Null(responsePlan.DenyPlan);
+	}
+
+	[Fact]
+	public void CreatePendingRequestResponsePlan_WrongQuestionLeavesPendingRequestLikeJavaRespondMiss()
+	{
+		var planner = new PlayerLeagueInvitePlanner();
+		var alliances = new PlayerAllianceRuntime();
+		var leagues = new PlayerLeagueRuntime();
+		var inviter = new Player { ObjectId = 1001, Name = "Inviter", IsOnline = true };
+		var invitedLeader = new Player { ObjectId = 2001, Name = "InvitedLeader", IsOnline = true };
+		alliances.CreateAlliance(88001, inviter);
+		alliances.CreateAlliance(88002, invitedLeader);
+		var setupPlan = planner.CreateRequestSetupPlan(inviter, invitedLeader, alliances);
+		var pendingPlan = planner.TryPutPendingRequest(invitedLeader, setupPlan);
+
+		var responsePlan = planner.CreatePendingRequestResponsePlan(
+			inviter,
+			invitedLeader,
+			questionId: 12345,
+			responseCode: 1,
+			leagueRuntime: leagues,
+			allianceRuntime: alliances);
+
+		Assert.Equal(PlayerLeagueInviteResponseStatus.NoPendingRequest, responsePlan.Status);
+		Assert.Same(pendingPlan.PendingRequest, responsePlan.PendingRequest);
+		Assert.Same(pendingPlan.PendingRequest, invitedLeader.PendingLeagueInviteRequest);
+		Assert.Null(responsePlan.AcceptPlan);
+		Assert.Null(responsePlan.DenyPlan);
+		Assert.Null(responsePlan.CanInvitePlan);
+	}
+
+	[Fact]
 	public void CreateCanInviteFirstChecksPlan_FollowsJavaFailureOrder()
 	{
 		var planner = new PlayerLeagueInvitePlanner();

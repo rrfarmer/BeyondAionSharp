@@ -84,6 +84,86 @@ public sealed class PlayerLeagueInvitePlanner
 			pendingRequest);
 	}
 
+	public PlayerLeagueInviteResponsePlan CreatePendingRequestResponsePlan(
+		Player requester,
+		Player responder,
+		int questionId,
+		int responseCode,
+		PlayerLeagueRuntime leagueRuntime,
+		PlayerAllianceRuntime allianceRuntime)
+	{
+		// Java parity: ResponseRequester.respond removes the handler by question id, then
+		// RequestResponseHandler.handle dispatches response 0 to denyRequest and nonzero to acceptRequest.
+		ArgumentNullException.ThrowIfNull(requester);
+		ArgumentNullException.ThrowIfNull(responder);
+		ArgumentNullException.ThrowIfNull(leagueRuntime);
+		ArgumentNullException.ThrowIfNull(allianceRuntime);
+
+		var pendingRequest = responder.PendingLeagueInviteRequest;
+		if (pendingRequest == null || pendingRequest.QuestionId != questionId)
+		{
+			return new PlayerLeagueInviteResponsePlan(
+				PlayerLeagueInviteResponseStatus.NoPendingRequest,
+				questionId,
+				responseCode,
+				PendingRequest: pendingRequest,
+				CanInvitePlan: null,
+				AcceptPlan: null,
+				DenyPlan: null);
+		}
+
+		responder.PendingLeagueInviteRequest = null;
+
+		if (responseCode == 0)
+		{
+			return new PlayerLeagueInviteResponsePlan(
+				PlayerLeagueInviteResponseStatus.Denied,
+				questionId,
+				responseCode,
+				pendingRequest,
+				CanInvitePlan: null,
+				AcceptPlan: null,
+				DenyPlan: CreateDenyPlan(requester.ObjectId, responder.Name));
+		}
+
+		var firstChecks = CreateCanInviteFirstChecksPlan(requester, responder);
+		if (firstChecks.Status != PlayerLeagueCanInviteStatus.PassedRepresentedChecks)
+		{
+			return CreateAcceptBlockedResponsePlan(questionId, responseCode, pendingRequest, firstChecks);
+		}
+
+		var allianceChecks = CreateCanInviteAllianceChecksPlan(requester, responder, leagueRuntime);
+		if (allianceChecks.Status != PlayerLeagueCanInviteStatus.PassedRepresentedChecks)
+		{
+			return CreateAcceptBlockedResponsePlan(questionId, responseCode, pendingRequest, allianceChecks);
+		}
+
+		var requesterAllianceId = requester.CurrentAllianceSnapshot?.AllianceId
+			?? throw new InvalidOperationException("Requester alliance should not be null");
+		var invitedAllianceId = responder.CurrentAllianceSnapshot?.AllianceId
+			?? pendingRequest.InvitedAllianceId;
+		var acceptPlan = CreateAcceptExistingLeaguePlan(
+			requesterAllianceId,
+			invitedAllianceId,
+			leagueRuntime,
+			allianceRuntime);
+
+		return new PlayerLeagueInviteResponsePlan(
+			acceptPlan.Status switch
+			{
+				PlayerLeagueInviteAcceptStatus.Joined => PlayerLeagueInviteResponseStatus.AcceptedJoined,
+				PlayerLeagueInviteAcceptStatus.RequesterLeagueMissing => PlayerLeagueInviteResponseStatus.AcceptedRequesterLeagueMissing,
+				PlayerLeagueInviteAcceptStatus.InvitedAlreadyInLeague => PlayerLeagueInviteResponseStatus.AcceptedInvitedAlreadyInLeague,
+				_ => throw new ArgumentOutOfRangeException(nameof(acceptPlan.Status), acceptPlan.Status, "Unsupported league invite accept status."),
+			},
+			questionId,
+			responseCode,
+			pendingRequest,
+			CanInvitePlan: allianceChecks,
+			AcceptPlan: acceptPlan,
+			DenyPlan: null);
+	}
+
 	public PlayerLeagueCanInvitePlan CreateCanInviteFirstChecksPlan(
 		Player inviter,
 		Player invited)
@@ -240,6 +320,22 @@ public sealed class PlayerLeagueInvitePlanner
 			status,
 			new PlayerAllianceSystemMessageIntent(inviterObjectId, message));
 	}
+
+	private static PlayerLeagueInviteResponsePlan CreateAcceptBlockedResponsePlan(
+		int questionId,
+		int responseCode,
+		PendingLeagueInviteRequest pendingRequest,
+		PlayerLeagueCanInvitePlan canInvitePlan)
+	{
+		return new PlayerLeagueInviteResponsePlan(
+			PlayerLeagueInviteResponseStatus.AcceptBlockedByCanInvite,
+			questionId,
+			responseCode,
+			pendingRequest,
+			canInvitePlan,
+			AcceptPlan: null,
+			DenyPlan: null);
+	}
 }
 
 public enum PlayerLeagueCanInviteStatus
@@ -283,6 +379,25 @@ public sealed record PlayerLeagueInvitePendingRequestPlan(
 	int QuestionCode,
 	bool Registered,
 	PendingLeagueInviteRequest PendingRequest);
+
+public enum PlayerLeagueInviteResponseStatus
+{
+	NoPendingRequest,
+	Denied,
+	AcceptBlockedByCanInvite,
+	AcceptedJoined,
+	AcceptedRequesterLeagueMissing,
+	AcceptedInvitedAlreadyInLeague,
+}
+
+public sealed record PlayerLeagueInviteResponsePlan(
+	PlayerLeagueInviteResponseStatus Status,
+	int QuestionId,
+	int ResponseCode,
+	PendingLeagueInviteRequest? PendingRequest,
+	PlayerLeagueCanInvitePlan? CanInvitePlan,
+	PlayerLeagueInviteAcceptPlan? AcceptPlan,
+	PlayerLeagueInviteDenyPlan? DenyPlan);
 
 public enum PlayerLeagueInviteAcceptStatus
 {
