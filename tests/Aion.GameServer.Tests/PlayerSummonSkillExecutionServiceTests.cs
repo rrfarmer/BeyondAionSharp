@@ -1544,10 +1544,30 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.True(contract.ExpectsPostSpawnAction);
 		Assert.True(contract.ExpectsPackets);
 		Assert.True(contract.HasActionSideEffectTrace);
+		Assert.True(contract.HasUseSkillStartTrace);
 		Assert.True(contract.HasEndCastSideEffectTrace);
 		Assert.Equal([
 			PlayerSummonKnownObjectNpcSkillActionSideEffectStep.CreatureControllerUseSkill,
 		], contract.ActionSideEffectTrace?.OrderedSteps);
+		Assert.Equal([
+			PlayerSummonKnownObjectNpcSkillUseSkillStartStep.ResetBoostSkillCost,
+			PlayerSummonKnownObjectNpcSkillUseSkillStartStep.NotifyBoostSkillCostObservers,
+			PlayerSummonKnownObjectNpcSkillUseSkillStartStep.CanUseSkillCastStart,
+			PlayerSummonKnownObjectNpcSkillUseSkillStartStep.UpdateCastDurationAndSpeed,
+			PlayerSummonKnownObjectNpcSkillUseSkillStartStep.UpdateHitTime,
+			PlayerSummonKnownObjectNpcSkillUseSkillStartStep.NotifyStartSkillCastObservers,
+			PlayerSummonKnownObjectNpcSkillUseSkillStartStep.EffectorSetCasting,
+			PlayerSummonKnownObjectNpcSkillUseSkillStartStep.CastStartTimeSet,
+			PlayerSummonKnownObjectNpcSkillUseSkillStartStep.StartCast,
+			PlayerSummonKnownObjectNpcSkillUseSkillStartStep.NpcAiSetCastSubState,
+			PlayerSummonKnownObjectNpcSkillUseSkillStartStep.AttachMoveListener,
+			PlayerSummonKnownObjectNpcSkillUseSkillStartStep.NpcSkillEntrySetLastTimeUsed,
+			PlayerSummonKnownObjectNpcSkillUseSkillStartStep.NpcGameStatsSetNextSkillDelay,
+			PlayerSummonKnownObjectNpcSkillUseSkillStartStep.EffectorAiOnStartUseSkill,
+			PlayerSummonKnownObjectNpcSkillUseSkillStartStep.ScheduleEndCast,
+		], contract.UseSkillStartTrace?.OrderedSteps);
+		Assert.True(contract.UseSkillStartTrace?.StartsCastingBeforeNpcCastSubState);
+		Assert.True(contract.UseSkillStartTrace?.UpdatesNpcSkillDelayBeforeAiStartUseSkill);
 		Assert.Equal([
 			PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.ScheduleApplyEffect,
 			PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.SendCastSpellEnd,
@@ -1624,9 +1644,12 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Equal(summary.DependencyReadiness, adapterContract.RequiredDependencies);
 		Assert.Contains("NpcAI state/substate mutation", adapterContract.UnsupportedBehaviors);
 		Assert.True(adapterContract.PreservesActionSideEffectOrdering);
+		Assert.True(adapterContract.PreservesUseSkillStartOrdering);
 		Assert.True(adapterContract.PreservesEndCastSideEffectOrdering);
 		Assert.Equal(contract.ActionSideEffectTrace?.Status, adapterContract.ActionSideEffectTrace?.Status);
 		Assert.Equal(contract.ActionSideEffectTrace?.OrderedSteps, adapterContract.ActionSideEffectTrace?.OrderedSteps);
+		Assert.Equal(contract.UseSkillStartTrace?.Status, adapterContract.UseSkillStartTrace?.Status);
+		Assert.Equal(contract.UseSkillStartTrace?.OrderedSteps, adapterContract.UseSkillStartTrace?.OrderedSteps);
 		Assert.Equal(contract.EndCastSideEffectTrace?.Status, adapterContract.EndCastSideEffectTrace?.Status);
 		Assert.Equal(contract.EndCastSideEffectTrace?.OrderedSteps, adapterContract.EndCastSideEffectTrace?.OrderedSteps);
 		Assert.True(adapterContract.RequiresDependency(PlayerSummonKnownObjectNpcSkillAttackCycleDependency.NpcAi));
@@ -2495,6 +2518,82 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.True(useFailed.MutatesTargetBeforeControllerUse);
 		Assert.True(useFailed.InvokesAfterUseSkill);
 		Assert.False(useFailed.WouldExecuteSideEffects);
+	}
+
+	[Fact]
+	public void ProjectMercenaryNpcSkillUseSkillStartTrace_OrdersJavaUseSkillStart()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var knownObject = new PlayerSummonKnownObject(8017, PlayerSummonKnownObjectKind.Creature);
+		var readySkill = service.EvaluateMercenarySkillReadiness(knownObject, CreateSkillTemplate("MAGICAL"));
+		var targetSelection = service.SelectMercenaryNpcSkillActionTarget(
+			skillFirstTargetIsSelf: false,
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.MostHated,
+			hasMostHatedTarget: true);
+
+		PlayerSummonKnownObjectNpcSkillActionResult Result(bool controllerUseSkillSucceeded = true)
+		{
+			var preview = service.PreviewMercenaryNpcSkillAction(
+				isInCastSubState: true,
+				shouldResumeFightAfterInterruptedCast: false,
+				hasCreatureTarget: true,
+				targetIsDead: false,
+				hasLastSkill: true,
+				ownerUsesMeleeAggroRange: false,
+				targetInAggroRange: true,
+				readySkill,
+				targetSelection,
+				controllerUseSkillSucceeded);
+
+			return service.ProjectMercenaryNpcSkillActionResult(preview);
+		}
+
+		var missingResult = service.ProjectMercenaryNpcSkillUseSkillStartTrace(null);
+		var noUseSkill = service.ProjectMercenaryNpcSkillUseSkillStartTrace(Result(controllerUseSkillSucceeded: false));
+		var blockedAtCastStart = service.ProjectMercenaryNpcSkillUseSkillStartTrace(
+			Result(),
+			canUseSkillAtCastStart: false);
+		var immediateNpcCast = service.ProjectMercenaryNpcSkillUseSkillStartTrace(Result());
+		var scheduledNpcCast = service.ProjectMercenaryNpcSkillUseSkillStartTrace(
+			Result(),
+			castDurationGreaterThanZero: true);
+		var chargeNpcCast = service.ProjectMercenaryNpcSkillUseSkillStartTrace(
+			Result(),
+			isChargeSkill: true);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillUseSkillStartTraceStatus.MissingResult, missingResult.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillUseSkillStartTraceStatus.NoUseSkill, noUseSkill.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillUseSkillStartTraceStatus.BlockedByCastStartValidation, blockedAtCastStart.Status);
+		Assert.Equal([
+			PlayerSummonKnownObjectNpcSkillUseSkillStartStep.ResetBoostSkillCost,
+			PlayerSummonKnownObjectNpcSkillUseSkillStartStep.NotifyBoostSkillCostObservers,
+			PlayerSummonKnownObjectNpcSkillUseSkillStartStep.CanUseSkillCastStart,
+		], blockedAtCastStart.OrderedSteps);
+		Assert.Equal([
+			PlayerSummonKnownObjectNpcSkillUseSkillStartStep.ResetBoostSkillCost,
+			PlayerSummonKnownObjectNpcSkillUseSkillStartStep.NotifyBoostSkillCostObservers,
+			PlayerSummonKnownObjectNpcSkillUseSkillStartStep.CanUseSkillCastStart,
+			PlayerSummonKnownObjectNpcSkillUseSkillStartStep.UpdateCastDurationAndSpeed,
+			PlayerSummonKnownObjectNpcSkillUseSkillStartStep.UpdateHitTime,
+			PlayerSummonKnownObjectNpcSkillUseSkillStartStep.NotifyStartSkillCastObservers,
+			PlayerSummonKnownObjectNpcSkillUseSkillStartStep.EffectorSetCasting,
+			PlayerSummonKnownObjectNpcSkillUseSkillStartStep.CastStartTimeSet,
+			PlayerSummonKnownObjectNpcSkillUseSkillStartStep.StartCast,
+			PlayerSummonKnownObjectNpcSkillUseSkillStartStep.NpcAiSetCastSubState,
+			PlayerSummonKnownObjectNpcSkillUseSkillStartStep.AttachMoveListener,
+			PlayerSummonKnownObjectNpcSkillUseSkillStartStep.NpcSkillEntrySetLastTimeUsed,
+			PlayerSummonKnownObjectNpcSkillUseSkillStartStep.NpcGameStatsSetNextSkillDelay,
+			PlayerSummonKnownObjectNpcSkillUseSkillStartStep.EffectorAiOnStartUseSkill,
+			PlayerSummonKnownObjectNpcSkillUseSkillStartStep.InvokeEndCast,
+		], immediateNpcCast.OrderedSteps);
+		Assert.True(immediateNpcCast.StartsCastingBeforeNpcCastSubState);
+		Assert.True(immediateNpcCast.UpdatesNpcSkillDelayBeforeAiStartUseSkill);
+		Assert.True(immediateNpcCast.ReachesEndCast);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillUseSkillStartStep.ScheduleEndCast, scheduledNpcCast.OrderedSteps);
+		Assert.DoesNotContain(PlayerSummonKnownObjectNpcSkillUseSkillStartStep.InvokeEndCast, scheduledNpcCast.OrderedSteps);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillUseSkillStartStep.ScheduleCancelCurrentSkillCast, chargeNpcCast.OrderedSteps);
+		Assert.False(chargeNpcCast.ReachesEndCast);
+		Assert.False(immediateNpcCast.WouldExecuteSideEffects);
 	}
 
 	[Fact]
