@@ -184,6 +184,7 @@ public class PlayerSummonCastSpellServiceTests
 			ObjectId: 8002,
 			Kind: PlayerSummonKnownObjectKind.Creature,
 			CreatorObjectId: 1,
+			NpcTemplateId: 833288,
 			NpcTemplateType: PlayerSummonKnownNpcTemplateType.Mercenary));
 
 		var mercenaryResult = service.Handle(
@@ -195,6 +196,7 @@ public class PlayerSummonCastSpellServiceTests
 			ObjectId: 8003,
 			Kind: PlayerSummonKnownObjectKind.Creature,
 			CreatorObjectId: 2,
+			NpcTemplateId: 833288,
 			NpcTemplateType: PlayerSummonKnownNpcTemplateType.Mercenary));
 
 		var wrongCreatorResult = service.Handle(
@@ -203,8 +205,10 @@ public class PlayerSummonCastSpellServiceTests
 
 		Assert.Equal(PlayerSummonCastSpellStatus.MercenaryReady, mercenaryResult.Status);
 		Assert.Equal(PlayerSummonOrMercenaryKind.Mercenary, mercenaryResult.ActorKind);
+		Assert.Equal(833288, player.GetSummonOrMercenaryNpcId(8002));
 		Assert.Equal(PlayerSummonCastSpellStatus.PetRequired, wrongCreatorResult.Status);
 		Assert.Equal(PlayerSummonOrMercenaryKind.None, wrongCreatorResult.ActorKind);
+		Assert.Equal(0, wrongCreator.GetSummonOrMercenaryNpcId(8003));
 	}
 
 	private static Player CreatePlayer()

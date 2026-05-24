@@ -372,9 +372,12 @@ public class GameServerConnectionCastSpellTests
 		var runtimeContext = await CreateRuntimeContextAsync();
 		await using var pair = await TestConnectionPair.CreateAsync(sentPackets, runtimeContext: runtimeContext);
 		var player = CreatePlayer();
-		player.RepresentedSummonOrMercenaryObjectId = 8002;
-		player.RepresentedSummonOrMercenaryKind = PlayerSummonOrMercenaryKind.Mercenary;
-		player.RepresentedSummonOrMercenaryNpcId = 833288;
+		player.SetSummonKnownObject(new PlayerSummonKnownObject(
+			ObjectId: 8002,
+			Kind: PlayerSummonKnownObjectKind.Creature,
+			CreatorObjectId: player.ObjectId,
+			NpcTemplateId: 833288,
+			NpcTemplateType: PlayerSummonKnownNpcTemplateType.Mercenary));
 
 		var result = await pair.Connection.HandleSummonCastSpellAsync(
 			player,
@@ -404,9 +407,12 @@ public class GameServerConnectionCastSpellTests
 		var runtimeContext = await CreateRuntimeContextAsync();
 		await using var pair = await TestConnectionPair.CreateAsync(sentPackets, runtimeContext: runtimeContext);
 		var player = CreatePlayer();
-		player.RepresentedSummonOrMercenaryObjectId = 8002;
-		player.RepresentedSummonOrMercenaryKind = PlayerSummonOrMercenaryKind.Mercenary;
-		player.RepresentedSummonOrMercenaryNpcId = 833288;
+		player.SetSummonKnownObject(new PlayerSummonKnownObject(
+			ObjectId: 8002,
+			Kind: PlayerSummonKnownObjectKind.Creature,
+			CreatorObjectId: player.ObjectId,
+			NpcTemplateId: 833288,
+			NpcTemplateType: PlayerSummonKnownNpcTemplateType.Mercenary));
 
 		var result = await pair.Connection.HandleSummonCastSpellAsync(
 			player,

@@ -41,19 +41,22 @@ public sealed class PlayerSummonSkillExecutionService
 		PetSkillTable petSkills)
 	{
 		// Java parity: CM_SUMMON_CASTSPELL mercenary branch checks petHasSkill before controller.useSkill(skillId, skillLvl).
-		if (player.RepresentedSummonOrMercenaryKind != PlayerSummonOrMercenaryKind.Mercenary
-			|| player.RepresentedSummonOrMercenaryNpcId == 0)
+		if (player.GetSummonOrMercenaryKind(packet.SummonObjectId) != PlayerSummonOrMercenaryKind.Mercenary)
 			return PlayerMercenarySkillExecutionResult.MissingMercenary(packet.SkillId, packet.SkillLevel, packet.TargetObjectId);
 
-		if (!petSkills.PetHasSkill(player.RepresentedSummonOrMercenaryNpcId, packet.SkillId))
+		var mercenaryNpcId = player.GetSummonOrMercenaryNpcId(packet.SummonObjectId);
+		if (mercenaryNpcId == 0)
+			return PlayerMercenarySkillExecutionResult.MissingMercenary(packet.SkillId, packet.SkillLevel, packet.TargetObjectId);
+
+		if (!petSkills.PetHasSkill(mercenaryNpcId, packet.SkillId))
 			return PlayerMercenarySkillExecutionResult.InvalidMercenarySkill(
-				player.RepresentedSummonOrMercenaryNpcId,
+				mercenaryNpcId,
 				packet.SkillId,
 				packet.SkillLevel,
 				packet.TargetObjectId);
 
 		return PlayerMercenarySkillExecutionResult.WouldInvokeController(
-			player.RepresentedSummonOrMercenaryNpcId,
+			mercenaryNpcId,
 			packet.SkillId,
 			packet.SkillLevel,
 			packet.TargetObjectId);

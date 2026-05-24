@@ -297,6 +297,25 @@ public sealed class Player
 			: PlayerSummonOrMercenaryKind.None;
 	}
 
+	public int GetSummonOrMercenaryNpcId(int objectId)
+	{
+		// Java parity: CM_SUMMON_CASTSPELL mercenary branch uses creature.getObjectTemplate().getTemplateId().
+		if (HasPetSummon && PetSummonObjectId == objectId)
+			return PetSummonNpcId;
+
+		if (TryGetSummonKnownObject(objectId, out var knownObject)
+			&& knownObject.Kind == PlayerSummonKnownObjectKind.Creature
+			&& knownObject.CreatorObjectId == ObjectId
+			&& knownObject.NpcTemplateType == PlayerSummonKnownNpcTemplateType.Mercenary)
+		{
+			return knownObject.NpcTemplateId;
+		}
+
+		return RepresentedSummonOrMercenaryObjectId == objectId
+			? RepresentedSummonOrMercenaryNpcId
+			: 0;
+	}
+
 	public PlayerBrokerSettlementSummary BrokerSettlements { get; set; } = PlayerBrokerSettlementSummary.Empty;
 
 	// Java parity: model/broker/BrokerPlayerCache remembers the last broker list/search for refresh after buy.

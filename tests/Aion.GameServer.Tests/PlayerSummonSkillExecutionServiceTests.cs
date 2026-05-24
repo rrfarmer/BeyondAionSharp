@@ -93,9 +93,14 @@ public class PlayerSummonSkillExecutionServiceTests
 		var service = new PlayerSummonSkillExecutionService();
 		var player = new Player
 		{
-			RepresentedSummonOrMercenaryKind = PlayerSummonOrMercenaryKind.Mercenary,
-			RepresentedSummonOrMercenaryNpcId = 833288,
+			ObjectId = 1,
 		};
+		player.SetSummonKnownObject(new PlayerSummonKnownObject(
+			ObjectId: 8002,
+			Kind: PlayerSummonKnownObjectKind.Creature,
+			CreatorObjectId: 1,
+			NpcTemplateId: 833288,
+			NpcTemplateType: PlayerSummonKnownNpcTemplateType.Mercenary));
 
 		var valid = service.ValidateMercenaryExecution(
 			player,
