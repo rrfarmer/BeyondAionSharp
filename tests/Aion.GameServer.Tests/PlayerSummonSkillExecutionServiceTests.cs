@@ -1472,6 +1472,9 @@ public class PlayerSummonSkillExecutionServiceTests
 		var missingInvocation = service.ProjectMercenaryNpcSkillAttackCycleResultContract(null);
 		var blocked = service.ProjectMercenaryNpcSkillAttackCycleResultContract(blockedInvocation);
 		var contract = service.ProjectMercenaryNpcSkillAttackCycleResultContract(readyInvocation);
+		var missingReadiness = service.ProjectMercenaryNpcSkillAttackCycleOperationReadiness(null);
+		var blockedReadiness = service.ProjectMercenaryNpcSkillAttackCycleOperationReadiness(blocked);
+		var operationReadiness = service.ProjectMercenaryNpcSkillAttackCycleOperationReadiness(contract);
 
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillAttackCycleResultContractStatus.MissingInvocation, missingInvocation.Status);
 		Assert.False(missingInvocation.WouldExecuteSideEffects);
@@ -1519,6 +1522,27 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.True(contract.ExpectsControllerUseSkill);
 		Assert.True(contract.ExpectsPostSpawnAction);
 		Assert.True(contract.ExpectsPackets);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillAttackCycleOperationReadinessStatus.MissingResultContract, missingReadiness.Status);
+		Assert.False(missingReadiness.WouldExecuteOperations);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillAttackCycleOperationReadinessStatus.BlockedByResultContract, blockedReadiness.Status);
+		Assert.Same(blocked, blockedReadiness.ResultContract);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillAttackCycleOperationReadinessStatus.UnsupportedDependencies, operationReadiness.Status);
+		Assert.True(operationReadiness.HasUnsupportedDependencies);
+		Assert.False(operationReadiness.WouldExecuteOperations);
+		Assert.Same(contract, operationReadiness.ResultContract);
+		Assert.Equal([
+			PlayerSummonKnownObjectNpcSkillAttackCycleDependency.NpcAi,
+			PlayerSummonKnownObjectNpcSkillAttackCycleDependency.Scheduler,
+			PlayerSummonKnownObjectNpcSkillAttackCycleDependency.Controller,
+			PlayerSummonKnownObjectNpcSkillAttackCycleDependency.PacketEffectPostSpawn,
+		], operationReadiness.DependencyReadiness.Select(dependency => dependency.Dependency).ToArray());
+		Assert.All(operationReadiness.DependencyReadiness, dependency => Assert.False(dependency.IsSupported));
+		Assert.True(operationReadiness.HasDependency(PlayerSummonKnownObjectNpcSkillAttackCycleDependency.NpcAi));
+		Assert.True(operationReadiness.HasDependency(PlayerSummonKnownObjectNpcSkillAttackCycleDependency.Scheduler));
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.NpcAiSetCastSubState, operationReadiness.DependencyReadiness[0].Operations);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.ThreadPoolScheduleSkillAction, operationReadiness.DependencyReadiness[1].Operations);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.CreatureControllerUseSkill, operationReadiness.DependencyReadiness[2].Operations);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.PacketFanout, operationReadiness.DependencyReadiness[3].Operations);
 	}
 
 	[Fact]

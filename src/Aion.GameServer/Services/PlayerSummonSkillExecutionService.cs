@@ -221,6 +221,13 @@ public sealed class PlayerSummonSkillExecutionService
 		return PlayerSummonKnownObjectNpcSkillAttackCycleResultContract.FromLiveInvocation(liveInvocation);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillAttackCycleOperationReadiness ProjectMercenaryNpcSkillAttackCycleOperationReadiness(
+		PlayerSummonKnownObjectNpcSkillAttackCycleResultContract? resultContract)
+	{
+		// Java parity: groups future live operations by currently unsupported runtime dependency.
+		return PlayerSummonKnownObjectNpcSkillAttackCycleOperationReadiness.FromResultContract(resultContract);
+	}
+
 	public PlayerSummonKnownObjectSkillReadiness EvaluateMercenarySkillReadiness(
 		PlayerSummonKnownObject knownObject,
 		SkillTemplateSummary? skillTemplate,
@@ -4437,6 +4444,139 @@ public enum PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation
 	PostSpawnImmediate,
 	PostSpawnSchedule,
 	PacketFanout,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleOperationReadiness(
+	PlayerSummonKnownObjectNpcSkillAttackCycleOperationReadinessStatus Status,
+	PlayerSummonKnownObjectNpcSkillAttackCycleResultContract? ResultContract = null,
+	IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleDependencyReadiness>? Dependencies = null)
+{
+	private static readonly IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleDependencyReadiness> EmptyDependencies = [];
+
+	public IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleDependencyReadiness> DependencyReadiness =>
+		Dependencies ?? EmptyDependencies;
+
+	public bool HasUnsupportedDependencies =>
+		DependencyReadiness.Any(dependency => !dependency.IsSupported);
+
+	public bool WouldExecuteOperations => false;
+
+	public bool HasDependency(PlayerSummonKnownObjectNpcSkillAttackCycleDependency dependency)
+	{
+		return DependencyReadiness.Any(readiness => readiness.Dependency == dependency);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillAttackCycleOperationReadiness FromResultContract(
+		PlayerSummonKnownObjectNpcSkillAttackCycleResultContract? resultContract)
+	{
+		if (resultContract == null)
+		{
+			return new PlayerSummonKnownObjectNpcSkillAttackCycleOperationReadiness(
+				PlayerSummonKnownObjectNpcSkillAttackCycleOperationReadinessStatus.MissingResultContract);
+		}
+
+		if (resultContract.Status != PlayerSummonKnownObjectNpcSkillAttackCycleResultContractStatus.LiveAiNotWired)
+		{
+			return new PlayerSummonKnownObjectNpcSkillAttackCycleOperationReadiness(
+				PlayerSummonKnownObjectNpcSkillAttackCycleOperationReadinessStatus.BlockedByResultContract,
+				resultContract);
+		}
+
+		var dependencies = BuildDependencyReadiness(resultContract.FutureLiveAdapterOperations);
+		return dependencies.Count == 0
+			? new PlayerSummonKnownObjectNpcSkillAttackCycleOperationReadiness(
+				PlayerSummonKnownObjectNpcSkillAttackCycleOperationReadinessStatus.NoFutureOperations,
+				resultContract,
+				dependencies)
+			: new PlayerSummonKnownObjectNpcSkillAttackCycleOperationReadiness(
+				PlayerSummonKnownObjectNpcSkillAttackCycleOperationReadinessStatus.UnsupportedDependencies,
+				resultContract,
+				dependencies);
+	}
+
+	private static IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleDependencyReadiness> BuildDependencyReadiness(
+		IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation> operations)
+	{
+		if (operations.Count == 0)
+			return EmptyDependencies;
+
+		var groups = new Dictionary<PlayerSummonKnownObjectNpcSkillAttackCycleDependency, List<PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation>>();
+		foreach (var operation in operations)
+		{
+			var dependency = ResolveDependency(operation);
+			if (!groups.TryGetValue(dependency, out var groupedOperations))
+			{
+				groupedOperations = [];
+				groups[dependency] = groupedOperations;
+			}
+
+			groupedOperations.Add(operation);
+		}
+
+		return groups
+			.OrderBy(group => group.Key)
+			.Select(group => PlayerSummonKnownObjectNpcSkillAttackCycleDependencyReadiness.Unsupported(
+				group.Key,
+				group.Value))
+			.ToArray();
+	}
+
+	private static PlayerSummonKnownObjectNpcSkillAttackCycleDependency ResolveDependency(
+		PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation operation)
+	{
+		return operation switch
+		{
+			PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.NpcAiSetCastSubState
+				or PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.NpcAiSetNoneSubState
+				or PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.NpcAiThink
+				or PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.NpcAiOnTargetTooFar
+				or PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.NpcAiOnTargetGiveUp
+				or PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.NpcAiOnAttackComplete
+				=> PlayerSummonKnownObjectNpcSkillAttackCycleDependency.NpcAi,
+			PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.ThreadPoolScheduleSkillAction
+				or PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.ThreadPoolAwaitScheduledCallback
+				=> PlayerSummonKnownObjectNpcSkillAttackCycleDependency.Scheduler,
+			PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.ControllerAbortCast
+				or PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.CreatureControllerUseSkill
+				or PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.OwnerSetTarget
+				=> PlayerSummonKnownObjectNpcSkillAttackCycleDependency.Controller,
+			_ => PlayerSummonKnownObjectNpcSkillAttackCycleDependency.PacketEffectPostSpawn,
+		};
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillAttackCycleOperationReadinessStatus
+{
+	MissingResultContract,
+	BlockedByResultContract,
+	NoFutureOperations,
+	UnsupportedDependencies,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleDependencyReadiness(
+	PlayerSummonKnownObjectNpcSkillAttackCycleDependency Dependency,
+	IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation> Operations,
+	bool IsSupported)
+{
+	public bool IsUnsupported => !IsSupported;
+
+	public static PlayerSummonKnownObjectNpcSkillAttackCycleDependencyReadiness Unsupported(
+		PlayerSummonKnownObjectNpcSkillAttackCycleDependency dependency,
+		IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation> operations)
+	{
+		return new PlayerSummonKnownObjectNpcSkillAttackCycleDependencyReadiness(
+			dependency,
+			operations,
+			IsSupported: false);
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillAttackCycleDependency
+{
+	NpcAi,
+	Scheduler,
+	Controller,
+	PacketEffectPostSpawn,
 }
 
 public sealed record PlayerSummonKnownObjectNpcSkillActionWorkflowPreview(
