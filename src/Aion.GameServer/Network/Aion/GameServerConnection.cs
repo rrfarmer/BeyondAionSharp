@@ -7006,13 +7006,16 @@ public sealed class GameServerConnection : BaseClientConnection
 			await SendGroupInvitePacketAsync(result.Request.RequesterObjectId, result.Message);
 		}
 
-		if (result.Status == AllianceInviteResponseStatus.Accepted && result.EnteredPlan != null)
+		if (result.Status == AllianceInviteResponseStatus.Accepted)
 		{
-			foreach (var intent in result.EnteredPlan.PacketIntents.OrderBy(intent => intent.Sequence))
+			foreach (var enteredPlan in result.EnteredPlans)
 			{
-				var packetToSend = intent.CreatePacket();
-				if (packetToSend != null)
-					await SendGroupInvitePacketAsync(intent.RecipientObjectId, packetToSend);
+				foreach (var intent in enteredPlan.PacketIntents.OrderBy(intent => intent.Sequence))
+				{
+					var packetToSend = intent.CreatePacket();
+					if (packetToSend != null)
+						await SendGroupInvitePacketAsync(intent.RecipientObjectId, packetToSend);
+				}
 			}
 		}
 

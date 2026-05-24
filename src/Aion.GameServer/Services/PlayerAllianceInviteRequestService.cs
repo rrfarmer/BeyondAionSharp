@@ -70,11 +70,11 @@ public sealed class PlayerAllianceInviteRequestService
 		PlayerGroupRuntime groupRuntime,
 		PlayerAllianceRuntime allianceRuntime,
 		Func<int> allocateAllianceId,
-		Func<int, Player?> resolveRequester)
+		Func<int, Player?> resolvePlayer)
 	{
 		// Java parity: PlayerAllianceInvite.denyRequest sends STR_PARTY_ALLIANCE_HE_REJECT_INVITATION;
-		// acceptRequest re-checks restrictions and creates/adds to the alliance. C# currently supports
-		// the solo/non-group accept branch and keeps Java group merge behavior explicit as unsupported.
+		// acceptRequest re-checks restrictions, collects requester/invited group members, removes their
+		// groups, and creates/adds to the alliance.
 		if (questionId != SmQuestionWindow.AllianceInvite)
 			return AllianceInviteResponseResult.Ignored();
 
@@ -87,22 +87,24 @@ public sealed class PlayerAllianceInviteRequestService
 		if (request == null)
 			return AllianceInviteResponseResult.MissingRequest();
 
-		var requester = resolveRequester(request.RequesterObjectId);
+		var requester = resolvePlayer(request.RequesterObjectId);
 		if (requester == null)
 			return AllianceInviteResponseResult.MissingRequest(request);
 
 		if (!dispatch.Accepted)
 			return AllianceInviteResponseResult.Denied(request, SmSystemMessage.PartyAllianceHeRejectInvitation(responder.Name));
 
-		if (groupRuntime.Resolve(requester) != null || groupRuntime.Resolve(responder) != null)
-			return AllianceInviteResponseResult.UnsupportedGroupMerge(request);
-
 		var restrictionMessage = CreateRepresentedRestrictionMessage(requester, responder, groupRuntime, allianceRuntime);
 		if (restrictionMessage != null)
 			return AllianceInviteResponseResult.Rejected(request, restrictionMessage);
 
+		var playersToAdd = CollectPlayersToAdd(requester, responder, groupRuntime, allianceRuntime, resolvePlayer);
+		foreach (var player in playersToAdd.GroupMembersToRemove)
+			groupRuntime.RemoveMember(player);
+
 		var requesterAlliance = allianceRuntime.Resolve(requester);
 		PlayerAllianceSnapshot snapshot;
+		var enteredPlans = new List<PlayerAllianceEnteredPlan>();
 		if (requesterAlliance == null)
 		{
 			var newAllianceId = allocateAllianceId();
@@ -110,17 +112,92 @@ public sealed class PlayerAllianceInviteRequestService
 				return AllianceInviteResponseResult.MissingRequest(request);
 
 			allianceRuntime.CreateAlliance(newAllianceId, requester);
-			snapshot = allianceRuntime.AddMember(newAllianceId, responder);
+			snapshot = AddPlayersToAlliance(newAllianceId, playersToAdd.PlayersToAdd, allianceRuntime, enteredPlans);
 		}
 		else
 		{
-			snapshot = allianceRuntime.AddMember(requesterAlliance.AllianceId, responder);
+			snapshot = AddPlayersToAlliance(requesterAlliance.AllianceId, playersToAdd.PlayersToAdd, allianceRuntime, enteredPlans);
 		}
 
 		return AllianceInviteResponseResult.Accepted(
 			request,
 			snapshot,
-			allianceRuntime.CreateEnteredPlan(snapshot.AllianceId, responder));
+			enteredPlans);
+	}
+
+	private static AllianceInviteAcceptCollection CollectPlayersToAdd(
+		Player requester,
+		Player responder,
+		PlayerGroupRuntime groupRuntime,
+		PlayerAllianceRuntime allianceRuntime,
+		Func<int, Player?> resolvePlayer)
+	{
+		// Java parity: PlayerAllianceInvite.collectPlayersToAdd first collects the requester group without
+		// requester when no alliance exists, then collects the full invited group or the solo invited player.
+		var playersToAdd = new List<Player>();
+		var groupMembersToRemove = new List<Player>();
+		var requesterAlliance = allianceRuntime.Resolve(requester);
+		var requesterGroup = groupRuntime.Resolve(requester);
+		if (requesterGroup != null && requesterAlliance == null)
+		{
+			foreach (var member in ResolveGroupMembers(requesterGroup, resolvePlayer))
+			{
+				groupMembersToRemove.Add(member);
+				if (member.ObjectId != requester.ObjectId)
+					playersToAdd.Add(member);
+			}
+		}
+
+		var responderGroup = groupRuntime.Resolve(responder);
+		if (responderGroup != null)
+		{
+			foreach (var member in ResolveGroupMembers(responderGroup, resolvePlayer))
+			{
+				groupMembersToRemove.Add(member);
+				playersToAdd.Add(member);
+			}
+		}
+		else
+		{
+			playersToAdd.Add(responder);
+		}
+
+		return new AllianceInviteAcceptCollection(
+			playersToAdd
+				.GroupBy(player => player.ObjectId)
+				.Select(group => group.First())
+				.ToArray(),
+			groupMembersToRemove
+				.GroupBy(player => player.ObjectId)
+				.Select(group => group.First())
+				.ToArray());
+	}
+
+	private static IReadOnlyList<Player> ResolveGroupMembers(PlayerGroupSnapshot group, Func<int, Player?> resolvePlayer)
+	{
+		return group.MemberObjectIds
+			.Select(resolvePlayer)
+			.Where(player => player != null)
+			.Cast<Player>()
+			.ToArray();
+	}
+
+	private static PlayerAllianceSnapshot AddPlayersToAlliance(
+		int allianceId,
+		IReadOnlyList<Player> playersToAdd,
+		PlayerAllianceRuntime allianceRuntime,
+		List<PlayerAllianceEnteredPlan> enteredPlans)
+	{
+		PlayerAllianceSnapshot? snapshot = null;
+		foreach (var player in playersToAdd)
+		{
+			snapshot = allianceRuntime.AddMember(allianceId, player);
+			var enteredPlan = allianceRuntime.CreateEnteredPlan(allianceId, player);
+			if (enteredPlan != null)
+				enteredPlans.Add(enteredPlan);
+		}
+
+		return snapshot ?? allianceRuntime.GetSnapshot(allianceId) ?? throw new InvalidOperationException("Alliance invite accept produced no alliance snapshot.");
 	}
 
 	private static SmSystemMessage? CreateRepresentedRestrictionMessage(
@@ -221,44 +298,39 @@ public sealed record AllianceInviteResponseResult(
 	PendingAllianceInviteRequest? Request,
 	SmSystemMessage? Message,
 	PlayerAllianceSnapshot? AllianceSnapshot,
-	PlayerAllianceEnteredPlan? EnteredPlan)
+	IReadOnlyList<PlayerAllianceEnteredPlan> EnteredPlans)
 {
 	public static AllianceInviteResponseResult Ignored()
 	{
-		return new AllianceInviteResponseResult(AllianceInviteResponseStatus.Ignored, null, null, null, null);
+		return new AllianceInviteResponseResult(AllianceInviteResponseStatus.Ignored, null, null, null, Array.Empty<PlayerAllianceEnteredPlan>());
 	}
 
 	public static AllianceInviteResponseResult MissingRequest(PendingAllianceInviteRequest? request = null)
 	{
-		return new AllianceInviteResponseResult(AllianceInviteResponseStatus.MissingRequest, request, null, null, null);
+		return new AllianceInviteResponseResult(AllianceInviteResponseStatus.MissingRequest, request, null, null, Array.Empty<PlayerAllianceEnteredPlan>());
 	}
 
 	public static AllianceInviteResponseResult Denied(PendingAllianceInviteRequest request, SmSystemMessage denyMessage)
 	{
-		return new AllianceInviteResponseResult(AllianceInviteResponseStatus.Denied, request, denyMessage, null, null);
+		return new AllianceInviteResponseResult(AllianceInviteResponseStatus.Denied, request, denyMessage, null, Array.Empty<PlayerAllianceEnteredPlan>());
 	}
 
 	public static AllianceInviteResponseResult Rejected(PendingAllianceInviteRequest request, SmSystemMessage rejectionMessage)
 	{
-		return new AllianceInviteResponseResult(AllianceInviteResponseStatus.Rejected, request, rejectionMessage, null, null);
-	}
-
-	public static AllianceInviteResponseResult UnsupportedGroupMerge(PendingAllianceInviteRequest request)
-	{
-		return new AllianceInviteResponseResult(AllianceInviteResponseStatus.UnsupportedGroupMerge, request, null, null, null);
+		return new AllianceInviteResponseResult(AllianceInviteResponseStatus.Rejected, request, rejectionMessage, null, Array.Empty<PlayerAllianceEnteredPlan>());
 	}
 
 	public static AllianceInviteResponseResult Accepted(
 		PendingAllianceInviteRequest request,
 		PlayerAllianceSnapshot allianceSnapshot,
-		PlayerAllianceEnteredPlan? enteredPlan)
+		IReadOnlyList<PlayerAllianceEnteredPlan> enteredPlans)
 	{
 		return new AllianceInviteResponseResult(
 			AllianceInviteResponseStatus.Accepted,
 			request,
 			null,
 			allianceSnapshot,
-			enteredPlan);
+			enteredPlans);
 	}
 }
 
@@ -268,6 +340,9 @@ public enum AllianceInviteResponseStatus
 	MissingRequest,
 	Denied,
 	Rejected,
-	UnsupportedGroupMerge,
 	Accepted,
 }
+
+public sealed record AllianceInviteAcceptCollection(
+	IReadOnlyList<Player> PlayersToAdd,
+	IReadOnlyList<Player> GroupMembersToRemove);

@@ -298,6 +298,39 @@ public sealed class GameServerConnectionGroupInviteTests
 		Assert.Contains(registry.SentPackets, send => send.Packet is SmAllianceMemberInfo);
 	}
 
+	[Fact]
+	public async Task HandleQuestionResponseAsync_AllianceInviteAcceptMergesRequesterAndInvitedGroupsLikeJavaCollectPlayersToAdd()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var groups = new PlayerGroupRuntime();
+		var alliances = new PlayerAllianceRuntime();
+		var inviter = CreatePlayer(1001, "Inviter");
+		var requesterMember = CreatePlayer(1002, "RequesterMember");
+		var invitedLeader = CreatePlayer(1003, "InvitedLeader");
+		var selected = CreatePlayer(1004, "Selected");
+		groups.CreateOrUpdateGroup(77001, [inviter, requesterMember]);
+		groups.CreateOrUpdateGroup(77002, [invitedLeader, selected]);
+		registry.OnlinePlayers.AddRange([inviter, requesterMember, invitedLeader, selected]);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, groups, idFactory: new IDFactory(), alliances: alliances);
+
+		await pair.Connection.HandleInviteToGroupAsync(inviter, CreateInvitePacket(inviteType: 12, "Selected"));
+		registry.SentPackets.Clear();
+		await pair.Connection.HandleQuestionResponseAsync(invitedLeader, CreateQuestionResponse(SmQuestionWindow.AllianceInvite, response: 1));
+
+		Assert.Null(inviter.CurrentGroupSnapshot);
+		Assert.Null(requesterMember.CurrentGroupSnapshot);
+		Assert.Null(invitedLeader.CurrentGroupSnapshot);
+		Assert.Null(selected.CurrentGroupSnapshot);
+		Assert.NotNull(inviter.CurrentAllianceSnapshot);
+		Assert.Same(inviter.CurrentAllianceSnapshot, requesterMember.CurrentAllianceSnapshot);
+		Assert.Same(inviter.CurrentAllianceSnapshot, invitedLeader.CurrentAllianceSnapshot);
+		Assert.Same(inviter.CurrentAllianceSnapshot, selected.CurrentAllianceSnapshot);
+		Assert.Equal([1001, 1002, 1003, 1004], inviter.CurrentAllianceSnapshot?.MemberObjectIds);
+		Assert.Contains(registry.SentPackets, send => send.PlayerObjectId == 1002 && send.Packet is SmAllianceInfo);
+		Assert.Contains(registry.SentPackets, send => send.PlayerObjectId == 1003 && send.Packet is SmAllianceInfo);
+		Assert.Contains(registry.SentPackets, send => send.PlayerObjectId == 1004 && send.Packet is SmAllianceMemberInfo);
+	}
+
 	private static Player CreatePlayer(int objectId, string name)
 	{
 		return new Player
