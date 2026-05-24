@@ -841,6 +841,56 @@ public sealed class PlayerSummonSkillExecutionService
 			isCastSkillMethod);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillValidationMutationTrace ProjectMercenaryNpcSkillValidationMutationTrace(
+		PlayerSummonKnownObjectNpcSkillActionResult? actionResult,
+		bool hasProperties = true,
+		bool isEndCastValidation = true,
+		bool hasFirstTargetRange = true,
+		bool firstTargetRangePasses = true,
+		bool hasTargetType = true,
+		bool targetRangePasses = true,
+		bool targetRangeMayAppendTargets = true,
+		bool hasTargetRelation = true,
+		bool targetRelationPasses = true,
+		bool targetRelationMayReplaceFirstTarget = true,
+		bool hasTargetStatus = false,
+		bool targetStatusPasses = true,
+		bool hasTargetSpecies = false,
+		bool targetSpeciesPasses = true,
+		bool hasMaxCount = true,
+		bool maxCountPasses = true,
+		bool isPlayerEffector = false,
+		bool playerCanUseSkill = true,
+		bool playerTargetFilterKeepsAny = true,
+		bool targetTypeZero = false,
+		bool isAreaTarget = false)
+	{
+		// Java parity: Properties.endCastValidate clears/re-seeds effectedList, property filters may mutate first target, then Skill.validateEffectedList can filter or reject it.
+		return PlayerSummonKnownObjectNpcSkillValidationMutationTrace.FromActionResult(
+			actionResult,
+			hasProperties,
+			isEndCastValidation,
+			hasFirstTargetRange,
+			firstTargetRangePasses,
+			hasTargetType,
+			targetRangePasses,
+			targetRangeMayAppendTargets,
+			hasTargetRelation,
+			targetRelationPasses,
+			targetRelationMayReplaceFirstTarget,
+			hasTargetStatus,
+			targetStatusPasses,
+			hasTargetSpecies,
+			targetSpeciesPasses,
+			hasMaxCount,
+			maxCountPasses,
+			isPlayerEffector,
+			playerCanUseSkill,
+			playerTargetFilterKeepsAny,
+			targetTypeZero,
+			isAreaTarget);
+	}
+
 	public PlayerSummonKnownObjectNpcSkillUseSkillStartTrace ProjectMercenaryNpcSkillUseSkillStartTrace(
 		PlayerSummonKnownObjectNpcSkillActionResult? actionResult,
 		bool canUseSkillAtCastStart = true,
@@ -4212,6 +4262,7 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 	IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation>? LiveOperations = null,
 	PlayerSummonKnownObjectNpcSkillActionSideEffectTrace? ActionSideEffectTrace = null,
 	PlayerSummonKnownObjectNpcSkillUseSkillStartTrace? UseSkillStartTrace = null,
+	PlayerSummonKnownObjectNpcSkillValidationMutationTrace? ValidationMutationTrace = null,
 	PlayerSummonKnownObjectNpcSkillEndCastBranchTrace? EndCastBranchTrace = null,
 	PlayerSummonKnownObjectNpcSkillEndCastSideEffectTrace? EndCastSideEffectTrace = null)
 {
@@ -4237,6 +4288,8 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 	public bool HasActionSideEffectTrace => ActionSideEffectTrace != null;
 
 	public bool HasUseSkillStartTrace => UseSkillStartTrace != null;
+
+	public bool HasValidationMutationTrace => ValidationMutationTrace != null;
 
 	public bool HasEndCastBranchTrace => EndCastBranchTrace != null;
 
@@ -4291,6 +4344,7 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 		var outcomeBranches = BuildExpectedOutcomeBranches(liveInvocation.CycleSnapshot);
 		var actionTrace = BuildActionSideEffectTrace(liveInvocation.CycleSnapshot);
 		var useSkillStartTrace = BuildUseSkillStartTrace(liveInvocation.CycleSnapshot, actionTrace);
+		var validationMutationTrace = BuildValidationMutationTrace(actionTrace);
 		var endCastBranchTrace = BuildEndCastBranchTrace(liveInvocation.CycleSnapshot, actionTrace);
 		return new PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 			PlayerSummonKnownObjectNpcSkillAttackCycleResultContractStatus.LiveAiNotWired,
@@ -4300,6 +4354,7 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 			BuildFutureLiveOperations(outcomeBranches, sideEffects),
 			actionTrace,
 			useSkillStartTrace,
+			validationMutationTrace,
 			endCastBranchTrace,
 			BuildEndCastSideEffectTrace(liveInvocation.CycleSnapshot, actionTrace));
 	}
@@ -4331,6 +4386,38 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 				== PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreviewStatus.ScheduledWorkflowDue,
 			isNpcEffector: true,
 			notifiesCastObservers: true);
+	}
+
+	private static PlayerSummonKnownObjectNpcSkillValidationMutationTrace? BuildValidationMutationTrace(
+		PlayerSummonKnownObjectNpcSkillActionSideEffectTrace? actionTrace)
+	{
+		var actionResult = actionTrace?.ActionResult;
+		if (actionResult == null)
+			return null;
+
+		return PlayerSummonKnownObjectNpcSkillValidationMutationTrace.FromActionResult(
+			actionResult,
+			hasProperties: true,
+			isEndCastValidation: true,
+			hasFirstTargetRange: true,
+			firstTargetRangePasses: true,
+			hasTargetType: true,
+			targetRangePasses: true,
+			targetRangeMayAppendTargets: true,
+			hasTargetRelation: true,
+			targetRelationPasses: true,
+			targetRelationMayReplaceFirstTarget: true,
+			hasTargetStatus: false,
+			targetStatusPasses: true,
+			hasTargetSpecies: false,
+			targetSpeciesPasses: true,
+			hasMaxCount: true,
+			maxCountPasses: true,
+			isPlayerEffector: false,
+			playerCanUseSkill: true,
+			playerTargetFilterKeepsAny: true,
+			targetTypeZero: false,
+			isAreaTarget: false);
 	}
 
 	private static PlayerSummonKnownObjectNpcSkillEndCastBranchTrace? BuildEndCastBranchTrace(
@@ -4850,6 +4937,7 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContra
 	IReadOnlyList<string>? UnsupportedJavaBehaviors = null,
 	PlayerSummonKnownObjectNpcSkillActionSideEffectTrace? ActionSideEffectTrace = null,
 	PlayerSummonKnownObjectNpcSkillUseSkillStartTrace? UseSkillStartTrace = null,
+	PlayerSummonKnownObjectNpcSkillValidationMutationTrace? ValidationMutationTrace = null,
 	PlayerSummonKnownObjectNpcSkillEndCastBranchTrace? EndCastBranchTrace = null,
 	PlayerSummonKnownObjectNpcSkillEndCastSideEffectTrace? EndCastSideEffectTrace = null)
 {
@@ -4878,6 +4966,8 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContra
 	public bool PreservesActionSideEffectOrdering => ActionSideEffectTrace != null;
 
 	public bool PreservesUseSkillStartOrdering => UseSkillStartTrace != null;
+
+	public bool PreservesValidationMutationOrdering => ValidationMutationTrace != null;
 
 	public bool PreservesEndCastBranchOrdering => EndCastBranchTrace != null;
 
@@ -4917,6 +5007,7 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContra
 			adapterSummary.LiveInvocation.UnsupportedBehaviors,
 			adapterSummary.ResultContract.ActionSideEffectTrace,
 			adapterSummary.ResultContract.UseSkillStartTrace,
+			adapterSummary.ResultContract.ValidationMutationTrace,
 			adapterSummary.ResultContract.EndCastBranchTrace,
 			adapterSummary.ResultContract.EndCastSideEffectTrace);
 	}
@@ -5448,6 +5539,249 @@ public enum PlayerSummonKnownObjectNpcSkillUseSkillStartStep
 	ScheduleCancelCurrentSkillCast,
 	ScheduleEndCast,
 	InvokeEndCast,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillValidationMutationTrace(
+	PlayerSummonKnownObjectNpcSkillValidationMutationTraceStatus Status,
+	PlayerSummonKnownObjectNpcSkillActionResult? ActionResult = null,
+	IReadOnlyList<PlayerSummonKnownObjectNpcSkillValidationMutationStep>? Steps = null)
+{
+	private static readonly IReadOnlyList<PlayerSummonKnownObjectNpcSkillValidationMutationStep> EmptySteps = [];
+
+	public IReadOnlyList<PlayerSummonKnownObjectNpcSkillValidationMutationStep> OrderedSteps => Steps ?? EmptySteps;
+
+	public bool WouldExecuteMutations => false;
+
+	public bool RebuildsEffectedListBeforePropertyFilters =>
+		IndexOf(PlayerSummonKnownObjectNpcSkillValidationMutationStep.EndCastClearEffectedList) is int clearIndex
+		&& clearIndex >= 0
+		&& IndexOf(PlayerSummonKnownObjectNpcSkillValidationMutationStep.TargetRangeProperty) is int filterIndex
+		&& filterIndex > clearIndex;
+
+	public bool SetsFirstTargetAfterPropertyFilters =>
+		IndexOf(PlayerSummonKnownObjectNpcSkillValidationMutationStep.SkillSetFirstTargetFromValidationResult) is int setIndex
+		&& setIndex >= 0
+		&& IndexOf(PlayerSummonKnownObjectNpcSkillValidationMutationStep.TargetRelationProperty) is int relationIndex
+		&& setIndex > relationIndex;
+
+	public bool CanRejectEmptyNonAreaTarget =>
+		OrderedSteps.Contains(PlayerSummonKnownObjectNpcSkillValidationMutationStep.TargetTypeZeroEmptyNonAreaCheck);
+
+	private int IndexOf(PlayerSummonKnownObjectNpcSkillValidationMutationStep step)
+	{
+		for (var i = 0; i < OrderedSteps.Count; i++)
+		{
+			if (OrderedSteps[i] == step)
+				return i;
+		}
+
+		return -1;
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillValidationMutationTrace FromActionResult(
+		PlayerSummonKnownObjectNpcSkillActionResult? actionResult,
+		bool hasProperties,
+		bool isEndCastValidation,
+		bool hasFirstTargetRange,
+		bool firstTargetRangePasses,
+		bool hasTargetType,
+		bool targetRangePasses,
+		bool targetRangeMayAppendTargets,
+		bool hasTargetRelation,
+		bool targetRelationPasses,
+		bool targetRelationMayReplaceFirstTarget,
+		bool hasTargetStatus,
+		bool targetStatusPasses,
+		bool hasTargetSpecies,
+		bool targetSpeciesPasses,
+		bool hasMaxCount,
+		bool maxCountPasses,
+		bool isPlayerEffector,
+		bool playerCanUseSkill,
+		bool playerTargetFilterKeepsAny,
+		bool targetTypeZero,
+		bool isAreaTarget)
+	{
+		if (actionResult == null || actionResult.Status == PlayerSummonKnownObjectNpcSkillActionResultStatus.MissingPreview)
+		{
+			return new PlayerSummonKnownObjectNpcSkillValidationMutationTrace(
+				PlayerSummonKnownObjectNpcSkillValidationMutationTraceStatus.MissingResult,
+				actionResult);
+		}
+
+		if (actionResult.Status != PlayerSummonKnownObjectNpcSkillActionResultStatus.UseSkill)
+		{
+			return new PlayerSummonKnownObjectNpcSkillValidationMutationTrace(
+				PlayerSummonKnownObjectNpcSkillValidationMutationTraceStatus.NoEndCastValidation,
+				actionResult);
+		}
+
+		var steps = new List<PlayerSummonKnownObjectNpcSkillValidationMutationStep>();
+		if (hasProperties)
+		{
+			if (isEndCastValidation)
+			{
+				steps.Add(PlayerSummonKnownObjectNpcSkillValidationMutationStep.EndCastClearEffectedList);
+				steps.Add(PlayerSummonKnownObjectNpcSkillValidationMutationStep.EndCastSeedFirstTarget);
+			}
+			else
+			{
+				steps.Add(PlayerSummonKnownObjectNpcSkillValidationMutationStep.CastStartFirstTargetProperty);
+				steps.Add(PlayerSummonKnownObjectNpcSkillValidationMutationStep.CastStartFirstTargetMayAddEffected);
+			}
+
+			if (hasFirstTargetRange)
+			{
+				steps.Add(PlayerSummonKnownObjectNpcSkillValidationMutationStep.FirstTargetRangeProperty);
+				if (!firstTargetRangePasses)
+				{
+					return new PlayerSummonKnownObjectNpcSkillValidationMutationTrace(
+						PlayerSummonKnownObjectNpcSkillValidationMutationTraceStatus.BlockedByFirstTargetRange,
+						actionResult,
+						steps);
+				}
+			}
+
+			if (hasTargetType)
+			{
+				steps.Add(PlayerSummonKnownObjectNpcSkillValidationMutationStep.TargetRangeProperty);
+				if (targetRangeMayAppendTargets)
+					steps.Add(PlayerSummonKnownObjectNpcSkillValidationMutationStep.TargetRangeMayAddOrClearTargets);
+				if (!targetRangePasses)
+				{
+					return new PlayerSummonKnownObjectNpcSkillValidationMutationTrace(
+						PlayerSummonKnownObjectNpcSkillValidationMutationTraceStatus.BlockedByTargetRangeProperty,
+						actionResult,
+						steps);
+				}
+			}
+
+			if (hasTargetRelation)
+			{
+				steps.Add(PlayerSummonKnownObjectNpcSkillValidationMutationStep.TargetRelationProperty);
+				if (targetRelationMayReplaceFirstTarget)
+					steps.Add(PlayerSummonKnownObjectNpcSkillValidationMutationStep.TargetRelationMayReplaceFirstTarget);
+				if (!targetRelationPasses)
+				{
+					return new PlayerSummonKnownObjectNpcSkillValidationMutationTrace(
+						PlayerSummonKnownObjectNpcSkillValidationMutationTraceStatus.BlockedByTargetRelationProperty,
+						actionResult,
+						steps);
+				}
+			}
+
+			if (hasTargetStatus)
+			{
+				steps.Add(PlayerSummonKnownObjectNpcSkillValidationMutationStep.TargetStatusFilter);
+				if (!targetStatusPasses)
+				{
+					return new PlayerSummonKnownObjectNpcSkillValidationMutationTrace(
+						PlayerSummonKnownObjectNpcSkillValidationMutationTraceStatus.BlockedByTargetStatusProperty,
+						actionResult,
+						steps);
+				}
+			}
+
+			if (hasTargetSpecies)
+			{
+				steps.Add(PlayerSummonKnownObjectNpcSkillValidationMutationStep.TargetSpeciesFilter);
+				if (!targetSpeciesPasses)
+				{
+					return new PlayerSummonKnownObjectNpcSkillValidationMutationTrace(
+						PlayerSummonKnownObjectNpcSkillValidationMutationTraceStatus.BlockedByTargetSpeciesProperty,
+						actionResult,
+						steps);
+				}
+			}
+
+			if (hasMaxCount)
+			{
+				steps.Add(PlayerSummonKnownObjectNpcSkillValidationMutationStep.MaxCountRetainNearest);
+				if (!maxCountPasses)
+				{
+					return new PlayerSummonKnownObjectNpcSkillValidationMutationTrace(
+						PlayerSummonKnownObjectNpcSkillValidationMutationTraceStatus.BlockedByMaxCountProperty,
+						actionResult,
+						steps);
+				}
+			}
+
+			steps.Add(PlayerSummonKnownObjectNpcSkillValidationMutationStep.SkillSetFirstTargetFromValidationResult);
+		}
+
+		if (isPlayerEffector)
+		{
+			steps.Add(PlayerSummonKnownObjectNpcSkillValidationMutationStep.PlayerCanUseSkillGate);
+			if (!playerCanUseSkill)
+			{
+				steps.Add(PlayerSummonKnownObjectNpcSkillValidationMutationStep.PlayerClearEffectedList);
+				return new PlayerSummonKnownObjectNpcSkillValidationMutationTrace(
+					PlayerSummonKnownObjectNpcSkillValidationMutationTraceStatus.PlayerUsabilityClearedTargets,
+					actionResult,
+					steps);
+			}
+
+			steps.Add(PlayerSummonKnownObjectNpcSkillValidationMutationStep.PlayerInvalidTargetFilter);
+			if (!playerTargetFilterKeepsAny)
+				steps.Add(PlayerSummonKnownObjectNpcSkillValidationMutationStep.PlayerFilterEmptiedTargets);
+		}
+
+		if (targetTypeZero)
+		{
+			steps.Add(PlayerSummonKnownObjectNpcSkillValidationMutationStep.TargetTypeZeroEmptyNonAreaCheck);
+			if (!isAreaTarget && !playerTargetFilterKeepsAny)
+			{
+				steps.Add(PlayerSummonKnownObjectNpcSkillValidationMutationStep.SendInvalidTargetMessage);
+				return new PlayerSummonKnownObjectNpcSkillValidationMutationTrace(
+					PlayerSummonKnownObjectNpcSkillValidationMutationTraceStatus.BlockedByEmptyNonAreaTarget,
+					actionResult,
+					steps);
+			}
+		}
+
+		return new PlayerSummonKnownObjectNpcSkillValidationMutationTrace(
+			PlayerSummonKnownObjectNpcSkillValidationMutationTraceStatus.OrderedMutations,
+			actionResult,
+			steps);
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillValidationMutationTraceStatus
+{
+	MissingResult,
+	NoEndCastValidation,
+	BlockedByFirstTargetRange,
+	BlockedByTargetRangeProperty,
+	BlockedByTargetRelationProperty,
+	BlockedByTargetStatusProperty,
+	BlockedByTargetSpeciesProperty,
+	BlockedByMaxCountProperty,
+	PlayerUsabilityClearedTargets,
+	BlockedByEmptyNonAreaTarget,
+	OrderedMutations,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillValidationMutationStep
+{
+	CastStartFirstTargetProperty,
+	CastStartFirstTargetMayAddEffected,
+	EndCastClearEffectedList,
+	EndCastSeedFirstTarget,
+	FirstTargetRangeProperty,
+	TargetRangeProperty,
+	TargetRangeMayAddOrClearTargets,
+	TargetRelationProperty,
+	TargetRelationMayReplaceFirstTarget,
+	TargetStatusFilter,
+	TargetSpeciesFilter,
+	MaxCountRetainNearest,
+	SkillSetFirstTargetFromValidationResult,
+	PlayerCanUseSkillGate,
+	PlayerClearEffectedList,
+	PlayerInvalidTargetFilter,
+	PlayerFilterEmptiedTargets,
+	TargetTypeZeroEmptyNonAreaCheck,
+	SendInvalidTargetMessage,
 }
 
 public sealed record PlayerSummonKnownObjectNpcSkillEndCastBranchTrace(

@@ -1545,6 +1545,7 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.True(contract.ExpectsPackets);
 		Assert.True(contract.HasActionSideEffectTrace);
 		Assert.True(contract.HasUseSkillStartTrace);
+		Assert.True(contract.HasValidationMutationTrace);
 		Assert.True(contract.HasEndCastBranchTrace);
 		Assert.True(contract.HasEndCastSideEffectTrace);
 		Assert.Equal([
@@ -1569,6 +1570,12 @@ public class PlayerSummonSkillExecutionServiceTests
 		], contract.UseSkillStartTrace?.OrderedSteps);
 		Assert.True(contract.UseSkillStartTrace?.StartsCastingBeforeNpcCastSubState);
 		Assert.True(contract.UseSkillStartTrace?.UpdatesNpcSkillDelayBeforeAiStartUseSkill);
+		var validationMutationTrace = Assert.IsType<PlayerSummonKnownObjectNpcSkillValidationMutationTrace>(contract.ValidationMutationTrace);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillValidationMutationTraceStatus.OrderedMutations, validationMutationTrace.Status);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillValidationMutationStep.EndCastClearEffectedList, validationMutationTrace.OrderedSteps);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillValidationMutationStep.SkillSetFirstTargetFromValidationResult, validationMutationTrace.OrderedSteps);
+		Assert.True(validationMutationTrace.RebuildsEffectedListBeforePropertyFilters);
+		Assert.True(validationMutationTrace.SetsFirstTargetAfterPropertyFilters);
 		var contractEndCastBranchTrace = Assert.IsType<PlayerSummonKnownObjectNpcSkillEndCastBranchTrace>(contract.EndCastBranchTrace);
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillEndCastBranchTraceStatus.OrderedBranches, contractEndCastBranchTrace.Status);
 		Assert.Contains(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.EndCondCheckIgnored, contractEndCastBranchTrace.OrderedSteps);
@@ -1651,12 +1658,15 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Contains("NpcAI state/substate mutation", adapterContract.UnsupportedBehaviors);
 		Assert.True(adapterContract.PreservesActionSideEffectOrdering);
 		Assert.True(adapterContract.PreservesUseSkillStartOrdering);
+		Assert.True(adapterContract.PreservesValidationMutationOrdering);
 		Assert.True(adapterContract.PreservesEndCastBranchOrdering);
 		Assert.True(adapterContract.PreservesEndCastSideEffectOrdering);
 		Assert.Equal(contract.ActionSideEffectTrace?.Status, adapterContract.ActionSideEffectTrace?.Status);
 		Assert.Equal(contract.ActionSideEffectTrace?.OrderedSteps, adapterContract.ActionSideEffectTrace?.OrderedSteps);
 		Assert.Equal(contract.UseSkillStartTrace?.Status, adapterContract.UseSkillStartTrace?.Status);
 		Assert.Equal(contract.UseSkillStartTrace?.OrderedSteps, adapterContract.UseSkillStartTrace?.OrderedSteps);
+		Assert.Equal(contract.ValidationMutationTrace?.Status, adapterContract.ValidationMutationTrace?.Status);
+		Assert.Equal(contract.ValidationMutationTrace?.OrderedSteps, adapterContract.ValidationMutationTrace?.OrderedSteps);
 		Assert.Equal(contract.EndCastBranchTrace?.Status, adapterContract.EndCastBranchTrace?.Status);
 		Assert.Equal(contract.EndCastBranchTrace?.OrderedSteps, adapterContract.EndCastBranchTrace?.OrderedSteps);
 		Assert.Equal(contract.EndCastSideEffectTrace?.Status, adapterContract.EndCastSideEffectTrace?.Status);
@@ -2779,6 +2789,104 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Contains(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.PlayerChainReset, playerChainCast.OrderedSteps);
 		Assert.Contains(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.QuestEngineOnUseSkill, playerChainCast.OrderedSteps);
 		Assert.DoesNotContain(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.SetCooldowns, playerChainCast.OrderedSteps);
+	}
+
+	[Fact]
+	public void ProjectMercenaryNpcSkillValidationMutationTrace_OrdersJavaPropertyTargetMutations()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var knownObject = new PlayerSummonKnownObject(8020, PlayerSummonKnownObjectKind.Creature);
+		var readySkill = service.EvaluateMercenarySkillReadiness(knownObject, CreateSkillTemplate("MAGICAL"));
+		var targetSelection = service.SelectMercenaryNpcSkillActionTarget(
+			skillFirstTargetIsSelf: false,
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.MostHated,
+			hasMostHatedTarget: true);
+
+		PlayerSummonKnownObjectNpcSkillActionResult Result(bool controllerUseSkillSucceeded = true)
+		{
+			var preview = service.PreviewMercenaryNpcSkillAction(
+				isInCastSubState: true,
+				shouldResumeFightAfterInterruptedCast: false,
+				hasCreatureTarget: true,
+				targetIsDead: false,
+				hasLastSkill: true,
+				ownerUsesMeleeAggroRange: false,
+				targetInAggroRange: true,
+				readySkill,
+				targetSelection,
+				controllerUseSkillSucceeded);
+
+			return service.ProjectMercenaryNpcSkillActionResult(preview);
+		}
+
+		var noEndCast = service.ProjectMercenaryNpcSkillValidationMutationTrace(Result(controllerUseSkillSucceeded: false));
+		var startValidation = service.ProjectMercenaryNpcSkillValidationMutationTrace(
+			Result(),
+			isEndCastValidation: false);
+		var endValidation = service.ProjectMercenaryNpcSkillValidationMutationTrace(
+			Result(),
+			hasTargetStatus: true,
+			hasTargetSpecies: true);
+		var rangeFailed = service.ProjectMercenaryNpcSkillValidationMutationTrace(Result(), firstTargetRangePasses: false);
+		var statusFailed = service.ProjectMercenaryNpcSkillValidationMutationTrace(
+			Result(),
+			hasTargetStatus: true,
+			targetStatusPasses: false);
+		var playerClearedTargets = service.ProjectMercenaryNpcSkillValidationMutationTrace(
+			Result(),
+			isPlayerEffector: true,
+			playerCanUseSkill: false);
+		var emptyNonArea = service.ProjectMercenaryNpcSkillValidationMutationTrace(
+			Result(),
+			isPlayerEffector: true,
+			playerTargetFilterKeepsAny: false,
+			targetTypeZero: true,
+			isAreaTarget: false);
+		var emptyArea = service.ProjectMercenaryNpcSkillValidationMutationTrace(
+			Result(),
+			isPlayerEffector: true,
+			playerTargetFilterKeepsAny: false,
+			targetTypeZero: true,
+			isAreaTarget: true);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillValidationMutationTraceStatus.NoEndCastValidation, noEndCast.Status);
+		Assert.Empty(noEndCast.OrderedSteps);
+		Assert.Equal([
+			PlayerSummonKnownObjectNpcSkillValidationMutationStep.CastStartFirstTargetProperty,
+			PlayerSummonKnownObjectNpcSkillValidationMutationStep.CastStartFirstTargetMayAddEffected,
+			PlayerSummonKnownObjectNpcSkillValidationMutationStep.FirstTargetRangeProperty,
+			PlayerSummonKnownObjectNpcSkillValidationMutationStep.TargetRangeProperty,
+			PlayerSummonKnownObjectNpcSkillValidationMutationStep.TargetRangeMayAddOrClearTargets,
+			PlayerSummonKnownObjectNpcSkillValidationMutationStep.TargetRelationProperty,
+			PlayerSummonKnownObjectNpcSkillValidationMutationStep.TargetRelationMayReplaceFirstTarget,
+			PlayerSummonKnownObjectNpcSkillValidationMutationStep.MaxCountRetainNearest,
+			PlayerSummonKnownObjectNpcSkillValidationMutationStep.SkillSetFirstTargetFromValidationResult,
+		], startValidation.OrderedSteps);
+		Assert.Equal([
+			PlayerSummonKnownObjectNpcSkillValidationMutationStep.EndCastClearEffectedList,
+			PlayerSummonKnownObjectNpcSkillValidationMutationStep.EndCastSeedFirstTarget,
+			PlayerSummonKnownObjectNpcSkillValidationMutationStep.FirstTargetRangeProperty,
+			PlayerSummonKnownObjectNpcSkillValidationMutationStep.TargetRangeProperty,
+			PlayerSummonKnownObjectNpcSkillValidationMutationStep.TargetRangeMayAddOrClearTargets,
+			PlayerSummonKnownObjectNpcSkillValidationMutationStep.TargetRelationProperty,
+			PlayerSummonKnownObjectNpcSkillValidationMutationStep.TargetRelationMayReplaceFirstTarget,
+			PlayerSummonKnownObjectNpcSkillValidationMutationStep.TargetStatusFilter,
+			PlayerSummonKnownObjectNpcSkillValidationMutationStep.TargetSpeciesFilter,
+			PlayerSummonKnownObjectNpcSkillValidationMutationStep.MaxCountRetainNearest,
+			PlayerSummonKnownObjectNpcSkillValidationMutationStep.SkillSetFirstTargetFromValidationResult,
+		], endValidation.OrderedSteps);
+		Assert.True(endValidation.RebuildsEffectedListBeforePropertyFilters);
+		Assert.True(endValidation.SetsFirstTargetAfterPropertyFilters);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillValidationMutationTraceStatus.BlockedByFirstTargetRange, rangeFailed.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillValidationMutationTraceStatus.BlockedByTargetStatusProperty, statusFailed.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillValidationMutationTraceStatus.PlayerUsabilityClearedTargets, playerClearedTargets.Status);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillValidationMutationStep.PlayerClearEffectedList, playerClearedTargets.OrderedSteps);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillValidationMutationTraceStatus.BlockedByEmptyNonAreaTarget, emptyNonArea.Status);
+		Assert.True(emptyNonArea.CanRejectEmptyNonAreaTarget);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillValidationMutationStep.SendInvalidTargetMessage, emptyNonArea.OrderedSteps);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillValidationMutationTraceStatus.OrderedMutations, emptyArea.Status);
+		Assert.True(emptyArea.CanRejectEmptyNonAreaTarget);
+		Assert.False(emptyArea.WouldExecuteMutations);
 	}
 
 	[Fact]
