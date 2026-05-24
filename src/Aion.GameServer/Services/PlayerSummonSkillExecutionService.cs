@@ -255,7 +255,8 @@ public sealed class PlayerSummonSkillExecutionService
 			template.NextChainId,
 			template.ChainId,
 			template.MaxChainTimeMilliseconds,
-			template.IsPostSpawn);
+			template.IsPostSpawn,
+			template.SpawnTemplate);
 	}
 
 	public PlayerSummonKnownObjectNpcSkillEntryTiming ProjectMercenaryNpcSkillEntryTiming(
@@ -759,6 +760,23 @@ public sealed class PlayerSummonSkillExecutionService
 			projectedQueuedCandidate,
 			projectedLastSkill,
 			projectedCandidateList.Candidates);
+	}
+
+	public PlayerSummonKnownObjectNpcSkillPostSpawnPreview PreviewMercenaryNpcSkillPostSpawn(
+		PlayerSummonKnownObjectNpcSkillTemplateProjection? skill,
+		bool ownerIsDead = false,
+		bool ownerIsAboutToDie = false)
+	{
+		// Java parity: NpcSkillTemplateEntry.fireOnEndCastEvents returns when spawn is absent or owner cannot spawn safely.
+		if (skill?.SpawnTemplate == null)
+			return PlayerSummonKnownObjectNpcSkillPostSpawnPreview.NoSpawnTemplate(skill);
+
+		if (ownerIsDead || ownerIsAboutToDie)
+			return PlayerSummonKnownObjectNpcSkillPostSpawnPreview.OwnerNotReady(skill, skill.SpawnTemplate);
+
+		return skill.SpawnTemplate.DelayMilliseconds == 0
+			? PlayerSummonKnownObjectNpcSkillPostSpawnPreview.ImmediateSpawn(skill, skill.SpawnTemplate)
+			: PlayerSummonKnownObjectNpcSkillPostSpawnPreview.DelayedSpawn(skill, skill.SpawnTemplate);
 	}
 
 	private static PlayerSummonKnownObjectNpcSkillSelectionResult SelectSingleMercenaryNpcSkillCandidate(
@@ -1600,6 +1618,7 @@ public sealed record PlayerSummonKnownObjectNpcSkillTemplateMetadata(
 	int NextChainId = 0,
 	int ChainId = 0,
 	int MaxChainTimeMilliseconds = 15000,
+	PlayerSummonKnownObjectNpcSkillSpawnMetadata? SpawnTemplate = null,
 	PlayerSummonKnownObjectNpcSkillTargetAttribute Target = PlayerSummonKnownObjectNpcSkillTargetAttribute.MostHated);
 
 public sealed record PlayerSummonKnownObjectNpcSkillTemplateProjection(
@@ -1612,7 +1631,83 @@ public sealed record PlayerSummonKnownObjectNpcSkillTemplateProjection(
 	int NextChainId,
 	int ChainId,
 	int MaxChainTimeMilliseconds,
-	bool IsPostSpawn);
+	bool IsPostSpawn,
+	PlayerSummonKnownObjectNpcSkillSpawnMetadata? SpawnTemplate);
+
+public sealed record PlayerSummonKnownObjectNpcSkillSpawnMetadata(
+	int NpcId = 0,
+	int DelayMilliseconds = 0,
+	int MinDistance = 0,
+	int MaxDistance = 0,
+	int MinCount = 1,
+	int MaxCount = 0);
+
+public sealed record PlayerSummonKnownObjectNpcSkillPostSpawnPreview(
+	PlayerSummonKnownObjectNpcSkillPostSpawnPreviewStatus Status,
+	PlayerSummonKnownObjectNpcSkillTemplateProjection? Skill,
+	PlayerSummonKnownObjectNpcSkillSpawnMetadata? SpawnTemplate = null)
+{
+	public bool ShouldScheduleSpawn => Status == PlayerSummonKnownObjectNpcSkillPostSpawnPreviewStatus.DelayedSpawn;
+	public bool ShouldSpawnImmediately => Status == PlayerSummonKnownObjectNpcSkillPostSpawnPreviewStatus.ImmediateSpawn;
+	public bool RequiresOwnerAliveRecheck => ShouldScheduleSpawn;
+	public bool RequiresRandomCount => SpawnTemplate is { MaxCount: > 1 };
+	public bool RequiresRandomDistance => SpawnTemplate is { MinDistance: > 0, MaxDistance: > 0 };
+	public bool RequiresRandomAngle => SpawnTemplate is { MinDistance: > 0 };
+	public int? EffectiveMinCount => SpawnTemplate?.MinCount;
+	public int? EffectiveMaxCount => SpawnTemplate == null
+		? null
+		: RequiresRandomCount ? SpawnTemplate.MaxCount : SpawnTemplate.MinCount;
+	public int? EffectiveMinDistance => SpawnTemplate?.MinDistance;
+	public int? EffectiveMaxDistance => SpawnTemplate == null
+		? null
+		: RequiresRandomDistance ? SpawnTemplate.MaxDistance : SpawnTemplate.MinDistance;
+
+	public static PlayerSummonKnownObjectNpcSkillPostSpawnPreview NoSpawnTemplate(
+		PlayerSummonKnownObjectNpcSkillTemplateProjection? skill)
+	{
+		return new PlayerSummonKnownObjectNpcSkillPostSpawnPreview(
+			PlayerSummonKnownObjectNpcSkillPostSpawnPreviewStatus.NoSpawnTemplate,
+			skill);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillPostSpawnPreview OwnerNotReady(
+		PlayerSummonKnownObjectNpcSkillTemplateProjection skill,
+		PlayerSummonKnownObjectNpcSkillSpawnMetadata spawnTemplate)
+	{
+		return new PlayerSummonKnownObjectNpcSkillPostSpawnPreview(
+			PlayerSummonKnownObjectNpcSkillPostSpawnPreviewStatus.OwnerNotReady,
+			skill,
+			spawnTemplate);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillPostSpawnPreview ImmediateSpawn(
+		PlayerSummonKnownObjectNpcSkillTemplateProjection skill,
+		PlayerSummonKnownObjectNpcSkillSpawnMetadata spawnTemplate)
+	{
+		return new PlayerSummonKnownObjectNpcSkillPostSpawnPreview(
+			PlayerSummonKnownObjectNpcSkillPostSpawnPreviewStatus.ImmediateSpawn,
+			skill,
+			spawnTemplate);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillPostSpawnPreview DelayedSpawn(
+		PlayerSummonKnownObjectNpcSkillTemplateProjection skill,
+		PlayerSummonKnownObjectNpcSkillSpawnMetadata spawnTemplate)
+	{
+		return new PlayerSummonKnownObjectNpcSkillPostSpawnPreview(
+			PlayerSummonKnownObjectNpcSkillPostSpawnPreviewStatus.DelayedSpawn,
+			skill,
+			spawnTemplate);
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillPostSpawnPreviewStatus
+{
+	NoSpawnTemplate,
+	OwnerNotReady,
+	ImmediateSpawn,
+	DelayedSpawn,
+}
 
 public sealed record PlayerSummonKnownObjectNpcSkillCandidateMetadata(
 	int Position,

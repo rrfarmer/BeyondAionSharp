@@ -23,6 +23,13 @@ public class PlayerSummonSkillExecutionServiceTests
 			DelayMilliseconds: 750,
 			CanDie: false,
 			DespawnTimeMilliseconds: 1200);
+		var spawn = new PlayerSummonKnownObjectNpcSkillSpawnMetadata(
+			NpcId: 212346,
+			DelayMilliseconds: 500,
+			MinDistance: 3,
+			MaxDistance: 8,
+			MinCount: 2,
+			MaxCount: 5);
 		var overrideTemplate = new PlayerSummonKnownObjectNpcSkillTemplateMetadata(
 			SkillId: 1001,
 			SkillLevel: 3,
@@ -40,6 +47,7 @@ public class PlayerSummonSkillExecutionServiceTests
 			NextChainId: 3002,
 			ChainId: 3001,
 			MaxChainTimeMilliseconds: 22000,
+			SpawnTemplate: spawn,
 			Target: PlayerSummonKnownObjectNpcSkillTargetAttribute.Random);
 		var overrideProjection = service.ProjectMercenaryNpcSkillTemplate(overrideTemplate, lastTimeUsedMilliseconds: 123456);
 
@@ -53,6 +61,7 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Equal(0, defaultProjection.ChainId);
 		Assert.Equal(15000, defaultProjection.MaxChainTimeMilliseconds);
 		Assert.False(defaultProjection.IsPostSpawn);
+		Assert.Null(defaultProjection.SpawnTemplate);
 
 		Assert.Equal(25, overrideProjection.EntryTiming.MinHpPercentage);
 		Assert.Equal(80, overrideProjection.EntryTiming.MaxHpPercentage);
@@ -70,6 +79,60 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Equal(3001, overrideProjection.ChainId);
 		Assert.Equal(22000, overrideProjection.MaxChainTimeMilliseconds);
 		Assert.True(overrideProjection.IsPostSpawn);
+		Assert.Equal(spawn, overrideProjection.SpawnTemplate);
+	}
+
+	[Fact]
+	public void PreviewMercenaryNpcSkillPostSpawn_ProjectsJavaFireOnEndCastEvents()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var immediateSpawn = new PlayerSummonKnownObjectNpcSkillSpawnMetadata(
+			NpcId: 212347,
+			DelayMilliseconds: 0,
+			MinDistance: 0,
+			MaxDistance: 0,
+			MinCount: 3,
+			MaxCount: 0);
+		var delayedRandomSpawn = new PlayerSummonKnownObjectNpcSkillSpawnMetadata(
+			NpcId: 212348,
+			DelayMilliseconds: 1500,
+			MinDistance: 4,
+			MaxDistance: 9,
+			MinCount: 1,
+			MaxCount: 4);
+		var noSpawnSkill = service.ProjectMercenaryNpcSkillTemplate(new PlayerSummonKnownObjectNpcSkillTemplateMetadata());
+		var immediateSkill = service.ProjectMercenaryNpcSkillTemplate(
+			new PlayerSummonKnownObjectNpcSkillTemplateMetadata(SpawnTemplate: immediateSpawn));
+		var delayedSkill = service.ProjectMercenaryNpcSkillTemplate(
+			new PlayerSummonKnownObjectNpcSkillTemplateMetadata(SpawnTemplate: delayedRandomSpawn));
+
+		var noSpawn = service.PreviewMercenaryNpcSkillPostSpawn(noSpawnSkill);
+		var ownerDead = service.PreviewMercenaryNpcSkillPostSpawn(immediateSkill, ownerIsDead: true);
+		var immediate = service.PreviewMercenaryNpcSkillPostSpawn(immediateSkill);
+		var delayed = service.PreviewMercenaryNpcSkillPostSpawn(delayedSkill);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillPostSpawnPreviewStatus.NoSpawnTemplate, noSpawn.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillPostSpawnPreviewStatus.OwnerNotReady, ownerDead.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillPostSpawnPreviewStatus.ImmediateSpawn, immediate.Status);
+		Assert.True(immediate.ShouldSpawnImmediately);
+		Assert.False(immediate.ShouldScheduleSpawn);
+		Assert.False(immediate.RequiresRandomCount);
+		Assert.False(immediate.RequiresRandomDistance);
+		Assert.False(immediate.RequiresRandomAngle);
+		Assert.Equal(3, immediate.EffectiveMinCount);
+		Assert.Equal(3, immediate.EffectiveMaxCount);
+		Assert.Equal(0, immediate.EffectiveMinDistance);
+		Assert.Equal(0, immediate.EffectiveMaxDistance);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillPostSpawnPreviewStatus.DelayedSpawn, delayed.Status);
+		Assert.True(delayed.ShouldScheduleSpawn);
+		Assert.True(delayed.RequiresOwnerAliveRecheck);
+		Assert.True(delayed.RequiresRandomCount);
+		Assert.True(delayed.RequiresRandomDistance);
+		Assert.True(delayed.RequiresRandomAngle);
+		Assert.Equal(1, delayed.EffectiveMinCount);
+		Assert.Equal(4, delayed.EffectiveMaxCount);
+		Assert.Equal(4, delayed.EffectiveMinDistance);
+		Assert.Equal(9, delayed.EffectiveMaxDistance);
 	}
 
 	[Fact]
