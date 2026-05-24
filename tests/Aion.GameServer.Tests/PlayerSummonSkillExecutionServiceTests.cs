@@ -10,6 +10,86 @@ namespace Aion.GameServer.Tests;
 public class PlayerSummonSkillExecutionServiceTests
 {
 	[Fact]
+	public void EvaluateMercenaryNpcSkillEntryReadiness_ProjectsJavaHpTimeCooldownAndConjunctions()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var defaultTiming = new PlayerSummonKnownObjectNpcSkillEntryTiming();
+		var gatedTiming = new PlayerSummonKnownObjectNpcSkillEntryTiming(
+			MinHpPercentage: 25,
+			MaxHpPercentage: 75,
+			MinTimeMilliseconds: 1_000,
+			MaxTimeMilliseconds: 5_000);
+
+		var defaultReady = service.EvaluateMercenaryNpcSkillEntryReadiness(
+			defaultTiming,
+			hpPercentage: 1,
+			elapsedFightTimeMilliseconds: 0,
+			currentTimeMilliseconds: 10_000);
+		var onCooldown = service.EvaluateMercenaryNpcSkillEntryReadiness(
+			defaultTiming with { CooldownMilliseconds = 5_000, LastTimeUsedMilliseconds = 8_000 },
+			hpPercentage: 50,
+			elapsedFightTimeMilliseconds: 2_000,
+			currentTimeMilliseconds: 10_000);
+		var chanceNotReady = service.EvaluateMercenaryNpcSkillEntryReadiness(
+			defaultTiming,
+			hpPercentage: 50,
+			elapsedFightTimeMilliseconds: 2_000,
+			currentTimeMilliseconds: 10_000,
+			chanceReady: false);
+		var andReady = service.EvaluateMercenaryNpcSkillEntryReadiness(
+			gatedTiming,
+			hpPercentage: 50,
+			elapsedFightTimeMilliseconds: 2_000,
+			currentTimeMilliseconds: 10_000);
+		var andHpOutOfRange = service.EvaluateMercenaryNpcSkillEntryReadiness(
+			gatedTiming,
+			hpPercentage: 90,
+			elapsedFightTimeMilliseconds: 2_000,
+			currentTimeMilliseconds: 10_000);
+		var minOnlyTimeReady = service.EvaluateMercenaryNpcSkillEntryReadiness(
+			gatedTiming with { MaxTimeMilliseconds = 0 },
+			hpPercentage: 50,
+			elapsedFightTimeMilliseconds: 7_000,
+			currentTimeMilliseconds: 10_000);
+		var orReady = service.EvaluateMercenaryNpcSkillEntryReadiness(
+			gatedTiming with { ConjunctionType = PlayerSummonKnownObjectNpcSkillConjunction.Or },
+			hpPercentage: 90,
+			elapsedFightTimeMilliseconds: 2_000,
+			currentTimeMilliseconds: 10_000);
+		var xorReady = service.EvaluateMercenaryNpcSkillEntryReadiness(
+			gatedTiming with { ConjunctionType = PlayerSummonKnownObjectNpcSkillConjunction.Xor },
+			hpPercentage: 90,
+			elapsedFightTimeMilliseconds: 2_000,
+			currentTimeMilliseconds: 10_000);
+		var xorNotReady = service.EvaluateMercenaryNpcSkillEntryReadiness(
+			gatedTiming with { ConjunctionType = PlayerSummonKnownObjectNpcSkillConjunction.Xor },
+			hpPercentage: 50,
+			elapsedFightTimeMilliseconds: 2_000,
+			currentTimeMilliseconds: 10_000);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEntryReadinessStatus.Ready, defaultReady.Status);
+		Assert.True(defaultReady.HpReady);
+		Assert.True(defaultReady.TimeReady);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEntryReadinessStatus.OnCooldown, onCooldown.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEntryReadinessStatus.ChanceNotReady, chanceNotReady.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEntryReadinessStatus.Ready, andReady.Status);
+		Assert.True(andReady.HpReady);
+		Assert.True(andReady.TimeReady);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEntryReadinessStatus.NotReady, andHpOutOfRange.Status);
+		Assert.False(andHpOutOfRange.HpReady);
+		Assert.True(andHpOutOfRange.TimeReady);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEntryReadinessStatus.Ready, minOnlyTimeReady.Status);
+		Assert.True(minOnlyTimeReady.TimeReady);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEntryReadinessStatus.Ready, orReady.Status);
+		Assert.False(orReady.HpReady);
+		Assert.True(orReady.TimeReady);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEntryReadinessStatus.Ready, xorReady.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEntryReadinessStatus.NotReady, xorNotReady.Status);
+		Assert.True(xorNotReady.HpReady);
+		Assert.True(xorNotReady.TimeReady);
+	}
+
+	[Fact]
 	public void ApplyMercenaryTargetRangeDelay_ProjectsJavaTargetTooFarDelay()
 	{
 		var service = new PlayerSummonSkillExecutionService();

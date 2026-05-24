@@ -155,6 +155,49 @@ public sealed class PlayerSummonSkillExecutionService
 		return PlayerSummonKnownObjectSkillReadiness.Ready(knownObject, skillTemplate);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillEntryReadiness EvaluateMercenaryNpcSkillEntryReadiness(
+		PlayerSummonKnownObjectNpcSkillEntryTiming timing,
+		int hpPercentage,
+		long elapsedFightTimeMilliseconds,
+		long currentTimeMilliseconds,
+		bool chanceReady = true)
+	{
+		if (timing.CooldownMilliseconds > currentTimeMilliseconds - timing.LastTimeUsedMilliseconds)
+			return PlayerSummonKnownObjectNpcSkillEntryReadiness.OnCooldown(timing);
+
+		if (!chanceReady)
+			return PlayerSummonKnownObjectNpcSkillEntryReadiness.ChanceNotReady(timing);
+
+		var hpReady = IsNpcSkillEntryHpReady(timing, hpPercentage);
+		var timeReady = IsNpcSkillEntryTimeReady(timing, elapsedFightTimeMilliseconds);
+		var ready = timing.ConjunctionType switch
+		{
+			PlayerSummonKnownObjectNpcSkillConjunction.Xor => hpReady ^ timeReady,
+			PlayerSummonKnownObjectNpcSkillConjunction.Or => hpReady || timeReady,
+			PlayerSummonKnownObjectNpcSkillConjunction.And => hpReady && timeReady,
+			_ => hpReady && timeReady,
+		};
+
+		return ready
+			? PlayerSummonKnownObjectNpcSkillEntryReadiness.Ready(timing, hpReady, timeReady)
+			: PlayerSummonKnownObjectNpcSkillEntryReadiness.NotReady(timing, hpReady, timeReady);
+	}
+
+	private static bool IsNpcSkillEntryHpReady(PlayerSummonKnownObjectNpcSkillEntryTiming timing, int hpPercentage)
+	{
+		// Java parity: NpcSkillTemplateEntry.hpReady treats default 0..100 as "not about HP".
+		return timing.MaxHpPercentage == 100 && timing.MinHpPercentage == 0
+			|| timing.MaxHpPercentage >= hpPercentage && timing.MinHpPercentage <= hpPercentage;
+	}
+
+	private static bool IsNpcSkillEntryTimeReady(PlayerSummonKnownObjectNpcSkillEntryTiming timing, long elapsedFightTimeMilliseconds)
+	{
+		// Java parity: NpcSkillTemplateEntry.timeReady supports no time gate, min-only, and bounded ranges.
+		return timing.MaxTimeMilliseconds == 0 && timing.MinTimeMilliseconds == 0
+			|| timing.MaxTimeMilliseconds == 0 && timing.MinTimeMilliseconds <= elapsedFightTimeMilliseconds
+			|| timing.MaxTimeMilliseconds >= elapsedFightTimeMilliseconds && timing.MinTimeMilliseconds <= elapsedFightTimeMilliseconds;
+	}
+
 	public PlayerSummonKnownObjectTargetRangeReadiness EvaluateMercenaryTargetRange(
 		PlayerSummonKnownObject knownObject,
 		bool requiresCreatureTargetCheck,
@@ -871,6 +914,75 @@ public enum PlayerSummonKnownObjectSkillReadinessStatus
 	BlockedByBind,
 	BlockedByCantAttackState,
 	BlockedByTransformSkillBan,
+	Ready,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillEntryTiming(
+	int MinHpPercentage = 0,
+	int MaxHpPercentage = 100,
+	long MinTimeMilliseconds = 0,
+	long MaxTimeMilliseconds = 0,
+	PlayerSummonKnownObjectNpcSkillConjunction ConjunctionType = PlayerSummonKnownObjectNpcSkillConjunction.And,
+	long CooldownMilliseconds = 0,
+	long LastTimeUsedMilliseconds = 0);
+
+public enum PlayerSummonKnownObjectNpcSkillConjunction
+{
+	And,
+	Or,
+	Xor,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillEntryReadiness(
+	PlayerSummonKnownObjectNpcSkillEntryReadinessStatus Status,
+	PlayerSummonKnownObjectNpcSkillEntryTiming Timing,
+	bool HpReady = false,
+	bool TimeReady = false)
+{
+	public static PlayerSummonKnownObjectNpcSkillEntryReadiness OnCooldown(PlayerSummonKnownObjectNpcSkillEntryTiming timing)
+	{
+		return new PlayerSummonKnownObjectNpcSkillEntryReadiness(
+			PlayerSummonKnownObjectNpcSkillEntryReadinessStatus.OnCooldown,
+			timing);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillEntryReadiness ChanceNotReady(PlayerSummonKnownObjectNpcSkillEntryTiming timing)
+	{
+		return new PlayerSummonKnownObjectNpcSkillEntryReadiness(
+			PlayerSummonKnownObjectNpcSkillEntryReadinessStatus.ChanceNotReady,
+			timing);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillEntryReadiness NotReady(
+		PlayerSummonKnownObjectNpcSkillEntryTiming timing,
+		bool hpReady,
+		bool timeReady)
+	{
+		return new PlayerSummonKnownObjectNpcSkillEntryReadiness(
+			PlayerSummonKnownObjectNpcSkillEntryReadinessStatus.NotReady,
+			timing,
+			hpReady,
+			timeReady);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillEntryReadiness Ready(
+		PlayerSummonKnownObjectNpcSkillEntryTiming timing,
+		bool hpReady,
+		bool timeReady)
+	{
+		return new PlayerSummonKnownObjectNpcSkillEntryReadiness(
+			PlayerSummonKnownObjectNpcSkillEntryReadinessStatus.Ready,
+			timing,
+			hpReady,
+			timeReady);
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillEntryReadinessStatus
+{
+	OnCooldown,
+	ChanceNotReady,
+	NotReady,
 	Ready,
 }
 
