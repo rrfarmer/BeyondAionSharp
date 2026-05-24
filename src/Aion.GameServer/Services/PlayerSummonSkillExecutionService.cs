@@ -267,6 +267,56 @@ public sealed class PlayerSummonSkillExecutionService
 		};
 	}
 
+	public PlayerSummonKnownObjectNpcSkillActionTargetSelection SelectMercenaryNpcSkillActionTarget(
+		bool skillFirstTargetIsSelf,
+		PlayerSummonKnownObjectNpcSkillTargetAttribute npcSkillTarget,
+		bool hasFriendTarget = false,
+		bool hasMostHatedTarget = false,
+		bool hasSecondMostHatedTarget = false,
+		bool hasThirdMostHatedTarget = false,
+		bool hasRandomTarget = false,
+		bool hasRandomExceptCurrentTarget = false)
+	{
+		if (skillFirstTargetIsSelf)
+			return PlayerSummonKnownObjectNpcSkillActionTargetSelection.Selected(PlayerSummonKnownObjectNpcSkillActionTargetSource.Owner);
+
+		return npcSkillTarget switch
+		{
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.Friend => SelectOptionalMercenaryNpcSkillActionTarget(
+				PlayerSummonKnownObjectNpcSkillActionTargetSource.Friend,
+				hasFriendTarget),
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.Me => PlayerSummonKnownObjectNpcSkillActionTargetSelection.Selected(
+				PlayerSummonKnownObjectNpcSkillActionTargetSource.Owner),
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.MostHated => SelectOptionalMercenaryNpcSkillActionTarget(
+				PlayerSummonKnownObjectNpcSkillActionTargetSource.MostHated,
+				hasMostHatedTarget),
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.SecondMostHated => SelectOptionalMercenaryNpcSkillActionTarget(
+				PlayerSummonKnownObjectNpcSkillActionTargetSource.SecondMostHated,
+				hasSecondMostHatedTarget),
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.ThirdMostHated => SelectOptionalMercenaryNpcSkillActionTarget(
+				PlayerSummonKnownObjectNpcSkillActionTargetSource.ThirdMostHated,
+				hasThirdMostHatedTarget),
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.Random => SelectOptionalMercenaryNpcSkillActionTarget(
+				PlayerSummonKnownObjectNpcSkillActionTargetSource.Random,
+				hasRandomTarget),
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.RandomExceptCurrentTarget => SelectOptionalMercenaryNpcSkillActionTarget(
+				PlayerSummonKnownObjectNpcSkillActionTargetSource.RandomExceptCurrentTarget,
+				hasRandomExceptCurrentTarget),
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.None => PlayerSummonKnownObjectNpcSkillActionTargetSelection.NotRequired(
+				PlayerSummonKnownObjectNpcSkillActionTargetSource.None),
+			_ => PlayerSummonKnownObjectNpcSkillActionTargetSelection.NotRequired(PlayerSummonKnownObjectNpcSkillActionTargetSource.None),
+		};
+	}
+
+	private static PlayerSummonKnownObjectNpcSkillActionTargetSelection SelectOptionalMercenaryNpcSkillActionTarget(
+		PlayerSummonKnownObjectNpcSkillActionTargetSource source,
+		bool hasTarget)
+	{
+		return hasTarget
+			? PlayerSummonKnownObjectNpcSkillActionTargetSelection.Selected(source)
+			: PlayerSummonKnownObjectNpcSkillActionTargetSelection.MissingTarget(source);
+	}
+
 	private static bool IsNpcSkillEntryHpReady(PlayerSummonKnownObjectNpcSkillEntryTiming timing, int hpPercentage)
 	{
 		// Java parity: NpcSkillTemplateEntry.hpReady treats default 0..100 as "not about HP".
@@ -1447,6 +1497,54 @@ public enum PlayerSummonKnownObjectNpcSkillTargetAttribute
 	Random,
 	RandomExceptCurrentTarget,
 	None,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillActionTargetSelection(
+	PlayerSummonKnownObjectNpcSkillActionTargetSelectionStatus Status,
+	PlayerSummonKnownObjectNpcSkillActionTargetSource Source)
+{
+	public bool ShouldSetOwnerTarget => Status == PlayerSummonKnownObjectNpcSkillActionTargetSelectionStatus.Selected
+		&& Source != PlayerSummonKnownObjectNpcSkillActionTargetSource.None;
+
+	public static PlayerSummonKnownObjectNpcSkillActionTargetSelection NotRequired(PlayerSummonKnownObjectNpcSkillActionTargetSource source)
+	{
+		return new PlayerSummonKnownObjectNpcSkillActionTargetSelection(
+			PlayerSummonKnownObjectNpcSkillActionTargetSelectionStatus.NotRequired,
+			source);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillActionTargetSelection MissingTarget(PlayerSummonKnownObjectNpcSkillActionTargetSource source)
+	{
+		return new PlayerSummonKnownObjectNpcSkillActionTargetSelection(
+			PlayerSummonKnownObjectNpcSkillActionTargetSelectionStatus.MissingTarget,
+			source);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillActionTargetSelection Selected(PlayerSummonKnownObjectNpcSkillActionTargetSource source)
+	{
+		return new PlayerSummonKnownObjectNpcSkillActionTargetSelection(
+			PlayerSummonKnownObjectNpcSkillActionTargetSelectionStatus.Selected,
+			source);
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillActionTargetSelectionStatus
+{
+	NotRequired,
+	MissingTarget,
+	Selected,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillActionTargetSource
+{
+	None,
+	Owner,
+	Friend,
+	MostHated,
+	SecondMostHated,
+	ThirdMostHated,
+	Random,
+	RandomExceptCurrentTarget,
 }
 
 public sealed record PlayerSummonKnownObjectNpcSkillEntryReadiness(

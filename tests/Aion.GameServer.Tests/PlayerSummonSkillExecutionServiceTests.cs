@@ -103,6 +103,68 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void SelectMercenaryNpcSkillActionTarget_ProjectsJavaSkillActionTargetMutation()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+
+		var firstTargetSelf = service.SelectMercenaryNpcSkillActionTarget(
+			skillFirstTargetIsSelf: true,
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.Random,
+			hasRandomTarget: true);
+		var npcTargetSelf = service.SelectMercenaryNpcSkillActionTarget(
+			skillFirstTargetIsSelf: false,
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.Me);
+		var friendSelected = service.SelectMercenaryNpcSkillActionTarget(
+			skillFirstTargetIsSelf: false,
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.Friend,
+			hasFriendTarget: true);
+		var friendMissing = service.SelectMercenaryNpcSkillActionTarget(
+			skillFirstTargetIsSelf: false,
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.Friend,
+			hasFriendTarget: false);
+		var mostHated = service.SelectMercenaryNpcSkillActionTarget(
+			skillFirstTargetIsSelf: false,
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.MostHated,
+			hasMostHatedTarget: true);
+		var secondMostHated = service.SelectMercenaryNpcSkillActionTarget(
+			skillFirstTargetIsSelf: false,
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.SecondMostHated,
+			hasSecondMostHatedTarget: true);
+		var thirdMostHated = service.SelectMercenaryNpcSkillActionTarget(
+			skillFirstTargetIsSelf: false,
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.ThirdMostHated,
+			hasThirdMostHatedTarget: true);
+		var random = service.SelectMercenaryNpcSkillActionTarget(
+			skillFirstTargetIsSelf: false,
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.Random,
+			hasRandomTarget: true);
+		var randomExceptCurrent = service.SelectMercenaryNpcSkillActionTarget(
+			skillFirstTargetIsSelf: false,
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.RandomExceptCurrentTarget,
+			hasRandomExceptCurrentTarget: true);
+		var none = service.SelectMercenaryNpcSkillActionTarget(
+			skillFirstTargetIsSelf: false,
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.None);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionTargetSelectionStatus.Selected, firstTargetSelf.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionTargetSource.Owner, firstTargetSelf.Source);
+		Assert.True(firstTargetSelf.ShouldSetOwnerTarget);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionTargetSource.Owner, npcTargetSelf.Source);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionTargetSource.Friend, friendSelected.Source);
+		Assert.True(friendSelected.ShouldSetOwnerTarget);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionTargetSelectionStatus.MissingTarget, friendMissing.Status);
+		Assert.False(friendMissing.ShouldSetOwnerTarget);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionTargetSource.MostHated, mostHated.Source);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionTargetSource.SecondMostHated, secondMostHated.Source);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionTargetSource.ThirdMostHated, thirdMostHated.Source);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionTargetSource.Random, random.Source);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionTargetSource.RandomExceptCurrentTarget, randomExceptCurrent.Source);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionTargetSelectionStatus.NotRequired, none.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionTargetSource.None, none.Source);
+		Assert.False(none.ShouldSetOwnerTarget);
+	}
+
+	[Fact]
 	public void EvaluateMercenaryNpcSkillConditionReadiness_ConsumesConditionMetadataRange()
 	{
 		var service = new PlayerSummonSkillExecutionService();
