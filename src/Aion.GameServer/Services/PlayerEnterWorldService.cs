@@ -817,6 +817,17 @@ public sealed class PlayerEnterWorldService
 				}
 				break;
 			}
+			case QuestionResponseRequestKind.SoulBind:
+			{
+				var request = dispatch.Request.Payload as PendingSoulBindRequest ?? responder.PendingSoulBindRequest;
+				if (request != null)
+				{
+					await _connectionRegistry.SendPacketToPlayerAsync(
+						responder.ObjectId,
+						SmSystemMessage.SoulBoundItemCanceled(request.ItemName));
+				}
+				break;
+			}
 		}
 	}
 

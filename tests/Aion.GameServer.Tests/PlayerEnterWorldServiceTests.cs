@@ -296,6 +296,12 @@ public sealed class PlayerEnterWorldServiceTests
 			registry.SentPackets.OrderBy(packet => packet.PlayerObjectId),
 			delivery =>
 			{
+				Assert.Equal(player.ObjectId, delivery.PlayerObjectId);
+				var message = Assert.IsType<SmSystemMessage>(delivery.Packet);
+				Assert.Equal(1300487, message.MessageId);
+			},
+			delivery =>
+			{
 				Assert.Equal(2001, delivery.PlayerObjectId);
 				Assert.IsType<SmFriendResponse>(delivery.Packet);
 			},
