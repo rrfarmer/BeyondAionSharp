@@ -1816,6 +1816,93 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void PreviewMercenaryNpcSkillPerformAttack_ProjectsJavaPreActionBranches()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var knownObject = new PlayerSummonKnownObject(8036, PlayerSummonKnownObjectKind.Creature);
+		var currentTarget = new PlayerSummonKnownObject(9036, PlayerSummonKnownObjectKind.Creature);
+		var candidate = new PlayerSummonKnownObjectNpcSkillCandidateMetadata(
+			0,
+			new PlayerSummonKnownObjectNpcSkillTemplateMetadata(
+				SkillId: 7101,
+				SkillLevel: 1,
+				Probability: 100,
+				Target: PlayerSummonKnownObjectNpcSkillTargetAttribute.MostHated));
+		var selection = service.PreviewMercenaryNextNpcSkillSelectionFromRepresentedCurrentTarget(
+			knownObject,
+			currentTarget,
+			currentTargetDistanceMeters: 3,
+			fightStartingTimeMilliseconds: 1_000,
+			initialSkillDelayMilliseconds: 0,
+			currentTimeMilliseconds: 2_000,
+			isInCastSubState: false,
+			candidates: [candidate],
+			hpPercentage: 100);
+		var workflow = service.PreviewMercenaryNpcSkillActionWorkflow(
+			knownObject,
+			selection,
+			CreateSkillTemplate("MAGICAL"),
+			currentTarget,
+			selectedNpcSkillTarget: PlayerSummonKnownObjectNpcSkillTargetAttribute.MostHated,
+			hasMostHatedTarget: true);
+
+		var targetTooFar = service.PreviewMercenaryNpcSkillPerformAttack(
+			ownerUsesMeleeAggroRange: true,
+			hasCurrentTarget: true,
+			currentTargetInAggroRange: false,
+			canEnterCastSubState: true,
+			delayMilliseconds: 250,
+			workflow);
+		var unchanged = service.PreviewMercenaryNpcSkillPerformAttack(
+			ownerUsesMeleeAggroRange: false,
+			hasCurrentTarget: false,
+			currentTargetInAggroRange: false,
+			canEnterCastSubState: false,
+			delayMilliseconds: 0,
+			workflow);
+		var scheduled = service.PreviewMercenaryNpcSkillPerformAttack(
+			ownerUsesMeleeAggroRange: true,
+			hasCurrentTarget: false,
+			currentTargetInAggroRange: false,
+			canEnterCastSubState: true,
+			delayMilliseconds: 250,
+			workflow);
+		var immediate = service.PreviewMercenaryNpcSkillPerformAttack(
+			ownerUsesMeleeAggroRange: false,
+			hasCurrentTarget: true,
+			currentTargetInAggroRange: true,
+			canEnterCastSubState: true,
+			delayMilliseconds: 0,
+			workflow);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillPerformAttackPreviewStatus.TargetTooFar, targetTooFar.Status);
+		Assert.True(targetTooFar.ShouldAbortCast);
+		Assert.True(targetTooFar.ShouldDispatchAiEvent);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillAiEvent.TargetTooFar, targetTooFar.AiEvent);
+		Assert.False(targetTooFar.ShouldEnterCastSubState);
+		Assert.Same(workflow, targetTooFar.ActionWorkflowPreview);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillPerformAttackPreviewStatus.CastSubStateUnchanged, unchanged.Status);
+		Assert.False(unchanged.ShouldEnterCastSubState);
+		Assert.False(unchanged.ShouldInvokeSkillActionNow);
+		Assert.False(unchanged.ShouldScheduleSkillAction);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillPerformAttackPreviewStatus.ScheduledSkillAction, scheduled.Status);
+		Assert.True(scheduled.ShouldEnterCastSubState);
+		Assert.True(scheduled.ShouldScheduleSkillAction);
+		Assert.False(scheduled.ShouldInvokeSkillActionNow);
+		Assert.Equal(250, scheduled.DelayMilliseconds);
+		Assert.Same(workflow, scheduled.ActionWorkflowPreview);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillPerformAttackPreviewStatus.ImmediateSkillAction, immediate.Status);
+		Assert.True(immediate.ShouldEnterCastSubState);
+		Assert.True(immediate.ShouldInvokeSkillActionNow);
+		Assert.False(immediate.ShouldScheduleSkillAction);
+		Assert.Equal(0, immediate.DelayMilliseconds);
+		Assert.Same(workflow, immediate.ActionWorkflowPreview);
+	}
+
+	[Fact]
 	public void PreviewMercenaryNextNpcSkillSelection_AdaptsNpcGameStatsTimingIntoSelection()
 	{
 		var service = new PlayerSummonSkillExecutionService();

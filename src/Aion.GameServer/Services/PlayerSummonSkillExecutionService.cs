@@ -655,6 +655,26 @@ public sealed class PlayerSummonSkillExecutionService
 		};
 	}
 
+	public PlayerSummonKnownObjectNpcSkillPerformAttackPreview PreviewMercenaryNpcSkillPerformAttack(
+		bool ownerUsesMeleeAggroRange,
+		bool hasCurrentTarget,
+		bool currentTargetInAggroRange,
+		bool canEnterCastSubState,
+		int delayMilliseconds,
+		PlayerSummonKnownObjectNpcSkillActionWorkflowPreview? actionWorkflowPreview = null)
+	{
+		// Java parity: SkillAttackManager.performAttack aborts before entering CAST when melee NPC target is outside aggro range.
+		if (ownerUsesMeleeAggroRange && hasCurrentTarget && !currentTargetInAggroRange)
+			return PlayerSummonKnownObjectNpcSkillPerformAttackPreview.TargetTooFar(delayMilliseconds, actionWorkflowPreview);
+
+		if (!canEnterCastSubState)
+			return PlayerSummonKnownObjectNpcSkillPerformAttackPreview.CastSubStateUnchanged(delayMilliseconds, actionWorkflowPreview);
+
+		return delayMilliseconds > 0
+			? PlayerSummonKnownObjectNpcSkillPerformAttackPreview.Scheduled(delayMilliseconds, actionWorkflowPreview)
+			: PlayerSummonKnownObjectNpcSkillPerformAttackPreview.Immediate(actionWorkflowPreview);
+	}
+
 	public PlayerSummonKnownObjectNpcSkillActionWorkflowPreview PreviewMercenaryNpcSkillActionWorkflow(
 		PlayerSummonKnownObject knownObject,
 		PlayerSummonKnownObjectNpcSkillSelectionPreview? selectionPreview,
@@ -3466,6 +3486,73 @@ public enum PlayerSummonKnownObjectNpcSkillActionTargetSource
 	ThirdMostHated,
 	Random,
 	RandomExceptCurrentTarget,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillPerformAttackPreview(
+	PlayerSummonKnownObjectNpcSkillPerformAttackPreviewStatus Status,
+	int DelayMilliseconds,
+	PlayerSummonKnownObjectNpcSkillActionWorkflowPreview? ActionWorkflowPreview = null,
+	PlayerSummonKnownObjectNpcSkillAiEvent AiEvent = PlayerSummonKnownObjectNpcSkillAiEvent.None)
+{
+	public bool ShouldAbortCast => Status == PlayerSummonKnownObjectNpcSkillPerformAttackPreviewStatus.TargetTooFar;
+
+	public bool ShouldDispatchAiEvent => AiEvent != PlayerSummonKnownObjectNpcSkillAiEvent.None;
+
+	public bool ShouldEnterCastSubState =>
+		Status is PlayerSummonKnownObjectNpcSkillPerformAttackPreviewStatus.ImmediateSkillAction
+			or PlayerSummonKnownObjectNpcSkillPerformAttackPreviewStatus.ScheduledSkillAction;
+
+	public bool ShouldInvokeSkillActionNow => Status == PlayerSummonKnownObjectNpcSkillPerformAttackPreviewStatus.ImmediateSkillAction;
+
+	public bool ShouldScheduleSkillAction => Status == PlayerSummonKnownObjectNpcSkillPerformAttackPreviewStatus.ScheduledSkillAction;
+
+	public static PlayerSummonKnownObjectNpcSkillPerformAttackPreview TargetTooFar(
+		int delayMilliseconds,
+		PlayerSummonKnownObjectNpcSkillActionWorkflowPreview? actionWorkflowPreview)
+	{
+		return new PlayerSummonKnownObjectNpcSkillPerformAttackPreview(
+			PlayerSummonKnownObjectNpcSkillPerformAttackPreviewStatus.TargetTooFar,
+			delayMilliseconds,
+			actionWorkflowPreview,
+			PlayerSummonKnownObjectNpcSkillAiEvent.TargetTooFar);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillPerformAttackPreview CastSubStateUnchanged(
+		int delayMilliseconds,
+		PlayerSummonKnownObjectNpcSkillActionWorkflowPreview? actionWorkflowPreview)
+	{
+		return new PlayerSummonKnownObjectNpcSkillPerformAttackPreview(
+			PlayerSummonKnownObjectNpcSkillPerformAttackPreviewStatus.CastSubStateUnchanged,
+			delayMilliseconds,
+			actionWorkflowPreview);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillPerformAttackPreview Scheduled(
+		int delayMilliseconds,
+		PlayerSummonKnownObjectNpcSkillActionWorkflowPreview? actionWorkflowPreview)
+	{
+		return new PlayerSummonKnownObjectNpcSkillPerformAttackPreview(
+			PlayerSummonKnownObjectNpcSkillPerformAttackPreviewStatus.ScheduledSkillAction,
+			delayMilliseconds,
+			actionWorkflowPreview);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillPerformAttackPreview Immediate(
+		PlayerSummonKnownObjectNpcSkillActionWorkflowPreview? actionWorkflowPreview)
+	{
+		return new PlayerSummonKnownObjectNpcSkillPerformAttackPreview(
+			PlayerSummonKnownObjectNpcSkillPerformAttackPreviewStatus.ImmediateSkillAction,
+			0,
+			actionWorkflowPreview);
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillPerformAttackPreviewStatus
+{
+	TargetTooFar,
+	CastSubStateUnchanged,
+	ScheduledSkillAction,
+	ImmediateSkillAction,
 }
 
 public sealed record PlayerSummonKnownObjectNpcSkillActionWorkflowPreview(
