@@ -65,7 +65,7 @@ public sealed class SmDuel : GameServerPacket
 public enum DuelResultKind : byte
 {
 	// Java parity: model/DuelResult result ids consumed by SM_DUEL.
-	Win = 0,
-	Lose = 1,
-	Draw = 2,
+	Lose = 0,
+	Draw = 1,
+	Win = 2,
 }

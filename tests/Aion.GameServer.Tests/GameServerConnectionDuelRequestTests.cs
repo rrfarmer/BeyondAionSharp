@@ -187,6 +187,78 @@ public sealed class GameServerConnectionDuelRequestTests
 		AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(sent.Packet), 1390120, "Target");
 	}
 
+	[Fact]
+	public async Task PlayerDuelRequestService_LoseDuelSendsLostWonResultsAndRemovesDuel()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var duelService = new PlayerDuelRequestService();
+		var requester = CreatePlayer(1001, "Requester");
+		var target = CreatePlayer(1002, "Target");
+		registry.OnlinePlayers.AddRange([requester, target]);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, duelService);
+		await pair.Connection.HandleDuelRequestAsync(requester, CreateDuelPacket(1002));
+		await pair.Connection.HandleQuestionResponseAsync(target, CreateQuestionResponse(SmQuestionWindow.DuelAcceptRequest, response: 1));
+
+		var plan = duelService.LoseDuel(target, Resolve);
+
+		Assert.Equal(DuelEndStatus.Ended, plan.Status);
+		Assert.False(duelService.IsDueling(requester));
+		Assert.False(duelService.IsDueling(target));
+		Assert.Collection(
+			plan.PacketIntents,
+			intent =>
+			{
+				Assert.Equal(1002, intent.RecipientObjectId);
+				AssertDuelResultPayload(Assert.IsType<SmDuel>(intent.Packet), resultId: 0, messageId: 1300099, playerName: "Requester");
+			},
+			intent =>
+			{
+				Assert.Equal(1001, intent.RecipientObjectId);
+				AssertDuelResultPayload(Assert.IsType<SmDuel>(intent.Packet), resultId: 2, messageId: 1300098, playerName: "Target");
+			});
+
+		Player? Resolve(int objectId)
+		{
+			return objectId == requester.ObjectId ? requester : objectId == target.ObjectId ? target : null;
+		}
+	}
+
+	[Fact]
+	public async Task PlayerDuelRequestService_DrawDuelSendsDrawResultsAndRemovesDuel()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var duelService = new PlayerDuelRequestService();
+		var requester = CreatePlayer(1001, "Requester");
+		var target = CreatePlayer(1002, "Target");
+		registry.OnlinePlayers.AddRange([requester, target]);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, duelService);
+		await pair.Connection.HandleDuelRequestAsync(requester, CreateDuelPacket(1002));
+		await pair.Connection.HandleQuestionResponseAsync(target, CreateQuestionResponse(SmQuestionWindow.DuelAcceptRequest, response: 1));
+
+		var plan = duelService.DrawDuel(requester, Resolve);
+
+		Assert.Equal(DuelEndStatus.Ended, plan.Status);
+		Assert.False(duelService.IsDueling(requester));
+		Assert.False(duelService.IsDueling(target));
+		Assert.Collection(
+			plan.PacketIntents,
+			intent =>
+			{
+				Assert.Equal(1001, intent.RecipientObjectId);
+				AssertDuelResultPayload(Assert.IsType<SmDuel>(intent.Packet), resultId: 1, messageId: 1300100, playerName: "Target");
+			},
+			intent =>
+			{
+				Assert.Equal(1002, intent.RecipientObjectId);
+				AssertDuelResultPayload(Assert.IsType<SmDuel>(intent.Packet), resultId: 1, messageId: 1300100, playerName: "Requester");
+			});
+
+		Player? Resolve(int objectId)
+		{
+			return objectId == requester.ObjectId ? requester : objectId == target.ObjectId ? target : null;
+		}
+	}
+
 	private static Player CreatePlayer(int objectId, string name)
 	{
 		return new Player
@@ -266,6 +338,20 @@ public sealed class GameServerConnectionDuelRequestTests
 		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
 		Assert.Equal(0, (int)reader.ReadC());
 		Assert.Equal(expectedOpponentObjectId, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertDuelResultPayload(
+		SmDuel packet,
+		byte resultId,
+		int messageId,
+		string playerName)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(1, (int)reader.ReadC());
+		Assert.Equal(resultId, (byte)reader.ReadC());
+		Assert.Equal(messageId, reader.ReadD());
+		Assert.Equal(playerName, reader.ReadS());
 		Assert.Equal(0, reader.Remaining);
 	}
 

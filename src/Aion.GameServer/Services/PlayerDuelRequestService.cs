@@ -158,11 +158,58 @@ public sealed class PlayerDuelRequestService
 		return _duels.TryGetValue(player.ObjectId, out var opponentId) ? opponentId : null;
 	}
 
+	public DuelEndPlan LoseDuel(Player loser, Func<int, Player?> resolvePlayer)
+	{
+		// Java parity: DuelService.loseDuel sends DUEL_LOST to the loser, DUEL_WON to the online
+		// winner, then removes both directions from the duel map.
+		var opponentId = GetOpponentId(loser);
+		if (opponentId == null)
+			return DuelEndPlan.NotDueling();
+
+		var winner = resolvePlayer(opponentId.Value);
+		var intents = new List<DuelPacketIntent>
+		{
+			new(loser.ObjectId, SmDuel.Result(DuelResultKind.Lose, winner?.Name ?? opponentId.Value.ToString(System.Globalization.CultureInfo.InvariantCulture))),
+		};
+		if (winner != null)
+			intents.Add(new DuelPacketIntent(winner.ObjectId, SmDuel.Result(DuelResultKind.Win, loser.Name)));
+
+		RemoveDuel(loser.ObjectId);
+		return DuelEndPlan.Ended(DuelEndReason.Loss, loser.ObjectId, opponentId.Value, intents);
+	}
+
+	public DuelEndPlan DrawDuel(Player firstPlayer, Func<int, Player?> resolvePlayer)
+	{
+		// Java parity: DuelService.createTask draw callback sends DUEL_DRAW to both still-dueling
+		// players, then removes both directions from the duel map. The scheduler itself is not ported here.
+		var opponentId = GetOpponentId(firstPlayer);
+		if (opponentId == null)
+			return DuelEndPlan.NotDueling();
+
+		var opponent = resolvePlayer(opponentId.Value);
+		var intents = new List<DuelPacketIntent>
+		{
+			new(firstPlayer.ObjectId, SmDuel.Result(DuelResultKind.Draw, opponent?.Name ?? opponentId.Value.ToString(System.Globalization.CultureInfo.InvariantCulture))),
+		};
+		if (opponent != null)
+			intents.Add(new DuelPacketIntent(opponent.ObjectId, SmDuel.Result(DuelResultKind.Draw, firstPlayer.Name)));
+
+		RemoveDuel(firstPlayer.ObjectId);
+		return DuelEndPlan.Ended(DuelEndReason.Draw, firstPlayer.ObjectId, opponentId.Value, intents);
+	}
+
 	private void RegisterDuel(int requesterObjectId, int responderObjectId)
 	{
 		// Java parity: DuelService.registerDuel stores both object-id directions.
 		_duels[requesterObjectId] = responderObjectId;
 		_duels[responderObjectId] = requesterObjectId;
+	}
+
+	private void RemoveDuel(int playerObjectId)
+	{
+		// Java parity: DuelService.removeDuel removes the player and opponent entries, then cancels draw tasks.
+		if (_duels.TryRemove(playerObjectId, out var opponentId))
+			_duels.TryRemove(opponentId, out _);
 	}
 }
 
@@ -225,4 +272,38 @@ public enum DuelResponseStatus
 	Ignored,
 	MissingRequest,
 	Handled,
+}
+
+public sealed record DuelEndPlan(
+	DuelEndStatus Status,
+	DuelEndReason? Reason,
+	int PlayerObjectId,
+	int? OpponentObjectId,
+	IReadOnlyList<DuelPacketIntent> PacketIntents)
+{
+	public static DuelEndPlan NotDueling()
+	{
+		return new DuelEndPlan(DuelEndStatus.NotDueling, null, 0, null, Array.Empty<DuelPacketIntent>());
+	}
+
+	public static DuelEndPlan Ended(
+		DuelEndReason reason,
+		int playerObjectId,
+		int opponentObjectId,
+		IReadOnlyList<DuelPacketIntent> packetIntents)
+	{
+		return new DuelEndPlan(DuelEndStatus.Ended, reason, playerObjectId, opponentObjectId, packetIntents);
+	}
+}
+
+public enum DuelEndStatus
+{
+	NotDueling,
+	Ended,
+}
+
+public enum DuelEndReason
+{
+	Loss,
+	Draw,
 }
