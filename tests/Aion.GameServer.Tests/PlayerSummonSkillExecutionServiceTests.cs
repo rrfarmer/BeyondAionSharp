@@ -1546,6 +1546,7 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.True(contract.HasActionSideEffectTrace);
 		Assert.True(contract.HasUseSkillStartTrace);
 		Assert.True(contract.HasValidationMutationTrace);
+		Assert.True(contract.HasTemplateActionTrace);
 		Assert.True(contract.HasEndCastBranchTrace);
 		Assert.True(contract.HasEndCastSideEffectTrace);
 		Assert.Equal([
@@ -1576,6 +1577,12 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Contains(PlayerSummonKnownObjectNpcSkillValidationMutationStep.SkillSetFirstTargetFromValidationResult, validationMutationTrace.OrderedSteps);
 		Assert.True(validationMutationTrace.RebuildsEffectedListBeforePropertyFilters);
 		Assert.True(validationMutationTrace.SetsFirstTargetAfterPropertyFilters);
+		var templateActionTrace = Assert.IsType<PlayerSummonKnownObjectNpcSkillTemplateActionTrace>(contract.TemplateActionTrace);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillTemplateActionTraceStatus.OrderedActions, templateActionTrace.Status);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillTemplateActionStep.ActionsLiveListOrder, templateActionTrace.OrderedSteps);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillTemplateActionStep.ReduceMp, templateActionTrace.OrderedSteps);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillTemplateActionStep.SetDp, templateActionTrace.OrderedSteps);
+		Assert.True(templateActionTrace.ConsumesResourceBeforeEffects);
 		var contractEndCastBranchTrace = Assert.IsType<PlayerSummonKnownObjectNpcSkillEndCastBranchTrace>(contract.EndCastBranchTrace);
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillEndCastBranchTraceStatus.OrderedBranches, contractEndCastBranchTrace.Status);
 		Assert.Contains(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.EndCondCheckIgnored, contractEndCastBranchTrace.OrderedSteps);
@@ -1659,6 +1666,7 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.True(adapterContract.PreservesActionSideEffectOrdering);
 		Assert.True(adapterContract.PreservesUseSkillStartOrdering);
 		Assert.True(adapterContract.PreservesValidationMutationOrdering);
+		Assert.True(adapterContract.PreservesTemplateActionOrdering);
 		Assert.True(adapterContract.PreservesEndCastBranchOrdering);
 		Assert.True(adapterContract.PreservesEndCastSideEffectOrdering);
 		Assert.Equal(contract.ActionSideEffectTrace?.Status, adapterContract.ActionSideEffectTrace?.Status);
@@ -1667,6 +1675,8 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Equal(contract.UseSkillStartTrace?.OrderedSteps, adapterContract.UseSkillStartTrace?.OrderedSteps);
 		Assert.Equal(contract.ValidationMutationTrace?.Status, adapterContract.ValidationMutationTrace?.Status);
 		Assert.Equal(contract.ValidationMutationTrace?.OrderedSteps, adapterContract.ValidationMutationTrace?.OrderedSteps);
+		Assert.Equal(contract.TemplateActionTrace?.Status, adapterContract.TemplateActionTrace?.Status);
+		Assert.Equal(contract.TemplateActionTrace?.OrderedSteps, adapterContract.TemplateActionTrace?.OrderedSteps);
 		Assert.Equal(contract.EndCastBranchTrace?.Status, adapterContract.EndCastBranchTrace?.Status);
 		Assert.Equal(contract.EndCastBranchTrace?.OrderedSteps, adapterContract.EndCastBranchTrace?.OrderedSteps);
 		Assert.Equal(contract.EndCastSideEffectTrace?.Status, adapterContract.EndCastSideEffectTrace?.Status);
@@ -2887,6 +2897,101 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillValidationMutationTraceStatus.OrderedMutations, emptyArea.Status);
 		Assert.True(emptyArea.CanRejectEmptyNonAreaTarget);
 		Assert.False(emptyArea.WouldExecuteMutations);
+	}
+
+	[Fact]
+	public void ProjectMercenaryNpcSkillTemplateActionTrace_OrdersJavaActionShortCircuit()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var knownObject = new PlayerSummonKnownObject(8021, PlayerSummonKnownObjectKind.Creature);
+		var readySkill = service.EvaluateMercenarySkillReadiness(knownObject, CreateSkillTemplate("MAGICAL"));
+		var targetSelection = service.SelectMercenaryNpcSkillActionTarget(
+			skillFirstTargetIsSelf: false,
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.MostHated,
+			hasMostHatedTarget: true);
+
+		PlayerSummonKnownObjectNpcSkillActionResult Result(bool controllerUseSkillSucceeded = true)
+		{
+			var preview = service.PreviewMercenaryNpcSkillAction(
+				isInCastSubState: true,
+				shouldResumeFightAfterInterruptedCast: false,
+				hasCreatureTarget: true,
+				targetIsDead: false,
+				hasLastSkill: true,
+				ownerUsesMeleeAggroRange: false,
+				targetInAggroRange: true,
+				readySkill,
+				targetSelection,
+				controllerUseSkillSucceeded);
+
+			return service.ProjectMercenaryNpcSkillActionResult(preview);
+		}
+
+		var noEndCast = service.ProjectMercenaryNpcSkillTemplateActionTrace(Result(controllerUseSkillSucceeded: false));
+		var noActions = service.ProjectMercenaryNpcSkillTemplateActionTrace(Result(), []);
+		var ordered = service.ProjectMercenaryNpcSkillTemplateActionTrace(
+			Result(),
+			[
+				PlayerSummonKnownObjectNpcSkillTemplateActionKind.MpUse,
+				PlayerSummonKnownObjectNpcSkillTemplateActionKind.HpUse,
+				PlayerSummonKnownObjectNpcSkillTemplateActionKind.DpUse,
+				PlayerSummonKnownObjectNpcSkillTemplateActionKind.ItemUse,
+			],
+			mpRatio: true,
+			hpRatio: true,
+			boostSkillCostPresent: true);
+		var mpFailure = service.ProjectMercenaryNpcSkillTemplateActionTrace(
+			Result(),
+			[
+				PlayerSummonKnownObjectNpcSkillTemplateActionKind.MpUse,
+				PlayerSummonKnownObjectNpcSkillTemplateActionKind.HpUse,
+			],
+			failingAction: PlayerSummonKnownObjectNpcSkillTemplateActionKind.MpUse);
+		var itemFailure = service.ProjectMercenaryNpcSkillTemplateActionTrace(
+			Result(),
+			[PlayerSummonKnownObjectNpcSkillTemplateActionKind.ItemUse],
+			failingAction: PlayerSummonKnownObjectNpcSkillTemplateActionKind.ItemUse);
+		var nonPlayerItem = service.ProjectMercenaryNpcSkillTemplateActionTrace(
+			Result(),
+			[PlayerSummonKnownObjectNpcSkillTemplateActionKind.ItemUse],
+			effectorIsPlayer: false);
+		var nonPlayerDp = service.ProjectMercenaryNpcSkillTemplateActionTrace(
+			Result(),
+			[PlayerSummonKnownObjectNpcSkillTemplateActionKind.DpUse],
+			effectorIsPlayer: false);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillTemplateActionTraceStatus.NoEndCastActions, noEndCast.Status);
+		Assert.Empty(noEndCast.OrderedSteps);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillTemplateActionTraceStatus.NoActions, noActions.Status);
+		Assert.Equal([
+			PlayerSummonKnownObjectNpcSkillTemplateActionStep.ActionsLiveListOrder,
+			PlayerSummonKnownObjectNpcSkillTemplateActionStep.ExecuteMpUseAction,
+			PlayerSummonKnownObjectNpcSkillTemplateActionStep.CalculateMpCostWithDelta,
+			PlayerSummonKnownObjectNpcSkillTemplateActionStep.ApplyMpRatioCost,
+			PlayerSummonKnownObjectNpcSkillTemplateActionStep.ApplyBoostSkillCost,
+			PlayerSummonKnownObjectNpcSkillTemplateActionStep.ReduceMp,
+			PlayerSummonKnownObjectNpcSkillTemplateActionStep.ExecuteHpUseAction,
+			PlayerSummonKnownObjectNpcSkillTemplateActionStep.CalculateHpCostWithDelta,
+			PlayerSummonKnownObjectNpcSkillTemplateActionStep.ApplyHpRatioCost,
+			PlayerSummonKnownObjectNpcSkillTemplateActionStep.ReduceHp,
+			PlayerSummonKnownObjectNpcSkillTemplateActionStep.ExecuteDpUseAction,
+			PlayerSummonKnownObjectNpcSkillTemplateActionStep.SetDp,
+			PlayerSummonKnownObjectNpcSkillTemplateActionStep.ExecuteItemUseAction,
+			PlayerSummonKnownObjectNpcSkillTemplateActionStep.LookupItemTemplate,
+			PlayerSummonKnownObjectNpcSkillTemplateActionStep.DecreaseInventoryByItemId,
+			PlayerSummonKnownObjectNpcSkillTemplateActionStep.ItemUseSucceeded,
+		], ordered.OrderedSteps);
+		Assert.True(ordered.ConsumesResourceBeforeEffects);
+		Assert.False(ordered.WouldExecuteActions);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillTemplateActionTraceStatus.ActionShortCircuited, mpFailure.Status);
+		Assert.True(mpFailure.ShortCircuitsBeforeEffects);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillTemplateActionStep.SendNotEnoughMp, mpFailure.OrderedSteps);
+		Assert.DoesNotContain(PlayerSummonKnownObjectNpcSkillTemplateActionStep.ExecuteHpUseAction, mpFailure.OrderedSteps);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillTemplateActionStep.InventoryMayPartiallyConsumeBeforeFalse, itemFailure.OrderedSteps);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillTemplateActionStep.SendNotEnoughItem, itemFailure.OrderedSteps);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillTemplateActionStep.SkipItemUseForNonPlayer, nonPlayerItem.OrderedSteps);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillTemplateActionStep.CastEffectorToPlayer, nonPlayerDp.OrderedSteps);
+		Assert.DoesNotContain(PlayerSummonKnownObjectNpcSkillTemplateActionStep.SetDp, nonPlayerDp.OrderedSteps);
 	}
 
 	[Fact]

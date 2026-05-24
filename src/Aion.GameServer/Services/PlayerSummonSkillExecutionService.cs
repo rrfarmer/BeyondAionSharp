@@ -891,6 +891,26 @@ public sealed class PlayerSummonSkillExecutionService
 			isAreaTarget);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillTemplateActionTrace ProjectMercenaryNpcSkillTemplateActionTrace(
+		PlayerSummonKnownObjectNpcSkillActionResult? actionResult,
+		IReadOnlyList<PlayerSummonKnownObjectNpcSkillTemplateActionKind>? actionOrder = null,
+		PlayerSummonKnownObjectNpcSkillTemplateActionKind? failingAction = null,
+		bool effectorIsPlayer = true,
+		bool mpRatio = false,
+		bool hpRatio = false,
+		bool boostSkillCostPresent = false)
+	{
+		// Java parity: Skill.endCast executes JAXB Actions live-list order; first Action.act(false) returns before effects/cooldowns/penalty.
+		return PlayerSummonKnownObjectNpcSkillTemplateActionTrace.FromActionResult(
+			actionResult,
+			actionOrder,
+			failingAction,
+			effectorIsPlayer,
+			mpRatio,
+			hpRatio,
+			boostSkillCostPresent);
+	}
+
 	public PlayerSummonKnownObjectNpcSkillUseSkillStartTrace ProjectMercenaryNpcSkillUseSkillStartTrace(
 		PlayerSummonKnownObjectNpcSkillActionResult? actionResult,
 		bool canUseSkillAtCastStart = true,
@@ -4263,6 +4283,7 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 	PlayerSummonKnownObjectNpcSkillActionSideEffectTrace? ActionSideEffectTrace = null,
 	PlayerSummonKnownObjectNpcSkillUseSkillStartTrace? UseSkillStartTrace = null,
 	PlayerSummonKnownObjectNpcSkillValidationMutationTrace? ValidationMutationTrace = null,
+	PlayerSummonKnownObjectNpcSkillTemplateActionTrace? TemplateActionTrace = null,
 	PlayerSummonKnownObjectNpcSkillEndCastBranchTrace? EndCastBranchTrace = null,
 	PlayerSummonKnownObjectNpcSkillEndCastSideEffectTrace? EndCastSideEffectTrace = null)
 {
@@ -4290,6 +4311,8 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 	public bool HasUseSkillStartTrace => UseSkillStartTrace != null;
 
 	public bool HasValidationMutationTrace => ValidationMutationTrace != null;
+
+	public bool HasTemplateActionTrace => TemplateActionTrace != null;
 
 	public bool HasEndCastBranchTrace => EndCastBranchTrace != null;
 
@@ -4345,6 +4368,7 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 		var actionTrace = BuildActionSideEffectTrace(liveInvocation.CycleSnapshot);
 		var useSkillStartTrace = BuildUseSkillStartTrace(liveInvocation.CycleSnapshot, actionTrace);
 		var validationMutationTrace = BuildValidationMutationTrace(actionTrace);
+		var templateActionTrace = BuildTemplateActionTrace(actionTrace);
 		var endCastBranchTrace = BuildEndCastBranchTrace(liveInvocation.CycleSnapshot, actionTrace);
 		return new PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 			PlayerSummonKnownObjectNpcSkillAttackCycleResultContractStatus.LiveAiNotWired,
@@ -4355,6 +4379,7 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 			actionTrace,
 			useSkillStartTrace,
 			validationMutationTrace,
+			templateActionTrace,
 			endCastBranchTrace,
 			BuildEndCastSideEffectTrace(liveInvocation.CycleSnapshot, actionTrace));
 	}
@@ -4418,6 +4443,28 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 			playerTargetFilterKeepsAny: true,
 			targetTypeZero: false,
 			isAreaTarget: false);
+	}
+
+	private static PlayerSummonKnownObjectNpcSkillTemplateActionTrace? BuildTemplateActionTrace(
+		PlayerSummonKnownObjectNpcSkillActionSideEffectTrace? actionTrace)
+	{
+		var actionResult = actionTrace?.ActionResult;
+		if (actionResult == null)
+			return null;
+
+		return PlayerSummonKnownObjectNpcSkillTemplateActionTrace.FromActionResult(
+			actionResult,
+			[
+				PlayerSummonKnownObjectNpcSkillTemplateActionKind.MpUse,
+				PlayerSummonKnownObjectNpcSkillTemplateActionKind.HpUse,
+				PlayerSummonKnownObjectNpcSkillTemplateActionKind.DpUse,
+				PlayerSummonKnownObjectNpcSkillTemplateActionKind.ItemUse,
+			],
+			failingAction: null,
+			effectorIsPlayer: true,
+			mpRatio: false,
+			hpRatio: false,
+			boostSkillCostPresent: false);
 	}
 
 	private static PlayerSummonKnownObjectNpcSkillEndCastBranchTrace? BuildEndCastBranchTrace(
@@ -4938,6 +4985,7 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContra
 	PlayerSummonKnownObjectNpcSkillActionSideEffectTrace? ActionSideEffectTrace = null,
 	PlayerSummonKnownObjectNpcSkillUseSkillStartTrace? UseSkillStartTrace = null,
 	PlayerSummonKnownObjectNpcSkillValidationMutationTrace? ValidationMutationTrace = null,
+	PlayerSummonKnownObjectNpcSkillTemplateActionTrace? TemplateActionTrace = null,
 	PlayerSummonKnownObjectNpcSkillEndCastBranchTrace? EndCastBranchTrace = null,
 	PlayerSummonKnownObjectNpcSkillEndCastSideEffectTrace? EndCastSideEffectTrace = null)
 {
@@ -4968,6 +5016,8 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContra
 	public bool PreservesUseSkillStartOrdering => UseSkillStartTrace != null;
 
 	public bool PreservesValidationMutationOrdering => ValidationMutationTrace != null;
+
+	public bool PreservesTemplateActionOrdering => TemplateActionTrace != null;
 
 	public bool PreservesEndCastBranchOrdering => EndCastBranchTrace != null;
 
@@ -5008,6 +5058,7 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContra
 			adapterSummary.ResultContract.ActionSideEffectTrace,
 			adapterSummary.ResultContract.UseSkillStartTrace,
 			adapterSummary.ResultContract.ValidationMutationTrace,
+			adapterSummary.ResultContract.TemplateActionTrace,
 			adapterSummary.ResultContract.EndCastBranchTrace,
 			adapterSummary.ResultContract.EndCastSideEffectTrace);
 	}
@@ -5782,6 +5833,214 @@ public enum PlayerSummonKnownObjectNpcSkillValidationMutationStep
 	PlayerFilterEmptiedTargets,
 	TargetTypeZeroEmptyNonAreaCheck,
 	SendInvalidTargetMessage,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillTemplateActionTrace(
+	PlayerSummonKnownObjectNpcSkillTemplateActionTraceStatus Status,
+	PlayerSummonKnownObjectNpcSkillActionResult? ActionResult = null,
+	IReadOnlyList<PlayerSummonKnownObjectNpcSkillTemplateActionStep>? Steps = null)
+{
+	private static readonly IReadOnlyList<PlayerSummonKnownObjectNpcSkillTemplateActionStep> EmptySteps = [];
+
+	public IReadOnlyList<PlayerSummonKnownObjectNpcSkillTemplateActionStep> OrderedSteps => Steps ?? EmptySteps;
+
+	public bool WouldExecuteActions => false;
+
+	public bool ShortCircuitsBeforeEffects =>
+		Status == PlayerSummonKnownObjectNpcSkillTemplateActionTraceStatus.ActionShortCircuited;
+
+	public bool ConsumesResourceBeforeEffects =>
+		OrderedSteps.Contains(PlayerSummonKnownObjectNpcSkillTemplateActionStep.ReduceMp)
+		|| OrderedSteps.Contains(PlayerSummonKnownObjectNpcSkillTemplateActionStep.ReduceHp)
+		|| OrderedSteps.Contains(PlayerSummonKnownObjectNpcSkillTemplateActionStep.SetDp)
+		|| OrderedSteps.Contains(PlayerSummonKnownObjectNpcSkillTemplateActionStep.DecreaseInventoryByItemId);
+
+	public static PlayerSummonKnownObjectNpcSkillTemplateActionTrace FromActionResult(
+		PlayerSummonKnownObjectNpcSkillActionResult? actionResult,
+		IReadOnlyList<PlayerSummonKnownObjectNpcSkillTemplateActionKind>? actionOrder,
+		PlayerSummonKnownObjectNpcSkillTemplateActionKind? failingAction,
+		bool effectorIsPlayer,
+		bool mpRatio,
+		bool hpRatio,
+		bool boostSkillCostPresent)
+	{
+		if (actionResult == null || actionResult.Status == PlayerSummonKnownObjectNpcSkillActionResultStatus.MissingPreview)
+		{
+			return new PlayerSummonKnownObjectNpcSkillTemplateActionTrace(
+				PlayerSummonKnownObjectNpcSkillTemplateActionTraceStatus.MissingResult,
+				actionResult);
+		}
+
+		if (actionResult.Status != PlayerSummonKnownObjectNpcSkillActionResultStatus.UseSkill)
+		{
+			return new PlayerSummonKnownObjectNpcSkillTemplateActionTrace(
+				PlayerSummonKnownObjectNpcSkillTemplateActionTraceStatus.NoEndCastActions,
+				actionResult);
+		}
+
+		if (actionOrder == null || actionOrder.Count == 0)
+		{
+			return new PlayerSummonKnownObjectNpcSkillTemplateActionTrace(
+				PlayerSummonKnownObjectNpcSkillTemplateActionTraceStatus.NoActions,
+				actionResult,
+				[]);
+		}
+
+		var steps = new List<PlayerSummonKnownObjectNpcSkillTemplateActionStep>
+		{
+			PlayerSummonKnownObjectNpcSkillTemplateActionStep.ActionsLiveListOrder,
+		};
+
+		foreach (var action in actionOrder)
+		{
+			AddActionSteps(action, steps, effectorIsPlayer, mpRatio, hpRatio, boostSkillCostPresent);
+			if (failingAction == action)
+			{
+				AddFailureStep(action, steps);
+				return new PlayerSummonKnownObjectNpcSkillTemplateActionTrace(
+					PlayerSummonKnownObjectNpcSkillTemplateActionTraceStatus.ActionShortCircuited,
+					actionResult,
+					steps);
+			}
+
+			AddSuccessStep(action, steps, effectorIsPlayer);
+		}
+
+		return new PlayerSummonKnownObjectNpcSkillTemplateActionTrace(
+			PlayerSummonKnownObjectNpcSkillTemplateActionTraceStatus.OrderedActions,
+			actionResult,
+			steps);
+	}
+
+	private static void AddActionSteps(
+		PlayerSummonKnownObjectNpcSkillTemplateActionKind action,
+		List<PlayerSummonKnownObjectNpcSkillTemplateActionStep> steps,
+		bool effectorIsPlayer,
+		bool mpRatio,
+		bool hpRatio,
+		bool boostSkillCostPresent)
+	{
+		switch (action)
+		{
+			case PlayerSummonKnownObjectNpcSkillTemplateActionKind.MpUse:
+				steps.Add(PlayerSummonKnownObjectNpcSkillTemplateActionStep.ExecuteMpUseAction);
+				steps.Add(PlayerSummonKnownObjectNpcSkillTemplateActionStep.CalculateMpCostWithDelta);
+				if (mpRatio)
+					steps.Add(PlayerSummonKnownObjectNpcSkillTemplateActionStep.ApplyMpRatioCost);
+				if (boostSkillCostPresent)
+					steps.Add(PlayerSummonKnownObjectNpcSkillTemplateActionStep.ApplyBoostSkillCost);
+				break;
+			case PlayerSummonKnownObjectNpcSkillTemplateActionKind.HpUse:
+				steps.Add(PlayerSummonKnownObjectNpcSkillTemplateActionStep.ExecuteHpUseAction);
+				steps.Add(PlayerSummonKnownObjectNpcSkillTemplateActionStep.CalculateHpCostWithDelta);
+				if (hpRatio)
+					steps.Add(PlayerSummonKnownObjectNpcSkillTemplateActionStep.ApplyHpRatioCost);
+				break;
+			case PlayerSummonKnownObjectNpcSkillTemplateActionKind.DpUse:
+				steps.Add(PlayerSummonKnownObjectNpcSkillTemplateActionStep.ExecuteDpUseAction);
+				if (!effectorIsPlayer)
+					steps.Add(PlayerSummonKnownObjectNpcSkillTemplateActionStep.CastEffectorToPlayer);
+				break;
+			case PlayerSummonKnownObjectNpcSkillTemplateActionKind.ItemUse:
+				steps.Add(PlayerSummonKnownObjectNpcSkillTemplateActionStep.ExecuteItemUseAction);
+				if (effectorIsPlayer)
+				{
+					steps.Add(PlayerSummonKnownObjectNpcSkillTemplateActionStep.LookupItemTemplate);
+					steps.Add(PlayerSummonKnownObjectNpcSkillTemplateActionStep.DecreaseInventoryByItemId);
+				}
+				else
+				{
+					steps.Add(PlayerSummonKnownObjectNpcSkillTemplateActionStep.SkipItemUseForNonPlayer);
+				}
+				break;
+		}
+	}
+
+	private static void AddFailureStep(
+		PlayerSummonKnownObjectNpcSkillTemplateActionKind action,
+		List<PlayerSummonKnownObjectNpcSkillTemplateActionStep> steps)
+	{
+		if (action == PlayerSummonKnownObjectNpcSkillTemplateActionKind.ItemUse)
+			steps.Add(PlayerSummonKnownObjectNpcSkillTemplateActionStep.InventoryMayPartiallyConsumeBeforeFalse);
+
+		steps.Add(action switch
+		{
+			PlayerSummonKnownObjectNpcSkillTemplateActionKind.MpUse => PlayerSummonKnownObjectNpcSkillTemplateActionStep.SendNotEnoughMp,
+			PlayerSummonKnownObjectNpcSkillTemplateActionKind.HpUse => PlayerSummonKnownObjectNpcSkillTemplateActionStep.SendNotEnoughHp,
+			PlayerSummonKnownObjectNpcSkillTemplateActionKind.DpUse => PlayerSummonKnownObjectNpcSkillTemplateActionStep.SendNotEnoughDp,
+			PlayerSummonKnownObjectNpcSkillTemplateActionKind.ItemUse => PlayerSummonKnownObjectNpcSkillTemplateActionStep.SendNotEnoughItem,
+			_ => PlayerSummonKnownObjectNpcSkillTemplateActionStep.ActionReturnedFalse,
+		});
+		steps.Add(PlayerSummonKnownObjectNpcSkillTemplateActionStep.ActionReturnedFalse);
+	}
+
+	private static void AddSuccessStep(
+		PlayerSummonKnownObjectNpcSkillTemplateActionKind action,
+		List<PlayerSummonKnownObjectNpcSkillTemplateActionStep> steps,
+		bool effectorIsPlayer)
+	{
+		switch (action)
+		{
+			case PlayerSummonKnownObjectNpcSkillTemplateActionKind.MpUse:
+				steps.Add(PlayerSummonKnownObjectNpcSkillTemplateActionStep.ReduceMp);
+				break;
+			case PlayerSummonKnownObjectNpcSkillTemplateActionKind.HpUse:
+				steps.Add(PlayerSummonKnownObjectNpcSkillTemplateActionStep.ReduceHp);
+				break;
+			case PlayerSummonKnownObjectNpcSkillTemplateActionKind.DpUse:
+				if (effectorIsPlayer)
+					steps.Add(PlayerSummonKnownObjectNpcSkillTemplateActionStep.SetDp);
+				break;
+			case PlayerSummonKnownObjectNpcSkillTemplateActionKind.ItemUse when effectorIsPlayer:
+				steps.Add(PlayerSummonKnownObjectNpcSkillTemplateActionStep.ItemUseSucceeded);
+				break;
+		}
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillTemplateActionTraceStatus
+{
+	MissingResult,
+	NoEndCastActions,
+	NoActions,
+	ActionShortCircuited,
+	OrderedActions,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillTemplateActionKind
+{
+	MpUse,
+	HpUse,
+	DpUse,
+	ItemUse,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillTemplateActionStep
+{
+	ActionsLiveListOrder,
+	ExecuteMpUseAction,
+	CalculateMpCostWithDelta,
+	ApplyMpRatioCost,
+	ApplyBoostSkillCost,
+	SendNotEnoughMp,
+	ReduceMp,
+	ExecuteHpUseAction,
+	CalculateHpCostWithDelta,
+	ApplyHpRatioCost,
+	SendNotEnoughHp,
+	ReduceHp,
+	ExecuteDpUseAction,
+	CastEffectorToPlayer,
+	SendNotEnoughDp,
+	SetDp,
+	ExecuteItemUseAction,
+	LookupItemTemplate,
+	DecreaseInventoryByItemId,
+	InventoryMayPartiallyConsumeBeforeFalse,
+	SendNotEnoughItem,
+	ItemUseSucceeded,
+	SkipItemUseForNonPlayer,
+	ActionReturnedFalse,
 }
 
 public sealed record PlayerSummonKnownObjectNpcSkillEndCastBranchTrace(
