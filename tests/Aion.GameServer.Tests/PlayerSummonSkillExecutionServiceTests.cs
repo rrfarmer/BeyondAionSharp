@@ -3417,6 +3417,74 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void ProjectMercenaryNpcSkillItemUsageStateTrace_MapsPositiveTimeUsingItemTiming()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+
+		var trace = service.ProjectMercenaryNpcSkillItemUsageStateTrace();
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillItemUsageStateTraceStatus.Projected, trace.Status);
+		Assert.False(trace.WouldExecuteRuntimeSideEffects);
+		Assert.True(trace.HasTimingMismatch);
+		Assert.False(trace.TracksJavaWriteTimeMutation);
+		Assert.True(trace.CSharpCoversPositiveTimeSchedulingPaths);
+		Assert.False(trace.HasDirectPositiveTimeWithoutPendingState);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillItemUsageStateMutationTiming.JavaPacketWriteTime, trace.JavaMutationTiming);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillItemUsageStateMutationTiming.CSharpAfterSendBeforeSchedule, trace.CSharpMutationTiming);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillItemUsageStateClearingPolicy.ClearOnlyMatchingPendingItem, trace.CSharpClearingPolicy);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillItemUsageStateNullPolicy.JavaThrowsOnMissingPlayerButAllowsMissingItem, trace.JavaNullPolicy);
+		Assert.Equal(
+			[
+				PlayerSummonKnownObjectNpcSkillItemUsageStateStep.SerializePositiveTimeSmItemUsageAnimation,
+				PlayerSummonKnownObjectNpcSkillItemUsageStateStep.ResolveWorldPlayer,
+				PlayerSummonKnownObjectNpcSkillItemUsageStateStep.ResolveInventoryItem,
+				PlayerSummonKnownObjectNpcSkillItemUsageStateStep.SetJavaUsingItemDuringWrite,
+			],
+			trace.JavaPositiveTimeSteps);
+		Assert.Equal(
+			[
+				PlayerSummonKnownObjectNpcSkillItemUsageStateStep.SendPositiveTimeSmItemUsageAnimation,
+				PlayerSummonKnownObjectNpcSkillItemUsageStateStep.SchedulePendingItemUse,
+				PlayerSummonKnownObjectNpcSkillItemUsageStateStep.SetCSharpUsingItemObjectIdAfterSend,
+				PlayerSummonKnownObjectNpcSkillItemUsageStateStep.CleanupPendingItemUseClearsMatchingItem,
+				PlayerSummonKnownObjectNpcSkillItemUsageStateStep.CancelPendingItemUseSendsEndThreeAnimation,
+			],
+			trace.CSharpScheduledSteps);
+		Assert.All(trace.CSharpPositiveTimePaths, path => Assert.True(path.SetsUsingItemObjectId));
+		Assert.Contains(
+			trace.CSharpPositiveTimePaths,
+			path => path.Kind == PlayerSummonKnownObjectNpcSkillItemUsageStatePathKind.StigmaCharge
+				&& path.SendKind == PlayerSummonKnownObjectNpcSkillItemUsageStateSendKind.BroadcastIncludingSelf
+				&& path.StartTimeMilliseconds == 5000
+				&& path.CancelEndState == 2
+				&& path.UsesTargetedCancelAnimation);
+		Assert.Contains(
+			trace.CSharpPositiveTimePaths,
+			path => path.Kind == PlayerSummonKnownObjectNpcSkillItemUsageStatePathKind.AnimationAdd
+				&& path.SendKind == PlayerSummonKnownObjectNpcSkillItemUsageStateSendKind.SendSelfOnly
+				&& path.StartTimeMilliseconds == 1000
+				&& path.CancelMessage == PlayerSummonKnownObjectNpcSkillItemUsageStateCancelMessage.Item);
+		Assert.Contains(
+			trace.CSharpPositiveTimePaths,
+			path => path.Kind == PlayerSummonKnownObjectNpcSkillItemUsageStatePathKind.SoulBind
+				&& path.CancelMessage == PlayerSummonKnownObjectNpcSkillItemUsageStateCancelMessage.SoulBind
+				&& path.CancelEndState == 8);
+		Assert.Contains(
+			trace.CSharpPositiveTimePaths,
+			path => path.Kind == PlayerSummonKnownObjectNpcSkillItemUsageStatePathKind.GodstoneSocket
+				&& path.StartTimeMilliseconds == 2000
+				&& path.CancelMessage == PlayerSummonKnownObjectNpcSkillItemUsageStateCancelMessage.GodstoneSocket);
+		Assert.Contains(
+			trace.CSharpPositiveTimePaths,
+			path => path.Kind == PlayerSummonKnownObjectNpcSkillItemUsageStatePathKind.RideOrToyPet
+				&& path.StartTimeMilliseconds == 3000);
+		Assert.Contains(
+			trace.CSharpPositiveTimePaths,
+			path => path.Kind == PlayerSummonKnownObjectNpcSkillItemUsageStatePathKind.PolishOrCharge
+				&& path.CancelMessage == PlayerSummonKnownObjectNpcSkillItemUsageStateCancelMessage.ItemCharge);
+	}
+
+	[Fact]
 	public void ProjectMercenaryNpcSkillEffectReservedPacketProjection_ProjectsJavaReservedSendFields()
 	{
 		var service = new PlayerSummonSkillExecutionService();

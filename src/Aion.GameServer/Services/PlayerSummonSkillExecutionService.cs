@@ -1000,6 +1000,12 @@ public sealed class PlayerSummonSkillExecutionService
 		return PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaGolden.FromSample(sample);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillItemUsageStateTrace ProjectMercenaryNpcSkillItemUsageStateTrace()
+	{
+		// Java parity: SM_ITEM_USAGE_ANIMATION.writeImpl mutates Player.usingItem during positive-time serialization; C# currently mirrors most delayed paths with scheduler-side state.
+		return PlayerSummonKnownObjectNpcSkillItemUsageStateTrace.JavaAndCSharpSourceReviewed();
+	}
+
 	public PlayerSummonKnownObjectNpcSkillEffectReservedPacketProjection ProjectMercenaryNpcSkillEffectReservedPacketProjection(
 		IReadOnlyList<PlayerSummonKnownObjectNpcSkillEffectReservedInput>? reservedEffects,
 		int shieldDefense = 0)
@@ -7037,6 +7043,188 @@ public enum PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaFieldNa
 	Unknown1,
 	Unknown2,
 	Unknown3,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillItemUsageStateTrace(
+	PlayerSummonKnownObjectNpcSkillItemUsageStateTraceStatus Status,
+	IReadOnlyList<PlayerSummonKnownObjectNpcSkillItemUsageStateStep> JavaPositiveTimeSteps,
+	IReadOnlyList<PlayerSummonKnownObjectNpcSkillItemUsageStateStep> CSharpScheduledSteps,
+	IReadOnlyList<PlayerSummonKnownObjectNpcSkillItemUsageStatePath> CSharpPositiveTimePaths,
+	PlayerSummonKnownObjectNpcSkillItemUsageStateMutationTiming JavaMutationTiming,
+	PlayerSummonKnownObjectNpcSkillItemUsageStateMutationTiming CSharpMutationTiming,
+	PlayerSummonKnownObjectNpcSkillItemUsageStateClearingPolicy CSharpClearingPolicy,
+	PlayerSummonKnownObjectNpcSkillItemUsageStateNullPolicy JavaNullPolicy,
+	bool WouldExecuteRuntimeSideEffects = false)
+{
+	public bool HasTimingMismatch => JavaMutationTiming != CSharpMutationTiming;
+
+	public bool CSharpCoversPositiveTimeSchedulingPaths =>
+		CSharpPositiveTimePaths.Count > 0
+		&& CSharpPositiveTimePaths.All(path => path.SetsUsingItemObjectId);
+
+	public bool HasDirectPositiveTimeWithoutPendingState =>
+		CSharpPositiveTimePaths.Any(path => !path.SetsUsingItemObjectId);
+
+	public bool TracksJavaWriteTimeMutation => false;
+
+	public static PlayerSummonKnownObjectNpcSkillItemUsageStateTrace JavaAndCSharpSourceReviewed()
+	{
+		return new PlayerSummonKnownObjectNpcSkillItemUsageStateTrace(
+			PlayerSummonKnownObjectNpcSkillItemUsageStateTraceStatus.Projected,
+			[
+				PlayerSummonKnownObjectNpcSkillItemUsageStateStep.SerializePositiveTimeSmItemUsageAnimation,
+				PlayerSummonKnownObjectNpcSkillItemUsageStateStep.ResolveWorldPlayer,
+				PlayerSummonKnownObjectNpcSkillItemUsageStateStep.ResolveInventoryItem,
+				PlayerSummonKnownObjectNpcSkillItemUsageStateStep.SetJavaUsingItemDuringWrite,
+			],
+			[
+				PlayerSummonKnownObjectNpcSkillItemUsageStateStep.SendPositiveTimeSmItemUsageAnimation,
+				PlayerSummonKnownObjectNpcSkillItemUsageStateStep.SchedulePendingItemUse,
+				PlayerSummonKnownObjectNpcSkillItemUsageStateStep.SetCSharpUsingItemObjectIdAfterSend,
+				PlayerSummonKnownObjectNpcSkillItemUsageStateStep.CleanupPendingItemUseClearsMatchingItem,
+				PlayerSummonKnownObjectNpcSkillItemUsageStateStep.CancelPendingItemUseSendsEndThreeAnimation,
+			],
+			[
+				new PlayerSummonKnownObjectNpcSkillItemUsageStatePath(
+					PlayerSummonKnownObjectNpcSkillItemUsageStatePathKind.StigmaCharge,
+					SendKind: PlayerSummonKnownObjectNpcSkillItemUsageStateSendKind.BroadcastIncludingSelf,
+					CancelMessage: PlayerSummonKnownObjectNpcSkillItemUsageStateCancelMessage.Item,
+					StartTimeMilliseconds: 5000,
+					CancelEndState: 2,
+					SetsUsingItemObjectId: true,
+					UsesTargetedCancelAnimation: true),
+				new PlayerSummonKnownObjectNpcSkillItemUsageStatePath(
+					PlayerSummonKnownObjectNpcSkillItemUsageStatePathKind.EnchantOrSocket,
+					SendKind: PlayerSummonKnownObjectNpcSkillItemUsageStateSendKind.BroadcastIncludingSelf,
+					CancelMessage: PlayerSummonKnownObjectNpcSkillItemUsageStateCancelMessage.EnchantOrManastone,
+					StartTimeMilliseconds: 5000,
+					CancelEndState: 2,
+					SetsUsingItemObjectId: true,
+					UsesTargetedCancelAnimation: true),
+				new PlayerSummonKnownObjectNpcSkillItemUsageStatePath(
+					PlayerSummonKnownObjectNpcSkillItemUsageStatePathKind.GodstoneSocket,
+					SendKind: PlayerSummonKnownObjectNpcSkillItemUsageStateSendKind.BroadcastIncludingSelf,
+					CancelMessage: PlayerSummonKnownObjectNpcSkillItemUsageStateCancelMessage.GodstoneSocket,
+					StartTimeMilliseconds: 2000,
+					CancelEndState: 2,
+					SetsUsingItemObjectId: true,
+					UsesTargetedCancelAnimation: false),
+				new PlayerSummonKnownObjectNpcSkillItemUsageStatePath(
+					PlayerSummonKnownObjectNpcSkillItemUsageStatePathKind.SoulBind,
+					SendKind: PlayerSummonKnownObjectNpcSkillItemUsageStateSendKind.BroadcastIncludingSelf,
+					CancelMessage: PlayerSummonKnownObjectNpcSkillItemUsageStateCancelMessage.SoulBind,
+					StartTimeMilliseconds: 5000,
+					CancelEndState: 8,
+					SetsUsingItemObjectId: true,
+					UsesTargetedCancelAnimation: false),
+				new PlayerSummonKnownObjectNpcSkillItemUsageStatePath(
+					PlayerSummonKnownObjectNpcSkillItemUsageStatePathKind.Assembly,
+					SendKind: PlayerSummonKnownObjectNpcSkillItemUsageStateSendKind.BroadcastIncludingSelf,
+					CancelMessage: PlayerSummonKnownObjectNpcSkillItemUsageStateCancelMessage.Item,
+					StartTimeMilliseconds: 3000,
+					CancelEndState: 2,
+					SetsUsingItemObjectId: true,
+					UsesTargetedCancelAnimation: false),
+				new PlayerSummonKnownObjectNpcSkillItemUsageStatePath(
+					PlayerSummonKnownObjectNpcSkillItemUsageStatePathKind.AnimationAdd,
+					SendKind: PlayerSummonKnownObjectNpcSkillItemUsageStateSendKind.SendSelfOnly,
+					CancelMessage: PlayerSummonKnownObjectNpcSkillItemUsageStateCancelMessage.Item,
+					StartTimeMilliseconds: 1000,
+					CancelEndState: 2,
+					SetsUsingItemObjectId: true,
+					UsesTargetedCancelAnimation: false),
+				new PlayerSummonKnownObjectNpcSkillItemUsageStatePath(
+					PlayerSummonKnownObjectNpcSkillItemUsageStatePathKind.RideOrToyPet,
+					SendKind: PlayerSummonKnownObjectNpcSkillItemUsageStateSendKind.BroadcastIncludingSelf,
+					CancelMessage: PlayerSummonKnownObjectNpcSkillItemUsageStateCancelMessage.Item,
+					StartTimeMilliseconds: 3000,
+					CancelEndState: 2,
+					SetsUsingItemObjectId: true,
+					UsesTargetedCancelAnimation: false),
+				new PlayerSummonKnownObjectNpcSkillItemUsageStatePath(
+					PlayerSummonKnownObjectNpcSkillItemUsageStatePathKind.PolishOrCharge,
+					SendKind: PlayerSummonKnownObjectNpcSkillItemUsageStateSendKind.BroadcastIncludingSelf,
+					CancelMessage: PlayerSummonKnownObjectNpcSkillItemUsageStateCancelMessage.ItemCharge,
+					StartTimeMilliseconds: 3000,
+					CancelEndState: 2,
+					SetsUsingItemObjectId: true,
+					UsesTargetedCancelAnimation: false),
+			],
+			PlayerSummonKnownObjectNpcSkillItemUsageStateMutationTiming.JavaPacketWriteTime,
+			PlayerSummonKnownObjectNpcSkillItemUsageStateMutationTiming.CSharpAfterSendBeforeSchedule,
+			PlayerSummonKnownObjectNpcSkillItemUsageStateClearingPolicy.ClearOnlyMatchingPendingItem,
+			PlayerSummonKnownObjectNpcSkillItemUsageStateNullPolicy.JavaThrowsOnMissingPlayerButAllowsMissingItem);
+	}
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillItemUsageStatePath(
+	PlayerSummonKnownObjectNpcSkillItemUsageStatePathKind Kind,
+	PlayerSummonKnownObjectNpcSkillItemUsageStateSendKind SendKind,
+	PlayerSummonKnownObjectNpcSkillItemUsageStateCancelMessage CancelMessage,
+	int StartTimeMilliseconds,
+	int CancelEndState,
+	bool SetsUsingItemObjectId,
+	bool UsesTargetedCancelAnimation);
+
+public enum PlayerSummonKnownObjectNpcSkillItemUsageStateTraceStatus
+{
+	Projected,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillItemUsageStateStep
+{
+	SerializePositiveTimeSmItemUsageAnimation,
+	ResolveWorldPlayer,
+	ResolveInventoryItem,
+	SetJavaUsingItemDuringWrite,
+	SendPositiveTimeSmItemUsageAnimation,
+	SchedulePendingItemUse,
+	SetCSharpUsingItemObjectIdAfterSend,
+	CleanupPendingItemUseClearsMatchingItem,
+	CancelPendingItemUseSendsEndThreeAnimation,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillItemUsageStateMutationTiming
+{
+	JavaPacketWriteTime,
+	CSharpAfterSendBeforeSchedule,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillItemUsageStateClearingPolicy
+{
+	ClearOnlyMatchingPendingItem,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillItemUsageStateNullPolicy
+{
+	JavaThrowsOnMissingPlayerButAllowsMissingItem,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillItemUsageStatePathKind
+{
+	StigmaCharge,
+	EnchantOrSocket,
+	GodstoneSocket,
+	SoulBind,
+	Assembly,
+	AnimationAdd,
+	RideOrToyPet,
+	PolishOrCharge,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillItemUsageStateSendKind
+{
+	BroadcastIncludingSelf,
+	SendSelfOnly,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillItemUsageStateCancelMessage
+{
+	Item,
+	ItemCharge,
+	EnchantOrManastone,
+	GodstoneSocket,
+	SoulBind,
 }
 
 public enum PlayerSummonKnownObjectNpcSkillCastResultShieldBranch
