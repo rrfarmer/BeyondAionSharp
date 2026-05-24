@@ -7142,6 +7142,14 @@ public sealed record PlayerSummonKnownObjectNpcSkillItemUsageStateTrace(
 					SetsUsingItemObjectId: true,
 					UsesTargetedCancelAnimation: false),
 				new PlayerSummonKnownObjectNpcSkillItemUsageStatePath(
+					PlayerSummonKnownObjectNpcSkillItemUsageStatePathKind.Decompose,
+					SendKind: PlayerSummonKnownObjectNpcSkillItemUsageStateSendKind.BroadcastIncludingSelf,
+					CancelMessage: PlayerSummonKnownObjectNpcSkillItemUsageStateCancelMessage.Decompose,
+					StartTimeMilliseconds: 3000,
+					CancelEndState: 2,
+					SetsUsingItemObjectId: true,
+					UsesTargetedCancelAnimation: false),
+				new PlayerSummonKnownObjectNpcSkillItemUsageStatePath(
 					PlayerSummonKnownObjectNpcSkillItemUsageStatePathKind.RideOrToyPet,
 					SendKind: PlayerSummonKnownObjectNpcSkillItemUsageStateSendKind.BroadcastIncludingSelf,
 					CancelMessage: PlayerSummonKnownObjectNpcSkillItemUsageStateCancelMessage.Item,
@@ -7217,6 +7225,7 @@ public enum PlayerSummonKnownObjectNpcSkillItemUsageStatePathKind
 	Assembly,
 	AnimationAdd,
 	ExpExtract,
+	Decompose,
 	RideOrToyPet,
 	PolishOrCharge,
 }
