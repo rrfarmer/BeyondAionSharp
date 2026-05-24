@@ -69,6 +69,41 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 			packet => Assert.IsType<SmMotion>(packet));
 	}
 
+	[Fact]
+	public async Task HandleReviveAsync_DepletedKiskRunsRegistryCleanupFanout()
+	{
+		var registry = new CapturingConnectionRegistry();
+		await using var fixture = await KiskReviveWorkflowFixture.CreateAsync(registry);
+		var revivedPlayer = CreateDeadPlayer(boundKiskObjectId: 9001);
+		var creator = CreateOnlinePlayer(objectId: 1001, boundKiskObjectId: 0);
+		var deadMember = CreateOnlinePlayer(objectId: 1003, boundKiskObjectId: 9001, currentHp: 0, dead: true);
+		var pendingResponder = CreateOnlinePlayer(objectId: 1004, boundKiskObjectId: 0);
+		var pendingRequest = new PendingKiskBindRequest(9001, SmQuestionWindow.RegisterBindstone);
+		pendingResponder.PendingKiskBindRequest = pendingRequest;
+		Assert.True(pendingResponder.ResponseRequester.PutRequest(
+			SmQuestionWindow.RegisterBindstone,
+			new QuestionResponseRequest(9001, QuestionResponseRequestKind.KiskBind, pendingRequest)));
+		registry.OnlinePlayers.AddRange([creator, deadMember, pendingResponder]);
+		var kiskPosition = new WorldPosition(210010000, 11, 22, 33, 0);
+		var kisk = fixture.RegisterKisk(objectId: 9001, kiskPosition, maxResurrects: 1);
+		Assert.True(kisk.AddMember(deadMember.ObjectId));
+		Assert.True(fixture.World.TryAddObject(9002, CreateKiskNpc(9002, kiskPosition with { X = 15 })));
+
+		await fixture.Connection.HandleReviveAsync(revivedPlayer, CreateRevive(PlayerKiskReviveService.KiskReviveId));
+
+		Assert.Equal(0, kisk.RemainingResurrects);
+		Assert.False(fixture.RuntimeContext.Kisks.HaveKisk(kisk.OwnerObjectId));
+		Assert.False(fixture.World.TryGetObject(kisk.ObjectId, out _));
+		Assert.Equal(0, deadMember.BoundKiskObjectId);
+		Assert.Null(pendingResponder.PendingKiskBindRequest);
+		Assert.Equal(0, pendingResponder.ResponseRequester.Count);
+		Assert.Contains(registry.SentPackets, delivery => delivery.PlayerObjectId == creator.ObjectId && delivery.Packet is SmKiskUpdate);
+		Assert.Contains(registry.SentPackets, delivery => delivery.PlayerObjectId == deadMember.ObjectId && delivery.Packet is SmBindPointInfo);
+		Assert.Contains(registry.SentPackets, delivery => delivery.PlayerObjectId == deadMember.ObjectId && delivery.Packet is SmDie);
+		Assert.True(registry.RefreshNpcVisibilityCalls >= 1);
+		Assert.Contains(registry.RefreshedNpcs, npc => npc.ObjectId == 9002);
+	}
+
 	private static Player CreateDeadPlayer(int boundKiskObjectId)
 	{
 		return new Player
@@ -84,6 +119,25 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 			LifeStats = new PlayerLifeStats(CurrentHp: 0, CurrentMp: 0, CurrentFp: 12),
 			Position = new WorldPosition(210010000, 1, 2, 3, 0),
 		};
+	}
+
+	private static Player CreateOnlinePlayer(int objectId, int boundKiskObjectId, int currentHp = 100, bool dead = false)
+	{
+		var player = new Player
+		{
+			ObjectId = objectId,
+			Name = $"KiskOnline{objectId}",
+			Race = "ELYOS",
+			PlayerClass = "RANGER",
+			Level = 1,
+			BoundKiskObjectId = boundKiskObjectId,
+			BindPoint = new PlayerBindPoint(210010000, 1, 2, 3, 0),
+			LifeStats = new PlayerLifeStats(CurrentHp: currentHp, CurrentMp: 0, CurrentFp: 0),
+			Position = new WorldPosition(210010000, 4, 5, 6, 0),
+		};
+		if (dead)
+			player.SetCreatureState(PlayerCreatureState.Dead, enabled: true);
+		return player;
 	}
 
 	private static WorldNpc CreateKiskNpc(int objectId, WorldPosition position)
@@ -111,6 +165,93 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 		packet.ReadFrom(reader);
 		return packet;
 	}
+
+	private sealed class CapturingConnectionRegistry : IGameClientConnectionRegistry
+	{
+		public List<Player> OnlinePlayers { get; } = [];
+
+		public List<PacketDelivery> SentPackets { get; } = [];
+
+		public List<IWorldNpcObject> RefreshedNpcs { get; } = [];
+
+		public int RefreshNpcVisibilityCalls { get; private set; }
+
+		public void RegisterPlayerConnection(int playerObjectId, GameServerConnection connection)
+		{
+		}
+
+		public void UnregisterPlayerConnection(int playerObjectId, GameServerConnection connection)
+		{
+		}
+
+		public bool TryGetOnlinePlayerByName(string playerName, out Player? player)
+		{
+			player = OnlinePlayers.SingleOrDefault(candidate => candidate.Name == playerName);
+			return player != null;
+		}
+
+		public void ForEachOnlinePlayer(Action<Player> action)
+		{
+			foreach (var player in OnlinePlayers)
+				action(player);
+		}
+
+		public Task<bool> SendPacketToPlayerAsync(int playerObjectId, GameServerPacket packet)
+		{
+			SentPackets.Add(new PacketDelivery(playerObjectId, packet));
+			return Task.FromResult(true);
+		}
+
+		public Task<int> BroadcastToWorldAsync(GameServerPacket packet, Func<Player, bool>? filter = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> BroadcastToVisiblePlayersAsync(
+			WorldPosition sourcePosition,
+			int sourceObjectId,
+			GameServerPacket packet,
+			bool includeSourcePlayer = false,
+			Func<Player, bool>? filter = null)
+		{
+			var recipients = OnlinePlayers.Where(player => filter?.Invoke(player) ?? true).ToArray();
+			foreach (var recipient in recipients)
+				SentPackets.Add(new PacketDelivery(recipient.ObjectId, packet));
+			return Task.FromResult(recipients.Length);
+		}
+
+		public Task<int> RefreshHousingVisibilityAsync(
+			IReadOnlyList<WorldHouse> houses,
+			HousingTemplateTable? housingTemplates,
+			int? playerObjectId = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> RefreshNpcVisibilityAsync(IReadOnlyList<IWorldNpcObject> npcs, int? playerObjectId = null)
+		{
+			RefreshNpcVisibilityCalls++;
+			RefreshedNpcs.AddRange(npcs);
+			return Task.FromResult(npcs.Count);
+		}
+
+		public Task<int> BroadcastHouseUpdateAsync(WorldHouse house, HousingTemplateTable? housingTemplates)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<bool> NotifyMailReceivedAsync(int recipientObjectId, PlayerMail mail)
+		{
+			return Task.FromResult(false);
+		}
+
+		public Task<bool> NotifyBrokerSettledAsync(int sellerObjectId, long settledKinah)
+		{
+			return Task.FromResult(false);
+		}
+	}
+
+	private sealed record PacketDelivery(int PlayerObjectId, GameServerPacket Packet);
 
 	private sealed class KiskReviveWorkflowFixture : IAsyncDisposable
 	{
@@ -142,18 +283,18 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 		public PlayerKiskRuntimeState RegisterKisk(int objectId, WorldPosition position, int maxResurrects)
 		{
 			var kisk = new PlayerKiskRuntimeState(
-			objectId,
-			ownerObjectId: 1001,
-			npcId: 700273,
-			maxResurrects: maxResurrects,
-			spawnedAt: DateTimeOffset.UtcNow.AddMinutes(-1),
-			ownerRace: "ELYOS");
+				objectId,
+				ownerObjectId: 1001,
+				npcId: 700273,
+				maxResurrects: maxResurrects,
+				spawnedAt: DateTimeOffset.UtcNow.AddMinutes(-1),
+				ownerRace: "ELYOS");
 			RuntimeContext.Kisks.RegisterKisk(kisk);
 			Assert.True(World.TryAddObject(objectId, CreateKiskNpc(objectId, position)));
 			return kisk;
 		}
 
-		public static async Task<KiskReviveWorkflowFixture> CreateAsync()
+		public static async Task<KiskReviveWorkflowFixture> CreateAsync(IGameClientConnectionRegistry? registry = null)
 		{
 			var runtimeContext = new GameServerRuntimeContext();
 			var world = new GameWorld(NullLogger<GameWorld>.Instance);
@@ -178,6 +319,7 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 					new GamePacketProcessor<string>((_, _) => Task.CompletedTask),
 					options: new GameServerOptions(),
 					runtimeContext: runtimeContext,
+					connectionRegistry: registry,
 					world: world,
 					sentPacketObserver: sentPackets.Add,
 					crypt: crypt);
