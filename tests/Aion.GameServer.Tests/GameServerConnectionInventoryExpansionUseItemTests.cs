@@ -12,6 +12,7 @@ using Aion.GameServer.Network.Aion.ClientPackets;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils;
+using Aion.GameServer.Utils.IdFactory;
 using Aion.GameServer.World;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -181,6 +182,35 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		AssertFirstShowDecomposablePayload(Assert.IsType<SmFirstShowDecomposable>(packet));
 	}
 
+	[Fact]
+	public async Task HandleSelectDecomposableAsync_SelectableRewardConsumesSourceAndAddsReward()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(idFactory: new IDFactory([5001]));
+		var player = CreatePlayer(itemId: 101);
+
+		await InvokeHandleSelectDecomposableAsync(fixture.Connection, player, CreateSelectDecomposable(sourceItemObjectId: 5001, index: 1));
+
+		Assert.Collection(
+			player.InventoryItems.OrderBy(item => item.ItemId),
+			item =>
+			{
+				Assert.Equal(101, item.ItemId);
+				Assert.Equal(1, item.Count);
+			},
+			item =>
+			{
+				Assert.Equal(202, item.ItemId);
+				Assert.Equal(3, item.Count);
+			});
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 101, expectedTime: 0, expectedEnd: 1, expectedUnknown3: 1),
+			packet => Assert.IsType<SmSystemMessage>(packet),
+			packet => Assert.IsType<SmInventoryUpdateItem>(packet),
+			packet => AssertSecondaryShowDecomposablePayload(Assert.IsType<SmSecondaryShowDecomposable>(packet)),
+			packet => Assert.IsType<SmInventoryAddItem>(packet));
+	}
+
 	private static Player CreatePlayer(int itemId)
 	{
 		return new Player
@@ -224,6 +254,18 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		return packet;
 	}
 
+	private static CmSelectDecomposable CreateSelectDecomposable(int sourceItemObjectId, int index)
+	{
+		using var writer = new PacketBuffer();
+		writer.WriteD(sourceItemObjectId);
+		writer.WriteD(0);
+		writer.WriteC(index);
+		var packet = new CmSelectDecomposable(236, new HashSet<GameConnectionState> { GameConnectionState.InGame });
+		using var reader = new PacketBuffer(writer.ToArray());
+		packet.ReadFrom(reader);
+		return packet;
+	}
+
 	private static async Task InvokeHandleEmotionAsync(GameServerConnection connection, Player player, CmEmotion packet)
 	{
 		var method = typeof(GameServerConnection).GetMethod(
@@ -234,7 +276,22 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		await task;
 	}
 
-	private static void AssertItemUsagePayload(SmItemUsageAnimation packet, int expectedItemId = 188500000, int expectedTime = 0, int expectedEnd = 0)
+	private static async Task InvokeHandleSelectDecomposableAsync(GameServerConnection connection, Player player, CmSelectDecomposable packet)
+	{
+		var method = typeof(GameServerConnection).GetMethod(
+			"HandleSelectDecomposableAsync",
+			BindingFlags.Instance | BindingFlags.NonPublic);
+		Assert.NotNull(method);
+		var task = Assert.IsAssignableFrom<Task>(method.Invoke(connection, [player, packet]));
+		await task;
+	}
+
+	private static void AssertItemUsagePayload(
+		SmItemUsageAnimation packet,
+		int expectedItemId = 188500000,
+		int expectedTime = 0,
+		int expectedEnd = 0,
+		int expectedUnknown3 = 0)
 	{
 		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
 		Assert.Equal(1001, reader.ReadD());
@@ -246,7 +303,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Equal(0, (int)reader.ReadC());
 		Assert.Equal(0, (int)reader.ReadC());
 		Assert.Equal(1, (int)reader.ReadC());
-		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(expectedUnknown3, reader.ReadD());
 		Assert.Equal(0, reader.Remaining);
 	}
 
@@ -270,6 +327,15 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Equal(0, (int)reader.ReadC());
 		Assert.Equal(0, (int)reader.ReadC());
 		Assert.Equal(1, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertSecondaryShowDecomposablePayload(SmSecondaryShowDecomposable packet)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(5001, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, (int)reader.ReadC());
 		Assert.Equal(0, reader.Remaining);
 	}
 
@@ -322,7 +388,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 
 		public static async Task<InventoryExpansionUseItemFixture> CreateAsync(
 			EmptyPlayerEnterWorldRepository? repository = null,
-			bool includeThreadPoolManager = false)
+			bool includeThreadPoolManager = false,
+			IDFactory? idFactory = null)
 		{
 			var tempRoot = Path.Combine(Path.GetTempPath(), "aion-inventory-expansion-use-" + Guid.NewGuid().ToString("N"));
 			Directory.CreateDirectory(Path.Combine(tempRoot, "game-server", "data", "static_data"));
@@ -421,6 +488,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 					runtimeContext: runtimeContext,
 					playerEnterWorldService: playerEnterWorldService,
 					threadPoolManager: threadPoolManager,
+					idFactory: idFactory,
 					sentPacketObserver: sentPackets.Add,
 					crypt: crypt);
 				return new InventoryExpansionUseItemFixture(client, connection, threadPoolManager, sentPackets, tempRoot);
