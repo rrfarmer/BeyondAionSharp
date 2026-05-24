@@ -7,9 +7,13 @@ public sealed class PlayerSummonCastSpellService
 {
 	public PlayerSummonCastSpellResult Handle(Player player, CmSummonCastSpell packet)
 	{
-		// Java parity: network/aion/clientpackets/CM_SUMMON_CASTSPELL.runImpl represented pet-summon order path.
-		if (!player.HasPetSummon || player.PetSummonObjectId == 0 || packet.SummonObjectId != player.PetSummonObjectId)
-			return PlayerSummonCastSpellResult.PetRequired(packet.SummonObjectId);
+		// Java parity: network/aion/clientpackets/CM_SUMMON_CASTSPELL.runImpl -> Player.getSummonOrMercenary.
+		var actorKind = player.GetSummonOrMercenaryKind(packet.SummonObjectId);
+		if (actorKind is PlayerSummonOrMercenaryKind.None or PlayerSummonOrMercenaryKind.NonPetSummon)
+			return PlayerSummonCastSpellResult.PetRequired(packet.SummonObjectId, actorKind);
+
+		if (actorKind == PlayerSummonOrMercenaryKind.Mercenary)
+			return PlayerSummonCastSpellResult.MercenaryUnsupported(packet.SummonObjectId, packet.TargetObjectId);
 
 		var targetValidation = ValidateTarget(player, packet);
 		if (targetValidation != null)
@@ -47,11 +51,25 @@ public sealed record PlayerSummonCastSpellResult(
 	int TargetObjectId,
 	PlayerPetSkillOrder? ExecutedOrder = null,
 	bool SkillMismatch = false,
-	PlayerSummonCastSpellAudit? Audit = null)
+	PlayerSummonCastSpellAudit? Audit = null,
+	PlayerSummonOrMercenaryKind ActorKind = PlayerSummonOrMercenaryKind.PetSummon)
 {
-	public static PlayerSummonCastSpellResult PetRequired(int summonObjectId)
+	public static PlayerSummonCastSpellResult PetRequired(int summonObjectId, PlayerSummonOrMercenaryKind actorKind)
 	{
-		return new PlayerSummonCastSpellResult(PlayerSummonCastSpellStatus.PetRequired, summonObjectId, 0);
+		return new PlayerSummonCastSpellResult(
+			PlayerSummonCastSpellStatus.PetRequired,
+			summonObjectId,
+			0,
+			ActorKind: actorKind);
+	}
+
+	public static PlayerSummonCastSpellResult MercenaryUnsupported(int summonObjectId, int targetObjectId)
+	{
+		return new PlayerSummonCastSpellResult(
+			PlayerSummonCastSpellStatus.MercenaryUnsupported,
+			summonObjectId,
+			targetObjectId,
+			ActorKind: PlayerSummonOrMercenaryKind.Mercenary);
 	}
 
 	public static PlayerSummonCastSpellResult NoQueuedOrder(int summonObjectId, int targetObjectId)
@@ -105,6 +123,7 @@ public sealed record PlayerSummonCastSpellResult(
 public enum PlayerSummonCastSpellStatus
 {
 	PetRequired,
+	MercenaryUnsupported,
 	NoQueuedOrder,
 	UnknownTarget,
 	NonCreatureTarget,

@@ -365,6 +365,25 @@ public class GameServerConnectionCastSpellTests
 		Assert.Empty(sentPackets);
 	}
 
+	[Fact]
+	public async Task HandleSummonCastSpellAsync_RepresentedMercenaryDoesNotSendPetRequiredPacket()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		await using var pair = await TestConnectionPair.CreateAsync(sentPackets);
+		var player = CreatePlayer();
+		player.RepresentedSummonOrMercenaryObjectId = 8002;
+		player.RepresentedSummonOrMercenaryKind = PlayerSummonOrMercenaryKind.Mercenary;
+
+		var result = await pair.Connection.HandleSummonCastSpellAsync(
+			player,
+			CreateSummonCastSpell(summonObjectId: 8002, skillId: 22107, skillLevel: 1, targetObjectId: 7001));
+
+		Assert.Equal(PlayerSummonCastSpellStatus.MercenaryUnsupported, result.CastResult.Status);
+		Assert.Equal(PlayerSummonOrMercenaryKind.Mercenary, result.CastResult.ActorKind);
+		Assert.Null(result.ExecutionResult);
+		Assert.Empty(sentPackets);
+	}
+
 	private static Player CreatePlayer(int currentHp = 100)
 	{
 		return new Player

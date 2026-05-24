@@ -219,6 +219,11 @@ public sealed class Player
 	// Java parity: model/gameobjects/Summon.getNpcId consumed by PetSkillData.getPetOrderSkill(orderSkillId, npcId).
 	public int PetSummonNpcId { get; set; }
 
+	// Java parity: model/gameobjects/player/Player.getSummonOrMercenary fallback until live Summon/Npc models exist.
+	public int RepresentedSummonOrMercenaryObjectId { get; set; }
+
+	public PlayerSummonOrMercenaryKind RepresentedSummonOrMercenaryKind { get; set; }
+
 	private readonly List<PlayerPetSkillOrder> _petSkillOrders = [];
 	private readonly Dictionary<int, PlayerSummonKnownObjectKind> _summonKnownObjects = [];
 
@@ -250,6 +255,17 @@ public sealed class Player
 	{
 		// Java parity: KnownList returns null for lagged-out or no-longer-visible targets.
 		return _summonKnownObjects.TryGetValue(objectId, out kind);
+	}
+
+	public PlayerSummonOrMercenaryKind GetSummonOrMercenaryKind(int objectId)
+	{
+		// Java parity: Player.getSummonOrMercenary first checks the owned summon, then creator-owned mercenary NPCs.
+		if (HasPetSummon && PetSummonObjectId == objectId)
+			return PlayerSummonOrMercenaryKind.PetSummon;
+
+		return RepresentedSummonOrMercenaryObjectId == objectId
+			? RepresentedSummonOrMercenaryKind
+			: PlayerSummonOrMercenaryKind.None;
 	}
 
 	public PlayerBrokerSettlementSummary BrokerSettlements { get; set; } = PlayerBrokerSettlementSummary.Empty;

@@ -122,9 +122,45 @@ public class PlayerSummonCastSpellServiceTests
 		var wrongSummonResult = service.Handle(wrongSummon, CreatePacket(8002, 22107, 1, 7001));
 
 		Assert.Equal(PlayerSummonCastSpellStatus.PetRequired, noSummon.Status);
+		Assert.Equal(PlayerSummonOrMercenaryKind.None, noSummon.ActorKind);
 		Assert.Equal(PlayerSummonCastSpellStatus.NoQueuedOrder, noOrder.Status);
+		Assert.Equal(PlayerSummonOrMercenaryKind.PetSummon, noOrder.ActorKind);
 		Assert.Equal(PlayerSummonCastSpellStatus.PetRequired, wrongSummonResult.Status);
+		Assert.Equal(PlayerSummonOrMercenaryKind.None, wrongSummonResult.ActorKind);
 		Assert.Single(wrongSummon.PetSkillOrders);
+	}
+
+	[Fact]
+	public void Handle_DistinguishesRepresentedNonPetSummonAndMercenary()
+	{
+		var service = new PlayerSummonCastSpellService();
+		var nonPetSummon = new Player
+		{
+			RepresentedSummonOrMercenaryObjectId = 8001,
+			RepresentedSummonOrMercenaryKind = PlayerSummonOrMercenaryKind.NonPetSummon,
+		};
+		nonPetSummon.AddPetSkillOrder(new PlayerPetSkillOrder(22107, SkillLevel: 1, TargetObjectId: 7001, Hate: 0, Release: false));
+
+		var nonPetResult = service.Handle(
+			nonPetSummon,
+			CreatePacket(summonObjectId: 8001, skillId: 22107, skillLevel: 1, targetObjectId: 7001));
+
+		var mercenary = new Player
+		{
+			RepresentedSummonOrMercenaryObjectId = 8002,
+			RepresentedSummonOrMercenaryKind = PlayerSummonOrMercenaryKind.Mercenary,
+		};
+
+		var mercenaryResult = service.Handle(
+			mercenary,
+			CreatePacket(summonObjectId: 8002, skillId: 22107, skillLevel: 1, targetObjectId: 7001));
+
+		Assert.Equal(PlayerSummonCastSpellStatus.PetRequired, nonPetResult.Status);
+		Assert.Equal(PlayerSummonOrMercenaryKind.NonPetSummon, nonPetResult.ActorKind);
+		Assert.Single(nonPetSummon.PetSkillOrders);
+		Assert.Equal(PlayerSummonCastSpellStatus.MercenaryUnsupported, mercenaryResult.Status);
+		Assert.Equal(PlayerSummonOrMercenaryKind.Mercenary, mercenaryResult.ActorKind);
+		Assert.Equal(7001, mercenaryResult.TargetObjectId);
 	}
 
 	private static Player CreatePlayer()
