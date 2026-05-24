@@ -953,6 +953,39 @@ public sealed class PlayerSummonSkillExecutionService
 			spawnTemplatePreview.InstanceId.Value);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillNpcCreationPreview PreviewMercenaryNpcSkillOrdinaryNpcCreation(
+		PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchPreview? dispatchPreview,
+		bool npcTemplateExists,
+		bool npcTemplateIsFlag = false,
+		bool walkerFormatorBroughtIntoWorld = false)
+	{
+		if (dispatchPreview == null)
+			return PlayerSummonKnownObjectNpcSkillNpcCreationPreview.MissingDispatch();
+
+		if (dispatchPreview.Branch != PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchBranch.Npc
+			|| dispatchPreview.SpawnTemplatePreview == null
+			|| dispatchPreview.NpcId == null
+			|| dispatchPreview.InstanceId == null)
+		{
+			return PlayerSummonKnownObjectNpcSkillNpcCreationPreview.NotOrdinaryNpc(dispatchPreview);
+		}
+
+		if (!npcTemplateExists)
+			return PlayerSummonKnownObjectNpcSkillNpcCreationPreview.MissingNpcTemplate(dispatchPreview);
+
+		// Java parity: VisibleObjectSpawner.spawnNpc creates NpcController/Npc, copies creator id,
+		// chooses FlagKnownList for FLAG templates otherwise NpcKnownList, then installs EffectController.
+		return PlayerSummonKnownObjectNpcSkillNpcCreationPreview.Created(
+			dispatchPreview,
+			dispatchPreview.NpcId.Value,
+			dispatchPreview.InstanceId.Value,
+			dispatchPreview.SpawnTemplatePreview.CreatorObjectId,
+			npcTemplateIsFlag
+				? PlayerSummonKnownObjectNpcSkillNpcKnownListKind.FlagKnownList
+				: PlayerSummonKnownObjectNpcSkillNpcKnownListKind.NpcKnownList,
+			walkerFormatorBroughtIntoWorld);
+	}
+
 	private static PlayerSummonKnownObjectNpcSkillSelectionResult SelectSingleMercenaryNpcSkillCandidate(
 		PlayerSummonKnownObjectNpcSkillCandidate candidate,
 		PlayerSummonKnownObjectNpcSkillSelectionSource source)
@@ -2272,6 +2305,84 @@ public enum PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchBranch
 	SiegeNpc,
 	InvasionNpc,
 	Npc,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillNpcCreationPreview(
+	PlayerSummonKnownObjectNpcSkillNpcCreationPreviewStatus Status,
+	PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchPreview? DispatchPreview = null,
+	int? NpcId = null,
+	int? InstanceId = null,
+	int CreatorObjectId = 0,
+	PlayerSummonKnownObjectNpcSkillNpcKnownListKind? KnownListKind = null,
+	bool WalkerFormatorBroughtIntoWorld = false)
+{
+	public bool WouldCreateNpc => Status == PlayerSummonKnownObjectNpcSkillNpcCreationPreviewStatus.Created;
+	public bool RequiresNpcController => WouldCreateNpc;
+	public bool RequiresNpcObject => WouldCreateNpc;
+	public bool RequiresCreatorIdCopy => WouldCreateNpc;
+	public bool RequiresKnownList => WouldCreateNpc;
+	public bool RequiresEffectController => WouldCreateNpc;
+	public bool RequiresWalkerFormator => WouldCreateNpc;
+	public bool RequiresBringIntoWorld => WouldCreateNpc && !WalkerFormatorBroughtIntoWorld;
+	public bool RequiresControllerDeleteOnBringIntoWorldFailure => RequiresBringIntoWorld;
+	public bool MayReturnNull => Status == PlayerSummonKnownObjectNpcSkillNpcCreationPreviewStatus.MissingNpcTemplate;
+	public bool HasCreator => CreatorObjectId != 0;
+
+	public static PlayerSummonKnownObjectNpcSkillNpcCreationPreview MissingDispatch()
+	{
+		return new PlayerSummonKnownObjectNpcSkillNpcCreationPreview(
+			PlayerSummonKnownObjectNpcSkillNpcCreationPreviewStatus.MissingDispatch);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillNpcCreationPreview NotOrdinaryNpc(
+		PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchPreview dispatchPreview)
+	{
+		return new PlayerSummonKnownObjectNpcSkillNpcCreationPreview(
+			PlayerSummonKnownObjectNpcSkillNpcCreationPreviewStatus.NotOrdinaryNpc,
+			dispatchPreview);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillNpcCreationPreview MissingNpcTemplate(
+		PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchPreview dispatchPreview)
+	{
+		return new PlayerSummonKnownObjectNpcSkillNpcCreationPreview(
+			PlayerSummonKnownObjectNpcSkillNpcCreationPreviewStatus.MissingNpcTemplate,
+			dispatchPreview,
+			dispatchPreview.NpcId,
+			dispatchPreview.InstanceId);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillNpcCreationPreview Created(
+		PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchPreview dispatchPreview,
+		int npcId,
+		int instanceId,
+		int creatorObjectId,
+		PlayerSummonKnownObjectNpcSkillNpcKnownListKind knownListKind,
+		bool walkerFormatorBroughtIntoWorld)
+	{
+		return new PlayerSummonKnownObjectNpcSkillNpcCreationPreview(
+			PlayerSummonKnownObjectNpcSkillNpcCreationPreviewStatus.Created,
+			dispatchPreview,
+			npcId,
+			instanceId,
+			creatorObjectId,
+			knownListKind,
+			walkerFormatorBroughtIntoWorld);
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillNpcCreationPreviewStatus
+{
+	MissingDispatch,
+	NotOrdinaryNpc,
+	MissingNpcTemplate,
+	Created,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillNpcKnownListKind
+{
+	NpcKnownList,
+	FlagKnownList,
 }
 
 public sealed record PlayerSummonKnownObjectNpcSkillCandidateMetadata(

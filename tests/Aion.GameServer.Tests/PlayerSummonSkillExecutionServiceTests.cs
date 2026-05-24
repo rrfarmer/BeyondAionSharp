@@ -442,6 +442,80 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void PreviewMercenaryNpcSkillOrdinaryNpcCreation_ProjectsJavaVisibleObjectSpawnerSpawnNpc()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+
+		PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchPreview Dispatch(int npcId)
+		{
+			var origin = new PlayerSummonKnownObjectNpcSkillSpawnOrigin(
+				WorldId: 210010000,
+				InstanceId: 12,
+				X: 100.5f,
+				Y: 200.25f,
+				Z: 35.75f,
+				Heading: 90,
+				CreatorObjectId: 8001);
+			var spawn = new PlayerSummonKnownObjectNpcSkillSpawnMetadata(
+				NpcId: npcId,
+				MinDistance: 0,
+				MaxDistance: 0,
+				MinCount: 1,
+				MaxCount: 0);
+			var postSpawn = service.PreviewMercenaryNpcSkillPostSpawn(
+				service.ProjectMercenaryNpcSkillTemplate(new PlayerSummonKnownObjectNpcSkillTemplateMetadata(SpawnTemplate: spawn)));
+			var execution = service.PreviewMercenaryNpcSkillPostSpawnExecution(postSpawn, origin);
+			var location = service.PreviewMercenaryNpcSkillPostSpawnLocation(execution);
+			var template = service.PreviewMercenaryNpcSkillSpawnTemplate(location);
+			return service.PreviewMercenaryNpcSkillSpawnObjectDispatch(template);
+		}
+
+		var ordinaryDispatch = Dispatch(212360);
+		var gatherableDispatch = service.PreviewMercenaryNpcSkillSpawnObjectDispatch(
+			ordinaryDispatch.SpawnTemplatePreview! with { NpcId = 450001 });
+
+		var missingDispatch = service.PreviewMercenaryNpcSkillOrdinaryNpcCreation(null, npcTemplateExists: true);
+		var notOrdinary = service.PreviewMercenaryNpcSkillOrdinaryNpcCreation(gatherableDispatch, npcTemplateExists: true);
+		var missingTemplate = service.PreviewMercenaryNpcSkillOrdinaryNpcCreation(ordinaryDispatch, npcTemplateExists: false);
+		var ordinary = service.PreviewMercenaryNpcSkillOrdinaryNpcCreation(ordinaryDispatch, npcTemplateExists: true);
+		var flag = service.PreviewMercenaryNpcSkillOrdinaryNpcCreation(
+			ordinaryDispatch,
+			npcTemplateExists: true,
+			npcTemplateIsFlag: true);
+		var clustered = service.PreviewMercenaryNpcSkillOrdinaryNpcCreation(
+			ordinaryDispatch,
+			npcTemplateExists: true,
+			walkerFormatorBroughtIntoWorld: true);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillNpcCreationPreviewStatus.MissingDispatch, missingDispatch.Status);
+		Assert.False(missingDispatch.WouldCreateNpc);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillNpcCreationPreviewStatus.NotOrdinaryNpc, notOrdinary.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillNpcCreationPreviewStatus.MissingNpcTemplate, missingTemplate.Status);
+		Assert.True(missingTemplate.MayReturnNull);
+		Assert.Equal(212360, missingTemplate.NpcId);
+		Assert.Equal(12, missingTemplate.InstanceId);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillNpcCreationPreviewStatus.Created, ordinary.Status);
+		Assert.True(ordinary.WouldCreateNpc);
+		Assert.True(ordinary.RequiresNpcController);
+		Assert.True(ordinary.RequiresNpcObject);
+		Assert.True(ordinary.RequiresCreatorIdCopy);
+		Assert.True(ordinary.RequiresKnownList);
+		Assert.True(ordinary.RequiresEffectController);
+		Assert.True(ordinary.RequiresWalkerFormator);
+		Assert.True(ordinary.RequiresBringIntoWorld);
+		Assert.True(ordinary.RequiresControllerDeleteOnBringIntoWorldFailure);
+		Assert.True(ordinary.HasCreator);
+		Assert.Equal(8001, ordinary.CreatorObjectId);
+		Assert.Equal(212360, ordinary.NpcId);
+		Assert.Equal(12, ordinary.InstanceId);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillNpcKnownListKind.NpcKnownList, ordinary.KnownListKind);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillNpcKnownListKind.FlagKnownList, flag.KnownListKind);
+		Assert.True(clustered.WalkerFormatorBroughtIntoWorld);
+		Assert.False(clustered.RequiresBringIntoWorld);
+		Assert.False(clustered.RequiresControllerDeleteOnBringIntoWorldFailure);
+	}
+
+	[Fact]
 	public void ProjectMercenaryNpcSkillCandidate_AdaptsStaticTemplateEntryIntoSelectableCandidate()
 	{
 		var service = new PlayerSummonSkillExecutionService();
