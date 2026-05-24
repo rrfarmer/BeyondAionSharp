@@ -6669,6 +6669,9 @@ public sealed class GameServerConnection : BaseClientConnection
 	internal async Task HandleQuestionResponseAsync(Player responder, CmQuestionResponse packet)
 	{
 		// Java parity: network/aion/clientpackets/CM_QUESTION_RESPONSE.runImpl.
+		if (responder.IsTrading && packet.Response != 0)
+			CancelExchangeForQuestionAccept(responder);
+
 		if (packet.QuestionId == SmQuestionWindow.SoulBoundItemConfirm)
 		{
 			await HandleSoulBindQuestionResponseAsync(responder, packet);
@@ -6724,6 +6727,14 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		await AcceptFriendRequestAsync(requester, responder);
+	}
+
+	private static void CancelExchangeForQuestionAccept(Player responder)
+	{
+		// Java parity: CM_QUESTION_RESPONSE.runImpl calls ExchangeService.cancelExchange(player)
+		// when a player accepts any question while trading. C# does not have the full ExchangeService
+		// map yet, so this clears the currently represented local trade state only.
+		responder.IsTrading = false;
 	}
 
 	private async Task HandleLeagueInviteQuestionResponseAsync(Player responder, CmQuestionResponse packet)

@@ -64,6 +64,44 @@ public sealed class GameServerConnectionLeagueInviteQuestionResponseTests
 	}
 
 	[Fact]
+	public async Task HandleQuestionResponseAsync_AcceptWhileTradingClearsRepresentedTradeStateLikeJavaCancelExchange()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var alliances = new PlayerAllianceRuntime();
+		var leagues = new PlayerLeagueRuntime();
+		var inviter = new Player { ObjectId = 1001, Name = "Inviter", IsOnline = true };
+		var invitedLeader = new Player { ObjectId = 2001, Name = "InvitedLeader", IsOnline = true, IsTrading = true };
+		alliances.CreateAlliance(88001, inviter);
+		alliances.CreateAlliance(88002, invitedLeader);
+		registry.OnlinePlayers.AddRange([inviter, invitedLeader]);
+		SeedPendingInvite(inviter, invitedLeader, alliances);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, alliances, leagues, idFactory: new IDFactory());
+
+		await pair.Connection.HandleQuestionResponseAsync(invitedLeader, CreateQuestionResponse(SmQuestionWindow.UnionInviteMe, response: 1));
+
+		Assert.False(invitedLeader.IsTrading);
+	}
+
+	[Fact]
+	public async Task HandleQuestionResponseAsync_DenyWhileTradingDoesNotCancelRepresentedTradeStateLikeJava()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var alliances = new PlayerAllianceRuntime();
+		var leagues = new PlayerLeagueRuntime();
+		var inviter = new Player { ObjectId = 1001, Name = "Inviter", IsOnline = true };
+		var invitedLeader = new Player { ObjectId = 2001, Name = "InvitedLeader", IsOnline = true, IsTrading = true };
+		alliances.CreateAlliance(88001, inviter);
+		alliances.CreateAlliance(88002, invitedLeader);
+		registry.OnlinePlayers.AddRange([inviter, invitedLeader]);
+		SeedPendingInvite(inviter, invitedLeader, alliances);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, alliances, leagues, idFactory: new IDFactory());
+
+		await pair.Connection.HandleQuestionResponseAsync(invitedLeader, CreateQuestionResponse(SmQuestionWindow.UnionInviteMe, response: 0));
+
+		Assert.True(invitedLeader.IsTrading);
+	}
+
+	[Fact]
 	public async Task HandleQuestionResponseAsync_LeagueInviteWrongQuestionLeavesPendingRequest()
 	{
 		var registry = new CapturingConnectionRegistry();
