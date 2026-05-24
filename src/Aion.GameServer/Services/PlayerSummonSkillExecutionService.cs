@@ -677,6 +677,48 @@ public sealed class PlayerSummonSkillExecutionService
 			: PlayerSummonKnownObjectNpcSkillPerformAttackPreview.Immediate(actionWorkflowPreview);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreview PreviewMercenaryNpcSkillPerformAttackExecution(
+		PlayerSummonKnownObjectNpcSkillPerformAttackPreview? performAttackPreview,
+		long performAttackTimeMilliseconds,
+		long currentTimeMilliseconds)
+	{
+		if (performAttackPreview == null)
+			return PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreview.MissingPreview(currentTimeMilliseconds);
+
+		if (performAttackPreview.Status == PlayerSummonKnownObjectNpcSkillPerformAttackPreviewStatus.TargetTooFar
+			|| performAttackPreview.Status == PlayerSummonKnownObjectNpcSkillPerformAttackPreviewStatus.CastSubStateUnchanged)
+		{
+			return PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreview.NoAction(
+				performAttackPreview,
+				currentTimeMilliseconds);
+		}
+
+		if (performAttackPreview.ActionWorkflowPreview == null)
+		{
+			return PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreview.MissingWorkflow(
+				performAttackPreview,
+				currentTimeMilliseconds);
+		}
+
+		if (performAttackPreview.Status == PlayerSummonKnownObjectNpcSkillPerformAttackPreviewStatus.ImmediateSkillAction)
+		{
+			return PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreview.Immediate(
+				performAttackPreview,
+				currentTimeMilliseconds);
+		}
+
+		var dueAt = performAttackTimeMilliseconds + performAttackPreview.DelayMilliseconds;
+		return currentTimeMilliseconds >= dueAt
+			? PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreview.ScheduledDue(
+				performAttackPreview,
+				currentTimeMilliseconds,
+				dueAt)
+			: PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreview.ScheduledPending(
+				performAttackPreview,
+				currentTimeMilliseconds,
+				dueAt);
+	}
+
 	public PlayerSummonKnownObjectNpcSkillActionWorkflowPreview PreviewMercenaryNpcSkillActionWorkflow(
 		PlayerSummonKnownObject knownObject,
 		PlayerSummonKnownObjectNpcSkillSelectionPreview? selectionPreview,
@@ -3555,6 +3597,93 @@ public enum PlayerSummonKnownObjectNpcSkillPerformAttackPreviewStatus
 	CastSubStateUnchanged,
 	ScheduledSkillAction,
 	ImmediateSkillAction,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreview(
+	PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreviewStatus Status,
+	long CurrentTimeMilliseconds,
+	PlayerSummonKnownObjectNpcSkillPerformAttackPreview? PerformAttackPreview = null,
+	long? ScheduledDueTimeMilliseconds = null)
+{
+	public bool ShouldInvokeSkillActionWorkflow =>
+		Status is PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreviewStatus.ImmediateWorkflow
+			or PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreviewStatus.ScheduledWorkflowDue;
+
+	public bool IsScheduledPending => Status == PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreviewStatus.ScheduledWorkflowPending;
+
+	public PlayerSummonKnownObjectNpcSkillActionWorkflowPreview? ActionWorkflowPreview => PerformAttackPreview?.ActionWorkflowPreview;
+
+	public static PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreview MissingPreview(long currentTimeMilliseconds)
+	{
+		return new PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreview(
+			PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreviewStatus.MissingPreview,
+			currentTimeMilliseconds);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreview NoAction(
+		PlayerSummonKnownObjectNpcSkillPerformAttackPreview performAttackPreview,
+		long currentTimeMilliseconds)
+	{
+		return new PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreview(
+			PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreviewStatus.NoAction,
+			currentTimeMilliseconds,
+			performAttackPreview);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreview MissingWorkflow(
+		PlayerSummonKnownObjectNpcSkillPerformAttackPreview performAttackPreview,
+		long currentTimeMilliseconds)
+	{
+		return new PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreview(
+			PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreviewStatus.MissingWorkflow,
+			currentTimeMilliseconds,
+			performAttackPreview);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreview Immediate(
+		PlayerSummonKnownObjectNpcSkillPerformAttackPreview performAttackPreview,
+		long currentTimeMilliseconds)
+	{
+		return new PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreview(
+			PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreviewStatus.ImmediateWorkflow,
+			currentTimeMilliseconds,
+			performAttackPreview,
+			currentTimeMilliseconds);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreview ScheduledPending(
+		PlayerSummonKnownObjectNpcSkillPerformAttackPreview performAttackPreview,
+		long currentTimeMilliseconds,
+		long scheduledDueTimeMilliseconds)
+	{
+		return new PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreview(
+			PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreviewStatus.ScheduledWorkflowPending,
+			currentTimeMilliseconds,
+			performAttackPreview,
+			scheduledDueTimeMilliseconds);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreview ScheduledDue(
+		PlayerSummonKnownObjectNpcSkillPerformAttackPreview performAttackPreview,
+		long currentTimeMilliseconds,
+		long scheduledDueTimeMilliseconds)
+	{
+		return new PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreview(
+			PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreviewStatus.ScheduledWorkflowDue,
+			currentTimeMilliseconds,
+			performAttackPreview,
+			scheduledDueTimeMilliseconds);
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreviewStatus
+{
+	MissingPreview,
+	NoAction,
+	MissingWorkflow,
+	ImmediateWorkflow,
+	ScheduledWorkflowPending,
+	ScheduledWorkflowDue,
 }
 
 public sealed record PlayerSummonKnownObjectNpcSkillActionWorkflowPreview(
