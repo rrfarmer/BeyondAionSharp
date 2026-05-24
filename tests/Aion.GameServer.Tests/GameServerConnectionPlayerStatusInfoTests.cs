@@ -236,12 +236,12 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 		Assert.Equal([2001, 2001, 2001, 1001, 1001, 1001], registry.SentPackets.Select(send => send.PlayerObjectId));
 		Assert.Collection(
 			registry.SentPackets,
-			send => Assert.IsType<SmAllianceInfo>(send.Packet),
-			send => Assert.Equal(1400589, Assert.IsType<SmSystemMessage>(send.Packet).MessageId),
-			send => Assert.Equal(1400590, Assert.IsType<SmSystemMessage>(send.Packet).MessageId),
-			send => Assert.IsType<SmAllianceInfo>(send.Packet),
-			send => Assert.Equal(1400590, Assert.IsType<SmSystemMessage>(send.Packet).MessageId),
-			send => Assert.Equal(1400589, Assert.IsType<SmSystemMessage>(send.Packet).MessageId));
+			send => AssertLeagueAllianceInfoPacket(send, 88002, 2001, 220010000),
+			send => AssertSystemMessagePayload(send, 1400589, "0"),
+			send => AssertSystemMessagePayload(send, 1400590, "LeagueLeader", "1"),
+			send => AssertLeagueAllianceInfoPacket(send, 88001, 1001, 210010000),
+			send => AssertSystemMessagePayload(send, 1400590, "AllianceLeader", "0"),
+			send => AssertSystemMessagePayload(send, 1400589, "1"));
 	}
 
 	[Fact]
@@ -1141,6 +1141,88 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 		return CreatePacket((int)command, selectedObjectId);
 	}
 
+	private static void AssertLeagueAllianceInfoPacket(
+		SentPacketRecord send,
+		int expectedAllianceId,
+		int expectedLeaderObjectId,
+		int expectedActivePlayerMapId)
+	{
+		var packet = Assert.IsType<SmAllianceInfo>(send.Packet);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(1, reader.ReadH());
+		Assert.Equal(expectedAllianceId, reader.ReadD());
+		Assert.Equal(expectedLeaderObjectId, reader.ReadD());
+		Assert.Equal(expectedActivePlayerMapId, reader.ReadD());
+		for (var i = 0; i < 4; i++)
+			Assert.Equal(0, reader.ReadD());
+		AssertDefaultLootRules(reader);
+		Assert.Equal(0x02, reader.ReadD());
+		Assert.Equal(0x00, (int)reader.ReadC());
+		Assert.Equal(0x3F, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(77001, reader.ReadD());
+		for (var i = 0; i < 4; i++)
+		{
+			Assert.Equal(i, reader.ReadD());
+			Assert.Equal(1000 + i, reader.ReadD());
+		}
+
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(string.Empty, reader.ReadS());
+		Assert.Equal(2, reader.ReadH());
+		AssertDefaultLootRules(reader);
+		Assert.Equal(0x02, reader.ReadD());
+		AssertLeagueRow(reader, 0, 88002, 1, "AllianceLeader", 220010000);
+		AssertLeagueRow(reader, 1, 88001, 1, "LeagueLeader", 210010000);
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertDefaultLootRules(PacketBuffer reader)
+	{
+		Assert.Equal((int)PlayerGroupLootRuleType.RoundRobin, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(2, reader.ReadD());
+		Assert.Equal(2, reader.ReadD());
+		Assert.Equal(2, reader.ReadD());
+		Assert.Equal(2, reader.ReadD());
+		Assert.Equal(2, reader.ReadD());
+	}
+
+	private static void AssertLeagueRow(
+		PacketBuffer reader,
+		int expectedPosition,
+		int expectedAllianceId,
+		int expectedMemberCount,
+		string expectedCaptainName,
+		int expectedCaptainWorldId)
+	{
+		Assert.Equal(expectedPosition, reader.ReadD());
+		Assert.Equal(expectedAllianceId, reader.ReadD());
+		Assert.Equal(expectedMemberCount, reader.ReadD());
+		Assert.Equal(expectedCaptainName, reader.ReadS());
+		Assert.Equal(expectedCaptainWorldId, reader.ReadD());
+	}
+
+	private static void AssertSystemMessagePayload(
+		SentPacketRecord send,
+		int expectedMessageId,
+		params string[] expectedParameters)
+	{
+		var packet = Assert.IsType<SmSystemMessage>(send.Packet);
+		Assert.Equal(expectedMessageId, packet.MessageId);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(25, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(expectedMessageId, reader.ReadD());
+		Assert.Equal(expectedParameters.Length, (int)reader.ReadC());
+		foreach (var expectedParameter in expectedParameters)
+			Assert.Equal(expectedParameter, reader.ReadS());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+	}
+
 	private static CmPlayerStatusInfo CreatePacket(
 		int commandCode,
 		int selectedObjectId,
@@ -1156,6 +1238,14 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 		using var reader = new PacketBuffer(writer.ToArray());
 		packet.ReadFrom(reader);
 		return packet;
+	}
+
+	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
+	{
+		var crypt = new GameCrypt(() => 0x01020304);
+		crypt.EnableKey();
+		var frame = packet.SerializeFrame(crypt);
+		return frame[7..];
 	}
 
 	private sealed class TestConnectionPair : IAsyncDisposable
