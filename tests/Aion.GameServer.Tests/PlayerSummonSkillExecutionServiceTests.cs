@@ -1512,6 +1512,83 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void ProjectMercenaryNpcSkillAttackCycleResultContract_LabelsFailureOutcomeBranches()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var knownObject = new PlayerSummonKnownObject(8015, PlayerSummonKnownObjectKind.Creature);
+
+		PlayerSummonKnownObjectNpcSkillAttackCycleResultContract ContractFor(
+			PlayerSummonKnownObjectNpcSkillPerformAttackPreview? performAttackPreview,
+			PlayerSummonKnownObjectNpcSkillActionResult? actionResult)
+		{
+			var workflow = new PlayerSummonKnownObjectNpcSkillActionWorkflowPreview(
+				PlayerSummonKnownObjectNpcSkillActionWorkflowPreviewStatus.Projected,
+				knownObject,
+				ActionResult: actionResult);
+			var cycle = PlayerSummonKnownObjectNpcSkillAttackCycleSnapshot.Captured(
+				knownObject.ObjectId,
+				knownObject,
+				skillListProjection: null,
+				selectionPreview: null,
+				actionPreview: actionResult?.Preview,
+				postSpawnPreview: null,
+				actionWorkflowPreview: workflow,
+				performAttackPreview: performAttackPreview,
+				performAttackExecutionPreview: null,
+				schedulerCallbackOutcome: null);
+			var readiness = PlayerSummonKnownObjectNpcSkillAttackCycleReadiness.Ready(cycle);
+			var invocation = new PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocation(
+				PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocationStatus.LiveAiNotWired,
+				readiness,
+				cycle);
+
+			return service.ProjectMercenaryNpcSkillAttackCycleResultContract(invocation);
+		}
+
+		var targetGiveUpPreview = PlayerSummonKnownObjectNpcSkillActionPreview.TargetGiveUp();
+		var targetTooFarPreview = PlayerSummonKnownObjectNpcSkillActionPreview.TargetTooFar();
+		var blockedPreview = new PlayerSummonKnownObjectNpcSkillActionPreview(
+			PlayerSummonKnownObjectNpcSkillActionPreviewStatus.AfterUseSkillBlocked);
+		var failedUsePreview = new PlayerSummonKnownObjectNpcSkillActionPreview(
+			PlayerSummonKnownObjectNpcSkillActionPreviewStatus.AfterUseSkillUseFailed);
+		var preActionTooFar = ContractFor(
+			PlayerSummonKnownObjectNpcSkillPerformAttackPreview.TargetTooFar(0, null),
+			null);
+		var targetGiveUp = ContractFor(
+			null,
+			PlayerSummonKnownObjectNpcSkillActionResult.TargetGiveUp(targetGiveUpPreview));
+		var skillActionTargetTooFar = ContractFor(
+			null,
+			PlayerSummonKnownObjectNpcSkillActionResult.TargetTooFar(targetTooFarPreview));
+		var blocked = ContractFor(
+			null,
+			PlayerSummonKnownObjectNpcSkillActionResult.AfterUseSkill(blockedPreview));
+		var failedUse = ContractFor(
+			null,
+			PlayerSummonKnownObjectNpcSkillActionResult.UseSkillFailed(failedUsePreview));
+
+		Assert.True(preActionTooFar.HasOutcomeBranch(PlayerSummonKnownObjectNpcSkillAttackCycleOutcomeBranch.PreActionTargetTooFar));
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.ControllerAbortCast, preActionTooFar.ExpectedJavaSideEffects);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.AiEventTargetTooFar, preActionTooFar.ExpectedJavaSideEffects);
+		Assert.True(targetGiveUp.HasOutcomeBranch(PlayerSummonKnownObjectNpcSkillAttackCycleOutcomeBranch.TargetGiveUp));
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.AiNoneSubState, targetGiveUp.ExpectedJavaSideEffects);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.AiEventTargetGiveUp, targetGiveUp.ExpectedJavaSideEffects);
+		Assert.True(skillActionTargetTooFar.HasOutcomeBranch(PlayerSummonKnownObjectNpcSkillAttackCycleOutcomeBranch.SkillActionTargetTooFar));
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.ControllerAbortCast, skillActionTargetTooFar.ExpectedJavaSideEffects);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.AiEventTargetTooFar, skillActionTargetTooFar.ExpectedJavaSideEffects);
+		Assert.True(blocked.HasOutcomeBranch(PlayerSummonKnownObjectNpcSkillAttackCycleOutcomeBranch.BlockedSkillAfterUse));
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.AiNoneSubState, blocked.ExpectedJavaSideEffects);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.AiEventAttackComplete, blocked.ExpectedJavaSideEffects);
+		Assert.True(failedUse.HasOutcomeBranch(PlayerSummonKnownObjectNpcSkillAttackCycleOutcomeBranch.UseSkillFailedAfterUse));
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.ControllerUseSkill, failedUse.ExpectedJavaSideEffects);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.AiEventAttackComplete, failedUse.ExpectedJavaSideEffects);
+		Assert.False(preActionTooFar.WouldExecuteSideEffects);
+		Assert.False(targetGiveUp.WouldExecuteSideEffects);
+		Assert.False(blocked.WouldExecuteSideEffects);
+		Assert.False(failedUse.WouldExecuteSideEffects);
+	}
+
+	[Fact]
 	public void ResolveMercenaryNpcSkillTargetMode_MapsJavaNpcSkillTargetAttributes()
 	{
 		var service = new PlayerSummonSkillExecutionService();
