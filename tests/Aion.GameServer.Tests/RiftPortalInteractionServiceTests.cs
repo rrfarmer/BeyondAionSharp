@@ -33,6 +33,36 @@ public sealed class RiftPortalInteractionServiceTests
 			Assert.Equal(RiftPortalDialogStatus.Requested, result.Status);
 			Assert.Equal(SmQuestionWindow.DirectPortalPassConfirm, result.QuestionWindow?.Code);
 			Assert.Equal(new PendingRiftPortalRequest(portal.MasterNpc.ObjectId, SmQuestionWindow.DirectPortalPassConfirm), player.PendingRiftPortalRequest);
+			Assert.Equal(1, player.ResponseRequester.Count);
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
+	public async Task RequestDialog_DuplicatePortalQuestionIsRejectedThroughResponseRequester()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-rift-interaction-duplicate-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var (riftService, interaction) = await CreateServicesAsync(tempPath);
+			Assert.True(riftService.OpenRifts(2120, guards: false).Succeeded);
+			var portal = Assert.Single(riftService.GetActiveRifts()).Portal;
+			Assert.NotNull(portal);
+			var player = CreatePlayer(level: 30);
+			var first = interaction.RequestDialog(player, portal.MasterNpc.ObjectId);
+
+			var duplicate = interaction.RequestDialog(player, portal.MasterNpc.ObjectId);
+
+			Assert.True(first.Requested);
+			Assert.False(duplicate.Requested);
+			Assert.Equal(RiftPortalDialogStatus.PendingRequest, duplicate.Status);
+			Assert.Null(duplicate.QuestionWindow);
+			Assert.Equal(new PendingRiftPortalRequest(portal.MasterNpc.ObjectId, SmQuestionWindow.DirectPortalPassConfirm), player.PendingRiftPortalRequest);
+			Assert.Equal(1, player.ResponseRequester.Count);
 		}
 		finally
 		{
@@ -65,6 +95,7 @@ public sealed class RiftPortalInteractionServiceTests
 			Assert.Equal(RiftPortalQuestionResponseStatus.Accepted, result.Status);
 			Assert.Equal(portal.SlaveNpc.SpawnLocation, player.Position);
 			Assert.Null(player.PendingRiftPortalRequest);
+			Assert.Equal(0, player.ResponseRequester.Count);
 			Assert.Equal(1, portal.UsedEntries);
 			Assert.Equal(PlayerTeamMembership.None, result.RemovedTeamMembership);
 			Assert.False(result.VortexOpenNoticeRequested);
@@ -173,6 +204,7 @@ public sealed class RiftPortalInteractionServiceTests
 			Assert.Equal(RiftPortalQuestionResponseStatus.Accepted, result.Status);
 			Assert.Equal(expectedDestination, player.Position);
 			Assert.Null(player.PendingRiftPortalRequest);
+			Assert.Equal(0, player.ResponseRequester.Count);
 			Assert.Equal(PlayerTeamMembership.None, player.TeamMembership);
 			Assert.Equal(PlayerTeamMembership.Group, result.RemovedTeamMembership);
 			Assert.True(result.VortexOpenNoticeRequested);
@@ -215,8 +247,37 @@ public sealed class RiftPortalInteractionServiceTests
 			Assert.False(result.Accepted);
 			Assert.Equal(RiftPortalQuestionResponseStatus.Declined, result.Status);
 			Assert.Null(player.PendingRiftPortalRequest);
+			Assert.Equal(0, player.ResponseRequester.Count);
 			Assert.Equal(originalPosition, player.Position);
 			Assert.Empty(registry.BroadcastDeliveries);
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
+	public async Task RespondAsync_WrongQuestionLeavesPortalRequestRegistered()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-rift-interaction-wrong-question-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var (riftService, interaction) = await CreateServicesAsync(tempPath);
+			Assert.True(riftService.OpenRifts(2120, guards: false).Succeeded);
+			var portal = Assert.Single(riftService.GetActiveRifts()).Portal;
+			Assert.NotNull(portal);
+			var player = CreatePlayer(level: 30);
+			var request = interaction.RequestDialog(player, portal.MasterNpc.ObjectId);
+			Assert.True(request.Requested);
+
+			var result = await interaction.RespondAsync(player, SmQuestionWindow.BuddyListAddBuddyRequest, response: 1);
+
+			Assert.False(result.Handled);
+			Assert.Equal(RiftPortalQuestionResponseStatus.NoPendingRequest, result.Status);
+			Assert.Equal(new PendingRiftPortalRequest(portal.MasterNpc.ObjectId, SmQuestionWindow.DirectPortalPassConfirm), player.PendingRiftPortalRequest);
+			Assert.Equal(1, player.ResponseRequester.Count);
 		}
 		finally
 		{

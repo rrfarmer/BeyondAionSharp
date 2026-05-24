@@ -47,7 +47,19 @@ public sealed class RiftPortalInteractionService
 
 		var result = _dialogService.CreateDialogRequest(player, portal);
 		if (result.Requested && result.QuestionWindow != null)
-			player.PendingRiftPortalRequest = new PendingRiftPortalRequest(targetObjectId, result.QuestionWindow.Code);
+		{
+			var pendingRequest = new PendingRiftPortalRequest(targetObjectId, result.QuestionWindow.Code);
+			// Java parity: RVController.onRequest registers its RequestResponseHandler in
+			// Player.getResponseRequester().putRequest before sending SM_QUESTION_WINDOW.
+			if (!player.ResponseRequester.PutRequest(
+				result.QuestionWindow.Code,
+				new QuestionResponseRequest(targetObjectId, QuestionResponseRequestKind.RiftPortal, pendingRequest)))
+			{
+				return RiftPortalDialogResult.NotRequested(RiftPortalDialogStatus.PendingRequest);
+			}
+
+			player.PendingRiftPortalRequest = pendingRequest;
+		}
 		return result;
 	}
 
@@ -57,11 +69,20 @@ public sealed class RiftPortalInteractionService
 		byte response,
 		Func<GameServerPacket, Task>? sendResponderPacketAsync = null)
 	{
-		// Java parity: CM_QUESTION_RESPONSE executes the matching ResponseRequester handler and removes it.
-		var request = player.PendingRiftPortalRequest;
-		if (request == null || request.QuestionId != questionId)
+		// Java parity: CM_QUESTION_RESPONSE delegates to ResponseRequester.respond, which removes
+		// the RVController RequestResponseHandler before invoking accept/deny behavior.
+		var pendingRequest = player.PendingRiftPortalRequest;
+		if (pendingRequest == null || pendingRequest.QuestionId != questionId)
 			return RiftPortalQuestionResponseResult.NotHandled(RiftPortalQuestionResponseStatus.NoPendingRequest);
 
+		var dispatch = player.ResponseRequester.Respond(questionId, response);
+		if (dispatch?.Request.Kind != QuestionResponseRequestKind.RiftPortal)
+		{
+			player.PendingRiftPortalRequest = null;
+			return RiftPortalQuestionResponseResult.NotHandled(RiftPortalQuestionResponseStatus.NoPendingRequest);
+		}
+
+		var request = dispatch.Request.Payload as PendingRiftPortalRequest ?? pendingRequest;
 		player.PendingRiftPortalRequest = null;
 		if (response == 0)
 			return RiftPortalQuestionResponseResult.Declined();

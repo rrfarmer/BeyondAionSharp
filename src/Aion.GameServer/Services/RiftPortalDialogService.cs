@@ -57,4 +57,5 @@ public enum RiftPortalDialogStatus
 	Requested,
 	UnknownPortal,
 	InvasionRaceMismatch,
+	PendingRequest,
 }
