@@ -1548,6 +1548,7 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.True(contract.HasValidationMutationTrace);
 		Assert.True(contract.HasTemplateActionTrace);
 		Assert.True(contract.HasEffectInitializationTrace);
+		Assert.True(contract.HasCastResultPacketTrace);
 		Assert.True(contract.HasEndCastBranchTrace);
 		Assert.True(contract.HasEndCastSideEffectTrace);
 		Assert.Equal([
@@ -1590,6 +1591,13 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Contains(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.SetEffectWorldPosition, effectInitializationTrace.OrderedSteps);
 		Assert.Contains(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.ScheduleApplyEffect, effectInitializationTrace.OrderedSteps);
 		Assert.True(effectInitializationTrace.CapturesDashStatusBeforeCastResult);
+		var castResultPacketTrace = Assert.IsType<PlayerSummonKnownObjectNpcSkillCastResultPacketTrace>(contract.CastResultPacketTrace);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillCastResultPacketTraceStatus.OrderedPacketFanout, castResultPacketTrace.Status);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.BroadcastSmCastspellResult, castResultPacketTrace.OrderedSteps);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteEffectResultId, castResultPacketTrace.OrderedSteps);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteAttackStatusId, castResultPacketTrace.OrderedSteps);
+		Assert.True(castResultPacketTrace.BroadcastsCastSpellResult);
+		Assert.True(castResultPacketTrace.WritesEffectResultBeforeAttackStatus);
 		var contractEndCastBranchTrace = Assert.IsType<PlayerSummonKnownObjectNpcSkillEndCastBranchTrace>(contract.EndCastBranchTrace);
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillEndCastBranchTraceStatus.OrderedBranches, contractEndCastBranchTrace.Status);
 		Assert.Contains(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.EndCondCheckIgnored, contractEndCastBranchTrace.OrderedSteps);
@@ -1675,6 +1683,7 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.True(adapterContract.PreservesValidationMutationOrdering);
 		Assert.True(adapterContract.PreservesTemplateActionOrdering);
 		Assert.True(adapterContract.PreservesEffectInitializationOrdering);
+		Assert.True(adapterContract.PreservesCastResultPacketOrdering);
 		Assert.True(adapterContract.PreservesEndCastBranchOrdering);
 		Assert.True(adapterContract.PreservesEndCastSideEffectOrdering);
 		Assert.Equal(contract.ActionSideEffectTrace?.Status, adapterContract.ActionSideEffectTrace?.Status);
@@ -1687,6 +1696,8 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Equal(contract.TemplateActionTrace?.OrderedSteps, adapterContract.TemplateActionTrace?.OrderedSteps);
 		Assert.Equal(contract.EffectInitializationTrace?.Status, adapterContract.EffectInitializationTrace?.Status);
 		Assert.Equal(contract.EffectInitializationTrace?.OrderedSteps, adapterContract.EffectInitializationTrace?.OrderedSteps);
+		Assert.Equal(contract.CastResultPacketTrace?.Status, adapterContract.CastResultPacketTrace?.Status);
+		Assert.Equal(contract.CastResultPacketTrace?.OrderedSteps, adapterContract.CastResultPacketTrace?.OrderedSteps);
 		Assert.Equal(contract.EndCastBranchTrace?.Status, adapterContract.EndCastBranchTrace?.Status);
 		Assert.Equal(contract.EndCastBranchTrace?.OrderedSteps, adapterContract.EndCastBranchTrace?.OrderedSteps);
 		Assert.Equal(contract.EndCastSideEffectTrace?.Status, adapterContract.EndCastSideEffectTrace?.Status);
@@ -3090,6 +3101,124 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Contains(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.EmptyEffectedListCountsAsAllResistedOrDodged, pointPointEmpty.OrderedSteps);
 		Assert.Contains(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.CreatePointPointNullEffect, pointPointEmpty.OrderedSteps);
 		Assert.Contains(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.MarkBlockedPenaltySkill, pointPointEmpty.OrderedSteps);
+	}
+
+	[Fact]
+	public void ProjectMercenaryNpcSkillCastResultPacketTrace_OrdersJavaPacketFanout()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var knownObject = new PlayerSummonKnownObject(8023, PlayerSummonKnownObjectKind.Creature);
+		var readySkill = service.EvaluateMercenarySkillReadiness(knownObject, CreateSkillTemplate("MAGICAL"));
+		var targetSelection = service.SelectMercenaryNpcSkillActionTarget(
+			skillFirstTargetIsSelf: false,
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.MostHated,
+			hasMostHatedTarget: true);
+
+		PlayerSummonKnownObjectNpcSkillActionResult Result(bool controllerUseSkillSucceeded = true)
+		{
+			var preview = service.PreviewMercenaryNpcSkillAction(
+				isInCastSubState: true,
+				shouldResumeFightAfterInterruptedCast: false,
+				hasCreatureTarget: true,
+				targetIsDead: false,
+				hasLastSkill: true,
+				ownerUsesMeleeAggroRange: false,
+				targetInAggroRange: true,
+				readySkill,
+				targetSelection,
+				controllerUseSkillSucceeded);
+
+			return service.ProjectMercenaryNpcSkillActionResult(preview);
+		}
+
+		var noCastResult = service.ProjectMercenaryNpcSkillCastResultPacketTrace(
+			Result(controllerUseSkillSucceeded: false));
+		var objectTarget = service.ProjectMercenaryNpcSkillCastResultPacketTrace(
+			Result(),
+			targetType: 0,
+			effectsCount: 1,
+			chainSuccess: true,
+			dashStatusWritesLocation: true,
+			hasReservedEffects: true,
+			shieldBranch: PlayerSummonKnownObjectNpcSkillCastResultShieldBranch.Protect);
+		var xyzTargetNoDamage = service.ProjectMercenaryNpcSkillCastResultPacketTrace(
+			Result(),
+			targetType: 1,
+			effectsCount: 0,
+			chainSuccess: false);
+		var nonCombatItem = service.ProjectMercenaryNpcSkillCastResultPacketTrace(
+			Result(),
+			hasItemTemplate: true,
+			itemTemplateIsCombatActivated: false,
+			isItemSkillMethod: true,
+			effectorIsPlayer: true);
+		var combatItemPenalty = service.ProjectMercenaryNpcSkillCastResultPacketTrace(
+			Result(),
+			hasItemTemplate: true,
+			itemTemplateIsCombatActivated: true,
+			isPenaltySkillMethod: true,
+			effectHasOriginalTarget: false,
+			spellStatusWritesLocation: true,
+			subEffectWritesLocation: true,
+			shieldBranch: PlayerSummonKnownObjectNpcSkillCastResultShieldBranch.ReflectOrMpShield);
+		var unsupportedTarget = service.ProjectMercenaryNpcSkillCastResultPacketTrace(Result(), targetType: 2);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillCastResultPacketTraceStatus.NoCastResult, noCastResult.Status);
+		Assert.Empty(noCastResult.OrderedSteps);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillCastResultPacketTraceStatus.OrderedPacketFanout, objectTarget.Status);
+		Assert.Equal([
+			PlayerSummonKnownObjectNpcSkillCastResultPacketStep.ResolveCreatureNeedsHelpAiEvent,
+			PlayerSummonKnownObjectNpcSkillCastResultPacketStep.SelectObjectTargetBranch,
+			PlayerSummonKnownObjectNpcSkillCastResultPacketStep.ConstructSmCastspellResult,
+			PlayerSummonKnownObjectNpcSkillCastResultPacketStep.BroadcastSmCastspellResult,
+			PlayerSummonKnownObjectNpcSkillCastResultPacketStep.MarkCastSpellResultSent,
+			PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteEffectorObjectId,
+			PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteTargetType,
+			PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteTargetObjectId,
+			PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteSkillIdAndLevel,
+			PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteCooldownHitTimeAndUnknown,
+			PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteChainSuccessFlag,
+			PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteNormalSkillHeader,
+			PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteDashStatus,
+			PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteDashLocation,
+			PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteEffectsCount,
+			PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteEffectedObjectId,
+			PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteEffectResultId,
+			PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteEffectedHpPercent,
+			PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteEffectorHpPercent,
+			PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteSpellStatus,
+			PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteSuccessfulEffectsByte,
+			PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteReservedZeroAndCarvedSignet,
+			PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteReservedEffectsCount,
+			PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteReservedEffectTypeAndValue,
+			PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteAttackStatusId,
+			PlayerSummonKnownObjectNpcSkillCastResultPacketStep.MaybeSetLastCounterSkill,
+			PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteShieldDefense,
+			PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteProtectShieldFields,
+		], objectTarget.OrderedSteps);
+		Assert.False(objectTarget.WouldSerializePackets);
+		Assert.True(objectTarget.BroadcastsCastSpellResult);
+		Assert.True(objectTarget.WritesEffectResultBeforeAttackStatus);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillCastResultPacketTraceStatus.OrderedPacketFanout, xyzTargetNoDamage.Status);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.SelectXyzTargetBranch, xyzTargetNoDamage.OrderedSteps);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteTargetCoordinates, xyzTargetNoDamage.OrderedSteps);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteNoDamageChainFlag, xyzTargetNoDamage.OrderedSteps);
+		Assert.DoesNotContain(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteEffectResultId, xyzTargetNoDamage.OrderedSteps);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillCastResultPacketTraceStatus.ItemUsageAnimationOnly, nonCombatItem.Status);
+		Assert.Equal([
+			PlayerSummonKnownObjectNpcSkillCastResultPacketStep.CheckNonCombatItemTemplate,
+			PlayerSummonKnownObjectNpcSkillCastResultPacketStep.ConstructSmItemUsageAnimation,
+			PlayerSummonKnownObjectNpcSkillCastResultPacketStep.BroadcastSmItemUsageAnimationAndReceive,
+			PlayerSummonKnownObjectNpcSkillCastResultPacketStep.SendUseItemSystemMessage,
+		], nonCombatItem.OrderedSteps);
+		Assert.False(nonCombatItem.BroadcastsCastSpellResult);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteCombatItemHeader, combatItemPenalty.OrderedSteps);
+		Assert.DoesNotContain(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WritePenaltySkillHeader, combatItemPenalty.OrderedSteps);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteEffectorAsPointPointEffectTarget, combatItemPenalty.OrderedSteps);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteEffectMovementLocation, combatItemPenalty.OrderedSteps);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteReflectOrMpShieldFields, combatItemPenalty.OrderedSteps);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillCastResultPacketTraceStatus.UnsupportedTargetType, unsupportedTarget.Status);
+		Assert.DoesNotContain(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.BroadcastSmCastspellResult, unsupportedTarget.OrderedSteps);
 	}
 
 	[Fact]

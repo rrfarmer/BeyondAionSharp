@@ -943,6 +943,46 @@ public sealed class PlayerSummonSkillExecutionService
 			hasResistedTauntHate);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillCastResultPacketTrace ProjectMercenaryNpcSkillCastResultPacketTrace(
+		PlayerSummonKnownObjectNpcSkillActionResult? actionResult,
+		bool skillMethodSendsCastSpellEnd = true,
+		bool hasItemTemplate = false,
+		bool itemTemplateIsCombatActivated = false,
+		bool skillSubTypeIsAttack = true,
+		int targetType = 0,
+		int effectsCount = 1,
+		bool chainSuccess = true,
+		bool dashStatusWritesLocation = false,
+		bool isPenaltySkillMethod = false,
+		bool isItemSkillMethod = false,
+		bool effectorIsPlayer = true,
+		bool effectHasOriginalTarget = true,
+		bool spellStatusWritesLocation = false,
+		bool subEffectWritesLocation = false,
+		bool hasReservedEffects = true,
+		PlayerSummonKnownObjectNpcSkillCastResultShieldBranch shieldBranch = PlayerSummonKnownObjectNpcSkillCastResultShieldBranch.None)
+	{
+		// Java parity: Skill.sendCastSpellEnd selects SM_CASTSPELL_RESULT branches before item-method use messages; packet bytes remain unwired.
+		return PlayerSummonKnownObjectNpcSkillCastResultPacketTrace.FromActionResult(
+			actionResult,
+			skillMethodSendsCastSpellEnd,
+			hasItemTemplate,
+			itemTemplateIsCombatActivated,
+			skillSubTypeIsAttack,
+			targetType,
+			effectsCount,
+			chainSuccess,
+			dashStatusWritesLocation,
+			isPenaltySkillMethod,
+			isItemSkillMethod,
+			effectorIsPlayer,
+			effectHasOriginalTarget,
+			spellStatusWritesLocation,
+			subEffectWritesLocation,
+			hasReservedEffects,
+			shieldBranch);
+	}
+
 	public PlayerSummonKnownObjectNpcSkillUseSkillStartTrace ProjectMercenaryNpcSkillUseSkillStartTrace(
 		PlayerSummonKnownObjectNpcSkillActionResult? actionResult,
 		bool canUseSkillAtCastStart = true,
@@ -4317,6 +4357,7 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 	PlayerSummonKnownObjectNpcSkillValidationMutationTrace? ValidationMutationTrace = null,
 	PlayerSummonKnownObjectNpcSkillTemplateActionTrace? TemplateActionTrace = null,
 	PlayerSummonKnownObjectNpcSkillEffectInitializationTrace? EffectInitializationTrace = null,
+	PlayerSummonKnownObjectNpcSkillCastResultPacketTrace? CastResultPacketTrace = null,
 	PlayerSummonKnownObjectNpcSkillEndCastBranchTrace? EndCastBranchTrace = null,
 	PlayerSummonKnownObjectNpcSkillEndCastSideEffectTrace? EndCastSideEffectTrace = null)
 {
@@ -4348,6 +4389,8 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 	public bool HasTemplateActionTrace => TemplateActionTrace != null;
 
 	public bool HasEffectInitializationTrace => EffectInitializationTrace != null;
+
+	public bool HasCastResultPacketTrace => CastResultPacketTrace != null;
 
 	public bool HasEndCastBranchTrace => EndCastBranchTrace != null;
 
@@ -4407,6 +4450,7 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 		var effectInitializationTrace = BuildEffectInitializationTrace(
 			liveInvocation.CycleSnapshot,
 			actionTrace);
+		var castResultPacketTrace = BuildCastResultPacketTrace(actionTrace);
 		var endCastBranchTrace = BuildEndCastBranchTrace(liveInvocation.CycleSnapshot, actionTrace);
 		return new PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 			PlayerSummonKnownObjectNpcSkillAttackCycleResultContractStatus.LiveAiNotWired,
@@ -4419,6 +4463,7 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 			validationMutationTrace,
 			templateActionTrace,
 			effectInitializationTrace,
+			castResultPacketTrace,
 			endCastBranchTrace,
 			BuildEndCastSideEffectTrace(liveInvocation.CycleSnapshot, actionTrace));
 	}
@@ -4558,6 +4603,33 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 			isInstantSkill: cycleSnapshot?.PerformAttackExecutionPreview?.Status
 				== PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreviewStatus.ImmediateWorkflow,
 			hasResistedTauntHate: false);
+	}
+
+	private static PlayerSummonKnownObjectNpcSkillCastResultPacketTrace? BuildCastResultPacketTrace(
+		PlayerSummonKnownObjectNpcSkillActionSideEffectTrace? actionTrace)
+	{
+		var actionResult = actionTrace?.ActionResult;
+		if (actionResult == null)
+			return null;
+
+		return PlayerSummonKnownObjectNpcSkillCastResultPacketTrace.FromActionResult(
+			actionResult,
+			skillMethodSendsCastSpellEnd: true,
+			hasItemTemplate: false,
+			itemTemplateIsCombatActivated: false,
+			skillSubTypeIsAttack: true,
+			targetType: 0,
+			effectsCount: 1,
+			chainSuccess: true,
+			dashStatusWritesLocation: false,
+			isPenaltySkillMethod: false,
+			isItemSkillMethod: false,
+			effectorIsPlayer: true,
+			effectHasOriginalTarget: true,
+			spellStatusWritesLocation: false,
+			subEffectWritesLocation: false,
+			hasReservedEffects: true,
+			shieldBranch: PlayerSummonKnownObjectNpcSkillCastResultShieldBranch.None);
 	}
 
 	private static PlayerSummonKnownObjectNpcSkillEndCastSideEffectTrace? BuildEndCastSideEffectTrace(
@@ -5051,6 +5123,7 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContra
 	PlayerSummonKnownObjectNpcSkillValidationMutationTrace? ValidationMutationTrace = null,
 	PlayerSummonKnownObjectNpcSkillTemplateActionTrace? TemplateActionTrace = null,
 	PlayerSummonKnownObjectNpcSkillEffectInitializationTrace? EffectInitializationTrace = null,
+	PlayerSummonKnownObjectNpcSkillCastResultPacketTrace? CastResultPacketTrace = null,
 	PlayerSummonKnownObjectNpcSkillEndCastBranchTrace? EndCastBranchTrace = null,
 	PlayerSummonKnownObjectNpcSkillEndCastSideEffectTrace? EndCastSideEffectTrace = null)
 {
@@ -5085,6 +5158,8 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContra
 	public bool PreservesTemplateActionOrdering => TemplateActionTrace != null;
 
 	public bool PreservesEffectInitializationOrdering => EffectInitializationTrace != null;
+
+	public bool PreservesCastResultPacketOrdering => CastResultPacketTrace != null;
 
 	public bool PreservesEndCastBranchOrdering => EndCastBranchTrace != null;
 
@@ -5127,6 +5202,7 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContra
 			adapterSummary.ResultContract.ValidationMutationTrace,
 			adapterSummary.ResultContract.TemplateActionTrace,
 			adapterSummary.ResultContract.EffectInitializationTrace,
+			adapterSummary.ResultContract.CastResultPacketTrace,
 			adapterSummary.ResultContract.EndCastBranchTrace,
 			adapterSummary.ResultContract.EndCastSideEffectTrace);
 	}
@@ -6327,6 +6403,271 @@ public enum PlayerSummonKnownObjectNpcSkillEffectInitializationStep
 	AddResistedEffectHateAndNotifyFriends,
 	AddHateForResistedEffect,
 	NotifyKnownNpcsCreatureNeedsSupport,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillCastResultPacketTrace(
+	PlayerSummonKnownObjectNpcSkillCastResultPacketTraceStatus Status,
+	PlayerSummonKnownObjectNpcSkillActionResult? ActionResult = null,
+	IReadOnlyList<PlayerSummonKnownObjectNpcSkillCastResultPacketStep>? Steps = null)
+{
+	private static readonly IReadOnlyList<PlayerSummonKnownObjectNpcSkillCastResultPacketStep> EmptySteps = [];
+
+	public IReadOnlyList<PlayerSummonKnownObjectNpcSkillCastResultPacketStep> OrderedSteps => Steps ?? EmptySteps;
+
+	public bool WouldSerializePackets => false;
+
+	public bool BroadcastsCastSpellResult =>
+		OrderedSteps.Contains(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.BroadcastSmCastspellResult);
+
+	public bool SendsItemUseMessageAfterResult =>
+		IndexOf(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.BroadcastSmCastspellResult) is int packetIndex
+		&& packetIndex >= 0
+		&& IndexOf(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.SendUseItemSystemMessage) is int itemMessageIndex
+		&& itemMessageIndex > packetIndex;
+
+	public bool WritesEffectResultBeforeAttackStatus =>
+		IndexOf(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteEffectResultId) is int effectResultIndex
+		&& effectResultIndex >= 0
+		&& IndexOf(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteAttackStatusId) is int attackStatusIndex
+		&& attackStatusIndex > effectResultIndex;
+
+	private int IndexOf(PlayerSummonKnownObjectNpcSkillCastResultPacketStep step)
+	{
+		for (var i = 0; i < OrderedSteps.Count; i++)
+		{
+			if (OrderedSteps[i] == step)
+				return i;
+		}
+
+		return -1;
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillCastResultPacketTrace FromActionResult(
+		PlayerSummonKnownObjectNpcSkillActionResult? actionResult,
+		bool skillMethodSendsCastSpellEnd,
+		bool hasItemTemplate,
+		bool itemTemplateIsCombatActivated,
+		bool skillSubTypeIsAttack,
+		int targetType,
+		int effectsCount,
+		bool chainSuccess,
+		bool dashStatusWritesLocation,
+		bool isPenaltySkillMethod,
+		bool isItemSkillMethod,
+		bool effectorIsPlayer,
+		bool effectHasOriginalTarget,
+		bool spellStatusWritesLocation,
+		bool subEffectWritesLocation,
+		bool hasReservedEffects,
+		PlayerSummonKnownObjectNpcSkillCastResultShieldBranch shieldBranch)
+	{
+		if (actionResult == null || actionResult.Status == PlayerSummonKnownObjectNpcSkillActionResultStatus.MissingPreview)
+		{
+			return new PlayerSummonKnownObjectNpcSkillCastResultPacketTrace(
+				PlayerSummonKnownObjectNpcSkillCastResultPacketTraceStatus.MissingResult,
+				actionResult);
+		}
+
+		if (actionResult.Status != PlayerSummonKnownObjectNpcSkillActionResultStatus.UseSkill || !skillMethodSendsCastSpellEnd)
+		{
+			return new PlayerSummonKnownObjectNpcSkillCastResultPacketTrace(
+				PlayerSummonKnownObjectNpcSkillCastResultPacketTraceStatus.NoCastResult,
+				actionResult);
+		}
+
+		var steps = new List<PlayerSummonKnownObjectNpcSkillCastResultPacketStep>();
+		if (hasItemTemplate && !itemTemplateIsCombatActivated)
+		{
+			steps.Add(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.CheckNonCombatItemTemplate);
+			steps.Add(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.ConstructSmItemUsageAnimation);
+			steps.Add(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.BroadcastSmItemUsageAnimationAndReceive);
+			AddOptionalItemUseSystemMessage(steps, isItemSkillMethod, effectorIsPlayer);
+
+			return new PlayerSummonKnownObjectNpcSkillCastResultPacketTrace(
+				PlayerSummonKnownObjectNpcSkillCastResultPacketTraceStatus.ItemUsageAnimationOnly,
+				actionResult,
+				steps);
+		}
+
+		if (targetType is not 0 and not 1 and not 3)
+		{
+			AddOptionalItemUseSystemMessage(steps, isItemSkillMethod, effectorIsPlayer);
+			return new PlayerSummonKnownObjectNpcSkillCastResultPacketTrace(
+				PlayerSummonKnownObjectNpcSkillCastResultPacketTraceStatus.UnsupportedTargetType,
+				actionResult,
+				steps);
+		}
+
+		if (skillSubTypeIsAttack)
+			steps.Add(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.ResolveCreatureNeedsHelpAiEvent);
+
+		steps.Add(targetType == 1
+			? PlayerSummonKnownObjectNpcSkillCastResultPacketStep.SelectXyzTargetBranch
+			: PlayerSummonKnownObjectNpcSkillCastResultPacketStep.SelectObjectTargetBranch);
+		steps.Add(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.ConstructSmCastspellResult);
+		steps.Add(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.BroadcastSmCastspellResult);
+		steps.Add(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.MarkCastSpellResultSent);
+		AddSmCastspellResultWriteSteps(
+			steps,
+			targetType,
+			effectsCount,
+			chainSuccess,
+			hasItemTemplate && itemTemplateIsCombatActivated,
+			dashStatusWritesLocation,
+			isPenaltySkillMethod,
+			effectHasOriginalTarget,
+			spellStatusWritesLocation,
+			subEffectWritesLocation,
+			hasReservedEffects,
+			shieldBranch);
+		AddOptionalItemUseSystemMessage(steps, isItemSkillMethod, effectorIsPlayer);
+
+		return new PlayerSummonKnownObjectNpcSkillCastResultPacketTrace(
+			PlayerSummonKnownObjectNpcSkillCastResultPacketTraceStatus.OrderedPacketFanout,
+			actionResult,
+			steps);
+	}
+
+	private static void AddSmCastspellResultWriteSteps(
+		List<PlayerSummonKnownObjectNpcSkillCastResultPacketStep> steps,
+		int targetType,
+		int effectsCount,
+		bool chainSuccess,
+		bool combatActivatedItem,
+		bool dashStatusWritesLocation,
+		bool isPenaltySkillMethod,
+		bool effectHasOriginalTarget,
+		bool spellStatusWritesLocation,
+		bool subEffectWritesLocation,
+		bool hasReservedEffects,
+		PlayerSummonKnownObjectNpcSkillCastResultShieldBranch shieldBranch)
+	{
+		steps.Add(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteEffectorObjectId);
+		steps.Add(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteTargetType);
+		steps.Add(targetType == 1
+			? PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteTargetCoordinates
+			: PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteTargetObjectId);
+		steps.Add(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteSkillIdAndLevel);
+		steps.Add(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteCooldownHitTimeAndUnknown);
+		steps.Add(effectsCount == 0
+			? PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteNoDamageChainFlag
+			: chainSuccess
+				? PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteChainSuccessFlag
+				: PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteNoChainFlag);
+
+		if (combatActivatedItem)
+		{
+			steps.Add(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteCombatItemHeader);
+		}
+		else
+		{
+			if (isPenaltySkillMethod)
+				steps.Add(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WritePenaltySkillHeader);
+			else
+				steps.Add(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteNormalSkillHeader);
+			steps.Add(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteDashStatus);
+			if (dashStatusWritesLocation)
+				steps.Add(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteDashLocation);
+		}
+
+		steps.Add(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteEffectsCount);
+		if (effectsCount <= 0)
+			return;
+
+		steps.Add(effectHasOriginalTarget
+			? PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteEffectedObjectId
+			: PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteEffectorAsPointPointEffectTarget);
+		steps.Add(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteEffectResultId);
+		steps.Add(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteEffectedHpPercent);
+		steps.Add(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteEffectorHpPercent);
+		steps.Add(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteSpellStatus);
+		steps.Add(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteSuccessfulEffectsByte);
+		steps.Add(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteReservedZeroAndCarvedSignet);
+		if (spellStatusWritesLocation || subEffectWritesLocation)
+			steps.Add(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteEffectMovementLocation);
+		steps.Add(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteReservedEffectsCount);
+		if (!hasReservedEffects)
+			return;
+
+		steps.Add(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteReservedEffectTypeAndValue);
+		steps.Add(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteAttackStatusId);
+		steps.Add(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.MaybeSetLastCounterSkill);
+		steps.Add(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteShieldDefense);
+		if (shieldBranch == PlayerSummonKnownObjectNpcSkillCastResultShieldBranch.Protect)
+			steps.Add(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteProtectShieldFields);
+		else if (shieldBranch == PlayerSummonKnownObjectNpcSkillCastResultShieldBranch.ReflectOrMpShield)
+			steps.Add(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.WriteReflectOrMpShieldFields);
+	}
+
+	private static void AddOptionalItemUseSystemMessage(
+		List<PlayerSummonKnownObjectNpcSkillCastResultPacketStep> steps,
+		bool isItemSkillMethod,
+		bool effectorIsPlayer)
+	{
+		if (isItemSkillMethod && effectorIsPlayer)
+			steps.Add(PlayerSummonKnownObjectNpcSkillCastResultPacketStep.SendUseItemSystemMessage);
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillCastResultPacketTraceStatus
+{
+	MissingResult,
+	NoCastResult,
+	ItemUsageAnimationOnly,
+	UnsupportedTargetType,
+	OrderedPacketFanout,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillCastResultShieldBranch
+{
+	None,
+	Protect,
+	ReflectOrMpShield,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillCastResultPacketStep
+{
+	CheckNonCombatItemTemplate,
+	ConstructSmItemUsageAnimation,
+	BroadcastSmItemUsageAnimationAndReceive,
+	ResolveCreatureNeedsHelpAiEvent,
+	SelectObjectTargetBranch,
+	SelectXyzTargetBranch,
+	ConstructSmCastspellResult,
+	BroadcastSmCastspellResult,
+	MarkCastSpellResultSent,
+	WriteEffectorObjectId,
+	WriteTargetType,
+	WriteTargetObjectId,
+	WriteTargetCoordinates,
+	WriteSkillIdAndLevel,
+	WriteCooldownHitTimeAndUnknown,
+	WriteNoDamageChainFlag,
+	WriteChainSuccessFlag,
+	WriteNoChainFlag,
+	WriteCombatItemHeader,
+	WritePenaltySkillHeader,
+	WriteNormalSkillHeader,
+	WriteDashStatus,
+	WriteDashLocation,
+	WriteEffectsCount,
+	WriteEffectedObjectId,
+	WriteEffectorAsPointPointEffectTarget,
+	WriteEffectResultId,
+	WriteEffectedHpPercent,
+	WriteEffectorHpPercent,
+	WriteSpellStatus,
+	WriteSuccessfulEffectsByte,
+	WriteReservedZeroAndCarvedSignet,
+	WriteEffectMovementLocation,
+	WriteReservedEffectsCount,
+	WriteReservedEffectTypeAndValue,
+	WriteAttackStatusId,
+	MaybeSetLastCounterSkill,
+	WriteShieldDefense,
+	WriteProtectShieldFields,
+	WriteReflectOrMpShieldFields,
+	SendUseItemSystemMessage,
 }
 
 public sealed record PlayerSummonKnownObjectNpcSkillEndCastBranchTrace(
