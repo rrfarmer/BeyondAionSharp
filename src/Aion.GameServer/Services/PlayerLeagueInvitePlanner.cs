@@ -90,7 +90,8 @@ public sealed class PlayerLeagueInvitePlanner
 		int questionId,
 		int responseCode,
 		PlayerLeagueRuntime leagueRuntime,
-		PlayerAllianceRuntime allianceRuntime)
+		PlayerAllianceRuntime allianceRuntime,
+		int? newLeagueId = null)
 	{
 		// Java parity: ResponseRequester.respond removes the handler by question id, then
 		// RequestResponseHandler.handle dispatches response 0 to denyRequest and nonzero to acceptRequest.
@@ -147,15 +148,26 @@ public sealed class PlayerLeagueInvitePlanner
 			invitedAllianceId,
 			leagueRuntime,
 			allianceRuntime);
+		var responseStatus = acceptPlan.Status switch
+		{
+			PlayerLeagueInviteAcceptStatus.Joined => PlayerLeagueInviteResponseStatus.AcceptedJoined,
+			PlayerLeagueInviteAcceptStatus.RequesterLeagueMissing when newLeagueId.HasValue => PlayerLeagueInviteResponseStatus.AcceptedCreatedLeagueAndJoined,
+			PlayerLeagueInviteAcceptStatus.RequesterLeagueMissing => PlayerLeagueInviteResponseStatus.AcceptedRequesterLeagueMissing,
+			PlayerLeagueInviteAcceptStatus.InvitedAlreadyInLeague => PlayerLeagueInviteResponseStatus.AcceptedInvitedAlreadyInLeague,
+			_ => throw new ArgumentOutOfRangeException(nameof(acceptPlan.Status), acceptPlan.Status, "Unsupported league invite accept status."),
+		};
+		if (acceptPlan.Status == PlayerLeagueInviteAcceptStatus.RequesterLeagueMissing && newLeagueId.HasValue)
+		{
+			acceptPlan = CreateAcceptNewLeaguePlan(
+				newLeagueId.Value,
+				requesterAllianceId,
+				invitedAllianceId,
+				leagueRuntime,
+				allianceRuntime);
+		}
 
 		return new PlayerLeagueInviteResponsePlan(
-			acceptPlan.Status switch
-			{
-				PlayerLeagueInviteAcceptStatus.Joined => PlayerLeagueInviteResponseStatus.AcceptedJoined,
-				PlayerLeagueInviteAcceptStatus.RequesterLeagueMissing => PlayerLeagueInviteResponseStatus.AcceptedRequesterLeagueMissing,
-				PlayerLeagueInviteAcceptStatus.InvitedAlreadyInLeague => PlayerLeagueInviteResponseStatus.AcceptedInvitedAlreadyInLeague,
-				_ => throw new ArgumentOutOfRangeException(nameof(acceptPlan.Status), acceptPlan.Status, "Unsupported league invite accept status."),
-			},
+			responseStatus,
 			questionId,
 			responseCode,
 			pendingRequest,
@@ -294,6 +306,55 @@ public sealed class PlayerLeagueInvitePlanner
 			joinPlan);
 	}
 
+	public PlayerLeagueInviteAcceptPlan CreateAcceptNewLeaguePlan(
+		int newLeagueId,
+		int requesterAllianceId,
+		int invitedAllianceId,
+		PlayerLeagueRuntime leagueRuntime,
+		PlayerAllianceRuntime allianceRuntime)
+	{
+		// Java parity: LeagueInviteEvent.acceptRequest calls LeagueService.createLeague(requester) when
+		// requester.getPlayerAlliance().getLeague() is null, then LeagueService.addAlliance for the invited alliance.
+		// The live C# caller must supply the IDFactory.NextId value that Java's League constructor allocates internally.
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(newLeagueId, 0);
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(requesterAllianceId, 0);
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(invitedAllianceId, 0);
+		ArgumentNullException.ThrowIfNull(leagueRuntime);
+		ArgumentNullException.ThrowIfNull(allianceRuntime);
+
+		if (leagueRuntime.ResolveByAllianceId(requesterAllianceId) != null)
+		{
+			return CreateAcceptExistingLeaguePlan(
+				requesterAllianceId,
+				invitedAllianceId,
+				leagueRuntime,
+				allianceRuntime);
+		}
+
+		if (leagueRuntime.ResolveByAllianceId(invitedAllianceId) != null)
+		{
+			return new PlayerLeagueInviteAcceptPlan(
+				requesterAllianceId,
+				invitedAllianceId,
+				PlayerLeagueInviteAcceptStatus.InvitedAlreadyInLeague,
+				JoinPlan: null,
+				CreatedLeague: null);
+		}
+
+		var createdLeague = leagueRuntime.CreateLeague(newLeagueId, requesterAllianceId);
+		var joinPlan = leagueRuntime.JoinAlliance(
+			createdLeague.LeagueId,
+			invitedAllianceId,
+			allianceRuntime);
+
+		return new PlayerLeagueInviteAcceptPlan(
+			requesterAllianceId,
+			invitedAllianceId,
+			joinPlan != null ? PlayerLeagueInviteAcceptStatus.Joined : PlayerLeagueInviteAcceptStatus.InvitedAlreadyInLeague,
+			joinPlan,
+			createdLeague);
+	}
+
 	public PlayerLeagueInviteDenyPlan CreateDenyPlan(
 		int requesterObjectId,
 		string responderName)
@@ -386,6 +447,7 @@ public enum PlayerLeagueInviteResponseStatus
 	Denied,
 	AcceptBlockedByCanInvite,
 	AcceptedJoined,
+	AcceptedCreatedLeagueAndJoined,
 	AcceptedRequesterLeagueMissing,
 	AcceptedInvitedAlreadyInLeague,
 }
@@ -410,7 +472,8 @@ public sealed record PlayerLeagueInviteAcceptPlan(
 	int RequesterAllianceId,
 	int InvitedAllianceId,
 	PlayerLeagueInviteAcceptStatus Status,
-	PlayerLeagueJoinPlan? JoinPlan);
+	PlayerLeagueJoinPlan? JoinPlan,
+	PlayerLeagueSnapshot? CreatedLeague = null);
 
 public sealed record PlayerLeagueInviteDenyPlan(
 	int RequesterObjectId,
