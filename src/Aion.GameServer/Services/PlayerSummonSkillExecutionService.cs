@@ -261,6 +261,39 @@ public sealed class PlayerSummonSkillExecutionService
 			template.SpawnTemplate);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillTemplateMetadata ProjectMercenaryNpcSkillTemplateMetadata(
+		NpcSkillTemplateSummary template)
+	{
+		// Java parity: adapts model/templates/npcskill/NpcSkillTemplate JAXB fields before NpcSkillTemplateEntry wraps them.
+		return new PlayerSummonKnownObjectNpcSkillTemplateMetadata(
+			SkillId: template.SkillId,
+			SkillLevel: template.SkillLevel,
+			Probability: template.Probability,
+			MinHpPercentage: template.MinHp,
+			MaxHpPercentage: template.MaxHp,
+			MaxTimeMilliseconds: template.MaxTime,
+			MinTimeMilliseconds: template.MinTime,
+			ConjunctionType: ResolveMercenaryNpcSkillConjunction(template.Conjunction),
+			CooldownMilliseconds: template.Cooldown,
+			IsPostSpawn: template.IsPostSpawn,
+			Priority: template.Priority,
+			NextSkillTimeMilliseconds: template.NextSkillTime,
+			ConditionTemplate: null,
+			NextChainId: template.NextChainId,
+			ChainId: template.ChainId,
+			MaxChainTimeMilliseconds: template.MaxChainTime,
+			SpawnTemplate: template.Spawn == null
+				? null
+				: new PlayerSummonKnownObjectNpcSkillSpawnMetadata(
+					template.Spawn.NpcId,
+					template.Spawn.Delay,
+					template.Spawn.MinDistance,
+					template.Spawn.MaxDistance,
+					template.Spawn.MinCount,
+					template.Spawn.MaxCount),
+			Target: ResolveMercenaryNpcSkillTargetAttribute(template.Target));
+	}
+
 	public PlayerSummonKnownObjectNpcSkillEntryTiming ProjectMercenaryNpcSkillEntryTiming(
 		PlayerSummonKnownObjectNpcSkillTemplateMetadata template,
 		long lastTimeUsedMilliseconds = 0)
@@ -310,6 +343,43 @@ public sealed class PlayerSummonSkillExecutionService
 			candidate.TargetRangeReadiness);
 	}
 
+	public IReadOnlyList<PlayerSummonKnownObjectNpcSkillCandidateMetadata> ProjectMercenaryNpcSkillCandidateMetadata(
+		NpcSkillTable? npcSkills,
+		int npcId)
+	{
+		// Java parity: NpcSkillList.initSkillList pulls static NpcSkillTemplates by npc id and materializes entries in XML order.
+		var skillList = npcSkills?.GetNpcSkillList(npcId);
+		if (skillList?.Skills.Count is null or 0)
+			return Array.Empty<PlayerSummonKnownObjectNpcSkillCandidateMetadata>();
+
+		return skillList.Skills
+			.Select((template, index) => new PlayerSummonKnownObjectNpcSkillCandidateMetadata(
+				index,
+				ProjectMercenaryNpcSkillTemplateMetadata(template)))
+			.ToArray();
+	}
+
+	public PlayerSummonKnownObjectNpcSkillCandidateListProjection ProjectMercenaryNpcSkillCandidateList(
+		NpcSkillTable? npcSkills,
+		int npcId,
+		int hpPercentage,
+		long elapsedFightTimeMilliseconds,
+		long currentTimeMilliseconds,
+		bool ownerExists = true,
+		bool ownerIsDead = false,
+		bool ownerIsAboutToDie = false)
+	{
+		// Java parity: represents NpcSkillList.initSkillList projection from NPC_SKILL_DATA before live SKILL_DATA pruning is available.
+		return ProjectMercenaryNpcSkillCandidateList(
+			ProjectMercenaryNpcSkillCandidateMetadata(npcSkills, npcId),
+			hpPercentage,
+			elapsedFightTimeMilliseconds,
+			currentTimeMilliseconds,
+			ownerExists,
+			ownerIsDead,
+			ownerIsAboutToDie);
+	}
+
 	public PlayerSummonKnownObjectNpcSkillCandidateListProjection ProjectMercenaryNpcSkillCandidateList(
 		IEnumerable<PlayerSummonKnownObjectNpcSkillCandidateMetadata> candidates,
 		int hpPercentage,
@@ -353,6 +423,31 @@ public sealed class PlayerSummonSkillExecutionService
 			PlayerSummonKnownObjectNpcSkillTargetAttribute.MostHated => PlayerSummonKnownObjectSkillTargetMode.MostHated,
 			PlayerSummonKnownObjectNpcSkillTargetAttribute.Me => PlayerSummonKnownObjectSkillTargetMode.Self,
 			_ => PlayerSummonKnownObjectSkillTargetMode.CreatureTarget,
+		};
+	}
+
+	public PlayerSummonKnownObjectNpcSkillConjunction ResolveMercenaryNpcSkillConjunction(string conjunction)
+	{
+		return conjunction.ToUpperInvariant() switch
+		{
+			"OR" => PlayerSummonKnownObjectNpcSkillConjunction.Or,
+			"XOR" => PlayerSummonKnownObjectNpcSkillConjunction.Xor,
+			_ => PlayerSummonKnownObjectNpcSkillConjunction.And,
+		};
+	}
+
+	public PlayerSummonKnownObjectNpcSkillTargetAttribute ResolveMercenaryNpcSkillTargetAttribute(string target)
+	{
+		return target.ToUpperInvariant() switch
+		{
+			"FRIEND" => PlayerSummonKnownObjectNpcSkillTargetAttribute.Friend,
+			"ME" => PlayerSummonKnownObjectNpcSkillTargetAttribute.Me,
+			"SECOND_MOST_HATED" => PlayerSummonKnownObjectNpcSkillTargetAttribute.SecondMostHated,
+			"THIRD_MOST_HATED" => PlayerSummonKnownObjectNpcSkillTargetAttribute.ThirdMostHated,
+			"RANDOM" => PlayerSummonKnownObjectNpcSkillTargetAttribute.Random,
+			"RANDOM_EXCEPT_CURRENT_TARGET" => PlayerSummonKnownObjectNpcSkillTargetAttribute.RandomExceptCurrentTarget,
+			"NONE" => PlayerSummonKnownObjectNpcSkillTargetAttribute.None,
+			_ => PlayerSummonKnownObjectNpcSkillTargetAttribute.MostHated,
 		};
 	}
 

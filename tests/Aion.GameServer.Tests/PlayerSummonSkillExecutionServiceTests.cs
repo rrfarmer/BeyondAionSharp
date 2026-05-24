@@ -818,6 +818,88 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void ProjectMercenaryNpcSkillCandidateList_AdaptsRepresentedNpcSkillTableEntries()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var table = new NpcSkillTable(
+		[
+			new NpcSkillListSummary(
+				[833288, 833289],
+				[
+					new NpcSkillTemplateSummary(
+						SkillId: 22107,
+						SkillLevel: 2,
+						Probability: 65,
+						MinHp: 20,
+						MaxHp: 90,
+						MaxTime: 10_000,
+						MinTime: 1_000,
+						Conjunction: "OR",
+						Cooldown: 4_000,
+						IsPostSpawn: false,
+						Priority: 7,
+						NextSkillTime: 0,
+						NextChainId: 44,
+						ChainId: 0,
+						MaxChainTime: 9_000,
+						Target: "SECOND_MOST_HATED",
+						Spawn: null),
+					new NpcSkillTemplateSummary(
+						SkillId: 22108,
+						SkillLevel: 1,
+						Probability: 100,
+						MinHp: 0,
+						MaxHp: 100,
+						MaxTime: 0,
+						MinTime: 0,
+						Conjunction: "AND",
+						Cooldown: 0,
+						IsPostSpawn: true,
+						Priority: 3,
+						NextSkillTime: -1,
+						NextChainId: 0,
+						ChainId: 44,
+						MaxChainTime: 15_000,
+						Target: "RANDOM_EXCEPT_CURRENT_TARGET",
+						Spawn: new NpcSkillSpawnSummary(212362, 500, 2, 8, 1, 4)),
+				]),
+		]);
+
+		var metadata = service.ProjectMercenaryNpcSkillCandidateMetadata(table, npcId: 833289);
+		var projection = service.ProjectMercenaryNpcSkillCandidateList(
+			table,
+			npcId: 833288,
+			hpPercentage: 50,
+			elapsedFightTimeMilliseconds: 5_000,
+			currentTimeMilliseconds: 20_000);
+		var missing = service.ProjectMercenaryNpcSkillCandidateList(
+			table,
+			npcId: 999999,
+			hpPercentage: 50,
+			elapsedFightTimeMilliseconds: 5_000,
+			currentTimeMilliseconds: 20_000);
+
+		Assert.Equal([0, 1], metadata.Select(candidate => candidate.Position));
+		Assert.Equal(22107, metadata[0].Template.SkillId);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConjunction.Or, metadata[0].Template.ConjunctionType);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillTargetAttribute.SecondMostHated, metadata[0].Template.Target);
+		Assert.Null(metadata[0].Template.SpawnTemplate);
+		Assert.True(metadata[1].Template.IsPostSpawn);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillTargetAttribute.RandomExceptCurrentTarget, metadata[1].Template.Target);
+		Assert.Equal(new PlayerSummonKnownObjectNpcSkillSpawnMetadata(212362, 500, 2, 8, 1, 4), metadata[1].Template.SpawnTemplate);
+
+		Assert.Equal(2, projection.Candidates.Count);
+		Assert.Equal([7, 3], projection.Priorities);
+		Assert.Equal(1, Assert.Single(projection.PostSpawnCandidates).Position);
+		Assert.Equal(PlayerSummonKnownObjectSkillTargetMode.CreatureTarget, projection.Candidates[0].Projection.TargetMode);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEntryReadinessStatus.Ready, projection.Candidates[0].EntryTimingReadiness.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEntryReadinessStatus.Ready, projection.Candidates[1].EntryTimingReadiness.Status);
+		Assert.True(missing.IsEmpty);
+		Assert.Empty(missing.Priorities);
+		Assert.Empty(missing.PostSpawnCandidates);
+	}
+
+	[Fact]
 	public void CaptureMercenaryNpcSkillPreview_StoresRepresentedSelectionAndActionState()
 	{
 		var service = new PlayerSummonSkillExecutionService();
