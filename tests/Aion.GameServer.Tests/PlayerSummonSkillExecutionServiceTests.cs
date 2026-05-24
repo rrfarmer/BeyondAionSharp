@@ -1093,6 +1093,65 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void EvaluateMercenaryNpcSkillConditionReadiness_ProjectsHelpFriendKnownListSearch()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var condition = new PlayerSummonKnownObjectNpcSkillConditionMetadata(
+			PlayerSummonKnownObjectNpcSkillCondition.HelpFriend,
+			HpBelowPercentage: 60,
+			RangeMeters: 12);
+
+		var missingKnownList = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			condition,
+			target: null);
+		var noMatch = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			condition,
+			target: null,
+			helpFriendCandidates: new[]
+			{
+				new PlayerSummonKnownObjectNpcSkillHelpFriendCandidate(7001, IsVisible: false, IsFriend: true, HpPercentage: 20, DistanceMeters: 5),
+				new PlayerSummonKnownObjectNpcSkillHelpFriendCandidate(7002, IsCreature: false, IsFriend: true, HpPercentage: 20, DistanceMeters: 5),
+				new PlayerSummonKnownObjectNpcSkillHelpFriendCandidate(7003, IsDead: true, IsFriend: true, HpPercentage: 20, DistanceMeters: 5),
+				new PlayerSummonKnownObjectNpcSkillHelpFriendCandidate(7004, IsAboutToDie: true, IsFriend: true, HpPercentage: 20, DistanceMeters: 5),
+				new PlayerSummonKnownObjectNpcSkillHelpFriendCandidate(7005, IsFriend: false, IsSupport: false, HpPercentage: 20, DistanceMeters: 5),
+				new PlayerSummonKnownObjectNpcSkillHelpFriendCandidate(7006, IsFriend: true, HpPercentage: 61, DistanceMeters: 5),
+				new PlayerSummonKnownObjectNpcSkillHelpFriendCandidate(7007, IsFriend: true, HpPercentage: 20, DistanceMeters: 12.1),
+				new PlayerSummonKnownObjectNpcSkillHelpFriendCandidate(7008, IsFriend: true, HpPercentage: 20, DistanceMeters: 5, GeoCanSee: false),
+			});
+		var firstMatch = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			condition,
+			target: null,
+			helpFriendCandidates: new[]
+			{
+				new PlayerSummonKnownObjectNpcSkillHelpFriendCandidate(8001, IsSupport: true, HpPercentage: 70, DistanceMeters: 3),
+				new PlayerSummonKnownObjectNpcSkillHelpFriendCandidate(8002, IsFriend: true, HpPercentage: 60, DistanceMeters: 12),
+				new PlayerSummonKnownObjectNpcSkillHelpFriendCandidate(8003, IsSupport: true, HpPercentage: 10, DistanceMeters: 1),
+			});
+		var ownerDead = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			condition,
+			target: null,
+			ownerIsDead: true,
+			helpFriendCandidates: new[]
+			{
+				new PlayerSummonKnownObjectNpcSkillHelpFriendCandidate(9001, IsFriend: true, HpPercentage: 20, DistanceMeters: 5),
+			});
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.Unsupported, missingKnownList.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.NotReady, noMatch.Status);
+		Assert.False(noMatch.WouldSetOwnerTarget);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionTargetKind.Unknown, noMatch.Target?.Kind);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.Ready, firstMatch.Status);
+		Assert.True(firstMatch.WouldSetOwnerTarget);
+		Assert.Equal(8002, firstMatch.HelpFriendTarget?.ObjectId);
+		Assert.Equal(8002, firstMatch.Target?.ObjectId);
+		Assert.True(firstMatch.Target?.IsFriend);
+		Assert.True(firstMatch.Target?.IsInRange);
+		Assert.Equal(60, firstMatch.Target?.HpPercentage);
+		Assert.True(firstMatch.Target?.GeoCanSee);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.OwnerNotReady, ownerDead.Status);
+	}
+
+	[Fact]
 	public void SelectMercenaryNpcSkillActionTarget_ProjectsJavaSkillActionTargetMutation()
 	{
 		var service = new PlayerSummonSkillExecutionService();

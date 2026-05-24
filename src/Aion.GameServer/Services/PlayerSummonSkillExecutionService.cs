@@ -680,10 +680,28 @@ public sealed class PlayerSummonSkillExecutionService
 		bool ownerExists = true,
 		bool ownerIsDead = false,
 		bool ownerIsAboutToDie = false,
-		bool? npcIsAliveInWorld = null)
+		bool? npcIsAliveInWorld = null,
+		IEnumerable<PlayerSummonKnownObjectNpcSkillHelpFriendCandidate>? helpFriendCandidates = null)
 	{
 		if (!ownerExists || ownerIsDead || ownerIsAboutToDie)
 			return PlayerSummonKnownObjectNpcSkillConditionReadiness.OwnerNotReady(conditionMetadata.Condition, target);
+
+		if (conditionMetadata.Condition == PlayerSummonKnownObjectNpcSkillCondition.HelpFriend)
+		{
+			// Java parity: NpcSkillTemplateEntry.conditionReady scans KnownList.findObject and setTarget(first valid support/friend).
+			if (helpFriendCandidates == null)
+				return PlayerSummonKnownObjectNpcSkillConditionReadiness.Unsupported(conditionMetadata.Condition, target);
+
+			var validTarget = helpFriendCandidates.FirstOrDefault(candidate => IsMercenaryHelpFriendCandidateReady(conditionMetadata, candidate));
+			return validTarget == null
+				? PlayerSummonKnownObjectNpcSkillConditionReadiness.NotReady(
+					conditionMetadata.Condition,
+					target ?? PlayerSummonKnownObjectNpcSkillConditionTarget.HelpFriendSearch())
+				: PlayerSummonKnownObjectNpcSkillConditionReadiness.Ready(
+					conditionMetadata.Condition,
+					PlayerSummonKnownObjectNpcSkillConditionTarget.HelpFriendTarget(validTarget, conditionMetadata),
+					validTarget);
+		}
 
 		if (conditionMetadata.Condition == PlayerSummonKnownObjectNpcSkillCondition.NpcIsAlive)
 		{
@@ -1311,6 +1329,21 @@ public sealed class PlayerSummonSkillExecutionService
 		return predicate(target)
 			? PlayerSummonKnownObjectNpcSkillConditionReadiness.Ready(condition, target)
 			: PlayerSummonKnownObjectNpcSkillConditionReadiness.NotReady(condition, target);
+	}
+
+	private static bool IsMercenaryHelpFriendCandidateReady(
+		PlayerSummonKnownObjectNpcSkillConditionMetadata conditionMetadata,
+		PlayerSummonKnownObjectNpcSkillHelpFriendCandidate candidate)
+	{
+		// Java parity: HELP_FRIEND requires visible Creature, alive, support/friend relation, hp threshold, range, and GeoService.canSee.
+		return candidate.IsVisible
+			&& candidate.IsCreature
+			&& !candidate.IsDead
+			&& !candidate.IsAboutToDie
+			&& (candidate.IsSupport || candidate.IsFriend)
+			&& candidate.HpPercentage <= conditionMetadata.HpBelowPercentage
+			&& candidate.DistanceMeters <= conditionMetadata.RangeMeters
+			&& candidate.GeoCanSee;
 	}
 
 	private static float ConvertJavaHeadingToAngle(byte heading)
@@ -3218,7 +3251,16 @@ public sealed record PlayerSummonKnownObjectNpcSkillConditionTarget(
 	bool IsFlying = false,
 	bool? IsPhysicalClass = null,
 	bool IsInRange = false,
-	int? NpcId = null)
+	int? NpcId = null,
+	int? ObjectId = null,
+	bool IsVisible = false,
+	bool IsCreature = false,
+	bool IsDead = false,
+	bool IsAboutToDie = false,
+	bool IsSupport = false,
+	bool IsFriend = false,
+	int? HpPercentage = null,
+	bool? GeoCanSee = null)
 {
 	public bool IsInAnyAbnormalState(PlayerAbnormalState state)
 	{
@@ -3232,7 +3274,44 @@ public sealed record PlayerSummonKnownObjectNpcSkillConditionTarget(
 			PlayerSummonKnownObjectNpcSkillConditionTargetKind.Npc,
 			NpcId: npcId);
 	}
+
+	public static PlayerSummonKnownObjectNpcSkillConditionTarget HelpFriendSearch()
+	{
+		return new PlayerSummonKnownObjectNpcSkillConditionTarget(
+			PlayerSummonKnownObjectNpcSkillConditionTargetKind.Unknown);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillConditionTarget HelpFriendTarget(
+		PlayerSummonKnownObjectNpcSkillHelpFriendCandidate candidate,
+		PlayerSummonKnownObjectNpcSkillConditionMetadata conditionMetadata)
+	{
+		return new PlayerSummonKnownObjectNpcSkillConditionTarget(
+			candidate.Kind,
+			IsInRange: candidate.DistanceMeters <= conditionMetadata.RangeMeters,
+			ObjectId: candidate.ObjectId,
+			IsVisible: candidate.IsVisible,
+			IsCreature: candidate.IsCreature,
+			IsDead: candidate.IsDead,
+			IsAboutToDie: candidate.IsAboutToDie,
+			IsSupport: candidate.IsSupport,
+			IsFriend: candidate.IsFriend,
+			HpPercentage: candidate.HpPercentage,
+			GeoCanSee: candidate.GeoCanSee);
+	}
 }
+
+public sealed record PlayerSummonKnownObjectNpcSkillHelpFriendCandidate(
+	int ObjectId,
+	PlayerSummonKnownObjectNpcSkillConditionTargetKind Kind = PlayerSummonKnownObjectNpcSkillConditionTargetKind.Npc,
+	bool IsVisible = true,
+	bool IsCreature = true,
+	bool IsDead = false,
+	bool IsAboutToDie = false,
+	bool IsSupport = false,
+	bool IsFriend = false,
+	int HpPercentage = 100,
+	double DistanceMeters = 0,
+	bool GeoCanSee = true);
 
 public enum PlayerSummonKnownObjectNpcSkillConditionTargetKind
 {
@@ -3271,8 +3350,13 @@ public enum PlayerSummonKnownObjectNpcSkillCondition
 public sealed record PlayerSummonKnownObjectNpcSkillConditionReadiness(
 	PlayerSummonKnownObjectNpcSkillConditionReadinessStatus Status,
 	PlayerSummonKnownObjectNpcSkillCondition Condition,
-	PlayerSummonKnownObjectNpcSkillConditionTarget? Target = null)
+	PlayerSummonKnownObjectNpcSkillConditionTarget? Target = null,
+	PlayerSummonKnownObjectNpcSkillHelpFriendCandidate? HelpFriendTarget = null)
 {
+	public bool WouldSetOwnerTarget => Condition == PlayerSummonKnownObjectNpcSkillCondition.HelpFriend
+		&& Status == PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.Ready
+		&& HelpFriendTarget != null;
+
 	public static PlayerSummonKnownObjectNpcSkillConditionReadiness OwnerNotReady(
 		PlayerSummonKnownObjectNpcSkillCondition condition,
 		PlayerSummonKnownObjectNpcSkillConditionTarget? target)
@@ -3312,12 +3396,14 @@ public sealed record PlayerSummonKnownObjectNpcSkillConditionReadiness(
 
 	public static PlayerSummonKnownObjectNpcSkillConditionReadiness Ready(
 		PlayerSummonKnownObjectNpcSkillCondition condition,
-		PlayerSummonKnownObjectNpcSkillConditionTarget? target)
+		PlayerSummonKnownObjectNpcSkillConditionTarget? target,
+		PlayerSummonKnownObjectNpcSkillHelpFriendCandidate? helpFriendTarget = null)
 	{
 		return new PlayerSummonKnownObjectNpcSkillConditionReadiness(
 			PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.Ready,
 			condition,
-			target);
+			target,
+			helpFriendTarget);
 	}
 }
 
