@@ -1612,6 +1612,88 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void ProjectMercenaryNpcSkillActionResult_ProjectsJavaAiSideEffects()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var knownObject = new PlayerSummonKnownObject(8016, PlayerSummonKnownObjectKind.Creature);
+		var readySkill = service.EvaluateMercenarySkillReadiness(knownObject, CreateSkillTemplate("MAGICAL"));
+		var blockedSkill = service.EvaluateMercenarySkillReadiness(
+			knownObject with { AbnormalState = PlayerAbnormalState.Silence },
+			CreateSkillTemplate("MAGICAL"));
+		var targetSelection = service.SelectMercenaryNpcSkillActionTarget(
+			skillFirstTargetIsSelf: false,
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.MostHated,
+			hasMostHatedTarget: true);
+
+		PlayerSummonKnownObjectNpcSkillActionResult Result(
+			bool isInCastSubState = true,
+			bool shouldResumeFightAfterInterruptedCast = false,
+			bool hasCreatureTarget = true,
+			bool targetIsDead = false,
+			bool hasLastSkill = true,
+			bool ownerUsesMeleeAggroRange = false,
+			bool targetInAggroRange = true,
+			PlayerSummonKnownObjectSkillReadiness? skillReadiness = null,
+			PlayerSummonKnownObjectNpcSkillActionTargetSelection? selection = null,
+			bool controllerUseSkillSucceeded = true)
+		{
+			var preview = service.PreviewMercenaryNpcSkillAction(
+				isInCastSubState,
+				shouldResumeFightAfterInterruptedCast,
+				hasCreatureTarget,
+				targetIsDead,
+				hasLastSkill,
+				ownerUsesMeleeAggroRange,
+				targetInAggroRange,
+				skillReadiness ?? readySkill,
+				selection ?? targetSelection,
+				controllerUseSkillSucceeded);
+			return service.ProjectMercenaryNpcSkillActionResult(preview);
+		}
+
+		var missingPreview = service.ProjectMercenaryNpcSkillActionResult(null);
+		var noAction = Result(isInCastSubState: false);
+		var resumeFight = Result(isInCastSubState: false, shouldResumeFightAfterInterruptedCast: true);
+		var targetGiveUp = Result(hasCreatureTarget: false);
+		var targetTooFar = Result(ownerUsesMeleeAggroRange: true, targetInAggroRange: false);
+		var blockedAfterUse = Result(skillReadiness: blockedSkill);
+		var useSkill = Result();
+		var useWithoutTargetMutation = Result(selection: service.SelectMercenaryNpcSkillActionTarget(
+			skillFirstTargetIsSelf: false,
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.None));
+		var useFailed = Result(controllerUseSkillSucceeded: false);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionResultStatus.MissingPreview, missingPreview.Status);
+		Assert.False(missingPreview.ShouldDispatchAiEvent);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionResultStatus.NoAction, noAction.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionResultStatus.ResumeFightAfterInterruptedCast, resumeFight.Status);
+		Assert.True(resumeFight.ShouldResumeFightAfterInterruptedCast);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionResultStatus.TargetGiveUp, targetGiveUp.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillAiEvent.TargetGiveUp, targetGiveUp.AiEvent);
+		Assert.True(targetGiveUp.ShouldSetSubStateNone);
+		Assert.True(targetGiveUp.ShouldDispatchAiEvent);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionResultStatus.TargetTooFar, targetTooFar.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillAiEvent.TargetTooFar, targetTooFar.AiEvent);
+		Assert.True(targetTooFar.ShouldAbortCast);
+		Assert.False(targetTooFar.ShouldSetSubStateNone);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionResultStatus.AfterUseSkill, blockedAfterUse.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillAiEvent.AttackComplete, blockedAfterUse.AiEvent);
+		Assert.True(blockedAfterUse.ShouldSetSubStateNone);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionResultStatus.UseSkill, useSkill.Status);
+		Assert.True(useSkill.ShouldInvokeUseSkill);
+		Assert.True(useSkill.ShouldSetOwnerTarget);
+		Assert.False(useSkill.DidInvokeUseSkill);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionResultStatus.UseSkill, useWithoutTargetMutation.Status);
+		Assert.True(useWithoutTargetMutation.ShouldInvokeUseSkill);
+		Assert.False(useWithoutTargetMutation.ShouldSetOwnerTarget);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionResultStatus.UseSkillFailed, useFailed.Status);
+		Assert.True(useFailed.DidInvokeUseSkill);
+		Assert.False(useFailed.ShouldInvokeUseSkill);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillAiEvent.AttackComplete, useFailed.AiEvent);
+		Assert.True(useFailed.ShouldSetSubStateNone);
+	}
+
+	[Fact]
 	public void PreviewMercenaryNextNpcSkillSelection_AdaptsNpcGameStatsTimingIntoSelection()
 	{
 		var service = new PlayerSummonSkillExecutionService();

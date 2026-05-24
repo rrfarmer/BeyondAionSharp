@@ -632,6 +632,27 @@ public sealed class PlayerSummonSkillExecutionService
 			: PlayerSummonKnownObjectNpcSkillActionPreview.WouldUseSkill(targetSelection);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillActionResult ProjectMercenaryNpcSkillActionResult(
+		PlayerSummonKnownObjectNpcSkillActionPreview? actionPreview)
+	{
+		if (actionPreview == null)
+			return PlayerSummonKnownObjectNpcSkillActionResult.MissingPreview();
+
+		// Java parity: SkillAttackManager.skillAction branches into AI events, abortCast, target mutation, useSkill, and afterUseSkill.
+		return actionPreview.Status switch
+		{
+			PlayerSummonKnownObjectNpcSkillActionPreviewStatus.NotInCastSubState => PlayerSummonKnownObjectNpcSkillActionResult.NoAction(actionPreview),
+			PlayerSummonKnownObjectNpcSkillActionPreviewStatus.ResumeFightAfterInterruptedCast => PlayerSummonKnownObjectNpcSkillActionResult.ResumeFight(actionPreview),
+			PlayerSummonKnownObjectNpcSkillActionPreviewStatus.TargetGiveUp => PlayerSummonKnownObjectNpcSkillActionResult.TargetGiveUp(actionPreview),
+			PlayerSummonKnownObjectNpcSkillActionPreviewStatus.TargetTooFar => PlayerSummonKnownObjectNpcSkillActionResult.TargetTooFar(actionPreview),
+			PlayerSummonKnownObjectNpcSkillActionPreviewStatus.AfterUseSkillBlocked => PlayerSummonKnownObjectNpcSkillActionResult.AfterUseSkill(actionPreview),
+			PlayerSummonKnownObjectNpcSkillActionPreviewStatus.AfterUseSkillUseFailed => PlayerSummonKnownObjectNpcSkillActionResult.UseSkillFailed(actionPreview),
+			PlayerSummonKnownObjectNpcSkillActionPreviewStatus.WouldSetTargetAndUseSkill => PlayerSummonKnownObjectNpcSkillActionResult.UseSkill(actionPreview),
+			PlayerSummonKnownObjectNpcSkillActionPreviewStatus.WouldUseSkill => PlayerSummonKnownObjectNpcSkillActionResult.UseSkill(actionPreview),
+			_ => PlayerSummonKnownObjectNpcSkillActionResult.NoAction(actionPreview),
+		};
+	}
+
 	private static bool IsNpcSkillEntryHpReady(PlayerSummonKnownObjectNpcSkillEntryTiming timing, int hpPercentage)
 	{
 		// Java parity: NpcSkillTemplateEntry.hpReady treats default 0..100 as "not about HP".
@@ -3432,6 +3453,107 @@ public enum PlayerSummonKnownObjectNpcSkillActionPreviewStatus
 	WouldSetTargetAndUseSkill,
 	WouldUseSkill,
 	AfterUseSkillUseFailed,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillActionResult(
+	PlayerSummonKnownObjectNpcSkillActionResultStatus Status,
+	PlayerSummonKnownObjectNpcSkillActionPreview? Preview = null,
+	PlayerSummonKnownObjectNpcSkillAiEvent AiEvent = PlayerSummonKnownObjectNpcSkillAiEvent.None)
+{
+	public bool ShouldSetSubStateNone =>
+		AiEvent is PlayerSummonKnownObjectNpcSkillAiEvent.TargetGiveUp
+			or PlayerSummonKnownObjectNpcSkillAiEvent.AttackComplete;
+
+	public bool ShouldDispatchAiEvent => AiEvent != PlayerSummonKnownObjectNpcSkillAiEvent.None;
+
+	public bool ShouldAbortCast => Status == PlayerSummonKnownObjectNpcSkillActionResultStatus.TargetTooFar;
+
+	public bool ShouldSetOwnerTarget => Preview?.ShouldSetOwnerTarget == true
+		&& Status == PlayerSummonKnownObjectNpcSkillActionResultStatus.UseSkill;
+
+	public bool ShouldInvokeUseSkill => Status == PlayerSummonKnownObjectNpcSkillActionResultStatus.UseSkill;
+
+	public bool DidInvokeUseSkill => Status == PlayerSummonKnownObjectNpcSkillActionResultStatus.UseSkillFailed;
+
+	public bool ShouldResumeFightAfterInterruptedCast => Status == PlayerSummonKnownObjectNpcSkillActionResultStatus.ResumeFightAfterInterruptedCast;
+
+	public static PlayerSummonKnownObjectNpcSkillActionResult MissingPreview()
+	{
+		return new PlayerSummonKnownObjectNpcSkillActionResult(PlayerSummonKnownObjectNpcSkillActionResultStatus.MissingPreview);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillActionResult NoAction(PlayerSummonKnownObjectNpcSkillActionPreview preview)
+	{
+		return new PlayerSummonKnownObjectNpcSkillActionResult(
+			PlayerSummonKnownObjectNpcSkillActionResultStatus.NoAction,
+			preview);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillActionResult ResumeFight(PlayerSummonKnownObjectNpcSkillActionPreview preview)
+	{
+		return new PlayerSummonKnownObjectNpcSkillActionResult(
+			PlayerSummonKnownObjectNpcSkillActionResultStatus.ResumeFightAfterInterruptedCast,
+			preview);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillActionResult TargetGiveUp(PlayerSummonKnownObjectNpcSkillActionPreview preview)
+	{
+		return new PlayerSummonKnownObjectNpcSkillActionResult(
+			PlayerSummonKnownObjectNpcSkillActionResultStatus.TargetGiveUp,
+			preview,
+			PlayerSummonKnownObjectNpcSkillAiEvent.TargetGiveUp);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillActionResult TargetTooFar(PlayerSummonKnownObjectNpcSkillActionPreview preview)
+	{
+		return new PlayerSummonKnownObjectNpcSkillActionResult(
+			PlayerSummonKnownObjectNpcSkillActionResultStatus.TargetTooFar,
+			preview,
+			PlayerSummonKnownObjectNpcSkillAiEvent.TargetTooFar);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillActionResult AfterUseSkill(PlayerSummonKnownObjectNpcSkillActionPreview preview)
+	{
+		return new PlayerSummonKnownObjectNpcSkillActionResult(
+			PlayerSummonKnownObjectNpcSkillActionResultStatus.AfterUseSkill,
+			preview,
+			PlayerSummonKnownObjectNpcSkillAiEvent.AttackComplete);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillActionResult UseSkill(PlayerSummonKnownObjectNpcSkillActionPreview preview)
+	{
+		return new PlayerSummonKnownObjectNpcSkillActionResult(
+			PlayerSummonKnownObjectNpcSkillActionResultStatus.UseSkill,
+			preview);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillActionResult UseSkillFailed(PlayerSummonKnownObjectNpcSkillActionPreview preview)
+	{
+		return new PlayerSummonKnownObjectNpcSkillActionResult(
+			PlayerSummonKnownObjectNpcSkillActionResultStatus.UseSkillFailed,
+			preview,
+			PlayerSummonKnownObjectNpcSkillAiEvent.AttackComplete);
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillActionResultStatus
+{
+	MissingPreview,
+	NoAction,
+	ResumeFightAfterInterruptedCast,
+	TargetGiveUp,
+	TargetTooFar,
+	AfterUseSkill,
+	UseSkill,
+	UseSkillFailed,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillAiEvent
+{
+	None,
+	TargetGiveUp,
+	TargetTooFar,
+	AttackComplete,
 }
 
 public sealed record PlayerSummonKnownObjectNpcSkillEntryReadiness(
