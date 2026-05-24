@@ -243,6 +243,95 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void PreviewMercenaryNextNpcSkillSelection_AdaptsNpcGameStatsTimingIntoSelection()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var knownObject = new PlayerSummonKnownObject(
+			ObjectId: 8007,
+			Kind: PlayerSummonKnownObjectKind.Creature,
+			CreatorObjectId: 1,
+			NpcTemplateId: 833288,
+			NpcTemplateType: PlayerSummonKnownNpcTemplateType.Mercenary,
+			LastSkillTimeMilliseconds: 10_000,
+			NextSkillDelayMilliseconds: 5_000);
+		var readyTiming = service.EvaluateMercenaryNpcSkillEntryReadiness(
+			new PlayerSummonKnownObjectNpcSkillEntryTiming(),
+			hpPercentage: 100,
+			elapsedFightTimeMilliseconds: 0,
+			currentTimeMilliseconds: 15_001);
+		var readyCondition = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			new PlayerSummonKnownObjectNpcSkillConditionMetadata(),
+			target: null);
+
+		PlayerSummonKnownObjectNpcSkillCandidate Candidate(
+			int position,
+			int priority,
+			int nextSkillTime = -1)
+		{
+			var projection = service.ProjectMercenaryNpcSkillTemplate(
+				new PlayerSummonKnownObjectNpcSkillTemplateMetadata(
+					Priority: priority,
+					NextSkillTimeMilliseconds: nextSkillTime));
+
+			return new PlayerSummonKnownObjectNpcSkillCandidate(position, projection, readyTiming, readyCondition);
+		}
+
+		var ordinaryCandidate = Candidate(1, priority: 5);
+		var queuedImmediate = Candidate(2, priority: 1, nextSkillTime: 0);
+		var waiting = service.PreviewMercenaryNextNpcSkillSelection(
+			knownObject,
+			fightStartingTimeMilliseconds: 10_000,
+			initialSkillDelayMilliseconds: 1_000,
+			currentTimeMilliseconds: 11_000,
+			isInCastSubState: false,
+			queuedCandidate: null,
+			lastSkill: null,
+			candidates: [ordinaryCandidate]);
+		var notReady = service.PreviewMercenaryNextNpcSkillSelection(
+			knownObject,
+			fightStartingTimeMilliseconds: 10_000,
+			initialSkillDelayMilliseconds: 1_000,
+			currentTimeMilliseconds: 14_999,
+			isInCastSubState: false,
+			queuedCandidate: null,
+			lastSkill: null,
+			candidates: [ordinaryCandidate]);
+		var selected = service.PreviewMercenaryNextNpcSkillSelection(
+			knownObject,
+			fightStartingTimeMilliseconds: 10_000,
+			initialSkillDelayMilliseconds: 1_000,
+			currentTimeMilliseconds: 15_000,
+			isInCastSubState: false,
+			queuedCandidate: null,
+			lastSkill: null,
+			candidates: [ordinaryCandidate]);
+		var immediateQueued = service.PreviewMercenaryNextNpcSkillSelection(
+			knownObject,
+			fightStartingTimeMilliseconds: 10_000,
+			initialSkillDelayMilliseconds: 20_000,
+			currentTimeMilliseconds: 10_001,
+			isInCastSubState: false,
+			queuedCandidate: queuedImmediate,
+			lastSkill: null,
+			candidates: [ordinaryCandidate]);
+
+		Assert.Equal(1_000, waiting.ElapsedFightTimeMilliseconds);
+		Assert.False(waiting.InitialSkillDelayElapsed);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionStatus.WaitingForDelayGate, waiting.Selection.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionSource.ChooseNextSkillGate, waiting.Selection.Source);
+		Assert.Equal(PlayerSummonKnownObjectNextSkillReadinessStatus.NotReady, notReady.NextSkillReadiness.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionStatus.WaitingForDelayGate, notReady.Selection.Status);
+		Assert.True(selected.InitialSkillDelayElapsed);
+		Assert.Equal(PlayerSummonKnownObjectNextSkillReadinessStatus.Ready, selected.NextSkillReadiness.Status);
+		Assert.Equal(5_000, selected.ElapsedSinceLastSkillMilliseconds);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionStatus.Ready, selected.Selection.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionSource.OrdinaryPriority, selected.Selection.Source);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionStatus.Ready, immediateQueued.Selection.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionSource.ImmediateQueuedSkill, immediateQueued.Selection.Source);
+		Assert.False(immediateQueued.InitialSkillDelayElapsed);
+	}
+
+	[Fact]
 	public void EvaluateMercenaryNpcSkillConditionReadiness_ConsumesConditionMetadataRange()
 	{
 		var service = new PlayerSummonSkillExecutionService();

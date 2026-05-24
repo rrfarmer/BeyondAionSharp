@@ -588,6 +588,44 @@ public sealed class PlayerSummonSkillExecutionService
 		return SelectMercenaryNpcSkillCandidate(candidateList);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillSelectionPreview PreviewMercenaryNextNpcSkillSelection(
+		PlayerSummonKnownObject knownObject,
+		long fightStartingTimeMilliseconds,
+		int initialSkillDelayMilliseconds,
+		long currentTimeMilliseconds,
+		bool isInCastSubState,
+		PlayerSummonKnownObjectNpcSkillCandidate? queuedCandidate,
+		PlayerSummonKnownObjectNpcSkillTemplateProjection? lastSkill,
+		IEnumerable<PlayerSummonKnownObjectNpcSkillCandidate> candidates)
+	{
+		var elapsedFightTime = currentTimeMilliseconds - fightStartingTimeMilliseconds;
+		var initialSkillDelayElapsed = elapsedFightTime > initialSkillDelayMilliseconds;
+		var nextSkillDelay = knownObject.NextSkillDelayMilliseconds ?? 0;
+		var nextSkillReadiness = EvaluateMercenaryNextSkillReadiness(
+			knownObject,
+			nextSkillDelay,
+			currentTimeMilliseconds);
+		var elapsedSinceLastSkill = currentTimeMilliseconds - (knownObject.LastSkillTimeMilliseconds ?? 0);
+		var selection = SelectMercenaryNextNpcSkillCandidate(
+			isInCastSubState,
+			initialSkillDelayElapsed,
+			nextSkillReadiness.Status == PlayerSummonKnownObjectNextSkillReadinessStatus.Ready,
+			queuedCandidate,
+			lastSkill,
+			candidates,
+			elapsedSinceLastSkill);
+
+		return new PlayerSummonKnownObjectNpcSkillSelectionPreview(
+			knownObject,
+			currentTimeMilliseconds,
+			elapsedFightTime,
+			initialSkillDelayMilliseconds,
+			initialSkillDelayElapsed,
+			nextSkillReadiness,
+			elapsedSinceLastSkill,
+			selection);
+	}
+
 	private static PlayerSummonKnownObjectNpcSkillSelectionResult SelectSingleMercenaryNpcSkillCandidate(
 		PlayerSummonKnownObjectNpcSkillCandidate candidate,
 		PlayerSummonKnownObjectNpcSkillSelectionSource source)
@@ -1422,6 +1460,16 @@ public sealed record PlayerSummonKnownObjectNpcSkillCandidate(
 	PlayerSummonKnownObjectNpcSkillEntryReadiness EntryTimingReadiness,
 	PlayerSummonKnownObjectNpcSkillConditionReadiness EntryConditionReadiness,
 	PlayerSummonKnownObjectTargetRangeReadiness? TargetRangeReadiness = null);
+
+public sealed record PlayerSummonKnownObjectNpcSkillSelectionPreview(
+	PlayerSummonKnownObject KnownObject,
+	long CurrentTimeMilliseconds,
+	long ElapsedFightTimeMilliseconds,
+	int InitialSkillDelayMilliseconds,
+	bool InitialSkillDelayElapsed,
+	PlayerSummonKnownObjectNextSkillReadiness NextSkillReadiness,
+	long ElapsedSinceLastSkillMilliseconds,
+	PlayerSummonKnownObjectNpcSkillSelectionResult Selection);
 
 public sealed record PlayerSummonKnownObjectNpcSkillSelectionResult(
 	PlayerSummonKnownObjectNpcSkillSelectionStatus Status,
