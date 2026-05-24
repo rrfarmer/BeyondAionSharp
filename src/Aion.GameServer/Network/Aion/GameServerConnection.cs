@@ -1285,7 +1285,8 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		if (castResult.Status == PlayerSummonCastSpellStatus.MercenaryReady)
 		{
-			var mercenaryPetSkills = _runtimeContext?.DataManager?.StaticData.PetSkills;
+			var staticData = _runtimeContext?.DataManager?.StaticData;
+			var mercenaryPetSkills = staticData?.PetSkills;
 			if (mercenaryPetSkills == null)
 				return new PlayerSummonCastSpellConnectionResult(castResult, ExecutionResult: null);
 
@@ -1294,6 +1295,16 @@ public sealed class GameServerConnection : BaseClientConnection
 				packet,
 				mercenaryPetSkills,
 				castResult.ResolvedTarget);
+			if (staticData?.SkillTemplates != null)
+			{
+				mercenaryExecutionResult = mercenaryExecutionResult with
+				{
+					InvocationExecution = _summonSkillExecutionService.PlanInvocationExecution(
+						mercenaryExecutionResult.InvocationPlan,
+						staticData.SkillTemplates),
+				};
+			}
+
 			return new PlayerSummonCastSpellConnectionResult(
 				castResult,
 				ExecutionResult: null,
@@ -1303,7 +1314,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (castResult.Status != PlayerSummonCastSpellStatus.Executed || castResult.ExecutedOrder == null)
 			return new PlayerSummonCastSpellConnectionResult(castResult, ExecutionResult: null);
 
-		var petSkills = _runtimeContext?.DataManager?.StaticData.PetSkills;
+		var summonStaticData = _runtimeContext?.DataManager?.StaticData;
+		var petSkills = summonStaticData?.PetSkills;
 		if (petSkills == null)
 			return new PlayerSummonCastSpellConnectionResult(castResult, ExecutionResult: null);
 
@@ -1312,6 +1324,16 @@ public sealed class GameServerConnection : BaseClientConnection
 			castResult.ExecutedOrder,
 			petSkills,
 			castResult.ResolvedTarget);
+		if (summonStaticData?.SkillTemplates != null)
+		{
+			executionResult = executionResult with
+			{
+				InvocationExecution = _summonSkillExecutionService.PlanInvocationExecution(
+					executionResult.InvocationPlan,
+					summonStaticData.SkillTemplates),
+			};
+		}
+
 		return new PlayerSummonCastSpellConnectionResult(castResult, executionResult);
 	}
 

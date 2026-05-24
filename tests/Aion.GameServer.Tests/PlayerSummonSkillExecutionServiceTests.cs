@@ -21,11 +21,13 @@ public class PlayerSummonSkillExecutionServiceTests
 		};
 		var order = new PlayerPetSkillOrder(22107, SkillLevel: 1, TargetObjectId: 7001, Hate: 5, Release: true);
 
-		var result = new PlayerSummonSkillExecutionService().ValidateExecution(
+		var service = new PlayerSummonSkillExecutionService();
+		var result = service.ValidateExecution(
 			player,
 			order,
 			dataManager.StaticData.PetSkills,
 			new PlayerSummonCastSpellTarget(7001, PlayerSummonKnownObjectKind.Creature, IsActorSelfTarget: false));
+		var invocationExecution = service.PlanInvocationExecution(result.InvocationPlan, dataManager.StaticData.SkillTemplates);
 
 		Assert.Equal(PlayerSummonSkillExecutionStatus.WouldInvokeSkillEngine, result.Status);
 		Assert.Equal(833288, result.PetSummonNpcId);
@@ -40,6 +42,17 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Equal(7001, result.InvocationPlan?.Target?.ObjectId);
 		Assert.Equal(5, result.InvocationPlan?.Hate);
 		Assert.True(result.InvocationPlan?.ReleaseOnSuccess);
+		Assert.Equal(PlayerSummonSkillInvocationExecutionStatus.WouldUseSkill, invocationExecution.Status);
+		Assert.Equal(22107, invocationExecution.SkillTemplateId);
+		Assert.Equal(result.InvocationPlan, invocationExecution.InvocationPlan);
+		Assert.Equal(
+			[
+				PlayerSummonSkillInvocationExecutionAction.ResolveSkillTemplate,
+				PlayerSummonSkillInvocationExecutionAction.SetHate,
+				PlayerSummonSkillInvocationExecutionAction.UseSkill,
+				PlayerSummonSkillInvocationExecutionAction.ReleaseOnSuccessfulUse,
+			],
+			invocationExecution.Actions);
 		Assert.True(result.Order.Release);
 		Assert.Equal(5, result.Order.Hate);
 		Assert.Equal(
@@ -63,11 +76,14 @@ public class PlayerSummonSkillExecutionServiceTests
 			PetSummonNpcId = 833288,
 		};
 
-		var result = new PlayerSummonSkillExecutionService().ValidateExecution(
+		var service = new PlayerSummonSkillExecutionService();
+		var result = service.ValidateExecution(
 			player,
 			new PlayerPetSkillOrder(22107, SkillLevel: 1, TargetObjectId: 7001, Hate: 0, Release: false),
 			dataManager.StaticData.PetSkills,
 			new PlayerSummonCastSpellTarget(7001, PlayerSummonKnownObjectKind.Creature, IsActorSelfTarget: false));
+		var invocationExecution = service.PlanInvocationExecution(result.InvocationPlan, dataManager.StaticData.SkillTemplates);
+		var missingTemplate = service.PlanInvocationExecution(result.InvocationPlan, new SkillTemplateTable([]));
 
 		Assert.Equal(PlayerSummonSkillExecutionStatus.WouldInvokeSkillEngine, result.Status);
 		Assert.Equal(7001, result.ResolvedTarget?.ObjectId);
@@ -75,6 +91,16 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Equal(8001, result.InvocationPlan?.ActorObjectId);
 		Assert.Equal(1, result.InvocationPlan?.SkillLevel);
 		Assert.False(result.InvocationPlan?.ReleaseOnSuccess);
+		Assert.Equal(PlayerSummonSkillInvocationExecutionStatus.WouldUseSkill, invocationExecution.Status);
+		Assert.Equal(
+			[
+				PlayerSummonSkillInvocationExecutionAction.ResolveSkillTemplate,
+				PlayerSummonSkillInvocationExecutionAction.SetHate,
+				PlayerSummonSkillInvocationExecutionAction.UseSkill,
+			],
+			invocationExecution.Actions);
+		Assert.Equal(PlayerSummonSkillInvocationExecutionStatus.MissingSkillTemplate, missingTemplate.Status);
+		Assert.Empty(missingTemplate.Actions);
 		Assert.Equal(
 			[
 				PlayerSummonSkillExecutionAction.GetSkill,
@@ -102,6 +128,7 @@ public class PlayerSummonSkillExecutionServiceTests
 			order with { SkillId = 9999 },
 			dataManager.StaticData.PetSkills,
 			resolvedTarget);
+		var missingPlan = service.PlanInvocationExecution(invalidSkill.InvocationPlan, dataManager.StaticData.SkillTemplates);
 
 		Assert.Equal(PlayerSummonSkillExecutionStatus.MissingSummon, missingSummon.Status);
 		Assert.Equal(PlayerSummonSkillExecutionStatus.InvalidPetSkill, invalidSkill.Status);
@@ -110,6 +137,7 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Equal(7001, invalidSkill.ResolvedTarget?.ObjectId);
 		Assert.Null(missingSummon.InvocationPlan);
 		Assert.Null(invalidSkill.InvocationPlan);
+		Assert.Equal(PlayerSummonSkillInvocationExecutionStatus.MissingPlan, missingPlan.Status);
 		Assert.Empty(missingSummon.Actions);
 		Assert.Empty(invalidSkill.Actions);
 	}
@@ -135,6 +163,7 @@ public class PlayerSummonSkillExecutionServiceTests
 			CreateSummonCastSpell(summonObjectId: 8002, skillId: 22107, skillLevel: 1, targetObjectId: 8002),
 			dataManager.StaticData.PetSkills,
 			new PlayerSummonCastSpellTarget(8002, PlayerSummonKnownObjectKind.Creature, IsActorSelfTarget: true));
+		var invocationExecution = service.PlanInvocationExecution(valid.InvocationPlan, dataManager.StaticData.SkillTemplates);
 		var invalid = service.ValidateMercenaryExecution(
 			player,
 			CreateSummonCastSpell(summonObjectId: 8002, skillId: 9999, skillLevel: 1, targetObjectId: 8002),
@@ -152,6 +181,14 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Equal(8002, valid.InvocationPlan?.Target?.ObjectId);
 		Assert.Equal(0, valid.InvocationPlan?.Hate);
 		Assert.False(valid.InvocationPlan?.ReleaseOnSuccess);
+		Assert.Equal(PlayerSummonSkillInvocationExecutionStatus.WouldUseSkill, invocationExecution.Status);
+		Assert.Equal(
+			[
+				PlayerSummonSkillInvocationExecutionAction.SetTarget,
+				PlayerSummonSkillInvocationExecutionAction.ResolveSkillTemplate,
+				PlayerSummonSkillInvocationExecutionAction.UseSkill,
+			],
+			invocationExecution.Actions);
 		Assert.Equal(
 			[
 				PlayerMercenarySkillExecutionAction.SetTarget,

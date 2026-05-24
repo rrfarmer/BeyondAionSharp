@@ -6,6 +6,21 @@ namespace Aion.GameServer.Services;
 
 public sealed class PlayerSummonSkillExecutionService
 {
+	public PlayerSummonSkillInvocationExecutionResult PlanInvocationExecution(
+		PlayerSummonSkillInvocationPlan? invocationPlan,
+		SkillTemplateTable skillTemplates)
+	{
+		if (invocationPlan == null)
+			return PlayerSummonSkillInvocationExecutionResult.MissingPlan();
+
+		// Java parity: SkillEngine.getSkill returns null when DataManager.SKILL_DATA has no template.
+		var skillTemplate = skillTemplates.GetSkillTemplate(invocationPlan.SkillId);
+		if (skillTemplate == null)
+			return PlayerSummonSkillInvocationExecutionResult.MissingSkillTemplate(invocationPlan);
+
+		return PlayerSummonSkillInvocationExecutionResult.WouldUseSkill(invocationPlan, skillTemplate.SkillId);
+	}
+
 	public PlayerSummonSkillExecutionResult ValidateExecution(
 		Player player,
 		PlayerPetSkillOrder order,
@@ -76,7 +91,8 @@ public sealed record PlayerSummonSkillExecutionResult(
 	PlayerPetSkillOrder Order,
 	PlayerSummonCastSpellTarget? ResolvedTarget = null,
 	IReadOnlyList<PlayerSummonSkillExecutionAction>? PlannedActions = null,
-	PlayerSummonSkillInvocationPlan? InvocationPlan = null)
+	PlayerSummonSkillInvocationPlan? InvocationPlan = null,
+	PlayerSummonSkillInvocationExecutionResult? InvocationExecution = null)
 {
 	public IReadOnlyList<PlayerSummonSkillExecutionAction> Actions => PlannedActions ?? Array.Empty<PlayerSummonSkillExecutionAction>();
 
@@ -171,7 +187,8 @@ public sealed record PlayerMercenarySkillExecutionResult(
 	PlayerSummonCastSpellTarget? ResolvedTarget = null,
 	IReadOnlyList<PlayerMercenarySkillExecutionAction>? PlannedActions = null,
 	PlayerMercenarySkillExecutionAudit? Audit = null,
-	PlayerSummonSkillInvocationPlan? InvocationPlan = null)
+	PlayerSummonSkillInvocationPlan? InvocationPlan = null,
+	PlayerSummonSkillInvocationExecutionResult? InvocationExecution = null)
 {
 	public IReadOnlyList<PlayerMercenarySkillExecutionAction> Actions => PlannedActions ?? Array.Empty<PlayerMercenarySkillExecutionAction>();
 
@@ -239,6 +256,81 @@ public sealed record PlayerMercenarySkillExecutionResult(
 			],
 			InvocationPlan: invocationPlan);
 	}
+}
+
+public sealed record PlayerSummonSkillInvocationExecutionResult(
+	PlayerSummonSkillInvocationExecutionStatus Status,
+	PlayerSummonSkillInvocationPlan? InvocationPlan = null,
+	int? SkillTemplateId = null,
+	IReadOnlyList<PlayerSummonSkillInvocationExecutionAction>? PlannedActions = null)
+{
+	public IReadOnlyList<PlayerSummonSkillInvocationExecutionAction> Actions => PlannedActions
+		?? Array.Empty<PlayerSummonSkillInvocationExecutionAction>();
+
+	public static PlayerSummonSkillInvocationExecutionResult MissingPlan()
+	{
+		return new PlayerSummonSkillInvocationExecutionResult(PlayerSummonSkillInvocationExecutionStatus.MissingPlan);
+	}
+
+	public static PlayerSummonSkillInvocationExecutionResult MissingSkillTemplate(PlayerSummonSkillInvocationPlan invocationPlan)
+	{
+		return new PlayerSummonSkillInvocationExecutionResult(
+			PlayerSummonSkillInvocationExecutionStatus.MissingSkillTemplate,
+			invocationPlan);
+	}
+
+	public static PlayerSummonSkillInvocationExecutionResult WouldUseSkill(
+		PlayerSummonSkillInvocationPlan invocationPlan,
+		int skillTemplateId)
+	{
+		return new PlayerSummonSkillInvocationExecutionResult(
+			PlayerSummonSkillInvocationExecutionStatus.WouldUseSkill,
+			invocationPlan,
+			skillTemplateId,
+			CreateActions(invocationPlan));
+	}
+
+	private static IReadOnlyList<PlayerSummonSkillInvocationExecutionAction> CreateActions(PlayerSummonSkillInvocationPlan invocationPlan)
+	{
+		if (invocationPlan.ActorKind == PlayerSummonSkillInvocationActorKind.Mercenary)
+		{
+			return
+			[
+				PlayerSummonSkillInvocationExecutionAction.SetTarget,
+				PlayerSummonSkillInvocationExecutionAction.ResolveSkillTemplate,
+				PlayerSummonSkillInvocationExecutionAction.UseSkill,
+			];
+		}
+
+		return invocationPlan.ReleaseOnSuccess
+			? [
+				PlayerSummonSkillInvocationExecutionAction.ResolveSkillTemplate,
+				PlayerSummonSkillInvocationExecutionAction.SetHate,
+				PlayerSummonSkillInvocationExecutionAction.UseSkill,
+				PlayerSummonSkillInvocationExecutionAction.ReleaseOnSuccessfulUse,
+			]
+			: [
+				PlayerSummonSkillInvocationExecutionAction.ResolveSkillTemplate,
+				PlayerSummonSkillInvocationExecutionAction.SetHate,
+				PlayerSummonSkillInvocationExecutionAction.UseSkill,
+			];
+	}
+}
+
+public enum PlayerSummonSkillInvocationExecutionStatus
+{
+	MissingPlan,
+	MissingSkillTemplate,
+	WouldUseSkill,
+}
+
+public enum PlayerSummonSkillInvocationExecutionAction
+{
+	ResolveSkillTemplate,
+	SetTarget,
+	SetHate,
+	UseSkill,
+	ReleaseOnSuccessfulUse,
 }
 
 public enum PlayerMercenarySkillExecutionStatus

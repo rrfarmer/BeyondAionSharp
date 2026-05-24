@@ -346,6 +346,16 @@ public class GameServerConnectionCastSpellTests
 		Assert.Equal(7001, result.ExecutionResult?.InvocationPlan?.Target?.ObjectId);
 		Assert.Equal(5, result.ExecutionResult?.InvocationPlan?.Hate);
 		Assert.True(result.ExecutionResult?.InvocationPlan?.ReleaseOnSuccess);
+		Assert.Equal(PlayerSummonSkillInvocationExecutionStatus.WouldUseSkill, result.ExecutionResult?.InvocationExecution?.Status);
+		Assert.Equal(22107, result.ExecutionResult?.InvocationExecution?.SkillTemplateId);
+		Assert.Equal(
+			[
+				PlayerSummonSkillInvocationExecutionAction.ResolveSkillTemplate,
+				PlayerSummonSkillInvocationExecutionAction.SetHate,
+				PlayerSummonSkillInvocationExecutionAction.UseSkill,
+				PlayerSummonSkillInvocationExecutionAction.ReleaseOnSuccessfulUse,
+			],
+			result.ExecutionResult?.InvocationExecution?.Actions);
 		Assert.Equal(5, result.ExecutionResult?.Order.Hate);
 		Assert.True(result.ExecutionResult?.Order.Release);
 		Assert.Empty(player.PetSkillOrders);
@@ -374,6 +384,7 @@ public class GameServerConnectionCastSpellTests
 		Assert.Equal(9999, result.ExecutionResult?.Order.SkillId);
 		Assert.Equal(7001, result.ExecutionResult?.ResolvedTarget?.ObjectId);
 		Assert.Null(result.ExecutionResult?.InvocationPlan);
+		Assert.Equal(PlayerSummonSkillInvocationExecutionStatus.MissingPlan, result.ExecutionResult?.InvocationExecution?.Status);
 		Assert.Empty(sentPackets);
 	}
 
@@ -413,6 +424,15 @@ public class GameServerConnectionCastSpellTests
 		Assert.Equal(8002, result.MercenaryExecutionResult?.InvocationPlan?.Target?.ObjectId);
 		Assert.Equal(0, result.MercenaryExecutionResult?.InvocationPlan?.Hate);
 		Assert.False(result.MercenaryExecutionResult?.InvocationPlan?.ReleaseOnSuccess);
+		Assert.Equal(PlayerSummonSkillInvocationExecutionStatus.WouldUseSkill, result.MercenaryExecutionResult?.InvocationExecution?.Status);
+		Assert.Equal(22107, result.MercenaryExecutionResult?.InvocationExecution?.SkillTemplateId);
+		Assert.Equal(
+			[
+				PlayerSummonSkillInvocationExecutionAction.SetTarget,
+				PlayerSummonSkillInvocationExecutionAction.ResolveSkillTemplate,
+				PlayerSummonSkillInvocationExecutionAction.UseSkill,
+			],
+			result.MercenaryExecutionResult?.InvocationExecution?.Actions);
 		Assert.Equal(
 			[
 				PlayerMercenarySkillExecutionAction.SetTarget,
@@ -445,6 +465,7 @@ public class GameServerConnectionCastSpellTests
 		Assert.Equal(9999, result.MercenaryExecutionResult?.SkillId);
 		Assert.Equal(8002, result.MercenaryExecutionResult?.ResolvedTarget?.ObjectId);
 		Assert.Null(result.MercenaryExecutionResult?.InvocationPlan);
+		Assert.Equal(PlayerSummonSkillInvocationExecutionStatus.MissingPlan, result.MercenaryExecutionResult?.InvocationExecution?.Status);
 		var audit = Assert.IsType<PlayerMercenarySkillExecutionAudit>(result.MercenaryExecutionResult?.Audit);
 		Assert.Equal(PlayerMercenarySkillExecutionAuditKind.InvalidMercenarySkill, audit.Kind);
 		Assert.Equal(9999, audit.SkillId);
