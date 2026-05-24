@@ -4058,6 +4058,14 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesUseChargeSkill()
+	{
+		Assert.IsType<CmUseChargeSkill>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(234, _ => { }), GameConnectionState.InGame));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(234, _ => { }), GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesChargeItem()
 	{
 		var chargeItem = Assert.IsType<CmChargeItem>(
