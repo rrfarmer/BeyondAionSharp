@@ -343,7 +343,8 @@ public sealed class PlayerSummonSkillExecutionService
 			ownerExists,
 			ownerIsDead,
 			ownerIsAboutToDie,
-			skillTemplateSignetBurstStacks: candidate.SkillTemplateSignetBurstStacks);
+			skillTemplateSignetBurstStacks: candidate.SkillTemplateSignetBurstStacks,
+			helpFriendCandidates: candidate.HelpFriendCandidates);
 
 		return new PlayerSummonKnownObjectNpcSkillCandidate(
 			candidate.Position,
@@ -1058,6 +1059,7 @@ public sealed class PlayerSummonSkillExecutionService
 		bool? currentTargetGeoCanSee = null,
 		bool currentTargetIsSupport = false,
 		bool currentTargetIsFriend = false,
+		IEnumerable<PlayerSummonKnownObjectNpcSkillHelpFriendCandidate>? helpFriendCandidates = null,
 		PlayerSummonKnownObjectNpcSkillCandidateMetadata? queuedCandidate = null,
 		PlayerSummonKnownObjectNpcSkillTemplateMetadata? lastSkill = null,
 		long lastSkillLastTimeUsedMilliseconds = 0,
@@ -1073,7 +1075,8 @@ public sealed class PlayerSummonSkillExecutionService
 				currentTargetDistanceMeters,
 				currentTargetGeoCanSee,
 				currentTargetIsSupport,
-				currentTargetIsFriend))
+				currentTargetIsFriend,
+				helpFriendCandidates))
 			.ToArray();
 		var projectedQueuedCandidate = queuedCandidate == null
 			? null
@@ -1083,7 +1086,8 @@ public sealed class PlayerSummonSkillExecutionService
 				currentTargetDistanceMeters,
 				currentTargetGeoCanSee,
 				currentTargetIsSupport,
-				currentTargetIsFriend);
+				currentTargetIsFriend,
+				helpFriendCandidates);
 
 		return PreviewMercenaryNextNpcSkillSelectionFromCandidateMetadata(
 			knownObject,
@@ -1434,12 +1438,28 @@ public sealed class PlayerSummonSkillExecutionService
 		double currentTargetDistanceMeters,
 		bool? currentTargetGeoCanSee,
 		bool currentTargetIsSupport,
-		bool currentTargetIsFriend)
+		bool currentTargetIsFriend,
+		IEnumerable<PlayerSummonKnownObjectNpcSkillHelpFriendCandidate>? helpFriendCandidates = null)
 	{
-		if (candidate.ConditionTarget != null)
-			return candidate;
-
 		var condition = candidate.Template.ConditionTemplate ?? new PlayerSummonKnownObjectNpcSkillConditionMetadata();
+		var projectedHelpFriendCandidates = candidate.HelpFriendCandidates
+			?? (condition.Condition == PlayerSummonKnownObjectNpcSkillCondition.HelpFriend
+				? helpFriendCandidates?.ToArray()
+				: null);
+		if (candidate.ConditionTarget != null)
+		{
+			return projectedHelpFriendCandidates == candidate.HelpFriendCandidates
+				? candidate
+				: candidate with { HelpFriendCandidates = projectedHelpFriendCandidates };
+		}
+
+		if (condition.Condition == PlayerSummonKnownObjectNpcSkillCondition.HelpFriend)
+		{
+			return candidate with { HelpFriendCandidates = projectedHelpFriendCandidates };
+		}
+
+		if (condition.Condition == PlayerSummonKnownObjectNpcSkillCondition.NpcIsAlive)
+			return candidate;
 		var target = ProjectMercenaryNpcSkillConditionTarget(
 			currentTarget,
 			condition,
@@ -3088,7 +3108,8 @@ public sealed record PlayerSummonKnownObjectNpcSkillCandidateMetadata(
 	bool ChanceReady = true,
 	PlayerSummonKnownObjectNpcSkillConditionTarget? ConditionTarget = null,
 	PlayerSummonKnownObjectTargetRangeReadiness? TargetRangeReadiness = null,
-	IReadOnlyList<string>? SkillTemplateSignetBurstStacks = null);
+	IReadOnlyList<string>? SkillTemplateSignetBurstStacks = null,
+	IReadOnlyList<PlayerSummonKnownObjectNpcSkillHelpFriendCandidate>? HelpFriendCandidates = null);
 
 public sealed record PlayerSummonKnownObjectNpcSkillCandidateMetadataProjection(
 	int NpcId,

@@ -1408,6 +1408,70 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void PreviewMercenaryNextNpcSkillSelectionFromRepresentedCurrentTarget_AppliesHelpFriendKnownListFacts()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var knownObject = new PlayerSummonKnownObject(
+			ObjectId: 8911,
+			Kind: PlayerSummonKnownObjectKind.Creature,
+			LastSkillTimeMilliseconds: 0,
+			NextSkillDelayMilliseconds: 0);
+		var currentTarget = new PlayerSummonKnownObject(
+			ObjectId: 8912,
+			Kind: PlayerSummonKnownObjectKind.Creature);
+		var helpFriend = new PlayerSummonKnownObjectNpcSkillCandidateMetadata(
+			0,
+			new PlayerSummonKnownObjectNpcSkillTemplateMetadata(
+				Priority: 20,
+				Probability: 100,
+				ConditionTemplate: new PlayerSummonKnownObjectNpcSkillConditionMetadata(
+					PlayerSummonKnownObjectNpcSkillCondition.HelpFriend,
+					HpBelowPercentage: 50,
+					RangeMeters: 15)));
+		var fallback = new PlayerSummonKnownObjectNpcSkillCandidateMetadata(
+			1,
+			new PlayerSummonKnownObjectNpcSkillTemplateMetadata(
+				Priority: 10,
+				Probability: 100,
+				ConditionTemplate: new PlayerSummonKnownObjectNpcSkillConditionMetadata(PlayerSummonKnownObjectNpcSkillCondition.None)));
+		var representedKnownList = new[]
+		{
+			new PlayerSummonKnownObjectNpcSkillHelpFriendCandidate(9001, IsFriend: true, HpPercentage: 65, DistanceMeters: 5),
+			new PlayerSummonKnownObjectNpcSkillHelpFriendCandidate(9002, IsSupport: true, HpPercentage: 45, DistanceMeters: 12, GeoCanSee: true),
+		};
+
+		var withoutKnownList = service.PreviewMercenaryNextNpcSkillSelectionFromRepresentedCurrentTarget(
+			knownObject,
+			currentTarget,
+			currentTargetDistanceMeters: 5,
+			fightStartingTimeMilliseconds: 1_000,
+			initialSkillDelayMilliseconds: 0,
+			currentTimeMilliseconds: 2_000,
+			isInCastSubState: false,
+			candidates: [helpFriend, fallback],
+			hpPercentage: 100);
+		var withKnownList = service.PreviewMercenaryNextNpcSkillSelectionFromRepresentedCurrentTarget(
+			knownObject,
+			currentTarget,
+			currentTargetDistanceMeters: 5,
+			fightStartingTimeMilliseconds: 1_000,
+			initialSkillDelayMilliseconds: 0,
+			currentTimeMilliseconds: 2_000,
+			isInCastSubState: false,
+			candidates: [helpFriend, fallback],
+			hpPercentage: 100,
+			helpFriendCandidates: representedKnownList);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionStatus.Ready, withoutKnownList.Selection.Status);
+		Assert.Equal(1, withoutKnownList.Selection.Candidate?.Position);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionStatus.Ready, withKnownList.Selection.Status);
+		Assert.Equal(0, withKnownList.Selection.Candidate?.Position);
+		Assert.True(withKnownList.Selection.Candidate?.EntryConditionReadiness.WouldSetOwnerTarget);
+		Assert.Equal(9002, withKnownList.Selection.Candidate?.EntryConditionReadiness.HelpFriendTarget?.ObjectId);
+		Assert.Equal(9002, withKnownList.Selection.Candidate?.EntryConditionReadiness.Target?.ObjectId);
+	}
+
+	[Fact]
 	public void SelectMercenaryNpcSkillActionTarget_ProjectsJavaSkillActionTargetMutation()
 	{
 		var service = new PlayerSummonSkillExecutionService();
