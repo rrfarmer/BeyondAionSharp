@@ -37,6 +37,7 @@ public sealed class StaticData
 		EventDropTable eventDrops,
 		GlobalNpcExclusionTable globalNpcExclusions,
 		SkillTemplateTable skillTemplates,
+		NpcSkillTable npcSkills,
 		PetSkillTable petSkills,
 		TitleTemplateTable titleTemplates,
 		RecipeTemplateTable recipeTemplates,
@@ -81,6 +82,7 @@ public sealed class StaticData
 		EventDrops = eventDrops;
 		GlobalNpcExclusions = globalNpcExclusions;
 		SkillTemplates = skillTemplates;
+		NpcSkills = npcSkills;
 		PetSkills = petSkills;
 		TitleTemplates = titleTemplates;
 		RecipeTemplates = recipeTemplates;
@@ -158,6 +160,8 @@ public sealed class StaticData
 
 	public SkillTemplateTable SkillTemplates { get; }
 
+	public NpcSkillTable NpcSkills { get; }
+
 	public PetSkillTable PetSkills { get; }
 
 	public TitleTemplateTable TitleTemplates { get; }
@@ -227,6 +231,7 @@ public sealed class StaticData
 		var globalNpcExclusionNpcTribes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 		var globalNpcExclusionNpcAbyssTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 		var skillTemplates = new List<SkillTemplateSummary>();
+		var npcSkillLists = new List<NpcSkillListSummary>();
 		var titleTemplates = new List<TitleTemplateSummary>();
 		var recipeTemplates = new List<RecipeTemplateSummary>();
 		var housingAddresses = new List<HousingAddressSummary>();
@@ -282,6 +287,8 @@ public sealed class StaticData
 		int currentNpcRiftSpawnSpotDepth = -1;
 		string currentWalkerParentRouteId = string.Empty;
 		SkillTemplateBuilder? currentSkillTemplate = null;
+		NpcSkillListBuilder? currentNpcSkillList = null;
+		NpcSkillTemplateBuilder? currentNpcSkill = null;
 		TitleTemplateBuilder? currentTitleTemplate = null;
 		List<int>? currentStorageExpansionNpcIds = null;
 		List<StorageExpansionPrice>? currentStorageExpansionPrices = null;
@@ -512,6 +519,18 @@ public sealed class StaticData
 
 				if (reader.Depth == 4 && reader.LocalName is "armormastery" or "wpnmastery" or "shieldmastery")
 					currentSkillTemplate?.EndMastery();
+
+				if (reader.LocalName == "npc_skill" && currentNpcSkillList != null && currentNpcSkill != null)
+				{
+					currentNpcSkillList.AddSkill(currentNpcSkill.ToSummary());
+					currentNpcSkill = null;
+				}
+
+				if (reader.LocalName == "npc_skills" && currentNpcSkillList != null)
+				{
+					npcSkillLists.Add(currentNpcSkillList.ToSummary());
+					currentNpcSkillList = null;
+				}
 
 				if (reader.Depth == 2 && reader.LocalName == "player_data")
 					currentPlayerCreationClass = null;
@@ -2039,6 +2058,59 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.LocalName == "npc_skills" && elementPath.GetValueOrDefault(reader.Depth - 1) == "npc_skill_templates")
+			{
+				// Java parity: model/templates/npcskill/NpcSkillTemplates uses JAXB @XmlList npc_ids.
+				currentNpcSkillList = new NpcSkillListBuilder(ReadXmlIntListAttribute(reader, "npc_ids"));
+				if (reader.IsEmptyElement)
+				{
+					npcSkillLists.Add(currentNpcSkillList.ToSummary());
+					currentNpcSkillList = null;
+				}
+				continue;
+			}
+
+			if (reader.LocalName == "npc_skill" && currentNpcSkillList != null)
+			{
+				// Java parity: model/templates/npcskill/NpcSkillTemplate scalar JAXB attributes and defaults.
+				currentNpcSkill = new NpcSkillTemplateBuilder(
+					ReadIntAttribute(reader, "id"),
+					ReadIntAttribute(reader, "lv"),
+					ReadIntAttribute(reader, "prob"),
+					ReadOptionalIntAttribute(reader, "min_hp", 0),
+					ReadOptionalIntAttribute(reader, "max_hp", 100),
+					ReadOptionalIntAttribute(reader, "max_time", 0),
+					ReadOptionalIntAttribute(reader, "min_time", 0),
+					reader.GetAttribute("conjunction") ?? "AND",
+					ReadOptionalIntAttribute(reader, "cd", 0),
+					ReadBoolAttribute(reader, "is_post_spawn"),
+					ReadOptionalIntAttribute(reader, "prio", 0),
+					ReadOptionalIntAttribute(reader, "next_skill_time", -1),
+					ReadOptionalIntAttribute(reader, "next_chain_id", 0),
+					ReadOptionalIntAttribute(reader, "chain_id", 0),
+					ReadOptionalIntAttribute(reader, "max_chain_time", 15000),
+					reader.GetAttribute("target") ?? "MOST_HATED");
+				if (reader.IsEmptyElement)
+				{
+					currentNpcSkillList.AddSkill(currentNpcSkill.ToSummary());
+					currentNpcSkill = null;
+				}
+				continue;
+			}
+
+			if (reader.LocalName == "spawn_npc" && currentNpcSkill != null)
+			{
+				// Java parity: model/templates/npcskill/NpcSkillSpawn defaults min_count=1 and max_count=0.
+				currentNpcSkill.Spawn = new NpcSkillSpawnSummary(
+					ReadIntAttribute(reader, "npc_id"),
+					ReadIntAttribute(reader, "delay"),
+					ReadIntAttribute(reader, "min_distance"),
+					ReadIntAttribute(reader, "max_distance"),
+					ReadOptionalIntAttribute(reader, "min_count", 1),
+					ReadOptionalIntAttribute(reader, "max_count", 0));
+				continue;
+			}
+
 			if (reader.Depth == 2
 				&& reader.LocalName == "title"
 				&& elementPath.TryGetValue(1, out var titleParent)
@@ -2181,6 +2253,7 @@ public sealed class StaticData
 				globalNpcExclusionNpcTribes,
 				globalNpcExclusionNpcAbyssTypes),
 			new SkillTemplateTable(skillTemplates.AsReadOnly()),
+			new NpcSkillTable(npcSkillLists.AsReadOnly()),
 			new PetSkillTable(petSkills.AsReadOnly()),
 			new TitleTemplateTable(titleTemplates.AsReadOnly()),
 			new RecipeTemplateTable(recipeTemplates.AsReadOnly()),
@@ -2935,6 +3008,107 @@ public sealed class StaticData
 				_weaponDualEffects.ToArray(),
 				StigmaType,
 				Activation);
+		}
+	}
+
+	private sealed class NpcSkillListBuilder
+	{
+		private readonly List<NpcSkillTemplateSummary> _skills = [];
+
+		public NpcSkillListBuilder(IReadOnlyList<int> npcIds)
+		{
+			NpcIds = npcIds;
+		}
+
+		private IReadOnlyList<int> NpcIds { get; }
+
+		public void AddSkill(NpcSkillTemplateSummary skill)
+		{
+			_skills.Add(skill);
+		}
+
+		public NpcSkillListSummary ToSummary()
+		{
+			return new NpcSkillListSummary(NpcIds, _skills.ToArray());
+		}
+	}
+
+	private sealed class NpcSkillTemplateBuilder
+	{
+		public NpcSkillTemplateBuilder(
+			int skillId,
+			int skillLevel,
+			int probability,
+			int minHp,
+			int maxHp,
+			int maxTime,
+			int minTime,
+			string conjunction,
+			int cooldown,
+			bool isPostSpawn,
+			int priority,
+			int nextSkillTime,
+			int nextChainId,
+			int chainId,
+			int maxChainTime,
+			string target)
+		{
+			SkillId = skillId;
+			SkillLevel = skillLevel;
+			Probability = probability;
+			MinHp = minHp;
+			MaxHp = maxHp;
+			MaxTime = maxTime;
+			MinTime = minTime;
+			Conjunction = conjunction;
+			Cooldown = cooldown;
+			IsPostSpawn = isPostSpawn;
+			Priority = priority;
+			NextSkillTime = nextSkillTime;
+			NextChainId = nextChainId;
+			ChainId = chainId;
+			MaxChainTime = maxChainTime;
+			Target = target;
+		}
+
+		private int SkillId { get; }
+		private int SkillLevel { get; }
+		private int Probability { get; }
+		private int MinHp { get; }
+		private int MaxHp { get; }
+		private int MaxTime { get; }
+		private int MinTime { get; }
+		private string Conjunction { get; }
+		private int Cooldown { get; }
+		private bool IsPostSpawn { get; }
+		private int Priority { get; }
+		private int NextSkillTime { get; }
+		private int NextChainId { get; }
+		private int ChainId { get; }
+		private int MaxChainTime { get; }
+		private string Target { get; }
+		public NpcSkillSpawnSummary? Spawn { get; set; }
+
+		public NpcSkillTemplateSummary ToSummary()
+		{
+			return new NpcSkillTemplateSummary(
+				SkillId,
+				SkillLevel,
+				Probability,
+				MinHp,
+				MaxHp,
+				MaxTime,
+				MinTime,
+				Conjunction,
+				Cooldown,
+				IsPostSpawn,
+				Priority,
+				NextSkillTime,
+				NextChainId,
+				ChainId,
+				MaxChainTime,
+				Target,
+				Spawn);
 		}
 	}
 
@@ -4382,6 +4556,18 @@ public sealed class StaticData
 
 		return value
 			.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+			.Select(part => int.Parse(part, CultureInfo.InvariantCulture))
+			.ToArray();
+	}
+
+	private static IReadOnlyList<int> ReadXmlIntListAttribute(XmlReader reader, string attributeName)
+	{
+		var value = reader.GetAttribute(attributeName);
+		if (string.IsNullOrWhiteSpace(value))
+			return Array.Empty<int>();
+
+		return value
+			.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
 			.Select(part => int.Parse(part, CultureInfo.InvariantCulture))
 			.ToArray();
 	}
