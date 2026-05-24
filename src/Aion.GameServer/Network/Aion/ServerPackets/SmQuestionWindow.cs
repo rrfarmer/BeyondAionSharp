@@ -9,6 +9,7 @@ public sealed class SmQuestionWindow : GameServerPacket
 	public const int DuelWithdrawRequest = 50030;
 	public const int PartyInvite = 60000;
 	public const int AllianceInvite = 70000;
+	public const int ExchangeAcceptRequest = 90001;
 	public const int BuddyListAddBuddyRequest = 1401498;
 	public const int SoulBoundItemConfirm = 95006;
 	public const int ItemChargeAllConfirm = 903026;

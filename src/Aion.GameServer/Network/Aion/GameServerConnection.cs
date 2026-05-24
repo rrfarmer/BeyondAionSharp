@@ -74,6 +74,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly PlayerAllianceRuntime _playerAllianceRuntime;
 	private readonly PlayerLeagueRuntime _playerLeagueRuntime;
 	private readonly PlayerDuelRequestService _playerDuelRequestService;
+	private readonly PlayerExchangeRequestService _playerExchangeRequestService;
 	private readonly PlayerAllianceGroupChangeServicePlanner _playerAllianceGroupChangeServicePlanner;
 	private readonly PlayerShowBrandCommandPlanner _showBrandCommandPlanner;
 	private readonly SemaphoreSlim _sendLock = new(1, 1);
@@ -135,6 +136,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		PlayerAllianceRuntime? playerAllianceRuntime = null,
 		PlayerLeagueRuntime? playerLeagueRuntime = null,
 		PlayerDuelRequestService? playerDuelRequestService = null,
+		PlayerExchangeRequestService? playerExchangeRequestService = null,
 		PlayerShowBrandCommandPlanner? showBrandCommandPlanner = null)
 		: base(logger, client, clientId)
 	{
@@ -169,6 +171,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_playerAllianceRuntime = playerAllianceRuntime ?? new PlayerAllianceRuntime();
 		_playerLeagueRuntime = playerLeagueRuntime ?? new PlayerLeagueRuntime();
 		_playerDuelRequestService = playerDuelRequestService ?? new PlayerDuelRequestService();
+		_playerExchangeRequestService = playerExchangeRequestService ?? new PlayerExchangeRequestService();
 		_playerAllianceGroupChangeServicePlanner = new PlayerAllianceGroupChangeServicePlanner(_playerAllianceRuntime);
 		_showBrandCommandPlanner = showBrandCommandPlanner
 			?? new PlayerShowBrandCommandPlanner(_playerGroupRuntime, _playerAllianceRuntime);
@@ -572,6 +575,10 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmQuestionResponse questionResponse:
 				if (_activePlayer != null)
 					await HandleQuestionResponseAsync(_activePlayer, questionResponse);
+				break;
+			case CmExchangeRequest exchangeRequest:
+				if (_activePlayer != null)
+					await HandleExchangeRequestAsync(_activePlayer, exchangeRequest);
 				break;
 			case CmShowDialog showDialog:
 				if (_activePlayer != null)
@@ -6865,6 +6872,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (packet.QuestionId == SmQuestionWindow.ExchangeAcceptRequest)
+		{
+			await HandleExchangeQuestionResponseAsync(responder, packet);
+			return;
+		}
+
 		if (packet.QuestionId != SmQuestionWindow.BuddyListAddBuddyRequest)
 			return;
 
@@ -6960,7 +6973,34 @@ public sealed class GameServerConnection : BaseClientConnection
 		return plan;
 	}
 
+	internal async Task<ExchangeRequestPlan> HandleExchangeRequestAsync(
+		Player requester,
+		CmExchangeRequest packet,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: network/aion/clientpackets/CM_EXCHANGE_REQUEST.runImpl resolves the target
+		// from world online players, validates the represented guards, then asks with SM_QUESTION_WINDOW.
+		var target = TryGetOnlinePlayerByObjectId(packet.TargetObjectId);
+		var plan = _playerExchangeRequestService.SendExchangeRequest(requester, target);
+		foreach (var intent in plan.PacketIntents)
+			await SendExchangePacketAsync(intent.RecipientObjectId, intent.Packet, cancellationToken);
+
+		return plan;
+	}
+
 	private async Task SendDuelPacketAsync(
+		int recipientObjectId,
+		GameServerPacket packet,
+		CancellationToken cancellationToken = default)
+	{
+		if (_connectionRegistry != null && await _connectionRegistry.SendPacketToPlayerAsync(recipientObjectId, packet))
+			return;
+
+		if (_activePlayer?.ObjectId == recipientObjectId)
+			await SendPacketAsync(packet, cancellationToken);
+	}
+
+	private async Task SendExchangePacketAsync(
 		int recipientObjectId,
 		GameServerPacket packet,
 		CancellationToken cancellationToken = default)
@@ -7161,6 +7201,18 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		foreach (var responsePacket in result.Packets)
 			await SendPacketAsync(responsePacket);
+	}
+
+	private async Task<ExchangeResponsePlan> HandleExchangeQuestionResponseAsync(Player responder, CmQuestionResponse packet)
+	{
+		var result = _playerExchangeRequestService.HandleResponse(
+			responder,
+			packet.QuestionId,
+			packet.Response,
+			TryGetOnlinePlayerByObjectId);
+		foreach (var intent in result.PacketIntents)
+			await SendExchangePacketAsync(intent.RecipientObjectId, intent.Packet);
+		return result;
 	}
 
 	private static void CancelExchangeForQuestionAccept(Player responder)

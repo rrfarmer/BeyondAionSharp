@@ -3,6 +3,7 @@ namespace Aion.GameServer.Model.GameObjects;
 public sealed class PlayerSettings
 {
 	public const int DenyGroupRequests = 4;
+	public const int DenyTradeRequests = 2;
 	public const int DenyFriendRequests = 16;
 	public const int DenyDuelRequests = 32;
 
@@ -20,6 +21,12 @@ public sealed class PlayerSettings
 	{
 		// Java parity: model/gameobjects/player/PlayerSettings.isInDeniedStatus(DeniedStatus.FRIEND).
 		return IsInDeniedStatus(DenyFriendRequests);
+	}
+
+	public bool DeniesTradeRequests()
+	{
+		// Java parity: model/gameobjects/player/PlayerSettings.isInDeniedStatus(DeniedStatus.TRADE).
+		return IsInDeniedStatus(DenyTradeRequests);
 	}
 
 	public bool DeniesGroupRequests()

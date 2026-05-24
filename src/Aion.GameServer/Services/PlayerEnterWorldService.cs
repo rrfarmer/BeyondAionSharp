@@ -788,6 +788,7 @@ public sealed class PlayerEnterWorldService
 		player.PendingDuelRequest = null;
 		player.PendingDuelWithdrawRequest = null;
 		player.PendingExperienceRecoveryRequest = null;
+		player.PendingExchangeRequest = null;
 	}
 
 	private async Task SendPendingQuestionDenySideEffectAsync(Player responder, QuestionResponseDispatch dispatch)
@@ -853,6 +854,18 @@ public sealed class PlayerEnterWorldService
 					await _connectionRegistry.SendPacketToPlayerAsync(
 						responder.ObjectId,
 						SmSystemMessage.SoulBoundItemCanceled(request.ItemName));
+				}
+				break;
+			}
+			case QuestionResponseRequestKind.ExchangeRequest:
+			{
+				var request = dispatch.Request.Payload as PendingExchangeRequest ?? responder.PendingExchangeRequest;
+				var requesterObjectId = request?.RequesterObjectId ?? dispatch.Request.RequesterObjectId;
+				if (requesterObjectId > 0)
+				{
+					await _connectionRegistry.SendPacketToPlayerAsync(
+						requesterObjectId,
+						SmSystemMessage.ExchangeHeRejectedExchange(responder.Name));
 				}
 				break;
 			}

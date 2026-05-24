@@ -1393,6 +1393,54 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300366);
 	}
 
+	public static SmSystemMessage ExchangeNoOneToExchange()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_EXCHANGE_NO_ONE_TO_EXCHANGE.
+		return new SmSystemMessage(1300351);
+	}
+
+	public static SmSystemMessage ExchangeTooFarToExchange()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_EXCHANGE_TOO_FAR_TO_EXCHANGE.
+		return new SmSystemMessage(1300352);
+	}
+
+	public static SmSystemMessage ExchangeAskedExchangeToHim(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_EXCHANGE_ASKED_EXCHANGE_TO_HIM.
+		return new SmSystemMessage(1300353, playerName);
+	}
+
+	public static SmSystemMessage ExchangeHeRejectedExchange(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_EXCHANGE_HE_REJECTED_EXCHANGE.
+		return new SmSystemMessage(1300354, playerName);
+	}
+
+	public static SmSystemMessage ExchangeCantAskWhenHeIsAskedQuestion(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_EXCHANGE_CANT_ASK_WHEN_HE_IS_ASKED_QUESTION.
+		return new SmSystemMessage(1300356, playerName);
+	}
+
+	public static SmSystemMessage ExchangeCantExchangeWhileInvisible()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_EXCHANGE_CANT_EXCHANGE_WHILE_INVISIBLE.
+		return new SmSystemMessage(1300348);
+	}
+
+	public static SmSystemMessage ExchangeCantExchangeWithInvisibleUser()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_EXCHANGE_CANT_EXCHANGE_WITH_INVISIBLE_USER.
+		return new SmSystemMessage(1300349);
+	}
+
+	public static SmSystemMessage MsgRejectedTrade(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_REJECTED_TRADE.
+		return new SmSystemMessage(1390121, playerName);
+	}
+
 	public static SmSystemMessage MailTakeAllCancel()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MAIL_TAKE_ALL_CANCEL.
