@@ -244,6 +244,68 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 	}
 
 	[Fact]
+	public async Task HandlePlayerStatusInfoAsync_LeagueExpelByLeaderRemovesTargetLikeJava()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var alliances = new PlayerAllianceRuntime();
+		var leagues = new PlayerLeagueRuntime();
+		var leagueLeader = new Player { ObjectId = 1001, Name = "LeagueLeader", IsOnline = true, Position = new WorldPosition(210010000, 1, 2, 3, 0) };
+		var expelledLeader = new Player { ObjectId = 2001, Name = "ExpelledLeader", IsOnline = true, Position = new WorldPosition(220010000, 4, 5, 6, 0) };
+		var remainingLeader = new Player { ObjectId = 3001, Name = "RemainingLeader", IsOnline = true, Position = new WorldPosition(230010000, 7, 8, 9, 0) };
+		alliances.CreateAlliance(88001, leagueLeader);
+		alliances.CreateAlliance(88002, expelledLeader);
+		alliances.CreateAlliance(88003, remainingLeader);
+		leagues.CreateLeague(77001, leaderAllianceId: 88001);
+		leagues.AddAlliance(77001, allianceId: 88002);
+		leagues.AddAlliance(77001, allianceId: 88003);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, alliances, playerLeagueRuntime: leagues);
+
+		Assert.Null(await pair.Connection.HandlePlayerStatusInfoAsync(
+			leagueLeader,
+			CreatePacket(commandCode: 30, selectedObjectId: 88002)));
+
+		Assert.Equal([88001, 88003], leagues.GetAllianceIdsByPosition(77001));
+		Assert.Equal(0, leagues.GetLeaguePosition(77001, 88001));
+		Assert.Null(leagues.GetLeaguePosition(77001, 88002));
+		Assert.Equal(1, leagues.GetLeaguePosition(77001, 88003));
+		Assert.Equal([1001, 3001, 2001], registry.SentPackets.Select(send => send.PlayerObjectId));
+		var expectedRows = new[]
+		{
+			new PlayerAllianceInfoLeagueRow(0, 88001, 1, "LeagueLeader", 210010000),
+			new PlayerAllianceInfoLeagueRow(1, 88003, 1, "RemainingLeader", 230010000),
+		};
+		Assert.Collection(
+			registry.SentPackets,
+			send => AssertLeagueAllianceInfoPacket(
+				send,
+				88001,
+				1001,
+				210010000,
+				PlayerAllianceInfoPacketPlan.LeagueExpelMessageId,
+				"ExpelledLeader",
+				77001,
+				expectedRows),
+			send => AssertLeagueAllianceInfoPacket(
+				send,
+				88003,
+				3001,
+				230010000,
+				PlayerAllianceInfoPacketPlan.LeagueExpelMessageId,
+				"ExpelledLeader",
+				77001,
+				expectedRows),
+			send => AssertLeagueAllianceInfoPacket(
+				send,
+				88002,
+				2001,
+				220010000,
+				PlayerAllianceInfoPacketPlan.LeagueExpelledMessageId,
+				"LeagueLeader",
+				expectedLeagueId: 0,
+				expectedLeagueRows: []));
+	}
+
+	[Fact]
 	public async Task HandlePlayerStatusInfoAsync_LeagueSetLeaderWithoutLeagueThrowsLikeJava()
 	{
 		var registry = new CapturingConnectionRegistry();

@@ -158,40 +158,109 @@ public sealed class PlayerLeagueRuntime
 				|| !_leaderAllianceIdByLeagueId.TryGetValue(leagueId, out var leaderAllianceId))
 				throw new InvalidOperationException("League should not be null");
 
-			var leavingMember = members.FirstOrDefault(member => member.AllianceId == allianceId)
-				?? throw new InvalidOperationException($"League member should not be null: {allianceId}");
 			var leavingLeaderName = GetAllianceLeaderName(allianceRuntime, allianceId);
-			members.Remove(leavingMember);
-			_leagueIdByAllianceId.Remove(allianceId);
-
-			var newLeaderName = ReorganizeAfterRemove(members, ref leaderAllianceId, allianceRuntime);
-			_leaderAllianceIdByLeagueId[leagueId] = leaderAllianceId;
-			var remainingAllianceIds = GetSortedAllianceIds(members);
-			var intents = CreateLeavePacketIntents(
+			return RemoveAllianceCore(
 				leagueId,
+				members,
+				ref leaderAllianceId,
 				allianceId,
 				leavingLeaderName,
-				remainingAllianceIds,
-				newLeaderName,
+				leavingLeaderName,
+				PlayerAllianceInfoPacketPlan.LeagueLeftHimMessageId,
+				PlayerAllianceInfoPacketPlan.LeagueLeftMeMessageId,
 				allianceRuntime);
-			var disbanded = members.Count <= 1;
-
-			if (disbanded)
-			{
-				foreach (var member in members.ToArray())
-					_leagueIdByAllianceId.Remove(member.AllianceId);
-				_membersByLeagueId.Remove(leagueId);
-				_leaderAllianceIdByLeagueId.Remove(leagueId);
-			}
-
-			return new PlayerLeagueLeavePlan(
-				leagueId,
-				allianceId,
-				newLeaderName,
-				disbanded,
-				remainingAllianceIds,
-				intents);
 		}
+	}
+
+	public PlayerLeagueLeavePlan ExpelAlliance(
+		int callerAllianceId,
+		int callerObjectId,
+		int targetAllianceId,
+		PlayerAllianceRuntime allianceRuntime)
+	{
+		// Java parity: PlayerTeamCommandService.LEAGUE_EXPEL resolves the target LeagueMember before
+		// LeagueService.expelAlliance checks that the caller leads both their alliance and the league.
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(callerAllianceId, 0);
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(targetAllianceId, 0);
+
+		lock (_sync)
+		{
+			if (!_leagueIdByAllianceId.TryGetValue(callerAllianceId, out var leagueId)
+				|| !_membersByLeagueId.TryGetValue(leagueId, out var members)
+				|| !_leaderAllianceIdByLeagueId.TryGetValue(leagueId, out var leaderAllianceId))
+				throw new InvalidOperationException($"{FormatPlayerForLeagueCommand(callerAllianceId, callerObjectId, allianceRuntime)} tried to execute league command without an active league alliance");
+
+			if (members.All(member => member.AllianceId != targetAllianceId))
+				throw new InvalidOperationException($"{FormatPlayerForLeagueCommand(callerAllianceId, callerObjectId, allianceRuntime)} tried to execute league command on invalid alliance {targetAllianceId}");
+
+			var callerAlliance = allianceRuntime.GetDescriptor(callerAllianceId)
+				?? throw new InvalidOperationException($"Alliance should not be null: {callerAllianceId}");
+			if (callerAlliance.LeaderObjectId != callerObjectId)
+				throw new InvalidOperationException("Given player is not the league alliance leader");
+			if (callerAllianceId != leaderAllianceId)
+				throw new InvalidOperationException("Leader's alliance is not the league leader");
+
+			var targetLeaderName = GetAllianceLeaderName(allianceRuntime, targetAllianceId);
+			var leagueLeaderName = GetAllianceLeaderName(allianceRuntime, leaderAllianceId);
+			return RemoveAllianceCore(
+				leagueId,
+				members,
+				ref leaderAllianceId,
+				targetAllianceId,
+				targetLeaderName,
+				leagueLeaderName,
+				PlayerAllianceInfoPacketPlan.LeagueExpelMessageId,
+				PlayerAllianceInfoPacketPlan.LeagueExpelledMessageId,
+				allianceRuntime);
+		}
+	}
+
+	private PlayerLeagueLeavePlan RemoveAllianceCore(
+		int leagueId,
+		List<PlayerLeagueMember> members,
+		ref int leaderAllianceId,
+		int removedAllianceId,
+		string removedLeaderName,
+		string removedAllianceMessage,
+		int remainingAllianceMessageId,
+		int removedAllianceMessageId,
+		PlayerAllianceRuntime allianceRuntime)
+	{
+		var leavingMember = members.FirstOrDefault(member => member.AllianceId == removedAllianceId)
+			?? throw new InvalidOperationException($"League member should not be null: {removedAllianceId}");
+		members.Remove(leavingMember);
+		_leagueIdByAllianceId.Remove(removedAllianceId);
+
+		var newLeaderName = ReorganizeAfterRemove(members, ref leaderAllianceId, allianceRuntime);
+		_leaderAllianceIdByLeagueId[leagueId] = leaderAllianceId;
+		var remainingAllianceIds = GetSortedAllianceIds(members);
+		var intents = CreateLeavePacketIntents(
+			leagueId,
+			removedAllianceId,
+			removedLeaderName,
+			removedAllianceMessage,
+			remainingAllianceMessageId,
+			removedAllianceMessageId,
+			remainingAllianceIds,
+			newLeaderName,
+			allianceRuntime);
+		var disbanded = members.Count <= 1;
+
+		if (disbanded)
+		{
+			foreach (var member in members.ToArray())
+				_leagueIdByAllianceId.Remove(member.AllianceId);
+			_membersByLeagueId.Remove(leagueId);
+			_leaderAllianceIdByLeagueId.Remove(leagueId);
+		}
+
+		return new PlayerLeagueLeavePlan(
+			leagueId,
+			removedAllianceId,
+			newLeaderName,
+			disbanded,
+			remainingAllianceIds,
+			intents);
 	}
 
 	private static IReadOnlyList<PlayerLeaguePacketIntent> CreateMovePacketIntents(
@@ -258,6 +327,9 @@ public sealed class PlayerLeagueRuntime
 		int leagueId,
 		int leavingAllianceId,
 		string leavingLeaderName,
+		string leavingAllianceMessage,
+		int remainingAllianceMessageId,
+		int leavingAllianceMessageId,
 		IReadOnlyList<int> remainingAllianceIds,
 		string? newLeaderName,
 		PlayerAllianceRuntime allianceRuntime)
@@ -271,7 +343,7 @@ public sealed class PlayerLeagueRuntime
 				intents,
 				ref sequence,
 				allianceId,
-				PlayerAllianceInfoPacketPlan.LeagueLeftHimMessageId,
+				remainingAllianceMessageId,
 				leavingLeaderName,
 				leagueId,
 				remainingAllianceIds,
@@ -297,8 +369,8 @@ public sealed class PlayerLeagueRuntime
 			intents,
 			ref sequence,
 			leavingAllianceId,
-			PlayerAllianceInfoPacketPlan.LeagueLeftMeMessageId,
-			leavingLeaderName,
+			leavingAllianceMessageId,
+			leavingAllianceMessage,
 			leagueId: 0,
 			leagueRowsAllianceIds: [],
 			allianceRuntime);
@@ -407,6 +479,17 @@ public sealed class PlayerLeagueRuntime
 		}
 
 		return newLeaderName;
+	}
+
+	private static string FormatPlayerForLeagueCommand(
+		int allianceId,
+		int playerObjectId,
+		PlayerAllianceRuntime allianceRuntime)
+	{
+		var member = allianceRuntime.GetMember(allianceId, playerObjectId);
+		return member != null
+			? $"Player [id={playerObjectId}, name={member.Name}]"
+			: $"Player [id={playerObjectId}, name=]";
 	}
 
 	private static PlayerLeagueSnapshot CreateSnapshot(

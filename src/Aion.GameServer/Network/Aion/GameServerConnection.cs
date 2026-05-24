@@ -5886,9 +5886,26 @@ public sealed class GameServerConnection : BaseClientConnection
 			return null;
 		}
 
-		if (packet.CommandCode is 30 or 32)
+		if (packet.CommandCode == 30)
 		{
-			// Java parity: PlayerTeamCommandService LEAGUE_EXPEL/LEAGUE_SET_LEADER -> findLeagueAlliance requires an active league before resolving the target alliance.
+			// Java parity: PlayerTeamCommandService LEAGUE_EXPEL -> findLeagueAlliance -> LeagueService.expelAlliance.
+			var leagueExpelAlliance = _playerAllianceRuntime.Resolve(player);
+			if (leagueExpelAlliance == null)
+				return null;
+
+			var leagueExpelPlan = _playerLeagueRuntime.ExpelAlliance(
+				leagueExpelAlliance.AllianceId,
+				player.ObjectId,
+				packet.SelectedObjectId,
+				_playerAllianceRuntime);
+			foreach (var intent in leagueExpelPlan.PacketIntents.OrderBy(intent => intent.Sequence))
+				await SendLeaguePacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+			return null;
+		}
+
+		if (packet.CommandCode == 32)
+		{
+			// Java parity: PlayerTeamCommandService LEAGUE_SET_LEADER -> findLeagueAlliance requires an active league before resolving the target alliance.
 			var leagueCommandAlliance = _playerAllianceRuntime.Resolve(player);
 			if (leagueCommandAlliance == null)
 				return null;

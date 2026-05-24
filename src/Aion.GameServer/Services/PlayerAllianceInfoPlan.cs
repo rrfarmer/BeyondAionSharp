@@ -198,6 +198,8 @@ public sealed record PlayerAllianceInfoPacketPlan(
 	public const int ViceCaptainDemoteMessageId = 1300985;
 	public const int LeagueLeftMeMessageId = 1400571;
 	public const int LeagueLeftHimMessageId = 1400572;
+	public const int LeagueExpelMessageId = 1400574;
+	public const int LeagueExpelledMessageId = 1400576;
 	public const int LeagueDispersedMessageId = 1400579;
 
 	public static PlayerAllianceInfoPacketPlan FromSnapshot(
