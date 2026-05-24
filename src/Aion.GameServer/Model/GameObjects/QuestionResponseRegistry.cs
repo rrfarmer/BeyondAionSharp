@@ -88,6 +88,8 @@ public enum QuestionResponseRequestKind
 	TeleportToNpc,
 	GroupInvite,
 	AllianceInvite,
+	DuelRequest,
+	DuelWithdraw,
 }
 
 public sealed record QuestionResponseRequest(

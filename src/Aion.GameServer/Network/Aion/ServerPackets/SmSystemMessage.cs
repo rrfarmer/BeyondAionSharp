@@ -93,6 +93,66 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1390116, playerName);
 	}
 
+	public static SmSystemMessage DuelNoUserToRequest()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_DUEL_NO_USER_TO_REQUEST.
+		return new SmSystemMessage(1300096);
+	}
+
+	public static SmSystemMessage DuelPartnerInvalid(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_DUEL_PARTNER_INVALID(String).
+		return new SmSystemMessage(1300091, playerName);
+	}
+
+	public static SmSystemMessage DuelYouAreInDuelAlready()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_DUEL_YOU_ARE_IN_DUEL_ALREADY.
+		return new SmSystemMessage(1300093);
+	}
+
+	public static SmSystemMessage DuelPartnerInDuelAlready(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_DUEL_PARTNER_IN_DUEL_ALREADY(String).
+		return new SmSystemMessage(1300092, playerName);
+	}
+
+	public static SmSystemMessage RejectedDuel(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_REJECTED_DUEL(String).
+		return new SmSystemMessage(1390120, playerName);
+	}
+
+	public static SmSystemMessage DuelRequested(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_DUEL_REQUESTED(String).
+		return new SmSystemMessage(1301065, playerName);
+	}
+
+	public static SmSystemMessage DuelRequestToPartner(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_DUEL_REQUEST_TO_PARTNER(String).
+		return new SmSystemMessage(1300094, playerName);
+	}
+
+	public static SmSystemMessage DuelCantRequestWhenHeIsAskedQuestion(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_DUEL_CANT_REQUEST_WHEN_HE_IS_ASKED_QUESTION(String).
+		return new SmSystemMessage(1300095, playerName);
+	}
+
+	public static SmSystemMessage DuelRejectDuel(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_DUEL_REJECT_DUEL(String).
+		return new SmSystemMessage(1301064, playerName);
+	}
+
+	public static SmSystemMessage DuelWithdrawRequest(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_DUEL_WITHDRAW_REQUEST(String).
+		return new SmSystemMessage(1300135, playerName);
+	}
+
 	public static SmSystemMessage NotEnoughMoney()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_NOT_ENOUGH_MONEY.

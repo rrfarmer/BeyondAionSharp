@@ -233,6 +233,10 @@ public sealed class Player
 
 	public PendingAllianceInviteRequest? PendingAllianceInviteRequest { get; set; }
 
+	public PendingDuelRequest? PendingDuelRequest { get; set; }
+
+	public PendingDuelRequest? PendingDuelWithdrawRequest { get; set; }
+
 	// Java parity: controllers/CreatureController TaskId.TELEPORT stores TeleportService.SpawnTask until CM_TELEPORT_ANIMATION_DONE.
 	public PendingPlayerTeleport? PendingTeleport { get; set; }
 

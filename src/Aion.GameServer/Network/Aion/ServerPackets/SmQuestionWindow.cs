@@ -5,6 +5,8 @@ namespace Aion.GameServer.Network.Aion.ServerPackets;
 public sealed class SmQuestionWindow : GameServerPacket
 {
 	public const int PacketOpCode = 52;
+	public const int DuelAcceptRequest = 50028;
+	public const int DuelWithdrawRequest = 50030;
 	public const int PartyInvite = 60000;
 	public const int AllianceInvite = 70000;
 	public const int BuddyListAddBuddyRequest = 1401498;

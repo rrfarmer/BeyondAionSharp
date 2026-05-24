@@ -785,6 +785,8 @@ public sealed class PlayerEnterWorldService
 		player.PendingKiskBindRequest = null;
 		player.PendingLeagueInviteRequest = null;
 		player.PendingAllianceInviteRequest = null;
+		player.PendingDuelRequest = null;
+		player.PendingDuelWithdrawRequest = null;
 	}
 
 	private async Task SendPendingQuestionDenySideEffectAsync(Player responder, QuestionResponseDispatch dispatch)
@@ -827,6 +829,18 @@ public sealed class PlayerEnterWorldService
 					await _connectionRegistry.SendPacketToPlayerAsync(
 						requesterObjectId,
 						SmSystemMessage.PartyAllianceHeRejectInvitation(responder.Name));
+				}
+				break;
+			}
+			case QuestionResponseRequestKind.DuelRequest:
+			{
+				var request = dispatch.Request.Payload as PendingDuelRequest ?? responder.PendingDuelRequest;
+				var requesterObjectId = request?.RequesterObjectId ?? dispatch.Request.RequesterObjectId;
+				if (requesterObjectId > 0)
+				{
+					await _connectionRegistry.SendPacketToPlayerAsync(
+						requesterObjectId,
+						SmCloseQuestionWindow.DuelHeRejectDuel(responder.Name));
 				}
 				break;
 			}

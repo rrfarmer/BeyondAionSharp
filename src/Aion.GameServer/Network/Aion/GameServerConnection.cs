@@ -73,6 +73,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly PlayerGroupRuntime _playerGroupRuntime;
 	private readonly PlayerAllianceRuntime _playerAllianceRuntime;
 	private readonly PlayerLeagueRuntime _playerLeagueRuntime;
+	private readonly PlayerDuelRequestService _playerDuelRequestService;
 	private readonly PlayerAllianceGroupChangeServicePlanner _playerAllianceGroupChangeServicePlanner;
 	private readonly PlayerShowBrandCommandPlanner _showBrandCommandPlanner;
 	private readonly SemaphoreSlim _sendLock = new(1, 1);
@@ -133,6 +134,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		PlayerGroupRuntime? playerGroupRuntime = null,
 		PlayerAllianceRuntime? playerAllianceRuntime = null,
 		PlayerLeagueRuntime? playerLeagueRuntime = null,
+		PlayerDuelRequestService? playerDuelRequestService = null,
 		PlayerShowBrandCommandPlanner? showBrandCommandPlanner = null)
 		: base(logger, client, clientId)
 	{
@@ -166,6 +168,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_playerGroupRuntime = playerGroupRuntime ?? new PlayerGroupRuntime();
 		_playerAllianceRuntime = playerAllianceRuntime ?? new PlayerAllianceRuntime();
 		_playerLeagueRuntime = playerLeagueRuntime ?? new PlayerLeagueRuntime();
+		_playerDuelRequestService = playerDuelRequestService ?? new PlayerDuelRequestService();
 		_playerAllianceGroupChangeServicePlanner = new PlayerAllianceGroupChangeServicePlanner(_playerAllianceRuntime);
 		_showBrandCommandPlanner = showBrandCommandPlanner
 			?? new PlayerShowBrandCommandPlanner(_playerGroupRuntime, _playerAllianceRuntime);
@@ -411,6 +414,10 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmInviteToGroup inviteToGroup:
 				if (_activePlayer != null)
 					await HandleInviteToGroupAsync(_activePlayer, inviteToGroup);
+				break;
+			case CmDuelRequest duelRequest:
+				if (_activePlayer != null)
+					await HandleDuelRequestAsync(_activePlayer, duelRequest);
 				break;
 			case CmCheckPak:
 				// Java parity: network/aion/clientpackets/CM_CHECK_PAK.runImpl only audit-logs suspicious pak status; deferred until audit logging policy is ported.
@@ -6818,6 +6825,18 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (packet.QuestionId == SmQuestionWindow.DuelAcceptRequest)
+		{
+			await HandleDuelAcceptQuestionResponseAsync(responder, packet);
+			return;
+		}
+
+		if (packet.QuestionId == SmQuestionWindow.DuelWithdrawRequest)
+		{
+			await HandleDuelWithdrawQuestionResponseAsync(responder, packet);
+			return;
+		}
+
 		if (packet.QuestionId == SmQuestionWindow.TeleportToNpcConfirm)
 		{
 			await HandleTeleportToNpcQuestionResponseAsync(responder, packet);
@@ -6899,6 +6918,36 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (result.QuestionWindow != null)
 			await _connectionRegistry.SendPacketToPlayerAsync(invited.ObjectId, result.QuestionWindow);
 		return result;
+	}
+
+	internal async Task<DuelRequestPlan> HandleDuelRequestAsync(
+		Player requester,
+		CmDuelRequest packet,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: network/aion/clientpackets/CM_DUEL_REQUEST.runImpl resolves the target from
+		// the active player's known-list, then calls DuelService.onDuelRequest.
+		var target = TryGetOnlinePlayerByObjectId(packet.TargetObjectId);
+		var plan = _playerDuelRequestService.SendDuelRequest(requester, target);
+		if (plan.RejectionIntent != null)
+			await SendDuelPacketAsync(plan.RejectionIntent.RecipientObjectId, plan.RejectionIntent.Packet, cancellationToken);
+
+		foreach (var intent in plan.PacketIntents)
+			await SendDuelPacketAsync(intent.RecipientObjectId, intent.Packet, cancellationToken);
+
+		return plan;
+	}
+
+	private async Task SendDuelPacketAsync(
+		int recipientObjectId,
+		GameServerPacket packet,
+		CancellationToken cancellationToken = default)
+	{
+		if (_connectionRegistry != null && await _connectionRegistry.SendPacketToPlayerAsync(recipientObjectId, packet))
+			return;
+
+		if (_activePlayer?.ObjectId == recipientObjectId)
+			await SendPacketAsync(packet, cancellationToken);
 	}
 
 	private async Task<GroupInviteRequestResult?> HandleInviteToAllianceAsync(
@@ -7019,6 +7068,34 @@ public sealed class GameServerConnection : BaseClientConnection
 			}
 		}
 
+		return result;
+	}
+
+	private async Task<DuelResponsePlan> HandleDuelAcceptQuestionResponseAsync(
+		Player responder,
+		CmQuestionResponse packet)
+	{
+		var result = _playerDuelRequestService.HandleTargetResponse(
+			responder,
+			packet.QuestionId,
+			packet.Response,
+			TryGetOnlinePlayerByObjectId);
+		foreach (var intent in result.PacketIntents)
+			await SendDuelPacketAsync(intent.RecipientObjectId, intent.Packet);
+		return result;
+	}
+
+	private async Task<DuelResponsePlan> HandleDuelWithdrawQuestionResponseAsync(
+		Player requester,
+		CmQuestionResponse packet)
+	{
+		var result = _playerDuelRequestService.HandleWithdrawResponse(
+			requester,
+			packet.QuestionId,
+			packet.Response,
+			TryGetOnlinePlayerByObjectId);
+		foreach (var intent in result.PacketIntents)
+			await SendDuelPacketAsync(intent.RecipientObjectId, intent.Packet);
 		return result;
 	}
 
