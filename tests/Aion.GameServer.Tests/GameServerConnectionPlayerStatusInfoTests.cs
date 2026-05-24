@@ -694,6 +694,81 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 	}
 
 	[Fact]
+	public void PlayerLeagueRuntime_ChangeLootRulesUpdatesLeagueAndBroadcastsAllianceInfoLikeJavaEvent()
+	{
+		var alliances = new PlayerAllianceRuntime();
+		var leagues = new PlayerLeagueRuntime();
+		var leagueLeader = new Player { ObjectId = 1001, Name = "LeagueLeader", IsOnline = true, Position = new WorldPosition(210010000, 1, 2, 3, 0) };
+		var allianceLeader = new Player { ObjectId = 2001, Name = "AllianceLeader", IsOnline = true, Position = new WorldPosition(220010000, 4, 5, 6, 0) };
+		alliances.CreateAlliance(88001, leagueLeader);
+		alliances.CreateAlliance(88002, allianceLeader);
+		leagues.CreateLeague(77001, leaderAllianceId: 88001);
+		leagues.AddAlliance(77001, allianceId: 88002);
+		var changedRules = new PlayerGroupLootRules(
+			PlayerGroupLootRuleType.Leader,
+			Misc: 7,
+			CommonItemAbove: 1,
+			SuperiorItemAbove: 2,
+			HeroicItemAbove: 3,
+			FabledItemAbove: 4,
+			EternalItemAbove: 5,
+			MythicItemAbove: 6);
+
+		var plan = Assert.IsType<PlayerLeagueLootRulesChangedPlan>(leagues.ChangeLootRules(77001, changedRules, alliances));
+
+		Assert.Equal(77001, plan.LeagueId);
+		Assert.Same(changedRules, plan.LootRules);
+		Assert.Same(changedRules, leagues.GetLootRules(77001));
+		Assert.Equal([88001, 88002], plan.AllianceIdsByPosition);
+		var expectedRows = new[]
+		{
+			new PlayerAllianceInfoLeagueRow(0, 88001, 1, "LeagueLeader", 210010000),
+			new PlayerAllianceInfoLeagueRow(1, 88002, 1, "AllianceLeader", 220010000),
+		};
+		Assert.Collection(
+			plan.PacketIntents,
+			intent =>
+			{
+				Assert.Equal(1001, intent.RecipientObjectId);
+				Assert.Equal(PlayerLeaguePacketIntentKind.AllianceInfo, intent.Kind);
+				Assert.Same(changedRules, intent.AllianceInfoPlan?.LeagueLootRules);
+				AssertLeagueAllianceInfoPacket(new SentPacketRecord(1001, intent.CreatePacket()), 88001, 1001, 210010000, expectedLeagueRows: expectedRows, expectedLeagueLootRules: changedRules);
+			},
+			intent =>
+			{
+				Assert.Equal(2001, intent.RecipientObjectId);
+				Assert.Equal(PlayerLeaguePacketIntentKind.AllianceInfo, intent.Kind);
+				Assert.Same(changedRules, intent.AllianceInfoPlan?.LeagueLootRules);
+				AssertLeagueAllianceInfoPacket(new SentPacketRecord(2001, intent.CreatePacket()), 88002, 2001, 220010000, expectedLeagueRows: expectedRows, expectedLeagueLootRules: changedRules);
+			});
+	}
+
+	[Fact]
+	public void PlayerLeagueRuntime_ChangeLootRulesReturnsNullForUnknownLeague()
+	{
+		var alliances = new PlayerAllianceRuntime();
+		var leagues = new PlayerLeagueRuntime();
+		var leader = new Player { ObjectId = 1001, Name = "LeagueLeader", IsOnline = true };
+		alliances.CreateAlliance(88001, leader);
+		leagues.CreateLeague(77001, leaderAllianceId: 88001);
+		var changedRules = new PlayerGroupLootRules(
+			PlayerGroupLootRuleType.Leader,
+			Misc: 7,
+			CommonItemAbove: 1,
+			SuperiorItemAbove: 2,
+			HeroicItemAbove: 3,
+			FabledItemAbove: 4,
+			EternalItemAbove: 5,
+			MythicItemAbove: 6);
+
+		var plan = leagues.ChangeLootRules(77999, changedRules, alliances);
+
+		Assert.Null(plan);
+		Assert.Equal(PlayerGroupLootRuleType.FreeForAll, leagues.GetLootRules(77001)?.LootRule);
+		Assert.Equal([88001], leagues.GetAllianceIdsByPosition(77001));
+	}
+
+	[Fact]
 	public async Task HandlePlayerStatusInfoAsync_GroupSetLfgTogglesPlayerFlagLikeJava()
 	{
 		var registry = new CapturingConnectionRegistry();
@@ -1598,8 +1673,18 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 		int expectedMessageId = 0,
 		string expectedMessage = "",
 		int expectedLeagueId = 77001,
-		IReadOnlyList<PlayerAllianceInfoLeagueRow>? expectedLeagueRows = null)
+		IReadOnlyList<PlayerAllianceInfoLeagueRow>? expectedLeagueRows = null,
+		PlayerGroupLootRules? expectedLeagueLootRules = null)
 	{
+		expectedLeagueLootRules ??= new PlayerGroupLootRules(
+			PlayerGroupLootRuleType.FreeForAll,
+			Misc: 0,
+			CommonItemAbove: 0,
+			SuperiorItemAbove: 2,
+			HeroicItemAbove: 2,
+			FabledItemAbove: 2,
+			EternalItemAbove: 2,
+			MythicItemAbove: 2);
 		expectedLeagueRows ??=
 		[
 			new PlayerAllianceInfoLeagueRow(0, 88002, 1, "AllianceLeader", 220010000),
@@ -1630,7 +1715,7 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 		if (expectedLeagueRows.Count > 0)
 		{
 			Assert.Equal(expectedLeagueRows.Count, reader.ReadH());
-			AssertDefaultLootRules(reader);
+			AssertLootRules(reader, expectedLeagueLootRules);
 			Assert.Equal(0x02, reader.ReadD());
 			foreach (var row in expectedLeagueRows)
 				AssertLeagueRow(reader, row.AlliancePosition, row.AllianceObjectId, row.MemberCount, row.CaptainName, row.CaptainWorldId);
@@ -1640,14 +1725,19 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 
 	private static void AssertDefaultLootRules(PacketBuffer reader)
 	{
-		Assert.Equal((int)PlayerGroupLootRuleType.RoundRobin, reader.ReadD());
-		Assert.Equal(0, reader.ReadD());
-		Assert.Equal(0, reader.ReadD());
-		Assert.Equal(2, reader.ReadD());
-		Assert.Equal(2, reader.ReadD());
-		Assert.Equal(2, reader.ReadD());
-		Assert.Equal(2, reader.ReadD());
-		Assert.Equal(2, reader.ReadD());
+		AssertLootRules(reader, PlayerGroupLootRules.Default());
+	}
+
+	private static void AssertLootRules(PacketBuffer reader, PlayerGroupLootRules expectedLootRules)
+	{
+		Assert.Equal((int)expectedLootRules.LootRule, reader.ReadD());
+		Assert.Equal(expectedLootRules.Misc, reader.ReadD());
+		Assert.Equal(expectedLootRules.CommonItemAbove, reader.ReadD());
+		Assert.Equal(expectedLootRules.SuperiorItemAbove, reader.ReadD());
+		Assert.Equal(expectedLootRules.HeroicItemAbove, reader.ReadD());
+		Assert.Equal(expectedLootRules.FabledItemAbove, reader.ReadD());
+		Assert.Equal(expectedLootRules.EternalItemAbove, reader.ReadD());
+		Assert.Equal(expectedLootRules.MythicItemAbove, reader.ReadD());
 	}
 
 	private static void AssertLeagueRow(

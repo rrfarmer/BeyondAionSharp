@@ -18,6 +18,7 @@ public sealed record PlayerAllianceSnapshot(
 		int messageId = 0,
 		string message = "",
 		int leagueId = 0,
+		PlayerGroupLootRules? leagueLootRules = null,
 		IReadOnlyList<PlayerAllianceInfoLeagueRow>? leagueRows = null)
 	{
 		// Java parity: network/aion/serverpackets/SM_ALLIANCE_INFO is built from PlayerAlliance snapshot data.
@@ -32,6 +33,7 @@ public sealed record PlayerAllianceSnapshot(
 			messageId,
 			message,
 			leagueId,
+			leagueLootRules,
 			leagueRows: leagueRows);
 	}
 }

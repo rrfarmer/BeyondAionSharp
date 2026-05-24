@@ -11,6 +11,7 @@ public sealed class PlayerLeagueRuntime
 	private readonly Dictionary<int, List<PlayerLeagueMember>> _membersByLeagueId = [];
 	private readonly Dictionary<int, int> _leagueIdByAllianceId = [];
 	private readonly Dictionary<int, int> _leaderAllianceIdByLeagueId = [];
+	private readonly Dictionary<int, PlayerGroupLootRules> _lootRulesByLeagueId = [];
 
 	public PlayerLeagueSnapshot CreateLeague(int leagueId, int leaderAllianceId)
 	{
@@ -29,6 +30,7 @@ public sealed class PlayerLeagueRuntime
 			_membersByLeagueId[leagueId] = members;
 			_leagueIdByAllianceId[leaderAllianceId] = leagueId;
 			_leaderAllianceIdByLeagueId[leagueId] = leaderAllianceId;
+			_lootRulesByLeagueId[leagueId] = CreateDefaultLeagueLootRules();
 			return CreateSnapshot(leagueId, members, leaderAllianceId);
 		}
 	}
@@ -84,6 +86,38 @@ public sealed class PlayerLeagueRuntime
 			return _membersByLeagueId.TryGetValue(leagueId, out var members)
 				? members.FirstOrDefault(member => member.AllianceId == allianceId)?.LeaguePosition
 				: null;
+	}
+
+	public PlayerGroupLootRules? GetLootRules(int leagueId)
+	{
+		lock (_sync)
+			return _lootRulesByLeagueId.GetValueOrDefault(leagueId);
+	}
+
+	public PlayerLeagueLootRulesChangedPlan? ChangeLootRules(
+		int leagueId,
+		PlayerGroupLootRules lootRules,
+		PlayerAllianceRuntime allianceRuntime)
+	{
+		// Java parity: model/team/league/events/LeagueLootRulesChangeEvent sets League.lootGroupRules and
+		// broadcasts SM_ALLIANCE_INFO(alliance) to every alliance in the league.
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(leagueId, 0);
+
+		lock (_sync)
+		{
+			if (!_membersByLeagueId.TryGetValue(leagueId, out var members))
+				return null;
+
+			_lootRulesByLeagueId[leagueId] = lootRules;
+			var sortedAllianceIds = GetSortedAllianceIds(members);
+			var intents = CreateLootRulesChangedPacketIntents(
+				leagueId,
+				sortedAllianceIds,
+				lootRules,
+				allianceRuntime);
+
+			return new PlayerLeagueLootRulesChangedPlan(leagueId, sortedAllianceIds, lootRules, intents);
+		}
 	}
 
 	public PlayerLeagueMovePlan? MoveAlliance(
@@ -315,6 +349,7 @@ public sealed class PlayerLeagueRuntime
 				_leagueIdByAllianceId.Remove(member.AllianceId);
 			_membersByLeagueId.Remove(leagueId);
 			_leaderAllianceIdByLeagueId.Remove(leagueId);
+			_lootRulesByLeagueId.Remove(leagueId);
 		}
 
 		return new PlayerLeagueLeavePlan(
@@ -326,7 +361,7 @@ public sealed class PlayerLeagueRuntime
 			intents);
 	}
 
-	private static IReadOnlyList<PlayerLeaguePacketIntent> CreateMovePacketIntents(
+	private IReadOnlyList<PlayerLeaguePacketIntent> CreateMovePacketIntents(
 		int leagueId,
 		IReadOnlyList<int> sortedAllianceIds,
 		int selectedAllianceId,
@@ -361,6 +396,7 @@ public sealed class PlayerLeagueRuntime
 					AllianceInfoPlan: snapshot.CreateInfoPacketPlan(
 						activePlayerMapId,
 						leagueId: leagueId,
+						leagueLootRules: GetLeagueLootRules(leagueId),
 						leagueRows: CreateLeagueRows(sortedAllianceIds, allianceRuntime))));
 
 				intents.Add(new PlayerLeaguePacketIntent(
@@ -386,7 +422,7 @@ public sealed class PlayerLeagueRuntime
 		return intents;
 	}
 
-	private static IReadOnlyList<PlayerLeaguePacketIntent> CreateLeavePacketIntents(
+	private IReadOnlyList<PlayerLeaguePacketIntent> CreateLeavePacketIntents(
 		int leagueId,
 		int leavingAllianceId,
 		string leavingLeaderName,
@@ -454,7 +490,7 @@ public sealed class PlayerLeagueRuntime
 		return intents;
 	}
 
-	private static IReadOnlyList<PlayerLeaguePacketIntent> CreateSetLeaderPacketIntents(
+	private IReadOnlyList<PlayerLeaguePacketIntent> CreateSetLeaderPacketIntents(
 		int leagueId,
 		int callerAllianceId,
 		int callerObjectId,
@@ -486,6 +522,7 @@ public sealed class PlayerLeagueRuntime
 					AllianceInfoPlan: snapshot.CreateInfoPacketPlan(
 						activePlayerMapId,
 						leagueId: leagueId,
+						leagueLootRules: GetLeagueLootRules(leagueId),
 						leagueRows: CreateLeagueRows(sortedAllianceIds, allianceRuntime, leaguePositionsByAllianceId))));
 
 				if (callerAllianceId == targetAllianceId)
@@ -520,7 +557,7 @@ public sealed class PlayerLeagueRuntime
 		return intents;
 	}
 
-	private static void AddAllianceInfoIntents(
+	private void AddAllianceInfoIntents(
 		List<PlayerLeaguePacketIntent> intents,
 		ref int sequence,
 		int allianceId,
@@ -546,10 +583,43 @@ public sealed class PlayerLeagueRuntime
 					messageId,
 					message,
 					leagueId,
+					leagueLootRules: GetLeagueLootRulesOrDefault(leagueId),
 					leagueRows: leagueRowsAllianceIds.Count > 0
 						? CreateLeagueRows(leagueRowsAllianceIds, allianceRuntime)
 						: Array.Empty<PlayerAllianceInfoLeagueRow>())));
 		}
+	}
+
+	private IReadOnlyList<PlayerLeaguePacketIntent> CreateLootRulesChangedPacketIntents(
+		int leagueId,
+		IReadOnlyList<int> sortedAllianceIds,
+		PlayerGroupLootRules lootRules,
+		PlayerAllianceRuntime allianceRuntime)
+	{
+		var intents = new List<PlayerLeaguePacketIntent>();
+		var sequence = 0;
+		foreach (var allianceId in sortedAllianceIds)
+		{
+			var snapshot = allianceRuntime.GetSnapshot(allianceId)
+				?? throw new InvalidOperationException($"Alliance should not be null: {allianceId}");
+			foreach (var recipientObjectId in allianceRuntime.GetMemberObjectIds(allianceId))
+			{
+				var recipient = allianceRuntime.GetMember(allianceId, recipientObjectId)?.Player;
+				var activePlayerMapId = recipient?.Position.WorldId ?? 0;
+				intents.Add(new PlayerLeaguePacketIntent(
+					sequence++,
+					recipientObjectId,
+					allianceId,
+					PlayerLeaguePacketIntentKind.AllianceInfo,
+					AllianceInfoPlan: snapshot.CreateInfoPacketPlan(
+						activePlayerMapId,
+						leagueId: leagueId,
+						leagueLootRules: lootRules,
+						leagueRows: CreateLeagueRows(sortedAllianceIds, allianceRuntime))));
+			}
+		}
+
+		return intents;
 	}
 
 	private static string GetAllianceLeaderName(PlayerAllianceRuntime allianceRuntime, int allianceId)
@@ -611,6 +681,32 @@ public sealed class PlayerLeagueRuntime
 		}
 
 		return newLeaderName;
+	}
+
+	private PlayerGroupLootRules GetLeagueLootRules(int leagueId)
+	{
+		return _lootRulesByLeagueId.TryGetValue(leagueId, out var lootRules)
+			? lootRules
+			: CreateDefaultLeagueLootRules();
+	}
+
+	private PlayerGroupLootRules? GetLeagueLootRulesOrDefault(int leagueId)
+	{
+		return leagueId > 0 ? GetLeagueLootRules(leagueId) : null;
+	}
+
+	private static PlayerGroupLootRules CreateDefaultLeagueLootRules()
+	{
+		// Java parity: LeagueService.createLeague sets new LootGroupRules(FREEFORALL, 0, 0, 2, 2, 2, 2, 2).
+		return new PlayerGroupLootRules(
+			PlayerGroupLootRuleType.FreeForAll,
+			Misc: 0,
+			CommonItemAbove: 0,
+			SuperiorItemAbove: 2,
+			HeroicItemAbove: 2,
+			FabledItemAbove: 2,
+			EternalItemAbove: 2,
+			MythicItemAbove: 2);
 	}
 
 	private static string FormatPlayerForLeagueCommand(
@@ -679,6 +775,12 @@ public sealed record PlayerLeagueSetLeaderPlan(
 	int NewLeaderAllianceId,
 	int NewLeaderPreviousPosition,
 	IReadOnlyList<int> AllianceIdsByPosition,
+	IReadOnlyList<PlayerLeaguePacketIntent> PacketIntents);
+
+public sealed record PlayerLeagueLootRulesChangedPlan(
+	int LeagueId,
+	IReadOnlyList<int> AllianceIdsByPosition,
+	PlayerGroupLootRules LootRules,
 	IReadOnlyList<PlayerLeaguePacketIntent> PacketIntents);
 
 public enum PlayerLeaguePacketIntentKind
