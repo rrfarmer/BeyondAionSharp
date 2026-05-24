@@ -1,5 +1,6 @@
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion.ServerPackets;
+using Aion.GameServer.Dataholders;
 
 namespace Aion.GameServer.Services;
 
@@ -7,13 +8,22 @@ public sealed class WorldNpcSkillDamageService
 {
 	private readonly WorldNpcDamageService _damageService;
 	private readonly WorldNpcSkillResultCalculationService _resultCalculation;
+	private readonly ItemTemplateTable? _itemTemplates;
+	private readonly Func<Player, IdianPolishBurnPlan, CancellationToken, Task<bool>>? _saveIdianPolishBurnAsync;
+	private readonly Func<Player, ItemChargeBurnPlan, CancellationToken, Task<bool>>? _saveItemChargeBurnAsync;
 
 	public WorldNpcSkillDamageService(
 		WorldNpcDamageService damageService,
-		WorldNpcSkillResultCalculationService? resultCalculation = null)
+		WorldNpcSkillResultCalculationService? resultCalculation = null,
+		ItemTemplateTable? itemTemplates = null,
+		Func<Player, IdianPolishBurnPlan, CancellationToken, Task<bool>>? saveIdianPolishBurnAsync = null,
+		Func<Player, ItemChargeBurnPlan, CancellationToken, Task<bool>>? saveItemChargeBurnAsync = null)
 	{
 		_damageService = damageService;
 		_resultCalculation = resultCalculation ?? new WorldNpcSkillResultCalculationService();
+		_itemTemplates = itemTemplates;
+		_saveIdianPolishBurnAsync = saveIdianPolishBurnAsync;
+		_saveItemChargeBurnAsync = saveItemChargeBurnAsync;
 	}
 
 	public async ValueTask<WorldNpcSkillDamageResult> ApplyDamageEffectAsync(
@@ -68,6 +78,11 @@ public sealed class WorldNpcSkillDamageService
 				request.Target!.ObjectId,
 				request.SkillId)
 			: null;
+		var equipmentObserverBurns = await ApplyEquipmentObserverBurnsAsync(
+			request,
+			shouldNotifyAttackObserver,
+			shouldNotifyDotAttackedObserver,
+			cancellationToken);
 		var drainResult = mapping.ApplyDrain
 			? new WorldNpcSkillDrainResult(
 				damageResult.Damage * Math.Max(0, options.HpDrainPercent) / 100,
@@ -81,9 +96,38 @@ public sealed class WorldNpcSkillDamageService
 			damageResult,
 			attackObserverNotification,
 			dotAttackedObserverNotification,
+			equipmentObserverBurns,
 			drainResult,
 			delayResult,
 			calculationResult);
+	}
+
+	private async Task<EquipmentObserverBurnWorkflowResult?> ApplyEquipmentObserverBurnsAsync(
+		WorldNpcSkillDamageRequest request,
+		bool shouldNotifyAttackObserver,
+		bool shouldNotifyDotAttackedObserver,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: Skill/Effect attack observer callbacks eventually notify equipped IdianStone/ChargeInfo observers.
+		if (_itemTemplates == null || request.Effector == null)
+			return null;
+
+		var observerEvent = shouldNotifyDotAttackedObserver
+			? EquipmentObserverBurnEvent.DotAttacked
+			: shouldNotifyAttackObserver
+				? EquipmentObserverBurnEvent.Attack
+				: (EquipmentObserverBurnEvent?)null;
+		if (observerEvent == null)
+			return null;
+
+		return await EquipmentObserverBurnWorkflowService.ApplyObserverBurnsAsync(
+			request.Effector,
+			_itemTemplates,
+			observerEvent.Value,
+			request.SkillId,
+			_saveIdianPolishBurnAsync,
+			_saveItemChargeBurnAsync,
+			cancellationToken);
 	}
 
 	public WorldNpcSkillOverTimeEffectStartResult StartOverTimeEffect(WorldNpcSkillOverTimeEffectStartRequest request)
@@ -855,6 +899,7 @@ public sealed record WorldNpcSkillDamageResult(
 	WorldNpcDamageResult DamageResult,
 	WorldNpcSkillAttackObserverNotification? AttackObserverNotification,
 	WorldNpcSkillDotAttackedObserverNotification? DotAttackedObserverNotification = null,
+	EquipmentObserverBurnWorkflowResult? EquipmentObserverBurns = null,
 	WorldNpcSkillDrainResult? DrainResult = null,
 	WorldNpcSkillDelayResult? DelayResult = null,
 	WorldNpcSkillResultCalculationResult? CalculationResult = null);

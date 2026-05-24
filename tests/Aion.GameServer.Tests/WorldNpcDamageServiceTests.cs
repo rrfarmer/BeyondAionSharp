@@ -1,3 +1,4 @@
+using Aion.Commons.Network;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
@@ -196,6 +197,58 @@ public sealed class WorldNpcDamageServiceTests
 	}
 
 	[Fact]
+	public async Task ApplyDamageEffectAsync_AppliesEquipmentObserverBurnsForOrdinaryAttack()
+	{
+		var damageService = CreateDamageService(out var spawnService, out var world, out _, out var threadPoolManager, out _, out _, out _, out _, out _);
+		var idianSavedObjects = new List<int>();
+		var chargeSavedObjects = new List<int>();
+		var skillDamageService = new WorldNpcSkillDamageService(
+			damageService,
+			itemTemplates: CreateObserverBurnItemTemplates(),
+			saveIdianPolishBurnAsync: (_, plan, _) =>
+			{
+				idianSavedObjects.AddRange(plan.Burns.Select(burn => burn.ItemUpdate.ObjectId));
+				return Task.FromResult(true);
+			},
+			saveItemChargeBurnAsync: (_, plan, _) =>
+			{
+				chargeSavedObjects.AddRange(plan.Burns.Select(burn => burn.ItemUpdate.ObjectId));
+				return Task.FromResult(true);
+			});
+		try
+		{
+			SpawnNpc(spawnService, world, npcTemplateId: 203108, maxHp: 100);
+			var npc = Assert.Single(world.GetNpcs());
+			var effector = CreatePlayerWithObserverBurnItem(charge: 100_050, polishCharge: 350_000);
+
+			var result = await skillDamageService.ApplyDamageEffectAsync(new WorldNpcSkillDamageRequest(
+				Target: npc,
+				Effector: effector,
+				Damage: 20,
+				SkillId: 0));
+
+			Assert.NotNull(result.AttackObserverNotification);
+			Assert.Null(result.DotAttackedObserverNotification);
+			Assert.NotNull(result.EquipmentObserverBurns);
+			Assert.True(result.EquipmentObserverBurns.Changed);
+			Assert.True(result.EquipmentObserverBurns.Persisted);
+			Assert.Equal([10], idianSavedObjects);
+			Assert.Equal([10], chargeSavedObjects);
+			var item = Assert.Single(effector.InventoryItems);
+			Assert.Equal(250_000, item.IdianStone?.PolishCharge);
+			Assert.Equal(99_850, item.Charge);
+			Assert.Collection(
+				result.EquipmentObserverBurns.Packets,
+				packet => AssertPolishChargePacket(packet, objectId: 10, polishCharge: 250_000),
+				packet => AssertChargePacket(packet, objectId: 10, charge: 99_850));
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
 	public async Task ApplyDamageEffectAsync_UsesStagedSkillResultCalculation()
 	{
 		var damageService = CreateDamageService(out var spawnService, out var world, out _, out var threadPoolManager, out _, out _, out _, out _, out _);
@@ -292,6 +345,44 @@ public sealed class WorldNpcDamageServiceTests
 			Assert.Equal(1001, result.DotAttackedObserverNotification.EffectorObjectId);
 			Assert.Equal(npc.ObjectId, result.DotAttackedObserverNotification.TargetObjectId);
 			Assert.Equal(5003, result.DotAttackedObserverNotification.SkillId);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
+	public async Task ApplyDamageEffectAsync_AppliesEquipmentObserverBurnsForDotAttack()
+	{
+		var damageService = CreateDamageService(out var spawnService, out var world, out _, out var threadPoolManager, out _, out _, out _, out _, out _);
+		var skillDamageService = new WorldNpcSkillDamageService(
+			damageService,
+			itemTemplates: CreateObserverBurnItemTemplates());
+		try
+		{
+			SpawnNpc(spawnService, world, npcTemplateId: 203109, maxHp: 100);
+			var npc = Assert.Single(world.GetNpcs());
+			var effector = CreatePlayerWithObserverBurnItem(charge: 100_050, polishCharge: 350_000);
+
+			var result = await skillDamageService.ApplyDamageEffectAsync(new WorldNpcSkillDamageRequest(
+				Target: npc,
+				Effector: effector,
+				Damage: 15,
+				SkillId: 5003,
+				Kind: WorldNpcSkillDamageKind.PeriodicSpellAttack));
+
+			Assert.Null(result.AttackObserverNotification);
+			Assert.NotNull(result.DotAttackedObserverNotification);
+			Assert.NotNull(result.EquipmentObserverBurns);
+			Assert.True(result.EquipmentObserverBurns.Changed);
+			var item = Assert.Single(effector.InventoryItems);
+			Assert.Equal(290_000, item.IdianStone?.PolishCharge);
+			Assert.Equal(99_950, item.Charge);
+			Assert.Collection(
+				result.EquipmentObserverBurns.Packets,
+				packet => AssertPolishChargePacket(packet, objectId: 10, polishCharge: 290_000),
+				packet => AssertChargePacket(packet, objectId: 10, charge: 99_950));
 		}
 		finally
 		{
@@ -1206,6 +1297,98 @@ public sealed class WorldNpcDamageServiceTests
 	private static Player CreatePlayer()
 	{
 		return new Player { ObjectId = 1001, Race = "ELYOS", Level = 10 };
+	}
+
+	private static Player CreatePlayerWithObserverBurnItem(int charge, int polishCharge)
+	{
+		return new Player
+		{
+			ObjectId = 1001,
+			Race = "ELYOS",
+			Level = 10,
+			InventoryItems =
+			[
+				new InventoryItem
+				{
+					ObjectId = 10,
+					ItemId = 100,
+					Count = 1,
+					Location = 0,
+					IsEquipped = true,
+					Slot = 1,
+					Charge = charge,
+					IdianStone = new PlayerIdianStone(600, 1, polishCharge),
+				},
+			],
+		};
+	}
+
+	private static ItemTemplateTable CreateObserverBurnItemTemplates()
+	{
+		return new ItemTemplateTable(
+		[
+			new ItemTemplateSummary(
+				100,
+				"item_100",
+				0,
+				1,
+				1,
+				"SWORD",
+				"NORMAL",
+				"COMMON",
+				"PC_ALL",
+				1,
+				0,
+				3,
+				Improvement: new ItemImprovement(ChargeWay: 1, Level: 2, BurnAttack: 200, BurnDefend: 100, Price1: 1000, Price2: 2000),
+				IdianInfo: new ItemIdianInfo(BurnAttack: 100_000, BurnDefend: 60_000)),
+			new ItemTemplateSummary(
+				600,
+				"idian_600",
+				0,
+				1,
+				1,
+				"NONE",
+				"NORMAL",
+				"COMMON",
+				"PC_ALL",
+				1,
+				0,
+				0,
+				PolishSetId: 12),
+		]);
+	}
+
+	private static void AssertPolishChargePacket(GameServerPacket packet, int objectId, int polishCharge)
+	{
+		var payload = SerializeUnencryptedPayload(packet);
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(objectId, reader.ReadD());
+		Assert.Equal(string.Empty, reader.ReadS());
+		Assert.Equal(5, reader.ReadH());
+		Assert.Equal(0x11, (int)reader.ReadC());
+		Assert.Equal(polishCharge, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertChargePacket(GameServerPacket packet, int objectId, int charge)
+	{
+		var payload = SerializeUnencryptedPayload(packet);
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(objectId, reader.ReadD());
+		Assert.Equal(string.Empty, reader.ReadS());
+		Assert.Equal(5, reader.ReadH());
+		Assert.Equal(0x0f, (int)reader.ReadC());
+		Assert.Equal(charge, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
+	{
+		var crypt = new GameCrypt(() => 0x01020304);
+		crypt.EnableKey();
+		var frame = packet.SerializeFrame(crypt);
+		return frame[7..];
 	}
 
 	private static NpcSpawnSummary CreateSpawn(
