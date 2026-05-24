@@ -224,6 +224,49 @@ public sealed class PlayerSummonSkillExecutionService
 			: PlayerSummonKnownObjectNpcSkillEntryReadiness.NotReady(timing, hpReady, timeReady);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillTemplateProjection ProjectMercenaryNpcSkillTemplate(
+		PlayerSummonKnownObjectNpcSkillTemplateMetadata template,
+		long lastTimeUsedMilliseconds = 0)
+	{
+		return new PlayerSummonKnownObjectNpcSkillTemplateProjection(
+			ProjectMercenaryNpcSkillEntryTiming(template, lastTimeUsedMilliseconds),
+			template.ConditionTemplate ?? new PlayerSummonKnownObjectNpcSkillConditionMetadata(),
+			ResolveMercenaryNpcSkillTargetMode(template.Target),
+			template.Probability,
+			template.Priority,
+			template.NextSkillTimeMilliseconds,
+			template.NextChainId,
+			template.ChainId,
+			template.MaxChainTimeMilliseconds,
+			template.IsPostSpawn);
+	}
+
+	public PlayerSummonKnownObjectNpcSkillEntryTiming ProjectMercenaryNpcSkillEntryTiming(
+		PlayerSummonKnownObjectNpcSkillTemplateMetadata template,
+		long lastTimeUsedMilliseconds = 0)
+	{
+		// Java parity: mirrors NpcSkillTemplate fields consumed by NpcSkillTemplateEntry.isReady.
+		return new PlayerSummonKnownObjectNpcSkillEntryTiming(
+			template.MinHpPercentage,
+			template.MaxHpPercentage,
+			template.MinTimeMilliseconds,
+			template.MaxTimeMilliseconds,
+			template.ConjunctionType,
+			template.CooldownMilliseconds,
+			lastTimeUsedMilliseconds);
+	}
+
+	public PlayerSummonKnownObjectSkillTargetMode ResolveMercenaryNpcSkillTargetMode(PlayerSummonKnownObjectNpcSkillTargetAttribute target)
+	{
+		return target switch
+		{
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.None => PlayerSummonKnownObjectSkillTargetMode.None,
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.MostHated => PlayerSummonKnownObjectSkillTargetMode.MostHated,
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.Me => PlayerSummonKnownObjectSkillTargetMode.Self,
+			_ => PlayerSummonKnownObjectSkillTargetMode.CreatureTarget,
+		};
+	}
+
 	private static bool IsNpcSkillEntryHpReady(PlayerSummonKnownObjectNpcSkillEntryTiming timing, int hpPercentage)
 	{
 		// Java parity: NpcSkillTemplateEntry.hpReady treats default 0..100 as "not about HP".
@@ -1045,6 +1088,46 @@ public enum PlayerSummonKnownObjectSkillReadinessStatus
 	Ready,
 }
 
+public sealed record PlayerSummonKnownObjectNpcSkillTemplateMetadata(
+	int SkillId = 0,
+	int SkillLevel = 0,
+	int Probability = 0,
+	int MinHpPercentage = 0,
+	int MaxHpPercentage = 100,
+	long MaxTimeMilliseconds = 0,
+	long MinTimeMilliseconds = 0,
+	PlayerSummonKnownObjectNpcSkillConjunction ConjunctionType = PlayerSummonKnownObjectNpcSkillConjunction.And,
+	long CooldownMilliseconds = 0,
+	bool IsPostSpawn = false,
+	int Priority = 0,
+	int NextSkillTimeMilliseconds = -1,
+	PlayerSummonKnownObjectNpcSkillConditionMetadata? ConditionTemplate = null,
+	int NextChainId = 0,
+	int ChainId = 0,
+	int MaxChainTimeMilliseconds = 15000,
+	PlayerSummonKnownObjectNpcSkillTargetAttribute Target = PlayerSummonKnownObjectNpcSkillTargetAttribute.MostHated);
+
+public sealed record PlayerSummonKnownObjectNpcSkillTemplateProjection(
+	PlayerSummonKnownObjectNpcSkillEntryTiming EntryTiming,
+	PlayerSummonKnownObjectNpcSkillConditionMetadata ConditionTemplate,
+	PlayerSummonKnownObjectSkillTargetMode TargetMode,
+	int Probability,
+	int Priority,
+	int NextSkillTimeMilliseconds,
+	int NextChainId,
+	int ChainId,
+	int MaxChainTimeMilliseconds,
+	bool IsPostSpawn);
+
+public sealed record PlayerSummonKnownObjectNpcSkillConditionMetadata(
+	PlayerSummonKnownObjectNpcSkillCondition Condition = PlayerSummonKnownObjectNpcSkillCondition.None,
+	int HpBelowPercentage = 50,
+	int RangeMeters = 10,
+	int NpcId = 0,
+	int DelayMilliseconds = 0,
+	bool CanDie = true,
+	int DespawnTimeMilliseconds = 500);
+
 public sealed record PlayerSummonKnownObjectNpcSkillEntryTiming(
 	int MinHpPercentage = 0,
 	int MaxHpPercentage = 100,
@@ -1059,6 +1142,18 @@ public enum PlayerSummonKnownObjectNpcSkillConjunction
 	And,
 	Or,
 	Xor,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillTargetAttribute
+{
+	Friend,
+	Me,
+	MostHated,
+	SecondMostHated,
+	ThirdMostHated,
+	Random,
+	RandomExceptCurrentTarget,
+	None,
 }
 
 public sealed record PlayerSummonKnownObjectNpcSkillEntryReadiness(

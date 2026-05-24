@@ -10,6 +10,99 @@ namespace Aion.GameServer.Tests;
 public class PlayerSummonSkillExecutionServiceTests
 {
 	[Fact]
+	public void ProjectMercenaryNpcSkillTemplate_MapsJavaTemplateDefaultsAndOverrides()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+
+		var defaultProjection = service.ProjectMercenaryNpcSkillTemplate(new PlayerSummonKnownObjectNpcSkillTemplateMetadata());
+		var condition = new PlayerSummonKnownObjectNpcSkillConditionMetadata(
+			PlayerSummonKnownObjectNpcSkillCondition.TargetIsInRange,
+			HpBelowPercentage: 35,
+			RangeMeters: 18,
+			NpcId: 212345,
+			DelayMilliseconds: 750,
+			CanDie: false,
+			DespawnTimeMilliseconds: 1200);
+		var overrideTemplate = new PlayerSummonKnownObjectNpcSkillTemplateMetadata(
+			SkillId: 1001,
+			SkillLevel: 3,
+			Probability: 70,
+			MinHpPercentage: 25,
+			MaxHpPercentage: 80,
+			MaxTimeMilliseconds: 9000,
+			MinTimeMilliseconds: 3000,
+			ConjunctionType: PlayerSummonKnownObjectNpcSkillConjunction.Or,
+			CooldownMilliseconds: 4000,
+			IsPostSpawn: true,
+			Priority: 12,
+			NextSkillTimeMilliseconds: 6500,
+			ConditionTemplate: condition,
+			NextChainId: 3002,
+			ChainId: 3001,
+			MaxChainTimeMilliseconds: 22000,
+			Target: PlayerSummonKnownObjectNpcSkillTargetAttribute.Random);
+		var overrideProjection = service.ProjectMercenaryNpcSkillTemplate(overrideTemplate, lastTimeUsedMilliseconds: 123456);
+
+		Assert.Equal(new PlayerSummonKnownObjectNpcSkillEntryTiming(), defaultProjection.EntryTiming);
+		Assert.Equal(new PlayerSummonKnownObjectNpcSkillConditionMetadata(), defaultProjection.ConditionTemplate);
+		Assert.Equal(PlayerSummonKnownObjectSkillTargetMode.MostHated, defaultProjection.TargetMode);
+		Assert.Equal(0, defaultProjection.Probability);
+		Assert.Equal(0, defaultProjection.Priority);
+		Assert.Equal(-1, defaultProjection.NextSkillTimeMilliseconds);
+		Assert.Equal(0, defaultProjection.NextChainId);
+		Assert.Equal(0, defaultProjection.ChainId);
+		Assert.Equal(15000, defaultProjection.MaxChainTimeMilliseconds);
+		Assert.False(defaultProjection.IsPostSpawn);
+
+		Assert.Equal(25, overrideProjection.EntryTiming.MinHpPercentage);
+		Assert.Equal(80, overrideProjection.EntryTiming.MaxHpPercentage);
+		Assert.Equal(3000, overrideProjection.EntryTiming.MinTimeMilliseconds);
+		Assert.Equal(9000, overrideProjection.EntryTiming.MaxTimeMilliseconds);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConjunction.Or, overrideProjection.EntryTiming.ConjunctionType);
+		Assert.Equal(4000, overrideProjection.EntryTiming.CooldownMilliseconds);
+		Assert.Equal(123456, overrideProjection.EntryTiming.LastTimeUsedMilliseconds);
+		Assert.Equal(condition, overrideProjection.ConditionTemplate);
+		Assert.Equal(PlayerSummonKnownObjectSkillTargetMode.CreatureTarget, overrideProjection.TargetMode);
+		Assert.Equal(70, overrideProjection.Probability);
+		Assert.Equal(12, overrideProjection.Priority);
+		Assert.Equal(6500, overrideProjection.NextSkillTimeMilliseconds);
+		Assert.Equal(3002, overrideProjection.NextChainId);
+		Assert.Equal(3001, overrideProjection.ChainId);
+		Assert.Equal(22000, overrideProjection.MaxChainTimeMilliseconds);
+		Assert.True(overrideProjection.IsPostSpawn);
+	}
+
+	[Fact]
+	public void ResolveMercenaryNpcSkillTargetMode_MapsJavaNpcSkillTargetAttributes()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+
+		Assert.Equal(
+			PlayerSummonKnownObjectSkillTargetMode.None,
+			service.ResolveMercenaryNpcSkillTargetMode(PlayerSummonKnownObjectNpcSkillTargetAttribute.None));
+		Assert.Equal(
+			PlayerSummonKnownObjectSkillTargetMode.MostHated,
+			service.ResolveMercenaryNpcSkillTargetMode(PlayerSummonKnownObjectNpcSkillTargetAttribute.MostHated));
+		Assert.Equal(
+			PlayerSummonKnownObjectSkillTargetMode.Self,
+			service.ResolveMercenaryNpcSkillTargetMode(PlayerSummonKnownObjectNpcSkillTargetAttribute.Me));
+
+		foreach (var target in new[]
+		{
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.Friend,
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.SecondMostHated,
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.ThirdMostHated,
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.Random,
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.RandomExceptCurrentTarget,
+		})
+		{
+			Assert.Equal(
+				PlayerSummonKnownObjectSkillTargetMode.CreatureTarget,
+				service.ResolveMercenaryNpcSkillTargetMode(target));
+		}
+	}
+
+	[Fact]
 	public void EvaluateMercenaryNpcSkillConditionReadiness_ProjectsSimpleJavaConditionBranches()
 	{
 		var service = new PlayerSummonSkillExecutionService();
