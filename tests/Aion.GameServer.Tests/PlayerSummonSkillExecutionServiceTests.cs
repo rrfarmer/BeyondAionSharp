@@ -900,6 +900,51 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void ProjectMercenaryNpcSkillCandidateMetadata_PrunesMissingSkillTemplatesLikeJavaInitSkillList()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var table = new NpcSkillTable(
+		[
+			new NpcSkillListSummary(
+				[833288],
+				[
+					new NpcSkillTemplateSummary(1001, 1, 100, 0, 100, 0, 0, "AND", 0, false, 5, -1, 0, 0, 15000, "MOST_HATED", null),
+					new NpcSkillTemplateSummary(9999, 1, 100, 0, 100, 0, 0, "AND", 0, false, 10, -1, 0, 0, 15000, "MOST_HATED", null),
+					new NpcSkillTemplateSummary(1002, 1, 100, 0, 100, 0, 0, "AND", 0, true, 3, -1, 0, 0, 15000, "MOST_HATED", new NpcSkillSpawnSummary(212362, 0, 0, 0, 1, 0)),
+				]),
+		]);
+		var skillTemplates = new SkillTemplateTable(
+		[
+			new SkillTemplateSummary(1001, "Ready One", 0, 1, "", "", "MAGICAL", "", 0, 0),
+			new SkillTemplateSummary(1002, "Ready Two", 0, 1, "", "", "MAGICAL", "", 0, 0),
+		]);
+
+		var metadataProjection = service.ProjectMercenaryNpcSkillCandidateMetadata(table, skillTemplates, npcId: 833288);
+		var candidateProjection = service.ProjectMercenaryNpcSkillCandidateList(
+			table,
+			skillTemplates,
+			npcId: 833288,
+			hpPercentage: 100,
+			elapsedFightTimeMilliseconds: 0,
+			currentTimeMilliseconds: 1_000);
+		var missingNpc = service.ProjectMercenaryNpcSkillCandidateMetadata(table, skillTemplates, npcId: 999999);
+
+		Assert.Equal(3, metadataProjection.OriginalSkillCount);
+		Assert.Equal([9999], metadataProjection.MissingSkillIds);
+		Assert.True(metadataProjection.RequiresSkillTemplateLookup);
+		Assert.True(metadataProjection.WouldPruneMissingSkills);
+		Assert.True(metadataProjection.JavaWouldWarnMissingSkills);
+		Assert.True(metadataProjection.JavaWouldMutateSourceTemplateList);
+		Assert.Equal([0, 1], metadataProjection.Candidates.Select(candidate => candidate.Position));
+		Assert.Equal([1001, 1002], metadataProjection.Candidates.Select(candidate => candidate.Template.SkillId));
+		Assert.Equal([5, 3], candidateProjection.Priorities);
+		Assert.Equal(1, Assert.Single(candidateProjection.PostSpawnCandidates).Position);
+		Assert.True(missingNpc.IsEmpty);
+		Assert.False(missingNpc.RequiresSkillTemplateLookup);
+		Assert.False(missingNpc.WouldPruneMissingSkills);
+	}
+
+	[Fact]
 	public void CaptureMercenaryNpcSkillPreview_StoresRepresentedSelectionAndActionState()
 	{
 		var service = new PlayerSummonSkillExecutionService();

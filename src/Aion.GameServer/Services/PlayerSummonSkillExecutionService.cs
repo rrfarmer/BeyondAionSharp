@@ -359,6 +359,38 @@ public sealed class PlayerSummonSkillExecutionService
 			.ToArray();
 	}
 
+	public PlayerSummonKnownObjectNpcSkillCandidateMetadataProjection ProjectMercenaryNpcSkillCandidateMetadata(
+		NpcSkillTable? npcSkills,
+		SkillTemplateTable skillTemplates,
+		int npcId)
+	{
+		// Java parity: NpcSkillList.initSkillList removes entries missing from DataManager.SKILL_DATA before wrapping them.
+		var skillList = npcSkills?.GetNpcSkillList(npcId);
+		if (skillList?.Skills.Count is null or 0)
+			return PlayerSummonKnownObjectNpcSkillCandidateMetadataProjection.Empty(npcId);
+
+		var candidates = new List<PlayerSummonKnownObjectNpcSkillCandidateMetadata>();
+		var missingSkillIds = new List<int>();
+		foreach (var template in skillList.Skills)
+		{
+			if (skillTemplates.GetSkillTemplate(template.SkillId) == null)
+			{
+				missingSkillIds.Add(template.SkillId);
+				continue;
+			}
+
+			candidates.Add(new PlayerSummonKnownObjectNpcSkillCandidateMetadata(
+				candidates.Count,
+				ProjectMercenaryNpcSkillTemplateMetadata(template)));
+		}
+
+		return new PlayerSummonKnownObjectNpcSkillCandidateMetadataProjection(
+			npcId,
+			skillList.Skills.Count,
+			candidates.ToArray(),
+			missingSkillIds.ToArray());
+	}
+
 	public PlayerSummonKnownObjectNpcSkillCandidateListProjection ProjectMercenaryNpcSkillCandidateList(
 		NpcSkillTable? npcSkills,
 		int npcId,
@@ -372,6 +404,27 @@ public sealed class PlayerSummonSkillExecutionService
 		// Java parity: represents NpcSkillList.initSkillList projection from NPC_SKILL_DATA before live SKILL_DATA pruning is available.
 		return ProjectMercenaryNpcSkillCandidateList(
 			ProjectMercenaryNpcSkillCandidateMetadata(npcSkills, npcId),
+			hpPercentage,
+			elapsedFightTimeMilliseconds,
+			currentTimeMilliseconds,
+			ownerExists,
+			ownerIsDead,
+			ownerIsAboutToDie);
+	}
+
+	public PlayerSummonKnownObjectNpcSkillCandidateListProjection ProjectMercenaryNpcSkillCandidateList(
+		NpcSkillTable? npcSkills,
+		SkillTemplateTable skillTemplates,
+		int npcId,
+		int hpPercentage,
+		long elapsedFightTimeMilliseconds,
+		long currentTimeMilliseconds,
+		bool ownerExists = true,
+		bool ownerIsDead = false,
+		bool ownerIsAboutToDie = false)
+	{
+		return ProjectMercenaryNpcSkillCandidateList(
+			ProjectMercenaryNpcSkillCandidateMetadata(npcSkills, skillTemplates, npcId).Candidates,
 			hpPercentage,
 			elapsedFightTimeMilliseconds,
 			currentTimeMilliseconds,
@@ -2757,6 +2810,28 @@ public sealed record PlayerSummonKnownObjectNpcSkillCandidateMetadata(
 	bool ChanceReady = true,
 	PlayerSummonKnownObjectNpcSkillConditionTarget? ConditionTarget = null,
 	PlayerSummonKnownObjectTargetRangeReadiness? TargetRangeReadiness = null);
+
+public sealed record PlayerSummonKnownObjectNpcSkillCandidateMetadataProjection(
+	int NpcId,
+	int OriginalSkillCount,
+	IReadOnlyList<PlayerSummonKnownObjectNpcSkillCandidateMetadata> Candidates,
+	IReadOnlyList<int> MissingSkillIds)
+{
+	public bool IsEmpty => Candidates.Count == 0;
+	public bool RequiresSkillTemplateLookup => OriginalSkillCount > 0;
+	public bool WouldPruneMissingSkills => MissingSkillIds.Count > 0;
+	public bool JavaWouldWarnMissingSkills => WouldPruneMissingSkills;
+	public bool JavaWouldMutateSourceTemplateList => WouldPruneMissingSkills;
+
+	public static PlayerSummonKnownObjectNpcSkillCandidateMetadataProjection Empty(int npcId)
+	{
+		return new PlayerSummonKnownObjectNpcSkillCandidateMetadataProjection(
+			npcId,
+			0,
+			Array.Empty<PlayerSummonKnownObjectNpcSkillCandidateMetadata>(),
+			Array.Empty<int>());
+	}
+}
 
 public sealed record PlayerSummonKnownObjectNpcSkillCandidateListProjection(
 	IReadOnlyList<PlayerSummonKnownObjectNpcSkillCandidate> Candidates,
