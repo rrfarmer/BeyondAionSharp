@@ -410,6 +410,48 @@ public sealed class PlayerSummonSkillExecutionService
 			PlayerSummonKnownObjectNpcSkillSelectionSource.DelayedQueuedSkill);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillSelectionResult SelectMercenaryChainNpcSkillCandidate(
+		PlayerSummonKnownObjectNpcSkillTemplateProjection? lastSkill,
+		IEnumerable<PlayerSummonKnownObjectNpcSkillCandidate> candidates,
+		long elapsedSinceLastSkillMilliseconds)
+	{
+		if (lastSkill == null
+			|| lastSkill.NextChainId <= 0
+			|| elapsedSinceLastSkillMilliseconds >= lastSkill.MaxChainTimeMilliseconds)
+		{
+			return PlayerSummonKnownObjectNpcSkillSelectionResult.NoReadyCandidate(
+				PlayerSummonKnownObjectNpcSkillSelectionSource.ChainSkill);
+		}
+
+		var chainCandidates = candidates
+			.Where(candidate => candidate.Projection.ChainId == lastSkill.NextChainId)
+			.ToList();
+
+		if (chainCandidates.Count == 0)
+		{
+			return PlayerSummonKnownObjectNpcSkillSelectionResult.NoReadyCandidate(
+				PlayerSummonKnownObjectNpcSkillSelectionSource.ChainSkill);
+		}
+
+		var orderedCandidates = chainCandidates.Any(candidate => candidate.Projection.Priority > 0)
+			? chainCandidates
+				.OrderByDescending(candidate => candidate.Projection.Priority)
+				.ThenBy(candidate => candidate.Position)
+			: chainCandidates.OrderBy(candidate => candidate.Position);
+
+		foreach (var candidate in orderedCandidates)
+		{
+			var result = SelectSingleMercenaryNpcSkillCandidate(
+				candidate,
+				PlayerSummonKnownObjectNpcSkillSelectionSource.ChainSkill);
+			if (result.Status != PlayerSummonKnownObjectNpcSkillSelectionStatus.NoReadyCandidate)
+				return result;
+		}
+
+		return PlayerSummonKnownObjectNpcSkillSelectionResult.NoReadyCandidate(
+			PlayerSummonKnownObjectNpcSkillSelectionSource.ChainSkill);
+	}
+
 	private static PlayerSummonKnownObjectNpcSkillSelectionResult SelectSingleMercenaryNpcSkillCandidate(
 		PlayerSummonKnownObjectNpcSkillCandidate candidate,
 		PlayerSummonKnownObjectNpcSkillSelectionSource source)
@@ -1306,6 +1348,7 @@ public enum PlayerSummonKnownObjectNpcSkillSelectionSource
 	OrdinaryPriority,
 	ImmediateQueuedSkill,
 	DelayedQueuedSkill,
+	ChainSkill,
 }
 
 public sealed record PlayerSummonKnownObjectNpcSkillConditionMetadata(
