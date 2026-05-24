@@ -219,6 +219,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300168, playerName);
 	}
 
+	public static SmSystemMessage PartyAllianceHeRejectInvitation(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_PARTY_ALLIANCE_HE_REJECT_INVITATION(String).
+		return new SmSystemMessage(1300190, playerName);
+	}
+
 	public static SmSystemMessage PartyHeBecomeOfflineTimeout(string playerName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_PARTY_HE_BECOME_OFFLINE_TIMEOUT(String).
