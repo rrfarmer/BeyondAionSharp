@@ -214,6 +214,13 @@ public sealed class PlayerSummonSkillExecutionService
 		return PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocation.FromReadiness(readiness);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillAttackCycleResultContract ProjectMercenaryNpcSkillAttackCycleResultContract(
+		PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocation? liveInvocation)
+	{
+		// Java parity: represented contract for future SkillAttackManager live side effects; it does not execute them.
+		return PlayerSummonKnownObjectNpcSkillAttackCycleResultContract.FromLiveInvocation(liveInvocation);
+	}
+
 	public PlayerSummonKnownObjectSkillReadiness EvaluateMercenarySkillReadiness(
 		PlayerSummonKnownObject knownObject,
 		SkillTemplateSummary? skillTemplate,
@@ -4073,6 +4080,150 @@ public enum PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocationStatus
 	MissingKnownObject,
 	MissingRequiredMetadata,
 	LiveAiNotWired,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
+	PlayerSummonKnownObjectNpcSkillAttackCycleResultContractStatus Status,
+	PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocation? LiveInvocation = null,
+	IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect>? ExpectedSideEffects = null)
+{
+	private static readonly IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect> EmptySideEffects = [];
+
+	public IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect> ExpectedJavaSideEffects =>
+		ExpectedSideEffects ?? EmptySideEffects;
+
+	public bool IsLiveAiUnsupported => Status == PlayerSummonKnownObjectNpcSkillAttackCycleResultContractStatus.LiveAiNotWired;
+
+	public bool IsBlockedByInvocationReadiness => Status == PlayerSummonKnownObjectNpcSkillAttackCycleResultContractStatus.BlockedByInvocationReadiness;
+
+	public bool WouldExecuteSideEffects => false;
+
+	public bool ExpectsAiSubStateMutation =>
+		ExpectedJavaSideEffects.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.AiCastSubState)
+		|| ExpectedJavaSideEffects.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.AiNoneSubState);
+
+	public bool ExpectsControllerUseSkill =>
+		ExpectedJavaSideEffects.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.ControllerUseSkill);
+
+	public bool ExpectsPostSpawnAction =>
+		ExpectedJavaSideEffects.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.PostSpawnImmediate)
+		|| ExpectedJavaSideEffects.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.PostSpawnScheduled);
+
+	public bool ExpectsPackets =>
+		ExpectedJavaSideEffects.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.PacketFanout);
+
+	public bool ExpectsSchedulerWork =>
+		ExpectedJavaSideEffects.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.SchedulerSkillActionCallback);
+
+	public static PlayerSummonKnownObjectNpcSkillAttackCycleResultContract FromLiveInvocation(
+		PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocation? liveInvocation)
+	{
+		if (liveInvocation == null)
+		{
+			return new PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
+				PlayerSummonKnownObjectNpcSkillAttackCycleResultContractStatus.MissingInvocation);
+		}
+
+		if (liveInvocation.Status != PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocationStatus.LiveAiNotWired)
+		{
+			return new PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
+				PlayerSummonKnownObjectNpcSkillAttackCycleResultContractStatus.BlockedByInvocationReadiness,
+				liveInvocation);
+		}
+
+		return new PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
+			PlayerSummonKnownObjectNpcSkillAttackCycleResultContractStatus.LiveAiNotWired,
+			liveInvocation,
+			BuildExpectedSideEffects(liveInvocation.CycleSnapshot));
+	}
+
+	private static IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect> BuildExpectedSideEffects(
+		PlayerSummonKnownObjectNpcSkillAttackCycleSnapshot? cycleSnapshot)
+	{
+		if (cycleSnapshot == null)
+			return EmptySideEffects;
+
+		var sideEffects = new List<PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect>();
+		var performAttack = cycleSnapshot.PerformAttackPreview;
+		var actionResult = cycleSnapshot.SchedulerCallbackOutcome?.ActionResult
+			?? cycleSnapshot.ActionWorkflowPreview?.ActionResult;
+
+		if (performAttack?.Status is PlayerSummonKnownObjectNpcSkillPerformAttackPreviewStatus.ImmediateSkillAction
+			or PlayerSummonKnownObjectNpcSkillPerformAttackPreviewStatus.ScheduledSkillAction)
+			AddOnce(sideEffects, PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.AiCastSubState);
+
+		if (performAttack?.Status == PlayerSummonKnownObjectNpcSkillPerformAttackPreviewStatus.ScheduledSkillAction)
+			AddOnce(sideEffects, PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.SchedulerSkillActionCallback);
+
+		if (performAttack?.Status == PlayerSummonKnownObjectNpcSkillPerformAttackPreviewStatus.TargetTooFar
+			|| actionResult?.ShouldAbortCast == true)
+		{
+			AddOnce(sideEffects, PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.ControllerAbortCast);
+			AddOnce(sideEffects, PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.AiEventTargetTooFar);
+		}
+
+		if (actionResult != null)
+		{
+			if (actionResult.ShouldSetSubStateNone)
+				AddOnce(sideEffects, PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.AiNoneSubState);
+			if (actionResult.ShouldResumeFightAfterInterruptedCast)
+				AddOnce(sideEffects, PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.AiThinkResumeFight);
+			if (actionResult.AiEvent == PlayerSummonKnownObjectNpcSkillAiEvent.TargetGiveUp)
+				AddOnce(sideEffects, PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.AiEventTargetGiveUp);
+			if (actionResult.AiEvent == PlayerSummonKnownObjectNpcSkillAiEvent.AttackComplete)
+				AddOnce(sideEffects, PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.AiEventAttackComplete);
+			if (actionResult.ShouldSetOwnerTarget)
+				AddOnce(sideEffects, PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.OwnerTargetMutation);
+			if (actionResult.ShouldInvokeUseSkill || actionResult.DidInvokeUseSkill)
+				AddOnce(sideEffects, PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.ControllerUseSkill);
+			if (actionResult.ShouldInvokeUseSkill)
+			{
+				AddOnce(sideEffects, PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.SkillEffectApplication);
+				AddOnce(sideEffects, PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.PacketFanout);
+			}
+		}
+
+		var postSpawn = cycleSnapshot.PostSpawnPreview;
+		if (postSpawn?.ShouldSpawnImmediately == true)
+			AddOnce(sideEffects, PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.PostSpawnImmediate);
+		if (postSpawn?.ShouldScheduleSpawn == true)
+			AddOnce(sideEffects, PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.PostSpawnScheduled);
+
+		return sideEffects;
+	}
+
+	private static void AddOnce(
+		List<PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect> sideEffects,
+		PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect sideEffect)
+	{
+		if (!sideEffects.Contains(sideEffect))
+			sideEffects.Add(sideEffect);
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillAttackCycleResultContractStatus
+{
+	MissingInvocation,
+	BlockedByInvocationReadiness,
+	LiveAiNotWired,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect
+{
+	AiCastSubState,
+	AiNoneSubState,
+	AiThinkResumeFight,
+	AiEventTargetTooFar,
+	AiEventTargetGiveUp,
+	AiEventAttackComplete,
+	ControllerAbortCast,
+	ControllerUseSkill,
+	OwnerTargetMutation,
+	SkillEffectApplication,
+	PostSpawnImmediate,
+	PostSpawnScheduled,
+	SchedulerSkillActionCallback,
+	PacketFanout,
 }
 
 public sealed record PlayerSummonKnownObjectNpcSkillActionWorkflowPreview(
