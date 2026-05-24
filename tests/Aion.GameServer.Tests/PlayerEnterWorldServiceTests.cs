@@ -314,6 +314,57 @@ public sealed class PlayerEnterWorldServiceTests
 	}
 
 	[Fact]
+	public async Task LeaveWorld_PersistsAcceptedStorageExpansionFields()
+	{
+		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
+		player.WarehouseNpcExpands = 0;
+		player.WarehouseBonusExpands = 0;
+		player.InventoryItems =
+		[
+			new InventoryItem
+			{
+				ObjectId = 5001,
+				ItemId = KinahItemId,
+				Count = 10_000,
+				Location = 0,
+			},
+		];
+		var expansionService = new StorageExpansionNpcService();
+		expansionService.RequestCubeExpansion(
+			player,
+			CreateExpansionNpc(798008),
+			CreateStorageExpansionTemplate(level: 1, price: 1000),
+			cubeExpansionLimit: 11,
+			npcCubeExpandsSizeLimit: 5);
+		expansionService.HandleResponse(
+			player,
+			SmQuestionWindow.WarehouseExpandWarning,
+			response: 1,
+			CreateItemTemplates(KinahItemId));
+		expansionService.RequestWarehouseExpansion(
+			player,
+			CreateExpansionNpc(203199),
+			CreateStorageExpansionTemplate(level: 1, price: 1200));
+		expansionService.HandleResponse(
+			player,
+			SmQuestionWindow.WarehouseExpandWarning,
+			response: 1,
+			CreateItemTemplates(KinahItemId));
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var world = CreateWorld();
+		world.TryAddObject(player.ObjectId, player);
+		var service = CreateService(repository, world);
+
+		await service.LeaveWorldAsync(player);
+
+		Assert.Equal(1, repository.SaveLogoutCalls);
+		Assert.NotNull(repository.SavedLogoutPlayer);
+		Assert.Equal(1, repository.SavedLogoutPlayer!.NpcExpands);
+		Assert.Equal(1, repository.SavedLogoutPlayer.WarehouseNpcExpands);
+		Assert.Equal(7_800, repository.SavedLogoutPlayer.InventoryItems.Single(item => item.ItemId == KinahItemId).Count);
+	}
+
+	[Fact]
 	public async Task MacroMutations_UpdateLoadedPlayerAndRepository()
 	{
 		var player = CreatePlayer();
@@ -756,6 +807,32 @@ public sealed class PlayerEnterWorldServiceTests
 	private static ItemTemplateTable CreateItemTemplates(params int[] itemIds)
 	{
 		return new ItemTemplateTable(itemIds.Select(CreateItemTemplate).ToArray());
+	}
+
+	private static WorldNpc CreateExpansionNpc(int templateId)
+	{
+		return new WorldNpc(
+			9001,
+			templateId,
+			new NpcTemplateSummary(
+				templateId,
+				"Expansion Master",
+				123456,
+				1,
+				"NORMAL",
+				"NORMAL",
+				"PC_ALL",
+				string.Empty,
+				"NPC",
+				FunctionDialogIds: [47],
+				HasTalkInfo: true,
+				IsDialogNpc: true),
+			new WorldPosition(210010000, 1, 2, 3, 0));
+	}
+
+	private static StorageExpansionTemplateSummary CreateStorageExpansionTemplate(int level, int price)
+	{
+		return new StorageExpansionTemplateSummary([1], [new StorageExpansionPrice(level, price)]);
 	}
 
 	private static ItemTemplateSummary CreateItemTemplate(int itemId)
