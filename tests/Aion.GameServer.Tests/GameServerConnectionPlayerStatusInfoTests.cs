@@ -202,6 +202,29 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 	}
 
 	[Fact]
+	public async Task HandlePlayerStatusInfoAsync_GroupRemoveTwoMemberGroupSkipsOfflineRemainingDisbandPacketsLikeJava()
+	{
+		var registry = new CapturingConnectionRegistry();
+		registry.UnavailablePlayerObjectIds.Add(1001);
+		var groups = new PlayerGroupRuntime();
+		var offlineLeader = new Player { ObjectId = 1001, Name = "Leader", IsOnline = false, Position = new WorldPosition(210010000, 1, 2, 3, 0) };
+		var removed = new Player { ObjectId = 1002, Name = "Removed", IsOnline = true, Position = new WorldPosition(220010000, 4, 5, 6, 0) };
+		groups.CreateOrUpdateGroup(99001, [offlineLeader, removed]);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, new PlayerAllianceRuntime(), groups);
+
+		await pair.Connection.HandlePlayerStatusInfoAsync(
+			removed,
+			CreatePacket(commandCode: 6, selectedObjectId: removed.ObjectId));
+
+		Assert.Equal(PlayerTeamMembership.None, offlineLeader.TeamMembership);
+		Assert.Equal(PlayerTeamMembership.None, removed.TeamMembership);
+		Assert.Empty(groups.GetMemberObjectIds(99001));
+		var send = Assert.Single(registry.SentPackets);
+		Assert.Equal(1002, send.PlayerObjectId);
+		Assert.IsType<SmLeaveGroupMember>(send.Packet);
+	}
+
+	[Fact]
 	public async Task HandlePlayerStatusInfoAsync_GroupBanFailureBranchesSendJavaMessages()
 	{
 		var registry = new CapturingConnectionRegistry();
