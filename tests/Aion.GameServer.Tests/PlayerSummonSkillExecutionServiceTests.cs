@@ -3276,6 +3276,93 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void ProjectMercenaryNpcSkillEffectReservedPacketProjection_ProjectsJavaReservedSendFields()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+
+		var projected = service.ProjectMercenaryNpcSkillEffectReservedPacketProjection([
+			new PlayerSummonKnownObjectNpcSkillEffectReservedInput(
+				Position: 4,
+				Value: 99,
+				Type: PlayerSummonKnownObjectNpcSkillEffectReservedResourceType.MP,
+				Send: false),
+			new PlayerSummonKnownObjectNpcSkillEffectReservedInput(
+				Position: 2,
+				Value: 0,
+				Type: PlayerSummonKnownObjectNpcSkillEffectReservedResourceType.FP),
+			new PlayerSummonKnownObjectNpcSkillEffectReservedInput(
+				Position: 3,
+				Value: 50,
+				Type: PlayerSummonKnownObjectNpcSkillEffectReservedResourceType.HP,
+				IsDamage: false),
+			new PlayerSummonKnownObjectNpcSkillEffectReservedInput(
+				Position: 1,
+				Value: 75,
+				Type: PlayerSummonKnownObjectNpcSkillEffectReservedResourceType.DP),
+			new PlayerSummonKnownObjectNpcSkillEffectReservedInput(
+				Position: 3,
+				Value: int.MinValue,
+				Type: PlayerSummonKnownObjectNpcSkillEffectReservedResourceType.MP,
+				IsDamage: false),
+		], shieldDefense: 10);
+		var fallback = service.ProjectMercenaryNpcSkillEffectReservedPacketProjection([
+			new PlayerSummonKnownObjectNpcSkillEffectReservedInput(
+				Position: 5,
+				Value: 0,
+				Type: PlayerSummonKnownObjectNpcSkillEffectReservedResourceType.DP),
+			new PlayerSummonKnownObjectNpcSkillEffectReservedInput(
+				Position: 6,
+				Value: 20,
+				Type: PlayerSummonKnownObjectNpcSkillEffectReservedResourceType.HP,
+				Send: false),
+		]);
+		var shieldBranches = new Dictionary<int, PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch>
+		{
+			[0] = service.ProjectMercenaryNpcSkillEffectReservedPacketProjection([], 0).ShieldPayloadBranch,
+			[2] = service.ProjectMercenaryNpcSkillEffectReservedPacketProjection([], 2).ShieldPayloadBranch,
+			[8] = service.ProjectMercenaryNpcSkillEffectReservedPacketProjection([], 8).ShieldPayloadBranch,
+			[10] = service.ProjectMercenaryNpcSkillEffectReservedPacketProjection([], 10).ShieldPayloadBranch,
+			[1] = service.ProjectMercenaryNpcSkillEffectReservedPacketProjection([], 1).ShieldPayloadBranch,
+			[16] = service.ProjectMercenaryNpcSkillEffectReservedPacketProjection([], 16).ShieldPayloadBranch,
+			[18] = service.ProjectMercenaryNpcSkillEffectReservedPacketProjection([], 18).ShieldPayloadBranch,
+			[32] = service.ProjectMercenaryNpcSkillEffectReservedPacketProjection([], 32).ShieldPayloadBranch,
+			[33] = service.ProjectMercenaryNpcSkillEffectReservedPacketProjection([], 33).ShieldPayloadBranch,
+		};
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEffectReservedPacketProjectionStatus.Projected, projected.Status);
+		Assert.False(projected.WouldSerializePackets);
+		Assert.Equal(0, (int)PlayerSummonKnownObjectNpcSkillEffectReservedResourceType.HP);
+		Assert.Equal(1, (int)PlayerSummonKnownObjectNpcSkillEffectReservedResourceType.MP);
+		Assert.Equal(2, (int)PlayerSummonKnownObjectNpcSkillEffectReservedResourceType.FP);
+		Assert.Equal(3, (int)PlayerSummonKnownObjectNpcSkillEffectReservedResourceType.DP);
+		Assert.Equal([1, 3, 3], projected.Rows.Select(row => row.Position).ToArray());
+		Assert.Equal([3, 0, 1], projected.Rows.Select(row => row.ResourceTypeByte).ToArray());
+		Assert.Equal([75, -50, int.MinValue], projected.Rows.Select(row => row.ValueToSend).ToArray());
+		Assert.Equal(3, projected.ReservedEffectsCountByte);
+		Assert.Equal(10, projected.ShieldDefenseByte);
+		Assert.True(projected.HasSamePositionOrderingRisk);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch.ProtectFields, projected.ShieldPayloadBranch);
+		Assert.True(projected.HasExactProtectPayload);
+		Assert.False(projected.HasLongReflectOrMpShieldPayload);
+		Assert.False(projected.UsedHpZeroFallback);
+		Assert.Single(fallback.Rows);
+		Assert.True(fallback.UsedHpZeroFallback);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEffectReservedResourceType.HP, fallback.Rows[0].Type);
+		Assert.Equal(0, fallback.Rows[0].ResourceTypeByte);
+		Assert.Equal(0, fallback.Rows[0].ValueToSend);
+		Assert.False(fallback.HasSamePositionOrderingRisk);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch.NoExtraFields, shieldBranches[0]);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch.NoExtraFields, shieldBranches[2]);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch.ProtectFields, shieldBranches[8]);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch.ProtectFields, shieldBranches[10]);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch.ReflectOrMpShieldFields, shieldBranches[1]);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch.ReflectOrMpShieldFields, shieldBranches[16]);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch.ReflectOrMpShieldFields, shieldBranches[18]);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch.ReflectOrMpShieldFields, shieldBranches[32]);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch.ReflectOrMpShieldFields, shieldBranches[33]);
+	}
+
+	[Fact]
 	public void PreviewMercenaryNpcSkillActionWorkflow_ComposesJavaSelectionRangeAndActionSlices()
 	{
 		var service = new PlayerSummonSkillExecutionService();

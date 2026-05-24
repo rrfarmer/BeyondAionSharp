@@ -992,6 +992,14 @@ public sealed class PlayerSummonSkillExecutionService
 		return PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaGolden.FromSample(sample);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillEffectReservedPacketProjection ProjectMercenaryNpcSkillEffectReservedPacketProjection(
+		IReadOnlyList<PlayerSummonKnownObjectNpcSkillEffectReservedInput>? reservedEffects,
+		int shieldDefense = 0)
+	{
+		// Java parity: Effect.getReservedEffectsToSend filters EffectReserved rows, TreeSet-sorts by position/hashCode, then SM_CASTSPELL_RESULT writes exact shield branches.
+		return PlayerSummonKnownObjectNpcSkillEffectReservedPacketProjection.FromJavaEffectReservedRows(reservedEffects, shieldDefense);
+	}
+
 	public PlayerSummonKnownObjectNpcSkillUseSkillStartTrace ProjectMercenaryNpcSkillUseSkillStartTrace(
 		PlayerSummonKnownObjectNpcSkillActionResult? actionResult,
 		bool canUseSkillAtCastStart = true,
@@ -6632,6 +6640,139 @@ public enum PlayerSummonKnownObjectNpcSkillCastResultShieldBranch
 	None,
 	Protect,
 	ReflectOrMpShield,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillEffectReservedPacketProjection(
+	PlayerSummonKnownObjectNpcSkillEffectReservedPacketProjectionStatus Status,
+	IReadOnlyList<PlayerSummonKnownObjectNpcSkillEffectReservedPacketRow> Rows,
+	int ShieldDefense,
+	PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch ShieldPayloadBranch,
+	bool UsedHpZeroFallback,
+	bool HasSamePositionOrderingRisk,
+	bool WouldSerializePackets = false)
+{
+	private static readonly IReadOnlyList<PlayerSummonKnownObjectNpcSkillEffectReservedInput> EmptyInputRows = [];
+
+	public int ReservedEffectsCountByte => Rows.Count & 0xFF;
+
+	public int ShieldDefenseByte => ShieldDefense & 0xFF;
+
+	public bool HasExactProtectPayload =>
+		ShieldPayloadBranch == PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch.ProtectFields;
+
+	public bool HasLongReflectOrMpShieldPayload =>
+		ShieldPayloadBranch == PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch.ReflectOrMpShieldFields;
+
+	public static PlayerSummonKnownObjectNpcSkillEffectReservedPacketProjection FromJavaEffectReservedRows(
+		IReadOnlyList<PlayerSummonKnownObjectNpcSkillEffectReservedInput>? reservedEffects,
+		int shieldDefense)
+	{
+		var sourceRows = reservedEffects ?? EmptyInputRows;
+		var samePositionOrderingRisk = sourceRows
+			.GroupBy(row => row.Position)
+			.Any(group => group.Count() > 1);
+		var sendableRows = sourceRows
+			.Where(row => row.Send && row.Value != 0)
+			.Select((row, inputIndex) => new { row, inputIndex })
+			.OrderBy(rowWithIndex => rowWithIndex.row.Position)
+			.ThenBy(rowWithIndex => rowWithIndex.inputIndex)
+			.Select(rowWithIndex => PlayerSummonKnownObjectNpcSkillEffectReservedPacketRow.FromInput(rowWithIndex.row, rowWithIndex.inputIndex, isJavaFallback: false))
+			.ToArray();
+
+		if (sendableRows.Length == 0)
+		{
+			sendableRows = [
+				new PlayerSummonKnownObjectNpcSkillEffectReservedPacketRow(
+					Position: 0,
+					InputIndex: -1,
+					Type: PlayerSummonKnownObjectNpcSkillEffectReservedResourceType.HP,
+					ResourceTypeByte: (int)PlayerSummonKnownObjectNpcSkillEffectReservedResourceType.HP,
+					SourceValue: 0,
+					ValueToSend: 0,
+					IsDamage: true,
+					Send: true,
+					IsJavaFallback: true),
+			];
+		}
+
+		return new PlayerSummonKnownObjectNpcSkillEffectReservedPacketProjection(
+			PlayerSummonKnownObjectNpcSkillEffectReservedPacketProjectionStatus.Projected,
+			sendableRows,
+			shieldDefense,
+			PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranchClassifier.FromShieldDefense(shieldDefense),
+			UsedHpZeroFallback: sendableRows.Any(row => row.IsJavaFallback),
+			HasSamePositionOrderingRisk: samePositionOrderingRisk);
+	}
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillEffectReservedInput(
+	int Position,
+	int Value,
+	PlayerSummonKnownObjectNpcSkillEffectReservedResourceType Type,
+	bool IsDamage = true,
+	bool Send = true);
+
+public sealed record PlayerSummonKnownObjectNpcSkillEffectReservedPacketRow(
+	int Position,
+	int InputIndex,
+	PlayerSummonKnownObjectNpcSkillEffectReservedResourceType Type,
+	int ResourceTypeByte,
+	int SourceValue,
+	int ValueToSend,
+	bool IsDamage,
+	bool Send,
+	bool IsJavaFallback)
+{
+	public static PlayerSummonKnownObjectNpcSkillEffectReservedPacketRow FromInput(
+		PlayerSummonKnownObjectNpcSkillEffectReservedInput input,
+		int inputIndex,
+		bool isJavaFallback)
+	{
+		return new PlayerSummonKnownObjectNpcSkillEffectReservedPacketRow(
+			input.Position,
+			inputIndex,
+			input.Type,
+			(int)input.Type,
+			input.Value,
+			input.IsDamage ? input.Value : unchecked(-input.Value),
+			input.IsDamage,
+			input.Send,
+			isJavaFallback);
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillEffectReservedPacketProjectionStatus
+{
+	Projected,
+}
+
+// Java: EffectReserved.ResourceType uses explicit values HP=0, MP=1, FP=2, DP=3; HealType order is not the packet source of truth.
+public enum PlayerSummonKnownObjectNpcSkillEffectReservedResourceType
+{
+	HP = 0,
+	MP = 1,
+	FP = 2,
+	DP = 3,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch
+{
+	NoExtraFields,
+	ProtectFields,
+	ReflectOrMpShieldFields,
+}
+
+public static class PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranchClassifier
+{
+	public static PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch FromShieldDefense(int shieldDefense)
+	{
+		return shieldDefense switch
+		{
+			0 or 2 => PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch.NoExtraFields,
+			8 or 10 => PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch.ProtectFields,
+			_ => PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch.ReflectOrMpShieldFields,
+		};
+	}
 }
 
 public enum PlayerSummonKnownObjectNpcSkillCastResultPacketStep
