@@ -798,6 +798,36 @@ public sealed class PlayerSummonSkillExecutionService
 			currentTimeMilliseconds + postSpawnPreview.SpawnTemplate.DelayMilliseconds);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillSpawnExecutionPreview PreviewMercenaryNpcSkillPostSpawnExecution(
+		PlayerSummonKnownObjectNpcSkillPostSpawnPreview? postSpawnPreview,
+		PlayerSummonKnownObjectNpcSkillSpawnOrigin? origin,
+		bool ownerIsDead = false,
+		bool ownerIsAboutToDie = false)
+	{
+		if (postSpawnPreview == null)
+			return PlayerSummonKnownObjectNpcSkillSpawnExecutionPreview.MissingPreview();
+
+		if (postSpawnPreview.SpawnTemplate == null
+			|| postSpawnPreview.Status == PlayerSummonKnownObjectNpcSkillPostSpawnPreviewStatus.NoSpawnTemplate)
+		{
+			return PlayerSummonKnownObjectNpcSkillSpawnExecutionPreview.NoSpawn(postSpawnPreview);
+		}
+
+		if (ownerIsDead
+			|| ownerIsAboutToDie
+			|| postSpawnPreview.Status == PlayerSummonKnownObjectNpcSkillPostSpawnPreviewStatus.OwnerNotReady)
+		{
+			return PlayerSummonKnownObjectNpcSkillSpawnExecutionPreview.OwnerNotReady(postSpawnPreview);
+		}
+
+		if (origin == null)
+			return PlayerSummonKnownObjectNpcSkillSpawnExecutionPreview.MissingOrigin(postSpawnPreview);
+
+		// Java parity: NpcSkillTemplateEntry.spawnNpc uses the owner's world/instance/position/heading
+		// to create SpawnEngine.newSingleTimeSpawn before SpawnEngine.spawnObject.
+		return PlayerSummonKnownObjectNpcSkillSpawnExecutionPreview.Spawnable(postSpawnPreview, origin);
+	}
+
 	private static PlayerSummonKnownObjectNpcSkillSelectionResult SelectSingleMercenaryNpcSkillCandidate(
 		PlayerSummonKnownObjectNpcSkillCandidate candidate,
 		PlayerSummonKnownObjectNpcSkillSelectionSource source)
@@ -1773,6 +1803,84 @@ public enum PlayerSummonKnownObjectNpcSkillPostSpawnScheduleStatus
 	MissingPreview,
 	NotScheduled,
 	Scheduled,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillSpawnOrigin(
+	int WorldId,
+	int InstanceId,
+	float X,
+	float Y,
+	float Z,
+	byte Heading);
+
+public sealed record PlayerSummonKnownObjectNpcSkillSpawnExecutionPreview(
+	PlayerSummonKnownObjectNpcSkillSpawnExecutionPreviewStatus Status,
+	PlayerSummonKnownObjectNpcSkillPostSpawnPreview? PostSpawnPreview = null,
+	PlayerSummonKnownObjectNpcSkillSpawnOrigin? Origin = null)
+{
+	public PlayerSummonKnownObjectNpcSkillSpawnMetadata? SpawnTemplate => PostSpawnPreview?.SpawnTemplate;
+	public bool WouldSpawn => Status == PlayerSummonKnownObjectNpcSkillSpawnExecutionPreviewStatus.WouldSpawn;
+	public bool RequiresSpawnEngine => WouldSpawn;
+	public bool RequiresInstanceSpawn => WouldSpawn;
+	public bool RequiresRandomCount => WouldSpawn && PostSpawnPreview is { RequiresRandomCount: true };
+	public bool RequiresRandomDistance => WouldSpawn && PostSpawnPreview is { RequiresRandomDistance: true };
+	public bool RequiresRandomAngle => WouldSpawn && PostSpawnPreview is { RequiresRandomAngle: true };
+	public bool UsesOwnerPosition => WouldSpawn && Origin != null;
+	public bool RequiresOwnerAliveRecheck => WouldSpawn && PostSpawnPreview is { RequiresOwnerAliveRecheck: true };
+	public int? NpcId => SpawnTemplate?.NpcId;
+	public int? EffectiveMinCount => WouldSpawn ? PostSpawnPreview?.EffectiveMinCount : null;
+	public int? EffectiveMaxCount => WouldSpawn ? PostSpawnPreview?.EffectiveMaxCount : null;
+	public int? EffectiveMinDistance => WouldSpawn ? PostSpawnPreview?.EffectiveMinDistance : null;
+	public int? EffectiveMaxDistance => WouldSpawn ? PostSpawnPreview?.EffectiveMaxDistance : null;
+
+	public static PlayerSummonKnownObjectNpcSkillSpawnExecutionPreview MissingPreview()
+	{
+		return new PlayerSummonKnownObjectNpcSkillSpawnExecutionPreview(
+			PlayerSummonKnownObjectNpcSkillSpawnExecutionPreviewStatus.MissingPreview);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillSpawnExecutionPreview NoSpawn(
+		PlayerSummonKnownObjectNpcSkillPostSpawnPreview postSpawnPreview)
+	{
+		return new PlayerSummonKnownObjectNpcSkillSpawnExecutionPreview(
+			PlayerSummonKnownObjectNpcSkillSpawnExecutionPreviewStatus.NoSpawn,
+			postSpawnPreview);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillSpawnExecutionPreview OwnerNotReady(
+		PlayerSummonKnownObjectNpcSkillPostSpawnPreview postSpawnPreview)
+	{
+		return new PlayerSummonKnownObjectNpcSkillSpawnExecutionPreview(
+			PlayerSummonKnownObjectNpcSkillSpawnExecutionPreviewStatus.OwnerNotReady,
+			postSpawnPreview);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillSpawnExecutionPreview MissingOrigin(
+		PlayerSummonKnownObjectNpcSkillPostSpawnPreview postSpawnPreview)
+	{
+		return new PlayerSummonKnownObjectNpcSkillSpawnExecutionPreview(
+			PlayerSummonKnownObjectNpcSkillSpawnExecutionPreviewStatus.MissingOrigin,
+			postSpawnPreview);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillSpawnExecutionPreview Spawnable(
+		PlayerSummonKnownObjectNpcSkillPostSpawnPreview postSpawnPreview,
+		PlayerSummonKnownObjectNpcSkillSpawnOrigin origin)
+	{
+		return new PlayerSummonKnownObjectNpcSkillSpawnExecutionPreview(
+			PlayerSummonKnownObjectNpcSkillSpawnExecutionPreviewStatus.WouldSpawn,
+			postSpawnPreview,
+			origin);
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillSpawnExecutionPreviewStatus
+{
+	MissingPreview,
+	NoSpawn,
+	OwnerNotReady,
+	MissingOrigin,
+	WouldSpawn,
 }
 
 public sealed record PlayerSummonKnownObjectNpcSkillCandidateMetadata(

@@ -148,6 +148,77 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void PreviewMercenaryNpcSkillPostSpawnExecution_ProjectsJavaSpawnNpcInputs()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var origin = new PlayerSummonKnownObjectNpcSkillSpawnOrigin(
+			WorldId: 210010000,
+			InstanceId: 12,
+			X: 100.5f,
+			Y: 200.25f,
+			Z: 35.75f,
+			Heading: 90);
+		var immediateSpawn = new PlayerSummonKnownObjectNpcSkillSpawnMetadata(
+			NpcId: 212350,
+			DelayMilliseconds: 0,
+			MinDistance: 0,
+			MaxDistance: 0,
+			MinCount: 2,
+			MaxCount: 0);
+		var delayedRandomSpawn = new PlayerSummonKnownObjectNpcSkillSpawnMetadata(
+			NpcId: 212351,
+			DelayMilliseconds: 1250,
+			MinDistance: 3,
+			MaxDistance: 7,
+			MinCount: 1,
+			MaxCount: 4);
+		var noSpawn = service.PreviewMercenaryNpcSkillPostSpawn(
+			service.ProjectMercenaryNpcSkillTemplate(new PlayerSummonKnownObjectNpcSkillTemplateMetadata()));
+		var immediate = service.PreviewMercenaryNpcSkillPostSpawn(
+			service.ProjectMercenaryNpcSkillTemplate(new PlayerSummonKnownObjectNpcSkillTemplateMetadata(SpawnTemplate: immediateSpawn)));
+		var delayed = service.PreviewMercenaryNpcSkillPostSpawn(
+			service.ProjectMercenaryNpcSkillTemplate(new PlayerSummonKnownObjectNpcSkillTemplateMetadata(SpawnTemplate: delayedRandomSpawn)));
+
+		var missingPreview = service.PreviewMercenaryNpcSkillPostSpawnExecution(null, origin);
+		var noSpawnExecution = service.PreviewMercenaryNpcSkillPostSpawnExecution(noSpawn, origin);
+		var missingOrigin = service.PreviewMercenaryNpcSkillPostSpawnExecution(immediate, origin: null);
+		var immediateExecution = service.PreviewMercenaryNpcSkillPostSpawnExecution(immediate, origin);
+		var delayedExecution = service.PreviewMercenaryNpcSkillPostSpawnExecution(delayed, origin);
+		var delayedOwnerDead = service.PreviewMercenaryNpcSkillPostSpawnExecution(delayed, origin, ownerIsDead: true);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSpawnExecutionPreviewStatus.MissingPreview, missingPreview.Status);
+		Assert.False(missingPreview.WouldSpawn);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSpawnExecutionPreviewStatus.NoSpawn, noSpawnExecution.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSpawnExecutionPreviewStatus.MissingOrigin, missingOrigin.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSpawnExecutionPreviewStatus.WouldSpawn, immediateExecution.Status);
+		Assert.True(immediateExecution.RequiresSpawnEngine);
+		Assert.True(immediateExecution.RequiresInstanceSpawn);
+		Assert.True(immediateExecution.UsesOwnerPosition);
+		Assert.Same(origin, immediateExecution.Origin);
+		Assert.Equal(212350, immediateExecution.NpcId);
+		Assert.Equal(2, immediateExecution.EffectiveMinCount);
+		Assert.Equal(2, immediateExecution.EffectiveMaxCount);
+		Assert.False(immediateExecution.RequiresRandomCount);
+		Assert.False(immediateExecution.RequiresRandomDistance);
+		Assert.False(immediateExecution.RequiresRandomAngle);
+		Assert.Equal(0, immediateExecution.EffectiveMinDistance);
+		Assert.Equal(0, immediateExecution.EffectiveMaxDistance);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSpawnExecutionPreviewStatus.WouldSpawn, delayedExecution.Status);
+		Assert.Equal(212351, delayedExecution.NpcId);
+		Assert.True(delayedExecution.RequiresOwnerAliveRecheck);
+		Assert.True(delayedExecution.RequiresRandomCount);
+		Assert.True(delayedExecution.RequiresRandomDistance);
+		Assert.True(delayedExecution.RequiresRandomAngle);
+		Assert.Equal(1, delayedExecution.EffectiveMinCount);
+		Assert.Equal(4, delayedExecution.EffectiveMaxCount);
+		Assert.Equal(3, delayedExecution.EffectiveMinDistance);
+		Assert.Equal(7, delayedExecution.EffectiveMaxDistance);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSpawnExecutionPreviewStatus.OwnerNotReady, delayedOwnerDead.Status);
+		Assert.False(delayedOwnerDead.RequiresSpawnEngine);
+	}
+
+	[Fact]
 	public void ProjectMercenaryNpcSkillCandidate_AdaptsStaticTemplateEntryIntoSelectableCandidate()
 	{
 		var service = new PlayerSummonSkillExecutionService();
