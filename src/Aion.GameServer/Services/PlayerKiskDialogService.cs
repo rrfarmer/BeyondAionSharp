@@ -42,10 +42,17 @@ public static class PlayerKiskDialogService
 					SmSystemMessage.CannotRegisterBindstoneHaveNoAuthority());
 		}
 
-		if (player.PendingKiskBindRequest != null)
+		var pendingRequest = new PendingKiskBindRequest(kisk.ObjectId, SmQuestionWindow.RegisterBindstone);
+		// Java parity: AIActions.addRequest registers the bindstone RequestResponseHandler
+		// in Player.getResponseRequester().putRequest before sending SM_QUESTION_WINDOW.
+		if (!player.ResponseRequester.PutRequest(
+			SmQuestionWindow.RegisterBindstone,
+			new QuestionResponseRequest(kisk.ObjectId, QuestionResponseRequestKind.KiskBind, pendingRequest)))
+		{
 			return PlayerKiskDialogResult.CreateHandled(PlayerKiskDialogStatus.PendingRequest);
+		}
 
-		player.PendingKiskBindRequest = new PendingKiskBindRequest(kisk.ObjectId, SmQuestionWindow.RegisterBindstone);
+		player.PendingKiskBindRequest = pendingRequest;
 		return PlayerKiskDialogResult.WithPacket(
 			PlayerKiskDialogStatus.QuestionRequested,
 			new SmQuestionWindow(SmQuestionWindow.RegisterBindstone, kisk.ObjectId, rangeOrCooldownSeconds: 5));

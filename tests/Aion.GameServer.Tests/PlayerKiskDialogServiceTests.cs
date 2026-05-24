@@ -29,6 +29,30 @@ public sealed class PlayerKiskDialogServiceTests
 		Assert.Equal(PlayerKiskDialogStatus.QuestionRequested, result.Status);
 		Assert.IsType<SmQuestionWindow>(result.ResponsePacket);
 		Assert.Equal(new PendingKiskBindRequest(kisk.ObjectId, SmQuestionWindow.RegisterBindstone), player.PendingKiskBindRequest);
+		Assert.Equal(1, player.ResponseRequester.Count);
+	}
+
+	[Fact]
+	public void RequestDialogRejectsDuplicateBindstoneQuestionThroughResponseRequester()
+	{
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var registry = new PlayerKiskRegistry();
+		var player = new Player
+		{
+			ObjectId = 1002,
+			Race = "ELYOS",
+			Position = new WorldPosition(210010000, 1, 1, 1, 0),
+		};
+		var kisk = RegisterKisk(world, registry, useMask: 1, ownerRace: "ELYOS");
+		var first = PlayerKiskDialogService.RequestDialog(player, kisk.ObjectId, world, registry);
+
+		var duplicate = PlayerKiskDialogService.RequestDialog(player, kisk.ObjectId, world, registry);
+
+		Assert.Equal(PlayerKiskDialogStatus.QuestionRequested, first.Status);
+		Assert.Equal(PlayerKiskDialogStatus.PendingRequest, duplicate.Status);
+		Assert.Null(duplicate.ResponsePacket);
+		Assert.Equal(new PendingKiskBindRequest(kisk.ObjectId, SmQuestionWindow.RegisterBindstone), player.PendingKiskBindRequest);
+		Assert.Equal(1, player.ResponseRequester.Count);
 	}
 
 	[Fact]

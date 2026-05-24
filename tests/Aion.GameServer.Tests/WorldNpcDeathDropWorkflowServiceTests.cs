@@ -356,7 +356,11 @@ public sealed class WorldNpcDeathDropWorkflowServiceTests
 			var deadMember = CreateOnlinePlayer(1002, boundKiskObjectId: kiskObjectId);
 			deadMember.CreatureState = PlayerCreatureState.Dead;
 			var pendingResponder = CreateOnlinePlayer(1003, boundKiskObjectId: 0);
-			pendingResponder.PendingKiskBindRequest = new PendingKiskBindRequest(kiskObjectId, SmQuestionWindow.RegisterBindstone);
+			var pendingKiskBindRequest = new PendingKiskBindRequest(kiskObjectId, SmQuestionWindow.RegisterBindstone);
+			pendingResponder.PendingKiskBindRequest = pendingKiskBindRequest;
+			Assert.True(pendingResponder.ResponseRequester.PutRequest(
+				SmQuestionWindow.RegisterBindstone,
+				new QuestionResponseRequest(kiskObjectId, QuestionResponseRequestKind.KiskBind, pendingKiskBindRequest)));
 			var connectionRegistry = new CapturingConnectionRegistry();
 			connectionRegistry.OnlinePlayers.AddRange([creator, deadMember, pendingResponder]);
 			connectionRegistry.OnlinePlayerObjectIds.UnionWith([1001, 1002, 1003]);
@@ -414,6 +418,7 @@ public sealed class WorldNpcDeathDropWorkflowServiceTests
 			Assert.Equal(0, creator.BoundKiskObjectId);
 			Assert.Equal(0, deadMember.BoundKiskObjectId);
 			Assert.Null(pendingResponder.PendingKiskBindRequest);
+			Assert.Equal(0, pendingResponder.ResponseRequester.Count);
 			Assert.Contains(connectionRegistry.SentPackets, delivery => delivery.PlayerObjectId == 1001 && delivery.Packet is SmKiskUpdate);
 			Assert.Equal(2, connectionRegistry.SentPackets.Count(delivery => delivery.Packet is SmBindPointInfo));
 			Assert.Single(connectionRegistry.SentPackets, delivery => delivery.PlayerObjectId == 1002 && delivery.Packet is SmDie);

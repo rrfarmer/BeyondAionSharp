@@ -38,7 +38,10 @@ public static class PlayerKiskRemovalRuntimeCleanupService
 			if (clearBoundObjectIds.Contains(player.ObjectId))
 				player.BoundKiskObjectId = 0;
 			if (clearPendingRequestObjectIds.Contains(player.ObjectId))
+			{
+				player.ResponseRequester.Remove(SmQuestionWindow.RegisterBindstone);
 				player.PendingKiskBindRequest = null;
+			}
 		}
 
 		var creatorUpdatesSent = 0;

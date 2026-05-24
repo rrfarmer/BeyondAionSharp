@@ -5215,10 +5215,17 @@ public sealed class GameServerConnection : BaseClientConnection
 		// Java parity: ToyPetSpawnAction.act -> kisk.getController().onDialogRequest(player) or KiskService.onBind.
 		if (kisk.MaxMembers > 1)
 		{
-			if (player.PendingKiskBindRequest != null)
+			var pendingRequest = new PendingKiskBindRequest(kisk.ObjectId, SmQuestionWindow.RegisterBindstone);
+			// Java parity: AIActions.addRequest stores the bindstone RequestResponseHandler
+			// in Player.getResponseRequester().putRequest before sending SM_QUESTION_WINDOW.
+			if (!player.ResponseRequester.PutRequest(
+				SmQuestionWindow.RegisterBindstone,
+				new QuestionResponseRequest(kisk.ObjectId, QuestionResponseRequestKind.KiskBind, pendingRequest)))
+			{
 				return;
+			}
 
-			player.PendingKiskBindRequest = new PendingKiskBindRequest(kisk.ObjectId, SmQuestionWindow.RegisterBindstone);
+			player.PendingKiskBindRequest = pendingRequest;
 			await SendPacketAsync(new SmQuestionWindow(SmQuestionWindow.RegisterBindstone, kisk.ObjectId, rangeOrCooldownSeconds: 5));
 			return;
 		}
@@ -5228,11 +5235,20 @@ public sealed class GameServerConnection : BaseClientConnection
 
 	private async Task HandleKiskBindQuestionResponseAsync(Player responder, CmQuestionResponse packet)
 	{
-		// Java parity: KiskAI acceptRequest -> KiskService.onBind for the pending bindstone dialog.
-		var request = responder.PendingKiskBindRequest;
-		if (request == null || packet.QuestionId != request.QuestionId)
+		// Java parity: CM_QUESTION_RESPONSE delegates to ResponseRequester.respond, which removes
+		// the bindstone RequestResponseHandler before invoking accept/deny behavior.
+		var pendingRequest = responder.PendingKiskBindRequest;
+		if (pendingRequest == null || packet.QuestionId != pendingRequest.QuestionId)
 			return;
 
+		var dispatch = responder.ResponseRequester.Respond(packet.QuestionId, packet.Response);
+		if (dispatch?.Request.Kind != QuestionResponseRequestKind.KiskBind)
+		{
+			responder.PendingKiskBindRequest = null;
+			return;
+		}
+
+		var request = dispatch.Request.Payload as PendingKiskBindRequest ?? pendingRequest;
 		responder.PendingKiskBindRequest = null;
 		if (packet.Response == 0)
 			return;
