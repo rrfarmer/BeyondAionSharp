@@ -10,6 +10,7 @@ public sealed class PlayerGroupRuntime
 	private readonly Dictionary<int, List<PlayerGroupMember>> _membersByTeamId = [];
 	private readonly Dictionary<int, PlayerGroupDescriptor> _descriptorsByTeamId = [];
 	private readonly Dictionary<int, Dictionary<int, int>> _targetObjectIdsByBrandIdByTeamId = [];
+	private readonly PlayerBaseLeavePlanner _baseLeavePlanner = new();
 
 	public PlayerGroupSnapshot CreateOrUpdateGroup(
 		int teamId,
@@ -169,26 +170,89 @@ public sealed class PlayerGroupRuntime
 				|| !_descriptorsByTeamId.TryGetValue(teamId, out var descriptor))
 				return null;
 
-			var newLeader = members.FirstOrDefault(member => member.ObjectId == newLeaderObjectId);
-			if (newLeader == null)
+			return ChangeLeaderCore(teamId, members, descriptor, newLeaderObjectId);
+		}
+	}
+
+	public PlayerGroupLeavePlan? RemoveMemberWithLeavePlan(
+		Player member,
+		PlayerGroupLeaveReason reason = PlayerGroupLeaveReason.Leave,
+		string banPersonName = "")
+	{
+		// Java parity: model/team/group/events/PlayerGroupLeavedEvent removes the member, fanouts leave packets, and then runs base PlayerLeavedEvent.
+		lock (_sync)
+		{
+			var teamId = member.CurrentGroupSnapshot?.TeamId
+				?? (member.TeamMembership == PlayerTeamMembership.Group ? member.CurrentTeamId : 0);
+			if (teamId == 0)
+			{
+				ClearGroup(member);
 				return null;
+			}
 
-			var updatedDescriptor = descriptor with { LeaderObjectId = newLeaderObjectId };
-			_descriptorsByTeamId[teamId] = updatedDescriptor;
-			ApplySnapshot(teamId, members);
+			if (!_membersByTeamId.TryGetValue(teamId, out var runtimeMembers)
+				|| !_descriptorsByTeamId.TryGetValue(teamId, out var descriptor))
+			{
+				ClearGroup(member);
+				return null;
+			}
 
-			var sequence = 0;
-			var intents = members
-				.Select(member => new PlayerGroupLeaderChangePacketIntent(
-					sequence++,
-					member.ObjectId,
-					PlayerGroupInfoPacketPlan.FromDescriptor(updatedDescriptor, member.Player.Position.WorldId),
-					member.ObjectId == newLeaderObjectId
-						? SmSystemMessage.PartyYouBecomeNewLeader()
-						: SmSystemMessage.PartyHeIsNewLeader(newLeader.Player.Name)))
-				.ToArray();
+			var leavedMember = runtimeMembers.FirstOrDefault(existing => existing.ObjectId == member.ObjectId);
+			if (leavedMember == null)
+				throw new InvalidOperationException("Team member is already removed.");
 
-			return new PlayerGroupLeaderChangePlan(teamId, newLeaderObjectId, intents);
+			var wasLeader = descriptor.LeaderObjectId == member.ObjectId;
+			var wasMentor = member.IsMentor;
+			var leavePacketPlan = PlayerGroupMemberInfoPacketPlan.FromMember(teamId, leavedMember, PlayerGroupEvent.Leave);
+			runtimeMembers.Remove(leavedMember);
+			ClearGroup(member);
+
+			var wouldDisband = descriptor.TeamType != PlayerGroupType.AutoGroup && runtimeMembers.Count == 1;
+			var packetIntents = CreateGroupLeavePacketIntents(runtimeMembers, leavePacketPlan, member.Name, reason, banPersonName);
+			PlayerGroupLeaderChangePlan? leaderChangePlan = null;
+
+			if (runtimeMembers.Count == 0)
+			{
+				_membersByTeamId.Remove(teamId);
+				_descriptorsByTeamId.Remove(teamId);
+				_targetObjectIdsByBrandIdByTeamId.Remove(teamId);
+			}
+			else if (wouldDisband)
+			{
+				foreach (var remainingMember in runtimeMembers)
+					ClearGroup(remainingMember.Player);
+				_membersByTeamId.Remove(teamId);
+				_descriptorsByTeamId.Remove(teamId);
+				_targetObjectIdsByBrandIdByTeamId.Remove(teamId);
+			}
+			else
+			{
+				if (wasLeader)
+				{
+					var fallbackLeader = runtimeMembers.FirstOrDefault(candidate => candidate.IsOnline) ?? runtimeMembers[0];
+					leaderChangePlan = ChangeLeaderCore(teamId, runtimeMembers, descriptor, fallbackLeader.ObjectId);
+				}
+				else
+				{
+					ApplySnapshot(teamId, runtimeMembers);
+				}
+			}
+
+			var baseLeavePlan = _baseLeavePlanner.CreateLeaveSideEffectPlan(
+				member.ObjectId,
+				member.IsOnline,
+				wasRegisteredToTeamInstance: false);
+
+			return new PlayerGroupLeavePlan(
+				teamId,
+				member.ObjectId,
+				reason,
+				packetIntents,
+				baseLeavePlan,
+				leaderChangePlan,
+				wouldDisband,
+				wasMentor,
+				baseLeavePlan.WouldNotifyEventServiceOnLeftTeam);
 		}
 	}
 
@@ -396,6 +460,75 @@ public sealed class PlayerGroupRuntime
 		}
 
 		return runtimeMembers;
+	}
+
+	private PlayerGroupLeaderChangePlan? ChangeLeaderCore(
+		int teamId,
+		IReadOnlyList<PlayerGroupMember> members,
+		PlayerGroupDescriptor descriptor,
+		int newLeaderObjectId)
+	{
+		var newLeader = members.FirstOrDefault(member => member.ObjectId == newLeaderObjectId);
+		if (newLeader == null)
+			return null;
+
+		var updatedDescriptor = descriptor with { LeaderObjectId = newLeaderObjectId };
+		_descriptorsByTeamId[teamId] = updatedDescriptor;
+		ApplySnapshot(teamId, members);
+
+		var sequence = 0;
+		var intents = members
+			.Select(member => new PlayerGroupLeaderChangePacketIntent(
+				sequence++,
+				member.ObjectId,
+				PlayerGroupInfoPacketPlan.FromDescriptor(updatedDescriptor, member.Player.Position.WorldId),
+				member.ObjectId == newLeaderObjectId
+					? SmSystemMessage.PartyYouBecomeNewLeader()
+					: SmSystemMessage.PartyHeIsNewLeader(newLeader.Player.Name)))
+			.ToArray();
+
+		return new PlayerGroupLeaderChangePlan(teamId, newLeaderObjectId, intents);
+	}
+
+	private static IReadOnlyList<PlayerGroupLeavePacketIntent> CreateGroupLeavePacketIntents(
+		IReadOnlyList<PlayerGroupMember> remainingMembers,
+		PlayerGroupMemberInfoPacketPlan leavePacketPlan,
+		string leavedPlayerName,
+		PlayerGroupLeaveReason reason,
+		string banPersonName)
+	{
+		var intents = new List<PlayerGroupLeavePacketIntent>();
+		var sequence = 0;
+		foreach (var remainingMember in remainingMembers)
+		{
+			intents.Add(new PlayerGroupLeavePacketIntent(
+				sequence++,
+				remainingMember.ObjectId,
+				PlayerGroupLeavePacketIntentKind.MemberInfo,
+				leavePacketPlan));
+			intents.Add(new PlayerGroupLeavePacketIntent(
+				sequence++,
+				remainingMember.ObjectId,
+				PlayerGroupLeavePacketIntentKind.SystemMessage,
+				SystemMessage: CreateLeaveMessage(reason, leavedPlayerName, banPersonName)));
+		}
+
+		return intents;
+	}
+
+	private static SmSystemMessage CreateLeaveMessage(
+		PlayerGroupLeaveReason reason,
+		string leavedPlayerName,
+		string banPersonName)
+	{
+		return reason switch
+		{
+			PlayerGroupLeaveReason.Leave => SmSystemMessage.PartyHeLeaveParty(leavedPlayerName),
+			PlayerGroupLeaveReason.Ban => SmSystemMessage.PartyHeIsBanished(leavedPlayerName),
+			PlayerGroupLeaveReason.Disband => SmSystemMessage.PartyIsDispersed(),
+			PlayerGroupLeaveReason.LeaveTimeout => SmSystemMessage.PartyHeBecomeOfflineTimeout(leavedPlayerName),
+			_ => throw new ArgumentOutOfRangeException(nameof(reason), reason, "Unsupported group leave reason."),
+		};
 	}
 
 	private static PlayerGroupSnapshot ApplySnapshot(int teamId, IReadOnlyList<PlayerGroupMember> members)

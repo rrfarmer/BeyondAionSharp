@@ -1,4 +1,5 @@
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 
 namespace Aion.GameServer.Services;
@@ -67,6 +68,50 @@ public sealed record PlayerGroupLeaderChangePacketIntent(
 	int RecipientObjectId,
 	PlayerGroupInfoPacketPlan GroupInfoPlan,
 	SmSystemMessage SystemMessage);
+
+public enum PlayerGroupLeaveReason
+{
+	Leave,
+	Ban,
+	LeaveTimeout,
+	Disband,
+}
+
+public enum PlayerGroupLeavePacketIntentKind
+{
+	MemberInfo,
+	SystemMessage,
+}
+
+public sealed record PlayerGroupLeavePlan(
+	int TeamId,
+	int LeavedPlayerObjectId,
+	PlayerGroupLeaveReason Reason,
+	IReadOnlyList<PlayerGroupLeavePacketIntent> PacketIntents,
+	PlayerBaseLeaveSideEffectPlan BaseLeavePlan,
+	PlayerGroupLeaderChangePlan? LeaderChangePlan,
+	bool WouldDisband,
+	bool WouldStopMentoring,
+	bool WouldInvokeEventServiceOnLeftTeam);
+
+public sealed record PlayerGroupLeavePacketIntent(
+	int Sequence,
+	int RecipientObjectId,
+	PlayerGroupLeavePacketIntentKind Kind,
+	PlayerGroupMemberInfoPacketPlan? MemberInfoPlan = null,
+	SmSystemMessage? SystemMessage = null)
+{
+	public GameServerPacket CreatePacket()
+	{
+		// Java parity: PlayerGroupLeavedEvent sends SM_GROUP_MEMBER_INFO and leave reason messages to remaining members.
+		return Kind switch
+		{
+			PlayerGroupLeavePacketIntentKind.MemberInfo when MemberInfoPlan != null => new SmGroupMemberInfo(MemberInfoPlan),
+			PlayerGroupLeavePacketIntentKind.SystemMessage when SystemMessage != null => SystemMessage,
+			_ => throw new InvalidOperationException("Group leave packet intent is missing packet metadata."),
+		};
+	}
+}
 
 public sealed record PlayerGroupMentorAbyssRankUpdateIntent(
 	int PlayerObjectId,

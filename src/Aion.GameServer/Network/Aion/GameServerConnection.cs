@@ -5791,6 +5791,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return null;
 		}
 
+		if (packet.CommandCode == 6)
+		{
+			await HandleGroupRemoveMemberAsync(player, packet.SelectedObjectId, cancellationToken);
+			return null;
+		}
+
 		if (packet.CommandCode is 10 or 11)
 		{
 			await HandleGroupMentorStatusAsync(player, isMentor: packet.CommandCode == 10, cancellationToken);
@@ -5918,6 +5924,55 @@ public sealed class GameServerConnection : BaseClientConnection
 	}
 
 	private async Task SendGroupLeaderPacketAsync(
+		int recipientObjectId,
+		GameServerPacket packet,
+		CancellationToken cancellationToken)
+	{
+		if (_connectionRegistry != null && await _connectionRegistry.SendPacketToPlayerAsync(recipientObjectId, packet))
+			return;
+
+		if (_activePlayer?.ObjectId == recipientObjectId)
+			await SendPacketAsync(packet, cancellationToken);
+	}
+
+	private async Task<PlayerGroupLeavePlan?> HandleGroupRemoveMemberAsync(
+		Player player,
+		int targetObjectId,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: PlayerTeamCommandService GROUP_REMOVE_MEMBER -> PlayerGroupService.removePlayer.
+		var group = _playerGroupRuntime.Resolve(player);
+		if (group == null)
+			return null;
+
+		var leavedPlayerObjectId = targetObjectId == 0 ? player.ObjectId : targetObjectId;
+		var leavedMember = _playerGroupRuntime.GetMember(group.TeamId, leavedPlayerObjectId);
+		if (leavedMember == null)
+			return null;
+
+		var plan = _playerGroupRuntime.RemoveMemberWithLeavePlan(leavedMember.Player);
+		if (plan == null)
+			return null;
+
+		foreach (var intent in plan.PacketIntents.OrderBy(intent => intent.Sequence))
+			await SendGroupRemovePacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+
+		if (plan.LeaderChangePlan != null)
+		{
+			foreach (var intent in plan.LeaderChangePlan.PacketIntents.OrderBy(intent => intent.Sequence))
+			{
+				await SendGroupRemovePacketAsync(intent.RecipientObjectId, new SmGroupInfo(intent.GroupInfoPlan), cancellationToken);
+				await SendGroupRemovePacketAsync(intent.RecipientObjectId, intent.SystemMessage, cancellationToken);
+			}
+		}
+
+		foreach (var intent in plan.BaseLeavePlan.PacketIntents.OrderBy(intent => intent.Sequence))
+			await SendGroupRemovePacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+
+		return plan;
+	}
+
+	private async Task SendGroupRemovePacketAsync(
 		int recipientObjectId,
 		GameServerPacket packet,
 		CancellationToken cancellationToken)

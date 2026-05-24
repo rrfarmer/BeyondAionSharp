@@ -100,6 +100,33 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 	}
 
 	[Fact]
+	public async Task HandlePlayerStatusInfoAsync_GroupRemoveMemberClearsMembershipAndSendsLeavePacketsLikeJava()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var groups = new PlayerGroupRuntime();
+		var leader = new Player { ObjectId = 1001, Name = "Leader", IsOnline = true, Position = new WorldPosition(210010000, 1, 2, 3, 0) };
+		var removed = new Player { ObjectId = 1002, Name = "Removed", IsOnline = true, Position = new WorldPosition(220010000, 4, 5, 6, 0) };
+		var member = new Player { ObjectId = 1003, Name = "Member", IsOnline = true, Position = new WorldPosition(230010000, 7, 8, 9, 0) };
+		groups.CreateOrUpdateGroup(99001, [leader, removed, member]);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, new PlayerAllianceRuntime(), groups);
+
+		await pair.Connection.HandlePlayerStatusInfoAsync(
+			leader,
+			CreatePacket(commandCode: 6, selectedObjectId: removed.ObjectId));
+
+		Assert.Equal(PlayerTeamMembership.None, removed.TeamMembership);
+		Assert.Equal([1001, 1003], groups.GetMemberObjectIds(99001));
+		Assert.Equal([1001, 1001, 1003, 1003, 1002], registry.SentPackets.Select(send => send.PlayerObjectId));
+		Assert.Collection(
+			registry.SentPackets,
+			send => Assert.IsType<SmGroupMemberInfo>(send.Packet),
+			send => Assert.Equal(1300168, Assert.IsType<SmSystemMessage>(send.Packet).MessageId),
+			send => Assert.IsType<SmGroupMemberInfo>(send.Packet),
+			send => Assert.Equal(1300168, Assert.IsType<SmSystemMessage>(send.Packet).MessageId),
+			send => Assert.IsType<SmLeaveGroupMember>(send.Packet));
+	}
+
+	[Fact]
 	public async Task HandlePlayerStatusInfoAsync_AllianceChangeGroupSendsJavaServiceFailureMessages()
 	{
 		var registry = new CapturingConnectionRegistry();

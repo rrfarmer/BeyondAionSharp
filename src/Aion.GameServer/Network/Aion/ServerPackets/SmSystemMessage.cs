@@ -201,6 +201,30 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300155);
 	}
 
+	public static SmSystemMessage PartyIsDispersed()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_PARTY_IS_DISPERSED.
+		return new SmSystemMessage(1300167);
+	}
+
+	public static SmSystemMessage PartyHeLeaveParty(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_PARTY_HE_LEAVE_PARTY(String).
+		return new SmSystemMessage(1300168, playerName);
+	}
+
+	public static SmSystemMessage PartyHeBecomeOfflineTimeout(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_PARTY_HE_BECOME_OFFLINE_TIMEOUT(String).
+		return new SmSystemMessage(1300176, playerName);
+	}
+
+	public static SmSystemMessage PartyHeIsBanished(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_PARTY_HE_IS_BANISHED(String).
+		return new SmSystemMessage(1300177, playerName);
+	}
+
 	public static SmSystemMessage ForceEnteredForce()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_FORCE_ENTERED_FORCE.
