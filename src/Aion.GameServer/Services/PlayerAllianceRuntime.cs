@@ -539,7 +539,13 @@ public sealed class PlayerAllianceRuntime
 			else
 			{
 				if (!descriptor.AllianceGroupIds.Contains(targetAllianceGroupId))
-					throw new InvalidOperationException("Player alliance group does not exist.");
+				{
+					// Java parity: ChangeMemberGroupEvent.moveMemberToGroup removes the member from the old
+					// PlayerAllianceGroup before PlayerAlliance.getAllianceGroup(groupId) throws requireNonNull.
+					firstMember.ClearAllianceGroupReference();
+					ApplySnapshot(allianceId, members, descriptor);
+					throw new InvalidOperationException($"No such alliance group {targetAllianceGroupId}");
+				}
 
 				firstMember.MoveToAllianceGroup(targetAllianceGroupId);
 			}

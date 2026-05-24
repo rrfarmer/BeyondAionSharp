@@ -198,8 +198,12 @@ public sealed class PlayerAllianceRuntimeTests
 
 		Assert.Null(runtime.ChangeMemberGroup(88001, firstMemberObjectId: 404, secondMemberObjectId: 0, targetAllianceGroupId: 1001));
 		Assert.Null(runtime.ChangeMemberGroup(88001, firstMemberObjectId: 1001, secondMemberObjectId: 404, targetAllianceGroupId: 0));
-		Assert.Throws<InvalidOperationException>(() => runtime.ChangeMemberGroup(88001, firstMemberObjectId: 1001, secondMemberObjectId: 0, targetAllianceGroupId: 404));
-		Assert.Equal([1001, 1002], runtime.GetMemberObjectIdsByGroupId(88001, 1000));
+		var ex = Assert.Throws<InvalidOperationException>(() => runtime.ChangeMemberGroup(88001, firstMemberObjectId: 1001, secondMemberObjectId: 0, targetAllianceGroupId: 404));
+
+		Assert.Equal("No such alliance group 404", ex.Message);
+		Assert.Equal([1002], runtime.GetMemberObjectIdsByGroupId(88001, 1000));
+		Assert.Equal([1001, 1002], runtime.GetMemberObjectIds(88001));
+		Assert.Equal(0, Assert.IsType<PlayerAllianceMember>(runtime.GetMember(88001, 1001)).AllianceGroupId);
 	}
 
 	[Fact]

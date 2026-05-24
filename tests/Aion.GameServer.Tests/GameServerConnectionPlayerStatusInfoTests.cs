@@ -545,6 +545,35 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 	}
 
 	[Fact]
+	public async Task HandlePlayerStatusInfoAsync_AllianceChangeGroupInvalidTargetGroupRemovesOldGroupBeforeThrowLikeJava()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var alliances = new PlayerAllianceRuntime();
+		var leader = new Player { ObjectId = 1001, Name = "Leader", IsOnline = true };
+		var moved = new Player { ObjectId = 1002, Name = "Moved", IsOnline = true };
+		alliances.CreateAlliance(88001, leader);
+		alliances.AddMember(88001, moved);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, alliances);
+
+		var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+			pair.Connection.HandlePlayerStatusInfoAsync(
+				leader,
+				CreatePacket(commandCode: 27, selectedObjectId: moved.ObjectId, allianceGroupId: 1999)));
+
+		Assert.Equal("No such alliance group 1999", ex.Message);
+		Assert.Equal([1001, 1002], alliances.GetMemberObjectIds(88001));
+		Assert.Equal([1001], alliances.GetMemberObjectIdsByGroupId(88001, 1000));
+		Assert.Empty(alliances.GetMemberObjectIdsByGroupId(88001, 1999));
+		var movedMember = alliances.GetMember(88001, moved.ObjectId);
+		Assert.NotNull(movedMember);
+		Assert.Equal(88001, movedMember.AllianceId);
+		Assert.Equal(0, movedMember.AllianceGroupId);
+		Assert.Equal(PlayerTeamMembership.Alliance, moved.TeamMembership);
+		Assert.Equal(88001, moved.CurrentTeamId);
+		Assert.Empty(registry.SentPackets);
+	}
+
+	[Fact]
 	public async Task HandlePlayerStatusInfoAsync_GroupMentoringCommandsToggleMentorAndSendGroupPackets()
 	{
 		var registry = new CapturingConnectionRegistry();

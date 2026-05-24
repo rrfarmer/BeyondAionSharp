@@ -37,6 +37,12 @@ public sealed class PlayerAllianceMember
 		AllianceId = 0;
 	}
 
+	public void ClearAllianceGroupReference()
+	{
+		// Java parity: model/team/alliance/PlayerAllianceGroup.onRemoveMember clears only the PlayerAllianceGroup reference.
+		AllianceGroupId = 0;
+	}
+
 	public void UpdateLastOnlineTime(DateTimeOffset now)
 	{
 		// Java parity: model/team/PlayerTeamMember.updateLastOnlineTime uses System.currentTimeMillis().
