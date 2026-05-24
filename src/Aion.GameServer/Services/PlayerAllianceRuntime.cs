@@ -14,6 +14,7 @@ public sealed class PlayerAllianceRuntime
 	private readonly PlayerAllianceMemberGroupChangePlanner _groupChangePlanner = new();
 	private readonly PlayerAllianceEnteredPlanner _enteredPlanner = new();
 	private readonly PlayerAllianceViceCaptainAssignmentPlanner _viceCaptainAssignmentPlanner = new();
+	private readonly PlayerAllianceLeaderChangePlanner _leaderChangePlanner = new();
 
 	public PlayerAllianceSnapshot CreateAlliance(
 		int allianceId,
@@ -248,6 +249,43 @@ public sealed class PlayerAllianceRuntime
 				ApplySnapshot(allianceId, members, descriptor);
 			}
 
+			return plan;
+		}
+	}
+
+	public PlayerAllianceLeaderChangePlan? ChangeLeader(
+		int allianceId,
+		int newLeaderObjectId,
+		bool eventPlayerWasSpecified)
+	{
+		// Java parity: model/team/alliance/events/ChangeAllianceLeaderEvent.changeLeaderTo.
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(allianceId, 0);
+
+		lock (_sync)
+		{
+			if (!_membersByAllianceId.TryGetValue(allianceId, out var members)
+				|| !_descriptorsByAllianceId.TryGetValue(allianceId, out var descriptor))
+				return null;
+
+			if (members.All(member => member.ObjectId != newLeaderObjectId))
+				return null;
+
+			var currentViceCaptainIds = _viceCaptainObjectIdsByAllianceId.GetValueOrDefault(allianceId) ?? [];
+			var plan = _leaderChangePlanner.CreateLeaderChangePlan(
+				allianceId,
+				descriptor.LeaderObjectId,
+				members.Select(member => member.Player).ToArray(),
+				currentViceCaptainIds,
+				newLeaderObjectId,
+				eventPlayerWasSpecified,
+				descriptor.LootRules,
+				descriptor.TeamType,
+				isInLeague: false);
+
+			var updatedDescriptor = descriptor with { LeaderObjectId = newLeaderObjectId };
+			_descriptorsByAllianceId[allianceId] = updatedDescriptor;
+			_viceCaptainObjectIdsByAllianceId[allianceId] = plan.ViceCaptainObjectIdsAfterEvent.ToList();
+			ApplySnapshot(allianceId, members, updatedDescriptor);
 			return plan;
 		}
 	}

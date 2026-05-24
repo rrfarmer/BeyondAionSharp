@@ -5813,6 +5813,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return null;
 		}
 
+		if (packet.CommandCode == 17)
+		{
+			await HandleAllianceLeaderChangeAsync(player, packet.SelectedObjectId, cancellationToken);
+			return null;
+		}
+
 		if (!Enum.IsDefined(typeof(PlayerAllianceReadyCheckCommand), packet.CommandCode))
 			return null;
 
@@ -5996,6 +6002,58 @@ public sealed class GameServerConnection : BaseClientConnection
 	}
 
 	private async Task SendAllianceViceCaptainPacketAsync(
+		int recipientObjectId,
+		GameServerPacket packet,
+		CancellationToken cancellationToken)
+	{
+		if (_connectionRegistry != null && await _connectionRegistry.SendPacketToPlayerAsync(recipientObjectId, packet))
+			return;
+
+		if (_activePlayer?.ObjectId == recipientObjectId)
+			await SendPacketAsync(packet, cancellationToken);
+	}
+
+	private async Task<PlayerAllianceLeaderChangePlan?> HandleAllianceLeaderChangeAsync(
+		Player player,
+		int targetObjectId,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: PlayerTeamCommandService ALLIANCE_SET_CAPTAIN -> PlayerAllianceService.changeLeader.
+		var alliance = _playerAllianceRuntime.Resolve(player);
+		if (alliance == null)
+			return null;
+
+		var newLeaderObjectId = targetObjectId == 0 ? player.ObjectId : targetObjectId;
+		if (!_playerAllianceRuntime.HasMember(alliance.AllianceId, newLeaderObjectId))
+			return null;
+
+		var plan = _playerAllianceRuntime.ChangeLeader(
+			alliance.AllianceId,
+			newLeaderObjectId,
+			eventPlayerWasSpecified: true);
+		if (plan == null)
+			return null;
+
+		foreach (var intent in plan.AllianceInfoIntents)
+			await SendAllianceLeaderPacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+
+		foreach (var intent in plan.SystemMessageIntents)
+			await SendAllianceLeaderPacketAsync(intent.RecipientObjectId, intent.Message, cancellationToken);
+
+		var demoteOldLeaderPlan = _playerAllianceRuntime.AssignViceCaptain(
+			alliance.AllianceId,
+			plan.OldLeaderObjectId,
+			PlayerAllianceAssignType.DemoteCaptainToViceCaptain);
+		if (demoteOldLeaderPlan != null)
+		{
+			foreach (var intent in demoteOldLeaderPlan.AllianceInfoIntents)
+				await SendAllianceLeaderPacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+		}
+
+		return plan;
+	}
+
+	private async Task SendAllianceLeaderPacketAsync(
 		int recipientObjectId,
 		GameServerPacket packet,
 		CancellationToken cancellationToken)
