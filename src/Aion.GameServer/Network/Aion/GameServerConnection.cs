@@ -5831,6 +5831,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return null;
 		}
 
+		if (packet.CommandCode == 14)
+		{
+			await HandleAllianceLeaveAsync(player, cancellationToken);
+			return null;
+		}
+
 		if (!Enum.IsDefined(typeof(PlayerAllianceReadyCheckCommand), packet.CommandCode))
 			return null;
 
@@ -6125,6 +6131,43 @@ public sealed class GameServerConnection : BaseClientConnection
 	}
 
 	private async Task SendAllianceViceCaptainPacketAsync(
+		int recipientObjectId,
+		GameServerPacket packet,
+		CancellationToken cancellationToken)
+	{
+		if (_connectionRegistry != null && await _connectionRegistry.SendPacketToPlayerAsync(recipientObjectId, packet))
+			return;
+
+		if (_activePlayer?.ObjectId == recipientObjectId)
+			await SendPacketAsync(packet, cancellationToken);
+	}
+
+	private async Task<PlayerAllianceLeaveWorkflowPlan?> HandleAllianceLeaveAsync(
+		Player player,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: PlayerTeamCommandService ALLIANCE_LEAVE -> PlayerAllianceService.removePlayer.
+		var alliance = _playerAllianceRuntime.Resolve(player);
+		if (alliance == null)
+			return null;
+
+		if (_playerAllianceRuntime.IsLeader(alliance.AllianceId, player))
+			return null;
+
+		var plan = _playerAllianceRuntime.RemoveMemberWithLeaveWorkflow(player);
+		if (plan == null)
+			return null;
+
+		foreach (var intent in plan.AllianceLeavePlan.PacketIntents.OrderBy(intent => intent.Sequence))
+			await SendAllianceLeavePacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+
+		foreach (var intent in plan.BaseLeavePlan.PacketIntents.OrderBy(intent => intent.Sequence))
+			await SendAllianceLeavePacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+
+		return plan;
+	}
+
+	private async Task SendAllianceLeavePacketAsync(
 		int recipientObjectId,
 		GameServerPacket packet,
 		CancellationToken cancellationToken)

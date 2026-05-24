@@ -15,6 +15,7 @@ public sealed class PlayerAllianceRuntime
 	private readonly PlayerAllianceEnteredPlanner _enteredPlanner = new();
 	private readonly PlayerAllianceViceCaptainAssignmentPlanner _viceCaptainAssignmentPlanner = new();
 	private readonly PlayerAllianceLeaderChangePlanner _leaderChangePlanner = new();
+	private readonly PlayerAllianceLeaveWorkflowPlanner _leaveWorkflowPlanner = new();
 
 	public PlayerAllianceSnapshot CreateAlliance(
 		int allianceId,
@@ -116,6 +117,84 @@ public sealed class PlayerAllianceRuntime
 			}
 
 			return ApplySnapshot(allianceId, members, descriptor);
+		}
+	}
+
+	public PlayerAllianceLeaveWorkflowPlan? RemoveMemberWithLeaveWorkflow(
+		Player member,
+		PlayerAllianceLeaveReason reason = PlayerAllianceLeaveReason.Leave,
+		string banPersonName = "")
+	{
+		// Java parity: model/team/alliance/events/PlayerAllianceLeavedEvent removes the member, fanouts alliance leave packets, then runs base PlayerLeavedEvent.
+		lock (_sync)
+		{
+			var allianceId = member.CurrentAllianceSnapshot?.AllianceId
+				?? (member.TeamMembership == PlayerTeamMembership.Alliance ? member.CurrentTeamId : 0);
+			if (allianceId == 0)
+			{
+				ClearAlliance(member);
+				return null;
+			}
+
+			if (!_membersByAllianceId.TryGetValue(allianceId, out var members)
+				|| !_descriptorsByAllianceId.TryGetValue(allianceId, out var descriptor))
+			{
+				ClearAlliance(member);
+				return null;
+			}
+
+			var removedMember = members.FirstOrDefault(existing => existing.ObjectId == member.ObjectId);
+			if (removedMember == null)
+				throw new InvalidOperationException("Alliance member is already removed.");
+
+			var wasLeader = descriptor.LeaderObjectId == member.ObjectId;
+			var currentViceCaptainIds = _viceCaptainObjectIdsByAllianceId.GetValueOrDefault(allianceId) ?? [];
+
+			members.Remove(removedMember);
+			removedMember.ClearAllianceGroup();
+			ClearAlliance(member);
+
+			var viceCaptainIdsAfterLeave = currentViceCaptainIds
+				.Where(objectId => objectId != member.ObjectId)
+				.ToList();
+			_viceCaptainObjectIdsByAllianceId[allianceId] = viceCaptainIdsAfterLeave;
+
+			var shouldDisband = descriptor.TeamType != PlayerAllianceTeamType.AutoAlliance && members.Count == 1;
+			var plan = _leaveWorkflowPlanner.CreateLeaveWorkflowPlan(
+				allianceId,
+				descriptor.LeaderObjectId,
+				members.Select(existing => existing.Player).ToArray(),
+				member,
+				currentViceCaptainIds,
+				reason,
+				banPersonName,
+				descriptor.LootRules,
+				descriptor.TeamType,
+				wasLeader,
+				shouldDisband,
+				isInLeague: false,
+				wasRegisteredToTeamInstance: false);
+
+			if (members.Count == 0)
+			{
+				_membersByAllianceId.Remove(allianceId);
+				_descriptorsByAllianceId.Remove(allianceId);
+				_viceCaptainObjectIdsByAllianceId.Remove(allianceId);
+				_allianceReadyStatusByAllianceId.Remove(allianceId);
+				_targetObjectIdsByBrandIdByAllianceId.Remove(allianceId);
+			}
+			else
+			{
+				if (wasLeader)
+				{
+					descriptor = descriptor with { LeaderObjectId = members[0].ObjectId };
+					_descriptorsByAllianceId[allianceId] = descriptor;
+				}
+
+				ApplySnapshot(allianceId, members, descriptor);
+			}
+
+			return plan;
 		}
 	}
 
