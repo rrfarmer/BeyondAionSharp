@@ -783,6 +783,24 @@ public sealed class PlayerSummonSkillExecutionService
 		return PlayerSummonKnownObjectNpcSkillActionSideEffectTrace.FromActionResult(actionResult);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillEndCastSideEffectTrace ProjectMercenaryNpcSkillEndCastSideEffectTrace(
+		PlayerSummonKnownObjectNpcSkillActionResult? actionResult,
+		PlayerSummonKnownObjectNpcSkillPostSpawnPreview? postSpawnPreview,
+		bool isInstantSkill,
+		bool skillMethodSendsCastSpellEnd = true,
+		bool isNpcEffector = true,
+		bool isCastSkillMethod = true)
+	{
+		// Java parity: Skill.endCast applies/schedules effects, sends cast result, fires NPC post-spawn, then afterUseSkill.
+		return PlayerSummonKnownObjectNpcSkillEndCastSideEffectTrace.FromActionResult(
+			actionResult,
+			postSpawnPreview,
+			isInstantSkill,
+			skillMethodSendsCastSpellEnd,
+			isNpcEffector,
+			isCastSkillMethod);
+	}
+
 	public PlayerSummonKnownObjectNpcSkillPerformAttackPreview PreviewMercenaryNpcSkillPerformAttack(
 		bool ownerUsesMeleeAggroRange,
 		bool hasCurrentTarget,
@@ -5124,6 +5142,112 @@ public enum PlayerSummonKnownObjectNpcSkillActionSideEffectStep
 	OwnerSetTarget,
 	CreatureControllerUseSkill,
 	NpcAiOnAttackComplete,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillEndCastSideEffectTrace(
+	PlayerSummonKnownObjectNpcSkillEndCastSideEffectTraceStatus Status,
+	PlayerSummonKnownObjectNpcSkillActionResult? ActionResult = null,
+	PlayerSummonKnownObjectNpcSkillPostSpawnPreview? PostSpawnPreview = null,
+	IReadOnlyList<PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep>? Steps = null)
+{
+	private static readonly IReadOnlyList<PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep> EmptySteps = [];
+
+	public IReadOnlyList<PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep> OrderedSteps => Steps ?? EmptySteps;
+
+	public bool WouldExecuteSideEffects => false;
+
+	public bool FiresPostSpawnBeforeAfterUseSkill =>
+		IndexOf(PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.NpcSkillEntryFireOnEndCastEvents) is int postSpawnIndex
+		&& postSpawnIndex >= 0
+		&& IndexOf(PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.SkillAttackManagerAfterUseSkill) is int afterUseIndex
+		&& afterUseIndex > postSpawnIndex;
+
+	public bool SendsCastResultBeforeNpcAfterUseSkill =>
+		IndexOf(PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.SendCastSpellEnd) is int packetIndex
+		&& packetIndex >= 0
+		&& IndexOf(PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.SkillAttackManagerAfterUseSkill) is int afterUseIndex
+		&& afterUseIndex > packetIndex;
+
+	private int IndexOf(PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep step)
+	{
+		for (var i = 0; i < OrderedSteps.Count; i++)
+		{
+			if (OrderedSteps[i] == step)
+				return i;
+		}
+
+		return -1;
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillEndCastSideEffectTrace FromActionResult(
+		PlayerSummonKnownObjectNpcSkillActionResult? actionResult,
+		PlayerSummonKnownObjectNpcSkillPostSpawnPreview? postSpawnPreview,
+		bool isInstantSkill,
+		bool skillMethodSendsCastSpellEnd,
+		bool isNpcEffector,
+		bool isCastSkillMethod)
+	{
+		if (actionResult?.Status != PlayerSummonKnownObjectNpcSkillActionResultStatus.UseSkill)
+		{
+			return new PlayerSummonKnownObjectNpcSkillEndCastSideEffectTrace(
+				PlayerSummonKnownObjectNpcSkillEndCastSideEffectTraceStatus.NoEndCast,
+				actionResult,
+				postSpawnPreview);
+		}
+
+		var steps = new List<PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep>
+		{
+			isInstantSkill
+				? PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.ApplyEffectImmediately
+				: PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.ScheduleApplyEffect,
+		};
+
+		if (skillMethodSendsCastSpellEnd)
+			steps.Add(PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.SendCastSpellEnd);
+
+		steps.Add(PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.EffectorAiOnEndUseSkill);
+
+		if (isNpcEffector)
+		{
+			steps.Add(PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.NpcSkillEntryFireOnEndCastEvents);
+			if (postSpawnPreview?.ShouldSpawnImmediately == true)
+				steps.Add(PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.PostSpawnImmediate);
+			if (postSpawnPreview?.ShouldScheduleSpawn == true)
+				steps.Add(PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.PostSpawnSchedule);
+			steps.Add(PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.SkillAttackManagerAfterUseSkill);
+		}
+
+		if (isCastSkillMethod)
+			steps.Add(PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.NotifyEndSkillCastObservers);
+
+		steps.Add(PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.InstanceHandlerOnEndCastSkill);
+
+		return new PlayerSummonKnownObjectNpcSkillEndCastSideEffectTrace(
+			PlayerSummonKnownObjectNpcSkillEndCastSideEffectTraceStatus.OrderedSideEffects,
+			actionResult,
+			postSpawnPreview,
+			steps);
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillEndCastSideEffectTraceStatus
+{
+	NoEndCast,
+	OrderedSideEffects,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep
+{
+	ApplyEffectImmediately,
+	ScheduleApplyEffect,
+	SendCastSpellEnd,
+	EffectorAiOnEndUseSkill,
+	NpcSkillEntryFireOnEndCastEvents,
+	PostSpawnImmediate,
+	PostSpawnSchedule,
+	SkillAttackManagerAfterUseSkill,
+	NotifyEndSkillCastObservers,
+	InstanceHandlerOnEndCastSkill,
 }
 
 public enum PlayerSummonKnownObjectNpcSkillActionResultStatus

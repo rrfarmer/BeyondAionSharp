@@ -2476,6 +2476,89 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void ProjectMercenaryNpcSkillEndCastSideEffectTrace_OrdersJavaNpcEndCastHooks()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var knownObject = new PlayerSummonKnownObject(8018, PlayerSummonKnownObjectKind.Creature);
+		var readySkill = service.EvaluateMercenarySkillReadiness(knownObject, CreateSkillTemplate("MAGICAL"));
+		var targetSelection = service.SelectMercenaryNpcSkillActionTarget(
+			skillFirstTargetIsSelf: false,
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.MostHated,
+			hasMostHatedTarget: true);
+		var actionPreview = service.PreviewMercenaryNpcSkillAction(
+			isInCastSubState: true,
+			shouldResumeFightAfterInterruptedCast: false,
+			hasCreatureTarget: true,
+			targetIsDead: false,
+			hasLastSkill: true,
+			ownerUsesMeleeAggroRange: false,
+			targetInAggroRange: true,
+			readySkill,
+			targetSelection,
+			controllerUseSkillSucceeded: true);
+		var actionResult = service.ProjectMercenaryNpcSkillActionResult(actionPreview);
+		var failedActionPreview = service.PreviewMercenaryNpcSkillAction(
+			isInCastSubState: true,
+			shouldResumeFightAfterInterruptedCast: false,
+			hasCreatureTarget: true,
+			targetIsDead: false,
+			hasLastSkill: true,
+			ownerUsesMeleeAggroRange: false,
+			targetInAggroRange: true,
+			readySkill,
+			targetSelection,
+			controllerUseSkillSucceeded: false);
+		var failedActionResult = service.ProjectMercenaryNpcSkillActionResult(failedActionPreview);
+		var postSpawn = service.PreviewMercenaryNpcSkillPostSpawn(
+			service.ProjectMercenaryNpcSkillTemplate(
+				new PlayerSummonKnownObjectNpcSkillTemplateMetadata(
+					SpawnTemplate: new PlayerSummonKnownObjectNpcSkillSpawnMetadata(
+						NpcId: 212360,
+						DelayMilliseconds: 250))));
+
+		var noEndCast = service.ProjectMercenaryNpcSkillEndCastSideEffectTrace(
+			failedActionResult,
+			postSpawn,
+			isInstantSkill: true);
+		var instantNpcCast = service.ProjectMercenaryNpcSkillEndCastSideEffectTrace(
+			actionResult,
+			postSpawn,
+			isInstantSkill: true);
+		var delayedNonCast = service.ProjectMercenaryNpcSkillEndCastSideEffectTrace(
+			actionResult,
+			postSpawn,
+			isInstantSkill: false,
+			skillMethodSendsCastSpellEnd: false,
+			isCastSkillMethod: false);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEndCastSideEffectTraceStatus.NoEndCast, noEndCast.Status);
+		Assert.Empty(noEndCast.OrderedSteps);
+		Assert.Equal([
+			PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.ApplyEffectImmediately,
+			PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.SendCastSpellEnd,
+			PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.EffectorAiOnEndUseSkill,
+			PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.NpcSkillEntryFireOnEndCastEvents,
+			PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.PostSpawnSchedule,
+			PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.SkillAttackManagerAfterUseSkill,
+			PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.NotifyEndSkillCastObservers,
+			PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.InstanceHandlerOnEndCastSkill,
+		], instantNpcCast.OrderedSteps);
+		Assert.True(instantNpcCast.FiresPostSpawnBeforeAfterUseSkill);
+		Assert.True(instantNpcCast.SendsCastResultBeforeNpcAfterUseSkill);
+		Assert.False(instantNpcCast.WouldExecuteSideEffects);
+		Assert.Equal([
+			PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.ScheduleApplyEffect,
+			PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.EffectorAiOnEndUseSkill,
+			PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.NpcSkillEntryFireOnEndCastEvents,
+			PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.PostSpawnSchedule,
+			PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.SkillAttackManagerAfterUseSkill,
+			PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.InstanceHandlerOnEndCastSkill,
+		], delayedNonCast.OrderedSteps);
+		Assert.True(delayedNonCast.FiresPostSpawnBeforeAfterUseSkill);
+		Assert.False(delayedNonCast.SendsCastResultBeforeNpcAfterUseSkill);
+	}
+
+	[Fact]
 	public void PreviewMercenaryNpcSkillActionWorkflow_ComposesJavaSelectionRangeAndActionSlices()
 	{
 		var service = new PlayerSummonSkillExecutionService();
