@@ -343,6 +343,52 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void EvaluateMercenarySkillReadiness_ConsumesTypedNpcSkillConditionReadiness()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var knownObject = new PlayerSummonKnownObject(
+			ObjectId: 8002,
+			Kind: PlayerSummonKnownObjectKind.Creature,
+			CreatorObjectId: 1,
+			NpcTemplateId: 833288,
+			NpcTemplateType: PlayerSummonKnownNpcTemplateType.Mercenary);
+		var magicalSkill = CreateSkillTemplate(skillType: "MAGICAL");
+		var readyTiming = service.EvaluateMercenaryNpcSkillEntryReadiness(
+			new PlayerSummonKnownObjectNpcSkillEntryTiming(),
+			hpPercentage: 50,
+			elapsedFightTimeMilliseconds: 0,
+			currentTimeMilliseconds: 10_000);
+		var stunnedTarget = new PlayerSummonKnownObjectNpcSkillConditionTarget(
+			PlayerSummonKnownObjectNpcSkillConditionTargetKind.Player,
+			PlayerAbnormalState.Stun);
+		var readyCondition = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			PlayerSummonKnownObjectNpcSkillCondition.TargetIsStunned,
+			stunnedTarget);
+		var blockedCondition = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			PlayerSummonKnownObjectNpcSkillCondition.TargetIsBleeding,
+			stunnedTarget);
+
+		var blocked = service.EvaluateMercenarySkillReadiness(
+			knownObject,
+			magicalSkill,
+			readyTiming,
+			blockedCondition);
+		var ready = service.EvaluateMercenarySkillReadiness(
+			knownObject,
+			magicalSkill,
+			readyTiming,
+			readyCondition);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.NotReady, blockedCondition.Status);
+		Assert.Equal(PlayerSummonKnownObjectSkillReadinessStatus.EntryConditionNotReady, blocked.Status);
+		Assert.Same(readyTiming, blocked.EntryTimingReadiness);
+		Assert.Same(blockedCondition, blocked.EntryConditionReadiness);
+		Assert.Equal(PlayerSummonKnownObjectSkillReadinessStatus.Ready, ready.Status);
+		Assert.Same(readyTiming, ready.EntryTimingReadiness);
+		Assert.Same(readyCondition, ready.EntryConditionReadiness);
+	}
+
+	[Fact]
 	public void PreviewMercenarySkillAttack_ProjectsSkillAttackManagerGates()
 	{
 		var service = new PlayerSummonSkillExecutionService();

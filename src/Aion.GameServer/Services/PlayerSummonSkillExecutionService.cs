@@ -128,6 +128,7 @@ public sealed class PlayerSummonSkillExecutionService
 			knownObject,
 			skillTemplate,
 			entryTimingReadiness: null,
+			entryConditionReadiness: null,
 			entryTimingReady,
 			entryConditionReady);
 	}
@@ -139,40 +140,60 @@ public sealed class PlayerSummonSkillExecutionService
 		bool entryTimingReady = true,
 		bool entryConditionReady = true)
 	{
+		return EvaluateMercenarySkillReadiness(
+			knownObject,
+			skillTemplate,
+			entryTimingReadiness,
+			entryConditionReadiness: null,
+			entryTimingReady,
+			entryConditionReady);
+	}
+
+	public PlayerSummonKnownObjectSkillReadiness EvaluateMercenarySkillReadiness(
+		PlayerSummonKnownObject knownObject,
+		SkillTemplateSummary? skillTemplate,
+		PlayerSummonKnownObjectNpcSkillEntryReadiness? entryTimingReadiness,
+		PlayerSummonKnownObjectNpcSkillConditionReadiness? entryConditionReadiness,
+		bool entryTimingReady = true,
+		bool entryConditionReady = true)
+	{
 		if (!entryTimingReady)
-			return PlayerSummonKnownObjectSkillReadiness.EntryTimingNotReady(knownObject, skillTemplate, entryTimingReadiness);
+			return PlayerSummonKnownObjectSkillReadiness.EntryTimingNotReady(knownObject, skillTemplate, entryTimingReadiness, entryConditionReadiness);
 
 		if (entryTimingReadiness is { Status: not PlayerSummonKnownObjectNpcSkillEntryReadinessStatus.Ready })
 		{
-			return PlayerSummonKnownObjectSkillReadiness.EntryTimingNotReady(knownObject, skillTemplate, entryTimingReadiness);
+			return PlayerSummonKnownObjectSkillReadiness.EntryTimingNotReady(knownObject, skillTemplate, entryTimingReadiness, entryConditionReadiness);
 		}
 
 		if (!entryConditionReady)
-			return PlayerSummonKnownObjectSkillReadiness.EntryConditionNotReady(knownObject, skillTemplate, entryTimingReadiness);
+			return PlayerSummonKnownObjectSkillReadiness.EntryConditionNotReady(knownObject, skillTemplate, entryTimingReadiness, entryConditionReadiness);
+
+		if (entryConditionReadiness is { Status: not PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.Ready })
+			return PlayerSummonKnownObjectSkillReadiness.EntryConditionNotReady(knownObject, skillTemplate, entryTimingReadiness, entryConditionReadiness);
 
 		// Java parity: SkillAttackManager.isReady resolves SkillTemplate through DataManager.SKILL_DATA.
 		if (skillTemplate == null)
-			return PlayerSummonKnownObjectSkillReadiness.MissingSkillTemplate(knownObject, entryTimingReadiness);
+			return PlayerSummonKnownObjectSkillReadiness.MissingSkillTemplate(knownObject, entryTimingReadiness, entryConditionReadiness);
 
 		if (string.Equals(skillTemplate.SkillType, "MAGICAL", StringComparison.Ordinal)
 			&& knownObject.IsAbnormalSet(PlayerAbnormalState.Silence))
 		{
-			return PlayerSummonKnownObjectSkillReadiness.BlockedBySilence(knownObject, skillTemplate, entryTimingReadiness);
+			return PlayerSummonKnownObjectSkillReadiness.BlockedBySilence(knownObject, skillTemplate, entryTimingReadiness, entryConditionReadiness);
 		}
 
 		if (string.Equals(skillTemplate.SkillType, "PHYSICAL", StringComparison.Ordinal)
 			&& knownObject.IsAbnormalSet(PlayerAbnormalState.Bind))
 		{
-			return PlayerSummonKnownObjectSkillReadiness.BlockedByBind(knownObject, skillTemplate, entryTimingReadiness);
+			return PlayerSummonKnownObjectSkillReadiness.BlockedByBind(knownObject, skillTemplate, entryTimingReadiness, entryConditionReadiness);
 		}
 
 		if (knownObject.IsInAnyAbnormalState(PlayerAbnormalState.CantAttackState))
-			return PlayerSummonKnownObjectSkillReadiness.BlockedByCantAttackState(knownObject, skillTemplate, entryTimingReadiness);
+			return PlayerSummonKnownObjectSkillReadiness.BlockedByCantAttackState(knownObject, skillTemplate, entryTimingReadiness, entryConditionReadiness);
 
 		if (knownObject.IsTransformed && knownObject.TransformBansSkillUse)
-			return PlayerSummonKnownObjectSkillReadiness.BlockedByTransformSkillBan(knownObject, skillTemplate, entryTimingReadiness);
+			return PlayerSummonKnownObjectSkillReadiness.BlockedByTransformSkillBan(knownObject, skillTemplate, entryTimingReadiness, entryConditionReadiness);
 
-		return PlayerSummonKnownObjectSkillReadiness.Ready(knownObject, skillTemplate, entryTimingReadiness);
+		return PlayerSummonKnownObjectSkillReadiness.Ready(knownObject, skillTemplate, entryTimingReadiness, entryConditionReadiness);
 	}
 
 	public PlayerSummonKnownObjectNpcSkillEntryReadiness EvaluateMercenaryNpcSkillEntryReadiness(
@@ -898,100 +919,117 @@ public sealed record PlayerSummonKnownObjectSkillReadiness(
 	PlayerSummonKnownObjectSkillReadinessStatus Status,
 	PlayerSummonKnownObject KnownObject,
 	SkillTemplateSummary? SkillTemplate = null,
-	PlayerSummonKnownObjectNpcSkillEntryReadiness? EntryTimingReadiness = null)
+	PlayerSummonKnownObjectNpcSkillEntryReadiness? EntryTimingReadiness = null,
+	PlayerSummonKnownObjectNpcSkillConditionReadiness? EntryConditionReadiness = null)
 {
 	public static PlayerSummonKnownObjectSkillReadiness EntryTimingNotReady(
 		PlayerSummonKnownObject knownObject,
 		SkillTemplateSummary? skillTemplate,
-		PlayerSummonKnownObjectNpcSkillEntryReadiness? entryTimingReadiness = null)
+		PlayerSummonKnownObjectNpcSkillEntryReadiness? entryTimingReadiness = null,
+		PlayerSummonKnownObjectNpcSkillConditionReadiness? entryConditionReadiness = null)
 	{
 		return new PlayerSummonKnownObjectSkillReadiness(
 			PlayerSummonKnownObjectSkillReadinessStatus.EntryTimingNotReady,
 			knownObject,
 			skillTemplate,
-			entryTimingReadiness);
+			entryTimingReadiness,
+			entryConditionReadiness);
 	}
 
 	public static PlayerSummonKnownObjectSkillReadiness EntryConditionNotReady(
 		PlayerSummonKnownObject knownObject,
 		SkillTemplateSummary? skillTemplate,
-		PlayerSummonKnownObjectNpcSkillEntryReadiness? entryTimingReadiness = null)
+		PlayerSummonKnownObjectNpcSkillEntryReadiness? entryTimingReadiness = null,
+		PlayerSummonKnownObjectNpcSkillConditionReadiness? entryConditionReadiness = null)
 	{
 		return new PlayerSummonKnownObjectSkillReadiness(
 			PlayerSummonKnownObjectSkillReadinessStatus.EntryConditionNotReady,
 			knownObject,
 			skillTemplate,
-			entryTimingReadiness);
+			entryTimingReadiness,
+			entryConditionReadiness);
 	}
 
 	public static PlayerSummonKnownObjectSkillReadiness MissingSkillTemplate(
 		PlayerSummonKnownObject knownObject,
-		PlayerSummonKnownObjectNpcSkillEntryReadiness? entryTimingReadiness = null)
+		PlayerSummonKnownObjectNpcSkillEntryReadiness? entryTimingReadiness = null,
+		PlayerSummonKnownObjectNpcSkillConditionReadiness? entryConditionReadiness = null)
 	{
 		return new PlayerSummonKnownObjectSkillReadiness(
 			PlayerSummonKnownObjectSkillReadinessStatus.MissingSkillTemplate,
 			knownObject,
-			EntryTimingReadiness: entryTimingReadiness);
+			EntryTimingReadiness: entryTimingReadiness,
+			EntryConditionReadiness: entryConditionReadiness);
 	}
 
 	public static PlayerSummonKnownObjectSkillReadiness BlockedBySilence(
 		PlayerSummonKnownObject knownObject,
 		SkillTemplateSummary skillTemplate,
-		PlayerSummonKnownObjectNpcSkillEntryReadiness? entryTimingReadiness = null)
+		PlayerSummonKnownObjectNpcSkillEntryReadiness? entryTimingReadiness = null,
+		PlayerSummonKnownObjectNpcSkillConditionReadiness? entryConditionReadiness = null)
 	{
 		return new PlayerSummonKnownObjectSkillReadiness(
 			PlayerSummonKnownObjectSkillReadinessStatus.BlockedBySilence,
 			knownObject,
 			skillTemplate,
-			entryTimingReadiness);
+			entryTimingReadiness,
+			entryConditionReadiness);
 	}
 
 	public static PlayerSummonKnownObjectSkillReadiness BlockedByBind(
 		PlayerSummonKnownObject knownObject,
 		SkillTemplateSummary skillTemplate,
-		PlayerSummonKnownObjectNpcSkillEntryReadiness? entryTimingReadiness = null)
+		PlayerSummonKnownObjectNpcSkillEntryReadiness? entryTimingReadiness = null,
+		PlayerSummonKnownObjectNpcSkillConditionReadiness? entryConditionReadiness = null)
 	{
 		return new PlayerSummonKnownObjectSkillReadiness(
 			PlayerSummonKnownObjectSkillReadinessStatus.BlockedByBind,
 			knownObject,
 			skillTemplate,
-			entryTimingReadiness);
+			entryTimingReadiness,
+			entryConditionReadiness);
 	}
 
 	public static PlayerSummonKnownObjectSkillReadiness BlockedByCantAttackState(
 		PlayerSummonKnownObject knownObject,
 		SkillTemplateSummary skillTemplate,
-		PlayerSummonKnownObjectNpcSkillEntryReadiness? entryTimingReadiness = null)
+		PlayerSummonKnownObjectNpcSkillEntryReadiness? entryTimingReadiness = null,
+		PlayerSummonKnownObjectNpcSkillConditionReadiness? entryConditionReadiness = null)
 	{
 		return new PlayerSummonKnownObjectSkillReadiness(
 			PlayerSummonKnownObjectSkillReadinessStatus.BlockedByCantAttackState,
 			knownObject,
 			skillTemplate,
-			entryTimingReadiness);
+			entryTimingReadiness,
+			entryConditionReadiness);
 	}
 
 	public static PlayerSummonKnownObjectSkillReadiness BlockedByTransformSkillBan(
 		PlayerSummonKnownObject knownObject,
 		SkillTemplateSummary skillTemplate,
-		PlayerSummonKnownObjectNpcSkillEntryReadiness? entryTimingReadiness = null)
+		PlayerSummonKnownObjectNpcSkillEntryReadiness? entryTimingReadiness = null,
+		PlayerSummonKnownObjectNpcSkillConditionReadiness? entryConditionReadiness = null)
 	{
 		return new PlayerSummonKnownObjectSkillReadiness(
 			PlayerSummonKnownObjectSkillReadinessStatus.BlockedByTransformSkillBan,
 			knownObject,
 			skillTemplate,
-			entryTimingReadiness);
+			entryTimingReadiness,
+			entryConditionReadiness);
 	}
 
 	public static PlayerSummonKnownObjectSkillReadiness Ready(
 		PlayerSummonKnownObject knownObject,
 		SkillTemplateSummary skillTemplate,
-		PlayerSummonKnownObjectNpcSkillEntryReadiness? entryTimingReadiness = null)
+		PlayerSummonKnownObjectNpcSkillEntryReadiness? entryTimingReadiness = null,
+		PlayerSummonKnownObjectNpcSkillConditionReadiness? entryConditionReadiness = null)
 	{
 		return new PlayerSummonKnownObjectSkillReadiness(
 			PlayerSummonKnownObjectSkillReadinessStatus.Ready,
 			knownObject,
 			skillTemplate,
-			entryTimingReadiness);
+			entryTimingReadiness,
+			entryConditionReadiness);
 	}
 }
 
