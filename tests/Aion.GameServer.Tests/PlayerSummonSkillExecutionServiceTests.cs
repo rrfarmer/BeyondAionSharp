@@ -138,6 +138,74 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void SelectMercenaryNpcSkillCandidate_OrdersByPriorityAndReadiness()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var readyTiming = service.EvaluateMercenaryNpcSkillEntryReadiness(
+			new PlayerSummonKnownObjectNpcSkillEntryTiming(),
+			hpPercentage: 100,
+			elapsedFightTimeMilliseconds: 0,
+			currentTimeMilliseconds: 1000);
+		var blockedTiming = service.EvaluateMercenaryNpcSkillEntryReadiness(
+			new PlayerSummonKnownObjectNpcSkillEntryTiming(),
+			hpPercentage: 100,
+			elapsedFightTimeMilliseconds: 0,
+			currentTimeMilliseconds: 1000,
+			chanceReady: false);
+		var readyCondition = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			new PlayerSummonKnownObjectNpcSkillConditionMetadata(),
+			target: null);
+		var blockedCondition = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			PlayerSummonKnownObjectNpcSkillCondition.TargetIsBleeding,
+			new PlayerSummonKnownObjectNpcSkillConditionTarget(PlayerSummonKnownObjectNpcSkillConditionTargetKind.Npc));
+
+		PlayerSummonKnownObjectNpcSkillCandidate Candidate(
+			int position,
+			int priority,
+			int chainId,
+			PlayerSummonKnownObjectNpcSkillEntryReadiness timing,
+			PlayerSummonKnownObjectNpcSkillConditionReadiness condition,
+			PlayerSummonKnownObjectTargetRangeReadiness? targetRange = null)
+		{
+			var projection = service.ProjectMercenaryNpcSkillTemplate(
+				new PlayerSummonKnownObjectNpcSkillTemplateMetadata(Priority: priority, ChainId: chainId));
+
+			return new PlayerSummonKnownObjectNpcSkillCandidate(position, projection, timing, condition, targetRange);
+		}
+
+		var empty = service.SelectMercenaryNpcSkillCandidate([]);
+		var selected = service.SelectMercenaryNpcSkillCandidate([
+			Candidate(0, priority: 9, chainId: 10, readyTiming, readyCondition),
+			Candidate(1, priority: 8, chainId: 0, blockedTiming, readyCondition),
+			Candidate(2, priority: 7, chainId: 0, readyTiming, blockedCondition),
+			Candidate(3, priority: 5, chainId: 0, readyTiming, readyCondition),
+			Candidate(4, priority: 1, chainId: 0, readyTiming, readyCondition),
+		]);
+
+		var knownObject = new PlayerSummonKnownObject(
+			ObjectId: 8003,
+			Kind: PlayerSummonKnownObjectKind.Creature,
+			CreatorObjectId: 1,
+			NpcTemplateId: 833288,
+			NpcTemplateType: PlayerSummonKnownNpcTemplateType.Mercenary);
+		var targetOutOfRange = service.EvaluateMercenaryTargetRange(
+			knownObject,
+			PlayerSummonKnownObjectSkillTargetMode.CreatureTarget,
+			hasCreatureTarget: true,
+			isInRange: false);
+		var blockedByRange = service.SelectMercenaryNpcSkillCandidate([
+			Candidate(0, priority: 10, chainId: 0, readyTiming, readyCondition, targetOutOfRange),
+			Candidate(1, priority: 1, chainId: 0, readyTiming, readyCondition),
+		]);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionStatus.Empty, empty.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionStatus.Ready, selected.Status);
+		Assert.Equal(3, selected.Candidate?.Position);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionStatus.TargetRangeNotReady, blockedByRange.Status);
+		Assert.Equal(0, blockedByRange.Candidate?.Position);
+	}
+
+	[Fact]
 	public void EvaluateMercenaryNpcSkillConditionReadiness_ProjectsSimpleJavaConditionBranches()
 	{
 		var service = new PlayerSummonSkillExecutionService();

@@ -345,6 +345,45 @@ public sealed class PlayerSummonSkillExecutionService
 			distanceMeters <= conditionMetadata.RangeMeters);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillSelectionResult SelectMercenaryNpcSkillCandidate(
+		IEnumerable<PlayerSummonKnownObjectNpcSkillCandidate> candidates,
+		bool includeChainSkills = false)
+	{
+		var orderedCandidates = candidates
+			.OrderByDescending(candidate => candidate.Projection.Priority)
+			.ThenBy(candidate => candidate.Position)
+			.ToList();
+
+		if (orderedCandidates.Count == 0)
+			return PlayerSummonKnownObjectNpcSkillSelectionResult.Empty();
+
+		foreach (var candidate in orderedCandidates)
+		{
+			// Java parity: SkillAttackManager.chooseNextSkill skips ordinary priority entries with a non-zero chain id.
+			if (!includeChainSkills && candidate.Projection.ChainId != 0)
+				continue;
+
+			if (candidate.EntryTimingReadiness.Status != PlayerSummonKnownObjectNpcSkillEntryReadinessStatus.Ready
+				|| candidate.EntryConditionReadiness.Status != PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.Ready)
+			{
+				continue;
+			}
+
+			if (candidate.TargetRangeReadiness is
+				{
+					Status: not PlayerSummonKnownObjectTargetRangeReadinessStatus.Ready
+						and not PlayerSummonKnownObjectTargetRangeReadinessStatus.NotRequired,
+				})
+			{
+				return PlayerSummonKnownObjectNpcSkillSelectionResult.TargetRangeNotReady(candidate);
+			}
+
+			return PlayerSummonKnownObjectNpcSkillSelectionResult.Ready(candidate);
+		}
+
+		return PlayerSummonKnownObjectNpcSkillSelectionResult.NoReadyCandidate();
+	}
+
 	private static PlayerSummonKnownObjectNpcSkillConditionReadiness MatchTargetAbnormalState(
 		PlayerSummonKnownObjectNpcSkillCondition condition,
 		PlayerSummonKnownObjectNpcSkillConditionTarget? target,
@@ -1150,6 +1189,50 @@ public sealed record PlayerSummonKnownObjectNpcSkillTemplateProjection(
 	int ChainId,
 	int MaxChainTimeMilliseconds,
 	bool IsPostSpawn);
+
+public sealed record PlayerSummonKnownObjectNpcSkillCandidate(
+	int Position,
+	PlayerSummonKnownObjectNpcSkillTemplateProjection Projection,
+	PlayerSummonKnownObjectNpcSkillEntryReadiness EntryTimingReadiness,
+	PlayerSummonKnownObjectNpcSkillConditionReadiness EntryConditionReadiness,
+	PlayerSummonKnownObjectTargetRangeReadiness? TargetRangeReadiness = null);
+
+public sealed record PlayerSummonKnownObjectNpcSkillSelectionResult(
+	PlayerSummonKnownObjectNpcSkillSelectionStatus Status,
+	PlayerSummonKnownObjectNpcSkillCandidate? Candidate = null)
+{
+	public static PlayerSummonKnownObjectNpcSkillSelectionResult Empty()
+	{
+		return new PlayerSummonKnownObjectNpcSkillSelectionResult(PlayerSummonKnownObjectNpcSkillSelectionStatus.Empty);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillSelectionResult NoReadyCandidate()
+	{
+		return new PlayerSummonKnownObjectNpcSkillSelectionResult(PlayerSummonKnownObjectNpcSkillSelectionStatus.NoReadyCandidate);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillSelectionResult TargetRangeNotReady(PlayerSummonKnownObjectNpcSkillCandidate candidate)
+	{
+		return new PlayerSummonKnownObjectNpcSkillSelectionResult(
+			PlayerSummonKnownObjectNpcSkillSelectionStatus.TargetRangeNotReady,
+			candidate);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillSelectionResult Ready(PlayerSummonKnownObjectNpcSkillCandidate candidate)
+	{
+		return new PlayerSummonKnownObjectNpcSkillSelectionResult(
+			PlayerSummonKnownObjectNpcSkillSelectionStatus.Ready,
+			candidate);
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillSelectionStatus
+{
+	Empty,
+	NoReadyCandidate,
+	TargetRangeNotReady,
+	Ready,
+}
 
 public sealed record PlayerSummonKnownObjectNpcSkillConditionMetadata(
 	PlayerSummonKnownObjectNpcSkillCondition Condition = PlayerSummonKnownObjectNpcSkillCondition.None,
