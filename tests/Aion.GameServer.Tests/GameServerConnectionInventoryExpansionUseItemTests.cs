@@ -168,6 +168,19 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Equal(3, fixture.SentPackets.Count);
 	}
 
+	[Fact]
+	public async Task HandleUseItemAsync_SelectableDecomposeShowsChoicesWithoutSchedulingUse()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(includeThreadPoolManager: true);
+		var player = CreatePlayer(itemId: 101);
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
+
+		Assert.Equal(0, player.UsingItemObjectId);
+		var packet = Assert.Single(fixture.SentPackets);
+		AssertFirstShowDecomposablePayload(Assert.IsType<SmFirstShowDecomposable>(packet));
+	}
+
 	private static Player CreatePlayer(int itemId)
 	{
 		return new Player
@@ -234,6 +247,29 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Equal(0, (int)reader.ReadC());
 		Assert.Equal(1, (int)reader.ReadC());
 		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertFirstShowDecomposablePayload(SmFirstShowDecomposable packet)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(5001, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(2, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(201, reader.ReadD());
+		Assert.Equal(2, reader.ReadD());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(1, (int)reader.ReadC());
+		Assert.Equal(1, (int)reader.ReadC());
+		Assert.Equal(202, reader.ReadD());
+		Assert.Equal(3, reader.ReadD());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(1, (int)reader.ReadC());
 		Assert.Equal(0, reader.Remaining);
 	}
 
@@ -320,12 +356,26 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 								<decompose/>
 							</actions>
 						</item_template>
+						<item_template id="101" name="Test Selectable Decompose Box" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="1">
+							<actions>
+								<decompose/>
+							</actions>
+						</item_template>
 						<item_template id="200" name="Test Decompose Reward" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
+						<item_template id="201" name="Test Selectable Reward 1" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
+						<item_template id="202" name="Test Selectable Reward 2" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
 					</item_templates>
 					<decomposable_items>
 						<decomposable item_id="100">
 							<items chance="100" minlevel="1" maxlevel="1">
 								<item id="200" min_count="1" max_count="1"/>
+							</items>
+						</decomposable>
+						<decomposable item_id="101" selectable="true">
+							<items chance="100" minlevel="1" maxlevel="1">
+								<item id="201" min_count="2" max_count="2" race="ELYOS" player_classes="RANGER"/>
+								<item id="202" min_count="3" max_count="3"/>
+								<item id="203" min_count="1" max_count="1" race="ASMODIANS"/>
 							</items>
 						</decomposable>
 					</decomposable_items>
