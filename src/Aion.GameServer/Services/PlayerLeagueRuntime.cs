@@ -255,6 +255,7 @@ public sealed class PlayerLeagueRuntime
 			callerMember.LeaguePosition = targetPreviousPosition;
 
 			var sortedAllianceIds = GetSortedAllianceIds(members);
+			var leaguePositionsByAllianceId = members.ToDictionary(member => member.AllianceId, member => member.LeaguePosition);
 			var intents = CreateSetLeaderPacketIntents(
 				leagueId,
 				callerAllianceId,
@@ -264,6 +265,7 @@ public sealed class PlayerLeagueRuntime
 				targetMember.LeaguePosition,
 				targetPreviousPosition,
 				sortedAllianceIds,
+				leaguePositionsByAllianceId,
 				allianceRuntime);
 
 			return new PlayerLeagueSetLeaderPlan(
@@ -461,6 +463,7 @@ public sealed class PlayerLeagueRuntime
 		int targetCurrentPosition,
 		int targetPreviousPosition,
 		IReadOnlyList<int> sortedAllianceIds,
+		IReadOnlyDictionary<int, int> leaguePositionsByAllianceId,
 		PlayerAllianceRuntime allianceRuntime)
 	{
 		// Java parity: LeagueChangeLeaderEvent.changeLeaderTo sends SM_ALLIANCE_INFO, optional force-number-me
@@ -483,7 +486,7 @@ public sealed class PlayerLeagueRuntime
 					AllianceInfoPlan: snapshot.CreateInfoPacketPlan(
 						activePlayerMapId,
 						leagueId: leagueId,
-						leagueRows: CreateLeagueRows(sortedAllianceIds, allianceRuntime))));
+						leagueRows: CreateLeagueRows(sortedAllianceIds, allianceRuntime, leaguePositionsByAllianceId))));
 
 				if (callerAllianceId == targetAllianceId)
 				{
@@ -560,7 +563,8 @@ public sealed class PlayerLeagueRuntime
 
 	private static IReadOnlyList<PlayerAllianceInfoLeagueRow> CreateLeagueRows(
 		IReadOnlyList<int> sortedAllianceIds,
-		PlayerAllianceRuntime allianceRuntime)
+		PlayerAllianceRuntime allianceRuntime,
+		IReadOnlyDictionary<int, int>? leaguePositionsByAllianceId = null)
 	{
 		// Java parity: SM_ALLIANCE_INFO constructor appends one league row for each captain in League.getCaptains().
 		var rows = new List<PlayerAllianceInfoLeagueRow>();
@@ -572,7 +576,9 @@ public sealed class PlayerLeagueRuntime
 			var leader = allianceRuntime.GetMember(allianceId, snapshot.LeaderObjectId)
 				?? throw new InvalidOperationException($"Alliance leader should not be null: {snapshot.LeaderObjectId}");
 			rows.Add(new PlayerAllianceInfoLeagueRow(
-				position,
+				leaguePositionsByAllianceId != null && leaguePositionsByAllianceId.TryGetValue(allianceId, out var leaguePosition)
+					? leaguePosition
+					: position,
 				allianceId,
 				snapshot.MemberObjectIds.Count,
 				leader.Name,
