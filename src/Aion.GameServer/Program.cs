@@ -99,7 +99,18 @@ var builder = Host.CreateDefaultBuilder(args)
 					serviceProvider.GetRequiredService<WorldNpcCastingInterruptService>().Clear(objectId);
 				});
 			services.AddSingleton<WorldNpcDamageService>();
-			services.AddSingleton<WorldNpcSkillDamageService>();
+			services.AddSingleton<WorldNpcSkillDamageService>(
+				serviceProvider =>
+				{
+					var runtimeContext = serviceProvider.GetRequiredService<GameServerRuntimeContext>();
+					var playerEnterWorldService = serviceProvider.GetRequiredService<PlayerEnterWorldService>();
+					return new WorldNpcSkillDamageService(
+						serviceProvider.GetRequiredService<WorldNpcDamageService>(),
+						serviceProvider.GetRequiredService<WorldNpcSkillResultCalculationService>(),
+						getItemTemplates: () => runtimeContext.DataManager?.StaticData.ItemTemplates,
+						saveIdianPolishBurnAsync: playerEnterWorldService.SaveIdianPolishBurnMutationAsync,
+						saveItemChargeBurnAsync: playerEnterWorldService.SaveItemChargeBurnMutationAsync);
+				});
 			services.AddSingleton<WorldNpcLootService>();
 			services.AddSingleton<WorldNpcLootBroadcastService>();
 			services.AddSingleton<WorldNpcRandomWalkService>();

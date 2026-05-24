@@ -9,6 +9,7 @@ public sealed class WorldNpcSkillDamageService
 	private readonly WorldNpcDamageService _damageService;
 	private readonly WorldNpcSkillResultCalculationService _resultCalculation;
 	private readonly ItemTemplateTable? _itemTemplates;
+	private readonly Func<ItemTemplateTable?>? _getItemTemplates;
 	private readonly Func<Player, IdianPolishBurnPlan, CancellationToken, Task<bool>>? _saveIdianPolishBurnAsync;
 	private readonly Func<Player, ItemChargeBurnPlan, CancellationToken, Task<bool>>? _saveItemChargeBurnAsync;
 
@@ -16,12 +17,14 @@ public sealed class WorldNpcSkillDamageService
 		WorldNpcDamageService damageService,
 		WorldNpcSkillResultCalculationService? resultCalculation = null,
 		ItemTemplateTable? itemTemplates = null,
+		Func<ItemTemplateTable?>? getItemTemplates = null,
 		Func<Player, IdianPolishBurnPlan, CancellationToken, Task<bool>>? saveIdianPolishBurnAsync = null,
 		Func<Player, ItemChargeBurnPlan, CancellationToken, Task<bool>>? saveItemChargeBurnAsync = null)
 	{
 		_damageService = damageService;
 		_resultCalculation = resultCalculation ?? new WorldNpcSkillResultCalculationService();
 		_itemTemplates = itemTemplates;
+		_getItemTemplates = getItemTemplates;
 		_saveIdianPolishBurnAsync = saveIdianPolishBurnAsync;
 		_saveItemChargeBurnAsync = saveItemChargeBurnAsync;
 	}
@@ -109,7 +112,8 @@ public sealed class WorldNpcSkillDamageService
 		CancellationToken cancellationToken)
 	{
 		// Java parity: Skill/Effect attack observer callbacks eventually notify equipped IdianStone/ChargeInfo observers.
-		if (_itemTemplates == null || request.Effector == null)
+		var itemTemplates = _itemTemplates ?? _getItemTemplates?.Invoke();
+		if (itemTemplates == null || request.Effector == null)
 			return null;
 
 		var observerEvent = shouldNotifyDotAttackedObserver
@@ -122,7 +126,7 @@ public sealed class WorldNpcSkillDamageService
 
 		return await EquipmentObserverBurnWorkflowService.ApplyObserverBurnsAsync(
 			request.Effector,
-			_itemTemplates,
+			itemTemplates,
 			observerEvent.Value,
 			request.SkillId,
 			_saveIdianPolishBurnAsync,

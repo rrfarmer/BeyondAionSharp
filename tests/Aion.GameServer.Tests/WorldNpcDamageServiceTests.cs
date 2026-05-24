@@ -353,6 +353,43 @@ public sealed class WorldNpcDamageServiceTests
 	}
 
 	[Fact]
+	public async Task ApplyDamageEffectAsync_UsesLazyItemTemplatesForEquipmentObserverBurns()
+	{
+		var damageService = CreateDamageService(out var spawnService, out var world, out _, out var threadPoolManager, out _, out _, out _, out _, out _);
+		var templateResolveCount = 0;
+		var skillDamageService = new WorldNpcSkillDamageService(
+			damageService,
+			getItemTemplates: () =>
+			{
+				templateResolveCount++;
+				return CreateObserverBurnItemTemplates();
+			});
+		try
+		{
+			SpawnNpc(spawnService, world, npcTemplateId: 203109, maxHp: 100);
+			var npc = Assert.Single(world.GetNpcs());
+			var effector = CreatePlayerWithObserverBurnItem(charge: 100_050, polishCharge: 350_000);
+
+			var result = await skillDamageService.ApplyDamageEffectAsync(new WorldNpcSkillDamageRequest(
+				Target: npc,
+				Effector: effector,
+				Damage: 20,
+				SkillId: 0));
+
+			Assert.Equal(1, templateResolveCount);
+			Assert.NotNull(result.EquipmentObserverBurns);
+			Assert.True(result.EquipmentObserverBurns.Changed);
+			var item = Assert.Single(effector.InventoryItems);
+			Assert.Equal(250_000, item.IdianStone?.PolishCharge);
+			Assert.Equal(99_850, item.Charge);
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
 	public async Task ApplyDamageEffectAsync_AppliesEquipmentObserverBurnsForDotAttack()
 	{
 		var damageService = CreateDamageService(out var spawnService, out var world, out _, out var threadPoolManager, out _, out _, out _, out _, out _);
