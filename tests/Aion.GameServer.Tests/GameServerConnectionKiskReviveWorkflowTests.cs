@@ -79,6 +79,25 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 	}
 
 	[Fact]
+	public async Task HandleReviveAsync_KiskReviveHonorsNoResurrectPenaltyEffect()
+	{
+		await using var fixture = await KiskReviveWorkflowFixture.CreateAsync();
+		var player = CreateDeadPlayer(boundKiskObjectId: 9001);
+		player.HasNoResurrectPenaltyEffect = true;
+		var kiskPosition = new WorldPosition(210010000, 11, 22, 33, 0);
+		var kisk = fixture.RegisterKisk(objectId: 9001, kiskPosition, maxResurrects: 2);
+
+		await fixture.Connection.HandleReviveAsync(player, CreateRevive(PlayerKiskReviveService.KiskReviveId));
+
+		Assert.Equal(1, kisk.RemainingResurrects);
+		Assert.Equal(kiskPosition, player.Position);
+		Assert.Equal(new PlayerLifeStats(170, 210, 12), player.LifeStats);
+		Assert.Equal(500, player.Dp);
+		Assert.False(player.IsInState(PlayerCreatureState.Dead));
+		Assert.True(player.IsInState(PlayerCreatureState.Active));
+	}
+
+	[Fact]
 	public async Task HandleReviveAsync_DepletedKiskRunsRegistryCleanupFanout()
 	{
 		var registry = new CapturingConnectionRegistry();

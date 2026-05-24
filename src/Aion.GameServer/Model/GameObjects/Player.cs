@@ -116,6 +116,9 @@ public sealed class Player
 	// Java parity: controllers/effect/EffectController.abnormals queried by CM_EMOTION and action guards.
 	public PlayerAbnormalState AbnormalState { get; set; }
 
+	// Java parity: skillengine/model/Effect.isNoResurrectPenalty queried by PlayerReviveService.revive.
+	public bool HasNoResurrectPenaltyEffect { get; set; }
+
 	// Java parity: model/gameobjects/Creature.visualState drives hide/protection visibility packets.
 	public int VisualState { get; set; } = PlayerVisualStates.Visible;
 

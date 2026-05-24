@@ -4983,7 +4983,11 @@ public sealed class GameServerConnection : BaseClientConnection
 			staticData?.SkillTemplates,
 			staticData?.TitleTemplates);
 		ClearReviveTargets(player);
-		PlayerReviveRestoreService.ApplyKiskReviveRestore(player, resourceMaxStats.MaxHp, resourceMaxStats.MaxMp);
+		PlayerReviveRestoreService.ApplyKiskReviveRestore(
+			player,
+			resourceMaxStats.MaxHp,
+			resourceMaxStats.MaxMp,
+			player.HasNoResurrectPenaltyEffect);
 		await BroadcastEmotionAsync(player, new SmEmotion(player, EmotionType.Resurrect));
 		await UpdatePlayerStatsAndSpeedVisuallyAsync(player);
 		player.ClearResurrectionPositionState();
