@@ -57,6 +57,29 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			packet => Assert.IsType<SmWarehouseInfo>(packet));
 	}
 
+	[Fact]
+	public async Task HandleUseItemAsync_WarehouseExpansionTicketAllowsQuestOffsetLikeJava()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync();
+		var player = CreatePlayer(itemId: 169640000);
+		player.WarehouseBonusExpands = 1;
+		player.Quests = [new PlayerQuestState(1987, "COMPLETE", 0, 0, 0)];
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
+
+		Assert.Equal(2, player.WarehouseBonusExpands);
+		Assert.Equal(40, InventoryCapacity.GetWarehouseLimit(player));
+		var sourceItem = Assert.Single(player.InventoryItems);
+		Assert.Equal(1, sourceItem.Count);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => Assert.IsType<SmInventoryUpdateItem>(packet),
+			packet => Assert.IsType<SmItemUsageAnimation>(packet),
+			packet => Assert.IsType<SmSystemMessage>(packet),
+			packet => Assert.IsType<SmWarehouseInfo>(packet),
+			packet => Assert.IsType<SmWarehouseInfo>(packet));
+	}
+
 	[Theory]
 	[InlineData(169630000)]
 	[InlineData(169640000)]
