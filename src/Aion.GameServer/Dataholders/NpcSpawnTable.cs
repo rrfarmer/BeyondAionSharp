@@ -29,6 +29,17 @@ public sealed class NpcSpawnTable
 		return _spawnsByMapId.GetValueOrDefault(mapId) ?? Array.Empty<NpcSpawnSummary>();
 	}
 
+	public NpcSpawnSummary? GetFirstSpawnByNpcId(int worldId, int npcId)
+	{
+		// Java parity: dataholders/SpawnsData.getFirstSpawnByNpcId searches the caller world first,
+		// then scans other world maps until it finds the first spawn group for the NPC.
+		var preferredWorldSpawn = Spawns.FirstOrDefault(spawn => spawn.MapId == worldId && spawn.NpcId == npcId);
+		if (preferredWorldSpawn != null)
+			return preferredWorldSpawn;
+
+		return Spawns.FirstOrDefault(spawn => spawn.MapId != worldId && spawn.NpcId == npcId);
+	}
+
 	public bool TryGetRiftSpawnByAnchor(string anchor, out NpcSpawnSummary? spawn)
 	{
 		return _riftSpawnsByAnchor.TryGetValue(anchor, out spawn);

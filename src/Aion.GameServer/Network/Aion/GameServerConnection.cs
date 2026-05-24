@@ -6762,6 +6762,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (packet.QuestionId == SmQuestionWindow.TeleportToNpcConfirm)
+		{
+			await HandleTeleportToNpcQuestionResponseAsync(responder, packet);
+			return;
+		}
+
 		if (packet.QuestionId != SmQuestionWindow.BuddyListAddBuddyRequest)
 			return;
 
@@ -6795,6 +6801,33 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		await AcceptFriendRequestAsync(requester, responder);
+	}
+
+	private async Task<TeleportToNpcResponseResult> HandleTeleportToNpcQuestionResponseAsync(
+		Player responder,
+		CmQuestionResponse packet)
+	{
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		if (staticData == null)
+			return TeleportToNpcResponseResult.MissingRequest();
+
+		var result = new PlayerTeleportToNpcRequestService().HandleResponse(
+			responder,
+			packet.QuestionId,
+			packet.Response,
+			staticData.NpcSpawns,
+			staticData.NpcTemplates);
+		if (result.Status != TeleportToNpcResponseStatus.Accepted || result.Teleport == null)
+			return result;
+
+		// Java parity: TeleportService.teleportToNpc accepts with TeleportAnimation.NONE and immediately
+		// runs the spawn completion path; C# reuses the same completion packet fan-out as same-instance portals.
+		RevalidatePlayerCreaturePvpZones(responder, staticData);
+		await SendDelayedTeleportCompletionPacketsAsync(
+			responder,
+			result.Teleport,
+			staticData);
+		return result;
 	}
 
 	private static void CancelExchangeForQuestionAccept(Player responder)

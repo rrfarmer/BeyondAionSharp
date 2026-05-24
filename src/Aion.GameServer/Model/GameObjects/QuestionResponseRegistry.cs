@@ -85,6 +85,7 @@ public enum QuestionResponseRequestKind
 	KiskBind,
 	SoulBind,
 	ChargeAll,
+	TeleportToNpc,
 }
 
 public sealed record QuestionResponseRequest(
