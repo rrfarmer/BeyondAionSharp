@@ -6,6 +6,7 @@ public sealed class SmExchangeConfirmation : GameServerPacket
 {
 	public const int PacketOpCode = 78;
 	public const int Canceled = 1;
+	public const int Confirmed = 2;
 	public const int Locked = 3;
 
 	private readonly int _action;

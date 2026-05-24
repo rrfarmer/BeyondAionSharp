@@ -791,6 +791,7 @@ public sealed class PlayerEnterWorldService
 		player.PendingExchangeRequest = null;
 		player.IsTrading = false;
 		player.IsExchangeLocked = false;
+		player.IsExchangeConfirmed = false;
 		player.CurrentExchangePartnerObjectId = 0;
 	}
 

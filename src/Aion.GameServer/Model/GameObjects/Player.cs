@@ -157,6 +157,9 @@ public sealed class Player
 	// Java parity: services/ExchangeService.getCurrentExchange(player).isLocked represented without the full Exchange basket model.
 	public bool IsExchangeLocked { get; set; }
 
+	// Java parity: services/ExchangeService.getCurrentExchange(player).isConfirmed represented without the full Exchange basket model.
+	public bool IsExchangeConfirmed { get; set; }
+
 	public int CurrentExchangePartnerObjectId { get; set; }
 
 	public IReadOnlyList<InventoryItem> InventoryItems { get; set; } = Array.Empty<InventoryItem>();

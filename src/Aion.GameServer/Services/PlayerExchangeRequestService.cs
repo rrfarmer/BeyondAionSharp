@@ -98,9 +98,11 @@ public sealed class PlayerExchangeRequestService
 
 		requester.IsTrading = true;
 		requester.IsExchangeLocked = false;
+		requester.IsExchangeConfirmed = false;
 		requester.CurrentExchangePartnerObjectId = responder.ObjectId;
 		responder.IsTrading = true;
 		responder.IsExchangeLocked = false;
+		responder.IsExchangeConfirmed = false;
 		responder.CurrentExchangePartnerObjectId = requester.ObjectId;
 		return ExchangeResponsePlan.CreateHandled(
 			ExchangeResponseStatus.Accepted,
@@ -126,6 +128,27 @@ public sealed class PlayerExchangeRequestService
 			new ExchangePacketIntent(partner.ObjectId, new SmExchangeConfirmation(SmExchangeConfirmation.Locked)));
 	}
 
+	public ExchangeConfirmPlan ConfirmExchange(Player activePlayer, Func<int, Player?> resolvePlayer)
+	{
+		// Java parity: network/aion/clientpackets/CM_EXCHANGE_OK.runImpl delegates to
+		// ExchangeService.confirmExchange(activePlayer), which confirms the active exchange and sends action 2.
+		if (!activePlayer.IsTrading)
+			return ExchangeConfirmPlan.NotHandled(ExchangeConfirmStatus.NoActiveExchange);
+
+		var partnerObjectId = activePlayer.CurrentExchangePartnerObjectId;
+		var partner = partnerObjectId == 0 ? null : resolvePlayer(partnerObjectId);
+		if (partner == null)
+			return ExchangeConfirmPlan.NotHandled(ExchangeConfirmStatus.PartnerMissing);
+
+		activePlayer.IsExchangeConfirmed = true;
+		var status = partner.IsExchangeConfirmed
+			? ExchangeConfirmStatus.TradeExecutionBlocked
+			: ExchangeConfirmStatus.Confirmed;
+		return ExchangeConfirmPlan.CreateHandled(
+			status,
+			new ExchangePacketIntent(partner.ObjectId, new SmExchangeConfirmation(SmExchangeConfirmation.Confirmed)));
+	}
+
 	public ExchangeCancelPlan CancelExchange(Player activePlayer, Func<int, Player?> resolvePlayer)
 	{
 		// Java parity: network/aion/clientpackets/CM_EXCHANGE_CANCEL.runImpl delegates to
@@ -137,6 +160,7 @@ public sealed class PlayerExchangeRequestService
 		var partner = partnerObjectId == 0 ? null : resolvePlayer(partnerObjectId);
 		activePlayer.IsTrading = false;
 		activePlayer.IsExchangeLocked = false;
+		activePlayer.IsExchangeConfirmed = false;
 		activePlayer.CurrentExchangePartnerObjectId = 0;
 
 		if (partner == null)
@@ -144,6 +168,7 @@ public sealed class PlayerExchangeRequestService
 
 		partner.IsTrading = false;
 		partner.IsExchangeLocked = false;
+		partner.IsExchangeConfirmed = false;
 		partner.CurrentExchangePartnerObjectId = 0;
 		return ExchangeCancelPlan.CreateHandled(
 			ExchangeCancelStatus.Canceled,
@@ -245,6 +270,30 @@ public enum ExchangeLockStatus
 	NoActiveUnlockedExchange,
 	PartnerMissing,
 	Locked,
+}
+
+public sealed record ExchangeConfirmPlan(
+	bool Handled,
+	ExchangeConfirmStatus Status,
+	IReadOnlyList<ExchangePacketIntent> PacketIntents)
+{
+	public static ExchangeConfirmPlan CreateHandled(ExchangeConfirmStatus status, params ExchangePacketIntent[] intents)
+	{
+		return new ExchangeConfirmPlan(true, status, intents);
+	}
+
+	public static ExchangeConfirmPlan NotHandled(ExchangeConfirmStatus status)
+	{
+		return new ExchangeConfirmPlan(false, status, Array.Empty<ExchangePacketIntent>());
+	}
+}
+
+public enum ExchangeConfirmStatus
+{
+	NoActiveExchange,
+	PartnerMissing,
+	Confirmed,
+	TradeExecutionBlocked,
 }
 
 public sealed record ExchangeCancelPlan(
