@@ -145,6 +145,33 @@ public sealed class PlayerSummonSkillExecutionService
 			: PlayerSummonKnownObjectNpcSkillPreviewCaptureResult.MissingKnownObject(mercenaryObjectId);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillAttackCycleSnapshot ProjectMercenaryNpcSkillAttackCycle(
+		Player player,
+		int mercenaryObjectId)
+	{
+		// Java parity: groups represented SkillAttackManager.chooseNextSkill/performAttack/skillAction state for a future live NpcAI bridge.
+		return player.TryGetSummonKnownObject(mercenaryObjectId, out var knownObject)
+			? ProjectMercenaryNpcSkillAttackCycle(knownObject)
+			: PlayerSummonKnownObjectNpcSkillAttackCycleSnapshot.MissingKnownObject(mercenaryObjectId);
+	}
+
+	public PlayerSummonKnownObjectNpcSkillAttackCycleSnapshot ProjectMercenaryNpcSkillAttackCycle(
+		PlayerSummonKnownObject knownObject)
+	{
+		// Java parity: this is metadata aggregation only; live AI mutation, scheduler callbacks, packets, and controller effects remain unwired.
+		return PlayerSummonKnownObjectNpcSkillAttackCycleSnapshot.Captured(
+			knownObject.ObjectId,
+			knownObject,
+			knownObject.LastNpcSkillListProjection,
+			knownObject.LastNpcSkillSelectionPreview,
+			knownObject.LastNpcSkillActionPreview,
+			knownObject.LastNpcSkillPostSpawnPreview,
+			knownObject.LastNpcSkillActionWorkflowPreview,
+			knownObject.LastNpcSkillPerformAttackPreview,
+			knownObject.LastNpcSkillPerformAttackExecutionPreview,
+			knownObject.LastNpcSkillSchedulerCallbackOutcome);
+	}
+
 	public PlayerSummonKnownObjectSkillReadiness EvaluateMercenarySkillReadiness(
 		PlayerSummonKnownObject knownObject,
 		SkillTemplateSummary? skillTemplate,
@@ -3775,6 +3802,87 @@ public enum PlayerSummonKnownObjectNpcSkillSchedulerCallbackOutcomeStatus
 	Pending,
 	MissingWorkflow,
 	WorkflowInvoked,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleSnapshot(
+	PlayerSummonKnownObjectNpcSkillAttackCycleSnapshotStatus Status,
+	int MercenaryObjectId,
+	PlayerSummonKnownObject? KnownObject = null,
+	PlayerSummonKnownObjectNpcSkillCandidateListProjection? SkillListProjection = null,
+	PlayerSummonKnownObjectNpcSkillSelectionPreview? SelectionPreview = null,
+	PlayerSummonKnownObjectNpcSkillActionPreview? ActionPreview = null,
+	PlayerSummonKnownObjectNpcSkillPostSpawnPreview? PostSpawnPreview = null,
+	PlayerSummonKnownObjectNpcSkillActionWorkflowPreview? ActionWorkflowPreview = null,
+	PlayerSummonKnownObjectNpcSkillPerformAttackPreview? PerformAttackPreview = null,
+	PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreview? PerformAttackExecutionPreview = null,
+	PlayerSummonKnownObjectNpcSkillSchedulerCallbackOutcome? SchedulerCallbackOutcome = null)
+{
+	public bool IsCaptured => Status == PlayerSummonKnownObjectNpcSkillAttackCycleSnapshotStatus.Captured;
+
+	public bool HasSkillListProjection => SkillListProjection != null;
+
+	public bool HasSelectionPreview => SelectionPreview != null;
+
+	public bool HasActionPreview => ActionPreview != null;
+
+	public bool HasPostSpawnPreview => PostSpawnPreview != null;
+
+	public bool HasActionWorkflowPreview => ActionWorkflowPreview != null;
+
+	public bool HasPerformAttackPreview => PerformAttackPreview != null;
+
+	public bool HasPerformAttackExecutionPreview => PerformAttackExecutionPreview != null;
+
+	public bool HasSchedulerCallbackOutcome => SchedulerCallbackOutcome != null;
+
+	public bool WouldInvokeSkillActionWorkflow => SchedulerCallbackOutcome?.ShouldInvokeSkillActionWorkflow == true;
+
+	public bool HasCompleteRepresentedCycle =>
+		HasSkillListProjection
+		&& HasSelectionPreview
+		&& HasActionWorkflowPreview
+		&& HasPerformAttackPreview
+		&& HasPerformAttackExecutionPreview
+		&& HasSchedulerCallbackOutcome;
+
+	public static PlayerSummonKnownObjectNpcSkillAttackCycleSnapshot MissingKnownObject(int mercenaryObjectId)
+	{
+		return new PlayerSummonKnownObjectNpcSkillAttackCycleSnapshot(
+			PlayerSummonKnownObjectNpcSkillAttackCycleSnapshotStatus.MissingKnownObject,
+			mercenaryObjectId);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillAttackCycleSnapshot Captured(
+		int mercenaryObjectId,
+		PlayerSummonKnownObject knownObject,
+		PlayerSummonKnownObjectNpcSkillCandidateListProjection? skillListProjection,
+		PlayerSummonKnownObjectNpcSkillSelectionPreview? selectionPreview,
+		PlayerSummonKnownObjectNpcSkillActionPreview? actionPreview,
+		PlayerSummonKnownObjectNpcSkillPostSpawnPreview? postSpawnPreview,
+		PlayerSummonKnownObjectNpcSkillActionWorkflowPreview? actionWorkflowPreview,
+		PlayerSummonKnownObjectNpcSkillPerformAttackPreview? performAttackPreview,
+		PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreview? performAttackExecutionPreview,
+		PlayerSummonKnownObjectNpcSkillSchedulerCallbackOutcome? schedulerCallbackOutcome)
+	{
+		return new PlayerSummonKnownObjectNpcSkillAttackCycleSnapshot(
+			PlayerSummonKnownObjectNpcSkillAttackCycleSnapshotStatus.Captured,
+			mercenaryObjectId,
+			knownObject,
+			skillListProjection,
+			selectionPreview,
+			actionPreview,
+			postSpawnPreview,
+			actionWorkflowPreview,
+			performAttackPreview,
+			performAttackExecutionPreview,
+			schedulerCallbackOutcome);
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillAttackCycleSnapshotStatus
+{
+	MissingKnownObject,
+	Captured,
 }
 
 public sealed record PlayerSummonKnownObjectNpcSkillActionWorkflowPreview(
