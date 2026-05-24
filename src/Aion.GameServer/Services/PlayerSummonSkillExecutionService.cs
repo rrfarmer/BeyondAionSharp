@@ -781,6 +781,23 @@ public sealed class PlayerSummonSkillExecutionService
 			: PlayerSummonKnownObjectNpcSkillPostSpawnPreview.DelayedSpawn(skill, skill.SpawnTemplate);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillPostSpawnScheduleResult PreviewMercenaryNpcSkillPostSpawnSchedule(
+		PlayerSummonKnownObjectNpcSkillPostSpawnPreview? postSpawnPreview,
+		long currentTimeMilliseconds)
+	{
+		if (postSpawnPreview == null)
+			return PlayerSummonKnownObjectNpcSkillPostSpawnScheduleResult.MissingPreview(currentTimeMilliseconds);
+
+		// Java parity: ThreadPoolManager.schedule is only used for delayed fireOnEndCastEvents spawn previews.
+		if (!postSpawnPreview.ShouldScheduleSpawn || postSpawnPreview.SpawnTemplate == null)
+			return PlayerSummonKnownObjectNpcSkillPostSpawnScheduleResult.NotScheduled(postSpawnPreview, currentTimeMilliseconds);
+
+		return PlayerSummonKnownObjectNpcSkillPostSpawnScheduleResult.Scheduled(
+			postSpawnPreview,
+			currentTimeMilliseconds,
+			currentTimeMilliseconds + postSpawnPreview.SpawnTemplate.DelayMilliseconds);
+	}
+
 	private static PlayerSummonKnownObjectNpcSkillSelectionResult SelectSingleMercenaryNpcSkillCandidate(
 		PlayerSummonKnownObjectNpcSkillCandidate candidate,
 		PlayerSummonKnownObjectNpcSkillSelectionSource source)
@@ -1709,6 +1726,53 @@ public enum PlayerSummonKnownObjectNpcSkillPostSpawnPreviewStatus
 	OwnerNotReady,
 	ImmediateSpawn,
 	DelayedSpawn,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillPostSpawnScheduleResult(
+	PlayerSummonKnownObjectNpcSkillPostSpawnScheduleStatus Status,
+	long CurrentTimeMilliseconds,
+	PlayerSummonKnownObjectNpcSkillPostSpawnPreview? PostSpawnPreview = null,
+	long? ScheduledAtMilliseconds = null)
+{
+	public bool WouldScheduleTask => Status == PlayerSummonKnownObjectNpcSkillPostSpawnScheduleStatus.Scheduled;
+	public bool RequiresOwnerAliveRecheck => WouldScheduleTask && PostSpawnPreview is { RequiresOwnerAliveRecheck: true };
+	public int? DelayMilliseconds => PostSpawnPreview?.SpawnTemplate?.DelayMilliseconds;
+
+	public static PlayerSummonKnownObjectNpcSkillPostSpawnScheduleResult MissingPreview(long currentTimeMilliseconds)
+	{
+		return new PlayerSummonKnownObjectNpcSkillPostSpawnScheduleResult(
+			PlayerSummonKnownObjectNpcSkillPostSpawnScheduleStatus.MissingPreview,
+			currentTimeMilliseconds);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillPostSpawnScheduleResult NotScheduled(
+		PlayerSummonKnownObjectNpcSkillPostSpawnPreview postSpawnPreview,
+		long currentTimeMilliseconds)
+	{
+		return new PlayerSummonKnownObjectNpcSkillPostSpawnScheduleResult(
+			PlayerSummonKnownObjectNpcSkillPostSpawnScheduleStatus.NotScheduled,
+			currentTimeMilliseconds,
+			postSpawnPreview);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillPostSpawnScheduleResult Scheduled(
+		PlayerSummonKnownObjectNpcSkillPostSpawnPreview postSpawnPreview,
+		long currentTimeMilliseconds,
+		long scheduledAtMilliseconds)
+	{
+		return new PlayerSummonKnownObjectNpcSkillPostSpawnScheduleResult(
+			PlayerSummonKnownObjectNpcSkillPostSpawnScheduleStatus.Scheduled,
+			currentTimeMilliseconds,
+			postSpawnPreview,
+			scheduledAtMilliseconds);
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillPostSpawnScheduleStatus
+{
+	MissingPreview,
+	NotScheduled,
+	Scheduled,
 }
 
 public sealed record PlayerSummonKnownObjectNpcSkillCandidateMetadata(

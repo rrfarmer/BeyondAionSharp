@@ -110,6 +110,9 @@ public class PlayerSummonSkillExecutionServiceTests
 		var ownerDead = service.PreviewMercenaryNpcSkillPostSpawn(immediateSkill, ownerIsDead: true);
 		var immediate = service.PreviewMercenaryNpcSkillPostSpawn(immediateSkill);
 		var delayed = service.PreviewMercenaryNpcSkillPostSpawn(delayedSkill);
+		var missingSchedule = service.PreviewMercenaryNpcSkillPostSpawnSchedule(null, currentTimeMilliseconds: 20_000);
+		var immediateSchedule = service.PreviewMercenaryNpcSkillPostSpawnSchedule(immediate, currentTimeMilliseconds: 20_000);
+		var delayedSchedule = service.PreviewMercenaryNpcSkillPostSpawnSchedule(delayed, currentTimeMilliseconds: 20_000);
 
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillPostSpawnPreviewStatus.NoSpawnTemplate, noSpawn.Status);
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillPostSpawnPreviewStatus.OwnerNotReady, ownerDead.Status);
@@ -133,6 +136,15 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Equal(4, delayed.EffectiveMaxCount);
 		Assert.Equal(4, delayed.EffectiveMinDistance);
 		Assert.Equal(9, delayed.EffectiveMaxDistance);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillPostSpawnScheduleStatus.MissingPreview, missingSchedule.Status);
+		Assert.False(missingSchedule.WouldScheduleTask);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillPostSpawnScheduleStatus.NotScheduled, immediateSchedule.Status);
+		Assert.False(immediateSchedule.WouldScheduleTask);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillPostSpawnScheduleStatus.Scheduled, delayedSchedule.Status);
+		Assert.True(delayedSchedule.WouldScheduleTask);
+		Assert.True(delayedSchedule.RequiresOwnerAliveRecheck);
+		Assert.Equal(1500, delayedSchedule.DelayMilliseconds);
+		Assert.Equal(21_500, delayedSchedule.ScheduledAtMilliseconds);
 	}
 
 	[Fact]
