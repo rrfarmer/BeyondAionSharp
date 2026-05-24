@@ -83,6 +83,25 @@ public sealed class PlayerSummonSkillExecutionService
 			: PlayerSummonKnownObjectLastSkillTimeRenewalResult.MissingKnownObject(executionResult);
 	}
 
+	public PlayerSummonKnownObjectNextSkillReadiness EvaluateMercenaryNextSkillReadiness(
+		PlayerSummonKnownObject knownObject,
+		int nextSkillDelayMilliseconds,
+		long currentTimeMilliseconds)
+	{
+		if (nextSkillDelayMilliseconds < 0)
+			return PlayerSummonKnownObjectNextSkillReadiness.RandomDelayUnsupported(knownObject, nextSkillDelayMilliseconds);
+
+		// Java parity: NpcGameStats.canUseNextSkill -> nextSkillDelay == 0 || now >= lastSkillTime + nextSkillDelay.
+		if (nextSkillDelayMilliseconds == 0)
+			return PlayerSummonKnownObjectNextSkillReadiness.Ready(knownObject, nextSkillDelayMilliseconds, currentTimeMilliseconds);
+
+		var lastSkillTime = knownObject.LastSkillTimeMilliseconds ?? 0;
+		var readyAt = lastSkillTime + nextSkillDelayMilliseconds;
+		return currentTimeMilliseconds >= readyAt
+			? PlayerSummonKnownObjectNextSkillReadiness.Ready(knownObject, nextSkillDelayMilliseconds, currentTimeMilliseconds, readyAt)
+			: PlayerSummonKnownObjectNextSkillReadiness.NotReady(knownObject, nextSkillDelayMilliseconds, currentTimeMilliseconds, readyAt);
+	}
+
 	public PlayerSummonSkillExecutionResult ValidateExecution(
 		Player player,
 		PlayerPetSkillOrder order,
@@ -510,6 +529,60 @@ public enum PlayerSummonKnownObjectLastSkillTimeRenewalStatus
 	NotRenewable,
 	MissingKnownObject,
 	Renewed,
+}
+
+public sealed record PlayerSummonKnownObjectNextSkillReadiness(
+	PlayerSummonKnownObjectNextSkillReadinessStatus Status,
+	PlayerSummonKnownObject KnownObject,
+	int NextSkillDelayMilliseconds,
+	long CurrentTimeMilliseconds,
+	long? ReadyAtMilliseconds = null)
+{
+	public static PlayerSummonKnownObjectNextSkillReadiness Ready(
+		PlayerSummonKnownObject knownObject,
+		int nextSkillDelayMilliseconds,
+		long currentTimeMilliseconds,
+		long? readyAtMilliseconds = null)
+	{
+		return new PlayerSummonKnownObjectNextSkillReadiness(
+			PlayerSummonKnownObjectNextSkillReadinessStatus.Ready,
+			knownObject,
+			nextSkillDelayMilliseconds,
+			currentTimeMilliseconds,
+			readyAtMilliseconds);
+	}
+
+	public static PlayerSummonKnownObjectNextSkillReadiness NotReady(
+		PlayerSummonKnownObject knownObject,
+		int nextSkillDelayMilliseconds,
+		long currentTimeMilliseconds,
+		long readyAtMilliseconds)
+	{
+		return new PlayerSummonKnownObjectNextSkillReadiness(
+			PlayerSummonKnownObjectNextSkillReadinessStatus.NotReady,
+			knownObject,
+			nextSkillDelayMilliseconds,
+			currentTimeMilliseconds,
+			readyAtMilliseconds);
+	}
+
+	public static PlayerSummonKnownObjectNextSkillReadiness RandomDelayUnsupported(
+		PlayerSummonKnownObject knownObject,
+		int nextSkillDelayMilliseconds)
+	{
+		return new PlayerSummonKnownObjectNextSkillReadiness(
+			PlayerSummonKnownObjectNextSkillReadinessStatus.RandomDelayUnsupported,
+			knownObject,
+			nextSkillDelayMilliseconds,
+			CurrentTimeMilliseconds: 0);
+	}
+}
+
+public enum PlayerSummonKnownObjectNextSkillReadinessStatus
+{
+	Ready,
+	NotReady,
+	RandomDelayUnsupported,
 }
 
 public enum PlayerMercenarySkillExecutionStatus

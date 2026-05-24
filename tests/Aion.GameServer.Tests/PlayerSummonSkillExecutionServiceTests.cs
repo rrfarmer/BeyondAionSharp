@@ -10,6 +10,49 @@ namespace Aion.GameServer.Tests;
 public class PlayerSummonSkillExecutionServiceTests
 {
 	[Fact]
+	public void EvaluateMercenaryNextSkillReadiness_ProjectsJavaDelayCheck()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var knownObject = new PlayerSummonKnownObject(
+			ObjectId: 8002,
+			Kind: PlayerSummonKnownObjectKind.Creature,
+			CreatorObjectId: 1,
+			NpcTemplateId: 833288,
+			NpcTemplateType: PlayerSummonKnownNpcTemplateType.Mercenary,
+			LastSkillTimeMilliseconds: 10_000);
+		var noDelay = service.EvaluateMercenaryNextSkillReadiness(
+			knownObject,
+			nextSkillDelayMilliseconds: 0,
+			currentTimeMilliseconds: 10_001);
+		var notReady = service.EvaluateMercenaryNextSkillReadiness(
+			knownObject,
+			nextSkillDelayMilliseconds: 5_000,
+			currentTimeMilliseconds: 14_999);
+		var ready = service.EvaluateMercenaryNextSkillReadiness(
+			knownObject,
+			nextSkillDelayMilliseconds: 5_000,
+			currentTimeMilliseconds: 15_000);
+		var defaultLastSkillTime = service.EvaluateMercenaryNextSkillReadiness(
+			knownObject with { LastSkillTimeMilliseconds = null },
+			nextSkillDelayMilliseconds: 5_000,
+			currentTimeMilliseconds: 4_999);
+		var randomDelay = service.EvaluateMercenaryNextSkillReadiness(
+			knownObject,
+			nextSkillDelayMilliseconds: -1,
+			currentTimeMilliseconds: 15_000);
+
+		Assert.Equal(PlayerSummonKnownObjectNextSkillReadinessStatus.Ready, noDelay.Status);
+		Assert.Null(noDelay.ReadyAtMilliseconds);
+		Assert.Equal(PlayerSummonKnownObjectNextSkillReadinessStatus.NotReady, notReady.Status);
+		Assert.Equal(15_000, notReady.ReadyAtMilliseconds);
+		Assert.Equal(PlayerSummonKnownObjectNextSkillReadinessStatus.Ready, ready.Status);
+		Assert.Equal(15_000, ready.ReadyAtMilliseconds);
+		Assert.Equal(PlayerSummonKnownObjectNextSkillReadinessStatus.NotReady, defaultLastSkillTime.Status);
+		Assert.Equal(5_000, defaultLastSkillTime.ReadyAtMilliseconds);
+		Assert.Equal(PlayerSummonKnownObjectNextSkillReadinessStatus.RandomDelayUnsupported, randomDelay.Status);
+	}
+
+	[Fact]
 	public void RenewMercenaryLastSkillTime_UpdatesRepresentedKnownObject()
 	{
 		var service = new PlayerSummonSkillExecutionService();
