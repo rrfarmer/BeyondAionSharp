@@ -1971,7 +1971,8 @@ public sealed class StaticData
 					reader.GetAttribute("skilltype") ?? string.Empty,
 					reader.GetAttribute("skillsubtype") ?? string.Empty,
 					ReadIntAttribute(reader, "cooldownId"),
-					ReadIntAttribute(reader, "cooldown"))
+					ReadIntAttribute(reader, "cooldown"),
+					reader.GetAttribute("activation") ?? string.Empty)
 				{
 					StigmaType = reader.GetAttribute("stigma") ?? string.Empty,
 				};
@@ -2818,7 +2819,8 @@ public sealed class StaticData
 			string skillType,
 			string skillSubType,
 			int cooldownId,
-			int cooldown)
+			int cooldown,
+			string activation)
 		{
 			SkillId = skillId;
 			Name = name;
@@ -2830,6 +2832,7 @@ public sealed class StaticData
 			SkillSubType = skillSubType;
 			CooldownId = cooldownId;
 			Cooldown = cooldown;
+			Activation = activation;
 		}
 
 		private int SkillId { get; }
@@ -2851,6 +2854,8 @@ public sealed class StaticData
 		private int CooldownId { get; }
 
 		private int Cooldown { get; }
+
+		private string Activation { get; }
 
 		public string StigmaType { get; set; } = string.Empty;
 
@@ -2912,7 +2917,8 @@ public sealed class StaticData
 				_weaponMasteryEffects.ToArray(),
 				_shieldMasteryEffects.ToArray(),
 				_weaponDualEffects.ToArray(),
-				StigmaType);
+				StigmaType,
+				Activation);
 		}
 	}
 

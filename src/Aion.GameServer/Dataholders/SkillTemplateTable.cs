@@ -79,7 +79,8 @@ public sealed record SkillTemplateSummary(
 	IReadOnlyList<SkillWeaponMasteryEffectSummary>? WeaponMasteryEffects = null,
 	IReadOnlyList<SkillShieldMasteryEffectSummary>? ShieldMasteryEffects = null,
 	IReadOnlyList<SkillWeaponDualEffectSummary>? WeaponDualEffects = null,
-	string StigmaType = "")
+	string StigmaType = "",
+	string Activation = "")
 {
 	public IReadOnlyList<SkillArmorMasteryEffectSummary> ArmorMastery => ArmorMasteryEffects ?? Array.Empty<SkillArmorMasteryEffectSummary>();
 
@@ -90,6 +91,8 @@ public sealed record SkillTemplateSummary(
 	public IReadOnlyList<SkillWeaponDualEffectSummary> WeaponDual => WeaponDualEffects ?? Array.Empty<SkillWeaponDualEffectSummary>();
 
 	public bool IsStigmaSkill => !string.IsNullOrEmpty(StigmaType) && !string.Equals(StigmaType, "NONE", StringComparison.Ordinal);
+
+	public bool IsPassive => string.Equals(Activation, "PASSIVE", StringComparison.OrdinalIgnoreCase);
 
 	public string? GetClientName()
 	{

@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Sockets;
 using Aion.Commons.Network;
 using Aion.GameServer.Configuration;
+using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
@@ -220,6 +221,46 @@ public class GameServerConnectionCastSpellTests
 		Assert.Empty(sentPackets);
 	}
 
+	[Fact]
+	public async Task HandleCastSpellAsync_UsesRuntimeStaticSkillTemplateLookupWhenHookDoesNotResolveTemplate()
+	{
+		var events = new List<string>();
+		var sentPackets = new List<GameServerPacket>();
+		var hooks = new GameServerCastSpellHandlerHooks
+		{
+			UseSkill = (_, template, _) => events.Add($"use-skill:{template.SkillId}:{template.IsPassive}"),
+		};
+		var runtimeContext = await CreateRuntimeContextAsync();
+		await using var pair = await TestConnectionPair.CreateAsync(sentPackets, hooks, runtimeContext);
+		var player = CreatePlayer();
+
+		var result = await pair.Connection.HandleCastSpellAsync(player, CreateCastSpell(539));
+
+		Assert.Equal(PlayerCastSpellEarlyExitStatus.UseSkill, result.Status);
+		Assert.Equal(["use-skill:539:False"], events);
+		Assert.Empty(sentPackets);
+	}
+
+	[Fact]
+	public async Task HandleCastSpellAsync_RuntimeStaticPassiveSkillTemplateExitsBeforeUseSkill()
+	{
+		var events = new List<string>();
+		var sentPackets = new List<GameServerPacket>();
+		var hooks = new GameServerCastSpellHandlerHooks
+		{
+			UseSkill = (_, _, _) => events.Add("use-skill"),
+		};
+		var runtimeContext = await CreateRuntimeContextAsync();
+		await using var pair = await TestConnectionPair.CreateAsync(sentPackets, hooks, runtimeContext);
+		var player = CreatePlayer();
+
+		var result = await pair.Connection.HandleCastSpellAsync(player, CreateCastSpell(40));
+
+		Assert.Equal(PlayerCastSpellEarlyExitStatus.MissingOrPassiveTemplate, result.Status);
+		Assert.Empty(events);
+		Assert.Empty(sentPackets);
+	}
+
 	private static Player CreatePlayer(int currentHp = 100)
 	{
 		return new Player
@@ -241,6 +282,22 @@ public class GameServerConnectionCastSpellTests
 		buffer.WriteD(0);
 		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
 		return packet;
+	}
+
+	private static async Task<GameServerRuntimeContext> CreateRuntimeContextAsync()
+	{
+		var runtimeContext = new GameServerRuntimeContext();
+		runtimeContext.SetDataManager(await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false));
+		return runtimeContext;
+	}
+
+	private static string FindRepoRoot()
+	{
+		var directory = new DirectoryInfo(AppContext.BaseDirectory);
+		while (directory != null && !Directory.Exists(Path.Combine(directory.FullName, "game-server")))
+			directory = directory.Parent;
+
+		return directory?.FullName ?? throw new InvalidOperationException("Unable to locate repository root.");
 	}
 
 	private static void AssertSystemMessageParameters(SmSystemMessage packet, params string[] expected)
@@ -318,7 +375,8 @@ public class GameServerConnectionCastSpellTests
 
 		public static async Task<TestConnectionPair> CreateAsync(
 			List<GameServerPacket> sentPackets,
-			GameServerCastSpellHandlerHooks? hooks = null)
+			GameServerCastSpellHandlerHooks? hooks = null,
+			GameServerRuntimeContext? runtimeContext = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -337,6 +395,7 @@ public class GameServerConnectionCastSpellTests
 					"cast-spell-test",
 					new GamePacketProcessor<string>((_, _) => Task.CompletedTask),
 					options: new GameServerOptions(),
+					runtimeContext: runtimeContext,
 					sentPacketObserver: sentPackets.Add,
 					castSpellHooks: hooks,
 					crypt: crypt);

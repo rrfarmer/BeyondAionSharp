@@ -1192,7 +1192,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			new PlayerCastSpellEarlyExitOptions(
 				IsPetOrderSkill: skillId => _castSpellHooks.IsPetOrderSkill(player, skillId),
 				HasPetSummon: _castSpellHooks.HasPetSummon(player),
-				GetSkillTemplate: skillId => _castSpellHooks.GetSkillTemplate(player, skillId),
+				GetSkillTemplate: skillId => ResolveCastSpellSkillTemplate(player, skillId),
 				NextSkillUseMilliseconds: _castSpellHooks.GetNextSkillUseMilliseconds(player),
 				CurrentTimeMilliseconds: _castSpellHooks.GetCurrentTimeMilliseconds(),
 				LastSkillId: _castSpellHooks.GetLastSkillId(player),
@@ -1239,6 +1239,18 @@ public sealed class GameServerConnection : BaseClientConnection
 			await SendPacketAsync(packetToSend);
 
 		return result;
+	}
+
+	private PlayerCastSpellSkillTemplate? ResolveCastSpellSkillTemplate(Player player, int skillId)
+	{
+		var hookTemplate = _castSpellHooks.GetSkillTemplate(player, skillId);
+		if (hookTemplate != null)
+			return hookTemplate;
+
+		var staticTemplate = _runtimeContext?.DataManager?.StaticData.SkillTemplates.GetSkillTemplate(skillId);
+		return staticTemplate == null
+			? null
+			: new PlayerCastSpellSkillTemplate(staticTemplate.SkillId, staticTemplate.IsPassive);
 	}
 
 	private static PlayerCastingSkillSnapshot? CancelCurrentSkillForCastSpell(Player player)

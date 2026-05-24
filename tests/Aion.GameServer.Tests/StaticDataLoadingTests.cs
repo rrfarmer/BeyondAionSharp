@@ -977,6 +977,8 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(8, staticData.SkillTemplates.GetSkillTemplatesByGroup("RA_WHITETIGER").Count);
 		var clothMastery = staticData.SkillTemplates.GetSkillTemplate(40);
 		Assert.NotNull(clothMastery);
+		Assert.Equal("PASSIVE", clothMastery.Activation);
+		Assert.True(clothMastery.IsPassive);
 		var armorMastery = Assert.Single(clothMastery.ArmorMastery);
 		Assert.Equal("CLOTHES", armorMastery.ArmorType);
 		Assert.Equal(1, armorMastery.Value);
@@ -1009,6 +1011,7 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(0, weaponDual.MaxDamageDelta);
 		var exhaustingWave = staticData.SkillTemplates.GetSkillTemplate(539);
 		Assert.NotNull(exhaustingWave);
+		Assert.False(exhaustingWave.IsPassive);
 		Assert.Equal("ADVANCED", exhaustingWave.StigmaType);
 		Assert.True(exhaustingWave.IsStigmaSkill);
 		Assert.Contains(staticData.SkillTree.GetTemplatesForSkill(539, "GLADIATOR", "ELYOS"), skill => skill.Stigma == 2);
