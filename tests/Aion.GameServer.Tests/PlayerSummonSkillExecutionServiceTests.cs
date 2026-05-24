@@ -10,6 +10,69 @@ namespace Aion.GameServer.Tests;
 public class PlayerSummonSkillExecutionServiceTests
 {
 	[Fact]
+	public void PreviewMercenarySkillAttack_ProjectsSkillAttackManagerGates()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var knownObject = new PlayerSummonKnownObject(
+			ObjectId: 8002,
+			Kind: PlayerSummonKnownObjectKind.Creature,
+			CreatorObjectId: 1,
+			NpcTemplateId: 833288,
+			NpcTemplateType: PlayerSummonKnownNpcTemplateType.Mercenary,
+			LastSkillTimeMilliseconds: 10_000,
+			NextSkillDelayMilliseconds: 5_000);
+
+		var casting = service.PreviewMercenarySkillAttack(
+			knownObject,
+			fightStartingTimeMilliseconds: 10_000,
+			initialSkillDelayMilliseconds: 1_000,
+			currentTimeMilliseconds: 20_000,
+			isCasting: true);
+		var queuedInstant = service.PreviewMercenarySkillAttack(
+			knownObject,
+			fightStartingTimeMilliseconds: 10_000,
+			initialSkillDelayMilliseconds: 20_000,
+			currentTimeMilliseconds: 10_001,
+			isCasting: false,
+			hasReadyQueuedInstantSkill: true);
+		var initialDelay = service.PreviewMercenarySkillAttack(
+			knownObject,
+			fightStartingTimeMilliseconds: 10_000,
+			initialSkillDelayMilliseconds: 1_000,
+			currentTimeMilliseconds: 11_000,
+			isCasting: false);
+		var nextSkillNotReady = service.PreviewMercenarySkillAttack(
+			knownObject,
+			fightStartingTimeMilliseconds: 10_000,
+			initialSkillDelayMilliseconds: 1_000,
+			currentTimeMilliseconds: 14_999,
+			isCasting: false);
+		var wouldEvaluate = service.PreviewMercenarySkillAttack(
+			knownObject,
+			fightStartingTimeMilliseconds: 10_000,
+			initialSkillDelayMilliseconds: 1_000,
+			currentTimeMilliseconds: 15_000,
+			isCasting: false);
+		var defaultDelayReady = service.PreviewMercenarySkillAttack(
+			knownObject with { NextSkillDelayMilliseconds = null },
+			fightStartingTimeMilliseconds: 10_000,
+			initialSkillDelayMilliseconds: 1_000,
+			currentTimeMilliseconds: 11_001,
+			isCasting: false);
+
+		Assert.Equal(PlayerSummonKnownObjectSkillAttackPreviewStatus.BlockedCasting, casting.Status);
+		Assert.Equal(PlayerSummonKnownObjectSkillAttackPreviewStatus.WouldUseQueuedInstantSkill, queuedInstant.Status);
+		Assert.Equal(PlayerSummonKnownObjectSkillAttackPreviewStatus.InitialDelayNotElapsed, initialDelay.Status);
+		Assert.Equal(1_000, initialDelay.ElapsedFightTimeMilliseconds);
+		Assert.Equal(PlayerSummonKnownObjectSkillAttackPreviewStatus.NextSkillNotReady, nextSkillNotReady.Status);
+		Assert.Equal(PlayerSummonKnownObjectNextSkillReadinessStatus.NotReady, nextSkillNotReady.Readiness?.Status);
+		Assert.Equal(PlayerSummonKnownObjectSkillAttackPreviewStatus.WouldEvaluateSkills, wouldEvaluate.Status);
+		Assert.Equal(PlayerSummonKnownObjectNextSkillReadinessStatus.Ready, wouldEvaluate.Readiness?.Status);
+		Assert.Equal(PlayerSummonKnownObjectSkillAttackPreviewStatus.WouldEvaluateSkills, defaultDelayReady.Status);
+		Assert.Equal(0, defaultDelayReady.Readiness?.NextSkillDelayMilliseconds);
+	}
+
+	[Fact]
 	public void SetMercenaryNextSkillDelay_StoresConcreteDelayAndRejectsRandomSentinel()
 	{
 		var service = new PlayerSummonSkillExecutionService();

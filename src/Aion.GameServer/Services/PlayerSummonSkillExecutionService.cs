@@ -116,6 +116,38 @@ public sealed class PlayerSummonSkillExecutionService
 			: PlayerSummonKnownObjectNextSkillDelayResult.MissingKnownObject(mercenaryObjectId, nextSkillDelayMilliseconds);
 	}
 
+	public PlayerSummonKnownObjectSkillAttackPreview PreviewMercenarySkillAttack(
+		PlayerSummonKnownObject knownObject,
+		long fightStartingTimeMilliseconds,
+		int initialSkillDelayMilliseconds,
+		long currentTimeMilliseconds,
+		bool isCasting,
+		bool hasReadyQueuedInstantSkill = false)
+	{
+		if (isCasting)
+			return PlayerSummonKnownObjectSkillAttackPreview.BlockedCasting(knownObject, currentTimeMilliseconds);
+
+		// Java parity: SkillAttackManager returns a ready queued skill with nextSkillTime == 0 before the ordinary delay gate.
+		if (hasReadyQueuedInstantSkill)
+			return PlayerSummonKnownObjectSkillAttackPreview.WouldUseQueuedInstantSkill(knownObject, currentTimeMilliseconds);
+
+		var elapsedFightTime = currentTimeMilliseconds - fightStartingTimeMilliseconds;
+		if (elapsedFightTime <= initialSkillDelayMilliseconds)
+		{
+			return PlayerSummonKnownObjectSkillAttackPreview.InitialDelayNotElapsed(
+				knownObject,
+				currentTimeMilliseconds,
+				elapsedFightTime,
+				initialSkillDelayMilliseconds);
+		}
+
+		var nextSkillDelay = knownObject.NextSkillDelayMilliseconds ?? 0;
+		var readiness = EvaluateMercenaryNextSkillReadiness(knownObject, nextSkillDelay, currentTimeMilliseconds);
+		return readiness.Status == PlayerSummonKnownObjectNextSkillReadinessStatus.Ready
+			? PlayerSummonKnownObjectSkillAttackPreview.WouldEvaluateSkills(knownObject, currentTimeMilliseconds, readiness)
+			: PlayerSummonKnownObjectSkillAttackPreview.NextSkillNotReady(knownObject, currentTimeMilliseconds, readiness);
+	}
+
 	public PlayerSummonSkillExecutionResult ValidateExecution(
 		Player player,
 		PlayerPetSkillOrder order,
@@ -640,6 +672,82 @@ public enum PlayerSummonKnownObjectNextSkillDelayStatus
 	Set,
 	MissingKnownObject,
 	RandomDelayUnsupported,
+}
+
+public sealed record PlayerSummonKnownObjectSkillAttackPreview(
+	PlayerSummonKnownObjectSkillAttackPreviewStatus Status,
+	PlayerSummonKnownObject KnownObject,
+	long CurrentTimeMilliseconds,
+	long? ElapsedFightTimeMilliseconds = null,
+	int? InitialSkillDelayMilliseconds = null,
+	PlayerSummonKnownObjectNextSkillReadiness? Readiness = null)
+{
+	public static PlayerSummonKnownObjectSkillAttackPreview BlockedCasting(
+		PlayerSummonKnownObject knownObject,
+		long currentTimeMilliseconds)
+	{
+		return new PlayerSummonKnownObjectSkillAttackPreview(
+			PlayerSummonKnownObjectSkillAttackPreviewStatus.BlockedCasting,
+			knownObject,
+			currentTimeMilliseconds);
+	}
+
+	public static PlayerSummonKnownObjectSkillAttackPreview WouldUseQueuedInstantSkill(
+		PlayerSummonKnownObject knownObject,
+		long currentTimeMilliseconds)
+	{
+		return new PlayerSummonKnownObjectSkillAttackPreview(
+			PlayerSummonKnownObjectSkillAttackPreviewStatus.WouldUseQueuedInstantSkill,
+			knownObject,
+			currentTimeMilliseconds);
+	}
+
+	public static PlayerSummonKnownObjectSkillAttackPreview InitialDelayNotElapsed(
+		PlayerSummonKnownObject knownObject,
+		long currentTimeMilliseconds,
+		long elapsedFightTimeMilliseconds,
+		int initialSkillDelayMilliseconds)
+	{
+		return new PlayerSummonKnownObjectSkillAttackPreview(
+			PlayerSummonKnownObjectSkillAttackPreviewStatus.InitialDelayNotElapsed,
+			knownObject,
+			currentTimeMilliseconds,
+			elapsedFightTimeMilliseconds,
+			initialSkillDelayMilliseconds);
+	}
+
+	public static PlayerSummonKnownObjectSkillAttackPreview NextSkillNotReady(
+		PlayerSummonKnownObject knownObject,
+		long currentTimeMilliseconds,
+		PlayerSummonKnownObjectNextSkillReadiness readiness)
+	{
+		return new PlayerSummonKnownObjectSkillAttackPreview(
+			PlayerSummonKnownObjectSkillAttackPreviewStatus.NextSkillNotReady,
+			knownObject,
+			currentTimeMilliseconds,
+			Readiness: readiness);
+	}
+
+	public static PlayerSummonKnownObjectSkillAttackPreview WouldEvaluateSkills(
+		PlayerSummonKnownObject knownObject,
+		long currentTimeMilliseconds,
+		PlayerSummonKnownObjectNextSkillReadiness readiness)
+	{
+		return new PlayerSummonKnownObjectSkillAttackPreview(
+			PlayerSummonKnownObjectSkillAttackPreviewStatus.WouldEvaluateSkills,
+			knownObject,
+			currentTimeMilliseconds,
+			Readiness: readiness);
+	}
+}
+
+public enum PlayerSummonKnownObjectSkillAttackPreviewStatus
+{
+	BlockedCasting,
+	WouldUseQueuedInstantSkill,
+	InitialDelayNotElapsed,
+	NextSkillNotReady,
+	WouldEvaluateSkills,
 }
 
 public enum PlayerMercenarySkillExecutionStatus
