@@ -8,6 +8,7 @@ public static class IdianPolishService
 	public const int FullPolishCharge = 1_000_000;
 	public const int LowPolishChargeThreshold = 300_000;
 	private const int CubeStorageId = 0;
+	private const long MainHand = 1L;
 	private const long MainOffHand = 1L << 17;
 	private const long SubOffHand = 1L << 18;
 
@@ -132,6 +133,48 @@ public static class IdianPolishService
 			: new IdianPolishBurnPlan(true, inventoryItems, burns);
 	}
 
+	public static IdianPolishBurnPlan BurnEquippedWeaponPolishChargeForObserverEvent(
+		Player player,
+		ItemTemplateTable itemTemplates,
+		IdianPolishObserverEvent observerEvent,
+		int skillId)
+	{
+		// Java parity: model/items/IdianStone.onEquip registers DOT_ATTACK_DEFEND only for MAIN_HAND idians.
+		if (observerEvent == IdianPolishObserverEvent.Attack && skillId != 0)
+			return IdianPolishBurnPlan.NoChange();
+
+		var inventoryItems = player.InventoryItems.ToList();
+		var burns = new List<IdianPolishBurnResult>();
+		foreach (var item in inventoryItems.ToArray())
+		{
+			if (item.Location != CubeStorageId
+				|| !item.IsEquipped
+				|| item.IdianStone == null
+				|| (item.Slot & MainHand) == 0)
+			{
+				continue;
+			}
+
+			var template = itemTemplates.GetItemTemplate(item.ItemId);
+			if (template is not { IsWeapon: true })
+				continue;
+
+			var burn = DecreasePolishCharge(
+				item,
+				template,
+				isAttacked: observerEvent != IdianPolishObserverEvent.Attack);
+			if (burn == null)
+				continue;
+
+			ReplaceInventoryItem(inventoryItems, burn.ItemUpdate);
+			burns.Add(burn);
+		}
+
+		return burns.Count == 0
+			? IdianPolishBurnPlan.NoChange()
+			: new IdianPolishBurnPlan(true, inventoryItems, burns);
+	}
+
 	private static InventoryItem CopyInventoryItem(InventoryItem item, long? count = null)
 	{
 		var copy = new InventoryItem
@@ -214,6 +257,13 @@ public enum IdianPolishBurnUpdateKind
 	None,
 	LowCharge,
 	Exhausted,
+}
+
+public enum IdianPolishObserverEvent
+{
+	Attack,
+	Attacked,
+	DotAttacked,
 }
 
 public sealed record IdianPolishBurnResult(

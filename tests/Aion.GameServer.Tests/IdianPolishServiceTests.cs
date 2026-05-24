@@ -168,6 +168,85 @@ public sealed class IdianPolishServiceTests
 		Assert.Null(Assert.Single(plan.InventoryItems).IdianStone);
 	}
 
+	[Fact]
+	public void BurnEquippedWeaponPolishChargeForObserverEvent_BurnsOnlyMainHandObserverIdian()
+	{
+		var itemTemplates = new ItemTemplateTable(
+		[
+			CreateTemplate(100, level: 20, itemGroup: "SWORD", mask: 1 << 17, idianInfo: new ItemIdianInfo(60_000, 100_000)),
+			CreateTemplate(101, level: 20, itemGroup: "DAGGER", mask: 1 << 17, idianInfo: new ItemIdianInfo(60_000, 100_000)),
+			CreateTemplate(102, level: 20, itemGroup: "CL_TORSO", mask: 1 << 17, idianInfo: new ItemIdianInfo(60_000, 100_000)),
+		]);
+		var player = new Player
+		{
+			InventoryItems =
+			[
+				CreateItem(100, objectId: 20, polishCharge: 500_000, isEquipped: true, slot: 1),
+				CreateItem(101, objectId: 21, polishCharge: 500_000, isEquipped: true, slot: 2),
+				CreateItem(100, objectId: 22, polishCharge: 500_000, isEquipped: true, slot: 1L << 17),
+				CreateItem(102, objectId: 23, polishCharge: 500_000, isEquipped: true, slot: 1),
+				CreateItem(100, objectId: 24, polishCharge: 500_000, isEquipped: false, slot: 1),
+			],
+		};
+
+		var attackPlan = IdianPolishService.BurnEquippedWeaponPolishChargeForObserverEvent(
+			player,
+			itemTemplates,
+			IdianPolishObserverEvent.Attack,
+			skillId: 0);
+		var attackedPlan = IdianPolishService.BurnEquippedWeaponPolishChargeForObserverEvent(
+			player,
+			itemTemplates,
+			IdianPolishObserverEvent.Attacked,
+			skillId: 2001);
+
+		Assert.True(attackPlan.Changed);
+		var attackBurn = Assert.Single(attackPlan.Burns);
+		Assert.Equal(20, attackBurn.ItemUpdate.ObjectId);
+		Assert.Equal(440_000, attackBurn.ItemUpdate.IdianStone?.PolishCharge);
+		Assert.Equal(500_000, attackPlan.InventoryItems.First(item => item.ObjectId == 21).IdianStone?.PolishCharge);
+		Assert.Equal(500_000, attackPlan.InventoryItems.First(item => item.ObjectId == 22).IdianStone?.PolishCharge);
+		Assert.Equal(500_000, attackPlan.InventoryItems.First(item => item.ObjectId == 23).IdianStone?.PolishCharge);
+		Assert.Equal(500_000, attackPlan.InventoryItems.First(item => item.ObjectId == 24).IdianStone?.PolishCharge);
+
+		Assert.True(attackedPlan.Changed);
+		var attackedBurn = Assert.Single(attackedPlan.Burns);
+		Assert.Equal(20, attackedBurn.ItemUpdate.ObjectId);
+		Assert.Equal(400_000, attackedBurn.ItemUpdate.IdianStone?.PolishCharge);
+	}
+
+	[Fact]
+	public void BurnEquippedWeaponPolishChargeForObserverEvent_SkipsSkillAttackButAllowsDotAttacked()
+	{
+		var itemTemplates = new ItemTemplateTable(
+		[
+			CreateTemplate(100, level: 20, itemGroup: "SWORD", mask: 1 << 17, idianInfo: new ItemIdianInfo(60_000, 100_000)),
+		]);
+		var player = new Player
+		{
+			InventoryItems =
+			[
+				CreateItem(100, objectId: 20, polishCharge: 500_000, isEquipped: true, slot: 1),
+			],
+		};
+
+		var skillAttackPlan = IdianPolishService.BurnEquippedWeaponPolishChargeForObserverEvent(
+			player,
+			itemTemplates,
+			IdianPolishObserverEvent.Attack,
+			skillId: 2001);
+		var dotPlan = IdianPolishService.BurnEquippedWeaponPolishChargeForObserverEvent(
+			player,
+			itemTemplates,
+			IdianPolishObserverEvent.DotAttacked,
+			skillId: 2001);
+
+		Assert.False(skillAttackPlan.Changed);
+		Assert.Empty(skillAttackPlan.Burns);
+		Assert.True(dotPlan.Changed);
+		Assert.Equal(400_000, Assert.Single(dotPlan.Burns).ItemUpdate.IdianStone?.PolishCharge);
+	}
+
 	private static ItemTemplateSummary CreateTemplate(
 		int templateId,
 		int level = 1,
