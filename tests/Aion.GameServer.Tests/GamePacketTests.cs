@@ -3914,6 +3914,25 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesAttack()
+	{
+		var attack = Assert.IsType<CmAttack>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(32, b =>
+			{
+				b.WriteD(7001);
+				b.WriteC(3);
+				b.WriteH(450);
+				b.WriteC(2);
+			}), GameConnectionState.InGame));
+
+		Assert.Equal(7001, attack.TargetObjectId);
+		Assert.Equal(3, attack.AttackNo);
+		Assert.Equal(450, attack.Time);
+		Assert.Equal(2, attack.Type);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(32, b => b.WriteD(7001)), GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesChargeItem()
 	{
 		var chargeItem = Assert.IsType<CmChargeItem>(
