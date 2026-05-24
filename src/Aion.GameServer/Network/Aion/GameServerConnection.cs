@@ -1348,7 +1348,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		return player.Recipes.Count != beforeCount;
 	}
 
-	private async Task HandleDialogSelectAsync(Player player, CmDialogSelect packet)
+	internal async Task HandleDialogSelectAsync(Player player, CmDialogSelect packet)
 	{
 		// Java parity: network/aion/clientpackets/CM_DIALOG_SELECT.runImpl -> NpcController.onDialogSelect.
 		if (player.IsTrading)
