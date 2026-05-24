@@ -49,6 +49,63 @@ public sealed class PlayerLeagueInvitePlannerTests
 	}
 
 	[Fact]
+	public void CreateCanInviteAllianceChecksPlan_FollowsJavaMiddleFailureOrder()
+	{
+		var planner = new PlayerLeagueInvitePlanner();
+		var alliances = new PlayerAllianceRuntime();
+		var leagues = new PlayerLeagueRuntime();
+		var inviter = new Player { ObjectId = 1001, Name = "Inviter", IsOnline = true };
+		var sameAllianceInvitee = new Player { ObjectId = 1002, Name = "SameAlliance", IsOnline = true };
+		alliances.CreateAlliance(88001, inviter);
+		alliances.AddMember(88001, sameAllianceInvitee);
+		leagues.CreateLeague(77001, leaderAllianceId: 88001);
+
+		var ownAlliancePlan = planner.CreateCanInviteAllianceChecksPlan(inviter, sameAllianceInvitee, leagues);
+
+		AssertCanInviteFailure(ownAlliancePlan, PlayerLeagueCanInviteStatus.InvitedInOwnAlliance, 1001, 1400568);
+
+		var invitedInLeague = new Player { ObjectId = 2001, Name = "AlreadyLeague", IsOnline = true };
+		alliances.CreateAlliance(88002, invitedInLeague);
+		Assert.NotNull(leagues.JoinAlliance(77001, 88002, alliances));
+
+		var alreadyLeaguePlan = planner.CreateCanInviteAllianceChecksPlan(inviter, invitedInLeague, leagues);
+
+		AssertCanInviteFailure(alreadyLeaguePlan, PlayerLeagueCanInviteStatus.InvitedAlreadyInLeague, 1001, 1400603);
+	}
+
+	[Fact]
+	public void CreateCanInviteAllianceChecksPlan_ReportsFullLeagueAndPassesRepresentedChecks()
+	{
+		var planner = new PlayerLeagueInvitePlanner();
+		var alliances = new PlayerAllianceRuntime();
+		var leagues = new PlayerLeagueRuntime();
+		var inviter = new Player { ObjectId = 1001, Name = "Inviter", IsOnline = true };
+		alliances.CreateAlliance(88001, inviter);
+		leagues.CreateLeague(77001, leaderAllianceId: 88001);
+		for (var index = 2; index <= 8; index++)
+		{
+			var leader = new Player { ObjectId = index * 1000 + 1, Name = $"Leader{index}", IsOnline = true };
+			var allianceId = 88000 + index;
+			alliances.CreateAlliance(allianceId, leader);
+			leagues.AddAlliance(77001, allianceId);
+		}
+
+		var invited = new Player { ObjectId = 9001, Name = "Invited", IsOnline = true };
+		alliances.CreateAlliance(88009, invited);
+
+		var fullPlan = planner.CreateCanInviteAllianceChecksPlan(inviter, invited, leagues);
+
+		AssertCanInviteFailure(fullPlan, PlayerLeagueCanInviteStatus.InviterLeagueFull, 1001, 1400565);
+
+		var openLeagues = new PlayerLeagueRuntime();
+		openLeagues.CreateLeague(77002, leaderAllianceId: 88001);
+		var passPlan = planner.CreateCanInviteAllianceChecksPlan(inviter, invited, openLeagues);
+
+		Assert.Equal(PlayerLeagueCanInviteStatus.PassedRepresentedChecks, passPlan.Status);
+		Assert.Null(passPlan.SystemMessageIntent);
+	}
+
+	[Fact]
 	public void CreateAcceptExistingLeaguePlan_JoinsInvitedAllianceLikeJavaAcceptRequest()
 	{
 		var planner = new PlayerLeagueInvitePlanner();

@@ -231,6 +231,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1400567, playerName);
 	}
 
+	public static SmSystemMessage UnionCantInviteSelf()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_UNION_CANT_INVITE_SELF.
+		return new SmSystemMessage(1400568);
+	}
+
 	public static SmSystemMessage UnionOfflineMember()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_UNION_OFFLINE_MEMBER.
@@ -241,6 +247,18 @@ public sealed class SmSystemMessage : GameServerPacket
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_UNION_CANT_INVITE_WHEN_DEAD.
 		return new SmSystemMessage(1400570);
+	}
+
+	public static SmSystemMessage UnionCantAddNewMember()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_UNION_CANT_ADD_NEW_MEMBER.
+		return new SmSystemMessage(1400565);
+	}
+
+	public static SmSystemMessage UnionAlreadyMyUnion()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_UNION_ALREADY_MY_UNION.
+		return new SmSystemMessage(1400603);
 	}
 
 	public static SmSystemMessage PartyHeBecomeOfflineTimeout(string playerName)

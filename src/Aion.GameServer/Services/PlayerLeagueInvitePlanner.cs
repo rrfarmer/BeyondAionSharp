@@ -43,6 +43,56 @@ public sealed class PlayerLeagueInvitePlanner
 			SystemMessageIntent: null);
 	}
 
+	public PlayerLeagueCanInvitePlan CreateCanInviteAllianceChecksPlan(
+		Player inviter,
+		Player invited,
+		PlayerLeagueRuntime leagueRuntime)
+	{
+		// Java parity: LeagueService.canInvite middle failure checks, after the dead/offline/no-alliance checks:
+		// own alliance, invited already in league, and requester league full.
+		ArgumentNullException.ThrowIfNull(inviter);
+		ArgumentNullException.ThrowIfNull(invited);
+		ArgumentNullException.ThrowIfNull(leagueRuntime);
+
+		var inviterAlliance = inviter.CurrentAllianceSnapshot;
+		var invitedAlliance = invited.CurrentAllianceSnapshot;
+		if (inviterAlliance == null || invitedAlliance == null)
+		{
+			return new PlayerLeagueCanInvitePlan(
+				PlayerLeagueCanInviteStatus.PassedRepresentedChecks,
+				SystemMessageIntent: null);
+		}
+
+		if (inviterAlliance.MemberObjectIds.Contains(invited.ObjectId))
+		{
+			return CreateCanInviteFailurePlan(
+				inviter.ObjectId,
+				PlayerLeagueCanInviteStatus.InvitedInOwnAlliance,
+				SmSystemMessage.UnionCantInviteSelf());
+		}
+
+		if (leagueRuntime.ResolveByAllianceId(invitedAlliance.AllianceId) != null)
+		{
+			return CreateCanInviteFailurePlan(
+				inviter.ObjectId,
+				PlayerLeagueCanInviteStatus.InvitedAlreadyInLeague,
+				SmSystemMessage.UnionAlreadyMyUnion());
+		}
+
+		var inviterLeague = leagueRuntime.ResolveByAllianceId(inviterAlliance.AllianceId);
+		if (inviterLeague != null && inviterLeague.AllianceIdsByPosition.Count >= 8)
+		{
+			return CreateCanInviteFailurePlan(
+				inviter.ObjectId,
+				PlayerLeagueCanInviteStatus.InviterLeagueFull,
+				SmSystemMessage.UnionCantAddNewMember());
+		}
+
+		return new PlayerLeagueCanInvitePlan(
+			PlayerLeagueCanInviteStatus.PassedRepresentedChecks,
+			SystemMessageIntent: null);
+	}
+
 	public PlayerLeagueInviteAcceptPlan CreateAcceptExistingLeaguePlan(
 		int requesterAllianceId,
 		int invitedAllianceId,
@@ -119,6 +169,9 @@ public enum PlayerLeagueCanInviteStatus
 	InviterDead,
 	InvitedOffline,
 	InvitedWithoutAlliance,
+	InvitedInOwnAlliance,
+	InvitedAlreadyInLeague,
+	InviterLeagueFull,
 }
 
 public sealed record PlayerLeagueCanInvitePlan(
