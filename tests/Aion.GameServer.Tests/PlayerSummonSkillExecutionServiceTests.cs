@@ -24,6 +24,39 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Same(order, result.Order);
 		Assert.True(result.Order.Release);
 		Assert.Equal(5, result.Order.Hate);
+		Assert.Equal(
+			[
+				PlayerSummonSkillExecutionAction.GetSkill,
+				PlayerSummonSkillExecutionAction.SetHate,
+				PlayerSummonSkillExecutionAction.UseSkill,
+				PlayerSummonSkillExecutionAction.ReleaseOnSuccess,
+			],
+			result.Actions);
+	}
+
+	[Fact]
+	public async Task ValidateExecution_PlansNoReleaseWhenQueuedOrderDoesNotRelease()
+	{
+		var dataManager = await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false);
+		var player = new Player
+		{
+			HasPetSummon = true,
+			PetSummonNpcId = 833288,
+		};
+
+		var result = new PlayerSummonSkillExecutionService().ValidateExecution(
+			player,
+			new PlayerPetSkillOrder(22107, SkillLevel: 1, TargetObjectId: 7001, Hate: 0, Release: false),
+			dataManager.StaticData.PetSkills);
+
+		Assert.Equal(PlayerSummonSkillExecutionStatus.WouldInvokeSkillEngine, result.Status);
+		Assert.Equal(
+			[
+				PlayerSummonSkillExecutionAction.GetSkill,
+				PlayerSummonSkillExecutionAction.SetHate,
+				PlayerSummonSkillExecutionAction.UseSkill,
+			],
+			result.Actions);
 	}
 
 	[Fact]
@@ -46,6 +79,8 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Equal(PlayerSummonSkillExecutionStatus.MissingSummon, missingSummon.Status);
 		Assert.Equal(PlayerSummonSkillExecutionStatus.InvalidPetSkill, invalidSkill.Status);
 		Assert.Equal(9999, invalidSkill.Order.SkillId);
+		Assert.Empty(missingSummon.Actions);
+		Assert.Empty(invalidSkill.Actions);
 	}
 
 	private static string FindRepoRoot()

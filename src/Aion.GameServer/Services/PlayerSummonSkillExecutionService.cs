@@ -17,15 +17,32 @@ public sealed class PlayerSummonSkillExecutionService
 		if (!petSkills.PetHasSkill(player.PetSummonNpcId, order.SkillId))
 			return PlayerSummonSkillExecutionResult.InvalidPetSkill(player.PetSummonNpcId, order);
 
-		return PlayerSummonSkillExecutionResult.WouldInvokeSkillEngine(player.PetSummonNpcId, order);
+		return PlayerSummonSkillExecutionResult.WouldInvokeSkillEngine(
+			player.PetSummonNpcId,
+			order,
+			order.Release
+				? [
+					PlayerSummonSkillExecutionAction.GetSkill,
+					PlayerSummonSkillExecutionAction.SetHate,
+					PlayerSummonSkillExecutionAction.UseSkill,
+					PlayerSummonSkillExecutionAction.ReleaseOnSuccess,
+				]
+				: [
+					PlayerSummonSkillExecutionAction.GetSkill,
+					PlayerSummonSkillExecutionAction.SetHate,
+					PlayerSummonSkillExecutionAction.UseSkill,
+				]);
 	}
 }
 
 public sealed record PlayerSummonSkillExecutionResult(
 	PlayerSummonSkillExecutionStatus Status,
 	int PetSummonNpcId,
-	PlayerPetSkillOrder Order)
+	PlayerPetSkillOrder Order,
+	IReadOnlyList<PlayerSummonSkillExecutionAction>? PlannedActions = null)
 {
+	public IReadOnlyList<PlayerSummonSkillExecutionAction> Actions => PlannedActions ?? Array.Empty<PlayerSummonSkillExecutionAction>();
+
 	public static PlayerSummonSkillExecutionResult MissingSummon(PlayerPetSkillOrder order)
 	{
 		return new PlayerSummonSkillExecutionResult(PlayerSummonSkillExecutionStatus.MissingSummon, 0, order);
@@ -36,9 +53,16 @@ public sealed record PlayerSummonSkillExecutionResult(
 		return new PlayerSummonSkillExecutionResult(PlayerSummonSkillExecutionStatus.InvalidPetSkill, petSummonNpcId, order);
 	}
 
-	public static PlayerSummonSkillExecutionResult WouldInvokeSkillEngine(int petSummonNpcId, PlayerPetSkillOrder order)
+	public static PlayerSummonSkillExecutionResult WouldInvokeSkillEngine(
+		int petSummonNpcId,
+		PlayerPetSkillOrder order,
+		IReadOnlyList<PlayerSummonSkillExecutionAction> plannedActions)
 	{
-		return new PlayerSummonSkillExecutionResult(PlayerSummonSkillExecutionStatus.WouldInvokeSkillEngine, petSummonNpcId, order);
+		return new PlayerSummonSkillExecutionResult(
+			PlayerSummonSkillExecutionStatus.WouldInvokeSkillEngine,
+			petSummonNpcId,
+			order,
+			plannedActions);
 	}
 }
 
@@ -47,4 +71,12 @@ public enum PlayerSummonSkillExecutionStatus
 	MissingSummon,
 	InvalidPetSkill,
 	WouldInvokeSkillEngine,
+}
+
+public enum PlayerSummonSkillExecutionAction
+{
+	GetSkill,
+	SetHate,
+	UseSkill,
+	ReleaseOnSuccess,
 }
