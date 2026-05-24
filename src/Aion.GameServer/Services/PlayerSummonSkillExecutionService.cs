@@ -1006,6 +1006,22 @@ public sealed class PlayerSummonSkillExecutionService
 		return PlayerSummonKnownObjectNpcSkillEffectReservedProducerCatalog.JavaSourceReviewed();
 	}
 
+	public PlayerSummonKnownObjectNpcSkillPacketFanoutTrace ProjectMercenaryNpcSkillPacketFanoutTrace(
+		bool effectorIsPlayer = false,
+		bool usesAiEventOverload = true,
+		bool aiEventIsCreatureNeedsHelp = true,
+		bool hasKnownPlayers = true,
+		bool hasKnownNpcs = true)
+	{
+		// Java parity: PacketSendUtility.broadcastPacketAndReceive sends player self first, then known-list players/NPC AI events in Java traversal order.
+		return PlayerSummonKnownObjectNpcSkillPacketFanoutTrace.FromJavaBroadcastPacketAndReceive(
+			effectorIsPlayer,
+			usesAiEventOverload,
+			aiEventIsCreatureNeedsHelp,
+			hasKnownPlayers,
+			hasKnownNpcs);
+	}
+
 	public PlayerSummonKnownObjectNpcSkillUseSkillStartTrace ProjectMercenaryNpcSkillUseSkillStartTrace(
 		PlayerSummonKnownObjectNpcSkillActionResult? actionResult,
 		bool canUseSkillAtCastStart = true,
@@ -6639,6 +6655,161 @@ public enum PlayerSummonKnownObjectNpcSkillCastResultPacketTraceStatus
 	ItemUsageAnimationOnly,
 	UnsupportedTargetType,
 	OrderedPacketFanout,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillPacketFanoutTrace(
+	PlayerSummonKnownObjectNpcSkillPacketFanoutTraceStatus Status,
+	IReadOnlyList<PlayerSummonKnownObjectNpcSkillPacketFanoutStep> Steps,
+	PlayerSummonKnownObjectNpcSkillPacketFanoutSourceKind SourceKind,
+	PlayerSummonKnownObjectNpcSkillPacketFanoutKnownListIterationKind KnownListIterationKind,
+	PlayerSummonKnownObjectNpcSkillPacketFanoutKnownListOrdering KnownListOrdering,
+	PlayerSummonKnownObjectNpcSkillPacketFanoutPassKind KnownObjectPassKind,
+	PlayerSummonKnownObjectNpcSkillPacketFanoutSendCompletion SendCompletion,
+	PlayerSummonKnownObjectNpcSkillPacketFanoutPacketInstanceReuse PacketInstanceReuse,
+	PlayerSummonKnownObjectNpcSkillPacketFanoutNullGuardPolicy NullGuardPolicy,
+	PlayerSummonKnownObjectNpcSkillPacketFanoutPerRecipientExceptionBehavior PerRecipientExceptionBehavior,
+	PlayerSummonKnownObjectNpcSkillPacketFanoutSerializationSideEffect SerializationSideEffects,
+	bool WouldSendPackets = false,
+	bool UsesKnownListTraversal = true)
+{
+	public bool SendsSelfBeforeKnownPlayers =>
+		IndexOf(PlayerSummonKnownObjectNpcSkillPacketFanoutStep.SendPacketToPlayerSelf) is int selfIndex
+		&& selfIndex >= 0
+		&& IndexOf(PlayerSummonKnownObjectNpcSkillPacketFanoutStep.SendPacketToKnownPlayer) is int knownPlayerIndex
+		&& knownPlayerIndex > selfIndex;
+
+	public bool NotifiesKnownNpcsDuringKnownObjectTraversal =>
+		Steps.Contains(PlayerSummonKnownObjectNpcSkillPacketFanoutStep.ForEachKnownObject)
+		&& Steps.Contains(PlayerSummonKnownObjectNpcSkillPacketFanoutStep.NotifyKnownNpcAiEvent);
+
+	public bool NonPlayerEffectorSkipsSelfSend =>
+		!Steps.Contains(PlayerSummonKnownObjectNpcSkillPacketFanoutStep.SendPacketToPlayerSelf);
+
+	public static PlayerSummonKnownObjectNpcSkillPacketFanoutTrace FromJavaBroadcastPacketAndReceive(
+		bool effectorIsPlayer,
+		bool usesAiEventOverload,
+		bool aiEventIsCreatureNeedsHelp,
+		bool hasKnownPlayers,
+		bool hasKnownNpcs)
+	{
+		var steps = new List<PlayerSummonKnownObjectNpcSkillPacketFanoutStep>();
+		if (effectorIsPlayer)
+		{
+			steps.Add(PlayerSummonKnownObjectNpcSkillPacketFanoutStep.CheckPlayerSelfOnline);
+			steps.Add(PlayerSummonKnownObjectNpcSkillPacketFanoutStep.SendPacketToPlayerSelf);
+		}
+
+		if (usesAiEventOverload)
+		{
+			steps.Add(PlayerSummonKnownObjectNpcSkillPacketFanoutStep.ForEachKnownObject);
+			if (hasKnownPlayers)
+				steps.Add(PlayerSummonKnownObjectNpcSkillPacketFanoutStep.SendPacketToKnownPlayer);
+			if (aiEventIsCreatureNeedsHelp)
+				steps.Add(PlayerSummonKnownObjectNpcSkillPacketFanoutStep.ResolveCreatureNeedsHelpAiEvent);
+			if (aiEventIsCreatureNeedsHelp && hasKnownNpcs)
+				steps.Add(PlayerSummonKnownObjectNpcSkillPacketFanoutStep.NotifyKnownNpcAiEvent);
+		}
+		else
+		{
+			steps.Add(PlayerSummonKnownObjectNpcSkillPacketFanoutStep.ForEachKnownPlayer);
+			if (hasKnownPlayers)
+				steps.Add(PlayerSummonKnownObjectNpcSkillPacketFanoutStep.SendPacketToKnownPlayer);
+		}
+
+		return new PlayerSummonKnownObjectNpcSkillPacketFanoutTrace(
+			PlayerSummonKnownObjectNpcSkillPacketFanoutTraceStatus.Projected,
+			steps,
+			usesAiEventOverload
+				? PlayerSummonKnownObjectNpcSkillPacketFanoutSourceKind.BroadcastPacketAndReceiveCreatureWithAiEvent
+				: PlayerSummonKnownObjectNpcSkillPacketFanoutSourceKind.BroadcastPacketAndReceiveVisibleObject,
+			PlayerSummonKnownObjectNpcSkillPacketFanoutKnownListIterationKind.ConcurrentWeaklyConsistent,
+			PlayerSummonKnownObjectNpcSkillPacketFanoutKnownListOrdering.Unspecified,
+			usesAiEventOverload
+				? PlayerSummonKnownObjectNpcSkillPacketFanoutPassKind.InterleavedPlayersAndNpcAi
+				: PlayerSummonKnownObjectNpcSkillPacketFanoutPassKind.KnownPlayersOnly,
+			PlayerSummonKnownObjectNpcSkillPacketFanoutSendCompletion.EnqueueOnly,
+			PlayerSummonKnownObjectNpcSkillPacketFanoutPacketInstanceReuse.SamePacketInstance,
+			PlayerSummonKnownObjectNpcSkillPacketFanoutNullGuardPolicy.JavaUncheckedExceptOnlinePlayer,
+			PlayerSummonKnownObjectNpcSkillPacketFanoutPerRecipientExceptionBehavior.LogAndContinue,
+			usesAiEventOverload
+				? PlayerSummonKnownObjectNpcSkillPacketFanoutSerializationSideEffect.LastCounterSkill
+				: PlayerSummonKnownObjectNpcSkillPacketFanoutSerializationSideEffect.UsingItemWhenTimePositive);
+	}
+
+	private int IndexOf(PlayerSummonKnownObjectNpcSkillPacketFanoutStep step)
+	{
+		for (var i = 0; i < Steps.Count; i++)
+		{
+			if (Steps[i] == step)
+				return i;
+		}
+
+		return -1;
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillPacketFanoutTraceStatus
+{
+	Projected,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillPacketFanoutSourceKind
+{
+	BroadcastPacketAndReceiveVisibleObject,
+	BroadcastPacketAndReceiveCreatureWithAiEvent,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillPacketFanoutKnownListIterationKind
+{
+	ConcurrentWeaklyConsistent,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillPacketFanoutKnownListOrdering
+{
+	Unspecified,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillPacketFanoutPassKind
+{
+	KnownPlayersOnly,
+	InterleavedPlayersAndNpcAi,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillPacketFanoutSendCompletion
+{
+	EnqueueOnly,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillPacketFanoutPacketInstanceReuse
+{
+	SamePacketInstance,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillPacketFanoutNullGuardPolicy
+{
+	JavaUncheckedExceptOnlinePlayer,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillPacketFanoutPerRecipientExceptionBehavior
+{
+	LogAndContinue,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillPacketFanoutSerializationSideEffect
+{
+	LastCounterSkill,
+	UsingItemWhenTimePositive,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillPacketFanoutStep
+{
+	CheckPlayerSelfOnline,
+	SendPacketToPlayerSelf,
+	ForEachKnownPlayer,
+	ForEachKnownObject,
+	SendPacketToKnownPlayer,
+	ResolveCreatureNeedsHelpAiEvent,
+	NotifyKnownNpcAiEvent,
 }
 
 public enum PlayerSummonKnownObjectNpcSkillCastResultShieldBranch

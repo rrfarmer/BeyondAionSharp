@@ -3222,6 +3222,78 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void ProjectMercenaryNpcSkillPacketFanoutTrace_ProjectsJavaBroadcastPacketAndReceive()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+
+		var playerAttackFanout = service.ProjectMercenaryNpcSkillPacketFanoutTrace(
+			effectorIsPlayer: true,
+			usesAiEventOverload: true,
+			aiEventIsCreatureNeedsHelp: true,
+			hasKnownPlayers: true,
+			hasKnownNpcs: true);
+		var npcAttackFanout = service.ProjectMercenaryNpcSkillPacketFanoutTrace(
+			effectorIsPlayer: false,
+			usesAiEventOverload: true,
+			aiEventIsCreatureNeedsHelp: true,
+			hasKnownPlayers: true,
+			hasKnownNpcs: true);
+		var nonAttackFanout = service.ProjectMercenaryNpcSkillPacketFanoutTrace(
+			effectorIsPlayer: false,
+			usesAiEventOverload: true,
+			aiEventIsCreatureNeedsHelp: false,
+			hasKnownPlayers: true,
+			hasKnownNpcs: true);
+		var itemAnimationFanout = service.ProjectMercenaryNpcSkillPacketFanoutTrace(
+			effectorIsPlayer: true,
+			usesAiEventOverload: false,
+			hasKnownPlayers: true,
+			hasKnownNpcs: true);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillPacketFanoutTraceStatus.Projected, playerAttackFanout.Status);
+		Assert.False(playerAttackFanout.WouldSendPackets);
+		Assert.True(playerAttackFanout.UsesKnownListTraversal);
+		Assert.Equal(
+			PlayerSummonKnownObjectNpcSkillPacketFanoutSourceKind.BroadcastPacketAndReceiveCreatureWithAiEvent,
+			playerAttackFanout.SourceKind);
+		Assert.Equal(
+			PlayerSummonKnownObjectNpcSkillPacketFanoutKnownListIterationKind.ConcurrentWeaklyConsistent,
+			playerAttackFanout.KnownListIterationKind);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillPacketFanoutKnownListOrdering.Unspecified, playerAttackFanout.KnownListOrdering);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillPacketFanoutPassKind.InterleavedPlayersAndNpcAi, playerAttackFanout.KnownObjectPassKind);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillPacketFanoutSendCompletion.EnqueueOnly, playerAttackFanout.SendCompletion);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillPacketFanoutPacketInstanceReuse.SamePacketInstance, playerAttackFanout.PacketInstanceReuse);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillPacketFanoutNullGuardPolicy.JavaUncheckedExceptOnlinePlayer, playerAttackFanout.NullGuardPolicy);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillPacketFanoutPerRecipientExceptionBehavior.LogAndContinue, playerAttackFanout.PerRecipientExceptionBehavior);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillPacketFanoutSerializationSideEffect.LastCounterSkill, playerAttackFanout.SerializationSideEffects);
+		Assert.Equal([
+			PlayerSummonKnownObjectNpcSkillPacketFanoutStep.CheckPlayerSelfOnline,
+			PlayerSummonKnownObjectNpcSkillPacketFanoutStep.SendPacketToPlayerSelf,
+			PlayerSummonKnownObjectNpcSkillPacketFanoutStep.ForEachKnownObject,
+			PlayerSummonKnownObjectNpcSkillPacketFanoutStep.SendPacketToKnownPlayer,
+			PlayerSummonKnownObjectNpcSkillPacketFanoutStep.ResolveCreatureNeedsHelpAiEvent,
+			PlayerSummonKnownObjectNpcSkillPacketFanoutStep.NotifyKnownNpcAiEvent,
+		], playerAttackFanout.Steps);
+		Assert.True(playerAttackFanout.SendsSelfBeforeKnownPlayers);
+		Assert.True(playerAttackFanout.NotifiesKnownNpcsDuringKnownObjectTraversal);
+		Assert.True(npcAttackFanout.NonPlayerEffectorSkipsSelfSend);
+		Assert.Equal([
+			PlayerSummonKnownObjectNpcSkillPacketFanoutStep.ForEachKnownObject,
+			PlayerSummonKnownObjectNpcSkillPacketFanoutStep.SendPacketToKnownPlayer,
+			PlayerSummonKnownObjectNpcSkillPacketFanoutStep.ResolveCreatureNeedsHelpAiEvent,
+			PlayerSummonKnownObjectNpcSkillPacketFanoutStep.NotifyKnownNpcAiEvent,
+		], npcAttackFanout.Steps);
+		Assert.DoesNotContain(PlayerSummonKnownObjectNpcSkillPacketFanoutStep.NotifyKnownNpcAiEvent, nonAttackFanout.Steps);
+		Assert.DoesNotContain(PlayerSummonKnownObjectNpcSkillPacketFanoutStep.ResolveCreatureNeedsHelpAiEvent, nonAttackFanout.Steps);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillPacketFanoutSourceKind.BroadcastPacketAndReceiveVisibleObject, itemAnimationFanout.SourceKind);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillPacketFanoutPassKind.KnownPlayersOnly, itemAnimationFanout.KnownObjectPassKind);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillPacketFanoutSerializationSideEffect.UsingItemWhenTimePositive, itemAnimationFanout.SerializationSideEffects);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillPacketFanoutStep.ForEachKnownPlayer, itemAnimationFanout.Steps);
+		Assert.DoesNotContain(PlayerSummonKnownObjectNpcSkillPacketFanoutStep.ForEachKnownObject, itemAnimationFanout.Steps);
+		Assert.DoesNotContain(PlayerSummonKnownObjectNpcSkillPacketFanoutStep.NotifyKnownNpcAiEvent, itemAnimationFanout.Steps);
+	}
+
+	[Fact]
 	public void ProjectMercenaryNpcSkillCastResultPacketSchemaGolden_EncodesJavaWriteTruncation()
 	{
 		var service = new PlayerSummonSkillExecutionService();
