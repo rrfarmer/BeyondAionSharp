@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion.ClientPackets;
@@ -981,6 +982,14 @@ public sealed class PlayerSummonSkillExecutionService
 			subEffectWritesLocation,
 			hasReservedEffects,
 			shieldBranch);
+	}
+
+	public PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaGolden ProjectMercenaryNpcSkillCastResultPacketSchemaGolden(
+		PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaSample sample =
+			PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaSample.ObjectTargetWithReservedProtect)
+	{
+		// Java parity: SM_CASTSPELL_RESULT.writeImpl writes to AConnection.writeBuffer, whose ByteBuffer is LITTLE_ENDIAN.
+		return PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaGolden.FromSample(sample);
 	}
 
 	public PlayerSummonKnownObjectNpcSkillUseSkillStartTrace ProjectMercenaryNpcSkillUseSkillStartTrace(
@@ -6668,6 +6677,291 @@ public enum PlayerSummonKnownObjectNpcSkillCastResultPacketStep
 	WriteProtectShieldFields,
 	WriteReflectOrMpShieldFields,
 	SendUseItemSystemMessage,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaGolden(
+	PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaGoldenStatus Status,
+	PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaSample Sample,
+	byte[] Payload,
+	IReadOnlyList<PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaField> Fields)
+{
+	public bool WouldSendPacket => false;
+
+	public bool UsesLittleEndianByteOrder => true;
+
+	public bool DemonstratesJavaShortTruncation =>
+		Fields.Any(schemaField => schemaField.WriteKind == PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaWriteKind.WriteHTruncated);
+
+	public bool DemonstratesJavaByteTruncation =>
+		Fields.Any(schemaField => schemaField.WriteKind == PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaWriteKind.WriteCTruncated);
+
+	public string PayloadHex => Convert.ToHexString(Payload);
+
+	public static PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaGolden FromSample(
+		PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaSample sample)
+	{
+		var writer = new JavaPacketSchemaWriter();
+		switch (sample)
+		{
+			case PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaSample.ObjectTargetWithReservedProtect:
+				WriteObjectTargetWithReservedProtect(writer);
+				break;
+			case PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaSample.XyzTargetNoEffects:
+				WriteXyzTargetNoEffects(writer);
+				break;
+			case PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaSample.CombatItemPointPointReflect:
+				WriteCombatItemPointPointReflect(writer);
+				break;
+			default:
+				return new PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaGolden(
+					PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaGoldenStatus.UnsupportedSample,
+					sample,
+					[],
+					[]);
+		}
+
+		return new PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaGolden(
+			PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaGoldenStatus.Projected,
+			sample,
+			writer.ToArray(),
+			writer.Fields);
+	}
+
+	private static void WriteObjectTargetWithReservedProtect(JavaPacketSchemaWriter writer)
+	{
+		writer.WriteD(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.EffectorObjectId), 0x01020304);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.TargetType), 0);
+		writer.WriteD(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.TargetObjectId), 0x05060708);
+		writer.WriteH(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.SkillId), 0x12345);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.SkillLevel), 0x1FF);
+		writer.WriteD(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.Cooldown), 0x0A0B0C0D);
+		writer.WriteH(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.HitTime), 0x12345);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.UnknownHeaderByte), 0);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.ChainResultFlag), 32);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.SkillHeader), 0);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.DashStatus), 2);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.DashHeading), 0x12);
+		writer.WriteF(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.DashX), 1.5f);
+		writer.WriteF(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.DashY), -2.25f);
+		writer.WriteF(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.DashZ), 3.75f);
+		writer.WriteH(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.EffectsCount), 1);
+		writer.WriteD(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.EffectedObjectId), 0x0E0F1011);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.EffectResultId), 4);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.EffectedHpPercent), 0x12C);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.EffectorHpPercent), 0x101);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.SpellStatus), 256);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.SuccessfulEffectsByte), 0x1AB);
+		writer.WriteH(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.ReservedZero), 0);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.CarvedSignet), 0x102);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.ReservedEffectsCount), 1);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.ReservedEffectType), 3);
+		writer.WriteD(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.ReservedEffectValue), -123456);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.AttackStatusId), -54);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.ShieldDefense), 8);
+		writer.WriteD(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.ProtectorId), 0x01000002);
+		writer.WriteD(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.ProtectedDamage), 0x03000004);
+		writer.WriteD(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.ProtectedSkillId), 0x05000006);
+	}
+
+	private static void WriteXyzTargetNoEffects(JavaPacketSchemaWriter writer)
+	{
+		writer.WriteD(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.EffectorObjectId), 0x11223344);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.TargetType), 1);
+		writer.WriteF(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.TargetX), 10.5f);
+		writer.WriteF(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.TargetY), -20.25f);
+		writer.WriteF(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.TargetZ), 30.75f);
+		writer.WriteH(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.SkillId), 0x23456);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.SkillLevel), 2);
+		writer.WriteD(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.Cooldown), 0);
+		writer.WriteH(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.HitTime), 0x1FFFF);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.UnknownHeaderByte), 0);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.ChainResultFlag), 16);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.SkillHeader), 4);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.DashStatus), 0);
+		writer.WriteH(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.EffectsCount), 0);
+	}
+
+	private static void WriteCombatItemPointPointReflect(JavaPacketSchemaWriter writer)
+	{
+		writer.WriteD(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.EffectorObjectId), 0x01010101);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.TargetType), 0);
+		writer.WriteD(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.TargetObjectId), 0x02020202);
+		writer.WriteH(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.SkillId), 0x1010);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.SkillLevel), 3);
+		writer.WriteD(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.Cooldown), 0x03030303);
+		writer.WriteH(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.HitTime), 250);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.UnknownHeaderByte), 0);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.ChainResultFlag), 0);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.CombatItemHeader), 2);
+		writer.WriteD(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.ItemObjectId), 0x04040404);
+		writer.WriteD(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.ItemTemplateId), 0x05050505);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.CombatItemUnknown), 0);
+		writer.WriteH(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.EffectsCount), 1);
+		writer.WriteD(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.PointPointEffectorObjectId), 0x01010101);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.EffectResultId), 0);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.EffectedHpPercent), 100);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.EffectorHpPercent), 77);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.SpellStatus), 16);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.SuccessfulEffectsByte), 1);
+		writer.WriteH(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.ReservedZero), 0);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.CarvedSignet), 0);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.SpinHeading), 0x7F);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.ReservedEffectsCount), 1);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.ReservedEffectType), 0);
+		writer.WriteD(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.ReservedEffectValue), 42);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.AttackStatusId), 10);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.ShieldDefense), 16);
+		writer.WriteD(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.ProtectorId), 1);
+		writer.WriteD(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.ProtectedDamage), 2);
+		writer.WriteD(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.ProtectedSkillId), 3);
+		writer.WriteD(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.ReflectedDamage), 4);
+		writer.WriteD(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.ReflectedSkillId), 5);
+		writer.WriteD(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.MpAbsorbed), 6);
+		writer.WriteD(nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.MpShieldSkillId), 7);
+	}
+
+	private sealed class JavaPacketSchemaWriter
+	{
+		private readonly List<byte> _payload = [];
+		private readonly List<PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaField> _fields = [];
+
+		public IReadOnlyList<PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaField> Fields => _fields;
+
+		public byte[] ToArray() => _payload.ToArray();
+
+		public void WriteD(string name, int value)
+		{
+			Span<byte> bytes = stackalloc byte[4];
+			BinaryPrimitives.WriteInt32LittleEndian(bytes, value);
+			Add(name, value, PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaWriteKind.WriteD, bytes);
+		}
+
+		public void WriteH(string name, int value)
+		{
+			Span<byte> bytes = stackalloc byte[2];
+			BinaryPrimitives.WriteInt16LittleEndian(bytes, unchecked((short)value));
+			Add(
+				name,
+				value,
+				value is < short.MinValue or > ushort.MaxValue
+					? PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaWriteKind.WriteHTruncated
+					: PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaWriteKind.WriteH,
+				bytes);
+		}
+
+		public void WriteC(string name, int value)
+		{
+			Span<byte> bytes = stackalloc byte[1];
+			bytes[0] = unchecked((byte)value);
+			Add(
+				name,
+				value,
+				value is < sbyte.MinValue or > byte.MaxValue
+					? PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaWriteKind.WriteCTruncated
+					: PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaWriteKind.WriteC,
+				bytes);
+		}
+
+		public void WriteF(string name, float value)
+		{
+			Span<byte> bytes = stackalloc byte[4];
+			BinaryPrimitives.WriteInt32LittleEndian(bytes, BitConverter.SingleToInt32Bits(value));
+			Add(name, value, PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaWriteKind.WriteF, bytes);
+		}
+
+		private void Add(
+			string name,
+			object value,
+			PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaWriteKind writeKind,
+			ReadOnlySpan<byte> bytes)
+		{
+			var fieldBytes = bytes.ToArray();
+			_payload.AddRange(fieldBytes);
+			_fields.Add(new PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaField(
+				name,
+				writeKind,
+				Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty,
+				fieldBytes));
+		}
+	}
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaField(
+	string Name,
+	PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaWriteKind WriteKind,
+	string SourceValue,
+	byte[] Bytes);
+
+public enum PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaGoldenStatus
+{
+	Projected,
+	UnsupportedSample,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaSample
+{
+	ObjectTargetWithReservedProtect,
+	XyzTargetNoEffects,
+	CombatItemPointPointReflect,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaWriteKind
+{
+	WriteD,
+	WriteH,
+	WriteHTruncated,
+	WriteC,
+	WriteCTruncated,
+	WriteF,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName
+{
+	EffectorObjectId,
+	TargetType,
+	TargetObjectId,
+	TargetX,
+	TargetY,
+	TargetZ,
+	SkillId,
+	SkillLevel,
+	Cooldown,
+	HitTime,
+	UnknownHeaderByte,
+	ChainResultFlag,
+	SkillHeader,
+	CombatItemHeader,
+	ItemObjectId,
+	ItemTemplateId,
+	CombatItemUnknown,
+	DashStatus,
+	DashHeading,
+	DashX,
+	DashY,
+	DashZ,
+	EffectsCount,
+	EffectedObjectId,
+	PointPointEffectorObjectId,
+	EffectResultId,
+	EffectedHpPercent,
+	EffectorHpPercent,
+	SpellStatus,
+	SuccessfulEffectsByte,
+	ReservedZero,
+	CarvedSignet,
+	SpinHeading,
+	ReservedEffectsCount,
+	ReservedEffectType,
+	ReservedEffectValue,
+	AttackStatusId,
+	ShieldDefense,
+	ProtectorId,
+	ProtectedDamage,
+	ProtectedSkillId,
+	ReflectedDamage,
+	ReflectedSkillId,
+	MpAbsorbed,
+	MpShieldSkillId,
 }
 
 public sealed record PlayerSummonKnownObjectNpcSkillEndCastBranchTrace(

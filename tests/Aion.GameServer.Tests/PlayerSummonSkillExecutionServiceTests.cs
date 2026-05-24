@@ -3222,6 +3222,60 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void ProjectMercenaryNpcSkillCastResultPacketSchemaGolden_EncodesJavaWriteTruncation()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+
+		var objectTarget = service.ProjectMercenaryNpcSkillCastResultPacketSchemaGolden();
+		var xyzTarget = service.ProjectMercenaryNpcSkillCastResultPacketSchemaGolden(
+			PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaSample.XyzTargetNoEffects);
+		var combatItem = service.ProjectMercenaryNpcSkillCastResultPacketSchemaGolden(
+			PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaSample.CombatItemPointPointReflect);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaGoldenStatus.Projected, objectTarget.Status);
+		Assert.False(objectTarget.WouldSendPacket);
+		Assert.True(objectTarget.UsesLittleEndianByteOrder);
+		Assert.True(objectTarget.DemonstratesJavaShortTruncation);
+		Assert.True(objectTarget.DemonstratesJavaByteTruncation);
+		Assert.Equal(
+			"0403020100080706054523FF0D0C0B0A452300200002120000C03F000010C000007040010011100F0E042C0100AB0000020103C01DFEFFCA08020000010400000306000005",
+			objectTarget.PayloadHex);
+		Assert.Contains(
+			objectTarget.Fields,
+			field => field.Name == nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.SkillId)
+				&& field.WriteKind == PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaWriteKind.WriteHTruncated
+				&& Convert.ToHexString(field.Bytes) == "4523");
+		Assert.Contains(
+			objectTarget.Fields,
+			field => field.Name == nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.SpellStatus)
+				&& field.WriteKind == PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaWriteKind.WriteCTruncated
+				&& Convert.ToHexString(field.Bytes) == "00");
+		Assert.Contains(
+			objectTarget.Fields,
+			field => field.Name == nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.AttackStatusId)
+				&& Convert.ToHexString(field.Bytes) == "CA");
+		Assert.Equal(
+			"4433221101000028410000A2C10000F64156340200000000FFFF001004000000",
+			xyzTarget.PayloadHex);
+		Assert.Contains(
+			xyzTarget.Fields,
+			field => field.Name == nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.HitTime)
+				&& field.WriteKind == PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaWriteKind.WriteHTruncated
+				&& Convert.ToHexString(field.Bytes) == "FFFF");
+		Assert.Equal(
+			"01010101000202020210100303030303FA0000000204040404050505050001000101010100644D10010000007F01002A0000000A1001000000020000000300000004000000050000000600000007000000",
+			combatItem.PayloadHex);
+		Assert.Contains(
+			combatItem.Fields,
+			field => field.Name == nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.CombatItemHeader)
+				&& Convert.ToHexString(field.Bytes) == "02");
+		Assert.Contains(
+			combatItem.Fields,
+			field => field.Name == nameof(PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaFieldName.MpShieldSkillId)
+				&& Convert.ToHexString(field.Bytes) == "07000000");
+	}
+
+	[Fact]
 	public void PreviewMercenaryNpcSkillActionWorkflow_ComposesJavaSelectionRangeAndActionSlices()
 	{
 		var service = new PlayerSummonSkillExecutionService();
