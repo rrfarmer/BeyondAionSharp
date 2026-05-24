@@ -170,6 +170,29 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 		Assert.Empty(registry.SentPackets);
 	}
 
+	[Theory]
+	[InlineData(2)]
+	[InlineData(3)]
+	[InlineData(6)]
+	public async Task HandlePlayerStatusInfoAsync_GroupFindMemberCommandsInvalidTargetThrowLikeJava(int commandCode)
+	{
+		var registry = new CapturingConnectionRegistry();
+		var groups = new PlayerGroupRuntime();
+		var leader = new Player { ObjectId = 1001, Name = "Leader", IsOnline = true };
+		var member = new Player { ObjectId = 1002, Name = "Member", IsOnline = true };
+		groups.CreateOrUpdateGroup(99001, [leader, member]);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, new PlayerAllianceRuntime(), groups);
+
+		var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+			pair.Connection.HandlePlayerStatusInfoAsync(
+				leader,
+				CreatePacket(commandCode: commandCode, selectedObjectId: 1999)));
+
+		Assert.Equal("Player [id=1001, name=Leader] tried to execute team command on non-existent member with ID 1999", exception.Message);
+		Assert.Equal([1001, 1002], groups.GetMemberObjectIds(99001));
+		Assert.Empty(registry.SentPackets);
+	}
+
 	[Fact]
 	public async Task HandlePlayerStatusInfoAsync_GroupSetLeaderChangesLeaderAndSendsGroupInfoThenMessages()
 	{
@@ -608,6 +631,31 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 			send => Assert.IsType<SmAllianceInfo>(send.Packet),
 			send => Assert.IsType<SmAllianceInfo>(send.Packet),
 			send => Assert.IsType<SmAllianceInfo>(send.Packet));
+	}
+
+	[Theory]
+	[InlineData(16)]
+	[InlineData(17)]
+	[InlineData(25)]
+	[InlineData(26)]
+	public async Task HandlePlayerStatusInfoAsync_AllianceFindMemberCommandsInvalidTargetThrowLikeJava(int commandCode)
+	{
+		var registry = new CapturingConnectionRegistry();
+		var alliances = new PlayerAllianceRuntime();
+		var leader = new Player { ObjectId = 1001, Name = "Leader", IsOnline = true };
+		var member = new Player { ObjectId = 1002, Name = "Member", IsOnline = true };
+		alliances.CreateAlliance(88001, leader);
+		alliances.AddMember(88001, member);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, alliances);
+
+		var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+			pair.Connection.HandlePlayerStatusInfoAsync(
+				leader,
+				CreatePacket(commandCode: commandCode, selectedObjectId: 1999)));
+
+		Assert.Equal("Player [id=1001, name=Leader] tried to execute team command on non-existent member with ID 1999", exception.Message);
+		Assert.Equal([1001, 1002], alliances.GetMemberObjectIds(88001));
+		Assert.Empty(registry.SentPackets);
 	}
 
 	[Fact]

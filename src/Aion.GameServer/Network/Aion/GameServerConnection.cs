@@ -5904,6 +5904,12 @@ public sealed class GameServerConnection : BaseClientConnection
 		return $"Player [id={player.ObjectId}, name={player.Name}]";
 	}
 
+	private static InvalidOperationException CreateInvalidTeamMemberException(Player player, int memberObjectId)
+	{
+		// Java parity: PlayerTeamCommandService.findMember requireNonNull message.
+		return new InvalidOperationException($"{FormatJavaPlayer(player)} tried to execute team command on non-existent member with ID {memberObjectId}");
+	}
+
 	private async Task SendAllianceReadyCheckAsync(
 		int recipientObjectId,
 		GameServerPacket packet,
@@ -5967,7 +5973,7 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		var newLeaderObjectId = targetObjectId == 0 ? player.ObjectId : targetObjectId;
 		if (!_playerGroupRuntime.HasMember(group.TeamId, newLeaderObjectId))
-			return null;
+			throw CreateInvalidTeamMemberException(player, newLeaderObjectId);
 
 		var plan = _playerGroupRuntime.ChangeLeader(group.TeamId, newLeaderObjectId);
 		if (plan == null)
@@ -6007,7 +6013,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		var leavedPlayerObjectId = targetObjectId == 0 ? player.ObjectId : targetObjectId;
 		var leavedMember = _playerGroupRuntime.GetMember(group.TeamId, leavedPlayerObjectId);
 		if (leavedMember == null)
-			return null;
+			throw CreateInvalidTeamMemberException(player, leavedPlayerObjectId);
 
 		var plan = _playerGroupRuntime.RemoveMemberWithLeavePlan(leavedMember.Player);
 		if (plan == null)
@@ -6044,7 +6050,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		var bannedPlayerObjectId = targetObjectId == 0 ? player.ObjectId : targetObjectId;
 		var bannedMember = _playerGroupRuntime.GetMember(group.TeamId, bannedPlayerObjectId);
 		if (bannedMember == null)
-			return null;
+			throw CreateInvalidTeamMemberException(player, bannedPlayerObjectId);
 
 		if (bannedPlayerObjectId == player.ObjectId)
 		{
@@ -6162,7 +6168,7 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		var eventPlayerObjectId = targetObjectId == 0 ? player.ObjectId : targetObjectId;
 		if (!_playerAllianceRuntime.HasMember(alliance.AllianceId, eventPlayerObjectId))
-			return null;
+			throw CreateInvalidTeamMemberException(player, eventPlayerObjectId);
 
 		var plan = _playerAllianceRuntime.AssignViceCaptain(alliance.AllianceId, eventPlayerObjectId, assignType);
 		if (plan == null)
@@ -6251,7 +6257,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		var bannedPlayerObjectId = targetObjectId == 0 ? player.ObjectId : targetObjectId;
 		var bannedMember = _playerAllianceRuntime.GetMember(alliance.AllianceId, bannedPlayerObjectId);
 		if (bannedMember == null)
-			return null;
+			throw CreateInvalidTeamMemberException(player, bannedPlayerObjectId);
 
 		if (bannedPlayerObjectId == player.ObjectId)
 		{
@@ -6312,7 +6318,7 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		var newLeaderObjectId = targetObjectId == 0 ? player.ObjectId : targetObjectId;
 		if (!_playerAllianceRuntime.HasMember(alliance.AllianceId, newLeaderObjectId))
-			return null;
+			throw CreateInvalidTeamMemberException(player, newLeaderObjectId);
 
 		var plan = _playerAllianceRuntime.ChangeLeader(
 			alliance.AllianceId,
