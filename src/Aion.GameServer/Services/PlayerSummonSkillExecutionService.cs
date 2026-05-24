@@ -4086,16 +4086,21 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 	PlayerSummonKnownObjectNpcSkillAttackCycleResultContractStatus Status,
 	PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocation? LiveInvocation = null,
 	IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect>? ExpectedSideEffects = null,
-	IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleOutcomeBranch>? OutcomeBranches = null)
+	IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleOutcomeBranch>? OutcomeBranches = null,
+	IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation>? LiveOperations = null)
 {
 	private static readonly IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect> EmptySideEffects = [];
 	private static readonly IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleOutcomeBranch> EmptyOutcomeBranches = [];
+	private static readonly IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation> EmptyLiveOperations = [];
 
 	public IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect> ExpectedJavaSideEffects =>
 		ExpectedSideEffects ?? EmptySideEffects;
 
 	public IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleOutcomeBranch> ExpectedJavaOutcomeBranches =>
 		OutcomeBranches ?? EmptyOutcomeBranches;
+
+	public IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation> FutureLiveAdapterOperations =>
+		LiveOperations ?? EmptyLiveOperations;
 
 	public bool IsLiveAiUnsupported => Status == PlayerSummonKnownObjectNpcSkillAttackCycleResultContractStatus.LiveAiNotWired;
 
@@ -4125,6 +4130,11 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 		return ExpectedJavaOutcomeBranches.Contains(branch);
 	}
 
+	public bool HasLiveOperation(PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation operation)
+	{
+		return FutureLiveAdapterOperations.Contains(operation);
+	}
+
 	public static PlayerSummonKnownObjectNpcSkillAttackCycleResultContract FromLiveInvocation(
 		PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocation? liveInvocation)
 	{
@@ -4143,11 +4153,14 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 				OutcomeBranches: [PlayerSummonKnownObjectNpcSkillAttackCycleOutcomeBranch.BlockedByInvocationReadiness]);
 		}
 
+		var sideEffects = BuildExpectedSideEffects(liveInvocation.CycleSnapshot);
+		var outcomeBranches = BuildExpectedOutcomeBranches(liveInvocation.CycleSnapshot);
 		return new PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 			PlayerSummonKnownObjectNpcSkillAttackCycleResultContractStatus.LiveAiNotWired,
 			liveInvocation,
-			BuildExpectedSideEffects(liveInvocation.CycleSnapshot),
-			BuildExpectedOutcomeBranches(liveInvocation.CycleSnapshot));
+			sideEffects,
+			outcomeBranches,
+			BuildFutureLiveOperations(outcomeBranches, sideEffects));
 	}
 
 	private static IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect> BuildExpectedSideEffects(
@@ -4272,6 +4285,70 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 		return branches;
 	}
 
+	private static IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation> BuildFutureLiveOperations(
+		IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleOutcomeBranch> outcomeBranches,
+		IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect> sideEffects)
+	{
+		if (outcomeBranches.Count == 0 && sideEffects.Count == 0)
+			return EmptyLiveOperations;
+
+		var operations = new List<PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation>();
+		foreach (var branch in outcomeBranches)
+		{
+			switch (branch)
+			{
+				case PlayerSummonKnownObjectNpcSkillAttackCycleOutcomeBranch.PreActionTargetTooFar:
+				case PlayerSummonKnownObjectNpcSkillAttackCycleOutcomeBranch.SkillActionTargetTooFar:
+					AddOnce(operations, PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.ControllerAbortCast);
+					AddOnce(operations, PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.NpcAiOnTargetTooFar);
+					break;
+				case PlayerSummonKnownObjectNpcSkillAttackCycleOutcomeBranch.CastSubStateEntered:
+					AddOnce(operations, PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.NpcAiSetCastSubState);
+					break;
+				case PlayerSummonKnownObjectNpcSkillAttackCycleOutcomeBranch.ScheduledSkillAction:
+					AddOnce(operations, PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.ThreadPoolScheduleSkillAction);
+					break;
+				case PlayerSummonKnownObjectNpcSkillAttackCycleOutcomeBranch.SchedulerCallbackPending:
+					AddOnce(operations, PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.ThreadPoolAwaitScheduledCallback);
+					break;
+				case PlayerSummonKnownObjectNpcSkillAttackCycleOutcomeBranch.ResumeFightAfterInterruptedCast:
+					AddOnce(operations, PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.NpcAiThink);
+					break;
+				case PlayerSummonKnownObjectNpcSkillAttackCycleOutcomeBranch.TargetGiveUp:
+					AddOnce(operations, PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.NpcAiSetNoneSubState);
+					AddOnce(operations, PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.NpcAiOnTargetGiveUp);
+					break;
+				case PlayerSummonKnownObjectNpcSkillAttackCycleOutcomeBranch.BlockedSkillAfterUse:
+					AddOnce(operations, PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.NpcAiSetNoneSubState);
+					AddOnce(operations, PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.NpcAiOnAttackComplete);
+					break;
+				case PlayerSummonKnownObjectNpcSkillAttackCycleOutcomeBranch.SuccessfulUseSkill:
+					AddOnce(operations, PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.CreatureControllerUseSkill);
+					break;
+				case PlayerSummonKnownObjectNpcSkillAttackCycleOutcomeBranch.UseSkillFailedAfterUse:
+					AddOnce(operations, PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.CreatureControllerUseSkill);
+					AddOnce(operations, PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.NpcAiSetNoneSubState);
+					AddOnce(operations, PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.NpcAiOnAttackComplete);
+					break;
+				case PlayerSummonKnownObjectNpcSkillAttackCycleOutcomeBranch.PostSpawnImmediate:
+					AddOnce(operations, PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.PostSpawnImmediate);
+					break;
+				case PlayerSummonKnownObjectNpcSkillAttackCycleOutcomeBranch.PostSpawnScheduled:
+					AddOnce(operations, PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.PostSpawnSchedule);
+					break;
+			}
+		}
+
+		if (sideEffects.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.OwnerTargetMutation))
+			AddOnce(operations, PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.OwnerSetTarget);
+		if (sideEffects.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.SkillEffectApplication))
+			AddOnce(operations, PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.SkillEffectApplication);
+		if (sideEffects.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.PacketFanout))
+			AddOnce(operations, PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.PacketFanout);
+
+		return operations;
+	}
+
 	private static void AddOnce(
 		List<PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect> sideEffects,
 		PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect sideEffect)
@@ -4286,6 +4363,14 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 	{
 		if (!branches.Contains(branch))
 			branches.Add(branch);
+	}
+
+	private static void AddOnce(
+		List<PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation> operations,
+		PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation operation)
+	{
+		if (!operations.Contains(operation))
+			operations.Add(operation);
 	}
 }
 
@@ -4333,6 +4418,25 @@ public enum PlayerSummonKnownObjectNpcSkillAttackCycleOutcomeBranch
 	UseSkillFailedAfterUse,
 	PostSpawnImmediate,
 	PostSpawnScheduled,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation
+{
+	NpcAiSetCastSubState,
+	NpcAiSetNoneSubState,
+	NpcAiThink,
+	NpcAiOnTargetTooFar,
+	NpcAiOnTargetGiveUp,
+	NpcAiOnAttackComplete,
+	ThreadPoolScheduleSkillAction,
+	ThreadPoolAwaitScheduledCallback,
+	ControllerAbortCast,
+	CreatureControllerUseSkill,
+	OwnerSetTarget,
+	SkillEffectApplication,
+	PostSpawnImmediate,
+	PostSpawnSchedule,
+	PacketFanout,
 }
 
 public sealed record PlayerSummonKnownObjectNpcSkillActionWorkflowPreview(
