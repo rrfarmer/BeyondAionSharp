@@ -29,29 +29,41 @@ public class PlayerSummonSkillExecutionServiceTests
 			knownObject,
 			requiresCreatureTargetCheck: false,
 			hasCreatureTarget: false);
+		var noneTarget = service.EvaluateMercenaryTargetRange(
+			knownObject,
+			PlayerSummonKnownObjectSkillTargetMode.None,
+			hasCreatureTarget: false);
+		var mostHatedTarget = service.EvaluateMercenaryTargetRange(
+			knownObject,
+			PlayerSummonKnownObjectSkillTargetMode.MostHated,
+			hasCreatureTarget: false);
+		var selfTarget = service.EvaluateMercenaryTargetRange(
+			knownObject,
+			PlayerSummonKnownObjectSkillTargetMode.Self,
+			hasCreatureTarget: false);
 		var areaSkillReady = service.EvaluateMercenaryTargetRange(
 			knownObject,
-			requiresCreatureTargetCheck: true,
+			PlayerSummonKnownObjectSkillTargetMode.CreatureTarget,
 			hasCreatureTarget: true,
 			isAreaTarget: true,
 			isInRange: false);
 		var missingCreatureTarget = service.EvaluateMercenaryTargetRange(
 			knownObject,
-			requiresCreatureTargetCheck: true,
+			PlayerSummonKnownObjectSkillTargetMode.CreatureTarget,
 			hasCreatureTarget: false);
 		var deadTarget = service.EvaluateMercenaryTargetRange(
 			knownObject,
-			requiresCreatureTargetCheck: true,
+			PlayerSummonKnownObjectSkillTargetMode.CreatureTarget,
 			hasCreatureTarget: true,
 			targetIsDead: true);
 		var unseenTarget = service.EvaluateMercenaryTargetRange(
 			knownObject,
-			requiresCreatureTargetCheck: true,
+			PlayerSummonKnownObjectSkillTargetMode.CreatureTarget,
 			hasCreatureTarget: true,
 			canSeeTarget: false);
 		var outOfRange = service.EvaluateMercenaryTargetRange(
 			knownObject,
-			requiresCreatureTargetCheck: true,
+			PlayerSummonKnownObjectSkillTargetMode.CreatureTarget,
 			hasCreatureTarget: true,
 			isInRange: false);
 
@@ -62,6 +74,9 @@ public class PlayerSummonSkillExecutionServiceTests
 
 		Assert.Equal(PlayerSummonKnownObjectTargetRangeReadinessStatus.NotRequired, notRequired.Status);
 		Assert.False(notRequired.ShouldSetNextSkillDelay);
+		Assert.Equal(PlayerSummonKnownObjectTargetRangeReadinessStatus.NotRequired, noneTarget.Status);
+		Assert.Equal(PlayerSummonKnownObjectTargetRangeReadinessStatus.NotRequired, mostHatedTarget.Status);
+		Assert.Equal(PlayerSummonKnownObjectTargetRangeReadinessStatus.NotRequired, selfTarget.Status);
 		Assert.Equal(PlayerSummonKnownObjectTargetRangeReadinessStatus.Ready, areaSkillReady.Status);
 		Assert.False(areaSkillReady.ShouldSetNextSkillDelay);
 		Assert.Equal(PlayerSummonKnownObjectTargetRangeReadinessStatus.MissingCreatureTarget, missingCreatureTarget.Status);

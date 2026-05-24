@@ -164,7 +164,28 @@ public sealed class PlayerSummonSkillExecutionService
 		bool isAreaTarget = false,
 		bool isInRange = true)
 	{
-		if (!requiresCreatureTargetCheck)
+		return EvaluateMercenaryTargetRange(
+			knownObject,
+			requiresCreatureTargetCheck
+				? PlayerSummonKnownObjectSkillTargetMode.CreatureTarget
+				: PlayerSummonKnownObjectSkillTargetMode.SkipRangeCheck,
+			hasCreatureTarget,
+			targetIsDead,
+			canSeeTarget,
+			isAreaTarget,
+			isInRange);
+	}
+
+	public PlayerSummonKnownObjectTargetRangeReadiness EvaluateMercenaryTargetRange(
+		PlayerSummonKnownObject knownObject,
+		PlayerSummonKnownObjectSkillTargetMode targetMode,
+		bool hasCreatureTarget,
+		bool targetIsDead = false,
+		bool canSeeTarget = true,
+		bool isAreaTarget = false,
+		bool isInRange = true)
+	{
+		if (targetMode != PlayerSummonKnownObjectSkillTargetMode.CreatureTarget)
 			return PlayerSummonKnownObjectTargetRangeReadiness.NotRequired(knownObject);
 
 		if (!hasCreatureTarget)
@@ -923,6 +944,17 @@ public enum PlayerSummonKnownObjectTargetRangeReadinessStatus
 	CannotSeeTarget,
 	TargetOutOfRange,
 	Ready,
+}
+
+public enum PlayerSummonKnownObjectSkillTargetMode
+{
+	// Java parity: SkillAttackManager.targetTooFar skips explicit range checks for firstTarget ME
+	// and NPC skill targets NONE, MOST_HATED, or ME.
+	SkipRangeCheck,
+	None,
+	MostHated,
+	Self,
+	CreatureTarget,
 }
 
 public sealed record PlayerSummonKnownObjectTargetRangeDelayResult(
