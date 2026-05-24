@@ -1043,6 +1043,32 @@ public sealed class PlayerSummonSkillExecutionService
 			spawnTemplate.Heading.Value);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillPostSpawnCallbackPreview PreviewMercenaryNpcSkillPostSpawnCallbacks(
+		PlayerSummonKnownObjectNpcSkillWorldInsertionPreview? worldInsertionPreview,
+		bool spawnedObjectReturned,
+		bool spawnedObjectHasSpawn = true,
+		bool spawnIsTemporary = false,
+		bool spawnedObjectIsSpawned = true)
+	{
+		if (worldInsertionPreview == null)
+			return PlayerSummonKnownObjectNpcSkillPostSpawnCallbackPreview.MissingWorldInsertion();
+
+		if (!worldInsertionPreview.WouldSpawn)
+			return PlayerSummonKnownObjectNpcSkillPostSpawnCallbackPreview.NotReady(worldInsertionPreview);
+
+		if (!spawnedObjectReturned)
+			return PlayerSummonKnownObjectNpcSkillPostSpawnCallbackPreview.NoSpawnedObject(worldInsertionPreview);
+
+		// Java parity: SpawnEngine.spawnObject post-processing only runs for non-null visObj.
+		return PlayerSummonKnownObjectNpcSkillPostSpawnCallbackPreview.Callbacks(
+			worldInsertionPreview,
+			shouldRegisterTemporarySpawn: spawnedObjectHasSpawn && spawnIsTemporary,
+			shouldInvokeInstanceOnSpawn: spawnedObjectIsSpawned,
+			spawnedObjectHasSpawn,
+			spawnIsTemporary,
+			spawnedObjectIsSpawned);
+	}
+
 	private static PlayerSummonKnownObjectNpcSkillSelectionResult SelectSingleMercenaryNpcSkillCandidate(
 		PlayerSummonKnownObjectNpcSkillCandidate candidate,
 		PlayerSummonKnownObjectNpcSkillSelectionSource source)
@@ -2563,6 +2589,70 @@ public enum PlayerSummonKnownObjectNpcSkillWorldInsertionPreviewStatus
 	InvalidRegion,
 	AlreadySpawned,
 	WouldInsert,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillPostSpawnCallbackPreview(
+	PlayerSummonKnownObjectNpcSkillPostSpawnCallbackPreviewStatus Status,
+	PlayerSummonKnownObjectNpcSkillWorldInsertionPreview? WorldInsertionPreview = null,
+	bool SpawnedObjectHasSpawn = false,
+	bool SpawnIsTemporary = false,
+	bool SpawnedObjectIsSpawned = false,
+	bool ShouldRegisterTemporarySpawn = false,
+	bool ShouldInvokeInstanceOnSpawn = false)
+{
+	public bool HasSpawnedObject => Status == PlayerSummonKnownObjectNpcSkillPostSpawnCallbackPreviewStatus.Callbacks;
+	public bool RequiresTemporarySpawnCheck => HasSpawnedObject;
+	public bool RequiresInstanceOnSpawnCheck => HasSpawnedObject;
+	public bool RequiresWorldMapInstance => ShouldInvokeInstanceOnSpawn;
+	public bool RequiresInstanceHandler => ShouldInvokeInstanceOnSpawn;
+
+	public static PlayerSummonKnownObjectNpcSkillPostSpawnCallbackPreview MissingWorldInsertion()
+	{
+		return new PlayerSummonKnownObjectNpcSkillPostSpawnCallbackPreview(
+			PlayerSummonKnownObjectNpcSkillPostSpawnCallbackPreviewStatus.MissingWorldInsertion);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillPostSpawnCallbackPreview NotReady(
+		PlayerSummonKnownObjectNpcSkillWorldInsertionPreview worldInsertionPreview)
+	{
+		return new PlayerSummonKnownObjectNpcSkillPostSpawnCallbackPreview(
+			PlayerSummonKnownObjectNpcSkillPostSpawnCallbackPreviewStatus.NotReady,
+			worldInsertionPreview);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillPostSpawnCallbackPreview NoSpawnedObject(
+		PlayerSummonKnownObjectNpcSkillWorldInsertionPreview worldInsertionPreview)
+	{
+		return new PlayerSummonKnownObjectNpcSkillPostSpawnCallbackPreview(
+			PlayerSummonKnownObjectNpcSkillPostSpawnCallbackPreviewStatus.NoSpawnedObject,
+			worldInsertionPreview);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillPostSpawnCallbackPreview Callbacks(
+		PlayerSummonKnownObjectNpcSkillWorldInsertionPreview worldInsertionPreview,
+		bool shouldRegisterTemporarySpawn,
+		bool shouldInvokeInstanceOnSpawn,
+		bool spawnedObjectHasSpawn,
+		bool spawnIsTemporary,
+		bool spawnedObjectIsSpawned)
+	{
+		return new PlayerSummonKnownObjectNpcSkillPostSpawnCallbackPreview(
+			PlayerSummonKnownObjectNpcSkillPostSpawnCallbackPreviewStatus.Callbacks,
+			worldInsertionPreview,
+			spawnedObjectHasSpawn,
+			spawnIsTemporary,
+			spawnedObjectIsSpawned,
+			shouldRegisterTemporarySpawn,
+			shouldInvokeInstanceOnSpawn);
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillPostSpawnCallbackPreviewStatus
+{
+	MissingWorldInsertion,
+	NotReady,
+	NoSpawnedObject,
+	Callbacks,
 }
 
 public sealed record PlayerSummonKnownObjectNpcSkillCandidateMetadata(

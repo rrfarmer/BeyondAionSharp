@@ -601,6 +601,92 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void PreviewMercenaryNpcSkillPostSpawnCallbacks_ProjectsJavaSpawnObjectPostProcessing()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+
+		PlayerSummonKnownObjectNpcSkillWorldInsertionPreview WorldInsertion(bool walkerBroughtIntoWorld = false)
+		{
+			var origin = new PlayerSummonKnownObjectNpcSkillSpawnOrigin(
+				WorldId: 210010000,
+				InstanceId: 12,
+				X: 100.5f,
+				Y: 200.25f,
+				Z: 35.75f,
+				Heading: 90,
+				CreatorObjectId: 8001);
+			var spawn = new PlayerSummonKnownObjectNpcSkillSpawnMetadata(
+				NpcId: 212362,
+				MinDistance: 0,
+				MaxDistance: 0,
+				MinCount: 1,
+				MaxCount: 0);
+			var postSpawn = service.PreviewMercenaryNpcSkillPostSpawn(
+				service.ProjectMercenaryNpcSkillTemplate(new PlayerSummonKnownObjectNpcSkillTemplateMetadata(SpawnTemplate: spawn)));
+			var execution = service.PreviewMercenaryNpcSkillPostSpawnExecution(postSpawn, origin);
+			var location = service.PreviewMercenaryNpcSkillPostSpawnLocation(execution);
+			var template = service.PreviewMercenaryNpcSkillSpawnTemplate(location);
+			var dispatch = service.PreviewMercenaryNpcSkillSpawnObjectDispatch(template);
+			var creation = service.PreviewMercenaryNpcSkillOrdinaryNpcCreation(
+				dispatch,
+				npcTemplateExists: true,
+				walkerFormatorBroughtIntoWorld: walkerBroughtIntoWorld);
+			return service.PreviewMercenaryNpcSkillBringIntoWorld(creation);
+		}
+
+		var worldInsertion = WorldInsertion();
+		var missing = service.PreviewMercenaryNpcSkillPostSpawnCallbacks(null, spawnedObjectReturned: true);
+		var notReady = service.PreviewMercenaryNpcSkillPostSpawnCallbacks(
+			WorldInsertion(walkerBroughtIntoWorld: true),
+			spawnedObjectReturned: true);
+		var noObject = service.PreviewMercenaryNpcSkillPostSpawnCallbacks(worldInsertion, spawnedObjectReturned: false);
+		var ordinary = service.PreviewMercenaryNpcSkillPostSpawnCallbacks(worldInsertion, spawnedObjectReturned: true);
+		var temporary = service.PreviewMercenaryNpcSkillPostSpawnCallbacks(
+			worldInsertion,
+			spawnedObjectReturned: true,
+			spawnedObjectHasSpawn: true,
+			spawnIsTemporary: true,
+			spawnedObjectIsSpawned: true);
+		var delayedWalker = service.PreviewMercenaryNpcSkillPostSpawnCallbacks(
+			worldInsertion,
+			spawnedObjectReturned: true,
+			spawnedObjectHasSpawn: true,
+			spawnIsTemporary: true,
+			spawnedObjectIsSpawned: false);
+		var noSpawnTemplate = service.PreviewMercenaryNpcSkillPostSpawnCallbacks(
+			worldInsertion,
+			spawnedObjectReturned: true,
+			spawnedObjectHasSpawn: false,
+			spawnIsTemporary: true,
+			spawnedObjectIsSpawned: true);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillPostSpawnCallbackPreviewStatus.MissingWorldInsertion, missing.Status);
+		Assert.False(missing.HasSpawnedObject);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillPostSpawnCallbackPreviewStatus.NotReady, notReady.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillPostSpawnCallbackPreviewStatus.NoSpawnedObject, noObject.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillPostSpawnCallbackPreviewStatus.Callbacks, ordinary.Status);
+		Assert.True(ordinary.HasSpawnedObject);
+		Assert.True(ordinary.RequiresTemporarySpawnCheck);
+		Assert.True(ordinary.RequiresInstanceOnSpawnCheck);
+		Assert.False(ordinary.ShouldRegisterTemporarySpawn);
+		Assert.True(ordinary.ShouldInvokeInstanceOnSpawn);
+		Assert.True(ordinary.RequiresWorldMapInstance);
+		Assert.True(ordinary.RequiresInstanceHandler);
+
+		Assert.True(temporary.ShouldRegisterTemporarySpawn);
+		Assert.True(temporary.ShouldInvokeInstanceOnSpawn);
+		Assert.True(temporary.SpawnedObjectHasSpawn);
+		Assert.True(temporary.SpawnIsTemporary);
+		Assert.True(temporary.SpawnedObjectIsSpawned);
+		Assert.True(delayedWalker.ShouldRegisterTemporarySpawn);
+		Assert.False(delayedWalker.ShouldInvokeInstanceOnSpawn);
+		Assert.False(delayedWalker.RequiresWorldMapInstance);
+		Assert.False(delayedWalker.RequiresInstanceHandler);
+		Assert.False(noSpawnTemplate.ShouldRegisterTemporarySpawn);
+		Assert.True(noSpawnTemplate.ShouldInvokeInstanceOnSpawn);
+	}
+
+	[Fact]
 	public void ProjectMercenaryNpcSkillCandidate_AdaptsStaticTemplateEntryIntoSelectableCandidate()
 	{
 		var service = new PlayerSummonSkillExecutionService();
