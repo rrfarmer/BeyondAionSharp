@@ -1476,6 +1476,7 @@ public class PlayerSummonSkillExecutionServiceTests
 		var blockedReadiness = service.ProjectMercenaryNpcSkillAttackCycleOperationReadiness(blocked);
 		var operationReadiness = service.ProjectMercenaryNpcSkillAttackCycleOperationReadiness(contract);
 		var missingSummary = service.ProjectMercenaryNpcSkillAttackCycleAdapterSummary((PlayerSummonKnownObjectNpcSkillAttackCycleSnapshot?)null);
+		var missingKnownObjectSummary = service.ProjectMercenaryNpcSkillAttackCycleAdapterSummary(new Player { ObjectId = 2 }, mercenaryObjectId: 9999);
 		var blockedSummary = service.ProjectMercenaryNpcSkillAttackCycleAdapterSummary(service.ProjectMercenaryNpcSkillAttackCycle(knownObject));
 		var summary = service.ProjectMercenaryNpcSkillAttackCycleAdapterSummary(readyCycle);
 
@@ -1548,8 +1549,19 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.PacketFanout, operationReadiness.DependencyReadiness[3].Operations);
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillAttackCycleAdapterSummaryStatus.MissingCycle, missingSummary.Status);
 		Assert.False(missingSummary.WouldExecuteLiveAdapter);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillAttackCycleAdapterSummaryStatus.MissingKnownObject, missingKnownObjectSummary.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillAttackCycleReadinessStatus.MissingKnownObject, missingKnownObjectSummary.Readiness.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocationStatus.MissingKnownObject, missingKnownObjectSummary.LiveInvocation.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillAttackCycleResultContractStatus.BlockedByInvocationReadiness, missingKnownObjectSummary.ResultContract.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillAttackCycleOperationReadinessStatus.BlockedByResultContract, missingKnownObjectSummary.OperationReadiness.Status);
+		Assert.False(missingKnownObjectSummary.WouldExecuteLiveAdapter);
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillAttackCycleAdapterSummaryStatus.MissingRequiredMetadata, blockedSummary.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillAttackCycleReadinessStatus.MissingRequiredMetadata, blockedSummary.Readiness.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocationStatus.MissingRequiredMetadata, blockedSummary.LiveInvocation.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillAttackCycleResultContractStatus.BlockedByInvocationReadiness, blockedSummary.ResultContract.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillAttackCycleOperationReadinessStatus.BlockedByResultContract, blockedSummary.OperationReadiness.Status);
 		Assert.False(blockedSummary.IsReadyForFutureLiveAdapter);
+		Assert.False(blockedSummary.WouldExecuteLiveAdapter);
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillAttackCycleAdapterSummaryStatus.LiveAiNotWired, summary.Status);
 		Assert.True(summary.IsReadyForFutureLiveAdapter);
 		Assert.True(summary.HasUnsupportedDependencies);
