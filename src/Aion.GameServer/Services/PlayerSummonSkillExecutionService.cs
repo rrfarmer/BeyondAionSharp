@@ -38,28 +38,31 @@ public sealed class PlayerSummonSkillExecutionService
 	public PlayerMercenarySkillExecutionResult ValidateMercenaryExecution(
 		Player player,
 		CmSummonCastSpell packet,
-		PetSkillTable petSkills)
+		PetSkillTable petSkills,
+		PlayerSummonCastSpellTarget? resolvedTarget = null)
 	{
 		// Java parity: CM_SUMMON_CASTSPELL mercenary branch checks petHasSkill before controller.useSkill(skillId, skillLvl).
 		if (player.GetSummonOrMercenaryKind(packet.SummonObjectId) != PlayerSummonOrMercenaryKind.Mercenary)
-			return PlayerMercenarySkillExecutionResult.MissingMercenary(packet.SkillId, packet.SkillLevel, packet.TargetObjectId);
+			return PlayerMercenarySkillExecutionResult.MissingMercenary(packet.SkillId, packet.SkillLevel, packet.TargetObjectId, resolvedTarget);
 
 		var mercenaryNpcId = player.GetSummonOrMercenaryNpcId(packet.SummonObjectId);
 		if (mercenaryNpcId == 0)
-			return PlayerMercenarySkillExecutionResult.MissingMercenary(packet.SkillId, packet.SkillLevel, packet.TargetObjectId);
+			return PlayerMercenarySkillExecutionResult.MissingMercenary(packet.SkillId, packet.SkillLevel, packet.TargetObjectId, resolvedTarget);
 
 		if (!petSkills.PetHasSkill(mercenaryNpcId, packet.SkillId))
 			return PlayerMercenarySkillExecutionResult.InvalidMercenarySkill(
 				mercenaryNpcId,
 				packet.SkillId,
 				packet.SkillLevel,
-				packet.TargetObjectId);
+				packet.TargetObjectId,
+				resolvedTarget);
 
 		return PlayerMercenarySkillExecutionResult.WouldInvokeController(
 			mercenaryNpcId,
 			packet.SkillId,
 			packet.SkillLevel,
-			packet.TargetObjectId);
+			packet.TargetObjectId,
+			resolvedTarget);
 	}
 }
 
@@ -115,26 +118,33 @@ public sealed record PlayerMercenarySkillExecutionResult(
 	int SkillId,
 	int SkillLevel,
 	int TargetObjectId,
+	PlayerSummonCastSpellTarget? ResolvedTarget = null,
 	IReadOnlyList<PlayerMercenarySkillExecutionAction>? PlannedActions = null,
 	PlayerMercenarySkillExecutionAudit? Audit = null)
 {
 	public IReadOnlyList<PlayerMercenarySkillExecutionAction> Actions => PlannedActions ?? Array.Empty<PlayerMercenarySkillExecutionAction>();
 
-	public static PlayerMercenarySkillExecutionResult MissingMercenary(int skillId, int skillLevel, int targetObjectId)
+	public static PlayerMercenarySkillExecutionResult MissingMercenary(
+		int skillId,
+		int skillLevel,
+		int targetObjectId,
+		PlayerSummonCastSpellTarget? resolvedTarget)
 	{
 		return new PlayerMercenarySkillExecutionResult(
 			PlayerMercenarySkillExecutionStatus.MissingMercenary,
 			0,
 			skillId,
 			skillLevel,
-			targetObjectId);
+			targetObjectId,
+			resolvedTarget);
 	}
 
 	public static PlayerMercenarySkillExecutionResult InvalidMercenarySkill(
 		int mercenaryNpcId,
 		int skillId,
 		int skillLevel,
-		int targetObjectId)
+		int targetObjectId,
+		PlayerSummonCastSpellTarget? resolvedTarget)
 	{
 		var audit = new PlayerMercenarySkillExecutionAudit(PlayerMercenarySkillExecutionAuditKind.InvalidMercenarySkill, skillId);
 		return new PlayerMercenarySkillExecutionResult(
@@ -143,6 +153,7 @@ public sealed record PlayerMercenarySkillExecutionResult(
 			skillId,
 			skillLevel,
 			targetObjectId,
+			resolvedTarget,
 			Audit: audit);
 	}
 
@@ -150,7 +161,8 @@ public sealed record PlayerMercenarySkillExecutionResult(
 		int mercenaryNpcId,
 		int skillId,
 		int skillLevel,
-		int targetObjectId)
+		int targetObjectId,
+		PlayerSummonCastSpellTarget? resolvedTarget)
 	{
 		return new PlayerMercenarySkillExecutionResult(
 			PlayerMercenarySkillExecutionStatus.WouldInvokeController,
@@ -158,6 +170,7 @@ public sealed record PlayerMercenarySkillExecutionResult(
 			skillId,
 			skillLevel,
 			targetObjectId,
+			resolvedTarget,
 			[
 				PlayerMercenarySkillExecutionAction.SetTarget,
 				PlayerMercenarySkillExecutionAction.UseSkill,

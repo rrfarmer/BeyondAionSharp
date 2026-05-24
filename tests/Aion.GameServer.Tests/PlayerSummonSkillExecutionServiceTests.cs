@@ -105,13 +105,17 @@ public class PlayerSummonSkillExecutionServiceTests
 		var valid = service.ValidateMercenaryExecution(
 			player,
 			CreateSummonCastSpell(summonObjectId: 8002, skillId: 22107, skillLevel: 1, targetObjectId: 8002),
-			dataManager.StaticData.PetSkills);
+			dataManager.StaticData.PetSkills,
+			new PlayerSummonCastSpellTarget(8002, PlayerSummonKnownObjectKind.Creature, IsActorSelfTarget: true));
 		var invalid = service.ValidateMercenaryExecution(
 			player,
 			CreateSummonCastSpell(summonObjectId: 8002, skillId: 9999, skillLevel: 1, targetObjectId: 8002),
-			dataManager.StaticData.PetSkills);
+			dataManager.StaticData.PetSkills,
+			new PlayerSummonCastSpellTarget(8002, PlayerSummonKnownObjectKind.Creature, IsActorSelfTarget: true));
 
 		Assert.Equal(PlayerMercenarySkillExecutionStatus.WouldInvokeController, valid.Status);
+		Assert.Equal(8002, valid.ResolvedTarget?.ObjectId);
+		Assert.True(valid.ResolvedTarget?.IsActorSelfTarget);
 		Assert.Equal(
 			[
 				PlayerMercenarySkillExecutionAction.SetTarget,
@@ -119,6 +123,7 @@ public class PlayerSummonSkillExecutionServiceTests
 			],
 			valid.Actions);
 		Assert.Equal(PlayerMercenarySkillExecutionStatus.InvalidMercenarySkill, invalid.Status);
+		Assert.Equal(8002, invalid.ResolvedTarget?.ObjectId);
 		var audit = Assert.IsType<PlayerMercenarySkillExecutionAudit>(invalid.Audit);
 		Assert.Equal(PlayerMercenarySkillExecutionAuditKind.InvalidMercenarySkill, audit.Kind);
 		Assert.Empty(invalid.Actions);

@@ -1289,7 +1289,11 @@ public sealed class GameServerConnection : BaseClientConnection
 			if (mercenaryPetSkills == null)
 				return new PlayerSummonCastSpellConnectionResult(castResult, ExecutionResult: null);
 
-			var mercenaryExecutionResult = _summonSkillExecutionService.ValidateMercenaryExecution(player, packet, mercenaryPetSkills);
+			var mercenaryExecutionResult = _summonSkillExecutionService.ValidateMercenaryExecution(
+				player,
+				packet,
+				mercenaryPetSkills,
+				castResult.ResolvedTarget);
 			return new PlayerSummonCastSpellConnectionResult(
 				castResult,
 				ExecutionResult: null,
