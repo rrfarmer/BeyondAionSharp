@@ -1027,6 +1027,10 @@ public class PlayerSummonSkillExecutionServiceTests
 			canEnterCastSubState: true,
 			delayMilliseconds: 125,
 			actionWorkflowPreview);
+		var performAttackExecutionPreview = service.PreviewMercenaryNpcSkillPerformAttackExecution(
+			performAttackPreview,
+			performAttackTimeMilliseconds: 12_000,
+			currentTimeMilliseconds: 12_125);
 
 		var missing = service.CaptureMercenaryNpcSkillPreview(
 			player,
@@ -1036,7 +1040,8 @@ public class PlayerSummonSkillExecutionServiceTests
 			actionPreview,
 			postSpawnPreview,
 			actionWorkflowPreview,
-			performAttackPreview);
+			performAttackPreview,
+			performAttackExecutionPreview);
 		var captured = service.CaptureMercenaryNpcSkillPreview(
 			player,
 			mercenaryObjectId: 8010,
@@ -1045,7 +1050,8 @@ public class PlayerSummonSkillExecutionServiceTests
 			actionPreview,
 			postSpawnPreview,
 			actionWorkflowPreview,
-			performAttackPreview);
+			performAttackPreview,
+			performAttackExecutionPreview);
 
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillPreviewCaptureStatus.MissingKnownObject, missing.Status);
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillPreviewCaptureStatus.Captured, captured.Status);
@@ -1056,6 +1062,7 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Same(postSpawnPreview, storedKnownObject.LastNpcSkillPostSpawnPreview);
 		Assert.Same(actionWorkflowPreview, storedKnownObject.LastNpcSkillActionWorkflowPreview);
 		Assert.Same(performAttackPreview, storedKnownObject.LastNpcSkillPerformAttackPreview);
+		Assert.Same(performAttackExecutionPreview, storedKnownObject.LastNpcSkillPerformAttackExecutionPreview);
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionStatus.Ready, storedKnownObject.LastNpcSkillSelectionPreview?.Selection.Status);
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionPreviewStatus.WouldUseSkill, storedKnownObject.LastNpcSkillActionPreview?.Status);
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillPostSpawnPreviewStatus.DelayedSpawn, storedKnownObject.LastNpcSkillPostSpawnPreview?.Status);
@@ -1064,6 +1071,8 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillPerformAttackPreviewStatus.ScheduledSkillAction, storedKnownObject.LastNpcSkillPerformAttackPreview?.Status);
 		Assert.Equal(125, storedKnownObject.LastNpcSkillPerformAttackPreview?.DelayMilliseconds);
 		Assert.Same(actionWorkflowPreview, storedKnownObject.LastNpcSkillPerformAttackPreview?.ActionWorkflowPreview);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreviewStatus.ScheduledWorkflowDue, storedKnownObject.LastNpcSkillPerformAttackExecutionPreview?.Status);
+		Assert.Equal(12_125, storedKnownObject.LastNpcSkillPerformAttackExecutionPreview?.ScheduledDueTimeMilliseconds);
 	}
 
 	[Fact]

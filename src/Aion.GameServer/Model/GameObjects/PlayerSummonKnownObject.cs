@@ -17,6 +17,7 @@ public sealed record PlayerSummonKnownObject(
 	PlayerSummonKnownObjectNpcSkillPostSpawnPreview? LastNpcSkillPostSpawnPreview = null,
 	PlayerSummonKnownObjectNpcSkillActionWorkflowPreview? LastNpcSkillActionWorkflowPreview = null,
 	PlayerSummonKnownObjectNpcSkillPerformAttackPreview? LastNpcSkillPerformAttackPreview = null,
+	PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreview? LastNpcSkillPerformAttackExecutionPreview = null,
 	PlayerAbnormalState AbnormalState = PlayerAbnormalState.None,
 	bool IsTransformed = false,
 	bool TransformBansSkillUse = false,
