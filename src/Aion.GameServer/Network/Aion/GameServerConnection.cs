@@ -5857,6 +5857,16 @@ public sealed class GameServerConnection : BaseClientConnection
 			throw new InvalidOperationException("League should not be null");
 		}
 
+		if (packet.CommandCode == 31)
+		{
+			// Java parity: CM_PLAYER_STATUS_INFO handles LEAGUE_ALLIANCE_MOVE directly through LeagueService.moveAlliance, outside PlayerTeamCommandService.
+			var leagueMoveAlliance = _playerAllianceRuntime.Resolve(player);
+			if (leagueMoveAlliance == null)
+				throw new InvalidOperationException("Player alliance should not be null");
+
+			throw new InvalidOperationException("League should not be null");
+		}
+
 		if (packet.CommandCode is 30 or 32)
 		{
 			// Java parity: PlayerTeamCommandService LEAGUE_EXPEL/LEAGUE_SET_LEADER -> findLeagueAlliance requires an active league before resolving the target alliance.

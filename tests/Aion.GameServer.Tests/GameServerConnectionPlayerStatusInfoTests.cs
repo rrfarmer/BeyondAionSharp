@@ -46,10 +46,23 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 
 		Assert.Null(await pair.Connection.HandlePlayerStatusInfoAsync(
 			player,
-			CreatePacket(commandCode: 31, selectedObjectId: 1002)));
-		Assert.Null(await pair.Connection.HandlePlayerStatusInfoAsync(
-			player,
 			CreatePacket(PlayerAllianceReadyCheckCommand.Start, selectedObjectId: 1002)));
+		Assert.Empty(registry.SentPackets);
+	}
+
+	[Fact]
+	public async Task HandlePlayerStatusInfoAsync_LeagueAllianceMoveWithoutAllianceThrowsLikeJavaDirectPath()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var player = new Player { ObjectId = 1001, Name = "Solo" };
+		await using var pair = await TestConnectionPair.CreateAsync(registry, new PlayerAllianceRuntime());
+
+		var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+			pair.Connection.HandlePlayerStatusInfoAsync(
+				player,
+				CreatePacket(commandCode: 31, selectedObjectId: 88001, allianceGroupId: 88002)));
+
+		Assert.Equal("Player alliance should not be null", exception.Message);
 		Assert.Empty(registry.SentPackets);
 	}
 
@@ -133,7 +146,7 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 	}
 
 	[Fact]
-	public async Task HandlePlayerStatusInfoAsync_LeagueAllianceMoveIsRecognizedButUndispatchedLikeJava()
+	public async Task HandlePlayerStatusInfoAsync_LeagueAllianceMoveWithoutLeagueThrowsLikeJavaDirectPath()
 	{
 		var registry = new CapturingConnectionRegistry();
 		var alliances = new PlayerAllianceRuntime();
@@ -143,10 +156,12 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 		alliances.AddMember(88001, member);
 		await using var pair = await TestConnectionPair.CreateAsync(registry, alliances);
 
-		Assert.Null(await pair.Connection.HandlePlayerStatusInfoAsync(
-			leader,
-			CreatePacket(commandCode: 31, selectedObjectId: 88001, secondObjectId: 88002)));
+		var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+			pair.Connection.HandlePlayerStatusInfoAsync(
+				leader,
+				CreatePacket(commandCode: 31, selectedObjectId: 88001, allianceGroupId: 88002)));
 
+		Assert.Equal("League should not be null", exception.Message);
 		Assert.Equal([1001, 1002], alliances.GetMemberObjectIds(88001));
 		Assert.Empty(registry.SentPackets);
 	}
