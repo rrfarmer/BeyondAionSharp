@@ -206,6 +206,7 @@ public sealed class StorageExpansionNpcServiceTests
 		Assert.True(result.Handled);
 		Assert.Equal(StorageExpansionResponseStatus.Accepted, result.Status);
 		Assert.Equal(1, player.WarehouseNpcExpands);
+		Assert.Equal(32, InventoryCapacity.GetWarehouseLimit(player));
 		Assert.Equal(8800, player.InventoryItems.Single(item => item.ItemId == 182400001).Count);
 		Assert.Equal(SmInventoryUpdateItem.DecreaseKinahBuy, ReadInventoryUpdateType(result.Packets.OfType<SmInventoryUpdateItem>().Single()));
 		Assert.Contains(result.Packets, packet => packet is SmSystemMessage);

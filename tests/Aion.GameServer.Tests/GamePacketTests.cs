@@ -5085,6 +5085,33 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void InventoryCapacity_MatchesJavaRegularWarehouseLimitAndIgnoresKinahRows()
+	{
+		var player = new Player
+		{
+			WarehouseNpcExpands = 1,
+			WarehouseBonusExpands = 2,
+			WarehouseItems = Enumerable.Range(1, 47)
+				.Select(id => new InventoryItem { ObjectId = id, ItemId = 100000000 + id, Location = 1 })
+				.Concat(
+				[
+					new InventoryItem { ObjectId = 1000, ItemId = 182400001, Location = 1 },
+					new InventoryItem { ObjectId = 1001, ItemId = 100000099, Location = 0 },
+				])
+				.ToArray(),
+		};
+
+		Assert.Equal(48, InventoryCapacity.GetWarehouseLimit(player));
+		Assert.Equal(47, InventoryCapacity.GetUsedWarehouseSlots(player));
+		Assert.Equal(1, InventoryCapacity.GetFreeWarehouseSlots(player));
+
+		player.WarehouseItems = player.WarehouseItems
+			.Concat([new InventoryItem { ObjectId = 1002, ItemId = 100000100, Location = 1 }])
+			.ToArray();
+		Assert.Equal(0, InventoryCapacity.GetFreeWarehouseSlots(player));
+	}
+
+	[Fact]
 	public void WorldVisibility_MatchesKnownListDefaultRange()
 	{
 		var player = new Player
