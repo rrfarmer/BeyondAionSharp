@@ -886,6 +886,40 @@ public sealed class PlayerSummonSkillExecutionService
 			origin.Z);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillSpawnTemplatePreview PreviewMercenaryNpcSkillSpawnTemplate(
+		PlayerSummonKnownObjectNpcSkillSpawnLocationPreview? locationPreview,
+		bool creatorHasSpawn = false,
+		bool creatorSpawnHasEventTemplate = false)
+	{
+		if (locationPreview == null)
+			return PlayerSummonKnownObjectNpcSkillSpawnTemplatePreview.MissingLocation();
+
+		if (!locationPreview.HasProjectedLocation
+			|| locationPreview.Origin == null
+			|| locationPreview.ExecutionPreview?.NpcId == null
+			|| locationPreview.SpawnX == null
+			|| locationPreview.SpawnY == null
+			|| locationPreview.SpawnZ == null
+			|| locationPreview.Heading == null)
+		{
+			return PlayerSummonKnownObjectNpcSkillSpawnTemplatePreview.NotReady(locationPreview);
+		}
+
+		// Java parity: SpawnEngine.newSingleTimeSpawn(..., creator, null) copies creator id,
+		// carries creator.getSpawn().getEventTemplate() when present, and builds a no-respawn SpawnTemplate.
+		return PlayerSummonKnownObjectNpcSkillSpawnTemplatePreview.Created(
+			locationPreview,
+			locationPreview.WorldId!.Value,
+			locationPreview.ExecutionPreview.NpcId.Value,
+			locationPreview.SpawnX.Value,
+			locationPreview.SpawnY.Value,
+			locationPreview.SpawnZ.Value,
+			locationPreview.Heading.Value,
+			locationPreview.InstanceId!.Value,
+			locationPreview.Origin.CreatorObjectId,
+			creatorHasSpawn && creatorSpawnHasEventTemplate);
+	}
+
 	private static PlayerSummonKnownObjectNpcSkillSelectionResult SelectSingleMercenaryNpcSkillCandidate(
 		PlayerSummonKnownObjectNpcSkillCandidate candidate,
 		PlayerSummonKnownObjectNpcSkillSelectionSource source)
@@ -1879,7 +1913,8 @@ public sealed record PlayerSummonKnownObjectNpcSkillSpawnOrigin(
 	float X,
 	float Y,
 	float Z,
-	byte Heading);
+	byte Heading,
+	int CreatorObjectId = 0);
 
 public sealed record PlayerSummonKnownObjectNpcSkillSpawnExecutionPreview(
 	PlayerSummonKnownObjectNpcSkillSpawnExecutionPreviewStatus Status,
@@ -2043,6 +2078,83 @@ public enum PlayerSummonKnownObjectNpcSkillSpawnLocationPreviewStatus
 	MissingRandomAngle,
 	MissingRandomDistance,
 	Projected,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillSpawnTemplatePreview(
+	PlayerSummonKnownObjectNpcSkillSpawnTemplatePreviewStatus Status,
+	PlayerSummonKnownObjectNpcSkillSpawnLocationPreview? LocationPreview = null,
+	int? WorldId = null,
+	int? NpcId = null,
+	float? X = null,
+	float? Y = null,
+	float? Z = null,
+	byte? Heading = null,
+	int? InstanceId = null,
+	int RespawnTimeSeconds = 0,
+	int CreatorObjectId = 0,
+	bool CarriesCreatorEventTemplate = false,
+	int RandomWalkRange = 0,
+	string? WalkerId = null,
+	int StaticId = 0,
+	string? AiName = null)
+{
+	public bool WouldCreateSpawnTemplate => Status == PlayerSummonKnownObjectNpcSkillSpawnTemplatePreviewStatus.Created;
+	public bool WouldSpawnObject => WouldCreateSpawnTemplate;
+	public bool RequiresSpawnObjectCall => WouldCreateSpawnTemplate;
+	public bool IsSingleTimeSpawn => WouldCreateSpawnTemplate && RespawnTimeSeconds == 0;
+	public bool HasCreator => CreatorObjectId != 0;
+
+	public static PlayerSummonKnownObjectNpcSkillSpawnTemplatePreview MissingLocation()
+	{
+		return new PlayerSummonKnownObjectNpcSkillSpawnTemplatePreview(
+			PlayerSummonKnownObjectNpcSkillSpawnTemplatePreviewStatus.MissingLocation);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillSpawnTemplatePreview NotReady(
+		PlayerSummonKnownObjectNpcSkillSpawnLocationPreview locationPreview)
+	{
+		return new PlayerSummonKnownObjectNpcSkillSpawnTemplatePreview(
+			PlayerSummonKnownObjectNpcSkillSpawnTemplatePreviewStatus.NotReady,
+			locationPreview);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillSpawnTemplatePreview Created(
+		PlayerSummonKnownObjectNpcSkillSpawnLocationPreview locationPreview,
+		int worldId,
+		int npcId,
+		float x,
+		float y,
+		float z,
+		byte heading,
+		int instanceId,
+		int creatorObjectId,
+		bool carriesCreatorEventTemplate)
+	{
+		return new PlayerSummonKnownObjectNpcSkillSpawnTemplatePreview(
+			PlayerSummonKnownObjectNpcSkillSpawnTemplatePreviewStatus.Created,
+			locationPreview,
+			worldId,
+			npcId,
+			x,
+			y,
+			z,
+			heading,
+			instanceId,
+			0,
+			creatorObjectId,
+			carriesCreatorEventTemplate,
+			RandomWalkRange: 0,
+			WalkerId: null,
+			StaticId: 0,
+			AiName: null);
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillSpawnTemplatePreviewStatus
+{
+	MissingLocation,
+	NotReady,
+	Created,
 }
 
 public sealed record PlayerSummonKnownObjectNpcSkillCandidateMetadata(

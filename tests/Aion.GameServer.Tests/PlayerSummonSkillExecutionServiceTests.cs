@@ -309,6 +309,66 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void PreviewMercenaryNpcSkillSpawnTemplate_ProjectsJavaNewSingleTimeSpawnInputs()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var origin = new PlayerSummonKnownObjectNpcSkillSpawnOrigin(
+			WorldId: 210010000,
+			InstanceId: 12,
+			X: 100.5f,
+			Y: 200.25f,
+			Z: 35.75f,
+			Heading: 90,
+			CreatorObjectId: 8001);
+		var spawn = new PlayerSummonKnownObjectNpcSkillSpawnMetadata(
+			NpcId: 212355,
+			MinDistance: 5,
+			MaxDistance: 0,
+			MinCount: 1,
+			MaxCount: 0);
+		var postSpawn = service.PreviewMercenaryNpcSkillPostSpawn(
+			service.ProjectMercenaryNpcSkillTemplate(new PlayerSummonKnownObjectNpcSkillTemplateMetadata(SpawnTemplate: spawn)));
+		var execution = service.PreviewMercenaryNpcSkillPostSpawnExecution(postSpawn, origin);
+		var location = service.PreviewMercenaryNpcSkillPostSpawnLocation(execution, randomAngleDegrees: 90f);
+
+		var missingLocation = service.PreviewMercenaryNpcSkillSpawnTemplate(null);
+		var notReady = service.PreviewMercenaryNpcSkillSpawnTemplate(
+			PlayerSummonKnownObjectNpcSkillSpawnLocationPreview.MissingExecution());
+		var withoutEventTemplate = service.PreviewMercenaryNpcSkillSpawnTemplate(
+			location,
+			creatorHasSpawn: false,
+			creatorSpawnHasEventTemplate: true);
+		var withEventTemplate = service.PreviewMercenaryNpcSkillSpawnTemplate(
+			location,
+			creatorHasSpawn: true,
+			creatorSpawnHasEventTemplate: true);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSpawnTemplatePreviewStatus.MissingLocation, missingLocation.Status);
+		Assert.False(missingLocation.WouldCreateSpawnTemplate);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSpawnTemplatePreviewStatus.NotReady, notReady.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSpawnTemplatePreviewStatus.Created, withoutEventTemplate.Status);
+		Assert.True(withoutEventTemplate.WouldCreateSpawnTemplate);
+		Assert.True(withoutEventTemplate.RequiresSpawnObjectCall);
+		Assert.True(withoutEventTemplate.IsSingleTimeSpawn);
+		Assert.True(withoutEventTemplate.HasCreator);
+		Assert.Equal(210010000, withoutEventTemplate.WorldId);
+		Assert.Equal(212355, withoutEventTemplate.NpcId);
+		Assert.Equal(105.5f, withoutEventTemplate.X.GetValueOrDefault(), precision: 5);
+		Assert.Equal(200.25f, withoutEventTemplate.Y.GetValueOrDefault(), precision: 5);
+		Assert.Equal(35.75f, withoutEventTemplate.Z);
+		Assert.Equal((byte)90, withoutEventTemplate.Heading);
+		Assert.Equal(12, withoutEventTemplate.InstanceId);
+		Assert.Equal(0, withoutEventTemplate.RespawnTimeSeconds);
+		Assert.Equal(8001, withoutEventTemplate.CreatorObjectId);
+		Assert.False(withoutEventTemplate.CarriesCreatorEventTemplate);
+		Assert.Equal(0, withoutEventTemplate.RandomWalkRange);
+		Assert.Null(withoutEventTemplate.WalkerId);
+		Assert.Equal(0, withoutEventTemplate.StaticId);
+		Assert.Null(withoutEventTemplate.AiName);
+		Assert.True(withEventTemplate.CarriesCreatorEventTemplate);
+	}
+
+	[Fact]
 	public void ProjectMercenaryNpcSkillCandidate_AdaptsStaticTemplateEntryIntoSelectableCandidate()
 	{
 		var service = new PlayerSummonSkillExecutionService();
