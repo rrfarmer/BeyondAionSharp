@@ -165,6 +165,84 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void PreviewMercenaryNpcSkillAction_ComposesJavaSkillActionPreUseOutcomes()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var knownObject = new PlayerSummonKnownObject(
+			ObjectId: 8006,
+			Kind: PlayerSummonKnownObjectKind.Creature,
+			CreatorObjectId: 1,
+			NpcTemplateId: 833288,
+			NpcTemplateType: PlayerSummonKnownNpcTemplateType.Mercenary);
+		var readySkill = service.EvaluateMercenarySkillReadiness(knownObject, CreateSkillTemplate("MAGICAL"));
+		var blockedSkill = service.EvaluateMercenarySkillReadiness(
+			knownObject with { AbnormalState = PlayerAbnormalState.Silence },
+			CreateSkillTemplate("MAGICAL"));
+		var targetSelection = service.SelectMercenaryNpcSkillActionTarget(
+			skillFirstTargetIsSelf: false,
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.MostHated,
+			hasMostHatedTarget: true);
+
+		PlayerSummonKnownObjectNpcSkillActionPreview Preview(
+			bool isInCastSubState = true,
+			bool shouldResumeFightAfterInterruptedCast = false,
+			bool hasCreatureTarget = true,
+			bool targetIsDead = false,
+			bool hasLastSkill = true,
+			bool ownerUsesMeleeAggroRange = false,
+			bool targetInAggroRange = true,
+			PlayerSummonKnownObjectSkillReadiness? skillReadiness = null,
+			PlayerSummonKnownObjectNpcSkillActionTargetSelection? selection = null,
+			bool controllerUseSkillSucceeded = true)
+		{
+			return service.PreviewMercenaryNpcSkillAction(
+				isInCastSubState,
+				shouldResumeFightAfterInterruptedCast,
+				hasCreatureTarget,
+				targetIsDead,
+				hasLastSkill,
+				ownerUsesMeleeAggroRange,
+				targetInAggroRange,
+				skillReadiness ?? readySkill,
+				selection ?? targetSelection,
+				controllerUseSkillSucceeded);
+		}
+
+		var notCasting = Preview(isInCastSubState: false);
+		var resumeFight = Preview(isInCastSubState: false, shouldResumeFightAfterInterruptedCast: true);
+		var missingTarget = Preview(hasCreatureTarget: false);
+		var deadTarget = Preview(targetIsDead: true);
+		var missingSkill = Preview(hasLastSkill: false);
+		var targetTooFar = Preview(ownerUsesMeleeAggroRange: true, targetInAggroRange: false);
+		var abnormalBlocked = Preview(skillReadiness: blockedSkill);
+		var wouldSetTarget = Preview();
+		var wouldUseWithoutTargetMutation = Preview(selection: service.SelectMercenaryNpcSkillActionTarget(
+			skillFirstTargetIsSelf: false,
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.None));
+		var useFailed = Preview(controllerUseSkillSucceeded: false);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionPreviewStatus.NotInCastSubState, notCasting.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionPreviewStatus.ResumeFightAfterInterruptedCast, resumeFight.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionPreviewStatus.TargetGiveUp, missingTarget.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionPreviewStatus.TargetGiveUp, deadTarget.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionPreviewStatus.TargetGiveUp, missingSkill.Status);
+		Assert.True(missingSkill.ShouldSetSubStateNone);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionPreviewStatus.TargetTooFar, targetTooFar.Status);
+		Assert.True(targetTooFar.ShouldAbortCast);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionPreviewStatus.AfterUseSkillBlocked, abnormalBlocked.Status);
+		Assert.Same(blockedSkill, abnormalBlocked.SkillReadiness);
+		Assert.True(abnormalBlocked.ShouldSetSubStateNone);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionPreviewStatus.WouldSetTargetAndUseSkill, wouldSetTarget.Status);
+		Assert.True(wouldSetTarget.ShouldSetOwnerTarget);
+		Assert.True(wouldSetTarget.ShouldUseSkill);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionPreviewStatus.WouldUseSkill, wouldUseWithoutTargetMutation.Status);
+		Assert.False(wouldUseWithoutTargetMutation.ShouldSetOwnerTarget);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionPreviewStatus.AfterUseSkillUseFailed, useFailed.Status);
+		Assert.True(useFailed.ShouldUseSkill);
+		Assert.True(useFailed.ShouldSetSubStateNone);
+	}
+
+	[Fact]
 	public void EvaluateMercenaryNpcSkillConditionReadiness_ConsumesConditionMetadataRange()
 	{
 		var service = new PlayerSummonSkillExecutionService();
