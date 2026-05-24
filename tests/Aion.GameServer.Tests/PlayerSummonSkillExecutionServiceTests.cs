@@ -218,6 +218,50 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void EvaluateMercenarySkillReadiness_ConsumesTypedNpcSkillEntryTiming()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var knownObject = new PlayerSummonKnownObject(
+			ObjectId: 8002,
+			Kind: PlayerSummonKnownObjectKind.Creature,
+			CreatorObjectId: 1,
+			NpcTemplateId: 833288,
+			NpcTemplateType: PlayerSummonKnownNpcTemplateType.Mercenary);
+		var magicalSkill = CreateSkillTemplate(skillType: "MAGICAL");
+		var timing = new PlayerSummonKnownObjectNpcSkillEntryTiming(
+			MinHpPercentage: 25,
+			MaxHpPercentage: 75,
+			MinTimeMilliseconds: 1_000,
+			MaxTimeMilliseconds: 5_000);
+		var blockedTiming = service.EvaluateMercenaryNpcSkillEntryReadiness(
+			timing,
+			hpPercentage: 90,
+			elapsedFightTimeMilliseconds: 2_000,
+			currentTimeMilliseconds: 10_000);
+		var readyTiming = service.EvaluateMercenaryNpcSkillEntryReadiness(
+			timing,
+			hpPercentage: 50,
+			elapsedFightTimeMilliseconds: 2_000,
+			currentTimeMilliseconds: 10_000);
+
+		var blocked = service.EvaluateMercenarySkillReadiness(knownObject, magicalSkill, blockedTiming);
+		var ready = service.EvaluateMercenarySkillReadiness(knownObject, magicalSkill, readyTiming);
+		var conditionBlocked = service.EvaluateMercenarySkillReadiness(
+			knownObject,
+			magicalSkill,
+			readyTiming,
+			entryConditionReady: false);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEntryReadinessStatus.NotReady, blockedTiming.Status);
+		Assert.Equal(PlayerSummonKnownObjectSkillReadinessStatus.EntryTimingNotReady, blocked.Status);
+		Assert.Same(blockedTiming, blocked.EntryTimingReadiness);
+		Assert.Equal(PlayerSummonKnownObjectSkillReadinessStatus.Ready, ready.Status);
+		Assert.Same(readyTiming, ready.EntryTimingReadiness);
+		Assert.Equal(PlayerSummonKnownObjectSkillReadinessStatus.EntryConditionNotReady, conditionBlocked.Status);
+		Assert.Same(readyTiming, conditionBlocked.EntryTimingReadiness);
+	}
+
+	[Fact]
 	public void PreviewMercenarySkillAttack_ProjectsSkillAttackManagerGates()
 	{
 		var service = new PlayerSummonSkillExecutionService();
