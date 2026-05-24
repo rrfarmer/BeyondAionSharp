@@ -595,6 +595,30 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 	}
 
 	[Fact]
+	public async Task HandlePlayerStatusInfoAsync_AllianceLeaveLeaderTwoMemberNoOnlineFallbackDisbandsLikeJava()
+	{
+		var registry = new CapturingConnectionRegistry();
+		registry.UnavailablePlayerObjectIds.Add(1002);
+		var alliances = new PlayerAllianceRuntime();
+		var leader = new Player { ObjectId = 1001, Name = "Leader", IsOnline = true, Position = new WorldPosition(210010000, 1, 2, 3, 0) };
+		var offlineMember = new Player { ObjectId = 1002, Name = "Offline", IsOnline = false, Position = new WorldPosition(220010000, 4, 5, 6, 0) };
+		alliances.CreateAlliance(88001, leader);
+		alliances.AddMember(88001, offlineMember);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, alliances);
+
+		await pair.Connection.HandlePlayerStatusInfoAsync(
+			leader,
+			CreatePacket(commandCode: 14, selectedObjectId: 0));
+
+		Assert.Equal(PlayerTeamMembership.None, leader.TeamMembership);
+		Assert.Equal(PlayerTeamMembership.None, offlineMember.TeamMembership);
+		Assert.Empty(alliances.GetMemberObjectIds(88001));
+		var send = Assert.Single(registry.SentPackets);
+		Assert.Equal(1001, send.PlayerObjectId);
+		Assert.IsType<SmLeaveGroupMember>(send.Packet);
+	}
+
+	[Fact]
 	public async Task HandlePlayerStatusInfoAsync_AllianceBanFailureBranchesSendJavaMessages()
 	{
 		var registry = new CapturingConnectionRegistry();
@@ -776,6 +800,7 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 	private sealed class CapturingConnectionRegistry : IGameClientConnectionRegistry
 	{
 		public List<SentPacketRecord> SentPackets { get; } = [];
+		public HashSet<int> UnavailablePlayerObjectIds { get; } = [];
 
 		public void RegisterPlayerConnection(int playerObjectId, GameServerConnection connection)
 		{
@@ -797,6 +822,9 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 
 		public Task<bool> SendPacketToPlayerAsync(int playerObjectId, GameServerPacket packet)
 		{
+			if (UnavailablePlayerObjectIds.Contains(playerObjectId))
+				return Task.FromResult(false);
+
 			SentPackets.Add(new SentPacketRecord(playerObjectId, packet));
 			return Task.FromResult(true);
 		}

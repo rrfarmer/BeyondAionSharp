@@ -6161,19 +6161,26 @@ public sealed class GameServerConnection : BaseClientConnection
 		{
 			var fallbackLeaderObjectId = _playerAllianceRuntime.SelectFallbackLeaderObjectId(alliance.AllianceId, player.ObjectId);
 			if (fallbackLeaderObjectId == null)
-				return null;
-
-			var leaderChangePlan = _playerAllianceRuntime.ChangeLeader(
-				alliance.AllianceId,
-				fallbackLeaderObjectId.Value,
-				eventPlayerWasSpecified: false);
-			if (leaderChangePlan != null)
 			{
-				foreach (var intent in leaderChangePlan.AllianceInfoIntents)
-					await SendAllianceLeaderPacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+				// Java parity: ChangeAllianceLeaderEvent may find no online fallback; the following PlayerAllianceLeavedEvent still removes the leader.
+				// Keep the non-disband multi-member variant deferred because Java can temporarily retain a removed leader reference there.
+				if (_playerAllianceRuntime.GetMemberObjectIds(alliance.AllianceId).Count != 2)
+					return null;
+			}
+			else
+			{
+				var leaderChangePlan = _playerAllianceRuntime.ChangeLeader(
+					alliance.AllianceId,
+					fallbackLeaderObjectId.Value,
+					eventPlayerWasSpecified: false);
+				if (leaderChangePlan != null)
+				{
+					foreach (var intent in leaderChangePlan.AllianceInfoIntents)
+						await SendAllianceLeaderPacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
 
-				foreach (var intent in leaderChangePlan.SystemMessageIntents)
-					await SendAllianceLeaderPacketAsync(intent.RecipientObjectId, intent.Message, cancellationToken);
+					foreach (var intent in leaderChangePlan.SystemMessageIntents)
+						await SendAllianceLeaderPacketAsync(intent.RecipientObjectId, intent.Message, cancellationToken);
+				}
 			}
 		}
 
