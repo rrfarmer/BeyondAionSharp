@@ -154,6 +154,8 @@ public sealed class Player
 	// Java parity: model/gameobjects/player/Player.isTrading guard used by mail and broker packets.
 	public bool IsTrading { get; set; }
 
+	public int CurrentExchangePartnerObjectId { get; set; }
+
 	public IReadOnlyList<InventoryItem> InventoryItems { get; set; } = Array.Empty<InventoryItem>();
 
 	public IReadOnlyList<InventoryItem> WarehouseItems { get; set; } = Array.Empty<InventoryItem>();

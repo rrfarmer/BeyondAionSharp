@@ -789,6 +789,8 @@ public sealed class PlayerEnterWorldService
 		player.PendingDuelWithdrawRequest = null;
 		player.PendingExperienceRecoveryRequest = null;
 		player.PendingExchangeRequest = null;
+		player.IsTrading = false;
+		player.CurrentExchangePartnerObjectId = 0;
 	}
 
 	private async Task SendPendingQuestionDenySideEffectAsync(Player responder, QuestionResponseDispatch dispatch)

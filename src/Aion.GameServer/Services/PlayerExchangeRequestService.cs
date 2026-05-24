@@ -97,11 +97,35 @@ public sealed class PlayerExchangeRequestService
 				new ExchangePacketIntent(responder.ObjectId, SmSystemMessage.ExchangeTooFarToExchange()));
 
 		requester.IsTrading = true;
+		requester.CurrentExchangePartnerObjectId = responder.ObjectId;
 		responder.IsTrading = true;
+		responder.CurrentExchangePartnerObjectId = requester.ObjectId;
 		return ExchangeResponsePlan.CreateHandled(
 			ExchangeResponseStatus.Accepted,
 			new ExchangePacketIntent(responder.ObjectId, new SmExchangeRequest(requester.Name)),
 			new ExchangePacketIntent(requester.ObjectId, new SmExchangeRequest(responder.Name)));
+	}
+
+	public ExchangeCancelPlan CancelExchange(Player activePlayer, Func<int, Player?> resolvePlayer)
+	{
+		// Java parity: network/aion/clientpackets/CM_EXCHANGE_CANCEL.runImpl delegates to
+		// ExchangeService.cancelExchange(activePlayer).
+		if (!activePlayer.IsTrading)
+			return ExchangeCancelPlan.NotHandled(ExchangeCancelStatus.NoActiveExchange);
+
+		var partnerObjectId = activePlayer.CurrentExchangePartnerObjectId;
+		var partner = partnerObjectId == 0 ? null : resolvePlayer(partnerObjectId);
+		activePlayer.IsTrading = false;
+		activePlayer.CurrentExchangePartnerObjectId = 0;
+
+		if (partner == null)
+			return ExchangeCancelPlan.CreateHandled(ExchangeCancelStatus.PartnerMissing);
+
+		partner.IsTrading = false;
+		partner.CurrentExchangePartnerObjectId = 0;
+		return ExchangeCancelPlan.CreateHandled(
+			ExchangeCancelStatus.Canceled,
+			new ExchangePacketIntent(partner.ObjectId, new SmExchangeConfirmation(SmExchangeConfirmation.Canceled)));
 	}
 
 	private static bool IsInRange(Player requester, Player target, float range)
@@ -177,3 +201,26 @@ public enum ExchangeResponseStatus
 }
 
 public sealed record ExchangePacketIntent(int RecipientObjectId, GameServerPacket Packet);
+
+public sealed record ExchangeCancelPlan(
+	bool Handled,
+	ExchangeCancelStatus Status,
+	IReadOnlyList<ExchangePacketIntent> PacketIntents)
+{
+	public static ExchangeCancelPlan CreateHandled(ExchangeCancelStatus status, params ExchangePacketIntent[] intents)
+	{
+		return new ExchangeCancelPlan(true, status, intents);
+	}
+
+	public static ExchangeCancelPlan NotHandled(ExchangeCancelStatus status)
+	{
+		return new ExchangeCancelPlan(false, status, Array.Empty<ExchangePacketIntent>());
+	}
+}
+
+public enum ExchangeCancelStatus
+{
+	NoActiveExchange,
+	PartnerMissing,
+	Canceled,
+}
