@@ -290,6 +290,41 @@ public sealed class PlayerSummonSkillExecutionService
 			candidate.TargetRangeReadiness);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillCandidateListProjection ProjectMercenaryNpcSkillCandidateList(
+		IEnumerable<PlayerSummonKnownObjectNpcSkillCandidateMetadata> candidates,
+		int hpPercentage,
+		long elapsedFightTimeMilliseconds,
+		long currentTimeMilliseconds,
+		bool ownerExists = true,
+		bool ownerIsDead = false,
+		bool ownerIsAboutToDie = false)
+	{
+		// Java parity: mirrors NpcSkillList.initSkillList priority extraction after static template entries are materialized.
+		var projectedCandidates = candidates
+			.Select(candidate => ProjectMercenaryNpcSkillCandidate(
+				candidate,
+				hpPercentage,
+				elapsedFightTimeMilliseconds,
+				currentTimeMilliseconds,
+				ownerExists,
+				ownerIsDead,
+				ownerIsAboutToDie))
+			.ToList();
+		var priorities = projectedCandidates
+			.Select(candidate => candidate.Projection.Priority)
+			.Distinct()
+			.OrderByDescending(priority => priority)
+			.ToList();
+		var postSpawnCandidates = projectedCandidates
+			.Where(candidate => candidate.Projection.IsPostSpawn)
+			.ToList();
+
+		return new PlayerSummonKnownObjectNpcSkillCandidateListProjection(
+			projectedCandidates,
+			priorities,
+			postSpawnCandidates);
+	}
+
 	public PlayerSummonKnownObjectSkillTargetMode ResolveMercenaryNpcSkillTargetMode(PlayerSummonKnownObjectNpcSkillTargetAttribute target)
 	{
 		return target switch
@@ -658,6 +693,55 @@ public sealed class PlayerSummonSkillExecutionService
 			nextSkillReadiness,
 			elapsedSinceLastSkill,
 			selection);
+	}
+
+	public PlayerSummonKnownObjectNpcSkillSelectionPreview PreviewMercenaryNextNpcSkillSelectionFromCandidateMetadata(
+		PlayerSummonKnownObject knownObject,
+		long fightStartingTimeMilliseconds,
+		int initialSkillDelayMilliseconds,
+		long currentTimeMilliseconds,
+		bool isInCastSubState,
+		IEnumerable<PlayerSummonKnownObjectNpcSkillCandidateMetadata> candidates,
+		int hpPercentage,
+		PlayerSummonKnownObjectNpcSkillCandidateMetadata? queuedCandidate = null,
+		PlayerSummonKnownObjectNpcSkillTemplateMetadata? lastSkill = null,
+		long lastSkillLastTimeUsedMilliseconds = 0,
+		bool ownerExists = true,
+		bool ownerIsDead = false,
+		bool ownerIsAboutToDie = false)
+	{
+		var elapsedFightTime = currentTimeMilliseconds - fightStartingTimeMilliseconds;
+		var projectedCandidateList = ProjectMercenaryNpcSkillCandidateList(
+			candidates,
+			hpPercentage,
+			elapsedFightTime,
+			currentTimeMilliseconds,
+			ownerExists,
+			ownerIsDead,
+			ownerIsAboutToDie);
+		var projectedQueuedCandidate = queuedCandidate == null
+			? null
+			: ProjectMercenaryNpcSkillCandidate(
+				queuedCandidate,
+				hpPercentage,
+				elapsedFightTime,
+				currentTimeMilliseconds,
+				ownerExists,
+				ownerIsDead,
+				ownerIsAboutToDie);
+		var projectedLastSkill = lastSkill == null
+			? null
+			: ProjectMercenaryNpcSkillTemplate(lastSkill, lastSkillLastTimeUsedMilliseconds);
+
+		return PreviewMercenaryNextNpcSkillSelection(
+			knownObject,
+			fightStartingTimeMilliseconds,
+			initialSkillDelayMilliseconds,
+			currentTimeMilliseconds,
+			isInCastSubState,
+			projectedQueuedCandidate,
+			projectedLastSkill,
+			projectedCandidateList.Candidates);
 	}
 
 	private static PlayerSummonKnownObjectNpcSkillSelectionResult SelectSingleMercenaryNpcSkillCandidate(
@@ -1495,6 +1579,14 @@ public sealed record PlayerSummonKnownObjectNpcSkillCandidateMetadata(
 	bool ChanceReady = true,
 	PlayerSummonKnownObjectNpcSkillConditionTarget? ConditionTarget = null,
 	PlayerSummonKnownObjectTargetRangeReadiness? TargetRangeReadiness = null);
+
+public sealed record PlayerSummonKnownObjectNpcSkillCandidateListProjection(
+	IReadOnlyList<PlayerSummonKnownObjectNpcSkillCandidate> Candidates,
+	IReadOnlyList<int> Priorities,
+	IReadOnlyList<PlayerSummonKnownObjectNpcSkillCandidate> PostSpawnCandidates)
+{
+	public bool IsEmpty => Candidates.Count == 0;
+}
 
 public sealed record PlayerSummonKnownObjectNpcSkillCandidate(
 	int Position,

@@ -140,6 +140,70 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void ProjectMercenaryNpcSkillCandidateList_AdaptsStaticEntriesForSelectionPreview()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var knownObject = new PlayerSummonKnownObject(
+			ObjectId: 8009,
+			Kind: PlayerSummonKnownObjectKind.Creature,
+			CreatorObjectId: 1,
+			NpcTemplateId: 833288,
+			NpcTemplateType: PlayerSummonKnownNpcTemplateType.Mercenary,
+			LastSkillTimeMilliseconds: 10_000,
+			NextSkillDelayMilliseconds: 0);
+		var ordinary = new PlayerSummonKnownObjectNpcSkillCandidateMetadata(
+			Position: 0,
+			Template: new PlayerSummonKnownObjectNpcSkillTemplateMetadata(Priority: 9));
+		var chain = new PlayerSummonKnownObjectNpcSkillCandidateMetadata(
+			Position: 1,
+			Template: new PlayerSummonKnownObjectNpcSkillTemplateMetadata(Priority: 1, ChainId: 77));
+		var postSpawn = new PlayerSummonKnownObjectNpcSkillCandidateMetadata(
+			Position: 2,
+			Template: new PlayerSummonKnownObjectNpcSkillTemplateMetadata(Priority: 4, IsPostSpawn: true));
+		var queuedImmediate = new PlayerSummonKnownObjectNpcSkillCandidateMetadata(
+			Position: 3,
+			Template: new PlayerSummonKnownObjectNpcSkillTemplateMetadata(Priority: 2, NextSkillTimeMilliseconds: 0));
+		var lastSkill = new PlayerSummonKnownObjectNpcSkillTemplateMetadata(
+			NextChainId: 77,
+			MaxChainTimeMilliseconds: 15_000);
+
+		var list = service.ProjectMercenaryNpcSkillCandidateList(
+			[ordinary, chain, postSpawn],
+			hpPercentage: 100,
+			elapsedFightTimeMilliseconds: 2_000,
+			currentTimeMilliseconds: 11_000);
+		var queuedPreview = service.PreviewMercenaryNextNpcSkillSelectionFromCandidateMetadata(
+			knownObject,
+			fightStartingTimeMilliseconds: 10_000,
+			initialSkillDelayMilliseconds: 20_000,
+			currentTimeMilliseconds: 10_001,
+			isInCastSubState: false,
+			candidates: [ordinary, chain],
+			hpPercentage: 100,
+			queuedCandidate: queuedImmediate,
+			lastSkill: lastSkill);
+		var chainPreview = service.PreviewMercenaryNextNpcSkillSelectionFromCandidateMetadata(
+			knownObject,
+			fightStartingTimeMilliseconds: 10_000,
+			initialSkillDelayMilliseconds: 0,
+			currentTimeMilliseconds: 11_000,
+			isInCastSubState: false,
+			candidates: [ordinary, chain],
+			hpPercentage: 100,
+			lastSkill: lastSkill);
+
+		Assert.False(list.IsEmpty);
+		Assert.Equal([9, 4, 1], list.Priorities);
+		Assert.Equal(2, Assert.Single(list.PostSpawnCandidates).Position);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionStatus.Ready, queuedPreview.Selection.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionSource.ImmediateQueuedSkill, queuedPreview.Selection.Source);
+		Assert.Equal(3, queuedPreview.Selection.Candidate?.Position);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionStatus.Ready, chainPreview.Selection.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionSource.ChainSkill, chainPreview.Selection.Source);
+		Assert.Equal(1, chainPreview.Selection.Candidate?.Position);
+	}
+
+	[Fact]
 	public void ResolveMercenaryNpcSkillTargetMode_MapsJavaNpcSkillTargetAttributes()
 	{
 		var service = new PlayerSummonSkillExecutionService();
