@@ -9,6 +9,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ClientPackets;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
+using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -99,6 +100,34 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Empty(fixture.SentPackets);
 	}
 
+	[Fact]
+	public async Task HandleUseItemAsync_AnimationAddSchedulesPositiveTimeUseAndClearsUsingItem()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(includeThreadPoolManager: true);
+		var player = CreatePlayer(itemId: 188500000);
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
+
+		Assert.Equal(5001, player.UsingItemObjectId);
+		var startAnimation = Assert.Single(fixture.SentPackets.OfType<SmItemUsageAnimation>());
+		using (var reader = new PacketBuffer(SerializeUnencryptedPayload(startAnimation)))
+		{
+			Assert.Equal(1001, reader.ReadD());
+			Assert.Equal(1001, reader.ReadD());
+			Assert.Equal(5001, reader.ReadD());
+			Assert.Equal(188500000, reader.ReadD());
+			Assert.Equal(1000, reader.ReadD());
+			Assert.Equal(0, (int)reader.ReadC());
+			Assert.Equal(0, (int)reader.ReadC());
+			Assert.Equal(0, (int)reader.ReadC());
+			Assert.Equal(1, (int)reader.ReadC());
+			Assert.Equal(0, reader.ReadD());
+			Assert.Equal(0, reader.Remaining);
+		}
+
+		await WaitUntilAsync(() => player.UsingItemObjectId == 0);
+	}
+
 	private static Player CreatePlayer(int itemId)
 	{
 		return new Player
@@ -132,20 +161,45 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		return packet;
 	}
 
+	private static async Task WaitUntilAsync(Func<bool> predicate)
+	{
+		var deadline = DateTimeOffset.UtcNow.AddSeconds(3);
+		while (DateTimeOffset.UtcNow < deadline)
+		{
+			if (predicate())
+				return;
+
+			await Task.Delay(25);
+		}
+
+		Assert.True(predicate());
+	}
+
+	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
+	{
+		var crypt = new GameCrypt(() => 0x01020304);
+		crypt.EnableKey();
+		var frame = packet.SerializeFrame(crypt);
+		return frame[7..];
+	}
+
 	private sealed class InventoryExpansionUseItemFixture : IAsyncDisposable
 	{
 		private readonly TcpClient _client;
 		private readonly GameServerConnection _connection;
+		private readonly ThreadPoolManager? _threadPoolManager;
 		private readonly string _tempRoot;
 
 		private InventoryExpansionUseItemFixture(
 			TcpClient client,
 			GameServerConnection connection,
+			ThreadPoolManager? threadPoolManager,
 			List<GameServerPacket> sentPackets,
 			string tempRoot)
 		{
 			_client = client;
 			_connection = connection;
+			_threadPoolManager = threadPoolManager;
 			SentPackets = sentPackets;
 			_tempRoot = tempRoot;
 		}
@@ -155,7 +209,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		public List<GameServerPacket> SentPackets { get; }
 
 		public static async Task<InventoryExpansionUseItemFixture> CreateAsync(
-			EmptyPlayerEnterWorldRepository? repository = null)
+			EmptyPlayerEnterWorldRepository? repository = null,
+			bool includeThreadPoolManager = false)
 		{
 			var tempRoot = Path.Combine(Path.GetTempPath(), "aion-inventory-expansion-use-" + Guid.NewGuid().ToString("N"));
 			Directory.CreateDirectory(Path.Combine(tempRoot, "game-server", "data", "static_data"));
@@ -173,6 +228,11 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 						<item_template id="169640000" name="[Expand Card] Expand Warehouse Ticket (lvl 1)" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="1">
 							<actions>
 								<expandinventory level="1" storage="WAREHOUSE" />
+							</actions>
+						</item_template>
+						<item_template id="188500000" name="[Motion Card] Test Motion" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="1">
+							<actions>
+								<animation idle="1" run="2" jump="3" rest="4" minutes="60" />
 							</actions>
 						</item_template>
 					</item_templates>
@@ -194,6 +254,9 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 					repository,
 					world,
 					NullLogger<PlayerEnterWorldService>.Instance);
+			var threadPoolManager = includeThreadPoolManager
+				? new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance)
+				: null;
 
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -214,9 +277,10 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 					options: new GameServerOptions(),
 					runtimeContext: runtimeContext,
 					playerEnterWorldService: playerEnterWorldService,
+					threadPoolManager: threadPoolManager,
 					sentPacketObserver: sentPackets.Add,
 					crypt: crypt);
-				return new InventoryExpansionUseItemFixture(client, connection, sentPackets, tempRoot);
+				return new InventoryExpansionUseItemFixture(client, connection, threadPoolManager, sentPackets, tempRoot);
 			}
 			finally
 			{
@@ -227,6 +291,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		public async ValueTask DisposeAsync()
 		{
 			await _connection.DisposeAsync();
+			if (_threadPoolManager != null)
+				await _threadPoolManager.DisposeAsync();
 			_client.Dispose();
 			if (Directory.Exists(_tempRoot))
 				Directory.Delete(_tempRoot, recursive: true);
