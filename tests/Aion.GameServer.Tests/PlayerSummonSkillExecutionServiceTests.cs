@@ -1152,6 +1152,76 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void EvaluateMercenaryNpcSkillConditionReadiness_ProjectsCarvedSignetThresholds()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var target = new PlayerSummonKnownObjectNpcSkillConditionTarget(
+			PlayerSummonKnownObjectNpcSkillConditionTargetKind.Player,
+			IsCreature: true,
+			CarvedSignets: new[]
+			{
+				new PlayerSummonKnownObjectNpcSkillCarvedSignetState("KAL_SIG", 3),
+				new PlayerSummonKnownObjectNpcSkillCarvedSignetState("BLADE_SIG", 5),
+			});
+
+		var unsupported = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			new PlayerSummonKnownObjectNpcSkillConditionMetadata(PlayerSummonKnownObjectNpcSkillCondition.TargetHasCarvedSignet),
+			target);
+		var missingTarget = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			new PlayerSummonKnownObjectNpcSkillConditionMetadata(PlayerSummonKnownObjectNpcSkillCondition.TargetHasCarvedSignet),
+			target: null,
+			skillTemplateSignetBurstStacks: new[] { "KAL_SIG" });
+		var baseReady = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			new PlayerSummonKnownObjectNpcSkillConditionMetadata(PlayerSummonKnownObjectNpcSkillCondition.TargetHasCarvedSignet),
+			target,
+			skillTemplateSignetBurstStacks: new[] { "MISSING_SIG", "KAL_SIG" });
+		var levelIiReady = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			new PlayerSummonKnownObjectNpcSkillConditionMetadata(PlayerSummonKnownObjectNpcSkillCondition.TargetHasCarvedSignetLevelIi),
+			target,
+			skillTemplateSignetBurstStacks: new[] { "KAL_SIG" });
+		var levelIiiReady = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			new PlayerSummonKnownObjectNpcSkillConditionMetadata(PlayerSummonKnownObjectNpcSkillCondition.TargetHasCarvedSignetLevelIii),
+			target,
+			skillTemplateSignetBurstStacks: new[] { "KAL_SIG" });
+		var levelIvBlockedByStrictGreaterThan = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			new PlayerSummonKnownObjectNpcSkillConditionMetadata(PlayerSummonKnownObjectNpcSkillCondition.TargetHasCarvedSignetLevelIv),
+			target,
+			skillTemplateSignetBurstStacks: new[] { "KAL_SIG" });
+		var levelVReady = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			new PlayerSummonKnownObjectNpcSkillConditionMetadata(PlayerSummonKnownObjectNpcSkillCondition.TargetHasCarvedSignetLevelV),
+			target,
+			skillTemplateSignetBurstStacks: new[] { "BLADE_SIG" });
+		var caseSensitiveMiss = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			new PlayerSummonKnownObjectNpcSkillConditionMetadata(PlayerSummonKnownObjectNpcSkillCondition.TargetHasCarvedSignet),
+			target,
+			skillTemplateSignetBurstStacks: new[] { "kal_sig" });
+		var emptySkillEffects = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			new PlayerSummonKnownObjectNpcSkillConditionMetadata(PlayerSummonKnownObjectNpcSkillCondition.TargetHasCarvedSignet),
+			target,
+			skillTemplateSignetBurstStacks: Array.Empty<string>());
+		var deadTarget = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			new PlayerSummonKnownObjectNpcSkillConditionMetadata(PlayerSummonKnownObjectNpcSkillCondition.TargetHasCarvedSignet),
+			target with { IsDead = true },
+			skillTemplateSignetBurstStacks: new[] { "KAL_SIG" });
+		var notCreature = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			new PlayerSummonKnownObjectNpcSkillConditionMetadata(PlayerSummonKnownObjectNpcSkillCondition.TargetHasCarvedSignet),
+			target with { IsCreature = false },
+			skillTemplateSignetBurstStacks: new[] { "KAL_SIG" });
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.Unsupported, unsupported.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.MissingTarget, missingTarget.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.Ready, baseReady.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.Ready, levelIiReady.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.Ready, levelIiiReady.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.NotReady, levelIvBlockedByStrictGreaterThan.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.Ready, levelVReady.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.NotReady, caseSensitiveMiss.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.NotReady, emptySkillEffects.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.NotReady, deadTarget.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.NotReady, notCreature.Status);
+	}
+
+	[Fact]
 	public void SelectMercenaryNpcSkillActionTarget_ProjectsJavaSkillActionTargetMutation()
 	{
 		var service = new PlayerSummonSkillExecutionService();

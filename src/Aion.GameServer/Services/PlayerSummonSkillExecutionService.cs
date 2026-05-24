@@ -681,10 +681,20 @@ public sealed class PlayerSummonSkillExecutionService
 		bool ownerIsDead = false,
 		bool ownerIsAboutToDie = false,
 		bool? npcIsAliveInWorld = null,
-		IEnumerable<PlayerSummonKnownObjectNpcSkillHelpFriendCandidate>? helpFriendCandidates = null)
+		IEnumerable<PlayerSummonKnownObjectNpcSkillHelpFriendCandidate>? helpFriendCandidates = null,
+		IEnumerable<string>? skillTemplateSignetBurstStacks = null)
 	{
 		if (!ownerExists || ownerIsDead || ownerIsAboutToDie)
 			return PlayerSummonKnownObjectNpcSkillConditionReadiness.OwnerNotReady(conditionMetadata.Condition, target);
+
+		if (IsCarvedSignetCondition(conditionMetadata.Condition))
+		{
+			// Java parity: hasCarvedSignet scans this skill template's SignetBurstEffect signet stacks and target abnormal effects.
+			if (skillTemplateSignetBurstStacks == null)
+				return PlayerSummonKnownObjectNpcSkillConditionReadiness.Unsupported(conditionMetadata.Condition, target);
+
+			return MatchCarvedSignetCondition(conditionMetadata.Condition, target, skillTemplateSignetBurstStacks);
+		}
 
 		if (conditionMetadata.Condition == PlayerSummonKnownObjectNpcSkillCondition.HelpFriend)
 		{
@@ -1329,6 +1339,50 @@ public sealed class PlayerSummonSkillExecutionService
 		return predicate(target)
 			? PlayerSummonKnownObjectNpcSkillConditionReadiness.Ready(condition, target)
 			: PlayerSummonKnownObjectNpcSkillConditionReadiness.NotReady(condition, target);
+	}
+
+	private static PlayerSummonKnownObjectNpcSkillConditionReadiness MatchCarvedSignetCondition(
+		PlayerSummonKnownObjectNpcSkillCondition condition,
+		PlayerSummonKnownObjectNpcSkillConditionTarget? target,
+		IEnumerable<string> skillTemplateSignetBurstStacks)
+	{
+		if (target == null)
+			return PlayerSummonKnownObjectNpcSkillConditionReadiness.MissingTarget(condition);
+
+		var requiredLevelExclusive = GetCarvedSignetRequiredLevelExclusive(condition);
+		var burstStacks = skillTemplateSignetBurstStacks.ToArray();
+		var targetSignets = target.CarvedSignets ?? Array.Empty<PlayerSummonKnownObjectNpcSkillCarvedSignetState>();
+		var ready = target.IsCreature
+			&& !target.IsDead
+			&& !target.IsAboutToDie
+			&& burstStacks.Any(signet => targetSignets.Any(effect => effect.SkillLevel > requiredLevelExclusive && string.Equals(effect.Signet, signet, StringComparison.Ordinal)));
+
+		return ready
+			? PlayerSummonKnownObjectNpcSkillConditionReadiness.Ready(condition, target)
+			: PlayerSummonKnownObjectNpcSkillConditionReadiness.NotReady(condition, target);
+	}
+
+	private static bool IsCarvedSignetCondition(PlayerSummonKnownObjectNpcSkillCondition condition)
+	{
+		return condition
+			is PlayerSummonKnownObjectNpcSkillCondition.TargetHasCarvedSignet
+			or PlayerSummonKnownObjectNpcSkillCondition.TargetHasCarvedSignetLevelIi
+			or PlayerSummonKnownObjectNpcSkillCondition.TargetHasCarvedSignetLevelIii
+			or PlayerSummonKnownObjectNpcSkillCondition.TargetHasCarvedSignetLevelIv
+			or PlayerSummonKnownObjectNpcSkillCondition.TargetHasCarvedSignetLevelV;
+	}
+
+	private static int GetCarvedSignetRequiredLevelExclusive(PlayerSummonKnownObjectNpcSkillCondition condition)
+	{
+		return condition switch
+		{
+			PlayerSummonKnownObjectNpcSkillCondition.TargetHasCarvedSignet => 0,
+			PlayerSummonKnownObjectNpcSkillCondition.TargetHasCarvedSignetLevelIi => 1,
+			PlayerSummonKnownObjectNpcSkillCondition.TargetHasCarvedSignetLevelIii => 2,
+			PlayerSummonKnownObjectNpcSkillCondition.TargetHasCarvedSignetLevelIv => 3,
+			PlayerSummonKnownObjectNpcSkillCondition.TargetHasCarvedSignetLevelV => 4,
+			_ => 0,
+		};
 	}
 
 	private static bool IsMercenaryHelpFriendCandidateReady(
@@ -3260,7 +3314,8 @@ public sealed record PlayerSummonKnownObjectNpcSkillConditionTarget(
 	bool IsSupport = false,
 	bool IsFriend = false,
 	int? HpPercentage = null,
-	bool? GeoCanSee = null)
+	bool? GeoCanSee = null,
+	IReadOnlyList<PlayerSummonKnownObjectNpcSkillCarvedSignetState>? CarvedSignets = null)
 {
 	public bool IsInAnyAbnormalState(PlayerAbnormalState state)
 	{
@@ -3312,6 +3367,10 @@ public sealed record PlayerSummonKnownObjectNpcSkillHelpFriendCandidate(
 	int HpPercentage = 100,
 	double DistanceMeters = 0,
 	bool GeoCanSee = true);
+
+public sealed record PlayerSummonKnownObjectNpcSkillCarvedSignetState(
+	string Signet,
+	int SkillLevel);
 
 public enum PlayerSummonKnownObjectNpcSkillConditionTargetKind
 {
