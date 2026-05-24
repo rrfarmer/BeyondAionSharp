@@ -217,6 +217,8 @@ public sealed class Player
 	public byte FriendListStatus { get; set; }
 
 	// Java parity: model/gameobjects/player/ResponseRequester stores pending SM_QUESTION_WINDOW handlers.
+	public QuestionResponseRegistry ResponseRequester { get; } = new();
+
 	public PendingFriendRequest? PendingFriendRequest { get; set; }
 
 	public PendingChargeAllRequest? PendingChargeAllRequest { get; set; }
