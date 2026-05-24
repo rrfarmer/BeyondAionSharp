@@ -45,10 +45,57 @@ public sealed class PlayerGroupInviteRequestService
 		if (request == null || request.InviterObjectId != inviter.ObjectId)
 			return GroupInviteResponseResult.MissingRequest();
 
-		if (!dispatch.Accepted)
+		return HandleResolvedResponse(inviter, invited, dispatch.Accepted, request, groupRuntime, newGroupId);
+	}
+
+	public GroupInviteResponseResult HandleResponse(
+		Player invited,
+		int questionId,
+		int response,
+		PlayerGroupRuntime groupRuntime,
+		Func<int> allocateGroupId,
+		Func<int, Player?> resolveInviter)
+	{
+		// Java parity: CM_QUESTION_RESPONSE delegates to ResponseRequester.respond, which removes
+		// the PlayerGroupInvite handler before invoking denyRequest or acceptRequest.
+		if (questionId != SmQuestionWindow.PartyInvite)
+			return GroupInviteResponseResult.Ignored();
+
+		var dispatch = invited.ResponseRequester.Respond(questionId, response);
+		if (dispatch?.Request.Kind != QuestionResponseRequestKind.GroupInvite)
+			return GroupInviteResponseResult.MissingRequest();
+
+		var request = dispatch.Request.Payload as PendingGroupInviteRequest;
+		if (request == null)
+			return GroupInviteResponseResult.MissingRequest();
+
+		var inviter = resolveInviter(request.InviterObjectId);
+		return inviter == null
+			? GroupInviteResponseResult.MissingRequest(request)
+			: HandleResolvedResponse(
+				inviter,
+				invited,
+				dispatch.Accepted,
+				request,
+				groupRuntime,
+				dispatch.Accepted && groupRuntime.Resolve(inviter) == null ? allocateGroupId() : 0);
+	}
+
+	private static GroupInviteResponseResult HandleResolvedResponse(
+		Player inviter,
+		Player invited,
+		bool accepted,
+		PendingGroupInviteRequest request,
+		PlayerGroupRuntime groupRuntime,
+		int newGroupId)
+	{
+		if (!accepted)
 			return GroupInviteResponseResult.Denied(request, SmSystemMessage.PartyHeRejectInvitation(invited.Name));
 
 		var inviterGroup = groupRuntime.Resolve(inviter);
+		if (inviterGroup == null && newGroupId <= 0)
+			return GroupInviteResponseResult.MissingRequest(request);
+
 		var snapshot = inviterGroup == null
 			? groupRuntime.CreateOrUpdateGroup(newGroupId, [inviter, invited])
 			: groupRuntime.AddMember(inviterGroup.TeamId, invited);
@@ -110,6 +157,11 @@ public sealed record GroupInviteResponseResult(
 	public static GroupInviteResponseResult MissingRequest()
 	{
 		return new GroupInviteResponseResult(GroupInviteResponseStatus.MissingRequest, null, null, null, null);
+	}
+
+	public static GroupInviteResponseResult MissingRequest(PendingGroupInviteRequest request)
+	{
+		return new GroupInviteResponseResult(GroupInviteResponseStatus.MissingRequest, request, null, null, null);
 	}
 
 	public static GroupInviteResponseResult Denied(PendingGroupInviteRequest request, SmSystemMessage denyMessage)

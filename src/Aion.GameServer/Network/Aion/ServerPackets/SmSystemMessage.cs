@@ -81,6 +81,18 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300173, playerName);
 	}
 
+	public static SmSystemMessage PartyCantInviteWhenDead()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_PARTY_CANT_INVITE_WHEN_DEAD.
+		return new SmSystemMessage(1300163);
+	}
+
+	public static SmSystemMessage RejectedInviteParty(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_REJECTED_INVITE_PARTY(String).
+		return new SmSystemMessage(1390116, playerName);
+	}
+
 	public static SmSystemMessage NotEnoughMoney()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_NOT_ENOUGH_MONEY.

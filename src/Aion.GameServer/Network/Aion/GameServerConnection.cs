@@ -408,6 +408,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandlePlayerStatusInfoAsync(_activePlayer, playerStatusInfo);
 				break;
+			case CmInviteToGroup inviteToGroup:
+				if (_activePlayer != null)
+					await HandleInviteToGroupAsync(_activePlayer, inviteToGroup);
+				break;
 			case CmCheckPak:
 				// Java parity: network/aion/clientpackets/CM_CHECK_PAK.runImpl only audit-logs suspicious pak status; deferred until audit logging policy is ported.
 				break;
@@ -6060,6 +6064,46 @@ public sealed class GameServerConnection : BaseClientConnection
 			await SendPacketAsync(packet, cancellationToken);
 	}
 
+	private async Task SendGroupInvitePacketAsync(
+		int recipientObjectId,
+		GameServerPacket packet,
+		CancellationToken cancellationToken = default)
+	{
+		if (_connectionRegistry != null && await _connectionRegistry.SendPacketToPlayerAsync(recipientObjectId, packet))
+			return;
+
+		if (_activePlayer?.ObjectId == recipientObjectId)
+			await SendPacketAsync(packet, cancellationToken);
+	}
+
+	private async Task SendGroupEnteredPlanAsync(
+		PlayerGroupEnteredPacketPlan plan,
+		CancellationToken cancellationToken = default)
+	{
+		var groupInfo = plan.CreateGroupInfoPacket();
+		if (groupInfo != null)
+			await SendGroupInvitePacketAsync(plan.EnteringPlayerObjectId, groupInfo, cancellationToken);
+
+		foreach (var intent in plan.SystemMessageIntents)
+			await SendGroupInvitePacketAsync(intent.RecipientObjectId, intent.Message, cancellationToken);
+
+		foreach (var intent in plan.MemberInfoIntents)
+		{
+			var packet = intent.CreatePacket();
+			if (packet != null)
+				await SendGroupInvitePacketAsync(intent.RecipientObjectId, packet, cancellationToken);
+		}
+
+		if (plan.BrandIntent != null)
+			await SendGroupInvitePacketAsync(plan.BrandIntent.RecipientObjectId, plan.BrandIntent.CreatePacket(), cancellationToken);
+
+		if (plan.AbyssRankUpdateIntent != null)
+			await SendGroupInvitePacketAsync(
+				plan.AbyssRankUpdateIntent.PlayerObjectId,
+				plan.AbyssRankUpdateIntent.CreatePacket(),
+				cancellationToken);
+	}
+
 	private async Task<PlayerGroupLeaderChangePlan?> HandleGroupLeaderChangeAsync(
 		Player player,
 		int targetObjectId,
@@ -6762,6 +6806,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (packet.QuestionId == SmQuestionWindow.PartyInvite)
+		{
+			await HandleGroupInviteQuestionResponseAsync(responder, packet);
+			return;
+		}
+
 		if (packet.QuestionId == SmQuestionWindow.TeleportToNpcConfirm)
 		{
 			await HandleTeleportToNpcQuestionResponseAsync(responder, packet);
@@ -6801,6 +6851,67 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		await AcceptFriendRequestAsync(requester, responder);
+	}
+
+	internal async Task<GroupInviteRequestResult?> HandleInviteToGroupAsync(
+		Player inviter,
+		CmInviteToGroup packet,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: network/aion/clientpackets/CM_INVITE_TO_GROUP.runImpl.
+		if (inviter.IsInState(PlayerCreatureState.Dead) || inviter.LifeStats?.CurrentHp <= 0)
+		{
+			await SendPacketAsync(SmSystemMessage.PartyCantInviteWhenDead(), cancellationToken);
+			return null;
+		}
+
+		if (_connectionRegistry == null
+			|| !_connectionRegistry.TryGetOnlinePlayerByName(packet.PlayerName, out var invited)
+			|| invited == null)
+		{
+			await SendPacketAsync(SmSystemMessage.NoSuchUser(packet.PlayerName), cancellationToken);
+			return null;
+		}
+
+		if (invited.Settings.DeniesGroupRequests())
+		{
+			await SendPacketAsync(SmSystemMessage.RejectedInviteParty(invited.Name), cancellationToken);
+			return null;
+		}
+
+		if (packet.InviteType != 0)
+		{
+			// Java parity: invite types 12 and 28 dispatch alliance/league services; those packet-level paths remain separate Phase 6 work.
+			return null;
+		}
+
+		var result = new PlayerGroupInviteRequestService().SendInvite(inviter, invited);
+		await SendPacketAsync(result.InviterMessage, cancellationToken);
+		if (result.QuestionWindow != null)
+			await _connectionRegistry.SendPacketToPlayerAsync(invited.ObjectId, result.QuestionWindow);
+		return result;
+	}
+
+	private async Task<GroupInviteResponseResult> HandleGroupInviteQuestionResponseAsync(
+		Player invited,
+		CmQuestionResponse packet)
+	{
+		var service = new PlayerGroupInviteRequestService();
+		var result = service.HandleResponse(
+			invited,
+			packet.QuestionId,
+			packet.Response,
+			_playerGroupRuntime,
+			() => _idFactory?.NextId() ?? 0,
+			TryGetOnlinePlayerByObjectId);
+
+		if (result.Status == GroupInviteResponseStatus.Denied && result.Request != null && result.DenyMessage != null)
+			await SendGroupInvitePacketAsync(result.Request.InviterObjectId, result.DenyMessage);
+
+		if (result.Status == GroupInviteResponseStatus.Accepted && result.EnteredPacketPlan != null)
+			await SendGroupEnteredPlanAsync(result.EnteredPacketPlan);
+
+		return result;
 	}
 
 	private async Task<TeleportToNpcResponseResult> HandleTeleportToNpcQuestionResponseAsync(

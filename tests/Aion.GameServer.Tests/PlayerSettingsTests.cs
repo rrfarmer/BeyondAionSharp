@@ -16,4 +16,17 @@ public sealed class PlayerSettingsTests
 		Assert.True(settings.IsInDeniedStatus(PlayerSettings.DenyFriendRequests));
 		Assert.False(new PlayerSettings { Deny = 2 }.DeniesFriendRequests());
 	}
+
+	[Fact]
+	public void DeniesGroupRequests_FollowsJavaDeniedStatusMask()
+	{
+		var settings = new PlayerSettings
+		{
+			Deny = PlayerSettings.DenyGroupRequests | PlayerSettings.DenyFriendRequests,
+		};
+
+		Assert.True(settings.DeniesGroupRequests());
+		Assert.True(settings.IsInDeniedStatus(PlayerSettings.DenyGroupRequests));
+		Assert.False(new PlayerSettings { Deny = 2 }.DeniesGroupRequests());
+	}
 }

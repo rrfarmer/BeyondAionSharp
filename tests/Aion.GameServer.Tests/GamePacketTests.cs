@@ -3795,6 +3795,30 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesInviteToGroupPacket()
+	{
+		var invite = Assert.IsType<CmInviteToGroup>(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(97, buffer =>
+				{
+					buffer.WriteC(0);
+					buffer.WriteS("marchutan");
+				}),
+				GameConnectionState.InGame));
+
+		Assert.Equal(0, invite.InviteType);
+		Assert.Equal("marchutan", invite.PlayerName);
+		Assert.Null(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(97, buffer =>
+				{
+					buffer.WriteC(0);
+					buffer.WriteS("marchutan");
+				}),
+				GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesChatAuthPacket()
 	{
 		var chatAuth = Assert.IsType<CmChatAuth>(
