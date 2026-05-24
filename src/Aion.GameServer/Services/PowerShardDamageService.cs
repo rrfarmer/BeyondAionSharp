@@ -23,8 +23,13 @@ public static class PowerShardDamageService
 
 		var weapon = GetEquippedItemBySlot(player.InventoryItems, mainHand ? MainHand : SubHand);
 		var weaponTemplate = weapon == null ? null : itemTemplates.GetItemTemplate(weapon.ItemId);
-		if (weaponTemplate is not { IsWeapon: true } || weaponTemplate.IsShield)
+		if (weapon == null
+			|| weaponTemplate is not { IsWeapon: true }
+			|| weaponTemplate.IsShield
+			|| (!mainHand && IsSameTwoHandMainWeapon(weapon)))
+		{
 			return PowerShardDamageResult.NoDamage();
+		}
 
 		var damage = 0;
 		var inventoryItems = player.InventoryItems;
@@ -94,6 +99,13 @@ public static class PowerShardDamageService
 			item.Location == CubeStorageId
 			&& item.IsEquipped
 			&& (item.Slot & slot) == slot);
+	}
+
+	private static bool IsSameTwoHandMainWeapon(InventoryItem weapon)
+	{
+		// Java parity: Equipment.getOffHandWeapon returns null when SUB_HAND maps to the main-hand two-handed weapon.
+		return (weapon.Slot & MainHand) == MainHand
+			&& (weapon.Slot & SubHand) == SubHand;
 	}
 }
 

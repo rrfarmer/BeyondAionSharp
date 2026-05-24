@@ -70,6 +70,22 @@ public sealed class PowerShardDamageServiceTests
 	}
 
 	[Fact]
+	public void GetPowerShardDamage_SkipsOffHandWhenSubHandIsSameTwoHandWeapon()
+	{
+		var player = CreatePlayer(
+			PlayerCreatureState.Powershard,
+			new InventoryItem { ObjectId = 1, ItemId = GreatswordId, Count = 1, Location = 0, IsEquipped = true, Slot = MainHand | SubHand },
+			new InventoryItem { ObjectId = 2, ItemId = PowerShardId, Count = 3, Location = 0, IsEquipped = true, Slot = PowerShardRight },
+			new InventoryItem { ObjectId = 3, ItemId = GreaterPowerShardId, Count = 4, Location = 0, IsEquipped = true, Slot = PowerShardLeft });
+
+		var result = PowerShardDamageService.GetPowerShardDamage(player, CreateItemTemplates(), mainHand: false, removePowerShards: true);
+
+		Assert.Equal(0, result.Damage);
+		Assert.Empty(result.PowerShardUses);
+		Assert.Empty(result.InventoryItems);
+	}
+
+	[Fact]
 	public void GetPowerShardDamage_UsesLeftShardForOffHandWeapon()
 	{
 		var player = CreatePlayer(
