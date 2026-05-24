@@ -123,14 +123,16 @@ public sealed class PlayerSummonSkillExecutionService
 		int mercenaryObjectId,
 		PlayerSummonKnownObjectNpcSkillCandidateListProjection? skillListProjection,
 		PlayerSummonKnownObjectNpcSkillSelectionPreview? selectionPreview,
-		PlayerSummonKnownObjectNpcSkillActionPreview? actionPreview)
+		PlayerSummonKnownObjectNpcSkillActionPreview? actionPreview,
+		PlayerSummonKnownObjectNpcSkillPostSpawnPreview? postSpawnPreview = null)
 	{
-		// Java parity: represents owner Npc skill-list/chooseNextSkill/skillAction state without invoking live AI or controller effects.
+		// Java parity: represents owner Npc skill-list/chooseNextSkill/skillAction/fireOnEndCastEvents state without invoking live AI or controller effects.
 		return player.TryStoreSummonKnownObjectNpcSkillPreview(
 				mercenaryObjectId,
 				skillListProjection,
 				selectionPreview,
-				actionPreview)
+				actionPreview,
+				postSpawnPreview)
 			? PlayerSummonKnownObjectNpcSkillPreviewCaptureResult.Captured(mercenaryObjectId)
 			: PlayerSummonKnownObjectNpcSkillPreviewCaptureResult.MissingKnownObject(mercenaryObjectId);
 	}

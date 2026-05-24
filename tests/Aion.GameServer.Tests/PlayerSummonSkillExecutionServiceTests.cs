@@ -309,19 +309,27 @@ public class PlayerSummonSkillExecutionServiceTests
 				skillFirstTargetIsSelf: false,
 				PlayerSummonKnownObjectNpcSkillTargetAttribute.None),
 			controllerUseSkillSucceeded: true);
+		var postSpawnPreview = service.PreviewMercenaryNpcSkillPostSpawn(
+			service.ProjectMercenaryNpcSkillTemplate(
+				new PlayerSummonKnownObjectNpcSkillTemplateMetadata(
+					SpawnTemplate: new PlayerSummonKnownObjectNpcSkillSpawnMetadata(
+						NpcId: 212349,
+						DelayMilliseconds: 250))));
 
 		var missing = service.CaptureMercenaryNpcSkillPreview(
 			player,
 			mercenaryObjectId: 9999,
 			listProjection,
 			selectionPreview,
-			actionPreview);
+			actionPreview,
+			postSpawnPreview);
 		var captured = service.CaptureMercenaryNpcSkillPreview(
 			player,
 			mercenaryObjectId: 8010,
 			listProjection,
 			selectionPreview,
-			actionPreview);
+			actionPreview,
+			postSpawnPreview);
 
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillPreviewCaptureStatus.MissingKnownObject, missing.Status);
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillPreviewCaptureStatus.Captured, captured.Status);
@@ -329,8 +337,10 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Same(listProjection, storedKnownObject.LastNpcSkillListProjection);
 		Assert.Same(selectionPreview, storedKnownObject.LastNpcSkillSelectionPreview);
 		Assert.Same(actionPreview, storedKnownObject.LastNpcSkillActionPreview);
+		Assert.Same(postSpawnPreview, storedKnownObject.LastNpcSkillPostSpawnPreview);
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionStatus.Ready, storedKnownObject.LastNpcSkillSelectionPreview?.Selection.Status);
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionPreviewStatus.WouldUseSkill, storedKnownObject.LastNpcSkillActionPreview?.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillPostSpawnPreviewStatus.DelayedSpawn, storedKnownObject.LastNpcSkillPostSpawnPreview?.Status);
 	}
 
 	[Fact]

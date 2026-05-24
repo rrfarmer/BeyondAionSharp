@@ -14,6 +14,7 @@ public sealed record PlayerSummonKnownObject(
 	PlayerSummonKnownObjectNpcSkillCandidateListProjection? LastNpcSkillListProjection = null,
 	PlayerSummonKnownObjectNpcSkillSelectionPreview? LastNpcSkillSelectionPreview = null,
 	PlayerSummonKnownObjectNpcSkillActionPreview? LastNpcSkillActionPreview = null,
+	PlayerSummonKnownObjectNpcSkillPostSpawnPreview? LastNpcSkillPostSpawnPreview = null,
 	PlayerAbnormalState AbnormalState = PlayerAbnormalState.None,
 	bool IsTransformed = false,
 	bool TransformBansSkillUse = false)
