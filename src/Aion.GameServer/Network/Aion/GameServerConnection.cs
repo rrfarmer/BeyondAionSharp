@@ -6666,7 +6666,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		return chargeWay == 1 ? SmQuestionWindow.ItemChargeAllConfirm : SmQuestionWindow.ItemCharge2AllConfirm;
 	}
 
-	private async Task HandleQuestionResponseAsync(Player responder, CmQuestionResponse packet)
+	internal async Task HandleQuestionResponseAsync(Player responder, CmQuestionResponse packet)
 	{
 		// Java parity: network/aion/clientpackets/CM_QUESTION_RESPONSE.runImpl.
 		if (packet.QuestionId == SmQuestionWindow.SoulBoundItemConfirm)
@@ -6690,6 +6690,12 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (packet.QuestionId == SmQuestionWindow.RegisterBindstone)
 		{
 			await HandleKiskBindQuestionResponseAsync(responder, packet);
+			return;
+		}
+
+		if (packet.QuestionId == SmQuestionWindow.UnionInviteMe)
+		{
+			await HandleLeagueInviteQuestionResponseAsync(responder, packet);
 			return;
 		}
 
@@ -6718,6 +6724,68 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		await AcceptFriendRequestAsync(requester, responder);
+	}
+
+	private async Task HandleLeagueInviteQuestionResponseAsync(Player responder, CmQuestionResponse packet)
+	{
+		// Java parity: CM_QUESTION_RESPONSE delegates to ResponseRequester.respond, which removes the
+		// LeagueInviteEvent handler and invokes denyRequest for 0 or acceptRequest for nonzero responses.
+		var pendingRequest = responder.PendingLeagueInviteRequest;
+		if (pendingRequest == null || pendingRequest.QuestionId != packet.QuestionId)
+			return;
+
+		if (_connectionRegistry == null)
+		{
+			responder.PendingLeagueInviteRequest = null;
+			return;
+		}
+
+		var requester = TryGetOnlinePlayerByObjectId(pendingRequest.RequesterObjectId);
+		if (requester == null)
+		{
+			responder.PendingLeagueInviteRequest = null;
+			return;
+		}
+
+		var requesterAllianceId = requester.CurrentAllianceSnapshot?.AllianceId ?? 0;
+		var newLeagueId = packet.Response != 0
+			&& requesterAllianceId > 0
+			&& _playerLeagueRuntime.ResolveByAllianceId(requesterAllianceId) == null
+				? _idFactory?.NextId()
+				: null;
+		var planner = new PlayerLeagueInvitePlanner();
+		var responsePlan = planner.CreatePendingRequestResponsePlan(
+			requester,
+			responder,
+			packet.QuestionId,
+			packet.Response,
+			_playerLeagueRuntime,
+			_playerAllianceRuntime,
+			newLeagueId);
+
+		if (responsePlan.DenyPlan != null)
+		{
+			await _connectionRegistry.SendPacketToPlayerAsync(
+				responsePlan.DenyPlan.RequesterObjectId,
+				responsePlan.DenyPlan.SystemMessageIntent.Message);
+		}
+
+		if (responsePlan.AcceptPlan?.JoinPlan != null)
+		{
+			foreach (var intent in responsePlan.AcceptPlan.JoinPlan.PacketIntents.OrderBy(intent => intent.Sequence))
+				await _connectionRegistry.SendPacketToPlayerAsync(intent.RecipientObjectId, intent.CreatePacket());
+		}
+	}
+
+	private Player? TryGetOnlinePlayerByObjectId(int playerObjectId)
+	{
+		Player? match = null;
+		_connectionRegistry?.ForEachOnlinePlayer(player =>
+		{
+			if (player.ObjectId == playerObjectId)
+				match = player;
+		});
+		return match;
 	}
 
 	private async Task HandleRiftPortalQuestionResponseAsync(Player responder, CmQuestionResponse packet)
