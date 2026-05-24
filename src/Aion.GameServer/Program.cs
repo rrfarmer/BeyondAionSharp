@@ -113,6 +113,7 @@ var builder = Host.CreateDefaultBuilder(args)
 				});
 			services.AddSingleton<WorldNpcSkillDamageFanoutService>();
 			services.AddSingleton<EquipmentObserverBurnFanoutService>();
+			services.AddSingleton<PlayerIncomingDamageObserverFanoutService>();
 			services.AddSingleton<WorldNpcLootService>();
 			services.AddSingleton<WorldNpcLootBroadcastService>();
 			services.AddSingleton<WorldNpcRandomWalkService>();

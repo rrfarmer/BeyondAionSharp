@@ -1,3 +1,4 @@
+using Aion.Commons.Network;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
@@ -320,6 +321,72 @@ public sealed class WorldNpcResourceStatsServiceTests
 		Assert.Null(result.AttackStatusPacket);
 		Assert.Empty(registry.Broadcasts);
 		Assert.Empty(registry.SentPackets);
+	}
+
+	[Fact]
+	public async Task ApplyIncomingHpDamageAndObserverBurnsAsync_SendsDamagePacketsBeforeDefenderObserverBurns()
+	{
+		var resourceStats = CreateService(out _, out var registry);
+		var observerFanout = new EquipmentObserverBurnFanoutService(registry);
+		var service = new PlayerIncomingDamageObserverFanoutService(resourceStats, observerFanout);
+		var player = CreatePlayer(objectId: 1020, currentHp: 100, currentMp: 80, currentFp: 100);
+		player.IsOnline = true;
+		player.InventoryItems =
+		[
+			CreateObserverBurnItem(objectId: 10, itemId: 100, charge: 100_050, polishCharge: 350_000),
+		];
+
+		var result = await service.ApplyIncomingHpDamageAndObserverBurnsAsync(
+			player,
+			maxHp: 100,
+			damage: 25,
+			CreateObserverBurnItemTemplates(),
+			skillId: 0);
+
+		Assert.Equal(WorldNpcResourceChangeStatus.Reduced, result.DamageResult.Status);
+		Assert.NotNull(result.ObserverBurns);
+		Assert.Equal(2, result.ObserverBurns.SentCount);
+		Assert.NotNull(result.DamageResult.AttackStatusPacket);
+		Assert.NotNull(result.DamageResult.HpStatUpdatePacket);
+		Assert.Collection(
+			registry.PacketOrder,
+			packet => Assert.Same(result.DamageResult.AttackStatusPacket, packet),
+			packet => Assert.Same(result.DamageResult.HpStatUpdatePacket, packet),
+			packet => AssertPolishChargePacket(packet, objectId: 10, polishCharge: 290_000),
+			packet => AssertChargePacket(packet, objectId: 10, charge: 99_950));
+		Assert.Equal([1020, 1020, 1020], registry.SentPackets.Select(sent => sent.PlayerObjectId));
+		var item = Assert.Single(player.InventoryItems);
+		Assert.Equal(75, player.LifeStats!.CurrentHp);
+		Assert.Equal(290_000, item.IdianStone?.PolishCharge);
+		Assert.Equal(99_950, item.Charge);
+	}
+
+	[Fact]
+	public async Task ApplyIncomingHpDamageAndObserverBurnsAsync_SkipsObserverBurnsWhenDamageDoesNotChangeHp()
+	{
+		var resourceStats = CreateService(out _, out var registry);
+		var observerFanout = new EquipmentObserverBurnFanoutService(registry);
+		var service = new PlayerIncomingDamageObserverFanoutService(resourceStats, observerFanout);
+		var player = CreatePlayer(objectId: 1021, currentHp: 0, currentMp: 0, currentFp: 100);
+		player.IsOnline = true;
+		player.InventoryItems =
+		[
+			CreateObserverBurnItem(objectId: 10, itemId: 100, charge: 100_050, polishCharge: 350_000),
+		];
+
+		var result = await service.ApplyIncomingHpDamageAndObserverBurnsAsync(
+			player,
+			maxHp: 100,
+			damage: 25,
+			CreateObserverBurnItemTemplates(),
+			skillId: 0);
+
+		Assert.Equal(WorldNpcResourceChangeStatus.AlreadyDead, result.DamageResult.Status);
+		Assert.Null(result.ObserverBurns);
+		Assert.Empty(registry.PacketOrder);
+		var item = Assert.Single(player.InventoryItems);
+		Assert.Equal(350_000, item.IdianStone?.PolishCharge);
+		Assert.Equal(100_050, item.Charge);
 	}
 
 	[Fact]
@@ -1020,6 +1087,89 @@ public sealed class WorldNpcResourceStatsServiceTests
 			Position = new WorldPosition(210010000, 10, 20, 30, 0),
 			LifeStats = new PlayerLifeStats(currentHp, currentMp, currentFp),
 		};
+	}
+
+	private static InventoryItem CreateObserverBurnItem(int objectId, int itemId, int charge, int polishCharge)
+	{
+		return new InventoryItem
+		{
+			ObjectId = objectId,
+			ItemId = itemId,
+			Count = 1,
+			Location = 0,
+			IsEquipped = true,
+			Slot = 1,
+			Charge = charge,
+			IdianStone = new PlayerIdianStone(600, 1, polishCharge),
+		};
+	}
+
+	private static ItemTemplateTable CreateObserverBurnItemTemplates()
+	{
+		return new ItemTemplateTable(
+		[
+			new ItemTemplateSummary(
+				100,
+				"item_100",
+				0,
+				1,
+				1,
+				"SWORD",
+				"NORMAL",
+				"COMMON",
+				"PC_ALL",
+				1,
+				0,
+				3,
+				Improvement: new ItemImprovement(ChargeWay: 1, Level: 2, BurnAttack: 200, BurnDefend: 100, Price1: 1000, Price2: 2000),
+				IdianInfo: new ItemIdianInfo(BurnAttack: 100_000, BurnDefend: 60_000)),
+			new ItemTemplateSummary(
+				600,
+				"idian_600",
+				0,
+				1,
+				1,
+				"NONE",
+				"NORMAL",
+				"COMMON",
+				"PC_ALL",
+				1,
+				0,
+				0,
+				PolishSetId: 12),
+		]);
+	}
+
+	private static void AssertPolishChargePacket(GameServerPacket packet, int objectId, int polishCharge)
+	{
+		var payload = SerializeUnencryptedPayload(packet);
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(objectId, reader.ReadD());
+		Assert.Equal(string.Empty, reader.ReadS());
+		Assert.Equal(5, reader.ReadH());
+		Assert.Equal(0x11, (int)reader.ReadC());
+		Assert.Equal(polishCharge, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertChargePacket(GameServerPacket packet, int objectId, int charge)
+	{
+		var payload = SerializeUnencryptedPayload(packet);
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(objectId, reader.ReadD());
+		Assert.Equal(string.Empty, reader.ReadS());
+		Assert.Equal(5, reader.ReadH());
+		Assert.Equal(0x0f, (int)reader.ReadC());
+		Assert.Equal(charge, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
+	{
+		var crypt = new GameCrypt(() => 0x01020304);
+		crypt.EnableKey();
+		var frame = packet.SerializeFrame(crypt);
+		return frame[7..];
 	}
 
 	private static NpcTemplateSummary CreateTemplate(int templateId, int maxHp)
