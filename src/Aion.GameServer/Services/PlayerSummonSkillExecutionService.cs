@@ -172,6 +172,40 @@ public sealed class PlayerSummonSkillExecutionService
 			knownObject.LastNpcSkillSchedulerCallbackOutcome);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillAttackCycleReadiness EvaluateMercenaryNpcSkillAttackCycleReadiness(
+		PlayerSummonKnownObjectNpcSkillAttackCycleSnapshot? cycleSnapshot)
+	{
+		// Java parity: validates represented SkillAttackManager state before any future live NpcAI adapter attempts invocation.
+		if (cycleSnapshot == null)
+			return PlayerSummonKnownObjectNpcSkillAttackCycleReadiness.MissingCycle();
+
+		if (!cycleSnapshot.IsCaptured || cycleSnapshot.KnownObject == null)
+			return PlayerSummonKnownObjectNpcSkillAttackCycleReadiness.MissingKnownObject(cycleSnapshot);
+
+		var missingPieces = new List<PlayerSummonKnownObjectNpcSkillAttackCycleReadinessPiece>();
+
+		if (!cycleSnapshot.HasSkillListProjection)
+			missingPieces.Add(PlayerSummonKnownObjectNpcSkillAttackCycleReadinessPiece.SkillListProjection);
+		if (!cycleSnapshot.HasSelectionPreview)
+			missingPieces.Add(PlayerSummonKnownObjectNpcSkillAttackCycleReadinessPiece.SelectionPreview);
+		if (!cycleSnapshot.HasActionPreview)
+			missingPieces.Add(PlayerSummonKnownObjectNpcSkillAttackCycleReadinessPiece.ActionPreview);
+		if (!cycleSnapshot.HasPostSpawnPreview)
+			missingPieces.Add(PlayerSummonKnownObjectNpcSkillAttackCycleReadinessPiece.PostSpawnPreview);
+		if (!cycleSnapshot.HasActionWorkflowPreview)
+			missingPieces.Add(PlayerSummonKnownObjectNpcSkillAttackCycleReadinessPiece.ActionWorkflowPreview);
+		if (!cycleSnapshot.HasPerformAttackPreview)
+			missingPieces.Add(PlayerSummonKnownObjectNpcSkillAttackCycleReadinessPiece.PerformAttackPreview);
+		if (!cycleSnapshot.HasPerformAttackExecutionPreview)
+			missingPieces.Add(PlayerSummonKnownObjectNpcSkillAttackCycleReadinessPiece.PerformAttackExecutionPreview);
+		if (!cycleSnapshot.HasSchedulerCallbackOutcome)
+			missingPieces.Add(PlayerSummonKnownObjectNpcSkillAttackCycleReadinessPiece.SchedulerCallbackOutcome);
+
+		return missingPieces.Count == 0
+			? PlayerSummonKnownObjectNpcSkillAttackCycleReadiness.Ready(cycleSnapshot)
+			: PlayerSummonKnownObjectNpcSkillAttackCycleReadiness.MissingRequiredMetadata(cycleSnapshot, missingPieces);
+	}
+
 	public PlayerSummonKnownObjectSkillReadiness EvaluateMercenarySkillReadiness(
 		PlayerSummonKnownObject knownObject,
 		SkillTemplateSummary? skillTemplate,
@@ -3883,6 +3917,90 @@ public enum PlayerSummonKnownObjectNpcSkillAttackCycleSnapshotStatus
 {
 	MissingKnownObject,
 	Captured,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleReadiness(
+	PlayerSummonKnownObjectNpcSkillAttackCycleReadinessStatus Status,
+	PlayerSummonKnownObjectNpcSkillAttackCycleSnapshot? CycleSnapshot = null,
+	IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleReadinessPiece>? MissingPieces = null)
+{
+	private static readonly IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleReadinessPiece> EmptyMissingPieces = [];
+
+	public IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleReadinessPiece> MissingRequiredPieces =>
+		MissingPieces ?? EmptyMissingPieces;
+
+	public bool IsReadyForLiveAiAdapter => Status == PlayerSummonKnownObjectNpcSkillAttackCycleReadinessStatus.Ready;
+
+	public bool HasMissingRequiredMetadata => Status == PlayerSummonKnownObjectNpcSkillAttackCycleReadinessStatus.MissingRequiredMetadata;
+
+	public bool MissingSkillListProjection => MissingRequiredPieces.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleReadinessPiece.SkillListProjection);
+
+	public bool MissingSelectionPreview => MissingRequiredPieces.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleReadinessPiece.SelectionPreview);
+
+	public bool MissingActionPreview => MissingRequiredPieces.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleReadinessPiece.ActionPreview);
+
+	public bool MissingPostSpawnPreview => MissingRequiredPieces.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleReadinessPiece.PostSpawnPreview);
+
+	public bool MissingActionWorkflowPreview => MissingRequiredPieces.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleReadinessPiece.ActionWorkflowPreview);
+
+	public bool MissingPerformAttackPreview => MissingRequiredPieces.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleReadinessPiece.PerformAttackPreview);
+
+	public bool MissingPerformAttackExecutionPreview => MissingRequiredPieces.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleReadinessPiece.PerformAttackExecutionPreview);
+
+	public bool MissingSchedulerCallbackOutcome => MissingRequiredPieces.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleReadinessPiece.SchedulerCallbackOutcome);
+
+	public static PlayerSummonKnownObjectNpcSkillAttackCycleReadiness MissingCycle()
+	{
+		return new PlayerSummonKnownObjectNpcSkillAttackCycleReadiness(
+			PlayerSummonKnownObjectNpcSkillAttackCycleReadinessStatus.MissingCycle);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillAttackCycleReadiness MissingKnownObject(
+		PlayerSummonKnownObjectNpcSkillAttackCycleSnapshot cycleSnapshot)
+	{
+		return new PlayerSummonKnownObjectNpcSkillAttackCycleReadiness(
+			PlayerSummonKnownObjectNpcSkillAttackCycleReadinessStatus.MissingKnownObject,
+			cycleSnapshot);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillAttackCycleReadiness MissingRequiredMetadata(
+		PlayerSummonKnownObjectNpcSkillAttackCycleSnapshot cycleSnapshot,
+		IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleReadinessPiece> missingPieces)
+	{
+		return new PlayerSummonKnownObjectNpcSkillAttackCycleReadiness(
+			PlayerSummonKnownObjectNpcSkillAttackCycleReadinessStatus.MissingRequiredMetadata,
+			cycleSnapshot,
+			missingPieces);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillAttackCycleReadiness Ready(
+		PlayerSummonKnownObjectNpcSkillAttackCycleSnapshot cycleSnapshot)
+	{
+		return new PlayerSummonKnownObjectNpcSkillAttackCycleReadiness(
+			PlayerSummonKnownObjectNpcSkillAttackCycleReadinessStatus.Ready,
+			cycleSnapshot,
+			EmptyMissingPieces);
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillAttackCycleReadinessStatus
+{
+	MissingCycle,
+	MissingKnownObject,
+	MissingRequiredMetadata,
+	Ready,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillAttackCycleReadinessPiece
+{
+	SkillListProjection,
+	SelectionPreview,
+	ActionPreview,
+	PostSpawnPreview,
+	ActionWorkflowPreview,
+	PerformAttackPreview,
+	PerformAttackExecutionPreview,
+	SchedulerCallbackOutcome,
 }
 
 public sealed record PlayerSummonKnownObjectNpcSkillActionWorkflowPreview(
