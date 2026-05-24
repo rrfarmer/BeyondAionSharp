@@ -369,6 +369,79 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void PreviewMercenaryNpcSkillSpawnObjectDispatch_ProjectsJavaSpawnObjectBranches()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+
+		PlayerSummonKnownObjectNpcSkillSpawnTemplatePreview Template(int npcId)
+		{
+			var origin = new PlayerSummonKnownObjectNpcSkillSpawnOrigin(
+				WorldId: 210010000,
+				InstanceId: 12,
+				X: 100.5f,
+				Y: 200.25f,
+				Z: 35.75f,
+				Heading: 90,
+				CreatorObjectId: 8001);
+			var spawn = new PlayerSummonKnownObjectNpcSkillSpawnMetadata(
+				NpcId: npcId,
+				MinDistance: 0,
+				MaxDistance: 0,
+				MinCount: 1,
+				MaxCount: 0);
+			var postSpawn = service.PreviewMercenaryNpcSkillPostSpawn(
+				service.ProjectMercenaryNpcSkillTemplate(new PlayerSummonKnownObjectNpcSkillTemplateMetadata(SpawnTemplate: spawn)));
+			var execution = service.PreviewMercenaryNpcSkillPostSpawnExecution(postSpawn, origin);
+			var location = service.PreviewMercenaryNpcSkillPostSpawnLocation(execution);
+			return service.PreviewMercenaryNpcSkillSpawnTemplate(location);
+		}
+
+		var missing = service.PreviewMercenaryNpcSkillSpawnObjectDispatch(null);
+		var notReady = service.PreviewMercenaryNpcSkillSpawnObjectDispatch(
+			PlayerSummonKnownObjectNpcSkillSpawnTemplatePreview.MissingLocation());
+		var gatherable = service.PreviewMercenaryNpcSkillSpawnObjectDispatch(
+			Template(450001),
+			PlayerSummonKnownObjectNpcSkillSpawnTemplateKind.Rift);
+		var rift = service.PreviewMercenaryNpcSkillSpawnObjectDispatch(
+			Template(212356),
+			PlayerSummonKnownObjectNpcSkillSpawnTemplateKind.Rift);
+		var siege = service.PreviewMercenaryNpcSkillSpawnObjectDispatch(
+			Template(212357),
+			PlayerSummonKnownObjectNpcSkillSpawnTemplateKind.Siege);
+		var vortex = service.PreviewMercenaryNpcSkillSpawnObjectDispatch(
+			Template(212358),
+			PlayerSummonKnownObjectNpcSkillSpawnTemplateKind.Vortex);
+		var npc = service.PreviewMercenaryNpcSkillSpawnObjectDispatch(Template(212359));
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchPreviewStatus.MissingTemplate, missing.Status);
+		Assert.False(missing.WouldCallVisibleObjectSpawner);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchPreviewStatus.NotReady, notReady.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchBranch.Gatherable, gatherable.Branch);
+		Assert.True(gatherable.RequiresGatherableSpawner);
+		Assert.False(gatherable.RequiresNpcTemplateLookup);
+		Assert.False(gatherable.RequiresRiftEnabledCheck);
+		Assert.Equal(450001, gatherable.NpcId);
+		Assert.Equal(12, gatherable.InstanceId);
+		Assert.True(gatherable.RequiresBringIntoWorld);
+		Assert.True(gatherable.RequiresTemporarySpawnRegistrationCheck);
+		Assert.True(gatherable.RequiresInstanceOnSpawnCheck);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchBranch.RiftNpc, rift.Branch);
+		Assert.True(rift.RequiresNpcTemplateLookup);
+		Assert.True(rift.RequiresRiftEnabledCheck);
+		Assert.True(rift.MayReturnNull);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchBranch.SiegeNpc, siege.Branch);
+		Assert.True(siege.RequiresSiegeEnabledCheck);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchBranch.InvasionNpc, vortex.Branch);
+		Assert.True(vortex.RequiresVortexEnabledCheck);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchBranch.Npc, npc.Branch);
+		Assert.True(npc.RequiresNpcTemplateLookup);
+		Assert.False(npc.RequiresRiftEnabledCheck);
+		Assert.False(npc.RequiresSiegeEnabledCheck);
+		Assert.False(npc.RequiresVortexEnabledCheck);
+	}
+
+	[Fact]
 	public void ProjectMercenaryNpcSkillCandidate_AdaptsStaticTemplateEntryIntoSelectableCandidate()
 	{
 		var service = new PlayerSummonSkillExecutionService();

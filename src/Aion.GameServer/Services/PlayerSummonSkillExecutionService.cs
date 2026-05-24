@@ -920,6 +920,39 @@ public sealed class PlayerSummonSkillExecutionService
 			creatorHasSpawn && creatorSpawnHasEventTemplate);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchPreview PreviewMercenaryNpcSkillSpawnObjectDispatch(
+		PlayerSummonKnownObjectNpcSkillSpawnTemplatePreview? spawnTemplatePreview,
+		PlayerSummonKnownObjectNpcSkillSpawnTemplateKind templateKind = PlayerSummonKnownObjectNpcSkillSpawnTemplateKind.Generic)
+	{
+		if (spawnTemplatePreview == null)
+			return PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchPreview.MissingTemplate();
+
+		if (!spawnTemplatePreview.WouldCreateSpawnTemplate
+			|| spawnTemplatePreview.NpcId == null
+			|| spawnTemplatePreview.InstanceId == null)
+		{
+			return PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchPreview.NotReady(spawnTemplatePreview, templateKind);
+		}
+
+		// Java parity: SpawnEngine.getSpawnedObject checks gatherable NPC ids before template subtype dispatch.
+		var branch = spawnTemplatePreview.NpcId is > 400000 and < 499999
+			? PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchBranch.Gatherable
+			: templateKind switch
+			{
+				PlayerSummonKnownObjectNpcSkillSpawnTemplateKind.Rift => PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchBranch.RiftNpc,
+				PlayerSummonKnownObjectNpcSkillSpawnTemplateKind.Siege => PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchBranch.SiegeNpc,
+				PlayerSummonKnownObjectNpcSkillSpawnTemplateKind.Vortex => PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchBranch.InvasionNpc,
+				_ => PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchBranch.Npc,
+			};
+
+		return PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchPreview.Dispatch(
+			spawnTemplatePreview,
+			templateKind,
+			branch,
+			spawnTemplatePreview.NpcId.Value,
+			spawnTemplatePreview.InstanceId.Value);
+	}
+
 	private static PlayerSummonKnownObjectNpcSkillSelectionResult SelectSingleMercenaryNpcSkillCandidate(
 		PlayerSummonKnownObjectNpcSkillCandidate candidate,
 		PlayerSummonKnownObjectNpcSkillSelectionSource source)
@@ -2155,6 +2188,90 @@ public enum PlayerSummonKnownObjectNpcSkillSpawnTemplatePreviewStatus
 	MissingLocation,
 	NotReady,
 	Created,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillSpawnTemplateKind
+{
+	Generic,
+	Rift,
+	Siege,
+	Vortex,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchPreview(
+	PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchPreviewStatus Status,
+	PlayerSummonKnownObjectNpcSkillSpawnTemplatePreview? SpawnTemplatePreview = null,
+	PlayerSummonKnownObjectNpcSkillSpawnTemplateKind TemplateKind = PlayerSummonKnownObjectNpcSkillSpawnTemplateKind.Generic,
+	PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchBranch? Branch = null,
+	int? NpcId = null,
+	int? InstanceId = null)
+{
+	public bool WouldCallVisibleObjectSpawner => Status == PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchPreviewStatus.Dispatch;
+	public bool RequiresNpcTemplateLookup => Branch is
+		PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchBranch.Npc
+		or PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchBranch.RiftNpc
+		or PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchBranch.SiegeNpc
+		or PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchBranch.InvasionNpc;
+	public bool RequiresGatherableSpawner => Branch == PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchBranch.Gatherable;
+	public bool RequiresRiftEnabledCheck => Branch == PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchBranch.RiftNpc;
+	public bool RequiresSiegeEnabledCheck => Branch == PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchBranch.SiegeNpc;
+	public bool RequiresVortexEnabledCheck => Branch == PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchBranch.InvasionNpc;
+	public bool RequiresBringIntoWorld => WouldCallVisibleObjectSpawner;
+	public bool RequiresTemporarySpawnRegistrationCheck => WouldCallVisibleObjectSpawner;
+	public bool RequiresInstanceOnSpawnCheck => WouldCallVisibleObjectSpawner;
+	public bool MayReturnNull => Branch is
+		PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchBranch.Npc
+		or PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchBranch.RiftNpc
+		or PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchBranch.SiegeNpc
+		or PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchBranch.InvasionNpc;
+
+	public static PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchPreview MissingTemplate()
+	{
+		return new PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchPreview(
+			PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchPreviewStatus.MissingTemplate);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchPreview NotReady(
+		PlayerSummonKnownObjectNpcSkillSpawnTemplatePreview spawnTemplatePreview,
+		PlayerSummonKnownObjectNpcSkillSpawnTemplateKind templateKind)
+	{
+		return new PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchPreview(
+			PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchPreviewStatus.NotReady,
+			spawnTemplatePreview,
+			templateKind);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchPreview Dispatch(
+		PlayerSummonKnownObjectNpcSkillSpawnTemplatePreview spawnTemplatePreview,
+		PlayerSummonKnownObjectNpcSkillSpawnTemplateKind templateKind,
+		PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchBranch branch,
+		int npcId,
+		int instanceId)
+	{
+		return new PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchPreview(
+			PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchPreviewStatus.Dispatch,
+			spawnTemplatePreview,
+			templateKind,
+			branch,
+			npcId,
+			instanceId);
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchPreviewStatus
+{
+	MissingTemplate,
+	NotReady,
+	Dispatch,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchBranch
+{
+	Gatherable,
+	RiftNpc,
+	SiegeNpc,
+	InvasionNpc,
+	Npc,
 }
 
 public sealed record PlayerSummonKnownObjectNpcSkillCandidateMetadata(
