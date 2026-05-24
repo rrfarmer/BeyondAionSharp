@@ -5857,6 +5857,16 @@ public sealed class GameServerConnection : BaseClientConnection
 			throw new InvalidOperationException("League should not be null");
 		}
 
+		if (packet.CommandCode == 30)
+		{
+			// Java parity: PlayerTeamCommandService LEAGUE_EXPEL -> findLeagueAlliance requires an active league before resolving the target alliance.
+			var leagueExpelAlliance = _playerAllianceRuntime.Resolve(player);
+			if (leagueExpelAlliance == null)
+				return null;
+
+			throw new InvalidOperationException($"{FormatJavaPlayer(player)} tried to execute league command without an active league alliance");
+		}
+
 		if (!Enum.IsDefined(typeof(PlayerAllianceReadyCheckCommand), packet.CommandCode))
 			return null;
 
@@ -5886,6 +5896,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			20 or 21 or 22 or 23 or 24 or
 			25 or 26 or 27 or
 			29 or 30 or 31 or 32;
+	}
+
+	private static string FormatJavaPlayer(Player player)
+	{
+		// Java parity: model/gameobjects/player/Player.toString.
+		return $"Player [id={player.ObjectId}, name={player.Name}]";
 	}
 
 	private async Task SendAllianceReadyCheckAsync(
