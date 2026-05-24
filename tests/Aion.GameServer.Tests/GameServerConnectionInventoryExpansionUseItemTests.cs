@@ -149,6 +149,25 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Equal(3, fixture.SentPackets.Count);
 	}
 
+	[Fact]
+	public async Task HandleEmotionAsync_DecomposePendingUseCancelsAndSendsEndState()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(includeThreadPoolManager: true);
+		var player = CreatePlayer(itemId: 100);
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
+		await InvokeHandleEmotionAsync(fixture.Connection, player, CreateEmotion(EmotionType.SelectTarget));
+
+		Assert.Equal(0, player.UsingItemObjectId);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 100, expectedTime: 3000, expectedEnd: 0),
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 100, expectedTime: 0, expectedEnd: 2),
+			packet => Assert.IsType<SmSystemMessage>(packet));
+		await Task.Delay(3100);
+		Assert.Equal(3, fixture.SentPackets.Count);
+	}
+
 	private static Player CreatePlayer(int itemId)
 	{
 		return new Player
@@ -202,13 +221,13 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		await task;
 	}
 
-	private static void AssertItemUsagePayload(SmItemUsageAnimation packet, int expectedTime, int expectedEnd)
+	private static void AssertItemUsagePayload(SmItemUsageAnimation packet, int expectedItemId = 188500000, int expectedTime = 0, int expectedEnd = 0)
 	{
 		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
 		Assert.Equal(1001, reader.ReadD());
 		Assert.Equal(1001, reader.ReadD());
 		Assert.Equal(5001, reader.ReadD());
-		Assert.Equal(188500000, reader.ReadD());
+		Assert.Equal(expectedItemId, reader.ReadD());
 		Assert.Equal(expectedTime, reader.ReadD());
 		Assert.Equal(expectedEnd, (int)reader.ReadC());
 		Assert.Equal(0, (int)reader.ReadC());
@@ -276,6 +295,10 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 				"""
 				<?xml version="1.0" encoding="UTF-8"?>
 				<static_data>
+					<player_experience_table>
+						<exp>0</exp>
+						<exp>100</exp>
+					</player_experience_table>
 					<item_templates>
 						<item_template id="169630000" name="[Expand Card] Expand Cube Ticket (lvl 1)" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="1">
 							<actions>
@@ -292,7 +315,20 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 								<animation idle="1" run="2" jump="3" rest="4" minutes="60" />
 							</actions>
 						</item_template>
+						<item_template id="100" name="Test Decompose Box" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="1">
+							<actions>
+								<decompose/>
+							</actions>
+						</item_template>
+						<item_template id="200" name="Test Decompose Reward" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
 					</item_templates>
+					<decomposable_items>
+						<decomposable item_id="100">
+							<items chance="100" minlevel="1" maxlevel="1">
+								<item id="200" min_count="1" max_count="1"/>
+							</items>
+						</decomposable>
+					</decomposable_items>
 				</static_data>
 				""");
 			var dataManager = await DataManager.LoadAsync(
