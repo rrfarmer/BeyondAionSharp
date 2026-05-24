@@ -70,6 +70,34 @@ public sealed class PlayerLeagueInvitePlannerTests
 	}
 
 	[Fact]
+	public void TryPutPendingRequest_RegistersOnceLikeJavaResponseRequesterPutRequest()
+	{
+		var planner = new PlayerLeagueInvitePlanner();
+		var alliances = new PlayerAllianceRuntime();
+		var inviter = new Player { ObjectId = 1001, Name = "Inviter", IsOnline = true };
+		var invitedLeader = new Player { ObjectId = 2001, Name = "InvitedLeader", IsOnline = true };
+		alliances.CreateAlliance(88001, inviter);
+		alliances.CreateAlliance(88002, invitedLeader);
+		var setupPlan = planner.CreateRequestSetupPlan(inviter, invitedLeader, alliances);
+
+		var registered = planner.TryPutPendingRequest(invitedLeader, setupPlan);
+		var duplicate = planner.TryPutPendingRequest(invitedLeader, setupPlan);
+
+		Assert.True(registered.Registered);
+		Assert.Equal(2001, registered.RequestTargetObjectId);
+		Assert.Equal(SmQuestionWindow.UnionInviteMe, registered.QuestionCode);
+		Assert.Same(registered.PendingRequest, invitedLeader.PendingLeagueInviteRequest);
+		Assert.Equal(SmQuestionWindow.UnionInviteMe, registered.PendingRequest.QuestionId);
+		Assert.Equal(1001, registered.PendingRequest.RequesterObjectId);
+		Assert.Equal(2001, registered.PendingRequest.RequestTargetObjectId);
+		Assert.Equal(2001, registered.PendingRequest.SelectedPlayerObjectId);
+		Assert.Equal(88002, registered.PendingRequest.InvitedAllianceId);
+		Assert.False(duplicate.Registered);
+		Assert.Same(registered.PendingRequest, duplicate.PendingRequest);
+		Assert.Same(registered.PendingRequest, invitedLeader.PendingLeagueInviteRequest);
+	}
+
+	[Fact]
 	public void CreateCanInviteFirstChecksPlan_FollowsJavaFailureOrder()
 	{
 		var planner = new PlayerLeagueInvitePlanner();

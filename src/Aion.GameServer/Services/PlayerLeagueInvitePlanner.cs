@@ -51,6 +51,39 @@ public sealed class PlayerLeagueInvitePlanner
 				new SmQuestionWindow(SmQuestionWindow.UnionInviteMe, senderObjectId: 0, rangeOrCooldownSeconds: 0, inviter.Name)));
 	}
 
+	public PlayerLeagueInvitePendingRequestPlan TryPutPendingRequest(
+		Player requestTarget,
+		PlayerLeagueInviteRequestSetupPlan setupPlan)
+	{
+		// Java parity: ResponseRequester.putRequest(messageId, handler) uses putIfAbsent by question id.
+		// This narrow model stores the league invite request metadata until CM_QUESTION_RESPONSE support is ported.
+		ArgumentNullException.ThrowIfNull(requestTarget);
+		ArgumentNullException.ThrowIfNull(setupPlan);
+
+		if (requestTarget.PendingLeagueInviteRequest != null)
+		{
+			return new PlayerLeagueInvitePendingRequestPlan(
+				requestTarget.ObjectId,
+				setupPlan.QuestionCode,
+				Registered: false,
+				requestTarget.PendingLeagueInviteRequest);
+		}
+
+		var pendingRequest = new PendingLeagueInviteRequest(
+			setupPlan.QuestionCode,
+			setupPlan.InviterObjectId,
+			setupPlan.RequestTargetObjectId,
+			setupPlan.SelectedPlayerObjectId,
+			setupPlan.InvitedAllianceId);
+		requestTarget.PendingLeagueInviteRequest = pendingRequest;
+
+		return new PlayerLeagueInvitePendingRequestPlan(
+			requestTarget.ObjectId,
+			setupPlan.QuestionCode,
+			Registered: true,
+			pendingRequest);
+	}
+
 	public PlayerLeagueCanInvitePlan CreateCanInviteFirstChecksPlan(
 		Player inviter,
 		Player invited)
@@ -244,6 +277,12 @@ public sealed record PlayerLeagueQuestionWindowIntent(
 		return QuestionWindow;
 	}
 }
+
+public sealed record PlayerLeagueInvitePendingRequestPlan(
+	int RequestTargetObjectId,
+	int QuestionCode,
+	bool Registered,
+	PendingLeagueInviteRequest PendingRequest);
 
 public enum PlayerLeagueInviteAcceptStatus
 {
