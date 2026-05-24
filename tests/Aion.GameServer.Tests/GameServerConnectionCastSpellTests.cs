@@ -51,7 +51,7 @@ public class GameServerConnectionCastSpellTests
 	}
 
 	[Fact]
-	public async Task HandleCastSpellAsync_ZeroSpellIdClearsCastingSkillBeforeCancelHook()
+	public async Task HandleCastSpellAsync_ZeroSpellIdClearsCastSkillAndSendsCancelPackets()
 	{
 		var events = new List<string>();
 		var sentPackets = new List<GameServerPacket>();
@@ -71,6 +71,35 @@ public class GameServerConnectionCastSpellTests
 		Assert.Equal(0, player.CastingSkillId);
 		Assert.Equal(7001, player.LastCastingSkillId);
 		Assert.Equal(["cancel-current:0:7001"], events);
+		Assert.Collection(
+			sentPackets,
+			packet => AssertSkillCancelPayload(Assert.IsType<SmSkillCancel>(packet), player.ObjectId, 7001),
+			packet =>
+			{
+				var message = Assert.IsType<SmSystemMessage>(packet);
+				Assert.Equal(1300023, message.MessageId);
+			});
+	}
+
+	[Fact]
+	public async Task HandleCastSpellAsync_ZeroSpellIdWithItemSkillClearsCastingSkillWithoutCastCancelPackets()
+	{
+		var events = new List<string>();
+		var sentPackets = new List<GameServerPacket>();
+		var hooks = new GameServerCastSpellHandlerHooks
+		{
+			CancelCurrentSkill = (player, _) => events.Add($"cancel-current:{player.CastingSkillId}:{player.LastCastingSkillId}"),
+		};
+		await using var pair = await TestConnectionPair.CreateAsync(sentPackets, hooks);
+		var player = CreatePlayer();
+		player.SetCastingSkill(9001, PlayerCastingSkillMethod.Item);
+
+		var result = await pair.Connection.HandleCastSpellAsync(player, CreateCastSpell(0));
+
+		Assert.Equal(PlayerCastSpellEarlyExitStatus.CancelCurrentSkill, result.Status);
+		Assert.Equal(0, player.CastingSkillId);
+		Assert.Equal(9001, player.LastCastingSkillId);
+		Assert.Equal(["cancel-current:0:9001"], events);
 		Assert.Empty(sentPackets);
 	}
 
@@ -178,6 +207,15 @@ public class GameServerConnectionCastSpellTests
 		foreach (var parameter in expected)
 			Assert.Equal(parameter, reader.ReadS());
 		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertSkillCancelPayload(SmSkillCancel packet, int expectedCreatureObjectId, int expectedSkillId)
+	{
+		var payload = SerializeUnencryptedPayload(packet);
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(expectedCreatureObjectId, reader.ReadD());
+		Assert.Equal(expectedSkillId, reader.ReadH());
 		Assert.Equal(0, reader.Remaining);
 	}
 

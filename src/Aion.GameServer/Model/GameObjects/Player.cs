@@ -301,6 +301,9 @@ public sealed class Player
 	// Java parity: model/gameobjects/Creature.castingSkill represented by skill id until full Skill instances are ported.
 	public int CastingSkillId { get; private set; }
 
+	// Java parity: skillengine/model/Skill.SkillMethod used by PlayerController.cancelCurrentSkill branch fanout.
+	public PlayerCastingSkillMethod CastingSkillMethod { get; private set; }
+
 	// Java parity: model/gameobjects/player/Player.lastSkill updated when a non-null casting skill is cleared.
 	public int LastCastingSkillId { get; private set; }
 
@@ -363,23 +366,31 @@ public sealed class Player
 		LootingNpcObjectId = 0;
 	}
 
-	public void SetCastingSkill(int skillId)
+	public void SetCastingSkill(int skillId, PlayerCastingSkillMethod method = PlayerCastingSkillMethod.Cast)
 	{
 		// Java parity: model/gameobjects/Creature.setCasting stores the active Skill; this port stores the represented skill id.
+		if (skillId == 0)
+		{
+			ClearCastingSkill();
+			return;
+		}
+
 		CastingSkillId = skillId;
+		CastingSkillMethod = method;
 	}
 
-	public int ClearCastingSkill()
+	public PlayerCastingSkillSnapshot? ClearCastingSkill()
 	{
 		// Java parity: model/gameobjects/player/Player.setCasting(null) records lastSkill before clearing the current cast.
 		var skillId = CastingSkillId;
-		if (skillId != 0)
-		{
-			LastCastingSkillId = skillId;
-			CastingSkillId = 0;
-		}
+		if (skillId == 0)
+			return null;
 
-		return skillId;
+		var method = CastingSkillMethod;
+		LastCastingSkillId = skillId;
+		CastingSkillId = 0;
+		CastingSkillMethod = PlayerCastingSkillMethod.None;
+		return new PlayerCastingSkillSnapshot(skillId, method);
 	}
 
 	public PlayerTeamMembership RemoveCurrentTeam()
@@ -753,5 +764,14 @@ public enum PlayerLeaveFlyAreaStatus
 	EndedFlying,
 	GlidingOutsideFlyArea,
 }
+
+public enum PlayerCastingSkillMethod
+{
+	None,
+	Cast,
+	Item,
+}
+
+public sealed record PlayerCastingSkillSnapshot(int SkillId, PlayerCastingSkillMethod Method);
 
 public sealed record PendingPlayerTeleport(WorldPosition Destination, TeleportAnimation Animation);

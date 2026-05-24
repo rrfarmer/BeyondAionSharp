@@ -1199,7 +1199,12 @@ public sealed class GameServerConnection : BaseClientConnection
 				SendSkillCannotCastDead: () => packets.Add(SmSystemMessage.SkillCannotCastDead()),
 				CancelCurrentSkill: () =>
 				{
-					CancelCurrentSkillForCastSpell(player);
+					var canceledSkill = CancelCurrentSkillForCastSpell(player);
+					if (canceledSkill?.Method == PlayerCastingSkillMethod.Cast)
+					{
+						packets.Add(new SmSkillCancel(player.ObjectId, canceledSkill.SkillId));
+						packets.Add(SmSystemMessage.SkillCanceled());
+					}
 					_castSpellHooks.CancelCurrentSkill(player, packet);
 				},
 				SendPetRequired: () => packets.Add(SmSystemMessage.SkillNotNeedPet()),
@@ -1219,10 +1224,10 @@ public sealed class GameServerConnection : BaseClientConnection
 		return result;
 	}
 
-	private static void CancelCurrentSkillForCastSpell(Player player)
+	private static PlayerCastingSkillSnapshot? CancelCurrentSkillForCastSpell(Player player)
 	{
 		// Java parity: CM_CASTSPELL spell id 0 -> PlayerController.cancelCurrentSkill(null) -> Player.setCasting(null).
-		player.ClearCastingSkill();
+		return player.ClearCastingSkill();
 	}
 
 	private void CancelUseItemForCastSpell(Player player)
