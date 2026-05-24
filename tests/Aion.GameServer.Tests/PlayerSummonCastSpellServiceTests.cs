@@ -1,0 +1,103 @@
+using Aion.Commons.Network;
+using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion;
+using Aion.GameServer.Network.Aion.ClientPackets;
+using Aion.GameServer.Services;
+
+namespace Aion.GameServer.Tests;
+
+public class PlayerSummonCastSpellServiceTests
+{
+	[Fact]
+	public void Handle_ConsumesMatchingQueuedPetOrderForRepresentedSummon()
+	{
+		var player = CreatePlayer();
+		player.AddPetSkillOrder(new PlayerPetSkillOrder(22107, SkillLevel: 1, TargetObjectId: 7001, Hate: 5, Release: true));
+		var packet = CreatePacket(summonObjectId: 8001, skillId: 22107, skillLevel: 1, targetObjectId: 7001);
+
+		var result = new PlayerSummonCastSpellService().Handle(player, packet);
+
+		Assert.Equal(PlayerSummonCastSpellStatus.Executed, result.Status);
+		Assert.False(result.SkillMismatch);
+		var order = Assert.IsType<PlayerPetSkillOrder>(result.ExecutedOrder);
+		Assert.Equal(22107, order.SkillId);
+		Assert.Equal(1, order.SkillLevel);
+		Assert.Equal(7001, order.TargetObjectId);
+		Assert.Equal(5, order.Hate);
+		Assert.True(order.Release);
+		Assert.Empty(player.PetSkillOrders);
+	}
+
+	[Fact]
+	public void Handle_UsesQueuedOrderWhenClientSkillDiffersAndMarksMismatch()
+	{
+		var player = CreatePlayer();
+		player.AddPetSkillOrder(new PlayerPetSkillOrder(22107, SkillLevel: 1, TargetObjectId: 7001, Hate: 0, Release: false));
+		var packet = CreatePacket(summonObjectId: 8001, skillId: 9999, skillLevel: 3, targetObjectId: 7001);
+
+		var result = new PlayerSummonCastSpellService().Handle(player, packet);
+
+		Assert.Equal(PlayerSummonCastSpellStatus.Executed, result.Status);
+		Assert.True(result.SkillMismatch);
+		Assert.Equal(22107, result.ExecutedOrder?.SkillId);
+		Assert.Equal(1, result.ExecutedOrder?.SkillLevel);
+		Assert.Empty(player.PetSkillOrders);
+	}
+
+	[Fact]
+	public void Handle_ConsumesQueuedOrderWithoutExecutionWhenTargetDoesNotMatch()
+	{
+		var player = CreatePlayer();
+		player.AddPetSkillOrder(new PlayerPetSkillOrder(22107, SkillLevel: 1, TargetObjectId: 7001, Hate: 0, Release: false));
+		var packet = CreatePacket(summonObjectId: 8001, skillId: 22107, skillLevel: 1, targetObjectId: 7002);
+
+		var result = new PlayerSummonCastSpellService().Handle(player, packet);
+
+		Assert.Equal(PlayerSummonCastSpellStatus.TargetMismatch, result.Status);
+		Assert.Equal(7002, result.TargetObjectId);
+		Assert.Equal(7001, result.ExecutedOrder?.TargetObjectId);
+		Assert.Empty(player.PetSkillOrders);
+	}
+
+	[Fact]
+	public void Handle_RequiresRepresentedPetSummonAndQueuedOrder()
+	{
+		var service = new PlayerSummonCastSpellService();
+		var noSummon = service.Handle(new Player(), CreatePacket(8001, 22107, 1, 7001));
+
+		var player = CreatePlayer();
+		var noOrder = service.Handle(player, CreatePacket(8001, 22107, 1, 7001));
+
+		var wrongSummon = CreatePlayer();
+		wrongSummon.AddPetSkillOrder(new PlayerPetSkillOrder(22107, SkillLevel: 1, TargetObjectId: 7001, Hate: 0, Release: false));
+		var wrongSummonResult = service.Handle(wrongSummon, CreatePacket(8002, 22107, 1, 7001));
+
+		Assert.Equal(PlayerSummonCastSpellStatus.PetRequired, noSummon.Status);
+		Assert.Equal(PlayerSummonCastSpellStatus.NoQueuedOrder, noOrder.Status);
+		Assert.Equal(PlayerSummonCastSpellStatus.PetRequired, wrongSummonResult.Status);
+		Assert.Single(wrongSummon.PetSkillOrders);
+	}
+
+	private static Player CreatePlayer()
+	{
+		return new Player
+		{
+			HasPetSummon = true,
+			PetSummonObjectId = 8001,
+			PetSummonNpcId = 833288,
+		};
+	}
+
+	private static CmSummonCastSpell CreatePacket(int summonObjectId, int skillId, int skillLevel, int targetObjectId)
+	{
+		var packet = new CmSummonCastSpell(205, new HashSet<GameConnectionState> { GameConnectionState.InGame });
+		using var buffer = new PacketBuffer();
+		buffer.WriteD(summonObjectId);
+		buffer.WriteH(skillId);
+		buffer.WriteC(skillLevel);
+		buffer.WriteD(targetObjectId);
+		buffer.WriteD(0);
+		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
+		return packet;
+	}
+}

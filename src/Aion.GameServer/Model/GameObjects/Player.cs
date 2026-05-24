@@ -229,6 +229,16 @@ public sealed class Player
 		_petSkillOrders.Add(order);
 	}
 
+	public PlayerPetSkillOrder? RetrieveNextPetSkillOrder()
+	{
+		if (_petSkillOrders.Count == 0)
+			return null;
+
+		var order = _petSkillOrders[0];
+		_petSkillOrders.RemoveAt(0);
+		return order;
+	}
+
 	public PlayerBrokerSettlementSummary BrokerSettlements { get; set; } = PlayerBrokerSettlementSummary.Empty;
 
 	// Java parity: model/broker/BrokerPlayerCache remembers the last broker list/search for refresh after buy.
