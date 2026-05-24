@@ -4,6 +4,7 @@ using Aion.GameServer.Data;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.World;
 using Microsoft.Extensions.Logging;
 using GameWorld = Aion.GameServer.World.World;
@@ -17,6 +18,7 @@ public sealed class PlayerEnterWorldService
 	private readonly GameWorld _world;
 	private readonly WorldNpcResourceStatsService? _resourceStats;
 	private readonly CreaturePvpZoneCounterService? _creaturePvpZoneCounterService;
+	private readonly IGameClientConnectionRegistry? _connectionRegistry;
 	private readonly ConcurrentDictionary<int, byte> _enteringWorld = new();
 	private readonly ILogger<PlayerEnterWorldService> _logger;
 
@@ -26,13 +28,15 @@ public sealed class PlayerEnterWorldService
 		GameWorld world,
 		ILogger<PlayerEnterWorldService> logger,
 		WorldNpcResourceStatsService? resourceStats = null,
-		CreaturePvpZoneCounterService? creaturePvpZoneCounterService = null)
+		CreaturePvpZoneCounterService? creaturePvpZoneCounterService = null,
+		IGameClientConnectionRegistry? connectionRegistry = null)
 	{
 		_options = options;
 		_repository = repository;
 		_world = world;
 		_resourceStats = resourceStats;
 		_creaturePvpZoneCounterService = creaturePvpZoneCounterService;
+		_connectionRegistry = connectionRegistry;
 		_logger = logger;
 	}
 
@@ -743,7 +747,7 @@ public sealed class PlayerEnterWorldService
 	public async Task LeaveWorldAsync(Player player, CancellationToken cancellationToken = default)
 	{
 		// Java parity: services/player/PlayerLeaveWorldService.leaveWorld baseline persistence.
-		ClearPendingQuestionResponses(player);
+		await ClearPendingQuestionResponsesAsync(player);
 		var lastOnline = DateTime.Now;
 		player.IsOnline = false;
 		player.LastOnline = lastOnline;
@@ -763,18 +767,57 @@ public sealed class PlayerEnterWorldService
 			&& DateTime.Now - lastOnline.Value < TimeSpan.FromSeconds(_options.Core.CharacterReentryTimeSeconds);
 	}
 
-	private static void ClearPendingQuestionResponses(Player player)
+	private async Task ClearPendingQuestionResponsesAsync(Player player)
 	{
 		// Java parity: PlayerLeaveWorldService.leaveWorld calls player.getResponseRequester().denyAll().
-		// Typed adapter slots are C# bridge state for migrated question handlers and must be cleared
-		// with the registry on logout.
-		_ = player.ResponseRequester.DenyAll();
+		// Java ResponseRequester.denyAll invokes each handler with response 0; execute the
+		// migrated per-kind denial side effects we can represent before clearing C# bridge slots.
+		var deniedRequests = player.ResponseRequester.DenyAll();
+		foreach (var dispatch in deniedRequests)
+			await SendPendingQuestionDenySideEffectAsync(player, dispatch);
+
+		// Typed adapter slots are C# bridge state for migrated question handlers and must be
+		// cleared with the registry on logout.
 		player.PendingFriendRequest = null;
 		player.PendingChargeAllRequest = null;
 		player.PendingSoulBindRequest = null;
 		player.PendingRiftPortalRequest = null;
 		player.PendingKiskBindRequest = null;
 		player.PendingLeagueInviteRequest = null;
+	}
+
+	private async Task SendPendingQuestionDenySideEffectAsync(Player responder, QuestionResponseDispatch dispatch)
+	{
+		if (_connectionRegistry == null)
+			return;
+
+		switch (dispatch.Request.Kind)
+		{
+			case QuestionResponseRequestKind.FriendInvite:
+			{
+				var request = dispatch.Request.Payload as PendingFriendRequest ?? responder.PendingFriendRequest;
+				var requesterObjectId = request?.RequesterObjectId ?? dispatch.Request.RequesterObjectId;
+				if (requesterObjectId > 0)
+				{
+					await _connectionRegistry.SendPacketToPlayerAsync(
+						requesterObjectId,
+						new SmFriendResponse(SmFriendResponse.TargetDenied, responder.Name));
+				}
+				break;
+			}
+			case QuestionResponseRequestKind.LeagueInvite:
+			{
+				var request = dispatch.Request.Payload as PendingLeagueInviteRequest ?? responder.PendingLeagueInviteRequest;
+				var requesterObjectId = request?.RequesterObjectId ?? dispatch.Request.RequesterObjectId;
+				if (requesterObjectId > 0)
+				{
+					await _connectionRegistry.SendPacketToPlayerAsync(
+						requesterObjectId,
+						SmSystemMessage.PartyAllianceHeRejectInvitation(responder.Name));
+				}
+				break;
+			}
+		}
 	}
 
 	private void ClearPlayerCreaturePvpZones(int playerObjectId)

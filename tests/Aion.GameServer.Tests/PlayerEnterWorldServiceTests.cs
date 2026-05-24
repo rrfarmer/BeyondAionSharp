@@ -271,7 +271,7 @@ public sealed class PlayerEnterWorldServiceTests
 		var repository = new CapturingEnterWorldRepository { Player = player };
 		var world = CreateWorld();
 		world.TryAddObject(player.ObjectId, player);
-		var service = CreateService(repository, world);
+		var service = CreateService(repository, world, out var registry);
 
 		await service.LeaveWorldAsync(player);
 
@@ -292,6 +292,19 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.Null(player.PendingRiftPortalRequest);
 		Assert.Null(player.PendingKiskBindRequest);
 		Assert.Null(player.PendingLeagueInviteRequest);
+		Assert.Collection(
+			registry.SentPackets.OrderBy(packet => packet.PlayerObjectId),
+			delivery =>
+			{
+				Assert.Equal(2001, delivery.PlayerObjectId);
+				Assert.IsType<SmFriendResponse>(delivery.Packet);
+			},
+			delivery =>
+			{
+				Assert.Equal(2002, delivery.PlayerObjectId);
+				var message = Assert.IsType<SmSystemMessage>(delivery.Packet);
+				Assert.Equal(1300190, message.MessageId);
+			});
 	}
 
 	[Fact]
@@ -590,7 +603,8 @@ public sealed class PlayerEnterWorldServiceTests
 			world,
 			NullLogger<PlayerEnterWorldService>.Instance,
 			resourceStats,
-			creaturePvpZoneCounterService);
+			creaturePvpZoneCounterService,
+			registry);
 	}
 
 	private static PlayerEnterWorldService CreateService(
