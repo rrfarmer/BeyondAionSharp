@@ -127,6 +127,38 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 	}
 
 	[Fact]
+	public async Task HandlePlayerStatusInfoAsync_GroupRemoveLeaderSelectsNextOnlineLeaderAfterLeaveFanoutLikeJava()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var groups = new PlayerGroupRuntime();
+		var leader = new Player { ObjectId = 1001, Name = "Leader", IsOnline = true, Position = new WorldPosition(210010000, 1, 2, 3, 0) };
+		var nextLeader = new Player { ObjectId = 1002, Name = "Next", IsOnline = true, Position = new WorldPosition(220010000, 4, 5, 6, 0) };
+		var member = new Player { ObjectId = 1003, Name = "Member", IsOnline = true, Position = new WorldPosition(230010000, 7, 8, 9, 0) };
+		groups.CreateOrUpdateGroup(99001, [leader, nextLeader, member]);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, new PlayerAllianceRuntime(), groups);
+
+		await pair.Connection.HandlePlayerStatusInfoAsync(
+			leader,
+			CreatePacket(commandCode: 6, selectedObjectId: leader.ObjectId));
+
+		Assert.Equal(PlayerTeamMembership.None, leader.TeamMembership);
+		Assert.Equal(nextLeader.ObjectId, groups.GetDescriptor(99001)?.LeaderObjectId);
+		Assert.Equal([1002, 1003], groups.GetMemberObjectIds(99001));
+		Assert.Equal([1002, 1002, 1003, 1003, 1002, 1002, 1003, 1003, 1001], registry.SentPackets.Select(send => send.PlayerObjectId));
+		Assert.Collection(
+			registry.SentPackets,
+			send => Assert.IsType<SmGroupMemberInfo>(send.Packet),
+			send => Assert.Equal(1300168, Assert.IsType<SmSystemMessage>(send.Packet).MessageId),
+			send => Assert.IsType<SmGroupMemberInfo>(send.Packet),
+			send => Assert.Equal(1300168, Assert.IsType<SmSystemMessage>(send.Packet).MessageId),
+			send => Assert.IsType<SmGroupInfo>(send.Packet),
+			send => Assert.Equal(1300155, Assert.IsType<SmSystemMessage>(send.Packet).MessageId),
+			send => Assert.IsType<SmGroupInfo>(send.Packet),
+			send => Assert.Equal(1300154, Assert.IsType<SmSystemMessage>(send.Packet).MessageId),
+			send => Assert.IsType<SmLeaveGroupMember>(send.Packet));
+	}
+
+	[Fact]
 	public async Task HandlePlayerStatusInfoAsync_AllianceChangeGroupSendsJavaServiceFailureMessages()
 	{
 		var registry = new CapturingConnectionRegistry();
