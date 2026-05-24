@@ -247,6 +247,49 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			packet => Assert.IsType<SmInventoryAddItem>(packet));
 	}
 
+	[Fact]
+	public async Task HandleSelectDecomposableAsync_SelectableRewardMergesExistingStack()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(idFactory: new IDFactory([5001, 6001]));
+		var player = CreatePlayer(itemId: 101);
+		player.InventoryItems = player.InventoryItems
+			.Concat(
+			[
+				new InventoryItem
+				{
+					ObjectId = 6001,
+					ItemId = 201,
+					Count = 4,
+					Location = 0,
+				},
+			])
+			.ToArray();
+
+		await InvokeHandleSelectDecomposableAsync(fixture.Connection, player, CreateSelectDecomposable(sourceItemObjectId: 5001, index: 0));
+
+		Assert.Collection(
+			player.InventoryItems.OrderBy(item => item.ObjectId),
+			item =>
+			{
+				Assert.Equal(5001, item.ObjectId);
+				Assert.Equal(101, item.ItemId);
+				Assert.Equal(1, item.Count);
+			},
+			item =>
+			{
+				Assert.Equal(6001, item.ObjectId);
+				Assert.Equal(201, item.ItemId);
+				Assert.Equal(6, item.Count);
+			});
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 101, expectedTime: 0, expectedEnd: 1, expectedUnknown3: 1),
+			packet => Assert.IsType<SmSystemMessage>(packet),
+			packet => AssertInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 5001, expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse),
+			packet => AssertSecondaryShowDecomposablePayload(Assert.IsType<SmSecondaryShowDecomposable>(packet)),
+			packet => AssertInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 6001, expectedUpdateType: SmInventoryUpdateItem.IncreaseItemCollect));
+	}
+
 	private static Player CreatePlayer(int itemId, long count = 2)
 	{
 		return new Player
@@ -341,6 +384,15 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Equal(1, (int)reader.ReadC());
 		Assert.Equal(expectedUnknown3, reader.ReadD());
 		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertInventoryUpdatePayload(SmInventoryUpdateItem packet, int expectedObjectId, int expectedUpdateType)
+	{
+		var payload = SerializeUnencryptedPayload(packet);
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(expectedObjectId, reader.ReadD());
+		var actualUpdateType = payload[^2] | (payload[^1] << 8);
+		Assert.Equal(expectedUpdateType, actualUpdateType);
 	}
 
 	private static void AssertFirstShowDecomposablePayload(SmFirstShowDecomposable packet)
