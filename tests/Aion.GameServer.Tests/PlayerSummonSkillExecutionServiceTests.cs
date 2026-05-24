@@ -10,6 +10,47 @@ namespace Aion.GameServer.Tests;
 public class PlayerSummonSkillExecutionServiceTests
 {
 	[Fact]
+	public void EvaluateMercenarySkillReadiness_ProjectsJavaAbnormalAndTransformGates()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var knownObject = new PlayerSummonKnownObject(
+			ObjectId: 8002,
+			Kind: PlayerSummonKnownObjectKind.Creature,
+			CreatorObjectId: 1,
+			NpcTemplateId: 833288,
+			NpcTemplateType: PlayerSummonKnownNpcTemplateType.Mercenary);
+		var magicalSkill = CreateSkillTemplate(skillType: "MAGICAL");
+		var physicalSkill = CreateSkillTemplate(skillType: "PHYSICAL");
+
+		var timingNotReady = service.EvaluateMercenarySkillReadiness(knownObject, magicalSkill, entryTimingReady: false);
+		var conditionNotReady = service.EvaluateMercenarySkillReadiness(knownObject, magicalSkill, entryConditionReady: false);
+		var missingTemplate = service.EvaluateMercenarySkillReadiness(knownObject, null);
+		var silencedMagical = service.EvaluateMercenarySkillReadiness(
+			knownObject with { AbnormalState = PlayerAbnormalState.Silence },
+			magicalSkill);
+		var boundPhysical = service.EvaluateMercenarySkillReadiness(
+			knownObject with { AbnormalState = PlayerAbnormalState.Bind },
+			physicalSkill);
+		var stunnedMagical = service.EvaluateMercenarySkillReadiness(
+			knownObject with { AbnormalState = PlayerAbnormalState.Stun },
+			magicalSkill);
+		var transformedBan = service.EvaluateMercenarySkillReadiness(
+			knownObject with { IsTransformed = true, TransformBansSkillUse = true },
+			physicalSkill);
+		var ready = service.EvaluateMercenarySkillReadiness(knownObject, magicalSkill);
+
+		Assert.Equal(PlayerSummonKnownObjectSkillReadinessStatus.EntryTimingNotReady, timingNotReady.Status);
+		Assert.Equal(PlayerSummonKnownObjectSkillReadinessStatus.EntryConditionNotReady, conditionNotReady.Status);
+		Assert.Equal(PlayerSummonKnownObjectSkillReadinessStatus.MissingSkillTemplate, missingTemplate.Status);
+		Assert.Equal(PlayerSummonKnownObjectSkillReadinessStatus.BlockedBySilence, silencedMagical.Status);
+		Assert.Equal(PlayerSummonKnownObjectSkillReadinessStatus.BlockedByBind, boundPhysical.Status);
+		Assert.Equal(PlayerSummonKnownObjectSkillReadinessStatus.BlockedByCantAttackState, stunnedMagical.Status);
+		Assert.Equal(PlayerSummonKnownObjectSkillReadinessStatus.BlockedByTransformSkillBan, transformedBan.Status);
+		Assert.Equal(PlayerSummonKnownObjectSkillReadinessStatus.Ready, ready.Status);
+		Assert.Same(magicalSkill, ready.SkillTemplate);
+	}
+
+	[Fact]
 	public void PreviewMercenarySkillAttack_ProjectsSkillAttackManagerGates()
 	{
 		var service = new PlayerSummonSkillExecutionService();
@@ -491,6 +532,21 @@ public class PlayerSummonSkillExecutionServiceTests
 			directory = directory.Parent;
 
 		return directory?.FullName ?? throw new InvalidOperationException("Unable to locate repository root.");
+	}
+
+	private static SkillTemplateSummary CreateSkillTemplate(string skillType)
+	{
+		return new SkillTemplateSummary(
+			SkillId: 22107,
+			Name: "summon_skill",
+			NameId: 0,
+			Level: 1,
+			Group: "",
+			Stack: "",
+			SkillType: skillType,
+			SkillSubType: "",
+			CooldownId: 0,
+			Cooldown: 0);
 	}
 
 	private static CmSummonCastSpell CreateSummonCastSpell(int summonObjectId, int skillId, int skillLevel, int targetObjectId)

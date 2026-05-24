@@ -8,7 +8,10 @@ public sealed record PlayerSummonKnownObject(
 	PlayerSummonKnownNpcTemplateType NpcTemplateType = PlayerSummonKnownNpcTemplateType.None,
 	IReadOnlySet<int>? DisabledSkillCooldownIds = null,
 	long? LastSkillTimeMilliseconds = null,
-	int? NextSkillDelayMilliseconds = null)
+	int? NextSkillDelayMilliseconds = null,
+	PlayerAbnormalState AbnormalState = PlayerAbnormalState.None,
+	bool IsTransformed = false,
+	bool TransformBansSkillUse = false)
 {
 	private static readonly IReadOnlySet<int> EmptyDisabledCooldowns = new HashSet<int>();
 
@@ -18,5 +21,17 @@ public sealed record PlayerSummonKnownObject(
 	{
 		// Java parity: Creature.isSkillDisabled checks the skill template cooldown id against creature cooldowns.
 		return DisabledCooldowns.Contains(cooldownId);
+	}
+
+	public bool IsAbnormalSet(PlayerAbnormalState state)
+	{
+		// Java parity: controllers/effect/EffectController.isAbnormalSet for represented NPC known objects.
+		return state == PlayerAbnormalState.None ? AbnormalState == PlayerAbnormalState.None : (AbnormalState & state) == state;
+	}
+
+	public bool IsInAnyAbnormalState(PlayerAbnormalState state)
+	{
+		// Java parity: controllers/effect/EffectController.isInAnyAbnormalState for represented NPC known objects.
+		return state == PlayerAbnormalState.None ? AbnormalState == PlayerAbnormalState.None : (AbnormalState & state) != 0;
 	}
 }

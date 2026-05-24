@@ -116,6 +116,43 @@ public sealed class PlayerSummonSkillExecutionService
 			: PlayerSummonKnownObjectNextSkillDelayResult.MissingKnownObject(mercenaryObjectId, nextSkillDelayMilliseconds);
 	}
 
+	public PlayerSummonKnownObjectSkillReadiness EvaluateMercenarySkillReadiness(
+		PlayerSummonKnownObject knownObject,
+		SkillTemplateSummary? skillTemplate,
+		bool entryTimingReady = true,
+		bool entryConditionReady = true)
+	{
+		if (!entryTimingReady)
+			return PlayerSummonKnownObjectSkillReadiness.EntryTimingNotReady(knownObject, skillTemplate);
+
+		if (!entryConditionReady)
+			return PlayerSummonKnownObjectSkillReadiness.EntryConditionNotReady(knownObject, skillTemplate);
+
+		// Java parity: SkillAttackManager.isReady resolves SkillTemplate through DataManager.SKILL_DATA.
+		if (skillTemplate == null)
+			return PlayerSummonKnownObjectSkillReadiness.MissingSkillTemplate(knownObject);
+
+		if (string.Equals(skillTemplate.SkillType, "MAGICAL", StringComparison.Ordinal)
+			&& knownObject.IsAbnormalSet(PlayerAbnormalState.Silence))
+		{
+			return PlayerSummonKnownObjectSkillReadiness.BlockedBySilence(knownObject, skillTemplate);
+		}
+
+		if (string.Equals(skillTemplate.SkillType, "PHYSICAL", StringComparison.Ordinal)
+			&& knownObject.IsAbnormalSet(PlayerAbnormalState.Bind))
+		{
+			return PlayerSummonKnownObjectSkillReadiness.BlockedByBind(knownObject, skillTemplate);
+		}
+
+		if (knownObject.IsInAnyAbnormalState(PlayerAbnormalState.CantAttackState))
+			return PlayerSummonKnownObjectSkillReadiness.BlockedByCantAttackState(knownObject, skillTemplate);
+
+		if (knownObject.IsTransformed && knownObject.TransformBansSkillUse)
+			return PlayerSummonKnownObjectSkillReadiness.BlockedByTransformSkillBan(knownObject, skillTemplate);
+
+		return PlayerSummonKnownObjectSkillReadiness.Ready(knownObject, skillTemplate);
+	}
+
 	public PlayerSummonKnownObjectSkillAttackPreview PreviewMercenarySkillAttack(
 		PlayerSummonKnownObject knownObject,
 		long fightStartingTimeMilliseconds,
@@ -672,6 +709,101 @@ public enum PlayerSummonKnownObjectNextSkillDelayStatus
 	Set,
 	MissingKnownObject,
 	RandomDelayUnsupported,
+}
+
+public sealed record PlayerSummonKnownObjectSkillReadiness(
+	PlayerSummonKnownObjectSkillReadinessStatus Status,
+	PlayerSummonKnownObject KnownObject,
+	SkillTemplateSummary? SkillTemplate = null)
+{
+	public static PlayerSummonKnownObjectSkillReadiness EntryTimingNotReady(
+		PlayerSummonKnownObject knownObject,
+		SkillTemplateSummary? skillTemplate)
+	{
+		return new PlayerSummonKnownObjectSkillReadiness(
+			PlayerSummonKnownObjectSkillReadinessStatus.EntryTimingNotReady,
+			knownObject,
+			skillTemplate);
+	}
+
+	public static PlayerSummonKnownObjectSkillReadiness EntryConditionNotReady(
+		PlayerSummonKnownObject knownObject,
+		SkillTemplateSummary? skillTemplate)
+	{
+		return new PlayerSummonKnownObjectSkillReadiness(
+			PlayerSummonKnownObjectSkillReadinessStatus.EntryConditionNotReady,
+			knownObject,
+			skillTemplate);
+	}
+
+	public static PlayerSummonKnownObjectSkillReadiness MissingSkillTemplate(PlayerSummonKnownObject knownObject)
+	{
+		return new PlayerSummonKnownObjectSkillReadiness(
+			PlayerSummonKnownObjectSkillReadinessStatus.MissingSkillTemplate,
+			knownObject);
+	}
+
+	public static PlayerSummonKnownObjectSkillReadiness BlockedBySilence(
+		PlayerSummonKnownObject knownObject,
+		SkillTemplateSummary skillTemplate)
+	{
+		return new PlayerSummonKnownObjectSkillReadiness(
+			PlayerSummonKnownObjectSkillReadinessStatus.BlockedBySilence,
+			knownObject,
+			skillTemplate);
+	}
+
+	public static PlayerSummonKnownObjectSkillReadiness BlockedByBind(
+		PlayerSummonKnownObject knownObject,
+		SkillTemplateSummary skillTemplate)
+	{
+		return new PlayerSummonKnownObjectSkillReadiness(
+			PlayerSummonKnownObjectSkillReadinessStatus.BlockedByBind,
+			knownObject,
+			skillTemplate);
+	}
+
+	public static PlayerSummonKnownObjectSkillReadiness BlockedByCantAttackState(
+		PlayerSummonKnownObject knownObject,
+		SkillTemplateSummary skillTemplate)
+	{
+		return new PlayerSummonKnownObjectSkillReadiness(
+			PlayerSummonKnownObjectSkillReadinessStatus.BlockedByCantAttackState,
+			knownObject,
+			skillTemplate);
+	}
+
+	public static PlayerSummonKnownObjectSkillReadiness BlockedByTransformSkillBan(
+		PlayerSummonKnownObject knownObject,
+		SkillTemplateSummary skillTemplate)
+	{
+		return new PlayerSummonKnownObjectSkillReadiness(
+			PlayerSummonKnownObjectSkillReadinessStatus.BlockedByTransformSkillBan,
+			knownObject,
+			skillTemplate);
+	}
+
+	public static PlayerSummonKnownObjectSkillReadiness Ready(
+		PlayerSummonKnownObject knownObject,
+		SkillTemplateSummary skillTemplate)
+	{
+		return new PlayerSummonKnownObjectSkillReadiness(
+			PlayerSummonKnownObjectSkillReadinessStatus.Ready,
+			knownObject,
+			skillTemplate);
+	}
+}
+
+public enum PlayerSummonKnownObjectSkillReadinessStatus
+{
+	EntryTimingNotReady,
+	EntryConditionNotReady,
+	MissingSkillTemplate,
+	BlockedBySilence,
+	BlockedByBind,
+	BlockedByCantAttackState,
+	BlockedByTransformSkillBan,
+	Ready,
 }
 
 public sealed record PlayerSummonKnownObjectSkillAttackPreview(
