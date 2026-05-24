@@ -362,6 +362,44 @@ public sealed class WorldNpcResourceStatsServiceTests
 	}
 
 	[Fact]
+	public async Task ApplyIncomingDotHpDamageAndObserverBurnsAsync_AllowsNonzeroSkillChargeAndIdianBurnsAfterDamage()
+	{
+		var resourceStats = CreateService(out _, out var registry);
+		var observerFanout = new EquipmentObserverBurnFanoutService(registry);
+		var service = new PlayerIncomingDamageObserverFanoutService(resourceStats, observerFanout);
+		var player = CreatePlayer(objectId: 1022, currentHp: 100, currentMp: 80, currentFp: 100);
+		player.IsOnline = true;
+		player.InventoryItems =
+		[
+			CreateObserverBurnItem(objectId: 10, itemId: 100, charge: 100_050, polishCharge: 350_000),
+		];
+
+		var result = await service.ApplyIncomingDotHpDamageAndObserverBurnsAsync(
+			player,
+			maxHp: 100,
+			damage: 25,
+			CreateObserverBurnItemTemplates(),
+			skillId: 2001);
+
+		Assert.Equal(WorldNpcResourceChangeStatus.Reduced, result.DamageResult.Status);
+		Assert.NotNull(result.ObserverBurns);
+		Assert.Equal(2, result.ObserverBurns.SentCount);
+		Assert.NotNull(result.DamageResult.AttackStatusPacket);
+		Assert.Equal(2001, result.DamageResult.AttackStatusPacket.SkillId);
+		Assert.NotNull(result.DamageResult.HpStatUpdatePacket);
+		Assert.Collection(
+			registry.PacketOrder,
+			packet => Assert.Same(result.DamageResult.AttackStatusPacket, packet),
+			packet => Assert.Same(result.DamageResult.HpStatUpdatePacket, packet),
+			packet => AssertPolishChargePacket(packet, objectId: 10, polishCharge: 290_000),
+			packet => AssertChargePacket(packet, objectId: 10, charge: 99_950));
+		var item = Assert.Single(player.InventoryItems);
+		Assert.Equal(75, player.LifeStats!.CurrentHp);
+		Assert.Equal(290_000, item.IdianStone?.PolishCharge);
+		Assert.Equal(99_950, item.Charge);
+	}
+
+	[Fact]
 	public async Task ApplyIncomingHpDamageAndObserverBurnsAsync_SkipsObserverBurnsWhenDamageDoesNotChangeHp()
 	{
 		var resourceStats = CreateService(out _, out var registry);
