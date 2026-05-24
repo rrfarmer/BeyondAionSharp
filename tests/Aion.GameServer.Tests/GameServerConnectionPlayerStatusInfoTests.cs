@@ -591,6 +591,30 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 	}
 
 	[Fact]
+	public async Task HandlePlayerStatusInfoAsync_AllianceLeaveTwoMemberAllianceSkipsOfflineRemainingDisbandPacketsLikeJava()
+	{
+		var registry = new CapturingConnectionRegistry();
+		registry.UnavailablePlayerObjectIds.Add(1001);
+		var alliances = new PlayerAllianceRuntime();
+		var offlineLeader = new Player { ObjectId = 1001, Name = "Leader", IsOnline = false, Position = new WorldPosition(210010000, 1, 2, 3, 0) };
+		var leaver = new Player { ObjectId = 1002, Name = "Leaver", IsOnline = true, Position = new WorldPosition(220010000, 4, 5, 6, 0) };
+		alliances.CreateAlliance(88001, offlineLeader);
+		alliances.AddMember(88001, leaver);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, alliances);
+
+		await pair.Connection.HandlePlayerStatusInfoAsync(
+			leaver,
+			CreatePacket(commandCode: 14, selectedObjectId: 0));
+
+		Assert.Equal(PlayerTeamMembership.None, offlineLeader.TeamMembership);
+		Assert.Equal(PlayerTeamMembership.None, leaver.TeamMembership);
+		Assert.Empty(alliances.GetMemberObjectIds(88001));
+		var send = Assert.Single(registry.SentPackets);
+		Assert.Equal(1002, send.PlayerObjectId);
+		Assert.IsType<SmLeaveGroupMember>(send.Packet);
+	}
+
+	[Fact]
 	public async Task HandlePlayerStatusInfoAsync_AllianceLeaveLeaderPromotesOnlineViceCaptainBeforeLeaveFanoutLikeJava()
 	{
 		var registry = new CapturingConnectionRegistry();
