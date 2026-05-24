@@ -1543,6 +1543,22 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.True(contract.ExpectsControllerUseSkill);
 		Assert.True(contract.ExpectsPostSpawnAction);
 		Assert.True(contract.ExpectsPackets);
+		Assert.True(contract.HasActionSideEffectTrace);
+		Assert.True(contract.HasEndCastSideEffectTrace);
+		Assert.Equal([
+			PlayerSummonKnownObjectNpcSkillActionSideEffectStep.CreatureControllerUseSkill,
+		], contract.ActionSideEffectTrace?.OrderedSteps);
+		Assert.Equal([
+			PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.ScheduleApplyEffect,
+			PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.SendCastSpellEnd,
+			PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.EffectorAiOnEndUseSkill,
+			PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.NpcSkillEntryFireOnEndCastEvents,
+			PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.PostSpawnSchedule,
+			PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.SkillAttackManagerAfterUseSkill,
+			PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.NotifyEndSkillCastObservers,
+			PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.InstanceHandlerOnEndCastSkill,
+		], contract.EndCastSideEffectTrace?.OrderedSteps);
+		Assert.True(contract.EndCastSideEffectTrace?.FiresPostSpawnBeforeAfterUseSkill);
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillAttackCycleOperationReadinessStatus.MissingResultContract, missingReadiness.Status);
 		Assert.False(missingReadiness.WouldExecuteOperations);
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillAttackCycleOperationReadinessStatus.BlockedByResultContract, blockedReadiness.Status);
@@ -1607,6 +1623,12 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Equal(summary.FutureLiveAdapterOperations, adapterContract.FutureLiveOperations);
 		Assert.Equal(summary.DependencyReadiness, adapterContract.RequiredDependencies);
 		Assert.Contains("NpcAI state/substate mutation", adapterContract.UnsupportedBehaviors);
+		Assert.True(adapterContract.PreservesActionSideEffectOrdering);
+		Assert.True(adapterContract.PreservesEndCastSideEffectOrdering);
+		Assert.Equal(contract.ActionSideEffectTrace?.Status, adapterContract.ActionSideEffectTrace?.Status);
+		Assert.Equal(contract.ActionSideEffectTrace?.OrderedSteps, adapterContract.ActionSideEffectTrace?.OrderedSteps);
+		Assert.Equal(contract.EndCastSideEffectTrace?.Status, adapterContract.EndCastSideEffectTrace?.Status);
+		Assert.Equal(contract.EndCastSideEffectTrace?.OrderedSteps, adapterContract.EndCastSideEffectTrace?.OrderedSteps);
 		Assert.True(adapterContract.RequiresDependency(PlayerSummonKnownObjectNpcSkillAttackCycleDependency.NpcAi));
 		Assert.True(adapterContract.RequiresDependency(PlayerSummonKnownObjectNpcSkillAttackCycleDependency.Scheduler));
 		Assert.True(adapterContract.RequiresOperation(PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.CreatureControllerUseSkill));

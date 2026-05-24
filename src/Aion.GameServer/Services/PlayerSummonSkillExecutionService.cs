@@ -4151,7 +4151,9 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 	PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocation? LiveInvocation = null,
 	IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect>? ExpectedSideEffects = null,
 	IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleOutcomeBranch>? OutcomeBranches = null,
-	IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation>? LiveOperations = null)
+	IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation>? LiveOperations = null,
+	PlayerSummonKnownObjectNpcSkillActionSideEffectTrace? ActionSideEffectTrace = null,
+	PlayerSummonKnownObjectNpcSkillEndCastSideEffectTrace? EndCastSideEffectTrace = null)
 {
 	private static readonly IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect> EmptySideEffects = [];
 	private static readonly IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleOutcomeBranch> EmptyOutcomeBranches = [];
@@ -4171,6 +4173,10 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 	public bool IsBlockedByInvocationReadiness => Status == PlayerSummonKnownObjectNpcSkillAttackCycleResultContractStatus.BlockedByInvocationReadiness;
 
 	public bool WouldExecuteSideEffects => false;
+
+	public bool HasActionSideEffectTrace => ActionSideEffectTrace != null;
+
+	public bool HasEndCastSideEffectTrace => EndCastSideEffectTrace != null;
 
 	public bool ExpectsAiSubStateMutation =>
 		ExpectedJavaSideEffects.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.AiCastSubState)
@@ -4219,12 +4225,44 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 
 		var sideEffects = BuildExpectedSideEffects(liveInvocation.CycleSnapshot);
 		var outcomeBranches = BuildExpectedOutcomeBranches(liveInvocation.CycleSnapshot);
+		var actionTrace = BuildActionSideEffectTrace(liveInvocation.CycleSnapshot);
 		return new PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 			PlayerSummonKnownObjectNpcSkillAttackCycleResultContractStatus.LiveAiNotWired,
 			liveInvocation,
 			sideEffects,
 			outcomeBranches,
-			BuildFutureLiveOperations(outcomeBranches, sideEffects));
+			BuildFutureLiveOperations(outcomeBranches, sideEffects),
+			actionTrace,
+			BuildEndCastSideEffectTrace(liveInvocation.CycleSnapshot, actionTrace));
+	}
+
+	private static PlayerSummonKnownObjectNpcSkillActionSideEffectTrace? BuildActionSideEffectTrace(
+		PlayerSummonKnownObjectNpcSkillAttackCycleSnapshot? cycleSnapshot)
+	{
+		var actionResult = cycleSnapshot?.SchedulerCallbackOutcome?.ActionResult
+			?? cycleSnapshot?.ActionWorkflowPreview?.ActionResult;
+
+		return actionResult == null
+			? null
+			: PlayerSummonKnownObjectNpcSkillActionSideEffectTrace.FromActionResult(actionResult);
+	}
+
+	private static PlayerSummonKnownObjectNpcSkillEndCastSideEffectTrace? BuildEndCastSideEffectTrace(
+		PlayerSummonKnownObjectNpcSkillAttackCycleSnapshot? cycleSnapshot,
+		PlayerSummonKnownObjectNpcSkillActionSideEffectTrace? actionTrace)
+	{
+		var actionResult = actionTrace?.ActionResult;
+		if (actionResult == null)
+			return null;
+
+		return PlayerSummonKnownObjectNpcSkillEndCastSideEffectTrace.FromActionResult(
+			actionResult,
+			cycleSnapshot?.PostSpawnPreview,
+			isInstantSkill: cycleSnapshot?.PerformAttackExecutionPreview?.Status
+				== PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreviewStatus.ImmediateWorkflow,
+			skillMethodSendsCastSpellEnd: true,
+			isNpcEffector: true,
+			isCastSkillMethod: true);
 	}
 
 	private static IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect> BuildExpectedSideEffects(
@@ -4694,7 +4732,9 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContra
 	PlayerSummonKnownObjectNpcSkillAttackCycleAdapterSummary? AdapterSummary = null,
 	IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation>? LiveOperations = null,
 	IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleDependencyReadiness>? DependencyReadiness = null,
-	IReadOnlyList<string>? UnsupportedJavaBehaviors = null)
+	IReadOnlyList<string>? UnsupportedJavaBehaviors = null,
+	PlayerSummonKnownObjectNpcSkillActionSideEffectTrace? ActionSideEffectTrace = null,
+	PlayerSummonKnownObjectNpcSkillEndCastSideEffectTrace? EndCastSideEffectTrace = null)
 {
 	private static readonly IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation> EmptyOperations = [];
 	private static readonly IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleDependencyReadiness> EmptyDependencies = [];
@@ -4717,6 +4757,10 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContra
 		Status == PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContractStatus.ReadyButUnsupported;
 
 	public bool WouldExecuteLiveAdapter => false;
+
+	public bool PreservesActionSideEffectOrdering => ActionSideEffectTrace != null;
+
+	public bool PreservesEndCastSideEffectOrdering => EndCastSideEffectTrace != null;
 
 	public bool RequiresDependency(PlayerSummonKnownObjectNpcSkillAttackCycleDependency dependency)
 	{
@@ -4749,7 +4793,9 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContra
 			adapterSummary,
 			adapterSummary.FutureLiveAdapterOperations,
 			adapterSummary.DependencyReadiness,
-			adapterSummary.LiveInvocation.UnsupportedBehaviors);
+			adapterSummary.LiveInvocation.UnsupportedBehaviors,
+			adapterSummary.ResultContract.ActionSideEffectTrace,
+			adapterSummary.ResultContract.EndCastSideEffectTrace);
 	}
 }
 
