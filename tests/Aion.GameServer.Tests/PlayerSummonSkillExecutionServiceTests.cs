@@ -516,6 +516,91 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void PreviewMercenaryNpcSkillBringIntoWorld_ProjectsJavaWorldInsertionSteps()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+
+		PlayerSummonKnownObjectNpcSkillNpcCreationPreview Creation(bool walkerBroughtIntoWorld = false)
+		{
+			var origin = new PlayerSummonKnownObjectNpcSkillSpawnOrigin(
+				WorldId: 210010000,
+				InstanceId: 12,
+				X: 100.5f,
+				Y: 200.25f,
+				Z: 35.75f,
+				Heading: 90,
+				CreatorObjectId: 8001);
+			var spawn = new PlayerSummonKnownObjectNpcSkillSpawnMetadata(
+				NpcId: 212361,
+				MinDistance: 0,
+				MaxDistance: 0,
+				MinCount: 1,
+				MaxCount: 0);
+			var postSpawn = service.PreviewMercenaryNpcSkillPostSpawn(
+				service.ProjectMercenaryNpcSkillTemplate(new PlayerSummonKnownObjectNpcSkillTemplateMetadata(SpawnTemplate: spawn)));
+			var execution = service.PreviewMercenaryNpcSkillPostSpawnExecution(postSpawn, origin);
+			var location = service.PreviewMercenaryNpcSkillPostSpawnLocation(execution);
+			var template = service.PreviewMercenaryNpcSkillSpawnTemplate(location);
+			var dispatch = service.PreviewMercenaryNpcSkillSpawnObjectDispatch(template);
+			return service.PreviewMercenaryNpcSkillOrdinaryNpcCreation(
+				dispatch,
+				npcTemplateExists: true,
+				walkerFormatorBroughtIntoWorld: walkerBroughtIntoWorld);
+		}
+
+		var creation = Creation();
+		var missing = service.PreviewMercenaryNpcSkillBringIntoWorld(null);
+		var notReady = service.PreviewMercenaryNpcSkillBringIntoWorld(Creation(walkerBroughtIntoWorld: true));
+		var invalidMap = service.PreviewMercenaryNpcSkillBringIntoWorld(creation, mapExists: false);
+		var invalidInstance = service.PreviewMercenaryNpcSkillBringIntoWorld(creation, instanceExists: false);
+		var invalidRegion = service.PreviewMercenaryNpcSkillBringIntoWorld(creation, regionExists: false);
+		var alreadySpawned = service.PreviewMercenaryNpcSkillBringIntoWorld(creation, objectAlreadySpawned: true);
+		var insert = service.PreviewMercenaryNpcSkillBringIntoWorld(creation);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillWorldInsertionPreviewStatus.MissingCreation, missing.Status);
+		Assert.False(missing.WouldStoreObject);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillWorldInsertionPreviewStatus.NotReady, notReady.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillWorldInsertionPreviewStatus.InvalidMap, invalidMap.Status);
+		Assert.True(invalidMap.RequiresMapLookup);
+		Assert.False(invalidMap.RequiresInstanceLookup);
+		Assert.True(invalidMap.MayThrow);
+		Assert.Equal(210010000, invalidMap.WorldId);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillWorldInsertionPreviewStatus.InvalidInstance, invalidInstance.Status);
+		Assert.True(invalidInstance.RequiresInstanceLookup);
+		Assert.False(invalidInstance.RequiresRegionLookup);
+		Assert.True(invalidInstance.MayThrow);
+		Assert.Equal(12, invalidInstance.InstanceId);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillWorldInsertionPreviewStatus.InvalidRegion, invalidRegion.Status);
+		Assert.True(invalidRegion.RequiresRegionLookup);
+		Assert.True(invalidRegion.MayThrow);
+		Assert.Equal(100.5f, invalidRegion.X);
+		Assert.Equal(200.25f, invalidRegion.Y);
+		Assert.Equal(35.75f, invalidRegion.Z);
+		Assert.Equal((byte)90, invalidRegion.Heading);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillWorldInsertionPreviewStatus.AlreadySpawned, alreadySpawned.Status);
+		Assert.True(alreadySpawned.MayThrow);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillWorldInsertionPreviewStatus.WouldInsert, insert.Status);
+		Assert.True(insert.WouldStoreObject);
+		Assert.True(insert.WouldSetPosition);
+		Assert.True(insert.WouldSpawn);
+		Assert.True(insert.RequiresDuplicateObjectCheck);
+		Assert.True(insert.RequiresMapLookup);
+		Assert.True(insert.RequiresInstanceLookup);
+		Assert.True(insert.RequiresRegionLookup);
+		Assert.True(insert.RequiresControllerBeforeAfterSpawn);
+		Assert.True(insert.RequiresMapRegionAdd);
+		Assert.True(insert.RequiresKnownListUpdate);
+		Assert.False(insert.MayThrow);
+		Assert.Equal(210010000, insert.WorldId);
+		Assert.Equal(12, insert.InstanceId);
+		Assert.Equal(100.5f, insert.X);
+		Assert.Equal(200.25f, insert.Y);
+		Assert.Equal(35.75f, insert.Z);
+		Assert.Equal((byte)90, insert.Heading);
+	}
+
+	[Fact]
 	public void ProjectMercenaryNpcSkillCandidate_AdaptsStaticTemplateEntryIntoSelectableCandidate()
 	{
 		var service = new PlayerSummonSkillExecutionService();

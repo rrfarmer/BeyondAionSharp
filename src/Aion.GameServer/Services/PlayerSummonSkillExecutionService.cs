@@ -986,6 +986,63 @@ public sealed class PlayerSummonSkillExecutionService
 			walkerFormatorBroughtIntoWorld);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillWorldInsertionPreview PreviewMercenaryNpcSkillBringIntoWorld(
+		PlayerSummonKnownObjectNpcSkillNpcCreationPreview? npcCreationPreview,
+		bool mapExists = true,
+		bool instanceExists = true,
+		bool regionExists = true,
+		bool objectAlreadySpawned = false)
+	{
+		if (npcCreationPreview == null)
+			return PlayerSummonKnownObjectNpcSkillWorldInsertionPreview.MissingCreation();
+
+		var spawnTemplate = npcCreationPreview.DispatchPreview?.SpawnTemplatePreview;
+		if (!npcCreationPreview.WouldCreateNpc
+			|| !npcCreationPreview.RequiresBringIntoWorld
+			|| spawnTemplate == null
+			|| spawnTemplate.WorldId == null
+			|| spawnTemplate.InstanceId == null
+			|| spawnTemplate.X == null
+			|| spawnTemplate.Y == null
+			|| spawnTemplate.Z == null
+			|| spawnTemplate.Heading == null)
+		{
+			return PlayerSummonKnownObjectNpcSkillWorldInsertionPreview.NotReady(npcCreationPreview);
+		}
+
+		if (!mapExists)
+			return PlayerSummonKnownObjectNpcSkillWorldInsertionPreview.InvalidMap(npcCreationPreview, spawnTemplate.WorldId.Value);
+
+		if (!instanceExists)
+			return PlayerSummonKnownObjectNpcSkillWorldInsertionPreview.InvalidInstance(
+				npcCreationPreview,
+				spawnTemplate.WorldId.Value,
+				spawnTemplate.InstanceId.Value);
+
+		if (!regionExists)
+			return PlayerSummonKnownObjectNpcSkillWorldInsertionPreview.InvalidRegion(
+				npcCreationPreview,
+				spawnTemplate.WorldId.Value,
+				spawnTemplate.InstanceId.Value,
+				spawnTemplate.X.Value,
+				spawnTemplate.Y.Value,
+				spawnTemplate.Z.Value,
+				spawnTemplate.Heading.Value);
+
+		if (objectAlreadySpawned)
+			return PlayerSummonKnownObjectNpcSkillWorldInsertionPreview.AlreadySpawned(npcCreationPreview);
+
+		// Java parity: SpawnEngine.bringIntoWorld calls World.storeObject, World.setPosition, then World.spawn.
+		return PlayerSummonKnownObjectNpcSkillWorldInsertionPreview.WouldInsert(
+			npcCreationPreview,
+			spawnTemplate.WorldId.Value,
+			spawnTemplate.InstanceId.Value,
+			spawnTemplate.X.Value,
+			spawnTemplate.Y.Value,
+			spawnTemplate.Z.Value,
+			spawnTemplate.Heading.Value);
+	}
+
 	private static PlayerSummonKnownObjectNpcSkillSelectionResult SelectSingleMercenaryNpcSkillCandidate(
 		PlayerSummonKnownObjectNpcSkillCandidate candidate,
 		PlayerSummonKnownObjectNpcSkillSelectionSource source)
@@ -2383,6 +2440,129 @@ public enum PlayerSummonKnownObjectNpcSkillNpcKnownListKind
 {
 	NpcKnownList,
 	FlagKnownList,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillWorldInsertionPreview(
+	PlayerSummonKnownObjectNpcSkillWorldInsertionPreviewStatus Status,
+	PlayerSummonKnownObjectNpcSkillNpcCreationPreview? NpcCreationPreview = null,
+	int? WorldId = null,
+	int? InstanceId = null,
+	float? X = null,
+	float? Y = null,
+	float? Z = null,
+	byte? Heading = null)
+{
+	public bool WouldStoreObject => Status == PlayerSummonKnownObjectNpcSkillWorldInsertionPreviewStatus.WouldInsert;
+	public bool WouldSetPosition => WouldStoreObject;
+	public bool WouldSpawn => WouldStoreObject;
+	public bool RequiresDuplicateObjectCheck => WouldStoreObject;
+	public bool RequiresMapLookup => Status is not PlayerSummonKnownObjectNpcSkillWorldInsertionPreviewStatus.MissingCreation
+		and not PlayerSummonKnownObjectNpcSkillWorldInsertionPreviewStatus.NotReady;
+	public bool RequiresInstanceLookup => RequiresMapLookup && Status != PlayerSummonKnownObjectNpcSkillWorldInsertionPreviewStatus.InvalidMap;
+	public bool RequiresRegionLookup => RequiresInstanceLookup && Status != PlayerSummonKnownObjectNpcSkillWorldInsertionPreviewStatus.InvalidInstance;
+	public bool RequiresControllerBeforeAfterSpawn => WouldSpawn;
+	public bool RequiresMapRegionAdd => WouldSpawn;
+	public bool RequiresKnownListUpdate => WouldSpawn;
+	public bool MayThrow => Status is
+		PlayerSummonKnownObjectNpcSkillWorldInsertionPreviewStatus.InvalidMap
+		or PlayerSummonKnownObjectNpcSkillWorldInsertionPreviewStatus.InvalidInstance
+		or PlayerSummonKnownObjectNpcSkillWorldInsertionPreviewStatus.InvalidRegion
+		or PlayerSummonKnownObjectNpcSkillWorldInsertionPreviewStatus.AlreadySpawned;
+
+	public static PlayerSummonKnownObjectNpcSkillWorldInsertionPreview MissingCreation()
+	{
+		return new PlayerSummonKnownObjectNpcSkillWorldInsertionPreview(
+			PlayerSummonKnownObjectNpcSkillWorldInsertionPreviewStatus.MissingCreation);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillWorldInsertionPreview NotReady(
+		PlayerSummonKnownObjectNpcSkillNpcCreationPreview npcCreationPreview)
+	{
+		return new PlayerSummonKnownObjectNpcSkillWorldInsertionPreview(
+			PlayerSummonKnownObjectNpcSkillWorldInsertionPreviewStatus.NotReady,
+			npcCreationPreview);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillWorldInsertionPreview InvalidMap(
+		PlayerSummonKnownObjectNpcSkillNpcCreationPreview npcCreationPreview,
+		int worldId)
+	{
+		return new PlayerSummonKnownObjectNpcSkillWorldInsertionPreview(
+			PlayerSummonKnownObjectNpcSkillWorldInsertionPreviewStatus.InvalidMap,
+			npcCreationPreview,
+			worldId);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillWorldInsertionPreview InvalidInstance(
+		PlayerSummonKnownObjectNpcSkillNpcCreationPreview npcCreationPreview,
+		int worldId,
+		int instanceId)
+	{
+		return new PlayerSummonKnownObjectNpcSkillWorldInsertionPreview(
+			PlayerSummonKnownObjectNpcSkillWorldInsertionPreviewStatus.InvalidInstance,
+			npcCreationPreview,
+			worldId,
+			instanceId);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillWorldInsertionPreview InvalidRegion(
+		PlayerSummonKnownObjectNpcSkillNpcCreationPreview npcCreationPreview,
+		int worldId,
+		int instanceId,
+		float x,
+		float y,
+		float z,
+		byte heading)
+	{
+		return new PlayerSummonKnownObjectNpcSkillWorldInsertionPreview(
+			PlayerSummonKnownObjectNpcSkillWorldInsertionPreviewStatus.InvalidRegion,
+			npcCreationPreview,
+			worldId,
+			instanceId,
+			x,
+			y,
+			z,
+			heading);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillWorldInsertionPreview AlreadySpawned(
+		PlayerSummonKnownObjectNpcSkillNpcCreationPreview npcCreationPreview)
+	{
+		return new PlayerSummonKnownObjectNpcSkillWorldInsertionPreview(
+			PlayerSummonKnownObjectNpcSkillWorldInsertionPreviewStatus.AlreadySpawned,
+			npcCreationPreview);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillWorldInsertionPreview WouldInsert(
+		PlayerSummonKnownObjectNpcSkillNpcCreationPreview npcCreationPreview,
+		int worldId,
+		int instanceId,
+		float x,
+		float y,
+		float z,
+		byte heading)
+	{
+		return new PlayerSummonKnownObjectNpcSkillWorldInsertionPreview(
+			PlayerSummonKnownObjectNpcSkillWorldInsertionPreviewStatus.WouldInsert,
+			npcCreationPreview,
+			worldId,
+			instanceId,
+			x,
+			y,
+			z,
+			heading);
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillWorldInsertionPreviewStatus
+{
+	MissingCreation,
+	NotReady,
+	InvalidMap,
+	InvalidInstance,
+	InvalidRegion,
+	AlreadySpawned,
+	WouldInsert,
 }
 
 public sealed record PlayerSummonKnownObjectNpcSkillCandidateMetadata(
