@@ -1045,6 +1045,62 @@ public sealed class PlayerSummonSkillExecutionService
 			projectedCandidateList.Candidates);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillSelectionPreview PreviewMercenaryNextNpcSkillSelectionFromRepresentedCurrentTarget(
+		PlayerSummonKnownObject knownObject,
+		PlayerSummonKnownObject currentTarget,
+		double currentTargetDistanceMeters,
+		long fightStartingTimeMilliseconds,
+		int initialSkillDelayMilliseconds,
+		long currentTimeMilliseconds,
+		bool isInCastSubState,
+		IEnumerable<PlayerSummonKnownObjectNpcSkillCandidateMetadata> candidates,
+		int hpPercentage,
+		bool? currentTargetGeoCanSee = null,
+		bool currentTargetIsSupport = false,
+		bool currentTargetIsFriend = false,
+		PlayerSummonKnownObjectNpcSkillCandidateMetadata? queuedCandidate = null,
+		PlayerSummonKnownObjectNpcSkillTemplateMetadata? lastSkill = null,
+		long lastSkillLastTimeUsedMilliseconds = 0,
+		bool ownerExists = true,
+		bool ownerIsDead = false,
+		bool ownerIsAboutToDie = false)
+	{
+		// Java parity: represents the curTarget facts read by NpcSkillTemplateEntry.conditionReady before live creature.getTarget() exists.
+		var projectedCandidates = candidates
+			.Select(candidate => ApplyRepresentedCurrentTarget(
+				candidate,
+				currentTarget,
+				currentTargetDistanceMeters,
+				currentTargetGeoCanSee,
+				currentTargetIsSupport,
+				currentTargetIsFriend))
+			.ToArray();
+		var projectedQueuedCandidate = queuedCandidate == null
+			? null
+			: ApplyRepresentedCurrentTarget(
+				queuedCandidate,
+				currentTarget,
+				currentTargetDistanceMeters,
+				currentTargetGeoCanSee,
+				currentTargetIsSupport,
+				currentTargetIsFriend);
+
+		return PreviewMercenaryNextNpcSkillSelectionFromCandidateMetadata(
+			knownObject,
+			fightStartingTimeMilliseconds,
+			initialSkillDelayMilliseconds,
+			currentTimeMilliseconds,
+			isInCastSubState,
+			projectedCandidates,
+			hpPercentage,
+			projectedQueuedCandidate,
+			lastSkill,
+			lastSkillLastTimeUsedMilliseconds,
+			ownerExists,
+			ownerIsDead,
+			ownerIsAboutToDie);
+	}
+
 	public PlayerSummonKnownObjectNpcSkillPostSpawnPreview PreviewMercenaryNpcSkillPostSpawn(
 		PlayerSummonKnownObjectNpcSkillTemplateProjection? skill,
 		bool ownerIsDead = false,
@@ -1370,6 +1426,28 @@ public sealed class PlayerSummonSkillExecutionService
 		}
 
 		return PlayerSummonKnownObjectNpcSkillSelectionResult.Ready(candidate, source);
+	}
+
+	private PlayerSummonKnownObjectNpcSkillCandidateMetadata ApplyRepresentedCurrentTarget(
+		PlayerSummonKnownObjectNpcSkillCandidateMetadata candidate,
+		PlayerSummonKnownObject currentTarget,
+		double currentTargetDistanceMeters,
+		bool? currentTargetGeoCanSee,
+		bool currentTargetIsSupport,
+		bool currentTargetIsFriend)
+	{
+		if (candidate.ConditionTarget != null)
+			return candidate;
+
+		var condition = candidate.Template.ConditionTemplate ?? new PlayerSummonKnownObjectNpcSkillConditionMetadata();
+		var target = ProjectMercenaryNpcSkillConditionTarget(
+			currentTarget,
+			condition,
+			currentTargetDistanceMeters,
+			currentTargetGeoCanSee,
+			currentTargetIsSupport,
+			currentTargetIsFriend);
+		return candidate with { ConditionTarget = target };
 	}
 
 	private static PlayerSummonKnownObjectNpcSkillConditionReadiness MatchTargetAbnormalState(

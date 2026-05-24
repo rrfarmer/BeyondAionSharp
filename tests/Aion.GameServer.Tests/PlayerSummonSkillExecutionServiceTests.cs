@@ -1334,6 +1334,80 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void PreviewMercenaryNextNpcSkillSelectionFromRepresentedCurrentTarget_AppliesTargetFacts()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var knownObject = new PlayerSummonKnownObject(
+			ObjectId: 8901,
+			Kind: PlayerSummonKnownObjectKind.Creature,
+			LastSkillTimeMilliseconds: 0,
+			NextSkillDelayMilliseconds: 0);
+		var currentTarget = new PlayerSummonKnownObject(
+			ObjectId: 8902,
+			Kind: PlayerSummonKnownObjectKind.Creature,
+			AbnormalState: PlayerAbnormalState.Stun,
+			HpPercentage: 35,
+			IsPhysicalClass: true);
+		var poisoned = new PlayerSummonKnownObjectNpcSkillCandidateMetadata(
+			0,
+			new PlayerSummonKnownObjectNpcSkillTemplateMetadata(
+				Priority: 20,
+				Probability: 100,
+				ConditionTemplate: new PlayerSummonKnownObjectNpcSkillConditionMetadata(PlayerSummonKnownObjectNpcSkillCondition.TargetIsPoisoned)));
+		var stunned = new PlayerSummonKnownObjectNpcSkillCandidateMetadata(
+			1,
+			new PlayerSummonKnownObjectNpcSkillTemplateMetadata(
+				Priority: 10,
+				Probability: 100,
+				ConditionTemplate: new PlayerSummonKnownObjectNpcSkillConditionMetadata(PlayerSummonKnownObjectNpcSkillCondition.TargetIsStunned)));
+		var manualTarget = new PlayerSummonKnownObjectNpcSkillConditionTarget(
+			PlayerSummonKnownObjectNpcSkillConditionTargetKind.Npc,
+			PlayerAbnormalState.Sleep,
+			ObjectId: 7777,
+			IsCreature: true);
+		var sleepingManual = new PlayerSummonKnownObjectNpcSkillCandidateMetadata(
+			2,
+			new PlayerSummonKnownObjectNpcSkillTemplateMetadata(
+				Priority: 5,
+				Probability: 100,
+				ConditionTemplate: new PlayerSummonKnownObjectNpcSkillConditionMetadata(PlayerSummonKnownObjectNpcSkillCondition.TargetIsSleeping)),
+			ConditionTarget: manualTarget);
+
+		var preview = service.PreviewMercenaryNextNpcSkillSelectionFromRepresentedCurrentTarget(
+			knownObject,
+			currentTarget,
+			currentTargetDistanceMeters: 6,
+			fightStartingTimeMilliseconds: 1_000,
+			initialSkillDelayMilliseconds: 0,
+			currentTimeMilliseconds: 2_000,
+			isInCastSubState: false,
+			candidates: [poisoned, stunned, sleepingManual],
+			hpPercentage: 100,
+			currentTargetGeoCanSee: true,
+			currentTargetIsFriend: true);
+		var manualPreview = service.PreviewMercenaryNextNpcSkillSelectionFromRepresentedCurrentTarget(
+			knownObject,
+			currentTarget,
+			currentTargetDistanceMeters: 6,
+			fightStartingTimeMilliseconds: 1_000,
+			initialSkillDelayMilliseconds: 0,
+			currentTimeMilliseconds: 2_000,
+			isInCastSubState: false,
+			candidates: [sleepingManual],
+			hpPercentage: 100);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionStatus.Ready, preview.Selection.Status);
+		Assert.Equal(1, preview.Selection.Candidate?.Position);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.Ready, preview.Selection.Candidate?.EntryConditionReadiness.Status);
+		Assert.Equal(8902, preview.Selection.Candidate?.EntryConditionReadiness.Target?.ObjectId);
+		Assert.True(preview.Selection.Candidate?.EntryConditionReadiness.Target?.IsCreature);
+		Assert.True(preview.Selection.Candidate?.EntryConditionReadiness.Target?.IsFriend);
+		Assert.Equal(PlayerAbnormalState.Stun, preview.Selection.Candidate?.EntryConditionReadiness.Target?.AbnormalState);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionStatus.Ready, manualPreview.Selection.Status);
+		Assert.Equal(7777, manualPreview.Selection.Candidate?.EntryConditionReadiness.Target?.ObjectId);
+	}
+
+	[Fact]
 	public void SelectMercenaryNpcSkillActionTarget_ProjectsJavaSkillActionTargetMutation()
 	{
 		var service = new PlayerSummonSkillExecutionService();
