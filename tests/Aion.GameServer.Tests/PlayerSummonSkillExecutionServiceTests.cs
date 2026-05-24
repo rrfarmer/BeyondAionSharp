@@ -103,6 +103,41 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void EvaluateMercenaryNpcSkillConditionReadiness_ConsumesConditionMetadataRange()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var condition = new PlayerSummonKnownObjectNpcSkillConditionMetadata(
+			PlayerSummonKnownObjectNpcSkillCondition.TargetIsInRange,
+			RangeMeters: 12);
+
+		var insideTarget = service.ProjectMercenaryNpcSkillConditionTarget(
+			PlayerSummonKnownObjectNpcSkillConditionTargetKind.Npc,
+			condition,
+			distanceMeters: 11.9);
+		var boundaryTarget = service.ProjectMercenaryNpcSkillConditionTarget(
+			PlayerSummonKnownObjectNpcSkillConditionTargetKind.Npc,
+			condition,
+			distanceMeters: 12);
+		var outsideTarget = service.ProjectMercenaryNpcSkillConditionTarget(
+			PlayerSummonKnownObjectNpcSkillConditionTargetKind.Npc,
+			condition,
+			distanceMeters: 12.1);
+
+		var inside = service.EvaluateMercenaryNpcSkillConditionReadiness(condition, insideTarget);
+		var boundary = service.EvaluateMercenaryNpcSkillConditionReadiness(condition, boundaryTarget);
+		var outside = service.EvaluateMercenaryNpcSkillConditionReadiness(condition, outsideTarget);
+
+		Assert.True(insideTarget.IsInRange);
+		Assert.True(boundaryTarget.IsInRange);
+		Assert.False(outsideTarget.IsInRange);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.Ready, inside.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.Ready, boundary.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.NotReady, outside.Status);
+		Assert.Equal(condition.Condition, inside.Condition);
+		Assert.Equal(condition.Condition, outside.Condition);
+	}
+
+	[Fact]
 	public void EvaluateMercenaryNpcSkillConditionReadiness_ProjectsSimpleJavaConditionBranches()
 	{
 		var service = new PlayerSummonSkillExecutionService();

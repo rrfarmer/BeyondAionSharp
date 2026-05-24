@@ -313,6 +313,38 @@ public sealed class PlayerSummonSkillExecutionService
 		};
 	}
 
+	public PlayerSummonKnownObjectNpcSkillConditionReadiness EvaluateMercenaryNpcSkillConditionReadiness(
+		PlayerSummonKnownObjectNpcSkillConditionMetadata conditionMetadata,
+		PlayerSummonKnownObjectNpcSkillConditionTarget? target,
+		bool ownerExists = true,
+		bool ownerIsDead = false,
+		bool ownerIsAboutToDie = false)
+	{
+		return EvaluateMercenaryNpcSkillConditionReadiness(
+			conditionMetadata.Condition,
+			target,
+			ownerExists,
+			ownerIsDead,
+			ownerIsAboutToDie);
+	}
+
+	public PlayerSummonKnownObjectNpcSkillConditionTarget ProjectMercenaryNpcSkillConditionTarget(
+		PlayerSummonKnownObjectNpcSkillConditionTargetKind kind,
+		PlayerSummonKnownObjectNpcSkillConditionMetadata conditionMetadata,
+		double distanceMeters,
+		PlayerAbnormalState abnormalState = PlayerAbnormalState.None,
+		bool isFlying = false,
+		bool? isPhysicalClass = null)
+	{
+		// Java parity: NpcSkillTemplateEntry.conditionReady uses PositionUtil.isInRange(..., condTemp.getRange(), false).
+		return new PlayerSummonKnownObjectNpcSkillConditionTarget(
+			kind,
+			abnormalState,
+			isFlying,
+			isPhysicalClass,
+			distanceMeters <= conditionMetadata.RangeMeters);
+	}
+
 	private static PlayerSummonKnownObjectNpcSkillConditionReadiness MatchTargetAbnormalState(
 		PlayerSummonKnownObjectNpcSkillCondition condition,
 		PlayerSummonKnownObjectNpcSkillConditionTarget? target,
