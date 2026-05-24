@@ -20,6 +20,7 @@ public sealed class PlayerSummonSkillExecutionService
 			return PlayerSummonSkillExecutionResult.InvalidPetSkill(player.PetSummonNpcId, order, resolvedTarget);
 
 		return PlayerSummonSkillExecutionResult.WouldInvokeSkillEngine(
+			player.PetSummonObjectId,
 			player.PetSummonNpcId,
 			order,
 			resolvedTarget,
@@ -60,6 +61,7 @@ public sealed class PlayerSummonSkillExecutionService
 				resolvedTarget);
 
 		return PlayerMercenarySkillExecutionResult.WouldInvokeController(
+			packet.SummonObjectId,
 			mercenaryNpcId,
 			packet.SkillId,
 			packet.SkillLevel,
@@ -73,7 +75,8 @@ public sealed record PlayerSummonSkillExecutionResult(
 	int PetSummonNpcId,
 	PlayerPetSkillOrder Order,
 	PlayerSummonCastSpellTarget? ResolvedTarget = null,
-	IReadOnlyList<PlayerSummonSkillExecutionAction>? PlannedActions = null)
+	IReadOnlyList<PlayerSummonSkillExecutionAction>? PlannedActions = null,
+	PlayerSummonSkillInvocationPlan? InvocationPlan = null)
 {
 	public IReadOnlyList<PlayerSummonSkillExecutionAction> Actions => PlannedActions ?? Array.Empty<PlayerSummonSkillExecutionAction>();
 
@@ -101,17 +104,30 @@ public sealed record PlayerSummonSkillExecutionResult(
 	}
 
 	public static PlayerSummonSkillExecutionResult WouldInvokeSkillEngine(
+		int petSummonObjectId,
 		int petSummonNpcId,
 		PlayerPetSkillOrder order,
 		PlayerSummonCastSpellTarget? resolvedTarget,
 		IReadOnlyList<PlayerSummonSkillExecutionAction> plannedActions)
 	{
+		// Java parity: SummonController.useSkill(SkillOrder) passes level 1 into SkillEngine.getSkill.
+		var invocationPlan = new PlayerSummonSkillInvocationPlan(
+			PlayerSummonSkillInvocationActorKind.Summon,
+			petSummonObjectId,
+			petSummonNpcId,
+			order.SkillId,
+			SkillLevel: 1,
+			resolvedTarget,
+			order.Hate,
+			ReleaseOnSuccess: order.Release);
+
 		return new PlayerSummonSkillExecutionResult(
 			PlayerSummonSkillExecutionStatus.WouldInvokeSkillEngine,
 			petSummonNpcId,
 			order,
 			resolvedTarget,
-			plannedActions);
+			plannedActions,
+			invocationPlan);
 	}
 }
 
@@ -130,6 +146,22 @@ public enum PlayerSummonSkillExecutionAction
 	ReleaseOnSuccess,
 }
 
+public sealed record PlayerSummonSkillInvocationPlan(
+	PlayerSummonSkillInvocationActorKind ActorKind,
+	int ActorObjectId,
+	int ActorTemplateId,
+	int SkillId,
+	int SkillLevel,
+	PlayerSummonCastSpellTarget? Target,
+	int Hate,
+	bool ReleaseOnSuccess);
+
+public enum PlayerSummonSkillInvocationActorKind
+{
+	Summon,
+	Mercenary,
+}
+
 public sealed record PlayerMercenarySkillExecutionResult(
 	PlayerMercenarySkillExecutionStatus Status,
 	int MercenaryNpcId,
@@ -138,7 +170,8 @@ public sealed record PlayerMercenarySkillExecutionResult(
 	int TargetObjectId,
 	PlayerSummonCastSpellTarget? ResolvedTarget = null,
 	IReadOnlyList<PlayerMercenarySkillExecutionAction>? PlannedActions = null,
-	PlayerMercenarySkillExecutionAudit? Audit = null)
+	PlayerMercenarySkillExecutionAudit? Audit = null,
+	PlayerSummonSkillInvocationPlan? InvocationPlan = null)
 {
 	public IReadOnlyList<PlayerMercenarySkillExecutionAction> Actions => PlannedActions ?? Array.Empty<PlayerMercenarySkillExecutionAction>();
 
@@ -176,12 +209,23 @@ public sealed record PlayerMercenarySkillExecutionResult(
 	}
 
 	public static PlayerMercenarySkillExecutionResult WouldInvokeController(
+		int mercenaryObjectId,
 		int mercenaryNpcId,
 		int skillId,
 		int skillLevel,
 		int targetObjectId,
 		PlayerSummonCastSpellTarget? resolvedTarget)
 	{
+		var invocationPlan = new PlayerSummonSkillInvocationPlan(
+			PlayerSummonSkillInvocationActorKind.Mercenary,
+			mercenaryObjectId,
+			mercenaryNpcId,
+			skillId,
+			skillLevel,
+			resolvedTarget,
+			Hate: 0,
+			ReleaseOnSuccess: false);
+
 		return new PlayerMercenarySkillExecutionResult(
 			PlayerMercenarySkillExecutionStatus.WouldInvokeController,
 			mercenaryNpcId,
@@ -192,7 +236,8 @@ public sealed record PlayerMercenarySkillExecutionResult(
 			[
 				PlayerMercenarySkillExecutionAction.SetTarget,
 				PlayerMercenarySkillExecutionAction.UseSkill,
-			]);
+			],
+			InvocationPlan: invocationPlan);
 	}
 }
 

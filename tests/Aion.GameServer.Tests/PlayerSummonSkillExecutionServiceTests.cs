@@ -16,6 +16,7 @@ public class PlayerSummonSkillExecutionServiceTests
 		var player = new Player
 		{
 			HasPetSummon = true,
+			PetSummonObjectId = 8001,
 			PetSummonNpcId = 833288,
 		};
 		var order = new PlayerPetSkillOrder(22107, SkillLevel: 1, TargetObjectId: 7001, Hate: 5, Release: true);
@@ -31,6 +32,14 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Same(order, result.Order);
 		Assert.Equal(7001, result.ResolvedTarget?.ObjectId);
 		Assert.False(result.ResolvedTarget?.IsActorSelfTarget);
+		Assert.Equal(PlayerSummonSkillInvocationActorKind.Summon, result.InvocationPlan?.ActorKind);
+		Assert.Equal(8001, result.InvocationPlan?.ActorObjectId);
+		Assert.Equal(833288, result.InvocationPlan?.ActorTemplateId);
+		Assert.Equal(22107, result.InvocationPlan?.SkillId);
+		Assert.Equal(1, result.InvocationPlan?.SkillLevel);
+		Assert.Equal(7001, result.InvocationPlan?.Target?.ObjectId);
+		Assert.Equal(5, result.InvocationPlan?.Hate);
+		Assert.True(result.InvocationPlan?.ReleaseOnSuccess);
 		Assert.True(result.Order.Release);
 		Assert.Equal(5, result.Order.Hate);
 		Assert.Equal(
@@ -50,6 +59,7 @@ public class PlayerSummonSkillExecutionServiceTests
 		var player = new Player
 		{
 			HasPetSummon = true,
+			PetSummonObjectId = 8001,
 			PetSummonNpcId = 833288,
 		};
 
@@ -61,6 +71,10 @@ public class PlayerSummonSkillExecutionServiceTests
 
 		Assert.Equal(PlayerSummonSkillExecutionStatus.WouldInvokeSkillEngine, result.Status);
 		Assert.Equal(7001, result.ResolvedTarget?.ObjectId);
+		Assert.Equal(PlayerSummonSkillInvocationActorKind.Summon, result.InvocationPlan?.ActorKind);
+		Assert.Equal(8001, result.InvocationPlan?.ActorObjectId);
+		Assert.Equal(1, result.InvocationPlan?.SkillLevel);
+		Assert.False(result.InvocationPlan?.ReleaseOnSuccess);
 		Assert.Equal(
 			[
 				PlayerSummonSkillExecutionAction.GetSkill,
@@ -94,6 +108,8 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Equal(9999, invalidSkill.Order.SkillId);
 		Assert.Equal(7001, missingSummon.ResolvedTarget?.ObjectId);
 		Assert.Equal(7001, invalidSkill.ResolvedTarget?.ObjectId);
+		Assert.Null(missingSummon.InvocationPlan);
+		Assert.Null(invalidSkill.InvocationPlan);
 		Assert.Empty(missingSummon.Actions);
 		Assert.Empty(invalidSkill.Actions);
 	}
@@ -128,6 +144,14 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Equal(PlayerMercenarySkillExecutionStatus.WouldInvokeController, valid.Status);
 		Assert.Equal(8002, valid.ResolvedTarget?.ObjectId);
 		Assert.True(valid.ResolvedTarget?.IsActorSelfTarget);
+		Assert.Equal(PlayerSummonSkillInvocationActorKind.Mercenary, valid.InvocationPlan?.ActorKind);
+		Assert.Equal(8002, valid.InvocationPlan?.ActorObjectId);
+		Assert.Equal(833288, valid.InvocationPlan?.ActorTemplateId);
+		Assert.Equal(22107, valid.InvocationPlan?.SkillId);
+		Assert.Equal(1, valid.InvocationPlan?.SkillLevel);
+		Assert.Equal(8002, valid.InvocationPlan?.Target?.ObjectId);
+		Assert.Equal(0, valid.InvocationPlan?.Hate);
+		Assert.False(valid.InvocationPlan?.ReleaseOnSuccess);
 		Assert.Equal(
 			[
 				PlayerMercenarySkillExecutionAction.SetTarget,
@@ -136,6 +160,7 @@ public class PlayerSummonSkillExecutionServiceTests
 			valid.Actions);
 		Assert.Equal(PlayerMercenarySkillExecutionStatus.InvalidMercenarySkill, invalid.Status);
 		Assert.Equal(8002, invalid.ResolvedTarget?.ObjectId);
+		Assert.Null(invalid.InvocationPlan);
 		var audit = Assert.IsType<PlayerMercenarySkillExecutionAudit>(invalid.Audit);
 		Assert.Equal(PlayerMercenarySkillExecutionAuditKind.InvalidMercenarySkill, audit.Kind);
 		Assert.Empty(invalid.Actions);

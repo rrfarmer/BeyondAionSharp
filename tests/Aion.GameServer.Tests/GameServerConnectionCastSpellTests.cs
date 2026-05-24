@@ -338,6 +338,14 @@ public class GameServerConnectionCastSpellTests
 		Assert.Equal(22107, result.ExecutionResult?.Order.SkillId);
 		Assert.Equal(7001, result.ExecutionResult?.ResolvedTarget?.ObjectId);
 		Assert.False(result.ExecutionResult?.ResolvedTarget?.IsActorSelfTarget);
+		Assert.Equal(PlayerSummonSkillInvocationActorKind.Summon, result.ExecutionResult?.InvocationPlan?.ActorKind);
+		Assert.Equal(8001, result.ExecutionResult?.InvocationPlan?.ActorObjectId);
+		Assert.Equal(833288, result.ExecutionResult?.InvocationPlan?.ActorTemplateId);
+		Assert.Equal(22107, result.ExecutionResult?.InvocationPlan?.SkillId);
+		Assert.Equal(1, result.ExecutionResult?.InvocationPlan?.SkillLevel);
+		Assert.Equal(7001, result.ExecutionResult?.InvocationPlan?.Target?.ObjectId);
+		Assert.Equal(5, result.ExecutionResult?.InvocationPlan?.Hate);
+		Assert.True(result.ExecutionResult?.InvocationPlan?.ReleaseOnSuccess);
 		Assert.Equal(5, result.ExecutionResult?.Order.Hate);
 		Assert.True(result.ExecutionResult?.Order.Release);
 		Assert.Empty(player.PetSkillOrders);
@@ -365,6 +373,7 @@ public class GameServerConnectionCastSpellTests
 		Assert.Equal(PlayerSummonSkillExecutionStatus.InvalidPetSkill, result.ExecutionResult?.Status);
 		Assert.Equal(9999, result.ExecutionResult?.Order.SkillId);
 		Assert.Equal(7001, result.ExecutionResult?.ResolvedTarget?.ObjectId);
+		Assert.Null(result.ExecutionResult?.InvocationPlan);
 		Assert.Empty(sentPackets);
 	}
 
@@ -396,6 +405,14 @@ public class GameServerConnectionCastSpellTests
 		Assert.Equal(8002, result.MercenaryExecutionResult?.TargetObjectId);
 		Assert.Equal(8002, result.MercenaryExecutionResult?.ResolvedTarget?.ObjectId);
 		Assert.True(result.MercenaryExecutionResult?.ResolvedTarget?.IsActorSelfTarget);
+		Assert.Equal(PlayerSummonSkillInvocationActorKind.Mercenary, result.MercenaryExecutionResult?.InvocationPlan?.ActorKind);
+		Assert.Equal(8002, result.MercenaryExecutionResult?.InvocationPlan?.ActorObjectId);
+		Assert.Equal(833288, result.MercenaryExecutionResult?.InvocationPlan?.ActorTemplateId);
+		Assert.Equal(22107, result.MercenaryExecutionResult?.InvocationPlan?.SkillId);
+		Assert.Equal(1, result.MercenaryExecutionResult?.InvocationPlan?.SkillLevel);
+		Assert.Equal(8002, result.MercenaryExecutionResult?.InvocationPlan?.Target?.ObjectId);
+		Assert.Equal(0, result.MercenaryExecutionResult?.InvocationPlan?.Hate);
+		Assert.False(result.MercenaryExecutionResult?.InvocationPlan?.ReleaseOnSuccess);
 		Assert.Equal(
 			[
 				PlayerMercenarySkillExecutionAction.SetTarget,
@@ -427,6 +444,7 @@ public class GameServerConnectionCastSpellTests
 		Assert.Equal(PlayerMercenarySkillExecutionStatus.InvalidMercenarySkill, result.MercenaryExecutionResult?.Status);
 		Assert.Equal(9999, result.MercenaryExecutionResult?.SkillId);
 		Assert.Equal(8002, result.MercenaryExecutionResult?.ResolvedTarget?.ObjectId);
+		Assert.Null(result.MercenaryExecutionResult?.InvocationPlan);
 		var audit = Assert.IsType<PlayerMercenarySkillExecutionAudit>(result.MercenaryExecutionResult?.Audit);
 		Assert.Equal(PlayerMercenarySkillExecutionAuditKind.InvalidMercenarySkill, audit.Kind);
 		Assert.Equal(9999, audit.SkillId);
