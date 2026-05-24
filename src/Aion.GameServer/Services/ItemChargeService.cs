@@ -132,6 +132,43 @@ public static class ItemChargeService
 			PointsDelta: nextCharge - previousCharge);
 	}
 
+	public static ItemChargeBurnPlan BurnEquippedChargePoints(
+		Player player,
+		ItemTemplateTable itemTemplates,
+		ItemChargeObserverEvent observerEvent,
+		int skillId)
+	{
+		// Java parity: model/stats/listeners/ItemEquipmentListener attaches ChargeInfo as a DOT_ATTACK_DEFEND observer.
+		if (observerEvent != ItemChargeObserverEvent.DotAttacked && skillId != 0)
+			return ItemChargeBurnPlan.NoChange();
+
+		var inventoryItems = player.InventoryItems.ToList();
+		var burns = new List<ItemChargeUpdateResult>();
+		foreach (var item in inventoryItems.ToArray())
+		{
+			if (item.Location != 0 || !item.IsEquipped || item.Charge <= 0)
+				continue;
+
+			var context = CreateContext(item, itemTemplates);
+			if (context?.Improvement == null)
+				continue;
+
+			var burn = DecreaseChargePoints(
+				item,
+				context.Improvement,
+				isAttacked: observerEvent != ItemChargeObserverEvent.Attack);
+			if (burn == null)
+				continue;
+
+			ReplaceInventoryItem(inventoryItems, burn.ItemUpdate);
+			burns.Add(burn);
+		}
+
+		return burns.Count == 0
+			? ItemChargeBurnPlan.NoChange()
+			: new ItemChargeBurnPlan(true, inventoryItems, burns);
+	}
+
 	private static ItemChargeContext? CreateContext(InventoryItem item, ItemTemplateTable itemTemplates)
 	{
 		var template = itemTemplates.GetItemTemplate(item.ItemId);
@@ -227,6 +264,15 @@ public static class ItemChargeService
 		return copy;
 	}
 
+	private static void ReplaceInventoryItem(List<InventoryItem> items, InventoryItem update)
+	{
+		var index = items.FindIndex(item => item.ObjectId == update.ObjectId);
+		if (index >= 0)
+			items[index] = update;
+		else
+			items.Add(update);
+	}
+
 	private sealed record ItemChargeContext(
 		ItemTemplateSummary Template,
 		ItemTemplateSummary? FusionTemplate,
@@ -248,3 +294,21 @@ public sealed record ItemChargeUpdateResult(
 	InventoryItem ItemUpdate,
 	bool ChargeBarChanged,
 	int PointsDelta);
+
+public sealed record ItemChargeBurnPlan(
+	bool Changed,
+	IReadOnlyList<InventoryItem> InventoryItems,
+	IReadOnlyList<ItemChargeUpdateResult> Burns)
+{
+	public static ItemChargeBurnPlan NoChange()
+	{
+		return new ItemChargeBurnPlan(false, Array.Empty<InventoryItem>(), Array.Empty<ItemChargeUpdateResult>());
+	}
+}
+
+public enum ItemChargeObserverEvent
+{
+	Attack,
+	Attacked,
+	DotAttacked,
+}

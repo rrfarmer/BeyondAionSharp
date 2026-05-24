@@ -135,6 +135,83 @@ public sealed class ItemChargeServiceTests
 	}
 
 	[Fact]
+	public void BurnEquippedChargePoints_BurnsAllEquippedConditionedItemsForObserverEvents()
+	{
+		var itemTemplates = new ItemTemplateTable(
+		[
+			CreateTemplate(100, improvement: new ItemImprovement(ChargeWay: 1, Level: 2, BurnAttack: 200, BurnDefend: 100, Price1: 1000, Price2: 2000)),
+			CreateTemplate(101, improvement: new ItemImprovement(ChargeWay: 1, Level: 2, BurnAttack: 300, BurnDefend: 150, Price1: 1000, Price2: 2000)),
+			CreateTemplate(102),
+			CreateTemplate(200, level: 55, improvement: new ItemImprovement(ChargeWay: 2, Level: 2, BurnAttack: 500, BurnDefend: 250, Price1: 1000, Price2: 2000)),
+		]);
+		var player = CreatePlayer(rank: 18);
+		player.InventoryItems =
+		[
+			CreateItem(itemId: 100, objectId: 10, charge: 100_050, isEquipped: true),
+			CreateItem(itemId: 101, objectId: 11, charge: 120_000, isEquipped: true),
+			CreateItem(itemId: 102, objectId: 12, charge: 120_000, isEquipped: true),
+			CreateItem(itemId: 100, objectId: 13, charge: 120_000, isEquipped: false),
+			CreateItem(itemId: 100, objectId: 14, charge: 0, isEquipped: true),
+			CreateItem(itemId: 102, objectId: 15, charge: 120_000, fusionedItem: 200, isEquipped: true),
+		];
+
+		var attackPlan = ItemChargeService.BurnEquippedChargePoints(
+			player,
+			itemTemplates,
+			ItemChargeObserverEvent.Attack,
+			skillId: 0);
+		var attackedPlan = ItemChargeService.BurnEquippedChargePoints(
+			player,
+			itemTemplates,
+			ItemChargeObserverEvent.Attacked,
+			skillId: 0);
+
+		Assert.True(attackPlan.Changed);
+		Assert.Equal([10, 11, 15], attackPlan.Burns.Select(burn => burn.ItemUpdate.ObjectId));
+		Assert.Equal(99_850, attackPlan.InventoryItems.First(item => item.ObjectId == 10).Charge);
+		Assert.Equal(119_700, attackPlan.InventoryItems.First(item => item.ObjectId == 11).Charge);
+		Assert.Equal(119_500, attackPlan.InventoryItems.First(item => item.ObjectId == 15).Charge);
+		Assert.Equal(120_000, attackPlan.InventoryItems.First(item => item.ObjectId == 12).Charge);
+		Assert.Equal(120_000, attackPlan.InventoryItems.First(item => item.ObjectId == 13).Charge);
+		Assert.True(attackPlan.Burns.First(burn => burn.ItemUpdate.ObjectId == 10).ChargeBarChanged);
+
+		Assert.True(attackedPlan.Changed);
+		Assert.Equal(99_950, attackedPlan.InventoryItems.First(item => item.ObjectId == 10).Charge);
+		Assert.Equal(119_850, attackedPlan.InventoryItems.First(item => item.ObjectId == 11).Charge);
+		Assert.Equal(119_750, attackedPlan.InventoryItems.First(item => item.ObjectId == 15).Charge);
+	}
+
+	[Fact]
+	public void BurnEquippedChargePoints_SkipsSkillAttackButAllowsDotAttacked()
+	{
+		var itemTemplates = new ItemTemplateTable(
+		[
+			CreateTemplate(100, improvement: new ItemImprovement(ChargeWay: 1, Level: 2, BurnAttack: 200, BurnDefend: 100, Price1: 1000, Price2: 2000)),
+		]);
+		var player = CreatePlayer(rank: 18);
+		player.InventoryItems =
+		[
+			CreateItem(itemId: 100, objectId: 10, charge: 120_000, isEquipped: true),
+		];
+
+		var skillAttackPlan = ItemChargeService.BurnEquippedChargePoints(
+			player,
+			itemTemplates,
+			ItemChargeObserverEvent.Attack,
+			skillId: 2001);
+		var dotPlan = ItemChargeService.BurnEquippedChargePoints(
+			player,
+			itemTemplates,
+			ItemChargeObserverEvent.DotAttacked,
+			skillId: 2001);
+
+		Assert.False(skillAttackPlan.Changed);
+		Assert.Empty(skillAttackPlan.Burns);
+		Assert.True(dotPlan.Changed);
+		Assert.Equal(119_900, Assert.Single(dotPlan.Burns).ItemUpdate.Charge);
+	}
+
+	[Fact]
 	public void PlayerAbyssRank_AddApMatchesSoldierRankThresholds()
 	{
 		var rank = PlayerAbyssRank.Default() with { Ap = 200_000, Rank = 9, MaxRank = 9 };
@@ -156,16 +233,22 @@ public sealed class ItemChargeServiceTests
 		};
 	}
 
-	private static InventoryItem CreateItem(int charge, int fusionedItem = 0)
+	private static InventoryItem CreateItem(
+		int charge,
+		int fusionedItem = 0,
+		int itemId = 100,
+		int objectId = 10,
+		bool isEquipped = false)
 	{
 		return new InventoryItem
 		{
-			ObjectId = 10,
-			ItemId = 100,
+			ObjectId = objectId,
+			ItemId = itemId,
 			Count = 1,
 			Location = 0,
 			Charge = charge,
 			FusionedItem = fusionedItem,
+			IsEquipped = isEquipped,
 		};
 	}
 
