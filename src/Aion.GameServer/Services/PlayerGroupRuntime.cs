@@ -219,6 +219,8 @@ public sealed class PlayerGroupRuntime
 			}
 			else if (wouldDisband)
 			{
+				// Java parity: GroupDisbandEvent replays PlayerGroupLeavedEvent with DISBAND for the last member before the original base leave packet.
+				AppendGroupDisbandPacketIntents(packetIntents, runtimeMembers);
 				foreach (var remainingMember in runtimeMembers)
 					ClearGroup(remainingMember.Player);
 				_membersByTeamId.Remove(teamId);
@@ -490,7 +492,7 @@ public sealed class PlayerGroupRuntime
 		return new PlayerGroupLeaderChangePlan(teamId, newLeaderObjectId, intents);
 	}
 
-	private static IReadOnlyList<PlayerGroupLeavePacketIntent> CreateGroupLeavePacketIntents(
+	private static List<PlayerGroupLeavePacketIntent> CreateGroupLeavePacketIntents(
 		IReadOnlyList<PlayerGroupMember> remainingMembers,
 		PlayerGroupMemberInfoPacketPlan leavePacketPlan,
 		string leavedPlayerName,
@@ -514,6 +516,29 @@ public sealed class PlayerGroupRuntime
 		}
 
 		return intents;
+	}
+
+	private static void AppendGroupDisbandPacketIntents(
+		List<PlayerGroupLeavePacketIntent> intents,
+		IReadOnlyList<PlayerGroupMember> remainingMembers)
+	{
+		var sequence = intents.Count == 0 ? 0 : intents.Max(intent => intent.Sequence) + 1;
+		foreach (var remainingMember in remainingMembers)
+		{
+			intents.Add(new PlayerGroupLeavePacketIntent(
+				sequence++,
+				remainingMember.ObjectId,
+				PlayerGroupLeavePacketIntentKind.SystemMessage,
+				SystemMessage: SmSystemMessage.PartyIsDispersed()));
+
+			if (!remainingMember.IsOnline)
+				continue;
+
+			intents.Add(new PlayerGroupLeavePacketIntent(
+				sequence++,
+				remainingMember.ObjectId,
+				PlayerGroupLeavePacketIntentKind.LeaveGroupMember));
+		}
 	}
 
 	private static SmSystemMessage CreateLeaveMessage(

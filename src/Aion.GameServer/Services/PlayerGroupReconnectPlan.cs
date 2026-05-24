@@ -81,6 +81,7 @@ public enum PlayerGroupLeavePacketIntentKind
 {
 	MemberInfo,
 	SystemMessage,
+	LeaveGroupMember,
 }
 
 public sealed record PlayerGroupLeavePlan(
@@ -108,6 +109,7 @@ public sealed record PlayerGroupLeavePacketIntent(
 		{
 			PlayerGroupLeavePacketIntentKind.MemberInfo when MemberInfoPlan != null => new SmGroupMemberInfo(MemberInfoPlan),
 			PlayerGroupLeavePacketIntentKind.SystemMessage when SystemMessage != null => SystemMessage,
+			PlayerGroupLeavePacketIntentKind.LeaveGroupMember => new SmLeaveGroupMember(),
 			_ => throw new InvalidOperationException("Group leave packet intent is missing packet metadata."),
 		};
 	}
