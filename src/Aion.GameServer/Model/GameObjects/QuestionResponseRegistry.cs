@@ -86,6 +86,7 @@ public enum QuestionResponseRequestKind
 	SoulBind,
 	ChargeAll,
 	TeleportToNpc,
+	GroupInvite,
 }
 
 public sealed record QuestionResponseRequest(

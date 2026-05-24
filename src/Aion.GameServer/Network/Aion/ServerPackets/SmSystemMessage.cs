@@ -69,6 +69,18 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1400009, playerName);
 	}
 
+	public static SmSystemMessage PartyHeRejectInvitation(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_PARTY_HE_REJECT_INVITATION(String).
+		return new SmSystemMessage(1300161, playerName);
+	}
+
+	public static SmSystemMessage PartyInvitedHim(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_PARTY_INVITED_HIM(String).
+		return new SmSystemMessage(1300173, playerName);
+	}
+
 	public static SmSystemMessage NotEnoughMoney()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_NOT_ENOUGH_MONEY.

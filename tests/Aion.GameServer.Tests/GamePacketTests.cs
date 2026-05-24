@@ -215,6 +215,8 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.MovePortalErrorInvalidRace(), 901354);
 		AssertSystemMessage(SmSystemMessage.SkillCanNotUseGroupgateNoRight(), 1300150);
 		AssertSystemMessage(SmSystemMessage.InstanceCantEnterWithoutItem(), 1400219);
+		AssertSystemMessage(SmSystemMessage.PartyHeRejectInvitation("Responder"), 1300161, "Responder");
+		AssertSystemMessage(SmSystemMessage.PartyInvitedHim("Invited"), 1300173, "Invited");
 		AssertSystemMessage(SmSystemMessage.PartyAllianceHeRejectInvitation("Responder"), 1300190, "Responder");
 	}
 

@@ -5,6 +5,7 @@ namespace Aion.GameServer.Network.Aion.ServerPackets;
 public sealed class SmQuestionWindow : GameServerPacket
 {
 	public const int PacketOpCode = 52;
+	public const int PartyInvite = 60000;
 	public const int BuddyListAddBuddyRequest = 1401498;
 	public const int SoulBoundItemConfirm = 95006;
 	public const int ItemChargeAllConfirm = 903026;
