@@ -65,6 +65,7 @@ public sealed record PlayerSummonCastSpellResult(
 	bool SkillMismatch = false,
 	PlayerSummonCastSpellAudit? Audit = null,
 	PlayerSummonCastSpellWarning? Warning = null,
+	PlayerSummonCastSpellSkippedExecution? SkippedExecution = null,
 	PlayerSummonOrMercenaryKind ActorKind = PlayerSummonOrMercenaryKind.PetSummon)
 {
 	public static PlayerSummonCastSpellResult PetRequired(int summonObjectId, PlayerSummonOrMercenaryKind actorKind)
@@ -120,11 +121,15 @@ public sealed record PlayerSummonCastSpellResult(
 
 	public static PlayerSummonCastSpellResult TargetMismatch(int summonObjectId, int targetObjectId, PlayerPetSkillOrder consumedOrder)
 	{
+		var skippedExecution = PlayerSummonCastSpellSkippedExecution.TargetMismatch(
+			consumedOrder.TargetObjectId,
+			targetObjectId);
 		return new PlayerSummonCastSpellResult(
 			PlayerSummonCastSpellStatus.TargetMismatch,
 			summonObjectId,
 			targetObjectId,
-			consumedOrder);
+			consumedOrder,
+			SkippedExecution: skippedExecution);
 	}
 
 	public static PlayerSummonCastSpellResult Executed(
@@ -195,6 +200,28 @@ public sealed record PlayerSummonCastSpellWarning(
 public enum PlayerSummonCastSpellWarningKind
 {
 	SkillMismatch,
+}
+
+public sealed record PlayerSummonCastSpellSkippedExecution(
+	PlayerSummonCastSpellSkippedExecutionKind Kind,
+	int QueuedTargetObjectId,
+	int PacketTargetObjectId)
+{
+	public static PlayerSummonCastSpellSkippedExecution TargetMismatch(
+		int queuedTargetObjectId,
+		int packetTargetObjectId)
+	{
+		// Java parity: CM_SUMMON_CASTSPELL consumes the order but skips useSkill when order.target != resolved target.
+		return new PlayerSummonCastSpellSkippedExecution(
+			PlayerSummonCastSpellSkippedExecutionKind.TargetMismatch,
+			queuedTargetObjectId,
+			packetTargetObjectId);
+	}
+}
+
+public enum PlayerSummonCastSpellSkippedExecutionKind
+{
+	TargetMismatch,
 }
 
 public sealed record PlayerSummonCastSpellConnectionResult(

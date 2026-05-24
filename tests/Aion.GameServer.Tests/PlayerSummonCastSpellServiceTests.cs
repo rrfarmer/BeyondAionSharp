@@ -67,6 +67,10 @@ public class PlayerSummonCastSpellServiceTests
 		Assert.Equal(7002, result.TargetObjectId);
 		Assert.Equal(7001, result.ExecutedOrder?.TargetObjectId);
 		Assert.Null(result.Warning);
+		var skippedExecution = Assert.IsType<PlayerSummonCastSpellSkippedExecution>(result.SkippedExecution);
+		Assert.Equal(PlayerSummonCastSpellSkippedExecutionKind.TargetMismatch, skippedExecution.Kind);
+		Assert.Equal(7001, skippedExecution.QueuedTargetObjectId);
+		Assert.Equal(7002, skippedExecution.PacketTargetObjectId);
 		Assert.Empty(player.PetSkillOrders);
 	}
 
