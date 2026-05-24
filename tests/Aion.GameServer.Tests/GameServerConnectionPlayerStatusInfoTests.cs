@@ -104,6 +104,60 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 	}
 
 	[Fact]
+	public async Task HandlePlayerStatusInfoAsync_LeagueLeaveLeaderReorganizesAndDisbandsLikeJava()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var alliances = new PlayerAllianceRuntime();
+		var leagues = new PlayerLeagueRuntime();
+		var leagueLeader = new Player { ObjectId = 1001, Name = "LeagueLeader", IsOnline = true, Position = new WorldPosition(210010000, 1, 2, 3, 0) };
+		var allianceLeader = new Player { ObjectId = 2001, Name = "AllianceLeader", IsOnline = true, Position = new WorldPosition(220010000, 4, 5, 6, 0) };
+		alliances.CreateAlliance(88001, leagueLeader);
+		alliances.CreateAlliance(88002, allianceLeader);
+		leagues.CreateLeague(77001, leaderAllianceId: 88001);
+		leagues.AddAlliance(77001, allianceId: 88002);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, alliances, playerLeagueRuntime: leagues);
+
+		Assert.Null(await pair.Connection.HandlePlayerStatusInfoAsync(
+			leagueLeader,
+			CreatePacket(commandCode: 29, selectedObjectId: 0)));
+
+		Assert.Empty(leagues.GetAllianceIdsByPosition(77001));
+		Assert.Null(leagues.ResolveByAllianceId(88001));
+		Assert.Null(leagues.ResolveByAllianceId(88002));
+		Assert.Equal([2001, 2001, 1001, 2001], registry.SentPackets.Select(send => send.PlayerObjectId));
+		Assert.Collection(
+			registry.SentPackets,
+			send => AssertLeagueAllianceInfoPacket(
+				send,
+				88002,
+				2001,
+				220010000,
+				PlayerAllianceInfoPacketPlan.LeagueLeftHimMessageId,
+				"LeagueLeader",
+				77001,
+				[new PlayerAllianceInfoLeagueRow(0, 88002, 1, "AllianceLeader", 220010000)]),
+			send => AssertSystemMessagePayload(send, 1400588, "AllianceLeader"),
+			send => AssertLeagueAllianceInfoPacket(
+				send,
+				88001,
+				1001,
+				210010000,
+				PlayerAllianceInfoPacketPlan.LeagueLeftMeMessageId,
+				"LeagueLeader",
+				expectedLeagueId: 0,
+				expectedLeagueRows: []),
+			send => AssertLeagueAllianceInfoPacket(
+				send,
+				88002,
+				2001,
+				220010000,
+				PlayerAllianceInfoPacketPlan.LeagueDispersedMessageId,
+				string.Empty,
+				expectedLeagueId: 0,
+				expectedLeagueRows: []));
+	}
+
+	[Fact]
 	public async Task HandlePlayerStatusInfoAsync_LeagueExpelWithoutLeagueThrowsLikeJava()
 	{
 		var registry = new CapturingConnectionRegistry();
@@ -1145,8 +1199,17 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 		SentPacketRecord send,
 		int expectedAllianceId,
 		int expectedLeaderObjectId,
-		int expectedActivePlayerMapId)
+		int expectedActivePlayerMapId,
+		int expectedMessageId = 0,
+		string expectedMessage = "",
+		int expectedLeagueId = 77001,
+		IReadOnlyList<PlayerAllianceInfoLeagueRow>? expectedLeagueRows = null)
 	{
+		expectedLeagueRows ??=
+		[
+			new PlayerAllianceInfoLeagueRow(0, 88002, 1, "AllianceLeader", 220010000),
+			new PlayerAllianceInfoLeagueRow(1, 88001, 1, "LeagueLeader", 210010000),
+		];
 		var packet = Assert.IsType<SmAllianceInfo>(send.Packet);
 		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
 		Assert.Equal(1, reader.ReadH());
@@ -1160,20 +1223,23 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 		Assert.Equal(0x00, (int)reader.ReadC());
 		Assert.Equal(0x3F, reader.ReadD());
 		Assert.Equal(0, reader.ReadD());
-		Assert.Equal(77001, reader.ReadD());
+		Assert.Equal(expectedLeagueId, reader.ReadD());
 		for (var i = 0; i < 4; i++)
 		{
 			Assert.Equal(i, reader.ReadD());
 			Assert.Equal(1000 + i, reader.ReadD());
 		}
 
-		Assert.Equal(0, reader.ReadD());
-		Assert.Equal(string.Empty, reader.ReadS());
-		Assert.Equal(2, reader.ReadH());
-		AssertDefaultLootRules(reader);
-		Assert.Equal(0x02, reader.ReadD());
-		AssertLeagueRow(reader, 0, 88002, 1, "AllianceLeader", 220010000);
-		AssertLeagueRow(reader, 1, 88001, 1, "LeagueLeader", 210010000);
+		Assert.Equal(expectedMessageId, reader.ReadD());
+		Assert.Equal(expectedMessage, reader.ReadS());
+		if (expectedLeagueRows.Count > 0)
+		{
+			Assert.Equal(expectedLeagueRows.Count, reader.ReadH());
+			AssertDefaultLootRules(reader);
+			Assert.Equal(0x02, reader.ReadD());
+			foreach (var row in expectedLeagueRows)
+				AssertLeagueRow(reader, row.AlliancePosition, row.AllianceObjectId, row.MemberCount, row.CaptainName, row.CaptainWorldId);
+		}
 		Assert.Equal(0, reader.Remaining);
 	}
 

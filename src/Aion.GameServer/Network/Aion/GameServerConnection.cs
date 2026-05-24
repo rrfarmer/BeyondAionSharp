@@ -5852,12 +5852,17 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		if (packet.CommandCode == 29)
 		{
-			// Java parity: PlayerTeamCommandService LEAGUE_LEAVE -> LeagueService.removeAlliance; an alliance without a league fails the requireNonNull gate.
+			// Java parity: PlayerTeamCommandService LEAGUE_LEAVE -> LeagueService.removeAlliance -> LeagueLeftEvent(LEAVE).
 			var leagueLeaveAlliance = _playerAllianceRuntime.Resolve(player);
 			if (leagueLeaveAlliance == null)
 				return null;
 
-			throw new InvalidOperationException("League should not be null");
+			var leagueLeavePlan = _playerLeagueRuntime.RemoveAlliance(
+				leagueLeaveAlliance.AllianceId,
+				_playerAllianceRuntime);
+			foreach (var intent in leagueLeavePlan.PacketIntents.OrderBy(intent => intent.Sequence))
+				await SendLeaguePacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+			return null;
 		}
 
 		if (packet.CommandCode == 31)

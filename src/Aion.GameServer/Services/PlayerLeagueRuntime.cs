@@ -143,6 +143,57 @@ public sealed class PlayerLeagueRuntime
 		}
 	}
 
+	public PlayerLeagueLeavePlan RemoveAlliance(
+		int allianceId,
+		PlayerAllianceRuntime allianceRuntime)
+	{
+		// Java parity: LeagueService.removeAlliance -> LeagueLeftEvent(LEAVE). The event removes the alliance,
+		// reorganizes remaining league positions, notifies remaining alliances, then notifies the leaving alliance and disbands at size 1.
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(allianceId, 0);
+
+		lock (_sync)
+		{
+			if (!_leagueIdByAllianceId.TryGetValue(allianceId, out var leagueId)
+				|| !_membersByLeagueId.TryGetValue(leagueId, out var members)
+				|| !_leaderAllianceIdByLeagueId.TryGetValue(leagueId, out var leaderAllianceId))
+				throw new InvalidOperationException("League should not be null");
+
+			var leavingMember = members.FirstOrDefault(member => member.AllianceId == allianceId)
+				?? throw new InvalidOperationException($"League member should not be null: {allianceId}");
+			var leavingLeaderName = GetAllianceLeaderName(allianceRuntime, allianceId);
+			members.Remove(leavingMember);
+			_leagueIdByAllianceId.Remove(allianceId);
+
+			var newLeaderName = ReorganizeAfterRemove(members, ref leaderAllianceId, allianceRuntime);
+			_leaderAllianceIdByLeagueId[leagueId] = leaderAllianceId;
+			var remainingAllianceIds = GetSortedAllianceIds(members);
+			var intents = CreateLeavePacketIntents(
+				leagueId,
+				allianceId,
+				leavingLeaderName,
+				remainingAllianceIds,
+				newLeaderName,
+				allianceRuntime);
+			var disbanded = members.Count <= 1;
+
+			if (disbanded)
+			{
+				foreach (var member in members.ToArray())
+					_leagueIdByAllianceId.Remove(member.AllianceId);
+				_membersByLeagueId.Remove(leagueId);
+				_leaderAllianceIdByLeagueId.Remove(leagueId);
+			}
+
+			return new PlayerLeagueLeavePlan(
+				leagueId,
+				allianceId,
+				newLeaderName,
+				disbanded,
+				remainingAllianceIds,
+				intents);
+		}
+	}
+
 	private static IReadOnlyList<PlayerLeaguePacketIntent> CreateMovePacketIntents(
 		int leagueId,
 		IReadOnlyList<int> sortedAllianceIds,
@@ -203,6 +254,103 @@ public sealed class PlayerLeagueRuntime
 		return intents;
 	}
 
+	private static IReadOnlyList<PlayerLeaguePacketIntent> CreateLeavePacketIntents(
+		int leagueId,
+		int leavingAllianceId,
+		string leavingLeaderName,
+		IReadOnlyList<int> remainingAllianceIds,
+		string? newLeaderName,
+		PlayerAllianceRuntime allianceRuntime)
+	{
+		// Java parity: LeagueLeftEvent.handleEvent sends LEFT_HIM to each remaining alliance member, optionally sends
+		// STR_UNION_CHANGE_LEADER_TIMEOUT to the remaining league, sends LEFT_ME to the leaving alliance, then disband sends DISPERSED.
+		var intents = new List<PlayerLeaguePacketIntent>();
+		var sequence = 0;
+		foreach (var allianceId in remainingAllianceIds)
+			AddAllianceInfoIntents(
+				intents,
+				ref sequence,
+				allianceId,
+				PlayerAllianceInfoPacketPlan.LeagueLeftHimMessageId,
+				leavingLeaderName,
+				leagueId,
+				remainingAllianceIds,
+				allianceRuntime);
+
+		if (newLeaderName != null)
+		{
+			foreach (var allianceId in remainingAllianceIds)
+			{
+				foreach (var recipientObjectId in allianceRuntime.GetMemberObjectIds(allianceId))
+				{
+					intents.Add(new PlayerLeaguePacketIntent(
+						sequence++,
+						recipientObjectId,
+						allianceId,
+						PlayerLeaguePacketIntentKind.SystemMessage,
+						SystemMessage: SmSystemMessage.UnionChangeLeaderTimeout(newLeaderName)));
+				}
+			}
+		}
+
+		AddAllianceInfoIntents(
+			intents,
+			ref sequence,
+			leavingAllianceId,
+			PlayerAllianceInfoPacketPlan.LeagueLeftMeMessageId,
+			leavingLeaderName,
+			leagueId: 0,
+			leagueRowsAllianceIds: [],
+			allianceRuntime);
+
+		if (remainingAllianceIds.Count == 1)
+		{
+			AddAllianceInfoIntents(
+				intents,
+				ref sequence,
+				remainingAllianceIds[0],
+				PlayerAllianceInfoPacketPlan.LeagueDispersedMessageId,
+				string.Empty,
+				leagueId: 0,
+				leagueRowsAllianceIds: [],
+				allianceRuntime);
+		}
+
+		return intents;
+	}
+
+	private static void AddAllianceInfoIntents(
+		List<PlayerLeaguePacketIntent> intents,
+		ref int sequence,
+		int allianceId,
+		int messageId,
+		string message,
+		int leagueId,
+		IReadOnlyList<int> leagueRowsAllianceIds,
+		PlayerAllianceRuntime allianceRuntime)
+	{
+		var snapshot = allianceRuntime.GetSnapshot(allianceId)
+			?? throw new InvalidOperationException($"Alliance should not be null: {allianceId}");
+		foreach (var recipientObjectId in allianceRuntime.GetMemberObjectIds(allianceId))
+		{
+			var recipient = allianceRuntime.GetMember(allianceId, recipientObjectId)?.Player;
+			var activePlayerMapId = recipient?.Position.WorldId ?? 0;
+			intents.Add(new PlayerLeaguePacketIntent(
+				sequence++,
+				recipientObjectId,
+				allianceId,
+				PlayerLeaguePacketIntentKind.AllianceInfo,
+				AllianceInfoPlan: snapshot.CreateInfoPacketPlan(
+					activePlayerMapId,
+					messageId,
+					message,
+					leagueId,
+					leagueRows: leagueRowsAllianceIds.Count > 0
+						? CreateLeagueRows(leagueRowsAllianceIds, allianceRuntime)
+						: Array.Empty<PlayerAllianceInfoLeagueRow>())));
+		}
+	}
+
 	private static string GetAllianceLeaderName(PlayerAllianceRuntime allianceRuntime, int allianceId)
 	{
 		var descriptor = allianceRuntime.GetDescriptor(allianceId)
@@ -234,6 +382,31 @@ public sealed class PlayerLeagueRuntime
 		}
 
 		return rows;
+	}
+
+	private static string? ReorganizeAfterRemove(
+		IReadOnlyList<PlayerLeagueMember> members,
+		ref int leaderAllianceId,
+		PlayerAllianceRuntime allianceRuntime)
+	{
+		// Java parity: League.reorganize compacts positions from zero and changes league leader only when position zero is vacant.
+		var position = 0;
+		string? newLeaderName = null;
+		foreach (var member in members.OrderBy(member => member.LeaguePosition))
+		{
+			if (member.LeaguePosition > position)
+			{
+				if (position == 0)
+				{
+					leaderAllianceId = member.AllianceId;
+					newLeaderName = GetAllianceLeaderName(allianceRuntime, member.AllianceId);
+				}
+				member.LeaguePosition = position;
+			}
+			position++;
+		}
+
+		return newLeaderName;
 	}
 
 	private static PlayerLeagueSnapshot CreateSnapshot(
@@ -275,6 +448,14 @@ public sealed record PlayerLeagueMovePlan(
 	int SelectedPreviousPosition,
 	int TargetPreviousPosition,
 	IReadOnlyList<int> AllianceIdsByPosition,
+	IReadOnlyList<PlayerLeaguePacketIntent> PacketIntents);
+
+public sealed record PlayerLeagueLeavePlan(
+	int LeagueId,
+	int LeavingAllianceId,
+	string? NewLeaderName,
+	bool Disbanded,
+	IReadOnlyList<int> RemainingAllianceIdsByPosition,
 	IReadOnlyList<PlayerLeaguePacketIntent> PacketIntents);
 
 public enum PlayerLeaguePacketIntentKind

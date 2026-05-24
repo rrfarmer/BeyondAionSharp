@@ -273,6 +273,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1400589, forceNumber.ToString(System.Globalization.CultureInfo.InvariantCulture));
 	}
 
+	public static SmSystemMessage UnionChangeLeaderTimeout(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_UNION_CHANGE_LEADER_TIMEOUT(String).
+		return new SmSystemMessage(1400588, playerName);
+	}
+
 	public static SmSystemMessage UnionChangeForceNumberHim(string playerName, int forceNumber)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_UNION_CHANGE_FORCE_NUMBER_HIM(String, int).
