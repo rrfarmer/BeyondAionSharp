@@ -776,6 +776,13 @@ public sealed class PlayerSummonSkillExecutionService
 		};
 	}
 
+	public PlayerSummonKnownObjectNpcSkillActionSideEffectTrace ProjectMercenaryNpcSkillActionSideEffectTrace(
+		PlayerSummonKnownObjectNpcSkillActionResult? actionResult)
+	{
+		// Java parity: SkillAttackManager.skillAction mutates target before controller useSkill, then afterUseSkill only on blocked/failed paths.
+		return PlayerSummonKnownObjectNpcSkillActionSideEffectTrace.FromActionResult(actionResult);
+	}
+
 	public PlayerSummonKnownObjectNpcSkillPerformAttackPreview PreviewMercenaryNpcSkillPerformAttack(
 		bool ownerUsesMeleeAggroRange,
 		bool hasCurrentTarget,
@@ -4935,7 +4942,8 @@ public sealed record PlayerSummonKnownObjectNpcSkillActionResult(
 	public bool ShouldAbortCast => Status == PlayerSummonKnownObjectNpcSkillActionResultStatus.TargetTooFar;
 
 	public bool ShouldSetOwnerTarget => Preview?.ShouldSetOwnerTarget == true
-		&& Status == PlayerSummonKnownObjectNpcSkillActionResultStatus.UseSkill;
+		|| (Preview?.TargetSelection?.ShouldSetOwnerTarget == true
+			&& Status == PlayerSummonKnownObjectNpcSkillActionResultStatus.UseSkillFailed);
 
 	public bool ShouldInvokeUseSkill => Status == PlayerSummonKnownObjectNpcSkillActionResultStatus.UseSkill;
 
@@ -5000,6 +5008,122 @@ public sealed record PlayerSummonKnownObjectNpcSkillActionResult(
 			preview,
 			PlayerSummonKnownObjectNpcSkillAiEvent.AttackComplete);
 	}
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillActionSideEffectTrace(
+	PlayerSummonKnownObjectNpcSkillActionSideEffectTraceStatus Status,
+	PlayerSummonKnownObjectNpcSkillActionResult? ActionResult = null,
+	IReadOnlyList<PlayerSummonKnownObjectNpcSkillActionSideEffectStep>? Steps = null)
+{
+	private static readonly IReadOnlyList<PlayerSummonKnownObjectNpcSkillActionSideEffectStep> EmptySteps = [];
+
+	public IReadOnlyList<PlayerSummonKnownObjectNpcSkillActionSideEffectStep> OrderedSteps => Steps ?? EmptySteps;
+
+	public bool HasSideEffects => OrderedSteps.Count > 0;
+
+	public bool WouldExecuteSideEffects => false;
+
+	public bool MutatesTargetBeforeControllerUse =>
+		IndexOf(PlayerSummonKnownObjectNpcSkillActionSideEffectStep.OwnerSetTarget) is int targetIndex
+		&& targetIndex >= 0
+		&& IndexOf(PlayerSummonKnownObjectNpcSkillActionSideEffectStep.CreatureControllerUseSkill) is int controllerIndex
+		&& controllerIndex > targetIndex;
+
+	public bool InvokesAfterUseSkill =>
+		OrderedSteps.Contains(PlayerSummonKnownObjectNpcSkillActionSideEffectStep.NpcAiSetNoneSubState)
+		&& OrderedSteps.Contains(PlayerSummonKnownObjectNpcSkillActionSideEffectStep.NpcAiOnAttackComplete);
+
+	public bool ResetsSubState =>
+		OrderedSteps.Contains(PlayerSummonKnownObjectNpcSkillActionSideEffectStep.NpcAiSetNoneSubState);
+
+	private int IndexOf(PlayerSummonKnownObjectNpcSkillActionSideEffectStep step)
+	{
+		for (var i = 0; i < OrderedSteps.Count; i++)
+		{
+			if (OrderedSteps[i] == step)
+				return i;
+		}
+
+		return -1;
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillActionSideEffectTrace FromActionResult(
+		PlayerSummonKnownObjectNpcSkillActionResult? actionResult)
+	{
+		if (actionResult == null || actionResult.Status == PlayerSummonKnownObjectNpcSkillActionResultStatus.MissingPreview)
+		{
+			return new PlayerSummonKnownObjectNpcSkillActionSideEffectTrace(
+				PlayerSummonKnownObjectNpcSkillActionSideEffectTraceStatus.MissingResult,
+				actionResult);
+		}
+
+		var steps = new List<PlayerSummonKnownObjectNpcSkillActionSideEffectStep>();
+		switch (actionResult.Status)
+		{
+			case PlayerSummonKnownObjectNpcSkillActionResultStatus.ResumeFightAfterInterruptedCast:
+				steps.Add(PlayerSummonKnownObjectNpcSkillActionSideEffectStep.NpcAiThink);
+				break;
+			case PlayerSummonKnownObjectNpcSkillActionResultStatus.TargetGiveUp:
+				steps.Add(PlayerSummonKnownObjectNpcSkillActionSideEffectStep.NpcAiSetNoneSubState);
+				steps.Add(PlayerSummonKnownObjectNpcSkillActionSideEffectStep.NpcAiOnTargetGiveUp);
+				break;
+			case PlayerSummonKnownObjectNpcSkillActionResultStatus.TargetTooFar:
+				steps.Add(PlayerSummonKnownObjectNpcSkillActionSideEffectStep.ControllerAbortCast);
+				steps.Add(PlayerSummonKnownObjectNpcSkillActionSideEffectStep.NpcAiOnTargetTooFar);
+				break;
+			case PlayerSummonKnownObjectNpcSkillActionResultStatus.AfterUseSkill:
+				steps.Add(PlayerSummonKnownObjectNpcSkillActionSideEffectStep.NpcAiSetNoneSubState);
+				steps.Add(PlayerSummonKnownObjectNpcSkillActionSideEffectStep.NpcAiOnAttackComplete);
+				break;
+			case PlayerSummonKnownObjectNpcSkillActionResultStatus.UseSkill:
+				AddUseSkillSteps(actionResult, steps);
+				break;
+			case PlayerSummonKnownObjectNpcSkillActionResultStatus.UseSkillFailed:
+				AddUseSkillSteps(actionResult, steps);
+				steps.Add(PlayerSummonKnownObjectNpcSkillActionSideEffectStep.NpcAiSetNoneSubState);
+				steps.Add(PlayerSummonKnownObjectNpcSkillActionSideEffectStep.NpcAiOnAttackComplete);
+				break;
+		}
+
+		return steps.Count == 0
+			? new PlayerSummonKnownObjectNpcSkillActionSideEffectTrace(
+				PlayerSummonKnownObjectNpcSkillActionSideEffectTraceStatus.NoSideEffects,
+				actionResult,
+				steps)
+			: new PlayerSummonKnownObjectNpcSkillActionSideEffectTrace(
+				PlayerSummonKnownObjectNpcSkillActionSideEffectTraceStatus.OrderedSideEffects,
+				actionResult,
+				steps);
+	}
+
+	private static void AddUseSkillSteps(
+		PlayerSummonKnownObjectNpcSkillActionResult actionResult,
+		List<PlayerSummonKnownObjectNpcSkillActionSideEffectStep> steps)
+	{
+		if (actionResult.ShouldSetOwnerTarget)
+			steps.Add(PlayerSummonKnownObjectNpcSkillActionSideEffectStep.OwnerSetTarget);
+
+		steps.Add(PlayerSummonKnownObjectNpcSkillActionSideEffectStep.CreatureControllerUseSkill);
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillActionSideEffectTraceStatus
+{
+	MissingResult,
+	NoSideEffects,
+	OrderedSideEffects,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillActionSideEffectStep
+{
+	NpcAiThink,
+	NpcAiSetNoneSubState,
+	NpcAiOnTargetGiveUp,
+	ControllerAbortCast,
+	NpcAiOnTargetTooFar,
+	OwnerSetTarget,
+	CreatureControllerUseSkill,
+	NpcAiOnAttackComplete,
 }
 
 public enum PlayerSummonKnownObjectNpcSkillActionResultStatus

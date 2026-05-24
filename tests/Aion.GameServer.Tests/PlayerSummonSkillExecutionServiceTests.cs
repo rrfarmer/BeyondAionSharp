@@ -2381,8 +2381,98 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionResultStatus.UseSkillFailed, useFailed.Status);
 		Assert.True(useFailed.DidInvokeUseSkill);
 		Assert.False(useFailed.ShouldInvokeUseSkill);
+		Assert.True(useFailed.ShouldSetOwnerTarget);
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillAiEvent.AttackComplete, useFailed.AiEvent);
 		Assert.True(useFailed.ShouldSetSubStateNone);
+	}
+
+	[Fact]
+	public void ProjectMercenaryNpcSkillActionSideEffectTrace_OrdersJavaSkillActionSideEffects()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var knownObject = new PlayerSummonKnownObject(8017, PlayerSummonKnownObjectKind.Creature);
+		var readySkill = service.EvaluateMercenarySkillReadiness(knownObject, CreateSkillTemplate("MAGICAL"));
+		var blockedSkill = service.EvaluateMercenarySkillReadiness(
+			knownObject with { AbnormalState = PlayerAbnormalState.Silence },
+			CreateSkillTemplate("MAGICAL"));
+		var targetSelection = service.SelectMercenaryNpcSkillActionTarget(
+			skillFirstTargetIsSelf: false,
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.MostHated,
+			hasMostHatedTarget: true);
+
+		PlayerSummonKnownObjectNpcSkillActionSideEffectTrace Trace(
+			bool isInCastSubState = true,
+			bool shouldResumeFightAfterInterruptedCast = false,
+			bool hasCreatureTarget = true,
+			bool targetIsDead = false,
+			bool hasLastSkill = true,
+			bool ownerUsesMeleeAggroRange = false,
+			bool targetInAggroRange = true,
+			PlayerSummonKnownObjectSkillReadiness? skillReadiness = null,
+			PlayerSummonKnownObjectNpcSkillActionTargetSelection? selection = null,
+			bool controllerUseSkillSucceeded = true)
+		{
+			var preview = service.PreviewMercenaryNpcSkillAction(
+				isInCastSubState,
+				shouldResumeFightAfterInterruptedCast,
+				hasCreatureTarget,
+				targetIsDead,
+				hasLastSkill,
+				ownerUsesMeleeAggroRange,
+				targetInAggroRange,
+				skillReadiness ?? readySkill,
+				selection ?? targetSelection,
+				controllerUseSkillSucceeded);
+			var result = service.ProjectMercenaryNpcSkillActionResult(preview);
+			return service.ProjectMercenaryNpcSkillActionSideEffectTrace(result);
+		}
+
+		var missingResult = service.ProjectMercenaryNpcSkillActionSideEffectTrace(null);
+		var noAction = Trace(isInCastSubState: false);
+		var resumeFight = Trace(isInCastSubState: false, shouldResumeFightAfterInterruptedCast: true);
+		var targetGiveUp = Trace(hasCreatureTarget: false);
+		var targetTooFar = Trace(ownerUsesMeleeAggroRange: true, targetInAggroRange: false);
+		var blocked = Trace(skillReadiness: blockedSkill);
+		var useSkill = Trace();
+		var useFailed = Trace(controllerUseSkillSucceeded: false);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionSideEffectTraceStatus.MissingResult, missingResult.Status);
+		Assert.False(missingResult.WouldExecuteSideEffects);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionSideEffectTraceStatus.NoSideEffects, noAction.Status);
+		Assert.Empty(noAction.OrderedSteps);
+		Assert.Equal([
+			PlayerSummonKnownObjectNpcSkillActionSideEffectStep.NpcAiThink,
+		], resumeFight.OrderedSteps);
+		Assert.Equal([
+			PlayerSummonKnownObjectNpcSkillActionSideEffectStep.NpcAiSetNoneSubState,
+			PlayerSummonKnownObjectNpcSkillActionSideEffectStep.NpcAiOnTargetGiveUp,
+		], targetGiveUp.OrderedSteps);
+		Assert.True(targetGiveUp.ResetsSubState);
+		Assert.Equal([
+			PlayerSummonKnownObjectNpcSkillActionSideEffectStep.ControllerAbortCast,
+			PlayerSummonKnownObjectNpcSkillActionSideEffectStep.NpcAiOnTargetTooFar,
+		], targetTooFar.OrderedSteps);
+		Assert.False(targetTooFar.ResetsSubState);
+		Assert.Equal([
+			PlayerSummonKnownObjectNpcSkillActionSideEffectStep.NpcAiSetNoneSubState,
+			PlayerSummonKnownObjectNpcSkillActionSideEffectStep.NpcAiOnAttackComplete,
+		], blocked.OrderedSteps);
+		Assert.True(blocked.InvokesAfterUseSkill);
+		Assert.Equal([
+			PlayerSummonKnownObjectNpcSkillActionSideEffectStep.OwnerSetTarget,
+			PlayerSummonKnownObjectNpcSkillActionSideEffectStep.CreatureControllerUseSkill,
+		], useSkill.OrderedSteps);
+		Assert.True(useSkill.MutatesTargetBeforeControllerUse);
+		Assert.False(useSkill.InvokesAfterUseSkill);
+		Assert.Equal([
+			PlayerSummonKnownObjectNpcSkillActionSideEffectStep.OwnerSetTarget,
+			PlayerSummonKnownObjectNpcSkillActionSideEffectStep.CreatureControllerUseSkill,
+			PlayerSummonKnownObjectNpcSkillActionSideEffectStep.NpcAiSetNoneSubState,
+			PlayerSummonKnownObjectNpcSkillActionSideEffectStep.NpcAiOnAttackComplete,
+		], useFailed.OrderedSteps);
+		Assert.True(useFailed.MutatesTargetBeforeControllerUse);
+		Assert.True(useFailed.InvokesAfterUseSkill);
+		Assert.False(useFailed.WouldExecuteSideEffects);
 	}
 
 	[Fact]
