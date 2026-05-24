@@ -3463,7 +3463,15 @@ public class PlayerSummonSkillExecutionServiceTests
 			path => path.Kind == PlayerSummonKnownObjectNpcSkillItemUsageStatePathKind.AnimationAdd
 				&& path.SendKind == PlayerSummonKnownObjectNpcSkillItemUsageStateSendKind.SendSelfOnly
 				&& path.StartTimeMilliseconds == 1000
-				&& path.CancelMessage == PlayerSummonKnownObjectNpcSkillItemUsageStateCancelMessage.Item);
+				&& path.CancelMessage == PlayerSummonKnownObjectNpcSkillItemUsageStateCancelMessage.Item
+				&& path.CancelEndState == 3);
+		Assert.Contains(
+			trace.CSharpPositiveTimePaths,
+			path => path.Kind == PlayerSummonKnownObjectNpcSkillItemUsageStatePathKind.ExpExtract
+				&& path.SendKind == PlayerSummonKnownObjectNpcSkillItemUsageStateSendKind.SendSelfOnly
+				&& path.StartTimeMilliseconds == 5000
+				&& path.CancelMessage == PlayerSummonKnownObjectNpcSkillItemUsageStateCancelMessage.Decompose
+				&& path.CancelEndState == 2);
 		Assert.Contains(
 			trace.CSharpPositiveTimePaths,
 			path => path.Kind == PlayerSummonKnownObjectNpcSkillItemUsageStatePathKind.SoulBind

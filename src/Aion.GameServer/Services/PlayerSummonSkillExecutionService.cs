@@ -7130,6 +7130,14 @@ public sealed record PlayerSummonKnownObjectNpcSkillItemUsageStateTrace(
 					SendKind: PlayerSummonKnownObjectNpcSkillItemUsageStateSendKind.SendSelfOnly,
 					CancelMessage: PlayerSummonKnownObjectNpcSkillItemUsageStateCancelMessage.Item,
 					StartTimeMilliseconds: 1000,
+					CancelEndState: 3,
+					SetsUsingItemObjectId: true,
+					UsesTargetedCancelAnimation: false),
+				new PlayerSummonKnownObjectNpcSkillItemUsageStatePath(
+					PlayerSummonKnownObjectNpcSkillItemUsageStatePathKind.ExpExtract,
+					SendKind: PlayerSummonKnownObjectNpcSkillItemUsageStateSendKind.SendSelfOnly,
+					CancelMessage: PlayerSummonKnownObjectNpcSkillItemUsageStateCancelMessage.Decompose,
+					StartTimeMilliseconds: 5000,
 					CancelEndState: 2,
 					SetsUsingItemObjectId: true,
 					UsesTargetedCancelAnimation: false),
@@ -7208,6 +7216,7 @@ public enum PlayerSummonKnownObjectNpcSkillItemUsageStatePathKind
 	SoulBind,
 	Assembly,
 	AnimationAdd,
+	ExpExtract,
 	RideOrToyPet,
 	PolishOrCharge,
 }
@@ -7222,6 +7231,7 @@ public enum PlayerSummonKnownObjectNpcSkillItemUsageStateCancelMessage
 {
 	Item,
 	ItemCharge,
+	Decompose,
 	EnchantOrManastone,
 	GodstoneSocket,
 	SoulBind,
