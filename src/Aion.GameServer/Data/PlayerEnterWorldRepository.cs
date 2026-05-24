@@ -202,6 +202,11 @@ public interface IPlayerEnterWorldRepository
 		PlayerAbyssRank? abyssRank,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveItemChargeBurnMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<InventoryItem> chargedItems,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SaveIdianPolishMutationAsync(
 		int playerObjectId,
 		InventoryItem? targetItem,
@@ -642,6 +647,14 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		return Task.FromResult(true);
 	}
 
+	public Task<bool> SaveItemChargeBurnMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<InventoryItem> chargedItems,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
 	public Task<bool> SaveIdianPolishMutationAsync(
 		int playerObjectId,
 		InventoryItem? targetItem,
@@ -1048,6 +1061,47 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not save charge-all mutation for player {PlayerObjectId}", playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SaveItemChargeBurnMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<InventoryItem> chargedItems,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: model/items/ChargeInfo.updateChargePoints marks the item/equipment persistent after observer burn.
+		if (chargedItems.Count == 0)
+			return true;
+
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			foreach (var chargedItem in chargedItems)
+			{
+				await using var chargeCommand = connection.CreateCommand();
+				chargeCommand.Transaction = transaction;
+				chargeCommand.CommandText = "UPDATE inventory SET charge = ? WHERE item_unique_id = ? AND item_owner = ?";
+				chargeCommand.Parameters.AddRange(
+					new[]
+					{
+						new MySqlParameter { Value = chargedItem.Charge },
+						new MySqlParameter { Value = chargedItem.ObjectId },
+						new MySqlParameter { Value = playerObjectId },
+					});
+				if (await chargeCommand.ExecuteNonQueryAsync(cancellationToken) <= 0)
+					return false;
+			}
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save item charge burn mutation for player {PlayerObjectId}", playerObjectId);
 			return false;
 		}
 	}

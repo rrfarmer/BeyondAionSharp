@@ -638,6 +638,45 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.Equal(0, repository.SaveIdianPolishBurnMutationCalls);
 	}
 
+	[Fact]
+	public async Task SaveItemChargeBurnMutation_PersistsAllObserverChargeUpdates()
+	{
+		var player = CreatePlayer();
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var service = CreateService(repository, CreateWorld());
+		var firstUpdate = new InventoryItem { ObjectId = 20, ItemId = 100000094, Charge = 99_900 };
+		var secondUpdate = new InventoryItem { ObjectId = 21, ItemId = 100000095, Charge = 119_800 };
+		var plan = new ItemChargeBurnPlan(
+			Changed: true,
+			InventoryItems: [firstUpdate, secondUpdate],
+			Burns:
+			[
+				new ItemChargeUpdateResult(firstUpdate, ChargeBarChanged: true, PointsDelta: -200),
+				new ItemChargeUpdateResult(secondUpdate, ChargeBarChanged: false, PointsDelta: -200),
+			]);
+
+		var saved = await service.SaveItemChargeBurnMutationAsync(player, plan);
+
+		Assert.True(saved);
+		Assert.Equal(1, repository.SaveItemChargeBurnMutationCalls);
+		Assert.Equal([20, 21], repository.ChargeBurnChargedItems.Select(item => item.ObjectId));
+		Assert.Equal([99_900, 119_800], repository.ChargeBurnChargedItems.Select(item => item.Charge));
+	}
+
+	[Fact]
+	public async Task SaveItemChargeBurnMutation_SkipsRepositoryWhenNothingChanged()
+	{
+		var player = CreatePlayer();
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var service = CreateService(repository, CreateWorld());
+		var plan = ItemChargeBurnPlan.NoChange();
+
+		var saved = await service.SaveItemChargeBurnMutationAsync(player, plan);
+
+		Assert.True(saved);
+		Assert.Equal(0, repository.SaveItemChargeBurnMutationCalls);
+	}
+
 	private static PlayerEnterWorldService CreateService(CapturingEnterWorldRepository repository, GameWorld world)
 	{
 		return CreateService(repository, world, out _);
@@ -1134,6 +1173,10 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public PlayerAbyssRank? ChargeAllPaymentAbyssRank { get; private set; }
 
+		public int SaveItemChargeBurnMutationCalls { get; private set; }
+
+		public IReadOnlyList<InventoryItem> ChargeBurnChargedItems { get; private set; } = Array.Empty<InventoryItem>();
+
 		public int SaveIdianPolishMutationCalls { get; private set; }
 
 		public InventoryItem? IdianPolishTargetItem { get; private set; }
@@ -1624,6 +1667,16 @@ public sealed class PlayerEnterWorldServiceTests
 			ChargeAllChargedItems = chargedItems;
 			ChargeAllPaymentKinahItem = kinahItem;
 			ChargeAllPaymentAbyssRank = abyssRank;
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> SaveItemChargeBurnMutationAsync(
+			int playerObjectId,
+			IReadOnlyList<InventoryItem> chargedItems,
+			CancellationToken cancellationToken = default)
+		{
+			SaveItemChargeBurnMutationCalls++;
+			ChargeBurnChargedItems = chargedItems;
 			return Task.FromResult(true);
 		}
 

@@ -501,6 +501,20 @@ public sealed class PlayerEnterWorldService
 		return _repository.SaveItemChargeAllMutationAsync(player.ObjectId, chargedItems, kinahItem, abyssRank, cancellationToken);
 	}
 
+	public Task<bool> SaveItemChargeBurnMutationAsync(
+		Player player,
+		ItemChargeBurnPlan plan,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: model/items/ChargeInfo.updateChargePoints persists observer-driven charge changes on conditioned items.
+		var chargedItems = plan.Burns
+			.Select(burn => burn.ItemUpdate)
+			.ToArray();
+		return chargedItems.Length == 0
+			? Task.FromResult(true)
+			: _repository.SaveItemChargeBurnMutationAsync(player.ObjectId, chargedItems, cancellationToken);
+	}
+
 	public Task<bool> SaveIdianPolishMutationAsync(
 		Player player,
 		InventoryItem? targetItem,
