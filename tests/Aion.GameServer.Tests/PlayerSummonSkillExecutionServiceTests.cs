@@ -1014,6 +1014,12 @@ public class PlayerSummonSkillExecutionServiceTests
 					SpawnTemplate: new PlayerSummonKnownObjectNpcSkillSpawnMetadata(
 						NpcId: 212349,
 						DelayMilliseconds: 250))));
+		var actionWorkflowPreview = service.PreviewMercenaryNpcSkillActionWorkflow(
+			knownObject,
+			selectionPreview,
+			CreateSkillTemplate("MAGICAL"),
+			currentTarget: new PlayerSummonKnownObject(9010, PlayerSummonKnownObjectKind.Creature),
+			selectedNpcSkillTarget: PlayerSummonKnownObjectNpcSkillTargetAttribute.None);
 
 		var missing = service.CaptureMercenaryNpcSkillPreview(
 			player,
@@ -1021,14 +1027,16 @@ public class PlayerSummonSkillExecutionServiceTests
 			listProjection,
 			selectionPreview,
 			actionPreview,
-			postSpawnPreview);
+			postSpawnPreview,
+			actionWorkflowPreview);
 		var captured = service.CaptureMercenaryNpcSkillPreview(
 			player,
 			mercenaryObjectId: 8010,
 			listProjection,
 			selectionPreview,
 			actionPreview,
-			postSpawnPreview);
+			postSpawnPreview,
+			actionWorkflowPreview);
 
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillPreviewCaptureStatus.MissingKnownObject, missing.Status);
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillPreviewCaptureStatus.Captured, captured.Status);
@@ -1037,9 +1045,12 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Same(selectionPreview, storedKnownObject.LastNpcSkillSelectionPreview);
 		Assert.Same(actionPreview, storedKnownObject.LastNpcSkillActionPreview);
 		Assert.Same(postSpawnPreview, storedKnownObject.LastNpcSkillPostSpawnPreview);
+		Assert.Same(actionWorkflowPreview, storedKnownObject.LastNpcSkillActionWorkflowPreview);
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionStatus.Ready, storedKnownObject.LastNpcSkillSelectionPreview?.Selection.Status);
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionPreviewStatus.WouldUseSkill, storedKnownObject.LastNpcSkillActionPreview?.Status);
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillPostSpawnPreviewStatus.DelayedSpawn, storedKnownObject.LastNpcSkillPostSpawnPreview?.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionWorkflowPreviewStatus.Projected, storedKnownObject.LastNpcSkillActionWorkflowPreview?.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionResultStatus.UseSkill, storedKnownObject.LastNpcSkillActionWorkflowPreview?.ActionResult?.Status);
 	}
 
 	[Fact]
