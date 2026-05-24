@@ -98,6 +98,52 @@ public sealed class StaticDataLoadingTests
 	}
 
 	[Fact]
+	public async Task StaticData_LoadsStorageExpansionTemplatesByNpcId()
+	{
+		using var temp = TempDirectory.Create();
+		var cacheFile = Path.Combine(temp.Path, "static_data.xml");
+		File.WriteAllText(
+			cacheFile,
+			"""
+			<?xml version="1.0" encoding="UTF-8"?>
+			<static_data>
+				<cube_expander>
+					<expansion_npc ids="798008 798037">
+						<expand level="1" price="1000" />
+					</expansion_npc>
+					<expansion_npc ids="279022">
+						<expand level="5" price="360000" />
+					</expansion_npc>
+				</cube_expander>
+				<warehouse_expander>
+					<expansion_npc ids="203199 203687">
+						<expand level="1" price="1200" />
+						<expand level="2" price="24000" />
+					</expansion_npc>
+				</warehouse_expander>
+			</static_data>
+			""");
+
+		var staticData = await StaticData.LoadFromCacheAsync(cacheFile, []);
+
+		Assert.Equal(3, staticData.CubeExpansionTemplates.Count);
+		Assert.Equal(2, staticData.WarehouseExpansionTemplates.Count);
+		var cubeTemplate = staticData.CubeExpansionTemplates.GetTemplateByNpcId(798037);
+		Assert.NotNull(cubeTemplate);
+		Assert.Equal(1, cubeTemplate.MinExpansionLevel);
+		Assert.Equal(1, cubeTemplate.MaxExpansionLevel);
+		Assert.Equal(1000, cubeTemplate.GetPrice(1));
+		var abyssTemplate = staticData.CubeExpansionTemplates.GetTemplateByNpcId(279022);
+		Assert.Equal(5, abyssTemplate?.MinExpansionLevel);
+		Assert.Equal(360000, abyssTemplate?.GetPrice(5));
+		var warehouseTemplate = staticData.WarehouseExpansionTemplates.GetTemplateByNpcId(203687);
+		Assert.Equal(1, warehouseTemplate?.MinExpansionLevel);
+		Assert.Equal(2, warehouseTemplate?.MaxExpansionLevel);
+		Assert.Equal(24000, warehouseTemplate?.GetPrice(2));
+		Assert.Null(staticData.WarehouseExpansionTemplates.GetTemplateByNpcId(1));
+	}
+
+	[Fact]
 	public async Task StaticData_LoadsPortalPathSummariesWithJavaRaceFallbacks()
 	{
 		using var temp = TempDirectory.Create();

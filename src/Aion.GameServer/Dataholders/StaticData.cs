@@ -46,6 +46,8 @@ public sealed class StaticData
 		PortalLocTable portalLocs,
 		PlayerInitialDataTable playerInitialData,
 		SkillTreeTable skillTree,
+		StorageExpansionTemplateTable cubeExpansionTemplates,
+		StorageExpansionTemplateTable warehouseExpansionTemplates,
 		Task? validationTask)
 	{
 		CacheFilePath = cacheFilePath;
@@ -87,6 +89,8 @@ public sealed class StaticData
 		PortalLocs = portalLocs;
 		PlayerInitialData = playerInitialData;
 		SkillTree = skillTree;
+		CubeExpansionTemplates = cubeExpansionTemplates;
+		WarehouseExpansionTemplates = warehouseExpansionTemplates;
 		ValidationTask = validationTask;
 	}
 
@@ -170,6 +174,10 @@ public sealed class StaticData
 
 	public SkillTreeTable SkillTree { get; }
 
+	public StorageExpansionTemplateTable CubeExpansionTemplates { get; }
+
+	public StorageExpansionTemplateTable WarehouseExpansionTemplates { get; }
+
 	public Task? ValidationTask { get; }
 
 	public int GetElementCount(string elementName)
@@ -232,6 +240,8 @@ public sealed class StaticData
 		var portalDialogTeleportIds = new Dictionary<int, int>();
 		var portalLocs = new List<PortalLocSummary>();
 		var skillTree = new List<SkillLearnSummary>();
+		var cubeExpansionTemplates = new List<StorageExpansionTemplateSummary>();
+		var warehouseExpansionTemplates = new List<StorageExpansionTemplateSummary>();
 		var learnableEmotionIds = new HashSet<int>();
 		var creationItemsByClass = new Dictionary<string, List<StartingItem>>(StringComparer.OrdinalIgnoreCase);
 		var spawnLocationsByRace = new Dictionary<string, PlayerSpawnLocation>(StringComparer.OrdinalIgnoreCase);
@@ -268,6 +278,9 @@ public sealed class StaticData
 		string currentWalkerParentRouteId = string.Empty;
 		SkillTemplateBuilder? currentSkillTemplate = null;
 		TitleTemplateBuilder? currentTitleTemplate = null;
+		List<int>? currentStorageExpansionNpcIds = null;
+		List<StorageExpansionPrice>? currentStorageExpansionPrices = null;
+		bool currentStorageExpansionIsCube = false;
 		CosmeticItemBuilder? currentCosmeticItem = null;
 		DecomposableItemBuilder? currentDecomposableItem = null;
 		HousingBuildingBuilder? currentHousingBuilding = null;
@@ -313,6 +326,19 @@ public sealed class StaticData
 				{
 					itemTemplates.Add(currentItemTemplate.ToSummary());
 					currentItemTemplate = null;
+				}
+
+				if (reader.Depth == 2 && reader.LocalName == "expansion_npc" && currentStorageExpansionNpcIds != null && currentStorageExpansionPrices != null)
+				{
+					var summary = new StorageExpansionTemplateSummary(
+						currentStorageExpansionNpcIds.AsReadOnly(),
+						currentStorageExpansionPrices.AsReadOnly());
+					if (currentStorageExpansionIsCube)
+						cubeExpansionTemplates.Add(summary);
+					else
+						warehouseExpansionTemplates.Add(summary);
+					currentStorageExpansionNpcIds = null;
+					currentStorageExpansionPrices = null;
 				}
 
 				if (reader.Depth == 2 && reader.LocalName == "cosmetic_item" && currentCosmeticItem != null)
@@ -1395,6 +1421,40 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 2
+				&& reader.LocalName == "expansion_npc"
+				&& elementPath.GetValueOrDefault(1) is "cube_expander" or "warehouse_expander")
+			{
+				// Java parity: dataholders/CubeExpandData and WarehouseExpandData afterUnmarshal flatten ids to template lookup maps.
+				currentStorageExpansionNpcIds = ReadIntListAttribute(reader, "ids").ToList();
+				currentStorageExpansionPrices = [];
+				currentStorageExpansionIsCube = elementPath.GetValueOrDefault(1) == "cube_expander";
+				if (reader.IsEmptyElement)
+				{
+					var summary = new StorageExpansionTemplateSummary(
+						currentStorageExpansionNpcIds.AsReadOnly(),
+						currentStorageExpansionPrices.AsReadOnly());
+					if (currentStorageExpansionIsCube)
+						cubeExpansionTemplates.Add(summary);
+					else
+						warehouseExpansionTemplates.Add(summary);
+					currentStorageExpansionNpcIds = null;
+					currentStorageExpansionPrices = null;
+				}
+
+				continue;
+			}
+
+			if (reader.Depth == 3 && reader.LocalName == "expand" && currentStorageExpansionPrices != null)
+			{
+				// Java parity: model/templates/expand/Expand level/price attributes.
+				currentStorageExpansionPrices.Add(
+					new StorageExpansionPrice(
+						ReadRequiredIntAttribute(reader, "level"),
+						ReadRequiredIntAttribute(reader, "price")));
+				continue;
+			}
+
 			if (reader.Depth == 2 && reader.LocalName == "random_bonus")
 			{
 				currentItemRandomBonus = new ItemRandomBonusBuilder(
@@ -2144,6 +2204,8 @@ public sealed class StaticData
 					StringComparer.OrdinalIgnoreCase),
 				spawnLocationsByRace),
 			new SkillTreeTable(skillTree.AsReadOnly(), new SkillTemplateTable(skillTemplates.AsReadOnly())),
+			new StorageExpansionTemplateTable(cubeExpansionTemplates.AsReadOnly()),
+			new StorageExpansionTemplateTable(warehouseExpansionTemplates.AsReadOnly()),
 			validationTask);
 	}
 

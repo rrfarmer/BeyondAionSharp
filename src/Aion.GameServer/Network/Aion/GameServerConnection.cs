@@ -1424,6 +1424,42 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (packet.DialogActionId is CmDialogSelect.ExtendInventory or CmDialogSelect.ExtendCharWarehouse)
+		{
+			if (NpcDialogTargetingService.ValidateTargetingNpcWithFunction(player, packet.TargetObjectId, packet.DialogActionId, _world) !=
+				NpcDialogTargetingResult.Valid)
+			{
+				return;
+			}
+
+			var staticData = _runtimeContext?.DataManager?.StaticData;
+			if (staticData == null
+				|| _world == null
+				|| !_world.TryGetObject(packet.TargetObjectId, out var target)
+				|| target is not IWorldNpcObject npc)
+			{
+				return;
+			}
+
+			var expansionService = new StorageExpansionNpcService();
+			var expansionResult = packet.DialogActionId == CmDialogSelect.ExtendInventory
+				? expansionService.RequestCubeExpansion(
+					player,
+					npc,
+					staticData.CubeExpansionTemplates.GetTemplateByNpcId(npc.TemplateId),
+					_options.Custom.CubeExpansionLimit,
+					_options.Custom.NpcCubeExpandsSizeLimit)
+				: expansionService.RequestWarehouseExpansion(
+					player,
+					npc,
+					staticData.WarehouseExpansionTemplates.GetTemplateByNpcId(npc.TemplateId));
+			foreach (var responsePacket in expansionResult.Packets)
+				await SendPacketAsync(responsePacket);
+			if (expansionResult.QuestionWindow != null)
+				await SendPacketAsync(expansionResult.QuestionWindow);
+			return;
+		}
+
 		var chargeWay = packet.DialogActionId switch
 		{
 			CmDialogSelect.ChargeItemMulti => 1,
