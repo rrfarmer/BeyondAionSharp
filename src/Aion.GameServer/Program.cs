@@ -112,6 +112,7 @@ var builder = Host.CreateDefaultBuilder(args)
 						saveItemChargeBurnAsync: playerEnterWorldService.SaveItemChargeBurnMutationAsync);
 				});
 			services.AddSingleton<WorldNpcSkillDamageFanoutService>();
+			services.AddSingleton<EquipmentObserverBurnFanoutService>();
 			services.AddSingleton<WorldNpcLootService>();
 			services.AddSingleton<WorldNpcLootBroadcastService>();
 			services.AddSingleton<WorldNpcRandomWalkService>();
