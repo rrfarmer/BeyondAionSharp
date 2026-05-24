@@ -54,6 +54,22 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 	}
 
 	[Fact]
+	public async Task HandlePlayerStatusInfoAsync_InvalidTeamCommandThrowsLikeJava()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var player = new Player { ObjectId = 1001, Name = "Solo" };
+		await using var pair = await TestConnectionPair.CreateAsync(registry, new PlayerAllianceRuntime());
+
+		var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+			pair.Connection.HandlePlayerStatusInfoAsync(
+				player,
+				CreatePacket(commandCode: 255, selectedObjectId: 0)));
+
+		Assert.Equal("Invalid team command code 255", exception.Message);
+		Assert.Empty(registry.SentPackets);
+	}
+
+	[Fact]
 	public async Task HandlePlayerStatusInfoAsync_GroupSetLfgTogglesPlayerFlagLikeJava()
 	{
 		var registry = new CapturingConnectionRegistry();

@@ -5777,6 +5777,10 @@ public sealed class GameServerConnection : BaseClientConnection
 		CmPlayerStatusInfo packet,
 		CancellationToken cancellationToken = default)
 	{
+		// Java parity: network/aion/clientpackets/CM_PLAYER_STATUS_INFO.runImpl resolves TeamCommand before dispatching.
+		if (!IsKnownPlayerStatusTeamCommand(packet.CommandCode))
+			throw new InvalidOperationException($"Invalid team command code {packet.CommandCode}");
+
 		// Java parity: network/aion/clientpackets/CM_PLAYER_STATUS_INFO.runImpl delegates ready-check commands through PlayerTeamCommandService -> PlayerAllianceService.checkReady.
 		if (packet.CommandCode == 9)
 		{
@@ -5861,6 +5865,17 @@ public sealed class GameServerConnection : BaseClientConnection
 			await SendAllianceReadyCheckAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
 
 		return plan;
+	}
+
+	private static bool IsKnownPlayerStatusTeamCommand(int commandCode)
+	{
+		// Java parity: model/team/common/events/TeamCommand.getCommand contains this exact command id set.
+		return commandCode is
+			2 or 3 or 6 or 9 or 10 or 11 or
+			14 or 16 or 17 or
+			20 or 21 or 22 or 23 or 24 or
+			25 or 26 or 27 or
+			29 or 30 or 31 or 32;
 	}
 
 	private async Task SendAllianceReadyCheckAsync(
