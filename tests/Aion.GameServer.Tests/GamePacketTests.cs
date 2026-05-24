@@ -4016,6 +4016,48 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesSummonAttack()
+	{
+		var summonAttack = Assert.IsType<CmSummonAttack>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(203, b =>
+			{
+				b.WriteD(8001);
+				b.WriteD(7001);
+				b.WriteC(4);
+				b.WriteH(500);
+				b.WriteC(9);
+			}), GameConnectionState.InGame));
+
+		Assert.Equal(8001, summonAttack.SummonObjectId);
+		Assert.Equal(7001, summonAttack.TargetObjectId);
+		Assert.Equal(4, summonAttack.Unknown1);
+		Assert.Equal(500, summonAttack.Time);
+		Assert.Equal(9, summonAttack.Unknown3);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(203, b => b.WriteD(8001)), GameConnectionState.Authed));
+	}
+
+	[Fact]
+	public void ClientPacketFactory_ParsesSummonCastSpell()
+	{
+		var summonCastSpell = Assert.IsType<CmSummonCastSpell>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(205, b =>
+			{
+				b.WriteD(8001);
+				b.WriteH(3101);
+				b.WriteC(3);
+				b.WriteD(7001);
+				b.WriteD(44);
+			}), GameConnectionState.InGame));
+
+		Assert.Equal(8001, summonCastSpell.SummonObjectId);
+		Assert.Equal(3101, summonCastSpell.SkillId);
+		Assert.Equal(3, summonCastSpell.SkillLevel);
+		Assert.Equal(7001, summonCastSpell.TargetObjectId);
+		Assert.Equal(44, summonCastSpell.Unknown);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(205, b => b.WriteD(8001)), GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesChargeItem()
 	{
 		var chargeItem = Assert.IsType<CmChargeItem>(
