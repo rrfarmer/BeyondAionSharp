@@ -20,11 +20,17 @@ public class PlayerSummonSkillExecutionServiceTests
 		};
 		var order = new PlayerPetSkillOrder(22107, SkillLevel: 1, TargetObjectId: 7001, Hate: 5, Release: true);
 
-		var result = new PlayerSummonSkillExecutionService().ValidateExecution(player, order, dataManager.StaticData.PetSkills);
+		var result = new PlayerSummonSkillExecutionService().ValidateExecution(
+			player,
+			order,
+			dataManager.StaticData.PetSkills,
+			new PlayerSummonCastSpellTarget(7001, PlayerSummonKnownObjectKind.Creature, IsActorSelfTarget: false));
 
 		Assert.Equal(PlayerSummonSkillExecutionStatus.WouldInvokeSkillEngine, result.Status);
 		Assert.Equal(833288, result.PetSummonNpcId);
 		Assert.Same(order, result.Order);
+		Assert.Equal(7001, result.ResolvedTarget?.ObjectId);
+		Assert.False(result.ResolvedTarget?.IsActorSelfTarget);
 		Assert.True(result.Order.Release);
 		Assert.Equal(5, result.Order.Hate);
 		Assert.Equal(
@@ -50,9 +56,11 @@ public class PlayerSummonSkillExecutionServiceTests
 		var result = new PlayerSummonSkillExecutionService().ValidateExecution(
 			player,
 			new PlayerPetSkillOrder(22107, SkillLevel: 1, TargetObjectId: 7001, Hate: 0, Release: false),
-			dataManager.StaticData.PetSkills);
+			dataManager.StaticData.PetSkills,
+			new PlayerSummonCastSpellTarget(7001, PlayerSummonKnownObjectKind.Creature, IsActorSelfTarget: false));
 
 		Assert.Equal(PlayerSummonSkillExecutionStatus.WouldInvokeSkillEngine, result.Status);
+		Assert.Equal(7001, result.ResolvedTarget?.ObjectId);
 		Assert.Equal(
 			[
 				PlayerSummonSkillExecutionAction.GetSkill,
@@ -69,7 +77,8 @@ public class PlayerSummonSkillExecutionServiceTests
 		var service = new PlayerSummonSkillExecutionService();
 		var order = new PlayerPetSkillOrder(22107, SkillLevel: 1, TargetObjectId: 7001, Hate: 0, Release: false);
 
-		var missingSummon = service.ValidateExecution(new Player(), order, dataManager.StaticData.PetSkills);
+		var resolvedTarget = new PlayerSummonCastSpellTarget(7001, PlayerSummonKnownObjectKind.Creature, IsActorSelfTarget: false);
+		var missingSummon = service.ValidateExecution(new Player(), order, dataManager.StaticData.PetSkills, resolvedTarget);
 		var invalidSkill = service.ValidateExecution(
 			new Player
 			{
@@ -77,11 +86,14 @@ public class PlayerSummonSkillExecutionServiceTests
 				PetSummonNpcId = 833288,
 			},
 			order with { SkillId = 9999 },
-			dataManager.StaticData.PetSkills);
+			dataManager.StaticData.PetSkills,
+			resolvedTarget);
 
 		Assert.Equal(PlayerSummonSkillExecutionStatus.MissingSummon, missingSummon.Status);
 		Assert.Equal(PlayerSummonSkillExecutionStatus.InvalidPetSkill, invalidSkill.Status);
 		Assert.Equal(9999, invalidSkill.Order.SkillId);
+		Assert.Equal(7001, missingSummon.ResolvedTarget?.ObjectId);
+		Assert.Equal(7001, invalidSkill.ResolvedTarget?.ObjectId);
 		Assert.Empty(missingSummon.Actions);
 		Assert.Empty(invalidSkill.Actions);
 	}

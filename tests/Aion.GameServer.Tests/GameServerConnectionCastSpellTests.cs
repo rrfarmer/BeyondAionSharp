@@ -336,6 +336,8 @@ public class GameServerConnectionCastSpellTests
 		Assert.True(result.CastResult.SkillMismatch);
 		Assert.Equal(PlayerSummonSkillExecutionStatus.WouldInvokeSkillEngine, result.ExecutionResult?.Status);
 		Assert.Equal(22107, result.ExecutionResult?.Order.SkillId);
+		Assert.Equal(7001, result.ExecutionResult?.ResolvedTarget?.ObjectId);
+		Assert.False(result.ExecutionResult?.ResolvedTarget?.IsActorSelfTarget);
 		Assert.Equal(5, result.ExecutionResult?.Order.Hate);
 		Assert.True(result.ExecutionResult?.Order.Release);
 		Assert.Empty(player.PetSkillOrders);
@@ -362,6 +364,7 @@ public class GameServerConnectionCastSpellTests
 		Assert.Equal(PlayerSummonCastSpellStatus.Executed, result.CastResult.Status);
 		Assert.Equal(PlayerSummonSkillExecutionStatus.InvalidPetSkill, result.ExecutionResult?.Status);
 		Assert.Equal(9999, result.ExecutionResult?.Order.SkillId);
+		Assert.Equal(7001, result.ExecutionResult?.ResolvedTarget?.ObjectId);
 		Assert.Empty(sentPackets);
 	}
 

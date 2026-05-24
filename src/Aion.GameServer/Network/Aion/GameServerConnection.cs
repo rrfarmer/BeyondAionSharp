@@ -1307,7 +1307,11 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (petSkills == null)
 			return new PlayerSummonCastSpellConnectionResult(castResult, ExecutionResult: null);
 
-		var executionResult = _summonSkillExecutionService.ValidateExecution(player, castResult.ExecutedOrder, petSkills);
+		var executionResult = _summonSkillExecutionService.ValidateExecution(
+			player,
+			castResult.ExecutedOrder,
+			petSkills,
+			castResult.ResolvedTarget);
 		return new PlayerSummonCastSpellConnectionResult(castResult, executionResult);
 	}
 

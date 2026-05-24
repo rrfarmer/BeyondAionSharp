@@ -9,18 +9,20 @@ public sealed class PlayerSummonSkillExecutionService
 	public PlayerSummonSkillExecutionResult ValidateExecution(
 		Player player,
 		PlayerPetSkillOrder order,
-		PetSkillTable petSkills)
+		PetSkillTable petSkills,
+		PlayerSummonCastSpellTarget? resolvedTarget = null)
 	{
 		// Java parity: controllers/SummonController.useSkill(SkillOrder) petHasSkill guard before SkillEngine invocation.
 		if (!player.HasPetSummon || player.PetSummonNpcId == 0)
-			return PlayerSummonSkillExecutionResult.MissingSummon(order);
+			return PlayerSummonSkillExecutionResult.MissingSummon(order, resolvedTarget);
 
 		if (!petSkills.PetHasSkill(player.PetSummonNpcId, order.SkillId))
-			return PlayerSummonSkillExecutionResult.InvalidPetSkill(player.PetSummonNpcId, order);
+			return PlayerSummonSkillExecutionResult.InvalidPetSkill(player.PetSummonNpcId, order, resolvedTarget);
 
 		return PlayerSummonSkillExecutionResult.WouldInvokeSkillEngine(
 			player.PetSummonNpcId,
 			order,
+			resolvedTarget,
 			order.Release
 				? [
 					PlayerSummonSkillExecutionAction.GetSkill,
@@ -70,29 +72,45 @@ public sealed record PlayerSummonSkillExecutionResult(
 	PlayerSummonSkillExecutionStatus Status,
 	int PetSummonNpcId,
 	PlayerPetSkillOrder Order,
+	PlayerSummonCastSpellTarget? ResolvedTarget = null,
 	IReadOnlyList<PlayerSummonSkillExecutionAction>? PlannedActions = null)
 {
 	public IReadOnlyList<PlayerSummonSkillExecutionAction> Actions => PlannedActions ?? Array.Empty<PlayerSummonSkillExecutionAction>();
 
-	public static PlayerSummonSkillExecutionResult MissingSummon(PlayerPetSkillOrder order)
+	public static PlayerSummonSkillExecutionResult MissingSummon(
+		PlayerPetSkillOrder order,
+		PlayerSummonCastSpellTarget? resolvedTarget)
 	{
-		return new PlayerSummonSkillExecutionResult(PlayerSummonSkillExecutionStatus.MissingSummon, 0, order);
+		return new PlayerSummonSkillExecutionResult(
+			PlayerSummonSkillExecutionStatus.MissingSummon,
+			0,
+			order,
+			resolvedTarget);
 	}
 
-	public static PlayerSummonSkillExecutionResult InvalidPetSkill(int petSummonNpcId, PlayerPetSkillOrder order)
+	public static PlayerSummonSkillExecutionResult InvalidPetSkill(
+		int petSummonNpcId,
+		PlayerPetSkillOrder order,
+		PlayerSummonCastSpellTarget? resolvedTarget)
 	{
-		return new PlayerSummonSkillExecutionResult(PlayerSummonSkillExecutionStatus.InvalidPetSkill, petSummonNpcId, order);
+		return new PlayerSummonSkillExecutionResult(
+			PlayerSummonSkillExecutionStatus.InvalidPetSkill,
+			petSummonNpcId,
+			order,
+			resolvedTarget);
 	}
 
 	public static PlayerSummonSkillExecutionResult WouldInvokeSkillEngine(
 		int petSummonNpcId,
 		PlayerPetSkillOrder order,
+		PlayerSummonCastSpellTarget? resolvedTarget,
 		IReadOnlyList<PlayerSummonSkillExecutionAction> plannedActions)
 	{
 		return new PlayerSummonSkillExecutionResult(
 			PlayerSummonSkillExecutionStatus.WouldInvokeSkillEngine,
 			petSummonNpcId,
 			order,
+			resolvedTarget,
 			plannedActions);
 	}
 }
