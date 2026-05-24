@@ -2554,13 +2554,16 @@ public sealed class GameServerConnection : BaseClientConnection
 	private async Task StartSoulBindRequestAsync(Player player, EquipmentChangeResult change)
 	{
 		// Java parity: model/gameobjects/player/Equipment.soulBindItem putRequest + SM_QUESTION_WINDOW.
-		if (player.PendingSoulBindRequest != null)
+		var pendingRequest = new PendingSoulBindRequest(change.SoulBindItemObjectId, change.SoulBindSlot, change.ItemName);
+		if (!player.ResponseRequester.PutRequest(
+			SmQuestionWindow.SoulBoundItemConfirm,
+			new QuestionResponseRequest(player.ObjectId, QuestionResponseRequestKind.SoulBind, pendingRequest)))
 		{
 			await SendPacketAsync(SmSystemMessage.SoulBoundCloseOtherMsgBoxAndRetry());
 			return;
 		}
 
-		player.PendingSoulBindRequest = new PendingSoulBindRequest(change.SoulBindItemObjectId, change.SoulBindSlot, change.ItemName);
+		player.PendingSoulBindRequest = pendingRequest;
 		await SendPacketAsync(new SmQuestionWindow(SmQuestionWindow.SoulBoundItemConfirm, 0, 0, change.ItemName));
 	}
 
@@ -2653,8 +2656,20 @@ public sealed class GameServerConnection : BaseClientConnection
 
 	private async Task HandleSoulBindQuestionResponseAsync(Player player, CmQuestionResponse packet)
 	{
-		// Java parity: ResponseRequester handler registered by Equipment.soulBindItem.
-		var request = player.PendingSoulBindRequest;
+		// Java parity: CM_QUESTION_RESPONSE delegates to ResponseRequester.respond, which removes
+		// the Equipment.soulBindItem RequestResponseHandler before invoking accept/deny behavior.
+		var pendingRequest = player.PendingSoulBindRequest;
+		if (pendingRequest == null || packet.QuestionId != SmQuestionWindow.SoulBoundItemConfirm)
+			return;
+
+		var dispatch = player.ResponseRequester.Respond(packet.QuestionId, packet.Response);
+		if (dispatch?.Request.Kind != QuestionResponseRequestKind.SoulBind)
+		{
+			player.PendingSoulBindRequest = null;
+			return;
+		}
+
+		var request = dispatch.Request.Payload as PendingSoulBindRequest ?? pendingRequest;
 		if (request == null || packet.QuestionId != SmQuestionWindow.SoulBoundItemConfirm)
 			return;
 
