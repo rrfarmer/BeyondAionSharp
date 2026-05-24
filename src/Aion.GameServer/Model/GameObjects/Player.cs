@@ -213,6 +213,22 @@ public sealed class Player
 	// Java parity: Player.getSummon() != null && Summon.isPet() guard used by CM_CASTSPELL pet-order skills.
 	public bool HasPetSummon { get; set; }
 
+	// Java parity: model/gameobjects/Summon.getObjectId consumed by PetOrderUseUltraSkillEffect -> SM_SUMMON_USESKILL.
+	public int PetSummonObjectId { get; set; }
+
+	// Java parity: model/gameobjects/Summon.getNpcId consumed by PetSkillData.getPetOrderSkill(orderSkillId, npcId).
+	public int PetSummonNpcId { get; set; }
+
+	private readonly List<PlayerPetSkillOrder> _petSkillOrders = [];
+
+	// Java parity: model/gameobjects/Summon.addSkillOrder represented until the full Summon model exists.
+	public IReadOnlyList<PlayerPetSkillOrder> PetSkillOrders => _petSkillOrders;
+
+	public void AddPetSkillOrder(PlayerPetSkillOrder order)
+	{
+		_petSkillOrders.Add(order);
+	}
+
 	public PlayerBrokerSettlementSummary BrokerSettlements { get; set; } = PlayerBrokerSettlementSummary.Empty;
 
 	// Java parity: model/broker/BrokerPlayerCache remembers the last broker list/search for refresh after buy.

@@ -882,6 +882,14 @@ public class GamePacketTests
 		Assert.Equal(1234, skillCancelReader.ReadH());
 		Assert.Equal(0, skillCancelReader.Remaining);
 
+		var summonUseSkillPayload = SerializeUnencryptedPayload(new SmSummonUseSkill(8001, 22107, 1, 7001));
+		using var summonUseSkillReader = new PacketBuffer(summonUseSkillPayload);
+		Assert.Equal(8001, summonUseSkillReader.ReadD());
+		Assert.Equal(22107, summonUseSkillReader.ReadH());
+		Assert.Equal(1, (int)summonUseSkillReader.ReadC());
+		Assert.Equal(7001, summonUseSkillReader.ReadD());
+		Assert.Equal(0, summonUseSkillReader.Remaining);
+
 		var kiskSpawnedAt = new DateTimeOffset(2026, 5, 23, 12, 0, 0, TimeSpan.Zero);
 		var kisk = new PlayerKiskRuntimeState(
 			objectId: 9001,
