@@ -306,6 +306,136 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 	}
 
 	[Fact]
+	public async Task HandlePlayerStatusInfoAsync_LeagueExpelInvalidTargetThrowsLikeJavaFindLeagueAlliance()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var alliances = new PlayerAllianceRuntime();
+		var leagues = new PlayerLeagueRuntime();
+		var leagueLeader = new Player { ObjectId = 1001, Name = "LeagueLeader", IsOnline = true };
+		var allianceLeader = new Player { ObjectId = 2001, Name = "AllianceLeader", IsOnline = true };
+		alliances.CreateAlliance(88001, leagueLeader);
+		alliances.CreateAlliance(88002, allianceLeader);
+		leagues.CreateLeague(77001, leaderAllianceId: 88001);
+		leagues.AddAlliance(77001, allianceId: 88002);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, alliances, playerLeagueRuntime: leagues);
+
+		var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+			pair.Connection.HandlePlayerStatusInfoAsync(
+				leagueLeader,
+				CreatePacket(commandCode: 30, selectedObjectId: 88999)));
+
+		Assert.Equal("Player [id=1001, name=LeagueLeader] tried to execute league command on invalid alliance 88999", exception.Message);
+		Assert.Equal([88001, 88002], leagues.GetAllianceIdsByPosition(77001));
+		Assert.Empty(registry.SentPackets);
+	}
+
+	[Fact]
+	public async Task HandlePlayerStatusInfoAsync_LeagueExpelByNonAllianceLeaderThrowsLikeJava()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var alliances = new PlayerAllianceRuntime();
+		var leagues = new PlayerLeagueRuntime();
+		var leagueLeader = new Player { ObjectId = 1001, Name = "LeagueLeader", IsOnline = true };
+		var leagueMember = new Player { ObjectId = 1002, Name = "LeagueMember", IsOnline = true };
+		var allianceLeader = new Player { ObjectId = 2001, Name = "AllianceLeader", IsOnline = true };
+		alliances.CreateAlliance(88001, leagueLeader);
+		alliances.AddMember(88001, leagueMember);
+		alliances.CreateAlliance(88002, allianceLeader);
+		leagues.CreateLeague(77001, leaderAllianceId: 88001);
+		leagues.AddAlliance(77001, allianceId: 88002);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, alliances, playerLeagueRuntime: leagues);
+
+		var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+			pair.Connection.HandlePlayerStatusInfoAsync(
+				leagueMember,
+				CreatePacket(commandCode: 30, selectedObjectId: 88002)));
+
+		Assert.Equal("Given player is not the league alliance leader", exception.Message);
+		Assert.Equal([88001, 88002], leagues.GetAllianceIdsByPosition(77001));
+		Assert.Empty(registry.SentPackets);
+	}
+
+	[Fact]
+	public async Task HandlePlayerStatusInfoAsync_LeagueExpelByNonLeagueLeaderAllianceThrowsLikeJava()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var alliances = new PlayerAllianceRuntime();
+		var leagues = new PlayerLeagueRuntime();
+		var leagueLeader = new Player { ObjectId = 1001, Name = "LeagueLeader", IsOnline = true };
+		var allianceLeader = new Player { ObjectId = 2001, Name = "AllianceLeader", IsOnline = true };
+		var targetLeader = new Player { ObjectId = 3001, Name = "TargetLeader", IsOnline = true };
+		alliances.CreateAlliance(88001, leagueLeader);
+		alliances.CreateAlliance(88002, allianceLeader);
+		alliances.CreateAlliance(88003, targetLeader);
+		leagues.CreateLeague(77001, leaderAllianceId: 88001);
+		leagues.AddAlliance(77001, allianceId: 88002);
+		leagues.AddAlliance(77001, allianceId: 88003);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, alliances, playerLeagueRuntime: leagues);
+
+		var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+			pair.Connection.HandlePlayerStatusInfoAsync(
+				allianceLeader,
+				CreatePacket(commandCode: 30, selectedObjectId: 88003)));
+
+		Assert.Equal("Leader's alliance is not the league leader", exception.Message);
+		Assert.Equal([88001, 88002, 88003], leagues.GetAllianceIdsByPosition(77001));
+		Assert.Empty(registry.SentPackets);
+	}
+
+	[Fact]
+	public async Task HandlePlayerStatusInfoAsync_LeagueExpelLastAllianceDisbandsLikeJava()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var alliances = new PlayerAllianceRuntime();
+		var leagues = new PlayerLeagueRuntime();
+		var leagueLeader = new Player { ObjectId = 1001, Name = "LeagueLeader", IsOnline = true, Position = new WorldPosition(210010000, 1, 2, 3, 0) };
+		var expelledLeader = new Player { ObjectId = 2001, Name = "ExpelledLeader", IsOnline = true, Position = new WorldPosition(220010000, 4, 5, 6, 0) };
+		alliances.CreateAlliance(88001, leagueLeader);
+		alliances.CreateAlliance(88002, expelledLeader);
+		leagues.CreateLeague(77001, leaderAllianceId: 88001);
+		leagues.AddAlliance(77001, allianceId: 88002);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, alliances, playerLeagueRuntime: leagues);
+
+		Assert.Null(await pair.Connection.HandlePlayerStatusInfoAsync(
+			leagueLeader,
+			CreatePacket(commandCode: 30, selectedObjectId: 88002)));
+
+		Assert.Empty(leagues.GetAllianceIdsByPosition(77001));
+		Assert.Null(leagues.ResolveByAllianceId(88001));
+		Assert.Null(leagues.ResolveByAllianceId(88002));
+		Assert.Equal([1001, 2001, 1001], registry.SentPackets.Select(send => send.PlayerObjectId));
+		Assert.Collection(
+			registry.SentPackets,
+			send => AssertLeagueAllianceInfoPacket(
+				send,
+				88001,
+				1001,
+				210010000,
+				PlayerAllianceInfoPacketPlan.LeagueExpelMessageId,
+				"ExpelledLeader",
+				77001,
+				[new PlayerAllianceInfoLeagueRow(0, 88001, 1, "LeagueLeader", 210010000)]),
+			send => AssertLeagueAllianceInfoPacket(
+				send,
+				88002,
+				2001,
+				220010000,
+				PlayerAllianceInfoPacketPlan.LeagueExpelledMessageId,
+				"LeagueLeader",
+				expectedLeagueId: 0,
+				expectedLeagueRows: []),
+			send => AssertLeagueAllianceInfoPacket(
+				send,
+				88001,
+				1001,
+				210010000,
+				PlayerAllianceInfoPacketPlan.LeagueDispersedMessageId,
+				string.Empty,
+				expectedLeagueId: 0,
+				expectedLeagueRows: []));
+	}
+
+	[Fact]
 	public async Task HandlePlayerStatusInfoAsync_LeagueSetLeaderWithoutLeagueThrowsLikeJava()
 	{
 		var registry = new CapturingConnectionRegistry();
