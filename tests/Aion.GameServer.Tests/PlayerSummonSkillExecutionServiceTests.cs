@@ -10,6 +10,87 @@ namespace Aion.GameServer.Tests;
 public class PlayerSummonSkillExecutionServiceTests
 {
 	[Fact]
+	public void EvaluateMercenaryNpcSkillConditionReadiness_ProjectsSimpleJavaConditionBranches()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var playerTarget = new PlayerSummonKnownObjectNpcSkillConditionTarget(
+			PlayerSummonKnownObjectNpcSkillConditionTargetKind.Player,
+			PlayerAbnormalState.Stun | PlayerAbnormalState.Poison,
+			IsFlying: true,
+			IsPhysicalClass: false,
+			IsInRange: true);
+		var npcTarget = new PlayerSummonKnownObjectNpcSkillConditionTarget(
+			PlayerSummonKnownObjectNpcSkillConditionTargetKind.Npc,
+			PlayerAbnormalState.Sleep,
+			IsInRange: false);
+		var gateTarget = new PlayerSummonKnownObjectNpcSkillConditionTarget(
+			PlayerSummonKnownObjectNpcSkillConditionTargetKind.Gate);
+
+		var ownerDead = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			PlayerSummonKnownObjectNpcSkillCondition.None,
+			playerTarget,
+			ownerIsDead: true);
+		var none = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			PlayerSummonKnownObjectNpcSkillCondition.None,
+			null);
+		var missingTarget = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			PlayerSummonKnownObjectNpcSkillCondition.TargetIsStunned,
+			null);
+		var stunned = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			PlayerSummonKnownObjectNpcSkillCondition.TargetIsStunned,
+			playerTarget);
+		var sleepingNpc = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			PlayerSummonKnownObjectNpcSkillCondition.TargetIsSleeping,
+			npcTarget);
+		var bleeding = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			PlayerSummonKnownObjectNpcSkillCondition.TargetIsBleeding,
+			playerTarget);
+		var flying = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			PlayerSummonKnownObjectNpcSkillCondition.TargetIsFlying,
+			playerTarget);
+		var player = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			PlayerSummonKnownObjectNpcSkillCondition.TargetIsPlayer,
+			playerTarget);
+		var npc = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			PlayerSummonKnownObjectNpcSkillCondition.TargetIsNpc,
+			npcTarget);
+		var gate = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			PlayerSummonKnownObjectNpcSkillCondition.TargetIsGate,
+			gateTarget);
+		var magicalClass = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			PlayerSummonKnownObjectNpcSkillCondition.TargetIsMagicalClass,
+			playerTarget);
+		var physicalClass = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			PlayerSummonKnownObjectNpcSkillCondition.TargetIsPhysicalClass,
+			playerTarget);
+		var inRange = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			PlayerSummonKnownObjectNpcSkillCondition.TargetIsInRange,
+			playerTarget);
+		var outOfRange = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			PlayerSummonKnownObjectNpcSkillCondition.TargetIsInRange,
+			npcTarget);
+		var unsupported = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			PlayerSummonKnownObjectNpcSkillCondition.HelpFriend,
+			playerTarget);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.OwnerNotReady, ownerDead.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.Ready, none.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.MissingTarget, missingTarget.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.Ready, stunned.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.Ready, sleepingNpc.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.NotReady, bleeding.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.Ready, flying.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.Ready, player.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.Ready, npc.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.Ready, gate.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.Ready, magicalClass.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.NotReady, physicalClass.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.Ready, inRange.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.NotReady, outOfRange.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.Unsupported, unsupported.Status);
+	}
+
+	[Fact]
 	public void EvaluateMercenaryNpcSkillEntryReadiness_ProjectsJavaHpTimeCooldownAndConjunctions()
 	{
 		var service = new PlayerSummonSkillExecutionService();

@@ -218,6 +218,58 @@ public sealed class PlayerSummonSkillExecutionService
 			|| timing.MaxTimeMilliseconds >= elapsedFightTimeMilliseconds && timing.MinTimeMilliseconds <= elapsedFightTimeMilliseconds;
 	}
 
+	public PlayerSummonKnownObjectNpcSkillConditionReadiness EvaluateMercenaryNpcSkillConditionReadiness(
+		PlayerSummonKnownObjectNpcSkillCondition condition,
+		PlayerSummonKnownObjectNpcSkillConditionTarget? target,
+		bool ownerExists = true,
+		bool ownerIsDead = false,
+		bool ownerIsAboutToDie = false)
+	{
+		if (!ownerExists || ownerIsDead || ownerIsAboutToDie)
+			return PlayerSummonKnownObjectNpcSkillConditionReadiness.OwnerNotReady(condition, target);
+
+		return condition switch
+		{
+			PlayerSummonKnownObjectNpcSkillCondition.None => PlayerSummonKnownObjectNpcSkillConditionReadiness.Ready(condition, target),
+			PlayerSummonKnownObjectNpcSkillCondition.TargetIsAethersHold => MatchTargetAbnormalState(condition, target, PlayerAbnormalState.OpenAerial),
+			PlayerSummonKnownObjectNpcSkillCondition.TargetIsStunned => MatchTargetAbnormalState(condition, target, PlayerAbnormalState.Stun),
+			PlayerSummonKnownObjectNpcSkillCondition.TargetIsInAnyStun => MatchTargetAbnormalState(condition, target, PlayerAbnormalState.AnyStun),
+			PlayerSummonKnownObjectNpcSkillCondition.TargetIsInStumble => MatchTargetAbnormalState(condition, target, PlayerAbnormalState.Stumble),
+			PlayerSummonKnownObjectNpcSkillCondition.TargetIsSleeping => MatchTargetAbnormalState(condition, target, PlayerAbnormalState.Sleep),
+			PlayerSummonKnownObjectNpcSkillCondition.TargetIsPoisoned => MatchTargetAbnormalState(condition, target, PlayerAbnormalState.Poison),
+			PlayerSummonKnownObjectNpcSkillCondition.TargetIsBleeding => MatchTargetAbnormalState(condition, target, PlayerAbnormalState.Bleed),
+			PlayerSummonKnownObjectNpcSkillCondition.TargetIsFlying => MatchTargetFlag(condition, target, static target => target.IsFlying),
+			PlayerSummonKnownObjectNpcSkillCondition.TargetIsGate => MatchTargetFlag(condition, target, static target => target.Kind == PlayerSummonKnownObjectNpcSkillConditionTargetKind.Gate),
+			PlayerSummonKnownObjectNpcSkillCondition.TargetIsPlayer => MatchTargetFlag(condition, target, static target => target.Kind == PlayerSummonKnownObjectNpcSkillConditionTargetKind.Player),
+			PlayerSummonKnownObjectNpcSkillCondition.TargetIsNpc => MatchTargetFlag(condition, target, static target => target.Kind == PlayerSummonKnownObjectNpcSkillConditionTargetKind.Npc),
+			PlayerSummonKnownObjectNpcSkillCondition.TargetIsMagicalClass => MatchTargetFlag(condition, target, static target => target.Kind == PlayerSummonKnownObjectNpcSkillConditionTargetKind.Player && target.IsPhysicalClass == false),
+			PlayerSummonKnownObjectNpcSkillCondition.TargetIsPhysicalClass => MatchTargetFlag(condition, target, static target => target.Kind == PlayerSummonKnownObjectNpcSkillConditionTargetKind.Player && target.IsPhysicalClass == true),
+			PlayerSummonKnownObjectNpcSkillCondition.TargetIsInRange => MatchTargetFlag(condition, target, static target => target.IsInRange),
+			_ => PlayerSummonKnownObjectNpcSkillConditionReadiness.Unsupported(condition, target),
+		};
+	}
+
+	private static PlayerSummonKnownObjectNpcSkillConditionReadiness MatchTargetAbnormalState(
+		PlayerSummonKnownObjectNpcSkillCondition condition,
+		PlayerSummonKnownObjectNpcSkillConditionTarget? target,
+		PlayerAbnormalState abnormalState)
+	{
+		return MatchTargetFlag(condition, target, target => target.IsInAnyAbnormalState(abnormalState));
+	}
+
+	private static PlayerSummonKnownObjectNpcSkillConditionReadiness MatchTargetFlag(
+		PlayerSummonKnownObjectNpcSkillCondition condition,
+		PlayerSummonKnownObjectNpcSkillConditionTarget? target,
+		Func<PlayerSummonKnownObjectNpcSkillConditionTarget, bool> predicate)
+	{
+		if (target == null)
+			return PlayerSummonKnownObjectNpcSkillConditionReadiness.MissingTarget(condition);
+
+		return predicate(target)
+			? PlayerSummonKnownObjectNpcSkillConditionReadiness.Ready(condition, target)
+			: PlayerSummonKnownObjectNpcSkillConditionReadiness.NotReady(condition, target);
+	}
+
 	public PlayerSummonKnownObjectTargetRangeReadiness EvaluateMercenaryTargetRange(
 		PlayerSummonKnownObject knownObject,
 		bool requiresCreatureTargetCheck,
@@ -1020,6 +1072,116 @@ public enum PlayerSummonKnownObjectNpcSkillEntryReadinessStatus
 {
 	OnCooldown,
 	ChanceNotReady,
+	NotReady,
+	Ready,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillConditionTarget(
+	PlayerSummonKnownObjectNpcSkillConditionTargetKind Kind,
+	PlayerAbnormalState AbnormalState = PlayerAbnormalState.None,
+	bool IsFlying = false,
+	bool? IsPhysicalClass = null,
+	bool IsInRange = false)
+{
+	public bool IsInAnyAbnormalState(PlayerAbnormalState state)
+	{
+		// Java parity: NpcSkillTemplateEntry.conditionReady delegates target states to EffectController.isInAnyAbnormalState.
+		return state == PlayerAbnormalState.None ? AbnormalState == PlayerAbnormalState.None : (AbnormalState & state) != 0;
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillConditionTargetKind
+{
+	Unknown,
+	Player,
+	Npc,
+	Gate,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillCondition
+{
+	None,
+	HelpFriend,
+	TargetIsInAnyStun,
+	TargetIsInRange,
+	TargetIsInStumble,
+	TargetIsStunned,
+	TargetIsSleeping,
+	TargetIsAethersHold,
+	TargetIsPoisoned,
+	TargetIsBleeding,
+	TargetIsFlying,
+	TargetIsGate,
+	TargetIsPlayer,
+	TargetIsNpc,
+	TargetIsPhysicalClass,
+	TargetIsMagicalClass,
+	TargetHasCarvedSignet,
+	TargetHasCarvedSignetLevelIi,
+	TargetHasCarvedSignetLevelIii,
+	TargetHasCarvedSignetLevelIv,
+	TargetHasCarvedSignetLevelV,
+	NpcIsAlive,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillConditionReadiness(
+	PlayerSummonKnownObjectNpcSkillConditionReadinessStatus Status,
+	PlayerSummonKnownObjectNpcSkillCondition Condition,
+	PlayerSummonKnownObjectNpcSkillConditionTarget? Target = null)
+{
+	public static PlayerSummonKnownObjectNpcSkillConditionReadiness OwnerNotReady(
+		PlayerSummonKnownObjectNpcSkillCondition condition,
+		PlayerSummonKnownObjectNpcSkillConditionTarget? target)
+	{
+		return new PlayerSummonKnownObjectNpcSkillConditionReadiness(
+			PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.OwnerNotReady,
+			condition,
+			target);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillConditionReadiness MissingTarget(PlayerSummonKnownObjectNpcSkillCondition condition)
+	{
+		return new PlayerSummonKnownObjectNpcSkillConditionReadiness(
+			PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.MissingTarget,
+			condition);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillConditionReadiness Unsupported(
+		PlayerSummonKnownObjectNpcSkillCondition condition,
+		PlayerSummonKnownObjectNpcSkillConditionTarget? target)
+	{
+		return new PlayerSummonKnownObjectNpcSkillConditionReadiness(
+			PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.Unsupported,
+			condition,
+			target);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillConditionReadiness NotReady(
+		PlayerSummonKnownObjectNpcSkillCondition condition,
+		PlayerSummonKnownObjectNpcSkillConditionTarget target)
+	{
+		return new PlayerSummonKnownObjectNpcSkillConditionReadiness(
+			PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.NotReady,
+			condition,
+			target);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillConditionReadiness Ready(
+		PlayerSummonKnownObjectNpcSkillCondition condition,
+		PlayerSummonKnownObjectNpcSkillConditionTarget? target)
+	{
+		return new PlayerSummonKnownObjectNpcSkillConditionReadiness(
+			PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.Ready,
+			condition,
+			target);
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillConditionReadinessStatus
+{
+	OwnerNotReady,
+	MissingTarget,
+	Unsupported,
 	NotReady,
 	Ready,
 }
