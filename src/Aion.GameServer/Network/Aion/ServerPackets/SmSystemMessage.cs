@@ -267,6 +267,18 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1400013, playerName);
 	}
 
+	public static SmSystemMessage UnionChangeForceNumberMe(int forceNumber)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_UNION_CHANGE_FORCE_NUMBER_ME(int).
+		return new SmSystemMessage(1400589, forceNumber.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage UnionChangeForceNumberHim(string playerName, int forceNumber)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_UNION_CHANGE_FORCE_NUMBER_HIM(String, int).
+		return new SmSystemMessage(1400590, playerName, forceNumber.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
 	public static SmSystemMessage ForceHeBecomeOffline(string playerName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_FORCE_HE_BECOME_OFFLINE(String).

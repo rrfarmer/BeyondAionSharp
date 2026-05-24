@@ -213,13 +213,13 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 	}
 
 	[Fact]
-	public async Task HandlePlayerStatusInfoAsync_LeagueAllianceMoveSwapsPositionsWithoutFanoutUntilLeaguePacketsPorted()
+	public async Task HandlePlayerStatusInfoAsync_LeagueAllianceMoveSwapsPositionsAndFansOutJavaPacketOrder()
 	{
 		var registry = new CapturingConnectionRegistry();
 		var alliances = new PlayerAllianceRuntime();
 		var leagues = new PlayerLeagueRuntime();
-		var leagueLeader = new Player { ObjectId = 1001, Name = "LeagueLeader", IsOnline = true };
-		var allianceLeader = new Player { ObjectId = 2001, Name = "AllianceLeader", IsOnline = true };
+		var leagueLeader = new Player { ObjectId = 1001, Name = "LeagueLeader", IsOnline = true, Position = new WorldPosition(210010000, 1, 2, 3, 0) };
+		var allianceLeader = new Player { ObjectId = 2001, Name = "AllianceLeader", IsOnline = true, Position = new WorldPosition(220010000, 4, 5, 6, 0) };
 		alliances.CreateAlliance(88001, leagueLeader);
 		alliances.CreateAlliance(88002, allianceLeader);
 		leagues.CreateLeague(77001, leaderAllianceId: 88001);
@@ -233,7 +233,15 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 		Assert.Equal([88002, 88001], leagues.GetAllianceIdsByPosition(77001));
 		Assert.Equal(1, leagues.GetLeaguePosition(77001, 88001));
 		Assert.Equal(0, leagues.GetLeaguePosition(77001, 88002));
-		Assert.Empty(registry.SentPackets);
+		Assert.Equal([2001, 2001, 2001, 1001, 1001, 1001], registry.SentPackets.Select(send => send.PlayerObjectId));
+		Assert.Collection(
+			registry.SentPackets,
+			send => Assert.IsType<SmAllianceInfo>(send.Packet),
+			send => Assert.Equal(1400589, Assert.IsType<SmSystemMessage>(send.Packet).MessageId),
+			send => Assert.Equal(1400590, Assert.IsType<SmSystemMessage>(send.Packet).MessageId),
+			send => Assert.IsType<SmAllianceInfo>(send.Packet),
+			send => Assert.Equal(1400590, Assert.IsType<SmSystemMessage>(send.Packet).MessageId),
+			send => Assert.Equal(1400589, Assert.IsType<SmSystemMessage>(send.Packet).MessageId));
 	}
 
 	[Fact]

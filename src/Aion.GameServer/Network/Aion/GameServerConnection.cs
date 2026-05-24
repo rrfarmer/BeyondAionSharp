@@ -5867,12 +5867,17 @@ public sealed class GameServerConnection : BaseClientConnection
 			if (leagueMoveAlliance == null)
 				throw new InvalidOperationException("Player alliance should not be null");
 
-			_playerLeagueRuntime.MoveAlliance(
+			var leagueMovePlan = _playerLeagueRuntime.MoveAlliance(
 				leagueMoveAlliance.AllianceId,
 				player.ObjectId,
 				packet.SelectedObjectId,
 				packet.AllianceGroupId,
 				_playerAllianceRuntime);
+			if (leagueMovePlan != null)
+			{
+				foreach (var intent in leagueMovePlan.PacketIntents.OrderBy(intent => intent.Sequence))
+					await SendLeaguePacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+			}
 			return null;
 		}
 
@@ -6160,6 +6165,18 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		return plan;
+	}
+
+	private async Task SendLeaguePacketAsync(
+		int recipientObjectId,
+		GameServerPacket packet,
+		CancellationToken cancellationToken)
+	{
+		if (_connectionRegistry != null && await _connectionRegistry.SendPacketToPlayerAsync(recipientObjectId, packet))
+			return;
+
+		if (_activePlayer?.ObjectId == recipientObjectId)
+			await SendPacketAsync(packet, cancellationToken);
 	}
 
 	private async Task SendAllianceGroupChangePacketAsync(

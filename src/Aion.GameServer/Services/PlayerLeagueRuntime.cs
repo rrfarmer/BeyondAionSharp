@@ -1,4 +1,6 @@
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using System.Threading;
 
 namespace Aion.GameServer.Services;
@@ -119,6 +121,16 @@ public sealed class PlayerLeagueRuntime
 			selected.LeaguePosition = targetCurrentPosition;
 			target.LeaguePosition = selectedCurrentPosition;
 
+			var sortedAllianceIds = GetSortedAllianceIds(members);
+			var packetIntents = CreateMovePacketIntents(
+				leagueId,
+				sortedAllianceIds,
+				selectedAllianceId,
+				targetAllianceId,
+				selectedCurrentPosition,
+				targetCurrentPosition,
+				allianceRuntime);
+
 			return new PlayerLeagueMovePlan(
 				leagueId,
 				callerAllianceId,
@@ -126,8 +138,75 @@ public sealed class PlayerLeagueRuntime
 				targetAllianceId,
 				selectedCurrentPosition,
 				targetCurrentPosition,
-				GetSortedAllianceIds(members));
+				sortedAllianceIds,
+				packetIntents);
 		}
+	}
+
+	private static IReadOnlyList<PlayerLeaguePacketIntent> CreateMovePacketIntents(
+		int leagueId,
+		IReadOnlyList<int> sortedAllianceIds,
+		int selectedAllianceId,
+		int targetAllianceId,
+		int selectedCurrentPosition,
+		int targetCurrentPosition,
+		PlayerAllianceRuntime allianceRuntime)
+	{
+		// Java parity: model/team/league/events/LeagueMoveEvent.handleEvent sends, for each alliance:
+		// SM_ALLIANCE_INFO, selected force-number message, then target force-number message.
+		var selectedName = GetAllianceLeaderName(allianceRuntime, selectedAllianceId);
+		var targetName = GetAllianceLeaderName(allianceRuntime, targetAllianceId);
+		var intents = new List<PlayerLeaguePacketIntent>();
+		var sequence = 0;
+
+		foreach (var allianceId in sortedAllianceIds)
+		{
+			var recipients = allianceRuntime.GetMemberObjectIds(allianceId);
+			var snapshot = allianceRuntime.GetSnapshot(allianceId);
+			if (snapshot == null)
+				continue;
+
+			foreach (var recipientObjectId in recipients)
+			{
+				var recipient = allianceRuntime.GetMember(allianceId, recipientObjectId)?.Player;
+				var activePlayerMapId = recipient?.Position.WorldId ?? 0;
+				intents.Add(new PlayerLeaguePacketIntent(
+					sequence++,
+					recipientObjectId,
+					allianceId,
+					PlayerLeaguePacketIntentKind.AllianceInfo,
+					AllianceInfoPlan: snapshot.CreateInfoPacketPlan(activePlayerMapId, leagueId: leagueId)));
+
+				intents.Add(new PlayerLeaguePacketIntent(
+					sequence++,
+					recipientObjectId,
+					allianceId,
+					PlayerLeaguePacketIntentKind.SystemMessage,
+					SystemMessage: allianceId == selectedAllianceId
+						? SmSystemMessage.UnionChangeForceNumberMe(targetCurrentPosition)
+						: SmSystemMessage.UnionChangeForceNumberHim(selectedName, targetCurrentPosition)));
+
+				intents.Add(new PlayerLeaguePacketIntent(
+					sequence++,
+					recipientObjectId,
+					allianceId,
+					PlayerLeaguePacketIntentKind.SystemMessage,
+					SystemMessage: allianceId == targetAllianceId
+						? SmSystemMessage.UnionChangeForceNumberMe(selectedCurrentPosition)
+						: SmSystemMessage.UnionChangeForceNumberHim(targetName, selectedCurrentPosition)));
+			}
+		}
+
+		return intents;
+	}
+
+	private static string GetAllianceLeaderName(PlayerAllianceRuntime allianceRuntime, int allianceId)
+	{
+		var descriptor = allianceRuntime.GetDescriptor(allianceId)
+			?? throw new InvalidOperationException($"Alliance should not be null: {allianceId}");
+		var leader = allianceRuntime.GetMember(allianceId, descriptor.LeaderObjectId)
+			?? throw new InvalidOperationException($"Alliance leader should not be null: {descriptor.LeaderObjectId}");
+		return leader.Name;
 	}
 
 	private static PlayerLeagueSnapshot CreateSnapshot(
@@ -168,4 +247,30 @@ public sealed record PlayerLeagueMovePlan(
 	int TargetAllianceId,
 	int SelectedPreviousPosition,
 	int TargetPreviousPosition,
-	IReadOnlyList<int> AllianceIdsByPosition);
+	IReadOnlyList<int> AllianceIdsByPosition,
+	IReadOnlyList<PlayerLeaguePacketIntent> PacketIntents);
+
+public enum PlayerLeaguePacketIntentKind
+{
+	AllianceInfo,
+	SystemMessage,
+}
+
+public sealed record PlayerLeaguePacketIntent(
+	int Sequence,
+	int RecipientObjectId,
+	int AllianceId,
+	PlayerLeaguePacketIntentKind Kind,
+	PlayerAllianceInfoPacketPlan? AllianceInfoPlan = null,
+	SmSystemMessage? SystemMessage = null)
+{
+	public GameServerPacket CreatePacket()
+	{
+		return Kind switch
+		{
+			PlayerLeaguePacketIntentKind.AllianceInfo when AllianceInfoPlan != null => new SmAllianceInfo(AllianceInfoPlan),
+			PlayerLeaguePacketIntentKind.SystemMessage when SystemMessage != null => SystemMessage,
+			_ => throw new InvalidOperationException("League packet intent is missing packet metadata."),
+		};
+	}
+}
