@@ -193,6 +193,8 @@ public sealed class PlayerStateTests
 		Assert.Equal(InventoryExpansionStorage.Cube, cubePlan.Storage);
 		Assert.Equal(1, cubePlan.NewItemExpands);
 		Assert.Equal(2, cubePlan.NewWarehouseBonusExpands);
+		cubePlayer.ItemExpands = cubePlan.NewItemExpands;
+		Assert.Equal(54, InventoryCapacity.GetCubeLimit(cubePlayer));
 
 		cubePlayer.ItemExpands = 1;
 		Assert.Equal(
