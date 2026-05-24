@@ -67,6 +67,28 @@ public class GameServerConnectionCastSpellTests
 	}
 
 	[Fact]
+	public async Task HandleCastSpellAsync_PlayerPetSummonAllowsRuntimeStaticPetOrderSkillPastPetGuard()
+	{
+		var events = new List<string>();
+		var sentPackets = new List<GameServerPacket>();
+		var hooks = new GameServerCastSpellHandlerHooks
+		{
+			GetSkillTemplate = (_, skillId) => new PlayerCastSpellSkillTemplate(skillId),
+			UseSkill = (_, template, _) => events.Add($"use-skill:{template.SkillId}"),
+		};
+		var runtimeContext = await CreateRuntimeContextAsync();
+		await using var pair = await TestConnectionPair.CreateAsync(sentPackets, hooks, runtimeContext);
+		var player = CreatePlayer();
+		player.HasPetSummon = true;
+
+		var result = await pair.Connection.HandleCastSpellAsync(player, CreateCastSpell(3835));
+
+		Assert.Equal(PlayerCastSpellEarlyExitStatus.UseSkill, result.Status);
+		Assert.Equal(["use-skill:3835"], events);
+		Assert.Empty(sentPackets);
+	}
+
+	[Fact]
 	public async Task HandleCastSpellAsync_ZeroSpellIdClearsCastSkillAndSendsCancelPackets()
 	{
 		var events = new List<string>();

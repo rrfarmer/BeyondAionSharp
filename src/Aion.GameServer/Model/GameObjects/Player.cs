@@ -210,6 +210,9 @@ public sealed class Player
 
 	public DateTimeOffset? ExpressMailCooldownUntil { get; set; }
 
+	// Java parity: Player.getSummon() != null && Summon.isPet() guard used by CM_CASTSPELL pet-order skills.
+	public bool HasPetSummon { get; set; }
+
 	public PlayerBrokerSettlementSummary BrokerSettlements { get; set; } = PlayerBrokerSettlementSummary.Empty;
 
 	// Java parity: model/broker/BrokerPlayerCache remembers the last broker list/search for refresh after buy.

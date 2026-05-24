@@ -1191,7 +1191,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			packet,
 			new PlayerCastSpellEarlyExitOptions(
 				IsPetOrderSkill: skillId => IsCastSpellPetOrderSkill(player, skillId),
-				HasPetSummon: _castSpellHooks.HasPetSummon(player),
+				HasPetSummon: HasCastSpellPetSummon(player),
 				GetSkillTemplate: skillId => ResolveCastSpellSkillTemplate(player, skillId),
 				NextSkillUseMilliseconds: _castSpellHooks.GetNextSkillUseMilliseconds(player),
 				CurrentTimeMilliseconds: _castSpellHooks.GetCurrentTimeMilliseconds(),
@@ -1257,6 +1257,12 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		return _castSpellHooks.IsPetOrderSkill(player, skillId)
 			|| (_runtimeContext?.DataManager?.StaticData.PetSkills.IsPetOrderSkill(skillId) ?? false);
+	}
+
+	private bool HasCastSpellPetSummon(Player player)
+	{
+		// Java parity: CM_CASTSPELL checks player.getSummon() != null && player.getSummon().isPet().
+		return _castSpellHooks.HasPetSummon(player) || player.HasPetSummon;
 	}
 
 	private static PlayerCastingSkillSnapshot? CancelCurrentSkillForCastSpell(Player player)
