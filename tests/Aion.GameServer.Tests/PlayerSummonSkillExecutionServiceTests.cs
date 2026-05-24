@@ -1475,9 +1475,15 @@ public class PlayerSummonSkillExecutionServiceTests
 
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillAttackCycleResultContractStatus.MissingInvocation, missingInvocation.Status);
 		Assert.False(missingInvocation.WouldExecuteSideEffects);
+		Assert.Equal([
+			PlayerSummonKnownObjectNpcSkillAttackCycleOutcomeBranch.MissingInvocation,
+		], missingInvocation.ExpectedJavaOutcomeBranches);
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillAttackCycleResultContractStatus.BlockedByInvocationReadiness, blocked.Status);
 		Assert.True(blocked.IsBlockedByInvocationReadiness);
 		Assert.Same(blockedInvocation, blocked.LiveInvocation);
+		Assert.Equal([
+			PlayerSummonKnownObjectNpcSkillAttackCycleOutcomeBranch.BlockedByInvocationReadiness,
+		], blocked.ExpectedJavaOutcomeBranches);
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillAttackCycleResultContractStatus.LiveAiNotWired, contract.Status);
 		Assert.True(contract.IsLiveAiUnsupported);
 		Assert.False(contract.WouldExecuteSideEffects);
@@ -1490,6 +1496,14 @@ public class PlayerSummonSkillExecutionServiceTests
 			PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.PacketFanout,
 			PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.PostSpawnScheduled,
 		], contract.ExpectedJavaSideEffects);
+		Assert.Equal([
+			PlayerSummonKnownObjectNpcSkillAttackCycleOutcomeBranch.CastSubStateEntered,
+			PlayerSummonKnownObjectNpcSkillAttackCycleOutcomeBranch.ScheduledSkillAction,
+			PlayerSummonKnownObjectNpcSkillAttackCycleOutcomeBranch.SuccessfulUseSkill,
+			PlayerSummonKnownObjectNpcSkillAttackCycleOutcomeBranch.PostSpawnScheduled,
+		], contract.ExpectedJavaOutcomeBranches);
+		Assert.True(contract.HasOutcomeBranch(PlayerSummonKnownObjectNpcSkillAttackCycleOutcomeBranch.ScheduledSkillAction));
+		Assert.True(contract.HasOutcomeBranch(PlayerSummonKnownObjectNpcSkillAttackCycleOutcomeBranch.SuccessfulUseSkill));
 		Assert.True(contract.ExpectsAiSubStateMutation);
 		Assert.True(contract.ExpectsSchedulerWork);
 		Assert.True(contract.ExpectsControllerUseSkill);
