@@ -37,7 +37,7 @@ public sealed class PlayerSummonCastSpellService
 
 		return targetKind == PlayerSummonKnownObjectKind.Creature
 			? null
-			: PlayerSummonCastSpellResult.NonCreatureTarget(packet.SummonObjectId, packet.TargetObjectId);
+			: PlayerSummonCastSpellResult.NonCreatureTarget(packet.SummonObjectId, packet.TargetObjectId, targetKind);
 	}
 }
 
@@ -46,7 +46,8 @@ public sealed record PlayerSummonCastSpellResult(
 	int SummonObjectId,
 	int TargetObjectId,
 	PlayerPetSkillOrder? ExecutedOrder = null,
-	bool SkillMismatch = false)
+	bool SkillMismatch = false,
+	PlayerSummonCastSpellAudit? Audit = null)
 {
 	public static PlayerSummonCastSpellResult PetRequired(int summonObjectId)
 	{
@@ -63,9 +64,18 @@ public sealed record PlayerSummonCastSpellResult(
 		return new PlayerSummonCastSpellResult(PlayerSummonCastSpellStatus.UnknownTarget, summonObjectId, targetObjectId);
 	}
 
-	public static PlayerSummonCastSpellResult NonCreatureTarget(int summonObjectId, int targetObjectId)
+	public static PlayerSummonCastSpellResult NonCreatureTarget(
+		int summonObjectId,
+		int targetObjectId,
+		PlayerSummonKnownObjectKind targetKind)
 	{
-		return new PlayerSummonCastSpellResult(PlayerSummonCastSpellStatus.NonCreatureTarget, summonObjectId, targetObjectId);
+		// Java parity: CM_SUMMON_CASTSPELL audits non-null known-list objects that are not Creature targets.
+		var audit = new PlayerSummonCastSpellAudit(PlayerSummonCastSpellAuditKind.WrongTarget, targetObjectId, targetKind);
+		return new PlayerSummonCastSpellResult(
+			PlayerSummonCastSpellStatus.NonCreatureTarget,
+			summonObjectId,
+			targetObjectId,
+			Audit: audit);
 	}
 
 	public static PlayerSummonCastSpellResult TargetMismatch(int summonObjectId, int targetObjectId, PlayerPetSkillOrder consumedOrder)
@@ -100,6 +110,16 @@ public enum PlayerSummonCastSpellStatus
 	NonCreatureTarget,
 	TargetMismatch,
 	Executed,
+}
+
+public sealed record PlayerSummonCastSpellAudit(
+	PlayerSummonCastSpellAuditKind Kind,
+	int TargetObjectId,
+	PlayerSummonKnownObjectKind TargetKind);
+
+public enum PlayerSummonCastSpellAuditKind
+{
+	WrongTarget,
 }
 
 public sealed record PlayerSummonCastSpellConnectionResult(

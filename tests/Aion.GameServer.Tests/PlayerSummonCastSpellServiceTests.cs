@@ -97,9 +97,14 @@ public class PlayerSummonCastSpellServiceTests
 
 		Assert.Equal(PlayerSummonCastSpellStatus.UnknownTarget, unknownTarget.Status);
 		Assert.Equal(7001, unknownTarget.TargetObjectId);
+		Assert.Null(unknownTarget.Audit);
 		Assert.Single(unknownTargetPlayer.PetSkillOrders);
 		Assert.Equal(PlayerSummonCastSpellStatus.NonCreatureTarget, nonCreatureTarget.Status);
 		Assert.Equal(7001, nonCreatureTarget.TargetObjectId);
+		var audit = Assert.IsType<PlayerSummonCastSpellAudit>(nonCreatureTarget.Audit);
+		Assert.Equal(PlayerSummonCastSpellAuditKind.WrongTarget, audit.Kind);
+		Assert.Equal(7001, audit.TargetObjectId);
+		Assert.Equal(PlayerSummonKnownObjectKind.VisibleObject, audit.TargetKind);
 		Assert.Single(nonCreatureTargetPlayer.PetSkillOrders);
 	}
 
