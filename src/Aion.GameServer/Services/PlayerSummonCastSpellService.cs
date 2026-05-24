@@ -14,20 +14,24 @@ public sealed class PlayerSummonCastSpellService
 
 		if (actorKind == PlayerSummonOrMercenaryKind.Mercenary)
 		{
-			var mercenaryTargetValidation = ValidateTarget(player, packet, actorKind);
-			return mercenaryTargetValidation ?? PlayerSummonCastSpellResult.MercenaryReady(packet.SummonObjectId, packet.TargetObjectId);
+			var mercenaryTargetResolution = ResolveTarget(player, packet, actorKind);
+			return mercenaryTargetResolution.Result
+				?? PlayerSummonCastSpellResult.MercenaryReady(
+					packet.SummonObjectId,
+					packet.TargetObjectId,
+					mercenaryTargetResolution.Target);
 		}
 
-		var targetValidation = ValidateTarget(player, packet, actorKind);
-		if (targetValidation != null)
-			return targetValidation;
+		var targetResolution = ResolveTarget(player, packet, actorKind);
+		if (targetResolution.Result != null)
+			return targetResolution.Result;
 
 		var order = player.RetrieveNextPetSkillOrder();
 		if (order is null)
-			return PlayerSummonCastSpellResult.NoQueuedOrder(packet.SummonObjectId, packet.TargetObjectId);
+			return PlayerSummonCastSpellResult.NoQueuedOrder(packet.SummonObjectId, packet.TargetObjectId, targetResolution.Target);
 
 		if (order.TargetObjectId != packet.TargetObjectId)
-			return PlayerSummonCastSpellResult.TargetMismatch(packet.SummonObjectId, packet.TargetObjectId, order);
+			return PlayerSummonCastSpellResult.TargetMismatch(packet.SummonObjectId, packet.TargetObjectId, order, targetResolution.Target);
 
 		var skillMismatch = order.SkillId != packet.SkillId || order.SkillLevel != packet.SkillLevel;
 		return PlayerSummonCastSpellResult.Executed(
@@ -36,31 +40,45 @@ public sealed class PlayerSummonCastSpellService
 			order,
 			skillMismatch,
 			packet.SkillId,
-			packet.SkillLevel);
+			packet.SkillLevel,
+			targetResolution.Target);
 	}
 
-	private static PlayerSummonCastSpellResult? ValidateTarget(
+	private static PlayerSummonCastSpellTargetResolution ResolveTarget(
 		Player player,
 		CmSummonCastSpell packet,
 		PlayerSummonOrMercenaryKind actorKind)
 	{
 		// Java parity: target can be the summon itself, otherwise it must be a Creature from summon.getKnownList().
 		if (packet.TargetObjectId == packet.SummonObjectId)
-			return null;
+			return new PlayerSummonCastSpellTargetResolution(
+				new PlayerSummonCastSpellTarget(packet.TargetObjectId, PlayerSummonKnownObjectKind.Creature, IsActorSelfTarget: true),
+				Result: null);
 
 		if (!player.TryGetSummonKnownObjectKind(packet.TargetObjectId, out var targetKind))
-			return PlayerSummonCastSpellResult.UnknownTarget(packet.SummonObjectId, packet.TargetObjectId, actorKind);
+			return new PlayerSummonCastSpellTargetResolution(
+				Target: null,
+				PlayerSummonCastSpellResult.UnknownTarget(packet.SummonObjectId, packet.TargetObjectId, actorKind));
 
 		return targetKind == PlayerSummonKnownObjectKind.Creature
-			? null
-			: PlayerSummonCastSpellResult.NonCreatureTarget(packet.SummonObjectId, packet.TargetObjectId, targetKind, actorKind);
+			? new PlayerSummonCastSpellTargetResolution(
+				new PlayerSummonCastSpellTarget(packet.TargetObjectId, targetKind, IsActorSelfTarget: false),
+				Result: null)
+			: new PlayerSummonCastSpellTargetResolution(
+				Target: null,
+				PlayerSummonCastSpellResult.NonCreatureTarget(packet.SummonObjectId, packet.TargetObjectId, targetKind, actorKind));
 	}
 }
+
+internal sealed record PlayerSummonCastSpellTargetResolution(
+	PlayerSummonCastSpellTarget? Target,
+	PlayerSummonCastSpellResult? Result);
 
 public sealed record PlayerSummonCastSpellResult(
 	PlayerSummonCastSpellStatus Status,
 	int SummonObjectId,
 	int TargetObjectId,
+	PlayerSummonCastSpellTarget? ResolvedTarget = null,
 	PlayerPetSkillOrder? ExecutedOrder = null,
 	bool SkillMismatch = false,
 	PlayerSummonCastSpellAudit? Audit = null,
@@ -77,18 +95,29 @@ public sealed record PlayerSummonCastSpellResult(
 			ActorKind: actorKind);
 	}
 
-	public static PlayerSummonCastSpellResult MercenaryReady(int summonObjectId, int targetObjectId)
+	public static PlayerSummonCastSpellResult MercenaryReady(
+		int summonObjectId,
+		int targetObjectId,
+		PlayerSummonCastSpellTarget? resolvedTarget)
 	{
 		return new PlayerSummonCastSpellResult(
 			PlayerSummonCastSpellStatus.MercenaryReady,
 			summonObjectId,
 			targetObjectId,
+			resolvedTarget,
 			ActorKind: PlayerSummonOrMercenaryKind.Mercenary);
 	}
 
-	public static PlayerSummonCastSpellResult NoQueuedOrder(int summonObjectId, int targetObjectId)
+	public static PlayerSummonCastSpellResult NoQueuedOrder(
+		int summonObjectId,
+		int targetObjectId,
+		PlayerSummonCastSpellTarget? resolvedTarget)
 	{
-		return new PlayerSummonCastSpellResult(PlayerSummonCastSpellStatus.NoQueuedOrder, summonObjectId, targetObjectId);
+		return new PlayerSummonCastSpellResult(
+			PlayerSummonCastSpellStatus.NoQueuedOrder,
+			summonObjectId,
+			targetObjectId,
+			resolvedTarget);
 	}
 
 	public static PlayerSummonCastSpellResult UnknownTarget(
@@ -121,6 +150,15 @@ public sealed record PlayerSummonCastSpellResult(
 
 	public static PlayerSummonCastSpellResult TargetMismatch(int summonObjectId, int targetObjectId, PlayerPetSkillOrder consumedOrder)
 	{
+		return TargetMismatch(summonObjectId, targetObjectId, consumedOrder, resolvedTarget: null);
+	}
+
+	public static PlayerSummonCastSpellResult TargetMismatch(
+		int summonObjectId,
+		int targetObjectId,
+		PlayerPetSkillOrder consumedOrder,
+		PlayerSummonCastSpellTarget? resolvedTarget)
+	{
 		var skippedExecution = PlayerSummonCastSpellSkippedExecution.TargetMismatch(
 			consumedOrder.TargetObjectId,
 			targetObjectId);
@@ -128,6 +166,7 @@ public sealed record PlayerSummonCastSpellResult(
 			PlayerSummonCastSpellStatus.TargetMismatch,
 			summonObjectId,
 			targetObjectId,
+			resolvedTarget,
 			consumedOrder,
 			SkippedExecution: skippedExecution);
 	}
@@ -138,7 +177,8 @@ public sealed record PlayerSummonCastSpellResult(
 		PlayerPetSkillOrder order,
 		bool skillMismatch,
 		int packetSkillId,
-		int packetSkillLevel)
+		int packetSkillLevel,
+		PlayerSummonCastSpellTarget? resolvedTarget)
 	{
 		var warning = skillMismatch
 			? PlayerSummonCastSpellWarning.SkillMismatch(packetSkillId, packetSkillLevel, order.SkillId, order.SkillLevel)
@@ -147,6 +187,7 @@ public sealed record PlayerSummonCastSpellResult(
 			PlayerSummonCastSpellStatus.Executed,
 			summonObjectId,
 			targetObjectId,
+			resolvedTarget,
 			order,
 			skillMismatch,
 			Warning: warning);
@@ -173,6 +214,11 @@ public enum PlayerSummonCastSpellAuditKind
 {
 	WrongTarget,
 }
+
+public sealed record PlayerSummonCastSpellTarget(
+	int ObjectId,
+	PlayerSummonKnownObjectKind Kind,
+	bool IsActorSelfTarget);
 
 public sealed record PlayerSummonCastSpellWarning(
 	PlayerSummonCastSpellWarningKind Kind,

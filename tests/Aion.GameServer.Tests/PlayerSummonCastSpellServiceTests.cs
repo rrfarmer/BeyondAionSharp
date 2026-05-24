@@ -21,6 +21,9 @@ public class PlayerSummonCastSpellServiceTests
 		Assert.Equal(PlayerSummonCastSpellStatus.Executed, result.Status);
 		Assert.False(result.SkillMismatch);
 		Assert.Null(result.Warning);
+		Assert.Equal(7001, result.ResolvedTarget?.ObjectId);
+		Assert.Equal(PlayerSummonKnownObjectKind.Creature, result.ResolvedTarget?.Kind);
+		Assert.False(result.ResolvedTarget?.IsActorSelfTarget);
 		var order = Assert.IsType<PlayerPetSkillOrder>(result.ExecutedOrder);
 		Assert.Equal(22107, order.SkillId);
 		Assert.Equal(1, order.SkillLevel);
@@ -65,6 +68,8 @@ public class PlayerSummonCastSpellServiceTests
 
 		Assert.Equal(PlayerSummonCastSpellStatus.TargetMismatch, result.Status);
 		Assert.Equal(7002, result.TargetObjectId);
+		Assert.Equal(7002, result.ResolvedTarget?.ObjectId);
+		Assert.False(result.ResolvedTarget?.IsActorSelfTarget);
 		Assert.Equal(7001, result.ExecutedOrder?.TargetObjectId);
 		Assert.Null(result.Warning);
 		var skippedExecution = Assert.IsType<PlayerSummonCastSpellSkippedExecution>(result.SkippedExecution);
@@ -85,6 +90,8 @@ public class PlayerSummonCastSpellServiceTests
 
 		Assert.Equal(PlayerSummonCastSpellStatus.Executed, result.Status);
 		Assert.Equal(8001, result.TargetObjectId);
+		Assert.Equal(8001, result.ResolvedTarget?.ObjectId);
+		Assert.True(result.ResolvedTarget?.IsActorSelfTarget);
 		Assert.Empty(player.PetSkillOrders);
 	}
 
