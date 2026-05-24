@@ -227,7 +227,7 @@ public sealed class Player
 	public int RepresentedSummonOrMercenaryNpcId { get; set; }
 
 	private readonly List<PlayerPetSkillOrder> _petSkillOrders = [];
-	private readonly Dictionary<int, PlayerSummonKnownObjectKind> _summonKnownObjects = [];
+	private readonly Dictionary<int, PlayerSummonKnownObject> _summonKnownObjects = [];
 
 	// Java parity: model/gameobjects/Summon.addSkillOrder represented until the full Summon model exists.
 	public IReadOnlyList<PlayerPetSkillOrder> PetSkillOrders => _petSkillOrders;
@@ -250,13 +250,32 @@ public sealed class Player
 	public void SetSummonKnownObject(int objectId, PlayerSummonKnownObjectKind kind)
 	{
 		// Java parity: CM_SUMMON_CASTSPELL resolves target via summon.getKnownList().getObject(targetObjId).
-		_summonKnownObjects[objectId] = kind;
+		SetSummonKnownObject(new PlayerSummonKnownObject(objectId, kind));
+	}
+
+	public void SetSummonKnownObject(PlayerSummonKnownObject knownObject)
+	{
+		// Java parity: KnownList stores VisibleObject instances; represented metadata is used until live objects exist.
+		_summonKnownObjects[knownObject.ObjectId] = knownObject;
 	}
 
 	public bool TryGetSummonKnownObjectKind(int objectId, out PlayerSummonKnownObjectKind kind)
 	{
 		// Java parity: KnownList returns null for lagged-out or no-longer-visible targets.
-		return _summonKnownObjects.TryGetValue(objectId, out kind);
+		if (_summonKnownObjects.TryGetValue(objectId, out var knownObject))
+		{
+			kind = knownObject.Kind;
+			return true;
+		}
+
+		kind = default;
+		return false;
+	}
+
+	public bool TryGetSummonKnownObject(int objectId, out PlayerSummonKnownObject knownObject)
+	{
+		// Java parity: Player.getSummonOrMercenary can inspect known-list NPC creator/template metadata.
+		return _summonKnownObjects.TryGetValue(objectId, out knownObject!);
 	}
 
 	public PlayerSummonOrMercenaryKind GetSummonOrMercenaryKind(int objectId)
@@ -264,6 +283,14 @@ public sealed class Player
 		// Java parity: Player.getSummonOrMercenary first checks the owned summon, then creator-owned mercenary NPCs.
 		if (HasPetSummon && PetSummonObjectId == objectId)
 			return PlayerSummonOrMercenaryKind.PetSummon;
+
+		if (TryGetSummonKnownObject(objectId, out var knownObject)
+			&& knownObject.Kind == PlayerSummonKnownObjectKind.Creature
+			&& knownObject.CreatorObjectId == ObjectId
+			&& knownObject.NpcTemplateType == PlayerSummonKnownNpcTemplateType.Mercenary)
+		{
+			return PlayerSummonOrMercenaryKind.Mercenary;
+		}
 
 		return RepresentedSummonOrMercenaryObjectId == objectId
 			? RepresentedSummonOrMercenaryKind

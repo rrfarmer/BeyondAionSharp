@@ -175,6 +175,38 @@ public class PlayerSummonCastSpellServiceTests
 		Assert.Equal(8002, mercenaryResult.TargetObjectId);
 	}
 
+	[Fact]
+	public void Handle_RecognizesCreatorOwnedKnownMercenaryMetadata()
+	{
+		var service = new PlayerSummonCastSpellService();
+		var player = new Player { ObjectId = 1 };
+		player.SetSummonKnownObject(new PlayerSummonKnownObject(
+			ObjectId: 8002,
+			Kind: PlayerSummonKnownObjectKind.Creature,
+			CreatorObjectId: 1,
+			NpcTemplateType: PlayerSummonKnownNpcTemplateType.Mercenary));
+
+		var mercenaryResult = service.Handle(
+			player,
+			CreatePacket(summonObjectId: 8002, skillId: 22107, skillLevel: 1, targetObjectId: 8002));
+
+		var wrongCreator = new Player { ObjectId = 1 };
+		wrongCreator.SetSummonKnownObject(new PlayerSummonKnownObject(
+			ObjectId: 8003,
+			Kind: PlayerSummonKnownObjectKind.Creature,
+			CreatorObjectId: 2,
+			NpcTemplateType: PlayerSummonKnownNpcTemplateType.Mercenary));
+
+		var wrongCreatorResult = service.Handle(
+			wrongCreator,
+			CreatePacket(summonObjectId: 8003, skillId: 22107, skillLevel: 1, targetObjectId: 8003));
+
+		Assert.Equal(PlayerSummonCastSpellStatus.MercenaryReady, mercenaryResult.Status);
+		Assert.Equal(PlayerSummonOrMercenaryKind.Mercenary, mercenaryResult.ActorKind);
+		Assert.Equal(PlayerSummonCastSpellStatus.PetRequired, wrongCreatorResult.Status);
+		Assert.Equal(PlayerSummonOrMercenaryKind.None, wrongCreatorResult.ActorKind);
+	}
+
 	private static Player CreatePlayer()
 	{
 		return new Player
