@@ -6879,9 +6879,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return null;
 		}
 
+		if (packet.InviteType == 28)
+			return await HandleInviteToLeagueAsync(inviter, invited, cancellationToken);
+
 		if (packet.InviteType != 0)
 		{
-			// Java parity: invite types 12 and 28 dispatch alliance/league services; those packet-level paths remain separate Phase 6 work.
+			// Java parity: invite type 12 dispatches PlayerAllianceService.inviteToAlliance; that packet-level path remains separate Phase 6 work.
 			return null;
 		}
 
@@ -6890,6 +6893,45 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (result.QuestionWindow != null)
 			await _connectionRegistry.SendPacketToPlayerAsync(invited.ObjectId, result.QuestionWindow);
 		return result;
+	}
+
+	private async Task<GroupInviteRequestResult?> HandleInviteToLeagueAsync(
+		Player inviter,
+		Player invited,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: CM_INVITE_TO_GROUP invite type 28 dispatches LeagueService.inviteToLeague.
+		var planner = new PlayerLeagueInvitePlanner();
+		var firstChecks = planner.CreateCanInviteFirstChecksPlan(inviter, invited);
+		if (firstChecks.SystemMessageIntent != null)
+		{
+			await SendPacketAsync(firstChecks.SystemMessageIntent.Message, cancellationToken);
+			return null;
+		}
+
+		var allianceChecks = planner.CreateCanInviteAllianceChecksPlan(inviter, invited, _playerLeagueRuntime);
+		if (allianceChecks.SystemMessageIntent != null)
+		{
+			await SendPacketAsync(allianceChecks.SystemMessageIntent.Message, cancellationToken);
+			return null;
+		}
+
+		var setupPlan = planner.CreateRequestSetupPlan(inviter, invited, _playerAllianceRuntime);
+		var requestTarget = TryGetOnlinePlayerByObjectId(setupPlan.RequestTargetObjectId);
+		if (requestTarget == null)
+			return null;
+
+		var pendingPlan = planner.TryPutPendingRequest(requestTarget, setupPlan);
+		if (!pendingPlan.Registered)
+			return null;
+
+		foreach (var intent in setupPlan.RequesterSystemMessages)
+			await SendGroupInvitePacketAsync(intent.RecipientObjectId, intent.Message, cancellationToken);
+		await SendGroupInvitePacketAsync(
+			setupPlan.QuestionWindowIntent.RecipientObjectId,
+			setupPlan.QuestionWindowIntent.QuestionWindow,
+			cancellationToken);
+		return null;
 	}
 
 	private async Task<GroupInviteResponseResult> HandleGroupInviteQuestionResponseAsync(
