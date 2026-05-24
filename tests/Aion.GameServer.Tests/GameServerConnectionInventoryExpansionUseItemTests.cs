@@ -211,6 +211,22 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			packet => Assert.IsType<SmInventoryAddItem>(packet));
 	}
 
+	[Theory]
+	[InlineData(2)]
+	[InlineData(99)]
+	public async Task HandleSelectDecomposableAsync_InvalidSelectableRewardIndexDoesNotMutateInventory(int index)
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(idFactory: new IDFactory([5001]));
+		var player = CreatePlayer(itemId: 101);
+
+		await InvokeHandleSelectDecomposableAsync(fixture.Connection, player, CreateSelectDecomposable(sourceItemObjectId: 5001, index));
+
+		var sourceItem = Assert.Single(player.InventoryItems);
+		Assert.Equal(101, sourceItem.ItemId);
+		Assert.Equal(2, sourceItem.Count);
+		Assert.Empty(fixture.SentPackets);
+	}
+
 	private static Player CreatePlayer(int itemId)
 	{
 		return new Player
