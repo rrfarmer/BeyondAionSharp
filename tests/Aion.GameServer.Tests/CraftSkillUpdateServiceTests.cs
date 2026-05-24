@@ -134,6 +134,77 @@ public sealed class CraftSkillUpdateServiceTests
 		Assert.Equal(0, player.ResponseRequester.Count);
 	}
 
+	[Fact]
+	public void GetProfessionByNpc_MapsJavaNpcIdsAndRejectsUnknownNpc()
+	{
+		var service = new CraftSkillUpdateService();
+
+		Assert.Equal(CraftProfession.Cooking, service.GetProfessionByNpc(CreateNpc(templateId: 203784)));
+		Assert.Equal(CraftProfession.Cooking, service.GetProfessionByNpc(CreateNpc(templateId: 830058)));
+		Assert.Null(service.GetProfessionByNpc(CreateNpc(templateId: 999999)));
+	}
+
+	[Fact]
+	public void CraftingSkillCounts_UseJavaExpertAndMasterThresholds()
+	{
+		var player = CreatePlayer();
+		player.Skills =
+		[
+			CreateSkill(CraftProfession.Cooking, 400),
+			CreateSkill(CraftProfession.Weaponsmithing, 499),
+			CreateSkill(CraftProfession.Armorsmithing, 500),
+			CreateSkill(CraftProfession.Tailoring, 501),
+			CreateSkill(CraftProfession.Essencetapping, 450),
+			CreateSkill(CraftProfession.Alchemy, 399),
+		];
+		var service = new CraftSkillUpdateService();
+
+		Assert.Equal(2, service.GetTotalExpertCraftingSkills(player));
+		Assert.Equal(2, service.GetTotalMasterCraftingSkills(player));
+	}
+
+	[Fact]
+	public void CanLearnMoreExpertCraftingSkill_UsesExpertPlusMasterCapAndJavaMessage()
+	{
+		var player = CreatePlayer();
+		player.Skills =
+		[
+			CreateSkill(CraftProfession.Cooking, 400),
+			CreateSkill(CraftProfession.Armorsmithing, 500),
+		];
+		var service = new CraftSkillUpdateService();
+
+		var allowed = service.CanLearnMoreExpertCraftingSkill(player, maxExpertCraftingSkills: 3);
+		var blocked = service.CanLearnMoreExpertCraftingSkill(player, maxExpertCraftingSkills: 2);
+
+		Assert.True(allowed.Allowed);
+		Assert.Null(allowed.Message);
+		Assert.False(blocked.Allowed);
+		Assert.Equal(2, blocked.CurrentCount);
+		Assert.Equal("You can only be an expert in 2 professions.", ReadMessage(Assert.IsType<SmMessage>(blocked.Message)));
+	}
+
+	[Fact]
+	public void CanLearnMoreMasterCraftingSkill_UsesMasterOnlyCapAndJavaMessage()
+	{
+		var player = CreatePlayer();
+		player.Skills =
+		[
+			CreateSkill(CraftProfession.Cooking, 400),
+			CreateSkill(CraftProfession.Armorsmithing, 500),
+		];
+		var service = new CraftSkillUpdateService();
+
+		var allowed = service.CanLearnMoreMasterCraftingSkill(player, maxMasterCraftingSkills: 2);
+		var blocked = service.CanLearnMoreMasterCraftingSkill(player, maxMasterCraftingSkills: 1);
+
+		Assert.True(allowed.Allowed);
+		Assert.Null(allowed.Message);
+		Assert.False(blocked.Allowed);
+		Assert.Equal(1, blocked.CurrentCount);
+		Assert.Equal("You can only be a master in 1 professions.", ReadMessage(Assert.IsType<SmMessage>(blocked.Message)));
+	}
+
 	private static Player CreatePlayer(long kinah = 10_000)
 	{
 		return new Player
@@ -195,6 +266,15 @@ public sealed class CraftSkillUpdateServiceTests
 		]);
 	}
 
+	private static PlayerSkill CreateSkill(CraftProfession profession, int skillLevel)
+	{
+		return new PlayerSkill
+		{
+			SkillId = profession.GetSkillId(),
+			SkillLevel = skillLevel,
+		};
+	}
+
 	private static int ReadInventoryUpdateType(SmInventoryUpdateItem packet)
 	{
 		var payload = SerializeUnencryptedPayload(packet);
@@ -204,6 +284,19 @@ public sealed class CraftSkillUpdateServiceTests
 		var blobSize = reader.ReadH();
 		reader.ReadB(blobSize);
 		return reader.ReadH();
+	}
+
+	private static string ReadMessage(SmMessage packet)
+	{
+		var payload = SerializeUnencryptedPayload(packet);
+		using var reader = new Aion.Commons.Network.PacketBuffer(payload);
+		Assert.Equal(25, (int)reader.ReadC());
+		reader.ReadC();
+		reader.ReadD();
+		reader.ReadS();
+		var message = reader.ReadS();
+		Assert.Equal(0, reader.Remaining);
+		return message;
 	}
 
 	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)

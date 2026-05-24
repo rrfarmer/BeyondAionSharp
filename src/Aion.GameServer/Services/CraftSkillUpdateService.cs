@@ -8,6 +8,9 @@ namespace Aion.GameServer.Services;
 
 public sealed class CraftSkillUpdateService
 {
+	public const int DefaultMaxExpertCraftingSkills = 2;
+	public const int DefaultMaxMasterCraftingSkills = 1;
+
 	private const int KinahItemId = 182400001;
 	private const int CubeStorageId = 0;
 
@@ -52,13 +55,19 @@ public sealed class CraftSkillUpdateService
 			[798454] = CraftProfession.Construction,
 		};
 
+	public CraftProfession? GetProfessionByNpc(IWorldNpcObject npc)
+	{
+		// Java parity: services/craft/CraftSkillUpdateService.getProfessionByNpc.
+		return ProfessionsByNpc.TryGetValue(npc.TemplateId, out var profession) ? profession : null;
+	}
+
 	public CraftSkillLearnRequestPlan RequestLearnSkill(Player player, IWorldNpcObject npc, SkillTemplateTable skillTemplates)
 	{
 		// Java parity: services/craft/CraftSkillUpdateService.learnSkill.
 		if (player.Level < 10)
 			return CraftSkillLearnRequestPlan.NotHandled(CraftSkillLearnRequestStatus.TooLowLevel);
 
-		if (!ProfessionsByNpc.TryGetValue(npc.TemplateId, out var profession))
+		if (GetProfessionByNpc(npc) is not { } profession)
 			return CraftSkillLearnRequestPlan.NotHandled(CraftSkillLearnRequestStatus.UnknownProfessionNpc);
 
 		var skillId = profession.GetSkillId();
@@ -162,6 +171,61 @@ public sealed class CraftSkillUpdateService
 		packets.Add(new SmSkillList([updatedSkill], SkillLearnServiceMessages.GetMessageId(updatedSkill, isNew)));
 
 		return CraftSkillLearnResponsePlan.Accepted(request, updatedKinah, updatedSkill, packets);
+	}
+
+	public int GetTotalExpertCraftingSkills(Player player)
+	{
+		// Java parity: services/craft/CraftSkillUpdateService.getTotalExpertCraftingSkills.
+		return CountCraftingSkills(player, skillLevel => skillLevel > 399 && skillLevel <= 499);
+	}
+
+	public int GetTotalMasterCraftingSkills(Player player)
+	{
+		// Java parity: services/craft/CraftSkillUpdateService.getTotalMasterCraftingSkills.
+		return CountCraftingSkills(player, skillLevel => skillLevel > 499);
+	}
+
+	public CraftSkillLimitResult CanLearnMoreExpertCraftingSkill(
+		Player player,
+		int maxExpertCraftingSkills = DefaultMaxExpertCraftingSkills)
+	{
+		// Java parity: services/craft/CraftSkillUpdateService.canLearnMoreExpertCraftingSkill.
+		var current = GetTotalExpertCraftingSkills(player) + GetTotalMasterCraftingSkills(player);
+		return current < maxExpertCraftingSkills
+			? CraftSkillLimitResult.CreateAllowed(current, maxExpertCraftingSkills)
+			: CraftSkillLimitResult.CreateBlocked(
+				current,
+				maxExpertCraftingSkills,
+				$"You can only be an expert in {maxExpertCraftingSkills} professions.");
+	}
+
+	public CraftSkillLimitResult CanLearnMoreMasterCraftingSkill(
+		Player player,
+		int maxMasterCraftingSkills = DefaultMaxMasterCraftingSkills)
+	{
+		// Java parity: services/craft/CraftSkillUpdateService.canLearnMoreMasterCraftingSkill.
+		var current = GetTotalMasterCraftingSkills(player);
+		return current < maxMasterCraftingSkills
+			? CraftSkillLimitResult.CreateAllowed(current, maxMasterCraftingSkills)
+			: CraftSkillLimitResult.CreateBlocked(
+				current,
+				maxMasterCraftingSkills,
+				$"You can only be a master in {maxMasterCraftingSkills} professions.");
+	}
+
+	private static int CountCraftingSkills(Player player, Func<int, bool> levelPredicate)
+	{
+		var count = 0;
+		foreach (var profession in Enum.GetValues<CraftProfession>())
+		{
+			if (!profession.IsCrafting())
+				continue;
+			var skillId = profession.GetSkillId();
+			var skill = player.Skills.FirstOrDefault(playerSkill => playerSkill.SkillId == skillId);
+			if (skill != null && levelPredicate(skill.SkillLevel))
+				count++;
+		}
+		return count;
 	}
 
 	private static CraftPacketIntent GetRankUpFailure(int playerObjectId, CraftProfession profession, int skillLevel)
@@ -305,6 +369,23 @@ public static class CraftProfessionExtensions
 }
 
 public sealed record CraftPacketIntent(int RecipientObjectId, GameServerPacket Packet);
+
+public sealed record CraftSkillLimitResult(
+	bool Allowed,
+	int CurrentCount,
+	int MaxCount,
+	SmMessage? Message)
+{
+	public static CraftSkillLimitResult CreateAllowed(int currentCount, int maxCount)
+	{
+		return new CraftSkillLimitResult(true, currentCount, maxCount, null);
+	}
+
+	public static CraftSkillLimitResult CreateBlocked(int currentCount, int maxCount, string message)
+	{
+		return new CraftSkillLimitResult(false, currentCount, maxCount, new SmMessage(message));
+	}
+}
 
 public sealed record CraftSkillLearnRequestPlan(
 	bool Handled,
