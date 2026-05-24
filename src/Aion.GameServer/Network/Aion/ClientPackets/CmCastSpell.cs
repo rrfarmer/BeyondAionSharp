@@ -4,10 +4,10 @@ namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 public sealed class CmCastSpell : GameClientPacket
 {
-	public CmCastSpell(int opCode, IReadOnlySet<GameConnectionState> validStates)
+	public CmCastSpell(int opCode, IReadOnlySet<GameConnectionState> validStates, long? receiveTimeMilliseconds = null)
 		: base(opCode, validStates)
 	{
-		ReceiveTimeMilliseconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+		ReceiveTimeMilliseconds = receiveTimeMilliseconds ?? DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 	}
 
 	public long ReceiveTimeMilliseconds { get; }
