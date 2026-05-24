@@ -303,6 +303,10 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public int SaveInventoryExpansionMutationCalls { get; private set; }
 
+	public bool SaveDecomposeActionMutationResult { get; init; } = true;
+
+	public int SaveDecomposeActionMutationCalls { get; private set; }
+
 	public Task<Player?> LoadPlayerAsync(int accountId, int playerObjectId, CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult<Player?>(null);
@@ -487,7 +491,8 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		int? deletedSourceItemObjectId,
 		CancellationToken cancellationToken = default)
 	{
-		return Task.FromResult(true);
+		SaveDecomposeActionMutationCalls++;
+		return Task.FromResult(SaveDecomposeActionMutationResult);
 	}
 
 	public Task<bool> SaveAssemblyItemActionMutationAsync(

@@ -290,6 +290,45 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			packet => AssertInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 6001, expectedUpdateType: SmInventoryUpdateItem.IncreaseItemCollect));
 	}
 
+	[Fact]
+	public async Task HandleSelectDecomposableAsync_PersistenceFailureDoesNotMutateRuntimeInventory()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository { SaveDecomposeActionMutationResult = false };
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository, idFactory: new IDFactory([5001, 6001]));
+		var player = CreatePlayer(itemId: 101);
+		player.InventoryItems = player.InventoryItems
+			.Concat(
+			[
+				new InventoryItem
+				{
+					ObjectId = 6001,
+					ItemId = 201,
+					Count = 4,
+					Location = 0,
+				},
+			])
+			.ToArray();
+
+		await InvokeHandleSelectDecomposableAsync(fixture.Connection, player, CreateSelectDecomposable(sourceItemObjectId: 5001, index: 0));
+
+		Assert.Equal(1, repository.SaveDecomposeActionMutationCalls);
+		Assert.Collection(
+			player.InventoryItems.OrderBy(item => item.ObjectId),
+			item =>
+			{
+				Assert.Equal(5001, item.ObjectId);
+				Assert.Equal(101, item.ItemId);
+				Assert.Equal(2, item.Count);
+			},
+			item =>
+			{
+				Assert.Equal(6001, item.ObjectId);
+				Assert.Equal(201, item.ItemId);
+				Assert.Equal(4, item.Count);
+			});
+		Assert.Empty(fixture.SentPackets);
+	}
+
 	private static Player CreatePlayer(int itemId, long count = 2)
 	{
 		return new Player
