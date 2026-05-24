@@ -6745,6 +6745,13 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (pendingRequest == null || pendingRequest.QuestionId != packet.QuestionId)
 			return;
 
+		var dispatch = responder.ResponseRequester.Respond(packet.QuestionId, packet.Response);
+		if (dispatch?.Request.Kind != QuestionResponseRequestKind.LeagueInvite)
+		{
+			responder.PendingLeagueInviteRequest = null;
+			return;
+		}
+
 		if (_connectionRegistry == null)
 		{
 			responder.PendingLeagueInviteRequest = null;

@@ -33,6 +33,7 @@ public sealed class GameServerConnectionLeagueInviteQuestionResponseTests
 		await pair.Connection.HandleQuestionResponseAsync(invitedLeader, CreateQuestionResponse(SmQuestionWindow.UnionInviteMe, response: 0));
 
 		Assert.Null(invitedLeader.PendingLeagueInviteRequest);
+		Assert.Equal(0, invitedLeader.ResponseRequester.Count);
 		var sent = Assert.Single(registry.SentPackets);
 		Assert.Equal(1001, sent.PlayerObjectId);
 		AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(sent.Packet), 1300190, "InvitedLeader");
@@ -56,6 +57,7 @@ public sealed class GameServerConnectionLeagueInviteQuestionResponseTests
 		await pair.Connection.HandleQuestionResponseAsync(invitedLeader, CreateQuestionResponse(SmQuestionWindow.UnionInviteMe, response: 1));
 
 		Assert.Null(invitedLeader.PendingLeagueInviteRequest);
+		Assert.Equal(0, invitedLeader.ResponseRequester.Count);
 		Assert.Equal([88001, 88002], leagues.GetAllianceIdsByPosition(1));
 		Assert.Equal(2, registry.SentPackets.Count);
 		Assert.Equal([1001, 2001], registry.SentPackets.Select(send => send.PlayerObjectId));
@@ -118,6 +120,7 @@ public sealed class GameServerConnectionLeagueInviteQuestionResponseTests
 		await pair.Connection.HandleQuestionResponseAsync(invitedLeader, CreateQuestionResponse(SmQuestionWindow.BuddyListAddBuddyRequest, response: 1));
 
 		Assert.Same(pending, invitedLeader.PendingLeagueInviteRequest);
+		Assert.Equal(1, invitedLeader.ResponseRequester.Count);
 		Assert.Empty(registry.SentPackets);
 	}
 

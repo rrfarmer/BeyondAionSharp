@@ -56,18 +56,9 @@ public sealed class PlayerLeagueInvitePlanner
 		PlayerLeagueInviteRequestSetupPlan setupPlan)
 	{
 		// Java parity: ResponseRequester.putRequest(messageId, handler) uses putIfAbsent by question id.
-		// This narrow model stores the league invite request metadata until CM_QUESTION_RESPONSE support is ported.
+		// This keeps the typed league invite metadata as the registry payload until a broader handler adapter lands.
 		ArgumentNullException.ThrowIfNull(requestTarget);
 		ArgumentNullException.ThrowIfNull(setupPlan);
-
-		if (requestTarget.PendingLeagueInviteRequest != null)
-		{
-			return new PlayerLeagueInvitePendingRequestPlan(
-				requestTarget.ObjectId,
-				setupPlan.QuestionCode,
-				Registered: false,
-				requestTarget.PendingLeagueInviteRequest);
-		}
 
 		var pendingRequest = new PendingLeagueInviteRequest(
 			setupPlan.QuestionCode,
@@ -75,6 +66,21 @@ public sealed class PlayerLeagueInvitePlanner
 			setupPlan.RequestTargetObjectId,
 			setupPlan.SelectedPlayerObjectId,
 			setupPlan.InvitedAllianceId);
+		var registered = requestTarget.ResponseRequester.PutRequest(
+			setupPlan.QuestionCode,
+			new QuestionResponseRequest(
+				setupPlan.InviterObjectId,
+				QuestionResponseRequestKind.LeagueInvite,
+				pendingRequest));
+		if (!registered)
+		{
+			return new PlayerLeagueInvitePendingRequestPlan(
+				requestTarget.ObjectId,
+				setupPlan.QuestionCode,
+				Registered: false,
+				requestTarget.PendingLeagueInviteRequest ?? pendingRequest);
+		}
+
 		requestTarget.PendingLeagueInviteRequest = pendingRequest;
 
 		return new PlayerLeagueInvitePendingRequestPlan(

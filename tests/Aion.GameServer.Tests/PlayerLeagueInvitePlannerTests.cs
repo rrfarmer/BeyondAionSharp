@@ -92,9 +92,11 @@ public sealed class PlayerLeagueInvitePlannerTests
 		Assert.Equal(2001, registered.PendingRequest.RequestTargetObjectId);
 		Assert.Equal(2001, registered.PendingRequest.SelectedPlayerObjectId);
 		Assert.Equal(88002, registered.PendingRequest.InvitedAllianceId);
+		Assert.Equal(1, invitedLeader.ResponseRequester.Count);
 		Assert.False(duplicate.Registered);
 		Assert.Same(registered.PendingRequest, duplicate.PendingRequest);
 		Assert.Same(registered.PendingRequest, invitedLeader.PendingLeagueInviteRequest);
+		Assert.Equal(1, invitedLeader.ResponseRequester.Count);
 	}
 
 	[Fact]
