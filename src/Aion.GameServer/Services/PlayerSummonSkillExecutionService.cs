@@ -679,14 +679,29 @@ public sealed class PlayerSummonSkillExecutionService
 		PlayerSummonKnownObjectNpcSkillConditionTarget? target,
 		bool ownerExists = true,
 		bool ownerIsDead = false,
-		bool ownerIsAboutToDie = false)
+		bool ownerIsAboutToDie = false,
+		bool? npcIsAliveInWorld = null)
 	{
+		if (!ownerExists || ownerIsDead || ownerIsAboutToDie)
+			return PlayerSummonKnownObjectNpcSkillConditionReadiness.OwnerNotReady(conditionMetadata.Condition, target);
+
+		if (conditionMetadata.Condition == PlayerSummonKnownObjectNpcSkillCondition.NpcIsAlive)
+		{
+			// Java parity: NpcSkillTemplateEntry.conditionReady checks worldMapInstance.getNpcs(condTemp.getNpcId()).anyMatch(!dead).
+			if (npcIsAliveInWorld == null)
+				return PlayerSummonKnownObjectNpcSkillConditionReadiness.Unsupported(conditionMetadata.Condition, target);
+
+			return npcIsAliveInWorld.Value
+				? PlayerSummonKnownObjectNpcSkillConditionReadiness.Ready(conditionMetadata.Condition, target)
+				: PlayerSummonKnownObjectNpcSkillConditionReadiness.NotReady(conditionMetadata.Condition, target ?? PlayerSummonKnownObjectNpcSkillConditionTarget.WorldNpcPresence(conditionMetadata.NpcId));
+		}
+
 		return EvaluateMercenaryNpcSkillConditionReadiness(
 			conditionMetadata.Condition,
 			target,
-			ownerExists,
-			ownerIsDead,
-			ownerIsAboutToDie);
+			ownerExists: true,
+			ownerIsDead: false,
+			ownerIsAboutToDie: false);
 	}
 
 	public PlayerSummonKnownObjectNpcSkillConditionTarget ProjectMercenaryNpcSkillConditionTarget(
@@ -3202,12 +3217,20 @@ public sealed record PlayerSummonKnownObjectNpcSkillConditionTarget(
 	PlayerAbnormalState AbnormalState = PlayerAbnormalState.None,
 	bool IsFlying = false,
 	bool? IsPhysicalClass = null,
-	bool IsInRange = false)
+	bool IsInRange = false,
+	int? NpcId = null)
 {
 	public bool IsInAnyAbnormalState(PlayerAbnormalState state)
 	{
 		// Java parity: NpcSkillTemplateEntry.conditionReady delegates target states to EffectController.isInAnyAbnormalState.
 		return state == PlayerAbnormalState.None ? AbnormalState == PlayerAbnormalState.None : (AbnormalState & state) != 0;
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillConditionTarget WorldNpcPresence(int npcId)
+	{
+		return new PlayerSummonKnownObjectNpcSkillConditionTarget(
+			PlayerSummonKnownObjectNpcSkillConditionTargetKind.Npc,
+			NpcId: npcId);
 	}
 }
 

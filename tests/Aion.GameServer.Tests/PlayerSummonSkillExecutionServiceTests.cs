@@ -1060,6 +1060,39 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void EvaluateMercenaryNpcSkillConditionReadiness_ProjectsNpcIsAliveWorldLookup()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var condition = new PlayerSummonKnownObjectNpcSkillConditionMetadata(
+			PlayerSummonKnownObjectNpcSkillCondition.NpcIsAlive,
+			NpcId: 212362);
+
+		var missingWorldState = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			condition,
+			target: null);
+		var alive = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			condition,
+			target: null,
+			npcIsAliveInWorld: true);
+		var absent = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			condition,
+			target: null,
+			npcIsAliveInWorld: false);
+		var ownerDead = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			condition,
+			target: null,
+			ownerIsDead: true,
+			npcIsAliveInWorld: true);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.Unsupported, missingWorldState.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.Ready, alive.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.NotReady, absent.Status);
+		Assert.Equal(212362, absent.Target?.NpcId);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionTargetKind.Npc, absent.Target?.Kind);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.OwnerNotReady, ownerDead.Status);
+	}
+
+	[Fact]
 	public void SelectMercenaryNpcSkillActionTarget_ProjectsJavaSkillActionTargetMutation()
 	{
 		var service = new PlayerSummonSkillExecutionService();
