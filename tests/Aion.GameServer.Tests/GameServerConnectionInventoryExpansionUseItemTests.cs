@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Sockets;
 using Aion.Commons.Network;
 using Aion.GameServer.Configuration;
+using Aion.GameServer.Data;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
@@ -54,6 +55,25 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			packet => Assert.IsType<SmSystemMessage>(packet),
 			packet => Assert.IsType<SmWarehouseInfo>(packet),
 			packet => Assert.IsType<SmWarehouseInfo>(packet));
+	}
+
+	[Theory]
+	[InlineData(169630000)]
+	[InlineData(169640000)]
+	public async Task HandleUseItemAsync_InventoryExpansionPersistenceFailureDoesNotMutateRuntimeState(int itemId)
+	{
+		var repository = new EmptyPlayerEnterWorldRepository { SaveInventoryExpansionMutationResult = false };
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreatePlayer(itemId);
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
+
+		Assert.Equal(1, repository.SaveInventoryExpansionMutationCalls);
+		Assert.Equal(0, player.ItemExpands);
+		Assert.Equal(0, player.WarehouseBonusExpands);
+		var sourceItem = Assert.Single(player.InventoryItems);
+		Assert.Equal(2, sourceItem.Count);
+		Assert.Empty(fixture.SentPackets);
 	}
 
 	private static Player CreatePlayer(int itemId)
@@ -111,7 +131,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 
 		public List<GameServerPacket> SentPackets { get; }
 
-		public static async Task<InventoryExpansionUseItemFixture> CreateAsync()
+		public static async Task<InventoryExpansionUseItemFixture> CreateAsync(
+			EmptyPlayerEnterWorldRepository? repository = null)
 		{
 			var tempRoot = Path.Combine(Path.GetTempPath(), "aion-inventory-expansion-use-" + Guid.NewGuid().ToString("N"));
 			Directory.CreateDirectory(Path.Combine(tempRoot, "game-server", "data", "static_data"));
@@ -141,6 +162,15 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			var runtimeContext = new GameServerRuntimeContext();
 			runtimeContext.SetDataManager(dataManager);
 			var sentPackets = new List<GameServerPacket>();
+			var world = new Aion.GameServer.World.World(NullLogger<Aion.GameServer.World.World>.Instance);
+			world.Initialize();
+			var playerEnterWorldService = repository == null
+				? null
+				: new PlayerEnterWorldService(
+					new GameServerOptions(),
+					repository,
+					world,
+					NullLogger<PlayerEnterWorldService>.Instance);
 
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -160,6 +190,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 					new GamePacketProcessor<string>((_, _) => Task.CompletedTask),
 					options: new GameServerOptions(),
 					runtimeContext: runtimeContext,
+					playerEnterWorldService: playerEnterWorldService,
 					sentPacketObserver: sentPackets.Add,
 					crypt: crypt);
 				return new InventoryExpansionUseItemFixture(client, connection, sentPackets, tempRoot);
