@@ -21,16 +21,8 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 	{
 		await using var fixture = await KiskReviveWorkflowFixture.CreateAsync();
 		var player = CreateDeadPlayer(boundKiskObjectId: 9001);
-		var kisk = new PlayerKiskRuntimeState(
-			objectId: 9001,
-			ownerObjectId: 1001,
-			npcId: 700273,
-			maxResurrects: 2,
-			spawnedAt: DateTimeOffset.UtcNow.AddMinutes(-1),
-			ownerRace: "ELYOS");
-		fixture.RuntimeContext.Kisks.RegisterKisk(kisk);
 		var kiskPosition = new WorldPosition(210010000, 11, 22, 33, 0);
-		Assert.True(fixture.World.TryAddObject(9001, CreateKiskNpc(9001, kiskPosition)));
+		var kisk = fixture.RegisterKisk(objectId: 9001, kiskPosition, maxResurrects: 2);
 
 		await fixture.Connection.HandleReviveAsync(player, CreateRevive(PlayerKiskReviveService.KiskReviveId));
 
@@ -40,6 +32,32 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 		Assert.Equal(0, player.Dp);
 		Assert.False(player.IsInState(PlayerCreatureState.Dead));
 		Assert.True(player.IsInState(PlayerCreatureState.Active));
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => Assert.IsType<SmKiskUpdate>(packet),
+			packet => Assert.IsType<SmEmotion>(packet),
+			packet => Assert.IsType<SmChannelInfo>(packet),
+			packet => Assert.IsType<SmPlayerSpawn>(packet),
+			packet => Assert.IsType<SmPlayerInfo>(packet),
+			packet => Assert.IsType<SmStatsInfo>(packet),
+			packet => Assert.IsType<SmMotion>(packet));
+	}
+
+	[Fact]
+	public async Task HandleReviveAsync_LastKiskReviveChargeRemovesKiskAfterUpdate()
+	{
+		await using var fixture = await KiskReviveWorkflowFixture.CreateAsync();
+		var player = CreateDeadPlayer(boundKiskObjectId: 9001);
+		var kiskPosition = new WorldPosition(210010000, 11, 22, 33, 0);
+		var kisk = fixture.RegisterKisk(objectId: 9001, kiskPosition, maxResurrects: 1);
+
+		await fixture.Connection.HandleReviveAsync(player, CreateRevive(PlayerKiskReviveService.KiskReviveId));
+
+		Assert.Equal(0, kisk.RemainingResurrects);
+		Assert.False(fixture.RuntimeContext.Kisks.HaveKisk(kisk.OwnerObjectId));
+		Assert.False(fixture.World.TryGetObject(kisk.ObjectId, out _));
+		Assert.Equal(kiskPosition, player.Position);
+		Assert.Equal(new PlayerLifeStats(51, 63, 12), player.LifeStats);
 		Assert.Collection(
 			fixture.SentPackets,
 			packet => Assert.IsType<SmKiskUpdate>(packet),
@@ -120,6 +138,20 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 		public GameWorld World { get; }
 
 		public List<GameServerPacket> SentPackets { get; }
+
+		public PlayerKiskRuntimeState RegisterKisk(int objectId, WorldPosition position, int maxResurrects)
+		{
+			var kisk = new PlayerKiskRuntimeState(
+			objectId,
+			ownerObjectId: 1001,
+			npcId: 700273,
+			maxResurrects: maxResurrects,
+			spawnedAt: DateTimeOffset.UtcNow.AddMinutes(-1),
+			ownerRace: "ELYOS");
+			RuntimeContext.Kisks.RegisterKisk(kisk);
+			Assert.True(World.TryAddObject(objectId, CreateKiskNpc(objectId, position)));
+			return kisk;
+		}
 
 		public static async Task<KiskReviveWorkflowFixture> CreateAsync()
 		{
