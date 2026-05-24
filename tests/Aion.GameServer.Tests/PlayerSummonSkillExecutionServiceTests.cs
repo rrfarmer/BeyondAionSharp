@@ -206,6 +206,81 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void SelectMercenaryQueuedNpcSkillCandidate_ProjectsImmediateAndDelayedQueuedBranches()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var readyTiming = service.EvaluateMercenaryNpcSkillEntryReadiness(
+			new PlayerSummonKnownObjectNpcSkillEntryTiming(),
+			hpPercentage: 100,
+			elapsedFightTimeMilliseconds: 0,
+			currentTimeMilliseconds: 1000);
+		var blockedTiming = service.EvaluateMercenaryNpcSkillEntryReadiness(
+			new PlayerSummonKnownObjectNpcSkillEntryTiming(),
+			hpPercentage: 100,
+			elapsedFightTimeMilliseconds: 0,
+			currentTimeMilliseconds: 1000,
+			chanceReady: false);
+		var readyCondition = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			new PlayerSummonKnownObjectNpcSkillConditionMetadata(),
+			target: null);
+
+		PlayerSummonKnownObjectNpcSkillCandidate Candidate(
+			int nextSkillTime,
+			PlayerSummonKnownObjectNpcSkillEntryReadiness timing,
+			PlayerSummonKnownObjectTargetRangeReadiness? targetRange = null)
+		{
+			var projection = service.ProjectMercenaryNpcSkillTemplate(
+				new PlayerSummonKnownObjectNpcSkillTemplateMetadata(NextSkillTimeMilliseconds: nextSkillTime));
+
+			return new PlayerSummonKnownObjectNpcSkillCandidate(0, projection, timing, readyCondition, targetRange);
+		}
+
+		var immediate = service.SelectMercenaryQueuedNpcSkillCandidate(
+			Candidate(nextSkillTime: 0, readyTiming),
+			initialSkillDelayElapsed: false,
+			canUseNextSkill: false);
+		var waiting = service.SelectMercenaryQueuedNpcSkillCandidate(
+			Candidate(nextSkillTime: 5000, readyTiming),
+			initialSkillDelayElapsed: false,
+			canUseNextSkill: true);
+		var delayed = service.SelectMercenaryQueuedNpcSkillCandidate(
+			Candidate(nextSkillTime: 5000, readyTiming),
+			initialSkillDelayElapsed: true,
+			canUseNextSkill: true);
+		var delayedNotReady = service.SelectMercenaryQueuedNpcSkillCandidate(
+			Candidate(nextSkillTime: 0, blockedTiming),
+			initialSkillDelayElapsed: true,
+			canUseNextSkill: true);
+
+		var knownObject = new PlayerSummonKnownObject(
+			ObjectId: 8004,
+			Kind: PlayerSummonKnownObjectKind.Creature,
+			CreatorObjectId: 1,
+			NpcTemplateId: 833288,
+			NpcTemplateType: PlayerSummonKnownNpcTemplateType.Mercenary);
+		var targetOutOfRange = service.EvaluateMercenaryTargetRange(
+			knownObject,
+			PlayerSummonKnownObjectSkillTargetMode.CreatureTarget,
+			hasCreatureTarget: true,
+			isInRange: false);
+		var immediateRangeBlocked = service.SelectMercenaryQueuedNpcSkillCandidate(
+			Candidate(nextSkillTime: 0, readyTiming, targetOutOfRange),
+			initialSkillDelayElapsed: false,
+			canUseNextSkill: false);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionStatus.Ready, immediate.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionSource.ImmediateQueuedSkill, immediate.Source);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionStatus.WaitingForDelayGate, waiting.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionSource.DelayedQueuedSkill, waiting.Source);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionStatus.Ready, delayed.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionSource.DelayedQueuedSkill, delayed.Source);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionStatus.NoReadyCandidate, delayedNotReady.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionSource.DelayedQueuedSkill, delayedNotReady.Source);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionStatus.TargetRangeNotReady, immediateRangeBlocked.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionSource.ImmediateQueuedSkill, immediateRangeBlocked.Source);
+	}
+
+	[Fact]
 	public void EvaluateMercenaryNpcSkillConditionReadiness_ProjectsSimpleJavaConditionBranches()
 	{
 		var service = new PlayerSummonSkillExecutionService();
