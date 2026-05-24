@@ -143,7 +143,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Collection(
 			fixture.SentPackets,
 			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedTime: 1000, expectedEnd: 0),
-			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedTime: 0, expectedEnd: 2),
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedTime: 0, expectedEnd: 3),
 			packet => Assert.IsType<SmSystemMessage>(packet));
 		await Task.Delay(1100);
 		Assert.Equal(3, fixture.SentPackets.Count);

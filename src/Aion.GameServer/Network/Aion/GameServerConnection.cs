@@ -4786,8 +4786,7 @@ public sealed class GameServerConnection : BaseClientConnection
 					return;
 
 				await CompleteAnimationAddUseItemAsync(player, inventoryItems, sourceItem, sourceTemplate);
-			},
-			cancelEndState: 2);
+			});
 	}
 
 	private async Task CompleteAnimationAddUseItemAsync(
