@@ -1617,6 +1617,34 @@ public sealed class PlayerSummonSkillExecutionService
 		return PlayerSummonKnownObjectTargetRangeReadiness.Ready(knownObject);
 	}
 
+	public PlayerSummonKnownObjectTargetRangeReadiness EvaluateMercenaryTargetRange(
+		PlayerSummonKnownObject knownObject,
+		PlayerSummonKnownObjectSkillTargetMode targetMode,
+		PlayerSummonKnownObject? currentTarget,
+		bool canSeeTarget = true,
+		bool isAreaTarget = false,
+		bool isInRange = true)
+	{
+		if (targetMode != PlayerSummonKnownObjectSkillTargetMode.CreatureTarget)
+			return PlayerSummonKnownObjectTargetRangeReadiness.NotRequired(knownObject);
+
+		// Java parity: SkillAttackManager.targetTooFar requires owner.getTarget() instanceof Creature.
+		if (currentTarget == null || !currentTarget.IsCreature)
+			return PlayerSummonKnownObjectTargetRangeReadiness.MissingCreatureTarget(knownObject, TargetTooFarNextSkillDelayMilliseconds);
+
+		if (currentTarget.IsDead)
+			return PlayerSummonKnownObjectTargetRangeReadiness.TargetDead(knownObject, TargetTooFarNextSkillDelayMilliseconds);
+
+		// Java parity: targetTooFar delegates visibility to owner.canSee(target); represented visibility is kept as an explicit input fact.
+		if (!currentTarget.IsVisible || !canSeeTarget)
+			return PlayerSummonKnownObjectTargetRangeReadiness.CannotSeeTarget(knownObject, TargetTooFarNextSkillDelayMilliseconds);
+
+		if (!isAreaTarget && !isInRange)
+			return PlayerSummonKnownObjectTargetRangeReadiness.TargetOutOfRange(knownObject, TargetTooFarNextSkillDelayMilliseconds);
+
+		return PlayerSummonKnownObjectTargetRangeReadiness.Ready(knownObject);
+	}
+
 	public PlayerSummonKnownObjectTargetRangeDelayResult ApplyMercenaryTargetRangeDelay(
 		Player player,
 		int mercenaryObjectId,

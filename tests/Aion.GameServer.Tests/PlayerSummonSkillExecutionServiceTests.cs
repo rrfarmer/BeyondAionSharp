@@ -2312,6 +2312,80 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void EvaluateMercenaryTargetRange_ProjectsRepresentedCurrentTargetInvalidation()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var player = new Player { ObjectId = 1 };
+		var knownObject = new PlayerSummonKnownObject(
+			ObjectId: 8003,
+			Kind: PlayerSummonKnownObjectKind.Creature,
+			CreatorObjectId: 1,
+			NpcTemplateId: 833288,
+			NpcTemplateType: PlayerSummonKnownNpcTemplateType.Mercenary);
+		player.SetSummonKnownObject(knownObject);
+		var readyTarget = new PlayerSummonKnownObject(9001, PlayerSummonKnownObjectKind.Creature);
+		var deadTarget = readyTarget with { IsDead = true };
+		var invisibleTarget = readyTarget with { IsVisible = false };
+		var visibleObjectTarget = new PlayerSummonKnownObject(9002, PlayerSummonKnownObjectKind.VisibleObject);
+
+		var notRequired = service.EvaluateMercenaryTargetRange(
+			knownObject,
+			PlayerSummonKnownObjectSkillTargetMode.MostHated,
+			currentTarget: null);
+		var missingTarget = service.EvaluateMercenaryTargetRange(
+			knownObject,
+			PlayerSummonKnownObjectSkillTargetMode.CreatureTarget,
+			currentTarget: null);
+		var nonCreatureTarget = service.EvaluateMercenaryTargetRange(
+			knownObject,
+			PlayerSummonKnownObjectSkillTargetMode.CreatureTarget,
+			visibleObjectTarget);
+		var dead = service.EvaluateMercenaryTargetRange(
+			knownObject,
+			PlayerSummonKnownObjectSkillTargetMode.CreatureTarget,
+			deadTarget);
+		var invisible = service.EvaluateMercenaryTargetRange(
+			knownObject,
+			PlayerSummonKnownObjectSkillTargetMode.CreatureTarget,
+			invisibleTarget);
+		var cannotSee = service.EvaluateMercenaryTargetRange(
+			knownObject,
+			PlayerSummonKnownObjectSkillTargetMode.CreatureTarget,
+			readyTarget,
+			canSeeTarget: false);
+		var areaReady = service.EvaluateMercenaryTargetRange(
+			knownObject,
+			PlayerSummonKnownObjectSkillTargetMode.CreatureTarget,
+			readyTarget,
+			isAreaTarget: true,
+			isInRange: false);
+		var outOfRange = service.EvaluateMercenaryTargetRange(
+			knownObject,
+			PlayerSummonKnownObjectSkillTargetMode.CreatureTarget,
+			readyTarget,
+			isInRange: false);
+		var delayed = service.ApplyMercenaryTargetRangeDelay(player, knownObject.ObjectId, invisible);
+
+		Assert.Equal(PlayerSummonKnownObjectTargetRangeReadinessStatus.NotRequired, notRequired.Status);
+		Assert.Equal(PlayerSummonKnownObjectTargetRangeReadinessStatus.MissingCreatureTarget, missingTarget.Status);
+		Assert.Equal(5_000, missingTarget.NextSkillDelayMilliseconds);
+		Assert.Equal(PlayerSummonKnownObjectTargetRangeReadinessStatus.MissingCreatureTarget, nonCreatureTarget.Status);
+		Assert.Equal(5_000, nonCreatureTarget.NextSkillDelayMilliseconds);
+		Assert.Equal(PlayerSummonKnownObjectTargetRangeReadinessStatus.TargetDead, dead.Status);
+		Assert.Equal(5_000, dead.NextSkillDelayMilliseconds);
+		Assert.Equal(PlayerSummonKnownObjectTargetRangeReadinessStatus.CannotSeeTarget, invisible.Status);
+		Assert.Equal(5_000, invisible.NextSkillDelayMilliseconds);
+		Assert.Equal(PlayerSummonKnownObjectTargetRangeReadinessStatus.CannotSeeTarget, cannotSee.Status);
+		Assert.Equal(5_000, cannotSee.NextSkillDelayMilliseconds);
+		Assert.Equal(PlayerSummonKnownObjectTargetRangeReadinessStatus.Ready, areaReady.Status);
+		Assert.Equal(PlayerSummonKnownObjectTargetRangeReadinessStatus.TargetOutOfRange, outOfRange.Status);
+		Assert.Equal(5_000, outOfRange.NextSkillDelayMilliseconds);
+		Assert.Equal(PlayerSummonKnownObjectTargetRangeDelayStatus.Set, delayed.Status);
+		Assert.True(player.TryGetSummonKnownObject(knownObject.ObjectId, out var storedKnownObject));
+		Assert.Equal(5_000, storedKnownObject.NextSkillDelayMilliseconds);
+	}
+
+	[Fact]
 	public void EvaluateMercenarySkillReadiness_ProjectsJavaAbnormalAndTransformGates()
 	{
 		var service = new PlayerSummonSkillExecutionService();
