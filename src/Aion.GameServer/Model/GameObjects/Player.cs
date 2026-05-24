@@ -304,6 +304,15 @@ public sealed class Player
 	// Java parity: skillengine/model/Skill.SkillMethod used by PlayerController.cancelCurrentSkill branch fanout.
 	public PlayerCastingSkillMethod CastingSkillMethod { get; private set; }
 
+	// Java parity: SkillMethod.ITEM cancellation uses Skill.itemObjectId, item template id, first target, and delay id.
+	public int CastingItemObjectId { get; private set; }
+
+	public int CastingItemTemplateId { get; private set; }
+
+	public int CastingFirstTargetObjectId { get; private set; }
+
+	public int? CastingItemCooldownDelayId { get; private set; }
+
 	// Java parity: model/gameobjects/player/Player.lastSkill updated when a non-null casting skill is cleared.
 	public int LastCastingSkillId { get; private set; }
 
@@ -366,7 +375,13 @@ public sealed class Player
 		LootingNpcObjectId = 0;
 	}
 
-	public void SetCastingSkill(int skillId, PlayerCastingSkillMethod method = PlayerCastingSkillMethod.Cast)
+	public void SetCastingSkill(
+		int skillId,
+		PlayerCastingSkillMethod method = PlayerCastingSkillMethod.Cast,
+		int itemObjectId = 0,
+		int itemTemplateId = 0,
+		int firstTargetObjectId = 0,
+		int? itemCooldownDelayId = null)
 	{
 		// Java parity: model/gameobjects/Creature.setCasting stores the active Skill; this port stores the represented skill id.
 		if (skillId == 0)
@@ -377,6 +392,10 @@ public sealed class Player
 
 		CastingSkillId = skillId;
 		CastingSkillMethod = method;
+		CastingItemObjectId = itemObjectId;
+		CastingItemTemplateId = itemTemplateId;
+		CastingFirstTargetObjectId = firstTargetObjectId;
+		CastingItemCooldownDelayId = itemCooldownDelayId;
 	}
 
 	public PlayerCastingSkillSnapshot? ClearCastingSkill()
@@ -387,10 +406,18 @@ public sealed class Player
 			return null;
 
 		var method = CastingSkillMethod;
+		var itemObjectId = CastingItemObjectId;
+		var itemTemplateId = CastingItemTemplateId;
+		var firstTargetObjectId = CastingFirstTargetObjectId;
+		var itemCooldownDelayId = CastingItemCooldownDelayId;
 		LastCastingSkillId = skillId;
 		CastingSkillId = 0;
 		CastingSkillMethod = PlayerCastingSkillMethod.None;
-		return new PlayerCastingSkillSnapshot(skillId, method);
+		CastingItemObjectId = 0;
+		CastingItemTemplateId = 0;
+		CastingFirstTargetObjectId = 0;
+		CastingItemCooldownDelayId = null;
+		return new PlayerCastingSkillSnapshot(skillId, method, itemObjectId, itemTemplateId, firstTargetObjectId, itemCooldownDelayId);
 	}
 
 	public PlayerTeamMembership RemoveCurrentTeam()
@@ -772,6 +799,15 @@ public enum PlayerCastingSkillMethod
 	Item,
 }
 
-public sealed record PlayerCastingSkillSnapshot(int SkillId, PlayerCastingSkillMethod Method);
+public sealed record PlayerCastingSkillSnapshot(
+	int SkillId,
+	PlayerCastingSkillMethod Method,
+	int ItemObjectId,
+	int ItemTemplateId,
+	int FirstTargetObjectId,
+	int? ItemCooldownDelayId)
+{
+	public bool HasItemCancellationMetadata => ItemObjectId != 0 && ItemTemplateId != 0 && FirstTargetObjectId != 0;
+}
 
 public sealed record PendingPlayerTeleport(WorldPosition Destination, TeleportAnimation Animation);

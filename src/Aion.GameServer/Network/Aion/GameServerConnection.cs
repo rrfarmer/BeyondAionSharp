@@ -1205,6 +1205,23 @@ public sealed class GameServerConnection : BaseClientConnection
 						packets.Add(new SmSkillCancel(player.ObjectId, canceledSkill.SkillId));
 						packets.Add(SmSystemMessage.SkillCanceled());
 					}
+					else if (canceledSkill is { Method: PlayerCastingSkillMethod.Item, HasItemCancellationMetadata: true })
+					{
+						packets.Add(SmSystemMessage.ItemCanceled());
+						if (canceledSkill.ItemCooldownDelayId.HasValue)
+							player.RemoveItemCooldown(canceledSkill.ItemCooldownDelayId.Value);
+						packets.Add(new SmItemUsageAnimation(
+							player.ObjectId,
+							canceledSkill.FirstTargetObjectId,
+							canceledSkill.ItemObjectId,
+							canceledSkill.ItemTemplateId,
+							0,
+							3,
+							0,
+							0,
+							1,
+							0));
+					}
 					_castSpellHooks.CancelCurrentSkill(player, packet);
 				},
 				SendPetRequired: () => packets.Add(SmSystemMessage.SkillNotNeedPet()),

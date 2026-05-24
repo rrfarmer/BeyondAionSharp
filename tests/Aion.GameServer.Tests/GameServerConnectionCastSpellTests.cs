@@ -104,6 +104,54 @@ public class GameServerConnectionCastSpellTests
 	}
 
 	[Fact]
+	public async Task HandleCastSpellAsync_ZeroSpellIdWithItemSkillMetadataSendsItemCancelPacketsAndRemovesCooldown()
+	{
+		var events = new List<string>();
+		var sentPackets = new List<GameServerPacket>();
+		var hooks = new GameServerCastSpellHandlerHooks
+		{
+			CancelCurrentSkill = (player, _) => events.Add($"cancel-current:{player.CastingSkillId}:{player.LastCastingSkillId}"),
+		};
+		await using var pair = await TestConnectionPair.CreateAsync(sentPackets, hooks);
+		var player = CreatePlayer();
+		player.AddItemCooldown(77, 5_000, new DateTimeOffset(2026, 5, 24, 12, 0, 0, TimeSpan.Zero));
+		player.SetCastingSkill(
+			9001,
+			PlayerCastingSkillMethod.Item,
+			itemObjectId: 6001,
+			itemTemplateId: 166050001,
+			firstTargetObjectId: 7001,
+			itemCooldownDelayId: 77);
+
+		var result = await pair.Connection.HandleCastSpellAsync(player, CreateCastSpell(0));
+
+		Assert.Equal(PlayerCastSpellEarlyExitStatus.CancelCurrentSkill, result.Status);
+		Assert.Equal(0, player.CastingSkillId);
+		Assert.Equal(9001, player.LastCastingSkillId);
+		Assert.False(player.ItemCooldowns.ContainsKey(77));
+		Assert.Equal(["cancel-current:0:9001"], events);
+		Assert.Collection(
+			sentPackets,
+			packet =>
+			{
+				var message = Assert.IsType<SmSystemMessage>(packet);
+				Assert.Equal(1300427, message.MessageId);
+			},
+			packet => AssertItemUsageAnimationPayload(
+				Assert.IsType<SmItemUsageAnimation>(packet),
+				player.ObjectId,
+				targetObjectId: 7001,
+				itemObjectId: 6001,
+				itemId: 166050001,
+				time: 0,
+				end: 3,
+				unknown: 0,
+				unknown1: 0,
+				unknown2: 1,
+				unknown3: 0));
+	}
+
+	[Fact]
 	public async Task HandleCastSpellAsync_CooldownNotReadySendsNotReadyAfterCancelUseItemAndAudit()
 	{
 		var events = new List<string>();
@@ -216,6 +264,34 @@ public class GameServerConnectionCastSpellTests
 		using var reader = new PacketBuffer(payload);
 		Assert.Equal(expectedCreatureObjectId, reader.ReadD());
 		Assert.Equal(expectedSkillId, reader.ReadH());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertItemUsageAnimationPayload(
+		SmItemUsageAnimation packet,
+		int playerObjectId,
+		int targetObjectId,
+		int itemObjectId,
+		int itemId,
+		int time,
+		int end,
+		int unknown,
+		int unknown1,
+		int unknown2,
+		int unknown3)
+	{
+		var payload = SerializeUnencryptedPayload(packet);
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(playerObjectId, reader.ReadD());
+		Assert.Equal(targetObjectId, reader.ReadD());
+		Assert.Equal(itemObjectId, reader.ReadD());
+		Assert.Equal(itemId, reader.ReadD());
+		Assert.Equal(time, reader.ReadD());
+		Assert.Equal(end, (int)reader.ReadC());
+		Assert.Equal(unknown, (int)reader.ReadC());
+		Assert.Equal(unknown1, (int)reader.ReadC());
+		Assert.Equal(unknown2, (int)reader.ReadC());
+		Assert.Equal(unknown3, reader.ReadD());
 		Assert.Equal(0, reader.Remaining);
 	}
 
