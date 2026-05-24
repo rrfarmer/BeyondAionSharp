@@ -383,6 +383,30 @@ public sealed class PlayerAllianceRuntime
 		}
 	}
 
+	public int? SelectFallbackLeaderObjectId(int allianceId, int leavingLeaderObjectId)
+	{
+		// Java parity: model/team/alliance/events/ChangeAllianceLeaderEvent.handleEvent prefers an online vice captain, then the next online non-leader member.
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(allianceId, 0);
+
+		lock (_sync)
+		{
+			if (!_membersByAllianceId.TryGetValue(allianceId, out var members))
+				return null;
+
+			var viceCaptainObjectIds = _viceCaptainObjectIdsByAllianceId.GetValueOrDefault(allianceId) ?? [];
+			foreach (var viceCaptainObjectId in viceCaptainObjectIds)
+			{
+				var viceCaptain = members.FirstOrDefault(member => member.ObjectId == viceCaptainObjectId);
+				if (viceCaptain is { IsOnline: true } && viceCaptain.ObjectId != leavingLeaderObjectId)
+					return viceCaptain.ObjectId;
+			}
+
+			return members
+				.FirstOrDefault(member => member.IsOnline && member.ObjectId != leavingLeaderObjectId)
+				?.ObjectId;
+		}
+	}
+
 	public PlayerAllianceReadyCheckPlan? CheckReady(int allianceId, Player player, PlayerAllianceReadyCheckCommand command)
 	{
 		// Java parity: model/team/alliance/events/CheckAllianceReadyEvent updates allianceReadyStatus and broadcasts SM_ALLIANCE_READY_CHECK.

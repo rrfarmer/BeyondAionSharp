@@ -6158,7 +6158,24 @@ public sealed class GameServerConnection : BaseClientConnection
 			return null;
 
 		if (_playerAllianceRuntime.IsLeader(alliance.AllianceId, player))
-			return null;
+		{
+			var fallbackLeaderObjectId = _playerAllianceRuntime.SelectFallbackLeaderObjectId(alliance.AllianceId, player.ObjectId);
+			if (fallbackLeaderObjectId == null)
+				return null;
+
+			var leaderChangePlan = _playerAllianceRuntime.ChangeLeader(
+				alliance.AllianceId,
+				fallbackLeaderObjectId.Value,
+				eventPlayerWasSpecified: false);
+			if (leaderChangePlan != null)
+			{
+				foreach (var intent in leaderChangePlan.AllianceInfoIntents)
+					await SendAllianceLeaderPacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+
+				foreach (var intent in leaderChangePlan.SystemMessageIntents)
+					await SendAllianceLeaderPacketAsync(intent.RecipientObjectId, intent.Message, cancellationToken);
+			}
+		}
 
 		var plan = _playerAllianceRuntime.RemoveMemberWithLeaveWorkflow(player);
 		if (plan == null)

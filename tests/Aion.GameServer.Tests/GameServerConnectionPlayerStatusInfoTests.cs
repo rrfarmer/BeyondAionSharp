@@ -525,6 +525,43 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 	}
 
 	[Fact]
+	public async Task HandlePlayerStatusInfoAsync_AllianceLeaveLeaderPromotesOnlineViceCaptainBeforeLeaveFanoutLikeJava()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var alliances = new PlayerAllianceRuntime();
+		var leader = new Player { ObjectId = 1001, Name = "Leader", IsOnline = true, Position = new WorldPosition(210010000, 1, 2, 3, 0) };
+		var viceCaptain = new Player { ObjectId = 1002, Name = "Vice", IsOnline = true, Position = new WorldPosition(220010000, 4, 5, 6, 0) };
+		var member = new Player { ObjectId = 1003, Name = "Member", IsOnline = true, Position = new WorldPosition(230010000, 7, 8, 9, 0) };
+		alliances.CreateAlliance(88001, leader);
+		alliances.AddMember(88001, viceCaptain);
+		alliances.AddMember(88001, member);
+		alliances.SetViceCaptains(88001, [viceCaptain.ObjectId]);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, alliances);
+
+		await pair.Connection.HandlePlayerStatusInfoAsync(
+			leader,
+			CreatePacket(commandCode: 14, selectedObjectId: 0));
+
+		Assert.Equal(PlayerTeamMembership.None, leader.TeamMembership);
+		Assert.True(alliances.IsLeader(88001, viceCaptain));
+		Assert.False(alliances.IsViceCaptain(88001, viceCaptain.ObjectId));
+		Assert.Equal([1001, 1002, 1003, 1002, 1002, 1002, 1002, 1003, 1003, 1003, 1001], registry.SentPackets.Select(send => send.PlayerObjectId));
+		Assert.Collection(
+			registry.SentPackets,
+			send => Assert.IsType<SmAllianceInfo>(send.Packet),
+			send => Assert.IsType<SmAllianceInfo>(send.Packet),
+			send => Assert.IsType<SmAllianceInfo>(send.Packet),
+			send => Assert.Equal(1300999, Assert.IsType<SmSystemMessage>(send.Packet).MessageId),
+			send => Assert.Equal(1300978, Assert.IsType<SmSystemMessage>(send.Packet).MessageId),
+			send => Assert.IsType<SmAllianceMemberInfo>(send.Packet),
+			send => Assert.IsType<SmAllianceInfo>(send.Packet),
+			send => Assert.Equal(1300978, Assert.IsType<SmSystemMessage>(send.Packet).MessageId),
+			send => Assert.IsType<SmAllianceMemberInfo>(send.Packet),
+			send => Assert.IsType<SmAllianceInfo>(send.Packet),
+			send => Assert.IsType<SmLeaveGroupMember>(send.Packet));
+	}
+
+	[Fact]
 	public async Task HandlePlayerStatusInfoAsync_AllianceBanFailureBranchesSendJavaMessages()
 	{
 		var registry = new CapturingConnectionRegistry();
