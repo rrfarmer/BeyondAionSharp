@@ -93,6 +93,13 @@ public class PlayerSummonSkillExecutionServiceTests
 			MaxDistance: 0,
 			MinCount: 3,
 			MaxCount: 0);
+		var singleMaxCountSpawn = new PlayerSummonKnownObjectNpcSkillSpawnMetadata(
+			NpcId: 212349,
+			DelayMilliseconds: 0,
+			MinDistance: 0,
+			MaxDistance: 0,
+			MinCount: 2,
+			MaxCount: 1);
 		var delayedRandomSpawn = new PlayerSummonKnownObjectNpcSkillSpawnMetadata(
 			NpcId: 212348,
 			DelayMilliseconds: 1500,
@@ -103,12 +110,15 @@ public class PlayerSummonSkillExecutionServiceTests
 		var noSpawnSkill = service.ProjectMercenaryNpcSkillTemplate(new PlayerSummonKnownObjectNpcSkillTemplateMetadata());
 		var immediateSkill = service.ProjectMercenaryNpcSkillTemplate(
 			new PlayerSummonKnownObjectNpcSkillTemplateMetadata(SpawnTemplate: immediateSpawn));
+		var singleMaxCountSkill = service.ProjectMercenaryNpcSkillTemplate(
+			new PlayerSummonKnownObjectNpcSkillTemplateMetadata(SpawnTemplate: singleMaxCountSpawn));
 		var delayedSkill = service.ProjectMercenaryNpcSkillTemplate(
 			new PlayerSummonKnownObjectNpcSkillTemplateMetadata(SpawnTemplate: delayedRandomSpawn));
 
 		var noSpawn = service.PreviewMercenaryNpcSkillPostSpawn(noSpawnSkill);
 		var ownerDead = service.PreviewMercenaryNpcSkillPostSpawn(immediateSkill, ownerIsDead: true);
 		var immediate = service.PreviewMercenaryNpcSkillPostSpawn(immediateSkill);
+		var singleMaxCount = service.PreviewMercenaryNpcSkillPostSpawn(singleMaxCountSkill);
 		var delayed = service.PreviewMercenaryNpcSkillPostSpawn(delayedSkill);
 		var missingSchedule = service.PreviewMercenaryNpcSkillPostSpawnSchedule(null, currentTimeMilliseconds: 20_000);
 		var immediateSchedule = service.PreviewMercenaryNpcSkillPostSpawnSchedule(immediate, currentTimeMilliseconds: 20_000);
@@ -126,6 +136,10 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Equal(3, immediate.EffectiveMaxCount);
 		Assert.Equal(0, immediate.EffectiveMinDistance);
 		Assert.Equal(0, immediate.EffectiveMaxDistance);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillPostSpawnPreviewStatus.ImmediateSpawn, singleMaxCount.Status);
+		Assert.False(singleMaxCount.RequiresRandomCount);
+		Assert.Equal(2, singleMaxCount.EffectiveMinCount);
+		Assert.Equal(2, singleMaxCount.EffectiveMaxCount);
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillPostSpawnPreviewStatus.DelayedSpawn, delayed.Status);
 		Assert.True(delayed.ShouldScheduleSpawn);
 		Assert.True(delayed.RequiresOwnerAliveRecheck);
