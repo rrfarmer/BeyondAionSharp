@@ -7,6 +7,7 @@ public static class ItemChargeService
 {
 	public const int Level1ChargePoints = 500_000;
 	public const int Level2ChargePoints = 1_000_000;
+	public const int ChargeBarStepPoints = 50_000;
 
 	public static ItemChargePlan? CreateChargePlan(
 		Player player,
@@ -103,6 +104,34 @@ public static class ItemChargeService
 		return context == null ? 0 : CalculateAvailableChargeLevel(player, context);
 	}
 
+	public static ItemChargeUpdateResult? DecreaseChargePoints(
+		InventoryItem item,
+		ItemImprovement improvement,
+		bool isAttacked)
+	{
+		// Java parity: model/items/ChargeInfo attack/attacked/dotattacked observers.
+		var burnAmount = isAttacked ? improvement.BurnDefend : improvement.BurnAttack;
+		return burnAmount <= 0 ? null : UpdateChargePoints(item, -burnAmount);
+	}
+
+	public static ItemChargeUpdateResult? UpdateChargePoints(InventoryItem item, int pointsToAdd)
+	{
+		// Java parity: model/items/ChargeInfo.updateChargePoints.
+		if (pointsToAdd == 0)
+			return null;
+
+		var previousCharge = Math.Clamp(item.Charge, 0, Level2ChargePoints);
+		var nextCharge = Math.Clamp(previousCharge + pointsToAdd, 0, Level2ChargePoints);
+		if (nextCharge == previousCharge)
+			return null;
+
+		var itemUpdate = CopyInventoryItem(item, charge: nextCharge);
+		return new ItemChargeUpdateResult(
+			itemUpdate,
+			ChargeBarChanged: GetChargeBarStep(previousCharge) != GetChargeBarStep(nextCharge),
+			PointsDelta: nextCharge - previousCharge);
+	}
+
 	private static ItemChargeContext? CreateContext(InventoryItem item, ItemTemplateTable itemTemplates)
 	{
 		var template = itemTemplates.GetItemTemplate(item.ItemId);
@@ -148,9 +177,54 @@ public static class ItemChargeService
 		throw new ArgumentOutOfRangeException(nameof(item), $"Invalid charge level {charge}");
 	}
 
+	private static int GetChargeBarStep(int charge)
+	{
+		return Math.Clamp(charge, 0, Level2ChargePoints) / ChargeBarStepPoints;
+	}
+
 	private static long JavaRound(double value)
 	{
 		return (long)Math.Floor(value + 0.5d);
+	}
+
+	private static InventoryItem CopyInventoryItem(InventoryItem item, int? charge = null)
+	{
+		var copy = new InventoryItem
+		{
+			ObjectId = item.ObjectId,
+			ItemId = item.ItemId,
+			Count = item.Count,
+			Color = item.Color,
+			ColorExpires = item.ColorExpires,
+			Creator = item.Creator,
+			ExpireTime = item.ExpireTime,
+			ActivationCount = item.ActivationCount,
+			OwnerId = item.OwnerId,
+			IsEquipped = item.IsEquipped,
+			IsSoulBound = item.IsSoulBound,
+			Slot = item.Slot,
+			Location = item.Location,
+			Enchant = item.Enchant,
+			EnchantBonus = item.EnchantBonus,
+			ItemSkin = item.ItemSkin,
+			FusionedItem = item.FusionedItem,
+			OptionalSocket = item.OptionalSocket,
+			OptionalFusionSocket = item.OptionalFusionSocket,
+			Charge = charge ?? item.Charge,
+			TuneCount = item.TuneCount,
+			RandomBonus = item.RandomBonus,
+			FusionRandomBonus = item.FusionRandomBonus,
+			Tempering = item.Tempering,
+			PackCount = item.PackCount,
+			IsAmplified = item.IsAmplified,
+			BuffSkill = item.BuffSkill,
+			RandomPlumeBonus = item.RandomPlumeBonus,
+		};
+		copy.ManaStones = item.ManaStones;
+		copy.FusionStones = item.FusionStones;
+		copy.Godstone = item.Godstone;
+		copy.IdianStone = item.IdianStone;
+		return copy;
 	}
 
 	private sealed record ItemChargeContext(
@@ -169,3 +243,8 @@ public sealed record ItemChargePlan(
 {
 	public int ChargeWay => Improvement.ChargeWay;
 }
+
+public sealed record ItemChargeUpdateResult(
+	InventoryItem ItemUpdate,
+	bool ChargeBarChanged,
+	int PointsDelta);

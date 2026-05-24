@@ -95,6 +95,46 @@ public sealed class ItemChargeServiceTests
 	}
 
 	[Fact]
+	public void DecreaseChargePoints_UsesJavaAttackAndDefendBurnAmounts()
+	{
+		var improvement = new ItemImprovement(ChargeWay: 1, Level: 2, BurnAttack: 200, BurnDefend: 100, Price1: 1000, Price2: 2000);
+		var item = CreateItem(charge: 120_000);
+
+		var attackBurn = ItemChargeService.DecreaseChargePoints(item, improvement, isAttacked: false);
+		var defendBurn = ItemChargeService.DecreaseChargePoints(item, improvement, isAttacked: true);
+
+		Assert.NotNull(attackBurn);
+		Assert.Equal(119_800, attackBurn.ItemUpdate.Charge);
+		Assert.Equal(-200, attackBurn.PointsDelta);
+		Assert.False(attackBurn.ChargeBarChanged);
+		Assert.Equal(120_000, item.Charge);
+
+		Assert.NotNull(defendBurn);
+		Assert.Equal(119_900, defendBurn.ItemUpdate.Charge);
+		Assert.Equal(-100, defendBurn.PointsDelta);
+	}
+
+	[Fact]
+	public void UpdateChargePoints_ClampsAndReportsJavaChargeBarStepChanges()
+	{
+		var dropsOneVisualStep = ItemChargeService.UpdateChargePoints(CreateItem(charge: 100_050), pointsToAdd: -100);
+		var clampsToZero = ItemChargeService.UpdateChargePoints(CreateItem(charge: 50), pointsToAdd: -200);
+		var alreadyFull = ItemChargeService.UpdateChargePoints(CreateItem(charge: ItemChargeService.Level2ChargePoints), pointsToAdd: 100);
+
+		Assert.NotNull(dropsOneVisualStep);
+		Assert.Equal(99_950, dropsOneVisualStep.ItemUpdate.Charge);
+		Assert.True(dropsOneVisualStep.ChargeBarChanged);
+		Assert.Equal(-100, dropsOneVisualStep.PointsDelta);
+
+		Assert.NotNull(clampsToZero);
+		Assert.Equal(0, clampsToZero.ItemUpdate.Charge);
+		Assert.False(clampsToZero.ChargeBarChanged);
+		Assert.Equal(-50, clampsToZero.PointsDelta);
+
+		Assert.Null(alreadyFull);
+	}
+
+	[Fact]
 	public void PlayerAbyssRank_AddApMatchesSoldierRankThresholds()
 	{
 		var rank = PlayerAbyssRank.Default() with { Ap = 200_000, Rank = 9, MaxRank = 9 };
