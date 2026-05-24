@@ -19,7 +19,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	public async Task HandleUseItemAsync_CubeExpansionTicketConsumesItemAndRefreshesCubeSize()
 	{
 		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync();
-		var player = CreatePlayer();
+		var player = CreatePlayer(itemId: 169630000);
 
 		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
 
@@ -35,7 +35,28 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			packet => Assert.IsType<SmCubeUpdate>(packet));
 	}
 
-	private static Player CreatePlayer()
+	[Fact]
+	public async Task HandleUseItemAsync_WarehouseExpansionTicketConsumesItemAndRefreshesWarehouseInfo()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync();
+		var player = CreatePlayer(itemId: 169640000);
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
+
+		Assert.Equal(1, player.WarehouseBonusExpands);
+		Assert.Equal(32, InventoryCapacity.GetWarehouseLimit(player));
+		var sourceItem = Assert.Single(player.InventoryItems);
+		Assert.Equal(1, sourceItem.Count);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => Assert.IsType<SmInventoryUpdateItem>(packet),
+			packet => Assert.IsType<SmItemUsageAnimation>(packet),
+			packet => Assert.IsType<SmSystemMessage>(packet),
+			packet => Assert.IsType<SmWarehouseInfo>(packet),
+			packet => Assert.IsType<SmWarehouseInfo>(packet));
+	}
+
+	private static Player CreatePlayer(int itemId)
 	{
 		return new Player
 		{
@@ -49,7 +70,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 				new InventoryItem
 				{
 					ObjectId = 5001,
-					ItemId = 169630000,
+					ItemId = itemId,
 					Count = 2,
 					Location = 0,
 				},
@@ -103,6 +124,11 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 						<item_template id="169630000" name="[Expand Card] Expand Cube Ticket (lvl 1)" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="1">
 							<actions>
 								<expandinventory level="1" storage="CUBE" />
+							</actions>
+						</item_template>
+						<item_template id="169640000" name="[Expand Card] Expand Warehouse Ticket (lvl 1)" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="1">
+							<actions>
+								<expandinventory level="1" storage="WAREHOUSE" />
 							</actions>
 						</item_template>
 					</item_templates>
