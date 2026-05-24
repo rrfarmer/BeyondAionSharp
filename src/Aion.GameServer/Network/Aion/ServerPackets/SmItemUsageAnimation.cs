@@ -17,10 +17,35 @@ public sealed class SmItemUsageAnimation : GameServerPacket
 	private readonly int _unknown2;
 	private readonly int _unknown3;
 
+	public SmItemUsageAnimation(int playerObjectId, int itemObjectId, int itemId)
+		: this(playerObjectId, itemObjectId, itemId, 0, 1, 1)
+	{
+		// Java parity: SM_ITEM_USAGE_ANIMATION(int, int, int) defaults target=self, time=0, end=1, unk2=1, unk3=1.
+	}
+
+	public SmItemUsageAnimation(int playerObjectId, int itemObjectId, int itemId, int time, int end)
+		: this(playerObjectId, itemObjectId, itemId, time, end, 0)
+	{
+		// Java parity: SM_ITEM_USAGE_ANIMATION(int, int, int, int, int) leaves unk3 at its Java field default 0.
+	}
+
 	public SmItemUsageAnimation(int playerObjectId, int itemObjectId, int itemId, int time, int end, int unknown)
 		: this(playerObjectId, playerObjectId, itemObjectId, itemId, time, end, 0, 0, 1, unknown)
 	{
 		// Java parity: network/aion/serverpackets/SM_ITEM_USAGE_ANIMATION(int, int, int, int, int, int).
+	}
+
+	public SmItemUsageAnimation(
+		int playerObjectId,
+		int targetObjectId,
+		int itemObjectId,
+		int itemId,
+		int time,
+		int end,
+		int unknown)
+		: this(playerObjectId, targetObjectId, itemObjectId, itemId, time, end, 0, 0, 1, unknown)
+	{
+		// Java parity: SM_ITEM_USAGE_ANIMATION(int, int, int, int, int, int, int) maps the final argument to unk3.
 	}
 
 	public SmItemUsageAnimation(

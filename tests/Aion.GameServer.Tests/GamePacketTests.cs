@@ -876,6 +876,64 @@ public class GamePacketTests
 		Assert.Equal(1, itemUsageReader.ReadD());
 		Assert.Equal(0, itemUsageReader.Remaining);
 
+		var defaultItemUsagePayload = SerializeUnencryptedPayload(new SmItemUsageAnimation(0x01020304, 0x05060708, 0x0A0B0C0D));
+		using var defaultItemUsageReader = new PacketBuffer(defaultItemUsagePayload);
+		Assert.Equal(0x01020304, defaultItemUsageReader.ReadD());
+		Assert.Equal(0x01020304, defaultItemUsageReader.ReadD());
+		Assert.Equal(0x05060708, defaultItemUsageReader.ReadD());
+		Assert.Equal(0x0A0B0C0D, defaultItemUsageReader.ReadD());
+		Assert.Equal(0, defaultItemUsageReader.ReadD());
+		Assert.Equal(1, (int)defaultItemUsageReader.ReadC());
+		Assert.Equal(0, (int)defaultItemUsageReader.ReadC());
+		Assert.Equal(0, (int)defaultItemUsageReader.ReadC());
+		Assert.Equal(1, (int)defaultItemUsageReader.ReadC());
+		Assert.Equal(1, defaultItemUsageReader.ReadD());
+		Assert.Equal(0, defaultItemUsageReader.Remaining);
+
+		var timedItemUsagePayload = SerializeUnencryptedPayload(new SmItemUsageAnimation(0x01020304, 0x05060708, 0x0A0B0C0D, 2000, 0));
+		using var timedItemUsageReader = new PacketBuffer(timedItemUsagePayload);
+		Assert.Equal(0x01020304, timedItemUsageReader.ReadD());
+		Assert.Equal(0x01020304, timedItemUsageReader.ReadD());
+		Assert.Equal(0x05060708, timedItemUsageReader.ReadD());
+		Assert.Equal(0x0A0B0C0D, timedItemUsageReader.ReadD());
+		Assert.Equal(2000, timedItemUsageReader.ReadD());
+		Assert.Equal(0, (int)timedItemUsageReader.ReadC());
+		Assert.Equal(0, (int)timedItemUsageReader.ReadC());
+		Assert.Equal(0, (int)timedItemUsageReader.ReadC());
+		Assert.Equal(1, (int)timedItemUsageReader.ReadC());
+		Assert.Equal(0, timedItemUsageReader.ReadD());
+		Assert.Equal(0, timedItemUsageReader.Remaining);
+
+		var targetedItemUsagePayload = SerializeUnencryptedPayload(
+			new SmItemUsageAnimation(0x11111111, 0x22222222, 0x33333333, 0x44444444, 3000, 0, 7));
+		using var targetedItemUsageReader = new PacketBuffer(targetedItemUsagePayload);
+		Assert.Equal(0x11111111, targetedItemUsageReader.ReadD());
+		Assert.Equal(0x22222222, targetedItemUsageReader.ReadD());
+		Assert.Equal(0x33333333, targetedItemUsageReader.ReadD());
+		Assert.Equal(0x44444444, targetedItemUsageReader.ReadD());
+		Assert.Equal(3000, targetedItemUsageReader.ReadD());
+		Assert.Equal(0, (int)targetedItemUsageReader.ReadC());
+		Assert.Equal(0, (int)targetedItemUsageReader.ReadC());
+		Assert.Equal(0, (int)targetedItemUsageReader.ReadC());
+		Assert.Equal(1, (int)targetedItemUsageReader.ReadC());
+		Assert.Equal(7, targetedItemUsageReader.ReadD());
+		Assert.Equal(0, targetedItemUsageReader.Remaining);
+
+		var fullItemUsagePayload = SerializeUnencryptedPayload(
+			new SmItemUsageAnimation(0x01000002, 0x03000004, 0x05000006, 0x07000008, 0, 0x101, -1, 0x102, 0x103, 15360));
+		using var fullItemUsageReader = new PacketBuffer(fullItemUsagePayload);
+		Assert.Equal(0x01000002, fullItemUsageReader.ReadD());
+		Assert.Equal(0x03000004, fullItemUsageReader.ReadD());
+		Assert.Equal(0x05000006, fullItemUsageReader.ReadD());
+		Assert.Equal(0x07000008, fullItemUsageReader.ReadD());
+		Assert.Equal(0, fullItemUsageReader.ReadD());
+		Assert.Equal(1, (int)fullItemUsageReader.ReadC());
+		Assert.Equal(255, (int)fullItemUsageReader.ReadC());
+		Assert.Equal(2, (int)fullItemUsageReader.ReadC());
+		Assert.Equal(3, (int)fullItemUsageReader.ReadC());
+		Assert.Equal(15360, fullItemUsageReader.ReadD());
+		Assert.Equal(0, fullItemUsageReader.Remaining);
+
 		var skillCancelPayload = SerializeUnencryptedPayload(new SmSkillCancel(7001, 1234));
 		using var skillCancelReader = new PacketBuffer(skillCancelPayload);
 		Assert.Equal(7001, skillCancelReader.ReadD());
