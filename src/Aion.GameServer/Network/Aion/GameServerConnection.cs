@@ -580,6 +580,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleExchangeRequestAsync(_activePlayer, exchangeRequest);
 				break;
+			case CmExchangeLock:
+				if (_activePlayer != null)
+					await HandleExchangeLockAsync(_activePlayer);
+				break;
 			case CmExchangeCancel:
 				if (_activePlayer != null)
 					await HandleExchangeCancelAsync(_activePlayer);
@@ -7003,6 +7007,17 @@ public sealed class GameServerConnection : BaseClientConnection
 		return plan;
 	}
 
+	internal async Task<ExchangeLockPlan> HandleExchangeLockAsync(
+		Player activePlayer,
+		CancellationToken cancellationToken = default)
+	{
+		var plan = _playerExchangeRequestService.LockExchange(activePlayer, TryGetOnlinePlayerByObjectId);
+		foreach (var intent in plan.PacketIntents)
+			await SendExchangePacketAsync(intent.RecipientObjectId, intent.Packet, cancellationToken);
+
+		return plan;
+	}
+
 	private async Task SendDuelPacketAsync(
 		int recipientObjectId,
 		GameServerPacket packet,
@@ -7236,6 +7251,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		// when a player accepts any question while trading. C# does not have the full ExchangeService
 		// map yet, so this clears the currently represented local trade state only.
 		responder.IsTrading = false;
+		responder.IsExchangeLocked = false;
 		responder.CurrentExchangePartnerObjectId = 0;
 	}
 

@@ -97,13 +97,33 @@ public sealed class PlayerExchangeRequestService
 				new ExchangePacketIntent(responder.ObjectId, SmSystemMessage.ExchangeTooFarToExchange()));
 
 		requester.IsTrading = true;
+		requester.IsExchangeLocked = false;
 		requester.CurrentExchangePartnerObjectId = responder.ObjectId;
 		responder.IsTrading = true;
+		responder.IsExchangeLocked = false;
 		responder.CurrentExchangePartnerObjectId = requester.ObjectId;
 		return ExchangeResponsePlan.CreateHandled(
 			ExchangeResponseStatus.Accepted,
 			new ExchangePacketIntent(responder.ObjectId, new SmExchangeRequest(requester.Name)),
 			new ExchangePacketIntent(requester.ObjectId, new SmExchangeRequest(responder.Name)));
+	}
+
+	public ExchangeLockPlan LockExchange(Player activePlayer, Func<int, Player?> resolvePlayer)
+	{
+		// Java parity: network/aion/clientpackets/CM_EXCHANGE_LOCK.runImpl delegates to
+		// ExchangeService.lockExchange(activePlayer), which locks the active exchange and sends action 3 to the partner.
+		if (!activePlayer.IsTrading || activePlayer.IsExchangeLocked)
+			return ExchangeLockPlan.NotHandled(ExchangeLockStatus.NoActiveUnlockedExchange);
+
+		var partnerObjectId = activePlayer.CurrentExchangePartnerObjectId;
+		var partner = partnerObjectId == 0 ? null : resolvePlayer(partnerObjectId);
+		if (partner == null)
+			return ExchangeLockPlan.NotHandled(ExchangeLockStatus.PartnerMissing);
+
+		activePlayer.IsExchangeLocked = true;
+		return ExchangeLockPlan.CreateHandled(
+			ExchangeLockStatus.Locked,
+			new ExchangePacketIntent(partner.ObjectId, new SmExchangeConfirmation(SmExchangeConfirmation.Locked)));
 	}
 
 	public ExchangeCancelPlan CancelExchange(Player activePlayer, Func<int, Player?> resolvePlayer)
@@ -116,12 +136,14 @@ public sealed class PlayerExchangeRequestService
 		var partnerObjectId = activePlayer.CurrentExchangePartnerObjectId;
 		var partner = partnerObjectId == 0 ? null : resolvePlayer(partnerObjectId);
 		activePlayer.IsTrading = false;
+		activePlayer.IsExchangeLocked = false;
 		activePlayer.CurrentExchangePartnerObjectId = 0;
 
 		if (partner == null)
 			return ExchangeCancelPlan.CreateHandled(ExchangeCancelStatus.PartnerMissing);
 
 		partner.IsTrading = false;
+		partner.IsExchangeLocked = false;
 		partner.CurrentExchangePartnerObjectId = 0;
 		return ExchangeCancelPlan.CreateHandled(
 			ExchangeCancelStatus.Canceled,
@@ -201,6 +223,29 @@ public enum ExchangeResponseStatus
 }
 
 public sealed record ExchangePacketIntent(int RecipientObjectId, GameServerPacket Packet);
+
+public sealed record ExchangeLockPlan(
+	bool Handled,
+	ExchangeLockStatus Status,
+	IReadOnlyList<ExchangePacketIntent> PacketIntents)
+{
+	public static ExchangeLockPlan CreateHandled(ExchangeLockStatus status, params ExchangePacketIntent[] intents)
+	{
+		return new ExchangeLockPlan(true, status, intents);
+	}
+
+	public static ExchangeLockPlan NotHandled(ExchangeLockStatus status)
+	{
+		return new ExchangeLockPlan(false, status, Array.Empty<ExchangePacketIntent>());
+	}
+}
+
+public enum ExchangeLockStatus
+{
+	NoActiveUnlockedExchange,
+	PartnerMissing,
+	Locked,
+}
 
 public sealed record ExchangeCancelPlan(
 	bool Handled,

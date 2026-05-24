@@ -37,6 +37,16 @@ public sealed class PlayerExchangeRequestServiceTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesExchangeLockPacketWithNoPayload()
+	{
+		var packet = Assert.IsType<CmExchangeLock>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(67, _ => { }), GameConnectionState.InGame));
+
+		Assert.Equal(67, packet.OpCode);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(67, _ => { }), GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void SendExchangeRequest_RegistersQuestionAndSendsRequesterAndTargetPackets()
 	{
 		var requester = CreatePlayer(1001, "Requester");
@@ -159,6 +169,8 @@ public sealed class PlayerExchangeRequestServiceTests
 		Assert.Equal(ExchangeResponseStatus.Accepted, result.Status);
 		Assert.True(requester.IsTrading);
 		Assert.True(target.IsTrading);
+		Assert.False(requester.IsExchangeLocked);
+		Assert.False(target.IsExchangeLocked);
 		Assert.Equal(target.ObjectId, requester.CurrentExchangePartnerObjectId);
 		Assert.Equal(requester.ObjectId, target.CurrentExchangePartnerObjectId);
 		Assert.Null(target.PendingExchangeRequest);
@@ -175,6 +187,72 @@ public sealed class PlayerExchangeRequestServiceTests
 				Assert.Equal(requester.ObjectId, intent.RecipientObjectId);
 				Assert.IsType<SmExchangeRequest>(intent.Packet);
 			});
+	}
+
+	[Fact]
+	public void LockExchange_MarksActiveExchangeLockedAndNotifiesPartner()
+	{
+		var requester = CreatePlayer(1001, "Requester");
+		var target = CreatePlayer(2001, "Target");
+		var service = new PlayerExchangeRequestService();
+		service.SendExchangeRequest(requester, target);
+		service.HandleResponse(
+			target,
+			SmQuestionWindow.ExchangeAcceptRequest,
+			response: 1,
+			id => id == requester.ObjectId ? requester : null);
+
+		var result = service.LockExchange(requester, id => id == target.ObjectId ? target : null);
+
+		Assert.True(result.Handled);
+		Assert.Equal(ExchangeLockStatus.Locked, result.Status);
+		Assert.True(requester.IsExchangeLocked);
+		Assert.False(target.IsExchangeLocked);
+		var intent = Assert.Single(result.PacketIntents);
+		Assert.Equal(target.ObjectId, intent.RecipientObjectId);
+		var packet = Assert.IsType<SmExchangeConfirmation>(intent.Packet);
+		Assert.Equal(SmExchangeConfirmation.Locked, packet.Action);
+	}
+
+	[Fact]
+	public void LockExchange_NoActiveOrAlreadyLockedExchangeDoesNotNotifyPartner()
+	{
+		var requester = CreatePlayer(1001, "Requester");
+		var target = CreatePlayer(2001, "Target");
+		var service = new PlayerExchangeRequestService();
+		service.SendExchangeRequest(requester, target);
+		service.HandleResponse(
+			target,
+			SmQuestionWindow.ExchangeAcceptRequest,
+			response: 1,
+			id => id == requester.ObjectId ? requester : null);
+		service.LockExchange(requester, id => id == target.ObjectId ? target : null);
+
+		var repeated = service.LockExchange(requester, id => id == target.ObjectId ? target : null);
+		var noExchange = service.LockExchange(CreatePlayer(3001, "NotTrading"), _ => target);
+
+		Assert.False(repeated.Handled);
+		Assert.Equal(ExchangeLockStatus.NoActiveUnlockedExchange, repeated.Status);
+		Assert.Empty(repeated.PacketIntents);
+		Assert.False(noExchange.Handled);
+		Assert.Equal(ExchangeLockStatus.NoActiveUnlockedExchange, noExchange.Status);
+		Assert.Empty(noExchange.PacketIntents);
+	}
+
+	[Fact]
+	public void LockExchange_MissingPartnerDoesNotLockActivePlayer()
+	{
+		var requester = CreatePlayer(1001, "Requester");
+		requester.IsTrading = true;
+		requester.CurrentExchangePartnerObjectId = 2001;
+		var service = new PlayerExchangeRequestService();
+
+		var result = service.LockExchange(requester, _ => null);
+
+		Assert.False(result.Handled);
+		Assert.Equal(ExchangeLockStatus.PartnerMissing, result.Status);
+		Assert.False(requester.IsExchangeLocked);
+		Assert.Empty(result.PacketIntents);
 	}
 
 	[Fact]
@@ -196,11 +274,14 @@ public sealed class PlayerExchangeRequestServiceTests
 		Assert.Equal(ExchangeCancelStatus.Canceled, result.Status);
 		Assert.False(requester.IsTrading);
 		Assert.False(target.IsTrading);
+		Assert.False(requester.IsExchangeLocked);
+		Assert.False(target.IsExchangeLocked);
 		Assert.Equal(0, requester.CurrentExchangePartnerObjectId);
 		Assert.Equal(0, target.CurrentExchangePartnerObjectId);
 		var intent = Assert.Single(result.PacketIntents);
 		Assert.Equal(target.ObjectId, intent.RecipientObjectId);
-		Assert.IsType<SmExchangeConfirmation>(intent.Packet);
+		var packet = Assert.IsType<SmExchangeConfirmation>(intent.Packet);
+		Assert.Equal(SmExchangeConfirmation.Canceled, packet.Action);
 	}
 
 	[Fact]

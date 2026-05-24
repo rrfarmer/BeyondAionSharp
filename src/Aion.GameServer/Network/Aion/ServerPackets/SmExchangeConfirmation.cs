@@ -6,6 +6,7 @@ public sealed class SmExchangeConfirmation : GameServerPacket
 {
 	public const int PacketOpCode = 78;
 	public const int Canceled = 1;
+	public const int Locked = 3;
 
 	private readonly int _action;
 
@@ -15,6 +16,8 @@ public sealed class SmExchangeConfirmation : GameServerPacket
 		// Java parity: network/aion/serverpackets/SM_EXCHANGE_CONFIRMATION(int action).
 		_action = action;
 	}
+
+	public int Action => _action;
 
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
