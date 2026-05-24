@@ -4953,7 +4953,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			pvpZoneCounterService: _creaturePvpZoneCounterService);
 	}
 
-	private async Task HandleReviveAsync(Player player, CmRevive packet)
+	internal async Task HandleReviveAsync(Player player, CmRevive packet)
 	{
 		// Java parity: network/aion/clientpackets/CM_REVIVE.runImpl routes ReviveType.KISK_REVIVE to PlayerReviveService.kiskRevive.
 		if (packet.ReviveId != PlayerKiskReviveService.KiskReviveId)
