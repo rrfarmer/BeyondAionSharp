@@ -8,7 +8,8 @@ public sealed class PlayerSummonSkillExecutionService
 {
 	public PlayerSummonSkillInvocationExecutionResult PlanInvocationExecution(
 		PlayerSummonSkillInvocationPlan? invocationPlan,
-		SkillTemplateTable skillTemplates)
+		SkillTemplateTable skillTemplates,
+		Player? player = null)
 	{
 		if (invocationPlan == null)
 			return PlayerSummonSkillInvocationExecutionResult.MissingPlan();
@@ -18,7 +19,20 @@ public sealed class PlayerSummonSkillExecutionService
 		if (skillTemplate == null)
 			return PlayerSummonSkillInvocationExecutionResult.MissingSkillTemplate(invocationPlan);
 
-		return PlayerSummonSkillInvocationExecutionResult.WouldUseSkill(invocationPlan, skillTemplate.SkillId);
+		if (invocationPlan.ActorKind == PlayerSummonSkillInvocationActorKind.Mercenary
+			&& player?.TryGetSummonKnownObject(invocationPlan.ActorObjectId, out var knownObject) == true
+			&& knownObject.IsSkillCooldownDisabled(skillTemplate.CooldownId))
+		{
+			return PlayerSummonSkillInvocationExecutionResult.DisabledNpcSkill(
+				invocationPlan,
+				skillTemplate.SkillId,
+				skillTemplate.CooldownId);
+		}
+
+		return PlayerSummonSkillInvocationExecutionResult.WouldUseSkill(
+			invocationPlan,
+			skillTemplate.SkillId,
+			skillTemplate.CooldownId);
 	}
 
 	public PlayerSummonSkillInvocationUseResult PreviewInvocationUse(
@@ -288,6 +302,8 @@ public sealed record PlayerSummonSkillInvocationExecutionResult(
 	PlayerSummonSkillInvocationExecutionStatus Status,
 	PlayerSummonSkillInvocationPlan? InvocationPlan = null,
 	int? SkillTemplateId = null,
+	int? SkillCooldownId = null,
+	bool WouldRenewLastSkillTime = false,
 	IReadOnlyList<PlayerSummonSkillInvocationExecutionAction>? PlannedActions = null)
 {
 	public IReadOnlyList<PlayerSummonSkillInvocationExecutionAction> Actions => PlannedActions
@@ -307,13 +323,28 @@ public sealed record PlayerSummonSkillInvocationExecutionResult(
 
 	public static PlayerSummonSkillInvocationExecutionResult WouldUseSkill(
 		PlayerSummonSkillInvocationPlan invocationPlan,
-		int skillTemplateId)
+		int skillTemplateId,
+		int skillCooldownId)
 	{
 		return new PlayerSummonSkillInvocationExecutionResult(
 			PlayerSummonSkillInvocationExecutionStatus.WouldUseSkill,
 			invocationPlan,
 			skillTemplateId,
-			CreateActions(invocationPlan));
+			skillCooldownId,
+			WouldRenewLastSkillTime: invocationPlan.ActorKind == PlayerSummonSkillInvocationActorKind.Mercenary,
+			PlannedActions: CreateActions(invocationPlan));
+	}
+
+	public static PlayerSummonSkillInvocationExecutionResult DisabledNpcSkill(
+		PlayerSummonSkillInvocationPlan invocationPlan,
+		int skillTemplateId,
+		int skillCooldownId)
+	{
+		return new PlayerSummonSkillInvocationExecutionResult(
+			PlayerSummonSkillInvocationExecutionStatus.DisabledNpcSkill,
+			invocationPlan,
+			skillTemplateId,
+			skillCooldownId);
 	}
 
 	private static IReadOnlyList<PlayerSummonSkillInvocationExecutionAction> CreateActions(PlayerSummonSkillInvocationPlan invocationPlan)
@@ -324,6 +355,7 @@ public sealed record PlayerSummonSkillInvocationExecutionResult(
 			[
 				PlayerSummonSkillInvocationExecutionAction.SetTarget,
 				PlayerSummonSkillInvocationExecutionAction.ResolveSkillTemplate,
+				PlayerSummonSkillInvocationExecutionAction.RenewLastSkillTime,
 				PlayerSummonSkillInvocationExecutionAction.UseSkill,
 			];
 		}
@@ -347,6 +379,7 @@ public enum PlayerSummonSkillInvocationExecutionStatus
 {
 	MissingPlan,
 	MissingSkillTemplate,
+	DisabledNpcSkill,
 	WouldUseSkill,
 }
 
@@ -354,6 +387,7 @@ public enum PlayerSummonSkillInvocationExecutionAction
 {
 	ResolveSkillTemplate,
 	SetTarget,
+	RenewLastSkillTime,
 	SetHate,
 	UseSkill,
 	ReleaseOnSuccessfulUse,

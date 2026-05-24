@@ -1301,7 +1301,8 @@ public sealed class GameServerConnection : BaseClientConnection
 				{
 					InvocationExecution = _summonSkillExecutionService.PlanInvocationExecution(
 						mercenaryExecutionResult.InvocationPlan,
-						staticData.SkillTemplates),
+						staticData.SkillTemplates,
+						player),
 				};
 			}
 
@@ -1330,7 +1331,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			{
 				InvocationExecution = _summonSkillExecutionService.PlanInvocationExecution(
 					executionResult.InvocationPlan,
-					summonStaticData.SkillTemplates),
+					summonStaticData.SkillTemplates,
+					player),
 			};
 		}
 

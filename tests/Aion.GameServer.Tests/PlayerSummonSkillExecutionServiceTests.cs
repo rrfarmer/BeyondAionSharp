@@ -37,16 +37,16 @@ public class PlayerSummonSkillExecutionServiceTests
 			PlayerSummonSkillInvocationExecutionResult.MissingSkillTemplate(releasePlan),
 			skillUseSucceeded: true);
 		var failedUse = service.PreviewInvocationUse(
-			PlayerSummonSkillInvocationExecutionResult.WouldUseSkill(releasePlan, skillTemplateId: 22107),
+			PlayerSummonSkillInvocationExecutionResult.WouldUseSkill(releasePlan, skillTemplateId: 22107, skillCooldownId: 0),
 			skillUseSucceeded: false);
 		var wouldRelease = service.PreviewInvocationUse(
-			PlayerSummonSkillInvocationExecutionResult.WouldUseSkill(releasePlan, skillTemplateId: 22107),
+			PlayerSummonSkillInvocationExecutionResult.WouldUseSkill(releasePlan, skillTemplateId: 22107, skillCooldownId: 0),
 			skillUseSucceeded: true);
 		var wouldNotRelease = service.PreviewInvocationUse(
-			PlayerSummonSkillInvocationExecutionResult.WouldUseSkill(noReleasePlan, skillTemplateId: 22107),
+			PlayerSummonSkillInvocationExecutionResult.WouldUseSkill(noReleasePlan, skillTemplateId: 22107, skillCooldownId: 0),
 			skillUseSucceeded: true);
 		var mercenaryUse = service.PreviewInvocationUse(
-			PlayerSummonSkillInvocationExecutionResult.WouldUseSkill(mercenaryPlan, skillTemplateId: 22107),
+			PlayerSummonSkillInvocationExecutionResult.WouldUseSkill(mercenaryPlan, skillTemplateId: 22107, skillCooldownId: 0),
 			skillUseSucceeded: true);
 
 		Assert.Equal(PlayerSummonSkillInvocationUseStatus.MissingExecution, missingExecution.Status);
@@ -217,7 +217,7 @@ public class PlayerSummonSkillExecutionServiceTests
 			CreateSummonCastSpell(summonObjectId: 8002, skillId: 22107, skillLevel: 1, targetObjectId: 8002),
 			dataManager.StaticData.PetSkills,
 			new PlayerSummonCastSpellTarget(8002, PlayerSummonKnownObjectKind.Creature, IsActorSelfTarget: true));
-		var invocationExecution = service.PlanInvocationExecution(valid.InvocationPlan, dataManager.StaticData.SkillTemplates);
+		var invocationExecution = service.PlanInvocationExecution(valid.InvocationPlan, dataManager.StaticData.SkillTemplates, player);
 		var invalid = service.ValidateMercenaryExecution(
 			player,
 			CreateSummonCastSpell(summonObjectId: 8002, skillId: 9999, skillLevel: 1, targetObjectId: 8002),
@@ -236,10 +236,12 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Equal(0, valid.InvocationPlan?.Hate);
 		Assert.False(valid.InvocationPlan?.ReleaseOnSuccess);
 		Assert.Equal(PlayerSummonSkillInvocationExecutionStatus.WouldUseSkill, invocationExecution.Status);
+		Assert.True(invocationExecution.WouldRenewLastSkillTime);
 		Assert.Equal(
 			[
 				PlayerSummonSkillInvocationExecutionAction.SetTarget,
 				PlayerSummonSkillInvocationExecutionAction.ResolveSkillTemplate,
+				PlayerSummonSkillInvocationExecutionAction.RenewLastSkillTime,
 				PlayerSummonSkillInvocationExecutionAction.UseSkill,
 			],
 			invocationExecution.Actions);
@@ -255,6 +257,40 @@ public class PlayerSummonSkillExecutionServiceTests
 		var audit = Assert.IsType<PlayerMercenarySkillExecutionAudit>(invalid.Audit);
 		Assert.Equal(PlayerMercenarySkillExecutionAuditKind.InvalidMercenarySkill, audit.Kind);
 		Assert.Empty(invalid.Actions);
+	}
+
+	[Fact]
+	public async Task PlanInvocationExecution_BlocksDisabledMercenarySkillBeforeControllerUse()
+	{
+		var dataManager = await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false);
+		var service = new PlayerSummonSkillExecutionService();
+		var skillTemplate = dataManager.StaticData.SkillTemplates.GetSkillTemplate(22107)
+			?? throw new InvalidOperationException("Expected test skill template.");
+		var player = new Player
+		{
+			ObjectId = 1,
+		};
+		player.SetSummonKnownObject(new PlayerSummonKnownObject(
+			ObjectId: 8002,
+			Kind: PlayerSummonKnownObjectKind.Creature,
+			CreatorObjectId: 1,
+			NpcTemplateId: 833288,
+			NpcTemplateType: PlayerSummonKnownNpcTemplateType.Mercenary,
+			DisabledSkillCooldownIds: new HashSet<int> { skillTemplate.CooldownId }));
+		var valid = service.ValidateMercenaryExecution(
+			player,
+			CreateSummonCastSpell(summonObjectId: 8002, skillId: 22107, skillLevel: 1, targetObjectId: 8002),
+			dataManager.StaticData.PetSkills,
+			new PlayerSummonCastSpellTarget(8002, PlayerSummonKnownObjectKind.Creature, IsActorSelfTarget: true));
+
+		var invocationExecution = service.PlanInvocationExecution(valid.InvocationPlan, dataManager.StaticData.SkillTemplates, player);
+
+		Assert.Equal(PlayerMercenarySkillExecutionStatus.WouldInvokeController, valid.Status);
+		Assert.Equal(PlayerSummonSkillInvocationExecutionStatus.DisabledNpcSkill, invocationExecution.Status);
+		Assert.Equal(22107, invocationExecution.SkillTemplateId);
+		Assert.Equal(skillTemplate.CooldownId, invocationExecution.SkillCooldownId);
+		Assert.False(invocationExecution.WouldRenewLastSkillTime);
+		Assert.Empty(invocationExecution.Actions);
 	}
 
 	private static string FindRepoRoot()

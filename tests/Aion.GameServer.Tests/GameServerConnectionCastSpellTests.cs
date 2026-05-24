@@ -426,10 +426,12 @@ public class GameServerConnectionCastSpellTests
 		Assert.False(result.MercenaryExecutionResult?.InvocationPlan?.ReleaseOnSuccess);
 		Assert.Equal(PlayerSummonSkillInvocationExecutionStatus.WouldUseSkill, result.MercenaryExecutionResult?.InvocationExecution?.Status);
 		Assert.Equal(22107, result.MercenaryExecutionResult?.InvocationExecution?.SkillTemplateId);
+		Assert.True(result.MercenaryExecutionResult?.InvocationExecution?.WouldRenewLastSkillTime);
 		Assert.Equal(
 			[
 				PlayerSummonSkillInvocationExecutionAction.SetTarget,
 				PlayerSummonSkillInvocationExecutionAction.ResolveSkillTemplate,
+				PlayerSummonSkillInvocationExecutionAction.RenewLastSkillTime,
 				PlayerSummonSkillInvocationExecutionAction.UseSkill,
 			],
 			result.MercenaryExecutionResult?.InvocationExecution?.Actions);
@@ -439,6 +441,37 @@ public class GameServerConnectionCastSpellTests
 				PlayerMercenarySkillExecutionAction.UseSkill,
 			],
 			result.MercenaryExecutionResult?.Actions);
+		Assert.Empty(sentPackets);
+	}
+
+	[Fact]
+	public async Task HandleSummonCastSpellAsync_DisabledRepresentedMercenarySkillStopsBeforeControllerUse()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var runtimeContext = await CreateRuntimeContextAsync();
+		var skillTemplate = runtimeContext.DataManager.StaticData.SkillTemplates.GetSkillTemplate(22107)
+			?? throw new InvalidOperationException("Expected test skill template.");
+		await using var pair = await TestConnectionPair.CreateAsync(sentPackets, runtimeContext: runtimeContext);
+		var player = CreatePlayer();
+		player.SetSummonKnownObject(new PlayerSummonKnownObject(
+			ObjectId: 8002,
+			Kind: PlayerSummonKnownObjectKind.Creature,
+			CreatorObjectId: player.ObjectId,
+			NpcTemplateId: 833288,
+			NpcTemplateType: PlayerSummonKnownNpcTemplateType.Mercenary,
+			DisabledSkillCooldownIds: new HashSet<int> { skillTemplate.CooldownId }));
+
+		var result = await pair.Connection.HandleSummonCastSpellAsync(
+			player,
+			CreateSummonCastSpell(summonObjectId: 8002, skillId: 22107, skillLevel: 1, targetObjectId: 8002));
+
+		Assert.Equal(PlayerSummonCastSpellStatus.MercenaryReady, result.CastResult.Status);
+		Assert.Equal(PlayerMercenarySkillExecutionStatus.WouldInvokeController, result.MercenaryExecutionResult?.Status);
+		Assert.Equal(PlayerSummonSkillInvocationExecutionStatus.DisabledNpcSkill, result.MercenaryExecutionResult?.InvocationExecution?.Status);
+		Assert.Equal(22107, result.MercenaryExecutionResult?.InvocationExecution?.SkillTemplateId);
+		Assert.Equal(skillTemplate.CooldownId, result.MercenaryExecutionResult?.InvocationExecution?.SkillCooldownId);
+		Assert.False(result.MercenaryExecutionResult?.InvocationExecution?.WouldRenewLastSkillTime);
+		Assert.Empty(result.MercenaryExecutionResult?.InvocationExecution?.Actions ?? []);
 		Assert.Empty(sentPackets);
 	}
 
