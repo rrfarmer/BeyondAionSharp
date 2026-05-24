@@ -1545,6 +1545,7 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.True(contract.ExpectsPackets);
 		Assert.True(contract.HasActionSideEffectTrace);
 		Assert.True(contract.HasUseSkillStartTrace);
+		Assert.True(contract.HasEndCastBranchTrace);
 		Assert.True(contract.HasEndCastSideEffectTrace);
 		Assert.Equal([
 			PlayerSummonKnownObjectNpcSkillActionSideEffectStep.CreatureControllerUseSkill,
@@ -1568,6 +1569,11 @@ public class PlayerSummonSkillExecutionServiceTests
 		], contract.UseSkillStartTrace?.OrderedSteps);
 		Assert.True(contract.UseSkillStartTrace?.StartsCastingBeforeNpcCastSubState);
 		Assert.True(contract.UseSkillStartTrace?.UpdatesNpcSkillDelayBeforeAiStartUseSkill);
+		var contractEndCastBranchTrace = Assert.IsType<PlayerSummonKnownObjectNpcSkillEndCastBranchTrace>(contract.EndCastBranchTrace);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEndCastBranchTraceStatus.OrderedBranches, contractEndCastBranchTrace.Status);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.EndCondCheckIgnored, contractEndCastBranchTrace.OrderedSteps);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.SetCooldowns, contractEndCastBranchTrace.OrderedSteps);
+		Assert.True(contractEndCastBranchTrace.ActionsRunBeforeCooldowns);
 		Assert.Equal([
 			PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.ScheduleApplyEffect,
 			PlayerSummonKnownObjectNpcSkillEndCastSideEffectStep.SendCastSpellEnd,
@@ -1645,11 +1651,14 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Contains("NpcAI state/substate mutation", adapterContract.UnsupportedBehaviors);
 		Assert.True(adapterContract.PreservesActionSideEffectOrdering);
 		Assert.True(adapterContract.PreservesUseSkillStartOrdering);
+		Assert.True(adapterContract.PreservesEndCastBranchOrdering);
 		Assert.True(adapterContract.PreservesEndCastSideEffectOrdering);
 		Assert.Equal(contract.ActionSideEffectTrace?.Status, adapterContract.ActionSideEffectTrace?.Status);
 		Assert.Equal(contract.ActionSideEffectTrace?.OrderedSteps, adapterContract.ActionSideEffectTrace?.OrderedSteps);
 		Assert.Equal(contract.UseSkillStartTrace?.Status, adapterContract.UseSkillStartTrace?.Status);
 		Assert.Equal(contract.UseSkillStartTrace?.OrderedSteps, adapterContract.UseSkillStartTrace?.OrderedSteps);
+		Assert.Equal(contract.EndCastBranchTrace?.Status, adapterContract.EndCastBranchTrace?.Status);
+		Assert.Equal(contract.EndCastBranchTrace?.OrderedSteps, adapterContract.EndCastBranchTrace?.OrderedSteps);
 		Assert.Equal(contract.EndCastSideEffectTrace?.Status, adapterContract.EndCastSideEffectTrace?.Status);
 		Assert.Equal(contract.EndCastSideEffectTrace?.OrderedSteps, adapterContract.EndCastSideEffectTrace?.OrderedSteps);
 		Assert.True(adapterContract.RequiresDependency(PlayerSummonKnownObjectNpcSkillAttackCycleDependency.NpcAi));
@@ -2677,6 +2686,99 @@ public class PlayerSummonSkillExecutionServiceTests
 		], delayedNonCast.OrderedSteps);
 		Assert.True(delayedNonCast.FiresPostSpawnBeforeAfterUseSkill);
 		Assert.False(delayedNonCast.SendsCastResultBeforeNpcAfterUseSkill);
+	}
+
+	[Fact]
+	public void ProjectMercenaryNpcSkillEndCastBranchTrace_OrdersJavaEndCastBranches()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var knownObject = new PlayerSummonKnownObject(8019, PlayerSummonKnownObjectKind.Creature);
+		var readySkill = service.EvaluateMercenarySkillReadiness(knownObject, CreateSkillTemplate("MAGICAL"));
+		var targetSelection = service.SelectMercenaryNpcSkillActionTarget(
+			skillFirstTargetIsSelf: false,
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.MostHated,
+			hasMostHatedTarget: true);
+
+		PlayerSummonKnownObjectNpcSkillActionResult Result(bool controllerUseSkillSucceeded = true)
+		{
+			var preview = service.PreviewMercenaryNpcSkillAction(
+				isInCastSubState: true,
+				shouldResumeFightAfterInterruptedCast: false,
+				hasCreatureTarget: true,
+				targetIsDead: false,
+				hasLastSkill: true,
+				ownerUsesMeleeAggroRange: false,
+				targetInAggroRange: true,
+				readySkill,
+				targetSelection,
+				controllerUseSkillSucceeded);
+
+			return service.ProjectMercenaryNpcSkillActionResult(preview);
+		}
+
+		var noEndCast = service.ProjectMercenaryNpcSkillEndCastBranchTrace(Result(controllerUseSkillSucceeded: false));
+		var notCasting = service.ProjectMercenaryNpcSkillEndCastBranchTrace(Result(), effectorStillCasting: false);
+		var validationFailed = service.ProjectMercenaryNpcSkillEndCastBranchTrace(Result(), endCastValidationPasses: false);
+		var itemMissing = service.ProjectMercenaryNpcSkillEndCastBranchTrace(Result(), isItemSkill: true, itemAvailable: false);
+		var itemConsumeFailed = service.ProjectMercenaryNpcSkillEndCastBranchTrace(Result(), isItemSkill: true, itemConsumed: false);
+		var actionFailed = service.ProjectMercenaryNpcSkillEndCastBranchTrace(Result(), actionsSucceed: false);
+		var resistedNpcCast = service.ProjectMercenaryNpcSkillEndCastBranchTrace(
+			Result(),
+			allEffectsResistedOrDodged: true,
+			isInstantSkill: false);
+		var playerChainCast = service.ProjectMercenaryNpcSkillEndCastBranchTrace(
+			Result(),
+			isPlayerEffector: true,
+			isMultiCast: true,
+			hasChainCategory: true,
+			chainSucceeds: false,
+			isNpcEffector: false,
+			isCastSkillMethod: true);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEndCastBranchTraceStatus.NoEndCast, noEndCast.Status);
+		Assert.Empty(noEndCast.OrderedSteps);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEndCastBranchTraceStatus.NotCastingOrCancelled, notCasting.Status);
+		Assert.Equal([
+			PlayerSummonKnownObjectNpcSkillEndCastBranchStep.RemoveObservers,
+			PlayerSummonKnownObjectNpcSkillEndCastBranchStep.CheckEffectorStillCastingAndNotCancelled,
+		], notCasting.OrderedSteps);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEndCastBranchTraceStatus.CancelledByEndCastValidation, validationFailed.Status);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.ControllerCancelCurrentSkill, validationFailed.OrderedSteps);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEndCastBranchTraceStatus.ItemMissing, itemMissing.Status);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.ItemLookup, itemMissing.OrderedSteps);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEndCastBranchTraceStatus.ItemConsumeFailed, itemConsumeFailed.Status);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.ItemActivationOrInventoryConsume, itemConsumeFailed.OrderedSteps);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEndCastBranchTraceStatus.ActionFailed, actionFailed.Status);
+		Assert.True(actionFailed.IgnoresEndConditionResult);
+		Assert.DoesNotContain(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.BuildEffects, actionFailed.OrderedSteps);
+		Assert.Equal([
+			PlayerSummonKnownObjectNpcSkillEndCastBranchStep.RemoveObservers,
+			PlayerSummonKnownObjectNpcSkillEndCastBranchStep.CheckEffectorStillCastingAndNotCancelled,
+			PlayerSummonKnownObjectNpcSkillEndCastBranchStep.PropertiesEndCastValidate,
+			PlayerSummonKnownObjectNpcSkillEndCastBranchStep.ValidateEffectedList,
+			PlayerSummonKnownObjectNpcSkillEndCastBranchStep.PreUsageCheck,
+			PlayerSummonKnownObjectNpcSkillEndCastBranchStep.EffectorSetCastingNull,
+			PlayerSummonKnownObjectNpcSkillEndCastBranchStep.EndCondCheckIgnored,
+			PlayerSummonKnownObjectNpcSkillEndCastBranchStep.ExecuteActions,
+			PlayerSummonKnownObjectNpcSkillEndCastBranchStep.BuildEffects,
+			PlayerSummonKnownObjectNpcSkillEndCastBranchStep.MarkBlockedChain,
+			PlayerSummonKnownObjectNpcSkillEndCastBranchStep.MarkBlockedPenaltySkill,
+			PlayerSummonKnownObjectNpcSkillEndCastBranchStep.SetCooldowns,
+			PlayerSummonKnownObjectNpcSkillEndCastBranchStep.ScheduleApplyEffect,
+			PlayerSummonKnownObjectNpcSkillEndCastBranchStep.SendCastSpellEnd,
+			PlayerSummonKnownObjectNpcSkillEndCastBranchStep.EffectorAiOnEndUseSkill,
+			PlayerSummonKnownObjectNpcSkillEndCastBranchStep.NpcSkillEntryFireOnEndCastEvents,
+			PlayerSummonKnownObjectNpcSkillEndCastBranchStep.SkillAttackManagerAfterUseSkill,
+			PlayerSummonKnownObjectNpcSkillEndCastBranchStep.NotifyEndSkillCastObservers,
+			PlayerSummonKnownObjectNpcSkillEndCastBranchStep.InstanceHandlerOnEndCastSkill,
+		], resistedNpcCast.OrderedSteps);
+		Assert.True(resistedNpcCast.ActionsRunBeforeCooldowns);
+		Assert.True(resistedNpcCast.BlocksPenaltyAfterFullResistOrDodge);
+		Assert.False(resistedNpcCast.WouldExecuteSideEffects);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.SkipCooldownsForMultiCast, playerChainCast.OrderedSteps);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.PlayerChainReset, playerChainCast.OrderedSteps);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.QuestEngineOnUseSkill, playerChainCast.OrderedSteps);
+		Assert.DoesNotContain(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.SetCooldowns, playerChainCast.OrderedSteps);
 	}
 
 	[Fact]

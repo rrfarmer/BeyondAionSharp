@@ -801,6 +801,46 @@ public sealed class PlayerSummonSkillExecutionService
 			isCastSkillMethod);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillEndCastBranchTrace ProjectMercenaryNpcSkillEndCastBranchTrace(
+		PlayerSummonKnownObjectNpcSkillActionResult? actionResult,
+		bool effectorStillCasting = true,
+		bool endCastValidationPasses = true,
+		bool isItemSkill = false,
+		bool itemAvailable = true,
+		bool itemConsumed = true,
+		bool actionsSucceed = true,
+		bool hasEffects = true,
+		bool allEffectsResistedOrDodged = false,
+		bool isPlayerEffector = false,
+		bool isMultiCast = false,
+		bool hasChainCategory = false,
+		bool chainSucceeds = true,
+		bool isInstantSkill = true,
+		bool sendsCastResult = true,
+		bool isNpcEffector = true,
+		bool isCastSkillMethod = true)
+	{
+		// Java parity: Skill.endCast validates again, ignores endCondCheck's result, actions short-circuit, then cooldown/penalty/effects/packets/hooks run in order.
+		return PlayerSummonKnownObjectNpcSkillEndCastBranchTrace.FromActionResult(
+			actionResult,
+			effectorStillCasting,
+			endCastValidationPasses,
+			isItemSkill,
+			itemAvailable,
+			itemConsumed,
+			actionsSucceed,
+			hasEffects,
+			allEffectsResistedOrDodged,
+			isPlayerEffector,
+			isMultiCast,
+			hasChainCategory,
+			chainSucceeds,
+			isInstantSkill,
+			sendsCastResult,
+			isNpcEffector,
+			isCastSkillMethod);
+	}
+
 	public PlayerSummonKnownObjectNpcSkillUseSkillStartTrace ProjectMercenaryNpcSkillUseSkillStartTrace(
 		PlayerSummonKnownObjectNpcSkillActionResult? actionResult,
 		bool canUseSkillAtCastStart = true,
@@ -4172,6 +4212,7 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 	IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation>? LiveOperations = null,
 	PlayerSummonKnownObjectNpcSkillActionSideEffectTrace? ActionSideEffectTrace = null,
 	PlayerSummonKnownObjectNpcSkillUseSkillStartTrace? UseSkillStartTrace = null,
+	PlayerSummonKnownObjectNpcSkillEndCastBranchTrace? EndCastBranchTrace = null,
 	PlayerSummonKnownObjectNpcSkillEndCastSideEffectTrace? EndCastSideEffectTrace = null)
 {
 	private static readonly IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect> EmptySideEffects = [];
@@ -4196,6 +4237,8 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 	public bool HasActionSideEffectTrace => ActionSideEffectTrace != null;
 
 	public bool HasUseSkillStartTrace => UseSkillStartTrace != null;
+
+	public bool HasEndCastBranchTrace => EndCastBranchTrace != null;
 
 	public bool HasEndCastSideEffectTrace => EndCastSideEffectTrace != null;
 
@@ -4248,6 +4291,7 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 		var outcomeBranches = BuildExpectedOutcomeBranches(liveInvocation.CycleSnapshot);
 		var actionTrace = BuildActionSideEffectTrace(liveInvocation.CycleSnapshot);
 		var useSkillStartTrace = BuildUseSkillStartTrace(liveInvocation.CycleSnapshot, actionTrace);
+		var endCastBranchTrace = BuildEndCastBranchTrace(liveInvocation.CycleSnapshot, actionTrace);
 		return new PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 			PlayerSummonKnownObjectNpcSkillAttackCycleResultContractStatus.LiveAiNotWired,
 			liveInvocation,
@@ -4256,6 +4300,7 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 			BuildFutureLiveOperations(outcomeBranches, sideEffects),
 			actionTrace,
 			useSkillStartTrace,
+			endCastBranchTrace,
 			BuildEndCastSideEffectTrace(liveInvocation.CycleSnapshot, actionTrace));
 	}
 
@@ -4286,6 +4331,35 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 				== PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreviewStatus.ScheduledWorkflowDue,
 			isNpcEffector: true,
 			notifiesCastObservers: true);
+	}
+
+	private static PlayerSummonKnownObjectNpcSkillEndCastBranchTrace? BuildEndCastBranchTrace(
+		PlayerSummonKnownObjectNpcSkillAttackCycleSnapshot? cycleSnapshot,
+		PlayerSummonKnownObjectNpcSkillActionSideEffectTrace? actionTrace)
+	{
+		var actionResult = actionTrace?.ActionResult;
+		if (actionResult == null)
+			return null;
+
+		return PlayerSummonKnownObjectNpcSkillEndCastBranchTrace.FromActionResult(
+			actionResult,
+			effectorStillCasting: true,
+			endCastValidationPasses: true,
+			isItemSkill: false,
+			itemAvailable: true,
+			itemConsumed: true,
+			actionsSucceed: true,
+			hasEffects: true,
+			allEffectsResistedOrDodged: false,
+			isPlayerEffector: false,
+			isMultiCast: false,
+			hasChainCategory: false,
+			chainSucceeds: true,
+			isInstantSkill: cycleSnapshot?.PerformAttackExecutionPreview?.Status
+				== PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreviewStatus.ImmediateWorkflow,
+			sendsCastResult: true,
+			isNpcEffector: true,
+			isCastSkillMethod: true);
 	}
 
 	private static PlayerSummonKnownObjectNpcSkillEndCastSideEffectTrace? BuildEndCastSideEffectTrace(
@@ -4776,6 +4850,7 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContra
 	IReadOnlyList<string>? UnsupportedJavaBehaviors = null,
 	PlayerSummonKnownObjectNpcSkillActionSideEffectTrace? ActionSideEffectTrace = null,
 	PlayerSummonKnownObjectNpcSkillUseSkillStartTrace? UseSkillStartTrace = null,
+	PlayerSummonKnownObjectNpcSkillEndCastBranchTrace? EndCastBranchTrace = null,
 	PlayerSummonKnownObjectNpcSkillEndCastSideEffectTrace? EndCastSideEffectTrace = null)
 {
 	private static readonly IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation> EmptyOperations = [];
@@ -4803,6 +4878,8 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContra
 	public bool PreservesActionSideEffectOrdering => ActionSideEffectTrace != null;
 
 	public bool PreservesUseSkillStartOrdering => UseSkillStartTrace != null;
+
+	public bool PreservesEndCastBranchOrdering => EndCastBranchTrace != null;
 
 	public bool PreservesEndCastSideEffectOrdering => EndCastSideEffectTrace != null;
 
@@ -4840,6 +4917,7 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContra
 			adapterSummary.LiveInvocation.UnsupportedBehaviors,
 			adapterSummary.ResultContract.ActionSideEffectTrace,
 			adapterSummary.ResultContract.UseSkillStartTrace,
+			adapterSummary.ResultContract.EndCastBranchTrace,
 			adapterSummary.ResultContract.EndCastSideEffectTrace);
 	}
 }
@@ -5370,6 +5448,229 @@ public enum PlayerSummonKnownObjectNpcSkillUseSkillStartStep
 	ScheduleCancelCurrentSkillCast,
 	ScheduleEndCast,
 	InvokeEndCast,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillEndCastBranchTrace(
+	PlayerSummonKnownObjectNpcSkillEndCastBranchTraceStatus Status,
+	PlayerSummonKnownObjectNpcSkillActionResult? ActionResult = null,
+	IReadOnlyList<PlayerSummonKnownObjectNpcSkillEndCastBranchStep>? Steps = null)
+{
+	private static readonly IReadOnlyList<PlayerSummonKnownObjectNpcSkillEndCastBranchStep> EmptySteps = [];
+
+	public IReadOnlyList<PlayerSummonKnownObjectNpcSkillEndCastBranchStep> OrderedSteps => Steps ?? EmptySteps;
+
+	public bool WouldExecuteSideEffects => false;
+
+	public bool IgnoresEndConditionResult =>
+		OrderedSteps.Contains(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.EndCondCheckIgnored);
+
+	public bool ActionsRunBeforeCooldowns =>
+		IndexOf(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.ExecuteActions) is int actionIndex
+		&& actionIndex >= 0
+		&& IndexOf(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.SetCooldowns) is int cooldownIndex
+		&& cooldownIndex > actionIndex;
+
+	public bool BlocksPenaltyAfterFullResistOrDodge =>
+		OrderedSteps.Contains(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.MarkBlockedPenaltySkill)
+		&& !OrderedSteps.Contains(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.StartPenaltySkill);
+
+	private int IndexOf(PlayerSummonKnownObjectNpcSkillEndCastBranchStep step)
+	{
+		for (var i = 0; i < OrderedSteps.Count; i++)
+		{
+			if (OrderedSteps[i] == step)
+				return i;
+		}
+
+		return -1;
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillEndCastBranchTrace FromActionResult(
+		PlayerSummonKnownObjectNpcSkillActionResult? actionResult,
+		bool effectorStillCasting,
+		bool endCastValidationPasses,
+		bool isItemSkill,
+		bool itemAvailable,
+		bool itemConsumed,
+		bool actionsSucceed,
+		bool hasEffects,
+		bool allEffectsResistedOrDodged,
+		bool isPlayerEffector,
+		bool isMultiCast,
+		bool hasChainCategory,
+		bool chainSucceeds,
+		bool isInstantSkill,
+		bool sendsCastResult,
+		bool isNpcEffector,
+		bool isCastSkillMethod)
+	{
+		if (actionResult == null || actionResult.Status == PlayerSummonKnownObjectNpcSkillActionResultStatus.MissingPreview)
+		{
+			return new PlayerSummonKnownObjectNpcSkillEndCastBranchTrace(
+				PlayerSummonKnownObjectNpcSkillEndCastBranchTraceStatus.MissingResult,
+				actionResult);
+		}
+
+		if (actionResult.Status != PlayerSummonKnownObjectNpcSkillActionResultStatus.UseSkill)
+		{
+			return new PlayerSummonKnownObjectNpcSkillEndCastBranchTrace(
+				PlayerSummonKnownObjectNpcSkillEndCastBranchTraceStatus.NoEndCast,
+				actionResult);
+		}
+
+		var steps = new List<PlayerSummonKnownObjectNpcSkillEndCastBranchStep>
+		{
+			PlayerSummonKnownObjectNpcSkillEndCastBranchStep.RemoveObservers,
+			PlayerSummonKnownObjectNpcSkillEndCastBranchStep.CheckEffectorStillCastingAndNotCancelled,
+		};
+
+		if (!effectorStillCasting)
+		{
+			return new PlayerSummonKnownObjectNpcSkillEndCastBranchTrace(
+				PlayerSummonKnownObjectNpcSkillEndCastBranchTraceStatus.NotCastingOrCancelled,
+				actionResult,
+				steps);
+		}
+
+		steps.Add(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.PropertiesEndCastValidate);
+		steps.Add(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.ValidateEffectedList);
+		steps.Add(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.PreUsageCheck);
+		if (!endCastValidationPasses)
+		{
+			steps.Add(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.ControllerCancelCurrentSkill);
+			return new PlayerSummonKnownObjectNpcSkillEndCastBranchTrace(
+				PlayerSummonKnownObjectNpcSkillEndCastBranchTraceStatus.CancelledByEndCastValidation,
+				actionResult,
+				steps);
+		}
+
+		steps.Add(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.EffectorSetCastingNull);
+		if (isItemSkill)
+		{
+			steps.Add(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.ItemLookup);
+			if (!itemAvailable)
+			{
+				return new PlayerSummonKnownObjectNpcSkillEndCastBranchTrace(
+					PlayerSummonKnownObjectNpcSkillEndCastBranchTraceStatus.ItemMissing,
+					actionResult,
+					steps);
+			}
+
+			steps.Add(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.ItemActivationOrInventoryConsume);
+			if (!itemConsumed)
+			{
+				return new PlayerSummonKnownObjectNpcSkillEndCastBranchTrace(
+					PlayerSummonKnownObjectNpcSkillEndCastBranchTraceStatus.ItemConsumeFailed,
+					actionResult,
+					steps);
+			}
+		}
+
+		steps.Add(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.EndCondCheckIgnored);
+		steps.Add(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.ExecuteActions);
+		if (!actionsSucceed)
+		{
+			return new PlayerSummonKnownObjectNpcSkillEndCastBranchTrace(
+				PlayerSummonKnownObjectNpcSkillEndCastBranchTraceStatus.ActionFailed,
+				actionResult,
+				steps);
+		}
+
+		if (hasEffects)
+		{
+			steps.Add(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.BuildEffects);
+			if (allEffectsResistedOrDodged)
+			{
+				steps.Add(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.MarkBlockedChain);
+				steps.Add(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.MarkBlockedPenaltySkill);
+			}
+		}
+
+		var shouldSetCooldowns = true;
+		if (isPlayerEffector)
+		{
+			if (isMultiCast)
+			{
+				steps.Add(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.SkipCooldownsForMultiCast);
+				shouldSetCooldowns = false;
+			}
+
+			if (hasChainCategory)
+				steps.Add(chainSucceeds && !allEffectsResistedOrDodged
+					? PlayerSummonKnownObjectNpcSkillEndCastBranchStep.PlayerChainUpdate
+					: PlayerSummonKnownObjectNpcSkillEndCastBranchStep.PlayerChainReset);
+
+			steps.Add(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.QuestEngineOnUseSkill);
+		}
+
+		if (shouldSetCooldowns)
+			steps.Add(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.SetCooldowns);
+		if (!allEffectsResistedOrDodged)
+			steps.Add(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.StartPenaltySkill);
+		steps.Add(isInstantSkill
+			? PlayerSummonKnownObjectNpcSkillEndCastBranchStep.ApplyEffectImmediately
+			: PlayerSummonKnownObjectNpcSkillEndCastBranchStep.ScheduleApplyEffect);
+		if (sendsCastResult)
+			steps.Add(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.SendCastSpellEnd);
+		steps.Add(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.EffectorAiOnEndUseSkill);
+		if (isNpcEffector)
+		{
+			steps.Add(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.NpcSkillEntryFireOnEndCastEvents);
+			steps.Add(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.SkillAttackManagerAfterUseSkill);
+		}
+		if (isCastSkillMethod)
+			steps.Add(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.NotifyEndSkillCastObservers);
+		steps.Add(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.InstanceHandlerOnEndCastSkill);
+
+		return new PlayerSummonKnownObjectNpcSkillEndCastBranchTrace(
+			PlayerSummonKnownObjectNpcSkillEndCastBranchTraceStatus.OrderedBranches,
+			actionResult,
+			steps);
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillEndCastBranchTraceStatus
+{
+	MissingResult,
+	NoEndCast,
+	NotCastingOrCancelled,
+	CancelledByEndCastValidation,
+	ItemMissing,
+	ItemConsumeFailed,
+	ActionFailed,
+	OrderedBranches,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillEndCastBranchStep
+{
+	RemoveObservers,
+	CheckEffectorStillCastingAndNotCancelled,
+	PropertiesEndCastValidate,
+	ValidateEffectedList,
+	PreUsageCheck,
+	ControllerCancelCurrentSkill,
+	EffectorSetCastingNull,
+	ItemLookup,
+	ItemActivationOrInventoryConsume,
+	EndCondCheckIgnored,
+	ExecuteActions,
+	BuildEffects,
+	MarkBlockedChain,
+	MarkBlockedPenaltySkill,
+	SkipCooldownsForMultiCast,
+	PlayerChainUpdate,
+	PlayerChainReset,
+	QuestEngineOnUseSkill,
+	SetCooldowns,
+	StartPenaltySkill,
+	ApplyEffectImmediately,
+	ScheduleApplyEffect,
+	SendCastSpellEnd,
+	EffectorAiOnEndUseSkill,
+	NpcSkillEntryFireOnEndCastEvents,
+	SkillAttackManagerAfterUseSkill,
+	NotifyEndSkillCastObservers,
+	InstanceHandlerOnEndCastSkill,
 }
 
 public sealed record PlayerSummonKnownObjectNpcSkillEndCastSideEffectTrace(
