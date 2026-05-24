@@ -112,6 +112,46 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 	}
 
 	[Fact]
+	public async Task HandlePlayerStatusInfoAsync_LeagueSetLeaderWithoutLeagueThrowsLikeJava()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var alliances = new PlayerAllianceRuntime();
+		var leader = new Player { ObjectId = 1001, Name = "Leader", IsOnline = true };
+		var member = new Player { ObjectId = 1002, Name = "Member", IsOnline = true };
+		alliances.CreateAlliance(88001, leader);
+		alliances.AddMember(88001, member);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, alliances);
+
+		var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+			pair.Connection.HandlePlayerStatusInfoAsync(
+				leader,
+				CreatePacket(commandCode: 32, selectedObjectId: 88002)));
+
+		Assert.Equal("Player [id=1001, name=Leader] tried to execute league command without an active league alliance", exception.Message);
+		Assert.Equal([1001, 1002], alliances.GetMemberObjectIds(88001));
+		Assert.Empty(registry.SentPackets);
+	}
+
+	[Fact]
+	public async Task HandlePlayerStatusInfoAsync_LeagueAllianceMoveIsRecognizedButUndispatchedLikeJava()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var alliances = new PlayerAllianceRuntime();
+		var leader = new Player { ObjectId = 1001, Name = "Leader", IsOnline = true };
+		var member = new Player { ObjectId = 1002, Name = "Member", IsOnline = true };
+		alliances.CreateAlliance(88001, leader);
+		alliances.AddMember(88001, member);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, alliances);
+
+		Assert.Null(await pair.Connection.HandlePlayerStatusInfoAsync(
+			leader,
+			CreatePacket(commandCode: 31, selectedObjectId: 88001, secondObjectId: 88002)));
+
+		Assert.Equal([1001, 1002], alliances.GetMemberObjectIds(88001));
+		Assert.Empty(registry.SentPackets);
+	}
+
+	[Fact]
 	public async Task HandlePlayerStatusInfoAsync_GroupSetLfgTogglesPlayerFlagLikeJava()
 	{
 		var registry = new CapturingConnectionRegistry();

@@ -5857,11 +5857,11 @@ public sealed class GameServerConnection : BaseClientConnection
 			throw new InvalidOperationException("League should not be null");
 		}
 
-		if (packet.CommandCode == 30)
+		if (packet.CommandCode is 30 or 32)
 		{
-			// Java parity: PlayerTeamCommandService LEAGUE_EXPEL -> findLeagueAlliance requires an active league before resolving the target alliance.
-			var leagueExpelAlliance = _playerAllianceRuntime.Resolve(player);
-			if (leagueExpelAlliance == null)
+			// Java parity: PlayerTeamCommandService LEAGUE_EXPEL/LEAGUE_SET_LEADER -> findLeagueAlliance requires an active league before resolving the target alliance.
+			var leagueCommandAlliance = _playerAllianceRuntime.Resolve(player);
+			if (leagueCommandAlliance == null)
 				return null;
 
 			throw new InvalidOperationException($"{FormatJavaPlayer(player)} tried to execute league command without an active league alliance");
