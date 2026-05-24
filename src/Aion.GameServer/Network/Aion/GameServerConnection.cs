@@ -6464,7 +6464,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 	}
 
-	private async Task HandleFriendAddAsync(Player requester, CmFriendAdd packet)
+	internal async Task HandleFriendAddAsync(Player requester, CmFriendAdd packet)
 	{
 		// Java parity: network/aion/clientpackets/CM_FRIEND_ADD.runImpl.
 		var targetName = ConvertCharacterName(packet.TargetName);
@@ -6533,13 +6533,18 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
-		if (target.PendingFriendRequest != null)
+		var pendingRequest = new PendingFriendRequest(requester.ObjectId, requester.Name);
+		// Java parity: CM_FRIEND_ADD registers a RequestResponseHandler in
+		// Player.getResponseRequester().putRequest before sending SM_QUESTION_WINDOW.
+		if (!target.ResponseRequester.PutRequest(
+			SmQuestionWindow.BuddyListAddBuddyRequest,
+			new QuestionResponseRequest(requester.ObjectId, QuestionResponseRequestKind.FriendInvite, pendingRequest)))
 		{
 			await SendPacketAsync(SmSystemMessage.BuddyListBusy());
 			return;
 		}
 
-		target.PendingFriendRequest = new PendingFriendRequest(requester.ObjectId, requester.Name);
+		target.PendingFriendRequest = pendingRequest;
 		var sent = await _connectionRegistry.SendPacketToPlayerAsync(
 			target.ObjectId,
 			new SmQuestionWindow(
@@ -6549,7 +6554,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				requester.Name,
 				packet.Message));
 		if (!sent)
+		{
+			target.ResponseRequester.Remove(SmQuestionWindow.BuddyListAddBuddyRequest);
 			target.PendingFriendRequest = null;
+		}
 	}
 
 	private async Task HandleChargeAllQuestionResponseAsync(Player player, CmQuestionResponse packet)
@@ -6705,8 +6713,16 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (packet.QuestionId != SmQuestionWindow.BuddyListAddBuddyRequest)
 			return;
 
-		// Java parity: CM_QUESTION_RESPONSE through ResponseRequester for buddy-list request handlers.
-		var request = responder.PendingFriendRequest;
+		// Java parity: CM_QUESTION_RESPONSE delegates to ResponseRequester.respond, which removes the
+		// RequestResponseHandler and invokes denyRequest for 0 or acceptRequest for nonzero responses.
+		var dispatch = responder.ResponseRequester.Respond(packet.QuestionId, packet.Response);
+		if (dispatch?.Request.Kind != QuestionResponseRequestKind.FriendInvite)
+		{
+			responder.PendingFriendRequest = null;
+			return;
+		}
+
+		var request = dispatch.Request.Payload as PendingFriendRequest ?? responder.PendingFriendRequest;
 		if (request == null)
 			return;
 
