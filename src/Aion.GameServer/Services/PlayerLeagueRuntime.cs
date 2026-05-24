@@ -215,6 +215,67 @@ public sealed class PlayerLeagueRuntime
 		}
 	}
 
+	public PlayerLeagueSetLeaderPlan? SetLeader(
+		int callerAllianceId,
+		int callerObjectId,
+		int targetAllianceId,
+		PlayerAllianceRuntime allianceRuntime)
+	{
+		// Java parity: PlayerTeamCommandService.LEAGUE_SET_LEADER resolves the target LeagueMember, then
+		// LeagueService.setLeader dispatches LeagueChangeLeaderEvent. The event only proceeds if the target player is the target alliance leader.
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(callerAllianceId, 0);
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(targetAllianceId, 0);
+
+		lock (_sync)
+		{
+			if (!_leagueIdByAllianceId.TryGetValue(callerAllianceId, out var leagueId)
+				|| !_membersByLeagueId.TryGetValue(leagueId, out var members)
+				|| !_leaderAllianceIdByLeagueId.TryGetValue(leagueId, out var leaderAllianceId))
+				throw new InvalidOperationException($"{FormatPlayerForLeagueCommand(callerAllianceId, callerObjectId, allianceRuntime)} tried to execute league command without an active league alliance");
+
+			var targetMember = members.FirstOrDefault(member => member.AllianceId == targetAllianceId);
+			if (targetMember == null)
+				throw new InvalidOperationException($"{FormatPlayerForLeagueCommand(callerAllianceId, callerObjectId, allianceRuntime)} tried to execute league command on invalid alliance {targetAllianceId}");
+
+			var targetDescriptor = allianceRuntime.GetDescriptor(targetAllianceId)
+				?? throw new InvalidOperationException($"Alliance should not be null: {targetAllianceId}");
+			var targetLeader = allianceRuntime.GetMember(targetAllianceId, targetDescriptor.LeaderObjectId)
+				?? throw new InvalidOperationException($"Alliance leader should not be null: {targetDescriptor.LeaderObjectId}");
+			if (targetLeader.ObjectId != targetDescriptor.LeaderObjectId)
+				return null;
+			if (targetAllianceId == leaderAllianceId)
+				throw new InvalidOperationException($"League member {targetAllianceId} is already the team leader");
+
+			var callerMember = members.FirstOrDefault(member => member.AllianceId == callerAllianceId)
+				?? throw new InvalidOperationException($"League member should not be null: {callerAllianceId}");
+			var targetPreviousPosition = targetMember.LeaguePosition;
+			targetMember.LeaguePosition = 0;
+			leaderAllianceId = targetAllianceId;
+			_leaderAllianceIdByLeagueId[leagueId] = targetAllianceId;
+			callerMember.LeaguePosition = targetPreviousPosition;
+
+			var sortedAllianceIds = GetSortedAllianceIds(members);
+			var intents = CreateSetLeaderPacketIntents(
+				leagueId,
+				callerAllianceId,
+				callerObjectId,
+				targetAllianceId,
+				targetLeader.Name,
+				targetMember.LeaguePosition,
+				targetPreviousPosition,
+				sortedAllianceIds,
+				allianceRuntime);
+
+			return new PlayerLeagueSetLeaderPlan(
+				leagueId,
+				callerAllianceId,
+				targetAllianceId,
+				targetPreviousPosition,
+				sortedAllianceIds,
+				intents);
+		}
+	}
+
 	private PlayerLeagueLeavePlan RemoveAllianceCore(
 		int leagueId,
 		List<PlayerLeagueMember> members,
@@ -391,6 +452,71 @@ public sealed class PlayerLeagueRuntime
 		return intents;
 	}
 
+	private static IReadOnlyList<PlayerLeaguePacketIntent> CreateSetLeaderPacketIntents(
+		int leagueId,
+		int callerAllianceId,
+		int callerObjectId,
+		int targetAllianceId,
+		string targetLeaderName,
+		int targetCurrentPosition,
+		int targetPreviousPosition,
+		IReadOnlyList<int> sortedAllianceIds,
+		PlayerAllianceRuntime allianceRuntime)
+	{
+		// Java parity: LeagueChangeLeaderEvent.changeLeaderTo sends SM_ALLIANCE_INFO, optional force-number-me
+		// when the caller alliance is the new leader alliance, force-number-him, and old-leader notification.
+		var intents = new List<PlayerLeaguePacketIntent>();
+		var sequence = 0;
+		foreach (var allianceId in sortedAllianceIds)
+		{
+			var snapshot = allianceRuntime.GetSnapshot(allianceId)
+				?? throw new InvalidOperationException($"Alliance should not be null: {allianceId}");
+			foreach (var recipientObjectId in allianceRuntime.GetMemberObjectIds(allianceId))
+			{
+				var recipient = allianceRuntime.GetMember(allianceId, recipientObjectId)?.Player;
+				var activePlayerMapId = recipient?.Position.WorldId ?? 0;
+				intents.Add(new PlayerLeaguePacketIntent(
+					sequence++,
+					recipientObjectId,
+					allianceId,
+					PlayerLeaguePacketIntentKind.AllianceInfo,
+					AllianceInfoPlan: snapshot.CreateInfoPacketPlan(
+						activePlayerMapId,
+						leagueId: leagueId,
+						leagueRows: CreateLeagueRows(sortedAllianceIds, allianceRuntime))));
+
+				if (callerAllianceId == targetAllianceId)
+				{
+					intents.Add(new PlayerLeaguePacketIntent(
+						sequence++,
+						recipientObjectId,
+						allianceId,
+						PlayerLeaguePacketIntentKind.SystemMessage,
+						SystemMessage: SmSystemMessage.UnionChangeForceNumberMe(targetPreviousPosition)));
+				}
+
+				intents.Add(new PlayerLeaguePacketIntent(
+					sequence++,
+					recipientObjectId,
+					allianceId,
+					PlayerLeaguePacketIntentKind.SystemMessage,
+					SystemMessage: SmSystemMessage.UnionChangeForceNumberHim(targetLeaderName, targetCurrentPosition)));
+
+				if (recipientObjectId == callerObjectId)
+				{
+					intents.Add(new PlayerLeaguePacketIntent(
+						sequence++,
+						recipientObjectId,
+						allianceId,
+						PlayerLeaguePacketIntentKind.SystemMessage,
+						SystemMessage: SmSystemMessage.UnionChangeLeader(targetLeaderName)));
+				}
+			}
+		}
+
+		return intents;
+	}
+
 	private static void AddAllianceInfoIntents(
 		List<PlayerLeaguePacketIntent> intents,
 		ref int sequence,
@@ -539,6 +665,14 @@ public sealed record PlayerLeagueLeavePlan(
 	string? NewLeaderName,
 	bool Disbanded,
 	IReadOnlyList<int> RemainingAllianceIdsByPosition,
+	IReadOnlyList<PlayerLeaguePacketIntent> PacketIntents);
+
+public sealed record PlayerLeagueSetLeaderPlan(
+	int LeagueId,
+	int CallerAllianceId,
+	int NewLeaderAllianceId,
+	int NewLeaderPreviousPosition,
+	IReadOnlyList<int> AllianceIdsByPosition,
 	IReadOnlyList<PlayerLeaguePacketIntent> PacketIntents);
 
 public enum PlayerLeaguePacketIntentKind

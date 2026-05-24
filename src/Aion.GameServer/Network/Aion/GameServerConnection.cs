@@ -5905,12 +5905,22 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		if (packet.CommandCode == 32)
 		{
-			// Java parity: PlayerTeamCommandService LEAGUE_SET_LEADER -> findLeagueAlliance requires an active league before resolving the target alliance.
+			// Java parity: PlayerTeamCommandService LEAGUE_SET_LEADER -> findLeagueAlliance -> LeagueService.setLeader.
 			var leagueCommandAlliance = _playerAllianceRuntime.Resolve(player);
 			if (leagueCommandAlliance == null)
 				return null;
 
-			throw new InvalidOperationException($"{FormatJavaPlayer(player)} tried to execute league command without an active league alliance");
+			var leagueSetLeaderPlan = _playerLeagueRuntime.SetLeader(
+				leagueCommandAlliance.AllianceId,
+				player.ObjectId,
+				packet.SelectedObjectId,
+				_playerAllianceRuntime);
+			if (leagueSetLeaderPlan != null)
+			{
+				foreach (var intent in leagueSetLeaderPlan.PacketIntents.OrderBy(intent => intent.Sequence))
+					await SendLeaguePacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+			}
+			return null;
 		}
 
 		if (!Enum.IsDefined(typeof(PlayerAllianceReadyCheckCommand), packet.CommandCode))
