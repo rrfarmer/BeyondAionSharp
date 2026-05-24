@@ -992,6 +992,14 @@ public sealed class PlayerSummonSkillExecutionService
 		return PlayerSummonKnownObjectNpcSkillCastResultPacketSchemaGolden.FromSample(sample);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaGolden ProjectMercenaryNpcSkillItemUsageAnimationPacketSchemaGolden(
+		PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaSample sample =
+			PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaSample.BasicConstructorDefaults)
+	{
+		// Java parity: SM_ITEM_USAGE_ANIMATION.writeImpl writes fixed D/D/D/D/D/C/C/C/C/D fields and mutates Player.usingItem only when time > 0.
+		return PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaGolden.FromSample(sample);
+	}
+
 	public PlayerSummonKnownObjectNpcSkillEffectReservedPacketProjection ProjectMercenaryNpcSkillEffectReservedPacketProjection(
 		IReadOnlyList<PlayerSummonKnownObjectNpcSkillEffectReservedInput>? reservedEffects,
 		int shieldDefense = 0)
@@ -6810,6 +6818,225 @@ public enum PlayerSummonKnownObjectNpcSkillPacketFanoutStep
 	SendPacketToKnownPlayer,
 	ResolveCreatureNeedsHelpAiEvent,
 	NotifyKnownNpcAiEvent,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaGolden(
+	PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaGoldenStatus Status,
+	PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaSample Sample,
+	PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketConstructor Constructor,
+	PlayerSummonKnownObjectNpcSkillItemUsageAnimationCallerCategory CallerCategory,
+	byte[] Payload,
+	IReadOnlyList<PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaField> Fields)
+{
+	public bool WouldSendPacket => false;
+
+	public bool UsesLittleEndianByteOrder => true;
+
+	public bool MutatesUsingItemDuringWrite =>
+		Fields.Any(schemaField =>
+			schemaField.Name == nameof(PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaFieldName.Time)
+			&& int.TryParse(schemaField.SourceValue, out var time)
+			&& time > 0);
+
+	public bool RequiresWorldPlayerInventoryLookupWhenTimePositive => MutatesUsingItemDuringWrite;
+
+	public bool JavaNullGuardsPlayerInventoryItemLookup => false;
+
+	public bool DemonstratesJavaByteTruncation =>
+		Fields.Any(schemaField => schemaField.WriteKind == PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaWriteKind.WriteCTruncated);
+
+	public string PayloadHex => Convert.ToHexString(Payload);
+
+	public static PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaGolden FromSample(
+		PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaSample sample)
+	{
+		var writer = new ItemUsageAnimationPacketSchemaWriter();
+		PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketConstructor constructor;
+		PlayerSummonKnownObjectNpcSkillItemUsageAnimationCallerCategory callerCategory;
+		switch (sample)
+		{
+			case PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaSample.BasicConstructorDefaults:
+				constructor = PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketConstructor.BasicSelfTargetEndSuccess;
+				callerCategory = PlayerSummonKnownObjectNpcSkillItemUsageAnimationCallerCategory.InstantItemUse;
+				WriteBasicConstructorDefaults(writer);
+				break;
+			case PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaSample.TargetedSkillStart:
+				constructor = PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketConstructor.TargetedItemSkillStart;
+				callerCategory = PlayerSummonKnownObjectNpcSkillItemUsageAnimationCallerCategory.SkillStartCastDuration;
+				WriteTargetedSkillStart(writer);
+				break;
+			case PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaSample.ExtendedPetSkillUse:
+				constructor = PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketConstructor.ExtendedPetSkillUse;
+				callerCategory = PlayerSummonKnownObjectNpcSkillItemUsageAnimationCallerCategory.PetSkillUse;
+				WriteExtendedPetSkillUse(writer);
+				break;
+			default:
+				return new PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaGolden(
+					PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaGoldenStatus.UnsupportedSample,
+					sample,
+					PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketConstructor.Unknown,
+					PlayerSummonKnownObjectNpcSkillItemUsageAnimationCallerCategory.Unknown,
+					[],
+					[]);
+		}
+
+		return new PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaGolden(
+			PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaGoldenStatus.Projected,
+			sample,
+			constructor,
+			callerCategory,
+			writer.ToArray(),
+			writer.Fields);
+	}
+
+	private static void WriteBasicConstructorDefaults(ItemUsageAnimationPacketSchemaWriter writer)
+	{
+		// Java parity: SM_ITEM_USAGE_ANIMATION(int, int, int) defaults target=self, end=1, unk2=1, and unk3=1.
+		WriteJavaFields(writer, 0x01020304, 0x01020304, 0x05060708, 0x0A0B0C0D, 0, 1, 0, 0, 1, 1);
+	}
+
+	private static void WriteTargetedSkillStart(ItemUsageAnimationPacketSchemaWriter writer)
+	{
+		// Java parity: Skill.startCast uses the seven-argument targeted constructor for item skills with castDuration > 0.
+		WriteJavaFields(writer, 0x11111111, 0x22222222, 0x33333333, 0x44444444, 3000, 0, 0, 0, 1, 0);
+	}
+
+	private static void WriteExtendedPetSkillUse(ItemUsageAnimationPacketSchemaWriter writer)
+	{
+		// Java parity: PetService uses the ten-argument constructor; writeC fields keep Java byte-cast truncation.
+		WriteJavaFields(writer, 0x01000002, 0x03000004, 0x05000006, 0x07000008, 0, 0x101, -1, 0x102, 0x103, 15360);
+	}
+
+	private static void WriteJavaFields(
+		ItemUsageAnimationPacketSchemaWriter writer,
+		int playerObjId,
+		int targetObjId,
+		int itemObjId,
+		int itemId,
+		int time,
+		int end,
+		int unk,
+		int unk1,
+		int unk2,
+		int unk3)
+	{
+		writer.WriteD(nameof(PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaFieldName.PlayerObjectId), playerObjId);
+		writer.WriteD(nameof(PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaFieldName.TargetObjectId), targetObjId);
+		writer.WriteD(nameof(PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaFieldName.ItemObjectId), itemObjId);
+		writer.WriteD(nameof(PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaFieldName.ItemId), itemId);
+		writer.WriteD(nameof(PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaFieldName.Time), time);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaFieldName.End), end);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaFieldName.Unknown), unk);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaFieldName.Unknown1), unk1);
+		writer.WriteC(nameof(PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaFieldName.Unknown2), unk2);
+		writer.WriteD(nameof(PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaFieldName.Unknown3), unk3);
+	}
+
+	private sealed class ItemUsageAnimationPacketSchemaWriter
+	{
+		private readonly List<byte> _payload = [];
+		private readonly List<PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaField> _fields = [];
+
+		public IReadOnlyList<PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaField> Fields => _fields;
+
+		public byte[] ToArray() => _payload.ToArray();
+
+		public void WriteD(string name, int value)
+		{
+			Span<byte> bytes = stackalloc byte[4];
+			BinaryPrimitives.WriteInt32LittleEndian(bytes, value);
+			Add(name, value, PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaWriteKind.WriteD, bytes);
+		}
+
+		public void WriteC(string name, int value)
+		{
+			Span<byte> bytes = stackalloc byte[1];
+			bytes[0] = unchecked((byte)value);
+			Add(
+				name,
+				value,
+				value is < sbyte.MinValue or > byte.MaxValue
+					? PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaWriteKind.WriteCTruncated
+					: PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaWriteKind.WriteC,
+				bytes);
+		}
+
+		private void Add(
+			string name,
+			int value,
+			PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaWriteKind writeKind,
+			ReadOnlySpan<byte> bytes)
+		{
+			var fieldBytes = bytes.ToArray();
+			_payload.AddRange(fieldBytes);
+			_fields.Add(new PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaField(
+				name,
+				writeKind,
+				Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty,
+				fieldBytes));
+		}
+	}
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaField(
+	string Name,
+	PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaWriteKind WriteKind,
+	string SourceValue,
+	byte[] Bytes);
+
+public enum PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaGoldenStatus
+{
+	Projected,
+	UnsupportedSample,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaSample
+{
+	BasicConstructorDefaults,
+	TargetedSkillStart,
+	ExtendedPetSkillUse,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketConstructor
+{
+	Unknown,
+	BasicSelfTargetEndSuccess,
+	SelfTargetTimed,
+	SelfTargetTimedWithUnknown3,
+	TargetedItemSkillStart,
+	ExtendedPetSkillUse,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillItemUsageAnimationCallerCategory
+{
+	Unknown,
+	InstantItemUse,
+	SkillStartCastDuration,
+	NonCombatSkillEnd,
+	CancelItemUse,
+	EnchantOrSocket,
+	PetSkillUse,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaWriteKind
+{
+	WriteD,
+	WriteC,
+	WriteCTruncated,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaFieldName
+{
+	PlayerObjectId,
+	TargetObjectId,
+	ItemObjectId,
+	ItemId,
+	Time,
+	End,
+	Unknown,
+	Unknown1,
+	Unknown2,
+	Unknown3,
 }
 
 public enum PlayerSummonKnownObjectNpcSkillCastResultShieldBranch

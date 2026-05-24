@@ -3348,6 +3348,75 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void ProjectMercenaryNpcSkillItemUsageAnimationPacketSchemaGolden_EncodesJavaConstructorDefaults()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+
+		var basic = service.ProjectMercenaryNpcSkillItemUsageAnimationPacketSchemaGolden();
+		var targetedStart = service.ProjectMercenaryNpcSkillItemUsageAnimationPacketSchemaGolden(
+			PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaSample.TargetedSkillStart);
+		var extended = service.ProjectMercenaryNpcSkillItemUsageAnimationPacketSchemaGolden(
+			PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaSample.ExtendedPetSkillUse);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaGoldenStatus.Projected, basic.Status);
+		Assert.False(basic.WouldSendPacket);
+		Assert.True(basic.UsesLittleEndianByteOrder);
+		Assert.False(basic.MutatesUsingItemDuringWrite);
+		Assert.False(basic.RequiresWorldPlayerInventoryLookupWhenTimePositive);
+		Assert.False(basic.JavaNullGuardsPlayerInventoryItemLookup);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketConstructor.BasicSelfTargetEndSuccess, basic.Constructor);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillItemUsageAnimationCallerCategory.InstantItemUse, basic.CallerCategory);
+		Assert.Equal("0403020104030201080706050D0C0B0A000000000100000101000000", basic.PayloadHex);
+		Assert.Contains(
+			basic.Fields,
+			field => field.Name == nameof(PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaFieldName.Unknown2)
+				&& field.SourceValue == "1"
+				&& Convert.ToHexString(field.Bytes) == "01");
+		Assert.Contains(
+			basic.Fields,
+			field => field.Name == nameof(PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaFieldName.Unknown3)
+				&& field.SourceValue == "1"
+				&& Convert.ToHexString(field.Bytes) == "01000000");
+
+		Assert.True(targetedStart.MutatesUsingItemDuringWrite);
+		Assert.True(targetedStart.RequiresWorldPlayerInventoryLookupWhenTimePositive);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketConstructor.TargetedItemSkillStart, targetedStart.Constructor);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillItemUsageAnimationCallerCategory.SkillStartCastDuration, targetedStart.CallerCategory);
+		Assert.Equal("11111111222222223333333344444444B80B00000000000100000000", targetedStart.PayloadHex);
+		Assert.Contains(
+			targetedStart.Fields,
+			field => field.Name == nameof(PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaFieldName.Time)
+				&& field.SourceValue == "3000"
+				&& Convert.ToHexString(field.Bytes) == "B80B0000");
+		Assert.Contains(
+			targetedStart.Fields,
+			field => field.Name == nameof(PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaFieldName.Unknown2)
+				&& field.SourceValue == "1"
+				&& Convert.ToHexString(field.Bytes) == "01");
+
+		Assert.True(extended.DemonstratesJavaByteTruncation);
+		Assert.False(extended.MutatesUsingItemDuringWrite);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketConstructor.ExtendedPetSkillUse, extended.Constructor);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillItemUsageAnimationCallerCategory.PetSkillUse, extended.CallerCategory);
+		Assert.Equal("020000010400000306000005080000070000000001FF0203003C0000", extended.PayloadHex);
+		Assert.Contains(
+			extended.Fields,
+			field => field.Name == nameof(PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaFieldName.End)
+				&& field.WriteKind == PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaWriteKind.WriteCTruncated
+				&& Convert.ToHexString(field.Bytes) == "01");
+		Assert.Contains(
+			extended.Fields,
+			field => field.Name == nameof(PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaFieldName.Unknown1)
+				&& field.WriteKind == PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaWriteKind.WriteCTruncated
+				&& Convert.ToHexString(field.Bytes) == "02");
+		Assert.Contains(
+			extended.Fields,
+			field => field.Name == nameof(PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaFieldName.Unknown2)
+				&& field.WriteKind == PlayerSummonKnownObjectNpcSkillItemUsageAnimationPacketSchemaWriteKind.WriteCTruncated
+				&& Convert.ToHexString(field.Bytes) == "03");
+	}
+
+	[Fact]
 	public void ProjectMercenaryNpcSkillEffectReservedPacketProjection_ProjectsJavaReservedSendFields()
 	{
 		var service = new PlayerSummonSkillExecutionService();
