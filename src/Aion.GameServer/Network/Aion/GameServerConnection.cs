@@ -72,6 +72,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly CreaturePvpZoneCounterService? _creaturePvpZoneCounterService;
 	private readonly PlayerGroupRuntime _playerGroupRuntime;
 	private readonly PlayerAllianceRuntime _playerAllianceRuntime;
+	private readonly PlayerLeagueRuntime _playerLeagueRuntime;
 	private readonly PlayerAllianceGroupChangeServicePlanner _playerAllianceGroupChangeServicePlanner;
 	private readonly PlayerShowBrandCommandPlanner _showBrandCommandPlanner;
 	private readonly SemaphoreSlim _sendLock = new(1, 1);
@@ -131,6 +132,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		CreaturePvpZoneCounterService? creaturePvpZoneCounterService = null,
 		PlayerGroupRuntime? playerGroupRuntime = null,
 		PlayerAllianceRuntime? playerAllianceRuntime = null,
+		PlayerLeagueRuntime? playerLeagueRuntime = null,
 		PlayerShowBrandCommandPlanner? showBrandCommandPlanner = null)
 		: base(logger, client, clientId)
 	{
@@ -163,6 +165,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_creaturePvpZoneCounterService = creaturePvpZoneCounterService;
 		_playerGroupRuntime = playerGroupRuntime ?? new PlayerGroupRuntime();
 		_playerAllianceRuntime = playerAllianceRuntime ?? new PlayerAllianceRuntime();
+		_playerLeagueRuntime = playerLeagueRuntime ?? new PlayerLeagueRuntime();
 		_playerAllianceGroupChangeServicePlanner = new PlayerAllianceGroupChangeServicePlanner(_playerAllianceRuntime);
 		_showBrandCommandPlanner = showBrandCommandPlanner
 			?? new PlayerShowBrandCommandPlanner(_playerGroupRuntime, _playerAllianceRuntime);
@@ -5864,7 +5867,13 @@ public sealed class GameServerConnection : BaseClientConnection
 			if (leagueMoveAlliance == null)
 				throw new InvalidOperationException("Player alliance should not be null");
 
-			throw new InvalidOperationException("League should not be null");
+			_playerLeagueRuntime.MoveAlliance(
+				leagueMoveAlliance.AllianceId,
+				player.ObjectId,
+				packet.SelectedObjectId,
+				packet.AllianceGroupId,
+				_playerAllianceRuntime);
+			return null;
 		}
 
 		if (packet.CommandCode is 30 or 32)

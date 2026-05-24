@@ -167,6 +167,76 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 	}
 
 	[Fact]
+	public async Task HandlePlayerStatusInfoAsync_LeagueAllianceMoveByNonLeagueLeaderNoopsLikeJava()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var alliances = new PlayerAllianceRuntime();
+		var leagues = new PlayerLeagueRuntime();
+		var leagueLeader = new Player { ObjectId = 1001, Name = "LeagueLeader", IsOnline = true };
+		var allianceLeader = new Player { ObjectId = 2001, Name = "AllianceLeader", IsOnline = true };
+		alliances.CreateAlliance(88001, leagueLeader);
+		alliances.CreateAlliance(88002, allianceLeader);
+		leagues.CreateLeague(77001, leaderAllianceId: 88001);
+		leagues.AddAlliance(77001, allianceId: 88002);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, alliances, playerLeagueRuntime: leagues);
+
+		Assert.Null(await pair.Connection.HandlePlayerStatusInfoAsync(
+			allianceLeader,
+			CreatePacket(commandCode: 31, selectedObjectId: 88002, allianceGroupId: 88001)));
+
+		Assert.Equal([88001, 88002], leagues.GetAllianceIdsByPosition(77001));
+		Assert.Empty(registry.SentPackets);
+	}
+
+	[Fact]
+	public async Task HandlePlayerStatusInfoAsync_LeagueAllianceMoveMissingTargetThrowsLikeJavaEventBoundary()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var alliances = new PlayerAllianceRuntime();
+		var leagues = new PlayerLeagueRuntime();
+		var leagueLeader = new Player { ObjectId = 1001, Name = "LeagueLeader", IsOnline = true };
+		var allianceLeader = new Player { ObjectId = 2001, Name = "AllianceLeader", IsOnline = true };
+		alliances.CreateAlliance(88001, leagueLeader);
+		alliances.CreateAlliance(88002, allianceLeader);
+		leagues.CreateLeague(77001, leaderAllianceId: 88001);
+		leagues.AddAlliance(77001, allianceId: 88002);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, alliances, playerLeagueRuntime: leagues);
+
+		var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+			pair.Connection.HandlePlayerStatusInfoAsync(
+				leagueLeader,
+				CreatePacket(commandCode: 31, selectedObjectId: 88002, allianceGroupId: 88999)));
+
+		Assert.Equal("League member should not be null: 88999", exception.Message);
+		Assert.Equal([88001, 88002], leagues.GetAllianceIdsByPosition(77001));
+		Assert.Empty(registry.SentPackets);
+	}
+
+	[Fact]
+	public async Task HandlePlayerStatusInfoAsync_LeagueAllianceMoveSwapsPositionsWithoutFanoutUntilLeaguePacketsPorted()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var alliances = new PlayerAllianceRuntime();
+		var leagues = new PlayerLeagueRuntime();
+		var leagueLeader = new Player { ObjectId = 1001, Name = "LeagueLeader", IsOnline = true };
+		var allianceLeader = new Player { ObjectId = 2001, Name = "AllianceLeader", IsOnline = true };
+		alliances.CreateAlliance(88001, leagueLeader);
+		alliances.CreateAlliance(88002, allianceLeader);
+		leagues.CreateLeague(77001, leaderAllianceId: 88001);
+		leagues.AddAlliance(77001, allianceId: 88002);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, alliances, playerLeagueRuntime: leagues);
+
+		Assert.Null(await pair.Connection.HandlePlayerStatusInfoAsync(
+			leagueLeader,
+			CreatePacket(commandCode: 31, selectedObjectId: 88002, allianceGroupId: 88001)));
+
+		Assert.Equal([88002, 88001], leagues.GetAllianceIdsByPosition(77001));
+		Assert.Equal(1, leagues.GetLeaguePosition(77001, 88001));
+		Assert.Equal(0, leagues.GetLeaguePosition(77001, 88002));
+		Assert.Empty(registry.SentPackets);
+	}
+
+	[Fact]
 	public async Task HandlePlayerStatusInfoAsync_GroupSetLfgTogglesPlayerFlagLikeJava()
 	{
 		var registry = new CapturingConnectionRegistry();
@@ -1096,7 +1166,8 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 		public static async Task<TestConnectionPair> CreateAsync(
 			IGameClientConnectionRegistry registry,
 			PlayerAllianceRuntime playerAllianceRuntime,
-			PlayerGroupRuntime? playerGroupRuntime = null)
+			PlayerGroupRuntime? playerGroupRuntime = null,
+			PlayerLeagueRuntime? playerLeagueRuntime = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -1115,7 +1186,8 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 					options: new GameServerOptions(),
 					connectionRegistry: registry,
 					playerGroupRuntime: playerGroupRuntime,
-					playerAllianceRuntime: playerAllianceRuntime);
+					playerAllianceRuntime: playerAllianceRuntime,
+					playerLeagueRuntime: playerLeagueRuntime);
 				return new TestConnectionPair(client, connection);
 			}
 			finally
