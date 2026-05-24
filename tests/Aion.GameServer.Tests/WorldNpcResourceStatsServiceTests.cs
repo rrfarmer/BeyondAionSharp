@@ -362,6 +362,50 @@ public sealed class WorldNpcResourceStatsServiceTests
 	}
 
 	[Fact]
+	public async Task ApplyIncomingHpDamageAndObserverBurnsAsync_RequestsObserverBurnPersistenceAfterDamage()
+	{
+		var resourceStats = CreateService(out _, out var registry);
+		var observerFanout = new EquipmentObserverBurnFanoutService(registry);
+		var service = new PlayerIncomingDamageObserverFanoutService(resourceStats, observerFanout);
+		var idianSavedObjects = new List<int>();
+		var chargeSavedObjects = new List<int>();
+		var player = CreatePlayer(objectId: 1023, currentHp: 100, currentMp: 80, currentFp: 100);
+		player.IsOnline = true;
+		player.InventoryItems =
+		[
+			CreateObserverBurnItem(objectId: 10, itemId: 100, charge: 100_050, polishCharge: 350_000),
+		];
+
+		var result = await service.ApplyIncomingHpDamageAndObserverBurnsAsync(
+			player,
+			maxHp: 100,
+			damage: 25,
+			CreateObserverBurnItemTemplates(),
+			skillId: 0,
+			saveIdianPolishBurnAsync: (_, plan, _) =>
+			{
+				idianSavedObjects.AddRange(plan.Burns.Select(burn => burn.ItemUpdate.ObjectId));
+				return Task.FromResult(true);
+			},
+			saveItemChargeBurnAsync: (_, plan, _) =>
+			{
+				chargeSavedObjects.AddRange(plan.Burns.Select(burn => burn.ItemUpdate.ObjectId));
+				return Task.FromResult(true);
+			});
+
+		Assert.NotNull(result.ObserverBurns);
+		Assert.True(result.ObserverBurns.Workflow.Persisted);
+		Assert.Equal([10], idianSavedObjects);
+		Assert.Equal([10], chargeSavedObjects);
+		Assert.Collection(
+			registry.PacketOrder,
+			packet => Assert.Same(result.DamageResult.AttackStatusPacket, packet),
+			packet => Assert.Same(result.DamageResult.HpStatUpdatePacket, packet),
+			packet => AssertPolishChargePacket(packet, objectId: 10, polishCharge: 290_000),
+			packet => AssertChargePacket(packet, objectId: 10, charge: 99_950));
+	}
+
+	[Fact]
 	public async Task ApplyIncomingDotHpDamageAndObserverBurnsAsync_AllowsNonzeroSkillChargeAndIdianBurnsAfterDamage()
 	{
 		var resourceStats = CreateService(out _, out var registry);
