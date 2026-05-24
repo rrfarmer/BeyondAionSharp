@@ -4,6 +4,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ClientPackets;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
+using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 
 namespace Aion.GameServer.Tests;
@@ -72,6 +73,76 @@ public sealed class StorageExpansionNpcServiceTests
 		Assert.IsType<SmSystemMessage>(Assert.Single(cube.Packets));
 		Assert.Equal(StorageExpansionRequestStatus.CannotExpand, warehouse.Status);
 		Assert.IsType<SmSystemMessage>(Assert.Single(warehouse.Packets));
+	}
+
+	[Fact]
+	public void RequestExpansion_BelowNpcMinimumEmitsJavaNpcSpecificMessages()
+	{
+		var service = new StorageExpansionNpcService();
+		var cubeNpc = CreateNpc(798008, nameId: 123456);
+		var warehouseNpc = CreateNpc(203199, nameId: 654321);
+
+		var cube = service.RequestCubeExpansion(
+			CreatePlayer(),
+			cubeNpc,
+			CreateTemplate(level: 3, price: 1000),
+			cubeExpansionLimit: 11,
+			npcCubeExpandsSizeLimit: 5);
+		var warehouse = service.RequestWarehouseExpansion(
+			CreatePlayer(),
+			warehouseNpc,
+			CreateTemplate(level: 4, price: 1200));
+
+		Assert.True(cube.Handled);
+		Assert.Equal(StorageExpansionRequestStatus.BelowTemplateMinLevel, cube.Status);
+		AssertSystemMessage(
+			Assert.Single(cube.Packets),
+			1300436,
+			ChatUtil.L10n(cubeNpc.Template.NameId),
+			"2");
+		Assert.True(warehouse.Handled);
+		Assert.Equal(StorageExpansionRequestStatus.BelowTemplateMinLevel, warehouse.Status);
+		AssertSystemMessage(
+			Assert.Single(warehouse.Packets),
+			1300438,
+			ChatUtil.L10n(warehouseNpc.Template.NameId),
+			"3");
+	}
+
+	[Fact]
+	public void RequestExpansion_AboveNpcMaximumEmitsJavaNpcSpecificMessages()
+	{
+		var service = new StorageExpansionNpcService();
+		var cubePlayer = CreatePlayer();
+		cubePlayer.NpcExpands = 5;
+		var warehousePlayer = CreatePlayer();
+		warehousePlayer.WarehouseNpcExpands = 2;
+
+		var cube = service.RequestCubeExpansion(
+			cubePlayer,
+			CreateNpc(798008, nameId: 123456),
+			CreateTemplate(level: 1, price: 1000),
+			cubeExpansionLimit: 11,
+			npcCubeExpandsSizeLimit: 5);
+		var warehouse = service.RequestWarehouseExpansion(
+			warehousePlayer,
+			CreateNpc(203199, nameId: 654321),
+			CreateTemplate(level: 1, price: 1200));
+
+		Assert.True(cube.Handled);
+		Assert.Equal(StorageExpansionRequestStatus.AboveTemplateMaxLevel, cube.Status);
+		AssertSystemMessage(
+			Assert.Single(cube.Packets),
+			1300437,
+			ChatUtil.L10n(123456),
+			"1");
+		Assert.True(warehouse.Handled);
+		Assert.Equal(StorageExpansionRequestStatus.AboveTemplateMaxLevel, warehouse.Status);
+		AssertSystemMessage(
+			Assert.Single(warehouse.Packets),
+			1300439,
+			ChatUtil.L10n(654321),
+			"1");
 	}
 
 	[Fact]
@@ -185,7 +256,7 @@ public sealed class StorageExpansionNpcServiceTests
 		};
 	}
 
-	private static WorldNpc CreateNpc(int templateId, int objectId = 9001)
+	private static WorldNpc CreateNpc(int templateId, int objectId = 9001, int nameId = 0)
 	{
 		return new WorldNpc(
 			objectId,
@@ -193,7 +264,7 @@ public sealed class StorageExpansionNpcServiceTests
 			new NpcTemplateSummary(
 				templateId,
 				"Expansion Master",
-				0,
+				nameId,
 				1,
 				"NORMAL",
 				"NORMAL",
@@ -228,6 +299,21 @@ public sealed class StorageExpansionNpcServiceTests
 		var blobSize = reader.ReadH();
 		reader.ReadB(blobSize);
 		return reader.ReadH();
+	}
+
+	private static void AssertSystemMessage(GameServerPacket packet, int expectedMessageId, params string[] expectedParameters)
+	{
+		var payload = SerializeUnencryptedPayload(packet);
+		using var reader = new Aion.Commons.Network.PacketBuffer(payload);
+		Assert.Equal(25, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(expectedMessageId, reader.ReadD());
+		Assert.Equal(expectedParameters.Length, (int)reader.ReadC());
+		foreach (var expectedParameter in expectedParameters)
+			Assert.Equal(expectedParameter, reader.ReadS());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
 	}
 
 	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)

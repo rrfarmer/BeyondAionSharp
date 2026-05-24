@@ -2,6 +2,7 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
+using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Services;
 
@@ -26,12 +27,22 @@ public sealed class StorageExpansionNpcService
 
 		var targetNpcExpands = player.NpcExpands + 1;
 		if (targetNpcExpands < template.MinExpansionLevel)
-			return StorageExpansionRequestPlan.NotHandled(StorageExpansionRequestStatus.BelowTemplateMinLevel);
+		{
+			return StorageExpansionRequestPlan.Failed(
+				StorageExpansionRequestStatus.BelowTemplateMinLevel,
+				SmSystemMessage.InventoryCantExtendBelowNpcMinimum(
+					GetNpcL10n(npc),
+					template.MinExpansionLevel - 1));
+		}
 
 		var maxExpansionLevel = Math.Min(template.MaxExpansionLevel, npcCubeExpandsSizeLimit);
 		var price = template.GetPrice(targetNpcExpands);
 		if (price == null || targetNpcExpands > maxExpansionLevel)
-			return StorageExpansionRequestPlan.NotHandled(StorageExpansionRequestStatus.AboveTemplateMaxLevel);
+		{
+			return StorageExpansionRequestPlan.Failed(
+				StorageExpansionRequestStatus.AboveTemplateMaxLevel,
+				SmSystemMessage.InventoryCantExtendAboveNpcMaximum(GetNpcL10n(npc), maxExpansionLevel));
+		}
 
 		return RegisterQuestion(player, npc, InventoryExpansionStorage.Cube, targetNpcExpands, price.Value);
 	}
@@ -49,11 +60,21 @@ public sealed class StorageExpansionNpcService
 
 		var targetNpcExpands = player.WarehouseNpcExpands + 1;
 		if (targetNpcExpands < template.MinExpansionLevel)
-			return StorageExpansionRequestPlan.NotHandled(StorageExpansionRequestStatus.BelowTemplateMinLevel);
+		{
+			return StorageExpansionRequestPlan.Failed(
+				StorageExpansionRequestStatus.BelowTemplateMinLevel,
+				SmSystemMessage.WarehouseCantExtendBelowNpcMinimum(
+					GetNpcL10n(npc),
+					template.MinExpansionLevel - 1));
+		}
 
 		var price = template.GetPrice(targetNpcExpands);
 		if (price == null || targetNpcExpands > template.MaxExpansionLevel)
-			return StorageExpansionRequestPlan.NotHandled(StorageExpansionRequestStatus.AboveTemplateMaxLevel);
+		{
+			return StorageExpansionRequestPlan.Failed(
+				StorageExpansionRequestStatus.AboveTemplateMaxLevel,
+				SmSystemMessage.WarehouseCantExtendAboveNpcMaximum(GetNpcL10n(npc), template.MaxExpansionLevel));
+		}
 
 		return RegisterQuestion(player, npc, InventoryExpansionStorage.Warehouse, targetNpcExpands, price.Value);
 	}
@@ -163,6 +184,12 @@ public sealed class StorageExpansionNpcService
 	{
 		var newExpansions = player.WarehouseNpcExpands + player.WarehouseBonusExpands + 1;
 		return newExpansions >= 0 && newExpansions <= WarehouseExpansionLimit;
+	}
+
+	private static string GetNpcL10n(IWorldNpcObject npc)
+	{
+		// Java parity: npc.getObjectTemplate().getL10n().
+		return npc.Template.NameId > 0 ? ChatUtil.L10n(npc.Template.NameId) : npc.Template.Name;
 	}
 
 	private static InventoryItem CopyInventoryItem(InventoryItem item, long count)

@@ -627,6 +627,18 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300431, slots.ToString(System.Globalization.CultureInfo.InvariantCulture));
 	}
 
+	public static SmSystemMessage InventoryCantExtendBelowNpcMinimum(string npcName, int level)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_EXTEND_INVENTORY_CANT_EXTEND_DUE_TO_MINIMUM_EXTEND_LEVEL_BY_THIS_NPC.
+		return new SmSystemMessage(1300436, npcName, level.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage InventoryCantExtendAboveNpcMaximum(string npcName, int level)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_EXTEND_INVENTORY_CANT_EXTEND_MORE_DUE_TO_MAXIMUM_EXTEND_LEVEL_BY_THIS_NPC.
+		return new SmSystemMessage(1300437, npcName, level.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
 	public static SmSystemMessage WarehouseCantExtendMore()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_EXTEND_CHAR_WAREHOUSE_CANT_EXTEND_MORE.
@@ -637,6 +649,18 @@ public sealed class SmSystemMessage : GameServerPacket
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_EXTEND_CHAR_WAREHOUSE_SIZE_EXTENDED.
 		return new SmSystemMessage(1300433, slots.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage WarehouseCantExtendBelowNpcMinimum(string npcName, int level)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_EXTEND_CHAR_WAREHOUSE_CANT_EXTEND_DUE_TO_MINIMUM_EXTEND_LEVEL_BY_THIS_NPC.
+		return new SmSystemMessage(1300438, npcName, level.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage WarehouseCantExtendAboveNpcMaximum(string npcName, int level)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_EXTEND_CHAR_WAREHOUSE_CANT_EXTEND_MORE_DUE_TO_MAXIMUM_EXTEND_LEVEL_BY_THIS_NPC.
+		return new SmSystemMessage(1300439, npcName, level.ToString(System.Globalization.CultureInfo.InvariantCulture));
 	}
 
 	public static SmSystemMessage WarehouseExpandNotEnoughMoney()

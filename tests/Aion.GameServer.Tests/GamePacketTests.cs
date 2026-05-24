@@ -1038,8 +1038,12 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.CashItemTimeLeft("item", 5), 1400481, "item", "5min");
 		AssertSystemMessage(SmSystemMessage.InventoryCantExtendMore(), 1300430);
 		AssertSystemMessage(SmSystemMessage.InventorySizeExtended(9), 1300431, "9");
+		AssertSystemMessage(SmSystemMessage.InventoryCantExtendBelowNpcMinimum(ChatUtil.L10n(123456), 2), 1300436, ChatUtil.L10n(123456), "2");
+		AssertSystemMessage(SmSystemMessage.InventoryCantExtendAboveNpcMaximum(ChatUtil.L10n(123456), 5), 1300437, ChatUtil.L10n(123456), "5");
 		AssertSystemMessage(SmSystemMessage.WarehouseCantExtendMore(), 1300432);
 		AssertSystemMessage(SmSystemMessage.WarehouseSizeExtended(8), 1300433, "8");
+		AssertSystemMessage(SmSystemMessage.WarehouseCantExtendBelowNpcMinimum(ChatUtil.L10n(123456), 3), 1300438, ChatUtil.L10n(123456), "3");
+		AssertSystemMessage(SmSystemMessage.WarehouseCantExtendAboveNpcMaximum(ChatUtil.L10n(123456), 11), 1300439, ChatUtil.L10n(123456), "11");
 		AssertSystemMessage(SmSystemMessage.WarehouseExpandNotEnoughMoney(), 1300831);
 		AssertSystemMessage(SmSystemMessage.CannotRide(ChatUtil.L10n(1400057)), 1401211, ChatUtil.L10n(1400057));
 		AssertSystemMessage(SmSystemMessage.CannotRideInvalidLocation(), 1401099);
