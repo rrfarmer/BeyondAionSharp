@@ -298,6 +298,71 @@ public class GameServerConnectionCastSpellTests
 		Assert.Empty(sentPackets);
 	}
 
+	[Fact]
+	public async Task HandleSummonCastSpellAsync_MissingRepresentedPetSendsPetRequiredPacket()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		await using var pair = await TestConnectionPair.CreateAsync(sentPackets);
+		var player = CreatePlayer();
+
+		var result = await pair.Connection.HandleSummonCastSpellAsync(
+			player,
+			CreateSummonCastSpell(summonObjectId: 8001, skillId: 22107, skillLevel: 1, targetObjectId: 7001));
+
+		Assert.Equal(PlayerSummonCastSpellStatus.PetRequired, result.CastResult.Status);
+		Assert.Null(result.ExecutionResult);
+		var message = Assert.IsType<SmSystemMessage>(Assert.Single(sentPackets));
+		Assert.Equal(1402918, message.MessageId);
+	}
+
+	[Fact]
+	public async Task HandleSummonCastSpellAsync_ValidRepresentedPetOrderReachesExecutionGuard()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var runtimeContext = await CreateRuntimeContextAsync();
+		await using var pair = await TestConnectionPair.CreateAsync(sentPackets, runtimeContext: runtimeContext);
+		var player = CreatePlayer();
+		player.HasPetSummon = true;
+		player.PetSummonObjectId = 8001;
+		player.PetSummonNpcId = 833288;
+		player.AddPetSkillOrder(new PlayerPetSkillOrder(22107, SkillLevel: 1, TargetObjectId: 7001, Hate: 5, Release: true));
+
+		var result = await pair.Connection.HandleSummonCastSpellAsync(
+			player,
+			CreateSummonCastSpell(summonObjectId: 8001, skillId: 9999, skillLevel: 3, targetObjectId: 7001));
+
+		Assert.Equal(PlayerSummonCastSpellStatus.Executed, result.CastResult.Status);
+		Assert.True(result.CastResult.SkillMismatch);
+		Assert.Equal(PlayerSummonSkillExecutionStatus.WouldInvokeSkillEngine, result.ExecutionResult?.Status);
+		Assert.Equal(22107, result.ExecutionResult?.Order.SkillId);
+		Assert.Equal(5, result.ExecutionResult?.Order.Hate);
+		Assert.True(result.ExecutionResult?.Order.Release);
+		Assert.Empty(player.PetSkillOrders);
+		Assert.Empty(sentPackets);
+	}
+
+	[Fact]
+	public async Task HandleSummonCastSpellAsync_InvalidRepresentedPetSkillStopsBeforeSkillEngine()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var runtimeContext = await CreateRuntimeContextAsync();
+		await using var pair = await TestConnectionPair.CreateAsync(sentPackets, runtimeContext: runtimeContext);
+		var player = CreatePlayer();
+		player.HasPetSummon = true;
+		player.PetSummonObjectId = 8001;
+		player.PetSummonNpcId = 833288;
+		player.AddPetSkillOrder(new PlayerPetSkillOrder(9999, SkillLevel: 1, TargetObjectId: 7001, Hate: 0, Release: false));
+
+		var result = await pair.Connection.HandleSummonCastSpellAsync(
+			player,
+			CreateSummonCastSpell(summonObjectId: 8001, skillId: 9999, skillLevel: 1, targetObjectId: 7001));
+
+		Assert.Equal(PlayerSummonCastSpellStatus.Executed, result.CastResult.Status);
+		Assert.Equal(PlayerSummonSkillExecutionStatus.InvalidPetSkill, result.ExecutionResult?.Status);
+		Assert.Equal(9999, result.ExecutionResult?.Order.SkillId);
+		Assert.Empty(sentPackets);
+	}
+
 	private static Player CreatePlayer(int currentHp = 100)
 	{
 		return new Player
@@ -316,6 +381,19 @@ public class GameServerConnectionCastSpellTests
 		buffer.WriteC(0);
 		buffer.WriteD(7001);
 		buffer.WriteH(hitTime);
+		buffer.WriteD(0);
+		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
+		return packet;
+	}
+
+	private static CmSummonCastSpell CreateSummonCastSpell(int summonObjectId, int skillId, int skillLevel, int targetObjectId)
+	{
+		var packet = new CmSummonCastSpell(205, new HashSet<GameConnectionState> { GameConnectionState.InGame });
+		using var buffer = new PacketBuffer();
+		buffer.WriteD(summonObjectId);
+		buffer.WriteH(skillId);
+		buffer.WriteC(skillLevel);
+		buffer.WriteD(targetObjectId);
 		buffer.WriteD(0);
 		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
 		return packet;

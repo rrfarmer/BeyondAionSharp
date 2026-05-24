@@ -71,3 +71,7 @@ public enum PlayerSummonCastSpellStatus
 	TargetMismatch,
 	Executed,
 }
+
+public sealed record PlayerSummonCastSpellConnectionResult(
+	PlayerSummonCastSpellResult CastResult,
+	PlayerSummonSkillExecutionResult? ExecutionResult);

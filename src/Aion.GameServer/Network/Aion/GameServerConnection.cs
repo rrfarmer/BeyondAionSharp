@@ -79,6 +79,8 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly PlayerShowBrandCommandPlanner _showBrandCommandPlanner;
 	private readonly PlayerCastSpellEarlyExitService _castSpellEarlyExitService;
 	private readonly GameServerCastSpellHandlerHooks _castSpellHooks;
+	private readonly PlayerSummonCastSpellService _summonCastSpellService;
+	private readonly PlayerSummonSkillExecutionService _summonSkillExecutionService;
 	private readonly SemaphoreSlim _sendLock = new(1, 1);
 	private readonly SemaphoreSlim _closeLock = new(1, 1);
 	private GameConnectionState _state = GameConnectionState.Connected;
@@ -181,6 +183,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			?? new PlayerShowBrandCommandPlanner(_playerGroupRuntime, _playerAllianceRuntime);
 		_castSpellEarlyExitService = castSpellEarlyExitService ?? new PlayerCastSpellEarlyExitService();
 		_castSpellHooks = castSpellHooks ?? new GameServerCastSpellHandlerHooks();
+		_summonCastSpellService = new PlayerSummonCastSpellService();
+		_summonSkillExecutionService = new PlayerSummonSkillExecutionService();
 		_riftPortalInteractionService = riftPortalInteractionService
 			?? (riftService == null
 				? null
@@ -530,6 +534,10 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmCastSpell castSpell:
 				if (_activePlayer != null)
 					await HandleCastSpellAsync(_activePlayer, castSpell);
+				break;
+			case CmSummonCastSpell summonCastSpell:
+				if (_activePlayer != null)
+					await HandleSummonCastSpellAsync(_activePlayer, summonCastSpell);
 				break;
 			case CmChargeItem chargeItem:
 				if (_activePlayer != null)
@@ -1263,6 +1271,27 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		// Java parity: CM_CASTSPELL checks player.getSummon() != null && player.getSummon().isPet().
 		return _castSpellHooks.HasPetSummon(player) || player.HasPetSummon;
+	}
+
+	internal async Task<PlayerSummonCastSpellConnectionResult> HandleSummonCastSpellAsync(Player player, CmSummonCastSpell packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_SUMMON_CASTSPELL.runImpl represented pet-summon branch.
+		var castResult = _summonCastSpellService.Handle(player, packet);
+		if (castResult.Status == PlayerSummonCastSpellStatus.PetRequired)
+		{
+			await SendPacketAsync(SmSystemMessage.SkillNotNeedPet());
+			return new PlayerSummonCastSpellConnectionResult(castResult, ExecutionResult: null);
+		}
+
+		if (castResult.Status != PlayerSummonCastSpellStatus.Executed || castResult.ExecutedOrder == null)
+			return new PlayerSummonCastSpellConnectionResult(castResult, ExecutionResult: null);
+
+		var petSkills = _runtimeContext?.DataManager?.StaticData.PetSkills;
+		if (petSkills == null)
+			return new PlayerSummonCastSpellConnectionResult(castResult, ExecutionResult: null);
+
+		var executionResult = _summonSkillExecutionService.ValidateExecution(player, castResult.ExecutedOrder, petSkills);
+		return new PlayerSummonCastSpellConnectionResult(castResult, executionResult);
 	}
 
 	private static PlayerCastingSkillSnapshot? CancelCurrentSkillForCastSpell(Player player)
