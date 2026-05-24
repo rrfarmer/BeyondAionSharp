@@ -1000,6 +1000,12 @@ public sealed class PlayerSummonSkillExecutionService
 		return PlayerSummonKnownObjectNpcSkillEffectReservedPacketProjection.FromJavaEffectReservedRows(reservedEffects, shieldDefense);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillEffectReservedProducerCatalog ProjectMercenaryNpcSkillEffectReservedProducerCatalog()
+	{
+		// Java parity: concrete EffectTemplate/AttackUtil/AttackShieldObserver producers feed EffectReserved rows and shieldDefense fields before SM_CASTSPELL_RESULT.
+		return PlayerSummonKnownObjectNpcSkillEffectReservedProducerCatalog.JavaSourceReviewed();
+	}
+
 	public PlayerSummonKnownObjectNpcSkillUseSkillStartTrace ProjectMercenaryNpcSkillUseSkillStartTrace(
 		PlayerSummonKnownObjectNpcSkillActionResult? actionResult,
 		bool canUseSkillAtCastStart = true,
@@ -6773,6 +6779,267 @@ public static class PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBr
 			_ => PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch.ReflectOrMpShieldFields,
 		};
 	}
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillEffectReservedProducerCatalog(
+	IReadOnlyList<PlayerSummonKnownObjectNpcSkillEffectReservedProducerContract> ReservedProducers,
+	IReadOnlyList<PlayerSummonKnownObjectNpcSkillShieldProducerContract> ShieldProducers,
+	bool WouldExecuteEffects = false)
+{
+	public bool DocumentsNonSentOverTimeRows =>
+		ReservedProducers.Any(producer => producer.Visibility == PlayerSummonKnownObjectNpcSkillEffectReservedProducerVisibility.FilteredFromCastResult);
+
+	public bool DocumentsPlayerOnlyResourceRows =>
+		ReservedProducers.Any(producer => producer.RequiresPlayerTarget || producer.RequiresPlayerEffector);
+
+	public bool DocumentsShieldPayloadBranches =>
+		ShieldProducers.Any(producer => producer.PayloadBranch == PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch.ProtectFields)
+		&& ShieldProducers.Any(producer => producer.PayloadBranch == PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch.ReflectOrMpShieldFields)
+		&& ShieldProducers.Any(producer => producer.PayloadBranch == PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch.NoExtraFields);
+
+	public static PlayerSummonKnownObjectNpcSkillEffectReservedProducerCatalog JavaSourceReviewed()
+	{
+		return new PlayerSummonKnownObjectNpcSkillEffectReservedProducerCatalog(
+			[
+				new(
+					"com.aionemu.gameserver.controllers.attack.AttackUtil",
+					"calculateEffectResult",
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerKind.AttackResultHpDamage,
+					PlayerSummonKnownObjectNpcSkillEffectReservedResourceType.HP,
+					IsDamage: true,
+					Send: true,
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerValueSource.AttackResultDamageIntTruncation,
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerPositionSource.EffectTemplatePosition,
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerVisibility.SentWhenNonZero,
+					MayCopyShieldDefense: true,
+					MaySuppressSendFlag: true,
+					UsesFloatToIntTruncation: true),
+				new(
+					"com.aionemu.gameserver.skillengine.effect.AbstractHealEffect",
+					"calculate",
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerKind.InstantHeal,
+					PlayerSummonKnownObjectNpcSkillEffectReservedResourceType.HP,
+					IsDamage: false,
+					Send: true,
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerValueSource.CalculateHealValueCappedByMissingStat,
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerPositionSource.EffectTemplatePosition,
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerVisibility.SentWhenNonZero,
+					ResourceTypeComesFromHealTypeName: true,
+					UsesIntegerPercentCalculation: true,
+					MayProduceZeroValue: true),
+				new(
+					"com.aionemu.gameserver.skillengine.effect.HealOverTimeEffect",
+					"startEffect",
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerKind.HealOverTime,
+					PlayerSummonKnownObjectNpcSkillEffectReservedResourceType.HP,
+					IsDamage: false,
+					Send: false,
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerValueSource.CalculateHealValueCappedByMissingStat,
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerPositionSource.EffectTemplatePosition,
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerVisibility.FilteredFromCastResult,
+					ResourceTypeComesFromHealTypeName: true,
+					IsOverTimeProducer: true,
+					UsesScheduler: true,
+					UsesIntegerPercentCalculation: true,
+					MayProduceZeroValue: true),
+				new(
+					"com.aionemu.gameserver.skillengine.effect.BleedEffect",
+					"startEffect",
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerKind.OverTimeHpDamage,
+					PlayerSummonKnownObjectNpcSkillEffectReservedResourceType.HP,
+					IsDamage: true,
+					Send: false,
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerValueSource.MagicalOverTimeDamageInt,
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerPositionSource.EffectTemplatePosition,
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerVisibility.FilteredFromCastResult,
+					IsOverTimeProducer: true,
+					UsesScheduler: true,
+					UsesFloatToIntTruncation: true,
+					MinimumDamageOne: true),
+				new(
+					"com.aionemu.gameserver.skillengine.effect.PoisonEffect",
+					"startEffect",
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerKind.OverTimeHpDamage,
+					PlayerSummonKnownObjectNpcSkillEffectReservedResourceType.HP,
+					IsDamage: true,
+					Send: false,
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerValueSource.MagicalOverTimeDamageInt,
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerPositionSource.EffectTemplatePosition,
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerVisibility.FilteredFromCastResult,
+					IsOverTimeProducer: true,
+					UsesScheduler: true,
+					UsesFloatToIntTruncation: true,
+					MinimumDamageOne: true),
+				new(
+					"com.aionemu.gameserver.skillengine.effect.SpellAttackEffect",
+					"startEffect",
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerKind.OverTimeHpDamage,
+					PlayerSummonKnownObjectNpcSkillEffectReservedResourceType.HP,
+					IsDamage: true,
+					Send: false,
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerValueSource.MagicalOverTimeDamageInt,
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerPositionSource.EffectTemplatePosition,
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerVisibility.FilteredFromCastResult,
+					IsOverTimeProducer: true,
+					UsesScheduler: true,
+					UsesFloatToIntTruncation: true,
+					MinimumDamageOne: true),
+				new(
+					"com.aionemu.gameserver.skillengine.effect.MpAttackInstantEffect",
+					"calculate",
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerKind.InstantMpDamage,
+					PlayerSummonKnownObjectNpcSkillEffectReservedResourceType.MP,
+					IsDamage: true,
+					Send: true,
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerValueSource.TemplateValueOrPercentOfMaxResource,
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerPositionSource.EffectTemplatePosition,
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerVisibility.SentWhenNonZero,
+					UsesIntegerPercentCalculation: true),
+				new(
+					"com.aionemu.gameserver.skillengine.effect.FpAttackInstantEffect",
+					"calculate",
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerKind.InstantFpDamage,
+					PlayerSummonKnownObjectNpcSkillEffectReservedResourceType.FP,
+					IsDamage: true,
+					Send: true,
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerValueSource.TemplateValueOrPercentOfMaxResource,
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerPositionSource.EffectTemplatePosition,
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerVisibility.SentWhenNonZero,
+					RequiresPlayerTarget: true,
+					UsesIntegerPercentCalculation: true),
+				new(
+					"com.aionemu.gameserver.skillengine.effect.DPTransferEffect",
+					"calculate",
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerKind.DpTransfer,
+					PlayerSummonKnownObjectNpcSkillEffectReservedResourceType.DP,
+					IsDamage: true,
+					Send: true,
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerValueSource.EffectorCurrentDp,
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerPositionSource.EffectTemplatePosition,
+					PlayerSummonKnownObjectNpcSkillEffectReservedProducerVisibility.SentWhenNonZero,
+					RequiresPlayerTarget: true,
+					RequiresPlayerEffector: true),
+			],
+			[
+				new(
+					"com.aionemu.gameserver.skillengine.effect.ShieldEffect",
+					"startEffect",
+					2,
+					PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch.NoExtraFields,
+					MayReduceIncomingDamage: true),
+				new(
+					"com.aionemu.gameserver.skillengine.effect.MPShieldEffect",
+					"startEffect",
+					16,
+					PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch.ReflectOrMpShieldFields,
+					MayReduceIncomingDamage: true,
+					WritesMpShieldPayload: true),
+				new(
+					"com.aionemu.gameserver.skillengine.effect.ReflectorEffect",
+					"startEffect",
+					1,
+					PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch.ReflectOrMpShieldFields,
+					WritesReflectPayload: true),
+				new(
+					"com.aionemu.gameserver.skillengine.effect.ReflectorEffect",
+					"startEffect",
+					32,
+					PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch.ReflectOrMpShieldFields,
+					WritesReflectPayload: true,
+					CanEndShieldAfterOneSkill: true,
+					CanBeStrippedForUnsupportedSubtype: true),
+				new(
+					"com.aionemu.gameserver.skillengine.effect.ProtectEffect",
+					"startEffect",
+					8,
+					PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch.ProtectFields,
+					WritesProtectPayload: true,
+					MayReduceIncomingDamage: true),
+				new(
+					"com.aionemu.gameserver.skillengine.effect.ConvertHealEffect",
+					"startEffect",
+					0,
+					PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch.NoExtraFields,
+					MayReduceIncomingDamage: true,
+					MayHealInsteadOfWritingShieldType: true),
+				new(
+					"com.aionemu.gameserver.skillengine.effect.EffectTemplate",
+					"calculateDamage",
+					32,
+					PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch.ReflectOrMpShieldFields,
+					WritesReflectPayload: true,
+					CanBeStrippedForUnsupportedSubtype: true),
+			]);
+	}
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillEffectReservedProducerContract(
+	string JavaArtifact,
+	string JavaMethod,
+	PlayerSummonKnownObjectNpcSkillEffectReservedProducerKind Kind,
+	PlayerSummonKnownObjectNpcSkillEffectReservedResourceType ResourceType,
+	bool IsDamage,
+	bool Send,
+	PlayerSummonKnownObjectNpcSkillEffectReservedProducerValueSource ValueSource,
+	PlayerSummonKnownObjectNpcSkillEffectReservedProducerPositionSource PositionSource,
+	PlayerSummonKnownObjectNpcSkillEffectReservedProducerVisibility Visibility,
+	bool MayCopyShieldDefense = false,
+	bool MaySuppressSendFlag = false,
+	bool ResourceTypeComesFromHealTypeName = false,
+	bool RequiresPlayerTarget = false,
+	bool RequiresPlayerEffector = false,
+	bool IsOverTimeProducer = false,
+	bool UsesScheduler = false,
+	bool UsesIntegerPercentCalculation = false,
+	bool UsesFloatToIntTruncation = false,
+	bool MayProduceZeroValue = false,
+	bool MinimumDamageOne = false);
+
+public sealed record PlayerSummonKnownObjectNpcSkillShieldProducerContract(
+	string JavaArtifact,
+	string JavaMethod,
+	int ShieldTypeValue,
+	PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch PayloadBranch,
+	bool WritesProtectPayload = false,
+	bool WritesReflectPayload = false,
+	bool WritesMpShieldPayload = false,
+	bool MayReduceIncomingDamage = false,
+	bool MayHealInsteadOfWritingShieldType = false,
+	bool CanEndShieldAfterOneSkill = false,
+	bool CanBeStrippedForUnsupportedSubtype = false)
+{
+	public int ShieldTypeByte => ShieldTypeValue & 0xFF;
+}
+
+public enum PlayerSummonKnownObjectNpcSkillEffectReservedProducerKind
+{
+	AttackResultHpDamage,
+	InstantHeal,
+	HealOverTime,
+	OverTimeHpDamage,
+	InstantMpDamage,
+	InstantFpDamage,
+	DpTransfer,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillEffectReservedProducerValueSource
+{
+	AttackResultDamageIntTruncation,
+	CalculateHealValueCappedByMissingStat,
+	MagicalOverTimeDamageInt,
+	TemplateValueOrPercentOfMaxResource,
+	EffectorCurrentDp,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillEffectReservedProducerPositionSource
+{
+	EffectTemplatePosition,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillEffectReservedProducerVisibility
+{
+	SentWhenNonZero,
+	FilteredFromCastResult,
 }
 
 public enum PlayerSummonKnownObjectNpcSkillCastResultPacketStep

@@ -3363,6 +3363,74 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void ProjectMercenaryNpcSkillEffectReservedProducerCatalog_MapsJavaReserveAndShieldProducers()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+
+		var catalog = service.ProjectMercenaryNpcSkillEffectReservedProducerCatalog();
+		var attackUtil = Assert.Single(
+			catalog.ReservedProducers,
+			producer => producer.Kind == PlayerSummonKnownObjectNpcSkillEffectReservedProducerKind.AttackResultHpDamage);
+		var instantHeal = Assert.Single(
+			catalog.ReservedProducers,
+			producer => producer.JavaArtifact == "com.aionemu.gameserver.skillengine.effect.AbstractHealEffect");
+		var filteredOverTime = catalog.ReservedProducers
+			.Where(producer => producer.Visibility == PlayerSummonKnownObjectNpcSkillEffectReservedProducerVisibility.FilteredFromCastResult)
+			.ToArray();
+		var mpAttack = Assert.Single(
+			catalog.ReservedProducers,
+			producer => producer.Kind == PlayerSummonKnownObjectNpcSkillEffectReservedProducerKind.InstantMpDamage);
+		var fpAttack = Assert.Single(
+			catalog.ReservedProducers,
+			producer => producer.Kind == PlayerSummonKnownObjectNpcSkillEffectReservedProducerKind.InstantFpDamage);
+		var dpTransfer = Assert.Single(
+			catalog.ReservedProducers,
+			producer => producer.Kind == PlayerSummonKnownObjectNpcSkillEffectReservedProducerKind.DpTransfer);
+		var shieldByValue = catalog.ShieldProducers.ToLookup(producer => producer.ShieldTypeValue);
+		var skillReflectors = shieldByValue[32].ToArray();
+
+		Assert.False(catalog.WouldExecuteEffects);
+		Assert.True(catalog.DocumentsNonSentOverTimeRows);
+		Assert.True(catalog.DocumentsPlayerOnlyResourceRows);
+		Assert.True(catalog.DocumentsShieldPayloadBranches);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEffectReservedResourceType.HP, attackUtil.ResourceType);
+		Assert.True(attackUtil.IsDamage);
+		Assert.True(attackUtil.Send);
+		Assert.True(attackUtil.MayCopyShieldDefense);
+		Assert.True(attackUtil.MaySuppressSendFlag);
+		Assert.True(attackUtil.UsesFloatToIntTruncation);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEffectReservedProducerValueSource.AttackResultDamageIntTruncation, attackUtil.ValueSource);
+		Assert.False(instantHeal.IsDamage);
+		Assert.True(instantHeal.Send);
+		Assert.True(instantHeal.ResourceTypeComesFromHealTypeName);
+		Assert.True(instantHeal.UsesIntegerPercentCalculation);
+		Assert.True(instantHeal.MayProduceZeroValue);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEffectReservedProducerValueSource.CalculateHealValueCappedByMissingStat, instantHeal.ValueSource);
+		Assert.Contains(filteredOverTime, producer => producer.JavaArtifact == "com.aionemu.gameserver.skillengine.effect.HealOverTimeEffect" && !producer.IsDamage && producer.UsesScheduler);
+		Assert.Contains(filteredOverTime, producer => producer.JavaArtifact == "com.aionemu.gameserver.skillengine.effect.BleedEffect" && producer.IsDamage && producer.MinimumDamageOne);
+		Assert.Contains(filteredOverTime, producer => producer.JavaArtifact == "com.aionemu.gameserver.skillengine.effect.PoisonEffect" && producer.IsDamage && producer.MinimumDamageOne);
+		Assert.Contains(filteredOverTime, producer => producer.JavaArtifact == "com.aionemu.gameserver.skillengine.effect.SpellAttackEffect" && producer.IsDamage && producer.MinimumDamageOne);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEffectReservedResourceType.MP, mpAttack.ResourceType);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEffectReservedProducerValueSource.TemplateValueOrPercentOfMaxResource, mpAttack.ValueSource);
+		Assert.True(mpAttack.UsesIntegerPercentCalculation);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEffectReservedResourceType.FP, fpAttack.ResourceType);
+		Assert.True(fpAttack.RequiresPlayerTarget);
+		Assert.True(fpAttack.UsesIntegerPercentCalculation);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEffectReservedResourceType.DP, dpTransfer.ResourceType);
+		Assert.True(dpTransfer.RequiresPlayerTarget);
+		Assert.True(dpTransfer.RequiresPlayerEffector);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEffectReservedProducerValueSource.EffectorCurrentDp, dpTransfer.ValueSource);
+		Assert.Contains(shieldByValue[2], producer => producer.PayloadBranch == PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch.NoExtraFields);
+		Assert.Contains(shieldByValue[16], producer => producer.PayloadBranch == PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch.ReflectOrMpShieldFields && producer.WritesMpShieldPayload);
+		Assert.Contains(shieldByValue[1], producer => producer.PayloadBranch == PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch.ReflectOrMpShieldFields && producer.WritesReflectPayload);
+		Assert.Contains(shieldByValue[8], producer => producer.PayloadBranch == PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch.ProtectFields && producer.WritesProtectPayload);
+		Assert.Contains(shieldByValue[0], producer => producer.PayloadBranch == PlayerSummonKnownObjectNpcSkillEffectReservedShieldPayloadBranch.NoExtraFields && producer.MayHealInsteadOfWritingShieldType);
+		Assert.Equal(2, skillReflectors.Length);
+		Assert.All(skillReflectors, producer => Assert.True(producer.CanBeStrippedForUnsupportedSubtype));
+		Assert.Contains(skillReflectors, producer => producer.CanEndShieldAfterOneSkill);
+	}
+
+	[Fact]
 	public void PreviewMercenaryNpcSkillActionWorkflow_ComposesJavaSelectionRangeAndActionSlices()
 	{
 		var service = new PlayerSummonSkillExecutionService();
