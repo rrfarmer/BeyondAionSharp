@@ -694,6 +694,79 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 	}
 
 	[Fact]
+	public void PlayerLeagueRuntime_JoinAllianceAddsAtLeagueSizeAndFansOutLikeJavaEvent()
+	{
+		var alliances = new PlayerAllianceRuntime();
+		var leagues = new PlayerLeagueRuntime();
+		var leagueLeader = new Player { ObjectId = 1001, Name = "LeagueLeader", IsOnline = true, Position = new WorldPosition(210010000, 1, 2, 3, 0) };
+		var invitedLeader = new Player { ObjectId = 2001, Name = "InvitedLeader", IsOnline = true, Position = new WorldPosition(220010000, 4, 5, 6, 0) };
+		alliances.CreateAlliance(88001, leagueLeader);
+		alliances.CreateAlliance(88002, invitedLeader);
+		leagues.CreateLeague(77001, leaderAllianceId: 88001);
+
+		var plan = Assert.IsType<PlayerLeagueJoinPlan>(leagues.JoinAlliance(77001, 88002, alliances));
+
+		Assert.Equal(77001, plan.LeagueId);
+		Assert.Equal(88002, plan.JoinedAllianceId);
+		Assert.Equal(1, plan.JoinedPosition);
+		Assert.Equal([88001, 88002], plan.AllianceIdsByPosition);
+		Assert.Equal([88001, 88002], leagues.GetAllianceIdsByPosition(77001));
+		Assert.Equal(1, leagues.GetLeaguePosition(77001, 88002));
+		var expectedRows = new[]
+		{
+			new PlayerAllianceInfoLeagueRow(0, 88001, 1, "LeagueLeader", 210010000),
+			new PlayerAllianceInfoLeagueRow(1, 88002, 1, "InvitedLeader", 220010000),
+		};
+		Assert.Collection(
+			plan.PacketIntents,
+			intent =>
+			{
+				Assert.Equal(1001, intent.RecipientObjectId);
+				Assert.Equal(PlayerLeaguePacketIntentKind.AllianceInfo, intent.Kind);
+				AssertLeagueAllianceInfoPacket(
+					new SentPacketRecord(1001, intent.CreatePacket()),
+					88001,
+					1001,
+					210010000,
+					PlayerAllianceInfoPacketPlan.LeagueJoinedAllianceMessageId,
+					"InvitedLeader",
+					expectedLeagueRows: expectedRows);
+			},
+			intent =>
+			{
+				Assert.Equal(2001, intent.RecipientObjectId);
+				Assert.Equal(PlayerLeaguePacketIntentKind.AllianceInfo, intent.Kind);
+				AssertLeagueAllianceInfoPacket(
+					new SentPacketRecord(2001, intent.CreatePacket()),
+					88002,
+					2001,
+					220010000,
+					PlayerAllianceInfoPacketPlan.LeagueAllianceEnteredMessageId,
+					"LeagueLeader",
+					expectedLeagueRows: expectedRows);
+			});
+	}
+
+	[Fact]
+	public void PlayerLeagueRuntime_JoinAllianceAlreadyInLeagueNoopsLikeJavaCheckCondition()
+	{
+		var alliances = new PlayerAllianceRuntime();
+		var leagues = new PlayerLeagueRuntime();
+		var leagueLeader = new Player { ObjectId = 1001, Name = "LeagueLeader", IsOnline = true };
+		var invitedLeader = new Player { ObjectId = 2001, Name = "InvitedLeader", IsOnline = true };
+		alliances.CreateAlliance(88001, leagueLeader);
+		alliances.CreateAlliance(88002, invitedLeader);
+		leagues.CreateLeague(77001, leaderAllianceId: 88001);
+		Assert.NotNull(leagues.JoinAlliance(77001, 88002, alliances));
+
+		var duplicatePlan = leagues.JoinAlliance(77001, 88002, alliances);
+
+		Assert.Null(duplicatePlan);
+		Assert.Equal([88001, 88002], leagues.GetAllianceIdsByPosition(77001));
+		Assert.Equal(1, leagues.GetLeaguePosition(77001, 88002));
+	}
+
+	[Fact]
 	public void PlayerLeagueRuntime_ChangeLootRulesUpdatesLeagueAndBroadcastsAllianceInfoLikeJavaEvent()
 	{
 		var alliances = new PlayerAllianceRuntime();

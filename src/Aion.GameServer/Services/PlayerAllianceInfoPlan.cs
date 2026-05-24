@@ -196,6 +196,8 @@ public sealed record PlayerAllianceInfoPacketPlan(
 {
 	public const int ViceCaptainPromoteMessageId = 1300984;
 	public const int ViceCaptainDemoteMessageId = 1300985;
+	public const int LeagueAllianceEnteredMessageId = 1400560;
+	public const int LeagueJoinedAllianceMessageId = 1400561;
 	public const int LeagueLeftMeMessageId = 1400571;
 	public const int LeagueLeftHimMessageId = 1400572;
 	public const int LeagueExpelMessageId = 1400574;

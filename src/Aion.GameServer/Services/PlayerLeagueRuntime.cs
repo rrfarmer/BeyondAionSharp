@@ -57,6 +57,47 @@ public sealed class PlayerLeagueRuntime
 		}
 	}
 
+	public PlayerLeagueJoinPlan? JoinAlliance(
+		int leagueId,
+		int invitedAllianceId,
+		PlayerAllianceRuntime allianceRuntime)
+	{
+		// Java parity: LeagueService.addAlliance dispatches LeagueJoinEvent. The event checks that the invited alliance
+		// is not already in the league, adds it at league.size(), then sends LEAGUE_ALLIANCE_ENTERED to the invitee and
+		// LEAGUE_JOINED_ALLIANCE to every existing alliance.
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(leagueId, 0);
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(invitedAllianceId, 0);
+
+		lock (_sync)
+		{
+			if (!_membersByLeagueId.TryGetValue(leagueId, out var members)
+				|| !_leaderAllianceIdByLeagueId.TryGetValue(leagueId, out var leaderAllianceId))
+				throw new InvalidOperationException("League should not be null");
+			if (_leagueIdByAllianceId.ContainsKey(invitedAllianceId))
+				return null;
+
+			var joinedPosition = members.Count;
+			members.Add(new PlayerLeagueMember(invitedAllianceId, joinedPosition));
+			_leagueIdByAllianceId[invitedAllianceId] = leagueId;
+
+			var sortedAllianceIds = GetSortedAllianceIds(members);
+			var intents = CreateJoinPacketIntents(
+				leagueId,
+				sortedAllianceIds,
+				leaderAllianceId,
+				invitedAllianceId,
+				GetLeagueLootRules(leagueId),
+				allianceRuntime);
+
+			return new PlayerLeagueJoinPlan(
+				leagueId,
+				invitedAllianceId,
+				joinedPosition,
+				sortedAllianceIds,
+				intents);
+		}
+	}
+
 	public PlayerLeagueSnapshot? ResolveByAllianceId(int allianceId)
 	{
 		// Java parity: model/team/alliance/PlayerAlliance.getLeague returns the live League pointer, modeled here by alliance id lookup.
@@ -622,6 +663,48 @@ public sealed class PlayerLeagueRuntime
 		return intents;
 	}
 
+	private static IReadOnlyList<PlayerLeaguePacketIntent> CreateJoinPacketIntents(
+		int leagueId,
+		IReadOnlyList<int> sortedAllianceIds,
+		int leaderAllianceId,
+		int invitedAllianceId,
+		PlayerGroupLootRules leagueLootRules,
+		PlayerAllianceRuntime allianceRuntime)
+	{
+		var leaderName = GetAllianceLeaderName(allianceRuntime, leaderAllianceId);
+		var invitedLeaderName = GetAllianceLeaderName(allianceRuntime, invitedAllianceId);
+		var intents = new List<PlayerLeaguePacketIntent>();
+		var sequence = 0;
+		foreach (var allianceId in sortedAllianceIds)
+		{
+			var snapshot = allianceRuntime.GetSnapshot(allianceId)
+				?? throw new InvalidOperationException($"Alliance should not be null: {allianceId}");
+			var messageId = allianceId == invitedAllianceId
+				? PlayerAllianceInfoPacketPlan.LeagueAllianceEnteredMessageId
+				: PlayerAllianceInfoPacketPlan.LeagueJoinedAllianceMessageId;
+			var message = allianceId == invitedAllianceId ? leaderName : invitedLeaderName;
+			foreach (var recipientObjectId in allianceRuntime.GetMemberObjectIds(allianceId))
+			{
+				var recipient = allianceRuntime.GetMember(allianceId, recipientObjectId)?.Player;
+				var activePlayerMapId = recipient?.Position.WorldId ?? 0;
+				intents.Add(new PlayerLeaguePacketIntent(
+					sequence++,
+					recipientObjectId,
+					allianceId,
+					PlayerLeaguePacketIntentKind.AllianceInfo,
+					AllianceInfoPlan: snapshot.CreateInfoPacketPlan(
+						activePlayerMapId,
+						messageId,
+						message,
+						leagueId,
+						leagueLootRules,
+						CreateLeagueRows(sortedAllianceIds, allianceRuntime))));
+			}
+		}
+
+		return intents;
+	}
+
 	private static string GetAllianceLeaderName(PlayerAllianceRuntime allianceRuntime, int allianceId)
 	{
 		var descriptor = allianceRuntime.GetDescriptor(allianceId)
@@ -758,6 +841,13 @@ public sealed record PlayerLeagueMovePlan(
 	int TargetAllianceId,
 	int SelectedPreviousPosition,
 	int TargetPreviousPosition,
+	IReadOnlyList<int> AllianceIdsByPosition,
+	IReadOnlyList<PlayerLeaguePacketIntent> PacketIntents);
+
+public sealed record PlayerLeagueJoinPlan(
+	int LeagueId,
+	int JoinedAllianceId,
+	int JoinedPosition,
 	IReadOnlyList<int> AllianceIdsByPosition,
 	IReadOnlyList<PlayerLeaguePacketIntent> PacketIntents);
 
