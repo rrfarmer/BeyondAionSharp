@@ -1,9 +1,48 @@
 using Aion.GameServer.Network.Aion.ServerPackets;
+using Aion.GameServer.Model.GameObjects;
 
 namespace Aion.GameServer.Services;
 
 public sealed class PlayerLeagueInvitePlanner
 {
+	public PlayerLeagueCanInvitePlan CreateCanInviteFirstChecksPlan(
+		Player inviter,
+		Player invited)
+	{
+		// Java parity: LeagueService.canInvite first failure checks, in source order:
+		// inviter.isDead(), !invited.isOnline(), invited.getPlayerAlliance() == null.
+		ArgumentNullException.ThrowIfNull(inviter);
+		ArgumentNullException.ThrowIfNull(invited);
+
+		if (inviter.IsInState(PlayerCreatureState.Dead))
+		{
+			return CreateCanInviteFailurePlan(
+				inviter.ObjectId,
+				PlayerLeagueCanInviteStatus.InviterDead,
+				SmSystemMessage.UnionCantInviteWhenDead());
+		}
+
+		if (!invited.IsOnline)
+		{
+			return CreateCanInviteFailurePlan(
+				inviter.ObjectId,
+				PlayerLeagueCanInviteStatus.InvitedOffline,
+				SmSystemMessage.UnionOfflineMember());
+		}
+
+		if (invited.TeamMembership != PlayerTeamMembership.Alliance || invited.CurrentAllianceSnapshot == null)
+		{
+			return CreateCanInviteFailurePlan(
+				inviter.ObjectId,
+				PlayerLeagueCanInviteStatus.InvitedWithoutAlliance,
+				SmSystemMessage.UnionCantInviteWhenHeIsAskedQuestion(invited.Name));
+		}
+
+		return new PlayerLeagueCanInvitePlan(
+			PlayerLeagueCanInviteStatus.PassedRepresentedChecks,
+			SystemMessageIntent: null);
+	}
+
 	public PlayerLeagueInviteAcceptPlan CreateAcceptExistingLeaguePlan(
 		int requesterAllianceId,
 		int invitedAllianceId,
@@ -62,7 +101,29 @@ public sealed class PlayerLeagueInvitePlanner
 				requesterObjectId,
 				SmSystemMessage.PartyAllianceHeRejectInvitation(responderName)));
 	}
+
+	private static PlayerLeagueCanInvitePlan CreateCanInviteFailurePlan(
+		int inviterObjectId,
+		PlayerLeagueCanInviteStatus status,
+		SmSystemMessage message)
+	{
+		return new PlayerLeagueCanInvitePlan(
+			status,
+			new PlayerAllianceSystemMessageIntent(inviterObjectId, message));
+	}
 }
+
+public enum PlayerLeagueCanInviteStatus
+{
+	PassedRepresentedChecks,
+	InviterDead,
+	InvitedOffline,
+	InvitedWithoutAlliance,
+}
+
+public sealed record PlayerLeagueCanInvitePlan(
+	PlayerLeagueCanInviteStatus Status,
+	PlayerAllianceSystemMessageIntent? SystemMessageIntent);
 
 public enum PlayerLeagueInviteAcceptStatus
 {

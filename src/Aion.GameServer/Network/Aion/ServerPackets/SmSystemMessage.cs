@@ -225,6 +225,24 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300190, playerName);
 	}
 
+	public static SmSystemMessage UnionCantInviteWhenHeIsAskedQuestion(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_UNION_CANT_INVITE_WHEN_HE_IS_ASKED_QUESTION(String).
+		return new SmSystemMessage(1400567, playerName);
+	}
+
+	public static SmSystemMessage UnionOfflineMember()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_UNION_OFFLINE_MEMBER.
+		return new SmSystemMessage(1400569);
+	}
+
+	public static SmSystemMessage UnionCantInviteWhenDead()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_UNION_CANT_INVITE_WHEN_DEAD.
+		return new SmSystemMessage(1400570);
+	}
+
 	public static SmSystemMessage PartyHeBecomeOfflineTimeout(string playerName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_PARTY_HE_BECOME_OFFLINE_TIMEOUT(String).

@@ -10,6 +10,45 @@ namespace Aion.GameServer.Tests;
 public sealed class PlayerLeagueInvitePlannerTests
 {
 	[Fact]
+	public void CreateCanInviteFirstChecksPlan_FollowsJavaFailureOrder()
+	{
+		var planner = new PlayerLeagueInvitePlanner();
+		var inviter = new Player { ObjectId = 1001, Name = "Inviter", IsOnline = true };
+		var invited = new Player { ObjectId = 2001, Name = "Invited", IsOnline = false };
+		inviter.ReplaceCreatureState(PlayerCreatureState.Dead);
+
+		var deadPlan = planner.CreateCanInviteFirstChecksPlan(inviter, invited);
+
+		AssertCanInviteFailure(deadPlan, PlayerLeagueCanInviteStatus.InviterDead, 1001, 1400570);
+
+		inviter.ReplaceCreatureState(PlayerCreatureState.None);
+		var offlinePlan = planner.CreateCanInviteFirstChecksPlan(inviter, invited);
+
+		AssertCanInviteFailure(offlinePlan, PlayerLeagueCanInviteStatus.InvitedOffline, 1001, 1400569);
+
+		invited.IsOnline = true;
+		var noAlliancePlan = planner.CreateCanInviteFirstChecksPlan(inviter, invited);
+
+		AssertCanInviteFailure(noAlliancePlan, PlayerLeagueCanInviteStatus.InvitedWithoutAlliance, 1001, 1400567, "Invited");
+	}
+
+	[Fact]
+	public void CreateCanInviteFirstChecksPlan_PassesWhenRepresentedChecksPass()
+	{
+		var planner = new PlayerLeagueInvitePlanner();
+		var alliances = new PlayerAllianceRuntime();
+		var inviter = new Player { ObjectId = 1001, Name = "Inviter", IsOnline = true };
+		var invited = new Player { ObjectId = 2001, Name = "Invited", IsOnline = true };
+		alliances.CreateAlliance(88001, inviter);
+		alliances.CreateAlliance(88002, invited);
+
+		var plan = planner.CreateCanInviteFirstChecksPlan(inviter, invited);
+
+		Assert.Equal(PlayerLeagueCanInviteStatus.PassedRepresentedChecks, plan.Status);
+		Assert.Null(plan.SystemMessageIntent);
+	}
+
+	[Fact]
 	public void CreateAcceptExistingLeaguePlan_JoinsInvitedAllianceLikeJavaAcceptRequest()
 	{
 		var planner = new PlayerLeagueInvitePlanner();
@@ -98,6 +137,20 @@ public sealed class PlayerLeagueInvitePlannerTests
 
 		Assert.Throws<ArgumentOutOfRangeException>(() => planner.CreateDenyPlan(0, "Responder"));
 		Assert.Throws<ArgumentException>(() => planner.CreateDenyPlan(1001, ""));
+	}
+
+	private static void AssertCanInviteFailure(
+		PlayerLeagueCanInvitePlan plan,
+		PlayerLeagueCanInviteStatus expectedStatus,
+		int expectedRecipientObjectId,
+		int expectedMessageId,
+		params string[] expectedParameters)
+	{
+		Assert.Equal(expectedStatus, plan.Status);
+		var intent = Assert.IsType<PlayerAllianceSystemMessageIntent>(plan.SystemMessageIntent);
+		Assert.Equal(expectedRecipientObjectId, intent.RecipientObjectId);
+		Assert.Equal(expectedMessageId, intent.Message.MessageId);
+		AssertSystemMessagePayload(intent.Message, expectedMessageId, expectedParameters);
 	}
 
 	private static void AssertSystemMessagePayload(
