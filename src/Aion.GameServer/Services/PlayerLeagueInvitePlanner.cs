@@ -1,10 +1,56 @@
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion;
 
 namespace Aion.GameServer.Services;
 
 public sealed class PlayerLeagueInvitePlanner
 {
+	public PlayerLeagueInviteRequestSetupPlan CreateRequestSetupPlan(
+		Player inviter,
+		Player invited,
+		PlayerAllianceRuntime allianceRuntime)
+	{
+		// Java parity: LeagueService.inviteToLeague after canInvite succeeds. If the selected player is not the
+		// invited alliance leader, Java notifies the inviter and redirects the actual request to the leader.
+		// It then registers SM_QUESTION_WINDOW.STR_MSGBOX_UNION_INVITE_ME and sends invite confirmation/question packets.
+		ArgumentNullException.ThrowIfNull(inviter);
+		ArgumentNullException.ThrowIfNull(invited);
+		ArgumentNullException.ThrowIfNull(allianceRuntime);
+
+		var invitedAlliance = invited.CurrentAllianceSnapshot
+			?? throw new InvalidOperationException("Invited player alliance should not be null");
+		var invitedAllianceDescriptor = allianceRuntime.GetDescriptor(invitedAlliance.AllianceId)
+			?? throw new InvalidOperationException($"Alliance should not be null: {invitedAlliance.AllianceId}");
+		var leader = allianceRuntime.GetMember(invitedAlliance.AllianceId, invitedAllianceDescriptor.LeaderObjectId)
+			?? throw new InvalidOperationException($"Alliance leader should not be null: {invitedAllianceDescriptor.LeaderObjectId}");
+
+		var requesterIntents = new List<PlayerAllianceSystemMessageIntent>();
+		if (leader.ObjectId != invited.ObjectId)
+		{
+			requesterIntents.Add(new PlayerAllianceSystemMessageIntent(
+				inviter.ObjectId,
+				SmSystemMessage.UnionInviteHisLeader(invited.Name, leader.Name)));
+		}
+
+		requesterIntents.Add(new PlayerAllianceSystemMessageIntent(
+			inviter.ObjectId,
+			SmSystemMessage.UnionInviteHim(leader.Name, invitedAlliance.AllianceGroupSize)));
+
+		return new PlayerLeagueInviteRequestSetupPlan(
+			InviterObjectId: inviter.ObjectId,
+			SelectedPlayerObjectId: invited.ObjectId,
+			RequestTargetObjectId: leader.ObjectId,
+			RequestTargetName: leader.Name,
+			InvitedAllianceId: invitedAlliance.AllianceId,
+			InvitedAllianceSize: invitedAlliance.AllianceGroupSize,
+			QuestionCode: SmQuestionWindow.UnionInviteMe,
+			RequesterSystemMessages: requesterIntents,
+			QuestionWindowIntent: new PlayerLeagueQuestionWindowIntent(
+				leader.ObjectId,
+				new SmQuestionWindow(SmQuestionWindow.UnionInviteMe, senderObjectId: 0, rangeOrCooldownSeconds: 0, inviter.Name)));
+	}
+
 	public PlayerLeagueCanInvitePlan CreateCanInviteFirstChecksPlan(
 		Player inviter,
 		Player invited)
@@ -177,6 +223,27 @@ public enum PlayerLeagueCanInviteStatus
 public sealed record PlayerLeagueCanInvitePlan(
 	PlayerLeagueCanInviteStatus Status,
 	PlayerAllianceSystemMessageIntent? SystemMessageIntent);
+
+public sealed record PlayerLeagueInviteRequestSetupPlan(
+	int InviterObjectId,
+	int SelectedPlayerObjectId,
+	int RequestTargetObjectId,
+	string RequestTargetName,
+	int InvitedAllianceId,
+	int InvitedAllianceSize,
+	int QuestionCode,
+	IReadOnlyList<PlayerAllianceSystemMessageIntent> RequesterSystemMessages,
+	PlayerLeagueQuestionWindowIntent QuestionWindowIntent);
+
+public sealed record PlayerLeagueQuestionWindowIntent(
+	int RecipientObjectId,
+	SmQuestionWindow QuestionWindow)
+{
+	public GameServerPacket CreatePacket()
+	{
+		return QuestionWindow;
+	}
+}
 
 public enum PlayerLeagueInviteAcceptStatus
 {

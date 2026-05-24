@@ -10,6 +10,66 @@ namespace Aion.GameServer.Tests;
 public sealed class PlayerLeagueInvitePlannerTests
 {
 	[Fact]
+	public void CreateRequestSetupPlan_TargetsLeaderAndSendsInviteMessagesLikeJavaService()
+	{
+		var planner = new PlayerLeagueInvitePlanner();
+		var alliances = new PlayerAllianceRuntime();
+		var inviter = new Player { ObjectId = 1001, Name = "Inviter", IsOnline = true };
+		var selected = new Player { ObjectId = 2002, Name = "Selected", IsOnline = true };
+		var invitedLeader = new Player { ObjectId = 2001, Name = "InvitedLeader", IsOnline = true };
+		alliances.CreateAlliance(88001, inviter);
+		alliances.CreateAlliance(88002, invitedLeader);
+		alliances.AddMember(88002, selected);
+
+		var plan = planner.CreateRequestSetupPlan(inviter, selected, alliances);
+
+		Assert.Equal(1001, plan.InviterObjectId);
+		Assert.Equal(2002, plan.SelectedPlayerObjectId);
+		Assert.Equal(2001, plan.RequestTargetObjectId);
+		Assert.Equal("InvitedLeader", plan.RequestTargetName);
+		Assert.Equal(88002, plan.InvitedAllianceId);
+		Assert.Equal(2, plan.InvitedAllianceSize);
+		Assert.Equal(SmQuestionWindow.UnionInviteMe, plan.QuestionCode);
+		Assert.Collection(
+			plan.RequesterSystemMessages,
+			intent =>
+			{
+				Assert.Equal(1001, intent.RecipientObjectId);
+				AssertSystemMessagePayload(intent.Message, 1400559, "Selected", "InvitedLeader");
+			},
+			intent =>
+			{
+				Assert.Equal(1001, intent.RecipientObjectId);
+				AssertSystemMessagePayload(intent.Message, 1400558, "InvitedLeader", "2");
+			});
+		Assert.Equal(2001, plan.QuestionWindowIntent.RecipientObjectId);
+		AssertQuestionWindowPayload(
+			plan.QuestionWindowIntent.QuestionWindow,
+			SmQuestionWindow.UnionInviteMe,
+			expectedSenderObjectId: 0,
+			expectedRangeOrCooldownSeconds: 0,
+			"Inviter");
+	}
+
+	[Fact]
+	public void CreateRequestSetupPlan_SkipsLeaderRedirectionMessageWhenSelectedPlayerIsLeader()
+	{
+		var planner = new PlayerLeagueInvitePlanner();
+		var alliances = new PlayerAllianceRuntime();
+		var inviter = new Player { ObjectId = 1001, Name = "Inviter", IsOnline = true };
+		var invitedLeader = new Player { ObjectId = 2001, Name = "InvitedLeader", IsOnline = true };
+		alliances.CreateAlliance(88001, inviter);
+		alliances.CreateAlliance(88002, invitedLeader);
+
+		var plan = planner.CreateRequestSetupPlan(inviter, invitedLeader, alliances);
+
+		var message = Assert.Single(plan.RequesterSystemMessages);
+		AssertSystemMessagePayload(message.Message, 1400558, "InvitedLeader", "1");
+		Assert.Equal(2001, plan.QuestionWindowIntent.RecipientObjectId);
+		AssertQuestionWindowPayload(plan.QuestionWindowIntent.QuestionWindow, SmQuestionWindow.UnionInviteMe, 0, 0, "Inviter");
+	}
+
+	[Fact]
 	public void CreateCanInviteFirstChecksPlan_FollowsJavaFailureOrder()
 	{
 		var planner = new PlayerLeagueInvitePlanner();
@@ -242,6 +302,24 @@ public sealed class PlayerLeagueInvitePlannerTests
 		foreach (var expectedParameter in expectedParameters)
 			Assert.Equal(expectedParameter, reader.ReadS());
 		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertQuestionWindowPayload(
+		SmQuestionWindow packet,
+		int expectedCode,
+		int expectedSenderObjectId,
+		int expectedRangeOrCooldownSeconds,
+		params string?[] expectedParameters)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(expectedCode, reader.ReadD());
+		for (var index = 0; index < 3; index++)
+			Assert.Equal(index < expectedParameters.Length ? expectedParameters[index] : string.Empty, reader.ReadS());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(expectedRangeOrCooldownSeconds > 0 ? 1 : 0, (int)reader.ReadC());
+		Assert.Equal(expectedSenderObjectId, reader.ReadD());
+		Assert.Equal(expectedRangeOrCooldownSeconds, reader.ReadD());
 		Assert.Equal(0, reader.Remaining);
 	}
 

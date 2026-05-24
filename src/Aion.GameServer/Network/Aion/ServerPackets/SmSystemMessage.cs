@@ -225,6 +225,18 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300190, playerName);
 	}
 
+	public static SmSystemMessage UnionInviteHim(string playerName, int allianceSize)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_UNION_INVITE_HIM(String, int).
+		return new SmSystemMessage(1400558, playerName, allianceSize.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage UnionInviteHisLeader(string playerName, string leaderName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_UNION_INVITE_HIS_LEADER(String, String).
+		return new SmSystemMessage(1400559, playerName, leaderName);
+	}
+
 	public static SmSystemMessage UnionCantInviteWhenHeIsAskedQuestion(string playerName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_UNION_CANT_INVITE_WHEN_HE_IS_ASKED_QUESTION(String).

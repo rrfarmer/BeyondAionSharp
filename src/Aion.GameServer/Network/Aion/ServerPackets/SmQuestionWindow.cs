@@ -12,6 +12,7 @@ public sealed class SmQuestionWindow : GameServerPacket
 	public const int DirectPortalPassConfirm = 160019;
 	public const int VortexPortalPassConfirm = 904304;
 	public const int RegisterBindstone = 160018;
+	public const int UnionInviteMe = 902249;
 	private const int MaxParameterCount = 3;
 
 	private readonly int _code;
