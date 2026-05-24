@@ -504,6 +504,47 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 	}
 
 	[Fact]
+	public async Task HandlePlayerStatusInfoAsync_AllianceChangeGroupMissingFirstMemberNoopsLikeJava()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var alliances = new PlayerAllianceRuntime();
+		var leader = new Player { ObjectId = 1001, Name = "Leader", IsOnline = true };
+		var member = new Player { ObjectId = 1002, Name = "Member", IsOnline = true };
+		alliances.CreateAlliance(88001, leader);
+		alliances.AddMember(88001, member);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, alliances);
+
+		await pair.Connection.HandlePlayerStatusInfoAsync(
+			leader,
+			CreatePacket(commandCode: 27, selectedObjectId: 1999, allianceGroupId: 1001));
+
+		Assert.Equal([1001, 1002], alliances.GetMemberObjectIdsByGroupId(88001, 1000));
+		Assert.Empty(alliances.GetMemberObjectIdsByGroupId(88001, 1001));
+		Assert.Empty(registry.SentPackets);
+	}
+
+	[Fact]
+	public async Task HandlePlayerStatusInfoAsync_AllianceChangeGroupMissingSecondMemberNoopsLikeJava()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var alliances = new PlayerAllianceRuntime();
+		var leader = new Player { ObjectId = 1001, Name = "Leader", IsOnline = true };
+		var first = new Player { ObjectId = 1002, Name = "First", IsOnline = true };
+		var second = new Player { ObjectId = 1003, Name = "Second", IsOnline = true };
+		alliances.CreateAlliance(88001, leader);
+		alliances.AddMember(88001, first);
+		alliances.AddMember(88001, second);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, alliances);
+
+		await pair.Connection.HandlePlayerStatusInfoAsync(
+			leader,
+			CreatePacket(commandCode: 27, selectedObjectId: first.ObjectId, allianceGroupId: 0, secondObjectId: 1999));
+
+		Assert.Equal([1001, 1002, 1003], alliances.GetMemberObjectIdsByGroupId(88001, 1000));
+		Assert.Empty(registry.SentPackets);
+	}
+
+	[Fact]
 	public async Task HandlePlayerStatusInfoAsync_GroupMentoringCommandsToggleMentorAndSendGroupPackets()
 	{
 		var registry = new CapturingConnectionRegistry();
