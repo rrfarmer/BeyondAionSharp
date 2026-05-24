@@ -1,12 +1,82 @@
 using Aion.Commons.Network;
+using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
+using Aion.GameServer.World;
 
 namespace Aion.GameServer.Tests;
 
 public sealed class PlayerLeagueInvitePlannerTests
 {
+	[Fact]
+	public void CreateAcceptExistingLeaguePlan_JoinsInvitedAllianceLikeJavaAcceptRequest()
+	{
+		var planner = new PlayerLeagueInvitePlanner();
+		var alliances = new PlayerAllianceRuntime();
+		var leagues = new PlayerLeagueRuntime();
+		var leagueLeader = new Player { ObjectId = 1001, Name = "LeagueLeader", IsOnline = true, Position = new WorldPosition(210010000, 1, 2, 3, 0) };
+		var invitedLeader = new Player { ObjectId = 2001, Name = "InvitedLeader", IsOnline = true, Position = new WorldPosition(220010000, 4, 5, 6, 0) };
+		alliances.CreateAlliance(88001, leagueLeader);
+		alliances.CreateAlliance(88002, invitedLeader);
+		leagues.CreateLeague(77001, leaderAllianceId: 88001);
+
+		var plan = planner.CreateAcceptExistingLeaguePlan(
+			requesterAllianceId: 88001,
+			invitedAllianceId: 88002,
+			leagues,
+			alliances);
+
+		Assert.Equal(PlayerLeagueInviteAcceptStatus.Joined, plan.Status);
+		Assert.Equal(88001, plan.RequesterAllianceId);
+		Assert.Equal(88002, plan.InvitedAllianceId);
+		var joinPlan = Assert.IsType<PlayerLeagueJoinPlan>(plan.JoinPlan);
+		Assert.Equal(77001, joinPlan.LeagueId);
+		Assert.Equal(1, joinPlan.JoinedPosition);
+		Assert.Equal([88001, 88002], joinPlan.AllianceIdsByPosition);
+		Assert.Equal([88001, 88002], leagues.GetAllianceIdsByPosition(77001));
+		Assert.Collection(
+			joinPlan.PacketIntents,
+			intent =>
+			{
+				Assert.Equal(1001, intent.RecipientObjectId);
+				Assert.Equal(1400561, intent.AllianceInfoPlan?.MessageId);
+				Assert.Equal("InvitedLeader", intent.AllianceInfoPlan?.Message);
+			},
+			intent =>
+			{
+				Assert.Equal(2001, intent.RecipientObjectId);
+				Assert.Equal(1400560, intent.AllianceInfoPlan?.MessageId);
+				Assert.Equal("LeagueLeader", intent.AllianceInfoPlan?.Message);
+			});
+	}
+
+	[Fact]
+	public void CreateAcceptExistingLeaguePlan_ReportsDeferredOrNoopBranches()
+	{
+		var planner = new PlayerLeagueInvitePlanner();
+		var alliances = new PlayerAllianceRuntime();
+		var leagues = new PlayerLeagueRuntime();
+		var requester = new Player { ObjectId = 1001, Name = "Requester", IsOnline = true };
+		var invited = new Player { ObjectId = 2001, Name = "Invited", IsOnline = true };
+		alliances.CreateAlliance(88001, requester);
+		alliances.CreateAlliance(88002, invited);
+
+		var missingLeaguePlan = planner.CreateAcceptExistingLeaguePlan(88001, 88002, leagues, alliances);
+
+		Assert.Equal(PlayerLeagueInviteAcceptStatus.RequesterLeagueMissing, missingLeaguePlan.Status);
+		Assert.Null(missingLeaguePlan.JoinPlan);
+
+		leagues.CreateLeague(77001, leaderAllianceId: 88001);
+		Assert.NotNull(leagues.JoinAlliance(77001, 88002, alliances));
+
+		var alreadyInLeaguePlan = planner.CreateAcceptExistingLeaguePlan(88001, 88002, leagues, alliances);
+
+		Assert.Equal(PlayerLeagueInviteAcceptStatus.InvitedAlreadyInLeague, alreadyInLeaguePlan.Status);
+		Assert.Null(alreadyInLeaguePlan.JoinPlan);
+		Assert.Equal([88001, 88002], leagues.GetAllianceIdsByPosition(77001));
+	}
+
 	[Fact]
 	public void CreateDenyPlan_SendsRequesterRejectMessageLikeJavaLeagueInviteEvent()
 	{
