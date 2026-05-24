@@ -267,6 +267,7 @@ public sealed class PlayerEnterWorldServiceTests
 			new PlayerMail(1, player.ObjectId, "Sender", "Title", "Message", true, 0, 0, 0, 0, DateTime.Now),
 			new PlayerMail(2, player.ObjectId, "Sender", "Title", "Message", false, 0, 0, 0, 1, DateTime.Now),
 		];
+		SeedPendingQuestionResponses(player);
 		var repository = new CapturingEnterWorldRepository { Player = player };
 		var world = CreateWorld();
 		world.TryAddObject(player.ObjectId, player);
@@ -284,6 +285,13 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.Single(repository.SavedLogoutPlayer.SkillCooldowns);
 		Assert.Single(repository.SavedLogoutPlayer.ItemCooldowns);
 		Assert.Equal(player.LastOnline, repository.LogoutLastOnline);
+		Assert.Equal(0, player.ResponseRequester.Count);
+		Assert.Null(player.PendingFriendRequest);
+		Assert.Null(player.PendingChargeAllRequest);
+		Assert.Null(player.PendingSoulBindRequest);
+		Assert.Null(player.PendingRiftPortalRequest);
+		Assert.Null(player.PendingKiskBindRequest);
+		Assert.Null(player.PendingLeagueInviteRequest);
 	}
 
 	[Fact]
@@ -621,6 +629,48 @@ public sealed class PlayerEnterWorldServiceTests
 			Dp = dp,
 			Position = new WorldPosition(210010000, 1, 2, 3, 32),
 		};
+	}
+
+	private static void SeedPendingQuestionResponses(Player player)
+	{
+		player.PendingFriendRequest = new PendingFriendRequest(2001, "Requester");
+		player.PendingChargeAllRequest = new PendingChargeAllRequest(
+			SenderObjectId: 7001,
+			ChargeWay: 1,
+			PaymentAmount: 0,
+			Items:
+			[
+				new PendingChargeAllItem(9001, 100, PreviousCharge: 0, TargetCharge: 10000, Level: 2)
+			]);
+		player.PendingSoulBindRequest = new PendingSoulBindRequest(9002, 1, "Practice Sword");
+		player.PendingRiftPortalRequest = new PendingRiftPortalRequest(9003, SmQuestionWindow.DirectPortalPassConfirm);
+		player.PendingKiskBindRequest = new PendingKiskBindRequest(9004, SmQuestionWindow.RegisterBindstone);
+		player.PendingLeagueInviteRequest = new PendingLeagueInviteRequest(
+			QuestionId: SmQuestionWindow.UnionInviteMe,
+			RequesterObjectId: 2002,
+			RequestTargetObjectId: player.ObjectId,
+			SelectedPlayerObjectId: player.ObjectId,
+			InvitedAllianceId: 3002);
+
+		Assert.True(player.ResponseRequester.PutRequest(
+			SmQuestionWindow.BuddyListAddBuddyRequest,
+			new QuestionResponseRequest(2001, QuestionResponseRequestKind.FriendInvite, player.PendingFriendRequest)));
+		Assert.True(player.ResponseRequester.PutRequest(
+			SmQuestionWindow.ItemChargeAllConfirm,
+			new QuestionResponseRequest(player.ObjectId, QuestionResponseRequestKind.ChargeAll, player.PendingChargeAllRequest)));
+		Assert.True(player.ResponseRequester.PutRequest(
+			SmQuestionWindow.SoulBoundItemConfirm,
+			new QuestionResponseRequest(player.ObjectId, QuestionResponseRequestKind.SoulBind, player.PendingSoulBindRequest)));
+		Assert.True(player.ResponseRequester.PutRequest(
+			SmQuestionWindow.DirectPortalPassConfirm,
+			new QuestionResponseRequest(9003, QuestionResponseRequestKind.RiftPortal, player.PendingRiftPortalRequest)));
+		Assert.True(player.ResponseRequester.PutRequest(
+			SmQuestionWindow.RegisterBindstone,
+			new QuestionResponseRequest(9004, QuestionResponseRequestKind.KiskBind, player.PendingKiskBindRequest)));
+		Assert.True(player.ResponseRequester.PutRequest(
+			SmQuestionWindow.UnionInviteMe,
+			new QuestionResponseRequest(2002, QuestionResponseRequestKind.LeagueInvite, player.PendingLeagueInviteRequest)));
+		Assert.Equal(6, player.ResponseRequester.Count);
 	}
 
 	private const int PortalWorldId = 300030000;

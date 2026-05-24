@@ -743,6 +743,7 @@ public sealed class PlayerEnterWorldService
 	public async Task LeaveWorldAsync(Player player, CancellationToken cancellationToken = default)
 	{
 		// Java parity: services/player/PlayerLeaveWorldService.leaveWorld baseline persistence.
+		ClearPendingQuestionResponses(player);
 		var lastOnline = DateTime.Now;
 		player.IsOnline = false;
 		player.LastOnline = lastOnline;
@@ -760,6 +761,20 @@ public sealed class PlayerEnterWorldService
 		// Java parity: PlayerEnterWorldService lastOnline vs GSConfig.CHARACTER_REENTRY_TIME check.
 		return lastOnline.HasValue
 			&& DateTime.Now - lastOnline.Value < TimeSpan.FromSeconds(_options.Core.CharacterReentryTimeSeconds);
+	}
+
+	private static void ClearPendingQuestionResponses(Player player)
+	{
+		// Java parity: PlayerLeaveWorldService.leaveWorld calls player.getResponseRequester().denyAll().
+		// Typed adapter slots are C# bridge state for migrated question handlers and must be cleared
+		// with the registry on logout.
+		_ = player.ResponseRequester.DenyAll();
+		player.PendingFriendRequest = null;
+		player.PendingChargeAllRequest = null;
+		player.PendingSoulBindRequest = null;
+		player.PendingRiftPortalRequest = null;
+		player.PendingKiskBindRequest = null;
+		player.PendingLeagueInviteRequest = null;
 	}
 
 	private void ClearPlayerCreaturePvpZones(int playerObjectId)
