@@ -10,6 +10,78 @@ namespace Aion.GameServer.Tests;
 public class PlayerSummonSkillExecutionServiceTests
 {
 	[Fact]
+	public void ApplyMercenaryTargetRangeDelay_ProjectsJavaTargetTooFarDelay()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var player = new Player
+		{
+			ObjectId = 1,
+		};
+		var knownObject = new PlayerSummonKnownObject(
+			ObjectId: 8002,
+			Kind: PlayerSummonKnownObjectKind.Creature,
+			CreatorObjectId: 1,
+			NpcTemplateId: 833288,
+			NpcTemplateType: PlayerSummonKnownNpcTemplateType.Mercenary);
+		player.SetSummonKnownObject(knownObject);
+
+		var notRequired = service.EvaluateMercenaryTargetRange(
+			knownObject,
+			requiresCreatureTargetCheck: false,
+			hasCreatureTarget: false);
+		var areaSkillReady = service.EvaluateMercenaryTargetRange(
+			knownObject,
+			requiresCreatureTargetCheck: true,
+			hasCreatureTarget: true,
+			isAreaTarget: true,
+			isInRange: false);
+		var missingCreatureTarget = service.EvaluateMercenaryTargetRange(
+			knownObject,
+			requiresCreatureTargetCheck: true,
+			hasCreatureTarget: false);
+		var deadTarget = service.EvaluateMercenaryTargetRange(
+			knownObject,
+			requiresCreatureTargetCheck: true,
+			hasCreatureTarget: true,
+			targetIsDead: true);
+		var unseenTarget = service.EvaluateMercenaryTargetRange(
+			knownObject,
+			requiresCreatureTargetCheck: true,
+			hasCreatureTarget: true,
+			canSeeTarget: false);
+		var outOfRange = service.EvaluateMercenaryTargetRange(
+			knownObject,
+			requiresCreatureTargetCheck: true,
+			hasCreatureTarget: true,
+			isInRange: false);
+
+		var missingEvaluation = service.ApplyMercenaryTargetRangeDelay(player, mercenaryObjectId: 8002, null);
+		var noDelay = service.ApplyMercenaryTargetRangeDelay(player, mercenaryObjectId: 8002, areaSkillReady);
+		var missingKnownObject = service.ApplyMercenaryTargetRangeDelay(new Player { ObjectId = 1 }, mercenaryObjectId: 8002, outOfRange);
+		var delayed = service.ApplyMercenaryTargetRangeDelay(player, mercenaryObjectId: 8002, outOfRange);
+
+		Assert.Equal(PlayerSummonKnownObjectTargetRangeReadinessStatus.NotRequired, notRequired.Status);
+		Assert.False(notRequired.ShouldSetNextSkillDelay);
+		Assert.Equal(PlayerSummonKnownObjectTargetRangeReadinessStatus.Ready, areaSkillReady.Status);
+		Assert.False(areaSkillReady.ShouldSetNextSkillDelay);
+		Assert.Equal(PlayerSummonKnownObjectTargetRangeReadinessStatus.MissingCreatureTarget, missingCreatureTarget.Status);
+		Assert.Equal(5_000, missingCreatureTarget.NextSkillDelayMilliseconds);
+		Assert.Equal(PlayerSummonKnownObjectTargetRangeReadinessStatus.TargetDead, deadTarget.Status);
+		Assert.Equal(5_000, deadTarget.NextSkillDelayMilliseconds);
+		Assert.Equal(PlayerSummonKnownObjectTargetRangeReadinessStatus.CannotSeeTarget, unseenTarget.Status);
+		Assert.Equal(5_000, unseenTarget.NextSkillDelayMilliseconds);
+		Assert.Equal(PlayerSummonKnownObjectTargetRangeReadinessStatus.TargetOutOfRange, outOfRange.Status);
+		Assert.Equal(5_000, outOfRange.NextSkillDelayMilliseconds);
+		Assert.Equal(PlayerSummonKnownObjectTargetRangeDelayStatus.MissingRangeEvaluation, missingEvaluation.Status);
+		Assert.Equal(PlayerSummonKnownObjectTargetRangeDelayStatus.NotRequired, noDelay.Status);
+		Assert.Equal(PlayerSummonKnownObjectTargetRangeDelayStatus.MissingKnownObject, missingKnownObject.Status);
+		Assert.Equal(PlayerSummonKnownObjectTargetRangeDelayStatus.Set, delayed.Status);
+		Assert.Equal(5_000, delayed.StoredDelayMilliseconds);
+		Assert.True(player.TryGetSummonKnownObject(8002, out var storedKnownObject));
+		Assert.Equal(5_000, storedKnownObject.NextSkillDelayMilliseconds);
+	}
+
+	[Fact]
 	public void EvaluateMercenarySkillReadiness_ProjectsJavaAbnormalAndTransformGates()
 	{
 		var service = new PlayerSummonSkillExecutionService();

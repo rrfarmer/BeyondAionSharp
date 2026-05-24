@@ -6,6 +6,8 @@ namespace Aion.GameServer.Services;
 
 public sealed class PlayerSummonSkillExecutionService
 {
+	private const int TargetTooFarNextSkillDelayMilliseconds = 5000;
+
 	public PlayerSummonSkillInvocationExecutionResult PlanInvocationExecution(
 		PlayerSummonSkillInvocationPlan? invocationPlan,
 		SkillTemplateTable skillTemplates,
@@ -151,6 +153,51 @@ public sealed class PlayerSummonSkillExecutionService
 			return PlayerSummonKnownObjectSkillReadiness.BlockedByTransformSkillBan(knownObject, skillTemplate);
 
 		return PlayerSummonKnownObjectSkillReadiness.Ready(knownObject, skillTemplate);
+	}
+
+	public PlayerSummonKnownObjectTargetRangeReadiness EvaluateMercenaryTargetRange(
+		PlayerSummonKnownObject knownObject,
+		bool requiresCreatureTargetCheck,
+		bool hasCreatureTarget,
+		bool targetIsDead = false,
+		bool canSeeTarget = true,
+		bool isAreaTarget = false,
+		bool isInRange = true)
+	{
+		if (!requiresCreatureTargetCheck)
+			return PlayerSummonKnownObjectTargetRangeReadiness.NotRequired(knownObject);
+
+		if (!hasCreatureTarget)
+			return PlayerSummonKnownObjectTargetRangeReadiness.MissingCreatureTarget(knownObject, TargetTooFarNextSkillDelayMilliseconds);
+
+		if (targetIsDead)
+			return PlayerSummonKnownObjectTargetRangeReadiness.TargetDead(knownObject, TargetTooFarNextSkillDelayMilliseconds);
+
+		if (!canSeeTarget)
+			return PlayerSummonKnownObjectTargetRangeReadiness.CannotSeeTarget(knownObject, TargetTooFarNextSkillDelayMilliseconds);
+
+		// Java parity: SkillAttackManager.targetTooFar skips PositionUtil.isInRange for AREA target range skills.
+		if (!isAreaTarget && !isInRange)
+			return PlayerSummonKnownObjectTargetRangeReadiness.TargetOutOfRange(knownObject, TargetTooFarNextSkillDelayMilliseconds);
+
+		return PlayerSummonKnownObjectTargetRangeReadiness.Ready(knownObject);
+	}
+
+	public PlayerSummonKnownObjectTargetRangeDelayResult ApplyMercenaryTargetRangeDelay(
+		Player player,
+		int mercenaryObjectId,
+		PlayerSummonKnownObjectTargetRangeReadiness? targetRangeReadiness)
+	{
+		if (targetRangeReadiness == null)
+			return PlayerSummonKnownObjectTargetRangeDelayResult.MissingRangeEvaluation(mercenaryObjectId);
+
+		if (!targetRangeReadiness.ShouldSetNextSkillDelay)
+			return PlayerSummonKnownObjectTargetRangeDelayResult.NotRequired(mercenaryObjectId, targetRangeReadiness);
+
+		// Java parity: SkillAttackManager.getNpcSkillEntryIfNotTooFarAway sets nextSkillDelay to 5000 on too-far targets.
+		return player.TrySetSummonKnownObjectNextSkillDelay(mercenaryObjectId, targetRangeReadiness.NextSkillDelayMilliseconds!.Value)
+			? PlayerSummonKnownObjectTargetRangeDelayResult.Set(mercenaryObjectId, targetRangeReadiness)
+			: PlayerSummonKnownObjectTargetRangeDelayResult.MissingKnownObject(mercenaryObjectId, targetRangeReadiness);
 	}
 
 	public PlayerSummonKnownObjectSkillAttackPreview PreviewMercenarySkillAttack(
@@ -804,6 +851,131 @@ public enum PlayerSummonKnownObjectSkillReadinessStatus
 	BlockedByCantAttackState,
 	BlockedByTransformSkillBan,
 	Ready,
+}
+
+public sealed record PlayerSummonKnownObjectTargetRangeReadiness(
+	PlayerSummonKnownObjectTargetRangeReadinessStatus Status,
+	PlayerSummonKnownObject KnownObject,
+	int? NextSkillDelayMilliseconds = null)
+{
+	public bool ShouldSetNextSkillDelay => NextSkillDelayMilliseconds.HasValue;
+
+	public static PlayerSummonKnownObjectTargetRangeReadiness NotRequired(PlayerSummonKnownObject knownObject)
+	{
+		return new PlayerSummonKnownObjectTargetRangeReadiness(
+			PlayerSummonKnownObjectTargetRangeReadinessStatus.NotRequired,
+			knownObject);
+	}
+
+	public static PlayerSummonKnownObjectTargetRangeReadiness MissingCreatureTarget(
+		PlayerSummonKnownObject knownObject,
+		int nextSkillDelayMilliseconds)
+	{
+		return new PlayerSummonKnownObjectTargetRangeReadiness(
+			PlayerSummonKnownObjectTargetRangeReadinessStatus.MissingCreatureTarget,
+			knownObject,
+			nextSkillDelayMilliseconds);
+	}
+
+	public static PlayerSummonKnownObjectTargetRangeReadiness TargetDead(
+		PlayerSummonKnownObject knownObject,
+		int nextSkillDelayMilliseconds)
+	{
+		return new PlayerSummonKnownObjectTargetRangeReadiness(
+			PlayerSummonKnownObjectTargetRangeReadinessStatus.TargetDead,
+			knownObject,
+			nextSkillDelayMilliseconds);
+	}
+
+	public static PlayerSummonKnownObjectTargetRangeReadiness CannotSeeTarget(
+		PlayerSummonKnownObject knownObject,
+		int nextSkillDelayMilliseconds)
+	{
+		return new PlayerSummonKnownObjectTargetRangeReadiness(
+			PlayerSummonKnownObjectTargetRangeReadinessStatus.CannotSeeTarget,
+			knownObject,
+			nextSkillDelayMilliseconds);
+	}
+
+	public static PlayerSummonKnownObjectTargetRangeReadiness TargetOutOfRange(
+		PlayerSummonKnownObject knownObject,
+		int nextSkillDelayMilliseconds)
+	{
+		return new PlayerSummonKnownObjectTargetRangeReadiness(
+			PlayerSummonKnownObjectTargetRangeReadinessStatus.TargetOutOfRange,
+			knownObject,
+			nextSkillDelayMilliseconds);
+	}
+
+	public static PlayerSummonKnownObjectTargetRangeReadiness Ready(PlayerSummonKnownObject knownObject)
+	{
+		return new PlayerSummonKnownObjectTargetRangeReadiness(
+			PlayerSummonKnownObjectTargetRangeReadinessStatus.Ready,
+			knownObject);
+	}
+}
+
+public enum PlayerSummonKnownObjectTargetRangeReadinessStatus
+{
+	NotRequired,
+	MissingCreatureTarget,
+	TargetDead,
+	CannotSeeTarget,
+	TargetOutOfRange,
+	Ready,
+}
+
+public sealed record PlayerSummonKnownObjectTargetRangeDelayResult(
+	PlayerSummonKnownObjectTargetRangeDelayStatus Status,
+	int MercenaryObjectId,
+	PlayerSummonKnownObjectTargetRangeReadiness? TargetRangeReadiness = null,
+	int? StoredDelayMilliseconds = null)
+{
+	public static PlayerSummonKnownObjectTargetRangeDelayResult MissingRangeEvaluation(int mercenaryObjectId)
+	{
+		return new PlayerSummonKnownObjectTargetRangeDelayResult(
+			PlayerSummonKnownObjectTargetRangeDelayStatus.MissingRangeEvaluation,
+			mercenaryObjectId);
+	}
+
+	public static PlayerSummonKnownObjectTargetRangeDelayResult NotRequired(
+		int mercenaryObjectId,
+		PlayerSummonKnownObjectTargetRangeReadiness targetRangeReadiness)
+	{
+		return new PlayerSummonKnownObjectTargetRangeDelayResult(
+			PlayerSummonKnownObjectTargetRangeDelayStatus.NotRequired,
+			mercenaryObjectId,
+			targetRangeReadiness);
+	}
+
+	public static PlayerSummonKnownObjectTargetRangeDelayResult MissingKnownObject(
+		int mercenaryObjectId,
+		PlayerSummonKnownObjectTargetRangeReadiness targetRangeReadiness)
+	{
+		return new PlayerSummonKnownObjectTargetRangeDelayResult(
+			PlayerSummonKnownObjectTargetRangeDelayStatus.MissingKnownObject,
+			mercenaryObjectId,
+			targetRangeReadiness);
+	}
+
+	public static PlayerSummonKnownObjectTargetRangeDelayResult Set(
+		int mercenaryObjectId,
+		PlayerSummonKnownObjectTargetRangeReadiness targetRangeReadiness)
+	{
+		return new PlayerSummonKnownObjectTargetRangeDelayResult(
+			PlayerSummonKnownObjectTargetRangeDelayStatus.Set,
+			mercenaryObjectId,
+			targetRangeReadiness,
+			targetRangeReadiness.NextSkillDelayMilliseconds);
+	}
+}
+
+public enum PlayerSummonKnownObjectTargetRangeDelayStatus
+{
+	MissingRangeEvaluation,
+	NotRequired,
+	MissingKnownObject,
+	Set,
 }
 
 public sealed record PlayerSummonKnownObjectSkillAttackPreview(
