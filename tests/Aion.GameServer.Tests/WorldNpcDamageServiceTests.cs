@@ -390,6 +390,41 @@ public sealed class WorldNpcDamageServiceTests
 	}
 
 	[Fact]
+	public async Task ApplyDamageEffectAndSendObserverPacketsAsync_SendsObserverPacketsAfterAttackStatusBroadcast()
+	{
+		var damageService = CreateDamageService(out var spawnService, out var world, out _, out var threadPoolManager, out _, out _, out _, out _, out var registry);
+		var skillDamageService = new WorldNpcSkillDamageService(
+			damageService,
+			itemTemplates: CreateObserverBurnItemTemplates());
+		var fanoutService = new WorldNpcSkillDamageFanoutService(skillDamageService, registry);
+		try
+		{
+			SpawnNpc(spawnService, world, npcTemplateId: 203110, maxHp: 100);
+			var npc = Assert.Single(world.GetNpcs());
+			var effector = CreatePlayerWithObserverBurnItem(charge: 100_050, polishCharge: 350_000);
+
+			var result = await fanoutService.ApplyDamageEffectAndSendObserverPacketsAsync(new WorldNpcSkillDamageRequest(
+				Target: npc,
+				Effector: effector,
+				Damage: 20,
+				SkillId: 0));
+
+			Assert.Equal(2, result.ObserverBurnPacketSentCount);
+			Assert.NotNull(result.DamageResult.DamageResult.AttackStatusPacket);
+			Assert.Collection(
+				registry.PacketOrder,
+				packet => Assert.Same(result.DamageResult.DamageResult.AttackStatusPacket, packet),
+				packet => AssertPolishChargePacket(packet, objectId: 10, polishCharge: 250_000),
+				packet => AssertChargePacket(packet, objectId: 10, charge: 99_850));
+			Assert.Equal([1001, 1001], registry.SentPackets.Select(sent => sent.PlayerObjectId));
+		}
+		finally
+		{
+			await threadPoolManager.ShutdownAsync();
+		}
+	}
+
+	[Fact]
 	public async Task ApplyDamageEffectAsync_AppliesEquipmentObserverBurnsForDotAttack()
 	{
 		var damageService = CreateDamageService(out var spawnService, out var world, out _, out var threadPoolManager, out _, out _, out _, out _, out _);
@@ -1474,6 +1509,8 @@ public sealed class WorldNpcDamageServiceTests
 	private sealed class CapturingConnectionRegistry : IGameClientConnectionRegistry
 	{
 		public List<BroadcastRecord> Broadcasts { get; } = [];
+		public List<SentPacketRecord> SentPackets { get; } = [];
+		public List<GameServerPacket> PacketOrder { get; } = [];
 
 		public void RegisterPlayerConnection(int playerObjectId, GameServerConnection connection)
 		{
@@ -1495,7 +1532,9 @@ public sealed class WorldNpcDamageServiceTests
 
 		public Task<bool> SendPacketToPlayerAsync(int playerObjectId, GameServerPacket packet)
 		{
-			return Task.FromResult(false);
+			SentPackets.Add(new SentPacketRecord(playerObjectId, packet));
+			PacketOrder.Add(packet);
+			return Task.FromResult(true);
 		}
 
 		public Task<int> BroadcastToWorldAsync(GameServerPacket packet, Func<Player, bool>? filter = null)
@@ -1511,6 +1550,7 @@ public sealed class WorldNpcDamageServiceTests
 			Func<Player, bool>? filter = null)
 		{
 			Broadcasts.Add(new BroadcastRecord(sourcePosition, sourceObjectId, packet, includeSourcePlayer));
+			PacketOrder.Add(packet);
 			return Task.FromResult(1);
 		}
 
@@ -1548,4 +1588,6 @@ public sealed class WorldNpcDamageServiceTests
 		int SourceObjectId,
 		GameServerPacket Packet,
 		bool IncludeSourcePlayer);
+
+	private sealed record SentPacketRecord(int PlayerObjectId, GameServerPacket Packet);
 }

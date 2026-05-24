@@ -111,6 +111,7 @@ var builder = Host.CreateDefaultBuilder(args)
 						saveIdianPolishBurnAsync: playerEnterWorldService.SaveIdianPolishBurnMutationAsync,
 						saveItemChargeBurnAsync: playerEnterWorldService.SaveItemChargeBurnMutationAsync);
 				});
+			services.AddSingleton<WorldNpcSkillDamageFanoutService>();
 			services.AddSingleton<WorldNpcLootService>();
 			services.AddSingleton<WorldNpcLootBroadcastService>();
 			services.AddSingleton<WorldNpcRandomWalkService>();
