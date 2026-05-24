@@ -449,7 +449,7 @@ public class GameServerConnectionCastSpellTests
 	{
 		var sentPackets = new List<GameServerPacket>();
 		var runtimeContext = await CreateRuntimeContextAsync();
-		var skillTemplate = runtimeContext.DataManager.StaticData.SkillTemplates.GetSkillTemplate(22107)
+		var skillTemplate = runtimeContext.DataManager!.StaticData.SkillTemplates.GetSkillTemplate(22107)
 			?? throw new InvalidOperationException("Expected test skill template.");
 		await using var pair = await TestConnectionPair.CreateAsync(sentPackets, runtimeContext: runtimeContext);
 		var player = CreatePlayer();

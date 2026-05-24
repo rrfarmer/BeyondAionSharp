@@ -278,6 +278,19 @@ public sealed class Player
 		return _summonKnownObjects.TryGetValue(objectId, out knownObject!);
 	}
 
+	public bool TryRenewSummonKnownObjectLastSkillTime(int objectId, long currentTimeMilliseconds)
+	{
+		// Java parity: NpcGameStats.renewLastSkillTime stores System.currentTimeMillis().
+		if (!_summonKnownObjects.TryGetValue(objectId, out var knownObject))
+			return false;
+
+		_summonKnownObjects[objectId] = knownObject with
+		{
+			LastSkillTimeMilliseconds = currentTimeMilliseconds,
+		};
+		return true;
+	}
+
 	public PlayerSummonOrMercenaryKind GetSummonOrMercenaryKind(int objectId)
 	{
 		// Java parity: Player.getSummonOrMercenary first checks the owned summon, then creator-owned mercenary NPCs.

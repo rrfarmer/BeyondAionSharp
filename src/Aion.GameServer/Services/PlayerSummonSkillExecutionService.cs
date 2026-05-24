@@ -61,6 +61,28 @@ public sealed class PlayerSummonSkillExecutionService
 		return PlayerSummonSkillInvocationUseResult.WouldCompleteWithoutRelease(executionResult);
 	}
 
+	public PlayerSummonKnownObjectLastSkillTimeRenewalResult RenewMercenaryLastSkillTime(
+		Player player,
+		PlayerSummonSkillInvocationExecutionResult? executionResult,
+		long currentTimeMilliseconds)
+	{
+		if (executionResult == null)
+			return PlayerSummonKnownObjectLastSkillTimeRenewalResult.MissingExecution();
+
+		if (!executionResult.WouldRenewLastSkillTime
+			|| executionResult.InvocationPlan?.ActorKind != PlayerSummonSkillInvocationActorKind.Mercenary)
+		{
+			return PlayerSummonKnownObjectLastSkillTimeRenewalResult.NotRenewable(executionResult);
+		}
+
+		// Java parity: NpcController.useSkill renews last skill time before CreatureController.useSkill.
+		return player.TryRenewSummonKnownObjectLastSkillTime(
+				executionResult.InvocationPlan.ActorObjectId,
+				currentTimeMilliseconds)
+			? PlayerSummonKnownObjectLastSkillTimeRenewalResult.Renewed(executionResult, currentTimeMilliseconds)
+			: PlayerSummonKnownObjectLastSkillTimeRenewalResult.MissingKnownObject(executionResult);
+	}
+
 	public PlayerSummonSkillExecutionResult ValidateExecution(
 		Player player,
 		PlayerPetSkillOrder order,
@@ -443,6 +465,51 @@ public enum PlayerSummonSkillInvocationUseStatus
 	SkillUseFailed,
 	WouldCompleteWithoutRelease,
 	WouldReleaseSummon,
+}
+
+public sealed record PlayerSummonKnownObjectLastSkillTimeRenewalResult(
+	PlayerSummonKnownObjectLastSkillTimeRenewalStatus Status,
+	PlayerSummonSkillInvocationExecutionResult? ExecutionResult = null,
+	long? LastSkillTimeMilliseconds = null)
+{
+	public static PlayerSummonKnownObjectLastSkillTimeRenewalResult MissingExecution()
+	{
+		return new PlayerSummonKnownObjectLastSkillTimeRenewalResult(PlayerSummonKnownObjectLastSkillTimeRenewalStatus.MissingExecution);
+	}
+
+	public static PlayerSummonKnownObjectLastSkillTimeRenewalResult NotRenewable(
+		PlayerSummonSkillInvocationExecutionResult executionResult)
+	{
+		return new PlayerSummonKnownObjectLastSkillTimeRenewalResult(
+			PlayerSummonKnownObjectLastSkillTimeRenewalStatus.NotRenewable,
+			executionResult);
+	}
+
+	public static PlayerSummonKnownObjectLastSkillTimeRenewalResult MissingKnownObject(
+		PlayerSummonSkillInvocationExecutionResult executionResult)
+	{
+		return new PlayerSummonKnownObjectLastSkillTimeRenewalResult(
+			PlayerSummonKnownObjectLastSkillTimeRenewalStatus.MissingKnownObject,
+			executionResult);
+	}
+
+	public static PlayerSummonKnownObjectLastSkillTimeRenewalResult Renewed(
+		PlayerSummonSkillInvocationExecutionResult executionResult,
+		long lastSkillTimeMilliseconds)
+	{
+		return new PlayerSummonKnownObjectLastSkillTimeRenewalResult(
+			PlayerSummonKnownObjectLastSkillTimeRenewalStatus.Renewed,
+			executionResult,
+			lastSkillTimeMilliseconds);
+	}
+}
+
+public enum PlayerSummonKnownObjectLastSkillTimeRenewalStatus
+{
+	MissingExecution,
+	NotRenewable,
+	MissingKnownObject,
+	Renewed,
 }
 
 public enum PlayerMercenarySkillExecutionStatus

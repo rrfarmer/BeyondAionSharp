@@ -10,6 +10,59 @@ namespace Aion.GameServer.Tests;
 public class PlayerSummonSkillExecutionServiceTests
 {
 	[Fact]
+	public void RenewMercenaryLastSkillTime_UpdatesRepresentedKnownObject()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var player = new Player
+		{
+			ObjectId = 1,
+		};
+		player.SetSummonKnownObject(new PlayerSummonKnownObject(
+			ObjectId: 8002,
+			Kind: PlayerSummonKnownObjectKind.Creature,
+			CreatorObjectId: 1,
+			NpcTemplateId: 833288,
+			NpcTemplateType: PlayerSummonKnownNpcTemplateType.Mercenary));
+		var mercenaryPlan = new PlayerSummonSkillInvocationPlan(
+			PlayerSummonSkillInvocationActorKind.Mercenary,
+			ActorObjectId: 8002,
+			ActorTemplateId: 833288,
+			SkillId: 22107,
+			SkillLevel: 1,
+			Target: new PlayerSummonCastSpellTarget(8002, PlayerSummonKnownObjectKind.Creature, IsActorSelfTarget: true),
+			Hate: 0,
+			ReleaseOnSuccess: false);
+		var summonPlan = mercenaryPlan with
+		{
+			ActorKind = PlayerSummonSkillInvocationActorKind.Summon,
+			ActorObjectId = 8001,
+			Hate = 5,
+			ReleaseOnSuccess = true,
+		};
+		var mercenaryExecution = PlayerSummonSkillInvocationExecutionResult.WouldUseSkill(
+			mercenaryPlan,
+			skillTemplateId: 22107,
+			skillCooldownId: 0);
+		var summonExecution = PlayerSummonSkillInvocationExecutionResult.WouldUseSkill(
+			summonPlan,
+			skillTemplateId: 22107,
+			skillCooldownId: 0);
+
+		var missingExecution = service.RenewMercenaryLastSkillTime(player, null, currentTimeMilliseconds: 12_000);
+		var notRenewable = service.RenewMercenaryLastSkillTime(player, summonExecution, currentTimeMilliseconds: 12_000);
+		var missingKnownObject = service.RenewMercenaryLastSkillTime(new Player { ObjectId = 1 }, mercenaryExecution, currentTimeMilliseconds: 12_000);
+		var renewed = service.RenewMercenaryLastSkillTime(player, mercenaryExecution, currentTimeMilliseconds: 12_345);
+
+		Assert.Equal(PlayerSummonKnownObjectLastSkillTimeRenewalStatus.MissingExecution, missingExecution.Status);
+		Assert.Equal(PlayerSummonKnownObjectLastSkillTimeRenewalStatus.NotRenewable, notRenewable.Status);
+		Assert.Equal(PlayerSummonKnownObjectLastSkillTimeRenewalStatus.MissingKnownObject, missingKnownObject.Status);
+		Assert.Equal(PlayerSummonKnownObjectLastSkillTimeRenewalStatus.Renewed, renewed.Status);
+		Assert.Equal(12_345, renewed.LastSkillTimeMilliseconds);
+		Assert.True(player.TryGetSummonKnownObject(8002, out var knownObject));
+		Assert.Equal(12_345, knownObject.LastSkillTimeMilliseconds);
+	}
+
+	[Fact]
 	public void PreviewInvocationUse_GatesReleaseOnSuccessfulSkillUse()
 	{
 		var service = new PlayerSummonSkillExecutionService();
