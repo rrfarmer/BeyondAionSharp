@@ -4,6 +4,7 @@ namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 public sealed class CmDialogSelect : GameClientPacket
 {
+	public const int Recovery = 35;
 	public const int ChargeItemMulti = 76;
 	public const int ChargeItemMulti2 = 95;
 

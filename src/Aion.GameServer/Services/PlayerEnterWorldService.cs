@@ -787,6 +787,7 @@ public sealed class PlayerEnterWorldService
 		player.PendingAllianceInviteRequest = null;
 		player.PendingDuelRequest = null;
 		player.PendingDuelWithdrawRequest = null;
+		player.PendingExperienceRecoveryRequest = null;
 	}
 
 	private async Task SendPendingQuestionDenySideEffectAsync(Player responder, QuestionResponseDispatch dispatch)

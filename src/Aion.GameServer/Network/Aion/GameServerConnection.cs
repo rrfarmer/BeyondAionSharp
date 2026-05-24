@@ -1364,6 +1364,22 @@ public sealed class GameServerConnection : BaseClientConnection
 				return;
 		}
 
+		if (packet.DialogActionId == CmDialogSelect.Recovery)
+		{
+			if (NpcDialogTargetingService.ValidateTargetingNpcWithFunction(player, packet.TargetObjectId, CmDialogSelect.Recovery, _world) !=
+				NpcDialogTargetingResult.Valid)
+			{
+				return;
+			}
+
+			var recoveryResult = PlayerExperienceRecoveryService.RequestDialog(player, packet.TargetObjectId);
+			if (recoveryResult.ResponsePacket != null)
+				await SendPacketAsync(recoveryResult.ResponsePacket);
+			if (recoveryResult.QuestionWindow != null)
+				await SendPacketAsync(recoveryResult.QuestionWindow);
+			return;
+		}
+
 		var chargeWay = packet.DialogActionId switch
 		{
 			CmDialogSelect.ChargeItemMulti => 1,
@@ -6843,6 +6859,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (packet.QuestionId == SmQuestionWindow.AskRecoverExperience)
+		{
+			await HandleExperienceRecoveryQuestionResponseAsync(responder, packet);
+			return;
+		}
+
 		if (packet.QuestionId != SmQuestionWindow.BuddyListAddBuddyRequest)
 			return;
 
@@ -7124,6 +7146,21 @@ public sealed class GameServerConnection : BaseClientConnection
 			result.Teleport,
 			staticData);
 		return result;
+	}
+
+	private async Task HandleExperienceRecoveryQuestionResponseAsync(Player responder, CmQuestionResponse packet)
+	{
+		var result = PlayerExperienceRecoveryService.HandleResponse(
+			responder,
+			packet.QuestionId,
+			packet.Response,
+			_runtimeContext?.DataManager?.StaticData.ItemTemplates,
+			_runtimeContext?.DataManager?.StaticData.PlayerExperienceTable);
+		if (!result.Handled)
+			return;
+
+		foreach (var responsePacket in result.Packets)
+			await SendPacketAsync(responsePacket);
 	}
 
 	private static void CancelExchangeForQuestionAccept(Player responder)

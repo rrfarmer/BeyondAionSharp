@@ -13,6 +13,7 @@ public sealed class SmQuestionWindow : GameServerPacket
 	public const int SoulBoundItemConfirm = 95006;
 	public const int ItemChargeAllConfirm = 903026;
 	public const int ItemCharge2AllConfirm = 904039;
+	public const int AskRecoverExperience = 160011;
 	public const int DirectPortalPassConfirm = 160019;
 	public const int VortexPortalPassConfirm = 904304;
 	public const int RegisterBindstone = 160018;

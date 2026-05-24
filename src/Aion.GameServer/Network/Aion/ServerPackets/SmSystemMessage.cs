@@ -549,6 +549,30 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(901285, kinah.ToString(System.Globalization.CultureInfo.InvariantCulture));
 	}
 
+	public static SmSystemMessage CannotAskRecoverExperienceByOtherQuestion()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_CANNOT_ASK_RECOVER_EXPERIENCE_BY_OTHER_QUESTION.
+		return new SmSystemMessage(1300671);
+	}
+
+	public static SmSystemMessage SuccessRecoverExperience()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_SUCCESS_RECOVER_EXPERIENCE.
+		return new SmSystemMessage(1300674);
+	}
+
+	public static SmSystemMessage DoNotHaveRecoverExperience()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_DONOT_HAVE_RECOVER_EXPERIENCE.
+		return new SmSystemMessage(1300682);
+	}
+
+	public static SmSystemMessage GetExp2(long exp)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GET_EXP2.
+		return new SmSystemMessage(1370002, exp.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
 	public static SmSystemMessage UseAbyssPoint(long abyssPoints)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_USE_ABYSSPOINT.

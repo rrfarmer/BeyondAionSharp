@@ -60,7 +60,7 @@ public sealed class Player
 
 	public long Exp { get; set; }
 
-	public long RecoverableExp { get; init; }
+	public long RecoverableExp { get; set; }
 
 	public int Dp { get; set; }
 
@@ -236,6 +236,8 @@ public sealed class Player
 	public PendingDuelRequest? PendingDuelRequest { get; set; }
 
 	public PendingDuelRequest? PendingDuelWithdrawRequest { get; set; }
+
+	public PendingExperienceRecoveryRequest? PendingExperienceRecoveryRequest { get; set; }
 
 	// Java parity: controllers/CreatureController TaskId.TELEPORT stores TeleportService.SpawnTask until CM_TELEPORT_ANIMATION_DONE.
 	public PendingPlayerTeleport? PendingTeleport { get; set; }

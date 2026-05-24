@@ -90,6 +90,7 @@ public enum QuestionResponseRequestKind
 	AllianceInvite,
 	DuelRequest,
 	DuelWithdraw,
+	ExperienceRecovery,
 }
 
 public sealed record QuestionResponseRequest(
