@@ -278,7 +278,16 @@ public sealed class PlayerSummonSkillExecutionService
 			IsPostSpawn: template.IsPostSpawn,
 			Priority: template.Priority,
 			NextSkillTimeMilliseconds: template.NextSkillTime,
-			ConditionTemplate: null,
+			ConditionTemplate: template.Condition == null
+				? null
+				: new PlayerSummonKnownObjectNpcSkillConditionMetadata(
+					ResolveMercenaryNpcSkillCondition(template.Condition.ConditionType),
+					template.Condition.HpBelow,
+					template.Condition.Range,
+					template.Condition.NpcId,
+					template.Condition.Delay,
+					template.Condition.CanDie,
+					template.Condition.DespawnTime),
 			NextChainId: template.NextChainId,
 			ChainId: template.ChainId,
 			MaxChainTimeMilliseconds: template.MaxChainTime,
@@ -501,6 +510,35 @@ public sealed class PlayerSummonSkillExecutionService
 			"RANDOM_EXCEPT_CURRENT_TARGET" => PlayerSummonKnownObjectNpcSkillTargetAttribute.RandomExceptCurrentTarget,
 			"NONE" => PlayerSummonKnownObjectNpcSkillTargetAttribute.None,
 			_ => PlayerSummonKnownObjectNpcSkillTargetAttribute.MostHated,
+		};
+	}
+
+	public PlayerSummonKnownObjectNpcSkillCondition ResolveMercenaryNpcSkillCondition(string condition)
+	{
+		return condition.ToUpperInvariant() switch
+		{
+			"HELP_FRIEND" => PlayerSummonKnownObjectNpcSkillCondition.HelpFriend,
+			"TARGET_IS_IN_ANY_STUN" => PlayerSummonKnownObjectNpcSkillCondition.TargetIsInAnyStun,
+			"TARGET_IS_IN_RANGE" => PlayerSummonKnownObjectNpcSkillCondition.TargetIsInRange,
+			"TARGET_IS_IN_STUMBLE" => PlayerSummonKnownObjectNpcSkillCondition.TargetIsInStumble,
+			"TARGET_IS_STUNNED" => PlayerSummonKnownObjectNpcSkillCondition.TargetIsStunned,
+			"TARGET_IS_SLEEPING" => PlayerSummonKnownObjectNpcSkillCondition.TargetIsSleeping,
+			"TARGET_IS_AETHERS_HOLD" => PlayerSummonKnownObjectNpcSkillCondition.TargetIsAethersHold,
+			"TARGET_IS_POISONED" => PlayerSummonKnownObjectNpcSkillCondition.TargetIsPoisoned,
+			"TARGET_IS_BLEEDING" => PlayerSummonKnownObjectNpcSkillCondition.TargetIsBleeding,
+			"TARGET_IS_FLYING" => PlayerSummonKnownObjectNpcSkillCondition.TargetIsFlying,
+			"TARGET_IS_GATE" => PlayerSummonKnownObjectNpcSkillCondition.TargetIsGate,
+			"TARGET_IS_PLAYER" => PlayerSummonKnownObjectNpcSkillCondition.TargetIsPlayer,
+			"TARGET_IS_NPC" => PlayerSummonKnownObjectNpcSkillCondition.TargetIsNpc,
+			"TARGET_IS_PHYSICAL_CLASS" => PlayerSummonKnownObjectNpcSkillCondition.TargetIsPhysicalClass,
+			"TARGET_IS_MAGICAL_CLASS" => PlayerSummonKnownObjectNpcSkillCondition.TargetIsMagicalClass,
+			"TARGET_HAS_CARVED_SIGNET" => PlayerSummonKnownObjectNpcSkillCondition.TargetHasCarvedSignet,
+			"TARGET_HAS_CARVED_SIGNET_LEVEL_II" => PlayerSummonKnownObjectNpcSkillCondition.TargetHasCarvedSignetLevelIi,
+			"TARGET_HAS_CARVED_SIGNET_LEVEL_III" => PlayerSummonKnownObjectNpcSkillCondition.TargetHasCarvedSignetLevelIii,
+			"TARGET_HAS_CARVED_SIGNET_LEVEL_IV" => PlayerSummonKnownObjectNpcSkillCondition.TargetHasCarvedSignetLevelIv,
+			"TARGET_HAS_CARVED_SIGNET_LEVEL_V" => PlayerSummonKnownObjectNpcSkillCondition.TargetHasCarvedSignetLevelV,
+			"NPC_IS_ALIVE" => PlayerSummonKnownObjectNpcSkillCondition.NpcIsAlive,
+			_ => PlayerSummonKnownObjectNpcSkillCondition.None,
 		};
 	}
 

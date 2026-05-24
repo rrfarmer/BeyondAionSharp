@@ -843,7 +843,8 @@ public class PlayerSummonSkillExecutionServiceTests
 						ChainId: 0,
 						MaxChainTime: 9_000,
 						Target: "SECOND_MOST_HATED",
-						Spawn: null),
+						Spawn: null,
+						Condition: new NpcSkillConditionSummary("TARGET_IS_IN_RANGE", 35, 12, 212362, 750, false, 1200)),
 					new NpcSkillTemplateSummary(
 						SkillId: 22108,
 						SkillLevel: 1,
@@ -883,6 +884,13 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Equal(22107, metadata[0].Template.SkillId);
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillConjunction.Or, metadata[0].Template.ConjunctionType);
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillTargetAttribute.SecondMostHated, metadata[0].Template.Target);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillCondition.TargetIsInRange, metadata[0].Template.ConditionTemplate?.Condition);
+		Assert.Equal(35, metadata[0].Template.ConditionTemplate?.HpBelowPercentage);
+		Assert.Equal(12, metadata[0].Template.ConditionTemplate?.RangeMeters);
+		Assert.Equal(212362, metadata[0].Template.ConditionTemplate?.NpcId);
+		Assert.Equal(750, metadata[0].Template.ConditionTemplate?.DelayMilliseconds);
+		Assert.False(metadata[0].Template.ConditionTemplate?.CanDie);
+		Assert.Equal(1200, metadata[0].Template.ConditionTemplate?.DespawnTimeMilliseconds);
 		Assert.Null(metadata[0].Template.SpawnTemplate);
 		Assert.True(metadata[1].Template.IsPostSpawn);
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillTargetAttribute.RandomExceptCurrentTarget, metadata[1].Template.Target);

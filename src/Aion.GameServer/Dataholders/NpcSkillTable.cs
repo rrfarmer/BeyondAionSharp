@@ -60,7 +60,8 @@ public sealed record NpcSkillTemplateSummary(
 	int ChainId,
 	int MaxChainTime,
 	string Target,
-	NpcSkillSpawnSummary? Spawn);
+	NpcSkillSpawnSummary? Spawn,
+	NpcSkillConditionSummary? Condition = null);
 
 public sealed record NpcSkillSpawnSummary(
 	int NpcId,
@@ -69,3 +70,12 @@ public sealed record NpcSkillSpawnSummary(
 	int MaxDistance,
 	int MinCount,
 	int MaxCount);
+
+public sealed record NpcSkillConditionSummary(
+	string ConditionType,
+	int HpBelow,
+	int Range,
+	int NpcId,
+	int Delay,
+	bool CanDie,
+	int DespawnTime);

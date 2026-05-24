@@ -16,9 +16,11 @@ public sealed class StaticDataNpcSkillTests
 				<npc_skill_templates>
 					<npc_skills npc_ids="1001 1002	1003">
 						<npc_skill id="2001" lv="3" prob="75" is_post_spawn="true">
+							<cond/>
 							<spawn_npc npc_id="3001"/>
 						</npc_skill>
 						<npc_skill id="2002" lv="4" prob="80" min_hp="10" max_hp="90" min_time="5" max_time="15" conjunction="OR" cd="30" prio="2" next_skill_time="7000" next_chain_id="9" chain_id="8" max_chain_time="12000" target="RANDOM">
+							<cond cond_type="TARGET_IS_IN_RANGE" hp_below="35" range="18" npc_id="212362" delay="750" can_die="false" despawn_time="1200"/>
 							<spawn_npc npc_id="3002" delay="11" min_distance="2" max_distance="6" min_count="3" max_count="5"/>
 						</npc_skill>
 					</npc_skills>
@@ -56,6 +58,7 @@ public sealed class StaticDataNpcSkillTests
 		Assert.Equal(15000, defaulted.MaxChainTime);
 		Assert.Equal("MOST_HATED", defaulted.Target);
 		Assert.Equal(new NpcSkillSpawnSummary(3001, 0, 0, 0, 1, 0), defaulted.Spawn);
+		Assert.Equal(new NpcSkillConditionSummary("NONE", 50, 10, 0, 0, true, 500), defaulted.Condition);
 
 		var explicitSpawn = firstList.Skills[1];
 		Assert.Equal(2002, explicitSpawn.SkillId);
@@ -72,6 +75,9 @@ public sealed class StaticDataNpcSkillTests
 		Assert.Equal(12000, explicitSpawn.MaxChainTime);
 		Assert.Equal("RANDOM", explicitSpawn.Target);
 		Assert.Equal(new NpcSkillSpawnSummary(3002, 11, 2, 6, 3, 5), explicitSpawn.Spawn);
+		Assert.Equal(
+			new NpcSkillConditionSummary("TARGET_IS_IN_RANGE", 35, 18, 212362, 750, false, 1200),
+			explicitSpawn.Condition);
 	}
 
 	private sealed class TempDirectory : IDisposable

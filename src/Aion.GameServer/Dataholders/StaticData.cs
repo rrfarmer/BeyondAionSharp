@@ -2111,6 +2111,20 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.LocalName == "cond" && currentNpcSkill != null)
+			{
+				// Java parity: model/templates/npcskill/NpcSkillConditionTemplate JAXB defaults.
+				currentNpcSkill.Condition = new NpcSkillConditionSummary(
+					reader.GetAttribute("cond_type") ?? "NONE",
+					ReadOptionalIntAttribute(reader, "hp_below", 50),
+					ReadOptionalIntAttribute(reader, "range", 10),
+					ReadIntAttribute(reader, "npc_id"),
+					ReadIntAttribute(reader, "delay"),
+					ReadOptionalBoolAttribute(reader, "can_die", true),
+					ReadOptionalIntAttribute(reader, "despawn_time", 500));
+				continue;
+			}
+
 			if (reader.Depth == 2
 				&& reader.LocalName == "title"
 				&& elementPath.TryGetValue(1, out var titleParent)
@@ -3088,6 +3102,7 @@ public sealed class StaticData
 		private int MaxChainTime { get; }
 		private string Target { get; }
 		public NpcSkillSpawnSummary? Spawn { get; set; }
+		public NpcSkillConditionSummary? Condition { get; set; }
 
 		public NpcSkillTemplateSummary ToSummary()
 		{
@@ -3108,7 +3123,8 @@ public sealed class StaticData
 				ChainId,
 				MaxChainTime,
 				Target,
-				Spawn);
+				Spawn,
+				Condition);
 		}
 	}
 
