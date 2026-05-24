@@ -57,6 +57,17 @@ public sealed record PlayerGroupMentorStatusChangePlan(
 	IReadOnlyList<PlayerGroupMemberInfoIntent> MemberInfoIntents,
 	PlayerGroupMentorAbyssRankUpdateIntent? AbyssRankUpdateIntent);
 
+public sealed record PlayerGroupLeaderChangePlan(
+	int TeamId,
+	int NewLeaderObjectId,
+	IReadOnlyList<PlayerGroupLeaderChangePacketIntent> PacketIntents);
+
+public sealed record PlayerGroupLeaderChangePacketIntent(
+	int Sequence,
+	int RecipientObjectId,
+	PlayerGroupInfoPacketPlan GroupInfoPlan,
+	SmSystemMessage SystemMessage);
+
 public sealed record PlayerGroupMentorAbyssRankUpdateIntent(
 	int PlayerObjectId,
 	bool IsMentor)

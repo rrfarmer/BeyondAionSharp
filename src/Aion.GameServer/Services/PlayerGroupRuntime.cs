@@ -158,6 +158,40 @@ public sealed class PlayerGroupRuntime
 		}
 	}
 
+	public PlayerGroupLeaderChangePlan? ChangeLeader(int teamId, int newLeaderObjectId)
+	{
+		// Java parity: model/team/group/events/ChangeGroupLeaderEvent.changeLeaderTo.
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(teamId, 0);
+
+		lock (_sync)
+		{
+			if (!_membersByTeamId.TryGetValue(teamId, out var members)
+				|| !_descriptorsByTeamId.TryGetValue(teamId, out var descriptor))
+				return null;
+
+			var newLeader = members.FirstOrDefault(member => member.ObjectId == newLeaderObjectId);
+			if (newLeader == null)
+				return null;
+
+			var updatedDescriptor = descriptor with { LeaderObjectId = newLeaderObjectId };
+			_descriptorsByTeamId[teamId] = updatedDescriptor;
+			ApplySnapshot(teamId, members);
+
+			var sequence = 0;
+			var intents = members
+				.Select(member => new PlayerGroupLeaderChangePacketIntent(
+					sequence++,
+					member.ObjectId,
+					PlayerGroupInfoPacketPlan.FromDescriptor(updatedDescriptor, member.Player.Position.WorldId),
+					member.ObjectId == newLeaderObjectId
+						? SmSystemMessage.PartyYouBecomeNewLeader()
+						: SmSystemMessage.PartyHeIsNewLeader(newLeader.Player.Name)))
+				.ToArray();
+
+			return new PlayerGroupLeaderChangePlan(teamId, newLeaderObjectId, intents);
+		}
+	}
+
 	public PlayerGroupBrandUpdatePlan? UpdateBrand(int teamId, int brandId, int targetObjectId)
 	{
 		// Java parity: model/team/TemporaryPlayerTeam.updateBrand stores target id and broadcasts SM_SHOW_BRAND.

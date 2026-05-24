@@ -5785,6 +5785,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return null;
 		}
 
+		if (packet.CommandCode == 3)
+		{
+			await HandleGroupLeaderChangeAsync(player, packet.SelectedObjectId, cancellationToken);
+			return null;
+		}
+
 		if (packet.CommandCode is 10 or 11)
 		{
 			await HandleGroupMentorStatusAsync(player, isMentor: packet.CommandCode == 10, cancellationToken);
@@ -5867,6 +5873,45 @@ public sealed class GameServerConnection : BaseClientConnection
 	}
 
 	private async Task SendGroupMentorPacketAsync(
+		int recipientObjectId,
+		GameServerPacket packet,
+		CancellationToken cancellationToken)
+	{
+		if (_connectionRegistry != null && await _connectionRegistry.SendPacketToPlayerAsync(recipientObjectId, packet))
+			return;
+
+		if (_activePlayer?.ObjectId == recipientObjectId)
+			await SendPacketAsync(packet, cancellationToken);
+	}
+
+	private async Task<PlayerGroupLeaderChangePlan?> HandleGroupLeaderChangeAsync(
+		Player player,
+		int targetObjectId,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: PlayerTeamCommandService GROUP_SET_LEADER -> PlayerGroupService.changeLeader.
+		var group = _playerGroupRuntime.Resolve(player);
+		if (group == null)
+			return null;
+
+		var newLeaderObjectId = targetObjectId == 0 ? player.ObjectId : targetObjectId;
+		if (!_playerGroupRuntime.HasMember(group.TeamId, newLeaderObjectId))
+			return null;
+
+		var plan = _playerGroupRuntime.ChangeLeader(group.TeamId, newLeaderObjectId);
+		if (plan == null)
+			return null;
+
+		foreach (var intent in plan.PacketIntents.OrderBy(intent => intent.Sequence))
+		{
+			await SendGroupLeaderPacketAsync(intent.RecipientObjectId, new SmGroupInfo(intent.GroupInfoPlan), cancellationToken);
+			await SendGroupLeaderPacketAsync(intent.RecipientObjectId, intent.SystemMessage, cancellationToken);
+		}
+
+		return plan;
+	}
+
+	private async Task SendGroupLeaderPacketAsync(
 		int recipientObjectId,
 		GameServerPacket packet,
 		CancellationToken cancellationToken)
