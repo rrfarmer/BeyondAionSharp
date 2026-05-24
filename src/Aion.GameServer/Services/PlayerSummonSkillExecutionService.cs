@@ -342,7 +342,8 @@ public sealed class PlayerSummonSkillExecutionService
 			candidate.ConditionTarget,
 			ownerExists,
 			ownerIsDead,
-			ownerIsAboutToDie);
+			ownerIsAboutToDie,
+			skillTemplateSignetBurstStacks: candidate.SkillTemplateSignetBurstStacks);
 
 		return new PlayerSummonKnownObjectNpcSkillCandidate(
 			candidate.Position,
@@ -382,7 +383,8 @@ public sealed class PlayerSummonSkillExecutionService
 		var missingSkillIds = new List<int>();
 		foreach (var template in skillList.Skills)
 		{
-			if (skillTemplates.GetSkillTemplate(template.SkillId) == null)
+			var skillTemplate = skillTemplates.GetSkillTemplate(template.SkillId);
+			if (skillTemplate == null)
 			{
 				missingSkillIds.Add(template.SkillId);
 				continue;
@@ -390,7 +392,8 @@ public sealed class PlayerSummonSkillExecutionService
 
 			candidates.Add(new PlayerSummonKnownObjectNpcSkillCandidateMetadata(
 				candidates.Count,
-				ProjectMercenaryNpcSkillTemplateMetadata(template)));
+				ProjectMercenaryNpcSkillTemplateMetadata(template),
+				SkillTemplateSignetBurstStacks: skillTemplate.SignetBurst.Select(effect => effect.Signet).ToArray()));
 		}
 
 		return new PlayerSummonKnownObjectNpcSkillCandidateMetadataProjection(
@@ -2949,7 +2952,8 @@ public sealed record PlayerSummonKnownObjectNpcSkillCandidateMetadata(
 	long LastTimeUsedMilliseconds = 0,
 	bool ChanceReady = true,
 	PlayerSummonKnownObjectNpcSkillConditionTarget? ConditionTarget = null,
-	PlayerSummonKnownObjectTargetRangeReadiness? TargetRangeReadiness = null);
+	PlayerSummonKnownObjectTargetRangeReadiness? TargetRangeReadiness = null,
+	IReadOnlyList<string>? SkillTemplateSignetBurstStacks = null);
 
 public sealed record PlayerSummonKnownObjectNpcSkillCandidateMetadataProjection(
 	int NpcId,

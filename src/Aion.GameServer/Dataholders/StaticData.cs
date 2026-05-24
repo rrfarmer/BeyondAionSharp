@@ -2047,6 +2047,16 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 4 && reader.LocalName == "signetburst" && currentSkillTemplate != null)
+			{
+				// Java parity: skillengine/effect/SignetBurstEffect exposes signet and signetlvl attributes.
+				currentSkillTemplate.AddSignetBurst(
+					new SkillSignetBurstEffectSummary(
+						reader.GetAttribute("signet") ?? string.Empty,
+						ReadIntAttribute(reader, "signetlvl")));
+				continue;
+			}
+
 			if (reader.Depth == 5 && reader.LocalName == "change" && currentSkillTemplate != null)
 			{
 				currentSkillTemplate.AddCurrentMasteryChange(
@@ -2910,6 +2920,7 @@ public sealed class StaticData
 		private readonly List<SkillWeaponMasteryEffectSummary> _weaponMasteryEffects = [];
 		private readonly List<SkillShieldMasteryEffectSummary> _shieldMasteryEffects = [];
 		private readonly List<SkillWeaponDualEffectSummary> _weaponDualEffects = [];
+		private readonly List<SkillSignetBurstEffectSummary> _signetBurstEffects = [];
 		private List<SkillStatChange>? _currentMasteryChanges;
 
 		public SkillTemplateBuilder(
@@ -2997,6 +3008,11 @@ public sealed class StaticData
 			_weaponDualEffects.Add(weaponDual);
 		}
 
+		public void AddSignetBurst(SkillSignetBurstEffectSummary signetBurst)
+		{
+			_signetBurstEffects.Add(signetBurst);
+		}
+
 		public void EndMastery()
 		{
 			_currentMasteryChanges = null;
@@ -3021,7 +3037,8 @@ public sealed class StaticData
 				_shieldMasteryEffects.ToArray(),
 				_weaponDualEffects.ToArray(),
 				StigmaType,
-				Activation);
+				Activation,
+				_signetBurstEffects.ToArray());
 		}
 	}
 

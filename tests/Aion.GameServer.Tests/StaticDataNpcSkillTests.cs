@@ -13,6 +13,13 @@ public sealed class StaticDataNpcSkillTests
 			cacheFile,
 			"""
 			<static_data>
+				<skill_templates>
+					<skill_template skill_id="2001" name="Burst One" nameId="0" lvl="1" skilltype="MAGICAL">
+						<effects>
+							<signetburst signetlvl="5" signet="SIGNET1"/>
+						</effects>
+					</skill_template>
+				</skill_templates>
 				<npc_skill_templates>
 					<npc_skills npc_ids="1001 1002	1003">
 						<npc_skill id="2001" lv="3" prob="75" is_post_spawn="true">
@@ -32,6 +39,10 @@ public sealed class StaticDataNpcSkillTests
 			""");
 
 		var staticData = await StaticData.LoadFromCacheAsync(cacheFile, Array.Empty<string>());
+
+		var skillTemplate = staticData.SkillTemplates.GetSkillTemplate(2001);
+		Assert.NotNull(skillTemplate);
+		Assert.Equal(new SkillSignetBurstEffectSummary("SIGNET1", 5), Assert.Single(skillTemplate.SignetBurst));
 
 		Assert.Equal(4, staticData.NpcSkills.Count);
 		var firstList = staticData.NpcSkills.GetNpcSkillList(1001)!;

@@ -923,7 +923,18 @@ public class PlayerSummonSkillExecutionServiceTests
 		]);
 		var skillTemplates = new SkillTemplateTable(
 		[
-			new SkillTemplateSummary(1001, "Ready One", 0, 1, "", "", "MAGICAL", "", 0, 0),
+			new SkillTemplateSummary(
+				1001,
+				"Ready One",
+				0,
+				1,
+				"",
+				"",
+				"MAGICAL",
+				"",
+				0,
+				0,
+				SignetBurstEffects: [new SkillSignetBurstEffectSummary("SIGNET1", 5)]),
 			new SkillTemplateSummary(1002, "Ready Two", 0, 1, "", "", "MAGICAL", "", 0, 0),
 		]);
 
@@ -945,6 +956,8 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.True(metadataProjection.JavaWouldMutateSourceTemplateList);
 		Assert.Equal([0, 1], metadataProjection.Candidates.Select(candidate => candidate.Position));
 		Assert.Equal([1001, 1002], metadataProjection.Candidates.Select(candidate => candidate.Template.SkillId));
+		Assert.Equal(["SIGNET1"], metadataProjection.Candidates[0].SkillTemplateSignetBurstStacks);
+		Assert.Empty(metadataProjection.Candidates[1].SkillTemplateSignetBurstStacks!);
 		Assert.Equal([5, 3], candidateProjection.Priorities);
 		Assert.Equal(1, Assert.Single(candidateProjection.PostSpawnCandidates).Position);
 		Assert.True(missingNpc.IsEmpty);
@@ -1207,6 +1220,18 @@ public class PlayerSummonSkillExecutionServiceTests
 			new PlayerSummonKnownObjectNpcSkillConditionMetadata(PlayerSummonKnownObjectNpcSkillCondition.TargetHasCarvedSignet),
 			target with { IsCreature = false },
 			skillTemplateSignetBurstStacks: new[] { "KAL_SIG" });
+		var candidate = service.ProjectMercenaryNpcSkillCandidate(
+			new PlayerSummonKnownObjectNpcSkillCandidateMetadata(
+				0,
+				new PlayerSummonKnownObjectNpcSkillTemplateMetadata(
+					SkillId: 3242,
+					Probability: 100,
+					ConditionTemplate: new PlayerSummonKnownObjectNpcSkillConditionMetadata(PlayerSummonKnownObjectNpcSkillCondition.TargetHasCarvedSignetLevelIii)),
+				ConditionTarget: target,
+				SkillTemplateSignetBurstStacks: ["KAL_SIG"]),
+			hpPercentage: 100,
+			elapsedFightTimeMilliseconds: 0,
+			currentTimeMilliseconds: 1_000);
 
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.Unsupported, unsupported.Status);
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.MissingTarget, missingTarget.Status);
@@ -1219,6 +1244,7 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.NotReady, emptySkillEffects.Status);
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.NotReady, deadTarget.Status);
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.NotReady, notCreature.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillConditionReadinessStatus.Ready, candidate.EntryConditionReadiness.Status);
 	}
 
 	[Fact]
