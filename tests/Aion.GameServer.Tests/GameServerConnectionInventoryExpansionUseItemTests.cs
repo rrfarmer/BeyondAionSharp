@@ -1,9 +1,11 @@
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
 using Aion.Commons.Network;
 using Aion.GameServer.Configuration;
 using Aion.GameServer.Data;
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ClientPackets;
@@ -128,6 +130,25 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		await WaitUntilAsync(() => player.UsingItemObjectId == 0);
 	}
 
+	[Fact]
+	public async Task HandleEmotionAsync_AnimationAddPendingUseCancelsAndSendsEndState()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(includeThreadPoolManager: true);
+		var player = CreatePlayer(itemId: 188500000);
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
+		await InvokeHandleEmotionAsync(fixture.Connection, player, CreateEmotion(EmotionType.SelectTarget));
+
+		Assert.Equal(0, player.UsingItemObjectId);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedTime: 1000, expectedEnd: 0),
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedTime: 0, expectedEnd: 2),
+			packet => Assert.IsType<SmSystemMessage>(packet));
+		await Task.Delay(1100);
+		Assert.Equal(3, fixture.SentPackets.Count);
+	}
+
 	private static Player CreatePlayer(int itemId)
 	{
 		return new Player
@@ -159,6 +180,42 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		using var reader = new PacketBuffer(writer.ToArray());
 		packet.ReadFrom(reader);
 		return packet;
+	}
+
+	private static CmEmotion CreateEmotion(EmotionType emotionType)
+	{
+		using var writer = new PacketBuffer();
+		writer.WriteC((byte)emotionType);
+		var packet = new CmEmotion(43, new HashSet<GameConnectionState> { GameConnectionState.InGame });
+		using var reader = new PacketBuffer(writer.ToArray());
+		packet.ReadFrom(reader);
+		return packet;
+	}
+
+	private static async Task InvokeHandleEmotionAsync(GameServerConnection connection, Player player, CmEmotion packet)
+	{
+		var method = typeof(GameServerConnection).GetMethod(
+			"HandleEmotionAsync",
+			BindingFlags.Instance | BindingFlags.NonPublic);
+		Assert.NotNull(method);
+		var task = Assert.IsAssignableFrom<Task>(method.Invoke(connection, [player, packet]));
+		await task;
+	}
+
+	private static void AssertItemUsagePayload(SmItemUsageAnimation packet, int expectedTime, int expectedEnd)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(1001, reader.ReadD());
+		Assert.Equal(1001, reader.ReadD());
+		Assert.Equal(5001, reader.ReadD());
+		Assert.Equal(188500000, reader.ReadD());
+		Assert.Equal(expectedTime, reader.ReadD());
+		Assert.Equal(expectedEnd, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(1, (int)reader.ReadC());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
 	}
 
 	private static async Task WaitUntilAsync(Func<bool> predicate)
