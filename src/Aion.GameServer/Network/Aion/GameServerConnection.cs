@@ -4986,6 +4986,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		PlayerReviveRestoreService.ApplyKiskReviveRestore(player, resourceMaxStats.MaxHp, resourceMaxStats.MaxMp);
 		await BroadcastEmotionAsync(player, new SmEmotion(player, EmotionType.Resurrect));
 		await UpdatePlayerStatsAndSpeedVisuallyAsync(player);
+		player.ClearResurrectionPositionState();
 		await TeleportPlayerToKiskPositionAsync(player, result.KiskPosition.Value, staticData);
 
 		// Full Java PlayerReviveService.revive + TeleportService.teleportTo side effects remain queued:

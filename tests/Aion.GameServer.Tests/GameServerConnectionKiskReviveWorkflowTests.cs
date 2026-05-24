@@ -22,6 +22,10 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 	{
 		await using var fixture = await KiskReviveWorkflowFixture.CreateAsync();
 		var player = CreateDeadPlayer(boundKiskObjectId: 9001);
+		player.IsInResurrectionPositionState = true;
+		player.ResurrectionPositionX = 1.5f;
+		player.ResurrectionPositionY = 2.5f;
+		player.ResurrectionPositionZ = 3.5f;
 		var kiskPosition = new WorldPosition(210010000, 11, 22, 33, 0);
 		var kisk = fixture.RegisterKisk(objectId: 9001, kiskPosition, maxResurrects: 2);
 
@@ -33,6 +37,10 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 		Assert.Equal(0, player.Dp);
 		Assert.False(player.IsInState(PlayerCreatureState.Dead));
 		Assert.True(player.IsInState(PlayerCreatureState.Active));
+		Assert.False(player.IsInResurrectionPositionState);
+		Assert.Equal(0, player.ResurrectionPositionX);
+		Assert.Equal(0, player.ResurrectionPositionY);
+		Assert.Equal(0, player.ResurrectionPositionZ);
 		Assert.Collection(
 			fixture.SentPackets,
 			packet => Assert.IsType<SmKiskUpdate>(packet),

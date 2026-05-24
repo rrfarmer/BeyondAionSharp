@@ -70,6 +70,15 @@ public sealed class Player
 	// Java parity: model/gameobjects/player/Player.resurrectionSkill reset by PlayerReviveService.revive.
 	public int ResurrectionSkillId { get; set; }
 
+	// Java parity: model/gameobjects/player/Player.isInResPostState cleared by Player.unsetResPosState after revive routing.
+	public bool IsInResurrectionPositionState { get; set; }
+
+	public float ResurrectionPositionX { get; set; }
+
+	public float ResurrectionPositionY { get; set; }
+
+	public float ResurrectionPositionZ { get; set; }
+
 	public long ReposeEnergy { get; init; }
 
 	public bool IsOnline { get; set; }
@@ -315,6 +324,18 @@ public sealed class Player
 	{
 		// Java parity: model/gameobjects/Creature.setState(state, replace=true).
 		CreatureState = state;
+	}
+
+	public void ClearResurrectionPositionState()
+	{
+		// Java parity: model/gameobjects/player/Player.unsetResPosState clears the positional resurrection flag and coordinates only when active.
+		if (!IsInResurrectionPositionState)
+			return;
+
+		IsInResurrectionPositionState = false;
+		ResurrectionPositionX = 0;
+		ResurrectionPositionY = 0;
+		ResurrectionPositionZ = 0;
 	}
 
 	public void StartLooting(int npcObjectId)
