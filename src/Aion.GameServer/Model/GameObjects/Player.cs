@@ -311,7 +311,8 @@ public sealed class Player
 		PlayerSummonKnownObjectNpcSkillSelectionPreview? selectionPreview,
 		PlayerSummonKnownObjectNpcSkillActionPreview? actionPreview,
 		PlayerSummonKnownObjectNpcSkillPostSpawnPreview? postSpawnPreview = null,
-		PlayerSummonKnownObjectNpcSkillActionWorkflowPreview? actionWorkflowPreview = null)
+		PlayerSummonKnownObjectNpcSkillActionWorkflowPreview? actionWorkflowPreview = null,
+		PlayerSummonKnownObjectNpcSkillPerformAttackPreview? performAttackPreview = null)
 	{
 		// Java parity: represents Npc.getSkillList, SkillAttackManager.chooseNextSkill, skillAction, and fireOnEndCastEvents state without live AI mutation.
 		if (!_summonKnownObjects.TryGetValue(objectId, out var knownObject))
@@ -324,6 +325,7 @@ public sealed class Player
 			LastNpcSkillActionPreview = actionPreview,
 			LastNpcSkillPostSpawnPreview = postSpawnPreview,
 			LastNpcSkillActionWorkflowPreview = actionWorkflowPreview,
+			LastNpcSkillPerformAttackPreview = performAttackPreview,
 		};
 		return true;
 	}
