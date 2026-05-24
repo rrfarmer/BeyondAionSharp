@@ -5791,6 +5791,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return null;
 		}
 
+		if (packet.CommandCode == 2)
+		{
+			await HandleGroupBanMemberAsync(player, packet.SelectedObjectId, cancellationToken);
+			return null;
+		}
+
 		if (packet.CommandCode == 6)
 		{
 			await HandleGroupRemoveMemberAsync(player, packet.SelectedObjectId, cancellationToken);
@@ -5965,6 +5971,68 @@ public sealed class GameServerConnection : BaseClientConnection
 				await SendGroupRemovePacketAsync(intent.RecipientObjectId, intent.SystemMessage, cancellationToken);
 			}
 		}
+
+		foreach (var intent in plan.BaseLeavePlan.PacketIntents.OrderBy(intent => intent.Sequence))
+			await SendGroupRemovePacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+
+		return plan;
+	}
+
+	private async Task<PlayerGroupLeavePlan?> HandleGroupBanMemberAsync(
+		Player player,
+		int targetObjectId,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: PlayerTeamCommandService GROUP_BAN_MEMBER -> PlayerGroupService.banPlayer.
+		var group = _playerGroupRuntime.Resolve(player);
+		if (group == null)
+			return null;
+
+		var bannedPlayerObjectId = targetObjectId == 0 ? player.ObjectId : targetObjectId;
+		var bannedMember = _playerGroupRuntime.GetMember(group.TeamId, bannedPlayerObjectId);
+		if (bannedMember == null)
+			return null;
+
+		if (bannedPlayerObjectId == player.ObjectId)
+		{
+			await SendGroupRemovePacketAsync(player.ObjectId, SmSystemMessage.PartyCantBanSelf(), cancellationToken);
+			return null;
+		}
+
+		if (!_playerGroupRuntime.IsLeader(group.TeamId, player))
+		{
+			await SendGroupRemovePacketAsync(player.ObjectId, SmSystemMessage.ForceOnlyLeaderCanBanish(), cancellationToken);
+			return null;
+		}
+
+		var descriptor = _playerGroupRuntime.GetDescriptor(group.TeamId);
+		if (descriptor?.TeamType == PlayerGroupType.AutoGroup)
+		{
+			await SendGroupRemovePacketAsync(player.ObjectId, SmSystemMessage.PartyForceNoRightToDecide(), cancellationToken);
+			return null;
+		}
+
+		var plan = _playerGroupRuntime.RemoveMemberWithLeavePlan(
+			bannedMember.Player,
+			PlayerGroupLeaveReason.Ban,
+			player.Name);
+		if (plan == null)
+			return null;
+
+		foreach (var intent in plan.PacketIntents.OrderBy(intent => intent.Sequence))
+			await SendGroupRemovePacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+
+		if (plan.LeaderChangePlan != null)
+		{
+			foreach (var intent in plan.LeaderChangePlan.PacketIntents.OrderBy(intent => intent.Sequence))
+			{
+				await SendGroupRemovePacketAsync(intent.RecipientObjectId, new SmGroupInfo(intent.GroupInfoPlan), cancellationToken);
+				await SendGroupRemovePacketAsync(intent.RecipientObjectId, intent.SystemMessage, cancellationToken);
+			}
+		}
+
+		if (bannedMember.IsOnline)
+			await SendGroupRemovePacketAsync(bannedMember.ObjectId, SmSystemMessage.PartyYouAreBanished(), cancellationToken);
 
 		foreach (var intent in plan.BaseLeavePlan.PacketIntents.OrderBy(intent => intent.Sequence))
 			await SendGroupRemovePacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);

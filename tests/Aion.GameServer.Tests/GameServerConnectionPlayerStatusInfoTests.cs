@@ -186,6 +186,71 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 	}
 
 	[Fact]
+	public async Task HandlePlayerStatusInfoAsync_GroupBanFailureBranchesSendJavaMessages()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var groups = new PlayerGroupRuntime();
+		var leader = new Player { ObjectId = 1001, Name = "Leader", IsOnline = true };
+		var member = new Player { ObjectId = 1002, Name = "Member", IsOnline = true };
+		var target = new Player { ObjectId = 1003, Name = "Target", IsOnline = true };
+		groups.CreateOrUpdateGroup(99001, [leader, member, target]);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, new PlayerAllianceRuntime(), groups);
+
+		await pair.Connection.HandlePlayerStatusInfoAsync(
+			leader,
+			CreatePacket(commandCode: 2, selectedObjectId: leader.ObjectId));
+		await pair.Connection.HandlePlayerStatusInfoAsync(
+			member,
+			CreatePacket(commandCode: 2, selectedObjectId: target.ObjectId));
+
+		var autoGroups = new PlayerGroupRuntime();
+		var autoLeader = new Player { ObjectId = 2001, Name = "AutoLeader", IsOnline = true };
+		var autoTarget = new Player { ObjectId = 2002, Name = "AutoTarget", IsOnline = true };
+		autoGroups.CreateOrUpdateGroup(99002, [autoLeader, autoTarget], PlayerGroupType.AutoGroup);
+		await using var autoPair = await TestConnectionPair.CreateAsync(registry, new PlayerAllianceRuntime(), autoGroups);
+		await autoPair.Connection.HandlePlayerStatusInfoAsync(
+			autoLeader,
+			CreatePacket(commandCode: 2, selectedObjectId: autoTarget.ObjectId));
+
+		Assert.Equal([1001, 1002, 2001], registry.SentPackets.Select(send => send.PlayerObjectId));
+		Assert.Collection(
+			registry.SentPackets,
+			send => Assert.Equal(1400705, Assert.IsType<SmSystemMessage>(send.Packet).MessageId),
+			send => Assert.Equal(1301009, Assert.IsType<SmSystemMessage>(send.Packet).MessageId),
+			send => Assert.Equal(1400749, Assert.IsType<SmSystemMessage>(send.Packet).MessageId));
+		Assert.Equal([1001, 1002, 1003], groups.GetMemberObjectIds(99001));
+		Assert.Equal([2001, 2002], autoGroups.GetMemberObjectIds(99002));
+	}
+
+	[Fact]
+	public async Task HandlePlayerStatusInfoAsync_GroupBanMemberSendsBanFanoutAndBanishedMessageLikeJava()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var groups = new PlayerGroupRuntime();
+		var leader = new Player { ObjectId = 1001, Name = "Leader", IsOnline = true, Position = new WorldPosition(210010000, 1, 2, 3, 0) };
+		var banned = new Player { ObjectId = 1002, Name = "Banned", IsOnline = true, Position = new WorldPosition(220010000, 4, 5, 6, 0) };
+		var member = new Player { ObjectId = 1003, Name = "Member", IsOnline = true, Position = new WorldPosition(230010000, 7, 8, 9, 0) };
+		groups.CreateOrUpdateGroup(99001, [leader, banned, member]);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, new PlayerAllianceRuntime(), groups);
+
+		await pair.Connection.HandlePlayerStatusInfoAsync(
+			leader,
+			CreatePacket(commandCode: 2, selectedObjectId: banned.ObjectId));
+
+		Assert.Equal(PlayerTeamMembership.None, banned.TeamMembership);
+		Assert.Equal([1001, 1003], groups.GetMemberObjectIds(99001));
+		Assert.Equal([1001, 1001, 1003, 1003, 1002, 1002], registry.SentPackets.Select(send => send.PlayerObjectId));
+		Assert.Collection(
+			registry.SentPackets,
+			send => Assert.IsType<SmGroupMemberInfo>(send.Packet),
+			send => Assert.Equal(1300177, Assert.IsType<SmSystemMessage>(send.Packet).MessageId),
+			send => Assert.IsType<SmGroupMemberInfo>(send.Packet),
+			send => Assert.Equal(1300177, Assert.IsType<SmSystemMessage>(send.Packet).MessageId),
+			send => Assert.Equal(1300166, Assert.IsType<SmSystemMessage>(send.Packet).MessageId),
+			send => Assert.IsType<SmLeaveGroupMember>(send.Packet));
+	}
+
+	[Fact]
 	public async Task HandlePlayerStatusInfoAsync_AllianceChangeGroupSendsJavaServiceFailureMessages()
 	{
 		var registry = new CapturingConnectionRegistry();

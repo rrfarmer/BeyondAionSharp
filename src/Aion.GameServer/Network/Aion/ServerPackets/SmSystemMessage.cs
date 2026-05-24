@@ -201,6 +201,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300155);
 	}
 
+	public static SmSystemMessage PartyYouAreBanished()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_PARTY_YOU_ARE_BANISHED.
+		return new SmSystemMessage(1300166);
+	}
+
 	public static SmSystemMessage PartyIsDispersed()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_PARTY_IS_DISPERSED.
@@ -223,6 +229,24 @@ public sealed class SmSystemMessage : GameServerPacket
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_PARTY_HE_IS_BANISHED(String).
 		return new SmSystemMessage(1300177, playerName);
+	}
+
+	public static SmSystemMessage ForceOnlyLeaderCanBanish()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_FORCE_ONLY_LEADER_CAN_BANISH.
+		return new SmSystemMessage(1301009);
+	}
+
+	public static SmSystemMessage PartyCantBanSelf()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_PARTY_CANT_BAN_SELF.
+		return new SmSystemMessage(1400705);
+	}
+
+	public static SmSystemMessage PartyForceNoRightToDecide()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_PARTY_FORCE_NO_RIGHT_TO_DECIDE.
+		return new SmSystemMessage(1400749);
 	}
 
 	public static SmSystemMessage ForceEnteredForce()
