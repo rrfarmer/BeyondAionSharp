@@ -1,4 +1,5 @@
 using Aion.Commons.Network;
+using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 
@@ -187,6 +188,30 @@ public sealed class SmSystemMessage : GameServerPacket
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_SKILL_NOT_ENOUGH_DP.
 		return new SmSystemMessage(1300016);
+	}
+
+	public static SmSystemMessage SkillNotReady()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_SKILL_NOT_READY.
+		return new SmSystemMessage(1300021);
+	}
+
+	public static SmSystemMessage SkillCannotCast(string stateName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_SKILL_CANT_CAST(String).
+		return new SmSystemMessage(1300026, stateName);
+	}
+
+	public static SmSystemMessage SkillCannotCastDead()
+	{
+		// Java parity: CM_CASTSPELL.runImpl -> STR_SKILL_CANT_CAST(ChatUtil.l10n(1400059)).
+		return SkillCannotCast(ChatUtil.L10n(1400059));
+	}
+
+	public static SmSystemMessage SkillNotNeedPet()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_SKILL_NOT_NEED_PET.
+		return new SmSystemMessage(1402918);
 	}
 
 	public static SmSystemMessage InstanceDungeonOpenedForSelf(int worldId)

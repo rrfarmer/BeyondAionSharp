@@ -208,6 +208,10 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.LootFailOnLooting(), 1300829);
 		AssertSystemMessage(SmSystemMessage.LootNoRight(), 901338);
 		AssertSystemMessage(SmSystemMessage.SkillNotEnoughDp(), 1300016);
+		AssertSystemMessage(SmSystemMessage.SkillNotReady(), 1300021);
+		AssertSystemMessage(SmSystemMessage.SkillCannotCast("state"), 1300026, "state");
+		AssertSystemMessage(SmSystemMessage.SkillCannotCastDead(), 1300026, ChatUtil.L10n(1400059));
+		AssertSystemMessage(SmSystemMessage.SkillNotNeedPet(), 1402918);
 		AssertSystemMessage(SmSystemMessage.InstanceDungeonOpenedForSelf(300030000), 1400640, "300030000");
 		AssertSystemMessage(SmSystemMessage.CannotMakeInstanceCoolTime(), 1400043);
 		AssertSystemMessage(SmSystemMessage.CantInstanceEnterLevel(), 1400179);
