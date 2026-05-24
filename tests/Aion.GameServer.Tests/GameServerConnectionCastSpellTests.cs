@@ -67,13 +67,30 @@ public class GameServerConnectionCastSpellTests
 		};
 		await using var pair = await TestConnectionPair.CreateAsync(sentPackets, hooks);
 		var player = CreatePlayer();
+		player.UsingItemObjectId = 9001;
 
 		var result = await pair.Connection.HandleCastSpellAsync(player, CreateCastSpell(200, receiveTimeMilliseconds: 1_000));
 
 		Assert.Equal(PlayerCastSpellEarlyExitStatus.SkillNotReady, result.Status);
 		Assert.Equal(["cancel-use-item", "audit:200:1000:199"], events);
+		Assert.Equal(0, player.UsingItemObjectId);
 		var message = Assert.IsType<SmSystemMessage>(Assert.Single(sentPackets));
 		Assert.Equal(1300021, message.MessageId);
+	}
+
+	[Fact]
+	public async Task HandleCastSpellAsync_MissingTemplateLeavesUsingItemUntouched()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		await using var pair = await TestConnectionPair.CreateAsync(sentPackets);
+		var player = CreatePlayer();
+		player.UsingItemObjectId = 9001;
+
+		var result = await pair.Connection.HandleCastSpellAsync(player, CreateCastSpell(300));
+
+		Assert.Equal(PlayerCastSpellEarlyExitStatus.MissingOrPassiveTemplate, result.Status);
+		Assert.Equal(9001, player.UsingItemObjectId);
+		Assert.Empty(sentPackets);
 	}
 
 	[Fact]
@@ -91,12 +108,14 @@ public class GameServerConnectionCastSpellTests
 		await using var pair = await TestConnectionPair.CreateAsync(sentPackets, hooks);
 		var player = CreatePlayer();
 		player.SetVisualState(PlayerVisualStates.Blinking);
+		player.UsingItemObjectId = 9001;
 
 		var result = await pair.Connection.HandleCastSpellAsync(player, CreateCastSpell(300, hitTime: 777));
 
 		Assert.Equal(PlayerCastSpellEarlyExitStatus.UseSkill, result.Status);
 		Assert.Equal(["stop-protection", "cancel-use-item", "use-skill:300:777"], events);
 		Assert.False(player.IsProtectionActive());
+		Assert.Equal(0, player.UsingItemObjectId);
 		Assert.Empty(sentPackets);
 	}
 

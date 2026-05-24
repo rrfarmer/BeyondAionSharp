@@ -1200,7 +1200,11 @@ public sealed class GameServerConnection : BaseClientConnection
 				CancelCurrentSkill: () => _castSpellHooks.CancelCurrentSkill(player, packet),
 				SendPetRequired: () => packets.Add(SmSystemMessage.SkillNotNeedPet()),
 				StopProtection: () => _castSpellHooks.StopProtection(player),
-				CancelUseItem: () => _castSpellHooks.CancelUseItem(player),
+				CancelUseItem: () =>
+				{
+					CancelUseItemForCastSpell(player);
+					_castSpellHooks.CancelUseItem(player);
+				},
 				AuditCooldown: (skillId, delta, lastSkillId) => _castSpellHooks.AuditCooldown(player, skillId, delta, lastSkillId),
 				SendSkillNotReady: () => packets.Add(SmSystemMessage.SkillNotReady()),
 				UseSkill: (template, request) => _castSpellHooks.UseSkill(player, template, request)));
@@ -1209,6 +1213,20 @@ public sealed class GameServerConnection : BaseClientConnection
 			await SendPacketAsync(packetToSend);
 
 		return result;
+	}
+
+	private void CancelUseItemForCastSpell(Player player)
+	{
+		// Java parity: CM_CASTSPELL.runImpl -> PlayerController.cancelUseItem clears Player.usingItem and cancels TaskId.ITEM_USE.
+		var pendingItemUse = _pendingItemUse;
+		if (pendingItemUse != null && pendingItemUse.Task.Cancel())
+		{
+			_pendingItemUse = null;
+			CleanupPendingItemUse(player, pendingItemUse, canceled: true);
+			return;
+		}
+
+		player.UsingItemObjectId = 0;
 	}
 
 	private async Task HandlePublicChatAsync(Player player, CmChatMessagePublic packet)
