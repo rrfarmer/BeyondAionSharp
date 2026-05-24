@@ -1489,7 +1489,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		// Java parity: services/item/ItemChargeService.startChargingEquippedItems.
 		var itemTemplates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
-		if (itemTemplates == null || player.PendingChargeAllRequest != null)
+		if (itemTemplates == null)
 			return;
 
 		var chargePlans = ItemChargeService.CreateChargeAllPlans(player, player.InventoryItems, itemTemplates, chargeWay);
@@ -1503,7 +1503,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		var payAmount = chargePlans.Sum(plan => plan.PaymentAmount);
-		player.PendingChargeAllRequest = new PendingChargeAllRequest(
+		var pendingRequest = new PendingChargeAllRequest(
 			senderObjectId,
 			chargeWay,
 			payAmount,
@@ -1515,10 +1515,22 @@ public sealed class GameServerConnection : BaseClientConnection
 					plan.TargetChargePoints,
 					plan.Level))
 				.ToArray());
+		var questionId = GetChargeAllQuestionId(chargeWay);
+		// Java parity: ItemChargeService.startChargingEquippedItems registers its
+		// RequestResponseHandler in Player.getResponseRequester().putRequest before
+		// sending the charge-all SM_QUESTION_WINDOW.
+		if (!player.ResponseRequester.PutRequest(
+			questionId,
+			new QuestionResponseRequest(player.ObjectId, QuestionResponseRequestKind.ChargeAll, pendingRequest)))
+		{
+			return;
+		}
+
+		player.PendingChargeAllRequest = pendingRequest;
 
 		await SendPacketAsync(
 			new SmQuestionWindow(
-				GetChargeAllQuestionId(chargeWay),
+				questionId,
 				senderObjectId,
 				0,
 				payAmount.ToString(System.Globalization.CultureInfo.InvariantCulture)));
@@ -6578,11 +6590,20 @@ public sealed class GameServerConnection : BaseClientConnection
 
 	private async Task HandleChargeAllQuestionResponseAsync(Player player, CmQuestionResponse packet)
 	{
-		// Java parity: ResponseRequester handler registered by ItemChargeService.startChargingEquippedItems.
-		var request = player.PendingChargeAllRequest;
-		if (request == null || packet.QuestionId != GetChargeAllQuestionId(request.ChargeWay))
+		// Java parity: CM_QUESTION_RESPONSE delegates to ResponseRequester.respond, which removes
+		// the ItemChargeService RequestResponseHandler before invoking accept/deny behavior.
+		var pendingRequest = player.PendingChargeAllRequest;
+		if (pendingRequest == null || packet.QuestionId != GetChargeAllQuestionId(pendingRequest.ChargeWay))
 			return;
 
+		var dispatch = player.ResponseRequester.Respond(packet.QuestionId, packet.Response);
+		if (dispatch?.Request.Kind != QuestionResponseRequestKind.ChargeAll)
+		{
+			player.PendingChargeAllRequest = null;
+			return;
+		}
+
+		var request = dispatch.Request.Payload as PendingChargeAllRequest ?? pendingRequest;
 		player.PendingChargeAllRequest = null;
 		if (packet.Response == 0)
 			return;
