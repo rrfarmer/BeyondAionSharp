@@ -8,6 +8,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ClientPackets;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
+using Aion.GameServer.Utils.IdFactory;
 using Aion.GameServer.World;
 using Microsoft.Extensions.Logging.Abstractions;
 using GameWorld = Aion.GameServer.World.World;
@@ -102,6 +103,20 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 		Assert.Contains(registry.SentPackets, delivery => delivery.PlayerObjectId == deadMember.ObjectId && delivery.Packet is SmDie);
 		Assert.True(registry.RefreshNpcVisibilityCalls >= 1);
 		Assert.Contains(registry.RefreshedNpcs, npc => npc.ObjectId == 9002);
+	}
+
+	[Fact]
+	public async Task HandleReviveAsync_DepletedKiskReleasesObjectId()
+	{
+		var idFactory = new IDFactory(Enumerable.Range(1, 9001));
+		await using var fixture = await KiskReviveWorkflowFixture.CreateAsync(idFactory: idFactory);
+		var player = CreateDeadPlayer(boundKiskObjectId: 9001);
+		var kiskPosition = new WorldPosition(210010000, 11, 22, 33, 0);
+		fixture.RegisterKisk(objectId: 9001, kiskPosition, maxResurrects: 1);
+
+		await fixture.Connection.HandleReviveAsync(player, CreateRevive(PlayerKiskReviveService.KiskReviveId));
+
+		Assert.Equal(9001, idFactory.NextId());
 	}
 
 	private static Player CreateDeadPlayer(int boundKiskObjectId)
@@ -294,7 +309,9 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 			return kisk;
 		}
 
-		public static async Task<KiskReviveWorkflowFixture> CreateAsync(IGameClientConnectionRegistry? registry = null)
+		public static async Task<KiskReviveWorkflowFixture> CreateAsync(
+			IGameClientConnectionRegistry? registry = null,
+			IDFactory? idFactory = null)
 		{
 			var runtimeContext = new GameServerRuntimeContext();
 			var world = new GameWorld(NullLogger<GameWorld>.Instance);
@@ -320,6 +337,7 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 					options: new GameServerOptions(),
 					runtimeContext: runtimeContext,
 					connectionRegistry: registry,
+					idFactory: idFactory,
 					world: world,
 					sentPacketObserver: sentPackets.Add,
 					crypt: crypt);
