@@ -653,6 +653,105 @@ public sealed class PlayerSummonSkillExecutionService
 		};
 	}
 
+	public PlayerSummonKnownObjectNpcSkillActionWorkflowPreview PreviewMercenaryNpcSkillActionWorkflow(
+		PlayerSummonKnownObject knownObject,
+		PlayerSummonKnownObjectNpcSkillSelectionPreview? selectionPreview,
+		SkillTemplateSummary? selectedSkillTemplate,
+		PlayerSummonKnownObject? currentTarget,
+		Player? player = null,
+		int? mercenaryObjectId = null,
+		bool canSeeCurrentTarget = true,
+		bool selectedSkillFirstTargetIsSelf = false,
+		bool selectedSkillTargetIsArea = false,
+		bool currentTargetInFirstTargetRange = true,
+		PlayerSummonKnownObjectNpcSkillTargetAttribute selectedNpcSkillTarget = PlayerSummonKnownObjectNpcSkillTargetAttribute.MostHated,
+		bool hasFriendTarget = false,
+		bool hasMostHatedTarget = false,
+		bool hasSecondMostHatedTarget = false,
+		bool hasThirdMostHatedTarget = false,
+		bool hasRandomTarget = false,
+		bool hasRandomExceptCurrentTarget = false,
+		bool isInCastSubState = true,
+		bool shouldResumeFightAfterInterruptedCast = false,
+		bool ownerUsesMeleeAggroRange = false,
+		bool currentTargetInAggroRange = true,
+		bool controllerUseSkillSucceeded = true)
+	{
+		if (selectionPreview == null)
+			return PlayerSummonKnownObjectNpcSkillActionWorkflowPreview.MissingSelectionPreview(knownObject);
+
+		var selectedCandidate = selectionPreview.Selection.Candidate;
+		if (selectionPreview.Selection.Status != PlayerSummonKnownObjectNpcSkillSelectionStatus.Ready || selectedCandidate == null)
+		{
+			return PlayerSummonKnownObjectNpcSkillActionWorkflowPreview.NoSelectedCandidate(
+				knownObject,
+				selectionPreview);
+		}
+
+		// Java parity: chooseNextSkill applies targetTooFar before skillAction can use the selected entry.
+		var targetRangeReadiness = EvaluateMercenaryTargetRange(
+			knownObject,
+			selectedCandidate.Projection.TargetMode,
+			currentTarget,
+			canSeeCurrentTarget,
+			selectedSkillTargetIsArea,
+			currentTargetInFirstTargetRange);
+		var targetRangeDelay = player == null
+			? null
+			: ApplyMercenaryTargetRangeDelay(
+				player,
+				mercenaryObjectId ?? knownObject.ObjectId,
+				targetRangeReadiness);
+		if (targetRangeReadiness.Status is not PlayerSummonKnownObjectTargetRangeReadinessStatus.Ready
+			and not PlayerSummonKnownObjectTargetRangeReadinessStatus.NotRequired)
+		{
+			return PlayerSummonKnownObjectNpcSkillActionWorkflowPreview.TargetRangeNotReady(
+				knownObject,
+				selectionPreview,
+				selectedCandidate,
+				targetRangeReadiness,
+				targetRangeDelay);
+		}
+
+		var skillReadiness = EvaluateMercenarySkillReadiness(
+			knownObject,
+			selectedSkillTemplate,
+			selectedCandidate.EntryTimingReadiness,
+			selectedCandidate.EntryConditionReadiness);
+		var targetSelection = SelectMercenaryNpcSkillActionTarget(
+			selectedSkillFirstTargetIsSelf,
+			selectedNpcSkillTarget,
+			hasFriendTarget,
+			hasMostHatedTarget,
+			hasSecondMostHatedTarget,
+			hasThirdMostHatedTarget,
+			hasRandomTarget,
+			hasRandomExceptCurrentTarget);
+		var actionPreview = PreviewMercenaryNpcSkillAction(
+			isInCastSubState,
+			shouldResumeFightAfterInterruptedCast,
+			currentTarget?.IsCreature == true,
+			currentTarget?.IsDead == true,
+			hasLastSkill: true,
+			ownerUsesMeleeAggroRange,
+			currentTargetInAggroRange,
+			skillReadiness,
+			targetSelection,
+			controllerUseSkillSucceeded);
+		var actionResult = ProjectMercenaryNpcSkillActionResult(actionPreview);
+
+		return PlayerSummonKnownObjectNpcSkillActionWorkflowPreview.Projected(
+			knownObject,
+			selectionPreview,
+			selectedCandidate,
+			targetRangeReadiness,
+			targetRangeDelay,
+			skillReadiness,
+			targetSelection,
+			actionPreview,
+			actionResult);
+	}
+
 	private static bool IsNpcSkillEntryHpReady(PlayerSummonKnownObjectNpcSkillEntryTiming timing, int hpPercentage)
 	{
 		// Java parity: NpcSkillTemplateEntry.hpReady treats default 0..100 as "not about HP".
@@ -3365,6 +3464,96 @@ public enum PlayerSummonKnownObjectNpcSkillActionTargetSource
 	ThirdMostHated,
 	Random,
 	RandomExceptCurrentTarget,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillActionWorkflowPreview(
+	PlayerSummonKnownObjectNpcSkillActionWorkflowPreviewStatus Status,
+	PlayerSummonKnownObject KnownObject,
+	PlayerSummonKnownObjectNpcSkillSelectionPreview? SelectionPreview = null,
+	PlayerSummonKnownObjectNpcSkillCandidate? SelectedCandidate = null,
+	PlayerSummonKnownObjectTargetRangeReadiness? TargetRangeReadiness = null,
+	PlayerSummonKnownObjectTargetRangeDelayResult? TargetRangeDelay = null,
+	PlayerSummonKnownObjectSkillReadiness? SkillReadiness = null,
+	PlayerSummonKnownObjectNpcSkillActionTargetSelection? TargetSelection = null,
+	PlayerSummonKnownObjectNpcSkillActionPreview? ActionPreview = null,
+	PlayerSummonKnownObjectNpcSkillActionResult? ActionResult = null)
+{
+	public bool ShouldSetNextSkillDelay => TargetRangeReadiness?.ShouldSetNextSkillDelay == true;
+
+	public bool DidStoreNextSkillDelay => TargetRangeDelay?.Status == PlayerSummonKnownObjectTargetRangeDelayStatus.Set;
+
+	public bool WouldInvokeSkillAction => Status == PlayerSummonKnownObjectNpcSkillActionWorkflowPreviewStatus.Projected
+		&& ActionPreview != null
+		&& ActionResult != null;
+
+	public static PlayerSummonKnownObjectNpcSkillActionWorkflowPreview MissingSelectionPreview(
+		PlayerSummonKnownObject knownObject)
+	{
+		return new PlayerSummonKnownObjectNpcSkillActionWorkflowPreview(
+			PlayerSummonKnownObjectNpcSkillActionWorkflowPreviewStatus.MissingSelectionPreview,
+			knownObject,
+			ActionResult: PlayerSummonKnownObjectNpcSkillActionResult.MissingPreview());
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillActionWorkflowPreview NoSelectedCandidate(
+		PlayerSummonKnownObject knownObject,
+		PlayerSummonKnownObjectNpcSkillSelectionPreview selectionPreview)
+	{
+		return new PlayerSummonKnownObjectNpcSkillActionWorkflowPreview(
+			PlayerSummonKnownObjectNpcSkillActionWorkflowPreviewStatus.NoSelectedCandidate,
+			knownObject,
+			selectionPreview,
+			ActionResult: PlayerSummonKnownObjectNpcSkillActionResult.MissingPreview());
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillActionWorkflowPreview TargetRangeNotReady(
+		PlayerSummonKnownObject knownObject,
+		PlayerSummonKnownObjectNpcSkillSelectionPreview selectionPreview,
+		PlayerSummonKnownObjectNpcSkillCandidate selectedCandidate,
+		PlayerSummonKnownObjectTargetRangeReadiness targetRangeReadiness,
+		PlayerSummonKnownObjectTargetRangeDelayResult? targetRangeDelay)
+	{
+		return new PlayerSummonKnownObjectNpcSkillActionWorkflowPreview(
+			PlayerSummonKnownObjectNpcSkillActionWorkflowPreviewStatus.TargetRangeNotReady,
+			knownObject,
+			selectionPreview,
+			selectedCandidate,
+			targetRangeReadiness,
+			targetRangeDelay,
+			ActionResult: PlayerSummonKnownObjectNpcSkillActionResult.MissingPreview());
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillActionWorkflowPreview Projected(
+		PlayerSummonKnownObject knownObject,
+		PlayerSummonKnownObjectNpcSkillSelectionPreview selectionPreview,
+		PlayerSummonKnownObjectNpcSkillCandidate selectedCandidate,
+		PlayerSummonKnownObjectTargetRangeReadiness targetRangeReadiness,
+		PlayerSummonKnownObjectTargetRangeDelayResult? targetRangeDelay,
+		PlayerSummonKnownObjectSkillReadiness skillReadiness,
+		PlayerSummonKnownObjectNpcSkillActionTargetSelection targetSelection,
+		PlayerSummonKnownObjectNpcSkillActionPreview actionPreview,
+		PlayerSummonKnownObjectNpcSkillActionResult actionResult)
+	{
+		return new PlayerSummonKnownObjectNpcSkillActionWorkflowPreview(
+			PlayerSummonKnownObjectNpcSkillActionWorkflowPreviewStatus.Projected,
+			knownObject,
+			selectionPreview,
+			selectedCandidate,
+			targetRangeReadiness,
+			targetRangeDelay,
+			skillReadiness,
+			targetSelection,
+			actionPreview,
+			actionResult);
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillActionWorkflowPreviewStatus
+{
+	MissingSelectionPreview,
+	NoSelectedCandidate,
+	TargetRangeNotReady,
+	Projected,
 }
 
 public sealed record PlayerSummonKnownObjectNpcSkillActionPreview(

@@ -1694,6 +1694,117 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void PreviewMercenaryNpcSkillActionWorkflow_ComposesJavaSelectionRangeAndActionSlices()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var player = new Player { ObjectId = 1 };
+		var knownObject = new PlayerSummonKnownObject(
+			ObjectId: 8026,
+			Kind: PlayerSummonKnownObjectKind.Creature,
+			LastSkillTimeMilliseconds: 0,
+			NextSkillDelayMilliseconds: 0);
+		player.SetSummonKnownObject(knownObject);
+		var currentTarget = new PlayerSummonKnownObject(
+			ObjectId: 9026,
+			Kind: PlayerSummonKnownObjectKind.Creature);
+		var randomTargetSkill = new PlayerSummonKnownObjectNpcSkillCandidateMetadata(
+			0,
+			new PlayerSummonKnownObjectNpcSkillTemplateMetadata(
+				SkillId: 7001,
+				SkillLevel: 1,
+				Probability: 100,
+				Target: PlayerSummonKnownObjectNpcSkillTargetAttribute.Random));
+		var mostHatedSkill = new PlayerSummonKnownObjectNpcSkillCandidateMetadata(
+			0,
+			new PlayerSummonKnownObjectNpcSkillTemplateMetadata(
+				SkillId: 7002,
+				SkillLevel: 1,
+				Probability: 100,
+				Target: PlayerSummonKnownObjectNpcSkillTargetAttribute.MostHated));
+		var selection = service.PreviewMercenaryNextNpcSkillSelectionFromRepresentedCurrentTarget(
+			knownObject,
+			currentTarget,
+			currentTargetDistanceMeters: 5,
+			fightStartingTimeMilliseconds: 1_000,
+			initialSkillDelayMilliseconds: 0,
+			currentTimeMilliseconds: 2_000,
+			isInCastSubState: false,
+			candidates: [randomTargetSkill],
+			hpPercentage: 100);
+		var mostHatedSelection = service.PreviewMercenaryNextNpcSkillSelectionFromRepresentedCurrentTarget(
+			knownObject,
+			currentTarget,
+			currentTargetDistanceMeters: 5,
+			fightStartingTimeMilliseconds: 1_000,
+			initialSkillDelayMilliseconds: 0,
+			currentTimeMilliseconds: 2_000,
+			isInCastSubState: false,
+			candidates: [mostHatedSkill],
+			hpPercentage: 100);
+
+		var readyWorkflow = service.PreviewMercenaryNpcSkillActionWorkflow(
+			knownObject,
+			selection,
+			CreateSkillTemplate("MAGICAL"),
+			currentTarget,
+			player,
+			selectedNpcSkillTarget: PlayerSummonKnownObjectNpcSkillTargetAttribute.Random,
+			hasRandomTarget: true);
+		var tooFarWorkflow = service.PreviewMercenaryNpcSkillActionWorkflow(
+			knownObject,
+			selection,
+			CreateSkillTemplate("MAGICAL"),
+			currentTarget,
+			player,
+			currentTargetInFirstTargetRange: false,
+			selectedNpcSkillTarget: PlayerSummonKnownObjectNpcSkillTargetAttribute.Random,
+			hasRandomTarget: true);
+		var blockedWorkflow = service.PreviewMercenaryNpcSkillActionWorkflow(
+			knownObject with { AbnormalState = PlayerAbnormalState.Silence },
+			mostHatedSelection,
+			CreateSkillTemplate("MAGICAL"),
+			currentTarget,
+			selectedNpcSkillTarget: PlayerSummonKnownObjectNpcSkillTargetAttribute.MostHated,
+			hasMostHatedTarget: true);
+		var missingSelection = service.PreviewMercenaryNpcSkillActionWorkflow(
+			knownObject,
+			selectionPreview: null,
+			CreateSkillTemplate("MAGICAL"),
+			currentTarget);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionWorkflowPreviewStatus.Projected, readyWorkflow.Status);
+		Assert.True(readyWorkflow.WouldInvokeSkillAction);
+		Assert.Equal(PlayerSummonKnownObjectTargetRangeReadinessStatus.Ready, readyWorkflow.TargetRangeReadiness?.Status);
+		Assert.Equal(PlayerSummonKnownObjectTargetRangeDelayStatus.NotRequired, readyWorkflow.TargetRangeDelay?.Status);
+		Assert.Equal(PlayerSummonKnownObjectSkillReadinessStatus.Ready, readyWorkflow.SkillReadiness?.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionTargetSelectionStatus.Selected, readyWorkflow.TargetSelection?.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionTargetSource.Random, readyWorkflow.TargetSelection?.Source);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionPreviewStatus.WouldSetTargetAndUseSkill, readyWorkflow.ActionPreview?.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionResultStatus.UseSkill, readyWorkflow.ActionResult?.Status);
+		Assert.True(readyWorkflow.ActionResult?.ShouldSetOwnerTarget);
+		Assert.True(readyWorkflow.ActionResult?.ShouldInvokeUseSkill);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionWorkflowPreviewStatus.TargetRangeNotReady, tooFarWorkflow.Status);
+		Assert.True(tooFarWorkflow.ShouldSetNextSkillDelay);
+		Assert.True(tooFarWorkflow.DidStoreNextSkillDelay);
+		Assert.Null(tooFarWorkflow.ActionPreview);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionResultStatus.MissingPreview, tooFarWorkflow.ActionResult?.Status);
+		Assert.True(player.TryGetSummonKnownObject(knownObject.ObjectId, out var delayedKnownObject));
+		Assert.Equal(5_000, delayedKnownObject.NextSkillDelayMilliseconds);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionWorkflowPreviewStatus.Projected, blockedWorkflow.Status);
+		Assert.Equal(PlayerSummonKnownObjectTargetRangeReadinessStatus.NotRequired, blockedWorkflow.TargetRangeReadiness?.Status);
+		Assert.Equal(PlayerSummonKnownObjectSkillReadinessStatus.BlockedBySilence, blockedWorkflow.SkillReadiness?.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionPreviewStatus.AfterUseSkillBlocked, blockedWorkflow.ActionPreview?.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionResultStatus.AfterUseSkill, blockedWorkflow.ActionResult?.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillAiEvent.AttackComplete, blockedWorkflow.ActionResult?.AiEvent);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionWorkflowPreviewStatus.MissingSelectionPreview, missingSelection.Status);
+		Assert.False(missingSelection.WouldInvokeSkillAction);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionResultStatus.MissingPreview, missingSelection.ActionResult?.Status);
+	}
+
+	[Fact]
 	public void PreviewMercenaryNextNpcSkillSelection_AdaptsNpcGameStatsTimingIntoSelection()
 	{
 		var service = new PlayerSummonSkillExecutionService();
