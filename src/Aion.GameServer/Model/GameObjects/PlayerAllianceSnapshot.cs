@@ -13,7 +13,12 @@ public sealed record PlayerAllianceSnapshot(
 {
 	public int AllianceGroupSize => MemberObjectIds.Count;
 
-	public PlayerAllianceInfoPacketPlan CreateInfoPacketPlan(int activePlayerMapId, int messageId = 0, string message = "", int leagueId = 0)
+	public PlayerAllianceInfoPacketPlan CreateInfoPacketPlan(
+		int activePlayerMapId,
+		int messageId = 0,
+		string message = "",
+		int leagueId = 0,
+		IReadOnlyList<PlayerAllianceInfoLeagueRow>? leagueRows = null)
 	{
 		// Java parity: network/aion/serverpackets/SM_ALLIANCE_INFO is built from PlayerAlliance snapshot data.
 		return PlayerAllianceInfoPacketPlan.FromSnapshot(
@@ -26,6 +31,7 @@ public sealed record PlayerAllianceSnapshot(
 			TeamType,
 			messageId,
 			message,
-			leagueId);
+			leagueId,
+			leagueRows: leagueRows);
 	}
 }

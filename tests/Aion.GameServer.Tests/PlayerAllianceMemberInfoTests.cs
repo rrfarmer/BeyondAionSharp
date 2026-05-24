@@ -395,7 +395,7 @@ public sealed class PlayerAllianceMemberInfoTests
 	}
 
 	[Fact]
-	public void SmAllianceInfo_RejectsLeagueRowsUntilPorted()
+	public void SmAllianceInfo_WritesLeagueRowsLikeJava()
 	{
 		var plan = PlayerAllianceInfoPacketPlan.FromSnapshot(
 			allianceId: 88001,
@@ -407,9 +407,28 @@ public sealed class PlayerAllianceMemberInfoTests
 			PlayerAllianceTeamType.Alliance,
 			messageId: PlayerAllianceInfoPacketPlan.ViceCaptainPromoteMessageId,
 			message: "Target",
-			leagueId: 77001);
+			leagueId: 77001,
+			leagueRows:
+			[
+				new PlayerAllianceInfoLeagueRow(0, 88001, 2, "Leader", 210010000),
+				new PlayerAllianceInfoLeagueRow(1, 88002, 3, "OtherLeader", 220010000),
+			]);
 
-		Assert.Throws<NotSupportedException>(() => SerializeUnencryptedPayload(new SmAllianceInfo(plan)));
+		AssertAllianceInfoPacketPayload(
+			new SmAllianceInfo(plan),
+			expectedAllianceGroupSize: 2,
+			expectedAllianceId: 88001,
+			expectedLeaderObjectId: 1001,
+			expectedActivePlayerMapId: 210010000,
+			expectedPaddedViceCaptainIds: [1003, 0, 0, 0],
+			expectedMessageId: PlayerAllianceInfoPacketPlan.ViceCaptainPromoteMessageId,
+			expectedMessage: "Target",
+			expectedLeagueId: 77001,
+			expectedLeagueRows:
+			[
+				new PlayerAllianceInfoLeagueRow(0, 88001, 2, "Leader", 210010000),
+				new PlayerAllianceInfoLeagueRow(1, 88002, 3, "OtherLeader", 220010000),
+			]);
 	}
 
 	[Fact]
@@ -1013,7 +1032,9 @@ public sealed class PlayerAllianceMemberInfoTests
 		int expectedActivePlayerMapId,
 		IReadOnlyList<int> expectedPaddedViceCaptainIds,
 		int expectedMessageId,
-		string expectedMessage)
+		string expectedMessage,
+		int expectedLeagueId = 0,
+		IReadOnlyList<PlayerAllianceInfoLeagueRow>? expectedLeagueRows = null)
 	{
 		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
 		Assert.Equal(expectedAllianceGroupSize, reader.ReadH());
@@ -1034,7 +1055,7 @@ public sealed class PlayerAllianceMemberInfoTests
 		Assert.Equal(0x00, (int)reader.ReadC());
 		Assert.Equal(0x3F, reader.ReadD());
 		Assert.Equal(0, reader.ReadD());
-		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(expectedLeagueId, reader.ReadD());
 		for (var i = 0; i < 4; i++)
 		{
 			Assert.Equal(i, reader.ReadD());
@@ -1043,6 +1064,28 @@ public sealed class PlayerAllianceMemberInfoTests
 
 		Assert.Equal(expectedMessageId, reader.ReadD());
 		Assert.Equal(expectedMessage, reader.ReadS());
+		if (expectedLeagueRows is { Count: > 0 })
+		{
+			Assert.Equal(expectedLeagueRows.Count, reader.ReadH());
+			Assert.Equal((int)PlayerGroupLootRuleType.RoundRobin, reader.ReadD());
+			Assert.Equal(0, reader.ReadD());
+			Assert.Equal(0, reader.ReadD());
+			Assert.Equal(2, reader.ReadD());
+			Assert.Equal(2, reader.ReadD());
+			Assert.Equal(2, reader.ReadD());
+			Assert.Equal(2, reader.ReadD());
+			Assert.Equal(2, reader.ReadD());
+			Assert.Equal(0x02, reader.ReadD());
+			foreach (var row in expectedLeagueRows)
+			{
+				Assert.Equal(row.AlliancePosition, reader.ReadD());
+				Assert.Equal(row.AllianceObjectId, reader.ReadD());
+				Assert.Equal(row.MemberCount, reader.ReadD());
+				Assert.Equal(row.CaptainName, reader.ReadS());
+				Assert.Equal(row.CaptainWorldId, reader.ReadD());
+			}
+		}
+
 		Assert.Equal(0, reader.Remaining);
 	}
 

@@ -188,6 +188,8 @@ public sealed record PlayerAllianceInfoPacketPlan(
 	int TeamType,
 	int TeamSubType,
 	int LeagueId,
+	PlayerGroupLootRules LeagueLootRules,
+	IReadOnlyList<PlayerAllianceInfoLeagueRow> LeagueRows,
 	IReadOnlyList<PlayerAllianceInfoGroupPlaceholder> GroupPlaceholders,
 	int MessageId,
 	string Message)
@@ -205,7 +207,9 @@ public sealed record PlayerAllianceInfoPacketPlan(
 		PlayerAllianceTeamType teamType,
 		int messageId,
 		string message,
-		int leagueId = 0)
+		int leagueId = 0,
+		PlayerGroupLootRules? leagueLootRules = null,
+		IReadOnlyList<PlayerAllianceInfoLeagueRow>? leagueRows = null)
 	{
 		// Java parity: network/aion/serverpackets/SM_ALLIANCE_INFO.writeImpl field order, represented as a non-sending plan.
 		var (type, subType) = teamType.ToJavaPacketFields();
@@ -227,6 +231,8 @@ public sealed record PlayerAllianceInfoPacketPlan(
 			type,
 			subType,
 			leagueId,
+			leagueLootRules ?? PlayerGroupLootRules.Default(),
+			leagueRows ?? Array.Empty<PlayerAllianceInfoLeagueRow>(),
 			GroupPlaceholders:
 			[
 				new PlayerAllianceInfoGroupPlaceholder(0, 1000),
@@ -240,3 +246,10 @@ public sealed record PlayerAllianceInfoPacketPlan(
 }
 
 public sealed record PlayerAllianceInfoGroupPlaceholder(int GroupNumber, int GroupId);
+
+public sealed record PlayerAllianceInfoLeagueRow(
+	int AlliancePosition,
+	int AllianceObjectId,
+	int MemberCount,
+	string CaptainName,
+	int CaptainWorldId);

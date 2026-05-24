@@ -175,7 +175,10 @@ public sealed class PlayerLeagueRuntime
 					recipientObjectId,
 					allianceId,
 					PlayerLeaguePacketIntentKind.AllianceInfo,
-					AllianceInfoPlan: snapshot.CreateInfoPacketPlan(activePlayerMapId, leagueId: leagueId)));
+					AllianceInfoPlan: snapshot.CreateInfoPacketPlan(
+						activePlayerMapId,
+						leagueId: leagueId,
+						leagueRows: CreateLeagueRows(sortedAllianceIds, allianceRuntime))));
 
 				intents.Add(new PlayerLeaguePacketIntent(
 					sequence++,
@@ -207,6 +210,30 @@ public sealed class PlayerLeagueRuntime
 		var leader = allianceRuntime.GetMember(allianceId, descriptor.LeaderObjectId)
 			?? throw new InvalidOperationException($"Alliance leader should not be null: {descriptor.LeaderObjectId}");
 		return leader.Name;
+	}
+
+	private static IReadOnlyList<PlayerAllianceInfoLeagueRow> CreateLeagueRows(
+		IReadOnlyList<int> sortedAllianceIds,
+		PlayerAllianceRuntime allianceRuntime)
+	{
+		// Java parity: SM_ALLIANCE_INFO constructor appends one league row for each captain in League.getCaptains().
+		var rows = new List<PlayerAllianceInfoLeagueRow>();
+		for (var position = 0; position < sortedAllianceIds.Count; position++)
+		{
+			var allianceId = sortedAllianceIds[position];
+			var snapshot = allianceRuntime.GetSnapshot(allianceId)
+				?? throw new InvalidOperationException($"Alliance should not be null: {allianceId}");
+			var leader = allianceRuntime.GetMember(allianceId, snapshot.LeaderObjectId)
+				?? throw new InvalidOperationException($"Alliance leader should not be null: {snapshot.LeaderObjectId}");
+			rows.Add(new PlayerAllianceInfoLeagueRow(
+				position,
+				allianceId,
+				snapshot.MemberObjectIds.Count,
+				leader.Name,
+				leader.Player.Position.WorldId));
+		}
+
+		return rows;
 	}
 
 	private static PlayerLeagueSnapshot CreateSnapshot(

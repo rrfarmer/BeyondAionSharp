@@ -17,10 +17,7 @@ public sealed class SmAllianceInfo : GameServerPacket
 
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
-		// Java parity: network/aion/serverpackets/SM_ALLIANCE_INFO.writeImpl non-league header/body.
-		if (_plan.LeagueId != 0)
-			throw new NotSupportedException("League SM_ALLIANCE_INFO rows are not ported yet.");
-
+		// Java parity: network/aion/serverpackets/SM_ALLIANCE_INFO.writeImpl header/body plus optional league rows.
 		buffer.WriteH(_plan.AllianceGroupSize);
 		buffer.WriteD(_plan.AllianceId);
 		buffer.WriteD(_plan.LeaderObjectId);
@@ -48,5 +45,27 @@ public sealed class SmAllianceInfo : GameServerPacket
 
 		buffer.WriteD(_plan.MessageId);
 		buffer.WriteS(_plan.MessageId != 0 ? _plan.Message : string.Empty);
+
+		if (_plan.LeagueRows.Count > 0)
+		{
+			buffer.WriteH(_plan.LeagueRows.Count);
+			buffer.WriteD((int)_plan.LeagueLootRules.LootRule);
+			buffer.WriteD(_plan.LeagueLootRules.Misc);
+			buffer.WriteD(_plan.LeagueLootRules.CommonItemAbove);
+			buffer.WriteD(_plan.LeagueLootRules.SuperiorItemAbove);
+			buffer.WriteD(_plan.LeagueLootRules.HeroicItemAbove);
+			buffer.WriteD(_plan.LeagueLootRules.FabledItemAbove);
+			buffer.WriteD(_plan.LeagueLootRules.EternalItemAbove);
+			buffer.WriteD(_plan.LeagueLootRules.MythicItemAbove);
+			buffer.WriteD(_plan.ConstantGroupInfoMarker);
+			foreach (var row in _plan.LeagueRows)
+			{
+				buffer.WriteD(row.AlliancePosition);
+				buffer.WriteD(row.AllianceObjectId);
+				buffer.WriteD(row.MemberCount);
+				buffer.WriteS(row.CaptainName);
+				buffer.WriteD(row.CaptainWorldId);
+			}
+		}
 	}
 }
