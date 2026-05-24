@@ -77,6 +77,8 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly PlayerExchangeRequestService _playerExchangeRequestService;
 	private readonly PlayerAllianceGroupChangeServicePlanner _playerAllianceGroupChangeServicePlanner;
 	private readonly PlayerShowBrandCommandPlanner _showBrandCommandPlanner;
+	private readonly PlayerCastSpellEarlyExitService _castSpellEarlyExitService;
+	private readonly GameServerCastSpellHandlerHooks _castSpellHooks;
 	private readonly SemaphoreSlim _sendLock = new(1, 1);
 	private readonly SemaphoreSlim _closeLock = new(1, 1);
 	private GameConnectionState _state = GameConnectionState.Connected;
@@ -137,7 +139,9 @@ public sealed class GameServerConnection : BaseClientConnection
 		PlayerLeagueRuntime? playerLeagueRuntime = null,
 		PlayerDuelRequestService? playerDuelRequestService = null,
 		PlayerExchangeRequestService? playerExchangeRequestService = null,
-		PlayerShowBrandCommandPlanner? showBrandCommandPlanner = null)
+		PlayerShowBrandCommandPlanner? showBrandCommandPlanner = null,
+		PlayerCastSpellEarlyExitService? castSpellEarlyExitService = null,
+		GameServerCastSpellHandlerHooks? castSpellHooks = null)
 		: base(logger, client, clientId)
 	{
 		_packetProcessor = packetProcessor;
@@ -175,6 +179,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		_playerAllianceGroupChangeServicePlanner = new PlayerAllianceGroupChangeServicePlanner(_playerAllianceRuntime);
 		_showBrandCommandPlanner = showBrandCommandPlanner
 			?? new PlayerShowBrandCommandPlanner(_playerGroupRuntime, _playerAllianceRuntime);
+		_castSpellEarlyExitService = castSpellEarlyExitService ?? new PlayerCastSpellEarlyExitService();
+		_castSpellHooks = castSpellHooks ?? new GameServerCastSpellHandlerHooks();
 		_riftPortalInteractionService = riftPortalInteractionService
 			?? (riftService == null
 				? null
@@ -520,6 +526,10 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmTargetSelect targetSelect:
 				if (_activePlayer != null)
 					HandleTargetSelect(_activePlayer, targetSelect);
+				break;
+			case CmCastSpell castSpell:
+				if (_activePlayer != null)
+					await HandleCastSpellAsync(_activePlayer, castSpell);
 				break;
 			case CmChargeItem chargeItem:
 				if (_activePlayer != null)
@@ -1170,6 +1180,35 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		_lastPingTime = now;
 		await SendPacketAsync(new SmPong());
+	}
+
+	internal async Task<PlayerCastSpellEarlyExitResult> HandleCastSpellAsync(Player player, CmCastSpell packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_CASTSPELL.runImpl early exits before full SkillEngine useSkill dispatch.
+		var packets = new List<GameServerPacket>();
+		var result = _castSpellEarlyExitService.Evaluate(
+			player,
+			packet,
+			new PlayerCastSpellEarlyExitOptions(
+				IsPetOrderSkill: skillId => _castSpellHooks.IsPetOrderSkill(player, skillId),
+				HasPetSummon: _castSpellHooks.HasPetSummon(player),
+				GetSkillTemplate: skillId => _castSpellHooks.GetSkillTemplate(player, skillId),
+				NextSkillUseMilliseconds: _castSpellHooks.GetNextSkillUseMilliseconds(player),
+				CurrentTimeMilliseconds: _castSpellHooks.GetCurrentTimeMilliseconds(),
+				LastSkillId: _castSpellHooks.GetLastSkillId(player),
+				SendSkillCannotCastDead: () => packets.Add(SmSystemMessage.SkillCannotCastDead()),
+				CancelCurrentSkill: () => _castSpellHooks.CancelCurrentSkill(player, packet),
+				SendPetRequired: () => packets.Add(SmSystemMessage.SkillNotNeedPet()),
+				StopProtection: () => _castSpellHooks.StopProtection(player),
+				CancelUseItem: () => _castSpellHooks.CancelUseItem(player),
+				AuditCooldown: (skillId, delta, lastSkillId) => _castSpellHooks.AuditCooldown(player, skillId, delta, lastSkillId),
+				SendSkillNotReady: () => packets.Add(SmSystemMessage.SkillNotReady()),
+				UseSkill: (template, request) => _castSpellHooks.UseSkill(player, template, request)));
+
+		foreach (var packetToSend in packets)
+			await SendPacketAsync(packetToSend);
+
+		return result;
 	}
 
 	private async Task HandlePublicChatAsync(Player player, CmChatMessagePublic packet)
