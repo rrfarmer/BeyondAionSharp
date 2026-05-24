@@ -206,6 +206,14 @@ public sealed class PlayerSummonSkillExecutionService
 			: PlayerSummonKnownObjectNpcSkillAttackCycleReadiness.MissingRequiredMetadata(cycleSnapshot, missingPieces);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocation ProjectMercenaryNpcSkillAttackCycleLiveInvocation(
+		PlayerSummonKnownObjectNpcSkillAttackCycleSnapshot? cycleSnapshot)
+	{
+		// Java parity: placeholder boundary for future SkillAttackManager.performAttack/skillAction live NpcAI invocation.
+		var readiness = EvaluateMercenaryNpcSkillAttackCycleReadiness(cycleSnapshot);
+		return PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocation.FromReadiness(readiness);
+	}
+
 	public PlayerSummonKnownObjectSkillReadiness EvaluateMercenarySkillReadiness(
 		PlayerSummonKnownObject knownObject,
 		SkillTemplateSummary? skillTemplate,
@@ -4001,6 +4009,70 @@ public enum PlayerSummonKnownObjectNpcSkillAttackCycleReadinessPiece
 	PerformAttackPreview,
 	PerformAttackExecutionPreview,
 	SchedulerCallbackOutcome,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocation(
+	PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocationStatus Status,
+	PlayerSummonKnownObjectNpcSkillAttackCycleReadiness Readiness,
+	PlayerSummonKnownObjectNpcSkillAttackCycleSnapshot? CycleSnapshot = null,
+	IReadOnlyList<string>? UnsupportedJavaBehaviors = null)
+{
+	private static readonly IReadOnlyList<string> EmptyUnsupportedBehaviors = [];
+
+	private static readonly IReadOnlyList<string> LiveAiUnsupportedBehaviors =
+	[
+		"NpcAI state/substate mutation",
+		"ThreadPoolManager scheduling and cancellation",
+		"CreatureController skill execution",
+		"target mutation",
+		"effect application",
+		"packet fanout",
+		"persistence",
+		"threading/serialization/date-time runtime parity",
+	];
+
+	public IReadOnlyList<string> UnsupportedBehaviors => UnsupportedJavaBehaviors ?? EmptyUnsupportedBehaviors;
+
+	public bool WouldInvokeLiveAi => false;
+
+	public bool IsBlockedByMissingMetadata => Status == PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocationStatus.MissingRequiredMetadata;
+
+	public bool IsLiveAiUnsupported => Status == PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocationStatus.LiveAiNotWired;
+
+	public static PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocation FromReadiness(
+		PlayerSummonKnownObjectNpcSkillAttackCycleReadiness readiness)
+	{
+		return readiness.Status switch
+		{
+			PlayerSummonKnownObjectNpcSkillAttackCycleReadinessStatus.MissingCycle =>
+				new PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocation(
+					PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocationStatus.MissingCycle,
+					readiness),
+			PlayerSummonKnownObjectNpcSkillAttackCycleReadinessStatus.MissingKnownObject =>
+				new PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocation(
+					PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocationStatus.MissingKnownObject,
+					readiness,
+					readiness.CycleSnapshot),
+			PlayerSummonKnownObjectNpcSkillAttackCycleReadinessStatus.MissingRequiredMetadata =>
+				new PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocation(
+					PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocationStatus.MissingRequiredMetadata,
+					readiness,
+					readiness.CycleSnapshot),
+			_ => new PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocation(
+				PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocationStatus.LiveAiNotWired,
+				readiness,
+				readiness.CycleSnapshot,
+				LiveAiUnsupportedBehaviors),
+		};
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocationStatus
+{
+	MissingCycle,
+	MissingKnownObject,
+	MissingRequiredMetadata,
+	LiveAiNotWired,
 }
 
 public sealed record PlayerSummonKnownObjectNpcSkillActionWorkflowPreview(

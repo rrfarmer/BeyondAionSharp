@@ -1302,6 +1302,99 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void ProjectMercenaryNpcSkillAttackCycleLiveInvocation_ReturnsExplicitUnsupportedOutcome()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var knownObject = new PlayerSummonKnownObject(8013, PlayerSummonKnownObjectKind.Creature);
+		var currentTarget = new PlayerSummonKnownObject(9013, PlayerSummonKnownObjectKind.Creature);
+		var candidate = new PlayerSummonKnownObjectNpcSkillCandidateMetadata(
+			0,
+			new PlayerSummonKnownObjectNpcSkillTemplateMetadata(Priority: 9));
+		var listProjection = service.ProjectMercenaryNpcSkillCandidateList(
+			[candidate],
+			hpPercentage: 100,
+			elapsedFightTimeMilliseconds: 2_000,
+			currentTimeMilliseconds: 12_000);
+		var selectionPreview = service.PreviewMercenaryNextNpcSkillSelectionFromCandidateMetadata(
+			knownObject,
+			fightStartingTimeMilliseconds: 10_000,
+			initialSkillDelayMilliseconds: 0,
+			currentTimeMilliseconds: 12_000,
+			isInCastSubState: false,
+			candidates: [candidate],
+			hpPercentage: 100);
+		var actionPreview = service.PreviewMercenaryNpcSkillAction(
+			isInCastSubState: true,
+			shouldResumeFightAfterInterruptedCast: false,
+			hasCreatureTarget: true,
+			targetIsDead: false,
+			hasLastSkill: true,
+			ownerUsesMeleeAggroRange: false,
+			targetInAggroRange: true,
+			skillReadiness: null,
+			targetSelection: service.SelectMercenaryNpcSkillActionTarget(
+				skillFirstTargetIsSelf: false,
+				PlayerSummonKnownObjectNpcSkillTargetAttribute.None),
+			controllerUseSkillSucceeded: true);
+		var postSpawnPreview = service.PreviewMercenaryNpcSkillPostSpawn(
+			service.ProjectMercenaryNpcSkillTemplate(
+				new PlayerSummonKnownObjectNpcSkillTemplateMetadata(
+					SpawnTemplate: new PlayerSummonKnownObjectNpcSkillSpawnMetadata(NpcId: 212351))));
+		var actionWorkflowPreview = service.PreviewMercenaryNpcSkillActionWorkflow(
+			knownObject,
+			selectionPreview,
+			CreateSkillTemplate("MAGICAL"),
+			currentTarget,
+			selectedNpcSkillTarget: PlayerSummonKnownObjectNpcSkillTargetAttribute.None);
+		var performAttackPreview = service.PreviewMercenaryNpcSkillPerformAttack(
+			ownerUsesMeleeAggroRange: false,
+			hasCurrentTarget: true,
+			currentTargetInAggroRange: true,
+			canEnterCastSubState: true,
+			delayMilliseconds: 0,
+			actionWorkflowPreview);
+		var performAttackExecutionPreview = service.PreviewMercenaryNpcSkillPerformAttackExecution(
+			performAttackPreview,
+			performAttackTimeMilliseconds: 12_000,
+			currentTimeMilliseconds: 12_000);
+		var schedulerCallbackOutcome = service.ProjectMercenaryNpcSkillSchedulerCallbackOutcome(
+			performAttackExecutionPreview);
+		var readyCycle = PlayerSummonKnownObjectNpcSkillAttackCycleSnapshot.Captured(
+			knownObject.ObjectId,
+			knownObject,
+			listProjection,
+			selectionPreview,
+			actionPreview,
+			postSpawnPreview,
+			actionWorkflowPreview,
+			performAttackPreview,
+			performAttackExecutionPreview,
+			schedulerCallbackOutcome);
+		var incompleteCycle = service.ProjectMercenaryNpcSkillAttackCycle(knownObject);
+
+		var missingCycle = service.ProjectMercenaryNpcSkillAttackCycleLiveInvocation(null);
+		var missingKnownObject = service.ProjectMercenaryNpcSkillAttackCycleLiveInvocation(
+			PlayerSummonKnownObjectNpcSkillAttackCycleSnapshot.MissingKnownObject(9999));
+		var missingMetadata = service.ProjectMercenaryNpcSkillAttackCycleLiveInvocation(incompleteCycle);
+		var unsupported = service.ProjectMercenaryNpcSkillAttackCycleLiveInvocation(readyCycle);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocationStatus.MissingCycle, missingCycle.Status);
+		Assert.False(missingCycle.WouldInvokeLiveAi);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocationStatus.MissingKnownObject, missingKnownObject.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocationStatus.MissingRequiredMetadata, missingMetadata.Status);
+		Assert.True(missingMetadata.IsBlockedByMissingMetadata);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocationStatus.LiveAiNotWired, unsupported.Status);
+		Assert.True(unsupported.IsLiveAiUnsupported);
+		Assert.False(unsupported.WouldInvokeLiveAi);
+		Assert.Same(readyCycle, unsupported.CycleSnapshot);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillAttackCycleReadinessStatus.Ready, unsupported.Readiness.Status);
+		Assert.Contains("NpcAI state/substate mutation", unsupported.UnsupportedBehaviors);
+		Assert.Contains("ThreadPoolManager scheduling and cancellation", unsupported.UnsupportedBehaviors);
+		Assert.Contains("CreatureController skill execution", unsupported.UnsupportedBehaviors);
+		Assert.Contains("packet fanout", unsupported.UnsupportedBehaviors);
+	}
+
+	[Fact]
 	public void ResolveMercenaryNpcSkillTargetMode_MapsJavaNpcSkillTargetAttributes()
 	{
 		var service = new PlayerSummonSkillExecutionService();
