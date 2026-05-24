@@ -5837,6 +5837,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return null;
 		}
 
+		if (packet.CommandCode == 16)
+		{
+			await HandleAllianceBanMemberAsync(player, packet.SelectedObjectId, cancellationToken);
+			return null;
+		}
+
 		if (!Enum.IsDefined(typeof(PlayerAllianceReadyCheckCommand), packet.CommandCode))
 			return null;
 
@@ -6155,6 +6161,56 @@ public sealed class GameServerConnection : BaseClientConnection
 			return null;
 
 		var plan = _playerAllianceRuntime.RemoveMemberWithLeaveWorkflow(player);
+		if (plan == null)
+			return null;
+
+		foreach (var intent in plan.AllianceLeavePlan.PacketIntents.OrderBy(intent => intent.Sequence))
+			await SendAllianceLeavePacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+
+		foreach (var intent in plan.BaseLeavePlan.PacketIntents.OrderBy(intent => intent.Sequence))
+			await SendAllianceLeavePacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+
+		return plan;
+	}
+
+	private async Task<PlayerAllianceLeaveWorkflowPlan?> HandleAllianceBanMemberAsync(
+		Player player,
+		int targetObjectId,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: PlayerTeamCommandService ALLIANCE_BAN_MEMBER -> PlayerAllianceService.banPlayer.
+		var alliance = _playerAllianceRuntime.Resolve(player);
+		if (alliance == null)
+			return null;
+
+		var bannedPlayerObjectId = targetObjectId == 0 ? player.ObjectId : targetObjectId;
+		var bannedMember = _playerAllianceRuntime.GetMember(alliance.AllianceId, bannedPlayerObjectId);
+		if (bannedMember == null)
+			return null;
+
+		if (bannedPlayerObjectId == player.ObjectId)
+		{
+			await SendAllianceLeavePacketAsync(player.ObjectId, SmSystemMessage.ForceCantBanSelf(), cancellationToken);
+			return null;
+		}
+
+		if (!_playerAllianceRuntime.IsLeader(alliance.AllianceId, player))
+		{
+			await SendAllianceLeavePacketAsync(player.ObjectId, SmSystemMessage.ForceOnlyLeaderCanBanish(), cancellationToken);
+			return null;
+		}
+
+		var descriptor = _playerAllianceRuntime.GetDescriptor(alliance.AllianceId);
+		if (descriptor?.TeamType == PlayerAllianceTeamType.AutoAlliance)
+		{
+			await SendAllianceLeavePacketAsync(player.ObjectId, SmSystemMessage.PartyForceNoRightToDecide(), cancellationToken);
+			return null;
+		}
+
+		var plan = _playerAllianceRuntime.RemoveMemberWithLeaveWorkflow(
+			bannedMember.Player,
+			PlayerAllianceLeaveReason.Ban,
+			player.Name);
 		if (plan == null)
 			return null;
 

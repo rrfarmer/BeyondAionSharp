@@ -237,6 +237,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1301009);
 	}
 
+	public static SmSystemMessage ForceCantBanSelf()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_FORCE_CANT_BAN_SELF.
+		return new SmSystemMessage(1400706);
+	}
+
 	public static SmSystemMessage PartyCantBanSelf()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_PARTY_CANT_BAN_SELF.
