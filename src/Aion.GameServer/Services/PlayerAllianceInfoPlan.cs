@@ -135,6 +135,7 @@ public enum PlayerAlliancePacketIntentKind
 	AllianceInfo,
 	MemberInfo,
 	SystemMessage,
+	LeaveGroupMember,
 }
 
 public sealed record PlayerAlliancePacketIntent(
@@ -153,6 +154,7 @@ public sealed record PlayerAlliancePacketIntent(
 			PlayerAlliancePacketIntentKind.AllianceInfo when AllianceInfoPlan != null => new SmAllianceInfo(AllianceInfoPlan),
 			PlayerAlliancePacketIntentKind.MemberInfo when MemberInfoPlan != null => new SmAllianceMemberInfo(MemberInfoPlan),
 			PlayerAlliancePacketIntentKind.SystemMessage when SystemMessage != null => SystemMessage,
+			PlayerAlliancePacketIntentKind.LeaveGroupMember => new SmLeaveGroupMember(),
 			_ => throw new InvalidOperationException("Alliance packet intent is missing packet metadata."),
 		};
 	}

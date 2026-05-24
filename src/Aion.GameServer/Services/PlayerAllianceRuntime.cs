@@ -183,6 +183,20 @@ public sealed class PlayerAllianceRuntime
 				_allianceReadyStatusByAllianceId.Remove(allianceId);
 				_targetObjectIdsByBrandIdByAllianceId.Remove(allianceId);
 			}
+			else if (plan.AllianceLeavePlan.WouldDisband)
+			{
+				foreach (var remainingMember in members)
+				{
+					remainingMember.ClearAllianceGroup();
+					ClearAlliance(remainingMember.Player);
+				}
+
+				_membersByAllianceId.Remove(allianceId);
+				_descriptorsByAllianceId.Remove(allianceId);
+				_viceCaptainObjectIdsByAllianceId.Remove(allianceId);
+				_allianceReadyStatusByAllianceId.Remove(allianceId);
+				_targetObjectIdsByBrandIdByAllianceId.Remove(allianceId);
+			}
 			else
 			{
 				if (wasLeader)

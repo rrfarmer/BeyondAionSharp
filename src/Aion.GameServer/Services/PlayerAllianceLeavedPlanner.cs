@@ -68,6 +68,16 @@ public sealed class PlayerAllianceLeavedPlanner
 					leagueId: isInLeague ? 1 : 0)));
 		}
 
+		var wouldDisband = shouldDisband
+			&& teamType != PlayerAllianceTeamType.AutoAlliance
+			&& reason is PlayerAllianceLeaveReason.Ban or PlayerAllianceLeaveReason.Leave or PlayerAllianceLeaveReason.LeaveTimeout;
+
+		if (wouldDisband && membersAfterLeave.Count == 1)
+		{
+			AppendAllianceDisbandPacketIntents(intents, membersAfterLeave);
+			sequence = intents.Count == 0 ? 0 : intents.Max(intent => intent.Sequence) + 1;
+		}
+
 		if (reason == PlayerAllianceLeaveReason.Ban)
 		{
 			intents.Add(new PlayerAlliancePacketIntent(
@@ -87,9 +97,6 @@ public sealed class PlayerAllianceLeavedPlanner
 
 		var wouldBroadcastLeague = isInLeague
 			&& (reason == PlayerAllianceLeaveReason.Ban || reason == PlayerAllianceLeaveReason.Leave);
-		var wouldDisband = shouldDisband
-			&& teamType != PlayerAllianceTeamType.AutoAlliance
-			&& reason is PlayerAllianceLeaveReason.Ban or PlayerAllianceLeaveReason.Leave or PlayerAllianceLeaveReason.LeaveTimeout;
 
 		return new PlayerAllianceLeavedPlan(
 			allianceId,
@@ -115,5 +122,29 @@ public sealed class PlayerAllianceLeavedPlanner
 			PlayerAllianceLeaveReason.Disband => SmSystemMessage.PartyAllianceDispersed(),
 			_ => throw new ArgumentOutOfRangeException(nameof(reason), reason, "Unsupported alliance leave reason."),
 		};
+	}
+
+	private static void AppendAllianceDisbandPacketIntents(
+		List<PlayerAlliancePacketIntent> intents,
+		IReadOnlyList<Player> membersAfterLeave)
+	{
+		// Java parity: AllianceDisbandEvent replays PlayerAllianceLeavedEvent with DISBAND for remaining members before the original base leave event.
+		var sequence = intents.Count == 0 ? 0 : intents.Max(intent => intent.Sequence) + 1;
+		foreach (var member in membersAfterLeave)
+		{
+			intents.Add(new PlayerAlliancePacketIntent(
+				sequence++,
+				member.ObjectId,
+				PlayerAlliancePacketIntentKind.SystemMessage,
+				SystemMessage: SmSystemMessage.PartyAllianceDispersed()));
+
+			if (!member.IsOnline)
+				continue;
+
+			intents.Add(new PlayerAlliancePacketIntent(
+				sequence++,
+				member.ObjectId,
+				PlayerAlliancePacketIntentKind.LeaveGroupMember));
+		}
 	}
 }
