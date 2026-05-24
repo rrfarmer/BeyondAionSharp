@@ -828,6 +828,64 @@ public sealed class PlayerSummonSkillExecutionService
 		return PlayerSummonKnownObjectNpcSkillSpawnExecutionPreview.Spawnable(postSpawnPreview, origin);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillSpawnLocationPreview PreviewMercenaryNpcSkillPostSpawnLocation(
+		PlayerSummonKnownObjectNpcSkillSpawnExecutionPreview? executionPreview,
+		float? randomAngleDegrees = null,
+		int? randomDistance = null)
+	{
+		if (executionPreview == null)
+			return PlayerSummonKnownObjectNpcSkillSpawnLocationPreview.MissingExecution();
+
+		if (!executionPreview.WouldSpawn
+			|| executionPreview.Origin == null
+			|| executionPreview.SpawnTemplate == null)
+		{
+			return PlayerSummonKnownObjectNpcSkillSpawnLocationPreview.NotSpawnable(executionPreview);
+		}
+
+		var origin = executionPreview.Origin;
+		var spawn = executionPreview.SpawnTemplate;
+		var headingAngleDegrees = ConvertJavaHeadingToAngle(origin.Heading);
+		if (spawn.MinDistance <= 0)
+		{
+			return PlayerSummonKnownObjectNpcSkillSpawnLocationPreview.Projected(
+				executionPreview,
+				origin,
+				headingAngleDegrees,
+				randomAngleDegrees: null,
+				distance: 0,
+				offsetX: 0,
+				offsetY: 0,
+				origin.X,
+				origin.Y,
+				origin.Z);
+		}
+
+		if (randomAngleDegrees == null)
+			return PlayerSummonKnownObjectNpcSkillSpawnLocationPreview.MissingRandomAngle(executionPreview, headingAngleDegrees);
+
+		if (spawn.MaxDistance > 0 && randomDistance == null)
+			return PlayerSummonKnownObjectNpcSkillSpawnLocationPreview.MissingRandomDistance(executionPreview, headingAngleDegrees, randomAngleDegrees.Value);
+
+		var distance = spawn.MaxDistance > 0 ? randomDistance!.Value : spawn.MinDistance;
+		var radian = Math.PI / 180d * (headingAngleDegrees + randomAngleDegrees.Value);
+		var offsetX = (float)(Math.Cos(radian) * distance);
+		var offsetY = (float)(Math.Sin(radian) * distance);
+
+		// Java parity: NpcSkillTemplateEntry.spawnNpc passes npc.getZ() unchanged and keeps npc.getHeading().
+		return PlayerSummonKnownObjectNpcSkillSpawnLocationPreview.Projected(
+			executionPreview,
+			origin,
+			headingAngleDegrees,
+			randomAngleDegrees,
+			distance,
+			offsetX,
+			offsetY,
+			origin.X + offsetX,
+			origin.Y + offsetY,
+			origin.Z);
+	}
+
 	private static PlayerSummonKnownObjectNpcSkillSelectionResult SelectSingleMercenaryNpcSkillCandidate(
 		PlayerSummonKnownObjectNpcSkillCandidate candidate,
 		PlayerSummonKnownObjectNpcSkillSelectionSource source)
@@ -869,6 +927,16 @@ public sealed class PlayerSummonSkillExecutionService
 		return predicate(target)
 			? PlayerSummonKnownObjectNpcSkillConditionReadiness.Ready(condition, target)
 			: PlayerSummonKnownObjectNpcSkillConditionReadiness.NotReady(condition, target);
+	}
+
+	private static float ConvertJavaHeadingToAngle(byte heading)
+	{
+		var angle = heading * 3f;
+		if (angle >= 360)
+			angle %= 360;
+		else if (angle < 0)
+			angle += 360;
+		return angle;
 	}
 
 	public PlayerSummonKnownObjectTargetRangeReadiness EvaluateMercenaryTargetRange(
@@ -1881,6 +1949,100 @@ public enum PlayerSummonKnownObjectNpcSkillSpawnExecutionPreviewStatus
 	OwnerNotReady,
 	MissingOrigin,
 	WouldSpawn,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillSpawnLocationPreview(
+	PlayerSummonKnownObjectNpcSkillSpawnLocationPreviewStatus Status,
+	PlayerSummonKnownObjectNpcSkillSpawnExecutionPreview? ExecutionPreview = null,
+	PlayerSummonKnownObjectNpcSkillSpawnOrigin? Origin = null,
+	float? HeadingAngleDegrees = null,
+	float? RandomAngleDegrees = null,
+	int? Distance = null,
+	float? OffsetX = null,
+	float? OffsetY = null,
+	float? SpawnX = null,
+	float? SpawnY = null,
+	float? SpawnZ = null)
+{
+	public bool HasProjectedLocation => Status == PlayerSummonKnownObjectNpcSkillSpawnLocationPreviewStatus.Projected;
+	public bool RequiresJavaRandomAngle => Status == PlayerSummonKnownObjectNpcSkillSpawnLocationPreviewStatus.MissingRandomAngle;
+	public bool RequiresJavaRandomDistance => Status == PlayerSummonKnownObjectNpcSkillSpawnLocationPreviewStatus.MissingRandomDistance;
+	public byte? Heading => HasProjectedLocation ? Origin?.Heading : null;
+	public int? WorldId => HasProjectedLocation ? Origin?.WorldId : null;
+	public int? InstanceId => HasProjectedLocation ? Origin?.InstanceId : null;
+
+	public static PlayerSummonKnownObjectNpcSkillSpawnLocationPreview MissingExecution()
+	{
+		return new PlayerSummonKnownObjectNpcSkillSpawnLocationPreview(
+			PlayerSummonKnownObjectNpcSkillSpawnLocationPreviewStatus.MissingExecution);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillSpawnLocationPreview NotSpawnable(
+		PlayerSummonKnownObjectNpcSkillSpawnExecutionPreview executionPreview)
+	{
+		return new PlayerSummonKnownObjectNpcSkillSpawnLocationPreview(
+			PlayerSummonKnownObjectNpcSkillSpawnLocationPreviewStatus.NotSpawnable,
+			executionPreview);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillSpawnLocationPreview MissingRandomAngle(
+		PlayerSummonKnownObjectNpcSkillSpawnExecutionPreview executionPreview,
+		float headingAngleDegrees)
+	{
+		return new PlayerSummonKnownObjectNpcSkillSpawnLocationPreview(
+			PlayerSummonKnownObjectNpcSkillSpawnLocationPreviewStatus.MissingRandomAngle,
+			executionPreview,
+			executionPreview.Origin,
+			headingAngleDegrees);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillSpawnLocationPreview MissingRandomDistance(
+		PlayerSummonKnownObjectNpcSkillSpawnExecutionPreview executionPreview,
+		float headingAngleDegrees,
+		float randomAngleDegrees)
+	{
+		return new PlayerSummonKnownObjectNpcSkillSpawnLocationPreview(
+			PlayerSummonKnownObjectNpcSkillSpawnLocationPreviewStatus.MissingRandomDistance,
+			executionPreview,
+			executionPreview.Origin,
+			headingAngleDegrees,
+			randomAngleDegrees);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillSpawnLocationPreview Projected(
+		PlayerSummonKnownObjectNpcSkillSpawnExecutionPreview executionPreview,
+		PlayerSummonKnownObjectNpcSkillSpawnOrigin origin,
+		float headingAngleDegrees,
+		float? randomAngleDegrees,
+		int distance,
+		float offsetX,
+		float offsetY,
+		float spawnX,
+		float spawnY,
+		float spawnZ)
+	{
+		return new PlayerSummonKnownObjectNpcSkillSpawnLocationPreview(
+			PlayerSummonKnownObjectNpcSkillSpawnLocationPreviewStatus.Projected,
+			executionPreview,
+			origin,
+			headingAngleDegrees,
+			randomAngleDegrees,
+			distance,
+			offsetX,
+			offsetY,
+			spawnX,
+			spawnY,
+			spawnZ);
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillSpawnLocationPreviewStatus
+{
+	MissingExecution,
+	NotSpawnable,
+	MissingRandomAngle,
+	MissingRandomDistance,
+	Projected,
 }
 
 public sealed record PlayerSummonKnownObjectNpcSkillCandidateMetadata(

@@ -219,6 +219,96 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void PreviewMercenaryNpcSkillPostSpawnLocation_ProjectsJavaSpawnNpcOffsetsWithInjectedRandomInputs()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var origin = new PlayerSummonKnownObjectNpcSkillSpawnOrigin(
+			WorldId: 210010000,
+			InstanceId: 12,
+			X: 100.5f,
+			Y: 200.25f,
+			Z: 35.75f,
+			Heading: 90);
+		var noOffsetSpawn = new PlayerSummonKnownObjectNpcSkillSpawnMetadata(
+			NpcId: 212352,
+			MinDistance: 0,
+			MaxDistance: 0,
+			MinCount: 1,
+			MaxCount: 0);
+		var fixedDistanceSpawn = new PlayerSummonKnownObjectNpcSkillSpawnMetadata(
+			NpcId: 212353,
+			MinDistance: 5,
+			MaxDistance: 0,
+			MinCount: 1,
+			MaxCount: 0);
+		var randomDistanceSpawn = new PlayerSummonKnownObjectNpcSkillSpawnMetadata(
+			NpcId: 212354,
+			MinDistance: 3,
+			MaxDistance: 7,
+			MinCount: 1,
+			MaxCount: 0);
+
+		PlayerSummonKnownObjectNpcSkillSpawnExecutionPreview Execution(PlayerSummonKnownObjectNpcSkillSpawnMetadata spawn)
+		{
+			var postSpawn = service.PreviewMercenaryNpcSkillPostSpawn(
+				service.ProjectMercenaryNpcSkillTemplate(new PlayerSummonKnownObjectNpcSkillTemplateMetadata(SpawnTemplate: spawn)));
+			return service.PreviewMercenaryNpcSkillPostSpawnExecution(postSpawn, origin);
+		}
+
+		var missingExecution = service.PreviewMercenaryNpcSkillPostSpawnLocation(null);
+		var notSpawnable = service.PreviewMercenaryNpcSkillPostSpawnLocation(
+			PlayerSummonKnownObjectNpcSkillSpawnExecutionPreview.MissingPreview());
+		var noOffset = service.PreviewMercenaryNpcSkillPostSpawnLocation(Execution(noOffsetSpawn));
+		var missingAngle = service.PreviewMercenaryNpcSkillPostSpawnLocation(Execution(fixedDistanceSpawn));
+		var fixedDistance = service.PreviewMercenaryNpcSkillPostSpawnLocation(
+			Execution(fixedDistanceSpawn),
+			randomAngleDegrees: 90f);
+		var missingDistance = service.PreviewMercenaryNpcSkillPostSpawnLocation(
+			Execution(randomDistanceSpawn),
+			randomAngleDegrees: 90f);
+		var randomDistance = service.PreviewMercenaryNpcSkillPostSpawnLocation(
+			Execution(randomDistanceSpawn),
+			randomAngleDegrees: 90f,
+			randomDistance: 7);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSpawnLocationPreviewStatus.MissingExecution, missingExecution.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSpawnLocationPreviewStatus.NotSpawnable, notSpawnable.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSpawnLocationPreviewStatus.Projected, noOffset.Status);
+		Assert.True(noOffset.HasProjectedLocation);
+		Assert.Equal(270f, noOffset.HeadingAngleDegrees);
+		Assert.Null(noOffset.RandomAngleDegrees);
+		Assert.Equal(0, noOffset.Distance);
+		Assert.Equal(0f, noOffset.OffsetX);
+		Assert.Equal(0f, noOffset.OffsetY);
+		Assert.Equal(origin.X, noOffset.SpawnX);
+		Assert.Equal(origin.Y, noOffset.SpawnY);
+		Assert.Equal(origin.Z, noOffset.SpawnZ);
+		Assert.Equal(origin.Heading, noOffset.Heading);
+		Assert.Equal(origin.WorldId, noOffset.WorldId);
+		Assert.Equal(origin.InstanceId, noOffset.InstanceId);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSpawnLocationPreviewStatus.MissingRandomAngle, missingAngle.Status);
+		Assert.True(missingAngle.RequiresJavaRandomAngle);
+		Assert.Equal(270f, missingAngle.HeadingAngleDegrees);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSpawnLocationPreviewStatus.Projected, fixedDistance.Status);
+		Assert.Equal(90f, fixedDistance.RandomAngleDegrees);
+		Assert.Equal(5, fixedDistance.Distance);
+		Assert.Equal(5f, fixedDistance.OffsetX.GetValueOrDefault(), precision: 5);
+		Assert.Equal(0f, fixedDistance.OffsetY.GetValueOrDefault(), precision: 5);
+		Assert.Equal(105.5f, fixedDistance.SpawnX.GetValueOrDefault(), precision: 5);
+		Assert.Equal(200.25f, fixedDistance.SpawnY.GetValueOrDefault(), precision: 5);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSpawnLocationPreviewStatus.MissingRandomDistance, missingDistance.Status);
+		Assert.True(missingDistance.RequiresJavaRandomDistance);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSpawnLocationPreviewStatus.Projected, randomDistance.Status);
+		Assert.Equal(7, randomDistance.Distance);
+		Assert.Equal(7f, randomDistance.OffsetX.GetValueOrDefault(), precision: 5);
+		Assert.Equal(0f, randomDistance.OffsetY.GetValueOrDefault(), precision: 5);
+		Assert.Equal(107.5f, randomDistance.SpawnX.GetValueOrDefault(), precision: 5);
+		Assert.Equal(200.25f, randomDistance.SpawnY.GetValueOrDefault(), precision: 5);
+	}
+
+	[Fact]
 	public void ProjectMercenaryNpcSkillCandidate_AdaptsStaticTemplateEntryIntoSelectableCandidate()
 	{
 		var service = new PlayerSummonSkillExecutionService();
