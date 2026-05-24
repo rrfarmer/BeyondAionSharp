@@ -209,6 +209,7 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.LootNoRight(), 901338);
 		AssertSystemMessage(SmSystemMessage.SkillNotEnoughDp(), 1300016);
 		AssertSystemMessage(SmSystemMessage.SkillNotReady(), 1300021);
+		AssertSystemMessage(SmSystemMessage.SkillCanceled(), 1300023);
 		AssertSystemMessage(SmSystemMessage.SkillCannotCast("state"), 1300026, "state");
 		AssertSystemMessage(SmSystemMessage.SkillCannotCastDead(), 1300026, ChatUtil.L10n(1400059));
 		AssertSystemMessage(SmSystemMessage.SkillNotNeedPet(), 1402918);
@@ -874,6 +875,12 @@ public class GamePacketTests
 		Assert.Equal(1, (int)itemUsageReader.ReadC());
 		Assert.Equal(1, itemUsageReader.ReadD());
 		Assert.Equal(0, itemUsageReader.Remaining);
+
+		var skillCancelPayload = SerializeUnencryptedPayload(new SmSkillCancel(7001, 1234));
+		using var skillCancelReader = new PacketBuffer(skillCancelPayload);
+		Assert.Equal(7001, skillCancelReader.ReadD());
+		Assert.Equal(1234, skillCancelReader.ReadH());
+		Assert.Equal(0, skillCancelReader.Remaining);
 
 		var kiskSpawnedAt = new DateTimeOffset(2026, 5, 23, 12, 0, 0, TimeSpan.Zero);
 		var kisk = new PlayerKiskRuntimeState(

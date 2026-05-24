@@ -196,6 +196,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300021);
 	}
 
+	public static SmSystemMessage SkillCanceled()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_SKILL_CANCELED.
+		return new SmSystemMessage(1300023);
+	}
+
 	public static SmSystemMessage SkillCannotCast(string stateName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_SKILL_CANT_CAST(String).
