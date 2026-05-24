@@ -106,6 +106,24 @@ public sealed class PlayerLeagueInvitePlannerTests
 	}
 
 	[Fact]
+	public void CreateCanInviteAllianceChecksPlan_SameLeagueHitsAlreadyInLeagueBeforeOtherUnionLikeJavaOrder()
+	{
+		var planner = new PlayerLeagueInvitePlanner();
+		var alliances = new PlayerAllianceRuntime();
+		var leagues = new PlayerLeagueRuntime();
+		var inviter = new Player { ObjectId = 1001, Name = "Inviter", IsOnline = true };
+		var invited = new Player { ObjectId = 2001, Name = "Invited", IsOnline = true };
+		alliances.CreateAlliance(88001, inviter);
+		alliances.CreateAlliance(88002, invited);
+		leagues.CreateLeague(77001, leaderAllianceId: 88001);
+		Assert.NotNull(leagues.JoinAlliance(77001, 88002, alliances));
+
+		var plan = planner.CreateCanInviteAllianceChecksPlan(inviter, invited, leagues);
+
+		AssertCanInviteFailure(plan, PlayerLeagueCanInviteStatus.InvitedAlreadyInLeague, 1001, 1400603);
+	}
+
+	[Fact]
 	public void CreateAcceptExistingLeaguePlan_JoinsInvitedAllianceLikeJavaAcceptRequest()
 	{
 		var planner = new PlayerLeagueInvitePlanner();
