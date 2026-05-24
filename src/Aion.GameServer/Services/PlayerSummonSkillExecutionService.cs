@@ -21,6 +21,32 @@ public sealed class PlayerSummonSkillExecutionService
 		return PlayerSummonSkillInvocationExecutionResult.WouldUseSkill(invocationPlan, skillTemplate.SkillId);
 	}
 
+	public PlayerSummonSkillInvocationUseResult PreviewInvocationUse(
+		PlayerSummonSkillInvocationExecutionResult? executionResult,
+		bool skillUseSucceeded)
+	{
+		if (executionResult == null)
+			return PlayerSummonSkillInvocationUseResult.MissingExecution();
+
+		if (executionResult.Status != PlayerSummonSkillInvocationExecutionStatus.WouldUseSkill
+			|| executionResult.InvocationPlan == null)
+		{
+			return PlayerSummonSkillInvocationUseResult.NotReadyToUseSkill(executionResult);
+		}
+
+		// Java parity: Skill.useSkill returns false before SummonController can release the summon.
+		if (!skillUseSucceeded)
+			return PlayerSummonSkillInvocationUseResult.SkillUseFailed(executionResult);
+
+		if (executionResult.InvocationPlan.ActorKind == PlayerSummonSkillInvocationActorKind.Summon
+			&& executionResult.InvocationPlan.ReleaseOnSuccess)
+		{
+			return PlayerSummonSkillInvocationUseResult.WouldReleaseSummon(executionResult);
+		}
+
+		return PlayerSummonSkillInvocationUseResult.WouldCompleteWithoutRelease(executionResult);
+	}
+
 	public PlayerSummonSkillExecutionResult ValidateExecution(
 		Player player,
 		PlayerPetSkillOrder order,
@@ -331,6 +357,58 @@ public enum PlayerSummonSkillInvocationExecutionAction
 	SetHate,
 	UseSkill,
 	ReleaseOnSuccessfulUse,
+}
+
+public sealed record PlayerSummonSkillInvocationUseResult(
+	PlayerSummonSkillInvocationUseStatus Status,
+	PlayerSummonSkillInvocationExecutionResult? ExecutionResult = null,
+	bool SkillUseSucceeded = false,
+	bool ShouldReleaseSummon = false)
+{
+	public static PlayerSummonSkillInvocationUseResult MissingExecution()
+	{
+		return new PlayerSummonSkillInvocationUseResult(PlayerSummonSkillInvocationUseStatus.MissingExecution);
+	}
+
+	public static PlayerSummonSkillInvocationUseResult NotReadyToUseSkill(PlayerSummonSkillInvocationExecutionResult executionResult)
+	{
+		return new PlayerSummonSkillInvocationUseResult(
+			PlayerSummonSkillInvocationUseStatus.NotReadyToUseSkill,
+			executionResult);
+	}
+
+	public static PlayerSummonSkillInvocationUseResult SkillUseFailed(PlayerSummonSkillInvocationExecutionResult executionResult)
+	{
+		return new PlayerSummonSkillInvocationUseResult(
+			PlayerSummonSkillInvocationUseStatus.SkillUseFailed,
+			executionResult);
+	}
+
+	public static PlayerSummonSkillInvocationUseResult WouldCompleteWithoutRelease(PlayerSummonSkillInvocationExecutionResult executionResult)
+	{
+		return new PlayerSummonSkillInvocationUseResult(
+			PlayerSummonSkillInvocationUseStatus.WouldCompleteWithoutRelease,
+			executionResult,
+			SkillUseSucceeded: true);
+	}
+
+	public static PlayerSummonSkillInvocationUseResult WouldReleaseSummon(PlayerSummonSkillInvocationExecutionResult executionResult)
+	{
+		return new PlayerSummonSkillInvocationUseResult(
+			PlayerSummonSkillInvocationUseStatus.WouldReleaseSummon,
+			executionResult,
+			SkillUseSucceeded: true,
+			ShouldReleaseSummon: true);
+	}
+}
+
+public enum PlayerSummonSkillInvocationUseStatus
+{
+	MissingExecution,
+	NotReadyToUseSkill,
+	SkillUseFailed,
+	WouldCompleteWithoutRelease,
+	WouldReleaseSummon,
 }
 
 public enum PlayerMercenarySkillExecutionStatus

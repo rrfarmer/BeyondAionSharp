@@ -10,6 +10,60 @@ namespace Aion.GameServer.Tests;
 public class PlayerSummonSkillExecutionServiceTests
 {
 	[Fact]
+	public void PreviewInvocationUse_GatesReleaseOnSuccessfulSkillUse()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var target = new PlayerSummonCastSpellTarget(7001, PlayerSummonKnownObjectKind.Creature, IsActorSelfTarget: false);
+		var releasePlan = new PlayerSummonSkillInvocationPlan(
+			PlayerSummonSkillInvocationActorKind.Summon,
+			ActorObjectId: 8001,
+			ActorTemplateId: 833288,
+			SkillId: 22107,
+			SkillLevel: 1,
+			target,
+			Hate: 5,
+			ReleaseOnSuccess: true);
+		var noReleasePlan = releasePlan with { ReleaseOnSuccess = false };
+		var mercenaryPlan = releasePlan with
+		{
+			ActorKind = PlayerSummonSkillInvocationActorKind.Mercenary,
+			ActorObjectId = 8002,
+			Hate = 0,
+			ReleaseOnSuccess = false,
+		};
+
+		var missingExecution = service.PreviewInvocationUse(null, skillUseSucceeded: true);
+		var notReady = service.PreviewInvocationUse(
+			PlayerSummonSkillInvocationExecutionResult.MissingSkillTemplate(releasePlan),
+			skillUseSucceeded: true);
+		var failedUse = service.PreviewInvocationUse(
+			PlayerSummonSkillInvocationExecutionResult.WouldUseSkill(releasePlan, skillTemplateId: 22107),
+			skillUseSucceeded: false);
+		var wouldRelease = service.PreviewInvocationUse(
+			PlayerSummonSkillInvocationExecutionResult.WouldUseSkill(releasePlan, skillTemplateId: 22107),
+			skillUseSucceeded: true);
+		var wouldNotRelease = service.PreviewInvocationUse(
+			PlayerSummonSkillInvocationExecutionResult.WouldUseSkill(noReleasePlan, skillTemplateId: 22107),
+			skillUseSucceeded: true);
+		var mercenaryUse = service.PreviewInvocationUse(
+			PlayerSummonSkillInvocationExecutionResult.WouldUseSkill(mercenaryPlan, skillTemplateId: 22107),
+			skillUseSucceeded: true);
+
+		Assert.Equal(PlayerSummonSkillInvocationUseStatus.MissingExecution, missingExecution.Status);
+		Assert.Equal(PlayerSummonSkillInvocationUseStatus.NotReadyToUseSkill, notReady.Status);
+		Assert.Equal(PlayerSummonSkillInvocationUseStatus.SkillUseFailed, failedUse.Status);
+		Assert.False(failedUse.ShouldReleaseSummon);
+		Assert.Equal(PlayerSummonSkillInvocationUseStatus.WouldReleaseSummon, wouldRelease.Status);
+		Assert.True(wouldRelease.SkillUseSucceeded);
+		Assert.True(wouldRelease.ShouldReleaseSummon);
+		Assert.Equal(PlayerSummonSkillInvocationUseStatus.WouldCompleteWithoutRelease, wouldNotRelease.Status);
+		Assert.True(wouldNotRelease.SkillUseSucceeded);
+		Assert.False(wouldNotRelease.ShouldReleaseSummon);
+		Assert.Equal(PlayerSummonSkillInvocationUseStatus.WouldCompleteWithoutRelease, mercenaryUse.Status);
+		Assert.False(mercenaryUse.ShouldReleaseSummon);
+	}
+
+	[Fact]
 	public async Task ValidateExecution_AllowsPetSkillBeforeRepresentedSkillEngineInvocation()
 	{
 		var dataManager = await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false);
