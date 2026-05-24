@@ -1600,6 +1600,11 @@ public class PlayerSummonSkillExecutionServiceTests
 		var failedUse = ContractFor(
 			null,
 			PlayerSummonKnownObjectNpcSkillActionResult.UseSkillFailed(failedUsePreview));
+		var preActionTooFarReadiness = service.ProjectMercenaryNpcSkillAttackCycleOperationReadiness(preActionTooFar);
+		var targetGiveUpReadiness = service.ProjectMercenaryNpcSkillAttackCycleOperationReadiness(targetGiveUp);
+		var skillActionTargetTooFarReadiness = service.ProjectMercenaryNpcSkillAttackCycleOperationReadiness(skillActionTargetTooFar);
+		var blockedReadiness = service.ProjectMercenaryNpcSkillAttackCycleOperationReadiness(blocked);
+		var failedUseReadiness = service.ProjectMercenaryNpcSkillAttackCycleOperationReadiness(failedUse);
 
 		Assert.True(preActionTooFar.HasOutcomeBranch(PlayerSummonKnownObjectNpcSkillAttackCycleOutcomeBranch.PreActionTargetTooFar));
 		Assert.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleExpectedSideEffect.ControllerAbortCast, preActionTooFar.ExpectedJavaSideEffects);
@@ -1630,6 +1635,34 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.False(targetGiveUp.WouldExecuteSideEffects);
 		Assert.False(blocked.WouldExecuteSideEffects);
 		Assert.False(failedUse.WouldExecuteSideEffects);
+		Assert.Equal([
+			PlayerSummonKnownObjectNpcSkillAttackCycleDependency.NpcAi,
+			PlayerSummonKnownObjectNpcSkillAttackCycleDependency.Controller,
+		], preActionTooFarReadiness.DependencyReadiness.Select(dependency => dependency.Dependency).ToArray());
+		Assert.Equal([
+			PlayerSummonKnownObjectNpcSkillAttackCycleDependency.NpcAi,
+		], targetGiveUpReadiness.DependencyReadiness.Select(dependency => dependency.Dependency).ToArray());
+		Assert.Equal([
+			PlayerSummonKnownObjectNpcSkillAttackCycleDependency.NpcAi,
+			PlayerSummonKnownObjectNpcSkillAttackCycleDependency.Controller,
+		], skillActionTargetTooFarReadiness.DependencyReadiness.Select(dependency => dependency.Dependency).ToArray());
+		Assert.Equal([
+			PlayerSummonKnownObjectNpcSkillAttackCycleDependency.NpcAi,
+		], blockedReadiness.DependencyReadiness.Select(dependency => dependency.Dependency).ToArray());
+		Assert.Equal([
+			PlayerSummonKnownObjectNpcSkillAttackCycleDependency.NpcAi,
+			PlayerSummonKnownObjectNpcSkillAttackCycleDependency.Controller,
+		], failedUseReadiness.DependencyReadiness.Select(dependency => dependency.Dependency).ToArray());
+		Assert.All(preActionTooFarReadiness.DependencyReadiness, dependency => Assert.True(dependency.IsUnsupported));
+		Assert.All(targetGiveUpReadiness.DependencyReadiness, dependency => Assert.True(dependency.IsUnsupported));
+		Assert.All(skillActionTargetTooFarReadiness.DependencyReadiness, dependency => Assert.True(dependency.IsUnsupported));
+		Assert.All(blockedReadiness.DependencyReadiness, dependency => Assert.True(dependency.IsUnsupported));
+		Assert.All(failedUseReadiness.DependencyReadiness, dependency => Assert.True(dependency.IsUnsupported));
+		Assert.False(preActionTooFarReadiness.WouldExecuteOperations);
+		Assert.False(targetGiveUpReadiness.WouldExecuteOperations);
+		Assert.False(skillActionTargetTooFarReadiness.WouldExecuteOperations);
+		Assert.False(blockedReadiness.WouldExecuteOperations);
+		Assert.False(failedUseReadiness.WouldExecuteOperations);
 	}
 
 	[Fact]
