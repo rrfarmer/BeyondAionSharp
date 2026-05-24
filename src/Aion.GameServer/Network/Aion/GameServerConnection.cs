@@ -6915,6 +6915,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (packet.QuestionId == SmQuestionWindow.WarehouseExpandWarning)
+		{
+			await HandleStorageExpansionQuestionResponseAsync(responder, packet);
+			return;
+		}
+
 		if (packet.QuestionId == SmQuestionWindow.AskRecoverExperience)
 		{
 			await HandleExperienceRecoveryQuestionResponseAsync(responder, packet);
@@ -7316,6 +7322,22 @@ public sealed class GameServerConnection : BaseClientConnection
 			return CraftSkillLearnResponsePlan.NotHandled(CraftSkillLearnResponseStatus.NoPendingRequest);
 
 		var result = new CraftSkillUpdateService().HandleResponse(
+			responder,
+			packet.QuestionId,
+			packet.Response,
+			itemTemplates);
+		foreach (var responsePacket in result.Packets)
+			await SendPacketAsync(responsePacket);
+		return result;
+	}
+
+	private async Task<StorageExpansionResponsePlan> HandleStorageExpansionQuestionResponseAsync(Player responder, CmQuestionResponse packet)
+	{
+		var itemTemplates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
+		if (itemTemplates == null)
+			return StorageExpansionResponsePlan.NotHandled(StorageExpansionResponseStatus.NoPendingRequest);
+
+		var result = new StorageExpansionNpcService().HandleResponse(
 			responder,
 			packet.QuestionId,
 			packet.Response,

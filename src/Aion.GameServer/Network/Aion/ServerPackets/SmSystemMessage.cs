@@ -639,6 +639,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300433, slots.ToString(System.Globalization.CultureInfo.InvariantCulture));
 	}
 
+	public static SmSystemMessage WarehouseExpandNotEnoughMoney()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_WAREHOUSE_EXPAND_NOT_ENOUGH_MONEY.
+		return new SmSystemMessage(1300831);
+	}
+
 	public static SmSystemMessage ItemChargeSuccess(string itemName, int level)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ITEM_CHARGE_SUCCESS.

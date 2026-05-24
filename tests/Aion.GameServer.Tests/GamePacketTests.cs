@@ -1040,6 +1040,7 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.InventorySizeExtended(9), 1300431, "9");
 		AssertSystemMessage(SmSystemMessage.WarehouseCantExtendMore(), 1300432);
 		AssertSystemMessage(SmSystemMessage.WarehouseSizeExtended(8), 1300433, "8");
+		AssertSystemMessage(SmSystemMessage.WarehouseExpandNotEnoughMoney(), 1300831);
 		AssertSystemMessage(SmSystemMessage.CannotRide(ChatUtil.L10n(1400057)), 1401211, ChatUtil.L10n(1400057));
 		AssertSystemMessage(SmSystemMessage.CannotRideInvalidLocation(), 1401099);
 		AssertSystemMessage(SmSystemMessage.ItemRestrictionRide(), 1401094);
@@ -1948,6 +1949,19 @@ public class GamePacketTests
 		Assert.Equal(9001, craftQuestionReader.ReadD());
 		Assert.Equal(0, craftQuestionReader.ReadD());
 		Assert.Equal(0, craftQuestionReader.Remaining);
+
+		var expansionQuestionPayload = SerializeUnencryptedPayload(
+			new SmQuestionWindow(SmQuestionWindow.WarehouseExpandWarning, 0, 0, "1200"));
+		using var expansionQuestionReader = new PacketBuffer(expansionQuestionPayload);
+		Assert.Equal(SmQuestionWindow.WarehouseExpandWarning, expansionQuestionReader.ReadD());
+		Assert.Equal("1200", expansionQuestionReader.ReadS());
+		Assert.Equal(string.Empty, expansionQuestionReader.ReadS());
+		Assert.Equal(string.Empty, expansionQuestionReader.ReadS());
+		Assert.Equal(0, expansionQuestionReader.ReadD());
+		Assert.Equal(0, (int)expansionQuestionReader.ReadC());
+		Assert.Equal(0, expansionQuestionReader.ReadD());
+		Assert.Equal(0, expansionQuestionReader.ReadD());
+		Assert.Equal(0, expansionQuestionReader.Remaining);
 
 		var instanceInfoPayload = SerializeUnencryptedPayload(
 			new SmInstanceInfo(

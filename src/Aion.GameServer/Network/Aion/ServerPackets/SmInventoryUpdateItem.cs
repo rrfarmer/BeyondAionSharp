@@ -13,6 +13,7 @@ public sealed class SmInventoryUpdateItem : GameServerPacket
 	public const int DecreaseStigmaUse = 0x17;
 	public const int DecreaseKinahBuy = 0x1D;
 	public const int DecreaseKinahLearn = 0x49;
+	public const int DecreaseKinahCube = 0x5A;
 	public const int EquipUnequip = -1;
 	public const int Charge = -2;
 	public const int PolishCharge = -3;

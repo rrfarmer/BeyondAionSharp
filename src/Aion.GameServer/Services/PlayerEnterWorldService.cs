@@ -791,6 +791,7 @@ public sealed class PlayerEnterWorldService
 		player.PendingExchangeRequest = null;
 		player.PendingRecallInstantRequest = null;
 		player.PendingCraftSkillLearnRequest = null;
+		player.PendingStorageExpansionRequest = null;
 		player.IsTrading = false;
 		player.IsExchangeLocked = false;
 		player.IsExchangeConfirmed = false;
