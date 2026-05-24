@@ -6878,6 +6878,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (packet.QuestionId == SmQuestionWindow.SummonPartyAcceptRequest)
+		{
+			await HandleRecallInstantQuestionResponseAsync(responder, packet);
+			return;
+		}
+
 		if (packet.QuestionId == SmQuestionWindow.AskRecoverExperience)
 		{
 			await HandleExperienceRecoveryQuestionResponseAsync(responder, packet);
@@ -7251,6 +7257,18 @@ public sealed class GameServerConnection : BaseClientConnection
 	private async Task<ExchangeResponsePlan> HandleExchangeQuestionResponseAsync(Player responder, CmQuestionResponse packet)
 	{
 		var result = _playerExchangeRequestService.HandleResponse(
+			responder,
+			packet.QuestionId,
+			packet.Response,
+			TryGetOnlinePlayerByObjectId);
+		foreach (var intent in result.PacketIntents)
+			await SendExchangePacketAsync(intent.RecipientObjectId, intent.Packet);
+		return result;
+	}
+
+	private async Task<RecallInstantResponsePlan> HandleRecallInstantQuestionResponseAsync(Player responder, CmQuestionResponse packet)
+	{
+		var result = new PlayerRecallInstantRequestService().HandleResponse(
 			responder,
 			packet.QuestionId,
 			packet.Response,

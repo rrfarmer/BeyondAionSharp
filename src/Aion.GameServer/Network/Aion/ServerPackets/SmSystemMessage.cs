@@ -1477,6 +1477,18 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300899);
 	}
 
+	public static SmSystemMessage RecallRejectEffect(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_Recall_Reject_EFFECT.
+		return new SmSystemMessage(1400099, playerName);
+	}
+
+	public static SmSystemMessage RecallRejectedEffect(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_Recall_Rejected_EFFECT.
+		return new SmSystemMessage(1400100, playerName);
+	}
+
 	public static SmSystemMessage HousingObjectOccupiedByOther()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_OBJECT_OCCUPIED_BY_OTHER.

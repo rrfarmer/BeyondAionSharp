@@ -92,6 +92,7 @@ public enum QuestionResponseRequestKind
 	DuelWithdraw,
 	ExperienceRecovery,
 	ExchangeRequest,
+	RecallInstant,
 }
 
 public sealed record QuestionResponseRequest(

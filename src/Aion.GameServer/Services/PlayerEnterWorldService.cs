@@ -789,6 +789,7 @@ public sealed class PlayerEnterWorldService
 		player.PendingDuelWithdrawRequest = null;
 		player.PendingExperienceRecoveryRequest = null;
 		player.PendingExchangeRequest = null;
+		player.PendingRecallInstantRequest = null;
 		player.IsTrading = false;
 		player.IsExchangeLocked = false;
 		player.IsExchangeConfirmed = false;
@@ -870,6 +871,18 @@ public sealed class PlayerEnterWorldService
 					await _connectionRegistry.SendPacketToPlayerAsync(
 						requesterObjectId,
 						SmSystemMessage.ExchangeHeRejectedExchange(responder.Name));
+				}
+				break;
+			}
+			case QuestionResponseRequestKind.RecallInstant:
+			{
+				var request = dispatch.Request.Payload as PendingRecallInstantRequest ?? responder.PendingRecallInstantRequest;
+				var requesterObjectId = request?.EffectorObjectId ?? dispatch.Request.RequesterObjectId;
+				if (requesterObjectId > 0)
+				{
+					await _connectionRegistry.SendPacketToPlayerAsync(
+						requesterObjectId,
+						SmSystemMessage.RecallRejectedEffect(responder.Name));
 				}
 				break;
 			}

@@ -1041,6 +1041,8 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.ItemRestrictionRide(), 1401094);
 		AssertSystemMessage(SmSystemMessage.UnrideAbnormalState(), 1401254);
 		AssertSystemMessage(SmSystemMessage.CannotRideAbnormalState(), 1401255);
+		AssertSystemMessage(SmSystemMessage.RecallRejectEffect("Kahrun"), 1400099, "Kahrun");
+		AssertSystemMessage(SmSystemMessage.RecallRejectedEffect("Kahrun"), 1400100, "Kahrun");
 		AssertSystemMessage(SmSystemMessage.CannotRegisterBindstoneHaveNoAuthority(), 1300799);
 		AssertSystemMessage(SmSystemMessage.CannotRegisterBindstoneFarFromNpc(), 1300800);
 		AssertSystemMessage(SmSystemMessage.CannotUseBindstoneItemWhileFlying(), 1300806);
@@ -1884,6 +1886,25 @@ public class GamePacketTests
 		Assert.Equal(1001, questionWindowReader.ReadD());
 		Assert.Equal(0, questionWindowReader.ReadD());
 		Assert.Equal(0, questionWindowReader.Remaining);
+
+		var recallQuestionPayload = SerializeUnencryptedPayload(
+			new SmQuestionWindow(
+				SmQuestionWindow.SummonPartyAcceptRequest,
+				0,
+				0,
+				"Kahrun",
+				"Summon Group Member",
+				"30"));
+		using var recallQuestionReader = new PacketBuffer(recallQuestionPayload);
+		Assert.Equal(SmQuestionWindow.SummonPartyAcceptRequest, recallQuestionReader.ReadD());
+		Assert.Equal("Kahrun", recallQuestionReader.ReadS());
+		Assert.Equal("Summon Group Member", recallQuestionReader.ReadS());
+		Assert.Equal("30", recallQuestionReader.ReadS());
+		Assert.Equal(0, recallQuestionReader.ReadD());
+		Assert.Equal(0, (int)recallQuestionReader.ReadC());
+		Assert.Equal(0, recallQuestionReader.ReadD());
+		Assert.Equal(0, recallQuestionReader.ReadD());
+		Assert.Equal(0, recallQuestionReader.Remaining);
 
 		var bindstoneQuestionPayload = SerializeUnencryptedPayload(
 			new SmQuestionWindow(SmQuestionWindow.RegisterBindstone, 9001, 5));

@@ -20,6 +20,7 @@ public sealed class SmQuestionWindow : GameServerPacket
 	public const int RegisterBindstone = 160018;
 	public const int UnionInviteMe = 902249;
 	public const int TeleportToNpcConfirm = 905097;
+	public const int SummonPartyAcceptRequest = 901721;
 	private const int MaxParameterCount = 3;
 
 	private readonly int _code;
