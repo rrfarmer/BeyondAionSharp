@@ -42,6 +42,40 @@ public sealed class PlayerReviveRestoreServiceTests
 	}
 
 	[Fact]
+	public void ApplyKiskReviveRestoreHonorsNoResurrectPenaltyLikeJavaRevive()
+	{
+		var player = new Player
+		{
+			CreatureState = PlayerCreatureState.Dead,
+			Dp = 1200,
+			IsPlayerResurrectionActive = true,
+			ResurrectionSkillId = 4456,
+			LifeStats = new PlayerLifeStats(CurrentHp: 0, CurrentMp: 0, CurrentFp: 42),
+		};
+
+		var result = PlayerReviveRestoreService.ApplyKiskReviveRestore(
+			player,
+			maxHp: 333,
+			maxMp: 222,
+			hasNoResurrectPenalty: true);
+
+		Assert.True(result.HasNoResurrectPenalty);
+		Assert.Equal(100, result.HpPercent);
+		Assert.Equal(100, result.MpPercent);
+		Assert.Equal(new PlayerLifeStats(333, 222, 42), result.CurrentLifeStats);
+		Assert.Equal(1200, result.PreviousDp);
+		Assert.Equal(1200, result.CurrentDp);
+		Assert.Equal(1200, player.Dp);
+		Assert.False(player.IsInState(PlayerCreatureState.Dead));
+		Assert.True(player.IsInState(PlayerCreatureState.Active));
+		Assert.True(result.PreviousPlayerResurrectionActive);
+		Assert.False(result.CurrentPlayerResurrectionActive);
+		Assert.Equal(4456, result.PreviousResurrectionSkillId);
+		Assert.Equal(0, result.CurrentResurrectionSkillId);
+		Assert.Equal(0, player.ResurrectionSkillId);
+	}
+
+	[Fact]
 	public void ApplyReviveRestoreClampsInvalidMaxAndPercentValuesLikeCreatureLifeStats()
 	{
 		var player = new Player
