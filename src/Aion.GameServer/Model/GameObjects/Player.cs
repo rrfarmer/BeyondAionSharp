@@ -224,6 +224,8 @@ public sealed class Player
 
 	public PlayerSummonOrMercenaryKind RepresentedSummonOrMercenaryKind { get; set; }
 
+	public int RepresentedSummonOrMercenaryNpcId { get; set; }
+
 	private readonly List<PlayerPetSkillOrder> _petSkillOrders = [];
 	private readonly Dictionary<int, PlayerSummonKnownObjectKind> _summonKnownObjects = [];
 

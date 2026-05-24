@@ -1283,6 +1283,19 @@ public sealed class GameServerConnection : BaseClientConnection
 			return new PlayerSummonCastSpellConnectionResult(castResult, ExecutionResult: null);
 		}
 
+		if (castResult.Status == PlayerSummonCastSpellStatus.MercenaryReady)
+		{
+			var mercenaryPetSkills = _runtimeContext?.DataManager?.StaticData.PetSkills;
+			if (mercenaryPetSkills == null)
+				return new PlayerSummonCastSpellConnectionResult(castResult, ExecutionResult: null);
+
+			var mercenaryExecutionResult = _summonSkillExecutionService.ValidateMercenaryExecution(player, packet, mercenaryPetSkills);
+			return new PlayerSummonCastSpellConnectionResult(
+				castResult,
+				ExecutionResult: null,
+				MercenaryExecutionResult: mercenaryExecutionResult);
+		}
+
 		if (castResult.Status != PlayerSummonCastSpellStatus.Executed || castResult.ExecutedOrder == null)
 			return new PlayerSummonCastSpellConnectionResult(castResult, ExecutionResult: null);
 

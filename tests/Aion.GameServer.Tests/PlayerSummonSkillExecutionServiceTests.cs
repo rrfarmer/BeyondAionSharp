@@ -1,6 +1,9 @@
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion;
+using Aion.GameServer.Network.Aion.ClientPackets;
 using Aion.GameServer.Services;
+using Aion.Commons.Network;
 
 namespace Aion.GameServer.Tests;
 
@@ -83,6 +86,39 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Empty(invalidSkill.Actions);
 	}
 
+	[Fact]
+	public async Task ValidateMercenaryExecution_PlansControllerUseAndAuditsInvalidSkill()
+	{
+		var dataManager = await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false);
+		var service = new PlayerSummonSkillExecutionService();
+		var player = new Player
+		{
+			RepresentedSummonOrMercenaryKind = PlayerSummonOrMercenaryKind.Mercenary,
+			RepresentedSummonOrMercenaryNpcId = 833288,
+		};
+
+		var valid = service.ValidateMercenaryExecution(
+			player,
+			CreateSummonCastSpell(summonObjectId: 8002, skillId: 22107, skillLevel: 1, targetObjectId: 8002),
+			dataManager.StaticData.PetSkills);
+		var invalid = service.ValidateMercenaryExecution(
+			player,
+			CreateSummonCastSpell(summonObjectId: 8002, skillId: 9999, skillLevel: 1, targetObjectId: 8002),
+			dataManager.StaticData.PetSkills);
+
+		Assert.Equal(PlayerMercenarySkillExecutionStatus.WouldInvokeController, valid.Status);
+		Assert.Equal(
+			[
+				PlayerMercenarySkillExecutionAction.SetTarget,
+				PlayerMercenarySkillExecutionAction.UseSkill,
+			],
+			valid.Actions);
+		Assert.Equal(PlayerMercenarySkillExecutionStatus.InvalidMercenarySkill, invalid.Status);
+		var audit = Assert.IsType<PlayerMercenarySkillExecutionAudit>(invalid.Audit);
+		Assert.Equal(PlayerMercenarySkillExecutionAuditKind.InvalidMercenarySkill, audit.Kind);
+		Assert.Empty(invalid.Actions);
+	}
+
 	private static string FindRepoRoot()
 	{
 		var directory = new DirectoryInfo(AppContext.BaseDirectory);
@@ -90,5 +126,18 @@ public class PlayerSummonSkillExecutionServiceTests
 			directory = directory.Parent;
 
 		return directory?.FullName ?? throw new InvalidOperationException("Unable to locate repository root.");
+	}
+
+	private static CmSummonCastSpell CreateSummonCastSpell(int summonObjectId, int skillId, int skillLevel, int targetObjectId)
+	{
+		var packet = new CmSummonCastSpell(205, new HashSet<GameConnectionState> { GameConnectionState.InGame });
+		using var buffer = new PacketBuffer();
+		buffer.WriteD(summonObjectId);
+		buffer.WriteH(skillId);
+		buffer.WriteC(skillLevel);
+		buffer.WriteD(targetObjectId);
+		buffer.WriteD(0);
+		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
+		return packet;
 	}
 }

@@ -153,14 +153,14 @@ public class PlayerSummonCastSpellServiceTests
 
 		var mercenaryResult = service.Handle(
 			mercenary,
-			CreatePacket(summonObjectId: 8002, skillId: 22107, skillLevel: 1, targetObjectId: 7001));
+			CreatePacket(summonObjectId: 8002, skillId: 22107, skillLevel: 1, targetObjectId: 8002));
 
 		Assert.Equal(PlayerSummonCastSpellStatus.PetRequired, nonPetResult.Status);
 		Assert.Equal(PlayerSummonOrMercenaryKind.NonPetSummon, nonPetResult.ActorKind);
 		Assert.Single(nonPetSummon.PetSkillOrders);
-		Assert.Equal(PlayerSummonCastSpellStatus.MercenaryUnsupported, mercenaryResult.Status);
+		Assert.Equal(PlayerSummonCastSpellStatus.MercenaryReady, mercenaryResult.Status);
 		Assert.Equal(PlayerSummonOrMercenaryKind.Mercenary, mercenaryResult.ActorKind);
-		Assert.Equal(7001, mercenaryResult.TargetObjectId);
+		Assert.Equal(8002, mercenaryResult.TargetObjectId);
 	}
 
 	private static Player CreatePlayer()

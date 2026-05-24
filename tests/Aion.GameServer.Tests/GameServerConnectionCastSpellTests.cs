@@ -366,21 +366,58 @@ public class GameServerConnectionCastSpellTests
 	}
 
 	[Fact]
-	public async Task HandleSummonCastSpellAsync_RepresentedMercenaryDoesNotSendPetRequiredPacket()
+	public async Task HandleSummonCastSpellAsync_ValidRepresentedMercenarySkillPlansControllerUse()
 	{
 		var sentPackets = new List<GameServerPacket>();
-		await using var pair = await TestConnectionPair.CreateAsync(sentPackets);
+		var runtimeContext = await CreateRuntimeContextAsync();
+		await using var pair = await TestConnectionPair.CreateAsync(sentPackets, runtimeContext: runtimeContext);
 		var player = CreatePlayer();
 		player.RepresentedSummonOrMercenaryObjectId = 8002;
 		player.RepresentedSummonOrMercenaryKind = PlayerSummonOrMercenaryKind.Mercenary;
+		player.RepresentedSummonOrMercenaryNpcId = 833288;
 
 		var result = await pair.Connection.HandleSummonCastSpellAsync(
 			player,
-			CreateSummonCastSpell(summonObjectId: 8002, skillId: 22107, skillLevel: 1, targetObjectId: 7001));
+			CreateSummonCastSpell(summonObjectId: 8002, skillId: 22107, skillLevel: 1, targetObjectId: 8002));
 
-		Assert.Equal(PlayerSummonCastSpellStatus.MercenaryUnsupported, result.CastResult.Status);
+		Assert.Equal(PlayerSummonCastSpellStatus.MercenaryReady, result.CastResult.Status);
 		Assert.Equal(PlayerSummonOrMercenaryKind.Mercenary, result.CastResult.ActorKind);
 		Assert.Null(result.ExecutionResult);
+		Assert.Equal(PlayerMercenarySkillExecutionStatus.WouldInvokeController, result.MercenaryExecutionResult?.Status);
+		Assert.Equal(833288, result.MercenaryExecutionResult?.MercenaryNpcId);
+		Assert.Equal(22107, result.MercenaryExecutionResult?.SkillId);
+		Assert.Equal(1, result.MercenaryExecutionResult?.SkillLevel);
+		Assert.Equal(8002, result.MercenaryExecutionResult?.TargetObjectId);
+		Assert.Equal(
+			[
+				PlayerMercenarySkillExecutionAction.SetTarget,
+				PlayerMercenarySkillExecutionAction.UseSkill,
+			],
+			result.MercenaryExecutionResult?.Actions);
+		Assert.Empty(sentPackets);
+	}
+
+	[Fact]
+	public async Task HandleSummonCastSpellAsync_InvalidRepresentedMercenarySkillRecordsAuditProjection()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var runtimeContext = await CreateRuntimeContextAsync();
+		await using var pair = await TestConnectionPair.CreateAsync(sentPackets, runtimeContext: runtimeContext);
+		var player = CreatePlayer();
+		player.RepresentedSummonOrMercenaryObjectId = 8002;
+		player.RepresentedSummonOrMercenaryKind = PlayerSummonOrMercenaryKind.Mercenary;
+		player.RepresentedSummonOrMercenaryNpcId = 833288;
+
+		var result = await pair.Connection.HandleSummonCastSpellAsync(
+			player,
+			CreateSummonCastSpell(summonObjectId: 8002, skillId: 9999, skillLevel: 1, targetObjectId: 8002));
+
+		Assert.Equal(PlayerSummonCastSpellStatus.MercenaryReady, result.CastResult.Status);
+		Assert.Equal(PlayerMercenarySkillExecutionStatus.InvalidMercenarySkill, result.MercenaryExecutionResult?.Status);
+		Assert.Equal(9999, result.MercenaryExecutionResult?.SkillId);
+		var audit = Assert.IsType<PlayerMercenarySkillExecutionAudit>(result.MercenaryExecutionResult?.Audit);
+		Assert.Equal(PlayerMercenarySkillExecutionAuditKind.InvalidMercenarySkill, audit.Kind);
+		Assert.Equal(9999, audit.SkillId);
 		Assert.Empty(sentPackets);
 	}
 

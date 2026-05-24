@@ -13,9 +13,12 @@ public sealed class PlayerSummonCastSpellService
 			return PlayerSummonCastSpellResult.PetRequired(packet.SummonObjectId, actorKind);
 
 		if (actorKind == PlayerSummonOrMercenaryKind.Mercenary)
-			return PlayerSummonCastSpellResult.MercenaryUnsupported(packet.SummonObjectId, packet.TargetObjectId);
+		{
+			var mercenaryTargetValidation = ValidateTarget(player, packet, actorKind);
+			return mercenaryTargetValidation ?? PlayerSummonCastSpellResult.MercenaryReady(packet.SummonObjectId, packet.TargetObjectId);
+		}
 
-		var targetValidation = ValidateTarget(player, packet);
+		var targetValidation = ValidateTarget(player, packet, actorKind);
 		if (targetValidation != null)
 			return targetValidation;
 
@@ -30,18 +33,21 @@ public sealed class PlayerSummonCastSpellService
 		return PlayerSummonCastSpellResult.Executed(packet.SummonObjectId, packet.TargetObjectId, order, skillMismatch);
 	}
 
-	private static PlayerSummonCastSpellResult? ValidateTarget(Player player, CmSummonCastSpell packet)
+	private static PlayerSummonCastSpellResult? ValidateTarget(
+		Player player,
+		CmSummonCastSpell packet,
+		PlayerSummonOrMercenaryKind actorKind)
 	{
 		// Java parity: target can be the summon itself, otherwise it must be a Creature from summon.getKnownList().
-		if (packet.TargetObjectId == player.PetSummonObjectId)
+		if (packet.TargetObjectId == packet.SummonObjectId)
 			return null;
 
 		if (!player.TryGetSummonKnownObjectKind(packet.TargetObjectId, out var targetKind))
-			return PlayerSummonCastSpellResult.UnknownTarget(packet.SummonObjectId, packet.TargetObjectId);
+			return PlayerSummonCastSpellResult.UnknownTarget(packet.SummonObjectId, packet.TargetObjectId, actorKind);
 
 		return targetKind == PlayerSummonKnownObjectKind.Creature
 			? null
-			: PlayerSummonCastSpellResult.NonCreatureTarget(packet.SummonObjectId, packet.TargetObjectId, targetKind);
+			: PlayerSummonCastSpellResult.NonCreatureTarget(packet.SummonObjectId, packet.TargetObjectId, targetKind, actorKind);
 	}
 }
 
@@ -63,10 +69,10 @@ public sealed record PlayerSummonCastSpellResult(
 			ActorKind: actorKind);
 	}
 
-	public static PlayerSummonCastSpellResult MercenaryUnsupported(int summonObjectId, int targetObjectId)
+	public static PlayerSummonCastSpellResult MercenaryReady(int summonObjectId, int targetObjectId)
 	{
 		return new PlayerSummonCastSpellResult(
-			PlayerSummonCastSpellStatus.MercenaryUnsupported,
+			PlayerSummonCastSpellStatus.MercenaryReady,
 			summonObjectId,
 			targetObjectId,
 			ActorKind: PlayerSummonOrMercenaryKind.Mercenary);
@@ -77,15 +83,23 @@ public sealed record PlayerSummonCastSpellResult(
 		return new PlayerSummonCastSpellResult(PlayerSummonCastSpellStatus.NoQueuedOrder, summonObjectId, targetObjectId);
 	}
 
-	public static PlayerSummonCastSpellResult UnknownTarget(int summonObjectId, int targetObjectId)
+	public static PlayerSummonCastSpellResult UnknownTarget(
+		int summonObjectId,
+		int targetObjectId,
+		PlayerSummonOrMercenaryKind actorKind = PlayerSummonOrMercenaryKind.PetSummon)
 	{
-		return new PlayerSummonCastSpellResult(PlayerSummonCastSpellStatus.UnknownTarget, summonObjectId, targetObjectId);
+		return new PlayerSummonCastSpellResult(
+			PlayerSummonCastSpellStatus.UnknownTarget,
+			summonObjectId,
+			targetObjectId,
+			ActorKind: actorKind);
 	}
 
 	public static PlayerSummonCastSpellResult NonCreatureTarget(
 		int summonObjectId,
 		int targetObjectId,
-		PlayerSummonKnownObjectKind targetKind)
+		PlayerSummonKnownObjectKind targetKind,
+		PlayerSummonOrMercenaryKind actorKind = PlayerSummonOrMercenaryKind.PetSummon)
 	{
 		// Java parity: CM_SUMMON_CASTSPELL audits non-null known-list objects that are not Creature targets.
 		var audit = new PlayerSummonCastSpellAudit(PlayerSummonCastSpellAuditKind.WrongTarget, targetObjectId, targetKind);
@@ -93,7 +107,8 @@ public sealed record PlayerSummonCastSpellResult(
 			PlayerSummonCastSpellStatus.NonCreatureTarget,
 			summonObjectId,
 			targetObjectId,
-			Audit: audit);
+			Audit: audit,
+			ActorKind: actorKind);
 	}
 
 	public static PlayerSummonCastSpellResult TargetMismatch(int summonObjectId, int targetObjectId, PlayerPetSkillOrder consumedOrder)
@@ -123,7 +138,7 @@ public sealed record PlayerSummonCastSpellResult(
 public enum PlayerSummonCastSpellStatus
 {
 	PetRequired,
-	MercenaryUnsupported,
+	MercenaryReady,
 	NoQueuedOrder,
 	UnknownTarget,
 	NonCreatureTarget,
@@ -143,4 +158,5 @@ public enum PlayerSummonCastSpellAuditKind
 
 public sealed record PlayerSummonCastSpellConnectionResult(
 	PlayerSummonCastSpellResult CastResult,
-	PlayerSummonSkillExecutionResult? ExecutionResult);
+	PlayerSummonSkillExecutionResult? ExecutionResult,
+	PlayerMercenarySkillExecutionResult? MercenaryExecutionResult = null);
