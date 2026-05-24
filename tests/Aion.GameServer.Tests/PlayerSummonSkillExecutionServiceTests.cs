@@ -1547,6 +1547,7 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.True(contract.HasUseSkillStartTrace);
 		Assert.True(contract.HasValidationMutationTrace);
 		Assert.True(contract.HasTemplateActionTrace);
+		Assert.True(contract.HasEffectInitializationTrace);
 		Assert.True(contract.HasEndCastBranchTrace);
 		Assert.True(contract.HasEndCastSideEffectTrace);
 		Assert.Equal([
@@ -1583,6 +1584,12 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Contains(PlayerSummonKnownObjectNpcSkillTemplateActionStep.ReduceMp, templateActionTrace.OrderedSteps);
 		Assert.Contains(PlayerSummonKnownObjectNpcSkillTemplateActionStep.SetDp, templateActionTrace.OrderedSteps);
 		Assert.True(templateActionTrace.ConsumesResourceBeforeEffects);
+		var effectInitializationTrace = Assert.IsType<PlayerSummonKnownObjectNpcSkillEffectInitializationTrace>(contract.EffectInitializationTrace);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEffectInitializationTraceStatus.OrderedEffectSetup, effectInitializationTrace.Status);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.CreateEffectForEffected, effectInitializationTrace.OrderedSteps);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.SetEffectWorldPosition, effectInitializationTrace.OrderedSteps);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.ScheduleApplyEffect, effectInitializationTrace.OrderedSteps);
+		Assert.True(effectInitializationTrace.CapturesDashStatusBeforeCastResult);
 		var contractEndCastBranchTrace = Assert.IsType<PlayerSummonKnownObjectNpcSkillEndCastBranchTrace>(contract.EndCastBranchTrace);
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillEndCastBranchTraceStatus.OrderedBranches, contractEndCastBranchTrace.Status);
 		Assert.Contains(PlayerSummonKnownObjectNpcSkillEndCastBranchStep.EndCondCheckIgnored, contractEndCastBranchTrace.OrderedSteps);
@@ -1667,6 +1674,7 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.True(adapterContract.PreservesUseSkillStartOrdering);
 		Assert.True(adapterContract.PreservesValidationMutationOrdering);
 		Assert.True(adapterContract.PreservesTemplateActionOrdering);
+		Assert.True(adapterContract.PreservesEffectInitializationOrdering);
 		Assert.True(adapterContract.PreservesEndCastBranchOrdering);
 		Assert.True(adapterContract.PreservesEndCastSideEffectOrdering);
 		Assert.Equal(contract.ActionSideEffectTrace?.Status, adapterContract.ActionSideEffectTrace?.Status);
@@ -1677,6 +1685,8 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Equal(contract.ValidationMutationTrace?.OrderedSteps, adapterContract.ValidationMutationTrace?.OrderedSteps);
 		Assert.Equal(contract.TemplateActionTrace?.Status, adapterContract.TemplateActionTrace?.Status);
 		Assert.Equal(contract.TemplateActionTrace?.OrderedSteps, adapterContract.TemplateActionTrace?.OrderedSteps);
+		Assert.Equal(contract.EffectInitializationTrace?.Status, adapterContract.EffectInitializationTrace?.Status);
+		Assert.Equal(contract.EffectInitializationTrace?.OrderedSteps, adapterContract.EffectInitializationTrace?.OrderedSteps);
 		Assert.Equal(contract.EndCastBranchTrace?.Status, adapterContract.EndCastBranchTrace?.Status);
 		Assert.Equal(contract.EndCastBranchTrace?.OrderedSteps, adapterContract.EndCastBranchTrace?.OrderedSteps);
 		Assert.Equal(contract.EndCastSideEffectTrace?.Status, adapterContract.EndCastSideEffectTrace?.Status);
@@ -2992,6 +3002,94 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Contains(PlayerSummonKnownObjectNpcSkillTemplateActionStep.SkipItemUseForNonPlayer, nonPlayerItem.OrderedSteps);
 		Assert.Contains(PlayerSummonKnownObjectNpcSkillTemplateActionStep.CastEffectorToPlayer, nonPlayerDp.OrderedSteps);
 		Assert.DoesNotContain(PlayerSummonKnownObjectNpcSkillTemplateActionStep.SetDp, nonPlayerDp.OrderedSteps);
+	}
+
+	[Fact]
+	public void ProjectMercenaryNpcSkillEffectInitializationTrace_OrdersJavaEffectSetupAndApply()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var knownObject = new PlayerSummonKnownObject(8022, PlayerSummonKnownObjectKind.Creature);
+		var readySkill = service.EvaluateMercenarySkillReadiness(knownObject, CreateSkillTemplate("MAGICAL"));
+		var targetSelection = service.SelectMercenaryNpcSkillActionTarget(
+			skillFirstTargetIsSelf: false,
+			PlayerSummonKnownObjectNpcSkillTargetAttribute.MostHated,
+			hasMostHatedTarget: true);
+
+		PlayerSummonKnownObjectNpcSkillActionResult Result(bool controllerUseSkillSucceeded = true)
+		{
+			var preview = service.PreviewMercenaryNpcSkillAction(
+				isInCastSubState: true,
+				shouldResumeFightAfterInterruptedCast: false,
+				hasCreatureTarget: true,
+				targetIsDead: false,
+				hasLastSkill: true,
+				ownerUsesMeleeAggroRange: false,
+				targetInAggroRange: true,
+				readySkill,
+				targetSelection,
+				controllerUseSkillSucceeded);
+
+			return service.ProjectMercenaryNpcSkillActionResult(preview);
+		}
+
+		var noEndCast = service.ProjectMercenaryNpcSkillEffectInitializationTrace(
+			Result(controllerUseSkillSucceeded: false));
+		var noEffects = service.ProjectMercenaryNpcSkillEffectInitializationTrace(Result(), hasSkillEffects: false);
+		var ordered = service.ProjectMercenaryNpcSkillEffectInitializationTrace(
+			Result(),
+			effectedCount: 1,
+			launchesSubEffect: true,
+			mayCreateCriticalSubEffect: true);
+		var resistedDelayed = service.ProjectMercenaryNpcSkillEffectInitializationTrace(
+			Result(),
+			allEffectsResistedOrDodged: true,
+			isInstantSkill: false,
+			hasResistedTauntHate: true);
+		var conflict = service.ProjectMercenaryNpcSkillEffectInitializationTrace(
+			Result(),
+			hasConflictOnPlayerTarget: true,
+			successEffectsEmpty: true);
+		var pointPointEmpty = service.ProjectMercenaryNpcSkillEffectInitializationTrace(
+			Result(),
+			effectedCount: 0,
+			isPointPointSkill: true);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEffectInitializationTraceStatus.NoEndCast, noEndCast.Status);
+		Assert.Empty(noEndCast.OrderedSteps);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEffectInitializationTraceStatus.NoSkillEffects, noEffects.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillEffectInitializationTraceStatus.OrderedEffectSetup, ordered.Status);
+		Assert.Equal([
+			PlayerSummonKnownObjectNpcSkillEffectInitializationStep.CreateEffectForEffected,
+			PlayerSummonKnownObjectNpcSkillEffectInitializationStep.InitializeEffect,
+			PlayerSummonKnownObjectNpcSkillEffectInitializationStep.CheckEffectControllerConflict,
+			PlayerSummonKnownObjectNpcSkillEffectInitializationStep.CalculateEffectTemplates,
+			PlayerSummonKnownObjectNpcSkillEffectInitializationStep.CalculateHateForSuccessEffects,
+			PlayerSummonKnownObjectNpcSkillEffectInitializationStep.CalculateSubEffects,
+			PlayerSummonKnownObjectNpcSkillEffectInitializationStep.MaybeCreateCriticalSubEffect,
+			PlayerSummonKnownObjectNpcSkillEffectInitializationStep.SetSpellStatusFromBaseAttackStatus,
+			PlayerSummonKnownObjectNpcSkillEffectInitializationStep.SetEffectWorldPosition,
+			PlayerSummonKnownObjectNpcSkillEffectInitializationStep.AddEffectToList,
+			PlayerSummonKnownObjectNpcSkillEffectInitializationStep.CaptureFirstTargetDashStatus,
+			PlayerSummonKnownObjectNpcSkillEffectInitializationStep.ApplyEffectImmediately,
+			PlayerSummonKnownObjectNpcSkillEffectInitializationStep.ApplyEachEffect,
+			PlayerSummonKnownObjectNpcSkillEffectInitializationStep.ApplySuccessEffectTemplates,
+			PlayerSummonKnownObjectNpcSkillEffectInitializationStep.ApplyCriticalSubEffect,
+			PlayerSummonKnownObjectNpcSkillEffectInitializationStep.NotifyEffectedAiOnEffectApplied,
+			PlayerSummonKnownObjectNpcSkillEffectInitializationStep.AddResistedEffectHateAndNotifyFriends,
+		], ordered.OrderedSteps);
+		Assert.False(ordered.WouldExecuteEffects);
+		Assert.True(ordered.CapturesDashStatusBeforeCastResult);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.CountExactResistOrDodge, resistedDelayed.OrderedSteps);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.MarkBlockedPenaltySkill, resistedDelayed.OrderedSteps);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.ScheduleApplyEffect, resistedDelayed.OrderedSteps);
+		Assert.True(resistedDelayed.BlocksPenaltyAfterFullResistOrDodge);
+		Assert.True(resistedDelayed.NotifiesSupportAfterApply);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.SetEffectResultConflict, conflict.OrderedSteps);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.MarkBlockedStance, conflict.OrderedSteps);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.ResolveEmptySuccessAsResist, conflict.OrderedSteps);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.EmptyEffectedListCountsAsAllResistedOrDodged, pointPointEmpty.OrderedSteps);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.CreatePointPointNullEffect, pointPointEmpty.OrderedSteps);
+		Assert.Contains(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.MarkBlockedPenaltySkill, pointPointEmpty.OrderedSteps);
 	}
 
 	[Fact]

@@ -911,6 +911,38 @@ public sealed class PlayerSummonSkillExecutionService
 			boostSkillCostPresent);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillEffectInitializationTrace ProjectMercenaryNpcSkillEffectInitializationTrace(
+		PlayerSummonKnownObjectNpcSkillActionResult? actionResult,
+		bool hasSkillEffects = true,
+		int effectedCount = 1,
+		bool isPointPointSkill = false,
+		bool hasConflictOnPlayerTarget = false,
+		bool allEffectsResistedOrDodged = false,
+		bool firstTargetReceivesDashStatus = true,
+		bool successEffectsEmpty = false,
+		bool emptySuccessFromPhysicalEffect = false,
+		bool launchesSubEffect = false,
+		bool mayCreateCriticalSubEffect = false,
+		bool isInstantSkill = true,
+		bool hasResistedTauntHate = false)
+	{
+		// Java parity: Skill.endCast creates Effect objects, initializes attack/result fields, stores world position, then applies immediately or by hitTime.
+		return PlayerSummonKnownObjectNpcSkillEffectInitializationTrace.FromActionResult(
+			actionResult,
+			hasSkillEffects,
+			effectedCount,
+			isPointPointSkill,
+			hasConflictOnPlayerTarget,
+			allEffectsResistedOrDodged,
+			firstTargetReceivesDashStatus,
+			successEffectsEmpty,
+			emptySuccessFromPhysicalEffect,
+			launchesSubEffect,
+			mayCreateCriticalSubEffect,
+			isInstantSkill,
+			hasResistedTauntHate);
+	}
+
 	public PlayerSummonKnownObjectNpcSkillUseSkillStartTrace ProjectMercenaryNpcSkillUseSkillStartTrace(
 		PlayerSummonKnownObjectNpcSkillActionResult? actionResult,
 		bool canUseSkillAtCastStart = true,
@@ -4284,6 +4316,7 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 	PlayerSummonKnownObjectNpcSkillUseSkillStartTrace? UseSkillStartTrace = null,
 	PlayerSummonKnownObjectNpcSkillValidationMutationTrace? ValidationMutationTrace = null,
 	PlayerSummonKnownObjectNpcSkillTemplateActionTrace? TemplateActionTrace = null,
+	PlayerSummonKnownObjectNpcSkillEffectInitializationTrace? EffectInitializationTrace = null,
 	PlayerSummonKnownObjectNpcSkillEndCastBranchTrace? EndCastBranchTrace = null,
 	PlayerSummonKnownObjectNpcSkillEndCastSideEffectTrace? EndCastSideEffectTrace = null)
 {
@@ -4313,6 +4346,8 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 	public bool HasValidationMutationTrace => ValidationMutationTrace != null;
 
 	public bool HasTemplateActionTrace => TemplateActionTrace != null;
+
+	public bool HasEffectInitializationTrace => EffectInitializationTrace != null;
 
 	public bool HasEndCastBranchTrace => EndCastBranchTrace != null;
 
@@ -4369,6 +4404,9 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 		var useSkillStartTrace = BuildUseSkillStartTrace(liveInvocation.CycleSnapshot, actionTrace);
 		var validationMutationTrace = BuildValidationMutationTrace(actionTrace);
 		var templateActionTrace = BuildTemplateActionTrace(actionTrace);
+		var effectInitializationTrace = BuildEffectInitializationTrace(
+			liveInvocation.CycleSnapshot,
+			actionTrace);
 		var endCastBranchTrace = BuildEndCastBranchTrace(liveInvocation.CycleSnapshot, actionTrace);
 		return new PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 			PlayerSummonKnownObjectNpcSkillAttackCycleResultContractStatus.LiveAiNotWired,
@@ -4380,6 +4418,7 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 			useSkillStartTrace,
 			validationMutationTrace,
 			templateActionTrace,
+			effectInitializationTrace,
 			endCastBranchTrace,
 			BuildEndCastSideEffectTrace(liveInvocation.CycleSnapshot, actionTrace));
 	}
@@ -4494,6 +4533,31 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleResultContract(
 			sendsCastResult: true,
 			isNpcEffector: true,
 			isCastSkillMethod: true);
+	}
+
+	private static PlayerSummonKnownObjectNpcSkillEffectInitializationTrace? BuildEffectInitializationTrace(
+		PlayerSummonKnownObjectNpcSkillAttackCycleSnapshot? cycleSnapshot,
+		PlayerSummonKnownObjectNpcSkillActionSideEffectTrace? actionTrace)
+	{
+		var actionResult = actionTrace?.ActionResult;
+		if (actionResult == null)
+			return null;
+
+		return PlayerSummonKnownObjectNpcSkillEffectInitializationTrace.FromActionResult(
+			actionResult,
+			hasSkillEffects: true,
+			effectedCount: 1,
+			isPointPointSkill: false,
+			hasConflictOnPlayerTarget: false,
+			allEffectsResistedOrDodged: false,
+			firstTargetReceivesDashStatus: true,
+			successEffectsEmpty: false,
+			emptySuccessFromPhysicalEffect: false,
+			launchesSubEffect: false,
+			mayCreateCriticalSubEffect: false,
+			isInstantSkill: cycleSnapshot?.PerformAttackExecutionPreview?.Status
+				== PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreviewStatus.ImmediateWorkflow,
+			hasResistedTauntHate: false);
 	}
 
 	private static PlayerSummonKnownObjectNpcSkillEndCastSideEffectTrace? BuildEndCastSideEffectTrace(
@@ -4986,6 +5050,7 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContra
 	PlayerSummonKnownObjectNpcSkillUseSkillStartTrace? UseSkillStartTrace = null,
 	PlayerSummonKnownObjectNpcSkillValidationMutationTrace? ValidationMutationTrace = null,
 	PlayerSummonKnownObjectNpcSkillTemplateActionTrace? TemplateActionTrace = null,
+	PlayerSummonKnownObjectNpcSkillEffectInitializationTrace? EffectInitializationTrace = null,
 	PlayerSummonKnownObjectNpcSkillEndCastBranchTrace? EndCastBranchTrace = null,
 	PlayerSummonKnownObjectNpcSkillEndCastSideEffectTrace? EndCastSideEffectTrace = null)
 {
@@ -5018,6 +5083,8 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContra
 	public bool PreservesValidationMutationOrdering => ValidationMutationTrace != null;
 
 	public bool PreservesTemplateActionOrdering => TemplateActionTrace != null;
+
+	public bool PreservesEffectInitializationOrdering => EffectInitializationTrace != null;
 
 	public bool PreservesEndCastBranchOrdering => EndCastBranchTrace != null;
 
@@ -5059,6 +5126,7 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContra
 			adapterSummary.ResultContract.UseSkillStartTrace,
 			adapterSummary.ResultContract.ValidationMutationTrace,
 			adapterSummary.ResultContract.TemplateActionTrace,
+			adapterSummary.ResultContract.EffectInitializationTrace,
 			adapterSummary.ResultContract.EndCastBranchTrace,
 			adapterSummary.ResultContract.EndCastSideEffectTrace);
 	}
@@ -6041,6 +6109,224 @@ public enum PlayerSummonKnownObjectNpcSkillTemplateActionStep
 	ItemUseSucceeded,
 	SkipItemUseForNonPlayer,
 	ActionReturnedFalse,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillEffectInitializationTrace(
+	PlayerSummonKnownObjectNpcSkillEffectInitializationTraceStatus Status,
+	PlayerSummonKnownObjectNpcSkillActionResult? ActionResult = null,
+	IReadOnlyList<PlayerSummonKnownObjectNpcSkillEffectInitializationStep>? Steps = null)
+{
+	private static readonly IReadOnlyList<PlayerSummonKnownObjectNpcSkillEffectInitializationStep> EmptySteps = [];
+
+	public IReadOnlyList<PlayerSummonKnownObjectNpcSkillEffectInitializationStep> OrderedSteps => Steps ?? EmptySteps;
+
+	public bool WouldExecuteEffects => false;
+
+	public bool CapturesDashStatusBeforeCastResult =>
+		OrderedSteps.Contains(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.CaptureFirstTargetDashStatus);
+
+	public bool BlocksPenaltyAfterFullResistOrDodge =>
+		OrderedSteps.Contains(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.MarkBlockedPenaltySkill);
+
+	public bool NotifiesSupportAfterApply =>
+		IndexOf(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.ApplyEachEffect) is int applyIndex
+		&& applyIndex >= 0
+		&& IndexOf(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.NotifyKnownNpcsCreatureNeedsSupport) is int notifyIndex
+		&& notifyIndex > applyIndex;
+
+	private int IndexOf(PlayerSummonKnownObjectNpcSkillEffectInitializationStep step)
+	{
+		for (var i = 0; i < OrderedSteps.Count; i++)
+		{
+			if (OrderedSteps[i] == step)
+				return i;
+		}
+
+		return -1;
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillEffectInitializationTrace FromActionResult(
+		PlayerSummonKnownObjectNpcSkillActionResult? actionResult,
+		bool hasSkillEffects,
+		int effectedCount,
+		bool isPointPointSkill,
+		bool hasConflictOnPlayerTarget,
+		bool allEffectsResistedOrDodged,
+		bool firstTargetReceivesDashStatus,
+		bool successEffectsEmpty,
+		bool emptySuccessFromPhysicalEffect,
+		bool launchesSubEffect,
+		bool mayCreateCriticalSubEffect,
+		bool isInstantSkill,
+		bool hasResistedTauntHate)
+	{
+		if (actionResult == null || actionResult.Status == PlayerSummonKnownObjectNpcSkillActionResultStatus.MissingPreview)
+		{
+			return new PlayerSummonKnownObjectNpcSkillEffectInitializationTrace(
+				PlayerSummonKnownObjectNpcSkillEffectInitializationTraceStatus.MissingResult,
+				actionResult);
+		}
+
+		if (actionResult.Status != PlayerSummonKnownObjectNpcSkillActionResultStatus.UseSkill)
+		{
+			return new PlayerSummonKnownObjectNpcSkillEffectInitializationTrace(
+				PlayerSummonKnownObjectNpcSkillEffectInitializationTraceStatus.NoEndCast,
+				actionResult);
+		}
+
+		if (!hasSkillEffects)
+		{
+			return new PlayerSummonKnownObjectNpcSkillEffectInitializationTrace(
+				PlayerSummonKnownObjectNpcSkillEffectInitializationTraceStatus.NoSkillEffects,
+				actionResult,
+				[]);
+		}
+
+		var steps = new List<PlayerSummonKnownObjectNpcSkillEffectInitializationStep>();
+		var blocksChainAndPenalty = allEffectsResistedOrDodged || effectedCount == 0;
+		if (effectedCount > 0)
+		{
+			for (var i = 0; i < effectedCount; i++)
+				AddPerTargetEffectSetupSteps(steps, hasConflictOnPlayerTarget, successEffectsEmpty, emptySuccessFromPhysicalEffect, launchesSubEffect, mayCreateCriticalSubEffect);
+
+			if (firstTargetReceivesDashStatus)
+				steps.Add(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.CaptureFirstTargetDashStatus);
+			if (allEffectsResistedOrDodged)
+				steps.Add(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.CountExactResistOrDodge);
+		}
+		else if (isPointPointSkill)
+		{
+			steps.Add(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.EmptyEffectedListCountsAsAllResistedOrDodged);
+			steps.Add(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.CreatePointPointNullEffect);
+			steps.Add(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.InitializePointPointNullEffect);
+			steps.Add(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.SetPointPointWorldPosition);
+			steps.Add(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.AddPointPointEffectToList);
+		}
+		else
+		{
+			steps.Add(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.EmptyEffectedListCountsAsAllResistedOrDodged);
+		}
+
+		if (blocksChainAndPenalty)
+		{
+			steps.Add(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.MarkBlockedChain);
+			steps.Add(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.MarkBlockedPenaltySkill);
+		}
+
+		steps.Add(isInstantSkill
+			? PlayerSummonKnownObjectNpcSkillEffectInitializationStep.ApplyEffectImmediately
+			: PlayerSummonKnownObjectNpcSkillEffectInitializationStep.ScheduleApplyEffect);
+		steps.Add(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.ApplyEachEffect);
+		if (successEffectsEmpty)
+			steps.Add(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.BroadcastHateWhenNoSuccessEffects);
+		else
+		{
+			steps.Add(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.ApplySuccessEffectTemplates);
+			if (mayCreateCriticalSubEffect)
+				steps.Add(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.ApplyCriticalSubEffect);
+			steps.Add(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.NotifyEffectedAiOnEffectApplied);
+		}
+
+		steps.Add(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.AddResistedEffectHateAndNotifyFriends);
+		if (hasResistedTauntHate)
+		{
+			steps.Add(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.AddHateForResistedEffect);
+			steps.Add(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.NotifyKnownNpcsCreatureNeedsSupport);
+		}
+
+		return new PlayerSummonKnownObjectNpcSkillEffectInitializationTrace(
+			PlayerSummonKnownObjectNpcSkillEffectInitializationTraceStatus.OrderedEffectSetup,
+			actionResult,
+			steps);
+	}
+
+	private static void AddPerTargetEffectSetupSteps(
+		List<PlayerSummonKnownObjectNpcSkillEffectInitializationStep> steps,
+		bool hasConflictOnPlayerTarget,
+		bool successEffectsEmpty,
+		bool emptySuccessFromPhysicalEffect,
+		bool launchesSubEffect,
+		bool mayCreateCriticalSubEffect)
+	{
+		steps.Add(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.CreateEffectForEffected);
+		steps.Add(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.InitializeEffect);
+		steps.Add(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.CheckEffectControllerConflict);
+		if (hasConflictOnPlayerTarget)
+		{
+			steps.Add(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.SetEffectResultConflict);
+			steps.Add(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.MarkBlockedStance);
+		}
+		else
+		{
+			steps.Add(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.CalculateEffectTemplates);
+		}
+
+		if (successEffectsEmpty)
+		{
+			steps.Add(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.ClearSuccessEffects);
+			steps.Add(emptySuccessFromPhysicalEffect
+				? PlayerSummonKnownObjectNpcSkillEffectInitializationStep.ResolveEmptySuccessAsDodge
+				: PlayerSummonKnownObjectNpcSkillEffectInitializationStep.ResolveEmptySuccessAsResist);
+		}
+		else
+		{
+			steps.Add(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.CalculateHateForSuccessEffects);
+			if (launchesSubEffect)
+				steps.Add(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.CalculateSubEffects);
+			if (mayCreateCriticalSubEffect)
+				steps.Add(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.MaybeCreateCriticalSubEffect);
+		}
+
+		steps.Add(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.SetSpellStatusFromBaseAttackStatus);
+		steps.Add(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.SetEffectWorldPosition);
+		steps.Add(PlayerSummonKnownObjectNpcSkillEffectInitializationStep.AddEffectToList);
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillEffectInitializationTraceStatus
+{
+	MissingResult,
+	NoEndCast,
+	NoSkillEffects,
+	OrderedEffectSetup,
+}
+
+public enum PlayerSummonKnownObjectNpcSkillEffectInitializationStep
+{
+	CreateEffectForEffected,
+	InitializeEffect,
+	CheckEffectControllerConflict,
+	SetEffectResultConflict,
+	CalculateEffectTemplates,
+	ClearSuccessEffects,
+	CalculateHateForSuccessEffects,
+	CalculateSubEffects,
+	MaybeCreateCriticalSubEffect,
+	ResolveEmptySuccessAsDodge,
+	ResolveEmptySuccessAsResist,
+	SetSpellStatusFromBaseAttackStatus,
+	MarkBlockedStance,
+	SetEffectWorldPosition,
+	AddEffectToList,
+	CaptureFirstTargetDashStatus,
+	CountExactResistOrDodge,
+	EmptyEffectedListCountsAsAllResistedOrDodged,
+	MarkBlockedChain,
+	MarkBlockedPenaltySkill,
+	CreatePointPointNullEffect,
+	InitializePointPointNullEffect,
+	SetPointPointWorldPosition,
+	AddPointPointEffectToList,
+	ApplyEffectImmediately,
+	ScheduleApplyEffect,
+	ApplyEachEffect,
+	BroadcastHateWhenNoSuccessEffects,
+	ApplySuccessEffectTemplates,
+	ApplyCriticalSubEffect,
+	NotifyEffectedAiOnEffectApplied,
+	AddResistedEffectHateAndNotifyFriends,
+	AddHateForResistedEffect,
+	NotifyKnownNpcsCreatureNeedsSupport,
 }
 
 public sealed record PlayerSummonKnownObjectNpcSkillEndCastBranchTrace(
