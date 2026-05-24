@@ -251,6 +251,8 @@ public sealed class Player
 
 	public PendingRecallInstantRequest? PendingRecallInstantRequest { get; set; }
 
+	public PendingCraftSkillLearnRequest? PendingCraftSkillLearnRequest { get; set; }
+
 	// Java parity: controllers/CreatureController TaskId.TELEPORT stores TeleportService.SpawnTask until CM_TELEPORT_ANIMATION_DONE.
 	public PendingPlayerTeleport? PendingTeleport { get; set; }
 

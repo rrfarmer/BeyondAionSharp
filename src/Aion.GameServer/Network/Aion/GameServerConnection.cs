@@ -1399,6 +1399,31 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (packet.DialogActionId == CmDialogSelect.CombineTask)
+		{
+			if (NpcDialogTargetingService.ValidateTargetingNpcWithFunction(player, packet.TargetObjectId, CmDialogSelect.CombineTask, _world) !=
+				NpcDialogTargetingResult.Valid)
+			{
+				return;
+			}
+
+			var staticData = _runtimeContext?.DataManager?.StaticData;
+			if (staticData?.SkillTemplates == null
+				|| _world == null
+				|| !_world.TryGetObject(packet.TargetObjectId, out var target)
+				|| target is not IWorldNpcObject npc)
+			{
+				return;
+			}
+
+			var craftResult = new CraftSkillUpdateService().RequestLearnSkill(player, npc, staticData.SkillTemplates);
+			foreach (var intent in craftResult.PacketIntents)
+				await SendExchangePacketAsync(intent.RecipientObjectId, intent.Packet);
+			if (craftResult.QuestionWindow != null)
+				await SendPacketAsync(craftResult.QuestionWindow);
+			return;
+		}
+
 		var chargeWay = packet.DialogActionId switch
 		{
 			CmDialogSelect.ChargeItemMulti => 1,
@@ -6884,6 +6909,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (packet.QuestionId == SmQuestionWindow.CraftAddSkillConfirm)
+		{
+			await HandleCraftSkillLearnQuestionResponseAsync(responder, packet);
+			return;
+		}
+
 		if (packet.QuestionId == SmQuestionWindow.AskRecoverExperience)
 		{
 			await HandleExperienceRecoveryQuestionResponseAsync(responder, packet);
@@ -7275,6 +7306,22 @@ public sealed class GameServerConnection : BaseClientConnection
 			TryGetOnlinePlayerByObjectId);
 		foreach (var intent in result.PacketIntents)
 			await SendExchangePacketAsync(intent.RecipientObjectId, intent.Packet);
+		return result;
+	}
+
+	private async Task<CraftSkillLearnResponsePlan> HandleCraftSkillLearnQuestionResponseAsync(Player responder, CmQuestionResponse packet)
+	{
+		var itemTemplates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
+		if (itemTemplates == null)
+			return CraftSkillLearnResponsePlan.NotHandled(CraftSkillLearnResponseStatus.NoPendingRequest);
+
+		var result = new CraftSkillUpdateService().HandleResponse(
+			responder,
+			packet.QuestionId,
+			packet.Response,
+			itemTemplates);
+		foreach (var responsePacket in result.Packets)
+			await SendPacketAsync(responsePacket);
 		return result;
 	}
 

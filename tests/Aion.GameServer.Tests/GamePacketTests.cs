@@ -215,6 +215,10 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.MovePortalErrorInvalidRace(), 901354);
 		AssertSystemMessage(SmSystemMessage.SkillCanNotUseGroupgateNoRight(), 1300150);
 		AssertSystemMessage(SmSystemMessage.InstanceCantEnterWithoutItem(), 1400219);
+		AssertSystemMessage(SmSystemMessage.CraftCantExtendMoney(), 1300834);
+		AssertSystemMessage(SmSystemMessage.DontRankUp(), 1390233);
+		AssertSystemMessage(SmSystemMessage.DontRankUpGathering(), 1390253);
+		AssertSystemMessage(SmSystemMessage.CraftCantExtendGrandMaster(), 1400286);
 		AssertSystemMessage(SmSystemMessage.PartyHeRejectInvitation("Responder"), 1300161, "Responder");
 		AssertSystemMessage(SmSystemMessage.PartyInvitedHim("Invited"), 1300173, "Invited");
 		AssertSystemMessage(SmSystemMessage.PartyAllianceHeRejectInvitation("Responder"), 1300190, "Responder");
@@ -1931,6 +1935,19 @@ public class GamePacketTests
 		Assert.Equal(0, soulBindQuestionReader.ReadD());
 		Assert.Equal(0, soulBindQuestionReader.ReadD());
 		Assert.Equal(0, soulBindQuestionReader.Remaining);
+
+		var craftQuestionPayload = SerializeUnencryptedPayload(
+			new SmQuestionWindow(SmQuestionWindow.CraftAddSkillConfirm, 9001, 0, "Cooking", "Beginner", "3500"));
+		using var craftQuestionReader = new PacketBuffer(craftQuestionPayload);
+		Assert.Equal(SmQuestionWindow.CraftAddSkillConfirm, craftQuestionReader.ReadD());
+		Assert.Equal("Cooking", craftQuestionReader.ReadS());
+		Assert.Equal("Beginner", craftQuestionReader.ReadS());
+		Assert.Equal("3500", craftQuestionReader.ReadS());
+		Assert.Equal(0, craftQuestionReader.ReadD());
+		Assert.Equal(0, (int)craftQuestionReader.ReadC());
+		Assert.Equal(9001, craftQuestionReader.ReadD());
+		Assert.Equal(0, craftQuestionReader.ReadD());
+		Assert.Equal(0, craftQuestionReader.Remaining);
 
 		var instanceInfoPayload = SerializeUnencryptedPayload(
 			new SmInstanceInfo(

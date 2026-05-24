@@ -93,6 +93,7 @@ public enum QuestionResponseRequestKind
 	ExperienceRecovery,
 	ExchangeRequest,
 	RecallInstant,
+	CraftSkillLearn,
 }
 
 public sealed record QuestionResponseRequest(

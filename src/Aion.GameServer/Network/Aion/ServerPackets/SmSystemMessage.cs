@@ -159,6 +159,30 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300388);
 	}
 
+	public static SmSystemMessage CraftCantExtendMoney()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_CRAFT_CANT_EXTEND_MONEY.
+		return new SmSystemMessage(1300834);
+	}
+
+	public static SmSystemMessage DontRankUp()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_DONT_RANK_UP.
+		return new SmSystemMessage(1390233);
+	}
+
+	public static SmSystemMessage DontRankUpGathering()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_DONT_RANK_UP_GATHERING.
+		return new SmSystemMessage(1390253);
+	}
+
+	public static SmSystemMessage CraftCantExtendGrandMaster()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_CRAFT_CANT_EXTEND_GRAND_MASTER.
+		return new SmSystemMessage(1400286);
+	}
+
 	public static SmSystemMessage SkillNotEnoughDp()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_SKILL_NOT_ENOUGH_DP.

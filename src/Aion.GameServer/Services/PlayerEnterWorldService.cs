@@ -790,6 +790,7 @@ public sealed class PlayerEnterWorldService
 		player.PendingExperienceRecoveryRequest = null;
 		player.PendingExchangeRequest = null;
 		player.PendingRecallInstantRequest = null;
+		player.PendingCraftSkillLearnRequest = null;
 		player.IsTrading = false;
 		player.IsExchangeLocked = false;
 		player.IsExchangeConfirmed = false;
