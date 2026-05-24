@@ -5797,6 +5797,16 @@ public sealed class GameServerConnection : BaseClientConnection
 			return null;
 		}
 
+		if (packet.CommandCode is 25 or 26)
+		{
+			await HandleAllianceViceCaptainAssignmentAsync(
+				player,
+				packet.SelectedObjectId,
+				packet.CommandCode == 25 ? PlayerAllianceAssignType.Promote : PlayerAllianceAssignType.Demote,
+				cancellationToken);
+			return null;
+		}
+
 		if (!Enum.IsDefined(typeof(PlayerAllianceReadyCheckCommand), packet.CommandCode))
 			return null;
 
@@ -5901,6 +5911,46 @@ public sealed class GameServerConnection : BaseClientConnection
 	}
 
 	private async Task SendAllianceGroupChangePacketAsync(
+		int recipientObjectId,
+		GameServerPacket packet,
+		CancellationToken cancellationToken)
+	{
+		if (_connectionRegistry != null && await _connectionRegistry.SendPacketToPlayerAsync(recipientObjectId, packet))
+			return;
+
+		if (_activePlayer?.ObjectId == recipientObjectId)
+			await SendPacketAsync(packet, cancellationToken);
+	}
+
+	private async Task<PlayerAllianceViceCaptainAssignmentPlan?> HandleAllianceViceCaptainAssignmentAsync(
+		Player player,
+		int targetObjectId,
+		PlayerAllianceAssignType assignType,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: PlayerTeamCommandService ALLIANCE_SET_VICECAPTAIN/ALLIANCE_UNSET_VICECAPTAIN -> PlayerAllianceService.changeViceCaptain.
+		var alliance = _playerAllianceRuntime.Resolve(player);
+		if (alliance == null)
+			return null;
+
+		var eventPlayerObjectId = targetObjectId == 0 ? player.ObjectId : targetObjectId;
+		if (!_playerAllianceRuntime.HasMember(alliance.AllianceId, eventPlayerObjectId))
+			return null;
+
+		var plan = _playerAllianceRuntime.AssignViceCaptain(alliance.AllianceId, eventPlayerObjectId, assignType);
+		if (plan == null)
+			return null;
+
+		if (plan.SystemMessageIntent != null)
+			await SendAllianceViceCaptainPacketAsync(plan.SystemMessageIntent.RecipientObjectId, plan.SystemMessageIntent.Message, cancellationToken);
+
+		foreach (var intent in plan.AllianceInfoIntents)
+			await SendAllianceViceCaptainPacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+
+		return plan;
+	}
+
+	private async Task SendAllianceViceCaptainPacketAsync(
 		int recipientObjectId,
 		GameServerPacket packet,
 		CancellationToken cancellationToken)

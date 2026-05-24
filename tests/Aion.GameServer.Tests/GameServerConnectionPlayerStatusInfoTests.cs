@@ -164,6 +164,64 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 			send => Assert.IsType<SmGroupMemberInfo>(send.Packet));
 	}
 
+	[Fact]
+	public async Task HandlePlayerStatusInfoAsync_AllianceViceCaptainCommandsMutateRolesAndBroadcastInfo()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var alliances = new PlayerAllianceRuntime();
+		var leader = new Player { ObjectId = 1001, Name = "Leader", IsOnline = true, Position = new WorldPosition(210010000, 1, 2, 3, 0) };
+		var target = new Player { ObjectId = 1002, Name = "Target", IsOnline = true, Position = new WorldPosition(220010000, 4, 5, 6, 0) };
+		var member = new Player { ObjectId = 1003, Name = "Member", IsOnline = true, Position = new WorldPosition(230010000, 7, 8, 9, 0) };
+		alliances.CreateAlliance(88001, leader);
+		alliances.AddMember(88001, target);
+		alliances.AddMember(88001, member);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, alliances);
+
+		await pair.Connection.HandlePlayerStatusInfoAsync(
+			leader,
+			CreatePacket(commandCode: 25, selectedObjectId: target.ObjectId));
+
+		Assert.True(alliances.IsViceCaptain(88001, target.ObjectId));
+		Assert.Equal([1001, 1002, 1003], registry.SentPackets.Select(send => send.PlayerObjectId));
+		Assert.All(registry.SentPackets, send => Assert.IsType<SmAllianceInfo>(send.Packet));
+
+		registry.SentPackets.Clear();
+		await pair.Connection.HandlePlayerStatusInfoAsync(
+			leader,
+			CreatePacket(commandCode: 26, selectedObjectId: target.ObjectId));
+
+		Assert.False(alliances.IsViceCaptain(88001, target.ObjectId));
+		Assert.Equal([1001, 1002, 1003], registry.SentPackets.Select(send => send.PlayerObjectId));
+		Assert.All(registry.SentPackets, send => Assert.IsType<SmAllianceInfo>(send.Packet));
+	}
+
+	[Fact]
+	public async Task HandlePlayerStatusInfoAsync_AllianceViceCaptainPromoteLimitSendsJavaLeaderMessage()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var alliances = new PlayerAllianceRuntime();
+		var leader = new Player { ObjectId = 1001, Name = "Leader", IsOnline = true };
+		var vice1 = new Player { ObjectId = 1002, Name = "Vice1", IsOnline = true };
+		var vice2 = new Player { ObjectId = 1003, Name = "Vice2", IsOnline = true };
+		var vice3 = new Player { ObjectId = 1004, Name = "Vice3", IsOnline = true };
+		var vice4 = new Player { ObjectId = 1005, Name = "Vice4", IsOnline = true };
+		var target = new Player { ObjectId = 1006, Name = "Target", IsOnline = true };
+		alliances.CreateAlliance(88001, leader);
+		foreach (var player in new[] { vice1, vice2, vice3, vice4, target })
+			alliances.AddMember(88001, player);
+		alliances.SetViceCaptains(88001, [vice1.ObjectId, vice2.ObjectId, vice3.ObjectId, vice4.ObjectId]);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, alliances);
+
+		await pair.Connection.HandlePlayerStatusInfoAsync(
+			leader,
+			CreatePacket(commandCode: 25, selectedObjectId: target.ObjectId));
+
+		Assert.False(alliances.IsViceCaptain(88001, target.ObjectId));
+		var send = Assert.Single(registry.SentPackets);
+		Assert.Equal(leader.ObjectId, send.PlayerObjectId);
+		Assert.Equal(1301061, Assert.IsType<SmSystemMessage>(send.Packet).MessageId);
+	}
+
 	private static CmPlayerStatusInfo CreatePacket(
 		PlayerAllianceReadyCheckCommand command,
 		int selectedObjectId)
