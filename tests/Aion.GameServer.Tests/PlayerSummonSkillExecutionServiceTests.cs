@@ -1475,6 +1475,9 @@ public class PlayerSummonSkillExecutionServiceTests
 		var missingReadiness = service.ProjectMercenaryNpcSkillAttackCycleOperationReadiness(null);
 		var blockedReadiness = service.ProjectMercenaryNpcSkillAttackCycleOperationReadiness(blocked);
 		var operationReadiness = service.ProjectMercenaryNpcSkillAttackCycleOperationReadiness(contract);
+		var missingSummary = service.ProjectMercenaryNpcSkillAttackCycleAdapterSummary((PlayerSummonKnownObjectNpcSkillAttackCycleSnapshot?)null);
+		var blockedSummary = service.ProjectMercenaryNpcSkillAttackCycleAdapterSummary(service.ProjectMercenaryNpcSkillAttackCycle(knownObject));
+		var summary = service.ProjectMercenaryNpcSkillAttackCycleAdapterSummary(readyCycle);
 
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillAttackCycleResultContractStatus.MissingInvocation, missingInvocation.Status);
 		Assert.False(missingInvocation.WouldExecuteSideEffects);
@@ -1543,6 +1546,22 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.ThreadPoolScheduleSkillAction, operationReadiness.DependencyReadiness[1].Operations);
 		Assert.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.CreatureControllerUseSkill, operationReadiness.DependencyReadiness[2].Operations);
 		Assert.Contains(PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.PacketFanout, operationReadiness.DependencyReadiness[3].Operations);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillAttackCycleAdapterSummaryStatus.MissingCycle, missingSummary.Status);
+		Assert.False(missingSummary.WouldExecuteLiveAdapter);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillAttackCycleAdapterSummaryStatus.MissingRequiredMetadata, blockedSummary.Status);
+		Assert.False(blockedSummary.IsReadyForFutureLiveAdapter);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillAttackCycleAdapterSummaryStatus.LiveAiNotWired, summary.Status);
+		Assert.True(summary.IsReadyForFutureLiveAdapter);
+		Assert.True(summary.HasUnsupportedDependencies);
+		Assert.False(summary.WouldExecuteLiveAdapter);
+		Assert.Same(readyCycle, summary.CycleSnapshot);
+		Assert.Equal(contract.FutureLiveAdapterOperations, summary.FutureLiveAdapterOperations);
+		Assert.Equal(
+			operationReadiness.DependencyReadiness.Select(dependency => dependency.Dependency),
+			summary.DependencyReadiness.Select(dependency => dependency.Dependency));
+		Assert.Equal(
+			operationReadiness.DependencyReadiness.SelectMany(dependency => dependency.Operations),
+			summary.DependencyReadiness.SelectMany(dependency => dependency.Operations));
 	}
 
 	[Fact]

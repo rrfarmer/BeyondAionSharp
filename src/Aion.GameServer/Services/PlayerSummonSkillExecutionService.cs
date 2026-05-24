@@ -228,6 +228,31 @@ public sealed class PlayerSummonSkillExecutionService
 		return PlayerSummonKnownObjectNpcSkillAttackCycleOperationReadiness.FromResultContract(resultContract);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillAttackCycleAdapterSummary ProjectMercenaryNpcSkillAttackCycleAdapterSummary(
+		Player player,
+		int mercenaryObjectId)
+	{
+		// Java parity: one represented handoff bundle for future SkillAttackManager live NpcAI integration.
+		return ProjectMercenaryNpcSkillAttackCycleAdapterSummary(ProjectMercenaryNpcSkillAttackCycle(player, mercenaryObjectId));
+	}
+
+	public PlayerSummonKnownObjectNpcSkillAttackCycleAdapterSummary ProjectMercenaryNpcSkillAttackCycleAdapterSummary(
+		PlayerSummonKnownObjectNpcSkillAttackCycleSnapshot? cycleSnapshot)
+	{
+		// Java parity: composes represented metadata only; live AI/scheduler/controller/packet execution stays unsupported.
+		var readiness = EvaluateMercenaryNpcSkillAttackCycleReadiness(cycleSnapshot);
+		var liveInvocation = PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocation.FromReadiness(readiness);
+		var resultContract = PlayerSummonKnownObjectNpcSkillAttackCycleResultContract.FromLiveInvocation(liveInvocation);
+		var operationReadiness = PlayerSummonKnownObjectNpcSkillAttackCycleOperationReadiness.FromResultContract(resultContract);
+
+		return PlayerSummonKnownObjectNpcSkillAttackCycleAdapterSummary.FromComponents(
+			cycleSnapshot,
+			readiness,
+			liveInvocation,
+			resultContract,
+			operationReadiness);
+	}
+
 	public PlayerSummonKnownObjectSkillReadiness EvaluateMercenarySkillReadiness(
 		PlayerSummonKnownObject knownObject,
 		SkillTemplateSummary? skillTemplate,
@@ -4577,6 +4602,67 @@ public enum PlayerSummonKnownObjectNpcSkillAttackCycleDependency
 	Scheduler,
 	Controller,
 	PacketEffectPostSpawn,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleAdapterSummary(
+	PlayerSummonKnownObjectNpcSkillAttackCycleAdapterSummaryStatus Status,
+	PlayerSummonKnownObjectNpcSkillAttackCycleSnapshot? CycleSnapshot,
+	PlayerSummonKnownObjectNpcSkillAttackCycleReadiness Readiness,
+	PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocation LiveInvocation,
+	PlayerSummonKnownObjectNpcSkillAttackCycleResultContract ResultContract,
+	PlayerSummonKnownObjectNpcSkillAttackCycleOperationReadiness OperationReadiness)
+{
+	public bool IsReadyForFutureLiveAdapter =>
+		Status == PlayerSummonKnownObjectNpcSkillAttackCycleAdapterSummaryStatus.LiveAiNotWired
+		&& Readiness.IsReadyForLiveAiAdapter
+		&& LiveInvocation.IsLiveAiUnsupported
+		&& ResultContract.IsLiveAiUnsupported
+		&& OperationReadiness.Status == PlayerSummonKnownObjectNpcSkillAttackCycleOperationReadinessStatus.UnsupportedDependencies;
+
+	public bool HasUnsupportedDependencies => OperationReadiness.HasUnsupportedDependencies;
+
+	public bool WouldExecuteLiveAdapter => false;
+
+	public IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation> FutureLiveAdapterOperations =>
+		ResultContract.FutureLiveAdapterOperations;
+
+	public IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleDependencyReadiness> DependencyReadiness =>
+		OperationReadiness.DependencyReadiness;
+
+	public static PlayerSummonKnownObjectNpcSkillAttackCycleAdapterSummary FromComponents(
+		PlayerSummonKnownObjectNpcSkillAttackCycleSnapshot? cycleSnapshot,
+		PlayerSummonKnownObjectNpcSkillAttackCycleReadiness readiness,
+		PlayerSummonKnownObjectNpcSkillAttackCycleLiveInvocation liveInvocation,
+		PlayerSummonKnownObjectNpcSkillAttackCycleResultContract resultContract,
+		PlayerSummonKnownObjectNpcSkillAttackCycleOperationReadiness operationReadiness)
+	{
+		var status = readiness.Status switch
+		{
+			PlayerSummonKnownObjectNpcSkillAttackCycleReadinessStatus.MissingCycle =>
+				PlayerSummonKnownObjectNpcSkillAttackCycleAdapterSummaryStatus.MissingCycle,
+			PlayerSummonKnownObjectNpcSkillAttackCycleReadinessStatus.MissingKnownObject =>
+				PlayerSummonKnownObjectNpcSkillAttackCycleAdapterSummaryStatus.MissingKnownObject,
+			PlayerSummonKnownObjectNpcSkillAttackCycleReadinessStatus.MissingRequiredMetadata =>
+				PlayerSummonKnownObjectNpcSkillAttackCycleAdapterSummaryStatus.MissingRequiredMetadata,
+			_ => PlayerSummonKnownObjectNpcSkillAttackCycleAdapterSummaryStatus.LiveAiNotWired,
+		};
+
+		return new PlayerSummonKnownObjectNpcSkillAttackCycleAdapterSummary(
+			status,
+			cycleSnapshot,
+			readiness,
+			liveInvocation,
+			resultContract,
+			operationReadiness);
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillAttackCycleAdapterSummaryStatus
+{
+	MissingCycle,
+	MissingKnownObject,
+	MissingRequiredMetadata,
+	LiveAiNotWired,
 }
 
 public sealed record PlayerSummonKnownObjectNpcSkillActionWorkflowPreview(
