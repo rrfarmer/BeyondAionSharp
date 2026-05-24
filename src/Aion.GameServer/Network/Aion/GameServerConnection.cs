@@ -6812,6 +6812,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (packet.QuestionId == SmQuestionWindow.AllianceInvite)
+		{
+			await HandleAllianceInviteQuestionResponseAsync(responder, packet);
+			return;
+		}
+
 		if (packet.QuestionId == SmQuestionWindow.TeleportToNpcConfirm)
 		{
 			await HandleTeleportToNpcQuestionResponseAsync(responder, packet);
@@ -6879,20 +6885,44 @@ public sealed class GameServerConnection : BaseClientConnection
 			return null;
 		}
 
+		if (packet.InviteType == 12)
+			return await HandleInviteToAllianceAsync(inviter, invited, cancellationToken);
+
 		if (packet.InviteType == 28)
 			return await HandleInviteToLeagueAsync(inviter, invited, cancellationToken);
 
 		if (packet.InviteType != 0)
-		{
-			// Java parity: invite type 12 dispatches PlayerAllianceService.inviteToAlliance; that packet-level path remains separate Phase 6 work.
 			return null;
-		}
 
 		var result = new PlayerGroupInviteRequestService().SendInvite(inviter, invited);
 		await SendPacketAsync(result.InviterMessage, cancellationToken);
 		if (result.QuestionWindow != null)
 			await _connectionRegistry.SendPacketToPlayerAsync(invited.ObjectId, result.QuestionWindow);
 		return result;
+	}
+
+	private async Task<GroupInviteRequestResult?> HandleInviteToAllianceAsync(
+		Player inviter,
+		Player invited,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: CM_INVITE_TO_GROUP invite type 12 dispatches PlayerAllianceService.inviteToAlliance.
+		var result = new PlayerAllianceInviteRequestService().SendInvite(
+			inviter,
+			invited,
+			_playerGroupRuntime,
+			_playerAllianceRuntime,
+			TryGetOnlinePlayerByObjectId);
+		if (result.RejectionMessage != null)
+			await SendPacketAsync(result.RejectionMessage, cancellationToken);
+
+		foreach (var message in result.RequesterMessages)
+			await SendGroupInvitePacketAsync(inviter.ObjectId, message, cancellationToken);
+
+		if (result.QuestionWindow != null && result.Request != null)
+			await SendGroupInvitePacketAsync(result.Request.RequestTargetObjectId, result.QuestionWindow, cancellationToken);
+
+		return null;
 	}
 
 	private async Task<GroupInviteRequestResult?> HandleInviteToLeagueAsync(
@@ -6952,6 +6982,39 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		if (result.Status == GroupInviteResponseStatus.Accepted && result.EnteredPacketPlan != null)
 			await SendGroupEnteredPlanAsync(result.EnteredPacketPlan);
+
+		return result;
+	}
+
+	private async Task<AllianceInviteResponseResult> HandleAllianceInviteQuestionResponseAsync(
+		Player responder,
+		CmQuestionResponse packet)
+	{
+		var result = new PlayerAllianceInviteRequestService().HandleResponse(
+			responder,
+			packet.QuestionId,
+			packet.Response,
+			_playerGroupRuntime,
+			_playerAllianceRuntime,
+			() => _idFactory?.NextId() ?? 0,
+			TryGetOnlinePlayerByObjectId);
+
+		if (result.Status is AllianceInviteResponseStatus.Denied or AllianceInviteResponseStatus.Rejected
+			&& result.Request != null
+			&& result.Message != null)
+		{
+			await SendGroupInvitePacketAsync(result.Request.RequesterObjectId, result.Message);
+		}
+
+		if (result.Status == AllianceInviteResponseStatus.Accepted && result.EnteredPlan != null)
+		{
+			foreach (var intent in result.EnteredPlan.PacketIntents.OrderBy(intent => intent.Sequence))
+			{
+				var packetToSend = intent.CreatePacket();
+				if (packetToSend != null)
+					await SendGroupInvitePacketAsync(intent.RecipientObjectId, packetToSend);
+			}
+		}
 
 		return result;
 	}

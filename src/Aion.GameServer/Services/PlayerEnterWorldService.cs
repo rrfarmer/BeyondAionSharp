@@ -784,6 +784,7 @@ public sealed class PlayerEnterWorldService
 		player.PendingRiftPortalRequest = null;
 		player.PendingKiskBindRequest = null;
 		player.PendingLeagueInviteRequest = null;
+		player.PendingAllianceInviteRequest = null;
 	}
 
 	private async Task SendPendingQuestionDenySideEffectAsync(Player responder, QuestionResponseDispatch dispatch)
@@ -808,6 +809,18 @@ public sealed class PlayerEnterWorldService
 			case QuestionResponseRequestKind.LeagueInvite:
 			{
 				var request = dispatch.Request.Payload as PendingLeagueInviteRequest ?? responder.PendingLeagueInviteRequest;
+				var requesterObjectId = request?.RequesterObjectId ?? dispatch.Request.RequesterObjectId;
+				if (requesterObjectId > 0)
+				{
+					await _connectionRegistry.SendPacketToPlayerAsync(
+						requesterObjectId,
+						SmSystemMessage.PartyAllianceHeRejectInvitation(responder.Name));
+				}
+				break;
+			}
+			case QuestionResponseRequestKind.AllianceInvite:
+			{
+				var request = dispatch.Request.Payload as PendingAllianceInviteRequest ?? responder.PendingAllianceInviteRequest;
 				var requesterObjectId = request?.RequesterObjectId ?? dispatch.Request.RequesterObjectId;
 				if (requesterObjectId > 0)
 				{

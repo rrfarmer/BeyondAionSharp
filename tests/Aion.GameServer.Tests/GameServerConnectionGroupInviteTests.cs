@@ -185,6 +185,119 @@ public sealed class GameServerConnectionGroupInviteTests
 		Assert.Empty(registry.SentPackets);
 	}
 
+	[Fact]
+	public async Task HandleInviteToGroupAsync_AllianceInviteTypeRegistersQuestion()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var groups = new PlayerGroupRuntime();
+		var alliances = new PlayerAllianceRuntime();
+		var inviter = CreatePlayer(1001, "Inviter");
+		var invited = CreatePlayer(1002, "Invited");
+		registry.OnlinePlayers.AddRange([inviter, invited]);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, groups, alliances: alliances);
+
+		var result = await pair.Connection.HandleInviteToGroupAsync(inviter, CreateInvitePacket(inviteType: 12, "Invited"));
+
+		Assert.Null(result);
+		Assert.NotNull(invited.PendingAllianceInviteRequest);
+		Assert.Equal(1, invited.ResponseRequester.Count);
+		Assert.Collection(
+			registry.SentPackets,
+			send =>
+			{
+				Assert.Equal(1001, send.PlayerObjectId);
+				AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(send.Packet), 1301017, "Invited");
+			},
+			send =>
+			{
+				Assert.Equal(1002, send.PlayerObjectId);
+				Assert.Equal(SmQuestionWindow.AllianceInvite, Assert.IsType<SmQuestionWindow>(send.Packet).Code);
+			});
+	}
+
+	[Fact]
+	public async Task HandleInviteToGroupAsync_AllianceInviteTypeRedirectsSelectedGroupMemberToLeader()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var groups = new PlayerGroupRuntime();
+		var alliances = new PlayerAllianceRuntime();
+		var inviter = CreatePlayer(1001, "Inviter");
+		var selected = CreatePlayer(1002, "Selected");
+		var invitedLeader = CreatePlayer(1003, "InvitedLeader");
+		groups.CreateOrUpdateGroup(77001, [invitedLeader, selected]);
+		registry.OnlinePlayers.AddRange([inviter, selected, invitedLeader]);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, groups, alliances: alliances);
+
+		var result = await pair.Connection.HandleInviteToGroupAsync(inviter, CreateInvitePacket(inviteType: 12, "Selected"));
+
+		Assert.Null(result);
+		Assert.Null(selected.PendingAllianceInviteRequest);
+		Assert.NotNull(invitedLeader.PendingAllianceInviteRequest);
+		Assert.Equal(1, invitedLeader.ResponseRequester.Count);
+		Assert.Collection(
+			registry.SentPackets,
+			send =>
+			{
+				Assert.Equal(1001, send.PlayerObjectId);
+				AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(send.Packet), 1300969, "Selected", "InvitedLeader");
+			},
+			send =>
+			{
+				Assert.Equal(1001, send.PlayerObjectId);
+				AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(send.Packet), 1300968, "InvitedLeader", "2");
+			},
+			send =>
+			{
+				Assert.Equal(1003, send.PlayerObjectId);
+				Assert.Equal(SmQuestionWindow.AllianceInvite, Assert.IsType<SmQuestionWindow>(send.Packet).Code);
+			});
+	}
+
+	[Fact]
+	public async Task HandleQuestionResponseAsync_AllianceInviteDenyClearsRequestAndRejectsInviter()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var groups = new PlayerGroupRuntime();
+		var alliances = new PlayerAllianceRuntime();
+		var inviter = CreatePlayer(1001, "Inviter");
+		var invited = CreatePlayer(1002, "Invited");
+		registry.OnlinePlayers.AddRange([inviter, invited]);
+		new PlayerAllianceInviteRequestService().SendInvite(inviter, invited, groups, alliances, objectId => objectId == inviter.ObjectId ? inviter : invited);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, groups, alliances: alliances);
+
+		await pair.Connection.HandleQuestionResponseAsync(invited, CreateQuestionResponse(SmQuestionWindow.AllianceInvite, response: 0));
+
+		Assert.Null(invited.PendingAllianceInviteRequest);
+		Assert.Equal(0, invited.ResponseRequester.Count);
+		var sent = Assert.Single(registry.SentPackets);
+		Assert.Equal(1001, sent.PlayerObjectId);
+		AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(sent.Packet), 1300190, "Invited");
+	}
+
+	[Fact]
+	public async Task HandleQuestionResponseAsync_AllianceInviteAcceptCreatesAllianceForSoloPlayers()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var groups = new PlayerGroupRuntime();
+		var alliances = new PlayerAllianceRuntime();
+		var inviter = CreatePlayer(1001, "Inviter");
+		var invited = CreatePlayer(1002, "Invited");
+		registry.OnlinePlayers.AddRange([inviter, invited]);
+		new PlayerAllianceInviteRequestService().SendInvite(inviter, invited, groups, alliances, objectId => objectId == inviter.ObjectId ? inviter : invited);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, groups, idFactory: new IDFactory(), alliances: alliances);
+
+		await pair.Connection.HandleQuestionResponseAsync(invited, CreateQuestionResponse(SmQuestionWindow.AllianceInvite, response: 1));
+
+		Assert.Null(invited.PendingAllianceInviteRequest);
+		Assert.Equal(0, invited.ResponseRequester.Count);
+		Assert.NotNull(inviter.CurrentAllianceSnapshot);
+		Assert.Same(inviter.CurrentAllianceSnapshot, invited.CurrentAllianceSnapshot);
+		Assert.Equal([1001, 1002], invited.CurrentAllianceSnapshot?.MemberObjectIds);
+		Assert.Contains(registry.SentPackets, send => send.PlayerObjectId == 1002 && send.Packet is SmAllianceInfo);
+		Assert.Contains(registry.SentPackets, send => send.PlayerObjectId == 1001 && send.Packet is SmSystemMessage);
+		Assert.Contains(registry.SentPackets, send => send.Packet is SmAllianceMemberInfo);
+	}
+
 	private static Player CreatePlayer(int objectId, string name)
 	{
 		return new Player

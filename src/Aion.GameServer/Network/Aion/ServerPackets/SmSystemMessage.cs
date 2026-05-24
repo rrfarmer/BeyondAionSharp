@@ -249,6 +249,72 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300190, playerName);
 	}
 
+	public static SmSystemMessage PartyAllianceInvitedHisParty(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_PARTY_ALLIANCE_INVITED_HIS_PARTY(String).
+		return new SmSystemMessage(1300189, playerName);
+	}
+
+	public static SmSystemMessage ForceInviteParty(string leaderName, int memberCount)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_FORCE_INVITE_PARTY(String, int).
+		return new SmSystemMessage(1300968, leaderName, memberCount.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage ForceInvitePartyHim(string playerName, string leaderName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_FORCE_INVITE_PARTY_HIM(String, String).
+		return new SmSystemMessage(1300969, playerName, leaderName);
+	}
+
+	public static SmSystemMessage ForceInvitedHim(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_FORCE_INVITED_HIM(String).
+		return new SmSystemMessage(1301017, playerName);
+	}
+
+	public static SmSystemMessage ForceCantInviteWhenDead()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_FORCE_CANT_INVITE_WHEN_DEAD.
+		return new SmSystemMessage(1301007);
+	}
+
+	public static SmSystemMessage ForceOnlyLeaderCanInvite()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_FORCE_ONLY_LEADER_CAN_INVITE.
+		return new SmSystemMessage(1301004);
+	}
+
+	public static SmSystemMessage ForceCantAddNewMember()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_FORCE_CANT_ADD_NEW_MEMBER.
+		return new SmSystemMessage(1300996);
+	}
+
+	public static SmSystemMessage ForceInviteFailedNotEnoughSlot()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_FORCE_INVITE_FAILED_NOT_ENOUGH_SLOT.
+		return new SmSystemMessage(1300975);
+	}
+
+	public static SmSystemMessage ForceCanNotInviteSelf()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_FORCE_CAN_NOT_INVITE_SELF.
+		return new SmSystemMessage(1301006);
+	}
+
+	public static SmSystemMessage ForceHeIsAlreadyMemberOfOurForce(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_FORCE_HE_IS_ALREADY_MEMBER_OF_OUR_FORCE(String).
+		return new SmSystemMessage(1301014, playerName);
+	}
+
+	public static SmSystemMessage ForceAlreadyOtherForce(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_FORCE_ALREADY_OTHER_FORCE(String).
+		return new SmSystemMessage(1300974, playerName);
+	}
+
 	public static SmSystemMessage UnionInviteHim(string playerName, int allianceSize)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_UNION_INVITE_HIM(String, int).

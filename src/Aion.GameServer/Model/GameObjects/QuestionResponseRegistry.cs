@@ -87,6 +87,7 @@ public enum QuestionResponseRequestKind
 	ChargeAll,
 	TeleportToNpc,
 	GroupInvite,
+	AllianceInvite,
 }
 
 public sealed record QuestionResponseRequest(
