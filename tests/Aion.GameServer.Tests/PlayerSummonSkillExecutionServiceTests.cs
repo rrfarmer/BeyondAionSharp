@@ -2028,6 +2028,96 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void ProjectMercenaryNpcSkillSchedulerCallbackOutcome_ComposesExecutionAndWorkflowMetadata()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var knownObject = new PlayerSummonKnownObject(8056, PlayerSummonKnownObjectKind.Creature);
+		var currentTarget = new PlayerSummonKnownObject(9056, PlayerSummonKnownObjectKind.Creature);
+		var candidate = new PlayerSummonKnownObjectNpcSkillCandidateMetadata(
+			0,
+			new PlayerSummonKnownObjectNpcSkillTemplateMetadata(
+				SkillId: 7301,
+				SkillLevel: 1,
+				Probability: 100,
+				Target: PlayerSummonKnownObjectNpcSkillTargetAttribute.MostHated));
+		var selection = service.PreviewMercenaryNextNpcSkillSelectionFromRepresentedCurrentTarget(
+			knownObject,
+			currentTarget,
+			currentTargetDistanceMeters: 3,
+			fightStartingTimeMilliseconds: 1_000,
+			initialSkillDelayMilliseconds: 0,
+			currentTimeMilliseconds: 2_000,
+			isInCastSubState: false,
+			candidates: [candidate],
+			hpPercentage: 100);
+		var workflow = service.PreviewMercenaryNpcSkillActionWorkflow(
+			knownObject,
+			selection,
+			CreateSkillTemplate("MAGICAL"),
+			currentTarget,
+			selectedNpcSkillTarget: PlayerSummonKnownObjectNpcSkillTargetAttribute.MostHated,
+			hasMostHatedTarget: true);
+		var noActionPreview = service.PreviewMercenaryNpcSkillPerformAttack(
+			ownerUsesMeleeAggroRange: true,
+			hasCurrentTarget: true,
+			currentTargetInAggroRange: false,
+			canEnterCastSubState: true,
+			delayMilliseconds: 250,
+			workflow);
+		var scheduledPreview = service.PreviewMercenaryNpcSkillPerformAttack(
+			ownerUsesMeleeAggroRange: false,
+			hasCurrentTarget: true,
+			currentTargetInAggroRange: true,
+			canEnterCastSubState: true,
+			delayMilliseconds: 250,
+			workflow);
+		var missingWorkflowPreview = service.PreviewMercenaryNpcSkillPerformAttack(
+			ownerUsesMeleeAggroRange: false,
+			hasCurrentTarget: true,
+			currentTargetInAggroRange: true,
+			canEnterCastSubState: true,
+			delayMilliseconds: 0);
+		var noActionExecution = service.PreviewMercenaryNpcSkillPerformAttackExecution(
+			noActionPreview,
+			performAttackTimeMilliseconds: 1_000,
+			currentTimeMilliseconds: 1_250);
+		var pendingExecution = service.PreviewMercenaryNpcSkillPerformAttackExecution(
+			scheduledPreview,
+			performAttackTimeMilliseconds: 1_000,
+			currentTimeMilliseconds: 1_249);
+		var dueExecution = service.PreviewMercenaryNpcSkillPerformAttackExecution(
+			scheduledPreview,
+			performAttackTimeMilliseconds: 1_000,
+			currentTimeMilliseconds: 1_250);
+		var missingWorkflowExecution = service.PreviewMercenaryNpcSkillPerformAttackExecution(
+			missingWorkflowPreview,
+			performAttackTimeMilliseconds: 1_000,
+			currentTimeMilliseconds: 1_000);
+
+		var missingExecution = service.ProjectMercenaryNpcSkillSchedulerCallbackOutcome(null);
+		var noAction = service.ProjectMercenaryNpcSkillSchedulerCallbackOutcome(noActionExecution);
+		var pending = service.ProjectMercenaryNpcSkillSchedulerCallbackOutcome(pendingExecution);
+		var missingWorkflow = service.ProjectMercenaryNpcSkillSchedulerCallbackOutcome(missingWorkflowExecution);
+		var workflowInvoked = service.ProjectMercenaryNpcSkillSchedulerCallbackOutcome(dueExecution);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSchedulerCallbackOutcomeStatus.MissingExecutionPreview, missingExecution.Status);
+		Assert.False(missingExecution.ShouldInvokeSkillActionWorkflow);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSchedulerCallbackOutcomeStatus.NoAction, noAction.Status);
+		Assert.False(noAction.ShouldInvokeSkillActionWorkflow);
+		Assert.Same(noActionExecution, noAction.ExecutionPreview);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSchedulerCallbackOutcomeStatus.Pending, pending.Status);
+		Assert.True(pending.IsPending);
+		Assert.False(pending.ShouldInvokeSkillActionWorkflow);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSchedulerCallbackOutcomeStatus.MissingWorkflow, missingWorkflow.Status);
+		Assert.False(missingWorkflow.ShouldInvokeSkillActionWorkflow);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSchedulerCallbackOutcomeStatus.WorkflowInvoked, workflowInvoked.Status);
+		Assert.True(workflowInvoked.ShouldInvokeSkillActionWorkflow);
+		Assert.Same(dueExecution, workflowInvoked.ExecutionPreview);
+		Assert.Same(workflow, workflowInvoked.ActionWorkflowPreview);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillActionResultStatus.UseSkill, workflowInvoked.ActionResult?.Status);
+	}
+
+	[Fact]
 	public void PreviewMercenaryNextNpcSkillSelection_AdaptsNpcGameStatsTimingIntoSelection()
 	{
 		var service = new PlayerSummonSkillExecutionService();

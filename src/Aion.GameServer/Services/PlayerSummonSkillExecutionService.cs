@@ -721,6 +721,31 @@ public sealed class PlayerSummonSkillExecutionService
 				dueAt);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillSchedulerCallbackOutcome ProjectMercenaryNpcSkillSchedulerCallbackOutcome(
+		PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreview? executionPreview)
+	{
+		if (executionPreview == null)
+			return PlayerSummonKnownObjectNpcSkillSchedulerCallbackOutcome.MissingExecutionPreview();
+
+		if (executionPreview.Status == PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreviewStatus.MissingWorkflow)
+			return PlayerSummonKnownObjectNpcSkillSchedulerCallbackOutcome.MissingWorkflow(executionPreview);
+
+		if (executionPreview.Status == PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreviewStatus.ScheduledWorkflowPending)
+			return PlayerSummonKnownObjectNpcSkillSchedulerCallbackOutcome.Pending(executionPreview);
+
+		if (!executionPreview.ShouldInvokeSkillActionWorkflow)
+			return PlayerSummonKnownObjectNpcSkillSchedulerCallbackOutcome.NoAction(executionPreview);
+
+		var workflow = executionPreview.ActionWorkflowPreview;
+		if (workflow == null)
+			return PlayerSummonKnownObjectNpcSkillSchedulerCallbackOutcome.MissingWorkflow(executionPreview);
+
+		return PlayerSummonKnownObjectNpcSkillSchedulerCallbackOutcome.WorkflowInvoked(
+			executionPreview,
+			workflow,
+			workflow.ActionResult);
+	}
+
 	public PlayerSummonKnownObjectNpcSkillActionWorkflowPreview PreviewMercenaryNpcSkillActionWorkflow(
 		PlayerSummonKnownObject knownObject,
 		PlayerSummonKnownObjectNpcSkillSelectionPreview? selectionPreview,
@@ -3686,6 +3711,68 @@ public enum PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreviewStatus
 	ImmediateWorkflow,
 	ScheduledWorkflowPending,
 	ScheduledWorkflowDue,
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillSchedulerCallbackOutcome(
+	PlayerSummonKnownObjectNpcSkillSchedulerCallbackOutcomeStatus Status,
+	PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreview? ExecutionPreview = null,
+	PlayerSummonKnownObjectNpcSkillActionWorkflowPreview? ActionWorkflowPreview = null,
+	PlayerSummonKnownObjectNpcSkillActionResult? ActionResult = null)
+{
+	public bool ShouldInvokeSkillActionWorkflow => Status == PlayerSummonKnownObjectNpcSkillSchedulerCallbackOutcomeStatus.WorkflowInvoked;
+
+	public bool IsPending => Status == PlayerSummonKnownObjectNpcSkillSchedulerCallbackOutcomeStatus.Pending;
+
+	public static PlayerSummonKnownObjectNpcSkillSchedulerCallbackOutcome MissingExecutionPreview()
+	{
+		return new PlayerSummonKnownObjectNpcSkillSchedulerCallbackOutcome(
+			PlayerSummonKnownObjectNpcSkillSchedulerCallbackOutcomeStatus.MissingExecutionPreview);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillSchedulerCallbackOutcome NoAction(
+		PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreview executionPreview)
+	{
+		return new PlayerSummonKnownObjectNpcSkillSchedulerCallbackOutcome(
+			PlayerSummonKnownObjectNpcSkillSchedulerCallbackOutcomeStatus.NoAction,
+			executionPreview);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillSchedulerCallbackOutcome Pending(
+		PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreview executionPreview)
+	{
+		return new PlayerSummonKnownObjectNpcSkillSchedulerCallbackOutcome(
+			PlayerSummonKnownObjectNpcSkillSchedulerCallbackOutcomeStatus.Pending,
+			executionPreview);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillSchedulerCallbackOutcome MissingWorkflow(
+		PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreview executionPreview)
+	{
+		return new PlayerSummonKnownObjectNpcSkillSchedulerCallbackOutcome(
+			PlayerSummonKnownObjectNpcSkillSchedulerCallbackOutcomeStatus.MissingWorkflow,
+			executionPreview);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillSchedulerCallbackOutcome WorkflowInvoked(
+		PlayerSummonKnownObjectNpcSkillPerformAttackExecutionPreview executionPreview,
+		PlayerSummonKnownObjectNpcSkillActionWorkflowPreview actionWorkflowPreview,
+		PlayerSummonKnownObjectNpcSkillActionResult? actionResult)
+	{
+		return new PlayerSummonKnownObjectNpcSkillSchedulerCallbackOutcome(
+			PlayerSummonKnownObjectNpcSkillSchedulerCallbackOutcomeStatus.WorkflowInvoked,
+			executionPreview,
+			actionWorkflowPreview,
+			actionResult);
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillSchedulerCallbackOutcomeStatus
+{
+	MissingExecutionPreview,
+	NoAction,
+	Pending,
+	MissingWorkflow,
+	WorkflowInvoked,
 }
 
 public sealed record PlayerSummonKnownObjectNpcSkillActionWorkflowPreview(
