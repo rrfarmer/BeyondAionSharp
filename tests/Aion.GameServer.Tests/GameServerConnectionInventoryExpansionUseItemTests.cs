@@ -227,7 +227,27 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Empty(fixture.SentPackets);
 	}
 
-	private static Player CreatePlayer(int itemId)
+	[Fact]
+	public async Task HandleSelectDecomposableAsync_SelectableRewardDeletesSingleCountSource()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(idFactory: new IDFactory([5001]));
+		var player = CreatePlayer(itemId: 101, count: 1);
+
+		await InvokeHandleSelectDecomposableAsync(fixture.Connection, player, CreateSelectDecomposable(sourceItemObjectId: 5001, index: 0));
+
+		var rewardItem = Assert.Single(player.InventoryItems);
+		Assert.Equal(201, rewardItem.ItemId);
+		Assert.Equal(2, rewardItem.Count);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 101, expectedTime: 0, expectedEnd: 1, expectedUnknown3: 1),
+			packet => Assert.IsType<SmSystemMessage>(packet),
+			packet => Assert.IsType<SmDeleteItem>(packet),
+			packet => AssertSecondaryShowDecomposablePayload(Assert.IsType<SmSecondaryShowDecomposable>(packet)),
+			packet => Assert.IsType<SmInventoryAddItem>(packet));
+	}
+
+	private static Player CreatePlayer(int itemId, long count = 2)
 	{
 		return new Player
 		{
@@ -242,7 +262,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 				{
 					ObjectId = 5001,
 					ItemId = itemId,
-					Count = 2,
+					Count = count,
 					Location = 0,
 				},
 			],
