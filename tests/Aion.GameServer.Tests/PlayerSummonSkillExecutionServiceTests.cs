@@ -1493,6 +1493,9 @@ public class PlayerSummonSkillExecutionServiceTests
 		var missingKnownObjectSummary = service.ProjectMercenaryNpcSkillAttackCycleAdapterSummary(new Player { ObjectId = 2 }, mercenaryObjectId: 9999);
 		var blockedSummary = service.ProjectMercenaryNpcSkillAttackCycleAdapterSummary(service.ProjectMercenaryNpcSkillAttackCycle(knownObject));
 		var summary = service.ProjectMercenaryNpcSkillAttackCycleAdapterSummary(readyCycle);
+		var missingAdapterContract = service.ProjectMercenaryNpcSkillAttackCycleLiveAdapterContract(null);
+		var blockedAdapterContract = service.ProjectMercenaryNpcSkillAttackCycleLiveAdapterContract(blockedSummary);
+		var adapterContract = service.ProjectMercenaryNpcSkillAttackCycleLiveAdapterContract(summary);
 
 		Assert.Equal(PlayerSummonKnownObjectNpcSkillAttackCycleResultContractStatus.MissingInvocation, missingInvocation.Status);
 		Assert.False(missingInvocation.WouldExecuteSideEffects);
@@ -1588,6 +1591,27 @@ public class PlayerSummonSkillExecutionServiceTests
 		Assert.Equal(
 			operationReadiness.DependencyReadiness.SelectMany(dependency => dependency.Operations),
 			summary.DependencyReadiness.SelectMany(dependency => dependency.Operations));
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContractStatus.MissingSummary, missingAdapterContract.Status);
+		Assert.True(missingAdapterContract.IsBlocked);
+		Assert.False(missingAdapterContract.WouldExecuteLiveAdapter);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContractStatus.BlockedBySummary, blockedAdapterContract.Status);
+		Assert.True(blockedAdapterContract.IsBlocked);
+		Assert.Same(blockedSummary, blockedAdapterContract.AdapterSummary);
+		Assert.Empty(blockedAdapterContract.FutureLiveOperations);
+		Assert.Empty(blockedAdapterContract.RequiredDependencies);
+		Assert.False(blockedAdapterContract.WouldExecuteLiveAdapter);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContractStatus.ReadyButUnsupported, adapterContract.Status);
+		Assert.True(adapterContract.IsReadyButUnsupported);
+		Assert.False(adapterContract.IsBlocked);
+		Assert.Same(summary, adapterContract.AdapterSummary);
+		Assert.Equal(summary.FutureLiveAdapterOperations, adapterContract.FutureLiveOperations);
+		Assert.Equal(summary.DependencyReadiness, adapterContract.RequiredDependencies);
+		Assert.Contains("NpcAI state/substate mutation", adapterContract.UnsupportedBehaviors);
+		Assert.True(adapterContract.RequiresDependency(PlayerSummonKnownObjectNpcSkillAttackCycleDependency.NpcAi));
+		Assert.True(adapterContract.RequiresDependency(PlayerSummonKnownObjectNpcSkillAttackCycleDependency.Scheduler));
+		Assert.True(adapterContract.RequiresOperation(PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.CreatureControllerUseSkill));
+		Assert.True(adapterContract.RequiresOperation(PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation.PacketFanout));
+		Assert.False(adapterContract.WouldExecuteLiveAdapter);
 	}
 
 	[Fact]

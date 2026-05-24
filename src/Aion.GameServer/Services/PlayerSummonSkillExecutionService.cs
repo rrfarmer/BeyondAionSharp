@@ -253,6 +253,13 @@ public sealed class PlayerSummonSkillExecutionService
 			operationReadiness);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContract ProjectMercenaryNpcSkillAttackCycleLiveAdapterContract(
+		PlayerSummonKnownObjectNpcSkillAttackCycleAdapterSummary? adapterSummary)
+	{
+		// Java parity: declarative contract for a future SkillAttackManager.performAttack adapter; still non-executing.
+		return PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContract.FromSummary(adapterSummary);
+	}
+
 	public PlayerSummonKnownObjectSkillReadiness EvaluateMercenarySkillReadiness(
 		PlayerSummonKnownObject knownObject,
 		SkillTemplateSummary? skillTemplate,
@@ -4655,6 +4662,77 @@ public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleAdapterSummary(
 			resultContract,
 			operationReadiness);
 	}
+}
+
+public sealed record PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContract(
+	PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContractStatus Status,
+	PlayerSummonKnownObjectNpcSkillAttackCycleAdapterSummary? AdapterSummary = null,
+	IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation>? LiveOperations = null,
+	IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleDependencyReadiness>? DependencyReadiness = null,
+	IReadOnlyList<string>? UnsupportedJavaBehaviors = null)
+{
+	private static readonly IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation> EmptyOperations = [];
+	private static readonly IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleDependencyReadiness> EmptyDependencies = [];
+	private static readonly IReadOnlyList<string> EmptyUnsupportedBehaviors = [];
+
+	public IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation> FutureLiveOperations =>
+		LiveOperations ?? EmptyOperations;
+
+	public IReadOnlyList<PlayerSummonKnownObjectNpcSkillAttackCycleDependencyReadiness> RequiredDependencies =>
+		DependencyReadiness ?? EmptyDependencies;
+
+	public IReadOnlyList<string> UnsupportedBehaviors =>
+		UnsupportedJavaBehaviors ?? EmptyUnsupportedBehaviors;
+
+	public bool IsBlocked =>
+		Status is PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContractStatus.MissingSummary
+			or PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContractStatus.BlockedBySummary;
+
+	public bool IsReadyButUnsupported =>
+		Status == PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContractStatus.ReadyButUnsupported;
+
+	public bool WouldExecuteLiveAdapter => false;
+
+	public bool RequiresDependency(PlayerSummonKnownObjectNpcSkillAttackCycleDependency dependency)
+	{
+		return RequiredDependencies.Any(readiness => readiness.Dependency == dependency);
+	}
+
+	public bool RequiresOperation(PlayerSummonKnownObjectNpcSkillAttackCycleLiveOperation operation)
+	{
+		return FutureLiveOperations.Contains(operation);
+	}
+
+	public static PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContract FromSummary(
+		PlayerSummonKnownObjectNpcSkillAttackCycleAdapterSummary? adapterSummary)
+	{
+		if (adapterSummary == null)
+		{
+			return new PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContract(
+				PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContractStatus.MissingSummary);
+		}
+
+		if (!adapterSummary.IsReadyForFutureLiveAdapter)
+		{
+			return new PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContract(
+				PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContractStatus.BlockedBySummary,
+				adapterSummary);
+		}
+
+		return new PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContract(
+			PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContractStatus.ReadyButUnsupported,
+			adapterSummary,
+			adapterSummary.FutureLiveAdapterOperations,
+			adapterSummary.DependencyReadiness,
+			adapterSummary.LiveInvocation.UnsupportedBehaviors);
+	}
+}
+
+public enum PlayerSummonKnownObjectNpcSkillAttackCycleLiveAdapterContractStatus
+{
+	MissingSummary,
+	BlockedBySummary,
+	ReadyButUnsupported,
 }
 
 public enum PlayerSummonKnownObjectNpcSkillAttackCycleAdapterSummaryStatus
