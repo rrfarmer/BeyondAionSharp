@@ -298,6 +298,12 @@ public sealed class Player
 	// Java parity: Player.usingItem set by SM_ITEM_USAGE_ANIMATION while delayed item use is active.
 	public int UsingItemObjectId { get; set; }
 
+	// Java parity: model/gameobjects/Creature.castingSkill represented by skill id until full Skill instances are ported.
+	public int CastingSkillId { get; private set; }
+
+	// Java parity: model/gameobjects/player/Player.lastSkill updated when a non-null casting skill is cleared.
+	public int LastCastingSkillId { get; private set; }
+
 	public IReadOnlyList<PlayerBlockedUser> BlockedUsers { get; set; } = Array.Empty<PlayerBlockedUser>();
 
 	public PlayerAbyssRank AbyssRank { get; set; } = PlayerAbyssRank.Default();
@@ -355,6 +361,25 @@ public sealed class Player
 		SetCreatureState(PlayerCreatureState.Looting, false);
 		SetCreatureState(PlayerCreatureState.Active, true);
 		LootingNpcObjectId = 0;
+	}
+
+	public void SetCastingSkill(int skillId)
+	{
+		// Java parity: model/gameobjects/Creature.setCasting stores the active Skill; this port stores the represented skill id.
+		CastingSkillId = skillId;
+	}
+
+	public int ClearCastingSkill()
+	{
+		// Java parity: model/gameobjects/player/Player.setCasting(null) records lastSkill before clearing the current cast.
+		var skillId = CastingSkillId;
+		if (skillId != 0)
+		{
+			LastCastingSkillId = skillId;
+			CastingSkillId = 0;
+		}
+
+		return skillId;
 	}
 
 	public PlayerTeamMembership RemoveCurrentTeam()

@@ -1197,7 +1197,11 @@ public sealed class GameServerConnection : BaseClientConnection
 				CurrentTimeMilliseconds: _castSpellHooks.GetCurrentTimeMilliseconds(),
 				LastSkillId: _castSpellHooks.GetLastSkillId(player),
 				SendSkillCannotCastDead: () => packets.Add(SmSystemMessage.SkillCannotCastDead()),
-				CancelCurrentSkill: () => _castSpellHooks.CancelCurrentSkill(player, packet),
+				CancelCurrentSkill: () =>
+				{
+					CancelCurrentSkillForCastSpell(player);
+					_castSpellHooks.CancelCurrentSkill(player, packet);
+				},
 				SendPetRequired: () => packets.Add(SmSystemMessage.SkillNotNeedPet()),
 				StopProtection: () => _castSpellHooks.StopProtection(player),
 				CancelUseItem: () =>
@@ -1213,6 +1217,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			await SendPacketAsync(packetToSend);
 
 		return result;
+	}
+
+	private static void CancelCurrentSkillForCastSpell(Player player)
+	{
+		// Java parity: CM_CASTSPELL spell id 0 -> PlayerController.cancelCurrentSkill(null) -> Player.setCasting(null).
+		player.ClearCastingSkill();
 	}
 
 	private void CancelUseItemForCastSpell(Player player)

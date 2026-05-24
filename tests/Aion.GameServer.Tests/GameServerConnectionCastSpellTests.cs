@@ -51,6 +51,30 @@ public class GameServerConnectionCastSpellTests
 	}
 
 	[Fact]
+	public async Task HandleCastSpellAsync_ZeroSpellIdClearsCastingSkillBeforeCancelHook()
+	{
+		var events = new List<string>();
+		var sentPackets = new List<GameServerPacket>();
+		var hooks = new GameServerCastSpellHandlerHooks
+		{
+			IsPetOrderSkill = (_, _) => throw new InvalidOperationException("Pet order check should not run after zero spell id."),
+			GetSkillTemplate = (_, _) => throw new InvalidOperationException("Template lookup should not run after zero spell id."),
+			CancelCurrentSkill = (player, _) => events.Add($"cancel-current:{player.CastingSkillId}:{player.LastCastingSkillId}"),
+		};
+		await using var pair = await TestConnectionPair.CreateAsync(sentPackets, hooks);
+		var player = CreatePlayer();
+		player.SetCastingSkill(7001);
+
+		var result = await pair.Connection.HandleCastSpellAsync(player, CreateCastSpell(0));
+
+		Assert.Equal(PlayerCastSpellEarlyExitStatus.CancelCurrentSkill, result.Status);
+		Assert.Equal(0, player.CastingSkillId);
+		Assert.Equal(7001, player.LastCastingSkillId);
+		Assert.Equal(["cancel-current:0:7001"], events);
+		Assert.Empty(sentPackets);
+	}
+
+	[Fact]
 	public async Task HandleCastSpellAsync_CooldownNotReadySendsNotReadyAfterCancelUseItemAndAudit()
 	{
 		var events = new List<string>();
