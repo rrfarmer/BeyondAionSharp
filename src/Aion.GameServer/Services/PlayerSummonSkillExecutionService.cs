@@ -452,6 +452,56 @@ public sealed class PlayerSummonSkillExecutionService
 			PlayerSummonKnownObjectNpcSkillSelectionSource.ChainSkill);
 	}
 
+	public PlayerSummonKnownObjectNpcSkillSelectionResult SelectMercenaryNextNpcSkillCandidate(
+		bool isInCastSubState,
+		bool initialSkillDelayElapsed,
+		bool canUseNextSkill,
+		PlayerSummonKnownObjectNpcSkillCandidate? queuedCandidate,
+		PlayerSummonKnownObjectNpcSkillTemplateProjection? lastSkill,
+		IEnumerable<PlayerSummonKnownObjectNpcSkillCandidate> candidates,
+		long elapsedSinceLastSkillMilliseconds)
+	{
+		if (isInCastSubState)
+			return PlayerSummonKnownObjectNpcSkillSelectionResult.InCastSubState();
+
+		var candidateList = candidates.ToList();
+
+		if (queuedCandidate is { Projection.NextSkillTimeMilliseconds: 0 })
+		{
+			// Java parity: chooseNextSkill checks queued nextSkillTime == 0 before initial-delay/can-use gates.
+			var immediateQueuedResult = SelectSingleMercenaryNpcSkillCandidate(
+				queuedCandidate,
+				PlayerSummonKnownObjectNpcSkillSelectionSource.ImmediateQueuedSkill);
+			if (immediateQueuedResult.Status != PlayerSummonKnownObjectNpcSkillSelectionStatus.NoReadyCandidate)
+				return immediateQueuedResult;
+		}
+
+		if (!initialSkillDelayElapsed || !canUseNextSkill)
+		{
+			return PlayerSummonKnownObjectNpcSkillSelectionResult.WaitingForDelayGate(
+				queuedCandidate,
+				PlayerSummonKnownObjectNpcSkillSelectionSource.ChooseNextSkillGate);
+		}
+
+		if (queuedCandidate != null)
+		{
+			var delayedQueuedResult = SelectSingleMercenaryNpcSkillCandidate(
+				queuedCandidate,
+				PlayerSummonKnownObjectNpcSkillSelectionSource.DelayedQueuedSkill);
+			if (delayedQueuedResult.Status != PlayerSummonKnownObjectNpcSkillSelectionStatus.NoReadyCandidate)
+				return delayedQueuedResult;
+		}
+
+		var chainResult = SelectMercenaryChainNpcSkillCandidate(
+			lastSkill,
+			candidateList,
+			elapsedSinceLastSkillMilliseconds);
+		if (chainResult.Status != PlayerSummonKnownObjectNpcSkillSelectionStatus.NoReadyCandidate)
+			return chainResult;
+
+		return SelectMercenaryNpcSkillCandidate(candidateList);
+	}
+
 	private static PlayerSummonKnownObjectNpcSkillSelectionResult SelectSingleMercenaryNpcSkillCandidate(
 		PlayerSummonKnownObjectNpcSkillCandidate candidate,
 		PlayerSummonKnownObjectNpcSkillSelectionSource source)
@@ -1292,6 +1342,13 @@ public sealed record PlayerSummonKnownObjectNpcSkillSelectionResult(
 	PlayerSummonKnownObjectNpcSkillCandidate? Candidate = null,
 	PlayerSummonKnownObjectNpcSkillSelectionSource Source = PlayerSummonKnownObjectNpcSkillSelectionSource.OrdinaryPriority)
 {
+	public static PlayerSummonKnownObjectNpcSkillSelectionResult InCastSubState()
+	{
+		return new PlayerSummonKnownObjectNpcSkillSelectionResult(
+			PlayerSummonKnownObjectNpcSkillSelectionStatus.InCastSubState,
+			Source: PlayerSummonKnownObjectNpcSkillSelectionSource.ChooseNextSkillGate);
+	}
+
 	public static PlayerSummonKnownObjectNpcSkillSelectionResult Empty()
 	{
 		return new PlayerSummonKnownObjectNpcSkillSelectionResult(PlayerSummonKnownObjectNpcSkillSelectionStatus.Empty);
@@ -1305,12 +1362,14 @@ public sealed record PlayerSummonKnownObjectNpcSkillSelectionResult(
 			Source: source);
 	}
 
-	public static PlayerSummonKnownObjectNpcSkillSelectionResult WaitingForDelayGate(PlayerSummonKnownObjectNpcSkillCandidate candidate)
+	public static PlayerSummonKnownObjectNpcSkillSelectionResult WaitingForDelayGate(
+		PlayerSummonKnownObjectNpcSkillCandidate? candidate,
+		PlayerSummonKnownObjectNpcSkillSelectionSource source = PlayerSummonKnownObjectNpcSkillSelectionSource.DelayedQueuedSkill)
 	{
 		return new PlayerSummonKnownObjectNpcSkillSelectionResult(
 			PlayerSummonKnownObjectNpcSkillSelectionStatus.WaitingForDelayGate,
 			candidate,
-			PlayerSummonKnownObjectNpcSkillSelectionSource.DelayedQueuedSkill);
+			source);
 	}
 
 	public static PlayerSummonKnownObjectNpcSkillSelectionResult TargetRangeNotReady(
@@ -1336,6 +1395,7 @@ public sealed record PlayerSummonKnownObjectNpcSkillSelectionResult(
 
 public enum PlayerSummonKnownObjectNpcSkillSelectionStatus
 {
+	InCastSubState,
 	Empty,
 	NoReadyCandidate,
 	WaitingForDelayGate,
@@ -1345,6 +1405,7 @@ public enum PlayerSummonKnownObjectNpcSkillSelectionStatus
 
 public enum PlayerSummonKnownObjectNpcSkillSelectionSource
 {
+	ChooseNextSkillGate,
 	OrdinaryPriority,
 	ImmediateQueuedSkill,
 	DelayedQueuedSkill,

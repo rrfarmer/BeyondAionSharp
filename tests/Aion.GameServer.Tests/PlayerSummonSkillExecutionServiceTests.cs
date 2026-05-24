@@ -357,6 +357,115 @@ public class PlayerSummonSkillExecutionServiceTests
 	}
 
 	[Fact]
+	public void SelectMercenaryNextNpcSkillCandidate_ComposesJavaChooseNextSkillBranchOrder()
+	{
+		var service = new PlayerSummonSkillExecutionService();
+		var readyTiming = service.EvaluateMercenaryNpcSkillEntryReadiness(
+			new PlayerSummonKnownObjectNpcSkillEntryTiming(),
+			hpPercentage: 100,
+			elapsedFightTimeMilliseconds: 0,
+			currentTimeMilliseconds: 1000);
+		var blockedTiming = service.EvaluateMercenaryNpcSkillEntryReadiness(
+			new PlayerSummonKnownObjectNpcSkillEntryTiming(),
+			hpPercentage: 100,
+			elapsedFightTimeMilliseconds: 0,
+			currentTimeMilliseconds: 1000,
+			chanceReady: false);
+		var readyCondition = service.EvaluateMercenaryNpcSkillConditionReadiness(
+			new PlayerSummonKnownObjectNpcSkillConditionMetadata(),
+			target: null);
+
+		PlayerSummonKnownObjectNpcSkillCandidate Candidate(
+			int position,
+			int priority,
+			int chainId,
+			int nextSkillTime,
+			PlayerSummonKnownObjectNpcSkillEntryReadiness timing)
+		{
+			var projection = service.ProjectMercenaryNpcSkillTemplate(
+				new PlayerSummonKnownObjectNpcSkillTemplateMetadata(
+					Priority: priority,
+					ChainId: chainId,
+					NextSkillTimeMilliseconds: nextSkillTime));
+
+			return new PlayerSummonKnownObjectNpcSkillCandidate(position, projection, timing, readyCondition);
+		}
+
+		var lastSkill = service.ProjectMercenaryNpcSkillTemplate(
+			new PlayerSummonKnownObjectNpcSkillTemplateMetadata(
+				NextChainId: 77,
+				MaxChainTimeMilliseconds: 15000));
+		var queuedImmediate = Candidate(0, priority: 1, chainId: 0, nextSkillTime: 0, readyTiming);
+		var queuedDelayed = Candidate(1, priority: 1, chainId: 0, nextSkillTime: 5000, readyTiming);
+		var chainCandidate = Candidate(2, priority: 7, chainId: 77, nextSkillTime: -1, readyTiming);
+		var ordinaryCandidate = Candidate(3, priority: 9, chainId: 0, nextSkillTime: -1, readyTiming);
+
+		var castBlocked = service.SelectMercenaryNextNpcSkillCandidate(
+			isInCastSubState: true,
+			initialSkillDelayElapsed: true,
+			canUseNextSkill: true,
+			queuedCandidate: queuedImmediate,
+			lastSkill: lastSkill,
+			candidates: [chainCandidate, ordinaryCandidate],
+			elapsedSinceLastSkillMilliseconds: 1000);
+		var immediateQueued = service.SelectMercenaryNextNpcSkillCandidate(
+			isInCastSubState: false,
+			initialSkillDelayElapsed: false,
+			canUseNextSkill: false,
+			queuedCandidate: queuedImmediate,
+			lastSkill: lastSkill,
+			candidates: [chainCandidate, ordinaryCandidate],
+			elapsedSinceLastSkillMilliseconds: 1000);
+		var waitingForGate = service.SelectMercenaryNextNpcSkillCandidate(
+			isInCastSubState: false,
+			initialSkillDelayElapsed: false,
+			canUseNextSkill: true,
+			queuedCandidate: queuedDelayed,
+			lastSkill: lastSkill,
+			candidates: [chainCandidate, ordinaryCandidate],
+			elapsedSinceLastSkillMilliseconds: 1000);
+		var delayedQueued = service.SelectMercenaryNextNpcSkillCandidate(
+			isInCastSubState: false,
+			initialSkillDelayElapsed: true,
+			canUseNextSkill: true,
+			queuedCandidate: queuedDelayed,
+			lastSkill: lastSkill,
+			candidates: [chainCandidate, ordinaryCandidate],
+			elapsedSinceLastSkillMilliseconds: 1000);
+		var chainSelected = service.SelectMercenaryNextNpcSkillCandidate(
+			isInCastSubState: false,
+			initialSkillDelayElapsed: true,
+			canUseNextSkill: true,
+			queuedCandidate: Candidate(4, priority: 1, chainId: 0, nextSkillTime: 0, blockedTiming),
+			lastSkill: lastSkill,
+			candidates: [chainCandidate, ordinaryCandidate],
+			elapsedSinceLastSkillMilliseconds: 1000);
+		var ordinarySelected = service.SelectMercenaryNextNpcSkillCandidate(
+			isInCastSubState: false,
+			initialSkillDelayElapsed: true,
+			canUseNextSkill: true,
+			queuedCandidate: null,
+			lastSkill: null,
+			candidates: [ordinaryCandidate],
+			elapsedSinceLastSkillMilliseconds: 0);
+
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionStatus.InCastSubState, castBlocked.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionSource.ChooseNextSkillGate, castBlocked.Source);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionStatus.Ready, immediateQueued.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionSource.ImmediateQueuedSkill, immediateQueued.Source);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionStatus.WaitingForDelayGate, waitingForGate.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionSource.ChooseNextSkillGate, waitingForGate.Source);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionStatus.Ready, delayedQueued.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionSource.DelayedQueuedSkill, delayedQueued.Source);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionStatus.Ready, chainSelected.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionSource.ChainSkill, chainSelected.Source);
+		Assert.Equal(2, chainSelected.Candidate?.Position);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionStatus.Ready, ordinarySelected.Status);
+		Assert.Equal(PlayerSummonKnownObjectNpcSkillSelectionSource.OrdinaryPriority, ordinarySelected.Source);
+		Assert.Equal(3, ordinarySelected.Candidate?.Position);
+	}
+
+	[Fact]
 	public void EvaluateMercenaryNpcSkillConditionReadiness_ProjectsSimpleJavaConditionBranches()
 	{
 		var service = new PlayerSummonSkillExecutionService();
