@@ -3520,6 +3520,56 @@ public sealed class GameServerConnection : BaseClientConnection
 			cancellationToken);
 	}
 
+	internal async Task<ItemPurificationPersistentLiveExecutionResult?> HandleItemPurificationPersistentLiveExecutionAsync(
+		Player player,
+		CmItemPurification packet,
+		int npcExpands,
+		int questExpands,
+		int itemExpands,
+		IPlayerEnterWorldRepository? repository,
+		ItemPurificationTable? itemPurificationsOverride = null,
+		ItemTemplateTable? itemTemplatesOverride = null,
+		int targetObjectId = 0,
+		int? rerolledRandomBonusId = null,
+		ItemRandomBonusTable? itemRandomBonusesOverride = null,
+		Func<double>? randomBonusRoll = null,
+		IGameClientConnectionRegistry? connectionRegistryOverride = null,
+		AbyssPointsAddOptions? abyssPointsOptions = null,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: explicit test/caller opt-in for the final CM_ITEM_PURIFICATION.runImpl
+		// mutation+packet+persistence chain. Normal packet dispatch remains plan-only.
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var itemTemplates = itemTemplatesOverride ?? staticData?.ItemTemplates;
+		if (itemTemplates == null)
+			return null;
+
+		var handlerPlan = await HandleItemPurificationAsync(
+			player,
+			packet,
+			itemPurificationsOverride,
+			itemTemplates,
+			targetObjectId,
+			rerolledRandomBonusId,
+			itemRandomBonusesOverride,
+			randomBonusRoll);
+		if (handlerPlan == null)
+			return null;
+
+		return await ItemPurificationPersistentLiveExecutionService.ExecuteAsync(
+			player.ObjectId,
+			player,
+			handlerPlan,
+			itemTemplates,
+			npcExpands,
+			questExpands,
+			itemExpands,
+			connectionRegistryOverride ?? _connectionRegistry,
+			repository,
+			abyssPointsOptions,
+			cancellationToken);
+	}
+
 	private static ItemPurificationHandlerPlan CreateItemPurificationHandlerPlan(
 		Player player,
 		InventoryItem? baseItem,
