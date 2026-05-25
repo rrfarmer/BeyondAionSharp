@@ -10,6 +10,8 @@ public sealed class QuestNpcStartRegistrationSourceRealDataAuditTests
 	private const int ExpectedJavaHandlerSources = 814;
 	private const int ExpectedDistinctNpcIds = 1668;
 	private const int ExpectedDistinctQuestIds = 4503;
+	private const int ExpectedRegisteredQuestStartPairs = 5214;
+	private const int ExpectedLargestNpcQuestCount = 50;
 
 	private readonly ITestOutputHelper _output;
 
@@ -21,12 +23,7 @@ public sealed class QuestNpcStartRegistrationSourceRealDataAuditTests
 	[Fact]
 	public void RealDataAudit_LoadsStagedQuestStartSourcesWithoutProductionWiring()
 	{
-		var repoRoot = FindRepoRoot();
-		var questScriptDirectory = Path.Combine(repoRoot, "game-server", "data", "static_data", "quest_script_data");
-		var javaHandlerDirectory = Path.Combine(repoRoot, "game-server", "data", "handlers", "quest");
-		var loader = new QuestNpcStartRegistrationSourceLoader();
-
-		var result = loader.Load(questScriptDirectory, javaHandlerDirectory);
+		var result = LoadRealDataSources();
 		var xmlSources = result.Sources.Where(source => source.SourceKind == QuestNpcStartRegistrationSourceKind.XmlQuest).ToArray();
 		var javaSources = result.Sources.Where(source => source.SourceKind == QuestNpcStartRegistrationSourceKind.JavaHandler).ToArray();
 
@@ -56,6 +53,38 @@ public sealed class QuestNpcStartRegistrationSourceRealDataAuditTests
 				&& source.SourcePath.EndsWith("altgard.xml", StringComparison.Ordinal)
 				&& source.NpcId == 203622
 				&& source.QuestId == 2274);
+	}
+
+	[Fact]
+	public void RealDataAudit_PopulatesStagedQuestNpcStartTableWithoutProductionWiring()
+	{
+		var result = LoadRealDataSources();
+		var table = new QuestNpcStartTable();
+
+		foreach (var source in result.Sources)
+			table.RegisterOnQuestStart(source);
+
+		var registeredQuestStartPairs = table.Registrations.Values.Sum(registration => registration.OnQuestStart.Count);
+		_output.WriteLine($"TableSources={table.Sources.Count}");
+		_output.WriteLine($"RegisteredNpcIds={table.Registrations.Count}");
+		_output.WriteLine($"RegisteredQuestStartPairs={registeredQuestStartPairs}");
+		_output.WriteLine($"LargestNpcQuestCount={table.Registrations.Values.Max(registration => registration.OnQuestStart.Count)}");
+
+		Assert.Equal(ExpectedTotalSources, table.Sources.Count);
+		Assert.Equal(ExpectedDistinctNpcIds, table.Registrations.Count);
+		Assert.Equal(ExpectedRegisteredQuestStartPairs, registeredQuestStartPairs);
+		Assert.Equal(ExpectedLargestNpcQuestCount, table.Registrations.Values.Max(registration => registration.OnQuestStart.Count));
+		Assert.All(table.Registrations.Values, registration => Assert.True(registration.NpcId > 0));
+		Assert.All(table.Registrations.Values, registration => Assert.Equal(QuestNpcStartRegistration.DefaultQuestRange, registration.QuestRange));
+	}
+
+	private static QuestNpcStartRegistrationSourceLoadResult LoadRealDataSources()
+	{
+		var repoRoot = FindRepoRoot();
+		var questScriptDirectory = Path.Combine(repoRoot, "game-server", "data", "static_data", "quest_script_data");
+		var javaHandlerDirectory = Path.Combine(repoRoot, "game-server", "data", "handlers", "quest");
+		var loader = new QuestNpcStartRegistrationSourceLoader();
+		return loader.Load(questScriptDirectory, javaHandlerDirectory);
 	}
 
 	private static string FindRepoRoot()
