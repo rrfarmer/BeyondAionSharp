@@ -514,6 +514,23 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task CompareSelectableDecomposeJavaArtifacts_WithDeclaredObjectIdMapping_NormalizesMappedObjectIds()
+	{
+		var csharpJson = await CaptureSelectableDecomposeObservationJsonAsync("JD-SEL-DEC-001", sourceCount: 2, selectIndex: 1);
+		var javaJson = CreateMappedSelectableDecomposeJavaArtifactJson(
+			csharpJson,
+			sourceItemId: 101,
+			rewardItemId: 202,
+			sourceObjectId: 70001,
+			rewardObjectId: 70002);
+
+		using var javaObservation = JsonDocument.Parse(javaJson);
+		using var csharpObservation = JsonDocument.Parse(csharpJson);
+
+		AssertSelectableDecomposeObservationMatchesJavaArtifact(javaObservation.RootElement, csharpObservation.RootElement);
+	}
+
+	[Fact]
 	public async Task HandleSelectDecomposableAsync_SelectableRewardMergesExistingStack()
 	{
 		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(idFactory: new IDFactory([5001, 6001]));
@@ -1430,22 +1447,48 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			.Single(packet => packet.GetProperty("sequence").GetInt32() == sequence);
 	}
 
-	private static string CreateMappedSelectableDecomposeJavaArtifactJson(string csharpJson, int sourceItemId, int rewardItemId)
+	private static string CreateMappedSelectableDecomposeJavaArtifactJson(
+		string csharpJson,
+		int sourceItemId,
+		int rewardItemId,
+		int? sourceObjectId = null,
+		int? rewardObjectId = null)
 	{
 		var artifact = JsonNode.Parse(csharpJson)!.AsObject();
 		artifact["capture_method"] = "live-java-server";
 		var fixture = artifact["fixture"]!.AsObject();
-		fixture["id_mapping"] = new JsonObject
+		var idMapping = new JsonObject
 		{
 			["logical_source_item_id"] = 101,
 			["java_source_item_id"] = sourceItemId,
 			["logical_reward_index_1"] = 202,
 			["java_reward_index_1"] = rewardItemId,
 		};
+		fixture["id_mapping"] = idMapping;
 
 		SetPacketField(artifact, sequence: 1, "item_id", sourceItemId);
 		SetPacketField(artifact, sequence: 5, "item_id", rewardItemId);
+		if (sourceObjectId.HasValue)
+		{
+			idMapping["logical_source_object_id"] = 5001;
+			idMapping["java_source_object_id"] = sourceObjectId.Value;
+			SetClientPacketPayloadField(artifact, "object_id", sourceObjectId.Value);
+			SetPacketField(artifact, sequence: 1, "item_object_id", sourceObjectId.Value);
+			SetPacketField(artifact, sequence: 3, "object_id", sourceObjectId.Value);
+			SetPacketField(artifact, sequence: 4, "source_object_id", sourceObjectId.Value);
+		}
+		if (rewardObjectId.HasValue)
+		{
+			idMapping["logical_reward_index_1_object_id"] = 1;
+			idMapping["java_reward_index_1_object_id"] = rewardObjectId.Value;
+			SetPacketField(artifact, sequence: 5, "object_id", rewardObjectId.Value);
+		}
 		return artifact.ToJsonString(new JsonSerializerOptions { WriteIndented = true });
+	}
+
+	private static void SetClientPacketPayloadField(JsonObject observation, string fieldName, int value)
+	{
+		observation["client_packet"]!.AsObject()["payload_fields"]!.AsObject()[fieldName] = value;
 	}
 
 	private static void SetPacketField(JsonObject observation, int sequence, string fieldName, int value)
@@ -1472,24 +1515,29 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Equal(
 			csharpObservation.GetProperty("client_packet").GetProperty("payload_fields").GetProperty("unknown_dword").GetInt32(),
 			javaObservation.GetProperty("client_packet").GetProperty("payload_fields").GetProperty("unknown_dword").GetInt32());
+		AssertMappedJsonValue(
+			csharpObservation.GetProperty("client_packet").GetProperty("payload_fields").GetProperty("object_id"),
+			javaObservation.GetProperty("client_packet").GetProperty("payload_fields").GetProperty("object_id"),
+			idMapping,
+			"client packet object_id");
 
 		var scenarioId = csharpObservation.GetProperty("scenario_id").GetString();
 		switch (scenarioId)
 		{
 			case "JD-SEL-DEC-001":
-				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 1, ["item_id", "time", "end", "unknown3"]);
+				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 1, ["item_object_id", "item_id", "time", "end", "unknown3"]);
 				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 2, ["message_id", "factory_name"]);
-				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 3, ["count", "update_type_mask", "update_type_name"]);
-				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 4, ["reward_count"]);
-				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 5, ["add_type_mask", "add_type_name", "packet_item_count", "item_id", "count", "slot", "cloth_flag"]);
+				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 3, ["object_id", "count", "update_type_mask", "update_type_name"]);
+				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 4, ["source_object_id", "reward_count"]);
+				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 5, ["add_type_mask", "add_type_name", "packet_item_count", "object_id", "item_id", "count", "slot", "cloth_flag"]);
 				break;
 			case "JD-SEL-DEL-001":
-				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 1, ["item_id", "time", "end", "unknown3"]);
+				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 1, ["item_object_id", "item_id", "time", "end", "unknown3"]);
 				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 2, ["message_id", "factory_name"]);
-				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 3, ["delete_type", "delete_type_name"]);
+				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 3, ["object_id", "delete_type", "delete_type_name"]);
 				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 4, ["action", "storage", "items_count", "npc_expands", "quest_expands", "item_expands"]);
-				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 5, ["reward_count"]);
-				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 6, ["add_type_mask", "add_type_name", "packet_item_count", "item_id", "count", "slot", "cloth_flag"]);
+				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 5, ["source_object_id", "reward_count"]);
+				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 6, ["add_type_mask", "add_type_name", "packet_item_count", "object_id", "item_id", "count", "slot", "cloth_flag"]);
 				break;
 			default:
 				throw new InvalidOperationException("Unsupported selectable-decompose scenario: " + scenarioId);
@@ -1533,8 +1581,13 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		{
 			Assert.True(javaFields.TryGetProperty(fieldName, out var javaValue), $"Java artifact packet {sequence} is missing decoded field '{fieldName}'.");
 			Assert.True(csharpFields.TryGetProperty(fieldName, out var csharpValue), $"C# observation packet {sequence} is missing decoded field '{fieldName}'.");
-			Assert.Equal(csharpValue.ToString(), NormalizeJavaFieldValue(javaValue, idMapping));
+			AssertMappedJsonValue(csharpValue, javaValue, idMapping, $"packet {sequence} decoded field '{fieldName}'");
 		}
+	}
+
+	private static void AssertMappedJsonValue(JsonElement csharpValue, JsonElement javaValue, IReadOnlyDictionary<int, int> idMapping, string fieldDescription)
+	{
+		Assert.Equal(csharpValue.ToString(), NormalizeJavaFieldValue(javaValue, idMapping));
 	}
 
 	private static string NormalizeJavaFieldValue(JsonElement javaValue, IReadOnlyDictionary<int, int> idMapping)
