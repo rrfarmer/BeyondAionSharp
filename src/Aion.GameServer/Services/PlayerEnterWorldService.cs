@@ -19,6 +19,7 @@ public sealed class PlayerEnterWorldService
 	private readonly WorldNpcResourceStatsService? _resourceStats;
 	private readonly CreaturePvpZoneCounterService? _creaturePvpZoneCounterService;
 	private readonly IGameClientConnectionRegistry? _connectionRegistry;
+	private readonly GameServerRuntimeContext? _runtimeContext;
 	private readonly ConcurrentDictionary<int, byte> _enteringWorld = new();
 	private readonly ILogger<PlayerEnterWorldService> _logger;
 
@@ -29,7 +30,8 @@ public sealed class PlayerEnterWorldService
 		ILogger<PlayerEnterWorldService> logger,
 		WorldNpcResourceStatsService? resourceStats = null,
 		CreaturePvpZoneCounterService? creaturePvpZoneCounterService = null,
-		IGameClientConnectionRegistry? connectionRegistry = null)
+		IGameClientConnectionRegistry? connectionRegistry = null,
+		GameServerRuntimeContext? runtimeContext = null)
 	{
 		_options = options;
 		_repository = repository;
@@ -37,6 +39,7 @@ public sealed class PlayerEnterWorldService
 		_resourceStats = resourceStats;
 		_creaturePvpZoneCounterService = creaturePvpZoneCounterService;
 		_connectionRegistry = connectionRegistry;
+		_runtimeContext = runtimeContext;
 		_logger = logger;
 	}
 
@@ -80,6 +83,15 @@ public sealed class PlayerEnterWorldService
 			player.SkillCooldowns = await _repository.LoadPlayerSkillCooldownsAsync(playerObjectId, cancellationToken);
 			player.ItemCooldowns = await _repository.LoadPlayerItemCooldownsAsync(playerObjectId, cancellationToken);
 			player.Quests = await _repository.LoadPlayerQuestsAsync(playerObjectId, cancellationToken);
+			if (_runtimeContext?.DataManager?.StaticData.NpcFactions is { } npcFactions)
+			{
+				player.NpcFactions = await _repository.LoadPlayerNpcFactionsAsync(
+					playerObjectId,
+					npcFactions,
+					CurrentEpochSeconds(),
+					cancellationToken);
+			}
+
 			player.Titles = await _repository.LoadPlayerTitlesAsync(playerObjectId, cancellationToken);
 			player.Motions = await _repository.LoadPlayerMotionsAsync(playerObjectId, cancellationToken);
 			player.Emotions = await _repository.LoadPlayerEmotionsAsync(playerObjectId, cancellationToken);
@@ -909,6 +921,12 @@ public sealed class PlayerEnterWorldService
 	{
 		// Java parity: PlayerEnterWorldService failure/logout paths delete the player controller and leave map-region zone memberships.
 		_creaturePvpZoneCounterService?.ClearCounters(playerObjectId);
+	}
+
+	private static int CurrentEpochSeconds()
+	{
+		var now = DateTimeOffset.Now.ToUnixTimeSeconds();
+		return now > int.MaxValue ? int.MaxValue : (int)now;
 	}
 
 	private async ValueTask ApplyOfflineDpResetAsync(Player player, DateTime? previousLastOnline, DateTime now)

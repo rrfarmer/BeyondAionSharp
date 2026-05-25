@@ -106,6 +106,38 @@ public sealed class PlayerEnterWorldServiceTests
 	}
 
 	[Fact]
+	public async Task EnterWorld_LoadsNpcFactionsWhenStaticDataIsAvailable()
+	{
+		var dataManager = await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false);
+		var runtimeContext = new GameServerRuntimeContext();
+		runtimeContext.SetDataManager(dataManager);
+		var npcFactions = new PlayerNpcFactionsSnapshot(
+		[
+			new PlayerNpcFactionState(
+				FactionId: 2,
+				IsActive: true,
+				IsMentor: false,
+				TimeEpochSeconds: 1000,
+				PlayerNpcFactionQuestState.Complete,
+				QuestId: 35007),
+		]);
+		var repository = new CapturingEnterWorldRepository
+		{
+			Player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5)),
+			NpcFactions = npcFactions,
+		};
+		var service = CreateService(repository, CreateWorld(), runtimeContext);
+
+		var result = await service.EnterWorldAsync(accountId: 10, playerObjectId: 1001);
+
+		Assert.Equal(EnterWorldCheckMessage.Ok, result.Message);
+		Assert.Same(npcFactions, result.Player!.NpcFactions);
+		Assert.Equal(1, repository.LoadNpcFactionsCalls);
+		Assert.Same(dataManager.StaticData.NpcFactions, repository.NpcFactionTable);
+		Assert.True(repository.NpcFactionCurrentEpochSeconds > 0);
+	}
+
+	[Fact]
 	public async Task EnterWorld_ResetsDpAfterFiveMinutesOfflineForAdvancedClass()
 	{
 		var repository = new CapturingEnterWorldRepository
@@ -685,8 +717,17 @@ public sealed class PlayerEnterWorldServiceTests
 	private static PlayerEnterWorldService CreateService(
 		CapturingEnterWorldRepository repository,
 		GameWorld world,
+		GameServerRuntimeContext runtimeContext)
+	{
+		return CreateService(repository, world, out _, runtimeContext: runtimeContext);
+	}
+
+	private static PlayerEnterWorldService CreateService(
+		CapturingEnterWorldRepository repository,
+		GameWorld world,
 		out CapturingConnectionRegistry registry,
-		CreaturePvpZoneCounterService? creaturePvpZoneCounterService = null)
+		CreaturePvpZoneCounterService? creaturePvpZoneCounterService = null,
+		GameServerRuntimeContext? runtimeContext = null)
 	{
 		registry = new CapturingConnectionRegistry();
 		var resourceStats = new WorldNpcResourceStatsService(
@@ -700,7 +741,8 @@ public sealed class PlayerEnterWorldServiceTests
 			NullLogger<PlayerEnterWorldService>.Instance,
 			resourceStats,
 			creaturePvpZoneCounterService,
-			registry);
+			registry,
+			runtimeContext);
 	}
 
 	private static PlayerEnterWorldService CreateService(
@@ -716,6 +758,19 @@ public sealed class PlayerEnterWorldServiceTests
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);
 		world.Initialize();
 		return world;
+	}
+
+	private static string FindRepoRoot()
+	{
+		var directory = new DirectoryInfo(AppContext.BaseDirectory);
+		while (directory != null)
+		{
+			if (File.Exists(Path.Combine(directory.FullName, "game-server", "data", "static_data", "static_data.xml")))
+				return directory.FullName;
+			directory = directory.Parent;
+		}
+
+		throw new FileNotFoundException("Could not find repository root from test output directory.");
 	}
 
 	private static Player CreatePlayer(
@@ -911,6 +966,8 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public IReadOnlyList<PlayerQuestState> Quests { get; init; } = Array.Empty<PlayerQuestState>();
 
+		public PlayerNpcFactionsSnapshot NpcFactions { get; init; } = PlayerNpcFactionsSnapshot.Empty;
+
 		public IReadOnlyList<PlayerTitle> Titles { get; init; } = Array.Empty<PlayerTitle>();
 
 		public IReadOnlyList<PlayerMotion> Motions { get; init; } = Array.Empty<PlayerMotion>();
@@ -958,6 +1015,12 @@ public sealed class PlayerEnterWorldServiceTests
 		public int LoadItemCooldownsCalls { get; private set; }
 
 		public int LoadQuestsCalls { get; private set; }
+
+		public int LoadNpcFactionsCalls { get; private set; }
+
+		public NpcFactionTable? NpcFactionTable { get; private set; }
+
+		public int NpcFactionCurrentEpochSeconds { get; private set; }
 
 		public int LoadTitlesCalls { get; private set; }
 
@@ -1280,6 +1343,18 @@ public sealed class PlayerEnterWorldServiceTests
 		{
 			LoadQuestsCalls++;
 			return Task.FromResult(Quests);
+		}
+
+		public Task<PlayerNpcFactionsSnapshot> LoadPlayerNpcFactionsAsync(
+			int playerObjectId,
+			NpcFactionTable npcFactions,
+			int currentEpochSeconds = 0,
+			CancellationToken cancellationToken = default)
+		{
+			LoadNpcFactionsCalls++;
+			NpcFactionTable = npcFactions;
+			NpcFactionCurrentEpochSeconds = currentEpochSeconds;
+			return Task.FromResult(NpcFactions);
 		}
 
 		public Task<IReadOnlyList<PlayerTitle>> LoadPlayerTitlesAsync(int playerObjectId, CancellationToken cancellationToken = default)

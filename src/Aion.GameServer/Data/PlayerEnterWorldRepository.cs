@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using Aion.Commons.Database;
+using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.Account;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Services;
@@ -27,6 +28,12 @@ public interface IPlayerEnterWorldRepository
 	Task<IReadOnlyDictionary<int, PlayerItemCooldown>> LoadPlayerItemCooldownsAsync(int playerObjectId, CancellationToken cancellationToken = default);
 
 	Task<IReadOnlyList<PlayerQuestState>> LoadPlayerQuestsAsync(int playerObjectId, CancellationToken cancellationToken = default);
+
+	Task<PlayerNpcFactionsSnapshot> LoadPlayerNpcFactionsAsync(
+		int playerObjectId,
+		NpcFactionTable npcFactions,
+		int currentEpochSeconds = 0,
+		CancellationToken cancellationToken = default);
 
 	Task<IReadOnlyList<PlayerTitle>> LoadPlayerTitlesAsync(int playerObjectId, CancellationToken cancellationToken = default);
 
@@ -386,6 +393,15 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	public Task<IReadOnlyList<PlayerQuestState>> LoadPlayerQuestsAsync(int playerObjectId, CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult<IReadOnlyList<PlayerQuestState>>(Array.Empty<PlayerQuestState>());
+	}
+
+	public Task<PlayerNpcFactionsSnapshot> LoadPlayerNpcFactionsAsync(
+		int playerObjectId,
+		NpcFactionTable npcFactions,
+		int currentEpochSeconds = 0,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(PlayerNpcFactionsSnapshot.Empty);
 	}
 
 	public Task<IReadOnlyList<PlayerTitle>> LoadPlayerTitlesAsync(int playerObjectId, CancellationToken cancellationToken = default)
@@ -2744,6 +2760,64 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			_logger.LogError(ex, "Could not load quests for player {PlayerObjectId}", playerObjectId);
 			return Array.Empty<PlayerQuestState>();
 		}
+	}
+
+	public async Task<PlayerNpcFactionsSnapshot> LoadPlayerNpcFactionsAsync(
+		int playerObjectId,
+		NpcFactionTable npcFactions,
+		int currentEpochSeconds = 0,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/PlayerNpcFactionsDAO.loadNpcFactions plus NpcFaction constructor mentor lookup.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = """
+				SELECT faction_id, active, time, state, quest_id
+				FROM player_npc_factions
+				WHERE player_id = ?
+				""";
+			command.Parameters.Add(new MySqlParameter { Value = playerObjectId });
+
+			var factions = new List<PlayerNpcFactionState>();
+			await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+			while (await reader.ReadAsync(cancellationToken))
+			{
+				var factionId = ReadInt(reader, "faction_id");
+				var template = npcFactions.GetNpcFactionById(factionId);
+				if (template == null)
+					throw new InvalidOperationException($"Missing NPC faction template {factionId}.");
+
+				factions.Add(
+					new PlayerNpcFactionState(
+						factionId,
+						reader.GetBoolean("active"),
+						template.IsMentor,
+						ReadInt(reader, "time"),
+						ParseNpcFactionQuestState(ReadString(reader, "state")),
+						ReadInt(reader, "quest_id")));
+			}
+
+			return new PlayerNpcFactionsSnapshot(factions, currentEpochSeconds);
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not restore NPC faction data for player {PlayerObjectId}", playerObjectId);
+			return PlayerNpcFactionsSnapshot.Empty;
+		}
+	}
+
+	private static PlayerNpcFactionQuestState ParseNpcFactionQuestState(string state)
+	{
+		return state switch
+		{
+			"NOTING" => PlayerNpcFactionQuestState.Noting,
+			"START" => PlayerNpcFactionQuestState.Start,
+			"COMPLETE" => PlayerNpcFactionQuestState.Complete,
+			_ => throw new InvalidOperationException($"Unknown NPC faction quest state '{state}'."),
+		};
 	}
 
 	public async Task<IReadOnlyList<PlayerTitle>> LoadPlayerTitlesAsync(int playerObjectId, CancellationToken cancellationToken = default)

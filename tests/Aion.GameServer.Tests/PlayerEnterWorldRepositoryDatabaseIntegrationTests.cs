@@ -1,5 +1,6 @@
 using Aion.Commons.Database;
 using Aion.GameServer.Data;
+using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Services;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -198,6 +199,42 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 		Assert.Null(quests.Single(quest => quest.QuestId == 5002).RewardGroup);
 		Assert.Null(quests.Single(quest => quest.QuestId == 5002).NextRepeatTime);
 		Assert.Null(quests.Single(quest => quest.QuestId == 5002).CompleteTime);
+	}
+
+	[Fact]
+	public async Task LoadPlayerNpcFactions_HydratesActiveSlotsAndTimeLimitsAgainstJavaSchema_WhenEnabled()
+	{
+		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
+			return;
+
+		// Java parity: dao/PlayerNpcFactionsDAO.SELECT_QUERY and NpcFactions.addNpcFaction slot/time-limit rules.
+		InitializeDatabaseFactory();
+		await InitializeSchemaAsync();
+		await SeedPlayerAsync();
+		await ExecuteNonQueryAsync(
+			"""
+			INSERT INTO player_npc_factions (player_id, faction_id, active, time, state, quest_id)
+			VALUES
+				(1001, 2, true, 1000, 'COMPLETE', 35007),
+				(1001, 8, true, -1, 'NOTING', 47000)
+			""");
+
+		var npcFactions = new NpcFactionTable(
+		[
+			new NpcFactionSummary(2, "Alabaster Order", 1129000, "DAILY", 30, 99, "ELYOS", [799803], 0),
+			new NpcFactionSummary(8, "Kaisinel Academy", 1129006, "MENTOR", 10, 39, "ELYOS", [799813], 0),
+		]);
+		var repository = new MySqlPlayerEnterWorldRepository(
+			new GameServerRuntimeContext(),
+			NullLogger<MySqlPlayerEnterWorldRepository>.Instance);
+
+		var snapshot = await repository.LoadPlayerNpcFactionsAsync(PlayerObjectId, npcFactions, currentEpochSeconds: 1500);
+
+		Assert.True(snapshot.HasActiveFaction(2));
+		Assert.True(snapshot.HasActiveFaction(8));
+		Assert.True(snapshot.CanStartQuest(isMentorQuest: false, currentEpochSeconds: 1500));
+		Assert.False(snapshot.CanStartQuest(isMentorQuest: true, currentEpochSeconds: 1500));
+		Assert.True(snapshot.CanStartQuest(isMentorQuest: true, currentEpochSeconds: 1501));
 	}
 
 	private static void InitializeDatabaseFactory()
