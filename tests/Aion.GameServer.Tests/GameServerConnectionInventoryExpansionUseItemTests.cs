@@ -265,6 +265,40 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleUseItemAsync_DecomposeSpecialCubeFullDoesNotScheduleOrMutate()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository, includeThreadPoolManager: true);
+		var player = CreatePlayer(itemId: 102);
+		player.InventoryItems = player.InventoryItems
+			.Concat(Enumerable.Range(0, 102).Select(index => new InventoryItem
+			{
+				ObjectId = 7000 + index,
+				ItemId = 205,
+				Count = 1,
+				Location = 0,
+			}))
+			.ToArray();
+		var originalInventory = player.InventoryItems
+			.OrderBy(item => item.ObjectId)
+			.Select(item => (item.ObjectId, item.ItemId, item.Count, item.Location, item.IsEquipped))
+			.ToArray();
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
+
+		Assert.Equal(0, player.UsingItemObjectId);
+		Assert.Equal(0, repository.SaveDecomposeActionMutationCalls);
+		Assert.Equal(
+			originalInventory,
+			player.InventoryItems
+				.OrderBy(item => item.ObjectId)
+				.Select(item => (item.ObjectId, item.ItemId, item.Count, item.Location, item.IsEquipped))
+				.ToArray());
+		var packet = Assert.Single(fixture.SentPackets);
+		AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1300447);
+	}
+
+	[Fact]
 	public async Task HandleUseItemAsync_SelectableDecomposeShowsChoicesWithoutSchedulingUse()
 	{
 		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(includeThreadPoolManager: true);
@@ -853,14 +887,30 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 								<decompose/>
 							</actions>
 						</item_template>
+						<item_template id="102" name="Test Special Decompose Box" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="1">
+							<actions>
+								<decompose/>
+							</actions>
+						</item_template>
 						<item_template id="200" name="Test Decompose Reward" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
 						<item_template id="201" name="Test Selectable Reward 1" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
 						<item_template id="202" name="Test Selectable Reward 2" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
+						<item_template id="204" name="Test Special Decompose Reward" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="1">
+							<inventory id="2"/>
+						</item_template>
+						<item_template id="205" name="Test Special Cube Filler" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="1">
+							<inventory id="2"/>
+						</item_template>
 					</item_templates>
 					<decomposable_items>
 						<decomposable item_id="100">
 							<items chance="100" minlevel="1" maxlevel="1">
 								<item id="200" min_count="1" max_count="1"/>
+							</items>
+						</decomposable>
+						<decomposable item_id="102">
+							<items chance="100" minlevel="1" maxlevel="1">
+								<item id="204" min_count="1" max_count="1"/>
 							</items>
 						</decomposable>
 						<decomposable item_id="101" selectable="true">
