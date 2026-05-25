@@ -1,3 +1,4 @@
+using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 
 namespace Aion.GameServer.Services;
@@ -6,6 +7,35 @@ public static class ItemPurificationApService
 {
 	private const int CubeStorageId = 0;
 	private const int KinahItemId = 182400001;
+
+	public static ItemPurificationApPlan CreatePurificationApPlan(
+		Player? player,
+		InventoryItem? baseItem,
+		ItemPurificationTable itemPurifications,
+		int resultItemId,
+		bool materialsAlreadyDecreased,
+		AbyssPointsAddOptions? abyssPointsOptions = null)
+	{
+		// Java parity: ItemPurificationService resolves DataManager.ITEM_PURIFICATION_DATA by base item id,
+		// then result item id, before running the same validation and decreaseMaterials AP spend path.
+		if (baseItem == null)
+			return ItemPurificationApPlan.Failed(ItemPurificationApStatus.MissingBaseItem);
+
+		var template = itemPurifications.GetItemPurificationTemplate(baseItem.ItemId);
+		if (template == null)
+			return ItemPurificationApPlan.Failed(ItemPurificationApStatus.MissingTemplate);
+
+		var result = itemPurifications.GetResultItem(baseItem.ItemId, resultItemId);
+		if (result == null)
+			return ItemPurificationApPlan.Failed(ItemPurificationApStatus.InvalidResultItem);
+
+		return CreatePurificationApPlan(
+			player,
+			baseItem,
+			ToProjection(result),
+			materialsAlreadyDecreased,
+			abyssPointsOptions);
+	}
 
 	public static ItemPurificationApPlan CreatePurificationApPlan(
 		Player? player,
@@ -92,6 +122,18 @@ public static class ItemPurificationApService
 			.Where(item => item.ItemId == itemId && (itemId != KinahItemId || item.Location == CubeStorageId))
 			.Sum(item => item.Count);
 	}
+
+	private static ItemPurificationResultProjection ToProjection(ItemPurificationResultSummary result)
+	{
+		return new ItemPurificationResultProjection(
+			result.ResultItemId,
+			result.MinEnchantCount,
+			result.NecessaryAbyssPoints,
+			result.NecessaryKinah,
+			result.RequiredMaterials
+				.Select(material => new ItemPurificationMaterialRequirement(material.ItemId, material.ItemCount))
+				.ToArray());
+	}
 }
 
 public sealed record ItemPurificationResultProjection(
@@ -147,6 +189,7 @@ public enum ItemPurificationApStatus
 	MissingPlayer,
 	MissingBaseItem,
 	InvalidResultItem,
+	MissingTemplate,
 	NotIdentified,
 	EnchantTooLow,
 	NotEnoughAbyssPoints,

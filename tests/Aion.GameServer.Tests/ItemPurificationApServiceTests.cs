@@ -1,3 +1,4 @@
+using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Services;
 
@@ -32,6 +33,52 @@ public sealed class ItemPurificationApServiceTests
 		Assert.NotNull(applied.AbyssPointsPlan);
 		Assert.Equal(-1_200, applied.AbyssPointsPlan.Added);
 		Assert.Equal(3_800, player.AbyssRank.Ap);
+	}
+
+	[Fact]
+	public void CreatePurificationApPlan_ResolvesResultFromStaticDataTable()
+	{
+		var player = CreatePlayer(
+			abyssPoints: 5_000,
+			kinah: 10_000,
+			materials: [new InventoryItem { ObjectId = 3, ItemId = 186000001, Count = 2, Location = 0 }]);
+		var baseItem = CreateBaseItem(enchant: 15);
+		var table = CreateTable();
+
+		var plan = ItemPurificationApService.CreatePurificationApPlan(
+			player,
+			baseItem,
+			table,
+			resultItemId: 100000002,
+			materialsAlreadyDecreased: true);
+
+		Assert.Equal(ItemPurificationApStatus.Applied, plan.Status);
+		Assert.Equal(1_200, plan.NecessaryAbyssPoints);
+		Assert.NotNull(plan.AbyssPointsPlan);
+		Assert.Equal(3_800, player.AbyssRank.Ap);
+	}
+
+	[Fact]
+	public void CreatePurificationApPlan_ReportsMissingTemplateAndInvalidResult()
+	{
+		var player = CreatePlayer(abyssPoints: 5_000, kinah: 10_000);
+		var table = CreateTable();
+
+		var missingTemplate = ItemPurificationApService.CreatePurificationApPlan(
+			player,
+			CreateBaseItem(itemId: 999, enchant: 15),
+			table,
+			resultItemId: 100000002,
+			materialsAlreadyDecreased: true);
+		var invalidResult = ItemPurificationApService.CreatePurificationApPlan(
+			player,
+			CreateBaseItem(enchant: 15),
+			table,
+			resultItemId: 999,
+			materialsAlreadyDecreased: true);
+
+		Assert.Equal(ItemPurificationApStatus.MissingTemplate, missingTemplate.Status);
+		Assert.Equal(ItemPurificationApStatus.InvalidResultItem, invalidResult.Status);
 	}
 
 	[Fact]
@@ -121,12 +168,12 @@ public sealed class ItemPurificationApServiceTests
 		};
 	}
 
-	private static InventoryItem CreateBaseItem(int enchant, int tuneCount = 0)
+	private static InventoryItem CreateBaseItem(int enchant, int tuneCount = 0, int itemId = 100000001)
 	{
 		return new InventoryItem
 		{
 			ObjectId = 10,
-			ItemId = 100000001,
+			ItemId = itemId,
 			Count = 1,
 			Location = 0,
 			Enchant = enchant,
@@ -146,5 +193,22 @@ public sealed class ItemPurificationApServiceTests
 			NecessaryAbyssPoints: necessaryAbyssPoints,
 			NecessaryKinah: necessaryKinah,
 			RequiredMaterials: requiredMaterials ?? Array.Empty<ItemPurificationMaterialRequirement>());
+	}
+
+	private static ItemPurificationTable CreateTable()
+	{
+		return new ItemPurificationTable(
+		[
+			new ItemPurificationSummary(
+				100000001,
+				[
+					new ItemPurificationResultSummary(
+						ResultItemId: 100000002,
+						MinEnchantCount: 10,
+						NecessaryAbyssPoints: 1_200,
+						NecessaryKinah: 0,
+						RequiredMaterials: [new ItemPurificationMaterialSummary(186000001, 2)]),
+				]),
+		]);
 	}
 }
