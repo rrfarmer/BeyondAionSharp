@@ -3431,12 +3431,54 @@ public sealed class GameServerConnection : BaseClientConnection
 			return Task.FromResult<ItemPurificationHandlerPlan?>(null);
 
 		var baseItem = player.InventoryItems.FirstOrDefault(item => item.ObjectId == packet.BaseItemObjectId);
-		var workflow = ItemPurificationWorkflowService.CreateWorkflowPlan(
+		var handlerPlan = CreateItemPurificationHandlerPlan(
 			player,
 			baseItem,
 			itemPurifications,
 			itemTemplates,
 			packet.ResultItemId,
+			targetObjectId,
+			rerolledRandomBonusId);
+		if (targetObjectId != 0
+			|| handlerPlan.Application.Status != ItemPurificationApplicationPlanStatus.NeedsTargetObjectIdAllocation
+			|| handlerPlan.Application.RequiresRandomBonusSelection
+			|| _idFactory == null)
+		{
+			return Task.FromResult<ItemPurificationHandlerPlan?>(handlerPlan);
+		}
+
+		// Java parity: ItemPurificationService.upgradeItem calls ItemFactory.newItem, whose constructor path
+		// allocates the target item object id through IDFactory before storage mutation and packet fanout.
+		var allocatedTargetObjectId = _idFactory.NextId();
+		var allocatedPlan = CreateItemPurificationHandlerPlan(
+			player,
+			baseItem,
+			itemPurifications,
+			itemTemplates,
+			packet.ResultItemId,
+			allocatedTargetObjectId,
+			rerolledRandomBonusId);
+		if (!allocatedPlan.Application.Succeeded)
+			_idFactory.ReleaseId(allocatedTargetObjectId);
+
+		return Task.FromResult<ItemPurificationHandlerPlan?>(allocatedPlan);
+	}
+
+	private static ItemPurificationHandlerPlan CreateItemPurificationHandlerPlan(
+		Player player,
+		InventoryItem? baseItem,
+		ItemPurificationTable itemPurifications,
+		ItemTemplateTable itemTemplates,
+		int resultItemId,
+		int targetObjectId,
+		int? rerolledRandomBonusId)
+	{
+		var workflow = ItemPurificationWorkflowService.CreateWorkflowPlan(
+			player,
+			baseItem,
+			itemPurifications,
+			itemTemplates,
+			resultItemId,
 			targetObjectId,
 			rerolledRandomBonusId);
 		var application = ItemPurificationApplicationPlanService.CreateApplicationPlan(workflow);
@@ -3446,7 +3488,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			application,
 			sourceTemplate?.GetClientName() ?? sourceTemplate?.Name ?? string.Empty,
 			targetTemplate?.GetClientName() ?? targetTemplate?.Name ?? string.Empty);
-		return Task.FromResult<ItemPurificationHandlerPlan?>(new ItemPurificationHandlerPlan(workflow, application, packetPlan));
+		return new ItemPurificationHandlerPlan(workflow, application, packetPlan);
 	}
 
 	internal async Task HandleUseItemAsync(Player player, CmUseItem packet)

@@ -7,6 +7,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ClientPackets;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
+using Aion.GameServer.Utils.IdFactory;
 using Aion.GameServer.World;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -61,6 +62,143 @@ public sealed class GameServerConnectionItemPurificationTests
 		Assert.Equal([10, 20, 30], player.InventoryItems.Select(item => item.ObjectId).ToArray());
 		Assert.Equal(2, material.Count);
 		Assert.Equal(10_000, kinah.Count);
+	}
+
+	[Fact]
+	public async Task HandleItemPurificationAsync_AllocatesTargetObjectIdWhenFactoryAvailable()
+	{
+		var baseItem = new InventoryItem
+		{
+			ObjectId = 10,
+			ItemId = 100000001,
+			Count = 1,
+			Location = 0,
+			Enchant = 25,
+			TuneCount = 2,
+			RandomBonus = 7,
+		};
+		var material = new InventoryItem { ObjectId = 20, ItemId = 186000001, Count = 2, Location = 0 };
+		var kinah = new InventoryItem { ObjectId = 30, ItemId = 182400001, Count = 10_000, Location = 0 };
+		var player = new Player
+		{
+			ObjectId = 700,
+			AbyssRank = PlayerAbyssRank.Default() with { Ap = 5_000 },
+			InventoryItems = [baseItem, material, kinah],
+		};
+		var idFactory = new IDFactory(Enumerable.Range(1, 9000));
+		await using var pair = await TestConnectionPair.CreateAsync(idFactory);
+		var packet = CreatePacket(
+			playerObjectId: 9999,
+			baseItemObjectId: baseItem.ObjectId,
+			resultItemId: 100000002,
+			requiredMaterialObjectIds: [9001, 9002, 9003, 9004, 9005]);
+
+		var handlerPlan = await pair.Connection.HandleItemPurificationAsync(
+			player,
+			packet,
+			CreatePurificationTable(),
+			CreateItemTemplates());
+
+		Assert.NotNull(handlerPlan);
+		Assert.True(handlerPlan.Workflow.Succeeded);
+		Assert.True(handlerPlan.Application.Succeeded);
+		Assert.Equal(9001, handlerPlan.Application.TargetItem?.ObjectId);
+		Assert.Equal(9001, handlerPlan.Workflow.Inheritance?.TargetItem?.ObjectId);
+		Assert.False(handlerPlan.Application.RequiresTargetObjectIdAllocation);
+		Assert.True(handlerPlan.PacketPlan.Succeeded);
+		Assert.Contains(handlerPlan.PacketPlan.Operations, operation =>
+			operation.Type == ItemPurificationPacketOperationType.InventoryAddItem
+			&& operation.ObjectId == 9001
+			&& operation.ItemId == 100000002);
+		Assert.Equal(9002, idFactory.GetUsedCount());
+		Assert.Equal([10, 20, 30], player.InventoryItems.Select(item => item.ObjectId).ToArray());
+		Assert.Equal(2, material.Count);
+		Assert.Equal(5_000, player.AbyssRank.Ap);
+	}
+
+	[Fact]
+	public async Task HandleItemPurificationAsync_DoesNotAllocateWhenRandomBonusSelectionIsPending()
+	{
+		var baseItem = new InventoryItem
+		{
+			ObjectId = 10,
+			ItemId = 100000001,
+			Count = 1,
+			Location = 0,
+			Enchant = 25,
+			TuneCount = 2,
+			RandomBonus = 7,
+		};
+		var material = new InventoryItem { ObjectId = 20, ItemId = 186000001, Count = 2, Location = 0 };
+		var kinah = new InventoryItem { ObjectId = 30, ItemId = 182400001, Count = 10_000, Location = 0 };
+		var player = new Player
+		{
+			ObjectId = 700,
+			AbyssRank = PlayerAbyssRank.Default() with { Ap = 5_000 },
+			InventoryItems = [baseItem, material, kinah],
+		};
+		var idFactory = new IDFactory(Enumerable.Range(1, 9000));
+		await using var pair = await TestConnectionPair.CreateAsync(idFactory);
+		var packet = CreatePacket(
+			playerObjectId: 9999,
+			baseItemObjectId: baseItem.ObjectId,
+			resultItemId: 100000002,
+			requiredMaterialObjectIds: [9001, 9002, 9003, 9004, 9005]);
+
+		var handlerPlan = await pair.Connection.HandleItemPurificationAsync(
+			player,
+			packet,
+			CreatePurificationTable(),
+			CreateItemTemplates(targetStatBonusSetId: 2));
+
+		Assert.NotNull(handlerPlan);
+		Assert.Equal(ItemPurificationApplicationPlanStatus.NeedsTargetObjectIdAllocation, handlerPlan.Application.Status);
+		Assert.True(handlerPlan.Application.RequiresTargetObjectIdAllocation);
+		Assert.True(handlerPlan.Application.RequiresRandomBonusSelection);
+		Assert.Equal(0, handlerPlan.Application.TargetItem?.ObjectId);
+		Assert.Equal(9001, idFactory.NextId());
+	}
+
+	[Fact]
+	public async Task HandleItemPurificationAsync_ReleasesAllocatedTargetObjectIdWhenRebuiltPlanIsNotReady()
+	{
+		var baseItem = new InventoryItem
+		{
+			ObjectId = 10,
+			ItemId = 100000001,
+			Count = 1,
+			Location = 0,
+			Enchant = 25,
+			TuneCount = 2,
+			RandomBonus = 7,
+		};
+		var kinah = new InventoryItem { ObjectId = 30, ItemId = 182400001, Count = 10_000, Location = 0 };
+		var player = new Player
+		{
+			ObjectId = 700,
+			AbyssRank = PlayerAbyssRank.Default() with { Ap = 5_000 },
+			InventoryItems = [baseItem, kinah],
+		};
+		var idFactory = new IDFactory(Enumerable.Range(1, 9000));
+		await using var pair = await TestConnectionPair.CreateAsync(idFactory);
+		var packet = CreatePacket(
+			playerObjectId: 9999,
+			baseItemObjectId: baseItem.ObjectId,
+			resultItemId: 100000002,
+			requiredMaterialObjectIds: [9001, 9002, 9003, 9004, 9005]);
+
+		var handlerPlan = await pair.Connection.HandleItemPurificationAsync(
+			player,
+			packet,
+			CreatePurificationTable(requiredMaterialItemId: baseItem.ItemId, requiredMaterialCount: 1),
+			CreateItemTemplates());
+
+		Assert.NotNull(handlerPlan);
+		Assert.Equal(ItemPurificationApplicationPlanStatus.NeedsBaseItemDeleteVerification, handlerPlan.Application.Status);
+		Assert.Equal(9001, handlerPlan.Application.TargetItem?.ObjectId);
+		Assert.Equal(9001, idFactory.NextId());
+		Assert.Equal([10, 30], player.InventoryItems.Select(item => item.ObjectId).ToArray());
+		Assert.Equal(5_000, player.AbyssRank.Ap);
 	}
 
 	[Fact]
@@ -345,7 +483,9 @@ public sealed class GameServerConnectionItemPurificationTests
 		return packet;
 	}
 
-	private static ItemPurificationTable CreatePurificationTable()
+	private static ItemPurificationTable CreatePurificationTable(
+		int requiredMaterialItemId = 186000001,
+		long requiredMaterialCount = 2)
 	{
 		return new ItemPurificationTable(
 		[
@@ -357,17 +497,17 @@ public sealed class GameServerConnectionItemPurificationTests
 						MinEnchantCount: 10,
 						NecessaryAbyssPoints: 1_200,
 						NecessaryKinah: 1_000,
-						RequiredMaterials: [new ItemPurificationMaterialSummary(186000001, 2)]),
+						RequiredMaterials: [new ItemPurificationMaterialSummary(requiredMaterialItemId, requiredMaterialCount)]),
 				]),
 		]);
 	}
 
-	private static ItemTemplateTable CreateItemTemplates()
+	private static ItemTemplateTable CreateItemTemplates(int targetStatBonusSetId = 1)
 	{
 		return new ItemTemplateTable(
 		[
 			CreateTemplate(100000001, statBonusSetId: 1, maxTuneCount: 5, maxEnchantLevel: 15),
-			CreateTemplate(100000002, statBonusSetId: 1, maxTuneCount: 1, maxEnchantLevel: 20),
+			CreateTemplate(100000002, statBonusSetId: targetStatBonusSetId, maxTuneCount: 1, maxEnchantLevel: 20),
 			CreateTemplate(186000001, statBonusSetId: 0, maxTuneCount: 0, maxEnchantLevel: 0),
 		]);
 	}
@@ -408,7 +548,7 @@ public sealed class GameServerConnectionItemPurificationTests
 
 		public GameServerConnection Connection { get; }
 
-		public static async Task<TestConnectionPair> CreateAsync()
+		public static async Task<TestConnectionPair> CreateAsync(IDFactory? idFactory = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -423,7 +563,8 @@ public sealed class GameServerConnectionItemPurificationTests
 					NullLogger.Instance,
 					serverClient,
 					"item-purification-test",
-					new GamePacketProcessor<string>((_, _) => Task.CompletedTask));
+					new GamePacketProcessor<string>((_, _) => Task.CompletedTask),
+					idFactory: idFactory);
 				return new TestConnectionPair(client, connection);
 			}
 			finally
