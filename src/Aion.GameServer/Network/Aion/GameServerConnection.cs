@@ -3471,6 +3471,55 @@ public sealed class GameServerConnection : BaseClientConnection
 		return Task.FromResult<ItemPurificationHandlerPlan?>(allocatedPlan);
 	}
 
+	internal async Task<ItemPurificationLiveExecutionResult?> HandleItemPurificationLiveExecutionAsync(
+		Player player,
+		CmItemPurification packet,
+		int npcExpands,
+		int questExpands,
+		int itemExpands,
+		ItemPurificationTable? itemPurificationsOverride = null,
+		ItemTemplateTable? itemTemplatesOverride = null,
+		int targetObjectId = 0,
+		int? rerolledRandomBonusId = null,
+		ItemRandomBonusTable? itemRandomBonusesOverride = null,
+		Func<double>? randomBonusRoll = null,
+		IGameClientConnectionRegistry? connectionRegistryOverride = null,
+		AbyssPointsAddOptions? abyssPointsOptions = null,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: this is an explicit opt-in bridge toward CM_ITEM_PURIFICATION.runImpl.
+		// The normal handler path remains plan-only until persistence, quest hooks, and AP side
+		// effects are wired deliberately.
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var itemTemplates = itemTemplatesOverride ?? staticData?.ItemTemplates;
+		if (itemTemplates == null)
+			return null;
+
+		var handlerPlan = await HandleItemPurificationAsync(
+			player,
+			packet,
+			itemPurificationsOverride,
+			itemTemplates,
+			targetObjectId,
+			rerolledRandomBonusId,
+			itemRandomBonusesOverride,
+			randomBonusRoll);
+		if (handlerPlan == null)
+			return null;
+
+		return await ItemPurificationLiveExecutionService.ExecuteAsync(
+			player.ObjectId,
+			player,
+			handlerPlan,
+			itemTemplates,
+			npcExpands,
+			questExpands,
+			itemExpands,
+			connectionRegistryOverride ?? _connectionRegistry,
+			abyssPointsOptions,
+			cancellationToken);
+	}
+
 	private static ItemPurificationHandlerPlan CreateItemPurificationHandlerPlan(
 		Player player,
 		InventoryItem? baseItem,

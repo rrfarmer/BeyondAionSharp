@@ -642,6 +642,75 @@ public sealed class GameServerConnectionItemPurificationTests
 		Assert.Equal(5_000, player.AbyssRank.Ap);
 	}
 
+	[Fact]
+	public async Task HandleItemPurificationLiveExecutionAsync_ReturnsLiveExecutionResultWhenExplicitlyRequested()
+	{
+		var baseItem = new InventoryItem
+		{
+			ObjectId = 10,
+			ItemId = 100000001,
+			Count = 1,
+			Location = 0,
+			Enchant = 25,
+			TuneCount = 2,
+			RandomBonus = 7,
+		};
+		var material = new InventoryItem { ObjectId = 20, ItemId = 186000001, Count = 3, Location = 0 };
+		var kinah = new InventoryItem { ObjectId = 30, ItemId = 182400001, Count = 10_000, Location = 0 };
+		var player = new Player
+		{
+			ObjectId = 700,
+			AbyssRank = PlayerAbyssRank.Default() with { Ap = 5_000 },
+			InventoryItems = [baseItem, material, kinah],
+		};
+		await using var pair = await TestConnectionPair.CreateAsync();
+		var itemTemplates = CreateItemTemplates();
+		var packet = CreatePacket(
+			playerObjectId: 9999,
+			baseItemObjectId: baseItem.ObjectId,
+			resultItemId: 100000002,
+			requiredMaterialObjectIds: [9001, 9002, 9003, 9004, 9005]);
+		var registry = new RecordingConnectionRegistry();
+
+		var execution = await pair.Connection.HandleItemPurificationLiveExecutionAsync(
+			player,
+			packet,
+			npcExpands: 1,
+			questExpands: 0,
+			itemExpands: 1,
+			CreatePurificationTable(),
+			itemTemplates,
+			targetObjectId: 9001,
+			connectionRegistryOverride: registry);
+
+		Assert.NotNull(execution);
+		Assert.True(execution.Succeeded);
+		Assert.Equal(ItemPurificationLiveExecutionStatus.Ready, execution.Status);
+		Assert.NotNull(execution.LiveMutation);
+		Assert.True(execution.LiveMutation.Succeeded);
+		Assert.Equal(3_800, player.AbyssRank.Ap);
+		Assert.Equal([20, 30, 9001], player.InventoryItems.Select(item => item.ObjectId).Order().ToArray());
+		Assert.Equal(1, player.InventoryItems.Single(item => item.ObjectId == material.ObjectId).Count);
+		Assert.Equal(10_000, player.InventoryItems.Single(item => item.ObjectId == kinah.ObjectId).Count);
+		Assert.Equal(6, registry.SentPackets.Count);
+		Assert.Equal(
+			[
+				typeof(SmSystemMessage),
+				typeof(SmInventoryUpdateItem),
+				typeof(SmDeleteItem),
+				typeof(SmCubeUpdate),
+				typeof(SmInventoryAddItem),
+				typeof(SmCubeUpdate),
+			],
+			registry.SentPackets.Select(packet => packet.Packet.GetType()).ToArray());
+		Assert.Equal(
+			[
+				ItemPurificationPacketOperationType.AbyssPointsUpdate,
+				ItemPurificationPacketOperationType.KinahNoPacket,
+			],
+			execution.MutationPacketSend?.SkippedMetadataOperations.Select(operation => operation.Type).ToArray());
+	}
+
 	private static CmItemPurification CreatePacket(
 		int playerObjectId,
 		int baseItemObjectId,
