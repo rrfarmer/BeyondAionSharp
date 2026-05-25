@@ -1857,9 +1857,8 @@ public sealed class GameServerConnection : BaseClientConnection
 				continue;
 
 			var chargedItem = CopyInventoryItem(currentItem, charge: plan.TargetChargePoints);
-			var oldAbyssRank = player.AbyssRank.Rank;
 			InventoryItem? kinahUpdate = null;
-			PlayerAbyssRank? abyssRankUpdate = null;
+			AbyssPointsAddPlan? abyssPointsPlan = null;
 			switch (plan.ChargeWay)
 			{
 				case 1:
@@ -1876,31 +1875,31 @@ public sealed class GameServerConnection : BaseClientConnection
 						break;
 					if (plan.PaymentAmount > int.MaxValue || player.AbyssRank.Ap < plan.PaymentAmount)
 						continue;
-					abyssRankUpdate = player.AbyssRank.AddAp(-(int)plan.PaymentAmount);
+					abyssPointsPlan = AbyssPointsService.CreateAddApPlan(player, -(int)plan.PaymentAmount);
 					break;
 				default:
 					continue;
 			}
 
 			var saved = _playerEnterWorldService == null
-				|| await _playerEnterWorldService.SaveItemChargeMutationAsync(player, chargedItem, kinahUpdate, abyssRankUpdate);
+				|| await _playerEnterWorldService.SaveItemChargeMutationAsync(player, chargedItem, kinahUpdate, abyssPointsPlan?.UpdatedRank);
 			if (!saved)
 				continue;
 
 			ReplaceInventoryItem(inventoryItems, chargedItem);
 			if (kinahUpdate != null)
 				ReplaceInventoryItem(inventoryItems, kinahUpdate);
-			if (abyssRankUpdate != null)
-				player.AbyssRank = abyssRankUpdate;
+			if (abyssPointsPlan?.UpdatedRank != null)
+				player.AbyssRank = abyssPointsPlan.UpdatedRank;
 			player.InventoryItems = inventoryItems.ToArray();
 
 			if (kinahUpdate != null && itemTemplates.GetItemTemplate(KinahItemId) is { } kinahTemplate)
 				await SendPacketAsync(new SmInventoryUpdateItem(kinahUpdate, kinahTemplate, SmInventoryUpdateItem.DecreaseKinahBuy));
-			if (abyssRankUpdate != null)
+			if (abyssPointsPlan != null)
 			{
-				await SendPacketAsync(SmSystemMessage.UseAbyssPoint(plan.PaymentAmount));
-				await SendPacketAsync(new SmAbyssRank(player.AbyssRank));
-				await ApplyAbyssRankChangedSideEffectsAsync(player, oldAbyssRank, staticData);
+				foreach (var playerPacket in abyssPointsPlan.PlayerPackets)
+					await SendPacketAsync(playerPacket);
+				await ApplyAbyssRankChangedSideEffectsAsync(player, abyssPointsPlan.OldRank, staticData);
 			}
 
 			if (GetChargeBarStep(currentItem.Charge) != GetChargeBarStep(chargedItem.Charge))
@@ -6970,9 +6969,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		var inventoryItems = player.InventoryItems.ToList();
-		var oldAbyssRank = player.AbyssRank.Rank;
 		InventoryItem? kinahUpdate = null;
-		PlayerAbyssRank? abyssRankUpdate = null;
+		AbyssPointsAddPlan? abyssPointsPlan = null;
 		switch (request.ChargeWay)
 		{
 			case 1:
@@ -6988,7 +6986,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (request.PaymentAmount > int.MaxValue || player.AbyssRank.Ap < request.PaymentAmount)
 					return;
 				if (request.PaymentAmount > 0)
-					abyssRankUpdate = player.AbyssRank.AddAp(-(int)request.PaymentAmount);
+					abyssPointsPlan = AbyssPointsService.CreateAddApPlan(player, -(int)request.PaymentAmount);
 				break;
 			default:
 				return;
@@ -7007,7 +7005,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		var saved = _playerEnterWorldService == null
-			|| await _playerEnterWorldService.SaveItemChargeAllMutationAsync(player, chargedItems, kinahUpdate, abyssRankUpdate);
+			|| await _playerEnterWorldService.SaveItemChargeAllMutationAsync(player, chargedItems, kinahUpdate, abyssPointsPlan?.UpdatedRank);
 		if (!saved)
 			return;
 
@@ -7017,11 +7015,11 @@ public sealed class GameServerConnection : BaseClientConnection
 			if (itemTemplates.GetItemTemplate(KinahItemId) is { } kinahTemplate)
 				await SendPacketAsync(new SmInventoryUpdateItem(kinahUpdate, kinahTemplate, SmInventoryUpdateItem.DecreaseKinahBuy));
 		}
-		if (abyssRankUpdate != null)
+		if (abyssPointsPlan?.UpdatedRank != null)
 		{
-			player.AbyssRank = abyssRankUpdate;
-			await SendPacketAsync(SmSystemMessage.UseAbyssPoint(request.PaymentAmount));
-			await SendPacketAsync(new SmAbyssRank(player.AbyssRank));
+			player.AbyssRank = abyssPointsPlan.UpdatedRank;
+			foreach (var playerPacket in abyssPointsPlan.PlayerPackets)
+				await SendPacketAsync(playerPacket);
 		}
 
 		foreach (var chargedItem in chargedItems)
@@ -7043,8 +7041,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		player.InventoryItems = inventoryItems.ToArray();
-		if (abyssRankUpdate != null)
-			await ApplyAbyssRankChangedSideEffectsAsync(player, oldAbyssRank, staticData);
+		if (abyssPointsPlan != null)
+			await ApplyAbyssRankChangedSideEffectsAsync(player, abyssPointsPlan.OldRank, staticData);
 		await SendPacketAsync(CreateStatsInfoPacket(player, staticData));
 		await SendPacketAsync(
 			request.ChargeWay == 1

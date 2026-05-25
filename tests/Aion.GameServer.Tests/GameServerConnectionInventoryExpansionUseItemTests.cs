@@ -135,6 +135,27 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleChargeItemAsync_ApPaymentSendsAbyssPointsPlannerPackets()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(new EmptyPlayerEnterWorldRepository());
+		var player = CreateChargePaymentPlayer();
+
+		await InvokeHandleChargeItemAsync(fixture.Connection, player, CreateChargeItem(itemObjectId: 7001, chargeLevel: 1));
+
+		Assert.Equal(500, player.AbyssRank.Ap);
+		var chargedItem = Assert.Single(player.InventoryItems, item => item.ObjectId == 7001);
+		Assert.Equal(ItemChargeService.Level1ChargePoints, chargedItem.Charge);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1300965, "500"),
+			packet => Assert.IsType<SmAbyssRank>(packet),
+			packet => Assert.IsType<SmInventoryUpdateItem>(packet),
+			packet => Assert.IsType<SmSystemMessage>(packet),
+			packet => Assert.IsType<SmStatsInfo>(packet),
+			packet => Assert.IsType<SmSystemMessage>(packet));
+	}
+
+	[Fact]
 	public async Task HandleUseItemAsync_AnimationAddSchedulesPositiveTimeUseAndClearsUsingItem()
 	{
 		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(includeThreadPoolManager: true);
@@ -1027,6 +1048,29 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		};
 	}
 
+	private static Player CreateChargePaymentPlayer()
+	{
+		return new Player
+		{
+			ObjectId = 1001,
+			Name = "TicketUser",
+			Race = "ELYOS",
+			PlayerClass = "RANGER",
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			AbyssRank = PlayerAbyssRank.Default() with { Ap = 1000 },
+			InventoryItems =
+			[
+				new InventoryItem
+				{
+					ObjectId = 7001,
+					ItemId = 100000400,
+					Count = 1,
+					Location = 0,
+				},
+			],
+		};
+	}
+
 	private static CmUseItem CreateUseItem(int sourceItemObjectId)
 	{
 		using var writer = new PacketBuffer();
@@ -1045,6 +1089,19 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		writer.WriteC(2);
 		writer.WriteD(targetItemObjectId);
 		var packet = new CmUseItem(37, new HashSet<GameConnectionState> { GameConnectionState.InGame });
+		using var reader = new PacketBuffer(writer.ToArray());
+		packet.ReadFrom(reader);
+		return packet;
+	}
+
+	private static CmChargeItem CreateChargeItem(int itemObjectId, int chargeLevel)
+	{
+		using var writer = new PacketBuffer();
+		writer.WriteD(0);
+		writer.WriteC((byte)chargeLevel);
+		writer.WriteH(1);
+		writer.WriteD(itemObjectId);
+		var packet = new CmChargeItem(78, new HashSet<GameConnectionState> { GameConnectionState.InGame });
 		using var reader = new PacketBuffer(writer.ToArray());
 		packet.ReadFrom(reader);
 		return packet;
@@ -1146,6 +1203,16 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	{
 		var method = typeof(GameServerConnection).GetMethod(
 			"HandleSelectDecomposableAsync",
+			BindingFlags.Instance | BindingFlags.NonPublic);
+		Assert.NotNull(method);
+		var task = Assert.IsAssignableFrom<Task>(method.Invoke(connection, [player, packet]));
+		await task;
+	}
+
+	private static async Task InvokeHandleChargeItemAsync(GameServerConnection connection, Player player, CmChargeItem packet)
+	{
+		var method = typeof(GameServerConnection).GetMethod(
+			"HandleChargeItemAsync",
 			BindingFlags.Instance | BindingFlags.NonPublic);
 		Assert.NotNull(method);
 		var task = Assert.IsAssignableFrom<Task>(method.Invoke(connection, [player, packet]));
@@ -1919,6 +1986,9 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 						</item_template>
 						<item_template id="100000363" name="Test Abyss Sword" level="30" mask="65536" item_group="SWORD" item_type="ABYSS" quality="RARE" race="PC_ALL" max_stack_count="1">
 							<acquisition ap="4900" />
+						</item_template>
+						<item_template id="100000400" name="Test Conditioning Sword" level="30" item_group="SWORD" item_type="ABYSS" quality="RARE" race="PC_ALL" max_stack_count="1">
+							<improve way="2" level="2" burn_attack="0" burn_defend="0" price1="1000" price2="2000" />
 						</item_template>
 						<item_template id="100" name="Test Decompose Box" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="1">
 							<actions>
