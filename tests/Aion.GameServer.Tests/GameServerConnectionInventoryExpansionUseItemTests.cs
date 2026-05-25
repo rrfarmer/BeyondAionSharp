@@ -180,6 +180,32 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleChargeItemAsync_ApPaymentHonorsConfiguredAbyssPointCapClamp()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(
+			repository,
+			options: CreateApCapOptions());
+		var player = CreateChargePaymentPlayer();
+		player.AbyssRank = PlayerAbyssRank.Default() with { Ap = 1_600, Rank = 2, MaxRank = 2 };
+
+		await InvokeHandleChargeItemAsync(fixture.Connection, player, CreateChargeItem(itemObjectId: 7001, chargeLevel: 1));
+
+		Assert.Equal(1_000, player.AbyssRank.Ap);
+		Assert.Equal(1_000, repository.ChargePaymentAbyssRank?.Ap);
+		var chargedItem = Assert.Single(player.InventoryItems, item => item.ObjectId == 7001);
+		Assert.Equal(ItemChargeService.Level1ChargePoints, chargedItem.Charge);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1300965, "600"),
+			packet => Assert.IsType<SmAbyssRank>(packet),
+			packet => Assert.IsType<SmInventoryUpdateItem>(packet),
+			packet => Assert.IsType<SmSystemMessage>(packet),
+			packet => Assert.IsType<SmStatsInfo>(packet),
+			packet => Assert.IsType<SmSystemMessage>(packet));
+	}
+
+	[Fact]
 	public async Task HandleQuestionResponseAsync_ChargeAllApPaymentSendsAbyssPointsPlannerPackets()
 	{
 		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(new EmptyPlayerEnterWorldRepository());

@@ -309,6 +309,8 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public PlayerAbyssRank? ApExtractAbyssRank { get; private set; }
 
+	public PlayerAbyssRank? ChargePaymentAbyssRank { get; private set; }
+
 	public Task<Player?> LoadPlayerAsync(int accountId, int playerObjectId, CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult<Player?>(null);
@@ -642,6 +644,7 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		PlayerAbyssRank? abyssRank,
 		CancellationToken cancellationToken = default)
 	{
+		ChargePaymentAbyssRank = abyssRank;
 		return Task.FromResult(true);
 	}
 
