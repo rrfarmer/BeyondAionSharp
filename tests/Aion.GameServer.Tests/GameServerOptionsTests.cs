@@ -37,6 +37,7 @@ public class GameServerOptionsTests
 		Assert.Equal([1f, 2f], options.Rates.ApQuestRates);
 		Assert.Equal([1f, 2f], options.Rates.ApDredgionRates);
 		Assert.Equal([1f, 2f], options.Rates.GpRates);
+		Assert.Equal([1f, 2f], options.Rates.XpQuestRates);
 		Assert.Equal([1f, 2f], options.Rates.QuestKinahRates);
 
 		Assert.Equal(new IPEndPoint(IPAddress.Any, 7777), options.Network.ClientEndPoint);
@@ -144,6 +145,7 @@ public class GameServerOptionsTests
 				gameserver.rates.ap.quest = 2.0, 4.0
 				gameserver.rates.ap.dredgion = 3.0, 6.0
 				gameserver.rates.gp.gain = 1.25, 2.25
+				gameserver.rates.xp.quest = 1.75, 2.75
 				gameserver.rates.kinah.quest = 1.5, 2.5, 3.5
 				gameserver.timezone = UTC
 				"""
@@ -164,6 +166,7 @@ public class GameServerOptionsTests
 			Assert.Equal([2f, 4f], options.Rates.ApQuestRates);
 			Assert.Equal([3f, 6f], options.Rates.ApDredgionRates);
 			Assert.Equal([1.25f, 2.25f], options.Rates.GpRates);
+			Assert.Equal([1.75f, 2.75f], options.Rates.XpQuestRates);
 			Assert.Equal([1.5f, 2.5f, 3.5f], options.Rates.QuestKinahRates);
 			Assert.Equal("UTC", options.Core.TimeZoneId);
 			Assert.Equal(TimeZoneInfo.Utc, options.Core.GetTimeZone());

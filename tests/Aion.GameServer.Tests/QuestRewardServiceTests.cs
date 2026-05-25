@@ -282,6 +282,139 @@ public sealed class QuestRewardServiceTests
 	}
 
 	[Fact]
+	public void CreateXpRewardPlan_AppliesJavaQuestRateReposeAndSalvationWithoutMutatingPlayer()
+	{
+		var service = CreateService(
+			out _,
+			new GameServerOptions
+			{
+				Rates = new GameServerRateOptions
+				{
+					XpQuestRates = [1f, 2f],
+				},
+			});
+		var player = CreatePlayer(
+			objectId: 1309,
+			playerClass: "RANGER",
+			dp: 500,
+			membership: 1,
+			level: 15,
+			exp: 14_000,
+			reposeEnergy: 50);
+		var table = CreateLinearExperienceTable();
+
+		var result = service.CreateXpRewardPlan(
+			player,
+			table,
+			rewardXp: 100,
+			npcName: "quest npc",
+			salvationPercent: 10);
+
+		Assert.Equal(QuestXpRewardStatus.Applied, result.Status);
+		Assert.Equal(player.ObjectId, result.ObjectId);
+		Assert.Equal(100, result.RewardXp);
+		Assert.Equal(200, result.AppliedBaseXp);
+		Assert.Equal(50, result.ReposeUsed);
+		Assert.Equal(20, result.ReposeBonus);
+		Assert.Equal(20, result.SalvationBonus);
+		Assert.Equal(240, result.FinalRewardXp);
+		Assert.Equal(14_000, result.PreviousExp);
+		Assert.Equal(14_240, result.CurrentExp);
+		Assert.Equal(15, result.PreviousLevel);
+		Assert.Equal(15, result.CurrentLevel);
+		Assert.Equal(50, result.PreviousReposeEnergy);
+		Assert.Equal(0, result.CurrentReposeEnergy);
+		Assert.Equal(250, result.MaxReposeEnergy);
+		Assert.Equal(QuestXpRewardMessageKind.NamedReposeAndSalvationBonus, result.MessageKind);
+		Assert.Equal(
+		[
+			QuestXpRewardPacketIntent.StatUpdateExp,
+			QuestXpRewardPacketIntent.XpSystemMessage,
+		], result.PacketIntents);
+		Assert.False(result.RequiresAscensionLimitMessage);
+		Assert.Equal(14_000, player.Exp);
+		Assert.Equal(50, player.ReposeEnergy);
+	}
+
+	[Fact]
+	public void CreateXpRewardPlan_RecordsJavaGuardsAndNonDaevaLevelCap()
+	{
+		var service = CreateService(out _);
+		var table = CreateLinearExperienceTable();
+		var player = CreatePlayer(
+			objectId: 1310,
+			playerClass: "RANGER",
+			dp: 500,
+			level: 9,
+			exp: 8_900,
+			position: new WorldPosition(210010000, 10, 20, 30, 0));
+		var zero = service.CreateXpRewardPlan(player, table, rewardXp: 0);
+		var noExp = service.CreateXpRewardPlan(player, table, rewardXp: 100, noExp: true);
+		var nightmare = service.CreateXpRewardPlan(
+			CreatePlayer(
+				objectId: 1311,
+				playerClass: "RANGER",
+				dp: 500,
+				level: 9,
+				exp: 8_900,
+				position: new WorldPosition(301200000, 10, 20, 30, 0)),
+			table,
+			rewardXp: 100);
+		var capped = service.CreateXpRewardPlan(player, table, rewardXp: 500, isDaeva: false);
+
+		Assert.Equal(QuestXpRewardStatus.NoXpReward, zero.Status);
+		Assert.Equal(QuestXpRewardStatus.NoExp, noExp.Status);
+		Assert.Equal(QuestXpRewardStatus.NightmareCircus, nightmare.Status);
+		Assert.Empty(zero.PacketIntents);
+		Assert.Empty(noExp.PacketIntents);
+		Assert.Empty(nightmare.PacketIntents);
+
+		Assert.Equal(QuestXpRewardStatus.Applied, capped.Status);
+		Assert.Equal(9_000, capped.CurrentExp);
+		Assert.Equal(9, capped.CurrentLevel);
+		Assert.True(capped.RequiresAscensionLimitMessage);
+		Assert.Equal(
+		[
+			QuestXpRewardPacketIntent.StatUpdateExp,
+			QuestXpRewardPacketIntent.XpSystemMessage,
+		], capped.PacketIntents);
+	}
+
+	[Fact]
+	public void ApplyQuestXpRate_MatchesJavaFloatRateBoostLegionFallbacksAndOverflow()
+	{
+		var clampedMembership = QuestRewardService.ApplyQuestXpRate(
+			membershipLevel: 7,
+			rewardXp: 200,
+			xpQuestRates: [1f, 1.5f],
+			questXpBoostStat: 150);
+		var legionBonus = QuestRewardService.ApplyQuestXpRate(
+			membershipLevel: 1,
+			rewardXp: 200,
+			xpQuestRates: [1f, 1.5f],
+			questXpBoostStat: 100,
+			hasLegionBonus: true);
+		var emptyRates = QuestRewardService.ApplyQuestXpRate(
+			membershipLevel: 7,
+			rewardXp: 200,
+			xpQuestRates: []);
+		var floatRounded = QuestRewardService.ApplyQuestXpRate(
+			membershipLevel: 0,
+			rewardXp: 16_777_217,
+			xpQuestRates: [1f]);
+		var overflowSaturates = QuestRewardService.ApplyQuestXpRate(
+			membershipLevel: 0,
+			rewardXp: long.MaxValue,
+			xpQuestRates: [2f]);
+
+		Assert.Equal(450, clampedMembership);
+		Assert.Equal(330, legionBonus);
+		Assert.Equal(200, emptyRates);
+		Assert.Equal(16_777_216, floatRounded);
+		Assert.Equal(long.MaxValue, overflowSaturates);
+	}
+
+	[Fact]
 	public void CreateKinahRewardPlan_CreatesMissingKinahItemWithQuestPacketMask()
 	{
 		var service = CreateService(
@@ -434,21 +567,32 @@ public sealed class QuestRewardServiceTests
 		int dp,
 		int ap = 0,
 		int gp = 0,
-		byte membership = 0)
+		byte membership = 0,
+		int level = 10,
+		long exp = 0,
+		long reposeEnergy = 0,
+		WorldPosition? position = null)
 	{
 		return new Player
 		{
 			ObjectId = objectId,
 			Race = "ELYOS",
 			PlayerClass = playerClass,
-			Level = 10,
+			Level = level,
+			Exp = exp,
 			Dp = dp,
+			ReposeEnergy = reposeEnergy,
 			IsOnline = true,
 			AccountMembership = membership,
 			AbyssRank = PlayerAbyssRank.Default() with { Ap = ap, Gp = gp },
-			Position = new WorldPosition(210010000, 10, 20, 30, 0),
+			Position = position ?? new WorldPosition(210010000, 10, 20, 30, 0),
 			LifeStats = new PlayerLifeStats(100, 100, 100),
 		};
+	}
+
+	private static PlayerExperienceTable CreateLinearExperienceTable()
+	{
+		return new PlayerExperienceTable(Enumerable.Range(0, 70).Select(level => (long)level * 1000).ToArray());
 	}
 
 	private sealed class CapturingConnectionRegistry : IGameClientConnectionRegistry

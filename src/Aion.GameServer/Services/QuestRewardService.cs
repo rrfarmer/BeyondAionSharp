@@ -1,4 +1,5 @@
 using Aion.GameServer.Configuration;
+using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion.ServerPackets;
 
@@ -82,6 +83,84 @@ public sealed class QuestRewardService
 			previousGp);
 	}
 
+	public QuestXpRewardPlan CreateXpRewardPlan(
+		Player? player,
+		PlayerExperienceTable experienceTable,
+		long rewardXp,
+		string? npcName = null,
+		bool noExp = false,
+		int questXpBoostStat = 100,
+		bool hasLegionBonus = false,
+		byte salvationPercent = 0,
+		bool isDaeva = true,
+		IReadOnlyList<float>? xpQuestRates = null)
+	{
+		// Java parity: services/QuestService.giveReward -> rewards.getExp(),
+		// DataManager.NPC_DATA.getNpcTemplate(env.getTargetId()).getL10n(),
+		// then PlayerCommonData.addExp(rewards.getExp(), Rates.XP_QUEST, npcL10n).
+		ArgumentNullException.ThrowIfNull(experienceTable);
+		if (player == null)
+			return QuestXpRewardPlan.MissingPlayer(rewardXp, npcName);
+		if (rewardXp == 0)
+			return QuestXpRewardPlan.NoReward(player.ObjectId, player.Exp, player.Level, player.ReposeEnergy, npcName);
+		if (noExp)
+			return QuestXpRewardPlan.NoExp(player.ObjectId, rewardXp, player.Exp, player.Level, player.ReposeEnergy, npcName);
+		if (player.Position.WorldId == 301200000)
+			return QuestXpRewardPlan.NightmareCircus(player.ObjectId, rewardXp, player.Exp, player.Level, player.ReposeEnergy, npcName);
+
+		var appliedBaseXp = ApplyQuestXpRate(
+			player.AccountMembership,
+			rewardXp,
+			xpQuestRates ?? _rateOptions.XpQuestRates,
+			questXpBoostStat,
+			hasLegionBonus);
+		var reposeUsed = 0L;
+		var reposeBonus = 0L;
+		var salvationBonus = 0L;
+		var newReposeEnergy = player.ReposeEnergy;
+		if (appliedBaseXp > 0)
+		{
+			if (player.ReposeEnergy > 0)
+			{
+				reposeUsed = Math.Min(player.ReposeEnergy, appliedBaseXp);
+				newReposeEnergy = player.ReposeEnergy - reposeUsed;
+				reposeBonus = JavaFloatToLong((reposeUsed / 100f) * 40f);
+			}
+
+			if (player.Level >= 15 && salvationPercent > 0)
+				salvationBonus = JavaFloatToLong((appliedBaseXp / 100f) * salvationPercent);
+		}
+
+		var finalRewardXp = unchecked(appliedBaseXp + reposeBonus + salvationBonus);
+		var nextExp = unchecked(player.Exp + finalRewardXp);
+		var maxLevel = isDaeva ? experienceTable.MaxLevel : 10;
+		var cappedExp = Math.Min(nextExp, experienceTable.GetStartExpForLevel(maxLevel));
+		var nextLevel = Math.Min(experienceTable.GetLevelForExp(cappedExp), maxLevel - 1);
+		var maxReposeEnergy = nextLevel >= 10 ? JavaFloatToLong(GetExpNeed(experienceTable, nextLevel) * 0.25f) : 0;
+		newReposeEnergy = nextLevel >= 10 ? Math.Min(maxReposeEnergy, newReposeEnergy) : 0;
+		var intents = CreateXpPacketIntents(player.Level, nextLevel);
+
+		return QuestXpRewardPlan.CreateApplied(
+			player.ObjectId,
+			rewardXp,
+			appliedBaseXp,
+			reposeUsed,
+			reposeBonus,
+			salvationBonus,
+			finalRewardXp,
+			player.Exp,
+			cappedExp,
+			player.Level,
+			nextLevel,
+			player.ReposeEnergy,
+			newReposeEnergy,
+			maxReposeEnergy,
+			npcName,
+			CreateXpMessageKind(npcName, reposeBonus, salvationBonus),
+			intents,
+			RequiresAscensionLimitMessage: nextLevel == 9 && cappedExp >= experienceTable.GetStartExpForLevel(10));
+	}
+
 	public QuestKinahRewardPlan CreateKinahRewardPlan(
 		Player? player,
 		IReadOnlyList<InventoryItem> inventoryItems,
@@ -157,6 +236,23 @@ public sealed class QuestRewardService
 		// Java parity: model/gameobjects/player/Rates.GP.calcResult.
 		var result = (long)(rewardGp * SelectMembershipRate(membershipLevel, gpRates));
 		return JavaLongToIntOrOriginal(result, rewardGp);
+	}
+
+	public static long ApplyQuestXpRate(
+		byte membershipLevel,
+		long rewardXp,
+		IReadOnlyList<float> xpQuestRates,
+		int questXpBoostStat = 100,
+		bool hasLegionBonus = false)
+	{
+		// Java parity: model/gameobjects/player/Rates.XP_QUEST.calcResult uses
+		// long * float, StatEnum.BOOST_QUEST_XP_RATE / 100f, optional legion bonus,
+		// and Java primitive narrowing from float to long.
+		var rate = SelectMembershipRate(membershipLevel, xpQuestRates);
+		rate *= questXpBoostStat / 100f;
+		if (hasLegionBonus)
+			rate *= 1.1f;
+		return JavaFloatToLong((float)rewardXp * rate);
 	}
 
 	private static long JavaFloatToLong(float value)
@@ -256,6 +352,39 @@ public sealed class QuestRewardService
 		if (value is < int.MinValue or > int.MaxValue)
 			return original;
 		return (int)value;
+	}
+
+	private static long GetExpNeed(PlayerExperienceTable experienceTable, int level)
+	{
+		if (level <= 0 || level >= experienceTable.MaxLevel)
+			return 0;
+
+		return experienceTable.GetStartExpForLevel(level + 1) - experienceTable.GetStartExpForLevel(level);
+	}
+
+	private static QuestXpRewardMessageKind CreateXpMessageKind(string? npcName, long reposeBonus, long salvationBonus)
+	{
+		return (npcName is not null, reposeBonus > 0, salvationBonus > 0) switch
+		{
+			(true, true, true) => QuestXpRewardMessageKind.NamedReposeAndSalvationBonus,
+			(false, true, true) => QuestXpRewardMessageKind.ReposeAndSalvationBonus,
+			(true, true, false) => QuestXpRewardMessageKind.NamedReposeBonus,
+			(false, true, false) => QuestXpRewardMessageKind.ReposeBonus,
+			(true, false, true) => QuestXpRewardMessageKind.NamedSalvationBonus,
+			(false, false, true) => QuestXpRewardMessageKind.SalvationBonus,
+			(true, false, false) => QuestXpRewardMessageKind.Named,
+			_ => QuestXpRewardMessageKind.Plain,
+		};
+	}
+
+	private static IReadOnlyList<QuestXpRewardPacketIntent> CreateXpPacketIntents(int previousLevel, int currentLevel)
+	{
+		var intents = new List<QuestXpRewardPacketIntent>();
+		if (currentLevel != previousLevel)
+			intents.Add(QuestXpRewardPacketIntent.LevelChangeSideEffects);
+		intents.Add(QuestXpRewardPacketIntent.StatUpdateExp);
+		intents.Add(QuestXpRewardPacketIntent.XpSystemMessage);
+		return intents;
 	}
 
 	private readonly record struct JavaIncreaseItemCountResult(long CurrentCount, long LeftCount);
@@ -434,6 +563,156 @@ public enum QuestGpRewardStatus
 	MissingPlayer,
 	NoGpReward,
 	GpBoundarySkipped,
+}
+
+public sealed record QuestXpRewardPlan(
+	QuestXpRewardStatus Status,
+	int ObjectId,
+	long RewardXp,
+	long AppliedBaseXp,
+	long ReposeUsed,
+	long ReposeBonus,
+	long SalvationBonus,
+	long FinalRewardXp,
+	long PreviousExp,
+	long CurrentExp,
+	int PreviousLevel,
+	int CurrentLevel,
+	long PreviousReposeEnergy,
+	long CurrentReposeEnergy,
+	long MaxReposeEnergy,
+	string? NpcName,
+	QuestXpRewardMessageKind MessageKind,
+	IReadOnlyList<QuestXpRewardPacketIntent> PacketIntents,
+	bool RequiresAscensionLimitMessage,
+	string JavaSource)
+{
+	public bool Applied => Status == QuestXpRewardStatus.Applied;
+
+	public static QuestXpRewardPlan CreateApplied(
+		int objectId,
+		long rewardXp,
+		long appliedBaseXp,
+		long reposeUsed,
+		long reposeBonus,
+		long salvationBonus,
+		long finalRewardXp,
+		long previousExp,
+		long currentExp,
+		int previousLevel,
+		int currentLevel,
+		long previousReposeEnergy,
+		long currentReposeEnergy,
+		long maxReposeEnergy,
+		string? npcName,
+		QuestXpRewardMessageKind messageKind,
+		IReadOnlyList<QuestXpRewardPacketIntent> packetIntents,
+		bool RequiresAscensionLimitMessage)
+	{
+		return new QuestXpRewardPlan(
+			QuestXpRewardStatus.Applied,
+			objectId,
+			rewardXp,
+			appliedBaseXp,
+			reposeUsed,
+			reposeBonus,
+			salvationBonus,
+			finalRewardXp,
+			previousExp,
+			currentExp,
+			previousLevel,
+			currentLevel,
+			previousReposeEnergy,
+			currentReposeEnergy,
+			maxReposeEnergy,
+			npcName,
+			messageKind,
+			packetIntents,
+			RequiresAscensionLimitMessage,
+			"PlayerCommonData.addExp -> setExp");
+	}
+
+	public static QuestXpRewardPlan MissingPlayer(long rewardXp, string? npcName)
+	{
+		return Skipped(QuestXpRewardStatus.MissingPlayer, 0, rewardXp, 0, 0, 0, npcName, "QuestService.giveReward requires player");
+	}
+
+	public static QuestXpRewardPlan NoReward(int objectId, long currentExp, int currentLevel, long currentReposeEnergy, string? npcName)
+	{
+		return Skipped(QuestXpRewardStatus.NoXpReward, objectId, 0, currentExp, currentLevel, currentReposeEnergy, npcName, "QuestService.giveReward skips raw zero XP");
+	}
+
+	public static QuestXpRewardPlan NoExp(int objectId, long rewardXp, long currentExp, int currentLevel, long currentReposeEnergy, string? npcName)
+	{
+		return Skipped(QuestXpRewardStatus.NoExp, objectId, rewardXp, currentExp, currentLevel, currentReposeEnergy, npcName, "PlayerCommonData.addExp noExp guard");
+	}
+
+	public static QuestXpRewardPlan NightmareCircus(int objectId, long rewardXp, long currentExp, int currentLevel, long currentReposeEnergy, string? npcName)
+	{
+		return Skipped(QuestXpRewardStatus.NightmareCircus, objectId, rewardXp, currentExp, currentLevel, currentReposeEnergy, npcName, "PlayerCommonData.addExp nightmare circus guard");
+	}
+
+	private static QuestXpRewardPlan Skipped(
+		QuestXpRewardStatus status,
+		int objectId,
+		long rewardXp,
+		long currentExp,
+		int currentLevel,
+		long currentReposeEnergy,
+		string? npcName,
+		string javaSource)
+	{
+		return new QuestXpRewardPlan(
+			status,
+			objectId,
+			rewardXp,
+			AppliedBaseXp: 0,
+			ReposeUsed: 0,
+			ReposeBonus: 0,
+			SalvationBonus: 0,
+			FinalRewardXp: 0,
+			currentExp,
+			currentExp,
+			currentLevel,
+			currentLevel,
+			currentReposeEnergy,
+			currentReposeEnergy,
+			MaxReposeEnergy: 0,
+			npcName,
+			QuestXpRewardMessageKind.None,
+			Array.Empty<QuestXpRewardPacketIntent>(),
+			RequiresAscensionLimitMessage: false,
+			javaSource);
+	}
+}
+
+public enum QuestXpRewardStatus
+{
+	Applied,
+	MissingPlayer,
+	NoXpReward,
+	NoExp,
+	NightmareCircus,
+}
+
+public enum QuestXpRewardMessageKind
+{
+	None,
+	Plain,
+	Named,
+	ReposeBonus,
+	NamedReposeBonus,
+	SalvationBonus,
+	NamedSalvationBonus,
+	ReposeAndSalvationBonus,
+	NamedReposeAndSalvationBonus,
+}
+
+public enum QuestXpRewardPacketIntent
+{
+	LevelChangeSideEffects,
+	StatUpdateExp,
+	XpSystemMessage,
 }
 
 public sealed record QuestKinahRewardPlan(
