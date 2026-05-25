@@ -81,6 +81,7 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<PvpDpRewardService>();
 			services.AddSingleton<PvpInstanceApRewardService>();
 			services.AddSingleton<PvpArenaApRewardService>();
+			services.AddSingleton<AturamSkyFortressApRewardService>();
 			services.AddSingleton<WorldNpcCombatStateService>();
 			services.AddSingleton<WorldNpcCombatEventService>();
 			services.AddSingleton<WorldNpcCastingInterruptService>();
