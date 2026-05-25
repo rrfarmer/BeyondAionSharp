@@ -240,6 +240,11 @@ public sealed class GameServerOptions
 				ManastoneChances = GetFloatListWithEnvironment(loader, "gameserver.rates.manastone_chances", "75.0, 75.0"),
 				EnchantmentStoneBaseChances = GetFloatListWithEnvironment(loader, "gameserver.rates.enchantment_stone.base_chances", "65.0, 65.0"),
 				EnchantmentStoneAmplifiedChances = GetFloatListWithEnvironment(loader, "gameserver.rates.enchantment_stone.amplified_chances", "50.0, 50.0"),
+				ApPvpGainRates = GetFloatListWithEnvironment(loader, "gameserver.rates.ap.pvp.gain", "1.0, 2.0"),
+				ApPvpLossRates = GetFloatListWithEnvironment(loader, "gameserver.rates.ap.pvp.loss", "1.0, 1.0"),
+				ApPveRates = GetFloatListWithEnvironment(loader, "gameserver.rates.ap.pve", "1.0, 2.0"),
+				ApQuestRates = GetFloatListWithEnvironment(loader, "gameserver.rates.ap.quest", "1.0, 2.0"),
+				ApDredgionRates = GetFloatListWithEnvironment(loader, "gameserver.rates.ap.dredgion", "1.0, 2.0"),
 			},
 			LoadedPropertyCount = loader.Count,
 		};
@@ -569,6 +574,17 @@ public sealed class GameServerRateOptions
 	public IReadOnlyList<float> EnchantmentStoneBaseChances { get; init; } = [65f, 65f];
 
 	public IReadOnlyList<float> EnchantmentStoneAmplifiedChances { get; init; } = [50f, 50f];
+
+	// Java parity: configs/main/RatesConfig AP_*_RATES consumed by model/gameobjects/player/Rates.
+	public IReadOnlyList<float> ApPvpGainRates { get; init; } = [1f, 2f];
+
+	public IReadOnlyList<float> ApPvpLossRates { get; init; } = [1f, 1f];
+
+	public IReadOnlyList<float> ApPveRates { get; init; } = [1f, 2f];
+
+	public IReadOnlyList<float> ApQuestRates { get; init; } = [1f, 2f];
+
+	public IReadOnlyList<float> ApDredgionRates { get; init; } = [1f, 2f];
 }
 
 public sealed class GameServerAdministrationOptions

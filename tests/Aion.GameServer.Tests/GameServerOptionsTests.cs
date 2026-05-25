@@ -31,6 +31,11 @@ public class GameServerOptionsTests
 		Assert.Equal([75f, 75f], options.Rates.ManastoneChances);
 		Assert.Equal([65f, 65f], options.Rates.EnchantmentStoneBaseChances);
 		Assert.Equal([50f, 50f], options.Rates.EnchantmentStoneAmplifiedChances);
+		Assert.Equal([1f, 2f], options.Rates.ApPvpGainRates);
+		Assert.Equal([1f, 1f], options.Rates.ApPvpLossRates);
+		Assert.Equal([1f, 2f], options.Rates.ApPveRates);
+		Assert.Equal([1f, 2f], options.Rates.ApQuestRates);
+		Assert.Equal([1f, 2f], options.Rates.ApDredgionRates);
 
 		Assert.Equal(new IPEndPoint(IPAddress.Any, 7777), options.Network.ClientEndPoint);
 		Assert.Equal(new IPEndPoint(IPAddress.Any, 7777), options.Network.ClientConnectEndPoint);
@@ -131,6 +136,11 @@ public class GameServerOptionsTests
 				gameserver.network.client.connect_address = ${gameserver.network.client.socket_address}
 				gameserver.topranking.xform.min_rank = COMMANDER
 				gameserver.event.service.disabled_events = Broken Hearts, Ice Festival
+				gameserver.rates.ap.pvp.gain = 1.25, 2.25, 3.25
+				gameserver.rates.ap.pvp.loss = 0.75, 1.25
+				gameserver.rates.ap.pve = 1.5, 2.5
+				gameserver.rates.ap.quest = 2.0, 4.0
+				gameserver.rates.ap.dredgion = 3.0, 6.0
 				"""
 			);
 
@@ -143,6 +153,11 @@ public class GameServerOptionsTests
 			Assert.Equal(2, options.Custom.DisabledEventNames.Count);
 			Assert.Contains("Broken Hearts", options.Custom.DisabledEventNames);
 			Assert.Contains("ice festival", options.Custom.DisabledEventNames);
+			Assert.Equal([1.25f, 2.25f, 3.25f], options.Rates.ApPvpGainRates);
+			Assert.Equal([0.75f, 1.25f], options.Rates.ApPvpLossRates);
+			Assert.Equal([1.5f, 2.5f], options.Rates.ApPveRates);
+			Assert.Equal([2f, 4f], options.Rates.ApQuestRates);
+			Assert.Equal([3f, 6f], options.Rates.ApDredgionRates);
 		}
 		finally
 		{
