@@ -228,7 +228,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 100, expectedTime: 3000, expectedEnd: 0),
 			packet => Assert.IsType<SmSystemMessage>(packet),
 			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 5001, expectedDeleteType: SmDeleteItem.UseDeleteType),
-			packet => Assert.IsType<SmCubeUpdate>(packet),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0),
 			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 100, expectedTime: 0, expectedEnd: 1),
 			packet => Assert.IsType<SmInventoryAddItem>(packet));
 	}
@@ -407,7 +407,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 101, expectedTime: 0, expectedEnd: 1, expectedUnknown3: 1),
 			packet => Assert.IsType<SmSystemMessage>(packet),
 			packet => Assert.IsType<SmDeleteItem>(packet),
-			packet => Assert.IsType<SmCubeUpdate>(packet),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0),
 			packet => AssertSecondaryShowDecomposablePayload(Assert.IsType<SmSecondaryShowDecomposable>(packet)),
 			packet => Assert.IsType<SmInventoryAddItem>(packet));
 	}
@@ -727,7 +727,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 100, expectedTime: 3000, expectedEnd: 0),
 			packet => Assert.IsType<SmSystemMessage>(packet),
 			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 5001, expectedDeleteType: SmDeleteItem.UseDeleteType),
-			packet => Assert.IsType<SmCubeUpdate>(packet),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0),
 			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 100, expectedTime: 0, expectedEnd: 1),
 			packet => Assert.IsType<SmInventoryAddItem>(packet));
 	}
@@ -930,6 +930,23 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
 		Assert.Equal(expectedObjectId, reader.ReadD());
 		Assert.Equal(expectedDeleteType, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertCubeUpdatePayload(
+		SmCubeUpdate packet,
+		int expectedItemsCount,
+		int expectedNpcExpands = 0,
+		int expectedQuestExpands = 0,
+		int expectedItemExpands = 0)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(expectedItemsCount, reader.ReadD());
+		Assert.Equal(expectedNpcExpands, (int)reader.ReadC());
+		Assert.Equal(expectedQuestExpands, (int)reader.ReadC());
+		Assert.Equal(expectedItemExpands, (int)reader.ReadC());
 		Assert.Equal(0, reader.Remaining);
 	}
 

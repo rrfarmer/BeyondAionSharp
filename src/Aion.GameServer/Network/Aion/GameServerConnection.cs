@@ -4335,12 +4335,14 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (deletedSourceObjectId.HasValue)
 		{
 			ApplySourceInventoryMutation(inventoryItems, sourceItemUpdate, deletedSourceObjectId);
+			player.InventoryItems = inventoryItems.ToArray();
 			await SendPacketAsync(new SmDeleteItem(deletedSourceObjectId.Value, SmDeleteItem.UseDeleteType));
 			await SendPacketAsync(SmCubeUpdate.CubeSize(player));
 		}
 		else if (sourceItemUpdate != null)
 		{
 			ApplySourceInventoryMutation(inventoryItems, sourceItemUpdate, deletedSourceObjectId);
+			player.InventoryItems = inventoryItems.ToArray();
 			await SendPacketAsync(new SmInventoryUpdateItem(sourceItemUpdate, sourceTemplate, SmInventoryUpdateItem.DecreaseItemUse));
 		}
 	}
