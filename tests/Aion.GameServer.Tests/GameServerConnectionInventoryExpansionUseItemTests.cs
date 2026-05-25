@@ -1,6 +1,8 @@
+using System.Buffers.Binary;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
+using System.Text;
 using Aion.Commons.Network;
 using Aion.GameServer.Configuration;
 using Aion.GameServer.Data;
@@ -595,6 +597,51 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			packet => Assert.IsType<SmInventoryAddItem>(packet));
 	}
 
+	[Fact]
+	public async Task RunAsync_EncryptedSelectDecomposableFrameDispatchesSelection()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(enableCryptKeyBeforeRun: false, idFactory: new IDFactory([5001]));
+		var player = CreatePlayer(itemId: 101);
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+		var runTask = Task.Run(() => fixture.Connection.RunAsync());
+
+		await fixture.ReadServerFrameAsync();
+		await fixture.WriteClientFrameAsync(
+			CreateEncryptedClientFrame(
+				CreateClientPayload(236, buffer =>
+				{
+					buffer.WriteD(5001);
+					buffer.WriteD(0);
+					buffer.WriteC(1);
+				})));
+
+		await WaitUntilAsync(() => player.InventoryItems.Any(item => item.ItemId == 202));
+
+		Assert.Collection(
+			player.InventoryItems.OrderBy(item => item.ItemId),
+			item =>
+			{
+				Assert.Equal(101, item.ItemId);
+				Assert.Equal(1, item.Count);
+			},
+			item =>
+			{
+				Assert.Equal(202, item.ItemId);
+				Assert.Equal(3, item.Count);
+			});
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => Assert.IsType<SmKey>(packet),
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 101, expectedTime: 0, expectedEnd: 1, expectedUnknown3: 1),
+			packet => Assert.IsType<SmSystemMessage>(packet),
+			packet => Assert.IsType<SmInventoryUpdateItem>(packet),
+			packet => AssertSecondaryShowDecomposablePayload(Assert.IsType<SmSecondaryShowDecomposable>(packet)),
+			packet => Assert.IsType<SmInventoryAddItem>(packet));
+
+		await fixture.Connection.CloseAsync();
+		await AssertCompletesAsync(runTask);
+	}
+
 	private static Player CreatePlayer(
 		int itemId,
 		long count = 2,
@@ -671,6 +718,50 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	private static int EncodeClientPacketOpcode(int opcode)
 	{
 		return ((((opcode + 207) ^ 0xEF) + 0x0C) ^ 0xEF) & 0xffff;
+	}
+
+	private static byte[] CreateEncryptedClientFrame(byte[] payload)
+	{
+		var encryptedPayload = payload.ToArray();
+		EncryptClientPayload(encryptedPayload, 0x01020304);
+		return GamePacketFrameCodec.CreateFrame(encryptedPayload);
+	}
+
+	private static void EncryptClientPayload(Span<byte> data, int baseKey)
+	{
+		var staticKey = Encoding.ASCII.GetBytes("nKO/WctQ0AVLbpzfBkS6NevDYT8ourG5CRlmdjyJ72aswx4EPq1UgZhFMXH?3iI9");
+		Span<byte> clientKey =
+		[
+			(byte)(baseKey & 0xff),
+			(byte)((baseKey >> 8) & 0xff),
+			(byte)((baseKey >> 16) & 0xff),
+			(byte)((baseKey >> 24) & 0xff),
+			0xa1,
+			0x6c,
+			0x54,
+			0x87,
+		];
+
+		if (data.Length == 0)
+			return;
+
+		data[0] ^= clientKey[0];
+		var previous = data[0];
+
+		for (var i = 1; i < data.Length; i++)
+		{
+			data[i] ^= (byte)(staticKey[i & 63] ^ clientKey[i & 7] ^ previous);
+			previous = data[i];
+		}
+
+		UpdateClientKey(clientKey, data.Length);
+	}
+
+	private static void UpdateClientKey(Span<byte> key, int packetSize)
+	{
+		var oldKey = BinaryPrimitives.ReadUInt64LittleEndian(key);
+		oldKey += (uint)packetSize;
+		BinaryPrimitives.WriteUInt64LittleEndian(key, oldKey);
 	}
 
 	private static async Task InvokeHandleEmotionAsync(GameServerConnection connection, Player player, CmEmotion packet)
@@ -812,6 +903,13 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.True(predicate());
 	}
 
+	private static async Task AssertCompletesAsync(Task task)
+	{
+		var completed = await Task.WhenAny(task, Task.Delay(TimeSpan.FromSeconds(2)));
+		Assert.Same(task, completed);
+		await task;
+	}
+
 	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
 	{
 		var crypt = new GameCrypt(() => 0x01020304);
@@ -848,7 +946,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		public static async Task<InventoryExpansionUseItemFixture> CreateAsync(
 			EmptyPlayerEnterWorldRepository? repository = null,
 			bool includeThreadPoolManager = false,
-			IDFactory? idFactory = null)
+			IDFactory? idFactory = null,
+			bool enableCryptKeyBeforeRun = true)
 		{
 			var tempRoot = Path.Combine(Path.GetTempPath(), "aion-inventory-expansion-use-" + Guid.NewGuid().ToString("N"));
 			Directory.CreateDirectory(Path.Combine(tempRoot, "game-server", "data", "static_data"));
@@ -953,7 +1052,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 				await client.ConnectAsync(endpoint.Address, endpoint.Port);
 				var serverClient = await acceptTask;
 				var crypt = new GameCrypt(() => 0x01020304);
-				crypt.EnableKey();
+				if (enableCryptKeyBeforeRun)
+					crypt.EnableKey();
 				var connection = new GameServerConnection(
 					NullLogger.Instance,
 					serverClient,
@@ -972,6 +1072,41 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			{
 				listener.Stop();
 			}
+		}
+
+		public async Task<byte[]> ReadServerFrameAsync()
+		{
+			var stream = _client.GetStream();
+			var header = await ReadExactAsync(stream, 2);
+			var length = BinaryPrimitives.ReadUInt16LittleEndian(header);
+			var payload = await ReadExactAsync(stream, length - 2);
+			var frame = new byte[length];
+			header.CopyTo(frame, 0);
+			payload.CopyTo(frame.AsSpan(2));
+			return frame;
+		}
+
+		public async Task WriteClientFrameAsync(byte[] frame)
+		{
+			var stream = _client.GetStream();
+			await stream.WriteAsync(frame);
+			await stream.FlushAsync();
+		}
+
+		private static async Task<byte[]> ReadExactAsync(NetworkStream stream, int length)
+		{
+			using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+			var buffer = new byte[length];
+			var offset = 0;
+			while (offset < length)
+			{
+				var read = await stream.ReadAsync(buffer.AsMemory(offset, length - offset), cts.Token);
+				if (read == 0)
+					throw new EndOfStreamException("Socket closed before the expected frame was read.");
+				offset += read;
+			}
+
+			return buffer;
 		}
 
 		public async ValueTask DisposeAsync()
