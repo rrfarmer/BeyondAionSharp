@@ -642,6 +642,54 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		await AssertCompletesAsync(runTask);
 	}
 
+	[Fact]
+	public async Task RunAsync_EncryptedUseItemFrameSchedulesAndCompletesDecompose()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(
+			includeThreadPoolManager: true,
+			idFactory: new IDFactory([5001]),
+			enableCryptKeyBeforeRun: false);
+		var player = CreatePlayer(itemId: 100);
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+		var runTask = Task.Run(() => fixture.Connection.RunAsync());
+
+		await fixture.ReadServerFrameAsync();
+		await fixture.WriteClientFrameAsync(
+			CreateEncryptedClientFrame(
+				CreateClientPayload(37, buffer =>
+				{
+					buffer.WriteD(5001);
+					buffer.WriteC(0);
+				})));
+
+		await WaitUntilAsync(() => fixture.SentPackets.Count >= 6, TimeSpan.FromSeconds(5));
+
+		Assert.Equal(0, player.UsingItemObjectId);
+		Assert.Collection(
+			player.InventoryItems.OrderBy(item => item.ItemId),
+			item =>
+			{
+				Assert.Equal(100, item.ItemId);
+				Assert.Equal(1, item.Count);
+			},
+			item =>
+			{
+				Assert.Equal(200, item.ItemId);
+				Assert.Equal(1, item.Count);
+			});
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => Assert.IsType<SmKey>(packet),
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 100, expectedTime: 3000, expectedEnd: 0),
+			packet => Assert.IsType<SmSystemMessage>(packet),
+			packet => AssertInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 5001, expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse),
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 100, expectedTime: 0, expectedEnd: 1),
+			packet => Assert.IsType<SmInventoryAddItem>(packet));
+
+		await fixture.Connection.CloseAsync();
+		await AssertCompletesAsync(runTask);
+	}
+
 	private static Player CreatePlayer(
 		int itemId,
 		long count = 2,
