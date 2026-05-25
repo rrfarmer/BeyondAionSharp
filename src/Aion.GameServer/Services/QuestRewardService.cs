@@ -59,6 +59,29 @@ public sealed class QuestRewardService
 			previousAp);
 	}
 
+	public QuestGpRewardResult ApplyGpReward(
+		Player? player,
+		int rewardGp,
+		IReadOnlyList<float>? gpRates = null)
+	{
+		// Java parity: services/QuestService.giveReward -> rewards.getGp(),
+		// Rates.GP, then GloryPointsService.addGp(playerObjectId, gp).
+		if (player == null)
+			return QuestGpRewardResult.MissingPlayer(rewardGp);
+		if (rewardGp == 0)
+			return QuestGpRewardResult.NoGpReward(player.ObjectId, player.AbyssRank.Gp);
+
+		var appliedRewardGp = ApplyQuestGpRate(player.AccountMembership, rewardGp, gpRates ?? _rateOptions.GpRates);
+		var previousGp = player.AbyssRank.Gp;
+		var plan = GloryPointsService.AddGp(player, player.ObjectId, appliedRewardGp);
+		return QuestGpRewardResult.FromGloryPointsPlan(
+			plan,
+			player.ObjectId,
+			rewardGp,
+			appliedRewardGp,
+			previousGp);
+	}
+
 	public QuestKinahRewardPlan CreateKinahRewardPlan(
 		Player? player,
 		IReadOnlyList<InventoryItem> inventoryItems,
@@ -127,6 +150,13 @@ public sealed class QuestRewardService
 		// Java parity: model/gameobjects/player/Rates.AP_QUEST.calcResult.
 		var result = (long)(rewardAp * SelectMembershipRate(membershipLevel, apQuestRates));
 		return JavaLongToIntOrOriginal(result, rewardAp);
+	}
+
+	public static int ApplyQuestGpRate(byte membershipLevel, int rewardGp, IReadOnlyList<float> gpRates)
+	{
+		// Java parity: model/gameobjects/player/Rates.GP.calcResult.
+		var result = (long)(rewardGp * SelectMembershipRate(membershipLevel, gpRates));
+		return JavaLongToIntOrOriginal(result, rewardGp);
 	}
 
 	private static long JavaFloatToLong(float value)
@@ -347,6 +377,63 @@ public enum QuestApRewardStatus
 	MissingPlayer,
 	NoApReward,
 	ApBoundarySkipped,
+}
+
+public sealed record QuestGpRewardResult(
+	QuestGpRewardStatus Status,
+	int ObjectId,
+	int RewardGp,
+	int AppliedRewardGp,
+	int PreviousGp,
+	int CurrentGp,
+	GloryPointsAddPlan? GloryPointsPlan = null)
+{
+	public static QuestGpRewardResult MissingPlayer(int rewardGp)
+	{
+		return new QuestGpRewardResult(
+			QuestGpRewardStatus.MissingPlayer,
+			0,
+			rewardGp,
+			0,
+			0,
+			0);
+	}
+
+	public static QuestGpRewardResult NoGpReward(int objectId, int currentGp)
+	{
+		return new QuestGpRewardResult(
+			QuestGpRewardStatus.NoGpReward,
+			objectId,
+			0,
+			0,
+			currentGp,
+			currentGp);
+	}
+
+	public static QuestGpRewardResult FromGloryPointsPlan(
+		GloryPointsAddPlan plan,
+		int objectId,
+		int rewardGp,
+		int appliedRewardGp,
+		int previousGp)
+	{
+		return new QuestGpRewardResult(
+			plan.Applied ? QuestGpRewardStatus.Applied : QuestGpRewardStatus.GpBoundarySkipped,
+			objectId,
+			rewardGp,
+			appliedRewardGp,
+			previousGp,
+			plan.UpdatedRank?.Gp ?? previousGp,
+			plan);
+	}
+}
+
+public enum QuestGpRewardStatus
+{
+	Applied,
+	MissingPlayer,
+	NoGpReward,
+	GpBoundarySkipped,
 }
 
 public sealed record QuestKinahRewardPlan(

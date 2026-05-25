@@ -208,6 +208,80 @@ public sealed class QuestRewardServiceTests
 	}
 
 	[Fact]
+	public void ApplyGpReward_AppliesConfiguredGpRateAndAddsGpThroughPlanner()
+	{
+		var service = CreateService(
+			out _,
+			new GameServerOptions
+			{
+				Rates = new GameServerRateOptions
+				{
+					GpRates = [1f, 1.5f],
+				},
+			});
+		var player = CreatePlayer(objectId: 1307, playerClass: "RANGER", dp: 500, gp: 100, membership: 1);
+
+		var result = service.ApplyGpReward(player, rewardGp: 40);
+
+		Assert.Equal(QuestGpRewardStatus.Applied, result.Status);
+		Assert.Equal(player.ObjectId, result.ObjectId);
+		Assert.Equal(40, result.RewardGp);
+		Assert.Equal(60, result.AppliedRewardGp);
+		Assert.Equal(100, result.PreviousGp);
+		Assert.Equal(160, result.CurrentGp);
+		Assert.Equal(160, player.AbyssRank.Gp);
+		Assert.Equal(60, player.AbyssRank.DailyGp);
+		Assert.Equal(60, player.AbyssRank.WeeklyGp);
+		Assert.NotNull(result.GloryPointsPlan);
+		Assert.Equal(60, result.GloryPointsPlan.Added);
+		Assert.Collection(
+			result.GloryPointsPlan.PlayerPackets,
+			packet =>
+			{
+				var message = Assert.IsType<SmSystemMessage>(packet);
+				Assert.Equal(1402081, message.MessageId);
+			},
+			packet => Assert.IsType<SmAbyssRank>(packet));
+	}
+
+	[Fact]
+	public void ApplyGpReward_SkipsMissingPlayerAndZeroGpReward()
+	{
+		var service = CreateService(out _);
+		var player = CreatePlayer(objectId: 1308, playerClass: "RANGER", dp: 500, gp: 700);
+
+		var missingPlayer = service.ApplyGpReward(null, rewardGp: 200);
+		var zeroReward = service.ApplyGpReward(player, rewardGp: 0);
+
+		Assert.Equal(QuestGpRewardStatus.MissingPlayer, missingPlayer.Status);
+		Assert.Equal(QuestGpRewardStatus.NoGpReward, zeroReward.Status);
+		Assert.Null(missingPlayer.GloryPointsPlan);
+		Assert.Null(zeroReward.GloryPointsPlan);
+		Assert.Equal(700, player.AbyssRank.Gp);
+	}
+
+	[Fact]
+	public void ApplyQuestGpRate_MatchesJavaMembershipFallbacksAndOverflowBehavior()
+	{
+		var clampedMembership = QuestRewardService.ApplyQuestGpRate(
+			membershipLevel: 7,
+			rewardGp: 200,
+			gpRates: [1f, 1.5f]);
+		var emptyRates = QuestRewardService.ApplyQuestGpRate(
+			membershipLevel: 7,
+			rewardGp: 200,
+			gpRates: []);
+		var overflowFallback = QuestRewardService.ApplyQuestGpRate(
+			membershipLevel: 1,
+			rewardGp: int.MaxValue,
+			gpRates: [1f, 2f]);
+
+		Assert.Equal(300, clampedMembership);
+		Assert.Equal(200, emptyRates);
+		Assert.Equal(int.MaxValue, overflowFallback);
+	}
+
+	[Fact]
 	public void CreateKinahRewardPlan_CreatesMissingKinahItemWithQuestPacketMask()
 	{
 		var service = CreateService(
@@ -359,6 +433,7 @@ public sealed class QuestRewardServiceTests
 		string playerClass,
 		int dp,
 		int ap = 0,
+		int gp = 0,
 		byte membership = 0)
 	{
 		return new Player
@@ -370,7 +445,7 @@ public sealed class QuestRewardServiceTests
 			Dp = dp,
 			IsOnline = true,
 			AccountMembership = membership,
-			AbyssRank = PlayerAbyssRank.Default() with { Ap = ap },
+			AbyssRank = PlayerAbyssRank.Default() with { Ap = ap, Gp = gp },
 			Position = new WorldPosition(210010000, 10, 20, 30, 0),
 			LifeStats = new PlayerLifeStats(100, 100, 100),
 		};

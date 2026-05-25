@@ -59,6 +59,23 @@ public sealed record PlayerAbyssRank(
 		};
 	}
 
+	public PlayerAbyssRank AddGp(int amount, bool addToStats)
+	{
+		// Java parity: model/gameobjects/player/AbyssRank.addGp(int, boolean).
+		var dailyGp = addToStats ? unchecked(DailyGp + amount) : DailyGp;
+		var weeklyGp = addToStats ? unchecked(WeeklyGp + amount) : WeeklyGp;
+		var currentGp = unchecked(Gp + amount);
+		if (currentGp < 0)
+			currentGp = 0;
+
+		return this with
+		{
+			DailyGp = dailyGp,
+			WeeklyGp = weeklyGp,
+			Gp = currentGp,
+		};
+	}
+
 	public static string GetRankL10n(string race, int rankId)
 	{
 		// Java parity: utils/stats/AbyssRankEnum.getRankL10n(Race, int) plus ChatUtil.l10n.

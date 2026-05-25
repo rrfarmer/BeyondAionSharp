@@ -640,6 +640,18 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1320000, abyssPoints.ToString(System.Globalization.CultureInfo.InvariantCulture));
 	}
 
+	public static SmSystemMessage GloryPointGain(int additionalGp)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_GLORY_POINT_GAIN.
+		return new SmSystemMessage(1402081, additionalGp.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage GloryPointLose(int gpLoss)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_GLORY_POINT_LOSE.
+		return new SmSystemMessage(1402219, gpLoss.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
 	public static SmSystemMessage InventoryCantExtendMore()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_EXTEND_INVENTORY_CANT_EXTEND_MORE.
