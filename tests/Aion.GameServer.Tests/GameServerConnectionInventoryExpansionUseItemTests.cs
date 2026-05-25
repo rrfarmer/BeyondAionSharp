@@ -156,6 +156,45 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleQuestionResponseAsync_ChargeAllApPaymentSendsAbyssPointsPlannerPackets()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(new EmptyPlayerEnterWorldRepository());
+		var player = CreateChargeAllPaymentPlayer();
+		var pendingRequest = new PendingChargeAllRequest(
+			SenderObjectId: player.ObjectId,
+			ChargeWay: 2,
+			PaymentAmount: 500,
+			Items:
+			[
+				new PendingChargeAllItem(
+					ObjectId: 7001,
+					ItemId: 100000400,
+					PreviousCharge: 0,
+					TargetCharge: ItemChargeService.Level1ChargePoints,
+					Level: 1),
+			]);
+		player.PendingChargeAllRequest = pendingRequest;
+		Assert.True(player.ResponseRequester.PutRequest(
+			SmQuestionWindow.ItemCharge2AllConfirm,
+			new QuestionResponseRequest(player.ObjectId, QuestionResponseRequestKind.ChargeAll, pendingRequest)));
+
+		await fixture.Connection.HandleQuestionResponseAsync(player, CreateQuestionResponse(SmQuestionWindow.ItemCharge2AllConfirm, response: 1));
+
+		Assert.Equal(500, player.AbyssRank.Ap);
+		Assert.Null(player.PendingChargeAllRequest);
+		var chargedItem = Assert.Single(player.InventoryItems, item => item.ObjectId == 7001);
+		Assert.Equal(ItemChargeService.Level1ChargePoints, chargedItem.Charge);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1300965, "500"),
+			packet => Assert.IsType<SmAbyssRank>(packet),
+			packet => Assert.IsType<SmInventoryUpdateItem>(packet),
+			packet => Assert.IsType<SmSystemMessage>(packet),
+			packet => Assert.IsType<SmStatsInfo>(packet),
+			packet => Assert.IsType<SmSystemMessage>(packet));
+	}
+
+	[Fact]
 	public async Task HandleUseItemAsync_AnimationAddSchedulesPositiveTimeUseAndClearsUsingItem()
 	{
 		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(includeThreadPoolManager: true);
@@ -1071,6 +1110,30 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		};
 	}
 
+	private static Player CreateChargeAllPaymentPlayer()
+	{
+		return new Player
+		{
+			ObjectId = 1001,
+			Name = "TicketUser",
+			Race = "ELYOS",
+			PlayerClass = "RANGER",
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			AbyssRank = PlayerAbyssRank.Default() with { Ap = 1000 },
+			InventoryItems =
+			[
+				new InventoryItem
+				{
+					ObjectId = 7001,
+					ItemId = 100000400,
+					Count = 1,
+					Location = 0,
+					IsEquipped = true,
+				},
+			],
+		};
+	}
+
 	private static CmUseItem CreateUseItem(int sourceItemObjectId)
 	{
 		using var writer = new PacketBuffer();
@@ -1102,6 +1165,22 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		writer.WriteH(1);
 		writer.WriteD(itemObjectId);
 		var packet = new CmChargeItem(78, new HashSet<GameConnectionState> { GameConnectionState.InGame });
+		using var reader = new PacketBuffer(writer.ToArray());
+		packet.ReadFrom(reader);
+		return packet;
+	}
+
+	private static CmQuestionResponse CreateQuestionResponse(int questionId, byte response)
+	{
+		using var writer = new PacketBuffer();
+		writer.WriteD(questionId);
+		writer.WriteC(response);
+		writer.WriteC(0);
+		writer.WriteH(0);
+		writer.WriteD(1001);
+		writer.WriteD(0);
+		writer.WriteH(0);
+		var packet = new CmQuestionResponse(104, new HashSet<GameConnectionState> { GameConnectionState.InGame });
 		using var reader = new PacketBuffer(writer.ToArray());
 		packet.ReadFrom(reader);
 		return packet;
