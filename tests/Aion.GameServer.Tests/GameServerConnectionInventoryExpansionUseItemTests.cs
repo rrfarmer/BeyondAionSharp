@@ -18,11 +18,19 @@ using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.IdFactory;
 using Aion.GameServer.World;
 using Microsoft.Extensions.Logging.Abstractions;
+using Xunit.Abstractions;
 
 namespace Aion.GameServer.Tests;
 
 public sealed class GameServerConnectionInventoryExpansionUseItemTests
 {
+	private readonly ITestOutputHelper _output;
+
+	public GameServerConnectionInventoryExpansionUseItemTests(ITestOutputHelper output)
+	{
+		_output = output;
+	}
+
 	[Fact]
 	public async Task HandleUseItemAsync_CubeExpansionTicketConsumesItemAndRefreshesCubeSize()
 	{
@@ -450,6 +458,37 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Equal(0, GetPacket(delete.RootElement, 4).GetProperty("decoded_fields").GetProperty("items_count").GetInt32());
 		Assert.Equal(201, GetPacket(delete.RootElement, 6).GetProperty("decoded_fields").GetProperty("item_id").GetInt32());
 		Assert.Equal(2, GetPacket(delete.RootElement, 6).GetProperty("decoded_fields").GetProperty("count").GetInt64());
+	}
+
+	[Fact]
+	public async Task CompareSelectableDecomposeJavaArtifacts_WhenPresent_ComparesContractFields()
+	{
+		var artifactRoot = Path.Combine(FindRepositoryRoot(), "docs", "parity-artifacts", "java", "decompose", "selectable");
+		var scenarios = new[]
+		{
+			new SelectableDecomposeArtifactScenario("JD-SEL-DEC-001", SourceCount: 2, SelectIndex: 1),
+			new SelectableDecomposeArtifactScenario("JD-SEL-DEL-001", SourceCount: 1, SelectIndex: 0),
+		};
+		var missingArtifacts = scenarios
+			.Select(scenario => Path.Combine(artifactRoot, scenario.ScenarioId + ".json"))
+			.Where(path => !File.Exists(path))
+			.ToArray();
+		if (missingArtifacts.Length > 0)
+		{
+			_output.WriteLine("Needs Verification: Java selectable-decompose artifacts are not present yet.");
+			foreach (var missingArtifact in missingArtifacts)
+				_output.WriteLine("Missing Java artifact: " + missingArtifact);
+			return;
+		}
+
+		foreach (var scenario in scenarios)
+		{
+			var javaJson = await File.ReadAllTextAsync(Path.Combine(artifactRoot, scenario.ScenarioId + ".json"));
+			var csharpJson = await CaptureSelectableDecomposeObservationJsonAsync(scenario.ScenarioId, scenario.SourceCount, scenario.SelectIndex);
+			using var javaObservation = JsonDocument.Parse(javaJson);
+			using var csharpObservation = JsonDocument.Parse(csharpJson);
+			AssertSelectableDecomposeObservationMatchesJavaArtifact(javaObservation.RootElement, csharpObservation.RootElement);
+		}
 	}
 
 	[Fact]
@@ -1351,6 +1390,69 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			.EnumerateArray()
 			.Single(packet => packet.GetProperty("sequence").GetInt32() == sequence);
 	}
+
+	private static void AssertSelectableDecomposeObservationMatchesJavaArtifact(JsonElement javaObservation, JsonElement csharpObservation)
+	{
+		Assert.Equal(csharpObservation.GetProperty("scenario_id").GetString(), javaObservation.GetProperty("scenario_id").GetString());
+		Assert.Equal("live-java-server", javaObservation.GetProperty("capture_method").GetString());
+		Assert.Equal(ReadPacketClasses(csharpObservation), ReadPacketClasses(javaObservation));
+		Assert.Equal(
+			csharpObservation.GetProperty("client_packet").GetProperty("opcode").GetInt32(),
+			javaObservation.GetProperty("client_packet").GetProperty("opcode").GetInt32());
+		Assert.Equal(
+			csharpObservation.GetProperty("client_packet").GetProperty("payload_fields").GetProperty("index").GetInt32(),
+			javaObservation.GetProperty("client_packet").GetProperty("payload_fields").GetProperty("index").GetInt32());
+		Assert.Equal(
+			csharpObservation.GetProperty("client_packet").GetProperty("payload_fields").GetProperty("unknown_dword").GetInt32(),
+			javaObservation.GetProperty("client_packet").GetProperty("payload_fields").GetProperty("unknown_dword").GetInt32());
+
+		var scenarioId = csharpObservation.GetProperty("scenario_id").GetString();
+		switch (scenarioId)
+		{
+			case "JD-SEL-DEC-001":
+				AssertPacketFields(javaObservation, csharpObservation, sequence: 1, ["item_id", "time", "end", "unknown3"]);
+				AssertPacketFields(javaObservation, csharpObservation, sequence: 3, ["count", "update_type_mask", "update_type_name"]);
+				AssertPacketFields(javaObservation, csharpObservation, sequence: 4, ["reward_count"]);
+				AssertPacketFields(javaObservation, csharpObservation, sequence: 5, ["add_type_mask", "add_type_name", "packet_item_count", "item_id", "count", "slot", "cloth_flag"]);
+				break;
+			case "JD-SEL-DEL-001":
+				AssertPacketFields(javaObservation, csharpObservation, sequence: 1, ["item_id", "time", "end", "unknown3"]);
+				AssertPacketFields(javaObservation, csharpObservation, sequence: 3, ["delete_type", "delete_type_name"]);
+				AssertPacketFields(javaObservation, csharpObservation, sequence: 4, ["action", "storage", "items_count", "npc_expands", "quest_expands", "item_expands"]);
+				AssertPacketFields(javaObservation, csharpObservation, sequence: 5, ["reward_count"]);
+				AssertPacketFields(javaObservation, csharpObservation, sequence: 6, ["add_type_mask", "add_type_name", "packet_item_count", "item_id", "count", "slot", "cloth_flag"]);
+				break;
+			default:
+				throw new InvalidOperationException("Unsupported selectable-decompose scenario: " + scenarioId);
+		}
+	}
+
+	private static void AssertPacketFields(JsonElement javaObservation, JsonElement csharpObservation, int sequence, IReadOnlyList<string> fieldNames)
+	{
+		var javaFields = GetPacket(javaObservation, sequence).GetProperty("decoded_fields");
+		var csharpFields = GetPacket(csharpObservation, sequence).GetProperty("decoded_fields");
+		foreach (var fieldName in fieldNames)
+		{
+			Assert.True(javaFields.TryGetProperty(fieldName, out var javaValue), $"Java artifact packet {sequence} is missing decoded field '{fieldName}'.");
+			Assert.True(csharpFields.TryGetProperty(fieldName, out var csharpValue), $"C# observation packet {sequence} is missing decoded field '{fieldName}'.");
+			Assert.Equal(csharpValue.ToString(), javaValue.ToString());
+		}
+	}
+
+	private static string FindRepositoryRoot()
+	{
+		var directory = new DirectoryInfo(AppContext.BaseDirectory);
+		while (directory != null)
+		{
+			if (Directory.Exists(Path.Combine(directory.FullName, ".git")) && Directory.Exists(Path.Combine(directory.FullName, "docs")))
+				return directory.FullName;
+			directory = directory.Parent;
+		}
+
+		throw new DirectoryNotFoundException("Could not locate repository root from " + AppContext.BaseDirectory);
+	}
+
+	private readonly record struct SelectableDecomposeArtifactScenario(string ScenarioId, int SourceCount, int SelectIndex);
 
 	private sealed class InventoryExpansionUseItemFixture : IAsyncDisposable
 	{
