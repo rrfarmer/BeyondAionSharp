@@ -1,6 +1,7 @@
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
+using Aion.GameServer.Network.Aion.ServerPackets;
 
 namespace Aion.GameServer.Services;
 
@@ -204,6 +205,14 @@ public static class ItemPurificationLiveExecutionService
 				{
 					player.InventoryItems = rankLimitChange.InventoryItems;
 					equipmentRankLimitChange = rankLimitChange;
+					sentCount += await SendEquipmentRankLimitPacketsAsync(
+						playerObjectId,
+						player,
+						rankLimitChange,
+						itemTemplates,
+						connectionRegistry,
+						packets,
+						cancellationToken);
 				}
 			}
 		}
@@ -217,6 +226,56 @@ public static class ItemPurificationLiveExecutionService
 				skippedMetadataOperations,
 				sentCount),
 			equipmentRankLimitChange);
+	}
+
+	private static async ValueTask<int> SendEquipmentRankLimitPacketsAsync(
+		int playerObjectId,
+		Player player,
+		EquipmentChangeResult rankLimitChange,
+		ItemTemplateTable itemTemplates,
+		IGameClientConnectionRegistry? connectionRegistry,
+		ICollection<GameServerPacket> packets,
+		CancellationToken cancellationToken)
+	{
+		var sentCount = 0;
+		foreach (var update in rankLimitChange.InventoryUpdateItems)
+		{
+			if (itemTemplates.GetItemTemplate(update.ItemId) is not { } template)
+				continue;
+
+			var packet = new SmInventoryUpdateItem(update, template, SmInventoryUpdateItem.EquipUnequip);
+			packets.Add(packet);
+			if (connectionRegistry != null)
+			{
+				cancellationToken.ThrowIfCancellationRequested();
+				if (await connectionRegistry.SendPacketToPlayerAsync(playerObjectId, packet))
+					sentCount++;
+			}
+		}
+
+		foreach (var itemName in rankLimitChange.RankLimitedUnequipMessages)
+		{
+			var packet = SmSystemMessage.UnequipRankItem(itemName);
+			packets.Add(packet);
+			if (connectionRegistry != null)
+			{
+				cancellationToken.ThrowIfCancellationRequested();
+				if (await connectionRegistry.SendPacketToPlayerAsync(playerObjectId, packet))
+					sentCount++;
+			}
+		}
+
+		if (rankLimitChange.BroadcastAppearance && connectionRegistry != null)
+		{
+			cancellationToken.ThrowIfCancellationRequested();
+			await connectionRegistry.BroadcastToVisiblePlayersAsync(
+				player.Position,
+				player.ObjectId,
+				new SmUpdatePlayerAppearance(player),
+				includeSourcePlayer: true);
+		}
+
+		return sentCount;
 	}
 
 	private static bool IsLastAbyssPointsUpdate(

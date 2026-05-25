@@ -184,7 +184,7 @@ public sealed class ItemPurificationLiveExecutionServiceTests
 		Assert.Equal(0, unequippedSword.Slot);
 		Assert.False(player.InventoryItems.Single(item => item.ObjectId == rankLimitedSword.ObjectId).IsEquipped);
 
-		Assert.Equal(7, result.MutationPacketSend?.SentCount);
+		Assert.Equal(9, result.MutationPacketSend?.SentCount);
 		Assert.Equal(
 			[
 				ItemPurificationPacketOperationType.KinahNoPacket,
@@ -196,16 +196,23 @@ public sealed class ItemPurificationLiveExecutionServiceTests
 				typeof(SmInventoryUpdateItem),
 				typeof(SmSystemMessage),
 				typeof(SmAbyssRank),
+				typeof(SmInventoryUpdateItem),
+				typeof(SmSystemMessage),
 				typeof(SmDeleteItem),
 				typeof(SmCubeUpdate),
 				typeof(SmInventoryAddItem),
 				typeof(SmCubeUpdate),
 			],
 			registry.SentPackets.Select(packet => packet.Packet.GetType()).ToArray());
-		var broadcast = Assert.Single(registry.BroadcastPackets);
-		Assert.Equal(player.ObjectId, broadcast.SourceObjectId);
-		Assert.False(broadcast.IncludeSourcePlayer);
-		Assert.IsType<SmAbyssRankUpdate>(broadcast.Packet);
+		Assert.Equal(
+			[
+				typeof(SmAbyssRankUpdate),
+				typeof(SmUpdatePlayerAppearance),
+			],
+			registry.BroadcastPackets.Select(packet => packet.Packet.GetType()).ToArray());
+		Assert.All(registry.BroadcastPackets, broadcast => Assert.Equal(player.ObjectId, broadcast.SourceObjectId));
+		Assert.False(registry.BroadcastPackets[0].IncludeSourcePlayer);
+		Assert.True(registry.BroadcastPackets[1].IncludeSourcePlayer);
 	}
 
 	private static ItemPurificationHandlerPlan CreateHandlerPlan(
