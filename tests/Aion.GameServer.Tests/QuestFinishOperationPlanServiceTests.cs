@@ -239,6 +239,103 @@ public sealed class QuestFinishOperationPlanServiceTests
 	}
 
 	[Fact]
+	public void CreatePlan_ComposesDetailedNonItemRewardProjectionBeforeCoarsePlaceholder()
+	{
+		var rewardProjection = new QuestFinishRewardTemplateProjection(
+			RewardGroupCount: 1,
+			HasNonItemRewards: true,
+			NonItemProjection: new QuestFinishRewardNonItemTemplateProjection(
+				Kinah: 1_000,
+				Experience: 2_000,
+				Title: 10,
+				AbyssPoints: 30,
+				DivinePoints: 40,
+				GloryPoints: 50,
+				ExtendInventory: 1),
+			TargetNpcId: 203001,
+			HasTargetNpcTemplate: true);
+
+		var plan = QuestFinishOperationPlanService.CreatePlan(
+			new PlayerQuestState(1001, "REWARD", QuestVars: 0, Flags: 0, CompleteCount: 0),
+			new NearbyQuestTemplateSummary(1001, QuestCategory: "QUEST"),
+			PlayerNpcFactionsSnapshot.Empty,
+			new DateTimeOffset(2026, 5, 25, 8, 30, 0, TimeSpan.Zero),
+			CreateOptions("UTC"),
+			rewardProjection);
+
+		Assert.All(plan.Descriptors, descriptor => Assert.False(descriptor.IsLive));
+		Assert.Equal(
+		[
+			QuestFinishOperationAction.RewardGroupCorrection,
+			QuestFinishOperationAction.NonItemRewardProjection,
+			QuestFinishOperationAction.NonItemRewardProjection,
+			QuestFinishOperationAction.NonItemRewardProjection,
+			QuestFinishOperationAction.NonItemRewardProjection,
+			QuestFinishOperationAction.NonItemRewardProjection,
+			QuestFinishOperationAction.NonItemRewardProjection,
+			QuestFinishOperationAction.NonItemRewardProjection,
+			QuestFinishOperationAction.NonItemRewardPlaceholder,
+			QuestFinishOperationAction.QuestStateMutation,
+		], plan.Descriptors.Take(10).Select(descriptor => descriptor.Action));
+		var projectedRewards = plan.Descriptors
+			.Where(descriptor => descriptor.Action == QuestFinishOperationAction.NonItemRewardProjection)
+			.ToArray();
+		Assert.Equal(
+		[
+			QuestFinishRewardNonItemAction.Kinah,
+			QuestFinishRewardNonItemAction.Experience,
+			QuestFinishRewardNonItemAction.Title,
+			QuestFinishRewardNonItemAction.AbyssPoints,
+			QuestFinishRewardNonItemAction.DivinePoints,
+			QuestFinishRewardNonItemAction.GloryPoints,
+			QuestFinishRewardNonItemAction.CubeExpansion,
+		], projectedRewards.Select(descriptor => descriptor.RewardNonItemProjection!.Action));
+		Assert.Equal("Rates.XP_QUEST", projectedRewards[1].RewardNonItemProjection!.RateSource);
+		Assert.Equal(203001, projectedRewards[1].RewardNonItemProjection!.TargetNpcId);
+		Assert.Equal("Rates.AP_QUEST", projectedRewards[3].RewardNonItemProjection!.RateSource);
+	}
+
+	[Fact]
+	public void CreatePlan_ComposesNonCountApRateBypassAndNonItemWarnings()
+	{
+		var rewardProjection = new QuestFinishRewardTemplateProjection(
+			RewardGroupCount: 1,
+			HasNonItemRewards: true,
+			NonItemProjection: new QuestFinishRewardNonItemTemplateProjection(
+				AbyssPoints: 500,
+				ExtendInventory: 3,
+				ExtendStigma: 1));
+
+		var plan = QuestFinishOperationPlanService.CreatePlan(
+			new PlayerQuestState(1001, "REWARD", QuestVars: 0, Flags: 0, CompleteCount: 0),
+			new NearbyQuestTemplateSummary(1001, QuestCategory: "NON_COUNT"),
+			PlayerNpcFactionsSnapshot.Empty,
+			new DateTimeOffset(2026, 5, 25, 8, 30, 0, TimeSpan.Zero),
+			CreateOptions("UTC"),
+			rewardProjection);
+
+		var apDescriptor = Assert.Single(
+			plan.Descriptors,
+			descriptor => descriptor.RewardNonItemProjection?.Action == QuestFinishRewardNonItemAction.AbyssPoints);
+		Assert.True(apDescriptor.RewardNonItemProjection!.RateBypassed);
+		Assert.Null(apDescriptor.RewardNonItemProjection.RateSource);
+		Assert.Equal(500, apDescriptor.Count);
+		Assert.Equal(
+		[
+			QuestFinishRewardNonItemProjectionWarning.UnsupportedExtendInventoryValue,
+			QuestFinishRewardNonItemProjectionWarning.XmlFieldIgnoredByJavaGiveReward,
+		], plan.Descriptors
+			.Where(descriptor => descriptor.Action == QuestFinishOperationAction.NonItemRewardProjectionWarning)
+			.Select(descriptor => descriptor.RewardNonItemProjectionWarning!.Warning));
+		var descriptorList = plan.Descriptors.ToList();
+		var lastWarningIndex = descriptorList.FindLastIndex(
+			descriptor => descriptor.Action == QuestFinishOperationAction.NonItemRewardProjectionWarning);
+		var coarsePlaceholderIndex = descriptorList.FindIndex(
+			descriptor => descriptor.Action == QuestFinishOperationAction.NonItemRewardPlaceholder);
+		Assert.True(lastWarningIndex < coarsePlaceholderIndex);
+	}
+
+	[Fact]
 	public void CreatePlan_ComposesDetailedPersistencePlansAfterNearbyRefresh()
 	{
 		var now = new DateTimeOffset(2026, 5, 25, 8, 30, 0, TimeSpan.Zero);

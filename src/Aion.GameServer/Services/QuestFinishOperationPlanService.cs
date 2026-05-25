@@ -11,6 +11,8 @@ public enum QuestFinishOperationAction
 	ItemRewardProjection,
 	ItemRewardProjectionWarning,
 	ItemRewardPlaceholder,
+	NonItemRewardProjection,
+	NonItemRewardProjectionWarning,
 	NonItemRewardPlaceholder,
 	ChallengeTaskCompletionPlaceholder,
 	RemoveQuestWorkItemsPlaceholder,
@@ -32,6 +34,8 @@ public sealed record QuestFinishOperationDescriptor(
 	long? Count = null,
 	QuestFinishRewardItemProjectionDescriptor? RewardItemProjection = null,
 	QuestFinishRewardItemProjectionWarningDescriptor? RewardItemProjectionWarning = null,
+	QuestFinishRewardNonItemProjectionDescriptor? RewardNonItemProjection = null,
+	QuestFinishRewardNonItemProjectionWarningDescriptor? RewardNonItemProjectionWarning = null,
 	QuestCompletionCallbackDescriptor? CompletionCallbackOperation = null,
 	QuestPersistenceOperationDescriptor? QuestPersistenceOperation = null,
 	NpcFactionPersistenceOperationDescriptor? NpcFactionPersistenceOperation = null);
@@ -91,6 +95,14 @@ public static class QuestFinishOperationPlanService
 						descriptors,
 						ref nextOrder,
 						stateInput,
+						rewardProjection);
+				}
+				else if (rewardDescriptor.Action == QuestFinishRewardOperationAction.NonItemRewardPlaceholder)
+				{
+					AddDetailedRewardNonItemProjectionDescriptors(
+						descriptors,
+						ref nextOrder,
+						template,
 						rewardProjection);
 				}
 
@@ -204,7 +216,7 @@ public static class QuestFinishOperationPlanService
 			QuestFinishRewardOperationAction.ChallengeTaskCompletionPlaceholder => QuestFinishOperationAction.ChallengeTaskCompletionPlaceholder,
 			QuestFinishRewardOperationAction.RemoveQuestWorkItemsPlaceholder => QuestFinishOperationAction.RemoveQuestWorkItemsPlaceholder,
 			_ => throw new ArgumentOutOfRangeException(nameof(action), action, null),
-			};
+		};
 	}
 
 	private static void AddDetailedRewardItemProjectionDescriptors(
@@ -249,6 +261,47 @@ public static class QuestFinishOperationPlanService
 				warning.JavaSource,
 				IsLive: false,
 				RewardItemProjectionWarning: warning));
+		}
+	}
+
+	private static void AddDetailedRewardNonItemProjectionDescriptors(
+		ICollection<QuestFinishOperationDescriptor> descriptors,
+		ref int nextOrder,
+		NearbyQuestTemplateSummary template,
+		QuestFinishRewardTemplateProjection rewardProjection)
+	{
+		if (rewardProjection.NonItemProjection is null)
+		{
+			return;
+		}
+
+		var projectionPlan = QuestFinishRewardPlanService.CreateNonItemRewardProjection(
+			new QuestFinishRewardNonItemProjectionInput(
+				template.QuestId,
+				template.QuestCategory,
+				rewardProjection.TargetNpcId,
+				rewardProjection.HasTargetNpcTemplate),
+			rewardProjection.NonItemProjection);
+
+		foreach (var nonItemDescriptor in projectionPlan.Descriptors)
+		{
+			descriptors.Add(new QuestFinishOperationDescriptor(
+				nextOrder++,
+				QuestFinishOperationAction.NonItemRewardProjection,
+				nonItemDescriptor.JavaSource,
+				nonItemDescriptor.IsLive,
+				Count: nonItemDescriptor.Amount,
+				RewardNonItemProjection: nonItemDescriptor));
+		}
+
+		foreach (var warning in projectionPlan.Warnings)
+		{
+			descriptors.Add(new QuestFinishOperationDescriptor(
+				nextOrder++,
+				QuestFinishOperationAction.NonItemRewardProjectionWarning,
+				warning.JavaSource,
+				IsLive: false,
+				RewardNonItemProjectionWarning: warning));
 		}
 	}
 }
