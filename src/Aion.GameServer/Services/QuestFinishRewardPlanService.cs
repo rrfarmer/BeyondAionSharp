@@ -40,6 +40,24 @@ public enum QuestFinishRewardItemProjectionWarning
 	BonusHandlerNotProjected,
 }
 
+public enum QuestFinishRewardNonItemAction
+{
+	Kinah,
+	Experience,
+	Title,
+	AbyssPoints,
+	DivinePoints,
+	GloryPoints,
+	CubeExpansion,
+	WarehouseExpansion,
+}
+
+public enum QuestFinishRewardNonItemProjectionWarning
+{
+	UnsupportedExtendInventoryValue,
+	XmlFieldIgnoredByJavaGiveReward,
+}
+
 public sealed record QuestFinishRewardWorkItem(int ItemId, long Count = 1);
 
 public sealed record QuestFinishRewardItem(int ItemId, long Count = 1);
@@ -96,6 +114,48 @@ public sealed record QuestFinishRewardItemProjectionWarningDescriptor(
 public sealed record QuestFinishRewardItemProjectionPlan(
 	IReadOnlyList<QuestFinishRewardItemProjectionDescriptor> Items,
 	IReadOnlyList<QuestFinishRewardItemProjectionWarningDescriptor> Warnings);
+
+public sealed record QuestFinishRewardNonItemTemplateProjection(
+	long Kinah = 0,
+	int Experience = 0,
+	int Title = 0,
+	int AbyssPoints = 0,
+	int DivinePoints = 0,
+	int GloryPoints = 0,
+	int ExtendInventory = 0,
+	int ExtendStigma = 0,
+	IReadOnlyList<int>? CollectItemChecks = null,
+	int InventoryItemCheck = 0)
+{
+	public IReadOnlyList<int> CollectItemChecks { get; init; } = CollectItemChecks ?? [];
+}
+
+public sealed record QuestFinishRewardNonItemProjectionInput(
+	int QuestId,
+	string QuestCategory = "QUEST",
+	int TargetNpcId = 0,
+	bool HasTargetNpcTemplate = false);
+
+public sealed record QuestFinishRewardNonItemProjectionDescriptor(
+	int Order,
+	QuestFinishRewardNonItemAction Action,
+	string JavaSource,
+	bool IsLive,
+	long Amount,
+	string? RateSource = null,
+	bool RateBypassed = false,
+	int? TargetNpcId = null,
+	bool RequiresTargetNpcL10nLookup = false);
+
+public sealed record QuestFinishRewardNonItemProjectionWarningDescriptor(
+	QuestFinishRewardNonItemProjectionWarning Warning,
+	string JavaSource,
+	string FieldName,
+	long Value);
+
+public sealed record QuestFinishRewardNonItemProjectionPlan(
+	IReadOnlyList<QuestFinishRewardNonItemProjectionDescriptor> Descriptors,
+	IReadOnlyList<QuestFinishRewardNonItemProjectionWarningDescriptor> Warnings);
 
 public sealed record QuestFinishRewardTemplateProjection(
 	int? RewardGroupCount = null,
@@ -395,6 +455,155 @@ public static class QuestFinishRewardPlanService
 		dialogActionId >= SelectedQuestReward1 && dialogActionId <= SelectedQuestReward15
 			? dialogActionId - SelectedQuestReward1
 			: -1;
+
+	public static QuestFinishRewardNonItemProjectionPlan CreateNonItemRewardProjection(
+		QuestFinishRewardNonItemProjectionInput input,
+		QuestFinishRewardNonItemTemplateProjection template)
+	{
+		ArgumentNullException.ThrowIfNull(template);
+
+		var descriptors = new List<QuestFinishRewardNonItemProjectionDescriptor>();
+		var warnings = new List<QuestFinishRewardNonItemProjectionWarningDescriptor>();
+		var order = 1;
+
+		if (template.Kinah != 0)
+		{
+			descriptors.Add(CreateNonItemDescriptor(
+				ref order,
+				QuestFinishRewardNonItemAction.Kinah,
+				template.Kinah,
+				RateSource: "Rates.QUEST_KINAH"));
+		}
+
+		if (template.Experience != 0)
+		{
+			descriptors.Add(CreateNonItemDescriptor(
+				ref order,
+				QuestFinishRewardNonItemAction.Experience,
+				template.Experience,
+				RateSource: "Rates.XP_QUEST",
+				TargetNpcId: input.TargetNpcId,
+				RequiresTargetNpcL10nLookup: true));
+		}
+
+		if (template.Title != 0)
+		{
+			descriptors.Add(CreateNonItemDescriptor(
+				ref order,
+				QuestFinishRewardNonItemAction.Title,
+				template.Title));
+		}
+
+		if (template.AbyssPoints != 0)
+		{
+			var isNonCountQuest = string.Equals(input.QuestCategory, "NON_COUNT", StringComparison.Ordinal);
+			descriptors.Add(CreateNonItemDescriptor(
+				ref order,
+				QuestFinishRewardNonItemAction.AbyssPoints,
+				template.AbyssPoints,
+				RateSource: isNonCountQuest ? null : "Rates.AP_QUEST",
+				RateBypassed: isNonCountQuest));
+		}
+
+		if (template.DivinePoints != 0)
+		{
+			descriptors.Add(CreateNonItemDescriptor(
+				ref order,
+				QuestFinishRewardNonItemAction.DivinePoints,
+				template.DivinePoints));
+		}
+
+		if (template.GloryPoints != 0)
+		{
+			descriptors.Add(CreateNonItemDescriptor(
+				ref order,
+				QuestFinishRewardNonItemAction.GloryPoints,
+				template.GloryPoints,
+				RateSource: "Rates.GP"));
+		}
+
+		switch (template.ExtendInventory)
+		{
+			case 0:
+				break;
+			case 1:
+				descriptors.Add(CreateNonItemDescriptor(
+					ref order,
+					QuestFinishRewardNonItemAction.CubeExpansion,
+					template.ExtendInventory));
+				break;
+			case 2:
+				descriptors.Add(CreateNonItemDescriptor(
+					ref order,
+					QuestFinishRewardNonItemAction.WarehouseExpansion,
+					template.ExtendInventory));
+				break;
+			default:
+				warnings.Add(new QuestFinishRewardNonItemProjectionWarningDescriptor(
+					QuestFinishRewardNonItemProjectionWarning.UnsupportedExtendInventoryValue,
+					GiveRewardJavaSource,
+					FieldName: "extend_inventory",
+					Value: template.ExtendInventory));
+				break;
+		}
+
+		AddIgnoredXmlFieldWarnings(warnings, template);
+
+		return new QuestFinishRewardNonItemProjectionPlan(descriptors, warnings);
+	}
+
+	private static QuestFinishRewardNonItemProjectionDescriptor CreateNonItemDescriptor(
+		ref int order,
+		QuestFinishRewardNonItemAction action,
+		long amount,
+		string? RateSource = null,
+		bool RateBypassed = false,
+		int? TargetNpcId = null,
+		bool RequiresTargetNpcL10nLookup = false)
+	{
+		return new QuestFinishRewardNonItemProjectionDescriptor(
+			order++,
+			action,
+			GiveRewardJavaSource,
+			IsLive: false,
+			amount,
+			RateSource,
+			RateBypassed,
+			TargetNpcId,
+			RequiresTargetNpcL10nLookup);
+	}
+
+	private static void AddIgnoredXmlFieldWarnings(
+		ICollection<QuestFinishRewardNonItemProjectionWarningDescriptor> warnings,
+		QuestFinishRewardNonItemTemplateProjection template)
+	{
+		if (template.ExtendStigma != 0)
+		{
+			warnings.Add(new QuestFinishRewardNonItemProjectionWarningDescriptor(
+				QuestFinishRewardNonItemProjectionWarning.XmlFieldIgnoredByJavaGiveReward,
+				GiveRewardJavaSource,
+				FieldName: "extend_stigma",
+				Value: template.ExtendStigma));
+		}
+
+		if (template.CollectItemChecks.Count > 0)
+		{
+			warnings.Add(new QuestFinishRewardNonItemProjectionWarningDescriptor(
+				QuestFinishRewardNonItemProjectionWarning.XmlFieldIgnoredByJavaGiveReward,
+				GiveRewardJavaSource,
+				FieldName: "ccheck",
+				Value: template.CollectItemChecks.Count));
+		}
+
+		if (template.InventoryItemCheck != 0)
+		{
+			warnings.Add(new QuestFinishRewardNonItemProjectionWarningDescriptor(
+				QuestFinishRewardNonItemProjectionWarning.XmlFieldIgnoredByJavaGiveReward,
+				GiveRewardJavaSource,
+				FieldName: "icheck",
+				Value: template.InventoryItemCheck));
+		}
+	}
 
 	private static bool UsesClassSelectableRewards(QuestFinishRewardItemTemplateProjection template, bool isLastRepeat) =>
 		isLastRepeat && template.SingleTimeClassReward || template.ClassRewardOnEveryRepeat;

@@ -286,4 +286,107 @@ public sealed class QuestFinishRewardPlanServiceTests
 		Assert.Equal(QuestFinishRewardItemProjectionWarning.BonusHandlerNotProjected, warning.Warning);
 		Assert.Empty(plan.Items);
 	}
+
+	[Fact]
+	public void CreateNonItemRewardProjection_EmitsJavaGiveRewardOrderAndRateMetadata()
+	{
+		var input = new QuestFinishRewardNonItemProjectionInput(
+			QuestId: 1001,
+			QuestCategory: "QUEST",
+			TargetNpcId: 203001,
+			HasTargetNpcTemplate: true);
+		var template = new QuestFinishRewardNonItemTemplateProjection(
+			Kinah: 1_000,
+			Experience: 2_000,
+			Title: 10,
+			AbyssPoints: 30,
+			DivinePoints: 40,
+			GloryPoints: 50,
+			ExtendInventory: 1);
+
+		var plan = QuestFinishRewardPlanService.CreateNonItemRewardProjection(input, template);
+
+		Assert.Empty(plan.Warnings);
+		Assert.All(plan.Descriptors, descriptor => Assert.False(descriptor.IsLive));
+		Assert.Equal(
+		[
+			QuestFinishRewardNonItemAction.Kinah,
+			QuestFinishRewardNonItemAction.Experience,
+			QuestFinishRewardNonItemAction.Title,
+			QuestFinishRewardNonItemAction.AbyssPoints,
+			QuestFinishRewardNonItemAction.DivinePoints,
+			QuestFinishRewardNonItemAction.GloryPoints,
+			QuestFinishRewardNonItemAction.CubeExpansion,
+		], plan.Descriptors.Select(descriptor => descriptor.Action));
+		Assert.Equal(Enumerable.Range(1, 7), plan.Descriptors.Select(descriptor => descriptor.Order));
+		Assert.Equal("Rates.QUEST_KINAH", plan.Descriptors[0].RateSource);
+		Assert.Equal("Rates.XP_QUEST", plan.Descriptors[1].RateSource);
+		Assert.True(plan.Descriptors[1].RequiresTargetNpcL10nLookup);
+		Assert.Equal(203001, plan.Descriptors[1].TargetNpcId);
+		Assert.Equal("Rates.AP_QUEST", plan.Descriptors[3].RateSource);
+		Assert.Equal("Rates.GP", plan.Descriptors[5].RateSource);
+	}
+
+	[Fact]
+	public void CreateNonItemRewardProjection_SkipsZerosAndBypassesApRateForNonCountQuest()
+	{
+		var input = new QuestFinishRewardNonItemProjectionInput(
+			QuestId: 1001,
+			QuestCategory: "NON_COUNT");
+		var template = new QuestFinishRewardNonItemTemplateProjection(AbyssPoints: 500);
+
+		var plan = QuestFinishRewardPlanService.CreateNonItemRewardProjection(input, template);
+
+		var descriptor = Assert.Single(plan.Descriptors);
+		Assert.Equal(QuestFinishRewardNonItemAction.AbyssPoints, descriptor.Action);
+		Assert.Equal(500, descriptor.Amount);
+		Assert.Null(descriptor.RateSource);
+		Assert.True(descriptor.RateBypassed);
+		Assert.Empty(plan.Warnings);
+	}
+
+	[Fact]
+	public void CreateNonItemRewardProjection_ProjectsWarehouseExpansionAndIgnoredXmlWarnings()
+	{
+		var template = new QuestFinishRewardNonItemTemplateProjection(
+			ExtendInventory: 2,
+			ExtendStigma: 1,
+			CollectItemChecks: [182400001, 182400002],
+			InventoryItemCheck: 99);
+
+		var plan = QuestFinishRewardPlanService.CreateNonItemRewardProjection(
+			new QuestFinishRewardNonItemProjectionInput(QuestId: 1001),
+			template);
+
+		var descriptor = Assert.Single(plan.Descriptors);
+		Assert.Equal(QuestFinishRewardNonItemAction.WarehouseExpansion, descriptor.Action);
+		Assert.Equal(2, descriptor.Amount);
+		Assert.Equal(
+		[
+			"extend_stigma",
+			"ccheck",
+			"icheck",
+		], plan.Warnings.Select(warning => warning.FieldName));
+		Assert.All(
+			plan.Warnings,
+			warning => Assert.Equal(
+				QuestFinishRewardNonItemProjectionWarning.XmlFieldIgnoredByJavaGiveReward,
+				warning.Warning));
+	}
+
+	[Fact]
+	public void CreateNonItemRewardProjection_RecordsUnsupportedExtendInventoryValues()
+	{
+		var template = new QuestFinishRewardNonItemTemplateProjection(ExtendInventory: 3);
+
+		var plan = QuestFinishRewardPlanService.CreateNonItemRewardProjection(
+			new QuestFinishRewardNonItemProjectionInput(QuestId: 1001),
+			template);
+
+		Assert.Empty(plan.Descriptors);
+		var warning = Assert.Single(plan.Warnings);
+		Assert.Equal(QuestFinishRewardNonItemProjectionWarning.UnsupportedExtendInventoryValue, warning.Warning);
+		Assert.Equal("extend_inventory", warning.FieldName);
+		Assert.Equal(3, warning.Value);
+	}
 }
