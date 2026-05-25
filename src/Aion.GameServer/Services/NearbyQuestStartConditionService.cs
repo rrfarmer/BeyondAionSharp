@@ -57,6 +57,10 @@ public static class NearbyQuestStartConditionService
 		if (xmlFailure != NearbyQuestStartConditionFailure.None)
 			return NearbyQuestStartConditionResult.Fail(xmlFailure);
 
+		var inventoryFailure = GetInventoryItemFailure(player, template);
+		if (inventoryFailure != NearbyQuestStartConditionFailure.None)
+			return NearbyQuestStartConditionResult.Fail(inventoryFailure);
+
 		var unsupportedFailure = GetUnsupportedDependencyFailure(template);
 		if (unsupportedFailure != NearbyQuestStartConditionFailure.None)
 			return NearbyQuestStartConditionResult.Fail(unsupportedFailure);
@@ -90,7 +94,7 @@ public static class NearbyQuestStartConditionService
 		if (template.HasXmlStartConditions
 			&& (template.XmlStartConditions.Count == 0 || template.HasUnsupportedXmlStartConditionElements))
 			return NearbyQuestStartConditionFailure.UnsupportedXmlStartConditions;
-		if (template.HasInventoryItems)
+		if (template.HasInventoryItems && template.InventoryItems.Count == 0)
 			return NearbyQuestStartConditionFailure.UnsupportedInventoryItems;
 		if (template.CombineSkill != 0)
 			return NearbyQuestStartConditionFailure.UnsupportedCombineSkill;
@@ -98,6 +102,24 @@ public static class NearbyQuestStartConditionService
 			return NearbyQuestStartConditionFailure.UnsupportedNpcFaction;
 
 		return NearbyQuestStartConditionFailure.None;
+	}
+
+	private static NearbyQuestStartConditionFailure GetInventoryItemFailure(
+		Player player,
+		NearbyQuestTemplateSummary template)
+	{
+		if (!template.HasInventoryItems)
+			return NearbyQuestStartConditionFailure.None;
+
+		if (template.InventoryItems.Count == 0)
+			return NearbyQuestStartConditionFailure.UnsupportedInventoryItems;
+
+		// Java parity: QuestService.inventoryItemCheck checks getFirstItemByItemId only.
+		// The XML count is intentionally not enforced for this start-condition gate.
+		return template.InventoryItems.All(requiredItem =>
+			player.InventoryItems.Any(item => item.ItemId == requiredItem.ItemId))
+			? NearbyQuestStartConditionFailure.None
+			: NearbyQuestStartConditionFailure.InventoryItems;
 	}
 
 	private static NearbyQuestStartConditionFailure GetXmlStartConditionFailure(
@@ -228,8 +250,9 @@ public enum NearbyQuestStartConditionFailure
 	Gender = 9,
 	Rank = 10,
 	XmlStartConditions = 11,
-	UnsupportedXmlStartConditions = 12,
-	UnsupportedInventoryItems = 13,
-	UnsupportedCombineSkill = 14,
-	UnsupportedNpcFaction = 15,
+	InventoryItems = 12,
+	UnsupportedXmlStartConditions = 13,
+	UnsupportedInventoryItems = 14,
+	UnsupportedCombineSkill = 15,
+	UnsupportedNpcFaction = 16,
 }

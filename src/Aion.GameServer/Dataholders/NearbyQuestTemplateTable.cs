@@ -32,14 +32,20 @@ public sealed record NearbyQuestTemplateSummary(
 	bool HasInventoryItems = false,
 	int CombineSkill = 0,
 	int NpcFactionId = 0,
+	IReadOnlyList<NearbyQuestInventoryItem>? InventoryItems = null,
 	IReadOnlyList<NearbyQuestXmlStartCondition>? XmlStartConditions = null,
 	bool HasUnsupportedXmlStartConditionElements = false)
 {
 	public IReadOnlySet<string> ClassPermitted { get; } = ClassPermitted ?? new HashSet<string>(StringComparer.Ordinal);
 
+	public IReadOnlyList<NearbyQuestInventoryItem> InventoryItems { get; } =
+		InventoryItems ?? Array.Empty<NearbyQuestInventoryItem>();
+
 	public IReadOnlyList<NearbyQuestXmlStartCondition> XmlStartConditions { get; } =
 		XmlStartConditions ?? Array.Empty<NearbyQuestXmlStartCondition>();
 }
+
+public sealed record NearbyQuestInventoryItem(int ItemId, int? Count = null);
 
 public sealed record NearbyQuestXmlStartCondition(
 	IReadOnlyList<NearbyQuestFinishedCondition>? Finished = null,

@@ -29,6 +29,7 @@ public sealed class NearbyQuestTemplateXmlExtractor
 	{
 		var classPermitted = ReadWhitespaceList(quest.Elements().FirstOrDefault(element => element.Name.LocalName == "class_permitted")?.Value);
 		var startConditions = ReadStartConditions(quest);
+		var inventoryItems = ReadInventoryItems(quest);
 		return new NearbyQuestTemplateSummary(
 			QuestId: ReadRequiredIntAttribute(quest, "id"),
 			MinLevelPermitted: ReadIntAttribute(quest, "minlevel_permitted"),
@@ -40,11 +41,25 @@ public sealed class NearbyQuestTemplateXmlExtractor
 			MaxRepeatCount: ReadIntAttribute(quest, "max_repeat_count", defaultValue: 1),
 			IsTimeBased: !string.IsNullOrWhiteSpace(ReadStringAttribute(quest, "repeat_cycle")),
 			HasXmlStartConditions: startConditions.Count != 0,
-			HasInventoryItems: quest.Elements().Any(element => element.Name.LocalName == "inventory_items"),
+			HasInventoryItems: inventoryItems.Count != 0,
 			CombineSkill: ReadIntAttribute(quest, "combineskill"),
 			NpcFactionId: ReadIntAttribute(quest, "npcfaction_id"),
+			InventoryItems: inventoryItems,
 			XmlStartConditions: startConditions,
 			HasUnsupportedXmlStartConditionElements: startConditions.Any(condition => condition.HasUnsupportedElements));
+	}
+
+	private static IReadOnlyList<NearbyQuestInventoryItem> ReadInventoryItems(XElement quest)
+	{
+		// Java parity breadcrumb: model/templates/quest/InventoryItems contains inventory_item rows.
+		return quest
+			.Elements()
+			.Where(element => element.Name.LocalName == "inventory_items")
+			.SelectMany(element => element.Elements().Where(child => child.Name.LocalName == "inventory_item"))
+			.Select(element => new NearbyQuestInventoryItem(
+				ReadRequiredIntAttribute(element, "item_id"),
+				ReadNullableIntAttribute(element, "count")))
+			.ToArray();
 	}
 
 	private static IReadOnlyList<NearbyQuestXmlStartCondition> ReadStartConditions(XElement quest)
@@ -125,6 +140,12 @@ public sealed class NearbyQuestTemplateXmlExtractor
 	{
 		var value = element.Attribute(attributeName)?.Value;
 		return int.TryParse(value, out var parsed) ? parsed : defaultValue;
+	}
+
+	private static int? ReadNullableIntAttribute(XElement element, string attributeName)
+	{
+		var value = element.Attribute(attributeName)?.Value;
+		return int.TryParse(value, out var parsed) ? parsed : null;
 	}
 
 	private static int ReadIntText(XElement element)

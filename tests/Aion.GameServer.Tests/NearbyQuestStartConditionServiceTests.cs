@@ -96,6 +96,38 @@ public sealed class NearbyQuestStartConditionServiceTests
 	}
 
 	[Fact]
+	public void CheckNearbyStartConditions_AppliesJavaInventoryItemPresenceGate()
+	{
+		var player = new Player
+		{
+			Level = 50,
+			Race = "ELYOS",
+			PlayerClass = "GLADIATOR",
+			Gender = "MALE",
+			InventoryItems =
+			[
+				new InventoryItem { ItemId = 182200001, Count = 1 },
+				new InventoryItem { ItemId = 182200002, Count = 1 },
+			],
+		};
+		var table = new NearbyQuestTemplateTable(
+		[
+			new NearbyQuestTemplateSummary(3501, HasInventoryItems: true, InventoryItems:
+			[
+				new NearbyQuestInventoryItem(182200001, Count: 99),
+				new NearbyQuestInventoryItem(182200002),
+			]),
+			new NearbyQuestTemplateSummary(3502, HasInventoryItems: true, InventoryItems:
+			[
+				new NearbyQuestInventoryItem(182200003),
+			]),
+		]);
+
+		AssertPass(player, 3501, table);
+		AssertFailure(player, 3502, table, NearbyQuestStartConditionFailure.InventoryItems);
+	}
+
+	[Fact]
 	public void CheckNearbyStartConditions_AppliesSupportedJavaXmlStartConditions()
 	{
 		var player = new Player

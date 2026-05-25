@@ -29,10 +29,11 @@ public sealed class NearbyQuestTemplateXmlExtractorTests
 					<class_permitted>
 						GLADIATOR CLERIC
 					</class_permitted>
-					<gender_permitted>MALE</gender_permitted>
-					<inventory_items>
-						<inventory_item item_id="182200001" count="1" />
-					</inventory_items>
+				<gender_permitted>MALE</gender_permitted>
+				<inventory_items>
+					<inventory_item item_id="182200001" count="1" />
+					<inventory_item item_id="182200002" />
+				</inventory_items>
 					<start_conditions>
 						<finished quest_id="1000" reward="2" />
 						<unfinished>1002 1003</unfinished>
@@ -69,6 +70,9 @@ public sealed class NearbyQuestTemplateXmlExtractorTests
 		Assert.Equal(7, startCondition.RequiredTitle);
 		Assert.False(template.HasUnsupportedXmlStartConditionElements);
 		Assert.True(template.HasInventoryItems);
+		Assert.Equal([182200001, 182200002], template.InventoryItems.Select(item => item.ItemId).Order());
+		Assert.Equal(1, template.InventoryItems.Single(item => item.ItemId == 182200001).Count);
+		Assert.Null(template.InventoryItems.Single(item => item.ItemId == 182200002).Count);
 		Assert.Equal(40001, template.CombineSkill);
 		Assert.Equal(12, template.NpcFactionId);
 	}
@@ -98,6 +102,7 @@ public sealed class NearbyQuestTemplateXmlExtractorTests
 		Assert.Empty(template.XmlStartConditions);
 		Assert.False(template.HasUnsupportedXmlStartConditionElements);
 		Assert.False(template.HasInventoryItems);
+		Assert.Empty(template.InventoryItems);
 		Assert.Equal(0, template.CombineSkill);
 		Assert.Equal(0, template.NpcFactionId);
 	}
