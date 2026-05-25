@@ -128,6 +128,43 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 		Assert.Equal(50, await ExecuteScalarLongAsync("SELECT gp FROM abyss_rank WHERE player_id = 1001"));
 	}
 
+	[Fact]
+	public async Task SaveItemPurificationMutation_RollsBackPriorUpdatesWhenRequiredDeleteFailsAgainstJavaSchema_WhenEnabled()
+	{
+		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
+			return;
+
+		// Java source breadcrumbs: InventoryDAO.deleteItems/updateItems commit by category; C# keeps this write set atomic.
+		InitializeDatabaseFactory();
+		await InitializeSchemaAsync();
+		await SeedPlayerAsync();
+		await SeedInventoryItemAsync(9201, itemId: 186000001, count: 5);
+
+		var repository = new MySqlPlayerEnterWorldRepository(
+			new GameServerRuntimeContext(),
+			NullLogger<MySqlPlayerEnterWorldRepository>.Instance);
+
+		var saved = await repository.SaveItemPurificationMutationAsync(
+			PlayerObjectId,
+			materialItemUpdates:
+			[
+				new InventoryItem { ObjectId = 9201, Count = 2 },
+			],
+			deletedMaterialItemObjectIds:
+			[
+				9299,
+			],
+			baseItemUpdate: null,
+			deletedBaseItemObjectId: null,
+			updatedTargetItems: [],
+			addedTargetItems: [],
+			abyssRank: null);
+
+		Assert.False(saved);
+		Assert.Equal(5, await ExecuteScalarLongAsync("SELECT item_count FROM inventory WHERE item_unique_id = 9201"));
+		Assert.Equal(0, await ExecuteScalarLongAsync("SELECT COUNT(*) FROM inventory WHERE item_unique_id = 9299"));
+	}
+
 	private static void InitializeDatabaseFactory()
 	{
 		DatabaseFactory.Initialize(
