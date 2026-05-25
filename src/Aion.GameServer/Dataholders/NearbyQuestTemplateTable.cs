@@ -28,6 +28,7 @@ public sealed record NearbyQuestTemplateSummary(
 	int RequiredRank = 0,
 	int MaxRepeatCount = 1,
 	bool IsTimeBased = false,
+	IReadOnlyList<string>? RepeatCycle = null,
 	bool HasXmlStartConditions = false,
 	bool HasInventoryItems = false,
 	int CombineSkill = 0,
@@ -37,6 +38,8 @@ public sealed record NearbyQuestTemplateSummary(
 	bool HasUnsupportedXmlStartConditionElements = false)
 {
 	public IReadOnlySet<string> ClassPermitted { get; } = ClassPermitted ?? new HashSet<string>(StringComparer.Ordinal);
+
+	public IReadOnlyList<string> RepeatCycle { get; } = RepeatCycle ?? Array.Empty<string>();
 
 	public IReadOnlyList<NearbyQuestInventoryItem> InventoryItems { get; } =
 		InventoryItems ?? Array.Empty<NearbyQuestInventoryItem>();

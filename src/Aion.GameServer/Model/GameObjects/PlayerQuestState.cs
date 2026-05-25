@@ -6,7 +6,9 @@ public sealed record PlayerQuestState(
 	int QuestVars,
 	int Flags,
 	int CompleteCount,
-	int? RewardGroup = null)
+	int? RewardGroup = null,
+	DateTimeOffset? NextRepeatTime = null,
+	DateTimeOffset? CompleteTime = null)
 {
 	public bool IsComplete => string.Equals(Status, "COMPLETE", StringComparison.Ordinal);
 

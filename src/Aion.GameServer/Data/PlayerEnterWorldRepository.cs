@@ -2714,7 +2714,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			await connection.OpenAsync(cancellationToken);
 			await using var command = connection.CreateCommand();
 			command.CommandText = """
-				SELECT quest_id, status, quest_vars, flags, complete_count, reward
+				SELECT quest_id, status, quest_vars, flags, complete_count, next_repeat_time, reward, complete_time
 				FROM player_quests
 				WHERE player_id = ?
 				ORDER BY quest_id
@@ -2732,7 +2732,9 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 						ReadInt(reader, "quest_vars"),
 						ReadInt(reader, "flags"),
 						ReadInt(reader, "complete_count"),
-						ReadNullableInt(reader, "reward")));
+						ReadNullableInt(reader, "reward"),
+						ReadDateTimeOffset(reader, "next_repeat_time"),
+						ReadDateTimeOffset(reader, "complete_time")));
 			}
 
 			return quests;
@@ -4433,6 +4435,20 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	{
 		var ordinal = reader.GetOrdinal(column);
 		return reader.IsDBNull(ordinal) ? null : reader.GetDateTime(ordinal);
+	}
+
+	private static DateTimeOffset? ReadDateTimeOffset(MySqlDataReader reader, string column)
+	{
+		var value = ReadDateTime(reader, column);
+		if (!value.HasValue)
+			return null;
+
+		// Java parity: java.sql.Timestamp represents an instant from the configured server/JDBC timezone.
+		// The current repository has no server-timezone option, so unspecified MySQL DateTime values
+		// are interpreted with the local offset and documented as a remaining verification risk.
+		return value.Value.Kind == DateTimeKind.Unspecified
+			? new DateTimeOffset(value.Value)
+			: new DateTimeOffset(value.Value.ToUniversalTime(), TimeSpan.Zero);
 	}
 
 	private static InventoryItem ReadItem(MySqlDataReader reader)

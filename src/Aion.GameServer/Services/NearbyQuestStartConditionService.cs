@@ -10,7 +10,8 @@ public static class NearbyQuestStartConditionService
 	public static NearbyQuestStartConditionResult CheckNearbyStartConditions(
 		Player player,
 		int questId,
-		NearbyQuestTemplateTable questTemplates)
+		NearbyQuestTemplateTable questTemplates,
+		DateTimeOffset? now = null)
 	{
 		// Java parity breadcrumb: QuestService.checkStartConditions(player, questId, false, 2, false, false, false).
 		if (!questTemplates.TryGetQuest(questId, out var template) || template == null)
@@ -25,7 +26,7 @@ public static class NearbyQuestStartConditionService
 
 			if (string.Equals(questState.Status, "COMPLETE", StringComparison.Ordinal))
 			{
-				var repeatFailure = GetRepeatFailure(questState, template);
+				var repeatFailure = GetRepeatFailure(questState, template, now ?? DateTimeOffset.Now);
 				if (repeatFailure != NearbyQuestStartConditionFailure.None)
 					return NearbyQuestStartConditionResult.Fail(repeatFailure);
 			}
@@ -78,15 +79,19 @@ public static class NearbyQuestStartConditionService
 
 	private static NearbyQuestStartConditionFailure GetRepeatFailure(
 		PlayerQuestState questState,
-		NearbyQuestTemplateSummary template)
+		NearbyQuestTemplateSummary template,
+		DateTimeOffset now)
 	{
 		// Java parity: QuestState.canRepeat blocks max-repeat exhaustion and time-based repeat cooldown.
 		if (template.MaxRepeatCount != 255 && questState.CompleteCount >= template.MaxRepeatCount)
 			return NearbyQuestStartConditionFailure.RepeatCount;
 
-		return template.IsTimeBased
-			? NearbyQuestStartConditionFailure.UnsupportedRepeatTiming
-			: NearbyQuestStartConditionFailure.None;
+		if (template.IsTimeBased
+			&& questState.NextRepeatTime.HasValue
+			&& now < questState.NextRepeatTime.Value)
+			return NearbyQuestStartConditionFailure.RepeatTiming;
+
+		return NearbyQuestStartConditionFailure.None;
 	}
 
 	private static NearbyQuestStartConditionFailure GetUnsupportedDependencyFailure(NearbyQuestTemplateSummary template)
@@ -242,17 +247,18 @@ public enum NearbyQuestStartConditionFailure
 	MissingTemplate = 1,
 	AlreadyStarted = 2,
 	RepeatCount = 3,
-	UnsupportedRepeatTiming = 4,
-	Race = 5,
-	MinLevel = 6,
-	MaxLevel = 7,
-	Class = 8,
-	Gender = 9,
-	Rank = 10,
-	XmlStartConditions = 11,
-	InventoryItems = 12,
-	UnsupportedXmlStartConditions = 13,
-	UnsupportedInventoryItems = 14,
-	UnsupportedCombineSkill = 15,
-	UnsupportedNpcFaction = 16,
+	RepeatTiming = 4,
+	UnsupportedRepeatTiming = 5,
+	Race = 6,
+	MinLevel = 7,
+	MaxLevel = 8,
+	Class = 9,
+	Gender = 10,
+	Rank = 11,
+	XmlStartConditions = 12,
+	InventoryItems = 13,
+	UnsupportedXmlStartConditions = 14,
+	UnsupportedInventoryItems = 15,
+	UnsupportedCombineSkill = 16,
+	UnsupportedNpcFaction = 17,
 }

@@ -53,6 +53,12 @@ public sealed class NearbyQuestStartConditionServiceTests
 				new PlayerQuestState(2003, "COMPLETE", QuestVars: 0, Flags: 0, CompleteCount: 1),
 				new PlayerQuestState(2004, "COMPLETE", QuestVars: 0, Flags: 0, CompleteCount: 1),
 				new PlayerQuestState(2005, "COMPLETE", QuestVars: 0, Flags: 0, CompleteCount: 1),
+				new PlayerQuestState(2006, "COMPLETE", QuestVars: 0, Flags: 0, CompleteCount: 1,
+					NextRepeatTime: new DateTimeOffset(2026, 5, 25, 9, 0, 0, TimeSpan.Zero)),
+				new PlayerQuestState(2007, "COMPLETE", QuestVars: 0, Flags: 0, CompleteCount: 1,
+					NextRepeatTime: new DateTimeOffset(2026, 5, 25, 9, 0, 0, TimeSpan.Zero)),
+				new PlayerQuestState(2008, "COMPLETE", QuestVars: 0, Flags: 0, CompleteCount: 255,
+					NextRepeatTime: new DateTimeOffset(2026, 5, 25, 9, 0, 0, TimeSpan.Zero)),
 			],
 		};
 		var table = new NearbyQuestTemplateTable(
@@ -61,14 +67,22 @@ public sealed class NearbyQuestStartConditionServiceTests
 			new NearbyQuestTemplateSummary(2002),
 			new NearbyQuestTemplateSummary(2003, MaxRepeatCount: 1),
 			new NearbyQuestTemplateSummary(2004, MaxRepeatCount: 2),
-			new NearbyQuestTemplateSummary(2005, MaxRepeatCount: 2, IsTimeBased: true),
+			new NearbyQuestTemplateSummary(2005, MaxRepeatCount: 2, IsTimeBased: true, RepeatCycle: ["ALL"]),
+			new NearbyQuestTemplateSummary(2006, MaxRepeatCount: 2, IsTimeBased: true, RepeatCycle: ["ALL"]),
+			new NearbyQuestTemplateSummary(2007, MaxRepeatCount: 2, IsTimeBased: true, RepeatCycle: ["MON", "WED"]),
+			new NearbyQuestTemplateSummary(2008, MaxRepeatCount: 255, IsTimeBased: true, RepeatCycle: ["ALL"]),
 		]);
+		var beforeReset = new DateTimeOffset(2026, 5, 25, 8, 59, 59, TimeSpan.Zero);
+		var atReset = new DateTimeOffset(2026, 5, 25, 9, 0, 0, TimeSpan.Zero);
 
 		AssertFailure(player, 2001, table, NearbyQuestStartConditionFailure.AlreadyStarted);
 		AssertFailure(player, 2002, table, NearbyQuestStartConditionFailure.AlreadyStarted);
 		AssertFailure(player, 2003, table, NearbyQuestStartConditionFailure.RepeatCount);
 		AssertPass(player, 2004, table);
-		AssertFailure(player, 2005, table, NearbyQuestStartConditionFailure.UnsupportedRepeatTiming);
+		AssertPass(player, 2005, table);
+		AssertFailure(player, 2006, table, NearbyQuestStartConditionFailure.RepeatTiming, beforeReset);
+		AssertPass(player, 2007, table, atReset);
+		AssertPass(player, 2008, table, atReset);
 	}
 
 	[Fact]
@@ -287,9 +301,13 @@ public sealed class NearbyQuestStartConditionServiceTests
 		Assert.Equal(99, NearbyQuestStartConditionService.GetLevelRequirementDiff(4999, playerLevel: 20, table));
 	}
 
-	private static void AssertPass(Player player, int questId, NearbyQuestTemplateTable table)
+	private static void AssertPass(
+		Player player,
+		int questId,
+		NearbyQuestTemplateTable table,
+		DateTimeOffset? now = null)
 	{
-		var result = NearbyQuestStartConditionService.CheckNearbyStartConditions(player, questId, table);
+		var result = NearbyQuestStartConditionService.CheckNearbyStartConditions(player, questId, table, now);
 		Assert.True(result.CanStart);
 		Assert.Equal(NearbyQuestStartConditionFailure.None, result.Failure);
 	}
@@ -298,9 +316,10 @@ public sealed class NearbyQuestStartConditionServiceTests
 		Player player,
 		int questId,
 		NearbyQuestTemplateTable table,
-		NearbyQuestStartConditionFailure expectedFailure)
+		NearbyQuestStartConditionFailure expectedFailure,
+		DateTimeOffset? now = null)
 	{
-		var result = NearbyQuestStartConditionService.CheckNearbyStartConditions(player, questId, table);
+		var result = NearbyQuestStartConditionService.CheckNearbyStartConditions(player, questId, table, now);
 		Assert.False(result.CanStart);
 		Assert.Equal(expectedFailure, result.Failure);
 	}

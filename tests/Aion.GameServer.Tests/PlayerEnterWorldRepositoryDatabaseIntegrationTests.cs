@@ -166,12 +166,12 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 	}
 
 	[Fact]
-	public async Task LoadPlayerQuests_HydratesRewardGroupAgainstJavaSchema_WhenEnabled()
+	public async Task LoadPlayerQuests_HydratesRewardGroupAndRepeatTimesAgainstJavaSchema_WhenEnabled()
 	{
 		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
 			return;
 
-		// Java parity: dao/PlayerQuestListDAO.SELECT_QUERY reads nullable `reward` into QuestState.rewardGroup.
+		// Java parity: dao/PlayerQuestListDAO.SELECT_QUERY reads nullable reward, next_repeat_time, and complete_time.
 		InitializeDatabaseFactory();
 		await InitializeSchemaAsync();
 		await SeedPlayerAsync();
@@ -181,7 +181,7 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 				player_id, quest_id, status, quest_vars, flags, complete_count, next_repeat_time, reward, complete_time
 			)
 			VALUES
-				(1001, 5001, 'COMPLETE', 0, 0, 2, NULL, 3, NULL),
+				(1001, 5001, 'COMPLETE', 0, 0, 2, '2026-05-25 09:00:00', 3, '2026-05-24 13:10:00'),
 				(1001, 5002, 'COMPLETE', 0, 0, 1, NULL, NULL, NULL)
 			""");
 
@@ -193,7 +193,11 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 
 		Assert.Equal(2, quests.Count);
 		Assert.Equal(3, quests.Single(quest => quest.QuestId == 5001).RewardGroup);
+		Assert.NotNull(quests.Single(quest => quest.QuestId == 5001).NextRepeatTime);
+		Assert.NotNull(quests.Single(quest => quest.QuestId == 5001).CompleteTime);
 		Assert.Null(quests.Single(quest => quest.QuestId == 5002).RewardGroup);
+		Assert.Null(quests.Single(quest => quest.QuestId == 5002).NextRepeatTime);
+		Assert.Null(quests.Single(quest => quest.QuestId == 5002).CompleteTime);
 	}
 
 	private static void InitializeDatabaseFactory()

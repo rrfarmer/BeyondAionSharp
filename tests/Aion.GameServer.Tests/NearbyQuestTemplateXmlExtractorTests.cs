@@ -58,6 +58,7 @@ public sealed class NearbyQuestTemplateXmlExtractorTests
 		Assert.Equal(4, template.RequiredRank);
 		Assert.Equal(3, template.MaxRepeatCount);
 		Assert.True(template.IsTimeBased);
+		Assert.Equal(["MON", "WED"], template.RepeatCycle);
 		Assert.True(template.HasXmlStartConditions);
 		var startCondition = Assert.Single(template.XmlStartConditions);
 		var finished = Assert.Single(startCondition.Finished);
@@ -98,6 +99,7 @@ public sealed class NearbyQuestTemplateXmlExtractorTests
 		Assert.Equal(0, template.RequiredRank);
 		Assert.Equal(1, template.MaxRepeatCount);
 		Assert.False(template.IsTimeBased);
+		Assert.Empty(template.RepeatCycle);
 		Assert.False(template.HasXmlStartConditions);
 		Assert.Empty(template.XmlStartConditions);
 		Assert.False(template.HasUnsupportedXmlStartConditionElements);

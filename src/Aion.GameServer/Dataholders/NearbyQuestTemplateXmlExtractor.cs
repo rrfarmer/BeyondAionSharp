@@ -30,6 +30,9 @@ public sealed class NearbyQuestTemplateXmlExtractor
 		var classPermitted = ReadWhitespaceList(quest.Elements().FirstOrDefault(element => element.Name.LocalName == "class_permitted")?.Value);
 		var startConditions = ReadStartConditions(quest);
 		var inventoryItems = ReadInventoryItems(quest);
+		var repeatCycle = ReadWhitespaceList(ReadStringAttribute(quest, "repeat_cycle"))
+			.Select(value => value.ToUpperInvariant())
+			.ToArray();
 		return new NearbyQuestTemplateSummary(
 			QuestId: ReadRequiredIntAttribute(quest, "id"),
 			MinLevelPermitted: ReadIntAttribute(quest, "minlevel_permitted"),
@@ -39,7 +42,8 @@ public sealed class NearbyQuestTemplateXmlExtractor
 			GenderPermitted: ReadChildText(quest, "gender_permitted"),
 			RequiredRank: ReadIntAttribute(quest, "rank"),
 			MaxRepeatCount: ReadIntAttribute(quest, "max_repeat_count", defaultValue: 1),
-			IsTimeBased: !string.IsNullOrWhiteSpace(ReadStringAttribute(quest, "repeat_cycle")),
+			IsTimeBased: repeatCycle.Length != 0,
+			RepeatCycle: repeatCycle,
 			HasXmlStartConditions: startConditions.Count != 0,
 			HasInventoryItems: inventoryItems.Count != 0,
 			CombineSkill: ReadIntAttribute(quest, "combineskill"),
