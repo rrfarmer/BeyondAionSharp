@@ -160,6 +160,55 @@ public sealed class GameServerConnectionItemPurificationTests
 	}
 
 	[Fact]
+	public async Task HandleItemPurificationAsync_SelectsRandomBonusAndAllocatesWhenBonusTableAvailable()
+	{
+		var baseItem = new InventoryItem
+		{
+			ObjectId = 10,
+			ItemId = 100000001,
+			Count = 1,
+			Location = 0,
+			Enchant = 25,
+			TuneCount = 2,
+			RandomBonus = 7,
+		};
+		var material = new InventoryItem { ObjectId = 20, ItemId = 186000001, Count = 2, Location = 0 };
+		var kinah = new InventoryItem { ObjectId = 30, ItemId = 182400001, Count = 10_000, Location = 0 };
+		var player = new Player
+		{
+			ObjectId = 700,
+			AbyssRank = PlayerAbyssRank.Default() with { Ap = 5_000 },
+			InventoryItems = [baseItem, material, kinah],
+		};
+		var idFactory = new IDFactory(Enumerable.Range(1, 9000));
+		await using var pair = await TestConnectionPair.CreateAsync(idFactory);
+		var packet = CreatePacket(
+			playerObjectId: 9999,
+			baseItemObjectId: baseItem.ObjectId,
+			resultItemId: 100000002,
+			requiredMaterialObjectIds: [9001, 9002, 9003, 9004, 9005]);
+
+		var handlerPlan = await pair.Connection.HandleItemPurificationAsync(
+			player,
+			packet,
+			CreatePurificationTable(),
+			CreateItemTemplates(targetStatBonusSetId: 2),
+			itemRandomBonusesOverride: CreateRandomBonuses(set1GroupCount: 1, set2GroupCount: 2),
+			randomBonusRoll: () => 0.75d);
+
+		Assert.NotNull(handlerPlan);
+		Assert.True(handlerPlan.Application.Succeeded);
+		Assert.Equal(9001, handlerPlan.Application.TargetItem?.ObjectId);
+		Assert.Equal(2, handlerPlan.Application.TargetItem?.RandomBonus);
+		Assert.True(handlerPlan.Workflow.Inheritance?.RandomBonusWasRerolled);
+		Assert.False(handlerPlan.Application.RequiresRandomBonusSelection);
+		Assert.True(handlerPlan.PacketPlan.Succeeded);
+		Assert.Equal(9002, idFactory.GetUsedCount());
+		Assert.Equal([10, 20, 30], player.InventoryItems.Select(item => item.ObjectId).ToArray());
+		Assert.Equal(5_000, player.AbyssRank.Ap);
+	}
+
+	[Fact]
 	public async Task HandleItemPurificationAsync_ReleasesAllocatedTargetObjectIdWhenRebuiltPlanIsNotReady()
 	{
 		var baseItem = new InventoryItem
@@ -534,6 +583,22 @@ public sealed class GameServerConnectionItemPurificationTests
 			StatBonusSetId: statBonusSetId,
 			MaxTuneCount: maxTuneCount,
 			MaxEnchantLevel: maxEnchantLevel);
+	}
+
+	private static ItemRandomBonusTable CreateRandomBonuses(int set1GroupCount, int set2GroupCount)
+	{
+		return new ItemRandomBonusTable(
+		[
+			new ItemRandomBonusSummary("INVENTORY", 1, CreateModifierGroups(set1GroupCount), Enumerable.Repeat(1d, set1GroupCount).ToArray()),
+			new ItemRandomBonusSummary("INVENTORY", 2, CreateModifierGroups(set2GroupCount), Enumerable.Repeat(1d, set2GroupCount).ToArray()),
+		]);
+	}
+
+	private static IReadOnlyList<IReadOnlyList<ItemStatModifier>> CreateModifierGroups(int count)
+	{
+		return Enumerable.Range(1, count)
+			.Select(index => (IReadOnlyList<ItemStatModifier>)[new ItemStatModifier("add", $"STAT{index}", index, Bonus: true)])
+			.ToArray();
 	}
 
 	private sealed class TestConnectionPair : IAsyncDisposable

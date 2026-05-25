@@ -95,6 +95,47 @@ public sealed class ItemPurificationInheritanceServiceTests
 	}
 
 	[Fact]
+	public void CreateTargetItemPlan_PreservesRandomBonusWhenDifferentInventorySetsHaveEqualGroupCounts()
+	{
+		var source = CreateSourceItem(enchant: 25, tuneCount: 1, randomBonus: 7);
+		var sourceTemplate = CreateTemplate(100000001, statBonusSetId: 1);
+		var targetTemplate = CreateTemplate(100000002, statBonusSetId: 2);
+		var randomBonuses = CreateRandomBonuses(set1GroupCount: 2, set2GroupCount: 2);
+
+		var plan = ItemPurificationInheritanceService.CreateTargetItemPlan(
+			source,
+			sourceTemplate,
+			targetTemplate,
+			targetObjectId: 9001,
+			itemRandomBonuses: randomBonuses);
+
+		Assert.True(plan.Succeeded);
+		Assert.False(plan.RandomBonusWasRerolled);
+		Assert.Equal(7, plan.TargetItem?.RandomBonus);
+	}
+
+	[Fact]
+	public void CreateTargetItemPlan_SelectsRandomBonusWhenInventoryBonusSetsDifferAndTableIsAvailable()
+	{
+		var source = CreateSourceItem(enchant: 25, tuneCount: 1, randomBonus: 7);
+		var sourceTemplate = CreateTemplate(100000001, statBonusSetId: 1);
+		var targetTemplate = CreateTemplate(100000002, statBonusSetId: 2);
+		var randomBonuses = CreateRandomBonuses(set1GroupCount: 1, set2GroupCount: 2);
+
+		var plan = ItemPurificationInheritanceService.CreateTargetItemPlan(
+			source,
+			sourceTemplate,
+			targetTemplate,
+			targetObjectId: 9001,
+			itemRandomBonuses: randomBonuses,
+			randomBonusRoll: () => 0.75d);
+
+		Assert.True(plan.Succeeded);
+		Assert.True(plan.RandomBonusWasRerolled);
+		Assert.Equal(2, plan.TargetItem?.RandomBonus);
+	}
+
+	[Fact]
 	public void CreateTargetItemPlan_ReportsMissingInputs()
 	{
 		var source = CreateSourceItem(enchant: 15, tuneCount: 0, randomBonus: 0);
@@ -168,5 +209,21 @@ public sealed class ItemPurificationInheritanceServiceTests
 			StatBonusSetId: statBonusSetId,
 			MaxTuneCount: maxTuneCount,
 			MaxEnchantLevel: maxEnchantLevel);
+	}
+
+	private static ItemRandomBonusTable CreateRandomBonuses(int set1GroupCount, int set2GroupCount)
+	{
+		return new ItemRandomBonusTable(
+		[
+			new ItemRandomBonusSummary("INVENTORY", 1, CreateModifierGroups(set1GroupCount), Enumerable.Repeat(1d, set1GroupCount).ToArray()),
+			new ItemRandomBonusSummary("INVENTORY", 2, CreateModifierGroups(set2GroupCount), Enumerable.Repeat(1d, set2GroupCount).ToArray()),
+		]);
+	}
+
+	private static IReadOnlyList<IReadOnlyList<ItemStatModifier>> CreateModifierGroups(int count)
+	{
+		return Enumerable.Range(1, count)
+			.Select(index => (IReadOnlyList<ItemStatModifier>)[new ItemStatModifier("add", $"STAT{index}", index, Bonus: true)])
+			.ToArray();
 	}
 }

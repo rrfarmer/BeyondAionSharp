@@ -16,6 +16,21 @@ public sealed class ItemRandomBonusTable
 
 	public int Count => _bonuses.Values.Sum(group => group.Count);
 
+	public bool AreBonusSetsEqual(string type, int statBonusSetId1, int statBonusSetId2)
+	{
+		// Java parity: dataholders/ItemRandomBonusData.areBonusSetsEqual uses group-count equality
+		// for different set ids because some purified-item sets have equivalent modifier content.
+		if (statBonusSetId1 == statBonusSetId2)
+			return true;
+
+		var set1 = GetBonusSet(type, statBonusSetId1);
+		var set2 = GetBonusSet(type, statBonusSetId2);
+		if (set1 == null || set2 == null)
+			return set1 == set2;
+
+		return set1.ModifierGroups.Count == set2.ModifierGroups.Count;
+	}
+
 	public IReadOnlyList<ItemStatModifier> GetModifiers(string type, int statBonusSetId, int statBonusId)
 	{
 		// Java parity: dataholders/ItemRandomBonusData.getTemplate(StatBonusType, setId, bonusId).
@@ -71,6 +86,14 @@ public sealed class ItemRandomBonusTable
 		}
 
 		return lastPositiveGroup;
+	}
+
+	private ItemRandomBonusSummary? GetBonusSet(string type, int statBonusSetId)
+	{
+		return _bonuses.TryGetValue(type, out var typedBonuses)
+			&& typedBonuses.TryGetValue(statBonusSetId, out var set)
+				? set
+				: null;
 	}
 }
 

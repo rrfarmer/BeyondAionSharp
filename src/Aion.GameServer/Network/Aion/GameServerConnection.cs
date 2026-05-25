@@ -3420,13 +3420,16 @@ public sealed class GameServerConnection : BaseClientConnection
 		ItemPurificationTable? itemPurificationsOverride = null,
 		ItemTemplateTable? itemTemplatesOverride = null,
 		int targetObjectId = 0,
-		int? rerolledRandomBonusId = null)
+		int? rerolledRandomBonusId = null,
+		ItemRandomBonusTable? itemRandomBonusesOverride = null,
+		Func<double>? randomBonusRoll = null)
 	{
 		// Java parity: network/aion/clientpackets/CM_ITEM_PURIFICATION.runImpl uses the active player,
 		// resolves the base item by upgradedItemObjectId, and ignores packet player/material object ids.
 		var staticData = _runtimeContext?.DataManager?.StaticData;
 		var itemPurifications = itemPurificationsOverride ?? staticData?.ItemPurifications;
 		var itemTemplates = itemTemplatesOverride ?? staticData?.ItemTemplates;
+		var itemRandomBonuses = itemRandomBonusesOverride ?? staticData?.ItemRandomBonuses;
 		if (itemPurifications == null || itemTemplates == null)
 			return Task.FromResult<ItemPurificationHandlerPlan?>(null);
 
@@ -3438,7 +3441,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			itemTemplates,
 			packet.ResultItemId,
 			targetObjectId,
-			rerolledRandomBonusId);
+			rerolledRandomBonusId,
+			itemRandomBonuses,
+			randomBonusRoll);
 		if (targetObjectId != 0
 			|| handlerPlan.Application.Status != ItemPurificationApplicationPlanStatus.NeedsTargetObjectIdAllocation
 			|| handlerPlan.Application.RequiresRandomBonusSelection
@@ -3457,7 +3462,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			itemTemplates,
 			packet.ResultItemId,
 			allocatedTargetObjectId,
-			rerolledRandomBonusId);
+			rerolledRandomBonusId,
+			itemRandomBonuses,
+			randomBonusRoll);
 		if (!allocatedPlan.Application.Succeeded)
 			_idFactory.ReleaseId(allocatedTargetObjectId);
 
@@ -3471,7 +3478,9 @@ public sealed class GameServerConnection : BaseClientConnection
 		ItemTemplateTable itemTemplates,
 		int resultItemId,
 		int targetObjectId,
-		int? rerolledRandomBonusId)
+		int? rerolledRandomBonusId,
+		ItemRandomBonusTable? itemRandomBonuses,
+		Func<double>? randomBonusRoll)
 	{
 		var workflow = ItemPurificationWorkflowService.CreateWorkflowPlan(
 			player,
@@ -3480,7 +3489,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			itemTemplates,
 			resultItemId,
 			targetObjectId,
-			rerolledRandomBonusId);
+			rerolledRandomBonusId,
+			itemRandomBonuses,
+			randomBonusRoll);
 		var application = ItemPurificationApplicationPlanService.CreateApplicationPlan(workflow);
 		var sourceTemplate = baseItem == null ? null : itemTemplates.GetItemTemplate(baseItem.ItemId);
 		var targetTemplate = application.TargetItem == null ? null : itemTemplates.GetItemTemplate(application.TargetItem.ItemId);

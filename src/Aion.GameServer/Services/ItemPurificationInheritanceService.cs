@@ -10,7 +10,9 @@ public static class ItemPurificationInheritanceService
 		ItemTemplateSummary? sourceTemplate,
 		ItemTemplateSummary? targetTemplate,
 		int targetObjectId,
-		int? rerolledRandomBonusId = null)
+		int? rerolledRandomBonusId = null,
+		ItemRandomBonusTable? itemRandomBonuses = null,
+		Func<double>? randomBonusRoll = null)
 	{
 		// Java parity: services/item/ItemPurificationService.upgradeItem copies source item state to
 		// ItemFactory.newItem(targetItemId, 1), then applies target-template caps and random-bonus set checks.
@@ -24,11 +26,15 @@ public static class ItemPurificationInheritanceService
 		var enchant = sourceItem.Enchant - 5;
 		var amplified = sourceItem.IsAmplified && enchant >= targetTemplate.MaxEnchantLevel;
 		var buffSkill = amplified && enchant >= 20 ? sourceItem.BuffSkill : 0;
+		var bonusSetsEqual = itemRandomBonuses?.AreBonusSetsEqual("INVENTORY", sourceTemplate.StatBonusSetId, targetTemplate.StatBonusSetId)
+			?? sourceTemplate.StatBonusSetId == targetTemplate.StatBonusSetId;
 		var randomBonus = CalculateRandomBonus(
 			sourceItem.RandomBonus,
-			sourceTemplate.StatBonusSetId,
+			bonusSetsEqual,
 			targetTemplate.StatBonusSetId,
-			rerolledRandomBonusId);
+			rerolledRandomBonusId,
+			itemRandomBonuses,
+			randomBonusRoll);
 
 		var targetItem = new InventoryItem
 		{
@@ -60,23 +66,27 @@ public static class ItemPurificationInheritanceService
 			ItemPurificationInheritanceStatus.Created,
 			targetItem,
 			RandomBonusWasRerolled: sourceItem.RandomBonus > 0
-				&& sourceTemplate.StatBonusSetId != targetTemplate.StatBonusSetId);
+				&& !bonusSetsEqual);
 	}
 
 	private static int CalculateRandomBonus(
 		int sourceRandomBonus,
-		int sourceStatBonusSetId,
+		bool bonusSetsEqual,
 		int targetStatBonusSetId,
-		int? rerolledRandomBonusId)
+		int? rerolledRandomBonusId,
+		ItemRandomBonusTable? itemRandomBonuses,
+		Func<double>? randomBonusRoll)
 	{
 		if (sourceRandomBonus <= 0)
 			return 0;
-		if (sourceStatBonusSetId == targetStatBonusSetId)
+		if (bonusSetsEqual)
 			return sourceRandomBonus;
 
 		// Java parity: TuningAction.getRandomStatBonusIdFor(newItem) is runtime-random and data-backed.
-		// The planner accepts the selected id as an injected projection until live random-bonus selection is wired.
-		return rerolledRandomBonusId ?? 0;
+		// The explicit reroll id remains a deterministic override for tests and future replay tooling.
+		return rerolledRandomBonusId
+			?? itemRandomBonuses?.SelectRandomBonusNumber("INVENTORY", targetStatBonusSetId, randomBonusRoll)
+			?? 0;
 	}
 }
 

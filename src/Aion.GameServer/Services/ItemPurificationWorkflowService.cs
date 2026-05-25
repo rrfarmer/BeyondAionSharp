@@ -12,7 +12,9 @@ public static class ItemPurificationWorkflowService
 		ItemTemplateTable itemTemplates,
 		int resultItemId,
 		int targetObjectId,
-		int? rerolledRandomBonusId = null)
+		int? rerolledRandomBonusId = null,
+		ItemRandomBonusTable? itemRandomBonuses = null,
+		Func<double>? randomBonusRoll = null)
 	{
 		// Java parity: network/aion/clientpackets/CM_ITEM_PURIFICATION validates the selected result
 		// through ItemPurificationService, then decreases materials, then calls upgradeItem.
@@ -58,7 +60,9 @@ public static class ItemPurificationWorkflowService
 			sourceTemplate,
 			targetTemplate,
 			targetObjectId,
-			rerolledRandomBonusId);
+			rerolledRandomBonusId,
+			itemRandomBonuses,
+			randomBonusRoll);
 		if (!inheritance.Succeeded)
 		{
 			return new ItemPurificationWorkflowPlan(
