@@ -86,6 +86,88 @@ public sealed class QuestCompletionCallbackPlanServiceTests
 	}
 
 	[Fact]
+	public void CreatePlan_CarriesDetailedFollowUpPlanWithoutExecutingHandler()
+	{
+		var followUpPlan = QuestCompletionFollowUpPlanService.CreatePlan(
+		[
+			new QuestCompletionFollowUpRequest(
+				FollowUpQuestId: 2001,
+				Decision: QuestCompletionFollowUpDecision.Lock,
+				StartConditionsEvaluatedByCaller: true),
+		]);
+
+		var plan = QuestCompletionCallbackPlanService.CreatePlan(
+			1001,
+		[
+			new QuestCompletionCallbackRegistration(
+				RegisteredQuestId: 2001,
+				HandlerJavaSource: "_2001FollowUp.java",
+				UsesDefaultFollowUp: true,
+				FollowUpQuestId: 2001,
+				FollowUpPlan: followUpPlan),
+		]);
+
+		var descriptor = Assert.Single(plan.Descriptors);
+		Assert.Same(followUpPlan, descriptor.FollowUpPlan);
+		Assert.NotNull(descriptor.FollowUpPlan);
+		var followUpDescriptor = Assert.Single(descriptor.FollowUpPlan!.Descriptors);
+		Assert.Equal(QuestCompletionFollowUpPacketAction.Add, followUpDescriptor.PacketAction);
+		Assert.Equal("LOCKED", followUpDescriptor.TargetQuestStatus);
+		Assert.True(followUpDescriptor.StartConditionsEvaluatedByCaller);
+		Assert.False(followUpDescriptor.IsLive);
+	}
+
+	[Fact]
+	public void CreatePlan_DoesNotCarryDuplicateFollowUpPlanForDuplicateRegistration()
+	{
+		var firstFollowUpPlan = QuestCompletionFollowUpPlanService.CreatePlan(
+		[
+			new QuestCompletionFollowUpRequest(2001, QuestCompletionFollowUpDecision.Lock),
+		]);
+		var duplicateFollowUpPlan = QuestCompletionFollowUpPlanService.CreatePlan(
+		[
+			new QuestCompletionFollowUpRequest(2001, QuestCompletionFollowUpDecision.Start),
+		]);
+
+		var plan = QuestCompletionCallbackPlanService.CreatePlan(
+			1001,
+		[
+			new QuestCompletionCallbackRegistration(2001, "_2001First.java", FollowUpPlan: firstFollowUpPlan),
+			new QuestCompletionCallbackRegistration(2001, "_2001Duplicate.java", FollowUpPlan: duplicateFollowUpPlan),
+		]);
+
+		var descriptor = Assert.Single(plan.Descriptors);
+		Assert.Same(firstFollowUpPlan, descriptor.FollowUpPlan);
+		Assert.Equal("LOCKED", Assert.Single(descriptor.FollowUpPlan!.Descriptors).TargetQuestStatus);
+	}
+
+	[Fact]
+	public void CreatePlan_CarriesThrowingHandlerFollowUpPlanThenStopsRemainingHandlers()
+	{
+		var followUpPlan = QuestCompletionFollowUpPlanService.CreatePlan(
+		[
+			new QuestCompletionFollowUpRequest(3001, QuestCompletionFollowUpDecision.Start),
+		]);
+
+		var plan = QuestCompletionCallbackPlanService.CreatePlan(
+			1001,
+		[
+			Registration(2001, "_2001First.java"),
+			new QuestCompletionCallbackRegistration(
+				RegisteredQuestId: 3001,
+				HandlerJavaSource: "_3001Throws.java",
+				ThrowsBeforeReturning: true,
+				FollowUpPlan: followUpPlan),
+			Registration(4001, "_4001NeverReached.java"),
+		]);
+
+		Assert.Equal(QuestCompletionCallbackPlanStatus.StoppedByHandlerException, plan.Status);
+		Assert.Equal([2001, 3001], plan.Descriptors.Select(descriptor => descriptor.RegisteredQuestId));
+		Assert.Same(followUpPlan, plan.Descriptors[1].FollowUpPlan);
+		Assert.True(plan.Descriptors[1].StopsRemainingHandlers);
+	}
+
+	[Fact]
 	public void CreatePlan_ReturnsNoHandlersForEmptyRegistrationList()
 	{
 		var plan = QuestCompletionCallbackPlanService.CreatePlan(1001, []);

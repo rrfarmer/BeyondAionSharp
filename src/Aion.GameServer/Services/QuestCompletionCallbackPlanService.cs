@@ -19,7 +19,8 @@ public sealed record QuestCompletionCallbackRegistration(
 	bool HandlerExists = true,
 	bool ThrowsBeforeReturning = false,
 	bool UsesDefaultFollowUp = false,
-	int? FollowUpQuestId = null);
+	int? FollowUpQuestId = null,
+	QuestCompletionFollowUpPlan? FollowUpPlan = null);
 
 public sealed record QuestCompletionCallbackDescriptor(
 	int Order,
@@ -31,7 +32,8 @@ public sealed record QuestCompletionCallbackDescriptor(
 	bool UsesSharedQuestEnv,
 	bool StopsRemainingHandlers = false,
 	bool UsesDefaultFollowUp = false,
-	int? FollowUpQuestId = null);
+	int? FollowUpQuestId = null,
+	QuestCompletionFollowUpPlan? FollowUpPlan = null);
 
 public sealed record QuestCompletionCallbackPlan(
 	QuestCompletionCallbackPlanStatus Status,
@@ -70,7 +72,8 @@ public static class QuestCompletionCallbackPlanService
 				UsesSharedQuestEnv: true,
 				StopsRemainingHandlers: registration.ThrowsBeforeReturning,
 				UsesDefaultFollowUp: registration.UsesDefaultFollowUp,
-				FollowUpQuestId: registration.FollowUpQuestId));
+				FollowUpQuestId: registration.FollowUpQuestId,
+				FollowUpPlan: registration.FollowUpPlan));
 
 			if (registration.ThrowsBeforeReturning)
 			{
