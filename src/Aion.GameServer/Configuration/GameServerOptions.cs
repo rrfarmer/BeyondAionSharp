@@ -493,6 +493,14 @@ public sealed class GameServerCoreOptions
 
 	public string TimeZoneId { get; init; } = TimeZoneInfo.Local.Id;
 
+	public TimeZoneInfo GetTimeZone()
+	{
+		// Java parity: GSConfig.TIME_ZONE_ID is a ZoneId resolved from gameserver.timezone,
+		// falling back to the system time zone when the property is empty.
+		return TimeZoneInfo.FindSystemTimeZoneById(
+			string.IsNullOrWhiteSpace(TimeZoneId) ? TimeZoneInfo.Local.Id : TimeZoneId);
+	}
+
 	public bool EnableChatServer { get; init; }
 
 	public byte ChatServerMinLevel { get; init; } = 10;

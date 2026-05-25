@@ -1,3 +1,4 @@
+using Aion.GameServer.Configuration;
 using Aion.GameServer.Services;
 
 namespace Aion.GameServer.Tests;
@@ -31,6 +32,28 @@ public sealed class QuestRepeatDateServiceTests
 		var nextRepeat = QuestRepeatDateService.CalculateNextRepeatTime(now, ["ALL", "WED"], ServerTimeZone);
 
 		Assert.Equal(new DateTimeOffset(2026, 5, 26, 9, 0, 0, ServerTimeZone.BaseUtcOffset), nextRepeat);
+	}
+
+	[Fact]
+	public void CalculateNextRepeatTime_UsesConfiguredGameServerTimezone()
+	{
+		var options = new GameServerOptions { Core = new GameServerCoreOptions { TimeZoneId = "UTC" } };
+		var now = new DateTimeOffset(2026, 5, 25, 8, 59, 0, TimeSpan.Zero);
+
+		var nextRepeat = QuestRepeatDateService.CalculateNextRepeatTime(now, ["ALL"], options);
+
+		Assert.Equal(new DateTimeOffset(2026, 5, 25, 9, 0, 0, TimeSpan.Zero), nextRepeat);
+	}
+
+	[Fact]
+	public void CalculateNextRepeatTime_PreservesDaylightSavingOffsetForConfiguredTimezone()
+	{
+		var newYork = TimeZoneInfo.FindSystemTimeZoneById("America/New_York");
+		var now = new DateTimeOffset(2026, 7, 1, 13, 1, 0, TimeSpan.Zero);
+
+		var nextRepeat = QuestRepeatDateService.CalculateNextRepeatTime(now, ["ALL"], newYork);
+
+		Assert.Equal(new DateTimeOffset(2026, 7, 2, 9, 0, 0, TimeSpan.FromHours(-4)), nextRepeat);
 	}
 
 	[Theory]

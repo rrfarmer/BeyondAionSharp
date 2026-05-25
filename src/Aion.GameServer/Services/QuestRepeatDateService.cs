@@ -1,8 +1,18 @@
+using Aion.GameServer.Configuration;
+
 namespace Aion.GameServer.Services;
 
 public static class QuestRepeatDateService
 {
 	private const int ResetHour = 9;
+
+	public static DateTimeOffset CalculateNextRepeatTime(
+		DateTimeOffset now,
+		IReadOnlyList<string> repeatCycle,
+		GameServerOptions options)
+	{
+		return CalculateNextRepeatTime(now, repeatCycle, options.Core.GetTimeZone());
+	}
 
 	public static DateTimeOffset CalculateNextRepeatTime(
 		DateTimeOffset now,

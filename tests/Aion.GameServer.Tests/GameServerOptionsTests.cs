@@ -141,6 +141,7 @@ public class GameServerOptionsTests
 				gameserver.rates.ap.pve = 1.5, 2.5
 				gameserver.rates.ap.quest = 2.0, 4.0
 				gameserver.rates.ap.dredgion = 3.0, 6.0
+				gameserver.timezone = UTC
 				"""
 			);
 
@@ -158,6 +159,8 @@ public class GameServerOptionsTests
 			Assert.Equal([1.5f, 2.5f], options.Rates.ApPveRates);
 			Assert.Equal([2f, 4f], options.Rates.ApQuestRates);
 			Assert.Equal([3f, 6f], options.Rates.ApDredgionRates);
+			Assert.Equal("UTC", options.Core.TimeZoneId);
+			Assert.Equal(TimeZoneInfo.Utc, options.Core.GetTimeZone());
 		}
 		finally
 		{
