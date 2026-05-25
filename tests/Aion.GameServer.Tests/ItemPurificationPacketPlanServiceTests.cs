@@ -75,6 +75,43 @@ public sealed class ItemPurificationPacketPlanServiceTests
 	}
 
 	[Fact]
+	public void CreatePacketPlan_AttachesConcreteInventoryUpdatePacketWhenRuntimeItemInputProvided()
+	{
+		var baseItem = CreateBaseItem(enchant: 25);
+		var player = CreatePlayer(
+			abyssPoints: 5_000,
+			kinah: 10_000,
+			baseItem,
+			new InventoryItem { ObjectId = 20, ItemId = 186000001, Count = 3, Location = 0 });
+		var application = CreateApplicationPlan(player, baseItem, targetObjectId: 9001);
+		var materialTemplate = CreateTemplate(186000001, maxTuneCount: 0, maxEnchantLevel: 0);
+		var inventoryInputs = new Dictionary<int, ItemPurificationInventoryPacketInput>
+		{
+			[20] = new(
+				new InventoryItem { ObjectId = 20, ItemId = 186000001, Count = 1, Location = 0 },
+				materialTemplate),
+		};
+
+		var plan = ItemPurificationPacketPlanService.CreatePacketPlan(
+			application,
+			"base-name",
+			"target-name",
+			inventoryInputs);
+
+		Assert.True(plan.Succeeded);
+		var materialUpdate = plan.Operations.Single(operation =>
+			operation.Type == ItemPurificationPacketOperationType.InventoryUpdateItem);
+		var concretePacket = Assert.IsType<SmInventoryUpdateItem>(materialUpdate.ConcretePacket);
+		Assert.Equal(SmInventoryUpdateItem.PacketOpCode, concretePacket.OpCode);
+		Assert.Equal(ItemPurificationPacketPlanService.DecreaseItemUseUpdateType, materialUpdate.Mask);
+		Assert.All(
+			plan.Operations.Where(operation =>
+				operation.Type is not ItemPurificationPacketOperationType.UpgradeSuccessSystemMessage
+					and not ItemPurificationPacketOperationType.InventoryUpdateItem),
+			operation => Assert.Null(operation.ConcretePacket));
+	}
+
+	[Fact]
 	public void CreatePacketPlan_FlagsRuntimeInputBlockersButStillListsDryRunPackets()
 	{
 		var baseItem = CreateBaseItem(enchant: 25);

@@ -1,3 +1,5 @@
+using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 
@@ -17,7 +19,8 @@ public static class ItemPurificationPacketPlanService
 	public static ItemPurificationPacketPlan CreatePacketPlan(
 		ItemPurificationApplicationPlan? applicationPlan,
 		string sourceItemName,
-		string targetItemName)
+		string targetItemName,
+		IReadOnlyDictionary<int, ItemPurificationInventoryPacketInput>? inventoryPacketInputs = null)
 	{
 		// Java parity: ItemPurificationService.isPurificationAllowed sends the success system message
 		// before decreaseMaterials and upgradeItem cause storage/AP/item packet fanout.
@@ -40,7 +43,7 @@ public static class ItemPurificationPacketPlanService
 		};
 
 		foreach (var operation in applicationPlan.Operations)
-			AddPacketOperations(packets, operation);
+			AddPacketOperations(packets, operation, inventoryPacketInputs);
 
 		var status = applicationPlan.Succeeded
 			? ItemPurificationPacketPlanStatus.Ready
@@ -50,13 +53,14 @@ public static class ItemPurificationPacketPlanService
 
 	private static void AddPacketOperations(
 		List<ItemPurificationPacketOperation> packets,
-		ItemPurificationApplicationOperation operation)
+		ItemPurificationApplicationOperation operation,
+		IReadOnlyDictionary<int, ItemPurificationInventoryPacketInput>? inventoryPacketInputs)
 	{
 		switch (operation.Type)
 		{
 			case ItemPurificationApplicationOperationType.UpdateMaterialItemCount:
 			case ItemPurificationApplicationOperationType.UpdateBaseItemCount:
-				packets.Add(InventoryUpdate(operation));
+				packets.Add(InventoryUpdate(operation, inventoryPacketInputs));
 				break;
 			case ItemPurificationApplicationOperationType.DeleteMaterialItem:
 			case ItemPurificationApplicationOperationType.DeleteBaseItem:
@@ -78,7 +82,9 @@ public static class ItemPurificationPacketPlanService
 		}
 	}
 
-	private static ItemPurificationPacketOperation InventoryUpdate(ItemPurificationApplicationOperation operation)
+	private static ItemPurificationPacketOperation InventoryUpdate(
+		ItemPurificationApplicationOperation operation,
+		IReadOnlyDictionary<int, ItemPurificationInventoryPacketInput>? inventoryPacketInputs)
 	{
 		return new ItemPurificationPacketOperation(
 			ItemPurificationPacketOperationType.InventoryUpdateItem,
@@ -88,7 +94,25 @@ public static class ItemPurificationPacketPlanService
 			DecreaseItemUseUpdateType,
 			operation.Type,
 			Parameters: Array.Empty<string>(),
-			ConcretePacket: null);
+			ConcretePacket: CreateInventoryUpdatePacket(operation, inventoryPacketInputs));
+	}
+
+	private static GameServerPacket? CreateInventoryUpdatePacket(
+		ItemPurificationApplicationOperation operation,
+		IReadOnlyDictionary<int, ItemPurificationInventoryPacketInput>? inventoryPacketInputs)
+	{
+		if (inventoryPacketInputs == null || !inventoryPacketInputs.TryGetValue(operation.ObjectId, out var input))
+			return null;
+
+		// Java parity: ItemPacketService.sendItemUpdatePacket(CUBE, item, DEC_ITEM_USE)
+		// constructs SM_INVENTORY_UPDATE_ITEM from the already-mutated Item instance.
+		if (input.Item.ObjectId != operation.ObjectId
+			|| input.Item.ItemId != operation.ItemId
+			|| input.Item.Count != operation.NewCount
+			|| input.Template.TemplateId != operation.ItemId)
+			return null;
+
+		return new SmInventoryUpdateItem(input.Item, input.Template, DecreaseItemUseUpdateType);
 	}
 
 	private static ItemPurificationPacketOperation DeleteItem(ItemPurificationApplicationOperation operation)
@@ -178,6 +202,11 @@ public sealed record ItemPurificationPacketOperation(
 	ItemPurificationApplicationOperationType? SourceOperationType,
 	IReadOnlyList<string> Parameters,
 	GameServerPacket? ConcretePacket);
+
+// Caller-provided post-mutation snapshot for Java SM_INVENTORY_UPDATE_ITEM construction.
+public sealed record ItemPurificationInventoryPacketInput(
+	InventoryItem Item,
+	ItemTemplateSummary Template);
 
 public enum ItemPurificationPacketPlanStatus
 {
