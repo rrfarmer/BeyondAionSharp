@@ -322,6 +322,8 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public PlayerAbyssRank? ItemPurificationAbyssRank { get; private set; }
 
+	public bool SaveItemPurificationMutationResult { get; init; } = true;
+
 	public IReadOnlyList<InventoryItem> ItemPurificationMaterialItemUpdates { get; private set; } = Array.Empty<InventoryItem>();
 
 	public IReadOnlyList<int> ItemPurificationDeletedMaterialItemObjectIds { get; private set; } = Array.Empty<int>();
@@ -588,7 +590,7 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		ItemPurificationUpdatedTargetItems = updatedTargetItems;
 		ItemPurificationAddedTargetItems = addedTargetItems;
 		ItemPurificationAbyssRank = abyssRank;
-		return Task.FromResult(true);
+		return Task.FromResult(SaveItemPurificationMutationResult);
 	}
 
 	public Task<bool> SaveItemRemodelMutationAsync(
