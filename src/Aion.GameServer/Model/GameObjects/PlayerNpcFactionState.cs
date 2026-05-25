@@ -46,6 +46,15 @@ public sealed class PlayerNpcFactionsSnapshot
 		return _factions.TryGetValue(factionId, out var faction) && faction.IsActive;
 	}
 
+	public bool CanStartAssignedQuest(int factionId, int questId)
+	{
+		// Java parity breadcrumb: QuestService.startQuest rejects NPC faction quest starts
+		// unless the exact faction is active and its assigned quest id matches.
+		return _factions.TryGetValue(factionId, out var faction)
+			&& faction.IsActive
+			&& faction.QuestId == questId;
+	}
+
 	public bool CanStartQuest(bool isMentorQuest, int currentEpochSeconds)
 	{
 		// Java parity breadcrumb: NpcFactions.canStartQuest uses the active mentor/non-mentor slot
