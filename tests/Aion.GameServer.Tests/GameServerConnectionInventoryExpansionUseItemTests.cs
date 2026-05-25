@@ -468,6 +468,24 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task CaptureSelectableDecomposeObservationJson_WithRealJavaXmlCandidate_ProjectsRealRewardCounts()
+	{
+		var candidate = SelectableDecomposeTestData.RealJavaXmlCandidate;
+		var decrementJson = await CaptureSelectableDecomposeObservationJsonAsync("JD-SEL-DEC-001", sourceCount: 2, selectIndex: 1, candidate);
+		var deleteJson = await CaptureSelectableDecomposeObservationJsonAsync("JD-SEL-DEL-001", sourceCount: 1, selectIndex: 0, candidate);
+
+		using var decrement = JsonDocument.Parse(decrementJson);
+		Assert.Equal(candidate.SourceItemId, GetPacket(decrement.RootElement, 1).GetProperty("decoded_fields").GetProperty("item_id").GetInt32());
+		Assert.Equal(candidate.RewardIndex1ItemId, GetPacket(decrement.RootElement, 5).GetProperty("decoded_fields").GetProperty("item_id").GetInt32());
+		Assert.Equal(candidate.RewardIndex1Count, GetPacket(decrement.RootElement, 5).GetProperty("decoded_fields").GetProperty("count").GetInt64());
+
+		using var delete = JsonDocument.Parse(deleteJson);
+		Assert.Equal(candidate.SourceItemId, GetPacket(delete.RootElement, 1).GetProperty("decoded_fields").GetProperty("item_id").GetInt32());
+		Assert.Equal(candidate.RewardIndex0ItemId, GetPacket(delete.RootElement, 6).GetProperty("decoded_fields").GetProperty("item_id").GetInt32());
+		Assert.Equal(candidate.RewardIndex0Count, GetPacket(delete.RootElement, 6).GetProperty("decoded_fields").GetProperty("count").GetInt64());
+	}
+
+	[Fact]
 	public async Task CompareSelectableDecomposeJavaArtifacts_WhenPresent_ComparesContractFields()
 	{
 		var artifactRoot = Path.Combine(FindRepositoryRoot(), "docs", "parity-artifacts", "java", "decompose", "selectable");
@@ -1182,10 +1200,15 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		return frame[7..];
 	}
 
-	private static async Task<string> CaptureSelectableDecomposeObservationJsonAsync(string scenarioId, int sourceCount, int selectIndex)
+	private static async Task<string> CaptureSelectableDecomposeObservationJsonAsync(
+		string scenarioId,
+		int sourceCount,
+		int selectIndex,
+		SelectableDecomposeTestData? selectableData = null)
 	{
-		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(idFactory: new IDFactory([5001]));
-		var player = CreatePlayer(itemId: 101, count: sourceCount);
+		var selectableFixture = selectableData ?? SelectableDecomposeTestData.Default;
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(idFactory: new IDFactory([5001]), selectableData: selectableFixture);
+		var player = CreatePlayer(itemId: selectableFixture.SourceItemId, count: sourceCount);
 
 		await InvokeHandleSelectDecomposableAsync(fixture.Connection, player, CreateSelectDecomposable(sourceItemObjectId: 5001, selectIndex));
 
@@ -1213,7 +1236,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 					new
 					{
 						object_id = 5001,
-						item_id = 101,
+						item_id = selectableFixture.SourceItemId,
 						count = sourceCount,
 						location = "CUBE",
 						equipped = false,
@@ -1684,6 +1707,20 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 
 	private readonly record struct SelectableDecomposeArtifactScenario(string ScenarioId, int SourceCount, int SelectIndex);
 
+	private sealed record SelectableDecomposeTestData(
+		int SourceItemId,
+		int RewardIndex0ItemId,
+		int RewardIndex0Count,
+		int RewardIndex1ItemId,
+		int RewardIndex1Count)
+	{
+		public static SelectableDecomposeTestData Default { get; } = new(101, 201, 2, 202, 3);
+
+		// Java source-of-truth breadcrumb: data/static_data/decomposable_items/decomposable_items.xml
+		// Smart Greater Scroll Bundle -> Greater Running Scroll x100 / Greater Courage Scroll x100.
+		public static SelectableDecomposeTestData RealJavaXmlCandidate { get; } = new(188051516, 164000076, 100, 164000073, 100);
+	}
+
 	private sealed class InventoryExpansionUseItemFixture : IAsyncDisposable
 	{
 		private readonly TcpClient _client;
@@ -1713,13 +1750,15 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			EmptyPlayerEnterWorldRepository? repository = null,
 			bool includeThreadPoolManager = false,
 			IDFactory? idFactory = null,
-			bool enableCryptKeyBeforeRun = true)
+			bool enableCryptKeyBeforeRun = true,
+			SelectableDecomposeTestData? selectableData = null)
 		{
+			var selectableFixture = selectableData ?? SelectableDecomposeTestData.Default;
 			var tempRoot = Path.Combine(Path.GetTempPath(), "aion-inventory-expansion-use-" + Guid.NewGuid().ToString("N"));
 			Directory.CreateDirectory(Path.Combine(tempRoot, "game-server", "data", "static_data"));
 			await File.WriteAllTextAsync(
 				Path.Combine(tempRoot, "game-server", "data", "static_data", "static_data.xml"),
-				"""
+				$"""
 				<?xml version="1.0" encoding="UTF-8"?>
 				<static_data>
 					<player_experience_table>
@@ -1747,7 +1786,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 								<decompose/>
 							</actions>
 						</item_template>
-						<item_template id="101" name="Test Selectable Decompose Box" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="1">
+						<item_template id="{selectableFixture.SourceItemId}" name="Test Selectable Decompose Box" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="1">
 							<actions>
 								<decompose/>
 							</actions>
@@ -1758,8 +1797,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 							</actions>
 						</item_template>
 						<item_template id="200" name="Test Decompose Reward" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
-						<item_template id="201" name="Test Selectable Reward 1" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
-						<item_template id="202" name="Test Selectable Reward 2" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
+						<item_template id="{selectableFixture.RewardIndex0ItemId}" name="Test Selectable Reward 1" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
+						<item_template id="{selectableFixture.RewardIndex1ItemId}" name="Test Selectable Reward 2" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
 						<item_template id="204" name="Test Special Decompose Reward" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="1">
 							<inventory id="2"/>
 						</item_template>
@@ -1778,10 +1817,10 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 								<item id="204" min_count="1" max_count="1"/>
 							</items>
 						</decomposable>
-						<decomposable item_id="101" selectable="true">
+						<decomposable item_id="{selectableFixture.SourceItemId}" selectable="true">
 							<items chance="100" minlevel="1" maxlevel="1">
-								<item id="201" min_count="2" max_count="2" race="ELYOS" player_classes="RANGER"/>
-								<item id="202" min_count="3" max_count="3"/>
+								<item id="{selectableFixture.RewardIndex0ItemId}" min_count="{selectableFixture.RewardIndex0Count}" max_count="{selectableFixture.RewardIndex0Count}" race="ELYOS" player_classes="RANGER"/>
+								<item id="{selectableFixture.RewardIndex1ItemId}" min_count="{selectableFixture.RewardIndex1Count}" max_count="{selectableFixture.RewardIndex1Count}"/>
 								<item id="203" min_count="1" max_count="1" race="ASMODIANS"/>
 							</items>
 						</decomposable>
