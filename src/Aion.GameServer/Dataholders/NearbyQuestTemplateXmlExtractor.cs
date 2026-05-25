@@ -50,6 +50,7 @@ public sealed class NearbyQuestTemplateXmlExtractor
 			CombineSkillPoint: ReadIntAttribute(quest, "combine_skillpoint"),
 			QuestCategory: ReadStringAttribute(quest, "category", defaultValue: "QUEST"),
 			NpcFactionId: ReadIntAttribute(quest, "npcfaction_id"),
+			IsMentorQuest: !string.Equals(ReadStringAttribute(quest, "mentor_type", defaultValue: "NONE"), "NONE", StringComparison.Ordinal),
 			InventoryItems: inventoryItems,
 			XmlStartConditions: startConditions,
 			HasUnsupportedXmlStartConditionElements: startConditions.Any(condition => condition.HasUnsupportedElements));

@@ -162,7 +162,6 @@ public sealed class QuestNpcStartRegistrationSourceRealDataAuditTests
 			markerProjection.RejectedQuestIds.Values,
 			failure => failure is NearbyQuestStartConditionFailure.UnsupportedXmlStartConditions
 				or NearbyQuestStartConditionFailure.UnsupportedInventoryItems
-				or NearbyQuestStartConditionFailure.UnsupportedNpcFaction
 				or NearbyQuestStartConditionFailure.UnsupportedRepeatTiming);
 	}
 

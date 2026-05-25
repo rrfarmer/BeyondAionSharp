@@ -189,6 +189,9 @@ public sealed class Player
 
 	public IReadOnlyList<PlayerQuestState> Quests { get; set; } = Array.Empty<PlayerQuestState>();
 
+	// Java parity: model/gameobjects/player/Player.getNpcFactions queried by QuestService.checkStartConditions.
+	public PlayerNpcFactionsSnapshot NpcFactions { get; set; } = PlayerNpcFactionsSnapshot.Empty;
+
 	public IReadOnlyList<PlayerTitle> Titles { get; set; } = Array.Empty<PlayerTitle>();
 
 	public IReadOnlyList<PlayerMotion> Motions { get; set; } = Array.Empty<PlayerMotion>();

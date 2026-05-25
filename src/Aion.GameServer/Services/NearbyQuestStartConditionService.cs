@@ -19,6 +19,7 @@ public static class NearbyQuestStartConditionService
 		if (!questTemplates.TryGetQuest(questId, out var template) || template == null)
 			return NearbyQuestStartConditionResult.Fail(NearbyQuestStartConditionFailure.MissingTemplate);
 
+		var effectiveNow = now ?? DateTimeOffset.Now;
 		var questState = player.Quests.FirstOrDefault(quest => quest.QuestId == questId);
 		if (questState != null)
 		{
@@ -28,7 +29,7 @@ public static class NearbyQuestStartConditionService
 
 			if (string.Equals(questState.Status, "COMPLETE", StringComparison.Ordinal))
 			{
-				var repeatFailure = GetRepeatFailure(questState, template, now ?? DateTimeOffset.Now);
+				var repeatFailure = GetRepeatFailure(questState, template, effectiveNow);
 				if (repeatFailure != NearbyQuestStartConditionFailure.None)
 					return NearbyQuestStartConditionResult.Fail(repeatFailure);
 			}
@@ -67,6 +68,10 @@ public static class NearbyQuestStartConditionService
 		var combineSkillFailure = GetCombineSkillFailure(player, template);
 		if (combineSkillFailure != NearbyQuestStartConditionFailure.None)
 			return NearbyQuestStartConditionResult.Fail(combineSkillFailure);
+
+		var npcFactionFailure = GetNpcFactionFailure(player, template, effectiveNow);
+		if (npcFactionFailure != NearbyQuestStartConditionFailure.None)
+			return NearbyQuestStartConditionResult.Fail(npcFactionFailure);
 
 		var unsupportedFailure = GetUnsupportedDependencyFailure(template);
 		if (unsupportedFailure != NearbyQuestStartConditionFailure.None)
@@ -107,10 +112,28 @@ public static class NearbyQuestStartConditionService
 			return NearbyQuestStartConditionFailure.UnsupportedXmlStartConditions;
 		if (template.HasInventoryItems && template.InventoryItems.Count == 0)
 			return NearbyQuestStartConditionFailure.UnsupportedInventoryItems;
-		if (template.NpcFactionId != 0)
-			return NearbyQuestStartConditionFailure.UnsupportedNpcFaction;
 
 		return NearbyQuestStartConditionFailure.None;
+	}
+
+	private static NearbyQuestStartConditionFailure GetNpcFactionFailure(
+		Player player,
+		NearbyQuestTemplateSummary template,
+		DateTimeOffset now)
+	{
+		if (template.NpcFactionId == 0)
+			return NearbyQuestStartConditionFailure.None;
+
+		// Java parity: QuestService.checkStartConditions first checks non-time-based
+		// NpcFactions.canStartQuest, then requires the exact faction row to be active.
+		var epochSeconds = now.ToUnixTimeSeconds() > int.MaxValue ? int.MaxValue : (int) now.ToUnixTimeSeconds();
+		if (!template.IsTimeBased
+			&& !player.NpcFactions.CanStartQuest(template.IsMentorQuest, epochSeconds))
+			return NearbyQuestStartConditionFailure.NpcFaction;
+
+		return player.NpcFactions.HasActiveFaction(template.NpcFactionId)
+			? NearbyQuestStartConditionFailure.None
+			: NearbyQuestStartConditionFailure.NpcFaction;
 	}
 
 	private static NearbyQuestStartConditionFailure GetCombineSkillFailure(
@@ -295,4 +318,5 @@ public enum NearbyQuestStartConditionFailure
 	UnsupportedInventoryItems = 16,
 	UnsupportedCombineSkill = 17,
 	UnsupportedNpcFaction = 18,
+	NpcFaction = 19,
 }

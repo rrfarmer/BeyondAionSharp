@@ -25,7 +25,7 @@ public sealed class NearbyQuestTemplateXmlExtractorTests
 			<quests>
 				<quest id="1001" minlevel_permitted="19" maxlevel_permitted="45" race_permitted="ELYOS" rank="4"
 				       max_repeat_count="3" combineskill="40001" combine_skillpoint="199" npcfaction_id="12"
-				       category="TASK" repeat_cycle="Mon Wed">
+				       category="TASK" mentor_type="MENTOR" repeat_cycle="Mon Wed">
 					<class_permitted>
 						GLADIATOR CLERIC
 					</class_permitted>
@@ -78,6 +78,7 @@ public sealed class NearbyQuestTemplateXmlExtractorTests
 		Assert.Equal(199, template.CombineSkillPoint);
 		Assert.Equal("TASK", template.QuestCategory);
 		Assert.Equal(12, template.NpcFactionId);
+		Assert.True(template.IsMentorQuest);
 	}
 
 	[Fact]
@@ -111,6 +112,7 @@ public sealed class NearbyQuestTemplateXmlExtractorTests
 		Assert.Equal(0, template.CombineSkillPoint);
 		Assert.Equal("QUEST", template.QuestCategory);
 		Assert.Equal(0, template.NpcFactionId);
+		Assert.False(template.IsMentorQuest);
 	}
 
 	[Fact]

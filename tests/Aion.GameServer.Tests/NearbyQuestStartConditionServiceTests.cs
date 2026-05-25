@@ -104,7 +104,57 @@ public sealed class NearbyQuestStartConditionServiceTests
 
 		AssertFailure(player, 3001, table, NearbyQuestStartConditionFailure.UnsupportedXmlStartConditions);
 		AssertFailure(player, 3002, table, NearbyQuestStartConditionFailure.UnsupportedInventoryItems);
-		AssertFailure(player, 3004, table, NearbyQuestStartConditionFailure.UnsupportedNpcFaction);
+		AssertFailure(player, 3004, table, NearbyQuestStartConditionFailure.NpcFaction);
+	}
+
+	[Fact]
+	public void CheckNearbyStartConditions_AppliesJavaNpcFactionGate()
+	{
+		var now = DateTimeOffset.FromUnixTimeSeconds(1_800);
+		var player = new Player
+		{
+			Level = 50,
+			Race = "ELYOS",
+			PlayerClass = "GLADIATOR",
+			Gender = "MALE",
+			NpcFactions = new PlayerNpcFactionsSnapshot(
+			[
+				new PlayerNpcFactionState(
+					FactionId: 2,
+					IsActive: true,
+					IsMentor: false,
+					TimeEpochSeconds: 1_000,
+					State: PlayerNpcFactionQuestState.Complete),
+				new PlayerNpcFactionState(
+					FactionId: 4,
+					IsActive: false,
+					IsMentor: false,
+					TimeEpochSeconds: 0,
+					State: PlayerNpcFactionQuestState.Noting),
+				new PlayerNpcFactionState(
+					FactionId: 10,
+					IsActive: true,
+					IsMentor: true,
+					TimeEpochSeconds: 2_000,
+					State: PlayerNpcFactionQuestState.Complete),
+			]),
+		};
+		var table = new NearbyQuestTemplateTable(
+		[
+			new NearbyQuestTemplateSummary(3601, NpcFactionId: 2),
+			new NearbyQuestTemplateSummary(3602, NpcFactionId: 4),
+			new NearbyQuestTemplateSummary(3603, NpcFactionId: 3),
+			new NearbyQuestTemplateSummary(3604, NpcFactionId: 10, IsMentorQuest: true),
+			new NearbyQuestTemplateSummary(3605, NpcFactionId: 10, IsMentorQuest: true, IsTimeBased: true, RepeatCycle: ["ALL"]),
+			new NearbyQuestTemplateSummary(3606, NpcFactionId: 11, IsMentorQuest: true, IsTimeBased: true, RepeatCycle: ["ALL"]),
+		]);
+
+		AssertPass(player, 3601, table, now);
+		AssertFailure(player, 3602, table, NearbyQuestStartConditionFailure.NpcFaction, now);
+		AssertFailure(player, 3603, table, NearbyQuestStartConditionFailure.NpcFaction, now);
+		AssertFailure(player, 3604, table, NearbyQuestStartConditionFailure.NpcFaction, now);
+		AssertPass(player, 3605, table, now);
+		AssertFailure(player, 3606, table, NearbyQuestStartConditionFailure.NpcFaction, now);
 	}
 
 	[Fact]
