@@ -67,6 +67,26 @@ public static class ItemChargeService
 			.ToArray();
 	}
 
+	public static ItemChargeAbyssPointPaymentPlan CreateAbyssPointPaymentPlan(
+		Player? player,
+		long requiredAbyssPoints,
+		AbyssPointsAddOptions? options = null)
+	{
+		// Java parity: services/item/ItemChargeService.processAPPayment checks current AP before
+		// delegating to AbyssPointsService.addAp; callers must not rely on AP clamping as a spend guard.
+		if (requiredAbyssPoints <= 0)
+			return ItemChargeAbyssPointPaymentPlan.NoPaymentRequired();
+		if (player == null)
+			return ItemChargeAbyssPointPaymentPlan.NoPlayer(requiredAbyssPoints);
+		if (requiredAbyssPoints > int.MaxValue)
+			return ItemChargeAbyssPointPaymentPlan.PaymentTooLarge(player.AbyssRank.Ap, requiredAbyssPoints);
+		if (player.AbyssRank.Ap < requiredAbyssPoints)
+			return ItemChargeAbyssPointPaymentPlan.InsufficientAbyssPoints(player.AbyssRank.Ap, requiredAbyssPoints);
+
+		var abyssPointsPlan = AbyssPointsService.CreateAddApPlan(player, -(int)requiredAbyssPoints, options);
+		return ItemChargeAbyssPointPaymentPlan.Ready(player.AbyssRank.Ap, requiredAbyssPoints, abyssPointsPlan);
+	}
+
 	public static long GetPayAmountForService(InventoryItem item, ItemImprovement improvement, int chargeLevel)
 	{
 		// Java parity: services/item/ItemChargeService.getPayAmountForService.
@@ -288,6 +308,69 @@ public sealed record ItemChargePlan(
 	long PaymentAmount)
 {
 	public int ChargeWay => Improvement.ChargeWay;
+}
+
+public sealed record ItemChargeAbyssPointPaymentPlan(
+	ItemChargeAbyssPointPaymentStatus Status,
+	int CurrentAbyssPoints,
+	long RequiredAbyssPoints,
+	AbyssPointsAddPlan? AbyssPointsPlan)
+{
+	public bool Succeeded => Status is ItemChargeAbyssPointPaymentStatus.Ready or ItemChargeAbyssPointPaymentStatus.NoPaymentRequired;
+
+	public static ItemChargeAbyssPointPaymentPlan Ready(int currentAbyssPoints, long requiredAbyssPoints, AbyssPointsAddPlan abyssPointsPlan)
+	{
+		return new ItemChargeAbyssPointPaymentPlan(
+			ItemChargeAbyssPointPaymentStatus.Ready,
+			currentAbyssPoints,
+			requiredAbyssPoints,
+			abyssPointsPlan);
+	}
+
+	public static ItemChargeAbyssPointPaymentPlan NoPaymentRequired()
+	{
+		return new ItemChargeAbyssPointPaymentPlan(
+			ItemChargeAbyssPointPaymentStatus.NoPaymentRequired,
+			CurrentAbyssPoints: 0,
+			RequiredAbyssPoints: 0,
+			AbyssPointsPlan: null);
+	}
+
+	public static ItemChargeAbyssPointPaymentPlan NoPlayer(long requiredAbyssPoints)
+	{
+		return new ItemChargeAbyssPointPaymentPlan(
+			ItemChargeAbyssPointPaymentStatus.NoPlayer,
+			CurrentAbyssPoints: 0,
+			requiredAbyssPoints,
+			AbyssPointsPlan: null);
+	}
+
+	public static ItemChargeAbyssPointPaymentPlan InsufficientAbyssPoints(int currentAbyssPoints, long requiredAbyssPoints)
+	{
+		return new ItemChargeAbyssPointPaymentPlan(
+			ItemChargeAbyssPointPaymentStatus.InsufficientAbyssPoints,
+			currentAbyssPoints,
+			requiredAbyssPoints,
+			AbyssPointsPlan: null);
+	}
+
+	public static ItemChargeAbyssPointPaymentPlan PaymentTooLarge(int currentAbyssPoints, long requiredAbyssPoints)
+	{
+		return new ItemChargeAbyssPointPaymentPlan(
+			ItemChargeAbyssPointPaymentStatus.PaymentTooLarge,
+			currentAbyssPoints,
+			requiredAbyssPoints,
+			AbyssPointsPlan: null);
+	}
+}
+
+public enum ItemChargeAbyssPointPaymentStatus
+{
+	Ready,
+	NoPaymentRequired,
+	NoPlayer,
+	InsufficientAbyssPoints,
+	PaymentTooLarge,
 }
 
 public sealed record ItemChargeUpdateResult(

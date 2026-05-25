@@ -95,6 +95,63 @@ public sealed class ItemChargeServiceTests
 	}
 
 	[Fact]
+	public void CreateAbyssPointPaymentPlan_RejectsInsufficientApBeforeAbyssPointsClamp()
+	{
+		var player = CreatePlayer(rank: 18);
+		player.AbyssRank = PlayerAbyssRank.Default() with { Ap = 400, Rank = 1, MaxRank = 1 };
+
+		var paymentPlan = ItemChargeService.CreateAbyssPointPaymentPlan(player, requiredAbyssPoints: 500);
+
+		Assert.False(paymentPlan.Succeeded);
+		Assert.Equal(ItemChargeAbyssPointPaymentStatus.InsufficientAbyssPoints, paymentPlan.Status);
+		Assert.Equal(400, paymentPlan.CurrentAbyssPoints);
+		Assert.Equal(500, paymentPlan.RequiredAbyssPoints);
+		Assert.Null(paymentPlan.AbyssPointsPlan);
+		Assert.Equal(400, player.AbyssRank.Ap);
+	}
+
+	[Fact]
+	public void CreateAbyssPointPaymentPlan_CreatesNegativeAbyssPointsPlanWhenAffordable()
+	{
+		var player = CreatePlayer(rank: 18);
+		player.AbyssRank = PlayerAbyssRank.Default() with { Ap = 900, Rank = 1, MaxRank = 1 };
+
+		var paymentPlan = ItemChargeService.CreateAbyssPointPaymentPlan(player, requiredAbyssPoints: 500);
+
+		Assert.True(paymentPlan.Succeeded);
+		Assert.Equal(ItemChargeAbyssPointPaymentStatus.Ready, paymentPlan.Status);
+		Assert.NotNull(paymentPlan.AbyssPointsPlan);
+		Assert.Equal(900, paymentPlan.CurrentAbyssPoints);
+		Assert.Equal(500, paymentPlan.RequiredAbyssPoints);
+		Assert.Equal(400, paymentPlan.AbyssPointsPlan.UpdatedRank?.Ap);
+		Assert.Equal(-500, paymentPlan.AbyssPointsPlan.Added);
+		Assert.Equal(900, player.AbyssRank.Ap);
+	}
+
+	[Fact]
+	public void CreateAbyssPointPaymentPlan_RejectsPaymentsThatCannotMatchJavaIntSpend()
+	{
+		var player = CreatePlayer(rank: 18);
+		player.AbyssRank = PlayerAbyssRank.Default() with { Ap = int.MaxValue, Rank = 1, MaxRank = 1 };
+
+		var paymentPlan = ItemChargeService.CreateAbyssPointPaymentPlan(player, requiredAbyssPoints: (long)int.MaxValue + 1);
+
+		Assert.False(paymentPlan.Succeeded);
+		Assert.Equal(ItemChargeAbyssPointPaymentStatus.PaymentTooLarge, paymentPlan.Status);
+		Assert.Null(paymentPlan.AbyssPointsPlan);
+	}
+
+	[Fact]
+	public void CreateAbyssPointPaymentPlan_SkipsZeroPayment()
+	{
+		var paymentPlan = ItemChargeService.CreateAbyssPointPaymentPlan(CreatePlayer(rank: 18), requiredAbyssPoints: 0);
+
+		Assert.True(paymentPlan.Succeeded);
+		Assert.Equal(ItemChargeAbyssPointPaymentStatus.NoPaymentRequired, paymentPlan.Status);
+		Assert.Null(paymentPlan.AbyssPointsPlan);
+	}
+
+	[Fact]
 	public void DecreaseChargePoints_UsesJavaAttackAndDefendBurnAmounts()
 	{
 		var improvement = new ItemImprovement(ChargeWay: 1, Level: 2, BurnAttack: 200, BurnDefend: 100, Price1: 1000, Price2: 2000);
