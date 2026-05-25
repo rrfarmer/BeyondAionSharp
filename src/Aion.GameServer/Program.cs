@@ -76,6 +76,7 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<PlayerVisualStatsUpdateService>();
 			services.AddSingleton<QuestRewardService>();
 			services.AddSingleton<WorldNpcSoloDpRewardService>();
+			services.AddSingleton<WorldNpcTeamApRewardService>();
 			services.AddSingleton<PvpApRewardService>();
 			services.AddSingleton<PvpDpRewardService>();
 			services.AddSingleton<PvpInstanceApRewardService>();
