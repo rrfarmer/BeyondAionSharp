@@ -117,6 +117,8 @@ public static class ItemPurificationPacketPlanService
 
 	private static ItemPurificationPacketOperation DeleteItem(ItemPurificationApplicationOperation operation)
 	{
+		// Java parity: ItemPacketService.sendItemDeletePacket(CUBE, item, USE)
+		// sends SM_DELETE_ITEM before SM_CUBE_UPDATE; cube-size counts stay metadata-only here.
 		return new ItemPurificationPacketOperation(
 			ItemPurificationPacketOperationType.DeleteItem,
 			DeleteItemPacketOpcode,
@@ -125,7 +127,7 @@ public static class ItemPurificationPacketPlanService
 			UseDeleteType,
 			operation.Type,
 			Parameters: Array.Empty<string>(),
-			ConcretePacket: null);
+			ConcretePacket: new SmDeleteItem(operation.ObjectId, UseDeleteType));
 	}
 
 	private static ItemPurificationPacketOperation InventoryAdd(ItemPurificationApplicationOperation operation)

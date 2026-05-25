@@ -1,5 +1,7 @@
+using Aion.Commons.Network;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 
@@ -37,7 +39,9 @@ public sealed class ItemPurificationPacketPlanServiceTests
 		Assert.Equal(ItemPurificationPacketPlanService.UpgradeSuccessMessageId, plan.Operations[0].Mask);
 		Assert.Equal(["base-name", "target-name"], plan.Operations[0].Parameters);
 		Assert.IsType<SmSystemMessage>(plan.Operations[0].ConcretePacket);
-		Assert.All(plan.Operations.Skip(1), operation => Assert.Null(operation.ConcretePacket));
+		Assert.All(
+			plan.Operations.Skip(1).Where(operation => operation.Type != ItemPurificationPacketOperationType.DeleteItem),
+			operation => Assert.Null(operation.ConcretePacket));
 	}
 
 	[Fact]
@@ -107,7 +111,52 @@ public sealed class ItemPurificationPacketPlanServiceTests
 		Assert.All(
 			plan.Operations.Where(operation =>
 				operation.Type is not ItemPurificationPacketOperationType.UpgradeSuccessSystemMessage
-					and not ItemPurificationPacketOperationType.InventoryUpdateItem),
+					and not ItemPurificationPacketOperationType.InventoryUpdateItem
+					and not ItemPurificationPacketOperationType.DeleteItem),
+			operation => Assert.Null(operation.ConcretePacket));
+	}
+
+	[Fact]
+	public void CreatePacketPlan_AttachesConcreteDeletePacketsBeforeCubeSizeMetadata()
+	{
+		var baseItem = CreateBaseItem(enchant: 25);
+		var player = CreatePlayer(
+			abyssPoints: 5_000,
+			kinah: 10_000,
+			baseItem,
+			new InventoryItem { ObjectId = 20, ItemId = 186000001, Count = 2, Location = 0 });
+		var application = CreateApplicationPlan(player, baseItem, targetObjectId: 9001);
+
+		var plan = ItemPurificationPacketPlanService.CreatePacketPlan(application, "base-name", "target-name");
+
+		var deleteOperations = plan.Operations
+			.Where(operation => operation.Type == ItemPurificationPacketOperationType.DeleteItem)
+			.ToArray();
+		Assert.Equal([20, 10], deleteOperations.Select(operation => operation.ObjectId).ToArray());
+		Assert.All(deleteOperations, operation =>
+		{
+			var concretePacket = Assert.IsType<SmDeleteItem>(operation.ConcretePacket);
+			Assert.Equal(SmDeleteItem.PacketOpCode, concretePacket.OpCode);
+			Assert.Equal(ItemPurificationPacketPlanService.UseDeleteType, operation.Mask);
+			using var reader = new PacketBuffer(SerializeUnencryptedPayload(concretePacket));
+			Assert.Equal(operation.ObjectId, reader.ReadD());
+			Assert.Equal(ItemPurificationPacketPlanService.UseDeleteType, (int)reader.ReadC());
+			Assert.Equal(0, reader.Remaining);
+		});
+		Assert.Equal(
+			[
+				ItemPurificationPacketOperationType.DeleteItem,
+				ItemPurificationPacketOperationType.CubeSizeUpdate,
+			],
+			plan.Operations.Skip(1).Take(2).Select(operation => operation.Type).ToArray());
+		Assert.Equal(
+			[
+				ItemPurificationPacketOperationType.DeleteItem,
+				ItemPurificationPacketOperationType.CubeSizeUpdate,
+			],
+			plan.Operations.Skip(5).Take(2).Select(operation => operation.Type).ToArray());
+		Assert.All(
+			plan.Operations.Where(operation => operation.Type == ItemPurificationPacketOperationType.CubeSizeUpdate),
 			operation => Assert.Null(operation.ConcretePacket));
 	}
 
@@ -231,5 +280,13 @@ public sealed class ItemPurificationPacketPlanServiceTests
 			StatBonusSetId: 0,
 			MaxTuneCount: maxTuneCount,
 			MaxEnchantLevel: maxEnchantLevel);
+	}
+
+	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
+	{
+		var crypt = new GameCrypt(() => 0x01020304);
+		crypt.EnableKey();
+		var frame = packet.SerializeFrame(crypt);
+		return frame[7..];
 	}
 }
