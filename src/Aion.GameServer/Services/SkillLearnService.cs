@@ -5,6 +5,9 @@ namespace Aion.GameServer.Services;
 
 public static class SkillLearnService
 {
+	private const int HumanGatheringSkillId = 30001;
+	private const int EssenceTappingSkillId = 30002;
+
 	private static readonly IReadOnlyDictionary<string, string> StartingClasses = new Dictionary<string, string>(StringComparer.Ordinal)
 	{
 		["GLADIATOR"] = "WARRIOR",
@@ -71,6 +74,58 @@ public static class SkillLearnService
 		return new SkillLearnPlan(SkillLearnFailure.None, finalSkills, packets);
 	}
 
+	public static SkillAutoLearnPlan CreateAutoLearnPlan(
+		Player? player,
+		SkillTreeTable? skillTree,
+		SkillTemplateTable? skillTemplates,
+		int fromLevel,
+		int toLevel,
+		bool isDaeva,
+		bool hasEffectController,
+		bool isSpawned)
+	{
+		if (player == null)
+			return SkillAutoLearnPlan.MissingPlayer(fromLevel, toLevel, isDaeva, hasEffectController, isSpawned);
+		if (skillTree == null)
+			return SkillAutoLearnPlan.Skipped(player, SkillAutoLearnPlanStatus.BlockedMissingSkillTree, fromLevel, toLevel, isDaeva, hasEffectController, isSpawned);
+		if (skillTemplates == null)
+			return SkillAutoLearnPlan.Skipped(player, SkillAutoLearnPlanStatus.BlockedMissingSkillTemplates, fromLevel, toLevel, isDaeva, hasEffectController, isSpawned);
+		if (fromLevel > toLevel)
+			return SkillAutoLearnPlan.Skipped(player, SkillAutoLearnPlanStatus.EmptyLevelRange, fromLevel, toLevel, isDaeva, hasEffectController, isSpawned);
+
+		var finalSkills = player.Skills.Select(CloneSkill).ToList();
+		var descriptors = new List<SkillAutoLearnDescriptor>();
+		var playerClass = player.PlayerClass;
+		var startingClass = GetStartingClass(playerClass);
+
+		for (var level = toLevel; level >= fromLevel; level--)
+		{
+			if (level < 10 && startingClass != null)
+				AddAutoLearnDescriptors(skillTree, skillTemplates, finalSkills, descriptors, player, level, startingClass, hasEffectController, isSpawned);
+			AddAutoLearnDescriptors(skillTree, skillTemplates, finalSkills, descriptors, player, level, playerClass, hasEffectController, isSpawned);
+		}
+
+		if (toLevel >= 10 && isDaeva && finalSkills.Any(skill => skill.SkillId == HumanGatheringSkillId))
+			AddDaevaGatheringUpgrade(skillTemplates, finalSkills, descriptors, player, hasEffectController, isSpawned);
+
+		var applied = descriptors.Any(descriptor => descriptor.Status is
+			SkillAutoLearnDescriptorStatus.PlannedAdd or
+			SkillAutoLearnDescriptorStatus.PlannedUpgrade or
+			SkillAutoLearnDescriptorStatus.PlannedRemove);
+		return new SkillAutoLearnPlan(
+			applied ? SkillAutoLearnPlanStatus.Planned : SkillAutoLearnPlanStatus.NoChanges,
+			player.ObjectId,
+			player.PlayerClass,
+			player.Race,
+			fromLevel,
+			toLevel,
+			isDaeva,
+			hasEffectController,
+			isSpawned,
+			finalSkills,
+			descriptors);
+	}
+
 	private static bool ValidateClass(string playerClass, string actionClass)
 	{
 		if (string.IsNullOrEmpty(actionClass))
@@ -81,6 +136,168 @@ public static class SkillLearnService
 		return string.Equals(normalizedActionClass, normalizedPlayerClass, StringComparison.Ordinal)
 			|| (StartingClasses.TryGetValue(normalizedPlayerClass, out var startingClass)
 				&& string.Equals(normalizedActionClass, startingClass, StringComparison.Ordinal));
+	}
+
+	private static string? GetStartingClass(string playerClass)
+	{
+		var normalized = playerClass.ToUpperInvariant();
+		return StartingClasses.TryGetValue(normalized, out var startingClass) ? startingClass : null;
+	}
+
+	private static bool IsStartingClass(string playerClass)
+	{
+		return !StartingClasses.ContainsKey(playerClass.ToUpperInvariant());
+	}
+
+	private static void AddAutoLearnDescriptors(
+		SkillTreeTable skillTree,
+		SkillTemplateTable skillTemplates,
+		List<PlayerSkill> finalSkills,
+		List<SkillAutoLearnDescriptor> descriptors,
+		Player player,
+		int level,
+		string learningClass,
+		bool hasEffectController,
+		bool isSpawned)
+	{
+		foreach (var template in skillTree.GetTemplatesFor(learningClass, level, player.Race))
+		{
+			if (!template.AutoLearn)
+			{
+				descriptors.Add(SkillAutoLearnDescriptor.Skipped(
+					template,
+					level,
+					learningClass,
+					SkillAutoLearnDescriptorStatus.SkippedNotAutoLearn,
+					"SkillLearnService.autoLearnSkills -> !template.isAutolearn()"));
+				continue;
+			}
+
+			if (template.SkillId == HumanGatheringSkillId && !IsStartingClass(learningClass))
+			{
+				descriptors.Add(SkillAutoLearnDescriptor.Skipped(
+					template,
+					level,
+					learningClass,
+					SkillAutoLearnDescriptorStatus.SkippedHumanGatheringForAdvancedClass,
+					"SkillLearnService.autoLearnSkills -> no human gathering for main classes"));
+				continue;
+			}
+
+			var matchingTemplates = skillTree.GetTemplatesForSkill(template.SkillId, player.PlayerClass, player.Race);
+			var learnTemplates = skillTree.GetSkillsForSkill(template.SkillId, player.PlayerClass, player.Race, player.Level, skillTemplates);
+			var skillType = ResolveSkillType(template.SkillId, matchingTemplates, skillTemplates);
+			var packet = AddOrUpgradeSkill(finalSkills, template.SkillId, template.SkillLevel, skillType, learnTemplates);
+			if (packet == null)
+			{
+				descriptors.Add(SkillAutoLearnDescriptor.Skipped(
+					template,
+					level,
+					learningClass,
+					SkillAutoLearnDescriptorStatus.SkippedAlreadyKnownAtSameOrHigherLevel,
+					"PlayerSkillList.addSkill -> skillLevel <= existingSkill.getSkillLevel()"));
+				continue;
+			}
+
+			var learnedSkill = finalSkills.Single(skill => skill.SkillId == template.SkillId);
+			descriptors.Add(SkillAutoLearnDescriptor.Planned(
+				template,
+				level,
+				learningClass,
+				packet.IsNew ? SkillAutoLearnDescriptorStatus.PlannedAdd : SkillAutoLearnDescriptorStatus.PlannedUpgrade,
+				learnedSkill,
+				packet,
+				CreateSideEffects(learnedSkill, packet.IsNew, skillTemplates, hasEffectController, isSpawned)));
+		}
+	}
+
+	private static void AddDaevaGatheringUpgrade(
+		SkillTemplateTable skillTemplates,
+		List<PlayerSkill> finalSkills,
+		List<SkillAutoLearnDescriptor> descriptors,
+		Player player,
+		bool hasEffectController,
+		bool isSpawned)
+	{
+		var humanGathering = finalSkills.Single(skill => skill.SkillId == HumanGatheringSkillId);
+		SkillLearnPacket? packet = null;
+		if (finalSkills.All(skill => skill.SkillId != EssenceTappingSkillId))
+		{
+			var essenceTapping = new PlayerSkill
+			{
+				SkillId = EssenceTappingSkillId,
+				SkillLevel = humanGathering.SkillLevel,
+				SkillType = humanGathering.SkillType,
+			};
+			finalSkills.Add(essenceTapping);
+			packet = new SkillLearnPacket(essenceTapping, IsNew: true);
+			descriptors.Add(new SkillAutoLearnDescriptor(
+				EssenceTappingSkillId,
+				humanGathering.SkillLevel,
+				player.Level,
+				player.PlayerClass,
+				SkillAutoLearnDescriptorStatus.PlannedAdd,
+				"SkillLearnService.learnNewSkills -> upgrade human gathering to daeva essence tapping",
+				essenceTapping,
+				packet,
+				CreateSideEffects(essenceTapping, isNew: true, skillTemplates, hasEffectController, isSpawned),
+				Notes: "Java adds skill 30002 at the current human gathering level before removing skill 30001."));
+		}
+
+		finalSkills.RemoveAll(skill => skill.SkillId == HumanGatheringSkillId);
+		descriptors.Add(new SkillAutoLearnDescriptor(
+			HumanGatheringSkillId,
+			humanGathering.SkillLevel,
+			player.Level,
+			player.PlayerClass,
+			SkillAutoLearnDescriptorStatus.PlannedRemove,
+			"SkillLearnService.learnNewSkills -> removeSkill(30001)",
+			RemovedSkill: humanGathering,
+			Packet: null,
+			SideEffects: [SkillAutoLearnSideEffect.RemoveEffect, SkillAutoLearnSideEffect.SkillRemovePacket],
+			Notes: packet == null
+				? "Java removes human gathering even when essence tapping was already present."
+				: "Java removes human gathering after adding essence tapping."));
+	}
+
+	private static IReadOnlyList<SkillAutoLearnSideEffect> CreateSideEffects(
+		PlayerSkill skill,
+		bool isNew,
+		SkillTemplateTable skillTemplates,
+		bool hasEffectController,
+		bool isSpawned)
+	{
+		var sideEffects = new List<SkillAutoLearnSideEffect>();
+		if (skill.IsProfessionSkill && skill.SkillLevel is 1 or 100 or 200 or 300 or 400 or 450 or 500
+			&& (skill.SkillLevel != 1 || skill.IsCraftingSkill))
+		{
+			sideEffects.Add(SkillAutoLearnSideEffect.CraftLevelUpAnimationBroadcast);
+		}
+
+		if (hasEffectController)
+		{
+			if (isSpawned)
+				sideEffects.Add(SkillAutoLearnSideEffect.SkillListPacket);
+			if (skillTemplates.GetSkillTemplate(skill.SkillId)?.IsPassive == true)
+				sideEffects.Add(SkillAutoLearnSideEffect.ApplyPassiveEffect);
+			if (skill.IsProfessionSkill && skill.SkillLevel is 399 or 499)
+				sideEffects.Add(SkillAutoLearnSideEffect.NearbyQuestRefresh);
+		}
+
+		if (skill.IsCraftingSkill || skill.IsMorphSkill)
+			sideEffects.Add(SkillAutoLearnSideEffect.AutoLearnRecipes);
+		return sideEffects;
+	}
+
+	private static PlayerSkill CloneSkill(PlayerSkill skill)
+	{
+		return new PlayerSkill
+		{
+			SkillId = skill.SkillId,
+			SkillLevel = skill.SkillLevel,
+			SkillType = skill.SkillType,
+			CurrentXp = skill.CurrentXp,
+		};
 	}
 
 	private static int ResolveSkillType(
@@ -187,4 +404,150 @@ public enum SkillLearnFailure
 	InvalidClass,
 	InvalidRace,
 	AlreadyKnown,
+}
+
+public sealed record SkillAutoLearnPlan(
+	SkillAutoLearnPlanStatus Status,
+	int ObjectId,
+	string PlayerClass,
+	string Race,
+	int FromLevel,
+	int ToLevel,
+	bool IsDaeva,
+	bool HasEffectController,
+	bool IsSpawned,
+	IReadOnlyList<PlayerSkill> FinalSkills,
+	IReadOnlyList<SkillAutoLearnDescriptor> Descriptors)
+{
+	public bool Applied => Status == SkillAutoLearnPlanStatus.Planned;
+
+	public static SkillAutoLearnPlan MissingPlayer(
+		int fromLevel,
+		int toLevel,
+		bool isDaeva,
+		bool hasEffectController,
+		bool isSpawned)
+	{
+		return new SkillAutoLearnPlan(
+			SkillAutoLearnPlanStatus.MissingPlayer,
+			ObjectId: 0,
+			PlayerClass: string.Empty,
+			Race: string.Empty,
+			fromLevel,
+			toLevel,
+			isDaeva,
+			hasEffectController,
+			isSpawned,
+			Array.Empty<PlayerSkill>(),
+			Array.Empty<SkillAutoLearnDescriptor>());
+	}
+
+	public static SkillAutoLearnPlan Skipped(
+		Player player,
+		SkillAutoLearnPlanStatus status,
+		int fromLevel,
+		int toLevel,
+		bool isDaeva,
+		bool hasEffectController,
+		bool isSpawned)
+	{
+		return new SkillAutoLearnPlan(
+			status,
+			player.ObjectId,
+			player.PlayerClass,
+			player.Race,
+			fromLevel,
+			toLevel,
+			isDaeva,
+			hasEffectController,
+			isSpawned,
+			player.Skills,
+			Array.Empty<SkillAutoLearnDescriptor>());
+	}
+}
+
+public sealed record SkillAutoLearnDescriptor(
+	int SkillId,
+	int SkillLevel,
+	int Level,
+	string LearningClass,
+	SkillAutoLearnDescriptorStatus Status,
+	string JavaSource,
+	PlayerSkill? LearnedSkill = null,
+	SkillLearnPacket? Packet = null,
+	IReadOnlyList<SkillAutoLearnSideEffect>? SideEffects = null,
+	PlayerSkill? RemovedSkill = null,
+	string? Notes = null)
+{
+	public bool IsLive => false;
+
+	public IReadOnlyList<SkillAutoLearnSideEffect> PlannedSideEffects => SideEffects ?? Array.Empty<SkillAutoLearnSideEffect>();
+
+	public static SkillAutoLearnDescriptor Planned(
+		SkillLearnSummary template,
+		int level,
+		string learningClass,
+		SkillAutoLearnDescriptorStatus status,
+		PlayerSkill learnedSkill,
+		SkillLearnPacket packet,
+		IReadOnlyList<SkillAutoLearnSideEffect> sideEffects)
+	{
+		return new SkillAutoLearnDescriptor(
+			template.SkillId,
+			template.SkillLevel,
+			level,
+			learningClass,
+			status,
+			"SkillLearnService.learnNewSkills -> autoLearnSkills -> PlayerSkillList.addSkill -> SkillLearnService.onLearnSkill",
+			learnedSkill,
+			packet,
+			sideEffects);
+	}
+
+	public static SkillAutoLearnDescriptor Skipped(
+		SkillLearnSummary template,
+		int level,
+		string learningClass,
+		SkillAutoLearnDescriptorStatus status,
+		string javaSource)
+	{
+		return new SkillAutoLearnDescriptor(
+			template.SkillId,
+			template.SkillLevel,
+			level,
+			learningClass,
+			status,
+			javaSource);
+	}
+}
+
+public enum SkillAutoLearnPlanStatus
+{
+	Planned,
+	NoChanges,
+	EmptyLevelRange,
+	BlockedMissingSkillTree,
+	BlockedMissingSkillTemplates,
+	MissingPlayer,
+}
+
+public enum SkillAutoLearnDescriptorStatus
+{
+	PlannedAdd,
+	PlannedUpgrade,
+	PlannedRemove,
+	SkippedNotAutoLearn,
+	SkippedHumanGatheringForAdvancedClass,
+	SkippedAlreadyKnownAtSameOrHigherLevel,
+}
+
+public enum SkillAutoLearnSideEffect
+{
+	SkillListPacket,
+	SkillRemovePacket,
+	CraftLevelUpAnimationBroadcast,
+	ApplyPassiveEffect,
+	NearbyQuestRefresh,
+	AutoLearnRecipes,
+	RemoveEffect,
 }
