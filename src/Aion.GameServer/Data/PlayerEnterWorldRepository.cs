@@ -313,6 +313,10 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public PlayerAbyssRank? ChargeAllPaymentAbyssRank { get; private set; }
 
+	public int SaveItemChargeMutationCalls { get; private set; }
+
+	public int SaveItemChargeAllMutationCalls { get; private set; }
+
 	public Task<Player?> LoadPlayerAsync(int accountId, int playerObjectId, CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult<Player?>(null);
@@ -646,6 +650,7 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		PlayerAbyssRank? abyssRank,
 		CancellationToken cancellationToken = default)
 	{
+		SaveItemChargeMutationCalls++;
 		ChargePaymentAbyssRank = abyssRank;
 		return Task.FromResult(true);
 	}
@@ -657,6 +662,7 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		PlayerAbyssRank? abyssRank,
 		CancellationToken cancellationToken = default)
 	{
+		SaveItemChargeAllMutationCalls++;
 		ChargeAllPaymentAbyssRank = abyssRank;
 		return Task.FromResult(true);
 	}

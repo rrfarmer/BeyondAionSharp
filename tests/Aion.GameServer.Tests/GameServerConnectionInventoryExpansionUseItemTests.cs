@@ -206,6 +206,24 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleChargeItemAsync_ApPaymentRejectsInsufficientAbyssPointsWithoutSideEffects()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreateChargePaymentPlayer();
+		player.AbyssRank = PlayerAbyssRank.Default() with { Ap = 499 };
+
+		await InvokeHandleChargeItemAsync(fixture.Connection, player, CreateChargeItem(itemObjectId: 7001, chargeLevel: 1));
+
+		Assert.Equal(499, player.AbyssRank.Ap);
+		Assert.Null(repository.ChargePaymentAbyssRank);
+		Assert.Equal(0, repository.SaveItemChargeMutationCalls);
+		var item = Assert.Single(player.InventoryItems, inventoryItem => inventoryItem.ObjectId == 7001);
+		Assert.Equal(0, item.Charge);
+		Assert.Empty(fixture.SentPackets);
+	}
+
+	[Fact]
 	public async Task HandleQuestionResponseAsync_ChargeAllApPaymentSendsAbyssPointsPlannerPackets()
 	{
 		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(new EmptyPlayerEnterWorldRepository());
@@ -286,6 +304,43 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			packet => Assert.IsType<SmSystemMessage>(packet),
 			packet => Assert.IsType<SmStatsInfo>(packet),
 			packet => Assert.IsType<SmSystemMessage>(packet));
+	}
+
+	[Fact]
+	public async Task HandleQuestionResponseAsync_ChargeAllApPaymentRejectsInsufficientAbyssPointsWithoutSideEffects()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreateChargeAllPaymentPlayer();
+		player.AbyssRank = PlayerAbyssRank.Default() with { Ap = 499 };
+		var pendingRequest = new PendingChargeAllRequest(
+			SenderObjectId: player.ObjectId,
+			ChargeWay: 2,
+			PaymentAmount: 500,
+			Items:
+			[
+				new PendingChargeAllItem(
+					ObjectId: 7001,
+					ItemId: 100000400,
+					PreviousCharge: 0,
+					TargetCharge: ItemChargeService.Level1ChargePoints,
+					Level: 1),
+			]);
+		player.PendingChargeAllRequest = pendingRequest;
+		Assert.True(player.ResponseRequester.PutRequest(
+			SmQuestionWindow.ItemCharge2AllConfirm,
+			new QuestionResponseRequest(player.ObjectId, QuestionResponseRequestKind.ChargeAll, pendingRequest)));
+
+		await fixture.Connection.HandleQuestionResponseAsync(player, CreateQuestionResponse(SmQuestionWindow.ItemCharge2AllConfirm, response: 1));
+
+		Assert.Equal(499, player.AbyssRank.Ap);
+		Assert.Null(player.PendingChargeAllRequest);
+		Assert.Equal(0, player.ResponseRequester.Count);
+		Assert.Null(repository.ChargeAllPaymentAbyssRank);
+		Assert.Equal(0, repository.SaveItemChargeAllMutationCalls);
+		var item = Assert.Single(player.InventoryItems, inventoryItem => inventoryItem.ObjectId == 7001);
+		Assert.Equal(0, item.Charge);
+		Assert.Empty(fixture.SentPackets);
 	}
 
 	[Fact]

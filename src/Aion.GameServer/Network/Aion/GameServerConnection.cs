@@ -1883,11 +1883,15 @@ public sealed class GameServerConnection : BaseClientConnection
 					}
 					break;
 				case 2:
-					if (plan.PaymentAmount == 0)
-						break;
-					if (plan.PaymentAmount > int.MaxValue || player.AbyssRank.Ap < plan.PaymentAmount)
+					// Java parity: ItemChargeService.processAPPayment guards current AP before
+					// delegating to AbyssPointsService.addAp for the spend.
+					var selectedItemPaymentPlan = ItemChargeService.CreateAbyssPointPaymentPlan(
+						player,
+						plan.PaymentAmount,
+						CreateAbyssPointsOptions());
+					if (!selectedItemPaymentPlan.Succeeded)
 						continue;
-					abyssPointsPlan = AbyssPointsService.CreateAddApPlan(player, -(int)plan.PaymentAmount, CreateAbyssPointsOptions());
+					abyssPointsPlan = selectedItemPaymentPlan.AbyssPointsPlan;
 					break;
 				default:
 					continue;
@@ -7021,10 +7025,15 @@ public sealed class GameServerConnection : BaseClientConnection
 				}
 				break;
 			case 2:
-				if (request.PaymentAmount > int.MaxValue || player.AbyssRank.Ap < request.PaymentAmount)
+				// Java parity: ItemChargeService.startChargingEquippedItems acceptRequest
+				// calls processPayment, which reaches processAPPayment for chargeWay 2.
+				var chargeAllPaymentPlan = ItemChargeService.CreateAbyssPointPaymentPlan(
+					player,
+					request.PaymentAmount,
+					CreateAbyssPointsOptions());
+				if (!chargeAllPaymentPlan.Succeeded)
 					return;
-				if (request.PaymentAmount > 0)
-					abyssPointsPlan = AbyssPointsService.CreateAddApPlan(player, -(int)request.PaymentAmount, CreateAbyssPointsOptions());
+				abyssPointsPlan = chargeAllPaymentPlan.AbyssPointsPlan;
 				break;
 			default:
 				return;
