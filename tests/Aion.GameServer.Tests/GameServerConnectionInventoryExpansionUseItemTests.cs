@@ -361,6 +361,45 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleQuestionResponseAsync_ChargeAllApPaymentStillSpendsWhenItemAlreadyChargedAtAccept()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreateChargeAllPaymentPlayer(charge: ItemChargeService.Level1ChargePoints);
+		var pendingRequest = new PendingChargeAllRequest(
+			SenderObjectId: player.ObjectId,
+			ChargeWay: 2,
+			PaymentAmount: 500,
+			Items:
+			[
+				new PendingChargeAllItem(
+					ObjectId: 7001,
+					ItemId: 100000400,
+					PreviousCharge: 0,
+					TargetCharge: ItemChargeService.Level1ChargePoints,
+					Level: 1),
+			]);
+		player.PendingChargeAllRequest = pendingRequest;
+		Assert.True(player.ResponseRequester.PutRequest(
+			SmQuestionWindow.ItemCharge2AllConfirm,
+			new QuestionResponseRequest(player.ObjectId, QuestionResponseRequestKind.ChargeAll, pendingRequest)));
+
+		await fixture.Connection.HandleQuestionResponseAsync(player, CreateQuestionResponse(SmQuestionWindow.ItemCharge2AllConfirm, response: 1));
+
+		Assert.Equal(500, player.AbyssRank.Ap);
+		Assert.Equal(1, repository.SaveItemChargeAllMutationCalls);
+		Assert.Equal(500, repository.ChargeAllPaymentAbyssRank?.Ap);
+		Assert.Empty(repository.ChargeAllChargedItems);
+		Assert.Null(player.PendingChargeAllRequest);
+		var unchangedItem = Assert.Single(player.InventoryItems, inventoryItem => inventoryItem.ObjectId == 7001);
+		Assert.Equal(ItemChargeService.Level1ChargePoints, unchangedItem.Charge);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1300965, "500"),
+			packet => Assert.IsType<SmAbyssRank>(packet));
+	}
+
+	[Fact]
 	public async Task HandleQuestionResponseAsync_ChargeAllKinahPaymentRejectsInsufficientKinahWithoutSideEffects()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
@@ -1312,7 +1351,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		};
 	}
 
-	private static Player CreateChargeAllPaymentPlayer()
+	private static Player CreateChargeAllPaymentPlayer(int charge = 0)
 	{
 		return new Player
 		{
@@ -1331,6 +1370,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 					Count = 1,
 					Location = 0,
 					IsEquipped = true,
+					Charge = charge,
 				},
 			],
 		};

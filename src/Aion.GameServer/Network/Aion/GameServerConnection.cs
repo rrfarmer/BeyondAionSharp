@@ -7043,14 +7043,27 @@ public sealed class GameServerConnection : BaseClientConnection
 		var chargedItems = request.Items
 			.Select(pending =>
 			{
-				var currentItem = inventoryItems.FirstOrDefault(item => item.ObjectId == pending.ObjectId && item.Location == CubeStorageId && item.IsEquipped);
-				return currentItem == null ? null : CopyInventoryItem(currentItem, charge: pending.TargetCharge);
+				var currentItem = inventoryItems.FirstOrDefault(item => item.ObjectId == pending.ObjectId && item.Location == CubeStorageId);
+				if (currentItem == null || currentItem.ItemId != pending.ItemId)
+					return null;
+
+				// Java parity: ItemChargeService.startChargingEquippedItems keeps the quoted
+				// payment amount, then acceptRequest calls chargeItems(..., requirePayment=false),
+				// so each item recalculates current chargeability before mutation.
+				var currentPlan = ItemChargeService.CreateChargePlan(
+					player,
+					currentItem,
+					itemTemplates,
+					pending.Level,
+					ignoreRankRequirement: false,
+					requirePayment: false);
+				if (currentPlan == null || currentPlan.ChargeWay != request.ChargeWay)
+					return null;
+				return CopyInventoryItem(currentItem, charge: currentPlan.TargetChargePoints);
 			})
 			.Where(item => item != null)
 			.Cast<InventoryItem>()
 			.ToArray();
-		if (chargedItems.Length == 0)
-			return;
 
 		var saved = _playerEnterWorldService == null
 			|| await _playerEnterWorldService.SaveItemChargeAllMutationAsync(player, chargedItems, kinahUpdate, abyssPointsPlan?.UpdatedRank);
@@ -7091,11 +7104,14 @@ public sealed class GameServerConnection : BaseClientConnection
 		player.InventoryItems = inventoryItems.ToArray();
 		if (abyssPointsPlan != null)
 			await ApplyAbyssRankChangedSideEffectsAsync(player, abyssPointsPlan.OldRank, staticData);
-		await SendPacketAsync(CreateStatsInfoPacket(player, staticData));
-		await SendPacketAsync(
-			request.ChargeWay == 1
-				? SmSystemMessage.ItemChargeAllComplete()
-				: SmSystemMessage.ItemCharge2AllComplete());
+		if (chargedItems.Length > 0)
+		{
+			await SendPacketAsync(CreateStatsInfoPacket(player, staticData));
+			await SendPacketAsync(
+				request.ChargeWay == 1
+					? SmSystemMessage.ItemChargeAllComplete()
+					: SmSystemMessage.ItemCharge2AllComplete());
+		}
 	}
 
 	private static bool IsChargeAllQuestion(int questionId)

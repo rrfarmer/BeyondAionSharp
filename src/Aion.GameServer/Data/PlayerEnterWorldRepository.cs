@@ -313,6 +313,8 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public PlayerAbyssRank? ChargeAllPaymentAbyssRank { get; private set; }
 
+	public IReadOnlyList<InventoryItem> ChargeAllChargedItems { get; private set; } = Array.Empty<InventoryItem>();
+
 	public int SaveItemChargeMutationCalls { get; private set; }
 
 	public int SaveItemChargeAllMutationCalls { get; private set; }
@@ -663,6 +665,7 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		CancellationToken cancellationToken = default)
 	{
 		SaveItemChargeAllMutationCalls++;
+		ChargeAllChargedItems = chargedItems;
 		ChargeAllPaymentAbyssRank = abyssRank;
 		return Task.FromResult(true);
 	}
