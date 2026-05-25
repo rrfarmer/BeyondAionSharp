@@ -96,6 +96,47 @@ public sealed class QuestNpcStartJavaHandlerExtractorTests
 	}
 
 	[Fact]
+	public void ExtractsIteratorAndForEachValuesFromStaticIntegerSets()
+	{
+		const string javaSource = """
+			public class _18806HeartofRock extends AbstractQuestHandler {
+				private static final Set<Integer> butlers;
+
+				static {
+					butlers = new HashSet<>();
+					butlers.add(810017);
+					butlers.add(810018);
+				}
+
+				public _18806HeartofRock() {
+					super(18806);
+				}
+
+				public void register() {
+					Iterator<Integer> iter = butlers.iterator();
+					while (iter.hasNext()) {
+						int butlerId = iter.next();
+						qe.registerQuestNpc(butlerId).addOnQuestStart(questId);
+					}
+					for (int secondButlerId : butlers)
+						qe.registerQuestNpc(secondButlerId).addOnQuestStart(questId);
+				}
+			}
+			""";
+		var extractor = new QuestNpcStartJavaHandlerExtractor();
+
+		var result = extractor.Extract(javaSource, "game-server/data/handlers/quest/oriel/_18806HeartofRock.java");
+
+		Assert.Empty(result.Unresolved);
+		Assert.Collection(
+			result.Sources,
+			source => AssertSource(source, 810017, 18806),
+			source => AssertSource(source, 810018, 18806),
+			source => AssertSource(source, 810017, 18806),
+			source => AssertSource(source, 810018, 18806));
+	}
+
+	[Fact]
 	public void ExtractedHandlerSourcesCanPopulateQuestNpcStartTable()
 	{
 		const string javaSource = """

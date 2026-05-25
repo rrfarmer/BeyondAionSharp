@@ -21,6 +21,22 @@ public sealed class QuestNpcStartJavaHandlerExtractor
 		@"\bsuper\s*\(\s*(?<questId>\d+)\s*\)",
 		RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
+	private static readonly Regex IntSetAddPattern = new(
+		@"\b(?<name>[A-Za-z_][A-Za-z0-9_]*)\s*\.\s*add\s*\(\s*(?<value>\d+)\s*\)\s*;",
+		RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+	private static readonly Regex IteratorAssignmentPattern = new(
+		@"\bIterator\s*<\s*Integer\s*>\s+(?<iterator>[A-Za-z_][A-Za-z0-9_]*)\s*=\s*(?<set>[A-Za-z_][A-Za-z0-9_]*)\s*\.\s*iterator\s*\(\s*\)\s*;",
+		RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+	private static readonly Regex IteratorValueAssignmentPattern = new(
+		@"\bint\s+(?<name>[A-Za-z_][A-Za-z0-9_]*)\s*=\s*(?<iterator>[A-Za-z_][A-Za-z0-9_]*)\s*\.\s*next\s*\(\s*\)\s*;",
+		RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+	private static readonly Regex ForEachSetPattern = new(
+		@"\bfor\s*\(\s*int\s+(?<name>[A-Za-z_][A-Za-z0-9_]*)\s*:\s*(?<set>[A-Za-z_][A-Za-z0-9_]*)\s*\)",
+		RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
 	private static readonly Regex IndexedIdentifierPattern = new(
 		@"^(?<name>[A-Za-z_][A-Za-z0-9_]*)\s*\[\s*(?<index>\d+)\s*\]$",
 		RegexOptions.Compiled | RegexOptions.CultureInvariant);
@@ -32,6 +48,8 @@ public sealed class QuestNpcStartJavaHandlerExtractor
 
 		var scalarConstants = ReadScalarIntAssignments(javaSource);
 		var arrayConstants = ReadIntArrayAssignments(javaSource);
+		var setConstants = ReadIntSetAssignments(javaSource);
+		var setAliases = ReadSetAliases(javaSource);
 		var inheritedQuestId = ReadInheritedQuestId(javaSource);
 		var sources = new List<QuestNpcStartRegistrationSource>();
 		var unresolved = new List<QuestNpcStartJavaHandlerUnresolvedRegistration>();
@@ -42,7 +60,7 @@ public sealed class QuestNpcStartJavaHandlerExtractor
 			var questExpression = match.Groups["quest"].Value.Trim();
 			var lineNumber = GetLineNumber(javaSource, match.Index);
 
-			if (!TryResolveInt(npcExpression, scalarConstants, arrayConstants, out var npcId, out var npcReason))
+			if (!TryResolveNpcIds(npcExpression, scalarConstants, arrayConstants, setConstants, setAliases, out var npcIds, out var npcReason))
 			{
 				unresolved.Add(new QuestNpcStartJavaHandlerUnresolvedRegistration(
 					SourcePath: sourcePath,
@@ -64,12 +82,15 @@ public sealed class QuestNpcStartJavaHandlerExtractor
 				continue;
 			}
 
-			// Java parity: handler register() methods add direct QuestNpc.onQuestStart registrations through QuestEngine.
-			sources.Add(new QuestNpcStartRegistrationSource(
-				NpcId: npcId,
-				QuestId: questId,
-				SourceKind: QuestNpcStartRegistrationSourceKind.JavaHandler,
-				SourcePath: sourcePath));
+			foreach (var npcId in npcIds)
+			{
+				// Java parity: handler register() methods add direct QuestNpc.onQuestStart registrations through QuestEngine.
+				sources.Add(new QuestNpcStartRegistrationSource(
+					NpcId: npcId,
+					QuestId: questId,
+					SourceKind: QuestNpcStartRegistrationSourceKind.JavaHandler,
+					SourcePath: sourcePath));
+			}
 		}
 
 		return new QuestNpcStartJavaHandlerExtractionResult(sources, unresolved);
@@ -106,6 +127,45 @@ public sealed class QuestNpcStartJavaHandlerExtractor
 		}
 
 		return values;
+	}
+
+	private static Dictionary<string, int[]> ReadIntSetAssignments(string javaSource)
+	{
+		var values = new Dictionary<string, List<int>>(StringComparer.Ordinal);
+		foreach (Match match in IntSetAddPattern.Matches(javaSource))
+		{
+			var name = match.Groups["name"].Value;
+			var value = int.Parse(match.Groups["value"].Value, CultureInfo.InvariantCulture);
+			if (!values.TryGetValue(name, out var setValues))
+			{
+				setValues = new List<int>();
+				values.Add(name, setValues);
+			}
+
+			setValues.Add(value);
+		}
+
+		return values.ToDictionary(pair => pair.Key, pair => pair.Value.ToArray(), StringComparer.Ordinal);
+	}
+
+	private static Dictionary<string, string> ReadSetAliases(string javaSource)
+	{
+		var aliases = new Dictionary<string, string>(StringComparer.Ordinal);
+		var iterators = new Dictionary<string, string>(StringComparer.Ordinal);
+		foreach (Match match in IteratorAssignmentPattern.Matches(javaSource))
+			iterators[match.Groups["iterator"].Value] = match.Groups["set"].Value;
+
+		foreach (Match match in IteratorValueAssignmentPattern.Matches(javaSource))
+		{
+			var iterator = match.Groups["iterator"].Value;
+			if (iterators.TryGetValue(iterator, out var setName))
+				aliases[match.Groups["name"].Value] = setName;
+		}
+
+		foreach (Match match in ForEachSetPattern.Matches(javaSource))
+			aliases[match.Groups["name"].Value] = match.Groups["set"].Value;
+
+		return aliases;
 	}
 
 	private static int? ReadInheritedQuestId(string javaSource)
@@ -168,6 +228,34 @@ public sealed class QuestNpcStartJavaHandlerExtractor
 
 		value = 0;
 		reason = $"Unsupported expression '{expression}'.";
+		return false;
+	}
+
+	private static bool TryResolveNpcIds(
+		string expression,
+		IReadOnlyDictionary<string, int> scalarConstants,
+		IReadOnlyDictionary<string, int[]> arrayConstants,
+		IReadOnlyDictionary<string, int[]> setConstants,
+		IReadOnlyDictionary<string, string> setAliases,
+		out IReadOnlyList<int> values,
+		out string reason)
+	{
+		if (TryResolveInt(expression, scalarConstants, arrayConstants, out var value, out reason))
+		{
+			values = [value];
+			return true;
+		}
+
+		if (setAliases.TryGetValue(expression, out var setName)
+			&& setConstants.TryGetValue(setName, out var setValues)
+			&& setValues.Length > 0)
+		{
+			values = setValues;
+			reason = string.Empty;
+			return true;
+		}
+
+		values = [];
 		return false;
 	}
 

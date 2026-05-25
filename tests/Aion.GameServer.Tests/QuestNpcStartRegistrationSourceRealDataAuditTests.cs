@@ -5,12 +5,11 @@ namespace Aion.GameServer.Tests;
 
 public sealed class QuestNpcStartRegistrationSourceRealDataAuditTests
 {
-	private const int ExpectedTotalSources = 5184;
+	private const int ExpectedTotalSources = 5214;
 	private const int ExpectedXmlSources = 4400;
-	private const int ExpectedJavaHandlerSources = 784;
-	private const int ExpectedUnresolvedJavaHandlerRegistrations = 6;
+	private const int ExpectedJavaHandlerSources = 814;
 	private const int ExpectedDistinctNpcIds = 1668;
-	private const int ExpectedDistinctQuestIds = 4497;
+	private const int ExpectedDistinctQuestIds = 4503;
 
 	private readonly ITestOutputHelper _output;
 
@@ -46,12 +45,11 @@ public sealed class QuestNpcStartRegistrationSourceRealDataAuditTests
 		Assert.Equal(ExpectedTotalSources, result.Sources.Count);
 		Assert.Equal(ExpectedXmlSources, xmlSources.Length);
 		Assert.Equal(ExpectedJavaHandlerSources, javaSources.Length);
-		Assert.Equal(ExpectedUnresolvedJavaHandlerRegistrations, result.Unresolved.Count);
+		Assert.Empty(result.Unresolved);
 		Assert.Equal(ExpectedDistinctNpcIds, result.Sources.Select(source => source.NpcId).Distinct().Count());
 		Assert.Equal(ExpectedDistinctQuestIds, result.Sources.Select(source => source.QuestId).Distinct().Count());
 		Assert.All(result.Sources, source => Assert.True(source.NpcId > 0));
 		Assert.All(result.Sources, source => Assert.True(source.QuestId > 0));
-		Assert.All(result.Unresolved, unresolved => Assert.Equal("butlerId", unresolved.NpcExpression));
 		Assert.DoesNotContain(
 			result.Sources,
 			source => source.SourceKind == QuestNpcStartRegistrationSourceKind.XmlQuest
