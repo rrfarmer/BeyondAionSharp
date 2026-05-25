@@ -12,6 +12,18 @@ public static class AbyssPointsService
 		AbyssPointsAddOptions? options = null)
 	{
 		// Java parity: services/abyss/AbyssPointsService.addAp(Player, int).
+		var plan = CreateAddApPlan(player, amount, options);
+		if (player != null && plan.UpdatedRank != null)
+			player.AbyssRank = plan.UpdatedRank;
+		return plan;
+	}
+
+	public static AbyssPointsAddPlan CreateAddApPlan(
+		Player? player,
+		int amount,
+		AbyssPointsAddOptions? options = null)
+	{
+		// Java parity: services/abyss/AbyssPointsService.addAp(Player, int), split for DB-transaction callers.
 		if (player == null)
 			return AbyssPointsAddPlan.NoPlayer();
 
@@ -20,7 +32,6 @@ public static class AbyssPointsService
 		var updatedRank = player.AbyssRank.AddAp(amount);
 		var added = updatedRank.Ap - oldAp;
 		var rankChanged = oldRank != updatedRank.Rank;
-		player.AbyssRank = updatedRank;
 
 		var packets = new List<GameServerPacket>
 		{
@@ -31,7 +42,9 @@ public static class AbyssPointsService
 		if (added != 0 || rankChanged)
 			packets.Add(new SmAbyssRank(updatedRank));
 
-		var rankUpdate = rankChanged ? SmAbyssRankUpdate.RankChange(player) : null;
+		var rankUpdate = rankChanged
+			? SmAbyssRankUpdate.RankChange(new Player { ObjectId = player.ObjectId, AbyssRank = updatedRank })
+			: null;
 		var legionContribution = CreateLegionContribution(player, added, options);
 		return new AbyssPointsAddPlan(
 			AbyssPointsAddStatus.Applied,

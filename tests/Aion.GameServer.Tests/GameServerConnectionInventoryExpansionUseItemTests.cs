@@ -116,6 +116,25 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleUseItemAsync_ApExtractSendsAbyssPointsPlannerPackets()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(new EmptyPlayerEnterWorldRepository());
+		var player = CreateApExtractPlayer();
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItemTarget(sourceItemObjectId: 5001, targetItemObjectId: 6001));
+
+		Assert.Equal(980, player.AbyssRank.Ap);
+		Assert.DoesNotContain(player.InventoryItems, item => item.ObjectId == 6001);
+		Assert.Contains(player.InventoryItems, item => item.ObjectId == 5001 && item.Count == 1);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 6001, expectedDeleteType: SmDeleteItem.UseDeleteType),
+			packet => AssertInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 5001, expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse),
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1320000, "980"),
+			packet => Assert.IsType<SmAbyssRank>(packet));
+	}
+
+	[Fact]
 	public async Task HandleUseItemAsync_AnimationAddSchedulesPositiveTimeUseAndClearsUsingItem()
 	{
 		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(includeThreadPoolManager: true);
@@ -978,11 +997,53 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		};
 	}
 
+	private static Player CreateApExtractPlayer()
+	{
+		return new Player
+		{
+			ObjectId = 1001,
+			Name = "TicketUser",
+			Race = "ELYOS",
+			PlayerClass = "RANGER",
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			AbyssRank = PlayerAbyssRank.Default(),
+			InventoryItems =
+			[
+				new InventoryItem
+				{
+					ObjectId = 5001,
+					ItemId = 165005000,
+					Count = 2,
+					Location = 0,
+				},
+				new InventoryItem
+				{
+					ObjectId = 6001,
+					ItemId = 100000363,
+					Count = 1,
+					Location = 0,
+				},
+			],
+		};
+	}
+
 	private static CmUseItem CreateUseItem(int sourceItemObjectId)
 	{
 		using var writer = new PacketBuffer();
 		writer.WriteD(sourceItemObjectId);
 		writer.WriteC(0);
+		var packet = new CmUseItem(37, new HashSet<GameConnectionState> { GameConnectionState.InGame });
+		using var reader = new PacketBuffer(writer.ToArray());
+		packet.ReadFrom(reader);
+		return packet;
+	}
+
+	private static CmUseItem CreateUseItemTarget(int sourceItemObjectId, int targetItemObjectId)
+	{
+		using var writer = new PacketBuffer();
+		writer.WriteD(sourceItemObjectId);
+		writer.WriteC(2);
+		writer.WriteD(targetItemObjectId);
 		var packet = new CmUseItem(37, new HashSet<GameConnectionState> { GameConnectionState.InGame });
 		using var reader = new PacketBuffer(writer.ToArray());
 		packet.ReadFrom(reader);
@@ -1850,6 +1911,14 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 							<actions>
 								<animation idle="1" run="2" jump="3" rest="4" minutes="60" />
 							</actions>
+						</item_template>
+						<item_template id="165005000" name="Test AP Extraction Tool" level="40" item_group="NONE" item_type="NORMAL" quality="RARE" race="PC_ALL" max_stack_count="10">
+							<actions>
+								<apextract target="WEAPON" rate="0.2" />
+							</actions>
+						</item_template>
+						<item_template id="100000363" name="Test Abyss Sword" level="30" mask="65536" item_group="SWORD" item_type="ABYSS" quality="RARE" race="PC_ALL" max_stack_count="1">
+							<acquisition ap="4900" />
 						</item_template>
 						<item_template id="100" name="Test Decompose Box" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="1">
 							<actions>

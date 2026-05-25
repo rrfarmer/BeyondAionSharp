@@ -31,6 +31,8 @@ public sealed class ApExtractServiceTests
 		Assert.Null(plan.DeletedSourceItemObjectId);
 		Assert.Equal(980, plan.AbyssPoints);
 		Assert.Equal(980, plan.AbyssRankUpdate?.Ap);
+		Assert.Equal(980, plan.AbyssPointsPlan?.Added);
+		Assert.Equal(0, player.AbyssRank.Ap);
 		Assert.DoesNotContain(plan.InventoryItems, item => item.ObjectId == 1001);
 		Assert.Contains(plan.InventoryItems, item => item.ObjectId == 2001 && item.Count == 1);
 	}

@@ -54,7 +54,10 @@ public static class ApExtractService
 			return ApExtractPlan.Failed(ApExtractFailure.NoAbyssPointValue);
 
 		var abyssPoints = (int)(targetTemplate.RequiredAbyssPoints * action.Rate);
-		var abyssRankUpdate = player.AbyssRank.AddAp(abyssPoints);
+		var abyssPointsPlan = AbyssPointsService.CreateAddApPlan(player, abyssPoints);
+		if (!abyssPointsPlan.Applied || abyssPointsPlan.UpdatedRank == null)
+			return ApExtractPlan.Failed(ApExtractFailure.AbyssPointsFailed);
+
 		inventoryItems.RemoveAll(item => item.ObjectId == targetItem.ObjectId);
 		var sourceMutation = DecreaseItemCount(extractionToolItem);
 		if (sourceMutation.UpdatedItem != null)
@@ -68,7 +71,7 @@ public static class ApExtractService
 			targetItem.ObjectId,
 			sourceMutation.UpdatedItem,
 			sourceMutation.DeletedObjectId,
-			abyssRankUpdate,
+			abyssPointsPlan,
 			abyssPoints);
 	}
 
@@ -170,6 +173,7 @@ public enum ApExtractFailure
 	MissingTemplate,
 	CannotAct,
 	NoAbyssPointValue,
+	AbyssPointsFailed,
 }
 
 public sealed record ApExtractPlan(
@@ -178,10 +182,11 @@ public sealed record ApExtractPlan(
 	int DeletedTargetItemObjectId,
 	InventoryItem? SourceItemUpdate,
 	int? DeletedSourceItemObjectId,
-	PlayerAbyssRank? AbyssRankUpdate,
+	AbyssPointsAddPlan? AbyssPointsPlan,
 	int AbyssPoints)
 {
 	public bool Succeeded => Failure == ApExtractFailure.None;
+	public PlayerAbyssRank? AbyssRankUpdate => AbyssPointsPlan?.UpdatedRank;
 
 	public static ApExtractPlan Failed(ApExtractFailure failure)
 	{
@@ -191,7 +196,7 @@ public sealed record ApExtractPlan(
 			DeletedTargetItemObjectId: 0,
 			SourceItemUpdate: null,
 			DeletedSourceItemObjectId: null,
-			AbyssRankUpdate: null,
+			AbyssPointsPlan: null,
 			AbyssPoints: 0);
 	}
 }

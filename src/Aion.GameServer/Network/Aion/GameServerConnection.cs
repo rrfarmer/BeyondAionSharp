@@ -3856,7 +3856,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			sourceItem.ObjectId,
 			targetItemObjectId,
 			staticData.ItemTemplates);
-		if (!plan.Succeeded || plan.AbyssRankUpdate == null)
+		if (!plan.Succeeded || plan.AbyssPointsPlan?.UpdatedRank == null)
 			return;
 
 		AddItemCooldownIfNeeded(player, sourceTemplate, removeOnCancel: false);
@@ -3865,15 +3865,14 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (!saved)
 			return;
 
-		var oldAbyssRank = player.AbyssRank.Rank;
 		var inventoryItems = player.InventoryItems.ToList();
 		await SendApExtractConsumedItemPacketsAsync(inventoryItems, plan, sourceTemplate);
 		ApplyApExtractInventoryMutation(inventoryItems, plan);
 		player.InventoryItems = inventoryItems.ToArray();
-		player.AbyssRank = plan.AbyssRankUpdate;
-		await SendPacketAsync(SmSystemMessage.CombatMyAbyssPointGain(plan.AbyssPoints));
-		await SendPacketAsync(new SmAbyssRank(player.AbyssRank));
-		await ApplyAbyssRankChangedSideEffectsAsync(player, oldAbyssRank, staticData);
+		player.AbyssRank = plan.AbyssPointsPlan.UpdatedRank;
+		foreach (var packet in plan.AbyssPointsPlan.PlayerPackets)
+			await SendPacketAsync(packet);
+		await ApplyAbyssRankChangedSideEffectsAsync(player, plan.AbyssPointsPlan.OldRank, staticData);
 	}
 
 	private async Task SendApExtractConsumedItemPacketsAsync(
