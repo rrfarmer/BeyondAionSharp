@@ -245,6 +245,50 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleQuestionResponseAsync_ChargeAllApPaymentHonorsConfiguredAbyssPointCapClamp()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(
+			repository,
+			options: CreateApCapOptions());
+		var player = CreateChargeAllPaymentPlayer();
+		player.AbyssRank = PlayerAbyssRank.Default() with { Ap = 1_600, Rank = 2, MaxRank = 2 };
+		var pendingRequest = new PendingChargeAllRequest(
+			SenderObjectId: player.ObjectId,
+			ChargeWay: 2,
+			PaymentAmount: 500,
+			Items:
+			[
+				new PendingChargeAllItem(
+					ObjectId: 7001,
+					ItemId: 100000400,
+					PreviousCharge: 0,
+					TargetCharge: ItemChargeService.Level1ChargePoints,
+					Level: 1),
+			]);
+		player.PendingChargeAllRequest = pendingRequest;
+		Assert.True(player.ResponseRequester.PutRequest(
+			SmQuestionWindow.ItemCharge2AllConfirm,
+			new QuestionResponseRequest(player.ObjectId, QuestionResponseRequestKind.ChargeAll, pendingRequest)));
+
+		await fixture.Connection.HandleQuestionResponseAsync(player, CreateQuestionResponse(SmQuestionWindow.ItemCharge2AllConfirm, response: 1));
+
+		Assert.Equal(1_000, player.AbyssRank.Ap);
+		Assert.Equal(1_000, repository.ChargeAllPaymentAbyssRank?.Ap);
+		Assert.Null(player.PendingChargeAllRequest);
+		var chargedItem = Assert.Single(player.InventoryItems, item => item.ObjectId == 7001);
+		Assert.Equal(ItemChargeService.Level1ChargePoints, chargedItem.Charge);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1300965, "600"),
+			packet => Assert.IsType<SmAbyssRank>(packet),
+			packet => Assert.IsType<SmInventoryUpdateItem>(packet),
+			packet => Assert.IsType<SmSystemMessage>(packet),
+			packet => Assert.IsType<SmStatsInfo>(packet),
+			packet => Assert.IsType<SmSystemMessage>(packet));
+	}
+
+	[Fact]
 	public async Task HandleUseItemAsync_AnimationAddSchedulesPositiveTimeUseAndClearsUsingItem()
 	{
 		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(includeThreadPoolManager: true);
