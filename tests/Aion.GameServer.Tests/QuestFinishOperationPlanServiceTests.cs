@@ -141,6 +141,124 @@ public sealed class QuestFinishOperationPlanServiceTests
 	}
 
 	[Fact]
+	public void CreatePlan_ComposesDetailedPersistencePlansAfterNearbyRefresh()
+	{
+		var now = new DateTimeOffset(2026, 5, 25, 8, 30, 0, TimeSpan.Zero);
+		var questState = new PlayerQuestState(
+			QuestId: 35007,
+			Status: "REWARD",
+			QuestVars: 4,
+			Flags: 0,
+			CompleteCount: 0);
+		var npcFactions = new PlayerNpcFactionsSnapshot(
+		[
+			new PlayerNpcFactionState(
+				FactionId: 2,
+				IsActive: true,
+				IsMentor: false,
+				TimeEpochSeconds: 0,
+				State: PlayerNpcFactionQuestState.Start,
+				QuestId: 35007),
+		]);
+		var questPersistencePlan = QuestPersistencePlanService.CreatePlan(
+		[
+			new QuestPersistenceStateEntry(questState, QuestPersistenceState.UpdateRequired),
+		],
+		[
+			777,
+		]);
+		var npcFactionPersistencePlan = NpcFactionPersistencePlanService.CreatePlan(
+		[
+			new NpcFactionPersistenceStateEntry(
+				new PlayerNpcFactionState(
+					FactionId: 2,
+					IsActive: true,
+					IsMentor: false,
+					TimeEpochSeconds: 1_779_800_400,
+					State: PlayerNpcFactionQuestState.Complete,
+					QuestId: 35007),
+				NpcFactionPersistenceState.UpdateRequired),
+			new NpcFactionPersistenceStateEntry(
+				new PlayerNpcFactionState(
+					FactionId: 8,
+					IsActive: false,
+					IsMentor: true,
+					TimeEpochSeconds: 0,
+					State: PlayerNpcFactionQuestState.Noting,
+					QuestId: 0),
+				NpcFactionPersistenceState.New),
+		]);
+
+		var plan = QuestFinishOperationPlanService.CreatePlan(
+			questState,
+			new NearbyQuestTemplateSummary(35007, NpcFactionId: 2),
+			npcFactions,
+			now,
+			CreateOptions("UTC"),
+			questPersistencePlan: questPersistencePlan,
+			npcFactionPersistencePlan: npcFactionPersistencePlan);
+
+		Assert.True(plan.Applied);
+		Assert.Equal(
+		[
+			QuestFinishOperationAction.RewardMutationPlaceholder,
+			QuestFinishOperationAction.RemoveQuestWorkItemsPlaceholder,
+			QuestFinishOperationAction.QuestStateMutation,
+			QuestFinishOperationAction.QuestUpdatePacket,
+			QuestFinishOperationAction.QuestCompletedCallback,
+			QuestFinishOperationAction.NpcFactionCompletion,
+			QuestFinishOperationAction.NearbyQuestRefresh,
+			QuestFinishOperationAction.DeferredQuestPersistence,
+			QuestFinishOperationAction.DeferredQuestPersistence,
+			QuestFinishOperationAction.DeferredNpcFactionPersistence,
+			QuestFinishOperationAction.DeferredNpcFactionPersistence,
+		], plan.Descriptors.Select(descriptor => descriptor.Action));
+		Assert.Equal(Enumerable.Range(1, 11), plan.Descriptors.Select(descriptor => descriptor.Order));
+		var persistenceDescriptors = plan.Descriptors
+			.SkipWhile(descriptor => descriptor.Action != QuestFinishOperationAction.NearbyQuestRefresh)
+			.Skip(1)
+			.ToArray();
+		Assert.Equal(
+		[
+			QuestPersistenceOperationAction.Delete,
+			QuestPersistenceOperationAction.Update,
+		], persistenceDescriptors
+			.Where(descriptor => descriptor.QuestPersistenceOperation is not null)
+			.Select(descriptor => descriptor.QuestPersistenceOperation!.Action));
+		Assert.Equal(
+		[
+			NpcFactionPersistenceOperationAction.Update,
+			NpcFactionPersistenceOperationAction.Insert,
+		], persistenceDescriptors
+			.Where(descriptor => descriptor.NpcFactionPersistenceOperation is not null)
+			.Select(descriptor => descriptor.NpcFactionPersistenceOperation!.Action));
+		Assert.All(
+			persistenceDescriptors,
+			descriptor => Assert.False(descriptor.IsLive));
+	}
+
+	[Fact]
+	public void CreatePlan_UsesProvidedEmptyPersistencePlansWithoutLegacyPlaceholders()
+	{
+		var plan = QuestFinishOperationPlanService.CreatePlan(
+			new PlayerQuestState(1001, "REWARD", QuestVars: 1, Flags: 0, CompleteCount: 0),
+			new NearbyQuestTemplateSummary(1001),
+			PlayerNpcFactionsSnapshot.Empty,
+			new DateTimeOffset(2026, 5, 25, 8, 30, 0, TimeSpan.Zero),
+			CreateOptions("UTC"),
+			questPersistencePlan: new QuestPersistencePlan(
+				QuestPersistencePlanStatus.NoChanges,
+				Array.Empty<QuestPersistenceOperationDescriptor>()),
+			npcFactionPersistencePlan: new NpcFactionPersistencePlan(
+				NpcFactionPersistencePlanStatus.NoChanges,
+				Array.Empty<NpcFactionPersistenceOperationDescriptor>()));
+
+		Assert.DoesNotContain(plan.Descriptors, descriptor => descriptor.Action == QuestFinishOperationAction.DeferredQuestPersistence);
+		Assert.DoesNotContain(plan.Descriptors, descriptor => descriptor.Action == QuestFinishOperationAction.DeferredNpcFactionPersistence);
+		Assert.Equal(QuestFinishOperationAction.NearbyQuestRefresh, plan.Descriptors.Last().Action);
+	}
+
+	[Fact]
 	public void CreatePlan_KeepsNpcFactionNoOpDescriptorWhenJavaWouldReturnFromMissingActiveSlot()
 	{
 		var plan = QuestFinishOperationPlanService.CreatePlan(

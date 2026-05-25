@@ -27,7 +27,9 @@ public sealed record QuestFinishOperationDescriptor(
 	string JavaSource,
 	bool IsLive,
 	int? ItemId = null,
-	long? Count = null);
+	long? Count = null,
+	QuestPersistenceOperationDescriptor? QuestPersistenceOperation = null,
+	NpcFactionPersistenceOperationDescriptor? NpcFactionPersistenceOperation = null);
 
 public sealed record QuestFinishOperationPlan(
 	QuestFinishStateMutationStatus Status,
@@ -46,7 +48,9 @@ public static class QuestFinishOperationPlanService
 		PlayerNpcFactionsSnapshot npcFactions,
 		DateTimeOffset now,
 		GameServerOptions options,
-		QuestFinishRewardTemplateProjection? rewardProjection = null)
+		QuestFinishRewardTemplateProjection? rewardProjection = null,
+		QuestPersistencePlan? questPersistencePlan = null,
+		NpcFactionPersistencePlan? npcFactionPersistencePlan = null)
 	{
 		var guard = QuestFinishStateMutationService.ApplyRewardCompletion(questState, template, now, options);
 		if (!guard.Applied)
@@ -108,18 +112,49 @@ public static class QuestFinishOperationPlanService
 			QuestFinishOperationAction.NearbyQuestRefresh,
 			"PlayerController.updateNearbyQuests",
 			IsLive: false));
-		descriptors.Add(new QuestFinishOperationDescriptor(
-			nextOrder++,
-			QuestFinishOperationAction.DeferredQuestPersistence,
-			"PlayerService.storePlayer -> PlayerQuestListDAO.store",
-			IsLive: false));
-		if (template.NpcFactionId != 0)
+		if (questPersistencePlan is null)
 		{
 			descriptors.Add(new QuestFinishOperationDescriptor(
-				nextOrder,
-				QuestFinishOperationAction.DeferredNpcFactionPersistence,
-				"PlayerService.storePlayer -> PlayerNpcFactionsDAO.storeNpcFactions",
+				nextOrder++,
+				QuestFinishOperationAction.DeferredQuestPersistence,
+				"PlayerService.storePlayer -> PlayerQuestListDAO.store",
 				IsLive: false));
+		}
+		else
+		{
+			foreach (var questPersistenceDescriptor in questPersistencePlan.Descriptors)
+			{
+				descriptors.Add(new QuestFinishOperationDescriptor(
+					nextOrder++,
+					QuestFinishOperationAction.DeferredQuestPersistence,
+					questPersistenceDescriptor.JavaSource,
+					questPersistenceDescriptor.IsLive,
+					QuestPersistenceOperation: questPersistenceDescriptor));
+			}
+		}
+
+		if (npcFactionPersistencePlan is null)
+		{
+			if (template.NpcFactionId != 0)
+			{
+				descriptors.Add(new QuestFinishOperationDescriptor(
+					nextOrder,
+					QuestFinishOperationAction.DeferredNpcFactionPersistence,
+					"PlayerService.storePlayer -> PlayerNpcFactionsDAO.storeNpcFactions",
+					IsLive: false));
+			}
+		}
+		else
+		{
+			foreach (var npcFactionPersistenceDescriptor in npcFactionPersistencePlan.Descriptors)
+			{
+				descriptors.Add(new QuestFinishOperationDescriptor(
+					nextOrder++,
+					QuestFinishOperationAction.DeferredNpcFactionPersistence,
+					npcFactionPersistenceDescriptor.JavaSource,
+					npcFactionPersistenceDescriptor.IsLive,
+					NpcFactionPersistenceOperation: npcFactionPersistenceDescriptor));
+			}
 		}
 
 		return new QuestFinishOperationPlan(
