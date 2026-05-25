@@ -78,6 +78,7 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<WorldNpcSoloDpRewardService>();
 			services.AddSingleton<PvpApRewardService>();
 			services.AddSingleton<PvpDpRewardService>();
+			services.AddSingleton<PvpInstanceApRewardService>();
 			services.AddSingleton<WorldNpcCombatStateService>();
 			services.AddSingleton<WorldNpcCombatEventService>();
 			services.AddSingleton<WorldNpcCastingInterruptService>();
