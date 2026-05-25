@@ -1,5 +1,6 @@
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 
 namespace Aion.GameServer.Tests;
@@ -35,6 +36,8 @@ public sealed class ItemPurificationPacketPlanServiceTests
 			plan.Operations.Select(operation => operation.Type).ToArray());
 		Assert.Equal(ItemPurificationPacketPlanService.UpgradeSuccessMessageId, plan.Operations[0].Mask);
 		Assert.Equal(["base-name", "target-name"], plan.Operations[0].Parameters);
+		Assert.IsType<SmSystemMessage>(plan.Operations[0].ConcretePacket);
+		Assert.All(plan.Operations.Skip(1), operation => Assert.Null(operation.ConcretePacket));
 	}
 
 	[Fact]

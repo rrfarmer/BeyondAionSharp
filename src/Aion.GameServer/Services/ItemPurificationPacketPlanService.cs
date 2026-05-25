@@ -1,3 +1,6 @@
+using Aion.GameServer.Network.Aion;
+using Aion.GameServer.Network.Aion.ServerPackets;
+
 namespace Aion.GameServer.Services;
 
 public static class ItemPurificationPacketPlanService
@@ -32,7 +35,8 @@ public static class ItemPurificationPacketPlanService
 				0,
 				UpgradeSuccessMessageId,
 				null,
-				[sourceItemName, targetItemName]),
+				[sourceItemName, targetItemName],
+				SmSystemMessage.ItemUpgradeSuccess(sourceItemName, targetItemName)),
 		};
 
 		foreach (var operation in applicationPlan.Operations)
@@ -83,7 +87,8 @@ public static class ItemPurificationPacketPlanService
 			operation.ItemId,
 			DecreaseItemUseUpdateType,
 			operation.Type,
-			Parameters: Array.Empty<string>());
+			Parameters: Array.Empty<string>(),
+			ConcretePacket: null);
 	}
 
 	private static ItemPurificationPacketOperation DeleteItem(ItemPurificationApplicationOperation operation)
@@ -95,7 +100,8 @@ public static class ItemPurificationPacketPlanService
 			operation.ItemId,
 			UseDeleteType,
 			operation.Type,
-			Parameters: Array.Empty<string>());
+			Parameters: Array.Empty<string>(),
+			ConcretePacket: null);
 	}
 
 	private static ItemPurificationPacketOperation InventoryAdd(ItemPurificationApplicationOperation operation)
@@ -107,7 +113,8 @@ public static class ItemPurificationPacketPlanService
 			operation.ItemId,
 			ItemCollectAddType,
 			operation.Type,
-			Parameters: Array.Empty<string>());
+			Parameters: Array.Empty<string>(),
+			ConcretePacket: null);
 	}
 
 	private static ItemPurificationPacketOperation CubeSize(ItemPurificationApplicationOperation operation)
@@ -119,7 +126,8 @@ public static class ItemPurificationPacketPlanService
 			operation.ItemId,
 			0,
 			operation.Type,
-			Parameters: Array.Empty<string>());
+			Parameters: Array.Empty<string>(),
+			ConcretePacket: null);
 	}
 
 	private static ItemPurificationPacketOperation AbyssPointsUpdate(ItemPurificationApplicationOperation operation)
@@ -131,7 +139,8 @@ public static class ItemPurificationPacketPlanService
 			operation.ItemId,
 			0,
 			operation.Type,
-			Parameters: Array.Empty<string>());
+			Parameters: Array.Empty<string>(),
+			ConcretePacket: null);
 	}
 
 	private static ItemPurificationPacketOperation KinahNoPacket(ItemPurificationApplicationOperation operation)
@@ -143,7 +152,8 @@ public static class ItemPurificationPacketPlanService
 			operation.ItemId,
 			0,
 			operation.Type,
-			Parameters: Array.Empty<string>());
+			Parameters: Array.Empty<string>(),
+			ConcretePacket: null);
 	}
 }
 
@@ -166,7 +176,8 @@ public sealed record ItemPurificationPacketOperation(
 	int ItemId,
 	int Mask,
 	ItemPurificationApplicationOperationType? SourceOperationType,
-	IReadOnlyList<string> Parameters);
+	IReadOnlyList<string> Parameters,
+	GameServerPacket? ConcretePacket);
 
 public enum ItemPurificationPacketPlanStatus
 {
