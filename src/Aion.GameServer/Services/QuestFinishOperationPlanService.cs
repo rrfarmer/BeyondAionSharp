@@ -37,6 +37,7 @@ public sealed record QuestFinishOperationDescriptor(
 	QuestFinishRewardItemProjectionWarningDescriptor? RewardItemProjectionWarning = null,
 	QuestFinishRewardNonItemProjectionDescriptor? RewardNonItemProjection = null,
 	QuestXpRewardPlan? XpRewardPlan = null,
+	QuestXpExecutionPlan? XpExecutionPlan = null,
 	QuestTitleRewardPlan? TitleRewardPlan = null,
 	QuestExpansionRewardPlan? ExpansionRewardPlan = null,
 	QuestGpRewardResult? GpRewardPlan = null,
@@ -55,7 +56,8 @@ public sealed record QuestFinishRewardSideEffectContext(
 	int QuestXpBoostStat = 100,
 	bool HasLegionBonus = false,
 	byte SalvationPercent = 0,
-	bool IsDaeva = true);
+	bool IsDaeva = true,
+	QuestXpLevelChangeContextFactoryInput? LevelChangeContextInput = null);
 
 public sealed record QuestFinishOperationPlan(
 	QuestFinishStateMutationStatus Status,
@@ -364,6 +366,14 @@ public static class QuestFinishOperationPlanService
 					rewardSideEffectContext.HasLegionBonus,
 					rewardSideEffectContext.SalvationPercent,
 					rewardSideEffectContext.IsDaeva);
+				var levelChangeContext = rewardSideEffectContext.LevelChangeContextInput == null
+					? null
+					: QuestXpLevelChangeContextFactoryService.CreateContext(
+						rewardSideEffectContext.Player,
+						rewardSideEffectContext.LevelChangeContextInput);
+				var xpExecutionPlan = levelChangeContext == null
+					? null
+					: QuestXpExecutionPlanService.CreatePlan(xpPlan, levelChangeContext);
 				descriptors.Add(new QuestFinishOperationDescriptor(
 					nextOrder++,
 					QuestFinishOperationAction.NonItemRewardSideEffectPlan,
@@ -371,7 +381,8 @@ public static class QuestFinishOperationPlanService
 					IsLive: false,
 					Count: nonItemDescriptor.Amount,
 					RewardNonItemProjection: nonItemDescriptor,
-					XpRewardPlan: xpPlan));
+					XpRewardPlan: xpPlan,
+					XpExecutionPlan: xpExecutionPlan));
 				break;
 			case QuestFinishRewardNonItemAction.Title:
 				if (rewardSideEffectContext.TitleTemplates is null)

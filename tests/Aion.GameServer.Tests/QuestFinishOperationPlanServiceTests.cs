@@ -488,6 +488,74 @@ public sealed class QuestFinishOperationPlanServiceTests
 	}
 
 	[Fact]
+	public void CreatePlan_ComposesXpExecutionPlanWithLevelChangeContextMetadata()
+	{
+		var player = new Player
+		{
+			ObjectId = 4104,
+			AccountId = 3301,
+			Name = "Xpcontext",
+			Race = "ELYOS",
+			PlayerClass = "RANGER",
+			Level = 9,
+			Exp = 8_900,
+			LifeStats = new PlayerLifeStats(100, 100, 100),
+		};
+		var rewardProjection = new QuestFinishRewardTemplateProjection(
+			RewardGroupCount: 1,
+			HasNonItemRewards: true,
+			NonItemProjection: new QuestFinishRewardNonItemTemplateProjection(Experience: 400));
+		var contextInput = new QuestXpLevelChangeContextFactoryInput(
+			FromLevel: 10,
+			ToLevel: 10,
+			MaxStats: new PlayerLevelChangeUpgradeStats(250, 230, 120),
+			QuestLevelChangedRegistrations: [new QuestLevelChangedRegistration(1001, "ELYOS")],
+			GuidesEnabled: true,
+			IsSpawned: true,
+			GuideHtmlTemplates: [new GuideHtmlTemplateSummary("level 10", 10, "RANGER", "ELYOS")],
+			IsDaeva: true,
+			HasEffectController: true,
+			BonusPackStoreReceivingPlayerSucceeded: true,
+			FactionPackAccountCreationLocalTime: new DateTime(2020, 9, 14, 0, 0, 0),
+			FactionPackStoreReceivingPlayerSucceeded: true,
+			StarterKitEnabled: true);
+
+		var plan = QuestFinishOperationPlanService.CreatePlan(
+			new PlayerQuestState(1001, "REWARD", QuestVars: 0, Flags: 0, CompleteCount: 0),
+			new NearbyQuestTemplateSummary(1001, QuestCategory: "QUEST"),
+			PlayerNpcFactionsSnapshot.Empty,
+			new DateTimeOffset(2026, 5, 25, 8, 30, 0, TimeSpan.Zero),
+			CreateOptions("UTC"),
+			rewardProjection,
+			rewardSideEffectContext: new QuestFinishRewardSideEffectContext(
+				player,
+				ExperienceTable: CreateLinearExperienceTable(),
+				LevelChangeContextInput: contextInput));
+
+		var sideEffect = Assert.Single(
+			plan.Descriptors,
+			descriptor => descriptor.XpExecutionPlan is not null);
+		Assert.NotNull(sideEffect.XpRewardPlan);
+		Assert.Equal(QuestXpExecutionPlanStatus.Applied, sideEffect.XpExecutionPlan?.Status);
+		Assert.True(sideEffect.XpExecutionPlan?.LevelChanged);
+		Assert.Equal(
+		[
+			QuestXpExecutionAction.UpgradePlayerLifeStats,
+			QuestXpExecutionAction.NpcFactionLevelUp,
+			QuestXpExecutionAction.QuestLevelChangedCallbacks,
+			QuestXpExecutionAction.NearbyQuestRefresh,
+			QuestXpExecutionAction.GuideHtml,
+			QuestXpExecutionAction.SkillAutoLearn,
+			QuestXpExecutionAction.BonusPackReward,
+			QuestXpExecutionAction.FactionPackReward,
+			QuestXpExecutionAction.StarterKitReward,
+		], sideEffect.XpExecutionPlan!.LevelChangeSubPlans.Select(subPlan => subPlan.Action));
+		Assert.All(sideEffect.XpExecutionPlan.LevelChangeSubPlans, subPlan => Assert.False(subPlan.IsLive));
+		Assert.Equal(8_900, player.Exp);
+		Assert.Equal(9, player.Level);
+	}
+
+	[Fact]
 	public void CreatePlan_ComposesWarehouseSideEffectPlanAndKeepsBoundaryFailuresNonLive()
 	{
 		var player = new Player
