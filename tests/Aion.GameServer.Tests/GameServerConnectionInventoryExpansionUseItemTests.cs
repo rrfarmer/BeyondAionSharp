@@ -690,6 +690,45 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		await AssertCompletesAsync(runTask);
 	}
 
+	[Fact]
+	public async Task RunAsync_EncryptedUseItemFrameDeletesLastSourceAndAddsReward()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(
+			includeThreadPoolManager: true,
+			idFactory: new IDFactory([5001]),
+			enableCryptKeyBeforeRun: false);
+		var player = CreatePlayer(itemId: 100, count: 1);
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+		var runTask = Task.Run(() => fixture.Connection.RunAsync());
+
+		await fixture.ReadServerFrameAsync();
+		await fixture.WriteClientFrameAsync(
+			CreateEncryptedClientFrame(
+				CreateClientPayload(37, buffer =>
+				{
+					buffer.WriteD(5001);
+					buffer.WriteC(0);
+				})));
+
+		await WaitUntilAsync(() => fixture.SentPackets.Count >= 6, TimeSpan.FromSeconds(5));
+
+		Assert.Equal(0, player.UsingItemObjectId);
+		var reward = Assert.Single(player.InventoryItems);
+		Assert.Equal(200, reward.ItemId);
+		Assert.Equal(1, reward.Count);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => Assert.IsType<SmKey>(packet),
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 100, expectedTime: 3000, expectedEnd: 0),
+			packet => Assert.IsType<SmSystemMessage>(packet),
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 5001, expectedDeleteType: SmDeleteItem.UseDeleteType),
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 100, expectedTime: 0, expectedEnd: 1),
+			packet => Assert.IsType<SmInventoryAddItem>(packet));
+
+		await fixture.Connection.CloseAsync();
+		await AssertCompletesAsync(runTask);
+	}
+
 	private static Player CreatePlayer(
 		int itemId,
 		long count = 2,
