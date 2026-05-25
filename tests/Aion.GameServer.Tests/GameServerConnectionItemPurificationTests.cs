@@ -786,6 +786,66 @@ public sealed class GameServerConnectionItemPurificationTests
 			registry.SentPackets.Select(packet => packet.Packet.GetType()).ToArray());
 	}
 
+	[Fact]
+	public async Task HandleItemPurificationPersistentLiveExecutionAsync_ReportsPersistenceFailureAfterLiveExecution()
+	{
+		var baseItem = new InventoryItem
+		{
+			ObjectId = 10,
+			ItemId = 100000001,
+			Count = 1,
+			Location = 0,
+			Enchant = 25,
+			TuneCount = 2,
+			RandomBonus = 7,
+		};
+		var material = new InventoryItem { ObjectId = 20, ItemId = 186000001, Count = 3, Location = 0 };
+		var kinah = new InventoryItem { ObjectId = 30, ItemId = 182400001, Count = 10_000, Location = 0 };
+		var player = new Player
+		{
+			ObjectId = 700,
+			AbyssRank = PlayerAbyssRank.Default() with { Ap = 5_000 },
+			InventoryItems = [baseItem, material, kinah],
+		};
+		await using var pair = await TestConnectionPair.CreateAsync();
+		var itemTemplates = CreateItemTemplates();
+		var packet = CreatePacket(
+			playerObjectId: 9999,
+			baseItemObjectId: baseItem.ObjectId,
+			resultItemId: 100000002,
+			requiredMaterialObjectIds: [9001, 9002, 9003, 9004, 9005]);
+		var registry = new RecordingConnectionRegistry();
+		var repository = new EmptyPlayerEnterWorldRepository { SaveItemPurificationMutationResult = false };
+
+		var execution = await pair.Connection.HandleItemPurificationPersistentLiveExecutionAsync(
+			player,
+			packet,
+			npcExpands: 1,
+			questExpands: 0,
+			itemExpands: 1,
+			repository,
+			CreatePurificationTable(),
+			itemTemplates,
+			targetObjectId: 9001,
+			connectionRegistryOverride: registry);
+
+		Assert.NotNull(execution);
+		Assert.False(execution.Succeeded);
+		Assert.Equal(ItemPurificationPersistentLiveExecutionStatus.PersistenceSaveFailed, execution.Status);
+		Assert.False(execution.PersistenceSaved);
+		Assert.NotNull(execution.LiveExecution);
+		Assert.True(execution.LiveExecution.Succeeded);
+		Assert.NotNull(execution.PersistencePlan);
+		Assert.True(execution.PersistencePlan.Succeeded);
+		Assert.Equal(3_800, player.AbyssRank.Ap);
+		Assert.Equal([20, 30, 9001], player.InventoryItems.Select(item => item.ObjectId).Order().ToArray());
+		Assert.Equal(1, repository.SaveItemPurificationMutationCalls);
+		Assert.Equal([20], repository.ItemPurificationMaterialItemUpdates.Select(item => item.ObjectId).ToArray());
+		Assert.Equal(10, repository.ItemPurificationDeletedBaseItemObjectId);
+		Assert.Equal([9001], repository.ItemPurificationAddedTargetItems.Select(item => item.ObjectId).ToArray());
+		Assert.Equal(6, registry.SentPackets.Count);
+	}
+
 	private static CmItemPurification CreatePacket(
 		int playerObjectId,
 		int baseItemObjectId,
