@@ -187,6 +187,40 @@ public sealed class QuestRewardService
 			RequiresAscensionLimitMessage: nextLevel == 9 && cappedExp >= experienceTable.GetStartExpForLevel(10));
 	}
 
+	public static IReadOnlyList<SmSystemMessage> CreateXpSystemMessagePackets(QuestXpRewardPlan plan)
+	{
+		// Java parity: PlayerCommonData.addExp sends the XP gain message after setExp,
+		// then sends STR_LEVEL_LIMIT_QUEST_NOT_FINISHED1 when the level-9 ascension cap is reached.
+		if (!plan.Applied)
+			return Array.Empty<SmSystemMessage>();
+
+		var packets = new List<SmSystemMessage>(plan.RequiresAscensionLimitMessage ? 2 : 1);
+		packets.Add(plan.MessageKind switch
+		{
+			QuestXpRewardMessageKind.Named => SmSystemMessage.GetExp(plan.NpcName!, plan.FinalRewardXp),
+			QuestXpRewardMessageKind.Plain => SmSystemMessage.GetExp2(plan.FinalRewardXp),
+			QuestXpRewardMessageKind.NamedReposeBonus => SmSystemMessage.GetExpVitalBonus(plan.NpcName!, plan.FinalRewardXp, plan.ReposeBonus),
+			QuestXpRewardMessageKind.ReposeBonus => SmSystemMessage.GetExp2VitalBonus(plan.FinalRewardXp, plan.ReposeBonus),
+			QuestXpRewardMessageKind.NamedSalvationBonus => SmSystemMessage.GetExpMakeupBonus(plan.NpcName!, plan.FinalRewardXp, plan.SalvationBonus),
+			QuestXpRewardMessageKind.SalvationBonus => SmSystemMessage.GetExp2MakeupBonus(plan.FinalRewardXp, plan.SalvationBonus),
+			QuestXpRewardMessageKind.NamedReposeAndSalvationBonus => SmSystemMessage.GetExpVitalMakeupBonus(
+				plan.NpcName!,
+				plan.FinalRewardXp,
+				plan.ReposeBonus,
+				plan.SalvationBonus),
+			QuestXpRewardMessageKind.ReposeAndSalvationBonus => SmSystemMessage.GetExp2VitalMakeupBonus(
+				plan.FinalRewardXp,
+				plan.ReposeBonus,
+				plan.SalvationBonus),
+			_ => throw new InvalidOperationException($"Applied XP plan has unsupported message kind {plan.MessageKind}."),
+		});
+
+		if (plan.RequiresAscensionLimitMessage)
+			packets.Add(SmSystemMessage.LevelLimitQuestNotFinished());
+
+		return packets;
+	}
+
 	public QuestKinahRewardPlan CreateKinahRewardPlan(
 		Player? player,
 		IReadOnlyList<InventoryItem> inventoryItems,

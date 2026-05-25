@@ -381,6 +381,57 @@ public sealed class QuestRewardServiceTests
 	}
 
 	[Fact]
+	public void CreateXpSystemMessagePackets_MapsPlanMessageKindsAndAscensionWarningInJavaOrder()
+	{
+		var service = CreateService(
+			out _,
+			new GameServerOptions
+			{
+				Rates = new GameServerRateOptions
+				{
+					XpQuestRates = [1f, 2f],
+				},
+			});
+		var table = CreateLinearExperienceTable();
+		var namedBonus = service.CreateXpRewardPlan(
+			CreatePlayer(
+				objectId: 1312,
+				playerClass: "RANGER",
+				dp: 500,
+				membership: 1,
+				level: 15,
+				exp: 14_000,
+				reposeEnergy: 50),
+			table,
+			rewardXp: 100,
+			npcName: "quest npc",
+			salvationPercent: 10);
+		var ascension = service.CreateXpRewardPlan(
+			CreatePlayer(
+				objectId: 1313,
+				playerClass: "RANGER",
+				dp: 500,
+				level: 9,
+				exp: 8_900,
+				position: new WorldPosition(210010000, 10, 20, 30, 0)),
+			table,
+			rewardXp: 500,
+			isDaeva: false);
+		var skipped = service.CreateXpRewardPlan(
+			CreatePlayer(objectId: 1314, playerClass: "RANGER", dp: 500),
+			table,
+			rewardXp: 0);
+
+		var namedBonusPackets = QuestRewardService.CreateXpSystemMessagePackets(namedBonus);
+		var ascensionPackets = QuestRewardService.CreateXpSystemMessagePackets(ascension);
+		var skippedPackets = QuestRewardService.CreateXpSystemMessagePackets(skipped);
+
+		Assert.Equal([1400344], namedBonusPackets.Select(packet => packet.MessageId));
+		Assert.Equal([1370002, 1400545], ascensionPackets.Select(packet => packet.MessageId));
+		Assert.Empty(skippedPackets);
+	}
+
+	[Fact]
 	public void ApplyQuestXpRate_MatchesJavaFloatRateBoostLegionFallbacksAndOverflow()
 	{
 		var clampedMembership = QuestRewardService.ApplyQuestXpRate(
