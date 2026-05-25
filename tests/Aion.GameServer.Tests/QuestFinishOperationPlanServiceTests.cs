@@ -299,6 +299,64 @@ public sealed class QuestFinishOperationPlanServiceTests
 	}
 
 	[Fact]
+	public void CreatePlan_PreservesNestedCallbackFollowUpPlanThroughQuestFinishOrdering()
+	{
+		var followUpPlan = QuestCompletionFollowUpPlanService.CreatePlan(
+		[
+			new QuestCompletionFollowUpRequest(
+				FollowUpQuestId: 14015,
+				Decision: QuestCompletionFollowUpDecision.Lock,
+				StartConditionsEvaluatedByCaller: true),
+			new QuestCompletionFollowUpRequest(
+				FollowUpQuestId: 14016,
+				Decision: QuestCompletionFollowUpDecision.Start,
+				ExistingQuestState: new PlayerQuestState(14016, "LOCKED", QuestVars: 0, Flags: 0, CompleteCount: 0)),
+		]);
+		var callbackPlan = QuestCompletionCallbackPlanService.CreatePlan(
+			35007,
+		[
+			new QuestCompletionCallbackRegistration(
+				RegisteredQuestId: 14015,
+				HandlerJavaSource: "game-server/data/handlers/quest/verteron/_14015NotBlindedByVengeance.java",
+				UsesDefaultFollowUp: true,
+				FollowUpQuestId: 14015,
+				FollowUpPlan: followUpPlan),
+		]);
+
+		var plan = QuestFinishOperationPlanService.CreatePlan(
+			new PlayerQuestState(35007, "REWARD", QuestVars: 4, Flags: 0, CompleteCount: 0),
+			new NearbyQuestTemplateSummary(35007, NpcFactionId: 0),
+			PlayerNpcFactionsSnapshot.Empty,
+			new DateTimeOffset(2026, 5, 25, 8, 30, 0, TimeSpan.Zero),
+			CreateOptions("UTC"),
+			callbackPlan: callbackPlan);
+
+		var callbackDescriptor = Assert.Single(
+			plan.Descriptors,
+			descriptor => descriptor.Action == QuestFinishOperationAction.QuestCompletedCallback);
+		Assert.NotNull(callbackDescriptor.CompletionCallbackOperation);
+		Assert.Same(followUpPlan, callbackDescriptor.CompletionCallbackOperation!.FollowUpPlan);
+		Assert.Equal(
+		[
+			QuestFinishOperationAction.QuestUpdatePacket,
+			QuestFinishOperationAction.QuestCompletedCallback,
+			QuestFinishOperationAction.NearbyQuestRefresh,
+		], plan.Descriptors
+			.Where(descriptor => descriptor.Action is
+				QuestFinishOperationAction.QuestUpdatePacket or
+				QuestFinishOperationAction.QuestCompletedCallback or
+				QuestFinishOperationAction.NearbyQuestRefresh)
+			.Select(descriptor => descriptor.Action));
+		Assert.Equal(
+		[
+			QuestCompletionFollowUpPacketAction.Add,
+			QuestCompletionFollowUpPacketAction.Update,
+		], callbackDescriptor.CompletionCallbackOperation.FollowUpPlan!.Descriptors.Select(descriptor => descriptor.PacketAction));
+		Assert.Equal(["LOCKED", "START"], callbackDescriptor.CompletionCallbackOperation.FollowUpPlan.Descriptors.Select(descriptor => descriptor.TargetQuestStatus));
+		Assert.All(callbackDescriptor.CompletionCallbackOperation.FollowUpPlan.Descriptors, descriptor => Assert.False(descriptor.IsLive));
+	}
+
+	[Fact]
 	public void CreatePlan_UsesProvidedEmptyCallbackPlanWithoutLegacyPlaceholder()
 	{
 		var plan = QuestFinishOperationPlanService.CreatePlan(
