@@ -433,6 +433,97 @@ public sealed class QuestFinishOperationPlanServiceTests
 	}
 
 	[Fact]
+	public void CreatePlan_PreservesJavaFailureOrderingAcrossRewardsCallbacksAndDeferredPersistence()
+	{
+		var now = new DateTimeOffset(2026, 5, 25, 8, 30, 0, TimeSpan.Zero);
+		var questState = new PlayerQuestState(
+			QuestId: 35007,
+			Status: "REWARD",
+			QuestVars: 4,
+			Flags: 0,
+			CompleteCount: 0);
+		var npcFactions = new PlayerNpcFactionsSnapshot(
+		[
+			new PlayerNpcFactionState(
+				FactionId: 2,
+				IsActive: true,
+				IsMentor: false,
+				TimeEpochSeconds: 0,
+				State: PlayerNpcFactionQuestState.Start,
+				QuestId: 35007),
+		]);
+		var rewardProjection = new QuestFinishRewardTemplateProjection(
+			RewardGroupCount: 1,
+			HasItemRewards: true,
+			HasNonItemRewards: true,
+			IsChallengeTask: true,
+			ItemProjection: new QuestFinishRewardItemTemplateProjection(
+				RewardGroups:
+				[
+					new QuestFinishRewardGroupProjection(
+						RewardGroupIndex: 0,
+						FixedRewardItems: [new QuestFinishRewardItem(ItemId: 182400001, Count: 2)]),
+				]),
+			NonItemProjection: new QuestFinishRewardNonItemTemplateProjection(Kinah: 500),
+			WorkItems:
+			[
+				new QuestFinishRewardWorkItem(ItemId: 182400002, Count: 1),
+			]);
+		var callbackPlan = QuestCompletionCallbackPlanService.CreatePlan(
+			35007,
+		[
+			new QuestCompletionCallbackRegistration(
+				RegisteredQuestId: 14015,
+				HandlerJavaSource: "game-server/data/handlers/quest/verteron/_14015NotBlindedByVengeance.java"),
+		]);
+		var questPersistencePlan = QuestPersistencePlanService.CreatePlan(
+		[
+			new QuestPersistenceStateEntry(questState, QuestPersistenceState.UpdateRequired),
+		],
+			deletedQuestIds: []);
+
+		var plan = QuestFinishOperationPlanService.CreatePlan(
+			questState,
+			new NearbyQuestTemplateSummary(35007, NpcFactionId: 2),
+			npcFactions,
+			now,
+			CreateOptions("UTC"),
+			rewardProjection,
+			callbackPlan,
+			questPersistencePlan);
+
+		Assert.True(plan.Applied);
+		Assert.All(plan.Descriptors, descriptor => Assert.False(descriptor.IsLive));
+		Assert.Equal(
+		[
+			QuestFinishOperationAction.RewardGroupCorrection,
+			QuestFinishOperationAction.ItemRewardProjection,
+			QuestFinishOperationAction.ItemRewardPlaceholder,
+			QuestFinishOperationAction.NonItemRewardProjection,
+			QuestFinishOperationAction.NonItemRewardPlaceholder,
+			QuestFinishOperationAction.ChallengeTaskCompletionPlaceholder,
+			QuestFinishOperationAction.RemoveQuestWorkItemsPlaceholder,
+			QuestFinishOperationAction.QuestStateMutation,
+			QuestFinishOperationAction.QuestUpdatePacket,
+			QuestFinishOperationAction.QuestCompletedCallback,
+			QuestFinishOperationAction.NpcFactionCompletion,
+			QuestFinishOperationAction.NearbyQuestRefresh,
+			QuestFinishOperationAction.DeferredQuestPersistence,
+			QuestFinishOperationAction.DeferredNpcFactionPersistence,
+		], plan.Descriptors.Select(descriptor => descriptor.Action));
+		Assert.Equal(Enumerable.Range(1, 14), plan.Descriptors.Select(descriptor => descriptor.Order));
+
+		var actions = plan.Descriptors.Select(descriptor => descriptor.Action).ToList();
+		Assert.True(actions.IndexOf(QuestFinishOperationAction.NonItemRewardPlaceholder) < actions.IndexOf(QuestFinishOperationAction.QuestStateMutation));
+		Assert.True(actions.IndexOf(QuestFinishOperationAction.QuestStateMutation) < actions.IndexOf(QuestFinishOperationAction.QuestUpdatePacket));
+		Assert.True(actions.IndexOf(QuestFinishOperationAction.QuestUpdatePacket) < actions.IndexOf(QuestFinishOperationAction.QuestCompletedCallback));
+		Assert.True(actions.IndexOf(QuestFinishOperationAction.QuestCompletedCallback) < actions.IndexOf(QuestFinishOperationAction.NpcFactionCompletion));
+		Assert.True(actions.IndexOf(QuestFinishOperationAction.NpcFactionCompletion) < actions.IndexOf(QuestFinishOperationAction.NearbyQuestRefresh));
+		Assert.True(actions.IndexOf(QuestFinishOperationAction.NearbyQuestRefresh) < actions.IndexOf(QuestFinishOperationAction.DeferredQuestPersistence));
+		Assert.True(actions.IndexOf(QuestFinishOperationAction.NearbyQuestRefresh) < actions.IndexOf(QuestFinishOperationAction.DeferredNpcFactionPersistence));
+	}
+
+	[Fact]
 	public void CreatePlan_ComposesDetailedCallbackPlanAfterUpdatePacketBeforeNpcFaction()
 	{
 		var now = new DateTimeOffset(2026, 5, 25, 8, 30, 0, TimeSpan.Zero);
