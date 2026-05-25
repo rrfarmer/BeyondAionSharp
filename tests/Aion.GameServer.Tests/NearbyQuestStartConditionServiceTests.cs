@@ -99,14 +99,46 @@ public sealed class NearbyQuestStartConditionServiceTests
 		[
 			new NearbyQuestTemplateSummary(3001, HasXmlStartConditions: true),
 			new NearbyQuestTemplateSummary(3002, HasInventoryItems: true),
-			new NearbyQuestTemplateSummary(3003, CombineSkill: 40001),
 			new NearbyQuestTemplateSummary(3004, NpcFactionId: 12),
 		]);
 
 		AssertFailure(player, 3001, table, NearbyQuestStartConditionFailure.UnsupportedXmlStartConditions);
 		AssertFailure(player, 3002, table, NearbyQuestStartConditionFailure.UnsupportedInventoryItems);
-		AssertFailure(player, 3003, table, NearbyQuestStartConditionFailure.UnsupportedCombineSkill);
 		AssertFailure(player, 3004, table, NearbyQuestStartConditionFailure.UnsupportedNpcFaction);
+	}
+
+	[Fact]
+	public void CheckNearbyStartConditions_AppliesJavaCombineSkillGate()
+	{
+		var player = new Player
+		{
+			Level = 50,
+			Race = "ELYOS",
+			PlayerClass = "GLADIATOR",
+			Gender = "MALE",
+			Skills =
+			[
+				new PlayerSkill { SkillId = 40001, SkillLevel = 199 },
+				new PlayerSkill { SkillId = 30002, SkillLevel = 399 },
+				new PlayerSkill { SkillId = 40002, SkillLevel = 241 },
+			],
+		};
+		var table = new NearbyQuestTemplateTable(
+		[
+			new NearbyQuestTemplateSummary(3301, CombineSkill: 40001, CombineSkillPoint: 199),
+			new NearbyQuestTemplateSummary(3302, CombineSkill: 40001, CombineSkillPoint: 200),
+			new NearbyQuestTemplateSummary(3303, CombineSkill: -1, CombineSkillPoint: 399),
+			new NearbyQuestTemplateSummary(3304, CombineSkill: -1, CombineSkillPoint: 399, NpcFactionId: 12),
+			new NearbyQuestTemplateSummary(3305, CombineSkill: 40002, CombineSkillPoint: 200, QuestCategory: "TASK"),
+			new NearbyQuestTemplateSummary(3306, CombineSkill: 40002, CombineSkillPoint: 201, QuestCategory: "TASK"),
+		]);
+
+		AssertPass(player, 3301, table);
+		AssertFailure(player, 3302, table, NearbyQuestStartConditionFailure.CombineSkill);
+		AssertPass(player, 3303, table);
+		AssertFailure(player, 3304, table, NearbyQuestStartConditionFailure.CombineSkill);
+		AssertFailure(player, 3305, table, NearbyQuestStartConditionFailure.CombineSkill);
+		AssertPass(player, 3306, table);
 	}
 
 	[Fact]

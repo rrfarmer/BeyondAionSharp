@@ -6,6 +6,8 @@ namespace Aion.GameServer.Services;
 public static class NearbyQuestStartConditionService
 {
 	public const int NearbyAllowedDiffToMinLevel = 2;
+	private static readonly int[] AnyCombineSkillIds = [30002, 30003, 40001, 40002, 40003, 40004, 40007, 40008, 40010];
+	private static readonly int[] AnyCombineSkillIdsWithoutTapping = [40001, 40002, 40003, 40004, 40007, 40008, 40010];
 
 	public static NearbyQuestStartConditionResult CheckNearbyStartConditions(
 		Player player,
@@ -62,6 +64,10 @@ public static class NearbyQuestStartConditionService
 		if (inventoryFailure != NearbyQuestStartConditionFailure.None)
 			return NearbyQuestStartConditionResult.Fail(inventoryFailure);
 
+		var combineSkillFailure = GetCombineSkillFailure(player, template);
+		if (combineSkillFailure != NearbyQuestStartConditionFailure.None)
+			return NearbyQuestStartConditionResult.Fail(combineSkillFailure);
+
 		var unsupportedFailure = GetUnsupportedDependencyFailure(template);
 		if (unsupportedFailure != NearbyQuestStartConditionFailure.None)
 			return NearbyQuestStartConditionResult.Fail(unsupportedFailure);
@@ -101,12 +107,39 @@ public static class NearbyQuestStartConditionService
 			return NearbyQuestStartConditionFailure.UnsupportedXmlStartConditions;
 		if (template.HasInventoryItems && template.InventoryItems.Count == 0)
 			return NearbyQuestStartConditionFailure.UnsupportedInventoryItems;
-		if (template.CombineSkill != 0)
-			return NearbyQuestStartConditionFailure.UnsupportedCombineSkill;
 		if (template.NpcFactionId != 0)
 			return NearbyQuestStartConditionFailure.UnsupportedNpcFaction;
 
 		return NearbyQuestStartConditionFailure.None;
+	}
+
+	private static NearbyQuestStartConditionFailure GetCombineSkillFailure(
+		Player player,
+		NearbyQuestTemplateSummary template)
+	{
+		if (template.CombineSkill == 0)
+			return NearbyQuestStartConditionFailure.None;
+
+		// Java parity: QuestService.checkCombineSkill checks one explicit combine skill, or the
+		// any-skill sentinel -1; NPC faction 12/13 excludes essence/aether tapping.
+		var skillIds = template.CombineSkill == -1
+			? template.NpcFactionId is 12 or 13 ? AnyCombineSkillIdsWithoutTapping : AnyCombineSkillIds
+			: [template.CombineSkill];
+
+		foreach (var skillId in skillIds)
+		{
+			var skill = player.Skills.FirstOrDefault(playerSkill => playerSkill.SkillId == skillId);
+			if (skill == null || skill.SkillLevel < template.CombineSkillPoint)
+				continue;
+
+			if (string.Equals(template.QuestCategory, "TASK", StringComparison.Ordinal)
+				&& skill.SkillLevel - 40 > template.CombineSkillPoint)
+				continue;
+
+			return NearbyQuestStartConditionFailure.None;
+		}
+
+		return NearbyQuestStartConditionFailure.CombineSkill;
 	}
 
 	private static NearbyQuestStartConditionFailure GetInventoryItemFailure(
@@ -257,8 +290,9 @@ public enum NearbyQuestStartConditionFailure
 	Rank = 11,
 	XmlStartConditions = 12,
 	InventoryItems = 13,
-	UnsupportedXmlStartConditions = 14,
-	UnsupportedInventoryItems = 15,
-	UnsupportedCombineSkill = 16,
-	UnsupportedNpcFaction = 17,
+	CombineSkill = 14,
+	UnsupportedXmlStartConditions = 15,
+	UnsupportedInventoryItems = 16,
+	UnsupportedCombineSkill = 17,
+	UnsupportedNpcFaction = 18,
 }

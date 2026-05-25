@@ -25,7 +25,7 @@ public sealed class NearbyQuestTemplateXmlExtractorTests
 			<quests>
 				<quest id="1001" minlevel_permitted="19" maxlevel_permitted="45" race_permitted="ELYOS" rank="4"
 				       max_repeat_count="3" combineskill="40001" combine_skillpoint="199" npcfaction_id="12"
-				       repeat_cycle="Mon Wed">
+				       category="TASK" repeat_cycle="Mon Wed">
 					<class_permitted>
 						GLADIATOR CLERIC
 					</class_permitted>
@@ -75,6 +75,8 @@ public sealed class NearbyQuestTemplateXmlExtractorTests
 		Assert.Equal(1, template.InventoryItems.Single(item => item.ItemId == 182200001).Count);
 		Assert.Null(template.InventoryItems.Single(item => item.ItemId == 182200002).Count);
 		Assert.Equal(40001, template.CombineSkill);
+		Assert.Equal(199, template.CombineSkillPoint);
+		Assert.Equal("TASK", template.QuestCategory);
 		Assert.Equal(12, template.NpcFactionId);
 	}
 
@@ -106,6 +108,8 @@ public sealed class NearbyQuestTemplateXmlExtractorTests
 		Assert.False(template.HasInventoryItems);
 		Assert.Empty(template.InventoryItems);
 		Assert.Equal(0, template.CombineSkill);
+		Assert.Equal(0, template.CombineSkillPoint);
+		Assert.Equal("QUEST", template.QuestCategory);
 		Assert.Equal(0, template.NpcFactionId);
 	}
 

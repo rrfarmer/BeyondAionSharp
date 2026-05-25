@@ -32,6 +32,8 @@ public sealed record NearbyQuestTemplateSummary(
 	bool HasXmlStartConditions = false,
 	bool HasInventoryItems = false,
 	int CombineSkill = 0,
+	int CombineSkillPoint = 0,
+	string QuestCategory = "QUEST",
 	int NpcFactionId = 0,
 	IReadOnlyList<NearbyQuestInventoryItem>? InventoryItems = null,
 	IReadOnlyList<NearbyQuestXmlStartCondition>? XmlStartConditions = null,

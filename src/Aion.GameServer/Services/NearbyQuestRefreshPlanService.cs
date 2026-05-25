@@ -49,7 +49,6 @@ public sealed record NearbyQuestRefreshPlan(
 	public bool HasUnsupportedDependencies =>
 		RejectionCounts.ContainsKey(NearbyQuestStartConditionFailure.UnsupportedXmlStartConditions)
 		|| RejectionCounts.ContainsKey(NearbyQuestStartConditionFailure.UnsupportedInventoryItems)
-		|| RejectionCounts.ContainsKey(NearbyQuestStartConditionFailure.UnsupportedCombineSkill)
 		|| RejectionCounts.ContainsKey(NearbyQuestStartConditionFailure.UnsupportedNpcFaction)
 		|| RejectionCounts.ContainsKey(NearbyQuestStartConditionFailure.UnsupportedRepeatTiming);
 

@@ -47,6 +47,8 @@ public sealed class NearbyQuestTemplateXmlExtractor
 			HasXmlStartConditions: startConditions.Count != 0,
 			HasInventoryItems: inventoryItems.Count != 0,
 			CombineSkill: ReadIntAttribute(quest, "combineskill"),
+			CombineSkillPoint: ReadIntAttribute(quest, "combine_skillpoint"),
+			QuestCategory: ReadStringAttribute(quest, "category", defaultValue: "QUEST"),
 			NpcFactionId: ReadIntAttribute(quest, "npcfaction_id"),
 			InventoryItems: inventoryItems,
 			XmlStartConditions: startConditions,
@@ -126,9 +128,9 @@ public sealed class NearbyQuestTemplateXmlExtractor
 			unsupported);
 	}
 
-	private static string ReadStringAttribute(XElement element, string attributeName)
+	private static string ReadStringAttribute(XElement element, string attributeName, string defaultValue = "")
 	{
-		return element.Attribute(attributeName)?.Value ?? string.Empty;
+		return element.Attribute(attributeName)?.Value ?? defaultValue;
 	}
 
 	private static int ReadRequiredIntAttribute(XElement element, string attributeName)
