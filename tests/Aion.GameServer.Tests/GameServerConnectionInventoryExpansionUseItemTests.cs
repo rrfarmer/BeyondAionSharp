@@ -362,6 +362,22 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleSelectDecomposableAsync_MissingRewardTemplateDoesNotCallPersistenceOrSendPackets()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository, idFactory: new IDFactory([5001]));
+		var player = CreatePlayer(itemId: 101, race: "ASMODIANS", playerClass: "GLADIATOR");
+
+		await InvokeHandleSelectDecomposableAsync(fixture.Connection, player, CreateSelectDecomposable(sourceItemObjectId: 5001, index: 1));
+
+		Assert.Equal(0, repository.SaveDecomposeActionMutationCalls);
+		var sourceItem = Assert.Single(player.InventoryItems);
+		Assert.Equal(101, sourceItem.ItemId);
+		Assert.Equal(2, sourceItem.Count);
+		Assert.Empty(fixture.SentPackets);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_SelectDecomposableDispatchesSelection()
 	{
 		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(idFactory: new IDFactory([5001]));
@@ -398,14 +414,14 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			packet => Assert.IsType<SmInventoryAddItem>(packet));
 	}
 
-	private static Player CreatePlayer(int itemId, long count = 2)
+	private static Player CreatePlayer(int itemId, long count = 2, string race = "ELYOS", string playerClass = "RANGER")
 	{
 		return new Player
 		{
 			ObjectId = 1001,
 			Name = "TicketUser",
-			Race = "ELYOS",
-			PlayerClass = "RANGER",
+			Race = race,
+			PlayerClass = playerClass,
 			Position = new WorldPosition(210010000, 1, 2, 3, 0),
 			InventoryItems =
 			[
