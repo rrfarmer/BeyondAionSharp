@@ -13,7 +13,8 @@ public static class NearbyQuestStartConditionService
 		Player player,
 		int questId,
 		NearbyQuestTemplateTable questTemplates,
-		DateTimeOffset? now = null)
+		DateTimeOffset? now = null,
+		int maxMasterCraftingSkills = CraftSkillUpdateService.DefaultMaxMasterCraftingSkills)
 	{
 		// Java parity breadcrumb: QuestService.checkStartConditions(player, questId, false, 2, false, false, false).
 		if (!questTemplates.TryGetQuest(questId, out var template) || template == null)
@@ -57,7 +58,7 @@ public static class NearbyQuestStartConditionService
 		if (template.RequiredRank != 0 && player.AbyssRank.Rank < template.RequiredRank)
 			return NearbyQuestStartConditionResult.Fail(NearbyQuestStartConditionFailure.Rank);
 
-		var xmlFailure = GetXmlStartConditionFailure(player, template, questTemplates);
+		var xmlFailure = GetXmlStartConditionFailure(player, template, questTemplates, maxMasterCraftingSkills);
 		if (xmlFailure != NearbyQuestStartConditionFailure.None)
 			return NearbyQuestStartConditionResult.Fail(xmlFailure);
 
@@ -186,7 +187,8 @@ public static class NearbyQuestStartConditionService
 	private static NearbyQuestStartConditionFailure GetXmlStartConditionFailure(
 		Player player,
 		NearbyQuestTemplateSummary template,
-		NearbyQuestTemplateTable questTemplates)
+		NearbyQuestTemplateTable questTemplates,
+		int maxMasterCraftingSkills)
 	{
 		if (!template.HasXmlStartConditions)
 			return NearbyQuestStartConditionFailure.None;
@@ -196,19 +198,22 @@ public static class NearbyQuestStartConditionService
 
 		var fulfilledStartConditions = template.XmlStartConditions.Count(condition =>
 			CheckXmlStartCondition(player, condition, questTemplates));
-		return fulfilledStartConditions < GetRequiredXmlStartConditionCount(template)
+		return fulfilledStartConditions < GetRequiredXmlStartConditionCount(template, maxMasterCraftingSkills)
 			? NearbyQuestStartConditionFailure.XmlStartConditions
 			: NearbyQuestStartConditionFailure.None;
 	}
 
-	private static int GetRequiredXmlStartConditionCount(NearbyQuestTemplateSummary template)
+	private static int GetRequiredXmlStartConditionCount(NearbyQuestTemplateSummary template, int maxMasterCraftingSkills)
 	{
 		// Java parity: QuestTemplate.getRequiredConditionCount requires every mandatory XMLStartCondition
-		// and at most one optional condition containing <finished>. Master-crafting adjustment remains blocked
-		// because combine-skill quest support is still outside the nearby staged predicate.
+		// and at most one optional condition containing <finished>. Master quests adjust by CraftConfig.MAX_MASTER_CRAFTING_SKILLS.
 		var optionalCount = template.XmlStartConditions.Count(condition => condition.IsOptional);
 		var mandatoryCount = template.XmlStartConditions.Count - optionalCount;
-		return Math.Min(1, optionalCount) + mandatoryCount;
+		var result = Math.Min(1, optionalCount) + mandatoryCount;
+		if (template.CombineSkillPoint == 499)
+			result += 1 - maxMasterCraftingSkills;
+
+		return result;
 	}
 
 	private static bool CheckXmlStartCondition(

@@ -370,6 +370,45 @@ public sealed class NearbyQuestStartConditionServiceTests
 	}
 
 	[Fact]
+	public void CheckNearbyStartConditions_AppliesJavaMasterCraftingRequiredConditionAdjustment()
+	{
+		var player = new Player
+		{
+			Level = 50,
+			Race = "ELYOS",
+			PlayerClass = "GLADIATOR",
+			Gender = "MALE",
+			Quests =
+			[
+				new PlayerQuestState(8001, "COMPLETE", QuestVars: 0, Flags: 0, CompleteCount: 1),
+			],
+			Skills = [new PlayerSkill { SkillId = 40001, SkillLevel = 499 }],
+		};
+		var table = new NearbyQuestTemplateTable(
+		[
+			new NearbyQuestTemplateSummary(4401, CombineSkill: 40001, CombineSkillPoint: 499, HasXmlStartConditions: true, XmlStartConditions:
+			[
+				new NearbyQuestXmlStartCondition(Finished: [new NearbyQuestFinishedCondition(8001)]),
+				new NearbyQuestXmlStartCondition(RequiredTitle: 7),
+			]),
+			new NearbyQuestTemplateSummary(4402, CombineSkill: 40001, CombineSkillPoint: 399, HasXmlStartConditions: true, XmlStartConditions:
+			[
+				new NearbyQuestXmlStartCondition(Finished: [new NearbyQuestFinishedCondition(8001)]),
+				new NearbyQuestXmlStartCondition(RequiredTitle: 7),
+			]),
+			new NearbyQuestTemplateSummary(4403, CombineSkill: 40001, CombineSkillPoint: 499, HasXmlStartConditions: true, XmlStartConditions:
+			[
+				new NearbyQuestXmlStartCondition(RequiredTitle: 7),
+			]),
+		]);
+
+		AssertFailure(player, 4401, table, NearbyQuestStartConditionFailure.XmlStartConditions);
+		AssertPass(player, 4401, table, maxMasterCraftingSkills: 2);
+		AssertFailure(player, 4402, table, NearbyQuestStartConditionFailure.XmlStartConditions, maxMasterCraftingSkills: 2);
+		AssertPass(player, 4403, table, maxMasterCraftingSkills: 2);
+	}
+
+	[Fact]
 	public void GetLevelRequirementDiff_MatchesJavaMissingTemplateAndMinLevelBehavior()
 	{
 		var table = new NearbyQuestTemplateTable(
@@ -387,9 +426,10 @@ public sealed class NearbyQuestStartConditionServiceTests
 		Player player,
 		int questId,
 		NearbyQuestTemplateTable table,
-		DateTimeOffset? now = null)
+		DateTimeOffset? now = null,
+		int maxMasterCraftingSkills = CraftSkillUpdateService.DefaultMaxMasterCraftingSkills)
 	{
-		var result = NearbyQuestStartConditionService.CheckNearbyStartConditions(player, questId, table, now);
+		var result = NearbyQuestStartConditionService.CheckNearbyStartConditions(player, questId, table, now, maxMasterCraftingSkills);
 		Assert.True(result.CanStart);
 		Assert.Equal(NearbyQuestStartConditionFailure.None, result.Failure);
 	}
@@ -399,9 +439,10 @@ public sealed class NearbyQuestStartConditionServiceTests
 		int questId,
 		NearbyQuestTemplateTable table,
 		NearbyQuestStartConditionFailure expectedFailure,
-		DateTimeOffset? now = null)
+		DateTimeOffset? now = null,
+		int maxMasterCraftingSkills = CraftSkillUpdateService.DefaultMaxMasterCraftingSkills)
 	{
-		var result = NearbyQuestStartConditionService.CheckNearbyStartConditions(player, questId, table, now);
+		var result = NearbyQuestStartConditionService.CheckNearbyStartConditions(player, questId, table, now, maxMasterCraftingSkills);
 		Assert.False(result.CanStart);
 		Assert.Equal(expectedFailure, result.Failure);
 	}
