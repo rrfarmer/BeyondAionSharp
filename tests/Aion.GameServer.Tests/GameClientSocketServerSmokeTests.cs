@@ -67,6 +67,40 @@ public class GameClientSocketServerSmokeTests
 		}
 	}
 
+	[Fact]
+	public async Task GameClientSocketServer_ClosesAfterThreeBadEncryptedClientFrames()
+	{
+		var server = CreateServer();
+		var serverTask = Task.Run(() => server.StartAsync());
+
+		try
+		{
+			var endpoint = await WaitForEndpointAsync(() => server.LocalEndPoint);
+			using var client = new TcpClient();
+			await client.ConnectAsync(endpoint.Address, endpoint.Port);
+			await using var stream = client.GetStream();
+			await ReadFrameAsync(stream);
+
+			var badFrame = GamePacketFrameCodec.CreateFrame(new byte[] { 1, 2, 3, 4, 5 });
+			await stream.WriteAsync(badFrame);
+			await Task.Delay(100);
+			Assert.Equal(1, server.GetActiveConnections());
+			await stream.WriteAsync(badFrame);
+			await Task.Delay(100);
+			Assert.Equal(1, server.GetActiveConnections());
+			await stream.WriteAsync(badFrame);
+
+			await AssertClientClosedAsync(stream);
+			await server.StopAsync(TimeSpan.FromSeconds(1));
+			Assert.Equal(0, server.GetActiveConnections());
+			await AssertTaskCompletedAsync(serverTask);
+		}
+		finally
+		{
+			await server.StopAsync(TimeSpan.FromSeconds(1));
+		}
+	}
+
 	private static GameClientSocketServer CreateServer()
 	{
 		var options = new GameServerOptions
