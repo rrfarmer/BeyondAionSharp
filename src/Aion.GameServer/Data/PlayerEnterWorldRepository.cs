@@ -2714,7 +2714,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			await connection.OpenAsync(cancellationToken);
 			await using var command = connection.CreateCommand();
 			command.CommandText = """
-				SELECT quest_id, status, quest_vars, flags, complete_count
+				SELECT quest_id, status, quest_vars, flags, complete_count, reward
 				FROM player_quests
 				WHERE player_id = ?
 				ORDER BY quest_id
@@ -2731,7 +2731,8 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 						ReadString(reader, "status"),
 						ReadInt(reader, "quest_vars"),
 						ReadInt(reader, "flags"),
-						ReadInt(reader, "complete_count")));
+						ReadInt(reader, "complete_count"),
+						ReadNullableInt(reader, "reward")));
 			}
 
 			return quests;

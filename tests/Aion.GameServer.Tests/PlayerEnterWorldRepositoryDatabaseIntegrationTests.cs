@@ -165,6 +165,37 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 		Assert.Equal(0, await ExecuteScalarLongAsync("SELECT COUNT(*) FROM inventory WHERE item_unique_id = 9299"));
 	}
 
+	[Fact]
+	public async Task LoadPlayerQuests_HydratesRewardGroupAgainstJavaSchema_WhenEnabled()
+	{
+		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
+			return;
+
+		// Java parity: dao/PlayerQuestListDAO.SELECT_QUERY reads nullable `reward` into QuestState.rewardGroup.
+		InitializeDatabaseFactory();
+		await InitializeSchemaAsync();
+		await SeedPlayerAsync();
+		await ExecuteNonQueryAsync(
+			"""
+			INSERT INTO player_quests (
+				player_id, quest_id, status, quest_vars, flags, complete_count, next_repeat_time, reward, complete_time
+			)
+			VALUES
+				(1001, 5001, 'COMPLETE', 0, 0, 2, NULL, 3, NULL),
+				(1001, 5002, 'COMPLETE', 0, 0, 1, NULL, NULL, NULL)
+			""");
+
+		var repository = new MySqlPlayerEnterWorldRepository(
+			new GameServerRuntimeContext(),
+			NullLogger<MySqlPlayerEnterWorldRepository>.Instance);
+
+		var quests = await repository.LoadPlayerQuestsAsync(PlayerObjectId);
+
+		Assert.Equal(2, quests.Count);
+		Assert.Equal(3, quests.Single(quest => quest.QuestId == 5001).RewardGroup);
+		Assert.Null(quests.Single(quest => quest.QuestId == 5002).RewardGroup);
+	}
+
 	private static void InitializeDatabaseFactory()
 	{
 		DatabaseFactory.Initialize(
