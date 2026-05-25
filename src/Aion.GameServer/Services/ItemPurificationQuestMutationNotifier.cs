@@ -31,13 +31,17 @@ public sealed class NoOpItemPurificationQuestMutationNotifier : IItemPurificatio
 public sealed class PlanningItemPurificationQuestMutationNotifier : IItemPurificationQuestMutationNotifier
 {
 	private readonly QuestUpdateItemTable _questUpdateItems;
+	private readonly IItemPurificationNearbyQuestRefreshDispatcher? _nearbyQuestRefreshDispatcher;
 
-	public PlanningItemPurificationQuestMutationNotifier(QuestUpdateItemTable questUpdateItems)
+	public PlanningItemPurificationQuestMutationNotifier(
+		QuestUpdateItemTable questUpdateItems,
+		IItemPurificationNearbyQuestRefreshDispatcher? nearbyQuestRefreshDispatcher = null)
 	{
 		_questUpdateItems = questUpdateItems;
+		_nearbyQuestRefreshDispatcher = nearbyQuestRefreshDispatcher;
 	}
 
-	public ValueTask<ItemPurificationQuestNotificationDispatchResult> NotifyAsync(
+	public async ValueTask<ItemPurificationQuestNotificationDispatchResult> NotifyAsync(
 		Player player,
 		IReadOnlyList<ItemPurificationQuestNotificationCandidate> notifications,
 		CancellationToken cancellationToken = default)
@@ -47,17 +51,45 @@ public sealed class PlanningItemPurificationQuestMutationNotifier : IItemPurific
 		// planner exposes that decision but still does not invoke quest handlers or
 		// the player controller.
 		var refreshPlan = ItemPurificationNearbyQuestRefreshPlan.Create(notifications, _questUpdateItems);
+		var refreshDispatch = _nearbyQuestRefreshDispatcher == null
+			? null
+			: await _nearbyQuestRefreshDispatcher.DispatchAsync(player, refreshPlan, cancellationToken);
+		return notifications.Count == 0
+			? ItemPurificationQuestNotificationDispatchResult.NoNotifications(refreshPlan, refreshDispatch)
+			: ItemPurificationQuestNotificationDispatchResult.NoOp(notifications, refreshPlan, refreshDispatch);
+	}
+}
+
+public interface IItemPurificationNearbyQuestRefreshDispatcher
+{
+	ValueTask<ItemPurificationNearbyQuestRefreshDispatchResult> DispatchAsync(
+		Player player,
+		ItemPurificationNearbyQuestRefreshPlan refreshPlan,
+		CancellationToken cancellationToken = default);
+}
+
+public sealed class NoOpItemPurificationNearbyQuestRefreshDispatcher : IItemPurificationNearbyQuestRefreshDispatcher
+{
+	public ValueTask<ItemPurificationNearbyQuestRefreshDispatchResult> DispatchAsync(
+		Player player,
+		ItemPurificationNearbyQuestRefreshPlan refreshPlan,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity breadcrumb: QuestEngine calls player.getController().updateNearbyQuests()
+		// for matching questUpdateItems. This dispatcher keeps the explicit seam no-op until a
+		// real player-controller refresh path exists in C#.
 		return ValueTask.FromResult(
-			notifications.Count == 0
-				? ItemPurificationQuestNotificationDispatchResult.NoNotifications(refreshPlan)
-				: ItemPurificationQuestNotificationDispatchResult.NoOp(notifications, refreshPlan));
+			refreshPlan.ShouldRefreshNearbyQuests
+				? ItemPurificationNearbyQuestRefreshDispatchResult.NoOp(refreshPlan)
+				: ItemPurificationNearbyQuestRefreshDispatchResult.NoRefreshNeeded(refreshPlan));
 	}
 }
 
 public sealed record ItemPurificationQuestNotificationDispatchResult(
 	ItemPurificationQuestNotificationDispatchStatus Status,
 	IReadOnlyList<ItemPurificationQuestNotificationCandidate> Notifications,
-	ItemPurificationNearbyQuestRefreshPlan? NearbyQuestRefreshPlan = null)
+	ItemPurificationNearbyQuestRefreshPlan? NearbyQuestRefreshPlan = null,
+	ItemPurificationNearbyQuestRefreshDispatchResult? NearbyQuestRefreshDispatch = null)
 {
 	public bool Succeeded => Status
 		is ItemPurificationQuestNotificationDispatchStatus.NoOp
@@ -65,21 +97,25 @@ public sealed record ItemPurificationQuestNotificationDispatchResult(
 
 	public static ItemPurificationQuestNotificationDispatchResult NoOp(
 		IReadOnlyList<ItemPurificationQuestNotificationCandidate> notifications,
-		ItemPurificationNearbyQuestRefreshPlan? nearbyQuestRefreshPlan = null)
+		ItemPurificationNearbyQuestRefreshPlan? nearbyQuestRefreshPlan = null,
+		ItemPurificationNearbyQuestRefreshDispatchResult? nearbyQuestRefreshDispatch = null)
 	{
 		return new ItemPurificationQuestNotificationDispatchResult(
 			ItemPurificationQuestNotificationDispatchStatus.NoOp,
 			notifications,
-			nearbyQuestRefreshPlan);
+			nearbyQuestRefreshPlan,
+			nearbyQuestRefreshDispatch);
 	}
 
 	public static ItemPurificationQuestNotificationDispatchResult NoNotifications(
-		ItemPurificationNearbyQuestRefreshPlan? nearbyQuestRefreshPlan = null)
+		ItemPurificationNearbyQuestRefreshPlan? nearbyQuestRefreshPlan = null,
+		ItemPurificationNearbyQuestRefreshDispatchResult? nearbyQuestRefreshDispatch = null)
 	{
 		return new ItemPurificationQuestNotificationDispatchResult(
 			ItemPurificationQuestNotificationDispatchStatus.NoNotifications,
 			Array.Empty<ItemPurificationQuestNotificationCandidate>(),
-			nearbyQuestRefreshPlan);
+			nearbyQuestRefreshPlan,
+			nearbyQuestRefreshDispatch);
 	}
 }
 
@@ -130,12 +166,43 @@ public sealed record ItemPurificationNearbyQuestRefreshCandidate(
 	int ObjectId,
 	int ItemId);
 
+public sealed record ItemPurificationNearbyQuestRefreshDispatchResult(
+	ItemPurificationNearbyQuestRefreshDispatchStatus Status,
+	IReadOnlyList<ItemPurificationNearbyQuestRefreshCandidate> Candidates)
+{
+	public bool Succeeded => Status
+		is ItemPurificationNearbyQuestRefreshDispatchStatus.NoOp
+		or ItemPurificationNearbyQuestRefreshDispatchStatus.NoRefreshNeeded;
+
+	public static ItemPurificationNearbyQuestRefreshDispatchResult NoOp(
+		ItemPurificationNearbyQuestRefreshPlan refreshPlan)
+	{
+		return new ItemPurificationNearbyQuestRefreshDispatchResult(
+			ItemPurificationNearbyQuestRefreshDispatchStatus.NoOp,
+			refreshPlan.Candidates);
+	}
+
+	public static ItemPurificationNearbyQuestRefreshDispatchResult NoRefreshNeeded(
+		ItemPurificationNearbyQuestRefreshPlan refreshPlan)
+	{
+		return new ItemPurificationNearbyQuestRefreshDispatchResult(
+			ItemPurificationNearbyQuestRefreshDispatchStatus.NoRefreshNeeded,
+			refreshPlan.Candidates);
+	}
+}
+
 public enum ItemPurificationNearbyQuestRefreshPlanStatus
 {
 	Ready,
 	NoNotifications,
 	NoQuestUpdateItems,
 	NoRefreshCandidates,
+}
+
+public enum ItemPurificationNearbyQuestRefreshDispatchStatus
+{
+	NoOp,
+	NoRefreshNeeded,
 }
 
 public enum ItemPurificationQuestNotificationDispatchStatus
