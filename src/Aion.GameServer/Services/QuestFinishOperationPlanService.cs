@@ -7,6 +7,10 @@ namespace Aion.GameServer.Services;
 public enum QuestFinishOperationAction
 {
 	RewardMutationPlaceholder,
+	RewardGroupCorrection,
+	ItemRewardPlaceholder,
+	NonItemRewardPlaceholder,
+	ChallengeTaskCompletionPlaceholder,
 	RemoveQuestWorkItemsPlaceholder,
 	QuestStateMutation,
 	QuestUpdatePacket,
@@ -21,7 +25,9 @@ public sealed record QuestFinishOperationDescriptor(
 	int Order,
 	QuestFinishOperationAction Action,
 	string JavaSource,
-	bool IsLive);
+	bool IsLive,
+	int? ItemId = null,
+	long? Count = null);
 
 public sealed record QuestFinishOperationPlan(
 	QuestFinishStateMutationStatus Status,
@@ -39,28 +45,50 @@ public static class QuestFinishOperationPlanService
 		NearbyQuestTemplateSummary template,
 		PlayerNpcFactionsSnapshot npcFactions,
 		DateTimeOffset now,
-		GameServerOptions options)
+		GameServerOptions options,
+		QuestFinishRewardTemplateProjection? rewardProjection = null)
 	{
-		var mutation = QuestFinishStateMutationService.ApplyRewardCompletion(questState, template, now, options);
-		if (!mutation.Applied)
+		var guard = QuestFinishStateMutationService.ApplyRewardCompletion(questState, template, now, options);
+		if (!guard.Applied)
 		{
 			return new QuestFinishOperationPlan(
-				mutation.Status,
-				mutation.QuestState,
+				guard.Status,
+				guard.QuestState,
 				npcFactions,
 				Array.Empty<QuestFinishOperationDescriptor>());
 		}
 
-		var descriptors = new List<QuestFinishOperationDescriptor>
+		var descriptors = new List<QuestFinishOperationDescriptor>();
+		var nextOrder = 1;
+		var stateInput = questState!;
+
+		if (rewardProjection is null)
 		{
 			// Java parity breadcrumb: QuestService.finishQuest computes/adds rewards and removes
 			// work items before mutating QuestState. These are deliberately descriptors only.
-			new(1, QuestFinishOperationAction.RewardMutationPlaceholder, "QuestService.finishQuest rewards", IsLive: false),
-			new(2, QuestFinishOperationAction.RemoveQuestWorkItemsPlaceholder, "QuestService.removeQuestWorkItems", IsLive: false),
-			new(3, QuestFinishOperationAction.QuestStateMutation, "QuestState.setStatus/setQuestVar/setNextRepeatTime", IsLive: false),
-			new(4, QuestFinishOperationAction.QuestUpdatePacket, "SM_QUEST_ACTION(ActionType.UPDATE, qs)", IsLive: false),
-			new(5, QuestFinishOperationAction.QuestCompletedCallback, "QuestEngine.onQuestCompleted", IsLive: false),
-		};
+			descriptors.Add(new(nextOrder++, QuestFinishOperationAction.RewardMutationPlaceholder, "QuestService.finishQuest rewards", IsLive: false));
+			descriptors.Add(new(nextOrder++, QuestFinishOperationAction.RemoveQuestWorkItemsPlaceholder, "QuestService.removeQuestWorkItems", IsLive: false));
+		}
+		else
+		{
+			var rewardPlan = QuestFinishRewardPlanService.CreatePlan(stateInput, rewardProjection);
+			stateInput = rewardPlan.QuestState;
+			foreach (var rewardDescriptor in rewardPlan.Descriptors)
+			{
+				descriptors.Add(new QuestFinishOperationDescriptor(
+					nextOrder++,
+					MapRewardAction(rewardDescriptor.Action),
+					rewardDescriptor.JavaSource,
+					rewardDescriptor.IsLive,
+					rewardDescriptor.ItemId,
+					rewardDescriptor.Count));
+			}
+		}
+
+		var mutation = QuestFinishStateMutationService.ApplyRewardCompletion(stateInput, template, now, options);
+		descriptors.Add(new(nextOrder++, QuestFinishOperationAction.QuestStateMutation, "QuestState.setStatus/setQuestVar/setNextRepeatTime", IsLive: false));
+		descriptors.Add(new(nextOrder++, QuestFinishOperationAction.QuestUpdatePacket, "SM_QUEST_ACTION(ActionType.UPDATE, qs)", IsLive: false));
+		descriptors.Add(new(nextOrder++, QuestFinishOperationAction.QuestCompletedCallback, "QuestEngine.onQuestCompleted", IsLive: false));
 
 		var plannedNpcFactions = npcFactions;
 		if (template.NpcFactionId != 0)
@@ -69,13 +97,12 @@ public static class QuestFinishOperationPlanService
 			var factionCompletion = npcFactions.CompleteActiveQuest(template.IsMentorQuest, nextReset);
 			plannedNpcFactions = factionCompletion.Snapshot;
 			descriptors.Add(new QuestFinishOperationDescriptor(
-				6,
+				nextOrder++,
 				QuestFinishOperationAction.NpcFactionCompletion,
 				"NpcFactions.completeQuest",
 				IsLive: false));
 		}
 
-		var nextOrder = descriptors.Count == 6 ? 7 : 6;
 		descriptors.Add(new QuestFinishOperationDescriptor(
 			nextOrder++,
 			QuestFinishOperationAction.NearbyQuestRefresh,
@@ -100,5 +127,18 @@ public static class QuestFinishOperationPlanService
 			mutation.QuestState,
 			plannedNpcFactions,
 			descriptors);
+	}
+
+	private static QuestFinishOperationAction MapRewardAction(QuestFinishRewardOperationAction action)
+	{
+		return action switch
+		{
+			QuestFinishRewardOperationAction.RewardGroupCorrection => QuestFinishOperationAction.RewardGroupCorrection,
+			QuestFinishRewardOperationAction.ItemRewardPlaceholder => QuestFinishOperationAction.ItemRewardPlaceholder,
+			QuestFinishRewardOperationAction.NonItemRewardPlaceholder => QuestFinishOperationAction.NonItemRewardPlaceholder,
+			QuestFinishRewardOperationAction.ChallengeTaskCompletionPlaceholder => QuestFinishOperationAction.ChallengeTaskCompletionPlaceholder,
+			QuestFinishRewardOperationAction.RemoveQuestWorkItemsPlaceholder => QuestFinishOperationAction.RemoveQuestWorkItemsPlaceholder,
+			_ => throw new ArgumentOutOfRangeException(nameof(action), action, null),
+		};
 	}
 }

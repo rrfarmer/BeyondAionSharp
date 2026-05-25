@@ -87,6 +87,60 @@ public sealed class QuestFinishOperationPlanServiceTests
 	}
 
 	[Fact]
+	public void CreatePlan_ComposesRewardProjectionBeforeStateMutation()
+	{
+		var now = new DateTimeOffset(2026, 5, 25, 8, 30, 0, TimeSpan.Zero);
+		var questState = new PlayerQuestState(
+			QuestId: 1001,
+			Status: "REWARD",
+			QuestVars: 0x123456,
+			Flags: 2,
+			CompleteCount: 0);
+		var rewardProjection = new QuestFinishRewardTemplateProjection(
+			RewardGroupCount: 2,
+			HasItemRewards: true,
+			HasNonItemRewards: true,
+			IsChallengeTask: true,
+			WorkItems:
+			[
+				new QuestFinishRewardWorkItem(ItemId: 182400001, Count: 3),
+			]);
+
+		var plan = QuestFinishOperationPlanService.CreatePlan(
+			questState,
+			new NearbyQuestTemplateSummary(1001),
+			PlayerNpcFactionsSnapshot.Empty,
+			now,
+			CreateOptions("UTC"),
+			rewardProjection);
+
+		Assert.True(plan.Applied);
+		Assert.NotNull(plan.QuestState);
+		Assert.Equal("COMPLETE", plan.QuestState.Status);
+		Assert.Equal(0, plan.QuestState.RewardGroup);
+		Assert.All(plan.Descriptors, descriptor => Assert.False(descriptor.IsLive));
+		Assert.Equal(
+		[
+			QuestFinishOperationAction.RewardGroupCorrection,
+			QuestFinishOperationAction.ItemRewardPlaceholder,
+			QuestFinishOperationAction.NonItemRewardPlaceholder,
+			QuestFinishOperationAction.ChallengeTaskCompletionPlaceholder,
+			QuestFinishOperationAction.RemoveQuestWorkItemsPlaceholder,
+			QuestFinishOperationAction.QuestStateMutation,
+			QuestFinishOperationAction.QuestUpdatePacket,
+			QuestFinishOperationAction.QuestCompletedCallback,
+			QuestFinishOperationAction.NearbyQuestRefresh,
+			QuestFinishOperationAction.DeferredQuestPersistence,
+		], plan.Descriptors.Select(descriptor => descriptor.Action));
+		Assert.Equal(Enumerable.Range(1, 10), plan.Descriptors.Select(descriptor => descriptor.Order));
+		var workItemDescriptor = Assert.Single(
+			plan.Descriptors,
+			descriptor => descriptor.Action == QuestFinishOperationAction.RemoveQuestWorkItemsPlaceholder);
+		Assert.Equal(182400001, workItemDescriptor.ItemId);
+		Assert.Equal(3, workItemDescriptor.Count);
+	}
+
+	[Fact]
 	public void CreatePlan_KeepsNpcFactionNoOpDescriptorWhenJavaWouldReturnFromMissingActiveSlot()
 	{
 		var plan = QuestFinishOperationPlanService.CreatePlan(
@@ -115,7 +169,8 @@ public sealed class QuestFinishOperationPlanServiceTests
 			new NearbyQuestTemplateSummary(1001),
 			PlayerNpcFactionsSnapshot.Empty,
 			new DateTimeOffset(2026, 5, 25, 8, 30, 0, TimeSpan.Zero),
-			CreateOptions("UTC"));
+			CreateOptions("UTC"),
+			new QuestFinishRewardTemplateProjection(RewardGroupCount: 2, HasItemRewards: true));
 
 		Assert.False(plan.Applied);
 		Assert.Equal(expectedStatus, plan.Status);
