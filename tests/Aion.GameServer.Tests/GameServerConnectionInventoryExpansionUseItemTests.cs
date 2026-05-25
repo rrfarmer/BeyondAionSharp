@@ -439,6 +439,9 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			],
 			ReadPacketClasses(decrement.RootElement));
 		Assert.Equal(SmInventoryUpdateItem.DecreaseItemUse, GetPacket(decrement.RootElement, 3).GetProperty("decoded_fields").GetProperty("update_type_mask").GetInt32());
+		Assert.Equal(
+			"STR_UNCOMPRESS_COMPRESSED_ITEM_SUCCEEDED",
+			GetPacket(decrement.RootElement, 2).GetProperty("decoded_fields").GetProperty("factory_name").GetString());
 		Assert.Equal(202, GetPacket(decrement.RootElement, 5).GetProperty("decoded_fields").GetProperty("item_id").GetInt32());
 		Assert.Equal(3, GetPacket(decrement.RootElement, 5).GetProperty("decoded_fields").GetProperty("count").GetInt64());
 
@@ -455,6 +458,9 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			],
 			ReadPacketClasses(delete.RootElement));
 		Assert.Equal(SmDeleteItem.UseDeleteType, GetPacket(delete.RootElement, 3).GetProperty("decoded_fields").GetProperty("delete_type").GetInt32());
+		Assert.Equal(
+			"STR_UNCOMPRESS_COMPRESSED_ITEM_SUCCEEDED",
+			GetPacket(delete.RootElement, 2).GetProperty("decoded_fields").GetProperty("factory_name").GetString());
 		Assert.Equal(0, GetPacket(delete.RootElement, 4).GetProperty("decoded_fields").GetProperty("items_count").GetInt32());
 		Assert.Equal(201, GetPacket(delete.RootElement, 6).GetProperty("decoded_fields").GetProperty("item_id").GetInt32());
 		Assert.Equal(2, GetPacket(delete.RootElement, 6).GetProperty("decoded_fields").GetProperty("count").GetInt64());
@@ -1266,12 +1272,17 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	private static Dictionary<string, object?> DecodeSystemMessageFields(SmSystemMessage packet)
 	{
 		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		var chatType = (int)reader.ReadC();
+		var messageKind = (int)reader.ReadC();
+		var senderObjectId = reader.ReadD();
+		var messageId = reader.ReadD();
 		var fields = new Dictionary<string, object?>
 		{
-			["chat_type"] = (int)reader.ReadC(),
-			["message_kind"] = (int)reader.ReadC(),
-			["sender_object_id"] = reader.ReadD(),
-			["message_id"] = reader.ReadD(),
+			["chat_type"] = chatType,
+			["message_kind"] = messageKind,
+			["sender_object_id"] = senderObjectId,
+			["message_id"] = messageId,
+			["factory_name"] = GetSystemMessageFactoryName(messageId),
 		};
 		var parameterCount = (int)reader.ReadC();
 		var parameters = new string[parameterCount];
@@ -1280,6 +1291,18 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		fields["parameters"] = parameters;
 		fields["trailing_flag"] = (int)reader.ReadC();
 		return fields;
+	}
+
+	private static string? GetSystemMessageFactoryName(int messageId)
+	{
+		return messageId switch
+		{
+			// Java parity: SM_SYSTEM_MESSAGE.STR_UNCOMPRESS_COMPRESSED_ITEM_SUCCEEDED(String) -> 1400452.
+			1400452 => "STR_UNCOMPRESS_COMPRESSED_ITEM_SUCCEEDED",
+			// Java parity: SM_SYSTEM_MESSAGE.STR_DECOMPOSE_ITEM_INVENTORY_IS_FULL() -> 1300447.
+			1300447 => "STR_DECOMPOSE_ITEM_INVENTORY_IS_FULL",
+			_ => null,
+		};
 	}
 
 	private static Dictionary<string, object?> DecodeInventoryUpdateFields(SmInventoryUpdateItem packet)
@@ -1411,12 +1434,14 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		{
 			case "JD-SEL-DEC-001":
 				AssertPacketFields(javaObservation, csharpObservation, sequence: 1, ["item_id", "time", "end", "unknown3"]);
+				AssertPacketFields(javaObservation, csharpObservation, sequence: 2, ["message_id", "factory_name"]);
 				AssertPacketFields(javaObservation, csharpObservation, sequence: 3, ["count", "update_type_mask", "update_type_name"]);
 				AssertPacketFields(javaObservation, csharpObservation, sequence: 4, ["reward_count"]);
 				AssertPacketFields(javaObservation, csharpObservation, sequence: 5, ["add_type_mask", "add_type_name", "packet_item_count", "item_id", "count", "slot", "cloth_flag"]);
 				break;
 			case "JD-SEL-DEL-001":
 				AssertPacketFields(javaObservation, csharpObservation, sequence: 1, ["item_id", "time", "end", "unknown3"]);
+				AssertPacketFields(javaObservation, csharpObservation, sequence: 2, ["message_id", "factory_name"]);
 				AssertPacketFields(javaObservation, csharpObservation, sequence: 3, ["delete_type", "delete_type_name"]);
 				AssertPacketFields(javaObservation, csharpObservation, sequence: 4, ["action", "storage", "items_count", "npc_expands", "quest_expands", "item_expands"]);
 				AssertPacketFields(javaObservation, csharpObservation, sequence: 5, ["reward_count"]);
