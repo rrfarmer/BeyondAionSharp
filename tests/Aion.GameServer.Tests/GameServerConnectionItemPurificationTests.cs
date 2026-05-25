@@ -7,6 +7,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ClientPackets;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
+using Aion.GameServer.World;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Aion.GameServer.Tests;
@@ -245,6 +246,86 @@ public sealed class GameServerConnectionItemPurificationTests
 		Assert.Equal(5_000, player.AbyssRank.Ap);
 	}
 
+	[Fact]
+	public async Task ItemPurificationHandlerPacketBridge_SendsConcretePacketsAndSkipsMetadata()
+	{
+		var baseItem = new InventoryItem
+		{
+			ObjectId = 10,
+			ItemId = 100000001,
+			Count = 1,
+			Location = 0,
+			Enchant = 25,
+			TuneCount = 2,
+			RandomBonus = 7,
+		};
+		var material = new InventoryItem { ObjectId = 20, ItemId = 186000001, Count = 3, Location = 0 };
+		var kinah = new InventoryItem { ObjectId = 30, ItemId = 182400001, Count = 10_000, Location = 0 };
+		var player = new Player
+		{
+			ObjectId = 700,
+			AbyssRank = PlayerAbyssRank.Default() with { Ap = 5_000 },
+			InventoryItems = [baseItem, material, kinah],
+		};
+		await using var pair = await TestConnectionPair.CreateAsync();
+		var itemTemplates = CreateItemTemplates();
+		var packet = CreatePacket(
+			playerObjectId: 9999,
+			baseItemObjectId: baseItem.ObjectId,
+			resultItemId: 100000002,
+			requiredMaterialObjectIds: [9001, 9002, 9003, 9004, 9005]);
+		var handlerPlan = await pair.Connection.HandleItemPurificationAsync(
+			player,
+			packet,
+			CreatePurificationTable(),
+			itemTemplates,
+			targetObjectId: 9001);
+		var postMutationItems = new[]
+		{
+			kinah,
+			new InventoryItem { ObjectId = 20, ItemId = 186000001, Count = 1, Location = 0 },
+			new InventoryItem { ObjectId = 9001, ItemId = 100000002, Count = 1, Location = 0, Slot = -1 },
+		};
+		var registry = new RecordingConnectionRegistry();
+
+		var send = await ItemPurificationHandlerPacketBridgeService.SendConcretePacketsAsync(
+			player.ObjectId,
+			handlerPlan,
+			postMutationItems,
+			itemTemplates,
+			new Dictionary<int, ItemPurificationCubeSnapshot>
+			{
+				[5] = new(ItemsCount: 2, NpcExpands: 1, QuestExpands: 0, ItemExpands: 0),
+				[7] = new(ItemsCount: 3, NpcExpands: 1, QuestExpands: 0, ItemExpands: 1),
+			},
+			registry);
+
+		Assert.True(send.Succeeded);
+		Assert.Equal(ItemPurificationHandlerPacketBridgeStatus.Ready, send.Bridge?.Status);
+		Assert.Equal(ItemPurificationPacketSendStatus.Ready, send.SendResult?.Status);
+		Assert.Equal(6, send.SendResult?.SentCount);
+		Assert.Equal([player.ObjectId, player.ObjectId, player.ObjectId, player.ObjectId, player.ObjectId, player.ObjectId], registry.SentPackets.Select(packet => packet.PlayerObjectId).ToArray());
+		Assert.Equal(
+			[
+				typeof(SmSystemMessage),
+				typeof(SmInventoryUpdateItem),
+				typeof(SmDeleteItem),
+				typeof(SmCubeUpdate),
+				typeof(SmInventoryAddItem),
+				typeof(SmCubeUpdate),
+			],
+			registry.SentPackets.Select(packet => packet.Packet.GetType()).ToArray());
+		Assert.Equal(
+			[
+				ItemPurificationPacketOperationType.AbyssPointsUpdate,
+				ItemPurificationPacketOperationType.KinahNoPacket,
+			],
+			send.SendResult?.SkippedMetadataOperations.Select(operation => operation.Type).ToArray());
+		Assert.Equal([10, 20, 30], player.InventoryItems.Select(item => item.ObjectId).ToArray());
+		Assert.Equal(3, material.Count);
+		Assert.Equal(5_000, player.AbyssRank.Ap);
+	}
+
 	private static CmItemPurification CreatePacket(
 		int playerObjectId,
 		int baseItemObjectId,
@@ -357,4 +438,75 @@ public sealed class GameServerConnectionItemPurificationTests
 			_client.Dispose();
 		}
 	}
+
+	private sealed class RecordingConnectionRegistry : IGameClientConnectionRegistry
+	{
+		public List<SentPacketRecord> SentPackets { get; } = [];
+
+		public void RegisterPlayerConnection(int playerObjectId, GameServerConnection connection)
+		{
+		}
+
+		public void UnregisterPlayerConnection(int playerObjectId, GameServerConnection connection)
+		{
+		}
+
+		public bool TryGetOnlinePlayerByName(string playerName, out Player? player)
+		{
+			player = null;
+			return false;
+		}
+
+		public void ForEachOnlinePlayer(Action<Player> action)
+		{
+		}
+
+		public Task<bool> SendPacketToPlayerAsync(int playerObjectId, GameServerPacket packet)
+		{
+			SentPackets.Add(new SentPacketRecord(playerObjectId, packet));
+			return Task.FromResult(true);
+		}
+
+		public Task<int> BroadcastToWorldAsync(GameServerPacket packet, Func<Player, bool>? filter = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> BroadcastToVisiblePlayersAsync(
+			WorldPosition sourcePosition,
+			int sourceObjectId,
+			GameServerPacket packet,
+			bool includeSourcePlayer = false,
+			Func<Player, bool>? filter = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> RefreshHousingVisibilityAsync(IReadOnlyList<WorldHouse> houses, HousingTemplateTable? housingTemplates, int? playerObjectId = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> RefreshNpcVisibilityAsync(IReadOnlyList<IWorldNpcObject> npcs, int? playerObjectId = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> BroadcastHouseUpdateAsync(WorldHouse house, HousingTemplateTable? housingTemplates)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<bool> NotifyMailReceivedAsync(int recipientObjectId, PlayerMail mail)
+		{
+			return Task.FromResult(false);
+		}
+
+		public Task<bool> NotifyBrokerSettledAsync(int sellerObjectId, long settledKinah)
+		{
+			return Task.FromResult(false);
+		}
+	}
+
+	private sealed record SentPacketRecord(int PlayerObjectId, GameServerPacket Packet);
 }

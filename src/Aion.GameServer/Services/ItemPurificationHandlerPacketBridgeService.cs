@@ -1,5 +1,6 @@
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion;
 
 namespace Aion.GameServer.Services;
 
@@ -48,6 +49,38 @@ public static class ItemPurificationHandlerPacketBridgeService
 			inputs,
 			packetPlan);
 	}
+
+	public static async ValueTask<ItemPurificationHandlerPacketSendBridgeResult> SendConcretePacketsAsync(
+		int playerObjectId,
+		ItemPurificationHandlerPlan? handlerPlan,
+		IReadOnlyList<InventoryItem> postMutationInventoryItems,
+		ItemTemplateTable itemTemplates,
+		IReadOnlyDictionary<int, ItemPurificationCubeSnapshot> cubeSnapshotsByPacketOperationIndex,
+		IGameClientConnectionRegistry? connectionRegistry,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: this models the PacketSendUtility.sendPacket boundary after the
+		// storage/AP/item operations have already produced concrete post-mutation snapshots.
+		// It does not mutate inventory, persist, or synthesize AP rank packets.
+		var bridge = CreateConcretePacketPlan(
+			handlerPlan,
+			postMutationInventoryItems,
+			itemTemplates,
+			cubeSnapshotsByPacketOperationIndex);
+		if (!bridge.Succeeded || bridge.ConcretePacketPlan == null)
+			return ItemPurificationHandlerPacketSendBridgeResult.FromBridge(bridge);
+
+		var sendResult = await new ItemPurificationPacketSendAdapter(connectionRegistry).SendConcretePacketsAsync(
+			playerObjectId,
+			bridge.ConcretePacketPlan,
+			cancellationToken);
+		return new ItemPurificationHandlerPacketSendBridgeResult(
+			sendResult.Succeeded
+				? ItemPurificationHandlerPacketSendBridgeStatus.Ready
+				: ItemPurificationHandlerPacketSendBridgeStatus.PacketSendNotReady,
+			bridge,
+			sendResult);
+	}
 }
 
 public sealed record ItemPurificationHandlerPacketBridgeResult(
@@ -70,4 +103,36 @@ public enum ItemPurificationHandlerPacketBridgeStatus
 	ApplicationPlanNotReady,
 	PacketInputsNotReady,
 	PacketPlanNotReady,
+}
+
+public sealed record ItemPurificationHandlerPacketSendBridgeResult(
+	ItemPurificationHandlerPacketSendBridgeStatus Status,
+	ItemPurificationHandlerPacketBridgeResult? Bridge,
+	ItemPurificationPacketSendResult? SendResult)
+{
+	public bool Succeeded => Status == ItemPurificationHandlerPacketSendBridgeStatus.Ready;
+
+	public static ItemPurificationHandlerPacketSendBridgeResult FromBridge(ItemPurificationHandlerPacketBridgeResult bridge)
+	{
+		return new ItemPurificationHandlerPacketSendBridgeResult(
+			bridge.Status switch
+			{
+				ItemPurificationHandlerPacketBridgeStatus.MissingHandlerPlan => ItemPurificationHandlerPacketSendBridgeStatus.MissingHandlerPlan,
+				ItemPurificationHandlerPacketBridgeStatus.ApplicationPlanNotReady => ItemPurificationHandlerPacketSendBridgeStatus.ApplicationPlanNotReady,
+				ItemPurificationHandlerPacketBridgeStatus.PacketInputsNotReady => ItemPurificationHandlerPacketSendBridgeStatus.PacketInputsNotReady,
+				_ => ItemPurificationHandlerPacketSendBridgeStatus.PacketPlanNotReady,
+			},
+			bridge,
+			SendResult: null);
+	}
+}
+
+public enum ItemPurificationHandlerPacketSendBridgeStatus
+{
+	Ready,
+	MissingHandlerPlan,
+	ApplicationPlanNotReady,
+	PacketInputsNotReady,
+	PacketPlanNotReady,
+	PacketSendNotReady,
 }
