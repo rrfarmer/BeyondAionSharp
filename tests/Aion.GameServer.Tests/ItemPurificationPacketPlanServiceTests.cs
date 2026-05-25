@@ -206,6 +206,84 @@ public sealed class ItemPurificationPacketPlanServiceTests
 	}
 
 	[Fact]
+	public void CreatePacketPlan_AttachesConcreteCubePacketsWhenRuntimeSnapshotsProvided()
+	{
+		var baseItem = CreateBaseItem(enchant: 25);
+		var player = CreatePlayer(
+			abyssPoints: 5_000,
+			kinah: 10_000,
+			baseItem,
+			new InventoryItem { ObjectId = 20, ItemId = 186000001, Count = 2, Location = 0 });
+		var application = CreateApplicationPlan(player, baseItem, targetObjectId: 9001);
+		var cubeInputs = new Dictionary<int, ItemPurificationCubePacketInput>
+		{
+			[2] = CreateCubeInput(ItemPurificationApplicationOperationType.DeleteMaterialItem, 20, 186000001, 2, 1, 0, 0),
+			[6] = CreateCubeInput(ItemPurificationApplicationOperationType.DeleteBaseItem, 10, 100000001, 1, 1, 0, 0),
+			[8] = CreateCubeInput(ItemPurificationApplicationOperationType.AddTargetItem, 9001, 100000002, 2, 1, 0, 1),
+		};
+
+		var plan = ItemPurificationPacketPlanService.CreatePacketPlan(
+			application,
+			"base-name",
+			"target-name",
+			cubePacketInputsByPacketOperationIndex: cubeInputs);
+
+		var cubeOperations = plan.Operations
+			.Where(operation => operation.Type == ItemPurificationPacketOperationType.CubeSizeUpdate)
+			.ToArray();
+		Assert.Equal([20, 10, 9001], cubeOperations.Select(operation => operation.ObjectId).ToArray());
+		Assert.Equal(
+			[
+				(ItemPurificationPacketOperationType.DeleteItem, 20),
+				(ItemPurificationPacketOperationType.CubeSizeUpdate, 20),
+			],
+			plan.Operations.Skip(1).Take(2).Select(operation => (operation.Type, operation.ObjectId)).ToArray());
+		Assert.Equal(
+			[
+				(ItemPurificationPacketOperationType.DeleteItem, 10),
+				(ItemPurificationPacketOperationType.CubeSizeUpdate, 10),
+			],
+			plan.Operations.Skip(5).Take(2).Select(operation => (operation.Type, operation.ObjectId)).ToArray());
+		Assert.Equal(
+			[
+				(ItemPurificationPacketOperationType.InventoryAddItem, 9001),
+				(ItemPurificationPacketOperationType.CubeSizeUpdate, 9001),
+			],
+			plan.Operations.Skip(7).Take(2).Select(operation => (operation.Type, operation.ObjectId)).ToArray());
+		AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(cubeOperations[0].ConcretePacket), 2, 1, 0, 0);
+		AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(cubeOperations[1].ConcretePacket), 1, 1, 0, 0);
+		AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(cubeOperations[2].ConcretePacket), 2, 1, 0, 1);
+	}
+
+	[Fact]
+	public void CreatePacketPlan_LeavesCubeMetadataWhenRuntimeSnapshotDoesNotMatchOperation()
+	{
+		var baseItem = CreateBaseItem(enchant: 25);
+		var player = CreatePlayer(
+			abyssPoints: 5_000,
+			kinah: 10_000,
+			baseItem,
+			new InventoryItem { ObjectId = 20, ItemId = 186000001, Count = 2, Location = 0 });
+		var application = CreateApplicationPlan(player, baseItem, targetObjectId: 9001);
+		var cubeInputs = new Dictionary<int, ItemPurificationCubePacketInput>
+		{
+			[2] = CreateCubeInput(ItemPurificationApplicationOperationType.DeleteBaseItem, 20, 186000001, 2, 1, 0, 0),
+			[6] = CreateCubeInput(ItemPurificationApplicationOperationType.DeleteBaseItem, 10, 100000001, 1, 1, 0, 0) with { NpcExpands = 256 },
+		};
+
+		var plan = ItemPurificationPacketPlanService.CreatePacketPlan(
+			application,
+			"base-name",
+			"target-name",
+			cubePacketInputsByPacketOperationIndex: cubeInputs);
+
+		var cubeOperations = plan.Operations
+			.Where(operation => operation.Type == ItemPurificationPacketOperationType.CubeSizeUpdate)
+			.ToArray();
+		Assert.All(cubeOperations, operation => Assert.Null(operation.ConcretePacket));
+	}
+
+	[Fact]
 	public void CreatePacketPlan_FlagsRuntimeInputBlockersButStillListsDryRunPackets()
 	{
 		var baseItem = CreateBaseItem(enchant: 25);
@@ -274,6 +352,63 @@ public sealed class ItemPurificationPacketPlanServiceTests
 				ItemPurificationPacketOperationType.CubeSizeUpdate,
 			],
 			result.SkippedMetadataOperations.Select(operation => operation.Type).ToArray());
+	}
+
+	[Fact]
+	public async Task SendConcretePacketsAsync_IncludesConcreteCubePacketsInPlanOrderWhenSnapshotsProvided()
+	{
+		var baseItem = CreateBaseItem(enchant: 25);
+		var player = CreatePlayer(
+			abyssPoints: 5_000,
+			kinah: 10_000,
+			baseItem,
+			new InventoryItem { ObjectId = 20, ItemId = 186000001, Count = 3, Location = 0 });
+		var application = CreateApplicationPlan(player, baseItem, targetObjectId: 9001);
+		var inventoryInputs = new Dictionary<int, ItemPurificationInventoryPacketInput>
+		{
+			[20] = new(
+				new InventoryItem { ObjectId = 20, ItemId = 186000001, Count = 1, Location = 0 },
+				CreateTemplate(186000001, maxTuneCount: 0, maxEnchantLevel: 0)),
+			[9001] = new(
+				new InventoryItem { ObjectId = 9001, ItemId = 100000002, Count = 1, Location = 0, Slot = -1 },
+				CreateTemplate(100000002, maxTuneCount: 1, maxEnchantLevel: 20)),
+		};
+		var cubeInputs = new Dictionary<int, ItemPurificationCubePacketInput>
+		{
+			[5] = CreateCubeInput(ItemPurificationApplicationOperationType.DeleteBaseItem, 10, 100000001, 2, 1, 0, 0),
+			[7] = CreateCubeInput(ItemPurificationApplicationOperationType.AddTargetItem, 9001, 100000002, 3, 1, 0, 1),
+		};
+		var plan = ItemPurificationPacketPlanService.CreatePacketPlan(
+			application,
+			"base-name",
+			"target-name",
+			inventoryInputs,
+			cubeInputs);
+		var registry = new RecordingConnectionRegistry();
+		var adapter = new ItemPurificationPacketSendAdapter(registry);
+
+		var result = await adapter.SendConcretePacketsAsync(player.ObjectId, plan);
+
+		Assert.True(result.Succeeded);
+		Assert.Equal(6, result.SentCount);
+		Assert.Equal(
+			[
+				typeof(SmSystemMessage),
+				typeof(SmInventoryUpdateItem),
+				typeof(SmDeleteItem),
+				typeof(SmCubeUpdate),
+				typeof(SmInventoryAddItem),
+				typeof(SmCubeUpdate),
+			],
+			result.Packets.Select(packet => packet.GetType()).ToArray());
+		Assert.Equal(
+			[
+				ItemPurificationPacketOperationType.AbyssPointsUpdate,
+				ItemPurificationPacketOperationType.KinahNoPacket,
+			],
+			result.SkippedMetadataOperations.Select(operation => operation.Type).ToArray());
+		AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(result.Packets[3]), 2, 1, 0, 0);
+		AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(result.Packets[5]), 3, 1, 0, 1);
 	}
 
 	[Fact]
@@ -409,6 +544,44 @@ public sealed class ItemPurificationPacketPlanServiceTests
 		crypt.EnableKey();
 		var frame = packet.SerializeFrame(crypt);
 		return frame[7..];
+	}
+
+	private static ItemPurificationCubePacketInput CreateCubeInput(
+		ItemPurificationApplicationOperationType sourceOperationType,
+		int expectedObjectId,
+		int expectedItemId,
+		int itemsCount,
+		int npcExpands,
+		int questExpands,
+		int itemExpands)
+	{
+		return new ItemPurificationCubePacketInput(
+			ItemPurificationPacketPlanService.CubeStorageTypeId,
+			ItemPurificationPacketPlanService.CubeStorageTypeOrdinal,
+			sourceOperationType,
+			expectedObjectId,
+			expectedItemId,
+			itemsCount,
+			npcExpands,
+			questExpands,
+			itemExpands);
+	}
+
+	private static void AssertCubeUpdatePayload(
+		SmCubeUpdate packet,
+		int expectedItemsCount,
+		int expectedNpcExpands,
+		int expectedQuestExpands,
+		int expectedItemExpands)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(expectedItemsCount, reader.ReadD());
+		Assert.Equal(expectedNpcExpands, (int)reader.ReadC());
+		Assert.Equal(expectedQuestExpands, (int)reader.ReadC());
+		Assert.Equal(expectedItemExpands, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
 	}
 
 	private sealed class RecordingConnectionRegistry : IGameClientConnectionRegistry

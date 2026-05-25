@@ -12,6 +12,8 @@ public static class ItemPurificationPacketPlanService
 	public const int DeleteItemPacketOpcode = 28;
 	public const int InventoryAddPacketOpcode = 27;
 	public const int CubeUpdatePacketOpcode = 130;
+	public const int CubeStorageTypeId = 0;
+	public const int CubeStorageTypeOrdinal = 0;
 	public const int DecreaseItemUseUpdateType = 0x16;
 	public const int UseDeleteType = 0x17;
 	public const int ItemCollectAddType = 0x19;
@@ -20,7 +22,8 @@ public static class ItemPurificationPacketPlanService
 		ItemPurificationApplicationPlan? applicationPlan,
 		string sourceItemName,
 		string targetItemName,
-		IReadOnlyDictionary<int, ItemPurificationInventoryPacketInput>? inventoryPacketInputs = null)
+		IReadOnlyDictionary<int, ItemPurificationInventoryPacketInput>? inventoryPacketInputs = null,
+		IReadOnlyDictionary<int, ItemPurificationCubePacketInput>? cubePacketInputsByPacketOperationIndex = null)
 	{
 		// Java parity: ItemPurificationService.isPurificationAllowed sends the success system message
 		// before decreaseMaterials and upgradeItem cause storage/AP/item packet fanout.
@@ -43,7 +46,7 @@ public static class ItemPurificationPacketPlanService
 		};
 
 		foreach (var operation in applicationPlan.Operations)
-			AddPacketOperations(packets, operation, inventoryPacketInputs);
+			AddPacketOperations(packets, operation, inventoryPacketInputs, cubePacketInputsByPacketOperationIndex);
 
 		var status = applicationPlan.Succeeded
 			? ItemPurificationPacketPlanStatus.Ready
@@ -54,7 +57,8 @@ public static class ItemPurificationPacketPlanService
 	private static void AddPacketOperations(
 		List<ItemPurificationPacketOperation> packets,
 		ItemPurificationApplicationOperation operation,
-		IReadOnlyDictionary<int, ItemPurificationInventoryPacketInput>? inventoryPacketInputs)
+		IReadOnlyDictionary<int, ItemPurificationInventoryPacketInput>? inventoryPacketInputs,
+		IReadOnlyDictionary<int, ItemPurificationCubePacketInput>? cubePacketInputs)
 	{
 		switch (operation.Type)
 		{
@@ -65,7 +69,7 @@ public static class ItemPurificationPacketPlanService
 			case ItemPurificationApplicationOperationType.DeleteMaterialItem:
 			case ItemPurificationApplicationOperationType.DeleteBaseItem:
 				packets.Add(DeleteItem(operation));
-				packets.Add(CubeSize(operation));
+				packets.Add(CubeSize(operation, packets.Count, cubePacketInputs));
 				break;
 			case ItemPurificationApplicationOperationType.SpendAbyssPoints:
 				packets.Add(AbyssPointsUpdate(operation));
@@ -75,7 +79,7 @@ public static class ItemPurificationPacketPlanService
 				break;
 			case ItemPurificationApplicationOperationType.AddTargetItem:
 				packets.Add(InventoryAdd(operation, inventoryPacketInputs));
-				packets.Add(CubeSize(operation));
+				packets.Add(CubeSize(operation, packets.Count, cubePacketInputs));
 				break;
 			default:
 				throw new ArgumentOutOfRangeException(nameof(operation), operation.Type, "Unsupported item purification operation.");
@@ -165,7 +169,10 @@ public static class ItemPurificationPacketPlanService
 		return SmInventoryAddItem.CreateItemCollect(input.Item, input.Template);
 	}
 
-	private static ItemPurificationPacketOperation CubeSize(ItemPurificationApplicationOperation operation)
+	private static ItemPurificationPacketOperation CubeSize(
+		ItemPurificationApplicationOperation operation,
+		int packetOperationIndex,
+		IReadOnlyDictionary<int, ItemPurificationCubePacketInput>? cubePacketInputs)
 	{
 		return new ItemPurificationPacketOperation(
 			ItemPurificationPacketOperationType.CubeSizeUpdate,
@@ -175,7 +182,30 @@ public static class ItemPurificationPacketPlanService
 			0,
 			operation.Type,
 			Parameters: Array.Empty<string>(),
-			ConcretePacket: null);
+			ConcretePacket: CreateCubeSizePacket(operation, packetOperationIndex, cubePacketInputs));
+	}
+
+	private static GameServerPacket? CreateCubeSizePacket(
+		ItemPurificationApplicationOperation operation,
+		int packetOperationIndex,
+		IReadOnlyDictionary<int, ItemPurificationCubePacketInput>? cubePacketInputs)
+	{
+		if (cubePacketInputs == null || !cubePacketInputs.TryGetValue(packetOperationIndex, out var input))
+			return null;
+		if (input.StorageTypeId != CubeStorageTypeId
+			|| input.StorageTypeOrdinal != CubeStorageTypeOrdinal
+			|| input.ExpectedSourceOperationType != operation.Type
+			|| input.ExpectedObjectId != operation.ObjectId
+			|| input.ExpectedItemId != operation.ItemId
+			|| input.ItemsCount < 0
+			|| input.NpcExpands is < 0 or > byte.MaxValue
+			|| input.QuestExpands is < 0 or > byte.MaxValue
+			|| input.ItemExpands is < 0 or > byte.MaxValue)
+			return null;
+
+		// Java parity: ItemPacketService sends SM_CUBE_UPDATE.cubeSize(CUBE, player) immediately
+		// after delete/add fanout. Callers must provide post-mutation Storage.size()/expand snapshots.
+		return SmCubeUpdate.CubeSizeSnapshot(input.ItemsCount, input.NpcExpands, input.QuestExpands, input.ItemExpands);
 	}
 
 	private static ItemPurificationPacketOperation AbyssPointsUpdate(ItemPurificationApplicationOperation operation)
@@ -231,6 +261,18 @@ public sealed record ItemPurificationPacketOperation(
 public sealed record ItemPurificationInventoryPacketInput(
 	InventoryItem Item,
 	ItemTemplateSummary Template);
+
+// Caller-provided post-mutation snapshot for Java SM_CUBE_UPDATE.cubeSize(CUBE, player).
+public sealed record ItemPurificationCubePacketInput(
+	int StorageTypeId,
+	int StorageTypeOrdinal,
+	ItemPurificationApplicationOperationType ExpectedSourceOperationType,
+	int ExpectedObjectId,
+	int ExpectedItemId,
+	int ItemsCount,
+	int NpcExpands,
+	int QuestExpands,
+	int ItemExpands);
 
 public enum ItemPurificationPacketPlanStatus
 {

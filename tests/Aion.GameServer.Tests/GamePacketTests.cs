@@ -1353,6 +1353,9 @@ public class GamePacketTests
 							new InventoryItem { ObjectId = 90, ItemId = 100000, Count = 2, Location = 0 },
 						],
 					})));
+		Assert.Equal(
+			Convert.FromHexString("000007000000020304"),
+			SerializeUnencryptedPayload(SmCubeUpdate.CubeSizeSnapshot(7, 2, 3, 4)));
 
 		var brokerItem = new PlayerBrokerItem(
 			90,

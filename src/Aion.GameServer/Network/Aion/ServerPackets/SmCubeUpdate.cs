@@ -39,6 +39,13 @@ public sealed class SmCubeUpdate : GameServerPacket
 		return new SmCubeUpdate(0, CubeStorageOrdinal, itemsCount, player.NpcExpands, player.QuestExpands, player.ItemExpands);
 	}
 
+	public static SmCubeUpdate CubeSizeSnapshot(int itemsCount, int npcExpands, int questExpands, int itemExpands)
+	{
+		// Java parity: SM_CUBE_UPDATE.cubeSize(StorageType.CUBE, Player) after callers have captured
+		// the post-mutation Storage.size()/expand fields at the exact fanout point.
+		return new SmCubeUpdate(0, CubeStorageOrdinal, itemsCount, npcExpands, questExpands, itemExpands);
+	}
+
 	public static SmCubeUpdate RegularWarehouseSize(Player player)
 	{
 		// Java parity: SM_CUBE_UPDATE.cubeSize(StorageType.REGULAR_WAREHOUSE, Player).
