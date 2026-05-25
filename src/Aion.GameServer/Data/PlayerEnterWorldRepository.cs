@@ -851,6 +851,15 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	}
 }
 
+internal sealed record ItemStonePersistenceRow(
+	int ItemObjectId,
+	int ItemId,
+	int Slot,
+	int Category,
+	int PolishNumber,
+	int PolishCharge,
+	int ProcCount);
+
 public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepository
 {
 	private readonly GameServerRuntimeContext _runtimeContext;
@@ -2131,6 +2140,66 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				new MySqlParameter { Value = item.RandomPlumeBonus },
 			});
 		await command.ExecuteNonQueryAsync(cancellationToken);
+		await InsertInventoryItemStonesAsync(connection, transaction, item, cancellationToken);
+	}
+
+	internal static IReadOnlyList<ItemStonePersistenceRow> BuildItemStonePersistenceRows(InventoryItem item)
+	{
+		// Java parity: dao/ItemStoneListDAO.ItemStoneType ordinal mapping.
+		var rows = new List<ItemStonePersistenceRow>();
+		foreach (var stone in item.ManaStones)
+			rows.Add(new ItemStonePersistenceRow(item.ObjectId, stone.ItemId, stone.Slot, Category: 0, PolishNumber: 0, PolishCharge: 0, ProcCount: 0));
+		if (item.Godstone != null)
+			rows.Add(new ItemStonePersistenceRow(item.ObjectId, item.Godstone.ItemId, Slot: 0, Category: 1, PolishNumber: 0, PolishCharge: 0, ProcCount: item.Godstone.ProcCount));
+		foreach (var stone in item.FusionStones)
+			rows.Add(new ItemStonePersistenceRow(item.ObjectId, stone.ItemId, stone.Slot, Category: 2, PolishNumber: 0, PolishCharge: 0, ProcCount: 0));
+		if (item.IdianStone != null)
+		{
+			rows.Add(new ItemStonePersistenceRow(
+				item.ObjectId,
+				item.IdianStone.ItemId,
+				Slot: 0,
+				Category: 3,
+				PolishNumber: item.IdianStone.PolishNumber,
+				PolishCharge: item.IdianStone.PolishCharge,
+				ProcCount: 0));
+		}
+
+		return rows;
+	}
+
+	private static async Task InsertInventoryItemStonesAsync(
+		MySqlConnection connection,
+		MySqlTransaction transaction,
+		InventoryItem item,
+		CancellationToken cancellationToken)
+	{
+		var rows = BuildItemStonePersistenceRows(item);
+		if (rows.Count == 0)
+			return;
+
+		await using var command = connection.CreateCommand();
+		command.Transaction = transaction;
+		command.CommandText = """
+			INSERT INTO item_stones (item_unique_id, item_id, slot, category, polishNumber, polishCharge, proc_count)
+			VALUES (?, ?, ?, ?, ?, ?, ?)
+			""";
+		foreach (var row in rows)
+		{
+			command.Parameters.Clear();
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = row.ItemObjectId },
+					new MySqlParameter { Value = row.ItemId },
+					new MySqlParameter { Value = row.Slot },
+					new MySqlParameter { Value = row.Category },
+					new MySqlParameter { Value = row.PolishNumber },
+					new MySqlParameter { Value = row.PolishCharge },
+					new MySqlParameter { Value = row.ProcCount },
+				});
+			await command.ExecuteNonQueryAsync(cancellationToken);
+		}
 	}
 
 	private static async Task<bool> DeleteInventoryItemAsync(
