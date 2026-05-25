@@ -217,6 +217,33 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleEmotionAsync_ItemSkillCastCancelsCooldownAndUsageBeforeModeChange()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync();
+		var player = CreatePlayer(itemId: 100);
+		player.AddItemCooldown(77, 5_000, new DateTimeOffset(2026, 5, 25, 12, 0, 0, TimeSpan.Zero));
+		player.SetCastingSkill(
+			9001,
+			PlayerCastingSkillMethod.Item,
+			itemObjectId: 5001,
+			itemTemplateId: 100,
+			firstTargetObjectId: player.ObjectId,
+			itemCooldownDelayId: 77);
+
+		await InvokeHandleEmotionAsync(fixture.Connection, player, CreateEmotion(EmotionType.Sit));
+
+		Assert.Equal(0, player.CastingSkillId);
+		Assert.Equal(9001, player.LastCastingSkillId);
+		Assert.False(player.ItemCooldowns.ContainsKey(77));
+		Assert.True(player.IsInState(PlayerCreatureState.Resting));
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1300427),
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 100, expectedTime: 0, expectedEnd: 3),
+			packet => Assert.IsType<SmEmotion>(packet));
+	}
+
+	[Fact]
 	public async Task HandleUseItemAsync_DecomposeCompletesAndAddsReward()
 	{
 		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(
