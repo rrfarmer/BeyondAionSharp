@@ -1147,6 +1147,22 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public int ApExtractDeletedTargetItemObjectId { get; private set; }
 
+		public int SaveItemPurificationMutationCalls { get; private set; }
+
+		public IReadOnlyList<InventoryItem> ItemPurificationMaterialItemUpdates { get; private set; } = Array.Empty<InventoryItem>();
+
+		public IReadOnlyList<int> ItemPurificationDeletedMaterialItemObjectIds { get; private set; } = Array.Empty<int>();
+
+		public InventoryItem? ItemPurificationBaseItemUpdate { get; private set; }
+
+		public int? ItemPurificationDeletedBaseItemObjectId { get; private set; }
+
+		public IReadOnlyList<InventoryItem> ItemPurificationUpdatedTargetItems { get; private set; } = Array.Empty<InventoryItem>();
+
+		public IReadOnlyList<InventoryItem> ItemPurificationAddedTargetItems { get; private set; } = Array.Empty<InventoryItem>();
+
+		public PlayerAbyssRank? ItemPurificationAbyssRank { get; private set; }
+
 		public int SaveItemRemodelMutationCalls { get; private set; }
 
 		public InventoryItem? RemodelTargetItemUpdate { get; private set; }
@@ -1512,6 +1528,28 @@ public sealed class PlayerEnterWorldServiceTests
 			ApExtractSourceItemUpdate = sourceItemUpdate;
 			ApExtractDeletedSourceItemObjectId = deletedSourceItemObjectId;
 			ApExtractDeletedTargetItemObjectId = deletedTargetItemObjectId;
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> SaveItemPurificationMutationAsync(
+			int playerObjectId,
+			IReadOnlyList<InventoryItem> materialItemUpdates,
+			IReadOnlyList<int> deletedMaterialItemObjectIds,
+			InventoryItem? baseItemUpdate,
+			int? deletedBaseItemObjectId,
+			IReadOnlyList<InventoryItem> updatedTargetItems,
+			IReadOnlyList<InventoryItem> addedTargetItems,
+			PlayerAbyssRank? abyssRank,
+			CancellationToken cancellationToken = default)
+		{
+			SaveItemPurificationMutationCalls++;
+			ItemPurificationMaterialItemUpdates = materialItemUpdates;
+			ItemPurificationDeletedMaterialItemObjectIds = deletedMaterialItemObjectIds;
+			ItemPurificationBaseItemUpdate = baseItemUpdate;
+			ItemPurificationDeletedBaseItemObjectId = deletedBaseItemObjectId;
+			ItemPurificationUpdatedTargetItems = updatedTargetItems;
+			ItemPurificationAddedTargetItems = addedTargetItems;
+			ItemPurificationAbyssRank = abyssRank;
 			return Task.FromResult(true);
 		}
 

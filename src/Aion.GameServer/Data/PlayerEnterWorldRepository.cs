@@ -142,6 +142,17 @@ public interface IPlayerEnterWorldRepository
 		int deletedTargetItemObjectId,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveItemPurificationMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<InventoryItem> materialItemUpdates,
+		IReadOnlyList<int> deletedMaterialItemObjectIds,
+		InventoryItem? baseItemUpdate,
+		int? deletedBaseItemObjectId,
+		IReadOnlyList<InventoryItem> updatedTargetItems,
+		IReadOnlyList<InventoryItem> addedTargetItems,
+		PlayerAbyssRank? abyssRank,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SaveItemRemodelMutationAsync(
 		int playerObjectId,
 		InventoryItem targetItemUpdate,
@@ -308,6 +319,22 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	public int SaveDecomposeActionMutationCalls { get; private set; }
 
 	public PlayerAbyssRank? ApExtractAbyssRank { get; private set; }
+
+	public PlayerAbyssRank? ItemPurificationAbyssRank { get; private set; }
+
+	public IReadOnlyList<InventoryItem> ItemPurificationMaterialItemUpdates { get; private set; } = Array.Empty<InventoryItem>();
+
+	public IReadOnlyList<int> ItemPurificationDeletedMaterialItemObjectIds { get; private set; } = Array.Empty<int>();
+
+	public InventoryItem? ItemPurificationBaseItemUpdate { get; private set; }
+
+	public int? ItemPurificationDeletedBaseItemObjectId { get; private set; }
+
+	public IReadOnlyList<InventoryItem> ItemPurificationUpdatedTargetItems { get; private set; } = Array.Empty<InventoryItem>();
+
+	public IReadOnlyList<InventoryItem> ItemPurificationAddedTargetItems { get; private set; } = Array.Empty<InventoryItem>();
+
+	public int SaveItemPurificationMutationCalls { get; private set; }
 
 	public PlayerAbyssRank? ChargePaymentAbyssRank { get; private set; }
 
@@ -539,6 +566,28 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		CancellationToken cancellationToken = default)
 	{
 		ApExtractAbyssRank = abyssRank;
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> SaveItemPurificationMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<InventoryItem> materialItemUpdates,
+		IReadOnlyList<int> deletedMaterialItemObjectIds,
+		InventoryItem? baseItemUpdate,
+		int? deletedBaseItemObjectId,
+		IReadOnlyList<InventoryItem> updatedTargetItems,
+		IReadOnlyList<InventoryItem> addedTargetItems,
+		PlayerAbyssRank? abyssRank,
+		CancellationToken cancellationToken = default)
+	{
+		SaveItemPurificationMutationCalls++;
+		ItemPurificationMaterialItemUpdates = materialItemUpdates;
+		ItemPurificationDeletedMaterialItemObjectIds = deletedMaterialItemObjectIds;
+		ItemPurificationBaseItemUpdate = baseItemUpdate;
+		ItemPurificationDeletedBaseItemObjectId = deletedBaseItemObjectId;
+		ItemPurificationUpdatedTargetItems = updatedTargetItems;
+		ItemPurificationAddedTargetItems = addedTargetItems;
+		ItemPurificationAbyssRank = abyssRank;
 		return Task.FromResult(true);
 	}
 
@@ -3411,6 +3460,66 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not save AP extraction action for player {PlayerObjectId}", playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SaveItemPurificationMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<InventoryItem> materialItemUpdates,
+		IReadOnlyList<int> deletedMaterialItemObjectIds,
+		InventoryItem? baseItemUpdate,
+		int? deletedBaseItemObjectId,
+		IReadOnlyList<InventoryItem> updatedTargetItems,
+		IReadOnlyList<InventoryItem> addedTargetItems,
+		PlayerAbyssRank? abyssRank,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: ItemPurificationService.decreaseMaterials consumes materials/AP/base item,
+		// then upgradeItem adds the target item. This keeps the C# DB write set in one transaction.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			foreach (var item in materialItemUpdates)
+			{
+				if (!await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, item, cancellationToken))
+					return false;
+			}
+
+			foreach (var deletedObjectId in deletedMaterialItemObjectIds)
+			{
+				if (!await DeleteInventoryItemAsync(connection, transaction, playerObjectId, deletedObjectId, cancellationToken))
+					return false;
+			}
+
+			if (baseItemUpdate != null && !await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, baseItemUpdate, cancellationToken))
+				return false;
+
+			if (deletedBaseItemObjectId.HasValue
+				&& !await DeleteInventoryItemAsync(connection, transaction, playerObjectId, deletedBaseItemObjectId.Value, cancellationToken))
+				return false;
+
+			foreach (var item in updatedTargetItems)
+			{
+				if (!await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, item, cancellationToken))
+					return false;
+			}
+
+			foreach (var item in addedTargetItems)
+				await InsertInventoryItemAsync(connection, transaction, item, cancellationToken);
+
+			if (abyssRank != null)
+				await SaveAbyssRankAsync(connection, transaction, playerObjectId, abyssRank, cancellationToken);
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save item purification mutation for player {PlayerObjectId}", playerObjectId);
 			return false;
 		}
 	}
