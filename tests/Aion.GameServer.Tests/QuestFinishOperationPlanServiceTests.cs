@@ -296,6 +296,109 @@ public sealed class QuestFinishOperationPlanServiceTests
 	}
 
 	[Fact]
+	public void CreatePlan_ComposesTitleAndCubeSideEffectPlansAfterMatchingNonItemProjection()
+	{
+		var player = new Player
+		{
+			ObjectId = 4100,
+			Race = "ELYOS",
+			QuestExpands = 1,
+			NpcExpands = 2,
+			ItemExpands = 3,
+		};
+		var titleTemplates = new TitleTemplateTable(
+		[
+			new TitleTemplateSummary(5, 412994, "quest title", "ELYOS", Array.Empty<ItemStatModifier>()),
+		]);
+		var rewardProjection = new QuestFinishRewardTemplateProjection(
+			RewardGroupCount: 1,
+			HasNonItemRewards: true,
+			NonItemProjection: new QuestFinishRewardNonItemTemplateProjection(
+				Title: 5,
+				ExtendInventory: 1));
+
+		var plan = QuestFinishOperationPlanService.CreatePlan(
+			new PlayerQuestState(1001, "REWARD", QuestVars: 0, Flags: 0, CompleteCount: 0),
+			new NearbyQuestTemplateSummary(1001, QuestCategory: "QUEST"),
+			PlayerNpcFactionsSnapshot.Empty,
+			new DateTimeOffset(2026, 5, 25, 8, 30, 0, TimeSpan.Zero),
+			CreateOptions("UTC"),
+			rewardProjection,
+			rewardSideEffectContext: new QuestFinishRewardSideEffectContext(player, titleTemplates));
+
+		Assert.All(plan.Descriptors, descriptor => Assert.False(descriptor.IsLive));
+		Assert.Equal(
+		[
+			QuestFinishOperationAction.RewardGroupCorrection,
+			QuestFinishOperationAction.NonItemRewardProjection,
+			QuestFinishOperationAction.NonItemRewardSideEffectPlan,
+			QuestFinishOperationAction.NonItemRewardProjection,
+			QuestFinishOperationAction.NonItemRewardSideEffectPlan,
+			QuestFinishOperationAction.NonItemRewardPlaceholder,
+			QuestFinishOperationAction.QuestStateMutation,
+		], plan.Descriptors.Take(7).Select(descriptor => descriptor.Action));
+		var sideEffects = plan.Descriptors
+			.Where(descriptor => descriptor.Action == QuestFinishOperationAction.NonItemRewardSideEffectPlan)
+			.ToArray();
+		Assert.Equal(2, sideEffects.Length);
+		Assert.Equal(QuestFinishRewardNonItemAction.Title, sideEffects[0].RewardNonItemProjection?.Action);
+		Assert.Equal(QuestTitleRewardStatus.Applied, sideEffects[0].TitleRewardPlan?.Status);
+		Assert.Equal(new PlayerTitle(5, 0), sideEffects[0].TitleRewardPlan?.Title);
+		Assert.Equal(
+		[
+			QuestRewardPacketIntent.QuestTitleSystemMessage,
+			QuestRewardPacketIntent.FullTitleInfo,
+		], sideEffects[0].TitleRewardPlan?.PacketIntents);
+		Assert.Equal(QuestFinishRewardNonItemAction.CubeExpansion, sideEffects[1].RewardNonItemProjection?.Action);
+		Assert.Equal(QuestExpansionRewardKind.Cube, sideEffects[1].ExpansionRewardPlan?.Kind);
+		Assert.Equal(QuestExpansionRewardStatus.Applied, sideEffects[1].ExpansionRewardPlan?.Status);
+		Assert.Equal(90, sideEffects[1].ExpansionRewardPlan?.NewSlotLimit);
+		Assert.Empty(player.Titles);
+		Assert.Equal(1, player.QuestExpands);
+	}
+
+	[Fact]
+	public void CreatePlan_ComposesWarehouseSideEffectPlanAndKeepsBoundaryFailuresNonLive()
+	{
+		var player = new Player
+		{
+			ObjectId = 4101,
+			WarehouseNpcExpands = 7,
+			WarehouseBonusExpands = 4,
+		};
+		var rewardProjection = new QuestFinishRewardTemplateProjection(
+			RewardGroupCount: 1,
+			HasNonItemRewards: true,
+			NonItemProjection: new QuestFinishRewardNonItemTemplateProjection(ExtendInventory: 2));
+
+		var plan = QuestFinishOperationPlanService.CreatePlan(
+			new PlayerQuestState(1001, "REWARD", QuestVars: 0, Flags: 0, CompleteCount: 0),
+			new NearbyQuestTemplateSummary(1001, QuestCategory: "QUEST"),
+			PlayerNpcFactionsSnapshot.Empty,
+			new DateTimeOffset(2026, 5, 25, 8, 30, 0, TimeSpan.Zero),
+			CreateOptions("UTC"),
+			rewardProjection,
+			rewardSideEffectContext: new QuestFinishRewardSideEffectContext(player));
+
+		var descriptorList = plan.Descriptors.ToList();
+		var warehouseProjectionIndex = descriptorList.FindIndex(
+			descriptor => descriptor.RewardNonItemProjection?.Action == QuestFinishRewardNonItemAction.WarehouseExpansion);
+		var sideEffectDescriptor = Assert.Single(
+			descriptorList,
+			descriptor => descriptor.ExpansionRewardPlan?.Kind == QuestExpansionRewardKind.Warehouse);
+		var sideEffectIndex = descriptorList.IndexOf(sideEffectDescriptor);
+		var coarsePlaceholderIndex = descriptorList.FindIndex(
+			descriptor => descriptor.Action == QuestFinishOperationAction.NonItemRewardPlaceholder);
+		Assert.True(warehouseProjectionIndex >= 0);
+		Assert.True(warehouseProjectionIndex < sideEffectIndex);
+		Assert.True(sideEffectIndex < coarsePlaceholderIndex);
+		Assert.False(sideEffectDescriptor.IsLive);
+		Assert.Equal(QuestExpansionRewardStatus.CannotExpand, sideEffectDescriptor.ExpansionRewardPlan?.Status);
+		Assert.Equal([QuestRewardPacketIntent.CannotExpandSystemMessage], sideEffectDescriptor.ExpansionRewardPlan?.PacketIntents);
+		Assert.Equal(4, player.WarehouseBonusExpands);
+	}
+
+	[Fact]
 	public void CreatePlan_ComposesNonCountApRateBypassAndNonItemWarnings()
 	{
 		var rewardProjection = new QuestFinishRewardTemplateProjection(

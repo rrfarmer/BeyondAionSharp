@@ -12,6 +12,7 @@ public enum QuestFinishOperationAction
 	ItemRewardProjectionWarning,
 	ItemRewardPlaceholder,
 	NonItemRewardProjection,
+	NonItemRewardSideEffectPlan,
 	NonItemRewardProjectionWarning,
 	NonItemRewardPlaceholder,
 	ChallengeTaskCompletionPlaceholder,
@@ -35,10 +36,17 @@ public sealed record QuestFinishOperationDescriptor(
 	QuestFinishRewardItemProjectionDescriptor? RewardItemProjection = null,
 	QuestFinishRewardItemProjectionWarningDescriptor? RewardItemProjectionWarning = null,
 	QuestFinishRewardNonItemProjectionDescriptor? RewardNonItemProjection = null,
+	QuestTitleRewardPlan? TitleRewardPlan = null,
+	QuestExpansionRewardPlan? ExpansionRewardPlan = null,
 	QuestFinishRewardNonItemProjectionWarningDescriptor? RewardNonItemProjectionWarning = null,
 	QuestCompletionCallbackDescriptor? CompletionCallbackOperation = null,
 	QuestPersistenceOperationDescriptor? QuestPersistenceOperation = null,
 	NpcFactionPersistenceOperationDescriptor? NpcFactionPersistenceOperation = null);
+
+public sealed record QuestFinishRewardSideEffectContext(
+	Player? Player,
+	TitleTemplateTable? TitleTemplates = null,
+	int? CubeExpansionLimit = null);
 
 public sealed record QuestFinishOperationPlan(
 	QuestFinishStateMutationStatus Status,
@@ -60,7 +68,8 @@ public static class QuestFinishOperationPlanService
 		QuestFinishRewardTemplateProjection? rewardProjection = null,
 		QuestCompletionCallbackPlan? callbackPlan = null,
 		QuestPersistencePlan? questPersistencePlan = null,
-		NpcFactionPersistencePlan? npcFactionPersistencePlan = null)
+		NpcFactionPersistencePlan? npcFactionPersistencePlan = null,
+		QuestFinishRewardSideEffectContext? rewardSideEffectContext = null)
 	{
 		var guard = QuestFinishStateMutationService.ApplyRewardCompletion(questState, template, now, options);
 		if (!guard.Applied)
@@ -103,7 +112,9 @@ public static class QuestFinishOperationPlanService
 						descriptors,
 						ref nextOrder,
 						template,
-						rewardProjection);
+						rewardProjection,
+						rewardSideEffectContext,
+						options);
 				}
 
 				descriptors.Add(new QuestFinishOperationDescriptor(
@@ -268,7 +279,9 @@ public static class QuestFinishOperationPlanService
 		ICollection<QuestFinishOperationDescriptor> descriptors,
 		ref int nextOrder,
 		NearbyQuestTemplateSummary template,
-		QuestFinishRewardTemplateProjection rewardProjection)
+		QuestFinishRewardTemplateProjection rewardProjection,
+		QuestFinishRewardSideEffectContext? rewardSideEffectContext,
+		GameServerOptions options)
 	{
 		if (rewardProjection.NonItemProjection is null)
 		{
@@ -292,6 +305,12 @@ public static class QuestFinishOperationPlanService
 				nonItemDescriptor.IsLive,
 				Count: nonItemDescriptor.Amount,
 				RewardNonItemProjection: nonItemDescriptor));
+			AddNonItemRewardSideEffectPlanDescriptor(
+				descriptors,
+				ref nextOrder,
+				nonItemDescriptor,
+				rewardSideEffectContext,
+				options);
 		}
 
 		foreach (var warning in projectionPlan.Warnings)
@@ -302,6 +321,67 @@ public static class QuestFinishOperationPlanService
 				warning.JavaSource,
 				IsLive: false,
 				RewardNonItemProjectionWarning: warning));
+		}
+	}
+
+	private static void AddNonItemRewardSideEffectPlanDescriptor(
+		ICollection<QuestFinishOperationDescriptor> descriptors,
+		ref int nextOrder,
+		QuestFinishRewardNonItemProjectionDescriptor nonItemDescriptor,
+		QuestFinishRewardSideEffectContext? rewardSideEffectContext,
+		GameServerOptions options)
+	{
+		if (rewardSideEffectContext is null)
+		{
+			return;
+		}
+
+		switch (nonItemDescriptor.Action)
+		{
+			case QuestFinishRewardNonItemAction.Title:
+				if (rewardSideEffectContext.TitleTemplates is null)
+				{
+					return;
+				}
+
+				var titlePlan = QuestRewardSideEffectPlanService.CreateTitleRewardPlan(
+					rewardSideEffectContext.Player,
+					checked((int)nonItemDescriptor.Amount),
+					rewardSideEffectContext.TitleTemplates);
+				descriptors.Add(new QuestFinishOperationDescriptor(
+					nextOrder++,
+					QuestFinishOperationAction.NonItemRewardSideEffectPlan,
+					titlePlan.JavaSource,
+					IsLive: false,
+					Count: nonItemDescriptor.Amount,
+					RewardNonItemProjection: nonItemDescriptor,
+					TitleRewardPlan: titlePlan));
+				break;
+			case QuestFinishRewardNonItemAction.CubeExpansion:
+				var cubePlan = QuestRewardSideEffectPlanService.CreateCubeExpansionPlan(
+					rewardSideEffectContext.Player,
+					rewardSideEffectContext.CubeExpansionLimit ?? options.Custom.CubeExpansionLimit);
+				descriptors.Add(new QuestFinishOperationDescriptor(
+					nextOrder++,
+					QuestFinishOperationAction.NonItemRewardSideEffectPlan,
+					cubePlan.JavaSource,
+					IsLive: false,
+					Count: nonItemDescriptor.Amount,
+					RewardNonItemProjection: nonItemDescriptor,
+					ExpansionRewardPlan: cubePlan));
+				break;
+			case QuestFinishRewardNonItemAction.WarehouseExpansion:
+				var warehousePlan = QuestRewardSideEffectPlanService.CreateWarehouseExpansionPlan(
+					rewardSideEffectContext.Player);
+				descriptors.Add(new QuestFinishOperationDescriptor(
+					nextOrder++,
+					QuestFinishOperationAction.NonItemRewardSideEffectPlan,
+					warehousePlan.JavaSource,
+					IsLive: false,
+					Count: nonItemDescriptor.Amount,
+					RewardNonItemProjection: nonItemDescriptor,
+					ExpansionRewardPlan: warehousePlan));
+				break;
 		}
 	}
 }
