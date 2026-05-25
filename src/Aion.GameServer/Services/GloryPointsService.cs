@@ -1,3 +1,4 @@
+using Aion.GameServer.Data;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
@@ -50,6 +51,28 @@ public static class GloryPointsService
 			updatedRank,
 			addToStats,
 			packets);
+	}
+
+	public static async ValueTask<GloryPointsOfflineExecutionResult> ExecuteOfflineDaoUpdateAsync(
+		GloryPointsAddPlan plan,
+		IAbyssRankRepository repository,
+		CancellationToken cancellationToken = default)
+	{
+		ArgumentNullException.ThrowIfNull(plan);
+		ArgumentNullException.ThrowIfNull(repository);
+
+		// Java parity: services/abyss/GloryPointsService.addGp offline player branch delegates
+		// to dao/AbyssRankDAO.addGp(playerObjId, amount, addToStats). This explicit method
+		// keeps live callers gated until offline reward execution is intentionally wired.
+		if (!plan.RequiresOfflineDaoUpdate)
+			return GloryPointsOfflineExecutionResult.NotOfflineDaoUpdate(plan);
+
+		var executed = await repository.AddGpAsync(
+			plan.ObjectId,
+			plan.Amount,
+			plan.AddsDailyWeeklyStats,
+			cancellationToken);
+		return GloryPointsOfflineExecutionResult.FromRepositoryResult(plan, executed);
 	}
 }
 
@@ -125,4 +148,48 @@ public enum GloryPointsAddStatus
 	Applied,
 	OfflineDaoUpdateRequired,
 	NoReward,
+}
+
+public sealed record GloryPointsOfflineExecutionResult(
+	GloryPointsOfflineExecutionStatus Status,
+	int ObjectId,
+	int Amount,
+	bool AddsDailyWeeklyStats,
+	bool RepositorySucceeded,
+	string JavaSource)
+{
+	public bool Executed => Status == GloryPointsOfflineExecutionStatus.Executed;
+
+	public static GloryPointsOfflineExecutionResult FromRepositoryResult(
+		GloryPointsAddPlan plan,
+		bool repositorySucceeded)
+	{
+		return new GloryPointsOfflineExecutionResult(
+			repositorySucceeded
+				? GloryPointsOfflineExecutionStatus.Executed
+				: GloryPointsOfflineExecutionStatus.RepositoryFailed,
+			plan.ObjectId,
+			plan.Amount,
+			plan.AddsDailyWeeklyStats,
+			repositorySucceeded,
+			"AbyssRankDAO.addGp offline player branch");
+	}
+
+	public static GloryPointsOfflineExecutionResult NotOfflineDaoUpdate(GloryPointsAddPlan plan)
+	{
+		return new GloryPointsOfflineExecutionResult(
+			GloryPointsOfflineExecutionStatus.NotOfflineDaoUpdate,
+			plan.ObjectId,
+			plan.Amount,
+			plan.AddsDailyWeeklyStats,
+			RepositorySucceeded: false,
+			"GloryPointsService.addGp online/zero branch skips AbyssRankDAO.addGp");
+	}
+}
+
+public enum GloryPointsOfflineExecutionStatus
+{
+	Executed,
+	RepositoryFailed,
+	NotOfflineDaoUpdate,
 }
