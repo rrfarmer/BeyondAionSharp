@@ -135,6 +135,30 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleUseItemAsync_ApExtractHonorsConfiguredAbyssPointCap()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(
+			repository,
+			options: CreateApCapOptions());
+		var player = CreateApExtractPlayer();
+		player.AbyssRank = PlayerAbyssRank.Default() with { Ap = 900 };
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItemTarget(sourceItemObjectId: 5001, targetItemObjectId: 6001));
+
+		Assert.Equal(1_000, player.AbyssRank.Ap);
+		Assert.Equal(1_000, repository.ApExtractAbyssRank?.Ap);
+		Assert.DoesNotContain(player.InventoryItems, item => item.ObjectId == 6001);
+		Assert.Contains(player.InventoryItems, item => item.ObjectId == 5001 && item.Count == 1);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 6001, expectedDeleteType: SmDeleteItem.UseDeleteType),
+			packet => AssertInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 5001, expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse),
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1320000, "100"),
+			packet => Assert.IsType<SmAbyssRank>(packet));
+	}
+
+	[Fact]
 	public async Task HandleChargeItemAsync_ApPaymentSendsAbyssPointsPlannerPackets()
 	{
 		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(new EmptyPlayerEnterWorldRepository());
@@ -1134,6 +1158,18 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		};
 	}
 
+	private static GameServerOptions CreateApCapOptions()
+	{
+		return new GameServerOptions
+		{
+			Custom = new GameServerCustomOptions
+			{
+				EnableApCap = true,
+				ApCapValue = 1_000,
+			},
+		};
+	}
+
 	private static CmUseItem CreateUseItem(int sourceItemObjectId)
 	{
 		using var writer = new PacketBuffer();
@@ -2028,8 +2064,10 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			bool includeThreadPoolManager = false,
 			IDFactory? idFactory = null,
 			bool enableCryptKeyBeforeRun = true,
-			SelectableDecomposeTestData? selectableData = null)
+			SelectableDecomposeTestData? selectableData = null,
+			GameServerOptions? options = null)
 		{
+			options ??= new GameServerOptions();
 			var selectableFixture = selectableData ?? SelectableDecomposeTestData.Default;
 			var tempRoot = Path.Combine(Path.GetTempPath(), "aion-inventory-expansion-use-" + Guid.NewGuid().ToString("N"));
 			Directory.CreateDirectory(Path.Combine(tempRoot, "game-server", "data", "static_data"));
@@ -2127,7 +2165,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			var playerEnterWorldService = repository == null
 				? null
 				: new PlayerEnterWorldService(
-					new GameServerOptions(),
+					options,
 					repository,
 					world,
 					NullLogger<PlayerEnterWorldService>.Instance);
@@ -2152,7 +2190,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 					serverClient,
 					"inventory-expansion-use-item-test",
 					new GamePacketProcessor<string>((_, _) => Task.CompletedTask),
-					options: new GameServerOptions(),
+					options: options,
 					runtimeContext: runtimeContext,
 					playerEnterWorldService: playerEnterWorldService,
 					threadPoolManager: threadPoolManager,

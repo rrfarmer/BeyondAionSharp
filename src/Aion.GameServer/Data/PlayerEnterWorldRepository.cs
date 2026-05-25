@@ -307,6 +307,8 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public int SaveDecomposeActionMutationCalls { get; private set; }
 
+	public PlayerAbyssRank? ApExtractAbyssRank { get; private set; }
+
 	public Task<Player?> LoadPlayerAsync(int accountId, int playerObjectId, CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult<Player?>(null);
@@ -526,6 +528,7 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		int deletedTargetItemObjectId,
 		CancellationToken cancellationToken = default)
 	{
+		ApExtractAbyssRank = abyssRank;
 		return Task.FromResult(true);
 	}
 
