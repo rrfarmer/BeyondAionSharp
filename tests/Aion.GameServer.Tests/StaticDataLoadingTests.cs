@@ -186,6 +186,43 @@ public sealed class StaticDataLoadingTests
 	}
 
 	[Fact]
+	public async Task StaticData_LoadsQuestUpdateItemIdsFromQuestInventoryItems()
+	{
+		using var temp = TempDirectory.Create();
+		var cacheFile = Path.Combine(temp.Path, "static_data.xml");
+		File.WriteAllText(
+			cacheFile,
+			"""
+			<?xml version="1.0" encoding="UTF-8"?>
+			<static_data>
+				<quests>
+					<quest id="1001">
+						<inventory_items>
+							<inventory_item item_id="182200001" count="3" />
+							<inventory_item item_id="182200002" />
+						</inventory_items>
+					</quest>
+					<quest id="1002">
+						<inventory_items>
+							<inventory_item item_id="182200001" count="99" />
+							<inventory_item item_id="182200003" count="1" />
+						</inventory_items>
+					</quest>
+					<quest id="1003" />
+				</quests>
+			</static_data>
+			""");
+
+		var staticData = await StaticData.LoadFromCacheAsync(cacheFile, []);
+
+		Assert.Equal([182200001, 182200002, 182200003], staticData.QuestUpdateItems.ItemIds);
+		Assert.Equal(3, staticData.QuestUpdateItems.Count);
+		Assert.True(staticData.QuestUpdateItems.ContainsItemId(182200001));
+		Assert.True(staticData.QuestUpdateItems.ContainsItemId(182200003));
+		Assert.False(staticData.QuestUpdateItems.ContainsItemId(182299999));
+	}
+
+	[Fact]
 	public async Task StaticData_LoadsPortalPathSummariesWithJavaRaceFallbacks()
 	{
 		using var temp = TempDirectory.Create();

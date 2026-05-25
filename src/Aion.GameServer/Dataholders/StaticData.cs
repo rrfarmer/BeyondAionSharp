@@ -34,6 +34,7 @@ public sealed class StaticData
 		NpcRiftSpawnTable npcRiftSpawns,
 		CustomNpcDropTable customNpcDrops,
 		QuestDropTable questDrops,
+		QuestUpdateItemTable questUpdateItems,
 		GlobalDropTable globalDrops,
 		EventDropTable eventDrops,
 		GlobalNpcExclusionTable globalNpcExclusions,
@@ -80,6 +81,7 @@ public sealed class StaticData
 		NpcRiftSpawns = npcRiftSpawns;
 		CustomNpcDrops = customNpcDrops;
 		QuestDrops = questDrops;
+		QuestUpdateItems = questUpdateItems;
 		GlobalDrops = globalDrops;
 		EventDrops = eventDrops;
 		GlobalNpcExclusions = globalNpcExclusions;
@@ -156,6 +158,8 @@ public sealed class StaticData
 
 	public QuestDropTable QuestDrops { get; }
 
+	public QuestUpdateItemTable QuestUpdateItems { get; }
+
 	public GlobalDropTable GlobalDrops { get; }
 
 	public EventDropTable EventDrops { get; }
@@ -228,6 +232,8 @@ public sealed class StaticData
 		var npcSpawns = new List<NpcSpawnSummary>();
 		var npcRiftSpawns = new List<NpcRiftSpawnSummary>();
 		var questDrops = new List<QuestDropSummary>();
+		var questUpdateItemIds = new List<int>();
+		var questUpdateItemIdSet = new HashSet<int>();
 		var globalDropRules = new List<GlobalDropRuleSummary>();
 		var eventTemplates = new List<EventTemplateSummary>();
 		var globalNpcExclusionNpcIds = new HashSet<int>();
@@ -799,6 +805,18 @@ public sealed class StaticData
 				currentQuestDropBuilder.AddCollectItem(
 					ReadRequiredIntAttribute(reader, "item_id"),
 					ReadOptionalIntAttribute(reader, "count", 1));
+				continue;
+			}
+
+			if (reader.Depth == 4
+				&& reader.LocalName == "inventory_item"
+				&& currentQuestDropBuilder != null
+				&& elementPath.GetValueOrDefault(3) == "inventory_items")
+			{
+				// Java parity: questEngine/QuestEngine.init builds questUpdateItems from InventoryItem.item_id and ignores count.
+				var itemId = ReadRequiredIntAttribute(reader, "item_id");
+				if (questUpdateItemIdSet.Add(itemId))
+					questUpdateItemIds.Add(itemId);
 				continue;
 			}
 
@@ -2342,6 +2360,7 @@ public sealed class StaticData
 			new NpcRiftSpawnTable(npcRiftSpawns.AsReadOnly()),
 			customNpcDrops,
 			new QuestDropTable(questDrops.AsReadOnly()),
+			new QuestUpdateItemTable(questUpdateItemIds.AsReadOnly()),
 			new GlobalDropTable(processedGlobalDropRules),
 			new EventDropTable(eventTemplates.AsReadOnly()),
 			new GlobalNpcExclusionTable(
