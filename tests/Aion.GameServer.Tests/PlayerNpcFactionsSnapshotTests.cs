@@ -1,4 +1,5 @@
 using Aion.GameServer.Configuration;
+using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Services;
 
@@ -119,6 +120,110 @@ public sealed class PlayerNpcFactionsSnapshotTests
 		Assert.Null(result.CompletedFaction);
 	}
 
+	[Fact]
+	public void LevelUpPlan_DeactivatesOverLevelActiveFactionAndRecordsJavaSideEffects()
+	{
+		var snapshot = new PlayerNpcFactionsSnapshot(
+		[
+			new PlayerNpcFactionState(
+				FactionId: 2,
+				IsActive: true,
+				IsMentor: false,
+				TimeEpochSeconds: 0,
+				State: PlayerNpcFactionQuestState.Start,
+				QuestId: 35007),
+			new PlayerNpcFactionState(
+				FactionId: 8,
+				IsActive: true,
+				IsMentor: true,
+				TimeEpochSeconds: 0,
+				State: PlayerNpcFactionQuestState.Noting,
+				QuestId: 35008),
+		]);
+		var table = CreateFactionTable(
+			new NpcFactionSummary(2, "Alabaster Order", 1129000, "DAILY", 30, 45, "ELYOS", [799803], 0),
+			new NpcFactionSummary(8, "Kaisinel Academy", 1129006, "MENTOR", 10, 65, "ELYOS", [799813], 0));
+
+		var plan = NpcFactionLevelUpPlanService.CreatePlan(snapshot, playerLevel: 46, table);
+
+		Assert.True(plan.Applied);
+		Assert.Equal(NpcFactionLevelUpPlanStatus.Applied, plan.Status);
+		Assert.True(plan.PlannedSnapshot.TryGetFaction(2, out var dailyFaction));
+		Assert.NotNull(dailyFaction);
+		Assert.False(dailyFaction.IsActive);
+		Assert.Equal(PlayerNpcFactionQuestState.Noting, dailyFaction.State);
+		Assert.Equal(35007, dailyFaction.QuestId);
+		Assert.True(plan.PlannedSnapshot.TryGetFaction(8, out var mentorFaction));
+		Assert.NotNull(mentorFaction);
+		Assert.True(mentorFaction.IsActive);
+		Assert.Equal(PlayerNpcFactionQuestState.Noting, mentorFaction.State);
+
+		Assert.Collection(
+			plan.Descriptors,
+			descriptor =>
+			{
+				Assert.False(descriptor.IsMentorSlot);
+				Assert.Equal(2, descriptor.FactionId);
+				Assert.Equal(NpcFactionLevelUpDescriptorStatus.PlannedLeaveByLevelLimit, descriptor.Status);
+				Assert.Equal(45, descriptor.TemplateMaxLevel);
+				Assert.Equal(1129000, descriptor.TemplateNameId);
+				Assert.Equal(35007, descriptor.QuestIdToAbandon);
+				Assert.Equal(NpcFactionLevelUpPlanService.FactionLeaveByLevelLimitSystemMessageId, descriptor.SystemMessageId);
+				Assert.False(descriptor.IsLive);
+			},
+			descriptor =>
+			{
+				Assert.True(descriptor.IsMentorSlot);
+				Assert.Equal(8, descriptor.FactionId);
+				Assert.Equal(NpcFactionLevelUpDescriptorStatus.WithinLevelLimit, descriptor.Status);
+				Assert.Null(descriptor.QuestIdToAbandon);
+				Assert.Null(descriptor.SystemMessageId);
+			});
+	}
+
+	[Fact]
+	public void LevelUpPlan_RecordsNoChangesMissingTemplateAndNoActiveBranches()
+	{
+		var activeSnapshot = new PlayerNpcFactionsSnapshot(
+		[
+			new PlayerNpcFactionState(
+				FactionId: 2,
+				IsActive: true,
+				IsMentor: false,
+				TimeEpochSeconds: 0,
+				State: PlayerNpcFactionQuestState.Complete,
+				QuestId: 35007),
+		]);
+		var inactiveSnapshot = new PlayerNpcFactionsSnapshot(
+		[
+			new PlayerNpcFactionState(
+				FactionId: 2,
+				IsActive: false,
+				IsMentor: false,
+				TimeEpochSeconds: 0,
+				State: PlayerNpcFactionQuestState.Noting,
+				QuestId: 35007),
+		]);
+		var table = CreateFactionTable(new NpcFactionSummary(2, "Alabaster Order", 1129000, "DAILY", 30, 45, "ELYOS", [799803], 0));
+
+		var noChanges = NpcFactionLevelUpPlanService.CreatePlan(activeSnapshot, playerLevel: 45, table);
+		var missingTemplate = NpcFactionLevelUpPlanService.CreatePlan(activeSnapshot, playerLevel: 46, CreateFactionTable());
+		var missingTable = NpcFactionLevelUpPlanService.CreatePlan(activeSnapshot, playerLevel: 46, npcFactionTable: null);
+		var noActive = NpcFactionLevelUpPlanService.CreatePlan(inactiveSnapshot, playerLevel: 46, table);
+		var missingSnapshot = NpcFactionLevelUpPlanService.CreatePlan(npcFactions: null, playerLevel: 46, table);
+
+		Assert.Equal(NpcFactionLevelUpPlanStatus.NoChanges, noChanges.Status);
+		Assert.Single(noChanges.Descriptors);
+		Assert.Equal(NpcFactionLevelUpDescriptorStatus.WithinLevelLimit, noChanges.Descriptors[0].Status);
+		Assert.True(noChanges.PlannedSnapshot.HasActiveFaction(2));
+		Assert.Equal(NpcFactionLevelUpPlanStatus.BlockedMissingTemplate, missingTemplate.Status);
+		Assert.Equal(NpcFactionLevelUpDescriptorStatus.MissingTemplate, Assert.Single(missingTemplate.Descriptors).Status);
+		Assert.Equal(NpcFactionLevelUpPlanStatus.BlockedMissingTemplate, missingTable.Status);
+		Assert.Equal(NpcFactionLevelUpPlanStatus.NoActiveFactions, noActive.Status);
+		Assert.Empty(noActive.Descriptors);
+		Assert.Equal(NpcFactionLevelUpPlanStatus.MissingSnapshot, missingSnapshot.Status);
+	}
+
 	[Theory]
 	[InlineData(8, 59, 2026, 5, 25)]
 	[InlineData(9, 0, 2026, 5, 26)]
@@ -147,5 +252,10 @@ public sealed class PlayerNpcFactionsSnapshotTests
 				TimeZoneId = timeZoneId,
 			},
 		};
+	}
+
+	private static NpcFactionTable CreateFactionTable(params NpcFactionSummary[] factions)
+	{
+		return new NpcFactionTable(factions);
 	}
 }

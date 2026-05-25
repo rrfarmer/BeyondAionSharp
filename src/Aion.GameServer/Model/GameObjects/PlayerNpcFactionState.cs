@@ -53,6 +53,12 @@ public sealed class PlayerNpcFactionsSnapshot
 		return _factions.TryGetValue(factionId, out faction);
 	}
 
+	public PlayerNpcFactionState? GetActiveFaction(bool isMentor)
+	{
+		// Java parity breadcrumb: NpcFactions.getActiveNpcFaction(boolean mentor).
+		return _activeNpcFaction[isMentor ? 1 : 0];
+	}
+
 	public bool CanStartAssignedQuest(int factionId, int questId)
 	{
 		// Java parity breadcrumb: QuestService.startQuest rejects NPC faction quest starts
