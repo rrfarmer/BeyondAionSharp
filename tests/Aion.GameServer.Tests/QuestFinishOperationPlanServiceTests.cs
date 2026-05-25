@@ -238,6 +238,94 @@ public sealed class QuestFinishOperationPlanServiceTests
 	}
 
 	[Fact]
+	public void CreatePlan_ComposesDetailedCallbackPlanAfterUpdatePacketBeforeNpcFaction()
+	{
+		var now = new DateTimeOffset(2026, 5, 25, 8, 30, 0, TimeSpan.Zero);
+		var npcFactions = new PlayerNpcFactionsSnapshot(
+		[
+			new PlayerNpcFactionState(
+				FactionId: 2,
+				IsActive: true,
+				IsMentor: false,
+				TimeEpochSeconds: 0,
+				State: PlayerNpcFactionQuestState.Start,
+				QuestId: 35007),
+		]);
+		var callbackPlan = QuestCompletionCallbackPlanService.CreatePlan(
+			35007,
+		[
+			new QuestCompletionCallbackRegistration(
+				RegisteredQuestId: 14015,
+				HandlerJavaSource: "game-server/data/handlers/quest/verteron/_14015NotBlindedByVengeance.java",
+				UsesDefaultFollowUp: true,
+				FollowUpQuestId: 14015),
+			new QuestCompletionCallbackRegistration(
+				RegisteredQuestId: 1002,
+				HandlerJavaSource: "game-server/data/handlers/quest/poeta/_1002RequestoftheElim.java"),
+		]);
+
+		var plan = QuestFinishOperationPlanService.CreatePlan(
+			new PlayerQuestState(35007, "REWARD", QuestVars: 4, Flags: 0, CompleteCount: 0),
+			new NearbyQuestTemplateSummary(35007, NpcFactionId: 2),
+			npcFactions,
+			now,
+			CreateOptions("UTC"),
+			callbackPlan: callbackPlan);
+
+		Assert.True(plan.Applied);
+		Assert.Equal(
+		[
+			QuestFinishOperationAction.RewardMutationPlaceholder,
+			QuestFinishOperationAction.RemoveQuestWorkItemsPlaceholder,
+			QuestFinishOperationAction.QuestStateMutation,
+			QuestFinishOperationAction.QuestUpdatePacket,
+			QuestFinishOperationAction.QuestCompletedCallback,
+			QuestFinishOperationAction.QuestCompletedCallback,
+			QuestFinishOperationAction.NpcFactionCompletion,
+			QuestFinishOperationAction.NearbyQuestRefresh,
+			QuestFinishOperationAction.DeferredQuestPersistence,
+			QuestFinishOperationAction.DeferredNpcFactionPersistence,
+		], plan.Descriptors.Select(descriptor => descriptor.Action));
+		Assert.Equal(Enumerable.Range(1, 10), plan.Descriptors.Select(descriptor => descriptor.Order));
+		var callbackDescriptors = plan.Descriptors
+			.Where(descriptor => descriptor.Action == QuestFinishOperationAction.QuestCompletedCallback)
+			.ToArray();
+		Assert.Equal([14015, 1002], callbackDescriptors.Select(descriptor => descriptor.CompletionCallbackOperation?.RegisteredQuestId));
+		Assert.All(callbackDescriptors, descriptor => Assert.NotNull(descriptor.CompletionCallbackOperation));
+		Assert.All(callbackDescriptors, descriptor => Assert.False(descriptor.IsLive));
+		Assert.True(callbackDescriptors[0].CompletionCallbackOperation!.UsesDefaultFollowUp);
+		Assert.Equal(14015, callbackDescriptors[0].CompletionCallbackOperation!.FollowUpQuestId);
+		Assert.Equal(35007, callbackDescriptors[0].CompletionCallbackOperation!.CompletedQuestId);
+	}
+
+	[Fact]
+	public void CreatePlan_UsesProvidedEmptyCallbackPlanWithoutLegacyPlaceholder()
+	{
+		var plan = QuestFinishOperationPlanService.CreatePlan(
+			new PlayerQuestState(1001, "REWARD", QuestVars: 1, Flags: 0, CompleteCount: 0),
+			new NearbyQuestTemplateSummary(1001),
+			PlayerNpcFactionsSnapshot.Empty,
+			new DateTimeOffset(2026, 5, 25, 8, 30, 0, TimeSpan.Zero),
+			CreateOptions("UTC"),
+			callbackPlan: new QuestCompletionCallbackPlan(
+				QuestCompletionCallbackPlanStatus.NoHandlers,
+				Array.Empty<QuestCompletionCallbackDescriptor>()));
+
+		Assert.DoesNotContain(plan.Descriptors, descriptor => descriptor.Action == QuestFinishOperationAction.QuestCompletedCallback);
+		Assert.Equal(
+		[
+			QuestFinishOperationAction.QuestStateMutation,
+			QuestFinishOperationAction.QuestUpdatePacket,
+			QuestFinishOperationAction.NearbyQuestRefresh,
+		], plan.Descriptors
+			.Where(descriptor => descriptor.Action is
+				QuestFinishOperationAction.QuestStateMutation or
+				QuestFinishOperationAction.QuestUpdatePacket or
+				QuestFinishOperationAction.NearbyQuestRefresh)
+			.Select(descriptor => descriptor.Action));
+	}
+
+	[Fact]
 	public void CreatePlan_UsesProvidedEmptyPersistencePlansWithoutLegacyPlaceholders()
 	{
 		var plan = QuestFinishOperationPlanService.CreatePlan(

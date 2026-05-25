@@ -28,6 +28,7 @@ public sealed record QuestFinishOperationDescriptor(
 	bool IsLive,
 	int? ItemId = null,
 	long? Count = null,
+	QuestCompletionCallbackDescriptor? CompletionCallbackOperation = null,
 	QuestPersistenceOperationDescriptor? QuestPersistenceOperation = null,
 	NpcFactionPersistenceOperationDescriptor? NpcFactionPersistenceOperation = null);
 
@@ -49,6 +50,7 @@ public static class QuestFinishOperationPlanService
 		DateTimeOffset now,
 		GameServerOptions options,
 		QuestFinishRewardTemplateProjection? rewardProjection = null,
+		QuestCompletionCallbackPlan? callbackPlan = null,
 		QuestPersistencePlan? questPersistencePlan = null,
 		NpcFactionPersistencePlan? npcFactionPersistencePlan = null)
 	{
@@ -92,7 +94,22 @@ public static class QuestFinishOperationPlanService
 		var mutation = QuestFinishStateMutationService.ApplyRewardCompletion(stateInput, template, now, options);
 		descriptors.Add(new(nextOrder++, QuestFinishOperationAction.QuestStateMutation, "QuestState.setStatus/setQuestVar/setNextRepeatTime", IsLive: false));
 		descriptors.Add(new(nextOrder++, QuestFinishOperationAction.QuestUpdatePacket, "SM_QUEST_ACTION(ActionType.UPDATE, qs)", IsLive: false));
-		descriptors.Add(new(nextOrder++, QuestFinishOperationAction.QuestCompletedCallback, "QuestEngine.onQuestCompleted", IsLive: false));
+		if (callbackPlan is null)
+		{
+			descriptors.Add(new(nextOrder++, QuestFinishOperationAction.QuestCompletedCallback, "QuestEngine.onQuestCompleted", IsLive: false));
+		}
+		else
+		{
+			foreach (var callbackDescriptor in callbackPlan.Descriptors)
+			{
+				descriptors.Add(new QuestFinishOperationDescriptor(
+					nextOrder++,
+					QuestFinishOperationAction.QuestCompletedCallback,
+					callbackDescriptor.HandlerJavaSource,
+					callbackDescriptor.IsLive,
+					CompletionCallbackOperation: callbackDescriptor));
+			}
+		}
 
 		var plannedNpcFactions = npcFactions;
 		if (template.NpcFactionId != 0)
