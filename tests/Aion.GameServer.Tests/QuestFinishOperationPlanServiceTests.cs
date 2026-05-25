@@ -358,6 +358,65 @@ public sealed class QuestFinishOperationPlanServiceTests
 	}
 
 	[Fact]
+	public void CreatePlan_ComposesGpSideEffectPlanAfterMatchingNonItemProjectionWithoutMutatingPlayer()
+	{
+		var player = new Player
+		{
+			ObjectId = 4102,
+			AccountMembership = 1,
+			AbyssRank = PlayerAbyssRank.Default() with { Gp = 100 },
+		};
+		var rewardProjection = new QuestFinishRewardTemplateProjection(
+			RewardGroupCount: 1,
+			HasNonItemRewards: true,
+			NonItemProjection: new QuestFinishRewardNonItemTemplateProjection(GloryPoints: 50));
+		var options = new GameServerOptions
+		{
+			Core = new GameServerCoreOptions
+			{
+				TimeZoneId = "UTC",
+			},
+			Rates = new GameServerRateOptions
+			{
+				GpRates = [1f, 2f],
+			},
+		};
+
+		var plan = QuestFinishOperationPlanService.CreatePlan(
+			new PlayerQuestState(1001, "REWARD", QuestVars: 0, Flags: 0, CompleteCount: 0),
+			new NearbyQuestTemplateSummary(1001, QuestCategory: "QUEST"),
+			PlayerNpcFactionsSnapshot.Empty,
+			new DateTimeOffset(2026, 5, 25, 8, 30, 0, TimeSpan.Zero),
+			options,
+			rewardProjection,
+			rewardSideEffectContext: new QuestFinishRewardSideEffectContext(player));
+
+		Assert.All(plan.Descriptors, descriptor => Assert.False(descriptor.IsLive));
+		Assert.Equal(
+		[
+			QuestFinishOperationAction.RewardGroupCorrection,
+			QuestFinishOperationAction.NonItemRewardProjection,
+			QuestFinishOperationAction.NonItemRewardSideEffectPlan,
+			QuestFinishOperationAction.NonItemRewardPlaceholder,
+			QuestFinishOperationAction.QuestStateMutation,
+		], plan.Descriptors.Take(5).Select(descriptor => descriptor.Action));
+		var sideEffect = Assert.Single(
+			plan.Descriptors,
+			descriptor => descriptor.GpRewardPlan is not null);
+		Assert.Equal(QuestFinishRewardNonItemAction.GloryPoints, sideEffect.RewardNonItemProjection?.Action);
+		Assert.Equal(QuestGpRewardStatus.Applied, sideEffect.GpRewardPlan?.Status);
+		Assert.Equal(50, sideEffect.GpRewardPlan?.RewardGp);
+		Assert.Equal(100, sideEffect.GpRewardPlan?.AppliedRewardGp);
+		Assert.Equal(100, sideEffect.GpRewardPlan?.PreviousGp);
+		Assert.Equal(200, sideEffect.GpRewardPlan?.CurrentGp);
+		Assert.Equal(100, sideEffect.GpRewardPlan?.GloryPointsPlan?.Added);
+		Assert.False(sideEffect.GpRewardPlan?.GloryPointsPlan?.RequiresOfflineDaoUpdate);
+		Assert.Equal(100, player.AbyssRank.Gp);
+		Assert.Equal(0, player.AbyssRank.DailyGp);
+		Assert.Equal(0, player.AbyssRank.WeeklyGp);
+	}
+
+	[Fact]
 	public void CreatePlan_ComposesWarehouseSideEffectPlanAndKeepsBoundaryFailuresNonLive()
 	{
 		var player = new Player

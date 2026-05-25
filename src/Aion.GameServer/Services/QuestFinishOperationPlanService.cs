@@ -38,6 +38,7 @@ public sealed record QuestFinishOperationDescriptor(
 	QuestFinishRewardNonItemProjectionDescriptor? RewardNonItemProjection = null,
 	QuestTitleRewardPlan? TitleRewardPlan = null,
 	QuestExpansionRewardPlan? ExpansionRewardPlan = null,
+	QuestGpRewardResult? GpRewardPlan = null,
 	QuestFinishRewardNonItemProjectionWarningDescriptor? RewardNonItemProjectionWarning = null,
 	QuestCompletionCallbackDescriptor? CompletionCallbackOperation = null,
 	QuestPersistenceOperationDescriptor? QuestPersistenceOperation = null,
@@ -381,6 +382,20 @@ public static class QuestFinishOperationPlanService
 					Count: nonItemDescriptor.Amount,
 					RewardNonItemProjection: nonItemDescriptor,
 					ExpansionRewardPlan: warehousePlan));
+				break;
+			case QuestFinishRewardNonItemAction.GloryPoints:
+				var gpPlan = QuestRewardSideEffectPlanService.CreateGpRewardPlan(
+					rewardSideEffectContext.Player,
+					checked((int)nonItemDescriptor.Amount),
+					options.Rates.GpRates);
+				descriptors.Add(new QuestFinishOperationDescriptor(
+					nextOrder++,
+					QuestFinishOperationAction.NonItemRewardSideEffectPlan,
+					gpPlan.GloryPointsPlan?.JavaSource ?? "QuestService.giveReward -> GloryPointsService.addGp",
+					IsLive: false,
+					Count: nonItemDescriptor.Amount,
+					RewardNonItemProjection: nonItemDescriptor,
+					GpRewardPlan: gpPlan));
 				break;
 		}
 	}

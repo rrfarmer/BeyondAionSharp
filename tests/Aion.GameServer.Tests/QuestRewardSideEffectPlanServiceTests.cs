@@ -151,6 +151,27 @@ public sealed class QuestRewardSideEffectPlanServiceTests
 		Assert.Equal([QuestRewardPacketIntent.CannotExpandSystemMessage], plan.PacketIntents);
 	}
 
+	[Fact]
+	public void CreateGpRewardPlan_AppliesRateAndPlansPacketsWithoutMutatingPlayer()
+	{
+		var player = CreatePlayer(objectId: 3108, membership: 1, gp: 200);
+
+		var result = QuestRewardSideEffectPlanService.CreateGpRewardPlan(player, rewardGp: 75, gpRates: [1f, 2f]);
+
+		Assert.Equal(QuestGpRewardStatus.Applied, result.Status);
+		Assert.Equal(75, result.RewardGp);
+		Assert.Equal(150, result.AppliedRewardGp);
+		Assert.Equal(200, result.PreviousGp);
+		Assert.Equal(350, result.CurrentGp);
+		Assert.NotNull(result.GloryPointsPlan);
+		Assert.Equal(150, result.GloryPointsPlan!.Added);
+		Assert.True(result.GloryPointsPlan.AddsDailyWeeklyStats);
+		Assert.Equal(2, result.GloryPointsPlan.PlayerPackets.Count);
+		Assert.Equal(200, player.AbyssRank.Gp);
+		Assert.Equal(0, player.AbyssRank.DailyGp);
+		Assert.Equal(0, player.AbyssRank.WeeklyGp);
+	}
+
 	private static Player CreatePlayer(
 		int objectId,
 		string race = "ELYOS",
@@ -159,12 +180,16 @@ public sealed class QuestRewardSideEffectPlanServiceTests
 		int npcExpands = 0,
 		int itemExpands = 0,
 		int warehouseNpcExpands = 0,
-		int warehouseBonusExpands = 0)
+		int warehouseBonusExpands = 0,
+		byte membership = 0,
+		int gp = 0)
 	{
 		return new Player
 		{
 			ObjectId = objectId,
 			Race = race,
+			AccountMembership = membership,
+			AbyssRank = PlayerAbyssRank.Default() with { Gp = gp },
 			Titles = titles ?? Array.Empty<PlayerTitle>(),
 			QuestExpands = questExpands,
 			NpcExpands = npcExpands,

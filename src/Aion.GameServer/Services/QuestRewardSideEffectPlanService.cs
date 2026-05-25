@@ -116,6 +116,29 @@ public static class QuestRewardSideEffectPlanService
 			[QuestRewardPacketIntent.WarehouseSizeExtended, QuestRewardPacketIntent.RegularWarehouseInfo],
 			"WarehouseService.expand(player, false)");
 	}
+
+	public static QuestGpRewardResult CreateGpRewardPlan(
+		Player? player,
+		int rewardGp,
+		IReadOnlyList<float> gpRates)
+	{
+		// Java parity: services/QuestService.giveReward -> rewards.getGp(),
+		// Rates.GP, then GloryPointsService.addGp(playerObjId, gp). This planner is non-live.
+		if (player == null)
+			return QuestGpRewardResult.MissingPlayer(rewardGp);
+		if (rewardGp == 0)
+			return QuestGpRewardResult.NoGpReward(player.ObjectId, player.AbyssRank.Gp);
+
+		var appliedRewardGp = QuestRewardService.ApplyQuestGpRate(player.AccountMembership, rewardGp, gpRates);
+		var previousGp = player.AbyssRank.Gp;
+		var plan = GloryPointsService.CreateAddGpPlan(player, player.ObjectId, appliedRewardGp);
+		return QuestGpRewardResult.FromGloryPointsPlan(
+			plan,
+			player.ObjectId,
+			rewardGp,
+			appliedRewardGp,
+			previousGp);
+	}
 }
 
 public sealed record QuestTitleRewardPlan(
