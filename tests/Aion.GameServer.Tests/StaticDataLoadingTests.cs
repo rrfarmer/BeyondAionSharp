@@ -144,6 +144,45 @@ public sealed class StaticDataLoadingTests
 	}
 
 	[Fact]
+	public async Task StaticData_LoadsNpcFactionTemplatesLikeJavaDataholder()
+	{
+		using var temp = TempDirectory.Create();
+		var cacheFile = Path.Combine(temp.Path, "static_data.xml");
+		File.WriteAllText(
+			cacheFile,
+			"""
+			<?xml version="1.0" encoding="UTF-8"?>
+			<static_data>
+				<npc_factions>
+					<npc_faction id="2" name="Alabaster Order" npc_ids="799803 805145" name_id="1129000" category="DAILY" min_level="30" race="ELYOS" />
+					<npc_faction id="8" name="Kaisinel Academy" npc_ids="799813" name_id="1129006" category="MENTOR" min_level="10" max_level="39" race="ELYOS" />
+					<npc_faction id="12" name="Elyos Divine Item Cooperation" npc_ids="205552" name_id="1129010" category="COMBINESKILL" min_level="29" skill_points="400" race="ELYOS" />
+				</npc_factions>
+			</static_data>
+			""");
+
+		var staticData = await StaticData.LoadFromCacheAsync(cacheFile, []);
+
+		Assert.Equal(3, staticData.NpcFactions.Count);
+		var daily = staticData.NpcFactions.GetNpcFactionById(2);
+		Assert.NotNull(daily);
+		Assert.Equal("Alabaster Order", daily.Name);
+		Assert.Equal(1129000, daily.NameId);
+		Assert.Equal("DAILY", daily.Category);
+		Assert.Equal(30, daily.MinLevel);
+		Assert.Equal(99, daily.MaxLevel);
+		Assert.Equal("ELYOS", daily.Race);
+		Assert.Equal([799803, 805145], daily.NpcIds);
+		Assert.False(daily.IsMentor);
+		Assert.Equal(daily, staticData.NpcFactions.GetNpcFactionByNpcId(805145));
+		Assert.True(staticData.NpcFactions.IsMentorFaction(8));
+		Assert.False(staticData.NpcFactions.IsMentorFaction(12));
+		Assert.Equal(400, staticData.NpcFactions.GetNpcFactionById(12)?.SkillPoints);
+		Assert.Null(staticData.NpcFactions.GetNpcFactionById(99));
+		Assert.Null(staticData.NpcFactions.GetNpcFactionByNpcId(1));
+	}
+
+	[Fact]
 	public async Task StaticData_LoadsItemPurificationSummaries()
 	{
 		using var temp = TempDirectory.Create();
@@ -768,6 +807,12 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(new WorldPosition(220050000, 2242.0f, 2797.0f, 75.4f, 0), staticData.VortexLocations.GetLocation(1)?.StartPoint);
 		Assert.Equal(staticData.VortexLocations.GetLocation(0), staticData.VortexLocations.GetLocationByInvasionWorld(210060000));
 		Assert.Equal(staticData.VortexLocations.GetLocation(1), staticData.VortexLocations.GetLocationByInvasionWorld(220050000));
+		Assert.Equal(staticData.GetElementCount("npc_faction"), staticData.NpcFactions.Count);
+		Assert.Equal(18, staticData.NpcFactions.Count);
+		Assert.True(staticData.NpcFactions.IsMentorFaction(8));
+		Assert.False(staticData.NpcFactions.IsMentorFaction(2));
+		Assert.Equal(staticData.NpcFactions.GetNpcFactionById(2), staticData.NpcFactions.GetNpcFactionByNpcId(799803));
+		Assert.Equal(400, staticData.NpcFactions.GetNpcFactionById(12)?.SkillPoints);
 		Assert.Equal(174, staticData.CustomNpcDrops.Count);
 		Assert.Equal(2, staticData.CustomNpcDrops.GetNpcDrop(210582)?.Groups.Count);
 		Assert.Equal(182400001, staticData.CustomNpcDrops.GetNpcDrop(212928)?.Groups[0].Drops[0].ItemId);

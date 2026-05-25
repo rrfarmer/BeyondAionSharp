@@ -32,6 +32,7 @@ public sealed class StaticData
 		NpcTemplateTable npcTemplates,
 		NpcSpawnTable npcSpawns,
 		NpcRiftSpawnTable npcRiftSpawns,
+		NpcFactionTable npcFactions,
 		CustomNpcDropTable customNpcDrops,
 		QuestDropTable questDrops,
 		QuestUpdateItemTable questUpdateItems,
@@ -79,6 +80,7 @@ public sealed class StaticData
 		NpcTemplates = npcTemplates;
 		NpcSpawns = npcSpawns;
 		NpcRiftSpawns = npcRiftSpawns;
+		NpcFactions = npcFactions;
 		CustomNpcDrops = customNpcDrops;
 		QuestDrops = questDrops;
 		QuestUpdateItems = questUpdateItems;
@@ -153,6 +155,8 @@ public sealed class StaticData
 	public NpcSpawnTable NpcSpawns { get; }
 
 	public NpcRiftSpawnTable NpcRiftSpawns { get; }
+
+	public NpcFactionTable NpcFactions { get; }
 
 	public CustomNpcDropTable CustomNpcDrops { get; }
 
@@ -231,6 +235,7 @@ public sealed class StaticData
 		var npcTemplates = new List<NpcTemplateSummary>();
 		var npcSpawns = new List<NpcSpawnSummary>();
 		var npcRiftSpawns = new List<NpcRiftSpawnSummary>();
+		var npcFactions = new List<NpcFactionSummary>();
 		var questDrops = new List<QuestDropSummary>();
 		var questUpdateItemIds = new List<int>();
 		var questUpdateItemIdSet = new HashSet<int>();
@@ -748,6 +753,22 @@ public sealed class StaticData
 					ReadRequiredIntAttribute(reader, "id"),
 					reader.GetAttribute("defends_race") ?? string.Empty,
 					reader.GetAttribute("offence_race") ?? string.Empty);
+				continue;
+			}
+
+			if (reader.Depth == 2 && reader.LocalName == "npc_faction" && elementPath.GetValueOrDefault(1) == "npc_factions")
+			{
+				npcFactions.Add(
+					new NpcFactionSummary(
+						ReadRequiredIntAttribute(reader, "id"),
+						reader.GetAttribute("name") ?? string.Empty,
+						ReadIntAttribute(reader, "name_id"),
+						reader.GetAttribute("category") ?? string.Empty,
+						ReadIntAttribute(reader, "min_level"),
+						ReadOptionalIntAttribute(reader, "max_level", 99),
+						reader.GetAttribute("race") ?? string.Empty,
+						ReadXmlIntListAttribute(reader, "npc_ids"),
+						ReadIntAttribute(reader, "skill_points")));
 				continue;
 			}
 
@@ -2358,6 +2379,7 @@ public sealed class StaticData
 			new NpcTemplateTable(npcTemplates.AsReadOnly()),
 			new NpcSpawnTable(npcSpawns.AsReadOnly()),
 			new NpcRiftSpawnTable(npcRiftSpawns.AsReadOnly()),
+			new NpcFactionTable(npcFactions.AsReadOnly()),
 			customNpcDrops,
 			new QuestDropTable(questDrops.AsReadOnly()),
 			new QuestUpdateItemTable(questUpdateItemIds.AsReadOnly()),
