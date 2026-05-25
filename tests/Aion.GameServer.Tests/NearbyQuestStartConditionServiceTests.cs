@@ -96,6 +96,152 @@ public sealed class NearbyQuestStartConditionServiceTests
 	}
 
 	[Fact]
+	public void CheckNearbyStartConditions_AppliesSupportedJavaXmlStartConditions()
+	{
+		var player = new Player
+		{
+			Level = 50,
+			Race = "ELYOS",
+			PlayerClass = "GLADIATOR",
+			Gender = "MALE",
+			TitleId = 7,
+			Quests =
+			[
+				new PlayerQuestState(5001, "COMPLETE", QuestVars: 0, Flags: 0, CompleteCount: 2, RewardGroup: 1),
+				new PlayerQuestState(5002, "START", QuestVars: 0, Flags: 0, CompleteCount: 0),
+				new PlayerQuestState(5003, "COMPLETE", QuestVars: 0, Flags: 0, CompleteCount: 1),
+				new PlayerQuestState(5004, "COMPLETE", QuestVars: 0, Flags: 0, CompleteCount: 1),
+			],
+		};
+		var table = new NearbyQuestTemplateTable(
+		[
+			new NearbyQuestTemplateSummary(5001, MaxRepeatCount: 2),
+			new NearbyQuestTemplateSummary(4001, HasXmlStartConditions: true, XmlStartConditions:
+			[
+				new NearbyQuestXmlStartCondition(
+					Finished: [new NearbyQuestFinishedCondition(5001, Reward: 1)],
+					Unfinished: new HashSet<int>([5002], EqualityComparer<int>.Default),
+					NoAcquired: new HashSet<int>([5003], EqualityComparer<int>.Default),
+					Acquired: new HashSet<int>([5004], EqualityComparer<int>.Default),
+					Equipped: new HashSet<int>([110101001], EqualityComparer<int>.Default),
+					RequiredTitle: 7),
+			]),
+		]);
+
+		AssertPass(player, 4001, table);
+	}
+
+	[Fact]
+	public void CheckNearbyStartConditions_AppliesJavaXmlStartConditionFailures()
+	{
+		var player = new Player
+		{
+			Level = 50,
+			Race = "ELYOS",
+			PlayerClass = "GLADIATOR",
+			Gender = "MALE",
+			TitleId = 9,
+			Quests =
+			[
+				new PlayerQuestState(6001, "COMPLETE", QuestVars: 0, Flags: 0, CompleteCount: 1, RewardGroup: 0),
+				new PlayerQuestState(6002, "COMPLETE", QuestVars: 0, Flags: 0, CompleteCount: 1),
+				new PlayerQuestState(6003, "START", QuestVars: 0, Flags: 0, CompleteCount: 0),
+				new PlayerQuestState(6004, "LOCKED", QuestVars: 0, Flags: 0, CompleteCount: 0),
+			],
+		};
+		var table = new NearbyQuestTemplateTable(
+		[
+			new NearbyQuestTemplateSummary(4101, HasXmlStartConditions: true, XmlStartConditions:
+			[
+				new NearbyQuestXmlStartCondition(Finished: [new NearbyQuestFinishedCondition(6999)]),
+			]),
+			new NearbyQuestTemplateSummary(4102, HasXmlStartConditions: true, XmlStartConditions:
+			[
+				new NearbyQuestXmlStartCondition(Finished: [new NearbyQuestFinishedCondition(6001, Reward: 1)]),
+			]),
+			new NearbyQuestTemplateSummary(4103, HasXmlStartConditions: true, XmlStartConditions:
+			[
+				new NearbyQuestXmlStartCondition(Unfinished: new HashSet<int>([6002], EqualityComparer<int>.Default)),
+			]),
+			new NearbyQuestTemplateSummary(4104, HasXmlStartConditions: true, XmlStartConditions:
+			[
+				new NearbyQuestXmlStartCondition(NoAcquired: new HashSet<int>([6003], EqualityComparer<int>.Default)),
+			]),
+			new NearbyQuestTemplateSummary(4105, HasXmlStartConditions: true, XmlStartConditions:
+			[
+				new NearbyQuestXmlStartCondition(Acquired: new HashSet<int>([6004], EqualityComparer<int>.Default)),
+			]),
+			new NearbyQuestTemplateSummary(4106, HasXmlStartConditions: true, XmlStartConditions:
+			[
+				new NearbyQuestXmlStartCondition(RequiredTitle: 7),
+			]),
+		]);
+
+		AssertFailure(player, 4101, table, NearbyQuestStartConditionFailure.XmlStartConditions);
+		AssertFailure(player, 4102, table, NearbyQuestStartConditionFailure.XmlStartConditions);
+		AssertFailure(player, 4103, table, NearbyQuestStartConditionFailure.XmlStartConditions);
+		AssertFailure(player, 4104, table, NearbyQuestStartConditionFailure.XmlStartConditions);
+		AssertFailure(player, 4105, table, NearbyQuestStartConditionFailure.XmlStartConditions);
+		AssertFailure(player, 4106, table, NearbyQuestStartConditionFailure.XmlStartConditions);
+	}
+
+	[Fact]
+	public void CheckNearbyStartConditions_RequiresAllMandatoryAndOneOptionalXmlBlockLikeJava()
+	{
+		var player = new Player
+		{
+			Level = 50,
+			Race = "ELYOS",
+			PlayerClass = "GLADIATOR",
+			Gender = "MALE",
+			TitleId = 11,
+			Quests =
+			[
+				new PlayerQuestState(7001, "COMPLETE", QuestVars: 0, Flags: 0, CompleteCount: 1),
+			],
+		};
+		var table = new NearbyQuestTemplateTable(
+		[
+			new NearbyQuestTemplateSummary(4201, HasXmlStartConditions: true, XmlStartConditions:
+			[
+				new NearbyQuestXmlStartCondition(Finished: [new NearbyQuestFinishedCondition(7999)]),
+				new NearbyQuestXmlStartCondition(Finished: [new NearbyQuestFinishedCondition(7001)]),
+				new NearbyQuestXmlStartCondition(RequiredTitle: 11),
+			]),
+			new NearbyQuestTemplateSummary(4202, HasXmlStartConditions: true, XmlStartConditions:
+			[
+				new NearbyQuestXmlStartCondition(Finished: [new NearbyQuestFinishedCondition(7001)]),
+				new NearbyQuestXmlStartCondition(RequiredTitle: 12),
+			]),
+		]);
+
+		AssertPass(player, 4201, table);
+		AssertFailure(player, 4202, table, NearbyQuestStartConditionFailure.XmlStartConditions);
+	}
+
+	[Fact]
+	public void CheckNearbyStartConditions_FailsClosedForUnknownXmlStartConditionChildren()
+	{
+		var player = new Player
+		{
+			Level = 50,
+			Race = "ELYOS",
+			PlayerClass = "GLADIATOR",
+			Gender = "MALE",
+		};
+		var table = new NearbyQuestTemplateTable(
+		[
+			new NearbyQuestTemplateSummary(
+				4301,
+				HasXmlStartConditions: true,
+				XmlStartConditions: [new NearbyQuestXmlStartCondition(HasUnsupportedElements: true)],
+				HasUnsupportedXmlStartConditionElements: true),
+		]);
+
+		AssertFailure(player, 4301, table, NearbyQuestStartConditionFailure.UnsupportedXmlStartConditions);
+	}
+
+	[Fact]
 	public void GetLevelRequirementDiff_MatchesJavaMissingTemplateAndMinLevelBehavior()
 	{
 		var table = new NearbyQuestTemplateTable(

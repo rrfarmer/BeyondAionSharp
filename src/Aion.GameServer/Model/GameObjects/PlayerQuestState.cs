@@ -5,7 +5,8 @@ public sealed record PlayerQuestState(
 	string Status,
 	int QuestVars,
 	int Flags,
-	int CompleteCount)
+	int CompleteCount,
+	int? RewardGroup = null)
 {
 	public bool IsComplete => string.Equals(Status, "COMPLETE", StringComparison.Ordinal);
 

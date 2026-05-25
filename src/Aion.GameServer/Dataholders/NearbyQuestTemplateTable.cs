@@ -31,7 +31,41 @@ public sealed record NearbyQuestTemplateSummary(
 	bool HasXmlStartConditions = false,
 	bool HasInventoryItems = false,
 	int CombineSkill = 0,
-	int NpcFactionId = 0)
+	int NpcFactionId = 0,
+	IReadOnlyList<NearbyQuestXmlStartCondition>? XmlStartConditions = null,
+	bool HasUnsupportedXmlStartConditionElements = false)
 {
 	public IReadOnlySet<string> ClassPermitted { get; } = ClassPermitted ?? new HashSet<string>(StringComparer.Ordinal);
+
+	public IReadOnlyList<NearbyQuestXmlStartCondition> XmlStartConditions { get; } =
+		XmlStartConditions ?? Array.Empty<NearbyQuestXmlStartCondition>();
 }
+
+public sealed record NearbyQuestXmlStartCondition(
+	IReadOnlyList<NearbyQuestFinishedCondition>? Finished = null,
+	IReadOnlySet<int>? Unfinished = null,
+	IReadOnlySet<int>? NoAcquired = null,
+	IReadOnlySet<int>? Acquired = null,
+	IReadOnlySet<int>? Equipped = null,
+	int RequiredTitle = 0,
+	bool HasUnsupportedElements = false)
+{
+	public IReadOnlyList<NearbyQuestFinishedCondition> Finished { get; } =
+		Finished ?? Array.Empty<NearbyQuestFinishedCondition>();
+
+	public IReadOnlySet<int> Unfinished { get; } =
+		Unfinished ?? new HashSet<int>();
+
+	public IReadOnlySet<int> NoAcquired { get; } =
+		NoAcquired ?? new HashSet<int>();
+
+	public IReadOnlySet<int> Acquired { get; } =
+		Acquired ?? new HashSet<int>();
+
+	public IReadOnlySet<int> Equipped { get; } =
+		Equipped ?? new HashSet<int>();
+
+	public bool IsOptional => Finished.Count != 0;
+}
+
+public sealed record NearbyQuestFinishedCondition(int QuestId, int Reward = -1);

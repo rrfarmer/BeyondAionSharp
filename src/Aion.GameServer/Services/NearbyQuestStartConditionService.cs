@@ -53,6 +53,10 @@ public static class NearbyQuestStartConditionService
 		if (template.RequiredRank != 0 && player.AbyssRank.Rank < template.RequiredRank)
 			return NearbyQuestStartConditionResult.Fail(NearbyQuestStartConditionFailure.Rank);
 
+		var xmlFailure = GetXmlStartConditionFailure(player, template, questTemplates);
+		if (xmlFailure != NearbyQuestStartConditionFailure.None)
+			return NearbyQuestStartConditionResult.Fail(xmlFailure);
+
 		var unsupportedFailure = GetUnsupportedDependencyFailure(template);
 		if (unsupportedFailure != NearbyQuestStartConditionFailure.None)
 			return NearbyQuestStartConditionResult.Fail(unsupportedFailure);
@@ -83,7 +87,8 @@ public static class NearbyQuestStartConditionService
 
 	private static NearbyQuestStartConditionFailure GetUnsupportedDependencyFailure(NearbyQuestTemplateSummary template)
 	{
-		if (template.HasXmlStartConditions)
+		if (template.HasXmlStartConditions
+			&& (template.XmlStartConditions.Count == 0 || template.HasUnsupportedXmlStartConditionElements))
 			return NearbyQuestStartConditionFailure.UnsupportedXmlStartConditions;
 		if (template.HasInventoryItems)
 			return NearbyQuestStartConditionFailure.UnsupportedInventoryItems;
@@ -93,6 +98,106 @@ public static class NearbyQuestStartConditionService
 			return NearbyQuestStartConditionFailure.UnsupportedNpcFaction;
 
 		return NearbyQuestStartConditionFailure.None;
+	}
+
+	private static NearbyQuestStartConditionFailure GetXmlStartConditionFailure(
+		Player player,
+		NearbyQuestTemplateSummary template,
+		NearbyQuestTemplateTable questTemplates)
+	{
+		if (!template.HasXmlStartConditions)
+			return NearbyQuestStartConditionFailure.None;
+
+		if (template.XmlStartConditions.Count == 0 || template.HasUnsupportedXmlStartConditionElements)
+			return NearbyQuestStartConditionFailure.UnsupportedXmlStartConditions;
+
+		var fulfilledStartConditions = template.XmlStartConditions.Count(condition =>
+			CheckXmlStartCondition(player, condition, questTemplates));
+		return fulfilledStartConditions < GetRequiredXmlStartConditionCount(template)
+			? NearbyQuestStartConditionFailure.XmlStartConditions
+			: NearbyQuestStartConditionFailure.None;
+	}
+
+	private static int GetRequiredXmlStartConditionCount(NearbyQuestTemplateSummary template)
+	{
+		// Java parity: QuestTemplate.getRequiredConditionCount requires every mandatory XMLStartCondition
+		// and at most one optional condition containing <finished>. Master-crafting adjustment remains blocked
+		// because combine-skill quest support is still outside the nearby staged predicate.
+		var optionalCount = template.XmlStartConditions.Count(condition => condition.IsOptional);
+		var mandatoryCount = template.XmlStartConditions.Count - optionalCount;
+		return Math.Min(1, optionalCount) + mandatoryCount;
+	}
+
+	private static bool CheckXmlStartCondition(
+		Player player,
+		NearbyQuestXmlStartCondition condition,
+		NearbyQuestTemplateTable questTemplates)
+	{
+		// Java parity breadcrumb: XMLStartCondition.check(player, warn=false). Equipped items pass when warn is false.
+		return CheckFinishedQuests(player, condition, questTemplates)
+			&& CheckUnfinishedQuests(player, condition)
+			&& CheckNoAcquiredQuests(player, condition)
+			&& CheckAcquiredQuests(player, condition)
+			&& IsRequiredTitleDisplayed(player, condition);
+	}
+
+	private static bool CheckFinishedQuests(
+		Player player,
+		NearbyQuestXmlStartCondition condition,
+		NearbyQuestTemplateTable questTemplates)
+	{
+		foreach (var finished in condition.Finished)
+		{
+			var questState = FindQuestState(player, finished.QuestId);
+			if (questState == null || !string.Equals(questState.Status, "COMPLETE", StringComparison.Ordinal))
+				return false;
+			if (finished.Reward >= 0 && questState.RewardGroup != finished.Reward)
+				return false;
+
+			if (questTemplates.TryGetQuest(finished.QuestId, out var finishedTemplate)
+				&& finishedTemplate != null
+				&& finishedTemplate.MaxRepeatCount > 1
+				&& finishedTemplate.MaxRepeatCount != 255
+				&& questState.CompleteCount != finishedTemplate.MaxRepeatCount)
+				return false;
+		}
+
+		return true;
+	}
+
+	private static bool CheckUnfinishedQuests(Player player, NearbyQuestXmlStartCondition condition)
+	{
+		return condition.Unfinished.All(questId =>
+			!string.Equals(FindQuestState(player, questId)?.Status, "COMPLETE", StringComparison.Ordinal));
+	}
+
+	private static bool CheckNoAcquiredQuests(Player player, NearbyQuestXmlStartCondition condition)
+	{
+		return condition.NoAcquired.All(questId =>
+		{
+			var status = FindQuestState(player, questId)?.Status;
+			return !string.Equals(status, "START", StringComparison.Ordinal)
+				&& !string.Equals(status, "REWARD", StringComparison.Ordinal);
+		});
+	}
+
+	private static bool CheckAcquiredQuests(Player player, NearbyQuestXmlStartCondition condition)
+	{
+		return condition.Acquired.All(questId =>
+		{
+			var status = FindQuestState(player, questId)?.Status;
+			return status != null && !string.Equals(status, "LOCKED", StringComparison.Ordinal);
+		});
+	}
+
+	private static bool IsRequiredTitleDisplayed(Player player, NearbyQuestXmlStartCondition condition)
+	{
+		return condition.RequiredTitle == 0 || player.TitleId == condition.RequiredTitle;
+	}
+
+	private static PlayerQuestState? FindQuestState(Player player, int questId)
+	{
+		return player.Quests.FirstOrDefault(quest => quest.QuestId == questId);
 	}
 }
 
@@ -122,8 +227,9 @@ public enum NearbyQuestStartConditionFailure
 	Class = 8,
 	Gender = 9,
 	Rank = 10,
-	UnsupportedXmlStartConditions = 11,
-	UnsupportedInventoryItems = 12,
-	UnsupportedCombineSkill = 13,
-	UnsupportedNpcFaction = 14,
+	XmlStartConditions = 11,
+	UnsupportedXmlStartConditions = 12,
+	UnsupportedInventoryItems = 13,
+	UnsupportedCombineSkill = 14,
+	UnsupportedNpcFaction = 15,
 }

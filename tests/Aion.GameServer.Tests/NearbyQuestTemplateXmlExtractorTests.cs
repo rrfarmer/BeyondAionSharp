@@ -34,7 +34,12 @@ public sealed class NearbyQuestTemplateXmlExtractorTests
 						<inventory_item item_id="182200001" count="1" />
 					</inventory_items>
 					<start_conditions>
-						<finished quest_id="1000" />
+						<finished quest_id="1000" reward="2" />
+						<unfinished>1002 1003</unfinished>
+						<noacquired>1004</noacquired>
+						<acquired>1005</acquired>
+						<equipped>110101001</equipped>
+						<required_title>7</required_title>
 					</start_conditions>
 				</quest>
 			</quests>
@@ -53,6 +58,16 @@ public sealed class NearbyQuestTemplateXmlExtractorTests
 		Assert.Equal(3, template.MaxRepeatCount);
 		Assert.True(template.IsTimeBased);
 		Assert.True(template.HasXmlStartConditions);
+		var startCondition = Assert.Single(template.XmlStartConditions);
+		var finished = Assert.Single(startCondition.Finished);
+		Assert.Equal(1000, finished.QuestId);
+		Assert.Equal(2, finished.Reward);
+		Assert.Equal([1002, 1003], startCondition.Unfinished.Order());
+		Assert.Equal([1004], startCondition.NoAcquired.Order());
+		Assert.Equal([1005], startCondition.Acquired.Order());
+		Assert.Equal([110101001], startCondition.Equipped.Order());
+		Assert.Equal(7, startCondition.RequiredTitle);
+		Assert.False(template.HasUnsupportedXmlStartConditionElements);
 		Assert.True(template.HasInventoryItems);
 		Assert.Equal(40001, template.CombineSkill);
 		Assert.Equal(12, template.NpcFactionId);
@@ -80,9 +95,33 @@ public sealed class NearbyQuestTemplateXmlExtractorTests
 		Assert.Equal(1, template.MaxRepeatCount);
 		Assert.False(template.IsTimeBased);
 		Assert.False(template.HasXmlStartConditions);
+		Assert.Empty(template.XmlStartConditions);
+		Assert.False(template.HasUnsupportedXmlStartConditionElements);
 		Assert.False(template.HasInventoryItems);
 		Assert.Equal(0, template.CombineSkill);
 		Assert.Equal(0, template.NpcFactionId);
+	}
+
+	[Fact]
+	public void Extract_MarksUnknownXmlStartConditionChildrenUnsupported()
+	{
+		const string xml = """
+			<quests>
+				<quest id="2501">
+					<start_conditions>
+						<finished quest_id="2500" />
+						<future_condition>1</future_condition>
+					</start_conditions>
+				</quest>
+			</quests>
+			""";
+		var extractor = new NearbyQuestTemplateXmlExtractor();
+
+		var template = Assert.Single(extractor.Extract(xml));
+
+		Assert.True(template.HasXmlStartConditions);
+		Assert.True(template.HasUnsupportedXmlStartConditionElements);
+		Assert.Single(template.XmlStartConditions);
 	}
 
 	[Fact]
