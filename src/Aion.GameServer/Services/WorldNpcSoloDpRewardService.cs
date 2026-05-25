@@ -40,6 +40,87 @@ public sealed class WorldNpcSoloDpRewardService
 			previousDp);
 	}
 
+	public WorldNpcSoloApRewardResult ApplySoloApReward(
+		Player? player,
+		IWorldNpcObject? npc,
+		float damagePercent,
+		bool shouldRewardAp,
+		int calculatedAp,
+		float apMultiplier = 1f,
+		AbyssPointsAddOptions? abyssPointsOptions = null,
+		bool sourceIsSiegeNpc = false,
+		bool sourceSiegeNpcPeace = false)
+	{
+		// Java parity: controllers/NpcController.doReward solo-player AP branch -> AIQuestion.REWARD_AP,
+		// StatFunctions.calculatePvEApGained, then AbyssPointsService.addAp(player, npc, rewardAp).
+		if (player == null)
+			return WorldNpcSoloApRewardResult.MissingPlayer(npc?.ObjectId ?? 0, damagePercent, calculatedAp, apMultiplier);
+		if (npc == null)
+			return WorldNpcSoloApRewardResult.MissingNpc(player.ObjectId, player.AbyssRank.Ap, damagePercent, calculatedAp, apMultiplier);
+		if (IsPlayerDead(player))
+		{
+			return WorldNpcSoloApRewardResult.PlayerDead(
+				player.ObjectId,
+				npc.ObjectId,
+				player.AbyssRank.Ap,
+				damagePercent,
+				calculatedAp,
+				apMultiplier);
+		}
+
+		if (!shouldRewardAp)
+		{
+			return WorldNpcSoloApRewardResult.ApRewardDenied(
+				player.ObjectId,
+				npc.ObjectId,
+				player.AbyssRank.Ap,
+				damagePercent,
+				calculatedAp,
+				apMultiplier);
+		}
+
+		var rewardAp = CalculateSoloApReward(calculatedAp, damagePercent, apMultiplier);
+		if (rewardAp <= 0)
+		{
+			return WorldNpcSoloApRewardResult.NoApReward(
+				player.ObjectId,
+				npc.ObjectId,
+				player.AbyssRank.Ap,
+				damagePercent,
+				calculatedAp,
+				apMultiplier);
+		}
+
+		var previousAp = player.AbyssRank.Ap;
+		var plan = AbyssPointsService.AddApFromObject(
+			player,
+			npc.ObjectId,
+			sourceIsPlayer: false,
+			sourceIsSiegeNpc,
+			sourceSiegeNpcPeace,
+			rewardAp,
+			abyssPointsOptions);
+		return WorldNpcSoloApRewardResult.FromAbyssPointsPlan(
+			plan,
+			player.ObjectId,
+			npc.ObjectId,
+			damagePercent,
+			calculatedAp,
+			apMultiplier,
+			rewardAp,
+			previousAp);
+	}
+
+	public static int CalculateSoloApReward(int calculatedAp, float damagePercent, float apMultiplier = 1f)
+	{
+		// Java parity: NpcController.doReward keeps rewardAp as float and casts to int only after >= 1.
+		var rewardAp = 1f;
+		rewardAp *= damagePercent;
+		rewardAp *= apMultiplier;
+		rewardAp *= calculatedAp;
+		return rewardAp >= 1f ? JavaFloatToInt(rewardAp) : 0;
+	}
+
 	public static int CalculateDpReward(int playerLevel, NpcTemplateSummary npcTemplate, float dpPveRate = 1f)
 	{
 		// Java parity: utils/stats/StatFunctions.calculateDPReward.
@@ -195,4 +276,148 @@ public enum WorldNpcSoloDpRewardStatus
 	MissingNpc,
 	PlayerDead,
 	DpBoundarySkipped,
+}
+
+public sealed record WorldNpcSoloApRewardResult(
+	WorldNpcSoloApRewardStatus Status,
+	int ObjectId,
+	int NpcObjectId,
+	float DamagePercent,
+	int CalculatedAp,
+	float ApMultiplier,
+	int RewardAp,
+	int PreviousAp,
+	int CurrentAp,
+	AbyssPointsAddPlan? AbyssPointsPlan = null)
+{
+	public static WorldNpcSoloApRewardResult MissingPlayer(
+		int npcObjectId,
+		float damagePercent,
+		int calculatedAp,
+		float apMultiplier)
+	{
+		return new WorldNpcSoloApRewardResult(
+			WorldNpcSoloApRewardStatus.MissingPlayer,
+			0,
+			npcObjectId,
+			damagePercent,
+			calculatedAp,
+			apMultiplier,
+			0,
+			0,
+			0);
+	}
+
+	public static WorldNpcSoloApRewardResult MissingNpc(
+		int objectId,
+		int currentAp,
+		float damagePercent,
+		int calculatedAp,
+		float apMultiplier)
+	{
+		return new WorldNpcSoloApRewardResult(
+			WorldNpcSoloApRewardStatus.MissingNpc,
+			objectId,
+			0,
+			damagePercent,
+			calculatedAp,
+			apMultiplier,
+			0,
+			currentAp,
+			currentAp);
+	}
+
+	public static WorldNpcSoloApRewardResult PlayerDead(
+		int objectId,
+		int npcObjectId,
+		int currentAp,
+		float damagePercent,
+		int calculatedAp,
+		float apMultiplier)
+	{
+		return new WorldNpcSoloApRewardResult(
+			WorldNpcSoloApRewardStatus.PlayerDead,
+			objectId,
+			npcObjectId,
+			damagePercent,
+			calculatedAp,
+			apMultiplier,
+			0,
+			currentAp,
+			currentAp);
+	}
+
+	public static WorldNpcSoloApRewardResult ApRewardDenied(
+		int objectId,
+		int npcObjectId,
+		int currentAp,
+		float damagePercent,
+		int calculatedAp,
+		float apMultiplier)
+	{
+		return new WorldNpcSoloApRewardResult(
+			WorldNpcSoloApRewardStatus.ApRewardDenied,
+			objectId,
+			npcObjectId,
+			damagePercent,
+			calculatedAp,
+			apMultiplier,
+			0,
+			currentAp,
+			currentAp);
+	}
+
+	public static WorldNpcSoloApRewardResult NoApReward(
+		int objectId,
+		int npcObjectId,
+		int currentAp,
+		float damagePercent,
+		int calculatedAp,
+		float apMultiplier)
+	{
+		return new WorldNpcSoloApRewardResult(
+			WorldNpcSoloApRewardStatus.NoApReward,
+			objectId,
+			npcObjectId,
+			damagePercent,
+			calculatedAp,
+			apMultiplier,
+			0,
+			currentAp,
+			currentAp);
+	}
+
+	public static WorldNpcSoloApRewardResult FromAbyssPointsPlan(
+		AbyssPointsAddPlan plan,
+		int objectId,
+		int npcObjectId,
+		float damagePercent,
+		int calculatedAp,
+		float apMultiplier,
+		int rewardAp,
+		int previousAp)
+	{
+		return new WorldNpcSoloApRewardResult(
+			plan.Applied ? WorldNpcSoloApRewardStatus.Applied : WorldNpcSoloApRewardStatus.ApBoundarySkipped,
+			objectId,
+			npcObjectId,
+			damagePercent,
+			calculatedAp,
+			apMultiplier,
+			rewardAp,
+			previousAp,
+			plan.UpdatedRank?.Ap ?? previousAp,
+			plan);
+	}
+}
+
+public enum WorldNpcSoloApRewardStatus
+{
+	Applied,
+	MissingPlayer,
+	MissingNpc,
+	PlayerDead,
+	ApRewardDenied,
+	NoApReward,
+	ApBoundarySkipped,
 }

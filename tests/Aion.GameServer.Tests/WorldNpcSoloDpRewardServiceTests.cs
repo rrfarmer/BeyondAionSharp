@@ -152,6 +152,128 @@ public sealed class WorldNpcSoloDpRewardServiceTests
 		Assert.Equal(2, registry.SentPackets.Count);
 	}
 
+	[Fact]
+	public void ApplySoloApReward_CalculatesScalesAndAddsApThroughAbyssPlanner()
+	{
+		var service = CreateService(out _);
+		var player = CreatePlayer(objectId: 1405, playerClass: "RANGER", level: 10, dp: 100);
+		player.AbyssRank = PlayerAbyssRank.Default() with { Ap = 100 };
+		var npc = CreateNpc(objectId: 2405, level: 12, rating: "ELITE");
+
+		var result = service.ApplySoloApReward(
+			player,
+			npc,
+			damagePercent: 0.5f,
+			shouldRewardAp: true,
+			calculatedAp: 15,
+			apMultiplier: 2f);
+
+		Assert.Equal(WorldNpcSoloApRewardStatus.Applied, result.Status);
+		Assert.Equal(player.ObjectId, result.ObjectId);
+		Assert.Equal(npc.ObjectId, result.NpcObjectId);
+		Assert.Equal(15, result.CalculatedAp);
+		Assert.Equal(15, result.RewardAp);
+		Assert.Equal(100, result.PreviousAp);
+		Assert.Equal(115, result.CurrentAp);
+		Assert.Equal(115, player.AbyssRank.Ap);
+		Assert.NotNull(result.AbyssPointsPlan);
+		Assert.Equal(15, result.AbyssPointsPlan.Added);
+		Assert.Null(result.AbyssPointsPlan.SiegeCallback);
+		Assert.Collection(
+			result.AbyssPointsPlan.PlayerPackets,
+			packet =>
+			{
+				var message = Assert.IsType<SmSystemMessage>(packet);
+				Assert.Equal(1320000, message.MessageId);
+			},
+			packet => Assert.IsType<SmAbyssRank>(packet));
+	}
+
+	[Fact]
+	public void ApplySoloApReward_SkipsAiDeniedAndBelowJavaMinimumReward()
+	{
+		var service = CreateService(out _);
+		var player = CreatePlayer(objectId: 1406, playerClass: "RANGER", level: 10, dp: 100);
+		player.AbyssRank = PlayerAbyssRank.Default() with { Ap = 200 };
+		var npc = CreateNpc(objectId: 2406, level: 12, rating: "ELITE");
+
+		var denied = service.ApplySoloApReward(
+			player,
+			npc,
+			damagePercent: 1f,
+			shouldRewardAp: false,
+			calculatedAp: 15);
+		var belowMinimum = service.ApplySoloApReward(
+			player,
+			npc,
+			damagePercent: 0.1f,
+			shouldRewardAp: true,
+			calculatedAp: 5);
+		var nanDamage = service.ApplySoloApReward(
+			player,
+			npc,
+			damagePercent: float.NaN,
+			shouldRewardAp: true,
+			calculatedAp: 15);
+
+		Assert.Equal(WorldNpcSoloApRewardStatus.ApRewardDenied, denied.Status);
+		Assert.Equal(WorldNpcSoloApRewardStatus.NoApReward, belowMinimum.Status);
+		Assert.Equal(WorldNpcSoloApRewardStatus.NoApReward, nanDamage.Status);
+		Assert.Null(denied.AbyssPointsPlan);
+		Assert.Null(belowMinimum.AbyssPointsPlan);
+		Assert.Null(nanDamage.AbyssPointsPlan);
+		Assert.Equal(200, player.AbyssRank.Ap);
+		Assert.Equal(0, belowMinimum.RewardAp);
+		Assert.Equal(0, nanDamage.RewardAp);
+	}
+
+	[Fact]
+	public void ApplySoloApReward_CreatesSiegeCallbackForNonPeaceSiegeNpc()
+	{
+		var service = CreateService(out _);
+		var player = CreatePlayer(objectId: 1407, playerClass: "RANGER", level: 10, dp: 100);
+		var npc = CreateNpc(objectId: 2407, level: 12, rating: "ELITE");
+
+		var result = service.ApplySoloApReward(
+			player,
+			npc,
+			damagePercent: 1f,
+			shouldRewardAp: true,
+			calculatedAp: 20,
+			sourceIsSiegeNpc: true,
+			sourceSiegeNpcPeace: false);
+
+		Assert.Equal(WorldNpcSoloApRewardStatus.Applied, result.Status);
+		Assert.NotNull(result.AbyssPointsPlan?.SiegeCallback);
+		Assert.Equal(player.ObjectId, result.AbyssPointsPlan.SiegeCallback.PlayerObjectId);
+		Assert.Equal(npc.ObjectId, result.AbyssPointsPlan.SiegeCallback.SourceObjectId);
+		Assert.Equal(20, result.AbyssPointsPlan.SiegeCallback.AbyssPoints);
+	}
+
+	[Fact]
+	public void ApplySoloApReward_SkipsMissingDeadTargets()
+	{
+		var service = CreateService(out _);
+		var npc = CreateNpc(objectId: 2408, level: 12, rating: "ELITE");
+		var player = CreatePlayer(objectId: 1408, playerClass: "RANGER", level: 10, dp: 100);
+		player.AbyssRank = PlayerAbyssRank.Default() with { Ap = 300 };
+		var deadPlayer = CreatePlayer(objectId: 1409, playerClass: "RANGER", level: 10, dp: 100, currentHp: 0);
+		deadPlayer.AbyssRank = PlayerAbyssRank.Default() with { Ap = 400 };
+
+		var missingPlayer = service.ApplySoloApReward(null, npc, damagePercent: 1f, shouldRewardAp: true, calculatedAp: 20);
+		var missingNpc = service.ApplySoloApReward(player, null, damagePercent: 1f, shouldRewardAp: true, calculatedAp: 20);
+		var playerDead = service.ApplySoloApReward(deadPlayer, npc, damagePercent: 1f, shouldRewardAp: true, calculatedAp: 20);
+
+		Assert.Equal(WorldNpcSoloApRewardStatus.MissingPlayer, missingPlayer.Status);
+		Assert.Equal(WorldNpcSoloApRewardStatus.MissingNpc, missingNpc.Status);
+		Assert.Equal(WorldNpcSoloApRewardStatus.PlayerDead, playerDead.Status);
+		Assert.Null(missingPlayer.AbyssPointsPlan);
+		Assert.Null(missingNpc.AbyssPointsPlan);
+		Assert.Null(playerDead.AbyssPointsPlan);
+		Assert.Equal(300, player.AbyssRank.Ap);
+		Assert.Equal(400, deadPlayer.AbyssRank.Ap);
+	}
+
 	private static WorldNpcSoloDpRewardService CreateService(out CapturingConnectionRegistry registry)
 	{
 		registry = new CapturingConnectionRegistry();
