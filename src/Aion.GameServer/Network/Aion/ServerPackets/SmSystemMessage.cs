@@ -1132,6 +1132,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(901714);
 	}
 
+	public static SmSystemMessage QuestGetRewardTitle(string titleName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_QUEST_GET_REWARD_TITLE(String).
+		return new SmSystemMessage(1300035, titleName);
+	}
+
 	public static SmSystemMessage CashTitle(string titleName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_GET_CASH_TITLE.

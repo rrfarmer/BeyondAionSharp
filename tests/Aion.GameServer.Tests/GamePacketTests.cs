@@ -1133,6 +1133,7 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.ItemColorChangeSucceed("item", "dye"), 1300511, "item", "dye");
 		AssertSystemMessage(SmSystemMessage.TooltipLearnedEmotion(), 901713);
 		AssertSystemMessage(SmSystemMessage.TooltipLearnedTitle(), 901714);
+		AssertSystemMessage(SmSystemMessage.QuestGetRewardTitle(ChatUtil.L10n(412994)), 1300035, ChatUtil.L10n(412994));
 		AssertSystemMessage(SmSystemMessage.CashTitle(ChatUtil.L10n(412994)), 1390242, ChatUtil.L10n(412994));
 		AssertSystemMessage(SmSystemMessage.UncompressCompressedItemSucceeded("item"), 1400452, "item");
 		AssertSystemMessage(SmSystemMessage.DeleteCashTitleByTimeout(ChatUtil.L10n(412994)), 1390244, ChatUtil.L10n(412994));
