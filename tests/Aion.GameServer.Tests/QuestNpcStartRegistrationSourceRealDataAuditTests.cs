@@ -1,4 +1,6 @@
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Services;
+using Aion.GameServer.World;
 using Xunit.Abstractions;
 
 namespace Aion.GameServer.Tests;
@@ -12,6 +14,7 @@ public sealed class QuestNpcStartRegistrationSourceRealDataAuditTests
 	private const int ExpectedDistinctQuestIds = 4503;
 	private const int ExpectedRegisteredQuestStartPairs = 5214;
 	private const int ExpectedLargestNpcQuestCount = 50;
+	private const int ExpectedProjectedWorldQuestIds = 4503;
 
 	private readonly ITestOutputHelper _output;
 
@@ -76,6 +79,33 @@ public sealed class QuestNpcStartRegistrationSourceRealDataAuditTests
 		Assert.Equal(ExpectedLargestNpcQuestCount, table.Registrations.Values.Max(registration => registration.OnQuestStart.Count));
 		Assert.All(table.Registrations.Values, registration => Assert.True(registration.NpcId > 0));
 		Assert.All(table.Registrations.Values, registration => Assert.Equal(QuestNpcStartRegistration.DefaultQuestRange, registration.QuestRange));
+	}
+
+	[Fact]
+	public void RealDataAudit_ProjectsStagedQuestIdsIntoWorldInstanceWithoutRefreshWiring()
+	{
+		var result = LoadRealDataSources();
+		var table = new QuestNpcStartTable();
+		foreach (var source in result.Sources)
+			table.RegisterOnQuestStart(source);
+		var instance = new WorldMapInstanceRuntimeState(instanceId: 1);
+
+		var projection = NearbyQuestCandidateProjectionService.ProjectNpcStartQuestIds(
+			instance,
+			table,
+			table.Registrations.Keys);
+
+		_output.WriteLine($"ProjectedNpcIds={projection.MatchedNpcIds.Count}");
+		_output.WriteLine($"ProjectedQuestIds={projection.ProjectedQuestIds.Count}");
+		_output.WriteLine($"NewlyRegisteredWorldQuestIds={projection.NewlyRegisteredQuestIds.Count}");
+		_output.WriteLine($"WorldQuestIds={projection.WorldQuestIds.Count}");
+
+		Assert.Equal(ExpectedDistinctNpcIds, projection.InspectedNpcIds.Count);
+		Assert.Equal(ExpectedDistinctNpcIds, projection.MatchedNpcIds.Count);
+		Assert.Equal(ExpectedProjectedWorldQuestIds, projection.ProjectedQuestIds.Count);
+		Assert.Equal(ExpectedProjectedWorldQuestIds, projection.NewlyRegisteredQuestIds.Count);
+		Assert.Equal(ExpectedProjectedWorldQuestIds, projection.WorldQuestIds.Count);
+		Assert.Empty(instance.QuestIds.Except(projection.WorldQuestIds));
 	}
 
 	private static QuestNpcStartRegistrationSourceLoadResult LoadRealDataSources()

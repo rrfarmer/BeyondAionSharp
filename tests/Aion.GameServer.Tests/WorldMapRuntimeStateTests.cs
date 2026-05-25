@@ -156,6 +156,30 @@ public sealed class WorldMapRuntimeStateTests
 	}
 
 	[Fact]
+	public void NearbyQuestCandidateProjectionService_RegistersNpcStartQuestIdsLikeJavaWorldMapInstance()
+	{
+		var table = new QuestNpcStartTable();
+		table.RegisterOnQuestStart(new QuestNpcStartRegistrationSource(203098, 1192, QuestNpcStartRegistrationSourceKind.Manual, "manual"));
+		table.RegisterOnQuestStart(new QuestNpcStartRegistrationSource(203098, 1194, QuestNpcStartRegistrationSourceKind.Manual, "manual"));
+		table.RegisterOnQuestStart(new QuestNpcStartRegistrationSource(203099, 1194, QuestNpcStartRegistrationSourceKind.Manual, "manual"));
+		table.RegisterOnQuestStart(new QuestNpcStartRegistrationSource(203099, 1195, QuestNpcStartRegistrationSourceKind.Manual, "manual"));
+		var instance = new WorldMapInstanceRuntimeState(instanceId: 7, maxPlayers: 6);
+		instance.RegisterQuestStartIds([1192]);
+
+		var result = NearbyQuestCandidateProjectionService.ProjectNpcStartQuestIds(
+			instance,
+			table,
+			[203098, 999999, 203099, 203098]);
+
+		Assert.Equal([203098, 203099, 999999], result.InspectedNpcIds.Order());
+		Assert.Equal([203098, 203099], result.MatchedNpcIds.Order());
+		Assert.Equal([1192, 1194, 1195], result.ProjectedQuestIds.Order());
+		Assert.Equal([1194, 1195], result.NewlyRegisteredQuestIds.Order());
+		Assert.Equal([1192, 1194, 1195], result.WorldQuestIds.Order());
+		Assert.Equal([1192, 1194, 1195], instance.QuestIds.Order());
+	}
+
+	[Fact]
 	public void WorldMapRuntimeStateTable_AllocatesNextInstanceIdsLikeJavaWorldMap()
 	{
 		var table = new WorldMapRuntimeStateTable(
