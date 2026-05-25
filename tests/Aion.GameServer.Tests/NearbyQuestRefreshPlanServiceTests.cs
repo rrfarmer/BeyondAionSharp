@@ -35,7 +35,7 @@ public sealed class NearbyQuestRefreshPlanServiceTests
 			new NearbyQuestTemplateTable([]));
 
 		Assert.Equal(NearbyQuestRefreshPlanStatus.NoWorldQuestIds, plan.Status);
-		Assert.False(plan.WouldSendPacket);
+		Assert.True(plan.WouldSendPacket);
 		Assert.Empty(plan.Markers);
 		Assert.Empty(plan.RejectedQuestIds);
 		Assert.Empty(plan.RejectionCounts);
@@ -91,12 +91,36 @@ public sealed class NearbyQuestRefreshPlanServiceTests
 		var plan = NearbyQuestRefreshPlanService.CreatePlan(player, instance, templates);
 
 		Assert.Equal(NearbyQuestRefreshPlanStatus.NoMarkers, plan.Status);
-		Assert.False(plan.WouldSendPacket);
+		Assert.True(plan.WouldSendPacket);
 		Assert.Empty(plan.Markers);
 		Assert.Equal(2, plan.RejectedQuestIds.Count);
 		Assert.Equal(1, plan.RejectionCounts[NearbyQuestStartConditionFailure.Race]);
 		Assert.Equal(1, plan.RejectionCounts[NearbyQuestStartConditionFailure.MinLevel]);
 		Assert.False(plan.HasUnsupportedDependencies);
+	}
+
+	[Fact]
+	public void CreatePlan_MatchesJavaEmptyNearbyQuestPacketIntent()
+	{
+		var player = CreatePlayer();
+		var emptyInstance = new WorldMapInstanceRuntimeState(instanceId: 1);
+		var rejectedInstance = new WorldMapInstanceRuntimeState(instanceId: 2);
+		rejectedInstance.RegisterQuestStartIds([3001]);
+		var templates = new NearbyQuestTemplateTable(
+		[
+			new NearbyQuestTemplateSummary(3001, RacePermitted: "ASMODIANS"),
+		]);
+
+		var emptyPlan = NearbyQuestRefreshPlanService.CreatePlan(player, emptyInstance, templates);
+		var rejectedPlan = NearbyQuestRefreshPlanService.CreatePlan(player, rejectedInstance, templates);
+
+		Assert.True(emptyPlan.WouldSendPacket);
+		Assert.Equal(NearbyQuestRefreshPlanStatus.NoWorldQuestIds, emptyPlan.Status);
+		Assert.Empty(emptyPlan.Markers);
+		Assert.True(rejectedPlan.WouldSendPacket);
+		Assert.Equal(NearbyQuestRefreshPlanStatus.NoMarkers, rejectedPlan.Status);
+		Assert.Empty(rejectedPlan.Markers);
+		Assert.Equal(NearbyQuestStartConditionFailure.Race, rejectedPlan.RejectedQuestIds[3001]);
 	}
 
 	private static Player CreatePlayer()

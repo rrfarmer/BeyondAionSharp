@@ -44,7 +44,10 @@ public sealed record NearbyQuestRefreshPlan(
 	IReadOnlyDictionary<int, NearbyQuestStartConditionFailure> RejectedQuestIds,
 	IReadOnlyDictionary<NearbyQuestStartConditionFailure, int> RejectionCounts)
 {
-	public bool WouldSendPacket => Status == NearbyQuestRefreshPlanStatus.Ready;
+	public bool WouldSendPacket => Status
+		is NearbyQuestRefreshPlanStatus.Ready
+		or NearbyQuestRefreshPlanStatus.NoWorldQuestIds
+		or NearbyQuestRefreshPlanStatus.NoMarkers;
 
 	public bool HasUnsupportedDependencies =>
 		RejectionCounts.ContainsKey(NearbyQuestStartConditionFailure.UnsupportedXmlStartConditions)
