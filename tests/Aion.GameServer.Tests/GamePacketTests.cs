@@ -4398,6 +4398,29 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesItemPurificationPacket()
+	{
+		var packet = Assert.IsType<CmItemPurification>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(247, b =>
+			{
+				b.WriteD(7001);
+				b.WriteD(9001);
+				b.WriteD(100201416);
+				b.WriteD(9101);
+				b.WriteD(9102);
+				b.WriteD(9103);
+				b.WriteD(9104);
+				b.WriteD(9105);
+			}), GameConnectionState.InGame));
+
+		Assert.Equal(7001, packet.PlayerObjectId);
+		Assert.Equal(9001, packet.BaseItemObjectId);
+		Assert.Equal(100201416, packet.ResultItemId);
+		Assert.Equal([9101, 9102, 9103, 9104, 9105], packet.RequiredMaterialObjectIds);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(247, _ => { }), GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesAppearancePackets()
 	{
 		var cosmetic = Assert.IsType<CmAppearance>(
