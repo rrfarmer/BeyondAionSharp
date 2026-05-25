@@ -19,6 +19,7 @@ public sealed class StaticData
 		CosmeticItemTable cosmeticItems,
 		DecomposableItemTable decomposableItems,
 		AssemblyItemTable assemblyItems,
+		ItemPurificationTable itemPurifications,
 		RideTable rideInfos,
 		ItemRandomBonusTable itemRandomBonuses,
 		ItemSetTable itemSets,
@@ -64,6 +65,7 @@ public sealed class StaticData
 		CosmeticItems = cosmeticItems;
 		DecomposableItems = decomposableItems;
 		AssemblyItems = assemblyItems;
+		ItemPurifications = itemPurifications;
 		RideInfos = rideInfos;
 		ItemRandomBonuses = itemRandomBonuses;
 		ItemSets = itemSets;
@@ -123,6 +125,8 @@ public sealed class StaticData
 	public DecomposableItemTable DecomposableItems { get; }
 
 	public AssemblyItemTable AssemblyItems { get; }
+
+	public ItemPurificationTable ItemPurifications { get; }
 
 	public RideTable RideInfos { get; }
 
@@ -210,6 +214,7 @@ public sealed class StaticData
 		var cosmeticItems = new List<CosmeticItemSummary>();
 		var decomposableItems = new List<DecomposableItemSummary>();
 		var assemblyItems = new List<AssemblyItemSummary>();
+		var itemPurifications = new List<ItemPurificationSummary>();
 		var rideInfos = new List<RideInfoSummary>();
 		var itemRandomBonuses = new List<ItemRandomBonusSummary>();
 		var itemSets = new List<ItemSetSummary>();
@@ -295,6 +300,9 @@ public sealed class StaticData
 		bool currentStorageExpansionIsCube = false;
 		CosmeticItemBuilder? currentCosmeticItem = null;
 		DecomposableItemBuilder? currentDecomposableItem = null;
+		int currentItemPurificationBaseItemId = 0;
+		List<ItemPurificationResultSummary>? currentItemPurificationResults = null;
+		ItemPurificationResultBuilder? currentItemPurificationResult = null;
 		HousingBuildingBuilder? currentHousingBuilding = null;
 		FlightZoneBuilder? currentFlightZone = null;
 		CreaturePvpZoneBuilder? currentCreaturePvpZone = null;
@@ -367,6 +375,21 @@ public sealed class StaticData
 
 				if (reader.Depth == 3 && reader.LocalName == "items" && currentDecomposableItem != null)
 					currentDecomposableItem.EndCollection();
+
+				if (reader.Depth == 3 && reader.LocalName == "purification_result" && currentItemPurificationResult != null && currentItemPurificationResults != null)
+				{
+					currentItemPurificationResults.Add(currentItemPurificationResult.ToSummary());
+					currentItemPurificationResult = null;
+				}
+
+				if (reader.Depth == 2 && reader.LocalName == "item_purification" && currentItemPurificationResults != null)
+				{
+					itemPurifications.Add(new ItemPurificationSummary(
+						currentItemPurificationBaseItemId,
+						currentItemPurificationResults.AsReadOnly()));
+					currentItemPurificationBaseItemId = 0;
+					currentItemPurificationResults = null;
+				}
 
 				if (reader.Depth == 2 && reader.LocalName == "random_bonus" && currentItemRandomBonus != null)
 				{
@@ -1125,6 +1148,56 @@ public sealed class StaticData
 					currentDecomposableItem = null;
 				}
 
+				continue;
+			}
+
+			if (reader.Depth == 2
+				&& reader.LocalName == "item_purification"
+				&& elementPath.GetValueOrDefault(1) == "item_purifications")
+			{
+				// Java parity: dataholders/ItemPurificationData maps base_item_id to possible result items.
+				currentItemPurificationBaseItemId = ReadRequiredIntAttribute(reader, "base_item_id");
+				currentItemPurificationResults = [];
+				if (reader.IsEmptyElement)
+				{
+					itemPurifications.Add(new ItemPurificationSummary(
+						currentItemPurificationBaseItemId,
+						currentItemPurificationResults.AsReadOnly()));
+					currentItemPurificationBaseItemId = 0;
+					currentItemPurificationResults = null;
+				}
+
+				continue;
+			}
+
+			if (reader.Depth == 3
+				&& reader.LocalName == "purification_result"
+				&& currentItemPurificationResults != null)
+			{
+				// Java parity: model/templates/item/purification/PurificationResult JAXB scalar attributes.
+				currentItemPurificationResult = new ItemPurificationResultBuilder(
+					ReadRequiredIntAttribute(reader, "result_item_id"),
+					ReadIntAttribute(reader, "min_enchant_count"),
+					ReadIntAttribute(reader, "necessary_abyss_points"),
+					ReadLongAttribute(reader, "necessary_kinah"));
+				if (reader.IsEmptyElement)
+				{
+					currentItemPurificationResults.Add(currentItemPurificationResult.ToSummary());
+					currentItemPurificationResult = null;
+				}
+
+				continue;
+			}
+
+			if (reader.Depth == 4
+				&& reader.LocalName == "req_material"
+				&& currentItemPurificationResult != null)
+			{
+				// Java parity: model/templates/item/purification/RequiredMaterial item_id/item_count.
+				currentItemPurificationResult.AddRequiredMaterial(
+					new ItemPurificationMaterialSummary(
+						ReadRequiredIntAttribute(reader, "item_id"),
+						ReadLongAttribute(reader, "item_count")));
 				continue;
 			}
 
@@ -2254,6 +2327,7 @@ public sealed class StaticData
 			new CosmeticItemTable(cosmeticItems.AsReadOnly()),
 			new DecomposableItemTable(decomposableItems.AsReadOnly()),
 			new AssemblyItemTable(assemblyItems.AsReadOnly()),
+			new ItemPurificationTable(itemPurifications.AsReadOnly()),
 			new RideTable(rideInfos.AsReadOnly()),
 			new ItemRandomBonusTable(itemRandomBonuses.AsReadOnly()),
 			new ItemSetTable(itemSets.AsReadOnly()),
@@ -3805,6 +3879,42 @@ public sealed class StaticData
 				ItemId,
 				IsSelectable,
 				_collections.Select(collection => collection.ToSummary()).ToArray());
+		}
+	}
+
+	private sealed class ItemPurificationResultBuilder
+	{
+		private readonly int _resultItemId;
+		private readonly int _minEnchantCount;
+		private readonly int _necessaryAbyssPoints;
+		private readonly long _necessaryKinah;
+		private readonly List<ItemPurificationMaterialSummary> _requiredMaterials = [];
+
+		public ItemPurificationResultBuilder(
+			int resultItemId,
+			int minEnchantCount,
+			int necessaryAbyssPoints,
+			long necessaryKinah)
+		{
+			_resultItemId = resultItemId;
+			_minEnchantCount = minEnchantCount;
+			_necessaryAbyssPoints = necessaryAbyssPoints;
+			_necessaryKinah = necessaryKinah;
+		}
+
+		public void AddRequiredMaterial(ItemPurificationMaterialSummary requiredMaterial)
+		{
+			_requiredMaterials.Add(requiredMaterial);
+		}
+
+		public ItemPurificationResultSummary ToSummary()
+		{
+			return new ItemPurificationResultSummary(
+				_resultItemId,
+				_minEnchantCount,
+				_necessaryAbyssPoints,
+				_necessaryKinah,
+				_requiredMaterials.AsReadOnly());
 		}
 	}
 

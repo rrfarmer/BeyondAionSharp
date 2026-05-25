@@ -144,6 +144,48 @@ public sealed class StaticDataLoadingTests
 	}
 
 	[Fact]
+	public async Task StaticData_LoadsItemPurificationSummaries()
+	{
+		using var temp = TempDirectory.Create();
+		var cacheFile = Path.Combine(temp.Path, "static_data.xml");
+		File.WriteAllText(
+			cacheFile,
+			"""
+			<?xml version="1.0" encoding="UTF-8"?>
+			<static_data>
+				<item_purifications>
+					<item_purification base_item_id="100201319">
+						<purification_result result_item_id="100201416" min_enchant_count="10" necessary_abyss_points="1374005">
+							<req_material item_id="186000242" item_count="143" />
+							<req_material item_id="169405379" item_count="1" />
+						</purification_result>
+						<purification_result result_item_id="100201532" min_enchant_count="15" necessary_abyss_points="4122018" necessary_kinah="1000" />
+					</item_purification>
+				</item_purifications>
+			</static_data>
+			""");
+
+		var staticData = await StaticData.LoadFromCacheAsync(cacheFile, []);
+
+		Assert.Equal(1, staticData.ItemPurifications.Count);
+		Assert.Equal(2, staticData.ItemPurifications.ResultCount);
+		var template = staticData.ItemPurifications.GetItemPurificationTemplate(100201319);
+		Assert.NotNull(template);
+		Assert.Equal(2, template.Results.Count);
+		var result = staticData.ItemPurifications.GetResultItem(100201319, 100201416);
+		Assert.NotNull(result);
+		Assert.Equal(10, result.MinEnchantCount);
+		Assert.Equal(1_374_005, result.NecessaryAbyssPoints);
+		Assert.Equal(0, result.NecessaryKinah);
+		Assert.Equal(new ItemPurificationMaterialSummary(186000242, 143), result.RequiredMaterials[0]);
+		var kinahResult = staticData.ItemPurifications.GetResultItem(100201319, 100201532);
+		Assert.NotNull(kinahResult);
+		Assert.Equal(1_000, kinahResult.NecessaryKinah);
+		Assert.Empty(kinahResult.RequiredMaterials);
+		Assert.Null(staticData.ItemPurifications.GetResultItem(100201319, 999));
+	}
+
+	[Fact]
 	public async Task StaticData_LoadsPortalPathSummariesWithJavaRaceFallbacks()
 	{
 		using var temp = TempDirectory.Create();
@@ -624,6 +666,13 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(300, staticData.TitleTemplates.Count);
 		Assert.Equal(staticData.GetElementCount("recipe_template"), staticData.RecipeTemplates.Count);
 		Assert.Equal(staticData.GetElementCount("ride_info"), staticData.RideInfos.Count);
+		Assert.Equal(staticData.GetElementCount("item_purification"), staticData.ItemPurifications.Count);
+		Assert.Equal(staticData.GetElementCount("purification_result"), staticData.ItemPurifications.ResultCount);
+		var purification = staticData.ItemPurifications.GetResultItem(100201319, 100201416);
+		Assert.NotNull(purification);
+		Assert.Equal(10, purification.MinEnchantCount);
+		Assert.Equal(1_374_005, purification.NecessaryAbyssPoints);
+		Assert.Equal(new ItemPurificationMaterialSummary(186000242, 143), purification.RequiredMaterials[0]);
 		Assert.Equal(staticData.GetElementCount("random_bonus"), staticData.ItemRandomBonuses.Count);
 		Assert.Equal(staticData.GetElementCount("itemset"), staticData.ItemSets.Count);
 		Assert.Equal(staticData.GetElementCount("enchant_list"), staticData.EnchantTemplates.Count);
