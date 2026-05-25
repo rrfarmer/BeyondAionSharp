@@ -205,6 +205,40 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleUseItemAsync_DecomposeInventoryFullDoesNotScheduleOrMutate()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository, includeThreadPoolManager: true);
+		var player = CreatePlayer(itemId: 100);
+		player.InventoryItems = player.InventoryItems
+			.Concat(Enumerable.Range(0, 26).Select(index => new InventoryItem
+			{
+				ObjectId = 6000 + index,
+				ItemId = 201,
+				Count = 1,
+				Location = 0,
+			}))
+			.ToArray();
+		var originalInventory = player.InventoryItems
+			.OrderBy(item => item.ObjectId)
+			.Select(item => (item.ObjectId, item.ItemId, item.Count, item.Location, item.IsEquipped))
+			.ToArray();
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
+
+		Assert.Equal(0, player.UsingItemObjectId);
+		Assert.Equal(0, repository.SaveDecomposeActionMutationCalls);
+		Assert.Equal(
+			originalInventory,
+			player.InventoryItems
+				.OrderBy(item => item.ObjectId)
+				.Select(item => (item.ObjectId, item.ItemId, item.Count, item.Location, item.IsEquipped))
+				.ToArray());
+		var packet = Assert.Single(fixture.SentPackets);
+		AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1300447);
+	}
+
+	[Fact]
 	public async Task HandleUseItemAsync_SelectableDecomposeShowsChoicesWithoutSchedulingUse()
 	{
 		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(includeThreadPoolManager: true);
@@ -616,6 +650,20 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Equal(expectedObjectId, reader.ReadD());
 		var actualUpdateType = payload[^2] | (payload[^1] << 8);
 		Assert.Equal(expectedUpdateType, actualUpdateType);
+	}
+
+	private static void AssertSystemMessagePayload(SmSystemMessage packet, int expectedMessageId, params string[] expectedParameters)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(25, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(expectedMessageId, reader.ReadD());
+		Assert.Equal(expectedParameters.Length, (int)reader.ReadC());
+		foreach (var expectedParameter in expectedParameters)
+			Assert.Equal(expectedParameter, reader.ReadS());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
 	}
 
 	private static void AssertFirstShowDecomposablePayload(SmFirstShowDecomposable packet)
