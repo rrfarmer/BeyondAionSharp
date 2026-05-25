@@ -555,6 +555,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleItemRemodelAsync(_activePlayer, itemRemodel);
 				break;
+			case CmItemPurification itemPurification:
+				if (_activePlayer != null)
+					await HandleItemPurificationAsync(_activePlayer, itemPurification);
+				break;
 			case CmDialogSelect dialogSelect:
 				if (_activePlayer != null)
 					await HandleDialogSelectAsync(_activePlayer, dialogSelect);
@@ -3404,6 +3408,31 @@ public sealed class GameServerConnection : BaseClientConnection
 	private static int RandomInclusive(int min, int max)
 	{
 		return Random.Shared.Next(min, max + 1);
+	}
+
+	internal Task<ItemPurificationWorkflowPlan?> HandleItemPurificationAsync(
+		Player player,
+		CmItemPurification packet,
+		ItemPurificationTable? itemPurificationsOverride = null,
+		ItemTemplateTable? itemTemplatesOverride = null)
+	{
+		// Java parity: network/aion/clientpackets/CM_ITEM_PURIFICATION.runImpl uses the active player,
+		// resolves the base item by upgradedItemObjectId, and ignores packet player/material object ids.
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var itemPurifications = itemPurificationsOverride ?? staticData?.ItemPurifications;
+		var itemTemplates = itemTemplatesOverride ?? staticData?.ItemTemplates;
+		if (itemPurifications == null || itemTemplates == null)
+			return Task.FromResult<ItemPurificationWorkflowPlan?>(null);
+
+		var baseItem = player.InventoryItems.FirstOrDefault(item => item.ObjectId == packet.BaseItemObjectId);
+		var plan = ItemPurificationWorkflowService.CreateWorkflowPlan(
+			player,
+			baseItem,
+			itemPurifications,
+			itemTemplates,
+			packet.ResultItemId,
+			targetObjectId: 0);
+		return Task.FromResult<ItemPurificationWorkflowPlan?>(plan);
 	}
 
 	internal async Task HandleUseItemAsync(Player player, CmUseItem packet)
