@@ -17,6 +17,7 @@ public static class ItemPurificationLiveExecutionService
 		int itemExpands,
 		IGameClientConnectionRegistry? connectionRegistry,
 		AbyssPointsAddOptions? abyssPointsOptions = null,
+		int abyssTransformMinRank = AbyssSkillService.DefaultTransformMinRank,
 		IItemPurificationQuestMutationNotifier? questMutationNotifier = null,
 		CancellationToken cancellationToken = default)
 	{
@@ -102,6 +103,7 @@ public static class ItemPurificationLiveExecutionService
 			mutationPacketPlan,
 			liveMutation.AbyssPointsPlan,
 			itemTemplates,
+			abyssTransformMinRank,
 			connectionRegistry,
 			cancellationToken);
 		var questNotificationDispatch = mutationSend.SendResult.Succeeded
@@ -161,6 +163,7 @@ public static class ItemPurificationLiveExecutionService
 		ItemPurificationPacketPlan? packetPlan,
 		AbyssPointsAddPlan? abyssPointsPlan,
 		ItemTemplateTable itemTemplates,
+		int abyssTransformMinRank,
 		IGameClientConnectionRegistry? connectionRegistry,
 		CancellationToken cancellationToken)
 	{
@@ -240,7 +243,7 @@ public static class ItemPurificationLiveExecutionService
 				&& IsLastAbyssPointsUpdate(packetPlan.Operations, index)
 				&& abyssPointsPlan?.ShouldUpdateAbyssSkills == true)
 			{
-				var skillUpdate = AbyssSkillService.UpdateSkills(player);
+				var skillUpdate = AbyssSkillService.UpdateSkills(player, abyssTransformMinRank);
 				if (skillUpdate.Changed)
 				{
 					player.Skills = skillUpdate.Skills;

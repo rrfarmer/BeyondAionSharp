@@ -18,6 +18,7 @@ public static class ItemPurificationPersistentLiveExecutionService
 		IGameClientConnectionRegistry? connectionRegistry,
 		IPlayerEnterWorldRepository? repository,
 		AbyssPointsAddOptions? abyssPointsOptions = null,
+		int abyssTransformMinRank = AbyssSkillService.DefaultTransformMinRank,
 		CancellationToken cancellationToken = default)
 	{
 		// Java parity: CM_ITEM_PURIFICATION validates/sends success, mutates storage/AP, then
@@ -36,6 +37,7 @@ public static class ItemPurificationPersistentLiveExecutionService
 			itemExpands,
 			connectionRegistry,
 			abyssPointsOptions,
+			abyssTransformMinRank,
 			questMutationNotifier: null,
 			cancellationToken);
 		if (!liveExecution.Succeeded)
