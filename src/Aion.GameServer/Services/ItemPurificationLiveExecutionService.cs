@@ -85,9 +85,12 @@ public static class ItemPurificationLiveExecutionService
 		var mutationPacketPlan = CreateMutationPacketPlanWithAbyssPointsPackets(
 			remainingPacketPlan,
 			liveMutation.AbyssPointsPlan);
-		var mutationSend = await sendAdapter.SendConcretePacketsAsync(
+		var mutationSend = await SendMutationPacketsWithAbyssRankBroadcastAsync(
 			playerObjectId,
+			player,
 			mutationPacketPlan,
+			liveMutation.AbyssPointsPlan,
+			connectionRegistry,
 			cancellationToken);
 		return new ItemPurificationLiveExecutionResult(
 			mutationSend.Succeeded
@@ -128,6 +131,73 @@ public static class ItemPurificationLiveExecutionService
 		}
 
 		return new ItemPurificationPacketPlan(packetPlan.Status, operations);
+	}
+
+	private static async ValueTask<ItemPurificationPacketSendResult> SendMutationPacketsWithAbyssRankBroadcastAsync(
+		int playerObjectId,
+		Player player,
+		ItemPurificationPacketPlan? packetPlan,
+		AbyssPointsAddPlan? abyssPointsPlan,
+		IGameClientConnectionRegistry? connectionRegistry,
+		CancellationToken cancellationToken)
+	{
+		if (packetPlan == null)
+			return ItemPurificationPacketSendResult.Failed(ItemPurificationPacketSendStatus.MissingPacketPlan);
+		if (!packetPlan.Succeeded)
+			return ItemPurificationPacketSendResult.Failed(ItemPurificationPacketSendStatus.PacketPlanNotReady);
+		if (packetPlan.Operations.Count == 0)
+			return ItemPurificationPacketSendResult.Failed(ItemPurificationPacketSendStatus.NoOperations);
+
+		var concreteOperations = new List<ItemPurificationPacketOperation>();
+		var skippedMetadataOperations = new List<ItemPurificationPacketOperation>();
+		var packets = new List<GameServerPacket>();
+		var sentCount = 0;
+
+		for (var index = 0; index < packetPlan.Operations.Count; index++)
+		{
+			var operation = packetPlan.Operations[index];
+			if (operation.ConcretePacket == null)
+			{
+				skippedMetadataOperations.Add(operation);
+				continue;
+			}
+
+			concreteOperations.Add(operation);
+			packets.Add(operation.ConcretePacket);
+			if (connectionRegistry != null)
+			{
+				cancellationToken.ThrowIfCancellationRequested();
+				if (await connectionRegistry.SendPacketToPlayerAsync(playerObjectId, operation.ConcretePacket))
+					sentCount++;
+
+				if (operation.Type == ItemPurificationPacketOperationType.AbyssPointsUpdate
+					&& IsLastAbyssPointsUpdate(packetPlan.Operations, index)
+					&& abyssPointsPlan?.RankUpdatePacket != null)
+				{
+					cancellationToken.ThrowIfCancellationRequested();
+					await connectionRegistry.BroadcastToVisiblePlayersAsync(
+						player.Position,
+						player.ObjectId,
+						abyssPointsPlan.RankUpdatePacket);
+				}
+			}
+		}
+
+		return new ItemPurificationPacketSendResult(
+			ItemPurificationPacketSendStatus.Ready,
+			packetPlan.Status,
+			concreteOperations,
+			packets,
+			skippedMetadataOperations,
+			sentCount);
+	}
+
+	private static bool IsLastAbyssPointsUpdate(
+		IReadOnlyList<ItemPurificationPacketOperation> operations,
+		int index)
+	{
+		return index == operations.Count - 1
+			|| operations[index + 1].Type != ItemPurificationPacketOperationType.AbyssPointsUpdate;
 	}
 }
 

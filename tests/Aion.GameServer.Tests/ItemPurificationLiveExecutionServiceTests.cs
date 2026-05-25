@@ -62,6 +62,7 @@ public sealed class ItemPurificationLiveExecutionServiceTests
 				typeof(SmCubeUpdate),
 			],
 			registry.SentPackets.Select(packet => packet.Packet.GetType()).ToArray());
+		Assert.Single(registry.BroadcastPackets, packet => packet.Packet is SmAbyssRankUpdate);
 		Assert.Equal(5_000, registry.SentPackets[0].AbyssPointsAtSend);
 		Assert.Equal([10, 20, 30], registry.SentPackets[0].InventoryObjectIdsAtSend);
 		Assert.All(registry.SentPackets.Skip(1), sent =>
@@ -178,6 +179,10 @@ public sealed class ItemPurificationLiveExecutionServiceTests
 				typeof(SmCubeUpdate),
 			],
 			registry.SentPackets.Select(packet => packet.Packet.GetType()).ToArray());
+		var broadcast = Assert.Single(registry.BroadcastPackets);
+		Assert.Equal(player.ObjectId, broadcast.SourceObjectId);
+		Assert.False(broadcast.IncludeSourcePlayer);
+		Assert.IsType<SmAbyssRankUpdate>(broadcast.Packet);
 	}
 
 	private static ItemPurificationHandlerPlan CreateHandlerPlan(
@@ -287,6 +292,8 @@ public sealed class ItemPurificationLiveExecutionServiceTests
 
 		public List<SentPacketRecord> SentPackets { get; } = [];
 
+		public List<BroadcastPacketRecord> BroadcastPackets { get; } = [];
+
 		public void RegisterPlayerConnection(int playerObjectId, GameServerConnection connection)
 		{
 		}
@@ -323,7 +330,8 @@ public sealed class ItemPurificationLiveExecutionServiceTests
 			bool includeSourcePlayer = false,
 			Func<Player, bool>? filter = null)
 		{
-			return Task.FromResult(0);
+			BroadcastPackets.Add(new BroadcastPacketRecord(sourcePosition, sourceObjectId, packet, includeSourcePlayer));
+			return Task.FromResult(1);
 		}
 
 		public Task<int> RefreshHousingVisibilityAsync(IReadOnlyList<WorldHouse> houses, HousingTemplateTable? housingTemplates, int? playerObjectId = null)
@@ -357,4 +365,10 @@ public sealed class ItemPurificationLiveExecutionServiceTests
 		GameServerPacket Packet,
 		int AbyssPointsAtSend,
 		IReadOnlyList<int> InventoryObjectIdsAtSend);
+
+	private sealed record BroadcastPacketRecord(
+		WorldPosition SourcePosition,
+		int SourceObjectId,
+		GameServerPacket Packet,
+		bool IncludeSourcePlayer);
 }
