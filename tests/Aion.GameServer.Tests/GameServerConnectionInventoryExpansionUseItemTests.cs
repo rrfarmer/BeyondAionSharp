@@ -595,6 +595,60 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleQuestionResponseAsync_ChargeAllKinahPaymentChargesOnlyCurrentChargeableItemWhenOnePendingItemIsMissing()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreateKinahChargeAllPaymentPlayerWithTwoItems(kinah: 1_000);
+		player.InventoryItems = player.InventoryItems
+			.Where(inventoryItem => inventoryItem.ObjectId != 7101)
+			.ToArray();
+		var pendingRequest = new PendingChargeAllRequest(
+			SenderObjectId: player.ObjectId,
+			ChargeWay: 1,
+			PaymentAmount: 1_000,
+			Items:
+			[
+				new PendingChargeAllItem(
+					ObjectId: 7101,
+					ItemId: 100000401,
+					PreviousCharge: 0,
+					TargetCharge: ItemChargeService.Level1ChargePoints,
+					Level: 1),
+				new PendingChargeAllItem(
+					ObjectId: 7102,
+					ItemId: 100000401,
+					PreviousCharge: 0,
+					TargetCharge: ItemChargeService.Level1ChargePoints,
+					Level: 1),
+			]);
+		player.PendingChargeAllRequest = pendingRequest;
+		Assert.True(player.ResponseRequester.PutRequest(
+			SmQuestionWindow.ItemChargeAllConfirm,
+			new QuestionResponseRequest(player.ObjectId, QuestionResponseRequestKind.ChargeAll, pendingRequest)));
+
+		await fixture.Connection.HandleQuestionResponseAsync(player, CreateQuestionResponse(SmQuestionWindow.ItemChargeAllConfirm, response: 1));
+
+		Assert.Equal(1, repository.SaveItemChargeAllMutationCalls);
+		Assert.Null(repository.ChargeAllPaymentAbyssRank);
+		var repositoryChargedItem = Assert.Single(repository.ChargeAllChargedItems);
+		Assert.Equal(7102, repositoryChargedItem.ObjectId);
+		Assert.Null(player.PendingChargeAllRequest);
+		var kinah = Assert.Single(player.InventoryItems, inventoryItem => inventoryItem.ItemId == 182400001);
+		Assert.Equal(0, kinah.Count);
+		var item = Assert.Single(player.InventoryItems, inventoryItem => inventoryItem.ItemId == 100000401);
+		Assert.Equal(7102, item.ObjectId);
+		Assert.Equal(ItemChargeService.Level1ChargePoints, item.Charge);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 8101, expectedUpdateType: SmInventoryUpdateItem.DecreaseKinahBuy),
+			packet => AssertChargeInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 7102),
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1400887, "Test Kinah Conditioning Sword", "1"),
+			packet => Assert.IsType<SmStatsInfo>(packet),
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1400892));
+	}
+
+	[Fact]
 	public async Task HandleUseItemAsync_AnimationAddSchedulesPositiveTimeUseAndClearsUsingItem()
 	{
 		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(includeThreadPoolManager: true);
