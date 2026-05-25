@@ -36,6 +36,7 @@ public sealed record QuestFinishOperationDescriptor(
 	QuestFinishRewardItemProjectionDescriptor? RewardItemProjection = null,
 	QuestFinishRewardItemProjectionWarningDescriptor? RewardItemProjectionWarning = null,
 	QuestFinishRewardNonItemProjectionDescriptor? RewardNonItemProjection = null,
+	QuestXpRewardPlan? XpRewardPlan = null,
 	QuestTitleRewardPlan? TitleRewardPlan = null,
 	QuestExpansionRewardPlan? ExpansionRewardPlan = null,
 	QuestGpRewardResult? GpRewardPlan = null,
@@ -47,7 +48,14 @@ public sealed record QuestFinishOperationDescriptor(
 public sealed record QuestFinishRewardSideEffectContext(
 	Player? Player,
 	TitleTemplateTable? TitleTemplates = null,
-	int? CubeExpansionLimit = null);
+	int? CubeExpansionLimit = null,
+	PlayerExperienceTable? ExperienceTable = null,
+	string? TargetNpcName = null,
+	bool NoExp = false,
+	int QuestXpBoostStat = 100,
+	bool HasLegionBonus = false,
+	byte SalvationPercent = 0,
+	bool IsDaeva = true);
 
 public sealed record QuestFinishOperationPlan(
 	QuestFinishStateMutationStatus Status,
@@ -339,6 +347,32 @@ public static class QuestFinishOperationPlanService
 
 		switch (nonItemDescriptor.Action)
 		{
+			case QuestFinishRewardNonItemAction.Experience:
+				if (rewardSideEffectContext.ExperienceTable is null)
+				{
+					return;
+				}
+
+				var xpPlan = QuestRewardService.CreateXpRewardPlanFromRates(
+					rewardSideEffectContext.Player,
+					rewardSideEffectContext.ExperienceTable,
+					nonItemDescriptor.Amount,
+					options.Rates.XpQuestRates,
+					rewardSideEffectContext.TargetNpcName,
+					rewardSideEffectContext.NoExp,
+					rewardSideEffectContext.QuestXpBoostStat,
+					rewardSideEffectContext.HasLegionBonus,
+					rewardSideEffectContext.SalvationPercent,
+					rewardSideEffectContext.IsDaeva);
+				descriptors.Add(new QuestFinishOperationDescriptor(
+					nextOrder++,
+					QuestFinishOperationAction.NonItemRewardSideEffectPlan,
+					xpPlan.JavaSource,
+					IsLive: false,
+					Count: nonItemDescriptor.Amount,
+					RewardNonItemProjection: nonItemDescriptor,
+					XpRewardPlan: xpPlan));
+				break;
 			case QuestFinishRewardNonItemAction.Title:
 				if (rewardSideEffectContext.TitleTemplates is null)
 				{

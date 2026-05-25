@@ -417,6 +417,77 @@ public sealed class QuestFinishOperationPlanServiceTests
 	}
 
 	[Fact]
+	public void CreatePlan_ComposesXpSideEffectPlanAfterMatchingNonItemProjectionWithoutMutatingPlayer()
+	{
+		var player = new Player
+		{
+			ObjectId = 4103,
+			AccountMembership = 1,
+			Level = 15,
+			Exp = 14_000,
+			ReposeEnergy = 50,
+		};
+		var rewardProjection = new QuestFinishRewardTemplateProjection(
+			RewardGroupCount: 1,
+			HasNonItemRewards: true,
+			NonItemProjection: new QuestFinishRewardNonItemTemplateProjection(Experience: 100));
+		var options = new GameServerOptions
+		{
+			Core = new GameServerCoreOptions
+			{
+				TimeZoneId = "UTC",
+			},
+			Rates = new GameServerRateOptions
+			{
+				XpQuestRates = [1f, 2f],
+			},
+		};
+
+		var plan = QuestFinishOperationPlanService.CreatePlan(
+			new PlayerQuestState(1001, "REWARD", QuestVars: 0, Flags: 0, CompleteCount: 0),
+			new NearbyQuestTemplateSummary(1001, QuestCategory: "QUEST"),
+			PlayerNpcFactionsSnapshot.Empty,
+			new DateTimeOffset(2026, 5, 25, 8, 30, 0, TimeSpan.Zero),
+			options,
+			rewardProjection,
+			rewardSideEffectContext: new QuestFinishRewardSideEffectContext(
+				player,
+				ExperienceTable: CreateLinearExperienceTable(),
+				TargetNpcName: "quest npc",
+				SalvationPercent: 10));
+
+		Assert.All(plan.Descriptors, descriptor => Assert.False(descriptor.IsLive));
+		Assert.Equal(
+		[
+			QuestFinishOperationAction.RewardGroupCorrection,
+			QuestFinishOperationAction.NonItemRewardProjection,
+			QuestFinishOperationAction.NonItemRewardSideEffectPlan,
+			QuestFinishOperationAction.NonItemRewardPlaceholder,
+			QuestFinishOperationAction.QuestStateMutation,
+		], plan.Descriptors.Take(5).Select(descriptor => descriptor.Action));
+		var sideEffect = Assert.Single(
+			plan.Descriptors,
+			descriptor => descriptor.XpRewardPlan is not null);
+		Assert.Equal(QuestFinishRewardNonItemAction.Experience, sideEffect.RewardNonItemProjection?.Action);
+		Assert.Equal(QuestXpRewardStatus.Applied, sideEffect.XpRewardPlan?.Status);
+		Assert.Equal(100, sideEffect.XpRewardPlan?.RewardXp);
+		Assert.Equal(200, sideEffect.XpRewardPlan?.AppliedBaseXp);
+		Assert.Equal(20, sideEffect.XpRewardPlan?.ReposeBonus);
+		Assert.Equal(20, sideEffect.XpRewardPlan?.SalvationBonus);
+		Assert.Equal(240, sideEffect.XpRewardPlan?.FinalRewardXp);
+		Assert.Equal(14_240, sideEffect.XpRewardPlan?.CurrentExp);
+		Assert.Equal(QuestXpRewardMessageKind.NamedReposeAndSalvationBonus, sideEffect.XpRewardPlan?.MessageKind);
+		Assert.Equal(
+		[
+			QuestXpRewardPacketIntent.StatUpdateExp,
+			QuestXpRewardPacketIntent.XpSystemMessage,
+		], sideEffect.XpRewardPlan?.PacketIntents);
+		Assert.Equal(14_000, player.Exp);
+		Assert.Equal(15, player.Level);
+		Assert.Equal(50, player.ReposeEnergy);
+	}
+
+	[Fact]
 	public void CreatePlan_ComposesWarehouseSideEffectPlanAndKeepsBoundaryFailuresNonLive()
 	{
 		var player = new Player
@@ -915,5 +986,10 @@ public sealed class QuestFinishOperationPlanServiceTests
 				TimeZoneId = timeZoneId,
 			},
 		};
+	}
+
+	private static PlayerExperienceTable CreateLinearExperienceTable()
+	{
+		return new PlayerExperienceTable(Enumerable.Range(0, 70).Select(level => (long)level * 1000).ToArray());
 	}
 }

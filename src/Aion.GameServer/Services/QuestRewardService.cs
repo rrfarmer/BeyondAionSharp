@@ -95,10 +95,36 @@ public sealed class QuestRewardService
 		bool isDaeva = true,
 		IReadOnlyList<float>? xpQuestRates = null)
 	{
+		return CreateXpRewardPlanFromRates(
+			player,
+			experienceTable,
+			rewardXp,
+			xpQuestRates ?? _rateOptions.XpQuestRates,
+			npcName,
+			noExp,
+			questXpBoostStat,
+			hasLegionBonus,
+			salvationPercent,
+			isDaeva);
+	}
+
+	public static QuestXpRewardPlan CreateXpRewardPlanFromRates(
+		Player? player,
+		PlayerExperienceTable experienceTable,
+		long rewardXp,
+		IReadOnlyList<float> xpQuestRates,
+		string? npcName = null,
+		bool noExp = false,
+		int questXpBoostStat = 100,
+		bool hasLegionBonus = false,
+		byte salvationPercent = 0,
+		bool isDaeva = true)
+	{
 		// Java parity: services/QuestService.giveReward -> rewards.getExp(),
 		// DataManager.NPC_DATA.getNpcTemplate(env.getTargetId()).getL10n(),
 		// then PlayerCommonData.addExp(rewards.getExp(), Rates.XP_QUEST, npcL10n).
 		ArgumentNullException.ThrowIfNull(experienceTable);
+		ArgumentNullException.ThrowIfNull(xpQuestRates);
 		if (player == null)
 			return QuestXpRewardPlan.MissingPlayer(rewardXp, npcName);
 		if (rewardXp == 0)
@@ -111,7 +137,7 @@ public sealed class QuestRewardService
 		var appliedBaseXp = ApplyQuestXpRate(
 			player.AccountMembership,
 			rewardXp,
-			xpQuestRates ?? _rateOptions.XpQuestRates,
+			xpQuestRates,
 			questXpBoostStat,
 			hasLegionBonus);
 		var reposeUsed = 0L;
