@@ -38,12 +38,15 @@ public sealed record PlayerAbyssRank(
 			RankingListPosition: 0);
 	}
 
-	public PlayerAbyssRank AddAp(int additionalAp)
+	public PlayerAbyssRank AddAp(int additionalAp, bool enableApCap = false, long apCapValue = 1_000_000)
 	{
 		// Java parity: model/gameobjects/player/AbyssRank.addAp plus utils/stats/AbyssRankEnum.getRankForPoints.
 		var dailyAp = additionalAp > 0 ? Math.Max(0, DailyAp + additionalAp) : DailyAp;
 		var weeklyAp = additionalAp > 0 ? Math.Max(0, WeeklyAp + additionalAp) : WeeklyAp;
-		var currentAp = Math.Max(0, Ap + additionalAp);
+		var cappedCount = enableApCap && Ap + additionalAp > apCapValue
+			? (int)(apCapValue - Ap)
+			: additionalAp;
+		var currentAp = Math.Max(0, Ap + cappedCount);
 		var newRank = GetRankForPoints(currentAp, Gp);
 		var rank = newRank.RequiredGp == 0 ? newRank.Id : Rank;
 		return this with

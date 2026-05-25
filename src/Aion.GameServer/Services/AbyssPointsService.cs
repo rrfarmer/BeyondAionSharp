@@ -29,7 +29,10 @@ public static class AbyssPointsService
 
 		var oldAp = player.AbyssRank.Ap;
 		var oldRank = player.AbyssRank.Rank;
-		var updatedRank = player.AbyssRank.AddAp(amount);
+		var updatedRank = player.AbyssRank.AddAp(
+			amount,
+			options?.EnableApCap ?? false,
+			options?.ApCapValue ?? 1_000_000);
 		var added = updatedRank.Ap - oldAp;
 		var rankChanged = oldRank != updatedRank.Rank;
 
@@ -98,7 +101,10 @@ public static class AbyssPointsService
 	}
 }
 
-public sealed record AbyssPointsAddOptions(long CurrentLegionContributionPoints = 0);
+public sealed record AbyssPointsAddOptions(
+	long CurrentLegionContributionPoints = 0,
+	bool EnableApCap = false,
+	long ApCapValue = 1_000_000);
 
 public sealed record AbyssPointsAddPlan(
 	AbyssPointsAddStatus Status,

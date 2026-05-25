@@ -223,6 +223,24 @@ public sealed class ItemChargeServiceTests
 		Assert.Equal(9, updated.MaxRank);
 	}
 
+	[Fact]
+	public void PlayerAbyssRank_AddApAppliesJavaCapAndAboveCapClamp()
+	{
+		var nearCap = PlayerAbyssRank.Default() with { Ap = 900, Rank = 1, MaxRank = 1 };
+		var cappedGain = nearCap.AddAp(200, enableApCap: true, apCapValue: 1_000);
+
+		Assert.Equal(1_000, cappedGain.Ap);
+		Assert.Equal(200, cappedGain.DailyAp);
+		Assert.Equal(200, cappedGain.WeeklyAp);
+
+		var aboveCap = PlayerAbyssRank.Default() with { Ap = 1_500, DailyAp = 10, WeeklyAp = 20, Rank = 2, MaxRank = 2 };
+		var clampedBackToCap = aboveCap.AddAp(50, enableApCap: true, apCapValue: 1_000);
+
+		Assert.Equal(1_000, clampedBackToCap.Ap);
+		Assert.Equal(60, clampedBackToCap.DailyAp);
+		Assert.Equal(70, clampedBackToCap.WeeklyAp);
+	}
+
 	private static Player CreatePlayer(int rank)
 	{
 		return new Player

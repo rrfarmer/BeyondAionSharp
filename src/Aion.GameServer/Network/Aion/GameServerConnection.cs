@@ -1173,6 +1173,14 @@ public sealed class GameServerConnection : BaseClientConnection
 		return new SmAccountProperties(_accessLevel >= _options.Administration.GmPanelAccessLevel);
 	}
 
+	private AbyssPointsAddOptions CreateAbyssPointsOptions(long currentLegionContributionPoints = 0)
+	{
+		return new AbyssPointsAddOptions(
+			CurrentLegionContributionPoints: currentLegionContributionPoints,
+			EnableApCap: _options.Custom.EnableApCap,
+			ApCapValue: _options.Custom.ApCapValue);
+	}
+
 	private async Task HandlePingAsync(CmPing packet)
 	{
 		// Java parity: network/aion/clientpackets/CM_PING.runImpl sends SM_PONG and audits the client ping interval.
@@ -1875,7 +1883,7 @@ public sealed class GameServerConnection : BaseClientConnection
 						break;
 					if (plan.PaymentAmount > int.MaxValue || player.AbyssRank.Ap < plan.PaymentAmount)
 						continue;
-					abyssPointsPlan = AbyssPointsService.CreateAddApPlan(player, -(int)plan.PaymentAmount);
+					abyssPointsPlan = AbyssPointsService.CreateAddApPlan(player, -(int)plan.PaymentAmount, CreateAbyssPointsOptions());
 					break;
 				default:
 					continue;
@@ -3854,7 +3862,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			player,
 			sourceItem.ObjectId,
 			targetItemObjectId,
-			staticData.ItemTemplates);
+			staticData.ItemTemplates,
+			CreateAbyssPointsOptions());
 		if (!plan.Succeeded || plan.AbyssPointsPlan?.UpdatedRank == null)
 			return;
 
@@ -6986,7 +6995,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (request.PaymentAmount > int.MaxValue || player.AbyssRank.Ap < request.PaymentAmount)
 					return;
 				if (request.PaymentAmount > 0)
-					abyssPointsPlan = AbyssPointsService.CreateAddApPlan(player, -(int)request.PaymentAmount);
+					abyssPointsPlan = AbyssPointsService.CreateAddApPlan(player, -(int)request.PaymentAmount, CreateAbyssPointsOptions());
 				break;
 			default:
 				return;

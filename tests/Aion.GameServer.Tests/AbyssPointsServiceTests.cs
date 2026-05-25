@@ -69,6 +69,30 @@ public sealed class AbyssPointsServiceTests
 			packet => Assert.IsType<SmAbyssRank>(packet));
 	}
 
+	[Fact]
+	public void AddAp_UsesJavaApCapOptionsForAppliedAmount()
+	{
+		var player = CreatePlayer();
+		player.AbyssRank = PlayerAbyssRank.Default() with { Ap = 900 };
+
+		var plan = AbyssPointsService.AddAp(
+			player,
+			amount: 200,
+			new AbyssPointsAddOptions(EnableApCap: true, ApCapValue: 1_000));
+
+		Assert.True(plan.Applied);
+		Assert.Equal(100, plan.Added);
+		Assert.Equal(1_000, player.AbyssRank.Ap);
+		Assert.Collection(
+			plan.PlayerPackets,
+			packet =>
+			{
+				var message = Assert.IsType<SmSystemMessage>(packet);
+				Assert.Equal(1320000, message.MessageId);
+			},
+			packet => Assert.IsType<SmAbyssRank>(packet));
+	}
+
 	[Theory]
 	[InlineData(true, false, false, true)]
 	[InlineData(false, true, false, true)]

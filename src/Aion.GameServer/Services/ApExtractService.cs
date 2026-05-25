@@ -32,7 +32,8 @@ public static class ApExtractService
 		Player player,
 		int extractionToolObjectId,
 		int targetItemObjectId,
-		ItemTemplateTable itemTemplates)
+		ItemTemplateTable itemTemplates,
+		AbyssPointsAddOptions? abyssPointsOptions = null)
 	{
 		// Java parity: model/templates/item/actions/ApExtractAction.canAct + act.
 		var inventoryItems = player.InventoryItems.ToList();
@@ -54,7 +55,7 @@ public static class ApExtractService
 			return ApExtractPlan.Failed(ApExtractFailure.NoAbyssPointValue);
 
 		var abyssPoints = (int)(targetTemplate.RequiredAbyssPoints * action.Rate);
-		var abyssPointsPlan = AbyssPointsService.CreateAddApPlan(player, abyssPoints);
+		var abyssPointsPlan = AbyssPointsService.CreateAddApPlan(player, abyssPoints, abyssPointsOptions);
 		if (!abyssPointsPlan.Applied || abyssPointsPlan.UpdatedRank == null)
 			return ApExtractPlan.Failed(ApExtractFailure.AbyssPointsFailed);
 
