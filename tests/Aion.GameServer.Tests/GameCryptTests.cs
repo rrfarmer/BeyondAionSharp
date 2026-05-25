@@ -31,6 +31,23 @@ public sealed class GameCryptTests
 	}
 
 	[Fact]
+	public void SerializeFrame_AdvancesServerKeyAcrossEncryptedPackets()
+	{
+		var crypt = new GameCrypt(() => 0x01020304);
+		new SmKey().SerializeFrame(crypt);
+		var encryptor = new ServerPayloadEncryptor(0x01020304);
+		var expectedFirstPong = CreateEncryptedSmPongFrame(encryptor);
+		var expectedSecondPong = CreateEncryptedSmPongFrame(encryptor);
+
+		var firstPong = new SmPong().SerializeFrame(crypt);
+		var secondPong = new SmPong().SerializeFrame(crypt);
+
+		Assert.Equal(expectedFirstPong, firstPong);
+		Assert.Equal(expectedSecondPong, secondPong);
+		Assert.NotEqual(firstPong, secondPong);
+	}
+
+	[Fact]
 	public void DecryptClientPayload_AdvancesClientKeyAfterValidPacket()
 	{
 		var crypt = new GameCrypt(() => 0x01020304);
@@ -99,6 +116,17 @@ public sealed class GameCryptTests
 	private static int GetEncodedKey(int key)
 	{
 		return unchecked((key ^ unchecked((int)0xCD92E4DF)) + 0x3FF2CCCF);
+	}
+
+	private static byte[] CreateEncryptedSmPongFrame(ServerPayloadEncryptor encryptor)
+	{
+		var frame = CreateServerFrame(142, writer =>
+		{
+			writer.WriteC(0);
+			writer.WriteC(0);
+		});
+		encryptor.Encrypt(frame.AsSpan(2));
+		return frame;
 	}
 
 	private sealed class ClientPayloadEncryptor
