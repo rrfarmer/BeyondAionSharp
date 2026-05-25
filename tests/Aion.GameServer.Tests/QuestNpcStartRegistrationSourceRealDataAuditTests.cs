@@ -1,4 +1,5 @@
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Services;
 using Aion.GameServer.World;
 using Xunit.Abstractions;
@@ -15,6 +16,9 @@ public sealed class QuestNpcStartRegistrationSourceRealDataAuditTests
 	private const int ExpectedRegisteredQuestStartPairs = 5214;
 	private const int ExpectedLargestNpcQuestCount = 50;
 	private const int ExpectedProjectedWorldQuestIds = 4503;
+	private const int ExpectedSupportedNearbyProjectedQuestIds = 2072;
+	private const int ExpectedSupportedNearbyMarkers = 920;
+	private const int ExpectedSupportedNearbyRejectedQuestIds = 1152;
 
 	private readonly ITestOutputHelper _output;
 
@@ -108,6 +112,61 @@ public sealed class QuestNpcStartRegistrationSourceRealDataAuditTests
 		Assert.Empty(instance.QuestIds.Except(projection.WorldQuestIds));
 	}
 
+	[Fact]
+	public void RealDataAudit_ProjectsSupportedNearbyMarkersWithoutProductionSendWiring()
+	{
+		var result = LoadRealDataSources();
+		var questStartTable = new QuestNpcStartTable();
+		foreach (var source in result.Sources)
+			questStartTable.RegisterOnQuestStart(source);
+		var allProjectedInstance = new WorldMapInstanceRuntimeState(instanceId: 1);
+		var candidateProjection = NearbyQuestCandidateProjectionService.ProjectNpcStartQuestIds(
+			allProjectedInstance,
+			questStartTable,
+			questStartTable.Registrations.Keys);
+		var questTemplates = LoadRealDataQuestTemplates();
+		var supportedProjectedQuestIds = candidateProjection.WorldQuestIds
+			.Where(
+				questId => questTemplates.TryGetQuest(questId, out var template)
+					&& template is
+					{
+						HasXmlStartConditions: false,
+						HasInventoryItems: false,
+						CombineSkill: 0,
+						NpcFactionId: 0,
+						IsTimeBased: false
+					})
+			.ToArray();
+		var supportedInstance = new WorldMapInstanceRuntimeState(instanceId: 2);
+		supportedInstance.RegisterQuestStartIds(supportedProjectedQuestIds);
+		var player = new Player
+		{
+			Level = 65,
+			Race = "ELYOS",
+			PlayerClass = "GLADIATOR",
+			Gender = "MALE",
+		};
+
+		var markerProjection = NearbyQuestMarkerProjectionService.ProjectMarkers(player, supportedInstance, questTemplates);
+
+		_output.WriteLine($"SupportedNearbyProjectedQuestIds={supportedProjectedQuestIds.Length}");
+		_output.WriteLine($"SupportedNearbyMarkers={markerProjection.Markers.Count}");
+		_output.WriteLine($"SupportedNearbyRejectedQuestIds={markerProjection.RejectedQuestIds.Count}");
+		_output.WriteLine(
+			$"SupportedNearbyRejectedFailures={string.Join(", ", markerProjection.RejectedQuestIds.Values.GroupBy(failure => failure).OrderBy(group => group.Key).Select(group => $"{group.Key}:{group.Count()}"))}");
+
+		Assert.Equal(ExpectedSupportedNearbyProjectedQuestIds, supportedProjectedQuestIds.Length);
+		Assert.Equal(ExpectedSupportedNearbyMarkers, markerProjection.Markers.Count);
+		Assert.Equal(ExpectedSupportedNearbyRejectedQuestIds, markerProjection.RejectedQuestIds.Count);
+		Assert.DoesNotContain(
+			markerProjection.RejectedQuestIds.Values,
+			failure => failure is NearbyQuestStartConditionFailure.UnsupportedXmlStartConditions
+				or NearbyQuestStartConditionFailure.UnsupportedInventoryItems
+				or NearbyQuestStartConditionFailure.UnsupportedCombineSkill
+				or NearbyQuestStartConditionFailure.UnsupportedNpcFaction
+				or NearbyQuestStartConditionFailure.UnsupportedRepeatTiming);
+	}
+
 	private static QuestNpcStartRegistrationSourceLoadResult LoadRealDataSources()
 	{
 		var repoRoot = FindRepoRoot();
@@ -115,6 +174,15 @@ public sealed class QuestNpcStartRegistrationSourceRealDataAuditTests
 		var javaHandlerDirectory = Path.Combine(repoRoot, "game-server", "data", "handlers", "quest");
 		var loader = new QuestNpcStartRegistrationSourceLoader();
 		return loader.Load(questScriptDirectory, javaHandlerDirectory);
+	}
+
+	private static NearbyQuestTemplateTable LoadRealDataQuestTemplates()
+	{
+		var repoRoot = FindRepoRoot();
+		var questDataPath = Path.Combine(repoRoot, "game-server", "data", "static_data", "quest_data", "quest_data.xml");
+		var extractor = new NearbyQuestTemplateXmlExtractor();
+		using var stream = File.OpenRead(questDataPath);
+		return new NearbyQuestTemplateTable(extractor.Extract(stream));
 	}
 
 	private static string FindRepoRoot()
