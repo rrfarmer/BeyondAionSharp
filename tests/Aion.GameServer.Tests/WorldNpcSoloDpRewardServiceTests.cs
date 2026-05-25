@@ -120,6 +120,53 @@ public sealed class WorldNpcSoloDpRewardServiceTests
 		Assert.Equal(0, nanScaled);
 	}
 
+	[Theory]
+	[InlineData(10, 12, "JUNK", "Training Target", 0, 15)]
+	[InlineData(10, 12, "NORMAL", "Training Target", 0, 30)]
+	[InlineData(10, 12, "ELITE", "Training Target", 0, 60)]
+	[InlineData(10, 12, "HERO", "Training Target", 0, 525)]
+	[InlineData(10, 12, "LEGENDARY", "Training Target", 0, 37_500)]
+	[InlineData(25, 12, "LEGENDARY", "Training Target", 1, 1)]
+	[InlineData(10, 12, "NORMAL", "flame hoverstone", 0, 7)]
+	public void CalculatePveApGained_MatchesJavaNpcRatingLevelAndSpecialNameRules(
+		int playerLevel,
+		int npcLevel,
+		string rating,
+		string npcName,
+		byte membership,
+		int expectedAp)
+	{
+		var player = CreatePlayer(objectId: 1410, playerClass: "RANGER", level: playerLevel, dp: 100);
+		player.AccountMembership = membership;
+		var npcTemplate = CreateTemplate(npcLevel, rating, npcName);
+
+		var reward = WorldNpcSoloDpRewardService.CalculatePveApGained(player, npcTemplate);
+
+		Assert.Equal(expectedAp, reward);
+	}
+
+	[Fact]
+	public void CalculatePveApGained_AppliesJavaMembershipAndApBoostRates()
+	{
+		var player = CreatePlayer(objectId: 1411, playerClass: "RANGER", level: 10, dp: 100);
+		player.AccountMembership = 7;
+		var npcTemplate = CreateTemplate(level: 12, rating: "ELITE");
+
+		var reward = WorldNpcSoloDpRewardService.CalculatePveApGained(
+			player,
+			npcTemplate,
+			apPveRates: [1f, 1.5f],
+			apBoostStat: 125);
+		var emptyRateReward = WorldNpcSoloDpRewardService.CalculatePveApGained(
+			player,
+			npcTemplate,
+			apPveRates: [],
+			apBoostStat: 100);
+
+		Assert.Equal(112, reward);
+		Assert.Equal(60, emptyRateReward);
+	}
+
 	[Fact]
 	public async Task ApplySoloDpRewardAsync_SkipsMissingDeadAndUsesOnlineMaxDp()
 	{
@@ -251,6 +298,34 @@ public sealed class WorldNpcSoloDpRewardServiceTests
 	}
 
 	[Fact]
+	public void ApplySoloApRewardFromNpcStats_CalculatesPveApBeforeRewardScaling()
+	{
+		var service = CreateService(out _);
+		var player = CreatePlayer(objectId: 1412, playerClass: "RANGER", level: 10, dp: 100);
+		player.AccountMembership = 1;
+		player.AbyssRank = PlayerAbyssRank.Default() with { Ap = 500 };
+		var npc = CreateNpc(objectId: 2412, level: 12, rating: "ELITE");
+
+		var result = service.ApplySoloApRewardFromNpcStats(
+			player,
+			npc,
+			damagePercent: 0.5f,
+			shouldRewardAp: true,
+			apMultiplier: 1f,
+			apPveRates: [1f, 1.5f],
+			apBoostStat: 100);
+
+		Assert.Equal(WorldNpcSoloApRewardStatus.Applied, result.Status);
+		Assert.Equal(90, result.CalculatedAp);
+		Assert.Equal(45, result.RewardAp);
+		Assert.Equal(500, result.PreviousAp);
+		Assert.Equal(545, result.CurrentAp);
+		Assert.Equal(545, player.AbyssRank.Ap);
+		Assert.NotNull(result.AbyssPointsPlan);
+		Assert.Equal(45, result.AbyssPointsPlan.Added);
+	}
+
+	[Fact]
 	public void ApplySoloApReward_SkipsMissingDeadTargets()
 	{
 		var service = CreateService(out _);
@@ -314,11 +389,11 @@ public sealed class WorldNpcSoloDpRewardServiceTests
 			new WorldPosition(210010000, 15, 25, 30, 0));
 	}
 
-	private static NpcTemplateSummary CreateTemplate(int level, string rating)
+	private static NpcTemplateSummary CreateTemplate(int level, string rating, string name = "Training Target")
 	{
 		return new NpcTemplateSummary(
 			TemplateId: 7300 + level,
-			Name: "Training Target",
+			Name: name,
 			NameId: 7300 + level,
 			Level: level,
 			Rank: "NORMAL",

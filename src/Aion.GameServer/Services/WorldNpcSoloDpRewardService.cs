@@ -5,6 +5,7 @@ namespace Aion.GameServer.Services;
 
 public sealed class WorldNpcSoloDpRewardService
 {
+	private static readonly float[] DefaultApPveRates = [1f, 2f];
 	private readonly WorldNpcResourceStatsService _resourceStats;
 
 	public WorldNpcSoloDpRewardService(WorldNpcResourceStatsService resourceStats)
@@ -111,6 +112,34 @@ public sealed class WorldNpcSoloDpRewardService
 			previousAp);
 	}
 
+	public WorldNpcSoloApRewardResult ApplySoloApRewardFromNpcStats(
+		Player? player,
+		IWorldNpcObject? npc,
+		float damagePercent,
+		bool shouldRewardAp,
+		float apMultiplier = 1f,
+		IReadOnlyList<float>? apPveRates = null,
+		int apBoostStat = 100,
+		AbyssPointsAddOptions? abyssPointsOptions = null,
+		bool sourceIsSiegeNpc = false,
+		bool sourceSiegeNpcPeace = false)
+	{
+		// Java parity: NpcController.doReward asks StatFunctions.calculatePvEApGained before scaling rewardAp.
+		var calculatedAp = player != null && npc != null
+			? CalculatePveApGained(player, npc.Template, apPveRates, apBoostStat)
+			: 0;
+		return ApplySoloApReward(
+			player,
+			npc,
+			damagePercent,
+			shouldRewardAp,
+			calculatedAp,
+			apMultiplier,
+			abyssPointsOptions,
+			sourceIsSiegeNpc,
+			sourceSiegeNpcPeace);
+	}
+
 	public static int CalculateSoloApReward(int calculatedAp, float damagePercent, float apMultiplier = 1f)
 	{
 		// Java parity: NpcController.doReward keeps rewardAp as float and casts to int only after >= 1.
@@ -119,6 +148,27 @@ public sealed class WorldNpcSoloDpRewardService
 		rewardAp *= apMultiplier;
 		rewardAp *= calculatedAp;
 		return rewardAp >= 1f ? JavaFloatToInt(rewardAp) : 0;
+	}
+
+	public static int CalculatePveApGained(
+		Player player,
+		NpcTemplateSummary npcTemplate,
+		IReadOnlyList<float>? apPveRates = null,
+		int apBoostStat = 100)
+	{
+		// Java parity: utils/stats/StatFunctions.calculatePvEApGained + Rates.AP_PVE.
+		if (player.Level - npcTemplate.Level > 10)
+			return 1;
+
+		float apNpcRate = GetApNpcRating(npcTemplate.Rating);
+		if (string.Equals(npcTemplate.Name, "flame hoverstone", StringComparison.Ordinal))
+			apNpcRate = 0.5f;
+
+		var baseAp = JavaFloatToInt((float)Math.Floor(15f * apNpcRate));
+		var membershipRate = SelectMembershipRate(player.AccountMembership, apPveRates ?? DefaultApPveRates);
+		var statRate = apBoostStat / 100f;
+		var result = (long)(baseAp * membershipRate * statRate);
+		return JavaLongToIntOrOriginal(result, baseAp);
 	}
 
 	public static int CalculateDpReward(int playerLevel, NpcTemplateSummary npcTemplate, float dpPveRate = 1f)
@@ -172,6 +222,29 @@ public sealed class WorldNpcSoloDpRewardService
 		};
 	}
 
+	public static int GetApNpcRating(string npcRating)
+	{
+		// Java parity: utils/stats/StatFunctions.getApNpcRating.
+		return npcRating.ToUpperInvariant() switch
+		{
+			"JUNK" => 1,
+			"NORMAL" => 2,
+			"ELITE" => 4,
+			"HERO" => 35,
+			"LEGENDARY" => 2500,
+			_ => 1,
+		};
+	}
+
+	private static float SelectMembershipRate(byte membershipLevel, IReadOnlyList<float> rates)
+	{
+		// Java parity: model/gameobjects/player/Rates.get returns 1 when the configured rate array is empty.
+		if (rates.Count == 0)
+			return 1f;
+
+		return rates[Math.Min(rates.Count - 1, membershipLevel)];
+	}
+
 	private static bool IsPlayerDead(Player player)
 	{
 		return player.LifeStats?.CurrentHp <= 0 || player.CreatureState == PlayerCreatureState.Dead;
@@ -185,6 +258,14 @@ public sealed class WorldNpcSoloDpRewardService
 			return int.MinValue;
 		if (value >= int.MaxValue)
 			return int.MaxValue;
+		return (int)value;
+	}
+
+	private static int JavaLongToIntOrOriginal(long value, int original)
+	{
+		// Java parity: Rates.calcResult(int) returns the original value if Math.toIntExact overflows.
+		if (value is < int.MinValue or > int.MaxValue)
+			return original;
 		return (int)value;
 	}
 }
