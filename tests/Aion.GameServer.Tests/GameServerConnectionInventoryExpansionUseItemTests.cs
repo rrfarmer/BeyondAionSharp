@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
 using Aion.Commons.Network;
 using Aion.GameServer.Configuration;
 using Aion.GameServer.Data;
@@ -410,6 +411,45 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0),
 			packet => AssertSecondaryShowDecomposablePayload(Assert.IsType<SmSecondaryShowDecomposable>(packet)),
 			packet => AssertInventoryAddPayload(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 201, expectedCount: 2));
+	}
+
+	[Fact]
+	public async Task CaptureSelectableDecomposeObservationJson_ProjectsContractComparablePackets()
+	{
+		var decrementJson = await CaptureSelectableDecomposeObservationJsonAsync("JD-SEL-DEC-001", sourceCount: 2, selectIndex: 1);
+		var deleteJson = await CaptureSelectableDecomposeObservationJsonAsync("JD-SEL-DEL-001", sourceCount: 1, selectIndex: 0);
+
+		using var decrement = JsonDocument.Parse(decrementJson);
+		Assert.Equal("JD-SEL-DEC-001", decrement.RootElement.GetProperty("scenario_id").GetString());
+		Assert.Equal(
+			[
+				"SM_ITEM_USAGE_ANIMATION",
+				"SM_SYSTEM_MESSAGE",
+				"SM_INVENTORY_UPDATE_ITEM",
+				"SM_SECONDARY_SHOW_DECOMPOSABLE",
+				"SM_INVENTORY_ADD_ITEM",
+			],
+			ReadPacketClasses(decrement.RootElement));
+		Assert.Equal(SmInventoryUpdateItem.DecreaseItemUse, GetPacket(decrement.RootElement, 3).GetProperty("decoded_fields").GetProperty("update_type_mask").GetInt32());
+		Assert.Equal(202, GetPacket(decrement.RootElement, 5).GetProperty("decoded_fields").GetProperty("item_id").GetInt32());
+		Assert.Equal(3, GetPacket(decrement.RootElement, 5).GetProperty("decoded_fields").GetProperty("count").GetInt64());
+
+		using var delete = JsonDocument.Parse(deleteJson);
+		Assert.Equal("JD-SEL-DEL-001", delete.RootElement.GetProperty("scenario_id").GetString());
+		Assert.Equal(
+			[
+				"SM_ITEM_USAGE_ANIMATION",
+				"SM_SYSTEM_MESSAGE",
+				"SM_DELETE_ITEM",
+				"SM_CUBE_UPDATE",
+				"SM_SECONDARY_SHOW_DECOMPOSABLE",
+				"SM_INVENTORY_ADD_ITEM",
+			],
+			ReadPacketClasses(delete.RootElement));
+		Assert.Equal(SmDeleteItem.UseDeleteType, GetPacket(delete.RootElement, 3).GetProperty("decoded_fields").GetProperty("delete_type").GetInt32());
+		Assert.Equal(0, GetPacket(delete.RootElement, 4).GetProperty("decoded_fields").GetProperty("items_count").GetInt32());
+		Assert.Equal(201, GetPacket(delete.RootElement, 6).GetProperty("decoded_fields").GetProperty("item_id").GetInt32());
+		Assert.Equal(2, GetPacket(delete.RootElement, 6).GetProperty("decoded_fields").GetProperty("count").GetInt64());
 	}
 
 	[Fact]
@@ -1043,6 +1083,273 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		crypt.EnableKey();
 		var frame = packet.SerializeFrame(crypt);
 		return frame[7..];
+	}
+
+	private static async Task<string> CaptureSelectableDecomposeObservationJsonAsync(string scenarioId, int sourceCount, int selectIndex)
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(idFactory: new IDFactory([5001]));
+		var player = CreatePlayer(itemId: 101, count: sourceCount);
+
+		await InvokeHandleSelectDecomposableAsync(fixture.Connection, player, CreateSelectDecomposable(sourceItemObjectId: 5001, selectIndex));
+
+		var observation = new
+		{
+			schema_version = 1,
+			scenario_id = scenarioId,
+			capture_method = "csharp-test-observer",
+			capture_levels = new[] { 1, 2 },
+			fixture = new
+			{
+				player = new
+				{
+					object_id = 1001,
+					name = "Player",
+					level = 10,
+					race = "ELYOS",
+				},
+				known_list = new
+				{
+					visible_players = Array.Empty<int>(),
+				},
+				initial_inventory = new[]
+				{
+					new
+					{
+						object_id = 5001,
+						item_id = 101,
+						count = sourceCount,
+						location = "CUBE",
+						equipped = false,
+					},
+				},
+			},
+			client_packet = new
+			{
+				@class = "CM_SELECT_DECOMPOSABLE",
+				opcode = 236,
+				payload_fields = new
+				{
+					object_id = 5001,
+					unknown_dword = 0,
+					index = selectIndex,
+				},
+			},
+			packets = fixture.SentPackets
+				.Select((packet, index) => BuildPacketObservation(index + 1, packet))
+				.ToArray(),
+			final_inventory = player.InventoryItems
+				.OrderBy(item => item.ObjectId)
+				.Select(item => new
+				{
+					object_id = item.ObjectId,
+					item_id = item.ItemId,
+					count = item.Count,
+					location = item.Location == 0 ? "CUBE" : item.Location.ToString(),
+				})
+				.ToArray(),
+			unsupported = new[]
+			{
+				"Java runtime artifact not captured in this C# projection",
+				"unencrypted body bytes omitted from JSON projection",
+				"encrypted frame bytes omitted from JSON projection",
+			},
+			risks = new[]
+			{
+				"C# projection is comparison-readiness evidence only and cannot verify Java parity by itself",
+			},
+		};
+
+		return JsonSerializer.Serialize(observation, new JsonSerializerOptions { WriteIndented = true });
+	}
+
+	private static Dictionary<string, object?> BuildPacketObservation(int sequence, GameServerPacket packet)
+	{
+		return new Dictionary<string, object?>
+		{
+			["sequence"] = sequence,
+			["recipient_object_id"] = 1001,
+			["java_class"] = ToJavaPacketClass(packet),
+			["decoded_fields"] = DecodePacketFields(packet),
+			["unencrypted_body_hex"] = null,
+			["encrypted_frame_hex"] = null,
+			["notes"] = Array.Empty<string>(),
+		};
+	}
+
+	private static string ToJavaPacketClass(GameServerPacket packet)
+	{
+		return packet switch
+		{
+			SmItemUsageAnimation => "SM_ITEM_USAGE_ANIMATION",
+			SmSystemMessage => "SM_SYSTEM_MESSAGE",
+			SmInventoryUpdateItem => "SM_INVENTORY_UPDATE_ITEM",
+			SmDeleteItem => "SM_DELETE_ITEM",
+			SmCubeUpdate => "SM_CUBE_UPDATE",
+			SmSecondaryShowDecomposable => "SM_SECONDARY_SHOW_DECOMPOSABLE",
+			SmInventoryAddItem => "SM_INVENTORY_ADD_ITEM",
+			_ => packet.GetType().Name,
+		};
+	}
+
+	private static Dictionary<string, object?> DecodePacketFields(GameServerPacket packet)
+	{
+		return packet switch
+		{
+			SmItemUsageAnimation itemUsage => DecodeItemUsageFields(itemUsage),
+			SmSystemMessage systemMessage => DecodeSystemMessageFields(systemMessage),
+			SmInventoryUpdateItem inventoryUpdate => DecodeInventoryUpdateFields(inventoryUpdate),
+			SmDeleteItem deleteItem => DecodeDeleteItemFields(deleteItem),
+			SmCubeUpdate cubeUpdate => DecodeCubeUpdateFields(cubeUpdate),
+			SmSecondaryShowDecomposable secondaryShow => DecodeSecondaryShowFields(secondaryShow),
+			SmInventoryAddItem addItem => DecodeInventoryAddFields(addItem),
+			_ => new Dictionary<string, object?>(),
+		};
+	}
+
+	private static Dictionary<string, object?> DecodeItemUsageFields(SmItemUsageAnimation packet)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		return new Dictionary<string, object?>
+		{
+			["player_object_id"] = reader.ReadD(),
+			["target_object_id"] = reader.ReadD(),
+			["item_object_id"] = reader.ReadD(),
+			["item_id"] = reader.ReadD(),
+			["time"] = reader.ReadD(),
+			["end"] = (int)reader.ReadC(),
+			["unknown"] = (int)reader.ReadC(),
+			["unknown1"] = (int)reader.ReadC(),
+			["unknown2"] = (int)reader.ReadC(),
+			["unknown3"] = reader.ReadD(),
+		};
+	}
+
+	private static Dictionary<string, object?> DecodeSystemMessageFields(SmSystemMessage packet)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		var fields = new Dictionary<string, object?>
+		{
+			["chat_type"] = (int)reader.ReadC(),
+			["message_kind"] = (int)reader.ReadC(),
+			["sender_object_id"] = reader.ReadD(),
+			["message_id"] = reader.ReadD(),
+		};
+		var parameterCount = (int)reader.ReadC();
+		var parameters = new string[parameterCount];
+		for (var index = 0; index < parameterCount; index++)
+			parameters[index] = reader.ReadS();
+		fields["parameters"] = parameters;
+		fields["trailing_flag"] = (int)reader.ReadC();
+		return fields;
+	}
+
+	private static Dictionary<string, object?> DecodeInventoryUpdateFields(SmInventoryUpdateItem packet)
+	{
+		var payload = SerializeUnencryptedPayload(packet);
+		using var reader = new PacketBuffer(payload);
+		var objectId = reader.ReadD();
+		var itemName = reader.ReadS();
+		var blobSize = reader.ReadH();
+		var blob = reader.ReadB(blobSize);
+		var updateType = reader.ReadH();
+		var (_, count) = DecodeGeneralInfoBlobCount(blob);
+		return new Dictionary<string, object?>
+		{
+			["object_id"] = objectId,
+			["item_name"] = itemName,
+			["count"] = count,
+			["update_type_mask"] = updateType,
+			["update_type_name"] = updateType == SmInventoryUpdateItem.DecreaseItemUse ? "DEC_ITEM_USE" : updateType.ToString(),
+		};
+	}
+
+	private static Dictionary<string, object?> DecodeDeleteItemFields(SmDeleteItem packet)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		return new Dictionary<string, object?>
+		{
+			["object_id"] = reader.ReadD(),
+			["delete_type"] = (int)reader.ReadC(),
+			["delete_type_name"] = "USE",
+		};
+	}
+
+	private static Dictionary<string, object?> DecodeCubeUpdateFields(SmCubeUpdate packet)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		return new Dictionary<string, object?>
+		{
+			["action"] = (int)reader.ReadC(),
+			["storage"] = (int)reader.ReadC(),
+			["items_count"] = reader.ReadD(),
+			["npc_expands"] = (int)reader.ReadC(),
+			["quest_expands"] = (int)reader.ReadC(),
+			["item_expands"] = (int)reader.ReadC(),
+		};
+	}
+
+	private static Dictionary<string, object?> DecodeSecondaryShowFields(SmSecondaryShowDecomposable packet)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		return new Dictionary<string, object?>
+		{
+			["source_object_id"] = reader.ReadD(),
+			["unknown_dword"] = reader.ReadD(),
+			["reward_count"] = (int)reader.ReadC(),
+		};
+	}
+
+	private static Dictionary<string, object?> DecodeInventoryAddFields(SmInventoryAddItem packet)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		var addType = reader.ReadH();
+		var itemCount = reader.ReadH();
+		var objectId = reader.ReadD();
+		var itemId = reader.ReadD();
+		var itemName = reader.ReadS();
+		var blobSize = reader.ReadH();
+		var blob = reader.ReadB(blobSize);
+		var slot = reader.ReadH();
+		var clothFlag = (int)reader.ReadC();
+		var (_, count) = DecodeGeneralInfoBlobCount(blob);
+		return new Dictionary<string, object?>
+		{
+			["add_type_mask"] = addType,
+			["add_type_name"] = "DECOMPOSABLE",
+			["packet_item_count"] = itemCount,
+			["object_id"] = objectId,
+			["item_id"] = itemId,
+			["item_name"] = itemName,
+			["count"] = count,
+			["slot"] = slot,
+			["cloth_flag"] = clothFlag,
+		};
+	}
+
+	private static (int Mask, long Count) DecodeGeneralInfoBlobCount(byte[] blob)
+	{
+		using var reader = new PacketBuffer(blob);
+		Assert.Equal(0, (int)reader.ReadC());
+		var mask = reader.ReadH();
+		var count = reader.ReadQ();
+		return (mask, count);
+	}
+
+	private static string[] ReadPacketClasses(JsonElement observation)
+	{
+		return observation
+			.GetProperty("packets")
+			.EnumerateArray()
+			.Select(packet => packet.GetProperty("java_class").GetString()!)
+			.ToArray();
+	}
+
+	private static JsonElement GetPacket(JsonElement observation, int sequence)
+	{
+		return observation
+			.GetProperty("packets")
+			.EnumerateArray()
+			.Single(packet => packet.GetProperty("sequence").GetInt32() == sequence);
 	}
 
 	private sealed class InventoryExpansionUseItemFixture : IAsyncDisposable
