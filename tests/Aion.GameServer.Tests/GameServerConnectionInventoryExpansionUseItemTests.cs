@@ -531,6 +531,25 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task CompareSelectableDecomposeJavaArtifacts_WithJavaRewardAddTrailingCubeUpdate_ReportsParityGap()
+	{
+		var csharpJson = await CaptureSelectableDecomposeObservationJsonAsync("JD-SEL-DEC-001", sourceCount: 2, selectIndex: 1);
+		var javaJson = CreateMappedSelectableDecomposeJavaArtifactJson(
+			csharpJson,
+			sourceItemId: 101,
+			rewardItemId: 202,
+			includeRewardAddTrailingCubeUpdate: true);
+
+		using var javaObservation = JsonDocument.Parse(javaJson);
+		using var csharpObservation = JsonDocument.Parse(csharpJson);
+
+		var exception = Assert.Throws<InvalidOperationException>(() =>
+			AssertSelectableDecomposeObservationMatchesJavaArtifact(javaObservation.RootElement, csharpObservation.RootElement));
+		Assert.Contains("reward-add trailing SM_CUBE_UPDATE", exception.Message);
+		Assert.Contains("ItemPacketService.sendStorageUpdatePacket", exception.Message);
+	}
+
+	[Fact]
 	public async Task HandleSelectDecomposableAsync_SelectableRewardMergesExistingStack()
 	{
 		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(idFactory: new IDFactory([5001, 6001]));
@@ -1452,7 +1471,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		int sourceItemId,
 		int rewardItemId,
 		int? sourceObjectId = null,
-		int? rewardObjectId = null)
+		int? rewardObjectId = null,
+		bool includeRewardAddTrailingCubeUpdate = false)
 	{
 		var artifact = JsonNode.Parse(csharpJson)!.AsObject();
 		artifact["capture_method"] = "live-java-server";
@@ -1483,12 +1503,38 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			idMapping["java_reward_index_1_object_id"] = rewardObjectId.Value;
 			SetPacketField(artifact, sequence: 5, "object_id", rewardObjectId.Value);
 		}
+		if (includeRewardAddTrailingCubeUpdate)
+			AppendRewardAddTrailingCubeUpdate(artifact);
 		return artifact.ToJsonString(new JsonSerializerOptions { WriteIndented = true });
 	}
 
 	private static void SetClientPacketPayloadField(JsonObject observation, string fieldName, int value)
 	{
 		observation["client_packet"]!.AsObject()["payload_fields"]!.AsObject()[fieldName] = value;
+	}
+
+	private static void AppendRewardAddTrailingCubeUpdate(JsonObject observation)
+	{
+		var packets = observation["packets"]!.AsArray();
+		var nextSequence = packets.Count + 1;
+		packets.Add(new JsonObject
+		{
+			["sequence"] = nextSequence,
+			["recipient_object_id"] = 1001,
+			["java_class"] = "SM_CUBE_UPDATE",
+			["decoded_fields"] = new JsonObject
+			{
+				["action"] = 0,
+				["storage"] = 0,
+				["items_count"] = 2,
+				["npc_expands"] = 0,
+				["quest_expands"] = 0,
+				["item_expands"] = 0,
+			},
+			["unencrypted_body_hex"] = null,
+			["encrypted_frame_hex"] = null,
+			["notes"] = new JsonArray("Synthetic Java artifact shape for ItemPacketService.sendStorageUpdatePacket reward-add trailing cube update."),
+		});
 	}
 
 	private static void SetPacketField(JsonObject observation, int sequence, string fieldName, int value)
@@ -1505,7 +1551,10 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		var idMapping = ReadIdMapping(javaObservation);
 		Assert.Equal(csharpObservation.GetProperty("scenario_id").GetString(), javaObservation.GetProperty("scenario_id").GetString());
 		Assert.Equal("live-java-server", javaObservation.GetProperty("capture_method").GetString());
-		Assert.Equal(ReadPacketClasses(csharpObservation), ReadPacketClasses(javaObservation));
+		var csharpPacketClasses = ReadPacketClasses(csharpObservation);
+		var javaPacketClasses = ReadPacketClasses(javaObservation);
+		ThrowIfJavaObservedRewardAddTrailingCubeUpdate(csharpPacketClasses, javaPacketClasses);
+		Assert.Equal(csharpPacketClasses, javaPacketClasses);
 		Assert.Equal(
 			csharpObservation.GetProperty("client_packet").GetProperty("opcode").GetInt32(),
 			javaObservation.GetProperty("client_packet").GetProperty("opcode").GetInt32());
@@ -1542,6 +1591,26 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			default:
 				throw new InvalidOperationException("Unsupported selectable-decompose scenario: " + scenarioId);
 		}
+	}
+
+	private static void ThrowIfJavaObservedRewardAddTrailingCubeUpdate(IReadOnlyList<string> csharpPacketClasses, IReadOnlyList<string> javaPacketClasses)
+	{
+		if (csharpPacketClasses.Count == 0
+			|| javaPacketClasses.Count != csharpPacketClasses.Count + 1
+			|| csharpPacketClasses[^1] != "SM_INVENTORY_ADD_ITEM"
+			|| javaPacketClasses[^1] != "SM_CUBE_UPDATE")
+			return;
+
+		for (var index = 0; index < csharpPacketClasses.Count; index++)
+		{
+			if (javaPacketClasses[index] != csharpPacketClasses[index])
+				return;
+		}
+
+		throw new InvalidOperationException(
+			"Java artifact includes reward-add trailing SM_CUBE_UPDATE after SM_INVENTORY_ADD_ITEM. "
+			+ "Java source ItemPacketService.sendStorageUpdatePacket sends SM_INVENTORY_ADD_ITEM and then SM_CUBE_UPDATE for cube storage; "
+			+ "treat this as a C# parity gap to implement or explicitly document, not as an optional packet to ignore.");
 	}
 
 	private static Dictionary<int, int> ReadIdMapping(JsonElement javaObservation)
