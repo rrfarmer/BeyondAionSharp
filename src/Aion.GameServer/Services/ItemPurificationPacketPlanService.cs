@@ -74,7 +74,7 @@ public static class ItemPurificationPacketPlanService
 				packets.Add(KinahNoPacket(operation));
 				break;
 			case ItemPurificationApplicationOperationType.AddTargetItem:
-				packets.Add(InventoryAdd(operation));
+				packets.Add(InventoryAdd(operation, inventoryPacketInputs));
 				packets.Add(CubeSize(operation));
 				break;
 			default:
@@ -130,7 +130,9 @@ public static class ItemPurificationPacketPlanService
 			ConcretePacket: new SmDeleteItem(operation.ObjectId, UseDeleteType));
 	}
 
-	private static ItemPurificationPacketOperation InventoryAdd(ItemPurificationApplicationOperation operation)
+	private static ItemPurificationPacketOperation InventoryAdd(
+		ItemPurificationApplicationOperation operation,
+		IReadOnlyDictionary<int, ItemPurificationInventoryPacketInput>? inventoryPacketInputs)
 	{
 		return new ItemPurificationPacketOperation(
 			ItemPurificationPacketOperationType.InventoryAddItem,
@@ -140,7 +142,27 @@ public static class ItemPurificationPacketPlanService
 			ItemCollectAddType,
 			operation.Type,
 			Parameters: Array.Empty<string>(),
-			ConcretePacket: null);
+			ConcretePacket: CreateInventoryAddPacket(operation, inventoryPacketInputs));
+	}
+
+	private static GameServerPacket? CreateInventoryAddPacket(
+		ItemPurificationApplicationOperation operation,
+		IReadOnlyDictionary<int, ItemPurificationInventoryPacketInput>? inventoryPacketInputs)
+	{
+		if (operation.ObjectId <= 0
+			|| inventoryPacketInputs == null
+			|| !inventoryPacketInputs.TryGetValue(operation.ObjectId, out var input))
+			return null;
+
+		// Java parity: ItemPacketService.sendStorageUpdatePacket(CUBE, item, ITEM_COLLECT)
+		// constructs SM_INVENTORY_ADD_ITEM from the already-created and added Item instance.
+		if (input.Item.ObjectId != operation.ObjectId
+			|| input.Item.ItemId != operation.ItemId
+			|| input.Item.Count != operation.Count
+			|| input.Template.TemplateId != operation.ItemId)
+			return null;
+
+		return SmInventoryAddItem.CreateItemCollect(input.Item, input.Template);
 	}
 
 	private static ItemPurificationPacketOperation CubeSize(ItemPurificationApplicationOperation operation)
@@ -205,7 +227,7 @@ public sealed record ItemPurificationPacketOperation(
 	IReadOnlyList<string> Parameters,
 	GameServerPacket? ConcretePacket);
 
-// Caller-provided post-mutation snapshot for Java SM_INVENTORY_UPDATE_ITEM construction.
+// Caller-provided post-mutation snapshot for Java inventory packet construction.
 public sealed record ItemPurificationInventoryPacketInput(
 	InventoryItem Item,
 	ItemTemplateSummary Template);

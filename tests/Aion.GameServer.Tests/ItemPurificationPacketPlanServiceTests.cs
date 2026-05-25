@@ -161,6 +161,50 @@ public sealed class ItemPurificationPacketPlanServiceTests
 	}
 
 	[Fact]
+	public void CreatePacketPlan_AttachesConcreteTargetAddPacketWhenRuntimeItemInputProvided()
+	{
+		var baseItem = CreateBaseItem(enchant: 25);
+		var player = CreatePlayer(
+			abyssPoints: 5_000,
+			kinah: 10_000,
+			baseItem,
+			new InventoryItem { ObjectId = 20, ItemId = 186000001, Count = 2, Location = 0 });
+		var application = CreateApplicationPlan(player, baseItem, targetObjectId: 9001);
+		var targetTemplate = CreateTemplate(100000002, maxTuneCount: 1, maxEnchantLevel: 20);
+		var inventoryInputs = new Dictionary<int, ItemPurificationInventoryPacketInput>
+		{
+			[9001] = new(
+				new InventoryItem { ObjectId = 9001, ItemId = 100000002, Count = 1, Location = 0, Slot = -1 },
+				targetTemplate),
+		};
+
+		var plan = ItemPurificationPacketPlanService.CreatePacketPlan(
+			application,
+			"base-name",
+			"target-name",
+			inventoryInputs);
+
+		var addOperation = plan.Operations.Single(operation =>
+			operation.Type == ItemPurificationPacketOperationType.InventoryAddItem);
+		var concretePacket = Assert.IsType<SmInventoryAddItem>(addOperation.ConcretePacket);
+		Assert.Equal(SmInventoryAddItem.PacketOpCode, concretePacket.OpCode);
+		Assert.Equal(ItemPurificationPacketPlanService.ItemCollectAddType, addOperation.Mask);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(concretePacket));
+		Assert.Equal(ItemPurificationPacketPlanService.ItemCollectAddType, reader.ReadH());
+		Assert.Equal(1, reader.ReadH());
+		Assert.Equal(9001, reader.ReadD());
+		Assert.Equal(100000002, reader.ReadD());
+		reader.ReadS();
+		var blobSize = reader.ReadH();
+		Assert.True(blobSize > 0);
+		reader.ReadB(blobSize);
+		Assert.Equal(0xffff, reader.ReadH());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+		Assert.Null(plan.Operations[8].ConcretePacket);
+	}
+
+	[Fact]
 	public void CreatePacketPlan_FlagsRuntimeInputBlockersButStillListsDryRunPackets()
 	{
 		var baseItem = CreateBaseItem(enchant: 25);
