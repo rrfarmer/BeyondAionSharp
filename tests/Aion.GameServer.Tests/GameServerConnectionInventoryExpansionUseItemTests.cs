@@ -205,6 +205,32 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleUseItemAsync_DecomposeDeletesLastSourceAndAddsReward()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(
+			includeThreadPoolManager: true,
+			idFactory: new IDFactory([5001]));
+		var player = CreatePlayer(itemId: 100, count: 1);
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
+
+		Assert.Equal(5001, player.UsingItemObjectId);
+		await WaitUntilAsync(() => fixture.SentPackets.Count >= 5, TimeSpan.FromSeconds(5));
+		Assert.Equal(0, player.UsingItemObjectId);
+		var reward = Assert.Single(player.InventoryItems);
+		Assert.Equal(200, reward.ItemId);
+		Assert.Equal(1, reward.Count);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 100, expectedTime: 3000, expectedEnd: 0),
+			packet => Assert.IsType<SmSystemMessage>(packet),
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 5001, expectedDeleteType: SmDeleteItem.UseDeleteType),
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 100, expectedTime: 0, expectedEnd: 1),
+			packet => Assert.IsType<SmInventoryAddItem>(packet));
+	}
+
+	[Fact]
 	public async Task HandleUseItemAsync_DecomposeInventoryFullDoesNotScheduleOrMutate()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
@@ -650,6 +676,14 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Equal(expectedObjectId, reader.ReadD());
 		var actualUpdateType = payload[^2] | (payload[^1] << 8);
 		Assert.Equal(expectedUpdateType, actualUpdateType);
+	}
+
+	private static void AssertDeleteItemPayload(SmDeleteItem packet, int expectedObjectId, int expectedDeleteType)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(expectedObjectId, reader.ReadD());
+		Assert.Equal(expectedDeleteType, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
 	}
 
 	private static void AssertSystemMessagePayload(SmSystemMessage packet, int expectedMessageId, params string[] expectedParameters)
