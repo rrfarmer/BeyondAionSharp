@@ -50,6 +50,49 @@ public static class ItemPurificationHandlerPacketBridgeService
 			packetPlan);
 	}
 
+	public static ItemPurificationHandlerMutationBridgeResult CreateConcretePacketPlanFromCurrentInventory(
+		ItemPurificationHandlerPlan? handlerPlan,
+		IReadOnlyList<InventoryItem> currentInventoryItems,
+		ItemTemplateTable itemTemplates,
+		int npcExpands,
+		int questExpands,
+		int itemExpands)
+	{
+		// Java parity: this composes the pre-live-mutation bridge for the same Storage mutation
+		// order used by ItemPurificationService.decreaseMaterials and upgradeItem, but keeps the
+		// C# handler side effect-free until persistence/runtime mutation is implemented.
+		if (handlerPlan == null)
+			return ItemPurificationHandlerMutationBridgeResult.Failed(ItemPurificationHandlerMutationBridgeStatus.MissingHandlerPlan);
+		if (!handlerPlan.Application.Succeeded)
+			return ItemPurificationHandlerMutationBridgeResult.Failed(ItemPurificationHandlerMutationBridgeStatus.ApplicationPlanNotReady);
+
+		var mutationPreview = ItemPurificationMutationSnapshotService.CreatePreview(
+			currentInventoryItems,
+			handlerPlan.Application,
+			npcExpands,
+			questExpands,
+			itemExpands);
+		if (!mutationPreview.Succeeded)
+		{
+			return new ItemPurificationHandlerMutationBridgeResult(
+				ItemPurificationHandlerMutationBridgeStatus.MutationSnapshotNotReady,
+				mutationPreview,
+				Bridge: null);
+		}
+
+		var bridge = CreateConcretePacketPlan(
+			handlerPlan,
+			mutationPreview.PostMutationInventoryItems,
+			itemTemplates,
+			mutationPreview.CubeSnapshotsByPacketOperationIndex);
+		return new ItemPurificationHandlerMutationBridgeResult(
+			bridge.Succeeded
+				? ItemPurificationHandlerMutationBridgeStatus.Ready
+				: ItemPurificationHandlerMutationBridgeStatus.PacketBridgeNotReady,
+			mutationPreview,
+			bridge);
+	}
+
 	public static async ValueTask<ItemPurificationHandlerPacketSendBridgeResult> SendConcretePacketsAsync(
 		int playerObjectId,
 		ItemPurificationHandlerPlan? handlerPlan,
@@ -103,6 +146,28 @@ public enum ItemPurificationHandlerPacketBridgeStatus
 	ApplicationPlanNotReady,
 	PacketInputsNotReady,
 	PacketPlanNotReady,
+}
+
+public sealed record ItemPurificationHandlerMutationBridgeResult(
+	ItemPurificationHandlerMutationBridgeStatus Status,
+	ItemPurificationMutationSnapshotPlan? MutationPreview,
+	ItemPurificationHandlerPacketBridgeResult? Bridge)
+{
+	public bool Succeeded => Status == ItemPurificationHandlerMutationBridgeStatus.Ready;
+
+	public static ItemPurificationHandlerMutationBridgeResult Failed(ItemPurificationHandlerMutationBridgeStatus status)
+	{
+		return new ItemPurificationHandlerMutationBridgeResult(status, MutationPreview: null, Bridge: null);
+	}
+}
+
+public enum ItemPurificationHandlerMutationBridgeStatus
+{
+	Ready,
+	MissingHandlerPlan,
+	ApplicationPlanNotReady,
+	MutationSnapshotNotReady,
+	PacketBridgeNotReady,
 }
 
 public sealed record ItemPurificationHandlerPacketSendBridgeResult(

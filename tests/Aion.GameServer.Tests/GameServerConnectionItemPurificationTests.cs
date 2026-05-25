@@ -434,6 +434,135 @@ public sealed class GameServerConnectionItemPurificationTests
 	}
 
 	[Fact]
+	public async Task ItemPurificationHandlerMutationBridge_ComposesConcretePacketsFromCurrentInventoryPreview()
+	{
+		var baseItem = new InventoryItem
+		{
+			ObjectId = 10,
+			ItemId = 100000001,
+			Count = 1,
+			Location = 0,
+			Enchant = 25,
+			TuneCount = 2,
+			RandomBonus = 7,
+		};
+		var material = new InventoryItem { ObjectId = 20, ItemId = 186000001, Count = 3, Location = 0 };
+		var kinah = new InventoryItem { ObjectId = 30, ItemId = 182400001, Count = 10_000, Location = 0 };
+		var player = new Player
+		{
+			ObjectId = 700,
+			AbyssRank = PlayerAbyssRank.Default() with { Ap = 5_000 },
+			InventoryItems = [baseItem, material, kinah],
+		};
+		await using var pair = await TestConnectionPair.CreateAsync();
+		var itemTemplates = CreateItemTemplates();
+		var packet = CreatePacket(
+			playerObjectId: 9999,
+			baseItemObjectId: baseItem.ObjectId,
+			resultItemId: 100000002,
+			requiredMaterialObjectIds: [9001, 9002, 9003, 9004, 9005]);
+		var handlerPlan = await pair.Connection.HandleItemPurificationAsync(
+			player,
+			packet,
+			CreatePurificationTable(),
+			itemTemplates,
+			targetObjectId: 9001);
+
+		var mutationBridge = ItemPurificationHandlerPacketBridgeService.CreateConcretePacketPlanFromCurrentInventory(
+			handlerPlan,
+			player.InventoryItems,
+			itemTemplates,
+			npcExpands: 1,
+			questExpands: 0,
+			itemExpands: 1);
+
+		Assert.True(mutationBridge.Succeeded);
+		Assert.Equal(ItemPurificationHandlerMutationBridgeStatus.Ready, mutationBridge.Status);
+		Assert.NotNull(mutationBridge.MutationPreview);
+		Assert.True(mutationBridge.MutationPreview.Succeeded);
+		Assert.Equal([20, 30, 9001], mutationBridge.MutationPreview.PostMutationInventoryItems.Select(item => item.ObjectId).Order().ToArray());
+		Assert.Equal(1, mutationBridge.MutationPreview.CubeSnapshotsByPacketOperationIndex[5].ItemsCount);
+		Assert.Equal(2, mutationBridge.MutationPreview.CubeSnapshotsByPacketOperationIndex[7].ItemsCount);
+		Assert.NotNull(mutationBridge.Bridge);
+		Assert.True(mutationBridge.Bridge.Succeeded);
+		Assert.Equal(ItemPurificationPacketInputSnapshotStatus.Ready, mutationBridge.Bridge.PacketInputs?.Status);
+		var concretePlan = mutationBridge.Bridge.ConcretePacketPlan;
+		Assert.NotNull(concretePlan);
+		Assert.True(concretePlan.Succeeded);
+		Assert.Equal(
+			[
+				typeof(SmSystemMessage),
+				typeof(SmInventoryUpdateItem),
+				typeof(SmDeleteItem),
+				typeof(SmCubeUpdate),
+				typeof(SmInventoryAddItem),
+				typeof(SmCubeUpdate),
+			],
+			concretePlan.Operations
+				.Where(operation => operation.ConcretePacket != null)
+				.Select(operation => operation.ConcretePacket!.GetType())
+				.ToArray());
+		Assert.Equal([10, 20, 30], player.InventoryItems.Select(item => item.ObjectId).ToArray());
+		Assert.Equal(3, material.Count);
+		Assert.Equal(10_000, kinah.Count);
+		Assert.Equal(5_000, player.AbyssRank.Ap);
+	}
+
+	[Fact]
+	public async Task ItemPurificationHandlerMutationBridge_ReportsPreviewFailuresWithoutPacketBridge()
+	{
+		var baseItem = new InventoryItem
+		{
+			ObjectId = 10,
+			ItemId = 100000001,
+			Count = 1,
+			Location = 0,
+			Enchant = 25,
+			TuneCount = 2,
+			RandomBonus = 7,
+		};
+		var material = new InventoryItem { ObjectId = 20, ItemId = 186000001, Count = 3, Location = 0 };
+		var kinah = new InventoryItem { ObjectId = 30, ItemId = 182400001, Count = 10_000, Location = 0 };
+		var player = new Player
+		{
+			ObjectId = 700,
+			AbyssRank = PlayerAbyssRank.Default() with { Ap = 5_000 },
+			InventoryItems = [baseItem, material, kinah],
+		};
+		await using var pair = await TestConnectionPair.CreateAsync();
+		var itemTemplates = CreateItemTemplates();
+		var packet = CreatePacket(
+			playerObjectId: 9999,
+			baseItemObjectId: baseItem.ObjectId,
+			resultItemId: 100000002,
+			requiredMaterialObjectIds: [9001, 9002, 9003, 9004, 9005]);
+		var handlerPlan = await pair.Connection.HandleItemPurificationAsync(
+			player,
+			packet,
+			CreatePurificationTable(),
+			itemTemplates,
+			targetObjectId: 9001);
+
+		var mutationBridge = ItemPurificationHandlerPacketBridgeService.CreateConcretePacketPlanFromCurrentInventory(
+			handlerPlan,
+			currentInventoryItems: [baseItem, kinah],
+			itemTemplates,
+			npcExpands: 0,
+			questExpands: 0,
+			itemExpands: 0);
+
+		Assert.False(mutationBridge.Succeeded);
+		Assert.Equal(ItemPurificationHandlerMutationBridgeStatus.MutationSnapshotNotReady, mutationBridge.Status);
+		Assert.NotNull(mutationBridge.MutationPreview);
+		Assert.Equal(ItemPurificationMutationSnapshotStatus.MissingCurrentInventoryItems, mutationBridge.MutationPreview.Status);
+		Assert.Equal([20], mutationBridge.MutationPreview.MissingObjectIds);
+		Assert.Null(mutationBridge.Bridge);
+		Assert.Equal([10, 20, 30], player.InventoryItems.Select(item => item.ObjectId).ToArray());
+		Assert.Equal(3, material.Count);
+		Assert.Equal(5_000, player.AbyssRank.Ap);
+	}
+
+	[Fact]
 	public async Task ItemPurificationHandlerPacketBridge_SendsConcretePacketsAndSkipsMetadata()
 	{
 		var baseItem = new InventoryItem
