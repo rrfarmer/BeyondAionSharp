@@ -41,9 +41,16 @@ public sealed class PlayerNpcFactionsSnapshot
 
 	public static PlayerNpcFactionsSnapshot Empty { get; } = new(Array.Empty<PlayerNpcFactionState>());
 
+	public IReadOnlyCollection<PlayerNpcFactionState> Factions => _factions.Values.ToArray();
+
 	public bool HasActiveFaction(int factionId)
 	{
 		return _factions.TryGetValue(factionId, out var faction) && faction.IsActive;
+	}
+
+	public bool TryGetFaction(int factionId, out PlayerNpcFactionState? faction)
+	{
+		return _factions.TryGetValue(factionId, out faction);
 	}
 
 	public bool CanStartAssignedQuest(int factionId, int questId)
@@ -62,6 +69,33 @@ public sealed class PlayerNpcFactionsSnapshot
 		var type = isMentorQuest ? 1 : 0;
 		return _activeNpcFaction[type] != null && _timeLimit[type] < currentEpochSeconds;
 	}
+
+	public PlayerNpcFactionCompletionResult CompleteActiveQuest(bool isMentorQuest, int nextResetEpochSeconds)
+	{
+		// Java parity breadcrumb: NpcFactions.completeQuest updates the active mentor/non-mentor
+		// slot chosen from QuestTemplate.isMentor(), not a direct npcfaction_id lookup.
+		var type = isMentorQuest ? 1 : 0;
+		var activeFaction = _activeNpcFaction[type];
+		if (activeFaction is null)
+			return new PlayerNpcFactionCompletionResult(
+				PlayerNpcFactionCompletionStatus.NoActiveFaction,
+				this,
+				null);
+
+		var completedFaction = activeFaction with
+		{
+			TimeEpochSeconds = nextResetEpochSeconds,
+			State = PlayerNpcFactionQuestState.Complete,
+		};
+		var updatedFactions = _factions.Values
+			.Select(faction => faction.FactionId == completedFaction.FactionId ? completedFaction : faction)
+			.ToArray();
+
+		return new PlayerNpcFactionCompletionResult(
+			PlayerNpcFactionCompletionStatus.Applied,
+			new PlayerNpcFactionsSnapshot(updatedFactions),
+			completedFaction);
+	}
 }
 
 public enum PlayerNpcFactionQuestState
@@ -70,4 +104,18 @@ public enum PlayerNpcFactionQuestState
 	Noting = 0,
 	Start = 1,
 	Complete = 2,
+}
+
+public enum PlayerNpcFactionCompletionStatus
+{
+	Applied,
+	NoActiveFaction,
+}
+
+public sealed record PlayerNpcFactionCompletionResult(
+	PlayerNpcFactionCompletionStatus Status,
+	PlayerNpcFactionsSnapshot Snapshot,
+	PlayerNpcFactionState? CompletedFaction)
+{
+	public bool Applied => Status == PlayerNpcFactionCompletionStatus.Applied;
 }
