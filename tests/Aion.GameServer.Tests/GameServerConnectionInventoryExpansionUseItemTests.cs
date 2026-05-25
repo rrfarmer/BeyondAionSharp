@@ -400,6 +400,58 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleQuestionResponseAsync_ChargeAllApPaymentChargesOnlyCurrentChargeableItemWhenOnePendingItemIsStale()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreateChargeAllPaymentPlayerWithTwoItems(firstCharge: ItemChargeService.Level1ChargePoints, secondCharge: 0);
+		var pendingRequest = new PendingChargeAllRequest(
+			SenderObjectId: player.ObjectId,
+			ChargeWay: 2,
+			PaymentAmount: 1_000,
+			Items:
+			[
+				new PendingChargeAllItem(
+					ObjectId: 7001,
+					ItemId: 100000400,
+					PreviousCharge: 0,
+					TargetCharge: ItemChargeService.Level1ChargePoints,
+					Level: 1),
+				new PendingChargeAllItem(
+					ObjectId: 7002,
+					ItemId: 100000400,
+					PreviousCharge: 0,
+					TargetCharge: ItemChargeService.Level1ChargePoints,
+					Level: 1),
+			]);
+		player.PendingChargeAllRequest = pendingRequest;
+		Assert.True(player.ResponseRequester.PutRequest(
+			SmQuestionWindow.ItemCharge2AllConfirm,
+			new QuestionResponseRequest(player.ObjectId, QuestionResponseRequestKind.ChargeAll, pendingRequest)));
+
+		await fixture.Connection.HandleQuestionResponseAsync(player, CreateQuestionResponse(SmQuestionWindow.ItemCharge2AllConfirm, response: 1));
+
+		Assert.Equal(0, player.AbyssRank.Ap);
+		Assert.Equal(1, repository.SaveItemChargeAllMutationCalls);
+		Assert.Equal(0, repository.ChargeAllPaymentAbyssRank?.Ap);
+		var chargedItem = Assert.Single(repository.ChargeAllChargedItems);
+		Assert.Equal(7002, chargedItem.ObjectId);
+		Assert.Null(player.PendingChargeAllRequest);
+		Assert.Collection(
+			player.InventoryItems.OrderBy(inventoryItem => inventoryItem.ObjectId).Where(inventoryItem => inventoryItem.ItemId == 100000400),
+			first => Assert.Equal(ItemChargeService.Level1ChargePoints, first.Charge),
+			second => Assert.Equal(ItemChargeService.Level1ChargePoints, second.Charge));
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1300965, "1000"),
+			packet => Assert.IsType<SmAbyssRank>(packet),
+			packet => AssertChargeInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 7002),
+			packet => Assert.IsType<SmSystemMessage>(packet),
+			packet => Assert.IsType<SmStatsInfo>(packet),
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1401340));
+	}
+
+	[Fact]
 	public async Task HandleQuestionResponseAsync_ChargeAllKinahPaymentRejectsInsufficientKinahWithoutSideEffects()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
@@ -1376,6 +1428,40 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		};
 	}
 
+	private static Player CreateChargeAllPaymentPlayerWithTwoItems(int firstCharge = 0, int secondCharge = 0)
+	{
+		return new Player
+		{
+			ObjectId = 1001,
+			Name = "TicketUser",
+			Race = "ELYOS",
+			PlayerClass = "RANGER",
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			AbyssRank = PlayerAbyssRank.Default() with { Ap = 1000 },
+			InventoryItems =
+			[
+				new InventoryItem
+				{
+					ObjectId = 7001,
+					ItemId = 100000400,
+					Count = 1,
+					Location = 0,
+					IsEquipped = true,
+					Charge = firstCharge,
+				},
+				new InventoryItem
+				{
+					ObjectId = 7002,
+					ItemId = 100000400,
+					Count = 1,
+					Location = 0,
+					IsEquipped = true,
+					Charge = secondCharge,
+				},
+			],
+		};
+	}
+
 	private static Player CreateKinahChargePaymentPlayer(long kinah)
 	{
 		return new Player
@@ -1662,6 +1748,16 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Equal(expectedObjectId, reader.ReadD());
 		var actualUpdateType = payload[^2] | (payload[^1] << 8);
 		Assert.Equal(expectedUpdateType, actualUpdateType);
+	}
+
+	private static void AssertChargeInventoryUpdatePayload(SmInventoryUpdateItem packet, int expectedObjectId)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(expectedObjectId, reader.ReadD());
+		reader.ReadS();
+		var blobSize = reader.ReadH();
+		reader.ReadB(blobSize);
+		Assert.Equal(0, reader.Remaining);
 	}
 
 	private static void AssertInventoryAddPayload(SmInventoryAddItem packet, int expectedObjectId, int expectedItemId, long expectedCount)
