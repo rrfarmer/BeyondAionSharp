@@ -1074,6 +1074,7 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.UiInventoryFull(), 1300042);
 		AssertSystemMessage(SmSystemMessage.DiceInventoryError(), 1390182);
 		AssertSystemMessage(SmSystemMessage.AssemblyItemSucceeded(), 1401122);
+		AssertSystemMessage(SmSystemMessage.ItemUpgradeSuccess("base", "result"), 1402579, "base", "result");
 		AssertSystemMessage(SmSystemMessage.DecompressInventoryFull(), 1400363);
 		AssertSystemMessage(SmSystemMessage.ExpExtractionUse("extract", 123, "reward"), 1401705, "extract", "123", "reward");
 		AssertSystemMessage(SmSystemMessage.ExpExtractionUseNotEnoughExp(), 1401706);

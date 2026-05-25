@@ -940,6 +940,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1401122);
 	}
 
+	public static SmSystemMessage ItemUpgradeSuccess(string baseItemName, string resultItemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_ITEM_UPGRADE_MSG_UPGRADE_SUCCESS.
+		return new SmSystemMessage(1402579, baseItemName, resultItemName);
+	}
+
 	public static SmSystemMessage DecomposeItemNoTarget()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_DECOMPOSE_ITEM_NO_TARGET_ITEM.
