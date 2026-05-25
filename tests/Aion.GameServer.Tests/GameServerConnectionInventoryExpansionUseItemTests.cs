@@ -182,6 +182,41 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleEmotionAsync_StanceCancelsCurrentCastBeforeModeGuardMessage()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync();
+		var player = CreatePlayer(itemId: 100);
+		player.StanceSkillId = 1234;
+		player.SetCastingSkill(7001);
+
+		await InvokeHandleEmotionAsync(fixture.Connection, player, CreateEmotion(EmotionType.Sit));
+
+		Assert.Equal(0, player.CastingSkillId);
+		Assert.Equal(7001, player.LastCastingSkillId);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertSkillCancelPayload(Assert.IsType<SmSkillCancel>(packet), player.ObjectId, 7001),
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1300023),
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1300124));
+		Assert.False(player.IsInState(PlayerCreatureState.Resting));
+	}
+
+	[Fact]
+	public async Task HandleEmotionAsync_StanceFlySendsTakeoffGuardMessage()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync();
+		var player = CreatePlayer(itemId: 100);
+		player.StanceSkillId = 1234;
+
+		await InvokeHandleEmotionAsync(fixture.Connection, player, CreateEmotion(EmotionType.Fly));
+
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1300147));
+		Assert.False(player.IsFlying());
+	}
+
+	[Fact]
 	public async Task HandleUseItemAsync_DecomposeCompletesAndAddsReward()
 	{
 		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(
@@ -1136,6 +1171,14 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		foreach (var expectedParameter in expectedParameters)
 			Assert.Equal(expectedParameter, reader.ReadS());
 		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertSkillCancelPayload(SmSkillCancel packet, int expectedCreatureObjectId, int expectedSkillId)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(expectedCreatureObjectId, reader.ReadD());
+		Assert.Equal(expectedSkillId, reader.ReadH());
 		Assert.Equal(0, reader.Remaining);
 	}
 

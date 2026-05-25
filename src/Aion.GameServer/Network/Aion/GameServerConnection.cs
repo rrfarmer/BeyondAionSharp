@@ -8176,7 +8176,6 @@ public sealed class GameServerConnection : BaseClientConnection
 			&& (player.IsInAnyAbnormalState(PlayerAbnormalState.CantMoveState) || player.IsUnderFear() || player.IsConfused()))
 			return;
 
-		// TODO Phase 6: apply PlayerController stance guard once stance state is ported.
 		if (player.IsInState(PlayerCreatureState.PrivateShop)
 			|| (player.IsInState(PlayerCreatureState.WeaponEquipped)
 				&& packet.EmotionType is EmotionType.ChairSit or EmotionType.Jump))
@@ -8187,6 +8186,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		// Java parity: network/aion/clientpackets/CM_EMOTION.runImpl stance guard after cancelUseItem/cancelCurrentSkill.
+		await CancelCurrentSkillForEmotionAsync(player);
 		if (player.IsUnderStance())
 		{
 			await SendPacketAsync(packet.EmotionType == EmotionType.Fly
@@ -8292,6 +8292,36 @@ public sealed class GameServerConnection : BaseClientConnection
 			new SmEmotion(player, packet.EmotionType, packet.Emotion, packet.X, packet.Y, packet.Z, packet.Heading, targetObjectId));
 	}
 
+	private async Task CancelCurrentSkillForEmotionAsync(Player player)
+	{
+		// Java parity: PlayerController.cancelCurrentSkill(null) from CM_EMOTION before stance/mode changes.
+		var canceledSkill = player.ClearCastingSkill();
+		if (canceledSkill?.Method == PlayerCastingSkillMethod.Cast)
+		{
+			await BroadcastToSightedPlayersAsync(player, new SmSkillCancel(player.ObjectId, canceledSkill.SkillId));
+			await SendPacketAsync(SmSystemMessage.SkillCanceled());
+		}
+		else if (canceledSkill is { Method: PlayerCastingSkillMethod.Item, HasItemCancellationMetadata: true })
+		{
+			await SendPacketAsync(SmSystemMessage.ItemCanceled());
+			if (canceledSkill.ItemCooldownDelayId.HasValue)
+				player.RemoveItemCooldown(canceledSkill.ItemCooldownDelayId.Value);
+			await BroadcastToSightedPlayersAsync(
+				player,
+				new SmItemUsageAnimation(
+					player.ObjectId,
+					canceledSkill.FirstTargetObjectId,
+					canceledSkill.ItemObjectId,
+					canceledSkill.ItemTemplateId,
+					0,
+					3,
+					0,
+					0,
+					1,
+					0));
+		}
+	}
+
 	private static bool IsHandledEmotion(EmotionType emotionType)
 	{
 		return emotionType is EmotionType.SelectTarget
@@ -8343,6 +8373,11 @@ public sealed class GameServerConnection : BaseClientConnection
 	private async Task BroadcastEmotionAsync(Player player, SmEmotion packet)
 	{
 		// Java parity: PacketSendUtility.broadcastToSightedPlayers(player, SM_EMOTION, true).
+		await BroadcastToSightedPlayersAsync(player, packet);
+	}
+
+	private async Task BroadcastToSightedPlayersAsync(Player player, GameServerPacket packet)
+	{
 		if (_connectionRegistry != null)
 			await _connectionRegistry.BroadcastToVisiblePlayersAsync(player.Position, player.ObjectId, packet, includeSourcePlayer: true);
 		else
