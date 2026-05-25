@@ -170,6 +170,41 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleUseItemAsync_DecomposeCompletesAndAddsReward()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(
+			includeThreadPoolManager: true,
+			idFactory: new IDFactory([5001]));
+		var player = CreatePlayer(itemId: 100);
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
+
+		Assert.Equal(5001, player.UsingItemObjectId);
+		await WaitUntilAsync(() => fixture.SentPackets.Count >= 5, TimeSpan.FromSeconds(5));
+		Assert.Equal(0, player.UsingItemObjectId);
+		Assert.Collection(
+			player.InventoryItems.OrderBy(item => item.ItemId),
+			item =>
+			{
+				Assert.Equal(100, item.ItemId);
+				Assert.Equal(1, item.Count);
+			},
+			item =>
+			{
+				Assert.Equal(200, item.ItemId);
+				Assert.Equal(1, item.Count);
+			});
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 100, expectedTime: 3000, expectedEnd: 0),
+			packet => Assert.IsType<SmSystemMessage>(packet),
+			packet => AssertInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 5001, expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse),
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 100, expectedTime: 0, expectedEnd: 1),
+			packet => Assert.IsType<SmInventoryAddItem>(packet));
+	}
+
+	[Fact]
 	public async Task HandleUseItemAsync_SelectableDecomposeShowsChoicesWithoutSchedulingUse()
 	{
 		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(includeThreadPoolManager: true);
@@ -615,9 +650,9 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Equal(0, reader.Remaining);
 	}
 
-	private static async Task WaitUntilAsync(Func<bool> predicate)
+	private static async Task WaitUntilAsync(Func<bool> predicate, TimeSpan? timeout = null)
 	{
-		var deadline = DateTimeOffset.UtcNow.AddSeconds(3);
+		var deadline = DateTimeOffset.UtcNow.Add(timeout ?? TimeSpan.FromSeconds(3));
 		while (DateTimeOffset.UtcNow < deadline)
 		{
 			if (predicate())
