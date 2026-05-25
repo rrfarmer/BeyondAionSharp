@@ -82,9 +82,12 @@ public static class ItemPurificationLiveExecutionService
 				MutationPacketSend: null);
 		}
 
+		var mutationPacketPlan = CreateMutationPacketPlanWithAbyssPointsPackets(
+			remainingPacketPlan,
+			liveMutation.AbyssPointsPlan);
 		var mutationSend = await sendAdapter.SendConcretePacketsAsync(
 			playerObjectId,
-			remainingPacketPlan,
+			mutationPacketPlan,
 			cancellationToken);
 		return new ItemPurificationLiveExecutionResult(
 			mutationSend.Succeeded
@@ -94,6 +97,37 @@ public static class ItemPurificationLiveExecutionService
 			successSend,
 			liveMutation,
 			mutationSend);
+	}
+
+	private static ItemPurificationPacketPlan CreateMutationPacketPlanWithAbyssPointsPackets(
+		ItemPurificationPacketPlan packetPlan,
+		AbyssPointsAddPlan? abyssPointsPlan)
+	{
+		// Java parity: ItemPurificationService.decreaseMaterials calls
+		// AbyssPointsService.addAp at the AP operation point, which sends AP system/rank packets.
+		// Rank-change broadcast and deeper side effects remain modeled metadata for later units.
+		if (abyssPointsPlan?.Applied != true || abyssPointsPlan.PlayerPackets.Count == 0)
+			return packetPlan;
+
+		var operations = new List<ItemPurificationPacketOperation>();
+		foreach (var operation in packetPlan.Operations)
+		{
+			if (operation.Type != ItemPurificationPacketOperationType.AbyssPointsUpdate)
+			{
+				operations.Add(operation);
+				continue;
+			}
+
+			foreach (var packet in abyssPointsPlan.PlayerPackets)
+			{
+				operations.Add(operation with
+				{
+					ConcretePacket = packet,
+				});
+			}
+		}
+
+		return new ItemPurificationPacketPlan(packetPlan.Status, operations);
 	}
 }
 

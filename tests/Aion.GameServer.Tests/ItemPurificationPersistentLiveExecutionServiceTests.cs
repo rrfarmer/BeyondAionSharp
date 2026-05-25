@@ -58,6 +58,8 @@ public sealed class ItemPurificationPersistentLiveExecutionServiceTests
 			[
 				typeof(SmSystemMessage),
 				typeof(SmInventoryUpdateItem),
+				typeof(SmSystemMessage),
+				typeof(SmAbyssRank),
 				typeof(SmDeleteItem),
 				typeof(SmCubeUpdate),
 				typeof(SmInventoryAddItem),
@@ -299,4 +301,3 @@ public sealed class ItemPurificationPersistentLiveExecutionServiceTests
 		}
 	}
 }
-

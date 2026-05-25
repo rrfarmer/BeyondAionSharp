@@ -44,10 +44,9 @@ public sealed class ItemPurificationLiveExecutionServiceTests
 		Assert.NotNull(result.LiveMutation);
 		Assert.True(result.LiveMutation.Succeeded);
 		Assert.NotNull(result.MutationPacketSend);
-		Assert.Equal(5, result.MutationPacketSend.SentCount);
+		Assert.Equal(7, result.MutationPacketSend.SentCount);
 		Assert.Equal(
 			[
-				ItemPurificationPacketOperationType.AbyssPointsUpdate,
 				ItemPurificationPacketOperationType.KinahNoPacket,
 			],
 			result.MutationPacketSend.SkippedMetadataOperations.Select(operation => operation.Type).ToArray());
@@ -55,6 +54,8 @@ public sealed class ItemPurificationLiveExecutionServiceTests
 			[
 				typeof(SmSystemMessage),
 				typeof(SmInventoryUpdateItem),
+				typeof(SmSystemMessage),
+				typeof(SmAbyssRank),
 				typeof(SmDeleteItem),
 				typeof(SmCubeUpdate),
 				typeof(SmInventoryAddItem),
@@ -115,7 +116,7 @@ public sealed class ItemPurificationLiveExecutionServiceTests
 	}
 
 	[Fact]
-	public async Task ExecuteAsync_RankDropKeepsApSpendPacketsModeledButNotSent()
+	public async Task ExecuteAsync_RankDropSendsModeledApSpendPacketsAtMetadataSlot()
 	{
 		var baseItem = CreateBaseItem(enchant: 25);
 		var material = new InventoryItem { ObjectId = 20, ItemId = 186000001, Count = 3, Location = 0 };
@@ -159,10 +160,9 @@ public sealed class ItemPurificationLiveExecutionServiceTests
 		Assert.Equal(100, player.AbyssRank.Ap);
 		Assert.Equal(1, player.AbyssRank.Rank);
 
-		Assert.Equal(5, result.MutationPacketSend?.SentCount);
+		Assert.Equal(7, result.MutationPacketSend?.SentCount);
 		Assert.Equal(
 			[
-				ItemPurificationPacketOperationType.AbyssPointsUpdate,
 				ItemPurificationPacketOperationType.KinahNoPacket,
 			],
 			result.MutationPacketSend?.SkippedMetadataOperations.Select(operation => operation.Type).ToArray());
@@ -170,6 +170,8 @@ public sealed class ItemPurificationLiveExecutionServiceTests
 			[
 				typeof(SmSystemMessage),
 				typeof(SmInventoryUpdateItem),
+				typeof(SmSystemMessage),
+				typeof(SmAbyssRank),
 				typeof(SmDeleteItem),
 				typeof(SmCubeUpdate),
 				typeof(SmInventoryAddItem),

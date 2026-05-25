@@ -693,11 +693,13 @@ public sealed class GameServerConnectionItemPurificationTests
 		Assert.Equal([20, 30, 9001], player.InventoryItems.Select(item => item.ObjectId).Order().ToArray());
 		Assert.Equal(1, player.InventoryItems.Single(item => item.ObjectId == material.ObjectId).Count);
 		Assert.Equal(10_000, player.InventoryItems.Single(item => item.ObjectId == kinah.ObjectId).Count);
-		Assert.Equal(6, registry.SentPackets.Count);
+		Assert.Equal(8, registry.SentPackets.Count);
 		Assert.Equal(
 			[
 				typeof(SmSystemMessage),
 				typeof(SmInventoryUpdateItem),
+				typeof(SmSystemMessage),
+				typeof(SmAbyssRank),
 				typeof(SmDeleteItem),
 				typeof(SmCubeUpdate),
 				typeof(SmInventoryAddItem),
@@ -706,7 +708,6 @@ public sealed class GameServerConnectionItemPurificationTests
 			registry.SentPackets.Select(packet => packet.Packet.GetType()).ToArray());
 		Assert.Equal(
 			[
-				ItemPurificationPacketOperationType.AbyssPointsUpdate,
 				ItemPurificationPacketOperationType.KinahNoPacket,
 			],
 			execution.MutationPacketSend?.SkippedMetadataOperations.Select(operation => operation.Type).ToArray());
@@ -773,11 +774,13 @@ public sealed class GameServerConnectionItemPurificationTests
 		Assert.Empty(repository.ItemPurificationUpdatedTargetItems);
 		Assert.Equal([9001], repository.ItemPurificationAddedTargetItems.Select(item => item.ObjectId).ToArray());
 		Assert.Equal(3_800, repository.ItemPurificationAbyssRank?.Ap);
-		Assert.Equal(6, registry.SentPackets.Count);
+		Assert.Equal(8, registry.SentPackets.Count);
 		Assert.Equal(
 			[
 				typeof(SmSystemMessage),
 				typeof(SmInventoryUpdateItem),
+				typeof(SmSystemMessage),
+				typeof(SmAbyssRank),
 				typeof(SmDeleteItem),
 				typeof(SmCubeUpdate),
 				typeof(SmInventoryAddItem),
@@ -843,7 +846,7 @@ public sealed class GameServerConnectionItemPurificationTests
 		Assert.Equal([20], repository.ItemPurificationMaterialItemUpdates.Select(item => item.ObjectId).ToArray());
 		Assert.Equal(10, repository.ItemPurificationDeletedBaseItemObjectId);
 		Assert.Equal([9001], repository.ItemPurificationAddedTargetItems.Select(item => item.ObjectId).ToArray());
-		Assert.Equal(6, registry.SentPackets.Count);
+		Assert.Equal(8, registry.SentPackets.Count);
 	}
 
 	private static CmItemPurification CreatePacket(
