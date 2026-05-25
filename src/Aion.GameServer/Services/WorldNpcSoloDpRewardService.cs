@@ -1,3 +1,4 @@
+using Aion.GameServer.Configuration;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 
@@ -6,11 +7,13 @@ namespace Aion.GameServer.Services;
 public sealed class WorldNpcSoloDpRewardService
 {
 	private static readonly float[] DefaultApPveRates = [1f, 2f];
+	private readonly GameServerRateOptions _rateOptions;
 	private readonly WorldNpcResourceStatsService _resourceStats;
 
-	public WorldNpcSoloDpRewardService(WorldNpcResourceStatsService resourceStats)
+	public WorldNpcSoloDpRewardService(WorldNpcResourceStatsService resourceStats, GameServerOptions? options = null)
 	{
 		_resourceStats = resourceStats;
+		_rateOptions = options?.Rates ?? new GameServerRateOptions();
 	}
 
 	public async ValueTask<WorldNpcSoloDpRewardResult> ApplySoloDpRewardAsync(
@@ -125,8 +128,10 @@ public sealed class WorldNpcSoloDpRewardService
 		bool sourceSiegeNpcPeace = false)
 	{
 		// Java parity: NpcController.doReward asks StatFunctions.calculatePvEApGained before scaling rewardAp.
+		// RatesConfig.AP_PVE_RATES reaches StatFunctions through Rates.AP_PVE.calcResult.
+		var configuredApPveRates = apPveRates ?? _rateOptions.ApPveRates;
 		var calculatedAp = player != null && npc != null
-			? CalculatePveApGained(player, npc.Template, apPveRates, apBoostStat)
+			? CalculatePveApGained(player, npc.Template, configuredApPveRates, apBoostStat)
 			: 0;
 		return ApplySoloApReward(
 			player,

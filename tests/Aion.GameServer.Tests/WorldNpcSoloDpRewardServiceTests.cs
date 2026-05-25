@@ -1,3 +1,4 @@
+using Aion.GameServer.Configuration;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
@@ -326,6 +327,41 @@ public sealed class WorldNpcSoloDpRewardServiceTests
 	}
 
 	[Fact]
+	public void ApplySoloApRewardFromNpcStats_UsesConfiguredApPveRatesWhenNoOverrideIsSupplied()
+	{
+		var service = CreateService(
+			out _,
+			new GameServerOptions
+			{
+				Rates = new GameServerRateOptions
+				{
+					ApPveRates = [1f, 1.25f],
+				},
+			});
+		var player = CreatePlayer(objectId: 1413, playerClass: "RANGER", level: 10, dp: 100);
+		player.AccountMembership = 1;
+		player.AbyssRank = PlayerAbyssRank.Default() with { Ap = 600 };
+		var npc = CreateNpc(objectId: 2413, level: 12, rating: "ELITE");
+
+		var result = service.ApplySoloApRewardFromNpcStats(
+			player,
+			npc,
+			damagePercent: 1f,
+			shouldRewardAp: true,
+			apMultiplier: 1f,
+			apBoostStat: 100);
+
+		Assert.Equal(WorldNpcSoloApRewardStatus.Applied, result.Status);
+		Assert.Equal(75, result.CalculatedAp);
+		Assert.Equal(75, result.RewardAp);
+		Assert.Equal(600, result.PreviousAp);
+		Assert.Equal(675, result.CurrentAp);
+		Assert.Equal(675, player.AbyssRank.Ap);
+		Assert.NotNull(result.AbyssPointsPlan);
+		Assert.Equal(75, result.AbyssPointsPlan.Added);
+	}
+
+	[Fact]
 	public void ApplySoloApReward_SkipsMissingDeadTargets()
 	{
 		var service = CreateService(out _);
@@ -349,14 +385,16 @@ public sealed class WorldNpcSoloDpRewardServiceTests
 		Assert.Equal(400, deadPlayer.AbyssRank.Ap);
 	}
 
-	private static WorldNpcSoloDpRewardService CreateService(out CapturingConnectionRegistry registry)
+	private static WorldNpcSoloDpRewardService CreateService(
+		out CapturingConnectionRegistry registry,
+		GameServerOptions? options = null)
 	{
 		registry = new CapturingConnectionRegistry();
 		var resourceStats = new WorldNpcResourceStatsService(
 			new WorldNpcLifeStatsService(new WorldNpcDeathDropWorkflowService(null!, null!)),
 			registry,
 			new PlayerVisualStatsUpdateService(registry));
-		return new WorldNpcSoloDpRewardService(resourceStats);
+		return new WorldNpcSoloDpRewardService(resourceStats, options);
 	}
 
 	private static Player CreatePlayer(
