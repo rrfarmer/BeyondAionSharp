@@ -306,6 +306,38 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			packet => Assert.IsType<SmInventoryAddItem>(packet));
 	}
 
+	[Fact]
+	public async Task HandleSelectDecomposableAsync_FullCubeStillAddsSelectableRewardLikeJavaOverflow()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository, idFactory: new IDFactory([5001]));
+		var player = CreatePlayer(itemId: 101);
+		player.InventoryItems = player.InventoryItems
+			.Concat(Enumerable.Range(0, 26).Select(index => new InventoryItem
+			{
+				ObjectId = 6000 + index,
+				ItemId = 200,
+				Count = 1,
+				Location = 0,
+			}))
+			.ToArray();
+
+		await InvokeHandleSelectDecomposableAsync(fixture.Connection, player, CreateSelectDecomposable(sourceItemObjectId: 5001, index: 1));
+
+		Assert.Equal(1, repository.SaveDecomposeActionMutationCalls);
+		Assert.Equal(28, InventoryCapacity.GetUsedCubeSlots(player));
+		Assert.Contains(player.InventoryItems, item => item is { ObjectId: 5001, ItemId: 101, Count: 1 });
+		var reward = Assert.Single(player.InventoryItems, item => item.ItemId == 202);
+		Assert.Equal(3, reward.Count);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 101, expectedTime: 0, expectedEnd: 1, expectedUnknown3: 1),
+			packet => Assert.IsType<SmSystemMessage>(packet),
+			packet => AssertInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 5001, expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse),
+			packet => AssertSecondaryShowDecomposablePayload(Assert.IsType<SmSecondaryShowDecomposable>(packet)),
+			packet => Assert.IsType<SmInventoryAddItem>(packet));
+	}
+
 	[Theory]
 	[InlineData(2)]
 	[InlineData(99)]
