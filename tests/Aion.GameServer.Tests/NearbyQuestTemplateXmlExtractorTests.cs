@@ -4,6 +4,20 @@ namespace Aion.GameServer.Tests;
 
 public sealed class NearbyQuestTemplateXmlExtractorTests
 {
+	private const int ExpectedRealDataTemplates = 8043;
+	private const int ExpectedRealDataXmlStartConditionTemplates = 2427;
+	private const int ExpectedRealDataInventoryItemTemplates = 363;
+	private const int ExpectedRealDataCombineSkillTemplates = 628;
+	private const int ExpectedRealDataNpcFactionTemplates = 365;
+	private const int ExpectedRealDataTimeBasedTemplates = 927;
+	private const int ExpectedRealDataRaceRestrictedTemplates = 7431;
+	private const int ExpectedRealDataClassRestrictedTemplates = 483;
+	private const int ExpectedRealDataGenderRestrictedTemplates = 18;
+	private const int ExpectedRealDataRankRestrictedTemplates = 12;
+	private const int ExpectedRealDataMinLevelTemplates = 8043;
+	private const int ExpectedRealDataMaxLevelTemplates = 1355;
+	private const int ExpectedRealDataMaxClassListCount = 16;
+
 	[Fact]
 	public void Extract_ReadsNearbyPredicateQuestTemplateFieldsLikeJavaQuestTemplate()
 	{
@@ -87,5 +101,46 @@ public sealed class NearbyQuestTemplateXmlExtractorTests
 		Assert.True(table.TryGetQuest(3001, out var template));
 		Assert.NotNull(template);
 		Assert.Equal(22, template.MinLevelPermitted);
+	}
+
+	[Fact]
+	public void RealDataAudit_LoadsNearbyQuestTemplateSummariesWithoutProductionWiring()
+	{
+		var repoRoot = FindRepoRoot();
+		var questDataPath = Path.Combine(repoRoot, "game-server", "data", "static_data", "quest_data", "quest_data.xml");
+		var extractor = new NearbyQuestTemplateXmlExtractor();
+
+		using var stream = File.OpenRead(questDataPath);
+		var templates = extractor.Extract(stream);
+
+		Assert.Equal(ExpectedRealDataTemplates, templates.Count);
+		Assert.Equal(ExpectedRealDataXmlStartConditionTemplates, templates.Count(template => template.HasXmlStartConditions));
+		Assert.Equal(ExpectedRealDataInventoryItemTemplates, templates.Count(template => template.HasInventoryItems));
+		Assert.Equal(ExpectedRealDataCombineSkillTemplates, templates.Count(template => template.CombineSkill != 0));
+		Assert.Equal(ExpectedRealDataNpcFactionTemplates, templates.Count(template => template.NpcFactionId != 0));
+		Assert.Equal(ExpectedRealDataTimeBasedTemplates, templates.Count(template => template.IsTimeBased));
+		Assert.Equal(ExpectedRealDataRaceRestrictedTemplates, templates.Count(template => !string.IsNullOrWhiteSpace(template.RacePermitted) && template.RacePermitted != "PC_ALL"));
+		Assert.Equal(ExpectedRealDataClassRestrictedTemplates, templates.Count(template => template.ClassPermitted.Count != 0));
+		Assert.Equal(ExpectedRealDataGenderRestrictedTemplates, templates.Count(template => !string.IsNullOrWhiteSpace(template.GenderPermitted)));
+		Assert.Equal(ExpectedRealDataRankRestrictedTemplates, templates.Count(template => template.RequiredRank != 0));
+		Assert.Equal(ExpectedRealDataMinLevelTemplates, templates.Count(template => template.MinLevelPermitted != 0));
+		Assert.Equal(ExpectedRealDataMaxLevelTemplates, templates.Count(template => template.MaxLevelPermitted != 0));
+		Assert.Equal(ExpectedRealDataMaxClassListCount, templates.Max(template => template.ClassPermitted.Count));
+		Assert.Equal(ExpectedRealDataTemplates, new NearbyQuestTemplateTable(templates).Count);
+	}
+
+	private static string FindRepoRoot()
+	{
+		var directory = new DirectoryInfo(AppContext.BaseDirectory);
+		while (directory != null)
+		{
+			if (Directory.Exists(Path.Combine(directory.FullName, "game-server"))
+				&& Directory.Exists(Path.Combine(directory.FullName, "dotnetConversion")))
+				return directory.FullName;
+
+			directory = directory.Parent;
+		}
+
+		throw new DirectoryNotFoundException("Unable to locate repository root.");
 	}
 }
