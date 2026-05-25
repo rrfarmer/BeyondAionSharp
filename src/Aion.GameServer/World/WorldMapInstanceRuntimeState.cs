@@ -5,6 +5,7 @@ public sealed class WorldMapInstanceRuntimeState
 	private readonly object _sync = new();
 	private readonly HashSet<int> _registeredObjectIds = new();
 	private readonly HashSet<int> _playerObjectIds = new();
+	private readonly HashSet<int> _questIds = new();
 
 	public WorldMapInstanceRuntimeState(int instanceId, int ownerId = 0, int maxPlayers = 0)
 	{
@@ -50,6 +51,15 @@ public sealed class WorldMapInstanceRuntimeState
 		{
 			lock (_sync)
 				return _registeredObjectIds.ToHashSet();
+		}
+	}
+
+	public IReadOnlySet<int> QuestIds
+	{
+		get
+		{
+			lock (_sync)
+				return _questIds.ToHashSet();
 		}
 	}
 
@@ -104,5 +114,18 @@ public sealed class WorldMapInstanceRuntimeState
 		// Java parity: WorldMapInstance.removeObject removes players from worldMapPlayers.
 		lock (_sync)
 			_playerObjectIds.Remove(objectId);
+	}
+
+	public bool RegisterQuestStartIds(IEnumerable<int> questIds)
+	{
+		// Java parity: WorldMapInstance.addObject(Npc) adds QuestNpc.getOnQuestStart ids to questIds.
+		var addedAny = false;
+		lock (_sync)
+		{
+			foreach (var questId in questIds)
+				addedAny |= _questIds.Add(questId);
+		}
+
+		return addedAny;
 	}
 }

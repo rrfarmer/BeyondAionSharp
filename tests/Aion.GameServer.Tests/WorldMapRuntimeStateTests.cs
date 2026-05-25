@@ -144,6 +144,18 @@ public sealed class WorldMapRuntimeStateTests
 	}
 
 	[Fact]
+	public void WorldMapInstanceRuntimeState_TracksQuestStartIdsLikeJavaWorldMapInstance()
+	{
+		var instance = new WorldMapInstanceRuntimeState(instanceId: 7, maxPlayers: 6);
+
+		Assert.True(instance.RegisterQuestStartIds([1001, 1002, 1001]));
+		Assert.Equal([1001, 1002], instance.QuestIds.Order());
+		Assert.False(instance.RegisterQuestStartIds([1002]));
+		Assert.True(instance.RegisterQuestStartIds([1003]));
+		Assert.Equal([1001, 1002, 1003], instance.QuestIds.Order());
+	}
+
+	[Fact]
 	public void WorldMapRuntimeStateTable_AllocatesNextInstanceIdsLikeJavaWorldMap()
 	{
 		var table = new WorldMapRuntimeStateTable(
