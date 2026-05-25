@@ -3414,11 +3414,13 @@ public sealed class GameServerConnection : BaseClientConnection
 		return Random.Shared.Next(min, max + 1);
 	}
 
-	internal Task<ItemPurificationWorkflowPlan?> HandleItemPurificationAsync(
+	internal Task<ItemPurificationHandlerPlan?> HandleItemPurificationAsync(
 		Player player,
 		CmItemPurification packet,
 		ItemPurificationTable? itemPurificationsOverride = null,
-		ItemTemplateTable? itemTemplatesOverride = null)
+		ItemTemplateTable? itemTemplatesOverride = null,
+		int targetObjectId = 0,
+		int? rerolledRandomBonusId = null)
 	{
 		// Java parity: network/aion/clientpackets/CM_ITEM_PURIFICATION.runImpl uses the active player,
 		// resolves the base item by upgradedItemObjectId, and ignores packet player/material object ids.
@@ -3426,17 +3428,25 @@ public sealed class GameServerConnection : BaseClientConnection
 		var itemPurifications = itemPurificationsOverride ?? staticData?.ItemPurifications;
 		var itemTemplates = itemTemplatesOverride ?? staticData?.ItemTemplates;
 		if (itemPurifications == null || itemTemplates == null)
-			return Task.FromResult<ItemPurificationWorkflowPlan?>(null);
+			return Task.FromResult<ItemPurificationHandlerPlan?>(null);
 
 		var baseItem = player.InventoryItems.FirstOrDefault(item => item.ObjectId == packet.BaseItemObjectId);
-		var plan = ItemPurificationWorkflowService.CreateWorkflowPlan(
+		var workflow = ItemPurificationWorkflowService.CreateWorkflowPlan(
 			player,
 			baseItem,
 			itemPurifications,
 			itemTemplates,
 			packet.ResultItemId,
-			targetObjectId: 0);
-		return Task.FromResult<ItemPurificationWorkflowPlan?>(plan);
+			targetObjectId,
+			rerolledRandomBonusId);
+		var application = ItemPurificationApplicationPlanService.CreateApplicationPlan(workflow);
+		var sourceTemplate = baseItem == null ? null : itemTemplates.GetItemTemplate(baseItem.ItemId);
+		var targetTemplate = application.TargetItem == null ? null : itemTemplates.GetItemTemplate(application.TargetItem.ItemId);
+		var packetPlan = ItemPurificationPacketPlanService.CreatePacketPlan(
+			application,
+			sourceTemplate?.GetClientName() ?? sourceTemplate?.Name ?? string.Empty,
+			targetTemplate?.GetClientName() ?? targetTemplate?.Name ?? string.Empty);
+		return Task.FromResult<ItemPurificationHandlerPlan?>(new ItemPurificationHandlerPlan(workflow, application, packetPlan));
 	}
 
 	internal async Task HandleUseItemAsync(Player player, CmUseItem packet)

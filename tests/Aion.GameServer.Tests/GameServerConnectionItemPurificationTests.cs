@@ -40,19 +40,21 @@ public sealed class GameServerConnectionItemPurificationTests
 			resultItemId: 100000002,
 			requiredMaterialObjectIds: [9001, 9002, 9003, 9004, 9005]);
 
-		var plan = await pair.Connection.HandleItemPurificationAsync(
+		var handlerPlan = await pair.Connection.HandleItemPurificationAsync(
 			player,
 			packet,
 			CreatePurificationTable(),
 			CreateItemTemplates());
 
-		Assert.NotNull(plan);
-		Assert.True(plan.Succeeded);
-		Assert.Equal(ItemPurificationApStatus.Allowed, plan.Validation?.Status);
-		Assert.Equal([20, 10], plan.MaterialMutation?.DeletedObjectIds);
-		Assert.Equal(1_200, plan.MaterialMutation?.AbyssPointsToSpend);
-		Assert.Equal(0, plan.Inheritance?.TargetItem?.ObjectId);
-		Assert.Equal(100000002, plan.Inheritance?.TargetItem?.ItemId);
+		Assert.NotNull(handlerPlan);
+		Assert.True(handlerPlan.Workflow.Succeeded);
+		Assert.Equal(ItemPurificationApStatus.Allowed, handlerPlan.Workflow.Validation?.Status);
+		Assert.Equal([20, 10], handlerPlan.Workflow.MaterialMutation?.DeletedObjectIds);
+		Assert.Equal(1_200, handlerPlan.Workflow.MaterialMutation?.AbyssPointsToSpend);
+		Assert.Equal(0, handlerPlan.Workflow.Inheritance?.TargetItem?.ObjectId);
+		Assert.Equal(100000002, handlerPlan.Workflow.Inheritance?.TargetItem?.ItemId);
+		Assert.Equal(ItemPurificationApplicationPlanStatus.NeedsTargetObjectIdAllocation, handlerPlan.Application.Status);
+		Assert.Equal(ItemPurificationPacketPlanStatus.NeedsRuntimeInputs, handlerPlan.PacketPlan.Status);
 		Assert.Equal(5_000, player.AbyssRank.Ap);
 		Assert.Equal([10, 20, 30], player.InventoryItems.Select(item => item.ObjectId).ToArray());
 		Assert.Equal(2, material.Count);
@@ -75,17 +77,87 @@ public sealed class GameServerConnectionItemPurificationTests
 			resultItemId: 100000002,
 			requiredMaterialObjectIds: [0, 0, 0, 0, 0]);
 
-		var plan = await pair.Connection.HandleItemPurificationAsync(
+		var handlerPlan = await pair.Connection.HandleItemPurificationAsync(
 			player,
 			packet,
 			CreatePurificationTable(),
 			CreateItemTemplates());
 
-		Assert.NotNull(plan);
-		Assert.Equal(ItemPurificationWorkflowStatus.MissingBaseItem, plan.Status);
-		Assert.Null(plan.Validation);
-		Assert.Null(plan.MaterialMutation);
-		Assert.Null(plan.Inheritance);
+		Assert.NotNull(handlerPlan);
+		Assert.Equal(ItemPurificationWorkflowStatus.MissingBaseItem, handlerPlan.Workflow.Status);
+		Assert.Null(handlerPlan.Workflow.Validation);
+		Assert.Null(handlerPlan.Workflow.MaterialMutation);
+		Assert.Null(handlerPlan.Workflow.Inheritance);
+		Assert.Equal(ItemPurificationApplicationPlanStatus.WorkflowNotPlanned, handlerPlan.Application.Status);
+		Assert.Equal(ItemPurificationPacketPlanStatus.ApplicationPlanUnavailable, handlerPlan.PacketPlan.Status);
+	}
+
+	[Fact]
+	public async Task HandleItemPurificationAsync_ComposesApplicationAndPacketPlansWhenTargetObjectIdProvided()
+	{
+		var baseItem = new InventoryItem
+		{
+			ObjectId = 10,
+			ItemId = 100000001,
+			Count = 1,
+			Location = 0,
+			Enchant = 25,
+			TuneCount = 2,
+			RandomBonus = 7,
+		};
+		var material = new InventoryItem { ObjectId = 20, ItemId = 186000001, Count = 2, Location = 0 };
+		var kinah = new InventoryItem { ObjectId = 30, ItemId = 182400001, Count = 10_000, Location = 0 };
+		var player = new Player
+		{
+			ObjectId = 700,
+			AbyssRank = PlayerAbyssRank.Default() with { Ap = 5_000 },
+			InventoryItems = [baseItem, material, kinah],
+		};
+		await using var pair = await TestConnectionPair.CreateAsync();
+		var packet = CreatePacket(
+			playerObjectId: 9999,
+			baseItemObjectId: baseItem.ObjectId,
+			resultItemId: 100000002,
+			requiredMaterialObjectIds: [9001, 9002, 9003, 9004, 9005]);
+
+		var handlerPlan = await pair.Connection.HandleItemPurificationAsync(
+			player,
+			packet,
+			CreatePurificationTable(),
+			CreateItemTemplates(),
+			targetObjectId: 9001);
+
+		Assert.NotNull(handlerPlan);
+		Assert.True(handlerPlan.Workflow.Succeeded);
+		Assert.True(handlerPlan.Application.Succeeded);
+		Assert.Equal(9001, handlerPlan.Application.TargetItem?.ObjectId);
+		Assert.Equal(20, handlerPlan.Application.TargetItem?.Enchant);
+		Assert.Equal(
+			[
+				ItemPurificationApplicationOperationType.DeleteMaterialItem,
+				ItemPurificationApplicationOperationType.SpendAbyssPoints,
+				ItemPurificationApplicationOperationType.PreserveKinahNoOp,
+				ItemPurificationApplicationOperationType.DeleteBaseItem,
+				ItemPurificationApplicationOperationType.AddTargetItem,
+			],
+			handlerPlan.Application.Operations.Select(operation => operation.Type).ToArray());
+		Assert.True(handlerPlan.PacketPlan.Succeeded);
+		Assert.Equal(
+			[
+				ItemPurificationPacketOperationType.UpgradeSuccessSystemMessage,
+				ItemPurificationPacketOperationType.DeleteItem,
+				ItemPurificationPacketOperationType.CubeSizeUpdate,
+				ItemPurificationPacketOperationType.AbyssPointsUpdate,
+				ItemPurificationPacketOperationType.KinahNoPacket,
+				ItemPurificationPacketOperationType.DeleteItem,
+				ItemPurificationPacketOperationType.CubeSizeUpdate,
+				ItemPurificationPacketOperationType.InventoryAddItem,
+				ItemPurificationPacketOperationType.CubeSizeUpdate,
+			],
+			handlerPlan.PacketPlan.Operations.Select(operation => operation.Type).ToArray());
+		Assert.Equal(["item-100000001", "item-100000002"], handlerPlan.PacketPlan.Operations[0].Parameters);
+		Assert.Equal([10, 20, 30], player.InventoryItems.Select(item => item.ObjectId).ToArray());
+		Assert.Equal(5_000, player.AbyssRank.Ap);
 	}
 
 	private static CmItemPurification CreatePacket(
