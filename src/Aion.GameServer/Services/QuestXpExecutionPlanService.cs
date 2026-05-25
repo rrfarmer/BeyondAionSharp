@@ -105,7 +105,7 @@ public static class QuestXpExecutionPlanService
 			new QuestXpExecutionDescriptor(
 				QuestXpExecutionAction.LevelUpAnimationBroadcast,
 				"PlayerController.onLevelChange -> SM_ACTION_ANIMATION(ActionAnimation.LEVEL_UP, newLevel)",
-				Notes: "Java ActionAnimation.LEVEL_UP id is 0; C# packet has no named LevelUp constant yet."),
+				Notes: "Java ActionAnimation.LEVEL_UP id is 0; C# uses SmActionAnimation.LevelUp for the future broadcast packet."),
 			new QuestXpExecutionDescriptor(
 				QuestXpExecutionAction.NpcFactionLevelUp,
 				"PlayerController.onLevelChange -> NpcFactions.onLevelUp"),

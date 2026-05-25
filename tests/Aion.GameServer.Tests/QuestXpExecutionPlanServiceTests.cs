@@ -55,7 +55,7 @@ public sealed class QuestXpExecutionPlanServiceTests
 		Assert.Contains(
 			plan.Descriptors,
 			descriptor => descriptor.Action == QuestXpExecutionAction.LevelUpAnimationBroadcast
-				&& descriptor.Notes!.Contains("LEVEL_UP id is 0", StringComparison.Ordinal));
+				&& descriptor.Notes!.Contains("SmActionAnimation.LevelUp", StringComparison.Ordinal));
 	}
 
 	[Fact]

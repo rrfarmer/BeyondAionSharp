@@ -1014,6 +1014,13 @@ public class GamePacketTests
 		Assert.Equal(0, actionAnimationReader.ReadD());
 		Assert.Equal(0, actionAnimationReader.Remaining);
 
+		var levelUpAnimationPayload = SerializeUnencryptedPayload(new SmActionAnimation(1001, SmActionAnimation.LevelUp, 27));
+		using var levelUpAnimationReader = new PacketBuffer(levelUpAnimationPayload);
+		Assert.Equal(1001, levelUpAnimationReader.ReadD());
+		Assert.Equal(SmActionAnimation.LevelUp, levelUpAnimationReader.ReadH());
+		Assert.Equal(27, levelUpAnimationReader.ReadD());
+		Assert.Equal(0, levelUpAnimationReader.Remaining);
+
 		var statUpdateHpPayload = SerializeUnencryptedPayload(new SmStatUpdateHp(currentHp: 1234, maxHp: 5678));
 		using var statUpdateHpReader = new PacketBuffer(statUpdateHpPayload);
 		Assert.Equal(1234, statUpdateHpReader.ReadD());
