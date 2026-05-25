@@ -92,6 +92,44 @@ public static class ItemPurificationApplicationPlanService
 			targetItem);
 	}
 
+	public static IReadOnlyList<ItemPurificationQuestNotificationCandidate> ProjectQuestNotifications(
+		ItemPurificationApplicationPlan? plan)
+	{
+		// Java parity: Storage.delete notifies QuestEngine.onItemRemoved only for actual
+		// non-Kinah deletes, while Storage.add notifies QuestEngine.onItemGet for actor-backed
+		// CUBE additions after storage update. This projection records intent only; it does not
+		// execute quest handlers or nearby-quest refresh.
+		if (plan == null)
+			return Array.Empty<ItemPurificationQuestNotificationCandidate>();
+
+		var notifications = new List<ItemPurificationQuestNotificationCandidate>();
+		foreach (var operation in plan.Operations)
+		{
+			if (!operation.Effects.HasFlag(ItemPurificationApplicationEffect.QuestNotification))
+				continue;
+
+			var notificationType = operation.Type switch
+			{
+				ItemPurificationApplicationOperationType.DeleteMaterialItem
+					or ItemPurificationApplicationOperationType.DeleteBaseItem
+					=> ItemPurificationQuestNotificationType.ItemRemoved,
+				ItemPurificationApplicationOperationType.AddTargetItem
+					=> ItemPurificationQuestNotificationType.ItemGet,
+				_ => (ItemPurificationQuestNotificationType?)null,
+			};
+			if (notificationType == null)
+				continue;
+
+			notifications.Add(new ItemPurificationQuestNotificationCandidate(
+				notificationType.Value,
+				operation.Type,
+				operation.ObjectId,
+				operation.ItemId));
+		}
+
+		return notifications;
+	}
+
 	private static ItemPurificationApplicationPlanStatus DetermineStatus(
 		bool requiresTargetObjectIdAllocation,
 		bool requiresRandomBonusSelection,
@@ -169,6 +207,12 @@ public sealed record ItemPurificationApplicationOperation(
 	long Count,
 	long NewCount);
 
+public sealed record ItemPurificationQuestNotificationCandidate(
+	ItemPurificationQuestNotificationType Type,
+	ItemPurificationApplicationOperationType SourceOperation,
+	int ObjectId,
+	int ItemId);
+
 public enum ItemPurificationApplicationPlanStatus
 {
 	Ready,
@@ -191,6 +235,12 @@ public enum ItemPurificationApplicationOperationType
 	UpdateBaseItemCount,
 	DeleteBaseItem,
 	AddTargetItem,
+}
+
+public enum ItemPurificationQuestNotificationType
+{
+	ItemRemoved,
+	ItemGet,
 }
 
 [Flags]

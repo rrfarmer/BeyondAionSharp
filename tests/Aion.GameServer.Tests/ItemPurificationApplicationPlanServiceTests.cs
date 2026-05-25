@@ -67,6 +67,59 @@ public sealed class ItemPurificationApplicationPlanServiceTests
 	}
 
 	[Fact]
+	public void ProjectQuestNotifications_EmitsOnlyJavaDeleteAndCubeAddCandidatesInOperationOrder()
+	{
+		var baseItem = CreateBaseItem(enchant: 25);
+		var player = CreatePlayer(
+			abyssPoints: 5_000,
+			kinah: 10_000,
+			baseItem,
+			new InventoryItem { ObjectId = 20, ItemId = 186000001, Count = 3, Location = 0 },
+			new InventoryItem { ObjectId = 21, ItemId = 186000002, Count = 2, Location = 0 });
+		var workflow = CreateWorkflow(
+			player,
+			baseItem,
+			targetObjectId: 9001,
+			requiredMaterials:
+			[
+				new ItemPurificationMaterialSummary(186000001, 2),
+				new ItemPurificationMaterialSummary(186000002, 2),
+			]);
+
+		var plan = ItemPurificationApplicationPlanService.CreateApplicationPlan(workflow);
+		var notifications = ItemPurificationApplicationPlanService.ProjectQuestNotifications(plan);
+
+		Assert.True(plan.Succeeded);
+		Assert.Equal(
+			[
+				ItemPurificationApplicationOperationType.UpdateMaterialItemCount,
+				ItemPurificationApplicationOperationType.DeleteMaterialItem,
+				ItemPurificationApplicationOperationType.SpendAbyssPoints,
+				ItemPurificationApplicationOperationType.PreserveKinahNoOp,
+				ItemPurificationApplicationOperationType.DeleteBaseItem,
+				ItemPurificationApplicationOperationType.AddTargetItem,
+			],
+			plan.Operations.Select(operation => operation.Type).ToArray());
+		Assert.Equal(3, notifications.Count);
+		Assert.Equal(
+			[
+				ItemPurificationQuestNotificationType.ItemRemoved,
+				ItemPurificationQuestNotificationType.ItemRemoved,
+				ItemPurificationQuestNotificationType.ItemGet,
+			],
+			notifications.Select(notification => notification.Type).ToArray());
+		Assert.Equal(
+			[
+				ItemPurificationApplicationOperationType.DeleteMaterialItem,
+				ItemPurificationApplicationOperationType.DeleteBaseItem,
+				ItemPurificationApplicationOperationType.AddTargetItem,
+			],
+			notifications.Select(notification => notification.SourceOperation).ToArray());
+		Assert.Equal([21, 10, 9001], notifications.Select(notification => notification.ObjectId).ToArray());
+		Assert.Equal([186000002, 100000001, 100000002], notifications.Select(notification => notification.ItemId).ToArray());
+	}
+
+	[Fact]
 	public void CreateApplicationPlan_FlagsPlaceholderTargetObjectId()
 	{
 		var baseItem = CreateBaseItem(enchant: 25);
@@ -127,12 +180,13 @@ public sealed class ItemPurificationApplicationPlanServiceTests
 		InventoryItem baseItem,
 		int targetObjectId,
 		int sourceStatBonusSetId = 0,
-		int targetStatBonusSetId = 0)
+		int targetStatBonusSetId = 0,
+		IReadOnlyList<ItemPurificationMaterialSummary>? requiredMaterials = null)
 	{
 		return ItemPurificationWorkflowService.CreateWorkflowPlan(
 			player,
 			baseItem,
-			CreatePurificationTable(),
+			CreatePurificationTable(requiredMaterials),
 			CreateItemTemplates(sourceStatBonusSetId, targetStatBonusSetId),
 			resultItemId: 100000002,
 			targetObjectId);
@@ -166,7 +220,8 @@ public sealed class ItemPurificationApplicationPlanServiceTests
 		};
 	}
 
-	private static ItemPurificationTable CreatePurificationTable()
+	private static ItemPurificationTable CreatePurificationTable(
+		IReadOnlyList<ItemPurificationMaterialSummary>? requiredMaterials = null)
 	{
 		return new ItemPurificationTable(
 		[
@@ -178,7 +233,7 @@ public sealed class ItemPurificationApplicationPlanServiceTests
 						MinEnchantCount: 10,
 						NecessaryAbyssPoints: 1_200,
 						NecessaryKinah: 1_000,
-						RequiredMaterials: [new ItemPurificationMaterialSummary(186000001, 2)]),
+						RequiredMaterials: requiredMaterials ?? [new ItemPurificationMaterialSummary(186000001, 2)]),
 				]),
 		]);
 	}
