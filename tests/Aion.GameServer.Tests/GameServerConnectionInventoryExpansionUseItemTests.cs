@@ -452,6 +452,58 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleQuestionResponseAsync_ChargeAllApPaymentChargesOnlyCurrentChargeableItemWhenOnePendingItemIsMissing()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreateChargeAllPaymentPlayerWithTwoItems();
+		player.InventoryItems = player.InventoryItems.Where(inventoryItem => inventoryItem.ObjectId != 7001).ToArray();
+		var pendingRequest = new PendingChargeAllRequest(
+			SenderObjectId: player.ObjectId,
+			ChargeWay: 2,
+			PaymentAmount: 1_000,
+			Items:
+			[
+				new PendingChargeAllItem(
+					ObjectId: 7001,
+					ItemId: 100000400,
+					PreviousCharge: 0,
+					TargetCharge: ItemChargeService.Level1ChargePoints,
+					Level: 1),
+				new PendingChargeAllItem(
+					ObjectId: 7002,
+					ItemId: 100000400,
+					PreviousCharge: 0,
+					TargetCharge: ItemChargeService.Level1ChargePoints,
+					Level: 1),
+			]);
+		player.PendingChargeAllRequest = pendingRequest;
+		Assert.True(player.ResponseRequester.PutRequest(
+			SmQuestionWindow.ItemCharge2AllConfirm,
+			new QuestionResponseRequest(player.ObjectId, QuestionResponseRequestKind.ChargeAll, pendingRequest)));
+
+		await fixture.Connection.HandleQuestionResponseAsync(player, CreateQuestionResponse(SmQuestionWindow.ItemCharge2AllConfirm, response: 1));
+
+		Assert.Equal(0, player.AbyssRank.Ap);
+		Assert.Equal(1, repository.SaveItemChargeAllMutationCalls);
+		Assert.Equal(0, repository.ChargeAllPaymentAbyssRank?.Ap);
+		var chargedItem = Assert.Single(repository.ChargeAllChargedItems);
+		Assert.Equal(7002, chargedItem.ObjectId);
+		Assert.Null(player.PendingChargeAllRequest);
+		var remainingItem = Assert.Single(player.InventoryItems, inventoryItem => inventoryItem.ItemId == 100000400);
+		Assert.Equal(7002, remainingItem.ObjectId);
+		Assert.Equal(ItemChargeService.Level1ChargePoints, remainingItem.Charge);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1300965, "1000"),
+			packet => Assert.IsType<SmAbyssRank>(packet),
+			packet => AssertChargeInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 7002),
+			packet => Assert.IsType<SmSystemMessage>(packet),
+			packet => Assert.IsType<SmStatsInfo>(packet),
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1401340));
+	}
+
+	[Fact]
 	public async Task HandleQuestionResponseAsync_ChargeAllKinahPaymentRejectsInsufficientKinahWithoutSideEffects()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
