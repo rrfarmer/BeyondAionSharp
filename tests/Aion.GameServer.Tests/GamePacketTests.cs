@@ -831,6 +831,7 @@ public class GamePacketTests
 		Assert.Equal(SmInventoryUpdateItem.DecreaseItemUse, inventoryUpdateReader.ReadH());
 		Assert.Equal(0, inventoryUpdateReader.Remaining);
 		Assert.Equal(0x19, SmInventoryUpdateItem.IncreaseItemCollect);
+		Assert.Equal(0x32, SmInventoryUpdateItem.IncreaseKinahQuest);
 
 		var chargeUpdateItem = new InventoryItem
 		{

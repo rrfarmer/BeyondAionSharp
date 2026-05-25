@@ -1,5 +1,6 @@
 using Aion.GameServer.Configuration;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion.ServerPackets;
 
 namespace Aion.GameServer.Services;
 
@@ -58,11 +59,102 @@ public sealed class QuestRewardService
 			previousAp);
 	}
 
+	public QuestKinahRewardPlan CreateKinahRewardPlan(
+		Player? player,
+		IReadOnlyList<InventoryItem> inventoryItems,
+		long rewardKinah,
+		Func<int>? nextObjectId = null,
+		IReadOnlyList<float>? questKinahRates = null,
+		long kinahMaxStackCount = long.MaxValue)
+	{
+		// Java parity: services/QuestService.giveReward -> if (rewards.getKinah() != 0)
+		// player.getInventory().increaseKinah(Rates.QUEST_KINAH.calcResult(...), INC_KINAH_QUEST).
+		if (player == null)
+			return QuestKinahRewardPlan.MissingPlayer(rewardKinah);
+		if (rewardKinah == 0)
+			return QuestKinahRewardPlan.NoReward(player.ObjectId);
+
+		var appliedKinah = ApplyQuestKinahRate(
+			player.AccountMembership,
+			rewardKinah,
+			questKinahRates ?? _rateOptions.QuestKinahRates);
+		var kinahItem = inventoryItems.FirstOrDefault(item =>
+			item.ItemId == InventoryItemFactory.KinahItemId && item.Location == QuestKinahRewardPlan.CubeStorageId);
+
+		if (kinahItem == null)
+		{
+			var objectId = nextObjectId?.Invoke() ?? 0;
+			if (objectId == 0)
+				return QuestKinahRewardPlan.MissingKinahObjectId(player.ObjectId, rewardKinah, appliedKinah);
+
+			var increase = ApplyJavaIncreaseItemCount(0, appliedKinah, kinahMaxStackCount);
+			var created = CreateKinahItem(objectId, player.ObjectId, increase.CurrentCount);
+			return appliedKinah > 0
+				? QuestKinahRewardPlan.CreatedKinahItem(player.ObjectId, rewardKinah, appliedKinah, created, increase.LeftCount)
+				: QuestKinahRewardPlan.CreatedEmptyKinahItem(player.ObjectId, rewardKinah, appliedKinah, created);
+		}
+
+		if (appliedKinah <= 0)
+		{
+			return QuestKinahRewardPlan.NonPositiveAppliedAmount(
+				player.ObjectId,
+				rewardKinah,
+				appliedKinah,
+				kinahItem.Count,
+				kinahItem);
+		}
+
+		var existingIncrease = ApplyJavaIncreaseItemCount(kinahItem.Count, appliedKinah, kinahMaxStackCount);
+		return QuestKinahRewardPlan.UpdatedExistingKinahItem(
+			player.ObjectId,
+			rewardKinah,
+			appliedKinah,
+			kinahItem.Count,
+			CopyInventoryItem(kinahItem, existingIncrease.CurrentCount),
+			existingIncrease.LeftCount);
+	}
+
+	public static long ApplyQuestKinahRate(byte membershipLevel, long rewardKinah, IReadOnlyList<float> questKinahRates)
+	{
+		// Java parity: model/gameobjects/player/Rates.QUEST_KINAH.calcResult uses long * float,
+		// float precision, and Java primitive narrowing from float to long.
+		var product = (float)rewardKinah * SelectMembershipRate(membershipLevel, questKinahRates);
+		return JavaFloatToLong(product);
+	}
+
 	public static int ApplyQuestApRate(byte membershipLevel, int rewardAp, IReadOnlyList<float> apQuestRates)
 	{
 		// Java parity: model/gameobjects/player/Rates.AP_QUEST.calcResult.
 		var result = (long)(rewardAp * SelectMembershipRate(membershipLevel, apQuestRates));
 		return JavaLongToIntOrOriginal(result, rewardAp);
+	}
+
+	private static long JavaFloatToLong(float value)
+	{
+		if (float.IsNaN(value))
+			return 0;
+		if (value >= 9.223372036854776E18f)
+			return long.MaxValue;
+		if (value <= -9.223372036854776E18f)
+			return long.MinValue;
+		return (long)value;
+	}
+
+	private static JavaIncreaseItemCountResult ApplyJavaIncreaseItemCount(long currentCount, long count, long cap)
+	{
+		if (count <= 0)
+			return new JavaIncreaseItemCountResult(currentCount, 0);
+
+		// Java parity: model/gameobjects/Item.increaseItemCount uses primitive long addition
+		// before comparing against the item template max-stack cap.
+		var addedToCurrent = unchecked(currentCount + count);
+		var addCount = addedToCurrent > cap
+			? unchecked(cap - currentCount)
+			: count;
+		var newCount = addCount != 0
+			? unchecked(currentCount + addCount)
+			: currentCount;
+		return new JavaIncreaseItemCountResult(newCount, unchecked(count - addCount));
 	}
 
 	private static float SelectMembershipRate(byte membershipLevel, IReadOnlyList<float> rates)
@@ -74,6 +166,60 @@ public sealed class QuestRewardService
 		return rates[Math.Min(rates.Count - 1, membershipLevel)];
 	}
 
+	private static InventoryItem CreateKinahItem(int objectId, int ownerId, long count)
+	{
+		// Java parity: model/items/storage/Storage.increaseKinah creates ItemId.KINAH with count 0
+		// before applying a positive count increase. This planner keeps that creation visible.
+		return new InventoryItem
+		{
+			ObjectId = objectId,
+			ItemId = InventoryItemFactory.KinahItemId,
+			Count = count,
+			OwnerId = ownerId,
+			Location = QuestKinahRewardPlan.CubeStorageId,
+			Slot = QuestKinahRewardPlan.FirstAvailableSlot,
+		};
+	}
+
+	private static InventoryItem CopyInventoryItem(InventoryItem item, long count)
+	{
+		return new InventoryItem
+		{
+			ObjectId = item.ObjectId,
+			ItemId = item.ItemId,
+			Count = count,
+			Color = item.Color,
+			ColorExpires = item.ColorExpires,
+			Creator = item.Creator,
+			ExpireTime = item.ExpireTime,
+			ActivationCount = item.ActivationCount,
+			OwnerId = item.OwnerId,
+			IsEquipped = item.IsEquipped,
+			IsSoulBound = item.IsSoulBound,
+			Slot = item.Slot,
+			Location = item.Location,
+			Enchant = item.Enchant,
+			EnchantBonus = item.EnchantBonus,
+			ItemSkin = item.ItemSkin,
+			FusionedItem = item.FusionedItem,
+			OptionalSocket = item.OptionalSocket,
+			OptionalFusionSocket = item.OptionalFusionSocket,
+			Charge = item.Charge,
+			TuneCount = item.TuneCount,
+			RandomBonus = item.RandomBonus,
+			FusionRandomBonus = item.FusionRandomBonus,
+			Tempering = item.Tempering,
+			PackCount = item.PackCount,
+			IsAmplified = item.IsAmplified,
+			BuffSkill = item.BuffSkill,
+			RandomPlumeBonus = item.RandomPlumeBonus,
+			ManaStones = item.ManaStones,
+			FusionStones = item.FusionStones,
+			Godstone = item.Godstone,
+			IdianStone = item.IdianStone,
+		};
+	}
+
 	private static int JavaLongToIntOrOriginal(long value, int original)
 	{
 		// Java parity: Rates.calcResult(int) returns the original value if Math.toIntExact overflows.
@@ -81,6 +227,8 @@ public sealed class QuestRewardService
 			return original;
 		return (int)value;
 	}
+
+	private readonly record struct JavaIncreaseItemCountResult(long CurrentCount, long LeftCount);
 }
 
 public sealed record QuestDpRewardResult(
@@ -199,4 +347,164 @@ public enum QuestApRewardStatus
 	MissingPlayer,
 	NoApReward,
 	ApBoundarySkipped,
+}
+
+public sealed record QuestKinahRewardPlan(
+	QuestKinahRewardStatus Status,
+	int ObjectId,
+	long RewardKinah,
+	long AppliedKinah,
+	long PreviousKinah,
+	long CurrentKinah,
+	bool CreatesMissingKinahItem,
+	InventoryItem? KinahItemUpdate,
+	int PacketUpdateType,
+	long OverflowRemainder,
+	string JavaSource)
+{
+	public const int CubeStorageId = 0;
+	public const long FirstAvailableSlot = 65535;
+
+	public static QuestKinahRewardPlan MissingPlayer(long rewardKinah)
+	{
+		return new QuestKinahRewardPlan(
+			QuestKinahRewardStatus.MissingPlayer,
+			0,
+			rewardKinah,
+			0,
+			0,
+			0,
+			false,
+			null,
+			SmInventoryUpdateItem.IncreaseKinahQuest,
+			0,
+			"QuestService.giveReward -> Storage.increaseKinah");
+	}
+
+	public static QuestKinahRewardPlan NoReward(int objectId)
+	{
+		return new QuestKinahRewardPlan(
+			QuestKinahRewardStatus.NoReward,
+			objectId,
+			0,
+			0,
+			0,
+			0,
+			false,
+			null,
+			SmInventoryUpdateItem.IncreaseKinahQuest,
+			0,
+			"QuestService.giveReward skips raw zero kinah");
+	}
+
+	public static QuestKinahRewardPlan MissingKinahObjectId(int objectId, long rewardKinah, long appliedKinah)
+	{
+		return new QuestKinahRewardPlan(
+			QuestKinahRewardStatus.MissingKinahObjectId,
+			objectId,
+			rewardKinah,
+			appliedKinah,
+			0,
+			0,
+			true,
+			null,
+			SmInventoryUpdateItem.IncreaseKinahQuest,
+			0,
+			"Storage.increaseKinah requires ItemFactory.newItem(ItemId.KINAH, 0) when missing");
+	}
+
+	public static QuestKinahRewardPlan CreatedKinahItem(
+		int objectId,
+		long rewardKinah,
+		long appliedKinah,
+		InventoryItem kinahItem,
+		long overflowRemainder)
+	{
+		return new QuestKinahRewardPlan(
+			QuestKinahRewardStatus.CreatedKinahItem,
+			objectId,
+			rewardKinah,
+			appliedKinah,
+			0,
+			kinahItem.Count,
+			true,
+			kinahItem,
+			SmInventoryUpdateItem.IncreaseKinahQuest,
+			overflowRemainder,
+			"Storage.increaseKinah creates missing kinah then increases positive amount");
+	}
+
+	public static QuestKinahRewardPlan CreatedEmptyKinahItem(
+		int objectId,
+		long rewardKinah,
+		long appliedKinah,
+		InventoryItem kinahItem)
+	{
+		return new QuestKinahRewardPlan(
+			QuestKinahRewardStatus.NonPositiveAppliedAmountCreatedKinahItem,
+			objectId,
+			rewardKinah,
+			appliedKinah,
+			0,
+			0,
+			true,
+			kinahItem,
+			SmInventoryUpdateItem.IncreaseKinahQuest,
+			0,
+			"Storage.increaseKinah creates missing kinah before amount > 0 guard");
+	}
+
+	public static QuestKinahRewardPlan NonPositiveAppliedAmount(
+		int objectId,
+		long rewardKinah,
+		long appliedKinah,
+		long currentKinah,
+		InventoryItem kinahItem)
+	{
+		return new QuestKinahRewardPlan(
+			QuestKinahRewardStatus.NonPositiveAppliedAmountExistingKinahItem,
+			objectId,
+			rewardKinah,
+			appliedKinah,
+			currentKinah,
+			currentKinah,
+			false,
+			null,
+			SmInventoryUpdateItem.IncreaseKinahQuest,
+			0,
+			"Storage.increaseKinah applies only amount > 0 after ensuring kinah item exists");
+	}
+
+	public static QuestKinahRewardPlan UpdatedExistingKinahItem(
+		int objectId,
+		long rewardKinah,
+		long appliedKinah,
+		long previousKinah,
+		InventoryItem kinahItem,
+		long overflowRemainder)
+	{
+		return new QuestKinahRewardPlan(
+			QuestKinahRewardStatus.UpdatedExistingKinahItem,
+			objectId,
+			rewardKinah,
+			appliedKinah,
+			previousKinah,
+			kinahItem.Count,
+			false,
+			kinahItem,
+			SmInventoryUpdateItem.IncreaseKinahQuest,
+			overflowRemainder,
+			"Storage.increaseKinah -> Item.increaseItemCount with kinah item template cap");
+	}
+}
+
+public enum QuestKinahRewardStatus
+{
+	CreatedKinahItem,
+	UpdatedExistingKinahItem,
+	NonPositiveAppliedAmountCreatedKinahItem,
+	NonPositiveAppliedAmountExistingKinahItem,
+	MissingPlayer,
+	MissingKinahObjectId,
+	NoReward,
 }

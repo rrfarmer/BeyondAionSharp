@@ -207,6 +207,141 @@ public sealed class QuestRewardServiceTests
 		Assert.Equal(int.MaxValue, overflowFallback);
 	}
 
+	[Fact]
+	public void CreateKinahRewardPlan_CreatesMissingKinahItemWithQuestPacketMask()
+	{
+		var service = CreateService(
+			out _,
+			new GameServerOptions
+			{
+				Rates = new GameServerRateOptions
+				{
+					QuestKinahRates = [1f, 2.5f],
+				},
+			});
+		var player = CreatePlayer(objectId: 1310, playerClass: "RANGER", dp: 500, membership: 1);
+
+		var result = service.CreateKinahRewardPlan(
+			player,
+			Array.Empty<InventoryItem>(),
+			rewardKinah: 400,
+			nextObjectId: () => 9001);
+
+		Assert.Equal(QuestKinahRewardStatus.CreatedKinahItem, result.Status);
+		Assert.Equal(player.ObjectId, result.ObjectId);
+		Assert.Equal(400, result.RewardKinah);
+		Assert.Equal(1000, result.AppliedKinah);
+		Assert.Equal(0, result.PreviousKinah);
+		Assert.Equal(1000, result.CurrentKinah);
+		Assert.True(result.CreatesMissingKinahItem);
+		Assert.Equal(SmInventoryUpdateItem.IncreaseKinahQuest, result.PacketUpdateType);
+		Assert.NotNull(result.KinahItemUpdate);
+		Assert.Equal(InventoryItemFactory.KinahItemId, result.KinahItemUpdate.ItemId);
+		Assert.Equal(9001, result.KinahItemUpdate.ObjectId);
+		Assert.Equal(1000, result.KinahItemUpdate.Count);
+		Assert.Equal(QuestKinahRewardPlan.CubeStorageId, result.KinahItemUpdate.Location);
+		Assert.Equal(QuestKinahRewardPlan.FirstAvailableSlot, result.KinahItemUpdate.Slot);
+		Assert.Equal(0, result.OverflowRemainder);
+	}
+
+	[Fact]
+	public void CreateKinahRewardPlan_UpdatesExistingKinahAndAppliesJavaCap()
+	{
+		var service = CreateService(out _);
+		var player = CreatePlayer(objectId: 1311, playerClass: "RANGER", dp: 500);
+		var kinah = new InventoryItem
+		{
+			ObjectId = 77,
+			ItemId = InventoryItemFactory.KinahItemId,
+			Count = 900,
+			OwnerId = player.ObjectId,
+			Location = QuestKinahRewardPlan.CubeStorageId,
+		};
+
+		var result = service.CreateKinahRewardPlan(
+			player,
+			[kinah],
+			rewardKinah: 200,
+			kinahMaxStackCount: 1000);
+
+		Assert.Equal(QuestKinahRewardStatus.UpdatedExistingKinahItem, result.Status);
+		Assert.False(result.CreatesMissingKinahItem);
+		Assert.Equal(900, result.PreviousKinah);
+		Assert.Equal(1000, result.CurrentKinah);
+		Assert.Equal(200, result.AppliedKinah);
+		Assert.Equal(100, result.OverflowRemainder);
+		Assert.NotNull(result.KinahItemUpdate);
+		Assert.Equal(77, result.KinahItemUpdate.ObjectId);
+		Assert.Equal(1000, result.KinahItemUpdate.Count);
+	}
+
+	[Fact]
+	public void CreateKinahRewardPlan_PreservesZeroAndNegativeJavaGuards()
+	{
+		var service = CreateService(out _);
+		var player = CreatePlayer(objectId: 1312, playerClass: "RANGER", dp: 500);
+
+		var zero = service.CreateKinahRewardPlan(
+			player,
+			Array.Empty<InventoryItem>(),
+			rewardKinah: 0,
+			nextObjectId: () => throw new InvalidOperationException("raw zero should skip Java branch"));
+		var negativeMissing = service.CreateKinahRewardPlan(
+			player,
+			Array.Empty<InventoryItem>(),
+			rewardKinah: -50,
+			nextObjectId: () => 9002);
+		var existing = new InventoryItem
+		{
+			ObjectId = 78,
+			ItemId = InventoryItemFactory.KinahItemId,
+			Count = 300,
+			OwnerId = player.ObjectId,
+			Location = QuestKinahRewardPlan.CubeStorageId,
+		};
+		var negativeExisting = service.CreateKinahRewardPlan(player, [existing], rewardKinah: -50);
+
+		Assert.Equal(QuestKinahRewardStatus.NoReward, zero.Status);
+		Assert.Null(zero.KinahItemUpdate);
+		Assert.Equal(QuestKinahRewardStatus.NonPositiveAppliedAmountCreatedKinahItem, negativeMissing.Status);
+		Assert.True(negativeMissing.CreatesMissingKinahItem);
+		Assert.Equal(-50, negativeMissing.AppliedKinah);
+		Assert.Equal(0, negativeMissing.CurrentKinah);
+		Assert.NotNull(negativeMissing.KinahItemUpdate);
+		Assert.Equal(0, negativeMissing.KinahItemUpdate.Count);
+		Assert.Equal(QuestKinahRewardStatus.NonPositiveAppliedAmountExistingKinahItem, negativeExisting.Status);
+		Assert.False(negativeExisting.CreatesMissingKinahItem);
+		Assert.Equal(300, negativeExisting.PreviousKinah);
+		Assert.Equal(300, negativeExisting.CurrentKinah);
+		Assert.Equal(-50, negativeExisting.AppliedKinah);
+	}
+
+	[Fact]
+	public void ApplyQuestKinahRate_MatchesJavaFloatTruncationMembershipFallbacksAndOverflow()
+	{
+		var clampedMembership = QuestRewardService.ApplyQuestKinahRate(
+			membershipLevel: 7,
+			rewardKinah: 200,
+			questKinahRates: [1f, 1.5f]);
+		var emptyRates = QuestRewardService.ApplyQuestKinahRate(
+			membershipLevel: 7,
+			rewardKinah: 200,
+			questKinahRates: []);
+		var floatRounded = QuestRewardService.ApplyQuestKinahRate(
+			membershipLevel: 0,
+			rewardKinah: 16_777_217,
+			questKinahRates: [1f]);
+		var overflowSaturates = QuestRewardService.ApplyQuestKinahRate(
+			membershipLevel: 0,
+			rewardKinah: long.MaxValue,
+			questKinahRates: [2f]);
+
+		Assert.Equal(300, clampedMembership);
+		Assert.Equal(200, emptyRates);
+		Assert.Equal(16_777_216, floatRounded);
+		Assert.Equal(long.MaxValue, overflowSaturates);
+	}
+
 	private static QuestRewardService CreateService(
 		out CapturingConnectionRegistry registry,
 		GameServerOptions? options = null)
