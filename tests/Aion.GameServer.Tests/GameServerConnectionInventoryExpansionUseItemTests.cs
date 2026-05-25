@@ -361,6 +361,43 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Empty(fixture.SentPackets);
 	}
 
+	[Fact]
+	public async Task ProcessPacketAsync_SelectDecomposableDispatchesSelection()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(idFactory: new IDFactory([5001]));
+		var player = CreatePlayer(itemId: 101);
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(236, buffer =>
+			{
+				buffer.WriteD(5001);
+				buffer.WriteD(0);
+				buffer.WriteC(1);
+			}));
+
+		Assert.Collection(
+			player.InventoryItems.OrderBy(item => item.ItemId),
+			item =>
+			{
+				Assert.Equal(101, item.ItemId);
+				Assert.Equal(1, item.Count);
+			},
+			item =>
+			{
+				Assert.Equal(202, item.ItemId);
+				Assert.Equal(3, item.Count);
+			});
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 101, expectedTime: 0, expectedEnd: 1, expectedUnknown3: 1),
+			packet => Assert.IsType<SmSystemMessage>(packet),
+			packet => Assert.IsType<SmInventoryUpdateItem>(packet),
+			packet => AssertSecondaryShowDecomposablePayload(Assert.IsType<SmSecondaryShowDecomposable>(packet)),
+			packet => Assert.IsType<SmInventoryAddItem>(packet));
+	}
+
 	private static Player CreatePlayer(int itemId, long count = 2)
 	{
 		return new Player
@@ -416,6 +453,22 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		return packet;
 	}
 
+	private static byte[] CreateClientPayload(int opcode, Action<PacketBuffer> writePayload)
+	{
+		using var buffer = new PacketBuffer();
+		var encodedOpcode = EncodeClientPacketOpcode(opcode);
+		buffer.WriteH(encodedOpcode);
+		buffer.WriteC(0x65);
+		buffer.WriteH(~encodedOpcode);
+		writePayload(buffer);
+		return buffer.ToArray();
+	}
+
+	private static int EncodeClientPacketOpcode(int opcode)
+	{
+		return ((((opcode + 207) ^ 0xEF) + 0x0C) ^ 0xEF) & 0xffff;
+	}
+
 	private static async Task InvokeHandleEmotionAsync(GameServerConnection connection, Player player, CmEmotion packet)
 	{
 		var method = typeof(GameServerConnection).GetMethod(
@@ -434,6 +487,27 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.NotNull(method);
 		var task = Assert.IsAssignableFrom<Task>(method.Invoke(connection, [player, packet]));
 		await task;
+	}
+
+	private static async Task InvokeProcessPacketAsync(GameServerConnection connection, byte[] payload)
+	{
+		var method = typeof(GameServerConnection).GetMethod(
+			"ProcessPacketAsync",
+			BindingFlags.Instance | BindingFlags.NonPublic);
+		Assert.NotNull(method);
+		using var packet = new PacketBuffer(payload);
+		var task = Assert.IsAssignableFrom<Task>(method.Invoke(connection, [packet]));
+		await task;
+	}
+
+	private static void SetActivePlayerForPacketDispatch(GameServerConnection connection, Player player)
+	{
+		var activePlayerField = typeof(GameServerConnection).GetField("_activePlayer", BindingFlags.Instance | BindingFlags.NonPublic);
+		var stateField = typeof(GameServerConnection).GetField("_state", BindingFlags.Instance | BindingFlags.NonPublic);
+		Assert.NotNull(activePlayerField);
+		Assert.NotNull(stateField);
+		activePlayerField.SetValue(connection, player);
+		stateField.SetValue(connection, GameConnectionState.InGame);
 	}
 
 	private static void AssertItemUsagePayload(
