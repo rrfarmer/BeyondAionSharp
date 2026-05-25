@@ -36,6 +36,7 @@ public static class ItemPurificationPersistentLiveExecutionService
 			itemExpands,
 			connectionRegistry,
 			abyssPointsOptions,
+			questMutationNotifier: null,
 			cancellationToken);
 		if (!liveExecution.Succeeded)
 		{
@@ -106,4 +107,3 @@ public enum ItemPurificationPersistentLiveExecutionStatus
 	PersistencePlanNotReady,
 	PersistenceSaveFailed,
 }
-

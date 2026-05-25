@@ -3517,6 +3517,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			itemExpands,
 			connectionRegistryOverride ?? _connectionRegistry,
 			abyssPointsOptions,
+			questMutationNotifier: null,
 			cancellationToken);
 	}
 

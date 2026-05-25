@@ -17,6 +17,7 @@ public static class ItemPurificationLiveExecutionService
 		int itemExpands,
 		IGameClientConnectionRegistry? connectionRegistry,
 		AbyssPointsAddOptions? abyssPointsOptions = null,
+		IItemPurificationQuestMutationNotifier? questMutationNotifier = null,
 		CancellationToken cancellationToken = default)
 	{
 		// Java parity: CM_ITEM_PURIFICATION sends the upgrade-success system message from
@@ -42,7 +43,8 @@ public static class ItemPurificationLiveExecutionService
 				LiveMutation: null,
 				MutationPacketSend: null,
 				EquipmentRankLimitChange: null,
-				AbyssSkillUpdate: null);
+				AbyssSkillUpdate: null,
+				QuestNotificationDispatch: null);
 		}
 
 		var packetPlan = bridge.Bridge.ConcretePacketPlan;
@@ -67,7 +69,8 @@ public static class ItemPurificationLiveExecutionService
 				LiveMutation: null,
 				MutationPacketSend: null,
 				EquipmentRankLimitChange: null,
-				AbyssSkillUpdate: null);
+				AbyssSkillUpdate: null,
+				QuestNotificationDispatch: null);
 		}
 
 		var liveMutation = ItemPurificationLiveMutationService.Apply(
@@ -86,7 +89,8 @@ public static class ItemPurificationLiveExecutionService
 				liveMutation,
 				MutationPacketSend: null,
 				EquipmentRankLimitChange: null,
-				AbyssSkillUpdate: null);
+				AbyssSkillUpdate: null,
+				QuestNotificationDispatch: null);
 		}
 
 		var mutationPacketPlan = CreateMutationPacketPlanWithAbyssPointsPackets(
@@ -100,6 +104,13 @@ public static class ItemPurificationLiveExecutionService
 			itemTemplates,
 			connectionRegistry,
 			cancellationToken);
+		var questNotificationDispatch = mutationSend.SendResult.Succeeded
+			? await DispatchQuestNotificationsAsync(
+				player,
+				handlerPlan?.Application,
+				questMutationNotifier,
+				cancellationToken)
+			: null;
 		return new ItemPurificationLiveExecutionResult(
 			mutationSend.SendResult.Succeeded
 				? ItemPurificationLiveExecutionStatus.Ready
@@ -109,7 +120,8 @@ public static class ItemPurificationLiveExecutionService
 			liveMutation,
 			mutationSend.SendResult,
 			mutationSend.EquipmentRankLimitChange,
-			mutationSend.AbyssSkillUpdate);
+			mutationSend.AbyssSkillUpdate,
+			questNotificationDispatch);
 	}
 
 	private static ItemPurificationPacketPlan CreateMutationPacketPlanWithAbyssPointsPackets(
@@ -340,6 +352,19 @@ public static class ItemPurificationLiveExecutionService
 		return sentCount;
 	}
 
+	private static async ValueTask<ItemPurificationQuestNotificationDispatchResult?> DispatchQuestNotificationsAsync(
+		Player player,
+		ItemPurificationApplicationPlan? application,
+		IItemPurificationQuestMutationNotifier? questMutationNotifier,
+		CancellationToken cancellationToken)
+	{
+		if (questMutationNotifier == null)
+			return null;
+
+		var notifications = ItemPurificationApplicationPlanService.ProjectQuestNotifications(application);
+		return await questMutationNotifier.NotifyAsync(player, notifications, cancellationToken);
+	}
+
 	private static bool IsLastAbyssPointsUpdate(
 		IReadOnlyList<ItemPurificationPacketOperation> operations,
 		int index)
@@ -356,7 +381,8 @@ public sealed record ItemPurificationLiveExecutionResult(
 	ItemPurificationLiveMutationResult? LiveMutation,
 	ItemPurificationPacketSendResult? MutationPacketSend,
 	EquipmentChangeResult? EquipmentRankLimitChange,
-	AbyssSkillUpdateResult? AbyssSkillUpdate)
+	AbyssSkillUpdateResult? AbyssSkillUpdate,
+	ItemPurificationQuestNotificationDispatchResult? QuestNotificationDispatch)
 {
 	public bool Succeeded => Status == ItemPurificationLiveExecutionStatus.Ready;
 
@@ -369,7 +395,8 @@ public sealed record ItemPurificationLiveExecutionResult(
 			LiveMutation: null,
 			MutationPacketSend: null,
 			EquipmentRankLimitChange: null,
-			AbyssSkillUpdate: null);
+			AbyssSkillUpdate: null,
+			QuestNotificationDispatch: null);
 	}
 }
 

@@ -117,6 +117,50 @@ public sealed class ItemPurificationLiveExecutionServiceTests
 	}
 
 	[Fact]
+	public async Task ExecuteAsync_OptInQuestNotifierReceivesProjectedJavaStorageCandidatesAfterMutation()
+	{
+		var baseItem = CreateBaseItem(enchant: 25);
+		var material = new InventoryItem { ObjectId = 20, ItemId = 186000001, Count = 2, Location = 0 };
+		var kinah = new InventoryItem { ObjectId = 30, ItemId = 182400001, Count = 10_000, Location = 0 };
+		var player = CreatePlayer(abyssPoints: 5_000, baseItem, material, kinah);
+		var itemTemplates = CreateItemTemplates();
+		var handlerPlan = CreateHandlerPlan(player, baseItem, itemTemplates, targetObjectId: 9001);
+		var notifier = new RecordingQuestMutationNotifier();
+
+		var result = await ItemPurificationLiveExecutionService.ExecuteAsync(
+			player.ObjectId,
+			player,
+			handlerPlan,
+			itemTemplates,
+			npcExpands: 1,
+			questExpands: 0,
+			itemExpands: 1,
+			connectionRegistry: null,
+			questMutationNotifier: notifier);
+
+		Assert.True(result.Succeeded);
+		var dispatch = Assert.IsType<ItemPurificationQuestNotificationDispatchResult>(result.QuestNotificationDispatch);
+		Assert.Equal(ItemPurificationQuestNotificationDispatchStatus.NoOp, dispatch.Status);
+		Assert.Same(player, notifier.Player);
+		Assert.Equal(
+			[
+				ItemPurificationQuestNotificationType.ItemRemoved,
+				ItemPurificationQuestNotificationType.ItemRemoved,
+				ItemPurificationQuestNotificationType.ItemGet,
+			],
+			notifier.Notifications.Select(notification => notification.Type).ToArray());
+		Assert.Equal(
+			[
+				ItemPurificationApplicationOperationType.DeleteMaterialItem,
+				ItemPurificationApplicationOperationType.DeleteBaseItem,
+				ItemPurificationApplicationOperationType.AddTargetItem,
+			],
+			notifier.Notifications.Select(notification => notification.SourceOperation).ToArray());
+		Assert.Equal([20, 10, 9001], notifier.Notifications.Select(notification => notification.ObjectId).ToArray());
+		Assert.Equal([186000001, 100000001, 100000002], notifier.Notifications.Select(notification => notification.ItemId).ToArray());
+	}
+
+	[Fact]
 	public async Task ExecuteAsync_RankDropSendsModeledApSpendPacketsAtMetadataSlot()
 	{
 		var baseItem = CreateBaseItem(enchant: 25);
@@ -415,4 +459,22 @@ public sealed class ItemPurificationLiveExecutionServiceTests
 		int SourceObjectId,
 		GameServerPacket Packet,
 		bool IncludeSourcePlayer);
+
+	private sealed class RecordingQuestMutationNotifier : IItemPurificationQuestMutationNotifier
+	{
+		public Player? Player { get; private set; }
+
+		public IReadOnlyList<ItemPurificationQuestNotificationCandidate> Notifications { get; private set; } =
+			Array.Empty<ItemPurificationQuestNotificationCandidate>();
+
+		public ValueTask<ItemPurificationQuestNotificationDispatchResult> NotifyAsync(
+			Player player,
+			IReadOnlyList<ItemPurificationQuestNotificationCandidate> notifications,
+			CancellationToken cancellationToken = default)
+		{
+			Player = player;
+			Notifications = notifications;
+			return ValueTask.FromResult(ItemPurificationQuestNotificationDispatchResult.NoOp(notifications));
+		}
+	}
 }
