@@ -507,6 +507,22 @@ public class GamePacketTests
 		Assert.Equal(
 			Convert.FromHexString("01000000"),
 			SerializeUnencryptedPayload(SmQuestCompletedList.CreateLoginPackets(Array.Empty<PlayerQuestState>())[0]));
+		var nearbyQuestPacket = new SmNearbyQuests(Array.Empty<NearbyQuestMarker>());
+		Assert.Equal(127, nearbyQuestPacket.OpCode);
+		Assert.Equal(
+			Convert.FromHexString("000000"),
+			SerializeUnencryptedPayload(nearbyQuestPacket));
+		Assert.Equal(
+			Convert.FromHexString("00FFFF64000000"),
+			SerializeUnencryptedPayload(new SmNearbyQuests([new NearbyQuestMarker(100, 0)])));
+		Assert.Equal(
+			Convert.FromHexString("00FEFF64000000C8000200"),
+			SerializeUnencryptedPayload(
+				new SmNearbyQuests(
+				[
+					new NearbyQuestMarker(100, 0),
+					new NearbyQuestMarker(200, 1),
+				])));
 		Assert.Equal(
 			Convert.FromHexString("014D00"),
 			SerializeUnencryptedPayload(new SmTitleInfo(77)));
