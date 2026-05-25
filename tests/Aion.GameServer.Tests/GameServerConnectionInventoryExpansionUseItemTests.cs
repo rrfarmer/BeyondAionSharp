@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Aion.Commons.Network;
 using Aion.GameServer.Configuration;
 using Aion.GameServer.Data;
@@ -495,6 +496,21 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			using var csharpObservation = JsonDocument.Parse(csharpJson);
 			AssertSelectableDecomposeObservationMatchesJavaArtifact(javaObservation.RootElement, csharpObservation.RootElement);
 		}
+	}
+
+	[Fact]
+	public async Task CompareSelectableDecomposeJavaArtifacts_WithDeclaredIdMapping_NormalizesMappedIds()
+	{
+		var csharpJson = await CaptureSelectableDecomposeObservationJsonAsync("JD-SEL-DEC-001", sourceCount: 2, selectIndex: 1);
+		var javaJson = CreateMappedSelectableDecomposeJavaArtifactJson(
+			csharpJson,
+			sourceItemId: 188052590,
+			rewardItemId: 188052592);
+
+		using var javaObservation = JsonDocument.Parse(javaJson);
+		using var csharpObservation = JsonDocument.Parse(csharpJson);
+
+		AssertSelectableDecomposeObservationMatchesJavaArtifact(javaObservation.RootElement, csharpObservation.RootElement);
 	}
 
 	[Fact]
@@ -1414,8 +1430,36 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			.Single(packet => packet.GetProperty("sequence").GetInt32() == sequence);
 	}
 
+	private static string CreateMappedSelectableDecomposeJavaArtifactJson(string csharpJson, int sourceItemId, int rewardItemId)
+	{
+		var artifact = JsonNode.Parse(csharpJson)!.AsObject();
+		artifact["capture_method"] = "live-java-server";
+		var fixture = artifact["fixture"]!.AsObject();
+		fixture["id_mapping"] = new JsonObject
+		{
+			["logical_source_item_id"] = 101,
+			["java_source_item_id"] = sourceItemId,
+			["logical_reward_index_1"] = 202,
+			["java_reward_index_1"] = rewardItemId,
+		};
+
+		SetPacketField(artifact, sequence: 1, "item_id", sourceItemId);
+		SetPacketField(artifact, sequence: 5, "item_id", rewardItemId);
+		return artifact.ToJsonString(new JsonSerializerOptions { WriteIndented = true });
+	}
+
+	private static void SetPacketField(JsonObject observation, int sequence, string fieldName, int value)
+	{
+		var packets = observation["packets"]!.AsArray();
+		var packet = packets
+			.Select(node => node!.AsObject())
+			.Single(node => node["sequence"]!.GetValue<int>() == sequence);
+		packet["decoded_fields"]!.AsObject()[fieldName] = value;
+	}
+
 	private static void AssertSelectableDecomposeObservationMatchesJavaArtifact(JsonElement javaObservation, JsonElement csharpObservation)
 	{
+		var idMapping = ReadIdMapping(javaObservation);
 		Assert.Equal(csharpObservation.GetProperty("scenario_id").GetString(), javaObservation.GetProperty("scenario_id").GetString());
 		Assert.Equal("live-java-server", javaObservation.GetProperty("capture_method").GetString());
 		Assert.Equal(ReadPacketClasses(csharpObservation), ReadPacketClasses(javaObservation));
@@ -1433,26 +1477,55 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		switch (scenarioId)
 		{
 			case "JD-SEL-DEC-001":
-				AssertPacketFields(javaObservation, csharpObservation, sequence: 1, ["item_id", "time", "end", "unknown3"]);
-				AssertPacketFields(javaObservation, csharpObservation, sequence: 2, ["message_id", "factory_name"]);
-				AssertPacketFields(javaObservation, csharpObservation, sequence: 3, ["count", "update_type_mask", "update_type_name"]);
-				AssertPacketFields(javaObservation, csharpObservation, sequence: 4, ["reward_count"]);
-				AssertPacketFields(javaObservation, csharpObservation, sequence: 5, ["add_type_mask", "add_type_name", "packet_item_count", "item_id", "count", "slot", "cloth_flag"]);
+				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 1, ["item_id", "time", "end", "unknown3"]);
+				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 2, ["message_id", "factory_name"]);
+				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 3, ["count", "update_type_mask", "update_type_name"]);
+				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 4, ["reward_count"]);
+				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 5, ["add_type_mask", "add_type_name", "packet_item_count", "item_id", "count", "slot", "cloth_flag"]);
 				break;
 			case "JD-SEL-DEL-001":
-				AssertPacketFields(javaObservation, csharpObservation, sequence: 1, ["item_id", "time", "end", "unknown3"]);
-				AssertPacketFields(javaObservation, csharpObservation, sequence: 2, ["message_id", "factory_name"]);
-				AssertPacketFields(javaObservation, csharpObservation, sequence: 3, ["delete_type", "delete_type_name"]);
-				AssertPacketFields(javaObservation, csharpObservation, sequence: 4, ["action", "storage", "items_count", "npc_expands", "quest_expands", "item_expands"]);
-				AssertPacketFields(javaObservation, csharpObservation, sequence: 5, ["reward_count"]);
-				AssertPacketFields(javaObservation, csharpObservation, sequence: 6, ["add_type_mask", "add_type_name", "packet_item_count", "item_id", "count", "slot", "cloth_flag"]);
+				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 1, ["item_id", "time", "end", "unknown3"]);
+				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 2, ["message_id", "factory_name"]);
+				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 3, ["delete_type", "delete_type_name"]);
+				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 4, ["action", "storage", "items_count", "npc_expands", "quest_expands", "item_expands"]);
+				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 5, ["reward_count"]);
+				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 6, ["add_type_mask", "add_type_name", "packet_item_count", "item_id", "count", "slot", "cloth_flag"]);
 				break;
 			default:
 				throw new InvalidOperationException("Unsupported selectable-decompose scenario: " + scenarioId);
 		}
 	}
 
-	private static void AssertPacketFields(JsonElement javaObservation, JsonElement csharpObservation, int sequence, IReadOnlyList<string> fieldNames)
+	private static Dictionary<int, int> ReadIdMapping(JsonElement javaObservation)
+	{
+		if (!javaObservation.TryGetProperty("fixture", out var fixture)
+			|| !fixture.TryGetProperty("id_mapping", out var idMapping)
+			|| idMapping.ValueKind != JsonValueKind.Object)
+			return [];
+
+		var mappings = new Dictionary<int, int>();
+		foreach (var property in idMapping.EnumerateObject())
+		{
+			if (!property.Name.StartsWith("java_", StringComparison.Ordinal) || property.Value.ValueKind != JsonValueKind.Number)
+				continue;
+
+			var logicalName = "logical_" + property.Name["java_".Length..];
+			if (idMapping.TryGetProperty(logicalName, out var logicalValue)
+				&& logicalValue.ValueKind == JsonValueKind.Number)
+			{
+				mappings[property.Value.GetInt32()] = logicalValue.GetInt32();
+			}
+		}
+
+		return mappings;
+	}
+
+	private static void AssertPacketFields(
+		JsonElement javaObservation,
+		JsonElement csharpObservation,
+		IReadOnlyDictionary<int, int> idMapping,
+		int sequence,
+		IReadOnlyList<string> fieldNames)
 	{
 		var javaFields = GetPacket(javaObservation, sequence).GetProperty("decoded_fields");
 		var csharpFields = GetPacket(csharpObservation, sequence).GetProperty("decoded_fields");
@@ -1460,8 +1533,18 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		{
 			Assert.True(javaFields.TryGetProperty(fieldName, out var javaValue), $"Java artifact packet {sequence} is missing decoded field '{fieldName}'.");
 			Assert.True(csharpFields.TryGetProperty(fieldName, out var csharpValue), $"C# observation packet {sequence} is missing decoded field '{fieldName}'.");
-			Assert.Equal(csharpValue.ToString(), javaValue.ToString());
+			Assert.Equal(csharpValue.ToString(), NormalizeJavaFieldValue(javaValue, idMapping));
 		}
+	}
+
+	private static string NormalizeJavaFieldValue(JsonElement javaValue, IReadOnlyDictionary<int, int> idMapping)
+	{
+		if (javaValue.ValueKind == JsonValueKind.Number
+			&& javaValue.TryGetInt32(out var numericValue)
+			&& idMapping.TryGetValue(numericValue, out var logicalValue))
+			return logicalValue.ToString();
+
+		return javaValue.ToString();
 	}
 
 	private static string FindRepositoryRoot()
