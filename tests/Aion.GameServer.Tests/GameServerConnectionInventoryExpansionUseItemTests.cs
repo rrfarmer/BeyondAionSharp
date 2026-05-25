@@ -329,6 +329,38 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Empty(fixture.SentPackets);
 	}
 
+	[Fact]
+	public async Task HandleSelectDecomposableAsync_MissingSourceDoesNotCallPersistenceOrSendPackets()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository, idFactory: new IDFactory([5001]));
+		var player = CreatePlayer(itemId: 101);
+
+		await InvokeHandleSelectDecomposableAsync(fixture.Connection, player, CreateSelectDecomposable(sourceItemObjectId: 9999, index: 0));
+
+		Assert.Equal(0, repository.SaveDecomposeActionMutationCalls);
+		var sourceItem = Assert.Single(player.InventoryItems);
+		Assert.Equal(101, sourceItem.ItemId);
+		Assert.Equal(2, sourceItem.Count);
+		Assert.Empty(fixture.SentPackets);
+	}
+
+	[Fact]
+	public async Task HandleSelectDecomposableAsync_NonSelectableSourceDoesNotCallPersistenceOrSendPackets()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository, idFactory: new IDFactory([5001]));
+		var player = CreatePlayer(itemId: 100);
+
+		await InvokeHandleSelectDecomposableAsync(fixture.Connection, player, CreateSelectDecomposable(sourceItemObjectId: 5001, index: 0));
+
+		Assert.Equal(0, repository.SaveDecomposeActionMutationCalls);
+		var sourceItem = Assert.Single(player.InventoryItems);
+		Assert.Equal(100, sourceItem.ItemId);
+		Assert.Equal(2, sourceItem.Count);
+		Assert.Empty(fixture.SentPackets);
+	}
+
 	private static Player CreatePlayer(int itemId, long count = 2)
 	{
 		return new Player
