@@ -5,6 +5,7 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ClientPackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -160,6 +161,90 @@ public sealed class GameServerConnectionItemPurificationTests
 		Assert.Equal(5_000, player.AbyssRank.Ap);
 	}
 
+	[Fact]
+	public async Task ItemPurificationHandlerPacketBridge_ComposesConcretePacketsFromPostMutationSnapshots()
+	{
+		var baseItem = new InventoryItem
+		{
+			ObjectId = 10,
+			ItemId = 100000001,
+			Count = 1,
+			Location = 0,
+			Enchant = 25,
+			TuneCount = 2,
+			RandomBonus = 7,
+		};
+		var material = new InventoryItem { ObjectId = 20, ItemId = 186000001, Count = 3, Location = 0 };
+		var kinah = new InventoryItem { ObjectId = 30, ItemId = 182400001, Count = 10_000, Location = 0 };
+		var player = new Player
+		{
+			ObjectId = 700,
+			AbyssRank = PlayerAbyssRank.Default() with { Ap = 5_000 },
+			InventoryItems = [baseItem, material, kinah],
+		};
+		await using var pair = await TestConnectionPair.CreateAsync();
+		var itemTemplates = CreateItemTemplates();
+		var packet = CreatePacket(
+			playerObjectId: 9999,
+			baseItemObjectId: baseItem.ObjectId,
+			resultItemId: 100000002,
+			requiredMaterialObjectIds: [9001, 9002, 9003, 9004, 9005]);
+		var handlerPlan = await pair.Connection.HandleItemPurificationAsync(
+			player,
+			packet,
+			CreatePurificationTable(),
+			itemTemplates,
+			targetObjectId: 9001);
+		var postMutationItems = new[]
+		{
+			kinah,
+			new InventoryItem { ObjectId = 20, ItemId = 186000001, Count = 1, Location = 0 },
+			new InventoryItem { ObjectId = 9001, ItemId = 100000002, Count = 1, Location = 0, Slot = -1 },
+		};
+
+		var bridge = ItemPurificationHandlerPacketBridgeService.CreateConcretePacketPlan(
+			handlerPlan,
+			postMutationItems,
+			itemTemplates,
+			new Dictionary<int, ItemPurificationCubeSnapshot>
+			{
+				[5] = new(ItemsCount: 2, NpcExpands: 1, QuestExpands: 0, ItemExpands: 0),
+				[7] = new(ItemsCount: 3, NpcExpands: 1, QuestExpands: 0, ItemExpands: 1),
+			});
+
+		Assert.True(bridge.Succeeded);
+		Assert.Equal(ItemPurificationPacketInputSnapshotStatus.Ready, bridge.PacketInputs?.Status);
+		Assert.NotNull(bridge.ConcretePacketPlan);
+		var concretePlan = bridge.ConcretePacketPlan;
+		Assert.True(concretePlan.Succeeded);
+		Assert.Equal(["item-100000001", "item-100000002"], concretePlan.Operations[0].Parameters);
+		Assert.Equal(
+			[
+				typeof(SmSystemMessage),
+				typeof(SmInventoryUpdateItem),
+				typeof(SmDeleteItem),
+				typeof(SmCubeUpdate),
+				typeof(SmInventoryAddItem),
+				typeof(SmCubeUpdate),
+			],
+			concretePlan.Operations
+				.Where(operation => operation.ConcretePacket != null)
+				.Select(operation => operation.ConcretePacket!.GetType())
+				.ToArray());
+		Assert.Equal(
+			[
+				ItemPurificationPacketOperationType.AbyssPointsUpdate,
+				ItemPurificationPacketOperationType.KinahNoPacket,
+			],
+			concretePlan.Operations
+				.Where(operation => operation.ConcretePacket == null)
+				.Select(operation => operation.Type)
+				.ToArray());
+		Assert.Equal([10, 20, 30], player.InventoryItems.Select(item => item.ObjectId).ToArray());
+		Assert.Equal(3, material.Count);
+		Assert.Equal(5_000, player.AbyssRank.Ap);
+	}
+
 	private static CmItemPurification CreatePacket(
 		int playerObjectId,
 		int baseItemObjectId,
@@ -202,6 +287,7 @@ public sealed class GameServerConnectionItemPurificationTests
 		[
 			CreateTemplate(100000001, statBonusSetId: 1, maxTuneCount: 5, maxEnchantLevel: 15),
 			CreateTemplate(100000002, statBonusSetId: 1, maxTuneCount: 1, maxEnchantLevel: 20),
+			CreateTemplate(186000001, statBonusSetId: 0, maxTuneCount: 0, maxEnchantLevel: 0),
 		]);
 	}
 
