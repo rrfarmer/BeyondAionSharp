@@ -102,7 +102,12 @@ public sealed record QuestFinishRewardTemplateProjection(
 	bool HasItemRewards = false,
 	bool HasNonItemRewards = false,
 	bool IsChallengeTask = false,
-	IReadOnlyList<QuestFinishRewardWorkItem>? WorkItems = null)
+	IReadOnlyList<QuestFinishRewardWorkItem>? WorkItems = null,
+	QuestFinishRewardItemTemplateProjection? ItemProjection = null,
+	int DialogActionId = 0,
+	int? ExtendedRewardIndex = null,
+	int RewardRepeatCount = 0,
+	string? PlayerClass = null)
 {
 	public IReadOnlyList<QuestFinishRewardWorkItem> WorkItems { get; init; } = WorkItems ?? [];
 }

@@ -141,6 +141,104 @@ public sealed class QuestFinishOperationPlanServiceTests
 	}
 
 	[Fact]
+	public void CreatePlan_ComposesDetailedRewardItemProjectionBeforeCoarsePlaceholder()
+	{
+		var now = new DateTimeOffset(2026, 5, 25, 8, 30, 0, TimeSpan.Zero);
+		var questState = new PlayerQuestState(
+			QuestId: 1001,
+			Status: "REWARD",
+			QuestVars: 0x123456,
+			Flags: 2,
+			CompleteCount: 2);
+		var rewardProjection = new QuestFinishRewardTemplateProjection(
+			RewardGroupCount: 2,
+			HasItemRewards: true,
+			ItemProjection: new QuestFinishRewardItemTemplateProjection(
+				RewardGroups:
+				[
+					new QuestFinishRewardGroupProjection(
+						RewardGroupIndex: 0,
+						FixedRewardItems: [new QuestFinishRewardItem(ItemId: 182400001, Count: 2)],
+						SelectableRewardItems: [new QuestFinishRewardItem(ItemId: 182400002, Count: 1)]),
+				],
+				ExtendedRewards: new QuestFinishRewardGroupProjection(
+					RewardGroupIndex: -1,
+					FixedRewardItems: [new QuestFinishRewardItem(ItemId: 186000001, Count: 5)])),
+			DialogActionId: 8,
+			RewardRepeatCount: 3);
+
+		var plan = QuestFinishOperationPlanService.CreatePlan(
+			questState,
+			new NearbyQuestTemplateSummary(1001),
+			PlayerNpcFactionsSnapshot.Empty,
+			now,
+			CreateOptions("UTC"),
+			rewardProjection);
+
+		Assert.True(plan.Applied);
+		Assert.Equal(0, plan.QuestState?.RewardGroup);
+		Assert.All(plan.Descriptors, descriptor => Assert.False(descriptor.IsLive));
+		Assert.Equal(
+		[
+			QuestFinishOperationAction.RewardGroupCorrection,
+			QuestFinishOperationAction.ItemRewardProjection,
+			QuestFinishOperationAction.ItemRewardProjection,
+			QuestFinishOperationAction.ItemRewardProjection,
+			QuestFinishOperationAction.ItemRewardPlaceholder,
+			QuestFinishOperationAction.QuestStateMutation,
+			QuestFinishOperationAction.QuestUpdatePacket,
+		], plan.Descriptors.Take(7).Select(descriptor => descriptor.Action));
+		var projectedItems = plan.Descriptors
+			.Where(descriptor => descriptor.Action == QuestFinishOperationAction.ItemRewardProjection)
+			.ToArray();
+		Assert.Equal(
+		[
+			QuestFinishRewardItemSource.ExtendedFixed,
+			QuestFinishRewardItemSource.RegularFixed,
+			QuestFinishRewardItemSource.RegularSelectable,
+		], projectedItems.Select(descriptor => descriptor.RewardItemProjection!.Source));
+		Assert.Equal([186000001, 182400001, 182400002], projectedItems.Select(descriptor => descriptor.ItemId));
+		Assert.DoesNotContain(plan.Descriptors, descriptor => descriptor.Action == QuestFinishOperationAction.ItemRewardProjectionWarning);
+	}
+
+	[Fact]
+	public void CreatePlan_ComposesRewardProjectionWarningsBeforeCoarsePlaceholder()
+	{
+		var rewardProjection = new QuestFinishRewardTemplateProjection(
+			RewardGroupCount: 1,
+			HasItemRewards: true,
+			ItemProjection: new QuestFinishRewardItemTemplateProjection(
+				RewardGroups:
+				[
+					new QuestFinishRewardGroupProjection(RewardGroupIndex: 0),
+				],
+				HasBonus: true),
+			DialogActionId: 0,
+			RewardRepeatCount: 1);
+
+		var plan = QuestFinishOperationPlanService.CreatePlan(
+			new PlayerQuestState(1001, "REWARD", QuestVars: 0, Flags: 0, CompleteCount: 0),
+			new NearbyQuestTemplateSummary(1001),
+			PlayerNpcFactionsSnapshot.Empty,
+			new DateTimeOffset(2026, 5, 25, 8, 30, 0, TimeSpan.Zero),
+			CreateOptions("UTC"),
+			rewardProjection);
+
+		var warningDescriptor = Assert.Single(
+			plan.Descriptors,
+			descriptor => descriptor.Action == QuestFinishOperationAction.ItemRewardProjectionWarning);
+		Assert.NotNull(warningDescriptor.RewardItemProjectionWarning);
+		Assert.Equal(
+			QuestFinishRewardItemProjectionWarning.BonusHandlerNotProjected,
+			warningDescriptor.RewardItemProjectionWarning.Warning);
+		var descriptorList = plan.Descriptors.ToList();
+		var warningIndex = descriptorList.IndexOf(warningDescriptor);
+		var coarsePlaceholderIndex = descriptorList.FindIndex(
+			descriptor => descriptor.Action == QuestFinishOperationAction.ItemRewardPlaceholder);
+		Assert.True(warningIndex < coarsePlaceholderIndex);
+	}
+
+	[Fact]
 	public void CreatePlan_ComposesDetailedPersistencePlansAfterNearbyRefresh()
 	{
 		var now = new DateTimeOffset(2026, 5, 25, 8, 30, 0, TimeSpan.Zero);

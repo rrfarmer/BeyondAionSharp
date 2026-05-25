@@ -8,6 +8,8 @@ public enum QuestFinishOperationAction
 {
 	RewardMutationPlaceholder,
 	RewardGroupCorrection,
+	ItemRewardProjection,
+	ItemRewardProjectionWarning,
 	ItemRewardPlaceholder,
 	NonItemRewardPlaceholder,
 	ChallengeTaskCompletionPlaceholder,
@@ -28,6 +30,8 @@ public sealed record QuestFinishOperationDescriptor(
 	bool IsLive,
 	int? ItemId = null,
 	long? Count = null,
+	QuestFinishRewardItemProjectionDescriptor? RewardItemProjection = null,
+	QuestFinishRewardItemProjectionWarningDescriptor? RewardItemProjectionWarning = null,
 	QuestCompletionCallbackDescriptor? CompletionCallbackOperation = null,
 	QuestPersistenceOperationDescriptor? QuestPersistenceOperation = null,
 	NpcFactionPersistenceOperationDescriptor? NpcFactionPersistenceOperation = null);
@@ -81,6 +85,15 @@ public static class QuestFinishOperationPlanService
 			stateInput = rewardPlan.QuestState;
 			foreach (var rewardDescriptor in rewardPlan.Descriptors)
 			{
+				if (rewardDescriptor.Action == QuestFinishRewardOperationAction.ItemRewardPlaceholder)
+				{
+					AddDetailedRewardItemProjectionDescriptors(
+						descriptors,
+						ref nextOrder,
+						stateInput,
+						rewardProjection);
+				}
+
 				descriptors.Add(new QuestFinishOperationDescriptor(
 					nextOrder++,
 					MapRewardAction(rewardDescriptor.Action),
@@ -191,6 +204,51 @@ public static class QuestFinishOperationPlanService
 			QuestFinishRewardOperationAction.ChallengeTaskCompletionPlaceholder => QuestFinishOperationAction.ChallengeTaskCompletionPlaceholder,
 			QuestFinishRewardOperationAction.RemoveQuestWorkItemsPlaceholder => QuestFinishOperationAction.RemoveQuestWorkItemsPlaceholder,
 			_ => throw new ArgumentOutOfRangeException(nameof(action), action, null),
-		};
+			};
+	}
+
+	private static void AddDetailedRewardItemProjectionDescriptors(
+		ICollection<QuestFinishOperationDescriptor> descriptors,
+		ref int nextOrder,
+		PlayerQuestState questState,
+		QuestFinishRewardTemplateProjection rewardProjection)
+	{
+		if (rewardProjection.ItemProjection is null)
+		{
+			return;
+		}
+
+		var projectionPlan = QuestFinishRewardPlanService.CreateRewardItemProjection(
+			new QuestFinishRewardItemProjectionInput(
+				questState.QuestId,
+				rewardProjection.DialogActionId,
+				rewardProjection.ExtendedRewardIndex,
+				questState.CompleteCount,
+				rewardProjection.RewardRepeatCount,
+				questState.RewardGroup,
+				rewardProjection.PlayerClass),
+			rewardProjection.ItemProjection);
+
+		foreach (var itemDescriptor in projectionPlan.Items)
+		{
+			descriptors.Add(new QuestFinishOperationDescriptor(
+				nextOrder++,
+				QuestFinishOperationAction.ItemRewardProjection,
+				itemDescriptor.JavaSource,
+				itemDescriptor.IsLive,
+				itemDescriptor.ItemId,
+				itemDescriptor.Count,
+				RewardItemProjection: itemDescriptor));
+		}
+
+		foreach (var warning in projectionPlan.Warnings)
+		{
+			descriptors.Add(new QuestFinishOperationDescriptor(
+				nextOrder++,
+				QuestFinishOperationAction.ItemRewardProjectionWarning,
+				warning.JavaSource,
+				IsLive: false,
+				RewardItemProjectionWarning: warning));
+		}
 	}
 }
