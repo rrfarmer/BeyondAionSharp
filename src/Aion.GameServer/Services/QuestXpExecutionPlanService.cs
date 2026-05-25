@@ -6,11 +6,19 @@ public static class QuestXpExecutionPlanService
 {
 	public static QuestXpExecutionPlan CreatePlan(QuestXpRewardPlan xpRewardPlan)
 	{
+		return CreatePlan(xpRewardPlan, levelChangeContext: null);
+	}
+
+	public static QuestXpExecutionPlan CreatePlan(
+		QuestXpRewardPlan xpRewardPlan,
+		QuestXpLevelChangeCompositionContext? levelChangeContext)
+	{
 		ArgumentNullException.ThrowIfNull(xpRewardPlan);
 		if (!xpRewardPlan.Applied)
 			return QuestXpExecutionPlan.Skipped(xpRewardPlan);
 
 		var descriptors = new List<QuestXpExecutionDescriptor>();
+		var levelChangeSubPlans = Array.Empty<QuestXpLevelChangeSubPlanDescriptor>();
 		var wouldRunSetExp = xpRewardPlan.CurrentExp != xpRewardPlan.PreviousExp
 			|| xpRewardPlan.PreviousLevel == 0 && xpRewardPlan.CurrentExp == 0;
 
@@ -22,7 +30,10 @@ public static class QuestXpExecutionPlanService
 				: "Java setExp would be called by addExp but would not enter its mutation/send branch because exp did not change."));
 
 		if (xpRewardPlan.CurrentLevel != xpRewardPlan.PreviousLevel)
+		{
 			AddLevelChangeDescriptors(descriptors);
+			levelChangeSubPlans = ComposeLevelChangeSubPlans(levelChangeContext);
+		}
 
 		if (wouldRunSetExp)
 		{
@@ -66,8 +77,127 @@ public static class QuestXpExecutionPlanService
 			wouldRunSetExp,
 			xpRewardPlan.CurrentLevel != xpRewardPlan.PreviousLevel,
 			descriptors,
+			levelChangeSubPlans,
 			systemMessagePackets,
 			xpRewardPlan);
+	}
+
+	private static QuestXpLevelChangeSubPlanDescriptor[] ComposeLevelChangeSubPlans(
+		QuestXpLevelChangeCompositionContext? context)
+	{
+		if (context == null)
+			return [];
+
+		var subPlans = new List<QuestXpLevelChangeSubPlanDescriptor>();
+		if (context.UpgradePlayerPlan != null)
+		{
+			subPlans.Add(new QuestXpLevelChangeSubPlanDescriptor(
+				QuestXpExecutionAction.UpgradePlayerLifeStats,
+				nameof(PlayerLevelChangeUpgradePlanService),
+				context.UpgradePlayerPlan.Status.ToString(),
+				context.UpgradePlayerPlan.Applied,
+				context.UpgradePlayerPlan.Descriptors.Count,
+				context.UpgradePlayerPlan.Descriptors.Count(descriptor => descriptor.Status == PlayerLevelChangeUpgradeDescriptorStatus.Planned),
+				"PlayerController.upgradePlayer"));
+		}
+
+		if (context.NpcFactionLevelUpPlan != null)
+		{
+			subPlans.Add(new QuestXpLevelChangeSubPlanDescriptor(
+				QuestXpExecutionAction.NpcFactionLevelUp,
+				nameof(NpcFactionLevelUpPlanService),
+				context.NpcFactionLevelUpPlan.Status.ToString(),
+				context.NpcFactionLevelUpPlan.Applied,
+				context.NpcFactionLevelUpPlan.Descriptors.Count,
+				context.NpcFactionLevelUpPlan.Descriptors.Count(descriptor => descriptor.Status == NpcFactionLevelUpDescriptorStatus.PlannedLeaveByLevelLimit),
+				"PlayerController.onLevelChange -> NpcFactions.onLevelUp"));
+		}
+
+		if (context.QuestLevelChangedCallbackPlan != null)
+		{
+			subPlans.Add(new QuestXpLevelChangeSubPlanDescriptor(
+				QuestXpExecutionAction.QuestLevelChangedCallbacks,
+				nameof(QuestLevelChangedCallbackPlanService),
+				context.QuestLevelChangedCallbackPlan.Status.ToString(),
+				context.QuestLevelChangedCallbackPlan.Applied,
+				context.QuestLevelChangedCallbackPlan.Descriptors.Count,
+				context.QuestLevelChangedCallbackPlan.Descriptors.Count(descriptor => descriptor.Status == QuestLevelChangedCallbackDescriptorStatus.PlannedDispatch),
+				"PlayerController.onLevelChange -> QuestEngine.onLevelChanged"));
+		}
+
+		if (context.NearbyQuestRefreshPlan != null)
+		{
+			subPlans.Add(new QuestXpLevelChangeSubPlanDescriptor(
+				QuestXpExecutionAction.NearbyQuestRefresh,
+				nameof(NearbyQuestRefreshPlanService),
+				context.NearbyQuestRefreshPlan.Status.ToString(),
+				context.NearbyQuestRefreshPlan.WouldSendPacket,
+				context.NearbyQuestRefreshPlan.Markers.Count,
+				context.NearbyQuestRefreshPlan.Markers.Count,
+				"PlayerController.onLevelChange -> updateNearbyQuests"));
+		}
+
+		if (context.GuideHtmlLevelChangePlan != null)
+		{
+			subPlans.Add(new QuestXpLevelChangeSubPlanDescriptor(
+				QuestXpExecutionAction.GuideHtml,
+				nameof(GuideHtmlLevelChangePlanService),
+				context.GuideHtmlLevelChangePlan.Status.ToString(),
+				context.GuideHtmlLevelChangePlan.Applied,
+				context.GuideHtmlLevelChangePlan.Descriptors.Count,
+				context.GuideHtmlLevelChangePlan.PlannedGuideCount,
+				"PlayerController.onLevelChange -> HTMLService.sendGuideHtml"));
+		}
+
+		if (context.SkillAutoLearnPlan != null)
+		{
+			subPlans.Add(new QuestXpLevelChangeSubPlanDescriptor(
+				QuestXpExecutionAction.SkillAutoLearn,
+				"SkillLearnService.CreateAutoLearnPlan",
+				context.SkillAutoLearnPlan.Status.ToString(),
+				context.SkillAutoLearnPlan.Applied,
+				context.SkillAutoLearnPlan.Descriptors.Count,
+				context.SkillAutoLearnPlan.Descriptors.Count(descriptor =>
+					descriptor.Status is SkillAutoLearnDescriptorStatus.PlannedAdd
+						or SkillAutoLearnDescriptorStatus.PlannedUpgrade
+						or SkillAutoLearnDescriptorStatus.PlannedRemove),
+				"PlayerController.onLevelChange -> SkillLearnService.learnNewSkills"));
+		}
+
+		if (context.BonusPackPlan != null)
+			subPlans.Add(CreateCustomRewardSubPlan(context.BonusPackPlan, QuestXpExecutionAction.BonusPackReward));
+		if (context.FactionPackPlan != null)
+			subPlans.Add(CreateCustomRewardSubPlan(context.FactionPackPlan, QuestXpExecutionAction.FactionPackReward));
+
+		if (context.StarterKitLevelChangePlan != null)
+		{
+			subPlans.Add(new QuestXpLevelChangeSubPlanDescriptor(
+				QuestXpExecutionAction.StarterKitReward,
+				nameof(StarterKitLevelChangePlanService),
+				context.StarterKitLevelChangePlan.Status.ToString(),
+				context.StarterKitLevelChangePlan.Applied,
+				context.StarterKitLevelChangePlan.Descriptors.Count,
+				context.StarterKitLevelChangePlan.Descriptors.Count(descriptor => descriptor.Status == StarterKitLevelChangeDescriptorStatus.PlannedSystemMail),
+				"PlayerController.onLevelChange -> StarterKitService.onLevelUp"));
+		}
+
+		return subPlans.ToArray();
+	}
+
+	private static QuestXpLevelChangeSubPlanDescriptor CreateCustomRewardSubPlan(
+		CustomLevelRewardPlan plan,
+		QuestXpExecutionAction action)
+	{
+		return new QuestXpLevelChangeSubPlanDescriptor(
+			action,
+			nameof(CustomLevelRewardPlanService),
+			plan.Status.ToString(),
+			plan.Applied,
+			plan.Descriptors.Count,
+			plan.Descriptors.Count(descriptor => descriptor.Status == CustomLevelRewardDescriptorStatus.PlannedSystemMail),
+			action == QuestXpExecutionAction.BonusPackReward
+				? "PlayerController.onLevelChange -> BonusPackService.addPlayerCustomReward"
+				: "PlayerController.onLevelChange -> FactionPackService.addPlayerCustomReward");
 	}
 
 	private static void AddLevelChangeDescriptors(List<QuestXpExecutionDescriptor> descriptors)
@@ -147,6 +277,7 @@ public sealed record QuestXpExecutionPlan(
 	bool WouldRunSetExpMutationBranch,
 	bool LevelChanged,
 	IReadOnlyList<QuestXpExecutionDescriptor> Descriptors,
+	IReadOnlyList<QuestXpLevelChangeSubPlanDescriptor> LevelChangeSubPlans,
 	IReadOnlyList<SmSystemMessage> XpSystemMessagePackets,
 	QuestXpRewardPlan XpRewardPlan)
 {
@@ -165,6 +296,7 @@ public sealed record QuestXpExecutionPlan(
 			WouldRunSetExpMutationBranch: false,
 			LevelChanged: false,
 			Array.Empty<QuestXpExecutionDescriptor>(),
+			Array.Empty<QuestXpLevelChangeSubPlanDescriptor>(),
 			Array.Empty<SmSystemMessage>(),
 			xpRewardPlan);
 	}
@@ -175,6 +307,27 @@ public sealed record QuestXpExecutionDescriptor(
 	string JavaSource,
 	bool IsLive = false,
 	string? Notes = null);
+
+public sealed record QuestXpLevelChangeCompositionContext(
+	PlayerLevelChangeUpgradePlan? UpgradePlayerPlan = null,
+	NpcFactionLevelUpPlan? NpcFactionLevelUpPlan = null,
+	QuestLevelChangedCallbackPlan? QuestLevelChangedCallbackPlan = null,
+	NearbyQuestRefreshPlan? NearbyQuestRefreshPlan = null,
+	GuideHtmlLevelChangePlan? GuideHtmlLevelChangePlan = null,
+	SkillAutoLearnPlan? SkillAutoLearnPlan = null,
+	CustomLevelRewardPlan? BonusPackPlan = null,
+	CustomLevelRewardPlan? FactionPackPlan = null,
+	StarterKitLevelChangePlan? StarterKitLevelChangePlan = null);
+
+public sealed record QuestXpLevelChangeSubPlanDescriptor(
+	QuestXpExecutionAction Action,
+	string CSharpPlan,
+	string PlanStatus,
+	bool Applied,
+	int DescriptorCount,
+	int PlannedDescriptorCount,
+	string JavaSource,
+	bool IsLive = false);
 
 public enum QuestXpExecutionPlanStatus
 {

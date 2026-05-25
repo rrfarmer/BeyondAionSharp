@@ -112,6 +112,102 @@ public sealed class QuestXpExecutionPlanServiceTests
 		Assert.Empty(skipped.XpSystemMessagePackets);
 	}
 
+	[Fact]
+	public void CreatePlan_ComposesLevelChangeSubPlansInJavaOrderWithoutExecutingThem()
+	{
+		var service = CreateRewardService();
+		var table = CreateLinearExperienceTable();
+		var player = CreatePlayer(level: 9, exp: 8_900);
+		var xpPlan = service.CreateXpRewardPlan(player, table, rewardXp: 400);
+		var context = new QuestXpLevelChangeCompositionContext(
+			UpgradePlayerPlan: PlayerLevelChangeUpgradePlanService.CreatePlan(
+				player,
+				new PlayerLevelChangeUpgradeStats(200, 180, 120)),
+			NpcFactionLevelUpPlan: NpcFactionLevelUpPlan.MissingSnapshot(),
+			QuestLevelChangedCallbackPlan: QuestLevelChangedCallbackPlanService.CreatePlan(
+				player.Race,
+				[new QuestLevelChangedRegistration(1001, "ELYOS")],
+				Array.Empty<PlayerQuestState>()),
+			NearbyQuestRefreshPlan: NearbyQuestRefreshPlan.NoWorldQuestIds(),
+			GuideHtmlLevelChangePlan: GuideHtmlLevelChangePlanService.CreatePlan(
+				player,
+				guidesEnabled: true,
+				isSpawned: true,
+				fromLevel: 10,
+				toLevel: 10,
+				[new GuideHtmlTemplateSummary("level 10", 10, "RANGER", "ELYOS")]),
+			SkillAutoLearnPlan: SkillLearnService.CreateAutoLearnPlan(
+				player,
+				skillTree: null,
+				skillTemplates: null,
+				fromLevel: 10,
+				toLevel: 10,
+				isDaeva: true,
+				hasEffectController: true,
+				isSpawned: true),
+			BonusPackPlan: CustomLevelRewardPlanService.CreateBonusPackPlan(
+				player,
+				receivedPlayerId: 0,
+				storeReceivingPlayerSucceeded: true),
+			FactionPackPlan: CustomLevelRewardPlanService.CreateFactionPackPlan(
+				player,
+				accountCreationLocalTime: new DateTime(2020, 9, 14, 0, 0, 0),
+				receivedPlayerId: 0,
+				storeReceivingPlayerSucceeded: true),
+			StarterKitLevelChangePlan: StarterKitLevelChangePlanService.CreatePlan(
+				player,
+				starterKitEnabled: true,
+				fromLevel: 10,
+				toLevel: 10));
+
+		var plan = QuestXpExecutionPlanService.CreatePlan(xpPlan, context);
+
+		Assert.True(plan.LevelChanged);
+		Assert.Equal(
+		[
+			QuestXpExecutionAction.UpgradePlayerLifeStats,
+			QuestXpExecutionAction.NpcFactionLevelUp,
+			QuestXpExecutionAction.QuestLevelChangedCallbacks,
+			QuestXpExecutionAction.NearbyQuestRefresh,
+			QuestXpExecutionAction.GuideHtml,
+			QuestXpExecutionAction.SkillAutoLearn,
+			QuestXpExecutionAction.BonusPackReward,
+			QuestXpExecutionAction.FactionPackReward,
+			QuestXpExecutionAction.StarterKitReward,
+		], plan.LevelChangeSubPlans.Select(subPlan => subPlan.Action));
+		Assert.All(plan.LevelChangeSubPlans, subPlan => Assert.False(subPlan.IsLive));
+		Assert.Contains(plan.LevelChangeSubPlans, subPlan =>
+			subPlan.Action == QuestXpExecutionAction.GuideHtml
+			&& subPlan.Applied
+			&& subPlan.PlannedDescriptorCount == 1);
+		Assert.Contains(plan.LevelChangeSubPlans, subPlan =>
+			subPlan.Action == QuestXpExecutionAction.SkillAutoLearn
+			&& subPlan.PlanStatus == SkillAutoLearnPlanStatus.BlockedMissingSkillTree.ToString());
+		Assert.Contains(plan.LevelChangeSubPlans, subPlan =>
+			subPlan.Action == QuestXpExecutionAction.StarterKitReward
+			&& subPlan.PlanStatus == StarterKitLevelChangePlanStatus.NoMatchingRewards.ToString());
+		Assert.Equal(
+			QuestXpExecutionAction.StatUpdateExpPacket,
+			plan.Descriptors[plan.Descriptors.Count - 2].Action);
+	}
+
+	[Fact]
+	public void CreatePlan_DoesNotComposeLevelChangeSubPlansWhenLevelIsUnchanged()
+	{
+		var service = CreateRewardService();
+		var xpPlan = service.CreateXpRewardPlan(
+			CreatePlayer(level: 15, exp: 14_000),
+			CreateLinearExperienceTable(),
+			rewardXp: 100);
+		var context = new QuestXpLevelChangeCompositionContext(
+			NearbyQuestRefreshPlan: NearbyQuestRefreshPlan.NoWorldQuestIds());
+
+		var plan = QuestXpExecutionPlanService.CreatePlan(xpPlan, context);
+
+		Assert.False(plan.LevelChanged);
+		Assert.Empty(plan.LevelChangeSubPlans);
+	}
+
 	private static QuestRewardService CreateRewardService()
 	{
 		return new QuestRewardService(
