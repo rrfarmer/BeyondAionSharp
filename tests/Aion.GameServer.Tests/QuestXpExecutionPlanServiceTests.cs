@@ -208,6 +208,76 @@ public sealed class QuestXpExecutionPlanServiceTests
 		Assert.Empty(plan.LevelChangeSubPlans);
 	}
 
+	[Fact]
+	public void CreatePlan_ComposesSuppliedCustomRewardExecutionResultMetadata()
+	{
+		var service = CreateRewardService();
+		var player = new Player
+		{
+			ObjectId = 4401,
+			AccountId = 3301,
+			Name = "Execution",
+			Race = "ELYOS",
+			PlayerClass = "RANGER",
+			Level = 64,
+			Exp = 64_900,
+			IsOnline = true,
+			AccountMembership = 0,
+			AbyssRank = PlayerAbyssRank.Default(),
+			Position = new WorldPosition(210010000, 10, 20, 30, 0),
+			LifeStats = new PlayerLifeStats(100, 100, 100),
+		};
+		var xpPlan = service.CreateXpRewardPlan(player, CreateLinearExperienceTable(), rewardXp: 200);
+		var rewardPlayer = new Player
+		{
+			ObjectId = player.ObjectId,
+			AccountId = player.AccountId,
+			Name = player.Name,
+			Race = player.Race,
+			PlayerClass = player.PlayerClass,
+			Level = 65,
+		};
+		var rewardPlan = CustomLevelRewardPlanService.CreateBonusPackPlan(
+			rewardPlayer,
+			receivedPlayerId: 0,
+			storeReceivingPlayerSucceeded: true);
+		var itemTemplates = CreateTemplates(rewardPlan.Descriptors.Select(descriptor => descriptor.Reward.ItemId));
+		var nextId = 9000;
+		var mailPlans = rewardPlan.Descriptors
+			.Select(descriptor => SystemMailRewardPlanService.CreatePlan(
+				rewardPlayer,
+				descriptor,
+				mailObjectId: ++nextId,
+				attachedItemObjectId: ++nextId,
+				DateTime.UnixEpoch,
+				itemTemplates))
+			.ToArray();
+		var executionResult = CustomLevelRewardExecutionResult.FromPlan(
+			CustomLevelRewardPackKind.Bonus,
+			CustomLevelRewardExecutionStatus.PlannedMail,
+			rewardPlan,
+			ReceivedPlayerId: 0,
+			StoreReceivingPlayerSucceeded: true,
+			mailPlans);
+		var fallbackPlan = CustomLevelRewardPlanService.CreateBonusPackPlan(
+			rewardPlayer,
+			receivedPlayerId: 4701,
+			storeReceivingPlayerSucceeded: true);
+		var context = new QuestXpLevelChangeCompositionContext(
+			BonusPackPlan: fallbackPlan,
+			BonusPackExecutionResult: executionResult);
+
+		var plan = QuestXpExecutionPlanService.CreatePlan(xpPlan, context);
+
+		var bonusSubPlan = Assert.Single(plan.LevelChangeSubPlans, subPlan => subPlan.Action == QuestXpExecutionAction.BonusPackReward);
+		Assert.Equal(nameof(CustomLevelRewardExecutionService), bonusSubPlan.CSharpPlan);
+		Assert.Equal(CustomLevelRewardExecutionStatus.PlannedMail.ToString(), bonusSubPlan.PlanStatus);
+		Assert.True(bonusSubPlan.Applied);
+		Assert.True(bonusSubPlan.IsLive);
+		Assert.Equal(rewardPlan.Descriptors.Count, bonusSubPlan.DescriptorCount);
+		Assert.Equal(mailPlans.Length, bonusSubPlan.PlannedDescriptorCount);
+	}
+
 	private static QuestRewardService CreateRewardService()
 	{
 		return new QuestRewardService(
@@ -245,5 +315,12 @@ public sealed class QuestXpExecutionPlanServiceTests
 	private static PlayerExperienceTable CreateLinearExperienceTable()
 	{
 		return new PlayerExperienceTable(Enumerable.Range(0, 70).Select(level => (long)level * 1000).ToArray());
+	}
+
+	private static ItemTemplateTable CreateTemplates(IEnumerable<int> itemIds)
+	{
+		return new ItemTemplateTable(itemIds
+			.Select(itemId => new ItemTemplateSummary(itemId, $"Item {itemId}", 0, 0, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 100, 0, 0))
+			.ToArray());
 	}
 }

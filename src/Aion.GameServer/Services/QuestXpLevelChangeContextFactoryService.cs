@@ -41,12 +41,14 @@ public static class QuestXpLevelChangeContextFactoryService
 				player,
 				input.BonusPackReceivedPlayerId,
 				input.BonusPackStoreReceivingPlayerSucceeded),
+			BonusPackExecutionResult: input.BonusPackExecutionResult,
 			FactionPackPlan: CustomLevelRewardPlanService.CreateFactionPackPlan(
 				player,
 				input.FactionPackAccountCreationLocalTime,
 				input.FactionPackReceivedPlayerId,
 				input.FactionPackStoreReceivingPlayerSucceeded,
 				input.ItemTemplates),
+			FactionPackExecutionResult: input.FactionPackExecutionResult,
 			StarterKitLevelChangePlan: StarterKitLevelChangePlanService.CreatePlan(
 				player,
 				input.StarterKitEnabled,
@@ -72,8 +74,10 @@ public sealed record QuestXpLevelChangeContextFactoryInput(
 	bool HasEffectController = false,
 	int BonusPackReceivedPlayerId = 0,
 	bool BonusPackStoreReceivingPlayerSucceeded = false,
+	CustomLevelRewardExecutionResult? BonusPackExecutionResult = null,
 	DateTime FactionPackAccountCreationLocalTime = default,
 	int FactionPackReceivedPlayerId = 0,
 	bool FactionPackStoreReceivingPlayerSucceeded = false,
+	CustomLevelRewardExecutionResult? FactionPackExecutionResult = null,
 	ItemTemplateTable? ItemTemplates = null,
 	bool StarterKitEnabled = false);

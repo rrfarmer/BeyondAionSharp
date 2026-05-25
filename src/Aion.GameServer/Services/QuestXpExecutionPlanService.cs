@@ -164,9 +164,13 @@ public static class QuestXpExecutionPlanService
 				"PlayerController.onLevelChange -> SkillLearnService.learnNewSkills"));
 		}
 
-		if (context.BonusPackPlan != null)
+		if (context.BonusPackExecutionResult != null)
+			subPlans.Add(CreateCustomRewardExecutionSubPlan(context.BonusPackExecutionResult, QuestXpExecutionAction.BonusPackReward));
+		else if (context.BonusPackPlan != null)
 			subPlans.Add(CreateCustomRewardSubPlan(context.BonusPackPlan, QuestXpExecutionAction.BonusPackReward));
-		if (context.FactionPackPlan != null)
+		if (context.FactionPackExecutionResult != null)
+			subPlans.Add(CreateCustomRewardExecutionSubPlan(context.FactionPackExecutionResult, QuestXpExecutionAction.FactionPackReward));
+		else if (context.FactionPackPlan != null)
 			subPlans.Add(CreateCustomRewardSubPlan(context.FactionPackPlan, QuestXpExecutionAction.FactionPackReward));
 
 		if (context.StarterKitLevelChangePlan != null)
@@ -198,6 +202,23 @@ public static class QuestXpExecutionPlanService
 			action == QuestXpExecutionAction.BonusPackReward
 				? "PlayerController.onLevelChange -> BonusPackService.addPlayerCustomReward"
 				: "PlayerController.onLevelChange -> FactionPackService.addPlayerCustomReward");
+	}
+
+	private static QuestXpLevelChangeSubPlanDescriptor CreateCustomRewardExecutionSubPlan(
+		CustomLevelRewardExecutionResult result,
+		QuestXpExecutionAction action)
+	{
+		return new QuestXpLevelChangeSubPlanDescriptor(
+			action,
+			nameof(CustomLevelRewardExecutionService),
+			result.Status.ToString(),
+			result.Applied,
+			result.RewardPlan.Descriptors.Count,
+			result.MailPlans.Count(mailPlan => mailPlan.Status == SystemMailRewardPlanStatus.Planned),
+			action == QuestXpExecutionAction.BonusPackReward
+				? "PlayerController.onLevelChange -> BonusPackService.addPlayerCustomReward"
+				: "PlayerController.onLevelChange -> FactionPackService.addPlayerCustomReward",
+			IsLive: result.IsLiveReceiptBoundary || result.IsLiveMailBoundary);
 	}
 
 	private static void AddLevelChangeDescriptors(List<QuestXpExecutionDescriptor> descriptors)
@@ -316,7 +337,9 @@ public sealed record QuestXpLevelChangeCompositionContext(
 	GuideHtmlLevelChangePlan? GuideHtmlLevelChangePlan = null,
 	SkillAutoLearnPlan? SkillAutoLearnPlan = null,
 	CustomLevelRewardPlan? BonusPackPlan = null,
+	CustomLevelRewardExecutionResult? BonusPackExecutionResult = null,
 	CustomLevelRewardPlan? FactionPackPlan = null,
+	CustomLevelRewardExecutionResult? FactionPackExecutionResult = null,
 	StarterKitLevelChangePlan? StarterKitLevelChangePlan = null);
 
 public sealed record QuestXpLevelChangeSubPlanDescriptor(
