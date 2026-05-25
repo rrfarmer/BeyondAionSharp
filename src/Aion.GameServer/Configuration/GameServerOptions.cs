@@ -245,6 +245,10 @@ public sealed class GameServerOptions
 				ApPveRates = GetFloatListWithEnvironment(loader, "gameserver.rates.ap.pve", "1.0, 2.0"),
 				ApQuestRates = GetFloatListWithEnvironment(loader, "gameserver.rates.ap.quest", "1.0, 2.0"),
 				ApDredgionRates = GetFloatListWithEnvironment(loader, "gameserver.rates.ap.dredgion", "1.0, 2.0"),
+				PvpArenaDisciplineRewardRates = GetFloatListWithEnvironment(loader, "gameserver.rates.pvparena.discipline", "1.0, 2.0"),
+				PvpArenaChaosRewardRates = GetFloatListWithEnvironment(loader, "gameserver.rates.pvparena.chaos", "1.0, 2.0"),
+				PvpArenaHarmonyRewardRates = GetFloatListWithEnvironment(loader, "gameserver.rates.pvparena.harmony", "1.0, 2.0"),
+				PvpArenaGloryRewardRates = GetFloatListWithEnvironment(loader, "gameserver.rates.pvparena.glory", "1.0, 2.0"),
 			},
 			LoadedPropertyCount = loader.Count,
 		};
@@ -585,6 +589,14 @@ public sealed class GameServerRateOptions
 	public IReadOnlyList<float> ApQuestRates { get; init; } = [1f, 2f];
 
 	public IReadOnlyList<float> ApDredgionRates { get; init; } = [1f, 2f];
+
+	public IReadOnlyList<float> PvpArenaDisciplineRewardRates { get; init; } = [1f, 2f];
+
+	public IReadOnlyList<float> PvpArenaChaosRewardRates { get; init; } = [1f, 2f];
+
+	public IReadOnlyList<float> PvpArenaHarmonyRewardRates { get; init; } = [1f, 2f];
+
+	public IReadOnlyList<float> PvpArenaGloryRewardRates { get; init; } = [1f, 2f];
 }
 
 public sealed class GameServerAdministrationOptions
