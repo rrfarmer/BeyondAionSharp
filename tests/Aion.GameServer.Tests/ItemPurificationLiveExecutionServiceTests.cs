@@ -130,6 +130,12 @@ public sealed class ItemPurificationLiveExecutionServiceTests
 			kinah,
 			rankLimitedSword);
 		player.AbyssRank = PlayerAbyssRank.Default() with { Ap = 1_300, Rank = 2, MaxRank = 2 };
+		player.Skills =
+		[
+			new PlayerSkill { SkillId = 11885, SkillLevel = 1 },
+			new PlayerSkill { SkillId = 11895, SkillLevel = 1 },
+			new PlayerSkill { SkillId = 37, SkillLevel = 1 },
+		];
 		var itemTemplates = CreateItemTemplates(
 			new ItemTemplateSummary(
 				100000003,
@@ -183,8 +189,12 @@ public sealed class ItemPurificationLiveExecutionServiceTests
 		Assert.False(unequippedSword.IsEquipped);
 		Assert.Equal(0, unequippedSword.Slot);
 		Assert.False(player.InventoryItems.Single(item => item.ObjectId == rankLimitedSword.ObjectId).IsEquipped);
+		var abyssSkillUpdate = Assert.IsType<AbyssSkillUpdateResult>(result.AbyssSkillUpdate);
+		Assert.Equal([11885, 11895], abyssSkillUpdate.RemovedSkills.Select(skill => skill.SkillId).ToArray());
+		Assert.Empty(abyssSkillUpdate.AddedSkills);
+		Assert.Equal([37], player.Skills.Select(skill => skill.SkillId).ToArray());
 
-		Assert.Equal(9, result.MutationPacketSend?.SentCount);
+		Assert.Equal(11, result.MutationPacketSend?.SentCount);
 		Assert.Equal(
 			[
 				ItemPurificationPacketOperationType.KinahNoPacket,
@@ -198,6 +208,8 @@ public sealed class ItemPurificationLiveExecutionServiceTests
 				typeof(SmAbyssRank),
 				typeof(SmInventoryUpdateItem),
 				typeof(SmSystemMessage),
+				typeof(SmSkillRemove),
+				typeof(SmSkillRemove),
 				typeof(SmDeleteItem),
 				typeof(SmCubeUpdate),
 				typeof(SmInventoryAddItem),
@@ -241,6 +253,7 @@ public sealed class ItemPurificationLiveExecutionServiceTests
 		return new Player
 		{
 			ObjectId = 700,
+			Race = "ELYOS",
 			AbyssRank = PlayerAbyssRank.Default() with { Ap = abyssPoints },
 			InventoryItems = items,
 		};
