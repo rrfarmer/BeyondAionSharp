@@ -87,6 +87,25 @@ public static class ItemChargeService
 		return ItemChargeAbyssPointPaymentPlan.Ready(player.AbyssRank.Ap, requiredAbyssPoints, abyssPointsPlan);
 	}
 
+	public static ItemChargeKinahPaymentPlan CreateKinahPaymentPlan(
+		InventoryItem? kinahItem,
+		long requiredKinah)
+	{
+		// Java parity: services/item/ItemChargeService.processKinahPayment delegates to
+		// Storage.tryDecreaseKinah(requiredKinah), which rejects missing/insufficient Kinah before mutation.
+		if (requiredKinah <= 0)
+			return ItemChargeKinahPaymentPlan.NoPaymentRequired();
+		if (kinahItem == null)
+			return ItemChargeKinahPaymentPlan.NoKinahItem(requiredKinah);
+		if (kinahItem.Count < requiredKinah)
+			return ItemChargeKinahPaymentPlan.InsufficientKinah(kinahItem.Count, requiredKinah);
+
+		return ItemChargeKinahPaymentPlan.Ready(
+			kinahItem.Count,
+			requiredKinah,
+			CopyInventoryItem(kinahItem, count: kinahItem.Count - requiredKinah));
+	}
+
 	public static long GetPayAmountForService(InventoryItem item, ItemImprovement improvement, int chargeLevel)
 	{
 		// Java parity: services/item/ItemChargeService.getPayAmountForService.
@@ -246,11 +265,16 @@ public static class ItemChargeService
 
 	private static InventoryItem CopyInventoryItem(InventoryItem item, int? charge = null)
 	{
+		return CopyInventoryItem(item, charge, count: null);
+	}
+
+	private static InventoryItem CopyInventoryItem(InventoryItem item, int? charge = null, long? count = null)
+	{
 		var copy = new InventoryItem
 		{
 			ObjectId = item.ObjectId,
 			ItemId = item.ItemId,
-			Count = item.Count,
+			Count = count ?? item.Count,
 			Color = item.Color,
 			ColorExpires = item.ColorExpires,
 			Creator = item.Creator,
@@ -371,6 +395,59 @@ public enum ItemChargeAbyssPointPaymentStatus
 	NoPlayer,
 	InsufficientAbyssPoints,
 	PaymentTooLarge,
+}
+
+public sealed record ItemChargeKinahPaymentPlan(
+	ItemChargeKinahPaymentStatus Status,
+	long CurrentKinah,
+	long RequiredKinah,
+	InventoryItem? KinahItemUpdate)
+{
+	public bool Succeeded => Status is ItemChargeKinahPaymentStatus.Ready or ItemChargeKinahPaymentStatus.NoPaymentRequired;
+
+	public static ItemChargeKinahPaymentPlan Ready(long currentKinah, long requiredKinah, InventoryItem kinahItemUpdate)
+	{
+		return new ItemChargeKinahPaymentPlan(
+			ItemChargeKinahPaymentStatus.Ready,
+			currentKinah,
+			requiredKinah,
+			kinahItemUpdate);
+	}
+
+	public static ItemChargeKinahPaymentPlan NoPaymentRequired()
+	{
+		return new ItemChargeKinahPaymentPlan(
+			ItemChargeKinahPaymentStatus.NoPaymentRequired,
+			CurrentKinah: 0,
+			RequiredKinah: 0,
+			KinahItemUpdate: null);
+	}
+
+	public static ItemChargeKinahPaymentPlan NoKinahItem(long requiredKinah)
+	{
+		return new ItemChargeKinahPaymentPlan(
+			ItemChargeKinahPaymentStatus.NoKinahItem,
+			CurrentKinah: 0,
+			requiredKinah,
+			KinahItemUpdate: null);
+	}
+
+	public static ItemChargeKinahPaymentPlan InsufficientKinah(long currentKinah, long requiredKinah)
+	{
+		return new ItemChargeKinahPaymentPlan(
+			ItemChargeKinahPaymentStatus.InsufficientKinah,
+			currentKinah,
+			requiredKinah,
+			KinahItemUpdate: null);
+	}
+}
+
+public enum ItemChargeKinahPaymentStatus
+{
+	Ready,
+	NoPaymentRequired,
+	NoKinahItem,
+	InsufficientKinah,
 }
 
 public sealed record ItemChargeUpdateResult(

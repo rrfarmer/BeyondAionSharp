@@ -1874,13 +1874,13 @@ public sealed class GameServerConnection : BaseClientConnection
 			switch (plan.ChargeWay)
 			{
 				case 1:
-					if (plan.PaymentAmount > 0)
-					{
-						var kinahItem = inventoryItems.FirstOrDefault(item => item.ItemId == KinahItemId && item.Location == CubeStorageId);
-						if (kinahItem == null || kinahItem.Count < plan.PaymentAmount)
-							continue;
-						kinahUpdate = CopyInventoryItem(kinahItem, count: kinahItem.Count - plan.PaymentAmount);
-					}
+					// Java parity: ItemChargeService.processKinahPayment delegates to Storage.tryDecreaseKinah.
+					var selectedItemKinahPlan = ItemChargeService.CreateKinahPaymentPlan(
+						inventoryItems.FirstOrDefault(item => item.ItemId == KinahItemId && item.Location == CubeStorageId),
+						plan.PaymentAmount);
+					if (!selectedItemKinahPlan.Succeeded)
+						continue;
+					kinahUpdate = selectedItemKinahPlan.KinahItemUpdate;
 					break;
 				case 2:
 					// Java parity: ItemChargeService.processAPPayment guards current AP before
@@ -7016,13 +7016,14 @@ public sealed class GameServerConnection : BaseClientConnection
 		switch (request.ChargeWay)
 		{
 			case 1:
-				if (request.PaymentAmount > 0)
-				{
-					var kinahItem = inventoryItems.FirstOrDefault(item => item.ItemId == KinahItemId && item.Location == CubeStorageId);
-					if (kinahItem == null || kinahItem.Count < request.PaymentAmount)
-						return;
-					kinahUpdate = CopyInventoryItem(kinahItem, count: kinahItem.Count - request.PaymentAmount);
-				}
+				// Java parity: charge-all acceptRequest calls processPayment, which reaches
+				// processKinahPayment for chargeWay 1.
+				var chargeAllKinahPlan = ItemChargeService.CreateKinahPaymentPlan(
+					inventoryItems.FirstOrDefault(item => item.ItemId == KinahItemId && item.Location == CubeStorageId),
+					request.PaymentAmount);
+				if (!chargeAllKinahPlan.Succeeded)
+					return;
+				kinahUpdate = chargeAllKinahPlan.KinahItemUpdate;
 				break;
 			case 2:
 				// Java parity: ItemChargeService.startChargingEquippedItems acceptRequest

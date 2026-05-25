@@ -224,6 +224,23 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleChargeItemAsync_KinahPaymentRejectsInsufficientKinahWithoutSideEffects()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreateKinahChargePaymentPlayer(kinah: 499);
+
+		await InvokeHandleChargeItemAsync(fixture.Connection, player, CreateChargeItem(itemObjectId: 7101, chargeLevel: 1));
+
+		Assert.Equal(0, repository.SaveItemChargeMutationCalls);
+		var item = Assert.Single(player.InventoryItems, inventoryItem => inventoryItem.ObjectId == 7101);
+		var kinah = Assert.Single(player.InventoryItems, inventoryItem => inventoryItem.ItemId == 182400001);
+		Assert.Equal(0, item.Charge);
+		Assert.Equal(499, kinah.Count);
+		Assert.Empty(fixture.SentPackets);
+	}
+
+	[Fact]
 	public async Task HandleQuestionResponseAsync_ChargeAllApPaymentSendsAbyssPointsPlannerPackets()
 	{
 		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(new EmptyPlayerEnterWorldRepository());
@@ -340,6 +357,42 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Equal(0, repository.SaveItemChargeAllMutationCalls);
 		var item = Assert.Single(player.InventoryItems, inventoryItem => inventoryItem.ObjectId == 7001);
 		Assert.Equal(0, item.Charge);
+		Assert.Empty(fixture.SentPackets);
+	}
+
+	[Fact]
+	public async Task HandleQuestionResponseAsync_ChargeAllKinahPaymentRejectsInsufficientKinahWithoutSideEffects()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreateKinahChargeAllPaymentPlayer(kinah: 499);
+		var pendingRequest = new PendingChargeAllRequest(
+			SenderObjectId: player.ObjectId,
+			ChargeWay: 1,
+			PaymentAmount: 500,
+			Items:
+			[
+				new PendingChargeAllItem(
+					ObjectId: 7101,
+					ItemId: 100000401,
+					PreviousCharge: 0,
+					TargetCharge: ItemChargeService.Level1ChargePoints,
+					Level: 1),
+			]);
+		player.PendingChargeAllRequest = pendingRequest;
+		Assert.True(player.ResponseRequester.PutRequest(
+			SmQuestionWindow.ItemChargeAllConfirm,
+			new QuestionResponseRequest(player.ObjectId, QuestionResponseRequestKind.ChargeAll, pendingRequest)));
+
+		await fixture.Connection.HandleQuestionResponseAsync(player, CreateQuestionResponse(SmQuestionWindow.ItemChargeAllConfirm, response: 1));
+
+		Assert.Null(player.PendingChargeAllRequest);
+		Assert.Equal(0, player.ResponseRequester.Count);
+		Assert.Equal(0, repository.SaveItemChargeAllMutationCalls);
+		var item = Assert.Single(player.InventoryItems, inventoryItem => inventoryItem.ObjectId == 7101);
+		var kinah = Assert.Single(player.InventoryItems, inventoryItem => inventoryItem.ItemId == 182400001);
+		Assert.Equal(0, item.Charge);
+		Assert.Equal(499, kinah.Count);
 		Assert.Empty(fixture.SentPackets);
 	}
 
@@ -1278,6 +1331,67 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 					Count = 1,
 					Location = 0,
 					IsEquipped = true,
+				},
+			],
+		};
+	}
+
+	private static Player CreateKinahChargePaymentPlayer(long kinah)
+	{
+		return new Player
+		{
+			ObjectId = 1001,
+			Name = "KinahUser",
+			Race = "ELYOS",
+			PlayerClass = "RANGER",
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			AbyssRank = PlayerAbyssRank.Default(),
+			InventoryItems =
+			[
+				new InventoryItem
+				{
+					ObjectId = 7101,
+					ItemId = 100000401,
+					Count = 1,
+					Location = 0,
+				},
+				new InventoryItem
+				{
+					ObjectId = 8101,
+					ItemId = 182400001,
+					Count = kinah,
+					Location = 0,
+				},
+			],
+		};
+	}
+
+	private static Player CreateKinahChargeAllPaymentPlayer(long kinah)
+	{
+		return new Player
+		{
+			ObjectId = 1001,
+			Name = "KinahUser",
+			Race = "ELYOS",
+			PlayerClass = "RANGER",
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			AbyssRank = PlayerAbyssRank.Default(),
+			InventoryItems =
+			[
+				new InventoryItem
+				{
+					ObjectId = 7101,
+					ItemId = 100000401,
+					Count = 1,
+					Location = 0,
+					IsEquipped = true,
+				},
+				new InventoryItem
+				{
+					ObjectId = 8101,
+					ItemId = 182400001,
+					Count = kinah,
+					Location = 0,
 				},
 			],
 		};
@@ -2232,6 +2346,10 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 						<item_template id="100000400" name="Test Conditioning Sword" level="30" item_group="SWORD" item_type="ABYSS" quality="RARE" race="PC_ALL" max_stack_count="1">
 							<improve way="2" level="2" burn_attack="0" burn_defend="0" price1="1000" price2="2000" />
 						</item_template>
+						<item_template id="100000401" name="Test Kinah Conditioning Sword" level="30" item_group="SWORD" item_type="NORMAL" quality="RARE" race="PC_ALL" max_stack_count="1">
+							<improve way="1" level="2" burn_attack="0" burn_defend="0" price1="1000" price2="2000" />
+						</item_template>
+						<item_template id="182400001" name="Kinah" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="0"/>
 						<item_template id="100" name="Test Decompose Box" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="1">
 							<actions>
 								<decompose/>

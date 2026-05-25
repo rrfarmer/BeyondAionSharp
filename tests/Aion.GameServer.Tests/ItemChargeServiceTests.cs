@@ -152,6 +152,52 @@ public sealed class ItemChargeServiceTests
 	}
 
 	[Fact]
+	public void CreateKinahPaymentPlan_RejectsMissingOrInsufficientKinahBeforeMutation()
+	{
+		var insufficientKinah = CreateItem(itemId: 182400001, count: 400);
+
+		var missing = ItemChargeService.CreateKinahPaymentPlan(null, requiredKinah: 500);
+		var insufficient = ItemChargeService.CreateKinahPaymentPlan(insufficientKinah, requiredKinah: 500);
+
+		Assert.False(missing.Succeeded);
+		Assert.Equal(ItemChargeKinahPaymentStatus.NoKinahItem, missing.Status);
+		Assert.Equal(500, missing.RequiredKinah);
+		Assert.Null(missing.KinahItemUpdate);
+		Assert.False(insufficient.Succeeded);
+		Assert.Equal(ItemChargeKinahPaymentStatus.InsufficientKinah, insufficient.Status);
+		Assert.Equal(400, insufficient.CurrentKinah);
+		Assert.Equal(500, insufficient.RequiredKinah);
+		Assert.Null(insufficient.KinahItemUpdate);
+		Assert.Equal(400, insufficientKinah.Count);
+	}
+
+	[Fact]
+	public void CreateKinahPaymentPlan_CreatesKinahUpdateWhenAffordable()
+	{
+		var kinah = CreateItem(itemId: 182400001, count: 900);
+
+		var paymentPlan = ItemChargeService.CreateKinahPaymentPlan(kinah, requiredKinah: 500);
+
+		Assert.True(paymentPlan.Succeeded);
+		Assert.Equal(ItemChargeKinahPaymentStatus.Ready, paymentPlan.Status);
+		Assert.Equal(900, paymentPlan.CurrentKinah);
+		Assert.Equal(500, paymentPlan.RequiredKinah);
+		Assert.NotNull(paymentPlan.KinahItemUpdate);
+		Assert.Equal(400, paymentPlan.KinahItemUpdate.Count);
+		Assert.Equal(900, kinah.Count);
+	}
+
+	[Fact]
+	public void CreateKinahPaymentPlan_SkipsZeroPayment()
+	{
+		var paymentPlan = ItemChargeService.CreateKinahPaymentPlan(CreateItem(itemId: 182400001, count: 900), requiredKinah: 0);
+
+		Assert.True(paymentPlan.Succeeded);
+		Assert.Equal(ItemChargeKinahPaymentStatus.NoPaymentRequired, paymentPlan.Status);
+		Assert.Null(paymentPlan.KinahItemUpdate);
+	}
+
+	[Fact]
 	public void DecreaseChargePoints_UsesJavaAttackAndDefendBurnAmounts()
 	{
 		var improvement = new ItemImprovement(ChargeWay: 1, Level: 2, BurnAttack: 200, BurnDefend: 100, Price1: 1000, Price2: 2000);
@@ -309,17 +355,18 @@ public sealed class ItemChargeServiceTests
 	}
 
 	private static InventoryItem CreateItem(
-		int charge,
+		int charge = 0,
 		int fusionedItem = 0,
 		int itemId = 100,
 		int objectId = 10,
-		bool isEquipped = false)
+		bool isEquipped = false,
+		long count = 1)
 	{
 		return new InventoryItem
 		{
 			ObjectId = objectId,
 			ItemId = itemId,
-			Count = 1,
+			Count = count,
 			Location = 0,
 			Charge = charge,
 			FusionedItem = fusionedItem,
