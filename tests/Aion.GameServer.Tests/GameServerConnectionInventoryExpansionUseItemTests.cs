@@ -218,7 +218,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
 
 		Assert.Equal(5001, player.UsingItemObjectId);
-		await WaitUntilAsync(() => fixture.SentPackets.Count >= 5, TimeSpan.FromSeconds(5));
+		await WaitUntilAsync(() => fixture.SentPackets.Count >= 6, TimeSpan.FromSeconds(5));
 		Assert.Equal(0, player.UsingItemObjectId);
 		var reward = Assert.Single(player.InventoryItems);
 		Assert.Equal(200, reward.ItemId);
@@ -228,6 +228,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 100, expectedTime: 3000, expectedEnd: 0),
 			packet => Assert.IsType<SmSystemMessage>(packet),
 			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 5001, expectedDeleteType: SmDeleteItem.UseDeleteType),
+			packet => Assert.IsType<SmCubeUpdate>(packet),
 			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 100, expectedTime: 0, expectedEnd: 1),
 			packet => Assert.IsType<SmInventoryAddItem>(packet));
 	}
@@ -406,6 +407,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 101, expectedTime: 0, expectedEnd: 1, expectedUnknown3: 1),
 			packet => Assert.IsType<SmSystemMessage>(packet),
 			packet => Assert.IsType<SmDeleteItem>(packet),
+			packet => Assert.IsType<SmCubeUpdate>(packet),
 			packet => AssertSecondaryShowDecomposablePayload(Assert.IsType<SmSecondaryShowDecomposable>(packet)),
 			packet => Assert.IsType<SmInventoryAddItem>(packet));
 	}
@@ -710,7 +712,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 					buffer.WriteC(0);
 				})));
 
-		await WaitUntilAsync(() => fixture.SentPackets.Count >= 6, TimeSpan.FromSeconds(5));
+		await WaitUntilAsync(() => fixture.SentPackets.Count >= 7, TimeSpan.FromSeconds(5));
 		await fixture.Connection.CloseAsync();
 		await AssertCompletesAsync(runTask);
 		var sentPackets = fixture.SentPackets.ToArray();
@@ -725,6 +727,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 100, expectedTime: 3000, expectedEnd: 0),
 			packet => Assert.IsType<SmSystemMessage>(packet),
 			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 5001, expectedDeleteType: SmDeleteItem.UseDeleteType),
+			packet => Assert.IsType<SmCubeUpdate>(packet),
 			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 100, expectedTime: 0, expectedEnd: 1),
 			packet => Assert.IsType<SmInventoryAddItem>(packet));
 	}

@@ -4171,7 +4171,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		await SendPacketAsync(SmSystemMessage.DecomposeItemSucceed(sourceTemplate.GetClientName() ?? sourceTemplate.Name));
-		await ApplySourceItemMutationAsync(inventoryItems, sourceTemplate, sourceItemUpdate, deletedSourceObjectId);
+		await ApplySourceItemMutationAsync(player, inventoryItems, sourceTemplate, sourceItemUpdate, deletedSourceObjectId);
 		ApplyRewardInventoryMutation(inventoryItems, rewardInventoryPlan);
 		player.InventoryItems = inventoryItems.ToArray();
 		RegisterExpirableAddedItems(player, rewardInventoryPlan.Packets);
@@ -4223,7 +4223,7 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		await BroadcastItemUsageAnimationAsync(player, new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 1, 1));
 		await SendPacketAsync(SmSystemMessage.UncompressCompressedItemSucceeded(sourceTemplate.GetClientName() ?? sourceTemplate.Name));
-		await ApplySourceItemMutationAsync(inventoryItems, sourceTemplate, sourceItemUpdate, deletedSourceObjectId);
+		await ApplySourceItemMutationAsync(player, inventoryItems, sourceTemplate, sourceItemUpdate, deletedSourceObjectId);
 		await SendPacketAsync(new SmSecondaryShowDecomposable(sourceItem.ObjectId, Array.Empty<ResultedItemSummary>()));
 		ApplyRewardInventoryMutation(inventoryItems, rewardInventoryPlan);
 		player.InventoryItems = inventoryItems.ToArray();
@@ -4326,6 +4326,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	}
 
 	private async Task ApplySourceItemMutationAsync(
+		Player player,
 		List<InventoryItem> inventoryItems,
 		ItemTemplateSummary sourceTemplate,
 		InventoryItem? sourceItemUpdate,
@@ -4335,6 +4336,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		{
 			ApplySourceInventoryMutation(inventoryItems, sourceItemUpdate, deletedSourceObjectId);
 			await SendPacketAsync(new SmDeleteItem(deletedSourceObjectId.Value, SmDeleteItem.UseDeleteType));
+			await SendPacketAsync(SmCubeUpdate.CubeSize(player));
 		}
 		else if (sourceItemUpdate != null)
 		{
