@@ -114,6 +114,70 @@ public sealed class ItemPurificationLiveExecutionServiceTests
 		Assert.Equal(3, material.Count);
 	}
 
+	[Fact]
+	public async Task ExecuteAsync_RankDropKeepsApSpendPacketsModeledButNotSent()
+	{
+		var baseItem = CreateBaseItem(enchant: 25);
+		var material = new InventoryItem { ObjectId = 20, ItemId = 186000001, Count = 3, Location = 0 };
+		var kinah = new InventoryItem { ObjectId = 30, ItemId = 182400001, Count = 10_000, Location = 0 };
+		var player = CreatePlayer(
+			abyssPoints: 1_300,
+			baseItem,
+			material,
+			kinah);
+		player.AbyssRank = PlayerAbyssRank.Default() with { Ap = 1_300, Rank = 2, MaxRank = 2 };
+		var itemTemplates = CreateItemTemplates();
+		var handlerPlan = CreateHandlerPlan(player, baseItem, itemTemplates, targetObjectId: 9001);
+		var registry = new RecordingConnectionRegistry(
+			packet => new SentPacketRecord(
+				player.ObjectId,
+				packet,
+				player.AbyssRank.Ap,
+				player.InventoryItems.Select(item => item.ObjectId).Order().ToArray()));
+
+		var result = await ItemPurificationLiveExecutionService.ExecuteAsync(
+			player.ObjectId,
+			player,
+			handlerPlan,
+			itemTemplates,
+			npcExpands: 1,
+			questExpands: 0,
+			itemExpands: 1,
+			registry);
+
+		Assert.True(result.Succeeded);
+		var abyssPointsPlan = Assert.IsType<AbyssPointsAddPlan>(result.LiveMutation?.AbyssPointsPlan);
+		Assert.Equal(2, abyssPointsPlan.OldRank);
+		Assert.Equal(1, abyssPointsPlan.UpdatedRank?.Rank);
+		Assert.Equal(-1_200, abyssPointsPlan.Added);
+		Assert.True(abyssPointsPlan.ShouldCheckRankLimitItems);
+		Assert.True(abyssPointsPlan.ShouldUpdateAbyssSkills);
+		Assert.NotNull(abyssPointsPlan.RankUpdatePacket);
+		Assert.Equal(
+			[typeof(SmSystemMessage), typeof(SmAbyssRank)],
+			abyssPointsPlan.PlayerPackets.Select(packet => packet.GetType()).ToArray());
+		Assert.Equal(100, player.AbyssRank.Ap);
+		Assert.Equal(1, player.AbyssRank.Rank);
+
+		Assert.Equal(5, result.MutationPacketSend?.SentCount);
+		Assert.Equal(
+			[
+				ItemPurificationPacketOperationType.AbyssPointsUpdate,
+				ItemPurificationPacketOperationType.KinahNoPacket,
+			],
+			result.MutationPacketSend?.SkippedMetadataOperations.Select(operation => operation.Type).ToArray());
+		Assert.Equal(
+			[
+				typeof(SmSystemMessage),
+				typeof(SmInventoryUpdateItem),
+				typeof(SmDeleteItem),
+				typeof(SmCubeUpdate),
+				typeof(SmInventoryAddItem),
+				typeof(SmCubeUpdate),
+			],
+			registry.SentPackets.Select(packet => packet.Packet.GetType()).ToArray());
+	}
+
 	private static ItemPurificationHandlerPlan CreateHandlerPlan(
 		Player player,
 		InventoryItem baseItem,
