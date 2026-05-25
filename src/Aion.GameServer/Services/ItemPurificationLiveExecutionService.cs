@@ -39,7 +39,8 @@ public static class ItemPurificationLiveExecutionService
 				bridge,
 				SuccessMessageSend: null,
 				LiveMutation: null,
-				MutationPacketSend: null);
+				MutationPacketSend: null,
+				EquipmentRankLimitChange: null);
 		}
 
 		var packetPlan = bridge.Bridge.ConcretePacketPlan;
@@ -62,7 +63,8 @@ public static class ItemPurificationLiveExecutionService
 				bridge,
 				successSend,
 				LiveMutation: null,
-				MutationPacketSend: null);
+				MutationPacketSend: null,
+				EquipmentRankLimitChange: null);
 		}
 
 		var liveMutation = ItemPurificationLiveMutationService.Apply(
@@ -79,7 +81,8 @@ public static class ItemPurificationLiveExecutionService
 				bridge,
 				successSend,
 				liveMutation,
-				MutationPacketSend: null);
+				MutationPacketSend: null,
+				EquipmentRankLimitChange: null);
 		}
 
 		var mutationPacketPlan = CreateMutationPacketPlanWithAbyssPointsPackets(
@@ -90,16 +93,18 @@ public static class ItemPurificationLiveExecutionService
 			player,
 			mutationPacketPlan,
 			liveMutation.AbyssPointsPlan,
+			itemTemplates,
 			connectionRegistry,
 			cancellationToken);
 		return new ItemPurificationLiveExecutionResult(
-			mutationSend.Succeeded
+			mutationSend.SendResult.Succeeded
 				? ItemPurificationLiveExecutionStatus.Ready
 				: ItemPurificationLiveExecutionStatus.MutationPacketSendNotReady,
 			bridge,
 			successSend,
 			liveMutation,
-			mutationSend);
+			mutationSend.SendResult,
+			mutationSend.EquipmentRankLimitChange);
 	}
 
 	private static ItemPurificationPacketPlan CreateMutationPacketPlanWithAbyssPointsPackets(
@@ -133,25 +138,33 @@ public static class ItemPurificationLiveExecutionService
 		return new ItemPurificationPacketPlan(packetPlan.Status, operations);
 	}
 
-	private static async ValueTask<ItemPurificationPacketSendResult> SendMutationPacketsWithAbyssRankBroadcastAsync(
+	private static async ValueTask<ItemPurificationMutationSendResult> SendMutationPacketsWithAbyssRankBroadcastAsync(
 		int playerObjectId,
 		Player player,
 		ItemPurificationPacketPlan? packetPlan,
 		AbyssPointsAddPlan? abyssPointsPlan,
+		ItemTemplateTable itemTemplates,
 		IGameClientConnectionRegistry? connectionRegistry,
 		CancellationToken cancellationToken)
 	{
 		if (packetPlan == null)
-			return ItemPurificationPacketSendResult.Failed(ItemPurificationPacketSendStatus.MissingPacketPlan);
+			return new ItemPurificationMutationSendResult(
+				ItemPurificationPacketSendResult.Failed(ItemPurificationPacketSendStatus.MissingPacketPlan),
+				EquipmentRankLimitChange: null);
 		if (!packetPlan.Succeeded)
-			return ItemPurificationPacketSendResult.Failed(ItemPurificationPacketSendStatus.PacketPlanNotReady);
+			return new ItemPurificationMutationSendResult(
+				ItemPurificationPacketSendResult.Failed(ItemPurificationPacketSendStatus.PacketPlanNotReady),
+				EquipmentRankLimitChange: null);
 		if (packetPlan.Operations.Count == 0)
-			return ItemPurificationPacketSendResult.Failed(ItemPurificationPacketSendStatus.NoOperations);
+			return new ItemPurificationMutationSendResult(
+				ItemPurificationPacketSendResult.Failed(ItemPurificationPacketSendStatus.NoOperations),
+				EquipmentRankLimitChange: null);
 
 		var concreteOperations = new List<ItemPurificationPacketOperation>();
 		var skippedMetadataOperations = new List<ItemPurificationPacketOperation>();
 		var packets = new List<GameServerPacket>();
 		var sentCount = 0;
+		EquipmentChangeResult? equipmentRankLimitChange = null;
 
 		for (var index = 0; index < packetPlan.Operations.Count; index++)
 		{
@@ -181,15 +194,29 @@ public static class ItemPurificationLiveExecutionService
 						abyssPointsPlan.RankUpdatePacket);
 				}
 			}
+
+			if (operation.Type == ItemPurificationPacketOperationType.AbyssPointsUpdate
+				&& IsLastAbyssPointsUpdate(packetPlan.Operations, index)
+				&& abyssPointsPlan?.ShouldCheckRankLimitItems == true)
+			{
+				var rankLimitChange = EquipmentService.CheckRankLimitItems(player, itemTemplates);
+				if (rankLimitChange.Changed || rankLimitChange.RankLimitedUnequipMessages.Count > 0)
+				{
+					player.InventoryItems = rankLimitChange.InventoryItems;
+					equipmentRankLimitChange = rankLimitChange;
+				}
+			}
 		}
 
-		return new ItemPurificationPacketSendResult(
-			ItemPurificationPacketSendStatus.Ready,
-			packetPlan.Status,
-			concreteOperations,
-			packets,
-			skippedMetadataOperations,
-			sentCount);
+		return new ItemPurificationMutationSendResult(
+			new ItemPurificationPacketSendResult(
+				ItemPurificationPacketSendStatus.Ready,
+				packetPlan.Status,
+				concreteOperations,
+				packets,
+				skippedMetadataOperations,
+				sentCount),
+			equipmentRankLimitChange);
 	}
 
 	private static bool IsLastAbyssPointsUpdate(
@@ -206,7 +233,8 @@ public sealed record ItemPurificationLiveExecutionResult(
 	ItemPurificationHandlerMutationBridgeResult? HandlerBridge,
 	ItemPurificationPacketSendResult? SuccessMessageSend,
 	ItemPurificationLiveMutationResult? LiveMutation,
-	ItemPurificationPacketSendResult? MutationPacketSend)
+	ItemPurificationPacketSendResult? MutationPacketSend,
+	EquipmentChangeResult? EquipmentRankLimitChange)
 {
 	public bool Succeeded => Status == ItemPurificationLiveExecutionStatus.Ready;
 
@@ -217,9 +245,14 @@ public sealed record ItemPurificationLiveExecutionResult(
 			HandlerBridge: null,
 			SuccessMessageSend: null,
 			LiveMutation: null,
-			MutationPacketSend: null);
+			MutationPacketSend: null,
+			EquipmentRankLimitChange: null);
 	}
 }
+
+internal sealed record ItemPurificationMutationSendResult(
+	ItemPurificationPacketSendResult SendResult,
+	EquipmentChangeResult? EquipmentRankLimitChange);
 
 public enum ItemPurificationLiveExecutionStatus
 {

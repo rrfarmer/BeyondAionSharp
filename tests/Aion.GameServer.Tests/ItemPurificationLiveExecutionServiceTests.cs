@@ -122,13 +122,29 @@ public sealed class ItemPurificationLiveExecutionServiceTests
 		var baseItem = CreateBaseItem(enchant: 25);
 		var material = new InventoryItem { ObjectId = 20, ItemId = 186000001, Count = 3, Location = 0 };
 		var kinah = new InventoryItem { ObjectId = 30, ItemId = 182400001, Count = 10_000, Location = 0 };
+		var rankLimitedSword = new InventoryItem { ObjectId = 40, ItemId = 100000003, Count = 1, Location = 0, IsEquipped = true, Slot = 1 };
 		var player = CreatePlayer(
 			abyssPoints: 1_300,
 			baseItem,
 			material,
-			kinah);
+			kinah,
+			rankLimitedSword);
 		player.AbyssRank = PlayerAbyssRank.Default() with { Ap = 1_300, Rank = 2, MaxRank = 2 };
-		var itemTemplates = CreateItemTemplates();
+		var itemTemplates = CreateItemTemplates(
+			new ItemTemplateSummary(
+				100000003,
+				"Abyss Sword",
+				0,
+				1,
+				65,
+				"SWORD",
+				"normal",
+				"MYTHIC",
+				"PC_ALL",
+				1,
+				0,
+				1,
+				MinRank: 2));
 		var handlerPlan = CreateHandlerPlan(player, baseItem, itemTemplates, targetObjectId: 9001);
 		var registry = new RecordingConnectionRegistry(
 			packet => new SentPacketRecord(
@@ -160,6 +176,13 @@ public sealed class ItemPurificationLiveExecutionServiceTests
 			abyssPointsPlan.PlayerPackets.Select(packet => packet.GetType()).ToArray());
 		Assert.Equal(100, player.AbyssRank.Ap);
 		Assert.Equal(1, player.AbyssRank.Rank);
+		var equipmentRankLimitChange = Assert.IsType<EquipmentChangeResult>(result.EquipmentRankLimitChange);
+		Assert.True(equipmentRankLimitChange.Changed);
+		Assert.Equal(["Abyss Sword"], equipmentRankLimitChange.RankLimitedUnequipMessages);
+		var unequippedSword = Assert.Single(equipmentRankLimitChange.InventoryUpdateItems, item => item.ObjectId == rankLimitedSword.ObjectId);
+		Assert.False(unequippedSword.IsEquipped);
+		Assert.Equal(0, unequippedSword.Slot);
+		Assert.False(player.InventoryItems.Single(item => item.ObjectId == rankLimitedSword.ObjectId).IsEquipped);
 
 		Assert.Equal(7, result.MutationPacketSend?.SentCount);
 		Assert.Equal(
@@ -247,13 +270,14 @@ public sealed class ItemPurificationLiveExecutionServiceTests
 		]);
 	}
 
-	private static ItemTemplateTable CreateItemTemplates()
+	private static ItemTemplateTable CreateItemTemplates(params ItemTemplateSummary[] additionalTemplates)
 	{
 		return new ItemTemplateTable(
 		[
 			CreateTemplate(100000001, statBonusSetId: 1, maxTuneCount: 5, maxEnchantLevel: 15),
 			CreateTemplate(100000002, statBonusSetId: 1, maxTuneCount: 1, maxEnchantLevel: 20),
 			CreateTemplate(186000001, statBonusSetId: 0, maxTuneCount: 0, maxEnchantLevel: 0),
+			.. additionalTemplates,
 		]);
 	}
 
