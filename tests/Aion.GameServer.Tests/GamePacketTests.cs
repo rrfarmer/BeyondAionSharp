@@ -500,6 +500,16 @@ public class GamePacketTests
 			Convert.FromHexString("0100FFFF64000000032200000205"),
 			SerializeUnencryptedPayload(
 				new SmQuestList([new PlayerQuestState(100, "START", 0x22, 2, 5)])));
+		var questActionUpdate = SmQuestAction.Update(new PlayerQuestState(100, "COMPLETE", 0x22, 2, 1));
+		Assert.Equal(124, questActionUpdate.OpCode);
+		Assert.Equal(
+			Convert.FromHexString("02640000000500220000020000"),
+			SerializeUnencryptedPayload(questActionUpdate));
+		Assert.Empty(
+			SerializeUnencryptedPayload(
+				SmQuestAction.Update(
+					new PlayerQuestState(100, "COMPLETE", 0x22, 2, 1),
+					suppressForExtraCategory: true)));
 		Assert.Equal(
 			Convert.FromHexString("0100FFFF640000000201"),
 			SerializeUnencryptedPayload(
