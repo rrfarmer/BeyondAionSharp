@@ -628,6 +628,77 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1370002, exp.ToString(System.Globalization.CultureInfo.InvariantCulture));
 	}
 
+	public static SmSystemMessage GetExp(string npcName, long exp)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GET_EXP(String, long).
+		return new SmSystemMessage(1370000, npcName, exp.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage GetExpVitalBonus(string npcName, long exp, long repose)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GET_EXP_VITAL_BONUS(String, long, long).
+		return new SmSystemMessage(
+			1400342,
+			npcName,
+			exp.ToString(System.Globalization.CultureInfo.InvariantCulture),
+			repose.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage GetExpMakeupBonus(string npcName, long exp, long salvation)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GET_EXP_MAKEUP_BONUS(String, long, long).
+		return new SmSystemMessage(
+			1400343,
+			npcName,
+			exp.ToString(System.Globalization.CultureInfo.InvariantCulture),
+			salvation.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage GetExpVitalMakeupBonus(string npcName, long exp, long repose, long salvation)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GET_EXP_VITAL_MAKEUP_BONUS(String, long, long, long).
+		return new SmSystemMessage(
+			1400344,
+			npcName,
+			exp.ToString(System.Globalization.CultureInfo.InvariantCulture),
+			repose.ToString(System.Globalization.CultureInfo.InvariantCulture),
+			salvation.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage GetExp2VitalBonus(long exp, long repose)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GET_EXP2_VITAL_BONUS(long, long).
+		return new SmSystemMessage(
+			1400348,
+			exp.ToString(System.Globalization.CultureInfo.InvariantCulture),
+			repose.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage GetExp2MakeupBonus(long exp, long salvation)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GET_EXP2_MAKEUP_BONUS(long, long).
+		return new SmSystemMessage(
+			1400349,
+			exp.ToString(System.Globalization.CultureInfo.InvariantCulture),
+			salvation.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage GetExp2VitalMakeupBonus(long exp, long repose, long salvation)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GET_EXP2_VITAL_MAKEUP_BONUS(long, long, long).
+		return new SmSystemMessage(
+			1400350,
+			exp.ToString(System.Globalization.CultureInfo.InvariantCulture),
+			repose.ToString(System.Globalization.CultureInfo.InvariantCulture),
+			salvation.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage LevelLimitQuestNotFinished()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_LEVEL_LIMIT_QUEST_NOT_FINISHED1.
+		return new SmSystemMessage(1400545);
+	}
+
 	public static SmSystemMessage UseAbyssPoint(long abyssPoints)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_USE_ABYSSPOINT.

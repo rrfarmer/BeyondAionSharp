@@ -213,6 +213,15 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.SkillCannotCast("state"), 1300026, "state");
 		AssertSystemMessage(SmSystemMessage.SkillCannotCastDead(), 1300026, ChatUtil.L10n(1400059));
 		AssertSystemMessage(SmSystemMessage.SkillNotNeedPet(), 1402918);
+		AssertSystemMessage(SmSystemMessage.GetExp("quest npc", 240), 1370000, "quest npc", "240");
+		AssertSystemMessage(SmSystemMessage.GetExp2(240), 1370002, "240");
+		AssertSystemMessage(SmSystemMessage.GetExpVitalBonus("quest npc", 240, 20), 1400342, "quest npc", "240", "20");
+		AssertSystemMessage(SmSystemMessage.GetExpMakeupBonus("quest npc", 240, 20), 1400343, "quest npc", "240", "20");
+		AssertSystemMessage(SmSystemMessage.GetExpVitalMakeupBonus("quest npc", 240, 20, 30), 1400344, "quest npc", "240", "20", "30");
+		AssertSystemMessage(SmSystemMessage.GetExp2VitalBonus(240, 20), 1400348, "240", "20");
+		AssertSystemMessage(SmSystemMessage.GetExp2MakeupBonus(240, 20), 1400349, "240", "20");
+		AssertSystemMessage(SmSystemMessage.GetExp2VitalMakeupBonus(240, 20, 30), 1400350, "240", "20", "30");
+		AssertSystemMessage(SmSystemMessage.LevelLimitQuestNotFinished(), 1400545);
 		AssertSystemMessage(SmSystemMessage.InstanceDungeonOpenedForSelf(300030000), 1400640, "300030000");
 		AssertSystemMessage(SmSystemMessage.CannotMakeInstanceCoolTime(), 1400043);
 		AssertSystemMessage(SmSystemMessage.CantInstanceEnterLevel(), 1400179);
