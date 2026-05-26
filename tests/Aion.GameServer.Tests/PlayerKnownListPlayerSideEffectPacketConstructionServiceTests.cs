@@ -1,8 +1,10 @@
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.World;
+using Aion.Commons.Network;
 
 namespace Aion.GameServer.Tests;
 
@@ -38,7 +40,8 @@ public sealed class PlayerKnownListPlayerSideEffectPacketConstructionServiceTest
 					RemainingTimeToDisplayMillis: 45000),
 			],
 			AbnormalEffectMask: 0x01020304,
-			AbnormalEffectSlots: 2));
+			AbnormalEffectSlots: 2,
+			RideMovementSpeed: 7.25f));
 
 		Assert.Equal(PlayerKnownListPlayerSideEffectPacketConstructionStatus.Constructed, plan.Status);
 		Assert.False(plan.ExecutesLivePackets);
@@ -61,6 +64,7 @@ public sealed class PlayerKnownListPlayerSideEffectPacketConstructionServiceTest
 		Assert.IsType<SmEmotion>(plan.Results[2].Packet);
 		Assert.IsType<SmPlayerStance>(plan.Results[3].Packet);
 		Assert.IsType<SmAbnormalEffect>(plan.Results[4].Packet);
+		AssertRidePacketPayload(plan.Results[2].Packet!, SeenPlayerObjectId, RideNpcId, 7.25f);
 	}
 
 	[Fact]
@@ -168,6 +172,31 @@ public sealed class PlayerKnownListPlayerSideEffectPacketConstructionServiceTest
 			PlayerClass = "GLADIATOR",
 			Position = new WorldPosition(210010000, 1, 2, 3, 4),
 		};
+
+	private static void AssertRidePacketPayload(
+		GameServerPacket packet,
+		int expectedSenderObjectId,
+		int expectedRideNpcId,
+		float expectedSpeed)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(expectedSenderObjectId, reader.ReadD());
+		Assert.Equal((int)EmotionType.Ride, (int)reader.ReadC());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(expectedSpeed, reader.ReadF());
+		Assert.Equal(expectedRideNpcId, reader.ReadD());
+		Assert.Equal(63.0f, reader.ReadF());
+		Assert.Equal(63.0f, reader.ReadF());
+		Assert.Equal(64.0f, reader.ReadF());
+	}
+
+	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
+	{
+		var crypt = new GameCrypt(() => 0x12345678);
+		crypt.EnableKey();
+		var frame = packet.SerializeFrame(crypt);
+		return frame[7..];
+	}
 
 	private const int ViewerPlayerObjectId = 9001;
 	private const int SeenPlayerObjectId = 9002;

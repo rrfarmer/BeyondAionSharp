@@ -28,7 +28,10 @@ public sealed record PlayerKnownListPlayerSideEffectPacketConstructionRequest(
 	SmPlayerInfoViewerContext? ViewerContext = null,
 	IReadOnlyList<SmAbnormalEffectEntry>? AbnormalEffects = null,
 	int AbnormalEffectMask = 0,
-	int AbnormalEffectSlots = SmAbnormalEffect.FullSkillTargetSlots);
+	int AbnormalEffectSlots = SmAbnormalEffect.FullSkillTargetSlots,
+	float RideMovementSpeed = 0,
+	int RideBaseAttackSpeed = 0,
+	int RideCurrentAttackSpeed = 0);
 
 public sealed record PlayerKnownListPlayerSideEffectPacketConstructionResult(
 	PlayerKnownListPlayerSideEffectDescriptor Descriptor,
@@ -121,7 +124,14 @@ public sealed class PlayerKnownListPlayerSideEffectPacketConstructionService
 
 		return Constructed(
 			descriptor,
-			new SmEmotion(request.SubjectPlayer, EmotionType.Ride, 0, rideNpcId));
+			new SmEmotion(
+				request.SubjectPlayer,
+				EmotionType.Ride,
+				0,
+				rideNpcId,
+				request.RideMovementSpeed,
+				request.RideBaseAttackSpeed,
+				request.RideCurrentAttackSpeed));
 	}
 
 	private static PlayerKnownListPlayerSideEffectPacketConstructionResult ConstructAbnormalEffect(
