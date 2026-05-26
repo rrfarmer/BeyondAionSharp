@@ -183,6 +183,61 @@ public sealed class StaticDataLoadingTests
 	}
 
 	[Fact]
+	public async Task StaticData_LoadsTradeListsAndGoodsListsLikeJavaDataholders()
+	{
+		using var temp = TempDirectory.Create();
+		var cacheFile = Path.Combine(temp.Path, "static_data.xml");
+		File.WriteAllText(
+			cacheFile,
+			"""
+			<?xml version="1.0" encoding="UTF-8"?>
+			<static_data>
+				<npc_trade_list>
+					<tradelist_template npc_id="203060" npc_type="NORMAL" sell_price_rate="80" buy_price_rate="200">
+						<tradelist id="129" />
+						<tradelist id="130" />
+					</tradelist_template>
+					<trade_in_list_template npc_id="205315">
+						<tradelist id="39" />
+					</trade_in_list_template>
+					<purchase_template npc_id="203060" save_count="7">
+						<tradelist id="140" />
+					</purchase_template>
+				</npc_trade_list>
+				<goodslists>
+					<list id="129" legion_lvl="3">
+						<item id="110100010" />
+					</list>
+					<in_list id="39">
+						<item id="188051574" />
+					</in_list>
+					<purchase_list id="140">
+						<item id="186000396" />
+					</purchase_list>
+				</goodslists>
+			</static_data>
+			""");
+
+		var staticData = await StaticData.LoadFromCacheAsync(cacheFile, []);
+
+		Assert.Equal(1, staticData.TradeLists.TradeListCount);
+		Assert.Equal(1, staticData.TradeLists.TradeInListCount);
+		Assert.Equal(1, staticData.TradeLists.PurchaseListCount);
+		var tradeList = staticData.TradeLists.GetTradeListTemplate(203060);
+		Assert.NotNull(tradeList);
+		Assert.Equal([129, 130], tradeList.GoodsListIds);
+		Assert.Equal(80, tradeList.SellPriceRate);
+		Assert.Equal(200, tradeList.BuyPriceRate);
+		Assert.Equal([39], staticData.TradeLists.GetTradeInListTemplate(205315)?.GoodsListIds);
+		Assert.Equal(7, staticData.TradeLists.GetPurchaseTemplate(203060)?.SaveCount);
+		Assert.Equal(3, staticData.GoodsLists.Count);
+		Assert.Equal(3, staticData.GoodsLists.GetGoodsListById(129)?.LegionLevel);
+		Assert.NotNull(staticData.GoodsLists.GetGoodsInListById(39));
+		Assert.NotNull(staticData.GoodsLists.GetGoodsPurchaseListById(140));
+		Assert.Null(staticData.GoodsLists.GetGoodsListById(39));
+	}
+
+	[Fact]
 	public async Task StaticData_LoadsItemPurificationSummaries()
 	{
 		using var temp = TempDirectory.Create();

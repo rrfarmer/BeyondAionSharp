@@ -34,6 +34,8 @@ public sealed class StaticData
 		NpcSpawnTable npcSpawns,
 		NpcRiftSpawnTable npcRiftSpawns,
 		NpcFactionTable npcFactions,
+		TradeListTable tradeLists,
+		GoodsListTable goodsLists,
 		CustomNpcDropTable customNpcDrops,
 		QuestDropTable questDrops,
 		QuestUpdateItemTable questUpdateItems,
@@ -84,6 +86,8 @@ public sealed class StaticData
 		NpcSpawns = npcSpawns;
 		NpcRiftSpawns = npcRiftSpawns;
 		NpcFactions = npcFactions;
+		TradeLists = tradeLists;
+		GoodsLists = goodsLists;
 		CustomNpcDrops = customNpcDrops;
 		QuestDrops = questDrops;
 		QuestUpdateItems = questUpdateItems;
@@ -162,6 +166,10 @@ public sealed class StaticData
 	public NpcRiftSpawnTable NpcRiftSpawns { get; }
 
 	public NpcFactionTable NpcFactions { get; }
+
+	public TradeListTable TradeLists { get; }
+
+	public GoodsListTable GoodsLists { get; }
 
 	public CustomNpcDropTable CustomNpcDrops { get; }
 
@@ -245,6 +253,12 @@ public sealed class StaticData
 		var npcSpawns = new List<NpcSpawnSummary>();
 		var npcRiftSpawns = new List<NpcRiftSpawnSummary>();
 		var npcFactions = new List<NpcFactionSummary>();
+		var tradeLists = new List<TradeListTemplateSummary>();
+		var tradeInLists = new List<TradeListTemplateSummary>();
+		var purchaseLists = new List<TradeListTemplateSummary>();
+		var goodsLists = new List<GoodsListSummary>();
+		var goodsInLists = new List<GoodsListSummary>();
+		var goodsPurchaseLists = new List<GoodsListSummary>();
 		var questDrops = new List<QuestDropSummary>();
 		var questUpdateItemIds = new List<int>();
 		var questUpdateItemIdSet = new HashSet<int>();
@@ -297,6 +311,9 @@ public sealed class StaticData
 		NpcRiftSpawnBuilder? currentNpcRiftSpawn = null;
 		NpcSpawnSpotBuilder? currentNpcRiftSpawnSpot = null;
 		VortexLocationBuilder? currentVortexLocation = null;
+		TradeListTemplateBuilder? currentTradeListTemplate = null;
+		TradeListTemplateKind currentTradeListTemplateKind = TradeListTemplateKind.TradeList;
+		int currentTradeListTemplateDepth = -1;
 		QuestDropBuilder? currentQuestDropBuilder = null;
 		EventTemplateBuilder? currentEventTemplate = null;
 		int currentEventTemplateDepth = -1;
@@ -480,6 +497,18 @@ public sealed class StaticData
 				{
 					npcTemplates.Add(currentNpcTemplate.ToSummary());
 					currentNpcTemplate = null;
+				}
+
+				if (reader.Depth == currentTradeListTemplateDepth && currentTradeListTemplate != null)
+				{
+					AddTradeListTemplate(
+						currentTradeListTemplate.ToSummary(),
+						currentTradeListTemplateKind,
+						tradeLists,
+						tradeInLists,
+						purchaseLists);
+					currentTradeListTemplate = null;
+					currentTradeListTemplateDepth = -1;
 				}
 
 				if (reader.Depth == currentNpcSpawnDepth && reader.LocalName == "spawn")
@@ -680,6 +709,69 @@ public sealed class StaticData
 					var flags = WorldMapSummary.ParseFlags(reader.GetAttribute("flags"));
 					worldMaps.Add(new WorldMapSummary(mapId, isInstance, twinCount, reader.GetAttribute("drop_type") ?? "NONE", flags));
 				}
+			}
+
+			if (reader.Depth == 2
+				&& elementPath.GetValueOrDefault(1) == "npc_trade_list"
+				&& TryGetTradeListTemplateKind(reader.LocalName, out var tradeListKind))
+			{
+				// Java parity: dataholders/TradeListData JAXB templates indexed by npc_id after unmarshal.
+				currentTradeListTemplate = new TradeListTemplateBuilder(
+					ReadRequiredIntAttribute(reader, "npc_id"),
+					reader.GetAttribute("npc_type") ?? "NORMAL",
+					ReadOptionalIntAttribute(reader, "sell_price_rate", 100),
+					ReadOptionalIntAttribute(reader, "sell_price_rate2", 100),
+					ReadOptionalIntAttribute(reader, "ap_sell_price_rate2", 100),
+					ReadIntAttribute(reader, "buy_price_rate"),
+					ReadIntAttribute(reader, "save_count"));
+				currentTradeListTemplateKind = tradeListKind;
+				currentTradeListTemplateDepth = reader.Depth;
+				if (reader.IsEmptyElement)
+				{
+					AddTradeListTemplate(
+						currentTradeListTemplate.ToSummary(),
+						currentTradeListTemplateKind,
+						tradeLists,
+						tradeInLists,
+						purchaseLists);
+					currentTradeListTemplate = null;
+					currentTradeListTemplateDepth = -1;
+				}
+
+				continue;
+			}
+
+			if (currentTradeListTemplate != null
+				&& reader.Depth == currentTradeListTemplateDepth + 1
+				&& reader.LocalName == "tradelist")
+			{
+				// Java parity: model/templates/tradelist/TradeTab stores the referenced goods-list id.
+				currentTradeListTemplate.AddGoodsListId(ReadRequiredIntAttribute(reader, "id"));
+				continue;
+			}
+
+			if (reader.Depth == 2
+				&& elementPath.GetValueOrDefault(1) == "goodslists"
+				&& reader.LocalName is "list" or "in_list" or "purchase_list")
+			{
+				// Java parity: dataholders/GoodsListData separates ordinary, trade-in, and purchase lists by element name.
+				var summary = new GoodsListSummary(
+					ReadRequiredIntAttribute(reader, "id"),
+					ReadIntAttribute(reader, "legion_lvl"));
+				switch (reader.LocalName)
+				{
+					case "list":
+						goodsLists.Add(summary);
+						break;
+					case "in_list":
+						goodsInLists.Add(summary);
+						break;
+					case "purchase_list":
+						goodsPurchaseLists.Add(summary);
+						break;
+				}
+
+				continue;
 			}
 
 			if (reader.Depth == 2 && reader.LocalName == "portal_use")
@@ -2458,6 +2550,14 @@ public sealed class StaticData
 			new NpcSpawnTable(npcSpawns.AsReadOnly()),
 			new NpcRiftSpawnTable(npcRiftSpawns.AsReadOnly()),
 			new NpcFactionTable(npcFactions.AsReadOnly()),
+			new TradeListTable(
+				tradeLists.AsReadOnly(),
+				tradeInLists.AsReadOnly(),
+				purchaseLists.AsReadOnly()),
+			new GoodsListTable(
+				goodsLists.AsReadOnly(),
+				goodsInLists.AsReadOnly(),
+				goodsPurchaseLists.AsReadOnly()),
 			customNpcDrops,
 			new QuestDropTable(questDrops.AsReadOnly()),
 			new QuestUpdateItemTable(questUpdateItemIds.AsReadOnly()),
@@ -2552,6 +2652,46 @@ public sealed class StaticData
 		return processedRules.AsReadOnly();
 	}
 
+	private static bool TryGetTradeListTemplateKind(string localName, out TradeListTemplateKind kind)
+	{
+		switch (localName)
+		{
+			case "tradelist_template":
+				kind = TradeListTemplateKind.TradeList;
+				return true;
+			case "trade_in_list_template":
+				kind = TradeListTemplateKind.TradeInList;
+				return true;
+			case "purchase_template":
+				kind = TradeListTemplateKind.PurchaseList;
+				return true;
+			default:
+				kind = default;
+				return false;
+		}
+	}
+
+	private static void AddTradeListTemplate(
+		TradeListTemplateSummary template,
+		TradeListTemplateKind kind,
+		ICollection<TradeListTemplateSummary> tradeLists,
+		ICollection<TradeListTemplateSummary> tradeInLists,
+		ICollection<TradeListTemplateSummary> purchaseLists)
+	{
+		switch (kind)
+		{
+			case TradeListTemplateKind.TradeList:
+				tradeLists.Add(template);
+				break;
+			case TradeListTemplateKind.TradeInList:
+				tradeInLists.Add(template);
+				break;
+			case TradeListTemplateKind.PurchaseList:
+				purchaseLists.Add(template);
+				break;
+		}
+	}
+
 	private static void AddPortalPathSummary(
 		PortalPathSummary path,
 		ICollection<PortalPathSummary> portalUsePaths,
@@ -2583,6 +2723,68 @@ public sealed class StaticData
 			"EQUALS" => string.Equals(npcName, ruleName.Value, StringComparison.OrdinalIgnoreCase),
 			_ => false,
 		};
+	}
+
+	private enum TradeListTemplateKind
+	{
+		TradeList,
+		TradeInList,
+		PurchaseList,
+	}
+
+	private sealed class TradeListTemplateBuilder
+	{
+		private readonly List<int> _goodsListIds = [];
+
+		public TradeListTemplateBuilder(
+			int npcId,
+			string npcType,
+			int sellPriceRate,
+			int sellPriceRate2,
+			int apSellPriceRate2,
+			int buyPriceRate,
+			int saveCount)
+		{
+			NpcId = npcId;
+			NpcType = npcType;
+			SellPriceRate = sellPriceRate;
+			SellPriceRate2 = sellPriceRate2;
+			ApSellPriceRate2 = apSellPriceRate2;
+			BuyPriceRate = buyPriceRate;
+			SaveCount = saveCount;
+		}
+
+		private int NpcId { get; }
+
+		private string NpcType { get; }
+
+		private int SellPriceRate { get; }
+
+		private int SellPriceRate2 { get; }
+
+		private int ApSellPriceRate2 { get; }
+
+		private int BuyPriceRate { get; }
+
+		private int SaveCount { get; }
+
+		public void AddGoodsListId(int id)
+		{
+			_goodsListIds.Add(id);
+		}
+
+		public TradeListTemplateSummary ToSummary()
+		{
+			return new TradeListTemplateSummary(
+				NpcId,
+				_goodsListIds.AsReadOnly(),
+				NpcType,
+				SellPriceRate,
+				SellPriceRate2,
+				ApSellPriceRate2,
+				BuyPriceRate,
+				SaveCount);
+		}
 	}
 
 	private sealed class FlightZoneBuilder
