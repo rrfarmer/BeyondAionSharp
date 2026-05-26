@@ -8,6 +8,7 @@ public sealed class QuestDialogNpcTargetBranchInputAssemblyPlanServiceTests
 	private const int PlayerObjectId = 42;
 	private const int TargetObjectId = 9001;
 	private const int FunctionDialogAction = 33;
+	private const int BuyAction = 2;
 
 	[Fact]
 	public void CreatePlan_DerivesFunctionDialogFromGlobalNpcTemplateTable()
@@ -130,6 +131,62 @@ public sealed class QuestDialogNpcTargetBranchInputAssemblyPlanServiceTests
 	}
 
 	[Fact]
+	public void CreatePlan_ComposesDialogServicePlanThroughControllerDispatchFacts()
+	{
+		var targetTemplate = CreateTemplate(203001, [BuyAction]);
+		var templates = new NpcTemplateTable([targetTemplate]);
+
+		var plan = QuestDialogNpcTargetBranchInputAssemblyPlanService.CreatePlan(
+			CreateSnapshot(
+				targetTemplate,
+				questId: 0,
+				dialogActionId: BuyAction,
+				controllerDispatchFacts: new QuestDialogNpcControllerDispatchFacts(
+					IsInTalkRange: true,
+					NpcAiHandledDialogSelect: false,
+					DialogServiceFacts: new NpcDialogServiceSelectFacts(
+						NpcSupportsAction: true,
+						HasTradeList: true,
+						HasSellableTradeGoods: true,
+						VendorBuyModifier: 125,
+						TradeSellPriceRate: 80))),
+			templates);
+
+		var controllerPlan = Assert.IsType<NpcDialogControllerDispatchPlan>(plan.ControllerDispatchPlan);
+		Assert.Equal(NpcDialogControllerDispatchStatus.DialogServiceFallback, controllerPlan.Status);
+		var servicePlan = Assert.IsType<NpcDialogServiceSelectPlan>(controllerPlan.DialogServicePlan);
+		Assert.Equal(NpcDialogServiceSelectStatus.BuyTradeList, servicePlan.Status);
+		var descriptor = Assert.Single(servicePlan.Descriptors);
+		Assert.Equal(NpcDialogServiceDescriptorKind.TradeListPacket, descriptor.Kind);
+		Assert.Equal(TargetObjectId, descriptor.TargetObjectId);
+		Assert.Equal(BuyAction, descriptor.DialogActionId);
+		Assert.Equal(100, descriptor.PriceModifier);
+	}
+
+	[Fact]
+	public void CreatePlan_DoesNotComposeDialogServicePlanWhenControllerShortCircuits()
+	{
+		var targetTemplate = CreateTemplate(203001, [FunctionDialogAction]);
+		var templates = new NpcTemplateTable([targetTemplate]);
+
+		var plan = QuestDialogNpcTargetBranchInputAssemblyPlanService.CreatePlan(
+			CreateSnapshot(
+				targetTemplate,
+				controllerDispatchFacts: new QuestDialogNpcControllerDispatchFacts(
+					IsInTalkRange: true,
+					NpcAiHandledDialogSelect: true,
+					DialogServiceFacts: new NpcDialogServiceSelectFacts(
+						HasTradeList: true,
+						HasSellableTradeGoods: true))),
+			templates);
+
+		var controllerPlan = Assert.IsType<NpcDialogControllerDispatchPlan>(plan.ControllerDispatchPlan);
+		Assert.Equal(NpcDialogControllerDispatchStatus.AiHandled, controllerPlan.Status);
+		Assert.Null(controllerPlan.DialogServiceFallback);
+		Assert.Null(controllerPlan.DialogServicePlan);
+	}
+
+	[Fact]
 	public void CreatePlan_UsesControllerDispatchFactsAfterBranchDispatch()
 	{
 		var targetTemplate = CreateTemplate(203001, [FunctionDialogAction]);
@@ -211,14 +268,16 @@ public sealed class QuestDialogNpcTargetBranchInputAssemblyPlanServiceTests
 		NpcTemplateSummary targetTemplate,
 		bool interactionAllowed = true,
 		NpcDialogInteractionAllowedInput? interactionInput = null,
-		QuestDialogNpcControllerDispatchFacts? controllerDispatchFacts = null)
+		QuestDialogNpcControllerDispatchFacts? controllerDispatchFacts = null,
+		int questId = 1001,
+		int dialogActionId = FunctionDialogAction)
 	{
 		return new QuestDialogNpcTargetBranchRuntimeSnapshot(
 			PlayerObjectId,
 			TargetObjectId,
-			FunctionDialogAction,
+			dialogActionId,
 			LastPage: 7,
-			QuestId: 1001,
+			QuestId: questId,
 			ExtendedRewardIndex: 3,
 			TargetExists: true,
 			TargetIsCreature: true,

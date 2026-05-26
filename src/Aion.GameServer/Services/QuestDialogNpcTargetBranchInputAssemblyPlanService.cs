@@ -28,7 +28,8 @@ public sealed record QuestDialogNpcTargetBranchInputAssemblyPlan(
 
 public sealed record QuestDialogNpcControllerDispatchFacts(
 	bool IsInTalkRange = true,
-	bool NpcAiHandledDialogSelect = false);
+	bool NpcAiHandledDialogSelect = false,
+	NpcDialogServiceSelectFacts? DialogServiceFacts = null);
 
 public static class QuestDialogNpcTargetBranchInputAssemblyPlanService
 {
@@ -90,6 +91,7 @@ public static class QuestDialogNpcTargetBranchInputAssemblyPlanService
 				branchPlan.Dispatch,
 				snapshot.TargetIsNpc,
 				snapshot.ControllerDispatchFacts.IsInTalkRange,
-				snapshot.ControllerDispatchFacts.NpcAiHandledDialogSelect));
+				snapshot.ControllerDispatchFacts.NpcAiHandledDialogSelect,
+				snapshot.ControllerDispatchFacts.DialogServiceFacts));
 	}
 }
