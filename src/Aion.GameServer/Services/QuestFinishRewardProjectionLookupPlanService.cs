@@ -1,5 +1,5 @@
-using Aion.GameServer.Dataholders;
 using System.Xml.Linq;
+using Aion.GameServer.Dataholders;
 
 namespace Aion.GameServer.Services;
 
@@ -70,13 +70,14 @@ public sealed class QuestFinishRewardProjectionLookupTableXmlFactory
 		// Java parity breadcrumb: this is a non-live bridge toward QuestsData#afterUnmarshal plus
 		// QuestTemplate#getRewards. It materializes all regular reward groups, but still does not
 		// expose production StaticData or socket wiring.
+		var questDocument = new XDocument(new XElement(
+			"quests",
+			GetQuestElements(document).Select(quest => new XElement(quest))));
 		var summaries = new NearbyQuestTemplateXmlExtractor()
-			.Extract(document.ToString(SaveOptions.DisableFormatting))
+			.Extract(questDocument.ToString(SaveOptions.DisableFormatting))
 			.ToDictionary(template => template.QuestId);
 		var extractor = new QuestFinishRewardTemplateXmlProjectionExtractor();
-		var entries = document
-			.Descendants()
-			.Where(element => element.Name.LocalName == "quest")
+		var entries = GetQuestElements(questDocument)
 			.Select(quest =>
 			{
 				var questId = ReadRequiredQuestId(quest);
@@ -91,6 +92,15 @@ public sealed class QuestFinishRewardProjectionLookupTableXmlFactory
 			});
 
 		return new QuestFinishRewardProjectionLookupTable(entries);
+	}
+
+	private static IEnumerable<XElement> GetQuestElements(XContainer document)
+	{
+		return document
+			.Descendants()
+			.Where(element =>
+				element.Name.LocalName == "quest"
+				&& element.Parent?.Name.LocalName == "quests");
 	}
 
 	private static int ReadRequiredQuestId(XElement quest)

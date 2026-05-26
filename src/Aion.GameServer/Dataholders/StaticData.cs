@@ -54,6 +54,7 @@ public sealed class StaticData
 		SkillTreeTable skillTree,
 		StorageExpansionTemplateTable cubeExpansionTemplates,
 		StorageExpansionTemplateTable warehouseExpansionTemplates,
+		QuestFinishRewardProjectionLookupTable questFinishRewardProjections,
 		QuestBonusItemGroupTable questBonusItemGroups,
 		Task? validationTask)
 	{
@@ -103,6 +104,7 @@ public sealed class StaticData
 		SkillTree = skillTree;
 		CubeExpansionTemplates = cubeExpansionTemplates;
 		WarehouseExpansionTemplates = warehouseExpansionTemplates;
+		QuestFinishRewardProjections = questFinishRewardProjections;
 		QuestBonusItemGroups = questBonusItemGroups;
 		ValidationTask = validationTask;
 	}
@@ -200,6 +202,8 @@ public sealed class StaticData
 	public StorageExpansionTemplateTable CubeExpansionTemplates { get; }
 
 	public StorageExpansionTemplateTable WarehouseExpansionTemplates { get; }
+
+	public QuestFinishRewardProjectionLookupTable QuestFinishRewardProjections { get; }
 
 	public QuestBonusItemGroupTable QuestBonusItemGroups { get; }
 
@@ -2420,6 +2424,9 @@ public sealed class StaticData
 		if (experience.Count == 0)
 			experience.AddRange(await LoadExperienceTableFromImportedFilesAsync(importedFiles, cancellationToken));
 		var customNpcDrops = await CustomNpcDropTable.LoadFromImportedFilesAsync(importedFiles, cancellationToken);
+		using var questFinishRewardProjectionStream = File.OpenRead(cacheFilePath);
+		var questFinishRewardProjections = new QuestFinishRewardProjectionLookupTableXmlFactory()
+			.Create(questFinishRewardProjectionStream);
 		var processedGlobalDropRules = ProcessGlobalDropRules(globalDropRules, npcTemplates);
 
 		return new StaticData(
@@ -2504,6 +2511,7 @@ public sealed class StaticData
 			new SkillTreeTable(skillTree.AsReadOnly(), new SkillTemplateTable(skillTemplates.AsReadOnly())),
 			new StorageExpansionTemplateTable(cubeExpansionTemplates.AsReadOnly()),
 			new StorageExpansionTemplateTable(warehouseExpansionTemplates.AsReadOnly()),
+			questFinishRewardProjections,
 			new QuestBonusItemGroupTable(questBonusItemGroups.AsReadOnly()),
 			validationTask);
 	}
