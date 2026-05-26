@@ -79,6 +79,7 @@ public sealed class NpcDialogControllerDispatchPlanServiceTests
 		Assert.Equal(2001, fallback.QuestId);
 		Assert.Equal(4, fallback.ExtendedRewardIndex);
 		Assert.DoesNotContain("lastPage", fallback.JavaSource);
+		Assert.Null(plan.DialogServicePlan);
 	}
 
 	[Fact]
@@ -92,6 +93,53 @@ public sealed class NpcDialogControllerDispatchPlanServiceTests
 		Assert.Same(dispatch, plan.Dispatch);
 		Assert.Equal(12, plan.Dispatch.LastPage);
 		Assert.Equal(1011, plan.Dispatch.DialogActionId);
+	}
+
+	[Fact]
+	public void CreatePlan_ComposesDialogServicePlanOnlyWhenAiFallsBack()
+	{
+		var plan = NpcDialogControllerDispatchPlanService.CreatePlan(
+			new NpcDialogControllerDispatchInput(
+				CreateDispatch(dialogActionId: 2, questId: 0),
+				TargetIsNpc: true,
+				IsInTalkRange: true,
+				NpcAiHandledDialogSelect: false,
+				DialogServiceFacts: new NpcDialogServiceSelectFacts(
+					HasTradeList: true,
+					HasSellableTradeGoods: true,
+					VendorBuyModifier: 120,
+					TradeSellPriceRate: 75)));
+
+		Assert.Equal(NpcDialogControllerDispatchStatus.DialogServiceFallback, plan.Status);
+		var servicePlan = Assert.IsType<NpcDialogServiceSelectPlan>(plan.DialogServicePlan);
+		Assert.Equal(NpcDialogServiceSelectStatus.BuyTradeList, servicePlan.Status);
+		var descriptor = Assert.Single(servicePlan.Descriptors);
+		Assert.Equal(9001, descriptor.TargetObjectId);
+		Assert.Equal(2, descriptor.DialogActionId);
+		Assert.Equal(90, descriptor.PriceModifier);
+	}
+
+	[Theory]
+	[InlineData(false, false, NpcDialogControllerDispatchStatus.OutOfTalkRange)]
+	[InlineData(true, true, NpcDialogControllerDispatchStatus.AiHandled)]
+	public void CreatePlan_DoesNotComposeDialogServicePlanForShortCircuitedControllerBranches(
+		bool isInTalkRange,
+		bool npcAiHandledDialogSelect,
+		NpcDialogControllerDispatchStatus expectedStatus)
+	{
+		var plan = NpcDialogControllerDispatchPlanService.CreatePlan(
+			new NpcDialogControllerDispatchInput(
+				CreateDispatch(dialogActionId: 2, questId: 0),
+				TargetIsNpc: true,
+				IsInTalkRange: isInTalkRange,
+				NpcAiHandledDialogSelect: npcAiHandledDialogSelect,
+				DialogServiceFacts: new NpcDialogServiceSelectFacts(
+					HasTradeList: true,
+					HasSellableTradeGoods: true)));
+
+		Assert.Equal(expectedStatus, plan.Status);
+		Assert.Null(plan.DialogServiceFallback);
+		Assert.Null(plan.DialogServicePlan);
 	}
 
 	private static QuestDialogNpcControllerDispatchDescriptor CreateDispatch(

@@ -12,7 +12,16 @@ public sealed record NpcDialogControllerDispatchInput(
 	QuestDialogNpcControllerDispatchDescriptor Dispatch,
 	bool TargetIsNpc,
 	bool IsInTalkRange = true,
-	bool NpcAiHandledDialogSelect = false);
+	bool NpcAiHandledDialogSelect = false,
+	NpcDialogServiceSelectFacts? DialogServiceFacts = null);
+
+public sealed record NpcDialogServiceSelectFacts(
+	bool NpcSupportsAction = true,
+	bool HasTradeList = false,
+	bool HasSellableTradeGoods = false,
+	int VendorBuyModifier = 100,
+	int TradeSellPriceRate = 100,
+	bool HasTradeInList = false);
 
 public sealed record NpcDialogControllerDispatchPlan(
 	NpcDialogControllerDispatchStatus Status,
@@ -22,6 +31,7 @@ public sealed record NpcDialogControllerDispatchPlan(
 	bool CallsDialogService,
 	QuestDialogNpcControllerDispatchDescriptor Dispatch,
 	NpcDialogServiceFallbackDescriptor? DialogServiceFallback = null,
+	NpcDialogServiceSelectPlan? DialogServicePlan = null,
 	string? AuditReason = null);
 
 public sealed record NpcDialogServiceFallbackDescriptor(
@@ -82,12 +92,37 @@ public static class NpcDialogControllerDispatchPlanService
 			CallsNpcAi: true,
 			CallsDialogService: true,
 			input.Dispatch,
-			new NpcDialogServiceFallbackDescriptor(
-				input.Dispatch.TargetObjectId,
-				input.Dispatch.DialogActionId,
-				input.Dispatch.QuestId,
-				input.Dispatch.ExtendedRewardIndex,
-				"DialogService.onDialogSelect(dialogActionId, player, getOwner(), questId, extendedRewardIndex)",
-				IsLive: false));
+			CreateFallbackDescriptor(input.Dispatch),
+			CreateDialogServicePlan(input));
+	}
+
+	private static NpcDialogServiceFallbackDescriptor CreateFallbackDescriptor(QuestDialogNpcControllerDispatchDescriptor dispatch)
+	{
+		return new NpcDialogServiceFallbackDescriptor(
+			dispatch.TargetObjectId,
+			dispatch.DialogActionId,
+			dispatch.QuestId,
+			dispatch.ExtendedRewardIndex,
+			"DialogService.onDialogSelect(dialogActionId, player, getOwner(), questId, extendedRewardIndex)",
+			IsLive: false);
+	}
+
+	private static NpcDialogServiceSelectPlan? CreateDialogServicePlan(NpcDialogControllerDispatchInput input)
+	{
+		if (input.DialogServiceFacts == null)
+		{
+			return null;
+		}
+
+		var facts = input.DialogServiceFacts;
+		return NpcDialogServiceSelectPlanService.CreatePlan(
+			new NpcDialogServiceSelectInput(
+				CreateFallbackDescriptor(input.Dispatch),
+				facts.NpcSupportsAction,
+				facts.HasTradeList,
+				facts.HasSellableTradeGoods,
+				facts.VendorBuyModifier,
+				facts.TradeSellPriceRate,
+				facts.HasTradeInList));
 	}
 }
