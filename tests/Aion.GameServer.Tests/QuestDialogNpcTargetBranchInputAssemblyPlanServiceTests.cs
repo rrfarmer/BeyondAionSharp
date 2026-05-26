@@ -107,6 +107,82 @@ public sealed class QuestDialogNpcTargetBranchInputAssemblyPlanServiceTests
 	}
 
 	[Fact]
+	public void CreatePlan_ComposesControllerDispatchPlanWhenBranchDispatches()
+	{
+		var targetTemplate = CreateTemplate(203001, [FunctionDialogAction]);
+		var templates = new NpcTemplateTable([targetTemplate]);
+
+		var plan = QuestDialogNpcTargetBranchInputAssemblyPlanService.CreatePlan(
+			CreateSnapshot(
+				targetTemplate,
+				controllerDispatchFacts: new QuestDialogNpcControllerDispatchFacts(
+					IsInTalkRange: true,
+					NpcAiHandledDialogSelect: false)),
+			templates);
+
+		Assert.Equal(QuestDialogNpcTargetBranchStatus.DispatchController, plan.BranchPlan.Status);
+		var controllerPlan = Assert.IsType<NpcDialogControllerDispatchPlan>(plan.ControllerDispatchPlan);
+		Assert.Equal(NpcDialogControllerDispatchStatus.DialogServiceFallback, controllerPlan.Status);
+		Assert.True(controllerPlan.CallsNpcAi);
+		Assert.True(controllerPlan.CallsDialogService);
+		Assert.Equal(TargetObjectId, controllerPlan.Dispatch.TargetObjectId);
+		Assert.NotNull(controllerPlan.DialogServiceFallback);
+	}
+
+	[Fact]
+	public void CreatePlan_UsesControllerDispatchFactsAfterBranchDispatch()
+	{
+		var targetTemplate = CreateTemplate(203001, [FunctionDialogAction]);
+		var templates = new NpcTemplateTable([targetTemplate]);
+
+		var plan = QuestDialogNpcTargetBranchInputAssemblyPlanService.CreatePlan(
+			CreateSnapshot(
+				targetTemplate,
+				controllerDispatchFacts: new QuestDialogNpcControllerDispatchFacts(
+					IsInTalkRange: false,
+					NpcAiHandledDialogSelect: true)),
+			templates);
+
+		var controllerPlan = Assert.IsType<NpcDialogControllerDispatchPlan>(plan.ControllerDispatchPlan);
+		Assert.Equal(NpcDialogControllerDispatchStatus.OutOfTalkRange, controllerPlan.Status);
+		Assert.False(controllerPlan.CallsNpcAi);
+		Assert.False(controllerPlan.CallsDialogService);
+	}
+
+	[Fact]
+	public void CreatePlan_DoesNotComposeControllerDispatchWhenBranchIsBlocked()
+	{
+		var targetTemplate = CreateTemplate(203001, [FunctionDialogAction]);
+		var templates = new NpcTemplateTable([targetTemplate]);
+
+		var plan = QuestDialogNpcTargetBranchInputAssemblyPlanService.CreatePlan(
+			CreateSnapshot(
+				targetTemplate,
+				interactionAllowed: false,
+				controllerDispatchFacts: new QuestDialogNpcControllerDispatchFacts()),
+			templates);
+
+		Assert.Equal(QuestDialogNpcTargetBranchStatus.InteractionNotAllowed, plan.BranchPlan.Status);
+		Assert.Null(plan.BranchPlan.Dispatch);
+		Assert.Null(plan.ControllerDispatchPlan);
+	}
+
+	[Fact]
+	public void CreatePlan_KeepsControllerDispatchOptional()
+	{
+		var targetTemplate = CreateTemplate(203001, [FunctionDialogAction]);
+		var templates = new NpcTemplateTable([targetTemplate]);
+
+		var plan = QuestDialogNpcTargetBranchInputAssemblyPlanService.CreatePlan(
+			CreateSnapshot(targetTemplate),
+			templates);
+
+		Assert.Equal(QuestDialogNpcTargetBranchStatus.DispatchController, plan.BranchPlan.Status);
+		Assert.NotNull(plan.BranchPlan.Dispatch);
+		Assert.Null(plan.ControllerDispatchPlan);
+	}
+
+	[Fact]
 	public void CreatePlan_DoesNotApplyNpcSupportGuardToNonNpcCreatures()
 	{
 		var templates = new NpcTemplateTable([CreateTemplate(203001, [FunctionDialogAction])]);
@@ -134,7 +210,8 @@ public sealed class QuestDialogNpcTargetBranchInputAssemblyPlanServiceTests
 	private static QuestDialogNpcTargetBranchRuntimeSnapshot CreateSnapshot(
 		NpcTemplateSummary targetTemplate,
 		bool interactionAllowed = true,
-		NpcDialogInteractionAllowedInput? interactionInput = null)
+		NpcDialogInteractionAllowedInput? interactionInput = null,
+		QuestDialogNpcControllerDispatchFacts? controllerDispatchFacts = null)
 	{
 		return new QuestDialogNpcTargetBranchRuntimeSnapshot(
 			PlayerObjectId,
@@ -148,7 +225,8 @@ public sealed class QuestDialogNpcTargetBranchInputAssemblyPlanServiceTests
 			TargetIsNpc: true,
 			TargetNpcTemplate: targetTemplate,
 			InteractionAllowed: interactionAllowed,
-			InteractionInput: interactionInput);
+			InteractionInput: interactionInput,
+			ControllerDispatchFacts: controllerDispatchFacts);
 	}
 
 	private static NpcTemplateSummary CreateTemplate(int templateId, IReadOnlyList<int>? functionDialogIds = null)

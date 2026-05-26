@@ -15,14 +15,20 @@ public sealed record QuestDialogNpcTargetBranchRuntimeSnapshot(
 	bool TargetIsNpc = false,
 	NpcTemplateSummary? TargetNpcTemplate = null,
 	bool InteractionAllowed = true,
-	NpcDialogInteractionAllowedInput? InteractionInput = null);
+	NpcDialogInteractionAllowedInput? InteractionInput = null,
+	QuestDialogNpcControllerDispatchFacts? ControllerDispatchFacts = null);
 
 public sealed record QuestDialogNpcTargetBranchInputAssemblyPlan(
 	QuestDialogNpcTargetBranchInput Input,
 	QuestDialogNpcTargetBranchPlan BranchPlan,
 	string JavaSource,
 	NpcDialogInteractionAllowedPlan? InteractionPlan = null,
+	NpcDialogControllerDispatchPlan? ControllerDispatchPlan = null,
 	bool IsLive = false);
+
+public sealed record QuestDialogNpcControllerDispatchFacts(
+	bool IsInTalkRange = true,
+	bool NpcAiHandledDialogSelect = false);
 
 public static class QuestDialogNpcTargetBranchInputAssemblyPlanService
 {
@@ -36,8 +42,10 @@ public static class QuestDialogNpcTargetBranchInputAssemblyPlanService
 		// DataManager.NPC_DATA.isFunctionDialog(dialogActionId) globally, then
 		// checks the target NpcTemplate.supportsAction(dialogActionId) per NPC.
 		// If provided, interaction facts are planned through DialogService.isInteractionAllowed.
+		// If provided, controller dispatch facts are planned only after the branch reaches
+		// target.getController().onDialogSelect(...).
 		// This is still a non-live input adapter only; known-list, audits, packets,
-		// and controller dispatch remain explicit dependencies.
+		// and live controller dispatch remain explicit dependencies.
 		var interactionPlan = snapshot.InteractionInput == null
 			? null
 			: NpcDialogInteractionAllowedPlanService.CreatePlan(snapshot.InteractionInput);
@@ -56,12 +64,32 @@ public static class QuestDialogNpcTargetBranchInputAssemblyPlanService
 			npcTemplates.IsFunctionDialog(snapshot.DialogActionId),
 			snapshot.TargetNpcTemplate?.SupportsDialogAction(snapshot.DialogActionId) == true,
 			interactionAllowed);
+		var branchPlan = QuestDialogNpcTargetBranchPlanService.CreatePlan(input);
+		var controllerDispatchPlan = CreateControllerDispatchPlan(snapshot, branchPlan);
 
 		return new QuestDialogNpcTargetBranchInputAssemblyPlan(
 			input,
-			QuestDialogNpcTargetBranchPlanService.CreatePlan(input),
-			"CM_DIALOG_SELECT.runImpl -> NpcData.isFunctionDialog + NpcTemplate.supportsAction + DialogService.isInteractionAllowed",
+			branchPlan,
+			"CM_DIALOG_SELECT.runImpl -> NpcData.isFunctionDialog + NpcTemplate.supportsAction + DialogService.isInteractionAllowed + target.getController().onDialogSelect",
 			interactionPlan,
+			controllerDispatchPlan,
 			IsLive: false);
+	}
+
+	private static NpcDialogControllerDispatchPlan? CreateControllerDispatchPlan(
+		QuestDialogNpcTargetBranchRuntimeSnapshot snapshot,
+		QuestDialogNpcTargetBranchPlan branchPlan)
+	{
+		if (snapshot.ControllerDispatchFacts == null || branchPlan.Dispatch == null)
+		{
+			return null;
+		}
+
+		return NpcDialogControllerDispatchPlanService.CreatePlan(
+			new NpcDialogControllerDispatchInput(
+				branchPlan.Dispatch,
+				snapshot.TargetIsNpc,
+				snapshot.ControllerDispatchFacts.IsInTalkRange,
+				snapshot.ControllerDispatchFacts.NpcAiHandledDialogSelect));
 	}
 }
