@@ -1,3 +1,4 @@
+using Aion.GameServer.Configuration;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 
@@ -26,7 +27,9 @@ public static class StigmaService
 		SkillTemplateTable skillTemplates,
 		SkillTreeTable skillTree,
 		PlayerExperienceTable? experienceTable = null,
-		byte stigmaSlotQuestMembership = 10)
+		byte stigmaSlotQuestMembership = 10,
+		GameServerPriceOptions? priceOptions = null,
+		PriceInfluenceRates? influenceRates = null)
 	{
 		// Java parity: services/StigmaService.notifyEquipAction.
 		if (resultTemplate.StigmaInfo == null)
@@ -75,7 +78,11 @@ public static class StigmaService
 				return StigmaEquipResult.Failed(StigmaEquipFailure.Denied);
 		}
 
-		var kinahPrice = GetStigmaEquipPrice(player, resultTemplate);
+		var kinahPrice = GetStigmaEquipPrice(
+			player,
+			resultTemplate,
+			priceOptions ?? new GameServerPriceOptions(),
+			influenceRates ?? new PriceInfluenceRates());
 		var kinahItem = inventoryItems.FirstOrDefault(item => item.ItemId == KinahItemId && item.Location == CubeStorageId);
 		if (kinahItem == null || kinahItem.Count < kinahPrice)
 			return StigmaEquipResult.Failed(StigmaEquipFailure.NotEnoughKinah);
@@ -695,8 +702,14 @@ public static class StigmaService
 		return player.AccountMembership >= permissionLevel;
 	}
 
-	private static long GetStigmaEquipPrice(Player player, ItemTemplateSummary itemTemplate)
+	private static long GetStigmaEquipPrice(
+		Player player,
+		ItemTemplateSummary itemTemplate,
+		GameServerPriceOptions priceOptions,
+		PriceInfluenceRates influenceRates)
 	{
+		// Java parity: services/StigmaService.notifyEquipAction selects the base kinah fee,
+		// then services/trade/PricesService.getPriceForService applies global price, modifier, and tax.
 		long kinahCount = 25000;
 		if ((player.Race == "ASMODIANS" && player.Position.WorldId == 320070000)
 			|| (player.Race == "ELYOS" && player.Position.WorldId == 310070000))
@@ -712,13 +725,7 @@ public static class StigmaService
 			kinahCount = 100000;
 		}
 
-		return GetPriceForService(kinahCount, player.Race);
-	}
-
-	private static long GetPriceForService(long basePrice, string race)
-	{
-		// Java parity: services/trade/PricesService.getPriceForService with the currently ported baseline SM_PRICES values.
-		return race is "ELYOS" or "ASMODIANS" ? basePrice : basePrice;
+		return PricesService.GetPriceForService(kinahCount, player.Race, priceOptions, influenceRates);
 	}
 
 	private static bool IsRegularStigma(long slot)

@@ -1,3 +1,4 @@
+using Aion.GameServer.Configuration;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Services;
@@ -246,6 +247,37 @@ public sealed class StigmaServiceTests
 		Assert.Equal(StigmaChargeResult.Invalid, plan.Result);
 	}
 
+	[Fact]
+	public void NotifyEquipAction_UsesJavaPricesServiceForKinahFee()
+	{
+		var player = CreatePlayer();
+		player.AccountMembership = 10;
+		player.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 9001, ItemId = KinahItemId, Count = 30000, Location = 0 },
+		];
+		var itemTemplates = CreateItemTemplates();
+		var resultItem = new InventoryItem { ObjectId = 1001, ItemId = StigmaId, Count = 1, Location = 0, Slot = StigmaSlot1 };
+		var resultTemplate = itemTemplates.GetItemTemplate(StigmaId)!;
+
+		var result = StigmaService.NotifyEquipAction(
+			player,
+			resultItem,
+			resultTemplate,
+			StigmaSlot1,
+			player.InventoryItems,
+			itemTemplates,
+			CreateSkillTemplates(),
+			CreateSkillTree(),
+			CreateExperienceTable(),
+			priceOptions: new GameServerPriceOptions(),
+			influenceRates: new PriceInfluenceRates(Elyos: 0.3f, Asmodians: 0.5f));
+
+		Assert.True(result.Allowed);
+		Assert.Equal(StigmaEquipFailure.None, result.Failure);
+		Assert.Equal(1125, result.KinahItemUpdate?.Count);
+	}
+
 	private static Player CreatePlayer()
 	{
 		return new Player
@@ -322,5 +354,6 @@ public sealed class StigmaServiceTests
 
 	private const int StigmaId = 140001001;
 	private const int OtherStigmaId = 140001002;
+	private const int KinahItemId = 182400001;
 	private const long StigmaSlot1 = 1L << 30;
 }
