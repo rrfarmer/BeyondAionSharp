@@ -244,6 +244,7 @@ public sealed class TradeListJavaVectorArtifactReaderTests(ITestOutputHelper out
 			Assert.NotEmpty(artifact.Packets);
 			AssertArtifactPacketSemantics(artifact);
 			AssertGeneratedTradeListBodyMatchesCSharpWhenPresent(artifact);
+			AssertGeneratedTradeInListBodyMatchesCSharpWhenPresent(artifact);
 		}
 	}
 
@@ -339,6 +340,31 @@ public sealed class TradeListJavaVectorArtifactReaderTests(ITestOutputHelper out
 			Assert.Equal(
 				NormalizeHex(expectedBodyHex),
 				Convert.ToHexString(SerializeUnencryptedBody(new SmTradeList(plan))));
+		}
+	}
+
+	private static void AssertGeneratedTradeInListBodyMatchesCSharpWhenPresent(TradeListJavaVectorArtifact artifact)
+	{
+		foreach (var packet in artifact.Packets.Where(packet =>
+			packet.PacketClass == "SM_TRADE_IN_LIST" && !string.IsNullOrWhiteSpace(packet.BodyHex)))
+		{
+			var expectedBodyHex = packet.BodyHex!;
+			if (!TryGetTradeNpcTypeName(packet.Decoded.TradeNpcTypeIndex.GetValueOrDefault(), out var npcType))
+				Assert.Fail($"Unsupported SM_TRADE_IN_LIST tradeNpcTypeIndex in generated artifact: {packet.Decoded.TradeNpcTypeIndex}");
+
+			var plan = SmTradeInListPacketPlanService.CreatePlan(
+				new SmTradeInListPacketPlanInput(
+					TargetObjectId: packet.Decoded.TargetObjId.GetValueOrDefault(),
+					TradeInList: new TradeListTemplateSummary(
+						artifact.Input.NpcId,
+						packet.Decoded.TradeTabIds,
+						NpcType: npcType),
+					BuyPriceModifier: packet.Decoded.BuyPriceModifier.GetValueOrDefault()));
+
+			Assert.Equal(SmTradeInListPacketPlanStatus.Ready, plan.Status);
+			Assert.Equal(
+				NormalizeHex(expectedBodyHex),
+				Convert.ToHexString(SerializeUnencryptedBody(new SmTradeInList(plan))));
 		}
 	}
 
