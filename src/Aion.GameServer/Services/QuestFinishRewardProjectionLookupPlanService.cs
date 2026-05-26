@@ -1,4 +1,5 @@
 using Aion.GameServer.Dataholders;
+using System.Xml.Linq;
 
 namespace Aion.GameServer.Services;
 
@@ -39,9 +40,66 @@ public sealed class QuestFinishRewardProjectionLookupTable
 		_entries = entries.ToDictionary(entry => entry.QuestId, entry => entry.Entry);
 	}
 
+	public int Count => _entries.Count;
+
+	public IEnumerable<QuestFinishRewardProjectionLookupEntry> Entries => _entries.Values;
+
 	public bool TryGetQuest(int questId, out QuestFinishRewardProjectionLookupEntry? entry)
 	{
 		return _entries.TryGetValue(questId, out entry);
+	}
+}
+
+public sealed class QuestFinishRewardProjectionLookupTableXmlFactory
+{
+	public QuestFinishRewardProjectionLookupTable Create(string xmlContent)
+	{
+		using var reader = new StringReader(xmlContent);
+		return Create(XDocument.Load(reader, LoadOptions.None));
+	}
+
+	public QuestFinishRewardProjectionLookupTable Create(Stream stream)
+	{
+		return Create(XDocument.Load(stream, LoadOptions.None));
+	}
+
+	public QuestFinishRewardProjectionLookupTable Create(XDocument document)
+	{
+		ArgumentNullException.ThrowIfNull(document);
+
+		// Java parity breadcrumb: this is a non-live bridge toward QuestsData#afterUnmarshal plus
+		// QuestTemplate#getRewards. It materializes all regular reward groups, but still does not
+		// expose production StaticData or socket wiring.
+		var summaries = new NearbyQuestTemplateXmlExtractor()
+			.Extract(document.ToString(SaveOptions.DisableFormatting))
+			.ToDictionary(template => template.QuestId);
+		var extractor = new QuestFinishRewardTemplateXmlProjectionExtractor();
+		var entries = document
+			.Descendants()
+			.Where(element => element.Name.LocalName == "quest")
+			.Select(quest =>
+			{
+				var questId = ReadRequiredQuestId(quest);
+				var rewardGroupCount = quest.Elements().Count(element => element.Name.LocalName == "rewards");
+				var rewardGroupIndexes = rewardGroupCount == 0
+					? [0]
+					: Enumerable.Range(0, rewardGroupCount);
+				var projections = rewardGroupIndexes.ToDictionary(
+					rewardGroupIndex => rewardGroupIndex,
+					rewardGroupIndex => extractor.CreateProjection(quest, rewardGroupIndex));
+				return (questId, new QuestFinishRewardProjectionLookupEntry(summaries[questId], projections));
+			});
+
+		return new QuestFinishRewardProjectionLookupTable(entries);
+	}
+
+	private static int ReadRequiredQuestId(XElement quest)
+	{
+		var value = quest.Attribute("id")?.Value;
+		if (!int.TryParse(value, out var parsed))
+			throw new FormatException("Missing or invalid quest attribute 'id'.");
+
+		return parsed;
 	}
 }
 
