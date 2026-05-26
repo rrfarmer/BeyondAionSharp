@@ -6,6 +6,7 @@ public enum PlayerKnownListMembershipUpdateReason
 {
 	Manual,
 	WorldVisibilityRefresh,
+	RegionSnapshotRefresh,
 	VisibilityChanged,
 	Removed,
 	Cleared,
