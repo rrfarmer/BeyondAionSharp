@@ -240,6 +240,18 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmSystemMessage_BuySellDoesNotSellItem_WritesJavaNoSellPayload()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_BUY_SELL_HE_DOES_NOT_SELL_ITEM(String)
+		// -> new SM_SYSTEM_MESSAGE(1300336, value0), used by DialogService BUY/TRADE_IN no-sell fallbacks.
+		var payload = SerializeUnencryptedPayload(SmSystemMessage.BuySellHeDoesNotSellItem("Merchant"));
+
+		Assert.Equal(
+			Convert.FromHexString("19000000000070D71300014D00650072006300680061006E007400000000"),
+			payload);
+	}
+
+	[Fact]
 	public void SmLootPackets_WriteJavaLootPayloads()
 	{
 		var player = new Player { ObjectId = 1001 };
