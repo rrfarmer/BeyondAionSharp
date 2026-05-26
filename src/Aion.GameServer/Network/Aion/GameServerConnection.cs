@@ -65,6 +65,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly ThreadPoolManager? _threadPoolManager;
 	private readonly IHouseDoorStateService? _houseDoorStateService;
 	private readonly Action<GameServerPacket>? _sentPacketObserver;
+	private readonly Action<QuestDialogNpcTargetBranchInputAssemblyPlan>? _dialogSelectPlanObserver;
 	private readonly RiftPortalInteractionService? _riftPortalInteractionService;
 	private readonly PortalEntryInteractionService? _portalEntryInteractionService;
 	private readonly WorldNpcLootService? _worldNpcLootService;
@@ -144,7 +145,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		PlayerExchangeRequestService? playerExchangeRequestService = null,
 		PlayerShowBrandCommandPlanner? showBrandCommandPlanner = null,
 		PlayerCastSpellEarlyExitService? castSpellEarlyExitService = null,
-		GameServerCastSpellHandlerHooks? castSpellHooks = null)
+		GameServerCastSpellHandlerHooks? castSpellHooks = null,
+		Action<QuestDialogNpcTargetBranchInputAssemblyPlan>? dialogSelectPlanObserver = null)
 		: base(logger, client, clientId)
 	{
 		_packetProcessor = packetProcessor;
@@ -171,6 +173,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_threadPoolManager = threadPoolManager;
 		_houseDoorStateService = houseDoorStateService;
 		_sentPacketObserver = sentPacketObserver;
+		_dialogSelectPlanObserver = dialogSelectPlanObserver;
 		_worldNpcLootService = worldNpcLootService;
 		_isKnownNpc = isKnownNpc;
 		_creaturePvpZoneCounterService = creaturePvpZoneCounterService;
@@ -1663,6 +1666,14 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (packet.DialogActionId == CmDialogSelect.Buy)
+		{
+			var plan = CreateNonLiveBuyDialogSelectPlan(player, packet);
+			if (plan != null)
+				_dialogSelectPlanObserver?.Invoke(plan);
+			return;
+		}
+
 		var chargeWay = packet.DialogActionId switch
 		{
 			CmDialogSelect.ChargeItemMulti => 1,
@@ -1677,6 +1688,56 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		await StartChargingEquippedItemsAsync(player, packet.TargetObjectId, chargeWay);
+	}
+
+	private QuestDialogNpcTargetBranchInputAssemblyPlan? CreateNonLiveBuyDialogSelectPlan(Player player, CmDialogSelect packet)
+	{
+		// Java parity breadcrumb: CM_DIALOG_SELECT.runImpl -> NpcController.onDialogSelect ->
+		// DialogService.onDialogSelect BUY. This boundary intentionally remains non-sending
+		// until SM_TRADELIST bytes, no-sell messages, AI dispatch, and runtime price/legion facts are live.
+		if (_world == null
+			|| (_isKnownNpc?.Invoke(player, packet.TargetObjectId) == false)
+			|| !_world.TryGetObject(packet.TargetObjectId, out var target)
+			|| target is not IWorldNpcObject npc)
+		{
+			return null;
+		}
+
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var npcTemplates = staticData?.NpcTemplates ?? new NpcTemplateTable([npc.Template]);
+		var isInTalkRange = PositionUtilService.IsInNpcTalkRange(
+			player.Position,
+			npc.Position,
+			npc.Template.TalkDistance,
+			npc.Template.BoundRadius,
+			player.BoundRadius);
+		var tradeListFactInput = staticData?.TradeLists == null || staticData.GoodsLists == null
+			? null
+			: new NpcDialogTradeListFactAdapterInput(
+				npc.TemplateId,
+				PlayerLegionLevel: 0,
+				VendorBuyModifier: 100);
+
+		return QuestDialogNpcTargetBranchInputAssemblyPlanService.CreatePlan(
+			new QuestDialogNpcTargetBranchRuntimeSnapshot(
+				player.ObjectId,
+				packet.TargetObjectId,
+				packet.DialogActionId,
+				packet.LastPage,
+				packet.QuestId,
+				packet.ExtendedRewardIndex,
+				TargetExists: true,
+				TargetIsCreature: true,
+				TargetIsNpc: true,
+				TargetNpcTemplate: npc.Template,
+				InteractionAllowed: true,
+				ControllerDispatchFacts: new QuestDialogNpcControllerDispatchFacts(
+					IsInTalkRange: isInTalkRange,
+					NpcAiHandledDialogSelect: false),
+				TradeListFactInput: tradeListFactInput),
+			npcTemplates,
+			staticData?.TradeLists,
+			staticData?.GoodsLists);
 	}
 
 	private async Task HandleShowDialogAsync(Player player, CmShowDialog packet)

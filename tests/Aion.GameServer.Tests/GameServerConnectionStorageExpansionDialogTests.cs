@@ -63,13 +63,25 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 	{
 		await using var fixture = await StorageExpansionDialogFixture.CreateAsync();
 		var player = CreatePlayer(targetObjectId: 9001);
-		var npc = CreateExpansionNpc(9001, templateId: 203060, dialogActionId: 2);
+		var npc = CreateExpansionNpc(9001, templateId: 203060, dialogActionId: CmDialogSelect.Buy);
 		fixture.World.TryAddObject(npc.ObjectId, npc);
 
-		await fixture.Connection.HandleDialogSelectAsync(player, CreateDialogSelect(npc.ObjectId, dialogActionId: 2));
+		await fixture.Connection.HandleDialogSelectAsync(player, CreateDialogSelect(npc.ObjectId, CmDialogSelect.Buy));
 
 		Assert.Empty(fixture.SentPackets);
 		Assert.Equal(0, player.ResponseRequester.Count);
+		var plan = Assert.Single(fixture.DialogSelectPlans);
+		Assert.Equal(QuestDialogNpcTargetBranchStatus.DispatchController, plan.BranchPlan.Status);
+		Assert.Equal(NpcDialogControllerDispatchStatus.DialogServiceFallback, plan.ControllerDispatchPlan?.Status);
+		Assert.Equal(NpcDialogServiceSelectStatus.BuyTradeList, plan.ControllerDispatchPlan?.DialogServicePlan?.Status);
+		var packetPlan = Assert.IsType<SmTradeListPacketPlan>(plan.TradeListPacketPlan);
+		Assert.Equal(SmTradeListPacketPlanStatus.Ready, packetPlan.Status);
+		Assert.Equal([129], packetPlan.TradeTabIds);
+		Assert.Equal(80, packetPlan.BuyPriceModifier);
+		Assert.False(packetPlan.IsLive);
+		var descriptor = Assert.Single(plan.ControllerDispatchPlan!.DialogServicePlan!.Descriptors);
+		Assert.Equal(NpcDialogServiceDescriptorKind.TradeListPacket, descriptor.Kind);
+		Assert.Same(packetPlan, descriptor.TradeListPacketPlan);
 	}
 
 	private static Player CreatePlayer(int targetObjectId)
@@ -127,12 +139,14 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 			GameServerConnection connection,
 			GameWorld world,
 			List<GameServerPacket> sentPackets,
+			List<QuestDialogNpcTargetBranchInputAssemblyPlan> dialogSelectPlans,
 			string tempRoot)
 		{
 			_client = client;
 			_connection = connection;
 			World = world;
 			SentPackets = sentPackets;
+			DialogSelectPlans = dialogSelectPlans;
 			_tempRoot = tempRoot;
 		}
 
@@ -141,6 +155,8 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 		public GameWorld World { get; }
 
 		public List<GameServerPacket> SentPackets { get; }
+
+		public List<QuestDialogNpcTargetBranchInputAssemblyPlan> DialogSelectPlans { get; }
 
 		public static async Task<StorageExpansionDialogFixture> CreateAsync()
 		{
@@ -161,6 +177,16 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 							<expand level="1" price="1200" />
 						</expansion_npc>
 					</warehouse_expander>
+					<npc_trade_list>
+						<tradelist_template npc_id="203060" npc_type="NORMAL" sell_price_rate="80">
+							<tradelist id="129" />
+						</tradelist_template>
+					</npc_trade_list>
+					<goodslists>
+						<list id="129">
+							<item id="110100010" />
+						</list>
+					</goodslists>
 				</static_data>
 				""");
 			var dataManager = await DataManager.LoadAsync(
@@ -172,6 +198,7 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 			var world = new GameWorld(NullLogger<GameWorld>.Instance);
 			world.Initialize();
 			var sentPackets = new List<GameServerPacket>();
+			var dialogSelectPlans = new List<QuestDialogNpcTargetBranchInputAssemblyPlan>();
 
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -193,8 +220,9 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 					runtimeContext: runtimeContext,
 					world: world,
 					sentPacketObserver: sentPackets.Add,
+					dialogSelectPlanObserver: dialogSelectPlans.Add,
 					crypt: crypt);
-				return new StorageExpansionDialogFixture(client, connection, world, sentPackets, tempRoot);
+				return new StorageExpansionDialogFixture(client, connection, world, sentPackets, dialogSelectPlans, tempRoot);
 			}
 			finally
 			{

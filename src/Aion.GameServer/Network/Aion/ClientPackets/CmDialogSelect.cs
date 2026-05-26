@@ -4,6 +4,7 @@ namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 public sealed class CmDialogSelect : GameClientPacket
 {
+	public const int Buy = 2;
 	public const int Recovery = 35;
 	public const int ExtendInventory = 47;
 	public const int ExtendCharWarehouse = 48;
