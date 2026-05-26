@@ -28,6 +28,25 @@ public sealed class NpcTemplateTableTests
 		Assert.False(ordinaryNpc.SupportsDialogAction(33));
 	}
 
+	[Fact]
+	public void GetUnknownFunctionDialogIds_ReportsJavaDialogActionNameOfGaps()
+	{
+		var table = new NpcTemplateTable(
+		[
+			CreateTemplate(203001, [33, 102]),
+			CreateTemplate(203002, [1011, 1010]),
+		]);
+
+		Assert.Equal(
+			[
+				new NpcTemplateUnknownDialogActionSummary(203001, 102),
+				new NpcTemplateUnknownDialogActionSummary(203002, 1010),
+			],
+			table.GetUnknownFunctionDialogIds());
+		Assert.True(table.IsFunctionDialog(102));
+		Assert.True(table.IsFunctionDialog(1010));
+	}
+
 	private static NpcTemplateSummary CreateTemplate(int templateId, IReadOnlyList<int>? functionDialogIds = null)
 	{
 		return new NpcTemplateSummary(

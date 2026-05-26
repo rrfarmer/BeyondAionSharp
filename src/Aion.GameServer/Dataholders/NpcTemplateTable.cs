@@ -6,6 +6,7 @@ public sealed class NpcTemplateTable
 {
 	private readonly IReadOnlyDictionary<int, NpcTemplateSummary> _templatesById;
 	private readonly HashSet<int> _functionDialogIds;
+	private readonly IReadOnlyList<NpcTemplateUnknownDialogActionSummary> _unknownFunctionDialogIds;
 
 	public NpcTemplateTable(IReadOnlyList<NpcTemplateSummary> templates)
 	{
@@ -17,6 +18,12 @@ public sealed class NpcTemplateTable
 		_functionDialogIds = templates
 			.SelectMany(template => template.FunctionDialogIds ?? [])
 			.ToHashSet();
+		_unknownFunctionDialogIds = templates
+			.SelectMany(
+				template => (template.FunctionDialogIds ?? [])
+					.Where(dialogActionId => !Services.DialogActionRegistry.NameOf(dialogActionId).IsKnown)
+					.Select(dialogActionId => new NpcTemplateUnknownDialogActionSummary(template.TemplateId, dialogActionId)))
+			.ToArray();
 	}
 
 	public IReadOnlyList<NpcTemplateSummary> Templates { get; }
@@ -32,7 +39,15 @@ public sealed class NpcTemplateTable
 	{
 		return _functionDialogIds.Contains(dialogActionId);
 	}
+
+	public IReadOnlyList<NpcTemplateUnknownDialogActionSummary> GetUnknownFunctionDialogIds()
+	{
+		// Java parity: dataholders/NpcData.init logs "Unknown dialog action {id} for Npc {templateId}".
+		return _unknownFunctionDialogIds;
+	}
 }
+
+public sealed record NpcTemplateUnknownDialogActionSummary(int NpcId, int DialogActionId);
 
 public sealed record NpcTemplateSummary(
 	int TemplateId,

@@ -28,6 +28,38 @@ public sealed class QuestDialogNpcTargetBranchInputAssemblyPlanServiceTests
 	}
 
 	[Fact]
+	public void CreatePlan_DerivesUnknownDialogActionFromRegistryBeforeTargetBranching()
+	{
+		var targetTemplate = CreateTemplate(203001, [FunctionDialogAction]);
+		var templates = new NpcTemplateTable([targetTemplate]);
+
+		var plan = QuestDialogNpcTargetBranchInputAssemblyPlanService.CreatePlan(
+			CreateSnapshot(targetTemplate, dialogActionId: 102),
+			templates);
+
+		Assert.False(plan.DialogActionName.IsKnown);
+		Assert.False(plan.Input.DialogActionKnown);
+		Assert.Equal(QuestDialogNpcTargetBranchStatus.UnknownDialogAction, plan.BranchPlan.Status);
+		Assert.Null(plan.BranchPlan.Dispatch);
+	}
+
+	[Fact]
+	public void CreatePlan_DerivesGeneratedSelectRangeAsKnownDialogAction()
+	{
+		var targetTemplate = CreateTemplate(203001);
+		var templates = new NpcTemplateTable([targetTemplate]);
+
+		var plan = QuestDialogNpcTargetBranchInputAssemblyPlanService.CreatePlan(
+			CreateSnapshot(targetTemplate, dialogActionId: 1011),
+			templates);
+
+		Assert.True(plan.DialogActionName.IsKnown);
+		Assert.False(plan.DialogActionName.NameIsExact);
+		Assert.Equal("SELECT_RANGE_1011", plan.DialogActionName.Name);
+		Assert.True(plan.Input.DialogActionKnown);
+	}
+
+	[Fact]
 	public void CreatePlan_DerivesNpcSupportFromTargetTemplate()
 	{
 		var targetTemplate = CreateTemplate(203001, [FunctionDialogAction]);

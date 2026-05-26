@@ -23,6 +23,7 @@ public sealed record QuestDialogNpcTargetBranchInputAssemblyPlan(
 	QuestDialogNpcTargetBranchInput Input,
 	QuestDialogNpcTargetBranchPlan BranchPlan,
 	string JavaSource,
+	DialogActionNameResult DialogActionName,
 	NpcDialogInteractionAllowedPlan? InteractionPlan = null,
 	NpcDialogTradeListFactAdapterPlan? TradeListFactAdapterPlan = null,
 	NpcDialogControllerDispatchPlan? ControllerDispatchPlan = null,
@@ -52,6 +53,7 @@ public static class QuestDialogNpcTargetBranchInputAssemblyPlanService
 		// If provided, trade-list facts are derived only for the Java DialogService fallback path.
 		// This is still a non-live input adapter only; known-list, audits, packets,
 		// and live controller dispatch remain explicit dependencies.
+		var dialogActionName = DialogActionRegistry.NameOf(snapshot.DialogActionId);
 		var interactionPlan = snapshot.InteractionInput == null
 			? null
 			: NpcDialogInteractionAllowedPlanService.CreatePlan(snapshot.InteractionInput);
@@ -63,7 +65,7 @@ public static class QuestDialogNpcTargetBranchInputAssemblyPlanService
 			snapshot.LastPage,
 			snapshot.QuestId,
 			snapshot.ExtendedRewardIndex,
-			snapshot.DialogActionKnown,
+			snapshot.DialogActionKnown && dialogActionName.IsKnown,
 			snapshot.TargetExists,
 			snapshot.TargetIsCreature,
 			snapshot.TargetIsNpc,
@@ -78,6 +80,7 @@ public static class QuestDialogNpcTargetBranchInputAssemblyPlanService
 			input,
 			branchPlan,
 			"CM_DIALOG_SELECT.runImpl -> NpcData.isFunctionDialog + NpcTemplate.supportsAction + DialogService.isInteractionAllowed + target.getController().onDialogSelect",
+			dialogActionName,
 			interactionPlan,
 			tradeListFactAdapterPlan,
 			controllerDispatchPlan,
