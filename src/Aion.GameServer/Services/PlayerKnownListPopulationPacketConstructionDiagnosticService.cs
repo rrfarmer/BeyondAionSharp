@@ -14,6 +14,8 @@ public sealed record PlayerKnownListPopulationFactPlanDiagnostic(
 	PlayerKnownListPopulationPacketConstructionFactPlanDirection Direction,
 	PlayerKnownListPacketConstructionFactPlanStatus Status,
 	IReadOnlyList<PlayerKnownListPacketConstructionFactBlocker> Blockers,
+	PlayerKnownListPacketConstructionAttackSpeedFactSource RideAttackSpeedFactSource,
+	PlayerKnownListAttackSpeedFactResolutionStatus? RideAttackSpeedResolutionStatus,
 	string JavaSource);
 
 public sealed record PlayerKnownListPopulationPacketConstructionResultDiagnostic(
@@ -47,6 +49,8 @@ public sealed record PlayerKnownListPopulationPacketConstructionDiagnosticPlan(
 	int CompletedFactPlanCount,
 	int BlockedFactPlanCount,
 	IReadOnlyDictionary<PlayerKnownListPacketConstructionFactBlocker, int> FactPlanBlockerCountsByKind,
+	IReadOnlyDictionary<PlayerKnownListPacketConstructionAttackSpeedFactSource, int> RideAttackSpeedFactSourceCountsByKind,
+	IReadOnlyDictionary<PlayerKnownListAttackSpeedFactResolutionStatus, int> RideAttackSpeedResolutionStatusCountsByKind,
 	int PacketConstructionFactSourceCount,
 	int RequestPacketConstructionFactSourceCount,
 	int GeneratedPacketConstructionFactSourceCount,
@@ -110,6 +114,10 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 			factPlans.Count(factPlan => factPlan.Status == PlayerKnownListPacketConstructionFactPlanStatus.Complete),
 			factPlans.Count(factPlan => factPlan.Status == PlayerKnownListPacketConstructionFactPlanStatus.Blocked),
 			CountByKind(factPlans.SelectMany(factPlan => factPlan.Blockers)),
+			CountByKind(factPlans.Select(factPlan => factPlan.RideAttackSpeedFactSource)),
+			CountByKind(factPlans
+				.Where(factPlan => factPlan.RideAttackSpeedResolutionStatus is not null)
+				.Select(factPlan => factPlan.RideAttackSpeedResolutionStatus!.Value)),
 			factSources.Length,
 			factSources.Count(source => source.Kind == PlayerKnownListPopulationPacketConstructionFactSourceKind.Request),
 			factSources.Count(source => source.Kind == PlayerKnownListPopulationPacketConstructionFactSourceKind.GeneratedFactPlan),
@@ -147,6 +155,8 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 				factPlan.Direction,
 				factPlan.Plan.Status,
 				factPlan.Plan.Blockers,
+				factPlan.Plan.RideAttackSpeedFactSource,
+				factPlan.Plan.RideAttackSpeedResolutionStatus,
 				factPlan.Plan.JavaSource))
 			.ToArray();
 		var factSources = candidatePlan.PacketConstructionFactSources ?? Array.Empty<PlayerKnownListPopulationPacketConstructionFactSource>();

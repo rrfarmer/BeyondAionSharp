@@ -1,3 +1,4 @@
+using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Services;
 using Aion.GameServer.World;
@@ -56,6 +57,9 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 		Assert.Equal(2, diagnostic.CompletedFactPlanCount);
 		Assert.Equal(0, diagnostic.BlockedFactPlanCount);
 		Assert.Empty(diagnostic.FactPlanBlockerCountsByKind);
+		Assert.Equal(1, diagnostic.RideAttackSpeedFactSourceCountsByKind[PlayerKnownListPacketConstructionAttackSpeedFactSource.Supplied]);
+		Assert.Equal(1, diagnostic.RideAttackSpeedFactSourceCountsByKind[PlayerKnownListPacketConstructionAttackSpeedFactSource.None]);
+		Assert.Empty(diagnostic.RideAttackSpeedResolutionStatusCountsByKind);
 		Assert.Equal(2, diagnostic.PacketConstructionFactSourceCount);
 		Assert.Equal(0, diagnostic.RequestPacketConstructionFactSourceCount);
 		Assert.Equal(2, diagnostic.GeneratedPacketConstructionFactSourceCount);
@@ -88,6 +92,8 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 				PlayerKnownListPopulationPacketConstructionFactPlanDirection.CandidateViewingOwner,
 			],
 			candidateDiagnostic.FactPlans.Select(factPlan => factPlan.Direction));
+		Assert.Equal(PlayerKnownListPacketConstructionAttackSpeedFactSource.Supplied, candidateDiagnostic.FactPlans[0].RideAttackSpeedFactSource);
+		Assert.Equal(PlayerKnownListPacketConstructionAttackSpeedFactSource.None, candidateDiagnostic.FactPlans[1].RideAttackSpeedFactSource);
 		Assert.Equal(
 			[PlayerKnownListTwoWayOperationStepKind.CandidateSeesOwner, PlayerKnownListTwoWayOperationStepKind.OwnerSeesCandidate],
 			candidateDiagnostic.PacketConstructionResults.Select(result => result.OperationStepKind));
@@ -137,6 +143,7 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 		Assert.Equal(1, diagnostic.BlockedFactPlanCount);
 		Assert.Equal(1, diagnostic.FactPlanBlockerCountsByKind[PlayerKnownListPacketConstructionFactBlocker.MissingRideInfo]);
 		Assert.Equal(1, diagnostic.FactPlanBlockerCountsByKind[PlayerKnownListPacketConstructionFactBlocker.MissingRideAttackSpeedFacts]);
+		Assert.Equal(2, diagnostic.RideAttackSpeedFactSourceCountsByKind[PlayerKnownListPacketConstructionAttackSpeedFactSource.None]);
 		Assert.Equal(1, diagnostic.PacketConstructionFactSourceCount);
 		Assert.Equal(0, diagnostic.RequestPacketConstructionFactSourceCount);
 		Assert.Equal(1, diagnostic.GeneratedPacketConstructionFactSourceCount);
@@ -157,6 +164,47 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 		Assert.Equal(
 			PlayerKnownListOperationSideEffectPacketConstructionResultStatus.BlockedMissingSubjectFacts,
 			candidateDiagnostic.PacketConstructionResults[1].Status);
+	}
+
+	[Fact]
+	public void Summarize_AttackSpeedResolverMetadataCountsResolvedApproximation()
+	{
+		var population = CreatePopulationService();
+		var diagnostics = new PlayerKnownListPopulationPacketConstructionDiagnosticService();
+		var owner = CreatePlayer(OwnerPlayerObjectId, "Owner", "ELYOS");
+		var candidate = CreatePlayer(NearPlayerObjectId, "Candidate", "ASMODIANS");
+		candidate.MountRide(new PlayerRideInfo(RideNpcId, StartFp: 0, CostFp: null, SprintSpeed: 9.5f, FlySpeed: 10.5f, MoveSpeed: 7.25f));
+		candidate.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 1001, ItemId = MainHandSwordId, Location = 0, IsEquipped = true, Slot = MainHandSlot },
+		];
+		var ownerViewingCandidate = new PlayerKnownListOperationSideEffectDirectionFacts(
+			SubjectIsInRideMode: true,
+			SubjectRideNpcId: RideNpcId);
+		var plan = population.Plan(CreateRequest(
+			[
+				new PlayerKnownListPopulationCandidateFact(
+					NearPlayerObjectId,
+					X: 10,
+					Y: 0,
+					Z: 0,
+					OwnerCanSeeCandidate: true,
+					CandidateCanSeeOwner: false,
+					OwnerViewingCandidateSideEffectFacts: ownerViewingCandidate,
+					OwnerViewingCandidatePacketFactPlanRequest: new PlayerKnownListPacketConstructionFactPlanRequest(
+						owner,
+						candidate,
+						ownerViewingCandidate)),
+			],
+			itemTemplates: CreateItemTemplates()));
+
+		var diagnostic = diagnostics.Summarize(plan);
+
+		Assert.Equal(1, diagnostic.RideAttackSpeedFactSourceCountsByKind[PlayerKnownListPacketConstructionAttackSpeedFactSource.ResolvedApproximation]);
+		Assert.Equal(1, diagnostic.RideAttackSpeedResolutionStatusCountsByKind[PlayerKnownListAttackSpeedFactResolutionStatus.ResolvedApproximation]);
+		var factPlan = Assert.Single(diagnostic.CandidateDiagnostics[0].FactPlans);
+		Assert.Equal(PlayerKnownListPacketConstructionAttackSpeedFactSource.ResolvedApproximation, factPlan.RideAttackSpeedFactSource);
+		Assert.Equal(PlayerKnownListAttackSpeedFactResolutionStatus.ResolvedApproximation, factPlan.RideAttackSpeedResolutionStatus);
 	}
 
 	[Fact]
@@ -278,7 +326,8 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 	private static PlayerKnownListPopulationPlanRequest CreateRequest(
 		IReadOnlyList<PlayerKnownListPopulationCandidateFact> candidateFacts,
 		IReadOnlyList<int>? regionCandidateIds = null,
-		IReadOnlyDictionary<int, PlayerKnownListOperationSideEffectPacketConstructionFacts>? packetConstructionFactsByPlayerObjectId = null) =>
+		IReadOnlyDictionary<int, PlayerKnownListOperationSideEffectPacketConstructionFacts>? packetConstructionFactsByPlayerObjectId = null,
+		ItemTemplateTable? itemTemplates = null) =>
 		new(
 			CreateRegionSnapshot(regionCandidateIds ?? [NearPlayerObjectId, FarPlayerObjectId]),
 			new PlayerKnownListVisibilityRangeObject(
@@ -289,7 +338,8 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 				Y: 0,
 				Z: 0),
 			candidateFacts,
-			PacketConstructionFactsByPlayerObjectId: packetConstructionFactsByPlayerObjectId);
+			PacketConstructionFactsByPlayerObjectId: packetConstructionFactsByPlayerObjectId,
+			ItemTemplates: itemTemplates);
 
 	private static PlayerKnownListRegionSnapshot CreateRegionSnapshot(IReadOnlyList<int> candidateIds) =>
 		new(
@@ -329,10 +379,42 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 			ActiveMotions: [],
 			RideMovementSpeed: rideMovementSpeed);
 
+	private static ItemTemplateTable CreateItemTemplates() =>
+		new(
+		[
+			new ItemTemplateSummary(
+				MainHandSwordId,
+				"weapon",
+				DescriptionId: 0,
+				Mask: 0,
+				Level: 1,
+				"SWORD",
+				ItemType: "WEAPON",
+				Quality: "COMMON",
+				Race: "PC_ALL",
+				MaxStackCount: 1,
+				Price: 1,
+				ValidEquipmentSlots: MainHandSlot,
+				WeaponStats: new ItemWeaponStats(
+					MinDamage: 1,
+					MaxDamage: 2,
+					AttackSpeed: 1400,
+					PhysicalCritical: 0,
+					PhysicalAccuracy: 0,
+					Parry: 0,
+					MagicalAccuracy: 0,
+					MagicalBoost: 0,
+					AttackRange: 1500,
+					HitCount: 1,
+					ReduceMax: 0)),
+		]);
+
 	private const int OwnerPlayerObjectId = 9001;
 	private const int NearPlayerObjectId = 9002;
 	private const int FarPlayerObjectId = 9003;
 	private const int MissingFactPlayerObjectId = 9004;
 	private const int UnrelatedPacketFactPlayerObjectId = 9005;
 	private const int RideNpcId = 730001;
+	private const int MainHandSwordId = 100000001;
+	private const long MainHandSlot = 1L;
 }
