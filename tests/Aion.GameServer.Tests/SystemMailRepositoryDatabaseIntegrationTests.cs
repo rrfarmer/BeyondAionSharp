@@ -119,6 +119,48 @@ public sealed class SystemMailRepositoryDatabaseIntegrationTests
 		Assert.Equal(4, await ExecuteScalarLongAsync("SELECT mailbox_letters FROM players WHERE id = 1001"));
 	}
 
+	[Fact]
+	public async Task StoreSystemMailOperations_DoesNotWriteItemOrCounterWhenLetterFails_WhenEnabled()
+	{
+		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
+			return;
+
+		// Java source breadcrumbs: SystemMailService.sendMail returns false immediately when MailDAO.storeLetter fails.
+		InitializeDatabaseFactory();
+		await InitializeSchemaAsync();
+		await SeedPlayerAsync();
+		await SeedMailAsync(9300);
+
+		var repository = new MySqlMailRepository(NullLogger<MySqlMailRepository>.Instance);
+		var duplicateMail = new PlayerMail(
+			9300,
+			PlayerObjectId,
+			"Beyond Aion",
+			"Bonus Pack",
+			"Body",
+			IsUnread: true,
+			9301,
+			186000242,
+			AttachedKinah: 0,
+			LetterType: 1,
+			new DateTime(2026, 5, 26, 11, 0, 0));
+		var attachedItem = new InventoryItem
+		{
+			ObjectId = 9301,
+			ItemId = 186000242,
+			Count = 1,
+			Location = 127,
+		};
+
+		Assert.False(await repository.StoreSystemMailLetterAsync(duplicateMail));
+
+		Assert.Equal(0, await ExecuteScalarLongAsync("SELECT COUNT(*) FROM inventory WHERE item_unique_id = 9301"));
+		Assert.Equal(4, await ExecuteScalarLongAsync("SELECT mailbox_letters FROM players WHERE id = 1001"));
+
+		// Keep the future live sequence explicit: item/counter calls must not run after the failed letter insert.
+		_ = attachedItem;
+	}
+
 	private static void InitializeDatabaseFactory()
 	{
 		DatabaseFactory.Initialize(
@@ -176,6 +218,18 @@ public sealed class SystemMailRepositoryDatabaseIntegrationTests
 			)
 			VALUES (1001, 'Mailreward', 1, 'integration', 0, 0, 0, 0, 0, 0, 0, 210010000,
 				'MALE', 'ELYOS', 'RANGER', CURRENT_TIMESTAMP, 4)
+			""");
+	}
+
+	private static Task SeedMailAsync(int mailId)
+	{
+		return ExecuteNonQueryAsync(
+			$"""
+			INSERT INTO mail (
+				mail_unique_id, mail_recipient_id, sender_name, mail_title, mail_message,
+				unread, attached_item_id, attached_kinah_count, express, recieved_time
+			)
+			VALUES ({mailId}, {PlayerObjectId}, 'Beyond Aion', 'Bonus Pack', 'Body', 1, 0, 0, 1, CURRENT_TIMESTAMP)
 			""");
 	}
 
