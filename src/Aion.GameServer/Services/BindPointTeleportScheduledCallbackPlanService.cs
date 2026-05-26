@@ -1,4 +1,5 @@
 using Aion.GameServer.Network.Aion;
+using Aion.GameServer.Model.GameObjects;
 
 namespace Aion.GameServer.Services;
 
@@ -19,17 +20,22 @@ public enum BindPointTeleportScheduledCallbackPlanStep
 	CheckFinalMovementGate,
 	CreateFinalMovementIntent,
 	CreateTeleportSideEffectIntent,
+	CreateKinahMutationIntent,
 }
 
 public sealed record BindPointTeleportScheduledCallbackPlan(
 	BindPointTeleportScheduledCallbackPlanStatus Status,
 	BindPointTeleportScheduledKinahPlan KinahPlan,
+	BindPointTeleportScheduledKinahMutationPlan? KinahMutationPlan,
 	BindPointTeleportCooldownPlan? CooldownPlan,
 	BindPointTeleportFanoutPlan? CooldownFanoutPlan,
 	BindPointTeleportFinalMovementPlan? FinalMovementPlan,
 	BindPointTeleportTeleportToSideEffectPlan? TeleportSideEffectPlan,
+	InventoryItem? KinahItemUpdate,
+	int? KinahInventoryUpdateType,
 	IReadOnlyList<BindPointTeleportScheduledCallbackPlanStep> Steps,
 	bool ShouldSendNotEnoughFee,
+	bool ShouldEmitKinahInventoryUpdatePacket,
 	bool ShouldStoreCooldown,
 	bool ShouldBroadcastCooldown,
 	bool ShouldScheduleFinalTeleport,
@@ -45,24 +51,31 @@ public static class BindPointTeleportScheduledCallbackPlanService
 		BindPointTeleportCooldownPlan cooldownPlan,
 		BindPointTeleportFanoutPlan cooldownFanoutPlan,
 		BindPointTeleportFinalMovementPlan finalMovementPlan,
-		BindPointTeleportTeleportToSideEffectPlan? teleportSideEffectPlan = null)
+		BindPointTeleportTeleportToSideEffectPlan? teleportSideEffectPlan = null,
+		BindPointTeleportScheduledKinahMutationPlan? kinahMutationPlan = null)
 	{
 		// Java parity: BindPointTeleportService.teleport scheduled SKILL_USE callback.
 		// This only composes intent/order; no inventory, cooldown map, packet, scheduler, or movement side effects run here.
-		if (!kinahPlan.ShouldContinueScheduledTeleport)
+		var kinahContinues = kinahMutationPlan?.Status == BindPointTeleportScheduledKinahMutationPlanStatus.DecrementReady
+			|| (kinahMutationPlan == null && kinahPlan.ShouldContinueScheduledTeleport);
+		if (!kinahContinues)
 		{
 			return new BindPointTeleportScheduledCallbackPlan(
 				BindPointTeleportScheduledCallbackPlanStatus.StoppedNotEnoughKinah,
 				kinahPlan,
+				kinahMutationPlan,
 				CooldownPlan: null,
 				CooldownFanoutPlan: null,
 				FinalMovementPlan: null,
 				TeleportSideEffectPlan: null,
+				KinahItemUpdate: null,
+				KinahInventoryUpdateType: null,
 				[
 					BindPointTeleportScheduledCallbackPlanStep.TryDecreaseKinahFly,
 					BindPointTeleportScheduledCallbackPlanStep.SendNotEnoughFeeAndReturn,
 				],
-				ShouldSendNotEnoughFee: kinahPlan.ShouldSendNotEnoughFee,
+				ShouldSendNotEnoughFee: kinahMutationPlan?.ShouldSendNotEnoughFee ?? kinahPlan.ShouldSendNotEnoughFee,
+				ShouldEmitKinahInventoryUpdatePacket: false,
 				ShouldStoreCooldown: false,
 				ShouldBroadcastCooldown: false,
 				ShouldScheduleFinalTeleport: false,
@@ -81,12 +94,18 @@ public static class BindPointTeleportScheduledCallbackPlanService
 				? BindPointTeleportScheduledCallbackPlanStatus.ReadyWithMovement
 				: BindPointTeleportScheduledCallbackPlanStatus.ReadyWithoutMovement,
 			kinahPlan,
+			kinahMutationPlan,
 			cooldownPlan,
 			cooldownFanoutPlan,
 			finalMovementPlan,
 			shouldPlanSideEffects ? teleportSideEffectPlan : null,
+			kinahMutationPlan?.KinahItemUpdate,
+			kinahMutationPlan?.InventoryUpdateType,
 			[
 				BindPointTeleportScheduledCallbackPlanStep.TryDecreaseKinahFly,
+				.. kinahMutationPlan?.ShouldEmitInventoryUpdatePacket == true
+					? [BindPointTeleportScheduledCallbackPlanStep.CreateKinahMutationIntent]
+					: Array.Empty<BindPointTeleportScheduledCallbackPlanStep>(),
 				BindPointTeleportScheduledCallbackPlanStep.AddCooldown,
 				BindPointTeleportScheduledCallbackPlanStep.BroadcastCooldown,
 				BindPointTeleportScheduledCallbackPlanStep.ScheduleFinalTeleport,
@@ -99,6 +118,7 @@ public static class BindPointTeleportScheduledCallbackPlanService
 					: Array.Empty<BindPointTeleportScheduledCallbackPlanStep>(),
 			],
 			ShouldSendNotEnoughFee: false,
+			ShouldEmitKinahInventoryUpdatePacket: kinahMutationPlan?.ShouldEmitInventoryUpdatePacket == true,
 			ShouldStoreCooldown: cooldownPlan.ShouldStoreCooldown,
 			ShouldBroadcastCooldown: cooldownFanoutPlan.Packet is GameServerPacket,
 			ShouldScheduleFinalTeleport: true,

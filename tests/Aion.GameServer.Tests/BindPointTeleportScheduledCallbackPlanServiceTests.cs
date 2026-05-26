@@ -1,4 +1,5 @@
 using Aion.GameServer.Network.Aion.ServerPackets;
+using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Services;
 
 namespace Aion.GameServer.Tests;
@@ -24,6 +25,10 @@ public sealed class BindPointTeleportScheduledCallbackPlanServiceTests
 		Assert.False(plan.IsLive);
 		Assert.Equal(BindPointTeleportScheduledCallbackPlanStatus.StoppedNotEnoughKinah, plan.Status);
 		Assert.True(plan.ShouldSendNotEnoughFee);
+		Assert.False(plan.ShouldEmitKinahInventoryUpdatePacket);
+		Assert.Null(plan.KinahMutationPlan);
+		Assert.Null(plan.KinahItemUpdate);
+		Assert.Null(plan.KinahInventoryUpdateType);
 		Assert.False(plan.ShouldStoreCooldown);
 		Assert.False(plan.ShouldBroadcastCooldown);
 		Assert.False(plan.ShouldScheduleFinalTeleport);
@@ -59,6 +64,7 @@ public sealed class BindPointTeleportScheduledCallbackPlanServiceTests
 
 		Assert.Equal(BindPointTeleportScheduledCallbackPlanStatus.ReadyWithMovement, plan.Status);
 		Assert.False(plan.ShouldSendNotEnoughFee);
+		Assert.False(plan.ShouldEmitKinahInventoryUpdatePacket);
 		Assert.True(plan.ShouldStoreCooldown);
 		Assert.True(plan.ShouldBroadcastCooldown);
 		Assert.True(plan.ShouldScheduleFinalTeleport);
@@ -144,6 +150,82 @@ public sealed class BindPointTeleportScheduledCallbackPlanServiceTests
 			plan.Steps);
 	}
 
+	[Fact]
+	public void CreatePlan_MutationFailureMetadataStopsBeforeCooldownFanoutAndMovement()
+	{
+		var kinahPlan = BindPointTeleportScheduledKinahPlanService.CreatePlan(
+			requiredPrice: 1_500,
+			currentKinah: 2_000);
+		var mutationPlan = BindPointTeleportScheduledKinahMutationPlanService.CreatePlan(
+			CreatePlayer([CreateKinah(count: 1_000)]),
+			requiredPrice: 1_500);
+		var cooldownPlan = CreateCooldownPlan();
+		var fanoutPlan = CreateCooldownFanoutPlan();
+		var movementPlan = CreateMovementPlan(playerIsDead: false, playerIsAboutToDie: false);
+
+		var plan = BindPointTeleportScheduledCallbackPlanService.CreatePlan(
+			kinahPlan,
+			cooldownPlan,
+			fanoutPlan,
+			movementPlan,
+			kinahMutationPlan: mutationPlan);
+
+		Assert.Equal(BindPointTeleportScheduledCallbackPlanStatus.StoppedNotEnoughKinah, plan.Status);
+		Assert.Same(mutationPlan, plan.KinahMutationPlan);
+		Assert.True(plan.ShouldSendNotEnoughFee);
+		Assert.False(plan.ShouldEmitKinahInventoryUpdatePacket);
+		Assert.False(plan.ShouldStoreCooldown);
+		Assert.False(plan.ShouldBroadcastCooldown);
+		Assert.Null(plan.CooldownPlan);
+		Assert.Null(plan.KinahItemUpdate);
+		Assert.Null(plan.KinahInventoryUpdateType);
+		Assert.Equal(
+			[
+				BindPointTeleportScheduledCallbackPlanStep.TryDecreaseKinahFly,
+				BindPointTeleportScheduledCallbackPlanStep.SendNotEnoughFeeAndReturn,
+			],
+			plan.Steps);
+	}
+
+	[Fact]
+	public void CreatePlan_MutationSuccessCarriesKinahUpdateBeforeCooldownFanoutMetadata()
+	{
+		var kinahPlan = BindPointTeleportScheduledKinahPlanService.CreatePlan(
+			requiredPrice: 1_500,
+			currentKinah: 2_000);
+		var mutationPlan = BindPointTeleportScheduledKinahMutationPlanService.CreatePlan(
+			CreatePlayer([CreateKinah(count: 2_000)]),
+			requiredPrice: 1_500);
+		var cooldownPlan = CreateCooldownPlan();
+		var fanoutPlan = CreateCooldownFanoutPlan();
+		var movementPlan = CreateMovementPlan(playerIsDead: false, playerIsAboutToDie: false);
+
+		var plan = BindPointTeleportScheduledCallbackPlanService.CreatePlan(
+			kinahPlan,
+			cooldownPlan,
+			fanoutPlan,
+			movementPlan,
+			kinahMutationPlan: mutationPlan);
+
+		Assert.Equal(BindPointTeleportScheduledCallbackPlanStatus.ReadyWithMovement, plan.Status);
+		Assert.Same(mutationPlan, plan.KinahMutationPlan);
+		Assert.Same(mutationPlan.KinahItemUpdate, plan.KinahItemUpdate);
+		Assert.Equal(SmInventoryUpdateItem.DecreaseKinahFly, plan.KinahInventoryUpdateType);
+		Assert.True(plan.ShouldEmitKinahInventoryUpdatePacket);
+		Assert.Equal(500, plan.KinahItemUpdate?.Count);
+		Assert.Equal(
+			[
+				BindPointTeleportScheduledCallbackPlanStep.TryDecreaseKinahFly,
+				BindPointTeleportScheduledCallbackPlanStep.CreateKinahMutationIntent,
+				BindPointTeleportScheduledCallbackPlanStep.AddCooldown,
+				BindPointTeleportScheduledCallbackPlanStep.BroadcastCooldown,
+				BindPointTeleportScheduledCallbackPlanStep.ScheduleFinalTeleport,
+				BindPointTeleportScheduledCallbackPlanStep.CheckFinalMovementGate,
+				BindPointTeleportScheduledCallbackPlanStep.CreateFinalMovementIntent,
+			],
+			plan.Steps);
+	}
+
 	private static BindPointTeleportCooldownPlan CreateCooldownPlan()
 	{
 		return BindPointTeleportRuntimeStatePlanService.CreateAddCooldownPlan(
@@ -175,5 +257,22 @@ public sealed class BindPointTeleportScheduledCallbackPlanServiceTests
 			destination,
 			playerIsDead,
 			playerIsAboutToDie);
+	}
+
+	private static Player CreatePlayer(IReadOnlyList<InventoryItem> inventoryItems)
+	{
+		return new Player { ObjectId = 7001, InventoryItems = inventoryItems };
+	}
+
+	private static InventoryItem CreateKinah(long count)
+	{
+		return new InventoryItem
+		{
+			ObjectId = 1824,
+			OwnerId = 7001,
+			ItemId = BindPointTeleportScheduledKinahMutationPlanService.KinahItemId,
+			Count = count,
+			Location = BindPointTeleportScheduledKinahMutationPlanService.CubeStorageId,
+		};
 	}
 }
