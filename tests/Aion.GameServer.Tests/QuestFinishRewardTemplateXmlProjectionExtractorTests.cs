@@ -11,9 +11,13 @@ public sealed class QuestFinishRewardTemplateXmlProjectionExtractorTests
 	private const int ExpectedRealDataDefaultRegularChallengeTaskTemplates = 174;
 	private const long ExpectedRealDataDefaultRegularKinahTotal = 3425802649;
 	private const long ExpectedRealDataDefaultRegularExperienceTotal = 20544638479;
+	private const int ExpectedRealDataAnyItemRewardTemplates = 5592;
 	private const int ExpectedRealDataDefaultRegularItemRewardTemplates = 5527;
 	private const int ExpectedRealDataDefaultRegularFixedRewardItemCount = 6182;
 	private const int ExpectedRealDataDefaultRegularSelectableRewardItemCount = 5502;
+	private const int ExpectedRealDataExtendedItemRewardTemplates = 233;
+	private const int ExpectedRealDataExtendedFixedRewardItemCount = 245;
+	private const int ExpectedRealDataExtendedSelectableRewardItemCount = 250;
 
 	[Fact]
 	public void ExtractDefaultRegularNonItemProjections_ReadsJavaRewardsAttributes()
@@ -107,6 +111,57 @@ public sealed class QuestFinishRewardTemplateXmlProjectionExtractorTests
 	}
 
 	[Fact]
+	public void CreateProjection_ReadsExtendedRewardItemsWithoutRegularRewardGroup()
+	{
+		var quest = XElement.Parse("""
+			<quest id="1001">
+				<extended_rewards gold="500">
+					<reward_item item_id="186000001" count="5" />
+					<reward_item item_id="186000002" />
+					<selectable_reward_item item_id="186000010" count="6" />
+					<selectable_reward_item item_id="186000011" />
+				</extended_rewards>
+			</quest>
+			""");
+		var extractor = new QuestFinishRewardTemplateXmlProjectionExtractor();
+
+		var projection = extractor.CreateProjection(quest, rewardGroupIndex: 0);
+
+		Assert.Null(projection.RewardGroupCount);
+		Assert.True(projection.HasItemRewards);
+		Assert.False(projection.HasNonItemRewards);
+		Assert.Null(projection.NonItemProjection);
+		var itemProjection = Assert.IsType<QuestFinishRewardItemTemplateProjection>(projection.ItemProjection);
+		Assert.Empty(itemProjection.RewardGroups);
+		var extendedRewards = Assert.IsType<QuestFinishRewardGroupProjection>(itemProjection.ExtendedRewards);
+		Assert.Equal(-1, extendedRewards.RewardGroupIndex);
+		Assert.Collection(
+			extendedRewards.FixedRewardItems,
+			item =>
+			{
+				Assert.Equal(186000001, item.ItemId);
+				Assert.Equal(5, item.Count);
+			},
+			item =>
+			{
+				Assert.Equal(186000002, item.ItemId);
+				Assert.Equal(1, item.Count);
+			});
+		Assert.Collection(
+			extendedRewards.SelectableRewardItems,
+			item =>
+			{
+				Assert.Equal(186000010, item.ItemId);
+				Assert.Equal(6, item.Count);
+			},
+			item =>
+			{
+				Assert.Equal(186000011, item.ItemId);
+				Assert.Equal(1, item.Count);
+			});
+	}
+
+	[Fact]
 	public void CreateProjection_DefaultsMissingAndOutOfRangeRewardsToEmptyJavaRewards()
 	{
 		var missingRewards = XElement.Parse("""<quest id="1001" />""");
@@ -150,13 +205,25 @@ public sealed class QuestFinishRewardTemplateXmlProjectionExtractorTests
 		Assert.Equal(ExpectedRealDataDefaultRegularChallengeTaskTemplates, projections.Values.Count(projection => projection.IsChallengeTask));
 		Assert.Equal(ExpectedRealDataDefaultRegularKinahTotal, projections.Values.Sum(projection => projection.NonItemProjection?.Kinah ?? 0));
 		Assert.Equal(ExpectedRealDataDefaultRegularExperienceTotal, projections.Values.Sum(projection => (long)(projection.NonItemProjection?.Experience ?? 0)));
-		Assert.Equal(ExpectedRealDataDefaultRegularItemRewardTemplates, projections.Values.Count(projection => projection.HasItemRewards));
+		Assert.Equal(ExpectedRealDataAnyItemRewardTemplates, projections.Values.Count(projection => projection.HasItemRewards));
+		Assert.Equal(
+			ExpectedRealDataDefaultRegularItemRewardTemplates,
+			projections.Values.Count(projection => projection.ItemProjection?.RewardGroups.Count > 0));
 		Assert.Equal(
 			ExpectedRealDataDefaultRegularFixedRewardItemCount,
 			projections.Values.Sum(projection => projection.ItemProjection?.RewardGroups.Sum(group => group.FixedRewardItems.Count) ?? 0));
 		Assert.Equal(
 			ExpectedRealDataDefaultRegularSelectableRewardItemCount,
 			projections.Values.Sum(projection => projection.ItemProjection?.RewardGroups.Sum(group => group.SelectableRewardItems.Count) ?? 0));
+		Assert.Equal(
+			ExpectedRealDataExtendedItemRewardTemplates,
+			projections.Values.Count(projection => projection.ItemProjection?.ExtendedRewards is not null));
+		Assert.Equal(
+			ExpectedRealDataExtendedFixedRewardItemCount,
+			projections.Values.Sum(projection => projection.ItemProjection?.ExtendedRewards?.FixedRewardItems.Count ?? 0));
+		Assert.Equal(
+			ExpectedRealDataExtendedSelectableRewardItemCount,
+			projections.Values.Sum(projection => projection.ItemProjection?.ExtendedRewards?.SelectableRewardItems.Count ?? 0));
 	}
 
 	private static string FindRepoRoot()

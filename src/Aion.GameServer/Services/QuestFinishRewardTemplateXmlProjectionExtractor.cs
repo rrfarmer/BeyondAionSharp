@@ -32,12 +32,11 @@ public sealed class QuestFinishRewardTemplateXmlProjectionExtractor
 		var selectedRewards = rewardGroupIndex >= 0 && rewardGroupIndex < rewards.Length
 			? rewards[rewardGroupIndex]
 			: null;
+		var extendedRewards = quest.Elements().FirstOrDefault(element => element.Name.LocalName == "extended_rewards");
 		var nonItemProjection = selectedRewards is null
 			? null
 			: CreateNonItemProjection(selectedRewards);
-		var itemProjection = selectedRewards is null
-			? null
-			: CreateItemProjection(selectedRewards, rewardGroupIndex);
+		var itemProjection = CreateItemProjection(selectedRewards, rewardGroupIndex, extendedRewards);
 
 		return new QuestFinishRewardTemplateProjection(
 			RewardGroupCount: rewards.Length == 0 ? null : rewards.Length,
@@ -49,21 +48,42 @@ public sealed class QuestFinishRewardTemplateXmlProjectionExtractor
 			RewardRepeatCount: ReadIntAttribute(quest, "reward_repeat_count"));
 	}
 
-	private static QuestFinishRewardItemTemplateProjection? CreateItemProjection(XElement rewards, int rewardGroupIndex)
+	private static QuestFinishRewardItemTemplateProjection? CreateItemProjection(
+		XElement? rewards,
+		int rewardGroupIndex,
+		XElement? extendedRewards)
 	{
-		var fixedItems = ReadQuestItems(rewards, "reward_item");
-		var selectableItems = ReadQuestItems(rewards, "selectable_reward_item");
-		if (fixedItems.Count == 0 && selectableItems.Count == 0)
+		IReadOnlyList<QuestFinishRewardItem> fixedItems = rewards is null ? [] : ReadQuestItems(rewards, "reward_item");
+		IReadOnlyList<QuestFinishRewardItem> selectableItems = rewards is null ? [] : ReadQuestItems(rewards, "selectable_reward_item");
+		IReadOnlyList<QuestFinishRewardItem> extendedFixedItems = extendedRewards is null ? [] : ReadQuestItems(extendedRewards, "reward_item");
+		IReadOnlyList<QuestFinishRewardItem> extendedSelectableItems = extendedRewards is null ? [] : ReadQuestItems(extendedRewards, "selectable_reward_item");
+		if (fixedItems.Count == 0
+			&& selectableItems.Count == 0
+			&& extendedFixedItems.Count == 0
+			&& extendedSelectableItems.Count == 0)
+		{
 			return null;
+		}
 
-		return new QuestFinishRewardItemTemplateProjection(
-			RewardGroups:
+		IReadOnlyList<QuestFinishRewardGroupProjection> rewardGroups = fixedItems.Count == 0 && selectableItems.Count == 0
+			? []
+			:
 			[
 				new QuestFinishRewardGroupProjection(
 					rewardGroupIndex,
 					fixedItems,
 					selectableItems),
-			]);
+			];
+		var extendedGroup = extendedFixedItems.Count == 0 && extendedSelectableItems.Count == 0
+			? null
+			: new QuestFinishRewardGroupProjection(
+				RewardGroupIndex: -1,
+				FixedRewardItems: extendedFixedItems,
+				SelectableRewardItems: extendedSelectableItems);
+
+		return new QuestFinishRewardItemTemplateProjection(
+			RewardGroups: rewardGroups,
+			ExtendedRewards: extendedGroup);
 	}
 
 	private static IReadOnlyList<QuestFinishRewardItem> ReadQuestItems(XElement rewards, string elementName)
