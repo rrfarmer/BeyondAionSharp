@@ -25,6 +25,13 @@ public enum PlayerKnownListPacketConstructionAttackSpeedFactSource
 	ResolvedApproximation,
 }
 
+public enum PlayerKnownListPacketConstructionAbnormalEffectFactSource
+{
+	None,
+	Supplied,
+	ResolvedSnapshot,
+}
+
 public sealed record PlayerKnownListPacketConstructionAttackSpeedFacts(
 	int BaseAttackSpeed,
 	int CurrentAttackSpeed);
@@ -40,7 +47,8 @@ public sealed record PlayerKnownListPacketConstructionFactPlanRequest(
 	int AbnormalEffectSlots = SmAbnormalEffect.FullSkillTargetSlots,
 	PlayerKnownListPacketConstructionAttackSpeedFacts? RideAttackSpeedFacts = null,
 	float? RideMovementSpeed = null,
-	PlayerKnownListAttackSpeedFactResolution? RideAttackSpeedResolution = null);
+	PlayerKnownListAttackSpeedFactResolution? RideAttackSpeedResolution = null,
+	PlayerKnownListAbnormalEffectFactResolution? AbnormalEffectResolution = null);
 
 public sealed record PlayerKnownListPacketConstructionFactPlan(
 	PlayerKnownListPacketConstructionFactPlanStatus Status,
@@ -51,7 +59,9 @@ public sealed record PlayerKnownListPacketConstructionFactPlan(
 	bool IsJavaControllerParity,
 	string JavaSource,
 	PlayerKnownListPacketConstructionAttackSpeedFactSource RideAttackSpeedFactSource = PlayerKnownListPacketConstructionAttackSpeedFactSource.None,
-	PlayerKnownListAttackSpeedFactResolutionStatus? RideAttackSpeedResolutionStatus = null);
+	PlayerKnownListAttackSpeedFactResolutionStatus? RideAttackSpeedResolutionStatus = null,
+	PlayerKnownListPacketConstructionAbnormalEffectFactSource AbnormalEffectFactSource = PlayerKnownListPacketConstructionAbnormalEffectFactSource.None,
+	PlayerKnownListAbnormalEffectFactResolutionStatus? AbnormalEffectResolutionStatus = null);
 
 public sealed class PlayerKnownListPacketConstructionFactPlanService
 {
@@ -64,6 +74,7 @@ public sealed class PlayerKnownListPacketConstructionFactPlanService
 		// EffectController state. This service only composes supplied snapshots.
 		var blockers = new List<PlayerKnownListPacketConstructionFactBlocker>();
 		var rideAttackSpeed = ResolveRideAttackSpeed(request);
+		var abnormalEffects = ResolveAbnormalEffects(request);
 
 		if (request.ViewerPlayer is null)
 			blockers.Add(PlayerKnownListPacketConstructionFactBlocker.MissingViewerPlayer);
@@ -81,7 +92,7 @@ public sealed class PlayerKnownListPacketConstructionFactPlanService
 		}
 
 		if (request.DirectionFacts.SubjectHasAbnormalEffects
-			&& (request.AbnormalEffects is null || request.AbnormalEffectMask is null))
+			&& abnormalEffects.Facts is null)
 		{
 			blockers.Add(PlayerKnownListPacketConstructionFactBlocker.MissingAbnormalEffectFacts);
 		}
@@ -93,7 +104,9 @@ public sealed class PlayerKnownListPacketConstructionFactPlanService
 				Facts: null,
 				blockers,
 				rideAttackSpeed.Source,
-				rideAttackSpeed.ResolutionStatus);
+				rideAttackSpeed.ResolutionStatus,
+				abnormalEffects.Source,
+				abnormalEffects.ResolutionStatus);
 		}
 
 		var viewerContext = new SmPlayerInfoViewerContext(
@@ -107,9 +120,9 @@ public sealed class PlayerKnownListPacketConstructionFactPlanService
 			request.SubjectPlayer,
 			request.SubjectPlayer.Motions.Where(motion => motion.IsActive).ToArray(),
 			viewerContext,
-			request.AbnormalEffects,
-			request.AbnormalEffectMask ?? 0,
-			request.AbnormalEffectSlots,
+			abnormalEffects.Facts?.Effects,
+			abnormalEffects.Facts?.AbnormalEffectMask ?? 0,
+			abnormalEffects.Facts?.Slots ?? SmAbnormalEffect.FullSkillTargetSlots,
 			rideMovementSpeed,
 			rideAttackSpeed.Facts?.BaseAttackSpeed ?? 0,
 			rideAttackSpeed.Facts?.CurrentAttackSpeed ?? 0);
@@ -119,7 +132,9 @@ public sealed class PlayerKnownListPacketConstructionFactPlanService
 			facts,
 			blockers,
 			rideAttackSpeed.Source,
-			rideAttackSpeed.ResolutionStatus);
+			rideAttackSpeed.ResolutionStatus,
+			abnormalEffects.Source,
+			abnormalEffects.ResolutionStatus);
 	}
 
 	private static PlayerKnownListPacketConstructionFactPlan CreatePlan(
@@ -127,7 +142,9 @@ public sealed class PlayerKnownListPacketConstructionFactPlanService
 		PlayerKnownListOperationSideEffectPacketConstructionFacts? Facts,
 		IReadOnlyList<PlayerKnownListPacketConstructionFactBlocker> blockers,
 		PlayerKnownListPacketConstructionAttackSpeedFactSource rideAttackSpeedFactSource,
-		PlayerKnownListAttackSpeedFactResolutionStatus? rideAttackSpeedResolutionStatus) =>
+		PlayerKnownListAttackSpeedFactResolutionStatus? rideAttackSpeedResolutionStatus,
+		PlayerKnownListPacketConstructionAbnormalEffectFactSource abnormalEffectFactSource,
+		PlayerKnownListAbnormalEffectFactResolutionStatus? abnormalEffectResolutionStatus) =>
 		new(
 			status,
 			Facts,
@@ -137,7 +154,9 @@ public sealed class PlayerKnownListPacketConstructionFactPlanService
 			IsJavaControllerParity: false,
 			"Non-live fact planner for com.aionemu.gameserver.controllers.PlayerController.sendPlayerInfoPackets and see/notSee packet construction; does not execute live known-list callbacks or send packets.",
 			rideAttackSpeedFactSource,
-			rideAttackSpeedResolutionStatus);
+			rideAttackSpeedResolutionStatus,
+			abnormalEffectFactSource,
+			abnormalEffectResolutionStatus);
 
 	private static ResolvedRideAttackSpeed ResolveRideAttackSpeed(
 		PlayerKnownListPacketConstructionFactPlanRequest request)
@@ -178,4 +197,44 @@ public sealed class PlayerKnownListPacketConstructionFactPlanService
 		PlayerKnownListPacketConstructionAttackSpeedFacts? Facts,
 		PlayerKnownListPacketConstructionAttackSpeedFactSource Source,
 		PlayerKnownListAttackSpeedFactResolutionStatus? ResolutionStatus);
+
+	private static ResolvedAbnormalEffects ResolveAbnormalEffects(
+		PlayerKnownListPacketConstructionFactPlanRequest request)
+	{
+		if (!request.DirectionFacts.SubjectHasAbnormalEffects)
+		{
+			return new ResolvedAbnormalEffects(
+				Facts: null,
+				PlayerKnownListPacketConstructionAbnormalEffectFactSource.None,
+				request.AbnormalEffectResolution?.Status);
+		}
+
+		// Supplied packet facts remain authoritative. The disabled resolver result
+		// is consumed only when callers opt in by providing an explicit result.
+		if (request.AbnormalEffects is { } suppliedEffects && request.AbnormalEffectMask is { } suppliedMask)
+		{
+			return new ResolvedAbnormalEffects(
+				new PlayerKnownListAbnormalEffectFacts(suppliedEffects, suppliedMask, request.AbnormalEffectSlots),
+				PlayerKnownListPacketConstructionAbnormalEffectFactSource.Supplied,
+				request.AbnormalEffectResolution?.Status);
+		}
+
+		if (request.AbnormalEffectResolution is { Facts: { } resolvedFacts } resolution)
+		{
+			return new ResolvedAbnormalEffects(
+				resolvedFacts,
+				PlayerKnownListPacketConstructionAbnormalEffectFactSource.ResolvedSnapshot,
+				resolution.Status);
+		}
+
+		return new ResolvedAbnormalEffects(
+			Facts: null,
+			PlayerKnownListPacketConstructionAbnormalEffectFactSource.None,
+			request.AbnormalEffectResolution?.Status);
+	}
+
+	private sealed record ResolvedAbnormalEffects(
+		PlayerKnownListAbnormalEffectFacts? Facts,
+		PlayerKnownListPacketConstructionAbnormalEffectFactSource Source,
+		PlayerKnownListAbnormalEffectFactResolutionStatus? ResolutionStatus);
 }

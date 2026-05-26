@@ -175,13 +175,7 @@ public sealed class PlayerKnownListPacketConstructionFactPlanServiceTests
 		var service = new PlayerKnownListPacketConstructionFactPlanService();
 		var effects = new[]
 		{
-			new SmAbnormalEffectEntry(
-				EffectorObjectId: 7001,
-				SkillId: 1200,
-				SkillLevel: 3,
-				TargetSlotId: 1,
-				TargetSlotOrdinal: 0,
-				RemainingTimeToDisplayMillis: 30_000),
+			CreateAbnormalEffect(skillId: 1200),
 		};
 
 		var plan = service.Plan(new PlayerKnownListPacketConstructionFactPlanRequest(
@@ -196,6 +190,107 @@ public sealed class PlayerKnownListPacketConstructionFactPlanServiceTests
 		Assert.Same(effects, plan.Facts!.AbnormalEffects);
 		Assert.Equal(0x80, plan.Facts.AbnormalEffectMask);
 		Assert.Equal(1, plan.Facts.AbnormalEffectSlots);
+		Assert.Equal(PlayerKnownListPacketConstructionAbnormalEffectFactSource.Supplied, plan.AbnormalEffectFactSource);
+		Assert.Null(plan.AbnormalEffectResolutionStatus);
+	}
+
+	[Fact]
+	public void Plan_AbnormalEffectsUsesResolvedSnapshotWhenSuppliedFactsAreMissing()
+	{
+		var service = new PlayerKnownListPacketConstructionFactPlanService();
+		var resolvedEffects = new[]
+		{
+			CreateAbnormalEffect(skillId: 1201, remainingTime: -1),
+		};
+
+		var plan = service.Plan(new PlayerKnownListPacketConstructionFactPlanRequest(
+			CreatePlayer(ViewerPlayerObjectId, "Viewer", "ELYOS"),
+			CreatePlayer(SubjectPlayerObjectId, "Subject", "ELYOS"),
+			new PlayerKnownListOperationSideEffectDirectionFacts(SubjectHasAbnormalEffects: true),
+			AbnormalEffectResolution: CreateResolvedAbnormalEffects(resolvedEffects, abnormalEffectMask: 0x40, slots: 64)));
+
+		Assert.Equal(PlayerKnownListPacketConstructionFactPlanStatus.Complete, plan.Status);
+		Assert.Empty(plan.Blockers);
+		Assert.Equal(PlayerKnownListPacketConstructionAbnormalEffectFactSource.ResolvedSnapshot, plan.AbnormalEffectFactSource);
+		Assert.Equal(PlayerKnownListAbnormalEffectFactResolutionStatus.ResolvedSnapshot, plan.AbnormalEffectResolutionStatus);
+		Assert.Same(resolvedEffects, plan.Facts!.AbnormalEffects);
+		Assert.Equal(0x40, plan.Facts.AbnormalEffectMask);
+		Assert.Equal(64, plan.Facts.AbnormalEffectSlots);
+		Assert.False(plan.ExecutesLivePackets);
+		Assert.False(plan.IsLive);
+	}
+
+	[Fact]
+	public void Plan_SuppliedAbnormalEffectFactsRemainAuthoritativeOverResolvedSnapshot()
+	{
+		var service = new PlayerKnownListPacketConstructionFactPlanService();
+		var suppliedEffects = new[]
+		{
+			CreateAbnormalEffect(skillId: 1200),
+		};
+		var resolvedEffects = new[]
+		{
+			CreateAbnormalEffect(skillId: 1201),
+		};
+
+		var plan = service.Plan(new PlayerKnownListPacketConstructionFactPlanRequest(
+			CreatePlayer(ViewerPlayerObjectId, "Viewer", "ELYOS"),
+			CreatePlayer(SubjectPlayerObjectId, "Subject", "ELYOS"),
+			new PlayerKnownListOperationSideEffectDirectionFacts(SubjectHasAbnormalEffects: true),
+			AbnormalEffects: suppliedEffects,
+			AbnormalEffectMask: 0x80,
+			AbnormalEffectSlots: 1,
+			AbnormalEffectResolution: CreateResolvedAbnormalEffects(resolvedEffects, abnormalEffectMask: 0x40, slots: 64)));
+
+		Assert.Equal(PlayerKnownListPacketConstructionFactPlanStatus.Complete, plan.Status);
+		Assert.Equal(PlayerKnownListPacketConstructionAbnormalEffectFactSource.Supplied, plan.AbnormalEffectFactSource);
+		Assert.Equal(PlayerKnownListAbnormalEffectFactResolutionStatus.ResolvedSnapshot, plan.AbnormalEffectResolutionStatus);
+		Assert.Same(suppliedEffects, plan.Facts!.AbnormalEffects);
+		Assert.Equal(0x80, plan.Facts.AbnormalEffectMask);
+		Assert.Equal(1, plan.Facts.AbnormalEffectSlots);
+	}
+
+	[Fact]
+	public void Plan_AbnormalEffectSubjectWithBlockedResolutionKeepsMissingFactBlocker()
+	{
+		var service = new PlayerKnownListPacketConstructionFactPlanService();
+
+		var plan = service.Plan(new PlayerKnownListPacketConstructionFactPlanRequest(
+			CreatePlayer(ViewerPlayerObjectId, "Viewer", "ELYOS"),
+			CreatePlayer(SubjectPlayerObjectId, "Subject", "ELYOS"),
+			new PlayerKnownListOperationSideEffectDirectionFacts(SubjectHasAbnormalEffects: true),
+			AbnormalEffectResolution: CreateBlockedAbnormalEffectResolution()));
+
+		Assert.Equal(PlayerKnownListPacketConstructionFactPlanStatus.Blocked, plan.Status);
+		Assert.Null(plan.Facts);
+		Assert.Contains(PlayerKnownListPacketConstructionFactBlocker.MissingAbnormalEffectFacts, plan.Blockers);
+		Assert.Equal(PlayerKnownListPacketConstructionAbnormalEffectFactSource.None, plan.AbnormalEffectFactSource);
+		Assert.Equal(PlayerKnownListAbnormalEffectFactResolutionStatus.MissingEffectSnapshot, plan.AbnormalEffectResolutionStatus);
+	}
+
+	[Fact]
+	public void Plan_NonAbnormalSubjectDoesNotConsumeAbnormalEffectMetadata()
+	{
+		var service = new PlayerKnownListPacketConstructionFactPlanService();
+		var resolvedEffects = new[]
+		{
+			CreateAbnormalEffect(skillId: 1201),
+		};
+
+		var plan = service.Plan(new PlayerKnownListPacketConstructionFactPlanRequest(
+			CreatePlayer(ViewerPlayerObjectId, "Viewer", "ELYOS"),
+			CreatePlayer(SubjectPlayerObjectId, "Subject", "ELYOS"),
+			new PlayerKnownListOperationSideEffectDirectionFacts(),
+			AbnormalEffects: [CreateAbnormalEffect(skillId: 1200)],
+			AbnormalEffectMask: 0x80,
+			AbnormalEffectResolution: CreateResolvedAbnormalEffects(resolvedEffects, abnormalEffectMask: 0x40, slots: 64)));
+
+		Assert.Equal(PlayerKnownListPacketConstructionFactPlanStatus.Complete, plan.Status);
+		Assert.Equal(PlayerKnownListPacketConstructionAbnormalEffectFactSource.None, plan.AbnormalEffectFactSource);
+		Assert.Equal(PlayerKnownListAbnormalEffectFactResolutionStatus.ResolvedSnapshot, plan.AbnormalEffectResolutionStatus);
+		Assert.Null(plan.Facts!.AbnormalEffects);
+		Assert.Equal(0, plan.Facts.AbnormalEffectMask);
+		Assert.Equal(SmAbnormalEffect.FullSkillTargetSlots, plan.Facts.AbnormalEffectSlots);
 	}
 
 	[Fact]
@@ -250,6 +345,40 @@ public sealed class PlayerKnownListPacketConstructionFactPlanServiceTests
 			IsJavaStatParity: false,
 			"com.aionemu.gameserver.model.stats.container.PlayerGameStats.getAttackSpeed",
 			"Item templates missing.");
+
+	private static PlayerKnownListAbnormalEffectFactResolution CreateResolvedAbnormalEffects(
+		IReadOnlyList<SmAbnormalEffectEntry> effects,
+		int abnormalEffectMask,
+		int slots) =>
+		new(
+			PlayerKnownListAbnormalEffectFactResolutionStatus.ResolvedSnapshot,
+			new PlayerKnownListAbnormalEffectFacts(effects, abnormalEffectMask, slots),
+			NeedsJavaEffectControllerParity: true,
+			IsLive: false,
+			IsJavaEffectControllerParity: false,
+			"com.aionemu.gameserver.controllers.effect.EffectController.getAbnormalEffects",
+			"Resolved from supplied abnormal-effect snapshot.");
+
+	private static PlayerKnownListAbnormalEffectFactResolution CreateBlockedAbnormalEffectResolution() =>
+		new(
+			PlayerKnownListAbnormalEffectFactResolutionStatus.MissingEffectSnapshot,
+			Facts: null,
+			NeedsJavaEffectControllerParity: true,
+			IsLive: false,
+			IsJavaEffectControllerParity: false,
+			"com.aionemu.gameserver.controllers.effect.EffectController.getAbnormalEffects",
+			"Effect snapshot missing.");
+
+	private static SmAbnormalEffectEntry CreateAbnormalEffect(
+		int skillId,
+		int remainingTime = 30_000) =>
+		new(
+			EffectorObjectId: 7001,
+			skillId,
+			SkillLevel: 3,
+			TargetSlotId: 1,
+			TargetSlotOrdinal: 0,
+			remainingTime);
 
 	private const int ViewerPlayerObjectId = 9001;
 	private const int SubjectPlayerObjectId = 9002;
