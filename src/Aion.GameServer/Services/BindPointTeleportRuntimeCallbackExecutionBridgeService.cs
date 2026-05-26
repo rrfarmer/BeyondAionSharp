@@ -1,3 +1,4 @@
+using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.World;
 
 namespace Aion.GameServer.Services;
@@ -14,7 +15,10 @@ public sealed record BindPointTeleportRuntimeCallbackExecutionResult(
 	BindPointTeleportScheduledCallbackPlan CallbackPlan,
 	BindPointTeleportCooldownFact? StoredCooldown,
 	BindPointTeleportRuntimeFanoutResult? FanoutResult,
+	InventoryItem? KinahItemUpdate,
+	int? KinahInventoryUpdateType,
 	bool ShouldSendNotEnoughFee,
+	bool ShouldEmitKinahInventoryUpdatePacket,
 	bool StoredCooldownFact,
 	bool BroadcastCooldown,
 	bool ShouldScheduleFinalTeleport,
@@ -45,14 +49,18 @@ public sealed class BindPointTeleportRuntimeCallbackExecutionBridgeService
 		// Java parity: BindPointTeleportService.teleport scheduled callback first tries Kinah, then addCooldown,
 		// broadcasts action 3, and only then schedules final movement. Kinah mutation and movement remain staged out here.
 		cancellationToken.ThrowIfCancellationRequested();
-		if (!callbackPlan.KinahPlan.ShouldContinueScheduledTeleport)
+		if (!callbackPlan.KinahPlan.ShouldContinueScheduledTeleport
+			|| (callbackPlan.ShouldSendNotEnoughFee && !callbackPlan.ShouldStoreCooldown))
 		{
 			return new BindPointTeleportRuntimeCallbackExecutionResult(
 				BindPointTeleportRuntimeCallbackExecutionStatus.StoppedNotEnoughKinah,
 				callbackPlan,
 				StoredCooldown: null,
 				FanoutResult: null,
+				KinahItemUpdate: null,
+				KinahInventoryUpdateType: null,
 				ShouldSendNotEnoughFee: callbackPlan.ShouldSendNotEnoughFee,
+				ShouldEmitKinahInventoryUpdatePacket: false,
 				StoredCooldownFact: false,
 				BroadcastCooldown: false,
 				ShouldScheduleFinalTeleport: false,
@@ -71,7 +79,10 @@ public sealed class BindPointTeleportRuntimeCallbackExecutionBridgeService
 				callbackPlan,
 				StoredCooldown: null,
 				FanoutResult: null,
+				callbackPlan.KinahItemUpdate,
+				callbackPlan.KinahInventoryUpdateType,
 				ShouldSendNotEnoughFee: false,
+				callbackPlan.ShouldEmitKinahInventoryUpdatePacket,
 				StoredCooldownFact: false,
 				BroadcastCooldown: false,
 				callbackPlan.ShouldScheduleFinalTeleport,
@@ -90,7 +101,10 @@ public sealed class BindPointTeleportRuntimeCallbackExecutionBridgeService
 			callbackPlan,
 			cooldown,
 			fanoutResult,
+			callbackPlan.KinahItemUpdate,
+			callbackPlan.KinahInventoryUpdateType,
 			ShouldSendNotEnoughFee: false,
+			callbackPlan.ShouldEmitKinahInventoryUpdatePacket,
 			StoredCooldownFact: true,
 			BroadcastCooldown: fanoutResult.SentPacket,
 			callbackPlan.ShouldScheduleFinalTeleport,

@@ -32,6 +32,9 @@ public sealed class BindPointTeleportRuntimeCallbackExecutionBridgeServiceTests
 		Assert.False(result.BroadcastCooldown);
 		Assert.Null(result.StoredCooldown);
 		Assert.Null(result.FanoutResult);
+		Assert.Null(result.KinahItemUpdate);
+		Assert.Null(result.KinahInventoryUpdateType);
+		Assert.False(result.ShouldEmitKinahInventoryUpdatePacket);
 		Assert.Null(owner.GetCooldown(8401));
 		Assert.Empty(registry.Broadcasts);
 	}
@@ -55,6 +58,8 @@ public sealed class BindPointTeleportRuntimeCallbackExecutionBridgeServiceTests
 		Assert.False(result.BroadcastCooldown);
 		Assert.Null(result.StoredCooldown);
 		Assert.Null(result.FanoutResult);
+		Assert.Null(result.KinahItemUpdate);
+		Assert.Null(result.KinahInventoryUpdateType);
 		Assert.Null(owner.GetCooldown(8402));
 		Assert.Empty(registry.Broadcasts);
 	}
@@ -80,6 +85,9 @@ public sealed class BindPointTeleportRuntimeCallbackExecutionBridgeServiceTests
 		Assert.True(result.BroadcastCooldown);
 		Assert.True(result.ShouldScheduleFinalTeleport);
 		Assert.True(result.ShouldTeleport);
+		Assert.Null(result.KinahItemUpdate);
+		Assert.Null(result.KinahInventoryUpdateType);
+		Assert.False(result.ShouldEmitKinahInventoryUpdatePacket);
 		Assert.NotNull(result.StoredCooldown);
 		Assert.Equal(8403, result.StoredCooldown.PlayerObjectId);
 		Assert.Equal(6503, result.StoredCooldown.LocId);
@@ -128,7 +136,56 @@ public sealed class BindPointTeleportRuntimeCallbackExecutionBridgeServiceTests
 		Assert.True(result.BroadcastCooldown);
 		Assert.True(result.ShouldScheduleFinalTeleport);
 		Assert.False(result.ShouldTeleport);
+		Assert.False(result.ShouldEmitKinahInventoryUpdatePacket);
 		Assert.NotNull(owner.GetCooldown(8404));
+		Assert.Single(registry.Broadcasts);
+	}
+
+	[Fact]
+	public async Task ExecuteCooldownFanoutAsync_MutationFailureMetadataStopsBeforeCooldownAndFanout()
+	{
+		await using var threadPoolManager = CreateThreadPoolManager();
+		var owner = new BindPointTeleportRuntimeStateOwner(threadPoolManager);
+		var registry = new CapturingConnectionRegistry(sentCount: 0);
+		var bridge = CreateBridge(owner, registry);
+
+		var result = await bridge.ExecuteCooldownFanoutAsync(
+			playerObjectId: 8405,
+			CreateCallbackPlanWithMutation(playerObjectId: 8405, locId: 6505, currentKinah: 500),
+			new WorldPosition(210010000, 10, 20, 30, 0),
+			currentTimeMillis: 4_000);
+
+		Assert.Equal(BindPointTeleportRuntimeCallbackExecutionStatus.StoppedNotEnoughKinah, result.Status);
+		Assert.True(result.ShouldSendNotEnoughFee);
+		Assert.False(result.ShouldEmitKinahInventoryUpdatePacket);
+		Assert.Null(result.KinahItemUpdate);
+		Assert.Null(result.KinahInventoryUpdateType);
+		Assert.Null(owner.GetCooldown(8405));
+		Assert.Empty(registry.Broadcasts);
+	}
+
+	[Fact]
+	public async Task ExecuteCooldownFanoutAsync_MutationSuccessCarriesInventoryUpdateMetadataBeforeFanout()
+	{
+		await using var threadPoolManager = CreateThreadPoolManager();
+		var owner = new BindPointTeleportRuntimeStateOwner(threadPoolManager);
+		var registry = new CapturingConnectionRegistry(sentCount: 2);
+		var bridge = CreateBridge(owner, registry);
+
+		var result = await bridge.ExecuteCooldownFanoutAsync(
+			playerObjectId: 8406,
+			CreateCallbackPlanWithMutation(playerObjectId: 8406, locId: 6506, currentKinah: 2_000),
+			new WorldPosition(210010000, 10, 20, 30, 0),
+			currentTimeMillis: 5_000);
+
+		Assert.Equal(BindPointTeleportRuntimeCallbackExecutionStatus.StoredCooldownAndBroadcast, result.Status);
+		Assert.True(result.ShouldEmitKinahInventoryUpdatePacket);
+		Assert.Equal(SmInventoryUpdateItem.DecreaseKinahFly, result.KinahInventoryUpdateType);
+		Assert.NotNull(result.KinahItemUpdate);
+		Assert.Equal(1_000, result.KinahItemUpdate.Count);
+		Assert.True(result.StoredCooldownFact);
+		Assert.True(result.BroadcastCooldown);
+		Assert.NotNull(owner.GetCooldown(8406));
 		Assert.Single(registry.Broadcasts);
 	}
 
@@ -202,6 +259,51 @@ public sealed class BindPointTeleportRuntimeCallbackExecutionBridgeServiceTests
 			ShouldSendNotEnoughFee = false,
 			ShouldScheduleFinalTeleport = true,
 		};
+	}
+
+	private static BindPointTeleportScheduledCallbackPlan CreateCallbackPlanWithMutation(
+		int playerObjectId,
+		int locId,
+		long currentKinah)
+	{
+		var kinahPlan = BindPointTeleportScheduledKinahPlanService.CreatePlan(
+			requiredPrice: 1_000,
+			currentKinah: 2_000);
+		var mutationPlan = BindPointTeleportScheduledKinahMutationPlanService.CreatePlan(
+			new Player
+			{
+				ObjectId = playerObjectId,
+				InventoryItems =
+				[
+					new InventoryItem
+					{
+						ObjectId = 1824,
+						OwnerId = playerObjectId,
+						ItemId = BindPointTeleportScheduledKinahMutationPlanService.KinahItemId,
+						Count = currentKinah,
+						Location = BindPointTeleportScheduledKinahMutationPlanService.CubeStorageId,
+					},
+				],
+			},
+			requiredPrice: 1_000);
+		var cooldownPlan = BindPointTeleportRuntimeStatePlanService.CreateAddCooldownPlan(
+			playerObjectId,
+			locId,
+			currentTimeMillis: 1_000);
+		var fanoutPlan = BindPointTeleportFanoutPlanService.CreatePlan(
+			BindPointTeleportFanoutSource.TeleportCooldownBroadcast,
+			playerObjectId,
+			SmBindPointTeleport.Cooldown(playerObjectId, locId, cooldownSeconds: 600));
+		var movementPlan = BindPointTeleportFinalMovementPlanService.CreatePlan(
+			new BindPointTeleportDestinationFact(210010000, 1, 2, 3, 0, 210010000, 1),
+			playerIsDead: false,
+			playerIsAboutToDie: false);
+		return BindPointTeleportScheduledCallbackPlanService.CreatePlan(
+			kinahPlan,
+			cooldownPlan,
+			fanoutPlan,
+			movementPlan,
+			kinahMutationPlan: mutationPlan);
 	}
 
 	private static ThreadPoolManager CreateThreadPoolManager()
