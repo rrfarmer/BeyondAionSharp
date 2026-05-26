@@ -111,6 +111,52 @@ public sealed class QuestBonusHandlerOutcomePlanServiceTests
 	}
 
 	[Fact]
+	public void CreatePlan_FirstLoadedUnknownHandlerStopsLaterHandlersLikeJavaQuestEngine()
+	{
+		var service = new QuestBonusHandlerOutcomePlanService();
+		var registrations = new[]
+		{
+			new QuestBonusHandlerRegistration(90001, "MOVIE", (QuestBonusHandlerKind)999),
+			new QuestBonusHandlerRegistration(80016, "MOVIE", QuestBonusHandlerKind.Movie, [103, 104]),
+		};
+		var states = new Dictionary<int, QuestBonusHandlerQuestState>
+		{
+			[80016] = new("REWARD", CompleteCount: 9),
+		};
+
+		var plan = service.CreatePlan(new QuestBonusHandlerOutcomeInput("MOVIE", states), registrations);
+
+		Assert.Equal(QuestBonusHandlerResult.Unknown, plan.Result);
+		Assert.Equal(QuestBonusHandlerOutcomeStatus.HandlerReturnedUnknown, plan.Status);
+		Assert.Equal(90001, plan.HandlerQuestId);
+		Assert.Equal((QuestBonusHandlerKind)999, plan.HandlerKind);
+		Assert.Empty(plan.DirectRewardItems);
+		Assert.Empty(plan.SideEffects);
+	}
+
+	[Fact]
+	public void CreateHandlerExceptionPlan_RepresentsJavaCatchAsFailedOutcome()
+	{
+		var service = new QuestBonusHandlerOutcomePlanService();
+		var input = new QuestBonusHandlerOutcomeInput(
+			"MOVIE",
+			new Dictionary<int, QuestBonusHandlerQuestState>
+			{
+				[80016] = new("REWARD"),
+			});
+		var registration = new QuestBonusHandlerRegistration(80016, "MOVIE", QuestBonusHandlerKind.Movie, [103, 104]);
+
+		var plan = service.CreateHandlerExceptionPlan(input, registration);
+
+		Assert.Equal(QuestBonusHandlerResult.Failed, plan.Result);
+		Assert.Equal(QuestBonusHandlerOutcomeStatus.HandlerException, plan.Status);
+		Assert.Equal(80016, plan.HandlerQuestId);
+		Assert.Equal(QuestBonusHandlerKind.Movie, plan.HandlerKind);
+		Assert.Empty(plan.DirectRewardItems);
+		Assert.Empty(plan.SideEffects);
+	}
+
+	[Fact]
 	public void CreatePlan_UnknownBonusTypeAllowsLaterBonusServiceLikeJavaUnknownResult()
 	{
 		var service = new QuestBonusHandlerOutcomePlanService();

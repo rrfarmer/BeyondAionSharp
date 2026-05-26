@@ -22,6 +22,25 @@ public sealed class QuestBonusHandlerOutcomePlanService
 	public QuestBonusHandlerOutcomePlan CreatePlan(QuestBonusHandlerOutcomeInput input) =>
 		CreatePlan(input, AuditedRegistrations);
 
+	public QuestBonusHandlerOutcomePlan CreateHandlerExceptionPlan(
+		QuestBonusHandlerOutcomeInput input,
+		QuestBonusHandlerRegistration? registration = null)
+	{
+		ArgumentNullException.ThrowIfNull(input);
+
+		// Java parity: QuestEngine#onBonusApplyEvent catches any exception
+		// escaping handler execution and returns HandlerResult.FAILED, which
+		// suppresses the later BonusService call in QuestService#getRewardItems.
+		return new QuestBonusHandlerOutcomePlan(
+			input,
+			QuestBonusHandlerResult.Failed,
+			QuestBonusHandlerOutcomeStatus.HandlerException,
+			registration?.QuestId,
+			registration?.HandlerKind,
+			[],
+			[]);
+	}
+
 	public QuestBonusHandlerOutcomePlan CreatePlan(
 		QuestBonusHandlerOutcomeInput input,
 		IEnumerable<QuestBonusHandlerRegistration> registrations)
@@ -182,6 +201,7 @@ public enum QuestBonusHandlerOutcomeStatus
 	HandlerReturnedUnknown,
 	HandlerSucceeded,
 	HandlerFailed,
+	HandlerException,
 }
 
 public enum QuestBonusHandlerSideEffectKind
