@@ -73,6 +73,34 @@ public sealed record ArmsfusionFusionPlan(
 	}
 }
 
+public sealed record ArmsfusionBreakPlan(
+	bool Succeeded,
+	ArmsfusionFailure Failure,
+	InventoryItem? WeaponUpdate,
+	string JavaSource,
+	bool IsLive)
+{
+	public static ArmsfusionBreakPlan Failed(ArmsfusionFailure failure)
+	{
+		return new ArmsfusionBreakPlan(
+			Succeeded: false,
+			failure,
+			WeaponUpdate: null,
+			"ArmsfusionService.breakWeapons",
+			IsLive: false);
+	}
+
+	public static ArmsfusionBreakPlan Success(InventoryItem weaponUpdate)
+	{
+		return new ArmsfusionBreakPlan(
+			Succeeded: true,
+			ArmsfusionFailure.None,
+			weaponUpdate,
+			"ArmsfusionService.breakWeapons validation/mutation plan",
+			IsLive: false);
+	}
+}
+
 public static class ArmsfusionPricePlanService
 {
 	private const int CubeStorageId = 0;
@@ -147,6 +175,30 @@ public static class ArmsfusionPricePlanService
 		var deletedFuseWeaponObjectId = fuseWeapon.Count <= 1 ? fuseWeapon.ObjectId : (int?)null;
 		var kinahItemUpdate = CopyInventoryItem(kinahItem, count: kinahItem.Count - pricePlan.FusionPrice);
 		return ArmsfusionFusionPlan.Success(pricePlan, mainWeaponUpdate, fuseWeaponUpdate, deletedFuseWeaponObjectId, kinahItemUpdate);
+	}
+
+	public static ArmsfusionBreakPlan CreateBreakPlan(Player player, int weaponToBreakObjectId)
+	{
+		// Java parity: services/ArmsfusionService.breakWeapons. This is a non-live plan:
+		// no InventoryDAO.store, ItemPacketService.updateItemAfterInfoChange, or PacketSendUtility call.
+		var inventoryItems = player.InventoryItems.ToList();
+		var weaponToBreak = FindBagItem(inventoryItems, weaponToBreakObjectId);
+		if (weaponToBreak == null)
+			return ArmsfusionBreakPlan.Failed(ArmsfusionFailure.ItemNoTarget);
+
+		if (weaponToBreak.FusionedItem == 0)
+			return ArmsfusionBreakPlan.Failed(ArmsfusionFailure.NotAvailable);
+
+		var weaponUpdate = CopyInventoryItem(
+			weaponToBreak,
+			fusionedItem: 0,
+			optionalFusionSocket: 0,
+			fusionRandomBonus: 0,
+			charge: 0);
+		// Java parity: Item.setFusionedItem(null) calls removeAllFusionStones and updateChargeInfo(0);
+		// it does not call removeRemainingTuningCountIfPossible because the template is null.
+		weaponUpdate.FusionStones = Array.Empty<ItemStoneSocket>();
+		return ArmsfusionBreakPlan.Success(weaponUpdate);
 	}
 
 	public static ArmsfusionPricePlan CreatePlan(

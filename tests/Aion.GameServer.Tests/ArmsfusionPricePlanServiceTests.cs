@@ -144,6 +144,60 @@ public sealed class ArmsfusionPricePlanServiceTests
 		Assert.Equal(expectedFailure, plan.Failure);
 	}
 
+	[Fact]
+	public void CreateBreakPlan_SucceedsWithJavaSetFusionedItemNullMutations()
+	{
+		var player = CreatePlayer(kinah: 0);
+		var weapon = new InventoryItem
+		{
+			ObjectId = 1001,
+			ItemId = MainWeaponId,
+			Count = 1,
+			Location = 0,
+			FusionedItem = FuseWeaponId,
+			OptionalFusionSocket = 2,
+			FusionRandomBonus = 7,
+			Charge = 120_000,
+			TuneCount = 1,
+			FusionStones = [new ItemStoneSocket(167000001, 0), new ItemStoneSocket(167000002, 1)],
+		};
+		player.InventoryItems = [weapon, player.InventoryItems.Single()];
+
+		var plan = ArmsfusionPricePlanService.CreateBreakPlan(player, weaponToBreakObjectId: 1001);
+
+		Assert.True(plan.Succeeded);
+		Assert.False(plan.IsLive);
+		Assert.Equal(ArmsfusionFailure.None, plan.Failure);
+		var weaponUpdate = Assert.IsType<InventoryItem>(plan.WeaponUpdate);
+		Assert.Equal(0, weaponUpdate.FusionedItem);
+		Assert.Equal(0, weaponUpdate.OptionalFusionSocket);
+		Assert.Equal(0, weaponUpdate.FusionRandomBonus);
+		Assert.Equal(0, weaponUpdate.Charge);
+		Assert.Equal(1, weaponUpdate.TuneCount);
+		Assert.Empty(weaponUpdate.FusionStones);
+	}
+
+	[Theory]
+	[InlineData(false, 0, ArmsfusionFailure.ItemNoTarget)]
+	[InlineData(true, 0, ArmsfusionFailure.NotAvailable)]
+	public void CreateBreakPlan_FollowsJavaFailureOrder(bool includeWeapon, int fusionedItem, ArmsfusionFailure expectedFailure)
+	{
+		var player = CreatePlayer(kinah: 0);
+		if (includeWeapon)
+		{
+			player.InventoryItems =
+			[
+				new InventoryItem { ObjectId = 1001, ItemId = MainWeaponId, Count = 1, Location = 0, FusionedItem = fusionedItem },
+				player.InventoryItems.Single(),
+			];
+		}
+
+		var plan = ArmsfusionPricePlanService.CreateBreakPlan(player, weaponToBreakObjectId: 1001);
+
+		Assert.False(plan.Succeeded);
+		Assert.Equal(expectedFailure, plan.Failure);
+	}
+
 	private static Player CreatePlayer(long kinah)
 	{
 		return new Player
