@@ -1,3 +1,4 @@
+using Aion.GameServer.Dataholders;
 using Aion.GameServer.Services;
 
 namespace Aion.GameServer.Tests;
@@ -41,18 +42,29 @@ public sealed class NpcDialogServiceSelectPlanServiceTests
 	[Fact]
 	public void CreatePlan_PlansBuyTradeListWhenTradeListAndSellableGoodsExist()
 	{
+		var packetPlan = SmTradeListPacketPlanService.CreatePlan(
+			new SmTradeListPacketPlanInput(
+				TargetObjectId: 9001,
+				PlayerObjectId: 42,
+				TradeList: new TradeListTemplateSummary(203060, [129], SellPriceRate: 80),
+				GoodsLists: CreateGoodsLists(new GoodsListSummary(129)),
+				BuyPriceModifier: 100));
 		var plan = NpcDialogServiceSelectPlanService.CreatePlan(
 			new NpcDialogServiceSelectInput(
 				CreateFallback(dialogActionId: 2),
 				HasTradeList: true,
 				HasSellableTradeGoods: true,
 				VendorBuyModifier: 125,
-				TradeSellPriceRate: 80));
+				TradeSellPriceRate: 80,
+				TradeListPacketPlan: packetPlan));
 
 		Assert.Equal(NpcDialogServiceSelectStatus.BuyTradeList, plan.Status);
 		var descriptor = Assert.Single(plan.Descriptors);
 		Assert.Equal(NpcDialogServiceDescriptorKind.TradeListPacket, descriptor.Kind);
 		Assert.Equal(100, descriptor.PriceModifier);
+		Assert.Same(packetPlan, descriptor.TradeListPacketPlan);
+		Assert.NotNull(descriptor.TradeListPacketPlan);
+		Assert.False(descriptor.TradeListPacketPlan.IsLive);
 	}
 
 	[Theory]
@@ -159,5 +171,10 @@ public sealed class NpcDialogServiceSelectPlanServiceTests
 			extendedRewardIndex,
 			"DialogService.onDialogSelect(dialogActionId, player, getOwner(), questId, extendedRewardIndex)",
 			IsLive: false);
+	}
+
+	private static GoodsListTable CreateGoodsLists(params GoodsListSummary[] goodsLists)
+	{
+		return new GoodsListTable(goodsLists, Array.Empty<GoodsListSummary>(), Array.Empty<GoodsListSummary>());
 	}
 }

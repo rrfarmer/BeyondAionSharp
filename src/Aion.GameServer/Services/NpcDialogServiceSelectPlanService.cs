@@ -49,7 +49,8 @@ public sealed record NpcDialogServiceSelectInput(
 	bool HasSellableTradeGoods = false,
 	int VendorBuyModifier = 100,
 	int TradeSellPriceRate = 100,
-	bool HasTradeInList = false);
+	bool HasTradeInList = false,
+	SmTradeListPacketPlan? TradeListPacketPlan = null);
 
 public sealed record NpcDialogServiceDescriptor(
 	NpcDialogServiceDescriptorKind Kind,
@@ -59,7 +60,8 @@ public sealed record NpcDialogServiceDescriptor(
 	bool IsLive = false,
 	int? QuestId = null,
 	int? ExtendedRewardIndex = null,
-	int? PriceModifier = null);
+	int? PriceModifier = null,
+	SmTradeListPacketPlan? TradeListPacketPlan = null);
 
 public sealed record NpcDialogServiceSelectPlan(
 	NpcDialogServiceSelectStatus Status,
@@ -188,7 +190,8 @@ public static class NpcDialogServiceSelectPlanService
 					input.Fallback,
 					NpcDialogServiceDescriptorKind.TradeListPacket,
 					"SM_TRADELIST",
-					priceModifier: input.VendorBuyModifier * input.TradeSellPriceRate / 100),
+					priceModifier: input.VendorBuyModifier * input.TradeSellPriceRate / 100,
+					tradeListPacketPlan: input.TradeListPacketPlan),
 			]);
 	}
 
@@ -287,7 +290,8 @@ public static class NpcDialogServiceSelectPlanService
 		string javaSource,
 		int? questId = null,
 		int? extendedRewardIndex = null,
-		int? priceModifier = null)
+		int? priceModifier = null,
+		SmTradeListPacketPlan? tradeListPacketPlan = null)
 	{
 		return new NpcDialogServiceDescriptor(
 			kind,
@@ -297,6 +301,7 @@ public static class NpcDialogServiceSelectPlanService
 			IsLive: false,
 			questId,
 			extendedRewardIndex,
-			priceModifier);
+			priceModifier,
+			tradeListPacketPlan);
 	}
 }
