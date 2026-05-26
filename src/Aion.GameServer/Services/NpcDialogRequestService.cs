@@ -38,15 +38,12 @@ public static class NpcDialogRequestService
 
 	private static bool IsInTalkRange(Player player, IWorldNpcObject npc)
 	{
-		// Java parity: utils/PositionUtil.isInTalkRange(Creature, Npc) uses talkDistance + 1 and object radii.
-		if (player.Position.WorldId != npc.Position.WorldId || player.Position.InstanceId != npc.Position.InstanceId)
-			return false;
-
-		var range = npc.Template.TalkDistance + 1 + npc.Template.BoundRadius;
-		var deltaX = player.Position.X - npc.Position.X;
-		var deltaY = player.Position.Y - npc.Position.Y;
-		var deltaZ = player.Position.Z - npc.Position.Z;
-		return deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ < range * range;
+		// Java parity: utils/PositionUtil.isInTalkRange(Creature, Npc).
+		return PositionUtilService.IsInNpcTalkRange(
+			player.Position,
+			npc.Position,
+			npc.Template.TalkDistance,
+			npc.Template.BoundRadius);
 	}
 }
 

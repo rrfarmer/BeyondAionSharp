@@ -97,14 +97,11 @@ public sealed class PortalEntryInteractionService
 	private static bool IsInTalkRange(Player player, IWorldNpcObject npc)
 	{
 		// Java parity: controllers/NpcController.onDialogSelect requires PositionUtil.isInTalkRange before AI dispatch.
-		if (player.Position.WorldId != npc.Position.WorldId || player.Position.InstanceId != npc.Position.InstanceId)
-			return false;
-
-		var range = npc.Template.TalkDistance + 1 + npc.Template.BoundRadius;
-		var deltaX = player.Position.X - npc.Position.X;
-		var deltaY = player.Position.Y - npc.Position.Y;
-		var deltaZ = player.Position.Z - npc.Position.Z;
-		return deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ < range * range;
+		return PositionUtilService.IsInNpcTalkRange(
+			player.Position,
+			npc.Position,
+			npc.Template.TalkDistance,
+			npc.Template.BoundRadius);
 	}
 
 	private static PortalDialogEntryStatus MapPreparationFailure(PortalEntryPreparationStatus status)
