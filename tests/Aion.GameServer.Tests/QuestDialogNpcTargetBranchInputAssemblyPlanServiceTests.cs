@@ -9,6 +9,7 @@ public sealed class QuestDialogNpcTargetBranchInputAssemblyPlanServiceTests
 	private const int TargetObjectId = 9001;
 	private const int FunctionDialogAction = 33;
 	private const int BuyAction = 2;
+	private const int TradeInAction = 78;
 
 	[Fact]
 	public void CreatePlan_DerivesFunctionDialogFromGlobalNpcTemplateTable()
@@ -282,6 +283,46 @@ public sealed class QuestDialogNpcTargetBranchInputAssemblyPlanServiceTests
 		var servicePlan = Assert.IsType<NpcDialogServiceSelectPlan>(controllerPlan.DialogServicePlan);
 		Assert.Equal(NpcDialogServiceSelectStatus.BuyUnavailable, servicePlan.Status);
 		Assert.Equal(NpcDialogServiceDescriptorKind.SystemMessageDoesNotSellItem, Assert.Single(servicePlan.Descriptors).Kind);
+	}
+
+	[Fact]
+	public void CreatePlan_ComposesTradeInPacketPlanFromStaticTradeData()
+	{
+		var targetTemplate = CreateTemplate(205315, [TradeInAction]);
+		var templates = new NpcTemplateTable([targetTemplate]);
+
+		var plan = QuestDialogNpcTargetBranchInputAssemblyPlanService.CreatePlan(
+			CreateSnapshot(
+				targetTemplate,
+				questId: 0,
+				dialogActionId: TradeInAction,
+				controllerDispatchFacts: new QuestDialogNpcControllerDispatchFacts(
+					IsInTalkRange: true,
+					NpcAiHandledDialogSelect: false),
+				tradeListFactInput: new NpcDialogTradeListFactAdapterInput(
+					NpcId: 205315,
+					PlayerLegionLevel: 0,
+					VendorBuyModifier: 125)),
+			templates,
+			CreateTradeLists(tradeInLists: [new TradeListTemplateSummary(205315, [39, 40], NpcType: "NORMAL")]),
+			CreateGoodsLists());
+
+		var tradeListFactPlan = Assert.IsType<NpcDialogTradeListFactAdapterPlan>(plan.TradeListFactAdapterPlan);
+		Assert.Null(tradeListFactPlan.TradeList);
+		Assert.NotNull(tradeListFactPlan.TradeInList);
+		Assert.Null(plan.TradeListPacketPlan);
+		var packetPlan = Assert.IsType<SmTradeInListPacketPlan>(plan.TradeInListPacketPlan);
+		Assert.Equal(SmTradeInListPacketPlanStatus.Ready, packetPlan.Status);
+		Assert.Equal([39, 40], packetPlan.TradeTabIds);
+		Assert.Equal(100, packetPlan.BuyPriceModifier);
+		Assert.False(packetPlan.IsLive);
+		var controllerPlan = Assert.IsType<NpcDialogControllerDispatchPlan>(plan.ControllerDispatchPlan);
+		var servicePlan = Assert.IsType<NpcDialogServiceSelectPlan>(controllerPlan.DialogServicePlan);
+		Assert.Equal(NpcDialogServiceSelectStatus.TradeInList, servicePlan.Status);
+		var descriptor = Assert.Single(servicePlan.Descriptors);
+		Assert.Equal(NpcDialogServiceDescriptorKind.TradeInListPacket, descriptor.Kind);
+		Assert.Equal(100, descriptor.PriceModifier);
+		Assert.Same(packetPlan, descriptor.TradeInListPacketPlan);
 	}
 
 	[Fact]

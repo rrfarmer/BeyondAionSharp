@@ -134,16 +134,27 @@ public sealed class NpcDialogServiceSelectPlanServiceTests
 	[Fact]
 	public void CreatePlan_PlansTradeInFromExplicitTradeInListAvailability()
 	{
+		var packetPlan = SmTradeInListPacketPlanService.CreatePlan(
+			new SmTradeInListPacketPlanInput(
+				TargetObjectId: 9001,
+				TradeInList: new TradeListTemplateSummary(205315, [39])));
 		var available = NpcDialogServiceSelectPlanService.CreatePlan(
-			new NpcDialogServiceSelectInput(CreateFallback(dialogActionId: 78), HasTradeInList: true));
+			new NpcDialogServiceSelectInput(
+				CreateFallback(dialogActionId: 78),
+				HasTradeInList: true,
+				TradeInListPacketPlan: packetPlan));
 		var unavailable = NpcDialogServiceSelectPlanService.CreatePlan(
 			new NpcDialogServiceSelectInput(CreateFallback(dialogActionId: 78), HasTradeInList: false));
 
 		Assert.Equal(NpcDialogServiceSelectStatus.TradeInList, available.Status);
-		Assert.Equal(NpcDialogServiceDescriptorKind.TradeInListPacket, Assert.Single(available.Descriptors).Kind);
-		Assert.Equal(100, available.Descriptors[0].PriceModifier);
+		var descriptor = Assert.Single(available.Descriptors);
+		Assert.Equal(NpcDialogServiceDescriptorKind.TradeInListPacket, descriptor.Kind);
+		Assert.Equal(100, descriptor.PriceModifier);
+		Assert.Same(packetPlan, descriptor.TradeInListPacketPlan);
+		Assert.False(descriptor.TradeInListPacketPlan!.IsLive);
 		Assert.Equal(NpcDialogServiceSelectStatus.TradeInUnavailable, unavailable.Status);
 		Assert.Equal(NpcDialogServiceDescriptorKind.SystemMessageDoesNotSellItem, Assert.Single(unavailable.Descriptors).Kind);
+		Assert.Null(unavailable.Descriptors[0].TradeInListPacketPlan);
 	}
 
 	[Fact]

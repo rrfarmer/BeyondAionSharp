@@ -14,7 +14,8 @@ public sealed record NpcDialogControllerDispatchInput(
 	bool IsInTalkRange = true,
 	bool NpcAiHandledDialogSelect = false,
 	NpcDialogServiceSelectFacts? DialogServiceFacts = null,
-	SmTradeListPacketPlan? TradeListPacketPlan = null);
+	SmTradeListPacketPlan? TradeListPacketPlan = null,
+	SmTradeInListPacketPlan? TradeInListPacketPlan = null);
 
 public sealed record NpcDialogServiceSelectFacts(
 	bool NpcSupportsAction = true,
@@ -125,6 +126,7 @@ public static class NpcDialogControllerDispatchPlanService
 				facts.VendorBuyModifier,
 				facts.TradeSellPriceRate,
 				facts.HasTradeInList,
-				input.TradeListPacketPlan));
+				input.TradeListPacketPlan,
+				input.TradeInListPacketPlan));
 	}
 }

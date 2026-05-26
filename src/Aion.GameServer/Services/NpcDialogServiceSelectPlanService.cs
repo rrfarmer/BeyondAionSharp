@@ -50,7 +50,8 @@ public sealed record NpcDialogServiceSelectInput(
 	int VendorBuyModifier = 100,
 	int TradeSellPriceRate = 100,
 	bool HasTradeInList = false,
-	SmTradeListPacketPlan? TradeListPacketPlan = null);
+	SmTradeListPacketPlan? TradeListPacketPlan = null,
+	SmTradeInListPacketPlan? TradeInListPacketPlan = null);
 
 public sealed record NpcDialogServiceDescriptor(
 	NpcDialogServiceDescriptorKind Kind,
@@ -61,7 +62,8 @@ public sealed record NpcDialogServiceDescriptor(
 	int? QuestId = null,
 	int? ExtendedRewardIndex = null,
 	int? PriceModifier = null,
-	SmTradeListPacketPlan? TradeListPacketPlan = null);
+	SmTradeListPacketPlan? TradeListPacketPlan = null,
+	SmTradeInListPacketPlan? TradeInListPacketPlan = null);
 
 public sealed record NpcDialogServiceSelectPlan(
 	NpcDialogServiceSelectStatus Status,
@@ -239,7 +241,8 @@ public static class NpcDialogServiceSelectPlanService
 					input.Fallback,
 					kind,
 					input.HasTradeInList ? "SM_TRADE_IN_LIST" : "SM_SYSTEM_MESSAGE.STR_BUY_SELL_HE_DOES_NOT_SELL_ITEM",
-					priceModifier: input.HasTradeInList ? 100 : null),
+					priceModifier: input.HasTradeInList ? 100 : null,
+					tradeInListPacketPlan: input.TradeInListPacketPlan),
 			]);
 	}
 
@@ -291,7 +294,8 @@ public static class NpcDialogServiceSelectPlanService
 		int? questId = null,
 		int? extendedRewardIndex = null,
 		int? priceModifier = null,
-		SmTradeListPacketPlan? tradeListPacketPlan = null)
+		SmTradeListPacketPlan? tradeListPacketPlan = null,
+		SmTradeInListPacketPlan? tradeInListPacketPlan = null)
 	{
 		return new NpcDialogServiceDescriptor(
 			kind,
@@ -302,6 +306,7 @@ public static class NpcDialogServiceSelectPlanService
 			questId,
 			extendedRewardIndex,
 			priceModifier,
-			tradeListPacketPlan);
+			tradeListPacketPlan,
+			tradeInListPacketPlan);
 	}
 }
