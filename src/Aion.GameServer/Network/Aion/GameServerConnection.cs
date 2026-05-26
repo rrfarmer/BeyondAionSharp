@@ -10711,7 +10711,11 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
-		var registrationCommission = CalculateBrokerRegistrationCommission(packet.Price, packet.ItemCount, registeredItemsCount, player.Race);
+		var registrationCommission = BrokerRegistrationCommissionPlanService.CreatePlan(
+			packet.Price,
+			packet.ItemCount,
+			registeredItemsCount,
+			player.Race).Commission;
 		var kinahItem = player.InventoryItems.FirstOrDefault(item => item.ItemId == KinahItemId && item.Location == CubeStorageId);
 		if (kinahItem == null || kinahItem.Count < registrationCommission)
 		{
@@ -10900,21 +10904,6 @@ public sealed class GameServerConnection : BaseClientConnection
 			await _connectionRegistry.NotifyBrokerSettledAsync(brokerItem.SellerId, sellerSettledPage.SettledKinah);
 
 		await SendPacketAsync(SmBrokerService.CreateSearchedItems(await LoadCachedBrokerPageAsync(player)));
-	}
-
-	private static long CalculateBrokerRegistrationCommission(long price, long count, int registeredItemsCount, string race)
-	{
-		// Java parity: services/BrokerService.registerItem commission calculation; price modifiers are currently baseline 100/100/100.
-		var commission = registeredItemsCount > 9
-			? (long)(price * count * 0.04f)
-			: (long)(price * count * 0.02f);
-		return commission < 10 ? 10 : GetPriceForService(commission, race);
-	}
-
-	private static long GetPriceForService(long basePrice, string race)
-	{
-		// Java parity: services/trade/PricesService.getPriceForService with the currently ported baseline SM_PRICES values.
-		return race is "ELYOS" or "ASMODIANS" ? basePrice : basePrice;
 	}
 
 	private static DateTime TruncateToSecond(DateTime value)
