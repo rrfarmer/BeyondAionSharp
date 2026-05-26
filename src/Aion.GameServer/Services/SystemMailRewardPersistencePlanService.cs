@@ -102,6 +102,8 @@ public sealed record SystemMailRewardPersistenceOperation(
 	string? Sql,
 	IReadOnlyList<string> ParameterOrder,
 	string? RecipientName = null,
+	PlayerMail? MailPayload = null,
+	InventoryItem? AttachedItemPayload = null,
 	int? MailObjectId = null,
 	int? RecipientObjectId = null,
 	int? AttachedItemObjectId = null,
@@ -127,6 +129,7 @@ public sealed record SystemMailRewardPersistenceOperation(
 				"express",
 				"recieved_time",
 			],
+			MailPayload: mail,
 			MailObjectId: mail.Id,
 			RecipientObjectId: mail.RecipientId,
 			AttachedItemObjectId: mail.AttachedItemObjectId == 0 ? null : mail.AttachedItemObjectId,
@@ -169,6 +172,7 @@ public sealed record SystemMailRewardPersistenceOperation(
 				"buff_skill",
 				"rnd_plume_bonus",
 			],
+			AttachedItemPayload: item,
 			RecipientObjectId: recipientObjectId,
 			AttachedItemObjectId: item.ObjectId,
 			StopsOnFailure: true);
@@ -192,6 +196,7 @@ public sealed record SystemMailRewardPersistenceOperation(
 			"com.aionemu.gameserver.model.gameobjects.player.Mailbox.putLetterToMailbox",
 			Sql: null,
 			ParameterOrder: Array.Empty<string>(),
+			MailPayload: mail,
 			MailObjectId: mail.Id,
 			RecipientObjectId: mail.RecipientId,
 			MailboxLettersAfterOperation: mailboxLetters);

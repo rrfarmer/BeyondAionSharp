@@ -76,6 +76,7 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<PlayerVisualStatsUpdateService>();
 			services.AddSingleton<QuestRewardService>();
 			services.AddSingleton<CustomLevelRewardExecutionService>();
+			services.AddSingleton<SystemMailRewardPersistenceExecutionService>();
 			services.AddSingleton<WorldNpcSoloDpRewardService>();
 			services.AddSingleton<WorldNpcTeamApRewardService>();
 			services.AddSingleton<PvpApRewardService>();
@@ -172,6 +173,7 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<ICharacterCreationRepository, MySqlCharacterCreationRepository>();
 			services.AddSingleton<IPlayerEnterWorldRepository, MySqlPlayerEnterWorldRepository>();
 			services.AddSingleton<IMailRepository, MySqlMailRepository>();
+			services.AddSingleton<ISystemMailRewardPersistenceOperationExecutor, SystemMailRewardPersistenceOperationExecutor>();
 			services.AddSingleton<ICustomLevelRewardRepository, MySqlCustomLevelRewardRepository>();
 			services.AddSingleton<IBrokerRepository, MySqlBrokerRepository>();
 			services.AddSingleton<ISocialRepository, MySqlSocialRepository>();

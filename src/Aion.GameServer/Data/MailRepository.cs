@@ -28,6 +28,18 @@ public interface IMailRepository
 		IReadOnlyList<int> senderItemDeletes,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> StoreSystemMailLetterAsync(PlayerMail mail, CancellationToken cancellationToken = default);
+
+	Task<bool> StoreSystemMailAttachedItemAsync(
+		InventoryItem attachedItem,
+		int recipientObjectId,
+		CancellationToken cancellationToken = default);
+
+	Task<bool> UpdateOfflineMailboxCounterAsync(
+		string recipientName,
+		int mailboxLetters,
+		CancellationToken cancellationToken = default);
+
 	Task MarkMailReadAsync(int letterId, CancellationToken cancellationToken = default);
 
 	Task ClearAttachedItemAsync(int letterId, int itemObjectId, int playerObjectId, CancellationToken cancellationToken = default);
@@ -196,6 +208,84 @@ public sealed class MySqlMailRepository : IMailRepository
 				mail.Id,
 				attachedItem.ObjectId,
 				mail.RecipientId);
+			return false;
+		}
+	}
+
+	public async Task<bool> StoreSystemMailLetterAsync(PlayerMail mail, CancellationToken cancellationToken = default)
+	{
+		// Java parity: services/mail/SystemMailService.sendMail calls MailDAO.storeLetter before any item persistence.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			await InsertMailAsync(connection, transaction, mail, cancellationToken);
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not store system mail {MailId} for recipient {RecipientId}", mail.Id, mail.RecipientId);
+			return false;
+		}
+	}
+
+	public async Task<bool> StoreSystemMailAttachedItemAsync(
+		InventoryItem attachedItem,
+		int recipientObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: SystemMailService.sendMail calls InventoryDAO.store(attachedItem, recipientId) after MailDAO.storeLetter.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			var mailboxItem = CopyForOwner(attachedItem, recipientObjectId);
+			await InsertInventoryItemAsync(connection, transaction, mailboxItem, cancellationToken);
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(
+				ex,
+				"Could not store system mail attached item {ItemObjectId} for recipient {RecipientId}",
+				attachedItem.ObjectId,
+				recipientObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> UpdateOfflineMailboxCounterAsync(
+		string recipientName,
+		int mailboxLetters,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: MailDAO.updateOfflineMailCounter updates by player name after incrementing PlayerCommonData.mailboxLetters.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = "UPDATE players SET mailbox_letters=? WHERE name=?";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = mailboxLetters },
+					new MySqlParameter { Value = recipientName },
+				});
+			await command.ExecuteNonQueryAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not update offline mailbox counter for recipient {RecipientName}", recipientName);
 			return false;
 		}
 	}
@@ -505,6 +595,45 @@ public sealed class MySqlMailRepository : IMailRepository
 				new MySqlParameter { Value = item.RandomPlumeBonus },
 			});
 		await command.ExecuteNonQueryAsync(cancellationToken);
+	}
+
+	private static InventoryItem CopyForOwner(InventoryItem item, int ownerId)
+	{
+		return new InventoryItem
+		{
+			ObjectId = item.ObjectId,
+			ItemId = item.ItemId,
+			Count = item.Count,
+			Color = item.Color,
+			ColorExpires = item.ColorExpires,
+			Creator = item.Creator,
+			ExpireTime = item.ExpireTime,
+			ActivationCount = item.ActivationCount,
+			OwnerId = ownerId,
+			IsEquipped = item.IsEquipped,
+			IsSoulBound = item.IsSoulBound,
+			Slot = item.Slot,
+			Location = item.Location,
+			Enchant = item.Enchant,
+			EnchantBonus = item.EnchantBonus,
+			ItemSkin = item.ItemSkin,
+			FusionedItem = item.FusionedItem,
+			OptionalSocket = item.OptionalSocket,
+			OptionalFusionSocket = item.OptionalFusionSocket,
+			Charge = item.Charge,
+			TuneCount = item.TuneCount,
+			RandomBonus = item.RandomBonus,
+			FusionRandomBonus = item.FusionRandomBonus,
+			Tempering = item.Tempering,
+			PackCount = item.PackCount,
+			IsAmplified = item.IsAmplified,
+			BuffSkill = item.BuffSkill,
+			RandomPlumeBonus = item.RandomPlumeBonus,
+			ManaStones = item.ManaStones,
+			FusionStones = item.FusionStones,
+			Godstone = item.Godstone,
+			IdianStone = item.IdianStone,
+		};
 	}
 
 	private static int ReadInt(MySqlDataReader reader, string column)
