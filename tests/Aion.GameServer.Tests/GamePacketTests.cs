@@ -281,6 +281,33 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmBindPointTeleport_WritesJavaHotspotPayloads()
+	{
+		Assert.Equal(296, SmBindPointTeleport.PacketOpCode);
+
+		var startPayload = SerializeUnencryptedPayload(SmBindPointTeleport.Start(playerObjectId: 7001, locId: 42));
+		using var startReader = new PacketBuffer(startPayload);
+		Assert.Equal(1, (int)startReader.ReadC());
+		Assert.Equal(7001, startReader.ReadD());
+		Assert.Equal(42, startReader.ReadD());
+		Assert.Equal(0, startReader.Remaining);
+
+		var cancelPayload = SerializeUnencryptedPayload(SmBindPointTeleport.Cancel(playerObjectId: 7002, locId: 43));
+		using var cancelReader = new PacketBuffer(cancelPayload);
+		Assert.Equal(2, (int)cancelReader.ReadC());
+		Assert.Equal(7002, cancelReader.ReadD());
+		Assert.Equal(0, cancelReader.Remaining);
+
+		var cooldownPayload = SerializeUnencryptedPayload(SmBindPointTeleport.Cooldown(playerObjectId: 7003, locId: 44, cooldownSeconds: 600));
+		using var cooldownReader = new PacketBuffer(cooldownPayload);
+		Assert.Equal(3, (int)cooldownReader.ReadC());
+		Assert.Equal(7003, cooldownReader.ReadD());
+		Assert.Equal(44, cooldownReader.ReadD());
+		Assert.Equal(600, cooldownReader.ReadD());
+		Assert.Equal(0, cooldownReader.Remaining);
+	}
+
+	[Fact]
 	public void SmLootPackets_WriteJavaLootPayloads()
 	{
 		var player = new Player { ObjectId = 1001 };
