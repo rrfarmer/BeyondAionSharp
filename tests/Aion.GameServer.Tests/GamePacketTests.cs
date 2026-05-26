@@ -3962,6 +3962,18 @@ public class GamePacketTests
 		Assert.Equal(1, (int)reader.ReadC());
 	}
 
+	[Theory]
+	[InlineData(1, "E903000001")]
+	[InlineData(0, "E903000000")]
+	public void SmPlayerStance_WritesObjectIdAndStateLikeJava(int state, string expectedPayloadHex)
+	{
+		var player = new Player { ObjectId = 1001 };
+
+		var payload = SerializeUnencryptedPayload(new SmPlayerStance(player, state));
+
+		Assert.Equal(Convert.FromHexString(expectedPayloadHex), payload);
+	}
+
 	[Fact]
 	public void ClientPacketFactory_ParsesL2AuthLoginCheck()
 	{

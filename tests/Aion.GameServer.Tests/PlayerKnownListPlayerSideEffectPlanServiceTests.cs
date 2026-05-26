@@ -49,8 +49,9 @@ public sealed class PlayerKnownListPlayerSideEffectPlanServiceTests
 		Assert.Equal(RideNpcId, plan.Descriptors[2].RideNpcId);
 		Assert.Equal(PlayerKnownListPlayerSideEffectCSharpSupport.Available, plan.Descriptors[2].CSharpSupport);
 		Assert.Equal(1, plan.Descriptors[3].StanceState);
-		Assert.Equal(PlayerKnownListPlayerSideEffectCSharpSupport.Missing, plan.Descriptors[3].CSharpSupport);
-		Assert.Contains("No C# SmPlayerStance", plan.Descriptors[3].Notes);
+		Assert.Equal("SmPlayerStance", plan.Descriptors[3].CSharpPacketTypeName);
+		Assert.Equal(PlayerKnownListPlayerSideEffectCSharpSupport.Available, plan.Descriptors[3].CSharpSupport);
+		Assert.Contains("serializer exists", plan.Descriptors[3].Notes);
 	}
 
 	[Fact]

@@ -121,13 +121,13 @@ public sealed class PlayerKnownListPlayerSideEffectPlanService
 			descriptors.Add(new PlayerKnownListPlayerSideEffectDescriptor(
 				PlayerKnownListPlayerSideEffectKind.SmPlayerStance,
 				"SM_PLAYER_STANCE",
-				null,
-				PlayerKnownListPlayerSideEffectCSharpSupport.Missing,
+				"SmPlayerStance",
+				PlayerKnownListPlayerSideEffectCSharpSupport.Available,
 				context.ViewerPlayerObjectId,
 				context.SeenPlayerObjectId,
 				"com.aionemu.gameserver.controllers.PlayerController.sendPlayerInfoPackets -> new SM_PLAYER_STANCE(player, 1)",
 				StanceState: 1,
-				Notes: "No C# SmPlayerStance packet class exists yet."));
+				Notes: "C# packet serializer exists; descriptor remains non-live and does not instantiate or send packets."));
 		}
 
 		if (context.SeenHasAbnormalEffects)
