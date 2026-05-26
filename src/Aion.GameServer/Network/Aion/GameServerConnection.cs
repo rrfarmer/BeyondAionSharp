@@ -88,6 +88,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private string _accountName = string.Empty;
 	private byte _accessLevel;
 	private byte _membership;
+	private long? _accountCreationEpochMillis;
 	private Player? _activePlayer;
 	private bool _accountDisconnectNotified;
 	private string _macAddress = string.Empty;
@@ -330,6 +331,7 @@ public sealed class GameServerConnection : BaseClientConnection
 					_accountName = accountName;
 					_accessLevel = authResult.AccessLevel;
 					_membership = authResult.Membership;
+					_accountCreationEpochMillis = authResult.CreationDate > 0 ? authResult.CreationDate : null;
 					_activePlayer = null;
 					_accountDisconnectNotified = false;
 				}
@@ -339,6 +341,7 @@ public sealed class GameServerConnection : BaseClientConnection
 					_accountName = string.Empty;
 					_accessLevel = 0;
 					_membership = 0;
+					_accountCreationEpochMillis = null;
 					_activePlayer = null;
 				}
 
@@ -937,8 +940,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				_activePlayer = enterWorldResult.Message == EnterWorldCheckMessage.Ok ? enterWorldResult.Player : null;
 				if (_activePlayer != null)
 				{
-					_activePlayer.AccessLevel = _accessLevel;
-					_activePlayer.AccountMembership = _membership;
+					PlayerAccountRuntimeStateService.ApplyLoginAccountState(
+						_activePlayer,
+						new PlayerAccountRuntimeState(_accessLevel, _membership, _accountCreationEpochMillis));
 					_connectionRegistry?.RegisterPlayerConnection(_activePlayer.ObjectId, this);
 
 					var staticData = _runtimeContext?.DataManager?.StaticData;

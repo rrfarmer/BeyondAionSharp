@@ -21,6 +21,10 @@ public sealed class Player
 	// Java parity: model/account/PlayerAccount.membership consumed by chat/player-info packets.
 	public byte AccountMembership { get; set; }
 
+	// Java parity: model/account/Account.creationDate is supplied by the login server in
+	// SM_ACCOUNT_AUTH_RESPONSE and later consumed by FactionPackService/VeteranRewardService.
+	public long? AccountCreationEpochMillis { get; set; }
+
 	// Java parity: model/team/legion/LegionMember data used by chat/player info packets.
 	public int LegionId { get; set; }
 
