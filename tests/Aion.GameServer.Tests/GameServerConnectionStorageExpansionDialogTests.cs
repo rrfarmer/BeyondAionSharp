@@ -232,6 +232,33 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 		Assert.False(plan.ControllerDispatchPlan.DialogServicePlan.IsLive);
 	}
 
+	[Fact]
+	public async Task HandleDialogSelectAsync_TradeInNoTradeListPlansNoSellMessageWithoutSending()
+	{
+		await using var fixture = await StorageExpansionDialogFixture.CreateAsync();
+		var player = CreatePlayer(targetObjectId: 9007);
+		var npc = CreateExpansionNpc(9007, templateId: 205316, dialogActionId: CmDialogSelect.TradeIn);
+		fixture.World.TryAddObject(npc.ObjectId, npc);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, CreateDialogSelect(npc.ObjectId, CmDialogSelect.TradeIn));
+
+		Assert.Empty(fixture.SentPackets);
+		Assert.Equal(0, player.ResponseRequester.Count);
+		var plan = Assert.Single(fixture.DialogSelectPlans);
+		Assert.Equal(QuestDialogNpcTargetBranchStatus.DispatchController, plan.BranchPlan.Status);
+		Assert.Equal(NpcDialogControllerDispatchStatus.DialogServiceFallback, plan.ControllerDispatchPlan?.Status);
+		var tradeListFacts = Assert.IsType<NpcDialogTradeListFactAdapterPlan>(plan.TradeListFactAdapterPlan);
+		Assert.False(tradeListFacts.Facts.HasTradeInList);
+		Assert.Null(plan.TradeListPacketPlan);
+		Assert.Null(plan.TradeInListPacketPlan);
+		var servicePlan = Assert.IsType<NpcDialogServiceSelectPlan>(plan.ControllerDispatchPlan?.DialogServicePlan);
+		Assert.Equal(NpcDialogServiceSelectStatus.TradeInUnavailable, servicePlan.Status);
+		var descriptor = Assert.Single(servicePlan.Descriptors);
+		Assert.Equal(NpcDialogServiceDescriptorKind.SystemMessageDoesNotSellItem, descriptor.Kind);
+		Assert.Null(descriptor.TradeInListPacketPlan);
+		Assert.False(servicePlan.IsLive);
+	}
+
 	private static Player CreatePlayer(int targetObjectId)
 	{
 		return new Player
