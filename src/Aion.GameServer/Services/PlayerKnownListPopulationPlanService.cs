@@ -13,7 +13,20 @@ public sealed record PlayerKnownListPopulationCandidateFact(
 	bool OwnerAwareOfCandidate = true,
 	bool CandidateAwareOfOwner = true,
 	PlayerKnownListOperationSideEffectDirectionFacts? OwnerViewingCandidateSideEffectFacts = null,
-	PlayerKnownListOperationSideEffectDirectionFacts? CandidateViewingOwnerSideEffectFacts = null);
+	PlayerKnownListOperationSideEffectDirectionFacts? CandidateViewingOwnerSideEffectFacts = null,
+	PlayerKnownListPacketConstructionFactPlanRequest? OwnerViewingCandidatePacketFactPlanRequest = null,
+	PlayerKnownListPacketConstructionFactPlanRequest? CandidateViewingOwnerPacketFactPlanRequest = null);
+
+public enum PlayerKnownListPopulationPacketConstructionFactPlanDirection
+{
+	OwnerViewingCandidate,
+	CandidateViewingOwner,
+}
+
+public sealed record PlayerKnownListPopulationPacketConstructionFactPlanAttachment(
+	PlayerKnownListPopulationPacketConstructionFactPlanDirection Direction,
+	PlayerKnownListPacketConstructionFactPlanRequest Request,
+	PlayerKnownListPacketConstructionFactPlan Plan);
 
 public sealed record PlayerKnownListPopulationPlanRequest(
 	PlayerKnownListRegionSnapshot RegionSnapshot,
@@ -29,7 +42,8 @@ public sealed record PlayerKnownListPopulationCandidatePlan(
 	PlayerKnownListTwoWayMembershipAdapterResult? MembershipAdapterResult,
 	string JavaSource,
 	PlayerKnownListOperationSideEffectAttachmentPlan? SideEffectAttachmentPlan = null,
-	PlayerKnownListOperationSideEffectPacketConstructionPlan? SideEffectPacketConstructionPlan = null);
+	PlayerKnownListOperationSideEffectPacketConstructionPlan? SideEffectPacketConstructionPlan = null,
+	IReadOnlyList<PlayerKnownListPopulationPacketConstructionFactPlanAttachment>? SideEffectFactPlans = null);
 
 public sealed record PlayerKnownListPopulationPlan(
 	int OwnerPlayerObjectId,
@@ -51,17 +65,20 @@ public sealed class PlayerKnownListPopulationPlanService
 	private readonly PlayerKnownListTwoWayMembershipAdapterService _membershipAdapterService;
 	private readonly PlayerKnownListOperationSideEffectAttachmentService _sideEffectAttachmentService;
 	private readonly PlayerKnownListOperationSideEffectPacketConstructionService _sideEffectPacketConstructionService;
+	private readonly PlayerKnownListPacketConstructionFactPlanService _factPlanService;
 
 	public PlayerKnownListPopulationPlanService(
 		PlayerKnownListVisibilityRangePlanService? visibilityRangePlanService = null,
 		PlayerKnownListTwoWayMembershipAdapterService? membershipAdapterService = null,
 		PlayerKnownListOperationSideEffectAttachmentService? sideEffectAttachmentService = null,
-		PlayerKnownListOperationSideEffectPacketConstructionService? sideEffectPacketConstructionService = null)
+		PlayerKnownListOperationSideEffectPacketConstructionService? sideEffectPacketConstructionService = null,
+		PlayerKnownListPacketConstructionFactPlanService? factPlanService = null)
 	{
 		_visibilityRangePlanService = visibilityRangePlanService ?? new PlayerKnownListVisibilityRangePlanService();
 		_membershipAdapterService = membershipAdapterService ?? new PlayerKnownListTwoWayMembershipAdapterService(new PlayerKnownListMembershipService());
 		_sideEffectAttachmentService = sideEffectAttachmentService ?? new PlayerKnownListOperationSideEffectAttachmentService();
 		_sideEffectPacketConstructionService = sideEffectPacketConstructionService ?? new PlayerKnownListOperationSideEffectPacketConstructionService();
+		_factPlanService = factPlanService ?? new PlayerKnownListPacketConstructionFactPlanService();
 	}
 
 	public PlayerKnownListPopulationPlan Plan(PlayerKnownListPopulationPlanRequest request)
@@ -114,20 +131,25 @@ public sealed class PlayerKnownListPopulationPlanService
 				visibilityRangePlan.OperationPlan,
 				fact.OwnerViewingCandidateSideEffectFacts ?? new PlayerKnownListOperationSideEffectDirectionFacts(),
 				fact.CandidateViewingOwnerSideEffectFacts ?? new PlayerKnownListOperationSideEffectDirectionFacts()));
-			var sideEffectPacketConstructionPlan = request.PacketConstructionFactsByPlayerObjectId is null
+			var sideEffectFactPlans = CreateFactPlans(fact);
+			var packetConstructionFacts = CreatePacketConstructionFacts(
+				request.PacketConstructionFactsByPlayerObjectId,
+				sideEffectFactPlans);
+			var sideEffectPacketConstructionPlan = packetConstructionFacts is null
 				? null
 				: _sideEffectPacketConstructionService.Construct(new PlayerKnownListOperationSideEffectPacketConstructionRequest(
 					sideEffectAttachmentPlan,
-					request.PacketConstructionFactsByPlayerObjectId));
+					packetConstructionFacts));
 
 			candidatePlans.Add(new PlayerKnownListPopulationCandidatePlan(
 				candidateId,
 				WasPresentInRegionSnapshot: true,
 				visibilityRangePlan,
 				membershipResult,
-				"KnownList.findVisibleObjects candidate composed through range/canSee, two-way membership metadata, controller side-effect descriptors, and optional packet construction metadata",
+				"KnownList.findVisibleObjects candidate composed through range/canSee, two-way membership metadata, controller side-effect descriptors, optional fact-plan metadata, and optional packet construction metadata",
 				sideEffectAttachmentPlan,
-				sideEffectPacketConstructionPlan));
+				sideEffectPacketConstructionPlan,
+				sideEffectFactPlans));
 		}
 
 		return new PlayerKnownListPopulationPlan(
@@ -143,5 +165,47 @@ public sealed class PlayerKnownListPopulationPlanService
 			IsLive: false,
 			AttachedControllerSideEffectDescriptors: candidatePlans.Any(plan => plan.SideEffectAttachmentPlan?.AttachedSideEffects.Count > 0),
 			ConstructedControllerSideEffectPackets: candidatePlans.Any(plan => plan.SideEffectPacketConstructionPlan?.Results.Count > 0));
+	}
+
+	private IReadOnlyList<PlayerKnownListPopulationPacketConstructionFactPlanAttachment> CreateFactPlans(
+		PlayerKnownListPopulationCandidateFact fact)
+	{
+		var plans = new List<PlayerKnownListPopulationPacketConstructionFactPlanAttachment>();
+		if (fact.OwnerViewingCandidatePacketFactPlanRequest is { } ownerViewingCandidate)
+		{
+			plans.Add(new PlayerKnownListPopulationPacketConstructionFactPlanAttachment(
+				PlayerKnownListPopulationPacketConstructionFactPlanDirection.OwnerViewingCandidate,
+				ownerViewingCandidate,
+				_factPlanService.Plan(ownerViewingCandidate)));
+		}
+
+		if (fact.CandidateViewingOwnerPacketFactPlanRequest is { } candidateViewingOwner)
+		{
+			plans.Add(new PlayerKnownListPopulationPacketConstructionFactPlanAttachment(
+				PlayerKnownListPopulationPacketConstructionFactPlanDirection.CandidateViewingOwner,
+				candidateViewingOwner,
+				_factPlanService.Plan(candidateViewingOwner)));
+		}
+
+		return plans;
+	}
+
+	private static IReadOnlyDictionary<int, PlayerKnownListOperationSideEffectPacketConstructionFacts>? CreatePacketConstructionFacts(
+		IReadOnlyDictionary<int, PlayerKnownListOperationSideEffectPacketConstructionFacts>? suppliedFacts,
+		IReadOnlyList<PlayerKnownListPopulationPacketConstructionFactPlanAttachment> factPlans)
+	{
+		if (suppliedFacts is null && factPlans.Count == 0)
+			return null;
+
+		var factsByPlayerObjectId = suppliedFacts is null
+			? new Dictionary<int, PlayerKnownListOperationSideEffectPacketConstructionFacts>()
+			: new Dictionary<int, PlayerKnownListOperationSideEffectPacketConstructionFacts>(suppliedFacts);
+		foreach (var factPlan in factPlans)
+		{
+			if (factPlan.Plan.Facts is { } facts)
+				factsByPlayerObjectId.TryAdd(facts.SubjectPlayer.ObjectId, facts);
+		}
+
+		return factsByPlayerObjectId;
 	}
 }
