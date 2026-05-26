@@ -6,6 +6,7 @@ namespace Aion.GameServer.Services;
 
 public enum QuestFinishOperationAction
 {
+	BonusRewardInputAssembly,
 	RewardMutationPlaceholder,
 	RewardGroupCorrection,
 	ItemRewardProjection,
@@ -45,7 +46,8 @@ public sealed record QuestFinishOperationDescriptor(
 	QuestCompletionCallbackDescriptor? CompletionCallbackOperation = null,
 	QuestPersistenceOperationDescriptor? QuestPersistenceOperation = null,
 	NpcFactionPersistenceOperationDescriptor? NpcFactionPersistenceOperation = null,
-	QuestFinishRewardNonItemSource? RewardNonItemSource = null);
+	QuestFinishRewardNonItemSource? RewardNonItemSource = null,
+	QuestFinishBonusRewardInputAssemblyPlan? BonusRewardInputAssemblyPlan = null);
 
 public sealed record QuestFinishRewardSideEffectContext(
 	Player? Player,
@@ -81,7 +83,8 @@ public static class QuestFinishOperationPlanService
 		QuestCompletionCallbackPlan? callbackPlan = null,
 		QuestPersistencePlan? questPersistencePlan = null,
 		NpcFactionPersistencePlan? npcFactionPersistencePlan = null,
-		QuestFinishRewardSideEffectContext? rewardSideEffectContext = null)
+		QuestFinishRewardSideEffectContext? rewardSideEffectContext = null,
+		QuestFinishBonusRewardInputAssemblyPlan? bonusRewardInputAssemblyPlan = null)
 	{
 		var guard = QuestFinishStateMutationService.ApplyRewardCompletion(questState, template, now, options);
 		if (!guard.Applied)
@@ -96,6 +99,16 @@ public static class QuestFinishOperationPlanService
 		var descriptors = new List<QuestFinishOperationDescriptor>();
 		var nextOrder = 1;
 		var stateInput = questState!;
+
+		if (bonusRewardInputAssemblyPlan is not null)
+		{
+			descriptors.Add(new QuestFinishOperationDescriptor(
+				nextOrder++,
+				QuestFinishOperationAction.BonusRewardInputAssembly,
+				bonusRewardInputAssemblyPlan.JavaSource,
+				IsLive: false,
+				BonusRewardInputAssemblyPlan: bonusRewardInputAssemblyPlan));
+		}
 
 		if (rewardProjection is null)
 		{

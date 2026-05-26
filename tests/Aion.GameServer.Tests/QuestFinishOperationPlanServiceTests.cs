@@ -1027,6 +1027,44 @@ public sealed class QuestFinishOperationPlanServiceTests
 	}
 
 	[Fact]
+	public void CreatePlan_ComposesOptionalBonusInputAssemblyDescriptorWithoutInvokingAdapter()
+	{
+		var rewardProjection = new QuestFinishRewardTemplateProjection(
+			HasItemRewards: true,
+			ItemProjection: new QuestFinishRewardItemTemplateProjection(
+				HasBonus: true,
+				BonusProjection: new QuestFinishRewardBonusTemplateProjection(
+					"MOVIE",
+					0,
+					QuestFinishRewardBonusSupportStatus.SilentNoOpInJavaBonusService)));
+		var bonusAssemblyPlan = QuestFinishBonusRewardInputAssemblyPlanService.CreatePlan(
+			new QuestFinishBonusRewardInputAssemblyRequest(
+				rewardProjection,
+				new NearbyQuestTemplateSummary(80016),
+				new PlayerQuestState(80016, "REWARD", QuestVars: 0, Flags: 0, CompleteCount: 0),
+				new Player { Race = "ELYOS" }));
+
+		var plan = QuestFinishOperationPlanService.CreatePlan(
+			new PlayerQuestState(80016, "REWARD", QuestVars: 0, Flags: 0, CompleteCount: 0),
+			new NearbyQuestTemplateSummary(80016),
+			PlayerNpcFactionsSnapshot.Empty,
+			new DateTimeOffset(2026, 5, 25, 8, 30, 0, TimeSpan.Zero),
+			CreateOptions("UTC"),
+			rewardProjection,
+			bonusRewardInputAssemblyPlan: bonusAssemblyPlan);
+
+		var descriptor = Assert.Single(
+			plan.Descriptors,
+			descriptor => descriptor.Action == QuestFinishOperationAction.BonusRewardInputAssembly);
+		Assert.Equal(1, descriptor.Order);
+		Assert.False(descriptor.IsLive);
+		Assert.Same(bonusAssemblyPlan, descriptor.BonusRewardInputAssemblyPlan);
+		Assert.True(descriptor.BonusRewardInputAssemblyPlan!.CreatedInput);
+		Assert.True(descriptor.Order < plan.Descriptors.Single(item => item.Action == QuestFinishOperationAction.ItemRewardPlaceholder).Order);
+		Assert.Contains(plan.Descriptors, descriptor => descriptor.Action == QuestFinishOperationAction.QuestStateMutation);
+	}
+
+	[Fact]
 	public void CreatePlan_KeepsNpcFactionNoOpDescriptorWhenJavaWouldReturnFromMissingActiveSlot()
 	{
 		var plan = QuestFinishOperationPlanService.CreatePlan(
