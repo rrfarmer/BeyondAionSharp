@@ -58,6 +58,20 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 		Assert.Empty(fixture.SentPackets);
 	}
 
+	[Fact]
+	public async Task HandleDialogSelectAsync_BuyTradeListRemainsDisabledAtSocketBoundaryUntilRoutingReady()
+	{
+		await using var fixture = await StorageExpansionDialogFixture.CreateAsync();
+		var player = CreatePlayer(targetObjectId: 9001);
+		var npc = CreateExpansionNpc(9001, templateId: 203060, dialogActionId: 2);
+		fixture.World.TryAddObject(npc.ObjectId, npc);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, CreateDialogSelect(npc.ObjectId, dialogActionId: 2));
+
+		Assert.Empty(fixture.SentPackets);
+		Assert.Equal(0, player.ResponseRequester.Count);
+	}
+
 	private static Player CreatePlayer(int targetObjectId)
 	{
 		return new Player
