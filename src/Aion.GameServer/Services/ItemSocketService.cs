@@ -1,4 +1,5 @@
 using System.Globalization;
+using Aion.GameServer.Configuration;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 
@@ -17,7 +18,9 @@ public static class ItemSocketService
 		int itemObjectId,
 		int slotNumber,
 		bool isFusionSocket,
-		ItemTemplateTable itemTemplates)
+		ItemTemplateTable itemTemplates,
+		GameServerPriceOptions? priceOptions = null,
+		PriceInfluenceRates? influenceRates = null)
 	{
 		// Java parity: services/item/ItemSocketService.removeManastone.
 		var inventoryItems = player.InventoryItems.ToList();
@@ -41,7 +44,12 @@ public static class ItemSocketService
 			candidate.ItemId == KinahItemId
 			&& candidate.Location == CubeStorageId
 			&& !candidate.IsEquipped);
-		if (kinahItem == null || kinahItem.Count < ManastoneRemovalPrice)
+		var removalPrice = PricesService.GetPriceForService(
+			ManastoneRemovalPrice,
+			player.Race,
+			priceOptions ?? new GameServerPriceOptions(),
+			influenceRates ?? new PriceInfluenceRates());
+		if (kinahItem == null || kinahItem.Count < removalPrice)
 			return ManastoneRemovalPlan.Failed(ManastoneRemovalFailure.NotEnoughKinah, itemName);
 
 		var itemUpdate = CopyInventoryItem(item);
@@ -50,7 +58,7 @@ public static class ItemSocketService
 		else
 			itemUpdate.ManaStones = item.ManaStones.Where(stone => stone.Slot != slotNumber).OrderBy(stone => stone.Slot).ToArray();
 
-		var kinahUpdate = CopyInventoryItem(kinahItem, count: kinahItem.Count - ManastoneRemovalPrice);
+		var kinahUpdate = CopyInventoryItem(kinahItem, count: kinahItem.Count - removalPrice);
 		ReplaceInventoryItem(inventoryItems, itemUpdate);
 		ReplaceInventoryItem(inventoryItems, kinahUpdate);
 
@@ -61,7 +69,8 @@ public static class ItemSocketService
 			itemUpdate,
 			kinahUpdate,
 			slotNumber,
-			isFusionSocket ? 2 : 0);
+			isFusionSocket ? 2 : 0,
+			removalPrice);
 	}
 
 	public static GodstoneSocketPlan CreateSocketGodstonePlan(
@@ -356,7 +365,8 @@ public sealed record ManastoneRemovalPlan(
 	InventoryItem? ItemUpdate,
 	InventoryItem? KinahItemUpdate,
 	int RemovedSlot,
-	int RemovedCategory)
+	int RemovedCategory,
+	long RemovalPrice)
 {
 	public bool Succeeded => Failure == ManastoneRemovalFailure.None;
 
@@ -369,7 +379,8 @@ public sealed record ManastoneRemovalPlan(
 			null,
 			null,
 			RemovedSlot: 0,
-			RemovedCategory: 0);
+			RemovedCategory: 0,
+			RemovalPrice: 0);
 	}
 }
 

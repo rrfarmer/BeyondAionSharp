@@ -1,3 +1,4 @@
+using Aion.GameServer.Configuration;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Services;
@@ -32,11 +33,42 @@ public class ItemSocketServiceTests
 		Assert.True(plan.Succeeded);
 		Assert.Equal(0, plan.RemovedCategory);
 		Assert.Equal(2, plan.RemovedSlot);
+		Assert.Equal(650, plan.RemovalPrice);
 		Assert.Equal(350, plan.KinahItemUpdate?.Count);
 		var itemUpdate = plan.ItemUpdate;
 		Assert.NotNull(itemUpdate);
 		Assert.Equal([0], itemUpdate.ManaStones.Select(stone => stone.Slot).ToArray());
 		Assert.Equal([0], plan.InventoryItems.Single(item => item.ObjectId == 1001).ManaStones.Select(stone => stone.Slot).ToArray());
+	}
+
+	[Fact]
+	public void RemoveManastone_UsesJavaPricesServiceForKinahFee()
+	{
+		var player = CreatePlayer();
+		player.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 1, ItemId = KinahItemId, Count = 1_000, Location = 0 },
+			CreateSword(1001, manaStones: [new ItemStoneSocket(ManastoneItemId, 0)]),
+		];
+		var priceOptions = new GameServerPriceOptions
+		{
+			DefaultPrices = 110,
+			DefaultModifier = 90,
+			DefaultTaxes = 105,
+		};
+
+		var plan = ItemSocketService.CreateRemoveManastonePlan(
+			player,
+			1001,
+			slotNumber: 0,
+			isFusionSocket: false,
+			CreateItemTemplates(),
+			priceOptions,
+			new PriceInfluenceRates(Elyos: 0.3f, Asmodians: 0.5f));
+
+		Assert.True(plan.Succeeded);
+		Assert.Equal(772, plan.RemovalPrice);
+		Assert.Equal(228, plan.KinahItemUpdate?.Count);
 	}
 
 	[Fact]
