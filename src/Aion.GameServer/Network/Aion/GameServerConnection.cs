@@ -1666,9 +1666,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
-		if (packet.DialogActionId == CmDialogSelect.Buy)
+		if (packet.DialogActionId is CmDialogSelect.Buy or CmDialogSelect.TradeIn)
 		{
-			var plan = CreateNonLiveBuyDialogSelectPlan(player, packet);
+			var plan = CreateNonLiveTradeDialogSelectPlan(player, packet);
 			if (plan != null)
 				_dialogSelectPlanObserver?.Invoke(plan);
 			return;
@@ -1690,11 +1690,11 @@ public sealed class GameServerConnection : BaseClientConnection
 		await StartChargingEquippedItemsAsync(player, packet.TargetObjectId, chargeWay);
 	}
 
-	private QuestDialogNpcTargetBranchInputAssemblyPlan? CreateNonLiveBuyDialogSelectPlan(Player player, CmDialogSelect packet)
+	private QuestDialogNpcTargetBranchInputAssemblyPlan? CreateNonLiveTradeDialogSelectPlan(Player player, CmDialogSelect packet)
 	{
 		// Java parity breadcrumb: CM_DIALOG_SELECT.runImpl -> NpcController.onDialogSelect ->
-		// DialogService.onDialogSelect BUY. This boundary intentionally remains non-sending
-		// until SM_TRADELIST bytes, no-sell messages, AI dispatch, and runtime price/legion facts are live.
+		// DialogService.onDialogSelect BUY/TRADE_IN. This boundary intentionally remains non-sending
+		// until SM_TRADELIST/SM_TRADE_IN_LIST bytes, no-sell messages, AI dispatch, and runtime facts are live.
 		if (_world == null
 			|| (_isKnownNpc?.Invoke(player, packet.TargetObjectId) == false)
 			|| !_world.TryGetObject(packet.TargetObjectId, out var target)
@@ -1719,7 +1719,9 @@ public sealed class GameServerConnection : BaseClientConnection
 					player.LegionId,
 					VendorBuyModifier: _options.Prices.VendorBuyModifier));
 		var tradeListFactInput = tradeRuntimeFactPlan?.ToTradeListFactInput(npc.TemplateId);
-		var limitedItemFactInput = tradeRuntimeFactPlan?.ToLimitedItemFactInput(npc.TemplateId);
+		var limitedItemFactInput = packet.DialogActionId == CmDialogSelect.Buy
+			? tradeRuntimeFactPlan?.ToLimitedItemFactInput(npc.TemplateId)
+			: null;
 
 		return QuestDialogNpcTargetBranchInputAssemblyPlanService.CreatePlan(
 			new QuestDialogNpcTargetBranchRuntimeSnapshot(

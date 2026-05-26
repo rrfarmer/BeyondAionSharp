@@ -199,6 +199,39 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 		Assert.False(servicePlan.IsLive);
 	}
 
+	[Fact]
+	public async Task HandleDialogSelectAsync_TradeInListRemainsDisabledAtSocketBoundaryUntilRoutingReady()
+	{
+		await using var fixture = await StorageExpansionDialogFixture.CreateAsync();
+		var player = CreatePlayer(targetObjectId: 9006);
+		var npc = CreateExpansionNpc(9006, templateId: 205315, dialogActionId: CmDialogSelect.TradeIn);
+		fixture.World.TryAddObject(npc.ObjectId, npc);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, CreateDialogSelect(npc.ObjectId, CmDialogSelect.TradeIn));
+
+		Assert.Empty(fixture.SentPackets);
+		Assert.Equal(0, player.ResponseRequester.Count);
+		var plan = Assert.Single(fixture.DialogSelectPlans);
+		Assert.Equal(QuestDialogNpcTargetBranchStatus.DispatchController, plan.BranchPlan.Status);
+		Assert.Equal(NpcDialogControllerDispatchStatus.DialogServiceFallback, plan.ControllerDispatchPlan?.Status);
+		Assert.Equal(NpcDialogServiceSelectStatus.TradeInList, plan.ControllerDispatchPlan?.DialogServicePlan?.Status);
+		var tradeListFacts = Assert.IsType<NpcDialogTradeListFactAdapterPlan>(plan.TradeListFactAdapterPlan);
+		Assert.True(tradeListFacts.Facts.HasTradeInList);
+		Assert.Null(plan.TradeListPacketPlan);
+		var packetPlan = Assert.IsType<SmTradeInListPacketPlan>(plan.TradeInListPacketPlan);
+		Assert.Equal(SmTradeInListPacketPlanStatus.Ready, packetPlan.Status);
+		Assert.Equal(205315, packetPlan.NpcId);
+		Assert.Equal(1, packetPlan.TradeNpcTypeIndex);
+		Assert.Equal([39], packetPlan.TradeTabIds);
+		Assert.Equal(100, packetPlan.BuyPriceModifier);
+		Assert.False(packetPlan.IsLive);
+		var descriptor = Assert.Single(plan.ControllerDispatchPlan!.DialogServicePlan!.Descriptors);
+		Assert.Equal(NpcDialogServiceDescriptorKind.TradeInListPacket, descriptor.Kind);
+		Assert.Same(packetPlan, descriptor.TradeInListPacketPlan);
+		Assert.Equal(100, descriptor.PriceModifier);
+		Assert.False(plan.ControllerDispatchPlan.DialogServicePlan.IsLive);
+	}
+
 	private static Player CreatePlayer(int targetObjectId)
 	{
 		return new Player
@@ -302,6 +335,9 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 						<tradelist_template npc_id="203063" npc_type="NORMAL" sell_price_rate="80">
 							<tradelist id="131" />
 						</tradelist_template>
+						<trade_in_list_template npc_id="205315" npc_type="NORMAL">
+							<tradelist id="39" />
+						</trade_in_list_template>
 					</npc_trade_list>
 					<goodslists>
 						<list id="129">
