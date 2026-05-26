@@ -1476,17 +1476,100 @@ public sealed class StaticDataLoadingTests
 			staticData.GoodsLists.GoodsLists
 				.SelectMany(goodsList => goodsList.ItemSummaries)
 				.Count(item => item.IsLimitedItem));
+
+		AssertTradeListTemplateMatchesSource(
+			GetSingleByAttribute(tradeListElements, "npc_id", 203060),
+			staticData.TradeLists.GetTradeListTemplate(203060));
+		AssertTradeListTemplateMatchesSource(
+			GetSingleByAttribute(tradeInListElements, "npc_id", 205315),
+			staticData.TradeLists.GetTradeInListTemplate(205315));
+		AssertTradeListTemplateMatchesSource(
+			GetSingleByAttribute(purchaseListElements, "npc_id", 206352),
+			staticData.TradeLists.GetPurchaseTemplate(206352));
+
+		AssertGoodsListMatchesSource(
+			GetSingleByAttribute(ordinaryGoodsLists, "id", 129),
+			staticData.GoodsLists.GetGoodsListById(129));
+		AssertGoodsListMatchesSource(
+			GetSingleByAttribute(ordinaryGoodsLists, "id", 5002),
+			staticData.GoodsLists.GetGoodsListById(5002));
+		AssertGoodsListMatchesSource(
+			GetSingleByAttribute(tradeInGoodsLists, "id", 39),
+			staticData.GoodsLists.GetGoodsInListById(39));
+		AssertGoodsListMatchesSource(
+			GetSingleByAttribute(purchaseGoodsLists, "id", 1),
+			staticData.GoodsLists.GetGoodsPurchaseListById(1));
 	}
 
 	private static int ReadNpcId(XElement element) => ReadRequiredIntAttribute(element, "npc_id");
 
 	private static int ReadId(XElement element) => ReadRequiredIntAttribute(element, "id");
 
+	private static XElement GetSingleByAttribute(IEnumerable<XElement> elements, string attributeName, int value)
+	{
+		return Assert.Single(elements, element => ReadRequiredIntAttribute(element, attributeName) == value);
+	}
+
+	private static void AssertTradeListTemplateMatchesSource(
+		XElement sourceTemplate,
+		TradeListTemplateSummary? actualTemplate)
+	{
+		Assert.NotNull(actualTemplate);
+		Assert.Equal(ReadRequiredIntAttribute(sourceTemplate, "npc_id"), actualTemplate.NpcId);
+		Assert.Equal(ReadOptionalStringAttribute(sourceTemplate, "npc_type", "NORMAL"), actualTemplate.NpcType);
+		Assert.Equal(ReadOptionalIntAttribute(sourceTemplate, "sell_price_rate", 100), actualTemplate.SellPriceRate);
+		Assert.Equal(ReadOptionalIntAttribute(sourceTemplate, "sell_price_rate2", 100), actualTemplate.SellPriceRate2);
+		Assert.Equal(ReadOptionalIntAttribute(sourceTemplate, "ap_sell_price_rate2", 100), actualTemplate.ApSellPriceRate2);
+		Assert.Equal(ReadOptionalIntAttribute(sourceTemplate, "buy_price_rate", 0), actualTemplate.BuyPriceRate);
+		Assert.Equal(ReadOptionalIntAttribute(sourceTemplate, "save_count", 0), actualTemplate.SaveCount);
+		Assert.Equal(
+			sourceTemplate.Elements("tradelist").Select(ReadId).ToArray(),
+			actualTemplate.GoodsListIds);
+	}
+
+	private static void AssertGoodsListMatchesSource(XElement sourceList, GoodsListSummary? actualList)
+	{
+		Assert.NotNull(actualList);
+		Assert.Equal(ReadRequiredIntAttribute(sourceList, "id"), actualList.Id);
+		Assert.Equal(ReadOptionalIntAttribute(sourceList, "legion_lvl", 0), actualList.LegionLevel);
+		Assert.Equal(sourceList.Element("salestime")?.Value, actualList.SalesTime);
+		Assert.Equal(sourceList.Elements("item").Count(), actualList.ItemSummaries.Count);
+
+		foreach (var (sourceItem, actualItem) in sourceList.Elements("item").Zip(actualList.ItemSummaries))
+		{
+			Assert.Equal(ReadRequiredIntAttribute(sourceItem, "id"), actualItem.Id);
+			Assert.Equal(ReadNullableIntAttribute(sourceItem, "sell_limit"), actualItem.SellLimit);
+			Assert.Equal(ReadNullableIntAttribute(sourceItem, "buy_limit"), actualItem.BuyLimit);
+			Assert.Equal(actualItem.SellLimit.HasValue && actualItem.BuyLimit.HasValue, actualItem.IsLimitedItem);
+		}
+	}
+
 	private static int ReadRequiredIntAttribute(XElement element, string attributeName)
 	{
 		var attribute = element.Attribute(attributeName);
 		Assert.NotNull(attribute);
 		return int.Parse(attribute.Value, System.Globalization.CultureInfo.InvariantCulture);
+	}
+
+	private static int ReadOptionalIntAttribute(XElement element, string attributeName, int defaultValue)
+	{
+		var attribute = element.Attribute(attributeName);
+		return attribute == null
+			? defaultValue
+			: int.Parse(attribute.Value, System.Globalization.CultureInfo.InvariantCulture);
+	}
+
+	private static int? ReadNullableIntAttribute(XElement element, string attributeName)
+	{
+		var attribute = element.Attribute(attributeName);
+		return attribute == null
+			? null
+			: int.Parse(attribute.Value, System.Globalization.CultureInfo.InvariantCulture);
+	}
+
+	private static string ReadOptionalStringAttribute(XElement element, string attributeName, string defaultValue)
+	{
+		return element.Attribute(attributeName)?.Value ?? defaultValue;
 	}
 
 	private static FlightZoneSummary CreateFlightZone(int flags)
