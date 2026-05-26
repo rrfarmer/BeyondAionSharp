@@ -3975,6 +3975,42 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmAbnormalEffect_PlayerWritesEffectorAndFiltersBySlotLikeJava()
+	{
+		var player = new Player { ObjectId = 1001 };
+		var effects = new[]
+		{
+			new SmAbnormalEffectEntry(2001, 3001, 4, TargetSlotId: 2, TargetSlotOrdinal: 1, RemainingTimeToDisplayMillis: 45000),
+			new SmAbnormalEffectEntry(2002, 3002, 5, TargetSlotId: 4, TargetSlotOrdinal: 2, RemainingTimeToDisplayMillis: 90000),
+		};
+
+		var payload = SerializeUnencryptedPayload(new SmAbnormalEffect(player, abnormals: 0x01020304, effects, slots: 2));
+
+		Assert.Equal(
+			Convert.FromHexString("E903000002000000000403020100000000020100D1070000B90B0401C8AF0000"),
+			payload);
+	}
+
+	[Fact]
+	public void SmAbnormalEffect_CreatureOmitsEffectorLikeJava()
+	{
+		var effects = new[]
+		{
+			new SmAbnormalEffectEntry(2001, 3001, 4, TargetSlotId: 2, TargetSlotOrdinal: 1, RemainingTimeToDisplayMillis: 45000),
+		};
+
+		var payload = SerializeUnencryptedPayload(new SmAbnormalEffect(
+			effectedObjectId: 1001,
+			effectedIsPlayer: false,
+			abnormals: 0x01020304,
+			effects));
+
+		Assert.Equal(
+			Convert.FromHexString("E9030000010000000004030201000000007F0100B90B0401C8AF0000"),
+			payload);
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesL2AuthLoginCheck()
 	{
 		var payload = CreateClientPayload(

@@ -135,12 +135,12 @@ public sealed class PlayerKnownListPlayerSideEffectPlanService
 			descriptors.Add(new PlayerKnownListPlayerSideEffectDescriptor(
 				PlayerKnownListPlayerSideEffectKind.SmAbnormalEffect,
 				"SM_ABNORMAL_EFFECT",
-				null,
-				PlayerKnownListPlayerSideEffectCSharpSupport.Missing,
+				"SmAbnormalEffect",
+				PlayerKnownListPlayerSideEffectCSharpSupport.Partial,
 				context.ViewerPlayerObjectId,
 				context.SeenPlayerObjectId,
 				"com.aionemu.gameserver.controllers.PlayerController.see -> if (!creature.getEffectController().isEmpty()) new SM_ABNORMAL_EFFECT(creature)",
-				Notes: "No C# SmAbnormalEffect packet class exists yet; Java sends this after the player-specific see packets."));
+				Notes: "C# packet serializer exists for supplied effect facts; descriptor does not yet hydrate live EffectController data or send packets."));
 		}
 
 		return CreatePlan(

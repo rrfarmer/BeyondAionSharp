@@ -77,7 +77,9 @@ public sealed class PlayerKnownListPlayerSideEffectPlanServiceTests
 			],
 			plan.Descriptors.Select(descriptor => descriptor.Kind));
 		Assert.Equal("SM_ABNORMAL_EFFECT", plan.Descriptors[4].JavaPacketName);
-		Assert.Equal(PlayerKnownListPlayerSideEffectCSharpSupport.Missing, plan.Descriptors[4].CSharpSupport);
+		Assert.Equal("SmAbnormalEffect", plan.Descriptors[4].CSharpPacketTypeName);
+		Assert.Equal(PlayerKnownListPlayerSideEffectCSharpSupport.Partial, plan.Descriptors[4].CSharpSupport);
+		Assert.Contains("supplied effect facts", plan.Descriptors[4].Notes);
 	}
 
 	[Fact]
