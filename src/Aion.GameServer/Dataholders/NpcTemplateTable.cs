@@ -5,12 +5,18 @@ namespace Aion.GameServer.Dataholders;
 public sealed class NpcTemplateTable
 {
 	private readonly IReadOnlyDictionary<int, NpcTemplateSummary> _templatesById;
+	private readonly HashSet<int> _functionDialogIds;
 
 	public NpcTemplateTable(IReadOnlyList<NpcTemplateSummary> templates)
 	{
 		Templates = templates;
 		_templatesById = new ReadOnlyDictionary<int, NpcTemplateSummary>(
 			templates.ToDictionary(template => template.TemplateId));
+		// Java parity: dataholders/NpcData.init aggregates all TalkInfo.funcDialogIds
+		// into functionDialogIds for NpcData.isFunctionDialog.
+		_functionDialogIds = templates
+			.SelectMany(template => template.FunctionDialogIds ?? [])
+			.ToHashSet();
 	}
 
 	public IReadOnlyList<NpcTemplateSummary> Templates { get; }
@@ -20,6 +26,11 @@ public sealed class NpcTemplateTable
 	public NpcTemplateSummary? GetNpcTemplate(int npcId)
 	{
 		return _templatesById.GetValueOrDefault(npcId);
+	}
+
+	public bool IsFunctionDialog(int dialogActionId)
+	{
+		return _functionDialogIds.Contains(dialogActionId);
 	}
 }
 
