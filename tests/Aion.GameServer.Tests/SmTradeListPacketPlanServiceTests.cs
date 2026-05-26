@@ -1,4 +1,6 @@
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Network.Aion;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 
 namespace Aion.GameServer.Tests;
@@ -89,8 +91,59 @@ public sealed class SmTradeListPacketPlanServiceTests
 		Assert.False(plan.IsLive);
 	}
 
+	[Fact]
+	public void SmTradeList_WritesJavaPayloadOrderFromReadyPlan()
+	{
+		var plan = SmTradeListPacketPlanService.CreatePlan(
+			new SmTradeListPacketPlanInput(
+				TargetObjectId: 9001,
+				PlayerObjectId: 42,
+				TradeList: new TradeListTemplateSummary(
+					203060,
+					[129, 130],
+					NpcType: "NORMAL"),
+				GoodsLists: CreateGoodsLists(
+					new GoodsListSummary(129),
+					new GoodsListSummary(130)),
+				PlayerLegionLevel: 0,
+				NpcCanSell: true,
+				NpcCanBuy: false,
+				BuyPriceModifier: 80,
+				LimitedItems:
+				[
+					new SmTradeListLimitedItemSummary(186000001, BuyCount: 2, SellLimit: 5),
+				]));
+
+		Assert.Equal(SmTradeList.PacketOpCode, new SmTradeList(plan).OpCode);
+		Assert.Equal(
+			Convert.FromHexString("2923000001500000006400000001000200810000008200000001008122160B02000500"),
+			SerializeUnencryptedPayload(new SmTradeList(plan)));
+	}
+
+	[Fact]
+	public void SmTradeList_RejectsUnknownTradeNpcTypePlans()
+	{
+		var plan = SmTradeListPacketPlanService.CreatePlan(
+			new SmTradeListPacketPlanInput(
+				TargetObjectId: 9001,
+				PlayerObjectId: 42,
+				TradeList: new TradeListTemplateSummary(203060, [129], NpcType: "CUSTOM"),
+				GoodsLists: CreateGoodsLists(new GoodsListSummary(129))));
+
+		var ex = Assert.Throws<ArgumentException>(() => new SmTradeList(plan));
+		Assert.Contains("ready", ex.Message, StringComparison.Ordinal);
+	}
+
 	private static GoodsListTable CreateGoodsLists(params GoodsListSummary[] goodsLists)
 	{
 		return new GoodsListTable(goodsLists, Array.Empty<GoodsListSummary>(), Array.Empty<GoodsListSummary>());
+	}
+
+	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
+	{
+		var crypt = new GameCrypt(() => 0x01020304);
+		crypt.EnableKey();
+		var frame = packet.SerializeFrame(crypt);
+		return frame[7..];
 	}
 }

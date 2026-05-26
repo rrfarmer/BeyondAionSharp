@@ -207,6 +207,7 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.CannotGetLoreItem("item"), 1300422, "item");
 		AssertSystemMessage(SmSystemMessage.LootFailOnLooting(), 1300829);
 		AssertSystemMessage(SmSystemMessage.LootNoRight(), 901338);
+		AssertSystemMessage(SmSystemMessage.BuySellHeDoesNotSellItem("Merchant"), 1300336, "Merchant");
 		AssertSystemMessage(SmSystemMessage.SkillNotEnoughDp(), 1300016);
 		AssertSystemMessage(SmSystemMessage.SkillNotReady(), 1300021);
 		AssertSystemMessage(SmSystemMessage.SkillCanceled(), 1300023);

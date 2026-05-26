@@ -58,6 +58,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(901338);
 	}
 
+	public static SmSystemMessage BuySellHeDoesNotSellItem(string npcName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_BUY_SELL_HE_DOES_NOT_SELL_ITEM(String) -> 1300336.
+		return new SmSystemMessage(1300336, npcName);
+	}
+
 	public static SmSystemMessage PartyEnteredParty()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_PARTY_ENTERED_PARTY.
