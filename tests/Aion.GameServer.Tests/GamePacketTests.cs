@@ -914,6 +914,22 @@ public class GamePacketTests
 		Assert.Equal(0x19, SmInventoryUpdateItem.IncreaseItemCollect);
 		Assert.Equal(0x32, SmInventoryUpdateItem.IncreaseKinahQuest);
 
+		var kinahTemplate = new ItemTemplateSummary(182400001, "Kinah", 0, 0, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0);
+		var kinahUpdatePayload = SerializeUnencryptedPayload(
+			new SmInventoryUpdateItem(
+				new InventoryItem { ObjectId = 1824, ItemId = 182400001, Count = 0, Location = 0 },
+				kinahTemplate,
+				SmInventoryUpdateItem.DecreaseKinahFly));
+		using var kinahUpdateReader = new PacketBuffer(kinahUpdatePayload);
+		Assert.Equal(1824, kinahUpdateReader.ReadD());
+		Assert.Equal(string.Empty, kinahUpdateReader.ReadS());
+		var kinahUpdateBlobSize = kinahUpdateReader.ReadH();
+		Assert.True(kinahUpdateBlobSize > 0);
+		kinahUpdateReader.ReadB(kinahUpdateBlobSize);
+		Assert.Equal(0x4B, SmInventoryUpdateItem.DecreaseKinahFly);
+		Assert.Equal(SmInventoryUpdateItem.DecreaseKinahFly, kinahUpdateReader.ReadH());
+		Assert.Equal(0, kinahUpdateReader.Remaining);
+
 		var chargeUpdateItem = new InventoryItem
 		{
 			ObjectId = 91,
