@@ -278,12 +278,20 @@ public sealed class QuestFinishRewardPlanServiceTests
 			CompleteCount: 0,
 			RewardRepeatCount: 1,
 			RewardGroup: null);
-		var template = new QuestFinishRewardItemTemplateProjection(HasBonus: true);
+		var template = new QuestFinishRewardItemTemplateProjection(
+			HasBonus: true,
+			BonusProjection: new QuestFinishRewardBonusTemplateProjection(
+				"FOOD",
+				Level: 20,
+				SupportStatus: QuestFinishRewardBonusSupportStatus.SupportedByJavaBonusService));
 
 		var plan = QuestFinishRewardPlanService.CreateRewardItemProjection(input, template);
 
 		var warning = Assert.Single(plan.Warnings);
 		Assert.Equal(QuestFinishRewardItemProjectionWarning.BonusHandlerNotProjected, warning.Warning);
+		Assert.Equal("FOOD", warning.BonusType);
+		Assert.Equal(20, warning.BonusLevel);
+		Assert.Equal(QuestFinishRewardBonusSupportStatus.SupportedByJavaBonusService, warning.BonusSupportStatus);
 		Assert.Empty(plan.Items);
 	}
 

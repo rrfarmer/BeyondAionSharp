@@ -268,6 +268,54 @@ public sealed class QuestFinishStaticRewardProjectionCompositionTests
 	}
 
 	[Fact]
+	public void StaticBonusRewardProjection_ComposesNonLiveBonusWarningWithoutRewardItems()
+	{
+		const string xml = """
+			<quests>
+				<quest id="1009" can_report="true" category="QUEST">
+					<bonus level="20" type="FOOD" />
+				</quest>
+			</quests>
+			""";
+		var template = new NearbyQuestTemplateXmlExtractor().Extract(xml).Single();
+		var rewardProjection = new QuestFinishRewardTemplateXmlProjectionExtractor()
+			.ExtractDefaultRegularNonItemProjections(xml)[1009] with
+		{
+			DialogActionId = 8
+		};
+
+		var operationPlan = QuestFinishOperationPlanService.CreatePlan(
+			new PlayerQuestState(1009, "REWARD", QuestVars: 0x12, Flags: 0, CompleteCount: 0),
+			template,
+			PlayerNpcFactionsSnapshot.Empty,
+			new DateTimeOffset(2026, 5, 26, 13, 0, 0, TimeSpan.Zero),
+			CreateOptions("UTC"),
+			rewardProjection);
+
+		Assert.True(rewardProjection.ItemProjection?.HasBonus);
+		Assert.Equal("FOOD", rewardProjection.ItemProjection?.BonusProjection?.BonusType);
+		Assert.Equal(20, rewardProjection.ItemProjection?.BonusProjection?.Level);
+		Assert.Equal(
+			QuestFinishRewardBonusSupportStatus.SupportedByJavaBonusService,
+			rewardProjection.ItemProjection?.BonusProjection?.SupportStatus);
+		Assert.True(operationPlan.Applied);
+		Assert.DoesNotContain(operationPlan.Descriptors, descriptor => descriptor.Action == QuestFinishOperationAction.ItemRewardProjection);
+		var warning = Assert.Single(
+			operationPlan.Descriptors,
+			descriptor => descriptor.Action == QuestFinishOperationAction.ItemRewardProjectionWarning);
+		Assert.Equal(QuestFinishRewardItemProjectionWarning.BonusHandlerNotProjected, warning.RewardItemProjectionWarning?.Warning);
+		Assert.Equal("FOOD", warning.RewardItemProjectionWarning?.BonusType);
+		Assert.Equal(20, warning.RewardItemProjectionWarning?.BonusLevel);
+		Assert.Equal(
+			QuestFinishRewardBonusSupportStatus.SupportedByJavaBonusService,
+			warning.RewardItemProjectionWarning?.BonusSupportStatus);
+		Assert.Contains(operationPlan.Descriptors, descriptor => descriptor.Action == QuestFinishOperationAction.ItemRewardPlaceholder);
+		Assert.True(
+			IndexOf(operationPlan.Descriptors, QuestFinishOperationAction.ItemRewardProjectionWarning)
+			< IndexOf(operationPlan.Descriptors, QuestFinishOperationAction.ItemRewardPlaceholder));
+	}
+
+	[Fact]
 	public void StaticExtendedItemRewardProjection_ComposesOnLastRepeatBeforeRegularRewardsWithoutLiveSideEffects()
 	{
 		const string xml = """

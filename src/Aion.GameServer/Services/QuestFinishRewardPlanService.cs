@@ -40,6 +40,13 @@ public enum QuestFinishRewardItemProjectionWarning
 	BonusHandlerNotProjected,
 }
 
+public enum QuestFinishRewardBonusSupportStatus
+{
+	SupportedByJavaBonusService,
+	SilentNoOpInJavaBonusService,
+	UnsupportedByJavaBonusService,
+}
+
 public enum QuestFinishRewardNonItemAction
 {
 	Kinah,
@@ -68,6 +75,11 @@ public sealed record QuestFinishRewardWorkItem(int ItemId, long Count = 1);
 
 public sealed record QuestFinishRewardItem(int ItemId, long Count = 1);
 
+public sealed record QuestFinishRewardBonusTemplateProjection(
+	string BonusType,
+	int Level = 0,
+	QuestFinishRewardBonusSupportStatus SupportStatus = QuestFinishRewardBonusSupportStatus.UnsupportedByJavaBonusService);
+
 public sealed record QuestFinishRewardGroupProjection(
 	int RewardGroupIndex,
 	IReadOnlyList<QuestFinishRewardItem>? FixedRewardItems = null,
@@ -92,7 +104,8 @@ public sealed record QuestFinishRewardItemTemplateProjection(
 	IReadOnlyDictionary<string, IReadOnlyList<QuestFinishRewardItem>>? ClassSelectableRewards = null,
 	bool SingleTimeClassReward = false,
 	bool ClassRewardOnEveryRepeat = false,
-	bool HasBonus = false)
+	bool HasBonus = false,
+	QuestFinishRewardBonusTemplateProjection? BonusProjection = null)
 {
 	public IReadOnlyList<QuestFinishRewardGroupProjection> RewardGroups { get; init; } = RewardGroups ?? [];
 	public IReadOnlyDictionary<string, IReadOnlyList<QuestFinishRewardItem>> ClassSelectableRewards { get; init; } =
@@ -115,7 +128,10 @@ public sealed record QuestFinishRewardItemProjectionWarningDescriptor(
 	string JavaSource,
 	int? RewardGroupIndex = null,
 	int? SelectableIndex = null,
-	string? PlayerClass = null);
+	string? PlayerClass = null,
+	string? BonusType = null,
+	int? BonusLevel = null,
+	QuestFinishRewardBonusSupportStatus? BonusSupportStatus = null);
 
 public sealed record QuestFinishRewardItemProjectionPlan(
 	IReadOnlyList<QuestFinishRewardItemProjectionDescriptor> Items,
@@ -458,7 +474,10 @@ public static class QuestFinishRewardPlanService
 		{
 			warnings.Add(new QuestFinishRewardItemProjectionWarningDescriptor(
 				QuestFinishRewardItemProjectionWarning.BonusHandlerNotProjected,
-				RewardItemJavaSource));
+				RewardItemJavaSource,
+				BonusType: template.BonusProjection?.BonusType,
+				BonusLevel: template.BonusProjection?.Level,
+				BonusSupportStatus: template.BonusProjection?.SupportStatus));
 		}
 
 		return new QuestFinishRewardItemProjectionPlan(descriptors, warnings);

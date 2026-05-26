@@ -11,7 +11,7 @@ public sealed class QuestFinishRewardTemplateXmlProjectionExtractorTests
 	private const int ExpectedRealDataDefaultRegularChallengeTaskTemplates = 174;
 	private const long ExpectedRealDataDefaultRegularKinahTotal = 3425802649;
 	private const long ExpectedRealDataDefaultRegularExperienceTotal = 20544638479;
-	private const int ExpectedRealDataAnyItemRewardTemplates = 5643;
+	private const int ExpectedRealDataAnyItemRewardTemplates = 6357;
 	private const int ExpectedRealDataDefaultRegularItemRewardTemplates = 5527;
 	private const int ExpectedRealDataDefaultRegularFixedRewardItemCount = 6182;
 	private const int ExpectedRealDataDefaultRegularSelectableRewardItemCount = 5502;
@@ -25,6 +25,7 @@ public sealed class QuestFinishRewardTemplateXmlProjectionExtractorTests
 	private const int ExpectedRealDataExtendedNonItemRewardTemplates = 82;
 	private const long ExpectedRealDataExtendedKinahTotal = 1560700;
 	private const int ExpectedRealDataExtendedTitleTemplates = 3;
+	private const int ExpectedRealDataBonusTemplates = 782;
 
 	[Fact]
 	public void ExtractDefaultRegularNonItemProjections_ReadsJavaRewardsAttributes()
@@ -167,6 +168,56 @@ public sealed class QuestFinishRewardTemplateXmlProjectionExtractorTests
 	}
 
 	[Fact]
+	public void CreateProjection_ReadsQuestBonusMetadataWithoutRewardItems()
+	{
+		var quest = XElement.Parse("""
+			<quest id="1001">
+				<bonus level="40" type="MANASTONE" />
+			</quest>
+			""");
+		var extractor = new QuestFinishRewardTemplateXmlProjectionExtractor();
+
+		var projection = extractor.CreateProjection(quest, rewardGroupIndex: 0);
+
+		Assert.True(projection.HasItemRewards);
+		var itemProjection = Assert.IsType<QuestFinishRewardItemTemplateProjection>(projection.ItemProjection);
+		Assert.True(itemProjection.HasBonus);
+		var bonus = Assert.IsType<QuestFinishRewardBonusTemplateProjection>(itemProjection.BonusProjection);
+		Assert.Equal("MANASTONE", bonus.BonusType);
+		Assert.Equal(40, bonus.Level);
+		Assert.Equal(QuestFinishRewardBonusSupportStatus.SupportedByJavaBonusService, bonus.SupportStatus);
+		Assert.Empty(itemProjection.RewardGroups);
+		Assert.Null(itemProjection.ExtendedRewards);
+		Assert.Empty(itemProjection.ClassSelectableRewards);
+	}
+
+	[Fact]
+	public void CreateProjection_ClassifiesUnsupportedAndSilentNoOpQuestBonusTypes()
+	{
+		var unsupportedQuest = XElement.Parse("""
+			<quest id="1001">
+				<bonus level="40" type="MAGICAL" />
+			</quest>
+			""");
+		var silentNoOpQuest = XElement.Parse("""
+			<quest id="1002">
+				<bonus type="MOVIE" />
+			</quest>
+			""");
+		var extractor = new QuestFinishRewardTemplateXmlProjectionExtractor();
+
+		var unsupportedProjection = extractor.CreateProjection(unsupportedQuest, rewardGroupIndex: 0);
+		var silentNoOpProjection = extractor.CreateProjection(silentNoOpQuest, rewardGroupIndex: 0);
+
+		Assert.Equal(
+			QuestFinishRewardBonusSupportStatus.UnsupportedByJavaBonusService,
+			unsupportedProjection.ItemProjection?.BonusProjection?.SupportStatus);
+		Assert.Equal(
+			QuestFinishRewardBonusSupportStatus.SilentNoOpInJavaBonusService,
+			silentNoOpProjection.ItemProjection?.BonusProjection?.SupportStatus);
+	}
+
+	[Fact]
 	public void CreateProjection_ReadsExtendedRewardItemsWithoutRegularRewardGroup()
 	{
 		var quest = XElement.Parse("""
@@ -296,6 +347,9 @@ public sealed class QuestFinishRewardTemplateXmlProjectionExtractorTests
 		Assert.Equal(
 			ExpectedRealDataSingleTimeClassRewardTemplates,
 			projections.Values.Count(projection => projection.ItemProjection?.SingleTimeClassReward == true));
+		Assert.Equal(
+			ExpectedRealDataBonusTemplates,
+			projections.Values.Count(projection => projection.ItemProjection?.HasBonus == true));
 		Assert.Equal(
 			ExpectedRealDataExtendedNonItemRewardTemplates,
 			projections.Values.Count(projection =>

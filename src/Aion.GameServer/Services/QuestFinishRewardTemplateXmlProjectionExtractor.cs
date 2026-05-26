@@ -4,6 +4,22 @@ namespace Aion.GameServer.Services;
 
 public sealed class QuestFinishRewardTemplateXmlProjectionExtractor
 {
+	private static readonly ISet<string> SupportedBonusTypes = new HashSet<string>(StringComparer.Ordinal)
+	{
+		"EVENTS",
+		"FOOD",
+		"MANASTONE",
+		"MEDICINE",
+		"MEDAL",
+		"TASK",
+	};
+
+	private static readonly ISet<string> SilentNoOpBonusTypes = new HashSet<string>(StringComparer.Ordinal)
+	{
+		"MOVIE",
+		"NONE",
+	};
+
 	private static readonly IReadOnlyDictionary<string, string> ClassSelectableRewardElements =
 		new Dictionary<string, string>(StringComparer.Ordinal)
 		{
@@ -80,11 +96,13 @@ public sealed class QuestFinishRewardTemplateXmlProjectionExtractor
 		IReadOnlyList<QuestFinishRewardItem> extendedFixedItems = extendedRewards is null ? [] : ReadQuestItems(extendedRewards, "reward_item");
 		IReadOnlyList<QuestFinishRewardItem> extendedSelectableItems = extendedRewards is null ? [] : ReadQuestItems(extendedRewards, "selectable_reward_item");
 		var classSelectableRewards = ReadClassSelectableRewards(quest);
+		var bonusProjection = CreateBonusProjection(quest);
 		if (fixedItems.Count == 0
 			&& selectableItems.Count == 0
 			&& extendedFixedItems.Count == 0
 			&& extendedSelectableItems.Count == 0
-			&& classSelectableRewards.Count == 0)
+			&& classSelectableRewards.Count == 0
+			&& bonusProjection is null)
 		{
 			return null;
 		}
@@ -112,7 +130,36 @@ public sealed class QuestFinishRewardTemplateXmlProjectionExtractor
 			ExtendedRewards: extendedGroup,
 			ClassSelectableRewards: classSelectableRewards,
 			SingleTimeClassReward: ReadIntAttribute(quest, "use_class_reward") == 2,
-			ClassRewardOnEveryRepeat: ReadIntAttribute(quest, "use_class_reward") == 1);
+			ClassRewardOnEveryRepeat: ReadIntAttribute(quest, "use_class_reward") == 1,
+			HasBonus: bonusProjection is not null,
+			BonusProjection: bonusProjection);
+	}
+
+	private static QuestFinishRewardBonusTemplateProjection? CreateBonusProjection(XElement quest)
+	{
+		var bonus = quest.Elements().FirstOrDefault(element => element.Name.LocalName == "bonus");
+		if (bonus is null)
+		{
+			return null;
+		}
+
+		var bonusType = ReadStringAttribute(bonus, "type");
+		return new QuestFinishRewardBonusTemplateProjection(
+			bonusType,
+			ReadIntAttribute(bonus, "level"),
+			GetBonusSupportStatus(bonusType));
+	}
+
+	private static QuestFinishRewardBonusSupportStatus GetBonusSupportStatus(string bonusType)
+	{
+		if (SupportedBonusTypes.Contains(bonusType))
+		{
+			return QuestFinishRewardBonusSupportStatus.SupportedByJavaBonusService;
+		}
+
+		return SilentNoOpBonusTypes.Contains(bonusType)
+			? QuestFinishRewardBonusSupportStatus.SilentNoOpInJavaBonusService
+			: QuestFinishRewardBonusSupportStatus.UnsupportedByJavaBonusService;
 	}
 
 	private static IReadOnlyDictionary<string, IReadOnlyList<QuestFinishRewardItem>> ReadClassSelectableRewards(XElement quest)
