@@ -22,27 +22,47 @@ public static class DialogActionRegistry
 		[7] = "RECREATE_LEGION",
 		[8] = "SELECTED_QUEST_REWARD1",
 		[23] = "SELECTED_QUEST_NOREWARD",
+		[24] = "RESURRECT_PET",
+		[25] = "RETRIEVE_CHAR_WAREHOUSE",
 		[26] = "DEPOSIT_CHAR_WAREHOUSE",
+		[27] = "RETRIEVE_ACCOUNT_WAREHOUSE",
+		[28] = "DEPOSIT_ACCOUNT_WAREHOUSE",
 		[29] = "QUEST_ACCEPT",
 		[30] = "QUEST_REFUSE",
 		[31] = "QUEST_SELECT",
 		[32] = "OPEN_QUEST_WINDOW",
 		[33] = "OPEN_VENDOR",
+		[34] = "RESURRECT_BIND",
 		[35] = "RECOVERY",
 		[36] = "ENTER_PVP",
 		[37] = "LEAVE_PVP",
+		[38] = "OPEN_POSTBOX",
+		[39] = "CHECK_USER_HAS_QUEST_ITEM",
+		[40] = "DIC",
+		[41] = "GIVE_ITEM_PROC",
+		[42] = "REMOVE_ITEM_OPTION",
+		[43] = "CHANGE_ITEM_SKIN",
 		[44] = "AIRLINE_SERVICE",
 		[45] = "GATHER_SKILL_LEVELUP",
 		[46] = "COMBINE_SKILL_LEVELUP",
 		[47] = "EXTEND_INVENTORY",
 		[48] = "EXTEND_CHAR_WAREHOUSE",
+		[49] = "EXTEND_ACCOUNT_WAREHOUSE",
+		[50] = "LEGION_LEVELUP",
+		[51] = "LEGION_CREATE_EMBLEM",
+		[52] = "LEGION_CHANGE_EMBLEM",
 		[53] = "OPEN_LEGION_WAREHOUSE",
+		[54] = "OPEN_PERSONAL_WAREHOUSE",
+		[55] = "BUY_BY_AP",
 		[56] = "CLOSE_LEGION_WAREHOUSE",
+		[57] = "PASS_DOORMAN",
 		[58] = "COMBINE_TASK",
 		[59] = "EXCHANGE_COIN",
+		[60] = "SHOW_CUTSCENE",
 		[61] = "EDIT_CHARACTER_ALL",
 		[62] = "EDIT_CHARACTER_GENDER",
 		[63] = "MATCH_MAKER",
+		[64] = "MAKE_MERCENARY",
 		[65] = "INSTANCE_ENTRY",
 		[66] = "COMPOUND_WEAPON",
 		[67] = "DECOMPOUND_WEAPON",
@@ -55,18 +75,36 @@ public static class DialogActionRegistry
 		[74] = "HOUSING_DESTRUCT",
 		[75] = "CHARGE_ITEM_SINGLE",
 		[76] = "CHARGE_ITEM_MULTI",
+		[77] = "INSTANCE_PARTY_MATCH",
 		[78] = "TRADE_IN",
 		[79] = "GIVEUP_CRAFT_EXPERT",
 		[80] = "GIVEUP_CRAFT_MASTER",
+		[81] = "HOUSING_BUDDY_LIST",
+		[82] = "HOUSING_RANDOM_TELEPORT",
+		[83] = "HOUSING_PERSONAL_INS_TELEPORT",
 		[84] = "HOUSING_PERSONAL_AUCTION",
+		[85] = "HOUSING_PAY_RENT",
+		[86] = "HOUSING_KICK",
+		[87] = "HOUSING_CHANGE_BUILDING",
+		[88] = "HOUSING_CONFIG",
+		[89] = "HOUSING_GIVEUP",
+		[90] = "HOUSING_CANCEL_GIVEUP",
+		[91] = "HOUSING_CREATE_PERSONAL_INS",
 		[92] = "FUNC_PET_H_ADOPT",
 		[93] = "FUNC_PET_H_ABANDON",
 		[94] = "CHARGE_ITEM_SINGLE2",
 		[95] = "CHARGE_ITEM_MULTI2",
 		[96] = "HOUSING_RECREATE_PERSONAL_INS",
+		[97] = "HOUSING_LIKE",
+		[98] = "HOUSING_SCRIPT",
+		[99] = "HOUSING_GUESTBOOK",
 		[100] = "TOWN_CHALLENGE",
+		[101] = "AP_SELL",
 		[103] = "TRADE_SELL_LIST",
+		[104] = "TELEPORT_SIMPLE",
 		[105] = "OPEN_INSTANCE_RECRUIT",
+		[106] = "MOVE_ITEM_SKIN",
+		[107] = "TRADE_IN_UPGRADE",
 		[108] = "SELECTED_QUEST_AUTO_REWARD",
 		[109] = "ITEM_UPGRADE",
 		[125] = "OPEN_STIGMA_ENCHANT",
@@ -108,8 +146,6 @@ public static class DialogActionRegistry
 			return Known(dialogActionId, $"SELECTED_QUEST_REWARD{dialogActionId - 7}", nameIsExact: true);
 		if (dialogActionId is >= 110 and <= 124)
 			return Known(dialogActionId, $"SELECTED_QUEST_AUTO_REWARD{dialogActionId - 109}", nameIsExact: true);
-		if (IsKnownFixedActionWithoutExactName(dialogActionId))
-			return Known(dialogActionId, $"DIALOG_ACTION_{dialogActionId}", nameIsExact: false);
 		if (dialogActionId is >= 1011 and <= 8204)
 			return Known(dialogActionId, $"SELECT_RANGE_{dialogActionId}", nameIsExact: false);
 		if (dialogActionId is >= 10000 and <= 10254)
@@ -122,14 +158,6 @@ public static class DialogActionRegistry
 			NameIsExact: false,
 			"DialogAction.nameOf -> null for id not present in reflected public fields",
 			IsLive: false);
-	}
-
-	private static bool IsKnownFixedActionWithoutExactName(int dialogActionId)
-	{
-		// Java has individual public constants for these sparse ids before SELECT1.
-		return dialogActionId is >= 1 and <= 125 and not 102
-			|| dialogActionId is 107
-			|| dialogActionId is >= 1000 and <= 1009;
 	}
 
 	private static DialogActionNameResult Known(int dialogActionId, string name, bool nameIsExact)

@@ -7,8 +7,12 @@ public sealed class DialogActionRegistryTests
 	[Theory]
 	[InlineData(-1, "USE_OBJECT")]
 	[InlineData(2, "BUY")]
+	[InlineData(24, "RESURRECT_PET")]
 	[InlineData(33, "OPEN_VENDOR")]
+	[InlineData(54, "OPEN_PERSONAL_WAREHOUSE")]
 	[InlineData(78, "TRADE_IN")]
+	[InlineData(101, "AP_SELL")]
+	[InlineData(107, "TRADE_IN_UPGRADE")]
 	[InlineData(125, "OPEN_STIGMA_ENCHANT")]
 	[InlineData(10255, "SET_SUCCEED")]
 	[InlineData(20004, "CHECK_AP")]
@@ -40,19 +44,6 @@ public sealed class DialogActionRegistryTests
 	}
 
 	[Theory]
-	[InlineData(24)]
-	[InlineData(101)]
-	[InlineData(107)]
-	public void NameOf_KnowsSparseFixedJavaConstantsThatAreNotYetNamedExactly(int dialogActionId)
-	{
-		var result = DialogActionRegistry.NameOf(dialogActionId);
-
-		Assert.True(result.IsKnown);
-		Assert.False(result.NameIsExact);
-		Assert.Equal($"DIALOG_ACTION_{dialogActionId}", result.Name);
-	}
-
-	[Theory]
 	[InlineData(1011)]
 	[InlineData(8204)]
 	public void NameOf_RecognizesGeneratedSelectRangeAsJavaKnown(int dialogActionId)
@@ -79,4 +70,3 @@ public sealed class DialogActionRegistryTests
 		Assert.Null(result.Name);
 	}
 }
-
