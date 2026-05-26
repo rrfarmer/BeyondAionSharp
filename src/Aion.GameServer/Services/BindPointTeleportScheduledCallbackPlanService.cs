@@ -18,6 +18,7 @@ public enum BindPointTeleportScheduledCallbackPlanStep
 	ScheduleFinalTeleport,
 	CheckFinalMovementGate,
 	CreateFinalMovementIntent,
+	CreateTeleportSideEffectIntent,
 }
 
 public sealed record BindPointTeleportScheduledCallbackPlan(
@@ -26,12 +27,14 @@ public sealed record BindPointTeleportScheduledCallbackPlan(
 	BindPointTeleportCooldownPlan? CooldownPlan,
 	BindPointTeleportFanoutPlan? CooldownFanoutPlan,
 	BindPointTeleportFinalMovementPlan? FinalMovementPlan,
+	BindPointTeleportTeleportToSideEffectPlan? TeleportSideEffectPlan,
 	IReadOnlyList<BindPointTeleportScheduledCallbackPlanStep> Steps,
 	bool ShouldSendNotEnoughFee,
 	bool ShouldStoreCooldown,
 	bool ShouldBroadcastCooldown,
 	bool ShouldScheduleFinalTeleport,
 	bool ShouldTeleport,
+	bool ShouldPlanTeleportSideEffects,
 	string JavaSource,
 	bool IsLive);
 
@@ -41,7 +44,8 @@ public static class BindPointTeleportScheduledCallbackPlanService
 		BindPointTeleportScheduledKinahPlan kinahPlan,
 		BindPointTeleportCooldownPlan cooldownPlan,
 		BindPointTeleportFanoutPlan cooldownFanoutPlan,
-		BindPointTeleportFinalMovementPlan finalMovementPlan)
+		BindPointTeleportFinalMovementPlan finalMovementPlan,
+		BindPointTeleportTeleportToSideEffectPlan? teleportSideEffectPlan = null)
 	{
 		// Java parity: BindPointTeleportService.teleport scheduled SKILL_USE callback.
 		// This only composes intent/order; no inventory, cooldown map, packet, scheduler, or movement side effects run here.
@@ -53,6 +57,7 @@ public static class BindPointTeleportScheduledCallbackPlanService
 				CooldownPlan: null,
 				CooldownFanoutPlan: null,
 				FinalMovementPlan: null,
+				TeleportSideEffectPlan: null,
 				[
 					BindPointTeleportScheduledCallbackPlanStep.TryDecreaseKinahFly,
 					BindPointTeleportScheduledCallbackPlanStep.SendNotEnoughFeeAndReturn,
@@ -62,11 +67,15 @@ public static class BindPointTeleportScheduledCallbackPlanService
 				ShouldBroadcastCooldown: false,
 				ShouldScheduleFinalTeleport: false,
 				ShouldTeleport: false,
+				ShouldPlanTeleportSideEffects: false,
 				"BindPointTeleportService.teleport scheduled task -> tryDecreaseKinah failed -> send STR_CANNOT_MOVE_TO_AIRPORT_NOT_ENOUGH_FEE and return before cooldown/fanout/final teleport",
 				IsLive: false);
 		}
 
 		var shouldTeleport = finalMovementPlan.ShouldTeleport;
+		var shouldPlanSideEffects = shouldTeleport
+			&& teleportSideEffectPlan != null
+			&& teleportSideEffectPlan.Status != BindPointTeleportTeleportToSideEffectPlanStatus.BlockedFinalMovement;
 		return new BindPointTeleportScheduledCallbackPlan(
 			shouldTeleport
 				? BindPointTeleportScheduledCallbackPlanStatus.ReadyWithMovement
@@ -75,6 +84,7 @@ public static class BindPointTeleportScheduledCallbackPlanService
 			cooldownPlan,
 			cooldownFanoutPlan,
 			finalMovementPlan,
+			shouldPlanSideEffects ? teleportSideEffectPlan : null,
 			[
 				BindPointTeleportScheduledCallbackPlanStep.TryDecreaseKinahFly,
 				BindPointTeleportScheduledCallbackPlanStep.AddCooldown,
@@ -84,12 +94,16 @@ public static class BindPointTeleportScheduledCallbackPlanService
 				.. shouldTeleport
 					? [BindPointTeleportScheduledCallbackPlanStep.CreateFinalMovementIntent]
 					: Array.Empty<BindPointTeleportScheduledCallbackPlanStep>(),
+				.. shouldPlanSideEffects
+					? [BindPointTeleportScheduledCallbackPlanStep.CreateTeleportSideEffectIntent]
+					: Array.Empty<BindPointTeleportScheduledCallbackPlanStep>(),
 			],
 			ShouldSendNotEnoughFee: false,
 			ShouldStoreCooldown: cooldownPlan.ShouldStoreCooldown,
 			ShouldBroadcastCooldown: cooldownFanoutPlan.Packet is GameServerPacket,
 			ShouldScheduleFinalTeleport: true,
 			ShouldTeleport: shouldTeleport,
+			ShouldPlanTeleportSideEffects: shouldPlanSideEffects,
 			"BindPointTeleportService.teleport scheduled task -> tryDecreaseKinah succeeded -> addCooldown -> broadcast action 3 -> schedule 1000ms final teleport gate",
 			IsLive: false);
 	}

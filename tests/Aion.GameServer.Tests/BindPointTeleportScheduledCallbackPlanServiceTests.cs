@@ -28,9 +28,11 @@ public sealed class BindPointTeleportScheduledCallbackPlanServiceTests
 		Assert.False(plan.ShouldBroadcastCooldown);
 		Assert.False(plan.ShouldScheduleFinalTeleport);
 		Assert.False(plan.ShouldTeleport);
+		Assert.False(plan.ShouldPlanTeleportSideEffects);
 		Assert.Null(plan.CooldownPlan);
 		Assert.Null(plan.CooldownFanoutPlan);
 		Assert.Null(plan.FinalMovementPlan);
+		Assert.Null(plan.TeleportSideEffectPlan);
 		Assert.Equal(
 			[
 				BindPointTeleportScheduledCallbackPlanStep.TryDecreaseKinahFly,
@@ -61,9 +63,11 @@ public sealed class BindPointTeleportScheduledCallbackPlanServiceTests
 		Assert.True(plan.ShouldBroadcastCooldown);
 		Assert.True(plan.ShouldScheduleFinalTeleport);
 		Assert.True(plan.ShouldTeleport);
+		Assert.False(plan.ShouldPlanTeleportSideEffects);
 		Assert.Same(cooldownPlan, plan.CooldownPlan);
 		Assert.Same(fanoutPlan, plan.CooldownFanoutPlan);
 		Assert.Same(movementPlan, plan.FinalMovementPlan);
+		Assert.Null(plan.TeleportSideEffectPlan);
 		Assert.Equal(
 			[
 				BindPointTeleportScheduledCallbackPlanStep.TryDecreaseKinahFly,
@@ -97,9 +101,47 @@ public sealed class BindPointTeleportScheduledCallbackPlanServiceTests
 		Assert.True(plan.ShouldBroadcastCooldown);
 		Assert.True(plan.ShouldScheduleFinalTeleport);
 		Assert.False(plan.ShouldTeleport);
+		Assert.False(plan.ShouldPlanTeleportSideEffects);
 		Assert.Same(movementPlan, plan.FinalMovementPlan);
+		Assert.Null(plan.TeleportSideEffectPlan);
 		Assert.DoesNotContain(BindPointTeleportScheduledCallbackPlanStep.CreateFinalMovementIntent, plan.Steps);
+		Assert.DoesNotContain(BindPointTeleportScheduledCallbackPlanStep.CreateTeleportSideEffectIntent, plan.Steps);
 		Assert.Contains("schedule 1000ms final teleport gate", plan.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void CreatePlan_KinahSuccessCanCarryTeleportSideEffectMetadataAfterFinalMovementIntent()
+	{
+		var kinahPlan = BindPointTeleportScheduledKinahPlanService.CreatePlan(
+			requiredPrice: 1_500,
+			currentKinah: 2_000);
+		var cooldownPlan = CreateCooldownPlan();
+		var fanoutPlan = CreateCooldownFanoutPlan();
+		var movementPlan = CreateMovementPlan(playerIsDead: false, playerIsAboutToDie: false);
+		var sideEffectPlan = BindPointTeleportTeleportToSideEffectPlanService.CreatePlan(movementPlan);
+
+		var plan = BindPointTeleportScheduledCallbackPlanService.CreatePlan(
+			kinahPlan,
+			cooldownPlan,
+			fanoutPlan,
+			movementPlan,
+			sideEffectPlan);
+
+		Assert.Equal(BindPointTeleportScheduledCallbackPlanStatus.ReadyWithMovement, plan.Status);
+		Assert.True(plan.ShouldTeleport);
+		Assert.True(plan.ShouldPlanTeleportSideEffects);
+		Assert.Same(sideEffectPlan, plan.TeleportSideEffectPlan);
+		Assert.Equal(
+			[
+				BindPointTeleportScheduledCallbackPlanStep.TryDecreaseKinahFly,
+				BindPointTeleportScheduledCallbackPlanStep.AddCooldown,
+				BindPointTeleportScheduledCallbackPlanStep.BroadcastCooldown,
+				BindPointTeleportScheduledCallbackPlanStep.ScheduleFinalTeleport,
+				BindPointTeleportScheduledCallbackPlanStep.CheckFinalMovementGate,
+				BindPointTeleportScheduledCallbackPlanStep.CreateFinalMovementIntent,
+				BindPointTeleportScheduledCallbackPlanStep.CreateTeleportSideEffectIntent,
+			],
+			plan.Steps);
 	}
 
 	private static BindPointTeleportCooldownPlan CreateCooldownPlan()
