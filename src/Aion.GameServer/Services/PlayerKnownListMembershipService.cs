@@ -7,6 +7,7 @@ public enum PlayerKnownListMembershipUpdateReason
 	Manual,
 	WorldVisibilityRefresh,
 	RegionSnapshotRefresh,
+	TwoWayOperationPlan,
 	VisibilityChanged,
 	Removed,
 	Cleared,
