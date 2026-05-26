@@ -1717,6 +1717,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				new NpcDialogTradeRuntimeFactAdapterInput(
 					player.ObjectId,
 					player.LegionId,
+					player.LegionId != 0 ? player.LegionLevel : null,
 					VendorBuyModifier: _options.Prices.VendorBuyModifier));
 		var tradeListFactInput = tradeRuntimeFactPlan?.ToTradeListFactInput(npc.TemplateId);
 		var limitedItemFactInput = packet.DialogActionId == CmDialogSelect.Buy

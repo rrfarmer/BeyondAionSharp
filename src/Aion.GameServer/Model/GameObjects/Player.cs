@@ -29,6 +29,9 @@ public sealed class Player
 	// Java parity: model/team/legion/LegionMember data used by chat/player info packets.
 	public int LegionId { get; set; }
 
+	// Java parity: Player.getLegion().getLegionLevel() used by DialogService BUY goods-list filtering.
+	public int LegionLevel { get; set; }
+
 	public string LegionName { get; set; } = string.Empty;
 
 	public byte LegionEmblemId { get; set; }

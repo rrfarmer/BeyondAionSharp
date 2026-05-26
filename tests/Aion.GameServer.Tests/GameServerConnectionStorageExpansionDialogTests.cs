@@ -175,6 +175,36 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 	}
 
 	[Fact]
+	public async Task HandleDialogSelectAsync_BuyRestrictedGoodsUsesHydratedLegionLevelWithoutSending()
+	{
+		await using var fixture = await StorageExpansionDialogFixture.CreateAsync();
+		var player = CreatePlayer(targetObjectId: 9003, legionId: 77, legionLevel: 5);
+		var npc = CreateExpansionNpc(9003, templateId: 203062, dialogActionId: CmDialogSelect.Buy);
+		fixture.World.TryAddObject(npc.ObjectId, npc);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, CreateDialogSelect(npc.ObjectId, CmDialogSelect.Buy));
+
+		Assert.Empty(fixture.SentPackets);
+		Assert.Equal(0, player.ResponseRequester.Count);
+		var plan = Assert.Single(fixture.DialogSelectPlans);
+		var runtimeFacts = Assert.IsType<NpcDialogTradeRuntimeFactAdapterPlan>(plan.TradeRuntimeFactPlan);
+		Assert.Equal(77, runtimeFacts.PlayerLegionId);
+		Assert.Equal(5, runtimeFacts.PlayerLegionLevel);
+		Assert.Equal("Injected runtime value", runtimeFacts.LegionLevelSource);
+		Assert.False(runtimeFacts.IsLive);
+		var tradeListFacts = Assert.IsType<NpcDialogTradeListFactAdapterPlan>(plan.TradeListFactAdapterPlan);
+		Assert.True(tradeListFacts.Facts.HasSellableTradeGoods);
+		Assert.Empty(tradeListFacts.RestrictedGoodsListIds);
+		var packetPlan = Assert.IsType<SmTradeListPacketPlan>(plan.TradeListPacketPlan);
+		Assert.Equal(SmTradeListPacketPlanStatus.Ready, packetPlan.Status);
+		Assert.Equal([130], packetPlan.TradeTabIds);
+		Assert.False(packetPlan.IsLive);
+		var servicePlan = Assert.IsType<NpcDialogServiceSelectPlan>(plan.ControllerDispatchPlan?.DialogServicePlan);
+		Assert.Equal(NpcDialogServiceSelectStatus.BuyTradeList, servicePlan.Status);
+		Assert.False(servicePlan.IsLive);
+	}
+
+	[Fact]
 	public async Task HandleDialogSelectAsync_BuyMissingGoodsPlansNoSellMessageWithoutSending()
 	{
 		await using var fixture = await StorageExpansionDialogFixture.CreateAsync();
@@ -259,13 +289,15 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 		Assert.False(servicePlan.IsLive);
 	}
 
-	private static Player CreatePlayer(int targetObjectId)
+	private static Player CreatePlayer(int targetObjectId, int legionId = 0, int legionLevel = 0)
 	{
 		return new Player
 		{
 			ObjectId = 1001,
 			Name = "ExpansionTester",
 			TargetObjectId = targetObjectId,
+			LegionId = legionId,
+			LegionLevel = legionLevel,
 			Position = new WorldPosition(210010000, 1, 2, 3, 0),
 		};
 	}
