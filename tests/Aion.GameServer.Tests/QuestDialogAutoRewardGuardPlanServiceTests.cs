@@ -1,3 +1,4 @@
+using Aion.GameServer.Dataholders;
 using Aion.GameServer.Services;
 
 namespace Aion.GameServer.Tests;
@@ -99,6 +100,83 @@ public sealed class QuestDialogAutoRewardGuardPlanServiceTests
 
 		Assert.False(plan.Planned);
 		Assert.Equal(QuestDialogAutoRewardGuardStatus.NotReportableQuest, plan.Status);
+	}
+
+	[Fact]
+	public void CreatePlanFromTemplateSummary_UsesRealCanReportAndStaticRewardMetadataWithoutLiveSideEffects()
+	{
+		var template = new NearbyQuestTemplateSummary(
+			1001,
+			CanReport: true,
+			RewardRepeatCount: 2,
+			HasRewards: true,
+			HasExtendedRewards: true,
+			HasBonus: true,
+			HasQuestWorkItems: true);
+
+		var plan = QuestDialogAutoRewardGuardPlanService.CreatePlanFromTemplateSummary(
+			new QuestDialogAutoRewardGuardTemplateInput(
+				PlayerObjectId: 77,
+				TargetObjectId: 0,
+				DialogActionId: 108,
+				QuestId: 1001,
+				QuestTemplate: template));
+
+		Assert.True(plan.Planned);
+		Assert.False(plan.IsLive);
+		Assert.Null(plan.MissingDependency);
+		var metadata = Assert.IsType<QuestDialogAutoRewardGuardStaticMetadata>(plan.StaticMetadata);
+		Assert.Equal(2, metadata.RewardRepeatCount);
+		Assert.True(metadata.HasRewards);
+		Assert.True(metadata.HasExtendedRewards);
+		Assert.True(metadata.HasBonus);
+		Assert.True(metadata.HasAnyRewardMetadata);
+		Assert.True(metadata.HasQuestWorkItems);
+	}
+
+	[Fact]
+	public void CreatePlanFromTemplateSummary_RejectsMissingAndNonReportableTemplatesInJavaOrder()
+	{
+		var missingTemplatePlan = QuestDialogAutoRewardGuardPlanService.CreatePlanFromTemplateSummary(
+			new QuestDialogAutoRewardGuardTemplateInput(
+				PlayerObjectId: 77,
+				TargetObjectId: 0,
+				DialogActionId: 8,
+				QuestId: 1001,
+				QuestTemplate: null));
+		var nonReportablePlan = QuestDialogAutoRewardGuardPlanService.CreatePlanFromTemplateSummary(
+			new QuestDialogAutoRewardGuardTemplateInput(
+				PlayerObjectId: 77,
+				TargetObjectId: 0,
+				DialogActionId: 8,
+				QuestId: 1001,
+				QuestTemplate: new NearbyQuestTemplateSummary(1001, CanReport: false, HasRewards: true)));
+
+		Assert.Equal(QuestDialogAutoRewardGuardStatus.MissingQuestTemplate, missingTemplatePlan.Status);
+		Assert.Null(missingTemplatePlan.StaticMetadata);
+		Assert.Equal(QuestDialogAutoRewardGuardStatus.NotReportableQuest, nonReportablePlan.Status);
+		Assert.False(nonReportablePlan.Planned);
+		Assert.True(nonReportablePlan.StaticMetadata?.HasRewards);
+	}
+
+	[Fact]
+	public void CreatePlanFromTemplateSummary_RejectsNonSelfTargetBeforeUsingStaticMetadata()
+	{
+		var plan = QuestDialogAutoRewardGuardPlanService.CreatePlanFromTemplateSummary(
+			new QuestDialogAutoRewardGuardTemplateInput(
+				PlayerObjectId: 77,
+				TargetObjectId: 88,
+				DialogActionId: 108,
+				QuestId: 1001,
+				QuestTemplate: new NearbyQuestTemplateSummary(
+					1001,
+					CanReport: true,
+					HasRewards: true,
+					HasQuestWorkItems: true)));
+
+		Assert.False(plan.Planned);
+		Assert.Equal(QuestDialogAutoRewardGuardStatus.NonSelfTarget, plan.Status);
+		Assert.Null(plan.StaticMetadata);
 	}
 
 	[Theory]

@@ -1,3 +1,5 @@
+using Aion.GameServer.Dataholders;
+
 namespace Aion.GameServer.Services;
 
 public static class QuestDialogAutoRewardGuardPlanService
@@ -22,6 +24,27 @@ public static class QuestDialogAutoRewardGuardPlanService
 		return QuestDialogAutoRewardGuardPlan.CreatePlanned(input);
 	}
 
+	public static QuestDialogAutoRewardGuardPlan CreatePlanFromTemplateSummary(
+		QuestDialogAutoRewardGuardTemplateInput input)
+	{
+		var guardInput = new QuestDialogAutoRewardGuardInput(
+			input.PlayerObjectId,
+			input.TargetObjectId,
+			input.DialogActionId,
+			input.QuestId,
+			QuestTemplateExists: input.QuestTemplate is not null,
+			QuestTemplateCanReport: input.QuestTemplate?.CanReport == true);
+		var plan = CreatePlan(guardInput);
+
+		if (input.QuestTemplate is null || plan.Status == QuestDialogAutoRewardGuardStatus.NonSelfTarget)
+			return plan;
+
+		return plan with
+		{
+			StaticMetadata = QuestDialogAutoRewardGuardStaticMetadata.From(input.QuestTemplate)
+		};
+	}
+
 	public static bool IsAutoRewardDialogAction(int dialogActionId)
 	{
 		return dialogActionId == SelectedQuestAutoReward
@@ -37,13 +60,21 @@ public sealed record QuestDialogAutoRewardGuardInput(
 	bool QuestTemplateExists,
 	bool QuestTemplateCanReport);
 
+public sealed record QuestDialogAutoRewardGuardTemplateInput(
+	int PlayerObjectId,
+	int TargetObjectId,
+	int DialogActionId,
+	int QuestId,
+	NearbyQuestTemplateSummary? QuestTemplate);
+
 public sealed record QuestDialogAutoRewardGuardPlan(
 	QuestDialogAutoRewardGuardStatus Status,
 	int QuestId,
 	int DialogActionId,
 	string JavaSource,
 	bool IsLive,
-	string? MissingDependency = null)
+	string? MissingDependency = null,
+	QuestDialogAutoRewardGuardStaticMetadata? StaticMetadata = null)
 {
 	public bool Planned => Status == QuestDialogAutoRewardGuardStatus.Planned;
 
@@ -68,6 +99,26 @@ public sealed record QuestDialogAutoRewardGuardPlan(
 			"CM_DIALOG_SELECT.runImpl self/reportable auto-reward guard",
 			IsLive: false,
 			MissingDependency: status.ToString());
+	}
+}
+
+public sealed record QuestDialogAutoRewardGuardStaticMetadata(
+	int RewardRepeatCount,
+	bool HasRewards,
+	bool HasExtendedRewards,
+	bool HasBonus,
+	bool HasQuestWorkItems)
+{
+	public bool HasAnyRewardMetadata => HasRewards || HasExtendedRewards || HasBonus;
+
+	public static QuestDialogAutoRewardGuardStaticMetadata From(NearbyQuestTemplateSummary template)
+	{
+		return new QuestDialogAutoRewardGuardStaticMetadata(
+			template.RewardRepeatCount,
+			template.HasRewards,
+			template.HasExtendedRewards,
+			template.HasBonus,
+			template.HasQuestWorkItems);
 	}
 }
 
