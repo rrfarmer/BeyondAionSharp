@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Xml;
+using Aion.GameServer.Services;
 
 namespace Aion.GameServer.Dataholders;
 
@@ -53,6 +54,7 @@ public sealed class StaticData
 		SkillTreeTable skillTree,
 		StorageExpansionTemplateTable cubeExpansionTemplates,
 		StorageExpansionTemplateTable warehouseExpansionTemplates,
+		QuestBonusItemGroupTable questBonusItemGroups,
 		Task? validationTask)
 	{
 		CacheFilePath = cacheFilePath;
@@ -101,6 +103,7 @@ public sealed class StaticData
 		SkillTree = skillTree;
 		CubeExpansionTemplates = cubeExpansionTemplates;
 		WarehouseExpansionTemplates = warehouseExpansionTemplates;
+		QuestBonusItemGroups = questBonusItemGroups;
 		ValidationTask = validationTask;
 	}
 
@@ -198,6 +201,8 @@ public sealed class StaticData
 
 	public StorageExpansionTemplateTable WarehouseExpansionTemplates { get; }
 
+	public QuestBonusItemGroupTable QuestBonusItemGroups { get; }
+
 	public Task? ValidationTask { get; }
 
 	public int GetElementCount(string elementName)
@@ -268,6 +273,7 @@ public sealed class StaticData
 		var skillTree = new List<SkillLearnSummary>();
 		var cubeExpansionTemplates = new List<StorageExpansionTemplateSummary>();
 		var warehouseExpansionTemplates = new List<StorageExpansionTemplateSummary>();
+		var questBonusItemGroups = new List<QuestBonusItemGroupProjection>();
 		var learnableEmotionIds = new HashSet<int>();
 		var creationItemsByClass = new Dictionary<string, List<StartingItem>>(StringComparer.OrdinalIgnoreCase);
 		var spawnLocationsByRace = new Dictionary<string, PlayerSpawnLocation>(StringComparer.OrdinalIgnoreCase);
@@ -319,6 +325,11 @@ public sealed class StaticData
 		CreaturePvpZoneBuilder? currentCreaturePvpZone = null;
 		int currentHousingLandId = 0;
 		int currentHousingManagerNpcId = 0;
+		string currentQuestBonusGroupElementName = string.Empty;
+		string currentQuestBonusGroupBonusType = string.Empty;
+		float currentQuestBonusGroupChance = 100f;
+		QuestBonusItemShape currentQuestBonusGroupShape = default;
+		List<QuestBonusItemProjection>? currentQuestBonusItems = null;
 		var elementPath = new Dictionary<int, string>();
 		var settings = new XmlReaderSettings
 		{
@@ -573,6 +584,20 @@ public sealed class StaticData
 					currentHousingLandId = 0;
 					currentHousingManagerNpcId = 0;
 				}
+				if (reader.Depth == 2 && currentQuestBonusItems != null)
+				{
+					questBonusItemGroups.Add(new QuestBonusItemGroupProjection(
+						currentQuestBonusGroupElementName,
+						currentQuestBonusGroupBonusType,
+						currentQuestBonusGroupChance,
+						currentQuestBonusGroupShape,
+						currentQuestBonusItems.AsReadOnly()));
+					currentQuestBonusGroupElementName = string.Empty;
+					currentQuestBonusGroupBonusType = string.Empty;
+					currentQuestBonusGroupChance = 100f;
+					currentQuestBonusGroupShape = default;
+					currentQuestBonusItems = null;
+				}
 				elementPath.Remove(reader.Depth);
 				continue;
 			}
@@ -587,6 +612,50 @@ public sealed class StaticData
 			counts[reader.LocalName] = counts.GetValueOrDefault(reader.LocalName) + 1;
 			if (reader.Depth == 1)
 				topLevelElements.Add(reader.LocalName);
+			if (reader.Depth == 2
+				&& elementPath.GetValueOrDefault(1) == "item_groups"
+				&& QuestBonusItemGroupXmlProjectionExtractor.TryGetSupportedGroup(reader.LocalName, out var defaultBonusType, out var itemShape))
+			{
+				currentQuestBonusGroupElementName = reader.LocalName;
+				currentQuestBonusGroupBonusType = reader.GetAttribute("bonusType") ?? defaultBonusType;
+				currentQuestBonusGroupChance = ReadOptionalFloatAttribute(reader, "chance", 100f);
+				currentQuestBonusGroupShape = itemShape;
+				currentQuestBonusItems = [];
+				if (reader.IsEmptyElement)
+				{
+					questBonusItemGroups.Add(new QuestBonusItemGroupProjection(
+						currentQuestBonusGroupElementName,
+						currentQuestBonusGroupBonusType,
+						currentQuestBonusGroupChance,
+						currentQuestBonusGroupShape,
+						currentQuestBonusItems.AsReadOnly()));
+					currentQuestBonusGroupElementName = string.Empty;
+					currentQuestBonusGroupBonusType = string.Empty;
+					currentQuestBonusGroupChance = 100f;
+					currentQuestBonusGroupShape = default;
+					currentQuestBonusItems = null;
+				}
+
+				continue;
+			}
+
+			if (reader.Depth == 3
+				&& reader.LocalName == "item"
+				&& currentQuestBonusItems != null
+				&& elementPath.GetValueOrDefault(1) == "item_groups")
+			{
+				currentQuestBonusItems.Add(new QuestBonusItemProjection(
+					ReadRequiredIntAttribute(reader, "id"),
+					Race: reader.GetAttribute("race"),
+					Level: ReadNullableIntAttribute(reader, "level"),
+					Count: ReadNullableLongAttribute(reader, "count"),
+					Chance: ReadNullableFloatAttribute(reader, "chance"),
+					Skill: ReadNullableIntAttribute(reader, "skill"),
+					MinLevel: ReadNullableIntAttribute(reader, "minLevel"),
+					MaxLevel: ReadNullableIntAttribute(reader, "maxLevel")));
+				continue;
+			}
+
 			if (reader.LocalName == "exp"
 				&& elementPath.TryGetValue(reader.Depth - 1, out var parentElement)
 				&& parentElement == "player_experience_table")
@@ -2435,6 +2504,7 @@ public sealed class StaticData
 			new SkillTreeTable(skillTree.AsReadOnly(), new SkillTemplateTable(skillTemplates.AsReadOnly())),
 			new StorageExpansionTemplateTable(cubeExpansionTemplates.AsReadOnly()),
 			new StorageExpansionTemplateTable(warehouseExpansionTemplates.AsReadOnly()),
+			new QuestBonusItemGroupTable(questBonusItemGroups.AsReadOnly()),
 			validationTask);
 	}
 
@@ -4651,6 +4721,11 @@ public sealed class StaticData
 		return float.TryParse(reader.GetAttribute(attributeName), NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed)
 			? parsed
 			: null;
+	}
+
+	private static long? ReadNullableLongAttribute(XmlReader reader, string attributeName)
+	{
+		return long.TryParse(reader.GetAttribute(attributeName), out var parsed) ? parsed : null;
 	}
 
 	private static bool ReadBoolAttribute(XmlReader reader, string attributeName)

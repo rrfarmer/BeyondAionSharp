@@ -52,6 +52,20 @@ public sealed class QuestBonusItemGroupXmlProjectionExtractor
 			["events"] = new("EVENTS", QuestBonusItemShape.FullRewardItem),
 		};
 
+	public static bool TryGetSupportedGroup(string elementName, out string bonusType, out QuestBonusItemShape itemShape)
+	{
+		if (SupportedGroups.TryGetValue(elementName, out var definition))
+		{
+			bonusType = definition.BonusType;
+			itemShape = definition.ItemShape;
+			return true;
+		}
+
+		bonusType = string.Empty;
+		itemShape = default;
+		return false;
+	}
+
 	public IReadOnlyList<QuestBonusItemGroupProjection> ExtractSupportedGroups(string xmlContent)
 	{
 		using var reader = new StringReader(xmlContent);
