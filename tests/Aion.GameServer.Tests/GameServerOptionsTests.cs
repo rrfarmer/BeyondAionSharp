@@ -39,7 +39,11 @@ public class GameServerOptionsTests
 		Assert.Equal([1f, 2f], options.Rates.GpRates);
 		Assert.Equal([1f, 2f], options.Rates.XpQuestRates);
 		Assert.Equal([1f, 2f], options.Rates.QuestKinahRates);
+		Assert.Equal(100, options.Prices.DefaultPrices);
+		Assert.Equal(100, options.Prices.DefaultModifier);
+		Assert.Equal(100, options.Prices.DefaultTaxes);
 		Assert.Equal(100, options.Prices.VendorBuyModifier);
+		Assert.Equal(20, options.Prices.VendorSellModifier);
 
 		Assert.Equal(new IPEndPoint(IPAddress.Any, 7777), options.Network.ClientEndPoint);
 		Assert.Equal(new IPEndPoint(IPAddress.Any, 7777), options.Network.ClientConnectEndPoint);
@@ -148,7 +152,11 @@ public class GameServerOptionsTests
 				gameserver.rates.gp.gain = 1.25, 2.25
 				gameserver.rates.xp.quest = 1.75, 2.75
 				gameserver.rates.kinah.quest = 1.5, 2.5, 3.5
+				gameserver.prices.default.prices = 110
+				gameserver.prices.default.modifier = 95
+				gameserver.prices.default.taxes = 105
 				gameserver.prices.vendor.buymod = 125
+				gameserver.prices.vendor.sellmod = 22
 				gameserver.timezone = UTC
 				"""
 			);
@@ -170,7 +178,11 @@ public class GameServerOptionsTests
 			Assert.Equal([1.25f, 2.25f], options.Rates.GpRates);
 			Assert.Equal([1.75f, 2.75f], options.Rates.XpQuestRates);
 			Assert.Equal([1.5f, 2.5f, 3.5f], options.Rates.QuestKinahRates);
+			Assert.Equal(110, options.Prices.DefaultPrices);
+			Assert.Equal(95, options.Prices.DefaultModifier);
+			Assert.Equal(105, options.Prices.DefaultTaxes);
 			Assert.Equal(125, options.Prices.VendorBuyModifier);
+			Assert.Equal(22, options.Prices.VendorSellModifier);
 			Assert.Equal("UTC", options.Core.TimeZoneId);
 			Assert.Equal(TimeZoneInfo.Utc, options.Core.GetTimeZone());
 		}

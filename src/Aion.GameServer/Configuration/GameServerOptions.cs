@@ -257,7 +257,11 @@ public sealed class GameServerOptions
 			},
 			Prices = new GameServerPriceOptions
 			{
+				DefaultPrices = GetIntWithEnvironment(loader, "gameserver.prices.default.prices", 100),
+				DefaultModifier = GetIntWithEnvironment(loader, "gameserver.prices.default.modifier", 100),
+				DefaultTaxes = GetIntWithEnvironment(loader, "gameserver.prices.default.taxes", 100),
 				VendorBuyModifier = GetIntWithEnvironment(loader, "gameserver.prices.vendor.buymod", 100),
+				VendorSellModifier = GetIntWithEnvironment(loader, "gameserver.prices.vendor.sellmod", 20),
 			},
 			LoadedPropertyCount = loader.Count,
 		};
@@ -624,8 +628,20 @@ public sealed class GameServerRateOptions
 
 public sealed class GameServerPriceOptions
 {
+	// Java parity: configs/main/PricesConfig.DEFAULT_PRICES consumed by PricesService.getGlobalPrices.
+	public int DefaultPrices { get; init; } = 100;
+
+	// Java parity: configs/main/PricesConfig.DEFAULT_MODIFIER consumed by PricesService.getGlobalPricesModifier.
+	public int DefaultModifier { get; init; } = 100;
+
+	// Java parity: configs/main/PricesConfig.DEFAULT_TAXES consumed by PricesService.getTaxes.
+	public int DefaultTaxes { get; init; } = 100;
+
 	// Java parity: configs/main/PricesConfig.VENDOR_BUY_MODIFIER consumed by PricesService.getVendorBuyModifier.
 	public int VendorBuyModifier { get; init; } = 100;
+
+	// Java parity: configs/main/PricesConfig.VENDOR_SELL_MODIFIER consumed by PricesService.getVendorSellModifier.
+	public int VendorSellModifier { get; init; } = 20;
 }
 
 public sealed class GameServerAdministrationOptions
