@@ -3,6 +3,7 @@ using Aion.GameServer.Data;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Services;
+using Aion.GameServer.Utils.IdFactory;
 
 namespace Aion.GameServer.Tests;
 
@@ -24,6 +25,68 @@ public sealed class QuestFinishCustomRewardRuntimeSideEffectAdapterServiceTests
 		Assert.Null(result.Context.LevelChangeContextInput);
 		Assert.Empty(repository.LoadKinds);
 		Assert.Empty(repository.StoreCalls);
+	}
+
+	[Fact]
+	public async Task CreateContextAsync_SessionAssembledDisabledOptionsKeepQuestFinishXpMetadataNonLive()
+	{
+		var repository = new RecordingCustomLevelRewardRepository(loadReceivingPlayerId: 0, storeSucceeded: true);
+		var service = CreateService(repository);
+		var idFactory = new IDFactory([1, 2]);
+		var itemTemplates = CreateTemplatesWithAdditional(
+			CustomLevelRewardPlanService.FactionRewards.Select(reward => reward.ItemId));
+		var player = CreatePlayer(level: 64, race: "ASMODIANS");
+		player.Exp = 63_900;
+		player.AccountCreationEpochMillis = 1_655_510_400_000L;
+		var contextInput = new QuestXpLevelChangeContextFactoryInput(
+			FromLevel: 64,
+			ToLevel: 65);
+		var context = CreateSideEffectContext(contextInput, player);
+		var sessionOptions = QuestFinishCustomRewardSessionRuntimeInputAdapterService.CreateOptions(
+			new QuestFinishCustomRewardSessionRuntimeInputAdapterInput(
+				EnableCustomRewardExecution: false,
+				CreateOptions(),
+				player,
+				idFactory,
+				new DateTime(2026, 5, 26, 17, 15, 0),
+				itemTemplates));
+
+		var adapterResult = await service.CreateContextAsync(context, sessionOptions.Options);
+
+		Assert.Equal(QuestFinishCustomRewardRuntimeInputAssemblerStatus.Disabled, sessionOptions.Status);
+		Assert.Equal(QuestXpCustomRewardRuntimeInputAdapterStatus.Disabled, adapterResult.Status);
+		Assert.Same(context, adapterResult.Context);
+		Assert.Same(contextInput, adapterResult.Context.LevelChangeContextInput);
+		Assert.Empty(repository.LoadKinds);
+		Assert.Empty(repository.StoreCalls);
+		Assert.Equal(3, idFactory.NextId());
+
+		var plan = QuestFinishOperationPlanService.CreatePlan(
+			new PlayerQuestState(1001, "REWARD", QuestVars: 0, Flags: 0, CompleteCount: 0),
+			new NearbyQuestTemplateSummary(1001, QuestCategory: "QUEST"),
+			PlayerNpcFactionsSnapshot.Empty,
+			new DateTimeOffset(2026, 5, 25, 8, 30, 0, TimeSpan.Zero),
+			CreateOptions(),
+			new QuestFinishRewardTemplateProjection(
+				RewardGroupCount: 1,
+				HasNonItemRewards: true,
+				NonItemProjection: new QuestFinishRewardNonItemTemplateProjection(Experience: 400)),
+			rewardSideEffectContext: adapterResult.Context);
+
+		var sideEffect = Assert.Single(plan.Descriptors, descriptor => descriptor.XpExecutionPlan is not null);
+		Assert.NotNull(sideEffect.XpExecutionPlan);
+		Assert.True(sideEffect.XpExecutionPlan.LevelChanged);
+		var customRewardSubPlans = sideEffect.XpExecutionPlan.LevelChangeSubPlans
+			.Where(subPlan => subPlan.Action is QuestXpExecutionAction.BonusPackReward or QuestXpExecutionAction.FactionPackReward)
+			.ToArray();
+		Assert.Equal([QuestXpExecutionAction.BonusPackReward, QuestXpExecutionAction.FactionPackReward], customRewardSubPlans.Select(subPlan => subPlan.Action));
+		Assert.All(customRewardSubPlans, subPlan =>
+		{
+			Assert.False(subPlan.IsLive);
+			Assert.Equal(nameof(CustomLevelRewardPlanService), subPlan.CSharpPlan);
+			Assert.Equal(CustomLevelRewardPlanStatus.SkippedWrongLevel.ToString(), subPlan.PlanStatus);
+			Assert.Equal(0, subPlan.PlannedDescriptorCount);
+		});
 	}
 
 	[Fact]
