@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Text.Json;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Network.Aion;
@@ -246,6 +247,7 @@ public sealed class TradeListJavaVectorArtifactReaderTests(ITestOutputHelper out
 			AssertGeneratedTradeListBodyMatchesCSharpWhenPresent(artifact);
 			AssertGeneratedTradeInListBodyMatchesCSharpWhenPresent(artifact);
 			AssertGeneratedSystemMessageBodyMatchesCSharpWhenPresent(artifact);
+			AssertGeneratedCanonicalPayloadMatchesCSharpWhenPresent(artifact);
 		}
 	}
 
@@ -314,33 +316,9 @@ public sealed class TradeListJavaVectorArtifactReaderTests(ITestOutputHelper out
 			packet.PacketClass == "SM_TRADELIST" && !string.IsNullOrWhiteSpace(packet.BodyHex)))
 		{
 			var expectedBodyHex = packet.BodyHex!;
-			if (!TryGetTradeNpcTypeName(packet.Decoded.TradeNpcTypeIndex.GetValueOrDefault(), out var npcType))
-				Assert.Fail($"Unsupported SM_TRADELIST tradeNpcTypeIndex in generated artifact: {packet.Decoded.TradeNpcTypeIndex}");
-
-			var plan = SmTradeListPacketPlanService.CreatePlan(
-				new SmTradeListPacketPlanInput(
-					TargetObjectId: packet.Decoded.TargetObjId.GetValueOrDefault(),
-					PlayerObjectId: artifact.Input.PlayerObjectId,
-					TradeList: new TradeListTemplateSummary(
-						artifact.Input.NpcId,
-						packet.Decoded.TradeTabIds,
-						NpcType: npcType),
-					GoodsLists: new GoodsListTable(
-						packet.Decoded.TradeTabIds.Select(id => new GoodsListSummary(id)).ToArray(),
-						Array.Empty<GoodsListSummary>(),
-						Array.Empty<GoodsListSummary>()),
-					PlayerLegionLevel: artifact.RuntimeFacts.PlayerLegionLevel,
-					NpcCanSell: packet.Decoded.ShowBuyTab.GetValueOrDefault(),
-					NpcCanBuy: packet.Decoded.ShowSellTab.GetValueOrDefault(),
-					BuyPriceModifier: packet.Decoded.BuyPriceModifier.GetValueOrDefault(),
-					LimitedItems: packet.Decoded.LimitedItems
-						.Select(item => new SmTradeListLimitedItemSummary(item.ItemId, item.BuyCount, item.SellLimit))
-						.ToArray()));
-
-			Assert.Equal(SmTradeListPacketPlanStatus.Ready, plan.Status);
 			Assert.Equal(
 				NormalizeHex(expectedBodyHex),
-				Convert.ToHexString(SerializeUnencryptedBody(new SmTradeList(plan))));
+				Convert.ToHexString(SerializeUnencryptedBody(CreateCSharpPacketFromArtifact(artifact, packet))));
 		}
 	}
 
@@ -350,22 +328,9 @@ public sealed class TradeListJavaVectorArtifactReaderTests(ITestOutputHelper out
 			packet.PacketClass == "SM_TRADE_IN_LIST" && !string.IsNullOrWhiteSpace(packet.BodyHex)))
 		{
 			var expectedBodyHex = packet.BodyHex!;
-			if (!TryGetTradeNpcTypeName(packet.Decoded.TradeNpcTypeIndex.GetValueOrDefault(), out var npcType))
-				Assert.Fail($"Unsupported SM_TRADE_IN_LIST tradeNpcTypeIndex in generated artifact: {packet.Decoded.TradeNpcTypeIndex}");
-
-			var plan = SmTradeInListPacketPlanService.CreatePlan(
-				new SmTradeInListPacketPlanInput(
-					TargetObjectId: packet.Decoded.TargetObjId.GetValueOrDefault(),
-					TradeInList: new TradeListTemplateSummary(
-						artifact.Input.NpcId,
-						packet.Decoded.TradeTabIds,
-						NpcType: npcType),
-					BuyPriceModifier: packet.Decoded.BuyPriceModifier.GetValueOrDefault()));
-
-			Assert.Equal(SmTradeInListPacketPlanStatus.Ready, plan.Status);
 			Assert.Equal(
 				NormalizeHex(expectedBodyHex),
-				Convert.ToHexString(SerializeUnencryptedBody(new SmTradeInList(plan))));
+				Convert.ToHexString(SerializeUnencryptedBody(CreateCSharpPacketFromArtifact(artifact, packet))));
 		}
 	}
 
@@ -375,14 +340,94 @@ public sealed class TradeListJavaVectorArtifactReaderTests(ITestOutputHelper out
 			packet.PacketClass == "SM_SYSTEM_MESSAGE" && !string.IsNullOrWhiteSpace(packet.BodyHex)))
 		{
 			var expectedBodyHex = packet.BodyHex!;
-			var messageId = Assert.IsType<int>(packet.Decoded.MessageId);
-			var messageParams = Assert.IsAssignableFrom<IReadOnlyList<string>>(packet.Decoded.MessageParams);
 			Assert.True(IsNoSellSemanticKey(packet.SemanticKey), $"Unsupported no-sell semantic key: {packet.SemanticKey}");
 
 			Assert.Equal(
 				NormalizeHex(expectedBodyHex),
-				Convert.ToHexString(SerializeUnencryptedBody(new SmSystemMessage(messageId, messageParams.ToArray()))));
+				Convert.ToHexString(SerializeUnencryptedBody(CreateCSharpPacketFromArtifact(artifact, packet))));
 		}
+	}
+
+	private static void AssertGeneratedCanonicalPayloadMatchesCSharpWhenPresent(TradeListJavaVectorArtifact artifact)
+	{
+		foreach (var packet in artifact.Packets.Where(packet => !string.IsNullOrWhiteSpace(packet.CanonicalPayloadHex)))
+		{
+			var expectedCanonicalPayloadHex = packet.CanonicalPayloadHex!;
+			Assert.Equal(
+				NormalizeHex(expectedCanonicalPayloadHex),
+				Convert.ToHexString(SerializeCanonicalPayload(CreateCSharpPacketFromArtifact(artifact, packet))));
+		}
+	}
+
+	private static GameServerPacket CreateCSharpPacketFromArtifact(
+		TradeListJavaVectorArtifact artifact,
+		TradeListJavaVectorPacket packet)
+	{
+		return packet.PacketClass switch
+		{
+			"SM_TRADELIST" => CreateTradeListPacketFromArtifact(artifact, packet),
+			"SM_TRADE_IN_LIST" => CreateTradeInListPacketFromArtifact(artifact, packet),
+			"SM_SYSTEM_MESSAGE" => CreateSystemMessagePacketFromArtifact(packet),
+			_ => throw new NotSupportedException($"Unsupported packet class in trade-list vector artifact: {packet.PacketClass}"),
+		};
+	}
+
+	private static SmTradeList CreateTradeListPacketFromArtifact(
+		TradeListJavaVectorArtifact artifact,
+		TradeListJavaVectorPacket packet)
+	{
+		if (!TryGetTradeNpcTypeName(packet.Decoded.TradeNpcTypeIndex.GetValueOrDefault(), out var npcType))
+			Assert.Fail($"Unsupported SM_TRADELIST tradeNpcTypeIndex in generated artifact: {packet.Decoded.TradeNpcTypeIndex}");
+
+		var plan = SmTradeListPacketPlanService.CreatePlan(
+			new SmTradeListPacketPlanInput(
+				TargetObjectId: packet.Decoded.TargetObjId.GetValueOrDefault(),
+				PlayerObjectId: artifact.Input.PlayerObjectId,
+				TradeList: new TradeListTemplateSummary(
+					artifact.Input.NpcId,
+					packet.Decoded.TradeTabIds,
+					NpcType: npcType),
+				GoodsLists: new GoodsListTable(
+					packet.Decoded.TradeTabIds.Select(id => new GoodsListSummary(id)).ToArray(),
+					Array.Empty<GoodsListSummary>(),
+					Array.Empty<GoodsListSummary>()),
+				PlayerLegionLevel: artifact.RuntimeFacts.PlayerLegionLevel,
+				NpcCanSell: packet.Decoded.ShowBuyTab.GetValueOrDefault(),
+				NpcCanBuy: packet.Decoded.ShowSellTab.GetValueOrDefault(),
+				BuyPriceModifier: packet.Decoded.BuyPriceModifier.GetValueOrDefault(),
+				LimitedItems: packet.Decoded.LimitedItems
+					.Select(item => new SmTradeListLimitedItemSummary(item.ItemId, item.BuyCount, item.SellLimit))
+					.ToArray()));
+
+		Assert.Equal(SmTradeListPacketPlanStatus.Ready, plan.Status);
+		return new SmTradeList(plan);
+	}
+
+	private static SmTradeInList CreateTradeInListPacketFromArtifact(
+		TradeListJavaVectorArtifact artifact,
+		TradeListJavaVectorPacket packet)
+	{
+		if (!TryGetTradeNpcTypeName(packet.Decoded.TradeNpcTypeIndex.GetValueOrDefault(), out var npcType))
+			Assert.Fail($"Unsupported SM_TRADE_IN_LIST tradeNpcTypeIndex in generated artifact: {packet.Decoded.TradeNpcTypeIndex}");
+
+		var plan = SmTradeInListPacketPlanService.CreatePlan(
+			new SmTradeInListPacketPlanInput(
+				TargetObjectId: packet.Decoded.TargetObjId.GetValueOrDefault(),
+				TradeInList: new TradeListTemplateSummary(
+					artifact.Input.NpcId,
+					packet.Decoded.TradeTabIds,
+					NpcType: npcType),
+				BuyPriceModifier: packet.Decoded.BuyPriceModifier.GetValueOrDefault()));
+
+		Assert.Equal(SmTradeInListPacketPlanStatus.Ready, plan.Status);
+		return new SmTradeInList(plan);
+	}
+
+	private static SmSystemMessage CreateSystemMessagePacketFromArtifact(TradeListJavaVectorPacket packet)
+	{
+		var messageId = Assert.IsType<int>(packet.Decoded.MessageId);
+		var messageParams = Assert.IsAssignableFrom<IReadOnlyList<string>>(packet.Decoded.MessageParams);
+		return new SmSystemMessage(messageId, messageParams.ToArray());
 	}
 
 	private static bool IsNoSellSemanticKey(string semanticKey)
@@ -416,6 +461,15 @@ public sealed class TradeListJavaVectorArtifactReaderTests(ITestOutputHelper out
 		crypt.EnableKey();
 		var frame = packet.SerializeFrame(crypt);
 		return frame[7..];
+	}
+
+	private static byte[] SerializeCanonicalPayload(GameServerPacket packet)
+	{
+		var body = SerializeUnencryptedBody(packet);
+		var payload = new byte[sizeof(ushort) + body.Length];
+		BinaryPrimitives.WriteUInt16LittleEndian(payload.AsSpan(0, sizeof(ushort)), checked((ushort)packet.OpCode));
+		body.CopyTo(payload.AsSpan(sizeof(ushort)));
+		return payload;
 	}
 
 	private static string GetTradeListArtifactRoot()
