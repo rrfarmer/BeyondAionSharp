@@ -105,6 +105,43 @@ public sealed class BindPointTeleportRuntimeFanoutServiceTests
 		Assert.Equal(0, reader.Remaining);
 	}
 
+	[Fact]
+	public async Task BroadcastFanoutPlanAsync_TeleportCooldownActionThreeUsesSourceIncludedVisibleDistanceFanoutWithoutDispatch()
+	{
+		var sourcePosition = new WorldPosition(210010000, 0, 0, 0, 0);
+		var registry = new VisibleFilteringConnectionRegistry(
+		[
+			new Player { ObjectId = 8301, Position = sourcePosition },
+			new Player { ObjectId = 8302, Position = new WorldPosition(210010000, 94, 0, 0, 0) },
+			new Player { ObjectId = 8303, Position = new WorldPosition(210010000, 96, 0, 0, 0) },
+			new Player { ObjectId = 8304, Position = new WorldPosition(220010000, 1, 0, 0, 0) },
+		]);
+		var fanout = new BindPointTeleportRuntimeFanoutService(registry);
+		var fanoutPlan = BindPointTeleportFanoutPlanService.CreatePlan(
+			BindPointTeleportFanoutSource.TeleportCooldownBroadcast,
+			sourcePlayerObjectId: 8301,
+			SmBindPointTeleport.Cooldown(8301, locId: 6401, cooldownSeconds: 600));
+
+		var result = await fanout.BroadcastFanoutPlanAsync(fanoutPlan, sourcePosition);
+
+		Assert.Equal(BindPointTeleportRuntimeFanoutStatus.BroadcastVisiblePlayersAndSelf, result.Status);
+		Assert.True(result.SentPacket);
+		Assert.Equal(2, result.SentCount);
+		Assert.Single(registry.Broadcasts);
+		Assert.Equal(sourcePosition, registry.Broadcasts[0].SourcePosition);
+		Assert.Equal(8301, registry.Broadcasts[0].SourceObjectId);
+		Assert.True(registry.Broadcasts[0].IncludeSourcePlayer);
+		Assert.Equal([8301, 8302], registry.Broadcasts[0].RecipientObjectIds);
+
+		var packet = Assert.IsType<SmBindPointTeleport>(registry.Broadcasts[0].Packet);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(3, (int)reader.ReadC());
+		Assert.Equal(8301, reader.ReadD());
+		Assert.Equal(6401, reader.ReadD());
+		Assert.Equal(600, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
 	private static ThreadPoolManager CreateThreadPoolManager()
 	{
 		return new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
@@ -202,4 +239,105 @@ public sealed class BindPointTeleportRuntimeFanoutServiceTests
 		int SourceObjectId,
 		GameServerPacket Packet,
 		bool IncludeSourcePlayer);
+
+	private sealed class VisibleFilteringConnectionRegistry : IGameClientConnectionRegistry
+	{
+		private readonly IReadOnlyList<Player> _players;
+
+		public VisibleFilteringConnectionRegistry(IReadOnlyList<Player> players)
+		{
+			_players = players;
+		}
+
+		public List<VisibleBroadcastRecord> Broadcasts { get; } = [];
+
+		public void RegisterPlayerConnection(int playerObjectId, GameServerConnection connection)
+		{
+		}
+
+		public void UnregisterPlayerConnection(int playerObjectId, GameServerConnection connection)
+		{
+		}
+
+		public bool TryGetOnlinePlayerByName(string playerName, out Player? player)
+		{
+			player = null;
+			return false;
+		}
+
+		public void ForEachOnlinePlayer(Action<Player> action)
+		{
+			foreach (var player in _players)
+				action(player);
+		}
+
+		public Task<bool> SendPacketToPlayerAsync(int playerObjectId, GameServerPacket packet)
+		{
+			throw new InvalidOperationException("Fanout characterization must not call direct player send.");
+		}
+
+		public Task<int> BroadcastToWorldAsync(GameServerPacket packet, Func<Player, bool>? filter = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> BroadcastToVisiblePlayersAsync(
+			WorldPosition sourcePosition,
+			int sourceObjectId,
+			GameServerPacket packet,
+			bool includeSourcePlayer = false,
+			Func<Player, bool>? filter = null)
+		{
+			// This intentionally characterizes the current C# approximation, not Java KnownList parity.
+			var recipients = _players
+				.Where(player =>
+					(player.ObjectId == sourceObjectId && includeSourcePlayer)
+					|| (player.ObjectId != sourceObjectId && WorldVisibility.IsVisibleTo(player, sourcePosition)))
+				.Where(player => filter?.Invoke(player) ?? true)
+				.Select(player => player.ObjectId)
+				.ToArray();
+			Broadcasts.Add(new VisibleBroadcastRecord(
+				sourcePosition,
+				sourceObjectId,
+				packet,
+				includeSourcePlayer,
+				recipients));
+			return Task.FromResult(recipients.Length);
+		}
+
+		public Task<int> RefreshHousingVisibilityAsync(
+			IReadOnlyList<WorldHouse> houses,
+			HousingTemplateTable? housingTemplates,
+			int? playerObjectId = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> RefreshNpcVisibilityAsync(IReadOnlyList<IWorldNpcObject> npcs, int? playerObjectId = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> BroadcastHouseUpdateAsync(WorldHouse house, HousingTemplateTable? housingTemplates)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<bool> NotifyMailReceivedAsync(int recipientObjectId, PlayerMail mail)
+		{
+			return Task.FromResult(false);
+		}
+
+		public Task<bool> NotifyBrokerSettledAsync(int sellerObjectId, long settledKinah)
+		{
+			return Task.FromResult(false);
+		}
+	}
+
+	private sealed record VisibleBroadcastRecord(
+		WorldPosition SourcePosition,
+		int SourceObjectId,
+		GameServerPacket Packet,
+		bool IncludeSourcePlayer,
+		IReadOnlyList<int> RecipientObjectIds);
 }
