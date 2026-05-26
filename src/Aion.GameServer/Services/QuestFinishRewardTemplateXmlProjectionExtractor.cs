@@ -18,8 +18,8 @@ public sealed class QuestFinishRewardTemplateXmlProjectionExtractor
 	public IReadOnlyDictionary<int, QuestFinishRewardTemplateProjection> ExtractDefaultRegularNonItemProjections(XDocument document)
 	{
 		// Java parity breadcrumb: model/templates/QuestTemplate#getRewards plus
-		// services/QuestService.giveReward(QuestEnv, Rewards). This first projection
-		// intentionally covers only the default regular reward group non-item fields.
+		// services/QuestService.getRewardItems/giveReward. This projection covers the
+		// default regular reward group only; extended, class, and bonus rewards stay disabled.
 		return document
 			.Descendants()
 			.Where(element => element.Name.LocalName == "quest")
@@ -35,13 +35,46 @@ public sealed class QuestFinishRewardTemplateXmlProjectionExtractor
 		var nonItemProjection = selectedRewards is null
 			? null
 			: CreateNonItemProjection(selectedRewards);
+		var itemProjection = selectedRewards is null
+			? null
+			: CreateItemProjection(selectedRewards, rewardGroupIndex);
 
 		return new QuestFinishRewardTemplateProjection(
 			RewardGroupCount: rewards.Length == 0 ? null : rewards.Length,
+			HasItemRewards: itemProjection is not null,
 			HasNonItemRewards: nonItemProjection is not null && HasAnyNonItemField(nonItemProjection),
 			IsChallengeTask: string.Equals(ReadStringAttribute(quest, "category", defaultValue: "QUEST"), "CHALLENGE_TASK", StringComparison.Ordinal),
+			ItemProjection: itemProjection,
 			NonItemProjection: nonItemProjection,
 			RewardRepeatCount: ReadIntAttribute(quest, "reward_repeat_count"));
+	}
+
+	private static QuestFinishRewardItemTemplateProjection? CreateItemProjection(XElement rewards, int rewardGroupIndex)
+	{
+		var fixedItems = ReadQuestItems(rewards, "reward_item");
+		var selectableItems = ReadQuestItems(rewards, "selectable_reward_item");
+		if (fixedItems.Count == 0 && selectableItems.Count == 0)
+			return null;
+
+		return new QuestFinishRewardItemTemplateProjection(
+			RewardGroups:
+			[
+				new QuestFinishRewardGroupProjection(
+					rewardGroupIndex,
+					fixedItems,
+					selectableItems),
+			]);
+	}
+
+	private static IReadOnlyList<QuestFinishRewardItem> ReadQuestItems(XElement rewards, string elementName)
+	{
+		return rewards
+			.Elements()
+			.Where(element => element.Name.LocalName == elementName)
+			.Select(element => new QuestFinishRewardItem(
+				ReadRequiredIntAttribute(element, "item_id"),
+				ReadLongAttribute(element, "count", defaultValue: 1)))
+			.ToArray();
 	}
 
 	private static QuestFinishRewardNonItemTemplateProjection CreateNonItemProjection(XElement rewards)
@@ -95,10 +128,10 @@ public sealed class QuestFinishRewardTemplateXmlProjectionExtractor
 		return int.TryParse(value, out var parsed) ? parsed : 0;
 	}
 
-	private static long ReadLongAttribute(XElement element, string attributeName)
+	private static long ReadLongAttribute(XElement element, string attributeName, long defaultValue = 0)
 	{
 		var value = element.Attribute(attributeName)?.Value;
-		return long.TryParse(value, out var parsed) ? parsed : 0;
+		return long.TryParse(value, out var parsed) ? parsed : defaultValue;
 	}
 
 	private static IReadOnlyList<int> ReadWhitespaceIntList(string? value)
