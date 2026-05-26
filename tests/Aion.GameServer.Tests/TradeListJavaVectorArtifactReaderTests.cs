@@ -83,6 +83,7 @@ public sealed class TradeListJavaVectorArtifactReaderTests(ITestOutputHelper out
 		Assert.Equal(186000001, limitedItem.ItemId);
 		Assert.Equal(0, limitedItem.BuyCount);
 		Assert.Equal(5, limitedItem.SellLimit);
+		AssertArtifactPacketSemantics(artifact);
 	}
 
 	[Fact]
@@ -148,6 +149,7 @@ public sealed class TradeListJavaVectorArtifactReaderTests(ITestOutputHelper out
 		Assert.Equal(100, packet.Decoded.BuyPriceModifier);
 		Assert.Equal([39], packet.Decoded.TradeTabIds);
 		Assert.Empty(packet.Decoded.LimitedItems);
+		AssertArtifactPacketSemantics(artifact);
 	}
 
 	[Fact]
@@ -211,6 +213,7 @@ public sealed class TradeListJavaVectorArtifactReaderTests(ITestOutputHelper out
 		Assert.Equal(["Merchant"], packet.Decoded.MessageParams);
 		Assert.Empty(packet.Decoded.TradeTabIds);
 		Assert.Empty(packet.Decoded.LimitedItems);
+		AssertArtifactPacketSemantics(artifact);
 	}
 
 	[Fact]
@@ -235,6 +238,66 @@ public sealed class TradeListJavaVectorArtifactReaderTests(ITestOutputHelper out
 			Assert.Equal(1, artifact.SchemaVersion);
 			Assert.NotEmpty(artifact.Scenario);
 			Assert.NotEmpty(artifact.Packets);
+			AssertArtifactPacketSemantics(artifact);
+		}
+	}
+
+	private static void AssertArtifactPacketSemantics(TradeListJavaVectorArtifact artifact)
+	{
+		foreach (var packet in artifact.Packets)
+		{
+			Assert.True(packet.Sequence >= 0, $"{packet.PacketClass} sequence must be non-negative.");
+			Assert.NotEmpty(packet.PacketClass);
+			Assert.NotEmpty(packet.SemanticKey);
+			Assert.NotNull(packet.Decoded);
+
+			switch (packet.PacketClass)
+			{
+				case "SM_TRADELIST":
+					Assert.Equal("trade-list", packet.SemanticKey);
+					AssertTradePacketDecodedFields(packet, expectsTabFlags: true);
+					break;
+				case "SM_TRADE_IN_LIST":
+					Assert.Equal("trade-in-list", packet.SemanticKey);
+					AssertTradePacketDecodedFields(packet, expectsTabFlags: false);
+					break;
+				case "SM_SYSTEM_MESSAGE":
+					Assert.Contains("no-trade-list", packet.SemanticKey, StringComparison.Ordinal);
+					Assert.True(packet.Decoded.MessageId.HasValue, $"{packet.PacketClass} missing decoded messageId.");
+					Assert.False(string.IsNullOrWhiteSpace(packet.Decoded.NpcNameParam));
+					var messageParams = Assert.IsAssignableFrom<IReadOnlyList<string>>(packet.Decoded.MessageParams);
+					Assert.NotEmpty(messageParams);
+					Assert.Contains(packet.Decoded.NpcNameParam, messageParams);
+					Assert.Empty(packet.Decoded.TradeTabIds);
+					Assert.Empty(packet.Decoded.LimitedItems);
+					break;
+				default:
+					Assert.Fail($"Unsupported packet class in trade-list vector artifact: {packet.PacketClass}");
+					break;
+			}
+		}
+	}
+
+	private static void AssertTradePacketDecodedFields(TradeListJavaVectorPacket packet, bool expectsTabFlags)
+	{
+		Assert.True(packet.Decoded.TargetObjId.HasValue, $"{packet.PacketClass} missing decoded targetObjId.");
+		Assert.True(packet.Decoded.TradeNpcTypeIndex.HasValue, $"{packet.PacketClass} missing decoded tradeNpcTypeIndex.");
+		Assert.True(packet.Decoded.BuyPriceModifier.HasValue, $"{packet.PacketClass} missing decoded buyPriceModifier.");
+		Assert.True(packet.Decoded.FixedClientModifier.HasValue, $"{packet.PacketClass} missing decoded fixedClientModifier.");
+		Assert.NotNull(packet.Decoded.TradeTabIds);
+		Assert.NotNull(packet.Decoded.LimitedItems);
+
+		if (expectsTabFlags)
+		{
+			Assert.True(packet.Decoded.ShowBuyTab.HasValue, $"{packet.PacketClass} missing decoded showBuyTab.");
+			Assert.True(packet.Decoded.ShowSellTab.HasValue, $"{packet.PacketClass} missing decoded showSellTab.");
+		}
+
+		foreach (var limitedItem in packet.Decoded.LimitedItems)
+		{
+			Assert.True(limitedItem.ItemId > 0, $"{packet.PacketClass} limited item id must be positive.");
+			Assert.True(limitedItem.BuyCount >= 0, $"{packet.PacketClass} limited item buy count must be non-negative.");
+			Assert.True(limitedItem.SellLimit >= 0, $"{packet.PacketClass} limited item sell limit must be non-negative.");
 		}
 	}
 
