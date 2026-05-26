@@ -818,6 +818,7 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(staticData.GetElementCount("ride_info"), staticData.RideInfos.Count);
 		Assert.Equal(staticData.GetElementCount("item_purification"), staticData.ItemPurifications.Count);
 		Assert.Equal(staticData.GetElementCount("purification_result"), staticData.ItemPurifications.ResultCount);
+		AssertTradeListCorpusMatchesJavaStaticData(repoRoot, staticData);
 		var purification = staticData.ItemPurifications.GetResultItem(100201319, 100201416);
 		Assert.NotNull(purification);
 		Assert.Equal(10, purification.MinEnchantCount);
@@ -1434,6 +1435,58 @@ public sealed class StaticDataLoadingTests
 		}
 
 		throw new DirectoryNotFoundException("Could not find repository root from test output directory.");
+	}
+
+	private static void AssertTradeListCorpusMatchesJavaStaticData(string repoRoot, StaticData staticData)
+	{
+		// Java parity breadcrumbs:
+		// - data/static_data/npc_trade_list.xml feeds dataholders/TradeListData afterUnmarshal indexes.
+		// - data/static_data/goodslists/goodslists.xml feeds dataholders/GoodsListData afterUnmarshal indexes.
+		// - model/templates/goods/GoodsList.getLimitedItems requires both sell_limit and buy_limit.
+		var sourceTradeLists = XDocument.Load(Path.Combine(repoRoot, "game-server", "data", "static_data", "npc_trade_list.xml"));
+		var sourceGoodsLists = XDocument.Load(Path.Combine(repoRoot, "game-server", "data", "static_data", "goodslists", "goodslists.xml"));
+
+		var tradeListElements = sourceTradeLists.Root!.Elements("tradelist_template").ToArray();
+		var tradeInListElements = sourceTradeLists.Root.Elements("trade_in_list_template").ToArray();
+		var purchaseListElements = sourceTradeLists.Root.Elements("purchase_template").ToArray();
+		Assert.Equal(tradeListElements.Length, staticData.TradeLists.TradeLists.Count);
+		Assert.Equal(tradeInListElements.Length, staticData.TradeLists.TradeInLists.Count);
+		Assert.Equal(purchaseListElements.Length, staticData.TradeLists.PurchaseLists.Count);
+		Assert.Equal(tradeListElements.Select(ReadNpcId).Distinct().Count(), staticData.TradeLists.TradeListCount);
+		Assert.Equal(tradeInListElements.Select(ReadNpcId).Distinct().Count(), staticData.TradeLists.TradeInListCount);
+		Assert.Equal(purchaseListElements.Select(ReadNpcId).Distinct().Count(), staticData.TradeLists.PurchaseListCount);
+
+		var ordinaryGoodsLists = sourceGoodsLists.Root!.Elements("list").ToArray();
+		var tradeInGoodsLists = sourceGoodsLists.Root.Elements("in_list").ToArray();
+		var purchaseGoodsLists = sourceGoodsLists.Root.Elements("purchase_list").ToArray();
+		Assert.Equal(ordinaryGoodsLists.Length, staticData.GoodsLists.GoodsLists.Count);
+		Assert.Equal(tradeInGoodsLists.Length, staticData.GoodsLists.GoodsInLists.Count);
+		Assert.Equal(purchaseGoodsLists.Length, staticData.GoodsLists.GoodsPurchaseLists.Count);
+		Assert.Equal(
+			ordinaryGoodsLists.Select(ReadId).Distinct().Count()
+				+ tradeInGoodsLists.Select(ReadId).Distinct().Count()
+				+ purchaseGoodsLists.Select(ReadId).Distinct().Count(),
+			staticData.GoodsLists.Count);
+
+		var sourceLimitedItemCount = ordinaryGoodsLists
+			.Elements("item")
+			.Count(item => item.Attribute("sell_limit") != null && item.Attribute("buy_limit") != null);
+		Assert.Equal(
+			sourceLimitedItemCount,
+			staticData.GoodsLists.GoodsLists
+				.SelectMany(goodsList => goodsList.ItemSummaries)
+				.Count(item => item.IsLimitedItem));
+	}
+
+	private static int ReadNpcId(XElement element) => ReadRequiredIntAttribute(element, "npc_id");
+
+	private static int ReadId(XElement element) => ReadRequiredIntAttribute(element, "id");
+
+	private static int ReadRequiredIntAttribute(XElement element, string attributeName)
+	{
+		var attribute = element.Attribute(attributeName);
+		Assert.NotNull(attribute);
+		return int.Parse(attribute.Value, System.Globalization.CultureInfo.InvariantCulture);
 	}
 
 	private static FlightZoneSummary CreateFlightZone(int flags)
