@@ -1,3 +1,5 @@
+using Aion.GameServer.Dataholders;
+
 namespace Aion.GameServer.Services;
 
 public sealed record PlayerKnownListPopulationCandidateFact(
@@ -46,7 +48,8 @@ public sealed record PlayerKnownListPopulationPlanRequest(
 	PlayerKnownListVisibilityRangeObject Owner,
 	IEnumerable<PlayerKnownListPopulationCandidateFact>? CandidateFacts,
 	bool ExecuteMembershipMutation = false,
-	IReadOnlyDictionary<int, PlayerKnownListOperationSideEffectPacketConstructionFacts>? PacketConstructionFactsByPlayerObjectId = null);
+	IReadOnlyDictionary<int, PlayerKnownListOperationSideEffectPacketConstructionFacts>? PacketConstructionFactsByPlayerObjectId = null,
+	ItemTemplateTable? ItemTemplates = null);
 
 public sealed record PlayerKnownListPopulationCandidatePlan(
 	int CandidatePlayerObjectId,
@@ -84,19 +87,22 @@ public sealed class PlayerKnownListPopulationPlanService
 	private readonly PlayerKnownListOperationSideEffectAttachmentService _sideEffectAttachmentService;
 	private readonly PlayerKnownListOperationSideEffectPacketConstructionService _sideEffectPacketConstructionService;
 	private readonly PlayerKnownListPacketConstructionFactPlanService _factPlanService;
+	private readonly PlayerKnownListAttackSpeedFactPlanRequestAdapterService _attackSpeedFactPlanRequestAdapterService;
 
 	public PlayerKnownListPopulationPlanService(
 		PlayerKnownListVisibilityRangePlanService? visibilityRangePlanService = null,
 		PlayerKnownListTwoWayMembershipAdapterService? membershipAdapterService = null,
 		PlayerKnownListOperationSideEffectAttachmentService? sideEffectAttachmentService = null,
 		PlayerKnownListOperationSideEffectPacketConstructionService? sideEffectPacketConstructionService = null,
-		PlayerKnownListPacketConstructionFactPlanService? factPlanService = null)
+		PlayerKnownListPacketConstructionFactPlanService? factPlanService = null,
+		PlayerKnownListAttackSpeedFactPlanRequestAdapterService? attackSpeedFactPlanRequestAdapterService = null)
 	{
 		_visibilityRangePlanService = visibilityRangePlanService ?? new PlayerKnownListVisibilityRangePlanService();
 		_membershipAdapterService = membershipAdapterService ?? new PlayerKnownListTwoWayMembershipAdapterService(new PlayerKnownListMembershipService());
 		_sideEffectAttachmentService = sideEffectAttachmentService ?? new PlayerKnownListOperationSideEffectAttachmentService();
 		_sideEffectPacketConstructionService = sideEffectPacketConstructionService ?? new PlayerKnownListOperationSideEffectPacketConstructionService();
 		_factPlanService = factPlanService ?? new PlayerKnownListPacketConstructionFactPlanService();
+		_attackSpeedFactPlanRequestAdapterService = attackSpeedFactPlanRequestAdapterService ?? new PlayerKnownListAttackSpeedFactPlanRequestAdapterService();
 	}
 
 	public PlayerKnownListPopulationPlan Plan(PlayerKnownListPopulationPlanRequest request)
@@ -149,7 +155,7 @@ public sealed class PlayerKnownListPopulationPlanService
 				visibilityRangePlan.OperationPlan,
 				fact.OwnerViewingCandidateSideEffectFacts ?? new PlayerKnownListOperationSideEffectDirectionFacts(),
 				fact.CandidateViewingOwnerSideEffectFacts ?? new PlayerKnownListOperationSideEffectDirectionFacts()));
-			var sideEffectFactPlans = CreateFactPlans(fact);
+			var sideEffectFactPlans = CreateFactPlans(fact, request.ItemTemplates);
 			var packetConstructionFacts = CreatePacketConstructionFacts(
 				request.PacketConstructionFactsByPlayerObjectId,
 				sideEffectFactPlans,
@@ -188,11 +194,15 @@ public sealed class PlayerKnownListPopulationPlanService
 	}
 
 	private IReadOnlyList<PlayerKnownListPopulationPacketConstructionFactPlanAttachment> CreateFactPlans(
-		PlayerKnownListPopulationCandidateFact fact)
+		PlayerKnownListPopulationCandidateFact fact,
+		ItemTemplateTable? itemTemplates)
 	{
 		var plans = new List<PlayerKnownListPopulationPacketConstructionFactPlanAttachment>();
 		if (fact.OwnerViewingCandidatePacketFactPlanRequest is { } ownerViewingCandidate)
 		{
+			ownerViewingCandidate = _attackSpeedFactPlanRequestAdapterService.AttachRideAttackSpeedResolution(
+				ownerViewingCandidate,
+				itemTemplates);
 			plans.Add(new PlayerKnownListPopulationPacketConstructionFactPlanAttachment(
 				PlayerKnownListPopulationPacketConstructionFactPlanDirection.OwnerViewingCandidate,
 				ownerViewingCandidate,
@@ -201,6 +211,9 @@ public sealed class PlayerKnownListPopulationPlanService
 
 		if (fact.CandidateViewingOwnerPacketFactPlanRequest is { } candidateViewingOwner)
 		{
+			candidateViewingOwner = _attackSpeedFactPlanRequestAdapterService.AttachRideAttackSpeedResolution(
+				candidateViewingOwner,
+				itemTemplates);
 			plans.Add(new PlayerKnownListPopulationPacketConstructionFactPlanAttachment(
 				PlayerKnownListPopulationPacketConstructionFactPlanDirection.CandidateViewingOwner,
 				candidateViewingOwner,

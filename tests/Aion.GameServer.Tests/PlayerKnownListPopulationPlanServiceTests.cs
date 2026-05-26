@@ -1,4 +1,5 @@
 using Aion.Commons.Network;
+using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
@@ -338,6 +339,50 @@ public sealed class PlayerKnownListPopulationPlanServiceTests
 	}
 
 	[Fact]
+	public void Plan_AttachesResolvedRideAttackSpeedToGeneratedFactPlanRequests()
+	{
+		var membership = new PlayerKnownListMembershipService();
+		var service = CreateService(membership);
+		var owner = CreatePlayer(OwnerPlayerObjectId, "Owner", "ELYOS");
+		var candidate = CreatePlayer(NearPlayerObjectId, "Candidate", "ASMODIANS");
+		candidate.MountRide(new PlayerRideInfo(RideNpcId, StartFp: 0, CostFp: null, SprintSpeed: 9.5f, FlySpeed: 10.5f, MoveSpeed: 7.25f));
+		candidate.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 1001, ItemId = MainHandSwordId, Location = 0, IsEquipped = true, Slot = MainHandSlot },
+		];
+		var ownerViewingCandidate = new PlayerKnownListOperationSideEffectDirectionFacts(
+			SubjectIsInRideMode: true,
+			SubjectRideNpcId: RideNpcId);
+		var request = CreateRequest(
+			[
+				new PlayerKnownListPopulationCandidateFact(
+					NearPlayerObjectId,
+					X: 10,
+					Y: 0,
+					Z: 0,
+					OwnerCanSeeCandidate: true,
+					CandidateCanSeeOwner: false,
+					OwnerViewingCandidateSideEffectFacts: ownerViewingCandidate,
+					OwnerViewingCandidatePacketFactPlanRequest: new PlayerKnownListPacketConstructionFactPlanRequest(
+						owner,
+						candidate,
+						ownerViewingCandidate)),
+			],
+			itemTemplates: CreateItemTemplates());
+
+		var plan = service.Plan(request);
+
+		var candidatePlan = Assert.Single(plan.CandidatePlans, candidatePlan => candidatePlan.CandidatePlayerObjectId == NearPlayerObjectId);
+		var factPlan = Assert.Single(candidatePlan.SideEffectFactPlans!);
+		Assert.NotNull(factPlan.Request.RideAttackSpeedResolution);
+		Assert.Equal(PlayerKnownListAttackSpeedFactResolutionStatus.ResolvedApproximation, factPlan.Request.RideAttackSpeedResolution.Status);
+		Assert.Equal(PlayerKnownListPacketConstructionAttackSpeedFactSource.ResolvedApproximation, factPlan.Plan.RideAttackSpeedFactSource);
+		Assert.Equal(PlayerKnownListPacketConstructionFactPlanStatus.Complete, factPlan.Plan.Status);
+		Assert.Equal(1400, factPlan.Plan.Facts!.RideBaseAttackSpeed);
+		Assert.Equal(PlayerKnownListPopulationPacketConstructionFactSourceKind.GeneratedFactPlan, Assert.Single(candidatePlan.PacketConstructionFactSources!).Kind);
+	}
+
+	[Fact]
 	public void Plan_PreservesBlockedFactPlanMetadataAndPartialPacketConstruction()
 	{
 		var membership = new PlayerKnownListMembershipService();
@@ -460,7 +505,8 @@ public sealed class PlayerKnownListPopulationPlanServiceTests
 	private static PlayerKnownListPopulationPlanRequest CreateRequest(
 		IReadOnlyList<PlayerKnownListPopulationCandidateFact> candidateFacts,
 		bool executeMembershipMutation = false,
-		IReadOnlyDictionary<int, PlayerKnownListOperationSideEffectPacketConstructionFacts>? packetConstructionFactsByPlayerObjectId = null) =>
+		IReadOnlyDictionary<int, PlayerKnownListOperationSideEffectPacketConstructionFacts>? packetConstructionFactsByPlayerObjectId = null,
+		ItemTemplateTable? itemTemplates = null) =>
 		new(
 			CreateRegionSnapshot([NearPlayerObjectId, FarPlayerObjectId]),
 			new PlayerKnownListVisibilityRangeObject(
@@ -472,7 +518,8 @@ public sealed class PlayerKnownListPopulationPlanServiceTests
 				Z: 0),
 			candidateFacts,
 			executeMembershipMutation,
-			packetConstructionFactsByPlayerObjectId);
+			packetConstructionFactsByPlayerObjectId,
+			itemTemplates);
 
 	private static PlayerKnownListRegionSnapshot CreateRegionSnapshot(IReadOnlyList<int> candidateIds) =>
 		new(
@@ -521,6 +568,36 @@ public sealed class PlayerKnownListPopulationPlanServiceTests
 			Position = new WorldPosition(210010000, 1, 2, 3, 4),
 		};
 
+	private static ItemTemplateTable CreateItemTemplates() =>
+		new(
+		[
+			new ItemTemplateSummary(
+				MainHandSwordId,
+				"weapon",
+				DescriptionId: 0,
+				Mask: 0,
+				Level: 1,
+				"SWORD",
+				ItemType: "WEAPON",
+				Quality: "COMMON",
+				Race: "PC_ALL",
+				MaxStackCount: 1,
+				Price: 1,
+				ValidEquipmentSlots: MainHandSlot,
+				WeaponStats: new ItemWeaponStats(
+					MinDamage: 1,
+					MaxDamage: 2,
+					AttackSpeed: 1400,
+					PhysicalCritical: 0,
+					PhysicalAccuracy: 0,
+					Parry: 0,
+					MagicalAccuracy: 0,
+					MagicalBoost: 0,
+					AttackRange: 1500,
+					HitCount: 1,
+					ReduceMax: 0)),
+		]);
+
 	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
 	{
 		var crypt = new GameCrypt(() => 0x12345678);
@@ -534,4 +611,6 @@ public sealed class PlayerKnownListPopulationPlanServiceTests
 	private const int FarPlayerObjectId = 9003;
 	private const int MissingFactPlayerObjectId = 9004;
 	private const int RideNpcId = 730001;
+	private const int MainHandSwordId = 100000001;
+	private const long MainHandSlot = 1L;
 }
