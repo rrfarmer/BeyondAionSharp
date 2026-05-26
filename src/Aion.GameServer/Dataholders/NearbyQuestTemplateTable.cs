@@ -38,7 +38,13 @@ public sealed record NearbyQuestTemplateSummary(
 	bool IsMentorQuest = false,
 	IReadOnlyList<NearbyQuestInventoryItem>? InventoryItems = null,
 	IReadOnlyList<NearbyQuestXmlStartCondition>? XmlStartConditions = null,
-	bool HasUnsupportedXmlStartConditionElements = false)
+	bool HasUnsupportedXmlStartConditionElements = false,
+	bool CanReport = false,
+	int RewardRepeatCount = 0,
+	bool HasRewards = false,
+	bool HasExtendedRewards = false,
+	bool HasBonus = false,
+	bool HasQuestWorkItems = false)
 {
 	public IReadOnlySet<string> ClassPermitted { get; } = ClassPermitted ?? new HashSet<string>(StringComparer.Ordinal);
 

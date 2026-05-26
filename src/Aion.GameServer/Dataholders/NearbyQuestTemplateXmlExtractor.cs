@@ -53,7 +53,13 @@ public sealed class NearbyQuestTemplateXmlExtractor
 			IsMentorQuest: !string.Equals(ReadStringAttribute(quest, "mentor_type", defaultValue: "NONE"), "NONE", StringComparison.Ordinal),
 			InventoryItems: inventoryItems,
 			XmlStartConditions: startConditions,
-			HasUnsupportedXmlStartConditionElements: startConditions.Any(condition => condition.HasUnsupportedElements));
+			HasUnsupportedXmlStartConditionElements: startConditions.Any(condition => condition.HasUnsupportedElements),
+			CanReport: ReadBoolAttribute(quest, "can_report"),
+			RewardRepeatCount: ReadIntAttribute(quest, "reward_repeat_count"),
+			HasRewards: HasChild(quest, "rewards"),
+			HasExtendedRewards: HasChild(quest, "extended_rewards"),
+			HasBonus: HasChild(quest, "bonus"),
+			HasQuestWorkItems: HasChild(quest, "quest_work_items"));
 	}
 
 	private static IReadOnlyList<NearbyQuestInventoryItem> ReadInventoryItems(XElement quest)
@@ -155,6 +161,12 @@ public sealed class NearbyQuestTemplateXmlExtractor
 		return int.TryParse(value, out var parsed) ? parsed : null;
 	}
 
+	private static bool ReadBoolAttribute(XElement element, string attributeName)
+	{
+		var value = element.Attribute(attributeName)?.Value;
+		return bool.TryParse(value, out var parsed) && parsed;
+	}
+
 	private static int ReadIntText(XElement element)
 	{
 		return int.TryParse(element.Value.Trim(), out var parsed) ? parsed : 0;
@@ -163,6 +175,11 @@ public sealed class NearbyQuestTemplateXmlExtractor
 	private static string ReadChildText(XElement element, string childName)
 	{
 		return element.Elements().FirstOrDefault(child => child.Name.LocalName == childName)?.Value.Trim() ?? string.Empty;
+	}
+
+	private static bool HasChild(XElement element, string childName)
+	{
+		return element.Elements().Any(child => child.Name.LocalName == childName);
 	}
 
 	private static IReadOnlySet<string> ReadWhitespaceList(string? value)

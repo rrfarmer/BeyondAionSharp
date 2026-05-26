@@ -17,6 +17,12 @@ public sealed class NearbyQuestTemplateXmlExtractorTests
 	private const int ExpectedRealDataMinLevelTemplates = 8043;
 	private const int ExpectedRealDataMaxLevelTemplates = 1355;
 	private const int ExpectedRealDataMaxClassListCount = 16;
+	private const int ExpectedRealDataReportableTemplates = 64;
+	private const int ExpectedRealDataRewardRepeatTemplates = 241;
+	private const int ExpectedRealDataRewardTemplates = 7935;
+	private const int ExpectedRealDataExtendedRewardTemplates = 235;
+	private const int ExpectedRealDataBonusTemplates = 782;
+	private const int ExpectedRealDataQuestWorkItemTemplates = 1630;
 
 	[Fact]
 	public void Extract_ReadsNearbyPredicateQuestTemplateFieldsLikeJavaQuestTemplate()
@@ -25,15 +31,19 @@ public sealed class NearbyQuestTemplateXmlExtractorTests
 			<quests>
 				<quest id="1001" minlevel_permitted="19" maxlevel_permitted="45" race_permitted="ELYOS" rank="4"
 				       max_repeat_count="3" combineskill="40001" combine_skillpoint="199" npcfaction_id="12"
-				       category="TASK" mentor_type="MENTOR" repeat_cycle="Mon Wed">
+				       category="TASK" mentor_type="MENTOR" repeat_cycle="Mon Wed"
+				       can_report="true" reward_repeat_count="2">
 					<class_permitted>
 						GLADIATOR CLERIC
 					</class_permitted>
-				<gender_permitted>MALE</gender_permitted>
-				<inventory_items>
-					<inventory_item item_id="182200001" count="1" />
-					<inventory_item item_id="182200002" />
-				</inventory_items>
+					<gender_permitted>MALE</gender_permitted>
+					<inventory_items>
+						<inventory_item item_id="182200001" count="1" />
+						<inventory_item item_id="182200002" />
+					</inventory_items>
+					<quest_work_items>
+						<quest_work_item item_id="182200003" count="1" />
+					</quest_work_items>
 					<start_conditions>
 						<finished quest_id="1000" reward="2" />
 						<unfinished>1002 1003</unfinished>
@@ -42,6 +52,9 @@ public sealed class NearbyQuestTemplateXmlExtractorTests
 						<equipped>110101001</equipped>
 						<required_title>7</required_title>
 					</start_conditions>
+					<rewards exp="200" />
+					<extended_rewards exp="300" />
+					<bonus />
 				</quest>
 			</quests>
 			""";
@@ -79,6 +92,12 @@ public sealed class NearbyQuestTemplateXmlExtractorTests
 		Assert.Equal("TASK", template.QuestCategory);
 		Assert.Equal(12, template.NpcFactionId);
 		Assert.True(template.IsMentorQuest);
+		Assert.True(template.CanReport);
+		Assert.Equal(2, template.RewardRepeatCount);
+		Assert.True(template.HasRewards);
+		Assert.True(template.HasExtendedRewards);
+		Assert.True(template.HasBonus);
+		Assert.True(template.HasQuestWorkItems);
 	}
 
 	[Fact]
@@ -113,6 +132,12 @@ public sealed class NearbyQuestTemplateXmlExtractorTests
 		Assert.Equal("QUEST", template.QuestCategory);
 		Assert.Equal(0, template.NpcFactionId);
 		Assert.False(template.IsMentorQuest);
+		Assert.False(template.CanReport);
+		Assert.Equal(0, template.RewardRepeatCount);
+		Assert.False(template.HasRewards);
+		Assert.False(template.HasExtendedRewards);
+		Assert.False(template.HasBonus);
+		Assert.False(template.HasQuestWorkItems);
 	}
 
 	[Fact]
@@ -178,6 +203,12 @@ public sealed class NearbyQuestTemplateXmlExtractorTests
 		Assert.Equal(ExpectedRealDataMinLevelTemplates, templates.Count(template => template.MinLevelPermitted != 0));
 		Assert.Equal(ExpectedRealDataMaxLevelTemplates, templates.Count(template => template.MaxLevelPermitted != 0));
 		Assert.Equal(ExpectedRealDataMaxClassListCount, templates.Max(template => template.ClassPermitted.Count));
+		Assert.Equal(ExpectedRealDataReportableTemplates, templates.Count(template => template.CanReport));
+		Assert.Equal(ExpectedRealDataRewardRepeatTemplates, templates.Count(template => template.RewardRepeatCount != 0));
+		Assert.Equal(ExpectedRealDataRewardTemplates, templates.Count(template => template.HasRewards));
+		Assert.Equal(ExpectedRealDataExtendedRewardTemplates, templates.Count(template => template.HasExtendedRewards));
+		Assert.Equal(ExpectedRealDataBonusTemplates, templates.Count(template => template.HasBonus));
+		Assert.Equal(ExpectedRealDataQuestWorkItemTemplates, templates.Count(template => template.HasQuestWorkItems));
 		Assert.Equal(ExpectedRealDataTemplates, new NearbyQuestTemplateTable(templates).Count);
 	}
 
