@@ -64,9 +64,9 @@ public sealed class DialogActionRegistryTests
 	}
 
 	[Fact]
-	public void NameOf_MatchesEveryJavaGeneratedSelectConstant()
+	public void NameOf_MatchesEveryJavaPublicConstant()
 	{
-		foreach (var (name, id) in ReadJavaDialogActionConstants().Where(pair => pair.Name.StartsWith("SELECT", StringComparison.Ordinal)))
+		foreach (var (name, id) in ReadJavaDialogActionConstants())
 		{
 			var result = DialogActionRegistry.NameOf(id);
 
@@ -74,6 +74,18 @@ public sealed class DialogActionRegistryTests
 			Assert.True(result.NameIsExact, $"{name} ({id}) should be exact");
 			Assert.Equal(name, result.Name);
 		}
+	}
+
+	[Fact]
+	public void JavaDialogActionPublicConstants_HaveUniqueIdsForNameOfMap()
+	{
+		var duplicateIds = ReadJavaDialogActionConstants()
+			.GroupBy(pair => pair.Id)
+			.Where(group => group.Count() > 1)
+			.Select(group => $"{group.Key}: {string.Join(", ", group.Select(pair => pair.Name))}")
+			.ToArray();
+
+		Assert.Empty(duplicateIds);
 	}
 
 	[Theory]
