@@ -78,6 +78,47 @@ public sealed class SystemMailRepositoryDatabaseIntegrationTests
 		Assert.Equal(5, await ExecuteScalarLongAsync("SELECT mailbox_letters FROM players WHERE id = 1001"));
 	}
 
+	[Fact]
+	public async Task StoreSystemMailOperations_LeavesLetterAndCounterUnchangedWhenAttachedItemFails_WhenEnabled()
+	{
+		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
+			return;
+
+		// Java source breadcrumbs: SystemMailService.sendMail stops before updateRecipientMailbox when InventoryDAO.store returns false.
+		InitializeDatabaseFactory();
+		await InitializeSchemaAsync();
+		await SeedPlayerAsync();
+		await SeedInventoryItemAsync(9201);
+
+		var repository = new MySqlMailRepository(NullLogger<MySqlMailRepository>.Instance);
+		var mail = new PlayerMail(
+			9200,
+			PlayerObjectId,
+			"Beyond Aion",
+			"Bonus Pack",
+			"Body",
+			IsUnread: true,
+			9201,
+			186000242,
+			AttachedKinah: 0,
+			LetterType: 1,
+			new DateTime(2026, 5, 26, 10, 0, 0));
+		var duplicateAttachedItem = new InventoryItem
+		{
+			ObjectId = 9201,
+			ItemId = 186000242,
+			Count = 1,
+			Location = 127,
+		};
+
+		Assert.True(await repository.StoreSystemMailLetterAsync(mail));
+		Assert.False(await repository.StoreSystemMailAttachedItemAsync(duplicateAttachedItem, PlayerObjectId));
+
+		Assert.Equal(1, await ExecuteScalarLongAsync("SELECT COUNT(*) FROM mail WHERE mail_unique_id = 9200"));
+		Assert.Equal(1, await ExecuteScalarLongAsync("SELECT COUNT(*) FROM inventory WHERE item_unique_id = 9201"));
+		Assert.Equal(4, await ExecuteScalarLongAsync("SELECT mailbox_letters FROM players WHERE id = 1001"));
+	}
+
 	private static void InitializeDatabaseFactory()
 	{
 		DatabaseFactory.Initialize(
@@ -135,6 +176,15 @@ public sealed class SystemMailRepositoryDatabaseIntegrationTests
 			)
 			VALUES (1001, 'Mailreward', 1, 'integration', 0, 0, 0, 0, 0, 0, 0, 210010000,
 				'MALE', 'ELYOS', 'RANGER', CURRENT_TIMESTAMP, 4)
+			""");
+	}
+
+	private static Task SeedInventoryItemAsync(int objectId)
+	{
+		return ExecuteNonQueryAsync(
+			$"""
+			INSERT INTO inventory (item_unique_id, item_id, item_count, item_owner, item_location)
+			VALUES ({objectId}, 186000242, 1, {PlayerObjectId}, 0)
 			""");
 	}
 
