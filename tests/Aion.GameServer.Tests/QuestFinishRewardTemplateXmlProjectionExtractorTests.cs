@@ -261,7 +261,9 @@ public sealed class QuestFinishRewardTemplateXmlProjectionExtractorTests
 		Assert.Equal(ExpectedRealDataAnyItemRewardTemplates, projections.Values.Count(projection => projection.HasItemRewards));
 		Assert.Equal(
 			ExpectedRealDataDefaultRegularItemRewardTemplates,
-			projections.Values.Count(projection => projection.ItemProjection?.RewardGroups.Count > 0));
+			projections.Values.Count(projection =>
+				projection.ItemProjection?.RewardGroups.Any(group =>
+					group.FixedRewardItems.Count != 0 || group.SelectableRewardItems.Count != 0) == true));
 		Assert.Equal(
 			ExpectedRealDataDefaultRegularFixedRewardItemCount,
 			projections.Values.Sum(projection => projection.ItemProjection?.RewardGroups.Sum(group => group.FixedRewardItems.Count) ?? 0));

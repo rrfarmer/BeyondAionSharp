@@ -84,15 +84,17 @@ public sealed class QuestFinishRewardTemplateXmlProjectionExtractor
 			return null;
 		}
 
-		IReadOnlyList<QuestFinishRewardGroupProjection> rewardGroups = fixedItems.Count == 0 && selectableItems.Count == 0
-			? []
-			:
+		var hasRegularRewardGroup = rewards is not null
+			&& (fixedItems.Count != 0 || selectableItems.Count != 0 || classSelectableRewards.Count != 0);
+		IReadOnlyList<QuestFinishRewardGroupProjection> rewardGroups = hasRegularRewardGroup
+			?
 			[
 				new QuestFinishRewardGroupProjection(
 					rewardGroupIndex,
 					fixedItems,
 					selectableItems),
-			];
+			]
+			: [];
 		var extendedGroup = extendedFixedItems.Count == 0 && extendedSelectableItems.Count == 0
 			? null
 			: new QuestFinishRewardGroupProjection(

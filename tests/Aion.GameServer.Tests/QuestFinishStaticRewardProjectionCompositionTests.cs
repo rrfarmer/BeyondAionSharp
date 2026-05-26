@@ -8,6 +8,119 @@ namespace Aion.GameServer.Tests;
 public sealed class QuestFinishStaticRewardProjectionCompositionTests
 {
 	[Fact]
+	public void StaticClassSelectableRewardProjection_ComposesOnLastRepeatInsteadOfRegularSelectableReward()
+	{
+		const string xml = """
+			<quests>
+				<quest id="1004" can_report="true" category="QUEST" reward_repeat_count="5" use_class_reward="2">
+					<rewards>
+						<reward_item item_id="182400001" count="2" />
+						<selectable_reward_item item_id="182400010" count="3" />
+						<selectable_reward_item item_id="182400011" count="4" />
+					</rewards>
+					<ranger_selectable_reward item_id="100900001" count="6" />
+					<ranger_selectable_reward item_id="100900002" count="7" />
+				</quest>
+			</quests>
+			""";
+		var template = new NearbyQuestTemplateXmlExtractor().Extract(xml).Single();
+		var rewardProjection = new QuestFinishRewardTemplateXmlProjectionExtractor()
+			.ExtractDefaultRegularNonItemProjections(xml)[1004] with
+		{
+			DialogActionId = 9,
+			PlayerClass = "RANGER"
+		};
+
+		var operationPlan = QuestFinishOperationPlanService.CreatePlan(
+			new PlayerQuestState(1004, "REWARD", QuestVars: 0x12, Flags: 0, CompleteCount: 4),
+			template,
+			PlayerNpcFactionsSnapshot.Empty,
+			new DateTimeOffset(2026, 5, 26, 11, 0, 0, TimeSpan.Zero),
+			CreateOptions("UTC"),
+			rewardProjection);
+
+		Assert.True(rewardProjection.ItemProjection?.SingleTimeClassReward);
+		Assert.False(rewardProjection.ItemProjection?.ClassRewardOnEveryRepeat);
+		Assert.True(operationPlan.Applied);
+		Assert.All(operationPlan.Descriptors, descriptor => Assert.False(descriptor.IsLive));
+		var projectedItems = operationPlan.Descriptors
+			.Where(descriptor => descriptor.Action == QuestFinishOperationAction.ItemRewardProjection)
+			.ToArray();
+		Assert.Collection(
+			projectedItems,
+			descriptor =>
+			{
+				Assert.Equal(QuestFinishRewardItemSource.RegularFixed, descriptor.RewardItemProjection?.Source);
+				Assert.Equal(182400001, descriptor.ItemId);
+				Assert.Equal(2, descriptor.Count);
+				Assert.Null(descriptor.RewardItemProjection?.SelectableIndex);
+			},
+			descriptor =>
+			{
+				Assert.Equal(QuestFinishRewardItemSource.ClassSelectable, descriptor.RewardItemProjection?.Source);
+				Assert.Equal(100900002, descriptor.ItemId);
+				Assert.Equal(7, descriptor.Count);
+				Assert.Equal(1, descriptor.RewardItemProjection?.SelectableIndex);
+				Assert.Equal("RANGER", descriptor.RewardItemProjection?.PlayerClass);
+			});
+		Assert.DoesNotContain(projectedItems, descriptor => descriptor.RewardItemProjection?.Source == QuestFinishRewardItemSource.RegularSelectable);
+		Assert.DoesNotContain(operationPlan.Descriptors, descriptor => descriptor.Action == QuestFinishOperationAction.ItemRewardProjectionWarning);
+		Assert.Contains(operationPlan.Descriptors, descriptor => descriptor.Action == QuestFinishOperationAction.ItemRewardPlaceholder);
+	}
+
+	[Fact]
+	public void StaticClassSelectableRewardProjection_ComposesNoRewardEveryRepeatSelectionFromExtendedIndex()
+	{
+		const string xml = """
+			<quests>
+				<quest id="1005" can_report="true" category="QUEST" reward_repeat_count="5" use_class_reward="1">
+					<rewards />
+					<priest_selectable_reward item_id="101500001" count="4" />
+					<priest_selectable_reward item_id="101500002" count="5" />
+					<priest_selectable_reward item_id="101500003" count="6" />
+				</quest>
+			</quests>
+			""";
+		var template = new NearbyQuestTemplateXmlExtractor().Extract(xml).Single();
+		var rewardProjection = new QuestFinishRewardTemplateXmlProjectionExtractor()
+			.ExtractDefaultRegularNonItemProjections(xml)[1005] with
+		{
+			DialogActionId = 23,
+			ExtendedRewardIndex = 10,
+			PlayerClass = "CLERIC"
+		};
+
+		var operationPlan = QuestFinishOperationPlanService.CreatePlan(
+			new PlayerQuestState(1005, "REWARD", QuestVars: 0x12, Flags: 0, CompleteCount: 0),
+			template,
+			PlayerNpcFactionsSnapshot.Empty,
+			new DateTimeOffset(2026, 5, 26, 11, 30, 0, TimeSpan.Zero),
+			CreateOptions("UTC"),
+			rewardProjection);
+
+		Assert.False(rewardProjection.ItemProjection?.SingleTimeClassReward);
+		Assert.True(rewardProjection.ItemProjection?.ClassRewardOnEveryRepeat);
+		Assert.True(operationPlan.Applied);
+		Assert.All(operationPlan.Descriptors, descriptor => Assert.False(descriptor.IsLive));
+		var projectedItem = Assert.Single(
+			operationPlan.Descriptors,
+			descriptor => descriptor.Action == QuestFinishOperationAction.ItemRewardProjection);
+		Assert.Equal(QuestFinishRewardItemSource.ClassSelectable, projectedItem.RewardItemProjection?.Source);
+		Assert.Equal(101500003, projectedItem.ItemId);
+		Assert.Equal(6, projectedItem.Count);
+		Assert.Equal(2, projectedItem.RewardItemProjection?.SelectableIndex);
+		Assert.Equal("CLERIC", projectedItem.RewardItemProjection?.PlayerClass);
+		Assert.DoesNotContain(operationPlan.Descriptors, descriptor => descriptor.Action == QuestFinishOperationAction.ItemRewardProjectionWarning);
+		Assert.Contains(operationPlan.Descriptors, descriptor => descriptor.Action == QuestFinishOperationAction.ItemRewardPlaceholder);
+		Assert.True(
+			IndexOf(operationPlan.Descriptors, QuestFinishOperationAction.ItemRewardProjection)
+			< IndexOf(operationPlan.Descriptors, QuestFinishOperationAction.ItemRewardPlaceholder));
+		Assert.True(
+			IndexOf(operationPlan.Descriptors, QuestFinishOperationAction.ItemRewardPlaceholder)
+			< IndexOf(operationPlan.Descriptors, QuestFinishOperationAction.QuestStateMutation));
+	}
+
+	[Fact]
 	public void StaticExtendedItemRewardProjection_ComposesOnLastRepeatBeforeRegularRewardsWithoutLiveSideEffects()
 	{
 		const string xml = """
