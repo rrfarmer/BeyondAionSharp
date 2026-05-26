@@ -79,7 +79,7 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 		Assert.Equal(0, runtimeFacts.PlayerLegionLevel);
 		Assert.Equal(100, runtimeFacts.VendorBuyModifier);
 		Assert.Contains("Staged default", runtimeFacts.LegionLevelSource);
-		Assert.Contains("Staged default", runtimeFacts.VendorBuyModifierSource);
+		Assert.Equal("Injected runtime value", runtimeFacts.VendorBuyModifierSource);
 		Assert.False(runtimeFacts.IsLive);
 		var packetPlan = Assert.IsType<SmTradeListPacketPlan>(plan.TradeListPacketPlan);
 		Assert.Equal(SmTradeListPacketPlanStatus.Ready, packetPlan.Status);
@@ -120,6 +120,33 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 		var descriptor = Assert.Single(servicePlan.Descriptors);
 		Assert.Equal(NpcDialogServiceDescriptorKind.SystemMessageDoesNotSellItem, descriptor.Kind);
 		Assert.False(servicePlan.IsLive);
+	}
+
+	[Fact]
+	public async Task HandleDialogSelectAsync_BuyTradeListUsesConfiguredVendorBuyModifierInNonLivePlan()
+	{
+		await using var fixture = await StorageExpansionDialogFixture.CreateAsync(
+			new GameServerOptions
+			{
+				Prices = new GameServerPriceOptions
+				{
+					VendorBuyModifier = 125,
+				},
+			});
+		var player = CreatePlayer(targetObjectId: 9005);
+		var npc = CreateExpansionNpc(9005, templateId: 203060, dialogActionId: CmDialogSelect.Buy);
+		fixture.World.TryAddObject(npc.ObjectId, npc);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, CreateDialogSelect(npc.ObjectId, CmDialogSelect.Buy));
+
+		Assert.Empty(fixture.SentPackets);
+		var plan = Assert.Single(fixture.DialogSelectPlans);
+		var runtimeFacts = Assert.IsType<NpcDialogTradeRuntimeFactAdapterPlan>(plan.TradeRuntimeFactPlan);
+		Assert.Equal(125, runtimeFacts.VendorBuyModifier);
+		Assert.Equal("Injected runtime value", runtimeFacts.VendorBuyModifierSource);
+		var packetPlan = Assert.IsType<SmTradeListPacketPlan>(plan.TradeListPacketPlan);
+		Assert.Equal(100, packetPlan.BuyPriceModifier);
+		Assert.False(packetPlan.IsLive);
 	}
 
 	[Fact]
@@ -246,7 +273,7 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 
 		public List<QuestDialogNpcTargetBranchInputAssemblyPlan> DialogSelectPlans { get; }
 
-		public static async Task<StorageExpansionDialogFixture> CreateAsync()
+		public static async Task<StorageExpansionDialogFixture> CreateAsync(GameServerOptions? options = null)
 		{
 			var tempRoot = Path.Combine(Path.GetTempPath(), "aion-storage-dialog-" + Guid.NewGuid().ToString("N"));
 			Directory.CreateDirectory(Path.Combine(tempRoot, "game-server", "data", "static_data"));
@@ -314,7 +341,7 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 					serverClient,
 					"storage-expansion-dialog-test",
 					new GamePacketProcessor<string>((_, _) => Task.CompletedTask),
-					options: new GameServerOptions(),
+					options: options ?? new GameServerOptions(),
 					runtimeContext: runtimeContext,
 					world: world,
 					sentPacketObserver: sentPackets.Add,

@@ -33,6 +33,8 @@ public sealed class GameServerOptions
 
 	public GameServerRateOptions Rates { get; init; } = new();
 
+	public GameServerPriceOptions Prices { get; init; } = new();
+
 	public int LoadedPropertyCount { get; init; }
 
 	public static GameServerOptions LoadFromJavaConfig(string startDirectory)
@@ -252,6 +254,10 @@ public sealed class GameServerOptions
 				PvpArenaChaosRewardRates = GetFloatListWithEnvironment(loader, "gameserver.rates.pvparena.chaos", "1.0, 2.0"),
 				PvpArenaHarmonyRewardRates = GetFloatListWithEnvironment(loader, "gameserver.rates.pvparena.harmony", "1.0, 2.0"),
 				PvpArenaGloryRewardRates = GetFloatListWithEnvironment(loader, "gameserver.rates.pvparena.glory", "1.0, 2.0"),
+			},
+			Prices = new GameServerPriceOptions
+			{
+				VendorBuyModifier = GetIntWithEnvironment(loader, "gameserver.prices.vendor.buymod", 100),
 			},
 			LoadedPropertyCount = loader.Count,
 		};
@@ -614,6 +620,12 @@ public sealed class GameServerRateOptions
 	public IReadOnlyList<float> PvpArenaHarmonyRewardRates { get; init; } = [1f, 2f];
 
 	public IReadOnlyList<float> PvpArenaGloryRewardRates { get; init; } = [1f, 2f];
+}
+
+public sealed class GameServerPriceOptions
+{
+	// Java parity: configs/main/PricesConfig.VENDOR_BUY_MODIFIER consumed by PricesService.getVendorBuyModifier.
+	public int VendorBuyModifier { get; init; } = 100;
 }
 
 public sealed class GameServerAdministrationOptions

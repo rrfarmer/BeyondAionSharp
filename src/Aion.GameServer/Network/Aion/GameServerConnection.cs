@@ -1716,7 +1716,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			: NpcDialogTradeRuntimeFactAdapterService.CreatePlan(
 				new NpcDialogTradeRuntimeFactAdapterInput(
 					player.ObjectId,
-					player.LegionId));
+					player.LegionId,
+					VendorBuyModifier: _options.Prices.VendorBuyModifier));
 		var tradeListFactInput = tradeRuntimeFactPlan?.ToTradeListFactInput(npc.TemplateId);
 		var limitedItemFactInput = tradeRuntimeFactPlan?.ToLimitedItemFactInput(npc.TemplateId);
 
