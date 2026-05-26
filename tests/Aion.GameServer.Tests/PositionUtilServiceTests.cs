@@ -1,3 +1,4 @@
+using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Services;
 using Aion.GameServer.World;
 
@@ -41,5 +42,23 @@ public sealed class PositionUtilServiceTests
 
 		Assert.False(PositionUtilService.IsInNpcTalkRange(player, npc, npcTalkDistance: 2, npcBoundRadius: 0.5f));
 		Assert.True(PositionUtilService.IsInNpcTalkRange(player, npc, npcTalkDistance: 2, npcBoundRadius: 0.5f, creatureBoundRadius: 0.5f));
+	}
+
+	[Theory]
+	[InlineData(3.24f, true)]
+	[InlineData(3.25f, false)]
+	public void IsInObjectTalkRange_ModelsHouseObjectTalkingDistance(float xOffset, bool expected)
+	{
+		var player = new WorldPosition(210010000, 0, 0, 0, 0, InstanceId: 1);
+		var houseObject = new WorldPosition(210010000, xOffset, 0, 0, 0, InstanceId: 1);
+
+		var result = PositionUtilService.IsInObjectTalkRange(
+			player,
+			houseObject,
+			targetTalkingDistance: 2,
+			targetBoundRadius: 0,
+			creatureBoundRadius: Player.DefaultBoundRadius);
+
+		Assert.Equal(expected, result);
 	}
 }

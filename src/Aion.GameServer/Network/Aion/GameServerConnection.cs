@@ -9481,18 +9481,19 @@ public sealed class GameServerConnection : BaseClientConnection
 		RegisteredHouseObjectSummary houseObject,
 		HousingObjectTemplateSummary template)
 	{
-		// Java parity: PositionUtil.isInTalkRange(player, HouseObject) uses template talkingDistance + 1.
-		var playerPosition = player.Position;
-		if (playerPosition.WorldId != house.Position.WorldId)
-			return false;
-
-		var range = template.TalkingDistance > 0
-			? template.TalkingDistance + 1
-			: WorldVisibility.DefaultVisibleDistance;
-		var deltaX = playerPosition.X - houseObject.X;
-		var deltaY = playerPosition.Y - houseObject.Y;
-		var deltaZ = playerPosition.Z - houseObject.Z;
-		return deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ <= range * range;
+		// Java parity: PositionUtil.isInTalkRange(player, HouseObject) delegates to isInRange(..., false).
+		return PositionUtilService.IsInObjectTalkRange(
+			player.Position,
+			new global::Aion.GameServer.World.WorldPosition(
+				house.Position.WorldId,
+				houseObject.X,
+				houseObject.Y,
+				houseObject.Z,
+				(byte)houseObject.Rotation,
+				house.Position.InstanceId),
+			template.TalkingDistance,
+			targetBoundRadius: 0,
+			player.BoundRadius);
 	}
 
 	private static bool TryOccupyHouseObject(int objectId, int playerObjectId)
