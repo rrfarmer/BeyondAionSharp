@@ -141,6 +141,41 @@ public sealed class QuestFinishOperationPlanServiceTests
 	}
 
 	[Fact]
+	public void CreatePlan_ComposesDialogAutoRewardGuardIntentWithExplicitProjectionWithoutLiveSideEffects()
+	{
+		var guardPlan = QuestDialogAutoRewardGuardPlanService.CreatePlan(
+			new QuestDialogAutoRewardGuardInput(
+				PlayerObjectId: 77,
+				TargetObjectId: 0,
+				DialogActionId: 108,
+				QuestId: 1001,
+				QuestTemplateExists: true,
+				QuestTemplateCanReport: true));
+		Assert.True(guardPlan.Planned);
+		Assert.False(guardPlan.IsLive);
+
+		var operationPlan = QuestFinishOperationPlanService.CreatePlan(
+			new PlayerQuestState(1001, "REWARD", QuestVars: 0x12, Flags: 0, CompleteCount: 0),
+			new NearbyQuestTemplateSummary(1001, QuestCategory: "QUEST"),
+			PlayerNpcFactionsSnapshot.Empty,
+			new DateTimeOffset(2026, 5, 25, 8, 30, 0, TimeSpan.Zero),
+			CreateOptions("UTC"),
+			new QuestFinishRewardTemplateProjection(
+				RewardGroupCount: 1,
+				HasNonItemRewards: true,
+				NonItemProjection: new QuestFinishRewardNonItemTemplateProjection(Experience: 400),
+				DialogActionId: guardPlan.DialogActionId));
+
+		Assert.True(operationPlan.Applied);
+		Assert.All(operationPlan.Descriptors, descriptor => Assert.False(descriptor.IsLive));
+		Assert.Contains(operationPlan.Descriptors, descriptor => descriptor.Action == QuestFinishOperationAction.NonItemRewardProjection);
+		Assert.Contains(operationPlan.Descriptors, descriptor => descriptor.Action == QuestFinishOperationAction.NonItemRewardPlaceholder);
+		Assert.Contains(operationPlan.Descriptors, descriptor => descriptor.Action == QuestFinishOperationAction.QuestStateMutation);
+		Assert.Equal(108, guardPlan.DialogActionId);
+		Assert.Equal("COMPLETE", operationPlan.QuestState?.Status);
+	}
+
+	[Fact]
 	public void CreatePlan_ComposesDetailedRewardItemProjectionBeforeCoarsePlaceholder()
 	{
 		var now = new DateTimeOffset(2026, 5, 25, 8, 30, 0, TimeSpan.Zero);
