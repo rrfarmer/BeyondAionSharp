@@ -128,6 +128,7 @@ public static class GameClientPacketFactory
 		Register(234, states => new CmUseChargeSkill(234, states), GameConnectionState.InGame);
 		Register(236, states => new CmSelectDecomposable(236, states), GameConnectionState.InGame);
 		Register(239, states => new CmFriendSetMemo(239, states), GameConnectionState.InGame);
+		Register(244, states => new CmBindPointTeleport(244, states), GameConnectionState.InGame);
 		Register(247, states => new CmItemPurification(247, states), GameConnectionState.InGame);
 	}
 
