@@ -1,4 +1,8 @@
 using System.Text.Json;
+using Aion.GameServer.Dataholders;
+using Aion.GameServer.Network.Aion;
+using Aion.GameServer.Network.Aion.ServerPackets;
+using Aion.GameServer.Services;
 using Xunit.Abstractions;
 
 namespace Aion.GameServer.Tests;
@@ -239,6 +243,7 @@ public sealed class TradeListJavaVectorArtifactReaderTests(ITestOutputHelper out
 			Assert.NotEmpty(artifact.Scenario);
 			Assert.NotEmpty(artifact.Packets);
 			AssertArtifactPacketSemantics(artifact);
+			AssertGeneratedTradeListBodyMatchesCSharpWhenPresent(artifact);
 		}
 	}
 
@@ -299,6 +304,70 @@ public sealed class TradeListJavaVectorArtifactReaderTests(ITestOutputHelper out
 			Assert.True(limitedItem.BuyCount >= 0, $"{packet.PacketClass} limited item buy count must be non-negative.");
 			Assert.True(limitedItem.SellLimit >= 0, $"{packet.PacketClass} limited item sell limit must be non-negative.");
 		}
+	}
+
+	private static void AssertGeneratedTradeListBodyMatchesCSharpWhenPresent(TradeListJavaVectorArtifact artifact)
+	{
+		foreach (var packet in artifact.Packets.Where(packet =>
+			packet.PacketClass == "SM_TRADELIST" && !string.IsNullOrWhiteSpace(packet.BodyHex)))
+		{
+			var expectedBodyHex = packet.BodyHex!;
+			if (!TryGetTradeNpcTypeName(packet.Decoded.TradeNpcTypeIndex.GetValueOrDefault(), out var npcType))
+				Assert.Fail($"Unsupported SM_TRADELIST tradeNpcTypeIndex in generated artifact: {packet.Decoded.TradeNpcTypeIndex}");
+
+			var plan = SmTradeListPacketPlanService.CreatePlan(
+				new SmTradeListPacketPlanInput(
+					TargetObjectId: packet.Decoded.TargetObjId.GetValueOrDefault(),
+					PlayerObjectId: artifact.Input.PlayerObjectId,
+					TradeList: new TradeListTemplateSummary(
+						artifact.Input.NpcId,
+						packet.Decoded.TradeTabIds,
+						NpcType: npcType),
+					GoodsLists: new GoodsListTable(
+						packet.Decoded.TradeTabIds.Select(id => new GoodsListSummary(id)).ToArray(),
+						Array.Empty<GoodsListSummary>(),
+						Array.Empty<GoodsListSummary>()),
+					PlayerLegionLevel: artifact.RuntimeFacts.PlayerLegionLevel,
+					NpcCanSell: packet.Decoded.ShowBuyTab.GetValueOrDefault(),
+					NpcCanBuy: packet.Decoded.ShowSellTab.GetValueOrDefault(),
+					BuyPriceModifier: packet.Decoded.BuyPriceModifier.GetValueOrDefault(),
+					LimitedItems: packet.Decoded.LimitedItems
+						.Select(item => new SmTradeListLimitedItemSummary(item.ItemId, item.BuyCount, item.SellLimit))
+						.ToArray()));
+
+			Assert.Equal(SmTradeListPacketPlanStatus.Ready, plan.Status);
+			Assert.Equal(
+				NormalizeHex(expectedBodyHex),
+				Convert.ToHexString(SerializeUnencryptedBody(new SmTradeList(plan))));
+		}
+	}
+
+	private static bool TryGetTradeNpcTypeName(int index, out string npcType)
+	{
+		npcType = index switch
+		{
+			1 => "NORMAL",
+			2 => "ABYSS",
+			3 => "LEGION_COIN",
+			4 => "REWARD",
+			5 => "ABYSS_KINAH",
+			_ => string.Empty,
+		};
+
+		return npcType.Length > 0;
+	}
+
+	private static string NormalizeHex(string hex)
+	{
+		return hex.Replace(" ", string.Empty, StringComparison.Ordinal).ToUpperInvariant();
+	}
+
+	private static byte[] SerializeUnencryptedBody(GameServerPacket packet)
+	{
+		var crypt = new GameCrypt(() => 0x01020304);
+		crypt.EnableKey();
+		var frame = packet.SerializeFrame(crypt);
+		return frame[7..];
 	}
 
 	private static string GetTradeListArtifactRoot()
