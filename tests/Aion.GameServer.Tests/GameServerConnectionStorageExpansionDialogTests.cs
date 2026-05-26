@@ -110,6 +110,31 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 		Assert.False(servicePlan.IsLive);
 	}
 
+	[Fact]
+	public async Task HandleDialogSelectAsync_BuyRestrictedGoodsPlansNoSellMessageWithoutSending()
+	{
+		await using var fixture = await StorageExpansionDialogFixture.CreateAsync();
+		var player = CreatePlayer(targetObjectId: 9003);
+		var npc = CreateExpansionNpc(9003, templateId: 203062, dialogActionId: CmDialogSelect.Buy);
+		fixture.World.TryAddObject(npc.ObjectId, npc);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, CreateDialogSelect(npc.ObjectId, CmDialogSelect.Buy));
+
+		Assert.Empty(fixture.SentPackets);
+		Assert.Equal(0, player.ResponseRequester.Count);
+		var plan = Assert.Single(fixture.DialogSelectPlans);
+		var tradeListFacts = Assert.IsType<NpcDialogTradeListFactAdapterPlan>(plan.TradeListFactAdapterPlan);
+		Assert.True(tradeListFacts.Facts.HasTradeList);
+		Assert.False(tradeListFacts.Facts.HasSellableTradeGoods);
+		Assert.Equal([130], tradeListFacts.RestrictedGoodsListIds);
+		Assert.Null(plan.TradeListPacketPlan);
+		var servicePlan = Assert.IsType<NpcDialogServiceSelectPlan>(plan.ControllerDispatchPlan?.DialogServicePlan);
+		Assert.Equal(NpcDialogServiceSelectStatus.BuyUnavailable, servicePlan.Status);
+		var descriptor = Assert.Single(servicePlan.Descriptors);
+		Assert.Equal(NpcDialogServiceDescriptorKind.SystemMessageDoesNotSellItem, descriptor.Kind);
+		Assert.False(servicePlan.IsLive);
+	}
+
 	private static Player CreatePlayer(int targetObjectId)
 	{
 		return new Player
@@ -207,10 +232,16 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 						<tradelist_template npc_id="203060" npc_type="NORMAL" sell_price_rate="80">
 							<tradelist id="129" />
 						</tradelist_template>
+						<tradelist_template npc_id="203062" npc_type="NORMAL" sell_price_rate="80">
+							<tradelist id="130" />
+						</tradelist_template>
 					</npc_trade_list>
 					<goodslists>
 						<list id="129">
 							<item id="110100010" />
+						</list>
+						<list id="130" legion_lvl="5">
+							<item id="110100011" />
 						</list>
 					</goodslists>
 				</static_data>
