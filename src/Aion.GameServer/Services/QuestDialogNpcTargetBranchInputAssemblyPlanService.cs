@@ -16,13 +16,15 @@ public sealed record QuestDialogNpcTargetBranchRuntimeSnapshot(
 	NpcTemplateSummary? TargetNpcTemplate = null,
 	bool InteractionAllowed = true,
 	NpcDialogInteractionAllowedInput? InteractionInput = null,
-	QuestDialogNpcControllerDispatchFacts? ControllerDispatchFacts = null);
+	QuestDialogNpcControllerDispatchFacts? ControllerDispatchFacts = null,
+	NpcDialogTradeListFactAdapterInput? TradeListFactInput = null);
 
 public sealed record QuestDialogNpcTargetBranchInputAssemblyPlan(
 	QuestDialogNpcTargetBranchInput Input,
 	QuestDialogNpcTargetBranchPlan BranchPlan,
 	string JavaSource,
 	NpcDialogInteractionAllowedPlan? InteractionPlan = null,
+	NpcDialogTradeListFactAdapterPlan? TradeListFactAdapterPlan = null,
 	NpcDialogControllerDispatchPlan? ControllerDispatchPlan = null,
 	bool IsLive = false);
 
@@ -35,7 +37,9 @@ public static class QuestDialogNpcTargetBranchInputAssemblyPlanService
 {
 	public static QuestDialogNpcTargetBranchInputAssemblyPlan CreatePlan(
 		QuestDialogNpcTargetBranchRuntimeSnapshot snapshot,
-		NpcTemplateTable npcTemplates)
+		NpcTemplateTable npcTemplates,
+		TradeListTable? tradeLists = null,
+		GoodsListTable? goodsLists = null)
 	{
 		ArgumentNullException.ThrowIfNull(npcTemplates);
 
@@ -45,6 +49,7 @@ public static class QuestDialogNpcTargetBranchInputAssemblyPlanService
 		// If provided, interaction facts are planned through DialogService.isInteractionAllowed.
 		// If provided, controller dispatch facts are planned only after the branch reaches
 		// target.getController().onDialogSelect(...).
+		// If provided, trade-list facts are derived only for the Java DialogService fallback path.
 		// This is still a non-live input adapter only; known-list, audits, packets,
 		// and live controller dispatch remain explicit dependencies.
 		var interactionPlan = snapshot.InteractionInput == null
@@ -66,32 +71,58 @@ public static class QuestDialogNpcTargetBranchInputAssemblyPlanService
 			snapshot.TargetNpcTemplate?.SupportsDialogAction(snapshot.DialogActionId) == true,
 			interactionAllowed);
 		var branchPlan = QuestDialogNpcTargetBranchPlanService.CreatePlan(input);
-		var controllerDispatchPlan = CreateControllerDispatchPlan(snapshot, branchPlan);
+		var tradeListFactAdapterPlan = CreateTradeListFactAdapterPlan(snapshot, branchPlan, tradeLists, goodsLists);
+		var controllerDispatchPlan = CreateControllerDispatchPlan(snapshot, branchPlan, tradeListFactAdapterPlan);
 
 		return new QuestDialogNpcTargetBranchInputAssemblyPlan(
 			input,
 			branchPlan,
 			"CM_DIALOG_SELECT.runImpl -> NpcData.isFunctionDialog + NpcTemplate.supportsAction + DialogService.isInteractionAllowed + target.getController().onDialogSelect",
 			interactionPlan,
+			tradeListFactAdapterPlan,
 			controllerDispatchPlan,
 			IsLive: false);
 	}
 
+	private static NpcDialogTradeListFactAdapterPlan? CreateTradeListFactAdapterPlan(
+		QuestDialogNpcTargetBranchRuntimeSnapshot snapshot,
+		QuestDialogNpcTargetBranchPlan branchPlan,
+		TradeListTable? tradeLists,
+		GoodsListTable? goodsLists)
+	{
+		if (branchPlan.Dispatch == null
+			|| snapshot.ControllerDispatchFacts == null
+			|| snapshot.ControllerDispatchFacts.DialogServiceFacts != null
+			|| snapshot.TradeListFactInput == null
+			|| tradeLists == null
+			|| goodsLists == null
+			|| !snapshot.TargetIsNpc
+			|| !snapshot.ControllerDispatchFacts.IsInTalkRange
+			|| snapshot.ControllerDispatchFacts.NpcAiHandledDialogSelect)
+		{
+			return null;
+		}
+
+		return NpcDialogTradeListFactAdapterService.CreatePlan(snapshot.TradeListFactInput, tradeLists, goodsLists);
+	}
+
 	private static NpcDialogControllerDispatchPlan? CreateControllerDispatchPlan(
 		QuestDialogNpcTargetBranchRuntimeSnapshot snapshot,
-		QuestDialogNpcTargetBranchPlan branchPlan)
+		QuestDialogNpcTargetBranchPlan branchPlan,
+		NpcDialogTradeListFactAdapterPlan? tradeListFactAdapterPlan)
 	{
 		if (snapshot.ControllerDispatchFacts == null || branchPlan.Dispatch == null)
 		{
 			return null;
 		}
 
+		var dialogServiceFacts = snapshot.ControllerDispatchFacts.DialogServiceFacts ?? tradeListFactAdapterPlan?.Facts;
 		return NpcDialogControllerDispatchPlanService.CreatePlan(
 			new NpcDialogControllerDispatchInput(
 				branchPlan.Dispatch,
 				snapshot.TargetIsNpc,
 				snapshot.ControllerDispatchFacts.IsInTalkRange,
 				snapshot.ControllerDispatchFacts.NpcAiHandledDialogSelect,
-				snapshot.ControllerDispatchFacts.DialogServiceFacts));
+				dialogServiceFacts));
 	}
 }

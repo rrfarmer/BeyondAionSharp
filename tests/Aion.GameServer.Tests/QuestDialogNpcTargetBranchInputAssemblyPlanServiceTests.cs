@@ -164,6 +164,90 @@ public sealed class QuestDialogNpcTargetBranchInputAssemblyPlanServiceTests
 	}
 
 	[Fact]
+	public void CreatePlan_ComposesDialogServiceFactsFromStaticTradeData()
+	{
+		var targetTemplate = CreateTemplate(203060, [BuyAction]);
+		var templates = new NpcTemplateTable([targetTemplate]);
+
+		var plan = QuestDialogNpcTargetBranchInputAssemblyPlanService.CreatePlan(
+			CreateSnapshot(
+				targetTemplate,
+				questId: 0,
+				dialogActionId: BuyAction,
+				controllerDispatchFacts: new QuestDialogNpcControllerDispatchFacts(
+					IsInTalkRange: true,
+					NpcAiHandledDialogSelect: false),
+				tradeListFactInput: new NpcDialogTradeListFactAdapterInput(
+					NpcId: 203060,
+					PlayerLegionLevel: 0,
+					VendorBuyModifier: 125)),
+			templates,
+			CreateTradeLists(tradeLists: [new TradeListTemplateSummary(203060, [129], SellPriceRate: 80)]),
+			CreateGoodsLists(new GoodsListSummary(129)));
+
+		var tradeListFactPlan = Assert.IsType<NpcDialogTradeListFactAdapterPlan>(plan.TradeListFactAdapterPlan);
+		Assert.True(tradeListFactPlan.Facts.HasTradeList);
+		Assert.True(tradeListFactPlan.Facts.HasSellableTradeGoods);
+		var controllerPlan = Assert.IsType<NpcDialogControllerDispatchPlan>(plan.ControllerDispatchPlan);
+		var servicePlan = Assert.IsType<NpcDialogServiceSelectPlan>(controllerPlan.DialogServicePlan);
+		Assert.Equal(NpcDialogServiceSelectStatus.BuyTradeList, servicePlan.Status);
+		Assert.Equal(100, Assert.Single(servicePlan.Descriptors).PriceModifier);
+	}
+
+	[Fact]
+	public void CreatePlan_PrefersExplicitDialogServiceFactsOverStaticTradeData()
+	{
+		var targetTemplate = CreateTemplate(203060, [BuyAction]);
+		var templates = new NpcTemplateTable([targetTemplate]);
+
+		var plan = QuestDialogNpcTargetBranchInputAssemblyPlanService.CreatePlan(
+			CreateSnapshot(
+				targetTemplate,
+				questId: 0,
+				dialogActionId: BuyAction,
+				controllerDispatchFacts: new QuestDialogNpcControllerDispatchFacts(
+					IsInTalkRange: true,
+					NpcAiHandledDialogSelect: false,
+					DialogServiceFacts: new NpcDialogServiceSelectFacts(
+						HasTradeList: false,
+						HasSellableTradeGoods: false)),
+				tradeListFactInput: new NpcDialogTradeListFactAdapterInput(203060)),
+			templates,
+			CreateTradeLists(tradeLists: [new TradeListTemplateSummary(203060, [129])]),
+			CreateGoodsLists(new GoodsListSummary(129)));
+
+		Assert.Null(plan.TradeListFactAdapterPlan);
+		var controllerPlan = Assert.IsType<NpcDialogControllerDispatchPlan>(plan.ControllerDispatchPlan);
+		var servicePlan = Assert.IsType<NpcDialogServiceSelectPlan>(controllerPlan.DialogServicePlan);
+		Assert.Equal(NpcDialogServiceSelectStatus.BuyUnavailable, servicePlan.Status);
+	}
+
+	[Fact]
+	public void CreatePlan_DoesNotDeriveStaticTradeFactsWhenControllerShortCircuits()
+	{
+		var targetTemplate = CreateTemplate(203060, [BuyAction]);
+		var templates = new NpcTemplateTable([targetTemplate]);
+
+		var plan = QuestDialogNpcTargetBranchInputAssemblyPlanService.CreatePlan(
+			CreateSnapshot(
+				targetTemplate,
+				questId: 0,
+				dialogActionId: BuyAction,
+				controllerDispatchFacts: new QuestDialogNpcControllerDispatchFacts(
+					IsInTalkRange: true,
+					NpcAiHandledDialogSelect: true),
+				tradeListFactInput: new NpcDialogTradeListFactAdapterInput(203060)),
+			templates,
+			CreateTradeLists(tradeLists: [new TradeListTemplateSummary(203060, [129])]),
+			CreateGoodsLists(new GoodsListSummary(129)));
+
+		Assert.Null(plan.TradeListFactAdapterPlan);
+		var controllerPlan = Assert.IsType<NpcDialogControllerDispatchPlan>(plan.ControllerDispatchPlan);
+		Assert.Equal(NpcDialogControllerDispatchStatus.AiHandled, controllerPlan.Status);
+		Assert.Null(controllerPlan.DialogServicePlan);
+	}
+
+	[Fact]
 	public void CreatePlan_DoesNotComposeDialogServicePlanWhenControllerShortCircuits()
 	{
 		var targetTemplate = CreateTemplate(203001, [FunctionDialogAction]);
@@ -270,7 +354,8 @@ public sealed class QuestDialogNpcTargetBranchInputAssemblyPlanServiceTests
 		NpcDialogInteractionAllowedInput? interactionInput = null,
 		QuestDialogNpcControllerDispatchFacts? controllerDispatchFacts = null,
 		int questId = 1001,
-		int dialogActionId = FunctionDialogAction)
+		int dialogActionId = FunctionDialogAction,
+		NpcDialogTradeListFactAdapterInput? tradeListFactInput = null)
 	{
 		return new QuestDialogNpcTargetBranchRuntimeSnapshot(
 			PlayerObjectId,
@@ -285,7 +370,8 @@ public sealed class QuestDialogNpcTargetBranchInputAssemblyPlanServiceTests
 			TargetNpcTemplate: targetTemplate,
 			InteractionAllowed: interactionAllowed,
 			InteractionInput: interactionInput,
-			ControllerDispatchFacts: controllerDispatchFacts);
+			ControllerDispatchFacts: controllerDispatchFacts,
+			TradeListFactInput: tradeListFactInput);
 	}
 
 	private static NpcTemplateSummary CreateTemplate(int templateId, IReadOnlyList<int>? functionDialogIds = null)
@@ -301,5 +387,21 @@ public sealed class QuestDialogNpcTargetBranchInputAssemblyPlanServiceTests
 			Tribe: "NONE",
 			Type: "NPC",
 			FunctionDialogIds: functionDialogIds);
+	}
+
+	private static TradeListTable CreateTradeLists(
+		IReadOnlyList<TradeListTemplateSummary>? tradeLists = null,
+		IReadOnlyList<TradeListTemplateSummary>? tradeInLists = null,
+		IReadOnlyList<TradeListTemplateSummary>? purchaseLists = null)
+	{
+		return new TradeListTable(
+			tradeLists ?? Array.Empty<TradeListTemplateSummary>(),
+			tradeInLists ?? Array.Empty<TradeListTemplateSummary>(),
+			purchaseLists ?? Array.Empty<TradeListTemplateSummary>());
+	}
+
+	private static GoodsListTable CreateGoodsLists(params GoodsListSummary[] goodsLists)
+	{
+		return new GoodsListTable(goodsLists, Array.Empty<GoodsListSummary>(), Array.Empty<GoodsListSummary>());
 	}
 }
