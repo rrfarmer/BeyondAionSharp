@@ -8,6 +8,67 @@ namespace Aion.GameServer.Tests;
 public sealed class QuestFinishStaticRewardProjectionCompositionTests
 {
 	[Fact]
+	public void StaticExtendedNonItemRewardProjection_ComposesAfterRegularNonItemRewardWithoutLiveSideEffects()
+	{
+		const string xml = """
+			<quests>
+				<quest id="1006" can_report="true" category="QUEST" reward_repeat_count="1">
+					<rewards gold="100" />
+					<extended_rewards gold="200" title="77" />
+				</quest>
+			</quests>
+			""";
+		var template = new NearbyQuestTemplateXmlExtractor().Extract(xml).Single();
+		var rewardProjection = new QuestFinishRewardTemplateXmlProjectionExtractor()
+			.ExtractDefaultRegularNonItemProjections(xml)[1006] with
+		{
+			DialogActionId = 108
+		};
+
+		var operationPlan = QuestFinishOperationPlanService.CreatePlan(
+			new PlayerQuestState(1006, "REWARD", QuestVars: 0x12, Flags: 0, CompleteCount: 0),
+			template,
+			PlayerNpcFactionsSnapshot.Empty,
+			new DateTimeOffset(2026, 5, 26, 12, 0, 0, TimeSpan.Zero),
+			CreateOptions("UTC"),
+			rewardProjection);
+
+		Assert.True(rewardProjection.HasNonItemRewards);
+		Assert.Equal(100, rewardProjection.NonItemProjection?.Kinah);
+		Assert.Equal(200, rewardProjection.ExtendedNonItemProjection?.Kinah);
+		Assert.Equal(77, rewardProjection.ExtendedNonItemProjection?.Title);
+		Assert.True(operationPlan.Applied);
+		Assert.All(operationPlan.Descriptors, descriptor => Assert.False(descriptor.IsLive));
+		var projectedNonItems = operationPlan.Descriptors
+			.Where(descriptor => descriptor.Action == QuestFinishOperationAction.NonItemRewardProjection)
+			.ToArray();
+		Assert.Collection(
+			projectedNonItems,
+			descriptor =>
+			{
+				Assert.Equal(QuestFinishRewardNonItemAction.Kinah, descriptor.RewardNonItemProjection?.Action);
+				Assert.Equal(100, descriptor.Count);
+			},
+			descriptor =>
+			{
+				Assert.Equal(QuestFinishRewardNonItemAction.Kinah, descriptor.RewardNonItemProjection?.Action);
+				Assert.Equal(200, descriptor.Count);
+			},
+			descriptor =>
+			{
+				Assert.Equal(QuestFinishRewardNonItemAction.Title, descriptor.RewardNonItemProjection?.Action);
+				Assert.Equal(77, descriptor.Count);
+			});
+		Assert.Contains(operationPlan.Descriptors, descriptor => descriptor.Action == QuestFinishOperationAction.NonItemRewardPlaceholder);
+		Assert.True(
+			IndexOf(operationPlan.Descriptors, QuestFinishOperationAction.NonItemRewardProjection)
+			< IndexOf(operationPlan.Descriptors, QuestFinishOperationAction.NonItemRewardPlaceholder));
+		Assert.True(
+			IndexOf(operationPlan.Descriptors, QuestFinishOperationAction.NonItemRewardPlaceholder)
+			< IndexOf(operationPlan.Descriptors, QuestFinishOperationAction.QuestStateMutation));
+	}
+
+	[Fact]
 	public void StaticClassSelectableRewardProjection_ComposesOnLastRepeatInsteadOfRegularSelectableReward()
 	{
 		const string xml = """

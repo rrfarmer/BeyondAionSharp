@@ -165,6 +165,7 @@ public sealed record QuestFinishRewardTemplateProjection(
 	IReadOnlyList<QuestFinishRewardWorkItem>? WorkItems = null,
 	QuestFinishRewardItemTemplateProjection? ItemProjection = null,
 	QuestFinishRewardNonItemTemplateProjection? NonItemProjection = null,
+	QuestFinishRewardNonItemTemplateProjection? ExtendedNonItemProjection = null,
 	int DialogActionId = 0,
 	int? ExtendedRewardIndex = null,
 	int RewardRepeatCount = 0,

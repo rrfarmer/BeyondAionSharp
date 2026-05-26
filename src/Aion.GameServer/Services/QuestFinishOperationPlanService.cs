@@ -294,18 +294,52 @@ public static class QuestFinishOperationPlanService
 		QuestFinishRewardSideEffectContext? rewardSideEffectContext,
 		GameServerOptions options)
 	{
-		if (rewardProjection.NonItemProjection is null)
+		if (rewardProjection.NonItemProjection is null && rewardProjection.ExtendedNonItemProjection is null)
 		{
 			return;
 		}
 
+		if (rewardProjection.NonItemProjection is not null)
+		{
+			AddNonItemProjectionDescriptors(
+				descriptors,
+				ref nextOrder,
+				template,
+				rewardProjection,
+				rewardProjection.NonItemProjection,
+				rewardSideEffectContext,
+				options);
+		}
+
+		if (rewardProjection.ExtendedNonItemProjection is not null)
+		{
+			AddNonItemProjectionDescriptors(
+				descriptors,
+				ref nextOrder,
+				template,
+				rewardProjection,
+				rewardProjection.ExtendedNonItemProjection,
+				rewardSideEffectContext,
+				options);
+		}
+	}
+
+	private static void AddNonItemProjectionDescriptors(
+		ICollection<QuestFinishOperationDescriptor> descriptors,
+		ref int nextOrder,
+		NearbyQuestTemplateSummary template,
+		QuestFinishRewardTemplateProjection rewardProjection,
+		QuestFinishRewardNonItemTemplateProjection nonItemProjection,
+		QuestFinishRewardSideEffectContext? rewardSideEffectContext,
+		GameServerOptions options)
+	{
 		var projectionPlan = QuestFinishRewardPlanService.CreateNonItemRewardProjection(
 			new QuestFinishRewardNonItemProjectionInput(
 				template.QuestId,
 				template.QuestCategory,
 				rewardProjection.TargetNpcId,
 				rewardProjection.HasTargetNpcTemplate),
-			rewardProjection.NonItemProjection);
+			nonItemProjection);
 
 		foreach (var nonItemDescriptor in projectionPlan.Descriptors)
 		{

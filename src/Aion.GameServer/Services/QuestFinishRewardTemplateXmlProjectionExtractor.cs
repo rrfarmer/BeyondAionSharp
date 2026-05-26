@@ -52,15 +52,20 @@ public sealed class QuestFinishRewardTemplateXmlProjectionExtractor
 		var nonItemProjection = selectedRewards is null
 			? null
 			: CreateNonItemProjection(selectedRewards);
+		var extendedNonItemProjection = extendedRewards is null
+			? null
+			: CreateNonItemProjection(extendedRewards);
 		var itemProjection = CreateItemProjection(quest, selectedRewards, rewardGroupIndex, extendedRewards);
 
 		return new QuestFinishRewardTemplateProjection(
 			RewardGroupCount: rewards.Length == 0 ? null : rewards.Length,
 			HasItemRewards: itemProjection is not null,
-			HasNonItemRewards: nonItemProjection is not null && HasAnyNonItemField(nonItemProjection),
+			HasNonItemRewards: (nonItemProjection is not null && HasAnyNonItemField(nonItemProjection))
+				|| (extendedNonItemProjection is not null && HasAnyNonItemField(extendedNonItemProjection)),
 			IsChallengeTask: string.Equals(ReadStringAttribute(quest, "category", defaultValue: "QUEST"), "CHALLENGE_TASK", StringComparison.Ordinal),
 			ItemProjection: itemProjection,
 			NonItemProjection: nonItemProjection,
+			ExtendedNonItemProjection: extendedNonItemProjection,
 			RewardRepeatCount: ReadIntAttribute(quest, "reward_repeat_count"));
 	}
 

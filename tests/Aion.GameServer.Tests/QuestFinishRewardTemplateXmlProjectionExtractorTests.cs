@@ -22,6 +22,9 @@ public sealed class QuestFinishRewardTemplateXmlProjectionExtractorTests
 	private const int ExpectedRealDataClassSelectableRewardItemCount = 2324;
 	private const int ExpectedRealDataClassRewardOnEveryRepeatTemplates = 69;
 	private const int ExpectedRealDataSingleTimeClassRewardTemplates = 5;
+	private const int ExpectedRealDataExtendedNonItemRewardTemplates = 82;
+	private const long ExpectedRealDataExtendedKinahTotal = 1560700;
+	private const int ExpectedRealDataExtendedTitleTemplates = 3;
 
 	[Fact]
 	public void ExtractDefaultRegularNonItemProjections_ReadsJavaRewardsAttributes()
@@ -182,8 +185,10 @@ public sealed class QuestFinishRewardTemplateXmlProjectionExtractorTests
 
 		Assert.Null(projection.RewardGroupCount);
 		Assert.True(projection.HasItemRewards);
-		Assert.False(projection.HasNonItemRewards);
+		Assert.True(projection.HasNonItemRewards);
 		Assert.Null(projection.NonItemProjection);
+		var extendedNonItem = Assert.IsType<QuestFinishRewardNonItemTemplateProjection>(projection.ExtendedNonItemProjection);
+		Assert.Equal(500, extendedNonItem.Kinah);
 		var itemProjection = Assert.IsType<QuestFinishRewardItemTemplateProjection>(projection.ItemProjection);
 		Assert.Empty(itemProjection.RewardGroups);
 		var extendedRewards = Assert.IsType<QuestFinishRewardGroupProjection>(itemProjection.ExtendedRewards);
@@ -291,6 +296,22 @@ public sealed class QuestFinishRewardTemplateXmlProjectionExtractorTests
 		Assert.Equal(
 			ExpectedRealDataSingleTimeClassRewardTemplates,
 			projections.Values.Count(projection => projection.ItemProjection?.SingleTimeClassReward == true));
+		Assert.Equal(
+			ExpectedRealDataExtendedNonItemRewardTemplates,
+			projections.Values.Count(projection =>
+				projection.ExtendedNonItemProjection is { } nonItem
+				&& (nonItem.Kinah != 0
+					|| nonItem.Experience != 0
+					|| nonItem.Title != 0
+					|| nonItem.AbyssPoints != 0
+					|| nonItem.DivinePoints != 0
+					|| nonItem.GloryPoints != 0
+					|| nonItem.ExtendInventory != 0
+					|| nonItem.ExtendStigma != 0
+					|| nonItem.CollectItemChecks.Count != 0
+					|| nonItem.InventoryItemCheck != 0)));
+		Assert.Equal(ExpectedRealDataExtendedKinahTotal, projections.Values.Sum(projection => projection.ExtendedNonItemProjection?.Kinah ?? 0));
+		Assert.Equal(ExpectedRealDataExtendedTitleTemplates, projections.Values.Count(projection => projection.ExtendedNonItemProjection is { Title: not 0 }));
 	}
 
 	private static string FindRepoRoot()
