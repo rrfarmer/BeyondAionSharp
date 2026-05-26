@@ -1,3 +1,5 @@
+using Aion.GameServer.Network.Aion.ServerPackets;
+
 namespace Aion.GameServer.Services;
 
 public enum BindPointTeleportOperationPlanStatus
@@ -30,6 +32,7 @@ public sealed record BindPointTeleportOperationPlan(
 	string? SystemMessage,
 	string? AuditMessage,
 	IReadOnlyList<BindPointTeleportOperationStep> Steps,
+	IReadOnlyList<SmBindPointTeleport> PacketIntents,
 	string JavaSource,
 	bool IsLive);
 
@@ -40,6 +43,7 @@ public static class BindPointTeleportOperationPlanService
 	private const int CooldownSeconds = 600;
 
 	public static BindPointTeleportOperationPlan CreatePlan(
+		int playerObjectId,
 		int locId,
 		bool hotspotExists,
 		BindPointTeleportPricePlan? pricePlan,
@@ -59,6 +63,7 @@ public static class BindPointTeleportOperationPlanService
 				"STR_CANNOT_MOVE_TO_AIRPORT_NO_ROUTE",
 				$"Tried to use invalid hotspot teleport to locId {locId}",
 				[BindPointTeleportOperationStep.AuditInvalidHotspot, BindPointTeleportOperationStep.SendNoRoute],
+				[],
 				"BindPointTeleportService.teleport -> invalid hotspot",
 				IsLive: false);
 		}
@@ -74,6 +79,7 @@ public static class BindPointTeleportOperationPlanService
 				pricePlan?.ShouldWarnPriceMismatch ?? false,
 				requirementsPlan?.SystemMessage,
 				requirementsPlan?.AuditMessage,
+				[],
 				[],
 				"BindPointTeleportService.teleport -> checkRequirements false",
 				IsLive: false);
@@ -96,6 +102,10 @@ public static class BindPointTeleportOperationPlanService
 				BindPointTeleportOperationStep.AddCooldown,
 				BindPointTeleportOperationStep.BroadcastCooldown,
 				BindPointTeleportOperationStep.ScheduleFinalTeleport,
+			],
+			[
+				SmBindPointTeleport.Start(playerObjectId, locId),
+				SmBindPointTeleport.Cooldown(playerObjectId, locId, CooldownSeconds),
 			],
 			$"BindPointTeleportService.teleport -> broadcast action 1 -> schedule {StartDelayMilliseconds}ms skill task -> tryDecreaseKinah(DEC_KINAH_FLY) -> add {CooldownSeconds}s cooldown -> broadcast action 3 -> schedule {FinalTeleportDelayMilliseconds}ms teleport",
 			IsLive: false);
