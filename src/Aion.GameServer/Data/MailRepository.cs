@@ -51,6 +51,91 @@ public interface IMailRepository
 
 public sealed record MailRecipientInfo(int PlayerObjectId, string Name, string Race, int MailboxLetters);
 
+public sealed record SystemMailRepositoryCommandPlan(
+	string JavaArtifact,
+	string Sql,
+	IReadOnlyList<SystemMailRepositoryParameter> Parameters);
+
+public sealed record SystemMailRepositoryParameter(string Name, object? Value);
+
+public static class SystemMailRepositoryPlan
+{
+	public const string StoreLetterSql =
+		"INSERT INTO `mail` (`mail_unique_id`, `mail_recipient_id`, `sender_name`, `mail_title`, `mail_message`, `unread`, `attached_item_id`, `attached_kinah_count`, `express`, `recieved_time`) VALUES(?,?,?,?,?,?,?,?,?,?)";
+
+	public const string StoreAttachedItemSql =
+		"INSERT INTO `inventory` (`item_unique_id`, `item_id`, `item_count`, `item_color`, `color_expires`, `item_creator`, `expire_time`, `activation_count`, `item_owner`, `is_equipped`, is_soul_bound, `slot`, `item_location`, `enchant`, `enchant_bonus`, `item_skin`, `fusioned_item`, `optional_socket`, `optional_fusion_socket`, `charge`, `tune_count`, `rnd_bonus`, `fusion_rnd_bonus`, `tempering`, `pack_count`, `is_amplified`, `buff_skill`, `rnd_plume_bonus`) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+
+	public const string UpdateOfflineMailboxCounterSql = "UPDATE players SET mailbox_letters=? WHERE name=?";
+
+	public static SystemMailRepositoryCommandPlan StoreLetter(PlayerMail mail)
+	{
+		return new SystemMailRepositoryCommandPlan(
+			"com.aionemu.gameserver.dao.MailDAO.storeLetter/saveLetter",
+			StoreLetterSql,
+			[
+				new("mail_unique_id", mail.Id),
+				new("mail_recipient_id", mail.RecipientId),
+				new("sender_name", mail.SenderName),
+				new("mail_title", mail.Title),
+				new("mail_message", mail.Message),
+				new("unread", mail.IsUnread),
+				new("attached_item_id", mail.AttachedItemObjectId),
+				new("attached_kinah_count", mail.AttachedKinah),
+				new("express", mail.LetterType),
+				new("recieved_time", mail.ReceivedTime),
+			]);
+	}
+
+	public static SystemMailRepositoryCommandPlan StoreAttachedItem(InventoryItem item, int recipientObjectId)
+	{
+		return new SystemMailRepositoryCommandPlan(
+			"com.aionemu.gameserver.dao.InventoryDAO.store/insertItems",
+			StoreAttachedItemSql,
+			[
+				new("item_unique_id", item.ObjectId),
+				new("item_id", item.ItemId),
+				new("item_count", item.Count),
+				new("item_color", item.Color),
+				new("color_expires", item.ColorExpires),
+				new("item_creator", item.Creator),
+				new("expire_time", item.ExpireTime),
+				new("activation_count", item.ActivationCount),
+				new("item_owner", recipientObjectId),
+				new("is_equipped", item.IsEquipped),
+				new("is_soul_bound", item.IsSoulBound ? 1 : 0),
+				new("slot", item.Slot),
+				new("item_location", item.Location),
+				new("enchant", item.Enchant),
+				new("enchant_bonus", item.EnchantBonus),
+				new("item_skin", item.ItemSkin),
+				new("fusioned_item", item.FusionedItem),
+				new("optional_socket", item.OptionalSocket),
+				new("optional_fusion_socket", item.OptionalFusionSocket),
+				new("charge", item.Charge),
+				new("tune_count", item.TuneCount),
+				new("rnd_bonus", item.RandomBonus),
+				new("fusion_rnd_bonus", item.FusionRandomBonus),
+				new("tempering", item.Tempering),
+				new("pack_count", item.PackCount),
+				new("is_amplified", item.IsAmplified),
+				new("buff_skill", item.BuffSkill),
+				new("rnd_plume_bonus", item.RandomPlumeBonus),
+			]);
+	}
+
+	public static SystemMailRepositoryCommandPlan UpdateOfflineMailboxCounter(string recipientName, int mailboxLetters)
+	{
+		return new SystemMailRepositoryCommandPlan(
+			"com.aionemu.gameserver.dao.MailDAO.updateOfflineMailCounter",
+			UpdateOfflineMailboxCounterSql,
+			[
+				new("mailbox_letters", mailboxLetters),
+				new("name", recipientName),
+			]);
+	}
+}
+
 public sealed class MySqlMailRepository : IMailRepository
 {
 	private const int CubeStorageId = 0;
@@ -219,11 +304,9 @@ public sealed class MySqlMailRepository : IMailRepository
 		{
 			await using var connection = DatabaseFactory.GetConnection();
 			await connection.OpenAsync(cancellationToken);
-			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
-
-			await InsertMailAsync(connection, transaction, mail, cancellationToken);
-
-			await transaction.CommitAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			ApplyPlan(command, SystemMailRepositoryPlan.StoreLetter(mail));
+			await command.ExecuteNonQueryAsync(cancellationToken);
 			return true;
 		}
 		catch (Exception ex)
@@ -243,12 +326,9 @@ public sealed class MySqlMailRepository : IMailRepository
 		{
 			await using var connection = DatabaseFactory.GetConnection();
 			await connection.OpenAsync(cancellationToken);
-			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
-
-			var mailboxItem = CopyForOwner(attachedItem, recipientObjectId);
-			await InsertInventoryItemAsync(connection, transaction, mailboxItem, cancellationToken);
-
-			await transaction.CommitAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			ApplyPlan(command, SystemMailRepositoryPlan.StoreAttachedItem(attachedItem, recipientObjectId));
+			await command.ExecuteNonQueryAsync(cancellationToken);
 			return true;
 		}
 		catch (Exception ex)
@@ -273,13 +353,7 @@ public sealed class MySqlMailRepository : IMailRepository
 			await using var connection = DatabaseFactory.GetConnection();
 			await connection.OpenAsync(cancellationToken);
 			await using var command = connection.CreateCommand();
-			command.CommandText = "UPDATE players SET mailbox_letters=? WHERE name=?";
-			command.Parameters.AddRange(
-				new[]
-				{
-					new MySqlParameter { Value = mailboxLetters },
-					new MySqlParameter { Value = recipientName },
-				});
+			ApplyPlan(command, SystemMailRepositoryPlan.UpdateOfflineMailboxCounter(recipientName, mailboxLetters));
 			await command.ExecuteNonQueryAsync(cancellationToken);
 			return true;
 		}
@@ -597,43 +671,13 @@ public sealed class MySqlMailRepository : IMailRepository
 		await command.ExecuteNonQueryAsync(cancellationToken);
 	}
 
-	private static InventoryItem CopyForOwner(InventoryItem item, int ownerId)
+	private static void ApplyPlan(MySqlCommand command, SystemMailRepositoryCommandPlan plan)
 	{
-		return new InventoryItem
+		command.CommandText = plan.Sql;
+		foreach (var parameter in plan.Parameters)
 		{
-			ObjectId = item.ObjectId,
-			ItemId = item.ItemId,
-			Count = item.Count,
-			Color = item.Color,
-			ColorExpires = item.ColorExpires,
-			Creator = item.Creator,
-			ExpireTime = item.ExpireTime,
-			ActivationCount = item.ActivationCount,
-			OwnerId = ownerId,
-			IsEquipped = item.IsEquipped,
-			IsSoulBound = item.IsSoulBound,
-			Slot = item.Slot,
-			Location = item.Location,
-			Enchant = item.Enchant,
-			EnchantBonus = item.EnchantBonus,
-			ItemSkin = item.ItemSkin,
-			FusionedItem = item.FusionedItem,
-			OptionalSocket = item.OptionalSocket,
-			OptionalFusionSocket = item.OptionalFusionSocket,
-			Charge = item.Charge,
-			TuneCount = item.TuneCount,
-			RandomBonus = item.RandomBonus,
-			FusionRandomBonus = item.FusionRandomBonus,
-			Tempering = item.Tempering,
-			PackCount = item.PackCount,
-			IsAmplified = item.IsAmplified,
-			BuffSkill = item.BuffSkill,
-			RandomPlumeBonus = item.RandomPlumeBonus,
-			ManaStones = item.ManaStones,
-			FusionStones = item.FusionStones,
-			Godstone = item.Godstone,
-			IdianStone = item.IdianStone,
-		};
+			command.Parameters.Add(new MySqlParameter { Value = parameter.Value ?? DBNull.Value });
+		}
 	}
 
 	private static int ReadInt(MySqlDataReader reader, string column)
