@@ -12,13 +12,20 @@ public sealed class SmPlayerInfo : GameServerPacket
 	public const int PacketOpCode = 32;
 	private const int FriendlyCreatureType = 0x26;
 	private readonly Player _player;
+	private readonly bool _enemy;
 	private readonly PlayerExperienceTable? _experienceTable;
 
 	public SmPlayerInfo(Player player, PlayerExperienceTable? experienceTable = null)
+		: this(player, enemy: false, experienceTable)
+	{
+	}
+
+	public SmPlayerInfo(Player player, bool enemy, PlayerExperienceTable? experienceTable = null)
 		: base(PacketOpCode)
 	{
-		// Java parity: network/aion/serverpackets/SM_PLAYER_INFO(Player).
+		// Java parity: network/aion/serverpackets/SM_PLAYER_INFO(Player, boolean enemy).
 		_player = player;
+		_enemy = enemy;
 		_experienceTable = experienceTable;
 	}
 
@@ -39,7 +46,7 @@ public sealed class SmPlayerInfo : GameServerPacket
 		buffer.WriteD(templateId);
 		buffer.WriteC(0);
 		buffer.WriteD(0);
-		buffer.WriteC(FriendlyCreatureType);
+		buffer.WriteC(_enemy ? 0 : FriendlyCreatureType);
 		buffer.WriteC(raceId);
 		buffer.WriteC(ToClassId(_player.PlayerClass));
 		buffer.WriteC(genderId);

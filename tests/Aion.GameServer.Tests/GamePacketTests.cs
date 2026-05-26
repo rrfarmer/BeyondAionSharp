@@ -3889,6 +3889,33 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmPlayerInfo_EnemyFlagWritesJavaAttackableCreatureType()
+	{
+		var player = new Player
+		{
+			ObjectId = 1002,
+			Name = "Enemy",
+			Race = "ASMODIANS",
+			Gender = "MALE",
+			PlayerClass = "GLADIATOR",
+			Position = new WorldPosition(210010000, 1, 2, 3, 4),
+		};
+
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(new SmPlayerInfo(player, enemy: true)));
+
+		reader.ReadF();
+		reader.ReadF();
+		reader.ReadF();
+		reader.ReadD();
+		reader.ReadD();
+		reader.ReadD();
+		reader.ReadD();
+		reader.ReadC();
+		reader.ReadD();
+		Assert.Equal(0, (int)reader.ReadC());
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesL2AuthLoginCheck()
 	{
 		var payload = CreateClientPayload(

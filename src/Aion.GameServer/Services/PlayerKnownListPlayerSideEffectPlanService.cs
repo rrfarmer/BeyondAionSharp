@@ -89,7 +89,7 @@ public sealed class PlayerKnownListPlayerSideEffectPlanService
 				context.SeenPlayerObjectId,
 				"com.aionemu.gameserver.controllers.PlayerController.sendPlayerInfoPackets -> new SM_PLAYER_INFO(player, !player.equals(getOwner()) && getOwner().isAggroIconTo(player))",
 				AggroIcon: aggroIcon,
-				Notes: "Current C# SmPlayerInfo exists, but its constructor does not expose Java's aggro-icon flag."),
+				Notes: "C# SmPlayerInfo can carry Java's enemy/aggro creature-type flag; viewer-sensitive race projection still needs verification."),
 			new(
 				PlayerKnownListPlayerSideEffectKind.SmMotion,
 				"SM_MOTION",
