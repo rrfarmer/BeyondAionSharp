@@ -220,10 +220,50 @@ public sealed class QuestDialogNpcTargetBranchInputAssemblyPlanServiceTests
 		var tradeListFactPlan = Assert.IsType<NpcDialogTradeListFactAdapterPlan>(plan.TradeListFactAdapterPlan);
 		Assert.True(tradeListFactPlan.Facts.HasTradeList);
 		Assert.True(tradeListFactPlan.Facts.HasSellableTradeGoods);
+		var packetPlan = Assert.IsType<SmTradeListPacketPlan>(plan.TradeListPacketPlan);
+		Assert.Equal(SmTradeListPacketPlanStatus.Ready, packetPlan.Status);
+		Assert.Equal([129], packetPlan.TradeTabIds);
+		Assert.Equal(100, packetPlan.BuyPriceModifier);
+		Assert.True(packetPlan.ShowBuyTab);
+		Assert.True(packetPlan.ShowSellTab);
+		Assert.False(packetPlan.IsLive);
 		var controllerPlan = Assert.IsType<NpcDialogControllerDispatchPlan>(plan.ControllerDispatchPlan);
 		var servicePlan = Assert.IsType<NpcDialogServiceSelectPlan>(controllerPlan.DialogServicePlan);
 		Assert.Equal(NpcDialogServiceSelectStatus.BuyTradeList, servicePlan.Status);
-		Assert.Equal(100, Assert.Single(servicePlan.Descriptors).PriceModifier);
+		var descriptor = Assert.Single(servicePlan.Descriptors);
+		Assert.Equal(100, descriptor.PriceModifier);
+		Assert.Same(packetPlan, descriptor.TradeListPacketPlan);
+	}
+
+	[Fact]
+	public void CreatePlan_DoesNotCreateTradeListPacketPlanWhenNoGoodsAreSellable()
+	{
+		var targetTemplate = CreateTemplate(203060, [BuyAction]);
+		var templates = new NpcTemplateTable([targetTemplate]);
+
+		var plan = QuestDialogNpcTargetBranchInputAssemblyPlanService.CreatePlan(
+			CreateSnapshot(
+				targetTemplate,
+				questId: 0,
+				dialogActionId: BuyAction,
+				controllerDispatchFacts: new QuestDialogNpcControllerDispatchFacts(
+					IsInTalkRange: true,
+					NpcAiHandledDialogSelect: false),
+				tradeListFactInput: new NpcDialogTradeListFactAdapterInput(
+					NpcId: 203060,
+					PlayerLegionLevel: 0,
+					VendorBuyModifier: 125)),
+			templates,
+			CreateTradeLists(tradeLists: [new TradeListTemplateSummary(203060, [129], SellPriceRate: 80)]),
+			CreateGoodsLists(new GoodsListSummary(129, LegionLevel: 5)));
+
+		var tradeListFactPlan = Assert.IsType<NpcDialogTradeListFactAdapterPlan>(plan.TradeListFactAdapterPlan);
+		Assert.False(tradeListFactPlan.Facts.HasSellableTradeGoods);
+		Assert.Null(plan.TradeListPacketPlan);
+		var controllerPlan = Assert.IsType<NpcDialogControllerDispatchPlan>(plan.ControllerDispatchPlan);
+		var servicePlan = Assert.IsType<NpcDialogServiceSelectPlan>(controllerPlan.DialogServicePlan);
+		Assert.Equal(NpcDialogServiceSelectStatus.BuyUnavailable, servicePlan.Status);
+		Assert.Equal(NpcDialogServiceDescriptorKind.SystemMessageDoesNotSellItem, Assert.Single(servicePlan.Descriptors).Kind);
 	}
 
 	[Fact]
@@ -249,6 +289,7 @@ public sealed class QuestDialogNpcTargetBranchInputAssemblyPlanServiceTests
 			CreateGoodsLists(new GoodsListSummary(129)));
 
 		Assert.Null(plan.TradeListFactAdapterPlan);
+		Assert.Null(plan.TradeListPacketPlan);
 		var controllerPlan = Assert.IsType<NpcDialogControllerDispatchPlan>(plan.ControllerDispatchPlan);
 		var servicePlan = Assert.IsType<NpcDialogServiceSelectPlan>(controllerPlan.DialogServicePlan);
 		Assert.Equal(NpcDialogServiceSelectStatus.BuyUnavailable, servicePlan.Status);
@@ -274,6 +315,7 @@ public sealed class QuestDialogNpcTargetBranchInputAssemblyPlanServiceTests
 			CreateGoodsLists(new GoodsListSummary(129)));
 
 		Assert.Null(plan.TradeListFactAdapterPlan);
+		Assert.Null(plan.TradeListPacketPlan);
 		var controllerPlan = Assert.IsType<NpcDialogControllerDispatchPlan>(plan.ControllerDispatchPlan);
 		Assert.Equal(NpcDialogControllerDispatchStatus.AiHandled, controllerPlan.Status);
 		Assert.Null(controllerPlan.DialogServicePlan);
