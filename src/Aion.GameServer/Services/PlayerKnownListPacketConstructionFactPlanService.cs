@@ -18,6 +18,13 @@ public enum PlayerKnownListPacketConstructionFactBlocker
 	MissingAbnormalEffectFacts,
 }
 
+public enum PlayerKnownListPacketConstructionAttackSpeedFactSource
+{
+	None,
+	Supplied,
+	ResolvedApproximation,
+}
+
 public sealed record PlayerKnownListPacketConstructionAttackSpeedFacts(
 	int BaseAttackSpeed,
 	int CurrentAttackSpeed);
@@ -32,7 +39,8 @@ public sealed record PlayerKnownListPacketConstructionFactPlanRequest(
 	int? AbnormalEffectMask = null,
 	int AbnormalEffectSlots = SmAbnormalEffect.FullSkillTargetSlots,
 	PlayerKnownListPacketConstructionAttackSpeedFacts? RideAttackSpeedFacts = null,
-	float? RideMovementSpeed = null);
+	float? RideMovementSpeed = null,
+	PlayerKnownListAttackSpeedFactResolution? RideAttackSpeedResolution = null);
 
 public sealed record PlayerKnownListPacketConstructionFactPlan(
 	PlayerKnownListPacketConstructionFactPlanStatus Status,
@@ -41,7 +49,9 @@ public sealed record PlayerKnownListPacketConstructionFactPlan(
 	bool ExecutesLivePackets,
 	bool IsLive,
 	bool IsJavaControllerParity,
-	string JavaSource);
+	string JavaSource,
+	PlayerKnownListPacketConstructionAttackSpeedFactSource RideAttackSpeedFactSource = PlayerKnownListPacketConstructionAttackSpeedFactSource.None,
+	PlayerKnownListAttackSpeedFactResolutionStatus? RideAttackSpeedResolutionStatus = null);
 
 public sealed class PlayerKnownListPacketConstructionFactPlanService
 {
@@ -53,6 +63,7 @@ public sealed class PlayerKnownListPacketConstructionFactPlanService
 		// and subject packet facts from the live Player, motion, ride, stats, and
 		// EffectController state. This service only composes supplied snapshots.
 		var blockers = new List<PlayerKnownListPacketConstructionFactBlocker>();
+		var rideAttackSpeed = ResolveRideAttackSpeed(request);
 
 		if (request.ViewerPlayer is null)
 			blockers.Add(PlayerKnownListPacketConstructionFactBlocker.MissingViewerPlayer);
@@ -65,7 +76,7 @@ public sealed class PlayerKnownListPacketConstructionFactPlanService
 			if (request.SubjectPlayer?.RideInfo is null)
 				blockers.Add(PlayerKnownListPacketConstructionFactBlocker.MissingRideInfo);
 
-			if (request.RideAttackSpeedFacts is null)
+			if (rideAttackSpeed.Facts is null)
 				blockers.Add(PlayerKnownListPacketConstructionFactBlocker.MissingRideAttackSpeedFacts);
 		}
 
@@ -80,7 +91,9 @@ public sealed class PlayerKnownListPacketConstructionFactPlanService
 			return CreatePlan(
 				PlayerKnownListPacketConstructionFactPlanStatus.Blocked,
 				Facts: null,
-				blockers);
+				blockers,
+				rideAttackSpeed.Source,
+				rideAttackSpeed.ResolutionStatus);
 		}
 
 		var viewerContext = new SmPlayerInfoViewerContext(
@@ -98,19 +111,23 @@ public sealed class PlayerKnownListPacketConstructionFactPlanService
 			request.AbnormalEffectMask ?? 0,
 			request.AbnormalEffectSlots,
 			rideMovementSpeed,
-			request.RideAttackSpeedFacts?.BaseAttackSpeed ?? 0,
-			request.RideAttackSpeedFacts?.CurrentAttackSpeed ?? 0);
+			rideAttackSpeed.Facts?.BaseAttackSpeed ?? 0,
+			rideAttackSpeed.Facts?.CurrentAttackSpeed ?? 0);
 
 		return CreatePlan(
 			PlayerKnownListPacketConstructionFactPlanStatus.Complete,
 			facts,
-			blockers);
+			blockers,
+			rideAttackSpeed.Source,
+			rideAttackSpeed.ResolutionStatus);
 	}
 
 	private static PlayerKnownListPacketConstructionFactPlan CreatePlan(
 		PlayerKnownListPacketConstructionFactPlanStatus status,
 		PlayerKnownListOperationSideEffectPacketConstructionFacts? Facts,
-		IReadOnlyList<PlayerKnownListPacketConstructionFactBlocker> blockers) =>
+		IReadOnlyList<PlayerKnownListPacketConstructionFactBlocker> blockers,
+		PlayerKnownListPacketConstructionAttackSpeedFactSource rideAttackSpeedFactSource,
+		PlayerKnownListAttackSpeedFactResolutionStatus? rideAttackSpeedResolutionStatus) =>
 		new(
 			status,
 			Facts,
@@ -118,5 +135,47 @@ public sealed class PlayerKnownListPacketConstructionFactPlanService
 			ExecutesLivePackets: false,
 			IsLive: false,
 			IsJavaControllerParity: false,
-			"Non-live fact planner for com.aionemu.gameserver.controllers.PlayerController.sendPlayerInfoPackets and see/notSee packet construction; does not execute live known-list callbacks or send packets.");
+			"Non-live fact planner for com.aionemu.gameserver.controllers.PlayerController.sendPlayerInfoPackets and see/notSee packet construction; does not execute live known-list callbacks or send packets.",
+			rideAttackSpeedFactSource,
+			rideAttackSpeedResolutionStatus);
+
+	private static ResolvedRideAttackSpeed ResolveRideAttackSpeed(
+		PlayerKnownListPacketConstructionFactPlanRequest request)
+	{
+		if (!request.DirectionFacts.SubjectIsInRideMode)
+		{
+			return new ResolvedRideAttackSpeed(
+				Facts: null,
+				PlayerKnownListPacketConstructionAttackSpeedFactSource.None,
+				request.RideAttackSpeedResolution?.Status);
+		}
+
+		// Supplied packet facts remain authoritative. The disabled resolver result
+		// is consumed only when callers opt in by providing an explicit result.
+		if (request.RideAttackSpeedFacts is { } suppliedFacts)
+		{
+			return new ResolvedRideAttackSpeed(
+				suppliedFacts,
+				PlayerKnownListPacketConstructionAttackSpeedFactSource.Supplied,
+				request.RideAttackSpeedResolution?.Status);
+		}
+
+		if (request.RideAttackSpeedResolution is { Facts: { } resolvedFacts } resolution)
+		{
+			return new ResolvedRideAttackSpeed(
+				resolvedFacts,
+				PlayerKnownListPacketConstructionAttackSpeedFactSource.ResolvedApproximation,
+				resolution.Status);
+		}
+
+		return new ResolvedRideAttackSpeed(
+			Facts: null,
+			PlayerKnownListPacketConstructionAttackSpeedFactSource.None,
+			request.RideAttackSpeedResolution?.Status);
+	}
+
+	private sealed record ResolvedRideAttackSpeed(
+		PlayerKnownListPacketConstructionAttackSpeedFacts? Facts,
+		PlayerKnownListPacketConstructionAttackSpeedFactSource Source,
+		PlayerKnownListAttackSpeedFactResolutionStatus? ResolutionStatus);
 }
