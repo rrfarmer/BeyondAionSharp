@@ -14,12 +14,14 @@ public sealed record QuestDialogNpcTargetBranchRuntimeSnapshot(
 	bool TargetIsCreature = false,
 	bool TargetIsNpc = false,
 	NpcTemplateSummary? TargetNpcTemplate = null,
-	bool InteractionAllowed = true);
+	bool InteractionAllowed = true,
+	NpcDialogInteractionAllowedInput? InteractionInput = null);
 
 public sealed record QuestDialogNpcTargetBranchInputAssemblyPlan(
 	QuestDialogNpcTargetBranchInput Input,
 	QuestDialogNpcTargetBranchPlan BranchPlan,
 	string JavaSource,
+	NpcDialogInteractionAllowedPlan? InteractionPlan = null,
 	bool IsLive = false);
 
 public static class QuestDialogNpcTargetBranchInputAssemblyPlanService
@@ -33,8 +35,13 @@ public static class QuestDialogNpcTargetBranchInputAssemblyPlanService
 		// Java parity breadcrumb: CM_DIALOG_SELECT.runImpl asks
 		// DataManager.NPC_DATA.isFunctionDialog(dialogActionId) globally, then
 		// checks the target NpcTemplate.supportsAction(dialogActionId) per NPC.
-		// This is a non-live input adapter only; known-list, interaction checks,
-		// audits, packets, and controller dispatch remain explicit dependencies.
+		// If provided, interaction facts are planned through DialogService.isInteractionAllowed.
+		// This is still a non-live input adapter only; known-list, audits, packets,
+		// and controller dispatch remain explicit dependencies.
+		var interactionPlan = snapshot.InteractionInput == null
+			? null
+			: NpcDialogInteractionAllowedPlanService.CreatePlan(snapshot.InteractionInput);
+		var interactionAllowed = interactionPlan?.IsAllowed ?? snapshot.InteractionAllowed;
 		var input = new QuestDialogNpcTargetBranchInput(
 			snapshot.PlayerObjectId,
 			snapshot.TargetObjectId,
@@ -48,12 +55,13 @@ public static class QuestDialogNpcTargetBranchInputAssemblyPlanService
 			snapshot.TargetIsNpc,
 			npcTemplates.IsFunctionDialog(snapshot.DialogActionId),
 			snapshot.TargetNpcTemplate?.SupportsDialogAction(snapshot.DialogActionId) == true,
-			snapshot.InteractionAllowed);
+			interactionAllowed);
 
 		return new QuestDialogNpcTargetBranchInputAssemblyPlan(
 			input,
 			QuestDialogNpcTargetBranchPlanService.CreatePlan(input),
-			"CM_DIALOG_SELECT.runImpl -> NpcData.isFunctionDialog + NpcTemplate.supportsAction",
+			"CM_DIALOG_SELECT.runImpl -> NpcData.isFunctionDialog + NpcTemplate.supportsAction + DialogService.isInteractionAllowed",
+			interactionPlan,
 			IsLive: false);
 	}
 }

@@ -59,6 +59,54 @@ public sealed class QuestDialogNpcTargetBranchInputAssemblyPlanServiceTests
 	}
 
 	[Fact]
+	public void CreatePlan_UsesInteractionPlanWhenProvided()
+	{
+		var targetTemplate = CreateTemplate(203001, [FunctionDialogAction]);
+		var templates = new NpcTemplateTable([targetTemplate]);
+
+		var plan = QuestDialogNpcTargetBranchInputAssemblyPlanService.CreatePlan(
+			CreateSnapshot(
+				targetTemplate,
+				interactionAllowed: true,
+				interactionInput: new NpcDialogInteractionAllowedInput(
+					PlayerObjectId,
+					SubDialogType: NpcSubDialogType.Level,
+					SubDialogValue: 50,
+					PlayerLevel: 49)),
+			templates);
+
+		Assert.NotNull(plan.InteractionPlan);
+		Assert.False(plan.InteractionPlan.IsAllowed);
+		Assert.False(plan.Input.InteractionAllowed);
+		Assert.Equal(QuestDialogNpcTargetBranchStatus.InteractionNotAllowed, plan.BranchPlan.Status);
+		Assert.Equal("tried to illegally use dialog action", plan.BranchPlan.AuditReason);
+		Assert.False(plan.IsLive);
+	}
+
+	[Fact]
+	public void CreatePlan_AllowsWhenInteractionPlanAllows()
+	{
+		var targetTemplate = CreateTemplate(203001, [FunctionDialogAction]);
+		var templates = new NpcTemplateTable([targetTemplate]);
+
+		var plan = QuestDialogNpcTargetBranchInputAssemblyPlanService.CreatePlan(
+			CreateSnapshot(
+				targetTemplate,
+				interactionAllowed: false,
+				interactionInput: new NpcDialogInteractionAllowedInput(
+					PlayerObjectId,
+					SubDialogType: NpcSubDialogType.Level,
+					SubDialogValue: 50,
+					PlayerLevel: 50)),
+			templates);
+
+		Assert.NotNull(plan.InteractionPlan);
+		Assert.True(plan.InteractionPlan.IsAllowed);
+		Assert.True(plan.Input.InteractionAllowed);
+		Assert.Equal(QuestDialogNpcTargetBranchStatus.DispatchController, plan.BranchPlan.Status);
+	}
+
+	[Fact]
 	public void CreatePlan_DoesNotApplyNpcSupportGuardToNonNpcCreatures()
 	{
 		var templates = new NpcTemplateTable([CreateTemplate(203001, [FunctionDialogAction])]);
@@ -85,7 +133,8 @@ public sealed class QuestDialogNpcTargetBranchInputAssemblyPlanServiceTests
 
 	private static QuestDialogNpcTargetBranchRuntimeSnapshot CreateSnapshot(
 		NpcTemplateSummary targetTemplate,
-		bool interactionAllowed = true)
+		bool interactionAllowed = true,
+		NpcDialogInteractionAllowedInput? interactionInput = null)
 	{
 		return new QuestDialogNpcTargetBranchRuntimeSnapshot(
 			PlayerObjectId,
@@ -98,7 +147,8 @@ public sealed class QuestDialogNpcTargetBranchInputAssemblyPlanServiceTests
 			TargetIsCreature: true,
 			TargetIsNpc: true,
 			TargetNpcTemplate: targetTemplate,
-			InteractionAllowed: interactionAllowed);
+			InteractionAllowed: interactionAllowed,
+			InteractionInput: interactionInput);
 	}
 
 	private static NpcTemplateSummary CreateTemplate(int templateId, IReadOnlyList<int>? functionDialogIds = null)
