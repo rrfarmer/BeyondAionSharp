@@ -135,6 +135,31 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 		Assert.False(servicePlan.IsLive);
 	}
 
+	[Fact]
+	public async Task HandleDialogSelectAsync_BuyMissingGoodsPlansNoSellMessageWithoutSending()
+	{
+		await using var fixture = await StorageExpansionDialogFixture.CreateAsync();
+		var player = CreatePlayer(targetObjectId: 9004);
+		var npc = CreateExpansionNpc(9004, templateId: 203063, dialogActionId: CmDialogSelect.Buy);
+		fixture.World.TryAddObject(npc.ObjectId, npc);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, CreateDialogSelect(npc.ObjectId, CmDialogSelect.Buy));
+
+		Assert.Empty(fixture.SentPackets);
+		Assert.Equal(0, player.ResponseRequester.Count);
+		var plan = Assert.Single(fixture.DialogSelectPlans);
+		var tradeListFacts = Assert.IsType<NpcDialogTradeListFactAdapterPlan>(plan.TradeListFactAdapterPlan);
+		Assert.True(tradeListFacts.Facts.HasTradeList);
+		Assert.False(tradeListFacts.Facts.HasSellableTradeGoods);
+		Assert.Equal([131], tradeListFacts.MissingGoodsListIds);
+		Assert.Null(plan.TradeListPacketPlan);
+		var servicePlan = Assert.IsType<NpcDialogServiceSelectPlan>(plan.ControllerDispatchPlan?.DialogServicePlan);
+		Assert.Equal(NpcDialogServiceSelectStatus.BuyUnavailable, servicePlan.Status);
+		var descriptor = Assert.Single(servicePlan.Descriptors);
+		Assert.Equal(NpcDialogServiceDescriptorKind.SystemMessageDoesNotSellItem, descriptor.Kind);
+		Assert.False(servicePlan.IsLive);
+	}
+
 	private static Player CreatePlayer(int targetObjectId)
 	{
 		return new Player
@@ -234,6 +259,9 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 						</tradelist_template>
 						<tradelist_template npc_id="203062" npc_type="NORMAL" sell_price_rate="80">
 							<tradelist id="130" />
+						</tradelist_template>
+						<tradelist_template npc_id="203063" npc_type="NORMAL" sell_price_rate="80">
+							<tradelist id="131" />
 						</tradelist_template>
 					</npc_trade_list>
 					<goodslists>
