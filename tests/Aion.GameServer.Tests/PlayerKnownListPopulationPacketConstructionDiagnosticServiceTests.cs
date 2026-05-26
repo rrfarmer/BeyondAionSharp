@@ -1,5 +1,6 @@
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.World;
 
@@ -60,6 +61,8 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 		Assert.Equal(1, diagnostic.RideAttackSpeedFactSourceCountsByKind[PlayerKnownListPacketConstructionAttackSpeedFactSource.Supplied]);
 		Assert.Equal(1, diagnostic.RideAttackSpeedFactSourceCountsByKind[PlayerKnownListPacketConstructionAttackSpeedFactSource.None]);
 		Assert.Empty(diagnostic.RideAttackSpeedResolutionStatusCountsByKind);
+		Assert.Equal(2, diagnostic.AbnormalEffectFactSourceCountsByKind[PlayerKnownListPacketConstructionAbnormalEffectFactSource.None]);
+		Assert.Empty(diagnostic.AbnormalEffectResolutionStatusCountsByKind);
 		Assert.Equal(2, diagnostic.PacketConstructionFactSourceCount);
 		Assert.Equal(0, diagnostic.RequestPacketConstructionFactSourceCount);
 		Assert.Equal(2, diagnostic.GeneratedPacketConstructionFactSourceCount);
@@ -94,6 +97,8 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 			candidateDiagnostic.FactPlans.Select(factPlan => factPlan.Direction));
 		Assert.Equal(PlayerKnownListPacketConstructionAttackSpeedFactSource.Supplied, candidateDiagnostic.FactPlans[0].RideAttackSpeedFactSource);
 		Assert.Equal(PlayerKnownListPacketConstructionAttackSpeedFactSource.None, candidateDiagnostic.FactPlans[1].RideAttackSpeedFactSource);
+		Assert.Equal(PlayerKnownListPacketConstructionAbnormalEffectFactSource.None, candidateDiagnostic.FactPlans[0].AbnormalEffectFactSource);
+		Assert.Equal(PlayerKnownListPacketConstructionAbnormalEffectFactSource.None, candidateDiagnostic.FactPlans[1].AbnormalEffectFactSource);
 		Assert.Equal(
 			[PlayerKnownListTwoWayOperationStepKind.CandidateSeesOwner, PlayerKnownListTwoWayOperationStepKind.OwnerSeesCandidate],
 			candidateDiagnostic.PacketConstructionResults.Select(result => result.OperationStepKind));
@@ -144,6 +149,7 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 		Assert.Equal(1, diagnostic.FactPlanBlockerCountsByKind[PlayerKnownListPacketConstructionFactBlocker.MissingRideInfo]);
 		Assert.Equal(1, diagnostic.FactPlanBlockerCountsByKind[PlayerKnownListPacketConstructionFactBlocker.MissingRideAttackSpeedFacts]);
 		Assert.Equal(2, diagnostic.RideAttackSpeedFactSourceCountsByKind[PlayerKnownListPacketConstructionAttackSpeedFactSource.None]);
+		Assert.Equal(2, diagnostic.AbnormalEffectFactSourceCountsByKind[PlayerKnownListPacketConstructionAbnormalEffectFactSource.None]);
 		Assert.Equal(1, diagnostic.PacketConstructionFactSourceCount);
 		Assert.Equal(0, diagnostic.RequestPacketConstructionFactSourceCount);
 		Assert.Equal(1, diagnostic.GeneratedPacketConstructionFactSourceCount);
@@ -205,6 +211,50 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 		var factPlan = Assert.Single(diagnostic.CandidateDiagnostics[0].FactPlans);
 		Assert.Equal(PlayerKnownListPacketConstructionAttackSpeedFactSource.ResolvedApproximation, factPlan.RideAttackSpeedFactSource);
 		Assert.Equal(PlayerKnownListAttackSpeedFactResolutionStatus.ResolvedApproximation, factPlan.RideAttackSpeedResolutionStatus);
+		Assert.Equal(PlayerKnownListPacketConstructionAbnormalEffectFactSource.None, factPlan.AbnormalEffectFactSource);
+		Assert.Null(factPlan.AbnormalEffectResolutionStatus);
+	}
+
+	[Fact]
+	public void Summarize_AbnormalEffectResolverMetadataCountsResolvedSnapshot()
+	{
+		var population = CreatePopulationService();
+		var diagnostics = new PlayerKnownListPopulationPacketConstructionDiagnosticService();
+		var owner = CreatePlayer(OwnerPlayerObjectId, "Owner", "ELYOS");
+		var candidate = CreatePlayer(NearPlayerObjectId, "Candidate", "ASMODIANS");
+		candidate.AbnormalState = PlayerAbnormalState.Root;
+		var ownerViewingCandidate = new PlayerKnownListOperationSideEffectDirectionFacts(
+			SubjectHasAbnormalEffects: true);
+		var resolvedEffects = new[]
+		{
+			CreateAbnormalEffect(skillId: 1201, remainingTime: -1),
+		};
+		var plan = population.Plan(CreateRequest(
+			[
+				new PlayerKnownListPopulationCandidateFact(
+					NearPlayerObjectId,
+					X: 10,
+					Y: 0,
+					Z: 0,
+					OwnerCanSeeCandidate: true,
+					CandidateCanSeeOwner: false,
+					OwnerViewingCandidateSideEffectFacts: ownerViewingCandidate,
+					OwnerViewingCandidatePacketFactPlanRequest: new PlayerKnownListPacketConstructionFactPlanRequest(
+						owner,
+						candidate,
+						ownerViewingCandidate,
+						AbnormalEffectResolution: CreateResolvedAbnormalEffects(resolvedEffects, abnormalEffectMask: 0x20, slots: 1))),
+			]));
+
+		var diagnostic = diagnostics.Summarize(plan);
+
+		Assert.Equal(1, diagnostic.AbnormalEffectFactSourceCountsByKind[PlayerKnownListPacketConstructionAbnormalEffectFactSource.ResolvedSnapshot]);
+		Assert.Equal(1, diagnostic.AbnormalEffectResolutionStatusCountsByKind[PlayerKnownListAbnormalEffectFactResolutionStatus.ResolvedSnapshot]);
+		var factPlan = Assert.Single(diagnostic.CandidateDiagnostics[0].FactPlans);
+		Assert.Equal(PlayerKnownListPacketConstructionAbnormalEffectFactSource.ResolvedSnapshot, factPlan.AbnormalEffectFactSource);
+		Assert.Equal(PlayerKnownListAbnormalEffectFactResolutionStatus.ResolvedSnapshot, factPlan.AbnormalEffectResolutionStatus);
+		Assert.Equal(PlayerKnownListPacketConstructionAttackSpeedFactSource.None, factPlan.RideAttackSpeedFactSource);
+		Assert.Null(factPlan.RideAttackSpeedResolutionStatus);
 	}
 
 	[Fact]
@@ -408,6 +458,30 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 					HitCount: 1,
 					ReduceMax: 0)),
 		]);
+
+	private static PlayerKnownListAbnormalEffectFactResolution CreateResolvedAbnormalEffects(
+		IReadOnlyList<SmAbnormalEffectEntry> effects,
+		int abnormalEffectMask,
+		int slots) =>
+		new(
+			PlayerKnownListAbnormalEffectFactResolutionStatus.ResolvedSnapshot,
+			new PlayerKnownListAbnormalEffectFacts(effects, abnormalEffectMask, slots),
+			NeedsJavaEffectControllerParity: true,
+			IsLive: false,
+			IsJavaEffectControllerParity: false,
+			"com.aionemu.gameserver.controllers.effect.EffectController.getAbnormalEffects",
+			"Resolved from supplied abnormal-effect snapshot.");
+
+	private static SmAbnormalEffectEntry CreateAbnormalEffect(
+		int skillId,
+		int remainingTime) =>
+		new(
+			EffectorObjectId: 7001,
+			skillId,
+			SkillLevel: 3,
+			TargetSlotId: 1,
+			TargetSlotOrdinal: 0,
+			remainingTime);
 
 	private const int OwnerPlayerObjectId = 9001;
 	private const int NearPlayerObjectId = 9002;

@@ -16,6 +16,8 @@ public sealed record PlayerKnownListPopulationFactPlanDiagnostic(
 	IReadOnlyList<PlayerKnownListPacketConstructionFactBlocker> Blockers,
 	PlayerKnownListPacketConstructionAttackSpeedFactSource RideAttackSpeedFactSource,
 	PlayerKnownListAttackSpeedFactResolutionStatus? RideAttackSpeedResolutionStatus,
+	PlayerKnownListPacketConstructionAbnormalEffectFactSource AbnormalEffectFactSource,
+	PlayerKnownListAbnormalEffectFactResolutionStatus? AbnormalEffectResolutionStatus,
 	string JavaSource);
 
 public sealed record PlayerKnownListPopulationPacketConstructionResultDiagnostic(
@@ -51,6 +53,8 @@ public sealed record PlayerKnownListPopulationPacketConstructionDiagnosticPlan(
 	IReadOnlyDictionary<PlayerKnownListPacketConstructionFactBlocker, int> FactPlanBlockerCountsByKind,
 	IReadOnlyDictionary<PlayerKnownListPacketConstructionAttackSpeedFactSource, int> RideAttackSpeedFactSourceCountsByKind,
 	IReadOnlyDictionary<PlayerKnownListAttackSpeedFactResolutionStatus, int> RideAttackSpeedResolutionStatusCountsByKind,
+	IReadOnlyDictionary<PlayerKnownListPacketConstructionAbnormalEffectFactSource, int> AbnormalEffectFactSourceCountsByKind,
+	IReadOnlyDictionary<PlayerKnownListAbnormalEffectFactResolutionStatus, int> AbnormalEffectResolutionStatusCountsByKind,
 	int PacketConstructionFactSourceCount,
 	int RequestPacketConstructionFactSourceCount,
 	int GeneratedPacketConstructionFactSourceCount,
@@ -118,6 +122,10 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 			CountByKind(factPlans
 				.Where(factPlan => factPlan.RideAttackSpeedResolutionStatus is not null)
 				.Select(factPlan => factPlan.RideAttackSpeedResolutionStatus!.Value)),
+			CountByKind(factPlans.Select(factPlan => factPlan.AbnormalEffectFactSource)),
+			CountByKind(factPlans
+				.Where(factPlan => factPlan.AbnormalEffectResolutionStatus is not null)
+				.Select(factPlan => factPlan.AbnormalEffectResolutionStatus!.Value)),
 			factSources.Length,
 			factSources.Count(source => source.Kind == PlayerKnownListPopulationPacketConstructionFactSourceKind.Request),
 			factSources.Count(source => source.Kind == PlayerKnownListPopulationPacketConstructionFactSourceKind.GeneratedFactPlan),
@@ -157,6 +165,8 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 				factPlan.Plan.Blockers,
 				factPlan.Plan.RideAttackSpeedFactSource,
 				factPlan.Plan.RideAttackSpeedResolutionStatus,
+				factPlan.Plan.AbnormalEffectFactSource,
+				factPlan.Plan.AbnormalEffectResolutionStatus,
 				factPlan.Plan.JavaSource))
 			.ToArray();
 		var factSources = candidatePlan.PacketConstructionFactSources ?? Array.Empty<PlayerKnownListPopulationPacketConstructionFactSource>();
