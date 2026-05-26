@@ -79,6 +79,146 @@ public sealed class BindPointTeleportKinahInventorySendAdapterPlanServiceTests
 		Assert.False(decision.ShouldTeleport);
 	}
 
+	[Fact]
+	public async Task ExecuteAsync_DisabledAdapterDoesNotCallRegistry()
+	{
+		var packetPlan = CreatePacketPlan(
+			BindPointTeleportKinahPersistenceStatus.Saved,
+			includeTemplate: true);
+		var registry = new RecordingConnectionRegistry(sendResult: true);
+		var service = new BindPointTeleportKinahInventorySendAdapterService(registry, enabled: false);
+
+		var plan = await service.ExecuteAsync(packetPlan, PlayerObjectId);
+
+		Assert.Equal(BindPointTeleportKinahInventorySendAdapterStatus.DisabledNoSend, plan.Status);
+		Assert.Equal(BindPointTeleportKinahInventorySendStatus.Failed, plan.SendResult.Status);
+		Assert.True(plan.WouldCallSendPacketAsync);
+		Assert.False(plan.DidCallSendPacketAsync);
+		Assert.False(plan.IsLive);
+		Assert.Empty(registry.SentPackets);
+	}
+
+	[Fact]
+	public async Task ExecuteAsync_EnabledWithoutPacketIntentDoesNotCallRegistry()
+	{
+		var packetPlan = CreatePacketPlan(
+			BindPointTeleportKinahPersistenceStatus.MissingRow,
+			includeTemplate: true);
+		var registry = new RecordingConnectionRegistry(sendResult: true);
+		var service = new BindPointTeleportKinahInventorySendAdapterService(registry, enabled: true);
+
+		var plan = await service.ExecuteAsync(packetPlan, PlayerObjectId);
+
+		Assert.Equal(BindPointTeleportKinahInventorySendAdapterStatus.NoPacketIntent, plan.Status);
+		Assert.Equal(BindPointTeleportKinahInventorySendStatus.Failed, plan.SendResult.Status);
+		Assert.False(plan.WouldCallSendPacketAsync);
+		Assert.False(plan.DidCallSendPacketAsync);
+		Assert.Empty(registry.SentPackets);
+	}
+
+	[Fact]
+	public async Task ExecuteAsync_EnabledWithoutRegistryReturnsMissingConnection()
+	{
+		var packetPlan = CreatePacketPlan(
+			BindPointTeleportKinahPersistenceStatus.Saved,
+			includeTemplate: true);
+		var service = new BindPointTeleportKinahInventorySendAdapterService(enabled: true);
+
+		var plan = await service.ExecuteAsync(packetPlan, PlayerObjectId);
+
+		Assert.Equal(BindPointTeleportKinahInventorySendAdapterStatus.MissingConnection, plan.Status);
+		Assert.Equal(BindPointTeleportKinahInventorySendStatus.MissingConnection, plan.SendResult.Status);
+		Assert.True(plan.WouldCallSendPacketAsync);
+		Assert.False(plan.DidCallSendPacketAsync);
+		Assert.True(plan.IsLive);
+	}
+
+	[Fact]
+	public async Task ExecuteAsync_EnabledMapsRegistryFalseToMissingConnection()
+	{
+		var packetPlan = CreatePacketPlan(
+			BindPointTeleportKinahPersistenceStatus.Saved,
+			includeTemplate: true);
+		var registry = new RecordingConnectionRegistry(sendResult: false);
+		var service = new BindPointTeleportKinahInventorySendAdapterService(registry, enabled: true);
+
+		var plan = await service.ExecuteAsync(packetPlan, PlayerObjectId);
+		var decision = BindPointTeleportKinahInventorySendResultPlanService.CreateDecision(
+			CreateComposition(packetPlan),
+			plan.SendResult);
+
+		Assert.Equal(BindPointTeleportKinahInventorySendAdapterStatus.MissingConnection, plan.Status);
+		Assert.Equal(BindPointTeleportKinahInventorySendStatus.MissingConnection, plan.SendResult.Status);
+		Assert.True(plan.WouldCallSendPacketAsync);
+		Assert.True(plan.DidCallSendPacketAsync);
+		Assert.True(plan.IsLive);
+		Assert.Single(registry.SentPackets);
+		Assert.Same(packetPlan.Packet, registry.SentPackets.Single().Packet);
+		Assert.Equal(BindPointTeleportKinahInventorySendDecisionStatus.StoppedMissingConnection, decision.Status);
+		Assert.False(decision.ShouldContinueToCooldownFanout);
+	}
+
+	[Fact]
+	public async Task ExecuteAsync_EnabledMapsRegistryTrueToSentAndUnlocksSendDecision()
+	{
+		var packetPlan = CreatePacketPlan(
+			BindPointTeleportKinahPersistenceStatus.Saved,
+			includeTemplate: true);
+		var registry = new RecordingConnectionRegistry(sendResult: true);
+		var service = new BindPointTeleportKinahInventorySendAdapterService(registry, enabled: true);
+
+		var plan = await service.ExecuteAsync(packetPlan, PlayerObjectId);
+		var decision = BindPointTeleportKinahInventorySendResultPlanService.CreateDecision(
+			CreateComposition(packetPlan),
+			plan.SendResult);
+
+		Assert.Equal(BindPointTeleportKinahInventorySendAdapterStatus.Sent, plan.Status);
+		Assert.Equal(BindPointTeleportKinahInventorySendStatus.Sent, plan.SendResult.Status);
+		Assert.True(plan.SendResult.SentPacket);
+		Assert.True(plan.DidCallSendPacketAsync);
+		Assert.True(plan.IsLive);
+		Assert.Equal(PlayerObjectId, registry.SentPackets.Single().PlayerObjectId);
+		Assert.Same(packetPlan.Packet, registry.SentPackets.Single().Packet);
+		Assert.Equal(BindPointTeleportKinahInventorySendDecisionStatus.ReadyForCooldownFanout, decision.Status);
+		Assert.True(decision.ShouldContinueToCooldownFanout);
+	}
+
+	[Fact]
+	public async Task ExecuteAsync_EnabledMapsRegistryExceptionToFailed()
+	{
+		var packetPlan = CreatePacketPlan(
+			BindPointTeleportKinahPersistenceStatus.Saved,
+			includeTemplate: true);
+		var registry = new RecordingConnectionRegistry(
+			sendResult: false,
+			exception: new InvalidOperationException("simulated send failure"));
+		var service = new BindPointTeleportKinahInventorySendAdapterService(registry, enabled: true);
+
+		var plan = await service.ExecuteAsync(packetPlan, PlayerObjectId);
+
+		Assert.Equal(BindPointTeleportKinahInventorySendAdapterStatus.Failed, plan.Status);
+		Assert.Equal(BindPointTeleportKinahInventorySendStatus.Failed, plan.SendResult.Status);
+		Assert.False(plan.SendResult.SentPacket);
+		Assert.True(plan.DidCallSendPacketAsync);
+		Assert.True(plan.IsLive);
+		Assert.Single(registry.SentPackets);
+	}
+
+	[Fact]
+	public async Task ExecuteAsync_CanceledTokenStopsBeforeRegistryCall()
+	{
+		var packetPlan = CreatePacketPlan(
+			BindPointTeleportKinahPersistenceStatus.Saved,
+			includeTemplate: true);
+		var registry = new RecordingConnectionRegistry(sendResult: true);
+		var service = new BindPointTeleportKinahInventorySendAdapterService(registry, enabled: true);
+		using var cts = new CancellationTokenSource();
+		await cts.CancelAsync();
+
+		await Assert.ThrowsAsync<OperationCanceledException>(() => service.ExecuteAsync(packetPlan, PlayerObjectId, cts.Token));
+		Assert.Empty(registry.SentPackets);
+	}
+
 	private const int PlayerObjectId = 7001;
 	private const int LocId = 6001;
 
@@ -224,6 +364,89 @@ public sealed class BindPointTeleportKinahInventorySendAdapterPlanServiceTests
 		{
 			SendPacketCalls++;
 			throw new InvalidOperationException("Disabled send adapter must not call SendPacketAsync.");
+		}
+
+		public Task<int> BroadcastToWorldAsync(GameServerPacket packet, Func<Player, bool>? filter = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> BroadcastToVisiblePlayersAsync(
+			WorldPosition sourcePosition,
+			int sourceObjectId,
+			GameServerPacket packet,
+			bool includeSourcePlayer = false,
+			Func<Player, bool>? filter = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> RefreshHousingVisibilityAsync(
+			IReadOnlyList<WorldHouse> houses,
+			HousingTemplateTable? housingTemplates,
+			int? playerObjectId = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> RefreshNpcVisibilityAsync(IReadOnlyList<IWorldNpcObject> npcs, int? playerObjectId = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> BroadcastHouseUpdateAsync(WorldHouse house, HousingTemplateTable? housingTemplates)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<bool> NotifyMailReceivedAsync(int recipientObjectId, PlayerMail mail)
+		{
+			return Task.FromResult(false);
+		}
+
+		public Task<bool> NotifyBrokerSettledAsync(int sellerObjectId, long settledKinah)
+		{
+			return Task.FromResult(false);
+		}
+	}
+
+	private sealed class RecordingConnectionRegistry : IGameClientConnectionRegistry
+	{
+		private readonly bool _sendResult;
+		private readonly Exception? _exception;
+
+		public RecordingConnectionRegistry(bool sendResult, Exception? exception = null)
+		{
+			_sendResult = sendResult;
+			_exception = exception;
+		}
+
+		public List<(int PlayerObjectId, GameServerPacket Packet)> SentPackets { get; } = [];
+
+		public void RegisterPlayerConnection(int playerObjectId, GameServerConnection connection)
+		{
+		}
+
+		public void UnregisterPlayerConnection(int playerObjectId, GameServerConnection connection)
+		{
+		}
+
+		public bool TryGetOnlinePlayerByName(string playerName, out Player? player)
+		{
+			player = null;
+			return false;
+		}
+
+		public void ForEachOnlinePlayer(Action<Player> action)
+		{
+		}
+
+		public Task<bool> SendPacketToPlayerAsync(int playerObjectId, GameServerPacket packet)
+		{
+			SentPackets.Add((playerObjectId, packet));
+			return _exception == null
+				? Task.FromResult(_sendResult)
+				: Task.FromException<bool>(_exception);
 		}
 
 		public Task<int> BroadcastToWorldAsync(GameServerPacket packet, Func<Player, bool>? filter = null)

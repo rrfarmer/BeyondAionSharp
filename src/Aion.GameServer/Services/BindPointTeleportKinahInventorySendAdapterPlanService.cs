@@ -6,6 +6,9 @@ public enum BindPointTeleportKinahInventorySendAdapterStatus
 {
 	NoPacketIntent,
 	DisabledNoSend,
+	MissingConnection,
+	Sent,
+	Failed,
 }
 
 public sealed record BindPointTeleportKinahInventorySendAdapterPlan(
@@ -62,5 +65,98 @@ public static class BindPointTeleportKinahInventorySendAdapterPlanService
 			DidCallSendPacketAsync: false,
 			"PacketSendUtility.sendPacket(player, SM_INVENTORY_UPDATE_ITEM) boundary identified, but live C# SendPacketAsync remains disabled",
 			IsLive: false);
+	}
+}
+
+public sealed class BindPointTeleportKinahInventorySendAdapterService
+{
+	private readonly IGameClientConnectionRegistry? _connectionRegistry;
+	private readonly bool _enabled;
+
+	public BindPointTeleportKinahInventorySendAdapterService(
+		IGameClientConnectionRegistry? connectionRegistry = null,
+		bool enabled = false)
+	{
+		_connectionRegistry = connectionRegistry;
+		_enabled = enabled;
+	}
+
+	public async Task<BindPointTeleportKinahInventorySendAdapterPlan> ExecuteAsync(
+		BindPointTeleportKinahInventoryUpdatePacketPlan packetPlan,
+		int playerObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity breadcrumb: ItemPacketService.sendItemUpdatePacket sends
+		// SM_INVENTORY_UPDATE_ITEM before bind-point cooldown fanout. This C# adapter keeps
+		// the SendPacketAsync boundary opt-in and isolated from GameServerConnection dispatch.
+		if (!packetPlan.ShouldSendPacket || packetPlan.Packet == null)
+			return BindPointTeleportKinahInventorySendAdapterPlanService.CreateDisabledPlan(packetPlan, playerObjectId);
+
+		if (!_enabled)
+			return BindPointTeleportKinahInventorySendAdapterPlanService.CreateDisabledPlan(packetPlan, playerObjectId, _connectionRegistry);
+
+		if (_connectionRegistry == null)
+		{
+			var missingConnectionResult = new BindPointTeleportKinahInventorySendResult(
+				BindPointTeleportKinahInventorySendStatus.MissingConnection,
+				playerObjectId,
+				SentPacket: false,
+				"Scheduled bind-point Kinah inventory update send adapter was enabled, but no connection registry was available",
+				IsLive: true);
+
+			return new BindPointTeleportKinahInventorySendAdapterPlan(
+				BindPointTeleportKinahInventorySendAdapterStatus.MissingConnection,
+				packetPlan,
+				missingConnectionResult,
+				WouldCallSendPacketAsync: true,
+				DidCallSendPacketAsync: false,
+				"PacketSendUtility.sendPacket(player, SM_INVENTORY_UPDATE_ITEM) could not run because the player connection registry was missing",
+				IsLive: true);
+		}
+
+		try
+		{
+			cancellationToken.ThrowIfCancellationRequested();
+			var sent = await _connectionRegistry.SendPacketToPlayerAsync(playerObjectId, packetPlan.Packet);
+			var sendResult = new BindPointTeleportKinahInventorySendResult(
+				sent
+					? BindPointTeleportKinahInventorySendStatus.Sent
+					: BindPointTeleportKinahInventorySendStatus.MissingConnection,
+				playerObjectId,
+				SentPacket: sent,
+				sent
+					? "PacketSendUtility.sendPacket(player, SM_INVENTORY_UPDATE_ITEM) executed through the opt-in C# connection registry"
+					: "Scheduled bind-point Kinah inventory update packet was not sent because the player connection was missing",
+				IsLive: true);
+
+			return new BindPointTeleportKinahInventorySendAdapterPlan(
+				sent
+					? BindPointTeleportKinahInventorySendAdapterStatus.Sent
+					: BindPointTeleportKinahInventorySendAdapterStatus.MissingConnection,
+				packetPlan,
+				sendResult,
+				WouldCallSendPacketAsync: true,
+				DidCallSendPacketAsync: true,
+				sendResult.JavaSource,
+				IsLive: true);
+		}
+		catch (Exception ex) when (ex is not OperationCanceledException)
+		{
+			var failedResult = new BindPointTeleportKinahInventorySendResult(
+				BindPointTeleportKinahInventorySendStatus.Failed,
+				playerObjectId,
+				SentPacket: false,
+				"Scheduled bind-point Kinah inventory update SendPacketAsync call failed; cooldown/action 3 fanout must remain blocked",
+				IsLive: true);
+
+			return new BindPointTeleportKinahInventorySendAdapterPlan(
+				BindPointTeleportKinahInventorySendAdapterStatus.Failed,
+				packetPlan,
+				failedResult,
+				WouldCallSendPacketAsync: true,
+				DidCallSendPacketAsync: true,
+				"PacketSendUtility.sendPacket(player, SM_INVENTORY_UPDATE_ITEM) threw at the opt-in C# send boundary",
+				IsLive: true);
+		}
 	}
 }
