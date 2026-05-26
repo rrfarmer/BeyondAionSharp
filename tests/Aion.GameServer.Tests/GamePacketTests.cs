@@ -252,6 +252,35 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmSellItem_WritesJavaSellWindowPayload()
+	{
+		var plan = SmSellItemPacketPlanService.CreatePlan(
+			new SmSellItemPacketPlanInput(
+				TargetObjectId: 7001,
+				PurchaseTemplate: new TradeListTemplateSummary(
+					NpcId: 203060,
+					GoodsListIds: [129, 130],
+					NpcType: "ABYSS",
+					BuyPriceRate: 175),
+				NpcCanSell: true,
+				NpcCanBuy: false,
+				NpcCanPurchase: true));
+
+		var payload = SerializeUnencryptedPayload(new SmSellItem(plan));
+		using var reader = new PacketBuffer(payload);
+
+		Assert.Equal(7001, reader.ReadD());
+		Assert.Equal(2, (int)reader.ReadC());
+		Assert.Equal(175, reader.ReadD());
+		Assert.Equal(1, (int)reader.ReadC());
+		Assert.Equal(1, (int)reader.ReadC());
+		Assert.Equal(2, reader.ReadH());
+		Assert.Equal(129, reader.ReadD());
+		Assert.Equal(130, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
 	public void SmLootPackets_WriteJavaLootPayloads()
 	{
 		var player = new Player { ObjectId = 1001 };
