@@ -34,14 +34,26 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 			Position = new WorldPosition(210010000, 1, 2, 3, 0),
 			Quests = [rewardQuestState],
 		};
+		var packet = CreateDialogSelect(
+			targetObjectId: 0,
+			dialogActionId: SelectedQuestAutoReward,
+			questId: 1001,
+			extendedRewardIndex: 0);
 
-		await fixture.Connection.HandleDialogSelectAsync(
+		var stagedPlan = QuestFinishSocketGuardedOperationCompositionPlanService.CreatePlan(
 			player,
-			CreateDialogSelect(
-				targetObjectId: 0,
-				dialogActionId: SelectedQuestAutoReward,
-				questId: 1001,
-				extendedRewardIndex: 0));
+			packet,
+			fixture.StaticData.QuestFinishRewardProjections,
+			PlayerNpcFactionsSnapshot.Empty,
+			new DateTimeOffset(2026, 5, 26, 11, 0, 0, TimeSpan.Zero),
+			new GameServerOptions());
+
+		Assert.Equal(QuestFinishSocketGuardedOperationCompositionStatus.Composed, stagedPlan.Status);
+		Assert.Equal(QuestDialogAutoRewardGuardStatus.Planned, stagedPlan.GuardedInputPlan.GuardPlan.Status);
+		Assert.Equal(QuestFinishSocketInputAssemblyStatus.Ready, stagedPlan.GuardedInputPlan.InputPlan?.Status);
+		Assert.NotNull(stagedPlan.OperationCompositionPlan?.OperationPlan);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, packet);
 
 		Assert.Empty(fixture.SentPackets);
 		Assert.Empty(player.InventoryItems);
