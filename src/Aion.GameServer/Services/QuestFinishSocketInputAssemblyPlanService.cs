@@ -17,6 +17,7 @@ public enum QuestFinishSocketInputAssemblyStatus
 public sealed record QuestFinishSocketInputAssemblyPlan(
 	QuestFinishSocketInputAssemblyStatus Status,
 	PlayerQuestState? QuestState = null,
+	NearbyQuestTemplateSummary? Template = null,
 	QuestFinishRewardTemplateProjection? RewardProjection = null,
 	QuestFinishRewardGroupCorrectionStatus? RewardGroupCorrectionStatus = null,
 	IReadOnlyList<QuestFinishRewardProjectionLookupDiagnostic>? Diagnostics = null,
@@ -87,6 +88,7 @@ public static class QuestFinishSocketInputAssemblyPlanService
 			return new QuestFinishSocketInputAssemblyPlan(
 				QuestFinishSocketInputAssemblyStatus.MissingRewardProjection,
 				correction.QuestState,
+				projectionEntry?.Template,
 				RewardGroupCorrectionStatus: correction.Status,
 				RewardProjectionLookupStatus: lookupPlan.Status);
 		}
@@ -96,6 +98,7 @@ public static class QuestFinishSocketInputAssemblyPlanService
 			return new QuestFinishSocketInputAssemblyPlan(
 				QuestFinishSocketInputAssemblyStatus.ProjectionDiagnostics,
 				correction.QuestState,
+				projectionEntry?.Template,
 				lookupPlan.Projection,
 				correction.Status,
 				lookupPlan.Diagnostics);
@@ -104,6 +107,7 @@ public static class QuestFinishSocketInputAssemblyPlanService
 		return new QuestFinishSocketInputAssemblyPlan(
 			QuestFinishSocketInputAssemblyStatus.Ready,
 			correction.QuestState,
+			projectionEntry?.Template,
 			lookupPlan.Projection,
 			correction.Status);
 	}
