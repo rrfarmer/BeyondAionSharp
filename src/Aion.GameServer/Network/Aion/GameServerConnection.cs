@@ -1711,17 +1711,14 @@ public sealed class GameServerConnection : BaseClientConnection
 			npc.Template.TalkDistance,
 			npc.Template.BoundRadius,
 			player.BoundRadius);
-		var tradeListFactInput = staticData?.TradeLists == null || staticData.GoodsLists == null
+		var tradeRuntimeFactPlan = staticData?.TradeLists == null || staticData.GoodsLists == null
 			? null
-			: new NpcDialogTradeListFactAdapterInput(
-				npc.TemplateId,
-				PlayerLegionLevel: 0,
-				VendorBuyModifier: 100);
-		var limitedItemFactInput = staticData?.TradeLists == null || staticData.GoodsLists == null
-			? null
-			: new NpcDialogLimitedItemFactAdapterInput(
-				npc.TemplateId,
-				player.ObjectId);
+			: NpcDialogTradeRuntimeFactAdapterService.CreatePlan(
+				new NpcDialogTradeRuntimeFactAdapterInput(
+					player.ObjectId,
+					player.LegionId));
+		var tradeListFactInput = tradeRuntimeFactPlan?.ToTradeListFactInput(npc.TemplateId);
+		var limitedItemFactInput = tradeRuntimeFactPlan?.ToLimitedItemFactInput(npc.TemplateId);
 
 		return QuestDialogNpcTargetBranchInputAssemblyPlanService.CreatePlan(
 			new QuestDialogNpcTargetBranchRuntimeSnapshot(
@@ -1739,6 +1736,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				ControllerDispatchFacts: new QuestDialogNpcControllerDispatchFacts(
 					IsInTalkRange: isInTalkRange,
 					NpcAiHandledDialogSelect: false),
+				TradeRuntimeFactPlan: tradeRuntimeFactPlan,
 				TradeListFactInput: tradeListFactInput,
 				LimitedItemFactInput: limitedItemFactInput),
 			npcTemplates,

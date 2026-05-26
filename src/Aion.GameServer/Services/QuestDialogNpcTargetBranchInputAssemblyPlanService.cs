@@ -17,6 +17,7 @@ public sealed record QuestDialogNpcTargetBranchRuntimeSnapshot(
 	bool InteractionAllowed = true,
 	NpcDialogInteractionAllowedInput? InteractionInput = null,
 	QuestDialogNpcControllerDispatchFacts? ControllerDispatchFacts = null,
+	NpcDialogTradeRuntimeFactAdapterPlan? TradeRuntimeFactPlan = null,
 	NpcDialogTradeListFactAdapterInput? TradeListFactInput = null,
 	NpcDialogLimitedItemFactAdapterInput? LimitedItemFactInput = null);
 
@@ -27,6 +28,7 @@ public sealed record QuestDialogNpcTargetBranchInputAssemblyPlan(
 	DialogActionNameResult DialogActionName,
 	NpcDialogInteractionAllowedPlan? InteractionPlan = null,
 	NpcDialogTradeListFactAdapterPlan? TradeListFactAdapterPlan = null,
+	NpcDialogTradeRuntimeFactAdapterPlan? TradeRuntimeFactPlan = null,
 	NpcDialogLimitedItemFactAdapterPlan? LimitedItemFactAdapterPlan = null,
 	SmTradeListPacketPlan? TradeListPacketPlan = null,
 	NpcDialogControllerDispatchPlan? ControllerDispatchPlan = null,
@@ -91,6 +93,7 @@ public static class QuestDialogNpcTargetBranchInputAssemblyPlanService
 			dialogActionName,
 			interactionPlan,
 			tradeListFactAdapterPlan,
+			snapshot.TradeRuntimeFactPlan,
 			limitedItemFactAdapterPlan,
 			tradeListPacketPlan,
 			controllerDispatchPlan,

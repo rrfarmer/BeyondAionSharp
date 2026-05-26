@@ -74,6 +74,13 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 		Assert.Equal(QuestDialogNpcTargetBranchStatus.DispatchController, plan.BranchPlan.Status);
 		Assert.Equal(NpcDialogControllerDispatchStatus.DialogServiceFallback, plan.ControllerDispatchPlan?.Status);
 		Assert.Equal(NpcDialogServiceSelectStatus.BuyTradeList, plan.ControllerDispatchPlan?.DialogServicePlan?.Status);
+		var runtimeFacts = Assert.IsType<NpcDialogTradeRuntimeFactAdapterPlan>(plan.TradeRuntimeFactPlan);
+		Assert.Equal(player.ObjectId, runtimeFacts.PlayerObjectId);
+		Assert.Equal(0, runtimeFacts.PlayerLegionLevel);
+		Assert.Equal(100, runtimeFacts.VendorBuyModifier);
+		Assert.Contains("Staged default", runtimeFacts.LegionLevelSource);
+		Assert.Contains("Staged default", runtimeFacts.VendorBuyModifierSource);
+		Assert.False(runtimeFacts.IsLive);
 		var packetPlan = Assert.IsType<SmTradeListPacketPlan>(plan.TradeListPacketPlan);
 		Assert.Equal(SmTradeListPacketPlanStatus.Ready, packetPlan.Status);
 		Assert.Equal([129], packetPlan.TradeTabIds);
