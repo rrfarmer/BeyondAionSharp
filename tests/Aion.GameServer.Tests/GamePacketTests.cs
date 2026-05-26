@@ -3916,6 +3916,53 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmPlayerInfo_ViewerEnemyContextProjectsOppositeRaceLikeJavaActivePlayer()
+	{
+		var player = new Player
+		{
+			ObjectId = 1003,
+			Name = "Projected",
+			Race = "ASMODIANS",
+			Gender = "MALE",
+			PlayerClass = "GLADIATOR",
+			Position = new WorldPosition(210010000, 1, 2, 3, 4),
+		};
+
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(new SmPlayerInfo(
+			player,
+			enemy: true,
+			new SmPlayerInfoViewerContext(ActivePlayerRace: "ASMODIANS", ActivePlayerIsEnemyToPlayer: true))));
+
+		SkipSmPlayerInfoHeaderThroughCreatureType(reader);
+		Assert.Equal(0, (int)reader.ReadC());
+	}
+
+	[Fact]
+	public void SmPlayerInfo_NeutralToAllViewerContextForcesActivePlayerRace()
+	{
+		var player = new Player
+		{
+			ObjectId = 1004,
+			Name = "Neutral",
+			Race = "ELYOS",
+			Gender = "FEMALE",
+			PlayerClass = "RANGER",
+			Position = new WorldPosition(210010000, 1, 2, 3, 4),
+		};
+
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(new SmPlayerInfo(
+			player,
+			enemy: true,
+			new SmPlayerInfoViewerContext(
+				ActivePlayerRace: "ASMODIANS",
+				ActivePlayerIsEnemyToPlayer: true,
+				EitherPlayerNeutralToAllPlayers: true))));
+
+		SkipSmPlayerInfoHeaderThroughCreatureType(reader);
+		Assert.Equal(1, (int)reader.ReadC());
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesL2AuthLoginCheck()
 	{
 		var payload = CreateClientPayload(
@@ -5632,6 +5679,20 @@ public class GamePacketTests
 		crypt.EnableKey();
 		var frame = packet.SerializeFrame(crypt);
 		return frame[7..];
+	}
+
+	private static void SkipSmPlayerInfoHeaderThroughCreatureType(PacketBuffer reader)
+	{
+		reader.ReadF();
+		reader.ReadF();
+		reader.ReadF();
+		reader.ReadD();
+		reader.ReadD();
+		reader.ReadD();
+		reader.ReadD();
+		reader.ReadC();
+		reader.ReadD();
+		reader.ReadC();
 	}
 
 	private static void AssertSystemMessage(GameServerPacket packet, int expectedMessageId, params string[] expectedParameters)

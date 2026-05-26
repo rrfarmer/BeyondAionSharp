@@ -7,12 +7,18 @@ using Aion.GameServer.Services;
 
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 
+public sealed record SmPlayerInfoViewerContext(
+	string ActivePlayerRace,
+	bool ActivePlayerIsEnemyToPlayer = false,
+	bool EitherPlayerNeutralToAllPlayers = false);
+
 public sealed class SmPlayerInfo : GameServerPacket
 {
 	public const int PacketOpCode = 32;
 	private const int FriendlyCreatureType = 0x26;
 	private readonly Player _player;
 	private readonly bool _enemy;
+	private readonly SmPlayerInfoViewerContext? _viewerContext;
 	private readonly PlayerExperienceTable? _experienceTable;
 
 	public SmPlayerInfo(Player player, PlayerExperienceTable? experienceTable = null)
@@ -21,11 +27,21 @@ public sealed class SmPlayerInfo : GameServerPacket
 	}
 
 	public SmPlayerInfo(Player player, bool enemy, PlayerExperienceTable? experienceTable = null)
+		: this(player, enemy, viewerContext: null, experienceTable)
+	{
+	}
+
+	public SmPlayerInfo(
+		Player player,
+		bool enemy,
+		SmPlayerInfoViewerContext? viewerContext,
+		PlayerExperienceTable? experienceTable = null)
 		: base(PacketOpCode)
 	{
 		// Java parity: network/aion/serverpackets/SM_PLAYER_INFO(Player, boolean enemy).
 		_player = player;
 		_enemy = enemy;
+		_viewerContext = viewerContext;
 		_experienceTable = experienceTable;
 	}
 
@@ -34,7 +50,7 @@ public sealed class SmPlayerInfo : GameServerPacket
 		// Java parity: network/aion/serverpackets/SM_PLAYER_INFO.writeImpl baseline path.
 		var position = _player.Position;
 		var appearance = _player.Appearance;
-		var raceId = ToRaceId(_player.Race);
+		var raceId = ResolveRaceId(_player.Race, _viewerContext);
 		var genderId = ToGenderId(_player.Gender);
 		var templateId = 100000 + raceId * 2 + genderId;
 		buffer.WriteF(position.X);
@@ -276,6 +292,27 @@ public sealed class SmPlayerInfo : GameServerPacket
 		return string.Equals(race, "ASMODIANS", StringComparison.OrdinalIgnoreCase) || string.Equals(race, "ASMODIAN", StringComparison.OrdinalIgnoreCase)
 			? 1
 			: 0;
+	}
+
+	private static int ResolveRaceId(string playerRace, SmPlayerInfoViewerContext? viewerContext)
+	{
+		// Java parity: SM_PLAYER_INFO.writeImpl uses activePlayer.isEnemy(player)
+		// to show the active player's opposite race, then neutral-to-all-player
+		// custom state forces the active player's own race.
+		if (viewerContext is null)
+			return ToRaceId(playerRace);
+
+		if (viewerContext.EitherPlayerNeutralToAllPlayers)
+			return ToRaceId(viewerContext.ActivePlayerRace);
+
+		return viewerContext.ActivePlayerIsEnemyToPlayer
+			? GetOppositePlayerRaceId(viewerContext.ActivePlayerRace)
+			: ToRaceId(playerRace);
+	}
+
+	private static int GetOppositePlayerRaceId(string activePlayerRace)
+	{
+		return ToRaceId(activePlayerRace) == 0 ? 1 : 0;
 	}
 
 	private static int ToGenderId(string gender)
