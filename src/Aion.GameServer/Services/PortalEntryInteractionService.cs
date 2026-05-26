@@ -101,7 +101,8 @@ public sealed class PortalEntryInteractionService
 			player.Position,
 			npc.Position,
 			npc.Template.TalkDistance,
-			npc.Template.BoundRadius);
+			npc.Template.BoundRadius,
+			player.BoundRadius);
 	}
 
 	private static PortalDialogEntryStatus MapPreparationFailure(PortalEntryPreparationStatus status)

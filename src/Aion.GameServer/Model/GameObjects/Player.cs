@@ -10,6 +10,7 @@ public sealed class Player
 	public const byte MailboxClosedState = 0;
 	public const byte MailboxRegularState = 1;
 	public const byte MailboxExpressState = 2;
+	public const float DefaultBoundRadius = 0.25f;
 
 	public int ObjectId { get; init; }
 
@@ -105,6 +106,10 @@ public sealed class Player
 	public int BonusTitleId { get; set; }
 
 	public WorldPosition Position { get; set; }
+
+	// Java parity: model/account/PlayerAccountData.updateBoundingRadius sets
+	// PlayerCommonData front/side bound radius to 0.25f; PositionUtil uses max(front, side).
+	public float BoundRadius { get; set; } = DefaultBoundRadius;
 
 	// Java parity: model/gameobjects/player/Player.portAnimation is written by SM_PLAYER_INFO and reset after spawn/level-ready fanout.
 	public ArrivalAnimation PortAnimation { get; set; } = ArrivalAnimation.None;

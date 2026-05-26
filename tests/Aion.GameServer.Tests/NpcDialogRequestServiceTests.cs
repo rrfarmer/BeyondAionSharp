@@ -77,6 +77,20 @@ public sealed class NpcDialogRequestServiceTests
 		Assert.Null(result.ResponsePacket);
 	}
 
+	[Fact]
+	public void RequestDialog_UsesPlayerBoundRadiusForJavaTalkRange()
+	{
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var player = CreatePlayer();
+		var npc = CreateNpc(5001, hasTalkInfo: true, isDialogNpc: true, position: new WorldPosition(210010000, 3.74f, 0, 0, 0));
+		world.TryAddObject(npc.ObjectId, npc);
+
+		var result = NpcDialogRequestService.RequestDialog(player, npc.ObjectId, world);
+
+		Assert.True(result.Handled);
+		Assert.Equal(NpcDialogRequestStatus.DialogStarted, result.Status);
+	}
+
 	private static Player CreatePlayer()
 	{
 		return new Player

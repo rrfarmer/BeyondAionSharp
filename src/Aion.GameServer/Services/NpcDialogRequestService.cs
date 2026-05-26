@@ -43,7 +43,8 @@ public static class NpcDialogRequestService
 			player.Position,
 			npc.Position,
 			npc.Template.TalkDistance,
-			npc.Template.BoundRadius);
+			npc.Template.BoundRadius,
+			player.BoundRadius);
 	}
 }
 
