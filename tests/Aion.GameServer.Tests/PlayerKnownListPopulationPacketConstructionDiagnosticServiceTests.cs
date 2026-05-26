@@ -56,6 +56,11 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 		Assert.Equal(2, diagnostic.CompletedFactPlanCount);
 		Assert.Equal(0, diagnostic.BlockedFactPlanCount);
 		Assert.Empty(diagnostic.FactPlanBlockerCountsByKind);
+		Assert.Equal(2, diagnostic.PacketConstructionFactSourceCount);
+		Assert.Equal(0, diagnostic.RequestPacketConstructionFactSourceCount);
+		Assert.Equal(2, diagnostic.GeneratedPacketConstructionFactSourceCount);
+		Assert.Equal(0, diagnostic.IgnoredGeneratedPacketConstructionFactSourceCount);
+		Assert.Equal(2, diagnostic.PacketConstructionFactSourceCountsByKind[PlayerKnownListPopulationPacketConstructionFactSourceKind.GeneratedFactPlan]);
 		Assert.Equal(1, diagnostic.PacketConstructionPlanCount);
 		Assert.Equal(1, diagnostic.ConstructedPacketConstructionPlanCount);
 		Assert.Equal(2, diagnostic.PacketConstructionResultCount);
@@ -71,6 +76,12 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 		Assert.Equal(NearPlayerObjectId, candidateDiagnostic.CandidatePlayerObjectId);
 		Assert.Equal(0, candidateDiagnostic.CandidateOrder);
 		Assert.Equal(PlayerKnownListPopulationPacketConstructionDiagnosticStatus.Complete, candidateDiagnostic.Status);
+		Assert.Equal(
+			[
+				PlayerKnownListPopulationPacketConstructionFactSourceKind.GeneratedFactPlan,
+				PlayerKnownListPopulationPacketConstructionFactSourceKind.GeneratedFactPlan,
+			],
+			candidateDiagnostic.PacketConstructionFactSources.Select(source => source.Kind));
 		Assert.Equal(
 			[
 				PlayerKnownListPopulationPacketConstructionFactPlanDirection.OwnerViewingCandidate,
@@ -126,6 +137,10 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 		Assert.Equal(1, diagnostic.BlockedFactPlanCount);
 		Assert.Equal(1, diagnostic.FactPlanBlockerCountsByKind[PlayerKnownListPacketConstructionFactBlocker.MissingRideInfo]);
 		Assert.Equal(1, diagnostic.FactPlanBlockerCountsByKind[PlayerKnownListPacketConstructionFactBlocker.MissingRideAttackSpeedFacts]);
+		Assert.Equal(1, diagnostic.PacketConstructionFactSourceCount);
+		Assert.Equal(0, diagnostic.RequestPacketConstructionFactSourceCount);
+		Assert.Equal(1, diagnostic.GeneratedPacketConstructionFactSourceCount);
+		Assert.Equal(0, diagnostic.IgnoredGeneratedPacketConstructionFactSourceCount);
 		Assert.Equal(1, diagnostic.PartiallyConstructedPacketConstructionPlanCount);
 		Assert.Equal(1, diagnostic.ConstructedPacketConstructionResultCount);
 		Assert.Equal(1, diagnostic.BlockedMissingSubjectFactsResultCount);
@@ -142,6 +157,91 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 		Assert.Equal(
 			PlayerKnownListOperationSideEffectPacketConstructionResultStatus.BlockedMissingSubjectFacts,
 			candidateDiagnostic.PacketConstructionResults[1].Status);
+	}
+
+	[Fact]
+	public void Summarize_RequestFactsRemainAuthoritativeAndGeneratedOverrideIsReported()
+	{
+		var population = CreatePopulationService();
+		var diagnostics = new PlayerKnownListPopulationPacketConstructionDiagnosticService();
+		var owner = CreatePlayer(OwnerPlayerObjectId, "Owner", "ELYOS");
+		var candidate = CreatePlayer(NearPlayerObjectId, "Candidate", "ASMODIANS");
+		candidate.MountRide(new PlayerRideInfo(RideNpcId, StartFp: 0, CostFp: null, SprintSpeed: 9.5f, FlySpeed: 10.5f, MoveSpeed: 7.25f));
+		var ownerViewingCandidate = new PlayerKnownListOperationSideEffectDirectionFacts(
+			SubjectIsInRideMode: true,
+			SubjectRideNpcId: RideNpcId);
+		var plan = population.Plan(CreateRequest(
+			[
+				new PlayerKnownListPopulationCandidateFact(
+					NearPlayerObjectId,
+					X: 10,
+					Y: 0,
+					Z: 0,
+					OwnerCanSeeCandidate: true,
+					CandidateCanSeeOwner: false,
+					OwnerViewingCandidateSideEffectFacts: ownerViewingCandidate,
+					OwnerViewingCandidatePacketFactPlanRequest: new PlayerKnownListPacketConstructionFactPlanRequest(
+						owner,
+						candidate,
+						ownerViewingCandidate,
+						RideAttackSpeedFacts: new PlayerKnownListPacketConstructionAttackSpeedFacts(1400, 1200))),
+			],
+			packetConstructionFactsByPlayerObjectId: new Dictionary<int, PlayerKnownListOperationSideEffectPacketConstructionFacts>
+			{
+				[NearPlayerObjectId] = CreatePacketFacts(NearPlayerObjectId, "ExplicitCandidate", rideMovementSpeed: 3.5f),
+			}));
+
+		var diagnostic = diagnostics.Summarize(plan);
+
+		Assert.Equal(2, diagnostic.PacketConstructionFactSourceCount);
+		Assert.Equal(1, diagnostic.RequestPacketConstructionFactSourceCount);
+		Assert.Equal(0, diagnostic.GeneratedPacketConstructionFactSourceCount);
+		Assert.Equal(1, diagnostic.IgnoredGeneratedPacketConstructionFactSourceCount);
+		Assert.Equal(1, diagnostic.PacketConstructionFactSourceCountsByKind[PlayerKnownListPopulationPacketConstructionFactSourceKind.Request]);
+		Assert.Equal(1, diagnostic.PacketConstructionFactSourceCountsByKind[PlayerKnownListPopulationPacketConstructionFactSourceKind.GeneratedFactPlanIgnoredByRequest]);
+		var candidateDiagnostic = diagnostic.CandidateDiagnostics[0];
+		Assert.Equal(
+			[
+				PlayerKnownListPopulationPacketConstructionFactSourceKind.Request,
+				PlayerKnownListPopulationPacketConstructionFactSourceKind.GeneratedFactPlanIgnoredByRequest,
+			],
+			candidateDiagnostic.PacketConstructionFactSources.Select(source => source.Kind));
+	}
+
+	[Fact]
+	public void Summarize_RequestFactsOnlyCountsSourcesConsumedByCandidateSideEffects()
+	{
+		var population = CreatePopulationService();
+		var diagnostics = new PlayerKnownListPopulationPacketConstructionDiagnosticService();
+		var ownerViewingCandidate = new PlayerKnownListOperationSideEffectDirectionFacts();
+		var plan = population.Plan(CreateRequest(
+			[
+				new PlayerKnownListPopulationCandidateFact(
+					NearPlayerObjectId,
+					X: 10,
+					Y: 0,
+					Z: 0,
+					OwnerCanSeeCandidate: true,
+					CandidateCanSeeOwner: false,
+					OwnerViewingCandidateSideEffectFacts: ownerViewingCandidate),
+			],
+			packetConstructionFactsByPlayerObjectId: new Dictionary<int, PlayerKnownListOperationSideEffectPacketConstructionFacts>
+			{
+				[NearPlayerObjectId] = CreatePacketFacts(NearPlayerObjectId, "Candidate"),
+				[UnrelatedPacketFactPlayerObjectId] = CreatePacketFacts(UnrelatedPacketFactPlayerObjectId, "Unrelated"),
+			}));
+
+		var diagnostic = diagnostics.Summarize(plan);
+
+		Assert.Equal(1, diagnostic.PacketConstructionFactSourceCount);
+		Assert.Equal(1, diagnostic.RequestPacketConstructionFactSourceCount);
+		var candidateDiagnostic = diagnostic.CandidateDiagnostics[0];
+		var source = Assert.Single(candidateDiagnostic.PacketConstructionFactSources);
+		Assert.Equal(NearPlayerObjectId, source.SubjectPlayerObjectId);
+		Assert.Equal(PlayerKnownListPopulationPacketConstructionFactSourceKind.Request, source.Kind);
+		Assert.DoesNotContain(
+			diagnostic.CandidateDiagnostics.SelectMany(candidate => candidate.PacketConstructionFactSources),
+			source => source.SubjectPlayerObjectId == UnrelatedPacketFactPlayerObjectId);
 	}
 
 	[Fact]
@@ -164,6 +264,7 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 		{
 			Assert.Equal(PlayerKnownListPopulationPacketConstructionDiagnosticStatus.NoPacketConstructionMetadata, candidate.Status);
 			Assert.Empty(candidate.FactPlans);
+			Assert.Empty(candidate.PacketConstructionFactSources);
 			Assert.Empty(candidate.PacketConstructionResults);
 		});
 	}
@@ -176,7 +277,8 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 
 	private static PlayerKnownListPopulationPlanRequest CreateRequest(
 		IReadOnlyList<PlayerKnownListPopulationCandidateFact> candidateFacts,
-		IReadOnlyList<int>? regionCandidateIds = null) =>
+		IReadOnlyList<int>? regionCandidateIds = null,
+		IReadOnlyDictionary<int, PlayerKnownListOperationSideEffectPacketConstructionFacts>? packetConstructionFactsByPlayerObjectId = null) =>
 		new(
 			CreateRegionSnapshot(regionCandidateIds ?? [NearPlayerObjectId, FarPlayerObjectId]),
 			new PlayerKnownListVisibilityRangeObject(
@@ -186,7 +288,8 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 				X: 0,
 				Y: 0,
 				Z: 0),
-			candidateFacts);
+			candidateFacts,
+			PacketConstructionFactsByPlayerObjectId: packetConstructionFactsByPlayerObjectId);
 
 	private static PlayerKnownListRegionSnapshot CreateRegionSnapshot(IReadOnlyList<int> candidateIds) =>
 		new(
@@ -217,9 +320,19 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 			Position = new WorldPosition(210010000, 1, 2, 3, 4),
 		};
 
+	private static PlayerKnownListOperationSideEffectPacketConstructionFacts CreatePacketFacts(
+		int objectId,
+		string name,
+		float rideMovementSpeed = 0) =>
+		new(
+			CreatePlayer(objectId, name, "ELYOS"),
+			ActiveMotions: [],
+			RideMovementSpeed: rideMovementSpeed);
+
 	private const int OwnerPlayerObjectId = 9001;
 	private const int NearPlayerObjectId = 9002;
 	private const int FarPlayerObjectId = 9003;
 	private const int MissingFactPlayerObjectId = 9004;
+	private const int UnrelatedPacketFactPlayerObjectId = 9005;
 	private const int RideNpcId = 730001;
 }

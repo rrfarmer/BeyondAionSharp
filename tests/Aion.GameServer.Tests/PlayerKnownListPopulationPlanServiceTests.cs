@@ -428,6 +428,17 @@ public sealed class PlayerKnownListPopulationPlanServiceTests
 
 		var candidatePlan = Assert.Single(plan.CandidatePlans, candidatePlan => candidatePlan.CandidatePlayerObjectId == NearPlayerObjectId);
 		Assert.Equal(PlayerKnownListPacketConstructionFactPlanStatus.Complete, Assert.Single(candidatePlan.SideEffectFactPlans!).Plan.Status);
+		Assert.Equal(
+			[
+				PlayerKnownListPopulationPacketConstructionFactSourceKind.Request,
+				PlayerKnownListPopulationPacketConstructionFactSourceKind.GeneratedFactPlanIgnoredByRequest,
+			],
+			candidatePlan.PacketConstructionFactSources!.Select(source => source.Kind));
+		Assert.All(candidatePlan.PacketConstructionFactSources!, source => Assert.Equal(NearPlayerObjectId, source.SubjectPlayerObjectId));
+		Assert.Null(candidatePlan.PacketConstructionFactSources![0].GeneratedFromDirection);
+		Assert.Equal(
+			PlayerKnownListPopulationPacketConstructionFactPlanDirection.OwnerViewingCandidate,
+			candidatePlan.PacketConstructionFactSources![1].GeneratedFromDirection);
 		var packetPlan = candidatePlan.SideEffectPacketConstructionPlan!;
 		var rideResult = packetPlan.Results
 			.SelectMany(result => result.PacketConstructionPlan!.Results)

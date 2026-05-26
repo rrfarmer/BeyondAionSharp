@@ -31,6 +31,7 @@ public sealed record PlayerKnownListPopulationPacketConstructionCandidateDiagnos
 	int CandidateOrder,
 	PlayerKnownListPopulationPacketConstructionDiagnosticStatus Status,
 	IReadOnlyList<PlayerKnownListPopulationFactPlanDiagnostic> FactPlans,
+	IReadOnlyList<PlayerKnownListPopulationPacketConstructionFactSource> PacketConstructionFactSources,
 	IReadOnlyList<PlayerKnownListPopulationPacketConstructionResultDiagnostic> PacketConstructionResults,
 	bool HasPacketConstructionPlan);
 
@@ -46,6 +47,11 @@ public sealed record PlayerKnownListPopulationPacketConstructionDiagnosticPlan(
 	int CompletedFactPlanCount,
 	int BlockedFactPlanCount,
 	IReadOnlyDictionary<PlayerKnownListPacketConstructionFactBlocker, int> FactPlanBlockerCountsByKind,
+	int PacketConstructionFactSourceCount,
+	int RequestPacketConstructionFactSourceCount,
+	int GeneratedPacketConstructionFactSourceCount,
+	int IgnoredGeneratedPacketConstructionFactSourceCount,
+	IReadOnlyDictionary<PlayerKnownListPopulationPacketConstructionFactSourceKind, int> PacketConstructionFactSourceCountsByKind,
 	int PacketConstructionPlanCount,
 	int ConstructedPacketConstructionPlanCount,
 	int PartiallyConstructedPacketConstructionPlanCount,
@@ -76,6 +82,7 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 			.Select((candidatePlan, index) => CreateCandidateDiagnostic(candidatePlan, index))
 			.ToArray();
 		var factPlans = candidateDiagnostics.SelectMany(candidate => candidate.FactPlans).ToArray();
+		var factSources = candidateDiagnostics.SelectMany(candidate => candidate.PacketConstructionFactSources).ToArray();
 		var packetConstructionPlans = populationPlan.CandidatePlans
 			.Select(candidate => candidate.SideEffectPacketConstructionPlan)
 			.Where(plan => plan is not null)
@@ -103,6 +110,11 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 			factPlans.Count(factPlan => factPlan.Status == PlayerKnownListPacketConstructionFactPlanStatus.Complete),
 			factPlans.Count(factPlan => factPlan.Status == PlayerKnownListPacketConstructionFactPlanStatus.Blocked),
 			CountByKind(factPlans.SelectMany(factPlan => factPlan.Blockers)),
+			factSources.Length,
+			factSources.Count(source => source.Kind == PlayerKnownListPopulationPacketConstructionFactSourceKind.Request),
+			factSources.Count(source => source.Kind == PlayerKnownListPopulationPacketConstructionFactSourceKind.GeneratedFactPlan),
+			factSources.Count(source => source.Kind == PlayerKnownListPopulationPacketConstructionFactSourceKind.GeneratedFactPlanIgnoredByRequest),
+			CountByKind(factSources.Select(source => source.Kind)),
 			packetConstructionPlans.Length,
 			packetConstructionPlans.Count(plan => plan.Status == PlayerKnownListOperationSideEffectPacketConstructionStatus.Constructed),
 			packetConstructionPlans.Count(plan => plan.Status == PlayerKnownListOperationSideEffectPacketConstructionStatus.PartiallyConstructed),
@@ -137,6 +149,7 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 				factPlan.Plan.Blockers,
 				factPlan.Plan.JavaSource))
 			.ToArray();
+		var factSources = candidatePlan.PacketConstructionFactSources ?? Array.Empty<PlayerKnownListPopulationPacketConstructionFactSource>();
 		var packetConstructionResultDiagnostics = (candidatePlan.SideEffectPacketConstructionPlan?.Results ?? Array.Empty<PlayerKnownListOperationSideEffectPacketConstructionResult>())
 			.Select(result => CreatePacketConstructionResultDiagnostic(candidatePlan, candidateOrder, result))
 			.ToArray();
@@ -146,6 +159,7 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 			candidateOrder,
 			CreateCandidateStatus(factPlanDiagnostics, candidatePlan.SideEffectPacketConstructionPlan, packetConstructionResultDiagnostics),
 			factPlanDiagnostics,
+			factSources,
 			packetConstructionResultDiagnostics,
 			candidatePlan.SideEffectPacketConstructionPlan is not null);
 	}

@@ -28,6 +28,19 @@ public sealed record PlayerKnownListPopulationPacketConstructionFactPlanAttachme
 	PlayerKnownListPacketConstructionFactPlanRequest Request,
 	PlayerKnownListPacketConstructionFactPlan Plan);
 
+public enum PlayerKnownListPopulationPacketConstructionFactSourceKind
+{
+	Request,
+	GeneratedFactPlan,
+	GeneratedFactPlanIgnoredByRequest,
+}
+
+public sealed record PlayerKnownListPopulationPacketConstructionFactSource(
+	int SubjectPlayerObjectId,
+	PlayerKnownListPopulationPacketConstructionFactSourceKind Kind,
+	PlayerKnownListPopulationPacketConstructionFactPlanDirection? GeneratedFromDirection,
+	string Notes);
+
 public sealed record PlayerKnownListPopulationPlanRequest(
 	PlayerKnownListRegionSnapshot RegionSnapshot,
 	PlayerKnownListVisibilityRangeObject Owner,
@@ -43,7 +56,12 @@ public sealed record PlayerKnownListPopulationCandidatePlan(
 	string JavaSource,
 	PlayerKnownListOperationSideEffectAttachmentPlan? SideEffectAttachmentPlan = null,
 	PlayerKnownListOperationSideEffectPacketConstructionPlan? SideEffectPacketConstructionPlan = null,
-	IReadOnlyList<PlayerKnownListPopulationPacketConstructionFactPlanAttachment>? SideEffectFactPlans = null);
+	IReadOnlyList<PlayerKnownListPopulationPacketConstructionFactPlanAttachment>? SideEffectFactPlans = null,
+	IReadOnlyList<PlayerKnownListPopulationPacketConstructionFactSource>? PacketConstructionFactSources = null);
+
+internal sealed record PlayerKnownListPopulationPacketConstructionFactMergeResult(
+	IReadOnlyDictionary<int, PlayerKnownListOperationSideEffectPacketConstructionFacts> FactsByPlayerObjectId,
+	IReadOnlyList<PlayerKnownListPopulationPacketConstructionFactSource> Sources);
 
 public sealed record PlayerKnownListPopulationPlan(
 	int OwnerPlayerObjectId,
@@ -134,12 +152,13 @@ public sealed class PlayerKnownListPopulationPlanService
 			var sideEffectFactPlans = CreateFactPlans(fact);
 			var packetConstructionFacts = CreatePacketConstructionFacts(
 				request.PacketConstructionFactsByPlayerObjectId,
-				sideEffectFactPlans);
+				sideEffectFactPlans,
+				sideEffectAttachmentPlan);
 			var sideEffectPacketConstructionPlan = packetConstructionFacts is null
 				? null
 				: _sideEffectPacketConstructionService.Construct(new PlayerKnownListOperationSideEffectPacketConstructionRequest(
 					sideEffectAttachmentPlan,
-					packetConstructionFacts));
+					packetConstructionFacts.FactsByPlayerObjectId));
 
 			candidatePlans.Add(new PlayerKnownListPopulationCandidatePlan(
 				candidateId,
@@ -149,7 +168,8 @@ public sealed class PlayerKnownListPopulationPlanService
 				"KnownList.findVisibleObjects candidate composed through range/canSee, two-way membership metadata, controller side-effect descriptors, optional fact-plan metadata, and optional packet construction metadata",
 				sideEffectAttachmentPlan,
 				sideEffectPacketConstructionPlan,
-				sideEffectFactPlans));
+				sideEffectFactPlans,
+				packetConstructionFacts?.Sources));
 		}
 
 		return new PlayerKnownListPopulationPlan(
@@ -190,22 +210,48 @@ public sealed class PlayerKnownListPopulationPlanService
 		return plans;
 	}
 
-	private static IReadOnlyDictionary<int, PlayerKnownListOperationSideEffectPacketConstructionFacts>? CreatePacketConstructionFacts(
+	private static PlayerKnownListPopulationPacketConstructionFactMergeResult? CreatePacketConstructionFacts(
 		IReadOnlyDictionary<int, PlayerKnownListOperationSideEffectPacketConstructionFacts>? suppliedFacts,
-		IReadOnlyList<PlayerKnownListPopulationPacketConstructionFactPlanAttachment> factPlans)
+		IReadOnlyList<PlayerKnownListPopulationPacketConstructionFactPlanAttachment> factPlans,
+		PlayerKnownListOperationSideEffectAttachmentPlan attachmentPlan)
 	{
 		if (suppliedFacts is null && factPlans.Count == 0)
 			return null;
 
+		var sources = new List<PlayerKnownListPopulationPacketConstructionFactSource>();
+		var attachedSubjectIds = attachmentPlan.AttachedSideEffects
+			.Select(attachment => attachment.SideEffectPlan.SubjectPlayerObjectId)
+			.ToHashSet();
 		var factsByPlayerObjectId = suppliedFacts is null
 			? new Dictionary<int, PlayerKnownListOperationSideEffectPacketConstructionFacts>()
 			: new Dictionary<int, PlayerKnownListOperationSideEffectPacketConstructionFacts>(suppliedFacts);
+		if (suppliedFacts is not null)
+		{
+			sources.AddRange(suppliedFacts.Keys.Where(attachedSubjectIds.Contains).Select(subjectPlayerObjectId =>
+				new PlayerKnownListPopulationPacketConstructionFactSource(
+					subjectPlayerObjectId,
+					PlayerKnownListPopulationPacketConstructionFactSourceKind.Request,
+					GeneratedFromDirection: null,
+					"Packet construction facts were supplied by the population plan request and remain authoritative over generated fact-plan facts.")));
+		}
+
 		foreach (var factPlan in factPlans)
 		{
 			if (factPlan.Plan.Facts is { } facts)
-				factsByPlayerObjectId.TryAdd(facts.SubjectPlayer.ObjectId, facts);
+			{
+				var sourceKind = factsByPlayerObjectId.TryAdd(facts.SubjectPlayer.ObjectId, facts)
+					? PlayerKnownListPopulationPacketConstructionFactSourceKind.GeneratedFactPlan
+					: PlayerKnownListPopulationPacketConstructionFactSourceKind.GeneratedFactPlanIgnoredByRequest;
+				sources.Add(new PlayerKnownListPopulationPacketConstructionFactSource(
+					facts.SubjectPlayer.ObjectId,
+					sourceKind,
+					factPlan.Direction,
+					sourceKind == PlayerKnownListPopulationPacketConstructionFactSourceKind.GeneratedFactPlan
+						? "Packet construction facts were generated from a completed supplied-snapshot fact plan."
+						: "Generated fact-plan facts were ignored because request-level packet construction facts for the same subject remain authoritative."));
+			}
 		}
 
-		return factsByPlayerObjectId;
+		return new PlayerKnownListPopulationPacketConstructionFactMergeResult(factsByPlayerObjectId, sources);
 	}
 }
