@@ -4,6 +4,22 @@ namespace Aion.GameServer.Services;
 
 public sealed class QuestFinishRewardTemplateXmlProjectionExtractor
 {
+	private static readonly IReadOnlyDictionary<string, string> ClassSelectableRewardElements =
+		new Dictionary<string, string>(StringComparer.Ordinal)
+		{
+			["fighter_selectable_reward"] = "GLADIATOR",
+			["knight_selectable_reward"] = "TEMPLAR",
+			["ranger_selectable_reward"] = "RANGER",
+			["assassin_selectable_reward"] = "ASSASSIN",
+			["wizard_selectable_reward"] = "SORCERER",
+			["elementalist_selectable_reward"] = "SPIRIT_MASTER",
+			["priest_selectable_reward"] = "CLERIC",
+			["chanter_selectable_reward"] = "CHANTER",
+			["gunner_selectable_reward"] = "GUNNER",
+			["rider_selectable_reward"] = "RIDER",
+			["bard_selectable_reward"] = "BARD",
+		};
+
 	public IReadOnlyDictionary<int, QuestFinishRewardTemplateProjection> ExtractDefaultRegularNonItemProjections(string xmlContent)
 	{
 		using var reader = new StringReader(xmlContent);
@@ -19,7 +35,7 @@ public sealed class QuestFinishRewardTemplateXmlProjectionExtractor
 	{
 		// Java parity breadcrumb: model/templates/QuestTemplate#getRewards plus
 		// services/QuestService.getRewardItems/giveReward. This projection covers the
-		// default regular reward group only; extended, class, and bonus rewards stay disabled.
+		// default regular reward group only; bonus rewards stay disabled.
 		return document
 			.Descendants()
 			.Where(element => element.Name.LocalName == "quest")
@@ -36,7 +52,7 @@ public sealed class QuestFinishRewardTemplateXmlProjectionExtractor
 		var nonItemProjection = selectedRewards is null
 			? null
 			: CreateNonItemProjection(selectedRewards);
-		var itemProjection = CreateItemProjection(selectedRewards, rewardGroupIndex, extendedRewards);
+		var itemProjection = CreateItemProjection(quest, selectedRewards, rewardGroupIndex, extendedRewards);
 
 		return new QuestFinishRewardTemplateProjection(
 			RewardGroupCount: rewards.Length == 0 ? null : rewards.Length,
@@ -49,6 +65,7 @@ public sealed class QuestFinishRewardTemplateXmlProjectionExtractor
 	}
 
 	private static QuestFinishRewardItemTemplateProjection? CreateItemProjection(
+		XElement quest,
 		XElement? rewards,
 		int rewardGroupIndex,
 		XElement? extendedRewards)
@@ -57,10 +74,12 @@ public sealed class QuestFinishRewardTemplateXmlProjectionExtractor
 		IReadOnlyList<QuestFinishRewardItem> selectableItems = rewards is null ? [] : ReadQuestItems(rewards, "selectable_reward_item");
 		IReadOnlyList<QuestFinishRewardItem> extendedFixedItems = extendedRewards is null ? [] : ReadQuestItems(extendedRewards, "reward_item");
 		IReadOnlyList<QuestFinishRewardItem> extendedSelectableItems = extendedRewards is null ? [] : ReadQuestItems(extendedRewards, "selectable_reward_item");
+		var classSelectableRewards = ReadClassSelectableRewards(quest);
 		if (fixedItems.Count == 0
 			&& selectableItems.Count == 0
 			&& extendedFixedItems.Count == 0
-			&& extendedSelectableItems.Count == 0)
+			&& extendedSelectableItems.Count == 0
+			&& classSelectableRewards.Count == 0)
 		{
 			return null;
 		}
@@ -83,7 +102,25 @@ public sealed class QuestFinishRewardTemplateXmlProjectionExtractor
 
 		return new QuestFinishRewardItemTemplateProjection(
 			RewardGroups: rewardGroups,
-			ExtendedRewards: extendedGroup);
+			ExtendedRewards: extendedGroup,
+			ClassSelectableRewards: classSelectableRewards,
+			SingleTimeClassReward: ReadIntAttribute(quest, "use_class_reward") == 2,
+			ClassRewardOnEveryRepeat: ReadIntAttribute(quest, "use_class_reward") == 1);
+	}
+
+	private static IReadOnlyDictionary<string, IReadOnlyList<QuestFinishRewardItem>> ReadClassSelectableRewards(XElement quest)
+	{
+		var classRewards = new Dictionary<string, IReadOnlyList<QuestFinishRewardItem>>(StringComparer.Ordinal);
+		foreach (var (elementName, playerClass) in ClassSelectableRewardElements)
+		{
+			var rewards = ReadQuestItems(quest, elementName);
+			if (rewards.Count != 0)
+			{
+				classRewards[playerClass] = rewards;
+			}
+		}
+
+		return classRewards;
 	}
 
 	private static IReadOnlyList<QuestFinishRewardItem> ReadQuestItems(XElement rewards, string elementName)

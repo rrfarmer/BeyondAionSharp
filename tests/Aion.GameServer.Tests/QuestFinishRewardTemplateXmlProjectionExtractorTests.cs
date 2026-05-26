@@ -11,13 +11,17 @@ public sealed class QuestFinishRewardTemplateXmlProjectionExtractorTests
 	private const int ExpectedRealDataDefaultRegularChallengeTaskTemplates = 174;
 	private const long ExpectedRealDataDefaultRegularKinahTotal = 3425802649;
 	private const long ExpectedRealDataDefaultRegularExperienceTotal = 20544638479;
-	private const int ExpectedRealDataAnyItemRewardTemplates = 5592;
+	private const int ExpectedRealDataAnyItemRewardTemplates = 5643;
 	private const int ExpectedRealDataDefaultRegularItemRewardTemplates = 5527;
 	private const int ExpectedRealDataDefaultRegularFixedRewardItemCount = 6182;
 	private const int ExpectedRealDataDefaultRegularSelectableRewardItemCount = 5502;
 	private const int ExpectedRealDataExtendedItemRewardTemplates = 233;
 	private const int ExpectedRealDataExtendedFixedRewardItemCount = 245;
 	private const int ExpectedRealDataExtendedSelectableRewardItemCount = 250;
+	private const int ExpectedRealDataClassSelectableRewardTemplates = 80;
+	private const int ExpectedRealDataClassSelectableRewardItemCount = 2324;
+	private const int ExpectedRealDataClassRewardOnEveryRepeatTemplates = 69;
+	private const int ExpectedRealDataSingleTimeClassRewardTemplates = 5;
 
 	[Fact]
 	public void ExtractDefaultRegularNonItemProjections_ReadsJavaRewardsAttributes()
@@ -108,6 +112,55 @@ public sealed class QuestFinishRewardTemplateXmlProjectionExtractorTests
 		Assert.Null(itemProjection.ExtendedRewards);
 		Assert.Empty(itemProjection.ClassSelectableRewards);
 		Assert.False(itemProjection.HasBonus);
+	}
+
+	[Fact]
+	public void CreateProjection_ReadsClassSelectableRewardsAndUseClassRewardFlags()
+	{
+		var quest = XElement.Parse("""
+			<quest id="1001" use_class_reward="2">
+				<rewards>
+					<selectable_reward_item item_id="182400001" count="9" />
+				</rewards>
+				<fighter_selectable_reward item_id="100000001" count="2" />
+				<fighter_selectable_reward item_id="100000002" />
+				<knight_selectable_reward item_id="100900001" count="3" />
+				<priest_selectable_reward item_id="101500001" count="4" />
+				<elementalist_selectable_reward item_id="101300001" count="5" />
+			</quest>
+			""");
+		var extractor = new QuestFinishRewardTemplateXmlProjectionExtractor();
+
+		var projection = extractor.CreateProjection(quest, rewardGroupIndex: 0);
+
+		Assert.True(projection.HasItemRewards);
+		var itemProjection = Assert.IsType<QuestFinishRewardItemTemplateProjection>(projection.ItemProjection);
+		Assert.True(itemProjection.SingleTimeClassReward);
+		Assert.False(itemProjection.ClassRewardOnEveryRepeat);
+		Assert.Collection(
+			itemProjection.ClassSelectableRewards["GLADIATOR"],
+			item =>
+			{
+				Assert.Equal(100000001, item.ItemId);
+				Assert.Equal(2, item.Count);
+			},
+			item =>
+			{
+				Assert.Equal(100000002, item.ItemId);
+				Assert.Equal(1, item.Count);
+			});
+		var templar = Assert.Single(itemProjection.ClassSelectableRewards["TEMPLAR"]);
+		Assert.Equal(100900001, templar.ItemId);
+		Assert.Equal(3, templar.Count);
+		var cleric = Assert.Single(itemProjection.ClassSelectableRewards["CLERIC"]);
+		Assert.Equal(101500001, cleric.ItemId);
+		Assert.Equal(4, cleric.Count);
+		var spiritMaster = Assert.Single(itemProjection.ClassSelectableRewards["SPIRIT_MASTER"]);
+		Assert.Equal(101300001, spiritMaster.ItemId);
+		Assert.Equal(5, spiritMaster.Count);
+		Assert.DoesNotContain("WARRIOR", itemProjection.ClassSelectableRewards.Keys);
+		Assert.DoesNotContain("PRIEST", itemProjection.ClassSelectableRewards.Keys);
+		Assert.DoesNotContain("MAGE", itemProjection.ClassSelectableRewards.Keys);
 	}
 
 	[Fact]
@@ -224,6 +277,18 @@ public sealed class QuestFinishRewardTemplateXmlProjectionExtractorTests
 		Assert.Equal(
 			ExpectedRealDataExtendedSelectableRewardItemCount,
 			projections.Values.Sum(projection => projection.ItemProjection?.ExtendedRewards?.SelectableRewardItems.Count ?? 0));
+		Assert.Equal(
+			ExpectedRealDataClassSelectableRewardTemplates,
+			projections.Values.Count(projection => projection.ItemProjection?.ClassSelectableRewards.Count > 0));
+		Assert.Equal(
+			ExpectedRealDataClassSelectableRewardItemCount,
+			projections.Values.Sum(projection => projection.ItemProjection?.ClassSelectableRewards.Values.Sum(items => items.Count) ?? 0));
+		Assert.Equal(
+			ExpectedRealDataClassRewardOnEveryRepeatTemplates,
+			projections.Values.Count(projection => projection.ItemProjection?.ClassRewardOnEveryRepeat == true));
+		Assert.Equal(
+			ExpectedRealDataSingleTimeClassRewardTemplates,
+			projections.Values.Count(projection => projection.ItemProjection?.SingleTimeClassReward == true));
 	}
 
 	private static string FindRepoRoot()
