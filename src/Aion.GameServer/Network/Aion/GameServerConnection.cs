@@ -11064,13 +11064,13 @@ public sealed class GameServerConnection : BaseClientConnection
 				return null;
 		}
 
-		var costFactor = sendMail.LetterTypeId == 1 ? 5 : 1;
-		var baseCost = sendMail.LetterTypeId == 1 ? 500 : 10;
-		var kinahMailCommission = sendMail.KinahCount > 0 ? (long)(sendMail.KinahCount * 0.01d * costFactor) : 0;
-		var itemMailCommission = senderItem == null || senderItemTemplate == null
-			? 0
-			: (long)(senderItemTemplate.Price * GetQualityPriceRate(senderItemTemplate) * sendMail.ItemCount * costFactor);
-		var finalMailKinah = baseCost + kinahMailCommission + itemMailCommission + sendMail.KinahCount;
+		var costPlan = MailSendCostPlanService.CreatePlan(
+			sendMail.LetterTypeId,
+			sendMail.KinahCount,
+			senderItemTemplate,
+			sendMail.ItemCount,
+			sender.Race);
+		var finalMailKinah = costPlan.FinalMailKinah;
 		var kinahItem = sender.InventoryItems.FirstOrDefault(item => item.ItemId == KinahItemId && item.Location == CubeStorageId);
 		if (kinahItem == null || kinahItem.Count < finalMailKinah)
 			return SmSystemMessage.NotEnoughMoney();
@@ -11246,18 +11246,6 @@ public sealed class GameServerConnection : BaseClientConnection
 		long slot)
 	{
 		return InventoryItemFactory.CreateNewItem(objectId, itemTemplate, count, ownerId, location, slot);
-	}
-
-	private static double GetQualityPriceRate(ItemTemplateSummary template)
-	{
-		// Java parity: services/mail/MailService.getQualityPriceRate.
-		return template.Quality switch
-		{
-			"MYTHIC" or "EPIC" => 0.05d,
-			"UNIQUE" or "LEGEND" => 0.04d,
-			"RARE" => 0.03d,
-			_ => 0.02d,
-		};
 	}
 
 	private sealed record InventoryItemConsumption(IReadOnlyList<InventoryItem> Updates, IReadOnlyList<InventoryItem> Deletes)
