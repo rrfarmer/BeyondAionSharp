@@ -4011,6 +4011,85 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmPet_SpawnWritesKnownListSubsetLikeJava()
+	{
+		var spawn = new SmPetSpawnSnapshot(
+			Name: "Tog",
+			TemplateId: 900001,
+			ObjectId: 7001,
+			X: 11.5f,
+			Y: 22.25f,
+			Z: 33.75f,
+			TargetX: 44.5f,
+			TargetY: 55.25f,
+			TargetZ: 66.75f,
+			Heading: 90,
+			MasterObjectId: 1001,
+			Decoration: 12345);
+
+		var payload = SerializeUnencryptedPayload(new SmPet(spawn));
+		using var reader = new PacketBuffer(payload);
+
+		Assert.Equal(SmPet.PacketOpCode, 101);
+		Assert.Equal((int)PetAction.Spawn, reader.ReadH());
+		Assert.Equal("Tog", reader.ReadS());
+		Assert.Equal(900001, reader.ReadD());
+		Assert.Equal(7001, reader.ReadD());
+		Assert.Equal(11.5f, reader.ReadF());
+		Assert.Equal(22.25f, reader.ReadF());
+		Assert.Equal(33.75f, reader.ReadF());
+		Assert.Equal(44.5f, reader.ReadF());
+		Assert.Equal(55.25f, reader.ReadF());
+		Assert.Equal(66.75f, reader.ReadF());
+		Assert.Equal(90, (int)reader.ReadC());
+		Assert.Equal(1001, reader.ReadD());
+		Assert.Equal(1, reader.ReadH());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(12345, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void SmPet_DismissWritesPetObjectIdAndDeleteAnimationLikeJava()
+	{
+		var payload = SerializeUnencryptedPayload(new SmPet(7001, ObjectDeleteAnimation.JumpIn));
+		using var reader = new PacketBuffer(payload);
+
+		Assert.Equal((int)PetAction.Dismiss, reader.ReadH());
+		Assert.Equal(7001, reader.ReadD());
+		Assert.Equal((byte)ObjectDeleteAnimation.JumpIn, reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void SmPetEmote_FlyStartWritesDefaultBranchLikeJava()
+	{
+		var payload = SerializeUnencryptedPayload(new SmPetEmote(new SmPetEmoteSnapshot(7001, PetEmote.FlyStart)));
+		using var reader = new PacketBuffer(payload);
+
+		Assert.Equal(SmPetEmote.PacketOpCode, 187);
+		Assert.Equal(7001, reader.ReadD());
+		Assert.Equal((int)PetEmote.FlyStart, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void PetActionAndEmoteResolversPreserveJavaUnknownFallbacks()
+	{
+		Assert.Equal(PetAction.Spawn, PetActionResolver.GetActionById(3));
+		Assert.Equal(PetAction.Dismiss, PetActionResolver.GetActionById(4));
+		Assert.Equal(PetAction.Unknown, PetActionResolver.GetActionById(254));
+		Assert.Equal(PetEmote.FlyStart, PetEmoteResolver.GetEmoteById(129));
+		Assert.Equal(PetEmote.Unknown, PetEmoteResolver.GetEmoteById(254));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesL2AuthLoginCheck()
 	{
 		var payload = CreateClientPayload(
