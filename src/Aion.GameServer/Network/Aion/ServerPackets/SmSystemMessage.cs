@@ -610,6 +610,24 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(901285, kinah.ToString(System.Globalization.CultureInfo.InvariantCulture));
 	}
 
+	public static SmSystemMessage CannotMoveToAirportNotEnoughFee()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_CANNOT_MOVE_TO_AIRPORT_NOT_ENOUGH_FEE.
+		return new SmSystemMessage(1300689);
+	}
+
+	public static SmSystemMessage CannotMoveToAirportNoRoute()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_CANNOT_MOVE_TO_AIRPORT_NO_ROUTE.
+		return new SmSystemMessage(1300691);
+	}
+
+	public static SmSystemMessage FlyingTimeNotReady()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_FLYING_TIME_NOT_READY.
+		return new SmSystemMessage(1300961);
+	}
+
 	public static SmSystemMessage CannotAskRecoverExperienceByOtherQuestion()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_CANNOT_ASK_RECOVER_EXPERIENCE_BY_OTHER_QUESTION.

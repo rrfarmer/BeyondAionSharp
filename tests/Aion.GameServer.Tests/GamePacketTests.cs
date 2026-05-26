@@ -228,6 +228,9 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.CantInstanceEnterLevel(), 1400179);
 		AssertSystemMessage(SmSystemMessage.MentorCantEnter(300030000), 1400766, "300030000");
 		AssertSystemMessage(SmSystemMessage.MovePortalErrorInvalidRace(), 901354);
+		AssertSystemMessage(SmSystemMessage.CannotMoveToAirportNotEnoughFee(), 1300689);
+		AssertSystemMessage(SmSystemMessage.CannotMoveToAirportNoRoute(), 1300691);
+		AssertSystemMessage(SmSystemMessage.FlyingTimeNotReady(), 1300961);
 		AssertSystemMessage(SmSystemMessage.SkillCanNotUseGroupgateNoRight(), 1300150);
 		AssertSystemMessage(SmSystemMessage.InstanceCantEnterWithoutItem(), 1400219);
 		AssertSystemMessage(SmSystemMessage.CraftCantExtendMoney(), 1300834);
