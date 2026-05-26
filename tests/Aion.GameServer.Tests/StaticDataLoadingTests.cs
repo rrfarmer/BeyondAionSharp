@@ -206,7 +206,9 @@ public sealed class StaticDataLoadingTests
 				</npc_trade_list>
 				<goodslists>
 					<list id="129" legion_lvl="3">
+						<salestime>0 0 9 ? * MON</salestime>
 						<item id="110100010" />
+						<item id="186000001" sell_limit="5" buy_limit="2" />
 					</list>
 					<in_list id="39">
 						<item id="188051574" />
@@ -231,7 +233,24 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal([39], staticData.TradeLists.GetTradeInListTemplate(205315)?.GoodsListIds);
 		Assert.Equal(7, staticData.TradeLists.GetPurchaseTemplate(203060)?.SaveCount);
 		Assert.Equal(3, staticData.GoodsLists.Count);
-		Assert.Equal(3, staticData.GoodsLists.GetGoodsListById(129)?.LegionLevel);
+		var goodsList = staticData.GoodsLists.GetGoodsListById(129);
+		Assert.NotNull(goodsList);
+		Assert.Equal(3, goodsList.LegionLevel);
+		Assert.Equal("0 0 9 ? * MON", goodsList.SalesTime);
+		Assert.Collection(
+			goodsList.ItemSummaries,
+			item =>
+			{
+				Assert.Equal(110100010, item.Id);
+				Assert.False(item.IsLimitedItem);
+			},
+			item =>
+			{
+				Assert.Equal(186000001, item.Id);
+				Assert.Equal(5, item.SellLimit);
+				Assert.Equal(2, item.BuyLimit);
+				Assert.True(item.IsLimitedItem);
+			});
 		Assert.NotNull(staticData.GoodsLists.GetGoodsInListById(39));
 		Assert.NotNull(staticData.GoodsLists.GetGoodsPurchaseListById(140));
 		Assert.Null(staticData.GoodsLists.GetGoodsListById(39));

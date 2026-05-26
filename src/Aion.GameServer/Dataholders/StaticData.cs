@@ -314,6 +314,9 @@ public sealed class StaticData
 		TradeListTemplateBuilder? currentTradeListTemplate = null;
 		TradeListTemplateKind currentTradeListTemplateKind = TradeListTemplateKind.TradeList;
 		int currentTradeListTemplateDepth = -1;
+		GoodsListBuilder? currentGoodsList = null;
+		GoodsListKind currentGoodsListKind = GoodsListKind.List;
+		int currentGoodsListDepth = -1;
 		QuestDropBuilder? currentQuestDropBuilder = null;
 		EventTemplateBuilder? currentEventTemplate = null;
 		int currentEventTemplateDepth = -1;
@@ -509,6 +512,18 @@ public sealed class StaticData
 						purchaseLists);
 					currentTradeListTemplate = null;
 					currentTradeListTemplateDepth = -1;
+				}
+
+				if (reader.Depth == currentGoodsListDepth && currentGoodsList != null)
+				{
+					AddGoodsListSummary(
+						currentGoodsList.ToSummary(),
+						currentGoodsListKind,
+						goodsLists,
+						goodsInLists,
+						goodsPurchaseLists);
+					currentGoodsList = null;
+					currentGoodsListDepth = -1;
 				}
 
 				if (reader.Depth == currentNpcSpawnDepth && reader.LocalName == "spawn")
@@ -755,22 +770,49 @@ public sealed class StaticData
 				&& reader.LocalName is "list" or "in_list" or "purchase_list")
 			{
 				// Java parity: dataholders/GoodsListData separates ordinary, trade-in, and purchase lists by element name.
-				var summary = new GoodsListSummary(
+				currentGoodsList = new GoodsListBuilder(
 					ReadRequiredIntAttribute(reader, "id"),
 					ReadIntAttribute(reader, "legion_lvl"));
-				switch (reader.LocalName)
+				currentGoodsListKind = reader.LocalName switch
 				{
-					case "list":
-						goodsLists.Add(summary);
-						break;
-					case "in_list":
-						goodsInLists.Add(summary);
-						break;
-					case "purchase_list":
-						goodsPurchaseLists.Add(summary);
-						break;
+					"in_list" => GoodsListKind.InList,
+					"purchase_list" => GoodsListKind.PurchaseList,
+					_ => GoodsListKind.List,
+				};
+				currentGoodsListDepth = reader.Depth;
+				if (reader.IsEmptyElement)
+				{
+					AddGoodsListSummary(
+						currentGoodsList.ToSummary(),
+						currentGoodsListKind,
+						goodsLists,
+						goodsInLists,
+						goodsPurchaseLists);
+					currentGoodsList = null;
+					currentGoodsListDepth = -1;
 				}
 
+				continue;
+			}
+
+			if (currentGoodsList != null
+				&& reader.Depth == currentGoodsListDepth + 1
+				&& reader.LocalName == "item")
+			{
+				// Java parity: model/templates/goods/GoodsList.Item stores optional sell_limit and buy_limit.
+				currentGoodsList.AddItem(new GoodsListItemSummary(
+					ReadRequiredIntAttribute(reader, "id"),
+					ReadNullableIntAttribute(reader, "sell_limit"),
+					ReadNullableIntAttribute(reader, "buy_limit")));
+				continue;
+			}
+
+			if (currentGoodsList != null
+				&& reader.Depth == currentGoodsListDepth + 1
+				&& reader.LocalName == "salestime")
+			{
+				// Java parity: model/templates/goods/GoodsList.salestime is passed into LimitedItem.
+				currentGoodsList.SalesTime = await ReadElementTextAsync(reader, cancellationToken);
 				continue;
 			}
 
@@ -2692,6 +2734,27 @@ public sealed class StaticData
 		}
 	}
 
+	private static void AddGoodsListSummary(
+		GoodsListSummary summary,
+		GoodsListKind kind,
+		ICollection<GoodsListSummary> goodsLists,
+		ICollection<GoodsListSummary> goodsInLists,
+		ICollection<GoodsListSummary> goodsPurchaseLists)
+	{
+		switch (kind)
+		{
+			case GoodsListKind.List:
+				goodsLists.Add(summary);
+				break;
+			case GoodsListKind.InList:
+				goodsInLists.Add(summary);
+				break;
+			case GoodsListKind.PurchaseList:
+				goodsPurchaseLists.Add(summary);
+				break;
+		}
+	}
+
 	private static void AddPortalPathSummary(
 		PortalPathSummary path,
 		ICollection<PortalPathSummary> portalUsePaths,
@@ -2729,6 +2792,13 @@ public sealed class StaticData
 	{
 		TradeList,
 		TradeInList,
+		PurchaseList,
+	}
+
+	private enum GoodsListKind
+	{
+		List,
+		InList,
 		PurchaseList,
 	}
 
@@ -2784,6 +2854,37 @@ public sealed class StaticData
 				ApSellPriceRate2,
 				BuyPriceRate,
 				SaveCount);
+		}
+	}
+
+	private sealed class GoodsListBuilder
+	{
+		private readonly List<GoodsListItemSummary> _items = [];
+
+		public GoodsListBuilder(int id, int legionLevel)
+		{
+			Id = id;
+			LegionLevel = legionLevel;
+		}
+
+		private int Id { get; }
+
+		private int LegionLevel { get; }
+
+		public string? SalesTime { get; set; }
+
+		public void AddItem(GoodsListItemSummary item)
+		{
+			_items.Add(item);
+		}
+
+		public GoodsListSummary ToSummary()
+		{
+			return new GoodsListSummary(
+				Id,
+				LegionLevel,
+				SalesTime,
+				_items.AsReadOnly());
 		}
 	}
 

@@ -133,5 +133,19 @@ public sealed class GoodsListTable
 	}
 }
 
-public sealed record GoodsListSummary(int Id, int LegionLevel = 0);
+public sealed record GoodsListSummary(
+	int Id,
+	int LegionLevel = 0,
+	string? SalesTime = null,
+	IReadOnlyList<GoodsListItemSummary>? Items = null)
+{
+	public IReadOnlyList<GoodsListItemSummary> ItemSummaries { get; } = Items ?? Array.Empty<GoodsListItemSummary>();
+}
 
+public sealed record GoodsListItemSummary(
+	int Id,
+	int? SellLimit = null,
+	int? BuyLimit = null)
+{
+	public bool IsLimitedItem => SellLimit.HasValue && BuyLimit.HasValue;
+}
