@@ -1,3 +1,4 @@
+using Aion.GameServer.Configuration;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 
@@ -16,7 +17,9 @@ public static class ItemRemodelService
 		ItemTemplateSummary extractTemplate,
 		ItemTemplateSummary extractSkinTemplate,
 		InventoryItem? kinahItem,
-		int playerLevel)
+		int playerLevel,
+		GameServerPriceOptions? priceOptions = null,
+		PriceInfluenceRates? influenceRates = null)
 	{
 		// Java parity: services/item/ItemRemodelService.remodelItem.
 		if (playerLevel < 10)
@@ -25,11 +28,16 @@ public static class ItemRemodelService
 		if (HasOppositeGenderRequirement(keepTemplate, extractTemplate))
 			return ItemRemodelPlan.Failed(ItemRemodelFailure.OppositeRequirement, keepTemplate, extractTemplate);
 
-		if (kinahItem == null || kinahItem.Count < RemodelCost)
+		var remodelCost = PricesService.GetPriceForService(
+			RemodelCost,
+			player.Race,
+			priceOptions ?? new GameServerPriceOptions(),
+			influenceRates ?? new PriceInfluenceRates());
+		if (kinahItem == null || kinahItem.Count < remodelCost)
 			return ItemRemodelPlan.Failed(ItemRemodelFailure.NotEnoughKinah, keepTemplate, extractSkinTemplate);
 
 		if (extractTemplate.TemplateId == PatternReshaperItemId)
-			return CreatePatternReshaperPlan(keepItem, keepTemplate, extractItem, kinahItem);
+			return CreatePatternReshaperPlan(keepItem, keepTemplate, extractItem, kinahItem, remodelCost);
 
 		if (!IsCompatible(keepTemplate, extractSkinTemplate))
 			return ItemRemodelPlan.Failed(ItemRemodelFailure.NotCompatible, keepTemplate, extractSkinTemplate);
@@ -51,17 +59,18 @@ public static class ItemRemodelService
 			itemSkin: extractSkinTemplate.TemplateId,
 			color: extractItem.Color,
 			setColor: true);
-		var kinahUpdate = CopyInventoryItem(kinahItem, count: kinahItem.Count - RemodelCost);
+		var kinahUpdate = CopyInventoryItem(kinahItem, count: kinahItem.Count - remodelCost);
 		var extractUpdate = extractItem.Count > 1 ? CopyInventoryItem(extractItem, count: extractItem.Count - 1) : null;
 		int? deletedExtractObjectId = extractItem.Count <= 1 ? extractItem.ObjectId : null;
-		return ItemRemodelPlan.Success(targetUpdate, kinahUpdate, extractUpdate, deletedExtractObjectId, keepTemplate);
+		return ItemRemodelPlan.Success(targetUpdate, kinahUpdate, extractUpdate, deletedExtractObjectId, keepTemplate, remodelCost);
 	}
 
 	private static ItemRemodelPlan CreatePatternReshaperPlan(
 		InventoryItem keepItem,
 		ItemTemplateSummary keepTemplate,
 		InventoryItem extractItem,
-		InventoryItem kinahItem)
+		InventoryItem kinahItem,
+		long remodelCost)
 	{
 		if (keepItem.ItemSkin == 0)
 			return ItemRemodelPlan.Failed(ItemRemodelFailure.NotSkinnedItem, keepTemplate, keepTemplate);
@@ -72,10 +81,10 @@ public static class ItemRemodelService
 			itemSkin: 0,
 			color: color,
 			setColor: true);
-		var kinahUpdate = CopyInventoryItem(kinahItem, count: kinahItem.Count - RemodelCost);
+		var kinahUpdate = CopyInventoryItem(kinahItem, count: kinahItem.Count - remodelCost);
 		var extractUpdate = extractItem.Count > 1 ? CopyInventoryItem(extractItem, count: extractItem.Count - 1) : null;
 		int? deletedExtractObjectId = extractItem.Count <= 1 ? extractItem.ObjectId : null;
-		return ItemRemodelPlan.Success(targetUpdate, kinahUpdate, extractUpdate, deletedExtractObjectId, keepTemplate);
+		return ItemRemodelPlan.Success(targetUpdate, kinahUpdate, extractUpdate, deletedExtractObjectId, keepTemplate, remodelCost);
 	}
 
 	private static bool HasOppositeGenderRequirement(ItemTemplateSummary keepTemplate, ItemTemplateSummary extractTemplate)
@@ -163,11 +172,12 @@ public sealed record ItemRemodelPlan(
 	InventoryItem? KinahItemUpdate,
 	InventoryItem? ExtractItemUpdate,
 	int? DeletedExtractItemObjectId,
-	ItemTemplateSummary? SuccessItem)
+	ItemTemplateSummary? SuccessItem,
+	long RemodelPrice)
 {
 	public static ItemRemodelPlan Failed(ItemRemodelFailure failure, ItemTemplateSummary failureItem, ItemTemplateSummary failureOtherItem)
 	{
-		return new ItemRemodelPlan(false, failure, failureItem, failureOtherItem, null, null, null, null, null);
+		return new ItemRemodelPlan(false, failure, failureItem, failureOtherItem, null, null, null, null, null, RemodelPrice: 0);
 	}
 
 	public static ItemRemodelPlan Success(
@@ -175,7 +185,8 @@ public sealed record ItemRemodelPlan(
 		InventoryItem kinahItemUpdate,
 		InventoryItem? extractItemUpdate,
 		int? deletedExtractItemObjectId,
-		ItemTemplateSummary successItem)
+		ItemTemplateSummary successItem,
+		long remodelPrice)
 	{
 		return new ItemRemodelPlan(
 			true,
@@ -186,7 +197,8 @@ public sealed record ItemRemodelPlan(
 			kinahItemUpdate,
 			extractItemUpdate,
 			deletedExtractItemObjectId,
-			successItem);
+			successItem,
+			remodelPrice);
 	}
 }
 

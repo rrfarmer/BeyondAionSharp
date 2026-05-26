@@ -1,3 +1,4 @@
+using Aion.GameServer.Configuration;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Services;
@@ -25,9 +26,43 @@ public sealed class ItemRemodelServiceTests
 		Assert.True(plan.Succeeded);
 		Assert.Equal(101, plan.TargetItemUpdate!.ItemSkin);
 		Assert.Equal(0x112233, plan.TargetItemUpdate.Color);
+		Assert.Equal(1000, plan.RemodelPrice);
 		Assert.Equal(1000, plan.KinahItemUpdate!.Count);
 		Assert.Equal(1, plan.ExtractItemUpdate!.Count);
 		Assert.Null(plan.DeletedExtractItemObjectId);
+	}
+
+	[Fact]
+	public void CreateRemodelPlan_UsesJavaPricesServiceForKinahFee()
+	{
+		var keepTemplate = CreateTemplate(100, "Practice Sword", "SWORD", validSlots: 3, mask: RemodelableMask);
+		var extractTemplate = CreateTemplate(101, "Skin Sword", "SWORD", validSlots: 3, mask: RemodelableMask);
+		var player = new Player { Race = "ELYOS" };
+		var keepItem = new InventoryItem { ObjectId = 1, ItemId = 100, Count = 1, Location = 0 };
+		var extractItem = new InventoryItem { ObjectId = 2, ItemId = 101, Count = 1, Location = 0, Color = 0x445566 };
+		var kinahItem = new InventoryItem { ObjectId = 3, ItemId = KinahItemId, Count = 2_000, Location = 0 };
+		var priceOptions = new GameServerPriceOptions
+		{
+			DefaultPrices = 110,
+			DefaultModifier = 90,
+			DefaultTaxes = 105,
+		};
+
+		var plan = ItemRemodelService.CreateRemodelPlan(
+			player,
+			keepItem,
+			keepTemplate,
+			extractItem,
+			extractTemplate,
+			extractTemplate,
+			kinahItem,
+			playerLevel: 10,
+			priceOptions,
+			new PriceInfluenceRates(Elyos: 0.3f, Asmodians: 0.5f));
+
+		Assert.True(plan.Succeeded);
+		Assert.Equal(1188, plan.RemodelPrice);
+		Assert.Equal(812, plan.KinahItemUpdate!.Count);
 	}
 
 	[Fact]
@@ -39,7 +74,7 @@ public sealed class ItemRemodelServiceTests
 		var extractItem = new InventoryItem { ObjectId = 2, ItemId = patternTemplate.TemplateId, Count = 1, Location = 0 };
 		var kinahItem = new InventoryItem { ObjectId = 3, ItemId = KinahItemId, Count = 2000, Location = 0 };
 
-		var plan = ItemRemodelService.CreateRemodelPlan(new Player(), keepItem, keepTemplate, extractItem, patternTemplate, patternTemplate, kinahItem, playerLevel: 10);
+		var plan = ItemRemodelService.CreateRemodelPlan(new Player { Race = "ELYOS" }, keepItem, keepTemplate, extractItem, patternTemplate, patternTemplate, kinahItem, playerLevel: 10);
 
 		Assert.True(plan.Succeeded);
 		Assert.Equal(0, plan.TargetItemUpdate!.ItemSkin);
