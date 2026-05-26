@@ -77,6 +77,7 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<QuestRewardService>();
 			services.AddSingleton<CustomLevelRewardExecutionService>();
 			services.AddSingleton<QuestXpCustomRewardRuntimeInputAdapterService>();
+			services.AddSingleton<QuestFinishCustomRewardRuntimeSideEffectAdapterService>();
 			services.AddSingleton<SystemMailRewardPersistenceExecutionService>();
 			services.AddSingleton<WorldNpcSoloDpRewardService>();
 			services.AddSingleton<WorldNpcTeamApRewardService>();
