@@ -383,6 +383,91 @@ public sealed class PlayerKnownListPopulationPlanServiceTests
 	}
 
 	[Fact]
+	public void Plan_AttachesResolvedAbnormalEffectsToGeneratedFactPlanRequests()
+	{
+		var membership = new PlayerKnownListMembershipService();
+		var service = CreateService(membership);
+		var owner = CreatePlayer(OwnerPlayerObjectId, "Owner", "ELYOS");
+		var candidate = CreatePlayer(NearPlayerObjectId, "Candidate", "ASMODIANS");
+		candidate.AbnormalState = PlayerAbnormalState.Root;
+		var ownerViewingCandidate = new PlayerKnownListOperationSideEffectDirectionFacts(
+			SubjectHasAbnormalEffects: true);
+		var request = CreateRequest(
+			[
+				new PlayerKnownListPopulationCandidateFact(
+					NearPlayerObjectId,
+					X: 10,
+					Y: 0,
+					Z: 0,
+					OwnerCanSeeCandidate: true,
+					CandidateCanSeeOwner: false,
+					OwnerViewingCandidateSideEffectFacts: ownerViewingCandidate,
+					OwnerViewingCandidatePacketFactPlanRequest: new PlayerKnownListPacketConstructionFactPlanRequest(
+						owner,
+						candidate,
+						ownerViewingCandidate)),
+			],
+			abnormalEffectSnapshotsByPlayerObjectId: new Dictionary<int, IReadOnlyList<PlayerKnownListAbnormalEffectSnapshotEntry>>
+			{
+				[NearPlayerObjectId] = [CreateAbnormalEffectSnapshot(skillId: 1200)],
+			});
+
+		var plan = service.Plan(request);
+
+		var candidatePlan = Assert.Single(plan.CandidatePlans, candidatePlan => candidatePlan.CandidatePlayerObjectId == NearPlayerObjectId);
+		var factPlan = Assert.Single(candidatePlan.SideEffectFactPlans!);
+		Assert.NotNull(factPlan.Request.AbnormalEffectResolution);
+		Assert.Equal(PlayerKnownListAbnormalEffectFactResolutionStatus.ResolvedSnapshot, factPlan.Request.AbnormalEffectResolution.Status);
+		Assert.Equal(PlayerKnownListPacketConstructionAbnormalEffectFactSource.ResolvedSnapshot, factPlan.Plan.AbnormalEffectFactSource);
+		Assert.Equal(PlayerKnownListPacketConstructionFactPlanStatus.Complete, factPlan.Plan.Status);
+		Assert.Equal((int)PlayerAbnormalState.Root, factPlan.Plan.Facts!.AbnormalEffectMask);
+		Assert.Equal(1200, Assert.Single(factPlan.Plan.Facts.AbnormalEffects!).SkillId);
+		Assert.Equal(PlayerKnownListPopulationPacketConstructionFactSourceKind.GeneratedFactPlan, Assert.Single(candidatePlan.PacketConstructionFactSources!).Kind);
+	}
+
+	[Fact]
+	public void Plan_PreservesBlockedAbnormalEffectMetadataWhenOptInSnapshotIsMissing()
+	{
+		var membership = new PlayerKnownListMembershipService();
+		var service = CreateService(membership);
+		var owner = CreatePlayer(OwnerPlayerObjectId, "Owner", "ELYOS");
+		var candidate = CreatePlayer(NearPlayerObjectId, "Candidate", "ASMODIANS");
+		var ownerViewingCandidate = new PlayerKnownListOperationSideEffectDirectionFacts(
+			SubjectHasAbnormalEffects: true);
+		var request = CreateRequest(
+			[
+				new PlayerKnownListPopulationCandidateFact(
+					NearPlayerObjectId,
+					X: 10,
+					Y: 0,
+					Z: 0,
+					OwnerCanSeeCandidate: true,
+					CandidateCanSeeOwner: false,
+					OwnerViewingCandidateSideEffectFacts: ownerViewingCandidate,
+					OwnerViewingCandidatePacketFactPlanRequest: new PlayerKnownListPacketConstructionFactPlanRequest(
+						owner,
+						candidate,
+						ownerViewingCandidate)),
+			],
+			abnormalEffectSnapshotsByPlayerObjectId: new Dictionary<int, IReadOnlyList<PlayerKnownListAbnormalEffectSnapshotEntry>>());
+
+		var plan = service.Plan(request);
+
+		var candidatePlan = Assert.Single(plan.CandidatePlans, candidatePlan => candidatePlan.CandidatePlayerObjectId == NearPlayerObjectId);
+		var factPlan = Assert.Single(candidatePlan.SideEffectFactPlans!);
+		Assert.Equal(PlayerKnownListAbnormalEffectFactResolutionStatus.MissingEffectSnapshot, factPlan.Request.AbnormalEffectResolution!.Status);
+		Assert.Equal(PlayerKnownListPacketConstructionFactPlanStatus.Blocked, factPlan.Plan.Status);
+		Assert.Contains(PlayerKnownListPacketConstructionFactBlocker.MissingAbnormalEffectFacts, factPlan.Plan.Blockers);
+		Assert.Empty(candidatePlan.PacketConstructionFactSources!);
+		Assert.Equal(
+			PlayerKnownListOperationSideEffectPacketConstructionStatus.PartiallyConstructed,
+			candidatePlan.SideEffectPacketConstructionPlan!.Status);
+		Assert.Equal(
+			PlayerKnownListOperationSideEffectPacketConstructionResultStatus.BlockedMissingSubjectFacts,
+			Assert.Single(candidatePlan.SideEffectPacketConstructionPlan.Results).Status);
+	}
+
+	[Fact]
 	public void Plan_PreservesBlockedFactPlanMetadataAndPartialPacketConstruction()
 	{
 		var membership = new PlayerKnownListMembershipService();
@@ -506,7 +591,8 @@ public sealed class PlayerKnownListPopulationPlanServiceTests
 		IReadOnlyList<PlayerKnownListPopulationCandidateFact> candidateFacts,
 		bool executeMembershipMutation = false,
 		IReadOnlyDictionary<int, PlayerKnownListOperationSideEffectPacketConstructionFacts>? packetConstructionFactsByPlayerObjectId = null,
-		ItemTemplateTable? itemTemplates = null) =>
+		ItemTemplateTable? itemTemplates = null,
+		IReadOnlyDictionary<int, IReadOnlyList<PlayerKnownListAbnormalEffectSnapshotEntry>>? abnormalEffectSnapshotsByPlayerObjectId = null) =>
 		new(
 			CreateRegionSnapshot([NearPlayerObjectId, FarPlayerObjectId]),
 			new PlayerKnownListVisibilityRangeObject(
@@ -519,7 +605,8 @@ public sealed class PlayerKnownListPopulationPlanServiceTests
 			candidateFacts,
 			executeMembershipMutation,
 			packetConstructionFactsByPlayerObjectId,
-			itemTemplates);
+			itemTemplates,
+			abnormalEffectSnapshotsByPlayerObjectId);
 
 	private static PlayerKnownListRegionSnapshot CreateRegionSnapshot(IReadOnlyList<int> candidateIds) =>
 		new(
@@ -597,6 +684,15 @@ public sealed class PlayerKnownListPopulationPlanServiceTests
 					HitCount: 1,
 					ReduceMax: 0)),
 		]);
+
+	private static PlayerKnownListAbnormalEffectSnapshotEntry CreateAbnormalEffectSnapshot(int skillId) =>
+		new(
+			EffectorObjectId: 7001,
+			skillId,
+			SkillLevel: 3,
+			TargetSlotId: 1,
+			TargetSlotOrdinal: 0,
+			RemainingTimeToDisplayMillis: 30_000);
 
 	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
 	{

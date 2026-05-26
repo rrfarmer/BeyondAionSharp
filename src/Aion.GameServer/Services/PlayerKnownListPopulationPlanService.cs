@@ -49,7 +49,8 @@ public sealed record PlayerKnownListPopulationPlanRequest(
 	IEnumerable<PlayerKnownListPopulationCandidateFact>? CandidateFacts,
 	bool ExecuteMembershipMutation = false,
 	IReadOnlyDictionary<int, PlayerKnownListOperationSideEffectPacketConstructionFacts>? PacketConstructionFactsByPlayerObjectId = null,
-	ItemTemplateTable? ItemTemplates = null);
+	ItemTemplateTable? ItemTemplates = null,
+	IReadOnlyDictionary<int, IReadOnlyList<PlayerKnownListAbnormalEffectSnapshotEntry>>? AbnormalEffectSnapshotsByPlayerObjectId = null);
 
 public sealed record PlayerKnownListPopulationCandidatePlan(
 	int CandidatePlayerObjectId,
@@ -88,6 +89,7 @@ public sealed class PlayerKnownListPopulationPlanService
 	private readonly PlayerKnownListOperationSideEffectPacketConstructionService _sideEffectPacketConstructionService;
 	private readonly PlayerKnownListPacketConstructionFactPlanService _factPlanService;
 	private readonly PlayerKnownListAttackSpeedFactPlanRequestAdapterService _attackSpeedFactPlanRequestAdapterService;
+	private readonly PlayerKnownListAbnormalEffectFactPlanRequestAdapterService _abnormalEffectFactPlanRequestAdapterService;
 
 	public PlayerKnownListPopulationPlanService(
 		PlayerKnownListVisibilityRangePlanService? visibilityRangePlanService = null,
@@ -95,7 +97,8 @@ public sealed class PlayerKnownListPopulationPlanService
 		PlayerKnownListOperationSideEffectAttachmentService? sideEffectAttachmentService = null,
 		PlayerKnownListOperationSideEffectPacketConstructionService? sideEffectPacketConstructionService = null,
 		PlayerKnownListPacketConstructionFactPlanService? factPlanService = null,
-		PlayerKnownListAttackSpeedFactPlanRequestAdapterService? attackSpeedFactPlanRequestAdapterService = null)
+		PlayerKnownListAttackSpeedFactPlanRequestAdapterService? attackSpeedFactPlanRequestAdapterService = null,
+		PlayerKnownListAbnormalEffectFactPlanRequestAdapterService? abnormalEffectFactPlanRequestAdapterService = null)
 	{
 		_visibilityRangePlanService = visibilityRangePlanService ?? new PlayerKnownListVisibilityRangePlanService();
 		_membershipAdapterService = membershipAdapterService ?? new PlayerKnownListTwoWayMembershipAdapterService(new PlayerKnownListMembershipService());
@@ -103,6 +106,7 @@ public sealed class PlayerKnownListPopulationPlanService
 		_sideEffectPacketConstructionService = sideEffectPacketConstructionService ?? new PlayerKnownListOperationSideEffectPacketConstructionService();
 		_factPlanService = factPlanService ?? new PlayerKnownListPacketConstructionFactPlanService();
 		_attackSpeedFactPlanRequestAdapterService = attackSpeedFactPlanRequestAdapterService ?? new PlayerKnownListAttackSpeedFactPlanRequestAdapterService();
+		_abnormalEffectFactPlanRequestAdapterService = abnormalEffectFactPlanRequestAdapterService ?? new PlayerKnownListAbnormalEffectFactPlanRequestAdapterService();
 	}
 
 	public PlayerKnownListPopulationPlan Plan(PlayerKnownListPopulationPlanRequest request)
@@ -155,7 +159,7 @@ public sealed class PlayerKnownListPopulationPlanService
 				visibilityRangePlan.OperationPlan,
 				fact.OwnerViewingCandidateSideEffectFacts ?? new PlayerKnownListOperationSideEffectDirectionFacts(),
 				fact.CandidateViewingOwnerSideEffectFacts ?? new PlayerKnownListOperationSideEffectDirectionFacts()));
-			var sideEffectFactPlans = CreateFactPlans(fact, request.ItemTemplates);
+			var sideEffectFactPlans = CreateFactPlans(fact, request.ItemTemplates, request.AbnormalEffectSnapshotsByPlayerObjectId);
 			var packetConstructionFacts = CreatePacketConstructionFacts(
 				request.PacketConstructionFactsByPlayerObjectId,
 				sideEffectFactPlans,
@@ -195,7 +199,8 @@ public sealed class PlayerKnownListPopulationPlanService
 
 	private IReadOnlyList<PlayerKnownListPopulationPacketConstructionFactPlanAttachment> CreateFactPlans(
 		PlayerKnownListPopulationCandidateFact fact,
-		ItemTemplateTable? itemTemplates)
+		ItemTemplateTable? itemTemplates,
+		IReadOnlyDictionary<int, IReadOnlyList<PlayerKnownListAbnormalEffectSnapshotEntry>>? abnormalEffectSnapshotsByPlayerObjectId)
 	{
 		var plans = new List<PlayerKnownListPopulationPacketConstructionFactPlanAttachment>();
 		if (fact.OwnerViewingCandidatePacketFactPlanRequest is { } ownerViewingCandidate)
@@ -203,6 +208,9 @@ public sealed class PlayerKnownListPopulationPlanService
 			ownerViewingCandidate = _attackSpeedFactPlanRequestAdapterService.AttachRideAttackSpeedResolution(
 				ownerViewingCandidate,
 				itemTemplates);
+			ownerViewingCandidate = _abnormalEffectFactPlanRequestAdapterService.AttachAbnormalEffectResolution(
+				ownerViewingCandidate,
+				abnormalEffectSnapshotsByPlayerObjectId);
 			plans.Add(new PlayerKnownListPopulationPacketConstructionFactPlanAttachment(
 				PlayerKnownListPopulationPacketConstructionFactPlanDirection.OwnerViewingCandidate,
 				ownerViewingCandidate,
@@ -214,6 +222,9 @@ public sealed class PlayerKnownListPopulationPlanService
 			candidateViewingOwner = _attackSpeedFactPlanRequestAdapterService.AttachRideAttackSpeedResolution(
 				candidateViewingOwner,
 				itemTemplates);
+			candidateViewingOwner = _abnormalEffectFactPlanRequestAdapterService.AttachAbnormalEffectResolution(
+				candidateViewingOwner,
+				abnormalEffectSnapshotsByPlayerObjectId);
 			plans.Add(new PlayerKnownListPopulationPacketConstructionFactPlanAttachment(
 				PlayerKnownListPopulationPacketConstructionFactPlanDirection.CandidateViewingOwner,
 				candidateViewingOwner,
