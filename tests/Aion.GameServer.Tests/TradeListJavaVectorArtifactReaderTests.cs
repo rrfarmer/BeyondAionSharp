@@ -245,6 +245,7 @@ public sealed class TradeListJavaVectorArtifactReaderTests(ITestOutputHelper out
 			AssertArtifactPacketSemantics(artifact);
 			AssertGeneratedTradeListBodyMatchesCSharpWhenPresent(artifact);
 			AssertGeneratedTradeInListBodyMatchesCSharpWhenPresent(artifact);
+			AssertGeneratedSystemMessageBodyMatchesCSharpWhenPresent(artifact);
 		}
 	}
 
@@ -268,7 +269,7 @@ public sealed class TradeListJavaVectorArtifactReaderTests(ITestOutputHelper out
 					AssertTradePacketDecodedFields(packet, expectsTabFlags: false);
 					break;
 				case "SM_SYSTEM_MESSAGE":
-					Assert.Contains("no-trade-list", packet.SemanticKey, StringComparison.Ordinal);
+					Assert.True(IsNoSellSemanticKey(packet.SemanticKey), $"Unsupported no-sell semantic key: {packet.SemanticKey}");
 					Assert.True(packet.Decoded.MessageId.HasValue, $"{packet.PacketClass} missing decoded messageId.");
 					Assert.False(string.IsNullOrWhiteSpace(packet.Decoded.NpcNameParam));
 					var messageParams = Assert.IsAssignableFrom<IReadOnlyList<string>>(packet.Decoded.MessageParams);
@@ -366,6 +367,27 @@ public sealed class TradeListJavaVectorArtifactReaderTests(ITestOutputHelper out
 				NormalizeHex(expectedBodyHex),
 				Convert.ToHexString(SerializeUnencryptedBody(new SmTradeInList(plan))));
 		}
+	}
+
+	private static void AssertGeneratedSystemMessageBodyMatchesCSharpWhenPresent(TradeListJavaVectorArtifact artifact)
+	{
+		foreach (var packet in artifact.Packets.Where(packet =>
+			packet.PacketClass == "SM_SYSTEM_MESSAGE" && !string.IsNullOrWhiteSpace(packet.BodyHex)))
+		{
+			var expectedBodyHex = packet.BodyHex!;
+			var messageId = Assert.IsType<int>(packet.Decoded.MessageId);
+			var messageParams = Assert.IsAssignableFrom<IReadOnlyList<string>>(packet.Decoded.MessageParams);
+			Assert.True(IsNoSellSemanticKey(packet.SemanticKey), $"Unsupported no-sell semantic key: {packet.SemanticKey}");
+
+			Assert.Equal(
+				NormalizeHex(expectedBodyHex),
+				Convert.ToHexString(SerializeUnencryptedBody(new SmSystemMessage(messageId, messageParams.ToArray()))));
+		}
+	}
+
+	private static bool IsNoSellSemanticKey(string semanticKey)
+	{
+		return semanticKey is "buy-no-trade-list" or "buy-no-sellable-goods" or "buy-restricted-goods" or "trade-in-no-template";
 	}
 
 	private static bool TryGetTradeNpcTypeName(int index, out string npcType)
