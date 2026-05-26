@@ -44,7 +44,8 @@ public sealed record QuestFinishOperationDescriptor(
 	QuestFinishRewardNonItemProjectionWarningDescriptor? RewardNonItemProjectionWarning = null,
 	QuestCompletionCallbackDescriptor? CompletionCallbackOperation = null,
 	QuestPersistenceOperationDescriptor? QuestPersistenceOperation = null,
-	NpcFactionPersistenceOperationDescriptor? NpcFactionPersistenceOperation = null);
+	NpcFactionPersistenceOperationDescriptor? NpcFactionPersistenceOperation = null,
+	QuestFinishRewardNonItemSource? RewardNonItemSource = null);
 
 public sealed record QuestFinishRewardSideEffectContext(
 	Player? Player,
@@ -307,6 +308,7 @@ public static class QuestFinishOperationPlanService
 				template,
 				rewardProjection,
 				rewardProjection.NonItemProjection,
+				QuestFinishRewardNonItemSource.Regular,
 				rewardSideEffectContext,
 				options);
 		}
@@ -319,6 +321,7 @@ public static class QuestFinishOperationPlanService
 				template,
 				rewardProjection,
 				rewardProjection.ExtendedNonItemProjection,
+				QuestFinishRewardNonItemSource.Extended,
 				rewardSideEffectContext,
 				options);
 		}
@@ -330,6 +333,7 @@ public static class QuestFinishOperationPlanService
 		NearbyQuestTemplateSummary template,
 		QuestFinishRewardTemplateProjection rewardProjection,
 		QuestFinishRewardNonItemTemplateProjection nonItemProjection,
+		QuestFinishRewardNonItemSource source,
 		QuestFinishRewardSideEffectContext? rewardSideEffectContext,
 		GameServerOptions options)
 	{
@@ -338,7 +342,8 @@ public static class QuestFinishOperationPlanService
 				template.QuestId,
 				template.QuestCategory,
 				rewardProjection.TargetNpcId,
-				rewardProjection.HasTargetNpcTemplate),
+				rewardProjection.HasTargetNpcTemplate,
+				source),
 			nonItemProjection);
 
 		foreach (var nonItemDescriptor in projectionPlan.Descriptors)
@@ -349,6 +354,7 @@ public static class QuestFinishOperationPlanService
 				nonItemDescriptor.JavaSource,
 				nonItemDescriptor.IsLive,
 				Count: nonItemDescriptor.Amount,
+				RewardNonItemSource: nonItemDescriptor.Source,
 				RewardNonItemProjection: nonItemDescriptor));
 			AddNonItemRewardSideEffectPlanDescriptor(
 				descriptors,
@@ -365,6 +371,7 @@ public static class QuestFinishOperationPlanService
 				QuestFinishOperationAction.NonItemRewardProjectionWarning,
 				warning.JavaSource,
 				IsLive: false,
+				RewardNonItemSource: warning.Source,
 				RewardNonItemProjectionWarning: warning));
 		}
 	}
@@ -414,6 +421,7 @@ public static class QuestFinishOperationPlanService
 					xpPlan.JavaSource,
 					IsLive: false,
 					Count: nonItemDescriptor.Amount,
+					RewardNonItemSource: nonItemDescriptor.Source,
 					RewardNonItemProjection: nonItemDescriptor,
 					XpRewardPlan: xpPlan,
 					XpExecutionPlan: xpExecutionPlan));
@@ -434,6 +442,7 @@ public static class QuestFinishOperationPlanService
 					titlePlan.JavaSource,
 					IsLive: false,
 					Count: nonItemDescriptor.Amount,
+					RewardNonItemSource: nonItemDescriptor.Source,
 					RewardNonItemProjection: nonItemDescriptor,
 					TitleRewardPlan: titlePlan));
 				break;
@@ -447,6 +456,7 @@ public static class QuestFinishOperationPlanService
 					cubePlan.JavaSource,
 					IsLive: false,
 					Count: nonItemDescriptor.Amount,
+					RewardNonItemSource: nonItemDescriptor.Source,
 					RewardNonItemProjection: nonItemDescriptor,
 					ExpansionRewardPlan: cubePlan));
 				break;
@@ -459,6 +469,7 @@ public static class QuestFinishOperationPlanService
 					warehousePlan.JavaSource,
 					IsLive: false,
 					Count: nonItemDescriptor.Amount,
+					RewardNonItemSource: nonItemDescriptor.Source,
 					RewardNonItemProjection: nonItemDescriptor,
 					ExpansionRewardPlan: warehousePlan));
 				break;
@@ -473,6 +484,7 @@ public static class QuestFinishOperationPlanService
 					gpPlan.GloryPointsPlan?.JavaSource ?? "QuestService.giveReward -> GloryPointsService.addGp",
 					IsLive: false,
 					Count: nonItemDescriptor.Amount,
+					RewardNonItemSource: nonItemDescriptor.Source,
 					RewardNonItemProjection: nonItemDescriptor,
 					GpRewardPlan: gpPlan));
 				break;

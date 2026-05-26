@@ -308,6 +308,7 @@ public sealed class QuestFinishRewardPlanServiceTests
 
 		Assert.Empty(plan.Warnings);
 		Assert.All(plan.Descriptors, descriptor => Assert.False(descriptor.IsLive));
+		Assert.All(plan.Descriptors, descriptor => Assert.Equal(QuestFinishRewardNonItemSource.Regular, descriptor.Source));
 		Assert.Equal(
 		[
 			QuestFinishRewardNonItemAction.Kinah,
@@ -355,12 +356,15 @@ public sealed class QuestFinishRewardPlanServiceTests
 			InventoryItemCheck: 99);
 
 		var plan = QuestFinishRewardPlanService.CreateNonItemRewardProjection(
-			new QuestFinishRewardNonItemProjectionInput(QuestId: 1001),
+			new QuestFinishRewardNonItemProjectionInput(
+				QuestId: 1001,
+				Source: QuestFinishRewardNonItemSource.Extended),
 			template);
 
 		var descriptor = Assert.Single(plan.Descriptors);
 		Assert.Equal(QuestFinishRewardNonItemAction.WarehouseExpansion, descriptor.Action);
 		Assert.Equal(2, descriptor.Amount);
+		Assert.Equal(QuestFinishRewardNonItemSource.Extended, descriptor.Source);
 		Assert.Equal(
 		[
 			"extend_stigma",
@@ -369,9 +373,13 @@ public sealed class QuestFinishRewardPlanServiceTests
 		], plan.Warnings.Select(warning => warning.FieldName));
 		Assert.All(
 			plan.Warnings,
-			warning => Assert.Equal(
-				QuestFinishRewardNonItemProjectionWarning.XmlFieldIgnoredByJavaGiveReward,
-				warning.Warning));
+			warning =>
+			{
+				Assert.Equal(
+					QuestFinishRewardNonItemProjectionWarning.XmlFieldIgnoredByJavaGiveReward,
+					warning.Warning);
+				Assert.Equal(QuestFinishRewardNonItemSource.Extended, warning.Source);
+			});
 	}
 
 	[Fact]

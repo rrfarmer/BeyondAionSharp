@@ -52,6 +52,12 @@ public enum QuestFinishRewardNonItemAction
 	WarehouseExpansion,
 }
 
+public enum QuestFinishRewardNonItemSource
+{
+	Regular,
+	Extended,
+}
+
 public enum QuestFinishRewardNonItemProjectionWarning
 {
 	UnsupportedExtendInventoryValue,
@@ -134,7 +140,8 @@ public sealed record QuestFinishRewardNonItemProjectionInput(
 	int QuestId,
 	string QuestCategory = "QUEST",
 	int TargetNpcId = 0,
-	bool HasTargetNpcTemplate = false);
+	bool HasTargetNpcTemplate = false,
+	QuestFinishRewardNonItemSource Source = QuestFinishRewardNonItemSource.Regular);
 
 public sealed record QuestFinishRewardNonItemProjectionDescriptor(
 	int Order,
@@ -145,13 +152,15 @@ public sealed record QuestFinishRewardNonItemProjectionDescriptor(
 	string? RateSource = null,
 	bool RateBypassed = false,
 	int? TargetNpcId = null,
-	bool RequiresTargetNpcL10nLookup = false);
+	bool RequiresTargetNpcL10nLookup = false,
+	QuestFinishRewardNonItemSource Source = QuestFinishRewardNonItemSource.Regular);
 
 public sealed record QuestFinishRewardNonItemProjectionWarningDescriptor(
 	QuestFinishRewardNonItemProjectionWarning Warning,
 	string JavaSource,
 	string FieldName,
-	long Value);
+	long Value,
+	QuestFinishRewardNonItemSource Source = QuestFinishRewardNonItemSource.Regular);
 
 public sealed record QuestFinishRewardNonItemProjectionPlan(
 	IReadOnlyList<QuestFinishRewardNonItemProjectionDescriptor> Descriptors,
@@ -476,6 +485,7 @@ public static class QuestFinishRewardPlanService
 				ref order,
 				QuestFinishRewardNonItemAction.Kinah,
 				template.Kinah,
+				input.Source,
 				RateSource: "Rates.QUEST_KINAH"));
 		}
 
@@ -485,6 +495,7 @@ public static class QuestFinishRewardPlanService
 				ref order,
 				QuestFinishRewardNonItemAction.Experience,
 				template.Experience,
+				input.Source,
 				RateSource: "Rates.XP_QUEST",
 				TargetNpcId: input.TargetNpcId,
 				RequiresTargetNpcL10nLookup: true));
@@ -495,7 +506,8 @@ public static class QuestFinishRewardPlanService
 			descriptors.Add(CreateNonItemDescriptor(
 				ref order,
 				QuestFinishRewardNonItemAction.Title,
-				template.Title));
+				template.Title,
+				input.Source));
 		}
 
 		if (template.AbyssPoints != 0)
@@ -505,6 +517,7 @@ public static class QuestFinishRewardPlanService
 				ref order,
 				QuestFinishRewardNonItemAction.AbyssPoints,
 				template.AbyssPoints,
+				input.Source,
 				RateSource: isNonCountQuest ? null : "Rates.AP_QUEST",
 				RateBypassed: isNonCountQuest));
 		}
@@ -514,7 +527,8 @@ public static class QuestFinishRewardPlanService
 			descriptors.Add(CreateNonItemDescriptor(
 				ref order,
 				QuestFinishRewardNonItemAction.DivinePoints,
-				template.DivinePoints));
+				template.DivinePoints,
+				input.Source));
 		}
 
 		if (template.GloryPoints != 0)
@@ -523,6 +537,7 @@ public static class QuestFinishRewardPlanService
 				ref order,
 				QuestFinishRewardNonItemAction.GloryPoints,
 				template.GloryPoints,
+				input.Source,
 				RateSource: "Rates.GP"));
 		}
 
@@ -534,24 +549,27 @@ public static class QuestFinishRewardPlanService
 				descriptors.Add(CreateNonItemDescriptor(
 					ref order,
 					QuestFinishRewardNonItemAction.CubeExpansion,
-					template.ExtendInventory));
+					template.ExtendInventory,
+					input.Source));
 				break;
 			case 2:
 				descriptors.Add(CreateNonItemDescriptor(
 					ref order,
 					QuestFinishRewardNonItemAction.WarehouseExpansion,
-					template.ExtendInventory));
+					template.ExtendInventory,
+					input.Source));
 				break;
 			default:
 				warnings.Add(new QuestFinishRewardNonItemProjectionWarningDescriptor(
 					QuestFinishRewardNonItemProjectionWarning.UnsupportedExtendInventoryValue,
 					GiveRewardJavaSource,
 					FieldName: "extend_inventory",
-					Value: template.ExtendInventory));
+					Value: template.ExtendInventory,
+					Source: input.Source));
 				break;
 		}
 
-		AddIgnoredXmlFieldWarnings(warnings, template);
+		AddIgnoredXmlFieldWarnings(warnings, template, input.Source);
 
 		return new QuestFinishRewardNonItemProjectionPlan(descriptors, warnings);
 	}
@@ -560,6 +578,7 @@ public static class QuestFinishRewardPlanService
 		ref int order,
 		QuestFinishRewardNonItemAction action,
 		long amount,
+		QuestFinishRewardNonItemSource source,
 		string? RateSource = null,
 		bool RateBypassed = false,
 		int? TargetNpcId = null,
@@ -574,12 +593,14 @@ public static class QuestFinishRewardPlanService
 			RateSource,
 			RateBypassed,
 			TargetNpcId,
-			RequiresTargetNpcL10nLookup);
+			RequiresTargetNpcL10nLookup,
+			source);
 	}
 
 	private static void AddIgnoredXmlFieldWarnings(
 		ICollection<QuestFinishRewardNonItemProjectionWarningDescriptor> warnings,
-		QuestFinishRewardNonItemTemplateProjection template)
+		QuestFinishRewardNonItemTemplateProjection template,
+		QuestFinishRewardNonItemSource source)
 	{
 		if (template.ExtendStigma != 0)
 		{
@@ -587,7 +608,8 @@ public static class QuestFinishRewardPlanService
 				QuestFinishRewardNonItemProjectionWarning.XmlFieldIgnoredByJavaGiveReward,
 				GiveRewardJavaSource,
 				FieldName: "extend_stigma",
-				Value: template.ExtendStigma));
+				Value: template.ExtendStigma,
+				Source: source));
 		}
 
 		if (template.CollectItemChecks.Count > 0)
@@ -596,7 +618,8 @@ public static class QuestFinishRewardPlanService
 				QuestFinishRewardNonItemProjectionWarning.XmlFieldIgnoredByJavaGiveReward,
 				GiveRewardJavaSource,
 				FieldName: "ccheck",
-				Value: template.CollectItemChecks.Count));
+				Value: template.CollectItemChecks.Count,
+				Source: source));
 		}
 
 		if (template.InventoryItemCheck != 0)
@@ -605,7 +628,8 @@ public static class QuestFinishRewardPlanService
 				QuestFinishRewardNonItemProjectionWarning.XmlFieldIgnoredByJavaGiveReward,
 				GiveRewardJavaSource,
 				FieldName: "icheck",
-				Value: template.InventoryItemCheck));
+				Value: template.InventoryItemCheck,
+				Source: source));
 		}
 	}
 

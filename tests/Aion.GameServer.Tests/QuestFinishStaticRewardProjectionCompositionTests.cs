@@ -47,16 +47,22 @@ public sealed class QuestFinishStaticRewardProjectionCompositionTests
 			descriptor =>
 			{
 				Assert.Equal(QuestFinishRewardNonItemAction.Kinah, descriptor.RewardNonItemProjection?.Action);
+				Assert.Equal(QuestFinishRewardNonItemSource.Regular, descriptor.RewardNonItemSource);
+				Assert.Equal(QuestFinishRewardNonItemSource.Regular, descriptor.RewardNonItemProjection?.Source);
 				Assert.Equal(100, descriptor.Count);
 			},
 			descriptor =>
 			{
 				Assert.Equal(QuestFinishRewardNonItemAction.Kinah, descriptor.RewardNonItemProjection?.Action);
+				Assert.Equal(QuestFinishRewardNonItemSource.Extended, descriptor.RewardNonItemSource);
+				Assert.Equal(QuestFinishRewardNonItemSource.Extended, descriptor.RewardNonItemProjection?.Source);
 				Assert.Equal(200, descriptor.Count);
 			},
 			descriptor =>
 			{
 				Assert.Equal(QuestFinishRewardNonItemAction.Title, descriptor.RewardNonItemProjection?.Action);
+				Assert.Equal(QuestFinishRewardNonItemSource.Extended, descriptor.RewardNonItemSource);
+				Assert.Equal(QuestFinishRewardNonItemSource.Extended, descriptor.RewardNonItemProjection?.Source);
 				Assert.Equal(77, descriptor.Count);
 			});
 		Assert.Contains(operationPlan.Descriptors, descriptor => descriptor.Action == QuestFinishOperationAction.NonItemRewardPlaceholder);
