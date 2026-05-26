@@ -54,8 +54,8 @@ public sealed class QuestDialogNpcTargetBranchInputAssemblyPlanServiceTests
 			templates);
 
 		Assert.True(plan.DialogActionName.IsKnown);
-		Assert.False(plan.DialogActionName.NameIsExact);
-		Assert.Equal("SELECT_RANGE_1011", plan.DialogActionName.Name);
+		Assert.True(plan.DialogActionName.NameIsExact);
+		Assert.Equal("SELECT1", plan.DialogActionName.Name);
 		Assert.True(plan.Input.DialogActionKnown);
 	}
 

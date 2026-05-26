@@ -10,6 +10,23 @@ public sealed record DialogActionNameResult(
 
 public static class DialogActionRegistry
 {
+	private const int SelectTreeSize = 341;
+	private static readonly string[] FirstSelectRoots =
+	[
+		"SELECT1",
+		"SELECT2",
+		"SELECT3",
+		"SELECT4",
+		"SELECT5",
+		"SELECT6",
+		"SELECT7",
+		"SELECT8",
+		"SELECT9",
+		"SELECT10",
+		"SELECT0",
+		"SELECT_NONE",
+	];
+
 	private static readonly IReadOnlyDictionary<int, string> ExactNames = new Dictionary<int, string>
 	{
 		[-1] = "USE_OBJECT",
@@ -137,8 +154,6 @@ public static class DialogActionRegistry
 	public static DialogActionNameResult NameOf(int dialogActionId)
 	{
 		// Java parity breadcrumb: model/DialogAction.nameOf builds a map from public integer fields.
-		// The large generated SELECT*/SETPRO* ranges are recognized for gating, but only the
-		// fixed names above are exact string parity so far.
 		if (ExactNames.TryGetValue(dialogActionId, out var exactName))
 			return Known(dialogActionId, exactName, nameIsExact: true);
 
@@ -146,8 +161,9 @@ public static class DialogActionRegistry
 			return Known(dialogActionId, $"SELECTED_QUEST_REWARD{dialogActionId - 7}", nameIsExact: true);
 		if (dialogActionId is >= 110 and <= 124)
 			return Known(dialogActionId, $"SELECTED_QUEST_AUTO_REWARD{dialogActionId - 109}", nameIsExact: true);
-		if (dialogActionId is >= 1011 and <= 8204)
-			return Known(dialogActionId, $"SELECT_RANGE_{dialogActionId}", nameIsExact: false);
+		var generatedSelectName = GetGeneratedSelectName(dialogActionId);
+		if (generatedSelectName != null)
+			return Known(dialogActionId, generatedSelectName, nameIsExact: true);
 		if (dialogActionId is >= 10000 and <= 10254)
 			return Known(dialogActionId, $"SETPRO{dialogActionId - 9999}", nameIsExact: true);
 
@@ -158,6 +174,66 @@ public static class DialogActionRegistry
 			NameIsExact: false,
 			"DialogAction.nameOf -> null for id not present in reflected public fields",
 			IsLive: false);
+	}
+
+	private static string? GetGeneratedSelectName(int dialogActionId)
+	{
+		if (dialogActionId is >= 1011 and <= 5102)
+		{
+			var offset = dialogActionId - 1011;
+			return BuildSelectName(FirstSelectRoots[offset / SelectTreeSize], offset % SelectTreeSize);
+		}
+
+		if (dialogActionId is >= 5103 and <= 5106)
+			return $"SELECT1_{dialogActionId - 5102}_5";
+
+		if (dialogActionId is >= 6500 and <= 8204)
+		{
+			var offset = dialogActionId - 6500;
+			return BuildSelectName($"SELECT{11 + offset / SelectTreeSize}", offset % SelectTreeSize);
+		}
+
+		return null;
+	}
+
+	private static string BuildSelectName(string rootName, int ordinal)
+	{
+		var name = rootName;
+		AppendSelectSuffix(ref name, ordinal, remainingDepth: 4);
+		return name;
+	}
+
+	private static void AppendSelectSuffix(ref string name, int ordinal, int remainingDepth)
+	{
+		if (ordinal == 0 || remainingDepth == 0)
+			return;
+
+		ordinal--;
+		var childTreeSize = GetSelectTreeSize(remainingDepth - 1);
+		for (var child = 1; child <= 4; child++)
+		{
+			if (ordinal < childTreeSize)
+			{
+				name = $"{name}_{child}";
+				AppendSelectSuffix(ref name, ordinal, remainingDepth - 1);
+				return;
+			}
+
+			ordinal -= childTreeSize;
+		}
+	}
+
+	private static int GetSelectTreeSize(int remainingDepth)
+	{
+		var size = 0;
+		var levelSize = 1;
+		for (var level = 0; level <= remainingDepth; level++)
+		{
+			size += levelSize;
+			levelSize *= 4;
+		}
+
+		return size;
 	}
 
 	private static DialogActionNameResult Known(int dialogActionId, string name, bool nameIsExact)
