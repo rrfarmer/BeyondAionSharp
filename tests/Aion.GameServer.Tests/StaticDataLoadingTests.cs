@@ -257,6 +257,97 @@ public sealed class StaticDataLoadingTests
 	}
 
 	[Fact]
+	public async Task StaticData_TradeAndGoodsDuplicateIdsUseJavaLastWriteLookup()
+	{
+		using var temp = TempDirectory.Create();
+		var cacheFile = Path.Combine(temp.Path, "static_data.xml");
+		File.WriteAllText(
+			cacheFile,
+			"""
+			<?xml version="1.0" encoding="UTF-8"?>
+			<static_data>
+				<npc_trade_list>
+					<tradelist_template npc_id="203060" sell_price_rate="80">
+						<tradelist id="129" />
+					</tradelist_template>
+					<tradelist_template npc_id="203060" sell_price_rate="120" buy_price_rate="200">
+						<tradelist id="130" />
+						<tradelist id="131" />
+					</tradelist_template>
+					<trade_in_list_template npc_id="205315">
+						<tradelist id="39" />
+					</trade_in_list_template>
+					<trade_in_list_template npc_id="205315" npc_type="ABYSS">
+						<tradelist id="40" />
+					</trade_in_list_template>
+					<purchase_template npc_id="203060" save_count="7">
+						<tradelist id="140" />
+					</purchase_template>
+					<purchase_template npc_id="203060" save_count="9">
+						<tradelist id="141" />
+					</purchase_template>
+				</npc_trade_list>
+				<goodslists>
+					<list id="129" legion_lvl="1">
+						<item id="110100010" />
+					</list>
+					<list id="129" legion_lvl="3">
+						<salestime>0 0 9 ? * MON</salestime>
+						<item id="186000001" sell_limit="5" buy_limit="2" />
+					</list>
+					<in_list id="39">
+						<item id="188051574" />
+					</in_list>
+					<in_list id="39">
+						<item id="188051575" />
+					</in_list>
+					<purchase_list id="140">
+						<item id="186000396" />
+					</purchase_list>
+					<purchase_list id="140">
+						<item id="186000397" />
+					</purchase_list>
+				</goodslists>
+			</static_data>
+			""");
+
+		var staticData = await StaticData.LoadFromCacheAsync(cacheFile, []);
+
+		Assert.Equal(2, staticData.TradeLists.TradeLists.Count);
+		Assert.Equal(1, staticData.TradeLists.TradeListCount);
+		var tradeList = Assert.IsType<TradeListTemplateSummary>(staticData.TradeLists.GetTradeListTemplate(203060));
+		Assert.Equal(120, tradeList.SellPriceRate);
+		Assert.Equal(200, tradeList.BuyPriceRate);
+		Assert.Equal([130, 131], tradeList.GoodsListIds);
+
+		Assert.Equal(2, staticData.TradeLists.TradeInLists.Count);
+		Assert.Equal(1, staticData.TradeLists.TradeInListCount);
+		var tradeInList = Assert.IsType<TradeListTemplateSummary>(staticData.TradeLists.GetTradeInListTemplate(205315));
+		Assert.Equal("ABYSS", tradeInList.NpcType);
+		Assert.Equal([40], tradeInList.GoodsListIds);
+
+		Assert.Equal(2, staticData.TradeLists.PurchaseLists.Count);
+		Assert.Equal(1, staticData.TradeLists.PurchaseListCount);
+		var purchaseList = Assert.IsType<TradeListTemplateSummary>(staticData.TradeLists.GetPurchaseTemplate(203060));
+		Assert.Equal(9, purchaseList.SaveCount);
+		Assert.Equal([141], purchaseList.GoodsListIds);
+
+		Assert.Equal(2, staticData.GoodsLists.GoodsLists.Count);
+		var goodsList = Assert.IsType<GoodsListSummary>(staticData.GoodsLists.GetGoodsListById(129));
+		Assert.Equal(3, goodsList.LegionLevel);
+		Assert.Equal("0 0 9 ? * MON", goodsList.SalesTime);
+		var limitedItem = Assert.Single(goodsList.ItemSummaries);
+		Assert.Equal(186000001, limitedItem.Id);
+		Assert.True(limitedItem.IsLimitedItem);
+
+		Assert.Equal(2, staticData.GoodsLists.GoodsInLists.Count);
+		Assert.Equal(188051575, Assert.Single(staticData.GoodsLists.GetGoodsInListById(39)!.ItemSummaries).Id);
+		Assert.Equal(2, staticData.GoodsLists.GoodsPurchaseLists.Count);
+		Assert.Equal(186000397, Assert.Single(staticData.GoodsLists.GetGoodsPurchaseListById(140)!.ItemSummaries).Id);
+		Assert.Equal(3, staticData.GoodsLists.Count);
+	}
+
+	[Fact]
 	public async Task StaticData_LoadsItemPurificationSummaries()
 	{
 		using var temp = TempDirectory.Create();
