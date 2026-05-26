@@ -188,6 +188,86 @@ public sealed class QuestFinishStaticRewardProjectionCompositionTests
 	}
 
 	[Fact]
+	public void StaticClassSelectableRewardProjection_ComposesMissingPlayerClassWarning()
+	{
+		const string xml = """
+			<quests>
+				<quest id="1007" can_report="true" category="QUEST" reward_repeat_count="2" use_class_reward="2">
+					<rewards>
+						<selectable_reward_item item_id="182400010" count="3" />
+					</rewards>
+					<ranger_selectable_reward item_id="100900001" count="6" />
+				</quest>
+			</quests>
+			""";
+		var template = new NearbyQuestTemplateXmlExtractor().Extract(xml).Single();
+		var rewardProjection = new QuestFinishRewardTemplateXmlProjectionExtractor()
+			.ExtractDefaultRegularNonItemProjections(xml)[1007] with
+		{
+			DialogActionId = 8
+		};
+
+		var operationPlan = QuestFinishOperationPlanService.CreatePlan(
+			new PlayerQuestState(1007, "REWARD", QuestVars: 0x12, Flags: 0, CompleteCount: 1),
+			template,
+			PlayerNpcFactionsSnapshot.Empty,
+			new DateTimeOffset(2026, 5, 26, 12, 30, 0, TimeSpan.Zero),
+			CreateOptions("UTC"),
+			rewardProjection);
+
+		Assert.True(operationPlan.Applied);
+		Assert.DoesNotContain(operationPlan.Descriptors, descriptor => descriptor.Action == QuestFinishOperationAction.ItemRewardProjection);
+		var warning = Assert.Single(
+			operationPlan.Descriptors,
+			descriptor => descriptor.Action == QuestFinishOperationAction.ItemRewardProjectionWarning);
+		Assert.Equal(QuestFinishRewardItemProjectionWarning.PlayerClassMissing, warning.RewardItemProjectionWarning?.Warning);
+		Assert.Equal(0, warning.RewardItemProjectionWarning?.SelectableIndex);
+		Assert.Null(warning.RewardItemProjectionWarning?.PlayerClass);
+		Assert.Contains(operationPlan.Descriptors, descriptor => descriptor.Action == QuestFinishOperationAction.ItemRewardPlaceholder);
+	}
+
+	[Fact]
+	public void StaticClassSelectableRewardProjection_ComposesOutOfRangeClassSelectableWarning()
+	{
+		const string xml = """
+			<quests>
+				<quest id="1008" can_report="true" category="QUEST" reward_repeat_count="2" use_class_reward="2">
+					<rewards>
+						<selectable_reward_item item_id="182400010" count="3" />
+						<selectable_reward_item item_id="182400011" count="4" />
+					</rewards>
+					<ranger_selectable_reward item_id="100900001" count="6" />
+				</quest>
+			</quests>
+			""";
+		var template = new NearbyQuestTemplateXmlExtractor().Extract(xml).Single();
+		var rewardProjection = new QuestFinishRewardTemplateXmlProjectionExtractor()
+			.ExtractDefaultRegularNonItemProjections(xml)[1008] with
+		{
+			DialogActionId = 9,
+			PlayerClass = "RANGER"
+		};
+
+		var operationPlan = QuestFinishOperationPlanService.CreatePlan(
+			new PlayerQuestState(1008, "REWARD", QuestVars: 0x12, Flags: 0, CompleteCount: 1),
+			template,
+			PlayerNpcFactionsSnapshot.Empty,
+			new DateTimeOffset(2026, 5, 26, 12, 45, 0, TimeSpan.Zero),
+			CreateOptions("UTC"),
+			rewardProjection);
+
+		Assert.True(operationPlan.Applied);
+		Assert.DoesNotContain(operationPlan.Descriptors, descriptor => descriptor.Action == QuestFinishOperationAction.ItemRewardProjection);
+		var warning = Assert.Single(
+			operationPlan.Descriptors,
+			descriptor => descriptor.Action == QuestFinishOperationAction.ItemRewardProjectionWarning);
+		Assert.Equal(QuestFinishRewardItemProjectionWarning.ClassSelectableOutOfRange, warning.RewardItemProjectionWarning?.Warning);
+		Assert.Equal(1, warning.RewardItemProjectionWarning?.SelectableIndex);
+		Assert.Equal("RANGER", warning.RewardItemProjectionWarning?.PlayerClass);
+		Assert.Contains(operationPlan.Descriptors, descriptor => descriptor.Action == QuestFinishOperationAction.ItemRewardPlaceholder);
+	}
+
+	[Fact]
 	public void StaticExtendedItemRewardProjection_ComposesOnLastRepeatBeforeRegularRewardsWithoutLiveSideEffects()
 	{
 		const string xml = """
