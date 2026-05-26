@@ -11,7 +11,9 @@ public sealed record PlayerKnownListPopulationCandidateFact(
 	bool OwnerKnowsCandidate = false,
 	bool CandidateKnowsOwner = false,
 	bool OwnerAwareOfCandidate = true,
-	bool CandidateAwareOfOwner = true);
+	bool CandidateAwareOfOwner = true,
+	PlayerKnownListOperationSideEffectDirectionFacts? OwnerViewingCandidateSideEffectFacts = null,
+	PlayerKnownListOperationSideEffectDirectionFacts? CandidateViewingOwnerSideEffectFacts = null);
 
 public sealed record PlayerKnownListPopulationPlanRequest(
 	PlayerKnownListRegionSnapshot RegionSnapshot,
@@ -24,7 +26,8 @@ public sealed record PlayerKnownListPopulationCandidatePlan(
 	bool WasPresentInRegionSnapshot,
 	PlayerKnownListVisibilityRangePlan? VisibilityRangePlan,
 	PlayerKnownListTwoWayMembershipAdapterResult? MembershipAdapterResult,
-	string JavaSource);
+	string JavaSource,
+	PlayerKnownListOperationSideEffectAttachmentPlan? SideEffectAttachmentPlan = null);
 
 public sealed record PlayerKnownListPopulationPlan(
 	int OwnerPlayerObjectId,
@@ -36,19 +39,23 @@ public sealed record PlayerKnownListPopulationPlan(
 	bool ExecutedControllerSideEffects,
 	bool IsJavaRegionKnownListParity,
 	string JavaSource,
-	bool IsLive);
+	bool IsLive,
+	bool AttachedControllerSideEffectDescriptors = false);
 
 public sealed class PlayerKnownListPopulationPlanService
 {
 	private readonly PlayerKnownListVisibilityRangePlanService _visibilityRangePlanService;
 	private readonly PlayerKnownListTwoWayMembershipAdapterService _membershipAdapterService;
+	private readonly PlayerKnownListOperationSideEffectAttachmentService _sideEffectAttachmentService;
 
 	public PlayerKnownListPopulationPlanService(
 		PlayerKnownListVisibilityRangePlanService? visibilityRangePlanService = null,
-		PlayerKnownListTwoWayMembershipAdapterService? membershipAdapterService = null)
+		PlayerKnownListTwoWayMembershipAdapterService? membershipAdapterService = null,
+		PlayerKnownListOperationSideEffectAttachmentService? sideEffectAttachmentService = null)
 	{
 		_visibilityRangePlanService = visibilityRangePlanService ?? new PlayerKnownListVisibilityRangePlanService();
 		_membershipAdapterService = membershipAdapterService ?? new PlayerKnownListTwoWayMembershipAdapterService(new PlayerKnownListMembershipService());
+		_sideEffectAttachmentService = sideEffectAttachmentService ?? new PlayerKnownListOperationSideEffectAttachmentService();
 	}
 
 	public PlayerKnownListPopulationPlan Plan(PlayerKnownListPopulationPlanRequest request)
@@ -97,13 +104,18 @@ public sealed class PlayerKnownListPopulationPlanService
 			var membershipResult = _membershipAdapterService.Apply(new PlayerKnownListTwoWayMembershipAdapterRequest(
 				visibilityRangePlan.OperationPlan,
 				request.ExecuteMembershipMutation));
+			var sideEffectAttachmentPlan = _sideEffectAttachmentService.Attach(new PlayerKnownListOperationSideEffectAttachmentRequest(
+				visibilityRangePlan.OperationPlan,
+				fact.OwnerViewingCandidateSideEffectFacts ?? new PlayerKnownListOperationSideEffectDirectionFacts(),
+				fact.CandidateViewingOwnerSideEffectFacts ?? new PlayerKnownListOperationSideEffectDirectionFacts()));
 
 			candidatePlans.Add(new PlayerKnownListPopulationCandidatePlan(
 				candidateId,
 				WasPresentInRegionSnapshot: true,
 				visibilityRangePlan,
 				membershipResult,
-				"KnownList.findVisibleObjects candidate composed through range/canSee and two-way membership metadata"));
+				"KnownList.findVisibleObjects candidate composed through range/canSee, two-way membership metadata, and controller side-effect descriptors",
+				sideEffectAttachmentPlan));
 		}
 
 		return new PlayerKnownListPopulationPlan(
@@ -116,6 +128,7 @@ public sealed class PlayerKnownListPopulationPlanService
 			ExecutedControllerSideEffects: false,
 			IsJavaRegionKnownListParity: false,
 			"Non-live composition of KnownList.findVisibleObjects prerequisites; does not execute Java region storage, controller packets, or world lifecycle",
-			IsLive: false);
+			IsLive: false,
+			AttachedControllerSideEffectDescriptors: candidatePlans.Any(plan => plan.SideEffectAttachmentPlan?.AttachedSideEffects.Count > 0));
 	}
 }

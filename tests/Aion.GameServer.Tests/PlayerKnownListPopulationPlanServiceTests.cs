@@ -21,6 +21,7 @@ public sealed class PlayerKnownListPopulationPlanServiceTests
 		Assert.False(plan.IsJavaRegionKnownListParity);
 		Assert.False(plan.MutatedMembership);
 		Assert.False(plan.ExecutedControllerSideEffects);
+		Assert.True(plan.AttachedControllerSideEffectDescriptors);
 		Assert.Equal(2, plan.CandidatePlans.Count);
 		Assert.True(plan.CandidatePlans[0].VisibilityRangePlan!.IsInJavaRange);
 		Assert.False(plan.CandidatePlans[1].VisibilityRangePlan!.IsInJavaRange);
@@ -70,6 +71,7 @@ public sealed class PlayerKnownListPopulationPlanServiceTests
 		var missing = Assert.Single(plan.CandidatePlans, candidatePlan => candidatePlan.CandidatePlayerObjectId == MissingFactPlayerObjectId);
 		Assert.Null(missing.VisibilityRangePlan);
 		Assert.Null(missing.MembershipAdapterResult);
+		Assert.Null(missing.SideEffectAttachmentPlan);
 		Assert.Contains("omitted", missing.JavaSource);
 	}
 
@@ -112,10 +114,78 @@ public sealed class PlayerKnownListPopulationPlanServiceTests
 			candidatePlan.MembershipAdapterResult.PreservedSideEffectSteps.Select(step => step.Kind));
 	}
 
+	[Fact]
+	public void Plan_AttachesPlayerSideEffectDescriptorsToVisibleOperationPlansWithoutExecutingThem()
+	{
+		var membership = new PlayerKnownListMembershipService();
+		var service = CreateService(membership);
+		var request = CreateRequest(
+			[
+				new PlayerKnownListPopulationCandidateFact(
+					NearPlayerObjectId,
+					X: 10,
+					Y: 0,
+					Z: 0,
+					OwnerCanSeeCandidate: true,
+					CandidateCanSeeOwner: true,
+					OwnerViewingCandidateSideEffectFacts: new PlayerKnownListOperationSideEffectDirectionFacts(
+						ViewerAggroIconToSubject: true,
+						SubjectIsInRideMode: true,
+						SubjectRideNpcId: RideNpcId),
+					CandidateViewingOwnerSideEffectFacts: new PlayerKnownListOperationSideEffectDirectionFacts(
+						SubjectIsUnderStance: true)),
+			]);
+
+		var plan = service.Plan(request);
+
+		Assert.True(plan.AttachedControllerSideEffectDescriptors);
+		Assert.False(plan.ExecutedControllerSideEffects);
+		var candidatePlan = Assert.Single(plan.CandidatePlans, candidatePlan => candidatePlan.CandidatePlayerObjectId == NearPlayerObjectId);
+		var attachmentPlan = candidatePlan.SideEffectAttachmentPlan!;
+		Assert.Equal(PlayerKnownListOperationSideEffectAttachmentStatus.Attached, attachmentPlan.Status);
+		Assert.Equal(
+			[PlayerKnownListTwoWayOperationStepKind.CandidateSeesOwner, PlayerKnownListTwoWayOperationStepKind.OwnerSeesCandidate],
+			attachmentPlan.AttachedSideEffects.Select(attachment => attachment.OperationStep.Kind));
+		Assert.Equal(NearPlayerObjectId, attachmentPlan.AttachedSideEffects[1].SideEffectPlan.SubjectPlayerObjectId);
+		Assert.True(attachmentPlan.AttachedSideEffects[1].SideEffectPlan.Descriptors[0].AggroIcon);
+		Assert.Equal(RideNpcId, attachmentPlan.AttachedSideEffects[1].SideEffectPlan.Descriptors[2].RideNpcId);
+		Assert.Contains(
+			attachmentPlan.AttachedSideEffects[0].SideEffectPlan.Descriptors,
+			descriptor => descriptor.Kind == PlayerKnownListPlayerSideEffectKind.SmPlayerStance);
+	}
+
+	[Fact]
+	public void Plan_AttachesSkippedNotSeeDescriptorForOutOfRangeUnspawnedViewer()
+	{
+		var membership = new PlayerKnownListMembershipService();
+		var service = CreateService(membership);
+		var request = CreateRequest(
+			[
+				new PlayerKnownListPopulationCandidateFact(
+					NearPlayerObjectId,
+					X: 200,
+					Y: 0,
+					Z: 0,
+					OwnerKnowsCandidate: true,
+					CandidateKnowsOwner: false,
+					OwnerViewingCandidateSideEffectFacts: new PlayerKnownListOperationSideEffectDirectionFacts(ViewerIsSpawned: false)),
+			]);
+
+		var plan = service.Plan(request);
+
+		Assert.True(plan.AttachedControllerSideEffectDescriptors);
+		var candidatePlan = Assert.Single(plan.CandidatePlans, candidatePlan => candidatePlan.CandidatePlayerObjectId == NearPlayerObjectId);
+		var attachment = Assert.Single(candidatePlan.SideEffectAttachmentPlan!.AttachedSideEffects);
+		Assert.Equal(PlayerKnownListTwoWayOperationStepKind.OwnerNotSeesCandidate, attachment.OperationStep.Kind);
+		Assert.Equal(PlayerKnownListPlayerSideEffectStatus.SkippedViewerNotSpawned, attachment.SideEffectPlan.Status);
+		Assert.Empty(attachment.SideEffectPlan.Descriptors);
+	}
+
 	private static PlayerKnownListPopulationPlanService CreateService(PlayerKnownListMembershipService membership) =>
 		new(
 			new PlayerKnownListVisibilityRangePlanService(),
-			new PlayerKnownListTwoWayMembershipAdapterService(membership));
+			new PlayerKnownListTwoWayMembershipAdapterService(membership),
+			new PlayerKnownListOperationSideEffectAttachmentService());
 
 	private static PlayerKnownListPopulationPlanRequest CreateRequest(
 		IReadOnlyList<PlayerKnownListPopulationCandidateFact> candidateFacts,
@@ -154,4 +224,5 @@ public sealed class PlayerKnownListPopulationPlanServiceTests
 	private const int NearPlayerObjectId = 9002;
 	private const int FarPlayerObjectId = 9003;
 	private const int MissingFactPlayerObjectId = 9004;
+	private const int RideNpcId = 730001;
 }
