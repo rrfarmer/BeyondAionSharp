@@ -17,7 +17,8 @@ public sealed record QuestDialogNpcTargetBranchRuntimeSnapshot(
 	bool InteractionAllowed = true,
 	NpcDialogInteractionAllowedInput? InteractionInput = null,
 	QuestDialogNpcControllerDispatchFacts? ControllerDispatchFacts = null,
-	NpcDialogTradeListFactAdapterInput? TradeListFactInput = null);
+	NpcDialogTradeListFactAdapterInput? TradeListFactInput = null,
+	NpcDialogLimitedItemFactAdapterInput? LimitedItemFactInput = null);
 
 public sealed record QuestDialogNpcTargetBranchInputAssemblyPlan(
 	QuestDialogNpcTargetBranchInput Input,
@@ -26,6 +27,7 @@ public sealed record QuestDialogNpcTargetBranchInputAssemblyPlan(
 	DialogActionNameResult DialogActionName,
 	NpcDialogInteractionAllowedPlan? InteractionPlan = null,
 	NpcDialogTradeListFactAdapterPlan? TradeListFactAdapterPlan = null,
+	NpcDialogLimitedItemFactAdapterPlan? LimitedItemFactAdapterPlan = null,
 	SmTradeListPacketPlan? TradeListPacketPlan = null,
 	NpcDialogControllerDispatchPlan? ControllerDispatchPlan = null,
 	bool IsLive = false);
@@ -78,7 +80,8 @@ public static class QuestDialogNpcTargetBranchInputAssemblyPlanService
 			interactionAllowed);
 		var branchPlan = QuestDialogNpcTargetBranchPlanService.CreatePlan(input);
 		var tradeListFactAdapterPlan = CreateTradeListFactAdapterPlan(snapshot, branchPlan, tradeLists, goodsLists);
-		var tradeListPacketPlan = CreateTradeListPacketPlan(snapshot, tradeListFactAdapterPlan, goodsLists);
+		var limitedItemFactAdapterPlan = CreateLimitedItemFactAdapterPlan(snapshot, branchPlan, tradeLists, goodsLists);
+		var tradeListPacketPlan = CreateTradeListPacketPlan(snapshot, tradeListFactAdapterPlan, limitedItemFactAdapterPlan, goodsLists);
 		var controllerDispatchPlan = CreateControllerDispatchPlan(snapshot, branchPlan, tradeListFactAdapterPlan, tradeListPacketPlan);
 
 		return new QuestDialogNpcTargetBranchInputAssemblyPlan(
@@ -88,6 +91,7 @@ public static class QuestDialogNpcTargetBranchInputAssemblyPlanService
 			dialogActionName,
 			interactionPlan,
 			tradeListFactAdapterPlan,
+			limitedItemFactAdapterPlan,
 			tradeListPacketPlan,
 			controllerDispatchPlan,
 			IsLive: false);
@@ -115,9 +119,32 @@ public static class QuestDialogNpcTargetBranchInputAssemblyPlanService
 		return NpcDialogTradeListFactAdapterService.CreatePlan(snapshot.TradeListFactInput, tradeLists, goodsLists);
 	}
 
+	private static NpcDialogLimitedItemFactAdapterPlan? CreateLimitedItemFactAdapterPlan(
+		QuestDialogNpcTargetBranchRuntimeSnapshot snapshot,
+		QuestDialogNpcTargetBranchPlan branchPlan,
+		TradeListTable? tradeLists,
+		GoodsListTable? goodsLists)
+	{
+		if (branchPlan.Dispatch == null
+			|| snapshot.ControllerDispatchFacts == null
+			|| snapshot.LimitedItemFactInput == null
+			|| tradeLists == null
+			|| goodsLists == null
+			|| !snapshot.TargetIsNpc
+			|| !snapshot.ControllerDispatchFacts.IsInTalkRange
+			|| snapshot.ControllerDispatchFacts.NpcAiHandledDialogSelect
+			|| snapshot.DialogActionId != BuyDialogAction)
+		{
+			return null;
+		}
+
+		return NpcDialogLimitedItemFactAdapterService.CreatePlan(snapshot.LimitedItemFactInput, tradeLists, goodsLists);
+	}
+
 	private static SmTradeListPacketPlan? CreateTradeListPacketPlan(
 		QuestDialogNpcTargetBranchRuntimeSnapshot snapshot,
 		NpcDialogTradeListFactAdapterPlan? tradeListFactAdapterPlan,
+		NpcDialogLimitedItemFactAdapterPlan? limitedItemFactAdapterPlan,
 		GoodsListTable? goodsLists)
 	{
 		if (tradeListFactAdapterPlan?.TradeList == null
@@ -141,7 +168,8 @@ public static class QuestDialogNpcTargetBranchInputAssemblyPlanService
 				snapshot.TradeListFactInput.PlayerLegionLevel,
 				npcCanSell,
 				npcCanBuy,
-				snapshot.TradeListFactInput.VendorBuyModifier * tradeListFactAdapterPlan.TradeList.SellPriceRate / 100));
+				snapshot.TradeListFactInput.VendorBuyModifier * tradeListFactAdapterPlan.TradeList.SellPriceRate / 100,
+				limitedItemFactAdapterPlan?.PacketItems));
 	}
 
 	private static NpcDialogControllerDispatchPlan? CreateControllerDispatchPlan(

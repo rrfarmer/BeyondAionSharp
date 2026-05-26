@@ -77,6 +77,11 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 		var packetPlan = Assert.IsType<SmTradeListPacketPlan>(plan.TradeListPacketPlan);
 		Assert.Equal(SmTradeListPacketPlanStatus.Ready, packetPlan.Status);
 		Assert.Equal([129], packetPlan.TradeTabIds);
+		Assert.Equal(
+			[
+				new SmTradeListLimitedItemSummary(186000001, BuyCount: 0, SellLimit: 5),
+			],
+			packetPlan.LimitedItems);
 		Assert.Equal(80, packetPlan.BuyPriceModifier);
 		Assert.False(packetPlan.IsLive);
 		var descriptor = Assert.Single(plan.ControllerDispatchPlan!.DialogServicePlan!.Descriptors);
@@ -267,6 +272,7 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 					<goodslists>
 						<list id="129">
 							<item id="110100010" />
+							<item id="186000001" sell_limit="5" buy_limit="3" />
 						</list>
 						<list id="130" legion_lvl="5">
 							<item id="110100011" />

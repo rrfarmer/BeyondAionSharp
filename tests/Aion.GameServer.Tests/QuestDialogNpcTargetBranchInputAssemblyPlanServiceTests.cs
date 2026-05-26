@@ -212,17 +212,35 @@ public sealed class QuestDialogNpcTargetBranchInputAssemblyPlanServiceTests
 				tradeListFactInput: new NpcDialogTradeListFactAdapterInput(
 					NpcId: 203060,
 					PlayerLegionLevel: 0,
-					VendorBuyModifier: 125)),
+					VendorBuyModifier: 125),
+				limitedItemFactInput: new NpcDialogLimitedItemFactAdapterInput(
+					NpcId: 203060,
+					PlayerObjectId: PlayerObjectId,
+					PlayerBuyCountsByItemId: new Dictionary<int, int> { [186000001] = 2 })),
 			templates,
 			CreateTradeLists(tradeLists: [new TradeListTemplateSummary(203060, [129], SellPriceRate: 80)]),
-			CreateGoodsLists(new GoodsListSummary(129)));
+			CreateGoodsLists(new GoodsListSummary(
+				129,
+				SalesTime: "0 0 9 ? * MON",
+				Items:
+				[
+					new GoodsListItemSummary(110100010),
+					new GoodsListItemSummary(186000001, SellLimit: 5, BuyLimit: 3),
+				])));
 
 		var tradeListFactPlan = Assert.IsType<NpcDialogTradeListFactAdapterPlan>(plan.TradeListFactAdapterPlan);
 		Assert.True(tradeListFactPlan.Facts.HasTradeList);
 		Assert.True(tradeListFactPlan.Facts.HasSellableTradeGoods);
+		var limitedItemFactPlan = Assert.IsType<NpcDialogLimitedItemFactAdapterPlan>(plan.LimitedItemFactAdapterPlan);
+		Assert.Equal(
+			[
+				new SmTradeListLimitedItemSummary(186000001, BuyCount: 2, SellLimit: 5),
+			],
+			limitedItemFactPlan.PacketItems);
 		var packetPlan = Assert.IsType<SmTradeListPacketPlan>(plan.TradeListPacketPlan);
 		Assert.Equal(SmTradeListPacketPlanStatus.Ready, packetPlan.Status);
 		Assert.Equal([129], packetPlan.TradeTabIds);
+		Assert.Equal(limitedItemFactPlan.PacketItems, packetPlan.LimitedItems);
 		Assert.Equal(100, packetPlan.BuyPriceModifier);
 		Assert.True(packetPlan.ShowBuyTab);
 		Assert.True(packetPlan.ShowSellTab);
@@ -429,7 +447,8 @@ public sealed class QuestDialogNpcTargetBranchInputAssemblyPlanServiceTests
 		QuestDialogNpcControllerDispatchFacts? controllerDispatchFacts = null,
 		int questId = 1001,
 		int dialogActionId = FunctionDialogAction,
-		NpcDialogTradeListFactAdapterInput? tradeListFactInput = null)
+		NpcDialogTradeListFactAdapterInput? tradeListFactInput = null,
+		NpcDialogLimitedItemFactAdapterInput? limitedItemFactInput = null)
 	{
 		return new QuestDialogNpcTargetBranchRuntimeSnapshot(
 			PlayerObjectId,
@@ -445,7 +464,8 @@ public sealed class QuestDialogNpcTargetBranchInputAssemblyPlanServiceTests
 			InteractionAllowed: interactionAllowed,
 			InteractionInput: interactionInput,
 			ControllerDispatchFacts: controllerDispatchFacts,
-			TradeListFactInput: tradeListFactInput);
+			TradeListFactInput: tradeListFactInput,
+			LimitedItemFactInput: limitedItemFactInput);
 	}
 
 	private static NpcTemplateSummary CreateTemplate(int templateId, IReadOnlyList<int>? functionDialogIds = null)
