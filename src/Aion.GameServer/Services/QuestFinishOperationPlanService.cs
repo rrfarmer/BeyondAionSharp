@@ -7,6 +7,7 @@ namespace Aion.GameServer.Services;
 public enum QuestFinishOperationAction
 {
 	BonusRewardInputAssembly,
+	BonusRewardPlanningReport,
 	RewardMutationPlaceholder,
 	RewardGroupCorrection,
 	ItemRewardProjection,
@@ -47,7 +48,8 @@ public sealed record QuestFinishOperationDescriptor(
 	QuestPersistenceOperationDescriptor? QuestPersistenceOperation = null,
 	NpcFactionPersistenceOperationDescriptor? NpcFactionPersistenceOperation = null,
 	QuestFinishRewardNonItemSource? RewardNonItemSource = null,
-	QuestFinishBonusRewardInputAssemblyPlan? BonusRewardInputAssemblyPlan = null);
+	QuestFinishBonusRewardInputAssemblyPlan? BonusRewardInputAssemblyPlan = null,
+	QuestBonusRewardPlanningReport? BonusRewardPlanningReport = null);
 
 public sealed record QuestFinishRewardSideEffectContext(
 	Player? Player,
@@ -84,7 +86,8 @@ public static class QuestFinishOperationPlanService
 		QuestPersistencePlan? questPersistencePlan = null,
 		NpcFactionPersistencePlan? npcFactionPersistencePlan = null,
 		QuestFinishRewardSideEffectContext? rewardSideEffectContext = null,
-		QuestFinishBonusRewardInputAssemblyPlan? bonusRewardInputAssemblyPlan = null)
+		QuestFinishBonusRewardInputAssemblyPlan? bonusRewardInputAssemblyPlan = null,
+		QuestBonusRewardPlanningReport? bonusRewardPlanningReport = null)
 	{
 		var guard = QuestFinishStateMutationService.ApplyRewardCompletion(questState, template, now, options);
 		if (!guard.Applied)
@@ -108,6 +111,16 @@ public static class QuestFinishOperationPlanService
 				bonusRewardInputAssemblyPlan.JavaSource,
 				IsLive: false,
 				BonusRewardInputAssemblyPlan: bonusRewardInputAssemblyPlan));
+		}
+
+		if (bonusRewardPlanningReport is not null)
+		{
+			descriptors.Add(new QuestFinishOperationDescriptor(
+				nextOrder++,
+				QuestFinishOperationAction.BonusRewardPlanningReport,
+				"QuestService.getRewardItems -> QuestEngine.onBonusApplyEvent -> BonusService.getQuestBonus",
+				IsLive: false,
+				BonusRewardPlanningReport: bonusRewardPlanningReport));
 		}
 
 		if (rewardProjection is null)

@@ -1065,6 +1065,50 @@ public sealed class QuestFinishOperationPlanServiceTests
 	}
 
 	[Fact]
+	public void CreatePlan_ComposesOptionalBonusPlanningReportDescriptorWithoutInvokingAdapter()
+	{
+		var rewardProjection = new QuestFinishRewardTemplateProjection(
+			HasItemRewards: true,
+			ItemProjection: new QuestFinishRewardItemTemplateProjection(
+				HasBonus: true,
+				BonusProjection: new QuestFinishRewardBonusTemplateProjection(
+					"MOVIE",
+					0,
+					QuestFinishRewardBonusSupportStatus.SilentNoOpInJavaBonusService)));
+		var bonusAssemblyPlan = QuestFinishBonusRewardInputAssemblyPlanService.CreatePlan(
+			new QuestFinishBonusRewardInputAssemblyRequest(
+				rewardProjection,
+				new NearbyQuestTemplateSummary(80016),
+				new PlayerQuestState(80016, "REWARD", QuestVars: 0, Flags: 0, CompleteCount: 0),
+				new Player { Race = "ELYOS" }));
+		var adapterResult = new QuestBonusRewardPlanningInputAdapterService().CreateReport(bonusAssemblyPlan.AdapterInput!);
+		var bonusReport = Assert.IsType<QuestBonusRewardPlanningReport>(adapterResult.Report);
+
+		var plan = QuestFinishOperationPlanService.CreatePlan(
+			new PlayerQuestState(80016, "REWARD", QuestVars: 0, Flags: 0, CompleteCount: 0),
+			new NearbyQuestTemplateSummary(80016),
+			PlayerNpcFactionsSnapshot.Empty,
+			new DateTimeOffset(2026, 5, 25, 8, 30, 0, TimeSpan.Zero),
+			CreateOptions("UTC"),
+			rewardProjection,
+			bonusRewardInputAssemblyPlan: bonusAssemblyPlan,
+			bonusRewardPlanningReport: bonusReport);
+
+		var assemblyDescriptor = Assert.Single(
+			plan.Descriptors,
+			descriptor => descriptor.Action == QuestFinishOperationAction.BonusRewardInputAssembly);
+		var reportDescriptor = Assert.Single(
+			plan.Descriptors,
+			descriptor => descriptor.Action == QuestFinishOperationAction.BonusRewardPlanningReport);
+		Assert.Equal(assemblyDescriptor.Order + 1, reportDescriptor.Order);
+		Assert.False(reportDescriptor.IsLive);
+		Assert.Same(bonusReport, reportDescriptor.BonusRewardPlanningReport);
+		Assert.Equal(QuestBonusServicePlanningStatus.NoCandidateGroups, reportDescriptor.BonusRewardPlanningReport!.BonusServiceStatus);
+		Assert.True(reportDescriptor.Order < plan.Descriptors.Single(item => item.Action == QuestFinishOperationAction.ItemRewardPlaceholder).Order);
+		Assert.Contains("BonusService.getQuestBonus", reportDescriptor.JavaSource);
+	}
+
+	[Fact]
 	public void CreatePlan_KeepsNpcFactionNoOpDescriptorWhenJavaWouldReturnFromMissingActiveSlot()
 	{
 		var plan = QuestFinishOperationPlanService.CreatePlan(
