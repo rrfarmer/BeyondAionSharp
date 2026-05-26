@@ -8,6 +8,82 @@ namespace Aion.GameServer.Tests;
 public sealed class QuestFinishStaticRewardProjectionCompositionTests
 {
 	[Fact]
+	public void StaticExtendedItemRewardProjection_ComposesOnLastRepeatBeforeRegularRewardsWithoutLiveSideEffects()
+	{
+		const string xml = """
+			<quests>
+				<quest id="1003" can_report="true" category="QUEST" reward_repeat_count="3">
+					<rewards>
+						<reward_item item_id="182400001" count="2" />
+					</rewards>
+					<extended_rewards>
+						<reward_item item_id="186000001" count="5" />
+						<selectable_reward_item item_id="186000010" count="6" />
+						<selectable_reward_item item_id="186000011" count="7" />
+					</extended_rewards>
+				</quest>
+			</quests>
+			""";
+		var template = new NearbyQuestTemplateXmlExtractor().Extract(xml).Single();
+		var rewardProjection = new QuestFinishRewardTemplateXmlProjectionExtractor()
+			.ExtractDefaultRegularNonItemProjections(xml)[1003] with
+		{
+			DialogActionId = 23,
+			ExtendedRewardIndex = 9
+		};
+
+		var operationPlan = QuestFinishOperationPlanService.CreatePlan(
+			new PlayerQuestState(1003, "REWARD", QuestVars: 0x12, Flags: 0, CompleteCount: 2),
+			template,
+			PlayerNpcFactionsSnapshot.Empty,
+			new DateTimeOffset(2026, 5, 26, 10, 0, 0, TimeSpan.Zero),
+			CreateOptions("UTC"),
+			rewardProjection);
+
+		Assert.True(rewardProjection.HasItemRewards);
+		Assert.NotNull(rewardProjection.ItemProjection?.ExtendedRewards);
+		Assert.True(operationPlan.Applied);
+		Assert.Equal("COMPLETE", operationPlan.QuestState?.Status);
+		Assert.All(operationPlan.Descriptors, descriptor => Assert.False(descriptor.IsLive));
+		var projectedItems = operationPlan.Descriptors
+			.Where(descriptor => descriptor.Action == QuestFinishOperationAction.ItemRewardProjection)
+			.ToArray();
+		Assert.Collection(
+			projectedItems,
+			descriptor =>
+			{
+				Assert.Equal(QuestFinishRewardItemSource.ExtendedFixed, descriptor.RewardItemProjection?.Source);
+				Assert.Equal(186000001, descriptor.ItemId);
+				Assert.Equal(5, descriptor.Count);
+				Assert.Equal(-1, descriptor.RewardItemProjection?.RewardGroupIndex);
+				Assert.Null(descriptor.RewardItemProjection?.SelectableIndex);
+			},
+			descriptor =>
+			{
+				Assert.Equal(QuestFinishRewardItemSource.ExtendedSelectable, descriptor.RewardItemProjection?.Source);
+				Assert.Equal(186000011, descriptor.ItemId);
+				Assert.Equal(7, descriptor.Count);
+				Assert.Equal(-1, descriptor.RewardItemProjection?.RewardGroupIndex);
+				Assert.Equal(1, descriptor.RewardItemProjection?.SelectableIndex);
+			},
+			descriptor =>
+			{
+				Assert.Equal(QuestFinishRewardItemSource.RegularFixed, descriptor.RewardItemProjection?.Source);
+				Assert.Equal(182400001, descriptor.ItemId);
+				Assert.Equal(2, descriptor.Count);
+				Assert.Equal(0, descriptor.RewardItemProjection?.RewardGroupIndex);
+			});
+		Assert.DoesNotContain(operationPlan.Descriptors, descriptor => descriptor.Action == QuestFinishOperationAction.ItemRewardProjectionWarning);
+		Assert.Contains(operationPlan.Descriptors, descriptor => descriptor.Action == QuestFinishOperationAction.ItemRewardPlaceholder);
+		Assert.True(
+			IndexOf(operationPlan.Descriptors, QuestFinishOperationAction.ItemRewardProjection)
+			< IndexOf(operationPlan.Descriptors, QuestFinishOperationAction.ItemRewardPlaceholder));
+		Assert.True(
+			IndexOf(operationPlan.Descriptors, QuestFinishOperationAction.ItemRewardPlaceholder)
+			< IndexOf(operationPlan.Descriptors, QuestFinishOperationAction.QuestStateMutation));
+	}
+
+	[Fact]
 	public void StaticRegularItemRewardProjection_ComposesThroughRewardAndOperationPlansWithoutLiveSideEffects()
 	{
 		const string xml = """
