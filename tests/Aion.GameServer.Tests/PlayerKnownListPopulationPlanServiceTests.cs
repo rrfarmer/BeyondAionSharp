@@ -1,4 +1,7 @@
+using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
+using Aion.GameServer.World;
 
 namespace Aion.GameServer.Tests;
 
@@ -22,6 +25,7 @@ public sealed class PlayerKnownListPopulationPlanServiceTests
 		Assert.False(plan.MutatedMembership);
 		Assert.False(plan.ExecutedControllerSideEffects);
 		Assert.True(plan.AttachedControllerSideEffectDescriptors);
+		Assert.False(plan.ConstructedControllerSideEffectPackets);
 		Assert.Equal(2, plan.CandidatePlans.Count);
 		Assert.True(plan.CandidatePlans[0].VisibilityRangePlan!.IsInJavaRange);
 		Assert.False(plan.CandidatePlans[1].VisibilityRangePlan!.IsInJavaRange);
@@ -152,6 +156,7 @@ public sealed class PlayerKnownListPopulationPlanServiceTests
 		Assert.Contains(
 			attachmentPlan.AttachedSideEffects[0].SideEffectPlan.Descriptors,
 			descriptor => descriptor.Kind == PlayerKnownListPlayerSideEffectKind.SmPlayerStance);
+		Assert.Null(candidatePlan.SideEffectPacketConstructionPlan);
 	}
 
 	[Fact]
@@ -181,6 +186,92 @@ public sealed class PlayerKnownListPopulationPlanServiceTests
 		Assert.Empty(attachment.SideEffectPlan.Descriptors);
 	}
 
+	[Fact]
+	public void Plan_ConstructsPopulationSideEffectPacketMetadataWhenSubjectFactsAreSupplied()
+	{
+		var membership = new PlayerKnownListMembershipService();
+		var service = CreateService(membership);
+		var request = CreateRequest(
+			[
+				new PlayerKnownListPopulationCandidateFact(
+					NearPlayerObjectId,
+					X: 10,
+					Y: 0,
+					Z: 0,
+					OwnerCanSeeCandidate: true,
+					CandidateCanSeeOwner: true,
+					OwnerViewingCandidateSideEffectFacts: new PlayerKnownListOperationSideEffectDirectionFacts(
+						ViewerAggroIconToSubject: true,
+						SubjectIsInRideMode: true,
+						SubjectRideNpcId: RideNpcId),
+					CandidateViewingOwnerSideEffectFacts: new PlayerKnownListOperationSideEffectDirectionFacts(
+						SubjectIsUnderStance: true)),
+			],
+			packetConstructionFactsByPlayerObjectId: new Dictionary<int, PlayerKnownListOperationSideEffectPacketConstructionFacts>
+			{
+				[OwnerPlayerObjectId] = CreatePacketFacts(OwnerPlayerObjectId, "Owner", stance: true),
+				[NearPlayerObjectId] = CreatePacketFacts(NearPlayerObjectId, "Candidate", rideMovementSpeed: 6.25f),
+			});
+
+		var plan = service.Plan(request);
+
+		Assert.True(plan.AttachedControllerSideEffectDescriptors);
+		Assert.True(plan.ConstructedControllerSideEffectPackets);
+		Assert.False(plan.ExecutedControllerSideEffects);
+		var candidatePlan = Assert.Single(plan.CandidatePlans, candidatePlan => candidatePlan.CandidatePlayerObjectId == NearPlayerObjectId);
+		var packetPlan = candidatePlan.SideEffectPacketConstructionPlan!;
+		Assert.False(packetPlan.ExecutesLivePackets);
+		Assert.False(packetPlan.IsLive);
+		Assert.Equal(PlayerKnownListOperationSideEffectPacketConstructionStatus.Constructed, packetPlan.Status);
+		Assert.Equal(
+			[PlayerKnownListTwoWayOperationStepKind.CandidateSeesOwner, PlayerKnownListTwoWayOperationStepKind.OwnerSeesCandidate],
+			packetPlan.Results.Select(result => result.AttachedSideEffect.OperationStep.Kind));
+		Assert.Equal(
+			[typeof(SmPlayerInfo), typeof(SmMotion), typeof(SmPlayerStance)],
+			packetPlan.Results[0].PacketConstructionPlan!.Results.Select(result => result.Packet!.GetType()));
+		Assert.Equal(
+			[typeof(SmPlayerInfo), typeof(SmMotion), typeof(SmEmotion)],
+			packetPlan.Results[1].PacketConstructionPlan!.Results.Select(result => result.Packet!.GetType()));
+	}
+
+	[Fact]
+	public void Plan_RecordsPartialPopulationPacketMetadataWhenSubjectFactsAreMissing()
+	{
+		var membership = new PlayerKnownListMembershipService();
+		var service = CreateService(membership);
+		var request = CreateRequest(
+			[
+				new PlayerKnownListPopulationCandidateFact(
+					NearPlayerObjectId,
+					X: 10,
+					Y: 0,
+					Z: 0,
+					OwnerCanSeeCandidate: true,
+					CandidateCanSeeOwner: true,
+					OwnerViewingCandidateSideEffectFacts: new PlayerKnownListOperationSideEffectDirectionFacts(
+						SubjectIsInRideMode: true,
+						SubjectRideNpcId: RideNpcId),
+					CandidateViewingOwnerSideEffectFacts: new PlayerKnownListOperationSideEffectDirectionFacts(
+						SubjectIsUnderStance: true)),
+			],
+			packetConstructionFactsByPlayerObjectId: new Dictionary<int, PlayerKnownListOperationSideEffectPacketConstructionFacts>
+			{
+				[OwnerPlayerObjectId] = CreatePacketFacts(OwnerPlayerObjectId, "Owner", stance: true),
+			});
+
+		var plan = service.Plan(request);
+
+		Assert.True(plan.ConstructedControllerSideEffectPackets);
+		var candidatePlan = Assert.Single(plan.CandidatePlans, candidatePlan => candidatePlan.CandidatePlayerObjectId == NearPlayerObjectId);
+		var packetPlan = candidatePlan.SideEffectPacketConstructionPlan!;
+		Assert.Equal(PlayerKnownListOperationSideEffectPacketConstructionStatus.PartiallyConstructed, packetPlan.Status);
+		Assert.Equal(PlayerKnownListOperationSideEffectPacketConstructionResultStatus.Constructed, packetPlan.Results[0].Status);
+		Assert.Equal(
+			PlayerKnownListOperationSideEffectPacketConstructionResultStatus.BlockedMissingSubjectFacts,
+			packetPlan.Results[1].Status);
+		Assert.Null(packetPlan.Results[1].PacketConstructionPlan);
+	}
+
 	private static PlayerKnownListPopulationPlanService CreateService(PlayerKnownListMembershipService membership) =>
 		new(
 			new PlayerKnownListVisibilityRangePlanService(),
@@ -189,7 +280,8 @@ public sealed class PlayerKnownListPopulationPlanServiceTests
 
 	private static PlayerKnownListPopulationPlanRequest CreateRequest(
 		IReadOnlyList<PlayerKnownListPopulationCandidateFact> candidateFacts,
-		bool executeMembershipMutation = false) =>
+		bool executeMembershipMutation = false,
+		IReadOnlyDictionary<int, PlayerKnownListOperationSideEffectPacketConstructionFacts>? packetConstructionFactsByPlayerObjectId = null) =>
 		new(
 			CreateRegionSnapshot([NearPlayerObjectId, FarPlayerObjectId]),
 			new PlayerKnownListVisibilityRangeObject(
@@ -200,7 +292,8 @@ public sealed class PlayerKnownListPopulationPlanServiceTests
 				Y: 0,
 				Z: 0),
 			candidateFacts,
-			executeMembershipMutation);
+			executeMembershipMutation,
+			packetConstructionFactsByPlayerObjectId);
 
 	private static PlayerKnownListRegionSnapshot CreateRegionSnapshot(IReadOnlyList<int> candidateIds) =>
 		new(
@@ -219,6 +312,24 @@ public sealed class PlayerKnownListPopulationPlanServiceTests
 			IsJavaRegionKnownListParity: false,
 			"test region snapshot",
 			IsLive: false);
+
+	private static PlayerKnownListOperationSideEffectPacketConstructionFacts CreatePacketFacts(
+		int objectId,
+		string name,
+		bool stance = false,
+		float rideMovementSpeed = 0) =>
+		new(
+			new Player
+			{
+				ObjectId = objectId,
+				Name = name,
+				Race = "ELYOS",
+				Gender = "MALE",
+				PlayerClass = "GLADIATOR",
+				Position = new WorldPosition(210010000, 1, 2, 3, 4),
+			},
+			ActiveMotions: stance ? [new PlayerMotion(11, 1010, true)] : [],
+			RideMovementSpeed: rideMovementSpeed);
 
 	private const int OwnerPlayerObjectId = 9001;
 	private const int NearPlayerObjectId = 9002;

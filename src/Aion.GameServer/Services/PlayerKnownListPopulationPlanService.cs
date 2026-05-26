@@ -19,7 +19,8 @@ public sealed record PlayerKnownListPopulationPlanRequest(
 	PlayerKnownListRegionSnapshot RegionSnapshot,
 	PlayerKnownListVisibilityRangeObject Owner,
 	IEnumerable<PlayerKnownListPopulationCandidateFact>? CandidateFacts,
-	bool ExecuteMembershipMutation = false);
+	bool ExecuteMembershipMutation = false,
+	IReadOnlyDictionary<int, PlayerKnownListOperationSideEffectPacketConstructionFacts>? PacketConstructionFactsByPlayerObjectId = null);
 
 public sealed record PlayerKnownListPopulationCandidatePlan(
 	int CandidatePlayerObjectId,
@@ -27,7 +28,8 @@ public sealed record PlayerKnownListPopulationCandidatePlan(
 	PlayerKnownListVisibilityRangePlan? VisibilityRangePlan,
 	PlayerKnownListTwoWayMembershipAdapterResult? MembershipAdapterResult,
 	string JavaSource,
-	PlayerKnownListOperationSideEffectAttachmentPlan? SideEffectAttachmentPlan = null);
+	PlayerKnownListOperationSideEffectAttachmentPlan? SideEffectAttachmentPlan = null,
+	PlayerKnownListOperationSideEffectPacketConstructionPlan? SideEffectPacketConstructionPlan = null);
 
 public sealed record PlayerKnownListPopulationPlan(
 	int OwnerPlayerObjectId,
@@ -40,22 +42,26 @@ public sealed record PlayerKnownListPopulationPlan(
 	bool IsJavaRegionKnownListParity,
 	string JavaSource,
 	bool IsLive,
-	bool AttachedControllerSideEffectDescriptors = false);
+	bool AttachedControllerSideEffectDescriptors = false,
+	bool ConstructedControllerSideEffectPackets = false);
 
 public sealed class PlayerKnownListPopulationPlanService
 {
 	private readonly PlayerKnownListVisibilityRangePlanService _visibilityRangePlanService;
 	private readonly PlayerKnownListTwoWayMembershipAdapterService _membershipAdapterService;
 	private readonly PlayerKnownListOperationSideEffectAttachmentService _sideEffectAttachmentService;
+	private readonly PlayerKnownListOperationSideEffectPacketConstructionService _sideEffectPacketConstructionService;
 
 	public PlayerKnownListPopulationPlanService(
 		PlayerKnownListVisibilityRangePlanService? visibilityRangePlanService = null,
 		PlayerKnownListTwoWayMembershipAdapterService? membershipAdapterService = null,
-		PlayerKnownListOperationSideEffectAttachmentService? sideEffectAttachmentService = null)
+		PlayerKnownListOperationSideEffectAttachmentService? sideEffectAttachmentService = null,
+		PlayerKnownListOperationSideEffectPacketConstructionService? sideEffectPacketConstructionService = null)
 	{
 		_visibilityRangePlanService = visibilityRangePlanService ?? new PlayerKnownListVisibilityRangePlanService();
 		_membershipAdapterService = membershipAdapterService ?? new PlayerKnownListTwoWayMembershipAdapterService(new PlayerKnownListMembershipService());
 		_sideEffectAttachmentService = sideEffectAttachmentService ?? new PlayerKnownListOperationSideEffectAttachmentService();
+		_sideEffectPacketConstructionService = sideEffectPacketConstructionService ?? new PlayerKnownListOperationSideEffectPacketConstructionService();
 	}
 
 	public PlayerKnownListPopulationPlan Plan(PlayerKnownListPopulationPlanRequest request)
@@ -108,14 +114,20 @@ public sealed class PlayerKnownListPopulationPlanService
 				visibilityRangePlan.OperationPlan,
 				fact.OwnerViewingCandidateSideEffectFacts ?? new PlayerKnownListOperationSideEffectDirectionFacts(),
 				fact.CandidateViewingOwnerSideEffectFacts ?? new PlayerKnownListOperationSideEffectDirectionFacts()));
+			var sideEffectPacketConstructionPlan = request.PacketConstructionFactsByPlayerObjectId is null
+				? null
+				: _sideEffectPacketConstructionService.Construct(new PlayerKnownListOperationSideEffectPacketConstructionRequest(
+					sideEffectAttachmentPlan,
+					request.PacketConstructionFactsByPlayerObjectId));
 
 			candidatePlans.Add(new PlayerKnownListPopulationCandidatePlan(
 				candidateId,
 				WasPresentInRegionSnapshot: true,
 				visibilityRangePlan,
 				membershipResult,
-				"KnownList.findVisibleObjects candidate composed through range/canSee, two-way membership metadata, and controller side-effect descriptors",
-				sideEffectAttachmentPlan));
+				"KnownList.findVisibleObjects candidate composed through range/canSee, two-way membership metadata, controller side-effect descriptors, and optional packet construction metadata",
+				sideEffectAttachmentPlan,
+				sideEffectPacketConstructionPlan));
 		}
 
 		return new PlayerKnownListPopulationPlan(
@@ -129,6 +141,7 @@ public sealed class PlayerKnownListPopulationPlanService
 			IsJavaRegionKnownListParity: false,
 			"Non-live composition of KnownList.findVisibleObjects prerequisites; does not execute Java region storage, controller packets, or world lifecycle",
 			IsLive: false,
-			AttachedControllerSideEffectDescriptors: candidatePlans.Any(plan => plan.SideEffectAttachmentPlan?.AttachedSideEffects.Count > 0));
+			AttachedControllerSideEffectDescriptors: candidatePlans.Any(plan => plan.SideEffectAttachmentPlan?.AttachedSideEffects.Count > 0),
+			ConstructedControllerSideEffectPackets: candidatePlans.Any(plan => plan.SideEffectPacketConstructionPlan?.Results.Count > 0));
 	}
 }
