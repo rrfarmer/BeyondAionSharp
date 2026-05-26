@@ -51,6 +51,15 @@ public sealed class BindPointTeleportRuntimeFanoutService
 			controlBridgePlan.ControlPlan.PlayerObjectId,
 			controlBridgePlan.ControlPlan.Packet);
 
+		return await BroadcastFanoutPlanAsync(fanoutPlan, sourcePosition, cancellationToken);
+	}
+
+	public async Task<BindPointTeleportRuntimeFanoutResult> BroadcastFanoutPlanAsync(
+		BindPointTeleportFanoutPlan fanoutPlan,
+		WorldPosition sourcePosition,
+		CancellationToken cancellationToken = default)
+	{
+		cancellationToken.ThrowIfCancellationRequested();
 		// Java parity: PacketSendUtility.broadcastPacket(player, packet, true) and broadcastPacketAndReceive
 		// send to the source player before known-list players. The C# registry approximation uses includeSourcePlayer.
 		var sentCount = await _connectionRegistry.BroadcastToVisiblePlayersAsync(
