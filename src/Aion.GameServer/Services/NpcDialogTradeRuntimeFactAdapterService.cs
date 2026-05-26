@@ -42,8 +42,8 @@ public static class NpcDialogTradeRuntimeFactAdapterService
 		// - DialogService.onDialogSelect BUY calculates legionLevel from
 		//   player.getLegion() == null ? 0 : player.getLegion().getLegionLevel().
 		// - DialogService passes PricesService.getVendorBuyModifier() * tradeModifier / 100
-		//   into SM_TRADELIST. The C# port does not yet have live LegionService or
-		//   PricesConfig-backed runtime plumbing at this socket boundary.
+		//   into SM_TRADELIST. GameServerConnection supplies the configured
+		//   gameserver.prices.vendor.buymod value while packet sends remain staged.
 		var playerLegionLevel = input.PlayerLegionLevel ?? JavaNoLegionLevel;
 		var vendorBuyModifier = input.VendorBuyModifier ?? JavaDefaultVendorBuyModifier;
 
@@ -60,8 +60,8 @@ public static class NpcDialogTradeRuntimeFactAdapterService
 				: "Staged default: PricesConfig.VENDOR_BUY_MODIFIER not wired",
 			"DialogService.onDialogSelect BUY -> Player.getLegion().getLegionLevel + PricesService.getVendorBuyModifier",
 			input.PlayerLegionLevel.HasValue && input.VendorBuyModifier.HasValue
-				? "Values were supplied by the caller; live lookup ownership remains outside this adapter."
-				: "Non-live fact seam only. Replace staged defaults after LegionService and PricesConfig runtime sources are ported.",
+				? "Values were supplied by the caller from projected player state and configured price options; packet sends remain staged."
+				: "Non-live fact seam only. Replace staged defaults after remaining runtime sources are ported.",
 			IsLive: false);
 	}
 }
