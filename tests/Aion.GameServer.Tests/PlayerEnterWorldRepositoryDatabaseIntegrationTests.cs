@@ -270,6 +270,29 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 		Assert.Equal("Hydrated Legion", player.LegionName);
 	}
 
+	[Fact]
+	public async Task LoadPlayerAsync_DefaultsLegionFactsWhenNoLegionMemberAgainstJavaSchema_WhenEnabled()
+	{
+		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
+			return;
+
+		// Java source breadcrumbs: SM_TRADELIST/DialogService use player.getLegion() == null ? 0 : legion level.
+		InitializeDatabaseFactory();
+		await InitializeSchemaAsync();
+		await SeedPlayerAsync();
+
+		var repository = new MySqlPlayerEnterWorldRepository(
+			new GameServerRuntimeContext(),
+			NullLogger<MySqlPlayerEnterWorldRepository>.Instance);
+
+		var player = await repository.LoadPlayerAsync(accountId: 1, playerObjectId: PlayerObjectId);
+
+		Assert.NotNull(player);
+		Assert.Equal(0, player.LegionId);
+		Assert.Equal(0, player.LegionLevel);
+		Assert.Equal(string.Empty, player.LegionName);
+	}
+
 	private static void InitializeDatabaseFactory()
 	{
 		DatabaseFactory.Initialize(
