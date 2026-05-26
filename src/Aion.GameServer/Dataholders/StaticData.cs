@@ -2163,6 +2163,8 @@ public sealed class StaticData
 				currentNpcTemplate.HasTalkInfo = true;
 				currentNpcTemplate.TalkDistance = ReadOptionalIntAttribute(reader, "distance", 2);
 				currentNpcTemplate.FunctionDialogIds.AddRange(ReadIntListAttribute(reader, "func_dialogs"));
+				currentNpcTemplate.SubDialogType = ReadNpcSubDialogType(reader.GetAttribute("subdialog_type"));
+				currentNpcTemplate.SubDialogValue = ReadOptionalIntAttribute(reader, "subdialog_value", 0);
 				currentNpcTemplate.CanTalkInvisible = ReadOptionalBoolAttribute(reader, "can_talk_invisible", true);
 				currentNpcTemplate.IsDialogNpc = ReadBoolAttribute(reader, "is_dialog");
 				continue;
@@ -4238,6 +4240,10 @@ public sealed class StaticData
 
 		public List<int> FunctionDialogIds { get; } = [];
 
+		public NpcSubDialogType? SubDialogType { get; set; }
+
+		public int SubDialogValue { get; set; }
+
 		public NpcTemplateSummary ToSummary()
 		{
 			// Java parity: model/templates/npc/NpcTemplate fields consumed by SM_NPC_INFO.
@@ -4266,7 +4272,9 @@ public sealed class StaticData
 				IsDialogNpc,
 				GroupDrop,
 				AbyssType,
-				KiskStats);
+				KiskStats,
+				SubDialogType,
+				SubDialogValue);
 		}
 	}
 
@@ -4744,6 +4752,32 @@ public sealed class StaticData
 	private static bool ReadOptionalBoolAttribute(XmlReader reader, string attributeName, bool defaultValue)
 	{
 		return bool.TryParse(reader.GetAttribute(attributeName), out var parsed) ? parsed : defaultValue;
+	}
+
+	private static NpcSubDialogType? ReadNpcSubDialogType(string? value)
+	{
+		return value switch
+		{
+			null or "" => null,
+			"FORT_CAPTURE" => NpcSubDialogType.FortCapture,
+			"SKILL_ID" => NpcSubDialogType.SkillId,
+			"ITEM_ID" => NpcSubDialogType.ItemId,
+			"RETURN" => NpcSubDialogType.Return,
+			"PCBANG" => NpcSubDialogType.PcBang,
+			"PAID_USER" => NpcSubDialogType.PaidUser,
+			"NEWBIE" => NpcSubDialogType.Newbie,
+			"ABYSSRANK" => NpcSubDialogType.AbyssRank,
+			"ABYSSRANKING" => NpcSubDialogType.AbyssRanking,
+			"LEVEL" => NpcSubDialogType.Level,
+			"LEVEL_LOW" => NpcSubDialogType.LevelLow,
+			"LEVEL_HIGH" => NpcSubDialogType.LevelHigh,
+			"LEGION_DOMINION_NPC" => NpcSubDialogType.LegionDominionNpc,
+			"TARGET_LEGION_DOMINION" => NpcSubDialogType.TargetLegionDominion,
+			"PACK_3" => NpcSubDialogType.Pack3,
+			"PACK_4" => NpcSubDialogType.Pack4,
+			"CASH" => NpcSubDialogType.Cash,
+			_ => null,
+		};
 	}
 
 	private static DateTime? ReadDateTimeAttribute(XmlReader reader, string attributeName)

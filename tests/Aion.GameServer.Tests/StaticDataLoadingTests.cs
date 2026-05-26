@@ -1100,6 +1100,10 @@ public sealed class StaticDataLoadingTests
 		Assert.False(brokerNpc.SupportsDialogAction(2));
 		Assert.True(staticData.NpcTemplates.IsFunctionDialog(33));
 		Assert.False(staticData.NpcTemplates.IsFunctionDialog(-1));
+		var levelLowNpc = staticData.NpcTemplates.GetNpcTemplate(832011);
+		Assert.NotNull(levelLowNpc);
+		Assert.Equal(NpcSubDialogType.LevelLow, levelLowNpc.SubDialogType);
+		Assert.Equal(39, levelLowNpc.SubDialogValue);
 		Assert.True(staticData.NpcSpawns.Count > 60000, $"NpcSpawns.Count={staticData.NpcSpawns.Count}");
 		var brokerSpawn = Assert.Single(staticData.NpcSpawns.GetSpawnsForMap(220070000), spawn => spawn.NpcId == 799211);
 		Assert.Equal(1887.75f, brokerSpawn.X);

@@ -59,7 +59,9 @@ public sealed record NpcTemplateSummary(
 	bool IsDialogNpc = false,
 	string GroupDrop = "",
 	string AbyssType = "NONE",
-	KiskStatsSummary? KiskStats = null)
+	KiskStatsSummary? KiskStats = null,
+	NpcSubDialogType? SubDialogType = null,
+	int SubDialogValue = 0)
 {
 	public bool CanInteract => HasTalkInfo;
 
@@ -74,3 +76,24 @@ public sealed record KiskStatsSummary(
 	int UseMask = 4,
 	int MaxMembers = 6,
 	int MaxResurrects = 18);
+
+public enum NpcSubDialogType
+{
+	FortCapture,
+	SkillId,
+	ItemId,
+	Return,
+	PcBang,
+	PaidUser,
+	Newbie,
+	AbyssRank,
+	AbyssRanking,
+	Level,
+	LevelLow,
+	LevelHigh,
+	LegionDominionNpc,
+	TargetLegionDominion,
+	Pack3,
+	Pack4,
+	Cash,
+}
