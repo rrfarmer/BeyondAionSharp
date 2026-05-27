@@ -124,6 +124,33 @@ public sealed class PlayerKiskUpdateFanoutServiceTests
 	}
 
 	[Fact]
+	public void CreatePlanForRestoredAddedMemberExcludesRestoredPlayerButUpdatesOtherRecipients()
+	{
+		var kiskPosition = new WorldPosition(210010000, 0, 0, 0, 0);
+		var kisk = new PlayerKiskRuntimeState(
+			objectId: 9006,
+			ownerObjectId: 6001,
+			npcId: 700273,
+			useMask: 0,
+			ownerRace: "ELYOS");
+		var restoredPlayer = CreatePlayer(6002, "ELYOS", kiskPosition);
+		var unknownMember = CreatePlayer(6003, "ASMODIANS", new WorldPosition(210010000, 250, 0, 0, 0));
+		var visibleSameRace = CreatePlayer(6004, "ELYOS", new WorldPosition(210010000, 5, 0, 0, 0));
+		Assert.True(kisk.AddMember(restoredPlayer.ObjectId));
+		Assert.True(kisk.AddMember(unknownMember.ObjectId));
+
+		var plan = PlayerKiskUpdateFanoutService.CreatePlan(
+			kisk,
+			kiskPosition,
+			[restoredPlayer, unknownMember, visibleSameRace],
+			isKnownNpc: (_, _) => false,
+			excludedPlayerObjectId: restoredPlayer.ObjectId);
+
+		Assert.Equal([unknownMember.ObjectId], plan.DirectMemberObjectIds);
+		Assert.Equal([visibleSameRace.ObjectId], plan.VisibleSameRaceObjectIds);
+	}
+
+	[Fact]
 	public void CreatePlanSkipsKnownDifferentRaceMemberLikeJavaBroadcastKiskUpdate()
 	{
 		var kiskPosition = new WorldPosition(210010000, 0, 0, 0, 0);
