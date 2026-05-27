@@ -1,3 +1,6 @@
+using Aion.GameServer.Model;
+using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 
 namespace Aion.GameServer.Services.ToyPet;
@@ -19,15 +22,22 @@ public enum PetFeedPacketMetadataResultStatus
 	BlockedSystemMessageContext,
 }
 
+public sealed record PetFeedSupplementalPacketContext(
+	int? PlayerObjectId = null,
+	PlayerCreatureState PlayerCreatureState = PlayerCreatureState.Active,
+	string? PetName = null,
+	string? ItemName = null);
+
 public sealed record PetFeedPacketMetadataBridgeRequest(
 	PetFeedServiceOperationPlan Plan,
 	int FeedProgressData,
-	int RefeedDelaySeconds = 0);
+	int RefeedDelaySeconds = 0,
+	PetFeedSupplementalPacketContext? SupplementalContext = null);
 
 public sealed record PetFeedPacketMetadataResult(
 	PetFeedServiceOperation Operation,
 	PetFeedPacketMetadataResultStatus Status,
-	SmPet? Packet,
+	GameServerPacket? Packet,
 	string Notes);
 
 public sealed record PetFeedPacketMetadataBridgeResult(
@@ -55,7 +65,7 @@ public sealed class PetFeedPacketMetadataBridge
 		}
 
 		var results = request.Plan.Operations
-			.Select(operation => Construct(operation, request.FeedProgressData, request.RefeedDelaySeconds))
+			.Select(operation => Construct(operation, request.FeedProgressData, request.RefeedDelaySeconds, request.SupplementalContext))
 			.ToArray();
 
 		var constructed = results.Count(result => result.Status == PetFeedPacketMetadataResultStatus.Constructed);
@@ -79,7 +89,8 @@ public sealed class PetFeedPacketMetadataBridge
 	private static PetFeedPacketMetadataResult Construct(
 		PetFeedServiceOperation operation,
 		int feedProgressData,
-		int refeedDelaySeconds)
+		int refeedDelaySeconds,
+		PetFeedSupplementalPacketContext? supplementalContext)
 	{
 		return operation.Kind switch
 		{
@@ -115,14 +126,8 @@ public sealed class PetFeedPacketMetadataBridge
 				operation,
 				PetFeedPacketMetadataResultStatus.BlockedItemUnlockPacket,
 				"Item unlock packet/service boundary is not represented by SmPet."),
-			PetFeedServiceOperationKind.SendEndFeedingEmotion => Blocked(
-				operation,
-				PetFeedPacketMetadataResultStatus.BlockedEmotionContext,
-				"SM_EMOTION EndFeeding needs a live/supplied player context and is not constructed by this bridge."),
-			PetFeedServiceOperationKind.SendFoodNotLovedSystemMessage => Blocked(
-				operation,
-				PetFeedPacketMetadataResultStatus.BlockedSystemMessageContext,
-				"Rejected-food system message needs pet name and localized item name context."),
+			PetFeedServiceOperationKind.SendEndFeedingEmotion => ConstructEndFeedingEmotion(operation, supplementalContext),
+			PetFeedServiceOperationKind.SendFoodNotLovedSystemMessage => ConstructFoodNotLovedSystemMessage(operation, supplementalContext),
 			_ => new PetFeedPacketMetadataResult(
 				operation,
 				PetFeedPacketMetadataResultStatus.SkippedNonPacketOperation,
@@ -145,6 +150,52 @@ public sealed class PetFeedPacketMetadataBridge
 			PetFeedPacketMetadataResultStatus.Constructed,
 			SmPet.Food(new SmPetFoodSnapshot(subType, feedProgressData, itemObjectId, count, refeedDelaySeconds)),
 			Notes: $"Constructed non-sending SmPet FOOD subtype {subType} metadata.");
+	}
+
+	private static PetFeedPacketMetadataResult ConstructEndFeedingEmotion(
+		PetFeedServiceOperation operation,
+		PetFeedSupplementalPacketContext? supplementalContext)
+	{
+		if (supplementalContext?.PlayerObjectId is not { } playerObjectId)
+		{
+			return Blocked(
+				operation,
+				PetFeedPacketMetadataResultStatus.BlockedEmotionContext,
+				"SM_EMOTION EndFeeding needs a supplied player object id.");
+		}
+
+		// Java parity: PetService.checkFeeding sends new SM_EMOTION(player, END_FEEDING, 0, player.getObjectId()).
+		var player = new Player
+		{
+			ObjectId = playerObjectId,
+			CreatureState = supplementalContext.PlayerCreatureState,
+		};
+		return new PetFeedPacketMetadataResult(
+			operation,
+			PetFeedPacketMetadataResultStatus.Constructed,
+			new SmEmotion(player, EmotionType.EndFeeding, emotion: 0, targetObjectId: playerObjectId),
+			Notes: "Constructed non-sending SmEmotion EndFeeding metadata from supplied player context.");
+	}
+
+	private static PetFeedPacketMetadataResult ConstructFoodNotLovedSystemMessage(
+		PetFeedServiceOperation operation,
+		PetFeedSupplementalPacketContext? supplementalContext)
+	{
+		if (supplementalContext?.PetName is not { Length: > 0 } petName
+			|| supplementalContext.ItemName is not { Length: > 0 } itemName)
+		{
+			return Blocked(
+				operation,
+				PetFeedPacketMetadataResultStatus.BlockedSystemMessageContext,
+				"Rejected-food system message needs supplied pet name and localized item name context.");
+		}
+
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_TOYPET_FEED_FOOD_NOT_LOVEFLAVOR(pet.getName(), item.getItemTemplate().getL10n()).
+		return new PetFeedPacketMetadataResult(
+			operation,
+			PetFeedPacketMetadataResultStatus.Constructed,
+			new SmSystemMessage(1400618, petName, itemName),
+			Notes: "Constructed non-sending rejected-food system-message metadata from supplied names.");
 	}
 
 	private static PetFeedPacketMetadataResult Blocked(

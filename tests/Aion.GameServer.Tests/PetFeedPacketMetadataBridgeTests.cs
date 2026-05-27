@@ -60,6 +60,40 @@ public sealed class PetFeedPacketMetadataBridgeTests
 	}
 
 	[Fact]
+	public void Construct_RejectedFoodWithSuppliedContextBuildsEmotionAndSystemMessageMetadata()
+	{
+		var bridge = new PetFeedPacketMetadataBridge();
+		var plan = new PetFeedServiceOperationPlan(
+			PetFeedServiceOperationPlanStatus.RejectedFood,
+			Evaluation: new PetFeedEvaluationResult(null, IsLovedFood: false, Reward: null),
+			Operations:
+			[
+				new PetFeedServiceOperation(PetFeedServiceOperationKind.UnlockFoodItem, ItemObjectId: 5001),
+				new PetFeedServiceOperation(PetFeedServiceOperationKind.SendPetFeedEndPacket),
+				new PetFeedServiceOperation(PetFeedServiceOperationKind.SendEndFeedingEmotion),
+				new PetFeedServiceOperation(PetFeedServiceOperationKind.SendFoodNotLovedSystemMessage, ItemId: 9999),
+			],
+			RemainingRequestedCount: 1,
+			RefeedTimeMilliseconds: null);
+
+		var result = bridge.Construct(new PetFeedPacketMetadataBridgeRequest(
+			plan,
+			FeedProgressData: 0x123450,
+			SupplementalContext: new PetFeedSupplementalPacketContext(
+				PlayerObjectId: 7001,
+				PetName: "Tog",
+				ItemName: "Old Boot")));
+
+		Assert.Equal(PetFeedPacketMetadataBridgeStatus.PartiallyConstructed, result.Status);
+		Assert.Equal(PetFeedPacketMetadataResultStatus.BlockedItemUnlockPacket, result.Results[0].Status);
+		Assert.IsType<SmPet>(result.Results[1].Packet);
+		Assert.IsType<SmEmotion>(result.Results[2].Packet);
+		var systemMessage = Assert.IsType<SmSystemMessage>(result.Results[3].Packet);
+		Assert.Equal(1400618, systemMessage.MessageId);
+		Assert.Contains("system-message", result.Results[3].Notes);
+	}
+
+	[Fact]
 	public void Construct_NotFullContinueBuildsProgressPacketAndSkipsNonPacketOperations()
 	{
 		var bridge = new PetFeedPacketMetadataBridge();
@@ -126,5 +160,34 @@ public sealed class PetFeedPacketMetadataBridgeTests
 			metadata => Assert.Equal(SmPet.PacketOpCode, Assert.IsType<SmPet>(metadata.Packet).OpCode));
 		Assert.Equal(PetFeedPacketMetadataResultStatus.BlockedEmotionContext, result.Results[4].Status);
 		Assert.Equal(6, result.Results.Count(metadata => metadata.Status == PetFeedPacketMetadataResultStatus.SkippedNonPacketOperation));
+	}
+
+	[Fact]
+	public void Construct_RewardedFeedWithSuppliedPlayerContextBuildsEndFeedingEmotionMetadata()
+	{
+		var bridge = new PetFeedPacketMetadataBridge();
+		var plan = new PetFeedServiceOperationPlan(
+			PetFeedServiceOperationPlanStatus.Rewarded,
+			Evaluation: new PetFeedEvaluationResult(PetFoodType.Armor, IsLovedFood: false, Reward: new PetFeedReward(1003, 0)),
+			Operations:
+			[
+				new PetFeedServiceOperation(PetFeedServiceOperationKind.SendPetFeedProgressPacket, ItemObjectId: 5001, Count: 0),
+				new PetFeedServiceOperation(PetFeedServiceOperationKind.SendEndFeedingEmotion),
+				new PetFeedServiceOperation(PetFeedServiceOperationKind.SendPetRefeedPacket),
+			],
+			RemainingRequestedCount: 0,
+			RefeedTimeMilliseconds: 160000);
+
+		var result = bridge.Construct(new PetFeedPacketMetadataBridgeRequest(
+			plan,
+			FeedProgressData: 0x123450,
+			RefeedDelaySeconds: 60,
+			SupplementalContext: new PetFeedSupplementalPacketContext(PlayerObjectId: 7001)));
+
+		Assert.Equal(PetFeedPacketMetadataBridgeStatus.Constructed, result.Status);
+		Assert.IsType<SmPet>(result.Results[0].Packet);
+		Assert.IsType<SmEmotion>(result.Results[1].Packet);
+		Assert.IsType<SmPet>(result.Results[2].Packet);
+		Assert.All(result.Results, metadata => Assert.Equal(PetFeedPacketMetadataResultStatus.Constructed, metadata.Status));
 	}
 }
