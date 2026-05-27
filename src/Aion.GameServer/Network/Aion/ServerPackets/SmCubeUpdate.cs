@@ -76,6 +76,34 @@ public sealed class SmCubeUpdate : GameServerPacket
 		return new SmCubeUpdate(0, storageTypeOrdinal, 0, 0, 0, 0);
 	}
 
+	public static bool TryGetJavaStorageOrdinal(int storageTypeId, out int storageTypeOrdinal)
+	{
+		// Java parity: StorageType enum declaration order in model/items/storage/StorageType.java.
+		storageTypeOrdinal = storageTypeId switch
+		{
+			0 => 0,
+			1 => 1,
+			2 => 2,
+			3 => 3,
+			>= 32 and <= 43 => storageTypeId - 28,
+			>= 60 and <= 79 => storageTypeId - 44,
+			126 => 36,
+			127 => 37,
+			_ => -1,
+		};
+		return storageTypeOrdinal >= 0;
+	}
+
+	public static SmCubeUpdate ZeroSizeForJavaStorageId(int storageTypeId)
+	{
+		if (!TryGetJavaStorageOrdinal(storageTypeId, out var storageTypeOrdinal))
+		{
+			throw new ArgumentOutOfRangeException(nameof(storageTypeId), storageTypeId, "Java StorageType id is not modeled.");
+		}
+
+		return ZeroSizeForJavaStorageOrdinal(storageTypeOrdinal);
+	}
+
 	public static SmCubeUpdate LegionWarehouseSizeSnapshot(int itemsCount, int warehouseExpansions)
 	{
 		// Java parity: SM_CUBE_UPDATE.cubeSize(StorageType.LEGION_WAREHOUSE, Player) after callers

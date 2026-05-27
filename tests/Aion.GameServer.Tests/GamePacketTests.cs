@@ -2623,6 +2623,81 @@ public class GamePacketTests
 		Assert.Throws<ArgumentOutOfRangeException>(() => SmCubeUpdate.ZeroSizeForJavaStorageOrdinal(storageTypeOrdinal));
 	}
 
+	[Theory]
+	[InlineData(0, 0)]
+	[InlineData(1, 1)]
+	[InlineData(2, 2)]
+	[InlineData(3, 3)]
+	[InlineData(32, 4)]
+	[InlineData(33, 5)]
+	[InlineData(34, 6)]
+	[InlineData(35, 7)]
+	[InlineData(36, 8)]
+	[InlineData(37, 9)]
+	[InlineData(38, 10)]
+	[InlineData(39, 11)]
+	[InlineData(40, 12)]
+	[InlineData(41, 13)]
+	[InlineData(42, 14)]
+	[InlineData(43, 15)]
+	[InlineData(60, 16)]
+	[InlineData(61, 17)]
+	[InlineData(62, 18)]
+	[InlineData(63, 19)]
+	[InlineData(64, 20)]
+	[InlineData(65, 21)]
+	[InlineData(66, 22)]
+	[InlineData(67, 23)]
+	[InlineData(68, 24)]
+	[InlineData(69, 25)]
+	[InlineData(70, 26)]
+	[InlineData(71, 27)]
+	[InlineData(72, 28)]
+	[InlineData(73, 29)]
+	[InlineData(74, 30)]
+	[InlineData(75, 31)]
+	[InlineData(76, 32)]
+	[InlineData(77, 33)]
+	[InlineData(78, 34)]
+	[InlineData(79, 35)]
+	[InlineData(126, 36)]
+	[InlineData(127, 37)]
+	public void SmCubeUpdate_TryGetJavaStorageOrdinalMapsStorageIdsLikeJavaEnumOrder(int storageTypeId, int expectedOrdinal)
+	{
+		Assert.True(SmCubeUpdate.TryGetJavaStorageOrdinal(storageTypeId, out var storageTypeOrdinal));
+		Assert.Equal(expectedOrdinal, storageTypeOrdinal);
+	}
+
+	[Theory]
+	[InlineData(32, 4)]
+	[InlineData(60, 16)]
+	[InlineData(126, 36)]
+	[InlineData(127, 37)]
+	public void SmCubeUpdate_ZeroSizeForJavaStorageIdUsesOrdinalNotStorageId(int storageTypeId, int expectedOrdinal)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(SmCubeUpdate.ZeroSizeForJavaStorageId(storageTypeId)));
+
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(expectedOrdinal, (int)reader.ReadC());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Theory]
+	[InlineData(31)]
+	[InlineData(44)]
+	[InlineData(59)]
+	[InlineData(80)]
+	[InlineData(128)]
+	public void SmCubeUpdate_TryGetJavaStorageOrdinalRejectsUnknownStorageIds(int storageTypeId)
+	{
+		Assert.False(SmCubeUpdate.TryGetJavaStorageOrdinal(storageTypeId, out _));
+		Assert.Throws<ArgumentOutOfRangeException>(() => SmCubeUpdate.ZeroSizeForJavaStorageId(storageTypeId));
+	}
+
 	[Fact]
 	public void SmHouseOwnerInfo_WritesActiveHouseTownLevel()
 	{
