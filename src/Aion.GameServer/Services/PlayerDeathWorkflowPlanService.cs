@@ -47,7 +47,9 @@ public sealed record PlayerDeathWorkflowFacts(
 	bool LastAttackerMasterIsNpcOrPlayerSelf = false,
 	int PlayerLevel = 1,
 	bool HasNoDeathPenaltyEffect = false,
-	bool HasTeleportTaskAtResurrectionOptionsCallback = false);
+	bool HasTeleportTaskAtResurrectionOptionsCallback = false,
+	int LastAttackerObjectId = 0,
+	IReadOnlyList<int>? KnownCreatureObjectIds = null);
 
 public sealed record PlayerDeathWorkflowPlan(
 	PlayerDeathWorkflowStatus Status,
@@ -59,6 +61,7 @@ public sealed record PlayerDeathWorkflowPlan(
 	bool WouldCalculateExperienceLoss,
 	bool WouldScheduleResurrectionOptions,
 	PlayerDeathResurrectionOptionsPlan? ResurrectionOptionsPlan,
+	PlayerDeathEmotionFanoutPlan? DeathEmotionFanoutPlan,
 	bool IsLive,
 	IReadOnlyList<PlayerDeathWorkflowStep> Steps,
 	IReadOnlyList<string> UnsupportedJavaBehaviors,
@@ -181,6 +184,12 @@ public sealed class PlayerDeathWorkflowPlanService
 				? PlayerDeathResurrectionOptionsPlanService.CreatePlan(
 					player,
 					facts.HasTeleportTaskAtResurrectionOptionsCallback)
+				: null,
+			steps.Contains(PlayerDeathWorkflowStep.BroadcastDieEmotion)
+				? PlayerDeathEmotionFanoutPlanService.CreatePlan(
+					player.ObjectId,
+					facts.LastAttackerObjectId,
+					facts.KnownCreatureObjectIds ?? Array.Empty<int>())
 				: null,
 			IsLive: false,
 			steps.ToArray(),

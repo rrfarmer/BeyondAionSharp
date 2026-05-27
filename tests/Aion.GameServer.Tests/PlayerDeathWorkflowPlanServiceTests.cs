@@ -20,7 +20,9 @@ public sealed class PlayerDeathWorkflowPlanServiceTests
 		var facts = new PlayerDeathWorkflowFacts(
 			HasSummon: true,
 			LastAttackerMasterIsNpcOrPlayerSelf: true,
-			PlayerLevel: 10);
+			PlayerLevel: 10,
+			LastAttackerObjectId: LastAttackerObjectId,
+			KnownCreatureObjectIds: new[] { KnownCreatureOneObjectId, KnownCreatureTwoObjectId });
 
 		var plan = _service.CreatePlan(player, facts);
 
@@ -33,6 +35,11 @@ public sealed class PlayerDeathWorkflowPlanServiceTests
 		Assert.True(plan.WouldScheduleResurrectionOptions);
 		Assert.NotNull(plan.ResurrectionOptionsPlan);
 		Assert.Equal(PlayerDeathResurrectionOptionsPlanStatus.SendSmDie, plan.ResurrectionOptionsPlan.Status);
+		Assert.NotNull(plan.DeathEmotionFanoutPlan);
+		Assert.Equal(LastAttackerObjectId, plan.DeathEmotionFanoutPlan.EmotionTargetObjectId);
+		Assert.Equal(
+			new[] { KnownCreatureOneObjectId, KnownCreatureTwoObjectId },
+			plan.DeathEmotionFanoutPlan.KnownCreatureAggroCleanupIntents.Select(intent => intent.CreatureObjectId));
 		Assert.Equal(PlayerDeathStateTransitionStatus.FloatingCorpseApplied, plan.PlannedTransitionStatus);
 		AssertOrdered(
 			plan.Steps,
@@ -80,6 +87,7 @@ public sealed class PlayerDeathWorkflowPlanServiceTests
 		Assert.False(plan.WouldReleaseSummon);
 		Assert.False(plan.WouldScheduleResurrectionOptions);
 		Assert.Null(plan.ResurrectionOptionsPlan);
+		Assert.Null(plan.DeathEmotionFanoutPlan);
 		Assert.False(plan.WouldCalculateExperienceLoss);
 		AssertOrdered(
 			plan.Steps,
@@ -107,7 +115,8 @@ public sealed class PlayerDeathWorkflowPlanServiceTests
 		var facts = new PlayerDeathWorkflowFacts(
 			InstanceHandlerConsumesDeath: true,
 			LastAttackerMasterIsNpcOrPlayerSelf: true,
-			PlayerLevel: 10);
+			PlayerLevel: 10,
+			LastAttackerObjectId: PlayerObjectId);
 
 		var plan = _service.CreatePlan(player, facts);
 
@@ -115,6 +124,8 @@ public sealed class PlayerDeathWorkflowPlanServiceTests
 		Assert.True(plan.WouldScheduleResurrectionOptions);
 		Assert.NotNull(plan.ResurrectionOptionsPlan);
 		Assert.Equal(PlayerDeathResurrectionOptionsPlanStatus.SendSmDie, plan.ResurrectionOptionsPlan.Status);
+		Assert.NotNull(plan.DeathEmotionFanoutPlan);
+		Assert.Equal(0, plan.DeathEmotionFanoutPlan.EmotionTargetObjectId);
 		Assert.False(plan.WouldCalculateExperienceLoss);
 		AssertOrdered(
 			plan.Steps,
@@ -140,7 +151,8 @@ public sealed class PlayerDeathWorkflowPlanServiceTests
 			MapRegionConsumesDeath: true,
 			HasTeleportTaskAtResurrectionOptionsCallback: true,
 			LastAttackerMasterIsNpcOrPlayerSelf: true,
-			PlayerLevel: 10);
+			PlayerLevel: 10,
+			LastAttackerObjectId: LastAttackerObjectId);
 
 		var plan = _service.CreatePlan(player, facts);
 
@@ -148,6 +160,7 @@ public sealed class PlayerDeathWorkflowPlanServiceTests
 		Assert.True(plan.WouldScheduleResurrectionOptions);
 		Assert.NotNull(plan.ResurrectionOptionsPlan);
 		Assert.Equal(PlayerDeathResurrectionOptionsPlanStatus.SkipTeleportTask, plan.ResurrectionOptionsPlan.Status);
+		Assert.NotNull(plan.DeathEmotionFanoutPlan);
 		Assert.False(plan.WouldCalculateExperienceLoss);
 		AssertOrdered(
 			plan.Steps,
@@ -171,4 +184,7 @@ public sealed class PlayerDeathWorkflowPlanServiceTests
 	}
 
 	private const int PlayerObjectId = 1001;
+	private const int LastAttackerObjectId = 2002;
+	private const int KnownCreatureOneObjectId = 3003;
+	private const int KnownCreatureTwoObjectId = 3004;
 }

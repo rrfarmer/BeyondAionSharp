@@ -18,6 +18,7 @@ public sealed class PlayerDeathWorkflowAdapterServiceTests
 		Assert.Equal(PlayerDeathWorkflowAdapterStatus.DisabledPlanned, result.Status);
 		Assert.Equal(PlayerDeathWorkflowStatus.PlannedFullPlayerDeath, result.Plan.Status);
 		Assert.NotNull(result.Plan.ResurrectionOptionsPlan);
+		Assert.NotNull(result.Plan.DeathEmotionFanoutPlan);
 		Assert.Null(result.StateTransitionResult);
 		Assert.False(result.MutatedPlayerState);
 		Assert.False(result.SentPackets);
@@ -36,7 +37,9 @@ public sealed class PlayerDeathWorkflowAdapterServiceTests
 		var facts = new PlayerDeathWorkflowFacts(
 			HasSummon: true,
 			LastAttackerMasterIsNpcOrPlayerSelf: true,
-			PlayerLevel: 10);
+			PlayerLevel: 10,
+			LastAttackerObjectId: LastAttackerObjectId,
+			KnownCreatureObjectIds: new[] { KnownCreatureObjectId });
 
 		var result = _service.Apply(new PlayerDeathWorkflowAdapterRequest(
 			player,
@@ -58,6 +61,9 @@ public sealed class PlayerDeathWorkflowAdapterServiceTests
 		Assert.Contains(PlayerDeathWorkflowStep.ScheduleShowResurrectionOptions, result.Plan.Steps);
 		Assert.NotNull(result.Plan.ResurrectionOptionsPlan);
 		Assert.Equal(PlayerDeathResurrectionOptionsPlanStatus.SendSmDie, result.Plan.ResurrectionOptionsPlan.Status);
+		Assert.NotNull(result.Plan.DeathEmotionFanoutPlan);
+		Assert.Equal(LastAttackerObjectId, result.Plan.DeathEmotionFanoutPlan.EmotionTargetObjectId);
+		Assert.Equal(KnownCreatureObjectId, Assert.Single(result.Plan.DeathEmotionFanoutPlan.KnownCreatureAggroCleanupIntents).CreatureObjectId);
 		Assert.True(result.Plan.WouldCalculateExperienceLoss);
 		Assert.Contains("state transition applied", result.JavaSource);
 	}
@@ -82,6 +88,7 @@ public sealed class PlayerDeathWorkflowAdapterServiceTests
 		Assert.Equal(PlayerDeathWorkflowStatus.ReturnedAfterDuelOpponentKill, result.Plan.Status);
 		Assert.Null(result.StateTransitionResult);
 		Assert.Null(result.Plan.ResurrectionOptionsPlan);
+		Assert.Null(result.Plan.DeathEmotionFanoutPlan);
 		Assert.False(result.MutatedPlayerState);
 		Assert.True(result.IsLive);
 		Assert.True(player.IsInState(PlayerCreatureState.Flying));
@@ -104,6 +111,7 @@ public sealed class PlayerDeathWorkflowAdapterServiceTests
 		Assert.Equal(PlayerDeathWorkflowStatus.ReturnedAfterInstanceHandler, result.Plan.Status);
 		Assert.NotNull(result.StateTransitionResult);
 		Assert.NotNull(result.Plan.ResurrectionOptionsPlan);
+		Assert.NotNull(result.Plan.DeathEmotionFanoutPlan);
 		Assert.True(result.MutatedPlayerState);
 		Assert.True(player.IsInState(PlayerCreatureState.FloatingCorpse));
 		Assert.Contains(PlayerDeathWorkflowStep.ReturnAfterInstanceHandler, result.Plan.Steps);
@@ -124,4 +132,6 @@ public sealed class PlayerDeathWorkflowAdapterServiceTests
 	}
 
 	private const int PlayerObjectId = 1001;
+	private const int LastAttackerObjectId = 2002;
+	private const int KnownCreatureObjectId = 3003;
 }
