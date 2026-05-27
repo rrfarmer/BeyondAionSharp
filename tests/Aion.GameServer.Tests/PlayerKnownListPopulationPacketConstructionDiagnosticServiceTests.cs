@@ -343,6 +343,96 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 	}
 
 	[Fact]
+	public void Summarize_PetVisibilityPacketConstructionMetadataCountsDependentPetPackets()
+	{
+		var population = CreatePopulationService();
+		var diagnostics = new PlayerKnownListPopulationPacketConstructionDiagnosticService();
+		var ownerViewingCandidatePet = new PlayerKnownListPetVisibilityOrderRequest(
+			PlayerKnownListPetVisibilityTransition.See,
+			OwnerPlayerObjectId,
+			NearPlayerObjectId,
+			PetObjectId,
+			MasterHasPet: true,
+			PetAlreadyKnownByViewer: true,
+			MasterVisibleToViewer: true,
+			MasterIsFlying: true);
+		var plan = population.Plan(CreateRequest(
+			[
+				new PlayerKnownListPopulationCandidateFact(
+					NearPlayerObjectId,
+					X: 10,
+					Y: 0,
+					Z: 0,
+					OwnerCanSeeCandidate: true,
+					CandidateCanSeeOwner: false,
+					OwnerViewingCandidatePetVisibilityRequest: ownerViewingCandidatePet),
+			],
+			petSpawnSnapshotsByPetObjectId: new Dictionary<int, SmPetSpawnSnapshot>
+			{
+				[PetObjectId] = CreatePetSpawnSnapshot(),
+			}));
+
+		var diagnostic = diagnostics.Summarize(plan);
+
+		Assert.Equal(PlayerKnownListPopulationPacketConstructionDiagnosticStatus.Complete, diagnostic.Status);
+		Assert.Equal(1, diagnostic.PetVisibilityPacketConstructionPlanCount);
+		Assert.Equal(1, diagnostic.ConstructedPetVisibilityPacketConstructionPlanCount);
+		Assert.Equal(0, diagnostic.PartiallyConstructedPetVisibilityPacketConstructionPlanCount);
+		Assert.Equal(2, diagnostic.ConstructedPetPacketCount);
+		Assert.Equal(0, diagnostic.BlockedPetPacketCount);
+		var candidateDiagnostic = diagnostic.CandidateDiagnostics[0];
+		var petResult = Assert.Single(candidateDiagnostic.PetVisibilityPacketConstructionResults);
+		Assert.Equal(PlayerKnownListPopulationPacketConstructionFactPlanDirection.OwnerViewingCandidate, petResult.Direction);
+		Assert.Equal(PlayerKnownListPetVisibilityOrderPlanStatus.Planned, petResult.VisibilityPlanStatus);
+		Assert.Equal(PlayerKnownListPetVisibilityPacketConstructionStatus.Constructed, petResult.PacketConstructionStatus);
+		Assert.Equal(2, petResult.DescriptorCount);
+		Assert.Equal(2, petResult.ConstructedPacketCount);
+		Assert.Equal(0, petResult.BlockedPacketCount);
+		Assert.Equal(PlayerKnownListPopulationPacketConstructionDiagnosticStatus.NoPacketConstructionMetadata, diagnostic.CandidateDiagnostics[1].Status);
+	}
+
+	[Fact]
+	public void Summarize_MissingPetSpawnSnapshotSurfacesPetPacketBlocker()
+	{
+		var population = CreatePopulationService();
+		var diagnostics = new PlayerKnownListPopulationPacketConstructionDiagnosticService();
+		var ownerViewingCandidatePet = new PlayerKnownListPetVisibilityOrderRequest(
+			PlayerKnownListPetVisibilityTransition.See,
+			OwnerPlayerObjectId,
+			NearPlayerObjectId,
+			PetObjectId,
+			MasterHasPet: true,
+			PetAlreadyKnownByViewer: false,
+			MasterVisibleToViewer: true,
+			MasterIsFlying: true);
+		var plan = population.Plan(CreateRequest(
+			[
+				new PlayerKnownListPopulationCandidateFact(
+					NearPlayerObjectId,
+					X: 10,
+					Y: 0,
+					Z: 0,
+					OwnerCanSeeCandidate: true,
+					CandidateCanSeeOwner: false,
+					OwnerViewingCandidatePetVisibilityRequest: ownerViewingCandidatePet),
+			]));
+
+		var diagnostic = diagnostics.Summarize(plan);
+
+		Assert.Equal(PlayerKnownListPopulationPacketConstructionDiagnosticStatus.Partial, diagnostic.Status);
+		Assert.Equal(1, diagnostic.PetVisibilityPacketConstructionPlanCount);
+		Assert.Equal(0, diagnostic.ConstructedPetVisibilityPacketConstructionPlanCount);
+		Assert.Equal(1, diagnostic.PartiallyConstructedPetVisibilityPacketConstructionPlanCount);
+		Assert.Equal(1, diagnostic.ConstructedPetPacketCount);
+		Assert.Equal(1, diagnostic.BlockedPetPacketCount);
+		var petResult = Assert.Single(diagnostic.CandidateDiagnostics[0].PetVisibilityPacketConstructionResults);
+		Assert.Equal(PlayerKnownListPetVisibilityPacketConstructionStatus.PartiallyConstructed, petResult.PacketConstructionStatus);
+		Assert.Equal(1, petResult.ConstructedPacketCount);
+		Assert.Equal(1, petResult.BlockedPacketCount);
+		Assert.Contains("Pet/PetCommonData", petResult.Notes);
+	}
+
+	[Fact]
 	public void Summarize_NoPacketConstructionMetadataStillReportsPopulationShape()
 	{
 		var population = CreatePopulationService();
@@ -364,6 +454,7 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 			Assert.Empty(candidate.FactPlans);
 			Assert.Empty(candidate.PacketConstructionFactSources);
 			Assert.Empty(candidate.PacketConstructionResults);
+			Assert.Empty(candidate.PetVisibilityPacketConstructionResults);
 		});
 	}
 
@@ -377,7 +468,8 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 		IReadOnlyList<PlayerKnownListPopulationCandidateFact> candidateFacts,
 		IReadOnlyList<int>? regionCandidateIds = null,
 		IReadOnlyDictionary<int, PlayerKnownListOperationSideEffectPacketConstructionFacts>? packetConstructionFactsByPlayerObjectId = null,
-		ItemTemplateTable? itemTemplates = null) =>
+		ItemTemplateTable? itemTemplates = null,
+		IReadOnlyDictionary<int, SmPetSpawnSnapshot>? petSpawnSnapshotsByPetObjectId = null) =>
 		new(
 			CreateRegionSnapshot(regionCandidateIds ?? [NearPlayerObjectId, FarPlayerObjectId]),
 			new PlayerKnownListVisibilityRangeObject(
@@ -389,7 +481,8 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 				Z: 0),
 			candidateFacts,
 			PacketConstructionFactsByPlayerObjectId: packetConstructionFactsByPlayerObjectId,
-			ItemTemplates: itemTemplates);
+			ItemTemplates: itemTemplates,
+			PetSpawnSnapshotsByPetObjectId: petSpawnSnapshotsByPetObjectId);
 
 	private static PlayerKnownListRegionSnapshot CreateRegionSnapshot(IReadOnlyList<int> candidateIds) =>
 		new(
@@ -472,6 +565,21 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 			"com.aionemu.gameserver.controllers.effect.EffectController.getAbnormalEffects",
 			"Resolved from supplied abnormal-effect snapshot.");
 
+	private static SmPetSpawnSnapshot CreatePetSpawnSnapshot() =>
+		new(
+			Name: "Tog",
+			TemplateId: 900001,
+			ObjectId: PetObjectId,
+			X: 10,
+			Y: 20,
+			Z: 30,
+			TargetX: 11,
+			TargetY: 21,
+			TargetZ: 31,
+			Heading: 90,
+			MasterObjectId: NearPlayerObjectId,
+			Decoration: 12345);
+
 	private static SmAbnormalEffectEntry CreateAbnormalEffect(
 		int skillId,
 		int remainingTime) =>
@@ -488,6 +596,7 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 	private const int FarPlayerObjectId = 9003;
 	private const int MissingFactPlayerObjectId = 9004;
 	private const int UnrelatedPacketFactPlayerObjectId = 9005;
+	private const int PetObjectId = 9102;
 	private const int RideNpcId = 730001;
 	private const int MainHandSwordId = 100000001;
 	private const long MainHandSlot = 1L;

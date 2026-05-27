@@ -30,6 +30,17 @@ public sealed record PlayerKnownListPopulationPacketConstructionResultDiagnostic
 	int BlockedPacketCount,
 	string Notes);
 
+public sealed record PlayerKnownListPopulationPetVisibilityPacketConstructionDiagnostic(
+	int CandidatePlayerObjectId,
+	int CandidateOrder,
+	PlayerKnownListPopulationPacketConstructionFactPlanDirection Direction,
+	PlayerKnownListPetVisibilityOrderPlanStatus VisibilityPlanStatus,
+	PlayerKnownListPetVisibilityPacketConstructionStatus PacketConstructionStatus,
+	int DescriptorCount,
+	int ConstructedPacketCount,
+	int BlockedPacketCount,
+	string Notes);
+
 public sealed record PlayerKnownListPopulationPacketConstructionCandidateDiagnostic(
 	int CandidatePlayerObjectId,
 	int CandidateOrder,
@@ -37,6 +48,7 @@ public sealed record PlayerKnownListPopulationPacketConstructionCandidateDiagnos
 	IReadOnlyList<PlayerKnownListPopulationFactPlanDiagnostic> FactPlans,
 	IReadOnlyList<PlayerKnownListPopulationPacketConstructionFactSource> PacketConstructionFactSources,
 	IReadOnlyList<PlayerKnownListPopulationPacketConstructionResultDiagnostic> PacketConstructionResults,
+	IReadOnlyList<PlayerKnownListPopulationPetVisibilityPacketConstructionDiagnostic> PetVisibilityPacketConstructionResults,
 	bool HasPacketConstructionPlan);
 
 public sealed record PlayerKnownListPopulationPacketConstructionDiagnosticPlan(
@@ -72,6 +84,12 @@ public sealed record PlayerKnownListPopulationPacketConstructionDiagnosticPlan(
 	int BlockedPlayerPacketCount,
 	IReadOnlyDictionary<PlayerKnownListPlayerSideEffectPacketConstructionResultStatus, int> PlayerPacketResultStatusCountsByKind,
 	IReadOnlyDictionary<PlayerKnownListPlayerSideEffectKind, int> ConstructedPacketCountsByKind,
+	int PetVisibilityPacketConstructionPlanCount,
+	int ConstructedPetVisibilityPacketConstructionPlanCount,
+	int PartiallyConstructedPetVisibilityPacketConstructionPlanCount,
+	int NoDescriptorPetVisibilityPacketConstructionPlanCount,
+	int ConstructedPetPacketCount,
+	int BlockedPetPacketCount,
 	PlayerKnownListPopulationPacketConstructionDiagnosticStatus Status,
 	bool ExecutesLivePackets,
 	bool IsLive,
@@ -103,8 +121,13 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 		var resultDiagnostics = candidateDiagnostics
 			.SelectMany(candidate => candidate.PacketConstructionResults)
 			.ToArray();
+		var petResultDiagnostics = candidateDiagnostics
+			.SelectMany(candidate => candidate.PetVisibilityPacketConstructionResults)
+			.ToArray();
 		var constructedPlayerPacketCount = resultDiagnostics.Sum(result => result.ConstructedPacketCount);
 		var blockedPlayerPacketCount = resultDiagnostics.Sum(result => result.BlockedPacketCount);
+		var constructedPetPacketCount = petResultDiagnostics.Sum(result => result.ConstructedPacketCount);
+		var blockedPetPacketCount = petResultDiagnostics.Sum(result => result.BlockedPacketCount);
 
 		return new PlayerKnownListPopulationPacketConstructionDiagnosticPlan(
 			populationPlan.OwnerPlayerObjectId,
@@ -145,11 +168,25 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 			CountByKind(playerPacketResults
 				.Where(result => result.Status == PlayerKnownListPlayerSideEffectPacketConstructionResultStatus.Constructed)
 				.Select(result => result.Descriptor.Kind)),
-			CreateOverallStatus(factPlans, packetConstructionPlans, resultDiagnostics, constructedPlayerPacketCount, blockedPlayerPacketCount),
+			petResultDiagnostics.Length,
+			petResultDiagnostics.Count(result => result.PacketConstructionStatus == PlayerKnownListPetVisibilityPacketConstructionStatus.Constructed),
+			petResultDiagnostics.Count(result => result.PacketConstructionStatus == PlayerKnownListPetVisibilityPacketConstructionStatus.PartiallyConstructed),
+			petResultDiagnostics.Count(result => result.PacketConstructionStatus == PlayerKnownListPetVisibilityPacketConstructionStatus.NoDescriptors),
+			constructedPetPacketCount,
+			blockedPetPacketCount,
+			CreateOverallStatus(
+				factPlans,
+				packetConstructionPlans,
+				resultDiagnostics,
+				constructedPlayerPacketCount,
+				blockedPlayerPacketCount,
+				petResultDiagnostics,
+				constructedPetPacketCount,
+				blockedPetPacketCount),
 			ExecutesLivePackets: false,
 			IsLive: false,
 			IsJavaControllerParity: false,
-			"Disabled diagnostic projection for KnownList.findVisibleObjects and PlayerController packet construction metadata; does not execute controller callbacks, mutate known-list state, or send packets.");
+			"Disabled diagnostic projection for KnownList.findVisibleObjects and PlayerController player/pet packet construction metadata; does not execute controller callbacks, mutate known-list state, or send packets.");
 	}
 
 	private static PlayerKnownListPopulationPacketConstructionCandidateDiagnostic CreateCandidateDiagnostic(
@@ -173,14 +210,22 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 		var packetConstructionResultDiagnostics = (candidatePlan.SideEffectPacketConstructionPlan?.Results ?? Array.Empty<PlayerKnownListOperationSideEffectPacketConstructionResult>())
 			.Select(result => CreatePacketConstructionResultDiagnostic(candidatePlan, candidateOrder, result))
 			.ToArray();
+		var petVisibilityPacketConstructionResultDiagnostics = (candidatePlan.PetVisibilityPacketConstructionPlans ?? Array.Empty<PlayerKnownListPopulationPetVisibilityPacketConstructionAttachment>())
+			.Select(result => CreatePetVisibilityPacketConstructionResultDiagnostic(candidatePlan, candidateOrder, result))
+			.ToArray();
 
 		return new PlayerKnownListPopulationPacketConstructionCandidateDiagnostic(
 			candidatePlan.CandidatePlayerObjectId,
 			candidateOrder,
-			CreateCandidateStatus(factPlanDiagnostics, candidatePlan.SideEffectPacketConstructionPlan, packetConstructionResultDiagnostics),
+			CreateCandidateStatus(
+				factPlanDiagnostics,
+				candidatePlan.SideEffectPacketConstructionPlan,
+				packetConstructionResultDiagnostics,
+				petVisibilityPacketConstructionResultDiagnostics),
 			factPlanDiagnostics,
 			factSources,
 			packetConstructionResultDiagnostics,
+			petVisibilityPacketConstructionResultDiagnostics,
 			candidatePlan.SideEffectPacketConstructionPlan is not null);
 	}
 
@@ -201,24 +246,46 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 			result.Notes);
 	}
 
+	private static PlayerKnownListPopulationPetVisibilityPacketConstructionDiagnostic CreatePetVisibilityPacketConstructionResultDiagnostic(
+		PlayerKnownListPopulationCandidatePlan candidatePlan,
+		int candidateOrder,
+		PlayerKnownListPopulationPetVisibilityPacketConstructionAttachment result)
+	{
+		var packetResults = result.PacketConstructionPlan.Results;
+		return new PlayerKnownListPopulationPetVisibilityPacketConstructionDiagnostic(
+			candidatePlan.CandidatePlayerObjectId,
+			candidateOrder,
+			result.Direction,
+			result.VisibilityPlan.Status,
+			result.PacketConstructionPlan.Status,
+			result.VisibilityPlan.Descriptors.Count,
+			packetResults.Count(packet => packet.Status == PlayerKnownListPetVisibilityPacketConstructionResultStatus.Constructed),
+			packetResults.Count(packet => packet.Status != PlayerKnownListPetVisibilityPacketConstructionResultStatus.Constructed),
+			result.PacketConstructionPlan.Results.FirstOrDefault(packet => packet.Status != PlayerKnownListPetVisibilityPacketConstructionResultStatus.Constructed)?.Notes
+				?? result.VisibilityPlan.Notes);
+	}
+
 	private static PlayerKnownListPopulationPacketConstructionDiagnosticStatus CreateCandidateStatus(
 		IReadOnlyList<PlayerKnownListPopulationFactPlanDiagnostic> factPlans,
 		PlayerKnownListOperationSideEffectPacketConstructionPlan? packetConstructionPlan,
-		IReadOnlyList<PlayerKnownListPopulationPacketConstructionResultDiagnostic> resultDiagnostics)
+		IReadOnlyList<PlayerKnownListPopulationPacketConstructionResultDiagnostic> resultDiagnostics,
+		IReadOnlyList<PlayerKnownListPopulationPetVisibilityPacketConstructionDiagnostic> petResultDiagnostics)
 	{
-		if (factPlans.Count == 0 && packetConstructionPlan is null)
+		if (factPlans.Count == 0 && packetConstructionPlan is null && petResultDiagnostics.Count == 0)
 			return PlayerKnownListPopulationPacketConstructionDiagnosticStatus.NoPacketConstructionMetadata;
 
 		var hasBlockingOnlyMetadata =
-			factPlans.Count > 0
+			(factPlans.Count > 0 || petResultDiagnostics.Count > 0)
 			&& factPlans.All(factPlan => factPlan.Status == PlayerKnownListPacketConstructionFactPlanStatus.Blocked)
-			&& resultDiagnostics.All(result => result.Status != PlayerKnownListOperationSideEffectPacketConstructionResultStatus.Constructed);
+			&& resultDiagnostics.All(result => result.Status != PlayerKnownListOperationSideEffectPacketConstructionResultStatus.Constructed)
+			&& petResultDiagnostics.All(result => result.ConstructedPacketCount == 0 && result.BlockedPacketCount > 0);
 		if (hasBlockingOnlyMetadata)
 			return PlayerKnownListPopulationPacketConstructionDiagnosticStatus.Blocked;
 
 		if (factPlans.Any(factPlan => factPlan.Status == PlayerKnownListPacketConstructionFactPlanStatus.Blocked)
 			|| packetConstructionPlan?.Status == PlayerKnownListOperationSideEffectPacketConstructionStatus.PartiallyConstructed
-			|| resultDiagnostics.Any(result => result.BlockedPacketCount > 0))
+			|| resultDiagnostics.Any(result => result.BlockedPacketCount > 0)
+			|| petResultDiagnostics.Any(result => result.BlockedPacketCount > 0))
 		{
 			return PlayerKnownListPopulationPacketConstructionDiagnosticStatus.Partial;
 		}
@@ -231,16 +298,22 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 		IReadOnlyList<PlayerKnownListOperationSideEffectPacketConstructionPlan> packetConstructionPlans,
 		IReadOnlyList<PlayerKnownListPopulationPacketConstructionResultDiagnostic> resultDiagnostics,
 		int constructedPlayerPacketCount,
-		int blockedPlayerPacketCount)
+		int blockedPlayerPacketCount,
+		IReadOnlyList<PlayerKnownListPopulationPetVisibilityPacketConstructionDiagnostic> petResultDiagnostics,
+		int constructedPetPacketCount,
+		int blockedPetPacketCount)
 	{
-		if (factPlans.Count == 0 && packetConstructionPlans.Count == 0)
+		if (factPlans.Count == 0 && packetConstructionPlans.Count == 0 && petResultDiagnostics.Count == 0)
 			return PlayerKnownListPopulationPacketConstructionDiagnosticStatus.NoPacketConstructionMetadata;
 
 		var hasConstructedMetadata = constructedPlayerPacketCount > 0
+			|| constructedPetPacketCount > 0
 			|| packetConstructionPlans.Any(plan => plan.Status == PlayerKnownListOperationSideEffectPacketConstructionStatus.Constructed)
 			|| factPlans.Any(factPlan => factPlan.Status == PlayerKnownListPacketConstructionFactPlanStatus.Complete);
 		var hasBlockedMetadata = blockedPlayerPacketCount > 0
+			|| blockedPetPacketCount > 0
 			|| resultDiagnostics.Any(result => result.Status != PlayerKnownListOperationSideEffectPacketConstructionResultStatus.Constructed)
+			|| petResultDiagnostics.Any(result => result.PacketConstructionStatus == PlayerKnownListPetVisibilityPacketConstructionStatus.PartiallyConstructed)
 			|| factPlans.Any(factPlan => factPlan.Status == PlayerKnownListPacketConstructionFactPlanStatus.Blocked)
 			|| packetConstructionPlans.Any(plan => plan.Status == PlayerKnownListOperationSideEffectPacketConstructionStatus.PartiallyConstructed);
 

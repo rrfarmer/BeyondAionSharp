@@ -1,4 +1,5 @@
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Network.Aion.ServerPackets;
 
 namespace Aion.GameServer.Services;
 
@@ -17,7 +18,9 @@ public sealed record PlayerKnownListPopulationCandidateFact(
 	PlayerKnownListOperationSideEffectDirectionFacts? OwnerViewingCandidateSideEffectFacts = null,
 	PlayerKnownListOperationSideEffectDirectionFacts? CandidateViewingOwnerSideEffectFacts = null,
 	PlayerKnownListPacketConstructionFactPlanRequest? OwnerViewingCandidatePacketFactPlanRequest = null,
-	PlayerKnownListPacketConstructionFactPlanRequest? CandidateViewingOwnerPacketFactPlanRequest = null);
+	PlayerKnownListPacketConstructionFactPlanRequest? CandidateViewingOwnerPacketFactPlanRequest = null,
+	PlayerKnownListPetVisibilityOrderRequest? OwnerViewingCandidatePetVisibilityRequest = null,
+	PlayerKnownListPetVisibilityOrderRequest? CandidateViewingOwnerPetVisibilityRequest = null);
 
 public enum PlayerKnownListPopulationPacketConstructionFactPlanDirection
 {
@@ -43,6 +46,11 @@ public sealed record PlayerKnownListPopulationPacketConstructionFactSource(
 	PlayerKnownListPopulationPacketConstructionFactPlanDirection? GeneratedFromDirection,
 	string Notes);
 
+public sealed record PlayerKnownListPopulationPetVisibilityPacketConstructionAttachment(
+	PlayerKnownListPopulationPacketConstructionFactPlanDirection Direction,
+	PlayerKnownListPetVisibilityOrderPlan VisibilityPlan,
+	PlayerKnownListPetVisibilityPacketConstructionPlan PacketConstructionPlan);
+
 public sealed record PlayerKnownListPopulationPlanRequest(
 	PlayerKnownListRegionSnapshot RegionSnapshot,
 	PlayerKnownListVisibilityRangeObject Owner,
@@ -50,7 +58,8 @@ public sealed record PlayerKnownListPopulationPlanRequest(
 	bool ExecuteMembershipMutation = false,
 	IReadOnlyDictionary<int, PlayerKnownListOperationSideEffectPacketConstructionFacts>? PacketConstructionFactsByPlayerObjectId = null,
 	ItemTemplateTable? ItemTemplates = null,
-	IReadOnlyDictionary<int, IReadOnlyList<PlayerKnownListAbnormalEffectSnapshotEntry>>? AbnormalEffectSnapshotsByPlayerObjectId = null);
+	IReadOnlyDictionary<int, IReadOnlyList<PlayerKnownListAbnormalEffectSnapshotEntry>>? AbnormalEffectSnapshotsByPlayerObjectId = null,
+	IReadOnlyDictionary<int, SmPetSpawnSnapshot>? PetSpawnSnapshotsByPetObjectId = null);
 
 public sealed record PlayerKnownListPopulationCandidatePlan(
 	int CandidatePlayerObjectId,
@@ -61,7 +70,8 @@ public sealed record PlayerKnownListPopulationCandidatePlan(
 	PlayerKnownListOperationSideEffectAttachmentPlan? SideEffectAttachmentPlan = null,
 	PlayerKnownListOperationSideEffectPacketConstructionPlan? SideEffectPacketConstructionPlan = null,
 	IReadOnlyList<PlayerKnownListPopulationPacketConstructionFactPlanAttachment>? SideEffectFactPlans = null,
-	IReadOnlyList<PlayerKnownListPopulationPacketConstructionFactSource>? PacketConstructionFactSources = null);
+	IReadOnlyList<PlayerKnownListPopulationPacketConstructionFactSource>? PacketConstructionFactSources = null,
+	IReadOnlyList<PlayerKnownListPopulationPetVisibilityPacketConstructionAttachment>? PetVisibilityPacketConstructionPlans = null);
 
 internal sealed record PlayerKnownListPopulationPacketConstructionFactMergeResult(
 	IReadOnlyDictionary<int, PlayerKnownListOperationSideEffectPacketConstructionFacts> FactsByPlayerObjectId,
@@ -90,6 +100,8 @@ public sealed class PlayerKnownListPopulationPlanService
 	private readonly PlayerKnownListPacketConstructionFactPlanService _factPlanService;
 	private readonly PlayerKnownListAttackSpeedFactPlanRequestAdapterService _attackSpeedFactPlanRequestAdapterService;
 	private readonly PlayerKnownListAbnormalEffectFactPlanRequestAdapterService _abnormalEffectFactPlanRequestAdapterService;
+	private readonly PlayerKnownListPetVisibilityOrderPlanService _petVisibilityOrderPlanService;
+	private readonly PlayerKnownListPetVisibilityPacketConstructionService _petVisibilityPacketConstructionService;
 
 	public PlayerKnownListPopulationPlanService(
 		PlayerKnownListVisibilityRangePlanService? visibilityRangePlanService = null,
@@ -98,7 +110,9 @@ public sealed class PlayerKnownListPopulationPlanService
 		PlayerKnownListOperationSideEffectPacketConstructionService? sideEffectPacketConstructionService = null,
 		PlayerKnownListPacketConstructionFactPlanService? factPlanService = null,
 		PlayerKnownListAttackSpeedFactPlanRequestAdapterService? attackSpeedFactPlanRequestAdapterService = null,
-		PlayerKnownListAbnormalEffectFactPlanRequestAdapterService? abnormalEffectFactPlanRequestAdapterService = null)
+		PlayerKnownListAbnormalEffectFactPlanRequestAdapterService? abnormalEffectFactPlanRequestAdapterService = null,
+		PlayerKnownListPetVisibilityOrderPlanService? petVisibilityOrderPlanService = null,
+		PlayerKnownListPetVisibilityPacketConstructionService? petVisibilityPacketConstructionService = null)
 	{
 		_visibilityRangePlanService = visibilityRangePlanService ?? new PlayerKnownListVisibilityRangePlanService();
 		_membershipAdapterService = membershipAdapterService ?? new PlayerKnownListTwoWayMembershipAdapterService(new PlayerKnownListMembershipService());
@@ -107,6 +121,8 @@ public sealed class PlayerKnownListPopulationPlanService
 		_factPlanService = factPlanService ?? new PlayerKnownListPacketConstructionFactPlanService();
 		_attackSpeedFactPlanRequestAdapterService = attackSpeedFactPlanRequestAdapterService ?? new PlayerKnownListAttackSpeedFactPlanRequestAdapterService();
 		_abnormalEffectFactPlanRequestAdapterService = abnormalEffectFactPlanRequestAdapterService ?? new PlayerKnownListAbnormalEffectFactPlanRequestAdapterService();
+		_petVisibilityOrderPlanService = petVisibilityOrderPlanService ?? new PlayerKnownListPetVisibilityOrderPlanService();
+		_petVisibilityPacketConstructionService = petVisibilityPacketConstructionService ?? new PlayerKnownListPetVisibilityPacketConstructionService();
 	}
 
 	public PlayerKnownListPopulationPlan Plan(PlayerKnownListPopulationPlanRequest request)
@@ -169,6 +185,9 @@ public sealed class PlayerKnownListPopulationPlanService
 				: _sideEffectPacketConstructionService.Construct(new PlayerKnownListOperationSideEffectPacketConstructionRequest(
 					sideEffectAttachmentPlan,
 					packetConstructionFacts.FactsByPlayerObjectId));
+			var petVisibilityPacketConstructionPlans = CreatePetVisibilityPacketConstructionPlans(
+				fact,
+				request.PetSpawnSnapshotsByPetObjectId);
 
 			candidatePlans.Add(new PlayerKnownListPopulationCandidatePlan(
 				candidateId,
@@ -179,7 +198,8 @@ public sealed class PlayerKnownListPopulationPlanService
 				sideEffectAttachmentPlan,
 				sideEffectPacketConstructionPlan,
 				sideEffectFactPlans,
-				packetConstructionFacts?.Sources));
+				packetConstructionFacts?.Sources,
+				petVisibilityPacketConstructionPlans));
 		}
 
 		return new PlayerKnownListPopulationPlan(
@@ -195,6 +215,49 @@ public sealed class PlayerKnownListPopulationPlanService
 			IsLive: false,
 			AttachedControllerSideEffectDescriptors: candidatePlans.Any(plan => plan.SideEffectAttachmentPlan?.AttachedSideEffects.Count > 0),
 			ConstructedControllerSideEffectPackets: candidatePlans.Any(plan => plan.SideEffectPacketConstructionPlan?.Results.Count > 0));
+	}
+
+	private IReadOnlyList<PlayerKnownListPopulationPetVisibilityPacketConstructionAttachment> CreatePetVisibilityPacketConstructionPlans(
+		PlayerKnownListPopulationCandidateFact fact,
+		IReadOnlyDictionary<int, SmPetSpawnSnapshot>? petSpawnSnapshotsByPetObjectId)
+	{
+		var attachments = new List<PlayerKnownListPopulationPetVisibilityPacketConstructionAttachment>();
+		AddPetVisibilityPacketConstructionPlan(
+			attachments,
+			PlayerKnownListPopulationPacketConstructionFactPlanDirection.OwnerViewingCandidate,
+			fact.OwnerViewingCandidatePetVisibilityRequest,
+			petSpawnSnapshotsByPetObjectId);
+		AddPetVisibilityPacketConstructionPlan(
+			attachments,
+			PlayerKnownListPopulationPacketConstructionFactPlanDirection.CandidateViewingOwner,
+			fact.CandidateViewingOwnerPetVisibilityRequest,
+			petSpawnSnapshotsByPetObjectId);
+		return attachments;
+	}
+
+	private void AddPetVisibilityPacketConstructionPlan(
+		List<PlayerKnownListPopulationPetVisibilityPacketConstructionAttachment> attachments,
+		PlayerKnownListPopulationPacketConstructionFactPlanDirection direction,
+		PlayerKnownListPetVisibilityOrderRequest? request,
+		IReadOnlyDictionary<int, SmPetSpawnSnapshot>? petSpawnSnapshotsByPetObjectId)
+	{
+		if (request is null)
+			return;
+
+		var visibilityPlan = _petVisibilityOrderPlanService.Plan(request);
+		var spawnSnapshot = visibilityPlan.PetObjectId is { } petObjectId
+			&& petSpawnSnapshotsByPetObjectId is not null
+			&& petSpawnSnapshotsByPetObjectId.TryGetValue(petObjectId, out var snapshot)
+				? snapshot
+				: null;
+		var constructionPlan = _petVisibilityPacketConstructionService.Construct(
+			new PlayerKnownListPetVisibilityPacketConstructionRequest(
+				visibilityPlan,
+				spawnSnapshot));
+		attachments.Add(new PlayerKnownListPopulationPetVisibilityPacketConstructionAttachment(
+			direction,
+			visibilityPlan,
+			constructionPlan));
 	}
 
 	private IReadOnlyList<PlayerKnownListPopulationPacketConstructionFactPlanAttachment> CreateFactPlans(
