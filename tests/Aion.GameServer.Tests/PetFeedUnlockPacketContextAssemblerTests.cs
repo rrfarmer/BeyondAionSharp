@@ -95,13 +95,32 @@ public sealed class PetFeedUnlockPacketContextAssemblerTests
 		Assert.Contains("template", result.Notes);
 	}
 
-	[Fact]
-	public void Assemble_UnsupportedKnownStorageLocationsDoNotGuessPacketShape()
+	[Theory]
+	[InlineData(32)]
+	[InlineData(33)]
+	[InlineData(34)]
+	[InlineData(35)]
+	[InlineData(36)]
+	[InlineData(37)]
+	[InlineData(38)]
+	[InlineData(39)]
+	[InlineData(40)]
+	[InlineData(41)]
+	[InlineData(42)]
+	[InlineData(43)]
+	[InlineData(60)]
+	[InlineData(61)]
+	[InlineData(68)]
+	[InlineData(74)]
+	[InlineData(79)]
+	[InlineData(126)]
+	[InlineData(127)]
+	public void Assemble_UnsupportedKnownStorageLocationsDoNotGuessPacketShape(int location)
 	{
 		var assembler = new PetFeedUnlockPacketContextAssembler();
 
 		var result = assembler.Assemble(new PetFeedUnlockPacketContextAssemblerInput(
-			CreateItem(location: 32, itemId: 188000001),
+			CreateItem(location, itemId: 188000001),
 			CreateTemplate(188000001)));
 
 		Assert.Equal(PetFeedUnlockPacketContextAssemblerStatus.UnsupportedStorageLocation, result.Status);
