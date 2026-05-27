@@ -44,6 +44,35 @@ public sealed class NpcVisibilityServiceTests
 		Assert.True(service.IsKnownNpc(player, visibleNpc.ObjectId));
 	}
 
+	[Fact]
+	public void UpdateKnownNpcs_RemovedKiskSnapshotOnlyDeletesForViewerThatKnewIt()
+	{
+		var service = new NpcVisibilityService();
+		var kisk = CreateNpc(9001, new WorldPosition(210010000, 10, 0, 0, 0));
+		var nearViewer = new Player
+		{
+			ObjectId = 1001,
+			Position = new WorldPosition(210010000, 0, 0, 0, 0),
+		};
+		var distantViewer = new Player
+		{
+			ObjectId = 1002,
+			Position = new WorldPosition(210010000, 300, 0, 0, 0),
+		};
+
+		var nearFirstRefresh = service.UpdateKnownNpcs(nearViewer, [kisk]);
+		var distantFirstRefresh = service.UpdateKnownNpcs(distantViewer, [kisk]);
+		var nearRemovalRefresh = service.UpdateKnownNpcs(nearViewer, []);
+		var distantRemovalRefresh = service.UpdateKnownNpcs(distantViewer, []);
+
+		Assert.Equal([kisk], nearFirstRefresh.Appeared);
+		Assert.Empty(distantFirstRefresh.Appeared);
+		Assert.Equal([kisk.ObjectId], nearRemovalRefresh.DisappearedObjectIds);
+		Assert.Empty(distantRemovalRefresh.DisappearedObjectIds);
+		Assert.False(service.IsKnownNpc(nearViewer, kisk.ObjectId));
+		Assert.False(service.IsKnownNpc(distantViewer, kisk.ObjectId));
+	}
+
 	private static WorldNpc CreateNpc(int objectId, WorldPosition position)
 	{
 		var template = new NpcTemplateSummary(
