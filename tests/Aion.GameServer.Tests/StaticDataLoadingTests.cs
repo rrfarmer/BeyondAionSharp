@@ -390,6 +390,44 @@ public sealed class StaticDataLoadingTests
 	}
 
 	[Fact]
+	public async Task StaticData_LoadsItemRestrictionCleanupFlagsLikeJava()
+	{
+		using var temp = TempDirectory.Create();
+		var cacheFile = Path.Combine(temp.Path, "static_data.xml");
+		File.WriteAllText(
+			cacheFile,
+			"""
+			<?xml version="1.0" encoding="UTF-8"?>
+			<static_data>
+				<item_restriction_cleanups>
+					<cleanup id="188053996" awh="0" lwh="0" />
+					<cleanup id="1001" trade="0" sell="0" wh="0" />
+					<cleanup id="1002" awh="1" lwh="1" />
+					<cleanup id="1003" awh="0" />
+					<cleanup id="1004" lwh="0" />
+				</item_restriction_cleanups>
+			</static_data>
+			""");
+
+		var staticData = await StaticData.LoadFromCacheAsync(cacheFile, []);
+
+		Assert.Equal(5, staticData.ItemRestrictionCleanups.Count);
+		var featherBoxCleanup = staticData.ItemRestrictionCleanups.GetCleanup(188053996);
+		Assert.NotNull(featherBoxCleanup);
+		Assert.Equal(-1, featherBoxCleanup.Trade);
+		Assert.Equal(-1, featherBoxCleanup.Sell);
+		Assert.Equal(-1, featherBoxCleanup.Warehouse);
+		Assert.Equal(0, featherBoxCleanup.AccountWarehouse);
+		Assert.Equal(0, featherBoxCleanup.LegionWarehouse);
+		Assert.True(staticData.ItemRestrictionCleanups.HasAccountOrLegionWarehouseStorabilityDisabled(188053996));
+		Assert.False(staticData.ItemRestrictionCleanups.HasAccountOrLegionWarehouseStorabilityDisabled(1001));
+		Assert.False(staticData.ItemRestrictionCleanups.HasAccountOrLegionWarehouseStorabilityDisabled(1002));
+		Assert.True(staticData.ItemRestrictionCleanups.HasAccountOrLegionWarehouseStorabilityDisabled(1003));
+		Assert.True(staticData.ItemRestrictionCleanups.HasAccountOrLegionWarehouseStorabilityDisabled(1004));
+		Assert.False(staticData.ItemRestrictionCleanups.HasAccountOrLegionWarehouseStorabilityDisabled(9999));
+	}
+
+	[Fact]
 	public async Task StaticData_LoadsQuestUpdateItemIdsFromQuestInventoryItems()
 	{
 		using var temp = TempDirectory.Create();
@@ -909,6 +947,8 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(staticData.GetElementCount("ride_info"), staticData.RideInfos.Count);
 		Assert.Equal(staticData.GetElementCount("item_purification"), staticData.ItemPurifications.Count);
 		Assert.Equal(staticData.GetElementCount("purification_result"), staticData.ItemPurifications.ResultCount);
+		Assert.Equal(staticData.GetElementCount("cleanup"), staticData.ItemRestrictionCleanups.Count);
+		Assert.True(staticData.ItemRestrictionCleanups.HasAccountOrLegionWarehouseStorabilityDisabled(188053996));
 		AssertTradeListCorpusMatchesJavaStaticData(repoRoot, staticData);
 		var purification = staticData.ItemPurifications.GetResultItem(100201319, 100201416);
 		Assert.NotNull(purification);

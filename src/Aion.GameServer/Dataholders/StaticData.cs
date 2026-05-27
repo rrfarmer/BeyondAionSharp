@@ -21,6 +21,7 @@ public sealed class StaticData
 		DecomposableItemTable decomposableItems,
 		AssemblyItemTable assemblyItems,
 		ItemPurificationTable itemPurifications,
+		ItemRestrictionCleanupTable itemRestrictionCleanups,
 		RideTable rideInfos,
 		ItemRandomBonusTable itemRandomBonuses,
 		ItemSetTable itemSets,
@@ -73,6 +74,7 @@ public sealed class StaticData
 		DecomposableItems = decomposableItems;
 		AssemblyItems = assemblyItems;
 		ItemPurifications = itemPurifications;
+		ItemRestrictionCleanups = itemRestrictionCleanups;
 		RideInfos = rideInfos;
 		ItemRandomBonuses = itemRandomBonuses;
 		ItemSets = itemSets;
@@ -140,6 +142,8 @@ public sealed class StaticData
 	public AssemblyItemTable AssemblyItems { get; }
 
 	public ItemPurificationTable ItemPurifications { get; }
+
+	public ItemRestrictionCleanupTable ItemRestrictionCleanups { get; }
 
 	public RideTable RideInfos { get; }
 
@@ -240,6 +244,7 @@ public sealed class StaticData
 		var decomposableItems = new List<DecomposableItemSummary>();
 		var assemblyItems = new List<AssemblyItemSummary>();
 		var itemPurifications = new List<ItemPurificationSummary>();
+		var itemRestrictionCleanups = new List<ItemRestrictionCleanupSummary>();
 		var rideInfos = new List<RideInfoSummary>();
 		var itemRandomBonuses = new List<ItemRandomBonusSummary>();
 		var itemSets = new List<ItemSetSummary>();
@@ -724,6 +729,20 @@ public sealed class StaticData
 					var flags = WorldMapSummary.ParseFlags(reader.GetAttribute("flags"));
 					worldMaps.Add(new WorldMapSummary(mapId, isInstance, twinCount, reader.GetAttribute("drop_type") ?? "NONE", flags));
 				}
+			}
+
+			if (reader.Depth == 2
+				&& reader.LocalName == "cleanup"
+				&& elementPath.GetValueOrDefault(1) == "item_restriction_cleanups")
+			{
+				itemRestrictionCleanups.Add(new ItemRestrictionCleanupSummary(
+					ReadRequiredIntAttribute(reader, "id"),
+					(sbyte)ReadOptionalIntAttribute(reader, "trade", -1),
+					(sbyte)ReadOptionalIntAttribute(reader, "sell", -1),
+					(sbyte)ReadOptionalIntAttribute(reader, "wh", -1),
+					(sbyte)ReadOptionalIntAttribute(reader, "awh", -1),
+					(sbyte)ReadOptionalIntAttribute(reader, "lwh", -1)));
+				continue;
 			}
 
 			if (reader.Depth == 2
@@ -2579,6 +2598,7 @@ public sealed class StaticData
 			new DecomposableItemTable(decomposableItems.AsReadOnly()),
 			new AssemblyItemTable(assemblyItems.AsReadOnly()),
 			new ItemPurificationTable(itemPurifications.AsReadOnly()),
+			new ItemRestrictionCleanupTable(itemRestrictionCleanups.AsReadOnly()),
 			new RideTable(rideInfos.AsReadOnly()),
 			new ItemRandomBonusTable(itemRandomBonuses.AsReadOnly()),
 			new ItemSetTable(itemSets.AsReadOnly()),
