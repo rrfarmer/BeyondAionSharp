@@ -17,12 +17,14 @@ public sealed class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 		Assert.False(report.HasGeneratedJavaTraceArtifactDirectoryReport);
 		Assert.False(report.HasShapeValidGeneratedJavaTraceArtifacts);
 		Assert.False(report.HasRuntimeComparisonContractReport);
+		Assert.False(report.HasRuntimeComparisonPreflightReport);
 		Assert.True(report.NeedsJavaInstrumentation);
 		Assert.True(report.NeedsJavaTraceSerializer);
 		Assert.True(report.NeedsGeneratedJavaTraceArtifacts);
 		Assert.False(report.NeedsCSharpArtifactReader);
 		Assert.True(report.NeedsLiveCSharpPacketHooks);
 		Assert.False(report.NeedsCSharpRuntimeTraceOutput);
+		Assert.False(report.NeedsRuntimeComparisonPreflightAlignment);
 		Assert.False(report.NeedsRuntimeComparisonExecution);
 		Assert.True(report.NeedsRuntimeComparisonEvidence);
 		Assert.False(report.ReadyForRuntimeComparison);
@@ -236,43 +238,135 @@ public sealed class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 			&& row.Notes.Contains("generated Java trace artifacts are missing or invalid", StringComparison.Ordinal));
 	}
 
+	[Fact]
+	public void Create_WithPreflightScenarioMismatchUpdatesRuntimeEvidenceRow()
+	{
+		var artifactReport = CreateShapeValidArtifactDirectoryReport("cm-move-threshold");
+		var preflight = PlayerProtectionActiveTaskStopTriggerRuntimeComparisonPreflightReportService.Create(
+			artifactReport,
+			CreateSyntheticCSharpRuntimeTraceReport(hasLivePacketHooks: true, scenario: "cm-teleport-animation-done"));
+
+		var report = PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessReportService.Create(
+			CreateRuntimeDesign(),
+			CreateTraceSchema(),
+			artifactReport,
+			comparisonContract: null,
+			preflightReport: preflight);
+
+		Assert.True(report.HasRuntimeComparisonPreflightReport);
+		Assert.True(report.NeedsRuntimeComparisonPreflightAlignment);
+		Assert.True(report.NeedsRuntimeComparisonEvidence);
+		Assert.Contains(report.Rows, row =>
+			row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.RuntimeComparisonEvidence
+			&& row.Status == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedScenarioMismatch
+			&& row.Evidence.Contains("needsScenarioAlignment=True", StringComparison.Ordinal)
+			&& row.Notes.Contains("scenarios do not align", StringComparison.Ordinal));
+	}
+
+	[Fact]
+	public void Create_WithPreflightRowCountMismatchUpdatesRuntimeEvidenceRow()
+	{
+		var artifactReport = CreateShapeValidArtifactDirectoryReport("cm-move-threshold");
+		var preflight = PlayerProtectionActiveTaskStopTriggerRuntimeComparisonPreflightReportService.Create(
+			artifactReport,
+			CreateSyntheticCSharpRuntimeTraceReport(
+				true,
+				"cm-move-threshold",
+				"cm-move-threshold"));
+
+		var report = PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessReportService.Create(
+			CreateRuntimeDesign(),
+			CreateTraceSchema(),
+			artifactReport,
+			comparisonContract: null,
+			preflightReport: preflight);
+
+		Assert.True(report.HasRuntimeComparisonPreflightReport);
+		Assert.True(report.NeedsRuntimeComparisonPreflightAlignment);
+		Assert.Contains(report.Rows, row =>
+			row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.RuntimeComparisonEvidence
+			&& row.Status == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedRowCountMismatch
+			&& row.Evidence.Contains("needsRowCountAlignment=True", StringComparison.Ordinal)
+			&& row.Notes.Contains("row counts do not align", StringComparison.Ordinal));
+	}
+
+	[Fact]
+	public void Create_WithAlignedPreflightStillBlocksComparisonExecution()
+	{
+		var artifactReport = CreateShapeValidArtifactDirectoryReport("cm-teleport-animation-done");
+		var preflight = PlayerProtectionActiveTaskStopTriggerRuntimeComparisonPreflightReportService.Create(
+			artifactReport,
+			CreateSyntheticCSharpRuntimeTraceReport(hasLivePacketHooks: true, scenario: "cm-teleport-animation-done"));
+
+		var report = PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessReportService.Create(
+			CreateRuntimeDesign(),
+			CreateTraceSchema(),
+			artifactReport,
+			comparisonContract: null,
+			preflightReport: preflight);
+
+		Assert.True(report.HasRuntimeComparisonPreflightReport);
+		Assert.False(report.NeedsRuntimeComparisonPreflightAlignment);
+		Assert.True(report.NeedsRuntimeComparisonExecution);
+		Assert.Contains(report.Rows, row =>
+			row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.RuntimeComparisonEvidence
+			&& row.Status == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedComparisonNotExecuted
+			&& row.Evidence.Contains("needsComparisonExecution=True", StringComparison.Ordinal)
+			&& row.Notes.Contains("preflight alignment has not executed deterministic", StringComparison.Ordinal));
+	}
+
 	private static PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaReport CreateTraceSchema() =>
 		PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaReportService.Create(CreateRuntimeDesign());
 
 	private static PlayerProtectionActiveTaskStopTriggerRuntimeComparisonDesignReport CreateRuntimeDesign() =>
 		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonDesignReportService.Create(CreateDetailedSummary());
 
-	private static PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTraceReport CreateSyntheticCSharpRuntimeTraceReport(bool hasLivePacketHooks) =>
-		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonContractService.CreateCSharpRuntimeTraceReport(
-			[
-				new PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTraceRow(
-					EventSeq: 0,
-					Scenario: "cm-teleport-animation-done",
-					Phase: "teleport_task_remove",
-					PacketName: "CM_TELEPORT_ANIMATION_DONE",
-					ReturnReason: "animation_done_no_pending_runnable_teleport_task",
-					StopCalled: false,
-					ExpectsStopProtectionCall: false,
-					TimestampIsParityKey: false,
-					new PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTracePlayerSnapshot(
-						ObjectId: 1001,
-						Spawned: false,
-						Flying: false,
-						Dead: false,
-						ProtectionActiveBefore: true,
-						ProtectionActiveAfter: true,
-						VisualStateBefore: ["BLINKING"],
-						VisualStateAfter: ["BLINKING"]))
-			],
+	private static PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTraceReport CreateSyntheticCSharpRuntimeTraceReport(
+		bool hasLivePacketHooks,
+		params string[] scenarios)
+	{
+		var scenarioRows = scenarios.Length == 0
+			? ["cm-teleport-animation-done"]
+			: scenarios;
+
+		return PlayerProtectionActiveTaskStopTriggerRuntimeComparisonContractService.CreateCSharpRuntimeTraceReport(
+			scenarioRows.Select((scenario, index) => CreateSyntheticCSharpTraceRow(index, scenario)).ToArray(),
 			hasLivePacketHooks,
 			"synthetic C# trace report only");
+	}
 
-	private static PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirectoryReport CreateShapeValidArtifactDirectoryReport() =>
+	private static PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTraceReport CreateSyntheticCSharpRuntimeTraceReport(
+		bool hasLivePacketHooks,
+		string scenario) =>
+		CreateSyntheticCSharpRuntimeTraceReport(hasLivePacketHooks, [scenario]);
+
+	private static PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTraceRow CreateSyntheticCSharpTraceRow(int eventSeq, string scenario) =>
+		new(
+			EventSeq: eventSeq,
+			Scenario: scenario,
+			Phase: "teleport_task_remove",
+			PacketName: "CM_TELEPORT_ANIMATION_DONE",
+			ReturnReason: "animation_done_no_pending_runnable_teleport_task",
+			StopCalled: false,
+			ExpectsStopProtectionCall: false,
+			TimestampIsParityKey: false,
+			new PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTracePlayerSnapshot(
+				ObjectId: 1001,
+				Spawned: false,
+				Flying: false,
+				Dead: false,
+				ProtectionActiveBefore: true,
+				ProtectionActiveAfter: true,
+				VisualStateBefore: ["BLINKING"],
+				VisualStateAfter: ["BLINKING"]));
+
+	private static PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirectoryReport CreateShapeValidArtifactDirectoryReport(
+		string scenarioName = "teleport-animation-done-no-op") =>
 		new(
 			PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirectoryStatus.AllArtifactsShapeValid,
 			[
 				new PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactFileRow(
-					"teleport-animation-done-no-op.json",
+					$"{scenarioName}.json",
 					new PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationReport(
 						[],
 						IsValidSchemaV1: true,
