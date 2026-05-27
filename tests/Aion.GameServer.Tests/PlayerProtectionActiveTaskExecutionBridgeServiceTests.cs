@@ -35,6 +35,10 @@ public sealed class PlayerProtectionActiveTaskExecutionBridgeServiceTests
 		Assert.Contains(result.SideEffectOperationPlan.Rows, row => row.Operation == PlayerProtectionActiveTaskSideEffectOperation.BroadcastPlayerState);
 		Assert.Empty(result.AttackUtilRecipientPlan.CastCancellationObjectIds);
 		Assert.Empty(result.AttackUtilRecipientPlan.TargetClearPlayerObjectIds);
+		Assert.True(result.TaskOperationPlan.SchedulesDelayedStop);
+		Assert.True(result.TaskOperationPlan.StoresTask);
+		Assert.False(result.TaskOperationPlan.ReplacesExistingTask);
+		Assert.False(result.TaskOperationPlan.IsLive);
 		Assert.True(player.IsProtectionActive());
 		Assert.True(result.ConstructedPacket);
 		Assert.IsType<SmPlayerState>(result.Packet);
@@ -70,6 +74,8 @@ public sealed class PlayerProtectionActiveTaskExecutionBridgeServiceTests
 		Assert.True(result.SideEffectOperationPlan.NotifiesAiOnMove);
 		Assert.Empty(result.AttackUtilRecipientPlan.CastCancellationObjectIds);
 		Assert.Empty(result.AttackUtilRecipientPlan.TargetClearPlayerObjectIds);
+		Assert.True(result.TaskOperationPlan.RemovesMissingTaskAsNoOp);
+		Assert.False(result.TaskOperationPlan.CancelsExistingTask);
 		Assert.Equal(
 			[
 				PlayerProtectionActiveTaskSideEffectOperation.CancelProtectionTask,
@@ -113,6 +119,9 @@ public sealed class PlayerProtectionActiveTaskExecutionBridgeServiceTests
 		Assert.Single(alreadyProtected.SideEffectOperationPlan.Rows);
 		Assert.Empty(alreadyProtected.AttackUtilRecipientPlan.CastCancellationObjectIds);
 		Assert.Empty(alreadyProtected.AttackUtilRecipientPlan.TargetClearPlayerObjectIds);
+		Assert.False(alreadyProtected.TaskOperationPlan.SchedulesDelayedStop);
+		Assert.False(alreadyProtected.TaskOperationPlan.StoresTask);
+		Assert.Equal(PlayerProtectionActiveTaskTaskOperation.NoTaskOperation, alreadyProtected.TaskOperationPlan.Rows.Single().Operation);
 		Assert.Null(alreadyProtected.Packet);
 		Assert.False(alreadyProtected.ConstructedPacket);
 		Assert.Equal(PlayerProtectionActiveTaskSightedRecipientSocketExecutorStatus.NoPacket, alreadyProtected.SocketExecutorResult.Status);
@@ -122,6 +131,8 @@ public sealed class PlayerProtectionActiveTaskExecutionBridgeServiceTests
 		Assert.Equal(PlayerProtectionActiveTaskPlanStatus.StopProtectionUnspawned, unspawnedStop.SideEffectOperationPlan.PlanStatus);
 		Assert.Empty(unspawnedStop.AttackUtilRecipientPlan.CastCancellationObjectIds);
 		Assert.Empty(unspawnedStop.AttackUtilRecipientPlan.TargetClearPlayerObjectIds);
+		Assert.True(unspawnedStop.TaskOperationPlan.RemovesMissingTaskAsNoOp);
+		Assert.False(unspawnedStop.TaskOperationPlan.CancelsExistingTask);
 		Assert.Equal(
 			[
 				PlayerProtectionActiveTaskSideEffectOperation.CancelProtectionTask,
@@ -133,6 +144,47 @@ public sealed class PlayerProtectionActiveTaskExecutionBridgeServiceTests
 		Assert.Equal(PlayerProtectionActiveTaskSightedRecipientSocketExecutorStatus.NoPacket, unspawnedStop.SocketExecutorResult.Status);
 		Assert.Empty(unspawnedStop.SocketExecutorResult.Recipients);
 		Assert.Empty(registry.SendAttempts);
+	}
+
+	[Fact]
+	public async Task ExecuteAsync_ComposesTaskOperationPlanWithExistingTaskFact()
+	{
+		var startPlayer = new Player { ObjectId = PlayerObjectId };
+		var stopPlayer = new Player { ObjectId = PlayerObjectId };
+		stopPlayer.SetVisualState(PlayerVisualStates.Blinking);
+		var bridge = new PlayerProtectionActiveTaskExecutionBridgeService();
+
+		var start = await bridge.ExecuteAsync(new PlayerProtectionActiveTaskExecutionBridgeRequest(
+			new PlayerProtectionActiveTaskAdapterRequest(
+				startPlayer,
+				PlayerProtectionActiveTaskAdapterAction.Start,
+				ExecuteLiveVisualMutation: true),
+			ExistingProtectionTaskPresent: true));
+		var stop = await bridge.ExecuteAsync(new PlayerProtectionActiveTaskExecutionBridgeRequest(
+			new PlayerProtectionActiveTaskAdapterRequest(
+				stopPlayer,
+				PlayerProtectionActiveTaskAdapterAction.Stop,
+				ExecuteLiveVisualMutation: true,
+				HasProtectionActiveTask: true,
+				IsSpawned: true),
+			ExistingProtectionTaskPresent: true));
+
+		Assert.True(start.TaskOperationPlan.ReplacesExistingTask);
+		Assert.True(start.TaskOperationPlan.StoresTask);
+		Assert.False(start.TaskOperationPlan.CancelsExistingTask);
+		Assert.Contains(start.TaskOperationPlan.Rows, row =>
+			row.Operation == PlayerProtectionActiveTaskTaskOperation.AddTaskAndMaybeReplaceExisting
+			&& row.Status == PlayerProtectionActiveTaskTaskOperationStatus.WouldReplaceExistingTask
+			&& row.WouldCancelExistingTask);
+
+		Assert.True(stop.TaskOperationPlan.CancelsExistingTask);
+		Assert.False(stop.TaskOperationPlan.RemovesMissingTaskAsNoOp);
+		Assert.Single(stop.TaskOperationPlan.Rows, row =>
+			row.Operation == PlayerProtectionActiveTaskTaskOperation.CancelTask
+			&& row.Status == PlayerProtectionActiveTaskTaskOperationStatus.WouldCancelExistingTask
+			&& row.WouldCancelExistingTask);
+		Assert.False(start.TaskOperationPlan.IsLive);
+		Assert.False(stop.TaskOperationPlan.IsLive);
 	}
 
 	[Fact]

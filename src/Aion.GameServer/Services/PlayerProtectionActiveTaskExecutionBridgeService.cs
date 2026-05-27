@@ -17,6 +17,7 @@ public sealed record PlayerProtectionActiveTaskExecutionBridgeResult(
 	PlayerProtectionActiveTaskAdapterResult AdapterResult,
 	PlayerProtectionActiveTaskSideEffectOperationPlan SideEffectOperationPlan,
 	PlayerProtectionAttackUtilRecipientPlan AttackUtilRecipientPlan,
+	PlayerProtectionActiveTaskTaskOperationPlan TaskOperationPlan,
 	SmPlayerState? Packet,
 	PlayerProtectionActiveTaskSightedRecipientSocketExecutorResult SocketExecutorResult,
 	bool ConstructedPacket,
@@ -28,7 +29,8 @@ public sealed record PlayerProtectionActiveTaskExecutionBridgeResult(
 public sealed record PlayerProtectionActiveTaskExecutionBridgeRequest(
 	PlayerProtectionActiveTaskAdapterRequest AdapterRequest,
 	IReadOnlyList<PlayerProtectionAttackUtilKnownObjectFact>? KnownObjectFacts = null,
-	bool ValidateSeeForTargetRemoval = false);
+	bool ValidateSeeForTargetRemoval = false,
+	bool ExistingProtectionTaskPresent = false);
 
 public sealed class PlayerProtectionActiveTaskExecutionBridgeService
 {
@@ -61,6 +63,9 @@ public sealed class PlayerProtectionActiveTaskExecutionBridgeService
 			request.AdapterRequest.Player.ObjectId,
 			request.KnownObjectFacts,
 			request.ValidateSeeForTargetRemoval);
+		var taskOperationPlan = PlayerProtectionActiveTaskTaskOperationPlanService.Create(
+			adapterResult.Plan,
+			request.ExistingProtectionTaskPresent);
 		var packet = adapterResult.FanoutPlan.ShouldBroadcast
 			? new SmPlayerState(request.AdapterRequest.Player)
 			: null;
@@ -78,6 +83,7 @@ public sealed class PlayerProtectionActiveTaskExecutionBridgeService
 			adapterResult,
 			sideEffectOperationPlan,
 			attackUtilRecipientPlan,
+			taskOperationPlan,
 			packet,
 			executorResult,
 			ConstructedPacket: packet != null,
