@@ -10,7 +10,9 @@ using Aion.GameServer.Network;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
+using Aion.GameServer.Utils.IdFactory;
 using Aion.GameServer.World;
+using GameWorld = Aion.GameServer.World.World;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Aion.GameServer.Tests;
@@ -129,6 +131,39 @@ public sealed class GameClientSocketServerNpcVisibilityTests
 			packet => AssertDeletePayload(Assert.IsType<SmDelete>(packet), oldKiskNpc.ObjectId));
 	}
 
+	[Fact]
+	public async Task RemoveRuntimeKiskAsync_RefreshesKnownViewerWithDeleteAfterWorldRemoval()
+	{
+		await using var fixture = await NpcVisibilityFixture.CreateAsync();
+		var player = new Player
+		{
+			ObjectId = 1002,
+			Name = "KiskViewer",
+			Race = "ELYOS",
+			PlayerClass = "RANGER",
+			Position = new WorldPosition(210010000, 0, 0, 0, 0),
+		};
+		var kiskNpc = CreateNpc(9001, 700273, new WorldPosition(210010000, 10, 0, 0, 0));
+		fixture.RuntimeContext.Kisks.RegisterKisk(new PlayerKiskRuntimeState(
+			objectId: kiskNpc.ObjectId,
+			ownerObjectId: 1001,
+			npcId: kiskNpc.TemplateId,
+			ownerRace: "ELYOS"));
+		Assert.True(fixture.World.TryAddObject(kiskNpc.ObjectId, kiskNpc));
+		SetActivePlayer(fixture.Connection, player);
+		fixture.Server.RegisterPlayerConnection(player.ObjectId, fixture.Connection);
+
+		await fixture.Server.RefreshNpcVisibilityAsync(fixture.World.GetNpcs(kiskNpc.Position.WorldId), player.ObjectId);
+		Assert.IsType<SmNpcInfo>(Assert.Single(fixture.SentPackets));
+		fixture.SentPackets.Clear();
+		await fixture.Connection.RemoveRuntimeKiskAsync(kiskNpc.ObjectId);
+
+		Assert.False(fixture.World.TryGetObject(kiskNpc.ObjectId, out _));
+		Assert.False(fixture.RuntimeContext.Kisks.HaveKisk(1001));
+		var deletePacket = Assert.IsType<SmDelete>(Assert.Single(fixture.SentPackets));
+		AssertDeletePayload(deletePacket, kiskNpc.ObjectId);
+	}
+
 	private static GameClientSocketServer CreateServer(
 		GameServerRuntimeContext runtimeContext,
 		CreaturePvpZoneCounterService? zoneCounterService)
@@ -242,11 +277,15 @@ public sealed class GameClientSocketServerNpcVisibilityTests
 			TcpClient client,
 			GameClientSocketServer server,
 			GameServerConnection connection,
+			GameServerRuntimeContext runtimeContext,
+			GameWorld world,
 			List<GameServerPacket> sentPackets)
 		{
 			_client = client;
 			Server = server;
 			Connection = connection;
+			RuntimeContext = runtimeContext;
+			World = world;
 			SentPackets = sentPackets;
 		}
 
@@ -254,12 +293,19 @@ public sealed class GameClientSocketServerNpcVisibilityTests
 
 		public GameServerConnection Connection { get; }
 
+		public GameServerRuntimeContext RuntimeContext { get; }
+
+		public GameWorld World { get; }
+
 		public List<GameServerPacket> SentPackets { get; }
 
 		public static async Task<NpcVisibilityFixture> CreateAsync()
 		{
 			var sentPackets = new List<GameServerPacket>();
 			var runtimeContext = new GameServerRuntimeContext();
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			world.Initialize();
+			var idFactory = new IDFactory([9001]);
 			var options = new GameServerOptions
 			{
 				Network = new GameServerNetworkOptions
@@ -293,9 +339,11 @@ public sealed class GameClientSocketServerNpcVisibilityTests
 					options: options,
 					runtimeContext: runtimeContext,
 					connectionRegistry: server,
+					idFactory: idFactory,
+					world: world,
 					sentPacketObserver: sentPackets.Add,
 					crypt: crypt);
-				return new NpcVisibilityFixture(client, server, connection, sentPackets);
+				return new NpcVisibilityFixture(client, server, connection, runtimeContext, world, sentPackets);
 			}
 			finally
 			{
