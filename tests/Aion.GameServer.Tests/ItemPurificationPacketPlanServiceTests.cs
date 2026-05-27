@@ -176,7 +176,8 @@ public sealed class ItemPurificationPacketPlanServiceTests
 		{
 			[9001] = new(
 				new InventoryItem { ObjectId = 9001, ItemId = 100000002, Count = 1, Location = 0, Slot = -1 },
-				targetTemplate),
+				targetTemplate,
+				GeneralInfoWarehouseRestrictionFlag: 3),
 		};
 
 		var plan = ItemPurificationPacketPlanService.CreatePacketPlan(
@@ -198,10 +199,11 @@ public sealed class ItemPurificationPacketPlanServiceTests
 		reader.ReadS();
 		var blobSize = reader.ReadH();
 		Assert.True(blobSize > 0);
-		reader.ReadB(blobSize);
+		var blob = reader.ReadB(blobSize);
 		Assert.Equal(0xffff, reader.ReadH());
 		Assert.Equal(0, (int)reader.ReadC());
 		Assert.Equal(0, reader.Remaining);
+		AssertGeneralInfoCleanupSealFlag(blob, expectedFlag: 3);
 		Assert.Null(plan.Operations[8].ConcretePacket);
 	}
 
@@ -582,6 +584,20 @@ public sealed class ItemPurificationPacketPlanServiceTests
 		Assert.Equal(expectedQuestExpands, (int)reader.ReadC());
 		Assert.Equal(expectedItemExpands, (int)reader.ReadC());
 		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertGeneralInfoCleanupSealFlag(byte[] blob, int expectedFlag)
+	{
+		using var blobReader = new PacketBuffer(blob);
+		Assert.Equal(0x00, (int)blobReader.ReadC());
+		Assert.Equal(0, blobReader.ReadH());
+		Assert.Equal(1, blobReader.ReadQ());
+		Assert.Equal(string.Empty, blobReader.ReadS());
+		Assert.Equal(0, (int)blobReader.ReadC());
+		Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(expectedFlag, blobReader.ReadH());
 	}
 
 	private sealed class RecordingConnectionRegistry : IGameClientConnectionRegistry

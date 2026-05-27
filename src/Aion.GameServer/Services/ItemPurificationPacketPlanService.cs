@@ -166,7 +166,10 @@ public static class ItemPurificationPacketPlanService
 			|| input.Template.TemplateId != operation.ItemId)
 			return null;
 
-		return SmInventoryAddItem.CreateItemCollect(input.Item, input.Template);
+		return SmInventoryAddItem.CreateItemCollect(
+			input.Item,
+			input.Template,
+			input.GeneralInfoWarehouseRestrictionFlag);
 	}
 
 	private static ItemPurificationPacketOperation CubeSize(
@@ -260,7 +263,8 @@ public sealed record ItemPurificationPacketOperation(
 // Caller-provided post-mutation snapshot for Java inventory packet construction.
 public sealed record ItemPurificationInventoryPacketInput(
 	InventoryItem Item,
-	ItemTemplateSummary Template);
+	ItemTemplateSummary Template,
+	int GeneralInfoWarehouseRestrictionFlag = 0);
 
 // Caller-provided post-mutation snapshot for Java SM_CUBE_UPDATE.cubeSize(CUBE, player).
 public sealed record ItemPurificationCubePacketInput(
