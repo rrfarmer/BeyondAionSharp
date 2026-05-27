@@ -2893,11 +2893,28 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (!saved)
 			return;
 
+		await CompleteAmplifyItemAsync(player, plan, targetTemplate, materialTemplate, toolTemplate, staticData.ItemRestrictionCleanups);
+	}
+
+	private async Task CompleteAmplifyItemAsync(
+		Player player,
+		AmplificationPlan plan,
+		ItemTemplateSummary targetTemplate,
+		ItemTemplateSummary? materialTemplate,
+		ItemTemplateSummary? toolTemplate,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups)
+	{
+		// Java parity: services/EnchantService.amplifyItem success packet fanout.
+		var targetItemUpdate = plan.TargetItemUpdate ?? throw new InvalidOperationException("Amplification success plan requires a target item update.");
 		player.InventoryItems = plan.InventoryItems;
-		await SendItemUseMutationAsync(plan.MaterialItemUpdate, plan.DeletedMaterialItemObjectId, materialTemplate);
-		await SendItemUseMutationAsync(plan.ToolItemUpdate, plan.DeletedToolItemObjectId, toolTemplate);
+		await SendItemUseMutationAsync(plan.MaterialItemUpdate, plan.DeletedMaterialItemObjectId, materialTemplate, itemRestrictionCleanups);
+		await SendItemUseMutationAsync(plan.ToolItemUpdate, plan.DeletedToolItemObjectId, toolTemplate, itemRestrictionCleanups);
 		await SendPacketAsync(SmSystemMessage.ExceedSucceed(plan.ItemName));
-		await SendPacketAsync(new SmInventoryUpdateItem(plan.TargetItemUpdate, targetTemplate, updateType: 0));
+		await SendPacketAsync(new SmInventoryUpdateItem(
+			targetItemUpdate,
+			targetTemplate,
+			SmInventoryUpdateItem.DecreaseItemUse,
+			GetGeneralInfoWarehouseRestrictionFlag(targetItemUpdate.ItemId, itemRestrictionCleanups)));
 	}
 
 	private async Task SendItemUseMutationAsync(
