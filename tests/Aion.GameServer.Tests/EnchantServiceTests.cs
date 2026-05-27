@@ -108,6 +108,34 @@ public sealed class EnchantServiceTests
 	}
 
 	[Fact]
+	public void CreateBreakItemPlan_MissingRewardTemplateFailsBeforeConsumption()
+	{
+		var targetItem = CreateItem(1001, ArmorItemId);
+		var extractionTool = CreateItem(2001, ExtractionToolItemId, count: 2);
+		var player = CreatePlayer(targetItem, extractionTool);
+		var templates = new ItemTemplateTable(
+		[
+			new ItemTemplateSummary(ExtractionToolItemId, "Extraction Tools", 0, 0, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 100, 0, 0, HasExtractAction: true),
+			new ItemTemplateSummary(ArmorItemId, "Leather Tunic", 0, 1, 20, "LT_TORSO", "NORMAL", "RARE", "PC_ALL", 1, 0, 1),
+		]);
+
+		var plan = EnchantService.CreateBreakItemPlan(
+			player,
+			targetItemObjectId: targetItem.ObjectId,
+			extractionToolObjectId: extractionTool.ObjectId,
+			templates,
+			nextObjectId: () => 9001,
+			rollInclusive: (_, _) => 0);
+
+		Assert.False(plan.Succeeded);
+		Assert.Equal(BreakItemFailure.MissingRewardTemplate, plan.Failure);
+		Assert.Equal(AlphaEnchantStoneItemId, plan.RewardItemId);
+		Assert.Empty(plan.InventoryItems);
+		Assert.Contains(player.InventoryItems, item => item.ObjectId == targetItem.ObjectId);
+		Assert.Contains(player.InventoryItems, item => item.ObjectId == extractionTool.ObjectId && item.Count == 2);
+	}
+
+	[Fact]
 	public void CreateBreakItemPlan_ReturnsJavaShapedGuardFailures()
 	{
 		var templates = CreateItemTemplates();
