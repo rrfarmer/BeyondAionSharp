@@ -3445,7 +3445,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		{
 			RegisterCompositionExpirableAddedItems(player, mutationPlan.AddedRewardItems, rewardTemplate);
 			if (HasRewardMutation(mutationPlan.UpdatedRewardItems, mutationPlan.AddedRewardItems))
-				await SendCompositionRewardPacketsAsync(mutationPlan, rewardTemplate);
+				await SendCompositionRewardPacketsAsync(mutationPlan, rewardTemplate, staticData.ItemRestrictionCleanups);
 		}
 
 		if (!mutationPlan.RewardSucceeded && mutationPlan.RewardInventoryFull)
@@ -3494,12 +3494,24 @@ public sealed class GameServerConnection : BaseClientConnection
 			_expirableTaskService?.RegisterInventoryItem(player, addedRewardItem);
 	}
 
-	private async Task SendCompositionRewardPacketsAsync(CompositionMutationPlan mutationPlan, ItemTemplateSummary rewardTemplate)
+	private async Task SendCompositionRewardPacketsAsync(
+		CompositionMutationPlan mutationPlan,
+		ItemTemplateSummary rewardTemplate,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups)
 	{
 		foreach (var updatedReward in mutationPlan.UpdatedRewardItems)
-			await SendPacketAsync(new SmInventoryUpdateItem(updatedReward, rewardTemplate, SmInventoryUpdateItem.IncreaseItemCollect));
+			await SendPacketAsync(
+				new SmInventoryUpdateItem(
+					updatedReward,
+					rewardTemplate,
+					SmInventoryUpdateItem.IncreaseItemCollect,
+					GetGeneralInfoWarehouseRestrictionFlag(updatedReward.ItemId, itemRestrictionCleanups)));
 		foreach (var addedReward in mutationPlan.AddedRewardItems)
-			await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(addedReward, rewardTemplate));
+			await SendPacketAsync(
+				SmInventoryAddItem.CreateItemCollect(
+					addedReward,
+					rewardTemplate,
+					GetGeneralInfoWarehouseRestrictionFlag(addedReward.ItemId, itemRestrictionCleanups)));
 	}
 
 	private static int RandomInclusive(int min, int max)
