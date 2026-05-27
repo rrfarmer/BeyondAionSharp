@@ -2717,7 +2717,8 @@ public sealed class GameServerConnection : BaseClientConnection
 	private async Task HandleSocketGodstoneAsync(Player player, CmManastone packet)
 	{
 		// Java parity: network/aion/clientpackets/CM_MANASTONE.runImpl actionType 4 + services/item/ItemSocketService.socketGodstone.
-		var itemTemplates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var itemTemplates = staticData?.ItemTemplates;
 		if (itemTemplates == null)
 			return;
 
@@ -10826,7 +10827,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (packet.ItemCount > brokerItem.ItemCount)
 			return;
 
-		var itemTemplates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var itemTemplates = staticData?.ItemTemplates;
 		var itemTemplate = itemTemplates?.GetItemTemplate(brokerItem.Item.ItemId);
 		var kinahItem = player.InventoryItems.FirstOrDefault(item => item.ItemId == KinahItemId && item.Location == CubeStorageId);
 		if (itemTemplate == null || kinahItem == null)
@@ -10914,7 +10916,10 @@ public sealed class GameServerConnection : BaseClientConnection
 		player.InventoryItems = inventoryItems.ToArray();
 		if (itemTemplates?.GetItemTemplate(KinahItemId) is { } kinahTemplate)
 			await SendPacketAsync(new SmInventoryUpdateItem(kinahUpdate, kinahTemplate, SmInventoryUpdateItem.DecreaseKinahBuy));
-		await SendPacketAsync(SmInventoryAddItem.CreateBrokerBuy(boughtItem, itemTemplate));
+		await SendPacketAsync(SmInventoryAddItem.CreateBrokerBuy(
+			boughtItem,
+			itemTemplate,
+			GetGeneralInfoWarehouseRestrictionFlag(boughtItem.ItemId, staticData?.ItemRestrictionCleanups)));
 		await SendPacketAsync(SmCubeUpdate.CubeSize(player));
 
 		var sellerSettledPage = await _brokerRepository.LoadSettledItemsAsync(brokerItem.SellerId, player.Race, pageIndex: 0);
