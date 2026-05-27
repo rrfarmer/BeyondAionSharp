@@ -3576,7 +3576,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		{
 			RegisterCompositionExpirableAddedItems(player, mutationPlan.AddedRewardItems, rewardTemplate);
 			if (HasRewardMutation(mutationPlan.UpdatedRewardItems, mutationPlan.AddedRewardItems))
-				await SendCompositionRewardPacketsAsync(mutationPlan, rewardTemplate, staticData.ItemRestrictionCleanups);
+				await SendCompositionRewardPacketsAsync(player, mutationPlan, rewardTemplate, staticData.ItemRestrictionCleanups);
 		}
 
 		if (!mutationPlan.RewardSucceeded && mutationPlan.RewardInventoryFull)
@@ -3664,6 +3664,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	}
 
 	private async Task SendCompositionRewardPacketsAsync(
+		Player player,
 		CompositionMutationPlan mutationPlan,
 		ItemTemplateSummary rewardTemplate,
 		ItemRestrictionCleanupTable? itemRestrictionCleanups)
@@ -3675,12 +3676,17 @@ public sealed class GameServerConnection : BaseClientConnection
 					rewardTemplate,
 					SmInventoryUpdateItem.IncreaseItemCollect,
 					GetGeneralInfoWarehouseRestrictionFlag(updatedReward.ItemId, itemRestrictionCleanups)));
+		var projectedCubeCount = player.InventoryItems.Count - mutationPlan.AddedRewardItems.Count;
 		foreach (var addedReward in mutationPlan.AddedRewardItems)
+		{
 			await SendPacketAsync(
 				SmInventoryAddItem.CreateItemCollect(
 					addedReward,
 					rewardTemplate,
 					GetGeneralInfoWarehouseRestrictionFlag(addedReward.ItemId, itemRestrictionCleanups)));
+			projectedCubeCount++;
+			await SendPacketAsync(SmCubeUpdate.CubeSizeSnapshot(projectedCubeCount, player.NpcExpands, player.QuestExpands, player.ItemExpands));
+		}
 	}
 
 	private static int RandomInclusive(int min, int max)
