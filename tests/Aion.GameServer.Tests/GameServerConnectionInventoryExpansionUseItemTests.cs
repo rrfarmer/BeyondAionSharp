@@ -1250,6 +1250,49 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleUseItemAsync_ExtractInventoryFullStillConsumesAndSendsDiceError()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(
+			includeThreadPoolManager: true,
+			idFactory: new IDFactory([5001, 6200]),
+			extractionRewardMaxStackCount: 1);
+		var player = CreateExtractPlayer();
+		player.InventoryItems = player.InventoryItems
+			.Concat(Enumerable.Range(0, 25).Select(index => new InventoryItem
+			{
+				ObjectId = 7000 + index,
+				ItemId = 200,
+				Count = 1,
+				Location = 0,
+			}))
+			.ToArray();
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItemTarget(sourceItemObjectId: 5001, targetItemObjectId: 6200));
+
+		await WaitUntilAsync(() => fixture.SentPackets.Count >= 8, TimeSpan.FromSeconds(6));
+		Assert.DoesNotContain(player.InventoryItems, item => item.ObjectId == 6200);
+		Assert.Contains(player.InventoryItems, item => item.ObjectId == 5001 && item.Count == 1);
+		var reward = Assert.Single(player.InventoryItems, item => item.ItemId == 166000195);
+		Assert.Equal(1, reward.Count);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 105, expectedTime: 5000, expectedEnd: 0),
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 6200, expectedDeleteType: 0),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 26),
+			packet => AssertInventoryUpdatePayloadWithCleanupSealFlag(
+				Assert.IsType<SmInventoryUpdateItem>(packet),
+				expectedObjectId: 5001,
+				expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse,
+				expectedCleanupSealFlag: 3,
+				expectedItemMask: 0),
+			packet => AssertInventoryItemCollectAddPayload(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 166000195, expectedCount: 1, expectedCleanupSealFlag: 3),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 27),
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1390182),
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 105, expectedTime: 0, expectedEnd: 1));
+	}
+
+	[Fact]
 	public async Task HandleUseItemAsync_DecomposeInventoryFullDoesNotScheduleOrMutate()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
@@ -3569,7 +3612,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			IDFactory? idFactory = null,
 			bool enableCryptKeyBeforeRun = true,
 			SelectableDecomposeTestData? selectableData = null,
-			GameServerOptions? options = null)
+			GameServerOptions? options = null,
+			int extractionRewardMaxStackCount = 100)
 		{
 			options ??= new GameServerOptions();
 			var selectableFixture = selectableData ?? SelectableDecomposeTestData.Default;
@@ -3695,7 +3739,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 							</actions>
 						</item_template>
 						<item_template id="100000500" name="Test Mythic Extraction Sword" level="65" mask="65536" item_group="SWORD" item_type="NORMAL" quality="MYTHIC" race="PC_ALL" max_stack_count="1"/>
-						<item_template id="166000195" name="Restricted Extraction Reward" level="1" mask="123" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
+						<item_template id="166000195" name="Restricted Extraction Reward" level="1" mask="123" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="{extractionRewardMaxStackCount}"/>
 						<item_template id="200" name="Test Decompose Reward" level="1" mask="123" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
 						<item_template id="{selectableFixture.RewardIndex0ItemId}" name="Test Selectable Reward 1" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
 						<item_template id="{selectableFixture.RewardIndex1ItemId}" name="Test Selectable Reward 2" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>

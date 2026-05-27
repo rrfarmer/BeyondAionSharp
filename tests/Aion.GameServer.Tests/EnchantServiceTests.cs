@@ -24,6 +24,8 @@ public sealed class EnchantServiceTests
 	private const int ManastoneOnlySupplementItemId = 166150018;
 	private const int ExtractionToolItemId = 165000001;
 	private const int ArmorItemId = 110100001;
+	private const int BetaExtractionStoneItemId = 166000192;
+	private const int GammaExtractionStoneItemId = 166000193;
 	private const int EpsilonExtractionStoneItemId = 166000195;
 
 	[Fact]
@@ -77,6 +79,32 @@ public sealed class EnchantServiceTests
 		Assert.DoesNotContain(plan.InventoryItems, item => item.ObjectId == 1001);
 		Assert.DoesNotContain(plan.InventoryItems, item => item.ObjectId == 2001);
 		Assert.Contains(plan.InventoryItems, item => item.ItemId == AlphaEnchantStoneItemId && item.Count == 2);
+	}
+
+	[Theory]
+	[InlineData(110100101, 20, "RARE", AlphaEnchantStoneItemId)]
+	[InlineData(110100102, 40, "LEGEND", BetaExtractionStoneItemId)]
+	[InlineData(110100103, 55, "UNIQUE", GammaExtractionStoneItemId)]
+	[InlineData(110100104, 60, "EPIC", DeltaEnchantStoneItemId)]
+	[InlineData(110100105, 65, "MYTHIC", EpsilonExtractionStoneItemId)]
+	public void CreateBreakItemPlan_UsesJavaExtractionStoneThresholds(int targetItemId, int targetLevel, string targetQuality, int expectedRewardItemId)
+	{
+		var player = CreatePlayer(
+			CreateItem(1001, targetItemId),
+			CreateItem(2001, ExtractionToolItemId, count: 2));
+		var templates = CreateItemTemplates(CreateArmorTemplate(targetItemId, targetLevel, targetQuality));
+
+		var plan = EnchantService.CreateBreakItemPlan(
+			player,
+			targetItemObjectId: 1001,
+			extractionToolObjectId: 2001,
+			templates,
+			nextObjectId: () => 9001,
+			rollInclusive: (min, max) => min == 0 && max == 10 ? 0 : 1);
+
+		Assert.True(plan.Succeeded);
+		Assert.Equal(expectedRewardItemId, plan.RewardItemId);
+		Assert.Equal(1, plan.RewardCount);
 	}
 
 	[Fact]
@@ -632,7 +660,12 @@ public sealed class EnchantServiceTests
 		return item;
 	}
 
-	private static ItemTemplateTable CreateItemTemplates()
+	private static ItemTemplateSummary CreateArmorTemplate(int itemId, int level, string quality)
+	{
+		return new ItemTemplateSummary(itemId, $"Threshold Armor {itemId}", 0, 1, level, "LT_TORSO", "NORMAL", quality, "PC_ALL", 1, 0, 1);
+	}
+
+	private static ItemTemplateTable CreateItemTemplates(params ItemTemplateSummary[] additionalTemplates)
 	{
 		return new ItemTemplateTable(
 		[
@@ -711,7 +744,10 @@ public sealed class EnchantServiceTests
 			new ItemTemplateSummary(ManastoneOnlySupplementItemId, "Manastone-Only Supplement", 0, 0, 65, "NONE", "NORMAL", "UNIQUE", "PC_ALL", 1, 0, 0, EnchantAction: new ItemEnchantActionInfo(0, 1, 65, true, 100)),
 			new ItemTemplateSummary(ExtractionToolItemId, "Extraction Tools", 0, 0, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 100, 0, 0, HasExtractAction: true),
 			new ItemTemplateSummary(ArmorItemId, "Leather Tunic", 0, 1, 20, "LT_TORSO", "NORMAL", "RARE", "PC_ALL", 1, 0, 1),
+			new ItemTemplateSummary(BetaExtractionStoneItemId, "Beta Enchantment Stone", 0, 0, 40, "ENCHANTMENT", "NORMAL", "LEGEND", "PC_ALL", 100, 0, 0),
+			new ItemTemplateSummary(GammaExtractionStoneItemId, "Gamma Enchantment Stone", 0, 0, 55, "ENCHANTMENT", "NORMAL", "UNIQUE", "PC_ALL", 100, 0, 0),
 			new ItemTemplateSummary(EpsilonExtractionStoneItemId, "Epsilon Enchantment Stone", 0, 0, 65, "ENCHANTMENT", "NORMAL", "MYTHIC", "PC_ALL", 100, 0, 0),
+			.. additionalTemplates,
 		]);
 	}
 }
