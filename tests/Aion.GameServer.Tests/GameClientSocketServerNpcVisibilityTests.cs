@@ -164,6 +164,42 @@ public sealed class GameClientSocketServerNpcVisibilityTests
 		AssertDeletePayload(deletePacket, kiskNpc.ObjectId);
 	}
 
+	[Fact]
+	public async Task RefreshNpcVisibilityAsync_SkipsDeleteWhenRegisteredConnectionHasNoActivePlayer()
+	{
+		await using var fixture = await NpcVisibilityFixture.CreateAsync();
+		var player = new Player
+		{
+			ObjectId = 1002,
+			Name = "TeleportingViewer",
+			Race = "ELYOS",
+			PlayerClass = "RANGER",
+			Position = new WorldPosition(210010000, 0, 0, 0, 0),
+		};
+		var kiskNpc = CreateNpc(9001, 700273, new WorldPosition(210010000, 10, 0, 0, 0));
+		SetActivePlayer(fixture.Connection, player);
+		fixture.Server.RegisterPlayerConnection(player.ObjectId, fixture.Connection);
+
+		await fixture.Server.RefreshNpcVisibilityAsync([kiskNpc], player.ObjectId);
+		Assert.IsType<SmNpcInfo>(Assert.Single(fixture.SentPackets));
+		fixture.SentPackets.Clear();
+		ClearActivePlayer(fixture.Connection);
+		var sent = await fixture.Server.RefreshNpcVisibilityAsync([], player.ObjectId);
+
+		Assert.Equal(0, sent);
+		Assert.Empty(fixture.SentPackets);
+	}
+
+	private static void ClearActivePlayer(GameServerConnection connection)
+	{
+		var activePlayerField = typeof(GameServerConnection).GetField("_activePlayer", BindingFlags.Instance | BindingFlags.NonPublic);
+		var stateField = typeof(GameServerConnection).GetField("_state", BindingFlags.Instance | BindingFlags.NonPublic);
+		Assert.NotNull(activePlayerField);
+		Assert.NotNull(stateField);
+		activePlayerField.SetValue(connection, null);
+		stateField.SetValue(connection, GameConnectionState.Connected);
+	}
+
 	private static GameClientSocketServer CreateServer(
 		GameServerRuntimeContext runtimeContext,
 		CreaturePvpZoneCounterService? zoneCounterService)
