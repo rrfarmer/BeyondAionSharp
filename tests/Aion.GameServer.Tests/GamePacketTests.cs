@@ -4065,6 +4065,20 @@ public class GamePacketTests
 		Assert.Equal(0, reader.Remaining);
 	}
 
+	[Theory]
+	[InlineData(PetAction.TalkWithMerchant)]
+	[InlineData(PetAction.TalkWithMinder)]
+	[InlineData(PetAction.HAdopt)]
+	[InlineData(PetAction.HAbandon)]
+	public void SmPet_ActionOnlyWritesActionIdOnlyLikeJava(PetAction action)
+	{
+		var payload = SerializeUnencryptedPayload(new SmPet(action));
+		using var reader = new PacketBuffer(payload);
+
+		Assert.Equal((int)action, reader.ReadH());
+		Assert.Equal(0, reader.Remaining);
+	}
+
 	[Fact]
 	public void SmPetEmote_FlyStartWritesDefaultBranchLikeJava()
 	{

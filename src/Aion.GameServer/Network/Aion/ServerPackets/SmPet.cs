@@ -28,6 +28,18 @@ public sealed class SmPet : GameServerPacket
 	private readonly int _petObjectId;
 	private readonly ObjectDeleteAnimation _animation;
 
+	public SmPet(PetAction action)
+		: base(PacketOpCode)
+	{
+		// Java parity: network/aion/serverpackets/SM_PET(PetAction) action-only branches.
+		if (!IsActionOnly(action))
+		{
+			throw new ArgumentOutOfRangeException(nameof(action), action, "SM_PET action is not a supported action-only packet.");
+		}
+
+		_action = action;
+	}
+
 	public SmPet(SmPetSpawnSnapshot spawn)
 		: base(PacketOpCode)
 	{
@@ -58,6 +70,11 @@ public sealed class SmPet : GameServerPacket
 			case PetAction.Dismiss:
 				buffer.WriteD(_petObjectId);
 				buffer.WriteC((byte)_animation);
+				break;
+			case PetAction.TalkWithMerchant:
+			case PetAction.TalkWithMinder:
+			case PetAction.HAdopt:
+			case PetAction.HAbandon:
 				break;
 			default:
 				throw new NotSupportedException($"SM_PET action {_action} is not ported in the known-list serializer subset.");
@@ -90,4 +107,13 @@ public sealed class SmPet : GameServerPacket
 		buffer.WriteD(0);
 		buffer.WriteD(0);
 	}
+
+	private static bool IsActionOnly(PetAction action) => action switch
+	{
+		PetAction.TalkWithMerchant or
+			PetAction.TalkWithMinder or
+			PetAction.HAdopt or
+			PetAction.HAbandon => true,
+		_ => false,
+	};
 }
