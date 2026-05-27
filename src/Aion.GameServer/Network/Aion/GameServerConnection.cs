@@ -5801,6 +5801,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			resourceMaxStats.MaxHp,
 			resourceMaxStats.MaxMp,
 			player.HasNoResurrectPenaltyEffect);
+		await SendReviveMovementUpdatesAsync(player);
 		await BroadcastEmotionAsync(player, new SmEmotion(player, EmotionType.Resurrect));
 		await UpdatePlayerStatsAndSpeedVisuallyAsync(player);
 		player.ClearResurrectionPositionState();
@@ -5808,8 +5809,59 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		// Full Java PlayerReviveService.revive + TeleportService.teleportTo side effects remain queued:
 		// no-resurrect-penalty effect detection, soul-sickness handling, aggro cleanup,
-		// group/alliance movement updates, flying-before-death state restoration, full world despawn/spawn
+		// flying-before-death state restoration, full world despawn/spawn
 		// ownership, protection tasks, instance/legion leave callbacks, and exact socket ordering need the broader revive/teleport model.
+	}
+
+	private async Task SendReviveMovementUpdatesAsync(Player player, CancellationToken cancellationToken = default)
+	{
+		// Java parity: services/player/PlayerReviveService.revive calls PlayerGroupService.updateGroup(..., MOVEMENT)
+		// and PlayerAllianceService.updateAlliance(..., MOVEMENT) before broadcasting SM_EMOTION RESURRECT.
+		var groupPlan = new PlayerGroupMovementUpdatePlanner(_playerGroupRuntime)
+			.CreateReviveMovementUpdatePlan(player)
+			.MemberInfoUpdatePlan;
+		if (groupPlan != null)
+		{
+			foreach (var intent in groupPlan.MemberInfoIntents)
+			{
+				var packet = intent.CreatePacket();
+				if (packet != null)
+					await SendTeamMovementPacketAsync(intent.RecipientObjectId, packet, cancellationToken);
+			}
+		}
+
+		var alliance = _playerAllianceRuntime.Resolve(player);
+		if (alliance == null)
+			return;
+
+		var members = _playerAllianceRuntime.GetMemberObjectIds(alliance.AllianceId)
+			.Select(memberObjectId => _playerAllianceRuntime.GetMember(alliance.AllianceId, memberObjectId)?.Player)
+			.Where(member => member != null)
+			.Cast<Player>()
+			.ToArray();
+		var alliancePlan = new PlayerAllianceMovementUpdatePlanner()
+			.CreateReviveMovementUpdatePlan(alliance.AllianceId, members, player);
+		if (alliancePlan == null)
+			return;
+
+		foreach (var intent in alliancePlan.MemberInfoIntents)
+		{
+			var packet = intent.CreatePacket();
+			if (packet != null)
+				await SendTeamMovementPacketAsync(intent.RecipientObjectId, packet, cancellationToken);
+		}
+	}
+
+	private async Task SendTeamMovementPacketAsync(
+		int recipientObjectId,
+		GameServerPacket packet,
+		CancellationToken cancellationToken)
+	{
+		if (_connectionRegistry != null && await _connectionRegistry.SendPacketToPlayerAsync(recipientObjectId, packet))
+			return;
+
+		if (_activePlayer?.ObjectId == recipientObjectId)
+			await SendPacketAsync(packet, cancellationToken);
 	}
 
 	internal async Task<PlayerTeleportResult> TeleportPlayerToKiskPositionAsync(

@@ -164,6 +164,69 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 	}
 
 	[Fact]
+	public async Task HandleReviveAsync_GroupKiskReviveSendsMovementUpdateBeforeReviveEmotion()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var groups = new PlayerGroupRuntime();
+		await using var fixture = await KiskReviveWorkflowFixture.CreateAsync(
+			registry,
+			playerGroupRuntime: groups);
+		var player = CreateDeadPlayer(boundKiskObjectId: 9001);
+		player.Position = new WorldPosition(210010000, 10, 10, 20, 0);
+		var member = CreateOnlinePlayer(objectId: 1003, boundKiskObjectId: 0);
+		member.Position = player.Position with { X = player.Position.X + 5 };
+		groups.CreateOrUpdateGroup(99001, [player, member]);
+		registry.OnlinePlayers.Add(member);
+		fixture.RegisterKisk(
+			objectId: 9001,
+			new WorldPosition(210010000, 100, 120, 33, 0),
+			maxResurrects: 2);
+
+		await fixture.Connection.HandleReviveAsync(player, CreateRevive(PlayerKiskReviveService.KiskReviveId));
+
+		var movement = Assert.Single(registry.SentPackets, send => send.Packet is SmGroupMemberInfo);
+		Assert.Equal(member.ObjectId, movement.PlayerObjectId);
+		var movementIndex = registry.SentPackets.FindIndex(send => send.Packet is SmGroupMemberInfo);
+		var firstReviveEmotionIndex = registry.SentPackets.FindIndex(send => send.Packet is SmEmotion);
+		Assert.True(movementIndex >= 0);
+		Assert.True(firstReviveEmotionIndex >= 0);
+		Assert.True(movementIndex < firstReviveEmotionIndex);
+		Assert.DoesNotContain(registry.SentPackets, send => send.PlayerObjectId == player.ObjectId && send.Packet is SmGroupMemberInfo);
+	}
+
+	[Fact]
+	public async Task HandleReviveAsync_AllianceKiskReviveSendsMovementUpdateBeforeReviveEmotion()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var alliances = new PlayerAllianceRuntime();
+		await using var fixture = await KiskReviveWorkflowFixture.CreateAsync(
+			registry,
+			playerAllianceRuntime: alliances);
+		var player = CreateDeadPlayer(boundKiskObjectId: 9001);
+		player.Position = new WorldPosition(210010000, 10, 10, 20, 0);
+		var member = CreateOnlinePlayer(objectId: 1003, boundKiskObjectId: 0);
+		member.Position = player.Position with { X = player.Position.X + 5 };
+		alliances.CreateAlliance(88001, player);
+		alliances.AddMember(88001, member);
+		registry.OnlinePlayers.Add(member);
+		fixture.RegisterKisk(
+			objectId: 9001,
+			new WorldPosition(210010000, 100, 120, 33, 0),
+			maxResurrects: 2);
+
+		await fixture.Connection.HandleReviveAsync(player, CreateRevive(PlayerKiskReviveService.KiskReviveId));
+
+		var movement = Assert.Single(registry.SentPackets, send => send.Packet is SmAllianceMemberInfo);
+		Assert.Equal(member.ObjectId, movement.PlayerObjectId);
+		var movementIndex = registry.SentPackets.FindIndex(send => send.Packet is SmAllianceMemberInfo);
+		var firstReviveEmotionIndex = registry.SentPackets.FindIndex(send => send.Packet is SmEmotion);
+		Assert.True(movementIndex >= 0);
+		Assert.True(firstReviveEmotionIndex >= 0);
+		Assert.True(movementIndex < firstReviveEmotionIndex);
+		Assert.DoesNotContain(registry.SentPackets, send => send.PlayerObjectId == player.ObjectId && send.Packet is SmAllianceMemberInfo);
+	}
+
+	[Fact]
 	public async Task HandleReviveAsync_DepletedKiskRunsRegistryCleanupFanout()
 	{
 		var registry = new CapturingConnectionRegistry();
@@ -413,7 +476,9 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 
 		public static async Task<KiskReviveWorkflowFixture> CreateAsync(
 			IGameClientConnectionRegistry? registry = null,
-			IDFactory? idFactory = null)
+			IDFactory? idFactory = null,
+			PlayerGroupRuntime? playerGroupRuntime = null,
+			PlayerAllianceRuntime? playerAllianceRuntime = null)
 		{
 			var runtimeContext = new GameServerRuntimeContext();
 			var world = new GameWorld(NullLogger<GameWorld>.Instance);
@@ -442,6 +507,8 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 					idFactory: idFactory,
 					world: world,
 					sentPacketObserver: sentPackets.Add,
+					playerGroupRuntime: playerGroupRuntime,
+					playerAllianceRuntime: playerAllianceRuntime,
 					crypt: crypt);
 				return new KiskReviveWorkflowFixture(client, connection, runtimeContext, world, sentPackets);
 			}
