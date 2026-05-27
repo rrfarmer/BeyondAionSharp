@@ -333,6 +333,52 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactReader
 		Assert.All(artifact.Traces, trace => Assert.False(trace.TimestampIsParityKey));
 	}
 
+	[Fact]
+	public void CmLevelReadyCallerOriginArtifacts_RecordStartProtectionBeforeWorldSpawn()
+	{
+		var artifact = ParseCmLevelReadyCallerOriginArtifact();
+
+		Assert.Equal(1, artifact.SchemaVersion);
+		Assert.Equal("cm-level-ready-start-protection-before-world-spawn", artifact.Scenario);
+		Assert.Equal("cm_level_ready_before_world_spawn", artifact.RuntimeFacts.ExpectedReturnReason);
+		Assert.Contains("CM_LEVEL_READY.runImpl", artifact.JavaSources);
+		Assert.Contains("PlayerController.startProtectionActiveTask", artifact.JavaSources);
+
+		var caller = artifact.Traces.Single(trace => trace.Phase == "caller_enter");
+		var startGuard = artifact.Traces.Single(trace => trace.Phase == "start_guard");
+		var visualSet = artifact.Traces.Single(trace => trace.Phase == "start_visual_set");
+		var cleanup = artifact.Traces.Single(trace => trace.Phase == "start_cast_target_cleanup");
+		var fanout = artifact.Traces.Single(trace => trace.Phase == "start_state_fanout");
+		var schedule = artifact.Traces.Single(trace => trace.Phase == "start_task_schedule");
+		var worldSpawnPending = artifact.Traces.Single(trace => trace.Phase == "world_spawn_pending");
+
+		Assert.NotNull(caller.CallerOrigin);
+		Assert.Equal("cm_level_ready_before_world_spawn", caller.CallerOrigin!.CallerName);
+		Assert.Equal("CM_LEVEL_READY", caller.CallerOrigin.CallerClass);
+		Assert.Equal("runImpl", caller.CallerOrigin.CallerMethod);
+		Assert.Equal(53, caller.CallerOrigin.StartProtectionLine);
+		Assert.True(caller.CallerOrigin.StartsProtectionBeforeWorldSpawn);
+		Assert.Equal(64, caller.CallerOrigin.WorldSpawnLine);
+		Assert.Equal("start_protection_before_world_spawn", caller.CallerOrigin.Ordering);
+		Assert.False(startGuard.Player.ProtectionActiveBefore);
+		Assert.True(visualSet.Player.ProtectionActiveAfter);
+		Assert.Contains("BLINKING", visualSet.Player.VisualStateAfter);
+		Assert.Equal("cancel_cast_and_remove_target", cleanup.ActionBranchName);
+		Assert.NotNull(fanout.Fanout);
+		Assert.Equal("SM_PLAYER_STATE", fanout.Fanout!.PacketName);
+		Assert.NotNull(schedule.Scheduler);
+		Assert.Equal(60000, schedule.Scheduler!.DelayMillis);
+		Assert.True(schedule.Scheduler.NewFutureStored);
+		Assert.True(caller.EventSeq < startGuard.EventSeq);
+		Assert.True(startGuard.EventSeq < visualSet.EventSeq);
+		Assert.True(visualSet.EventSeq < cleanup.EventSeq);
+		Assert.True(cleanup.EventSeq < fanout.EventSeq);
+		Assert.True(fanout.EventSeq < schedule.EventSeq);
+		Assert.True(schedule.EventSeq < worldSpawnPending.EventSeq);
+		Assert.DoesNotContain(artifact.Traces, trace => trace.Phase is "callback_enter" or "task_cancel" or "stop_call_enter");
+		Assert.All(artifact.Traces, trace => Assert.False(trace.TimestampIsParityKey));
+	}
+
 	private static void AssertNoStopArtifact(ProtectionStopTriggerJavaTraceArtifact artifact)
 	{
 		Assert.Equal(1, artifact.SchemaVersion);
@@ -1743,6 +1789,314 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactReader
 		return artifact;
 	}
 
+	private static ProtectionStopTriggerJavaTraceArtifact ParseCmLevelReadyCallerOriginArtifact()
+	{
+		const string json = """
+			{
+			  "schemaVersion": 1,
+			  "javaCommit": "abcdef1",
+			  "scenario": "cm-level-ready-start-protection-before-world-spawn",
+			  "runtimeFacts": {
+			    "serverFlavor": "java",
+			    "packetName": "CM_LEVEL_READY",
+			    "playerObjectId": 1001,
+			    "worldId": 210010000,
+			    "expectedReturnReason": "cm_level_ready_before_world_spawn"
+			  },
+			  "javaSources": [
+			    "CM_LEVEL_READY.runImpl",
+			    "PlayerController.startProtectionActiveTask",
+			    "ThreadPoolManager.schedule",
+			    "CreatureController.addTask"
+			  ],
+			  "traces": [
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "cm-level-ready-start-protection-before-world-spawn-001",
+			      "eventSeq": 0,
+			      "phase": "caller_enter",
+			      "packetName": "CM_LEVEL_READY",
+			      "returnReason": "cm_level_ready_before_world_spawn",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000000000,
+			      "monotonicNanos": 6000000,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "CM_LEVEL_READY.java",
+			      "javaLine": 53,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": false,
+			        "protectionActiveAfter": false,
+			        "visualStateBefore": [],
+			        "visualStateAfter": []
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "callerOrigin": {
+			        "callerName": "cm_level_ready_before_world_spawn",
+			        "callerClass": "CM_LEVEL_READY",
+			        "callerMethod": "runImpl",
+			        "callerSourceFile": "CM_LEVEL_READY.java",
+			        "callerLine": 53,
+			        "startProtectionLine": 53,
+			        "startsProtectionBeforeWorldSpawn": true,
+			        "worldSpawnLine": 64,
+			        "spawnedBeforeStart": false,
+			        "ordering": "start_protection_before_world_spawn"
+			      },
+			      "actionBranchName": "call_start_protection_active_task"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "cm-level-ready-start-protection-before-world-spawn-001",
+			      "eventSeq": 1,
+			      "phase": "start_guard",
+			      "packetName": "CM_LEVEL_READY",
+			      "returnReason": "cm_level_ready_before_world_spawn",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000000001,
+			      "monotonicNanos": 6000100,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "PlayerController.java",
+			      "javaLine": 629,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": false,
+			        "protectionActiveAfter": false,
+			        "visualStateBefore": [],
+			        "visualStateAfter": []
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "callerOrigin": null,
+			      "actionBranchName": "not_already_protection_active"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "cm-level-ready-start-protection-before-world-spawn-001",
+			      "eventSeq": 2,
+			      "phase": "start_visual_set",
+			      "packetName": "CM_LEVEL_READY",
+			      "returnReason": "cm_level_ready_before_world_spawn",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000000002,
+			      "monotonicNanos": 6000200,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "PlayerController.java",
+			      "javaLine": 630,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": false,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": [],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "callerOrigin": null,
+			      "actionBranchName": "set_blinking"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "cm-level-ready-start-protection-before-world-spawn-001",
+			      "eventSeq": 3,
+			      "phase": "start_cast_target_cleanup",
+			      "packetName": "CM_LEVEL_READY",
+			      "returnReason": "cm_level_ready_before_world_spawn",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000000003,
+			      "monotonicNanos": 6000300,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "PlayerController.java",
+			      "javaLine": 631,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "callerOrigin": null,
+			      "actionBranchName": "cancel_cast_and_remove_target"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "cm-level-ready-start-protection-before-world-spawn-001",
+			      "eventSeq": 4,
+			      "phase": "start_state_fanout",
+			      "packetName": "CM_LEVEL_READY",
+			      "returnReason": "cm_level_ready_before_world_spawn",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000000004,
+			      "monotonicNanos": 6000400,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "PlayerController.java",
+			      "javaLine": 633,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": {
+			        "packetName": "SM_PLAYER_STATE",
+			        "includeSelf": true,
+			        "recipientCount": 0,
+			        "knownListOrderIsParityKey": false
+			      },
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "callerOrigin": null,
+			      "actionBranchName": "broadcast_start_state"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "cm-level-ready-start-protection-before-world-spawn-001",
+			      "eventSeq": 5,
+			      "phase": "start_task_schedule",
+			      "packetName": "CM_LEVEL_READY",
+			      "returnReason": "cm_level_ready_before_world_spawn",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000000005,
+			      "monotonicNanos": 6000500,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "PlayerController.java",
+			      "javaLine": 634,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": {
+			        "delayMillis": 60000,
+			        "timeUnit": "MILLISECONDS",
+			        "runnableWrapperApplied": true,
+			        "callbackMethod": "PlayerController.stopProtectionActiveTask",
+			        "oldFuturePresent": false,
+			        "oldFutureCancelArgument": null,
+			        "oldFutureCancelResult": null,
+			        "newFutureStored": true
+			      },
+			      "callerOrigin": null,
+			      "actionBranchName": "schedule_stop_callback"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "cm-level-ready-start-protection-before-world-spawn-001",
+			      "eventSeq": 6,
+			      "phase": "world_spawn_pending",
+			      "packetName": "CM_LEVEL_READY",
+			      "returnReason": "cm_level_ready_before_world_spawn",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000000006,
+			      "monotonicNanos": 6000600,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "CM_LEVEL_READY.java",
+			      "javaLine": 64,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "callerOrigin": {
+			        "callerName": "cm_level_ready_before_world_spawn",
+			        "callerClass": "CM_LEVEL_READY",
+			        "callerMethod": "runImpl",
+			        "callerSourceFile": "CM_LEVEL_READY.java",
+			        "callerLine": 53,
+			        "startProtectionLine": 53,
+			        "startsProtectionBeforeWorldSpawn": true,
+			        "worldSpawnLine": 64,
+			        "spawnedBeforeStart": false,
+			        "ordering": "start_protection_before_world_spawn"
+			      },
+			      "actionBranchName": "world_spawn_after_start_protection"
+			    }
+			  ],
+			  "notes": [
+			    "CM_LEVEL_READY starts protection active before World.spawn(activePlayer).",
+			    "Inline fixture proves reader binding only, not Java runtime parity."
+			  ]
+			}
+			""";
+
+		var artifact = JsonSerializer.Deserialize<ProtectionStopTriggerJavaTraceArtifact>(json, JsonOptions);
+		Assert.NotNull(artifact);
+		return artifact;
+	}
+
 	private static ProtectionStopTriggerJavaTraceArtifact ParseNoStopArtifact(
 		string scenario,
 		string packetName,
@@ -1932,6 +2286,7 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactReader
 		ProtectionStopTriggerEmotionSnapshot? Emotion,
 		ProtectionStopTriggerActionPayloadSnapshot? ActionPayload,
 		ProtectionStopTriggerSchedulerSnapshot? Scheduler,
+		ProtectionStopTriggerCallerOriginSnapshot? CallerOrigin,
 		string ActionBranchName);
 
 	private sealed record ProtectionStopTriggerPlayerSnapshot(
@@ -2004,4 +2359,16 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactReader
 		bool? OldFutureCancelArgument,
 		bool? OldFutureCancelResult,
 		bool NewFutureStored);
+
+	private sealed record ProtectionStopTriggerCallerOriginSnapshot(
+		string CallerName,
+		string? CallerClass,
+		string? CallerMethod,
+		string CallerSourceFile,
+		int CallerLine,
+		int? StartProtectionLine,
+		bool StartsProtectionBeforeWorldSpawn,
+		int? WorldSpawnLine,
+		bool SpawnedBeforeStart,
+		string? Ordering);
 }
