@@ -16,11 +16,14 @@ public sealed class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 		Assert.True(report.HasTraceArtifactSchema);
 		Assert.False(report.HasGeneratedJavaTraceArtifactDirectoryReport);
 		Assert.False(report.HasShapeValidGeneratedJavaTraceArtifacts);
+		Assert.False(report.HasRuntimeComparisonContractReport);
 		Assert.True(report.NeedsJavaInstrumentation);
 		Assert.True(report.NeedsJavaTraceSerializer);
 		Assert.True(report.NeedsGeneratedJavaTraceArtifacts);
 		Assert.False(report.NeedsCSharpArtifactReader);
 		Assert.True(report.NeedsLiveCSharpPacketHooks);
+		Assert.False(report.NeedsCSharpRuntimeTraceOutput);
+		Assert.False(report.NeedsRuntimeComparisonExecution);
 		Assert.True(report.NeedsRuntimeComparisonEvidence);
 		Assert.False(report.ReadyForRuntimeComparison);
 	}
@@ -164,11 +167,87 @@ public sealed class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 			&& row.Notes.Contains("Verified parity cannot be claimed", StringComparison.Ordinal));
 	}
 
+	[Fact]
+	public void Create_WithComparisonContractMissingCSharpTraceUpdatesRuntimeEvidenceRow()
+	{
+		var artifactReport = CreateShapeValidArtifactDirectoryReport();
+		var comparisonContract = PlayerProtectionActiveTaskStopTriggerRuntimeComparisonContractService.Create(artifactReport);
+
+		var report = PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessReportService.Create(
+			CreateRuntimeDesign(),
+			CreateTraceSchema(),
+			artifactReport,
+			comparisonContract);
+
+		Assert.True(report.HasRuntimeComparisonContractReport);
+		Assert.True(report.NeedsCSharpRuntimeTraceOutput);
+		Assert.True(report.NeedsRuntimeComparisonExecution);
+		Assert.True(report.NeedsRuntimeComparisonEvidence);
+		Assert.Contains(report.Rows, row =>
+			row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.RuntimeComparisonEvidence
+			&& row.Status == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedMissingCSharpRuntimeTrace
+			&& row.Evidence.Contains("needsCSharpRuntimeTrace=True", StringComparison.Ordinal)
+			&& row.Notes.Contains("live C# stop-trigger trace output is missing", StringComparison.Ordinal));
+	}
+
+	[Fact]
+	public void Create_WithComparisonContractComparisonNotExecutedUpdatesRuntimeEvidenceRow()
+	{
+		var artifactReport = CreateShapeValidArtifactDirectoryReport();
+		var comparisonContract = PlayerProtectionActiveTaskStopTriggerRuntimeComparisonContractService.Create(
+			artifactReport,
+			CreateSyntheticCSharpRuntimeTraceReport(hasLivePacketHooks: true));
+
+		var report = PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessReportService.Create(
+			CreateRuntimeDesign(),
+			CreateTraceSchema(),
+			artifactReport,
+			comparisonContract);
+
+		Assert.True(report.HasRuntimeComparisonContractReport);
+		Assert.False(report.NeedsCSharpRuntimeTraceOutput);
+		Assert.True(report.NeedsRuntimeComparisonExecution);
+		Assert.True(report.NeedsRuntimeComparisonEvidence);
+		Assert.Contains(report.Rows, row =>
+			row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.RuntimeComparisonEvidence
+			&& row.Status == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedComparisonNotExecuted
+			&& row.Evidence.Contains("needsExecutedComparison=True", StringComparison.Ordinal)
+			&& row.Notes.Contains("deterministic Java/C# trace comparison has not executed", StringComparison.Ordinal));
+	}
+
+	[Fact]
+	public void Create_WithComparisonContractInvalidJavaArtifactsKeepsRuntimeEvidenceSpecific()
+	{
+		var artifactReport = CreateInvalidArtifactDirectoryReport();
+		var comparisonContract = PlayerProtectionActiveTaskStopTriggerRuntimeComparisonContractService.Create(artifactReport);
+
+		var report = PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessReportService.Create(
+			CreateRuntimeDesign(),
+			CreateTraceSchema(),
+			artifactReport,
+			comparisonContract);
+
+		Assert.True(report.HasRuntimeComparisonContractReport);
+		Assert.True(report.NeedsGeneratedJavaTraceArtifacts);
+		Assert.Contains(report.Rows, row =>
+			row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.RuntimeComparisonEvidence
+			&& row.Status == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedInvalidJavaArtifact
+			&& row.Evidence.Contains("needsJavaArtifacts=True", StringComparison.Ordinal)
+			&& row.Notes.Contains("generated Java trace artifacts are missing or invalid", StringComparison.Ordinal));
+	}
+
 	private static PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaReport CreateTraceSchema() =>
 		PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaReportService.Create(CreateRuntimeDesign());
 
 	private static PlayerProtectionActiveTaskStopTriggerRuntimeComparisonDesignReport CreateRuntimeDesign() =>
 		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonDesignReportService.Create(CreateDetailedSummary());
+
+	private static PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTraceReport CreateSyntheticCSharpRuntimeTraceReport(bool hasLivePacketHooks) =>
+		new(
+			["CM_TELEPORT_ANIMATION_DONE"],
+			HasLivePacketHooks: hasLivePacketHooks,
+			ReadyForRuntimeComparison: false,
+			"synthetic C# trace report only");
 
 	private static PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirectoryReport CreateShapeValidArtifactDirectoryReport() =>
 		new(

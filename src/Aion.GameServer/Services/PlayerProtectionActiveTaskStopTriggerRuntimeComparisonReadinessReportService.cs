@@ -19,7 +19,9 @@ public enum PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatu
 	BlockedMissingJavaArtifact,
 	BlockedInvalidJavaArtifact,
 	BlockedMissingCSharpImplementation,
+	BlockedMissingCSharpRuntimeTrace,
 	BlockedMissingRuntimeEvidence,
+	BlockedComparisonNotExecuted,
 }
 
 public sealed record PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessRow(
@@ -38,11 +40,14 @@ public sealed record PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadi
 	bool HasTraceArtifactSchema,
 	bool HasGeneratedJavaTraceArtifactDirectoryReport,
 	bool HasShapeValidGeneratedJavaTraceArtifacts,
+	bool HasRuntimeComparisonContractReport,
 	bool NeedsJavaInstrumentation,
 	bool NeedsJavaTraceSerializer,
 	bool NeedsGeneratedJavaTraceArtifacts,
 	bool NeedsCSharpArtifactReader,
 	bool NeedsLiveCSharpPacketHooks,
+	bool NeedsCSharpRuntimeTraceOutput,
+	bool NeedsRuntimeComparisonExecution,
 	bool NeedsRuntimeComparisonEvidence,
 	bool ReadyForRuntimeComparison,
 	string JavaSource,
@@ -57,7 +62,8 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 	public static PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessReport Create(
 		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonDesignReport? runtimeDesign,
 		PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaReport? traceSchema,
-		PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirectoryReport? artifactDirectoryReport = null)
+		PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirectoryReport? artifactDirectoryReport = null,
+		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonContractReport? comparisonContract = null)
 	{
 		var rows = new List<PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessRow>();
 
@@ -68,7 +74,7 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 		AddGeneratedJavaTraceArtifacts(rows, traceSchema, artifactDirectoryReport);
 		AddCSharpArtifactReader(rows, traceSchema);
 		AddLiveCSharpPacketHooks(rows, runtimeDesign);
-		AddRuntimeComparisonEvidence(rows);
+		AddRuntimeComparisonEvidence(rows, comparisonContract);
 
 		var rowArray = rows.ToArray();
 
@@ -78,11 +84,14 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 			HasTraceArtifactSchema: traceSchema != null,
 			HasGeneratedJavaTraceArtifactDirectoryReport: artifactDirectoryReport != null,
 			HasShapeValidGeneratedJavaTraceArtifacts: artifactDirectoryReport?.Status == PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirectoryStatus.AllArtifactsShapeValid,
+			HasRuntimeComparisonContractReport: comparisonContract != null,
 			NeedsJavaInstrumentation: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.JavaInstrumentation && row.BlocksRuntimeComparison),
 			NeedsJavaTraceSerializer: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.JavaTraceSerializer && row.BlocksRuntimeComparison),
 			NeedsGeneratedJavaTraceArtifacts: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.GeneratedJavaTraceArtifacts && row.BlocksRuntimeComparison),
 			NeedsCSharpArtifactReader: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.CSharpArtifactReader && row.BlocksRuntimeComparison),
 			NeedsLiveCSharpPacketHooks: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.LiveCSharpPacketHooks && row.BlocksRuntimeComparison),
+			NeedsCSharpRuntimeTraceOutput: comparisonContract?.NeedsCSharpRuntimeTrace == true,
+			NeedsRuntimeComparisonExecution: comparisonContract?.NeedsExecutedComparison == true,
 			NeedsRuntimeComparisonEvidence: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.RuntimeComparisonEvidence && row.BlocksRuntimeComparison),
 			ReadyForRuntimeComparison: rowArray.Length > 0 && rowArray.All(row => !row.BlocksRuntimeComparison),
 			"Protection stop-trigger runtime comparison readiness gate",
@@ -268,8 +277,23 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 	}
 
 	private static void AddRuntimeComparisonEvidence(
-		ICollection<PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessRow> rows)
+		ICollection<PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessRow> rows,
+		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonContractReport? comparisonContract)
 	{
+		if (comparisonContract != null)
+		{
+			var status = GetRuntimeComparisonEvidenceStatus(comparisonContract);
+			Add(rows,
+				PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.RuntimeComparisonEvidence,
+				status,
+				blocks: status != PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.SatisfiedByNonLiveMetadata,
+				comparisonContract.JavaSource,
+				"PlayerProtectionActiveTaskStopTriggerRuntimeComparisonContractReport",
+				$"contractRows={comparisonContract.Rows.Count}; needsJavaArtifacts={comparisonContract.NeedsJavaArtifacts}; needsCSharpRuntimeTrace={comparisonContract.NeedsCSharpRuntimeTrace}; needsExecutedComparison={comparisonContract.NeedsExecutedComparison}",
+				GetRuntimeComparisonEvidenceNotes(comparisonContract));
+			return;
+		}
+
 		Add(rows,
 			PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.RuntimeComparisonEvidence,
 			PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedMissingRuntimeEvidence,
@@ -278,6 +302,42 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 			"future runtime comparison test suite",
 			"no Java/C# trace comparison executed",
 			"Verified parity cannot be claimed until generated Java traces and C# outputs are compared deterministically.");
+	}
+
+	private static PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus GetRuntimeComparisonEvidenceStatus(
+		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonContractReport comparisonContract)
+	{
+		if (comparisonContract.NeedsJavaArtifacts)
+		{
+			return comparisonContract.Rows.Any(row =>
+				row.Area == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonContractArea.JavaTraceArtifacts
+				&& row.Status == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonContractStatus.BlockedInvalidJavaArtifact)
+				? PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedInvalidJavaArtifact
+				: PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedMissingJavaArtifact;
+		}
+
+		if (comparisonContract.NeedsCSharpRuntimeTrace)
+			return PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedMissingCSharpRuntimeTrace;
+
+		if (comparisonContract.NeedsExecutedComparison)
+			return PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedComparisonNotExecuted;
+
+		return PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.SatisfiedByNonLiveMetadata;
+	}
+
+	private static string GetRuntimeComparisonEvidenceNotes(
+		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonContractReport comparisonContract)
+	{
+		if (comparisonContract.NeedsJavaArtifacts)
+			return "Runtime evidence is blocked because generated Java trace artifacts are missing or invalid.";
+
+		if (comparisonContract.NeedsCSharpRuntimeTrace)
+			return "Runtime evidence is blocked because live C# stop-trigger trace output is missing.";
+
+		if (comparisonContract.NeedsExecutedComparison)
+			return "Runtime evidence is blocked because deterministic Java/C# trace comparison has not executed.";
+
+		return "Runtime comparison contract has no current blockers, but verified parity still requires objective comparison evidence.";
 	}
 
 	private static void Add(
