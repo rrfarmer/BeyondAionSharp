@@ -2740,9 +2740,9 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		// Java parity: network/aion/clientpackets/CM_MANASTONE.runImpl actionType 4 + services/item/ItemSocketService.socketGodstone.
 		var staticData = _runtimeContext?.DataManager?.StaticData;
-		var itemTemplates = staticData?.ItemTemplates;
-		if (itemTemplates == null)
+		if (staticData == null)
 			return;
+		var itemTemplates = staticData.ItemTemplates;
 
 		var sourceItem = player.InventoryItems.FirstOrDefault(item =>
 			item.ObjectId == packet.StoneObjectId
@@ -2785,7 +2785,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (cancellationToken.IsCancellationRequested)
 					return;
 
-				await CompleteSocketGodstoneAsync(player, packet.StoneObjectId, plan, sourceTemplate, itemTemplates, cancellationToken);
+				await CompleteSocketGodstoneAsync(player, packet.StoneObjectId, plan, sourceTemplate, itemTemplates, staticData.ItemRestrictionCleanups, cancellationToken);
 			});
 	}
 
@@ -2795,6 +2795,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		GodstoneSocketPlan plan,
 		ItemTemplateSummary sourceTemplate,
 		ItemTemplateTable itemTemplates,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups,
 		CancellationToken cancellationToken)
 	{
 		if (plan.TargetItemUpdate == null)
@@ -2822,14 +2823,15 @@ public sealed class GameServerConnection : BaseClientConnection
 				1,
 				0));
 
-		if (plan.SourceItemUpdate != null)
-			await SendPacketAsync(new SmInventoryUpdateItem(plan.SourceItemUpdate, sourceTemplate, SmInventoryUpdateItem.DecreaseItemUse));
-		else if (plan.DeletedSourceItemObjectId.HasValue)
-			await SendPacketAsync(new SmDeleteItem(plan.DeletedSourceItemObjectId.Value, SmDeleteItem.UseDeleteType));
+		await SendItemUseMutationAsync(plan.SourceItemUpdate, plan.DeletedSourceItemObjectId, sourceTemplate, itemRestrictionCleanups);
 
 		await SendPacketAsync(SmSystemMessage.GiveItemProcEnchantedTargetItem(plan.ItemName));
 		if (itemTemplates.GetItemTemplate(plan.TargetItemUpdate.ItemId) is { } targetTemplate)
-			await SendPacketAsync(new SmInventoryUpdateItem(plan.TargetItemUpdate, targetTemplate, updateType: 0));
+			await SendPacketAsync(new SmInventoryUpdateItem(
+				plan.TargetItemUpdate,
+				targetTemplate,
+				updateType: 0,
+				GetGeneralInfoWarehouseRestrictionFlag(plan.TargetItemUpdate.ItemId, itemRestrictionCleanups)));
 	}
 
 	private static SmSystemMessage CreateSocketGodstoneFailureMessage(GodstoneSocketPlan plan)
