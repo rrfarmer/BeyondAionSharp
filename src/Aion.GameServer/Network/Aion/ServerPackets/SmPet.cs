@@ -21,7 +21,7 @@ public sealed record SmPetSpawnSnapshot(
 
 public sealed record SmPetSurrenderSnapshot(int TemplateId, int ObjectId);
 
-internal sealed record SmPetDataSnapshot(
+public sealed record SmPetDataSnapshot(
 	string Name,
 	int TemplateId,
 	int ObjectId,
@@ -31,7 +31,7 @@ internal sealed record SmPetDataSnapshot(
 	IReadOnlyList<SmPetFunctionSnapshot> Functions,
 	int Decoration);
 
-internal sealed record SmPetFunctionSnapshot(
+public sealed record SmPetFunctionSnapshot(
 	PetFunctionType FunctionType,
 	IReadOnlyList<int>? DopingItemIds = null,
 	int FeedProgressData = 0,
@@ -46,6 +46,7 @@ public sealed class SmPet : GameServerPacket
 	private readonly PetAction _action;
 	private readonly SmPetSpawnSnapshot? _spawn;
 	private readonly SmPetSurrenderSnapshot? _surrender;
+	private readonly SmPetDataSnapshot? _petData;
 	private readonly int _petObjectId;
 	private readonly string? _petName;
 	private readonly ObjectDeleteAnimation _animation;
@@ -68,6 +69,12 @@ public sealed class SmPet : GameServerPacket
 		// Java parity: network/aion/serverpackets/SM_PET(Pet) with PetAction.SPAWN.
 		_action = PetAction.Spawn;
 		_spawn = spawn;
+	}
+
+	public static SmPet Adopt(SmPetDataSnapshot petData)
+	{
+		// Java parity: network/aion/serverpackets/SM_PET(PetCommonData, true) with PetAction.ADOPT.
+		return new SmPet(PetAction.Adopt, petData);
 	}
 
 	public SmPet(SmPetSurrenderSnapshot surrender)
@@ -96,6 +103,13 @@ public sealed class SmPet : GameServerPacket
 		_petName = petName;
 	}
 
+	private SmPet(PetAction action, SmPetDataSnapshot petData)
+		: base(PacketOpCode)
+	{
+		_action = action;
+		_petData = petData;
+	}
+
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
 		// Java parity: SM_PET.writeImpl currently ported packet subset.
@@ -103,6 +117,9 @@ public sealed class SmPet : GameServerPacket
 
 		switch (_action)
 		{
+			case PetAction.Adopt:
+				WritePetData(buffer, _petData ?? throw new InvalidOperationException("Pet data snapshot is required for SM_PET adopt."));
+				break;
 			case PetAction.Spawn:
 				WriteSpawn(buffer, _spawn ?? throw new InvalidOperationException("Spawn snapshot is required for SM_PET spawn."));
 				break;

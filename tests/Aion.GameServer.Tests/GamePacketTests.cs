@@ -4211,6 +4211,33 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmPet_AdoptWritesPetDataLikeJava()
+	{
+		var payload = SerializeUnencryptedPayload(SmPet.Adopt(new SmPetDataSnapshot(
+			Name: "Tog",
+			TemplateId: 900001,
+			ObjectId: 7001,
+			MasterObjectId: 1001,
+			BirthdayEpochSeconds: 123456,
+			SecondsUntilExpiration: 654,
+			Functions:
+			[
+				new SmPetFunctionSnapshot(PetFunctionType.Loot),
+			],
+			Decoration: 12345)));
+		using var reader = new PacketBuffer(payload);
+
+		Assert.Equal((int)PetAction.Adopt, reader.ReadH());
+		AssertSmPetDataHeader(reader);
+		Assert.Equal((int)PetFunctionType.Loot, (int)reader.ReadC());
+		Assert.Equal(1, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal((int)PetFunctionType.None, reader.ReadH());
+		AssertSmPetAppearance(reader, decoration: 12345);
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
 	public void SmPetEmote_FlyStartWritesDefaultBranchLikeJava()
 	{
 		var payload = SerializeUnencryptedPayload(new SmPetEmote(new SmPetEmoteSnapshot(7001, PetEmote.FlyStart)));
