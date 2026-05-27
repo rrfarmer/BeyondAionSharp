@@ -9236,9 +9236,20 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (rewardTemplate != null)
 		{
 			foreach (var updatedReward in rewardPlan.UpdatedItems)
-				await SendPacketAsync(new SmInventoryUpdateItem(updatedReward, rewardTemplate, SmInventoryUpdateItem.IncreaseItemCollect), cancellationToken);
+				await SendPacketAsync(
+					new SmInventoryUpdateItem(
+						updatedReward,
+						rewardTemplate,
+						SmInventoryUpdateItem.IncreaseItemCollect,
+						GetGeneralInfoWarehouseRestrictionFlag(updatedReward.ItemId, staticData.ItemRestrictionCleanups)),
+					cancellationToken);
 			foreach (var addedReward in rewardPlan.AddedItems)
-				await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(addedReward, rewardTemplate), cancellationToken);
+				await SendPacketAsync(
+					SmInventoryAddItem.CreateItemCollect(
+						addedReward,
+						rewardTemplate,
+						GetGeneralInfoWarehouseRestrictionFlag(addedReward.ItemId, staticData.ItemRestrictionCleanups)),
+					cancellationToken);
 			await SendPacketAsync(
 				SmSystemMessage.HousingObjectRewardItem(ChatUtil.L10n(target.Template.NameId), rewardTemplate.GetClientName() ?? rewardTemplate.Name),
 				cancellationToken);
