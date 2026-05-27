@@ -96,8 +96,9 @@ public sealed class PlayerPetRowProjectionTests
 		Assert.NotNull(projection.DopingBag);
 		Assert.Equal(166000001, projection.DopingBag.FoodItem);
 		Assert.Equal(162000001, projection.DopingBag.DrinkItem);
-		Assert.Equal([164000001, 164000002], projection.DopingBag.ScrollItems);
-		Assert.Equal("166000001,162000001,164000001,164000002", projection.DopingBag.ToJavaPersistenceCsv());
+		Assert.Equal([164000001, 164000002], projection.DopingBag.GetScrollsUsed());
+		Assert.Equal([166000001, 162000001, 164000001, 164000002], projection.DopingBag.GetItems());
+		Assert.True(projection.DopingBag.IsDirty);
 	}
 
 	[Fact]
@@ -109,11 +110,27 @@ public sealed class PlayerPetRowProjectionTests
 			() => DateTimeOffset.FromUnixTimeSeconds(9999));
 
 		Assert.NotNull(projection.DopingBag);
-		Assert.Empty(projection.DopingBag.ItemIds);
+		Assert.Empty(projection.DopingBag.GetItems());
 		Assert.Equal(0, projection.DopingBag.FoodItem);
 		Assert.Equal(0, projection.DopingBag.DrinkItem);
-		Assert.Empty(projection.DopingBag.ScrollItems);
-		Assert.Equal("0,0", projection.DopingBag.ToJavaPersistenceCsv());
+		Assert.Empty(projection.DopingBag.GetScrollsUsed());
+		Assert.False(projection.DopingBag.IsDirty);
+	}
+
+	[Fact]
+	public void ProjectDopingBagZeroCsvExpandsWithoutDirtyLikeJavaSetItem()
+	{
+		var projection = PlayerPetRowProjection.Project(
+			CreateRow(Dopings: "0,0,0"),
+			new PlayerPetProjectionOptions(HasFoodFunction: false, HasDopingFunction: true),
+			() => DateTimeOffset.FromUnixTimeSeconds(9999));
+
+		Assert.NotNull(projection.DopingBag);
+		Assert.Equal([0, 0, 0], projection.DopingBag.GetItems());
+		Assert.Equal(0, projection.DopingBag.FoodItem);
+		Assert.Equal(0, projection.DopingBag.DrinkItem);
+		Assert.Equal([0], projection.DopingBag.GetScrollsUsed());
+		Assert.False(projection.DopingBag.IsDirty);
 	}
 
 	[Fact]

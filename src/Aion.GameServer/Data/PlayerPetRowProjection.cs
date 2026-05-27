@@ -25,25 +25,6 @@ public sealed record PlayerPetProjectionOptions(
 	short LovedFoodLimit = 0,
 	bool HasDopingFunction = false);
 
-public sealed record PlayerPetDopingBagProjection(IReadOnlyList<int> ItemIds)
-{
-	public const int MaxItems = 8;
-
-	public int FoodItem => ItemIds.Count >= 1 ? ItemIds[0] : 0;
-
-	public int DrinkItem => ItemIds.Count >= 2 ? ItemIds[1] : 0;
-
-	public IReadOnlyList<int> ScrollItems => ItemIds.Count < 3 ? [] : ItemIds.Skip(2).ToArray();
-
-	public string ToJavaPersistenceCsv()
-	{
-		// Java parity: model/templates/pet/PetDopingBag.getFoodItem/getDrinkItem/getScrollsUsed for PlayerPetsDAO.saveDopingBag.
-		var ids = new List<int> { FoodItem, DrinkItem };
-		ids.AddRange(ScrollItems);
-		return string.Join(",", ids);
-	}
-}
-
 public sealed record PlayerPetLoadedProjection(
 	int PetObjectId,
 	int TemplateId,
@@ -55,7 +36,7 @@ public sealed record PlayerPetLoadedProjection(
 	DateTimeOffset DespawnTime,
 	PetFeedProgress? FeedProgress,
 	PetCommonDataTiming Timing,
-	PlayerPetDopingBagProjection? DopingBag);
+	PetDopingBag? DopingBag);
 
 public static class PlayerPetRowProjection
 {
@@ -94,26 +75,27 @@ public static class PlayerPetRowProjection
 			dopingBag);
 	}
 
-	public static PlayerPetDopingBagProjection ProjectDopingBag(string? dopings)
+	public static PetDopingBag ProjectDopingBag(string? dopings)
 	{
+		var bag = new PetDopingBag();
 		if (dopings is null)
 		{
-			return new PlayerPetDopingBagProjection([]);
+			return bag;
 		}
 
 		var parts = dopings.Split(',');
-		if (parts.Length > PlayerPetDopingBagProjection.MaxItems)
+		if (parts.Length > PetDopingBag.MaxItems)
 		{
 			throw new ArgumentOutOfRangeException(nameof(dopings), parts.Length, "Java PetDopingBag has exactly 8 packet slots.");
 		}
 
-		var items = new int[parts.Length];
 		for (var i = 0; i < parts.Length; i++)
 		{
-			items[i] = int.Parse(parts[i], System.Globalization.CultureInfo.InvariantCulture);
+			// Java parity: dao/PlayerPetsDAO.getPlayerPets calls PetDopingBag.setItem(Integer.parseInt(ids[i]), i).
+			bag.SetItem(int.Parse(parts[i], System.Globalization.CultureInfo.InvariantCulture), i);
 		}
 
-		return new PlayerPetDopingBagProjection(items);
+		return bag;
 	}
 
 	private static PetFeedProgress CreateFeedProgress(PlayerPetRepositoryRow row, short lovedFoodLimit)
