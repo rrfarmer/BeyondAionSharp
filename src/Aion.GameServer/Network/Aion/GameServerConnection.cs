@@ -1885,7 +1885,8 @@ public sealed class GameServerConnection : BaseClientConnection
 	private async Task StartChargingEquippedItemsAsync(Player player, int senderObjectId, int chargeWay)
 	{
 		// Java parity: services/item/ItemChargeService.startChargingEquippedItems.
-		var itemTemplates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var itemTemplates = staticData?.ItemTemplates;
 		if (itemTemplates == null)
 			return;
 
@@ -7866,7 +7867,8 @@ public sealed class GameServerConnection : BaseClientConnection
 
 	private async Task<CraftSkillLearnResponsePlan> HandleCraftSkillLearnQuestionResponseAsync(Player responder, CmQuestionResponse packet)
 	{
-		var itemTemplates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var itemTemplates = staticData?.ItemTemplates;
 		if (itemTemplates == null)
 			return CraftSkillLearnResponsePlan.NotHandled(CraftSkillLearnResponseStatus.NoPendingRequest);
 
@@ -10628,7 +10630,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (_brokerRepository == null)
 			return;
 
-		var itemTemplates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var itemTemplates = staticData?.ItemTemplates;
 		if (itemTemplates == null)
 			return;
 
@@ -10680,7 +10683,10 @@ public sealed class GameServerConnection : BaseClientConnection
 			inventoryItems.RemoveAll(item => item.ObjectId == returnedItem.ReturnedItem.ObjectId);
 			inventoryItems.Add(returnedItem.ReturnedItem);
 			player.InventoryItems = inventoryItems.ToArray();
-			await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(returnedItem.ReturnedItem, itemTemplate));
+			await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(
+				returnedItem.ReturnedItem,
+				itemTemplate,
+				GetGeneralInfoWarehouseRestrictionFlag(returnedItem.ReturnedItem.ItemId, staticData?.ItemRestrictionCleanups)));
 			await SendPacketAsync(SmCubeUpdate.CubeSize(player));
 		}
 
