@@ -625,6 +625,54 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactReader
 		Assert.All(artifact.Traces, trace => Assert.False(trace.TimestampIsParityKey));
 	}
 
+	[Fact]
+	public void TeleportAnimationDoneNoOpArtifacts_RecordMissingDoneAndNonRunnableTaskBranches()
+	{
+		var artifact = ParseTeleportAnimationDoneNoOpArtifact();
+
+		Assert.Equal(1, artifact.SchemaVersion);
+		Assert.Equal("teleport-animation-done-no-op-without-runnable-pending-task", artifact.Scenario);
+		Assert.Equal("animation_done_no_pending_runnable_teleport_task", artifact.RuntimeFacts.ExpectedReturnReason);
+		Assert.Contains("CM_TELEPORT_ANIMATION_DONE.runImpl", artifact.JavaSources);
+		Assert.Contains("CreatureController.getAndRemoveTask", artifact.JavaSources);
+		Assert.DoesNotContain("TeleportService.SpawnTask.run", artifact.JavaSources);
+
+		var missingTask = artifact.Traces.Single(trace => trace.Phase == "missing_teleport_task_noop");
+		var doneTask = artifact.Traces.Single(trace => trace.Phase == "completed_runnable_task_noop");
+		var nonRunnableTask = artifact.Traces.Single(trace => trace.Phase == "non_runnable_task_noop");
+
+		Assert.NotNull(missingTask.Scheduler);
+		Assert.False(missingTask.Scheduler!.OldFuturePresent);
+		Assert.Equal("none", missingTask.Scheduler.CallbackMethod);
+		Assert.Null(missingTask.TaskCancellation);
+		Assert.NotNull(doneTask.Scheduler);
+		Assert.True(doneTask.Scheduler!.OldFuturePresent);
+		Assert.Equal("RunnableFuture.isDone", doneTask.Scheduler.CallbackMethod);
+		Assert.NotNull(doneTask.TaskCancellation);
+		Assert.True(doneTask.TaskCancellation!.TaskRemovedBeforeCancel);
+		Assert.False(doneTask.TaskCancellation.FutureCancelResult);
+		Assert.NotNull(nonRunnableTask.Scheduler);
+		Assert.True(nonRunnableTask.Scheduler!.OldFuturePresent);
+		Assert.Equal("not_RunnableFuture", nonRunnableTask.Scheduler.CallbackMethod);
+		Assert.NotNull(nonRunnableTask.TaskCancellation);
+		Assert.True(nonRunnableTask.TaskCancellation!.TaskRemovedBeforeCancel);
+		Assert.True(missingTask.EventSeq < doneTask.EventSeq);
+		Assert.True(doneTask.EventSeq < nonRunnableTask.EventSeq);
+		Assert.All(artifact.Traces, trace =>
+		{
+			Assert.False(trace.StopCalled);
+			Assert.False(trace.ExpectsStopProtectionCall);
+			Assert.False(trace.Player.Spawned);
+			Assert.True(trace.Player.ProtectionActiveBefore);
+			Assert.True(trace.Player.ProtectionActiveAfter);
+			Assert.Null(trace.Fanout);
+			Assert.Null(trace.CallerOrigin);
+			Assert.False(trace.TimestampIsParityKey);
+		});
+		Assert.DoesNotContain(artifact.Traces, trace => trace.Phase is "spawn_task_run" or "fallback_player_info_packet" or "fallback_world_spawn" or "world_position_set" or "protection_start_skip");
+		Assert.DoesNotContain(artifact.Traces, trace => trace.JavaLine is 39 or 40 or 45 or 46);
+	}
+
 	private static void AssertNoStopArtifact(ProtectionStopTriggerJavaTraceArtifact artifact)
 	{
 		Assert.Equal(1, artifact.SchemaVersion);
@@ -4220,6 +4268,187 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactReader
 			  "notes": [
 			    "Missing-instance and dead-player delayed teleport fallback share the same Java branch.",
 			    "Fallback sends SM_PLAYER_INFO and World.spawn(player), then returns before position set, pet position set, same-map packets, or startProtectionActiveTask.",
+			    "Inline fixture proves reader binding only, not Java runtime parity."
+			  ]
+			}
+			""";
+
+		var artifact = JsonSerializer.Deserialize<ProtectionStopTriggerJavaTraceArtifact>(json, JsonOptions);
+		Assert.NotNull(artifact);
+		return artifact;
+	}
+
+	private static ProtectionStopTriggerJavaTraceArtifact ParseTeleportAnimationDoneNoOpArtifact()
+	{
+		const string json = """
+			{
+			  "schemaVersion": 1,
+			  "javaCommit": "abcdef1",
+			  "scenario": "teleport-animation-done-no-op-without-runnable-pending-task",
+			  "runtimeFacts": {
+			    "serverFlavor": "java",
+			    "packetName": "CM_TELEPORT_ANIMATION_DONE",
+			    "playerObjectId": 1001,
+			    "worldId": 301390000,
+			    "expectedReturnReason": "animation_done_no_pending_runnable_teleport_task"
+			  },
+			  "javaSources": [
+			    "CM_TELEPORT_ANIMATION_DONE.runImpl",
+			    "CreatureController.getAndRemoveTask"
+			  ],
+			  "traces": [
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "teleport-animation-done-no-op-without-runnable-pending-task-001",
+			      "eventSeq": 0,
+			      "phase": "missing_teleport_task_noop",
+			      "packetName": "CM_TELEPORT_ANIMATION_DONE",
+			      "returnReason": "animation_done_no_pending_runnable_teleport_task",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000003000,
+			      "monotonicNanos": 13000000,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "CM_TELEPORT_ANIMATION_DONE.java",
+			      "javaLine": 36,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": {
+			        "delayMillis": 0,
+			        "timeUnit": "CLIENT_ANIMATION_DONE",
+			        "runnableWrapperApplied": false,
+			        "callbackMethod": "none",
+			        "oldFuturePresent": false,
+			        "oldFutureCancelArgument": null,
+			        "oldFutureCancelResult": null,
+			        "newFutureStored": false
+			      },
+			      "callerOrigin": null,
+			      "actionBranchName": "missing_task_returns_without_running"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "teleport-animation-done-no-op-without-runnable-pending-task-001",
+			      "eventSeq": 1,
+			      "phase": "completed_runnable_task_noop",
+			      "packetName": "CM_TELEPORT_ANIMATION_DONE",
+			      "returnReason": "animation_done_no_pending_runnable_teleport_task",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000003001,
+			      "monotonicNanos": 13000100,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "CM_TELEPORT_ANIMATION_DONE.java",
+			      "javaLine": 37,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": {
+			        "taskIdName": "TELEPORT",
+			        "taskIdOrdinal": 1,
+			        "taskPresentBeforeCancel": true,
+			        "taskRemovedBeforeCancel": true,
+			        "futureCancelArgument": false,
+			        "futureCancelResult": false,
+			        "scheduledDelayMillis": 0,
+			        "stopOrigin": "animation_done_get_and_remove_completed_task"
+			      },
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": {
+			        "delayMillis": 0,
+			        "timeUnit": "CLIENT_ANIMATION_DONE",
+			        "runnableWrapperApplied": false,
+			        "callbackMethod": "RunnableFuture.isDone",
+			        "oldFuturePresent": true,
+			        "oldFutureCancelArgument": null,
+			        "oldFutureCancelResult": null,
+			        "newFutureStored": false
+			      },
+			      "callerOrigin": null,
+			      "actionBranchName": "completed_runnable_task_not_run"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "teleport-animation-done-no-op-without-runnable-pending-task-001",
+			      "eventSeq": 2,
+			      "phase": "non_runnable_task_noop",
+			      "packetName": "CM_TELEPORT_ANIMATION_DONE",
+			      "returnReason": "animation_done_no_pending_runnable_teleport_task",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000003002,
+			      "monotonicNanos": 13000200,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "CM_TELEPORT_ANIMATION_DONE.java",
+			      "javaLine": 37,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": {
+			        "taskIdName": "TELEPORT",
+			        "taskIdOrdinal": 1,
+			        "taskPresentBeforeCancel": true,
+			        "taskRemovedBeforeCancel": true,
+			        "futureCancelArgument": false,
+			        "futureCancelResult": false,
+			        "scheduledDelayMillis": 0,
+			        "stopOrigin": "animation_done_get_and_remove_non_runnable_task"
+			      },
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": {
+			        "delayMillis": 0,
+			        "timeUnit": "CLIENT_ANIMATION_DONE",
+			        "runnableWrapperApplied": false,
+			        "callbackMethod": "not_RunnableFuture",
+			        "oldFuturePresent": true,
+			        "oldFutureCancelArgument": null,
+			        "oldFutureCancelResult": null,
+			        "newFutureStored": false
+			      },
+			      "callerOrigin": null,
+			      "actionBranchName": "non_runnable_future_not_run"
+			    }
+			  ],
+			  "notes": [
+			    "CM_TELEPORT_ANIMATION_DONE only runs a removed task when it is a RunnableFuture and is not done.",
+			    "Missing, already-complete, and non-runnable teleport tasks no-op after getAndRemoveTask.",
+			    "No-op branches do not send SM_PLAYER_INFO, spawn the player, set position, or touch protection state.",
 			    "Inline fixture proves reader binding only, not Java runtime parity."
 			  ]
 			}
