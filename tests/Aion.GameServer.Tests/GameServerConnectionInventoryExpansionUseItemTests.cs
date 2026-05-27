@@ -1043,7 +1043,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 
 		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
 
-		await WaitUntilAsync(() => fixture.SentPackets.Count >= 6, TimeSpan.FromSeconds(5));
+		await WaitUntilAsync(() => fixture.SentPackets.Count >= 7, TimeSpan.FromSeconds(5));
 		Assert.Contains(player.InventoryItems, item => item.ItemId == 188053996 && item.Count == 1);
 		Assert.Collection(
 			fixture.SentPackets,
@@ -1062,7 +1062,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 				expectedItemMask: 0),
 			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 103, expectedTime: 0, expectedEnd: 1),
 			packet => Assert.IsType<SmSystemMessage>(packet),
-			packet => AssertInventoryItemCollectAddPayload(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 188053996, expectedCount: 1, expectedCleanupSealFlag: 3));
+			packet => AssertInventoryItemCollectAddPayload(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 188053996, expectedCount: 1, expectedCleanupSealFlag: 3),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 4));
 	}
 
 	[Fact]

@@ -4135,7 +4135,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		await BroadcastItemUsageAnimationAsync(player, new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 1, 0));
 		await SendPacketAsync(SmSystemMessage.AssemblyItemSucceeded());
 		if (HasRewardMutation(mutationPlan.UpdatedRewardItems, mutationPlan.AddedRewardItems))
-			await SendAssemblyRewardPacketsAsync(mutationPlan, rewardTemplate, staticData.ItemRestrictionCleanups);
+			await SendAssemblyRewardPacketsAsync(player, mutationPlan, rewardTemplate, staticData.ItemRestrictionCleanups);
 		if (!mutationPlan.RewardSucceeded && mutationPlan.RewardInventoryFull)
 			await SendPacketAsync(SmSystemMessage.DiceInventoryError());
 	}
@@ -4186,6 +4186,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	}
 
 	private async Task SendAssemblyRewardPacketsAsync(
+		Player player,
 		AssemblyItemMutationPlan mutationPlan,
 		ItemTemplateSummary rewardTemplate,
 		ItemRestrictionCleanupTable? itemRestrictionCleanups)
@@ -4197,12 +4198,17 @@ public sealed class GameServerConnection : BaseClientConnection
 					rewardTemplate,
 					SmInventoryUpdateItem.IncreaseItemCollect,
 					GetGeneralInfoWarehouseRestrictionFlag(updatedReward.ItemId, itemRestrictionCleanups)));
+		var projectedCubeCount = player.InventoryItems.Count - mutationPlan.AddedRewardItems.Count;
 		foreach (var addedReward in mutationPlan.AddedRewardItems)
+		{
 			await SendPacketAsync(
 				SmInventoryAddItem.CreateItemCollect(
 					addedReward,
 					rewardTemplate,
 					GetGeneralInfoWarehouseRestrictionFlag(addedReward.ItemId, itemRestrictionCleanups)));
+			projectedCubeCount++;
+			await SendPacketAsync(SmCubeUpdate.CubeSizeSnapshot(projectedCubeCount, player.NpcExpands, player.QuestExpands, player.ItemExpands));
+		}
 	}
 
 	private async Task HandleExpExtractUseItemAsync(
