@@ -3820,7 +3820,14 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		if (sourceTemplate.DyeAction != null)
 		{
-			await HandleDyeUseItemAsync(player, inventoryItems, sourceItem, sourceTemplate, packet.TargetItemObjectId, itemTemplates);
+			await HandleDyeUseItemAsync(
+				player,
+				inventoryItems,
+				sourceItem,
+				sourceTemplate,
+				packet.TargetItemObjectId,
+				itemTemplates,
+				staticData.ItemRestrictionCleanups);
 			return;
 		}
 
@@ -5092,7 +5099,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		InventoryItem sourceItem,
 		ItemTemplateSummary sourceTemplate,
 		int targetItemObjectId,
-		ItemTemplateTable itemTemplates)
+		ItemTemplateTable itemTemplates,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups)
 	{
 		// Java parity: model/templates/item/actions/DyeAction.canAct + dyeItem item branch.
 		var targetItem = inventoryItems.FirstOrDefault(item => item.ObjectId == targetItemObjectId);
@@ -5136,7 +5144,11 @@ public sealed class GameServerConnection : BaseClientConnection
 		else if (sourceItemUpdate != null)
 		{
 			ReplaceInventoryItem(inventoryItems, sourceItemUpdate);
-			await SendPacketAsync(new SmInventoryUpdateItem(sourceItemUpdate, sourceTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+			await SendPacketAsync(new SmInventoryUpdateItem(
+				sourceItemUpdate,
+				sourceTemplate,
+				SmInventoryUpdateItem.DecreaseItemUse,
+				GetGeneralInfoWarehouseRestrictionFlag(sourceItemUpdate.ItemId, itemRestrictionCleanups)));
 		}
 
 		ReplaceInventoryItem(inventoryItems, targetItemUpdate);
@@ -5161,7 +5173,11 @@ public sealed class GameServerConnection : BaseClientConnection
 				await SendPacketAsync(appearancePacket);
 		}
 
-		await SendPacketAsync(new SmInventoryUpdateItem(targetItemUpdate, targetTemplate, updateType: 0));
+		await SendPacketAsync(new SmInventoryUpdateItem(
+			targetItemUpdate,
+			targetTemplate,
+			SmInventoryUpdateItem.DecreaseItemUse,
+			GetGeneralInfoWarehouseRestrictionFlag(targetItemUpdate.ItemId, itemRestrictionCleanups)));
 	}
 
 	private async Task HandleAnimationAddUseItemAsync(
