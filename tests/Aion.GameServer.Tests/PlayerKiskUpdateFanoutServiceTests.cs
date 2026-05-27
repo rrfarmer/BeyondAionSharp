@@ -123,6 +123,31 @@ public sealed class PlayerKiskUpdateFanoutServiceTests
 		Assert.Equal(new[] { 4001, 4002, 4004 }, plan.VisibleSameRaceObjectIds);
 	}
 
+	[Fact]
+	public void CreatePlanSkipsKnownDifferentRaceMemberLikeJavaBroadcastKiskUpdate()
+	{
+		var kiskPosition = new WorldPosition(210010000, 0, 0, 0, 0);
+		var kisk = new PlayerKiskRuntimeState(
+			objectId: 9005,
+			ownerObjectId: 5001,
+			npcId: 700273,
+			useMask: 0,
+			ownerRace: "ELYOS");
+		Assert.True(kisk.AddMember(5002));
+		var knownEnemyMember = CreatePlayer(5002, "ASMODIANS", kiskPosition);
+		var knownSameRaceMember = CreatePlayer(5003, "ELYOS", kiskPosition);
+		Assert.True(kisk.AddMember(knownSameRaceMember.ObjectId));
+
+		var plan = PlayerKiskUpdateFanoutService.CreatePlan(
+			kisk,
+			kiskPosition,
+			[knownEnemyMember, knownSameRaceMember],
+			isKnownNpc: (_, _) => true);
+
+		Assert.Empty(plan.DirectMemberObjectIds);
+		Assert.Equal([knownSameRaceMember.ObjectId], plan.VisibleSameRaceObjectIds);
+	}
+
 	private static Player CreatePlayer(int objectId, string race, WorldPosition position)
 	{
 		return new Player
