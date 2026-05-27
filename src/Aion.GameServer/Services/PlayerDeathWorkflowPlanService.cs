@@ -61,6 +61,7 @@ public sealed record PlayerDeathWorkflowPlan(
 	bool WouldCalculateExperienceLoss,
 	bool WouldScheduleResurrectionOptions,
 	PlayerDeathResurrectionOptionsPlan? ResurrectionOptionsPlan,
+	PlayerDeathCoreSideEffectPlan? CoreSideEffectPlan,
 	PlayerDeathEmotionFanoutPlan? DeathEmotionFanoutPlan,
 	bool IsLive,
 	IReadOnlyList<PlayerDeathWorkflowStep> Steps,
@@ -184,6 +185,9 @@ public sealed class PlayerDeathWorkflowPlanService
 				? PlayerDeathResurrectionOptionsPlanService.CreatePlan(
 					player,
 					facts.HasTeleportTaskAtResurrectionOptionsCallback)
+				: null,
+			steps.Contains(PlayerDeathWorkflowStep.AbortMove)
+				? PlayerDeathCoreSideEffectPlanService.CreatePlan(player.ObjectId)
 				: null,
 			steps.Contains(PlayerDeathWorkflowStep.BroadcastDieEmotion)
 				? PlayerDeathEmotionFanoutPlanService.CreatePlan(

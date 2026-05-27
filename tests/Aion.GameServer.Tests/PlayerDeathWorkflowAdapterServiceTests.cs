@@ -18,6 +18,7 @@ public sealed class PlayerDeathWorkflowAdapterServiceTests
 		Assert.Equal(PlayerDeathWorkflowAdapterStatus.DisabledPlanned, result.Status);
 		Assert.Equal(PlayerDeathWorkflowStatus.PlannedFullPlayerDeath, result.Plan.Status);
 		Assert.NotNull(result.Plan.ResurrectionOptionsPlan);
+		Assert.NotNull(result.Plan.CoreSideEffectPlan);
 		Assert.NotNull(result.Plan.DeathEmotionFanoutPlan);
 		Assert.Null(result.StateTransitionResult);
 		Assert.False(result.MutatedPlayerState);
@@ -61,6 +62,10 @@ public sealed class PlayerDeathWorkflowAdapterServiceTests
 		Assert.Contains(PlayerDeathWorkflowStep.ScheduleShowResurrectionOptions, result.Plan.Steps);
 		Assert.NotNull(result.Plan.ResurrectionOptionsPlan);
 		Assert.Equal(PlayerDeathResurrectionOptionsPlanStatus.SendSmDie, result.Plan.ResurrectionOptionsPlan.Status);
+		Assert.NotNull(result.Plan.CoreSideEffectPlan);
+		Assert.False(result.Plan.CoreSideEffectPlan.MutatedMovement);
+		Assert.False(result.Plan.CoreSideEffectPlan.MutatedCasting);
+		Assert.False(result.Plan.CoreSideEffectPlan.MutatedEffects);
 		Assert.NotNull(result.Plan.DeathEmotionFanoutPlan);
 		Assert.Equal(LastAttackerObjectId, result.Plan.DeathEmotionFanoutPlan.EmotionTargetObjectId);
 		Assert.Equal(KnownCreatureObjectId, Assert.Single(result.Plan.DeathEmotionFanoutPlan.KnownCreatureAggroCleanupIntents).CreatureObjectId);
@@ -88,6 +93,7 @@ public sealed class PlayerDeathWorkflowAdapterServiceTests
 		Assert.Equal(PlayerDeathWorkflowStatus.ReturnedAfterDuelOpponentKill, result.Plan.Status);
 		Assert.Null(result.StateTransitionResult);
 		Assert.Null(result.Plan.ResurrectionOptionsPlan);
+		Assert.Null(result.Plan.CoreSideEffectPlan);
 		Assert.Null(result.Plan.DeathEmotionFanoutPlan);
 		Assert.False(result.MutatedPlayerState);
 		Assert.True(result.IsLive);
@@ -111,6 +117,7 @@ public sealed class PlayerDeathWorkflowAdapterServiceTests
 		Assert.Equal(PlayerDeathWorkflowStatus.ReturnedAfterInstanceHandler, result.Plan.Status);
 		Assert.NotNull(result.StateTransitionResult);
 		Assert.NotNull(result.Plan.ResurrectionOptionsPlan);
+		Assert.NotNull(result.Plan.CoreSideEffectPlan);
 		Assert.NotNull(result.Plan.DeathEmotionFanoutPlan);
 		Assert.True(result.MutatedPlayerState);
 		Assert.True(player.IsInState(PlayerCreatureState.FloatingCorpse));

@@ -35,6 +35,13 @@ public sealed class PlayerDeathWorkflowPlanServiceTests
 		Assert.True(plan.WouldScheduleResurrectionOptions);
 		Assert.NotNull(plan.ResurrectionOptionsPlan);
 		Assert.Equal(PlayerDeathResurrectionOptionsPlanStatus.SendSmDie, plan.ResurrectionOptionsPlan.Status);
+		Assert.NotNull(plan.CoreSideEffectPlan);
+		AssertOrdered(
+			plan.Steps,
+			PlayerDeathWorkflowStep.AbortMove,
+			PlayerDeathWorkflowStep.ClearCasting,
+			PlayerDeathWorkflowStep.RemoveAllEffects,
+			PlayerDeathWorkflowStep.NotifyDeathObservers);
 		Assert.NotNull(plan.DeathEmotionFanoutPlan);
 		Assert.Equal(LastAttackerObjectId, plan.DeathEmotionFanoutPlan.EmotionTargetObjectId);
 		Assert.Equal(
@@ -87,6 +94,7 @@ public sealed class PlayerDeathWorkflowPlanServiceTests
 		Assert.False(plan.WouldReleaseSummon);
 		Assert.False(plan.WouldScheduleResurrectionOptions);
 		Assert.Null(plan.ResurrectionOptionsPlan);
+		Assert.Null(plan.CoreSideEffectPlan);
 		Assert.Null(plan.DeathEmotionFanoutPlan);
 		Assert.False(plan.WouldCalculateExperienceLoss);
 		AssertOrdered(
@@ -124,6 +132,7 @@ public sealed class PlayerDeathWorkflowPlanServiceTests
 		Assert.True(plan.WouldScheduleResurrectionOptions);
 		Assert.NotNull(plan.ResurrectionOptionsPlan);
 		Assert.Equal(PlayerDeathResurrectionOptionsPlanStatus.SendSmDie, plan.ResurrectionOptionsPlan.Status);
+		Assert.NotNull(plan.CoreSideEffectPlan);
 		Assert.NotNull(plan.DeathEmotionFanoutPlan);
 		Assert.Equal(0, plan.DeathEmotionFanoutPlan.EmotionTargetObjectId);
 		Assert.False(plan.WouldCalculateExperienceLoss);
@@ -160,6 +169,7 @@ public sealed class PlayerDeathWorkflowPlanServiceTests
 		Assert.True(plan.WouldScheduleResurrectionOptions);
 		Assert.NotNull(plan.ResurrectionOptionsPlan);
 		Assert.Equal(PlayerDeathResurrectionOptionsPlanStatus.SkipTeleportTask, plan.ResurrectionOptionsPlan.Status);
+		Assert.NotNull(plan.CoreSideEffectPlan);
 		Assert.NotNull(plan.DeathEmotionFanoutPlan);
 		Assert.False(plan.WouldCalculateExperienceLoss);
 		AssertOrdered(
