@@ -27,22 +27,29 @@ public sealed class SmWarehouseInfo : GameServerPacket
 		_items = items;
 	}
 
-	public static IReadOnlyList<SmWarehouseInfo> CreateLoginPackets(Player player, ItemTemplateTable itemTemplates, bool includeAuxiliaryStoragePlaceholders = true)
+	public static IReadOnlyList<SmWarehouseInfo> CreateLoginPackets(
+		Player player,
+		ItemTemplateTable itemTemplates,
+		bool includeAuxiliaryStoragePlaceholders = true,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups = null)
 	{
 		// Java parity: services/player/PlayerEnterWorldService.sendWarehouseItemInfos.
 		var packets = new List<SmWarehouseInfo>();
-		AddRegularWarehousePackets(packets, player, itemTemplates);
-		AddAccountWarehousePackets(packets, player, itemTemplates);
+		AddRegularWarehousePackets(packets, player, itemTemplates, itemRestrictionCleanups);
+		AddAccountWarehousePackets(packets, player, itemTemplates, itemRestrictionCleanups);
 		if (includeAuxiliaryStoragePlaceholders)
 			AddAuxiliaryStoragePlaceholders(packets);
 		return packets;
 	}
 
-	public static IReadOnlyList<SmWarehouseInfo> CreateRegularWarehouseUpdatePackets(Player player, ItemTemplateTable itemTemplates)
+	public static IReadOnlyList<SmWarehouseInfo> CreateRegularWarehouseUpdatePackets(
+		Player player,
+		ItemTemplateTable itemTemplates,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups = null)
 	{
 		// Java parity: services/WarehouseService.sendWarehouseInfo(player, false).
 		var packets = new List<SmWarehouseInfo>();
-		AddRegularWarehousePackets(packets, player, itemTemplates);
+		AddRegularWarehousePackets(packets, player, itemTemplates, itemRestrictionCleanups);
 		packets.Add(new SmWarehouseInfo(AccountWarehouse, expandLevel: 0, isFirstPacket: false, Array.Empty<WarehousePacketItem>()));
 		return packets;
 	}
@@ -68,14 +75,18 @@ public sealed class SmWarehouseInfo : GameServerPacket
 			WriteItemInfo(buffer, item);
 	}
 
-	private static void AddRegularWarehousePackets(List<SmWarehouseInfo> packets, Player player, ItemTemplateTable itemTemplates)
+	private static void AddRegularWarehousePackets(
+		List<SmWarehouseInfo> packets,
+		Player player,
+		ItemTemplateTable itemTemplates,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups)
 	{
 		// Java parity: services/WarehouseService.sendWarehouseInfo regular warehouse branch.
 		var regularItems = player.WarehouseItems
 			.Where(item => item.ItemId != KinahItemId)
 			.OrderBy(item => item.Slot)
 			.ThenBy(item => item.ObjectId);
-		var items = BuildWarehouseItems(regularItems, itemTemplates);
+		var items = BuildWarehouseItems(regularItems, itemTemplates, itemRestrictionCleanups);
 		var expandLevel = player.WarehouseNpcExpands + player.WarehouseBonusExpands;
 		for (var offset = 0; offset < items.Length; offset += ItemsPerPacket)
 		{
@@ -90,7 +101,11 @@ public sealed class SmWarehouseInfo : GameServerPacket
 		packets.Add(new SmWarehouseInfo(RegularWarehouse, expandLevel, isFirstPacket: false, Array.Empty<WarehousePacketItem>()));
 	}
 
-	private static void AddAccountWarehousePackets(List<SmWarehouseInfo> packets, Player player, ItemTemplateTable itemTemplates)
+	private static void AddAccountWarehousePackets(
+		List<SmWarehouseInfo> packets,
+		Player player,
+		ItemTemplateTable itemTemplates,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups)
 	{
 		// Java parity: services/WarehouseService.sendWarehouseInfo account warehouse branch.
 		var accountItems = player.AccountWarehouseItems
@@ -98,7 +113,7 @@ public sealed class SmWarehouseInfo : GameServerPacket
 			.OrderBy(item => item.Slot)
 			.ThenBy(item => item.ObjectId)
 			.Concat(player.AccountWarehouseItems.Where(item => item.ItemId == KinahItemId).OrderBy(item => item.ObjectId));
-		packets.Add(new SmWarehouseInfo(AccountWarehouse, expandLevel: 0, isFirstPacket: true, BuildWarehouseItems(accountItems, itemTemplates)));
+		packets.Add(new SmWarehouseInfo(AccountWarehouse, expandLevel: 0, isFirstPacket: true, BuildWarehouseItems(accountItems, itemTemplates, itemRestrictionCleanups)));
 		packets.Add(new SmWarehouseInfo(AccountWarehouse, expandLevel: 0, isFirstPacket: false, Array.Empty<WarehousePacketItem>()));
 	}
 
@@ -113,14 +128,20 @@ public sealed class SmWarehouseInfo : GameServerPacket
 		}
 	}
 
-	private static WarehousePacketItem[] BuildWarehouseItems(IEnumerable<InventoryItem> items, ItemTemplateTable itemTemplates)
+	private static WarehousePacketItem[] BuildWarehouseItems(
+		IEnumerable<InventoryItem> items,
+		ItemTemplateTable itemTemplates,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups)
 	{
 		var packetItems = new List<WarehousePacketItem>();
 		foreach (var item in items)
 		{
 			var template = itemTemplates.GetItemTemplate(item.ItemId);
 			if (template != null)
-				packetItems.Add(new WarehousePacketItem(item, template));
+			{
+				var warehouseRestrictionFlag = itemRestrictionCleanups?.HasAccountOrLegionWarehouseStorabilityDisabled(item.ItemId) == true ? 3 : 0;
+				packetItems.Add(new WarehousePacketItem(item, template, warehouseRestrictionFlag));
+			}
 		}
 
 		return packetItems.ToArray();
@@ -134,9 +155,9 @@ public sealed class SmWarehouseInfo : GameServerPacket
 		buffer.WriteD(template.TemplateId);
 		buffer.WriteC(0);
 		buffer.WriteS(template.GetClientName());
-		SmInventoryInfo.WriteItemInfoBlob(buffer, item, template);
+		SmInventoryInfo.WriteItemInfoBlob(buffer, item, template, packetItem.GeneralInfoWarehouseRestrictionFlag);
 		buffer.WriteH((int)(item.Slot & 0xffff));
 	}
 
-	private sealed record WarehousePacketItem(InventoryItem Item, ItemTemplateSummary Template);
+	private sealed record WarehousePacketItem(InventoryItem Item, ItemTemplateSummary Template, int GeneralInfoWarehouseRestrictionFlag);
 }

@@ -3081,6 +3081,54 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmInventoryInfo_WritesCleanupSealFlagFromRestrictionTableLikeJava()
+	{
+		var cleanupTable = new ItemRestrictionCleanupTable(
+		[
+			new ItemRestrictionCleanupSummary(188053996, AccountWarehouse: 0),
+		]);
+		var inventoryPackets = SmInventoryInfo.CreateLoginPackets(
+			new Player
+			{
+				InventoryItems =
+				[
+					new InventoryItem { ObjectId = 88, ItemId = 188053996, Count = 1, Location = 0, Slot = 1 },
+				],
+			},
+			new ItemTemplateTable(
+				[
+					new ItemTemplateSummary(182400001, "Kinah", 0, 12350, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
+					new ItemTemplateSummary(188053996, "Emperor Trillirunerk's Feather Box", 0, 123, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
+				]),
+			() => 77,
+			cleanupTable);
+
+		var inventoryPayload = SerializeUnencryptedPayload(inventoryPackets[0]);
+		using var reader = new PacketBuffer(inventoryPayload);
+		reader.ReadC();
+		reader.ReadC();
+		reader.ReadC();
+		reader.ReadC();
+		Assert.Equal(2, reader.ReadH());
+		ReadInventoryItemWithBlob(reader);
+		var restrictedItem = ReadInventoryItemWithBlob(reader);
+		using var blobReader = new PacketBuffer(restrictedItem.Blob);
+
+		Assert.Equal(0x00, (int)blobReader.ReadC());
+		Assert.Equal(123, blobReader.ReadH());
+		Assert.Equal(1, blobReader.ReadQ());
+		Assert.Equal(string.Empty, blobReader.ReadS());
+		Assert.Equal(0, (int)blobReader.ReadC());
+		Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(3, blobReader.ReadH());
+		Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(18, blobReader.ReadH());
+		Assert.Equal(0, blobReader.Remaining);
+	}
+
+	[Fact]
 	public void SmStatsInfo_WritesJavaShapedBaselineStats()
 	{
 		var payload = SerializeUnencryptedPayload(

@@ -28,10 +28,11 @@ public sealed class SmInventoryInfo : GameServerPacket
 	public static IReadOnlyList<SmInventoryInfo> CreateLoginPackets(
 		Player player,
 		ItemTemplateTable itemTemplates,
-		Func<int>? nextObjectId = null)
+		Func<int>? nextObjectId = null,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups = null)
 	{
 		// Java parity: services/player/PlayerEnterWorldService.sendItemInfos.
-		var allItems = BuildLoginItemList(player, itemTemplates, nextObjectId);
+		var allItems = BuildLoginItemList(player, itemTemplates, nextObjectId, itemRestrictionCleanups);
 		var packets = new List<SmInventoryInfo>();
 		for (var offset = 0; offset < allItems.Count; offset += ItemsPerPacket)
 		{
@@ -58,7 +59,8 @@ public sealed class SmInventoryInfo : GameServerPacket
 	private static IReadOnlyList<InventoryPacketItem> BuildLoginItemList(
 		Player player,
 		ItemTemplateTable itemTemplates,
-		Func<int>? nextObjectId)
+		Func<int>? nextObjectId,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups)
 	{
 		var cubeItems = player.InventoryItems
 			.Where(item => item.Location == CubeStorageId)
@@ -73,22 +75,29 @@ public sealed class SmInventoryInfo : GameServerPacket
 				Location = CubeStorageId,
 				Slot = FirstAvailableSlot,
 			};
-		AddIfTemplateExists(allItems, kinah, itemTemplates);
+		AddIfTemplateExists(allItems, kinah, itemTemplates, itemRestrictionCleanups);
 
 		foreach (var item in cubeItems.Where(item => item.ItemId != KinahItemId && item.IsEquipped).OrderBy(item => item.Slot).ThenBy(item => item.ObjectId))
-			AddIfTemplateExists(allItems, item, itemTemplates);
+			AddIfTemplateExists(allItems, item, itemTemplates, itemRestrictionCleanups);
 
 		foreach (var item in cubeItems.Where(item => item.ItemId != KinahItemId && !item.IsEquipped).OrderBy(item => item.Slot).ThenBy(item => item.ObjectId))
-			AddIfTemplateExists(allItems, item, itemTemplates);
+			AddIfTemplateExists(allItems, item, itemTemplates, itemRestrictionCleanups);
 
 		return allItems;
 	}
 
-	private static void AddIfTemplateExists(List<InventoryPacketItem> items, InventoryItem item, ItemTemplateTable itemTemplates)
+	private static void AddIfTemplateExists(
+		List<InventoryPacketItem> items,
+		InventoryItem item,
+		ItemTemplateTable itemTemplates,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups)
 	{
 		var template = itemTemplates.GetItemTemplate(item.ItemId);
 		if (template != null)
-			items.Add(new InventoryPacketItem(item, template));
+		{
+			var warehouseRestrictionFlag = itemRestrictionCleanups?.HasAccountOrLegionWarehouseStorabilityDisabled(item.ItemId) == true ? 3 : 0;
+			items.Add(new InventoryPacketItem(item, template, warehouseRestrictionFlag));
+		}
 	}
 
 	private static void WriteItemInfo(PacketBuffer buffer, InventoryPacketItem packetItem)
@@ -98,12 +107,16 @@ public sealed class SmInventoryInfo : GameServerPacket
 		buffer.WriteD(item.ObjectId);
 		buffer.WriteD(template.TemplateId);
 		buffer.WriteS(template.GetClientName());
-		WriteItemInfoBlob(buffer, item, template);
+		WriteItemInfoBlob(buffer, item, template, packetItem.GeneralInfoWarehouseRestrictionFlag);
 		buffer.WriteH((int)(item.Slot & 0xffff));
 		buffer.WriteC(template.IsCloth ? 1 : 0);
 	}
 
-	internal static void WriteItemInfoBlob(PacketBuffer buffer, InventoryItem item, ItemTemplateSummary template)
+	internal static void WriteItemInfoBlob(
+		PacketBuffer buffer,
+		InventoryItem item,
+		ItemTemplateSummary template,
+		int generalInfoWarehouseRestrictionFlag = 0)
 	{
 		// Java parity: network/aion/iteminfo/ItemInfoBlob.getFullBlob.
 		using var blob = new PacketBuffer();
@@ -144,7 +157,7 @@ public sealed class SmInventoryInfo : GameServerPacket
 		if (template.IsStigmaShard)
 			WriteStigmaShardBlob(blob);
 
-		WriteGeneralInfoBlob(blob, item, template);
+		WriteGeneralInfoBlob(blob, item, template, generalInfoWarehouseRestrictionFlag);
 		if (item.PackCount != 0)
 			WriteWrapInfoBlob(blob, item);
 
@@ -514,7 +527,11 @@ public sealed class SmInventoryInfo : GameServerPacket
 		WriteBlob(buffer, 0x08, payload => payload.WriteD(0));
 	}
 
-	private static void WriteGeneralInfoBlob(PacketBuffer buffer, InventoryItem item, ItemTemplateSummary template)
+	private static void WriteGeneralInfoBlob(
+		PacketBuffer buffer,
+		InventoryItem item,
+		ItemTemplateSummary template,
+		int warehouseRestrictionFlag)
 	{
 		WriteBlob(
 			buffer,
@@ -529,7 +546,7 @@ public sealed class SmInventoryInfo : GameServerPacket
 				payload.WriteD(GetRemainingSeconds(item.ExpireTime));
 				payload.WriteD(0);
 				payload.WriteD(0);
-				payload.WriteH(0);
+				payload.WriteH(warehouseRestrictionFlag);
 				payload.WriteD(0);
 				payload.WriteH(18);
 			});
@@ -610,5 +627,5 @@ public sealed class SmInventoryInfo : GameServerPacket
 		return result.ToArray();
 	}
 
-	private sealed record InventoryPacketItem(InventoryItem Item, ItemTemplateSummary Template);
+	private sealed record InventoryPacketItem(InventoryItem Item, ItemTemplateSummary Template, int GeneralInfoWarehouseRestrictionFlag);
 }

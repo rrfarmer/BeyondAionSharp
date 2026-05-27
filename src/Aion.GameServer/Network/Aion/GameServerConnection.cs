@@ -1010,19 +1010,20 @@ public sealed class GameServerConnection : BaseClientConnection
 					if (enterWorldResult.Player.Settings.HouseBuddies != null)
 						await SendPacketAsync(new SmUiSettings(enterWorldResult.Player.Settings.HouseBuddies, type: 2));
 
-					var itemTemplates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
+					var staticData = _runtimeContext?.DataManager?.StaticData;
+					var itemTemplates = staticData?.ItemTemplates;
 					if (itemTemplates != null)
 					{
 						foreach (var inventoryPacket in SmInventoryInfo.CreateLoginPackets(
 							enterWorldResult.Player,
 							itemTemplates,
-							_idFactory == null ? null : () => _idFactory.NextId()))
+							_idFactory == null ? null : () => _idFactory.NextId(),
+							staticData?.ItemRestrictionCleanups))
 						{
 							await SendPacketAsync(inventoryPacket);
 						}
 					}
 
-					var staticData = _runtimeContext?.DataManager?.StaticData;
 					// Java parity: CreatureController.onAfterSpawn revalidates zones after the player enters the world.
 					await RevalidatePlayerFlightZonesAsync(enterWorldResult.Player);
 					await SendPacketAsync(new SmChannelInfo(enterWorldResult.Player.Position, staticData?.WorldMaps ?? Array.Empty<WorldMapSummary>()));
@@ -1062,7 +1063,10 @@ public sealed class GameServerConnection : BaseClientConnection
 					await SendPacketAsync(new SmGameTime(_gameTimeService?.GameMinutes ?? 0));
 					if (itemTemplates != null)
 					{
-						foreach (var warehousePacket in SmWarehouseInfo.CreateLoginPackets(enterWorldResult.Player, itemTemplates))
+						foreach (var warehousePacket in SmWarehouseInfo.CreateLoginPackets(
+							enterWorldResult.Player,
+							itemTemplates,
+							itemRestrictionCleanups: staticData?.ItemRestrictionCleanups))
 							await SendPacketAsync(warehousePacket);
 					}
 
