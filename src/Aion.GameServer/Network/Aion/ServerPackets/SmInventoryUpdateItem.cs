@@ -23,14 +23,20 @@ public sealed class SmInventoryUpdateItem : GameServerPacket
 	private readonly InventoryItem _item;
 	private readonly ItemTemplateSummary _template;
 	private readonly int _updateType;
+	private readonly int _generalInfoWarehouseRestrictionFlag;
 
-	public SmInventoryUpdateItem(InventoryItem item, ItemTemplateSummary template, int updateType)
+	public SmInventoryUpdateItem(
+		InventoryItem item,
+		ItemTemplateSummary template,
+		int updateType,
+		int generalInfoWarehouseRestrictionFlag = 0)
 		: base(PacketOpCode)
 	{
 		// Java parity: network/aion/serverpackets/SM_INVENTORY_UPDATE_ITEM(Player, Item, ItemUpdateType).
 		_item = item;
 		_template = template;
 		_updateType = updateType;
+		_generalInfoWarehouseRestrictionFlag = generalInfoWarehouseRestrictionFlag;
 	}
 
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
@@ -60,7 +66,7 @@ public sealed class SmInventoryUpdateItem : GameServerPacket
 		}
 
 		// Java parity: SM_INVENTORY_UPDATE_ITEM.writeImpl default full blob path.
-		SmInventoryInfo.WriteItemInfoBlob(buffer, _item, _template);
+		SmInventoryInfo.WriteItemInfoBlob(buffer, _item, _template, _generalInfoWarehouseRestrictionFlag);
 		buffer.WriteH(_updateType);
 	}
 }

@@ -24,28 +24,40 @@ public sealed class SmInventoryAddItem : GameServerPacket
 		_addType = addType;
 	}
 
-	public static SmInventoryAddItem CreateBrokerReturn(InventoryItem item, ItemTemplateSummary template)
+	public static SmInventoryAddItem CreateBrokerReturn(
+		InventoryItem item,
+		ItemTemplateSummary template,
+		int generalInfoWarehouseRestrictionFlag = 0)
 	{
 		// Java parity: services/BrokerService.cancelRegisteredItem uses ItemPacketService.ItemAddType.BROKER_RETURN.
-		return new SmInventoryAddItem([new InventoryPacketItem(item, template)], BrokerReturn);
+		return new SmInventoryAddItem([new InventoryPacketItem(item, template, generalInfoWarehouseRestrictionFlag)], BrokerReturn);
 	}
 
-	public static SmInventoryAddItem CreateBrokerBuy(InventoryItem item, ItemTemplateSummary template)
+	public static SmInventoryAddItem CreateBrokerBuy(
+		InventoryItem item,
+		ItemTemplateSummary template,
+		int generalInfoWarehouseRestrictionFlag = 0)
 	{
 		// Java parity: services/BrokerService.buyBrokerItem uses ItemPacketService.ItemAddType.BROKER_BUY.
-		return new SmInventoryAddItem([new InventoryPacketItem(item, template)], BrokerBuy);
+		return new SmInventoryAddItem([new InventoryPacketItem(item, template, generalInfoWarehouseRestrictionFlag)], BrokerBuy);
 	}
 
-	public static SmInventoryAddItem CreateItemCollect(InventoryItem item, ItemTemplateSummary template)
+	public static SmInventoryAddItem CreateItemCollect(
+		InventoryItem item,
+		ItemTemplateSummary template,
+		int generalInfoWarehouseRestrictionFlag = 0)
 	{
 		// Java parity: ItemPacketService.ItemAddType.ITEM_COLLECT default add type.
-		return new SmInventoryAddItem([new InventoryPacketItem(item, template)], ItemCollect);
+		return new SmInventoryAddItem([new InventoryPacketItem(item, template, generalInfoWarehouseRestrictionFlag)], ItemCollect);
 	}
 
-	public static SmInventoryAddItem CreateAllSlot(InventoryItem item, ItemTemplateSummary template)
+	public static SmInventoryAddItem CreateAllSlot(
+		InventoryItem item,
+		ItemTemplateSummary template,
+		int generalInfoWarehouseRestrictionFlag = 0)
 	{
 		// Java parity: ItemPacketService.sendItemUnlockPacket -> ItemAddType.ALL_SLOT for normal cube storage.
-		return new SmInventoryAddItem([new InventoryPacketItem(item, template)], AllSlot);
+		return new SmInventoryAddItem([new InventoryPacketItem(item, template, generalInfoWarehouseRestrictionFlag)], AllSlot);
 	}
 
 	public static SmInventoryAddItem CreateDecomposable(IReadOnlyList<InventoryPacketItem> items)
@@ -71,10 +83,10 @@ public sealed class SmInventoryAddItem : GameServerPacket
 		buffer.WriteD(item.ObjectId);
 		buffer.WriteD(template.TemplateId);
 		buffer.WriteS(template.GetClientName());
-		SmInventoryInfo.WriteItemInfoBlob(buffer, item, template);
+		SmInventoryInfo.WriteItemInfoBlob(buffer, item, template, packetItem.GeneralInfoWarehouseRestrictionFlag);
 		buffer.WriteH((int)(item.Slot & 0xffff));
 		buffer.WriteC(template.IsCloth ? 1 : 0);
 	}
 
-	public sealed record InventoryPacketItem(InventoryItem Item, ItemTemplateSummary Template);
+	public sealed record InventoryPacketItem(InventoryItem Item, ItemTemplateSummary Template, int GeneralInfoWarehouseRestrictionFlag = 0);
 }

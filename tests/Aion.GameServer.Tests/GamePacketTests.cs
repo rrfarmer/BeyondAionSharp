@@ -3161,6 +3161,44 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmInventoryAddItem_WritesCleanupSealFlagInItemBlobLikeJava()
+	{
+		var payload = SerializeUnencryptedPayload(
+			SmInventoryAddItem.CreateItemCollect(
+				new InventoryItem { ObjectId = 88, ItemId = 188053996, Count = 1, Location = 0, Slot = 7 },
+				new ItemTemplateSummary(188053996, "Emperor Trillirunerk's Feather Box", 0, 123, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
+				generalInfoWarehouseRestrictionFlag: 3));
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(SmInventoryAddItem.ItemCollect, reader.ReadH());
+		Assert.Equal(1, reader.ReadH());
+		var restrictedItem = ReadInventoryItemWithBlob(reader);
+		Assert.Equal((88, 188053996, 7, 0), (restrictedItem.ObjectId, restrictedItem.ItemId, restrictedItem.EquipmentSlot, restrictedItem.IsCloth));
+		Assert.Equal(0, reader.Remaining);
+
+		AssertGeneralInfoCleanupSealFlag(restrictedItem.Blob, expectedItemMask: 123, expectedFlag: 3);
+	}
+
+	[Fact]
+	public void SmInventoryUpdateItem_WritesCleanupSealFlagInItemBlobLikeJava()
+	{
+		var payload = SerializeUnencryptedPayload(
+			new SmInventoryUpdateItem(
+				new InventoryItem { ObjectId = 88, ItemId = 188053996, Count = 1, Location = 0, Slot = 7 },
+				new ItemTemplateSummary(188053996, "Emperor Trillirunerk's Feather Box", 0, 123, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
+				SmInventoryUpdateItem.IncreaseItemCollect,
+				generalInfoWarehouseRestrictionFlag: 3));
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(88, reader.ReadD());
+		Assert.Equal(string.Empty, reader.ReadS());
+		var blobSize = reader.ReadH();
+		var blob = reader.ReadB(blobSize);
+		Assert.Equal(SmInventoryUpdateItem.IncreaseItemCollect, reader.ReadH());
+		Assert.Equal(0, reader.Remaining);
+
+		AssertGeneralInfoCleanupSealFlag(blob, expectedItemMask: 123, expectedFlag: 3);
+	}
+
+	[Fact]
 	public void SmStatsInfo_WritesJavaShapedBaselineStats()
 	{
 		var payload = SerializeUnencryptedPayload(
@@ -6867,6 +6905,23 @@ public class GamePacketTests
 		var blob = reader.ReadB(blobSize);
 		var equipmentSlot = reader.ReadH();
 		return (objectId, itemId, itemInfo, blob, equipmentSlot);
+	}
+
+	private static void AssertGeneralInfoCleanupSealFlag(byte[] blob, int expectedItemMask, int expectedFlag)
+	{
+		using var blobReader = new PacketBuffer(blob);
+		Assert.Equal(0x00, (int)blobReader.ReadC());
+		Assert.Equal(expectedItemMask, blobReader.ReadH());
+		Assert.Equal(1, blobReader.ReadQ());
+		Assert.Equal(string.Empty, blobReader.ReadS());
+		Assert.Equal(0, (int)blobReader.ReadC());
+		Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(expectedFlag, blobReader.ReadH());
+		Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(18, blobReader.ReadH());
+		Assert.Equal(0, blobReader.Remaining);
 	}
 
 	private static void AssertPrimaryStats(PacketBuffer reader, int power, int health, int accuracy, int agility, int knowledge, int will)
