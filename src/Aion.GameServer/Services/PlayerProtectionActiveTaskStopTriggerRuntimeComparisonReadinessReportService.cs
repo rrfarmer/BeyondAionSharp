@@ -17,6 +17,7 @@ public enum PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatu
 	SatisfiedByNonLiveMetadata,
 	BlockedMissingPrerequisite,
 	BlockedMissingJavaArtifact,
+	BlockedInvalidJavaArtifact,
 	BlockedMissingCSharpImplementation,
 	BlockedMissingRuntimeEvidence,
 }
@@ -35,6 +36,8 @@ public sealed record PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadi
 	IReadOnlyList<PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessRow> Rows,
 	bool HasRuntimeComparisonDesign,
 	bool HasTraceArtifactSchema,
+	bool HasGeneratedJavaTraceArtifactDirectoryReport,
+	bool HasShapeValidGeneratedJavaTraceArtifacts,
 	bool NeedsJavaInstrumentation,
 	bool NeedsJavaTraceSerializer,
 	bool NeedsGeneratedJavaTraceArtifacts,
@@ -53,7 +56,8 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 {
 	public static PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessReport Create(
 		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonDesignReport? runtimeDesign,
-		PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaReport? traceSchema)
+		PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaReport? traceSchema,
+		PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirectoryReport? artifactDirectoryReport = null)
 	{
 		var rows = new List<PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessRow>();
 
@@ -61,7 +65,7 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 		AddTraceArtifactSchema(rows, traceSchema);
 		AddJavaInstrumentation(rows, traceSchema);
 		AddJavaTraceSerializer(rows, traceSchema);
-		AddGeneratedJavaTraceArtifacts(rows, traceSchema);
+		AddGeneratedJavaTraceArtifacts(rows, traceSchema, artifactDirectoryReport);
 		AddCSharpArtifactReader(rows, traceSchema);
 		AddLiveCSharpPacketHooks(rows, runtimeDesign);
 		AddRuntimeComparisonEvidence(rows);
@@ -72,6 +76,8 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 			rowArray,
 			HasRuntimeComparisonDesign: runtimeDesign != null,
 			HasTraceArtifactSchema: traceSchema != null,
+			HasGeneratedJavaTraceArtifactDirectoryReport: artifactDirectoryReport != null,
+			HasShapeValidGeneratedJavaTraceArtifacts: artifactDirectoryReport?.Status == PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirectoryStatus.AllArtifactsShapeValid,
 			NeedsJavaInstrumentation: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.JavaInstrumentation && row.BlocksRuntimeComparison),
 			NeedsJavaTraceSerializer: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.JavaTraceSerializer && row.BlocksRuntimeComparison),
 			NeedsGeneratedJavaTraceArtifacts: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.GeneratedJavaTraceArtifacts && row.BlocksRuntimeComparison),
@@ -171,18 +177,60 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 
 	private static void AddGeneratedJavaTraceArtifacts(
 		ICollection<PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessRow> rows,
-		PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaReport? traceSchema)
+		PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaReport? traceSchema,
+		PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirectoryReport? artifactDirectoryReport)
 	{
+		if (traceSchema == null)
+		{
+			Add(rows,
+				PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.GeneratedJavaTraceArtifacts,
+				PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedMissingPrerequisite,
+				blocks: true,
+				"Java runtime packet/controller execution",
+				"future generated protection stop-trigger trace fixtures",
+				"trace schema missing",
+				"Need schema-v1 fields before generated Java trace artifacts can be accepted.");
+			return;
+		}
+
+		if (artifactDirectoryReport == null)
+		{
+			Add(rows,
+				PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.GeneratedJavaTraceArtifacts,
+				PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedMissingJavaArtifact,
+				blocks: true,
+				"Java runtime packet/controller execution",
+				"PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirectoryReportService",
+				"no artifact directory report supplied",
+				"Need generated traces for movement thresholds, early action packets, composite invalid-after-stop, emotion late-stop/no-stop, delayed teleport branches, and controller races.");
+			return;
+		}
+
+		if (artifactDirectoryReport.Status == PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirectoryStatus.AllArtifactsShapeValid)
+		{
+			Add(rows,
+				PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.GeneratedJavaTraceArtifacts,
+				PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.SatisfiedByNonLiveMetadata,
+				blocks: false,
+				"Java runtime packet/controller execution",
+				"PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirectoryReport",
+				$"status={artifactDirectoryReport.Status}; files={artifactDirectoryReport.Files.Count}; shapeValidFiles={artifactDirectoryReport.Files.Count(file => file.ValidationReport.IsValidSchemaV1)}",
+				"Generated Java artifact JSON is schema-valid only; runtime comparison still needs live C# hooks and deterministic Java/C# output comparison.");
+			return;
+		}
+
+		var status = artifactDirectoryReport.Status == PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirectoryStatus.InvalidArtifacts
+			? PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedInvalidJavaArtifact
+			: PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedMissingJavaArtifact;
+
 		Add(rows,
 			PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.GeneratedJavaTraceArtifacts,
-			traceSchema == null
-				? PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedMissingPrerequisite
-				: PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedMissingJavaArtifact,
+			status,
 			blocks: true,
 			"Java runtime packet/controller execution",
-			"future generated protection stop-trigger trace fixtures",
-			traceSchema == null ? "trace schema missing" : "no generated Java artifacts for schema-v1",
-			"Need generated traces for movement thresholds, early action packets, composite invalid-after-stop, emotion late-stop/no-stop, and controller races.");
+			"PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirectoryReport",
+			$"status={artifactDirectoryReport.Status}; files={artifactDirectoryReport.Files.Count}; validFiles={artifactDirectoryReport.Files.Count(file => file.ValidationReport.IsValidSchemaV1)}",
+			artifactDirectoryReport.Notes);
 	}
 
 	private static void AddCSharpArtifactReader(
@@ -193,12 +241,14 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 			PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.CSharpArtifactReader,
 			traceSchema == null
 				? PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedMissingPrerequisite
-				: PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedMissingCSharpImplementation,
-			blocks: true,
+				: PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.SatisfiedByNonLiveMetadata,
+			blocks: traceSchema == null,
 			"schema-v1 Java trace artifact",
-			"future C# protection stop-trigger trace artifact reader",
-			traceSchema == null ? "trace schema missing" : "no C# parser/validator for schema-v1",
-			"Reader must validate schema version, phase ordering, enum return reasons, invariant floats, optional timestamps, and packet-specific payloads.");
+			"PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidatorService / PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirectoryReportService",
+			traceSchema == null ? "trace schema missing" : "schema-v1 validator and artifact directory report exist",
+			traceSchema == null
+				? "Reader must validate schema version, phase ordering, enum return reasons, invariant floats, optional timestamps, and packet-specific payloads."
+				: "C# can shape-validate schema-v1 Java artifacts, but this is not a runtime comparator and cannot prove parity.");
 	}
 
 	private static void AddLiveCSharpPacketHooks(

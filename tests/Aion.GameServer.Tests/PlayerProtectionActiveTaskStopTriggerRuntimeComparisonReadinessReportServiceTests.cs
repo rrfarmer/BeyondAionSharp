@@ -5,7 +5,7 @@ namespace Aion.GameServer.Tests;
 public sealed class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessReportServiceTests
 {
 	[Fact]
-	public void Create_WithRuntimeDesignAndTraceSchemaKeepsArtifactBlockersExplicit()
+	public void Create_WithRuntimeDesignAndTraceSchemaKeepsMissingGeneratedArtifactBlockerExplicit()
 	{
 		var report = PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessReportService.Create(
 			CreateRuntimeDesign(),
@@ -14,10 +14,12 @@ public sealed class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 		Assert.False(report.IsLive);
 		Assert.True(report.HasRuntimeComparisonDesign);
 		Assert.True(report.HasTraceArtifactSchema);
+		Assert.False(report.HasGeneratedJavaTraceArtifactDirectoryReport);
+		Assert.False(report.HasShapeValidGeneratedJavaTraceArtifacts);
 		Assert.True(report.NeedsJavaInstrumentation);
 		Assert.True(report.NeedsJavaTraceSerializer);
 		Assert.True(report.NeedsGeneratedJavaTraceArtifacts);
-		Assert.True(report.NeedsCSharpArtifactReader);
+		Assert.False(report.NeedsCSharpArtifactReader);
 		Assert.True(report.NeedsLiveCSharpPacketHooks);
 		Assert.True(report.NeedsRuntimeComparisonEvidence);
 		Assert.False(report.ReadyForRuntimeComparison);
@@ -73,7 +75,7 @@ public sealed class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 	}
 
 	[Fact]
-	public void Create_CSharpArtifactReaderBlockerDocumentsParserValidationRequirements()
+	public void Create_CSharpArtifactReaderDocumentsExistingParserValidationContract()
 	{
 		var report = PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessReportService.Create(
 			CreateRuntimeDesign(),
@@ -81,10 +83,72 @@ public sealed class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 
 		Assert.Contains(report.Rows, row =>
 			row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.CSharpArtifactReader
-			&& row.Status == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedMissingCSharpImplementation
-			&& row.Notes.Contains("schema version", StringComparison.Ordinal)
-			&& row.Notes.Contains("enum return reasons", StringComparison.Ordinal)
-			&& row.Notes.Contains("invariant floats", StringComparison.Ordinal));
+			&& row.Status == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.SatisfiedByNonLiveMetadata
+			&& !row.BlocksRuntimeComparison
+			&& row.CSharpTarget.Contains("PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidatorService", StringComparison.Ordinal)
+			&& row.Notes.Contains("not a runtime comparator", StringComparison.Ordinal));
+	}
+
+	[Fact]
+	public void Create_WithShapeValidGeneratedArtifactsClearsArtifactBlockerButKeepsRuntimeEvidenceBlocked()
+	{
+		var report = PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessReportService.Create(
+			CreateRuntimeDesign(),
+			CreateTraceSchema(),
+			CreateShapeValidArtifactDirectoryReport());
+
+		Assert.True(report.HasGeneratedJavaTraceArtifactDirectoryReport);
+		Assert.True(report.HasShapeValidGeneratedJavaTraceArtifacts);
+		Assert.False(report.NeedsGeneratedJavaTraceArtifacts);
+		Assert.False(report.NeedsCSharpArtifactReader);
+		Assert.True(report.NeedsRuntimeComparisonEvidence);
+		Assert.False(report.ReadyForRuntimeComparison);
+		Assert.Contains(report.Rows, row =>
+			row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.GeneratedJavaTraceArtifacts
+			&& row.Status == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.SatisfiedByNonLiveMetadata
+			&& !row.BlocksRuntimeComparison
+			&& row.Evidence.Contains("shapeValidFiles=1", StringComparison.Ordinal)
+			&& row.Notes.Contains("runtime comparison still needs live C# hooks", StringComparison.Ordinal));
+	}
+
+	[Fact]
+	public void Create_WithMissingArtifactDirectoryReportKeepsGeneratedArtifactBlocker()
+	{
+		var report = PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessReportService.Create(
+			CreateRuntimeDesign(),
+			CreateTraceSchema(),
+			new PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirectoryReport(
+				PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirectoryStatus.MissingDirectory,
+				[],
+				HasGeneratedJavaArtifacts: false,
+				ReadyForRuntimeComparison: false,
+				"missing generated Java artifacts"));
+
+		Assert.True(report.HasGeneratedJavaTraceArtifactDirectoryReport);
+		Assert.False(report.HasShapeValidGeneratedJavaTraceArtifacts);
+		Assert.True(report.NeedsGeneratedJavaTraceArtifacts);
+		Assert.Contains(report.Rows, row =>
+			row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.GeneratedJavaTraceArtifacts
+			&& row.Status == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedMissingJavaArtifact
+			&& row.Evidence.Contains("status=MissingDirectory", StringComparison.Ordinal));
+	}
+
+	[Fact]
+	public void Create_WithInvalidArtifactDirectoryReportSurfacesInvalidJavaArtifactStatus()
+	{
+		var report = PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessReportService.Create(
+			CreateRuntimeDesign(),
+			CreateTraceSchema(),
+			CreateInvalidArtifactDirectoryReport());
+
+		Assert.True(report.HasGeneratedJavaTraceArtifactDirectoryReport);
+		Assert.False(report.HasShapeValidGeneratedJavaTraceArtifacts);
+		Assert.True(report.NeedsGeneratedJavaTraceArtifacts);
+		Assert.Contains(report.Rows, row =>
+			row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.GeneratedJavaTraceArtifacts
+			&& row.Status == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedInvalidJavaArtifact
+			&& row.BlocksRuntimeComparison
+			&& row.Evidence.Contains("validFiles=0", StringComparison.Ordinal));
 	}
 
 	[Fact]
@@ -105,6 +169,43 @@ public sealed class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 
 	private static PlayerProtectionActiveTaskStopTriggerRuntimeComparisonDesignReport CreateRuntimeDesign() =>
 		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonDesignReportService.Create(CreateDetailedSummary());
+
+	private static PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirectoryReport CreateShapeValidArtifactDirectoryReport() =>
+		new(
+			PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirectoryStatus.AllArtifactsShapeValid,
+			[
+				new PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactFileRow(
+					"teleport-animation-done-no-op.json",
+					new PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationReport(
+						[],
+						IsValidSchemaV1: true,
+						ReadyForRuntimeComparison: false,
+						"shape-valid only"))
+			],
+			HasGeneratedJavaArtifacts: true,
+			ReadyForRuntimeComparison: false,
+			"shape-valid generated Java artifact JSON only");
+
+	private static PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirectoryReport CreateInvalidArtifactDirectoryReport() =>
+		new(
+			PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirectoryStatus.InvalidArtifacts,
+			[
+				new PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactFileRow(
+					"teleport-animation-done-invalid.json",
+					new PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationReport(
+						[
+							new PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationIssue(
+								PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationIssueCode.MissingTraceRows,
+								"$.traces",
+								"Expected at least one trace row.")
+						],
+						IsValidSchemaV1: false,
+						ReadyForRuntimeComparison: false,
+						"invalid schema-v1 artifact"))
+			],
+			HasGeneratedJavaArtifacts: true,
+			ReadyForRuntimeComparison: false,
+			"invalid generated Java artifact JSON");
 
 	private static PlayerProtectionActiveTaskFirstActionStopTriggerSummaryReport CreateDetailedSummary() =>
 		PlayerProtectionActiveTaskFirstActionStopTriggerSummaryReportService.Create(
