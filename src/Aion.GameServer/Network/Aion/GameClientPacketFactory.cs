@@ -22,6 +22,7 @@ public static class GameClientPacketFactory
 		Register(15, states => new CmTeleportAnimationDone(15, states), GameConnectionState.InGame);
 		Register(17, states => new CmPositionSelf(17, states), GameConnectionState.InGame);
 		Register(18, states => new CmTimeCheck(18, states), GameConnectionState.Connected, GameConnectionState.Authed, GameConnectionState.InGame);
+		Register(21, states => new CmPetEmote(21, states), GameConnectionState.InGame);
 		Register(22, states => new CmPet(22, states), GameConnectionState.InGame);
 		Register(27, states => new CmChatMessagePublic(27, states), GameConnectionState.InGame);
 		Register(28, states => new CmChatMessageWhisper(28, states), GameConnectionState.InGame);
