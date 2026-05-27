@@ -4569,7 +4569,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		{
 			RegisterExtractExpirableAddedItems(player, plan.AddedRewardItems, rewardTemplate);
 			if (HasRewardMutation(plan.UpdatedRewardItems, plan.AddedRewardItems))
-				await SendExtractRewardPacketsAsync(plan, rewardTemplate, staticData.ItemRestrictionCleanups);
+				await SendExtractRewardPacketsAsync(player, plan, rewardTemplate, staticData.ItemRestrictionCleanups);
 		}
 
 		if (!plan.RewardSucceeded && plan.RewardInventoryFull)
@@ -4631,6 +4631,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	}
 
 	private async Task SendExtractRewardPacketsAsync(
+		Player player,
 		BreakItemPlan plan,
 		ItemTemplateSummary rewardTemplate,
 		ItemRestrictionCleanupTable? itemRestrictionCleanups)
@@ -4642,12 +4643,17 @@ public sealed class GameServerConnection : BaseClientConnection
 					rewardTemplate,
 					SmInventoryUpdateItem.IncreaseItemCollect,
 					GetGeneralInfoWarehouseRestrictionFlag(updatedReward.ItemId, itemRestrictionCleanups)));
+		var projectedCubeCount = player.InventoryItems.Count - plan.AddedRewardItems.Count;
 		foreach (var addedReward in plan.AddedRewardItems)
+		{
 			await SendPacketAsync(
 				SmInventoryAddItem.CreateItemCollect(
 					addedReward,
 					rewardTemplate,
 					GetGeneralInfoWarehouseRestrictionFlag(addedReward.ItemId, itemRestrictionCleanups)));
+			projectedCubeCount++;
+			await SendPacketAsync(SmCubeUpdate.CubeSizeSnapshot(projectedCubeCount, player.NpcExpands, player.QuestExpands, player.ItemExpands));
+		}
 	}
 
 	private static bool HasRewardMutation(IReadOnlyCollection<InventoryItem> updatedItems, IReadOnlyCollection<InventoryItem> addedItems)

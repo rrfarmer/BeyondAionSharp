@@ -1141,7 +1141,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 
 		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
 
-		await WaitUntilAsync(() => fixture.SentPackets.Count >= 6, TimeSpan.FromSeconds(6));
+		await WaitUntilAsync(() => fixture.SentPackets.Count >= 7, TimeSpan.FromSeconds(6));
 		Assert.Equal(140, player.Exp);
 		var reward = Assert.Single(player.InventoryItems, item => item.ItemId == 188053996);
 		Assert.Equal(2, reward.Count);
@@ -1186,6 +1186,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 				expectedCleanupSealFlag: 3,
 				expectedItemMask: 0),
 			packet => AssertInventoryItemCollectAddPayload(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 166000195, expectedCount: reward.Count, expectedCleanupSealFlag: 3),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 2),
 			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 105, expectedTime: 0, expectedEnd: 1));
 	}
 
@@ -1230,7 +1231,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 
 		await fixture.Connection.HandleUseItemAsync(player, CreateUseItemTarget(sourceItemObjectId: 5001, targetItemObjectId: 6200));
 
-		await WaitUntilAsync(() => fixture.SentPackets.Count >= 7, TimeSpan.FromSeconds(6));
+		await WaitUntilAsync(() => fixture.SentPackets.Count >= 8, TimeSpan.FromSeconds(6));
 		Assert.DoesNotContain(player.InventoryItems, item => item.ObjectId is 5001 or 6200);
 		var reward = Assert.Single(player.InventoryItems, item => item.ItemId == 166000195);
 		Assert.Collection(
@@ -1241,6 +1242,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 5001, expectedDeleteType: SmDeleteItem.UseDeleteType),
 			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0),
 			packet => AssertInventoryItemCollectAddPayload(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 166000195, expectedCount: reward.Count, expectedCleanupSealFlag: 3),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1),
 			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 105, expectedTime: 0, expectedEnd: 1));
 	}
 
