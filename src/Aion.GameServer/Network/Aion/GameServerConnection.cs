@@ -5654,6 +5654,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		// Java parity: ToyPetSpawnAction's delayed task broadcasts the success end animation before
+		// inventory.decreaseByObjectId, spawnKisk, and KiskService.regKisk side effects.
+		await BroadcastItemUsageAnimationAsync(
+			player,
+			new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 1, 1));
+
 		var kiskObjectId = _idFactory.NextId();
 		var plan = PlayerKiskSpawnService.CreatePlan(player, sourceItem, kiskTemplate, kiskObjectId);
 		var addedToWorld = false;
@@ -5683,9 +5689,6 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
-		await BroadcastItemUsageAnimationAsync(
-			player,
-			new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 1, 1));
 		if (plan.DeletedSourceItemObjectId.HasValue)
 		{
 			inventoryItems.RemoveAll(item => item.ObjectId == plan.DeletedSourceItemObjectId.Value);

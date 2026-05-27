@@ -676,6 +676,15 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 		Assert.Null(runtimeContext.Kisks.GetKiskState(1));
 		Assert.Empty(registry.RefreshedNpcs);
 		Assert.Equal(1, reusedId);
+		var packet = Assert.Single(registry.Broadcasts).Packet;
+		AssertItemUsagePayload(
+			Assert.IsType<SmItemUsageAnimation>(packet),
+			expectedPlayerObjectId: player.ObjectId,
+			expectedItemObjectId: sourceItem.ObjectId,
+			expectedItemId: sourceItem.ItemId,
+			expectedTime: 0,
+			expectedEnd: 1,
+			expectedUnknown3: 1);
 	}
 
 	[Fact]
@@ -732,6 +741,15 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 		Assert.NotNull(player.InventoryItems.SingleOrDefault(item => item.ObjectId == sourceItem.ObjectId));
 		Assert.Null(runtimeContext.Kisks.GetKiskState(1));
 		Assert.Empty(registry.RefreshedNpcs);
+		var packet = Assert.Single(registry.Broadcasts).Packet;
+		AssertItemUsagePayload(
+			Assert.IsType<SmItemUsageAnimation>(packet),
+			expectedPlayerObjectId: player.ObjectId,
+			expectedItemObjectId: sourceItem.ObjectId,
+			expectedItemId: sourceItem.ItemId,
+			expectedTime: 0,
+			expectedEnd: 1,
+			expectedUnknown3: 1);
 	}
 
 	[Fact]
