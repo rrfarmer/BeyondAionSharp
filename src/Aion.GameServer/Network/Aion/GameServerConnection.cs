@@ -4074,7 +4074,11 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (!saved)
 			return;
 
-		await SendAssemblyConsumedPartPacketsAsync(inventoryItems, mutationPlan, staticData.ItemTemplates);
+		await SendAssemblyConsumedPartPacketsAsync(
+			inventoryItems,
+			mutationPlan,
+			staticData.ItemTemplates,
+			staticData.ItemRestrictionCleanups);
 		ApplyAssemblyInventoryMutation(inventoryItems, mutationPlan);
 		player.InventoryItems = inventoryItems.ToArray();
 		RegisterAssemblyExpirableAddedItems(player, mutationPlan.AddedRewardItems, rewardTemplate);
@@ -4090,13 +4094,18 @@ public sealed class GameServerConnection : BaseClientConnection
 	private async Task SendAssemblyConsumedPartPacketsAsync(
 		IReadOnlyList<InventoryItem> inventoryItems,
 		AssemblyItemMutationPlan mutationPlan,
-		ItemTemplateTable itemTemplates)
+		ItemTemplateTable itemTemplates,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups)
 	{
 		foreach (var updatedPart in mutationPlan.UpdatedPartItems)
 		{
 			var template = itemTemplates.GetItemTemplate(updatedPart.ItemId);
 			if (template != null)
-				await SendPacketAsync(new SmInventoryUpdateItem(updatedPart, template, SmInventoryUpdateItem.DecreaseItemUse));
+				await SendPacketAsync(new SmInventoryUpdateItem(
+					updatedPart,
+					template,
+					SmInventoryUpdateItem.DecreaseItemUse,
+					GetGeneralInfoWarehouseRestrictionFlag(updatedPart.ItemId, itemRestrictionCleanups)));
 		}
 
 		foreach (var deletedPartObjectId in mutationPlan.DeletedPartObjectIds)
@@ -4483,7 +4492,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (!saved)
 			return;
 
-		await SendExtractConsumedItemPacketsAsync(inventoryItems, plan, sourceTemplate);
+		await SendExtractConsumedItemPacketsAsync(inventoryItems, plan, sourceTemplate, staticData.ItemRestrictionCleanups);
 		ApplyBreakItemInventoryMutation(inventoryItems, plan);
 		player.InventoryItems = inventoryItems.ToArray();
 
@@ -4502,14 +4511,19 @@ public sealed class GameServerConnection : BaseClientConnection
 	private async Task SendExtractConsumedItemPacketsAsync(
 		IReadOnlyList<InventoryItem> inventoryItems,
 		BreakItemPlan plan,
-		ItemTemplateSummary sourceTemplate)
+		ItemTemplateSummary sourceTemplate,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups)
 	{
 		if (inventoryItems.Any(item => item.ObjectId == plan.DeletedTargetItemObjectId))
 			await SendPacketAsync(new SmDeleteItem(plan.DeletedTargetItemObjectId, SmDeleteItem.UseDeleteType));
 
 		if (plan.SourceItemUpdate != null)
 		{
-			await SendPacketAsync(new SmInventoryUpdateItem(plan.SourceItemUpdate, sourceTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+			await SendPacketAsync(new SmInventoryUpdateItem(
+				plan.SourceItemUpdate,
+				sourceTemplate,
+				SmInventoryUpdateItem.DecreaseItemUse,
+				GetGeneralInfoWarehouseRestrictionFlag(plan.SourceItemUpdate.ItemId, itemRestrictionCleanups)));
 		}
 		else if (plan.DeletedSourceItemObjectId.HasValue && inventoryItems.Any(item => item.ObjectId == plan.DeletedSourceItemObjectId.Value))
 		{
