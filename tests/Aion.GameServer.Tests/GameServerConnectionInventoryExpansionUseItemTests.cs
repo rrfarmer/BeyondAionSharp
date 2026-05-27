@@ -1196,6 +1196,31 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleUseItemAsync_ExtractDeletesLastSourceWithUseDeleteAndCubeUpdate()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(
+			includeThreadPoolManager: true,
+			idFactory: new IDFactory([5001, 6200]));
+		var player = CreateExtractPlayer(sourceCount: 1);
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItemTarget(sourceItemObjectId: 5001, targetItemObjectId: 6200));
+
+		await WaitUntilAsync(() => fixture.SentPackets.Count >= 7, TimeSpan.FromSeconds(6));
+		Assert.DoesNotContain(player.InventoryItems, item => item.ObjectId is 5001 or 6200);
+		var reward = Assert.Single(player.InventoryItems, item => item.ItemId == 166000195);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 105, expectedTime: 5000, expectedEnd: 0),
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 6200, expectedDeleteType: 0),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1),
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 5001, expectedDeleteType: SmDeleteItem.UseDeleteType),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0),
+			packet => AssertInventoryItemCollectAddPayload(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 166000195, expectedCount: reward.Count, expectedCleanupSealFlag: 3),
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 105, expectedTime: 0, expectedEnd: 1));
+	}
+
+	[Fact]
 	public async Task HandleUseItemAsync_DecomposeInventoryFullDoesNotScheduleOrMutate()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
@@ -2042,7 +2067,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		};
 	}
 
-	private static Player CreateExtractPlayer(long existingRewardCount = 0)
+	private static Player CreateExtractPlayer(long existingRewardCount = 0, long sourceCount = 2)
 	{
 		var items = new List<InventoryItem>
 		{
@@ -2050,7 +2075,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			{
 				ObjectId = 5001,
 				ItemId = 105,
-				Count = 2,
+				Count = sourceCount,
 				Location = 0,
 			},
 			new()

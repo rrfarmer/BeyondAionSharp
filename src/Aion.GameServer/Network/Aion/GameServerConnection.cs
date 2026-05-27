@@ -4526,10 +4526,12 @@ public sealed class GameServerConnection : BaseClientConnection
 		ItemTemplateSummary sourceTemplate,
 		ItemRestrictionCleanupTable? itemRestrictionCleanups)
 	{
+		var projectedCubeCount = inventoryItems.Count;
 		if (inventoryItems.Any(item => item.ObjectId == plan.DeletedTargetItemObjectId))
 		{
+			projectedCubeCount--;
 			await SendPacketAsync(new SmDeleteItem(plan.DeletedTargetItemObjectId));
-			await SendPacketAsync(SmCubeUpdate.CubeSizeSnapshot(inventoryItems.Count - 1, player.NpcExpands, player.QuestExpands, player.ItemExpands));
+			await SendPacketAsync(SmCubeUpdate.CubeSizeSnapshot(projectedCubeCount, player.NpcExpands, player.QuestExpands, player.ItemExpands));
 		}
 
 		if (plan.SourceItemUpdate != null)
@@ -4542,7 +4544,9 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 		else if (plan.DeletedSourceItemObjectId.HasValue && inventoryItems.Any(item => item.ObjectId == plan.DeletedSourceItemObjectId.Value))
 		{
+			projectedCubeCount--;
 			await SendPacketAsync(new SmDeleteItem(plan.DeletedSourceItemObjectId.Value, SmDeleteItem.UseDeleteType));
+			await SendPacketAsync(SmCubeUpdate.CubeSizeSnapshot(projectedCubeCount, player.NpcExpands, player.QuestExpands, player.ItemExpands));
 		}
 	}
 
