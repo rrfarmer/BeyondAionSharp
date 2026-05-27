@@ -1,5 +1,7 @@
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Services;
+using Aion.GameServer.Utils;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Aion.GameServer.Tests;
 
@@ -105,6 +107,93 @@ public sealed class PlayerProtectionActiveTaskTaskMapSimulationServiceTests
 		Assert.Equal(0, report.FinalSnapshot.Count);
 	}
 
+	[Fact]
+	public async Task Create_StartStoresWrappedScheduledTaskHandle()
+	{
+		await using var threadPoolManager = CreateThreadPoolManager();
+		var callbackRan = false;
+		var scheduledTask = threadPoolManager.Schedule(
+			_ =>
+			{
+				callbackRan = true;
+				return ValueTask.CompletedTask;
+			},
+			TimeSpan.FromMinutes(5));
+		var scheduledHandle = new PlayerProtectionActiveTaskScheduledTaskHandleAdapter(scheduledTask);
+		var plan = CreateStartPlan(existingTask: false);
+
+		var report = PlayerProtectionActiveTaskTaskMapSimulationService.Create(new PlayerProtectionActiveTaskTaskMapSimulationRequest(
+			plan,
+			ScheduledTaskHandle: scheduledHandle));
+
+		Assert.True(report.StoredScheduledTask);
+		Assert.Equal(1, report.FinalSnapshot.Count);
+		Assert.False(callbackRan);
+		Assert.False(scheduledHandle.IsDone);
+
+		Assert.True(scheduledHandle.Cancel(mayInterruptIfRunning: false));
+		await WaitForCompletionAsync(scheduledTask);
+	}
+
+	[Fact]
+	public async Task Create_StartReplacementCancelsExistingWrappedScheduledTaskHandle()
+	{
+		await using var threadPoolManager = CreateThreadPoolManager();
+		var existingCallbackRan = false;
+		var existingTask = threadPoolManager.Schedule(
+			_ =>
+			{
+				existingCallbackRan = true;
+				return ValueTask.CompletedTask;
+			},
+			TimeSpan.FromMinutes(5));
+		var existingHandle = new PlayerProtectionActiveTaskScheduledTaskHandleAdapter(existingTask);
+		var newScheduled = new RecordingTaskHandle();
+		var plan = CreateStartPlan(existingTask: true);
+
+		var report = PlayerProtectionActiveTaskTaskMapSimulationService.Create(new PlayerProtectionActiveTaskTaskMapSimulationRequest(
+			plan,
+			ScheduledTaskHandle: newScheduled,
+			ExistingTaskHandle: existingHandle));
+		await WaitForCompletionAsync(existingTask);
+
+		var row = Assert.Single(report.Rows);
+		Assert.Equal(PlayerProtectionActiveTaskTaskMapOperationStatus.ReplacedExistingTask, row.AdapterResult.Status);
+		Assert.Same(existingHandle, row.AdapterResult.RemovedTaskHandle);
+		Assert.True(existingHandle.IsDone);
+		Assert.False(existingCallbackRan);
+		Assert.Equal(0, newScheduled.CancelCalls);
+		Assert.Equal(1, report.FinalSnapshot.Count);
+	}
+
+	[Fact]
+	public async Task Create_StopCancelsExistingWrappedScheduledTaskHandle()
+	{
+		await using var threadPoolManager = CreateThreadPoolManager();
+		var callbackRan = false;
+		var existingTask = threadPoolManager.Schedule(
+			_ =>
+			{
+				callbackRan = true;
+				return ValueTask.CompletedTask;
+			},
+			TimeSpan.FromMinutes(5));
+		var existingHandle = new PlayerProtectionActiveTaskScheduledTaskHandleAdapter(existingTask);
+		var plan = CreateStopPlan(existingTask: true);
+
+		var report = PlayerProtectionActiveTaskTaskMapSimulationService.Create(new PlayerProtectionActiveTaskTaskMapSimulationRequest(
+			plan,
+			ExistingTaskHandle: existingHandle));
+		await WaitForCompletionAsync(existingTask);
+
+		var row = Assert.Single(report.Rows);
+		Assert.Equal(PlayerProtectionActiveTaskTaskMapOperationStatus.RemovedExistingTask, row.AdapterResult.Status);
+		Assert.Same(existingHandle, row.AdapterResult.RemovedTaskHandle);
+		Assert.True(existingHandle.IsDone);
+		Assert.False(callbackRan);
+		Assert.Equal(0, report.FinalSnapshot.Count);
+	}
+
 	private static PlayerProtectionActiveTaskTaskOperationPlan CreateStartPlan(bool existingTask)
 	{
 		var player = new Player { ObjectId = PlayerObjectId };
@@ -131,6 +220,16 @@ public sealed class PlayerProtectionActiveTaskTaskMapSimulationServiceTests
 	}
 
 	private const int PlayerObjectId = 1001;
+
+	private static ThreadPoolManager CreateThreadPoolManager() =>
+		new(NullLogger<ThreadPoolManager>.Instance);
+
+	private static async Task WaitForCompletionAsync(ScheduledTask scheduledTask)
+	{
+		var completed = await Task.WhenAny(scheduledTask.Completion, Task.Delay(TimeSpan.FromSeconds(2)));
+		Assert.Same(scheduledTask.Completion, completed);
+		await scheduledTask.Completion;
+	}
 
 	private sealed class RecordingTaskHandle : IPlayerProtectionActiveTaskTaskHandle
 	{
