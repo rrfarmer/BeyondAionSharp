@@ -30,6 +30,17 @@ public enum PlayerProtectionActiveTaskFirstActionStopTriggerRowKind
 	ProductionBoundary,
 }
 
+public enum PlayerProtectionActiveTaskCmEmotionAuditPath
+{
+	ReachesLateEmotionProcessingStop,
+	DeadGuardReturn,
+	AbnormalMovementBlockedReturn,
+	PrivateShopOrAttackModeReturn,
+	SelectTargetReturnAfterCancelUseItem,
+	StanceRejectedAfterCancelCurrentSkill,
+	ValidationReturnAfterEmotionSideEffect,
+}
+
 public sealed record PlayerProtectionActiveTaskFirstActionStopTriggerAuditRequest(
 	bool PlayerSpawned,
 	bool AntiHackAccepted,
@@ -59,7 +70,13 @@ public sealed record PlayerProtectionActiveTaskFirstActionStopTriggerAuditReques
 	bool EvaluateCmShowDialog = false,
 	bool CmShowDialogProtectionActive = true,
 	bool EvaluateCmDialogSelect = false,
-	bool CmDialogSelectProtectionActive = true);
+	bool CmDialogSelectProtectionActive = true,
+	bool EvaluateCmCompositeStones = false,
+	bool CmCompositeStonesPlayerPresent = true,
+	bool CmCompositeStonesProtectionActive = true,
+	bool EvaluateCmEmotion = false,
+	PlayerProtectionActiveTaskCmEmotionAuditPath CmEmotionPath = PlayerProtectionActiveTaskCmEmotionAuditPath.ReachesLateEmotionProcessingStop,
+	bool CmEmotionProtectionActive = true);
 
 public sealed record PlayerProtectionActiveTaskFirstActionStopTriggerAuditRow(
 	int Order,
@@ -95,9 +112,9 @@ public static class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 		AddCmMoveInAir(rows, request);
 		AddCmAttack(rows, request);
 		AddCmCastSpell(rows, request);
-		AddPendingActionCaller(rows, PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmCompositeStones, "CM_COMPOSITE_STONES.runImpl", "after null-player guard");
+		AddCmCompositeStones(rows, request);
 		AddCmDialogSelect(rows, request);
-		AddPendingActionCaller(rows, PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmEmotion, "CM_EMOTION.runImpl", "near the end of the handled emotion flow");
+		AddCmEmotion(rows, request);
 		AddCmShowDialog(rows, request);
 		AddCmUseItem(rows, request);
 		AddProductionBoundary(rows);
@@ -375,6 +392,91 @@ public static class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 			"future CM_DIALOG_SELECT protection-stop hook",
 			note);
 	}
+
+	private static void AddCmCompositeStones(
+		ICollection<PlayerProtectionActiveTaskFirstActionStopTriggerAuditRow> rows,
+		PlayerProtectionActiveTaskFirstActionStopTriggerAuditRequest request)
+	{
+		if (!request.EvaluateCmCompositeStones)
+		{
+			AddPendingActionCaller(rows, PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmCompositeStones, "CM_COMPOSITE_STONES.runImpl", "after null-player guard");
+			return;
+		}
+
+		var javaCallReached = request.CmCompositeStonesPlayerPresent && request.CmCompositeStonesProtectionActive;
+		var note = !request.CmCompositeStonesPlayerPresent
+			? "Java CM_COMPOSITE_STONES returns at the null-player guard before protection stop, casting cancellation, inventory lookup, restrictions, validation, or scheduling."
+			: request.CmCompositeStonesProtectionActive
+				? "Java CM_COMPOSITE_STONES stops protection early after the null-player guard and before casting cancellation, inventory lookup, PlayerRestrictions.canUseItem, CompositionAction.canAct, or CompositionAction.act scheduling."
+				: "Java CM_COMPOSITE_STONES reaches the composition path but skips stopProtectionActiveTask because protection is not active, then continues to casting cancellation and composition validation.";
+
+		Add(
+			rows,
+			PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmCompositeStones,
+			PlayerProtectionActiveTaskFirstActionStopTriggerRowKind.ActionPacketStop,
+			javaCallReached
+				? PlayerProtectionActiveTaskFirstActionStopTriggerStatus.WouldStopProtection
+				: PlayerProtectionActiveTaskFirstActionStopTriggerStatus.SkippedByJavaBranch,
+			javaCallReached,
+			javaCallReached,
+			"if (player.isProtectionActive()) stopProtectionActiveTask()",
+			"CM_COMPOSITE_STONES.runImpl",
+			"future CM_COMPOSITE_STONES protection-stop hook",
+			note);
+	}
+
+	private static void AddCmEmotion(
+		ICollection<PlayerProtectionActiveTaskFirstActionStopTriggerAuditRow> rows,
+		PlayerProtectionActiveTaskFirstActionStopTriggerAuditRequest request)
+	{
+		if (!request.EvaluateCmEmotion)
+		{
+			AddPendingActionCaller(rows, PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmEmotion, "CM_EMOTION.runImpl", "near the end of the handled emotion flow");
+			return;
+		}
+
+		var reachesLateStopSite = request.CmEmotionPath == PlayerProtectionActiveTaskCmEmotionAuditPath.ReachesLateEmotionProcessingStop;
+		var javaCallReached = reachesLateStopSite && request.CmEmotionProtectionActive;
+		var note = CreateCmEmotionNote(request.CmEmotionPath, request.CmEmotionProtectionActive);
+
+		Add(
+			rows,
+			PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmEmotion,
+			PlayerProtectionActiveTaskFirstActionStopTriggerRowKind.ActionPacketStop,
+			javaCallReached
+				? PlayerProtectionActiveTaskFirstActionStopTriggerStatus.WouldStopProtection
+				: PlayerProtectionActiveTaskFirstActionStopTriggerStatus.SkippedByJavaBranch,
+			javaCallReached,
+			javaCallReached,
+			"if (player.isProtectionActive()) stopProtectionActiveTask()",
+			"CM_EMOTION.runImpl",
+			"future CM_EMOTION protection-stop hook",
+			note);
+	}
+
+	private static string CreateCmEmotionNote(
+		PlayerProtectionActiveTaskCmEmotionAuditPath path,
+		bool protectionActive) =>
+		path switch
+		{
+			PlayerProtectionActiveTaskCmEmotionAuditPath.ReachesLateEmotionProcessingStop when protectionActive =>
+				"Java CM_EMOTION reaches the late protection stop only after cancelUseItem/cancelCurrentSkill, stance checks, emotion-specific state changes, optional SM_EMOTION broadcast, and canUse gating.",
+			PlayerProtectionActiveTaskCmEmotionAuditPath.ReachesLateEmotionProcessingStop =>
+				"Java CM_EMOTION reaches the late stop site after emotion processing but skips stopProtectionActiveTask because protection is not active.",
+			PlayerProtectionActiveTaskCmEmotionAuditPath.DeadGuardReturn =>
+				"Java CM_EMOTION returns at the dead-player guard before cancellation, emotion processing, broadcast, or protection stop.",
+			PlayerProtectionActiveTaskCmEmotionAuditPath.AbnormalMovementBlockedReturn =>
+				"Java CM_EMOTION returns at the abnormal movement/fear/confuse guard for non-exempt emotion types before cancellation, emotion processing, broadcast, or protection stop.",
+			PlayerProtectionActiveTaskCmEmotionAuditPath.PrivateShopOrAttackModeReturn =>
+				"Java CM_EMOTION returns for private-shop state or attack-mode chair/jump before cancelUseItem and before protection stop.",
+			PlayerProtectionActiveTaskCmEmotionAuditPath.SelectTargetReturnAfterCancelUseItem =>
+				"Java CM_EMOTION SELECT_TARGET may cancel item use, then returns before cancelCurrentSkill, emotion processing, broadcast, or protection stop.",
+			PlayerProtectionActiveTaskCmEmotionAuditPath.StanceRejectedAfterCancelCurrentSkill =>
+				"Java CM_EMOTION cancels item use and current skill, sends the stance rejection packet, then returns before emotion processing, broadcast, or protection stop.",
+			PlayerProtectionActiveTaskCmEmotionAuditPath.ValidationReturnAfterEmotionSideEffect =>
+				"Java CM_EMOTION can return from emotion-specific validation after earlier cancellation or state checks, before optional broadcast and before protection stop.",
+			_ => "Java CM_EMOTION path is not modeled.",
+		};
 
 	private static void AddProductionBoundary(ICollection<PlayerProtectionActiveTaskFirstActionStopTriggerAuditRow> rows) =>
 		Add(

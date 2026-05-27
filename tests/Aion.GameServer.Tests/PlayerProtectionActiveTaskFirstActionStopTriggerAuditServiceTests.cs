@@ -314,6 +314,95 @@ public sealed class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 			&& row.Status == PlayerProtectionActiveTaskFirstActionStopTriggerStatus.PendingAudit);
 	}
 
+	[Fact]
+	public void Create_CmCompositeStonesStopsAfterNullGuardBeforeCompositionValidation()
+	{
+		var report = PlayerProtectionActiveTaskFirstActionStopTriggerAuditService.Create(CreateRequest(
+			evaluateCmCompositeStones: true));
+
+		Assert.True(report.TriggersStopProtection);
+		Assert.Contains(report.Rows, row =>
+			row.Source == PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmCompositeStones
+			&& row.Status == PlayerProtectionActiveTaskFirstActionStopTriggerStatus.WouldStopProtection
+			&& row.JavaCallReached
+			&& row.Notes.Contains("after the null-player guard", StringComparison.Ordinal)
+			&& row.Notes.Contains("before casting cancellation", StringComparison.Ordinal));
+	}
+
+	[Theory]
+	[InlineData(false, true, "null-player guard")]
+	[InlineData(true, false, "protection is not active")]
+	public void Create_CmCompositeStonesSkippedBranchesDoNotStop(
+		bool playerPresent,
+		bool protectionActive,
+		string expectedNote)
+	{
+		var report = PlayerProtectionActiveTaskFirstActionStopTriggerAuditService.Create(CreateRequest(
+			evaluateCmCompositeStones: true,
+			cmCompositeStonesPlayerPresent: playerPresent,
+			cmCompositeStonesProtectionActive: protectionActive));
+
+		Assert.False(report.TriggersStopProtection);
+		Assert.Contains(report.Rows, row =>
+			row.Source == PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmCompositeStones
+			&& row.Status == PlayerProtectionActiveTaskFirstActionStopTriggerStatus.SkippedByJavaBranch
+			&& !row.JavaCallReached
+			&& row.Notes.Contains(expectedNote, StringComparison.Ordinal));
+	}
+
+	[Fact]
+	public void Create_CmEmotionStopsOnlyAfterLateEmotionProcessing()
+	{
+		var report = PlayerProtectionActiveTaskFirstActionStopTriggerAuditService.Create(CreateRequest(
+			evaluateCmEmotion: true));
+
+		Assert.True(report.TriggersStopProtection);
+		Assert.Contains(report.Rows, row =>
+			row.Source == PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmEmotion
+			&& row.Status == PlayerProtectionActiveTaskFirstActionStopTriggerStatus.WouldStopProtection
+			&& row.JavaCallReached
+			&& row.Notes.Contains("late protection stop", StringComparison.Ordinal)
+			&& row.Notes.Contains("optional SM_EMOTION broadcast", StringComparison.Ordinal));
+	}
+
+	[Theory]
+	[InlineData(PlayerProtectionActiveTaskCmEmotionAuditPath.DeadGuardReturn, "dead-player guard")]
+	[InlineData(PlayerProtectionActiveTaskCmEmotionAuditPath.AbnormalMovementBlockedReturn, "abnormal movement")]
+	[InlineData(PlayerProtectionActiveTaskCmEmotionAuditPath.PrivateShopOrAttackModeReturn, "private-shop state")]
+	[InlineData(PlayerProtectionActiveTaskCmEmotionAuditPath.SelectTargetReturnAfterCancelUseItem, "may cancel item use")]
+	[InlineData(PlayerProtectionActiveTaskCmEmotionAuditPath.StanceRejectedAfterCancelCurrentSkill, "stance rejection packet")]
+	[InlineData(PlayerProtectionActiveTaskCmEmotionAuditPath.ValidationReturnAfterEmotionSideEffect, "emotion-specific validation")]
+	public void Create_CmEmotionEarlyReturnPathsDoNotStop(
+		PlayerProtectionActiveTaskCmEmotionAuditPath path,
+		string expectedNote)
+	{
+		var report = PlayerProtectionActiveTaskFirstActionStopTriggerAuditService.Create(CreateRequest(
+			evaluateCmEmotion: true,
+			cmEmotionPath: path));
+
+		Assert.False(report.TriggersStopProtection);
+		Assert.Contains(report.Rows, row =>
+			row.Source == PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmEmotion
+			&& row.Status == PlayerProtectionActiveTaskFirstActionStopTriggerStatus.SkippedByJavaBranch
+			&& !row.JavaCallReached
+			&& row.Notes.Contains(expectedNote, StringComparison.Ordinal));
+	}
+
+	[Fact]
+	public void Create_CmEmotionInactiveProtectionSkipsAtLateStopSite()
+	{
+		var report = PlayerProtectionActiveTaskFirstActionStopTriggerAuditService.Create(CreateRequest(
+			evaluateCmEmotion: true,
+			cmEmotionProtectionActive: false));
+
+		Assert.False(report.TriggersStopProtection);
+		Assert.Contains(report.Rows, row =>
+			row.Source == PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmEmotion
+			&& row.Status == PlayerProtectionActiveTaskFirstActionStopTriggerStatus.SkippedByJavaBranch
+			&& !row.JavaCallReached
+			&& row.Notes.Contains("reaches the late stop site", StringComparison.Ordinal));
+	}
+
 	private static PlayerProtectionActiveTaskFirstActionStopTriggerAuditRequest CreateRequest(
 		float packetX = CurrentX,
 		float packetY = CurrentY,
@@ -340,7 +429,13 @@ public sealed class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 		bool evaluateCmShowDialog = false,
 		bool cmShowDialogProtectionActive = true,
 		bool evaluateCmDialogSelect = false,
-		bool cmDialogSelectProtectionActive = true) =>
+		bool cmDialogSelectProtectionActive = true,
+		bool evaluateCmCompositeStones = false,
+		bool cmCompositeStonesPlayerPresent = true,
+		bool cmCompositeStonesProtectionActive = true,
+		bool evaluateCmEmotion = false,
+		PlayerProtectionActiveTaskCmEmotionAuditPath cmEmotionPath = PlayerProtectionActiveTaskCmEmotionAuditPath.ReachesLateEmotionProcessingStop,
+		bool cmEmotionProtectionActive = true) =>
 		new(
 			spawned,
 			antiHackAccepted,
@@ -370,7 +465,13 @@ public sealed class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 			evaluateCmShowDialog,
 			cmShowDialogProtectionActive,
 			evaluateCmDialogSelect,
-			cmDialogSelectProtectionActive);
+			cmDialogSelectProtectionActive,
+			evaluateCmCompositeStones,
+			cmCompositeStonesPlayerPresent,
+			cmCompositeStonesProtectionActive,
+			evaluateCmEmotion,
+			cmEmotionPath,
+			cmEmotionProtectionActive);
 
 	private const float CurrentX = 100f;
 	private const float CurrentY = 200f;
