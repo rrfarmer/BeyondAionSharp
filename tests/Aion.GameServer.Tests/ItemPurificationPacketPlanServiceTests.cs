@@ -94,7 +94,8 @@ public sealed class ItemPurificationPacketPlanServiceTests
 		{
 			[20] = new(
 				new InventoryItem { ObjectId = 20, ItemId = 186000001, Count = 1, Location = 0 },
-				materialTemplate),
+				materialTemplate,
+				GeneralInfoWarehouseRestrictionFlag: 3),
 		};
 
 		var plan = ItemPurificationPacketPlanService.CreatePacketPlan(
@@ -109,6 +110,15 @@ public sealed class ItemPurificationPacketPlanServiceTests
 		var concretePacket = Assert.IsType<SmInventoryUpdateItem>(materialUpdate.ConcretePacket);
 		Assert.Equal(SmInventoryUpdateItem.PacketOpCode, concretePacket.OpCode);
 		Assert.Equal(ItemPurificationPacketPlanService.DecreaseItemUseUpdateType, materialUpdate.Mask);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(concretePacket));
+		Assert.Equal(20, reader.ReadD());
+		reader.ReadS();
+		var blobSize = reader.ReadH();
+		Assert.True(blobSize > 0);
+		var blob = reader.ReadB(blobSize);
+		Assert.Equal(ItemPurificationPacketPlanService.DecreaseItemUseUpdateType, reader.ReadH());
+		Assert.Equal(0, reader.Remaining);
+		AssertGeneralInfoCleanupSealFlag(blob, expectedFlag: 3);
 		Assert.All(
 			plan.Operations.Where(operation =>
 				operation.Type is not ItemPurificationPacketOperationType.UpgradeSuccessSystemMessage

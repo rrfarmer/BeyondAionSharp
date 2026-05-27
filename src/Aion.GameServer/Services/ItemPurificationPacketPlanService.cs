@@ -116,7 +116,11 @@ public static class ItemPurificationPacketPlanService
 			|| input.Template.TemplateId != operation.ItemId)
 			return null;
 
-		return new SmInventoryUpdateItem(input.Item, input.Template, DecreaseItemUseUpdateType);
+		return new SmInventoryUpdateItem(
+			input.Item,
+			input.Template,
+			DecreaseItemUseUpdateType,
+			input.GeneralInfoWarehouseRestrictionFlag);
 	}
 
 	private static ItemPurificationPacketOperation DeleteItem(ItemPurificationApplicationOperation operation)
