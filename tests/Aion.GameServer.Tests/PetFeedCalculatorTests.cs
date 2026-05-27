@@ -90,4 +90,122 @@ public sealed class PetFeedCalculatorTests
 		Assert.Equal(0, progress.LovedFoodRemaining);
 		Assert.Equal(0, progress.RegularCount);
 	}
+
+	[Fact]
+	public void CreatePointValuesMatchesJavaDocumentedTableSamples()
+	{
+		var pointValues = PetFeedCalculator.CreatePointValues([10, 25, 40, 50, 100, 200]);
+
+		Assert.Equal([0, 0, 0, 0, 0, 0], pointValues[0]);
+		Assert.Equal([80, 200, 320, 400, 800, 1600], pointValues[1]);
+		Assert.Equal([880, 2200, 3520, 4400, 8800, 17600], pointValues[11]);
+	}
+
+	[Fact]
+	public void GetRewardReturnsNullWhenNotFullNoRewardsOrUnknownFullCountLikeJava()
+	{
+		var progress = new PetFeedProgress(lovedFoodLimit: 0);
+		var pointValues = PetFeedCalculator.CreatePointValues([10]);
+		var rewards = new[] { new PetFeedReward(1001, 10) };
+
+		Assert.Null(PetFeedCalculator.GetReward(10, [10], pointValues, rewards, progress, playerLevel: 20, ThrowingLovedSelector));
+
+		progress.HungryLevel = PetHungryLevel.Full;
+		Assert.Null(PetFeedCalculator.GetReward(10, [10], pointValues, [], progress, playerLevel: 20, ThrowingLovedSelector));
+		Assert.Null(PetFeedCalculator.GetReward(25, [10], pointValues, rewards, progress, playerLevel: 20, ThrowingLovedSelector));
+	}
+
+	[Fact]
+	public void GetRewardSelectsNormalRewardIndexFromPointThresholdsLikeJava()
+	{
+		var progress = new PetFeedProgress(lovedFoodLimit: 0)
+		{
+			HungryLevel = PetHungryLevel.Full,
+			TotalPoints = 8800,
+		};
+		var pointValues = PetFeedCalculator.CreatePointValues([10, 25, 40, 50, 100, 200]);
+		var rewards = new[]
+		{
+			new PetFeedReward(1001, 10),
+			new PetFeedReward(1002, 20),
+			new PetFeedReward(1003, 30),
+			new PetFeedReward(1004, 40),
+			new PetFeedReward(1005, 50),
+		};
+
+		var reward = PetFeedCalculator.GetReward(100, [10, 25, 40, 50, 100, 200], pointValues, rewards, progress, playerLevel: 60, ThrowingLovedSelector);
+
+		Assert.Equal(rewards[^1], reward);
+	}
+
+	[Fact]
+	public void GetRewardClampsNormalRewardIndexToFirstLikeJavaRoundingFix()
+	{
+		var progress = new PetFeedProgress(lovedFoodLimit: 0)
+		{
+			HungryLevel = PetHungryLevel.Full,
+			TotalPoints = 0,
+		};
+		var pointValues = PetFeedCalculator.CreatePointValues([10]);
+		var rewards = new[] { new PetFeedReward(1001, 10), new PetFeedReward(1002, 20) };
+
+		var reward = PetFeedCalculator.GetReward(10, [10], pointValues, rewards, progress, playerLevel: 60, ThrowingLovedSelector);
+
+		Assert.Equal(rewards[0], reward);
+	}
+
+	[Fact]
+	public void GetRewardLovedFeedReturnsSingleRewardWithoutLevelFilteringLikeJava()
+	{
+		var progress = new PetFeedProgress(lovedFoodLimit: 1)
+		{
+			HungryLevel = PetHungryLevel.Full,
+		};
+		progress.SetIsLovedFeeded();
+		var pointValues = PetFeedCalculator.CreatePointValues([1]);
+		var rewards = new[] { new PetFeedReward(1001, 99) };
+
+		var reward = PetFeedCalculator.GetReward(1, [1], pointValues, rewards, progress, playerLevel: 1, ThrowingLovedSelector);
+
+		Assert.Equal(rewards[0], reward);
+	}
+
+	[Fact]
+	public void GetRewardLovedFeedFiltersToHighestAllowedItemLevelBeforeRandomChoiceLikeJava()
+	{
+		var progress = new PetFeedProgress(lovedFoodLimit: 1)
+		{
+			HungryLevel = PetHungryLevel.Full,
+		};
+		progress.SetIsLovedFeeded();
+		var pointValues = PetFeedCalculator.CreatePointValues([1]);
+		var rewards = new[]
+		{
+			new PetFeedReward(1001, 10),
+			new PetFeedReward(1002, 20),
+			new PetFeedReward(1003, 30),
+			new PetFeedReward(1004, 30),
+			new PetFeedReward(1005, 40),
+		};
+
+		var reward = PetFeedCalculator.GetReward(
+			1,
+			[1],
+			pointValues,
+			rewards,
+			progress,
+			playerLevel: 30,
+			validRewards =>
+			{
+				Assert.Equal([rewards[2], rewards[3]], validRewards);
+				return validRewards[1];
+			});
+
+		Assert.Equal(rewards[3], reward);
+	}
+
+	private static PetFeedReward? ThrowingLovedSelector(IReadOnlyList<PetFeedReward> rewards)
+	{
+		throw new InvalidOperationException("Loved reward selector should not be called.");
+	}
 }
