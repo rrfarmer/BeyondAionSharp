@@ -2704,16 +2704,24 @@ public sealed class GameServerConnection : BaseClientConnection
 		{
 			var supplementTemplate = itemTemplates.GetItemTemplate(supplementUpdate.ItemId);
 			if (supplementTemplate != null)
-				await SendPacketAsync(new SmInventoryUpdateItem(supplementUpdate, supplementTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+				await SendPacketAsync(new SmInventoryUpdateItem(
+					supplementUpdate,
+					supplementTemplate,
+					SmInventoryUpdateItem.DecreaseItemUse,
+					GetGeneralInfoWarehouseRestrictionFlag(supplementUpdate.ItemId, staticData.ItemRestrictionCleanups)));
 		}
 		foreach (var deletedSupplementItemObjectId in plan.DeletedSupplementItemObjectIds)
 			await SendPacketAsync(new SmDeleteItem(deletedSupplementItemObjectId, SmDeleteItem.UseDeleteType));
-		await SendItemUseMutationAsync(plan.SourceItemUpdate, plan.DeletedSourceItemObjectId, sourceTemplate);
+		await SendItemUseMutationAsync(plan.SourceItemUpdate, plan.DeletedSourceItemObjectId, sourceTemplate, staticData.ItemRestrictionCleanups);
 		await SendPacketAsync(
 			plan.SocketSucceeded
 				? SmSystemMessage.GiveItemOptionSucceed(plan.ItemName)
 				: SmSystemMessage.GiveItemOptionFailed(plan.ItemName));
-		await SendPacketAsync(new SmInventoryUpdateItem(plan.TargetItemUpdate, targetTemplate, updateType: 0));
+		await SendPacketAsync(new SmInventoryUpdateItem(
+			plan.TargetItemUpdate,
+			targetTemplate,
+			updateType: 0,
+			GetGeneralInfoWarehouseRestrictionFlag(plan.TargetItemUpdate.ItemId, staticData.ItemRestrictionCleanups)));
 		if (plan.RefreshStats && plan.SocketSucceeded)
 			await SendPacketAsync(CreateStatsInfoPacket(player, staticData));
 
@@ -2890,10 +2898,18 @@ public sealed class GameServerConnection : BaseClientConnection
 		await SendPacketAsync(new SmInventoryUpdateItem(plan.TargetItemUpdate, targetTemplate, updateType: 0));
 	}
 
-	private async Task SendItemUseMutationAsync(InventoryItem? itemUpdate, int? deletedItemObjectId, ItemTemplateSummary? template)
+	private async Task SendItemUseMutationAsync(
+		InventoryItem? itemUpdate,
+		int? deletedItemObjectId,
+		ItemTemplateSummary? template,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups = null)
 	{
 		if (itemUpdate != null && template != null)
-			await SendPacketAsync(new SmInventoryUpdateItem(itemUpdate, template, SmInventoryUpdateItem.DecreaseItemUse));
+			await SendPacketAsync(new SmInventoryUpdateItem(
+				itemUpdate,
+				template,
+				SmInventoryUpdateItem.DecreaseItemUse,
+				GetGeneralInfoWarehouseRestrictionFlag(itemUpdate.ItemId, itemRestrictionCleanups)));
 		else if (deletedItemObjectId.HasValue)
 			await SendPacketAsync(new SmDeleteItem(deletedItemObjectId.Value, SmDeleteItem.UseDeleteType));
 	}
