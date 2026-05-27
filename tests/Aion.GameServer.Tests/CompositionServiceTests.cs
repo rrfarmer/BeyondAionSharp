@@ -87,6 +87,63 @@ public sealed class CompositionServiceTests
 	}
 
 	[Fact]
+	public void CreateMutationPlan_ConsumesSameStoneStackTwiceInJavaOrder()
+	{
+		var toolTemplate = CreateTemplate(165010000, "COMBINATION", hasCompositionAction: true);
+		var stoneTemplate = CreateTemplate(166000020, "ENCHANTMENT", level: 20);
+		var rewardTemplate = CreateTemplate(166000019, "ENCHANTMENT", level: 19);
+		var itemTemplates = new ItemTemplateTable([toolTemplate, stoneTemplate, rewardTemplate]);
+		var player = new Player
+		{
+			ObjectId = 700,
+			InventoryItems =
+			[
+				new InventoryItem { ObjectId = 1, ItemId = 165010000, Count = 1, Location = 0, OwnerId = 700 },
+				new InventoryItem { ObjectId = 2, ItemId = 166000020, Count = 2, Location = 0, OwnerId = 700 },
+			],
+		};
+
+		var plan = CompositionService.CreateMutationPlan(
+			player,
+			player.InventoryItems,
+			toolItemId: 165010000,
+			firstItemId: 166000020,
+			firstItemLevel: 20,
+			secondItemId: 166000020,
+			secondItemLevel: 20,
+			itemTemplates,
+			(min, _) => min,
+			() => 9001);
+
+		Assert.True(plan.Succeeded);
+		Assert.True(plan.RewardSucceeded);
+		Assert.Equal(166000019, plan.RewardItemId);
+		Assert.Empty(plan.UpdatedConsumedItems);
+		Assert.Equal([1, 2], plan.DeletedConsumedObjectIds);
+		Assert.Collection(
+			plan.ConsumedItemMutations,
+			mutation =>
+			{
+				Assert.True(mutation.Deleted);
+				Assert.Equal(1, mutation.ObjectId);
+			},
+			mutation =>
+			{
+				Assert.False(mutation.Deleted);
+				Assert.Equal(2, mutation.ObjectId);
+				Assert.Equal(1, mutation.UpdatedItem?.Count);
+			},
+			mutation =>
+			{
+				Assert.True(mutation.Deleted);
+				Assert.Equal(2, mutation.ObjectId);
+			});
+		var reward = Assert.Single(plan.AddedRewardItems);
+		Assert.Equal(9001, reward.ObjectId);
+		Assert.Equal(166000019, reward.ItemId);
+	}
+
+	[Fact]
 	public void CreateMutationPlan_ConsumesWhatJavaDecreaseByItemIdCanConsumeWhenSecondStoneIsMissing()
 	{
 		var toolTemplate = CreateTemplate(165010000, "COMBINATION", hasCompositionAction: true);
