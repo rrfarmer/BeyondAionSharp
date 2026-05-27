@@ -30,7 +30,8 @@ public sealed class PlayerReviveCleanupPlanService
 
 	public PlayerReviveCleanupPlan CreateKiskReviveCleanupPlan(
 		int playerObjectId,
-		IEnumerable<PlayerAggroEntrySnapshot> preReviveAggroEntries)
+		IEnumerable<PlayerAggroEntrySnapshot> preReviveAggroEntries,
+		bool isLive = false)
 	{
 		// Java parity breadcrumb: PlayerReviveService.kiskRevive delegates to
 		// revive(player, 30, 30, false, skillId), whose cleanup order clears
@@ -39,7 +40,8 @@ public sealed class PlayerReviveCleanupPlanService
 		var aggroClearPlan = _aggroCleanupPlanService.PlanClear(
 			playerObjectId,
 			preReviveAggroEntries,
-			PlayerAggroCleanupReason.Revive);
+			PlayerAggroCleanupReason.Revive,
+			isLive);
 		var steps = new[]
 		{
 			PlayerReviveCleanupPlanStep.ClearKnownPlayerTargets,
@@ -57,6 +59,6 @@ public sealed class PlayerReviveCleanupPlanService
 			PlacesAggroClearAfterRestore: true,
 			PlacesAggroClearBeforeSpawn: true,
 			"com.aionemu.gameserver.services.player.PlayerReviveService.revive cleanup order inside kiskRevive",
-			IsLive: false);
+			isLive);
 	}
 }

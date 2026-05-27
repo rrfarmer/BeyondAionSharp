@@ -59,7 +59,8 @@ public sealed class PlayerAggroCleanupPlanService
 	public PlayerAggroClearPlan PlanClear(
 		int ownerPlayerObjectId,
 		IEnumerable<PlayerAggroEntrySnapshot> entries,
-		PlayerAggroCleanupReason reason)
+		PlayerAggroCleanupReason reason,
+		bool isLive = false)
 	{
 		// Java parity breadcrumb: PlayerReviveService.revive calls
 		// player.getAggroList().clear(); PlayerLifeStats also clears on full HP.
@@ -72,6 +73,6 @@ public sealed class PlayerAggroCleanupPlanService
 			reason == PlayerAggroCleanupReason.Revive
 				? "com.aionemu.gameserver.services.player.PlayerReviveService.revive -> player.getAggroList().clear()"
 				: "com.aionemu.gameserver.model.stats.container.PlayerLifeStats.onHpChanged -> owner.getAggroList().clear() when fully restored",
-			IsLive: false);
+			isLive);
 	}
 }

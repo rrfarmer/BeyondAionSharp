@@ -1,15 +1,19 @@
+using Aion.GameServer.Model.GameObjects;
+
 namespace Aion.GameServer.Services;
 
 public enum PlayerReviveCleanupAdapterStatus
 {
 	DisabledPlanned,
 	BlockedMissingLiveAggroList,
+	LiveAggroCleared,
 }
 
 public sealed record PlayerReviveCleanupAdapterRequest(
 	int PlayerObjectId,
 	IReadOnlyList<PlayerAggroEntrySnapshot> PreReviveAggroEntries,
-	bool ExecuteLiveAggroMutation = false);
+	bool ExecuteLiveAggroMutation = false,
+	PlayerOwnedAggroList? LiveAggroList = null);
 
 public sealed record PlayerReviveCleanupAdapterResult(
 	PlayerReviveCleanupAdapterStatus Status,
@@ -46,6 +50,22 @@ public sealed class PlayerReviveCleanupAdapterService
 				ExposesPlanForObservation: true,
 				"com.aionemu.gameserver.services.player.PlayerReviveService.kiskRevive -> revive cleanup plan exposed with live aggro mutation disabled",
 				IsLive: false);
+		}
+
+		if (request.LiveAggroList is not null)
+		{
+			var clearedEntries = request.LiveAggroList.Clear();
+			var livePlan = _planService.CreateKiskReviveCleanupPlan(
+				request.PlayerObjectId,
+				clearedEntries,
+				isLive: true);
+			return new PlayerReviveCleanupAdapterResult(
+				PlayerReviveCleanupAdapterStatus.LiveAggroCleared,
+				livePlan,
+				MutatedLiveAggro: true,
+				ExposesPlanForObservation: true,
+				"com.aionemu.gameserver.services.player.PlayerReviveService.revive -> player.getAggroList().clear() executed against C# PlayerOwnedAggroList",
+				IsLive: true);
 		}
 
 		return new PlayerReviveCleanupAdapterResult(

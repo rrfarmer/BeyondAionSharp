@@ -176,6 +176,10 @@ public sealed class Player
 	// Java parity: model/gameobjects/VisibleObject target set by network/aion/clientpackets/CM_TARGET_SELECT.
 	public int TargetObjectId { get; set; }
 
+	// Java parity: model/gameobjects/player/Player.createAggroList returns PlayerAggroList,
+	// whose clear path is invoked by PlayerReviveService.revive.
+	public PlayerOwnedAggroList AggroList { get; } = new();
+
 	// Java parity: model/gameobjects/player/Player.isTrading guard used by mail and broker packets.
 	public bool IsTrading { get; set; }
 
