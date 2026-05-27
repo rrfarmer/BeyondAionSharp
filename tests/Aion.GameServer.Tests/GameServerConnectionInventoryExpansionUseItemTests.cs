@@ -1125,6 +1125,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 				expectedItemMask: 0),
 			packet => Assert.IsType<SmStatUpdateExp>(packet),
 			packet => AssertInventoryItemCollectAddPayload(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 188053996, expectedCount: 1, expectedCleanupSealFlag: 3),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 2),
 			packet => Assert.IsType<SmSystemMessage>(packet),
 			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 104, expectedTime: 0, expectedEnd: 1));
 	}
