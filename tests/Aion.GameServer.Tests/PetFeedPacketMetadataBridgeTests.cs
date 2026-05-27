@@ -365,6 +365,55 @@ public sealed class PetFeedPacketMetadataBridgeTests
 	}
 
 	[Theory]
+	[InlineData(PetFeedUnlockPacketStorageKind.Warehouse, SmWarehouseAddItem.RegularWarehouse)]
+	[InlineData(PetFeedUnlockPacketStorageKind.AccountWarehouse, SmWarehouseAddItem.AccountWarehouse)]
+	[InlineData(PetFeedUnlockPacketStorageKind.LegionWarehouse, SmWarehouseAddItem.LegionWarehouse)]
+	[InlineData(PetFeedUnlockPacketStorageKind.UnusualWarehouse, 32)]
+	public void Construct_RejectedFoodWithCleanupSealContextWritesWarehouseAddFlagLikeJava(
+		PetFeedUnlockPacketStorageKind storageKind,
+		int warehouseType)
+	{
+		var bridge = new PetFeedPacketMetadataBridge();
+		var plan = new PetFeedServiceOperationPlan(
+			PetFeedServiceOperationPlanStatus.RejectedFood,
+			Evaluation: new PetFeedEvaluationResult(null, IsLovedFood: false, Reward: null),
+			Operations: [new PetFeedServiceOperation(PetFeedServiceOperationKind.UnlockFoodItem, ItemObjectId: 5001)],
+			RemainingRequestedCount: 1,
+			RefeedTimeMilliseconds: null);
+		var item = new InventoryItem
+		{
+			ObjectId = 5001,
+			ItemId = 188053996,
+			Count = 1,
+			OwnerId = 7001,
+			Location = warehouseType,
+			Slot = 4,
+		};
+
+		var result = bridge.Construct(new PetFeedPacketMetadataBridgeRequest(
+			plan,
+			FeedProgressData: 0x123450,
+			SupplementalContext: new PetFeedSupplementalPacketContext(
+				UnlockPacketContext: new PetFeedUnlockPacketContext(
+					storageKind,
+					item,
+					CreateTemplate(item.ItemId, "Emperor Trillirunerk's Feather Box"),
+					GeneralInfoWarehouseRestrictionFlag: 3))));
+
+		Assert.Equal(PetFeedPacketMetadataBridgeStatus.Constructed, result.Status);
+		var warehouseAdd = Assert.IsType<SmWarehouseAddItem>(result.Results[0].Packets[0]);
+		using var warehouseReader = new PacketBuffer(SerializeUnencryptedPayload(warehouseAdd));
+		Assert.Equal(warehouseType, (int)warehouseReader.ReadC());
+		Assert.Equal(SmWarehouseAddItem.AllSlot, warehouseReader.ReadH());
+		Assert.Equal(1, warehouseReader.ReadH());
+		var restrictedItem = ReadWarehouseItemWithBlob(warehouseReader);
+		Assert.Equal((5001, 188053996, 0, 4), (restrictedItem.ObjectId, restrictedItem.ItemId, restrictedItem.ItemInfo, restrictedItem.EquipmentSlot));
+		Assert.Equal(0, warehouseReader.Remaining);
+
+		AssertWarehouseGeneralInfoCleanupSealFlag(restrictedItem.Blob, expectedFlag: 3);
+	}
+
+	[Theory]
 	[InlineData(32, 4)]
 	[InlineData(33, 5)]
 	[InlineData(34, 6)]
@@ -605,5 +654,34 @@ public sealed class PetFeedPacketMetadataBridgeTests
 		crypt.EnableKey();
 		var frame = packet.SerializeFrame(crypt);
 		return frame[7..];
+	}
+
+	private static (int ObjectId, int ItemId, int ItemInfo, byte[] Blob, int EquipmentSlot) ReadWarehouseItemWithBlob(PacketBuffer reader)
+	{
+		var objectId = reader.ReadD();
+		var itemId = reader.ReadD();
+		var itemInfo = reader.ReadC();
+		reader.ReadS();
+		var blobSize = reader.ReadH();
+		var blob = reader.ReadB(blobSize);
+		var equipmentSlot = reader.ReadH();
+		return (objectId, itemId, itemInfo, blob, equipmentSlot);
+	}
+
+	private static void AssertWarehouseGeneralInfoCleanupSealFlag(byte[] blob, int expectedFlag)
+	{
+		using var blobReader = new PacketBuffer(blob);
+		Assert.Equal(0x00, (int)blobReader.ReadC());
+		Assert.Equal(0, blobReader.ReadH());
+		Assert.Equal(1, blobReader.ReadQ());
+		Assert.Equal(string.Empty, blobReader.ReadS());
+		Assert.Equal(0, (int)blobReader.ReadC());
+		Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(expectedFlag, blobReader.ReadH());
+		Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(18, blobReader.ReadH());
+		Assert.Equal(0, blobReader.Remaining);
 	}
 }

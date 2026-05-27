@@ -20,7 +20,8 @@ public sealed record PetFeedUnlockPacketContextAssemblerInput(
 	int QuestExpands = 0,
 	int ItemExpands = 0,
 	int StorageItemsCount = 0,
-	long LegionWarehouseKinah = 0);
+	long LegionWarehouseKinah = 0,
+	int GeneralInfoWarehouseRestrictionFlag = 0);
 
 public sealed record PetFeedUnlockPacketContextAssemblerResult(
 	PetFeedUnlockPacketContextAssemblerStatus Status,
@@ -83,7 +84,8 @@ public sealed class PetFeedUnlockPacketContextAssembler
 			input.ItemExpands,
 			input.StorageItemsCount,
 			isKinah,
-			input.LegionWarehouseKinah);
+			input.LegionWarehouseKinah,
+			input.GeneralInfoWarehouseRestrictionFlag);
 		return new PetFeedUnlockPacketContextAssemblerResult(
 			PetFeedUnlockPacketContextAssemblerStatus.Created,
 			context,

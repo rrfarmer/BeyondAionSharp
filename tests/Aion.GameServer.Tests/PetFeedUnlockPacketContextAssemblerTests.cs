@@ -60,6 +60,25 @@ public sealed class PetFeedUnlockPacketContextAssemblerTests
 		Assert.False(result.Context.IsKinah);
 	}
 
+	[Theory]
+	[InlineData(1)]
+	[InlineData(2)]
+	[InlineData(3)]
+	public void Assemble_WarehouseLocationsPreservePrecomputedCleanupSealFlag(int location)
+	{
+		var assembler = new PetFeedUnlockPacketContextAssembler();
+		var item = CreateItem(location, itemId: 188053996);
+
+		var result = assembler.Assemble(new PetFeedUnlockPacketContextAssemblerInput(
+			item,
+			CreateTemplate(item.ItemId),
+			GeneralInfoWarehouseRestrictionFlag: 3));
+
+		Assert.Equal(PetFeedUnlockPacketContextAssemblerStatus.Created, result.Status);
+		Assert.NotNull(result.Context);
+		Assert.Equal(3, result.Context.GeneralInfoWarehouseRestrictionFlag);
+	}
+
 	[Fact]
 	public void Assemble_LegionWarehouseKinahDoesNotRequireTemplateLikeJavaSpecialCase()
 	{

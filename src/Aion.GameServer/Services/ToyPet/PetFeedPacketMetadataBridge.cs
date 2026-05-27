@@ -43,7 +43,8 @@ public sealed record PetFeedUnlockPacketContext(
 	int ItemExpands = 0,
 	int StorageItemsCount = 0,
 	bool IsKinah = false,
-	long LegionWarehouseKinah = 0);
+	long LegionWarehouseKinah = 0,
+	int GeneralInfoWarehouseRestrictionFlag = 0);
 
 public sealed record PetFeedSupplementalPacketContext(
 	int? PlayerObjectId = null,
@@ -246,7 +247,11 @@ public sealed class PetFeedPacketMetadataBridge
 		var warehouseType = context.StorageKind == PetFeedUnlockPacketStorageKind.Warehouse
 			? SmWarehouseAddItem.RegularWarehouse
 			: SmWarehouseAddItem.AccountWarehouse;
-		var warehouseAdd = SmWarehouseAddItem.CreateAllSlot(warehouseType, context.Item, context.Template);
+		var warehouseAdd = SmWarehouseAddItem.CreateAllSlot(
+			warehouseType,
+			context.Item,
+			context.Template,
+			context.GeneralInfoWarehouseRestrictionFlag);
 		var cubeUpdate = context.StorageKind == PetFeedUnlockPacketStorageKind.Warehouse
 			? SmCubeUpdate.RegularWarehouseSizeSnapshot(context.StorageItemsCount, context.NpcExpands, context.QuestExpands)
 			: SmCubeUpdate.AccountWarehouseSize();
@@ -281,7 +286,11 @@ public sealed class PetFeedPacketMetadataBridge
 				$"Storage id {context.Item.Location} is not a modeled Java StorageType for unusual unlock metadata.");
 		}
 
-		var warehouseAdd = SmWarehouseAddItem.CreateAllSlot(context.Item.Location, context.Item, context.Template);
+		var warehouseAdd = SmWarehouseAddItem.CreateAllSlot(
+			context.Item.Location,
+			context.Item,
+			context.Template,
+			context.GeneralInfoWarehouseRestrictionFlag);
 		var cubeUpdate = SmCubeUpdate.ZeroSizeForJavaStorageId(context.Item.Location);
 
 		// Java parity: ItemPacketService.sendStorageUpdatePacket default branch emits SM_WAREHOUSE_ADD_ITEM
@@ -318,7 +327,11 @@ public sealed class PetFeedPacketMetadataBridge
 					"Legion warehouse item unlock metadata needs supplied item and template snapshots.");
 			}
 
-			firstPacket = SmWarehouseAddItem.CreateAllSlot(SmWarehouseAddItem.LegionWarehouse, context.Item, context.Template);
+			firstPacket = SmWarehouseAddItem.CreateAllSlot(
+				SmWarehouseAddItem.LegionWarehouse,
+				context.Item,
+				context.Template,
+				context.GeneralInfoWarehouseRestrictionFlag);
 		}
 
 		return new PetFeedPacketMetadataResult(
