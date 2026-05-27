@@ -302,6 +302,37 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactReader
 		Assert.True(taskAdd.EventSeq < taskCancel.EventSeq);
 	}
 
+	[Fact]
+	public void UnspawnedScheduledCallbackArtifacts_CancelTaskAndSkipFanout()
+	{
+		var artifact = ParseUnspawnedScheduledCallbackArtifact();
+
+		Assert.Equal(1, artifact.SchemaVersion);
+		Assert.Equal("protection-active-unspawned-callback-skip-fanout", artifact.Scenario);
+		Assert.Equal("player_unspawned_after_task_cancel", artifact.RuntimeFacts.ExpectedReturnReason);
+		Assert.Contains(artifact.Traces, trace => trace.Phase == "schedule_enter");
+		Assert.Contains(artifact.Traces, trace => trace.Phase == "task_cancel");
+		Assert.Contains(artifact.Traces, trace => trace.Phase == "spawn_guard");
+		Assert.DoesNotContain(artifact.Traces, trace => trace.Phase is "visual_mutate" or "state_broadcast" or "ai_notify_enqueue");
+
+		var stopCall = artifact.Traces.Single(trace => trace.Phase == "stop_call_enter");
+		var taskCancel = artifact.Traces.Single(trace => trace.Phase == "task_cancel");
+		var spawnGuard = artifact.Traces.Single(trace => trace.Phase == "spawn_guard");
+		var callbackReturn = artifact.Traces.Single(trace => trace.Phase == "callback_return");
+
+		Assert.True(stopCall.EventSeq < taskCancel.EventSeq);
+		Assert.True(taskCancel.EventSeq < spawnGuard.EventSeq);
+		Assert.True(spawnGuard.EventSeq < callbackReturn.EventSeq);
+		Assert.False(spawnGuard.Player.Spawned);
+		Assert.True(spawnGuard.StopCalled);
+		Assert.True(spawnGuard.ExpectsStopProtectionCall);
+		Assert.Null(spawnGuard.Fanout);
+		Assert.Null(spawnGuard.AiNotify);
+		Assert.NotNull(taskCancel.TaskCancellation);
+		Assert.Equal("player_unspawned_after_task_cancel", taskCancel.TaskCancellation!.StopOrigin);
+		Assert.All(artifact.Traces, trace => Assert.False(trace.TimestampIsParityKey));
+	}
+
 	private static void AssertNoStopArtifact(ProtectionStopTriggerJavaTraceArtifact artifact)
 	{
 		Assert.Equal(1, artifact.SchemaVersion);
@@ -1406,6 +1437,309 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactReader
 		var artifact = JsonSerializer.Deserialize<ProtectionStopTriggerJavaTraceArtifact>(json, JsonOptions);
 		Assert.NotNull(artifact);
 		AssertArtifactSemantics(artifact);
+		return artifact;
+	}
+
+	private static ProtectionStopTriggerJavaTraceArtifact ParseUnspawnedScheduledCallbackArtifact()
+	{
+		const string json = """
+			{
+			  "schemaVersion": 1,
+			  "javaCommit": "abcdef1",
+			  "scenario": "protection-active-unspawned-callback-skip-fanout",
+			  "runtimeFacts": {
+			    "serverFlavor": "java",
+			    "packetName": "SCHEDULED_PROTECTION_ACTIVE_CALLBACK",
+			    "playerObjectId": 1001,
+			    "worldId": 210010000,
+			    "expectedReturnReason": "player_unspawned_after_task_cancel"
+			  },
+			  "javaSources": [
+			    "PlayerController.startProtectionActiveTask",
+			    "ThreadPoolManager.schedule",
+			    "CreatureController.addTask",
+			    "PlayerController.stopProtectionActiveTask",
+			    "CreatureController.cancelTask"
+			  ],
+			  "traces": [
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "protection-active-unspawned-callback-skip-fanout-001",
+			      "eventSeq": 0,
+			      "phase": "schedule_enter",
+			      "packetName": "SCHEDULED_PROTECTION_ACTIVE_CALLBACK",
+			      "returnReason": "player_unspawned_after_task_cancel",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": true,
+			      "wallTimeEpochMillis": 1760000000000,
+			      "monotonicNanos": 5000000,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "PlayerController.java",
+			      "javaLine": 634,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": true,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": false,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": [],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": {
+			        "delayMillis": 60000,
+			        "timeUnit": "MILLISECONDS",
+			        "runnableWrapperApplied": true,
+			        "callbackMethod": "PlayerController.stopProtectionActiveTask",
+			        "oldFuturePresent": false,
+			        "oldFutureCancelArgument": null,
+			        "oldFutureCancelResult": null,
+			        "newFutureStored": false
+			      },
+			      "actionBranchName": "schedule_protection_active_task"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "protection-active-unspawned-callback-skip-fanout-001",
+			      "eventSeq": 1,
+			      "phase": "task_add",
+			      "packetName": "SCHEDULED_PROTECTION_ACTIVE_CALLBACK",
+			      "returnReason": "player_unspawned_after_task_cancel",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": true,
+			      "wallTimeEpochMillis": 1760000000001,
+			      "monotonicNanos": 5000100,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "CreatureController.java",
+			      "javaLine": 383,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": true,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": {
+			        "delayMillis": 60000,
+			        "timeUnit": "MILLISECONDS",
+			        "runnableWrapperApplied": true,
+			        "callbackMethod": "PlayerController.stopProtectionActiveTask",
+			        "oldFuturePresent": false,
+			        "oldFutureCancelArgument": null,
+			        "oldFutureCancelResult": null,
+			        "newFutureStored": true
+			      },
+			      "actionBranchName": "store_new_protection_future"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "protection-active-unspawned-callback-skip-fanout-001",
+			      "eventSeq": 2,
+			      "phase": "callback_enter",
+			      "packetName": "SCHEDULED_PROTECTION_ACTIVE_CALLBACK",
+			      "returnReason": "player_unspawned_after_task_cancel",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": true,
+			      "wallTimeEpochMillis": 1760000060000,
+			      "monotonicNanos": 110000000,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "ThreadPoolManager.java",
+			      "javaLine": 53,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": {
+			        "delayMillis": 60000,
+			        "timeUnit": "MILLISECONDS",
+			        "runnableWrapperApplied": true,
+			        "callbackMethod": "PlayerController.stopProtectionActiveTask",
+			        "oldFuturePresent": false,
+			        "oldFutureCancelArgument": null,
+			        "oldFutureCancelResult": null,
+			        "newFutureStored": true
+			      },
+			      "actionBranchName": "scheduled_future_callback_enter"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "protection-active-unspawned-callback-skip-fanout-001",
+			      "eventSeq": 3,
+			      "phase": "stop_call_enter",
+			      "packetName": "SCHEDULED_PROTECTION_ACTIVE_CALLBACK",
+			      "returnReason": "player_unspawned_after_task_cancel",
+			      "stopCalled": true,
+			      "expectsStopProtectionCall": true,
+			      "wallTimeEpochMillis": 1760000060001,
+			      "monotonicNanos": 110000100,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "PlayerController.java",
+			      "javaLine": 641,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "actionBranchName": "stop_protection_active_task"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "protection-active-unspawned-callback-skip-fanout-001",
+			      "eventSeq": 4,
+			      "phase": "task_cancel",
+			      "packetName": "SCHEDULED_PROTECTION_ACTIVE_CALLBACK",
+			      "returnReason": "player_unspawned_after_task_cancel",
+			      "stopCalled": true,
+			      "expectsStopProtectionCall": true,
+			      "wallTimeEpochMillis": 1760000060002,
+			      "monotonicNanos": 110000200,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "CreatureController.java",
+			      "javaLine": 364,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": {
+			        "taskIdName": "PROTECTION_ACTIVE",
+			        "taskIdOrdinal": 3,
+			        "taskPresentBeforeCancel": true,
+			        "taskRemovedBeforeCancel": true,
+			        "futureCancelArgument": false,
+			        "futureCancelResult": true,
+			        "scheduledDelayMillis": 60000,
+			        "stopOrigin": "player_unspawned_after_task_cancel"
+			      },
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "actionBranchName": "cancel_current_protection_future"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "protection-active-unspawned-callback-skip-fanout-001",
+			      "eventSeq": 5,
+			      "phase": "spawn_guard",
+			      "packetName": "SCHEDULED_PROTECTION_ACTIVE_CALLBACK",
+			      "returnReason": "player_unspawned_after_task_cancel",
+			      "stopCalled": true,
+			      "expectsStopProtectionCall": true,
+			      "wallTimeEpochMillis": 1760000060003,
+			      "monotonicNanos": 110000300,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "PlayerController.java",
+			      "javaLine": 644,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "actionBranchName": "skip_spawned_only_fanout"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "protection-active-unspawned-callback-skip-fanout-001",
+			      "eventSeq": 6,
+			      "phase": "callback_return",
+			      "packetName": "SCHEDULED_PROTECTION_ACTIVE_CALLBACK",
+			      "returnReason": "player_unspawned_after_task_cancel",
+			      "stopCalled": true,
+			      "expectsStopProtectionCall": true,
+			      "wallTimeEpochMillis": 1760000060004,
+			      "monotonicNanos": 110000400,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "PlayerController.java",
+			      "javaLine": 648,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "actionBranchName": "callback_return"
+			    }
+			  ],
+			  "notes": [
+			    "Java cancels the protection task before checking player.isSpawned().",
+			    "When the player is not spawned, visual clear, SM_PLAYER_STATE fanout, and AI move notify are skipped.",
+			    "Inline fixture proves reader binding only, not Java runtime parity."
+			  ]
+			}
+			""";
+
+		var artifact = JsonSerializer.Deserialize<ProtectionStopTriggerJavaTraceArtifact>(json, JsonOptions);
+		Assert.NotNull(artifact);
 		return artifact;
 	}
 
