@@ -959,7 +959,8 @@ public sealed class PortalEntryValidationServiceTests
 		var application = PortalEntryValidationService.CreateRequiredItemsAndKinahApplication(
 			player,
 			consumptionPlan,
-			CreateItemTemplates(185000077, KinahItemId));
+			CreateItemTemplates(185000077, KinahItemId),
+			CreateItemRestrictionCleanups());
 
 		Assert.True(application.Applied);
 		Assert.Empty(application.MissingTemplateIds);
@@ -989,12 +990,14 @@ public sealed class PortalEntryValidationServiceTests
 		using var itemUpdateReader = new PacketBuffer(itemUpdatePayload);
 		Assert.Equal(11, itemUpdateReader.ReadD());
 		Assert.Equal(CreateItemTemplate(185000077).GetClientName()?.TrimEnd('\0'), itemUpdateReader.ReadS());
+		AssertGeneralInfoCleanupSealFlag(itemUpdateReader, expectedCount: 1, expectedFlag: 3);
 		AssertPacketEndsWithUpdateType(itemUpdatePayload, SmInventoryUpdateItem.DecreaseItemUse);
 
 		var kinahUpdatePayload = SerializeUnencryptedPayload(application.Packets[3]);
 		using var kinahUpdateReader = new PacketBuffer(kinahUpdatePayload);
 		Assert.Equal(12, kinahUpdateReader.ReadD());
 		Assert.Equal(CreateItemTemplate(KinahItemId).GetClientName()?.TrimEnd('\0'), kinahUpdateReader.ReadS());
+		AssertGeneralInfoCleanupSealFlag(kinahUpdateReader, expectedCount: 500, expectedFlag: 0);
 		AssertPacketEndsWithUpdateType(kinahUpdatePayload, SmInventoryUpdateItem.DecreaseKinahBuy);
 
 		Assert.Equal(1, itemStackA.Count);
@@ -1589,6 +1592,15 @@ public sealed class PortalEntryValidationServiceTests
 			ValidEquipmentSlots: 0);
 	}
 
+	private static ItemRestrictionCleanupTable CreateItemRestrictionCleanups()
+	{
+		return new ItemRestrictionCleanupTable(
+		[
+			new ItemRestrictionCleanupSummary(185000077, AccountWarehouse: 0, LegionWarehouse: 1),
+			new ItemRestrictionCleanupSummary(KinahItemId, AccountWarehouse: 1, LegionWarehouse: 1),
+		]);
+	}
+
 	private static Player CreatePlayerWithCooldown(long reuseTimeMillis, int entryCount, string race = "")
 	{
 		return new Player
@@ -1700,5 +1712,24 @@ public sealed class PortalEntryValidationServiceTests
 	{
 		var actual = payload[^2] | (payload[^1] << 8);
 		Assert.Equal(updateType, actual);
+	}
+
+	private static void AssertGeneralInfoCleanupSealFlag(PacketBuffer packetReader, long expectedCount, int expectedFlag)
+	{
+		var blobSize = packetReader.ReadH();
+		if (blobSize == 0 && packetReader.Remaining > 2)
+			blobSize = packetReader.ReadH();
+		Assert.True(blobSize > 0, $"Expected a positive full item blob size, got {blobSize} with {packetReader.Remaining} bytes remaining.");
+		var blob = packetReader.ReadB(blobSize);
+		using var blobReader = new PacketBuffer(blob);
+		Assert.Equal(0x00, (int)blobReader.ReadC());
+		Assert.Equal(0, blobReader.ReadH());
+		Assert.Equal(expectedCount, blobReader.ReadQ());
+		Assert.Equal(string.Empty, blobReader.ReadS());
+		Assert.Equal(0, (int)blobReader.ReadC());
+		Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(expectedFlag, blobReader.ReadH());
 	}
 }

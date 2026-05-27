@@ -453,7 +453,8 @@ public static class PortalEntryValidationService
 	public static PortalRequirementConsumptionApplication CreateRequiredItemsAndKinahApplication(
 		Player player,
 		PortalRequirementConsumptionPlan consumptionPlan,
-		ItemTemplateTable itemTemplates)
+		ItemTemplateTable itemTemplates,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups = null)
 	{
 		// Java parity: services/item/ItemPacketService.sendItemPacket over PortalService.checkAndRemoveRequiredItems mutations.
 		if (!consumptionPlan.Succeeded)
@@ -489,7 +490,11 @@ public static class PortalEntryValidationService
 			var updateType = step.IsKinah
 				? SmInventoryUpdateItem.DecreaseKinahBuy
 				: SmInventoryUpdateItem.DecreaseItemUse;
-			packets.Add(new SmInventoryUpdateItem(updatedItem, template, updateType));
+			packets.Add(new SmInventoryUpdateItem(
+				updatedItem,
+				template,
+				updateType,
+				GetGeneralInfoWarehouseRestrictionFlag(updatedItem.ItemId, itemRestrictionCleanups)));
 		}
 
 		return PortalRequirementConsumptionApplication.Success(
@@ -507,6 +512,12 @@ public static class PortalEntryValidationService
 	private static long GetInventoryCount(IReadOnlyList<InventoryItem> inventoryItems, int itemId)
 	{
 		return inventoryItems.Where(item => item.ItemId == itemId).Sum(item => item.Count);
+	}
+
+	private static int GetGeneralInfoWarehouseRestrictionFlag(int itemId, ItemRestrictionCleanupTable? itemRestrictionCleanups)
+	{
+		// Java parity: GeneralInfoBlobEntry reads ItemRestrictionCleanupData.hasAccountOrLegionWhStorabilityDisabled.
+		return itemRestrictionCleanups?.HasAccountOrLegionWarehouseStorabilityDisabled(itemId) == true ? 3 : 0;
 	}
 
 	private static void PlanDecreaseByItemId(
