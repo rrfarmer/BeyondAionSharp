@@ -15,6 +15,7 @@ public sealed class PlayerDeathWorkflowPlanServiceTests
 			ObjectId = PlayerObjectId,
 			CreatureState = PlayerCreatureState.Active | PlayerCreatureState.Flying,
 			FlyState = PlayerFlyState.Flying,
+			LifeStats = new PlayerLifeStats(CurrentHp: 0, CurrentMp: 0, CurrentFp: 0),
 		};
 		var facts = new PlayerDeathWorkflowFacts(
 			HasSummon: true,
@@ -30,6 +31,8 @@ public sealed class PlayerDeathWorkflowPlanServiceTests
 		Assert.True(plan.WouldReleaseSummon);
 		Assert.True(plan.WouldCalculateExperienceLoss);
 		Assert.True(plan.WouldScheduleResurrectionOptions);
+		Assert.NotNull(plan.ResurrectionOptionsPlan);
+		Assert.Equal(PlayerDeathResurrectionOptionsPlanStatus.SendSmDie, plan.ResurrectionOptionsPlan.Status);
 		Assert.Equal(PlayerDeathStateTransitionStatus.FloatingCorpseApplied, plan.PlannedTransitionStatus);
 		AssertOrdered(
 			plan.Steps,
@@ -76,6 +79,7 @@ public sealed class PlayerDeathWorkflowPlanServiceTests
 		Assert.Equal(PlayerDeathWorkflowStatus.ReturnedAfterDuelOpponentKill, plan.Status);
 		Assert.False(plan.WouldReleaseSummon);
 		Assert.False(plan.WouldScheduleResurrectionOptions);
+		Assert.Null(plan.ResurrectionOptionsPlan);
 		Assert.False(plan.WouldCalculateExperienceLoss);
 		AssertOrdered(
 			plan.Steps,
@@ -98,6 +102,7 @@ public sealed class PlayerDeathWorkflowPlanServiceTests
 		{
 			ObjectId = PlayerObjectId,
 			CreatureState = PlayerCreatureState.Active,
+			LifeStats = new PlayerLifeStats(CurrentHp: 0, CurrentMp: 0, CurrentFp: 0),
 		};
 		var facts = new PlayerDeathWorkflowFacts(
 			InstanceHandlerConsumesDeath: true,
@@ -108,6 +113,8 @@ public sealed class PlayerDeathWorkflowPlanServiceTests
 
 		Assert.Equal(PlayerDeathWorkflowStatus.ReturnedAfterInstanceHandler, plan.Status);
 		Assert.True(plan.WouldScheduleResurrectionOptions);
+		Assert.NotNull(plan.ResurrectionOptionsPlan);
+		Assert.Equal(PlayerDeathResurrectionOptionsPlanStatus.SendSmDie, plan.ResurrectionOptionsPlan.Status);
 		Assert.False(plan.WouldCalculateExperienceLoss);
 		AssertOrdered(
 			plan.Steps,
@@ -127,9 +134,11 @@ public sealed class PlayerDeathWorkflowPlanServiceTests
 		{
 			ObjectId = PlayerObjectId,
 			CreatureState = PlayerCreatureState.Active,
+			LifeStats = new PlayerLifeStats(CurrentHp: 0, CurrentMp: 0, CurrentFp: 0),
 		};
 		var facts = new PlayerDeathWorkflowFacts(
 			MapRegionConsumesDeath: true,
+			HasTeleportTaskAtResurrectionOptionsCallback: true,
 			LastAttackerMasterIsNpcOrPlayerSelf: true,
 			PlayerLevel: 10);
 
@@ -137,6 +146,8 @@ public sealed class PlayerDeathWorkflowPlanServiceTests
 
 		Assert.Equal(PlayerDeathWorkflowStatus.ReturnedAfterMapRegion, plan.Status);
 		Assert.True(plan.WouldScheduleResurrectionOptions);
+		Assert.NotNull(plan.ResurrectionOptionsPlan);
+		Assert.Equal(PlayerDeathResurrectionOptionsPlanStatus.SkipTeleportTask, plan.ResurrectionOptionsPlan.Status);
 		Assert.False(plan.WouldCalculateExperienceLoss);
 		AssertOrdered(
 			plan.Steps,

@@ -46,7 +46,8 @@ public sealed record PlayerDeathWorkflowFacts(
 	bool MapRegionConsumesDeath = false,
 	bool LastAttackerMasterIsNpcOrPlayerSelf = false,
 	int PlayerLevel = 1,
-	bool HasNoDeathPenaltyEffect = false);
+	bool HasNoDeathPenaltyEffect = false,
+	bool HasTeleportTaskAtResurrectionOptionsCallback = false);
 
 public sealed record PlayerDeathWorkflowPlan(
 	PlayerDeathWorkflowStatus Status,
@@ -57,6 +58,7 @@ public sealed record PlayerDeathWorkflowPlan(
 	bool WouldReleaseSummon,
 	bool WouldCalculateExperienceLoss,
 	bool WouldScheduleResurrectionOptions,
+	PlayerDeathResurrectionOptionsPlan? ResurrectionOptionsPlan,
 	bool IsLive,
 	IReadOnlyList<PlayerDeathWorkflowStep> Steps,
 	IReadOnlyList<string> UnsupportedJavaBehaviors,
@@ -175,6 +177,11 @@ public sealed class PlayerDeathWorkflowPlanService
 			facts.HasSummon && steps.Contains(PlayerDeathWorkflowStep.ReleaseSummon),
 			ShouldCalculateExperienceLoss(facts) && steps.Contains(PlayerDeathWorkflowStep.CalculateExperienceLoss),
 			wouldScheduleResurrectionOptions,
+			wouldScheduleResurrectionOptions
+				? PlayerDeathResurrectionOptionsPlanService.CreatePlan(
+					player,
+					facts.HasTeleportTaskAtResurrectionOptionsCallback)
+				: null,
 			IsLive: false,
 			steps.ToArray(),
 			new[]

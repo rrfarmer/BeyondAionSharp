@@ -17,6 +17,7 @@ public sealed class PlayerDeathWorkflowAdapterServiceTests
 
 		Assert.Equal(PlayerDeathWorkflowAdapterStatus.DisabledPlanned, result.Status);
 		Assert.Equal(PlayerDeathWorkflowStatus.PlannedFullPlayerDeath, result.Plan.Status);
+		Assert.NotNull(result.Plan.ResurrectionOptionsPlan);
 		Assert.Null(result.StateTransitionResult);
 		Assert.False(result.MutatedPlayerState);
 		Assert.False(result.SentPackets);
@@ -55,6 +56,8 @@ public sealed class PlayerDeathWorkflowAdapterServiceTests
 		Assert.True(player.IsInState(PlayerCreatureState.FloatingCorpse));
 		Assert.Contains(PlayerDeathWorkflowStep.ReleaseSummon, result.Plan.Steps);
 		Assert.Contains(PlayerDeathWorkflowStep.ScheduleShowResurrectionOptions, result.Plan.Steps);
+		Assert.NotNull(result.Plan.ResurrectionOptionsPlan);
+		Assert.Equal(PlayerDeathResurrectionOptionsPlanStatus.SendSmDie, result.Plan.ResurrectionOptionsPlan.Status);
 		Assert.True(result.Plan.WouldCalculateExperienceLoss);
 		Assert.Contains("state transition applied", result.JavaSource);
 	}
@@ -78,6 +81,7 @@ public sealed class PlayerDeathWorkflowAdapterServiceTests
 		Assert.Equal(PlayerDeathWorkflowAdapterStatus.EarlyReturnPlanned, result.Status);
 		Assert.Equal(PlayerDeathWorkflowStatus.ReturnedAfterDuelOpponentKill, result.Plan.Status);
 		Assert.Null(result.StateTransitionResult);
+		Assert.Null(result.Plan.ResurrectionOptionsPlan);
 		Assert.False(result.MutatedPlayerState);
 		Assert.True(result.IsLive);
 		Assert.True(player.IsInState(PlayerCreatureState.Flying));
@@ -99,6 +103,7 @@ public sealed class PlayerDeathWorkflowAdapterServiceTests
 		Assert.Equal(PlayerDeathWorkflowAdapterStatus.LiveStateTransitionApplied, result.Status);
 		Assert.Equal(PlayerDeathWorkflowStatus.ReturnedAfterInstanceHandler, result.Plan.Status);
 		Assert.NotNull(result.StateTransitionResult);
+		Assert.NotNull(result.Plan.ResurrectionOptionsPlan);
 		Assert.True(result.MutatedPlayerState);
 		Assert.True(player.IsInState(PlayerCreatureState.FloatingCorpse));
 		Assert.Contains(PlayerDeathWorkflowStep.ReturnAfterInstanceHandler, result.Plan.Steps);
@@ -112,6 +117,7 @@ public sealed class PlayerDeathWorkflowAdapterServiceTests
 			ObjectId = PlayerObjectId,
 			CreatureState = PlayerCreatureState.Active | PlayerCreatureState.Flying | PlayerCreatureState.Resting,
 			FlyState = PlayerFlyState.Flying,
+			LifeStats = new PlayerLifeStats(CurrentHp: 0, CurrentMp: 0, CurrentFp: 0),
 			IsInRideMode = true,
 			RideInfo = new PlayerRideInfo(1, 2, 3, 4, 5, 6),
 		};
