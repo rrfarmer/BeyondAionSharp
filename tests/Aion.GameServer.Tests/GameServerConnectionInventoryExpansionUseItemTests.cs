@@ -915,7 +915,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
 
 		Assert.Equal(5001, player.UsingItemObjectId);
-		await WaitUntilAsync(() => fixture.SentPackets.Count >= 5, TimeSpan.FromSeconds(5));
+		await WaitUntilAsync(() => fixture.SentPackets.Count >= 6, TimeSpan.FromSeconds(5));
 		Assert.Equal(0, player.UsingItemObjectId);
 		Assert.Collection(
 			player.InventoryItems.OrderBy(item => item.ItemId),
@@ -935,7 +935,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			packet => Assert.IsType<SmSystemMessage>(packet),
 			packet => AssertInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 5001, expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse),
 			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 100, expectedTime: 0, expectedEnd: 1),
-			packet => AssertInventoryAddPayload(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 200, expectedCount: 1));
+			packet => AssertInventoryAddPayload(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 200, expectedCount: 1),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 2));
 	}
 
 	[Fact]
@@ -950,7 +951,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
 
 		Assert.Equal(5001, player.UsingItemObjectId);
-		await WaitUntilAsync(() => fixture.SentPackets.Count >= 6, TimeSpan.FromSeconds(5));
+		await WaitUntilAsync(() => fixture.SentPackets.Count >= 7, TimeSpan.FromSeconds(5));
 		Assert.Equal(0, player.UsingItemObjectId);
 		var reward = Assert.Single(player.InventoryItems);
 		Assert.Equal(200, reward.ItemId);
@@ -962,7 +963,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 5001, expectedDeleteType: SmDeleteItem.UseDeleteType),
 			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0),
 			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 100, expectedTime: 0, expectedEnd: 1),
-			packet => AssertInventoryAddPayload(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 200, expectedCount: 1));
+			packet => AssertInventoryAddPayload(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 200, expectedCount: 1),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1));
 	}
 
 	[Fact]
@@ -976,7 +978,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 
 		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
 
-		await WaitUntilAsync(() => fixture.SentPackets.Count >= 5, TimeSpan.FromSeconds(5));
+		await WaitUntilAsync(() => fixture.SentPackets.Count >= 6, TimeSpan.FromSeconds(5));
 		Assert.Contains(player.InventoryItems, item => item.ItemId == 200 && item.Count == 1);
 		Assert.Collection(
 			fixture.SentPackets,
@@ -989,7 +991,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 				expectedCleanupSealFlag: 3,
 				expectedItemMask: 0),
 			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 100, expectedTime: 0, expectedEnd: 1),
-			packet => AssertDecomposableAddPayloadWithCleanupSealFlag(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 200, expectedCount: 1, expectedCleanupSealFlag: 3));
+			packet => AssertDecomposableAddPayloadWithCleanupSealFlag(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 200, expectedCount: 1, expectedCleanupSealFlag: 3),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 2));
 	}
 
 	[Fact]
@@ -1111,7 +1114,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 
 		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
 
-		await WaitUntilAsync(() => fixture.SentPackets.Count >= 7, TimeSpan.FromSeconds(6));
+		await WaitUntilAsync(() => fixture.SentPackets.Count >= 6, TimeSpan.FromSeconds(6));
 		Assert.Equal(140, player.Exp);
 		Assert.Contains(player.InventoryItems, item => item.ItemId == 188053996 && item.Count == 1);
 		Assert.Collection(
@@ -1358,7 +1361,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 				expectedCleanupSealFlag: 3,
 				expectedItemMask: 0),
 			packet => AssertSecondaryShowDecomposablePayload(Assert.IsType<SmSecondaryShowDecomposable>(packet)),
-			packet => AssertInventoryAddPayload(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 202, expectedCount: 3));
+			packet => AssertInventoryAddPayload(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 202, expectedCount: 3),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 2));
 	}
 
 	[Fact]
@@ -1395,7 +1399,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 				expectedCleanupSealFlag: 3,
 				expectedItemMask: 0),
 			packet => AssertSecondaryShowDecomposablePayload(Assert.IsType<SmSecondaryShowDecomposable>(packet)),
-			packet => AssertInventoryAddPayload(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 202, expectedCount: 3));
+			packet => AssertInventoryAddPayload(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 202, expectedCount: 3),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 28));
 	}
 
 	[Theory]
@@ -1432,7 +1437,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			packet => Assert.IsType<SmDeleteItem>(packet),
 			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0),
 			packet => AssertSecondaryShowDecomposablePayload(Assert.IsType<SmSecondaryShowDecomposable>(packet)),
-			packet => AssertInventoryAddPayload(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 201, expectedCount: 2));
+			packet => AssertInventoryAddPayload(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 201, expectedCount: 2),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1));
 	}
 
 	[Fact]
@@ -1450,6 +1456,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 				"SM_INVENTORY_UPDATE_ITEM",
 				"SM_SECONDARY_SHOW_DECOMPOSABLE",
 				"SM_INVENTORY_ADD_ITEM",
+				"SM_CUBE_UPDATE",
 			],
 			ReadPacketClasses(decrement.RootElement));
 		Assert.Equal(SmInventoryUpdateItem.DecreaseItemUse, GetPacket(decrement.RootElement, 3).GetProperty("decoded_fields").GetProperty("update_type_mask").GetInt32());
@@ -1458,6 +1465,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			GetPacket(decrement.RootElement, 2).GetProperty("decoded_fields").GetProperty("factory_name").GetString());
 		Assert.Equal(202, GetPacket(decrement.RootElement, 5).GetProperty("decoded_fields").GetProperty("item_id").GetInt32());
 		Assert.Equal(3, GetPacket(decrement.RootElement, 5).GetProperty("decoded_fields").GetProperty("count").GetInt64());
+		Assert.Equal(2, GetPacket(decrement.RootElement, 6).GetProperty("decoded_fields").GetProperty("items_count").GetInt32());
 
 		using var delete = JsonDocument.Parse(deleteJson);
 		Assert.Equal("JD-SEL-DEL-001", delete.RootElement.GetProperty("scenario_id").GetString());
@@ -1469,6 +1477,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 				"SM_CUBE_UPDATE",
 				"SM_SECONDARY_SHOW_DECOMPOSABLE",
 				"SM_INVENTORY_ADD_ITEM",
+				"SM_CUBE_UPDATE",
 			],
 			ReadPacketClasses(delete.RootElement));
 		Assert.Equal(SmDeleteItem.UseDeleteType, GetPacket(delete.RootElement, 3).GetProperty("decoded_fields").GetProperty("delete_type").GetInt32());
@@ -1478,6 +1487,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Equal(0, GetPacket(delete.RootElement, 4).GetProperty("decoded_fields").GetProperty("items_count").GetInt32());
 		Assert.Equal(201, GetPacket(delete.RootElement, 6).GetProperty("decoded_fields").GetProperty("item_id").GetInt32());
 		Assert.Equal(2, GetPacket(delete.RootElement, 6).GetProperty("decoded_fields").GetProperty("count").GetInt64());
+		Assert.Equal(1, GetPacket(delete.RootElement, 7).GetProperty("decoded_fields").GetProperty("items_count").GetInt32());
 	}
 
 	[Fact]
@@ -1562,22 +1572,18 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
-	public async Task CompareSelectableDecomposeJavaArtifacts_WithJavaRewardAddTrailingCubeUpdate_ReportsParityGap()
+	public async Task CompareSelectableDecomposeJavaArtifacts_WithRewardAddTrailingCubeUpdate_MatchesCurrentPacketShape()
 	{
 		var csharpJson = await CaptureSelectableDecomposeObservationJsonAsync("JD-SEL-DEC-001", sourceCount: 2, selectIndex: 1);
 		var javaJson = CreateMappedSelectableDecomposeJavaArtifactJson(
 			csharpJson,
 			sourceItemId: 101,
-			rewardItemId: 202,
-			includeRewardAddTrailingCubeUpdate: true);
+			rewardItemId: 202);
 
 		using var javaObservation = JsonDocument.Parse(javaJson);
 		using var csharpObservation = JsonDocument.Parse(csharpJson);
 
-		var exception = Assert.Throws<InvalidOperationException>(() =>
-			AssertSelectableDecomposeObservationMatchesJavaArtifact(javaObservation.RootElement, csharpObservation.RootElement));
-		Assert.Contains("reward-add trailing SM_CUBE_UPDATE", exception.Message);
-		Assert.Contains("ItemPacketService.sendStorageUpdatePacket", exception.Message);
+		AssertSelectableDecomposeObservationMatchesJavaArtifact(javaObservation.RootElement, csharpObservation.RootElement);
 	}
 
 	[Fact]
@@ -1764,7 +1770,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			packet => Assert.IsType<SmSystemMessage>(packet),
 			packet => Assert.IsType<SmInventoryUpdateItem>(packet),
 			packet => AssertSecondaryShowDecomposablePayload(Assert.IsType<SmSecondaryShowDecomposable>(packet)),
-			packet => AssertInventoryAddPayload(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 202, expectedCount: 3));
+			packet => AssertInventoryAddPayload(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 202, expectedCount: 3),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 2));
 	}
 
 	[Fact]
@@ -1785,7 +1792,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 					buffer.WriteC(1);
 				})));
 
-		await WaitUntilAsync(() => player.InventoryItems.Any(item => item.ItemId == 202) && fixture.SentPackets.Count >= 6);
+		await WaitUntilAsync(() => player.InventoryItems.Any(item => item.ItemId == 202) && fixture.SentPackets.Count >= 7);
 		await fixture.Connection.CloseAsync();
 		await AssertCompletesAsync(runTask);
 		var sentPackets = fixture.SentPackets.ToArray();
@@ -1809,7 +1816,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			packet => Assert.IsType<SmSystemMessage>(packet),
 			packet => Assert.IsType<SmInventoryUpdateItem>(packet),
 			packet => AssertSecondaryShowDecomposablePayload(Assert.IsType<SmSecondaryShowDecomposable>(packet)),
-			packet => AssertInventoryAddPayload(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 202, expectedCount: 3));
+			packet => AssertInventoryAddPayload(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 202, expectedCount: 3),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 2));
 	}
 
 	[Fact]
@@ -1832,7 +1840,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 					buffer.WriteC(0);
 				})));
 
-		await WaitUntilAsync(() => fixture.SentPackets.Count >= 6, TimeSpan.FromSeconds(5));
+		await WaitUntilAsync(() => fixture.SentPackets.Count >= 7, TimeSpan.FromSeconds(5));
 		await fixture.Connection.CloseAsync();
 		await AssertCompletesAsync(runTask);
 		var sentPackets = fixture.SentPackets.ToArray();
@@ -1857,7 +1865,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			packet => Assert.IsType<SmSystemMessage>(packet),
 			packet => AssertInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 5001, expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse),
 			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 100, expectedTime: 0, expectedEnd: 1),
-			packet => AssertInventoryAddPayload(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 200, expectedCount: 1));
+			packet => AssertInventoryAddPayload(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 200, expectedCount: 1),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 2));
 	}
 
 	[Fact]
@@ -1880,7 +1889,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 					buffer.WriteC(0);
 				})));
 
-		await WaitUntilAsync(() => fixture.SentPackets.Count >= 7, TimeSpan.FromSeconds(5));
+		await WaitUntilAsync(() => fixture.SentPackets.Count >= 8, TimeSpan.FromSeconds(5));
 		await fixture.Connection.CloseAsync();
 		await AssertCompletesAsync(runTask);
 		var sentPackets = fixture.SentPackets.ToArray();
@@ -1897,7 +1906,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 5001, expectedDeleteType: SmDeleteItem.UseDeleteType),
 			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0),
 			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 100, expectedTime: 0, expectedEnd: 1),
-			packet => AssertInventoryAddPayload(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 200, expectedCount: 1));
+			packet => AssertInventoryAddPayload(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 200, expectedCount: 1),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1));
 	}
 
 	[Fact]
@@ -3407,6 +3417,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 3, ["object_id", "count", "update_type_mask", "update_type_name"]);
 				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 4, ["source_object_id", "reward_count"]);
 				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 5, ["add_type_mask", "add_type_name", "packet_item_count", "object_id", "item_id", "count", "slot", "cloth_flag"]);
+				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 6, ["action", "storage", "items_count", "npc_expands", "quest_expands", "item_expands"]);
 				break;
 			case "JD-SEL-DEL-001":
 				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 1, ["item_object_id", "item_id", "time", "end", "unknown3"]);
@@ -3415,6 +3426,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 4, ["action", "storage", "items_count", "npc_expands", "quest_expands", "item_expands"]);
 				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 5, ["source_object_id", "reward_count"]);
 				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 6, ["add_type_mask", "add_type_name", "packet_item_count", "object_id", "item_id", "count", "slot", "cloth_flag"]);
+				AssertPacketFields(javaObservation, csharpObservation, idMapping, sequence: 7, ["action", "storage", "items_count", "npc_expands", "quest_expands", "item_expands"]);
 				break;
 			default:
 				throw new InvalidOperationException("Unsupported selectable-decompose scenario: " + scenarioId);

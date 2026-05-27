@@ -4781,7 +4781,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		player.InventoryItems = inventoryItems.ToArray();
 		RegisterExpirableAddedItems(player, rewardInventoryPlan.Packets);
 		await BroadcastItemUsageAnimationAsync(player, new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 1, 0));
-		await SendDecomposeRewardItemsAsync(rewardInventoryPlan.Packets, staticData.ItemRestrictionCleanups);
+		await SendDecomposeRewardItemsAsync(player, rewardInventoryPlan.Packets, staticData.ItemRestrictionCleanups);
 	}
 
 	private async Task HandleSelectDecomposableAsync(Player player, CmSelectDecomposable packet)
@@ -4839,7 +4839,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		ApplyRewardInventoryMutation(inventoryItems, rewardInventoryPlan);
 		player.InventoryItems = inventoryItems.ToArray();
 		RegisterExpirableAddedItems(player, rewardInventoryPlan.Packets);
-		await SendDecomposeRewardItemsAsync(rewardInventoryPlan.Packets, staticData.ItemRestrictionCleanups);
+		await SendDecomposeRewardItemsAsync(player, rewardInventoryPlan.Packets, staticData.ItemRestrictionCleanups);
 	}
 
 	private DecomposeRewardInventoryPlan? CreateDecomposeRewardInventoryPlan(
@@ -4901,9 +4901,12 @@ public sealed class GameServerConnection : BaseClientConnection
 	}
 
 	private async Task SendDecomposeRewardItemsAsync(
+		Player player,
 		IReadOnlyList<DecomposeRewardPacket> rewardPackets,
 		ItemRestrictionCleanupTable? itemRestrictionCleanups)
 	{
+		var newItemCount = rewardPackets.Count(packet => packet.IsNewItem);
+		var projectedCubeCount = player.InventoryItems.Count - newItemCount;
 		foreach (var rewardPacket in rewardPackets)
 		{
 			var cleanupSealFlag = GetGeneralInfoWarehouseRestrictionFlag(rewardPacket.Item.ItemId, itemRestrictionCleanups);
@@ -4914,6 +4917,8 @@ public sealed class GameServerConnection : BaseClientConnection
 					[
 						new SmInventoryAddItem.InventoryPacketItem(rewardPacket.Item, rewardPacket.Template, cleanupSealFlag),
 					]));
+				projectedCubeCount++;
+				await SendPacketAsync(SmCubeUpdate.CubeSizeSnapshot(projectedCubeCount, player.NpcExpands, player.QuestExpands, player.ItemExpands));
 			}
 			else
 			{
