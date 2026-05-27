@@ -886,6 +886,55 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleUseItemAsync_ExpExtractAddsRestrictedRewardWithCleanupSealFlag()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(
+			includeThreadPoolManager: true,
+			idFactory: new IDFactory([5001]));
+		var player = CreateExpExtractPlayer();
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
+
+		await WaitUntilAsync(() => fixture.SentPackets.Count >= 6, TimeSpan.FromSeconds(6));
+		Assert.Equal(140, player.Exp);
+		Assert.Contains(player.InventoryItems, item => item.ItemId == 188053996 && item.Count == 1);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 104, expectedTime: 5000, expectedEnd: 0),
+			packet => AssertInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 5001, expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse),
+			packet => Assert.IsType<SmStatUpdateExp>(packet),
+			packet => AssertInventoryItemCollectAddPayload(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 188053996, expectedCount: 1, expectedCleanupSealFlag: 3),
+			packet => Assert.IsType<SmSystemMessage>(packet),
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 104, expectedTime: 0, expectedEnd: 1));
+	}
+
+	[Fact]
+	public async Task HandleUseItemAsync_ExpExtractMergesRestrictedRewardWithCleanupSealFlag()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(
+			includeThreadPoolManager: true,
+			idFactory: new IDFactory([5001, 6001]));
+		var player = CreateExpExtractPlayer(existingRewardCount: 1);
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
+
+		await WaitUntilAsync(() => fixture.SentPackets.Count >= 6, TimeSpan.FromSeconds(6));
+		Assert.Equal(140, player.Exp);
+		var reward = Assert.Single(player.InventoryItems, item => item.ItemId == 188053996);
+		Assert.Equal(2, reward.Count);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 104, expectedTime: 5000, expectedEnd: 0),
+			packet => AssertInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 5001, expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse),
+			packet => Assert.IsType<SmStatUpdateExp>(packet),
+			packet => AssertInventoryUpdatePayloadWithCleanupSealFlag(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 6001, expectedUpdateType: SmInventoryUpdateItem.IncreaseItemCollect, expectedCleanupSealFlag: 3),
+			packet => Assert.IsType<SmSystemMessage>(packet),
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 104, expectedTime: 0, expectedEnd: 1));
+	}
+
+	[Fact]
 	public async Task HandleUseItemAsync_DecomposeInventoryFullDoesNotScheduleOrMutate()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
@@ -1633,6 +1682,42 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			Race = "ELYOS",
 			PlayerClass = "RANGER",
 			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			InventoryItems = items.ToArray(),
+		};
+	}
+
+	private static Player CreateExpExtractPlayer(long existingRewardCount = 0)
+	{
+		var items = new List<InventoryItem>
+		{
+			new()
+			{
+				ObjectId = 5001,
+				ItemId = 104,
+				Count = 2,
+				Location = 0,
+			},
+		};
+		if (existingRewardCount > 0)
+		{
+			items.Add(
+				new InventoryItem
+				{
+					ObjectId = 6001,
+					ItemId = 188053996,
+					Count = existingRewardCount,
+					Location = 0,
+				});
+		}
+
+		return new Player
+		{
+			ObjectId = 1001,
+			Name = "TicketUser",
+			Race = "ELYOS",
+			PlayerClass = "RANGER",
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			Exp = 150,
 			InventoryItems = items.ToArray(),
 		};
 	}
@@ -2858,6 +2943,11 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 						<item_template id="103" name="Test Assembly Tool" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="1">
 							<actions>
 								<assemble item="188053996"/>
+							</actions>
+						</item_template>
+						<item_template id="104" name="Test XP Extraction Tool" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="10">
+							<actions>
+								<expextract item_id="188053996" cost="10" percent="false"/>
 							</actions>
 						</item_template>
 						<item_template id="200" name="Test Decompose Reward" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
