@@ -169,7 +169,7 @@ public sealed class SmInventoryInfo : GameServerPacket
 				payload.WriteD(item.FusionedItem);
 				WriteStoneSlots(payload, item.FusionStones);
 				payload.WriteC(item.OptionalFusionSocket);
-				payload.WriteC(0);
+				payload.WriteC(item.FusionRandomBonus);
 			});
 	}
 

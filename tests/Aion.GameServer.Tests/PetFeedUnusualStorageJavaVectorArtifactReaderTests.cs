@@ -349,7 +349,6 @@ public sealed class PetFeedUnusualStorageJavaVectorArtifactReaderTests(ITestOutp
 	private static IReadOnlyList<KnownBlobSerializerGap> GetKnownBlobSerializerGaps() =>
 	[
 		KnownBlobSerializerGap.StatBonuses,
-		KnownBlobSerializerGap.FusionRandomBonusStatsId,
 		KnownBlobSerializerGap.TemporaryExchangeAndSealFlags,
 		KnownBlobSerializerGap.PlumeTemperingStats,
 		KnownBlobSerializerGap.RuntimeConditioningPresence,
@@ -375,7 +374,6 @@ public sealed class PetFeedUnusualStorageJavaVectorArtifactReaderTests(ITestOutp
 	private enum KnownBlobSerializerGap
 	{
 		StatBonuses,
-		FusionRandomBonusStatsId,
 		TemporaryExchangeAndSealFlags,
 		PlumeTemperingStats,
 		RuntimeConditioningPresence,

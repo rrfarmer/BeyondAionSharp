@@ -2801,6 +2801,7 @@ public class GamePacketTests
 						OptionalSocket = 3,
 						FusionedItem = 101,
 						OptionalFusionSocket = 2,
+						FusionRandomBonus = 7,
 						Tempering = 9,
 						IsAmplified = true,
 						BuffSkill = 55,
@@ -2837,7 +2838,7 @@ public class GamePacketTests
 		for (var i = 0; i < 4; i++)
 			Assert.Equal(0, blobReader.ReadD());
 		Assert.Equal(2, (int)blobReader.ReadC());
-		Assert.Equal(0, (int)blobReader.ReadC());
+		Assert.Equal(7, (int)blobReader.ReadC());
 
 		Assert.Equal(0x06, (int)blobReader.ReadC());
 		blobReader.ReadQ();
