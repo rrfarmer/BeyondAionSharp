@@ -468,6 +468,58 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactReader
 		Assert.All(artifact.Traces, trace => Assert.False(trace.TimestampIsParityKey));
 	}
 
+	[Fact]
+	public void BeritraPortalCallerOriginArtifacts_RecordFadeOutTeleportBeforeStartProtection()
+	{
+		var artifact = ParseBeritraPortalCallerOriginArtifact();
+
+		Assert.Equal(1, artifact.SchemaVersion);
+		Assert.Equal("beritra-portal-fade-out-teleport-start-protection-before-animation-done", artifact.Scenario);
+		Assert.Equal("beritra_portal_fade_out_before_animation_done", artifact.RuntimeFacts.ExpectedReturnReason);
+		Assert.Contains("BeritraPortalAI.handleUseItemFinish", artifact.JavaSources);
+		Assert.Contains("TeleportService.sendLoc", artifact.JavaSources);
+		Assert.Contains("PlayerController.startProtectionActiveTask", artifact.JavaSources);
+
+		var caller = artifact.Traces.Single(trace => trace.Phase == "caller_enter");
+		var despawn = artifact.Traces.Single(trace => trace.Phase == "teleport_sendloc_despawn");
+		var teleportTaskStore = artifact.Traces.Single(trace => trace.Phase == "teleport_task_store");
+		var startGuard = artifact.Traces.Single(trace => trace.Phase == "start_guard");
+		var visualSet = artifact.Traces.Single(trace => trace.Phase == "start_visual_set");
+		var fanout = artifact.Traces.Single(trace => trace.Phase == "start_state_fanout");
+		var schedule = artifact.Traces.Single(trace => trace.Phase == "start_task_schedule");
+		var movieSchedule = artifact.Traces.Single(trace => trace.Phase == "movie_schedule");
+
+		Assert.NotNull(caller.CallerOrigin);
+		Assert.Equal("beritra_portal_fade_out_before_animation_done", caller.CallerOrigin!.CallerName);
+		Assert.Equal("BeritraPortalAI", caller.CallerOrigin.CallerClass);
+		Assert.Equal("handleUseItemFinish", caller.CallerOrigin.CallerMethod);
+		Assert.Equal(38, caller.CallerOrigin.StartProtectionLine);
+		Assert.True(caller.CallerOrigin.StartsProtectionBeforeWorldSpawn);
+		Assert.Equal(211, caller.CallerOrigin.WorldSpawnLine);
+		Assert.False(caller.CallerOrigin.SpawnedBeforeStart);
+		Assert.Equal("fade_out_teleport_task_before_start_protection_before_animation_done", caller.CallerOrigin.Ordering);
+		Assert.True(caller.Player.Spawned);
+		Assert.False(despawn.Player.Spawned);
+		Assert.False(startGuard.Player.Spawned);
+		Assert.True(visualSet.Player.ProtectionActiveAfter);
+		Assert.Contains("BLINKING", visualSet.Player.VisualStateAfter);
+		Assert.NotNull(fanout.Fanout);
+		Assert.Equal("SM_PLAYER_STATE", fanout.Fanout!.PacketName);
+		Assert.True(fanout.Fanout.IncludeSelf);
+		Assert.NotNull(schedule.Scheduler);
+		Assert.Equal(60000, schedule.Scheduler!.DelayMillis);
+		Assert.True(schedule.Scheduler.NewFutureStored);
+		Assert.NotNull(movieSchedule.Scheduler);
+		Assert.Equal(1000, movieSchedule.Scheduler!.DelayMillis);
+		Assert.Equal("PacketSendUtility.sendPacket(SM_PLAY_MOVIE)", movieSchedule.Scheduler.CallbackMethod);
+		Assert.True(caller.EventSeq < despawn.EventSeq);
+		Assert.True(despawn.EventSeq < teleportTaskStore.EventSeq);
+		Assert.True(teleportTaskStore.EventSeq < startGuard.EventSeq);
+		Assert.True(schedule.EventSeq < movieSchedule.EventSeq);
+		Assert.DoesNotContain(artifact.Traces, trace => trace.Phase is "cm_teleport_animation_done" or "world_spawn_completed");
+		Assert.All(artifact.Traces, trace => Assert.False(trace.TimestampIsParityKey));
+	}
+
 	private static void AssertNoStopArtifact(ProtectionStopTriggerJavaTraceArtifact artifact)
 	{
 		Assert.Equal(1, artifact.SchemaVersion);
@@ -2839,6 +2891,472 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactReader
 			  "notes": [
 			    "TeleportService.changeChannel sets world position before startProtectionActiveTask and sends SM_PLAYER_SPAWN afterward.",
 			    "Known-list recipient count remains diagnostic until generated Java artifacts exist.",
+			    "Inline fixture proves reader binding only, not Java runtime parity."
+			  ]
+			}
+			""";
+
+		var artifact = JsonSerializer.Deserialize<ProtectionStopTriggerJavaTraceArtifact>(json, JsonOptions);
+		Assert.NotNull(artifact);
+		return artifact;
+	}
+
+	private static ProtectionStopTriggerJavaTraceArtifact ParseBeritraPortalCallerOriginArtifact()
+	{
+		const string json = """
+			{
+			  "schemaVersion": 1,
+			  "javaCommit": "abcdef1",
+			  "scenario": "beritra-portal-fade-out-teleport-start-protection-before-animation-done",
+			  "runtimeFacts": {
+			    "serverFlavor": "java",
+			    "packetName": "BERITRA_PORTAL_AI",
+			    "playerObjectId": 1001,
+			    "worldId": 301390000,
+			    "expectedReturnReason": "beritra_portal_fade_out_before_animation_done"
+			  },
+			  "javaSources": [
+			    "BeritraPortalAI.handleUseItemFinish",
+			    "TeleportService.teleportTo",
+			    "TeleportService.sendLoc",
+			    "PlayerController.startProtectionActiveTask",
+			    "ThreadPoolManager.schedule",
+			    "CreatureController.addTask",
+			    "CM_TELEPORT_ANIMATION_DONE.runImpl"
+			  ],
+			  "traces": [
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "beritra-portal-fade-out-teleport-start-protection-before-animation-done-001",
+			      "eventSeq": 0,
+			      "phase": "caller_enter",
+			      "packetName": "BERITRA_PORTAL_AI",
+			      "returnReason": "beritra_portal_fade_out_before_animation_done",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000000000,
+			      "monotonicNanos": 9000000,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "BeritraPortalAI.java",
+			      "javaLine": 24,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": true,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": false,
+			        "protectionActiveAfter": false,
+			        "visualStateBefore": [],
+			        "visualStateAfter": []
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "callerOrigin": {
+			        "callerName": "beritra_portal_fade_out_before_animation_done",
+			        "callerClass": "BeritraPortalAI",
+			        "callerMethod": "handleUseItemFinish",
+			        "callerSourceFile": "BeritraPortalAI.java",
+			        "callerLine": 38,
+			        "startProtectionLine": 38,
+			        "startsProtectionBeforeWorldSpawn": true,
+			        "worldSpawnLine": 211,
+			        "spawnedBeforeStart": false,
+			        "ordering": "fade_out_teleport_task_before_start_protection_before_animation_done"
+			      },
+			      "actionBranchName": "rnd_case_1_fade_out"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "beritra-portal-fade-out-teleport-start-protection-before-animation-done-001",
+			      "eventSeq": 1,
+			      "phase": "teleport_to_enter",
+			      "packetName": "BERITRA_PORTAL_AI",
+			      "returnReason": "beritra_portal_fade_out_before_animation_done",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000000001,
+			      "monotonicNanos": 9000100,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "BeritraPortalAI.java",
+			      "javaLine": 29,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": true,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": false,
+			        "protectionActiveAfter": false,
+			        "visualStateBefore": [],
+			        "visualStateAfter": []
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "callerOrigin": null,
+			      "actionBranchName": "teleport_to_fade_out"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "beritra-portal-fade-out-teleport-start-protection-before-animation-done-001",
+			      "eventSeq": 2,
+			      "phase": "teleport_sendloc_despawn",
+			      "packetName": "BERITRA_PORTAL_AI",
+			      "returnReason": "beritra_portal_fade_out_before_animation_done",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000000002,
+			      "monotonicNanos": 9000200,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "TeleportService.java",
+			      "javaLine": 185,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": false,
+			        "protectionActiveAfter": false,
+			        "visualStateBefore": [],
+			        "visualStateAfter": []
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "callerOrigin": null,
+			      "actionBranchName": "world_despawn_for_fade_out"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "beritra-portal-fade-out-teleport-start-protection-before-animation-done-001",
+			      "eventSeq": 3,
+			      "phase": "teleport_animation_packet",
+			      "packetName": "BERITRA_PORTAL_AI",
+			      "returnReason": "beritra_portal_fade_out_before_animation_done",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000000003,
+			      "monotonicNanos": 9000300,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "TeleportService.java",
+			      "javaLine": 192,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": false,
+			        "protectionActiveAfter": false,
+			        "visualStateBefore": [],
+			        "visualStateAfter": []
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "callerOrigin": null,
+			      "actionBranchName": "send_sm_teleport_loc"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "beritra-portal-fade-out-teleport-start-protection-before-animation-done-001",
+			      "eventSeq": 4,
+			      "phase": "teleport_task_store",
+			      "packetName": "BERITRA_PORTAL_AI",
+			      "returnReason": "beritra_portal_fade_out_before_animation_done",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000000004,
+			      "monotonicNanos": 9000400,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "TeleportService.java",
+			      "javaLine": 194,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": false,
+			        "protectionActiveAfter": false,
+			        "visualStateBefore": [],
+			        "visualStateAfter": []
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": {
+			        "delayMillis": 0,
+			        "timeUnit": "CLIENT_ANIMATION_DONE",
+			        "runnableWrapperApplied": true,
+			        "callbackMethod": "TeleportService.SpawnTask.run",
+			        "oldFuturePresent": false,
+			        "oldFutureCancelArgument": null,
+			        "oldFutureCancelResult": null,
+			        "newFutureStored": true
+			      },
+			      "callerOrigin": null,
+			      "actionBranchName": "store_teleport_future_task"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "beritra-portal-fade-out-teleport-start-protection-before-animation-done-001",
+			      "eventSeq": 5,
+			      "phase": "start_guard",
+			      "packetName": "BERITRA_PORTAL_AI",
+			      "returnReason": "beritra_portal_fade_out_before_animation_done",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000000005,
+			      "monotonicNanos": 9000500,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "PlayerController.java",
+			      "javaLine": 629,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": false,
+			        "protectionActiveAfter": false,
+			        "visualStateBefore": [],
+			        "visualStateAfter": []
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "callerOrigin": null,
+			      "actionBranchName": "not_already_protection_active"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "beritra-portal-fade-out-teleport-start-protection-before-animation-done-001",
+			      "eventSeq": 6,
+			      "phase": "start_visual_set",
+			      "packetName": "BERITRA_PORTAL_AI",
+			      "returnReason": "beritra_portal_fade_out_before_animation_done",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000000006,
+			      "monotonicNanos": 9000600,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "PlayerController.java",
+			      "javaLine": 630,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": false,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": [],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "callerOrigin": null,
+			      "actionBranchName": "set_blinking"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "beritra-portal-fade-out-teleport-start-protection-before-animation-done-001",
+			      "eventSeq": 7,
+			      "phase": "start_cast_target_cleanup",
+			      "packetName": "BERITRA_PORTAL_AI",
+			      "returnReason": "beritra_portal_fade_out_before_animation_done",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000000007,
+			      "monotonicNanos": 9000700,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "PlayerController.java",
+			      "javaLine": 631,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "callerOrigin": null,
+			      "actionBranchName": "cancel_cast_and_remove_target"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "beritra-portal-fade-out-teleport-start-protection-before-animation-done-001",
+			      "eventSeq": 8,
+			      "phase": "start_state_fanout",
+			      "packetName": "BERITRA_PORTAL_AI",
+			      "returnReason": "beritra_portal_fade_out_before_animation_done",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000000008,
+			      "monotonicNanos": 9000800,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "PlayerController.java",
+			      "javaLine": 633,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": {
+			        "packetName": "SM_PLAYER_STATE",
+			        "includeSelf": true,
+			        "recipientCount": 1,
+			        "knownListOrderIsParityKey": false
+			      },
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "callerOrigin": null,
+			      "actionBranchName": "broadcast_start_state"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "beritra-portal-fade-out-teleport-start-protection-before-animation-done-001",
+			      "eventSeq": 9,
+			      "phase": "start_task_schedule",
+			      "packetName": "BERITRA_PORTAL_AI",
+			      "returnReason": "beritra_portal_fade_out_before_animation_done",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000000009,
+			      "monotonicNanos": 9000900,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "PlayerController.java",
+			      "javaLine": 634,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": {
+			        "delayMillis": 60000,
+			        "timeUnit": "MILLISECONDS",
+			        "runnableWrapperApplied": true,
+			        "callbackMethod": "PlayerController.stopProtectionActiveTask",
+			        "oldFuturePresent": false,
+			        "oldFutureCancelArgument": null,
+			        "oldFutureCancelResult": null,
+			        "newFutureStored": true
+			      },
+			      "callerOrigin": null,
+			      "actionBranchName": "schedule_stop_callback"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "beritra-portal-fade-out-teleport-start-protection-before-animation-done-001",
+			      "eventSeq": 10,
+			      "phase": "movie_schedule",
+			      "packetName": "BERITRA_PORTAL_AI",
+			      "returnReason": "beritra_portal_fade_out_before_animation_done",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000000010,
+			      "monotonicNanos": 9001000,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "BeritraPortalAI.java",
+			      "javaLine": 39,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": {
+			        "delayMillis": 1000,
+			        "timeUnit": "MILLISECONDS",
+			        "runnableWrapperApplied": true,
+			        "callbackMethod": "PacketSendUtility.sendPacket(SM_PLAY_MOVIE)",
+			        "oldFuturePresent": false,
+			        "oldFutureCancelArgument": null,
+			        "oldFutureCancelResult": null,
+			        "newFutureStored": false
+			      },
+			      "callerOrigin": {
+			        "callerName": "beritra_portal_fade_out_before_animation_done",
+			        "callerClass": "BeritraPortalAI",
+			        "callerMethod": "handleUseItemFinish",
+			        "callerSourceFile": "BeritraPortalAI.java",
+			        "callerLine": 38,
+			        "startProtectionLine": 38,
+			        "startsProtectionBeforeWorldSpawn": true,
+			        "worldSpawnLine": 211,
+			        "spawnedBeforeStart": false,
+			        "ordering": "fade_out_teleport_task_before_start_protection_before_animation_done"
+			      },
+			      "actionBranchName": "schedule_sm_play_movie"
+			    }
+			  ],
+			  "notes": [
+			    "BeritraPortalAI starts FADE_OUT teleport first, then calls startProtectionActiveTask while the player is despawned by TeleportService.sendLoc.",
+			    "Teleport spawn completion is deferred to CM_TELEPORT_ANIMATION_DONE and is intentionally absent from this fixture.",
 			    "Inline fixture proves reader binding only, not Java runtime parity."
 			  ]
 			}
