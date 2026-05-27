@@ -1847,6 +1847,55 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			packet => AssertInventoryAddPayload(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 200, expectedCount: 1));
 	}
 
+	[Fact]
+	public async Task ProcessPacketAsync_CompositeStonesWritesCleanupSealFlagsForRemainingConsumedInputs()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(includeThreadPoolManager: true);
+		var player = CreatePlayer(itemId: 165010000);
+		player.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 7001, ItemId = 165010000, Count = 2, Location = 0, OwnerId = player.ObjectId },
+			new InventoryItem { ObjectId = 7002, ItemId = 166000020, Count = 2, Location = 0, OwnerId = player.ObjectId },
+			new InventoryItem { ObjectId = 7003, ItemId = 166000030, Count = 2, Location = 0, OwnerId = player.ObjectId },
+		];
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(208, buffer =>
+			{
+				buffer.WriteD(7001);
+				buffer.WriteD(7002);
+				buffer.WriteD(7003);
+			}));
+
+		await WaitUntilAsync(() => fixture.SentPackets.Count >= 5, TimeSpan.FromSeconds(6));
+
+		Assert.All(player.InventoryItems, item => Assert.Equal(1, item.Count));
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 165010000, expectedTime: 5000, expectedEnd: 0, expectedItemObjectId: 7001),
+			packet => AssertInventoryUpdatePayloadWithCleanupSealFlag(
+				Assert.IsType<SmInventoryUpdateItem>(packet),
+				expectedObjectId: 7001,
+				expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse,
+				expectedCleanupSealFlag: 3,
+				expectedItemMask: 0),
+			packet => AssertInventoryUpdatePayloadWithCleanupSealFlag(
+				Assert.IsType<SmInventoryUpdateItem>(packet),
+				expectedObjectId: 7002,
+				expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse,
+				expectedCleanupSealFlag: 3,
+				expectedItemMask: 0),
+			packet => AssertInventoryUpdatePayloadWithCleanupSealFlag(
+				Assert.IsType<SmInventoryUpdateItem>(packet),
+				expectedObjectId: 7003,
+				expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse,
+				expectedCleanupSealFlag: 3,
+				expectedItemMask: 0),
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 165010000, expectedTime: 0, expectedEnd: 1, expectedItemObjectId: 7001));
+	}
+
 	private static Player CreatePlayer(
 		int itemId,
 		long count = 2,
@@ -2419,12 +2468,13 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		int expectedItemId = 188500000,
 		int expectedTime = 0,
 		int expectedEnd = 0,
-		int expectedUnknown3 = 0)
+		int expectedUnknown3 = 0,
+		int expectedItemObjectId = 5001)
 	{
 		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
 		Assert.Equal(1001, reader.ReadD());
 		Assert.Equal(1001, reader.ReadD());
-		Assert.Equal(5001, reader.ReadD());
+		Assert.Equal(expectedItemObjectId, reader.ReadD());
 		Assert.Equal(expectedItemId, reader.ReadD());
 		Assert.Equal(expectedTime, reader.ReadD());
 		Assert.Equal(expectedEnd, (int)reader.ReadC());
@@ -3273,6 +3323,13 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 								<apextract target="WEAPON" rate="0.2" />
 							</actions>
 						</item_template>
+						<item_template id="165010000" name="Test Composition Tool" level="1" item_group="COMBINATION" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="10">
+							<actions>
+								<composition/>
+							</actions>
+						</item_template>
+						<item_template id="166000020" name="Test Enchantment Stone 20" level="20" item_group="ENCHANTMENT" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
+						<item_template id="166000030" name="Test Enchantment Stone 30" level="30" item_group="ENCHANTMENT" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
 						<item_template id="100000363" name="Test Abyss Sword" level="30" mask="65536" item_group="SWORD" item_type="ABYSS" quality="RARE" race="PC_ALL" max_stack_count="1">
 							<acquisition ap="4900" />
 						</item_template>
@@ -3357,6 +3414,9 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 						<cleanup id="104" awh="0" lwh="0"/>
 						<cleanup id="105" awh="0" lwh="0"/>
 						<cleanup id="165005000" awh="0" lwh="0"/>
+						<cleanup id="165010000" awh="0" lwh="0"/>
+						<cleanup id="166000020" awh="0" lwh="0"/>
+						<cleanup id="166000030" awh="0" lwh="0"/>
 						<cleanup id="200" awh="0" lwh="0"/>
 						<cleanup id="101" awh="0" lwh="0"/>
 						<cleanup id="188053996" awh="0" lwh="0"/>

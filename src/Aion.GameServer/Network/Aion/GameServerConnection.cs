@@ -3564,7 +3564,12 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (!saved)
 			return;
 
-		await SendConsumedItemPacketsAsync(inventoryItems, mutationPlan.UpdatedConsumedItems, mutationPlan.DeletedConsumedObjectIds, staticData.ItemTemplates);
+		await SendConsumedItemPacketsAsync(
+			inventoryItems,
+			mutationPlan.UpdatedConsumedItems,
+			mutationPlan.DeletedConsumedObjectIds,
+			staticData.ItemTemplates,
+			staticData.ItemRestrictionCleanups);
 		ApplyConsumedAndRewardInventoryMutation(inventoryItems, mutationPlan);
 		player.InventoryItems = inventoryItems.ToArray();
 		if (mutationPlan.RewardItemId != 0 && staticData.ItemTemplates.GetItemTemplate(mutationPlan.RewardItemId) is { } rewardTemplate)
@@ -3583,13 +3588,19 @@ public sealed class GameServerConnection : BaseClientConnection
 		IReadOnlyList<InventoryItem> inventoryItems,
 		IReadOnlyList<InventoryItem> updatedConsumedItems,
 		IReadOnlyList<int> deletedConsumedObjectIds,
-		ItemTemplateTable itemTemplates)
+		ItemTemplateTable itemTemplates,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups = null)
 	{
 		foreach (var updatedItem in updatedConsumedItems)
 		{
 			var template = itemTemplates.GetItemTemplate(updatedItem.ItemId);
 			if (template != null)
-				await SendPacketAsync(new SmInventoryUpdateItem(updatedItem, template, SmInventoryUpdateItem.DecreaseItemUse));
+				await SendPacketAsync(
+					new SmInventoryUpdateItem(
+						updatedItem,
+						template,
+						SmInventoryUpdateItem.DecreaseItemUse,
+						GetGeneralInfoWarehouseRestrictionFlag(updatedItem.ItemId, itemRestrictionCleanups)));
 		}
 
 		foreach (var deletedObjectId in deletedConsumedObjectIds)
