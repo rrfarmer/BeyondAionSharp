@@ -150,7 +150,7 @@ public sealed class PetFeedUnusualStorageJavaVectorArtifactReaderTests(ITestOutp
 		AssertBridgeConstructsGuardedUnusualStorageSequence(artifact);
 		AssertGeneratedCubeUpdateBodyMatchesCSharpWhenPresent(artifact);
 		AssertGeneratedCubeUpdateCanonicalPayloadMatchesCSharpWhenPresent(artifact);
-		Assert.Contains(KnownBlobSerializerGap.StatBonuses, GetKnownBlobSerializerGaps());
+		Assert.DoesNotContain(KnownBlobSerializerGap.StatBonuses, GetKnownBlobSerializerGaps());
 	}
 
 	[Fact]
@@ -348,7 +348,6 @@ public sealed class PetFeedUnusualStorageJavaVectorArtifactReaderTests(ITestOutp
 
 	private static IReadOnlyList<KnownBlobSerializerGap> GetKnownBlobSerializerGaps() =>
 	[
-		KnownBlobSerializerGap.StatBonuses,
 		KnownBlobSerializerGap.TemporaryExchangeAndSealFlags,
 		KnownBlobSerializerGap.PlumeTemperingStats,
 		KnownBlobSerializerGap.RuntimeConditioningPresence,

@@ -138,6 +138,7 @@ public sealed class SmInventoryInfo : GameServerPacket
 			if (template.CanPolish)
 				WritePolishInfoBlob(blob, item);
 			WritePremiumOptionBlob(blob, item);
+			WriteStatBonusBlobs(blob, template);
 		}
 
 		if (template.IsStigmaShard)
@@ -348,6 +349,143 @@ public sealed class SmInventoryInfo : GameServerPacket
 				payload.WriteC(item.IsIdentified ? item.TuneCount : 0);
 				payload.WriteC(0);
 			});
+	}
+
+	private static void WriteStatBonusBlobs(PacketBuffer buffer, ItemTemplateSummary template)
+	{
+		foreach (var modifier in template.StatModifiers)
+		{
+			if (!modifier.Bonus || modifier.ChargeCondition != 0 || !TryGetJavaItemStoneMaskAndSign(modifier.Name, out var mask, out var sign))
+				continue;
+
+			WriteBlob(
+				buffer,
+				0x0a,
+				payload =>
+				{
+					// Java parity: network/aion/iteminfo/BonusInfoBlobEntry.writeThisBlob.
+					payload.WriteH(mask);
+					payload.WriteD(modifier.Value * sign);
+					payload.WriteC(string.Equals(modifier.Operation, "rate", StringComparison.Ordinal) ? 1 : 0);
+				});
+		}
+	}
+
+	private static bool TryGetJavaItemStoneMaskAndSign(string statName, out int mask, out int sign)
+	{
+		sign = string.Equals(statName, "ATTACK_SPEED", StringComparison.Ordinal) ? -1 : 1;
+		mask = statName switch
+		{
+			// Java parity: model/stats/container/StatEnum itemStoneMask values.
+			"ABNORMAL_RESISTANCE_ALL" => 1,
+			"ALLRESIST" => 2,
+			"STRVIT" => 3,
+			"KNOWIL" => 4,
+			"AGIDEX" => 5,
+			"POWER" => 6,
+			"HEALTH" => 7,
+			"ACCURACY" => 8,
+			"AGILITY" => 9,
+			"KNOWLEDGE" => 10,
+			"WILL" => 11,
+			"WATER_RESISTANCE" => 12,
+			"WIND_RESISTANCE" => 13,
+			"EARTH_RESISTANCE" => 14,
+			"FIRE_RESISTANCE" => 15,
+			"LIGHT_RESISTANCE" => 16,
+			"DARK_RESISTANCE" => 17,
+			"MAXHP" => 18,
+			"REGEN_HP" => 19,
+			"MAXMP" => 20,
+			"REGEN_MP" => 21,
+			"MAXDP" => 22,
+			"FLY_TIME" => 23,
+			"REGEN_FP" => 24,
+			"PHYSICAL_ATTACK" => 25,
+			"PHYSICAL_DEFENSE" => 26,
+			"MAGICAL_ATTACK" => 27,
+			"MAGICAL_RESIST" => 28,
+			"ATTACK_SPEED" => 29,
+			"PHYSICAL_ACCURACY" => 30,
+			"EVASION" => 31,
+			"PARRY" => 32,
+			"BLOCK" => 33,
+			"PHYSICAL_CRITICAL" => 34,
+			"HIT_COUNT" => 35,
+			"SPEED" => 36,
+			"FLY_SPEED" => 37,
+			"ATTACK_RANGE" => 38,
+			"WEIGHT" => 39,
+			"MAGICAL_CRITICAL" => 40,
+			"CONCENTRATION" => 41,
+			"POISON_RESISTANCE" => 43,
+			"BLEED_RESISTANCE" => 44,
+			"PARALYZE_RESISTANCE" => 45,
+			"SLEEP_RESISTANCE" => 46,
+			"ROOT_RESISTANCE" => 47,
+			"BLIND_RESISTANCE" => 48,
+			"CHARM_RESISTANCE" => 49,
+			"DISEASE_RESISTANCE" => 50,
+			"SILENCE_RESISTANCE" => 51,
+			"FEAR_RESISTANCE" => 52,
+			"CURSE_RESISTANCE" => 53,
+			"CONFUSE_RESISTANCE" => 54,
+			"STUN_RESISTANCE" => 55,
+			"PERIFICATION_RESISTANCE" => 56,
+			"STUMBLE_RESISTANCE" => 57,
+			"STAGGER_RESISTANCE" => 58,
+			"OPENAERIAL_RESISTANCE" => 59,
+			"SNARE_RESISTANCE" => 60,
+			"SLOW_RESISTANCE" => 61,
+			"SPIN_RESISTANCE" => 62,
+			"BIND_RESISTANCE" => 63,
+			"DEFORM_RESISTANCE" => 64,
+			"PULLED_RESISTANCE" => 65,
+			"NOFLY_RESISTANCE" => 66,
+			"POISON_RESISTANCE_PENETRATION" => 69,
+			"BLEED_RESISTANCE_PENETRATION" => 70,
+			"PARALYZE_RESISTANCE_PENETRATION" => 71,
+			"SLEEP_RESISTANCE_PENETRATION" => 72,
+			"ROOT_RESISTANCE_PENETRATION" => 73,
+			"BLIND_RESISTANCE_PENETRATION" => 74,
+			"CHARM_RESISTANCE_PENETRATION" => 75,
+			"DISEASE_RESISTANCE_PENETRATION" => 76,
+			"SILENCE_RESISTANCE_PENETRATION" => 77,
+			"FEAR_RESISTANCE_PENETRATION" => 78,
+			"CURSE_RESISTANCE_PENETRATION" => 79,
+			"CONFUSE_RESISTANCE_PENETRATION" => 80,
+			"STUN_RESISTANCE_PENETRATION" => 81,
+			"PERIFICATION_RESISTANCE_PENETRATION" => 82,
+			"STUMBLE_RESISTANCE_PENETRATION" => 83,
+			"STAGGER_RESISTANCE_PENETRATION" => 84,
+			"OPENAERIAL_RESISTANCE_PENETRATION" => 85,
+			"SNARE_RESISTANCE_PENETRATION" => 86,
+			"SLOW_RESISTANCE_PENETRATION" => 87,
+			"SPIN_RESISTANCE_PENETRATION" => 88,
+			"BIND_RESISTANCE_PENETRATION" => 89,
+			"DEFORM_RESISTANCE_PENETRATION" => 90,
+			"PULLED_RESISTANCE_PENETRATION" => 91,
+			"NOFLY_RESISTANCE_PENETRATION" => 92,
+			"BOOST_MAGICAL_SKILL" => 104,
+			"MAGICAL_ACCURACY" => 105,
+			"PVP_ATTACK_RATIO" => 106,
+			"PVP_DEFEND_RATIO" => 107,
+			"BOOST_CASTING_TIME" => 108,
+			"BOOST_HATE" => 109,
+			"HEAL_BOOST" => 110,
+			"PVP_PHYSICAL_ATTACK" => 111,
+			"PVP_PHYSICAL_DEFEND" => 112,
+			"PVP_MAGICAL_ATTACK" => 113,
+			"PVP_MAGICAL_DEFEND" => 114,
+			"PHYSICAL_CRITICAL_RESIST" => 115,
+			"MAGICAL_CRITICAL_RESIST" => 116,
+			"PHYSICAL_CRITICAL_DAMAGE_REDUCE" => 117,
+			"MAGICAL_CRITICAL_DAMAGE_REDUCE" => 118,
+			"MAGICAL_DEFEND" => 125,
+			"MAGIC_SKILL_BOOST_RESIST" => 126,
+			_ => 0,
+		};
+		return mask != 0;
 	}
 
 	private static void WriteStigmaShardBlob(PacketBuffer buffer)
