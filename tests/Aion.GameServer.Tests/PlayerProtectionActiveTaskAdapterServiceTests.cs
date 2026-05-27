@@ -19,6 +19,8 @@ public sealed class PlayerProtectionActiveTaskAdapterServiceTests
 		Assert.Equal(PlayerProtectionActiveTaskFanoutStatus.BroadcastPlanned, result.FanoutPlan.Status);
 		Assert.True(result.FanoutPlan.ShouldBroadcast);
 		Assert.False(result.FanoutPlan.SentPackets);
+		Assert.Equal(PlayerProtectionActiveTaskAdapterStatus.DisabledPlanned, result.Report.Status);
+		Assert.Contains(result.Report.Rows, row => row.JavaOperation == "broadcastToSightedPlayers(player, packet, true)" && !row.IsLive);
 		Assert.False(result.MutatedVisualState);
 		Assert.False(result.MutatedScheduler);
 		Assert.False(result.SentPackets);
@@ -48,6 +50,8 @@ public sealed class PlayerProtectionActiveTaskAdapterServiceTests
 		Assert.Equal(PlayerProtectionActiveTaskFanoutStatus.BroadcastPlanned, result.FanoutPlan.Status);
 		Assert.False(result.FanoutPlan.SentPackets);
 		Assert.Equal(PlayerProtectionActiveTaskPlanStep.SetBlinkingVisualState, result.FanoutPlan.VisualMutationStep);
+		Assert.Contains(result.Report.Rows, row => row.JavaOperation == "setVisualState(CreatureVisualState.BLINKING)" && row.IsLive);
+		Assert.Contains(result.Report.Rows, row => row.JavaOperation == "schedule(this::stopProtectionActiveTask, 60000)" && !row.IsLive);
 		Assert.Contains("setVisualState(BLINKING)", result.JavaSource);
 	}
 
@@ -68,6 +72,8 @@ public sealed class PlayerProtectionActiveTaskAdapterServiceTests
 		Assert.False(result.Plan.ShouldScheduleTask);
 		Assert.Equal(PlayerProtectionActiveTaskFanoutStatus.SkippedAlreadyProtectedStart, result.FanoutPlan.Status);
 		Assert.False(result.FanoutPlan.ShouldBroadcast);
+		Assert.Equal(PlayerProtectionActiveTaskAdapterStatus.AlreadyProtected, result.Report.Status);
+		Assert.Equal(PlayerProtectionActiveTaskReportRowKind.SkippedBranch, result.Report.Rows[^1].Kind);
 	}
 
 	[Fact]
@@ -95,6 +101,8 @@ public sealed class PlayerProtectionActiveTaskAdapterServiceTests
 		Assert.Equal(PlayerProtectionActiveTaskFanoutStatus.BroadcastPlanned, result.FanoutPlan.Status);
 		Assert.False(result.FanoutPlan.SentPackets);
 		Assert.Equal(PlayerProtectionActiveTaskPlanStep.UnsetBlinkingVisualState, result.FanoutPlan.VisualMutationStep);
+		Assert.Contains(result.Report.Rows, row => row.JavaOperation == "unsetVisualState(CreatureVisualState.BLINKING)" && row.IsLive);
+		Assert.Contains(result.Report.Rows, row => row.JavaOperation == "notifyAIOnMove()" && !row.IsLive);
 		Assert.Contains("unsetVisualState(BLINKING)", result.JavaSource);
 	}
 
@@ -118,6 +126,8 @@ public sealed class PlayerProtectionActiveTaskAdapterServiceTests
 		Assert.False(result.Plan.ShouldBroadcastPlayerState);
 		Assert.Equal(PlayerProtectionActiveTaskFanoutStatus.SkippedUnspawnedStop, result.FanoutPlan.Status);
 		Assert.False(result.FanoutPlan.ShouldBroadcast);
+		Assert.Equal(PlayerProtectionActiveTaskAdapterStatus.LiveVisualStopUnspawned, result.Report.Status);
+		Assert.Equal(PlayerProtectionActiveTaskReportRowKind.SkippedBranch, result.Report.Rows[^1].Kind);
 	}
 
 	private const int PlayerObjectId = 1001;

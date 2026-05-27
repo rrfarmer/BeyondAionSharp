@@ -28,6 +28,7 @@ public sealed record PlayerProtectionActiveTaskAdapterResult(
 	PlayerProtectionActiveTaskAdapterStatus Status,
 	PlayerProtectionActiveTaskPlan Plan,
 	PlayerProtectionActiveTaskFanoutPlan FanoutPlan,
+	PlayerProtectionActiveTaskReport Report,
 	bool MutatedVisualState,
 	bool MutatedScheduler,
 	bool SentPackets,
@@ -52,16 +53,16 @@ public static class PlayerProtectionActiveTaskAdapterService
 
 		if (!request.ExecuteLiveVisualMutation)
 		{
-			return new PlayerProtectionActiveTaskAdapterResult(
+			return CreateResult(
 				PlayerProtectionActiveTaskAdapterStatus.DisabledPlanned,
 				plan,
 				fanoutPlan,
-				MutatedVisualState: false,
-				MutatedScheduler: false,
-				SentPackets: false,
-				ExposesPlanForObservation: true,
+				mutatedVisualState: false,
+				mutatedScheduler: false,
+				sentPackets: false,
+				exposesPlanForObservation: true,
 				"com.aionemu.gameserver.controllers.PlayerController protection task plan exposed with live visual mutation disabled",
-				IsLive: false);
+				isLive: false);
 		}
 
 		return request.Action == PlayerProtectionActiveTaskAdapterAction.Start
@@ -76,29 +77,29 @@ public static class PlayerProtectionActiveTaskAdapterService
 	{
 		if (plan.Status == PlayerProtectionActiveTaskPlanStatus.AlreadyProtected)
 		{
-			return new PlayerProtectionActiveTaskAdapterResult(
+			return CreateResult(
 				PlayerProtectionActiveTaskAdapterStatus.AlreadyProtected,
 				plan,
 				fanoutPlan,
-				MutatedVisualState: false,
-				MutatedScheduler: false,
-				SentPackets: false,
-				ExposesPlanForObservation: true,
+				mutatedVisualState: false,
+				mutatedScheduler: false,
+				sentPackets: false,
+				exposesPlanForObservation: true,
 				"com.aionemu.gameserver.controllers.PlayerController.startProtectionActiveTask already had BLINKING visual state",
-				IsLive: true);
+				isLive: true);
 		}
 
 		player.SetVisualState(PlayerVisualStates.Blinking);
-		return new PlayerProtectionActiveTaskAdapterResult(
+		return CreateResult(
 			PlayerProtectionActiveTaskAdapterStatus.LiveVisualStarted,
 			plan,
 			fanoutPlan,
-			MutatedVisualState: true,
-			MutatedScheduler: false,
-			SentPackets: false,
-			ExposesPlanForObservation: true,
+			mutatedVisualState: true,
+			mutatedScheduler: false,
+			sentPackets: false,
+			exposesPlanForObservation: true,
 			"com.aionemu.gameserver.controllers.PlayerController.startProtectionActiveTask -> setVisualState(BLINKING); scheduler and SM_PLAYER_STATE fanout remain planned",
-			IsLive: true);
+			isLive: true);
 	}
 
 	private static PlayerProtectionActiveTaskAdapterResult ApplyStop(
@@ -108,28 +109,59 @@ public static class PlayerProtectionActiveTaskAdapterService
 	{
 		if (!plan.IsSpawned)
 		{
-			return new PlayerProtectionActiveTaskAdapterResult(
+			return CreateResult(
 				PlayerProtectionActiveTaskAdapterStatus.LiveVisualStopUnspawned,
 				plan,
 				fanoutPlan,
-				MutatedVisualState: false,
-				MutatedScheduler: false,
-				SentPackets: false,
-				ExposesPlanForObservation: true,
+				mutatedVisualState: false,
+				mutatedScheduler: false,
+				sentPackets: false,
+				exposesPlanForObservation: true,
 				"com.aionemu.gameserver.controllers.PlayerController.stopProtectionActiveTask skips visual-state and packet fanout when player.isSpawned() is false",
-				IsLive: true);
+				isLive: true);
 		}
 
 		var mutatedVisualState = player.StopProtectionActive();
-		return new PlayerProtectionActiveTaskAdapterResult(
+		return CreateResult(
 			PlayerProtectionActiveTaskAdapterStatus.LiveVisualStopped,
 			plan,
 			fanoutPlan,
 			mutatedVisualState,
-			MutatedScheduler: false,
-			SentPackets: false,
-			ExposesPlanForObservation: true,
+			mutatedScheduler: false,
+			sentPackets: false,
+			exposesPlanForObservation: true,
 			"com.aionemu.gameserver.controllers.PlayerController.stopProtectionActiveTask -> unsetVisualState(BLINKING); scheduler, SM_PLAYER_STATE fanout, and notifyAIOnMove remain planned",
-			IsLive: true);
+			isLive: true);
+	}
+
+	private static PlayerProtectionActiveTaskAdapterResult CreateResult(
+		PlayerProtectionActiveTaskAdapterStatus status,
+		PlayerProtectionActiveTaskPlan plan,
+		PlayerProtectionActiveTaskFanoutPlan fanoutPlan,
+		bool mutatedVisualState,
+		bool mutatedScheduler,
+		bool sentPackets,
+		bool exposesPlanForObservation,
+		string javaSource,
+		bool isLive)
+	{
+		var report = PlayerProtectionActiveTaskReportService.CreateReport(
+			status,
+			plan,
+			fanoutPlan,
+			mutatedVisualState,
+			isLive);
+
+		return new PlayerProtectionActiveTaskAdapterResult(
+			status,
+			plan,
+			fanoutPlan,
+			report,
+			mutatedVisualState,
+			mutatedScheduler,
+			sentPackets,
+			exposesPlanForObservation,
+			javaSource,
+			isLive);
 	}
 }

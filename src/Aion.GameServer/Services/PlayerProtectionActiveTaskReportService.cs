@@ -28,14 +28,27 @@ public sealed record PlayerProtectionActiveTaskReport(
 public static class PlayerProtectionActiveTaskReportService
 {
 	public static PlayerProtectionActiveTaskReport CreateReport(PlayerProtectionActiveTaskAdapterResult result)
+		=> CreateReport(
+			result.Status,
+			result.Plan,
+			result.FanoutPlan,
+			result.MutatedVisualState,
+			result.IsLive);
+
+	public static PlayerProtectionActiveTaskReport CreateReport(
+		PlayerProtectionActiveTaskAdapterStatus status,
+		PlayerProtectionActiveTaskPlan plan,
+		PlayerProtectionActiveTaskFanoutPlan fanoutPlan,
+		bool mutatedVisualState,
+		bool isLive)
 	{
 		var rows = new List<PlayerProtectionActiveTaskReportRow>();
-		foreach (var step in result.Plan.Steps)
+		foreach (var step in plan.Steps)
 		{
-			AddStep(rows, result, step);
+			AddStep(rows, plan, fanoutPlan, mutatedVisualState, step);
 		}
 
-		if (result.Plan.Status == PlayerProtectionActiveTaskPlanStatus.AlreadyProtected)
+		if (plan.Status == PlayerProtectionActiveTaskPlanStatus.AlreadyProtected)
 		{
 			Add(
 				rows,
@@ -45,7 +58,7 @@ public static class PlayerProtectionActiveTaskReportService
 				isLive: false,
 				"Java does not set BLINKING, schedule a task, or send SM_PLAYER_STATE in this branch.");
 		}
-		else if (result.Plan.Status == PlayerProtectionActiveTaskPlanStatus.StopProtectionUnspawned)
+		else if (plan.Status == PlayerProtectionActiveTaskPlanStatus.StopProtectionUnspawned)
 		{
 			Add(
 				rows,
@@ -57,16 +70,18 @@ public static class PlayerProtectionActiveTaskReportService
 		}
 
 		return new PlayerProtectionActiveTaskReport(
-			result.Status,
-			result.Plan.PlayerObjectId,
+			status,
+			plan.PlayerObjectId,
 			rows,
 			"com.aionemu.gameserver.controllers.PlayerController.startProtectionActiveTask / stopProtectionActiveTask",
-			result.IsLive);
+			isLive);
 	}
 
 	private static void AddStep(
 		ICollection<PlayerProtectionActiveTaskReportRow> rows,
-		PlayerProtectionActiveTaskAdapterResult result,
+		PlayerProtectionActiveTaskPlan plan,
+		PlayerProtectionActiveTaskFanoutPlan fanoutPlan,
+		bool mutatedVisualState,
 		PlayerProtectionActiveTaskPlanStep step)
 	{
 		switch (step)
@@ -75,7 +90,7 @@ public static class PlayerProtectionActiveTaskReportService
 				Add(rows, "PlayerController", "if (!getOwner().isProtectionActive())", PlayerProtectionActiveTaskReportRowKind.PlannedMetadata, false, "Branch is derived from current BLINKING visual state.");
 				break;
 			case PlayerProtectionActiveTaskPlanStep.SetBlinkingVisualState:
-				Add(rows, "Player", "setVisualState(CreatureVisualState.BLINKING)", PlayerProtectionActiveTaskReportRowKind.LiveStateBoundary, result.MutatedVisualState, "Only this visual-state mutation may be executed by the opt-in adapter.");
+				Add(rows, "Player", "setVisualState(CreatureVisualState.BLINKING)", PlayerProtectionActiveTaskReportRowKind.LiveStateBoundary, mutatedVisualState, "Only this visual-state mutation may be executed by the opt-in adapter.");
 				break;
 			case PlayerProtectionActiveTaskPlanStep.CancelCastOnPlayer:
 				Add(rows, "AttackUtil", "cancelCastOn(getOwner())", PlayerProtectionActiveTaskReportRowKind.UnsupportedSideEffect, false, "Live cast cancellation is not executed.");
@@ -84,7 +99,7 @@ public static class PlayerProtectionActiveTaskReportService
 				Add(rows, "AttackUtil", "removeTargetFrom(getOwner())", PlayerProtectionActiveTaskReportRowKind.UnsupportedSideEffect, false, "Live attacker target cleanup is not executed.");
 				break;
 			case PlayerProtectionActiveTaskPlanStep.BroadcastPlayerState:
-				AddBroadcast(rows, result.FanoutPlan);
+				AddBroadcast(rows, fanoutPlan);
 				break;
 			case PlayerProtectionActiveTaskPlanStep.ScheduleProtectionActiveTask:
 				Add(rows, "ThreadPoolManager", "schedule(this::stopProtectionActiveTask, 60000)", PlayerProtectionActiveTaskReportRowKind.SchedulerIntent, false, "Live scheduler mutation is disabled.");
@@ -93,10 +108,10 @@ public static class PlayerProtectionActiveTaskReportService
 				Add(rows, "CreatureController", "addTask(TaskId.PROTECTION_ACTIVE, future)", PlayerProtectionActiveTaskReportRowKind.SchedulerIntent, false, "Task storage is metadata only.");
 				break;
 			case PlayerProtectionActiveTaskPlanStep.CancelProtectionActiveTask:
-				Add(rows, "CreatureController", "cancelTask(TaskId.PROTECTION_ACTIVE)", PlayerProtectionActiveTaskReportRowKind.SchedulerIntent, false, result.Plan.ShouldCancelTask ? "Represented task cancellation is planned only." : "Java still calls cancelTask; current C# inputs represent no stored task.");
+				Add(rows, "CreatureController", "cancelTask(TaskId.PROTECTION_ACTIVE)", PlayerProtectionActiveTaskReportRowKind.SchedulerIntent, false, plan.ShouldCancelTask ? "Represented task cancellation is planned only." : "Java still calls cancelTask; current C# inputs represent no stored task.");
 				break;
 			case PlayerProtectionActiveTaskPlanStep.UnsetBlinkingVisualState:
-				Add(rows, "Player", "unsetVisualState(CreatureVisualState.BLINKING)", PlayerProtectionActiveTaskReportRowKind.LiveStateBoundary, result.MutatedVisualState, "Only this visual-state mutation may be executed by the opt-in adapter.");
+				Add(rows, "Player", "unsetVisualState(CreatureVisualState.BLINKING)", PlayerProtectionActiveTaskReportRowKind.LiveStateBoundary, mutatedVisualState, "Only this visual-state mutation may be executed by the opt-in adapter.");
 				break;
 			case PlayerProtectionActiveTaskPlanStep.NotifyAiOnMove:
 				Add(rows, "PlayerController", "notifyAIOnMove()", PlayerProtectionActiveTaskReportRowKind.UnsupportedSideEffect, false, "Live AI movement notification is not executed.");
