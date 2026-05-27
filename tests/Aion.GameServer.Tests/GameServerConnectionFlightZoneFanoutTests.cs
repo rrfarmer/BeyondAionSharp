@@ -488,7 +488,8 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 		var runtimeContext = new GameServerRuntimeContext();
 		runtimeContext.SetDataManager(dataManager);
 		var zoneCounterService = new CreaturePvpZoneCounterService();
-		var registry = new CapturingConnectionRegistry();
+		var operationOrder = new List<string>();
+		var registry = new CapturingConnectionRegistry(operationOrder);
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);
 		var idFactory = new IDFactory();
 		await using var pair = await TestConnectionPair.CreateAsync(
@@ -496,7 +497,8 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 			runtimeContext,
 			zoneCounterService,
 			idFactory,
-			world);
+			world,
+			sentPacketObserver: packet => operationOrder.Add(packet.GetType().Name));
 		var spawnPosition = new WorldPosition(210040000, 2700, 620, 150, 0);
 		var player = CreateTeleportingPlayer(7304, spawnPosition);
 		var sourceItem = new InventoryItem
@@ -533,6 +535,18 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 		Assert.Equal(0, counters.SiegeZoneCount);
 		Assert.DoesNotContain(player.InventoryItems, item => item.ObjectId == sourceItem.ObjectId);
 		Assert.NotNull(runtimeContext.Kisks.GetKiskState(kiskNpc.ObjectId));
+		Assert.NotNull(player.PendingKiskBindRequest);
+		Assert.Equal(kiskNpc.ObjectId, player.PendingKiskBindRequest.KiskObjectId);
+		Assert.Equal(SmQuestionWindow.RegisterBindstone, player.PendingKiskBindRequest.QuestionId);
+		Assert.Single(registry.RefreshedNpcs, npc => npc.ObjectId == kiskNpc.ObjectId);
+		Assert.Equal(
+		[
+			nameof(SmItemUsageAnimation),
+			nameof(SmDeleteItem),
+			nameof(SmCubeUpdate),
+			"RefreshNpcVisibility",
+			nameof(SmQuestionWindow),
+		], operationOrder);
 	}
 
 	[Fact]
@@ -1003,6 +1017,13 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 
 	private sealed class CapturingConnectionRegistry : IGameClientConnectionRegistry
 	{
+		private readonly List<string>? _operationOrder;
+
+		public CapturingConnectionRegistry(List<string>? operationOrder = null)
+		{
+			_operationOrder = operationOrder;
+		}
+
 		public List<GameServerPacket> PacketOrder { get; } = [];
 
 		public List<BroadcastRecord> Broadcasts { get; } = [];
@@ -1047,6 +1068,7 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 		{
 			Broadcasts.Add(new BroadcastRecord(sourcePosition, sourceObjectId, packet, includeSourcePlayer));
 			PacketOrder.Add(packet);
+			_operationOrder?.Add(packet.GetType().Name);
 			return Task.FromResult(1);
 		}
 
@@ -1061,6 +1083,7 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 		public Task<int> RefreshNpcVisibilityAsync(IReadOnlyList<IWorldNpcObject> npcs, int? playerObjectId = null)
 		{
 			RefreshedNpcs.AddRange(npcs);
+			_operationOrder?.Add("RefreshNpcVisibility");
 			return Task.FromResult(0);
 		}
 
@@ -1110,7 +1133,8 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 			CreaturePvpZoneCounterService? creaturePvpZoneCounterService = null,
 			IDFactory? idFactory = null,
 			GameWorld? world = null,
-			PlayerEnterWorldService? playerEnterWorldService = null)
+			PlayerEnterWorldService? playerEnterWorldService = null,
+			Action<GameServerPacket>? sentPacketObserver = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -1136,7 +1160,11 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 					world: world,
 					playerEnterWorldService: playerEnterWorldService,
 					creaturePvpZoneCounterService: creaturePvpZoneCounterService,
-					sentPacketObserver: sentPackets.Add,
+					sentPacketObserver: packet =>
+					{
+						sentPackets.Add(packet);
+						sentPacketObserver?.Invoke(packet);
+					},
 					crypt: crypt);
 				return new TestConnectionPair(client, connection, sentPackets);
 			}
