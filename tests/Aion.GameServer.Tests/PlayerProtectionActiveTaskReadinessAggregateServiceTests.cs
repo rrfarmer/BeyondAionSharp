@@ -20,6 +20,9 @@ public sealed class PlayerProtectionActiveTaskReadinessAggregateServiceTests
 		var audit = PlayerProtectionActiveTaskTaskMapAuditService.Create(readiness);
 		var ownerSelection = PlayerProtectionActiveTaskTaskMapOwnerSelectionService.Create(new PlayerProtectionActiveTaskTaskMapOwnerSelectionRequest());
 		var ownerPrototype = CreateOwnerPrototypeSnapshot(withStoredTask: true);
+		var schedulerPlan = PlayerProtectionActiveTaskSchedulerCallbackPlanService.Create(new PlayerProtectionActiveTaskSchedulerCallbackPlanRequest(
+			CreateStartPlan(alreadyProtected: false),
+			ownerPrototype));
 
 		var report = PlayerProtectionActiveTaskReadinessAggregateService.Create(new PlayerProtectionActiveTaskReadinessAggregateRequest(
 			summary,
@@ -28,7 +31,8 @@ public sealed class PlayerProtectionActiveTaskReadinessAggregateServiceTests
 			[simulation],
 			cleanup,
 			ownerSelection,
-			ownerPrototype));
+			ownerPrototype,
+			schedulerPlan));
 
 		Assert.False(report.IsLive);
 		Assert.False(report.CanEnableProtectionTaskMapStack);
@@ -56,6 +60,17 @@ public sealed class PlayerProtectionActiveTaskReadinessAggregateServiceTests
 			&& row.EvidenceSource == "Controller-owned owner prototype snapshot"
 			&& row.Status == PlayerProtectionActiveTaskReadinessAggregateStatus.ObservedNonLive
 			&& row.Notes.Contains("1 tracked protection task", StringComparison.Ordinal));
+		Assert.Contains(report.Rows, row =>
+			row.Area == PlayerProtectionActiveTaskReadinessAggregateArea.SchedulerCallback
+			&& row.EvidenceSource == "Scheduler callback plan"
+			&& row.Status == PlayerProtectionActiveTaskReadinessAggregateStatus.ObservedNonLive
+			&& row.Notes.Contains("DelayMilliseconds=60000", StringComparison.Ordinal)
+			&& row.Notes.Contains("InvokesScheduler=False", StringComparison.Ordinal));
+		Assert.Contains(report.Rows, row =>
+			row.Area == PlayerProtectionActiveTaskReadinessAggregateArea.SchedulerCallback
+			&& row.EvidenceSource == "Scheduler callback plan"
+			&& row.Status == PlayerProtectionActiveTaskReadinessAggregateStatus.Blocked
+			&& row.Notes.Contains("metadata-only", StringComparison.Ordinal));
 	}
 
 	[Fact]
@@ -150,6 +165,43 @@ public sealed class PlayerProtectionActiveTaskReadinessAggregateServiceTests
 			&& row.Notes.Contains("best matches Java lifecycle", StringComparison.Ordinal));
 	}
 
+	[Fact]
+	public async Task Create_AlreadyProtectedStartIncludesSkippedSchedulerCallbackMetadata()
+	{
+		var summary = await CreateSummaryAsync(
+			PlayerProtectionActiveTaskAdapterAction.Start,
+			player => player.SetVisualState(PlayerVisualStates.Blinking),
+			existingTask: false);
+		var readiness = PlayerProtectionActiveTaskLiveReadinessService.Create(summary);
+		var cleanup = PlayerProtectionActiveTaskTaskMapLifecycleCleanupService.Create(new PlayerProtectionActiveTaskTaskMapLifecycleCleanupRequest());
+		var ownerPrototype = CreateOwnerPrototypeSnapshot(withStoredTask: false);
+		var schedulerPlan = PlayerProtectionActiveTaskSchedulerCallbackPlanService.Create(new PlayerProtectionActiveTaskSchedulerCallbackPlanRequest(
+			CreateStartPlan(alreadyProtected: true),
+			ownerPrototype));
+
+		var report = PlayerProtectionActiveTaskReadinessAggregateService.Create(new PlayerProtectionActiveTaskReadinessAggregateRequest(
+			summary,
+			readiness,
+			PlayerProtectionActiveTaskTaskMapAuditService.Create(readiness),
+			Array.Empty<PlayerProtectionActiveTaskTaskMapSimulationReport>(),
+			cleanup,
+			OwnerPrototypeSnapshot: ownerPrototype,
+			SchedulerCallbackPlan: schedulerPlan));
+
+		Assert.False(report.IsLive);
+		Assert.False(report.HasStartStorageEvidence);
+		Assert.DoesNotContain(report.Rows, row =>
+			row.EvidenceSource == "Scheduler callback plan"
+			&& row.JavaOperation.Contains("schedule(this::stopProtectionActiveTask", StringComparison.Ordinal));
+		Assert.Contains(report.Rows, row =>
+			row.Area == PlayerProtectionActiveTaskReadinessAggregateArea.BranchObservation
+			&& row.EvidenceSource == "Scheduler callback plan"
+			&& row.Status == PlayerProtectionActiveTaskReadinessAggregateStatus.Skipped
+			&& !row.BlocksLiveEnablement
+			&& row.Notes.Contains("returns before scheduling", StringComparison.Ordinal)
+			&& row.Notes.Contains("InvokesScheduler=False", StringComparison.Ordinal));
+	}
+
 	private static async Task<PlayerProtectionActiveTaskExecutionSummary> CreateSummaryAsync(
 		PlayerProtectionActiveTaskAdapterAction action,
 		Action<Player> configurePlayer,
@@ -202,6 +254,20 @@ public sealed class PlayerProtectionActiveTaskReadinessAggregateServiceTests
 			IsSpawned: true));
 
 		return PlayerProtectionActiveTaskTaskOperationPlanService.Create(adapterResult.Plan, existingTask);
+	}
+
+	private static PlayerProtectionActiveTaskPlan CreateStartPlan(bool alreadyProtected)
+	{
+		var player = new Player { ObjectId = PlayerObjectId };
+		if (alreadyProtected)
+			player.SetVisualState(PlayerVisualStates.Blinking);
+
+		var result = PlayerProtectionActiveTaskAdapterService.Apply(new PlayerProtectionActiveTaskAdapterRequest(
+			player,
+			PlayerProtectionActiveTaskAdapterAction.Start,
+			ExecuteLiveVisualMutation: true));
+
+		return result.Plan;
 	}
 
 	private static PlayerProtectionActiveTaskControllerTaskMapOwnerPrototypeSnapshot CreateOwnerPrototypeSnapshot(

@@ -36,6 +36,7 @@ public sealed record PlayerProtectionActiveTaskReadinessAggregateRequest(
 	PlayerProtectionActiveTaskTaskMapLifecycleCleanupReport LifecycleCleanupReport,
 	PlayerProtectionActiveTaskTaskMapOwnerSelectionReport? OwnerSelectionReport = null,
 	PlayerProtectionActiveTaskControllerTaskMapOwnerPrototypeSnapshot? OwnerPrototypeSnapshot = null,
+	PlayerProtectionActiveTaskSchedulerCallbackPlan? SchedulerCallbackPlan = null,
 	bool ScheduledTaskHandleAdapterAvailable = true);
 
 public sealed record PlayerProtectionActiveTaskReadinessAggregateRow(
@@ -78,6 +79,8 @@ public static class PlayerProtectionActiveTaskReadinessAggregateService
 			AddOwnerSelectionRows(rows, request.OwnerSelectionReport);
 		if (request.OwnerPrototypeSnapshot != null)
 			AddOwnerPrototypeRows(rows, request.OwnerPrototypeSnapshot);
+		if (request.SchedulerCallbackPlan != null)
+			AddSchedulerCallbackPlanRows(rows, request.SchedulerCallbackPlan);
 		AddRuntimeComparisonRow(rows);
 
 		var rowArray = rows.ToArray();
@@ -94,12 +97,44 @@ public static class PlayerProtectionActiveTaskReadinessAggregateService
 			rowArray,
 			blockedAreas,
 			CanEnableProtectionTaskMapStack: blockedAreas.Length == 0,
-			HasStartStorageEvidence: request.TaskMapSimulationReports.Any(report => report.StoredScheduledTask),
+			HasStartStorageEvidence: request.TaskMapSimulationReports.Any(report => report.StoredScheduledTask)
+				|| request.SchedulerCallbackPlan?.StoresScheduledFuture == true,
 			HasStopCancellationEvidence: request.TaskMapSimulationReports.Any(report => report.CanceledExistingTask || report.RemovedMissingTaskAsNoOp),
 			HasLifecycleCleanupEvidence: request.LifecycleCleanupReport.Rows.Any(row => row.Kind == PlayerProtectionActiveTaskTaskMapLifecycleCleanupRowKind.CancelAllTasks),
 			HasScheduledTaskHandleAdapterEvidence: request.ScheduledTaskHandleAdapterAvailable,
 			"PlayerController protection active task production-readiness aggregate: PlayerController -> CreatureController task map -> ThreadPoolManager -> lifecycle cleanup",
 			IsLive: false);
+	}
+
+	private static void AddSchedulerCallbackPlanRows(
+		ICollection<PlayerProtectionActiveTaskReadinessAggregateRow> rows,
+		PlayerProtectionActiveTaskSchedulerCallbackPlan plan)
+	{
+		foreach (var row in plan.Rows)
+		{
+			Add(
+				rows,
+				ToArea(row.Kind),
+				ToStatus(row.Status),
+				BlocksLiveEnablement(row),
+				"Scheduler callback plan",
+				row.JavaOperation,
+				row.JavaSource,
+				$"{row.Notes} DelayMilliseconds={plan.DelayMilliseconds}; InvokesScheduler={plan.InvokesScheduler}; InvokesCallback={plan.InvokesCallback}.");
+		}
+
+		if (!plan.InvokesScheduler && plan.Status == PlayerProtectionActiveTaskSchedulerCallbackPlanStatus.PlannedNotLive)
+		{
+			Add(
+				rows,
+				PlayerProtectionActiveTaskReadinessAggregateArea.SchedulerCallback,
+				PlayerProtectionActiveTaskReadinessAggregateStatus.Blocked,
+				blocksLiveEnablement: true,
+				"Scheduler callback plan",
+				"ThreadPoolManager.getInstance().schedule(this::stopProtectionActiveTask, 60000)",
+				plan.JavaSource,
+				"Callback plan is metadata-only; live ThreadPoolManager.Schedule and delayed stopProtectionActiveTask invocation remain disabled.");
+		}
 	}
 
 	private static void AddReadinessRows(
@@ -285,6 +320,24 @@ public static class PlayerProtectionActiveTaskReadinessAggregateService
 			or PlayerProtectionActiveTaskTaskMapOwnerSelectionArea.Recommendation
 			or PlayerProtectionActiveTaskTaskMapOwnerSelectionArea.LiveEnablementBlocker;
 
+	private static bool BlocksLiveEnablement(
+		PlayerProtectionActiveTaskSchedulerCallbackPlanRow row) =>
+		row.Kind == PlayerProtectionActiveTaskSchedulerCallbackPlanRowKind.RequireOwnerPrototype
+			|| row.Kind == PlayerProtectionActiveTaskSchedulerCallbackPlanRowKind.RecordRuntimeBlocker;
+
+	private static PlayerProtectionActiveTaskReadinessAggregateArea ToArea(
+		PlayerProtectionActiveTaskSchedulerCallbackPlanRowKind kind) =>
+		kind switch
+		{
+			PlayerProtectionActiveTaskSchedulerCallbackPlanRowKind.ObserveStartBranch => PlayerProtectionActiveTaskReadinessAggregateArea.BranchObservation,
+			PlayerProtectionActiveTaskSchedulerCallbackPlanRowKind.RequireOwnerPrototype => PlayerProtectionActiveTaskReadinessAggregateArea.ProductionOwnerSelection,
+			PlayerProtectionActiveTaskSchedulerCallbackPlanRowKind.RecordScheduleCall => PlayerProtectionActiveTaskReadinessAggregateArea.SchedulerCallback,
+			PlayerProtectionActiveTaskSchedulerCallbackPlanRowKind.RecordCallbackTarget => PlayerProtectionActiveTaskReadinessAggregateArea.SchedulerCallback,
+			PlayerProtectionActiveTaskSchedulerCallbackPlanRowKind.RecordTaskMapStorage => PlayerProtectionActiveTaskReadinessAggregateArea.TaskMapStorage,
+			PlayerProtectionActiveTaskSchedulerCallbackPlanRowKind.RecordRuntimeBlocker => PlayerProtectionActiveTaskReadinessAggregateArea.JavaRuntimeComparison,
+			_ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null),
+		};
+
 	private static PlayerProtectionActiveTaskReadinessAggregateArea ToArea(
 		PlayerProtectionActiveTaskLiveReadinessCapability capability) =>
 		capability switch
@@ -334,6 +387,16 @@ public static class PlayerProtectionActiveTaskReadinessAggregateService
 			PlayerProtectionActiveTaskTaskMapOwnerSelectionStatus.RejectedCandidate => PlayerProtectionActiveTaskReadinessAggregateStatus.Blocked,
 			PlayerProtectionActiveTaskTaskMapOwnerSelectionStatus.Blocked => PlayerProtectionActiveTaskReadinessAggregateStatus.Blocked,
 			PlayerProtectionActiveTaskTaskMapOwnerSelectionStatus.NeedsVerification => PlayerProtectionActiveTaskReadinessAggregateStatus.NeedsVerification,
+			_ => throw new ArgumentOutOfRangeException(nameof(status), status, null),
+		};
+
+	private static PlayerProtectionActiveTaskReadinessAggregateStatus ToStatus(
+		PlayerProtectionActiveTaskSchedulerCallbackPlanStatus status) =>
+		status switch
+		{
+			PlayerProtectionActiveTaskSchedulerCallbackPlanStatus.PlannedNotLive => PlayerProtectionActiveTaskReadinessAggregateStatus.ObservedNonLive,
+			PlayerProtectionActiveTaskSchedulerCallbackPlanStatus.SkippedAlreadyProtected => PlayerProtectionActiveTaskReadinessAggregateStatus.Skipped,
+			PlayerProtectionActiveTaskSchedulerCallbackPlanStatus.BlockedMissingOwnerPrototype => PlayerProtectionActiveTaskReadinessAggregateStatus.Blocked,
 			_ => throw new ArgumentOutOfRangeException(nameof(status), status, null),
 		};
 
