@@ -129,7 +129,12 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Collection(
 			fixture.SentPackets,
 			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 6001, expectedDeleteType: SmDeleteItem.UseDeleteType),
-			packet => AssertInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 5001, expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse),
+			packet => AssertInventoryUpdatePayloadWithCleanupSealFlag(
+				Assert.IsType<SmInventoryUpdateItem>(packet),
+				expectedObjectId: 5001,
+				expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse,
+				expectedCleanupSealFlag: 3,
+				expectedItemMask: 0),
 			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1320000, "980"),
 			packet => Assert.IsType<SmAbyssRank>(packet));
 	}
@@ -153,7 +158,12 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Collection(
 			fixture.SentPackets,
 			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 6001, expectedDeleteType: SmDeleteItem.UseDeleteType),
-			packet => AssertInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 5001, expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse),
+			packet => AssertInventoryUpdatePayloadWithCleanupSealFlag(
+				Assert.IsType<SmInventoryUpdateItem>(packet),
+				expectedObjectId: 5001,
+				expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse,
+				expectedCleanupSealFlag: 3,
+				expectedItemMask: 0),
 			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1320000, "100"),
 			packet => Assert.IsType<SmAbyssRank>(packet));
 	}
@@ -855,7 +865,12 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			fixture.SentPackets,
 			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 100, expectedTime: 3000, expectedEnd: 0),
 			packet => Assert.IsType<SmSystemMessage>(packet),
-			packet => AssertInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 5001, expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse),
+			packet => AssertInventoryUpdatePayloadWithCleanupSealFlag(
+				Assert.IsType<SmInventoryUpdateItem>(packet),
+				expectedObjectId: 5001,
+				expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse,
+				expectedCleanupSealFlag: 3,
+				expectedItemMask: 0),
 			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 100, expectedTime: 0, expectedEnd: 1),
 			packet => AssertDecomposableAddPayloadWithCleanupSealFlag(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 200, expectedCount: 1, expectedCleanupSealFlag: 3));
 	}
@@ -890,7 +905,12 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			fixture.SentPackets,
 			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 100, expectedTime: 3000, expectedEnd: 0),
 			packet => Assert.IsType<SmSystemMessage>(packet),
-			packet => AssertInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 5001, expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse),
+			packet => AssertInventoryUpdatePayloadWithCleanupSealFlag(
+				Assert.IsType<SmInventoryUpdateItem>(packet),
+				expectedObjectId: 5001,
+				expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse,
+				expectedCleanupSealFlag: 3,
+				expectedItemMask: 0),
 			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 100, expectedTime: 0, expectedEnd: 1),
 			packet => AssertInventoryUpdatePayloadWithCleanupSealFlag(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 6001, expectedUpdateType: SmInventoryUpdateItem.IncreaseItemCollect, expectedCleanupSealFlag: 3));
 	}
@@ -959,7 +979,12 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Collection(
 			fixture.SentPackets,
 			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 104, expectedTime: 5000, expectedEnd: 0),
-			packet => AssertInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 5001, expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse),
+			packet => AssertInventoryUpdatePayloadWithCleanupSealFlag(
+				Assert.IsType<SmInventoryUpdateItem>(packet),
+				expectedObjectId: 5001,
+				expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse,
+				expectedCleanupSealFlag: 3,
+				expectedItemMask: 0),
 			packet => Assert.IsType<SmStatUpdateExp>(packet),
 			packet => AssertInventoryItemCollectAddPayload(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 188053996, expectedCount: 1, expectedCleanupSealFlag: 3),
 			packet => Assert.IsType<SmSystemMessage>(packet),
@@ -984,7 +1009,12 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Collection(
 			fixture.SentPackets,
 			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 104, expectedTime: 5000, expectedEnd: 0),
-			packet => AssertInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 5001, expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse),
+			packet => AssertInventoryUpdatePayloadWithCleanupSealFlag(
+				Assert.IsType<SmInventoryUpdateItem>(packet),
+				expectedObjectId: 5001,
+				expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse,
+				expectedCleanupSealFlag: 3,
+				expectedItemMask: 0),
 			packet => Assert.IsType<SmStatUpdateExp>(packet),
 			packet => AssertInventoryUpdatePayloadWithCleanupSealFlag(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 6001, expectedUpdateType: SmInventoryUpdateItem.IncreaseItemCollect, expectedCleanupSealFlag: 3),
 			packet => Assert.IsType<SmSystemMessage>(packet),
@@ -1143,7 +1173,12 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			fixture.SentPackets,
 			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 101, expectedTime: 0, expectedEnd: 1, expectedUnknown3: 1),
 			packet => Assert.IsType<SmSystemMessage>(packet),
-			packet => Assert.IsType<SmInventoryUpdateItem>(packet),
+			packet => AssertInventoryUpdatePayloadWithCleanupSealFlag(
+				Assert.IsType<SmInventoryUpdateItem>(packet),
+				expectedObjectId: 5001,
+				expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse,
+				expectedCleanupSealFlag: 3,
+				expectedItemMask: 0),
 			packet => AssertSecondaryShowDecomposablePayload(Assert.IsType<SmSecondaryShowDecomposable>(packet)),
 			packet => AssertInventoryAddPayload(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 202, expectedCount: 3));
 	}
@@ -1175,7 +1210,12 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			fixture.SentPackets,
 			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 101, expectedTime: 0, expectedEnd: 1, expectedUnknown3: 1),
 			packet => Assert.IsType<SmSystemMessage>(packet),
-			packet => AssertInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 5001, expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse),
+			packet => AssertInventoryUpdatePayloadWithCleanupSealFlag(
+				Assert.IsType<SmInventoryUpdateItem>(packet),
+				expectedObjectId: 5001,
+				expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse,
+				expectedCleanupSealFlag: 3,
+				expectedItemMask: 0),
 			packet => AssertSecondaryShowDecomposablePayload(Assert.IsType<SmSecondaryShowDecomposable>(packet)),
 			packet => AssertInventoryAddPayload(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 202, expectedCount: 3));
 	}
@@ -2283,7 +2323,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		SmInventoryUpdateItem packet,
 		int expectedObjectId,
 		int expectedUpdateType,
-		int expectedCleanupSealFlag)
+		int expectedCleanupSealFlag,
+		int expectedItemMask = 123)
 	{
 		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
 		Assert.Equal(expectedObjectId, reader.ReadD());
@@ -2292,7 +2333,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		var blob = reader.ReadB(blobSize);
 		Assert.Equal(expectedUpdateType, reader.ReadH());
 		Assert.Equal(0, reader.Remaining);
-		AssertGeneralInfoCleanupSealFlag(blob, expectedItemMask: 123, expectedFlag: expectedCleanupSealFlag);
+		AssertGeneralInfoCleanupSealFlag(blob, expectedItemMask, expectedCleanupSealFlag);
 	}
 
 	private static void AssertChargeInventoryUpdatePayload(SmInventoryUpdateItem packet, int expectedObjectId)
@@ -3163,6 +3204,10 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 						<item id="188053996" parts="100 101"/>
 					</assembly_items>
 					<item_restriction_cleanups>
+						<cleanup id="100" awh="0" lwh="0"/>
+						<cleanup id="{selectableFixture.SourceItemId}" awh="0" lwh="0"/>
+						<cleanup id="104" awh="0" lwh="0"/>
+						<cleanup id="165005000" awh="0" lwh="0"/>
 						<cleanup id="200" awh="0" lwh="0"/>
 						<cleanup id="188053996" awh="0" lwh="0"/>
 						<cleanup id="166000195" awh="0" lwh="0"/>

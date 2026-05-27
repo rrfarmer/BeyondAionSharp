@@ -4224,7 +4224,12 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (!saved)
 			return;
 
-		await ApplyExpExtractSourceMutationAsync(inventoryItems, sourceTemplate, mutationPlan.SourceItemUpdate, mutationPlan.DeletedSourceItemObjectId);
+		await ApplyExpExtractSourceMutationAsync(
+			inventoryItems,
+			sourceTemplate,
+			mutationPlan.SourceItemUpdate,
+			mutationPlan.DeletedSourceItemObjectId,
+			staticData.ItemRestrictionCleanups);
 		player.Exp = validation.NewExp;
 		await SendPacketAsync(new SmStatUpdateExp(player, staticData.PlayerExperienceTable));
 		ApplyExpExtractRewardMutation(inventoryItems, mutationPlan);
@@ -4261,7 +4266,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		List<InventoryItem> inventoryItems,
 		ItemTemplateSummary sourceTemplate,
 		InventoryItem? sourceItemUpdate,
-		int? deletedSourceItemObjectId)
+		int? deletedSourceItemObjectId,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups)
 	{
 		if (deletedSourceItemObjectId.HasValue)
 		{
@@ -4271,7 +4277,11 @@ public sealed class GameServerConnection : BaseClientConnection
 		else if (sourceItemUpdate != null)
 		{
 			ReplaceInventoryItem(inventoryItems, sourceItemUpdate);
-			await SendPacketAsync(new SmInventoryUpdateItem(sourceItemUpdate, sourceTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+			await SendPacketAsync(new SmInventoryUpdateItem(
+				sourceItemUpdate,
+				sourceTemplate,
+				SmInventoryUpdateItem.DecreaseItemUse,
+				GetGeneralInfoWarehouseRestrictionFlag(sourceItemUpdate.ItemId, itemRestrictionCleanups)));
 		}
 	}
 
@@ -4336,7 +4346,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		var inventoryItems = player.InventoryItems.ToList();
-		await SendApExtractConsumedItemPacketsAsync(inventoryItems, plan, sourceTemplate);
+		await SendApExtractConsumedItemPacketsAsync(inventoryItems, plan, sourceTemplate, staticData.ItemRestrictionCleanups);
 		ApplyApExtractInventoryMutation(inventoryItems, plan);
 		player.InventoryItems = inventoryItems.ToArray();
 		player.AbyssRank = plan.AbyssPointsPlan.UpdatedRank;
@@ -4348,14 +4358,19 @@ public sealed class GameServerConnection : BaseClientConnection
 	private async Task SendApExtractConsumedItemPacketsAsync(
 		IReadOnlyList<InventoryItem> inventoryItems,
 		ApExtractPlan plan,
-		ItemTemplateSummary sourceTemplate)
+		ItemTemplateSummary sourceTemplate,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups)
 	{
 		if (inventoryItems.Any(item => item.ObjectId == plan.DeletedTargetItemObjectId))
 			await SendPacketAsync(new SmDeleteItem(plan.DeletedTargetItemObjectId, SmDeleteItem.UseDeleteType));
 
 		if (plan.SourceItemUpdate != null)
 		{
-			await SendPacketAsync(new SmInventoryUpdateItem(plan.SourceItemUpdate, sourceTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+			await SendPacketAsync(new SmInventoryUpdateItem(
+				plan.SourceItemUpdate,
+				sourceTemplate,
+				SmInventoryUpdateItem.DecreaseItemUse,
+				GetGeneralInfoWarehouseRestrictionFlag(plan.SourceItemUpdate.ItemId, itemRestrictionCleanups)));
 		}
 		else if (plan.DeletedSourceItemObjectId.HasValue && inventoryItems.Any(item => item.ObjectId == plan.DeletedSourceItemObjectId.Value))
 		{
@@ -4652,7 +4667,13 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		await SendPacketAsync(SmSystemMessage.DecomposeItemSucceed(sourceTemplate.GetClientName() ?? sourceTemplate.Name));
-		await ApplySourceItemMutationAsync(player, inventoryItems, sourceTemplate, sourceItemUpdate, deletedSourceObjectId);
+		await ApplySourceItemMutationAsync(
+			player,
+			inventoryItems,
+			sourceTemplate,
+			sourceItemUpdate,
+			deletedSourceObjectId,
+			staticData.ItemRestrictionCleanups);
 		ApplyRewardInventoryMutation(inventoryItems, rewardInventoryPlan);
 		player.InventoryItems = inventoryItems.ToArray();
 		RegisterExpirableAddedItems(player, rewardInventoryPlan.Packets);
@@ -4704,7 +4725,13 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		await BroadcastItemUsageAnimationAsync(player, new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 1, 1));
 		await SendPacketAsync(SmSystemMessage.UncompressCompressedItemSucceeded(sourceTemplate.GetClientName() ?? sourceTemplate.Name));
-		await ApplySourceItemMutationAsync(player, inventoryItems, sourceTemplate, sourceItemUpdate, deletedSourceObjectId);
+		await ApplySourceItemMutationAsync(
+			player,
+			inventoryItems,
+			sourceTemplate,
+			sourceItemUpdate,
+			deletedSourceObjectId,
+			staticData.ItemRestrictionCleanups);
 		await SendPacketAsync(new SmSecondaryShowDecomposable(sourceItem.ObjectId, Array.Empty<ResultedItemSummary>()));
 		ApplyRewardInventoryMutation(inventoryItems, rewardInventoryPlan);
 		player.InventoryItems = inventoryItems.ToArray();
@@ -4819,7 +4846,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		List<InventoryItem> inventoryItems,
 		ItemTemplateSummary sourceTemplate,
 		InventoryItem? sourceItemUpdate,
-		int? deletedSourceObjectId)
+		int? deletedSourceObjectId,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups)
 	{
 		if (deletedSourceObjectId.HasValue)
 		{
@@ -4832,7 +4860,11 @@ public sealed class GameServerConnection : BaseClientConnection
 		{
 			ApplySourceInventoryMutation(inventoryItems, sourceItemUpdate, deletedSourceObjectId);
 			player.InventoryItems = inventoryItems.ToArray();
-			await SendPacketAsync(new SmInventoryUpdateItem(sourceItemUpdate, sourceTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+			await SendPacketAsync(new SmInventoryUpdateItem(
+				sourceItemUpdate,
+				sourceTemplate,
+				SmInventoryUpdateItem.DecreaseItemUse,
+				GetGeneralInfoWarehouseRestrictionFlag(sourceItemUpdate.ItemId, itemRestrictionCleanups)));
 		}
 	}
 
