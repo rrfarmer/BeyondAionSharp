@@ -570,8 +570,11 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 		Assert.DoesNotContain(player.InventoryItems, item => item.ObjectId == sourceItem.ObjectId);
 		Assert.NotNull(runtimeContext.Kisks.GetKiskState(1));
 		Assert.True(world.TryGetObject(1, out _));
+		Assert.NotNull(player.PendingKiskBindRequest);
+		Assert.Equal(1, player.PendingKiskBindRequest.KiskObjectId);
+		Assert.Equal(SmQuestionWindow.RegisterBindstone, player.PendingKiskBindRequest.QuestionId);
 		Assert.Collection(
-			pair.SentPackets.Take(3),
+			pair.SentPackets,
 			packet => AssertItemUsagePayload(
 				Assert.IsType<SmItemUsageAnimation>(packet),
 				expectedPlayerObjectId: player.ObjectId,
@@ -584,7 +587,9 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 				Assert.IsType<SmDeleteItem>(packet),
 				expectedObjectId: sourceItem.ObjectId,
 				expectedDeleteType: SmDeleteItem.UseDeleteType),
-			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0));
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0),
+			packet => Assert.IsType<SmNpcInfo>(packet),
+			packet => Assert.IsType<SmQuestionWindow>(packet));
 	}
 
 	[Fact]
