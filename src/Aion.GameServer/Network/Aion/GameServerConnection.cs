@@ -4769,7 +4769,6 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (!saved)
 			return;
 
-		await SendPacketAsync(SmSystemMessage.DecomposeItemSucceed(sourceTemplate.GetClientName() ?? sourceTemplate.Name));
 		await ApplySourceItemMutationAsync(
 			player,
 			inventoryItems,
@@ -4780,8 +4779,9 @@ public sealed class GameServerConnection : BaseClientConnection
 		ApplyRewardInventoryMutation(inventoryItems, rewardInventoryPlan);
 		player.InventoryItems = inventoryItems.ToArray();
 		RegisterExpirableAddedItems(player, rewardInventoryPlan.Packets);
-		await BroadcastItemUsageAnimationAsync(player, new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 1, 0));
+		await SendPacketAsync(SmSystemMessage.DecomposeItemSucceed(sourceTemplate.GetClientName() ?? sourceTemplate.Name));
 		await SendDecomposeRewardItemsAsync(player, rewardInventoryPlan.Packets, staticData.ItemRestrictionCleanups);
+		await BroadcastItemUsageAnimationAsync(player, new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 1, 0));
 	}
 
 	private async Task HandleSelectDecomposableAsync(Player player, CmSelectDecomposable packet)
