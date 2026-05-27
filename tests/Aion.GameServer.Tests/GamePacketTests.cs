@@ -4238,6 +4238,59 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmPet_LoadPetsWritesCountAndPetDataListLikeJava()
+	{
+		var payload = SerializeUnencryptedPayload(SmPet.LoadPets(
+		[
+			new SmPetDataSnapshot(
+				Name: "Tog",
+				TemplateId: 900001,
+				ObjectId: 7001,
+				MasterObjectId: 1001,
+				BirthdayEpochSeconds: 123456,
+				SecondsUntilExpiration: 654,
+				Functions: [],
+				Decoration: 12345),
+			new SmPetDataSnapshot(
+				Name: "Porgus",
+				TemplateId: 900002,
+				ObjectId: 7002,
+				MasterObjectId: 1001,
+				BirthdayEpochSeconds: 223456,
+				SecondsUntilExpiration: 0,
+				Functions:
+				[
+					new SmPetFunctionSnapshot(PetFunctionType.Warehouse),
+				],
+				Decoration: 54321),
+		]));
+		using var reader = new PacketBuffer(payload);
+
+		Assert.Equal((int)PetAction.LoadPets, reader.ReadH());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(2, reader.ReadH());
+
+		AssertSmPetDataHeader(reader);
+		Assert.Equal((int)PetFunctionType.None, reader.ReadH());
+		Assert.Equal((int)PetFunctionType.None, reader.ReadH());
+		AssertSmPetAppearance(reader, decoration: 12345);
+
+		Assert.Equal("Porgus", reader.ReadS());
+		Assert.Equal(900002, reader.ReadD());
+		Assert.Equal(7002, reader.ReadD());
+		Assert.Equal(1001, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(223456, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal((int)PetFunctionType.Warehouse, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal((int)PetFunctionType.None, reader.ReadH());
+		AssertSmPetAppearance(reader, decoration: 54321);
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
 	public void SmPetEmote_FlyStartWritesDefaultBranchLikeJava()
 	{
 		var payload = SerializeUnencryptedPayload(new SmPetEmote(new SmPetEmoteSnapshot(7001, PetEmote.FlyStart)));

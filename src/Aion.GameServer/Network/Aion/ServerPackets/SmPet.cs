@@ -47,6 +47,7 @@ public sealed class SmPet : GameServerPacket
 	private readonly SmPetSpawnSnapshot? _spawn;
 	private readonly SmPetSurrenderSnapshot? _surrender;
 	private readonly SmPetDataSnapshot? _petData;
+	private readonly IReadOnlyList<SmPetDataSnapshot>? _pets;
 	private readonly int _petObjectId;
 	private readonly string? _petName;
 	private readonly ObjectDeleteAnimation _animation;
@@ -75,6 +76,12 @@ public sealed class SmPet : GameServerPacket
 	{
 		// Java parity: network/aion/serverpackets/SM_PET(PetCommonData, true) with PetAction.ADOPT.
 		return new SmPet(PetAction.Adopt, petData);
+	}
+
+	public static SmPet LoadPets(IReadOnlyList<SmPetDataSnapshot> pets)
+	{
+		// Java parity: network/aion/serverpackets/SM_PET(Collection<PetCommonData>) with PetAction.LOAD_PETS.
+		return new SmPet(pets);
 	}
 
 	public SmPet(SmPetSurrenderSnapshot surrender)
@@ -110,6 +117,13 @@ public sealed class SmPet : GameServerPacket
 		_petData = petData;
 	}
 
+	private SmPet(IReadOnlyList<SmPetDataSnapshot> pets)
+		: base(PacketOpCode)
+	{
+		_action = PetAction.LoadPets;
+		_pets = pets;
+	}
+
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
 		// Java parity: SM_PET.writeImpl currently ported packet subset.
@@ -117,6 +131,9 @@ public sealed class SmPet : GameServerPacket
 
 		switch (_action)
 		{
+			case PetAction.LoadPets:
+				WriteLoadPets(buffer, _pets ?? throw new InvalidOperationException("Pet list snapshot is required for SM_PET load pets."));
+				break;
 			case PetAction.Adopt:
 				WritePetData(buffer, _petData ?? throw new InvalidOperationException("Pet data snapshot is required for SM_PET adopt."));
 				break;
@@ -205,6 +222,16 @@ public sealed class SmPet : GameServerPacket
 		}
 
 		WriteAppearance(buffer, petData.Decoration);
+	}
+
+	private static void WriteLoadPets(PacketBuffer buffer, IReadOnlyList<SmPetDataSnapshot> pets)
+	{
+		buffer.WriteC(0);
+		buffer.WriteH(pets.Count);
+		foreach (var pet in pets)
+		{
+			WritePetData(buffer, pet);
+		}
 	}
 
 	private static void WriteSurrender(PacketBuffer buffer, SmPetSurrenderSnapshot surrender)
