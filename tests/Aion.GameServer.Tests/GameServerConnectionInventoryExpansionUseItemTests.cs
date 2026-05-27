@@ -839,6 +839,53 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleUseItemAsync_AssemblyAddsRestrictedRewardWithCleanupSealFlag()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(
+			includeThreadPoolManager: true,
+			idFactory: new IDFactory([5001, 5100, 5101]));
+		var player = CreateAssemblyPlayer();
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
+
+		await WaitUntilAsync(() => fixture.SentPackets.Count >= 6, TimeSpan.FromSeconds(5));
+		Assert.Contains(player.InventoryItems, item => item.ItemId == 188053996 && item.Count == 1);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 103, expectedTime: 1000, expectedEnd: 0),
+			packet => AssertInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 5100, expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse),
+			packet => AssertInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 5101, expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse),
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 103, expectedTime: 0, expectedEnd: 1),
+			packet => Assert.IsType<SmSystemMessage>(packet),
+			packet => AssertInventoryItemCollectAddPayload(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 188053996, expectedCount: 1, expectedCleanupSealFlag: 3));
+	}
+
+	[Fact]
+	public async Task HandleUseItemAsync_AssemblyMergesRestrictedRewardWithCleanupSealFlag()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(
+			includeThreadPoolManager: true,
+			idFactory: new IDFactory([5001, 5100, 5101, 6001]));
+		var player = CreateAssemblyPlayer(existingRewardCount: 1);
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
+
+		await WaitUntilAsync(() => fixture.SentPackets.Count >= 6, TimeSpan.FromSeconds(5));
+		var reward = Assert.Single(player.InventoryItems, item => item.ItemId == 188053996);
+		Assert.Equal(2, reward.Count);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 103, expectedTime: 1000, expectedEnd: 0),
+			packet => AssertInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 5100, expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse),
+			packet => AssertInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 5101, expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse),
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 103, expectedTime: 0, expectedEnd: 1),
+			packet => Assert.IsType<SmSystemMessage>(packet),
+			packet => AssertInventoryUpdatePayloadWithCleanupSealFlag(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 6001, expectedUpdateType: SmInventoryUpdateItem.IncreaseItemCollect, expectedCleanupSealFlag: 3));
+	}
+
+	[Fact]
 	public async Task HandleUseItemAsync_DecomposeInventoryFullDoesNotScheduleOrMutate()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
@@ -1541,6 +1588,55 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		};
 	}
 
+	private static Player CreateAssemblyPlayer(long existingRewardCount = 0)
+	{
+		var items = new List<InventoryItem>
+		{
+			new()
+			{
+				ObjectId = 5001,
+				ItemId = 103,
+				Count = 1,
+				Location = 0,
+			},
+			new()
+			{
+				ObjectId = 5100,
+				ItemId = 100,
+				Count = 2,
+				Location = 0,
+			},
+			new()
+			{
+				ObjectId = 5101,
+				ItemId = 101,
+				Count = 2,
+				Location = 0,
+			},
+		};
+		if (existingRewardCount > 0)
+		{
+			items.Add(
+				new InventoryItem
+				{
+					ObjectId = 6001,
+					ItemId = 188053996,
+					Count = existingRewardCount,
+					Location = 0,
+				});
+		}
+
+		return new Player
+		{
+			ObjectId = 1001,
+			Name = "TicketUser",
+			Race = "ELYOS",
+			PlayerClass = "RANGER",
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			InventoryItems = items.ToArray(),
+		};
+	}
+
 	private static Player CreateChargePaymentPlayer()
 	{
 		return new Player
@@ -1952,6 +2048,22 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Equal(expectedUpdateType, actualUpdateType);
 	}
 
+	private static void AssertInventoryUpdatePayloadWithCleanupSealFlag(
+		SmInventoryUpdateItem packet,
+		int expectedObjectId,
+		int expectedUpdateType,
+		int expectedCleanupSealFlag)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(expectedObjectId, reader.ReadD());
+		Assert.Equal(string.Empty, reader.ReadS());
+		var blobSize = reader.ReadH();
+		var blob = reader.ReadB(blobSize);
+		Assert.Equal(expectedUpdateType, reader.ReadH());
+		Assert.Equal(0, reader.Remaining);
+		AssertGeneralInfoCleanupSealFlag(blob, expectedItemMask: 123, expectedFlag: expectedCleanupSealFlag);
+	}
+
 	private static void AssertChargeInventoryUpdatePayload(SmInventoryUpdateItem packet, int expectedObjectId)
 	{
 		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
@@ -1980,6 +2092,46 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Equal(0, (int)blobReader.ReadC());
 		blobReader.ReadH();
 		Assert.Equal(expectedCount, blobReader.ReadQ());
+	}
+
+	private static void AssertInventoryItemCollectAddPayload(
+		SmInventoryAddItem packet,
+		int expectedObjectId,
+		int expectedItemId,
+		long expectedCount,
+		int expectedCleanupSealFlag)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(SmInventoryAddItem.ItemCollect, reader.ReadH());
+		Assert.Equal(1, reader.ReadH());
+		Assert.Equal(expectedObjectId, reader.ReadD());
+		Assert.Equal(expectedItemId, reader.ReadD());
+		reader.ReadS();
+		var blobSize = reader.ReadH();
+		var blob = reader.ReadB(blobSize);
+		Assert.Equal(65535, reader.ReadH());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+
+		using var blobReader = new PacketBuffer(blob);
+		Assert.Equal(0, (int)blobReader.ReadC());
+		blobReader.ReadH();
+		Assert.Equal(expectedCount, blobReader.ReadQ());
+		AssertGeneralInfoCleanupSealFlag(blob, expectedItemMask: 123, expectedFlag: expectedCleanupSealFlag);
+	}
+
+	private static void AssertGeneralInfoCleanupSealFlag(byte[] blob, int expectedItemMask, int expectedFlag)
+	{
+		using var blobReader = new PacketBuffer(blob);
+		Assert.Equal(0x00, (int)blobReader.ReadC());
+		Assert.Equal(expectedItemMask, blobReader.ReadH());
+		blobReader.ReadQ();
+		Assert.Equal(string.Empty, blobReader.ReadS());
+		Assert.Equal(0, (int)blobReader.ReadC());
+		Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(expectedFlag, blobReader.ReadH());
 	}
 
 	private static void AssertDeleteItemPayload(SmDeleteItem packet, int expectedObjectId, int expectedDeleteType)
@@ -2703,9 +2855,15 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 								<decompose/>
 							</actions>
 						</item_template>
+						<item_template id="103" name="Test Assembly Tool" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="1">
+							<actions>
+								<assemble item="188053996"/>
+							</actions>
+						</item_template>
 						<item_template id="200" name="Test Decompose Reward" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
 						<item_template id="{selectableFixture.RewardIndex0ItemId}" name="Test Selectable Reward 1" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
 						<item_template id="{selectableFixture.RewardIndex1ItemId}" name="Test Selectable Reward 2" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
+						<item_template id="188053996" name="Restricted Assembly Reward" level="1" mask="123" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
 						<item_template id="204" name="Test Special Decompose Reward" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="1">
 							<inventory id="2"/>
 						</item_template>
@@ -2732,6 +2890,12 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 							</items>
 						</decomposable>
 					</decomposable_items>
+					<assembly_items>
+						<item id="188053996" parts="100 101"/>
+					</assembly_items>
+					<item_restriction_cleanups>
+						<cleanup id="188053996" awh="0" lwh="0"/>
+					</item_restriction_cleanups>
 				</static_data>
 				""");
 			var dataManager = await DataManager.LoadAsync(

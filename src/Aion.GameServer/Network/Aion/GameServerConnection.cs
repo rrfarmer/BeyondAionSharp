@@ -3941,7 +3941,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		await BroadcastItemUsageAnimationAsync(player, new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 1, 0));
 		await SendPacketAsync(SmSystemMessage.AssemblyItemSucceeded());
 		if (HasRewardMutation(mutationPlan.UpdatedRewardItems, mutationPlan.AddedRewardItems))
-			await SendAssemblyRewardPacketsAsync(mutationPlan, rewardTemplate);
+			await SendAssemblyRewardPacketsAsync(mutationPlan, rewardTemplate, staticData.ItemRestrictionCleanups);
 		if (!mutationPlan.RewardSucceeded && mutationPlan.RewardInventoryFull)
 			await SendPacketAsync(SmSystemMessage.DiceInventoryError());
 	}
@@ -3986,12 +3986,24 @@ public sealed class GameServerConnection : BaseClientConnection
 			_expirableTaskService?.RegisterInventoryItem(player, addedRewardItem);
 	}
 
-	private async Task SendAssemblyRewardPacketsAsync(AssemblyItemMutationPlan mutationPlan, ItemTemplateSummary rewardTemplate)
+	private async Task SendAssemblyRewardPacketsAsync(
+		AssemblyItemMutationPlan mutationPlan,
+		ItemTemplateSummary rewardTemplate,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups)
 	{
 		foreach (var updatedReward in mutationPlan.UpdatedRewardItems)
-			await SendPacketAsync(new SmInventoryUpdateItem(updatedReward, rewardTemplate, SmInventoryUpdateItem.IncreaseItemCollect));
+			await SendPacketAsync(
+				new SmInventoryUpdateItem(
+					updatedReward,
+					rewardTemplate,
+					SmInventoryUpdateItem.IncreaseItemCollect,
+					GetGeneralInfoWarehouseRestrictionFlag(updatedReward.ItemId, itemRestrictionCleanups)));
 		foreach (var addedReward in mutationPlan.AddedRewardItems)
-			await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(addedReward, rewardTemplate));
+			await SendPacketAsync(
+				SmInventoryAddItem.CreateItemCollect(
+					addedReward,
+					rewardTemplate,
+					GetGeneralInfoWarehouseRestrictionFlag(addedReward.ItemId, itemRestrictionCleanups)));
 	}
 
 	private async Task HandleExpExtractUseItemAsync(
