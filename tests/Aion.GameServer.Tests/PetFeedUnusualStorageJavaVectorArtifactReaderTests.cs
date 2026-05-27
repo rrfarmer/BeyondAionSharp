@@ -1,4 +1,3 @@
-using System.Buffers.Binary;
 using System.Text.Json;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
@@ -72,8 +71,9 @@ public sealed class PetFeedUnusualStorageJavaVectorArtifactReaderTests(ITestOutp
 			      "color": null
 			    },
 			    "itemBlob": {
-			      "hex": "010203",
+			      "hex": "0003010203",
 			      "size": 3,
+			      "packetBodyVerification": "matched",
 			      "entryIds": [1, 16],
 			      "decodedEntries": [
 			        { "entryId": 1, "name": "GENERAL_INFO" },
@@ -104,10 +104,10 @@ public sealed class PetFeedUnusualStorageJavaVectorArtifactReaderTests(ITestOutp
 			  },
 			  "packets": [
 			    {
-			      "javaClass": "SM_WAREHOUSE_ADD_ITEM",
+			      "javaClass": "com.aionemu.gameserver.network.aion.serverpackets.SM_WAREHOUSE_ADD_ITEM",
 			      "opcode": 169,
-			      "bodyHex": null,
-			      "canonicalPayloadHex": null,
+			      "bodyHex": "2000130001000013890B35138100004F0064006400200053006E00610063006B000000030102030004",
+			      "canonicalPayloadHex": "2000130001000013890B35138100004F0064006400200053006E00610063006B000000030102030004",
 			      "decoded": {
 			        "warehouseType": 32,
 			        "addTypeMask": 19,
@@ -115,10 +115,10 @@ public sealed class PetFeedUnusualStorageJavaVectorArtifactReaderTests(ITestOutp
 			      }
 			    },
 			    {
-			      "javaClass": "SM_CUBE_UPDATE",
+			      "javaClass": "com.aionemu.gameserver.network.aion.serverpackets.SM_CUBE_UPDATE",
 			      "opcode": 130,
 			      "bodyHex": "000400000000000000",
-			      "canonicalPayloadHex": "8200000400000000000000",
+			      "canonicalPayloadHex": "000400000000000000",
 			      "decoded": {
 			        "action": 0,
 			        "actionValue": 4,
@@ -145,6 +145,7 @@ public sealed class PetFeedUnusualStorageJavaVectorArtifactReaderTests(ITestOutp
 		Assert.Equal(["SM_WAREHOUSE_ADD_ITEM", "SM_CUBE_UPDATE"], artifact.ConstructionSnapshot.PacketOrder);
 		Assert.Equal([1, 16], artifact.EncodeSnapshot.ItemBlob.EntryIds);
 		Assert.Equal(2, artifact.EncodeSnapshot.ItemBlob.DecodedEntries.Count);
+		Assert.Equal("matched", artifact.EncodeSnapshot.ItemBlob.PacketBodyVerification);
 		AssertArtifactSemantics(artifact);
 		AssertBridgeConstructsGuardedUnusualStorageSequence(artifact);
 		AssertGeneratedCubeUpdateBodyMatchesCSharpWhenPresent(artifact);
@@ -183,7 +184,7 @@ public sealed class PetFeedUnusualStorageJavaVectorArtifactReaderTests(ITestOutp
 
 	private void ReportWarehouseByteComparisonGapWhenPresent(PetFeedUnusualStorageJavaVectorArtifact artifact)
 	{
-		if (artifact.Packets.Any(packet => packet.JavaClass == "SM_WAREHOUSE_ADD_ITEM"
+		if (artifact.Packets.Any(packet => IsPacketClass(packet, "SM_WAREHOUSE_ADD_ITEM")
 				&& (!string.IsNullOrWhiteSpace(packet.BodyHex) || !string.IsNullOrWhiteSpace(packet.CanonicalPayloadHex))))
 		{
 			output.WriteLine("Needs Verification: SM_WAREHOUSE_ADD_ITEM bytes are present, but full C# item-blob parity is still guarded.");
@@ -209,14 +210,18 @@ public sealed class PetFeedUnusualStorageJavaVectorArtifactReaderTests(ITestOutp
 		Assert.NotEmpty(artifact.EncodeSnapshot.Item.LocalizedName);
 		AssertBlobMetadataIsComparable(artifact.EncodeSnapshot.ItemBlob);
 
-		var warehousePacket = Assert.Single(artifact.Packets, packet => packet.JavaClass == "SM_WAREHOUSE_ADD_ITEM");
+		var warehousePacket = Assert.Single(artifact.Packets, packet => IsPacketClass(packet, "SM_WAREHOUSE_ADD_ITEM"));
 		Assert.Equal(SmWarehouseAddItem.PacketOpCode, warehousePacket.Opcode);
+		Assert.False(string.IsNullOrWhiteSpace(warehousePacket.BodyHex));
+		Assert.Equal(warehousePacket.BodyHex, warehousePacket.CanonicalPayloadHex);
 		Assert.Equal(artifact.Storage.StorageId, RequiredInt(warehousePacket.Decoded.WarehouseType, "warehouseType"));
 		Assert.Equal(SmWarehouseAddItem.AllSlot, RequiredInt(warehousePacket.Decoded.AddTypeMask, "addTypeMask"));
 		Assert.Equal(1, RequiredInt(warehousePacket.Decoded.ItemCount, "itemCount"));
 
-		var cubePacket = Assert.Single(artifact.Packets, packet => packet.JavaClass == "SM_CUBE_UPDATE");
+		var cubePacket = Assert.Single(artifact.Packets, packet => IsPacketClass(packet, "SM_CUBE_UPDATE"));
 		Assert.Equal(SmCubeUpdate.PacketOpCode, cubePacket.Opcode);
+		Assert.False(string.IsNullOrWhiteSpace(cubePacket.BodyHex));
+		Assert.Equal(cubePacket.BodyHex, cubePacket.CanonicalPayloadHex);
 		Assert.Equal(0, RequiredInt(cubePacket.Decoded.Action, "action"));
 		Assert.Equal(artifact.Storage.StorageTypeOrdinal, RequiredInt(cubePacket.Decoded.ActionValue, "actionValue"));
 		Assert.Equal(0, RequiredInt(cubePacket.Decoded.ItemsCount, "itemsCount"));
@@ -261,7 +266,9 @@ public sealed class PetFeedUnusualStorageJavaVectorArtifactReaderTests(ITestOutp
 		Assert.NotNull(blob.DynamicInputs);
 		Assert.NotNull(blob.TimeNormalization);
 		Assert.Equal(blob.EntryIds.Count, blob.DecodedEntries.Count);
-		Assert.Equal(blob.Hex.Length / 2, blob.Size);
+		Assert.NotEmpty(blob.Hex);
+		Assert.Equal((blob.Size + 2) * 2, blob.Hex.Length);
+		Assert.Contains(blob.PacketBodyVerification, new[] { "matched", "mismatched", "unavailable" });
 		Assert.True(blob.TimeNormalization.CapturedAtEpochSeconds >= 0);
 		Assert.True(blob.TimeNormalization.ExpirationRemainingSeconds >= 0);
 		Assert.True(blob.TimeNormalization.DyeRemainingSeconds >= 0);
@@ -269,7 +276,7 @@ public sealed class PetFeedUnusualStorageJavaVectorArtifactReaderTests(ITestOutp
 
 	private static void AssertGeneratedCubeUpdateBodyMatchesCSharpWhenPresent(PetFeedUnusualStorageJavaVectorArtifact artifact)
 	{
-		foreach (var packet in artifact.Packets.Where(packet => packet.JavaClass == "SM_CUBE_UPDATE" && !string.IsNullOrWhiteSpace(packet.BodyHex)))
+		foreach (var packet in artifact.Packets.Where(packet => IsPacketClass(packet, "SM_CUBE_UPDATE") && !string.IsNullOrWhiteSpace(packet.BodyHex)))
 		{
 			Assert.Equal(
 				NormalizeHex(packet.BodyHex!),
@@ -279,13 +286,17 @@ public sealed class PetFeedUnusualStorageJavaVectorArtifactReaderTests(ITestOutp
 
 	private static void AssertGeneratedCubeUpdateCanonicalPayloadMatchesCSharpWhenPresent(PetFeedUnusualStorageJavaVectorArtifact artifact)
 	{
-		foreach (var packet in artifact.Packets.Where(packet => packet.JavaClass == "SM_CUBE_UPDATE" && !string.IsNullOrWhiteSpace(packet.CanonicalPayloadHex)))
+		foreach (var packet in artifact.Packets.Where(packet => IsPacketClass(packet, "SM_CUBE_UPDATE") && !string.IsNullOrWhiteSpace(packet.CanonicalPayloadHex)))
 		{
 			Assert.Equal(
 				NormalizeHex(packet.CanonicalPayloadHex!),
-				Convert.ToHexString(SerializeCanonicalPayload(SmCubeUpdate.ZeroSizeForJavaStorageId(artifact.Storage.StorageId))));
+				Convert.ToHexString(SerializeUnencryptedBody(SmCubeUpdate.ZeroSizeForJavaStorageId(artifact.Storage.StorageId))));
 		}
 	}
+
+	private static bool IsPacketClass(PetFeedUnusualStoragePacket packet, string simpleName) =>
+		string.Equals(packet.JavaClass, simpleName, StringComparison.Ordinal)
+		|| packet.JavaClass.EndsWith("." + simpleName, StringComparison.Ordinal);
 
 	private static int RequiredInt(int? value, string fieldName)
 	{
@@ -299,15 +310,6 @@ public sealed class PetFeedUnusualStorageJavaVectorArtifactReaderTests(ITestOutp
 		crypt.EnableKey();
 		var frame = packet.SerializeFrame(crypt);
 		return frame[7..];
-	}
-
-	private static byte[] SerializeCanonicalPayload(GameServerPacket packet)
-	{
-		var body = SerializeUnencryptedBody(packet);
-		var payload = new byte[sizeof(ushort) + body.Length];
-		BinaryPrimitives.WriteUInt16LittleEndian(payload.AsSpan(0, sizeof(ushort)), checked((ushort)packet.OpCode));
-		body.CopyTo(payload.AsSpan(sizeof(ushort)));
-		return payload;
 	}
 
 	private static string NormalizeHex(string hex) =>
@@ -434,6 +436,7 @@ public sealed class PetFeedUnusualStorageJavaVectorArtifactReaderTests(ITestOutp
 	private sealed record PetFeedUnusualStorageItemBlob(
 		string Hex,
 		int Size,
+		string PacketBodyVerification,
 		IReadOnlyList<int> EntryIds,
 		IReadOnlyList<JsonElement> DecodedEntries,
 		PetFeedUnusualStorageTemplateDerivedInputs TemplateDerivedInputs,
