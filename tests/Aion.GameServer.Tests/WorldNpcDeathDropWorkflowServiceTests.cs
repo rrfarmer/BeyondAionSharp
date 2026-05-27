@@ -422,6 +422,28 @@ public sealed class WorldNpcDeathDropWorkflowServiceTests
 			Assert.Contains(connectionRegistry.SentPackets, delivery => delivery.PlayerObjectId == 1001 && delivery.Packet is SmKiskUpdate);
 			Assert.Equal(2, connectionRegistry.SentPackets.Count(delivery => delivery.Packet is SmBindPointInfo));
 			Assert.Single(connectionRegistry.SentPackets, delivery => delivery.PlayerObjectId == 1002 && delivery.Packet is SmDie);
+			Assert.Collection(
+				connectionRegistry.SentPackets,
+				delivery =>
+				{
+					Assert.Equal(1001, delivery.PlayerObjectId);
+					Assert.IsType<SmKiskUpdate>(delivery.Packet);
+				},
+				delivery =>
+				{
+					Assert.Equal(1001, delivery.PlayerObjectId);
+					Assert.IsType<SmBindPointInfo>(delivery.Packet);
+				},
+				delivery =>
+				{
+					Assert.Equal(1002, delivery.PlayerObjectId);
+					Assert.IsType<SmBindPointInfo>(delivery.Packet);
+				},
+				delivery =>
+				{
+					Assert.Equal(1002, delivery.PlayerObjectId);
+					Assert.IsType<SmDie>(delivery.Packet);
+				});
 		}
 		finally
 		{
