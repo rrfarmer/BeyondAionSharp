@@ -2078,6 +2078,68 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CompositeStonesMergesRewardWithoutCubeUpdate()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(includeThreadPoolManager: true);
+		var player = CreatePlayer(itemId: 165010000);
+		var possibleRewardIds = Enumerable.Range(166000015, 10)
+			.Concat(Enumerable.Range(166000026, 10))
+			.ToArray();
+		var seededRewardStacks = possibleRewardIds
+			.Select((itemId, index) => new InventoryItem
+			{
+				ObjectId = 7100 + index,
+				ItemId = itemId,
+				Count = 1,
+				Location = 0,
+				OwnerId = player.ObjectId,
+			});
+		player.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 7001, ItemId = 165010000, Count = 1, Location = 0, OwnerId = player.ObjectId },
+			new InventoryItem { ObjectId = 7002, ItemId = 166001020, Count = 1, Location = 0, OwnerId = player.ObjectId },
+			new InventoryItem { ObjectId = 7003, ItemId = 166001030, Count = 1, Location = 0, OwnerId = player.ObjectId },
+			.. seededRewardStacks,
+		];
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(208, buffer =>
+			{
+				buffer.WriteD(7001);
+				buffer.WriteD(7002);
+				buffer.WriteD(7003);
+			}));
+
+		await WaitUntilAsync(() => fixture.SentPackets.Count >= 9, TimeSpan.FromSeconds(6));
+
+		Assert.Equal(possibleRewardIds.Length, player.InventoryItems.Count);
+		var mergedReward = Assert.Single(
+			player.InventoryItems,
+			item => possibleRewardIds.Contains(item.ItemId) && item.Count == 2);
+		Assert.All(
+			player.InventoryItems.Where(item => possibleRewardIds.Contains(item.ItemId) && item.ItemId != mergedReward.ItemId),
+			item => Assert.Equal(1, item.Count));
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 165010000, expectedTime: 5000, expectedEnd: 0, expectedItemObjectId: 7001),
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 7001, expectedDeleteType: SmDeleteItem.UseDeleteType),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 22),
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 7002, expectedDeleteType: SmDeleteItem.UseDeleteType),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 21),
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 7003, expectedDeleteType: SmDeleteItem.UseDeleteType),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 20),
+			packet => AssertInventoryUpdatePayloadWithCleanupSealFlag(
+				Assert.IsType<SmInventoryUpdateItem>(packet),
+				expectedObjectId: mergedReward.ObjectId,
+				expectedUpdateType: SmInventoryUpdateItem.IncreaseItemCollect,
+				expectedCleanupSealFlag: 3,
+				expectedItemMask: 0),
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 165010000, expectedTime: 0, expectedEnd: 1, expectedItemObjectId: 7001));
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CompositeStonesKeepsEarlierConsumesWhenSecondStoneDisappearsBeforeCompletion()
 	{
 		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(includeThreadPoolManager: true);
@@ -3554,6 +3616,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 						</item_template>
 						<item_template id="166000020" name="Test Enchantment Stone 20" level="20" item_group="ENCHANTMENT" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
 						<item_template id="166000030" name="Test Enchantment Stone 30" level="30" item_group="ENCHANTMENT" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
+						<item_template id="166001020" name="Test Input-Only Enchantment Stone 20" level="20" item_group="ENCHANTMENT" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
+						<item_template id="166001030" name="Test Input-Only Enchantment Stone 30" level="30" item_group="ENCHANTMENT" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
 						<item_template id="166000015" name="Test Enchantment Stone 15" level="15" item_group="ENCHANTMENT" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
 						<item_template id="166000016" name="Test Enchantment Stone 16" level="16" item_group="ENCHANTMENT" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
 						<item_template id="166000017" name="Test Enchantment Stone 17" level="17" item_group="ENCHANTMENT" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
