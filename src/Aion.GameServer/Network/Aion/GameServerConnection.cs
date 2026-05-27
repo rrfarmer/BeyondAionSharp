@@ -6148,7 +6148,11 @@ public sealed class GameServerConnection : BaseClientConnection
 		else if (polishPlan.SourceItemUpdate != null)
 		{
 			ReplaceInventoryItem(inventoryItems, polishPlan.SourceItemUpdate);
-			await SendPacketAsync(new SmInventoryUpdateItem(polishPlan.SourceItemUpdate, polishPlan.SourceTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+			await SendPacketAsync(new SmInventoryUpdateItem(
+				polishPlan.SourceItemUpdate,
+				polishPlan.SourceTemplate,
+				SmInventoryUpdateItem.DecreaseItemUse,
+				GetGeneralInfoWarehouseRestrictionFlag(polishPlan.SourceItemUpdate.ItemId, staticData.ItemRestrictionCleanups)));
 		}
 
 		if (!success)
@@ -6164,7 +6168,11 @@ public sealed class GameServerConnection : BaseClientConnection
 		ReplaceInventoryItem(inventoryItems, polishPlan.TargetItemUpdate);
 		player.InventoryItems = inventoryItems.ToArray();
 		await SendPacketAsync(SmSystemMessage.PolishSuccess(polishPlan.TargetTemplate.GetClientName() ?? polishPlan.TargetTemplate.Name));
-		await SendPacketAsync(new SmInventoryUpdateItem(polishPlan.TargetItemUpdate, polishPlan.TargetTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+		await SendPacketAsync(new SmInventoryUpdateItem(
+			polishPlan.TargetItemUpdate,
+			polishPlan.TargetTemplate,
+			SmInventoryUpdateItem.DecreaseItemUse,
+			GetGeneralInfoWarehouseRestrictionFlag(polishPlan.TargetItemUpdate.ItemId, staticData.ItemRestrictionCleanups)));
 		if (polishPlan.TargetItemUpdate.IsEquipped)
 			await SendPacketAsync(CreateStatsInfoPacket(player, staticData));
 	}
