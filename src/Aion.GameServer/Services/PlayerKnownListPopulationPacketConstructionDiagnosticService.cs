@@ -36,6 +36,8 @@ public sealed record PlayerKnownListPopulationPetVisibilityPacketConstructionDia
 	PlayerKnownListPopulationPacketConstructionFactPlanDirection Direction,
 	PlayerKnownListPetVisibilityOrderPlanStatus VisibilityPlanStatus,
 	PlayerKnownListPetVisibilityPacketConstructionStatus PacketConstructionStatus,
+	PlayerKnownListPetSpawnSnapshotProviderStatus? SpawnSnapshotProviderStatus,
+	bool HasSpawnSnapshotProviderResult,
 	int DescriptorCount,
 	int ConstructedPacketCount,
 	int BlockedPacketCount,
@@ -88,6 +90,9 @@ public sealed record PlayerKnownListPopulationPacketConstructionDiagnosticPlan(
 	int ConstructedPetVisibilityPacketConstructionPlanCount,
 	int PartiallyConstructedPetVisibilityPacketConstructionPlanCount,
 	int NoDescriptorPetVisibilityPacketConstructionPlanCount,
+	int PetSpawnSnapshotProviderResultCount,
+	int BlockedPetSpawnSnapshotProviderResultCount,
+	IReadOnlyDictionary<PlayerKnownListPetSpawnSnapshotProviderStatus, int> PetSpawnSnapshotProviderStatusCountsByKind,
 	int ConstructedPetPacketCount,
 	int BlockedPetPacketCount,
 	PlayerKnownListPopulationPacketConstructionDiagnosticStatus Status,
@@ -172,6 +177,12 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 			petResultDiagnostics.Count(result => result.PacketConstructionStatus == PlayerKnownListPetVisibilityPacketConstructionStatus.Constructed),
 			petResultDiagnostics.Count(result => result.PacketConstructionStatus == PlayerKnownListPetVisibilityPacketConstructionStatus.PartiallyConstructed),
 			petResultDiagnostics.Count(result => result.PacketConstructionStatus == PlayerKnownListPetVisibilityPacketConstructionStatus.NoDescriptors),
+			petResultDiagnostics.Count(result => result.SpawnSnapshotProviderStatus is not null),
+			petResultDiagnostics.Count(result => result.SpawnSnapshotProviderStatus is { } status
+				&& status != PlayerKnownListPetSpawnSnapshotProviderStatus.Created),
+			CountByKind(petResultDiagnostics
+				.Where(result => result.SpawnSnapshotProviderStatus is not null)
+				.Select(result => result.SpawnSnapshotProviderStatus!.Value)),
 			constructedPetPacketCount,
 			blockedPetPacketCount,
 			CreateOverallStatus(
@@ -258,10 +269,14 @@ public sealed class PlayerKnownListPopulationPacketConstructionDiagnosticService
 			result.Direction,
 			result.VisibilityPlan.Status,
 			result.PacketConstructionPlan.Status,
+			result.SpawnSnapshotProviderResult?.Status,
+			result.SpawnSnapshotProviderResult is not null,
 			result.VisibilityPlan.Descriptors.Count,
 			packetResults.Count(packet => packet.Status == PlayerKnownListPetVisibilityPacketConstructionResultStatus.Constructed),
 			packetResults.Count(packet => packet.Status != PlayerKnownListPetVisibilityPacketConstructionResultStatus.Constructed),
-			result.PacketConstructionPlan.Results.FirstOrDefault(packet => packet.Status != PlayerKnownListPetVisibilityPacketConstructionResultStatus.Constructed)?.Notes
+			result.SpawnSnapshotProviderResult is { Status: not PlayerKnownListPetSpawnSnapshotProviderStatus.Created } providerResult
+				? providerResult.Notes
+				: result.PacketConstructionPlan.Results.FirstOrDefault(packet => packet.Status != PlayerKnownListPetVisibilityPacketConstructionResultStatus.Constructed)?.Notes
 				?? result.VisibilityPlan.Notes);
 	}
 
