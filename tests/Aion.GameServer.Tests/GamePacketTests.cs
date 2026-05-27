@@ -6,6 +6,7 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.Account;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Model.Templates.Pet;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ClientPackets;
 using Aion.GameServer.Network.Aion.ServerPackets;
@@ -4106,6 +4107,110 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmPet_WritePetDataNoWritableFunctionsPadsNoneLikeJava()
+	{
+		var payload = SerializePetData(new SmPetDataSnapshot(
+			Name: "Tog",
+			TemplateId: 900001,
+			ObjectId: 7001,
+			MasterObjectId: 1001,
+			BirthdayEpochSeconds: 123456,
+			SecondsUntilExpiration: 654,
+			Functions: [],
+			Decoration: 12345));
+		using var reader = new PacketBuffer(payload);
+
+		AssertSmPetDataHeader(reader);
+		Assert.Equal((int)PetFunctionType.None, reader.ReadH());
+		Assert.Equal((int)PetFunctionType.None, reader.ReadH());
+		AssertSmPetAppearance(reader, decoration: 12345);
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void SmPet_WritePetDataOneDopingFunctionPadsItemsAndNoneLikeJava()
+	{
+		var payload = SerializePetData(new SmPetDataSnapshot(
+			Name: "Tog",
+			TemplateId: 900001,
+			ObjectId: 7001,
+			MasterObjectId: 1001,
+			BirthdayEpochSeconds: 123456,
+			SecondsUntilExpiration: 654,
+			Functions:
+			[
+				new SmPetFunctionSnapshot(PetFunctionType.Doping, DopingItemIds: [166000001, 166000002]),
+			],
+			Decoration: 12345));
+		using var reader = new PacketBuffer(payload);
+
+		AssertSmPetDataHeader(reader);
+		Assert.Equal((int)PetFunctionType.Doping, (int)reader.ReadC());
+		Assert.Equal(32, (int)reader.ReadC());
+		Assert.Equal(166000001, reader.ReadD());
+		Assert.Equal(166000002, reader.ReadD());
+		for (var i = 0; i < 6; i++)
+		{
+			Assert.Equal(0, reader.ReadD());
+		}
+
+		Assert.Equal((int)PetFunctionType.None, reader.ReadH());
+		AssertSmPetAppearance(reader, decoration: 12345);
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void SmPet_WritePetDataTwoFunctionsUsesJavaOrderAndNoNonePad()
+	{
+		var payload = SerializePetData(new SmPetDataSnapshot(
+			Name: "Tog",
+			TemplateId: 900001,
+			ObjectId: 7001,
+			MasterObjectId: 1001,
+			BirthdayEpochSeconds: 123456,
+			SecondsUntilExpiration: 654,
+			Functions:
+			[
+				new SmPetFunctionSnapshot(PetFunctionType.Food, FeedProgressData: 0x123450, RefeedDelaySeconds: 99),
+				new SmPetFunctionSnapshot(PetFunctionType.Warehouse),
+			],
+			Decoration: 12345));
+		using var reader = new PacketBuffer(payload);
+
+		AssertSmPetDataHeader(reader);
+		Assert.Equal((int)PetFunctionType.Warehouse, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal((int)PetFunctionType.Food, (int)reader.ReadC());
+		Assert.Equal(8, (int)reader.ReadC());
+		Assert.Equal(0x123450, reader.ReadD());
+		Assert.Equal(99, reader.ReadD());
+		AssertSmPetAppearance(reader, decoration: 12345);
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void SmPet_WritePetDataRejectsMoreThanTwoWritableFunctions()
+	{
+		using var buffer = new PacketBuffer();
+		var snapshot = new SmPetDataSnapshot(
+			Name: "Tog",
+			TemplateId: 900001,
+			ObjectId: 7001,
+			MasterObjectId: 1001,
+			BirthdayEpochSeconds: 123456,
+			SecondsUntilExpiration: 654,
+			Functions:
+			[
+				new SmPetFunctionSnapshot(PetFunctionType.Warehouse),
+				new SmPetFunctionSnapshot(PetFunctionType.Loot),
+				new SmPetFunctionSnapshot(PetFunctionType.Food, FeedProgressData: 1, RefeedDelaySeconds: 2),
+			],
+			Decoration: 12345);
+
+		Assert.Throws<InvalidOperationException>(() => SmPet.WritePetData(buffer, snapshot));
+	}
+
+	[Fact]
 	public void SmPetEmote_FlyStartWritesDefaultBranchLikeJava()
 	{
 		var payload = SerializeUnencryptedPayload(new SmPetEmote(new SmPetEmoteSnapshot(7001, PetEmote.FlyStart)));
@@ -5888,12 +5993,42 @@ public class GamePacketTests
 		return ((((opcode + 207) ^ 0xEF) + 0x0C) ^ 0xEF) & 0xffff;
 	}
 
+	private static byte[] SerializePetData(SmPetDataSnapshot snapshot)
+	{
+		using var buffer = new PacketBuffer();
+		SmPet.WritePetData(buffer, snapshot);
+		return buffer.ToArray();
+	}
+
 	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
 	{
 		var crypt = new GameCrypt(() => 0x01020304);
 		crypt.EnableKey();
 		var frame = packet.SerializeFrame(crypt);
 		return frame[7..];
+	}
+
+	private static void AssertSmPetDataHeader(PacketBuffer reader)
+	{
+		Assert.Equal("Tog", reader.ReadS());
+		Assert.Equal(900001, reader.ReadD());
+		Assert.Equal(7001, reader.ReadD());
+		Assert.Equal(1001, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(123456, reader.ReadD());
+		Assert.Equal(654, reader.ReadD());
+	}
+
+	private static void AssertSmPetAppearance(PacketBuffer reader, int decoration)
+	{
+		Assert.Equal((int)PetFunctionType.Appearance, reader.ReadH());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(decoration, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
 	}
 
 	private static void SkipSmPlayerInfoHeaderThroughCreatureType(PacketBuffer reader)
