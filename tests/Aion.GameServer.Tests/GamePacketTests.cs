@@ -4290,6 +4290,47 @@ public class GamePacketTests
 		Assert.Equal(0, reader.Remaining);
 	}
 
+	[Theory]
+	[InlineData(PetSpecialFunction.AutoLoot, true)]
+	[InlineData(PetSpecialFunction.AutoLoot, false)]
+	[InlineData(PetSpecialFunction.AutoSell, true)]
+	[InlineData(PetSpecialFunction.AutoSell, false)]
+	public void SmPet_SpecialFunctionActivationWritesJavaShape(PetSpecialFunction function, bool active)
+	{
+		var payload = SerializeUnencryptedPayload(SmPet.SpecialFunction(new SmPetSpecialFunctionSnapshot(function, active)));
+		using var reader = new PacketBuffer(payload);
+
+		Assert.Equal((int)PetAction.SpecialFunction, reader.ReadH());
+		Assert.Equal((int)function, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(active ? 1 : 0, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Theory]
+	[InlineData(true, 1)]
+	[InlineData(false, 2)]
+	public void SmPet_SpecialFunctionAutoLootNpcNotificationWritesJavaShape(bool active, int expectedState)
+	{
+		var payload = SerializeUnencryptedPayload(SmPet.SpecialFunction(new SmPetSpecialFunctionSnapshot(
+			PetSpecialFunction.AutoLoot,
+			active,
+			LootNpcObjectId: 50123)));
+		using var reader = new PacketBuffer(payload);
+
+		Assert.Equal((int)PetAction.SpecialFunction, reader.ReadH());
+		Assert.Equal((int)PetSpecialFunction.AutoLoot, (int)reader.ReadC());
+		Assert.Equal(expectedState, (int)reader.ReadC());
+		Assert.Equal(50123, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void SmPet_SpecialFunctionRejectsDopingShapeUntilDedicatedConstructorIsPorted()
+	{
+		Assert.Throws<NotSupportedException>(() => SmPet.SpecialFunction(new SmPetSpecialFunctionSnapshot(PetSpecialFunction.Doping, true)));
+	}
+
 	[Fact]
 	public void SmPetEmote_FlyStartWritesDefaultBranchLikeJava()
 	{
@@ -4360,6 +4401,9 @@ public class GamePacketTests
 		Assert.Equal(PetAction.Unknown, PetActionResolver.GetActionById(254));
 		Assert.Equal(PetEmote.FlyStart, PetEmoteResolver.GetEmoteById(129));
 		Assert.Equal(PetEmote.Unknown, PetEmoteResolver.GetEmoteById(254));
+		Assert.Equal(PetSpecialFunction.Doping, PetSpecialFunctionResolver.GetById(2));
+		Assert.Equal(PetSpecialFunction.AutoLoot, PetSpecialFunctionResolver.GetById(3));
+		Assert.Null(PetSpecialFunctionResolver.GetById(99));
 	}
 
 	[Fact]
