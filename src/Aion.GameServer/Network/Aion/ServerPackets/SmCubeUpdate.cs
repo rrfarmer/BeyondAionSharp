@@ -67,6 +67,15 @@ public sealed class SmCubeUpdate : GameServerPacket
 		return new SmCubeUpdate(0, AccountWarehouseStorageOrdinal, 0, 0, 0, 0);
 	}
 
+	public static SmCubeUpdate ZeroSizeForJavaStorageOrdinal(int storageTypeOrdinal)
+	{
+		// Java parity: SM_CUBE_UPDATE.cubeSize(StorageType, Player) writes StorageType.ordinal()
+		// even for storage families whose count/expand fields fall through to zero.
+		ArgumentOutOfRangeException.ThrowIfNegative(storageTypeOrdinal);
+		ArgumentOutOfRangeException.ThrowIfGreaterThan(storageTypeOrdinal, byte.MaxValue);
+		return new SmCubeUpdate(0, storageTypeOrdinal, 0, 0, 0, 0);
+	}
+
 	public static SmCubeUpdate LegionWarehouseSizeSnapshot(int itemsCount, int warehouseExpansions)
 	{
 		// Java parity: SM_CUBE_UPDATE.cubeSize(StorageType.LEGION_WAREHOUSE, Player) after callers

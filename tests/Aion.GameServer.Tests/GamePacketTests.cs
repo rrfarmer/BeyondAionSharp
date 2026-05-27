@@ -2565,6 +2565,64 @@ public class GamePacketTests
 		Assert.Equal(107, brokerNpcReader.ReadH());
 	}
 
+	[Theory]
+	[InlineData(4)]
+	[InlineData(5)]
+	[InlineData(6)]
+	[InlineData(7)]
+	[InlineData(8)]
+	[InlineData(9)]
+	[InlineData(10)]
+	[InlineData(11)]
+	[InlineData(12)]
+	[InlineData(13)]
+	[InlineData(14)]
+	[InlineData(15)]
+	[InlineData(16)]
+	[InlineData(17)]
+	[InlineData(18)]
+	[InlineData(19)]
+	[InlineData(20)]
+	[InlineData(21)]
+	[InlineData(22)]
+	[InlineData(23)]
+	[InlineData(24)]
+	[InlineData(25)]
+	[InlineData(26)]
+	[InlineData(27)]
+	[InlineData(28)]
+	[InlineData(29)]
+	[InlineData(30)]
+	[InlineData(31)]
+	[InlineData(32)]
+	[InlineData(33)]
+	[InlineData(34)]
+	[InlineData(35)]
+	[InlineData(36)]
+	[InlineData(37)]
+	public void SmCubeUpdate_ZeroSizeForJavaStorageOrdinalWritesUnusualStorageOrdinalsLikeJava(int storageTypeOrdinal)
+	{
+		// Java source breadcrumb: SM_CUBE_UPDATE.cubeSize writes StorageType.ordinal(),
+		// while pet bag, house, broker, and mailbox storage families keep zero count/expand fields.
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(SmCubeUpdate.ZeroSizeForJavaStorageOrdinal(storageTypeOrdinal)));
+
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(storageTypeOrdinal, (int)reader.ReadC());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Theory]
+	[InlineData(-1)]
+	[InlineData(256)]
+	public void SmCubeUpdate_ZeroSizeForJavaStorageOrdinalRejectsOutOfByteRangeActionValues(int storageTypeOrdinal)
+	{
+		Assert.Throws<ArgumentOutOfRangeException>(() => SmCubeUpdate.ZeroSizeForJavaStorageOrdinal(storageTypeOrdinal));
+	}
+
 	[Fact]
 	public void SmHouseOwnerInfo_WritesActiveHouseTownLevel()
 	{
