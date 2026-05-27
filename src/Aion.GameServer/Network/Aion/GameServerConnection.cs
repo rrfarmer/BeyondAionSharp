@@ -1042,20 +1042,23 @@ public sealed class GameServerConnection : BaseClientConnection
 					await RevalidatePlayerFlightZonesAsync(enterWorldResult.Player);
 					await SendPacketAsync(new SmChannelInfo(enterWorldResult.Player.Position, staticData?.WorldMaps ?? Array.Empty<WorldMapSummary>()));
 					var restoredKiskBinding = _runtimeContext?.Kisks.RestoreOfflineBinding(enterWorldResult.Player);
-					await SendPacketAsync(CreateBindPointPacket(enterWorldResult.Player, staticData));
-					if (restoredKiskBinding?.Kisk != null)
+					WorldPosition? restoredKiskPosition = null;
+					if (restoredKiskBinding?.Kisk != null && TryGetKiskPosition(restoredKiskBinding.Kisk.ObjectId, out var resolvedKiskPosition))
+						restoredKiskPosition = resolvedKiskPosition;
+					var kiskLoginRestorePlan = PlayerKiskLoginRestorePacketPlanService.CreatePlan(
+						enterWorldResult.Player,
+						restoredKiskBinding,
+						restoredKiskPosition,
+						staticData);
+					foreach (var directPacket in kiskLoginRestorePlan.DirectPackets)
+						await SendPacketAsync(directPacket);
+					if (kiskLoginRestorePlan is
+						{ RestoredKisk: not null, RestoredKiskPosition: { } kiskPosition, ShouldBroadcastAddedMemberUpdate: true })
 					{
-						// Java parity: KiskService.onLogin -> Kisk.addPlayer duplicate branch + TeleportService.sendKiskBindPoint.
-						await SendPacketAsync(new SmKiskUpdate(restoredKiskBinding.Kisk));
-						if (TryGetKiskPosition(restoredKiskBinding.Kisk.ObjectId, out var restoredKiskPosition))
-						{
-							if (restoredKiskBinding.AddedMember)
-								await BroadcastKiskUpdateAsync(
-									restoredKiskBinding.Kisk,
-									restoredKiskPosition,
-									excludedPlayerObjectId: enterWorldResult.Player.ObjectId);
-							await SendPacketAsync(SmBindPointInfo.Kisk(restoredKiskPosition, restoredKiskBinding.Kisk.ObjectId));
-						}
+						await BroadcastKiskUpdateAsync(
+							kiskLoginRestorePlan.RestoredKisk,
+							kiskPosition,
+							excludedPlayerObjectId: enterWorldResult.Player.ObjectId);
 					}
 					await SendPacketAsync(new SmPlayerSpawn(enterWorldResult.Player));
 					RegisterLoadedHouses(enterWorldResult.Player, staticData?.HousingTemplates);
