@@ -21,6 +21,17 @@ public enum PlayerDeathStateTransitionStep
 	SetDeadState,
 }
 
+public enum PlayerDeathStateTransitionPhase
+{
+	PlayerControllerPreSuperCleanup,
+	CreatureControllerDeathStateSelection,
+}
+
+public sealed record PlayerDeathStateTransitionPhasePlan(
+	PlayerDeathStateTransitionPhase Phase,
+	IReadOnlyList<PlayerDeathStateTransitionStep> Steps,
+	string JavaSource);
+
 public sealed record PlayerDeathStateTransitionResult(
 	PlayerDeathStateTransitionStatus Status,
 	int PlayerObjectId,
@@ -32,6 +43,7 @@ public sealed record PlayerDeathStateTransitionResult(
 	bool CurrentFlyingBeforeDeath,
 	bool WasFlyingAtDeath,
 	IReadOnlyList<PlayerDeathStateTransitionStep> Steps,
+	IReadOnlyList<PlayerDeathStateTransitionPhasePlan> PhasePlans,
 	string JavaSource,
 	bool IsLive);
 
@@ -46,15 +58,19 @@ public static class PlayerDeathStateTransitionService
 		var previousFlyState = player.FlyState;
 		var previousFlyingBeforeDeath = player.IsFlyingBeforeDeath;
 		var wasFlyingAtDeath = player.IsInState(PlayerCreatureState.Flying);
+		var playerControllerSteps = new List<PlayerDeathStateTransitionStep>();
+		var creatureControllerSteps = new List<PlayerDeathStateTransitionStep>();
 		var steps = new List<PlayerDeathStateTransitionStep>
 		{
 			PlayerDeathStateTransitionStep.CheckFlyingBeforeDeath,
 		};
+		playerControllerSteps.Add(PlayerDeathStateTransitionStep.CheckFlyingBeforeDeath);
 
 		if (wasFlyingAtDeath)
 		{
 			player.IsFlyingBeforeDeath = true;
 			steps.Add(PlayerDeathStateTransitionStep.SetFlyingBeforeDeathFlag);
+			playerControllerSteps.Add(PlayerDeathStateTransitionStep.SetFlyingBeforeDeathFlag);
 		}
 
 		player.IsInRideMode = false;
@@ -63,6 +79,8 @@ public static class PlayerDeathStateTransitionService
 		player.SetCreatureState(PlayerCreatureState.FloatingCorpse, enabled: false);
 		steps.Add(PlayerDeathStateTransitionStep.ClearRideAndRestingState);
 		steps.Add(PlayerDeathStateTransitionStep.ClearExistingFloatingCorpseState);
+		playerControllerSteps.Add(PlayerDeathStateTransitionStep.ClearRideAndRestingState);
+		playerControllerSteps.Add(PlayerDeathStateTransitionStep.ClearExistingFloatingCorpseState);
 
 		player.SetCreatureState(PlayerCreatureState.Flying, enabled: false);
 		player.SetCreatureState(PlayerCreatureState.Gliding, enabled: false);
@@ -70,6 +88,8 @@ public static class PlayerDeathStateTransitionService
 		player.UnsetFlyState(PlayerFlyState.Gliding);
 		steps.Add(PlayerDeathStateTransitionStep.ClearFlyingAndGlidingCreatureState);
 		steps.Add(PlayerDeathStateTransitionStep.ClearFlyingAndGlidingFlyState);
+		playerControllerSteps.Add(PlayerDeathStateTransitionStep.ClearFlyingAndGlidingCreatureState);
+		playerControllerSteps.Add(PlayerDeathStateTransitionStep.ClearFlyingAndGlidingFlyState);
 
 		if (player.IsFlyingBeforeDeath)
 		{
@@ -77,11 +97,14 @@ public static class PlayerDeathStateTransitionService
 			player.SetCreatureState(PlayerCreatureState.FloatingCorpse, enabled: true);
 			steps.Add(PlayerDeathStateTransitionStep.ClearActiveState);
 			steps.Add(PlayerDeathStateTransitionStep.SetFloatingCorpseState);
+			creatureControllerSteps.Add(PlayerDeathStateTransitionStep.ClearActiveState);
+			creatureControllerSteps.Add(PlayerDeathStateTransitionStep.SetFloatingCorpseState);
 		}
 		else
 		{
 			player.SetCreatureState(PlayerCreatureState.Dead, enabled: true);
 			steps.Add(PlayerDeathStateTransitionStep.SetDeadState);
+			creatureControllerSteps.Add(PlayerDeathStateTransitionStep.SetDeadState);
 		}
 
 		return new PlayerDeathStateTransitionResult(
@@ -97,6 +120,17 @@ public static class PlayerDeathStateTransitionService
 			player.IsFlyingBeforeDeath,
 			wasFlyingAtDeath,
 			steps,
+			new[]
+			{
+				new PlayerDeathStateTransitionPhasePlan(
+					PlayerDeathStateTransitionPhase.PlayerControllerPreSuperCleanup,
+					playerControllerSteps.ToArray(),
+					"com.aionemu.gameserver.controllers.PlayerController.onDie -> setIsFlyingBeforeDeath when FLYING; clear ride/rest/floating/flying/gliding before super.onDie"),
+				new PlayerDeathStateTransitionPhasePlan(
+					PlayerDeathStateTransitionPhase.CreatureControllerDeathStateSelection,
+					creatureControllerSteps.ToArray(),
+					"com.aionemu.gameserver.controllers.CreatureController.onDie -> if player.getIsFlyingBeforeDeath() set FLOATING_CORPSE else DEAD after abort/casting/effect cleanup"),
+			},
 			"com.aionemu.gameserver.controllers.PlayerController.onDie -> setIsFlyingBeforeDeath when FLYING, clear ride/rest/flying/gliding; CreatureController.onDie -> if isFlyingBeforeDeath set FLOATING_CORPSE else DEAD",
 			IsLive: true);
 	}

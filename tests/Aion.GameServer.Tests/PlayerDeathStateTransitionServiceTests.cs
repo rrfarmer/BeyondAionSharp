@@ -36,6 +36,22 @@ public sealed class PlayerDeathStateTransitionServiceTests
 		Assert.False(player.IsInGlidingState());
 		Assert.Contains(PlayerDeathStateTransitionStep.SetFlyingBeforeDeathFlag, result.Steps);
 		Assert.Contains(PlayerDeathStateTransitionStep.SetFloatingCorpseState, result.Steps);
+		var playerControllerPhase = Assert.Single(result.PhasePlans, phase => phase.Phase == PlayerDeathStateTransitionPhase.PlayerControllerPreSuperCleanup);
+		var creatureControllerPhase = Assert.Single(result.PhasePlans, phase => phase.Phase == PlayerDeathStateTransitionPhase.CreatureControllerDeathStateSelection);
+		AssertOrdered(
+			playerControllerPhase.Steps,
+			PlayerDeathStateTransitionStep.CheckFlyingBeforeDeath,
+			PlayerDeathStateTransitionStep.SetFlyingBeforeDeathFlag,
+			PlayerDeathStateTransitionStep.ClearRideAndRestingState,
+			PlayerDeathStateTransitionStep.ClearExistingFloatingCorpseState,
+			PlayerDeathStateTransitionStep.ClearFlyingAndGlidingCreatureState,
+			PlayerDeathStateTransitionStep.ClearFlyingAndGlidingFlyState);
+		AssertOrdered(
+			creatureControllerPhase.Steps,
+			PlayerDeathStateTransitionStep.ClearActiveState,
+			PlayerDeathStateTransitionStep.SetFloatingCorpseState);
+		Assert.Contains("PlayerController.onDie", playerControllerPhase.JavaSource);
+		Assert.Contains("CreatureController.onDie", creatureControllerPhase.JavaSource);
 		Assert.Contains("CreatureController.onDie", result.JavaSource);
 		Assert.True(result.IsLive);
 	}
@@ -60,6 +76,10 @@ public sealed class PlayerDeathStateTransitionServiceTests
 		Assert.False(player.IsInState(PlayerCreatureState.FloatingCorpse));
 		Assert.DoesNotContain(PlayerDeathStateTransitionStep.SetFlyingBeforeDeathFlag, result.Steps);
 		Assert.Contains(PlayerDeathStateTransitionStep.SetDeadState, result.Steps);
+		var playerControllerPhase = Assert.Single(result.PhasePlans, phase => phase.Phase == PlayerDeathStateTransitionPhase.PlayerControllerPreSuperCleanup);
+		var creatureControllerPhase = Assert.Single(result.PhasePlans, phase => phase.Phase == PlayerDeathStateTransitionPhase.CreatureControllerDeathStateSelection);
+		Assert.DoesNotContain(PlayerDeathStateTransitionStep.SetFlyingBeforeDeathFlag, playerControllerPhase.Steps);
+		Assert.Equal(new[] { PlayerDeathStateTransitionStep.SetDeadState }, creatureControllerPhase.Steps);
 	}
 
 	[Fact]
@@ -82,6 +102,21 @@ public sealed class PlayerDeathStateTransitionServiceTests
 		Assert.True(player.IsInState(PlayerCreatureState.FloatingCorpse));
 		Assert.True(player.IsInState(PlayerCreatureState.WalkMode));
 		Assert.DoesNotContain(PlayerDeathStateTransitionStep.SetFlyingBeforeDeathFlag, result.Steps);
+		var creatureControllerPhase = Assert.Single(result.PhasePlans, phase => phase.Phase == PlayerDeathStateTransitionPhase.CreatureControllerDeathStateSelection);
+		Assert.Equal(
+			new[] { PlayerDeathStateTransitionStep.ClearActiveState, PlayerDeathStateTransitionStep.SetFloatingCorpseState },
+			creatureControllerPhase.Steps);
+	}
+
+	private static void AssertOrdered(IReadOnlyList<PlayerDeathStateTransitionStep> actual, params PlayerDeathStateTransitionStep[] expected)
+	{
+		var previousIndex = -1;
+		foreach (var step in expected)
+		{
+			var currentIndex = Array.IndexOf(actual.ToArray(), step);
+			Assert.True(currentIndex > previousIndex, $"Expected {step} after index {previousIndex}, actual order: {string.Join(", ", actual)}");
+			previousIndex = currentIndex;
+		}
 	}
 
 	private const int PlayerObjectId = 1001;
