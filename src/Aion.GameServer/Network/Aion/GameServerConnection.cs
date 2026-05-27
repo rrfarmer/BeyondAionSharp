@@ -1860,7 +1860,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			packet.TargetObjectId,
 			packet.Index,
 			_runtimeContext?.DataManager?.StaticData.ItemTemplates,
-			() => _idFactory?.NextId() ?? 0);
+			() => _idFactory?.NextId() ?? 0,
+			_runtimeContext?.DataManager?.StaticData.ItemRestrictionCleanups);
 
 		foreach (var responsePacket in result.PlayerPackets)
 			await SendPacketAsync(responsePacket);

@@ -1,6 +1,8 @@
+using Aion.Commons.Network;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils;
@@ -291,6 +293,79 @@ public sealed class WorldNpcLootServiceTests
 	}
 
 	[Fact]
+	public void RequestDropItem_AddsRestrictedSoloItemWithCleanupSealFlag()
+	{
+		var dropRegistration = new WorldNpcDropRegistrationService();
+		var collectedDrop = new WorldNpcDropItem(1, 182400002, 2);
+		var remainingDrop = new WorldNpcDropItem(2, 182400003, 1);
+		dropRegistration.RegisterDrop(5001, looterObjectId: 1001, drops: [collectedDrop, remainingDrop]);
+		var service = new WorldNpcLootService(dropRegistration);
+		var player = CreatePlayer(1001);
+		Assert.Equal(WorldNpcLootStatus.Opened, service.RequestDropList(player, 5001).Status);
+
+		var result = service.RequestDropItem(
+			player,
+			5001,
+			itemIndex: 1,
+			CreateItemTemplates(),
+			() => 9001,
+			CreateItemRestrictionCleanups());
+
+		Assert.Equal(WorldNpcLootStatus.ItemCollected, result.Status);
+		var item = Assert.Single(player.InventoryItems);
+		Assert.Equal(9001, item.ObjectId);
+		Assert.Equal(182400002, item.ItemId);
+		Assert.Equal(2, item.Count);
+		AssertInventoryItemCollectAddPayload(
+			Assert.IsType<SmInventoryAddItem>(result.PlayerPackets[0]),
+			expectedObjectId: 9001,
+			expectedItemId: 182400002,
+			expectedCount: 2,
+			expectedCleanupSealFlag: 3);
+	}
+
+	[Fact]
+	public void RequestDropItem_MergesRestrictedSoloItemWithCleanupSealFlag()
+	{
+		var dropRegistration = new WorldNpcDropRegistrationService();
+		var collectedDrop = new WorldNpcDropItem(1, 182400002, 2);
+		var remainingDrop = new WorldNpcDropItem(2, 182400003, 1);
+		dropRegistration.RegisterDrop(5001, looterObjectId: 1001, drops: [collectedDrop, remainingDrop]);
+		var service = new WorldNpcLootService(dropRegistration);
+		var player = CreatePlayer(1001);
+		player.InventoryItems =
+		[
+			new InventoryItem
+			{
+				ObjectId = 8001,
+				ItemId = 182400002,
+				Count = 1,
+				Location = 0,
+			},
+		];
+		Assert.Equal(WorldNpcLootStatus.Opened, service.RequestDropList(player, 5001).Status);
+
+		var result = service.RequestDropItem(
+			player,
+			5001,
+			itemIndex: 1,
+			CreateItemTemplates(),
+			() => 9001,
+			CreateItemRestrictionCleanups());
+
+		Assert.Equal(WorldNpcLootStatus.ItemCollected, result.Status);
+		var item = Assert.Single(player.InventoryItems);
+		Assert.Equal(8001, item.ObjectId);
+		Assert.Equal(182400002, item.ItemId);
+		Assert.Equal(3, item.Count);
+		AssertInventoryUpdatePayloadWithCleanupSealFlag(
+			Assert.IsType<SmInventoryUpdateItem>(result.PlayerPackets[0]),
+			expectedObjectId: 8001,
+			expectedUpdateType: SmInventoryUpdateItem.IncreaseItemCollect,
+			expectedCleanupSealFlag: 3);
+	}
+
+	[Fact]
 	public void RequestDropItem_ClosesLootListWhenLastDropIsCollected()
 	{
 		var dropRegistration = new WorldNpcDropRegistrationService();
@@ -467,7 +542,7 @@ public sealed class WorldNpcLootServiceTests
 				TemplateId: 182400002,
 				Name: "drop_item",
 				DescriptionId: 0,
-				Mask: 0,
+				Mask: 122,
 				Level: 1,
 				ItemGroup: "NORMAL",
 				ItemType: "NORMAL",
@@ -503,5 +578,77 @@ public sealed class WorldNpcLootServiceTests
 				Price: 0,
 				ValidEquipmentSlots: 0),
 		]);
+	}
+
+	private static ItemRestrictionCleanupTable CreateItemRestrictionCleanups()
+	{
+		return new ItemRestrictionCleanupTable(
+		[
+			new ItemRestrictionCleanupSummary(182400002, AccountWarehouse: 0, LegionWarehouse: 0),
+		]);
+	}
+
+	private static void AssertInventoryItemCollectAddPayload(
+		SmInventoryAddItem packet,
+		int expectedObjectId,
+		int expectedItemId,
+		long expectedCount,
+		int expectedCleanupSealFlag)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(SmInventoryAddItem.ItemCollect, reader.ReadH());
+		Assert.Equal(1, reader.ReadH());
+		Assert.Equal(expectedObjectId, reader.ReadD());
+		Assert.Equal(expectedItemId, reader.ReadD());
+		reader.ReadS();
+		var blobSize = reader.ReadH();
+		var blob = reader.ReadB(blobSize);
+		Assert.Equal(65535, reader.ReadH());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+
+		using var blobReader = new PacketBuffer(blob);
+		Assert.Equal(0, (int)blobReader.ReadC());
+		blobReader.ReadH();
+		Assert.Equal(expectedCount, blobReader.ReadQ());
+		AssertGeneralInfoCleanupSealFlag(blob, expectedItemMask: 122, expectedFlag: expectedCleanupSealFlag);
+	}
+
+	private static void AssertInventoryUpdatePayloadWithCleanupSealFlag(
+		SmInventoryUpdateItem packet,
+		int expectedObjectId,
+		int expectedUpdateType,
+		int expectedCleanupSealFlag)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(expectedObjectId, reader.ReadD());
+		Assert.Equal(string.Empty, reader.ReadS());
+		var blobSize = reader.ReadH();
+		var blob = reader.ReadB(blobSize);
+		Assert.Equal(expectedUpdateType, reader.ReadH());
+		Assert.Equal(0, reader.Remaining);
+		AssertGeneralInfoCleanupSealFlag(blob, expectedItemMask: 122, expectedFlag: expectedCleanupSealFlag);
+	}
+
+	private static void AssertGeneralInfoCleanupSealFlag(byte[] blob, int expectedItemMask, int expectedFlag)
+	{
+		using var blobReader = new PacketBuffer(blob);
+		Assert.Equal(0x00, (int)blobReader.ReadC());
+		Assert.Equal(expectedItemMask, blobReader.ReadH());
+		blobReader.ReadQ();
+		Assert.Equal(string.Empty, blobReader.ReadS());
+		Assert.Equal(0, (int)blobReader.ReadC());
+		Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(expectedFlag, blobReader.ReadH());
+	}
+
+	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
+	{
+		var crypt = new GameCrypt(() => 0x01020304);
+		crypt.EnableKey();
+		var frame = packet.SerializeFrame(crypt);
+		return frame[7..];
 	}
 }

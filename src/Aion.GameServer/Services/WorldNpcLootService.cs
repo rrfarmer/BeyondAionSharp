@@ -91,7 +91,8 @@ public sealed class WorldNpcLootService
 		int npcObjectId,
 		int itemIndex,
 		ItemTemplateTable? itemTemplates,
-		Func<int>? nextObjectId)
+		Func<int>? nextObjectId,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups = null)
 	{
 		// Java parity: services/drop/DropService.requestDropItem, narrowed to direct solo item collection.
 		if (player == null
@@ -139,7 +140,7 @@ public sealed class WorldNpcLootService
 		}
 
 		ApplyInventoryPlan(player, addPlan);
-		var playerPackets = CreateInventoryCollectPackets(addPlan, template).ToList();
+		var playerPackets = CreateInventoryCollectPackets(addPlan, template, itemRestrictionCleanups).ToList();
 		var remainingDrops = _dropRegistrationService.ApplyCollectedCount(npcObjectId, itemIndex, addPlan.RemainingCount);
 		var visiblePackets = new List<GameServerPacket>();
 		if (remainingDrops.Count == 0)
@@ -263,18 +264,34 @@ public sealed class WorldNpcLootService
 		player.InventoryItems = inventory;
 	}
 
-	private static IEnumerable<GameServerPacket> CreateInventoryCollectPackets(InventoryAddPlan addPlan, ItemTemplateSummary template)
+	private static IEnumerable<GameServerPacket> CreateInventoryCollectPackets(
+		InventoryAddPlan addPlan,
+		ItemTemplateSummary template,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups)
 	{
 		foreach (var updatedItem in addPlan.UpdatedItems)
 		{
 			var updateType = template.TemplateId == InventoryItemFactory.KinahItemId
 				? SmInventoryUpdateItem.IncreaseKinahCollect
 				: SmInventoryUpdateItem.IncreaseItemCollect;
-			yield return new SmInventoryUpdateItem(updatedItem, template, updateType);
+			yield return new SmInventoryUpdateItem(
+				updatedItem,
+				template,
+				updateType,
+				GetGeneralInfoWarehouseRestrictionFlag(updatedItem.ItemId, itemRestrictionCleanups));
 		}
 
 		foreach (var addedItem in addPlan.AddedItems)
-			yield return SmInventoryAddItem.CreateItemCollect(addedItem, template);
+			yield return SmInventoryAddItem.CreateItemCollect(
+				addedItem,
+				template,
+				GetGeneralInfoWarehouseRestrictionFlag(addedItem.ItemId, itemRestrictionCleanups));
+	}
+
+	private static int GetGeneralInfoWarehouseRestrictionFlag(int itemId, ItemRestrictionCleanupTable? itemRestrictionCleanups)
+	{
+		// Java parity: network/aion/iteminfo/GeneralInfoBlobEntry uses DataManager.ITEM_CLEAN_UP.hasAccountOrLegionWhStorabilityDisabled.
+		return itemRestrictionCleanups?.HasAccountOrLegionWarehouseStorabilityDisabled(itemId) == true ? 3 : 0;
 	}
 
 	private static bool PlayerAlreadyOwnsLimitOneItem(Player player, ItemTemplateSummary template)
