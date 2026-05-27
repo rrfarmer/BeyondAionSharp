@@ -186,6 +186,69 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactReader
 		}
 	}
 
+	[Fact]
+	public void StopAfterInvalidUseItemArtifacts_KeepControllerStopBeforeInvalidBranches()
+	{
+		var artifacts = new[]
+		{
+			ParseStopAfterInvalidArtifact("cm-use-item-not-found-after-stop", "CM_USE_ITEM", "item_not_found", "CM_USE_ITEM.java", 62, "item_lookup_missing"),
+			ParseStopAfterInvalidArtifact("cm-use-item-restricted-after-stop", "CM_USE_ITEM", "item_use_restricted", "CM_USE_ITEM.java", 79, "player_restrictions_can_use_item"),
+			ParseStopAfterInvalidArtifact("cm-use-item-not-usable-after-stop", "CM_USE_ITEM", "item_not_usable", "CM_USE_ITEM.java", 88, "item_actions_empty_and_quest_not_handled"),
+			ParseStopAfterInvalidArtifact("cm-use-item-action-rejected-after-stop", "CM_USE_ITEM", "item_action_rejected", "CM_USE_ITEM.java", 109, "item_actions_rejected_by_can_act"),
+		};
+
+		foreach (var artifact in artifacts)
+		{
+			AssertStopAfterInvalidArtifact(artifact);
+			var invalidBranch = artifact.Traces.Single(trace => trace.Phase == "post_stop_packet_side_effect");
+			Assert.NotNull(invalidBranch.ActionPayload);
+			Assert.Equal(987654, invalidBranch.ActionPayload!.ItemObjectId);
+			switch (invalidBranch.ReturnReason)
+			{
+				case "item_not_found":
+					Assert.Equal("not_found", invalidBranch.ActionPayload.ItemLookupResult);
+					break;
+				case "item_use_restricted":
+					Assert.Equal("restricted", invalidBranch.ActionPayload.RestrictionResult);
+					break;
+				case "item_not_usable":
+					Assert.Equal("no_template_actions_and_quest_not_handled", invalidBranch.ActionPayload.ItemActionResult);
+					break;
+				case "item_action_rejected":
+					Assert.Equal("all_can_act_false", invalidBranch.ActionPayload.ItemActionResult);
+					break;
+				default:
+					throw new Xunit.Sdk.XunitException($"Unexpected use-item return reason {invalidBranch.ReturnReason}.");
+			}
+			Assert.Null(invalidBranch.ActionPayload.CompositeToolObjectId);
+		}
+	}
+
+	[Fact]
+	public void StopAfterInvalidCompositeArtifacts_KeepControllerStopBeforeInvalidBranches()
+	{
+		var artifacts = new[]
+		{
+			ParseStopAfterInvalidArtifact("cm-composite-tool-missing-after-stop", "CM_COMPOSITE_STONES", "composition_tool_not_found", "CM_COMPOSITE_STONES.java", 58, "tool_item_lookup_missing"),
+			ParseStopAfterInvalidArtifact("cm-composite-first-missing-after-stop", "CM_COMPOSITE_STONES", "composition_first_item_not_found", "CM_COMPOSITE_STONES.java", 61, "first_item_lookup_missing"),
+			ParseStopAfterInvalidArtifact("cm-composite-second-missing-after-stop", "CM_COMPOSITE_STONES", "composition_second_item_not_found", "CM_COMPOSITE_STONES.java", 64, "second_item_lookup_missing"),
+			ParseStopAfterInvalidArtifact("cm-composite-tool-restricted-after-stop", "CM_COMPOSITE_STONES", "composition_tool_use_restricted", "CM_COMPOSITE_STONES.java", 67, "composition_tool_use_restricted"),
+			ParseStopAfterInvalidArtifact("cm-composite-can-act-after-stop", "CM_COMPOSITE_STONES", "composition_action_rejected", "CM_COMPOSITE_STONES.java", 72, "composition_action_can_act_failed"),
+		};
+
+		foreach (var artifact in artifacts)
+		{
+			AssertStopAfterInvalidArtifact(artifact);
+			var invalidBranch = artifact.Traces.Single(trace => trace.Phase == "post_stop_packet_side_effect");
+			Assert.NotNull(invalidBranch.ActionPayload);
+			Assert.Equal(222001, invalidBranch.ActionPayload!.CompositeToolObjectId);
+			Assert.Equal(222002, invalidBranch.ActionPayload.CompositeFirstObjectId);
+			Assert.Equal(222003, invalidBranch.ActionPayload.CompositeSecondObjectId);
+			Assert.Null(invalidBranch.ActionPayload.ItemObjectId);
+			Assert.Contains("composition", invalidBranch.ReturnReason);
+		}
+	}
+
 	private static void AssertNoStopArtifact(ProtectionStopTriggerJavaTraceArtifact artifact)
 	{
 		Assert.Equal(1, artifact.SchemaVersion);
@@ -204,6 +267,33 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactReader
 			Assert.False(trace.TimestampIsParityKey);
 			Assert.True(trace.JavaLine > 0);
 		});
+	}
+
+	private static void AssertStopAfterInvalidArtifact(ProtectionStopTriggerJavaTraceArtifact artifact)
+	{
+		AssertArtifactSemantics(artifact);
+		Assert.Contains(artifact.Traces, trace => trace.Phase == "visual_mutate");
+		Assert.Contains(artifact.Traces, trace => trace.Phase == "post_stop_packet_side_effect");
+
+		var stopCall = artifact.Traces.Single(trace => trace.Phase == "stop_call_enter");
+		var taskCancel = artifact.Traces.Single(trace => trace.Phase == "task_cancel");
+		var invalidBranch = artifact.Traces.Single(trace => trace.Phase == "post_stop_packet_side_effect");
+		var packetReturn = artifact.Traces.Single(trace => trace.Phase == "packet_return");
+
+		Assert.True(stopCall.EventSeq < taskCancel.EventSeq);
+		Assert.True(taskCancel.EventSeq < invalidBranch.EventSeq);
+		Assert.True(invalidBranch.EventSeq < packetReturn.EventSeq);
+		Assert.True(stopCall.StopCalled);
+		Assert.True(taskCancel.StopCalled);
+		Assert.True(invalidBranch.StopCalled);
+		Assert.True(invalidBranch.ExpectsStopProtectionCall);
+		Assert.Equal(artifact.RuntimeFacts.ExpectedReturnReason, invalidBranch.ReturnReason);
+		Assert.Equal(invalidBranch.ReturnReason, packetReturn.ReturnReason);
+		Assert.Null(invalidBranch.TaskCancellation);
+		Assert.Null(invalidBranch.Fanout);
+		Assert.Null(invalidBranch.AiNotify);
+		Assert.NotNull(invalidBranch.ActionPayload);
+		Assert.All(artifact.Traces, trace => Assert.False(trace.TimestampIsParityKey));
 	}
 
 	private static void AssertArtifactSemantics(ProtectionStopTriggerJavaTraceArtifact artifact)
@@ -536,6 +626,353 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactReader
 		return artifact;
 	}
 
+	private static ProtectionStopTriggerJavaTraceArtifact ParseStopAfterInvalidArtifact(
+		string scenario,
+		string packetName,
+		string returnReason,
+		string javaSourceFile,
+		int invalidBranchLine,
+		string actionBranchName)
+	{
+		var itemLookupResult = returnReason == "item_not_found" ? "not_found" : "found";
+		var restrictionResult = returnReason == "item_use_restricted" ? "restricted" : "passed";
+		var itemActionResult = returnReason switch
+		{
+			"item_not_usable" => "no_template_actions_and_quest_not_handled",
+			"item_action_rejected" => "all_can_act_false",
+			_ => "not_evaluated",
+		};
+		var compositeCanActResult = returnReason == "composition_action_rejected" ? "false" : "not_evaluated";
+		var actionPayloadJson = packetName == "CM_USE_ITEM"
+			? $$"""
+				  {
+				    "itemObjectId": 987654,
+				    "itemLookupResult": "{{itemLookupResult}}",
+				    "restrictionResult": "{{restrictionResult}}",
+				    "itemActionResult": "{{itemActionResult}}",
+				    "compositeToolObjectId": null,
+				    "compositeFirstObjectId": null,
+				    "compositeSecondObjectId": null,
+				    "compositeCanActResult": null
+				  }
+				"""
+			: $$"""
+				  {
+				    "itemObjectId": null,
+				    "itemLookupResult": null,
+				    "restrictionResult": null,
+				    "itemActionResult": null,
+				    "compositeToolObjectId": 222001,
+				    "compositeFirstObjectId": 222002,
+				    "compositeSecondObjectId": 222003,
+				    "compositeCanActResult": "{{compositeCanActResult}}"
+				  }
+				""";
+		var json = $$"""
+			{
+			  "schemaVersion": 1,
+			  "javaCommit": "abcdef1",
+			  "scenario": "{{scenario}}",
+			  "runtimeFacts": {
+			    "serverFlavor": "java",
+			    "packetName": "{{packetName}}",
+			    "playerObjectId": 1001,
+			    "worldId": 210010000,
+			    "expectedReturnReason": "{{returnReason}}"
+			  },
+			  "javaSources": [
+			    "{{packetName}}.runImpl",
+			    "PlayerController.stopProtectionActiveTask",
+			    "CreatureController.cancelTask"
+			  ],
+			  "traces": [
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "{{scenario}}-001",
+			      "eventSeq": 0,
+			      "phase": "packet_enter",
+			      "packetName": "{{packetName}}",
+			      "returnReason": "{{returnReason}}",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": true,
+			      "wallTimeEpochMillis": 1760000000000,
+			      "monotonicNanos": 3000000,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "{{javaSourceFile}}",
+			      "javaLine": {{(packetName == "CM_USE_ITEM" ? 55 : 44)}},
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": true,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": {{actionPayloadJson}},
+			      "actionBranchName": "packet_enter"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "{{scenario}}-001",
+			      "eventSeq": 1,
+			      "phase": "stop_call_enter",
+			      "packetName": "{{packetName}}",
+			      "returnReason": "{{returnReason}}",
+			      "stopCalled": true,
+			      "expectsStopProtectionCall": true,
+			      "wallTimeEpochMillis": 1760000000001,
+			      "monotonicNanos": 3000100,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "{{javaSourceFile}}",
+			      "javaLine": {{(packetName == "CM_USE_ITEM" ? 58 : 49)}},
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": true,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "actionBranchName": "active_protection_stop"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "{{scenario}}-001",
+			      "eventSeq": 2,
+			      "phase": "task_cancel",
+			      "packetName": "{{packetName}}",
+			      "returnReason": "{{returnReason}}",
+			      "stopCalled": true,
+			      "expectsStopProtectionCall": true,
+			      "wallTimeEpochMillis": 1760000000002,
+			      "monotonicNanos": 3000200,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "CreatureController.java",
+			      "javaLine": 364,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": true,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": {
+			        "taskIdName": "PROTECTION_ACTIVE",
+			        "taskIdOrdinal": 3,
+			        "taskPresentBeforeCancel": true,
+			        "taskRemovedBeforeCancel": true,
+			        "futureCancelArgument": false,
+			        "futureCancelResult": true,
+			        "scheduledDelayMillis": 60000,
+			        "stopOrigin": "first_action_packet"
+			      },
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "actionBranchName": "cancel_task"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "{{scenario}}-001",
+			      "eventSeq": 3,
+			      "phase": "visual_mutate",
+			      "packetName": "{{packetName}}",
+			      "returnReason": "{{returnReason}}",
+			      "stopCalled": true,
+			      "expectsStopProtectionCall": true,
+			      "wallTimeEpochMillis": 1760000000003,
+			      "monotonicNanos": 3000300,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "PlayerController.java",
+			      "javaLine": 644,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": true,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": false,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": []
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "actionBranchName": "unset_blinking"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "{{scenario}}-001",
+			      "eventSeq": 4,
+			      "phase": "state_broadcast",
+			      "packetName": "{{packetName}}",
+			      "returnReason": "{{returnReason}}",
+			      "stopCalled": true,
+			      "expectsStopProtectionCall": true,
+			      "wallTimeEpochMillis": 1760000000004,
+			      "monotonicNanos": 3000400,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "PlayerController.java",
+			      "javaLine": 645,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": true,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": false,
+			        "protectionActiveAfter": false,
+			        "visualStateBefore": [],
+			        "visualStateAfter": []
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": {
+			        "packetName": "SM_PLAYER_STATE",
+			        "includeSelf": true,
+			        "recipientCount": 2,
+			        "knownListOrderIsParityKey": false
+			      },
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "actionBranchName": "broadcast_state"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "{{scenario}}-001",
+			      "eventSeq": 5,
+			      "phase": "ai_notify_enqueue",
+			      "packetName": "{{packetName}}",
+			      "returnReason": "{{returnReason}}",
+			      "stopCalled": true,
+			      "expectsStopProtectionCall": true,
+			      "wallTimeEpochMillis": 1760000000005,
+			      "monotonicNanos": 3000500,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "PlayerController.java",
+			      "javaLine": 646,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": true,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": false,
+			        "protectionActiveAfter": false,
+			        "visualStateBefore": [],
+			        "visualStateAfter": []
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": {
+			        "notifyAiOnMoveCalled": true,
+			        "ordering": "after_state_broadcast"
+			      },
+			      "emotion": null,
+			      "actionPayload": null,
+			      "actionBranchName": "ai_notify"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "{{scenario}}-001",
+			      "eventSeq": 6,
+			      "phase": "post_stop_packet_side_effect",
+			      "packetName": "{{packetName}}",
+			      "returnReason": "{{returnReason}}",
+			      "stopCalled": true,
+			      "expectsStopProtectionCall": true,
+			      "wallTimeEpochMillis": 1760000000006,
+			      "monotonicNanos": 3000600,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "{{javaSourceFile}}",
+			      "javaLine": {{invalidBranchLine}},
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": true,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": false,
+			        "protectionActiveAfter": false,
+			        "visualStateBefore": [],
+			        "visualStateAfter": []
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": {{actionPayloadJson}},
+			      "actionBranchName": "{{actionBranchName}}"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "{{scenario}}-001",
+			      "eventSeq": 7,
+			      "phase": "packet_return",
+			      "packetName": "{{packetName}}",
+			      "returnReason": "{{returnReason}}",
+			      "stopCalled": true,
+			      "expectsStopProtectionCall": true,
+			      "wallTimeEpochMillis": 1760000000007,
+			      "monotonicNanos": 3000700,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "{{javaSourceFile}}",
+			      "javaLine": {{invalidBranchLine}},
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": true,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": false,
+			        "protectionActiveAfter": false,
+			        "visualStateBefore": [],
+			        "visualStateAfter": []
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "actionBranchName": "packet_return"
+			    }
+			  ],
+			  "notes": [
+			    "Java calls stopProtectionActiveTask before this packet validation branch returns.",
+			    "Inline fixture proves reader binding only, not Java runtime parity."
+			  ]
+			}
+			""";
+
+		var artifact = JsonSerializer.Deserialize<ProtectionStopTriggerJavaTraceArtifact>(json, JsonOptions);
+		Assert.NotNull(artifact);
+		AssertStopAfterInvalidArtifact(artifact);
+		return artifact;
+	}
+
 	private static ProtectionStopTriggerJavaTraceArtifact ParseNoStopArtifact(
 		string scenario,
 		string packetName,
@@ -723,6 +1160,7 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactReader
 		ProtectionStopTriggerFanoutSnapshot? Fanout,
 		ProtectionStopTriggerAiNotifySnapshot? AiNotify,
 		ProtectionStopTriggerEmotionSnapshot? Emotion,
+		ProtectionStopTriggerActionPayloadSnapshot? ActionPayload,
 		string ActionBranchName);
 
 	private sealed record ProtectionStopTriggerPlayerSnapshot(
@@ -775,4 +1213,14 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactReader
 		string EmotionStance,
 		bool EmotionCanUse,
 		bool EmotionBroadcasted);
+
+	private sealed record ProtectionStopTriggerActionPayloadSnapshot(
+		int? ItemObjectId,
+		string? ItemLookupResult,
+		string? RestrictionResult,
+		string? ItemActionResult,
+		int? CompositeToolObjectId,
+		int? CompositeFirstObjectId,
+		int? CompositeSecondObjectId,
+		string? CompositeCanActResult);
 }
