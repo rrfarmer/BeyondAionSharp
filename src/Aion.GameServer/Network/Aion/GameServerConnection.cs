@@ -2934,9 +2934,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		var staticData = _runtimeContext?.DataManager?.StaticData;
-		var itemTemplates = staticData?.ItemTemplates;
-		if (itemTemplates == null)
+		if (staticData == null)
 			return;
+		var itemTemplates = staticData.ItemTemplates;
 
 		var plan = ItemSocketService.CreateRemoveManastonePlan(
 			player,
@@ -2950,6 +2950,18 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (plan.ItemUpdate == null || plan.KinahItemUpdate == null)
+			return;
+
+		await CompleteRemoveManastoneAsync(player, plan, itemTemplates, staticData.ItemRestrictionCleanups);
+	}
+
+	private async Task CompleteRemoveManastoneAsync(
+		Player player,
+		ManastoneRemovalPlan plan,
+		ItemTemplateTable itemTemplates,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups)
+	{
 		if (plan.ItemUpdate == null || plan.KinahItemUpdate == null)
 			return;
 
@@ -2969,7 +2981,11 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		await SendPacketAsync(SmSystemMessage.RemoveItemOptionSucceed(plan.ItemName));
 		if (itemTemplates.GetItemTemplate(plan.ItemUpdate.ItemId) is { } itemTemplate)
-			await SendPacketAsync(new SmInventoryUpdateItem(plan.ItemUpdate, itemTemplate, updateType: 0));
+			await SendPacketAsync(new SmInventoryUpdateItem(
+				plan.ItemUpdate,
+				itemTemplate,
+				SmInventoryUpdateItem.DecreaseItemUse,
+				GetGeneralInfoWarehouseRestrictionFlag(plan.ItemUpdate.ItemId, itemRestrictionCleanups)));
 	}
 
 	private static SmSystemMessage CreateRemoveManastoneFailureMessage(ManastoneRemovalPlan plan)
