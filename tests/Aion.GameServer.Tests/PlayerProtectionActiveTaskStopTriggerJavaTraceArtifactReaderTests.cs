@@ -424,6 +424,50 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactReader
 		Assert.All(artifact.Traces, trace => Assert.False(trace.TimestampIsParityKey));
 	}
 
+	[Fact]
+	public void TeleportChangeChannelCallerOriginArtifacts_RecordStartProtectionBeforeSpawnPacket()
+	{
+		var artifact = ParseTeleportChangeChannelCallerOriginArtifact();
+
+		Assert.Equal(1, artifact.SchemaVersion);
+		Assert.Equal("teleport-service-change-channel-start-protection-before-spawn-packet", artifact.Scenario);
+		Assert.Equal("teleport_change_channel_before_spawn_packet", artifact.RuntimeFacts.ExpectedReturnReason);
+		Assert.Contains("TeleportService.changeChannel", artifact.JavaSources);
+		Assert.Contains("PlayerController.startProtectionActiveTask", artifact.JavaSources);
+
+		var caller = artifact.Traces.Single(trace => trace.Phase == "caller_enter");
+		var positionSet = artifact.Traces.Single(trace => trace.Phase == "world_position_set");
+		var startGuard = artifact.Traces.Single(trace => trace.Phase == "start_guard");
+		var fanout = artifact.Traces.Single(trace => trace.Phase == "start_state_fanout");
+		var schedule = artifact.Traces.Single(trace => trace.Phase == "start_task_schedule");
+		var spawnPacketPending = artifact.Traces.Single(trace => trace.Phase == "spawn_packet_pending");
+
+		Assert.NotNull(caller.CallerOrigin);
+		Assert.Equal("teleport_change_channel_before_spawn_packet", caller.CallerOrigin!.CallerName);
+		Assert.Equal("TeleportService", caller.CallerOrigin.CallerClass);
+		Assert.Equal("changeChannel", caller.CallerOrigin.CallerMethod);
+		Assert.Equal(425, caller.CallerOrigin.StartProtectionLine);
+		Assert.False(caller.CallerOrigin.StartsProtectionBeforeWorldSpawn);
+		Assert.Null(caller.CallerOrigin.WorldSpawnLine);
+		Assert.False(caller.CallerOrigin.SpawnedBeforeStart);
+		Assert.Equal("position_set_before_start_protection_before_spawn_packet", caller.CallerOrigin.Ordering);
+		Assert.True(caller.Player.Spawned);
+		Assert.False(positionSet.Player.Spawned);
+		Assert.False(startGuard.Player.Spawned);
+		Assert.NotNull(fanout.Fanout);
+		Assert.Equal("SM_PLAYER_STATE", fanout.Fanout!.PacketName);
+		Assert.True(fanout.Fanout.IncludeSelf);
+		Assert.NotNull(schedule.Scheduler);
+		Assert.Equal(60000, schedule.Scheduler!.DelayMillis);
+		Assert.True(schedule.Scheduler.NewFutureStored);
+		Assert.True(caller.EventSeq < positionSet.EventSeq);
+		Assert.True(positionSet.EventSeq < startGuard.EventSeq);
+		Assert.True(fanout.EventSeq < schedule.EventSeq);
+		Assert.True(schedule.EventSeq < spawnPacketPending.EventSeq);
+		Assert.DoesNotContain(artifact.Traces, trace => trace.Phase is "callback_enter" or "task_cancel" or "stop_call_enter");
+		Assert.All(artifact.Traces, trace => Assert.False(trace.TimestampIsParityKey));
+	}
+
 	private static void AssertNoStopArtifact(ProtectionStopTriggerJavaTraceArtifact artifact)
 	{
 		Assert.Equal(1, artifact.SchemaVersion);
@@ -2440,6 +2484,360 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactReader
 			  ],
 			  "notes": [
 			    "TeleportService same-map path spawns the player before startProtectionActiveTask.",
+			    "Known-list recipient count remains diagnostic until generated Java artifacts exist.",
+			    "Inline fixture proves reader binding only, not Java runtime parity."
+			  ]
+			}
+			""";
+
+		var artifact = JsonSerializer.Deserialize<ProtectionStopTriggerJavaTraceArtifact>(json, JsonOptions);
+		Assert.NotNull(artifact);
+		return artifact;
+	}
+
+	private static ProtectionStopTriggerJavaTraceArtifact ParseTeleportChangeChannelCallerOriginArtifact()
+	{
+		const string json = """
+			{
+			  "schemaVersion": 1,
+			  "javaCommit": "abcdef1",
+			  "scenario": "teleport-service-change-channel-start-protection-before-spawn-packet",
+			  "runtimeFacts": {
+			    "serverFlavor": "java",
+			    "packetName": "TELEPORT_SERVICE_CHANGE_CHANNEL",
+			    "playerObjectId": 1001,
+			    "worldId": 210010000,
+			    "expectedReturnReason": "teleport_change_channel_before_spawn_packet"
+			  },
+			  "javaSources": [
+			    "TeleportService.changeChannel",
+			    "PlayerController.startProtectionActiveTask",
+			    "ThreadPoolManager.schedule",
+			    "CreatureController.addTask"
+			  ],
+			  "traces": [
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "teleport-service-change-channel-start-protection-before-spawn-packet-001",
+			      "eventSeq": 0,
+			      "phase": "caller_enter",
+			      "packetName": "TELEPORT_SERVICE_CHANGE_CHANNEL",
+			      "returnReason": "teleport_change_channel_before_spawn_packet",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000000000,
+			      "monotonicNanos": 8000000,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "TeleportService.java",
+			      "javaLine": 423,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": true,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": false,
+			        "protectionActiveAfter": false,
+			        "visualStateBefore": [],
+			        "visualStateAfter": []
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "callerOrigin": {
+			        "callerName": "teleport_change_channel_before_spawn_packet",
+			        "callerClass": "TeleportService",
+			        "callerMethod": "changeChannel",
+			        "callerSourceFile": "TeleportService.java",
+			        "callerLine": 425,
+			        "startProtectionLine": 425,
+			        "startsProtectionBeforeWorldSpawn": false,
+			        "worldSpawnLine": null,
+			        "spawnedBeforeStart": false,
+			        "ordering": "position_set_before_start_protection_before_spawn_packet"
+			      },
+			      "actionBranchName": "change_channel_path"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "teleport-service-change-channel-start-protection-before-spawn-packet-001",
+			      "eventSeq": 1,
+			      "phase": "world_position_set",
+			      "packetName": "TELEPORT_SERVICE_CHANGE_CHANNEL",
+			      "returnReason": "teleport_change_channel_before_spawn_packet",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000000001,
+			      "monotonicNanos": 8000100,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "TeleportService.java",
+			      "javaLine": 424,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": false,
+			        "protectionActiveAfter": false,
+			        "visualStateBefore": [],
+			        "visualStateAfter": []
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "callerOrigin": {
+			        "callerName": "teleport_change_channel_before_spawn_packet",
+			        "callerClass": "TeleportService",
+			        "callerMethod": "changeChannel",
+			        "callerSourceFile": "TeleportService.java",
+			        "callerLine": 425,
+			        "startProtectionLine": 425,
+			        "startsProtectionBeforeWorldSpawn": false,
+			        "worldSpawnLine": null,
+			        "spawnedBeforeStart": false,
+			        "ordering": "position_set_before_start_protection_before_spawn_packet"
+			      },
+			      "actionBranchName": "set_world_position"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "teleport-service-change-channel-start-protection-before-spawn-packet-001",
+			      "eventSeq": 2,
+			      "phase": "start_guard",
+			      "packetName": "TELEPORT_SERVICE_CHANGE_CHANNEL",
+			      "returnReason": "teleport_change_channel_before_spawn_packet",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000000002,
+			      "monotonicNanos": 8000200,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "PlayerController.java",
+			      "javaLine": 629,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": false,
+			        "protectionActiveAfter": false,
+			        "visualStateBefore": [],
+			        "visualStateAfter": []
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "callerOrigin": null,
+			      "actionBranchName": "not_already_protection_active"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "teleport-service-change-channel-start-protection-before-spawn-packet-001",
+			      "eventSeq": 3,
+			      "phase": "start_visual_set",
+			      "packetName": "TELEPORT_SERVICE_CHANGE_CHANNEL",
+			      "returnReason": "teleport_change_channel_before_spawn_packet",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000000003,
+			      "monotonicNanos": 8000300,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "PlayerController.java",
+			      "javaLine": 630,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": false,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": [],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "callerOrigin": null,
+			      "actionBranchName": "set_blinking"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "teleport-service-change-channel-start-protection-before-spawn-packet-001",
+			      "eventSeq": 4,
+			      "phase": "start_cast_target_cleanup",
+			      "packetName": "TELEPORT_SERVICE_CHANGE_CHANNEL",
+			      "returnReason": "teleport_change_channel_before_spawn_packet",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000000004,
+			      "monotonicNanos": 8000400,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "PlayerController.java",
+			      "javaLine": 631,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "callerOrigin": null,
+			      "actionBranchName": "cancel_cast_and_remove_target"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "teleport-service-change-channel-start-protection-before-spawn-packet-001",
+			      "eventSeq": 5,
+			      "phase": "start_state_fanout",
+			      "packetName": "TELEPORT_SERVICE_CHANGE_CHANNEL",
+			      "returnReason": "teleport_change_channel_before_spawn_packet",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000000005,
+			      "monotonicNanos": 8000500,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "PlayerController.java",
+			      "javaLine": 633,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": {
+			        "packetName": "SM_PLAYER_STATE",
+			        "includeSelf": true,
+			        "recipientCount": 2,
+			        "knownListOrderIsParityKey": false
+			      },
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "callerOrigin": null,
+			      "actionBranchName": "broadcast_start_state"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "teleport-service-change-channel-start-protection-before-spawn-packet-001",
+			      "eventSeq": 6,
+			      "phase": "start_task_schedule",
+			      "packetName": "TELEPORT_SERVICE_CHANGE_CHANNEL",
+			      "returnReason": "teleport_change_channel_before_spawn_packet",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000000006,
+			      "monotonicNanos": 8000600,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "PlayerController.java",
+			      "javaLine": 634,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": {
+			        "delayMillis": 60000,
+			        "timeUnit": "MILLISECONDS",
+			        "runnableWrapperApplied": true,
+			        "callbackMethod": "PlayerController.stopProtectionActiveTask",
+			        "oldFuturePresent": false,
+			        "oldFutureCancelArgument": null,
+			        "oldFutureCancelResult": null,
+			        "newFutureStored": true
+			      },
+			      "callerOrigin": null,
+			      "actionBranchName": "schedule_stop_callback"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "teleport-service-change-channel-start-protection-before-spawn-packet-001",
+			      "eventSeq": 7,
+			      "phase": "spawn_packet_pending",
+			      "packetName": "TELEPORT_SERVICE_CHANGE_CHANNEL",
+			      "returnReason": "teleport_change_channel_before_spawn_packet",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000000007,
+			      "monotonicNanos": 8000700,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "TeleportService.java",
+			      "javaLine": 427,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "callerOrigin": {
+			        "callerName": "teleport_change_channel_before_spawn_packet",
+			        "callerClass": "TeleportService",
+			        "callerMethod": "changeChannel",
+			        "callerSourceFile": "TeleportService.java",
+			        "callerLine": 425,
+			        "startProtectionLine": 425,
+			        "startsProtectionBeforeWorldSpawn": false,
+			        "worldSpawnLine": null,
+			        "spawnedBeforeStart": false,
+			        "ordering": "position_set_before_start_protection_before_spawn_packet"
+			      },
+			      "actionBranchName": "send_sm_player_spawn_after_start"
+			    }
+			  ],
+			  "notes": [
+			    "TeleportService.changeChannel sets world position before startProtectionActiveTask and sends SM_PLAYER_SPAWN afterward.",
 			    "Known-list recipient count remains diagnostic until generated Java artifacts exist.",
 			    "Inline fixture proves reader binding only, not Java runtime parity."
 			  ]
