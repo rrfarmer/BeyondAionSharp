@@ -17,6 +17,8 @@ public sealed class PlayerDeathWorkflowAdapterServiceTests
 
 		Assert.Equal(PlayerDeathWorkflowAdapterStatus.DisabledPlanned, result.Status);
 		Assert.Equal(PlayerDeathWorkflowStatus.PlannedFullPlayerDeath, result.Plan.Status);
+		Assert.Equal(PlayerDeathWorkflowStatus.PlannedFullPlayerDeath, result.Report.Status);
+		Assert.Contains(result.Report.Rows, row => row.JavaOperation == "broadcastPacketAndReceive(SM_EMOTION DIE)");
 		Assert.NotEmpty(result.Plan.StatePhasePlans);
 		Assert.NotNull(result.Plan.ResurrectionOptionsPlan);
 		Assert.NotNull(result.Plan.CoreSideEffectPlan);
@@ -56,6 +58,7 @@ public sealed class PlayerDeathWorkflowAdapterServiceTests
 		Assert.False(result.ScheduledTasks);
 		Assert.False(result.ExecutedExternalCallbacks);
 		Assert.True(result.IsLive);
+		Assert.Contains(result.Report.Rows, row => row.JavaOperation == "scheduleShowResurrectionOptions()");
 		Assert.Equal(PlayerDeathStateTransitionStatus.FloatingCorpseApplied, result.StateTransitionResult.Status);
 		Assert.True(player.IsFlyingBeforeDeath);
 		Assert.False(player.IsInState(PlayerCreatureState.Flying));
@@ -93,6 +96,9 @@ public sealed class PlayerDeathWorkflowAdapterServiceTests
 
 		Assert.Equal(PlayerDeathWorkflowAdapterStatus.EarlyReturnPlanned, result.Status);
 		Assert.Equal(PlayerDeathWorkflowStatus.ReturnedAfterDuelOpponentKill, result.Plan.Status);
+		Assert.Equal(PlayerDeathWorkflowStatus.ReturnedAfterDuelOpponentKill, result.Report.Status);
+		Assert.Equal(PlayerDeathWorkflowReportRowKind.EarlyReturn, result.Report.Rows[^1].Kind);
+		Assert.DoesNotContain(result.Report.Rows, row => row.JavaOperation == "doMode(RELEASE, summon, UNSPECIFIED)");
 		Assert.Null(result.StateTransitionResult);
 		Assert.Empty(result.Plan.StatePhasePlans);
 		Assert.Null(result.Plan.ResurrectionOptionsPlan);
@@ -118,6 +124,8 @@ public sealed class PlayerDeathWorkflowAdapterServiceTests
 
 		Assert.Equal(PlayerDeathWorkflowAdapterStatus.LiveStateTransitionApplied, result.Status);
 		Assert.Equal(PlayerDeathWorkflowStatus.ReturnedAfterInstanceHandler, result.Plan.Status);
+		Assert.Equal(PlayerDeathWorkflowStatus.ReturnedAfterInstanceHandler, result.Report.Status);
+		Assert.Contains(result.Report.Rows, row => row.JavaOperation == "return after instance handler");
 		Assert.NotNull(result.StateTransitionResult);
 		Assert.NotEmpty(result.Plan.StatePhasePlans);
 		Assert.NotNull(result.Plan.ResurrectionOptionsPlan);

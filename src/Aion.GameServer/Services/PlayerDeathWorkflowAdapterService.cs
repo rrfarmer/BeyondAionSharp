@@ -17,6 +17,7 @@ public sealed record PlayerDeathWorkflowAdapterRequest(
 public sealed record PlayerDeathWorkflowAdapterResult(
 	PlayerDeathWorkflowAdapterStatus Status,
 	PlayerDeathWorkflowPlan Plan,
+	PlayerDeathWorkflowReport Report,
 	PlayerDeathStateTransitionResult? StateTransitionResult,
 	bool MutatedPlayerState,
 	bool SentPackets,
@@ -38,11 +39,13 @@ public sealed class PlayerDeathWorkflowAdapterService
 	public PlayerDeathWorkflowAdapterResult Apply(PlayerDeathWorkflowAdapterRequest request)
 	{
 		var plan = _planService.CreatePlan(request.Player, request.Facts);
+		var report = PlayerDeathWorkflowReportService.CreateReport(plan);
 		if (!request.ExecuteLiveStateMutation)
 		{
 			return new PlayerDeathWorkflowAdapterResult(
 				PlayerDeathWorkflowAdapterStatus.DisabledPlanned,
 				plan,
+				report,
 				StateTransitionResult: null,
 				MutatedPlayerState: false,
 				SentPackets: false,
@@ -58,6 +61,7 @@ public sealed class PlayerDeathWorkflowAdapterService
 			return new PlayerDeathWorkflowAdapterResult(
 				PlayerDeathWorkflowAdapterStatus.EarlyReturnPlanned,
 				plan,
+				report,
 				StateTransitionResult: null,
 				MutatedPlayerState: false,
 				SentPackets: false,
@@ -72,6 +76,7 @@ public sealed class PlayerDeathWorkflowAdapterService
 		return new PlayerDeathWorkflowAdapterResult(
 			PlayerDeathWorkflowAdapterStatus.LiveStateTransitionApplied,
 			plan,
+			report,
 			transition,
 			MutatedPlayerState: true,
 			SentPackets: false,
