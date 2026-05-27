@@ -40,7 +40,11 @@ public sealed record PlayerProtectionActiveTaskFirstActionStopTriggerAuditReques
 	float CurrentZ,
 	float PacketX,
 	float PacketY,
-	float PacketZ);
+	float PacketZ,
+	bool EvaluateCmMoveInAir = false,
+	bool MoveInAirPlayerSpawned = true,
+	bool MoveInAirPlayerFlying = true,
+	bool MoveInAirProtectionActive = true);
 
 public sealed record PlayerProtectionActiveTaskFirstActionStopTriggerAuditRow(
 	int Order,
@@ -58,6 +62,7 @@ public sealed record PlayerProtectionActiveTaskFirstActionStopTriggerAuditReport
 	IReadOnlyList<PlayerProtectionActiveTaskFirstActionStopTriggerAuditRow> Rows,
 	bool HasCmMoveThresholdEvidence,
 	bool HasCmMoveInAirUnconditionalEvidence,
+	bool HasCmMoveInAirOrderingEvidence,
 	bool HasPendingCallerSurface,
 	bool TriggersStopProtection,
 	bool WiresProductionHandlers,
@@ -72,7 +77,7 @@ public static class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 		var rows = new List<PlayerProtectionActiveTaskFirstActionStopTriggerAuditRow>();
 
 		AddCmMove(rows, request);
-		AddCmMoveInAir(rows);
+		AddCmMoveInAir(rows, request);
 		AddPendingActionCaller(rows, PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmAttack, "CM_ATTACK.runImpl", "after dead-player guard");
 		AddPendingActionCaller(rows, PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmCastSpell, "CM_CASTSPELL.runImpl", "after dead, zero spell, pet order, template, and passive checks");
 		AddPendingActionCaller(rows, PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmCompositeStones, "CM_COMPOSITE_STONES.runImpl", "after null-player guard");
@@ -88,6 +93,9 @@ public static class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 			rowArray,
 			HasCmMoveThresholdEvidence: rowArray.Any(row => row.Source == PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmMove),
 			HasCmMoveInAirUnconditionalEvidence: rowArray.Any(row => row.Source == PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmMoveInAir),
+			HasCmMoveInAirOrderingEvidence: rowArray.Any(row =>
+				row.Source == PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmMoveInAir
+				&& row.Status != PlayerProtectionActiveTaskFirstActionStopTriggerStatus.PendingAudit),
 			HasPendingCallerSurface: rowArray.Any(row => row.Status == PlayerProtectionActiveTaskFirstActionStopTriggerStatus.PendingAudit),
 			TriggersStopProtection: rowArray.Any(row => row.WouldStopProtection),
 			WiresProductionHandlers: false,
@@ -129,18 +137,51 @@ public static class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 			note);
 	}
 
-	private static void AddCmMoveInAir(ICollection<PlayerProtectionActiveTaskFirstActionStopTriggerAuditRow> rows) =>
+	private static void AddCmMoveInAir(
+		ICollection<PlayerProtectionActiveTaskFirstActionStopTriggerAuditRow> rows,
+		PlayerProtectionActiveTaskFirstActionStopTriggerAuditRequest request)
+	{
+		if (!request.EvaluateCmMoveInAir)
+		{
+			Add(
+				rows,
+				PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmMoveInAir,
+				PlayerProtectionActiveTaskFirstActionStopTriggerRowKind.UnconditionalPacketStop,
+				PlayerProtectionActiveTaskFirstActionStopTriggerStatus.PendingAudit,
+				javaCallReached: false,
+				wouldStopProtection: false,
+				"if (player.isProtectionActive()) stopProtectionActiveTask()",
+				"CM_MOVE_IN_AIR.runImpl",
+				"future CM_MOVE_IN_AIR protection-stop hook",
+				"Java stops unconditionally after spawned/flying guards; this row is cataloged for the next detailed packet-order audit.");
+			return;
+		}
+
+		var javaCallReached = request.MoveInAirPlayerSpawned
+			&& request.MoveInAirPlayerFlying
+			&& request.MoveInAirProtectionActive;
+		var note = javaCallReached
+			? "Java CM_MOVE_IN_AIR reaches unconditional protection stop after spawned/flying guards and before World.updatePosition, onMoveFromClient, and onMove."
+			: !request.MoveInAirPlayerSpawned
+				? "Java CM_MOVE_IN_AIR returns at the spawned guard before flying, protection, distance, or world-position handling."
+				: !request.MoveInAirPlayerFlying
+					? "Java CM_MOVE_IN_AIR returns at the flying guard before protection stop, distance update, or world-position handling."
+					: "Java CM_MOVE_IN_AIR reaches spawned/flying path but skips stopProtectionActiveTask because protection is not active.";
+
 		Add(
 			rows,
 			PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmMoveInAir,
 			PlayerProtectionActiveTaskFirstActionStopTriggerRowKind.UnconditionalPacketStop,
-			PlayerProtectionActiveTaskFirstActionStopTriggerStatus.PendingAudit,
-			javaCallReached: false,
-			wouldStopProtection: false,
+			javaCallReached
+				? PlayerProtectionActiveTaskFirstActionStopTriggerStatus.WouldStopProtection
+				: PlayerProtectionActiveTaskFirstActionStopTriggerStatus.SkippedByJavaBranch,
+			javaCallReached,
+			javaCallReached,
 			"if (player.isProtectionActive()) stopProtectionActiveTask()",
 			"CM_MOVE_IN_AIR.runImpl",
 			"future CM_MOVE_IN_AIR protection-stop hook",
-			"Java stops unconditionally after spawned/flying guards; this row is cataloged for the next detailed packet-order audit.");
+			note);
+	}
 
 	private static void AddPendingActionCaller(
 		ICollection<PlayerProtectionActiveTaskFirstActionStopTriggerAuditRow> rows,

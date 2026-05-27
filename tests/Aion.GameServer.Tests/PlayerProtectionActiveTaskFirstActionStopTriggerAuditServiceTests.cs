@@ -95,6 +95,7 @@ public sealed class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 		var report = PlayerProtectionActiveTaskFirstActionStopTriggerAuditService.Create(CreateRequest());
 
 		Assert.True(report.HasCmMoveInAirUnconditionalEvidence);
+		Assert.False(report.HasCmMoveInAirOrderingEvidence);
 		Assert.True(report.HasPendingCallerSurface);
 		Assert.Contains(report.Rows, row =>
 			row.Source == PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmMoveInAir
@@ -109,6 +110,67 @@ public sealed class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 		Assert.Contains(report.Rows, row => row.Source == PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmUseItem && row.Status == PlayerProtectionActiveTaskFirstActionStopTriggerStatus.PendingAudit);
 	}
 
+	[Fact]
+	public void Create_CmMoveInAirSpawnedFlyingProtectedStopsBeforeWorldUpdate()
+	{
+		var report = PlayerProtectionActiveTaskFirstActionStopTriggerAuditService.Create(CreateRequest(
+			evaluateCmMoveInAir: true));
+
+		Assert.True(report.HasCmMoveInAirOrderingEvidence);
+		Assert.True(report.TriggersStopProtection);
+		Assert.Contains(report.Rows, row =>
+			row.Source == PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmMoveInAir
+			&& row.Status == PlayerProtectionActiveTaskFirstActionStopTriggerStatus.WouldStopProtection
+			&& row.JavaCallReached
+			&& row.WouldStopProtection
+			&& row.Notes.Contains("before World.updatePosition", StringComparison.Ordinal));
+	}
+
+	[Fact]
+	public void Create_CmMoveInAirNotSpawnedSkipsBeforeFlyingAndProtection()
+	{
+		var report = PlayerProtectionActiveTaskFirstActionStopTriggerAuditService.Create(CreateRequest(
+			evaluateCmMoveInAir: true,
+			moveInAirPlayerSpawned: false));
+
+		Assert.False(report.TriggersStopProtection);
+		Assert.Contains(report.Rows, row =>
+			row.Source == PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmMoveInAir
+			&& row.Status == PlayerProtectionActiveTaskFirstActionStopTriggerStatus.SkippedByJavaBranch
+			&& !row.JavaCallReached
+			&& row.Notes.Contains("returns at the spawned guard", StringComparison.Ordinal));
+	}
+
+	[Fact]
+	public void Create_CmMoveInAirNotFlyingSkipsBeforeProtectionStop()
+	{
+		var report = PlayerProtectionActiveTaskFirstActionStopTriggerAuditService.Create(CreateRequest(
+			evaluateCmMoveInAir: true,
+			moveInAirPlayerFlying: false));
+
+		Assert.False(report.TriggersStopProtection);
+		Assert.Contains(report.Rows, row =>
+			row.Source == PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmMoveInAir
+			&& row.Status == PlayerProtectionActiveTaskFirstActionStopTriggerStatus.SkippedByJavaBranch
+			&& !row.JavaCallReached
+			&& row.Notes.Contains("returns at the flying guard", StringComparison.Ordinal));
+	}
+
+	[Fact]
+	public void Create_CmMoveInAirInactiveProtectionSkipsAfterSpawnedFlyingGuards()
+	{
+		var report = PlayerProtectionActiveTaskFirstActionStopTriggerAuditService.Create(CreateRequest(
+			evaluateCmMoveInAir: true,
+			moveInAirProtectionActive: false));
+
+		Assert.False(report.TriggersStopProtection);
+		Assert.Contains(report.Rows, row =>
+			row.Source == PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmMoveInAir
+			&& row.Status == PlayerProtectionActiveTaskFirstActionStopTriggerStatus.SkippedByJavaBranch
+			&& !row.JavaCallReached
+			&& row.Notes.Contains("protection is not active", StringComparison.Ordinal));
+	}
+
 	private static PlayerProtectionActiveTaskFirstActionStopTriggerAuditRequest CreateRequest(
 		float packetX = CurrentX,
 		float packetY = CurrentY,
@@ -116,7 +178,11 @@ public sealed class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 		bool spawned = true,
 		bool antiHackAccepted = true,
 		bool teleportationModeAbsoluteMove = false,
-		bool protectionActive = true) =>
+		bool protectionActive = true,
+		bool evaluateCmMoveInAir = false,
+		bool moveInAirPlayerSpawned = true,
+		bool moveInAirPlayerFlying = true,
+		bool moveInAirProtectionActive = true) =>
 		new(
 			spawned,
 			antiHackAccepted,
@@ -127,7 +193,11 @@ public sealed class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 			CurrentZ,
 			packetX,
 			packetY,
-			packetZ);
+			packetZ,
+			evaluateCmMoveInAir,
+			moveInAirPlayerSpawned,
+			moveInAirPlayerFlying,
+			moveInAirProtectionActive);
 
 	private const float CurrentX = 100f;
 	private const float CurrentY = 200f;
