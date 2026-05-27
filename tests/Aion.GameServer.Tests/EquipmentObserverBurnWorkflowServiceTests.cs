@@ -54,6 +54,32 @@ public sealed class EquipmentObserverBurnWorkflowServiceTests
 	}
 
 	[Fact]
+	public async Task ApplyObserverBurnsAsync_PassesCleanupSealContextToExhaustedIdianFullUpdate()
+	{
+		var player = new Player
+		{
+			ObjectId = 1001,
+			InventoryItems =
+			[
+				CreateItem(objectId: 10, itemId: 100, charge: 0, polishCharge: 100_000),
+			],
+		};
+
+		var result = await EquipmentObserverBurnWorkflowService.ApplyObserverBurnsAsync(
+			player,
+			CreateItemTemplates(validEquipmentSlots: 0),
+			EquipmentObserverBurnEvent.Attack,
+			skillId: 0,
+			itemRestrictionCleanups: CreateItemRestrictionCleanups());
+
+		Assert.True(result.Changed);
+		Assert.True(result.Persisted);
+		Assert.Null(Assert.Single(player.InventoryItems).IdianStone);
+		var packet = Assert.Single(result.Packets);
+		AssertFullDecreasePacket(packet, objectId: 10, expectedCleanupSealFlag: 3);
+	}
+
+	[Fact]
 	public async Task ApplyObserverBurnsAsync_SkipsSkillAttackButAllowsDotAttacked()
 	{
 		var skillAttackPlayer = new Player
@@ -213,6 +239,34 @@ public sealed class EquipmentObserverBurnWorkflowServiceTests
 		Assert.Equal(0, reader.Remaining);
 	}
 
+	private static void AssertFullDecreasePacket(GameServerPacket packet, int objectId, int expectedCleanupSealFlag)
+	{
+		var payload = SerializeUnencryptedPayload(packet);
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(objectId, reader.ReadD());
+		Assert.Equal(string.Empty, reader.ReadS());
+		var blobSize = reader.ReadH();
+		Assert.True(blobSize > 0);
+		var blob = reader.ReadB(blobSize);
+		AssertGeneralInfoCleanupSealFlag(blob, expectedItemMask: 1, expectedFlag: expectedCleanupSealFlag);
+		Assert.Equal(SmInventoryUpdateItem.DecreaseItemUse, reader.ReadH());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertGeneralInfoCleanupSealFlag(byte[] blob, int expectedItemMask, int expectedFlag)
+	{
+		using var reader = new PacketBuffer(blob);
+		Assert.Equal(0x00, (int)reader.ReadC());
+		Assert.Equal(expectedItemMask, reader.ReadH());
+		Assert.Equal(1, reader.ReadQ());
+		Assert.Equal(string.Empty, reader.ReadS());
+		Assert.Equal(0, (int)reader.ReadC());
+		reader.ReadD();
+		reader.ReadD();
+		reader.ReadD();
+		Assert.Equal(expectedFlag, reader.ReadH());
+	}
+
 	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
 	{
 		var crypt = new GameCrypt(() => 0x01020304);
@@ -236,7 +290,7 @@ public sealed class EquipmentObserverBurnWorkflowServiceTests
 		};
 	}
 
-	private static ItemTemplateTable CreateItemTemplates()
+	private static ItemTemplateTable CreateItemTemplates(long validEquipmentSlots = 3)
 	{
 		return new ItemTemplateTable(
 		[
@@ -252,7 +306,7 @@ public sealed class EquipmentObserverBurnWorkflowServiceTests
 				"PC_ALL",
 				1,
 				0,
-				3,
+				validEquipmentSlots,
 				Improvement: new ItemImprovement(ChargeWay: 1, Level: 2, BurnAttack: 200, BurnDefend: 100, Price1: 1000, Price2: 2000),
 				IdianInfo: new ItemIdianInfo(BurnAttack: 100_000, BurnDefend: 60_000)),
 			new ItemTemplateSummary(
@@ -269,6 +323,14 @@ public sealed class EquipmentObserverBurnWorkflowServiceTests
 				0,
 				0,
 				PolishSetId: 12),
+		]);
+	}
+
+	private static ItemRestrictionCleanupTable CreateItemRestrictionCleanups()
+	{
+		return new ItemRestrictionCleanupTable(
+		[
+			new ItemRestrictionCleanupSummary(ItemId: 100, AccountWarehouse: 0, LegionWarehouse: 1),
 		]);
 	}
 

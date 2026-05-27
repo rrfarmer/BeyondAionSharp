@@ -27,7 +27,8 @@ public sealed class PlayerIncomingDamageObserverFanoutService
 		SmAttackStatusLog? packetLog = SmAttackStatusLog.Regular,
 		Func<Player, IdianPolishBurnPlan, CancellationToken, Task<bool>>? saveIdianPolishBurnAsync = null,
 		Func<Player, ItemChargeBurnPlan, CancellationToken, Task<bool>>? saveItemChargeBurnAsync = null,
-		CancellationToken cancellationToken = default)
+		CancellationToken cancellationToken = default,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups = null)
 	{
 		// Java parity: player incoming HP damage reaches life-stat packet side effects before equipment attacked observers update item packets.
 		return await ApplyIncomingHpDamageAndObserverBurnsAsync(
@@ -41,7 +42,8 @@ public sealed class PlayerIncomingDamageObserverFanoutService
 			packetLog,
 			saveIdianPolishBurnAsync,
 			saveItemChargeBurnAsync,
-			cancellationToken);
+			cancellationToken,
+			itemRestrictionCleanups);
 	}
 
 	public async ValueTask<PlayerIncomingDamageObserverFanoutResult> ApplyIncomingDotHpDamageAndObserverBurnsAsync(
@@ -54,7 +56,8 @@ public sealed class PlayerIncomingDamageObserverFanoutService
 		SmAttackStatusLog? packetLog = SmAttackStatusLog.SpellAttack,
 		Func<Player, IdianPolishBurnPlan, CancellationToken, Task<bool>>? saveIdianPolishBurnAsync = null,
 		Func<Player, ItemChargeBurnPlan, CancellationToken, Task<bool>>? saveItemChargeBurnAsync = null,
-		CancellationToken cancellationToken = default)
+		CancellationToken cancellationToken = default,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups = null)
 	{
 		// Java parity: AbstractOverTimeEffect periodic damage notifies dotattacked observers after HP packet side effects.
 		return await ApplyIncomingHpDamageAndObserverBurnsAsync(
@@ -68,7 +71,8 @@ public sealed class PlayerIncomingDamageObserverFanoutService
 			packetLog,
 			saveIdianPolishBurnAsync,
 			saveItemChargeBurnAsync,
-			cancellationToken);
+			cancellationToken,
+			itemRestrictionCleanups);
 	}
 
 	private async ValueTask<PlayerIncomingDamageObserverFanoutResult> ApplyIncomingHpDamageAndObserverBurnsAsync(
@@ -82,7 +86,8 @@ public sealed class PlayerIncomingDamageObserverFanoutService
 		SmAttackStatusLog? packetLog,
 		Func<Player, IdianPolishBurnPlan, CancellationToken, Task<bool>>? saveIdianPolishBurnAsync,
 		Func<Player, ItemChargeBurnPlan, CancellationToken, Task<bool>>? saveItemChargeBurnAsync,
-		CancellationToken cancellationToken)
+		CancellationToken cancellationToken,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups)
 	{
 		var damageResult = await _resourceStats.IncreasePlayerHpAsync(
 			defender,
@@ -101,7 +106,8 @@ public sealed class PlayerIncomingDamageObserverFanoutService
 				skillId,
 				saveIdianPolishBurnAsync,
 				saveItemChargeBurnAsync,
-				cancellationToken)
+				cancellationToken,
+				itemRestrictionCleanups)
 			: null;
 
 		return new PlayerIncomingDamageObserverFanoutResult(damageResult, observerBurns);

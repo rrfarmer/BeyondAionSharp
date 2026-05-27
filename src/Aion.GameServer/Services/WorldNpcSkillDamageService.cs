@@ -10,6 +10,7 @@ public sealed class WorldNpcSkillDamageService
 	private readonly WorldNpcSkillResultCalculationService _resultCalculation;
 	private readonly ItemTemplateTable? _itemTemplates;
 	private readonly Func<ItemTemplateTable?>? _getItemTemplates;
+	private readonly Func<ItemRestrictionCleanupTable?>? _getItemRestrictionCleanups;
 	private readonly Func<Player, IdianPolishBurnPlan, CancellationToken, Task<bool>>? _saveIdianPolishBurnAsync;
 	private readonly Func<Player, ItemChargeBurnPlan, CancellationToken, Task<bool>>? _saveItemChargeBurnAsync;
 
@@ -18,6 +19,7 @@ public sealed class WorldNpcSkillDamageService
 		WorldNpcSkillResultCalculationService? resultCalculation = null,
 		ItemTemplateTable? itemTemplates = null,
 		Func<ItemTemplateTable?>? getItemTemplates = null,
+		Func<ItemRestrictionCleanupTable?>? getItemRestrictionCleanups = null,
 		Func<Player, IdianPolishBurnPlan, CancellationToken, Task<bool>>? saveIdianPolishBurnAsync = null,
 		Func<Player, ItemChargeBurnPlan, CancellationToken, Task<bool>>? saveItemChargeBurnAsync = null)
 	{
@@ -25,6 +27,7 @@ public sealed class WorldNpcSkillDamageService
 		_resultCalculation = resultCalculation ?? new WorldNpcSkillResultCalculationService();
 		_itemTemplates = itemTemplates;
 		_getItemTemplates = getItemTemplates;
+		_getItemRestrictionCleanups = getItemRestrictionCleanups;
 		_saveIdianPolishBurnAsync = saveIdianPolishBurnAsync;
 		_saveItemChargeBurnAsync = saveItemChargeBurnAsync;
 	}
@@ -113,6 +116,7 @@ public sealed class WorldNpcSkillDamageService
 	{
 		// Java parity: Skill/Effect attack observer callbacks eventually notify equipped IdianStone/ChargeInfo observers.
 		var itemTemplates = _itemTemplates ?? _getItemTemplates?.Invoke();
+		var itemRestrictionCleanups = _getItemRestrictionCleanups?.Invoke();
 		if (itemTemplates == null || request.Effector == null)
 			return null;
 
@@ -131,7 +135,8 @@ public sealed class WorldNpcSkillDamageService
 			request.SkillId,
 			_saveIdianPolishBurnAsync,
 			_saveItemChargeBurnAsync,
-			cancellationToken);
+			cancellationToken,
+			itemRestrictionCleanups);
 	}
 
 	public WorldNpcSkillOverTimeEffectStartResult StartOverTimeEffect(WorldNpcSkillOverTimeEffectStartRequest request)

@@ -119,6 +119,7 @@ var builder = Host.CreateDefaultBuilder(args)
 						serviceProvider.GetRequiredService<WorldNpcDamageService>(),
 						serviceProvider.GetRequiredService<WorldNpcSkillResultCalculationService>(),
 						getItemTemplates: () => runtimeContext.DataManager?.StaticData.ItemTemplates,
+						getItemRestrictionCleanups: () => runtimeContext.DataManager?.StaticData.ItemRestrictionCleanups,
 						saveIdianPolishBurnAsync: playerEnterWorldService.SaveIdianPolishBurnMutationAsync,
 						saveItemChargeBurnAsync: playerEnterWorldService.SaveItemChargeBurnMutationAsync);
 				});

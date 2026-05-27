@@ -13,7 +13,8 @@ public static class EquipmentObserverBurnWorkflowService
 		int skillId,
 		Func<Player, IdianPolishBurnPlan, CancellationToken, Task<bool>>? saveIdianPolishBurnAsync = null,
 		Func<Player, ItemChargeBurnPlan, CancellationToken, Task<bool>>? saveItemChargeBurnAsync = null,
-		CancellationToken cancellationToken = default)
+		CancellationToken cancellationToken = default,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups = null)
 	{
 		// Java parity: model/items/IdianStone.onEquip registers its observer before ItemEquipmentListener registers ChargeInfo.
 		var idianPlan = IdianPolishService.BurnEquippedWeaponPolishChargeForObserverEvent(
@@ -21,7 +22,11 @@ public static class EquipmentObserverBurnWorkflowService
 			itemTemplates,
 			MapIdianEvent(observerEvent),
 			skillId);
-		var idianApplication = IdianPolishBurnApplicationService.ApplyBurnPlan(player, idianPlan, itemTemplates);
+		var idianApplication = IdianPolishBurnApplicationService.ApplyBurnPlan(
+			player,
+			idianPlan,
+			itemTemplates,
+			itemRestrictionCleanups);
 		var idianPersisted = saveIdianPolishBurnAsync == null || !idianPlan.Changed
 			|| await saveIdianPolishBurnAsync(player, idianPlan, cancellationToken);
 

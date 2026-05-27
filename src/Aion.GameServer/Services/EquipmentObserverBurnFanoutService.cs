@@ -20,7 +20,8 @@ public sealed class EquipmentObserverBurnFanoutService
 		int skillId,
 		Func<Player, IdianPolishBurnPlan, CancellationToken, Task<bool>>? saveIdianPolishBurnAsync = null,
 		Func<Player, ItemChargeBurnPlan, CancellationToken, Task<bool>>? saveItemChargeBurnAsync = null,
-		CancellationToken cancellationToken = default)
+		CancellationToken cancellationToken = default,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups = null)
 	{
 		// Java parity: IdianStone and ChargeInfo observer callbacks send SM_INVENTORY_UPDATE_ITEM to the equipment owner.
 		var workflow = await EquipmentObserverBurnWorkflowService.ApplyObserverBurnsAsync(
@@ -30,7 +31,8 @@ public sealed class EquipmentObserverBurnFanoutService
 			skillId,
 			saveIdianPolishBurnAsync,
 			saveItemChargeBurnAsync,
-			cancellationToken);
+			cancellationToken,
+			itemRestrictionCleanups);
 		var sentCount = 0;
 
 		if (_connectionRegistry != null)
