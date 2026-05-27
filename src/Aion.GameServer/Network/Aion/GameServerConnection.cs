@@ -5736,9 +5736,10 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		var delay = TimeSpan.FromSeconds(kisk.GetRemainingLifetimeSeconds(DateTimeOffset.UtcNow));
-		_threadPoolManager.Schedule(
+		var task = _threadPoolManager.Schedule(
 			cancellationToken => RunKiskLifetimeDespawnAsync(kisk.ObjectId, cancellationToken),
 			delay);
+		kisk.SetDespawnTask(task);
 	}
 
 	private async ValueTask RunKiskLifetimeDespawnAsync(int kiskObjectId, CancellationToken cancellationToken)
@@ -5746,15 +5747,20 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (cancellationToken.IsCancellationRequested || _world == null || _runtimeContext == null)
 			return;
 
-		await RemoveRuntimeKiskAsync(kiskObjectId);
+		await RemoveRuntimeKiskAsync(kiskObjectId, cancelScheduledDespawnTask: false);
 	}
 
-	internal async Task RemoveRuntimeKiskAsync(int kiskObjectId)
+	internal async Task RemoveRuntimeKiskAsync(int kiskObjectId, bool cancelScheduledDespawnTask = true)
 	{
 		if (_world == null || _runtimeContext == null)
 			return;
 
-		var result = PlayerKiskLifetimeService.DespawnExpiredKisk(_world, _runtimeContext.Kisks, _idFactory, kiskObjectId);
+		var result = PlayerKiskLifetimeService.DespawnExpiredKisk(
+			_world,
+			_runtimeContext.Kisks,
+			_idFactory,
+			kiskObjectId,
+			cancelScheduledDespawnTask);
 		if (!result.RemovedRegistry)
 			return;
 

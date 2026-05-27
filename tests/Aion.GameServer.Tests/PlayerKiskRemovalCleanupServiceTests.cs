@@ -18,7 +18,8 @@ public sealed class PlayerKiskRemovalCleanupServiceTests
 			kisk,
 			worldId: 210010000,
 			kisk.CurrentMemberIds,
-			releasedObjectId: true);
+			releasedObjectId: true,
+			cancelledDespawnTask: false);
 		var players = new[]
 		{
 			CreatePlayer(1001),

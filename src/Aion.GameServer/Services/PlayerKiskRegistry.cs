@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Services;
 
@@ -165,6 +166,8 @@ public sealed class PlayerKiskRuntimeState
 	public const int DefaultMaxResurrects = 18;
 
 	private readonly ConcurrentDictionary<int, byte> _memberIds = new();
+	private readonly Lock _despawnTaskSync = new();
+	private ScheduledTask? _despawnTask;
 
 	public PlayerKiskRuntimeState(
 		int objectId,
@@ -215,6 +218,15 @@ public sealed class PlayerKiskRuntimeState
 
 	public IReadOnlyList<int> CurrentMemberIds => _memberIds.Keys.ToArray();
 
+	public bool HasScheduledDespawnTask
+	{
+		get
+		{
+			lock (_despawnTaskSync)
+				return _despawnTask != null;
+		}
+	}
+
 	public static PlayerKiskRuntimeState FromTemplate(
 		int objectId,
 		int ownerObjectId,
@@ -246,6 +258,28 @@ public sealed class PlayerKiskRuntimeState
 	public bool AddMember(int playerObjectId)
 	{
 		return _memberIds.TryAdd(playerObjectId, 0);
+	}
+
+	public bool SetDespawnTask(ScheduledTask task)
+	{
+		// Java parity: controllers/CreatureController.addTask(TaskId.DESPAWN) replaces and cancels a previous DESPAWN task.
+		lock (_despawnTaskSync)
+		{
+			var replaced = _despawnTask?.Cancel() == true;
+			_despawnTask = task;
+			return replaced;
+		}
+	}
+
+	public bool CancelDespawnTask()
+	{
+		// Java parity: controllers/CreatureController.onDelete -> cancelAllTasks cancels the Kisk TaskId.DESPAWN Future.
+		lock (_despawnTaskSync)
+		{
+			var task = _despawnTask;
+			_despawnTask = null;
+			return task?.Cancel() == true;
+		}
 	}
 
 	public bool RemoveMember(int playerObjectId)
