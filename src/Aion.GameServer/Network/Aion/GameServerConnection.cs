@@ -4522,7 +4522,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		player.InventoryItems = inventoryItems.ToArray();
 		RegisterExpirableAddedItems(player, rewardInventoryPlan.Packets);
 		await BroadcastItemUsageAnimationAsync(player, new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 1, 0));
-		await SendDecomposeRewardItemsAsync(rewardInventoryPlan.Packets);
+		await SendDecomposeRewardItemsAsync(rewardInventoryPlan.Packets, staticData.ItemRestrictionCleanups);
 	}
 
 	private async Task HandleSelectDecomposableAsync(Player player, CmSelectDecomposable packet)
@@ -4574,7 +4574,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		ApplyRewardInventoryMutation(inventoryItems, rewardInventoryPlan);
 		player.InventoryItems = inventoryItems.ToArray();
 		RegisterExpirableAddedItems(player, rewardInventoryPlan.Packets);
-		await SendDecomposeRewardItemsAsync(rewardInventoryPlan.Packets);
+		await SendDecomposeRewardItemsAsync(rewardInventoryPlan.Packets, staticData.ItemRestrictionCleanups);
 	}
 
 	private DecomposeRewardInventoryPlan? CreateDecomposeRewardInventoryPlan(
@@ -4635,21 +4635,29 @@ public sealed class GameServerConnection : BaseClientConnection
 			_expirableTaskService?.RegisterInventoryItem(player, rewardPacket.Item);
 	}
 
-	private async Task SendDecomposeRewardItemsAsync(IReadOnlyList<DecomposeRewardPacket> rewardPackets)
+	private async Task SendDecomposeRewardItemsAsync(
+		IReadOnlyList<DecomposeRewardPacket> rewardPackets,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups)
 	{
 		foreach (var rewardPacket in rewardPackets)
 		{
+			var cleanupSealFlag = GetGeneralInfoWarehouseRestrictionFlag(rewardPacket.Item.ItemId, itemRestrictionCleanups);
 			if (rewardPacket.IsNewItem)
 			{
 				await SendPacketAsync(
 					SmInventoryAddItem.CreateDecomposable(
 					[
-						new SmInventoryAddItem.InventoryPacketItem(rewardPacket.Item, rewardPacket.Template),
+						new SmInventoryAddItem.InventoryPacketItem(rewardPacket.Item, rewardPacket.Template, cleanupSealFlag),
 					]));
 			}
 			else
 			{
-				await SendPacketAsync(new SmInventoryUpdateItem(rewardPacket.Item, rewardPacket.Template, SmInventoryUpdateItem.IncreaseItemCollect));
+				await SendPacketAsync(
+					new SmInventoryUpdateItem(
+						rewardPacket.Item,
+						rewardPacket.Template,
+						SmInventoryUpdateItem.IncreaseItemCollect,
+						cleanupSealFlag));
 			}
 		}
 	}

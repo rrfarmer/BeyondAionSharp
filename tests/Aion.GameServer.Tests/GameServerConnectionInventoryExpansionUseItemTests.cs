@@ -839,6 +839,63 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleUseItemAsync_DecomposeAddsRestrictedRewardWithCleanupSealFlag()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(
+			includeThreadPoolManager: true,
+			idFactory: new IDFactory([5001]));
+		var player = CreatePlayer(itemId: 100);
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
+
+		await WaitUntilAsync(() => fixture.SentPackets.Count >= 5, TimeSpan.FromSeconds(5));
+		Assert.Contains(player.InventoryItems, item => item.ItemId == 200 && item.Count == 1);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 100, expectedTime: 3000, expectedEnd: 0),
+			packet => Assert.IsType<SmSystemMessage>(packet),
+			packet => AssertInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 5001, expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse),
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 100, expectedTime: 0, expectedEnd: 1),
+			packet => AssertDecomposableAddPayloadWithCleanupSealFlag(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 200, expectedCount: 1, expectedCleanupSealFlag: 3));
+	}
+
+	[Fact]
+	public async Task HandleUseItemAsync_DecomposeMergesRestrictedRewardWithCleanupSealFlag()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(
+			includeThreadPoolManager: true,
+			idFactory: new IDFactory([5001, 6001]));
+		var player = CreatePlayer(itemId: 100);
+		player.InventoryItems = player.InventoryItems
+			.Concat(
+			[
+				new InventoryItem
+				{
+					ObjectId = 6001,
+					ItemId = 200,
+					Count = 1,
+					Location = 0,
+				},
+			])
+			.ToArray();
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
+
+		await WaitUntilAsync(() => fixture.SentPackets.Count >= 5, TimeSpan.FromSeconds(5));
+		var reward = Assert.Single(player.InventoryItems, item => item.ItemId == 200);
+		Assert.Equal(2, reward.Count);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 100, expectedTime: 3000, expectedEnd: 0),
+			packet => Assert.IsType<SmSystemMessage>(packet),
+			packet => AssertInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 5001, expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse),
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 100, expectedTime: 0, expectedEnd: 1),
+			packet => AssertInventoryUpdatePayloadWithCleanupSealFlag(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 6001, expectedUpdateType: SmInventoryUpdateItem.IncreaseItemCollect, expectedCleanupSealFlag: 3));
+	}
+
+	[Fact]
 	public async Task HandleUseItemAsync_AssemblyAddsRestrictedRewardWithCleanupSealFlag()
 	{
 		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(
@@ -2268,6 +2325,32 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Equal(expectedCount, blobReader.ReadQ());
 	}
 
+	private static void AssertDecomposableAddPayloadWithCleanupSealFlag(
+		SmInventoryAddItem packet,
+		int expectedObjectId,
+		int expectedItemId,
+		long expectedCount,
+		int expectedCleanupSealFlag)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(SmInventoryAddItem.Decomposable, reader.ReadH());
+		Assert.Equal(1, reader.ReadH());
+		Assert.Equal(expectedObjectId, reader.ReadD());
+		Assert.Equal(expectedItemId, reader.ReadD());
+		reader.ReadS();
+		var blobSize = reader.ReadH();
+		var blob = reader.ReadB(blobSize);
+		Assert.Equal(65535, reader.ReadH());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+
+		using var blobReader = new PacketBuffer(blob);
+		Assert.Equal(0, (int)blobReader.ReadC());
+		blobReader.ReadH();
+		Assert.Equal(expectedCount, blobReader.ReadQ());
+		AssertGeneralInfoCleanupSealFlag(blob, expectedItemMask: 123, expectedFlag: expectedCleanupSealFlag);
+	}
+
 	private static void AssertInventoryItemCollectAddPayload(
 		SmInventoryAddItem packet,
 		int expectedObjectId,
@@ -3046,7 +3129,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 						</item_template>
 						<item_template id="100000500" name="Test Mythic Extraction Sword" level="65" mask="65536" item_group="SWORD" item_type="NORMAL" quality="MYTHIC" race="PC_ALL" max_stack_count="1"/>
 						<item_template id="166000195" name="Restricted Extraction Reward" level="1" mask="123" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
-						<item_template id="200" name="Test Decompose Reward" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
+						<item_template id="200" name="Test Decompose Reward" level="1" mask="123" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
 						<item_template id="{selectableFixture.RewardIndex0ItemId}" name="Test Selectable Reward 1" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
 						<item_template id="{selectableFixture.RewardIndex1ItemId}" name="Test Selectable Reward 2" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
 						<item_template id="188053996" name="Restricted Assembly Reward" level="1" mask="123" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
@@ -3080,6 +3163,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 						<item id="188053996" parts="100 101"/>
 					</assembly_items>
 					<item_restriction_cleanups>
+						<cleanup id="200" awh="0" lwh="0"/>
 						<cleanup id="188053996" awh="0" lwh="0"/>
 						<cleanup id="166000195" awh="0" lwh="0"/>
 					</item_restriction_cleanups>
