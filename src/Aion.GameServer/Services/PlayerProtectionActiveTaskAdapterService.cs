@@ -27,6 +27,7 @@ public sealed record PlayerProtectionActiveTaskAdapterRequest(
 public sealed record PlayerProtectionActiveTaskAdapterResult(
 	PlayerProtectionActiveTaskAdapterStatus Status,
 	PlayerProtectionActiveTaskPlan Plan,
+	PlayerProtectionActiveTaskFanoutPlan FanoutPlan,
 	bool MutatedVisualState,
 	bool MutatedScheduler,
 	bool SentPackets,
@@ -38,18 +39,23 @@ public static class PlayerProtectionActiveTaskAdapterService
 {
 	public static PlayerProtectionActiveTaskAdapterResult Apply(PlayerProtectionActiveTaskAdapterRequest request)
 	{
+		var action = request.Action == PlayerProtectionActiveTaskAdapterAction.Start
+			? PlayerProtectionActiveTaskFanoutAction.Start
+			: PlayerProtectionActiveTaskFanoutAction.Stop;
 		var plan = request.Action == PlayerProtectionActiveTaskAdapterAction.Start
 			? PlayerProtectionActiveTaskPlanService.CreateStartPlan(request.Player)
 			: PlayerProtectionActiveTaskPlanService.CreateStopPlan(
 				request.Player,
 				request.HasProtectionActiveTask,
 				request.IsSpawned);
+		var fanoutPlan = PlayerProtectionActiveTaskFanoutPlanService.Create(plan, action);
 
 		if (!request.ExecuteLiveVisualMutation)
 		{
 			return new PlayerProtectionActiveTaskAdapterResult(
 				PlayerProtectionActiveTaskAdapterStatus.DisabledPlanned,
 				plan,
+				fanoutPlan,
 				MutatedVisualState: false,
 				MutatedScheduler: false,
 				SentPackets: false,
@@ -59,19 +65,21 @@ public static class PlayerProtectionActiveTaskAdapterService
 		}
 
 		return request.Action == PlayerProtectionActiveTaskAdapterAction.Start
-			? ApplyStart(request.Player, plan)
-			: ApplyStop(request.Player, plan);
+			? ApplyStart(request.Player, plan, fanoutPlan)
+			: ApplyStop(request.Player, plan, fanoutPlan);
 	}
 
 	private static PlayerProtectionActiveTaskAdapterResult ApplyStart(
 		Player player,
-		PlayerProtectionActiveTaskPlan plan)
+		PlayerProtectionActiveTaskPlan plan,
+		PlayerProtectionActiveTaskFanoutPlan fanoutPlan)
 	{
 		if (plan.Status == PlayerProtectionActiveTaskPlanStatus.AlreadyProtected)
 		{
 			return new PlayerProtectionActiveTaskAdapterResult(
 				PlayerProtectionActiveTaskAdapterStatus.AlreadyProtected,
 				plan,
+				fanoutPlan,
 				MutatedVisualState: false,
 				MutatedScheduler: false,
 				SentPackets: false,
@@ -84,6 +92,7 @@ public static class PlayerProtectionActiveTaskAdapterService
 		return new PlayerProtectionActiveTaskAdapterResult(
 			PlayerProtectionActiveTaskAdapterStatus.LiveVisualStarted,
 			plan,
+			fanoutPlan,
 			MutatedVisualState: true,
 			MutatedScheduler: false,
 			SentPackets: false,
@@ -94,13 +103,15 @@ public static class PlayerProtectionActiveTaskAdapterService
 
 	private static PlayerProtectionActiveTaskAdapterResult ApplyStop(
 		Player player,
-		PlayerProtectionActiveTaskPlan plan)
+		PlayerProtectionActiveTaskPlan plan,
+		PlayerProtectionActiveTaskFanoutPlan fanoutPlan)
 	{
 		if (!plan.IsSpawned)
 		{
 			return new PlayerProtectionActiveTaskAdapterResult(
 				PlayerProtectionActiveTaskAdapterStatus.LiveVisualStopUnspawned,
 				plan,
+				fanoutPlan,
 				MutatedVisualState: false,
 				MutatedScheduler: false,
 				SentPackets: false,
@@ -113,6 +124,7 @@ public static class PlayerProtectionActiveTaskAdapterService
 		return new PlayerProtectionActiveTaskAdapterResult(
 			PlayerProtectionActiveTaskAdapterStatus.LiveVisualStopped,
 			plan,
+			fanoutPlan,
 			mutatedVisualState,
 			MutatedScheduler: false,
 			SentPackets: false,

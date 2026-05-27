@@ -16,6 +16,9 @@ public sealed class PlayerProtectionActiveTaskAdapterServiceTests
 
 		Assert.Equal(PlayerProtectionActiveTaskAdapterStatus.DisabledPlanned, result.Status);
 		Assert.Equal(PlayerProtectionActiveTaskPlanStatus.StartProtection, result.Plan.Status);
+		Assert.Equal(PlayerProtectionActiveTaskFanoutStatus.BroadcastPlanned, result.FanoutPlan.Status);
+		Assert.True(result.FanoutPlan.ShouldBroadcast);
+		Assert.False(result.FanoutPlan.SentPackets);
 		Assert.False(result.MutatedVisualState);
 		Assert.False(result.MutatedScheduler);
 		Assert.False(result.SentPackets);
@@ -42,6 +45,9 @@ public sealed class PlayerProtectionActiveTaskAdapterServiceTests
 		Assert.True(player.IsProtectionActive());
 		Assert.True(result.Plan.ShouldScheduleTask);
 		Assert.True(result.Plan.ShouldBroadcastPlayerState);
+		Assert.Equal(PlayerProtectionActiveTaskFanoutStatus.BroadcastPlanned, result.FanoutPlan.Status);
+		Assert.False(result.FanoutPlan.SentPackets);
+		Assert.Equal(PlayerProtectionActiveTaskPlanStep.SetBlinkingVisualState, result.FanoutPlan.VisualMutationStep);
 		Assert.Contains("setVisualState(BLINKING)", result.JavaSource);
 	}
 
@@ -60,6 +66,8 @@ public sealed class PlayerProtectionActiveTaskAdapterServiceTests
 		Assert.False(result.MutatedVisualState);
 		Assert.True(player.IsProtectionActive());
 		Assert.False(result.Plan.ShouldScheduleTask);
+		Assert.Equal(PlayerProtectionActiveTaskFanoutStatus.SkippedAlreadyProtectedStart, result.FanoutPlan.Status);
+		Assert.False(result.FanoutPlan.ShouldBroadcast);
 	}
 
 	[Fact]
@@ -84,6 +92,9 @@ public sealed class PlayerProtectionActiveTaskAdapterServiceTests
 		Assert.True(result.Plan.ShouldCancelTask);
 		Assert.True(result.Plan.ShouldBroadcastPlayerState);
 		Assert.True(result.Plan.ShouldNotifyAiOnMove);
+		Assert.Equal(PlayerProtectionActiveTaskFanoutStatus.BroadcastPlanned, result.FanoutPlan.Status);
+		Assert.False(result.FanoutPlan.SentPackets);
+		Assert.Equal(PlayerProtectionActiveTaskPlanStep.UnsetBlinkingVisualState, result.FanoutPlan.VisualMutationStep);
 		Assert.Contains("unsetVisualState(BLINKING)", result.JavaSource);
 	}
 
@@ -105,6 +116,8 @@ public sealed class PlayerProtectionActiveTaskAdapterServiceTests
 		Assert.True(player.IsProtectionActive());
 		Assert.True(result.Plan.ShouldCancelTask);
 		Assert.False(result.Plan.ShouldBroadcastPlayerState);
+		Assert.Equal(PlayerProtectionActiveTaskFanoutStatus.SkippedUnspawnedStop, result.FanoutPlan.Status);
+		Assert.False(result.FanoutPlan.ShouldBroadcast);
 	}
 
 	private const int PlayerObjectId = 1001;
