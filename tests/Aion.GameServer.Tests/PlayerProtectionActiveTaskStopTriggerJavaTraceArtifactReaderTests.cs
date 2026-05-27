@@ -520,6 +520,66 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactReader
 		Assert.All(artifact.Traces, trace => Assert.False(trace.TimestampIsParityKey));
 	}
 
+	[Fact]
+	public void BeritraAnimationDoneArtifacts_RecordSameMapSpawnAndProtectionStartSkip()
+	{
+		var artifact = ParseBeritraAnimationDoneCallerOriginArtifact();
+
+		Assert.Equal(1, artifact.SchemaVersion);
+		Assert.Equal("beritra-portal-animation-done-runs-same-map-spawn-after-protection-start", artifact.Scenario);
+		Assert.Equal("beritra_animation_done_same_map_spawn_after_protection_start", artifact.RuntimeFacts.ExpectedReturnReason);
+		Assert.Contains("CM_TELEPORT_ANIMATION_DONE.runImpl", artifact.JavaSources);
+		Assert.Contains("TeleportService.SpawnTask.run", artifact.JavaSources);
+		Assert.Contains("TeleportService.spawnOnSameMap", artifact.JavaSources);
+
+		var animationDone = artifact.Traces.Single(trace => trace.Phase == "animation_done_enter");
+		var teleportTaskRemove = artifact.Traces.Single(trace => trace.Phase == "teleport_task_remove");
+		var spawnTaskRun = artifact.Traces.Single(trace => trace.Phase == "spawn_task_run");
+		var worldPositionSet = artifact.Traces.Single(trace => trace.Phase == "world_position_set");
+		var sameMapPackets = artifact.Traces.Single(trace => trace.Phase == "same_map_spawn_packets");
+		var worldSpawn = artifact.Traces.Single(trace => trace.Phase == "world_spawn_completed");
+		var protectionSkip = artifact.Traces.Single(trace => trace.Phase == "protection_start_skip");
+
+		Assert.NotNull(animationDone.CallerOrigin);
+		Assert.Equal("beritra_animation_done_same_map_spawn_after_protection_start", animationDone.CallerOrigin!.CallerName);
+		Assert.Equal("CM_TELEPORT_ANIMATION_DONE", animationDone.CallerOrigin.CallerClass);
+		Assert.Equal("runImpl", animationDone.CallerOrigin.CallerMethod);
+		Assert.Null(animationDone.CallerOrigin.StartProtectionLine);
+		Assert.False(animationDone.CallerOrigin.StartsProtectionBeforeWorldSpawn);
+		Assert.Equal(211, animationDone.CallerOrigin.WorldSpawnLine);
+		Assert.False(animationDone.CallerOrigin.SpawnedBeforeStart);
+		Assert.Equal("animation_done_runs_spawn_task_then_same_map_spawn_then_start_skip", animationDone.CallerOrigin.Ordering);
+		Assert.False(animationDone.Player.Spawned);
+		Assert.True(animationDone.Player.ProtectionActiveBefore);
+		Assert.NotNull(teleportTaskRemove.Scheduler);
+		Assert.True(teleportTaskRemove.Scheduler!.OldFuturePresent);
+		Assert.Equal("TeleportService.SpawnTask.run", teleportTaskRemove.Scheduler.CallbackMethod);
+		Assert.False(spawnTaskRun.Player.Spawned);
+		Assert.False(worldPositionSet.Player.Spawned);
+		Assert.NotNull(sameMapPackets.Fanout);
+		Assert.Equal("SM_PLAYER_INFO", sameMapPackets.Fanout!.PacketName);
+		Assert.True(worldSpawn.Player.Spawned);
+		Assert.NotNull(protectionSkip.CallerOrigin);
+		Assert.Equal("TeleportService", protectionSkip.CallerOrigin!.CallerClass);
+		Assert.Equal("spawnOnSameMap", protectionSkip.CallerOrigin.CallerMethod);
+		Assert.Equal(213, protectionSkip.CallerOrigin.StartProtectionLine);
+		Assert.False(protectionSkip.CallerOrigin.StartsProtectionBeforeWorldSpawn);
+		Assert.Equal(211, protectionSkip.CallerOrigin.WorldSpawnLine);
+		Assert.True(protectionSkip.CallerOrigin.SpawnedBeforeStart);
+		Assert.True(protectionSkip.Player.Spawned);
+		Assert.True(protectionSkip.Player.ProtectionActiveBefore);
+		Assert.True(protectionSkip.Player.ProtectionActiveAfter);
+		Assert.Null(protectionSkip.Scheduler);
+		Assert.True(animationDone.EventSeq < teleportTaskRemove.EventSeq);
+		Assert.True(teleportTaskRemove.EventSeq < spawnTaskRun.EventSeq);
+		Assert.True(spawnTaskRun.EventSeq < worldPositionSet.EventSeq);
+		Assert.True(worldPositionSet.EventSeq < sameMapPackets.EventSeq);
+		Assert.True(sameMapPackets.EventSeq < worldSpawn.EventSeq);
+		Assert.True(worldSpawn.EventSeq < protectionSkip.EventSeq);
+		Assert.DoesNotContain(artifact.Traces, trace => trace.Phase is "start_visual_set" or "start_state_fanout" or "start_task_schedule");
+		Assert.All(artifact.Traces, trace => Assert.False(trace.TimestampIsParityKey));
+	}
+
 	private static void AssertNoStopArtifact(ProtectionStopTriggerJavaTraceArtifact artifact)
 	{
 		Assert.Equal(1, artifact.SchemaVersion);
@@ -3358,6 +3418,479 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactReader
 			    "BeritraPortalAI starts FADE_OUT teleport first, then calls startProtectionActiveTask while the player is despawned by TeleportService.sendLoc.",
 			    "Teleport spawn completion is deferred to CM_TELEPORT_ANIMATION_DONE and is intentionally absent from this fixture.",
 			    "Inline fixture proves reader binding only, not Java runtime parity."
+			  ]
+			}
+			""";
+
+		var artifact = JsonSerializer.Deserialize<ProtectionStopTriggerJavaTraceArtifact>(json, JsonOptions);
+		Assert.NotNull(artifact);
+		return artifact;
+	}
+
+	private static ProtectionStopTriggerJavaTraceArtifact ParseBeritraAnimationDoneCallerOriginArtifact()
+	{
+		const string json = """
+			{
+			  "schemaVersion": 1,
+			  "javaCommit": "abcdef1",
+			  "scenario": "beritra-portal-animation-done-runs-same-map-spawn-after-protection-start",
+			  "runtimeFacts": {
+			    "serverFlavor": "java",
+			    "packetName": "CM_TELEPORT_ANIMATION_DONE",
+			    "playerObjectId": 1001,
+			    "worldId": 301390000,
+			    "expectedReturnReason": "beritra_animation_done_same_map_spawn_after_protection_start"
+			  },
+			  "javaSources": [
+			    "CM_TELEPORT_ANIMATION_DONE.runImpl",
+			    "TeleportService.SpawnTask.run",
+			    "TeleportService.spawnOnSameMap",
+			    "World.setPosition",
+			    "World.spawn",
+			    "PlayerController.startProtectionActiveTask",
+			    "CreatureController.getAndRemoveTask"
+			  ],
+			  "traces": [
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "beritra-portal-animation-done-runs-same-map-spawn-after-protection-start-001",
+			      "eventSeq": 0,
+			      "phase": "animation_done_enter",
+			      "packetName": "CM_TELEPORT_ANIMATION_DONE",
+			      "returnReason": "beritra_animation_done_same_map_spawn_after_protection_start",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000001000,
+			      "monotonicNanos": 10000000,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "CM_TELEPORT_ANIMATION_DONE.java",
+			      "javaLine": 34,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "callerOrigin": {
+			        "callerName": "beritra_animation_done_same_map_spawn_after_protection_start",
+			        "callerClass": "CM_TELEPORT_ANIMATION_DONE",
+			        "callerMethod": "runImpl",
+			        "callerSourceFile": "CM_TELEPORT_ANIMATION_DONE.java",
+			        "callerLine": 40,
+			        "startProtectionLine": null,
+			        "startsProtectionBeforeWorldSpawn": false,
+			        "worldSpawnLine": 211,
+			        "spawnedBeforeStart": false,
+			        "ordering": "animation_done_runs_spawn_task_then_same_map_spawn_then_start_skip"
+			      },
+			      "actionBranchName": "animation_done_packet"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "beritra-portal-animation-done-runs-same-map-spawn-after-protection-start-001",
+			      "eventSeq": 1,
+			      "phase": "teleport_task_remove",
+			      "packetName": "CM_TELEPORT_ANIMATION_DONE",
+			      "returnReason": "beritra_animation_done_same_map_spawn_after_protection_start",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000001001,
+			      "monotonicNanos": 10000100,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "CM_TELEPORT_ANIMATION_DONE.java",
+			      "javaLine": 36,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": {
+			        "taskIdName": "TELEPORT",
+			        "taskIdOrdinal": 1,
+			        "taskPresentBeforeCancel": true,
+			        "taskRemovedBeforeCancel": true,
+			        "futureCancelArgument": false,
+			        "futureCancelResult": false,
+			        "scheduledDelayMillis": 0,
+			        "stopOrigin": "animation_done_get_and_remove_task"
+			      },
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": {
+			        "delayMillis": 0,
+			        "timeUnit": "CLIENT_ANIMATION_DONE",
+			        "runnableWrapperApplied": true,
+			        "callbackMethod": "TeleportService.SpawnTask.run",
+			        "oldFuturePresent": true,
+			        "oldFutureCancelArgument": null,
+			        "oldFutureCancelResult": null,
+			        "newFutureStored": false
+			      },
+			      "callerOrigin": null,
+			      "actionBranchName": "get_and_remove_teleport_task"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "beritra-portal-animation-done-runs-same-map-spawn-after-protection-start-001",
+			      "eventSeq": 2,
+			      "phase": "spawn_task_run",
+			      "packetName": "CM_TELEPORT_ANIMATION_DONE",
+			      "returnReason": "beritra_animation_done_same_map_spawn_after_protection_start",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000001002,
+			      "monotonicNanos": 10000200,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "TeleportService.java",
+			      "javaLine": 498,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "callerOrigin": null,
+			      "actionBranchName": "run_stored_spawn_task"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "beritra-portal-animation-done-runs-same-map-spawn-after-protection-start-001",
+			      "eventSeq": 3,
+			      "phase": "spawn_task_abort_actions",
+			      "packetName": "CM_TELEPORT_ANIMATION_DONE",
+			      "returnReason": "beritra_animation_done_same_map_spawn_after_protection_start",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000001003,
+			      "monotonicNanos": 10000300,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "TeleportService.java",
+			      "javaLine": 508,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "callerOrigin": null,
+			      "actionBranchName": "abort_player_actions_again"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "beritra-portal-animation-done-runs-same-map-spawn-after-protection-start-001",
+			      "eventSeq": 4,
+			      "phase": "world_position_set",
+			      "packetName": "CM_TELEPORT_ANIMATION_DONE",
+			      "returnReason": "beritra_animation_done_same_map_spawn_after_protection_start",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000001004,
+			      "monotonicNanos": 10000400,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "TeleportService.java",
+			      "javaLine": 517,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": {
+			        "oldX": 174.7,
+			        "oldY": 518.2,
+			        "oldZ": 1749.6,
+			        "packetX": 174.7,
+			        "packetY": 518.2,
+			        "packetZ": 1749.6,
+			        "zDelta": 0.0,
+			        "heading": 59,
+			        "movementType": "teleport_position_set",
+			        "antiHackAccepted": true,
+			        "teleportationModeAbsoluteMove": true,
+			        "stopThresholdExceeded": false
+			      },
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "callerOrigin": null,
+			      "actionBranchName": "set_player_position"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "beritra-portal-animation-done-runs-same-map-spawn-after-protection-start-001",
+			      "eventSeq": 5,
+			      "phase": "pet_position_set",
+			      "packetName": "CM_TELEPORT_ANIMATION_DONE",
+			      "returnReason": "beritra_animation_done_same_map_spawn_after_protection_start",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000001005,
+			      "monotonicNanos": 10000500,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "TeleportService.java",
+			      "javaLine": 518,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "callerOrigin": null,
+			      "actionBranchName": "set_pet_position"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "beritra-portal-animation-done-runs-same-map-spawn-after-protection-start-001",
+			      "eventSeq": 6,
+			      "phase": "same_map_spawn_packets",
+			      "packetName": "CM_TELEPORT_ANIMATION_DONE",
+			      "returnReason": "beritra_animation_done_same_map_spawn_after_protection_start",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000001006,
+			      "monotonicNanos": 10000600,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "TeleportService.java",
+			      "javaLine": 207,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": {
+			        "packetName": "SM_PLAYER_INFO",
+			        "includeSelf": true,
+			        "recipientCount": 1,
+			        "knownListOrderIsParityKey": false
+			      },
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "callerOrigin": null,
+			      "actionBranchName": "same_map_packet_sequence"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "beritra-portal-animation-done-runs-same-map-spawn-after-protection-start-001",
+			      "eventSeq": 7,
+			      "phase": "world_spawn_completed",
+			      "packetName": "CM_TELEPORT_ANIMATION_DONE",
+			      "returnReason": "beritra_animation_done_same_map_spawn_after_protection_start",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000001007,
+			      "monotonicNanos": 10000700,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "TeleportService.java",
+			      "javaLine": 211,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": true,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "callerOrigin": null,
+			      "actionBranchName": "world_spawn_before_start_skip"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "beritra-portal-animation-done-runs-same-map-spawn-after-protection-start-001",
+			      "eventSeq": 8,
+			      "phase": "pet_spawn_completed",
+			      "packetName": "CM_TELEPORT_ANIMATION_DONE",
+			      "returnReason": "beritra_animation_done_same_map_spawn_after_protection_start",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000001008,
+			      "monotonicNanos": 10000800,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "TeleportService.java",
+			      "javaLine": 212,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": true,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "callerOrigin": null,
+			      "actionBranchName": "pet_spawn_after_player"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "beritra-portal-animation-done-runs-same-map-spawn-after-protection-start-001",
+			      "eventSeq": 9,
+			      "phase": "protection_start_skip",
+			      "packetName": "CM_TELEPORT_ANIMATION_DONE",
+			      "returnReason": "beritra_animation_done_same_map_spawn_after_protection_start",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000001009,
+			      "monotonicNanos": 10000900,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "PlayerController.java",
+			      "javaLine": 629,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": true,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "callerOrigin": {
+			        "callerName": "beritra_animation_done_same_map_spawn_after_protection_start",
+			        "callerClass": "TeleportService",
+			        "callerMethod": "spawnOnSameMap",
+			        "callerSourceFile": "TeleportService.java",
+			        "callerLine": 213,
+			        "startProtectionLine": 213,
+			        "startsProtectionBeforeWorldSpawn": false,
+			        "worldSpawnLine": 211,
+			        "spawnedBeforeStart": true,
+			        "ordering": "world_spawn_before_already_active_start_skip"
+			      },
+			      "actionBranchName": "already_protection_active_skip"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "beritra-portal-animation-done-runs-same-map-spawn-after-protection-start-001",
+			      "eventSeq": 10,
+			      "phase": "post_spawn_cleanup",
+			      "packetName": "CM_TELEPORT_ANIMATION_DONE",
+			      "returnReason": "beritra_animation_done_same_map_spawn_after_protection_start",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000001010,
+			      "monotonicNanos": 10001000,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "TeleportService.java",
+			      "javaLine": 214,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": true,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": {
+			        "notifyAiOnMoveCalled": false,
+			        "ordering": "effect_icon_update_zone_update_port_animation_reset"
+			      },
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "callerOrigin": null,
+			      "actionBranchName": "effect_zone_cleanup_after_skip"
+			    }
+			  ],
+			  "notes": [
+			    "CM_TELEPORT_ANIMATION_DONE removes the stored TELEPORT FutureTask and runs SpawnTask synchronously when it has not started.",
+			    "For the Beritra same-map delayed teleport, spawnOnSameMap spawns the player before calling startProtectionActiveTask again.",
+			    "The second startProtectionActiveTask call should skip because Beritra line 38 already made protection active before animation completion."
 			  ]
 			}
 			""";
