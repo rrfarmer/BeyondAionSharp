@@ -4375,6 +4375,130 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmPet_FoodEatWritesJavaShape()
+	{
+		var payload = SerializeUnencryptedPayload(SmPet.Food(new SmPetFoodSnapshot(
+			SubType: 1,
+			FeedProgressData: 0x123450,
+			ItemObjectId: 4001,
+			Count: 3)));
+		using var reader = new PacketBuffer(payload);
+
+		AssertSmPetFoodHeader(reader, 1);
+		Assert.Equal(0x123450, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(4001, reader.ReadD());
+		Assert.Equal(3, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void SmPet_FoodEatingSuccessWritesTrailingStatusLikeJava()
+	{
+		var payload = SerializeUnencryptedPayload(SmPet.Food(new SmPetFoodSnapshot(
+			SubType: 2,
+			FeedProgressData: 0x123450,
+			ItemObjectId: 4001,
+			Count: 3)));
+		using var reader = new PacketBuffer(payload);
+
+		AssertSmPetFoodHeader(reader, 2);
+		Assert.Equal(0x123450, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(4001, reader.ReadD());
+		Assert.Equal(3, reader.ReadD());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Theory]
+	[InlineData(3)]
+	[InlineData(4)]
+	[InlineData(5)]
+	public void SmPet_FoodDelaySubtypesWriteProgressAndRefeedLikeJava(int subType)
+	{
+		var payload = SerializeUnencryptedPayload(SmPet.Food(new SmPetFoodSnapshot(
+			SubType: subType,
+			FeedProgressData: 0x123450,
+			RefeedDelaySeconds: 77)));
+		using var reader = new PacketBuffer(payload);
+
+		AssertSmPetFoodHeader(reader, subType);
+		Assert.Equal(0x123450, reader.ReadD());
+		Assert.Equal(77, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void SmPet_FoodGiveItemWritesJavaShape()
+	{
+		var payload = SerializeUnencryptedPayload(SmPet.Food(new SmPetFoodSnapshot(
+			SubType: 6,
+			FeedProgressData: 0x123450,
+			ItemObjectId: 4001)));
+		using var reader = new PacketBuffer(payload);
+
+		AssertSmPetFoodHeader(reader, 6);
+		Assert.Equal(0x123450, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(4001, reader.ReadD());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void SmPet_FoodPresentNotificationWritesJavaShape()
+	{
+		var payload = SerializeUnencryptedPayload(SmPet.Food(new SmPetFoodSnapshot(
+			SubType: 7,
+			FeedProgressData: 0x123450,
+			ItemObjectId: 4001,
+			RefeedDelaySeconds: 77)));
+		using var reader = new PacketBuffer(payload);
+
+		AssertSmPetFoodHeader(reader, 7);
+		Assert.Equal(0x123450, reader.ReadD());
+		Assert.Equal(77, reader.ReadD());
+		Assert.Equal(4001, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void SmPet_FoodFullWritesJavaShape()
+	{
+		var payload = SerializeUnencryptedPayload(SmPet.Food(new SmPetFoodSnapshot(
+			SubType: 8,
+			FeedProgressData: 0x123450,
+			ItemObjectId: 4001,
+			Count: 3,
+			RefeedDelaySeconds: 77)));
+		using var reader = new PacketBuffer(payload);
+
+		AssertSmPetFoodHeader(reader, 8);
+		Assert.Equal(0x123450, reader.ReadD());
+		Assert.Equal(77, reader.ReadD());
+		Assert.Equal(4001, reader.ReadD());
+		Assert.Equal(3, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void SmPet_FoodUnknownSubtypeWritesJavaHeaderOnly()
+	{
+		var payload = SerializeUnencryptedPayload(SmPet.Food(new SmPetFoodSnapshot(
+			SubType: 99,
+			FeedProgressData: 0x123450,
+			ItemObjectId: 4001,
+			Count: 3,
+			RefeedDelaySeconds: 77)));
+		using var reader = new PacketBuffer(payload);
+
+		AssertSmPetFoodHeader(reader, 99);
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
 	public void SmPetEmote_FlyStartWritesDefaultBranchLikeJava()
 	{
 		var payload = SerializeUnencryptedPayload(new SmPetEmote(new SmPetEmoteSnapshot(7001, PetEmote.FlyStart)));
@@ -6185,6 +6309,14 @@ public class GamePacketTests
 		Assert.Equal(0, reader.ReadD());
 		Assert.Equal(123456, reader.ReadD());
 		Assert.Equal(654, reader.ReadD());
+	}
+
+	private static void AssertSmPetFoodHeader(PacketBuffer reader, int subType)
+	{
+		Assert.Equal((int)PetAction.Food, reader.ReadH());
+		Assert.Equal(1, reader.ReadH());
+		Assert.Equal(1, (int)reader.ReadC());
+		Assert.Equal(subType, (int)reader.ReadC());
 	}
 
 	private static void AssertSmPetAppearance(PacketBuffer reader, int decoration)

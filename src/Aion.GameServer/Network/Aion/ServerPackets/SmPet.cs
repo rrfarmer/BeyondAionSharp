@@ -47,6 +47,13 @@ public sealed record SmPetDopingSpecialFunctionSnapshot(
 	int ItemTemplateIdOrSlot2 = 0,
 	int Slot = 0);
 
+public sealed record SmPetFoodSnapshot(
+	int SubType,
+	int FeedProgressData,
+	int ItemObjectId = 0,
+	int Count = 0,
+	int RefeedDelaySeconds = 0);
+
 public sealed class SmPet : GameServerPacket
 {
 	private const int PetDopingBagMaxItems = 8;
@@ -60,6 +67,7 @@ public sealed class SmPet : GameServerPacket
 	private readonly IReadOnlyList<SmPetDataSnapshot>? _pets;
 	private readonly SmPetSpecialFunctionSnapshot? _specialFunction;
 	private readonly SmPetDopingSpecialFunctionSnapshot? _dopingSpecialFunction;
+	private readonly SmPetFoodSnapshot? _food;
 	private readonly int _petObjectId;
 	private readonly string? _petName;
 	private readonly ObjectDeleteAnimation _animation;
@@ -106,6 +114,12 @@ public sealed class SmPet : GameServerPacket
 	{
 		// Java parity: network/aion/serverpackets/SM_PET(int dopeAction, int itemId, int slot).
 		return new SmPet(dopingSpecialFunction);
+	}
+
+	public static SmPet Food(SmPetFoodSnapshot food)
+	{
+		// Java parity: network/aion/serverpackets/SM_PET(int subType, int itemObjectId, int count, Pet).
+		return new SmPet(food);
 	}
 
 	public SmPet(SmPetSurrenderSnapshot surrender)
@@ -167,6 +181,13 @@ public sealed class SmPet : GameServerPacket
 		_dopingSpecialFunction = dopingSpecialFunction;
 	}
 
+	private SmPet(SmPetFoodSnapshot food)
+		: base(PacketOpCode)
+	{
+		_action = PetAction.Food;
+		_food = food;
+	}
+
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
 		// Java parity: SM_PET.writeImpl currently ported packet subset.
@@ -204,6 +225,9 @@ public sealed class SmPet : GameServerPacket
 					WriteSpecialFunction(buffer, _specialFunction ?? throw new InvalidOperationException("Special-function snapshot is required for SM_PET special function."));
 				}
 				break;
+			case PetAction.Food:
+				WriteFood(buffer, _food ?? throw new InvalidOperationException("Food snapshot is required for SM_PET food."));
+				break;
 			case PetAction.TalkWithMerchant:
 			case PetAction.TalkWithMinder:
 			case PetAction.HAdopt:
@@ -211,6 +235,53 @@ public sealed class SmPet : GameServerPacket
 				break;
 			default:
 				throw new NotSupportedException($"SM_PET action {_action} is not ported in the known-list serializer subset.");
+		}
+	}
+
+	private static void WriteFood(PacketBuffer buffer, SmPetFoodSnapshot food)
+	{
+		buffer.WriteH(1);
+		buffer.WriteC(1);
+		buffer.WriteC(food.SubType);
+		switch (food.SubType)
+		{
+			case 1:
+				buffer.WriteD(food.FeedProgressData);
+				buffer.WriteD(0);
+				buffer.WriteD(food.ItemObjectId);
+				buffer.WriteD(food.Count);
+				break;
+			case 2:
+				buffer.WriteD(food.FeedProgressData);
+				buffer.WriteD(0);
+				buffer.WriteD(food.ItemObjectId);
+				buffer.WriteD(food.Count);
+				buffer.WriteC(0);
+				break;
+			case 3:
+			case 4:
+			case 5:
+				buffer.WriteD(food.FeedProgressData);
+				buffer.WriteD(food.RefeedDelaySeconds);
+				break;
+			case 6:
+				buffer.WriteD(food.FeedProgressData);
+				buffer.WriteD(0);
+				buffer.WriteD(food.ItemObjectId);
+				buffer.WriteC(0);
+				break;
+			case 7:
+				buffer.WriteD(food.FeedProgressData);
+				buffer.WriteD(food.RefeedDelaySeconds);
+				buffer.WriteD(food.ItemObjectId);
+				buffer.WriteD(0);
+				break;
+			case 8:
+				buffer.WriteD(food.FeedProgressData);
+				buffer.WriteD(food.RefeedDelaySeconds);
+				buffer.WriteD(food.ItemObjectId);
+				buffer.WriteD(food.Count);
+				break;
 		}
 	}
 
