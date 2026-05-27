@@ -4092,6 +4092,20 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmPet_SurrenderWritesCommonDataIdsLikeJava()
+	{
+		var payload = SerializeUnencryptedPayload(new SmPet(new SmPetSurrenderSnapshot(TemplateId: 900001, ObjectId: 7001)));
+		using var reader = new PacketBuffer(payload);
+
+		Assert.Equal((int)PetAction.Surrender, reader.ReadH());
+		Assert.Equal(900001, reader.ReadD());
+		Assert.Equal(7001, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
 	public void SmPetEmote_FlyStartWritesDefaultBranchLikeJava()
 	{
 		var payload = SerializeUnencryptedPayload(new SmPetEmote(new SmPetEmoteSnapshot(7001, PetEmote.FlyStart)));

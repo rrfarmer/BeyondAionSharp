@@ -19,12 +19,15 @@ public sealed record SmPetSpawnSnapshot(
 	int MasterObjectId,
 	int Decoration);
 
+public sealed record SmPetSurrenderSnapshot(int TemplateId, int ObjectId);
+
 public sealed class SmPet : GameServerPacket
 {
 	public const int PacketOpCode = 101;
 
 	private readonly PetAction _action;
 	private readonly SmPetSpawnSnapshot? _spawn;
+	private readonly SmPetSurrenderSnapshot? _surrender;
 	private readonly int _petObjectId;
 	private readonly string? _petName;
 	private readonly ObjectDeleteAnimation _animation;
@@ -47,6 +50,14 @@ public sealed class SmPet : GameServerPacket
 		// Java parity: network/aion/serverpackets/SM_PET(Pet) with PetAction.SPAWN.
 		_action = PetAction.Spawn;
 		_spawn = spawn;
+	}
+
+	public SmPet(SmPetSurrenderSnapshot surrender)
+		: base(PacketOpCode)
+	{
+		// Java parity: network/aion/serverpackets/SM_PET(PetCommonData, false) with PetAction.SURRENDER.
+		_action = PetAction.Surrender;
+		_surrender = surrender;
 	}
 
 	public SmPet(int petObjectId, ObjectDeleteAnimation animation)
@@ -76,6 +87,9 @@ public sealed class SmPet : GameServerPacket
 		{
 			case PetAction.Spawn:
 				WriteSpawn(buffer, _spawn ?? throw new InvalidOperationException("Spawn snapshot is required for SM_PET spawn."));
+				break;
+			case PetAction.Surrender:
+				WriteSurrender(buffer, _surrender ?? throw new InvalidOperationException("Surrender snapshot is required for SM_PET surrender."));
 				break;
 			case PetAction.Dismiss:
 				buffer.WriteD(_petObjectId);
@@ -118,6 +132,14 @@ public sealed class SmPet : GameServerPacket
 		buffer.WriteC(0);
 		buffer.WriteC(0);
 		buffer.WriteD(decoration);
+		buffer.WriteD(0);
+		buffer.WriteD(0);
+	}
+
+	private static void WriteSurrender(PacketBuffer buffer, SmPetSurrenderSnapshot surrender)
+	{
+		buffer.WriteD(surrender.TemplateId);
+		buffer.WriteD(surrender.ObjectId);
 		buffer.WriteD(0);
 		buffer.WriteD(0);
 	}
