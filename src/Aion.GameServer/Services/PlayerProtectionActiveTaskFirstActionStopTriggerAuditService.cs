@@ -44,7 +44,16 @@ public sealed record PlayerProtectionActiveTaskFirstActionStopTriggerAuditReques
 	bool EvaluateCmMoveInAir = false,
 	bool MoveInAirPlayerSpawned = true,
 	bool MoveInAirPlayerFlying = true,
-	bool MoveInAirProtectionActive = true);
+	bool MoveInAirProtectionActive = true,
+	bool EvaluateCmAttack = false,
+	bool CmAttackPlayerDead = false,
+	bool CmAttackProtectionActive = true,
+	bool EvaluateCmCastSpell = false,
+	bool CmCastSpellPlayerDead = false,
+	bool CmCastSpellIdZero = false,
+	bool CmCastSpellPetOrderWithoutPet = false,
+	bool CmCastSpellTemplateMissingOrPassive = false,
+	bool CmCastSpellProtectionActive = true);
 
 public sealed record PlayerProtectionActiveTaskFirstActionStopTriggerAuditRow(
 	int Order,
@@ -78,8 +87,8 @@ public static class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 
 		AddCmMove(rows, request);
 		AddCmMoveInAir(rows, request);
-		AddPendingActionCaller(rows, PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmAttack, "CM_ATTACK.runImpl", "after dead-player guard");
-		AddPendingActionCaller(rows, PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmCastSpell, "CM_CASTSPELL.runImpl", "after dead, zero spell, pet order, template, and passive checks");
+		AddCmAttack(rows, request);
+		AddCmCastSpell(rows, request);
 		AddPendingActionCaller(rows, PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmCompositeStones, "CM_COMPOSITE_STONES.runImpl", "after null-player guard");
 		AddPendingActionCaller(rows, PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmDialogSelect, "CM_DIALOG_SELECT.runImpl", "before trading and dialog validation");
 		AddPendingActionCaller(rows, PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmEmotion, "CM_EMOTION.runImpl", "near the end of the handled emotion flow");
@@ -199,6 +208,80 @@ public static class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 			javaSource,
 			$"future {source} protection-stop hook",
 			$"Direct Java caller discovered {javaOrdering}; exact production ordering and packet side effects still need a class-specific audit.");
+
+	private static void AddCmAttack(
+		ICollection<PlayerProtectionActiveTaskFirstActionStopTriggerAuditRow> rows,
+		PlayerProtectionActiveTaskFirstActionStopTriggerAuditRequest request)
+	{
+		if (!request.EvaluateCmAttack)
+		{
+			AddPendingActionCaller(rows, PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmAttack, "CM_ATTACK.runImpl", "after dead-player guard");
+			return;
+		}
+
+		var javaCallReached = !request.CmAttackPlayerDead && request.CmAttackProtectionActive;
+		var note = request.CmAttackPlayerDead
+			? "Java CM_ATTACK returns at the dead-player guard before protection stop, known-list lookup, or attackTarget."
+			: request.CmAttackProtectionActive
+				? "Java CM_ATTACK stops protection after the dead-player guard and before known-list target lookup or attackTarget."
+				: "Java CM_ATTACK reaches the attack path but skips stopProtectionActiveTask because protection is not active.";
+
+		Add(
+			rows,
+			PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmAttack,
+			PlayerProtectionActiveTaskFirstActionStopTriggerRowKind.ActionPacketStop,
+			javaCallReached
+				? PlayerProtectionActiveTaskFirstActionStopTriggerStatus.WouldStopProtection
+				: PlayerProtectionActiveTaskFirstActionStopTriggerStatus.SkippedByJavaBranch,
+			javaCallReached,
+			javaCallReached,
+			"if (player.isProtectionActive()) stopProtectionActiveTask()",
+			"CM_ATTACK.runImpl",
+			"future CM_ATTACK protection-stop hook",
+			note);
+	}
+
+	private static void AddCmCastSpell(
+		ICollection<PlayerProtectionActiveTaskFirstActionStopTriggerAuditRow> rows,
+		PlayerProtectionActiveTaskFirstActionStopTriggerAuditRequest request)
+	{
+		if (!request.EvaluateCmCastSpell)
+		{
+			AddPendingActionCaller(rows, PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmCastSpell, "CM_CASTSPELL.runImpl", "after dead, zero spell, pet order, template, and passive checks");
+			return;
+		}
+
+		var preconditionSkipped = request.CmCastSpellPlayerDead
+			|| request.CmCastSpellIdZero
+			|| request.CmCastSpellPetOrderWithoutPet
+			|| request.CmCastSpellTemplateMissingOrPassive;
+		var javaCallReached = !preconditionSkipped && request.CmCastSpellProtectionActive;
+		var note = request.CmCastSpellPlayerDead
+			? "Java CM_CASTSPELL sends cannot-cast message and returns at the dead-player guard before protection stop."
+			: request.CmCastSpellIdZero
+				? "Java CM_CASTSPELL cancels the current skill and returns when spellid is zero before protection stop."
+				: request.CmCastSpellPetOrderWithoutPet
+					? "Java CM_CASTSPELL sends pet-required message and returns for invalid pet-order skills before protection stop."
+					: request.CmCastSpellTemplateMissingOrPassive
+						? "Java CM_CASTSPELL returns for missing or passive skill templates before protection stop."
+						: request.CmCastSpellProtectionActive
+							? "Java CM_CASTSPELL stops protection after dead, zero-spell, pet-order, template, and passive guards, then cancels item use."
+							: "Java CM_CASTSPELL reaches the cast path but skips stopProtectionActiveTask because protection is not active, then cancels item use.";
+
+		Add(
+			rows,
+			PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmCastSpell,
+			PlayerProtectionActiveTaskFirstActionStopTriggerRowKind.ActionPacketStop,
+			javaCallReached
+				? PlayerProtectionActiveTaskFirstActionStopTriggerStatus.WouldStopProtection
+				: PlayerProtectionActiveTaskFirstActionStopTriggerStatus.SkippedByJavaBranch,
+			javaCallReached,
+			javaCallReached,
+			"if (player.isProtectionActive()) stopProtectionActiveTask(); player.getController().cancelUseItem()",
+			"CM_CASTSPELL.runImpl",
+			"future CM_CASTSPELL protection-stop hook",
+			note);
+	}
 
 	private static void AddProductionBoundary(ICollection<PlayerProtectionActiveTaskFirstActionStopTriggerAuditRow> rows) =>
 		Add(

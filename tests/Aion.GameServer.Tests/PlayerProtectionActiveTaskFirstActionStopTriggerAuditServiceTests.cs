@@ -171,6 +171,86 @@ public sealed class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 			&& row.Notes.Contains("protection is not active", StringComparison.Ordinal));
 	}
 
+	[Fact]
+	public void Create_CmAttackStopsAfterDeadGuardBeforeTargetLookup()
+	{
+		var report = PlayerProtectionActiveTaskFirstActionStopTriggerAuditService.Create(CreateRequest(
+			evaluateCmAttack: true));
+
+		Assert.True(report.TriggersStopProtection);
+		Assert.Contains(report.Rows, row =>
+			row.Source == PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmAttack
+			&& row.Status == PlayerProtectionActiveTaskFirstActionStopTriggerStatus.WouldStopProtection
+			&& row.JavaCallReached
+			&& row.Notes.Contains("before known-list target lookup", StringComparison.Ordinal));
+	}
+
+	[Theory]
+	[InlineData(true, true, "dead-player guard")]
+	[InlineData(false, false, "protection is not active")]
+	public void Create_CmAttackSkippedBranchesDoNotStop(
+		bool playerDead,
+		bool protectionActive,
+		string expectedNote)
+	{
+		var report = PlayerProtectionActiveTaskFirstActionStopTriggerAuditService.Create(CreateRequest(
+			evaluateCmAttack: true,
+			cmAttackPlayerDead: playerDead,
+			cmAttackProtectionActive: protectionActive));
+
+		Assert.False(report.TriggersStopProtection);
+		Assert.Contains(report.Rows, row =>
+			row.Source == PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmAttack
+			&& row.Status == PlayerProtectionActiveTaskFirstActionStopTriggerStatus.SkippedByJavaBranch
+			&& !row.JavaCallReached
+			&& row.Notes.Contains(expectedNote, StringComparison.Ordinal));
+	}
+
+	[Fact]
+	public void Create_CmCastSpellStopsAfterPreconditionGuardsBeforeCancelUseItem()
+	{
+		var report = PlayerProtectionActiveTaskFirstActionStopTriggerAuditService.Create(CreateRequest(
+			evaluateCmCastSpell: true));
+
+		Assert.True(report.TriggersStopProtection);
+		Assert.Contains(report.Rows, row =>
+			row.Source == PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmCastSpell
+			&& row.Status == PlayerProtectionActiveTaskFirstActionStopTriggerStatus.WouldStopProtection
+			&& row.JavaCallReached
+			&& row.JavaOperation.Contains("cancelUseItem", StringComparison.Ordinal)
+			&& row.Notes.Contains("then cancels item use", StringComparison.Ordinal));
+	}
+
+	[Theory]
+	[InlineData(true, false, false, false, true, "dead-player guard")]
+	[InlineData(false, true, false, false, true, "spellid is zero")]
+	[InlineData(false, false, true, false, true, "invalid pet-order skills")]
+	[InlineData(false, false, false, true, true, "missing or passive skill templates")]
+	[InlineData(false, false, false, false, false, "protection is not active")]
+	public void Create_CmCastSpellSkippedBranchesDoNotStop(
+		bool playerDead,
+		bool spellIdZero,
+		bool petOrderWithoutPet,
+		bool templateMissingOrPassive,
+		bool protectionActive,
+		string expectedNote)
+	{
+		var report = PlayerProtectionActiveTaskFirstActionStopTriggerAuditService.Create(CreateRequest(
+			evaluateCmCastSpell: true,
+			cmCastSpellPlayerDead: playerDead,
+			cmCastSpellIdZero: spellIdZero,
+			cmCastSpellPetOrderWithoutPet: petOrderWithoutPet,
+			cmCastSpellTemplateMissingOrPassive: templateMissingOrPassive,
+			cmCastSpellProtectionActive: protectionActive));
+
+		Assert.False(report.TriggersStopProtection);
+		Assert.Contains(report.Rows, row =>
+			row.Source == PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmCastSpell
+			&& row.Status == PlayerProtectionActiveTaskFirstActionStopTriggerStatus.SkippedByJavaBranch
+			&& !row.JavaCallReached
+			&& row.Notes.Contains(expectedNote, StringComparison.Ordinal));
+	}
+
 	private static PlayerProtectionActiveTaskFirstActionStopTriggerAuditRequest CreateRequest(
 		float packetX = CurrentX,
 		float packetY = CurrentY,
@@ -182,7 +262,16 @@ public sealed class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 		bool evaluateCmMoveInAir = false,
 		bool moveInAirPlayerSpawned = true,
 		bool moveInAirPlayerFlying = true,
-		bool moveInAirProtectionActive = true) =>
+		bool moveInAirProtectionActive = true,
+		bool evaluateCmAttack = false,
+		bool cmAttackPlayerDead = false,
+		bool cmAttackProtectionActive = true,
+		bool evaluateCmCastSpell = false,
+		bool cmCastSpellPlayerDead = false,
+		bool cmCastSpellIdZero = false,
+		bool cmCastSpellPetOrderWithoutPet = false,
+		bool cmCastSpellTemplateMissingOrPassive = false,
+		bool cmCastSpellProtectionActive = true) =>
 		new(
 			spawned,
 			antiHackAccepted,
@@ -197,7 +286,16 @@ public sealed class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 			evaluateCmMoveInAir,
 			moveInAirPlayerSpawned,
 			moveInAirPlayerFlying,
-			moveInAirProtectionActive);
+			moveInAirProtectionActive,
+			evaluateCmAttack,
+			cmAttackPlayerDead,
+			cmAttackProtectionActive,
+			evaluateCmCastSpell,
+			cmCastSpellPlayerDead,
+			cmCastSpellIdZero,
+			cmCastSpellPetOrderWithoutPet,
+			cmCastSpellTemplateMissingOrPassive,
+			cmCastSpellProtectionActive);
 
 	private const float CurrentX = 100f;
 	private const float CurrentY = 200f;
