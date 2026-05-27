@@ -25,10 +25,14 @@ public sealed class SmWarehouseAddItem : GameServerPacket
 		_addType = addType;
 	}
 
-	public static SmWarehouseAddItem CreateAllSlot(int warehouseType, InventoryItem item, ItemTemplateSummary template)
+	public static SmWarehouseAddItem CreateAllSlot(
+		int warehouseType,
+		InventoryItem item,
+		ItemTemplateSummary template,
+		int generalInfoWarehouseRestrictionFlag = 0)
 	{
 		// Java parity: ItemPacketService.sendItemUnlockPacket -> ItemAddType.ALL_SLOT for non-cube storage.
-		return new SmWarehouseAddItem(warehouseType, [new WarehousePacketItem(item, template)], AllSlot);
+		return new SmWarehouseAddItem(warehouseType, [new WarehousePacketItem(item, template, generalInfoWarehouseRestrictionFlag)], AllSlot);
 	}
 
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
@@ -50,9 +54,9 @@ public sealed class SmWarehouseAddItem : GameServerPacket
 		buffer.WriteD(template.TemplateId);
 		buffer.WriteC(0);
 		buffer.WriteS(template.GetClientName());
-		SmInventoryInfo.WriteItemInfoBlob(buffer, item, template);
+		SmInventoryInfo.WriteItemInfoBlob(buffer, item, template, packetItem.GeneralInfoWarehouseRestrictionFlag);
 		buffer.WriteH((int)(item.Slot & 0xffff));
 	}
 
-	public sealed record WarehousePacketItem(InventoryItem Item, ItemTemplateSummary Template);
+	public sealed record WarehousePacketItem(InventoryItem Item, ItemTemplateSummary Template, int GeneralInfoWarehouseRestrictionFlag = 0);
 }

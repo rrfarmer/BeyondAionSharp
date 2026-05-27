@@ -3129,6 +3129,38 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmWarehouseAddItem_WritesCleanupSealFlagInItemBlobLikeJava()
+	{
+		var payload = SerializeUnencryptedPayload(
+			SmWarehouseAddItem.CreateAllSlot(
+				SmWarehouseAddItem.AccountWarehouse,
+				new InventoryItem { ObjectId = 88, ItemId = 188053996, Count = 1, Location = 2, Slot = 7 },
+				new ItemTemplateSummary(188053996, "Emperor Trillirunerk's Feather Box", 0, 123, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
+				generalInfoWarehouseRestrictionFlag: 3));
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(SmWarehouseAddItem.AccountWarehouse, (int)reader.ReadC());
+		Assert.Equal(SmWarehouseAddItem.AllSlot, reader.ReadH());
+		Assert.Equal(1, reader.ReadH());
+		var restrictedItem = ReadWarehouseItemWithBlob(reader);
+		Assert.Equal((88, 188053996, 0, 7), (restrictedItem.ObjectId, restrictedItem.ItemId, restrictedItem.ItemInfo, restrictedItem.EquipmentSlot));
+		Assert.Equal(0, reader.Remaining);
+		using var blobReader = new PacketBuffer(restrictedItem.Blob);
+
+		Assert.Equal(0x00, (int)blobReader.ReadC());
+		Assert.Equal(123, blobReader.ReadH());
+		Assert.Equal(1, blobReader.ReadQ());
+		Assert.Equal(string.Empty, blobReader.ReadS());
+		Assert.Equal(0, (int)blobReader.ReadC());
+		Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(3, blobReader.ReadH());
+		Assert.Equal(0, blobReader.ReadD());
+		Assert.Equal(18, blobReader.ReadH());
+		Assert.Equal(0, blobReader.Remaining);
+	}
+
+	[Fact]
 	public void SmStatsInfo_WritesJavaShapedBaselineStats()
 	{
 		var payload = SerializeUnencryptedPayload(
@@ -6823,6 +6855,18 @@ public class GamePacketTests
 		reader.ReadB(blobSize);
 		var equipmentSlot = reader.ReadH();
 		return (objectId, itemId, itemInfo, blobSize, equipmentSlot);
+	}
+
+	private static (int ObjectId, int ItemId, int ItemInfo, byte[] Blob, int EquipmentSlot) ReadWarehouseItemWithBlob(PacketBuffer reader)
+	{
+		var objectId = reader.ReadD();
+		var itemId = reader.ReadD();
+		var itemInfo = reader.ReadC();
+		reader.ReadS();
+		var blobSize = reader.ReadH();
+		var blob = reader.ReadB(blobSize);
+		var equipmentSlot = reader.ReadH();
+		return (objectId, itemId, itemInfo, blob, equipmentSlot);
 	}
 
 	private static void AssertPrimaryStats(PacketBuffer reader, int power, int health, int accuracy, int agility, int knowledge, int will)
