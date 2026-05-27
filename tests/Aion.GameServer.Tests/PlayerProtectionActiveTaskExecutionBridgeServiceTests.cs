@@ -28,6 +28,11 @@ public sealed class PlayerProtectionActiveTaskExecutionBridgeServiceTests
 
 		Assert.Equal(PlayerProtectionActiveTaskExecutionBridgeStatus.LiveVisualMutationNoSend, result.Status);
 		Assert.Equal(PlayerProtectionActiveTaskAdapterStatus.LiveVisualStarted, result.AdapterResult.Status);
+		Assert.Equal(PlayerProtectionActiveTaskPlanStatus.StartProtection, result.SideEffectOperationPlan.PlanStatus);
+		Assert.True(result.SideEffectOperationPlan.SchedulesDelayedStop);
+		Assert.True(result.SideEffectOperationPlan.CancelsKnownCreatureCasts);
+		Assert.True(result.SideEffectOperationPlan.ClearsKnownPlayerTargets);
+		Assert.Contains(result.SideEffectOperationPlan.Rows, row => row.Operation == PlayerProtectionActiveTaskSideEffectOperation.BroadcastPlayerState);
 		Assert.True(player.IsProtectionActive());
 		Assert.True(result.ConstructedPacket);
 		Assert.IsType<SmPlayerState>(result.Packet);
@@ -58,6 +63,18 @@ public sealed class PlayerProtectionActiveTaskExecutionBridgeServiceTests
 
 		Assert.Equal(PlayerProtectionActiveTaskExecutionBridgeStatus.LiveVisualMutationNoSend, result.Status);
 		Assert.Equal(PlayerProtectionActiveTaskAdapterStatus.LiveVisualStopped, result.AdapterResult.Status);
+		Assert.Equal(PlayerProtectionActiveTaskPlanStatus.StopProtection, result.SideEffectOperationPlan.PlanStatus);
+		Assert.True(result.SideEffectOperationPlan.CancelsExistingStopTask);
+		Assert.True(result.SideEffectOperationPlan.NotifiesAiOnMove);
+		Assert.Equal(
+			[
+				PlayerProtectionActiveTaskSideEffectOperation.CancelProtectionTask,
+				PlayerProtectionActiveTaskSideEffectOperation.CheckSpawned,
+				PlayerProtectionActiveTaskSideEffectOperation.UnsetBlinkingVisualState,
+				PlayerProtectionActiveTaskSideEffectOperation.BroadcastPlayerState,
+				PlayerProtectionActiveTaskSideEffectOperation.NotifyAiOnMove,
+			],
+			result.SideEffectOperationPlan.Rows.Select(row => row.Operation));
 		Assert.False(player.IsProtectionActive());
 		Assert.True(result.ConstructedPacket);
 		Assert.IsType<SmPlayerState>(result.Packet);
@@ -88,12 +105,21 @@ public sealed class PlayerProtectionActiveTaskExecutionBridgeServiceTests
 			IsSpawned: false));
 
 		Assert.Equal(PlayerProtectionActiveTaskExecutionBridgeStatus.NoBroadcast, alreadyProtected.Status);
+		Assert.Equal(PlayerProtectionActiveTaskPlanStatus.AlreadyProtected, alreadyProtected.SideEffectOperationPlan.PlanStatus);
+		Assert.Single(alreadyProtected.SideEffectOperationPlan.Rows);
 		Assert.Null(alreadyProtected.Packet);
 		Assert.False(alreadyProtected.ConstructedPacket);
 		Assert.Equal(PlayerProtectionActiveTaskSightedRecipientSocketExecutorStatus.NoPacket, alreadyProtected.SocketExecutorResult.Status);
 		Assert.Empty(alreadyProtected.SocketExecutorResult.Recipients);
 
 		Assert.Equal(PlayerProtectionActiveTaskExecutionBridgeStatus.NoBroadcast, unspawnedStop.Status);
+		Assert.Equal(PlayerProtectionActiveTaskPlanStatus.StopProtectionUnspawned, unspawnedStop.SideEffectOperationPlan.PlanStatus);
+		Assert.Equal(
+			[
+				PlayerProtectionActiveTaskSideEffectOperation.CancelProtectionTask,
+				PlayerProtectionActiveTaskSideEffectOperation.CheckSpawned,
+			],
+			unspawnedStop.SideEffectOperationPlan.Rows.Select(row => row.Operation));
 		Assert.Null(unspawnedStop.Packet);
 		Assert.False(unspawnedStop.ConstructedPacket);
 		Assert.Equal(PlayerProtectionActiveTaskSightedRecipientSocketExecutorStatus.NoPacket, unspawnedStop.SocketExecutorResult.Status);

@@ -15,6 +15,7 @@ public enum PlayerProtectionActiveTaskExecutionBridgeStatus
 public sealed record PlayerProtectionActiveTaskExecutionBridgeResult(
 	PlayerProtectionActiveTaskExecutionBridgeStatus Status,
 	PlayerProtectionActiveTaskAdapterResult AdapterResult,
+	PlayerProtectionActiveTaskSideEffectOperationPlan SideEffectOperationPlan,
 	SmPlayerState? Packet,
 	PlayerProtectionActiveTaskSightedRecipientSocketExecutorResult SocketExecutorResult,
 	bool ConstructedPacket,
@@ -42,6 +43,9 @@ public sealed class PlayerProtectionActiveTaskExecutionBridgeService
 	{
 		cancellationToken.ThrowIfCancellationRequested();
 		var adapterResult = PlayerProtectionActiveTaskAdapterService.Apply(request);
+		var sideEffectOperationPlan = PlayerProtectionActiveTaskSideEffectOperationPlanService.Create(
+			request,
+			adapterResult);
 		var packet = adapterResult.FanoutPlan.ShouldBroadcast
 			? new SmPlayerState(request.Player)
 			: null;
@@ -57,6 +61,7 @@ public sealed class PlayerProtectionActiveTaskExecutionBridgeService
 		return new PlayerProtectionActiveTaskExecutionBridgeResult(
 			status,
 			adapterResult,
+			sideEffectOperationPlan,
 			packet,
 			executorResult,
 			ConstructedPacket: packet != null,
