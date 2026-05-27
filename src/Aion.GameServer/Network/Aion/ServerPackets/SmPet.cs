@@ -26,6 +26,7 @@ public sealed class SmPet : GameServerPacket
 	private readonly PetAction _action;
 	private readonly SmPetSpawnSnapshot? _spawn;
 	private readonly int _petObjectId;
+	private readonly string? _petName;
 	private readonly ObjectDeleteAnimation _animation;
 
 	public SmPet(PetAction action)
@@ -57,6 +58,15 @@ public sealed class SmPet : GameServerPacket
 		_animation = animation;
 	}
 
+	public SmPet(int petObjectId, string petName)
+		: base(PacketOpCode)
+	{
+		// Java parity: network/aion/serverpackets/SM_PET(int, String) with PetAction.RENAME.
+		_action = PetAction.Rename;
+		_petObjectId = petObjectId;
+		_petName = petName;
+	}
+
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
 		// Java parity: SM_PET.writeImpl known-list spawn/dismiss subset.
@@ -70,6 +80,10 @@ public sealed class SmPet : GameServerPacket
 			case PetAction.Dismiss:
 				buffer.WriteD(_petObjectId);
 				buffer.WriteC((byte)_animation);
+				break;
+			case PetAction.Rename:
+				buffer.WriteD(_petObjectId);
+				buffer.WriteS(_petName ?? throw new InvalidOperationException("Pet name is required for SM_PET rename."));
 				break;
 			case PetAction.TalkWithMerchant:
 			case PetAction.TalkWithMinder:

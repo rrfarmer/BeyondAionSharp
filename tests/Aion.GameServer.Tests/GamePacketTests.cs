@@ -4080,6 +4080,18 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmPet_RenameWritesPetObjectIdAndNameLikeJava()
+	{
+		var payload = SerializeUnencryptedPayload(new SmPet(7001, "Tog II"));
+		using var reader = new PacketBuffer(payload);
+
+		Assert.Equal((int)PetAction.Rename, reader.ReadH());
+		Assert.Equal(7001, reader.ReadD());
+		Assert.Equal("Tog II", reader.ReadS());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
 	public void SmPetEmote_FlyStartWritesDefaultBranchLikeJava()
 	{
 		var payload = SerializeUnencryptedPayload(new SmPetEmote(new SmPetEmoteSnapshot(7001, PetEmote.FlyStart)));
