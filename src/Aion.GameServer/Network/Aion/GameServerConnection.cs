@@ -3893,7 +3893,13 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		if (sourceTemplate.ExpandInventoryAction != null)
 		{
-			await HandleInventoryExpansionUseItemAsync(player, inventoryItems, sourceItem, sourceTemplate, itemTemplates);
+			await HandleInventoryExpansionUseItemAsync(
+				player,
+				inventoryItems,
+				sourceItem,
+				sourceTemplate,
+				itemTemplates,
+				staticData.ItemRestrictionCleanups);
 			return;
 		}
 
@@ -4915,7 +4921,11 @@ public sealed class GameServerConnection : BaseClientConnection
 		else if (sourceItemUpdate != null)
 		{
 			ReplaceInventoryItem(inventoryItems, sourceItemUpdate);
-			await SendPacketAsync(new SmInventoryUpdateItem(sourceItemUpdate, sourceTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+			await SendPacketAsync(new SmInventoryUpdateItem(
+				sourceItemUpdate,
+				sourceTemplate,
+				SmInventoryUpdateItem.DecreaseItemUse,
+				GetGeneralInfoWarehouseRestrictionFlag(sourceItemUpdate.ItemId, staticData.ItemRestrictionCleanups)));
 		}
 
 		player.InventoryItems = inventoryItems.ToArray();
@@ -5133,7 +5143,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		List<InventoryItem> inventoryItems,
 		InventoryItem sourceItem,
 		ItemTemplateSummary sourceTemplate,
-		ItemTemplateTable itemTemplates)
+		ItemTemplateTable itemTemplates,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups)
 	{
 		// Java parity: model/templates/item/actions/ExpandInventoryAction.canAct + act.
 		var plan = InventoryExpansionService.CreatePlan(
@@ -5167,7 +5178,11 @@ public sealed class GameServerConnection : BaseClientConnection
 		else if (sourceItemUpdate != null)
 		{
 			ReplaceInventoryItem(inventoryItems, sourceItemUpdate);
-			await SendPacketAsync(new SmInventoryUpdateItem(sourceItemUpdate, sourceTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+			await SendPacketAsync(new SmInventoryUpdateItem(
+				sourceItemUpdate,
+				sourceTemplate,
+				SmInventoryUpdateItem.DecreaseItemUse,
+				GetGeneralInfoWarehouseRestrictionFlag(sourceItemUpdate.ItemId, itemRestrictionCleanups)));
 		}
 
 		player.InventoryItems = inventoryItems.ToArray();

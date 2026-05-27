@@ -46,7 +46,12 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Equal(1, sourceItem.Count);
 		Assert.Collection(
 			fixture.SentPackets,
-			packet => Assert.IsType<SmInventoryUpdateItem>(packet),
+			packet => AssertInventoryUpdatePayloadWithCleanupSealFlag(
+				Assert.IsType<SmInventoryUpdateItem>(packet),
+				expectedObjectId: 5001,
+				expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse,
+				expectedCleanupSealFlag: 3,
+				expectedItemMask: 0),
 			packet => Assert.IsType<SmItemUsageAnimation>(packet),
 			packet => Assert.IsType<SmSystemMessage>(packet),
 			packet => Assert.IsType<SmCubeUpdate>(packet));
@@ -66,7 +71,12 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Equal(1, sourceItem.Count);
 		Assert.Collection(
 			fixture.SentPackets,
-			packet => Assert.IsType<SmInventoryUpdateItem>(packet),
+			packet => AssertInventoryUpdatePayloadWithCleanupSealFlag(
+				Assert.IsType<SmInventoryUpdateItem>(packet),
+				expectedObjectId: 5001,
+				expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse,
+				expectedCleanupSealFlag: 3,
+				expectedItemMask: 0),
 			packet => Assert.IsType<SmItemUsageAnimation>(packet),
 			packet => Assert.IsType<SmSystemMessage>(packet),
 			packet => Assert.IsType<SmWarehouseInfo>(packet),
@@ -89,11 +99,41 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Equal(1, sourceItem.Count);
 		Assert.Collection(
 			fixture.SentPackets,
-			packet => Assert.IsType<SmInventoryUpdateItem>(packet),
+			packet => AssertInventoryUpdatePayloadWithCleanupSealFlag(
+				Assert.IsType<SmInventoryUpdateItem>(packet),
+				expectedObjectId: 5001,
+				expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse,
+				expectedCleanupSealFlag: 3,
+				expectedItemMask: 0),
 			packet => Assert.IsType<SmItemUsageAnimation>(packet),
 			packet => Assert.IsType<SmSystemMessage>(packet),
 			packet => Assert.IsType<SmWarehouseInfo>(packet),
 			packet => Assert.IsType<SmWarehouseInfo>(packet));
+	}
+
+	[Fact]
+	public async Task HandleUseItemAsync_CraftLearnTicketWritesCleanupSealFlagForRemainingSource()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync();
+		var player = CreatePlayer(itemId: 152200001);
+		player.Skills = [new PlayerSkill { SkillId = 40009, SkillLevel = 1 }];
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
+
+		Assert.Contains(155000001, player.Recipes);
+		var sourceItem = Assert.Single(player.InventoryItems);
+		Assert.Equal(1, sourceItem.Count);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertInventoryUpdatePayloadWithCleanupSealFlag(
+				Assert.IsType<SmInventoryUpdateItem>(packet),
+				expectedObjectId: 5001,
+				expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse,
+				expectedCleanupSealFlag: 3,
+				expectedItemMask: 0),
+			packet => Assert.IsType<SmLearnRecipe>(packet),
+			packet => Assert.IsType<SmSystemMessage>(packet),
+			packet => Assert.IsType<SmItemUsageAnimation>(packet));
 	}
 
 	[Theory]
@@ -3108,6 +3148,11 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 						<exp>100</exp>
 					</player_experience_table>
 					<item_templates>
+						<item_template id="152200001" name="Test Craft Recipe" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="10">
+							<actions>
+								<craftlearn recipeid="155000001"/>
+							</actions>
+						</item_template>
 						<item_template id="169630000" name="[Expand Card] Expand Cube Ticket (lvl 1)" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="1">
 							<actions>
 								<expandinventory level="1" storage="CUBE" />
@@ -3204,6 +3249,9 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 						<item id="188053996" parts="100 101"/>
 					</assembly_items>
 					<item_restriction_cleanups>
+						<cleanup id="152200001" awh="0" lwh="0"/>
+						<cleanup id="169630000" awh="0" lwh="0"/>
+						<cleanup id="169640000" awh="0" lwh="0"/>
 						<cleanup id="100" awh="0" lwh="0"/>
 						<cleanup id="{selectableFixture.SourceItemId}" awh="0" lwh="0"/>
 						<cleanup id="104" awh="0" lwh="0"/>
@@ -3212,6 +3260,9 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 						<cleanup id="188053996" awh="0" lwh="0"/>
 						<cleanup id="166000195" awh="0" lwh="0"/>
 					</item_restriction_cleanups>
+					<recipe_templates>
+						<recipe_template id="155000001" nameid="730278" skillid="40009" race="ELYOS" skillpoint="1" dp="200" autolearn="1" productid="152000401" quantity="3"/>
+					</recipe_templates>
 				</static_data>
 				""");
 			var dataManager = await DataManager.LoadAsync(
