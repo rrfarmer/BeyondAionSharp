@@ -98,6 +98,33 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 	}
 
 	[Fact]
+	public async Task HandleReviveAsync_KiskReviveCanExposeDisabledCleanupPlanWithoutAggroMutation()
+	{
+		await using var fixture = await KiskReviveWorkflowFixture.CreateAsync();
+		var player = CreateDeadPlayer(boundKiskObjectId: 9001);
+		var kiskPosition = new WorldPosition(210010000, 11, 22, 33, 0);
+		fixture.RegisterKisk(objectId: 9001, kiskPosition, maxResurrects: 2);
+		var adapter = new PlayerReviveCleanupAdapterService();
+		var aggroEntries = new[]
+		{
+			new PlayerAggroEntrySnapshot(2001, Damage: 80, Hate: 800),
+			new PlayerAggroEntrySnapshot(2002, Damage: 20, Hate: 200),
+		};
+
+		await fixture.Connection.HandleReviveAsync(player, CreateRevive(PlayerKiskReviveService.KiskReviveId));
+		var observation = adapter.Apply(new PlayerReviveCleanupAdapterRequest(player.ObjectId, aggroEntries));
+
+		Assert.Equal(kiskPosition, player.Position);
+		Assert.Equal(PlayerReviveCleanupAdapterStatus.DisabledPlanned, observation.Status);
+		Assert.False(observation.MutatedLiveAggro);
+		Assert.True(observation.ExposesPlanForObservation);
+		Assert.Equal(player.ObjectId, observation.Plan.PlayerObjectId);
+		Assert.Equal(aggroEntries, observation.Plan.AggroClearPlan.ClearedEntries);
+		Assert.Contains(PlayerReviveCleanupPlanStep.ClearPlayerAggro, observation.Plan.Steps);
+		Assert.False(observation.IsLive);
+	}
+
+	[Fact]
 	public async Task HandleReviveAsync_KiskReviveClearsVisibleTargetsBeforeTeleport()
 	{
 		var registry = new CapturingConnectionRegistry();
