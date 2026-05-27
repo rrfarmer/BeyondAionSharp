@@ -115,4 +115,28 @@ public sealed class PlayerKiskRegistryTests
 		var expiredAfterRemoval = registry.RestoreOfflineBinding(new Player { ObjectId = 1002 });
 		Assert.Equal(PlayerKiskOfflineBindingRestoreStatus.NotFound, expiredAfterRemoval.Status);
 	}
+
+	[Fact]
+	public void TryRemoveKiskRemovesOfflineBindingsForCurrentMembersOnlyLikeJavaRemoveKisk()
+	{
+		var registry = new PlayerKiskRegistry();
+		var kisk = new PlayerKiskRuntimeState(objectId: 9001, ownerObjectId: 1001, npcId: 700273);
+		Assert.True(kisk.AddMember(1002));
+		Assert.True(kisk.AddMember(1003));
+		registry.RegisterKisk(kisk);
+		Assert.True(registry.RegisterOfflineBinding(playerObjectId: 1002, kiskObjectId: 9001));
+		Assert.True(registry.RegisterOfflineBinding(playerObjectId: 1003, kiskObjectId: 9001));
+		Assert.True(registry.RegisterOfflineBinding(playerObjectId: 1004, kiskObjectId: 9001));
+
+		Assert.True(registry.TryRemoveKisk(9001, out var removed));
+		var memberRestore = registry.RestoreOfflineBinding(new Player { ObjectId = 1002 });
+		var secondMemberRestore = registry.RestoreOfflineBinding(new Player { ObjectId = 1003 });
+		var staleNonMemberRestore = registry.RestoreOfflineBinding(new Player { ObjectId = 1004 });
+
+		Assert.Same(kisk, removed);
+		Assert.Equal(PlayerKiskOfflineBindingRestoreStatus.NotFound, memberRestore.Status);
+		Assert.Equal(PlayerKiskOfflineBindingRestoreStatus.NotFound, secondMemberRestore.Status);
+		Assert.Equal(PlayerKiskOfflineBindingRestoreStatus.Expired, staleNonMemberRestore.Status);
+		Assert.Equal(9001, staleNonMemberRestore.KiskObjectId);
+	}
 }
