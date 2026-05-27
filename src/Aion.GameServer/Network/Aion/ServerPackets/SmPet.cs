@@ -42,6 +42,11 @@ public sealed record SmPetSpecialFunctionSnapshot(
 	bool Active,
 	int LootNpcObjectId = 0);
 
+public sealed record SmPetDopingSpecialFunctionSnapshot(
+	int DopeAction,
+	int ItemTemplateIdOrSlot2 = 0,
+	int Slot = 0);
+
 public sealed class SmPet : GameServerPacket
 {
 	private const int PetDopingBagMaxItems = 8;
@@ -54,6 +59,7 @@ public sealed class SmPet : GameServerPacket
 	private readonly SmPetDataSnapshot? _petData;
 	private readonly IReadOnlyList<SmPetDataSnapshot>? _pets;
 	private readonly SmPetSpecialFunctionSnapshot? _specialFunction;
+	private readonly SmPetDopingSpecialFunctionSnapshot? _dopingSpecialFunction;
 	private readonly int _petObjectId;
 	private readonly string? _petName;
 	private readonly ObjectDeleteAnimation _animation;
@@ -94,6 +100,12 @@ public sealed class SmPet : GameServerPacket
 	{
 		// Java parity: network/aion/serverpackets/SM_PET(PetSpecialFunction, boolean, int).
 		return new SmPet(specialFunction);
+	}
+
+	public static SmPet DopingSpecialFunction(SmPetDopingSpecialFunctionSnapshot dopingSpecialFunction)
+	{
+		// Java parity: network/aion/serverpackets/SM_PET(int dopeAction, int itemId, int slot).
+		return new SmPet(dopingSpecialFunction);
 	}
 
 	public SmPet(SmPetSurrenderSnapshot surrender)
@@ -148,6 +160,13 @@ public sealed class SmPet : GameServerPacket
 		_specialFunction = specialFunction;
 	}
 
+	private SmPet(SmPetDopingSpecialFunctionSnapshot dopingSpecialFunction)
+		: base(PacketOpCode)
+	{
+		_action = PetAction.SpecialFunction;
+		_dopingSpecialFunction = dopingSpecialFunction;
+	}
+
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
 		// Java parity: SM_PET.writeImpl currently ported packet subset.
@@ -176,7 +195,14 @@ public sealed class SmPet : GameServerPacket
 				buffer.WriteS(_petName ?? throw new InvalidOperationException("Pet name is required for SM_PET rename."));
 				break;
 			case PetAction.SpecialFunction:
-				WriteSpecialFunction(buffer, _specialFunction ?? throw new InvalidOperationException("Special-function snapshot is required for SM_PET special function."));
+				if (_dopingSpecialFunction != null)
+				{
+					WriteDopingSpecialFunction(buffer, _dopingSpecialFunction);
+				}
+				else
+				{
+					WriteSpecialFunction(buffer, _specialFunction ?? throw new InvalidOperationException("Special-function snapshot is required for SM_PET special function."));
+				}
 				break;
 			case PetAction.TalkWithMerchant:
 			case PetAction.TalkWithMinder:
@@ -185,6 +211,31 @@ public sealed class SmPet : GameServerPacket
 				break;
 			default:
 				throw new NotSupportedException($"SM_PET action {_action} is not ported in the known-list serializer subset.");
+		}
+	}
+
+	private static void WriteDopingSpecialFunction(PacketBuffer buffer, SmPetDopingSpecialFunctionSnapshot dopingSpecialFunction)
+	{
+		buffer.WriteC((int)PetSpecialFunction.Doping);
+		buffer.WriteC(dopingSpecialFunction.DopeAction);
+		switch (dopingSpecialFunction.DopeAction)
+		{
+			case 0:
+				buffer.WriteD(dopingSpecialFunction.ItemTemplateIdOrSlot2);
+				buffer.WriteD(dopingSpecialFunction.Slot);
+				break;
+			case 1:
+				buffer.WriteD(dopingSpecialFunction.Slot);
+				break;
+			case 2:
+				buffer.WriteD(dopingSpecialFunction.Slot);
+				buffer.WriteD(dopingSpecialFunction.ItemTemplateIdOrSlot2);
+				break;
+			case 3:
+				buffer.WriteD(dopingSpecialFunction.ItemTemplateIdOrSlot2);
+				break;
+			default:
+				throw new NotSupportedException($"SM_PET doping special-function action {dopingSpecialFunction.DopeAction} is not written by Java.");
 		}
 	}
 

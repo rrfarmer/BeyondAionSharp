@@ -4326,9 +4326,52 @@ public class GamePacketTests
 	}
 
 	[Fact]
-	public void SmPet_SpecialFunctionRejectsDopingShapeUntilDedicatedConstructorIsPorted()
+	public void SmPet_SpecialFunctionRejectsDopingShapeOnGenericApi()
 	{
 		Assert.Throws<NotSupportedException>(() => SmPet.SpecialFunction(new SmPetSpecialFunctionSnapshot(PetSpecialFunction.Doping, true)));
+	}
+
+	[Theory]
+	[InlineData(0, 166000001, 3)]
+	[InlineData(1, 0, 3)]
+	[InlineData(2, 7, 3)]
+	[InlineData(3, 166000001, 0)]
+	public void SmPet_DopingSpecialFunctionWritesJavaDopeActionShapes(int dopeAction, int itemTemplateIdOrSlot2, int slot)
+	{
+		var payload = SerializeUnencryptedPayload(SmPet.DopingSpecialFunction(new SmPetDopingSpecialFunctionSnapshot(
+			dopeAction,
+			ItemTemplateIdOrSlot2: itemTemplateIdOrSlot2,
+			Slot: slot)));
+		using var reader = new PacketBuffer(payload);
+
+		Assert.Equal((int)PetAction.SpecialFunction, reader.ReadH());
+		Assert.Equal((int)PetSpecialFunction.Doping, (int)reader.ReadC());
+		Assert.Equal(dopeAction, (int)reader.ReadC());
+		switch (dopeAction)
+		{
+			case 0:
+				Assert.Equal(itemTemplateIdOrSlot2, reader.ReadD());
+				Assert.Equal(slot, reader.ReadD());
+				break;
+			case 1:
+				Assert.Equal(slot, reader.ReadD());
+				break;
+			case 2:
+				Assert.Equal(slot, reader.ReadD());
+				Assert.Equal(itemTemplateIdOrSlot2, reader.ReadD());
+				break;
+			case 3:
+				Assert.Equal(itemTemplateIdOrSlot2, reader.ReadD());
+				break;
+		}
+
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void SmPet_DopingSpecialFunctionRejectsUnknownDopeAction()
+	{
+		Assert.Throws<NotSupportedException>(() => SerializeUnencryptedPayload(SmPet.DopingSpecialFunction(new SmPetDopingSpecialFunctionSnapshot(99))));
 	}
 
 	[Fact]
