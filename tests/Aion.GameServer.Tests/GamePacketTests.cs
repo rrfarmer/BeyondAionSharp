@@ -4080,6 +4080,54 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmPetEmote_MoveStopWritesCurrentPositionLikeJava()
+	{
+		var payload = SerializeUnencryptedPayload(new SmPetEmote(new SmPetEmoteSnapshot(
+			7001,
+			PetEmote.MoveStop,
+			X: 11.5f,
+			Y: 22.25f,
+			Z: 33.75f,
+			Heading: 90)));
+		using var reader = new PacketBuffer(payload);
+
+		Assert.Equal(7001, reader.ReadD());
+		Assert.Equal((int)PetEmote.MoveStop, (int)reader.ReadC());
+		Assert.Equal(11.5f, reader.ReadF());
+		Assert.Equal(22.25f, reader.ReadF());
+		Assert.Equal(33.75f, reader.ReadF());
+		Assert.Equal(90, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void SmPetEmote_MoveToWritesCurrentAndTargetPositionLikeJava()
+	{
+		var payload = SerializeUnencryptedPayload(new SmPetEmote(new SmPetEmoteSnapshot(
+			7001,
+			PetEmote.MoveTo,
+			X: 11.5f,
+			Y: 22.25f,
+			Z: 33.75f,
+			Heading: 90,
+			TargetX: 44.5f,
+			TargetY: 55.25f,
+			TargetZ: 66.75f)));
+		using var reader = new PacketBuffer(payload);
+
+		Assert.Equal(7001, reader.ReadD());
+		Assert.Equal((int)PetEmote.MoveTo, (int)reader.ReadC());
+		Assert.Equal(11.5f, reader.ReadF());
+		Assert.Equal(22.25f, reader.ReadF());
+		Assert.Equal(33.75f, reader.ReadF());
+		Assert.Equal(90, (int)reader.ReadC());
+		Assert.Equal(44.5f, reader.ReadF());
+		Assert.Equal(55.25f, reader.ReadF());
+		Assert.Equal(66.75f, reader.ReadF());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
 	public void PetActionAndEmoteResolversPreserveJavaUnknownFallbacks()
 	{
 		Assert.Equal(PetAction.Spawn, PetActionResolver.GetActionById(3));
