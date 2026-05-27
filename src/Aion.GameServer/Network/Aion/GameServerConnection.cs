@@ -5618,9 +5618,10 @@ public sealed class GameServerConnection : BaseClientConnection
 			&& !item.IsEquipped);
 		if (sourceItem == null)
 		{
+			// Java parity: ToyPetSpawnAction sends the success end animation before decreaseByObjectId can fail.
 			await BroadcastItemUsageAnimationAsync(
 				player,
-				new SmItemUsageAnimation(player.ObjectId, sourceItemObjectId, sourceTemplate.TemplateId, 0, 2, 0));
+				new SmItemUsageAnimation(player.ObjectId, sourceItemObjectId, sourceTemplate.TemplateId, 0, 1, 1));
 			return;
 		}
 
@@ -5660,6 +5661,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		{
 			inventoryItems.RemoveAll(item => item.ObjectId == plan.DeletedSourceItemObjectId.Value);
 			await SendPacketAsync(new SmDeleteItem(plan.DeletedSourceItemObjectId.Value, SmDeleteItem.UseDeleteType));
+			await SendPacketAsync(SmCubeUpdate.CubeSizeSnapshot(inventoryItems.Count, player.NpcExpands, player.QuestExpands, player.ItemExpands));
 		}
 		else if (plan.SourceItemUpdate != null)
 		{

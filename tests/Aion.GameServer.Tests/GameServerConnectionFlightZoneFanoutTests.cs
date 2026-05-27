@@ -536,6 +536,93 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 	}
 
 	[Fact]
+	public async Task CompleteToyPetSpawnUseItemAsync_DeletesLastSourceWithUseDeleteAndCubeUpdate()
+	{
+		var runtimeContext = new GameServerRuntimeContext();
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var idFactory = new IDFactory();
+		await using var pair = await TestConnectionPair.CreateAsync(
+			registry: null,
+			runtimeContext,
+			idFactory: idFactory,
+			world: world);
+		var player = CreateTeleportingPlayer(7305, new WorldPosition(210040000, 2700, 620, 150, 10));
+		var sourceItem = new InventoryItem
+		{
+			ObjectId = 9104,
+			ItemId = 184000011,
+			Count = 1,
+			OwnerId = player.ObjectId,
+			Location = 0,
+			Slot = 4,
+		};
+		player.InventoryItems = [sourceItem];
+		var sourceTemplate = CreateToyPetSpawnItemTemplate(sourceItem.ItemId, toyPetSpawnNpcId: 700273);
+		var kiskTemplate = CreateKiskTemplate(700273);
+
+		await pair.Connection.CompleteToyPetSpawnUseItemAsync(
+			player,
+			sourceItem.ObjectId,
+			sourceTemplate,
+			kiskTemplate,
+			CancellationToken.None);
+
+		Assert.DoesNotContain(player.InventoryItems, item => item.ObjectId == sourceItem.ObjectId);
+		Assert.NotNull(runtimeContext.Kisks.GetKiskState(1));
+		Assert.True(world.TryGetObject(1, out _));
+		Assert.Collection(
+			pair.SentPackets.Take(3),
+			packet => AssertItemUsagePayload(
+				Assert.IsType<SmItemUsageAnimation>(packet),
+				expectedPlayerObjectId: player.ObjectId,
+				expectedItemObjectId: sourceItem.ObjectId,
+				expectedItemId: sourceItem.ItemId,
+				expectedTime: 0,
+				expectedEnd: 1,
+				expectedUnknown3: 1),
+			packet => AssertDeleteItemPayload(
+				Assert.IsType<SmDeleteItem>(packet),
+				expectedObjectId: sourceItem.ObjectId,
+				expectedDeleteType: SmDeleteItem.UseDeleteType),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0));
+	}
+
+	[Fact]
+	public async Task CompleteToyPetSpawnUseItemAsync_MissingSourceKeepsJavaSuccessEndAndSkipsSpawn()
+	{
+		var runtimeContext = new GameServerRuntimeContext();
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		await using var pair = await TestConnectionPair.CreateAsync(
+			registry: null,
+			runtimeContext,
+			idFactory: new IDFactory(),
+			world: world);
+		var player = CreateTeleportingPlayer(7308, new WorldPosition(210040000, 2700, 620, 150, 10));
+		var sourceTemplate = CreateToyPetSpawnItemTemplate(184000011, toyPetSpawnNpcId: 700273);
+		var kiskTemplate = CreateKiskTemplate(700273);
+
+		await pair.Connection.CompleteToyPetSpawnUseItemAsync(
+			player,
+			sourceItemObjectId: 9105,
+			sourceTemplate,
+			kiskTemplate,
+			CancellationToken.None);
+
+		Assert.Empty(player.InventoryItems);
+		Assert.False(world.TryGetObject(1, out _));
+		Assert.False(runtimeContext.Kisks.HaveKisk(player.ObjectId));
+		var packet = Assert.Single(pair.SentPackets);
+		AssertItemUsagePayload(
+			Assert.IsType<SmItemUsageAnimation>(packet),
+			expectedPlayerObjectId: player.ObjectId,
+			expectedItemObjectId: 9105,
+			expectedItemId: sourceTemplate.TemplateId,
+			expectedTime: 0,
+			expectedEnd: 1,
+			expectedUnknown3: 1);
+	}
+
+	[Fact]
 	public async Task CompleteToyPetSpawnUseItemAsync_ClearsCreaturePvpZoneCountersWhenSourceMutationFailsAfterKiskSpawn()
 	{
 		var dataManager = await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false);
@@ -825,6 +912,49 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 		using var reader = new PacketBuffer(SerializeUnencryptedPayload(emotion));
 		Assert.Equal(expectedObjectId, reader.ReadD());
 		Assert.Equal((int)expectedEmotion, (int)reader.ReadC());
+	}
+
+	private static void AssertItemUsagePayload(
+		SmItemUsageAnimation packet,
+		int expectedPlayerObjectId,
+		int expectedItemObjectId,
+		int expectedItemId,
+		int expectedTime,
+		int expectedEnd,
+		int expectedUnknown3)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(expectedPlayerObjectId, reader.ReadD());
+		Assert.Equal(expectedPlayerObjectId, reader.ReadD());
+		Assert.Equal(expectedItemObjectId, reader.ReadD());
+		Assert.Equal(expectedItemId, reader.ReadD());
+		Assert.Equal(expectedTime, reader.ReadD());
+		Assert.Equal(expectedEnd, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(1, (int)reader.ReadC());
+		Assert.Equal(expectedUnknown3, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertDeleteItemPayload(SmDeleteItem packet, int expectedObjectId, int expectedDeleteType)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(expectedObjectId, reader.ReadD());
+		Assert.Equal(expectedDeleteType, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertCubeUpdatePayload(SmCubeUpdate packet, int expectedItemsCount)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(expectedItemsCount, reader.ReadD());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
 	}
 
 	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
