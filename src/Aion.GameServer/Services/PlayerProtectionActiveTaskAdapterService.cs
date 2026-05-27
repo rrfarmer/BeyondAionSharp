@@ -22,12 +22,15 @@ public sealed record PlayerProtectionActiveTaskAdapterRequest(
 	PlayerProtectionActiveTaskAdapterAction Action,
 	bool ExecuteLiveVisualMutation = false,
 	bool HasProtectionActiveTask = false,
-	bool IsSpawned = true);
+	bool IsSpawned = true,
+	PlayerKnownListMembershipSnapshot? SourceKnownListSnapshot = null,
+	IReadOnlyList<PlayerProtectionActiveTaskRecipientVisibilityFact>? RecipientVisibilityFacts = null);
 
 public sealed record PlayerProtectionActiveTaskAdapterResult(
 	PlayerProtectionActiveTaskAdapterStatus Status,
 	PlayerProtectionActiveTaskPlan Plan,
 	PlayerProtectionActiveTaskFanoutPlan FanoutPlan,
+	PlayerProtectionActiveTaskSightedRecipientTrace SightedRecipientTrace,
 	PlayerProtectionActiveTaskReport Report,
 	bool MutatedVisualState,
 	bool MutatedScheduler,
@@ -50,6 +53,10 @@ public static class PlayerProtectionActiveTaskAdapterService
 				request.HasProtectionActiveTask,
 				request.IsSpawned);
 		var fanoutPlan = PlayerProtectionActiveTaskFanoutPlanService.Create(plan, action);
+		var sightedRecipientTrace = PlayerProtectionActiveTaskSightedRecipientTraceService.CreateTrace(
+			fanoutPlan,
+			request.SourceKnownListSnapshot,
+			request.RecipientVisibilityFacts);
 
 		if (!request.ExecuteLiveVisualMutation)
 		{
@@ -57,6 +64,7 @@ public static class PlayerProtectionActiveTaskAdapterService
 				PlayerProtectionActiveTaskAdapterStatus.DisabledPlanned,
 				plan,
 				fanoutPlan,
+				sightedRecipientTrace,
 				mutatedVisualState: false,
 				mutatedScheduler: false,
 				sentPackets: false,
@@ -66,14 +74,15 @@ public static class PlayerProtectionActiveTaskAdapterService
 		}
 
 		return request.Action == PlayerProtectionActiveTaskAdapterAction.Start
-			? ApplyStart(request.Player, plan, fanoutPlan)
-			: ApplyStop(request.Player, plan, fanoutPlan);
+			? ApplyStart(request.Player, plan, fanoutPlan, sightedRecipientTrace)
+			: ApplyStop(request.Player, plan, fanoutPlan, sightedRecipientTrace);
 	}
 
 	private static PlayerProtectionActiveTaskAdapterResult ApplyStart(
 		Player player,
 		PlayerProtectionActiveTaskPlan plan,
-		PlayerProtectionActiveTaskFanoutPlan fanoutPlan)
+		PlayerProtectionActiveTaskFanoutPlan fanoutPlan,
+		PlayerProtectionActiveTaskSightedRecipientTrace sightedRecipientTrace)
 	{
 		if (plan.Status == PlayerProtectionActiveTaskPlanStatus.AlreadyProtected)
 		{
@@ -81,6 +90,7 @@ public static class PlayerProtectionActiveTaskAdapterService
 				PlayerProtectionActiveTaskAdapterStatus.AlreadyProtected,
 				plan,
 				fanoutPlan,
+				sightedRecipientTrace,
 				mutatedVisualState: false,
 				mutatedScheduler: false,
 				sentPackets: false,
@@ -94,6 +104,7 @@ public static class PlayerProtectionActiveTaskAdapterService
 			PlayerProtectionActiveTaskAdapterStatus.LiveVisualStarted,
 			plan,
 			fanoutPlan,
+			sightedRecipientTrace,
 			mutatedVisualState: true,
 			mutatedScheduler: false,
 			sentPackets: false,
@@ -105,7 +116,8 @@ public static class PlayerProtectionActiveTaskAdapterService
 	private static PlayerProtectionActiveTaskAdapterResult ApplyStop(
 		Player player,
 		PlayerProtectionActiveTaskPlan plan,
-		PlayerProtectionActiveTaskFanoutPlan fanoutPlan)
+		PlayerProtectionActiveTaskFanoutPlan fanoutPlan,
+		PlayerProtectionActiveTaskSightedRecipientTrace sightedRecipientTrace)
 	{
 		if (!plan.IsSpawned)
 		{
@@ -113,6 +125,7 @@ public static class PlayerProtectionActiveTaskAdapterService
 				PlayerProtectionActiveTaskAdapterStatus.LiveVisualStopUnspawned,
 				plan,
 				fanoutPlan,
+				sightedRecipientTrace,
 				mutatedVisualState: false,
 				mutatedScheduler: false,
 				sentPackets: false,
@@ -126,6 +139,7 @@ public static class PlayerProtectionActiveTaskAdapterService
 			PlayerProtectionActiveTaskAdapterStatus.LiveVisualStopped,
 			plan,
 			fanoutPlan,
+			sightedRecipientTrace,
 			mutatedVisualState,
 			mutatedScheduler: false,
 			sentPackets: false,
@@ -138,6 +152,7 @@ public static class PlayerProtectionActiveTaskAdapterService
 		PlayerProtectionActiveTaskAdapterStatus status,
 		PlayerProtectionActiveTaskPlan plan,
 		PlayerProtectionActiveTaskFanoutPlan fanoutPlan,
+		PlayerProtectionActiveTaskSightedRecipientTrace sightedRecipientTrace,
 		bool mutatedVisualState,
 		bool mutatedScheduler,
 		bool sentPackets,
@@ -156,6 +171,7 @@ public static class PlayerProtectionActiveTaskAdapterService
 			status,
 			plan,
 			fanoutPlan,
+			sightedRecipientTrace,
 			report,
 			mutatedVisualState,
 			mutatedScheduler,
