@@ -27,6 +27,7 @@ public sealed class SmMailService : GameServerPacket
 	private readonly IReadOnlyList<PlayerMail> _mailbox;
 	private readonly PlayerMail? _letter;
 	private readonly ItemTemplateTable? _itemTemplates;
+	private readonly int _generalInfoWarehouseRestrictionFlag;
 	private readonly int _playerObjectId;
 	private readonly int _mailMessageId;
 	private readonly int _letterId;
@@ -61,7 +62,11 @@ public sealed class SmMailService : GameServerPacket
 		_isLastPacket = isLastPacket;
 	}
 
-	private SmMailService(IReadOnlyList<PlayerMail> mailbox, PlayerMail letter, ItemTemplateTable? itemTemplates)
+	private SmMailService(
+		IReadOnlyList<PlayerMail> mailbox,
+		PlayerMail letter,
+		ItemTemplateTable? itemTemplates,
+		int generalInfoWarehouseRestrictionFlag)
 		: base(PacketOpCode)
 	{
 		// Java parity: network/aion/serverpackets/SM_MAIL_SERVICE(Player, Letter, long) with serviceId 3.
@@ -69,6 +74,7 @@ public sealed class SmMailService : GameServerPacket
 		_mailbox = mailbox;
 		_letter = letter;
 		_itemTemplates = itemTemplates;
+		_generalInfoWarehouseRestrictionFlag = generalInfoWarehouseRestrictionFlag;
 	}
 
 	private SmMailService(int letterId, int attachmentType)
@@ -131,10 +137,14 @@ public sealed class SmMailService : GameServerPacket
 		return packets;
 	}
 
-	public static SmMailService CreateReadPacket(IReadOnlyList<PlayerMail> mailbox, PlayerMail letter, ItemTemplateTable? itemTemplates)
+	public static SmMailService CreateReadPacket(
+		IReadOnlyList<PlayerMail> mailbox,
+		PlayerMail letter,
+		ItemTemplateTable? itemTemplates,
+		int generalInfoWarehouseRestrictionFlag = 0)
 	{
 		// Java parity: services/mail/MailService.readMail sends SM_MAIL_SERVICE before marking the letter read.
-		return new SmMailService(mailbox, letter, itemTemplates);
+		return new SmMailService(mailbox, letter, itemTemplates, generalInfoWarehouseRestrictionFlag);
 	}
 
 	public static SmMailService CreateAttachmentState(int letterId, int attachmentType)
@@ -235,7 +245,7 @@ public sealed class SmMailService : GameServerPacket
 			buffer.WriteD(1);
 			buffer.WriteD(0);
 			buffer.WriteS(itemTemplate.GetClientName());
-			SmInventoryInfo.WriteItemInfoBlob(buffer, attachedItem, itemTemplate);
+			SmInventoryInfo.WriteItemInfoBlob(buffer, attachedItem, itemTemplate, _generalInfoWarehouseRestrictionFlag);
 		}
 		else
 		{

@@ -889,6 +889,59 @@ public class GamePacketTests
 		Assert.Equal(0, (int)attachedMailReader.ReadC());
 		Assert.Equal(0, attachedMailReader.Remaining);
 
+		var restrictedTemplate = new ItemTemplateSummary(
+			188053996,
+			"Emperor Trillirunerk's Feather Box",
+			0,
+			123,
+			1,
+			"NONE",
+			"NORMAL",
+			"COMMON",
+			"PC_ALL",
+			1,
+			0,
+			0);
+		var restrictedItem = new InventoryItem
+		{
+			ObjectId = 91,
+			ItemId = restrictedTemplate.TemplateId,
+			Count = 1,
+			OwnerId = 1001,
+			Location = 127,
+		};
+		var restrictedMail = new PlayerMail(23, 1001, "SealSender", "SealSubject", "SealBody", true, 91, restrictedTemplate.TemplateId, 0, 0, mailReceivedAt, restrictedItem);
+		var restrictedMailPayload = SerializeUnencryptedPayload(
+			SmMailService.CreateReadPacket(
+				[restrictedMail],
+				restrictedMail,
+				new ItemTemplateTable([restrictedTemplate]),
+				generalInfoWarehouseRestrictionFlag: 3));
+		using var restrictedMailReader = new PacketBuffer(restrictedMailPayload);
+		Assert.Equal(3, (int)restrictedMailReader.ReadC());
+		Assert.Equal(1001, restrictedMailReader.ReadD());
+		Assert.Equal(65537, restrictedMailReader.ReadD());
+		Assert.Equal(0, restrictedMailReader.ReadD());
+		Assert.Equal(23, restrictedMailReader.ReadD());
+		Assert.Equal(1001, restrictedMailReader.ReadD());
+		Assert.Equal("SealSender", restrictedMailReader.ReadS());
+		Assert.Equal("SealSubject", restrictedMailReader.ReadS());
+		Assert.Equal("SealBody", restrictedMailReader.ReadS());
+		Assert.Equal(91, restrictedMailReader.ReadD());
+		Assert.Equal(188053996, restrictedMailReader.ReadD());
+		Assert.Equal(1, restrictedMailReader.ReadD());
+		Assert.Equal(0, restrictedMailReader.ReadD());
+		Assert.Equal(string.Empty, restrictedMailReader.ReadS());
+		var restrictedBlobSize = restrictedMailReader.ReadH();
+		var restrictedBlob = restrictedMailReader.ReadB(restrictedBlobSize);
+		Assert.Equal(0, restrictedMailReader.ReadD());
+		Assert.Equal(0, restrictedMailReader.ReadD());
+		Assert.Equal(0, (int)restrictedMailReader.ReadC());
+		Assert.Equal((int)new DateTimeOffset(mailReceivedAt).ToUnixTimeSeconds(), restrictedMailReader.ReadD());
+		Assert.Equal(0, (int)restrictedMailReader.ReadC());
+		Assert.Equal(0, restrictedMailReader.Remaining);
+		AssertGeneralInfoCleanupSealFlag(restrictedBlob, expectedItemMask: 123, expectedFlag: 3);
+
 		var deleteItemPayload = SerializeUnencryptedPayload(new SmDeleteItem(90));
 		using var deleteItemReader = new PacketBuffer(deleteItemPayload);
 		Assert.Equal(90, deleteItemReader.ReadD());
