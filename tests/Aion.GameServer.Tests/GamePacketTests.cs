@@ -4499,6 +4499,102 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmPet_MoodCheckWritesDeltaWhenMoodIncreasedLikeJava()
+	{
+		var payload = SerializeUnencryptedPayload(SmPet.Mood(new SmPetMoodSnapshot(
+			SubType: 0,
+			MoodPoints: 1400,
+			LastSentPoints: 1000)));
+		using var reader = new PacketBuffer(payload);
+
+		Assert.Equal((int)PetAction.Mood, reader.ReadH());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(400, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void SmPet_MoodCheckWritesZeroWhenMoodDidNotIncreaseLikeJava()
+	{
+		var payload = SerializeUnencryptedPayload(SmPet.Mood(new SmPetMoodSnapshot(
+			SubType: 0,
+			MoodPoints: 1000,
+			LastSentPoints: 1400)));
+		using var reader = new PacketBuffer(payload);
+
+		Assert.Equal((int)PetAction.Mood, reader.ReadH());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void SmPet_MoodEmotionWritesMoodAndEmotionLikeJava()
+	{
+		var payload = SerializeUnencryptedPayload(SmPet.Mood(new SmPetMoodSnapshot(
+			SubType: 2,
+			MoodPoints: 2600,
+			ShuggleEmotion: 7)));
+		using var reader = new PacketBuffer(payload);
+
+		Assert.Equal((int)PetAction.Mood, reader.ReadH());
+		Assert.Equal(2, (int)reader.ReadC());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(2600, reader.ReadD());
+		Assert.Equal(7, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void SmPet_MoodGiftWritesConditionRewardLikeJava()
+	{
+		var payload = SerializeUnencryptedPayload(SmPet.Mood(new SmPetMoodSnapshot(
+			SubType: 3,
+			ConditionReward: 188053001)));
+		using var reader = new PacketBuffer(payload);
+
+		Assert.Equal((int)PetAction.Mood, reader.ReadH());
+		Assert.Equal(3, (int)reader.ReadC());
+		Assert.Equal(188053001, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void SmPet_MoodPeriodicUpdateWritesCooldownsLikeJava()
+	{
+		var payload = SerializeUnencryptedPayload(SmPet.Mood(new SmPetMoodSnapshot(
+			SubType: 4,
+			MoodPoints: 4500,
+			MoodRemainingSeconds: 120,
+			GiftRemainingSeconds: 3300)));
+		using var reader = new PacketBuffer(payload);
+
+		Assert.Equal((int)PetAction.Mood, reader.ReadH());
+		Assert.Equal(4, (int)reader.ReadC());
+		Assert.Equal(4500, reader.ReadD());
+		Assert.Equal(120, reader.ReadD());
+		Assert.Equal(3300, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void SmPet_MoodUnknownSubtypeWritesActionOnlyLikeJava()
+	{
+		var payload = SerializeUnencryptedPayload(SmPet.Mood(new SmPetMoodSnapshot(
+			SubType: 99,
+			MoodPoints: 4500,
+			LastSentPoints: 1000,
+			ShuggleEmotion: 7,
+			ConditionReward: 188053001,
+			MoodRemainingSeconds: 120,
+			GiftRemainingSeconds: 3300)));
+		using var reader = new PacketBuffer(payload);
+
+		Assert.Equal((int)PetAction.Mood, reader.ReadH());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
 	public void SmPetEmote_FlyStartWritesDefaultBranchLikeJava()
 	{
 		var payload = SerializeUnencryptedPayload(new SmPetEmote(new SmPetEmoteSnapshot(7001, PetEmote.FlyStart)));

@@ -54,6 +54,15 @@ public sealed record SmPetFoodSnapshot(
 	int Count = 0,
 	int RefeedDelaySeconds = 0);
 
+public sealed record SmPetMoodSnapshot(
+	int SubType,
+	int MoodPoints = 0,
+	int LastSentPoints = 0,
+	int ShuggleEmotion = 0,
+	int ConditionReward = 0,
+	int MoodRemainingSeconds = 0,
+	int GiftRemainingSeconds = 0);
+
 public sealed class SmPet : GameServerPacket
 {
 	private const int PetDopingBagMaxItems = 8;
@@ -68,6 +77,7 @@ public sealed class SmPet : GameServerPacket
 	private readonly SmPetSpecialFunctionSnapshot? _specialFunction;
 	private readonly SmPetDopingSpecialFunctionSnapshot? _dopingSpecialFunction;
 	private readonly SmPetFoodSnapshot? _food;
+	private readonly SmPetMoodSnapshot? _mood;
 	private readonly int _petObjectId;
 	private readonly string? _petName;
 	private readonly ObjectDeleteAnimation _animation;
@@ -120,6 +130,12 @@ public sealed class SmPet : GameServerPacket
 	{
 		// Java parity: network/aion/serverpackets/SM_PET(int subType, int itemObjectId, int count, Pet).
 		return new SmPet(food);
+	}
+
+	public static SmPet Mood(SmPetMoodSnapshot mood)
+	{
+		// Java parity: network/aion/serverpackets/SM_PET(Pet, int subType, int shuggleEmotion).
+		return new SmPet(mood);
 	}
 
 	public SmPet(SmPetSurrenderSnapshot surrender)
@@ -188,6 +204,13 @@ public sealed class SmPet : GameServerPacket
 		_food = food;
 	}
 
+	private SmPet(SmPetMoodSnapshot mood)
+		: base(PacketOpCode)
+	{
+		_action = PetAction.Mood;
+		_mood = mood;
+	}
+
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
 		// Java parity: SM_PET.writeImpl currently ported packet subset.
@@ -228,6 +251,9 @@ public sealed class SmPet : GameServerPacket
 			case PetAction.Food:
 				WriteFood(buffer, _food ?? throw new InvalidOperationException("Food snapshot is required for SM_PET food."));
 				break;
+			case PetAction.Mood:
+				WriteMood(buffer, _mood ?? throw new InvalidOperationException("Mood snapshot is required for SM_PET mood."));
+				break;
 			case PetAction.TalkWithMerchant:
 			case PetAction.TalkWithMinder:
 			case PetAction.HAdopt:
@@ -235,6 +261,33 @@ public sealed class SmPet : GameServerPacket
 				break;
 			default:
 				throw new NotSupportedException($"SM_PET action {_action} is not ported in the known-list serializer subset.");
+		}
+	}
+
+	private static void WriteMood(PacketBuffer buffer, SmPetMoodSnapshot mood)
+	{
+		switch (mood.SubType)
+		{
+			case 0:
+				buffer.WriteC(mood.SubType);
+				buffer.WriteD(mood.LastSentPoints < mood.MoodPoints ? mood.MoodPoints - mood.LastSentPoints : 0);
+				break;
+			case 2:
+				buffer.WriteC(mood.SubType);
+				buffer.WriteD(0);
+				buffer.WriteD(mood.MoodPoints);
+				buffer.WriteD(mood.ShuggleEmotion);
+				break;
+			case 3:
+				buffer.WriteC(mood.SubType);
+				buffer.WriteD(mood.ConditionReward);
+				break;
+			case 4:
+				buffer.WriteC(mood.SubType);
+				buffer.WriteD(mood.MoodPoints);
+				buffer.WriteD(mood.MoodRemainingSeconds);
+				buffer.WriteD(mood.GiftRemainingSeconds);
+				break;
 		}
 	}
 
