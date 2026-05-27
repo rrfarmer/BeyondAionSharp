@@ -243,10 +243,28 @@ public sealed class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonDesignReportService.Create(CreateDetailedSummary());
 
 	private static PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTraceReport CreateSyntheticCSharpRuntimeTraceReport(bool hasLivePacketHooks) =>
-		new(
-			["CM_TELEPORT_ANIMATION_DONE"],
-			HasLivePacketHooks: hasLivePacketHooks,
-			ReadyForRuntimeComparison: false,
+		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonContractService.CreateCSharpRuntimeTraceReport(
+			[
+				new PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTraceRow(
+					EventSeq: 0,
+					Scenario: "cm-teleport-animation-done",
+					Phase: "teleport_task_remove",
+					PacketName: "CM_TELEPORT_ANIMATION_DONE",
+					ReturnReason: "animation_done_no_pending_runnable_teleport_task",
+					StopCalled: false,
+					ExpectsStopProtectionCall: false,
+					TimestampIsParityKey: false,
+					new PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTracePlayerSnapshot(
+						ObjectId: 1001,
+						Spawned: false,
+						Flying: false,
+						Dead: false,
+						ProtectionActiveBefore: true,
+						ProtectionActiveAfter: true,
+						VisualStateBefore: ["BLINKING"],
+						VisualStateAfter: ["BLINKING"]))
+			],
+			hasLivePacketHooks,
 			"synthetic C# trace report only");
 
 	private static PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirectoryReport CreateShapeValidArtifactDirectoryReport() =>

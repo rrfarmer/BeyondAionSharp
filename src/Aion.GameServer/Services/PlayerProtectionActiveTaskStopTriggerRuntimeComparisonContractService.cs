@@ -16,8 +16,43 @@ public enum PlayerProtectionActiveTaskStopTriggerRuntimeComparisonContractStatus
 	BlockedComparisonNotExecuted,
 }
 
+public enum PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTraceValidationIssueCode
+{
+	MissingTraceRows,
+	OutOfOrderEventSequence,
+	TimestampMarkedAsParityKey,
+}
+
+public sealed record PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTracePlayerSnapshot(
+	int ObjectId,
+	bool Spawned,
+	bool Flying,
+	bool Dead,
+	bool ProtectionActiveBefore,
+	bool ProtectionActiveAfter,
+	IReadOnlyList<string> VisualStateBefore,
+	IReadOnlyList<string> VisualStateAfter);
+
+public sealed record PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTraceRow(
+	int EventSeq,
+	string Scenario,
+	string Phase,
+	string PacketName,
+	string ReturnReason,
+	bool StopCalled,
+	bool ExpectsStopProtectionCall,
+	bool TimestampIsParityKey,
+	PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTracePlayerSnapshot Player);
+
+public sealed record PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTraceValidationIssue(
+	PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTraceValidationIssueCode Code,
+	string Path,
+	string Message);
+
 public sealed record PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTraceReport(
 	IReadOnlyList<string> Scenarios,
+	IReadOnlyList<PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTraceRow> TraceRows,
+	IReadOnlyList<PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTraceValidationIssue> ValidationIssues,
 	bool HasLivePacketHooks,
 	bool ReadyForRuntimeComparison,
 	string Notes);
@@ -50,6 +85,27 @@ public sealed record PlayerProtectionActiveTaskStopTriggerRuntimeComparisonContr
 /// </summary>
 public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonContractService
 {
+	public static PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTraceReport CreateCSharpRuntimeTraceReport(
+		IReadOnlyList<PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTraceRow> traceRows,
+		bool hasLivePacketHooks,
+		string notes)
+	{
+		var issues = ValidateCSharpRuntimeTraceRows(traceRows);
+		var scenarios = traceRows
+			.Select(row => row.Scenario)
+			.Distinct(StringComparer.Ordinal)
+			.OrderBy(scenario => scenario, StringComparer.Ordinal)
+			.ToArray();
+
+		return new PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTraceReport(
+			scenarios,
+			traceRows,
+			issues,
+			HasLivePacketHooks: hasLivePacketHooks,
+			ReadyForRuntimeComparison: false,
+			notes);
+	}
+
 	public static PlayerProtectionActiveTaskStopTriggerRuntimeComparisonContractReport Create(
 		PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirectoryReport? javaArtifactDirectoryReport,
 		PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTraceReport? csharpRuntimeTraceReport = null)
@@ -138,14 +194,16 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonContra
 
 		Add(rows,
 			PlayerProtectionActiveTaskStopTriggerRuntimeComparisonContractArea.CSharpRuntimeTraceOutput,
-			csharpRuntimeTraceReport.HasLivePacketHooks
+			csharpRuntimeTraceReport.HasLivePacketHooks && csharpRuntimeTraceReport.ValidationIssues.Count == 0 && csharpRuntimeTraceReport.TraceRows.Count > 0
 				? PlayerProtectionActiveTaskStopTriggerRuntimeComparisonContractStatus.SatisfiedByNonLiveMetadata
 				: PlayerProtectionActiveTaskStopTriggerRuntimeComparisonContractStatus.BlockedMissingCSharpRuntimeTrace,
-			blocks: !csharpRuntimeTraceReport.HasLivePacketHooks,
+			blocks: !csharpRuntimeTraceReport.HasLivePacketHooks || csharpRuntimeTraceReport.ValidationIssues.Count > 0 || csharpRuntimeTraceReport.TraceRows.Count == 0,
 			"future C# packet/controller stop-trigger execution",
 			"PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTraceReport",
-			$"scenarios={csharpRuntimeTraceReport.Scenarios.Count}; hasLivePacketHooks={csharpRuntimeTraceReport.HasLivePacketHooks}",
-			csharpRuntimeTraceReport.Notes);
+			$"scenarios={csharpRuntimeTraceReport.Scenarios.Count}; rows={csharpRuntimeTraceReport.TraceRows.Count}; validationIssues={csharpRuntimeTraceReport.ValidationIssues.Count}; hasLivePacketHooks={csharpRuntimeTraceReport.HasLivePacketHooks}",
+			csharpRuntimeTraceReport.ValidationIssues.Count == 0
+				? csharpRuntimeTraceReport.Notes
+				: $"{csharpRuntimeTraceReport.Notes} Validation issues: {string.Join(", ", csharpRuntimeTraceReport.ValidationIssues.Select(issue => issue.Code))}.");
 	}
 
 	private static void AddComparisonExecutionRow(
@@ -180,5 +238,53 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonContra
 			csharpTarget,
 			evidence,
 			notes));
+	}
+
+	private static IReadOnlyList<PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTraceValidationIssue> ValidateCSharpRuntimeTraceRows(
+		IReadOnlyList<PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTraceRow> traceRows)
+	{
+		var issues = new List<PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTraceValidationIssue>();
+		if (traceRows.Count == 0)
+		{
+			Add(issues,
+				PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTraceValidationIssueCode.MissingTraceRows,
+				"$.traceRows",
+				"Expected at least one C# runtime trace row.");
+			return issues;
+		}
+
+		var lastEventSeq = -1;
+		for (var i = 0; i < traceRows.Count; i++)
+		{
+			var row = traceRows[i];
+			if (row.EventSeq <= lastEventSeq)
+			{
+				Add(issues,
+					PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTraceValidationIssueCode.OutOfOrderEventSequence,
+					$"$.traceRows[{i}].eventSeq",
+					"C# runtime trace eventSeq values must be strictly increasing.");
+			}
+
+			if (row.TimestampIsParityKey)
+			{
+				Add(issues,
+					PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTraceValidationIssueCode.TimestampMarkedAsParityKey,
+					$"$.traceRows[{i}].timestampIsParityKey",
+					"Timestamps are diagnostic only and must not be used as parity keys.");
+			}
+
+			lastEventSeq = row.EventSeq;
+		}
+
+		return issues;
+	}
+
+	private static void Add(
+		ICollection<PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTraceValidationIssue> issues,
+		PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTraceValidationIssueCode code,
+		string path,
+		string message)
+	{
+		issues.Add(new PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTraceValidationIssue(code, path, message));
 	}
 }
