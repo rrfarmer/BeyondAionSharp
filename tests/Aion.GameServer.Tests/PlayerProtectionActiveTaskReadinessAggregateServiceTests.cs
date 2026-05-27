@@ -19,6 +19,7 @@ public sealed class PlayerProtectionActiveTaskReadinessAggregateServiceTests
 			PendingProtectionTaskHandle: new RecordingTaskHandle()));
 		var audit = PlayerProtectionActiveTaskTaskMapAuditService.Create(readiness);
 		var ownerSelection = PlayerProtectionActiveTaskTaskMapOwnerSelectionService.Create(new PlayerProtectionActiveTaskTaskMapOwnerSelectionRequest());
+		var ownerPrototype = CreateOwnerPrototypeSnapshot(withStoredTask: true);
 
 		var report = PlayerProtectionActiveTaskReadinessAggregateService.Create(new PlayerProtectionActiveTaskReadinessAggregateRequest(
 			summary,
@@ -26,7 +27,8 @@ public sealed class PlayerProtectionActiveTaskReadinessAggregateServiceTests
 			audit,
 			[simulation],
 			cleanup,
-			ownerSelection));
+			ownerSelection,
+			ownerPrototype));
 
 		Assert.False(report.IsLive);
 		Assert.False(report.CanEnableProtectionTaskMapStack);
@@ -49,6 +51,11 @@ public sealed class PlayerProtectionActiveTaskReadinessAggregateServiceTests
 			row.Area == PlayerProtectionActiveTaskReadinessAggregateArea.ProductionOwnerSelection
 			&& row.EvidenceSource == "Owner selection report"
 			&& row.Notes.Contains("controller-owned task storage", StringComparison.Ordinal));
+		Assert.Contains(report.Rows, row =>
+			row.Area == PlayerProtectionActiveTaskReadinessAggregateArea.ProductionOwnerSelection
+			&& row.EvidenceSource == "Controller-owned owner prototype snapshot"
+			&& row.Status == PlayerProtectionActiveTaskReadinessAggregateStatus.ObservedNonLive
+			&& row.Notes.Contains("1 tracked protection task", StringComparison.Ordinal));
 	}
 
 	[Fact]
@@ -66,6 +73,7 @@ public sealed class PlayerProtectionActiveTaskReadinessAggregateServiceTests
 		var cleanup = PlayerProtectionActiveTaskTaskMapLifecycleCleanupService.Create(new PlayerProtectionActiveTaskTaskMapLifecycleCleanupRequest());
 		var audit = PlayerProtectionActiveTaskTaskMapAuditService.Create(readiness);
 		var ownerSelection = PlayerProtectionActiveTaskTaskMapOwnerSelectionService.Create(new PlayerProtectionActiveTaskTaskMapOwnerSelectionRequest());
+		var ownerPrototype = CreateOwnerPrototypeSnapshot(withStoredTask: false);
 
 		var report = PlayerProtectionActiveTaskReadinessAggregateService.Create(new PlayerProtectionActiveTaskReadinessAggregateRequest(
 			summary,
@@ -73,7 +81,8 @@ public sealed class PlayerProtectionActiveTaskReadinessAggregateServiceTests
 			audit,
 			[simulation],
 			cleanup,
-			ownerSelection));
+			ownerSelection,
+			ownerPrototype));
 
 		Assert.Equal(PlayerProtectionActiveTaskAdapterAction.Stop, report.Action);
 		Assert.False(report.CanEnableProtectionTaskMapStack);
@@ -90,6 +99,11 @@ public sealed class PlayerProtectionActiveTaskReadinessAggregateServiceTests
 			row.Area == PlayerProtectionActiveTaskReadinessAggregateArea.ProductionOwnerSelection
 			&& row.EvidenceSource == "Owner selection report"
 			&& row.Notes.Contains("Player model storage", StringComparison.Ordinal));
+		Assert.Contains(report.Rows, row =>
+			row.Area == PlayerProtectionActiveTaskReadinessAggregateArea.ProductionOwnerSelection
+			&& row.EvidenceSource == "Controller-owned owner prototype snapshot"
+			&& row.Status == PlayerProtectionActiveTaskReadinessAggregateStatus.Blocked
+			&& row.Notes.Contains("not wired to PlayerController", StringComparison.Ordinal));
 	}
 
 	[Fact]
@@ -106,6 +120,7 @@ public sealed class PlayerProtectionActiveTaskReadinessAggregateServiceTests
 			ReplacementProtectionTaskHandle: new RecordingTaskHandle()));
 		var ownerSelection = PlayerProtectionActiveTaskTaskMapOwnerSelectionService.Create(new PlayerProtectionActiveTaskTaskMapOwnerSelectionRequest(
 			HasConcreteCSharpControllerTaskMapOwner: true));
+		var ownerPrototype = CreateOwnerPrototypeSnapshot(withStoredTask: true);
 
 		var report = PlayerProtectionActiveTaskReadinessAggregateService.Create(new PlayerProtectionActiveTaskReadinessAggregateRequest(
 			summary,
@@ -113,7 +128,8 @@ public sealed class PlayerProtectionActiveTaskReadinessAggregateServiceTests
 			PlayerProtectionActiveTaskTaskMapAuditService.Create(readiness),
 			Array.Empty<PlayerProtectionActiveTaskTaskMapSimulationReport>(),
 			cleanup,
-			ownerSelection));
+			ownerSelection,
+			ownerPrototype));
 
 		Assert.True(report.HasLifecycleCleanupEvidence);
 		Assert.False(report.CanEnableProtectionTaskMapStack);
@@ -186,6 +202,16 @@ public sealed class PlayerProtectionActiveTaskReadinessAggregateServiceTests
 			IsSpawned: true));
 
 		return PlayerProtectionActiveTaskTaskOperationPlanService.Create(adapterResult.Plan, existingTask);
+	}
+
+	private static PlayerProtectionActiveTaskControllerTaskMapOwnerPrototypeSnapshot CreateOwnerPrototypeSnapshot(
+		bool withStoredTask)
+	{
+		var owner = new PlayerProtectionActiveTaskControllerTaskMapOwnerPrototypeService(PlayerObjectId);
+		if (withStoredTask)
+			owner.AddTask(new RecordingTaskHandle());
+
+		return owner.CreateSnapshot();
 	}
 
 	private sealed class RecordingTaskHandle : IPlayerProtectionActiveTaskTaskHandle

@@ -35,6 +35,7 @@ public sealed record PlayerProtectionActiveTaskReadinessAggregateRequest(
 	IReadOnlyList<PlayerProtectionActiveTaskTaskMapSimulationReport> TaskMapSimulationReports,
 	PlayerProtectionActiveTaskTaskMapLifecycleCleanupReport LifecycleCleanupReport,
 	PlayerProtectionActiveTaskTaskMapOwnerSelectionReport? OwnerSelectionReport = null,
+	PlayerProtectionActiveTaskControllerTaskMapOwnerPrototypeSnapshot? OwnerPrototypeSnapshot = null,
 	bool ScheduledTaskHandleAdapterAvailable = true);
 
 public sealed record PlayerProtectionActiveTaskReadinessAggregateRow(
@@ -75,6 +76,8 @@ public static class PlayerProtectionActiveTaskReadinessAggregateService
 		AddLifecycleCleanupRows(rows, request.LifecycleCleanupReport);
 		if (request.OwnerSelectionReport != null)
 			AddOwnerSelectionRows(rows, request.OwnerSelectionReport);
+		if (request.OwnerPrototypeSnapshot != null)
+			AddOwnerPrototypeRows(rows, request.OwnerPrototypeSnapshot);
 		AddRuntimeComparisonRow(rows);
 
 		var rowArray = rows.ToArray();
@@ -228,6 +231,30 @@ public static class PlayerProtectionActiveTaskReadinessAggregateService
 			"Future.cancel(false) / ConcurrentHashMap.compute/remove/cancelAllTasks",
 			"CreatureController.addTask/cancelTask/cancelAllTasks",
 			"Java runtime artifact generation is still required before claiming scheduler/task-map parity.");
+	}
+
+	private static void AddOwnerPrototypeRows(
+		ICollection<PlayerProtectionActiveTaskReadinessAggregateRow> rows,
+		PlayerProtectionActiveTaskControllerTaskMapOwnerPrototypeSnapshot snapshot)
+	{
+		Add(
+			rows,
+			PlayerProtectionActiveTaskReadinessAggregateArea.ProductionOwnerSelection,
+			PlayerProtectionActiveTaskReadinessAggregateStatus.ObservedNonLive,
+			blocksLiveEnablement: false,
+			"Controller-owned owner prototype snapshot",
+			"CreatureController.tasks owner-shaped prototype",
+			snapshot.JavaSource,
+			$"Non-live owner prototype exists for owner object id {snapshot.OwnerObjectId} with {snapshot.TaskCount} tracked protection task(s).");
+		Add(
+			rows,
+			PlayerProtectionActiveTaskReadinessAggregateArea.ProductionOwnerSelection,
+			PlayerProtectionActiveTaskReadinessAggregateStatus.Blocked,
+			blocksLiveEnablement: true,
+			"Controller-owned owner prototype snapshot",
+			"future production CreatureController task-map owner",
+			snapshot.JavaSource,
+			"Prototype evidence does not prove production readiness because it is not wired to PlayerController, scheduler callbacks, or lifecycle cleanup.");
 	}
 
 	private static void AddOwnerSelectionRows(
