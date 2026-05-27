@@ -2346,7 +2346,33 @@ public sealed class GameServerConnection : BaseClientConnection
 		StaticData staticData,
 		CancellationToken cancellationToken)
 	{
-		var itemTemplates = staticData.ItemTemplates;
+		await CompleteEnchantItemAsync(
+			player,
+			packet.StoneObjectId,
+			packet.TargetItemObjectId,
+			plan,
+			sourceTemplate,
+			targetTemplate,
+			staticData.ItemTemplates,
+			staticData.ItemRestrictionCleanups,
+			staticData.SkillTemplates,
+			staticData,
+			cancellationToken);
+	}
+
+	private async Task CompleteEnchantItemAsync(
+		Player player,
+		int stoneObjectId,
+		int targetItemObjectId,
+		EnchantItemPlan plan,
+		ItemTemplateSummary sourceTemplate,
+		ItemTemplateSummary targetTemplate,
+		ItemTemplateTable itemTemplates,
+		ItemRestrictionCleanupTable itemRestrictionCleanups,
+		SkillTemplateTable? skillTemplates,
+		StaticData? staticData,
+		CancellationToken cancellationToken)
+	{
 		var saved = _playerEnterWorldService == null
 			|| await _playerEnterWorldService.SaveEnchantItemMutationAsync(
 				player,
@@ -2367,11 +2393,15 @@ public sealed class GameServerConnection : BaseClientConnection
 		{
 			var supplementTemplate = itemTemplates.GetItemTemplate(supplementUpdate.ItemId);
 			if (supplementTemplate != null)
-				await SendPacketAsync(new SmInventoryUpdateItem(supplementUpdate, supplementTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+				await SendPacketAsync(new SmInventoryUpdateItem(
+					supplementUpdate,
+					supplementTemplate,
+					SmInventoryUpdateItem.DecreaseItemUse,
+					GetGeneralInfoWarehouseRestrictionFlag(supplementUpdate.ItemId, itemRestrictionCleanups)));
 		}
 		foreach (var deletedSupplementItemObjectId in plan.DeletedSupplementItemObjectIds)
 			await SendPacketAsync(new SmDeleteItem(deletedSupplementItemObjectId, SmDeleteItem.UseDeleteType));
-		await SendItemUseMutationAsync(plan.SourceItemUpdate, plan.DeletedSourceItemObjectId, sourceTemplate);
+		await SendItemUseMutationAsync(plan.SourceItemUpdate, plan.DeletedSourceItemObjectId, sourceTemplate, itemRestrictionCleanups);
 
 		foreach (var removedSkill in plan.RemovedBuffSkills)
 			await SendPacketAsync(new SmSkillRemove(removedSkill));
@@ -2383,7 +2413,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			await SendPacketAsync(SmSystemMessage.EnchantItemSucceedNew(plan.ItemName, plan.NewEnchantLevel));
 			if (plan.EnchantBuffSkillId != 0)
 			{
-				var skillTemplate = staticData.SkillTemplates.GetSkillTemplate(plan.EnchantBuffSkillId);
+				var skillTemplate = skillTemplates?.GetSkillTemplate(plan.EnchantBuffSkillId);
 				var skillName = skillTemplate?.GetClientName() ?? skillTemplate?.Name ?? plan.EnchantBuffSkillId.ToString();
 				await SendPacketAsync(SmSystemMessage.ExceedSkillEnchant(plan.ItemName, plan.NewEnchantLevel, skillName));
 			}
@@ -2404,21 +2434,25 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		if (plan.TargetItemUpdate != null)
-			await SendPacketAsync(new SmInventoryUpdateItem(plan.TargetItemUpdate, targetTemplate, updateType: 0));
+			await SendPacketAsync(new SmInventoryUpdateItem(
+				plan.TargetItemUpdate,
+				targetTemplate,
+				updateType: 0,
+				GetGeneralInfoWarehouseRestrictionFlag(plan.TargetItemUpdate.ItemId, itemRestrictionCleanups)));
 		else if (plan.DeletedTargetItemObjectId.HasValue)
 			await SendPacketAsync(new SmDeleteItem(plan.DeletedTargetItemObjectId.Value));
 
 		if (plan.TargetDestroyed)
 			await SendPacketAsync(SmSystemMessage.EnchantType1EnchantFail(plan.ItemName));
 
-		if (plan.RefreshStats)
+		if (plan.RefreshStats && staticData != null)
 			await SendPacketAsync(CreateStatsInfoPacket(player, staticData));
 
 		await BroadcastItemUsageAnimationAsync(
 			player,
 			new SmItemUsageAnimation(
 				player.ObjectId,
-				packet.StoneObjectId,
+				stoneObjectId,
 				sourceTemplate.TemplateId,
 				0,
 				plan.EnchantSucceeded ? 1 : 2,
