@@ -3324,6 +3324,26 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (!saved)
 			return;
 
+		await CompleteItemRemodelAsync(
+			player,
+			inventoryItems,
+			plan,
+			keepTemplate,
+			extractTemplate,
+			kinahTemplate,
+			staticData.ItemRestrictionCleanups);
+	}
+
+	private async Task CompleteItemRemodelAsync(
+		Player player,
+		List<InventoryItem> inventoryItems,
+		ItemRemodelPlan plan,
+		ItemTemplateSummary keepTemplate,
+		ItemTemplateSummary extractTemplate,
+		ItemTemplateSummary kinahTemplate,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups)
+	{
+		// Java parity: services/item/ItemRemodelService.remodelItem success packet fanout.
 		ReplaceInventoryItem(inventoryItems, plan.TargetItemUpdate!);
 		ReplaceInventoryItem(inventoryItems, plan.KinahItemUpdate!);
 		await SendPacketAsync(new SmInventoryUpdateItem(plan.KinahItemUpdate!, kinahTemplate, SmInventoryUpdateItem.DecreaseKinahBuy));
@@ -3335,11 +3355,19 @@ public sealed class GameServerConnection : BaseClientConnection
 		else if (plan.ExtractItemUpdate != null)
 		{
 			ReplaceInventoryItem(inventoryItems, plan.ExtractItemUpdate);
-			await SendPacketAsync(new SmInventoryUpdateItem(plan.ExtractItemUpdate, extractTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+			await SendPacketAsync(new SmInventoryUpdateItem(
+				plan.ExtractItemUpdate,
+				extractTemplate,
+				SmInventoryUpdateItem.DecreaseItemUse,
+				GetGeneralInfoWarehouseRestrictionFlag(plan.ExtractItemUpdate.ItemId, itemRestrictionCleanups)));
 		}
 
 		player.InventoryItems = inventoryItems.ToArray();
-		await SendPacketAsync(new SmInventoryUpdateItem(plan.TargetItemUpdate!, keepTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+		await SendPacketAsync(new SmInventoryUpdateItem(
+			plan.TargetItemUpdate!,
+			keepTemplate,
+			SmInventoryUpdateItem.DecreaseItemUse,
+			GetGeneralInfoWarehouseRestrictionFlag(plan.TargetItemUpdate!.ItemId, itemRestrictionCleanups)));
 		await SendPacketAsync(SmSystemMessage.ChangeItemSkinSucceed(keepTemplate.GetClientName() ?? keepTemplate.Name));
 	}
 
