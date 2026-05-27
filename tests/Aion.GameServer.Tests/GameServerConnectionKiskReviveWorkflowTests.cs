@@ -126,6 +126,44 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 	}
 
 	[Fact]
+	public async Task HandleReviveAsync_KiskReviveBroadcastsTeleportDeleteFromPreRevivePosition()
+	{
+		var registry = new CapturingConnectionRegistry();
+		await using var fixture = await KiskReviveWorkflowFixture.CreateAsync(registry);
+		var player = CreateDeadPlayer(boundKiskObjectId: 9001);
+		var preRevivePosition = new WorldPosition(210010000, 10, 10, 20, 0);
+		player.Position = preRevivePosition;
+		var viewer = CreateOnlinePlayer(objectId: 1003, boundKiskObjectId: 0);
+		viewer.Position = preRevivePosition with { X = preRevivePosition.X + 5 };
+		registry.OnlinePlayers.Add(viewer);
+		var kiskPosition = new WorldPosition(210010000, 100, 120, 33, 0);
+		fixture.RegisterKisk(objectId: 9001, kiskPosition, maxResurrects: 2);
+
+		await fixture.Connection.HandleReviveAsync(player, CreateRevive(PlayerKiskReviveService.KiskReviveId));
+
+		var teleportDelete = Assert.Single(registry.Broadcasts, broadcast => broadcast.Packet is SmDelete && broadcast.SourceObjectId == player.ObjectId);
+		Assert.Equal(preRevivePosition, teleportDelete.SourcePosition);
+		Assert.False(teleportDelete.IncludeSourcePlayer);
+		var reviveEmotions = registry.Broadcasts
+			.Where(broadcast => broadcast.Packet is SmEmotion && broadcast.SourceObjectId == player.ObjectId)
+			.ToArray();
+		Assert.Equal(2, reviveEmotions.Length);
+		Assert.All(reviveEmotions, broadcast =>
+		{
+			Assert.Equal(preRevivePosition, broadcast.SourcePosition);
+			Assert.True(broadcast.IncludeSourcePlayer);
+		});
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => Assert.IsType<SmKiskUpdate>(packet),
+			packet => Assert.IsType<SmChannelInfo>(packet),
+			packet => Assert.IsType<SmPlayerSpawn>(packet),
+			packet => Assert.IsType<SmPlayerInfo>(packet),
+			packet => Assert.IsType<SmStatsInfo>(packet),
+			packet => Assert.IsType<SmMotion>(packet));
+	}
+
+	[Fact]
 	public async Task HandleReviveAsync_DepletedKiskRunsRegistryCleanupFanout()
 	{
 		var registry = new CapturingConnectionRegistry();
@@ -244,6 +282,8 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 
 		public List<IWorldNpcObject> RefreshedNpcs { get; } = [];
 
+		public List<BroadcastRecord> Broadcasts { get; } = [];
+
 		public int RefreshNpcVisibilityCalls { get; private set; }
 
 		public void RegisterPlayerConnection(int playerObjectId, GameServerConnection connection)
@@ -284,6 +324,7 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 			bool includeSourcePlayer = false,
 			Func<Player, bool>? filter = null)
 		{
+			Broadcasts.Add(new BroadcastRecord(sourcePosition, sourceObjectId, packet, includeSourcePlayer));
 			var recipients = OnlinePlayers.Where(player => filter?.Invoke(player) ?? true).ToArray();
 			foreach (var recipient in recipients)
 				SentPackets.Add(new PacketDelivery(recipient.ObjectId, packet));
@@ -322,6 +363,12 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 	}
 
 	private sealed record PacketDelivery(int PlayerObjectId, GameServerPacket Packet);
+
+	private sealed record BroadcastRecord(
+		WorldPosition SourcePosition,
+		int SourceObjectId,
+		GameServerPacket Packet,
+		bool IncludeSourcePlayer);
 
 	private sealed class KiskReviveWorkflowFixture : IAsyncDisposable
 	{
