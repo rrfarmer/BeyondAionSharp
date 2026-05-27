@@ -399,13 +399,15 @@ public sealed class GameServerConnectionItemPurificationTests
 			{
 				[5] = new(ItemsCount: 2, NpcExpands: 1, QuestExpands: 0, ItemExpands: 0),
 				[7] = new(ItemsCount: 3, NpcExpands: 1, QuestExpands: 0, ItemExpands: 1),
-			});
+			},
+			CreateItemRestrictionCleanups());
 
 		Assert.True(bridge.Succeeded);
 		Assert.Equal(ItemPurificationPacketInputSnapshotStatus.Ready, bridge.PacketInputs?.Status);
 		Assert.NotNull(bridge.ConcretePacketPlan);
 		var concretePlan = bridge.ConcretePacketPlan;
 		Assert.True(concretePlan.Succeeded);
+		Assert.Equal(3, bridge.PacketInputs?.InventoryPacketInputs[9001].GeneralInfoWarehouseRestrictionFlag);
 		Assert.Equal(["item-100000001", "item-100000002"], concretePlan.Operations[0].Parameters);
 		Assert.Equal(
 			[
@@ -475,7 +477,8 @@ public sealed class GameServerConnectionItemPurificationTests
 			itemTemplates,
 			npcExpands: 1,
 			questExpands: 0,
-			itemExpands: 1);
+			itemExpands: 1,
+			CreateItemRestrictionCleanups());
 
 		Assert.True(mutationBridge.Succeeded);
 		Assert.Equal(ItemPurificationHandlerMutationBridgeStatus.Ready, mutationBridge.Status);
@@ -487,6 +490,7 @@ public sealed class GameServerConnectionItemPurificationTests
 		Assert.NotNull(mutationBridge.Bridge);
 		Assert.True(mutationBridge.Bridge.Succeeded);
 		Assert.Equal(ItemPurificationPacketInputSnapshotStatus.Ready, mutationBridge.Bridge.PacketInputs?.Status);
+		Assert.Equal(3, mutationBridge.Bridge.PacketInputs?.InventoryPacketInputs[9001].GeneralInfoWarehouseRestrictionFlag);
 		var concretePlan = mutationBridge.Bridge.ConcretePacketPlan;
 		Assert.NotNull(concretePlan);
 		Assert.True(concretePlan.Succeeded);
@@ -919,6 +923,15 @@ public sealed class GameServerConnectionItemPurificationTests
 			StatBonusSetId: statBonusSetId,
 			MaxTuneCount: maxTuneCount,
 			MaxEnchantLevel: maxEnchantLevel);
+	}
+
+	private static ItemRestrictionCleanupTable CreateItemRestrictionCleanups()
+	{
+		return new ItemRestrictionCleanupTable(
+		[
+			new ItemRestrictionCleanupSummary(100000002, AccountWarehouse: 0, LegionWarehouse: 1),
+			new ItemRestrictionCleanupSummary(186000001, AccountWarehouse: 1, LegionWarehouse: 1),
+		]);
 	}
 
 	private static ItemRandomBonusTable CreateRandomBonuses(int set1GroupCount, int set2GroupCount)

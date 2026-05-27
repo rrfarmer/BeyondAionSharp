@@ -10,7 +10,8 @@ public static class ItemPurificationHandlerPacketBridgeService
 		ItemPurificationHandlerPlan? handlerPlan,
 		IReadOnlyList<InventoryItem> postMutationInventoryItems,
 		ItemTemplateTable itemTemplates,
-		IReadOnlyDictionary<int, ItemPurificationCubeSnapshot> cubeSnapshotsByPacketOperationIndex)
+		IReadOnlyDictionary<int, ItemPurificationCubeSnapshot> cubeSnapshotsByPacketOperationIndex,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups = null)
 	{
 		// Java parity: services/item/ItemPurificationService sends the success message before
 		// storage/AP/item fanout. This bridge only assembles the concrete packet inputs from
@@ -24,7 +25,8 @@ public static class ItemPurificationHandlerPacketBridgeService
 			handlerPlan.Application,
 			postMutationInventoryItems,
 			itemTemplates,
-			cubeSnapshotsByPacketOperationIndex);
+			cubeSnapshotsByPacketOperationIndex,
+			itemRestrictionCleanups);
 		if (!inputs.Succeeded)
 			return new ItemPurificationHandlerPacketBridgeResult(
 				ItemPurificationHandlerPacketBridgeStatus.PacketInputsNotReady,
@@ -56,7 +58,8 @@ public static class ItemPurificationHandlerPacketBridgeService
 		ItemTemplateTable itemTemplates,
 		int npcExpands,
 		int questExpands,
-		int itemExpands)
+		int itemExpands,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups = null)
 	{
 		// Java parity: this composes the pre-live-mutation bridge for the same Storage mutation
 		// order used by ItemPurificationService.decreaseMaterials and upgradeItem, but keeps the
@@ -84,7 +87,8 @@ public static class ItemPurificationHandlerPacketBridgeService
 			handlerPlan,
 			mutationPreview.PostMutationInventoryItems,
 			itemTemplates,
-			mutationPreview.CubeSnapshotsByPacketOperationIndex);
+			mutationPreview.CubeSnapshotsByPacketOperationIndex,
+			itemRestrictionCleanups);
 		return new ItemPurificationHandlerMutationBridgeResult(
 			bridge.Succeeded
 				? ItemPurificationHandlerMutationBridgeStatus.Ready
@@ -100,6 +104,7 @@ public static class ItemPurificationHandlerPacketBridgeService
 		ItemTemplateTable itemTemplates,
 		IReadOnlyDictionary<int, ItemPurificationCubeSnapshot> cubeSnapshotsByPacketOperationIndex,
 		IGameClientConnectionRegistry? connectionRegistry,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups = null,
 		CancellationToken cancellationToken = default)
 	{
 		// Java parity: this models the PacketSendUtility.sendPacket boundary after the
@@ -109,7 +114,8 @@ public static class ItemPurificationHandlerPacketBridgeService
 			handlerPlan,
 			postMutationInventoryItems,
 			itemTemplates,
-			cubeSnapshotsByPacketOperationIndex);
+			cubeSnapshotsByPacketOperationIndex,
+			itemRestrictionCleanups);
 		if (!bridge.Succeeded || bridge.ConcretePacketPlan == null)
 			return ItemPurificationHandlerPacketSendBridgeResult.FromBridge(bridge);
 

@@ -58,6 +58,37 @@ public sealed class ItemPurificationPacketInputSnapshotServiceTests
 	}
 
 	[Fact]
+	public void CreateInputs_ComputesCleanupSealFlagFromRestrictionTable()
+	{
+		var baseItem = CreateBaseItem(enchant: 25);
+		var player = CreatePlayer(
+			abyssPoints: 5_000,
+			kinah: 10_000,
+			baseItem,
+			new InventoryItem { ObjectId = 20, ItemId = 186000001, Count = 3, Location = 0 });
+		var application = CreateApplicationPlan(player, baseItem, targetObjectId: 9001);
+
+		var result = ItemPurificationPacketInputSnapshotService.CreateInputs(
+			application,
+			postMutationInventoryItems:
+			[
+				new InventoryItem { ObjectId = 20, ItemId = 186000001, Count = 1, Location = 0 },
+				new InventoryItem { ObjectId = 9001, ItemId = 100000002, Count = 1, Location = 0, Slot = -1 },
+			],
+			CreateItemTemplates(),
+			new Dictionary<int, ItemPurificationCubeSnapshot>
+			{
+				[5] = new(ItemsCount: 2, NpcExpands: 0, QuestExpands: 0, ItemExpands: 0),
+				[7] = new(ItemsCount: 3, NpcExpands: 0, QuestExpands: 0, ItemExpands: 0),
+			},
+			CreateItemRestrictionCleanups());
+
+		Assert.True(result.Succeeded);
+		Assert.Equal(0, result.InventoryPacketInputs[20].GeneralInfoWarehouseRestrictionFlag);
+		Assert.Equal(3, result.InventoryPacketInputs[9001].GeneralInfoWarehouseRestrictionFlag);
+	}
+
+	[Fact]
 	public void CreateInputs_ReportsMissingSnapshotsWithoutSynthesizingPackets()
 	{
 		var baseItem = CreateBaseItem(enchant: 25);
@@ -312,5 +343,14 @@ public sealed class ItemPurificationPacketInputSnapshotServiceTests
 			StatBonusSetId: 1,
 			MaxTuneCount: 5,
 			MaxEnchantLevel: 20);
+	}
+
+	private static ItemRestrictionCleanupTable CreateItemRestrictionCleanups()
+	{
+		return new ItemRestrictionCleanupTable(
+		[
+			new ItemRestrictionCleanupSummary(100000002, AccountWarehouse: 0, LegionWarehouse: 1),
+			new ItemRestrictionCleanupSummary(186000001, AccountWarehouse: 1, LegionWarehouse: 1),
+		]);
 	}
 }

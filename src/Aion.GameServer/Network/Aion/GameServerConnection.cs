@@ -3624,6 +3624,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			connectionRegistryOverride ?? _connectionRegistry,
 			abyssPointsOptions,
 			_options.Custom.TopRankingXformMinRank,
+			staticData?.ItemRestrictionCleanups,
 			questMutationNotifier: null,
 			cancellationToken);
 	}
@@ -3676,6 +3677,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			repository,
 			abyssPointsOptions,
 			_options.Custom.TopRankingXformMinRank,
+			staticData?.ItemRestrictionCleanups,
 			cancellationToken);
 	}
 

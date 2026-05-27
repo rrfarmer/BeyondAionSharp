@@ -12,7 +12,8 @@ public static class ItemPurificationPacketInputSnapshotService
 		ItemPurificationApplicationPlan? applicationPlan,
 		IReadOnlyList<InventoryItem> postMutationInventoryItems,
 		ItemTemplateTable itemTemplates,
-		IReadOnlyDictionary<int, ItemPurificationCubeSnapshot> cubeSnapshotsByPacketOperationIndex)
+		IReadOnlyDictionary<int, ItemPurificationCubeSnapshot> cubeSnapshotsByPacketOperationIndex,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups = null)
 	{
 		// Java parity: this mirrors the already-mutated item objects that ItemPacketService consumes
 		// after Storage.decreaseItemCount/delete/add have run, without performing those mutations here.
@@ -48,7 +49,8 @@ public static class ItemPurificationPacketInputSnapshotService
 						inventoryInputs,
 						missingInventoryObjectIds,
 						mismatchedInventoryObjectIds,
-						missingTemplateIds);
+						missingTemplateIds,
+						itemRestrictionCleanups);
 					packetOperationIndex++;
 					break;
 				case ItemPurificationApplicationOperationType.DeleteMaterialItem:
@@ -75,7 +77,8 @@ public static class ItemPurificationPacketInputSnapshotService
 						inventoryInputs,
 						missingInventoryObjectIds,
 						mismatchedInventoryObjectIds,
-						missingTemplateIds);
+						missingTemplateIds,
+						itemRestrictionCleanups);
 					packetOperationIndex++;
 					AddCubeInput(
 						operation,
@@ -120,7 +123,8 @@ public static class ItemPurificationPacketInputSnapshotService
 		Dictionary<int, ItemPurificationInventoryPacketInput> inventoryInputs,
 		HashSet<int> missingInventoryObjectIds,
 		HashSet<int> mismatchedInventoryObjectIds,
-		HashSet<int> missingTemplateIds)
+		HashSet<int> missingTemplateIds,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups)
 	{
 		if (operation.ObjectId <= 0 || !inventoryItemsByObjectId.TryGetValue(operation.ObjectId, out var item))
 		{
@@ -143,7 +147,10 @@ public static class ItemPurificationPacketInputSnapshotService
 			return;
 		}
 
-		inventoryInputs[operation.ObjectId] = new ItemPurificationInventoryPacketInput(item, template);
+		inventoryInputs[operation.ObjectId] = new ItemPurificationInventoryPacketInput(
+			item,
+			template,
+			GetGeneralInfoWarehouseRestrictionFlag(item.ItemId, itemRestrictionCleanups));
 	}
 
 	private static void AddCubeInput(
@@ -197,6 +204,13 @@ public static class ItemPurificationPacketInputSnapshotService
 		// separately in Java Storage, so this excludes C#'s synthetic kinah InventoryItem.
 		var itemsCount = postMutationInventoryItems.Count(item => item.Location == CubeStorageId && item.ItemId != KinahItemId);
 		return new ItemPurificationCubeSnapshot(itemsCount, npcExpands, questExpands, itemExpands);
+	}
+
+	private static int GetGeneralInfoWarehouseRestrictionFlag(int itemId, ItemRestrictionCleanupTable? itemRestrictionCleanups)
+	{
+		// Java parity: ItemRestrictionCleanupData.hasAccountOrLegionWhStorabilityDisabled
+		// drives GeneralInfoBlobEntry's cleanup/seal warehouse restriction field.
+		return itemId != 0 && itemRestrictionCleanups?.HasAccountOrLegionWarehouseStorabilityDisabled(itemId) == true ? 3 : 0;
 	}
 }
 

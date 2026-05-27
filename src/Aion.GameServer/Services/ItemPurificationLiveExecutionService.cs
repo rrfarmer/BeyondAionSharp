@@ -18,6 +18,7 @@ public static class ItemPurificationLiveExecutionService
 		IGameClientConnectionRegistry? connectionRegistry,
 		AbyssPointsAddOptions? abyssPointsOptions = null,
 		int abyssTransformMinRank = AbyssSkillService.DefaultTransformMinRank,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups = null,
 		IItemPurificationQuestMutationNotifier? questMutationNotifier = null,
 		CancellationToken cancellationToken = default)
 	{
@@ -34,7 +35,8 @@ public static class ItemPurificationLiveExecutionService
 			itemTemplates,
 			npcExpands,
 			questExpands,
-			itemExpands);
+			itemExpands,
+			itemRestrictionCleanups);
 		if (!bridge.Succeeded || bridge.Bridge?.ConcretePacketPlan == null)
 		{
 			return new ItemPurificationLiveExecutionResult(
