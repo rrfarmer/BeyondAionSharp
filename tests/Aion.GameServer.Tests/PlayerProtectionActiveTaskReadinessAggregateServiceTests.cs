@@ -18,13 +18,15 @@ public sealed class PlayerProtectionActiveTaskReadinessAggregateServiceTests
 		var cleanup = PlayerProtectionActiveTaskTaskMapLifecycleCleanupService.Create(new PlayerProtectionActiveTaskTaskMapLifecycleCleanupRequest(
 			PendingProtectionTaskHandle: new RecordingTaskHandle()));
 		var audit = PlayerProtectionActiveTaskTaskMapAuditService.Create(readiness);
+		var ownerSelection = PlayerProtectionActiveTaskTaskMapOwnerSelectionService.Create(new PlayerProtectionActiveTaskTaskMapOwnerSelectionRequest());
 
 		var report = PlayerProtectionActiveTaskReadinessAggregateService.Create(new PlayerProtectionActiveTaskReadinessAggregateRequest(
 			summary,
 			readiness,
 			audit,
 			[simulation],
-			cleanup));
+			cleanup,
+			ownerSelection));
 
 		Assert.False(report.IsLive);
 		Assert.False(report.CanEnableProtectionTaskMapStack);
@@ -43,6 +45,10 @@ public sealed class PlayerProtectionActiveTaskReadinessAggregateServiceTests
 		Assert.Contains(report.Rows, row =>
 			row.Area == PlayerProtectionActiveTaskReadinessAggregateArea.ScheduledTaskHandleAdapter
 			&& row.Status == PlayerProtectionActiveTaskReadinessAggregateStatus.ObservedNonLive);
+		Assert.Contains(report.Rows, row =>
+			row.Area == PlayerProtectionActiveTaskReadinessAggregateArea.ProductionOwnerSelection
+			&& row.EvidenceSource == "Owner selection report"
+			&& row.Notes.Contains("controller-owned task storage", StringComparison.Ordinal));
 	}
 
 	[Fact]
@@ -59,13 +65,15 @@ public sealed class PlayerProtectionActiveTaskReadinessAggregateServiceTests
 			ExistingTaskHandle: new RecordingTaskHandle()));
 		var cleanup = PlayerProtectionActiveTaskTaskMapLifecycleCleanupService.Create(new PlayerProtectionActiveTaskTaskMapLifecycleCleanupRequest());
 		var audit = PlayerProtectionActiveTaskTaskMapAuditService.Create(readiness);
+		var ownerSelection = PlayerProtectionActiveTaskTaskMapOwnerSelectionService.Create(new PlayerProtectionActiveTaskTaskMapOwnerSelectionRequest());
 
 		var report = PlayerProtectionActiveTaskReadinessAggregateService.Create(new PlayerProtectionActiveTaskReadinessAggregateRequest(
 			summary,
 			readiness,
 			audit,
 			[simulation],
-			cleanup));
+			cleanup,
+			ownerSelection));
 
 		Assert.Equal(PlayerProtectionActiveTaskAdapterAction.Stop, report.Action);
 		Assert.False(report.CanEnableProtectionTaskMapStack);
@@ -78,6 +86,10 @@ public sealed class PlayerProtectionActiveTaskReadinessAggregateServiceTests
 			row.Area == PlayerProtectionActiveTaskReadinessAggregateArea.TaskMapCancellation
 			&& row.Status == PlayerProtectionActiveTaskReadinessAggregateStatus.ObservedNonLive
 			&& row.JavaOperation == "cancelTask(TaskId.PROTECTION_ACTIVE)");
+		Assert.Contains(report.Rows, row =>
+			row.Area == PlayerProtectionActiveTaskReadinessAggregateArea.ProductionOwnerSelection
+			&& row.EvidenceSource == "Owner selection report"
+			&& row.Notes.Contains("Player model storage", StringComparison.Ordinal));
 	}
 
 	[Fact]
@@ -92,13 +104,16 @@ public sealed class PlayerProtectionActiveTaskReadinessAggregateServiceTests
 		var cleanup = PlayerProtectionActiveTaskTaskMapLifecycleCleanupService.Create(new PlayerProtectionActiveTaskTaskMapLifecycleCleanupRequest(
 			PendingProtectionTaskHandle: new RecordingTaskHandle(),
 			ReplacementProtectionTaskHandle: new RecordingTaskHandle()));
+		var ownerSelection = PlayerProtectionActiveTaskTaskMapOwnerSelectionService.Create(new PlayerProtectionActiveTaskTaskMapOwnerSelectionRequest(
+			HasConcreteCSharpControllerTaskMapOwner: true));
 
 		var report = PlayerProtectionActiveTaskReadinessAggregateService.Create(new PlayerProtectionActiveTaskReadinessAggregateRequest(
 			summary,
 			readiness,
 			PlayerProtectionActiveTaskTaskMapAuditService.Create(readiness),
 			Array.Empty<PlayerProtectionActiveTaskTaskMapSimulationReport>(),
-			cleanup));
+			cleanup,
+			ownerSelection));
 
 		Assert.True(report.HasLifecycleCleanupEvidence);
 		Assert.False(report.CanEnableProtectionTaskMapStack);
@@ -112,6 +127,11 @@ public sealed class PlayerProtectionActiveTaskReadinessAggregateServiceTests
 			row.Area == PlayerProtectionActiveTaskReadinessAggregateArea.JavaRuntimeComparison
 			&& row.Status == PlayerProtectionActiveTaskReadinessAggregateStatus.NeedsVerification
 			&& row.BlocksLiveEnablement);
+		Assert.Contains(report.Rows, row =>
+			row.Area == PlayerProtectionActiveTaskReadinessAggregateArea.ProductionOwnerSelection
+			&& row.EvidenceSource == "Owner selection report"
+			&& row.Status == PlayerProtectionActiveTaskReadinessAggregateStatus.ObservedNonLive
+			&& row.Notes.Contains("best matches Java lifecycle", StringComparison.Ordinal));
 	}
 
 	private static async Task<PlayerProtectionActiveTaskExecutionSummary> CreateSummaryAsync(

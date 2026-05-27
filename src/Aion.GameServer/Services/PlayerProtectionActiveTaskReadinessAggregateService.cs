@@ -34,6 +34,7 @@ public sealed record PlayerProtectionActiveTaskReadinessAggregateRequest(
 	PlayerProtectionActiveTaskTaskMapAuditReport TaskMapAuditReport,
 	IReadOnlyList<PlayerProtectionActiveTaskTaskMapSimulationReport> TaskMapSimulationReports,
 	PlayerProtectionActiveTaskTaskMapLifecycleCleanupReport LifecycleCleanupReport,
+	PlayerProtectionActiveTaskTaskMapOwnerSelectionReport? OwnerSelectionReport = null,
 	bool ScheduledTaskHandleAdapterAvailable = true);
 
 public sealed record PlayerProtectionActiveTaskReadinessAggregateRow(
@@ -72,6 +73,8 @@ public static class PlayerProtectionActiveTaskReadinessAggregateService
 		AddTaskMapSimulationRows(rows, request.TaskMapSimulationReports);
 		AddScheduledHandleRow(rows, request.ScheduledTaskHandleAdapterAvailable);
 		AddLifecycleCleanupRows(rows, request.LifecycleCleanupReport);
+		if (request.OwnerSelectionReport != null)
+			AddOwnerSelectionRows(rows, request.OwnerSelectionReport);
 		AddRuntimeComparisonRow(rows);
 
 		var rowArray = rows.ToArray();
@@ -227,6 +230,34 @@ public static class PlayerProtectionActiveTaskReadinessAggregateService
 			"Java runtime artifact generation is still required before claiming scheduler/task-map parity.");
 	}
 
+	private static void AddOwnerSelectionRows(
+		ICollection<PlayerProtectionActiveTaskReadinessAggregateRow> rows,
+		PlayerProtectionActiveTaskTaskMapOwnerSelectionReport ownerSelection)
+	{
+		foreach (var row in ownerSelection.Rows.Where(IsAggregateRelevantOwnerRow))
+		{
+			Add(
+				rows,
+				row.Area == PlayerProtectionActiveTaskTaskMapOwnerSelectionArea.LiveEnablementBlocker
+					? PlayerProtectionActiveTaskReadinessAggregateArea.JavaRuntimeComparison
+					: PlayerProtectionActiveTaskReadinessAggregateArea.ProductionOwnerSelection,
+				ToStatus(row.Status),
+				row.BlocksLiveEnablement,
+				"Owner selection report",
+				row.JavaOperation,
+				row.JavaSource,
+				row.CSharpImplication + " " + row.Notes);
+		}
+	}
+
+	private static bool IsAggregateRelevantOwnerRow(
+		PlayerProtectionActiveTaskTaskMapOwnerSelectionRow row) =>
+		row.Area is PlayerProtectionActiveTaskTaskMapOwnerSelectionArea.ControllerOwnedCandidate
+			or PlayerProtectionActiveTaskTaskMapOwnerSelectionArea.PlayerModelOwnedCandidate
+			or PlayerProtectionActiveTaskTaskMapOwnerSelectionArea.ExternalServiceOwnedCandidate
+			or PlayerProtectionActiveTaskTaskMapOwnerSelectionArea.Recommendation
+			or PlayerProtectionActiveTaskTaskMapOwnerSelectionArea.LiveEnablementBlocker;
+
 	private static PlayerProtectionActiveTaskReadinessAggregateArea ToArea(
 		PlayerProtectionActiveTaskLiveReadinessCapability capability) =>
 		capability switch
@@ -264,6 +295,18 @@ public static class PlayerProtectionActiveTaskReadinessAggregateService
 			PlayerProtectionActiveTaskLiveReadinessStatus.NotReached => PlayerProtectionActiveTaskReadinessAggregateStatus.Skipped,
 			PlayerProtectionActiveTaskLiveReadinessStatus.SkippedBranch => PlayerProtectionActiveTaskReadinessAggregateStatus.Skipped,
 			PlayerProtectionActiveTaskLiveReadinessStatus.LiveOnlyAllowed => PlayerProtectionActiveTaskReadinessAggregateStatus.LiveVisualOnly,
+			_ => throw new ArgumentOutOfRangeException(nameof(status), status, null),
+		};
+
+	private static PlayerProtectionActiveTaskReadinessAggregateStatus ToStatus(
+		PlayerProtectionActiveTaskTaskMapOwnerSelectionStatus status) =>
+		status switch
+		{
+			PlayerProtectionActiveTaskTaskMapOwnerSelectionStatus.JavaRequirement => PlayerProtectionActiveTaskReadinessAggregateStatus.ObservedNonLive,
+			PlayerProtectionActiveTaskTaskMapOwnerSelectionStatus.PreferredCandidate => PlayerProtectionActiveTaskReadinessAggregateStatus.ObservedNonLive,
+			PlayerProtectionActiveTaskTaskMapOwnerSelectionStatus.RejectedCandidate => PlayerProtectionActiveTaskReadinessAggregateStatus.Blocked,
+			PlayerProtectionActiveTaskTaskMapOwnerSelectionStatus.Blocked => PlayerProtectionActiveTaskReadinessAggregateStatus.Blocked,
+			PlayerProtectionActiveTaskTaskMapOwnerSelectionStatus.NeedsVerification => PlayerProtectionActiveTaskReadinessAggregateStatus.NeedsVerification,
 			_ => throw new ArgumentOutOfRangeException(nameof(status), status, null),
 		};
 
