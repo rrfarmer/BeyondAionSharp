@@ -106,6 +106,23 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void GameServerConnection_GetGeneralInfoWarehouseRestrictionFlag_UsesJavaCleanupPredicate()
+	{
+		// Java parity: ItemRestrictionCleanupData.hasAccountOrLegionWhStorabilityDisabled returns true when
+		// either account or legion warehouse storage is disabled, and packet blobs write flag value 3.
+		var cleanups = new ItemRestrictionCleanupTable(
+		[
+			new ItemRestrictionCleanupSummary(ItemId: 188053996, AccountWarehouse: 0, LegionWarehouse: 1),
+			new ItemRestrictionCleanupSummary(ItemId: 188053997, AccountWarehouse: 1, LegionWarehouse: 1),
+		]);
+
+		Assert.Equal(3, GameServerConnection.GetGeneralInfoWarehouseRestrictionFlag(188053996, cleanups));
+		Assert.Equal(0, GameServerConnection.GetGeneralInfoWarehouseRestrictionFlag(188053997, cleanups));
+		Assert.Equal(0, GameServerConnection.GetGeneralInfoWarehouseRestrictionFlag(0, cleanups));
+		Assert.Equal(0, GameServerConnection.GetGeneralInfoWarehouseRestrictionFlag(188053996, itemRestrictionCleanups: null));
+	}
+
+	[Fact]
 	public void SmMessage_WritesShoutCoordinates()
 	{
 		var player = new Player

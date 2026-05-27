@@ -210,6 +210,15 @@ public sealed class GameServerConnection : BaseClientConnection
 
 	public GameConnectionState State => _state;
 
+	internal static int GetGeneralInfoWarehouseRestrictionFlag(
+		int itemId,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups)
+	{
+		// Java parity: dataholders/ItemRestrictionCleanupData.hasAccountOrLegionWhStorabilityDisabled
+		// feeds GeneralInfoBlobEntry's account/legion warehouse restriction bitmask.
+		return itemId != 0 && itemRestrictionCleanups?.HasAccountOrLegionWarehouseStorabilityDisabled(itemId) == true ? 3 : 0;
+	}
+
 	public override async Task RunAsync()
 	{
 		// Java parity: network/aion/AionConnection.initialized sends SM_KEY.
@@ -818,10 +827,15 @@ public sealed class GameServerConnection : BaseClientConnection
 					var letter = _activePlayer.Mailbox.FirstOrDefault(mail => mail.Id == readMail.MailObjectId);
 					if (letter != null)
 					{
+						var staticData = _runtimeContext?.DataManager?.StaticData;
+						var generalInfoWarehouseRestrictionFlag = GetGeneralInfoWarehouseRestrictionFlag(
+							letter.AttachedItem?.ItemId ?? letter.AttachedItemTemplateId,
+							staticData?.ItemRestrictionCleanups);
 						await SendPacketAsync(SmMailService.CreateReadPacket(
 							_activePlayer.Mailbox,
 							letter,
-							_runtimeContext?.DataManager?.StaticData.ItemTemplates));
+							staticData?.ItemTemplates,
+							generalInfoWarehouseRestrictionFlag));
 						_activePlayer.Mailbox = _activePlayer.Mailbox
 							.Select(mail => mail.Id == readMail.MailObjectId ? mail with { IsUnread = false } : mail)
 							.ToArray();
