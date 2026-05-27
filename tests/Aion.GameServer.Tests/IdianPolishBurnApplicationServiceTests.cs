@@ -34,7 +34,11 @@ public sealed class IdianPolishBurnApplicationServiceTests
 				new IdianPolishBurnResult(unchangedPacketUpdate, IdianPolishBurnUpdateKind.None, BurnAmount: 50_000),
 			]);
 
-		var result = IdianPolishBurnApplicationService.ApplyBurnPlan(player, plan, CreateItemTemplates());
+		var result = IdianPolishBurnApplicationService.ApplyBurnPlan(
+			player,
+			plan,
+			CreateItemTemplates(),
+			CreateItemRestrictionCleanups());
 
 		Assert.True(result.Changed);
 		Assert.Same(player.InventoryItems, result.InventoryItems);
@@ -44,7 +48,7 @@ public sealed class IdianPolishBurnApplicationServiceTests
 		Assert.Collection(
 			result.Packets,
 			packet => AssertPolishChargePacket(packet, objectId: 10, polishCharge: 250_000),
-			packet => AssertFullDecreasePacket(packet, objectId: 11));
+			packet => AssertFullDecreasePacket(packet, objectId: 11, expectedCleanupSealFlag: 3));
 	}
 
 	[Fact]
@@ -101,7 +105,7 @@ public sealed class IdianPolishBurnApplicationServiceTests
 		Assert.Equal(0, reader.Remaining);
 	}
 
-	private static void AssertFullDecreasePacket(GameServerPacket packet, int objectId)
+	private static void AssertFullDecreasePacket(GameServerPacket packet, int objectId, int expectedCleanupSealFlag)
 	{
 		var payload = SerializeUnencryptedPayload(packet);
 		using var reader = new PacketBuffer(payload);
@@ -109,9 +113,24 @@ public sealed class IdianPolishBurnApplicationServiceTests
 		Assert.Equal(string.Empty, reader.ReadS());
 		var blobSize = reader.ReadH();
 		Assert.True(blobSize > 0);
-		reader.ReadB(blobSize);
+		var blob = reader.ReadB(blobSize);
+		AssertGeneralInfoCleanupSealFlag(blob, expectedItemMask: 1, expectedFlag: expectedCleanupSealFlag);
 		Assert.Equal(SmInventoryUpdateItem.DecreaseItemUse, reader.ReadH());
 		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertGeneralInfoCleanupSealFlag(byte[] blob, int expectedItemMask, int expectedFlag)
+	{
+		using var reader = new PacketBuffer(blob);
+		Assert.Equal(0x00, (int)reader.ReadC());
+		Assert.Equal(expectedItemMask, reader.ReadH());
+		Assert.Equal(1, reader.ReadQ());
+		Assert.Equal(string.Empty, reader.ReadS());
+		Assert.Equal(0, (int)reader.ReadC());
+		reader.ReadD();
+		reader.ReadD();
+		reader.ReadD();
+		Assert.Equal(expectedFlag, reader.ReadH());
 	}
 
 	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
@@ -148,6 +167,15 @@ public sealed class IdianPolishBurnApplicationServiceTests
 		]);
 	}
 
+	private static ItemRestrictionCleanupTable CreateItemRestrictionCleanups()
+	{
+		return new ItemRestrictionCleanupTable(
+		[
+			new ItemRestrictionCleanupSummary(ItemId: 100, AccountWarehouse: 1, LegionWarehouse: 1),
+			new ItemRestrictionCleanupSummary(ItemId: 101, AccountWarehouse: 1, LegionWarehouse: 0),
+		]);
+	}
+
 	private static ItemTemplateSummary CreateTemplate(int templateId, string name)
 	{
 		return new ItemTemplateSummary(
@@ -156,13 +184,12 @@ public sealed class IdianPolishBurnApplicationServiceTests
 			0,
 			1,
 			1,
-			"SWORD",
+			"MISC",
 			"NORMAL",
 			"COMMON",
 			"PC_ALL",
 			1,
 			0,
-			3,
-			IdianInfo: new ItemIdianInfo(100_000, 100_000));
+			0);
 	}
 }

@@ -10,7 +10,8 @@ public static class IdianPolishBurnApplicationService
 	public static IdianPolishBurnApplicationResult ApplyBurnPlan(
 		Player player,
 		IdianPolishBurnPlan plan,
-		ItemTemplateTable itemTemplates)
+		ItemTemplateTable itemTemplates,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups = null)
 	{
 		// Java parity: model/items/IdianStone.decreasePolishCharge sends POLISH_CHARGE at the low-charge threshold and a full DEC_ITEM_USE update on exhaustion.
 		if (!plan.Changed || plan.Burns.Count == 0)
@@ -33,7 +34,12 @@ public static class IdianPolishBurnApplicationService
 
 			var template = itemTemplates.GetItemTemplate(burn.ItemUpdate.ItemId);
 			if (template != null)
-				packets.Add(new SmInventoryUpdateItem(burn.ItemUpdate, template, updateType));
+			{
+				var cleanupSealFlag = burn.UpdateKind == IdianPolishBurnUpdateKind.Exhausted
+					? GetGeneralInfoWarehouseRestrictionFlag(burn.ItemUpdate.ItemId, itemRestrictionCleanups)
+					: 0;
+				packets.Add(new SmInventoryUpdateItem(burn.ItemUpdate, template, updateType, cleanupSealFlag));
+			}
 		}
 
 		player.InventoryItems = inventoryItems.ToArray();
@@ -47,6 +53,12 @@ public static class IdianPolishBurnApplicationService
 			items[index] = update;
 		else
 			items.Add(update);
+	}
+
+	private static int GetGeneralInfoWarehouseRestrictionFlag(int itemId, ItemRestrictionCleanupTable? itemRestrictionCleanups)
+	{
+		// Java parity: network/aion/iteminfo/GeneralInfoBlobEntry reads ItemRestrictionCleanupData.hasAccountOrLegionWhStorabilityDisabled.
+		return itemId != 0 && itemRestrictionCleanups?.HasAccountOrLegionWarehouseStorabilityDisabled(itemId) == true ? 3 : 0;
 	}
 }
 
