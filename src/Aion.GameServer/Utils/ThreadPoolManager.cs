@@ -6,13 +6,17 @@ namespace Aion.GameServer.Utils;
 public sealed class ThreadPoolManager : IAsyncDisposable
 {
 	private readonly ILogger<ThreadPoolManager> _logger;
+	private readonly Action<ThreadPoolScheduleObservation>? _scheduleObserver;
 	private readonly ConcurrentBag<Task> _scheduledTasks = new();
 	private readonly CancellationTokenSource _shutdownTokenSource = new();
 	private int _isShutdown;
 
-	public ThreadPoolManager(ILogger<ThreadPoolManager> logger)
+	public ThreadPoolManager(
+		ILogger<ThreadPoolManager> logger,
+		Action<ThreadPoolScheduleObservation>? scheduleObserver = null)
 	{
 		_logger = logger;
+		_scheduleObserver = scheduleObserver;
 	}
 
 	public ScheduledTask Schedule(
@@ -27,6 +31,7 @@ public sealed class ThreadPoolManager : IAsyncDisposable
 		var linkedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_shutdownTokenSource.Token, cancellationToken);
 		var task = Task.Run(() => RunOnceAsync(action, delay, linkedTokenSource.Token), CancellationToken.None);
 		_scheduledTasks.Add(task);
+		_scheduleObserver?.Invoke(new ThreadPoolScheduleObservation(ThreadPoolScheduleKind.Once, delay, Period: null));
 		return new ScheduledTask(task, linkedTokenSource);
 	}
 
@@ -43,6 +48,7 @@ public sealed class ThreadPoolManager : IAsyncDisposable
 		var linkedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_shutdownTokenSource.Token, cancellationToken);
 		var task = Task.Run(() => RunFixedRateAsync(action, initialDelay, period, linkedTokenSource), CancellationToken.None);
 		_scheduledTasks.Add(task);
+		_scheduleObserver?.Invoke(new ThreadPoolScheduleObservation(ThreadPoolScheduleKind.FixedRate, initialDelay, period));
 		return task;
 	}
 
@@ -118,6 +124,17 @@ public sealed class ThreadPoolManager : IAsyncDisposable
 		await ShutdownAsync();
 		_shutdownTokenSource.Dispose();
 	}
+}
+
+public sealed record ThreadPoolScheduleObservation(
+	ThreadPoolScheduleKind Kind,
+	TimeSpan Delay,
+	TimeSpan? Period);
+
+public enum ThreadPoolScheduleKind
+{
+	Once,
+	FixedRate,
 }
 
 public sealed class ScheduledTask

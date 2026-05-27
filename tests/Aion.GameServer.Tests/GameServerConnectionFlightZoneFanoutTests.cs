@@ -9,6 +9,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
+using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.IdFactory;
 using Aion.GameServer.World;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -772,6 +773,53 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 	}
 
 	[Fact]
+	public async Task CompleteToyPetSpawnUseItemAsync_SchedulesKiskDespawnForRemainingLifetime()
+	{
+		var observations = new List<ThreadPoolScheduleObservation>();
+		await using var threadPoolManager = new ThreadPoolManager(
+			NullLogger<ThreadPoolManager>.Instance,
+			observations.Add);
+		var runtimeContext = new GameServerRuntimeContext();
+		var registry = new CapturingConnectionRegistry();
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var idFactory = new IDFactory([1]);
+		await using var pair = await TestConnectionPair.CreateAsync(
+			registry,
+			runtimeContext,
+			idFactory: idFactory,
+			world: world,
+			threadPoolManager: threadPoolManager);
+		var player = CreateTeleportingPlayer(7309, new WorldPosition(210010000, 10, 20, 30, 0));
+		var sourceItem = new InventoryItem
+		{
+			ObjectId = 9104,
+			ItemId = 184000011,
+			Count = 1,
+			OwnerId = player.ObjectId,
+			Location = 0,
+			Slot = 4,
+		};
+		player.InventoryItems = [sourceItem];
+		var sourceTemplate = CreateToyPetSpawnItemTemplate(sourceItem.ItemId, toyPetSpawnNpcId: 700273);
+		var kiskTemplate = CreateKiskTemplate(700273);
+
+		await pair.Connection.CompleteToyPetSpawnUseItemAsync(
+			player,
+			sourceItem.ObjectId,
+			sourceTemplate,
+			kiskTemplate,
+			CancellationToken.None);
+
+		var observation = Assert.Single(observations);
+		Assert.Equal(ThreadPoolScheduleKind.Once, observation.Kind);
+		Assert.Null(observation.Period);
+		Assert.InRange(observation.Delay.TotalSeconds, 7198, PlayerKiskRuntimeState.LifetimeSeconds);
+		var kiskState = runtimeContext.Kisks.GetOwnerKiskState(player.ObjectId);
+		Assert.NotNull(kiskState);
+		Assert.InRange(kiskState.GetRemainingLifetimeSeconds(DateTimeOffset.UtcNow), 7198, PlayerKiskRuntimeState.LifetimeSeconds);
+	}
+
+	[Fact]
 	public async Task RemoveRuntimeKiskAsync_ClearsCreaturePvpZoneCountersWithoutConnectionRegistry()
 	{
 		var dataManager = await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false);
@@ -1134,6 +1182,7 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 			IDFactory? idFactory = null,
 			GameWorld? world = null,
 			PlayerEnterWorldService? playerEnterWorldService = null,
+			ThreadPoolManager? threadPoolManager = null,
 			Action<GameServerPacket>? sentPacketObserver = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
@@ -1158,6 +1207,7 @@ public sealed class GameServerConnectionFlightZoneFanoutTests
 					connectionRegistry: registry,
 					idFactory: idFactory,
 					world: world,
+					threadPoolManager: threadPoolManager,
 					playerEnterWorldService: playerEnterWorldService,
 					creaturePvpZoneCounterService: creaturePvpZoneCounterService,
 					sentPacketObserver: packet =>
