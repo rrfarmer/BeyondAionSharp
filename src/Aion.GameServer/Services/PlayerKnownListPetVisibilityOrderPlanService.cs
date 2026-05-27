@@ -1,4 +1,5 @@
 using Aion.GameServer.Model;
+using Aion.GameServer.Network.Aion.ServerPackets;
 
 namespace Aion.GameServer.Services;
 
@@ -129,14 +130,14 @@ public sealed class PlayerKnownListPetVisibilityOrderPlanService
 			new(
 				PlayerKnownListPetVisibilitySideEffectKind.SmPetSpawn,
 				"SM_PET",
-				CSharpPacketTypeName: null,
-				PlayerKnownListPlayerSideEffectCSharpSupport.Missing,
+				nameof(SmPet),
+				PlayerKnownListPlayerSideEffectCSharpSupport.Partial,
 				request.ViewerPlayerObjectId,
 				request.MasterPlayerObjectId,
 				request.PetObjectId!.Value,
 				DeleteAnimation: null,
 				javaSource,
-				"Java PlayerController.see(Pet) sends new SM_PET(pet). C# serializer and pet object/common-data model are not ported."),
+				"Java PlayerController.see(Pet) sends new SM_PET(pet). C# has a known-list serializer subset, but live pet object/common-data hydration is not ported."),
 		};
 
 		if (request.MasterIsFlying)
@@ -144,14 +145,14 @@ public sealed class PlayerKnownListPetVisibilityOrderPlanService
 			descriptors.Add(new PlayerKnownListPetVisibilitySideEffectDescriptor(
 				PlayerKnownListPetVisibilitySideEffectKind.SmPetEmoteFlyStart,
 				"SM_PET_EMOTE",
-				CSharpPacketTypeName: null,
-				PlayerKnownListPlayerSideEffectCSharpSupport.Missing,
+				nameof(SmPetEmote),
+				PlayerKnownListPlayerSideEffectCSharpSupport.Partial,
 				request.ViewerPlayerObjectId,
 				request.MasterPlayerObjectId,
 				request.PetObjectId!.Value,
 				DeleteAnimation: null,
 				javaSource,
-				"Java PlayerController.see(Pet) sends SM_PET_EMOTE(pet, PetEmote.FLY_START) when the pet master is flying. C# PetEmote and packet serializer are not ported."));
+				"Java PlayerController.see(Pet) sends SM_PET_EMOTE(pet, PetEmote.FLY_START) when the pet master is flying. C# supports the fly-start/default branch but not movement branches."));
 		}
 
 		return descriptors;
@@ -164,15 +165,15 @@ public sealed class PlayerKnownListPetVisibilityOrderPlanService
 			new(
 				PlayerKnownListPetVisibilitySideEffectKind.SmPetDismiss,
 				"SM_PET",
-				CSharpPacketTypeName: null,
-				PlayerKnownListPlayerSideEffectCSharpSupport.Missing,
+				nameof(SmPet),
+				PlayerKnownListPlayerSideEffectCSharpSupport.Partial,
 				request.ViewerPlayerObjectId,
 				request.MasterPlayerObjectId,
 				request.PetObjectId!.Value,
 				request.NotSeeAnimation,
 				javaSource,
-				"Java PlayerController.notSee(Pet) sends new SM_PET(petObjectId, animation), not SM_DELETE. C# dismiss serializer is not ported."),
-		];
+				"Java PlayerController.notSee(Pet) sends new SM_PET(petObjectId, animation), not SM_DELETE. C# supports the known-list dismiss serializer subset."),
+	];
 
 	private static PlayerKnownListPetVisibilityOrderPlan CreatePlan(
 		PlayerKnownListPetVisibilityOrderPlanStatus status,

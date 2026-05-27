@@ -1,4 +1,5 @@
 using Aion.GameServer.Model;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 
 namespace Aion.GameServer.Tests;
@@ -29,11 +30,11 @@ public sealed class PlayerKnownListPetVisibilityOrderPlanServiceTests
 		var descriptor = Assert.Single(plan.Descriptors);
 		Assert.Equal(PlayerKnownListPetVisibilitySideEffectKind.SmPetSpawn, descriptor.Kind);
 		Assert.Equal("SM_PET", descriptor.JavaPacketName);
-		Assert.Null(descriptor.CSharpPacketTypeName);
-		Assert.Equal(PlayerKnownListPlayerSideEffectCSharpSupport.Missing, descriptor.CSharpSupport);
+		Assert.Equal(nameof(SmPet), descriptor.CSharpPacketTypeName);
+		Assert.Equal(PlayerKnownListPlayerSideEffectCSharpSupport.Partial, descriptor.CSharpSupport);
 		Assert.Equal(PetObjectId, descriptor.PetObjectId);
 		Assert.Contains("updatePetVisibility", descriptor.JavaSource);
-		Assert.Contains("not ported", descriptor.Notes);
+		Assert.Contains("serializer subset", descriptor.Notes);
 	}
 
 	[Fact]
@@ -58,7 +59,8 @@ public sealed class PlayerKnownListPetVisibilityOrderPlanServiceTests
 			],
 			plan.Descriptors.Select(descriptor => descriptor.Kind));
 		Assert.Equal("SM_PET_EMOTE", plan.Descriptors[1].JavaPacketName);
-		Assert.Equal(PlayerKnownListPlayerSideEffectCSharpSupport.Missing, plan.Descriptors[1].CSharpSupport);
+		Assert.Equal(nameof(SmPetEmote), plan.Descriptors[1].CSharpPacketTypeName);
+		Assert.Equal(PlayerKnownListPlayerSideEffectCSharpSupport.Partial, plan.Descriptors[1].CSharpSupport);
 		Assert.Contains("FLY_START", plan.Descriptors[1].Notes);
 	}
 
@@ -81,7 +83,8 @@ public sealed class PlayerKnownListPetVisibilityOrderPlanServiceTests
 		Assert.Equal(PlayerKnownListPetVisibilitySideEffectKind.SmPetDismiss, descriptor.Kind);
 		Assert.Equal("SM_PET", descriptor.JavaPacketName);
 		Assert.Equal(ObjectDeleteAnimation.FadeOut, descriptor.DeleteAnimation);
-		Assert.Equal(PlayerKnownListPlayerSideEffectCSharpSupport.Missing, descriptor.CSharpSupport);
+		Assert.Equal(nameof(SmPet), descriptor.CSharpPacketTypeName);
+		Assert.Equal(PlayerKnownListPlayerSideEffectCSharpSupport.Partial, descriptor.CSharpSupport);
 		Assert.Contains("not SM_DELETE", descriptor.Notes);
 	}
 
