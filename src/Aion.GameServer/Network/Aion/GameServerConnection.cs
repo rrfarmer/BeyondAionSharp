@@ -4335,7 +4335,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		{
 			RegisterExtractExpirableAddedItems(player, plan.AddedRewardItems, rewardTemplate);
 			if (HasRewardMutation(plan.UpdatedRewardItems, plan.AddedRewardItems))
-				await SendExtractRewardPacketsAsync(plan, rewardTemplate);
+				await SendExtractRewardPacketsAsync(plan, rewardTemplate, staticData.ItemRestrictionCleanups);
 		}
 
 		if (!plan.RewardSucceeded && plan.RewardInventoryFull)
@@ -4383,12 +4383,24 @@ public sealed class GameServerConnection : BaseClientConnection
 			_expirableTaskService?.RegisterInventoryItem(player, addedRewardItem);
 	}
 
-	private async Task SendExtractRewardPacketsAsync(BreakItemPlan plan, ItemTemplateSummary rewardTemplate)
+	private async Task SendExtractRewardPacketsAsync(
+		BreakItemPlan plan,
+		ItemTemplateSummary rewardTemplate,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups)
 	{
 		foreach (var updatedReward in plan.UpdatedRewardItems)
-			await SendPacketAsync(new SmInventoryUpdateItem(updatedReward, rewardTemplate, SmInventoryUpdateItem.IncreaseItemCollect));
+			await SendPacketAsync(
+				new SmInventoryUpdateItem(
+					updatedReward,
+					rewardTemplate,
+					SmInventoryUpdateItem.IncreaseItemCollect,
+					GetGeneralInfoWarehouseRestrictionFlag(updatedReward.ItemId, itemRestrictionCleanups)));
 		foreach (var addedReward in plan.AddedRewardItems)
-			await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(addedReward, rewardTemplate));
+			await SendPacketAsync(
+				SmInventoryAddItem.CreateItemCollect(
+					addedReward,
+					rewardTemplate,
+					GetGeneralInfoWarehouseRestrictionFlag(addedReward.ItemId, itemRestrictionCleanups)));
 	}
 
 	private static bool HasRewardMutation(IReadOnlyCollection<InventoryItem> updatedItems, IReadOnlyCollection<InventoryItem> addedItems)

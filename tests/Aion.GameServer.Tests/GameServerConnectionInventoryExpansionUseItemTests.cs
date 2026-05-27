@@ -935,6 +935,53 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleUseItemAsync_ExtractAddsRestrictedRewardWithCleanupSealFlag()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(
+			includeThreadPoolManager: true,
+			idFactory: new IDFactory([5001, 6200]));
+		var player = CreateExtractPlayer();
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItemTarget(sourceItemObjectId: 5001, targetItemObjectId: 6200));
+
+		await WaitUntilAsync(() => fixture.SentPackets.Count >= 5, TimeSpan.FromSeconds(6));
+		Assert.DoesNotContain(player.InventoryItems, item => item.ObjectId == 6200);
+		var reward = Assert.Single(player.InventoryItems, item => item.ItemId == 166000195);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 105, expectedTime: 5000, expectedEnd: 0),
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 6200, expectedDeleteType: SmDeleteItem.UseDeleteType),
+			packet => AssertInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 5001, expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse),
+			packet => AssertInventoryItemCollectAddPayload(Assert.IsType<SmInventoryAddItem>(packet), expectedObjectId: 1, expectedItemId: 166000195, expectedCount: reward.Count, expectedCleanupSealFlag: 3),
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 105, expectedTime: 0, expectedEnd: 1));
+	}
+
+	[Fact]
+	public async Task HandleUseItemAsync_ExtractMergesRestrictedRewardWithCleanupSealFlag()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(
+			includeThreadPoolManager: true,
+			idFactory: new IDFactory([5001, 6200, 6001]));
+		var player = CreateExtractPlayer(existingRewardCount: 1);
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItemTarget(sourceItemObjectId: 5001, targetItemObjectId: 6200));
+
+		await WaitUntilAsync(() => fixture.SentPackets.Count >= 5, TimeSpan.FromSeconds(6));
+		Assert.DoesNotContain(player.InventoryItems, item => item.ObjectId == 6200);
+		var reward = Assert.Single(player.InventoryItems, item => item.ItemId == 166000195);
+		Assert.True(reward.Count >= 3);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 105, expectedTime: 5000, expectedEnd: 0),
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 6200, expectedDeleteType: SmDeleteItem.UseDeleteType),
+			packet => AssertInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 5001, expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse),
+			packet => AssertInventoryUpdatePayloadWithCleanupSealFlag(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 6001, expectedUpdateType: SmInventoryUpdateItem.IncreaseItemCollect, expectedCleanupSealFlag: 3),
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 105, expectedTime: 0, expectedEnd: 1));
+	}
+
+	[Fact]
 	public async Task HandleUseItemAsync_DecomposeInventoryFullDoesNotScheduleOrMutate()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
@@ -1718,6 +1765,48 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			PlayerClass = "RANGER",
 			Position = new WorldPosition(210010000, 1, 2, 3, 0),
 			Exp = 150,
+			InventoryItems = items.ToArray(),
+		};
+	}
+
+	private static Player CreateExtractPlayer(long existingRewardCount = 0)
+	{
+		var items = new List<InventoryItem>
+		{
+			new()
+			{
+				ObjectId = 5001,
+				ItemId = 105,
+				Count = 2,
+				Location = 0,
+			},
+			new()
+			{
+				ObjectId = 6200,
+				ItemId = 100000500,
+				Count = 1,
+				Location = 0,
+			},
+		};
+		if (existingRewardCount > 0)
+		{
+			items.Add(
+				new InventoryItem
+				{
+					ObjectId = 6001,
+					ItemId = 166000195,
+					Count = existingRewardCount,
+					Location = 0,
+				});
+		}
+
+		return new Player
+		{
+			ObjectId = 1001,
+			Name = "TicketUser",
+			Race = "ELYOS",
+			PlayerClass = "RANGER",
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
 			InventoryItems = items.ToArray(),
 		};
 	}
@@ -2950,6 +3039,13 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 								<expextract item_id="188053996" cost="10" percent="false"/>
 							</actions>
 						</item_template>
+						<item_template id="105" name="Test Extraction Tool" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="10">
+							<actions>
+								<extract/>
+							</actions>
+						</item_template>
+						<item_template id="100000500" name="Test Mythic Extraction Sword" level="65" mask="65536" item_group="SWORD" item_type="NORMAL" quality="MYTHIC" race="PC_ALL" max_stack_count="1"/>
+						<item_template id="166000195" name="Restricted Extraction Reward" level="1" mask="123" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
 						<item_template id="200" name="Test Decompose Reward" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
 						<item_template id="{selectableFixture.RewardIndex0ItemId}" name="Test Selectable Reward 1" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
 						<item_template id="{selectableFixture.RewardIndex1ItemId}" name="Test Selectable Reward 2" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
@@ -2985,6 +3081,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 					</assembly_items>
 					<item_restriction_cleanups>
 						<cleanup id="188053996" awh="0" lwh="0"/>
+						<cleanup id="166000195" awh="0" lwh="0"/>
 					</item_restriction_cleanups>
 				</static_data>
 				""");
