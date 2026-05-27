@@ -141,6 +141,71 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactReader
 		});
 	}
 
+	[Fact]
+	public void NoStopCmMoveArtifacts_ClassifyGuardReturnsWithoutControllerObservables()
+	{
+		var artifacts = new[]
+		{
+			ParseNoStopArtifact("cm-move-anti-hack-reject", "CM_MOVE", "anti_hack_reject", "CM_MOVE.java", 132, includeMovement: true),
+			ParseNoStopArtifact("cm-move-not-spawned", "CM_MOVE", "not_spawned", "CM_MOVE.java", 137, includeMovement: true),
+			ParseNoStopArtifact("cm-move-teleportation-absolute-move", "CM_MOVE", "teleportation_absolute_move_return", "CM_MOVE.java", 102, includeMovement: true),
+			ParseNoStopArtifact("cm-move-same-position-turn", "CM_MOVE", "cm_move_same_position_turn", "CM_MOVE.java", 139, includeMovement: true),
+		};
+
+		foreach (var artifact in artifacts)
+		{
+			AssertNoStopArtifact(artifact);
+			Assert.All(artifact.Traces.Where(trace => trace.Movement != null), trace =>
+			{
+				Assert.False(trace.Movement!.StopThresholdExceeded);
+				Assert.False(trace.Movement.TeleportationModeAbsoluteMove && trace.ReturnReason != "teleportation_absolute_move_return");
+			});
+		}
+	}
+
+	[Fact]
+	public void NoStopCmEmotionArtifacts_ClassifyEarlyReturnsWithoutControllerObservables()
+	{
+		var artifacts = new[]
+		{
+			ParseNoStopArtifact("cm-emotion-stance-rejection-no-stop", "CM_EMOTION", "emotion_stance_reject", "CM_EMOTION.java", 131, includeMovement: false),
+			ParseNoStopArtifact("cm-emotion-abnormal-guard-no-stop", "CM_EMOTION", "emotion_abnormal_guard", "CM_EMOTION.java", 110, includeMovement: false),
+			ParseNoStopArtifact("cm-emotion-validation-return-no-stop", "CM_EMOTION", "emotion_validation_return", "CM_EMOTION.java", 214, includeMovement: false),
+		};
+
+		foreach (var artifact in artifacts)
+		{
+			AssertNoStopArtifact(artifact);
+			Assert.All(artifact.Traces, trace => Assert.Null(trace.Movement));
+			Assert.All(artifact.Traces, trace =>
+			{
+				Assert.NotNull(trace.Emotion);
+				Assert.False(trace.Emotion!.EmotionCanUse);
+				Assert.False(trace.Emotion.EmotionBroadcasted);
+			});
+		}
+	}
+
+	private static void AssertNoStopArtifact(ProtectionStopTriggerJavaTraceArtifact artifact)
+	{
+		Assert.Equal(1, artifact.SchemaVersion);
+		Assert.NotEmpty(artifact.Scenario);
+		Assert.NotEmpty(artifact.Traces);
+		Assert.Contains(artifact.Traces, trace => trace.Phase == "packet_enter");
+		Assert.Contains(artifact.Traces, trace => trace.Phase == "guard_return");
+		Assert.DoesNotContain(artifact.Traces, trace => trace.Phase is "stop_call_enter" or "task_cancel" or "state_broadcast" or "ai_notify_enqueue");
+		Assert.All(artifact.Traces, trace =>
+		{
+			Assert.False(trace.StopCalled);
+			Assert.False(trace.ExpectsStopProtectionCall);
+			Assert.Null(trace.TaskCancellation);
+			Assert.Null(trace.Fanout);
+			Assert.Null(trace.AiNotify);
+			Assert.False(trace.TimestampIsParityKey);
+			Assert.True(trace.JavaLine > 0);
+		});
+	}
+
 	private static void AssertArtifactSemantics(ProtectionStopTriggerJavaTraceArtifact artifact)
 	{
 		Assert.Equal(1, artifact.SchemaVersion);
@@ -471,6 +536,135 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactReader
 		return artifact;
 	}
 
+	private static ProtectionStopTriggerJavaTraceArtifact ParseNoStopArtifact(
+		string scenario,
+		string packetName,
+		string returnReason,
+		string javaSourceFile,
+		int javaLine,
+		bool includeMovement)
+	{
+		var movementJson = includeMovement
+			? $$"""
+				  {
+				    "oldX": 100.0,
+				    "oldY": 200.0,
+				    "oldZ": 50.0,
+				    "packetX": 100.0,
+				    "packetY": 200.0,
+				    "packetZ": 50.0,
+				    "zDelta": 0.0,
+				    "heading": 91,
+				    "movementType": "turn",
+				    "antiHackAccepted": {{(returnReason == "anti_hack_reject" ? "false" : "true")}},
+				    "teleportationModeAbsoluteMove": {{(returnReason == "teleportation_absolute_move_return" ? "true" : "false")}},
+				    "stopThresholdExceeded": false
+				  }
+				"""
+			: "null";
+		var emotionJson = packetName == "CM_EMOTION"
+			? $$"""
+				  {
+				    "emotionType": "EMOTE",
+				    "emotionId": 131,
+				    "emotionStance": "{{returnReason}}",
+				    "emotionCanUse": false,
+				    "emotionBroadcasted": false
+				  }
+				"""
+			: "null";
+		var json = $$"""
+			{
+			  "schemaVersion": 1,
+			  "javaCommit": "abcdef1",
+			  "scenario": "{{scenario}}",
+			  "runtimeFacts": {
+			    "serverFlavor": "java",
+			    "packetName": "{{packetName}}",
+			    "playerObjectId": 1001,
+			    "worldId": 210010000,
+			    "expectedReturnReason": "{{returnReason}}"
+			  },
+			  "javaSources": [
+			    "{{packetName}}.runImpl"
+			  ],
+			  "traces": [
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "{{scenario}}-001",
+			      "eventSeq": 0,
+			      "phase": "packet_enter",
+			      "packetName": "{{packetName}}",
+			      "returnReason": "{{returnReason}}",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000000000,
+			      "monotonicNanos": 2000000,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "{{javaSourceFile}}",
+			      "javaLine": 76,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": {{(returnReason == "not_spawned" ? "false" : "true")}},
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": {{movementJson}},
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": {{emotionJson}},
+			      "actionBranchName": "{{returnReason}}"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "{{scenario}}-001",
+			      "eventSeq": 1,
+			      "phase": "guard_return",
+			      "packetName": "{{packetName}}",
+			      "returnReason": "{{returnReason}}",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000000001,
+			      "monotonicNanos": 2000100,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "{{javaSourceFile}}",
+			      "javaLine": {{javaLine}},
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": {{(returnReason == "not_spawned" ? "false" : "true")}},
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": {{movementJson}},
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": {{emotionJson}},
+			      "actionBranchName": "{{returnReason}}"
+			    }
+			  ],
+			  "notes": [
+			    "No stopProtectionActiveTask call is expected for this branch.",
+			    "Inline fixture proves reader binding only, not Java runtime parity."
+			  ]
+			}
+			""";
+
+		var artifact = JsonSerializer.Deserialize<ProtectionStopTriggerJavaTraceArtifact>(json, JsonOptions);
+		Assert.NotNull(artifact);
+		AssertNoStopArtifact(artifact);
+		return artifact;
+	}
+
 	private static float RequiredFloat(float? value, string fieldName)
 	{
 		Assert.True(value.HasValue, $"Missing trace movement {fieldName}.");
@@ -528,6 +722,7 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactReader
 		ProtectionStopTriggerTaskCancellationSnapshot? TaskCancellation,
 		ProtectionStopTriggerFanoutSnapshot? Fanout,
 		ProtectionStopTriggerAiNotifySnapshot? AiNotify,
+		ProtectionStopTriggerEmotionSnapshot? Emotion,
 		string ActionBranchName);
 
 	private sealed record ProtectionStopTriggerPlayerSnapshot(
@@ -573,4 +768,11 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactReader
 	private sealed record ProtectionStopTriggerAiNotifySnapshot(
 		bool NotifyAiOnMoveCalled,
 		string Ordering);
+
+	private sealed record ProtectionStopTriggerEmotionSnapshot(
+		string EmotionType,
+		int EmotionId,
+		string EmotionStance,
+		bool EmotionCanUse,
+		bool EmotionBroadcasted);
 }
