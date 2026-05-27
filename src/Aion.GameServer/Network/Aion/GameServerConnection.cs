@@ -3564,10 +3564,10 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (!saved)
 			return;
 
-		await SendConsumedItemPacketsAsync(
+		await SendCompositionConsumedItemPacketsAsync(
+			player,
 			inventoryItems,
-			mutationPlan.UpdatedConsumedItems,
-			mutationPlan.DeletedConsumedObjectIds,
+			mutationPlan.ConsumedItemMutations,
 			staticData.ItemTemplates,
 			staticData.ItemRestrictionCleanups);
 		ApplyConsumedAndRewardInventoryMutation(inventoryItems, mutationPlan);
@@ -3607,6 +3607,38 @@ public sealed class GameServerConnection : BaseClientConnection
 		{
 			if (inventoryItems.Any(item => item.ObjectId == deletedObjectId))
 				await SendPacketAsync(new SmDeleteItem(deletedObjectId, SmDeleteItem.UseDeleteType));
+		}
+	}
+
+	private async Task SendCompositionConsumedItemPacketsAsync(
+		Player player,
+		IReadOnlyList<InventoryItem> inventoryItems,
+		IReadOnlyList<CompositionConsumedItemMutation> consumedMutations,
+		ItemTemplateTable itemTemplates,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups)
+	{
+		// Java parity: model/templates/item/actions/CompositionAction consumes tool, first stone, then second stone,
+		// and Storage.decreaseByItemId sends each update/delete packet immediately.
+		var projectedCubeCount = inventoryItems.Count;
+		foreach (var mutation in consumedMutations)
+		{
+			if (mutation.UpdatedItem != null)
+			{
+				var template = itemTemplates.GetItemTemplate(mutation.UpdatedItem.ItemId);
+				if (template != null)
+					await SendPacketAsync(
+						new SmInventoryUpdateItem(
+							mutation.UpdatedItem,
+							template,
+							SmInventoryUpdateItem.DecreaseItemUse,
+							GetGeneralInfoWarehouseRestrictionFlag(mutation.UpdatedItem.ItemId, itemRestrictionCleanups)));
+			}
+			else if (mutation.Deleted && inventoryItems.Any(item => item.ObjectId == mutation.ObjectId))
+			{
+				projectedCubeCount--;
+				await SendPacketAsync(new SmDeleteItem(mutation.ObjectId, SmDeleteItem.UseDeleteType));
+				await SendPacketAsync(SmCubeUpdate.CubeSizeSnapshot(projectedCubeCount, player.NpcExpands, player.QuestExpands, player.ItemExpands));
+			}
 		}
 	}
 

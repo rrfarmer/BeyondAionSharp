@@ -62,6 +62,24 @@ public sealed class CompositionServiceTests
 		Assert.Equal(1, updatedTool.ObjectId);
 		Assert.Equal(1, updatedTool.Count);
 		Assert.Equal([2, 3], plan.DeletedConsumedObjectIds);
+		Assert.Collection(
+			plan.ConsumedItemMutations,
+			mutation =>
+			{
+				Assert.False(mutation.Deleted);
+				Assert.Equal(1, mutation.ObjectId);
+				Assert.Equal(1, mutation.UpdatedItem?.Count);
+			},
+			mutation =>
+			{
+				Assert.True(mutation.Deleted);
+				Assert.Equal(2, mutation.ObjectId);
+			},
+			mutation =>
+			{
+				Assert.True(mutation.Deleted);
+				Assert.Equal(3, mutation.ObjectId);
+			});
 		var reward = Assert.Single(plan.AddedRewardItems);
 		Assert.Equal(9001, reward.ObjectId);
 		Assert.Equal(166000024, reward.ItemId);
@@ -99,6 +117,18 @@ public sealed class CompositionServiceTests
 		Assert.True(plan.Succeeded);
 		Assert.False(plan.RewardSucceeded);
 		Assert.Equal([1, 2], plan.DeletedConsumedObjectIds);
+		Assert.Collection(
+			plan.ConsumedItemMutations,
+			mutation =>
+			{
+				Assert.True(mutation.Deleted);
+				Assert.Equal(1, mutation.ObjectId);
+			},
+			mutation =>
+			{
+				Assert.True(mutation.Deleted);
+				Assert.Equal(2, mutation.ObjectId);
+			});
 		Assert.Empty(plan.AddedRewardItems);
 	}
 

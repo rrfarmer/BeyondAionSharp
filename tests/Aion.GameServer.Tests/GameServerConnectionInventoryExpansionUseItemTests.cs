@@ -1088,7 +1088,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 
 		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
 
-		await WaitUntilAsync(() => fixture.SentPackets.Count >= 6, TimeSpan.FromSeconds(6));
+		await WaitUntilAsync(() => fixture.SentPackets.Count >= 7, TimeSpan.FromSeconds(6));
 		Assert.Equal(140, player.Exp);
 		Assert.Contains(player.InventoryItems, item => item.ItemId == 188053996 && item.Count == 1);
 		Assert.Collection(
@@ -1920,6 +1920,49 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 				expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse,
 				expectedCleanupSealFlag: 3,
 				expectedItemMask: 0),
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 165010000, expectedTime: 0, expectedEnd: 1, expectedItemObjectId: 7001));
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CompositeStonesSendsConsumedPacketsInJavaOrderForMixedDeletes()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(includeThreadPoolManager: true);
+		var player = CreatePlayer(itemId: 165010000);
+		player.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 7001, ItemId = 165010000, Count = 1, Location = 0, OwnerId = player.ObjectId },
+			new InventoryItem { ObjectId = 7002, ItemId = 166000020, Count = 2, Location = 0, OwnerId = player.ObjectId },
+			new InventoryItem { ObjectId = 7003, ItemId = 166000030, Count = 1, Location = 0, OwnerId = player.ObjectId },
+		];
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(208, buffer =>
+			{
+				buffer.WriteD(7001);
+				buffer.WriteD(7002);
+				buffer.WriteD(7003);
+			}));
+
+		await WaitUntilAsync(() => fixture.SentPackets.Count >= 6, TimeSpan.FromSeconds(6));
+
+		var remainingStone = Assert.Single(player.InventoryItems);
+		Assert.Equal(7002, remainingStone.ObjectId);
+		Assert.Equal(1, remainingStone.Count);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 165010000, expectedTime: 5000, expectedEnd: 0, expectedItemObjectId: 7001),
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 7001, expectedDeleteType: SmDeleteItem.UseDeleteType),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 2),
+			packet => AssertInventoryUpdatePayloadWithCleanupSealFlag(
+				Assert.IsType<SmInventoryUpdateItem>(packet),
+				expectedObjectId: 7002,
+				expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse,
+				expectedCleanupSealFlag: 3,
+				expectedItemMask: 0),
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 7003, expectedDeleteType: SmDeleteItem.UseDeleteType),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1),
 			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 165010000, expectedTime: 0, expectedEnd: 1, expectedItemObjectId: 7001));
 	}
 

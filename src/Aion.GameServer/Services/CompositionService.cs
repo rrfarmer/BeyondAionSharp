@@ -47,13 +47,15 @@ public static class CompositionService
 		var workingItems = inventoryItems.ToList();
 		var updatedItemsByObjectId = new Dictionary<int, InventoryItem>();
 		var deletedObjectIds = new List<int>();
+		var consumedMutations = new List<CompositionConsumedItemMutation>();
 
-		var toolConsumed = DecreaseByItemId(workingItems, toolItemId, updatedItemsByObjectId, deletedObjectIds);
-		var firstConsumed = DecreaseByItemId(workingItems, firstItemId, updatedItemsByObjectId, deletedObjectIds);
-		var secondConsumed = DecreaseByItemId(workingItems, secondItemId, updatedItemsByObjectId, deletedObjectIds);
+		var toolConsumed = DecreaseByItemId(workingItems, toolItemId, updatedItemsByObjectId, deletedObjectIds, consumedMutations);
+		var firstConsumed = DecreaseByItemId(workingItems, firstItemId, updatedItemsByObjectId, deletedObjectIds, consumedMutations);
+		var secondConsumed = DecreaseByItemId(workingItems, secondItemId, updatedItemsByObjectId, deletedObjectIds, consumedMutations);
 		if (!toolConsumed || !firstConsumed || !secondConsumed)
 		{
 			return CompositionMutationPlan.Success(
+				consumedMutations,
 				updatedItemsByObjectId.Values.ToArray(),
 				deletedObjectIds,
 				Array.Empty<InventoryItem>(),
@@ -68,6 +70,7 @@ public static class CompositionService
 		if (rewardTemplate == null)
 		{
 			return CompositionMutationPlan.Success(
+				consumedMutations,
 				updatedItemsByObjectId.Values.ToArray(),
 				deletedObjectIds,
 				Array.Empty<InventoryItem>(),
@@ -87,6 +90,7 @@ public static class CompositionService
 			itemTemplates);
 
 		return CompositionMutationPlan.Success(
+			consumedMutations,
 			updatedItemsByObjectId.Values.ToArray(),
 			deletedObjectIds,
 			addPlan.UpdatedItems,
@@ -117,7 +121,8 @@ public static class CompositionService
 		List<InventoryItem> workingItems,
 		int itemId,
 		Dictionary<int, InventoryItem> updatedItemsByObjectId,
-		List<int> deletedObjectIds)
+		List<int> deletedObjectIds,
+		List<CompositionConsumedItemMutation> consumedMutations)
 	{
 		var item = workingItems.FirstOrDefault(candidate => candidate.ItemId == itemId && candidate.Location == CubeStorageId && !candidate.IsEquipped);
 		if (item == null)
@@ -127,12 +132,14 @@ public static class CompositionService
 		{
 			var updatedItem = CopyInventoryItem(item, item.Count - 1);
 			updatedItemsByObjectId[updatedItem.ObjectId] = updatedItem;
+			consumedMutations.Add(CompositionConsumedItemMutation.Update(updatedItem));
 			ReplaceInventoryItem(workingItems, updatedItem);
 		}
 		else
 		{
 			updatedItemsByObjectId.Remove(item.ObjectId);
 			deletedObjectIds.Add(item.ObjectId);
+			consumedMutations.Add(CompositionConsumedItemMutation.Delete(item.ObjectId));
 			workingItems.RemoveAll(candidate => candidate.ObjectId == item.ObjectId);
 		}
 
@@ -187,6 +194,19 @@ public static class CompositionService
 	}
 }
 
+public sealed record CompositionConsumedItemMutation(int ObjectId, InventoryItem? UpdatedItem, bool Deleted)
+{
+	public static CompositionConsumedItemMutation Update(InventoryItem updatedItem)
+	{
+		return new CompositionConsumedItemMutation(updatedItem.ObjectId, updatedItem, false);
+	}
+
+	public static CompositionConsumedItemMutation Delete(int objectId)
+	{
+		return new CompositionConsumedItemMutation(objectId, null, true);
+	}
+}
+
 public sealed record CompositionValidation(bool Succeeded, CompositionFailure Failure)
 {
 	public static CompositionValidation Success()
@@ -202,6 +222,7 @@ public sealed record CompositionValidation(bool Succeeded, CompositionFailure Fa
 
 public sealed record CompositionMutationPlan(
 	bool Succeeded,
+	IReadOnlyList<CompositionConsumedItemMutation> ConsumedItemMutations,
 	IReadOnlyList<InventoryItem> UpdatedConsumedItems,
 	IReadOnlyList<int> DeletedConsumedObjectIds,
 	IReadOnlyList<InventoryItem> UpdatedRewardItems,
@@ -213,6 +234,7 @@ public sealed record CompositionMutationPlan(
 	public bool RewardSucceeded => RewardItemId != 0 && RewardRemainingCount == 0;
 
 	public static CompositionMutationPlan Success(
+		IReadOnlyList<CompositionConsumedItemMutation> consumedItemMutations,
 		IReadOnlyList<InventoryItem> updatedConsumedItems,
 		IReadOnlyList<int> deletedConsumedObjectIds,
 		IReadOnlyList<InventoryItem> updatedRewardItems,
@@ -223,6 +245,7 @@ public sealed record CompositionMutationPlan(
 	{
 		return new CompositionMutationPlan(
 			true,
+			consumedItemMutations,
 			updatedConsumedItems,
 			deletedConsumedObjectIds,
 			updatedRewardItems,
