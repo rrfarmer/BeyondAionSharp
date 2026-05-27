@@ -2207,7 +2207,11 @@ public sealed class GameServerConnection : BaseClientConnection
 				1));
 
 		if (plan.SourceItemUpdate != null)
-			await SendPacketAsync(new SmInventoryUpdateItem(plan.SourceItemUpdate, sourceTemplate, SmInventoryUpdateItem.DecreaseStigmaUse));
+			await SendPacketAsync(new SmInventoryUpdateItem(
+				plan.SourceItemUpdate,
+				sourceTemplate,
+				SmInventoryUpdateItem.DecreaseStigmaUse,
+				GetGeneralInfoWarehouseRestrictionFlag(plan.SourceItemUpdate.ItemId, staticData.ItemRestrictionCleanups)));
 		else if (plan.DeletedSourceItemObjectId.HasValue && plan.DeletedSourceItemObjectId != plan.DeletedTargetItemObjectId)
 			await SendPacketAsync(new SmDeleteItem(plan.DeletedSourceItemObjectId.Value));
 
@@ -2225,12 +2229,20 @@ public sealed class GameServerConnection : BaseClientConnection
 		{
 			await SendPacketAsync(SmSystemMessage.StigmaEnchantSuccess(plan.ItemName));
 			if (plan.TargetItemUpdate != null)
-				await SendPacketAsync(new SmInventoryUpdateItem(plan.TargetItemUpdate, targetTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+				await SendPacketAsync(new SmInventoryUpdateItem(
+					plan.TargetItemUpdate,
+					targetTemplate,
+					SmInventoryUpdateItem.DecreaseItemUse,
+					GetGeneralInfoWarehouseRestrictionFlag(plan.TargetItemUpdate.ItemId, staticData.ItemRestrictionCleanups)));
 		}
 		else
 		{
 			if (plan.TargetItemUpdate != null)
-				await SendPacketAsync(new SmInventoryUpdateItem(plan.TargetItemUpdate, targetTemplate, SmInventoryUpdateItem.DecreaseStigmaUse));
+				await SendPacketAsync(new SmInventoryUpdateItem(
+					plan.TargetItemUpdate,
+					targetTemplate,
+					SmInventoryUpdateItem.DecreaseStigmaUse,
+					GetGeneralInfoWarehouseRestrictionFlag(plan.TargetItemUpdate.ItemId, staticData.ItemRestrictionCleanups)));
 			else if (plan.DeletedTargetItemObjectId.HasValue)
 				await SendPacketAsync(new SmDeleteItem(plan.DeletedTargetItemObjectId.Value));
 			await SendPacketAsync(SmSystemMessage.StigmaEnchantFail(plan.ItemName));
