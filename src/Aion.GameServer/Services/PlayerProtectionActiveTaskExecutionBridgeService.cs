@@ -16,6 +16,7 @@ public sealed record PlayerProtectionActiveTaskExecutionBridgeResult(
 	PlayerProtectionActiveTaskExecutionBridgeStatus Status,
 	PlayerProtectionActiveTaskAdapterResult AdapterResult,
 	PlayerProtectionActiveTaskSideEffectOperationPlan SideEffectOperationPlan,
+	PlayerProtectionAttackUtilRecipientPlan AttackUtilRecipientPlan,
 	SmPlayerState? Packet,
 	PlayerProtectionActiveTaskSightedRecipientSocketExecutorResult SocketExecutorResult,
 	bool ConstructedPacket,
@@ -23,6 +24,11 @@ public sealed record PlayerProtectionActiveTaskExecutionBridgeResult(
 	bool UsesDisabledSocketExecutorByDefault,
 	string JavaSource,
 	bool IsLive);
+
+public sealed record PlayerProtectionActiveTaskExecutionBridgeRequest(
+	PlayerProtectionActiveTaskAdapterRequest AdapterRequest,
+	IReadOnlyList<PlayerProtectionAttackUtilKnownObjectFact>? KnownObjectFacts = null,
+	bool ValidateSeeForTargetRemoval = false);
 
 public sealed class PlayerProtectionActiveTaskExecutionBridgeService
 {
@@ -39,15 +45,24 @@ public sealed class PlayerProtectionActiveTaskExecutionBridgeService
 
 	public async Task<PlayerProtectionActiveTaskExecutionBridgeResult> ExecuteAsync(
 		PlayerProtectionActiveTaskAdapterRequest request,
+		CancellationToken cancellationToken = default) =>
+		await ExecuteAsync(new PlayerProtectionActiveTaskExecutionBridgeRequest(request), cancellationToken);
+
+	public async Task<PlayerProtectionActiveTaskExecutionBridgeResult> ExecuteAsync(
+		PlayerProtectionActiveTaskExecutionBridgeRequest request,
 		CancellationToken cancellationToken = default)
 	{
 		cancellationToken.ThrowIfCancellationRequested();
-		var adapterResult = PlayerProtectionActiveTaskAdapterService.Apply(request);
+		var adapterResult = PlayerProtectionActiveTaskAdapterService.Apply(request.AdapterRequest);
 		var sideEffectOperationPlan = PlayerProtectionActiveTaskSideEffectOperationPlanService.Create(
-			request,
+			request.AdapterRequest,
 			adapterResult);
+		var attackUtilRecipientPlan = PlayerProtectionAttackUtilRecipientPlannerService.CreatePlan(
+			request.AdapterRequest.Player.ObjectId,
+			request.KnownObjectFacts,
+			request.ValidateSeeForTargetRemoval);
 		var packet = adapterResult.FanoutPlan.ShouldBroadcast
-			? new SmPlayerState(request.Player)
+			? new SmPlayerState(request.AdapterRequest.Player)
 			: null;
 		var executor = new PlayerProtectionActiveTaskSightedRecipientSocketExecutorService(
 			_connectionRegistry,
@@ -62,6 +77,7 @@ public sealed class PlayerProtectionActiveTaskExecutionBridgeService
 			status,
 			adapterResult,
 			sideEffectOperationPlan,
+			attackUtilRecipientPlan,
 			packet,
 			executorResult,
 			ConstructedPacket: packet != null,

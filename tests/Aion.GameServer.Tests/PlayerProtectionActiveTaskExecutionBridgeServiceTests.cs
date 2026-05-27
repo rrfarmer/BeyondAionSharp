@@ -33,6 +33,8 @@ public sealed class PlayerProtectionActiveTaskExecutionBridgeServiceTests
 		Assert.True(result.SideEffectOperationPlan.CancelsKnownCreatureCasts);
 		Assert.True(result.SideEffectOperationPlan.ClearsKnownPlayerTargets);
 		Assert.Contains(result.SideEffectOperationPlan.Rows, row => row.Operation == PlayerProtectionActiveTaskSideEffectOperation.BroadcastPlayerState);
+		Assert.Empty(result.AttackUtilRecipientPlan.CastCancellationObjectIds);
+		Assert.Empty(result.AttackUtilRecipientPlan.TargetClearPlayerObjectIds);
 		Assert.True(player.IsProtectionActive());
 		Assert.True(result.ConstructedPacket);
 		Assert.IsType<SmPlayerState>(result.Packet);
@@ -66,6 +68,8 @@ public sealed class PlayerProtectionActiveTaskExecutionBridgeServiceTests
 		Assert.Equal(PlayerProtectionActiveTaskPlanStatus.StopProtection, result.SideEffectOperationPlan.PlanStatus);
 		Assert.True(result.SideEffectOperationPlan.CancelsExistingStopTask);
 		Assert.True(result.SideEffectOperationPlan.NotifiesAiOnMove);
+		Assert.Empty(result.AttackUtilRecipientPlan.CastCancellationObjectIds);
+		Assert.Empty(result.AttackUtilRecipientPlan.TargetClearPlayerObjectIds);
 		Assert.Equal(
 			[
 				PlayerProtectionActiveTaskSideEffectOperation.CancelProtectionTask,
@@ -107,6 +111,8 @@ public sealed class PlayerProtectionActiveTaskExecutionBridgeServiceTests
 		Assert.Equal(PlayerProtectionActiveTaskExecutionBridgeStatus.NoBroadcast, alreadyProtected.Status);
 		Assert.Equal(PlayerProtectionActiveTaskPlanStatus.AlreadyProtected, alreadyProtected.SideEffectOperationPlan.PlanStatus);
 		Assert.Single(alreadyProtected.SideEffectOperationPlan.Rows);
+		Assert.Empty(alreadyProtected.AttackUtilRecipientPlan.CastCancellationObjectIds);
+		Assert.Empty(alreadyProtected.AttackUtilRecipientPlan.TargetClearPlayerObjectIds);
 		Assert.Null(alreadyProtected.Packet);
 		Assert.False(alreadyProtected.ConstructedPacket);
 		Assert.Equal(PlayerProtectionActiveTaskSightedRecipientSocketExecutorStatus.NoPacket, alreadyProtected.SocketExecutorResult.Status);
@@ -114,6 +120,8 @@ public sealed class PlayerProtectionActiveTaskExecutionBridgeServiceTests
 
 		Assert.Equal(PlayerProtectionActiveTaskExecutionBridgeStatus.NoBroadcast, unspawnedStop.Status);
 		Assert.Equal(PlayerProtectionActiveTaskPlanStatus.StopProtectionUnspawned, unspawnedStop.SideEffectOperationPlan.PlanStatus);
+		Assert.Empty(unspawnedStop.AttackUtilRecipientPlan.CastCancellationObjectIds);
+		Assert.Empty(unspawnedStop.AttackUtilRecipientPlan.TargetClearPlayerObjectIds);
 		Assert.Equal(
 			[
 				PlayerProtectionActiveTaskSideEffectOperation.CancelProtectionTask,
@@ -127,6 +135,46 @@ public sealed class PlayerProtectionActiveTaskExecutionBridgeServiceTests
 		Assert.Empty(registry.SendAttempts);
 	}
 
+	[Fact]
+	public async Task ExecuteAsync_ComposesAttackUtilRecipientPlanFromKnownObjectFacts()
+	{
+		var player = new Player { ObjectId = PlayerObjectId };
+		var registry = new RecordingConnectionRegistry();
+		var bridge = new PlayerProtectionActiveTaskExecutionBridgeService(registry);
+
+		var result = await bridge.ExecuteAsync(new PlayerProtectionActiveTaskExecutionBridgeRequest(
+			new PlayerProtectionActiveTaskAdapterRequest(
+				player,
+				PlayerProtectionActiveTaskAdapterAction.Start,
+				ExecuteLiveVisualMutation: true),
+			KnownObjectFacts:
+			[
+				new PlayerProtectionAttackUtilKnownObjectFact(
+					KnownObjectId: CastingCreatureObjectId,
+					PlayerProtectionAttackUtilKnownObjectKind.Creature,
+					TargetObjectId: PlayerObjectId,
+					IsCasting: true,
+					CastingSkillFirstTargetObjectId: PlayerObjectId),
+				new PlayerProtectionAttackUtilKnownObjectFact(
+					KnownObjectId: TargetingPlayerObjectId,
+					PlayerProtectionAttackUtilKnownObjectKind.Player,
+					TargetObjectId: PlayerObjectId,
+					IsCasting: false,
+					CastingSkillFirstTargetObjectId: null,
+					CanSeeProtectedTarget: true),
+			]));
+
+		Assert.Equal(PlayerProtectionActiveTaskExecutionBridgeStatus.LiveVisualMutationNoSend, result.Status);
+		Assert.Equal([CastingCreatureObjectId], result.AttackUtilRecipientPlan.CastCancellationObjectIds);
+		Assert.Equal([TargetingPlayerObjectId], result.AttackUtilRecipientPlan.TargetClearPlayerObjectIds);
+		Assert.False(result.AttackUtilRecipientPlan.ValidateSeeForTargetRemoval);
+		Assert.All(result.AttackUtilRecipientPlan.CastCancellationProjections.Where(projection => projection.WouldCancelCast), projection =>
+			Assert.False(projection.IsLive));
+		Assert.All(result.AttackUtilRecipientPlan.TargetClearProjections.Where(projection => projection.WouldClearTarget), projection =>
+			Assert.False(projection.IsLive));
+		Assert.Empty(registry.SendAttempts);
+	}
+
 	private static PlayerKnownListMembershipSnapshot CreateKnownListSnapshot()
 	{
 		var membershipService = new PlayerKnownListMembershipService();
@@ -137,6 +185,8 @@ public sealed class PlayerProtectionActiveTaskExecutionBridgeServiceTests
 
 	private const int PlayerObjectId = 1001;
 	private const int SightedPlayerObjectId = 1002;
+	private const int CastingCreatureObjectId = 1003;
+	private const int TargetingPlayerObjectId = 1004;
 
 	private sealed class RecordingConnectionRegistry : IGameClientConnectionRegistry
 	{
