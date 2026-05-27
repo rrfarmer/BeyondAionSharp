@@ -202,6 +202,97 @@ public sealed class PlayerProtectionActiveTaskReadinessAggregateServiceTests
 			&& row.Notes.Contains("InvokesScheduler=False", StringComparison.Ordinal));
 	}
 
+	[Fact]
+	public async Task Create_DelayedStopPreviewAddsCancellationAndLiveSideEffectBlockers()
+	{
+		var summary = await CreateSummaryAsync(PlayerProtectionActiveTaskAdapterAction.Start, player => { }, existingTask: true);
+		var readiness = PlayerProtectionActiveTaskLiveReadinessService.Create(summary);
+		var cleanup = PlayerProtectionActiveTaskTaskMapLifecycleCleanupService.Create(new PlayerProtectionActiveTaskTaskMapLifecycleCleanupRequest(
+			PendingProtectionTaskHandle: new RecordingTaskHandle()));
+		var owner = CreateOwnerPrototypeService(withStoredTask: true);
+		var ownerSnapshot = owner.CreateSnapshot();
+		var schedulerPlan = PlayerProtectionActiveTaskSchedulerCallbackPlanService.Create(new PlayerProtectionActiveTaskSchedulerCallbackPlanRequest(
+			CreateStartPlan(alreadyProtected: false),
+			ownerSnapshot));
+		var delayedPreview = PlayerProtectionActiveTaskDelayedStopCallbackPreviewService.Create(new PlayerProtectionActiveTaskDelayedStopCallbackPreviewRequest(
+			schedulerPlan,
+			CreateStopTaskOperationPlan(existingTask: true),
+			owner));
+
+		var report = PlayerProtectionActiveTaskReadinessAggregateService.Create(new PlayerProtectionActiveTaskReadinessAggregateRequest(
+			summary,
+			readiness,
+			PlayerProtectionActiveTaskTaskMapAuditService.Create(readiness),
+			Array.Empty<PlayerProtectionActiveTaskTaskMapSimulationReport>(),
+			cleanup,
+			OwnerPrototypeSnapshot: ownerSnapshot,
+			SchedulerCallbackPlan: schedulerPlan,
+			DelayedStopCallbackPreview: delayedPreview));
+
+		Assert.False(report.CanEnableProtectionTaskMapStack);
+		Assert.True(report.HasStopCancellationEvidence);
+		Assert.Contains(PlayerProtectionActiveTaskReadinessAggregateArea.VisualMutation, report.BlockedAreas);
+		Assert.Contains(PlayerProtectionActiveTaskReadinessAggregateArea.PacketFanout, report.BlockedAreas);
+		Assert.Contains(PlayerProtectionActiveTaskReadinessAggregateArea.AiMoveNotification, report.BlockedAreas);
+		Assert.Contains(report.Rows, row =>
+			row.Area == PlayerProtectionActiveTaskReadinessAggregateArea.SchedulerCallback
+			&& row.EvidenceSource == "Delayed-stop callback preview"
+			&& row.JavaOperation == "this::stopProtectionActiveTask"
+			&& row.Notes.Contains("InvokesCallback=False", StringComparison.Ordinal));
+		Assert.Contains(report.Rows, row =>
+			row.Area == PlayerProtectionActiveTaskReadinessAggregateArea.TaskMapCancellation
+			&& row.EvidenceSource == "Delayed-stop callback preview"
+			&& row.Notes.Contains("CanceledTask=True", StringComparison.Ordinal));
+		Assert.Contains(report.Rows, row =>
+			row.Area == PlayerProtectionActiveTaskReadinessAggregateArea.PacketFanout
+			&& row.EvidenceSource == "Delayed-stop callback preview"
+			&& row.Notes.Contains("InvokesSocketFanout=False", StringComparison.Ordinal));
+		Assert.Contains(report.Rows, row =>
+			row.Area == PlayerProtectionActiveTaskReadinessAggregateArea.AiMoveNotification
+			&& row.EvidenceSource == "Delayed-stop callback preview"
+			&& row.Notes.Contains("InvokesAiMoveNotification=False", StringComparison.Ordinal));
+	}
+
+	[Fact]
+	public async Task Create_DelayedStopPreviewSkippedWhenSchedulerPlanDidNotSchedule()
+	{
+		var summary = await CreateSummaryAsync(
+			PlayerProtectionActiveTaskAdapterAction.Start,
+			player => player.SetVisualState(PlayerVisualStates.Blinking),
+			existingTask: false);
+		var readiness = PlayerProtectionActiveTaskLiveReadinessService.Create(summary);
+		var cleanup = PlayerProtectionActiveTaskTaskMapLifecycleCleanupService.Create(new PlayerProtectionActiveTaskTaskMapLifecycleCleanupRequest());
+		var owner = CreateOwnerPrototypeService(withStoredTask: false);
+		var ownerSnapshot = owner.CreateSnapshot();
+		var schedulerPlan = PlayerProtectionActiveTaskSchedulerCallbackPlanService.Create(new PlayerProtectionActiveTaskSchedulerCallbackPlanRequest(
+			CreateStartPlan(alreadyProtected: true),
+			ownerSnapshot));
+		var delayedPreview = PlayerProtectionActiveTaskDelayedStopCallbackPreviewService.Create(new PlayerProtectionActiveTaskDelayedStopCallbackPreviewRequest(
+			schedulerPlan,
+			CreateStopTaskOperationPlan(existingTask: false),
+			owner));
+
+		var report = PlayerProtectionActiveTaskReadinessAggregateService.Create(new PlayerProtectionActiveTaskReadinessAggregateRequest(
+			summary,
+			readiness,
+			PlayerProtectionActiveTaskTaskMapAuditService.Create(readiness),
+			Array.Empty<PlayerProtectionActiveTaskTaskMapSimulationReport>(),
+			cleanup,
+			OwnerPrototypeSnapshot: ownerSnapshot,
+			SchedulerCallbackPlan: schedulerPlan,
+			DelayedStopCallbackPreview: delayedPreview));
+
+		Assert.False(report.HasStopCancellationEvidence);
+		Assert.Contains(report.Rows, row =>
+			row.Area == PlayerProtectionActiveTaskReadinessAggregateArea.SchedulerCallback
+			&& row.EvidenceSource == "Delayed-stop callback preview"
+			&& row.Status == PlayerProtectionActiveTaskReadinessAggregateStatus.Skipped
+			&& row.Notes.Contains("did not schedule a delayed stop", StringComparison.Ordinal));
+		Assert.DoesNotContain(report.Rows, row =>
+			row.EvidenceSource == "Delayed-stop callback preview"
+			&& row.Area == PlayerProtectionActiveTaskReadinessAggregateArea.PacketFanout);
+	}
+
 	private static async Task<PlayerProtectionActiveTaskExecutionSummary> CreateSummaryAsync(
 		PlayerProtectionActiveTaskAdapterAction action,
 		Action<Player> configurePlayer,
@@ -270,14 +361,32 @@ public sealed class PlayerProtectionActiveTaskReadinessAggregateServiceTests
 		return result.Plan;
 	}
 
+	private static PlayerProtectionActiveTaskTaskOperationPlan CreateStopTaskOperationPlan(bool existingTask)
+	{
+		var player = new Player { ObjectId = PlayerObjectId };
+		player.SetVisualState(PlayerVisualStates.Blinking);
+		var stopPlan = PlayerProtectionActiveTaskPlanService.CreateStopPlan(
+			player,
+			hasProtectionActiveTask: existingTask,
+			isSpawned: true);
+
+		return PlayerProtectionActiveTaskTaskOperationPlanService.Create(stopPlan, existingTask);
+	}
+
 	private static PlayerProtectionActiveTaskControllerTaskMapOwnerPrototypeSnapshot CreateOwnerPrototypeSnapshot(
+		bool withStoredTask)
+	{
+		return CreateOwnerPrototypeService(withStoredTask).CreateSnapshot();
+	}
+
+	private static PlayerProtectionActiveTaskControllerTaskMapOwnerPrototypeService CreateOwnerPrototypeService(
 		bool withStoredTask)
 	{
 		var owner = new PlayerProtectionActiveTaskControllerTaskMapOwnerPrototypeService(PlayerObjectId);
 		if (withStoredTask)
 			owner.AddTask(new RecordingTaskHandle());
 
-		return owner.CreateSnapshot();
+		return owner;
 	}
 
 	private sealed class RecordingTaskHandle : IPlayerProtectionActiveTaskTaskHandle

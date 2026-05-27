@@ -37,6 +37,7 @@ public sealed record PlayerProtectionActiveTaskReadinessAggregateRequest(
 	PlayerProtectionActiveTaskTaskMapOwnerSelectionReport? OwnerSelectionReport = null,
 	PlayerProtectionActiveTaskControllerTaskMapOwnerPrototypeSnapshot? OwnerPrototypeSnapshot = null,
 	PlayerProtectionActiveTaskSchedulerCallbackPlan? SchedulerCallbackPlan = null,
+	PlayerProtectionActiveTaskDelayedStopCallbackPreview? DelayedStopCallbackPreview = null,
 	bool ScheduledTaskHandleAdapterAvailable = true);
 
 public sealed record PlayerProtectionActiveTaskReadinessAggregateRow(
@@ -81,6 +82,8 @@ public static class PlayerProtectionActiveTaskReadinessAggregateService
 			AddOwnerPrototypeRows(rows, request.OwnerPrototypeSnapshot);
 		if (request.SchedulerCallbackPlan != null)
 			AddSchedulerCallbackPlanRows(rows, request.SchedulerCallbackPlan);
+		if (request.DelayedStopCallbackPreview != null)
+			AddDelayedStopCallbackPreviewRows(rows, request.DelayedStopCallbackPreview);
 		AddRuntimeComparisonRow(rows);
 
 		var rowArray = rows.ToArray();
@@ -99,11 +102,83 @@ public static class PlayerProtectionActiveTaskReadinessAggregateService
 			CanEnableProtectionTaskMapStack: blockedAreas.Length == 0,
 			HasStartStorageEvidence: request.TaskMapSimulationReports.Any(report => report.StoredScheduledTask)
 				|| request.SchedulerCallbackPlan?.StoresScheduledFuture == true,
-			HasStopCancellationEvidence: request.TaskMapSimulationReports.Any(report => report.CanceledExistingTask || report.RemovedMissingTaskAsNoOp),
+			HasStopCancellationEvidence: request.TaskMapSimulationReports.Any(report => report.CanceledExistingTask || report.RemovedMissingTaskAsNoOp)
+				|| request.DelayedStopCallbackPreview is { CancelsOwnerTask: true } or { RemovesMissingTaskAsNoOp: true },
 			HasLifecycleCleanupEvidence: request.LifecycleCleanupReport.Rows.Any(row => row.Kind == PlayerProtectionActiveTaskTaskMapLifecycleCleanupRowKind.CancelAllTasks),
 			HasScheduledTaskHandleAdapterEvidence: request.ScheduledTaskHandleAdapterAvailable,
 			"PlayerController protection active task production-readiness aggregate: PlayerController -> CreatureController task map -> ThreadPoolManager -> lifecycle cleanup",
 			IsLive: false);
+	}
+
+	private static void AddDelayedStopCallbackPreviewRows(
+		ICollection<PlayerProtectionActiveTaskReadinessAggregateRow> rows,
+		PlayerProtectionActiveTaskDelayedStopCallbackPreview preview)
+	{
+		foreach (var row in preview.Rows)
+		{
+			if (row.Kind == PlayerProtectionActiveTaskDelayedStopCallbackPreviewRowKind.RecordLiveSideEffectBoundary)
+			{
+				AddDelayedStopLiveBoundaryRows(rows, row, preview);
+				continue;
+			}
+
+			Add(
+				rows,
+				ToArea(row.Kind),
+				ToStatus(row.Status),
+				BlocksLiveEnablement(row),
+				"Delayed-stop callback preview",
+				row.JavaOperation,
+				row.JavaSource,
+				$"{row.Notes} InvokesCallback={preview.InvokesCallback}; InvokesScheduler={preview.InvokesScheduler}.");
+		}
+
+		if (preview.HasScheduledCallbackMetadata && !preview.InvokesCallback)
+		{
+			Add(
+				rows,
+				PlayerProtectionActiveTaskReadinessAggregateArea.SchedulerCallback,
+				PlayerProtectionActiveTaskReadinessAggregateStatus.Blocked,
+				blocksLiveEnablement: true,
+				"Delayed-stop callback preview",
+				"scheduled callback execution for this::stopProtectionActiveTask",
+				preview.JavaSource,
+				"Delayed-stop callback preview is metadata-only; live callback invocation remains disabled.");
+		}
+	}
+
+	private static void AddDelayedStopLiveBoundaryRows(
+		ICollection<PlayerProtectionActiveTaskReadinessAggregateRow> rows,
+		PlayerProtectionActiveTaskDelayedStopCallbackPreviewRow row,
+		PlayerProtectionActiveTaskDelayedStopCallbackPreview preview)
+	{
+		Add(
+			rows,
+			PlayerProtectionActiveTaskReadinessAggregateArea.VisualMutation,
+			PlayerProtectionActiveTaskReadinessAggregateStatus.Blocked,
+			blocksLiveEnablement: true,
+			"Delayed-stop callback preview",
+			row.JavaOperation,
+			row.JavaSource,
+			$"{row.Notes} InvokesCallback={preview.InvokesCallback}.");
+		Add(
+			rows,
+			PlayerProtectionActiveTaskReadinessAggregateArea.PacketFanout,
+			PlayerProtectionActiveTaskReadinessAggregateStatus.Blocked,
+			blocksLiveEnablement: true,
+			"Delayed-stop callback preview",
+			row.JavaOperation,
+			row.JavaSource,
+			$"{row.Notes} InvokesSocketFanout={preview.InvokesSocketFanout}.");
+		Add(
+			rows,
+			PlayerProtectionActiveTaskReadinessAggregateArea.AiMoveNotification,
+			PlayerProtectionActiveTaskReadinessAggregateStatus.Blocked,
+			blocksLiveEnablement: true,
+			"Delayed-stop callback preview",
+			row.JavaOperation,
+			row.JavaSource,
+			$"{row.Notes} InvokesAiMoveNotification={preview.InvokesAiMoveNotification}.");
 	}
 
 	private static void AddSchedulerCallbackPlanRows(
@@ -325,6 +400,24 @@ public static class PlayerProtectionActiveTaskReadinessAggregateService
 		row.Kind == PlayerProtectionActiveTaskSchedulerCallbackPlanRowKind.RequireOwnerPrototype
 			|| row.Kind == PlayerProtectionActiveTaskSchedulerCallbackPlanRowKind.RecordRuntimeBlocker;
 
+	private static bool BlocksLiveEnablement(
+		PlayerProtectionActiveTaskDelayedStopCallbackPreviewRow row) =>
+		row.Kind == PlayerProtectionActiveTaskDelayedStopCallbackPreviewRowKind.RecordRuntimeBlocker
+			|| row.Status == PlayerProtectionActiveTaskDelayedStopCallbackPreviewStatus.BlockedMissingOwnerPrototype;
+
+	private static PlayerProtectionActiveTaskReadinessAggregateArea ToArea(
+		PlayerProtectionActiveTaskDelayedStopCallbackPreviewRowKind kind) =>
+		kind switch
+		{
+			PlayerProtectionActiveTaskDelayedStopCallbackPreviewRowKind.RequireScheduledCallbackPlan => PlayerProtectionActiveTaskReadinessAggregateArea.SchedulerCallback,
+			PlayerProtectionActiveTaskDelayedStopCallbackPreviewRowKind.RecordCallbackTarget => PlayerProtectionActiveTaskReadinessAggregateArea.SchedulerCallback,
+			PlayerProtectionActiveTaskDelayedStopCallbackPreviewRowKind.ComposeStopTaskOperationPlan => PlayerProtectionActiveTaskReadinessAggregateArea.TaskMapCancellation,
+			PlayerProtectionActiveTaskDelayedStopCallbackPreviewRowKind.CancelOwnerTask => PlayerProtectionActiveTaskReadinessAggregateArea.TaskMapCancellation,
+			PlayerProtectionActiveTaskDelayedStopCallbackPreviewRowKind.RecordLiveSideEffectBoundary => PlayerProtectionActiveTaskReadinessAggregateArea.VisualMutation,
+			PlayerProtectionActiveTaskDelayedStopCallbackPreviewRowKind.RecordRuntimeBlocker => PlayerProtectionActiveTaskReadinessAggregateArea.JavaRuntimeComparison,
+			_ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null),
+		};
+
 	private static PlayerProtectionActiveTaskReadinessAggregateArea ToArea(
 		PlayerProtectionActiveTaskSchedulerCallbackPlanRowKind kind) =>
 		kind switch
@@ -397,6 +490,17 @@ public static class PlayerProtectionActiveTaskReadinessAggregateService
 			PlayerProtectionActiveTaskSchedulerCallbackPlanStatus.PlannedNotLive => PlayerProtectionActiveTaskReadinessAggregateStatus.ObservedNonLive,
 			PlayerProtectionActiveTaskSchedulerCallbackPlanStatus.SkippedAlreadyProtected => PlayerProtectionActiveTaskReadinessAggregateStatus.Skipped,
 			PlayerProtectionActiveTaskSchedulerCallbackPlanStatus.BlockedMissingOwnerPrototype => PlayerProtectionActiveTaskReadinessAggregateStatus.Blocked,
+			_ => throw new ArgumentOutOfRangeException(nameof(status), status, null),
+		};
+
+	private static PlayerProtectionActiveTaskReadinessAggregateStatus ToStatus(
+		PlayerProtectionActiveTaskDelayedStopCallbackPreviewStatus status) =>
+		status switch
+		{
+			PlayerProtectionActiveTaskDelayedStopCallbackPreviewStatus.PlannedNotLive => PlayerProtectionActiveTaskReadinessAggregateStatus.ObservedNonLive,
+			PlayerProtectionActiveTaskDelayedStopCallbackPreviewStatus.MissingOwnerTaskNoOp => PlayerProtectionActiveTaskReadinessAggregateStatus.ObservedNonLive,
+			PlayerProtectionActiveTaskDelayedStopCallbackPreviewStatus.SkippedNoDelayedStop => PlayerProtectionActiveTaskReadinessAggregateStatus.Skipped,
+			PlayerProtectionActiveTaskDelayedStopCallbackPreviewStatus.BlockedMissingOwnerPrototype => PlayerProtectionActiveTaskReadinessAggregateStatus.Blocked,
 			_ => throw new ArgumentOutOfRangeException(nameof(status), status, null),
 		};
 
