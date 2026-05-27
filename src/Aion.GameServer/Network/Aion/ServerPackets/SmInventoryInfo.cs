@@ -132,7 +132,7 @@ public sealed class SmInventoryInfo : GameServerPacket
 				WriteWeaponInfoBlob(blob, item, template);
 			}
 
-			WriteEnchantInfoBlob(blob, item);
+			WriteEnchantInfoBlob(blob, item, template);
 			if (template.ConditioningMaxLevel > 0 || item.Charge > 0)
 				WriteConditioningInfoBlob(blob, item);
 			if (template.CanPolish)
@@ -270,15 +270,18 @@ public sealed class SmInventoryInfo : GameServerPacket
 			});
 	}
 
-	private static void WriteEnchantInfoBlob(PacketBuffer buffer, InventoryItem item)
+	private static void WriteEnchantInfoBlob(PacketBuffer buffer, InventoryItem item, ItemTemplateSummary template)
 	{
 		WriteBlob(
 			buffer,
 			0x0b,
-			payload => WriteEnchantInfo(payload, item));
+			payload => WriteEnchantInfo(payload, item, template));
 	}
 
-	internal static void WriteEnchantInfo(PacketBuffer payload, InventoryItem item)
+	internal static void WriteEnchantInfo(PacketBuffer payload, InventoryItem item) =>
+		WriteEnchantInfo(payload, item, template: null);
+
+	internal static void WriteEnchantInfo(PacketBuffer payload, InventoryItem item, ItemTemplateSummary? template)
 	{
 		// Java parity: network/aion/iteminfo/EnchantInfoBlobEntry.writeInfo.
 		payload.WriteC(item.IsSoulBound ? 1 : 0);
@@ -310,12 +313,30 @@ public sealed class SmInventoryInfo : GameServerPacket
 		payload.WriteC(0);
 		payload.WriteD(0);
 		payload.WriteD(0);
-		for (var i = 0; i < 13; i++)
+		WritePlumeTemperingStatPairs(payload, item, template);
+		for (var i = 0; i < 9; i++)
 			payload.WriteD(0);
 		payload.WriteC(item.IsAmplified ? 1 : 0);
 		payload.WriteD(item.BuffSkill);
 		payload.WriteD(0);
 		payload.WriteD(0);
+	}
+
+	private static void WritePlumeTemperingStatPairs(PacketBuffer payload, InventoryItem item, ItemTemplateSummary? template)
+	{
+		// Java parity: network/aion/iteminfo/EnchantInfoBlobEntry.writeThisBlob + model/stats/container/PlumStatEnum.
+		if (item.Tempering <= 0 || template?.IsPlume != true)
+		{
+			for (var i = 0; i < 4; i++)
+				payload.WriteD(0);
+			return;
+		}
+
+		payload.WriteD(42);
+		payload.WriteD(150 * item.Tempering);
+		var isPhysicalPlume = string.Equals(template.TemperingName, "TSHIRT_PHYSICAL", StringComparison.Ordinal);
+		payload.WriteD(isPhysicalPlume ? 30 : 35);
+		payload.WriteD((isPhysicalPlume ? 4 : 20) * item.Tempering + item.RandomPlumeBonus);
 	}
 
 	internal static void WriteConditioningInfoBlob(PacketBuffer buffer, InventoryItem item)

@@ -2875,6 +2875,85 @@ public class GamePacketTests
 		Assert.Equal(123456, blobReader.ReadD());
 	}
 
+	[Theory]
+	[InlineData("PLUME", "TSHIRT_PHYSICAL", 5, 3, 42, 750, 30, 23)]
+	[InlineData("PLUME", "TSHIRT_MAGICAL", 5, 8, 42, 750, 35, 108)]
+	[InlineData("SWORD", "TSHIRT_PHYSICAL", 5, 3, 0, 0, 0, 0)]
+	public void SmInventoryInfo_WritesPlumeTemperingStatsLikeJava(
+		string itemGroup,
+		string temperingName,
+		int tempering,
+		int randomPlumeBonus,
+		int firstStatId,
+		int firstStatValue,
+		int secondStatId,
+		int secondStatValue)
+	{
+		var inventoryPackets = SmInventoryInfo.CreateLoginPackets(
+			new Player
+			{
+				InventoryItems =
+				[
+					new InventoryItem
+					{
+						ObjectId = 88,
+						ItemId = 100,
+						Count = 1,
+						IsEquipped = true,
+						Location = 0,
+						Slot = 1,
+						Tempering = tempering,
+						RandomPlumeBonus = randomPlumeBonus,
+					},
+				],
+			},
+			new ItemTemplateTable(
+				[
+					new ItemTemplateSummary(182400001, "Kinah", 0, 12350, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
+					new ItemTemplateSummary(
+						100,
+						"Tempered Item",
+						0,
+						1,
+						1,
+						itemGroup,
+						"NORMAL",
+						"COMMON",
+						"PC_ALL",
+						1,
+						0,
+						1,
+						TemperingName: temperingName),
+				]),
+			() => 77);
+
+		var inventoryPayload = SerializeUnencryptedPayload(inventoryPackets[0]);
+		using var reader = new PacketBuffer(inventoryPayload);
+		reader.ReadC();
+		reader.ReadC();
+		reader.ReadC();
+		reader.ReadC();
+		Assert.Equal(2, reader.ReadH());
+		ReadInventoryItemWithBlob(reader);
+		var item = ReadInventoryItemWithBlob(reader);
+		using var blobReader = new PacketBuffer(item.Blob);
+
+		Assert.Equal(0x06, (int)blobReader.ReadC());
+		blobReader.ReadQ();
+		Assert.Equal(string.Equals(itemGroup, "PLUME", StringComparison.Ordinal) ? 0x13 : 0x01, (int)blobReader.ReadC());
+		blobReader.ReadB(string.Equals(itemGroup, "PLUME", StringComparison.Ordinal) ? 32 : 16);
+		Assert.Equal(0x0b, (int)blobReader.ReadC());
+		blobReader.ReadB(54);
+		Assert.Equal(tempering, (int)blobReader.ReadC());
+		blobReader.ReadB(18);
+		Assert.Equal(firstStatId, blobReader.ReadD());
+		Assert.Equal(firstStatValue, blobReader.ReadD());
+		Assert.Equal(secondStatId, blobReader.ReadD());
+		Assert.Equal(secondStatValue, blobReader.ReadD());
+		for (var i = 0; i < 9; i++)
+			Assert.Equal(0, blobReader.ReadD());
+	}
+
 	[Fact]
 	public void SmInventoryInfo_WritesConditioningBlobForConditionableTemplateAtZeroCharge()
 	{
