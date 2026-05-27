@@ -204,7 +204,10 @@ public sealed class PetFeedPacketMetadataBridge
 
 		// Java parity: ItemPacketService.sendItemUnlockPacket -> sendStorageUpdatePacket(CUBE, item, ALL_SLOT)
 		// emits SM_INVENTORY_ADD_ITEM first, then SM_CUBE_UPDATE.cubeSize(StorageType.CUBE, player).
-		var inventoryAdd = SmInventoryAddItem.CreateAllSlot(context.Item, context.Template);
+		var inventoryAdd = SmInventoryAddItem.CreateAllSlot(
+			context.Item,
+			context.Template,
+			context.GeneralInfoWarehouseRestrictionFlag);
 		var cubeUpdate = SmCubeUpdate.CubeSizeSnapshot(
 			context.CubeItemsCount,
 			context.NpcExpands,

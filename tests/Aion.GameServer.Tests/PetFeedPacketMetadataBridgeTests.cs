@@ -365,11 +365,12 @@ public sealed class PetFeedPacketMetadataBridgeTests
 	}
 
 	[Theory]
+	[InlineData(PetFeedUnlockPacketStorageKind.Cube, 0)]
 	[InlineData(PetFeedUnlockPacketStorageKind.Warehouse, SmWarehouseAddItem.RegularWarehouse)]
 	[InlineData(PetFeedUnlockPacketStorageKind.AccountWarehouse, SmWarehouseAddItem.AccountWarehouse)]
 	[InlineData(PetFeedUnlockPacketStorageKind.LegionWarehouse, SmWarehouseAddItem.LegionWarehouse)]
 	[InlineData(PetFeedUnlockPacketStorageKind.UnusualWarehouse, 32)]
-	public void Construct_RejectedFoodWithCleanupSealContextWritesWarehouseAddFlagLikeJava(
+	public void Construct_RejectedFoodWithCleanupSealContextWritesUnlockPacketFlagLikeJava(
 		PetFeedUnlockPacketStorageKind storageKind,
 		int warehouseType)
 	{
@@ -401,16 +402,30 @@ public sealed class PetFeedPacketMetadataBridgeTests
 					GeneralInfoWarehouseRestrictionFlag: 3))));
 
 		Assert.Equal(PetFeedPacketMetadataBridgeStatus.Constructed, result.Status);
-		var warehouseAdd = Assert.IsType<SmWarehouseAddItem>(result.Results[0].Packets[0]);
-		using var warehouseReader = new PacketBuffer(SerializeUnencryptedPayload(warehouseAdd));
-		Assert.Equal(warehouseType, (int)warehouseReader.ReadC());
-		Assert.Equal(SmWarehouseAddItem.AllSlot, warehouseReader.ReadH());
-		Assert.Equal(1, warehouseReader.ReadH());
-		var restrictedItem = ReadWarehouseItemWithBlob(warehouseReader);
-		Assert.Equal((5001, 188053996, 0, 4), (restrictedItem.ObjectId, restrictedItem.ItemId, restrictedItem.ItemInfo, restrictedItem.EquipmentSlot));
-		Assert.Equal(0, warehouseReader.Remaining);
-
-		AssertWarehouseGeneralInfoCleanupSealFlag(restrictedItem.Blob, expectedFlag: 3);
+		if (storageKind == PetFeedUnlockPacketStorageKind.Cube)
+		{
+			var inventoryAdd = Assert.IsType<SmInventoryAddItem>(result.Results[0].Packets[0]);
+			using var inventoryReader = new PacketBuffer(SerializeUnencryptedPayload(inventoryAdd));
+			Assert.Equal(SmInventoryAddItem.AllSlot, inventoryReader.ReadH());
+			Assert.Equal(1, inventoryReader.ReadH());
+			var restrictedItem = ReadInventoryItemWithBlob(inventoryReader);
+			Assert.Equal((5001, 188053996, 4), (restrictedItem.ObjectId, restrictedItem.ItemId, restrictedItem.EquipmentSlot));
+			Assert.Equal(0, (int)inventoryReader.ReadC());
+			Assert.Equal(0, inventoryReader.Remaining);
+			AssertGeneralInfoCleanupSealFlag(restrictedItem.Blob, expectedFlag: 3);
+		}
+		else
+		{
+			var warehouseAdd = Assert.IsType<SmWarehouseAddItem>(result.Results[0].Packets[0]);
+			using var warehouseReader = new PacketBuffer(SerializeUnencryptedPayload(warehouseAdd));
+			Assert.Equal(warehouseType, (int)warehouseReader.ReadC());
+			Assert.Equal(SmWarehouseAddItem.AllSlot, warehouseReader.ReadH());
+			Assert.Equal(1, warehouseReader.ReadH());
+			var restrictedItem = ReadWarehouseItemWithBlob(warehouseReader);
+			Assert.Equal((5001, 188053996, 0, 4), (restrictedItem.ObjectId, restrictedItem.ItemId, restrictedItem.ItemInfo, restrictedItem.EquipmentSlot));
+			Assert.Equal(0, warehouseReader.Remaining);
+			AssertGeneralInfoCleanupSealFlag(restrictedItem.Blob, expectedFlag: 3);
+		}
 	}
 
 	[Theory]
@@ -668,7 +683,18 @@ public sealed class PetFeedPacketMetadataBridgeTests
 		return (objectId, itemId, itemInfo, blob, equipmentSlot);
 	}
 
-	private static void AssertWarehouseGeneralInfoCleanupSealFlag(byte[] blob, int expectedFlag)
+	private static (int ObjectId, int ItemId, byte[] Blob, int EquipmentSlot) ReadInventoryItemWithBlob(PacketBuffer reader)
+	{
+		var objectId = reader.ReadD();
+		var itemId = reader.ReadD();
+		reader.ReadS();
+		var blobSize = reader.ReadH();
+		var blob = reader.ReadB(blobSize);
+		var equipmentSlot = reader.ReadH();
+		return (objectId, itemId, blob, equipmentSlot);
+	}
+
+	private static void AssertGeneralInfoCleanupSealFlag(byte[] blob, int expectedFlag)
 	{
 		using var blobReader = new PacketBuffer(blob);
 		Assert.Equal(0x00, (int)blobReader.ReadC());
