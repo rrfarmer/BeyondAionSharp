@@ -6,6 +6,32 @@ namespace Aion.GameServer.Tests;
 public sealed class PlayerDeathStateTransitionServiceTests
 {
 	[Fact]
+	public void CreatePhasePlans_PreviewsJavaPhaseMetadataWithoutMutatingPlayer()
+	{
+		var player = new Player
+		{
+			ObjectId = PlayerObjectId,
+			CreatureState = PlayerCreatureState.Active | PlayerCreatureState.Flying | PlayerCreatureState.Resting,
+			FlyState = PlayerFlyState.Flying,
+			IsInRideMode = true,
+			RideInfo = new PlayerRideInfo(1, 2, 3, 4, 5, 6),
+		};
+
+		var phasePlans = PlayerDeathStateTransitionService.CreatePhasePlans(player);
+
+		Assert.True(player.IsInState(PlayerCreatureState.Flying));
+		Assert.False(player.IsFlyingBeforeDeath);
+		Assert.True(player.IsInRideMode);
+		Assert.NotNull(player.RideInfo);
+		var playerControllerPhase = Assert.Single(phasePlans, phase => phase.Phase == PlayerDeathStateTransitionPhase.PlayerControllerPreSuperCleanup);
+		var creatureControllerPhase = Assert.Single(phasePlans, phase => phase.Phase == PlayerDeathStateTransitionPhase.CreatureControllerDeathStateSelection);
+		Assert.Contains(PlayerDeathStateTransitionStep.SetFlyingBeforeDeathFlag, playerControllerPhase.Steps);
+		Assert.Equal(
+			new[] { PlayerDeathStateTransitionStep.ClearActiveState, PlayerDeathStateTransitionStep.SetFloatingCorpseState },
+			creatureControllerPhase.Steps);
+	}
+
+	[Fact]
 	public void Apply_FlyingPlayerSetsFlyingBeforeDeathAndFloatingCorpseLikeJava()
 	{
 		var player = new Player

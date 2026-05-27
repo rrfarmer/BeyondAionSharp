@@ -17,6 +17,7 @@ public sealed class PlayerDeathWorkflowAdapterServiceTests
 
 		Assert.Equal(PlayerDeathWorkflowAdapterStatus.DisabledPlanned, result.Status);
 		Assert.Equal(PlayerDeathWorkflowStatus.PlannedFullPlayerDeath, result.Plan.Status);
+		Assert.NotEmpty(result.Plan.StatePhasePlans);
 		Assert.NotNull(result.Plan.ResurrectionOptionsPlan);
 		Assert.NotNull(result.Plan.CoreSideEffectPlan);
 		Assert.NotNull(result.Plan.DeathEmotionFanoutPlan);
@@ -49,6 +50,7 @@ public sealed class PlayerDeathWorkflowAdapterServiceTests
 
 		Assert.Equal(PlayerDeathWorkflowAdapterStatus.LiveStateTransitionApplied, result.Status);
 		Assert.NotNull(result.StateTransitionResult);
+		Assert.NotEmpty(result.Plan.StatePhasePlans);
 		Assert.True(result.MutatedPlayerState);
 		Assert.False(result.SentPackets);
 		Assert.False(result.ScheduledTasks);
@@ -92,6 +94,7 @@ public sealed class PlayerDeathWorkflowAdapterServiceTests
 		Assert.Equal(PlayerDeathWorkflowAdapterStatus.EarlyReturnPlanned, result.Status);
 		Assert.Equal(PlayerDeathWorkflowStatus.ReturnedAfterDuelOpponentKill, result.Plan.Status);
 		Assert.Null(result.StateTransitionResult);
+		Assert.Empty(result.Plan.StatePhasePlans);
 		Assert.Null(result.Plan.ResurrectionOptionsPlan);
 		Assert.Null(result.Plan.CoreSideEffectPlan);
 		Assert.Null(result.Plan.DeathEmotionFanoutPlan);
@@ -116,6 +119,7 @@ public sealed class PlayerDeathWorkflowAdapterServiceTests
 		Assert.Equal(PlayerDeathWorkflowAdapterStatus.LiveStateTransitionApplied, result.Status);
 		Assert.Equal(PlayerDeathWorkflowStatus.ReturnedAfterInstanceHandler, result.Plan.Status);
 		Assert.NotNull(result.StateTransitionResult);
+		Assert.NotEmpty(result.Plan.StatePhasePlans);
 		Assert.NotNull(result.Plan.ResurrectionOptionsPlan);
 		Assert.NotNull(result.Plan.CoreSideEffectPlan);
 		Assert.NotNull(result.Plan.DeathEmotionFanoutPlan);

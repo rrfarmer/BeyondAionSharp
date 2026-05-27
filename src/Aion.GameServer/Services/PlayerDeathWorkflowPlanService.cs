@@ -57,6 +57,7 @@ public sealed record PlayerDeathWorkflowPlan(
 	PlayerDeathStateTransitionStatus PlannedTransitionStatus,
 	bool WouldSetFlyingBeforeDeath,
 	bool WouldUseFloatingCorpse,
+	IReadOnlyList<PlayerDeathStateTransitionPhasePlan> StatePhasePlans,
 	bool WouldReleaseSummon,
 	bool WouldCalculateExperienceLoss,
 	bool WouldScheduleResurrectionOptions,
@@ -178,6 +179,9 @@ public sealed class PlayerDeathWorkflowPlanService
 				: PlayerDeathStateTransitionStatus.DeadStateApplied,
 			wouldSetFlyingBeforeDeath,
 			wouldUseFloatingCorpse,
+			steps.Contains(PlayerDeathWorkflowStep.ApplyPlayerDeathStateTransition)
+				? PlayerDeathStateTransitionService.CreatePhasePlans(player)
+				: Array.Empty<PlayerDeathStateTransitionPhasePlan>(),
 			facts.HasSummon && steps.Contains(PlayerDeathWorkflowStep.ReleaseSummon),
 			ShouldCalculateExperienceLoss(facts) && steps.Contains(PlayerDeathWorkflowStep.CalculateExperienceLoss),
 			wouldScheduleResurrectionOptions,

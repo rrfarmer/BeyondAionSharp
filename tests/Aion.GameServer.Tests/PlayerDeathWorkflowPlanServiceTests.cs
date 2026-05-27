@@ -30,6 +30,12 @@ public sealed class PlayerDeathWorkflowPlanServiceTests
 		Assert.False(plan.IsLive);
 		Assert.True(plan.WouldSetFlyingBeforeDeath);
 		Assert.True(plan.WouldUseFloatingCorpse);
+		var playerControllerPhase = Assert.Single(plan.StatePhasePlans, phase => phase.Phase == PlayerDeathStateTransitionPhase.PlayerControllerPreSuperCleanup);
+		var creatureControllerPhase = Assert.Single(plan.StatePhasePlans, phase => phase.Phase == PlayerDeathStateTransitionPhase.CreatureControllerDeathStateSelection);
+		Assert.Contains(PlayerDeathStateTransitionStep.SetFlyingBeforeDeathFlag, playerControllerPhase.Steps);
+		Assert.Equal(
+			new[] { PlayerDeathStateTransitionStep.ClearActiveState, PlayerDeathStateTransitionStep.SetFloatingCorpseState },
+			creatureControllerPhase.Steps);
 		Assert.True(plan.WouldReleaseSummon);
 		Assert.True(plan.WouldCalculateExperienceLoss);
 		Assert.True(plan.WouldScheduleResurrectionOptions);
@@ -93,6 +99,7 @@ public sealed class PlayerDeathWorkflowPlanServiceTests
 		Assert.Equal(PlayerDeathWorkflowStatus.ReturnedAfterDuelOpponentKill, plan.Status);
 		Assert.False(plan.WouldReleaseSummon);
 		Assert.False(plan.WouldScheduleResurrectionOptions);
+		Assert.Empty(plan.StatePhasePlans);
 		Assert.Null(plan.ResurrectionOptionsPlan);
 		Assert.Null(plan.CoreSideEffectPlan);
 		Assert.Null(plan.DeathEmotionFanoutPlan);
@@ -129,6 +136,7 @@ public sealed class PlayerDeathWorkflowPlanServiceTests
 		var plan = _service.CreatePlan(player, facts);
 
 		Assert.Equal(PlayerDeathWorkflowStatus.ReturnedAfterInstanceHandler, plan.Status);
+		Assert.NotEmpty(plan.StatePhasePlans);
 		Assert.True(plan.WouldScheduleResurrectionOptions);
 		Assert.NotNull(plan.ResurrectionOptionsPlan);
 		Assert.Equal(PlayerDeathResurrectionOptionsPlanStatus.SendSmDie, plan.ResurrectionOptionsPlan.Status);
@@ -166,6 +174,7 @@ public sealed class PlayerDeathWorkflowPlanServiceTests
 		var plan = _service.CreatePlan(player, facts);
 
 		Assert.Equal(PlayerDeathWorkflowStatus.ReturnedAfterMapRegion, plan.Status);
+		Assert.NotEmpty(plan.StatePhasePlans);
 		Assert.True(plan.WouldScheduleResurrectionOptions);
 		Assert.NotNull(plan.ResurrectionOptionsPlan);
 		Assert.Equal(PlayerDeathResurrectionOptionsPlanStatus.SkipTeleportTask, plan.ResurrectionOptionsPlan.Status);
