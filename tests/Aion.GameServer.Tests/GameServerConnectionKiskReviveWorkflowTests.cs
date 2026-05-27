@@ -125,6 +125,33 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 	}
 
 	[Fact]
+	public async Task HandleReviveAsync_KiskReviveClearsLivePlayerAggro()
+	{
+		await using var fixture = await KiskReviveWorkflowFixture.CreateAsync();
+		var player = CreateDeadPlayer(boundKiskObjectId: 9001);
+		player.AggroList.TryAddKnownAttacker(2001, damage: 80, hate: 800, ownerKnownListKnowsAttacker: true);
+		player.AggroList.TryAddKnownAttacker(2002, damage: 20, hate: 200, ownerKnownListKnowsAttacker: true);
+		player.AggroList.MarkHateReductionTaskActiveForParity();
+		var kiskPosition = new WorldPosition(210010000, 11, 22, 33, 0);
+		fixture.RegisterKisk(objectId: 9001, kiskPosition, maxResurrects: 2);
+
+		await fixture.Connection.HandleReviveAsync(player, CreateRevive(PlayerKiskReviveService.KiskReviveId));
+
+		Assert.Empty(player.AggroList.Entries);
+		Assert.False(player.AggroList.HasHateReductionTask);
+		Assert.Equal(kiskPosition, player.Position);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => Assert.IsType<SmKiskUpdate>(packet),
+			packet => Assert.IsType<SmEmotion>(packet),
+			packet => Assert.IsType<SmChannelInfo>(packet),
+			packet => Assert.IsType<SmPlayerSpawn>(packet),
+			packet => Assert.IsType<SmPlayerInfo>(packet),
+			packet => Assert.IsType<SmStatsInfo>(packet),
+			packet => Assert.IsType<SmMotion>(packet));
+	}
+
+	[Fact]
 	public async Task HandleReviveAsync_KiskReviveClearsVisibleTargetsBeforeTeleport()
 	{
 		var registry = new CapturingConnectionRegistry();

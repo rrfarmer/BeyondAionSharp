@@ -5810,6 +5810,11 @@ public sealed class GameServerConnection : BaseClientConnection
 			resourceMaxStats.MaxHp,
 			resourceMaxStats.MaxMp,
 			player.HasNoResurrectPenaltyEffect);
+		new PlayerReviveCleanupAdapterService().Apply(new PlayerReviveCleanupAdapterRequest(
+			player.ObjectId,
+			player.AggroList.Entries,
+			ExecuteLiveAggroMutation: true,
+			player.AggroList));
 		await SendReviveMovementUpdatesAsync(player);
 		await BroadcastEmotionAsync(player, new SmEmotion(player, EmotionType.Resurrect));
 		await UpdatePlayerStatsAndSpeedVisuallyAsync(player);
@@ -5817,8 +5822,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		await TeleportPlayerToKiskPositionAsync(player, result.KiskPosition.Value, staticData);
 
 		// Full Java PlayerReviveService.revive + TeleportService.teleportTo side effects remain queued:
-		// no-resurrect-penalty effect detection, soul-sickness handling, aggro cleanup,
-		// flying-before-death state restoration, full world despawn/spawn
+		// soul-sickness handling, flying-before-death state restoration, full world despawn/spawn
 		// ownership, protection tasks, instance/legion leave callbacks, and exact socket ordering need the broader revive/teleport model.
 	}
 
