@@ -126,6 +126,9 @@ public sealed class Player
 	// Java parity: model/gameobjects/player/Player.flyState queried by Player.isFlying/isInFlyingState.
 	public PlayerFlyState FlyState { get; set; }
 
+	// Java parity: model/gameobjects/player/Player.isFlyingBeforeDeath controls PlayerController.onBeforeSpawn state cleanup.
+	public bool IsFlyingBeforeDeath { get; set; }
+
 	// Java parity: controllers/effect/EffectController.abnormals queried by CM_EMOTION and action guards.
 	public PlayerAbnormalState AbnormalState { get; set; }
 

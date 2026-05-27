@@ -25,7 +25,8 @@ public static class PlayerReviveRestoreService
 		int mpPercent,
 		bool hasNoResurrectPenalty = false)
 	{
-		// Java parity: PlayerReviveService.revive handles no-resurrect-penalty, clears player-res state/skill, then PlayerController.onBeforeSpawn clears DEAD state.
+		// Java parity: PlayerReviveService.revive handles no-resurrect-penalty, clears player-res state/skill,
+		// then PlayerController.onBeforeSpawn clears FLOATING_CORPSE for flying deaths or DEAD otherwise.
 		var previousLifeStats = player.LifeStats ?? new PlayerLifeStats(CurrentHp: 0, CurrentMp: 0, CurrentFp: 0);
 		var previousState = player.CreatureState;
 		var previousDp = player.Dp;
@@ -46,7 +47,9 @@ public static class PlayerReviveRestoreService
 			player.Dp = 0;
 		player.ResurrectionSkillId = 0;
 		player.LifeStats = nextLifeStats;
-		if (player.IsInState(PlayerCreatureState.Dead))
+		if (player.IsFlyingBeforeDeath)
+			player.SetCreatureState(PlayerCreatureState.FloatingCorpse, enabled: false);
+		else if (player.IsInState(PlayerCreatureState.Dead))
 			player.SetCreatureState(PlayerCreatureState.Dead, enabled: false);
 		player.SetCreatureState(PlayerCreatureState.Active, enabled: true);
 

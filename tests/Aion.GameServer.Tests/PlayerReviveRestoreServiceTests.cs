@@ -76,6 +76,26 @@ public sealed class PlayerReviveRestoreServiceTests
 	}
 
 	[Fact]
+	public void ApplyKiskReviveRestoreClearsFloatingCorpseForFlyingBeforeDeathLikeOnBeforeSpawn()
+	{
+		var player = new Player
+		{
+			CreatureState = PlayerCreatureState.FloatingCorpse | PlayerCreatureState.WalkMode,
+			IsFlyingBeforeDeath = true,
+			LifeStats = new PlayerLifeStats(CurrentHp: 0, CurrentMp: 0, CurrentFp: 42),
+		};
+
+		var result = PlayerReviveRestoreService.ApplyKiskReviveRestore(player, maxHp: 333, maxMp: 222);
+
+		Assert.True(result.PreviousState.HasFlag(PlayerCreatureState.FloatingCorpse));
+		Assert.False(player.IsInState(PlayerCreatureState.FloatingCorpse));
+		Assert.True(player.IsInState(PlayerCreatureState.Active));
+		Assert.True(player.IsInState(PlayerCreatureState.WalkMode));
+		Assert.True(player.IsFlyingBeforeDeath);
+		Assert.Equal(new PlayerLifeStats(99, 66, 42), player.LifeStats);
+	}
+
+	[Fact]
 	public void ApplyReviveRestoreClampsInvalidMaxAndPercentValuesLikeCreatureLifeStats()
 	{
 		var player = new Player
