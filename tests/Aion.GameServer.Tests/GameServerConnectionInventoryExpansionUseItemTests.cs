@@ -1882,8 +1882,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		player.InventoryItems =
 		[
 			new InventoryItem { ObjectId = 7001, ItemId = 165010000, Count = 2, Location = 0, OwnerId = player.ObjectId },
-			new InventoryItem { ObjectId = 7002, ItemId = 166000020, Count = 2, Location = 0, OwnerId = player.ObjectId },
-			new InventoryItem { ObjectId = 7003, ItemId = 166000030, Count = 2, Location = 0, OwnerId = player.ObjectId },
+			new InventoryItem { ObjectId = 7002, ItemId = 166000090, Count = 2, Location = 0, OwnerId = player.ObjectId },
+			new InventoryItem { ObjectId = 7003, ItemId = 166000095, Count = 2, Location = 0, OwnerId = player.ObjectId },
 		];
 		SetActivePlayerForPacketDispatch(fixture.Connection, player);
 
@@ -1931,8 +1931,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		player.InventoryItems =
 		[
 			new InventoryItem { ObjectId = 7001, ItemId = 165010000, Count = 1, Location = 0, OwnerId = player.ObjectId },
-			new InventoryItem { ObjectId = 7002, ItemId = 166000020, Count = 2, Location = 0, OwnerId = player.ObjectId },
-			new InventoryItem { ObjectId = 7003, ItemId = 166000030, Count = 1, Location = 0, OwnerId = player.ObjectId },
+			new InventoryItem { ObjectId = 7002, ItemId = 166000090, Count = 2, Location = 0, OwnerId = player.ObjectId },
+			new InventoryItem { ObjectId = 7003, ItemId = 166000095, Count = 1, Location = 0, OwnerId = player.ObjectId },
 		];
 		SetActivePlayerForPacketDispatch(fixture.Connection, player);
 
@@ -1963,6 +1963,44 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 				expectedItemMask: 0),
 			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 7003, expectedDeleteType: SmDeleteItem.UseDeleteType),
 			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1),
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 165010000, expectedTime: 0, expectedEnd: 1, expectedItemObjectId: 7001));
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CompositeStonesKeepsEarlierConsumesWhenSecondStoneDisappearsBeforeCompletion()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(includeThreadPoolManager: true);
+		var player = CreatePlayer(itemId: 165010000);
+		player.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 7001, ItemId = 165010000, Count = 1, Location = 0, OwnerId = player.ObjectId },
+			new InventoryItem { ObjectId = 7002, ItemId = 166000090, Count = 1, Location = 0, OwnerId = player.ObjectId },
+			new InventoryItem { ObjectId = 7003, ItemId = 166000095, Count = 1, Location = 0, OwnerId = player.ObjectId },
+		];
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(208, buffer =>
+			{
+				buffer.WriteD(7001);
+				buffer.WriteD(7002);
+				buffer.WriteD(7003);
+			}));
+		player.InventoryItems = player.InventoryItems
+			.Where(item => item.ObjectId != 7003)
+			.ToArray();
+
+		await WaitUntilAsync(() => fixture.SentPackets.Count >= 6, TimeSpan.FromSeconds(6));
+
+		Assert.Empty(player.InventoryItems);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 165010000, expectedTime: 5000, expectedEnd: 0, expectedItemObjectId: 7001),
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 7001, expectedDeleteType: SmDeleteItem.UseDeleteType),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1),
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 7002, expectedDeleteType: SmDeleteItem.UseDeleteType),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0),
 			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 165010000, expectedTime: 0, expectedEnd: 1, expectedItemObjectId: 7001));
 	}
 
@@ -3400,6 +3438,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 						</item_template>
 						<item_template id="166000020" name="Test Enchantment Stone 20" level="20" item_group="ENCHANTMENT" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
 						<item_template id="166000030" name="Test Enchantment Stone 30" level="30" item_group="ENCHANTMENT" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
+						<item_template id="166000090" name="Test Enchantment Stone 90" level="90" item_group="ENCHANTMENT" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
+						<item_template id="166000095" name="Test Enchantment Stone 95" level="95" item_group="ENCHANTMENT" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
 						<item_template id="100000363" name="Test Abyss Sword" level="30" mask="65536" item_group="SWORD" item_type="ABYSS" quality="RARE" race="PC_ALL" max_stack_count="1">
 							<acquisition ap="4900" />
 						</item_template>
@@ -3487,6 +3527,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 						<cleanup id="165010000" awh="0" lwh="0"/>
 						<cleanup id="166000020" awh="0" lwh="0"/>
 						<cleanup id="166000030" awh="0" lwh="0"/>
+						<cleanup id="166000090" awh="0" lwh="0"/>
+						<cleanup id="166000095" awh="0" lwh="0"/>
 						<cleanup id="200" awh="0" lwh="0"/>
 						<cleanup id="101" awh="0" lwh="0"/>
 						<cleanup id="188053996" awh="0" lwh="0"/>
