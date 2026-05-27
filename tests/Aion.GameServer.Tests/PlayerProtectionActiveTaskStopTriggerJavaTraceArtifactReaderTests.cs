@@ -249,6 +249,59 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactReader
 		}
 	}
 
+	[Fact]
+	public void ScheduledCallbackArtifacts_RecordDelayAndStopCallbackOrdering()
+	{
+		var artifact = ParseScheduledCallbackArtifact("protection-active-scheduled-callback-stop", replacementCancelsOldFuture: false);
+
+		AssertArtifactSemantics(artifact);
+		Assert.Contains(artifact.JavaSources, source => source == "PlayerController.startProtectionActiveTask");
+		var schedule = artifact.Traces.Single(trace => trace.Phase == "schedule_enter");
+		var taskAdd = artifact.Traces.Single(trace => trace.Phase == "task_add");
+		var callback = artifact.Traces.Single(trace => trace.Phase == "callback_enter");
+		var stopCall = artifact.Traces.Single(trace => trace.Phase == "stop_call_enter");
+		var taskCancel = artifact.Traces.Single(trace => trace.Phase == "task_cancel");
+
+		Assert.NotNull(schedule.Scheduler);
+		Assert.Equal(60000, schedule.Scheduler!.DelayMillis);
+		Assert.Equal("MILLISECONDS", schedule.Scheduler.TimeUnit);
+		Assert.True(schedule.Scheduler.RunnableWrapperApplied);
+		Assert.Equal("PlayerController.stopProtectionActiveTask", schedule.Scheduler.CallbackMethod);
+		Assert.NotNull(taskAdd.Scheduler);
+		Assert.False(taskAdd.Scheduler!.OldFuturePresent);
+		Assert.True(taskAdd.Scheduler.NewFutureStored);
+		Assert.True(schedule.EventSeq < taskAdd.EventSeq);
+		Assert.True(taskAdd.EventSeq < callback.EventSeq);
+		Assert.True(callback.EventSeq < stopCall.EventSeq);
+		Assert.True(stopCall.EventSeq < taskCancel.EventSeq);
+		Assert.Equal("scheduled_callback", taskCancel.TaskCancellation!.StopOrigin);
+	}
+
+	[Fact]
+	public void ReplacementRaceArtifacts_RecordOldFutureCancellationBeforeNewTaskStorage()
+	{
+		var artifact = ParseScheduledCallbackArtifact("protection-active-replacement-race", replacementCancelsOldFuture: true);
+
+		AssertArtifactSemantics(artifact);
+		var taskAdd = artifact.Traces.Single(trace => trace.Phase == "task_add");
+		var taskCancel = artifact.Traces.Single(trace => trace.Phase == "task_cancel");
+
+		Assert.NotNull(taskAdd.Scheduler);
+		Assert.True(taskAdd.Scheduler!.OldFuturePresent);
+		Assert.True(taskAdd.Scheduler.OldFutureCancelArgument.HasValue);
+		Assert.False(taskAdd.Scheduler.OldFutureCancelArgument!.Value);
+		Assert.True(taskAdd.Scheduler.OldFutureCancelResult.HasValue);
+		Assert.False(taskAdd.Scheduler.OldFutureCancelResult!.Value);
+		Assert.True(taskAdd.Scheduler.NewFutureStored);
+		Assert.NotNull(taskCancel.TaskCancellation);
+		Assert.True(taskCancel.TaskCancellation!.TaskPresentBeforeCancel);
+		Assert.True(taskCancel.TaskCancellation.TaskRemovedBeforeCancel);
+		Assert.False(taskCancel.TaskCancellation.FutureCancelArgument);
+		Assert.True(taskCancel.TaskCancellation.FutureCancelResult);
+		Assert.Equal("replacement_race_current_future", taskCancel.TaskCancellation.StopOrigin);
+		Assert.True(taskAdd.EventSeq < taskCancel.EventSeq);
+	}
+
 	private static void AssertNoStopArtifact(ProtectionStopTriggerJavaTraceArtifact artifact)
 	{
 		Assert.Equal(1, artifact.SchemaVersion);
@@ -303,7 +356,7 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactReader
 		Assert.False(string.IsNullOrWhiteSpace(artifact.JavaCommit));
 		Assert.NotEmpty(artifact.JavaSources);
 		Assert.NotEmpty(artifact.Traces);
-		Assert.Contains(artifact.Traces, trace => trace.Phase == "packet_enter");
+		Assert.Contains(artifact.Traces, trace => trace.Phase is "packet_enter" or "schedule_enter");
 		Assert.Contains(artifact.Traces, trace => trace.Phase == "task_cancel");
 		Assert.Contains(artifact.Traces, trace => trace.Phase == "state_broadcast");
 		Assert.Contains(artifact.Traces, trace => trace.Phase == "ai_notify_enqueue");
@@ -973,6 +1026,389 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactReader
 		return artifact;
 	}
 
+	private static ProtectionStopTriggerJavaTraceArtifact ParseScheduledCallbackArtifact(
+		string scenario,
+		bool replacementCancelsOldFuture)
+	{
+		var stopOrigin = replacementCancelsOldFuture ? "replacement_race_current_future" : "scheduled_callback";
+		var oldFuturePresent = replacementCancelsOldFuture ? "true" : "false";
+		var oldFutureCancelArgument = replacementCancelsOldFuture ? "false" : "null";
+		var oldFutureCancelResult = replacementCancelsOldFuture ? "false" : "null";
+		var json = $$"""
+			{
+			  "schemaVersion": 1,
+			  "javaCommit": "abcdef1",
+			  "scenario": "{{scenario}}",
+			  "runtimeFacts": {
+			    "serverFlavor": "java",
+			    "packetName": "SCHEDULED_PROTECTION_ACTIVE_CALLBACK",
+			    "playerObjectId": 1001,
+			    "worldId": 210010000,
+			    "expectedReturnReason": "{{stopOrigin}}"
+			  },
+			  "javaSources": [
+			    "PlayerController.startProtectionActiveTask",
+			    "ThreadPoolManager.schedule",
+			    "CreatureController.addTask",
+			    "PlayerController.stopProtectionActiveTask",
+			    "CreatureController.cancelTask"
+			  ],
+			  "traces": [
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "{{scenario}}-001",
+			      "eventSeq": 0,
+			      "phase": "schedule_enter",
+			      "packetName": "SCHEDULED_PROTECTION_ACTIVE_CALLBACK",
+			      "returnReason": "{{stopOrigin}}",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": true,
+			      "wallTimeEpochMillis": 1760000000000,
+			      "monotonicNanos": 4000000,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "PlayerController.java",
+			      "javaLine": 634,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": true,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": false,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": [],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": {
+			        "delayMillis": 60000,
+			        "timeUnit": "MILLISECONDS",
+			        "runnableWrapperApplied": true,
+			        "callbackMethod": "PlayerController.stopProtectionActiveTask",
+			        "oldFuturePresent": false,
+			        "oldFutureCancelArgument": null,
+			        "oldFutureCancelResult": null,
+			        "newFutureStored": false
+			      },
+			      "actionBranchName": "schedule_protection_active_task"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "{{scenario}}-001",
+			      "eventSeq": 1,
+			      "phase": "task_add",
+			      "packetName": "SCHEDULED_PROTECTION_ACTIVE_CALLBACK",
+			      "returnReason": "{{stopOrigin}}",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": true,
+			      "wallTimeEpochMillis": 1760000000001,
+			      "monotonicNanos": 4000100,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "CreatureController.java",
+			      "javaLine": 383,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": true,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": {
+			        "delayMillis": 60000,
+			        "timeUnit": "MILLISECONDS",
+			        "runnableWrapperApplied": true,
+			        "callbackMethod": "PlayerController.stopProtectionActiveTask",
+			        "oldFuturePresent": {{oldFuturePresent}},
+			        "oldFutureCancelArgument": {{oldFutureCancelArgument}},
+			        "oldFutureCancelResult": {{oldFutureCancelResult}},
+			        "newFutureStored": true
+			      },
+			      "actionBranchName": "{{(replacementCancelsOldFuture ? "replace_old_protection_future" : "store_new_protection_future")}}"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "{{scenario}}-001",
+			      "eventSeq": 2,
+			      "phase": "callback_enter",
+			      "packetName": "SCHEDULED_PROTECTION_ACTIVE_CALLBACK",
+			      "returnReason": "{{stopOrigin}}",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": true,
+			      "wallTimeEpochMillis": 1760000060000,
+			      "monotonicNanos": 100000000,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "ThreadPoolManager.java",
+			      "javaLine": 53,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": true,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": {
+			        "delayMillis": 60000,
+			        "timeUnit": "MILLISECONDS",
+			        "runnableWrapperApplied": true,
+			        "callbackMethod": "PlayerController.stopProtectionActiveTask",
+			        "oldFuturePresent": false,
+			        "oldFutureCancelArgument": null,
+			        "oldFutureCancelResult": null,
+			        "newFutureStored": true
+			      },
+			      "actionBranchName": "scheduled_future_callback_enter"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "{{scenario}}-001",
+			      "eventSeq": 3,
+			      "phase": "stop_call_enter",
+			      "packetName": "SCHEDULED_PROTECTION_ACTIVE_CALLBACK",
+			      "returnReason": "{{stopOrigin}}",
+			      "stopCalled": true,
+			      "expectsStopProtectionCall": true,
+			      "wallTimeEpochMillis": 1760000060001,
+			      "monotonicNanos": 100000100,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "PlayerController.java",
+			      "javaLine": 641,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": true,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "actionBranchName": "stop_protection_active_task"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "{{scenario}}-001",
+			      "eventSeq": 4,
+			      "phase": "task_cancel",
+			      "packetName": "SCHEDULED_PROTECTION_ACTIVE_CALLBACK",
+			      "returnReason": "{{stopOrigin}}",
+			      "stopCalled": true,
+			      "expectsStopProtectionCall": true,
+			      "wallTimeEpochMillis": 1760000060002,
+			      "monotonicNanos": 100000200,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "CreatureController.java",
+			      "javaLine": 364,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": true,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": {
+			        "taskIdName": "PROTECTION_ACTIVE",
+			        "taskIdOrdinal": 3,
+			        "taskPresentBeforeCancel": true,
+			        "taskRemovedBeforeCancel": true,
+			        "futureCancelArgument": false,
+			        "futureCancelResult": true,
+			        "scheduledDelayMillis": 60000,
+			        "stopOrigin": "{{stopOrigin}}"
+			      },
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "actionBranchName": "cancel_current_protection_future"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "{{scenario}}-001",
+			      "eventSeq": 5,
+			      "phase": "visual_mutate",
+			      "packetName": "SCHEDULED_PROTECTION_ACTIVE_CALLBACK",
+			      "returnReason": "{{stopOrigin}}",
+			      "stopCalled": true,
+			      "expectsStopProtectionCall": true,
+			      "wallTimeEpochMillis": 1760000060003,
+			      "monotonicNanos": 100000300,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "PlayerController.java",
+			      "javaLine": 645,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": true,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": false,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": []
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "actionBranchName": "unset_blinking"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "{{scenario}}-001",
+			      "eventSeq": 6,
+			      "phase": "state_broadcast",
+			      "packetName": "SCHEDULED_PROTECTION_ACTIVE_CALLBACK",
+			      "returnReason": "{{stopOrigin}}",
+			      "stopCalled": true,
+			      "expectsStopProtectionCall": true,
+			      "wallTimeEpochMillis": 1760000060004,
+			      "monotonicNanos": 100000400,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "PlayerController.java",
+			      "javaLine": 646,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": true,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": false,
+			        "protectionActiveAfter": false,
+			        "visualStateBefore": [],
+			        "visualStateAfter": []
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": {
+			        "packetName": "SM_PLAYER_STATE",
+			        "includeSelf": true,
+			        "recipientCount": 2,
+			        "knownListOrderIsParityKey": false
+			      },
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "actionBranchName": "broadcast_state"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "{{scenario}}-001",
+			      "eventSeq": 7,
+			      "phase": "ai_notify_enqueue",
+			      "packetName": "SCHEDULED_PROTECTION_ACTIVE_CALLBACK",
+			      "returnReason": "{{stopOrigin}}",
+			      "stopCalled": true,
+			      "expectsStopProtectionCall": true,
+			      "wallTimeEpochMillis": 1760000060005,
+			      "monotonicNanos": 100000500,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "PlayerController.java",
+			      "javaLine": 647,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": true,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": false,
+			        "protectionActiveAfter": false,
+			        "visualStateBefore": [],
+			        "visualStateAfter": []
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": {
+			        "notifyAiOnMoveCalled": true,
+			        "ordering": "after_state_broadcast"
+			      },
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "actionBranchName": "ai_notify"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "{{scenario}}-001",
+			      "eventSeq": 8,
+			      "phase": "callback_return",
+			      "packetName": "SCHEDULED_PROTECTION_ACTIVE_CALLBACK",
+			      "returnReason": "{{stopOrigin}}",
+			      "stopCalled": true,
+			      "expectsStopProtectionCall": true,
+			      "wallTimeEpochMillis": 1760000060006,
+			      "monotonicNanos": 100000600,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "PlayerController.java",
+			      "javaLine": 648,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": true,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": false,
+			        "protectionActiveAfter": false,
+			        "visualStateBefore": [],
+			        "visualStateAfter": []
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "actionBranchName": "callback_return"
+			    }
+			  ],
+			  "notes": [
+			    "Wall-clock timestamps are diagnostics only; eventSeq is the ordering key.",
+			    "Inline fixture proves reader binding only, not Java runtime parity."
+			  ]
+			}
+			""";
+
+		var artifact = JsonSerializer.Deserialize<ProtectionStopTriggerJavaTraceArtifact>(json, JsonOptions);
+		Assert.NotNull(artifact);
+		AssertArtifactSemantics(artifact);
+		return artifact;
+	}
+
 	private static ProtectionStopTriggerJavaTraceArtifact ParseNoStopArtifact(
 		string scenario,
 		string packetName,
@@ -1161,6 +1597,7 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactReader
 		ProtectionStopTriggerAiNotifySnapshot? AiNotify,
 		ProtectionStopTriggerEmotionSnapshot? Emotion,
 		ProtectionStopTriggerActionPayloadSnapshot? ActionPayload,
+		ProtectionStopTriggerSchedulerSnapshot? Scheduler,
 		string ActionBranchName);
 
 	private sealed record ProtectionStopTriggerPlayerSnapshot(
@@ -1223,4 +1660,14 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactReader
 		int? CompositeFirstObjectId,
 		int? CompositeSecondObjectId,
 		string? CompositeCanActResult);
+
+	private sealed record ProtectionStopTriggerSchedulerSnapshot(
+		int DelayMillis,
+		string TimeUnit,
+		bool RunnableWrapperApplied,
+		string CallbackMethod,
+		bool OldFuturePresent,
+		bool? OldFutureCancelArgument,
+		bool? OldFutureCancelResult,
+		bool NewFutureStored);
 }
