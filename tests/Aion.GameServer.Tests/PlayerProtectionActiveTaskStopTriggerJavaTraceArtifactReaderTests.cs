@@ -673,6 +673,54 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactReader
 		Assert.DoesNotContain(artifact.Traces, trace => trace.JavaLine is 39 or 40 or 45 or 46);
 	}
 
+	[Fact]
+	public void TeleportAnimationDoneExceptionArtifacts_RecordFallbackOnlyWhenPlayerRemainsUnspawned()
+	{
+		var artifact = ParseTeleportAnimationDoneExceptionFallbackArtifact();
+
+		Assert.Equal(1, artifact.SchemaVersion);
+		Assert.Equal("teleport-animation-done-exception-fallback-spawns-only-when-unspawned", artifact.Scenario);
+		Assert.Equal("animation_done_spawn_task_exception_fallback", artifact.RuntimeFacts.ExpectedReturnReason);
+		Assert.Contains("CM_TELEPORT_ANIMATION_DONE.runImpl", artifact.JavaSources);
+		Assert.Contains("World.spawn", artifact.JavaSources);
+		Assert.Contains("SM_PLAYER_INFO", artifact.JavaSources);
+
+		var animationDone = artifact.Traces.Single(trace => trace.Phase == "animation_done_enter");
+		var spawnTaskRun = artifact.Traces.Single(trace => trace.Phase == "spawn_task_run");
+		var spawnTaskGet = artifact.Traces.Single(trace => trace.Phase == "spawn_task_get_exception");
+		var catchLog = artifact.Traces.Single(trace => trace.Phase == "exception_logged");
+		var fallbackPacket = artifact.Traces.Single(trace => trace.Phase == "exception_fallback_player_info_packet");
+		var fallbackSpawn = artifact.Traces.Single(trace => trace.Phase == "exception_fallback_world_spawn");
+		var spawnedGuard = artifact.Traces.Single(trace => trace.Phase == "exception_spawned_guard_noop");
+
+		Assert.NotNull(animationDone.Scheduler);
+		Assert.True(animationDone.Scheduler!.OldFuturePresent);
+		Assert.Equal("TeleportService.SpawnTask.run", animationDone.Scheduler.CallbackMethod);
+		Assert.False(spawnTaskRun.Player.Spawned);
+		Assert.Equal("spawnTask.get", spawnTaskGet.Scheduler!.CallbackMethod);
+		Assert.Equal("LoggerFactory.error(e.getCause)", catchLog.ActionBranchName);
+		Assert.NotNull(fallbackPacket.Fanout);
+		Assert.Equal("SM_PLAYER_INFO", fallbackPacket.Fanout!.PacketName);
+		Assert.True(fallbackPacket.Fanout.IncludeSelf);
+		Assert.True(fallbackSpawn.Player.Spawned);
+		Assert.NotNull(fallbackSpawn.CallerOrigin);
+		Assert.Null(fallbackSpawn.CallerOrigin!.StartProtectionLine);
+		Assert.False(fallbackSpawn.CallerOrigin.StartsProtectionBeforeWorldSpawn);
+		Assert.Equal(46, fallbackSpawn.CallerOrigin.WorldSpawnLine);
+		Assert.True(spawnedGuard.Player.Spawned);
+		Assert.Null(spawnedGuard.Fanout);
+		Assert.Null(spawnedGuard.CallerOrigin);
+		Assert.True(animationDone.EventSeq < spawnTaskRun.EventSeq);
+		Assert.True(spawnTaskRun.EventSeq < spawnTaskGet.EventSeq);
+		Assert.True(spawnTaskGet.EventSeq < catchLog.EventSeq);
+		Assert.True(catchLog.EventSeq < fallbackPacket.EventSeq);
+		Assert.True(fallbackPacket.EventSeq < fallbackSpawn.EventSeq);
+		Assert.True(fallbackSpawn.EventSeq < spawnedGuard.EventSeq);
+		Assert.DoesNotContain(artifact.Traces, trace => trace.Phase is "world_position_set" or "pet_position_set" or "same_map_spawn_packets" or "protection_start_skip");
+		Assert.DoesNotContain(artifact.Traces, trace => trace.JavaLine is 517 or 518 or 523 or 213);
+		Assert.All(artifact.Traces, trace => Assert.False(trace.TimestampIsParityKey));
+	}
+
 	private static void AssertNoStopArtifact(ProtectionStopTriggerJavaTraceArtifact artifact)
 	{
 		Assert.Equal(1, artifact.SchemaVersion);
@@ -4449,6 +4497,334 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactReader
 			    "CM_TELEPORT_ANIMATION_DONE only runs a removed task when it is a RunnableFuture and is not done.",
 			    "Missing, already-complete, and non-runnable teleport tasks no-op after getAndRemoveTask.",
 			    "No-op branches do not send SM_PLAYER_INFO, spawn the player, set position, or touch protection state.",
+			    "Inline fixture proves reader binding only, not Java runtime parity."
+			  ]
+			}
+			""";
+
+		var artifact = JsonSerializer.Deserialize<ProtectionStopTriggerJavaTraceArtifact>(json, JsonOptions);
+		Assert.NotNull(artifact);
+		return artifact;
+	}
+
+	private static ProtectionStopTriggerJavaTraceArtifact ParseTeleportAnimationDoneExceptionFallbackArtifact()
+	{
+		const string json = """
+			{
+			  "schemaVersion": 1,
+			  "javaCommit": "abcdef1",
+			  "scenario": "teleport-animation-done-exception-fallback-spawns-only-when-unspawned",
+			  "runtimeFacts": {
+			    "serverFlavor": "java",
+			    "packetName": "CM_TELEPORT_ANIMATION_DONE",
+			    "playerObjectId": 1001,
+			    "worldId": 301390000,
+			    "expectedReturnReason": "animation_done_spawn_task_exception_fallback"
+			  },
+			  "javaSources": [
+			    "CM_TELEPORT_ANIMATION_DONE.runImpl",
+			    "TeleportService.SpawnTask.run",
+			    "LoggerFactory.error",
+			    "PacketSendUtility.sendPacket",
+			    "SM_PLAYER_INFO",
+			    "World.spawn"
+			  ],
+			  "traces": [
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "teleport-animation-done-exception-fallback-spawns-only-when-unspawned-001",
+			      "eventSeq": 0,
+			      "phase": "animation_done_enter",
+			      "packetName": "CM_TELEPORT_ANIMATION_DONE",
+			      "returnReason": "animation_done_spawn_task_exception_fallback",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000004000,
+			      "monotonicNanos": 14000000,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "CM_TELEPORT_ANIMATION_DONE.java",
+			      "javaLine": 36,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": {
+			        "taskIdName": "TELEPORT",
+			        "taskIdOrdinal": 1,
+			        "taskPresentBeforeCancel": true,
+			        "taskRemovedBeforeCancel": true,
+			        "futureCancelArgument": false,
+			        "futureCancelResult": false,
+			        "scheduledDelayMillis": 0,
+			        "stopOrigin": "animation_done_get_and_remove_pending_task"
+			      },
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": {
+			        "delayMillis": 0,
+			        "timeUnit": "CLIENT_ANIMATION_DONE",
+			        "runnableWrapperApplied": true,
+			        "callbackMethod": "TeleportService.SpawnTask.run",
+			        "oldFuturePresent": true,
+			        "oldFutureCancelArgument": null,
+			        "oldFutureCancelResult": null,
+			        "newFutureStored": false
+			      },
+			      "callerOrigin": null,
+			      "actionBranchName": "pending_runnable_future_removed"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "teleport-animation-done-exception-fallback-spawns-only-when-unspawned-001",
+			      "eventSeq": 1,
+			      "phase": "spawn_task_run",
+			      "packetName": "CM_TELEPORT_ANIMATION_DONE",
+			      "returnReason": "animation_done_spawn_task_exception_fallback",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000004001,
+			      "monotonicNanos": 14000100,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "CM_TELEPORT_ANIMATION_DONE.java",
+			      "javaLine": 40,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": {
+			        "delayMillis": 0,
+			        "timeUnit": "CLIENT_ANIMATION_DONE",
+			        "runnableWrapperApplied": true,
+			        "callbackMethod": "TeleportService.SpawnTask.run",
+			        "oldFuturePresent": true,
+			        "oldFutureCancelArgument": null,
+			        "oldFutureCancelResult": null,
+			        "newFutureStored": false
+			      },
+			      "callerOrigin": null,
+			      "actionBranchName": "spawn_task_run_now"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "teleport-animation-done-exception-fallback-spawns-only-when-unspawned-001",
+			      "eventSeq": 2,
+			      "phase": "spawn_task_get_exception",
+			      "packetName": "CM_TELEPORT_ANIMATION_DONE",
+			      "returnReason": "animation_done_spawn_task_exception_fallback",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000004002,
+			      "monotonicNanos": 14000200,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "CM_TELEPORT_ANIMATION_DONE.java",
+			      "javaLine": 41,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": {
+			        "delayMillis": 0,
+			        "timeUnit": "CLIENT_ANIMATION_DONE",
+			        "runnableWrapperApplied": true,
+			        "callbackMethod": "spawnTask.get",
+			        "oldFuturePresent": true,
+			        "oldFutureCancelArgument": null,
+			        "oldFutureCancelResult": null,
+			        "newFutureStored": false
+			      },
+			      "callerOrigin": null,
+			      "actionBranchName": "execution_exception_from_spawn_task"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "teleport-animation-done-exception-fallback-spawns-only-when-unspawned-001",
+			      "eventSeq": 3,
+			      "phase": "exception_logged",
+			      "packetName": "CM_TELEPORT_ANIMATION_DONE",
+			      "returnReason": "animation_done_spawn_task_exception_fallback",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000004003,
+			      "monotonicNanos": 14000300,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "CM_TELEPORT_ANIMATION_DONE.java",
+			      "javaLine": 43,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "callerOrigin": null,
+			      "actionBranchName": "LoggerFactory.error(e.getCause)"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "teleport-animation-done-exception-fallback-spawns-only-when-unspawned-001",
+			      "eventSeq": 4,
+			      "phase": "exception_fallback_player_info_packet",
+			      "packetName": "CM_TELEPORT_ANIMATION_DONE",
+			      "returnReason": "animation_done_spawn_task_exception_fallback",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000004004,
+			      "monotonicNanos": 14000400,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "CM_TELEPORT_ANIMATION_DONE.java",
+			      "javaLine": 45,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": false,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": {
+			        "packetName": "SM_PLAYER_INFO",
+			        "includeSelf": true,
+			        "recipientCount": 1,
+			        "knownListOrderIsParityKey": false
+			      },
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "callerOrigin": null,
+			      "actionBranchName": "send_player_info_after_exception"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "teleport-animation-done-exception-fallback-spawns-only-when-unspawned-001",
+			      "eventSeq": 5,
+			      "phase": "exception_fallback_world_spawn",
+			      "packetName": "CM_TELEPORT_ANIMATION_DONE",
+			      "returnReason": "animation_done_spawn_task_exception_fallback",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000004005,
+			      "monotonicNanos": 14000500,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "CM_TELEPORT_ANIMATION_DONE.java",
+			      "javaLine": 46,
+			      "player": {
+			        "objectId": 1001,
+			        "spawned": true,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "callerOrigin": {
+			        "callerName": "animation_done_spawn_task_exception_fallback",
+			        "callerClass": "CM_TELEPORT_ANIMATION_DONE",
+			        "callerMethod": "runImpl",
+			        "callerSourceFile": "CM_TELEPORT_ANIMATION_DONE.java",
+			        "callerLine": 42,
+			        "startProtectionLine": null,
+			        "startsProtectionBeforeWorldSpawn": false,
+			        "worldSpawnLine": 46,
+			        "spawnedBeforeStart": false,
+			        "ordering": "spawn_task_get_exception_logs_then_packet_before_world_spawn"
+			      },
+			      "actionBranchName": "world_spawn_after_exception"
+			    },
+			    {
+			      "schemaVersion": 1,
+			      "traceId": "teleport-animation-done-exception-fallback-spawns-only-when-unspawned-001",
+			      "eventSeq": 6,
+			      "phase": "exception_spawned_guard_noop",
+			      "packetName": "CM_TELEPORT_ANIMATION_DONE",
+			      "returnReason": "animation_done_spawn_task_exception_fallback_spawned_guard",
+			      "stopCalled": false,
+			      "expectsStopProtectionCall": false,
+			      "wallTimeEpochMillis": 1760000004006,
+			      "monotonicNanos": 14000600,
+			      "timestampIsParityKey": false,
+			      "javaSourceFile": "CM_TELEPORT_ANIMATION_DONE.java",
+			      "javaLine": 44,
+			      "player": {
+			        "objectId": 1002,
+			        "spawned": true,
+			        "flying": false,
+			        "dead": false,
+			        "protectionActiveBefore": true,
+			        "protectionActiveAfter": true,
+			        "visualStateBefore": ["BLINKING"],
+			        "visualStateAfter": ["BLINKING"]
+			      },
+			      "movement": null,
+			      "taskCancellation": null,
+			      "fanout": null,
+			      "aiNotify": null,
+			      "emotion": null,
+			      "actionPayload": null,
+			      "scheduler": null,
+			      "callerOrigin": null,
+			      "actionBranchName": "exception_branch_player_already_spawned_no_packet_or_spawn"
+			    }
+			  ],
+			  "notes": [
+			    "The catch branch logs e.getCause() before checking player.isSpawned().",
+			    "Fallback SM_PLAYER_INFO and World.spawn(player) are only represented for the unspawned branch.",
+			    "The spawned guard row records that the same catch branch should not send packet or spawn when the player is already spawned.",
 			    "Inline fixture proves reader binding only, not Java runtime parity."
 			  ]
 			}
