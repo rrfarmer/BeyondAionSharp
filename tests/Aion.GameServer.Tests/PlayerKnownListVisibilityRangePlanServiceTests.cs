@@ -89,6 +89,30 @@ public sealed class PlayerKnownListVisibilityRangePlanServiceTests
 			plan.OperationPlan.Steps.Select(step => step.Kind));
 	}
 
+	[Fact]
+	public void Plan_OutOfRangeExistingInvisibleMembershipSkipsNotSeeSideEffects()
+	{
+		var service = new PlayerKnownListVisibilityRangePlanService();
+
+		var plan = service.Plan(
+			CreateObject(OwnerPlayerObjectId, x: 0, knowsOther: true, canSeeOther: false),
+			CreateObject(CandidatePlayerObjectId, x: 200, knowsOther: true, canSeeOther: false));
+
+		Assert.False(plan.IsInJavaRange);
+		Assert.Equal(PlayerKnownListTwoWayOperationKind.Remove, plan.OperationPlan.Kind);
+		Assert.Equal(
+			[
+				PlayerKnownListTwoWayOperationStepKind.OwnerRemovesCandidate,
+				PlayerKnownListTwoWayOperationStepKind.OwnerNotKnowsCandidate,
+				PlayerKnownListTwoWayOperationStepKind.CandidateRemovesOwner,
+				PlayerKnownListTwoWayOperationStepKind.CandidateNotKnowsOwner,
+			],
+			plan.OperationPlan.Steps.Select(step => step.Kind));
+		Assert.DoesNotContain(plan.OperationPlan.Steps, step => step.Kind is
+			PlayerKnownListTwoWayOperationStepKind.OwnerNotSeesCandidate or
+			PlayerKnownListTwoWayOperationStepKind.CandidateNotSeesOwner);
+	}
+
 	private static PlayerKnownListVisibilityRangeObject CreateObject(
 		int playerObjectId,
 		float x,
