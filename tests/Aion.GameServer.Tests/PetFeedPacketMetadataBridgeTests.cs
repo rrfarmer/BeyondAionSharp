@@ -278,7 +278,51 @@ public sealed class PetFeedPacketMetadataBridgeTests
 	}
 
 	[Fact]
-	public void Construct_RejectedFoodUnlockKeepsLegionWarehouseStorageBlockedUntilLegionPacketBehaviorExists()
+	public void Construct_RejectedFoodWithLegionWarehouseItemUnlockContextBuildsWarehousePacketsLikeJava()
+	{
+		var bridge = new PetFeedPacketMetadataBridge();
+		var plan = new PetFeedServiceOperationPlan(
+			PetFeedServiceOperationPlanStatus.RejectedFood,
+			Evaluation: new PetFeedEvaluationResult(null, IsLovedFood: false, Reward: null),
+			Operations: [new PetFeedServiceOperation(PetFeedServiceOperationKind.UnlockFoodItem, ItemObjectId: 5001)],
+			RemainingRequestedCount: 1,
+			RefeedTimeMilliseconds: null);
+		var item = new InventoryItem { ObjectId = 5001, ItemId = 188000001, Count = 2, OwnerId = 7001, Location = SmWarehouseAddItem.LegionWarehouse, Slot = 4 };
+
+		var result = bridge.Construct(new PetFeedPacketMetadataBridgeRequest(
+			plan,
+			FeedProgressData: 0x123450,
+			SupplementalContext: new PetFeedSupplementalPacketContext(
+				UnlockPacketContext: new PetFeedUnlockPacketContext(
+					PetFeedUnlockPacketStorageKind.LegionWarehouse,
+					item,
+					CreateTemplate(item.ItemId, "Legion Snack"),
+					NpcExpands: 6,
+					StorageItemsCount: 21))));
+
+		Assert.Equal(PetFeedPacketMetadataBridgeStatus.Constructed, result.Status);
+		var warehouseAdd = Assert.IsType<SmWarehouseAddItem>(result.Results[0].Packets[0]);
+		var cubeUpdate = Assert.IsType<SmCubeUpdate>(result.Results[0].Packets[1]);
+
+		using (var warehouseReader = new PacketBuffer(SerializeUnencryptedPayload(warehouseAdd)))
+		{
+			Assert.Equal(SmWarehouseAddItem.LegionWarehouse, (int)warehouseReader.ReadC());
+			Assert.Equal(SmWarehouseAddItem.AllSlot, warehouseReader.ReadH());
+			Assert.Equal(1, warehouseReader.ReadH());
+		}
+
+		using var cubeReader = new PacketBuffer(SerializeUnencryptedPayload(cubeUpdate));
+		Assert.Equal(0, (int)cubeReader.ReadC());
+		Assert.Equal(3, (int)cubeReader.ReadC());
+		Assert.Equal(21, cubeReader.ReadD());
+		Assert.Equal(6, (int)cubeReader.ReadC());
+		Assert.Equal(0, (int)cubeReader.ReadC());
+		Assert.Equal(0, (int)cubeReader.ReadC());
+		Assert.Equal(0, cubeReader.Remaining);
+	}
+
+	[Fact]
+	public void Construct_RejectedFoodWithLegionWarehouseKinahUnlockContextBuildsLegionEditLikeJava()
 	{
 		var bridge = new PetFeedPacketMetadataBridge();
 		var plan = new PetFeedServiceOperationPlan(
@@ -292,12 +336,32 @@ public sealed class PetFeedPacketMetadataBridgeTests
 			plan,
 			FeedProgressData: 0x123450,
 			SupplementalContext: new PetFeedSupplementalPacketContext(
-				UnlockPacketContext: new PetFeedUnlockPacketContext(PetFeedUnlockPacketStorageKind.LegionWarehouse))));
+				UnlockPacketContext: new PetFeedUnlockPacketContext(
+					PetFeedUnlockPacketStorageKind.LegionWarehouse,
+					NpcExpands: 7,
+					StorageItemsCount: 22,
+					IsKinah: true,
+					LegionWarehouseKinah: 123456))));
 
-		Assert.Equal(PetFeedPacketMetadataBridgeStatus.Blocked, result.Status);
-		Assert.Equal(PetFeedPacketMetadataResultStatus.BlockedItemUnlockPacket, result.Results[0].Status);
-		Assert.Empty(result.Results[0].Packets);
-		Assert.Contains("Legion warehouse", result.Results[0].Notes);
+		Assert.Equal(PetFeedPacketMetadataBridgeStatus.Constructed, result.Status);
+		var legionEdit = Assert.IsType<SmLegionEdit>(result.Results[0].Packets[0]);
+		var cubeUpdate = Assert.IsType<SmCubeUpdate>(result.Results[0].Packets[1]);
+
+		using (var legionReader = new PacketBuffer(SerializeUnencryptedPayload(legionEdit)))
+		{
+			Assert.Equal(4, (int)legionReader.ReadC());
+			Assert.Equal(123456, legionReader.ReadQ());
+			Assert.Equal(0, legionReader.Remaining);
+		}
+
+		using var cubeReader = new PacketBuffer(SerializeUnencryptedPayload(cubeUpdate));
+		Assert.Equal(0, (int)cubeReader.ReadC());
+		Assert.Equal(3, (int)cubeReader.ReadC());
+		Assert.Equal(22, cubeReader.ReadD());
+		Assert.Equal(7, (int)cubeReader.ReadC());
+		Assert.Equal(0, (int)cubeReader.ReadC());
+		Assert.Equal(0, (int)cubeReader.ReadC());
+		Assert.Equal(0, cubeReader.Remaining);
 	}
 
 	[Fact]

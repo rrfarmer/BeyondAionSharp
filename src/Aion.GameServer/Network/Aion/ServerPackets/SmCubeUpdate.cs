@@ -11,6 +11,7 @@ public sealed class SmCubeUpdate : GameServerPacket
 	private const int RegularWarehouseStorageId = 1;
 	private const int RegularWarehouseStorageOrdinal = 1;
 	private const int AccountWarehouseStorageOrdinal = 2;
+	private const int LegionWarehouseStorageOrdinal = 3;
 	private const int KinahItemId = 182400001;
 
 	private readonly int _action;
@@ -64,6 +65,13 @@ public sealed class SmCubeUpdate : GameServerPacket
 	{
 		// Java parity: SM_CUBE_UPDATE.cubeSize(StorageType.ACCOUNT_WAREHOUSE, Player) falls through to zero counts.
 		return new SmCubeUpdate(0, AccountWarehouseStorageOrdinal, 0, 0, 0, 0);
+	}
+
+	public static SmCubeUpdate LegionWarehouseSizeSnapshot(int itemsCount, int warehouseExpansions)
+	{
+		// Java parity: SM_CUBE_UPDATE.cubeSize(StorageType.LEGION_WAREHOUSE, Player) after callers
+		// have captured LegionWarehouse.size()/Legion.getWarehouseExpansions() at the fanout point.
+		return new SmCubeUpdate(0, LegionWarehouseStorageOrdinal, itemsCount, warehouseExpansions, 0, 0);
 	}
 
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)

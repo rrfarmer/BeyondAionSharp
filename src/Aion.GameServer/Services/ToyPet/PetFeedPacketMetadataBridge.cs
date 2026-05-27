@@ -40,7 +40,9 @@ public sealed record PetFeedUnlockPacketContext(
 	int NpcExpands = 0,
 	int QuestExpands = 0,
 	int ItemExpands = 0,
-	int StorageItemsCount = 0);
+	int StorageItemsCount = 0,
+	bool IsKinah = false,
+	long LegionWarehouseKinah = 0);
 
 public sealed record PetFeedSupplementalPacketContext(
 	int? PlayerObjectId = null,
@@ -219,12 +221,7 @@ public sealed class PetFeedPacketMetadataBridge
 		PetFeedUnlockPacketContext context)
 	{
 		if (context.StorageKind is PetFeedUnlockPacketStorageKind.LegionWarehouse)
-		{
-			return Blocked(
-				operation,
-				PetFeedPacketMetadataResultStatus.BlockedItemUnlockPacket,
-				"Legion warehouse unlock metadata is blocked until SM_LEGION_EDIT kinah behavior and legion storage snapshots are modeled.");
-		}
+			return ConstructLegionWarehouseItemUnlock(operation, context);
 
 		if (context.StorageKind is not (PetFeedUnlockPacketStorageKind.Warehouse or PetFeedUnlockPacketStorageKind.AccountWarehouse))
 		{
@@ -258,6 +255,42 @@ public sealed class PetFeedPacketMetadataBridge
 			warehouseAdd,
 			Notes: $"Constructed non-sending {context.StorageKind} unlock metadata: SmWarehouseAddItem ALL_SLOT followed by SmCubeUpdate.",
 			PacketSequence: [warehouseAdd, cubeUpdate]);
+	}
+
+	private static PetFeedPacketMetadataResult ConstructLegionWarehouseItemUnlock(
+		PetFeedServiceOperation operation,
+		PetFeedUnlockPacketContext context)
+	{
+		GameServerPacket firstPacket;
+		var cubeUpdate = SmCubeUpdate.LegionWarehouseSizeSnapshot(context.StorageItemsCount, context.NpcExpands);
+
+		if (context.IsKinah)
+		{
+			// Java parity: ItemPacketService.sendStorageUpdatePacket LEGION_WAREHOUSE kinah branch
+			// emits SM_LEGION_EDIT(0x04, player.getLegion()) before the cube update.
+			firstPacket = SmLegionEdit.WarehouseKinah(context.LegionWarehouseKinah);
+		}
+		else
+		{
+			if (context.Item is null || context.Template is null)
+			{
+				return Blocked(
+					operation,
+					PetFeedPacketMetadataResultStatus.BlockedItemUnlockPacket,
+					"Legion warehouse item unlock metadata needs supplied item and template snapshots.");
+			}
+
+			firstPacket = SmWarehouseAddItem.CreateAllSlot(SmWarehouseAddItem.LegionWarehouse, context.Item, context.Template);
+		}
+
+		return new PetFeedPacketMetadataResult(
+			operation,
+			PetFeedPacketMetadataResultStatus.Constructed,
+			firstPacket,
+			Notes: context.IsKinah
+				? "Constructed non-sending legion warehouse kinah unlock metadata: SmLegionEdit WarehouseKinah followed by SmCubeUpdate."
+				: "Constructed non-sending legion warehouse item unlock metadata: SmWarehouseAddItem ALL_SLOT followed by SmCubeUpdate.",
+			PacketSequence: [firstPacket, cubeUpdate]);
 	}
 
 	private static PetFeedPacketMetadataResult ConstructEndFeedingEmotion(
