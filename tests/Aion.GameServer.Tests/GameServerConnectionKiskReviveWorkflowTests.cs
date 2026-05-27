@@ -257,6 +257,27 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 		Assert.Contains(registry.SentPackets, delivery => delivery.PlayerObjectId == creator.ObjectId && delivery.Packet is SmKiskUpdate);
 		Assert.Contains(registry.SentPackets, delivery => delivery.PlayerObjectId == deadMember.ObjectId && delivery.Packet is SmBindPointInfo);
 		Assert.Contains(registry.SentPackets, delivery => delivery.PlayerObjectId == deadMember.ObjectId && delivery.Packet is SmDie);
+		var operations = registry.OperationOrder;
+		var kiskUpdateBroadcastIndex = operations.FindIndex(entry => entry == "broadcast:9001:SmKiskUpdate");
+		var creatorFinalUpdateIndex = operations.FindLastIndex(entry => entry == $"send:{creator.ObjectId}:SmKiskUpdate");
+		var bindPointIndex = operations.FindIndex(entry => entry == $"send:{deadMember.ObjectId}:SmBindPointInfo");
+		var deathRefreshIndex = operations.FindIndex(entry => entry == $"send:{deadMember.ObjectId}:SmDie");
+		var npcRefreshIndex = operations.FindIndex(entry => entry == "refresh-npc");
+		var firstReviveEmotionIndex = operations.FindIndex(entry => entry == $"broadcast:{revivedPlayer.ObjectId}:SmEmotion");
+		var teleportDeleteIndex = operations.FindIndex(entry => entry == $"broadcast:{revivedPlayer.ObjectId}:SmDelete");
+		Assert.True(kiskUpdateBroadcastIndex >= 0);
+		Assert.True(creatorFinalUpdateIndex >= 0);
+		Assert.True(bindPointIndex >= 0);
+		Assert.True(deathRefreshIndex >= 0);
+		Assert.True(npcRefreshIndex >= 0);
+		Assert.True(firstReviveEmotionIndex >= 0);
+		Assert.True(teleportDeleteIndex >= 0);
+		Assert.True(kiskUpdateBroadcastIndex < creatorFinalUpdateIndex);
+		Assert.True(creatorFinalUpdateIndex < bindPointIndex);
+		Assert.True(bindPointIndex < deathRefreshIndex);
+		Assert.True(deathRefreshIndex < npcRefreshIndex);
+		Assert.True(npcRefreshIndex < firstReviveEmotionIndex);
+		Assert.True(firstReviveEmotionIndex < teleportDeleteIndex);
 		Assert.True(registry.RefreshNpcVisibilityCalls >= 1);
 		Assert.Contains(registry.RefreshedNpcs, npc => npc.ObjectId == 9002);
 	}
@@ -347,6 +368,8 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 
 		public List<BroadcastRecord> Broadcasts { get; } = [];
 
+		public List<string> OperationOrder { get; } = [];
+
 		public int RefreshNpcVisibilityCalls { get; private set; }
 
 		public void RegisterPlayerConnection(int playerObjectId, GameServerConnection connection)
@@ -371,6 +394,7 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 
 		public Task<bool> SendPacketToPlayerAsync(int playerObjectId, GameServerPacket packet)
 		{
+			OperationOrder.Add($"send:{playerObjectId}:{packet.GetType().Name}");
 			SentPackets.Add(new PacketDelivery(playerObjectId, packet));
 			return Task.FromResult(true);
 		}
@@ -387,10 +411,14 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 			bool includeSourcePlayer = false,
 			Func<Player, bool>? filter = null)
 		{
+			OperationOrder.Add($"broadcast:{sourceObjectId}:{packet.GetType().Name}");
 			Broadcasts.Add(new BroadcastRecord(sourcePosition, sourceObjectId, packet, includeSourcePlayer));
 			var recipients = OnlinePlayers.Where(player => filter?.Invoke(player) ?? true).ToArray();
 			foreach (var recipient in recipients)
+			{
+				OperationOrder.Add($"send:{recipient.ObjectId}:{packet.GetType().Name}");
 				SentPackets.Add(new PacketDelivery(recipient.ObjectId, packet));
+			}
 			return Task.FromResult(recipients.Length);
 		}
 
@@ -404,6 +432,7 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 
 		public Task<int> RefreshNpcVisibilityAsync(IReadOnlyList<IWorldNpcObject> npcs, int? playerObjectId = null)
 		{
+			OperationOrder.Add("refresh-npc");
 			RefreshNpcVisibilityCalls++;
 			RefreshedNpcs.AddRange(npcs);
 			return Task.FromResult(npcs.Count);
