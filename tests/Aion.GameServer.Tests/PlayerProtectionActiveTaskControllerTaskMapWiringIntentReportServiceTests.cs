@@ -81,6 +81,108 @@ public sealed class PlayerProtectionActiveTaskControllerTaskMapWiringIntentRepor
 			&& row.Notes.Contains("Delayed callback preview is missing", StringComparison.Ordinal));
 	}
 
+	[Fact]
+	public async Task Create_DetailedStopTriggerSummaryAddsPacketHookBlocker()
+	{
+		var closure = PlayerProtectionActiveTaskLifecycleClosureReportService.Create(await CreateAggregateAsync(
+			includeDelayedPreview: true,
+			alreadyProtected: false,
+			ownerHasTask: true));
+		var summary = CreateDetailedStopTriggerSummary();
+
+		var report = PlayerProtectionActiveTaskControllerTaskMapWiringIntentReportService.Create(closure, summary);
+
+		Assert.False(report.ReadyForImplementation);
+		Assert.True(report.HasFirstActionPacketStopTriggerIntent);
+		Assert.Contains(report.Rows, row =>
+			row.Hook == PlayerProtectionActiveTaskControllerTaskMapWiringHook.FirstActionPacketStopTriggers
+			&& row.ShouldImplementHook
+			&& row.BlocksImplementation
+			&& row.Status == PlayerProtectionActiveTaskControllerTaskMapWiringIntentStatus.NeedsRuntimeVerification
+			&& row.Notes.Contains("Summary classifies packet stop triggers", StringComparison.Ordinal));
+	}
+
+	[Fact]
+	public async Task Create_DefaultPendingStopTriggerSummaryKeepsPacketHookBlockedWithoutIntent()
+	{
+		var closure = PlayerProtectionActiveTaskLifecycleClosureReportService.Create(await CreateAggregateAsync(
+			includeDelayedPreview: true,
+			alreadyProtected: false,
+			ownerHasTask: true));
+		var summary = PlayerProtectionActiveTaskFirstActionStopTriggerSummaryReportService.Create(
+			PlayerProtectionActiveTaskFirstActionStopTriggerAuditService.Create(CreateBaseStopTriggerRequest()));
+
+		var report = PlayerProtectionActiveTaskControllerTaskMapWiringIntentReportService.Create(closure, summary);
+
+		Assert.False(report.ReadyForImplementation);
+		Assert.False(report.HasFirstActionPacketStopTriggerIntent);
+		Assert.Contains(report.Rows, row =>
+			row.Hook == PlayerProtectionActiveTaskControllerTaskMapWiringHook.FirstActionPacketStopTriggers
+			&& !row.ShouldImplementHook
+			&& row.BlocksImplementation);
+	}
+
+	[Fact]
+	public async Task Create_MissingStopTriggerSummaryBlocksBeforePacketHookWork()
+	{
+		var closure = PlayerProtectionActiveTaskLifecycleClosureReportService.Create(await CreateAggregateAsync(
+			includeDelayedPreview: true,
+			alreadyProtected: false,
+			ownerHasTask: true));
+
+		var report = PlayerProtectionActiveTaskControllerTaskMapWiringIntentReportService.Create(closure);
+
+		Assert.False(report.ReadyForImplementation);
+		Assert.False(report.HasFirstActionPacketStopTriggerIntent);
+		Assert.Contains(report.Rows, row =>
+			row.Hook == PlayerProtectionActiveTaskControllerTaskMapWiringHook.FirstActionPacketStopTriggers
+			&& row.Status == PlayerProtectionActiveTaskControllerTaskMapWiringIntentStatus.BlockedMissingPrerequisite
+			&& row.Notes.Contains("summary is missing", StringComparison.Ordinal));
+	}
+
+	private static PlayerProtectionActiveTaskFirstActionStopTriggerSummaryReport CreateDetailedStopTriggerSummary() =>
+		PlayerProtectionActiveTaskFirstActionStopTriggerSummaryReportService.Create(
+			PlayerProtectionActiveTaskFirstActionStopTriggerAuditService.Create(CreateBaseStopTriggerRequest(
+				packetX: 101f,
+				evaluateCmMoveInAir: true,
+				evaluateCmAttack: true,
+				evaluateCmCastSpell: true,
+				evaluateCmUseItem: true,
+				evaluateCmShowDialog: true,
+				evaluateCmDialogSelect: true,
+				evaluateCmCompositeStones: true,
+				evaluateCmEmotion: true)));
+
+	private static PlayerProtectionActiveTaskFirstActionStopTriggerAuditRequest CreateBaseStopTriggerRequest(
+		float packetX = CurrentX,
+		bool evaluateCmMoveInAir = false,
+		bool evaluateCmAttack = false,
+		bool evaluateCmCastSpell = false,
+		bool evaluateCmUseItem = false,
+		bool evaluateCmShowDialog = false,
+		bool evaluateCmDialogSelect = false,
+		bool evaluateCmCompositeStones = false,
+		bool evaluateCmEmotion = false) =>
+		new(
+			PlayerSpawned: true,
+			AntiHackAccepted: true,
+			TeleportationModeAbsoluteMove: false,
+			PlayerProtectionActive: true,
+			CurrentX,
+			CurrentY,
+			CurrentZ,
+			packetX,
+			CurrentY,
+			CurrentZ,
+			EvaluateCmMoveInAir: evaluateCmMoveInAir,
+			EvaluateCmAttack: evaluateCmAttack,
+			EvaluateCmCastSpell: evaluateCmCastSpell,
+			EvaluateCmUseItem: evaluateCmUseItem,
+			EvaluateCmShowDialog: evaluateCmShowDialog,
+			EvaluateCmDialogSelect: evaluateCmDialogSelect,
+			EvaluateCmCompositeStones: evaluateCmCompositeStones,
+			EvaluateCmEmotion: evaluateCmEmotion);
+
 	private static async Task<PlayerProtectionActiveTaskReadinessAggregateReport> CreateAggregateAsync(
 		bool includeDelayedPreview,
 		bool alreadyProtected,
@@ -180,4 +282,7 @@ public sealed class PlayerProtectionActiveTaskControllerTaskMapWiringIntentRepor
 	}
 
 	private const int PlayerObjectId = 1001;
+	private const float CurrentX = 100f;
+	private const float CurrentY = 200f;
+	private const float CurrentZ = 50f;
 }

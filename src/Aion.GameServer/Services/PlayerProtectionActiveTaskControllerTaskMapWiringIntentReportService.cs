@@ -7,6 +7,7 @@ public enum PlayerProtectionActiveTaskControllerTaskMapWiringHook
 	SchedulerCallbackExecution,
 	ControllerLifecycleCleanup,
 	SpawnedPlayerSideEffects,
+	FirstActionPacketStopTriggers,
 	RuntimeComparison,
 }
 
@@ -37,6 +38,7 @@ public sealed record PlayerProtectionActiveTaskControllerTaskMapWiringIntentRepo
 	bool HasStopCancellationIntent,
 	bool HasSchedulerCallbackIntent,
 	bool HasLifecycleCleanupIntent,
+	bool HasFirstActionPacketStopTriggerIntent,
 	bool HasRuntimeComparisonBlocker,
 	bool ReadyForImplementation,
 	string JavaSource,
@@ -45,7 +47,8 @@ public sealed record PlayerProtectionActiveTaskControllerTaskMapWiringIntentRepo
 public static class PlayerProtectionActiveTaskControllerTaskMapWiringIntentReportService
 {
 	public static PlayerProtectionActiveTaskControllerTaskMapWiringIntentReport Create(
-		PlayerProtectionActiveTaskLifecycleClosureReport closure)
+		PlayerProtectionActiveTaskLifecycleClosureReport closure,
+		PlayerProtectionActiveTaskFirstActionStopTriggerSummaryReport? stopTriggerSummary = null)
 	{
 		var rows = new List<PlayerProtectionActiveTaskControllerTaskMapWiringIntentRow>();
 
@@ -54,6 +57,7 @@ public static class PlayerProtectionActiveTaskControllerTaskMapWiringIntentRepor
 		AddSchedulerCallback(rows, closure);
 		AddLifecycleCleanup(rows, closure);
 		AddSpawnedSideEffects(rows, closure);
+		AddFirstActionPacketStopTriggers(rows, stopTriggerSummary);
 		AddRuntimeComparison(rows, closure);
 
 		var rowArray = rows.ToArray();
@@ -67,6 +71,7 @@ public static class PlayerProtectionActiveTaskControllerTaskMapWiringIntentRepor
 			HasStopCancellationIntent: rowArray.Any(row => row.Hook == PlayerProtectionActiveTaskControllerTaskMapWiringHook.StopProtectionTaskCancellation && row.ShouldImplementHook),
 			HasSchedulerCallbackIntent: rowArray.Any(row => row.Hook == PlayerProtectionActiveTaskControllerTaskMapWiringHook.SchedulerCallbackExecution && row.ShouldImplementHook),
 			HasLifecycleCleanupIntent: rowArray.Any(row => row.Hook == PlayerProtectionActiveTaskControllerTaskMapWiringHook.ControllerLifecycleCleanup && row.ShouldImplementHook),
+			HasFirstActionPacketStopTriggerIntent: rowArray.Any(row => row.Hook == PlayerProtectionActiveTaskControllerTaskMapWiringHook.FirstActionPacketStopTriggers && row.ShouldImplementHook),
 			HasRuntimeComparisonBlocker: rowArray.Any(row => row.Hook == PlayerProtectionActiveTaskControllerTaskMapWiringHook.RuntimeComparison && row.BlocksImplementation),
 			ReadyForImplementation: ready,
 			"PlayerController protection active task-map wiring intent report",
@@ -231,6 +236,41 @@ public static class PlayerProtectionActiveTaskControllerTaskMapWiringIntentRepor
 			runtime == null
 				? "Runtime comparison prerequisite is missing from the closure report."
 				: "Java runtime comparison must be generated before production scheduler/future/concurrency parity can be claimed.");
+	}
+
+	private static void AddFirstActionPacketStopTriggers(
+		ICollection<PlayerProtectionActiveTaskControllerTaskMapWiringIntentRow> rows,
+		PlayerProtectionActiveTaskFirstActionStopTriggerSummaryReport? stopTriggerSummary)
+	{
+		if (stopTriggerSummary == null)
+		{
+			Add(
+				rows,
+				PlayerProtectionActiveTaskControllerTaskMapWiringHook.FirstActionPacketStopTriggers,
+				PlayerProtectionActiveTaskControllerTaskMapWiringIntentStatus.BlockedMissingPrerequisite,
+				shouldImplementHook: false,
+				blocksImplementation: true,
+				"client packet runImpl -> player.getController().stopProtectionActiveTask()",
+				"CM_MOVE / CM_MOVE_IN_AIR / action packet callers",
+				"future packet-handler stopProtectionActiveTask hook composition",
+				"First-action stop-trigger summary is missing, so production packet stop hook wiring cannot be requested.");
+			return;
+		}
+
+		Add(
+			rows,
+			PlayerProtectionActiveTaskControllerTaskMapWiringHook.FirstActionPacketStopTriggers,
+			stopTriggerSummary.HasRuntimeComparisonBlocker
+				? PlayerProtectionActiveTaskControllerTaskMapWiringIntentStatus.NeedsRuntimeVerification
+				: PlayerProtectionActiveTaskControllerTaskMapWiringIntentStatus.PlannedBlocked,
+			shouldImplementHook: stopTriggerSummary.HasAllKnownPacketSources && !stopTriggerSummary.Rows.Any(row => row.Status == PlayerProtectionActiveTaskFirstActionStopTriggerSummaryStatus.PendingDetailedAudit),
+			blocksImplementation: true,
+			"client packet runImpl -> stopProtectionActiveTask before/after packet-specific guards",
+			stopTriggerSummary.JavaSource,
+			"future production packet-handler stop hook integration",
+			stopTriggerSummary.ReadyForProductionPacketStopWiring
+				? "Summary reports packet stop triggers ready, but production integration is still held behind this wiring intent gate."
+				: "Summary classifies packet stop triggers but production packet handlers, controller side effects, and Java runtime comparison remain disabled.");
 	}
 
 	private static PlayerProtectionActiveTaskLifecycleClosureRow? Find(
