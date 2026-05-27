@@ -50,6 +50,10 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirect
 			Assert.False(report.ReadyForRuntimeComparison);
 			Assert.Single(report.Files);
 			Assert.True(report.Files[0].ValidationReport.IsValidSchemaV1);
+			var metadata = report.Files[0].ValidationReport.Metadata!;
+			Assert.NotNull(metadata);
+			Assert.Equal("directory-reader-validator-contract", metadata.Scenario);
+			Assert.Single(metadata.TraceRows);
 		}
 		finally
 		{
@@ -73,6 +77,7 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirect
 			Assert.False(report.ReadyForRuntimeComparison);
 			Assert.Equal(2, report.Files.Count);
 			Assert.Contains(report.Files, file => file.ValidationReport.Issues.Any(issue => issue.Code == PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationIssueCode.UnsupportedSchemaVersion));
+			Assert.Contains(report.Files, file => !file.ValidationReport.IsValidSchemaV1 && file.ValidationReport.Metadata == null);
 		}
 		finally
 		{

@@ -19,11 +19,40 @@ public sealed record PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValid
 	string Path,
 	string Message);
 
+public sealed record PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactPlayerSnapshot(
+	int? ObjectId,
+	bool? Spawned,
+	bool? Flying,
+	bool? Dead,
+	bool? ProtectionActiveBefore,
+	bool? ProtectionActiveAfter,
+	IReadOnlyList<string> VisualStateBefore,
+	IReadOnlyList<string> VisualStateAfter);
+
+public sealed record PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactTraceRow(
+	int? EventSeq,
+	string Phase,
+	string PacketName,
+	string ReturnReason,
+	bool? StopCalled,
+	bool? ExpectsStopProtectionCall,
+	bool? TimestampIsParityKey,
+	PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactPlayerSnapshot Player);
+
+public sealed record PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactMetadata(
+	int SchemaVersion,
+	string JavaCommit,
+	string Scenario,
+	string RuntimePacketName,
+	string RuntimeExpectedReturnReason,
+	IReadOnlyList<PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactTraceRow> TraceRows);
+
 public sealed record PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationReport(
 	IReadOnlyList<PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationIssue> Issues,
 	bool IsValidSchemaV1,
 	bool ReadyForRuntimeComparison,
-	string Notes);
+	string Notes,
+	PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactMetadata? Metadata);
 
 /// <summary>
 /// Java parity breadcrumb: guarded schema-v1 validator for future generated Java trace artifacts
@@ -65,9 +94,9 @@ public static class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValida
 
 			ValidateRuntimeFacts(root, issues);
 			ValidateTraces(root, issues);
-		}
 
-		return CreateReport(issues);
+			return CreateReport(issues, issues.Count == 0 ? ParseMetadata(root) : null);
+		}
 	}
 
 	private static void ValidateRuntimeFacts(
@@ -167,12 +196,102 @@ public static class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValida
 	}
 
 	private static PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationReport CreateReport(
-		IReadOnlyList<PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationIssue> issues) =>
+		IReadOnlyList<PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationIssue> issues,
+		PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactMetadata? metadata = null) =>
 		new(
 			issues,
 			IsValidSchemaV1: issues.Count == 0,
 			ReadyForRuntimeComparison: false,
-			"Validation covers JSON schema shape only; generated Java artifacts and C# runtime comparison remain required.");
+			"Validation covers JSON schema shape only; generated Java artifacts and C# runtime comparison remain required.",
+			metadata);
+
+	private static PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactMetadata ParseMetadata(JsonElement root)
+	{
+		var runtimeFacts = root.GetProperty("runtimeFacts");
+		return new PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactMetadata(
+			SchemaVersion: GetInt(root, "schemaVersion") ?? 1,
+			JavaCommit: GetString(root, "javaCommit"),
+			Scenario: GetString(root, "scenario"),
+			RuntimePacketName: GetString(runtimeFacts, "packetName"),
+			RuntimeExpectedReturnReason: GetString(runtimeFacts, "expectedReturnReason"),
+			TraceRows: root.GetProperty("traces")
+				.EnumerateArray()
+				.Select(ParseTraceRow)
+				.ToArray());
+	}
+
+	private static PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactTraceRow ParseTraceRow(JsonElement trace)
+	{
+		return new PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactTraceRow(
+			EventSeq: GetInt(trace, "eventSeq"),
+			Phase: GetString(trace, "phase"),
+			PacketName: GetString(trace, "packetName"),
+			ReturnReason: GetString(trace, "returnReason"),
+			StopCalled: GetBool(trace, "stopCalled"),
+			ExpectsStopProtectionCall: GetBool(trace, "expectsStopProtectionCall"),
+			TimestampIsParityKey: GetBool(trace, "timestampIsParityKey"),
+			Player: trace.TryGetProperty("player", out var player) && player.ValueKind == JsonValueKind.Object
+				? ParsePlayerSnapshot(player)
+				: EmptyPlayerSnapshot);
+	}
+
+	private static PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactPlayerSnapshot ParsePlayerSnapshot(JsonElement player)
+	{
+		return new PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactPlayerSnapshot(
+			ObjectId: GetInt(player, "objectId"),
+			Spawned: GetBool(player, "spawned"),
+			Flying: GetBool(player, "flying"),
+			Dead: GetBool(player, "dead"),
+			ProtectionActiveBefore: GetBool(player, "protectionActiveBefore"),
+			ProtectionActiveAfter: GetBool(player, "protectionActiveAfter"),
+			VisualStateBefore: GetStringArray(player, "visualStateBefore"),
+			VisualStateAfter: GetStringArray(player, "visualStateAfter"));
+	}
+
+	private static string GetString(JsonElement element, string propertyName) =>
+		element.TryGetProperty(propertyName, out var value) && value.ValueKind == JsonValueKind.String
+			? value.GetString() ?? string.Empty
+			: string.Empty;
+
+	private static int? GetInt(JsonElement element, string propertyName) =>
+		element.TryGetProperty(propertyName, out var value) && value.TryGetInt32(out var result)
+			? result
+			: null;
+
+	private static bool? GetBool(JsonElement element, string propertyName)
+	{
+		if (!element.TryGetProperty(propertyName, out var value))
+			return null;
+
+		return value.ValueKind switch
+		{
+			JsonValueKind.True => true,
+			JsonValueKind.False => false,
+			_ => null,
+		};
+	}
+
+	private static IReadOnlyList<string> GetStringArray(JsonElement element, string propertyName)
+	{
+		if (!element.TryGetProperty(propertyName, out var value) || value.ValueKind != JsonValueKind.Array)
+			return [];
+
+		return value
+			.EnumerateArray()
+			.Where(item => item.ValueKind == JsonValueKind.String)
+			.Select(item => item.GetString() ?? string.Empty)
+			.ToArray();
+	}
+
+	private static readonly PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactPlayerSnapshot EmptyPlayerSnapshot = new(
+		ObjectId: null,
+		Spawned: null,
+		Flying: null,
+		Dead: null,
+		ProtectionActiveBefore: null,
+		ProtectionActiveAfter: null,
+		VisualStateBefore: [],
+		VisualStateAfter: []);
 
 	private static readonly ISet<string> KnownPhases = new HashSet<string>(StringComparer.Ordinal)
 	{

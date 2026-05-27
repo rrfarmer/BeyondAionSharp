@@ -371,7 +371,8 @@ public sealed class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 						[],
 						IsValidSchemaV1: true,
 						ReadyForRuntimeComparison: false,
-						"shape-valid only"))
+						"shape-valid only",
+						Metadata: null))
 			],
 			HasGeneratedJavaArtifacts: true,
 			ReadyForRuntimeComparison: false,
@@ -392,7 +393,8 @@ public sealed class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 						],
 						IsValidSchemaV1: false,
 						ReadyForRuntimeComparison: false,
-						"invalid schema-v1 artifact"))
+						"invalid schema-v1 artifact",
+						Metadata: null))
 			],
 			HasGeneratedJavaArtifacts: true,
 			ReadyForRuntimeComparison: false,

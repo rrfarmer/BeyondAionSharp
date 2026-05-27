@@ -13,6 +13,21 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValida
 		Assert.False(report.ReadyForRuntimeComparison);
 		Assert.Empty(report.Issues);
 		Assert.Contains("generated Java artifacts", report.Notes, StringComparison.Ordinal);
+		Assert.NotNull(report.Metadata);
+		Assert.Equal(1, report.Metadata.SchemaVersion);
+		Assert.Equal("abcdef1", report.Metadata.JavaCommit);
+		Assert.Equal("teleport-animation-done-validator-contract", report.Metadata.Scenario);
+		Assert.Equal("CM_TELEPORT_ANIMATION_DONE", report.Metadata.RuntimePacketName);
+		Assert.Equal("animation_done_no_pending_runnable_teleport_task", report.Metadata.RuntimeExpectedReturnReason);
+		Assert.Equal(2, report.Metadata.TraceRows.Count);
+		Assert.Equal(0, report.Metadata.TraceRows[0].EventSeq);
+		Assert.Equal("teleport_task_remove", report.Metadata.TraceRows[0].Phase);
+		Assert.False(report.Metadata.TraceRows[0].StopCalled);
+		Assert.False(report.Metadata.TraceRows[0].ExpectsStopProtectionCall);
+		Assert.False(report.Metadata.TraceRows[0].TimestampIsParityKey);
+		Assert.Equal(1001, report.Metadata.TraceRows[0].Player.ObjectId);
+		Assert.True(report.Metadata.TraceRows[0].Player.ProtectionActiveBefore);
+		Assert.Equal(["BLINKING"], report.Metadata.TraceRows[0].Player.VisualStateBefore);
 	}
 
 	[Fact]
@@ -22,6 +37,7 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValida
 			RepresentativeArtifactJson.Replace("\"schemaVersion\": 1", "\"schemaVersion\": 2", StringComparison.Ordinal));
 
 		Assert.False(report.IsValidSchemaV1);
+		Assert.Null(report.Metadata);
 		Assert.Contains(report.Issues, issue =>
 			issue.Code == PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationIssueCode.UnsupportedSchemaVersion
 			&& issue.Path == "$.schemaVersion");
@@ -40,6 +56,7 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValida
 		var report = PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidatorService.Validate(json);
 
 		Assert.False(report.IsValidSchemaV1);
+		Assert.Null(report.Metadata);
 		Assert.Contains(report.Issues, issue => issue.Path == "$.javaCommit");
 		Assert.Contains(report.Issues, issue => issue.Path == "$.runtimeFacts");
 		Assert.Contains(report.Issues, issue => issue.Path == "$.traces");
@@ -52,6 +69,7 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValida
 			RepresentativeArtifactJson.Replace("\"eventSeq\": 1", "\"eventSeq\": 0", StringComparison.Ordinal));
 
 		Assert.False(report.IsValidSchemaV1);
+		Assert.Null(report.Metadata);
 		Assert.Contains(report.Issues, issue =>
 			issue.Code == PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationIssueCode.OutOfOrderEventSequence);
 	}
@@ -66,6 +84,7 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValida
 		var report = PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidatorService.Validate(json);
 
 		Assert.False(report.IsValidSchemaV1);
+		Assert.Null(report.Metadata);
 		Assert.Contains(report.Issues, issue =>
 			issue.Code == PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationIssueCode.UnknownPhase
 			&& issue.Path == "$.traces[0].phase");
@@ -81,6 +100,7 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValida
 			RepresentativeArtifactJson.Replace("\"timestampIsParityKey\": false", "\"timestampIsParityKey\": true", StringComparison.Ordinal));
 
 		Assert.False(report.IsValidSchemaV1);
+		Assert.Null(report.Metadata);
 		Assert.Contains(report.Issues, issue =>
 			issue.Code == PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationIssueCode.TimestampMarkedAsParityKey);
 	}

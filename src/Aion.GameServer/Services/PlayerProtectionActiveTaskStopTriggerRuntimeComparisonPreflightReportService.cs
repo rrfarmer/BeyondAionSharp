@@ -55,11 +55,12 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonPrefli
 	{
 		var rows = new List<PlayerProtectionActiveTaskStopTriggerRuntimeComparisonPreflightRow>();
 		var javaScenarioNames = GetJavaScenarioNames(javaArtifacts);
+		var javaTraceRowCount = GetJavaTraceRowCount(javaArtifacts);
 
 		AddJavaArtifacts(rows, javaArtifacts, javaScenarioNames);
 		AddCSharpTraceRows(rows, csharpTrace);
 		AddScenarioAlignment(rows, javaArtifacts, csharpTrace, javaScenarioNames);
-		AddRowCountAlignment(rows, javaArtifacts, csharpTrace);
+		AddRowCountAlignment(rows, javaArtifacts, csharpTrace, javaTraceRowCount);
 		AddComparisonExecution(rows);
 
 		var rowArray = rows.ToArray();
@@ -102,7 +103,7 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonPrefli
 				PlayerProtectionActiveTaskStopTriggerRuntimeComparisonPreflightArea.JavaArtifacts,
 				PlayerProtectionActiveTaskStopTriggerRuntimeComparisonPreflightStatus.SatisfiedByNonLiveMetadata,
 				blocks: false,
-				$"status={javaArtifacts.Status}; files={javaArtifacts.Files.Count}; scenarios={javaScenarioNames.Count}",
+				$"status={javaArtifacts.Status}; files={javaArtifacts.Files.Count}; scenarios={javaScenarioNames.Count}; traceRows={GetJavaTraceRowCount(javaArtifacts)}",
 				"Java artifact files are schema-valid only; preflight still does not execute runtime comparison.");
 			return;
 		}
@@ -170,14 +171,15 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonPrefli
 			blocks: !matches,
 			$"java=[{string.Join(",", javaScenarioNames)}]; csharp=[{string.Join(",", csharpScenarios)}]",
 			matches
-				? "Scenario names align by synthetic artifact file stem and C# trace scenario."
+				? "Scenario names align by parsed Java artifact metadata and C# trace scenario."
 				: "Scenario names differ; comparison must not execute.");
 	}
 
 	private static void AddRowCountAlignment(
 		ICollection<PlayerProtectionActiveTaskStopTriggerRuntimeComparisonPreflightRow> rows,
 		PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirectoryReport? javaArtifacts,
-		PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTraceReport? csharpTrace)
+		PlayerProtectionActiveTaskStopTriggerCSharpRuntimeTraceReport? csharpTrace,
+		int javaTraceRowCount)
 	{
 		if (javaArtifacts?.Status != PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirectoryStatus.AllArtifactsShapeValid || csharpTrace == null)
 		{
@@ -190,16 +192,16 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonPrefli
 			return;
 		}
 
-		var matches = javaArtifacts.Files.Count == csharpTrace.TraceRows.Count;
+		var matches = javaTraceRowCount == csharpTrace.TraceRows.Count;
 		Add(rows,
 			PlayerProtectionActiveTaskStopTriggerRuntimeComparisonPreflightArea.RowCountAlignment,
 			matches
 				? PlayerProtectionActiveTaskStopTriggerRuntimeComparisonPreflightStatus.SatisfiedByNonLiveMetadata
 				: PlayerProtectionActiveTaskStopTriggerRuntimeComparisonPreflightStatus.BlockedRowCountMismatch,
 			blocks: !matches,
-			$"javaFiles={javaArtifacts.Files.Count}; csharpRows={csharpTrace.TraceRows.Count}",
+			$"javaTraceRows={javaTraceRowCount}; csharpRows={csharpTrace.TraceRows.Count}",
 			matches
-				? "Synthetic preflight counts align one Java artifact file per C# trace row."
+				? "Trace row counts align by parsed Java artifact metadata and C# trace rows."
 				: "Synthetic preflight counts differ; comparison must not execute.");
 	}
 
@@ -220,10 +222,18 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonPrefli
 			return [];
 
 		return javaArtifacts.Files
-			.Select(file => Path.GetFileNameWithoutExtension(file.Path))
+			.Select(file => file.ValidationReport.Metadata?.Scenario ?? Path.GetFileNameWithoutExtension(file.Path))
 			.Where(name => !string.IsNullOrWhiteSpace(name))
 			.OrderBy(name => name, StringComparer.Ordinal)
 			.ToArray();
+	}
+
+	private static int GetJavaTraceRowCount(PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirectoryReport? javaArtifacts)
+	{
+		if (javaArtifacts == null)
+			return 0;
+
+		return javaArtifacts.Files.Sum(file => file.ValidationReport.Metadata?.TraceRows.Count ?? 1);
 	}
 
 	private static void Add(
