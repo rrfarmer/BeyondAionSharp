@@ -1,0 +1,84 @@
+using Aion.GameServer.Model.GameObjects;
+
+namespace Aion.GameServer.Services;
+
+public enum PlayerDeathWorkflowAdapterStatus
+{
+	DisabledPlanned,
+	EarlyReturnPlanned,
+	LiveStateTransitionApplied,
+}
+
+public sealed record PlayerDeathWorkflowAdapterRequest(
+	Player Player,
+	PlayerDeathWorkflowFacts Facts,
+	bool ExecuteLiveStateMutation = false);
+
+public sealed record PlayerDeathWorkflowAdapterResult(
+	PlayerDeathWorkflowAdapterStatus Status,
+	PlayerDeathWorkflowPlan Plan,
+	PlayerDeathStateTransitionResult? StateTransitionResult,
+	bool MutatedPlayerState,
+	bool SentPackets,
+	bool ScheduledTasks,
+	bool ExecutedExternalCallbacks,
+	bool ExposesPlanForObservation,
+	string JavaSource,
+	bool IsLive);
+
+public sealed class PlayerDeathWorkflowAdapterService
+{
+	private readonly PlayerDeathWorkflowPlanService _planService;
+
+	public PlayerDeathWorkflowAdapterService(PlayerDeathWorkflowPlanService? planService = null)
+	{
+		_planService = planService ?? new PlayerDeathWorkflowPlanService();
+	}
+
+	public PlayerDeathWorkflowAdapterResult Apply(PlayerDeathWorkflowAdapterRequest request)
+	{
+		var plan = _planService.CreatePlan(request.Player, request.Facts);
+		if (!request.ExecuteLiveStateMutation)
+		{
+			return new PlayerDeathWorkflowAdapterResult(
+				PlayerDeathWorkflowAdapterStatus.DisabledPlanned,
+				plan,
+				StateTransitionResult: null,
+				MutatedPlayerState: false,
+				SentPackets: false,
+				ScheduledTasks: false,
+				ExecutedExternalCallbacks: false,
+				ExposesPlanForObservation: true,
+				"com.aionemu.gameserver.controllers.PlayerController.onDie plan exposed with live state mutation disabled",
+				IsLive: false);
+		}
+
+		if (!plan.Steps.Contains(PlayerDeathWorkflowStep.ApplyPlayerDeathStateTransition))
+		{
+			return new PlayerDeathWorkflowAdapterResult(
+				PlayerDeathWorkflowAdapterStatus.EarlyReturnPlanned,
+				plan,
+				StateTransitionResult: null,
+				MutatedPlayerState: false,
+				SentPackets: false,
+				ScheduledTasks: false,
+				ExecutedExternalCallbacks: false,
+				ExposesPlanForObservation: true,
+				"com.aionemu.gameserver.controllers.PlayerController.onDie returned before super.onDie; no player death state transition executed",
+				IsLive: true);
+		}
+
+		var transition = PlayerDeathStateTransitionService.Apply(request.Player);
+		return new PlayerDeathWorkflowAdapterResult(
+			PlayerDeathWorkflowAdapterStatus.LiveStateTransitionApplied,
+			plan,
+			transition,
+			MutatedPlayerState: true,
+			SentPackets: false,
+			ScheduledTasks: false,
+			ExecutedExternalCallbacks: false,
+			ExposesPlanForObservation: true,
+			"com.aionemu.gameserver.controllers.PlayerController.onDie state transition applied; packet fanout, scheduler, callbacks, rewards, and quest dispatch remain planned",
+			IsLive: true);
+	}
+}
