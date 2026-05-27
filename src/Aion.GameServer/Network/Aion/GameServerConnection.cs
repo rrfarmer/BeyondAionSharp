@@ -10585,7 +10585,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		var brokerItem = await _brokerRepository.LoadRegisteredItemAsync(player.ObjectId, player.Race, packet.BrokerItemObjectId);
 		if (brokerItem?.Item != null)
 		{
-			var itemTemplates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
+			var staticData = _runtimeContext?.DataManager?.StaticData;
+			var itemTemplates = staticData?.ItemTemplates;
 			var itemTemplate = itemTemplates?.GetItemTemplate(brokerItem.Item.ItemId);
 			if (itemTemplate != null)
 			{
@@ -10607,7 +10608,10 @@ public sealed class GameServerConnection : BaseClientConnection
 						.Where(item => item.ObjectId != returnedItem.ObjectId)
 						.Concat([returnedItem])
 						.ToArray();
-					await SendPacketAsync(SmInventoryAddItem.CreateBrokerReturn(returnedItem, itemTemplate));
+					await SendPacketAsync(SmInventoryAddItem.CreateBrokerReturn(
+						returnedItem,
+						itemTemplate,
+						GetGeneralInfoWarehouseRestrictionFlag(returnedItem.ItemId, staticData?.ItemRestrictionCleanups)));
 					await SendPacketAsync(SmCubeUpdate.CubeSize(player));
 					await SendPacketAsync(SmBrokerService.CreateCancelRegisteredItem(packet.BrokerItemObjectId));
 				}
