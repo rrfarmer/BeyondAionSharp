@@ -4957,14 +4957,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			player,
 			new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 1, 1));
 
-		var sourceItemUpdate = sourceItem.Count > 1 ? CopyInventoryItem(sourceItem, count: sourceItem.Count - 1) : null;
-		int? deletedSourceObjectId = sourceItem.Count <= 1 ? sourceItem.ObjectId : null;
 		var saved = _playerEnterWorldService == null
 			|| await _playerEnterWorldService.SaveSkillLearnActionMutationAsync(
 				player,
 				plan.PersistedSkills,
-				sourceItemUpdate,
-				deletedSourceObjectId);
+				sourceItemUpdate: null,
+				deletedSourceItemObjectId: sourceItem.ObjectId);
 		if (!saved)
 			return;
 
@@ -4972,18 +4970,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		foreach (var packet in plan.Packets)
 			await SendPacketAsync(new SmSkillList([packet.Skill], packet.MessageId));
 
-		if (deletedSourceObjectId.HasValue)
-		{
-			inventoryItems.RemoveAll(item => item.ObjectId == deletedSourceObjectId.Value);
-			await SendPacketAsync(new SmDeleteItem(deletedSourceObjectId.Value, SmDeleteItem.UseDeleteType));
-		}
-		else if (sourceItemUpdate != null)
-		{
-			ReplaceInventoryItem(inventoryItems, sourceItemUpdate);
-			await SendPacketAsync(new SmInventoryUpdateItem(sourceItemUpdate, sourceTemplate, SmInventoryUpdateItem.DecreaseItemUse));
-		}
-
-		player.InventoryItems = inventoryItems.ToArray();
+		await DeleteDirectSourceItemAsync(player, inventoryItems, sourceItem.ObjectId);
 	}
 
 	private async Task HandleTitleAddUseItemAsync(
@@ -5020,14 +5007,12 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		var title = validation.Title!;
-		var sourceItemUpdate = sourceItem.Count > 1 ? CopyInventoryItem(sourceItem, count: sourceItem.Count - 1) : null;
-		int? deletedSourceObjectId = sourceItem.Count <= 1 ? sourceItem.ObjectId : null;
 		var saved = _playerEnterWorldService == null
 			|| await _playerEnterWorldService.SaveTitleAddActionMutationAsync(
 				player,
 				title,
-				sourceItemUpdate,
-				deletedSourceObjectId);
+				sourceItemUpdate: null,
+				deletedSourceItemObjectId: sourceItem.ObjectId);
 		if (!saved)
 			return;
 
@@ -5039,18 +5024,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		await SendPacketAsync(SmSystemMessage.CashTitle(ChatUtil.L10n(validation.TitleTemplate!.NameId)));
 		await SendPacketAsync(new SmTitleInfo(player.Titles));
 
-		if (deletedSourceObjectId.HasValue)
-		{
-			inventoryItems.RemoveAll(item => item.ObjectId == deletedSourceObjectId.Value);
-			await SendPacketAsync(new SmDeleteItem(deletedSourceObjectId.Value, SmDeleteItem.UseDeleteType));
-		}
-		else if (sourceItemUpdate != null)
-		{
-			ReplaceInventoryItem(inventoryItems, sourceItemUpdate);
-			await SendPacketAsync(new SmInventoryUpdateItem(sourceItemUpdate, sourceTemplate, SmInventoryUpdateItem.DecreaseItemUse));
-		}
-
-		player.InventoryItems = inventoryItems.ToArray();
+		await DeleteDirectSourceItemAsync(player, inventoryItems, sourceItem.ObjectId);
 	}
 
 	private async Task SendTitleAddFailureAsync(TitleAddValidation validation)
@@ -5089,14 +5063,12 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		AddItemCooldownIfNeeded(player, sourceTemplate, removeOnCancel: false);
 		var emotion = validation.Emotion!;
-		var sourceItemUpdate = sourceItem.Count > 1 ? CopyInventoryItem(sourceItem, count: sourceItem.Count - 1) : null;
-		int? deletedSourceObjectId = sourceItem.Count <= 1 ? sourceItem.ObjectId : null;
 		var saved = _playerEnterWorldService == null
 			|| await _playerEnterWorldService.SaveEmotionLearnActionMutationAsync(
 				player,
 				emotion,
-				sourceItemUpdate,
-				deletedSourceObjectId);
+				sourceItemUpdate: null,
+				deletedSourceItemObjectId: sourceItem.ObjectId);
 		if (!saved)
 			return;
 
@@ -5111,18 +5083,17 @@ public sealed class GameServerConnection : BaseClientConnection
 		_expirableTaskService?.RegisterEmotion(player, emotion);
 		await SendPacketAsync(new SmEmotionList(1, [emotion]));
 
-		if (deletedSourceObjectId.HasValue)
-		{
-			inventoryItems.RemoveAll(item => item.ObjectId == deletedSourceObjectId.Value);
-			await SendPacketAsync(new SmDeleteItem(deletedSourceObjectId.Value, SmDeleteItem.UseDeleteType));
-		}
-		else if (sourceItemUpdate != null)
-		{
-			ReplaceInventoryItem(inventoryItems, sourceItemUpdate);
-			await SendPacketAsync(new SmInventoryUpdateItem(sourceItemUpdate, sourceTemplate, SmInventoryUpdateItem.DecreaseItemUse));
-		}
+		await DeleteDirectSourceItemAsync(player, inventoryItems, sourceItem.ObjectId);
+	}
 
+	private async Task DeleteDirectSourceItemAsync(Player player, List<InventoryItem> inventoryItems, int sourceItemObjectId)
+	{
+		// Java parity: SkillLearnAction/TitleAddAction/EmotionLearnAction use Inventory.delete(item),
+		// which sends the default delete mask and a cube-size refresh, not DEC_ITEM_USE.
+		inventoryItems.RemoveAll(item => item.ObjectId == sourceItemObjectId);
 		player.InventoryItems = inventoryItems.ToArray();
+		await SendPacketAsync(new SmDeleteItem(sourceItemObjectId));
+		await SendPacketAsync(SmCubeUpdate.CubeSize(player));
 	}
 
 	private async Task SendEmotionLearnFailureAsync(EmotionLearnFailure failure)

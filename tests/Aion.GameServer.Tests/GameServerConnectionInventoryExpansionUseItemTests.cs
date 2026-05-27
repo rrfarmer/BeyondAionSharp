@@ -136,6 +136,61 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			packet => Assert.IsType<SmItemUsageAnimation>(packet));
 	}
 
+	[Fact]
+	public async Task HandleUseItemAsync_SkillBookDirectDeletesSourceLikeJava()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync();
+		var player = CreatePlayer(itemId: 169500001);
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
+
+		Assert.Empty(player.InventoryItems);
+		Assert.Contains(player.Skills, skill => skill.SkillId == 1 && skill.SkillLevel == 1);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 169500001, expectedEnd: 1, expectedUnknown3: 1),
+			packet => Assert.IsType<SmSkillList>(packet),
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 5001, expectedDeleteType: 0),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0));
+	}
+
+	[Fact]
+	public async Task HandleUseItemAsync_TitleCardDirectDeletesSourceLikeJava()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync();
+		var player = CreatePlayer(itemId: 169945000);
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
+
+		Assert.Empty(player.InventoryItems);
+		Assert.Contains(player.Titles, title => title.Id == 269);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 169945000, expectedEnd: 1, expectedUnknown3: 1),
+			packet => Assert.IsType<SmSystemMessage>(packet),
+			packet => Assert.IsType<SmTitleInfo>(packet),
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 5001, expectedDeleteType: 0),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0));
+	}
+
+	[Fact]
+	public async Task HandleUseItemAsync_EmotionCardDirectDeletesSourceLikeJava()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync();
+		var player = CreatePlayer(itemId: 169600001);
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
+
+		Assert.Empty(player.InventoryItems);
+		Assert.Contains(player.Emotions, emotion => emotion.Id == 64);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 169600001, expectedEnd: 1, expectedUnknown3: 1),
+			packet => Assert.IsType<SmEmotionList>(packet),
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 5001, expectedDeleteType: 0),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0));
+	}
+
 	[Theory]
 	[InlineData(169630000)]
 	[InlineData(169640000)]
@@ -3153,6 +3208,21 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 								<craftlearn recipeid="155000001"/>
 							</actions>
 						</item_template>
+						<item_template id="169500001" name="Test Skill Book" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="10">
+							<actions>
+								<skilllearn skillid="1" level="1" class="RANGER"/>
+							</actions>
+						</item_template>
+						<item_template id="169600001" name="Test Emotion Card" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="10">
+							<actions>
+								<learnemotion emotionid="64"/>
+							</actions>
+						</item_template>
+						<item_template id="169945000" name="Test Title Card" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="10">
+							<actions>
+								<titleadd titleid="269"/>
+							</actions>
+						</item_template>
 						<item_template id="169630000" name="[Expand Card] Expand Cube Ticket (lvl 1)" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="1">
 							<actions>
 								<expandinventory level="1" storage="CUBE" />
@@ -3263,6 +3333,15 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 					<recipe_templates>
 						<recipe_template id="155000001" nameid="730278" skillid="40009" race="ELYOS" skillpoint="1" dp="200" autolearn="1" productid="152000401" quantity="3"/>
 					</recipe_templates>
+					<skill_templates>
+						<skill_template skill_id="1" name="Test Skill" nameId="1" lvl="1" group="" stack="" skilltype="MAGICAL" skillsubtype="NONE" cooldownId="0" cooldown="0" activation="ACTIVE"/>
+					</skill_templates>
+					<skill_tree>
+						<skill classId="RANGER" skillId="1" race="PC_ALL" minLevel="1" autolearn="false" stigma="0"/>
+					</skill_tree>
+					<player_titles>
+						<title id="269" nameId="1101268" desc="Test Title" race="ELYOS"/>
+					</player_titles>
 				</static_data>
 				""");
 			var dataManager = await DataManager.LoadAsync(
