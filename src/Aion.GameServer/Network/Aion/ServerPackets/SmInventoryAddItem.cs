@@ -7,6 +7,7 @@ namespace Aion.GameServer.Network.Aion.ServerPackets;
 public sealed class SmInventoryAddItem : GameServerPacket
 {
 	public const int PacketOpCode = 27;
+	public const int AllSlot = 0x13;
 	public const int ItemCollect = 0x19;
 	public const int BrokerBuy = 0x2E;
 	public const int BrokerReturn = 0x2F;
@@ -39,6 +40,12 @@ public sealed class SmInventoryAddItem : GameServerPacket
 	{
 		// Java parity: ItemPacketService.ItemAddType.ITEM_COLLECT default add type.
 		return new SmInventoryAddItem([new InventoryPacketItem(item, template)], ItemCollect);
+	}
+
+	public static SmInventoryAddItem CreateAllSlot(InventoryItem item, ItemTemplateSummary template)
+	{
+		// Java parity: ItemPacketService.sendItemUnlockPacket -> ItemAddType.ALL_SLOT for normal cube storage.
+		return new SmInventoryAddItem([new InventoryPacketItem(item, template)], AllSlot);
 	}
 
 	public static SmInventoryAddItem CreateDecomposable(IReadOnlyList<InventoryPacketItem> items)

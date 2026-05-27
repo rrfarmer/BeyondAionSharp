@@ -1,3 +1,4 @@
+using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
@@ -22,11 +23,30 @@ public enum PetFeedPacketMetadataResultStatus
 	BlockedSystemMessageContext,
 }
 
+public enum PetFeedUnlockPacketStorageKind
+{
+	Unknown,
+	Cube,
+	Warehouse,
+	LegionWarehouse,
+	AccountWarehouse,
+}
+
+public sealed record PetFeedUnlockPacketContext(
+	PetFeedUnlockPacketStorageKind StorageKind,
+	InventoryItem? Item = null,
+	ItemTemplateSummary? Template = null,
+	int CubeItemsCount = 0,
+	int NpcExpands = 0,
+	int QuestExpands = 0,
+	int ItemExpands = 0);
+
 public sealed record PetFeedSupplementalPacketContext(
 	int? PlayerObjectId = null,
 	PlayerCreatureState PlayerCreatureState = PlayerCreatureState.Active,
 	string? PetName = null,
-	string? ItemName = null);
+	string? ItemName = null,
+	PetFeedUnlockPacketContext? UnlockPacketContext = null);
 
 public sealed record PetFeedPacketMetadataBridgeRequest(
 	PetFeedServiceOperationPlan Plan,
@@ -38,7 +58,11 @@ public sealed record PetFeedPacketMetadataResult(
 	PetFeedServiceOperation Operation,
 	PetFeedPacketMetadataResultStatus Status,
 	GameServerPacket? Packet,
-	string Notes);
+	string Notes,
+	IReadOnlyList<GameServerPacket>? PacketSequence = null)
+{
+	public IReadOnlyList<GameServerPacket> Packets => PacketSequence ?? (Packet is null ? [] : [Packet]);
+}
 
 public sealed record PetFeedPacketMetadataBridgeResult(
 	PetFeedPacketMetadataBridgeStatus Status,
@@ -122,10 +146,7 @@ public sealed class PetFeedPacketMetadataBridge
 				itemObjectId: 0,
 				count: 0,
 				refeedDelaySeconds),
-			PetFeedServiceOperationKind.UnlockFoodItem => Blocked(
-				operation,
-				PetFeedPacketMetadataResultStatus.BlockedItemUnlockPacket,
-				"Item unlock packet/service boundary is not represented by SmPet."),
+			PetFeedServiceOperationKind.UnlockFoodItem => ConstructFoodItemUnlock(operation, supplementalContext),
 			PetFeedServiceOperationKind.SendEndFeedingEmotion => ConstructEndFeedingEmotion(operation, supplementalContext),
 			PetFeedServiceOperationKind.SendFoodNotLovedSystemMessage => ConstructFoodNotLovedSystemMessage(operation, supplementalContext),
 			_ => new PetFeedPacketMetadataResult(
@@ -150,6 +171,51 @@ public sealed class PetFeedPacketMetadataBridge
 			PetFeedPacketMetadataResultStatus.Constructed,
 			SmPet.Food(new SmPetFoodSnapshot(subType, feedProgressData, itemObjectId, count, refeedDelaySeconds)),
 			Notes: $"Constructed non-sending SmPet FOOD subtype {subType} metadata.");
+	}
+
+	private static PetFeedPacketMetadataResult ConstructFoodItemUnlock(
+		PetFeedServiceOperation operation,
+		PetFeedSupplementalPacketContext? supplementalContext)
+	{
+		var context = supplementalContext?.UnlockPacketContext;
+		if (context is null)
+		{
+			return Blocked(
+				operation,
+				PetFeedPacketMetadataResultStatus.BlockedItemUnlockPacket,
+				"Item unlock packet/service boundary needs supplied storage and item/template snapshot context.");
+		}
+
+		if (context.StorageKind != PetFeedUnlockPacketStorageKind.Cube)
+		{
+			return Blocked(
+				operation,
+				PetFeedPacketMetadataResultStatus.BlockedItemUnlockPacket,
+				$"Storage kind {context.StorageKind} is not supported by the normal-cube unlock metadata boundary.");
+		}
+
+		if (context.Item is null || context.Template is null)
+		{
+			return Blocked(
+				operation,
+				PetFeedPacketMetadataResultStatus.BlockedItemUnlockPacket,
+				"Normal-cube unlock metadata needs supplied item and template snapshots.");
+		}
+
+		// Java parity: ItemPacketService.sendItemUnlockPacket -> sendStorageUpdatePacket(CUBE, item, ALL_SLOT)
+		// emits SM_INVENTORY_ADD_ITEM first, then SM_CUBE_UPDATE.cubeSize(StorageType.CUBE, player).
+		var inventoryAdd = SmInventoryAddItem.CreateAllSlot(context.Item, context.Template);
+		var cubeUpdate = SmCubeUpdate.CubeSizeSnapshot(
+			context.CubeItemsCount,
+			context.NpcExpands,
+			context.QuestExpands,
+			context.ItemExpands);
+		return new PetFeedPacketMetadataResult(
+			operation,
+			PetFeedPacketMetadataResultStatus.Constructed,
+			inventoryAdd,
+			Notes: "Constructed non-sending normal-cube unlock metadata: SmInventoryAddItem ALL_SLOT followed by SmCubeUpdate.",
+			PacketSequence: [inventoryAdd, cubeUpdate]);
 	}
 
 	private static PetFeedPacketMetadataResult ConstructEndFeedingEmotion(

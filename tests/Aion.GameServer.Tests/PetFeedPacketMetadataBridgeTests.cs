@@ -1,3 +1,7 @@
+using Aion.Commons.Network;
+using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services.ToyPet;
 
@@ -91,6 +95,104 @@ public sealed class PetFeedPacketMetadataBridgeTests
 		var systemMessage = Assert.IsType<SmSystemMessage>(result.Results[3].Packet);
 		Assert.Equal(1400618, systemMessage.MessageId);
 		Assert.Contains("system-message", result.Results[3].Notes);
+	}
+
+	[Fact]
+	public void Construct_RejectedFoodWithNormalCubeUnlockContextBuildsUnlockPacketsBeforeSmPetLikeJava()
+	{
+		var bridge = new PetFeedPacketMetadataBridge();
+		var plan = new PetFeedServiceOperationPlan(
+			PetFeedServiceOperationPlanStatus.RejectedFood,
+			Evaluation: new PetFeedEvaluationResult(null, IsLovedFood: false, Reward: null),
+			Operations:
+			[
+				new PetFeedServiceOperation(PetFeedServiceOperationKind.UnlockFoodItem, ItemObjectId: 5001),
+				new PetFeedServiceOperation(PetFeedServiceOperationKind.SendPetFeedEndPacket),
+				new PetFeedServiceOperation(PetFeedServiceOperationKind.SendEndFeedingEmotion),
+				new PetFeedServiceOperation(PetFeedServiceOperationKind.SendFoodNotLovedSystemMessage, ItemId: 9999),
+			],
+			RemainingRequestedCount: 1,
+			RefeedTimeMilliseconds: null);
+
+		var item = new InventoryItem
+		{
+			ObjectId = 5001,
+			ItemId = 188000001,
+			Count = 2,
+			OwnerId = 7001,
+			Location = 0,
+			Slot = 9,
+		};
+		var result = bridge.Construct(new PetFeedPacketMetadataBridgeRequest(
+			plan,
+			FeedProgressData: 0x123450,
+			SupplementalContext: new PetFeedSupplementalPacketContext(
+				PlayerObjectId: 7001,
+				PetName: "Tog",
+				ItemName: "Spiced Snack",
+				UnlockPacketContext: new PetFeedUnlockPacketContext(
+					PetFeedUnlockPacketStorageKind.Cube,
+					item,
+					CreateTemplate(item.ItemId, "Spiced Snack"),
+					CubeItemsCount: 7,
+					NpcExpands: 2,
+					QuestExpands: 1,
+					ItemExpands: 3))));
+
+		Assert.Equal(PetFeedPacketMetadataBridgeStatus.Constructed, result.Status);
+		Assert.All(result.Results, metadata => Assert.Equal(PetFeedPacketMetadataResultStatus.Constructed, metadata.Status));
+		Assert.Equal([2, 1, 1, 1], result.Results.Select(metadata => metadata.Packets.Count).ToArray());
+		var inventoryAdd = Assert.IsType<SmInventoryAddItem>(result.Results[0].Packets[0]);
+		var cubeUpdate = Assert.IsType<SmCubeUpdate>(result.Results[0].Packets[1]);
+		Assert.Same(inventoryAdd, result.Results[0].Packet);
+		Assert.IsType<SmPet>(result.Results[1].Packet);
+
+		using (var inventoryReader = new PacketBuffer(SerializeUnencryptedPayload(inventoryAdd)))
+		{
+			Assert.Equal(SmInventoryAddItem.AllSlot, inventoryReader.ReadH());
+			Assert.Equal(1, inventoryReader.ReadH());
+			Assert.Equal(5001, inventoryReader.ReadD());
+			Assert.Equal(188000001, inventoryReader.ReadD());
+			Assert.Equal(string.Empty, inventoryReader.ReadS());
+			var blobSize = inventoryReader.ReadH();
+			Assert.True(blobSize > 0);
+			inventoryReader.ReadB(blobSize);
+			Assert.Equal(9, inventoryReader.ReadH());
+			Assert.Equal(0, (int)inventoryReader.ReadC());
+			Assert.Equal(0, inventoryReader.Remaining);
+		}
+
+		using var cubeReader = new PacketBuffer(SerializeUnencryptedPayload(cubeUpdate));
+		Assert.Equal(0, (int)cubeReader.ReadC());
+		Assert.Equal(0, (int)cubeReader.ReadC());
+		Assert.Equal(7, cubeReader.ReadD());
+		Assert.Equal(2, (int)cubeReader.ReadC());
+		Assert.Equal(1, (int)cubeReader.ReadC());
+		Assert.Equal(3, (int)cubeReader.ReadC());
+		Assert.Equal(0, cubeReader.Remaining);
+	}
+
+	[Fact]
+	public void Construct_RejectedFoodUnlockKeepsWarehouseStorageBlockedUntilWarehousePacketExists()
+	{
+		var bridge = new PetFeedPacketMetadataBridge();
+		var plan = new PetFeedServiceOperationPlan(
+			PetFeedServiceOperationPlanStatus.RejectedFood,
+			Evaluation: new PetFeedEvaluationResult(null, IsLovedFood: false, Reward: null),
+			Operations: [new PetFeedServiceOperation(PetFeedServiceOperationKind.UnlockFoodItem, ItemObjectId: 5001)],
+			RemainingRequestedCount: 1,
+			RefeedTimeMilliseconds: null);
+
+		var result = bridge.Construct(new PetFeedPacketMetadataBridgeRequest(
+			plan,
+			FeedProgressData: 0x123450,
+			SupplementalContext: new PetFeedSupplementalPacketContext(
+				UnlockPacketContext: new PetFeedUnlockPacketContext(PetFeedUnlockPacketStorageKind.Warehouse))));
+
+		Assert.Equal(PetFeedPacketMetadataBridgeStatus.Blocked, result.Status);
+		Assert.Equal(PetFeedPacketMetadataResultStatus.BlockedItemUnlockPacket, result.Results[0].Status);
+		Assert.Empty(result.Results[0].Packets);
+		Assert.Contains("Warehouse", result.Results[0].Notes);
 	}
 
 	[Fact]
@@ -189,5 +291,30 @@ public sealed class PetFeedPacketMetadataBridgeTests
 		Assert.IsType<SmEmotion>(result.Results[1].Packet);
 		Assert.IsType<SmPet>(result.Results[2].Packet);
 		Assert.All(result.Results, metadata => Assert.Equal(PetFeedPacketMetadataResultStatus.Constructed, metadata.Status));
+	}
+
+	private static ItemTemplateSummary CreateTemplate(int itemId, string name)
+	{
+		return new ItemTemplateSummary(
+			itemId,
+			name,
+			0,
+			0,
+			1,
+			string.Empty,
+			string.Empty,
+			string.Empty,
+			string.Empty,
+			100,
+			0,
+			0);
+	}
+
+	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
+	{
+		var crypt = new GameCrypt(() => 0x01020304);
+		crypt.EnableKey();
+		var frame = packet.SerializeFrame(crypt);
+		return frame[7..];
 	}
 }
