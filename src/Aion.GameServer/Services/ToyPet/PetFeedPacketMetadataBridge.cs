@@ -30,6 +30,7 @@ public enum PetFeedUnlockPacketStorageKind
 	Warehouse,
 	LegionWarehouse,
 	AccountWarehouse,
+	UnusualWarehouse,
 }
 
 public sealed record PetFeedUnlockPacketContext(
@@ -223,6 +224,9 @@ public sealed class PetFeedPacketMetadataBridge
 		if (context.StorageKind is PetFeedUnlockPacketStorageKind.LegionWarehouse)
 			return ConstructLegionWarehouseItemUnlock(operation, context);
 
+		if (context.StorageKind is PetFeedUnlockPacketStorageKind.UnusualWarehouse)
+			return ConstructUnusualWarehouseItemUnlock(operation, context);
+
 		if (context.StorageKind is not (PetFeedUnlockPacketStorageKind.Warehouse or PetFeedUnlockPacketStorageKind.AccountWarehouse))
 		{
 			return Blocked(
@@ -254,6 +258,40 @@ public sealed class PetFeedPacketMetadataBridge
 			PetFeedPacketMetadataResultStatus.Constructed,
 			warehouseAdd,
 			Notes: $"Constructed non-sending {context.StorageKind} unlock metadata: SmWarehouseAddItem ALL_SLOT followed by SmCubeUpdate.",
+			PacketSequence: [warehouseAdd, cubeUpdate]);
+	}
+
+	private static PetFeedPacketMetadataResult ConstructUnusualWarehouseItemUnlock(
+		PetFeedServiceOperation operation,
+		PetFeedUnlockPacketContext context)
+	{
+		if (context.Item is null || context.Template is null)
+		{
+			return Blocked(
+				operation,
+				PetFeedPacketMetadataResultStatus.BlockedItemUnlockPacket,
+				"Unusual storage unlock metadata needs supplied item and template snapshots.");
+		}
+
+		if (!SmCubeUpdate.TryGetJavaStorageOrdinal(context.Item.Location, out _))
+		{
+			return Blocked(
+				operation,
+				PetFeedPacketMetadataResultStatus.BlockedItemUnlockPacket,
+				$"Storage id {context.Item.Location} is not a modeled Java StorageType for unusual unlock metadata.");
+		}
+
+		var warehouseAdd = SmWarehouseAddItem.CreateAllSlot(context.Item.Location, context.Item, context.Template);
+		var cubeUpdate = SmCubeUpdate.ZeroSizeForJavaStorageId(context.Item.Location);
+
+		// Java parity: ItemPacketService.sendStorageUpdatePacket default branch emits SM_WAREHOUSE_ADD_ITEM
+		// with StorageType.getId(), then SM_CUBE_UPDATE.cubeSize with StorageType.ordinal() and zero counts
+		// for pet bag, house, broker, and mailbox storage families.
+		return new PetFeedPacketMetadataResult(
+			operation,
+			PetFeedPacketMetadataResultStatus.Constructed,
+			warehouseAdd,
+			Notes: $"Constructed guarded non-sending unusual storage {context.Item.Location} unlock metadata: SmWarehouseAddItem ALL_SLOT followed by zero-count SmCubeUpdate.",
 			PacketSequence: [warehouseAdd, cubeUpdate]);
 	}
 

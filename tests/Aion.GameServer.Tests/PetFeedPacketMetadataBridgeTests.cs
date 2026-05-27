@@ -364,6 +364,96 @@ public sealed class PetFeedPacketMetadataBridgeTests
 		Assert.Equal(0, cubeReader.Remaining);
 	}
 
+	[Theory]
+	[InlineData(32, 4)]
+	[InlineData(60, 16)]
+	[InlineData(126, 36)]
+	[InlineData(127, 37)]
+	public void Construct_RejectedFoodWithGuardedUnusualStorageContextBuildsWarehouseAddAndZeroCubeUpdate(
+		int storageId,
+		int expectedCubeActionValue)
+	{
+		var bridge = new PetFeedPacketMetadataBridge();
+		var plan = new PetFeedServiceOperationPlan(
+			PetFeedServiceOperationPlanStatus.RejectedFood,
+			Evaluation: new PetFeedEvaluationResult(null, IsLovedFood: false, Reward: null),
+			Operations: [new PetFeedServiceOperation(PetFeedServiceOperationKind.UnlockFoodItem, ItemObjectId: 5001)],
+			RemainingRequestedCount: 1,
+			RefeedTimeMilliseconds: null);
+		var item = new InventoryItem
+		{
+			ObjectId = 5001,
+			ItemId = 188000001,
+			Count = 2,
+			OwnerId = 7001,
+			Location = storageId,
+			Slot = 4,
+		};
+
+		var result = bridge.Construct(new PetFeedPacketMetadataBridgeRequest(
+			plan,
+			FeedProgressData: 0x123450,
+			SupplementalContext: new PetFeedSupplementalPacketContext(
+				UnlockPacketContext: new PetFeedUnlockPacketContext(
+					PetFeedUnlockPacketStorageKind.UnusualWarehouse,
+					item,
+					CreateTemplate(item.ItemId, "Odd Snack")))));
+
+		Assert.Equal(PetFeedPacketMetadataBridgeStatus.Constructed, result.Status);
+		var warehouseAdd = Assert.IsType<SmWarehouseAddItem>(result.Results[0].Packets[0]);
+		var cubeUpdate = Assert.IsType<SmCubeUpdate>(result.Results[0].Packets[1]);
+
+		using (var warehouseReader = new PacketBuffer(SerializeUnencryptedPayload(warehouseAdd)))
+		{
+			Assert.Equal(storageId, (int)warehouseReader.ReadC());
+			Assert.Equal(SmWarehouseAddItem.AllSlot, warehouseReader.ReadH());
+			Assert.Equal(1, warehouseReader.ReadH());
+			Assert.Equal(5001, warehouseReader.ReadD());
+			Assert.Equal(188000001, warehouseReader.ReadD());
+			Assert.Equal(0, (int)warehouseReader.ReadC());
+			Assert.Equal(string.Empty, warehouseReader.ReadS());
+			var blobSize = warehouseReader.ReadH();
+			Assert.True(blobSize > 0);
+			warehouseReader.ReadB(blobSize);
+			Assert.Equal(4, warehouseReader.ReadH());
+			Assert.Equal(0, warehouseReader.Remaining);
+		}
+
+		using var cubeReader = new PacketBuffer(SerializeUnencryptedPayload(cubeUpdate));
+		Assert.Equal(0, (int)cubeReader.ReadC());
+		Assert.Equal(expectedCubeActionValue, (int)cubeReader.ReadC());
+		Assert.Equal(0, cubeReader.ReadD());
+		Assert.Equal(0, (int)cubeReader.ReadC());
+		Assert.Equal(0, (int)cubeReader.ReadC());
+		Assert.Equal(0, (int)cubeReader.ReadC());
+		Assert.Equal(0, cubeReader.Remaining);
+	}
+
+	[Fact]
+	public void Construct_RejectedFoodWithGuardedUnusualStorageContextRejectsUnknownStorageId()
+	{
+		var bridge = new PetFeedPacketMetadataBridge();
+		var plan = new PetFeedServiceOperationPlan(
+			PetFeedServiceOperationPlanStatus.RejectedFood,
+			Evaluation: new PetFeedEvaluationResult(null, IsLovedFood: false, Reward: null),
+			Operations: [new PetFeedServiceOperation(PetFeedServiceOperationKind.UnlockFoodItem, ItemObjectId: 5001)],
+			RemainingRequestedCount: 1,
+			RefeedTimeMilliseconds: null);
+
+		var result = bridge.Construct(new PetFeedPacketMetadataBridgeRequest(
+			plan,
+			FeedProgressData: 0x123450,
+			SupplementalContext: new PetFeedSupplementalPacketContext(
+				UnlockPacketContext: new PetFeedUnlockPacketContext(
+					PetFeedUnlockPacketStorageKind.UnusualWarehouse,
+					new InventoryItem { ObjectId = 5001, ItemId = 188000001, Location = 999, Slot = 4 },
+					CreateTemplate(188000001, "Odd Snack")))));
+
+		Assert.Equal(PetFeedPacketMetadataBridgeStatus.Blocked, result.Status);
+		Assert.Equal(PetFeedPacketMetadataResultStatus.BlockedItemUnlockPacket, result.Results[0].Status);
+		Assert.Contains("not a modeled Java StorageType", result.Results[0].Notes);
+	}
+
 	[Fact]
 	public void Construct_NotFullContinueBuildsProgressPacketAndSkipsNonPacketOperations()
 	{
