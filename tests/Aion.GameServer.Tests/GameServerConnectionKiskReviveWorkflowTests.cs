@@ -98,6 +98,34 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 	}
 
 	[Fact]
+	public async Task HandleReviveAsync_KiskReviveClearsVisibleTargetsBeforeTeleport()
+	{
+		var registry = new CapturingConnectionRegistry();
+		await using var fixture = await KiskReviveWorkflowFixture.CreateAsync(registry);
+		var player = CreateDeadPlayer(boundKiskObjectId: 9001);
+		player.Position = new WorldPosition(210010000, 10, 10, 20, 0);
+		var visibleTargeter = CreateOnlinePlayer(objectId: 1003, boundKiskObjectId: 0);
+		visibleTargeter.Position = player.Position with { X = player.Position.X + 5 };
+		visibleTargeter.TargetObjectId = player.ObjectId;
+		var distantTargeter = CreateOnlinePlayer(objectId: 1004, boundKiskObjectId: 0);
+		distantTargeter.Position = player.Position with { X = player.Position.X + 300 };
+		distantTargeter.TargetObjectId = player.ObjectId;
+		var unrelatedTargeter = CreateOnlinePlayer(objectId: 1005, boundKiskObjectId: 0);
+		unrelatedTargeter.Position = player.Position with { Y = player.Position.Y + 5 };
+		unrelatedTargeter.TargetObjectId = 9999;
+		registry.OnlinePlayers.AddRange([visibleTargeter, distantTargeter, unrelatedTargeter]);
+		var kiskPosition = new WorldPosition(210010000, 100, 120, 33, 0);
+		fixture.RegisterKisk(objectId: 9001, kiskPosition, maxResurrects: 2);
+
+		await fixture.Connection.HandleReviveAsync(player, CreateRevive(PlayerKiskReviveService.KiskReviveId));
+
+		Assert.Equal(0, visibleTargeter.TargetObjectId);
+		Assert.Equal(player.ObjectId, distantTargeter.TargetObjectId);
+		Assert.Equal(9999, unrelatedTargeter.TargetObjectId);
+		Assert.Equal(kiskPosition, player.Position);
+	}
+
+	[Fact]
 	public async Task HandleReviveAsync_DepletedKiskRunsRegistryCleanupFanout()
 	{
 		var registry = new CapturingConnectionRegistry();
