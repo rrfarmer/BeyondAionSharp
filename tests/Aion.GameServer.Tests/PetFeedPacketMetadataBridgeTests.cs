@@ -173,7 +173,112 @@ public sealed class PetFeedPacketMetadataBridgeTests
 	}
 
 	[Fact]
-	public void Construct_RejectedFoodUnlockKeepsWarehouseStorageBlockedUntilWarehousePacketExists()
+	public void Construct_RejectedFoodWithRegularWarehouseUnlockContextBuildsWarehousePacketsBeforeSmPetLikeJava()
+	{
+		var bridge = new PetFeedPacketMetadataBridge();
+		var plan = new PetFeedServiceOperationPlan(
+			PetFeedServiceOperationPlanStatus.RejectedFood,
+			Evaluation: new PetFeedEvaluationResult(null, IsLovedFood: false, Reward: null),
+			Operations:
+			[
+				new PetFeedServiceOperation(PetFeedServiceOperationKind.UnlockFoodItem, ItemObjectId: 5001),
+				new PetFeedServiceOperation(PetFeedServiceOperationKind.SendPetFeedEndPacket),
+			],
+			RemainingRequestedCount: 1,
+			RefeedTimeMilliseconds: null);
+		var item = new InventoryItem
+		{
+			ObjectId = 5001,
+			ItemId = 188000001,
+			Count = 2,
+			OwnerId = 7001,
+			Location = SmWarehouseAddItem.RegularWarehouse,
+			Slot = 12,
+		};
+
+		var result = bridge.Construct(new PetFeedPacketMetadataBridgeRequest(
+			plan,
+			FeedProgressData: 0x123450,
+			SupplementalContext: new PetFeedSupplementalPacketContext(
+				UnlockPacketContext: new PetFeedUnlockPacketContext(
+					PetFeedUnlockPacketStorageKind.Warehouse,
+					item,
+					CreateTemplate(item.ItemId, "Warehouse Snack"),
+					NpcExpands: 4,
+					QuestExpands: 2,
+					StorageItemsCount: 11))));
+
+		Assert.Equal(PetFeedPacketMetadataBridgeStatus.Constructed, result.Status);
+		Assert.Equal([2, 1], result.Results.Select(metadata => metadata.Packets.Count).ToArray());
+		var warehouseAdd = Assert.IsType<SmWarehouseAddItem>(result.Results[0].Packets[0]);
+		var cubeUpdate = Assert.IsType<SmCubeUpdate>(result.Results[0].Packets[1]);
+		Assert.IsType<SmPet>(result.Results[1].Packet);
+
+		using (var warehouseReader = new PacketBuffer(SerializeUnencryptedPayload(warehouseAdd)))
+		{
+			Assert.Equal(SmWarehouseAddItem.RegularWarehouse, (int)warehouseReader.ReadC());
+			Assert.Equal(SmWarehouseAddItem.AllSlot, warehouseReader.ReadH());
+			Assert.Equal(1, warehouseReader.ReadH());
+			Assert.Equal(5001, warehouseReader.ReadD());
+			Assert.Equal(188000001, warehouseReader.ReadD());
+			Assert.Equal(0, (int)warehouseReader.ReadC());
+			Assert.Equal(string.Empty, warehouseReader.ReadS());
+			var blobSize = warehouseReader.ReadH();
+			Assert.True(blobSize > 0);
+			warehouseReader.ReadB(blobSize);
+			Assert.Equal(12, warehouseReader.ReadH());
+			Assert.Equal(0, warehouseReader.Remaining);
+		}
+
+		using var cubeReader = new PacketBuffer(SerializeUnencryptedPayload(cubeUpdate));
+		Assert.Equal(0, (int)cubeReader.ReadC());
+		Assert.Equal(1, (int)cubeReader.ReadC());
+		Assert.Equal(11, cubeReader.ReadD());
+		Assert.Equal(4, (int)cubeReader.ReadC());
+		Assert.Equal(2, (int)cubeReader.ReadC());
+		Assert.Equal(0, (int)cubeReader.ReadC());
+		Assert.Equal(0, cubeReader.Remaining);
+	}
+
+	[Fact]
+	public void Construct_RejectedFoodWithAccountWarehouseUnlockContextUsesJavaZeroCubeUpdate()
+	{
+		var bridge = new PetFeedPacketMetadataBridge();
+		var plan = new PetFeedServiceOperationPlan(
+			PetFeedServiceOperationPlanStatus.RejectedFood,
+			Evaluation: new PetFeedEvaluationResult(null, IsLovedFood: false, Reward: null),
+			Operations: [new PetFeedServiceOperation(PetFeedServiceOperationKind.UnlockFoodItem, ItemObjectId: 5001)],
+			RemainingRequestedCount: 1,
+			RefeedTimeMilliseconds: null);
+		var item = new InventoryItem { ObjectId = 5001, ItemId = 188000001, Count = 2, OwnerId = 7001, Location = SmWarehouseAddItem.AccountWarehouse, Slot = 3 };
+
+		var result = bridge.Construct(new PetFeedPacketMetadataBridgeRequest(
+			plan,
+			FeedProgressData: 0x123450,
+			SupplementalContext: new PetFeedSupplementalPacketContext(
+				UnlockPacketContext: new PetFeedUnlockPacketContext(
+					PetFeedUnlockPacketStorageKind.AccountWarehouse,
+					item,
+					CreateTemplate(item.ItemId, "Account Snack"),
+					StorageItemsCount: 99))));
+
+		Assert.Equal(PetFeedPacketMetadataBridgeStatus.Constructed, result.Status);
+		var warehouseAdd = Assert.IsType<SmWarehouseAddItem>(result.Results[0].Packets[0]);
+		var cubeUpdate = Assert.IsType<SmCubeUpdate>(result.Results[0].Packets[1]);
+
+		using (var warehouseReader = new PacketBuffer(SerializeUnencryptedPayload(warehouseAdd)))
+		{
+			Assert.Equal(SmWarehouseAddItem.AccountWarehouse, (int)warehouseReader.ReadC());
+			Assert.Equal(SmWarehouseAddItem.AllSlot, warehouseReader.ReadH());
+		}
+
+		Assert.Equal(
+			Convert.FromHexString("000200000000000000"),
+			SerializeUnencryptedPayload(cubeUpdate));
+	}
+
+	[Fact]
+	public void Construct_RejectedFoodUnlockKeepsLegionWarehouseStorageBlockedUntilLegionPacketBehaviorExists()
 	{
 		var bridge = new PetFeedPacketMetadataBridge();
 		var plan = new PetFeedServiceOperationPlan(
@@ -187,12 +292,12 @@ public sealed class PetFeedPacketMetadataBridgeTests
 			plan,
 			FeedProgressData: 0x123450,
 			SupplementalContext: new PetFeedSupplementalPacketContext(
-				UnlockPacketContext: new PetFeedUnlockPacketContext(PetFeedUnlockPacketStorageKind.Warehouse))));
+				UnlockPacketContext: new PetFeedUnlockPacketContext(PetFeedUnlockPacketStorageKind.LegionWarehouse))));
 
 		Assert.Equal(PetFeedPacketMetadataBridgeStatus.Blocked, result.Status);
 		Assert.Equal(PetFeedPacketMetadataResultStatus.BlockedItemUnlockPacket, result.Results[0].Status);
 		Assert.Empty(result.Results[0].Packets);
-		Assert.Contains("Warehouse", result.Results[0].Notes);
+		Assert.Contains("Legion warehouse", result.Results[0].Notes);
 	}
 
 	[Fact]

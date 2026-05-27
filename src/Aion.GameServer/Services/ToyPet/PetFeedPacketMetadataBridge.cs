@@ -39,7 +39,8 @@ public sealed record PetFeedUnlockPacketContext(
 	int CubeItemsCount = 0,
 	int NpcExpands = 0,
 	int QuestExpands = 0,
-	int ItemExpands = 0);
+	int ItemExpands = 0,
+	int StorageItemsCount = 0);
 
 public sealed record PetFeedSupplementalPacketContext(
 	int? PlayerObjectId = null,
@@ -187,12 +188,7 @@ public sealed class PetFeedPacketMetadataBridge
 		}
 
 		if (context.StorageKind != PetFeedUnlockPacketStorageKind.Cube)
-		{
-			return Blocked(
-				operation,
-				PetFeedPacketMetadataResultStatus.BlockedItemUnlockPacket,
-				$"Storage kind {context.StorageKind} is not supported by the normal-cube unlock metadata boundary.");
-		}
+			return ConstructWarehouseItemUnlock(operation, context);
 
 		if (context.Item is null || context.Template is null)
 		{
@@ -216,6 +212,52 @@ public sealed class PetFeedPacketMetadataBridge
 			inventoryAdd,
 			Notes: "Constructed non-sending normal-cube unlock metadata: SmInventoryAddItem ALL_SLOT followed by SmCubeUpdate.",
 			PacketSequence: [inventoryAdd, cubeUpdate]);
+	}
+
+	private static PetFeedPacketMetadataResult ConstructWarehouseItemUnlock(
+		PetFeedServiceOperation operation,
+		PetFeedUnlockPacketContext context)
+	{
+		if (context.StorageKind is PetFeedUnlockPacketStorageKind.LegionWarehouse)
+		{
+			return Blocked(
+				operation,
+				PetFeedPacketMetadataResultStatus.BlockedItemUnlockPacket,
+				"Legion warehouse unlock metadata is blocked until SM_LEGION_EDIT kinah behavior and legion storage snapshots are modeled.");
+		}
+
+		if (context.StorageKind is not (PetFeedUnlockPacketStorageKind.Warehouse or PetFeedUnlockPacketStorageKind.AccountWarehouse))
+		{
+			return Blocked(
+				operation,
+				PetFeedPacketMetadataResultStatus.BlockedItemUnlockPacket,
+				$"Storage kind {context.StorageKind} is not supported by the rejected-food unlock metadata boundary.");
+		}
+
+		if (context.Item is null || context.Template is null)
+		{
+			return Blocked(
+				operation,
+				PetFeedPacketMetadataResultStatus.BlockedItemUnlockPacket,
+				"Warehouse unlock metadata needs supplied item and template snapshots.");
+		}
+
+		var warehouseType = context.StorageKind == PetFeedUnlockPacketStorageKind.Warehouse
+			? SmWarehouseAddItem.RegularWarehouse
+			: SmWarehouseAddItem.AccountWarehouse;
+		var warehouseAdd = SmWarehouseAddItem.CreateAllSlot(warehouseType, context.Item, context.Template);
+		var cubeUpdate = context.StorageKind == PetFeedUnlockPacketStorageKind.Warehouse
+			? SmCubeUpdate.RegularWarehouseSizeSnapshot(context.StorageItemsCount, context.NpcExpands, context.QuestExpands)
+			: SmCubeUpdate.AccountWarehouseSize();
+
+		// Java parity: ItemPacketService.sendStorageUpdatePacket non-cube default emits SM_WAREHOUSE_ADD_ITEM
+		// followed by SM_CUBE_UPDATE.cubeSize(storageType, player).
+		return new PetFeedPacketMetadataResult(
+			operation,
+			PetFeedPacketMetadataResultStatus.Constructed,
+			warehouseAdd,
+			Notes: $"Constructed non-sending {context.StorageKind} unlock metadata: SmWarehouseAddItem ALL_SLOT followed by SmCubeUpdate.",
+			PacketSequence: [warehouseAdd, cubeUpdate]);
 	}
 
 	private static PetFeedPacketMetadataResult ConstructEndFeedingEmotion(
