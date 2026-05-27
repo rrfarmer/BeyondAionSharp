@@ -30,6 +30,28 @@ public sealed class PlayerKiskAuthorizationServiceTests
 	}
 
 	[Fact]
+	public void ValidateBindPrioritizesAlreadyRegisteredBeforeCapacityLikeJavaDialogGuard()
+	{
+		var boundPlayer = new Player { ObjectId = 1002, BoundKiskObjectId = 9001 };
+		var memberOnlyPlayer = new Player { ObjectId = 1003 };
+		var fullKisk = new PlayerKiskRuntimeState(
+			objectId: 9001,
+			ownerObjectId: 1001,
+			npcId: 700273,
+			useMask: 0,
+			maxMembers: 1);
+		Assert.True(fullKisk.AddMember(memberOnlyPlayer.ObjectId));
+
+		var boundDuplicate = PlayerKiskAuthorizationService.ValidateBind(boundPlayer, fullKisk);
+		var memberDuplicate = PlayerKiskAuthorizationService.ValidateBind(memberOnlyPlayer, fullKisk);
+		var unrelatedFull = PlayerKiskAuthorizationService.ValidateBind(new Player { ObjectId = 1004 }, fullKisk);
+
+		Assert.Equal(PlayerKiskBindAuthorizationStatus.AlreadyRegistered, boundDuplicate.Status);
+		Assert.Equal(PlayerKiskBindAuthorizationStatus.AlreadyRegistered, memberDuplicate.Status);
+		Assert.Equal(PlayerKiskBindAuthorizationStatus.Full, unrelatedFull.Status);
+	}
+
+	[Fact]
 	public void ValidateBindKeepsGroupAndAllianceMasksOwnerOnlyUntilTeamMembershipCanBeResolved()
 	{
 		var owner = new Player { ObjectId = 1001, TeamMembership = PlayerTeamMembership.Group };
