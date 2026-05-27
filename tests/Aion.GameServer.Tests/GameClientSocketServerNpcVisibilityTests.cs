@@ -117,8 +117,7 @@ public sealed class GameClientSocketServerNpcVisibilityTests
 		};
 		var oldKiskNpc = CreateNpc(9001, 700273, new WorldPosition(210010000, 10, 0, 0, 0));
 		var newNpc = CreateNpc(5001, 203000, new WorldPosition(210010000, 15, 0, 0, 0));
-		SetActivePlayer(fixture.Connection, player);
-		fixture.Server.RegisterPlayerConnection(player.ObjectId, fixture.Connection);
+		fixture.RegisterActivePlayer(connectionIndex: 0, player);
 
 		await fixture.Server.RefreshNpcVisibilityAsync([oldKiskNpc], player.ObjectId);
 		fixture.SentPackets.Clear();
@@ -150,8 +149,7 @@ public sealed class GameClientSocketServerNpcVisibilityTests
 			npcId: kiskNpc.TemplateId,
 			ownerRace: "ELYOS"));
 		Assert.True(fixture.World.TryAddObject(kiskNpc.ObjectId, kiskNpc));
-		SetActivePlayer(fixture.Connection, player);
-		fixture.Server.RegisterPlayerConnection(player.ObjectId, fixture.Connection);
+		fixture.RegisterActivePlayer(connectionIndex: 0, player);
 
 		await fixture.Server.RefreshNpcVisibilityAsync(fixture.World.GetNpcs(kiskNpc.Position.WorldId), player.ObjectId);
 		Assert.IsType<SmNpcInfo>(Assert.Single(fixture.SentPackets));
@@ -177,8 +175,7 @@ public sealed class GameClientSocketServerNpcVisibilityTests
 			Position = new WorldPosition(210010000, 0, 0, 0, 0),
 		};
 		var kiskNpc = CreateNpc(9001, 700273, new WorldPosition(210010000, 10, 0, 0, 0));
-		SetActivePlayer(fixture.Connection, player);
-		fixture.Server.RegisterPlayerConnection(player.ObjectId, fixture.Connection);
+		fixture.RegisterActivePlayer(connectionIndex: 0, player);
 
 		await fixture.Server.RefreshNpcVisibilityAsync([kiskNpc], player.ObjectId);
 		Assert.IsType<SmNpcInfo>(Assert.Single(fixture.SentPackets));
@@ -188,6 +185,54 @@ public sealed class GameClientSocketServerNpcVisibilityTests
 
 		Assert.Equal(0, sent);
 		Assert.Empty(fixture.SentPackets);
+	}
+
+	[Fact]
+	public async Task RefreshNpcVisibilityAsync_DeletesRemovedKiskOnlyForViewerThatKnewIt()
+	{
+		await using var fixture = await NpcVisibilityFixture.CreateAsync(connectionCount: 2);
+		var nearViewer = new Player
+		{
+			ObjectId = 1002,
+			Name = "NearKiskViewer",
+			Race = "ELYOS",
+			PlayerClass = "RANGER",
+			Position = new WorldPosition(210010000, 0, 0, 0, 0),
+		};
+		var farViewer = new Player
+		{
+			ObjectId = 1003,
+			Name = "FarKiskViewer",
+			Race = "ELYOS",
+			PlayerClass = "RANGER",
+			Position = new WorldPosition(210010000, 500, 0, 0, 0),
+		};
+		var kiskNpc = CreateNpc(9001, 700273, new WorldPosition(210010000, 10, 0, 0, 0));
+		fixture.RegisterActivePlayer(connectionIndex: 0, nearViewer);
+		fixture.RegisterActivePlayer(connectionIndex: 1, farViewer);
+
+		var appearedSent = await fixture.Server.RefreshNpcVisibilityAsync([kiskNpc]);
+
+		Assert.Equal(1, appearedSent);
+		Assert.Collection(
+			fixture.ObservedPackets,
+			observed =>
+			{
+				Assert.Equal(0, observed.ConnectionIndex);
+				Assert.IsType<SmNpcInfo>(observed.Packet);
+			});
+		fixture.SentPackets.Clear();
+		fixture.ObservedPackets.Clear();
+		var removedSent = await fixture.Server.RefreshNpcVisibilityAsync([]);
+
+		Assert.Equal(1, removedSent);
+		Assert.Collection(
+			fixture.ObservedPackets,
+			observed =>
+			{
+				Assert.Equal(0, observed.ConnectionIndex);
+				AssertDeletePayload(Assert.IsType<SmDelete>(observed.Packet), kiskNpc.ObjectId);
+			});
 	}
 
 	private static void ClearActivePlayer(GameServerConnection connection)
@@ -307,27 +352,32 @@ public sealed class GameClientSocketServerNpcVisibilityTests
 
 	private sealed class NpcVisibilityFixture : IAsyncDisposable
 	{
-		private readonly TcpClient _client;
+		private readonly IReadOnlyList<TcpClient> _clients;
+		private readonly Dictionary<int, GameServerConnection> _registeredPlayerConnections = [];
 
 		private NpcVisibilityFixture(
-			TcpClient client,
+			IReadOnlyList<TcpClient> clients,
 			GameClientSocketServer server,
-			GameServerConnection connection,
+			IReadOnlyList<GameServerConnection> connections,
 			GameServerRuntimeContext runtimeContext,
 			GameWorld world,
-			List<GameServerPacket> sentPackets)
+			List<GameServerPacket> sentPackets,
+			List<(int ConnectionIndex, GameServerPacket Packet)> observedPackets)
 		{
-			_client = client;
+			_clients = clients;
 			Server = server;
-			Connection = connection;
+			Connections = connections;
 			RuntimeContext = runtimeContext;
 			World = world;
 			SentPackets = sentPackets;
+			ObservedPackets = observedPackets;
 		}
 
 		public GameClientSocketServer Server { get; }
 
-		public GameServerConnection Connection { get; }
+		public GameServerConnection Connection => Connections[0];
+
+		public IReadOnlyList<GameServerConnection> Connections { get; }
 
 		public GameServerRuntimeContext RuntimeContext { get; }
 
@@ -335,9 +385,20 @@ public sealed class GameClientSocketServerNpcVisibilityTests
 
 		public List<GameServerPacket> SentPackets { get; }
 
-		public static async Task<NpcVisibilityFixture> CreateAsync()
+		public List<(int ConnectionIndex, GameServerPacket Packet)> ObservedPackets { get; }
+
+		public void RegisterActivePlayer(int connectionIndex, Player player)
+		{
+			var connection = Connections[connectionIndex];
+			SetActivePlayer(connection, player);
+			Server.RegisterPlayerConnection(player.ObjectId, connection);
+			_registeredPlayerConnections[player.ObjectId] = connection;
+		}
+
+		public static async Task<NpcVisibilityFixture> CreateAsync(int connectionCount = 1)
 		{
 			var sentPackets = new List<GameServerPacket>();
+			var observedPackets = new List<(int ConnectionIndex, GameServerPacket Packet)>();
 			var runtimeContext = new GameServerRuntimeContext();
 			var world = new GameWorld(NullLogger<GameWorld>.Instance);
 			world.Initialize();
@@ -361,25 +422,38 @@ public sealed class GameClientSocketServerNpcVisibilityTests
 			try
 			{
 				var endpoint = (IPEndPoint)listener.LocalEndpoint;
-				var client = new TcpClient();
-				var acceptTask = listener.AcceptTcpClientAsync();
-				await client.ConnectAsync(endpoint.Address, endpoint.Port);
-				var serverClient = await acceptTask;
-				var crypt = new GameCrypt(() => 0x01020304);
-				crypt.EnableKey();
-				var connection = new GameServerConnection(
-					NullLogger.Instance,
-					serverClient,
-					"npc-visibility-test",
-					packetProcessor,
-					options: options,
-					runtimeContext: runtimeContext,
-					connectionRegistry: server,
-					idFactory: idFactory,
-					world: world,
-					sentPacketObserver: sentPackets.Add,
-					crypt: crypt);
-				return new NpcVisibilityFixture(client, server, connection, runtimeContext, world, sentPackets);
+				var clients = new List<TcpClient>();
+				var connections = new List<GameServerConnection>();
+				for (var i = 0; i < connectionCount; i++)
+				{
+					var connectionIndex = i;
+					var client = new TcpClient();
+					var acceptTask = listener.AcceptTcpClientAsync();
+					await client.ConnectAsync(endpoint.Address, endpoint.Port);
+					var serverClient = await acceptTask;
+					var crypt = new GameCrypt(() => 0x01020304);
+					crypt.EnableKey();
+					var connection = new GameServerConnection(
+						NullLogger.Instance,
+						serverClient,
+						$"npc-visibility-test-{connectionIndex}",
+						packetProcessor,
+						options: options,
+						runtimeContext: runtimeContext,
+						connectionRegistry: server,
+						idFactory: idFactory,
+						world: world,
+						sentPacketObserver: packet =>
+						{
+							sentPackets.Add(packet);
+							observedPackets.Add((connectionIndex, packet));
+						},
+						crypt: crypt);
+					clients.Add(client);
+					connections.Add(connection);
+				}
+
+				return new NpcVisibilityFixture(clients, server, connections, runtimeContext, world, sentPackets, observedPackets);
 			}
 			finally
 			{
@@ -389,9 +463,12 @@ public sealed class GameClientSocketServerNpcVisibilityTests
 
 		public async ValueTask DisposeAsync()
 		{
-			Server.UnregisterPlayerConnection(1002, Connection);
-			await Connection.DisposeAsync();
-			_client.Dispose();
+			foreach (var pair in _registeredPlayerConnections)
+				Server.UnregisterPlayerConnection(pair.Key, pair.Value);
+			foreach (var connection in Connections)
+				await connection.DisposeAsync();
+			foreach (var client in _clients)
+				client.Dispose();
 		}
 	}
 }
