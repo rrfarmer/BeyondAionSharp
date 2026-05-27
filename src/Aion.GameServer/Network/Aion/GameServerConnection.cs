@@ -4503,7 +4503,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (!saved)
 			return;
 
-		await SendExtractConsumedItemPacketsAsync(inventoryItems, plan, sourceTemplate, staticData.ItemRestrictionCleanups);
+		await SendExtractConsumedItemPacketsAsync(player, inventoryItems, plan, sourceTemplate, staticData.ItemRestrictionCleanups);
 		ApplyBreakItemInventoryMutation(inventoryItems, plan);
 		player.InventoryItems = inventoryItems.ToArray();
 
@@ -4520,13 +4520,17 @@ public sealed class GameServerConnection : BaseClientConnection
 	}
 
 	private async Task SendExtractConsumedItemPacketsAsync(
+		Player player,
 		IReadOnlyList<InventoryItem> inventoryItems,
 		BreakItemPlan plan,
 		ItemTemplateSummary sourceTemplate,
 		ItemRestrictionCleanupTable? itemRestrictionCleanups)
 	{
 		if (inventoryItems.Any(item => item.ObjectId == plan.DeletedTargetItemObjectId))
-			await SendPacketAsync(new SmDeleteItem(plan.DeletedTargetItemObjectId, SmDeleteItem.UseDeleteType));
+		{
+			await SendPacketAsync(new SmDeleteItem(plan.DeletedTargetItemObjectId));
+			await SendPacketAsync(SmCubeUpdate.CubeSizeSnapshot(inventoryItems.Count - 1, player.NpcExpands, player.QuestExpands, player.ItemExpands));
+		}
 
 		if (plan.SourceItemUpdate != null)
 		{
