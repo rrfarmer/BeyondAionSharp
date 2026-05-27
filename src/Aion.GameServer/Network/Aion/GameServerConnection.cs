@@ -4404,7 +4404,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		var inventoryItems = player.InventoryItems.ToList();
-		await SendApExtractConsumedItemPacketsAsync(inventoryItems, plan, sourceTemplate, staticData.ItemRestrictionCleanups);
+		await SendApExtractConsumedItemPacketsAsync(player, inventoryItems, plan, sourceTemplate, staticData.ItemRestrictionCleanups);
 		ApplyApExtractInventoryMutation(inventoryItems, plan);
 		player.InventoryItems = inventoryItems.ToArray();
 		player.AbyssRank = plan.AbyssPointsPlan.UpdatedRank;
@@ -4414,13 +4414,19 @@ public sealed class GameServerConnection : BaseClientConnection
 	}
 
 	private async Task SendApExtractConsumedItemPacketsAsync(
+		Player player,
 		IReadOnlyList<InventoryItem> inventoryItems,
 		ApExtractPlan plan,
 		ItemTemplateSummary sourceTemplate,
 		ItemRestrictionCleanupTable? itemRestrictionCleanups)
 	{
+		var projectedCubeCount = inventoryItems.Count;
 		if (inventoryItems.Any(item => item.ObjectId == plan.DeletedTargetItemObjectId))
-			await SendPacketAsync(new SmDeleteItem(plan.DeletedTargetItemObjectId, SmDeleteItem.UseDeleteType));
+		{
+			projectedCubeCount--;
+			await SendPacketAsync(new SmDeleteItem(plan.DeletedTargetItemObjectId));
+			await SendPacketAsync(SmCubeUpdate.CubeSizeSnapshot(projectedCubeCount, player.NpcExpands, player.QuestExpands, player.ItemExpands));
+		}
 
 		if (plan.SourceItemUpdate != null)
 		{
@@ -4432,7 +4438,9 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 		else if (plan.DeletedSourceItemObjectId.HasValue && inventoryItems.Any(item => item.ObjectId == plan.DeletedSourceItemObjectId.Value))
 		{
+			projectedCubeCount--;
 			await SendPacketAsync(new SmDeleteItem(plan.DeletedSourceItemObjectId.Value, SmDeleteItem.UseDeleteType));
+			await SendPacketAsync(SmCubeUpdate.CubeSizeSnapshot(projectedCubeCount, player.NpcExpands, player.QuestExpands, player.ItemExpands));
 		}
 	}
 

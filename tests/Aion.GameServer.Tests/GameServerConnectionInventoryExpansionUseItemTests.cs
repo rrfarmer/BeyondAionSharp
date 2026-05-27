@@ -223,7 +223,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Contains(player.InventoryItems, item => item.ObjectId == 5001 && item.Count == 1);
 		Assert.Collection(
 			fixture.SentPackets,
-			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 6001, expectedDeleteType: SmDeleteItem.UseDeleteType),
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 6001, expectedDeleteType: 0),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1),
 			packet => AssertInventoryUpdatePayloadWithCleanupSealFlag(
 				Assert.IsType<SmInventoryUpdateItem>(packet),
 				expectedObjectId: 5001,
@@ -252,7 +253,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Contains(player.InventoryItems, item => item.ObjectId == 5001 && item.Count == 1);
 		Assert.Collection(
 			fixture.SentPackets,
-			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 6001, expectedDeleteType: SmDeleteItem.UseDeleteType),
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 6001, expectedDeleteType: 0),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1),
 			packet => AssertInventoryUpdatePayloadWithCleanupSealFlag(
 				Assert.IsType<SmInventoryUpdateItem>(packet),
 				expectedObjectId: 5001,
@@ -260,6 +262,26 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 				expectedCleanupSealFlag: 3,
 				expectedItemMask: 0),
 			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1320000, "100"),
+			packet => Assert.IsType<SmAbyssRank>(packet));
+	}
+
+	[Fact]
+	public async Task HandleUseItemAsync_ApExtractDeletesLastToolWithUseDeleteAndCubeUpdate()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(new EmptyPlayerEnterWorldRepository());
+		var player = CreateApExtractPlayer(sourceCount: 1);
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItemTarget(sourceItemObjectId: 5001, targetItemObjectId: 6001));
+
+		Assert.Equal(980, player.AbyssRank.Ap);
+		Assert.Empty(player.InventoryItems);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 6001, expectedDeleteType: 0),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1),
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 5001, expectedDeleteType: SmDeleteItem.UseDeleteType),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0),
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1320000, "980"),
 			packet => Assert.IsType<SmAbyssRank>(packet));
 	}
 
@@ -2033,7 +2055,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		};
 	}
 
-	private static Player CreateApExtractPlayer()
+	private static Player CreateApExtractPlayer(long sourceCount = 2)
 	{
 		return new Player
 		{
@@ -2049,7 +2071,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 				{
 					ObjectId = 5001,
 					ItemId = 165005000,
-					Count = 2,
+					Count = sourceCount,
 					Location = 0,
 				},
 				new InventoryItem
