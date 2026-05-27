@@ -1293,6 +1293,54 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleUseItemAsync_ExtractMissingRewardTemplateFailsWithoutMutation()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(
+			includeThreadPoolManager: true,
+			idFactory: new IDFactory([5001, 6200]),
+			includeExtractionRewardTemplate: false);
+		var player = CreateExtractPlayer();
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItemTarget(sourceItemObjectId: 5001, targetItemObjectId: 6200));
+
+		await WaitUntilAsync(() => fixture.SentPackets.Count >= 2, TimeSpan.FromSeconds(6));
+		Assert.Contains(player.InventoryItems, item => item.ObjectId == 5001 && item.Count == 2);
+		Assert.Contains(player.InventoryItems, item => item.ObjectId == 6200);
+		Assert.DoesNotContain(player.InventoryItems, item => item.ItemId == 166000195);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 105, expectedTime: 5000, expectedEnd: 0),
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 105, expectedTime: 0, expectedEnd: 2));
+	}
+
+	[Theory]
+	[InlineData(5001)]
+	[InlineData(6200)]
+	public async Task HandleUseItemAsync_ExtractMissingScheduledItemSendsFailureWithoutMutation(int missingObjectId)
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(
+			includeThreadPoolManager: true,
+			idFactory: new IDFactory([5001, 6200]));
+		var player = CreateExtractPlayer();
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItemTarget(sourceItemObjectId: 5001, targetItemObjectId: 6200));
+		player.InventoryItems = player.InventoryItems
+			.Where(item => item.ObjectId != missingObjectId)
+			.ToArray();
+
+		await WaitUntilAsync(() => fixture.SentPackets.Count >= 2, TimeSpan.FromSeconds(6));
+		Assert.DoesNotContain(player.InventoryItems, item => item.ItemId == 166000195);
+		Assert.DoesNotContain(player.InventoryItems, item => item.ObjectId == missingObjectId);
+		Assert.Contains(player.InventoryItems, item => item.ObjectId == (missingObjectId == 5001 ? 6200 : 5001));
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 105, expectedTime: 5000, expectedEnd: 0),
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 105, expectedTime: 0, expectedEnd: 2));
+	}
+
+	[Fact]
 	public async Task HandleUseItemAsync_DecomposeInventoryFullDoesNotScheduleOrMutate()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
@@ -3613,10 +3661,14 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			bool enableCryptKeyBeforeRun = true,
 			SelectableDecomposeTestData? selectableData = null,
 			GameServerOptions? options = null,
-			int extractionRewardMaxStackCount = 100)
+			int extractionRewardMaxStackCount = 100,
+			bool includeExtractionRewardTemplate = true)
 		{
 			options ??= new GameServerOptions();
 			var selectableFixture = selectableData ?? SelectableDecomposeTestData.Default;
+			var extractionRewardTemplateXml = includeExtractionRewardTemplate
+				? $"""<item_template id="166000195" name="Restricted Extraction Reward" level="1" mask="123" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="{extractionRewardMaxStackCount}"/>"""
+				: string.Empty;
 			var tempRoot = Path.Combine(Path.GetTempPath(), "aion-inventory-expansion-use-" + Guid.NewGuid().ToString("N"));
 			Directory.CreateDirectory(Path.Combine(tempRoot, "game-server", "data", "static_data"));
 			await File.WriteAllTextAsync(
@@ -3739,7 +3791,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 							</actions>
 						</item_template>
 						<item_template id="100000500" name="Test Mythic Extraction Sword" level="65" mask="65536" item_group="SWORD" item_type="NORMAL" quality="MYTHIC" race="PC_ALL" max_stack_count="1"/>
-						<item_template id="166000195" name="Restricted Extraction Reward" level="1" mask="123" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="{extractionRewardMaxStackCount}"/>
+						{extractionRewardTemplateXml}
 						<item_template id="200" name="Test Decompose Reward" level="1" mask="123" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
 						<item_template id="{selectableFixture.RewardIndex0ItemId}" name="Test Selectable Reward 1" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
 						<item_template id="{selectableFixture.RewardIndex1ItemId}" name="Test Selectable Reward 2" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
