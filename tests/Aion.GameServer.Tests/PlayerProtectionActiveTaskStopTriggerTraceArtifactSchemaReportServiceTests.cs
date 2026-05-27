@@ -45,12 +45,68 @@ public sealed class PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaRepo
 		var report = PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaReportService.Create(CreateRuntimeDesign());
 
 		Assert.True(report.HasFanoutAndAiFields);
+		Assert.Contains(report.Fields, row =>
+			row.Field == PlayerProtectionActiveTaskStopTriggerTraceArtifactField.FanoutIncludeSelf
+			&& row.RequiredFor.Contains("direct packet", StringComparison.Ordinal));
 		Assert.Contains(report.ControllerObservables, row =>
 			row.JavaOperation.Contains("SM_PLAYER_STATE", StringComparison.Ordinal)
 			&& row.RequiredFields.Contains("FanoutRecipientCount", StringComparison.Ordinal));
 		Assert.Contains(report.ControllerObservables, row =>
 			row.JavaOperation == "notifyAIOnMove()"
 			&& row.RequiredFields.Contains("NotifyAiOnMoveCalled", StringComparison.Ordinal));
+	}
+
+	[Fact]
+	public void Create_IncludesTeleportAnimationDoneGeneratedArtifactPhases()
+	{
+		var report = PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaReportService.Create(CreateRuntimeDesign());
+
+		Assert.Contains(report.Phases, row =>
+			row.Phase == PlayerProtectionActiveTaskStopTriggerTraceArtifactPhase.TeleportTaskRemove
+			&& row.JavaSource == "CM_TELEPORT_ANIMATION_DONE.runImpl");
+		Assert.Contains(report.Phases, row =>
+			row.Phase == PlayerProtectionActiveTaskStopTriggerTraceArtifactPhase.TeleportTaskNoOp
+			&& row.RequiredObservation.Contains("missing/done/non-runnable", StringComparison.Ordinal));
+		Assert.Contains(report.Phases, row =>
+			row.Phase == PlayerProtectionActiveTaskStopTriggerTraceArtifactPhase.SpawnTaskRun
+			&& row.Notes.Contains("run inline", StringComparison.Ordinal));
+		Assert.Contains(report.Phases, row =>
+			row.Phase == PlayerProtectionActiveTaskStopTriggerTraceArtifactPhase.SpawnTaskGetException
+			&& row.JavaSource == "CM_TELEPORT_ANIMATION_DONE.runImpl");
+		Assert.Contains(report.Phases, row =>
+			row.Phase == PlayerProtectionActiveTaskStopTriggerTraceArtifactPhase.ExceptionLogged
+			&& row.RequiredObservation.Contains("e.getCause()", StringComparison.Ordinal));
+		Assert.Contains(report.Phases, row =>
+			row.Phase == PlayerProtectionActiveTaskStopTriggerTraceArtifactPhase.SpawnedGuardNoOp
+			&& row.Notes.Contains("skips fallback packet and spawn", StringComparison.Ordinal));
+	}
+
+	[Fact]
+	public void Create_IncludesTeleportCallerOriginAndSpawnTaskFields()
+	{
+		var report = PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaReportService.Create(CreateRuntimeDesign());
+
+		Assert.Contains(report.Fields, row =>
+			row.Field == PlayerProtectionActiveTaskStopTriggerTraceArtifactField.CallerClass
+			&& row.SerializationNote.Contains("string", StringComparison.Ordinal));
+		Assert.Contains(report.Fields, row =>
+			row.Field == PlayerProtectionActiveTaskStopTriggerTraceArtifactField.StartProtectionLine
+			&& row.Notes.Contains("do not invoke", StringComparison.Ordinal));
+		Assert.Contains(report.Fields, row =>
+			row.Field == PlayerProtectionActiveTaskStopTriggerTraceArtifactField.StartsProtectionBeforeWorldSpawn
+			&& row.Notes.Contains("Beritra", StringComparison.Ordinal));
+		Assert.Contains(report.Fields, row =>
+			row.Field == PlayerProtectionActiveTaskStopTriggerTraceArtifactField.TeleportTaskRunnableFuture
+			&& row.Notes.Contains("instanceof RunnableFuture", StringComparison.Ordinal));
+		Assert.Contains(report.Fields, row =>
+			row.Field == PlayerProtectionActiveTaskStopTriggerTraceArtifactField.TeleportTaskIsDone
+			&& row.Notes.Contains("Observational only", StringComparison.Ordinal));
+		Assert.Contains(report.Fields, row =>
+			row.Field == PlayerProtectionActiveTaskStopTriggerTraceArtifactField.SpawnTaskGetExceptionType
+			&& row.RequiredFor.Contains("exception", StringComparison.Ordinal));
+		Assert.Contains(report.Fields, row =>
+			row.Field == PlayerProtectionActiveTaskStopTriggerTraceArtifactField.InstanceExists
+			&& row.Notes.Contains("missing-instance", StringComparison.Ordinal));
 	}
 
 	[Fact]
@@ -70,6 +126,18 @@ public sealed class PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaRepo
 			&& row.ExpectsStopProtectionCall);
 		Assert.Contains(report.PacketReturnReasons, row =>
 			row.Reason == PlayerProtectionActiveTaskStopTriggerTraceArtifactPacketReturnReason.CmEmotionStanceRejectionReturn
+			&& !row.ExpectsStopProtectionCall);
+		Assert.Contains(report.PacketReturnReasons, row =>
+			row.Reason == PlayerProtectionActiveTaskStopTriggerTraceArtifactPacketReturnReason.TeleportAnimationDoneNoPendingRunnableTask
+			&& row.PacketName == "CM_TELEPORT_ANIMATION_DONE"
+			&& !row.ExpectsStopProtectionCall);
+		Assert.Contains(report.PacketReturnReasons, row =>
+			row.Reason == PlayerProtectionActiveTaskStopTriggerTraceArtifactPacketReturnReason.TeleportAnimationDoneMissingInstanceFallback
+			&& row.Notes.Contains("without position set", StringComparison.Ordinal)
+			&& !row.ExpectsStopProtectionCall);
+		Assert.Contains(report.PacketReturnReasons, row =>
+			row.Reason == PlayerProtectionActiveTaskStopTriggerTraceArtifactPacketReturnReason.TeleportSpawnOnSameMapProtectionStartSkip
+			&& row.JavaSource == "TeleportService.spawnOnSameMap"
 			&& !row.ExpectsStopProtectionCall);
 	}
 

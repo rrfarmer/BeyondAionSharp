@@ -18,6 +18,21 @@ public enum PlayerProtectionActiveTaskStopTriggerTraceArtifactPhase
 	AiNotify,
 	StopCallExit,
 	PostStopPacketSideEffect,
+	CallerOriginEnter,
+	TeleportTaskRemove,
+	TeleportTaskNoOp,
+	SpawnTaskRun,
+	SpawnTaskGetException,
+	ExceptionLogged,
+	FallbackGuard,
+	FallbackWorldSpawn,
+	WorldPositionSet,
+	PetPositionSet,
+	SameMapSpawnPackets,
+	WorldSpawnCompleted,
+	PetSpawnCompleted,
+	ProtectionStartSkip,
+	SpawnedGuardNoOp,
 	PacketReturn,
 	PacketExit,
 }
@@ -61,8 +76,26 @@ public enum PlayerProtectionActiveTaskStopTriggerTraceArtifactField
 	StopOrigin,
 	PacketReturnReason,
 	FanoutPacketName,
+	FanoutIncludeSelf,
 	FanoutRecipientCount,
 	NotifyAiOnMoveCalled,
+	CallerName,
+	CallerClass,
+	CallerMethod,
+	CallerSourceFile,
+	CallerLine,
+	StartProtectionLine,
+	StartsProtectionBeforeWorldSpawn,
+	WorldSpawnLine,
+	SpawnedBeforeStart,
+	CallerOrdering,
+	TeleportTaskFutureType,
+	TeleportTaskIsDone,
+	TeleportTaskRunnableFuture,
+	SpawnTaskGetExceptionType,
+	LoggerCauseType,
+	PetSpawned,
+	InstanceExists,
 	MovementOldX,
 	MovementOldY,
 	MovementOldZ,
@@ -135,6 +168,12 @@ public enum PlayerProtectionActiveTaskStopTriggerTraceArtifactPacketReturnReason
 	CmEmotionStanceRejectionReturn,
 	CmEmotionValidationReturn,
 	CmEmotionLateStopAfterStateMutation,
+	TeleportAnimationDoneRunsSpawnTask,
+	TeleportAnimationDoneNoPendingRunnableTask,
+	TeleportAnimationDoneMissingInstanceFallback,
+	TeleportAnimationDoneSpawnTaskExceptionFallback,
+	TeleportAnimationDoneSpawnTaskExceptionSpawnedGuard,
+	TeleportSpawnOnSameMapProtectionStartSkip,
 	ProtectionInactiveNoStop,
 	StopCompleted,
 }
@@ -265,6 +304,21 @@ public static class PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaRepo
 		AddPhase(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactPhase.AiNotify, "PlayerController.notifyAIOnMove", "Trace notifyAIOnMove invocation after spawned-player fanout.", "Needed before AI move-notification parity can be claimed.");
 		AddPhase(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactPhase.StopCallExit, "PlayerController.stopProtectionActiveTask", "Trace protection/task/visual state after controller stop completes.", "Required to prove task cancel precedes visual/fanout/AI side effects.");
 		AddPhase(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactPhase.PostStopPacketSideEffect, "action packet runImpl after stop", "Trace packet work that continues after stop, including invalid-after-stop branches.", "Needed for CM_USE_ITEM and CM_COMPOSITE_STONES.");
+		AddPhase(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactPhase.CallerOriginEnter, "CM_LEVEL_READY/TeleportService/BeritraPortalAI/CM_TELEPORT_ANIMATION_DONE", "Trace caller-origin metadata for branches that start or skip protection outside direct first-action stop packets.", "Required by generated artifacts for level-ready, teleport, Beritra, and animation-done scenarios.");
+		AddPhase(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactPhase.TeleportTaskRemove, "CM_TELEPORT_ANIMATION_DONE.runImpl", "Trace getAndRemoveTask(TaskId.TELEPORT) before runnable dispatch decisions.", "Needed to distinguish missing, done, non-runnable, runnable, and exception paths.");
+		AddPhase(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactPhase.TeleportTaskNoOp, "CM_TELEPORT_ANIMATION_DONE.runImpl", "Trace missing/done/non-runnable teleport task no-op branches.", "No-op rows must prove no packet, spawn, position, or protection mutation occurred.");
+		AddPhase(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactPhase.SpawnTaskRun, "CM_TELEPORT_ANIMATION_DONE.runImpl and TeleportService.SpawnTask.run", "Trace synchronous pending spawn-task execution after client animation completion.", "Must preserve that the task is run inline by the packet handler.");
+		AddPhase(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactPhase.SpawnTaskGetException, "CM_TELEPORT_ANIMATION_DONE.runImpl", "Trace spawnTask.get exception type after run.", "Needed before exception fallback can be compared.");
+		AddPhase(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactPhase.ExceptionLogged, "CM_TELEPORT_ANIMATION_DONE.runImpl", "Trace LoggerFactory error call with e.getCause() before fallback guard.", "Logging is not parity evidence by itself, but ordering must not be lost.");
+		AddPhase(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactPhase.FallbackGuard, "TeleportService.SpawnTask.run and CM_TELEPORT_ANIMATION_DONE.runImpl", "Trace dead/missing-instance or catch-branch spawned guard before fallback packet/spawn.", "Required to separate missing-instance/dead-player fallback from exception fallback.");
+		AddPhase(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactPhase.FallbackWorldSpawn, "TeleportService.SpawnTask.run and CM_TELEPORT_ANIMATION_DONE.runImpl", "Trace fallback World.spawn(player) without position set.", "Generated artifacts must show fallback returns before normal same-map/full-reload work.");
+		AddPhase(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactPhase.WorldPositionSet, "TeleportService.SpawnTask.run", "Trace World.setPosition before normal same-map/full-reload spawn.", "Needed to prove fallback branches skip position mutation.");
+		AddPhase(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactPhase.PetPositionSet, "TeleportService.SpawnTask.run", "Trace pet position mutation after player position set.", "Pet updates are absent from fallback and no-op branches.");
+		AddPhase(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactPhase.SameMapSpawnPackets, "TeleportService.spawnOnSameMap", "Trace same-map packet sequence before World.spawn(player).", "Packet classes/order must be captured separately from world-spawn side effects.");
+		AddPhase(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactPhase.WorldSpawnCompleted, "World.spawn", "Trace player spawned state after normal or fallback spawn.", "World region/known-list side effects remain separate runtime evidence.");
+		AddPhase(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactPhase.PetSpawnCompleted, "World.spawn(pet)", "Trace pet spawn completion when Java has an active pet.", "Needed so generated artifacts do not infer pet spawn from player spawn.");
+		AddPhase(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactPhase.ProtectionStartSkip, "PlayerController.startProtectionActiveTask", "Trace already-active guard skip after same-map World.spawn.", "Must prove no second fanout/scheduler refresh occurs.");
+		AddPhase(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactPhase.SpawnedGuardNoOp, "CM_TELEPORT_ANIMATION_DONE.runImpl", "Trace exception catch branch when player is already spawned.", "Must prove catch branch logs but skips fallback packet and spawn.");
 		AddPhase(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactPhase.PacketReturn, "AionClientPacket.runImpl", "Trace return reason and packet result.", "Stable return reason enum should be emitted here.");
 		AddPhase(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactPhase.PacketExit, "AionClientPacket.runImpl", "Trace final packet result, return reason, and post-packet protection/task state.", "Last phase for every instrumented branch.");
 		return rows;
@@ -310,8 +364,26 @@ public static class PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaRepo
 		AddField(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactField.StopOrigin, "stop phases", "enum string", "Values should distinguish first-action packet and scheduled callback origins.");
 		AddField(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactField.PacketReturnReason, "guard/exit phases", "enum string", "Must use explicit packet return-reason schema values.");
 		AddField(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactField.FanoutPacketName, "fanout phase", "string", "Expected SM_PLAYER_STATE for spawned stop side effects.");
+		AddField(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactField.FanoutIncludeSelf, "fanout/direct packet phases", "boolean", "Records Java broadcast toSelf/includeSelf behavior separately from recipient count.");
 		AddField(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactField.FanoutRecipientCount, "fanout phase", "integer", "Required for socket fanout comparison.");
 		AddField(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactField.NotifyAiOnMoveCalled, "AI phase/exit", "boolean", "Expected true only for spawned stop side effect path.");
+		AddField(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactField.CallerName, "caller-origin phases", "string", "Stable branch/scenario name for non-first-action caller-origin traces.");
+		AddField(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactField.CallerClass, "caller-origin phases", "string or null", "Java simple class name such as TeleportService or CM_TELEPORT_ANIMATION_DONE.");
+		AddField(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactField.CallerMethod, "caller-origin phases", "string or null", "Java method such as spawnOnSameMap, sendLoc, handleUseItemFinish, or runImpl.");
+		AddField(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactField.CallerSourceFile, "caller-origin phases", "string", "Java source file containing the caller-origin branch.");
+		AddField(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactField.CallerLine, "caller-origin phases", "integer or null", "Line near caller-origin branch; diagnostic when source shifts.");
+		AddField(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactField.StartProtectionLine, "caller-origin phases", "integer or null", "Null for branches that do not invoke startProtectionActiveTask.");
+		AddField(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactField.StartsProtectionBeforeWorldSpawn, "caller-origin phases", "boolean", "Distinguishes Beritra pre-animation start from same-map post-spawn skipped start.");
+		AddField(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactField.WorldSpawnLine, "caller-origin/spawn phases", "integer or null", "Breadcrumb to the Java World.spawn line for normal/fallback branch comparison.");
+		AddField(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactField.SpawnedBeforeStart, "caller-origin phases", "boolean", "Records server-side spawned state before a start-protection attempt.");
+		AddField(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactField.CallerOrdering, "caller-origin phases", "string", "Human-readable source-reviewed ordering key for generated artifact comparison.");
+		AddField(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactField.TeleportTaskFutureType, "CM_TELEPORT_ANIMATION_DONE task phases", "string or null", "Records missing, Future, RunnableFuture, or implementation type without depending on C# task types.");
+		AddField(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactField.TeleportTaskIsDone, "CM_TELEPORT_ANIMATION_DONE task phases", "boolean or null", "Observational only; must not add Java control flow beyond existing !task.isDone branch.");
+		AddField(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactField.TeleportTaskRunnableFuture, "CM_TELEPORT_ANIMATION_DONE task phases", "boolean", "Records Java instanceof RunnableFuture branch used before run/get.");
+		AddField(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactField.SpawnTaskGetExceptionType, "CM_TELEPORT_ANIMATION_DONE exception phases", "string or null", "Records InterruptedException or ExecutionException without requiring stack trace serialization.");
+		AddField(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactField.LoggerCauseType, "CM_TELEPORT_ANIMATION_DONE exception phases", "string or null", "Records e.getCause() type used by Java logging before fallback guard.");
+		AddField(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactField.PetSpawned, "TeleportService.SpawnTask.run", "boolean or null", "Separates pet spawn/position side effects from player spawn.");
+		AddField(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactField.InstanceExists, "TeleportService.SpawnTask.run", "boolean or null", "Records missing-instance fallback guard without executing C# world registry.");
 		AddField(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactField.MovementOldX, "CM_MOVE", "float", "Preserves Java float comparison inputs.");
 		AddField(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactField.MovementOldY, "CM_MOVE", "float", "Preserves Java float comparison inputs.");
 		AddField(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactField.MovementOldZ, "CM_MOVE", "float", "Preserves asymmetric z threshold input.");
@@ -386,6 +458,12 @@ public static class PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaRepo
 		AddReturnReason(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactPacketReturnReason.CmEmotionStanceRejectionReturn, "CM_EMOTION", "CM_EMOTION.runImpl", false, "Stance rejection packet path returns before stop.");
 		AddReturnReason(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactPacketReturnReason.CmEmotionValidationReturn, "CM_EMOTION", "CM_EMOTION.runImpl", false, "Validation return after pre-stop state checks still skips stop.");
 		AddReturnReason(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactPacketReturnReason.CmEmotionLateStopAfterStateMutation, "CM_EMOTION", "CM_EMOTION.runImpl", true, "Late successful emotion path calls stop after state mutation and optional broadcast.");
+		AddReturnReason(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactPacketReturnReason.TeleportAnimationDoneRunsSpawnTask, "CM_TELEPORT_ANIMATION_DONE", "CM_TELEPORT_ANIMATION_DONE.runImpl", false, "Pending RunnableFuture is run inline; any protection start comes from the spawn task branch, not the packet handler itself.");
+		AddReturnReason(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactPacketReturnReason.TeleportAnimationDoneNoPendingRunnableTask, "CM_TELEPORT_ANIMATION_DONE", "CM_TELEPORT_ANIMATION_DONE.runImpl", false, "Missing, done, or non-runnable teleport task no-ops after getAndRemoveTask.");
+		AddReturnReason(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactPacketReturnReason.TeleportAnimationDoneMissingInstanceFallback, "CM_TELEPORT_ANIMATION_DONE/TeleportService.SpawnTask", "TeleportService.SpawnTask.run", false, "Dead-player or missing-instance fallback sends player info and spawns without position set or protection start.");
+		AddReturnReason(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactPacketReturnReason.TeleportAnimationDoneSpawnTaskExceptionFallback, "CM_TELEPORT_ANIMATION_DONE", "CM_TELEPORT_ANIMATION_DONE.runImpl", false, "spawnTask.get exception logs then sends player info and spawns only when the player remains unspawned.");
+		AddReturnReason(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactPacketReturnReason.TeleportAnimationDoneSpawnTaskExceptionSpawnedGuard, "CM_TELEPORT_ANIMATION_DONE", "CM_TELEPORT_ANIMATION_DONE.runImpl", false, "Exception catch branch skips fallback packet/spawn when player is already spawned.");
+		AddReturnReason(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactPacketReturnReason.TeleportSpawnOnSameMapProtectionStartSkip, "TeleportService.spawnOnSameMap", "TeleportService.spawnOnSameMap", false, "Same-map spawn can attempt startProtectionActiveTask after World.spawn, but already-active protection skips without scheduler/fanout refresh.");
 		AddReturnReason(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactPacketReturnReason.ProtectionInactiveNoStop, "all stop-trigger packets", "runImpl", false, "Protection-inactive paths do not call stop.");
 		AddReturnReason(rows, PlayerProtectionActiveTaskStopTriggerTraceArtifactPacketReturnReason.StopCompleted, "all stop-trigger packets", "runImpl", true, "Terminal reason for branches where stop completed and packet execution continued or exited normally.");
 		return rows;
