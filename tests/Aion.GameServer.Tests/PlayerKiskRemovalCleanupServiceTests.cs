@@ -40,6 +40,30 @@ public sealed class PlayerKiskRemovalCleanupServiceTests
 	}
 
 	[Fact]
+	public void CreatePlanIncludesCreatorMemberBindPointResetLikeJavaRemoveKisk()
+	{
+		var kisk = new PlayerKiskRuntimeState(
+			objectId: 9001,
+			ownerObjectId: 1001,
+			npcId: 700273);
+		Assert.True(kisk.AddMember(1001));
+		var despawn = PlayerKiskDespawnResult.Removed(
+			kisk,
+			worldId: 210010000,
+			kisk.CurrentMemberIds,
+			releasedObjectId: true,
+			cancelledDespawnTask: false);
+		var creator = CreatePlayer(1001, boundKiskObjectId: 9001);
+
+		var plan = PlayerKiskRemovalCleanupService.CreatePlan(despawn, [creator]);
+
+		Assert.Equal(1001, plan.CreatorUpdateObjectId);
+		Assert.Equal(new[] { 1001 }, plan.ClearBoundObjectIds);
+		Assert.Equal(new[] { 1001 }, plan.BindPointResetObjectIds);
+		Assert.Empty(plan.ResurrectionOptionRefreshObjectIds);
+	}
+
+	[Fact]
 	public void CreatePlanIsEmptyWhenNoKiskWasRemoved()
 	{
 		var player = CreatePlayer(1001, boundKiskObjectId: 9001, pendingKiskObjectId: 9001);
