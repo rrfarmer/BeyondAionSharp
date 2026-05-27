@@ -1,5 +1,6 @@
 using System.Buffers.Binary;
 using System.Text.Json;
+using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
@@ -97,14 +98,16 @@ public sealed class PetFeedSubtype7JavaVectorArtifactReaderTests(ITestOutputHelp
 			    {
 			      "sequence": 3,
 			      "packetClass": "SM_EMOTION",
-			      "opcode": 41,
+			      "opcode": 37,
 			      "semanticKey": "end-feeding-emotion",
 			      "canonicalPayloadHex": null,
 			      "bodyHex": null,
 			      "wireFrameHex": null,
 			      "decoded": {
 			        "playerObjectId": 7001,
-			        "emotionType": 0,
+			        "emotionType": 51,
+			        "state": 0,
+			        "speed": 0,
 			        "targetObjectId": 7001
 			      }
 			    },
@@ -216,8 +219,12 @@ public sealed class PetFeedSubtype7JavaVectorArtifactReaderTests(ITestOutputHelp
 					AssertPetFoodPacketSemantics(packet, artifact);
 					break;
 				case "SM_EMOTION":
+					Assert.Equal(SmEmotion.PacketOpCode, packet.Opcode);
 					Assert.True(packet.SemanticKey == "end-feeding-emotion", $"Unsupported SM_EMOTION semantic key: {packet.SemanticKey}");
 					Assert.True(packet.Decoded.PlayerObjectId.HasValue, "SM_EMOTION missing playerObjectId.");
+					Assert.Equal((int)EmotionType.EndFeeding, RequiredInt(packet.Decoded.EmotionType, "emotionType"));
+					Assert.True(packet.Decoded.State.HasValue, "SM_EMOTION missing state.");
+					Assert.True(packet.Decoded.Speed.HasValue, "SM_EMOTION missing speed.");
 					Assert.True(packet.Decoded.TargetObjectId.HasValue, "SM_EMOTION missing targetObjectId.");
 					break;
 				default:
@@ -259,7 +266,7 @@ public sealed class PetFeedSubtype7JavaVectorArtifactReaderTests(ITestOutputHelp
 
 	private static void AssertGeneratedBodyMatchesCSharpWhenPresent(PetFeedSubtype7JavaVectorArtifact artifact)
 	{
-		foreach (var packet in artifact.Packets.Where(packet => packet.PacketClass == "SM_PET" && !string.IsNullOrWhiteSpace(packet.BodyHex)))
+		foreach (var packet in artifact.Packets.Where(packet => SupportsCSharpComparison(packet) && !string.IsNullOrWhiteSpace(packet.BodyHex)))
 		{
 			Assert.Equal(
 				NormalizeHex(packet.BodyHex!),
@@ -269,7 +276,7 @@ public sealed class PetFeedSubtype7JavaVectorArtifactReaderTests(ITestOutputHelp
 
 	private static void AssertGeneratedCanonicalPayloadMatchesCSharpWhenPresent(PetFeedSubtype7JavaVectorArtifact artifact)
 	{
-		foreach (var packet in artifact.Packets.Where(packet => packet.PacketClass == "SM_PET" && !string.IsNullOrWhiteSpace(packet.CanonicalPayloadHex)))
+		foreach (var packet in artifact.Packets.Where(packet => SupportsCSharpComparison(packet) && !string.IsNullOrWhiteSpace(packet.CanonicalPayloadHex)))
 		{
 			Assert.Equal(
 				NormalizeHex(packet.CanonicalPayloadHex!),
@@ -279,18 +286,38 @@ public sealed class PetFeedSubtype7JavaVectorArtifactReaderTests(ITestOutputHelp
 
 	private static GameServerPacket CreateCSharpPacketFromArtifact(PetFeedSubtype7JavaVectorPacket packet)
 	{
-		if (packet.PacketClass != "SM_PET")
-			throw new NotSupportedException($"C# comparison is only available for SM_PET artifacts, not {packet.PacketClass}.");
-
-		return SmPet.Food(new SmPetFoodSnapshot(
-			RequiredInt(packet.Decoded.FoodSubType, "foodSubType"),
-			RequiredInt(packet.Decoded.FeedProgressData, "feedProgressData"),
-			packet.Decoded.ItemObjectId ?? 0,
-			packet.Decoded.Count ?? 0,
-			packet.Decoded.RefeedDelaySeconds ?? 0));
+		return packet.PacketClass switch
+		{
+			"SM_PET" => SmPet.Food(new SmPetFoodSnapshot(
+				RequiredInt(packet.Decoded.FoodSubType, "foodSubType"),
+				RequiredInt(packet.Decoded.FeedProgressData, "feedProgressData"),
+				packet.Decoded.ItemObjectId ?? 0,
+				packet.Decoded.Count ?? 0,
+				packet.Decoded.RefeedDelaySeconds ?? 0)),
+			"SM_EMOTION" when packet.SemanticKey == "end-feeding-emotion" => new SmEmotion(
+				new Player
+				{
+					ObjectId = RequiredInt(packet.Decoded.PlayerObjectId, "playerObjectId"),
+					CreatureState = (PlayerCreatureState)RequiredInt(packet.Decoded.State, "state"),
+				},
+				(EmotionType)RequiredInt(packet.Decoded.EmotionType, "emotionType"),
+				emotion: 0,
+				targetObjectId: packet.Decoded.TargetObjectId ?? 0,
+				speed: RequiredFloat(packet.Decoded.Speed, "speed")),
+			_ => throw new NotSupportedException($"Unsupported pet feed subtype 7 vector packet: {packet.PacketClass}/{packet.SemanticKey}"),
+		};
 	}
 
+	private static bool SupportsCSharpComparison(PetFeedSubtype7JavaVectorPacket packet) =>
+		packet.PacketClass is "SM_PET" || packet.PacketClass == "SM_EMOTION" && packet.SemanticKey == "end-feeding-emotion";
+
 	private static int RequiredInt(int? value, string fieldName)
+	{
+		Assert.True(value.HasValue, $"Missing decoded {fieldName}.");
+		return value.Value;
+	}
+
+	private static float RequiredFloat(float? value, string fieldName)
 	{
 		Assert.True(value.HasValue, $"Missing decoded {fieldName}.");
 		return value.Value;
@@ -377,6 +404,8 @@ public sealed class PetFeedSubtype7JavaVectorArtifactReaderTests(ITestOutputHelp
 		int? TrailingInt,
 		int? PlayerObjectId,
 		int? EmotionType,
+		int? State,
+		float? Speed,
 		int? TargetObjectId);
 
 	private sealed record PetFeedSubtype7StateSnapshot(
