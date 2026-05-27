@@ -70,6 +70,34 @@ public sealed class PlayerAllianceMemberInfoTests
 	}
 
 	[Fact]
+	public void CreateReviveMovementUpdatePlan_UsesJavaPlayerReviveMovementEvent()
+	{
+		var planner = new PlayerAllianceMovementUpdatePlanner();
+		var leader = new Player { ObjectId = 1001, Name = "Leader", IsOnline = true };
+		var revived = new Player
+		{
+			ObjectId = 1002,
+			Name = "Revived",
+			IsOnline = true,
+			PlayerClass = "CLERIC",
+			Gender = "FEMALE",
+			Level = 45,
+			Position = new WorldPosition(220010000, 11, 22, 33, 64),
+		};
+		var other = new Player { ObjectId = 1003, Name = "Other", IsOnline = true };
+
+		var plan = Assert.IsType<PlayerAllianceMemberInfoUpdatePlan>(
+			planner.CreateReviveMovementUpdatePlan(88001, [leader, revived, other], revived));
+
+		Assert.Equal(PlayerAllianceEvent.Movement, plan.Event);
+		Assert.Equal(revived.ObjectId, plan.SubjectObjectId);
+		Assert.Collection(
+			plan.MemberInfoIntents,
+			intent => AssertMovementIntent(intent, recipientObjectId: leader.ObjectId, subjectObjectId: revived.ObjectId),
+			intent => AssertMovementIntent(intent, recipientObjectId: other.ObjectId, subjectObjectId: revived.ObjectId));
+	}
+
+	[Fact]
 	public void CreateMovementUpdatePlan_ReturnsNullForMissingAllianceMember()
 	{
 		var planner = new PlayerAllianceMovementUpdatePlanner();

@@ -4,6 +4,15 @@ namespace Aion.GameServer.Services;
 
 public sealed class PlayerAllianceMovementUpdatePlanner
 {
+	public PlayerAllianceMemberInfoUpdatePlan? CreateReviveMovementUpdatePlan(
+		int allianceId,
+		IReadOnlyList<Player> members,
+		Player player)
+	{
+		// Java parity: services/player/PlayerReviveService.revive calls PlayerAllianceService.updateAlliance(..., MOVEMENT).
+		return CreateMovementUpdatePlan(allianceId, members, player);
+	}
+
 	public PlayerAllianceMemberInfoUpdatePlan? CreateMovementUpdatePlan(
 		int allianceId,
 		IReadOnlyList<Player> members,
