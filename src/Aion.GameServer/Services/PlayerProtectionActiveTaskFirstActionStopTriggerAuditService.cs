@@ -53,7 +53,13 @@ public sealed record PlayerProtectionActiveTaskFirstActionStopTriggerAuditReques
 	bool CmCastSpellIdZero = false,
 	bool CmCastSpellPetOrderWithoutPet = false,
 	bool CmCastSpellTemplateMissingOrPassive = false,
-	bool CmCastSpellProtectionActive = true);
+	bool CmCastSpellProtectionActive = true,
+	bool EvaluateCmUseItem = false,
+	bool CmUseItemProtectionActive = true,
+	bool EvaluateCmShowDialog = false,
+	bool CmShowDialogProtectionActive = true,
+	bool EvaluateCmDialogSelect = false,
+	bool CmDialogSelectProtectionActive = true);
 
 public sealed record PlayerProtectionActiveTaskFirstActionStopTriggerAuditRow(
 	int Order,
@@ -90,10 +96,10 @@ public static class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 		AddCmAttack(rows, request);
 		AddCmCastSpell(rows, request);
 		AddPendingActionCaller(rows, PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmCompositeStones, "CM_COMPOSITE_STONES.runImpl", "after null-player guard");
-		AddPendingActionCaller(rows, PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmDialogSelect, "CM_DIALOG_SELECT.runImpl", "before trading and dialog validation");
+		AddCmDialogSelect(rows, request);
 		AddPendingActionCaller(rows, PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmEmotion, "CM_EMOTION.runImpl", "near the end of the handled emotion flow");
-		AddPendingActionCaller(rows, PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmShowDialog, "CM_SHOW_DIALOG.runImpl", "before trading and NPC validation");
-		AddPendingActionCaller(rows, PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmUseItem, "CM_USE_ITEM.runImpl", "before item lookup and restriction checks");
+		AddCmShowDialog(rows, request);
+		AddCmUseItem(rows, request);
 		AddProductionBoundary(rows);
 
 		var rowArray = rows.ToArray();
@@ -280,6 +286,93 @@ public static class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 			"if (player.isProtectionActive()) stopProtectionActiveTask(); player.getController().cancelUseItem()",
 			"CM_CASTSPELL.runImpl",
 			"future CM_CASTSPELL protection-stop hook",
+			note);
+	}
+
+	private static void AddCmUseItem(
+		ICollection<PlayerProtectionActiveTaskFirstActionStopTriggerAuditRow> rows,
+		PlayerProtectionActiveTaskFirstActionStopTriggerAuditRequest request)
+	{
+		if (!request.EvaluateCmUseItem)
+		{
+			AddPendingActionCaller(rows, PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmUseItem, "CM_USE_ITEM.runImpl", "before item lookup and restriction checks");
+			return;
+		}
+
+		var note = request.CmUseItemProtectionActive
+			? "Java CM_USE_ITEM stops protection immediately after resolving the active player and before source item lookup, target item lookup, casting cancellation, restrictions, quest item-use callback, cooldown, observers, or action execution."
+			: "Java CM_USE_ITEM reaches the item-use path but skips stopProtectionActiveTask because protection is not active, then continues to source item lookup and later item-use guards.";
+
+		Add(
+			rows,
+			PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmUseItem,
+			PlayerProtectionActiveTaskFirstActionStopTriggerRowKind.ActionPacketStop,
+			request.CmUseItemProtectionActive
+				? PlayerProtectionActiveTaskFirstActionStopTriggerStatus.WouldStopProtection
+				: PlayerProtectionActiveTaskFirstActionStopTriggerStatus.SkippedByJavaBranch,
+			request.CmUseItemProtectionActive,
+			request.CmUseItemProtectionActive,
+			"if (player.isProtectionActive()) stopProtectionActiveTask()",
+			"CM_USE_ITEM.runImpl",
+			"future CM_USE_ITEM protection-stop hook",
+			note);
+	}
+
+	private static void AddCmShowDialog(
+		ICollection<PlayerProtectionActiveTaskFirstActionStopTriggerAuditRow> rows,
+		PlayerProtectionActiveTaskFirstActionStopTriggerAuditRequest request)
+	{
+		if (!request.EvaluateCmShowDialog)
+		{
+			AddPendingActionCaller(rows, PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmShowDialog, "CM_SHOW_DIALOG.runImpl", "before trading and NPC validation");
+			return;
+		}
+
+		var note = request.CmShowDialogProtectionActive
+			? "Java CM_SHOW_DIALOG stops protection immediately after resolving the active player and before the trading guard, known-list NPC lookup, hide removal, or onDialogRequest."
+			: "Java CM_SHOW_DIALOG reaches the dialog request path but skips stopProtectionActiveTask because protection is not active, then evaluates trading and NPC validation.";
+
+		Add(
+			rows,
+			PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmShowDialog,
+			PlayerProtectionActiveTaskFirstActionStopTriggerRowKind.ActionPacketStop,
+			request.CmShowDialogProtectionActive
+				? PlayerProtectionActiveTaskFirstActionStopTriggerStatus.WouldStopProtection
+				: PlayerProtectionActiveTaskFirstActionStopTriggerStatus.SkippedByJavaBranch,
+			request.CmShowDialogProtectionActive,
+			request.CmShowDialogProtectionActive,
+			"if (player.isProtectionActive()) stopProtectionActiveTask()",
+			"CM_SHOW_DIALOG.runImpl",
+			"future CM_SHOW_DIALOG protection-stop hook",
+			note);
+	}
+
+	private static void AddCmDialogSelect(
+		ICollection<PlayerProtectionActiveTaskFirstActionStopTriggerAuditRow> rows,
+		PlayerProtectionActiveTaskFirstActionStopTriggerAuditRequest request)
+	{
+		if (!request.EvaluateCmDialogSelect)
+		{
+			AddPendingActionCaller(rows, PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmDialogSelect, "CM_DIALOG_SELECT.runImpl", "before trading and dialog validation");
+			return;
+		}
+
+		var note = request.CmDialogSelectProtectionActive
+			? "Java CM_DIALOG_SELECT stops protection immediately after resolving the active player and before the trading guard, admin dialog-info message, action-name lookup, quest handling, NPC validation, or controller onDialogSelect."
+			: "Java CM_DIALOG_SELECT reaches the dialog select path but skips stopProtectionActiveTask because protection is not active, then evaluates trading and dialog validation.";
+
+		Add(
+			rows,
+			PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmDialogSelect,
+			PlayerProtectionActiveTaskFirstActionStopTriggerRowKind.ActionPacketStop,
+			request.CmDialogSelectProtectionActive
+				? PlayerProtectionActiveTaskFirstActionStopTriggerStatus.WouldStopProtection
+				: PlayerProtectionActiveTaskFirstActionStopTriggerStatus.SkippedByJavaBranch,
+			request.CmDialogSelectProtectionActive,
+			request.CmDialogSelectProtectionActive,
+			"if (player.isProtectionActive()) stopProtectionActiveTask()",
+			"CM_DIALOG_SELECT.runImpl",
+			"future CM_DIALOG_SELECT protection-stop hook",
 			note);
 	}
 

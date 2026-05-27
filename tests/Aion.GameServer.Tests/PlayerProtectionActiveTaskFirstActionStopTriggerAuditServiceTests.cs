@@ -251,6 +251,69 @@ public sealed class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 			&& row.Notes.Contains(expectedNote, StringComparison.Ordinal));
 	}
 
+	[Theory]
+	[InlineData(PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmUseItem, "before source item lookup")]
+	[InlineData(PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmShowDialog, "before the trading guard")]
+	[InlineData(PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmDialogSelect, "before the trading guard")]
+	public void Create_UseItemAndDialogPacketsStopBeforeJavaValidation(
+		PlayerProtectionActiveTaskFirstActionStopTriggerSource source,
+		string expectedNote)
+	{
+		var report = PlayerProtectionActiveTaskFirstActionStopTriggerAuditService.Create(CreateRequest(
+			evaluateCmUseItem: source == PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmUseItem,
+			evaluateCmShowDialog: source == PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmShowDialog,
+			evaluateCmDialogSelect: source == PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmDialogSelect));
+
+		Assert.True(report.TriggersStopProtection);
+		Assert.Contains(report.Rows, row =>
+			row.Source == source
+			&& row.Status == PlayerProtectionActiveTaskFirstActionStopTriggerStatus.WouldStopProtection
+			&& row.JavaCallReached
+			&& row.WouldStopProtection
+			&& row.Notes.Contains(expectedNote, StringComparison.Ordinal));
+	}
+
+	[Theory]
+	[InlineData(PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmUseItem, "source item lookup")]
+	[InlineData(PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmShowDialog, "trading and NPC validation")]
+	[InlineData(PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmDialogSelect, "trading and dialog validation")]
+	public void Create_UseItemAndDialogPacketsInactiveProtectionSkipsStop(
+		PlayerProtectionActiveTaskFirstActionStopTriggerSource source,
+		string expectedNote)
+	{
+		var report = PlayerProtectionActiveTaskFirstActionStopTriggerAuditService.Create(CreateRequest(
+			evaluateCmUseItem: source == PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmUseItem,
+			cmUseItemProtectionActive: false,
+			evaluateCmShowDialog: source == PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmShowDialog,
+			cmShowDialogProtectionActive: false,
+			evaluateCmDialogSelect: source == PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmDialogSelect,
+			cmDialogSelectProtectionActive: false));
+
+		Assert.False(report.TriggersStopProtection);
+		Assert.Contains(report.Rows, row =>
+			row.Source == source
+			&& row.Status == PlayerProtectionActiveTaskFirstActionStopTriggerStatus.SkippedByJavaBranch
+			&& !row.JavaCallReached
+			&& row.Notes.Contains(expectedNote, StringComparison.Ordinal));
+	}
+
+	[Fact]
+	public void Create_RemainingCompositeAndEmotionCallersStayPendingAfterUseItemAndDialogAudit()
+	{
+		var report = PlayerProtectionActiveTaskFirstActionStopTriggerAuditService.Create(CreateRequest(
+			evaluateCmUseItem: true,
+			evaluateCmShowDialog: true,
+			evaluateCmDialogSelect: true));
+
+		Assert.True(report.HasPendingCallerSurface);
+		Assert.Contains(report.Rows, row =>
+			row.Source == PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmCompositeStones
+			&& row.Status == PlayerProtectionActiveTaskFirstActionStopTriggerStatus.PendingAudit);
+		Assert.Contains(report.Rows, row =>
+			row.Source == PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmEmotion
+			&& row.Status == PlayerProtectionActiveTaskFirstActionStopTriggerStatus.PendingAudit);
+	}
+
 	private static PlayerProtectionActiveTaskFirstActionStopTriggerAuditRequest CreateRequest(
 		float packetX = CurrentX,
 		float packetY = CurrentY,
@@ -271,7 +334,13 @@ public sealed class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 		bool cmCastSpellIdZero = false,
 		bool cmCastSpellPetOrderWithoutPet = false,
 		bool cmCastSpellTemplateMissingOrPassive = false,
-		bool cmCastSpellProtectionActive = true) =>
+		bool cmCastSpellProtectionActive = true,
+		bool evaluateCmUseItem = false,
+		bool cmUseItemProtectionActive = true,
+		bool evaluateCmShowDialog = false,
+		bool cmShowDialogProtectionActive = true,
+		bool evaluateCmDialogSelect = false,
+		bool cmDialogSelectProtectionActive = true) =>
 		new(
 			spawned,
 			antiHackAccepted,
@@ -295,7 +364,13 @@ public sealed class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 			cmCastSpellIdZero,
 			cmCastSpellPetOrderWithoutPet,
 			cmCastSpellTemplateMissingOrPassive,
-			cmCastSpellProtectionActive);
+			cmCastSpellProtectionActive,
+			evaluateCmUseItem,
+			cmUseItemProtectionActive,
+			evaluateCmShowDialog,
+			cmShowDialogProtectionActive,
+			evaluateCmDialogSelect,
+			cmDialogSelectProtectionActive);
 
 	private const float CurrentX = 100f;
 	private const float CurrentY = 200f;
