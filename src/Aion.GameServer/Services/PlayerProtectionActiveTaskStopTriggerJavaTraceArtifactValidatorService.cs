@@ -8,6 +8,7 @@ public enum PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationIssu
 	MissingTopLevelField,
 	UnsupportedSchemaVersion,
 	MissingTraceRows,
+	MissingNestedPayloadField,
 	OutOfOrderEventSequence,
 	UnknownPhase,
 	UnknownReturnReason,
@@ -172,8 +173,28 @@ public static class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValida
 				Add(issues, PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationIssueCode.TimestampMarkedAsParityKey, $"{path}.timestampIsParityKey", "Timestamps are diagnostics only and must not be parity keys.");
 			}
 
+			ValidatePlayerSnapshot(trace, issues, path);
+
 			index++;
 		}
+	}
+
+	private static void ValidatePlayerSnapshot(
+		JsonElement trace,
+		ICollection<PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationIssue> issues,
+		string tracePath)
+	{
+		if (!trace.TryGetProperty("player", out var player) || player.ValueKind != JsonValueKind.Object)
+			return;
+
+		RequireNested(player, issues, "objectId", $"{tracePath}.player");
+		RequireNested(player, issues, "spawned", $"{tracePath}.player");
+		RequireNested(player, issues, "flying", $"{tracePath}.player");
+		RequireNested(player, issues, "dead", $"{tracePath}.player");
+		RequireNested(player, issues, "protectionActiveBefore", $"{tracePath}.player");
+		RequireNested(player, issues, "protectionActiveAfter", $"{tracePath}.player");
+		RequireNested(player, issues, "visualStateBefore", $"{tracePath}.player");
+		RequireNested(player, issues, "visualStateAfter", $"{tracePath}.player");
 	}
 
 	private static void Require(
@@ -184,6 +205,16 @@ public static class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValida
 	{
 		if (!element.TryGetProperty(propertyName, out _))
 			Add(issues, PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationIssueCode.MissingTopLevelField, $"{path}.{propertyName}", "Required schema-v1 field is missing.");
+	}
+
+	private static void RequireNested(
+		JsonElement element,
+		ICollection<PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationIssue> issues,
+		string propertyName,
+		string path)
+	{
+		if (!element.TryGetProperty(propertyName, out _))
+			Add(issues, PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationIssueCode.MissingNestedPayloadField, $"{path}.{propertyName}", "Required schema-v1 nested payload field is missing.");
 	}
 
 	private static void Add(

@@ -105,6 +105,28 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValida
 			issue.Code == PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationIssueCode.TimestampMarkedAsParityKey);
 	}
 
+	[Fact]
+	public void Validate_RejectsMissingPlayerSnapshotNestedPayloadFields()
+	{
+		var json = RepresentativeArtifactJson.Replace(
+			"""
+			        "visualStateAfter": ["BLINKING"]
+			""",
+			"""
+			        "visualStateAfterMissing": ["BLINKING"]
+			""",
+			StringComparison.Ordinal);
+
+		var report = PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidatorService.Validate(json);
+
+		Assert.False(report.IsValidSchemaV1);
+		Assert.Null(report.Metadata);
+		Assert.Contains(report.Issues, issue =>
+			issue.Code == PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationIssueCode.MissingNestedPayloadField
+			&& issue.Path == "$.traces[0].player.visualStateAfter"
+			&& issue.Message.Contains("nested payload", StringComparison.Ordinal));
+	}
+
 	private const string RepresentativeArtifactJson = """
 		{
 		  "schemaVersion": 1,
