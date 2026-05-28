@@ -62,6 +62,36 @@ public sealed class ItemPurificationPersistencePlanServiceTests
 		Assert.Null(persistence.AbyssRank);
 	}
 
+	[Fact]
+	public void CreatePersistencePlan_RejectsMissingAbyssRankMutationWhenApplicationSpendsAp()
+	{
+		var baseItem = CreateBaseItem(enchant: 25);
+		var material = new InventoryItem { ObjectId = 20, ItemId = 186000001, Count = 3, Location = 0 };
+		var kinah = new InventoryItem { ObjectId = 30, ItemId = 182400001, Count = 10_000, Location = 0 };
+		var player = CreatePlayer(abyssPoints: 5_000, baseItem, material, kinah);
+		var application = CreateApplicationPlan(player, baseItem, targetObjectId: 9001);
+		var mutation = ItemPurificationLiveMutationService.Apply(
+			player,
+			application,
+			npcExpands: 1,
+			questExpands: 0,
+			itemExpands: 1);
+
+		var persistence = ItemPurificationPersistencePlanService.CreatePersistencePlan(
+			application,
+			mutation.MutationPreview,
+			abyssPointsPlan: null);
+
+		Assert.False(persistence.Succeeded);
+		Assert.Equal(ItemPurificationPersistencePlanStatus.MissingAbyssRankMutation, persistence.Status);
+		Assert.Empty(persistence.MaterialItemUpdates);
+		Assert.Empty(persistence.DeletedMaterialItemObjectIds);
+		Assert.Null(persistence.BaseItemUpdate);
+		Assert.Null(persistence.DeletedBaseItemObjectId);
+		Assert.Empty(persistence.AddedTargetItems);
+		Assert.Null(persistence.AbyssRank);
+	}
+
 	private static ItemPurificationApplicationPlan CreateApplicationPlan(
 		Player player,
 		InventoryItem baseItem,
@@ -152,4 +182,3 @@ public sealed class ItemPurificationPersistencePlanServiceTests
 			MaxEnchantLevel: maxEnchantLevel);
 	}
 }
-

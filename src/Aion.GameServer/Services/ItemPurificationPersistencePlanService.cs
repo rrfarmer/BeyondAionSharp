@@ -20,6 +20,8 @@ public static class ItemPurificationPersistencePlanService
 			return ItemPurificationPersistencePlan.Failed(ItemPurificationPersistencePlanStatus.MissingMutationPreview);
 		if (!mutationPreview.Succeeded)
 			return ItemPurificationPersistencePlan.Failed(ItemPurificationPersistencePlanStatus.MutationPreviewNotReady);
+		if (applicationPlan.AbyssPointsToSpend > 0 && abyssPointsPlan?.UpdatedRank == null)
+			return ItemPurificationPersistencePlan.Failed(ItemPurificationPersistencePlanStatus.MissingAbyssRankMutation);
 
 		var postItemsByObjectId = mutationPreview.PostMutationInventoryItems.ToDictionary(item => item.ObjectId);
 		var materialItemUpdates = new List<InventoryItem>();
@@ -121,7 +123,7 @@ public enum ItemPurificationPersistencePlanStatus
 	ApplicationPlanNotReady,
 	MissingMutationPreview,
 	MutationPreviewNotReady,
+	MissingAbyssRankMutation,
 	MissingUpdatedItemSnapshot,
 	MissingTargetItemSnapshot,
 }
-
