@@ -261,6 +261,63 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValida
 			&& issue.Message.Contains("nested payload", StringComparison.Ordinal));
 	}
 
+	[Fact]
+	public void Validate_RejectsMissingEmotionNestedPayloadFieldsWhenEmotionIsPresent()
+	{
+		var json = RepresentativeArtifactJson.Replace(
+			"""
+			      "emotion": null,
+			""",
+			"""
+			      "emotion": {
+			        "emotionType": "EMOTE",
+			        "emotionId": 131,
+			        "emotionStance": "cm_emotion_validation_return",
+			        "emotionCanUse": false
+			      },
+			""",
+			StringComparison.Ordinal);
+
+		var report = PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidatorService.Validate(json);
+
+		Assert.False(report.IsValidSchemaV1);
+		Assert.Null(report.Metadata);
+		Assert.Contains(report.Issues, issue =>
+			issue.Code == PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationIssueCode.MissingNestedPayloadField
+			&& issue.Path == "$.traces[0].emotion.emotionBroadcasted"
+			&& issue.Message.Contains("nested payload", StringComparison.Ordinal));
+	}
+
+	[Fact]
+	public void Validate_RejectsMissingActionPayloadNestedPayloadFieldsWhenActionPayloadIsPresent()
+	{
+		var json = RepresentativeArtifactJson.Replace(
+			"""
+			      "actionPayload": null,
+			""",
+			"""
+			      "actionPayload": {
+			        "itemObjectId": 987654,
+			        "itemLookupResult": "found",
+			        "restrictionResult": "passed",
+			        "itemActionResult": "all_can_act_false",
+			        "compositeToolObjectId": null,
+			        "compositeFirstObjectId": null,
+			        "compositeSecondObjectId": null
+			      },
+			""",
+			StringComparison.Ordinal);
+
+		var report = PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidatorService.Validate(json);
+
+		Assert.False(report.IsValidSchemaV1);
+		Assert.Null(report.Metadata);
+		Assert.Contains(report.Issues, issue =>
+			issue.Code == PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationIssueCode.MissingNestedPayloadField
+			&& issue.Path == "$.traces[0].actionPayload.compositeCanActResult"
+			&& issue.Message.Contains("nested payload", StringComparison.Ordinal));
+	}
+
 	private const string RepresentativeArtifactJson = """
 		{
 		  "schemaVersion": 1,

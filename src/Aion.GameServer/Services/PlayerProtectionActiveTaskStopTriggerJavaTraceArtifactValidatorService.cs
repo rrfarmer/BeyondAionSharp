@@ -179,6 +179,8 @@ public static class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValida
 			ValidateTaskCancellationPayload(trace, issues, path);
 			ValidateFanoutPayload(trace, issues, path);
 			ValidateAiNotifyPayload(trace, issues, path);
+			ValidateEmotionPayload(trace, issues, path);
+			ValidateActionPayload(trace, issues, path);
 
 			index++;
 		}
@@ -284,6 +286,39 @@ public static class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValida
 
 		RequireNested(aiNotify, issues, "notifyAiOnMoveCalled", $"{tracePath}.aiNotify");
 		RequireNested(aiNotify, issues, "ordering", $"{tracePath}.aiNotify");
+	}
+
+	private static void ValidateEmotionPayload(
+		JsonElement trace,
+		ICollection<PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationIssue> issues,
+		string tracePath)
+	{
+		if (!trace.TryGetProperty("emotion", out var emotion) || emotion.ValueKind != JsonValueKind.Object)
+			return;
+
+		RequireNested(emotion, issues, "emotionType", $"{tracePath}.emotion");
+		RequireNested(emotion, issues, "emotionId", $"{tracePath}.emotion");
+		RequireNested(emotion, issues, "emotionStance", $"{tracePath}.emotion");
+		RequireNested(emotion, issues, "emotionCanUse", $"{tracePath}.emotion");
+		RequireNested(emotion, issues, "emotionBroadcasted", $"{tracePath}.emotion");
+	}
+
+	private static void ValidateActionPayload(
+		JsonElement trace,
+		ICollection<PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationIssue> issues,
+		string tracePath)
+	{
+		if (!trace.TryGetProperty("actionPayload", out var actionPayload) || actionPayload.ValueKind != JsonValueKind.Object)
+			return;
+
+		RequireNested(actionPayload, issues, "itemObjectId", $"{tracePath}.actionPayload");
+		RequireNested(actionPayload, issues, "itemLookupResult", $"{tracePath}.actionPayload");
+		RequireNested(actionPayload, issues, "restrictionResult", $"{tracePath}.actionPayload");
+		RequireNested(actionPayload, issues, "itemActionResult", $"{tracePath}.actionPayload");
+		RequireNested(actionPayload, issues, "compositeToolObjectId", $"{tracePath}.actionPayload");
+		RequireNested(actionPayload, issues, "compositeFirstObjectId", $"{tracePath}.actionPayload");
+		RequireNested(actionPayload, issues, "compositeSecondObjectId", $"{tracePath}.actionPayload");
+		RequireNested(actionPayload, issues, "compositeCanActResult", $"{tracePath}.actionPayload");
 	}
 
 	private static void Require(
