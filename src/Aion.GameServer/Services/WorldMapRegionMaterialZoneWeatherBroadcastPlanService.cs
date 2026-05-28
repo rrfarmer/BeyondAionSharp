@@ -1,3 +1,5 @@
+using Aion.GameServer.Network.Aion.ServerPackets;
+
 namespace Aion.GameServer.Services;
 
 public static class WorldMapRegionMaterialZoneWeatherBroadcastPlanService
@@ -105,6 +107,20 @@ public static class WorldMapRegionMaterialZoneWeatherBroadcastPlanService
 				WorldMapRegionMaterialZoneWeatherChangeEntryStatus.ExistingWeatherEntry,
 				existing);
 	}
+
+	public static WorldMapRegionMaterialZoneWeatherPacketFactoryPlan CreateWeatherPacketFactoryPlan(
+		IReadOnlyList<int> weatherCodes)
+	{
+		ArgumentNullException.ThrowIfNull(weatherCodes);
+
+		// Java parity breadcrumb: WeatherService.loadWeather/checkWeathersTime/changeWeather
+		// instantiate new SM_WEATHER(worldZoneWeathers.get(worldId)) after selecting the
+		// ordered WeatherEntry array for a world map.
+		return new WorldMapRegionMaterialZoneWeatherPacketFactoryPlan(
+			weatherCodes,
+			new SmWeather(weatherCodes),
+			"new SM_WEATHER(weatherEntries) non-live packet factory boundary");
+	}
 }
 
 public sealed record WorldMapRegionMaterialZoneWeatherCheckContext(
@@ -153,6 +169,11 @@ public sealed record WorldMapRegionMaterialZoneWeatherOverrideEntrySnapshot(
 	int ZoneId,
 	int WeatherCode,
 	string? WeatherName);
+
+public sealed record WorldMapRegionMaterialZoneWeatherPacketFactoryPlan(
+	IReadOnlyList<int> WeatherCodes,
+	SmWeather Packet,
+	string JavaSource);
 
 public enum WorldMapRegionMaterialZoneWeatherLoadStatus
 {

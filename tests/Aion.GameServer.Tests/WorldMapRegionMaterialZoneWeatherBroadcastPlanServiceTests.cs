@@ -1,3 +1,5 @@
+using Aion.Commons.Network;
+using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services;
 
 namespace Aion.GameServer.Tests;
@@ -96,5 +98,31 @@ public sealed class WorldMapRegionMaterialZoneWeatherBroadcastPlanServiceTests
 		Assert.Equal(2, plan.Entries[1].SelectedEntry?.ZoneId);
 		Assert.Equal(7, plan.Entries[1].SelectedEntry?.WeatherCode);
 		Assert.Null(plan.Entries[1].SelectedEntry?.WeatherName);
+	}
+
+	[Fact]
+	public void CreateWeatherPacketFactoryPlan_CreatesSmWeatherWithJavaPacketBody()
+	{
+		var plan = WorldMapRegionMaterialZoneWeatherBroadcastPlanService.CreateWeatherPacketFactoryPlan([0, 7, 255]);
+
+		Assert.Equal([0, 7, 255], plan.WeatherCodes);
+		Assert.Contains("SM_WEATHER", plan.JavaSource);
+
+		var payload = SerializeUnencryptedPayload(plan.Packet);
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(3, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(7, (int)reader.ReadC());
+		Assert.Equal(255, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
+	{
+		var crypt = new GameCrypt(() => 0x01020304);
+		crypt.EnableKey();
+		var frame = packet.SerializeFrame(crypt);
+		return frame[7..];
 	}
 }
