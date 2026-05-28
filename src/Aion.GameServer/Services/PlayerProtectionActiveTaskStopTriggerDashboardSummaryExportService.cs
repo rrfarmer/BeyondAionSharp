@@ -63,8 +63,12 @@ public static class PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportS
 			|| blockers.Any(row => row.Status == PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardStatus.BlockedMissingRuntimeEvidence);
 		var hasComparisonExecutionBlocker = dashboard.NeedsComparisonExecution
 			|| blockers.Any(row => row.Status == PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardStatus.BlockedComparisonNotExecuted);
-		var needsProtectionArtifactSerializer = javaHookDetail?.NeedsProtectionArtifactSerializer == true;
-		var needsJavaObserverImplementation = javaHookDetail?.NeedsJavaObserverImplementation == true;
+		var hasJavaHookDetailEvidence = dashboard.HasJavaHookDetailEvidence || javaHookDetail != null;
+		var javaHookDetailRowCount = javaHookDetail?.Rows.Count ?? dashboard.JavaHookDetailRowCount;
+		var needsProtectionArtifactSerializer = dashboard.NeedsProtectionArtifactSerializer
+			|| javaHookDetail?.NeedsProtectionArtifactSerializer == true;
+		var needsJavaObserverImplementation = dashboard.NeedsJavaObserverImplementation
+			|| javaHookDetail?.NeedsJavaObserverImplementation == true;
 		var readyForRuntimeComparison = dashboard.ReadyForRuntimeComparison && blockers.Length == 0;
 		var status = readyForRuntimeComparison
 			? PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportStatus.ReadyForRuntimeComparison
@@ -81,7 +85,7 @@ public static class PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportS
 				hasCSharpEmitterBlocker,
 				hasRuntimeEvidenceBlocker,
 				hasComparisonExecutionBlocker,
-				javaHookDetail?.Rows.Count ?? 0,
+				javaHookDetailRowCount,
 				needsProtectionArtifactSerializer,
 				needsJavaObserverImplementation),
 			blockers,
@@ -93,8 +97,8 @@ public static class PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportS
 			hasRuntimeEvidenceBlocker,
 			hasComparisonExecutionBlocker,
 			dashboard.HasKeyProjectionEvidence,
-			javaHookDetail != null,
-			javaHookDetail?.Rows.Count ?? 0,
+			hasJavaHookDetailEvidence,
+			javaHookDetailRowCount,
 			needsProtectionArtifactSerializer,
 			needsJavaObserverImplementation,
 			readyForRuntimeComparison,

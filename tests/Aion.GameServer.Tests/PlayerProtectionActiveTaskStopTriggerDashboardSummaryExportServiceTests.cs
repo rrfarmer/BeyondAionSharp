@@ -90,10 +90,34 @@ public sealed class PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportS
 		Assert.Contains("Java observer implementation", report.Summary, StringComparison.Ordinal);
 	}
 
+	[Fact]
+	public void Create_WithDashboardJavaHookDetailSurfacesHookBlockerWithoutDuplicateReport()
+	{
+		var report = PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportService.Create(
+			CreateDashboard(withJavaHookDetail: true));
+
+		Assert.True(report.HasJavaHookDetailEvidence);
+		Assert.Equal(19, report.JavaHookDetailRowCount);
+		Assert.True(report.NeedsProtectionArtifactSerializer);
+		Assert.True(report.NeedsJavaObserverImplementation);
+		Assert.True(report.HasJavaArtifactBlocker);
+		Assert.True(report.HasComparisonExecutionBlocker);
+		Assert.Equal(7, report.DashboardRowCount);
+		Assert.Contains("javaHookRows=19", report.Summary, StringComparison.Ordinal);
+		Assert.Contains("protection artifact serializer", report.Summary, StringComparison.Ordinal);
+		Assert.Contains("Java observer implementation", report.Summary, StringComparison.Ordinal);
+		Assert.Contains(report.Blockers, row =>
+			row.Area == PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardArea.JavaHookDetailCoverage
+			&& row.Status == PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardStatus.BlockedMissingJavaArtifacts
+			&& row.Evidence.Contains("hookRows=19", StringComparison.Ordinal)
+			&& row.Notes.Contains("observer wiring remain required", StringComparison.Ordinal));
+	}
+
 	private static PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportReport CreateSummaryExport() =>
 		PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportService.Create(CreateDashboard());
 
-	private static PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardReport CreateDashboard()
+	private static PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardReport CreateDashboard(
+		bool withJavaHookDetail = false)
 	{
 		var runtimeDesign = CreateRuntimeDesign();
 		var traceSchema = PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaReportService.Create(runtimeDesign);
@@ -122,7 +146,8 @@ public sealed class PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportS
 			executionPlan,
 			emitterDesign,
 			readiness,
-			keyProjection);
+			keyProjection,
+			withJavaHookDetail ? PlayerProtectionActiveTaskStopTriggerJavaHookDetailReportService.Create() : null);
 	}
 
 	private static PlayerProtectionActiveTaskStopTriggerRuntimeComparisonDesignReport CreateRuntimeDesign() =>
