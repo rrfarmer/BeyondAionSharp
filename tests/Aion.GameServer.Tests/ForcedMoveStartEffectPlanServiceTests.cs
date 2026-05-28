@@ -10,16 +10,19 @@ public sealed class ForcedMoveStartEffectPlanServiceTests
 	[Fact]
 	public void CreatePlan_ForPulledPlayer_UsesEffectorPacketAndStopsMovement()
 	{
-		var plan = ForcedMoveStartEffectPlanService.CreatePlan(new ForcedMoveStartEffectPlanInput(
-			EffectKind: ForcedMoveEffectKind.Pulled,
-			EffectedCurrentPosition: new ObjectPositionSnapshot(ObjectId: 8002, X: 5, Y: 6, Z: 7, Heading: 105),
-			TargetX: 12.5f,
-			TargetY: -8.25f,
-			TargetZ: 3.75f,
-			IsEffectedPlayer: true,
-			IsReflected: false,
-			EffectorObjectId: 7001,
-			OriginalEffectedObjectId: 9003));
+		var plan = ForcedMoveStartEffectPlanService.CreatePlan(
+			new ForcedMoveStartEffectPlanInput(
+				EffectKind: ForcedMoveEffectKind.Pulled,
+				EffectedCurrentPosition: new ObjectPositionSnapshot(ObjectId: 8002, X: 5, Y: 6, Z: 7, Heading: 105),
+				TargetX: 12.5f,
+				TargetY: -8.25f,
+				TargetZ: 3.75f,
+				IsEffectedPlayer: true,
+				IsReflected: false,
+				EffectorObjectId: 7001,
+				OriginalEffectedObjectId: 9003
+			)
+		);
 
 		Assert.Equal(ForcedMoveStartEffectPlanStatus.PlannedPlayerPacket, plan.Status);
 		Assert.False(plan.IsLive);
@@ -39,16 +42,19 @@ public sealed class ForcedMoveStartEffectPlanServiceTests
 	[Fact]
 	public void CreatePlan_ForReflectedPulledPlayer_UsesOriginalEffectedPacketSourceAndSkipsMotionStops()
 	{
-		var plan = ForcedMoveStartEffectPlanService.CreatePlan(new ForcedMoveStartEffectPlanInput(
-			EffectKind: ForcedMoveEffectKind.Pulled,
-			EffectedCurrentPosition: new ObjectPositionSnapshot(ObjectId: 8002, X: 5, Y: 6, Z: 7, Heading: 105),
-			TargetX: 12.5f,
-			TargetY: -8.25f,
-			TargetZ: 3.75f,
-			IsEffectedPlayer: true,
-			IsReflected: true,
-			EffectorObjectId: 7001,
-			OriginalEffectedObjectId: 9003));
+		var plan = ForcedMoveStartEffectPlanService.CreatePlan(
+			new ForcedMoveStartEffectPlanInput(
+				EffectKind: ForcedMoveEffectKind.Pulled,
+				EffectedCurrentPosition: new ObjectPositionSnapshot(ObjectId: 8002, X: 5, Y: 6, Z: 7, Heading: 105),
+				TargetX: 12.5f,
+				TargetY: -8.25f,
+				TargetZ: 3.75f,
+				IsEffectedPlayer: true,
+				IsReflected: true,
+				EffectorObjectId: 7001,
+				OriginalEffectedObjectId: 9003
+			)
+		);
 
 		Assert.Equal(ForcedMoveStartEffectPlanStatus.PlannedPlayerPacket, plan.Status);
 		Assert.Null(plan.CancelCurrentSkillSourceObjectId);
@@ -61,16 +67,19 @@ public sealed class ForcedMoveStartEffectPlanServiceTests
 	[Fact]
 	public void CreatePlan_ForOpenAerialNpc_RemovesParalyzeAndSkipsForcedMovePacket()
 	{
-		var plan = ForcedMoveStartEffectPlanService.CreatePlan(new ForcedMoveStartEffectPlanInput(
-			EffectKind: ForcedMoveEffectKind.OpenAerial,
-			EffectedCurrentPosition: new ObjectPositionSnapshot(ObjectId: 8002, X: 5, Y: 6, Z: 7, Heading: 105),
-			TargetX: 12.5f,
-			TargetY: -8.25f,
-			TargetZ: 3.75f,
-			IsEffectedPlayer: false,
-			IsReflected: false,
-			EffectorObjectId: 7001,
-			OriginalEffectedObjectId: 9003));
+		var plan = ForcedMoveStartEffectPlanService.CreatePlan(
+			new ForcedMoveStartEffectPlanInput(
+				EffectKind: ForcedMoveEffectKind.OpenAerial,
+				EffectedCurrentPosition: new ObjectPositionSnapshot(ObjectId: 8002, X: 5, Y: 6, Z: 7, Heading: 105),
+				TargetX: 12.5f,
+				TargetY: -8.25f,
+				TargetZ: 3.75f,
+				IsEffectedPlayer: false,
+				IsReflected: false,
+				EffectorObjectId: 7001,
+				OriginalEffectedObjectId: 9003
+			)
+		);
 
 		Assert.Equal(ForcedMoveStartEffectPlanStatus.PlannedNpcNoPacket, plan.Status);
 		Assert.Equal(7001, plan.CancelCurrentSkillSourceObjectId);
@@ -87,16 +96,19 @@ public sealed class ForcedMoveStartEffectPlanServiceTests
 	[Fact]
 	public void CreatePlan_BlocksInvalidEffectedBeforeWorldOrPacketPlanning()
 	{
-		var plan = ForcedMoveStartEffectPlanService.CreatePlan(new ForcedMoveStartEffectPlanInput(
-			EffectKind: ForcedMoveEffectKind.OpenAerial,
-			EffectedCurrentPosition: new ObjectPositionSnapshot(ObjectId: 0, X: 5, Y: 6, Z: 7, Heading: 105),
-			TargetX: 12.5f,
-			TargetY: -8.25f,
-			TargetZ: 3.75f,
-			IsEffectedPlayer: true,
-			IsReflected: false,
-			EffectorObjectId: 7001,
-			OriginalEffectedObjectId: 9003));
+		var plan = ForcedMoveStartEffectPlanService.CreatePlan(
+			new ForcedMoveStartEffectPlanInput(
+				EffectKind: ForcedMoveEffectKind.OpenAerial,
+				EffectedCurrentPosition: new ObjectPositionSnapshot(ObjectId: 0, X: 5, Y: 6, Z: 7, Heading: 105),
+				TargetX: 12.5f,
+				TargetY: -8.25f,
+				TargetZ: 3.75f,
+				IsEffectedPlayer: true,
+				IsReflected: false,
+				EffectorObjectId: 7001,
+				OriginalEffectedObjectId: 9003
+			)
+		);
 
 		Assert.Equal(ForcedMoveStartEffectPlanStatus.BlockedInvalidEffected, plan.Status);
 		Assert.Null(plan.CancelCurrentSkillSourceObjectId);

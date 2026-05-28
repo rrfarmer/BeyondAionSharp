@@ -27,9 +27,4 @@ public sealed class SmForcedMove : GameServerPacket
 	}
 }
 
-public sealed record ForcedMoveSnapshot(
-	int SourceObjectId,
-	int TargetObjectId,
-	float X,
-	float Y,
-	float Z);
+public sealed record ForcedMoveSnapshot(int SourceObjectId, int TargetObjectId, float X, float Y, float Z);

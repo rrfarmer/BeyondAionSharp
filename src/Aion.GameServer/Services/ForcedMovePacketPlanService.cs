@@ -16,7 +16,8 @@ public sealed record ForcedMovePacketPlan(
 	bool ShouldBroadcastPacket,
 	bool ShouldBroadcastAndReceive,
 	bool ShouldSendToOwner,
-	string JavaSource)
+	string JavaSource
+)
 {
 	public bool IsLive => false;
 }
@@ -37,7 +38,8 @@ public static class ForcedMovePacketPlanService
 				ShouldBroadcastPacket: false,
 				ShouldBroadcastAndReceive: false,
 				ShouldSendToOwner: false,
-				"SM_FORCED_MOVE requires a live source Creature with a positive object id");
+				"SM_FORCED_MOVE requires a live source Creature with a positive object id"
+			);
 		}
 
 		if (snapshot.TargetObjectId <= 0)
@@ -49,7 +51,8 @@ public static class ForcedMovePacketPlanService
 				ShouldBroadcastPacket: false,
 				ShouldBroadcastAndReceive: false,
 				ShouldSendToOwner: false,
-				"SM_FORCED_MOVE requires a live target Creature with a positive object id");
+				"SM_FORCED_MOVE requires a live target Creature with a positive object id"
+			);
 		}
 
 		return new ForcedMovePacketPlan(
@@ -59,6 +62,7 @@ public static class ForcedMovePacketPlanService
 			ShouldBroadcastPacket: true,
 			ShouldBroadcastAndReceive: true,
 			ShouldSendToOwner: false,
-			"PacketSendUtility.broadcastPacketAndReceive(effected, new SM_FORCED_MOVE(source, targetObjectId, x, y, z))");
+			"PacketSendUtility.broadcastPacketAndReceive(effected, new SM_FORCED_MOVE(source, targetObjectId, x, y, z))"
+		);
 	}
 }

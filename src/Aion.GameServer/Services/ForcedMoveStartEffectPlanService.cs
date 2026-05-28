@@ -25,7 +25,8 @@ public sealed record ForcedMoveStartEffectPlanInput(
 	bool IsEffectedPlayer,
 	bool IsReflected,
 	int EffectorObjectId,
-	int OriginalEffectedObjectId);
+	int OriginalEffectedObjectId
+);
 
 public sealed record ForcedMoveStartEffectPlan(
 	ForcedMoveStartEffectPlanStatus Status,
@@ -40,7 +41,8 @@ public sealed record ForcedMoveStartEffectPlan(
 	string AbnormalStateName,
 	bool ShouldSetEffectedControllerAbnormal,
 	bool ShouldSetEffectAbnormal,
-	string JavaSource)
+	string JavaSource
+)
 {
 	public bool IsLive => false;
 }
@@ -69,7 +71,8 @@ public static class ForcedMoveStartEffectPlanService
 				AbnormalStateName: ResolveAbnormalStateName(input.EffectKind),
 				ShouldSetEffectedControllerAbnormal: false,
 				ShouldSetEffectAbnormal: false,
-				"Forced-move startEffect requires a live effected Creature with a positive object id");
+				"Forced-move startEffect requires a live effected Creature with a positive object id"
+			);
 		}
 
 		var updatedPosition = new ObjectPositionSnapshot(
@@ -77,7 +80,8 @@ public static class ForcedMoveStartEffectPlanService
 			input.TargetX,
 			input.TargetY,
 			input.TargetZ,
-			input.EffectedCurrentPosition.Heading);
+			input.EffectedCurrentPosition.Heading
+		);
 
 		var shouldSkipPullMotionStops = input.EffectKind == ForcedMoveEffectKind.Pulled && input.IsReflected;
 		int? cancelCurrentSkillSourceObjectId = shouldSkipPullMotionStops ? null : input.EffectorObjectId;
@@ -89,20 +93,23 @@ public static class ForcedMoveStartEffectPlanService
 		var status = ForcedMoveStartEffectPlanStatus.PlannedNpcNoPacket;
 		if (input.IsEffectedPlayer)
 		{
-			var sourceObjectId = input.EffectKind == ForcedMoveEffectKind.Pulled && input.IsReflected
-				? input.OriginalEffectedObjectId
-				: input.EffectorObjectId;
+			var sourceObjectId =
+				input.EffectKind == ForcedMoveEffectKind.Pulled && input.IsReflected ? input.OriginalEffectedObjectId : input.EffectorObjectId;
 
-			forcedMovePacketPlan = ForcedMovePacketPlanService.CreateBroadcastReceivePlan(new ForcedMoveSnapshot(
-				SourceObjectId: sourceObjectId,
-				TargetObjectId: input.EffectedCurrentPosition.ObjectId,
-				X: input.TargetX,
-				Y: input.TargetY,
-				Z: input.TargetZ));
+			forcedMovePacketPlan = ForcedMovePacketPlanService.CreateBroadcastReceivePlan(
+				new ForcedMoveSnapshot(
+					SourceObjectId: sourceObjectId,
+					TargetObjectId: input.EffectedCurrentPosition.ObjectId,
+					X: input.TargetX,
+					Y: input.TargetY,
+					Z: input.TargetZ
+				)
+			);
 
-			status = forcedMovePacketPlan.Status == ForcedMovePacketPlanStatus.PacketCreated
-				? ForcedMoveStartEffectPlanStatus.PlannedPlayerPacket
-				: ForcedMoveStartEffectPlanStatus.BlockedInvalidPacketSource;
+			status =
+				forcedMovePacketPlan.Status == ForcedMovePacketPlanStatus.PacketCreated
+					? ForcedMoveStartEffectPlanStatus.PlannedPlayerPacket
+					: ForcedMoveStartEffectPlanStatus.BlockedInvalidPacketSource;
 		}
 
 		var shouldApplyAbnormal = status is ForcedMoveStartEffectPlanStatus.PlannedPlayerPacket or ForcedMoveStartEffectPlanStatus.PlannedNpcNoPacket;
@@ -119,9 +126,8 @@ public static class ForcedMoveStartEffectPlanService
 			ResolveAbnormalStateName(input.EffectKind),
 			ShouldSetEffectedControllerAbnormal: shouldApplyAbnormal,
 			ShouldSetEffectAbnormal: shouldApplyAbnormal,
-			input.EffectKind == ForcedMoveEffectKind.Pulled
-				? "PulledEffect.startEffect"
-				: "OpenAerialEffect.startEffect");
+			input.EffectKind == ForcedMoveEffectKind.Pulled ? "PulledEffect.startEffect" : "OpenAerialEffect.startEffect"
+		);
 	}
 
 	private static string ResolveAbnormalStateName(ForcedMoveEffectKind effectKind)

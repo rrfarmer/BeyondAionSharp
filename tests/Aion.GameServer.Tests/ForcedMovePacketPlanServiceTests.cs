@@ -10,12 +10,9 @@ public sealed class ForcedMovePacketPlanServiceTests
 	[Fact]
 	public void CreateBroadcastReceivePlan_CreatesSmForcedMoveAndBroadcastReceiveIntent()
 	{
-		var plan = ForcedMovePacketPlanService.CreateBroadcastReceivePlan(new ForcedMoveSnapshot(
-			SourceObjectId: 7001,
-			TargetObjectId: 8002,
-			X: 123.5f,
-			Y: -45.25f,
-			Z: 98.75f));
+		var plan = ForcedMovePacketPlanService.CreateBroadcastReceivePlan(
+			new ForcedMoveSnapshot(SourceObjectId: 7001, TargetObjectId: 8002, X: 123.5f, Y: -45.25f, Z: 98.75f)
+		);
 
 		Assert.Equal(ForcedMovePacketPlanStatus.PacketCreated, plan.Status);
 		Assert.False(plan.IsLive);
@@ -30,12 +27,9 @@ public sealed class ForcedMovePacketPlanServiceTests
 	[Fact]
 	public void CreateBroadcastReceivePlan_BlocksInvalidSourceBeforePacketCreation()
 	{
-		var plan = ForcedMovePacketPlanService.CreateBroadcastReceivePlan(new ForcedMoveSnapshot(
-			SourceObjectId: 0,
-			TargetObjectId: 8002,
-			X: 123.5f,
-			Y: -45.25f,
-			Z: 98.75f));
+		var plan = ForcedMovePacketPlanService.CreateBroadcastReceivePlan(
+			new ForcedMoveSnapshot(SourceObjectId: 0, TargetObjectId: 8002, X: 123.5f, Y: -45.25f, Z: 98.75f)
+		);
 
 		Assert.Equal(ForcedMovePacketPlanStatus.BlockedInvalidSource, plan.Status);
 		Assert.False(plan.ShouldBroadcastPacket);
@@ -47,12 +41,9 @@ public sealed class ForcedMovePacketPlanServiceTests
 	[Fact]
 	public void CreateBroadcastReceivePlan_BlocksInvalidTargetBeforePacketCreation()
 	{
-		var plan = ForcedMovePacketPlanService.CreateBroadcastReceivePlan(new ForcedMoveSnapshot(
-			SourceObjectId: 7001,
-			TargetObjectId: 0,
-			X: 123.5f,
-			Y: -45.25f,
-			Z: 98.75f));
+		var plan = ForcedMovePacketPlanService.CreateBroadcastReceivePlan(
+			new ForcedMoveSnapshot(SourceObjectId: 7001, TargetObjectId: 0, X: 123.5f, Y: -45.25f, Z: 98.75f)
+		);
 
 		Assert.Equal(ForcedMovePacketPlanStatus.BlockedInvalidTarget, plan.Status);
 		Assert.False(plan.ShouldBroadcastPacket);

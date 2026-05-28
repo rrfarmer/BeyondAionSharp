@@ -9,12 +9,7 @@ public sealed class SmForcedMovePacketTests
 	[Fact]
 	public void SmForcedMove_WritesJavaPayloadShape()
 	{
-		var packet = new SmForcedMove(new ForcedMoveSnapshot(
-			SourceObjectId: 7001,
-			TargetObjectId: 8002,
-			X: 123.5f,
-			Y: -45.25f,
-			Z: 98.75f));
+		var packet = new SmForcedMove(new ForcedMoveSnapshot(SourceObjectId: 7001, TargetObjectId: 8002, X: 123.5f, Y: -45.25f, Z: 98.75f));
 
 		var payload = SerializeUnencryptedPayload(packet);
 		using var reader = new PacketBuffer(payload);
