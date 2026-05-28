@@ -40,6 +40,71 @@ public sealed class NearbyQuestDelayedRefreshExecutionReportServiceTests
 	}
 
 	[Fact]
+	public async Task CreatePacketIntentSummary_AggregatesReadyEmptyRejectedAndUnsupportedCounts()
+	{
+		using var temp = TempDirectory.Create();
+		var staticData = await LoadStaticDataAsync(temp.Path);
+		var instance = new WorldMapInstanceRuntimeState(instanceId: 1);
+		var schedulePlan = instance.RegisterQuestStartIdsAndPlanNearbyRefresh([3001, 3002, 3003, 3004]);
+		var report = NearbyQuestDelayedRefreshExecutionReportService.CreateReport(
+			schedulePlan,
+			instance,
+			[
+				CreatePlayer(1001, "ELYOS"),
+				CreatePlayer(2002, "ASMODIANS"),
+				CreatePlayer(3003, "BALAUR"),
+			],
+			staticData);
+
+		var summary = NearbyQuestDelayedRefreshExecutionReportService.CreatePacketIntentSummary(report);
+
+		Assert.Equal(3, summary.PlayerCount);
+		Assert.True(summary.HasPacketIntent);
+		Assert.Equal(3, summary.PacketIntentCount);
+		Assert.Equal(2, summary.ReadyPacketCount);
+		Assert.Equal(1, summary.EmptyPacketIntentCount);
+		Assert.Equal(4, summary.RejectionCounts[NearbyQuestStartConditionFailure.Race]);
+		Assert.Equal(3, summary.RejectionCounts[NearbyQuestStartConditionFailure.UnsupportedXmlStartConditions]);
+		Assert.Equal(3, summary.UnsupportedDependencyCount);
+	}
+
+	[Fact]
+	public async Task CreatePacketIntentSummary_CapturesJavaEmptyPacketIntentWhenNoWorldQuestIds()
+	{
+		using var temp = TempDirectory.Create();
+		var staticData = await LoadStaticDataAsync(temp.Path);
+		var instance = new WorldMapInstanceRuntimeState(instanceId: 1);
+		var schedulePlan = instance.RegisterQuestStartIdsAndPlanNearbyRefresh([3001]);
+		var report = NearbyQuestDelayedRefreshExecutionReportService.CreateReport(
+			schedulePlan,
+			instance,
+			Array.Empty<Player>(),
+			staticData);
+		var emptyInstanceReport = NearbyQuestDelayedRefreshExecutionReport.Completed(
+			schedulePlan,
+			clearedPendingRefresh: true,
+			[
+				new NearbyQuestDelayedRefreshPlayerReport(
+					1001,
+					NearbyQuestRefreshInputAdapterService.CreatePlan(
+						CreatePlayer(1001, "ELYOS"),
+						new WorldMapInstanceRuntimeState(instanceId: 2),
+						staticData))
+			]);
+
+		var noPlayersSummary = NearbyQuestDelayedRefreshExecutionReportService.CreatePacketIntentSummary(report);
+		var emptyPacketSummary = NearbyQuestDelayedRefreshExecutionReportService.CreatePacketIntentSummary(emptyInstanceReport);
+
+		Assert.Equal(0, noPlayersSummary.PlayerCount);
+		Assert.False(noPlayersSummary.HasPacketIntent);
+		Assert.Equal(1, emptyPacketSummary.PlayerCount);
+		Assert.True(emptyPacketSummary.HasPacketIntent);
+		Assert.Equal(1, emptyPacketSummary.PacketIntentCount);
+		Assert.Equal(0, emptyPacketSummary.ReadyPacketCount);
+		Assert.Equal(1, emptyPacketSummary.EmptyPacketIntentCount);
+	}
+
+	[Fact]
 	public async Task CreateReport_ClearsPendingRefreshEvenWhenNoPlayersArePresent()
 	{
 		using var temp = TempDirectory.Create();
@@ -89,6 +154,11 @@ public sealed class NearbyQuestDelayedRefreshExecutionReportServiceTests
 				<quests>
 					<quest id="3001" minlevel_permitted="10" race_permitted="ELYOS" />
 					<quest id="3002" minlevel_permitted="10" race_permitted="ASMODIANS" />
+					<quest id="3003">
+						<start_conditions>
+							<future_condition>1</future_condition>
+						</start_conditions>
+					</quest>
 				</quests>
 			</static_data>
 			""");

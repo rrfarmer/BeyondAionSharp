@@ -34,6 +34,46 @@ public static class NearbyQuestDelayedRefreshExecutionReportService
 			clearedPendingRefresh,
 			playerReports);
 	}
+
+	public static NearbyQuestDelayedRefreshPacketIntentSummary CreatePacketIntentSummary(
+		NearbyQuestDelayedRefreshExecutionReport report)
+	{
+		// Java parity breadcrumb: SM_NEARBY_QUESTS is sent even for an empty nearbyQuestList.
+		var packetIntentReports = report.PlayerReports
+			.Where(playerReport => playerReport.RefreshResult.Plan.WouldSendPacket)
+			.ToArray();
+		var readyPacketCount = packetIntentReports.Count(
+			playerReport => playerReport.RefreshResult.Plan.Status == NearbyQuestRefreshPlanStatus.Ready);
+		var emptyPacketIntentCount = packetIntentReports.Count(
+			playerReport => playerReport.RefreshResult.Plan.Status
+				is NearbyQuestRefreshPlanStatus.NoWorldQuestIds
+				or NearbyQuestRefreshPlanStatus.NoMarkers);
+		var rejectionCounts = report.PlayerReports
+			.SelectMany(playerReport => playerReport.RefreshResult.Plan.RejectionCounts)
+			.GroupBy(pair => pair.Key)
+			.ToDictionary(group => group.Key, group => group.Sum(pair => pair.Value));
+		var unsupportedDependencyCount = SumUnsupportedDependencyCount(rejectionCounts);
+		return new NearbyQuestDelayedRefreshPacketIntentSummary(
+			report.PlayerReports.Count,
+			packetIntentReports.Length,
+			readyPacketCount,
+			emptyPacketIntentCount,
+			rejectionCounts,
+			unsupportedDependencyCount);
+	}
+
+	private static int SumUnsupportedDependencyCount(
+		IReadOnlyDictionary<NearbyQuestStartConditionFailure, int> rejectionCounts)
+	{
+		var total = 0;
+		if (rejectionCounts.TryGetValue(NearbyQuestStartConditionFailure.UnsupportedXmlStartConditions, out var xmlConditions))
+			total += xmlConditions;
+		if (rejectionCounts.TryGetValue(NearbyQuestStartConditionFailure.UnsupportedInventoryItems, out var inventoryItems))
+			total += inventoryItems;
+		if (rejectionCounts.TryGetValue(NearbyQuestStartConditionFailure.UnsupportedRepeatTiming, out var repeatTiming))
+			total += repeatTiming;
+		return total;
+	}
 }
 
 public sealed record NearbyQuestDelayedRefreshExecutionReport(
@@ -96,6 +136,17 @@ public sealed record NearbyQuestDelayedRefreshExecutionReport(
 public sealed record NearbyQuestDelayedRefreshPlayerReport(
 	int PlayerObjectId,
 	NearbyQuestRefreshInputAdapterResult RefreshResult);
+
+public sealed record NearbyQuestDelayedRefreshPacketIntentSummary(
+	int PlayerCount,
+	int PacketIntentCount,
+	int ReadyPacketCount,
+	int EmptyPacketIntentCount,
+	IReadOnlyDictionary<NearbyQuestStartConditionFailure, int> RejectionCounts,
+	int UnsupportedDependencyCount)
+{
+	public bool HasPacketIntent => PacketIntentCount > 0;
+}
 
 public enum NearbyQuestDelayedRefreshExecutionStatus
 {
