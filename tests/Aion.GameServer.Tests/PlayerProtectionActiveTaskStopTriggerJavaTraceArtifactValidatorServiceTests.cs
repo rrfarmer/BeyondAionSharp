@@ -237,6 +237,30 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValida
 			&& issue.Message.Contains("nested payload", StringComparison.Ordinal));
 	}
 
+	[Fact]
+	public void Validate_RejectsMissingAiNotifyNestedPayloadFieldsWhenAiNotifyIsPresent()
+	{
+		var json = RepresentativeArtifactJson.Replace(
+			"""
+			      "aiNotify": null,
+			""",
+			"""
+			      "aiNotify": {
+			        "notifyAiOnMoveCalled": true
+			      },
+			""",
+			StringComparison.Ordinal);
+
+		var report = PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidatorService.Validate(json);
+
+		Assert.False(report.IsValidSchemaV1);
+		Assert.Null(report.Metadata);
+		Assert.Contains(report.Issues, issue =>
+			issue.Code == PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationIssueCode.MissingNestedPayloadField
+			&& issue.Path == "$.traces[0].aiNotify.ordering"
+			&& issue.Message.Contains("nested payload", StringComparison.Ordinal));
+	}
+
 	private const string RepresentativeArtifactJson = """
 		{
 		  "schemaVersion": 1,
