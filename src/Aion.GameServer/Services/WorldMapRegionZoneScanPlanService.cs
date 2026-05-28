@@ -101,6 +101,42 @@ public static class WorldMapRegionZoneScanPlanService
 		return false;
 	}
 
+	public static WorldMapRegionZoneDeathPlan CreateDeathPlan(
+		IEnumerable<WorldMapRegionZoneScanCandidate> constructorOrderedZones)
+	{
+		ArgumentNullException.ThrowIfNull(constructorOrderedZones);
+
+		// Java parity breadcrumb: MapRegion.onDie scans zonesSortedByTypeAndPriority, calls
+		// ZoneInstance.onDie only for zones containing the target, and stops on the first
+		// AdvancedZoneHandler that handles the death event.
+		var actions = new List<WorldMapRegionZoneDeathAction>();
+		foreach (var zone in constructorOrderedZones)
+		{
+			if (!zone.IsInsideCreature)
+				continue;
+
+			var actionType = zone.DeathHandlerHandles
+				? WorldMapRegionZoneDeathActionType.Handled
+				: WorldMapRegionZoneDeathActionType.NotHandled;
+			actions.Add(new WorldMapRegionZoneDeathAction(zone.ZoneId, zone.ZoneClassName, actionType));
+
+			if (zone.DeathHandlerHandles)
+			{
+				return new WorldMapRegionZoneDeathPlan(
+					actions,
+					WasHandled: true,
+					HandledZoneId: zone.ZoneId,
+					"MapRegion.onDie -> ZoneInstance.onDie short-circuited by first handling AdvancedZoneHandler");
+			}
+		}
+
+		return new WorldMapRegionZoneDeathPlan(
+			actions,
+			WasHandled: false,
+			HandledZoneId: null,
+			"MapRegion.onDie scanned inside zones without a handling AdvancedZoneHandler");
+	}
+
 	private static bool GetInsideResult(WorldMapRegionZoneScanCandidate zone, WorldMapRegionZoneInsideMode mode)
 	{
 		return mode switch
@@ -120,7 +156,8 @@ public sealed record WorldMapRegionZoneScanCandidate(
 	string XmlName,
 	bool RevalidateSucceeds,
 	bool IsInsideCreature,
-	bool IsInsideCoordinate);
+	bool IsInsideCoordinate,
+	bool DeathHandlerHandles);
 
 public sealed record WorldMapRegionZoneRevalidationPlan(
 	IReadOnlyList<WorldMapRegionZoneRevalidationAction> Actions,
@@ -141,4 +178,21 @@ public enum WorldMapRegionZoneInsideMode
 {
 	Creature,
 	Coordinate,
+}
+
+public sealed record WorldMapRegionZoneDeathPlan(
+	IReadOnlyList<WorldMapRegionZoneDeathAction> Actions,
+	bool WasHandled,
+	string? HandledZoneId,
+	string JavaSource);
+
+public sealed record WorldMapRegionZoneDeathAction(
+	string ZoneId,
+	WorldMapRegionZoneSortClassName ZoneClassName,
+	WorldMapRegionZoneDeathActionType ActionType);
+
+public enum WorldMapRegionZoneDeathActionType
+{
+	NotHandled,
+	Handled,
 }

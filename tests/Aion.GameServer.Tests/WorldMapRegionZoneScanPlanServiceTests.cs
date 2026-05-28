@@ -104,6 +104,49 @@ public sealed class WorldMapRegionZoneScanPlanServiceTests
 			WorldMapRegionZoneInsideMode.Creature));
 	}
 
+	[Fact]
+	public void CreateDeathPlan_ScansOnlyInsideZonesAndStopsOnFirstHandledDeath()
+	{
+		var zones = new[]
+		{
+			Create("outside", WorldMapRegionZoneSortClassName.Sub, priority: 0, isInsideCreature: false, deathHandlerHandles: true),
+			Create("inside-unhandled", WorldMapRegionZoneSortClassName.Sub, priority: 0, isInsideCreature: true, deathHandlerHandles: false),
+			Create("inside-handled", WorldMapRegionZoneSortClassName.Pvp, priority: 0, isInsideCreature: true, deathHandlerHandles: true),
+			Create("inside-after-handled", WorldMapRegionZoneSortClassName.Fort, priority: 0, isInsideCreature: true, deathHandlerHandles: true),
+		};
+
+		var plan = WorldMapRegionZoneScanPlanService.CreateDeathPlan(zones);
+
+		Assert.True(plan.WasHandled);
+		Assert.Equal("inside-handled", plan.HandledZoneId);
+		Assert.Equal(
+		[
+			("inside-unhandled", WorldMapRegionZoneDeathActionType.NotHandled),
+			("inside-handled", WorldMapRegionZoneDeathActionType.Handled),
+		], plan.Actions.Select(action => (action.ZoneId, action.ActionType)));
+		Assert.Contains("MapRegion.onDie", plan.JavaSource);
+	}
+
+	[Fact]
+	public void CreateDeathPlan_ReturnsUnhandledWhenInsideZonesDoNotHandleDeath()
+	{
+		var zones = new[]
+		{
+			Create("inside-a", WorldMapRegionZoneSortClassName.Sub, priority: 0, isInsideCreature: true, deathHandlerHandles: false),
+			Create("inside-b", WorldMapRegionZoneSortClassName.Pvp, priority: 0, isInsideCreature: true, deathHandlerHandles: false),
+		};
+
+		var plan = WorldMapRegionZoneScanPlanService.CreateDeathPlan(zones);
+
+		Assert.False(plan.WasHandled);
+		Assert.Null(plan.HandledZoneId);
+		Assert.Equal(
+		[
+			("inside-a", WorldMapRegionZoneDeathActionType.NotHandled),
+			("inside-b", WorldMapRegionZoneDeathActionType.NotHandled),
+		], plan.Actions.Select(action => (action.ZoneId, action.ActionType)));
+	}
+
 	private static WorldMapRegionZoneScanCandidate Create(
 		string zoneId,
 		WorldMapRegionZoneSortClassName zoneClassName,
@@ -112,7 +155,8 @@ public sealed class WorldMapRegionZoneScanPlanServiceTests
 		string? xmlName = null,
 		bool revalidateSucceeds = true,
 		bool isInsideCreature = true,
-		bool isInsideCoordinate = true)
+		bool isInsideCoordinate = true,
+		bool deathHandlerHandles = false)
 	{
 		return new WorldMapRegionZoneScanCandidate(
 			zoneId,
@@ -122,6 +166,7 @@ public sealed class WorldMapRegionZoneScanPlanServiceTests
 			xmlName ?? zoneId,
 			revalidateSucceeds,
 			isInsideCreature,
-			isInsideCoordinate);
+			isInsideCoordinate,
+			deathHandlerHandles);
 	}
 }
