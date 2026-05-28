@@ -17,6 +17,10 @@ public sealed class PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardRe
 		Assert.Equal(0, report.SerializerFieldContractRowCount);
 		Assert.False(report.HasSerializerTimestampNonParityPolicy);
 		Assert.False(report.HasSerializerNestedPayloadPlaceholders);
+		Assert.False(report.HasSerializerActionBranchNameTraceContract);
+		Assert.False(report.HasSerializerEmotionPayloadContract);
+		Assert.False(report.HasSerializerActionPayloadContract);
+		Assert.False(report.HasSerializerCallerOriginPayloadContract);
 		Assert.False(report.NeedsProtectionArtifactSerializer);
 		Assert.False(report.NeedsJavaObserverImplementation);
 		Assert.True(report.NeedsJavaSerializerImplementation);
@@ -126,6 +130,10 @@ public sealed class PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardRe
 		Assert.True(report.SerializerFieldContractRowCount > 0);
 		Assert.True(report.HasSerializerTimestampNonParityPolicy);
 		Assert.True(report.HasSerializerNestedPayloadPlaceholders);
+		Assert.True(report.HasSerializerActionBranchNameTraceContract);
+		Assert.True(report.HasSerializerEmotionPayloadContract);
+		Assert.True(report.HasSerializerActionPayloadContract);
+		Assert.True(report.HasSerializerCallerOriginPayloadContract);
 		Assert.True(report.NeedsJavaSerializerImplementation);
 		Assert.True(report.NeedsJavaArtifacts);
 		Assert.Contains(report.Rows, row =>
@@ -134,6 +142,10 @@ public sealed class PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardRe
 			&& row.Evidence.Contains("serializerFieldContract=True", StringComparison.Ordinal)
 			&& row.Evidence.Contains("timestampPolicy=True", StringComparison.Ordinal)
 			&& row.Evidence.Contains("nestedPayloadPlaceholders=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("actionBranchNameContract=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("emotionPayloadContract=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("actionPayloadContract=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("callerOriginPayloadContract=True", StringComparison.Ordinal)
 			&& row.Evidence.Contains("needsJavaSerializer=True", StringComparison.Ordinal)
 			&& row.Notes.Contains("serializer field contract is metadata only", StringComparison.Ordinal));
 	}

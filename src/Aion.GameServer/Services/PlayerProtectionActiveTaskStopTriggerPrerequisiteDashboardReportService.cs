@@ -45,6 +45,10 @@ public sealed record PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardR
 	int SerializerFieldContractRowCount,
 	bool HasSerializerTimestampNonParityPolicy,
 	bool HasSerializerNestedPayloadPlaceholders,
+	bool HasSerializerActionBranchNameTraceContract,
+	bool HasSerializerEmotionPayloadContract,
+	bool HasSerializerActionPayloadContract,
+	bool HasSerializerCallerOriginPayloadContract,
 	bool NeedsProtectionArtifactSerializer,
 	bool NeedsJavaObserverImplementation,
 	bool NeedsJavaSerializerImplementation,
@@ -179,6 +183,10 @@ public static class PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardRe
 			SerializerFieldContractRowCount: serializerFieldContract?.Rows.Count ?? 0,
 			HasSerializerTimestampNonParityPolicy: serializerFieldContract?.HasTimestampNonParityPolicy == true,
 			HasSerializerNestedPayloadPlaceholders: serializerFieldContract?.HasNestedPayloadPlaceholders == true,
+			HasSerializerActionBranchNameTraceContract: serializerFieldContract?.HasActionBranchNameTraceContract == true,
+			HasSerializerEmotionPayloadContract: serializerFieldContract?.HasEmotionPayloadContract == true,
+			HasSerializerActionPayloadContract: serializerFieldContract?.HasActionPayloadContract == true,
+			HasSerializerCallerOriginPayloadContract: serializerFieldContract?.HasCallerOriginPayloadContract == true,
 			NeedsProtectionArtifactSerializer: javaHookDetailReport?.NeedsProtectionArtifactSerializer == true,
 			NeedsJavaObserverImplementation: javaHookDetailReport?.NeedsJavaObserverImplementation == true,
 			NeedsJavaSerializerImplementation: generatedArtifactExecutionPlan.NeedsJavaSerializerImplementation
@@ -208,7 +216,7 @@ public static class PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardRe
 			return evidence;
 		}
 
-		return $"{evidence}; serializerRows={serializerFieldContract.Rows.Count}; timestampPolicy={serializerFieldContract.HasTimestampNonParityPolicy}; nestedPayloadPlaceholders={serializerFieldContract.HasNestedPayloadPlaceholders}; needsJavaSerializer={serializerFieldContract.RequiresJavaSerializerImplementation}";
+		return $"{evidence}; serializerRows={serializerFieldContract.Rows.Count}; timestampPolicy={serializerFieldContract.HasTimestampNonParityPolicy}; nestedPayloadPlaceholders={serializerFieldContract.HasNestedPayloadPlaceholders}; actionBranchNameContract={serializerFieldContract.HasActionBranchNameTraceContract}; emotionPayloadContract={serializerFieldContract.HasEmotionPayloadContract}; actionPayloadContract={serializerFieldContract.HasActionPayloadContract}; callerOriginPayloadContract={serializerFieldContract.HasCallerOriginPayloadContract}; needsJavaSerializer={serializerFieldContract.RequiresJavaSerializerImplementation}";
 	}
 
 	private static string CreateJavaToolingNotes(
