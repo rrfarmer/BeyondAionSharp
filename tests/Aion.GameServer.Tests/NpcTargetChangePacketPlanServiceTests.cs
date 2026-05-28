@@ -29,6 +29,25 @@ public sealed class NpcTargetChangePacketPlanServiceTests
 	}
 
 	[Fact]
+	public void CreatePlan_WithCoordinatesCalculatesHeadingTowardNonSelfTargetLikeJavaPositionUtil()
+	{
+		var plan = NpcTargetChangePacketPlanService.CreatePlan(new NpcTargetChangeCoordinatePacketPlanInput(
+			NpcObjectId: 5001,
+			NewTargetObjectId: 7002,
+			NpcX: 10,
+			NpcY: 10,
+			TargetX: 11,
+			TargetY: 9,
+			CurrentHeading: 11,
+			IsDead: false,
+			HasTalkInfo: false));
+
+		Assert.Equal(NpcTargetChangePacketPlanStatus.PacketCreated, plan.Status);
+		Assert.Equal(105, plan.SelectedHeading);
+		AssertLookAtObjectPayload(plan.Packet!, objectId: 5001, targetObjectId: 7002, heading: 105);
+	}
+
+	[Fact]
 	public void CreatePlan_CreatesZeroTargetPacketWhenTargetClearsAndNpcHasNoTalkInfoLikeJava()
 	{
 		var plan = NpcTargetChangePacketPlanService.CreatePlan(new NpcTargetChangePacketPlanInput(

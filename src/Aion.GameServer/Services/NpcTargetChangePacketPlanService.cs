@@ -6,6 +6,21 @@ public static class NpcTargetChangePacketPlanService
 {
 	public const int TalkInfoRetargetDelayMilliseconds = 750;
 
+	public static NpcTargetChangePacketPlan CreatePlan(NpcTargetChangeCoordinatePacketPlanInput input)
+	{
+		var headingTowardTarget = input.NewTargetObjectId != 0 && input.NewTargetObjectId != input.NpcObjectId
+			? PositionUtilService.GetHeadingTowards(input.NpcX, input.NpcY, input.TargetX, input.TargetY)
+			: input.CurrentHeading;
+
+		return CreatePlan(new NpcTargetChangePacketPlanInput(
+			input.NpcObjectId,
+			input.NewTargetObjectId,
+			input.CurrentHeading,
+			headingTowardTarget,
+			input.IsDead,
+			input.HasTalkInfo));
+	}
+
 	public static NpcTargetChangePacketPlan CreatePlan(NpcTargetChangePacketPlanInput input)
 	{
 		// Java parity breadcrumb: controllers/NpcController.onTargetChanged clears
@@ -32,6 +47,17 @@ public sealed record NpcTargetChangePacketPlanInput(
 	int NewTargetObjectId,
 	int CurrentHeading,
 	int HeadingTowardTarget,
+	bool IsDead,
+	bool HasTalkInfo);
+
+public sealed record NpcTargetChangeCoordinatePacketPlanInput(
+	int NpcObjectId,
+	int NewTargetObjectId,
+	float NpcX,
+	float NpcY,
+	float TargetX,
+	float TargetY,
+	int CurrentHeading,
 	bool IsDead,
 	bool HasTalkInfo);
 
