@@ -64,7 +64,7 @@ public sealed class WorldMapRegionMaterialZoneActorPlanServiceTests
 	{
 		var plan = WorldMapRegionMaterialZoneActorPlanService.CreateTickPlan(CreateTickContext(
 			showDetailsToStaff: true,
-			dayTime: WorldMapRegionMaterialZoneDayTime.Day,
+			dayTime: WorldMapRegionMaterialZoneDayTime.Morning,
 			weatherName: "RAIN_HEAVY",
 			weatherIsBefore: true,
 			skills:
@@ -87,7 +87,7 @@ public sealed class WorldMapRegionMaterialZoneActorPlanServiceTests
 	public void CreateTickPlan_SkipsWhenNoMaterialActConditionMatches()
 	{
 		var plan = WorldMapRegionMaterialZoneActorPlanService.CreateTickPlan(CreateTickContext(
-			dayTime: WorldMapRegionMaterialZoneDayTime.Day,
+			dayTime: WorldMapRegionMaterialZoneDayTime.Morning,
 			weatherName: "RAIN_HEAVY",
 			weatherIsBefore: false,
 			skills:
@@ -109,7 +109,7 @@ public sealed class WorldMapRegionMaterialZoneActorPlanServiceTests
 		bool isDead = false,
 		bool isPlayerProtectionActive = false,
 		bool showDetailsToStaff = false,
-		WorldMapRegionMaterialZoneDayTime dayTime = WorldMapRegionMaterialZoneDayTime.Day,
+		WorldMapRegionMaterialZoneDayTime dayTime = WorldMapRegionMaterialZoneDayTime.Morning,
 		string? weatherName = null,
 		bool weatherIsBefore = false,
 		IReadOnlyList<WorldMapRegionMaterialZoneActorSkillSnapshot>? skills = null)

@@ -219,6 +219,8 @@ public enum WorldMapRegionMaterialZoneActCondition
 
 public enum WorldMapRegionMaterialZoneDayTime
 {
-	Day,
+	Morning,
+	Afternoon,
+	Evening,
 	Night,
 }
