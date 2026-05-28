@@ -18,6 +18,20 @@ public sealed class PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecut
 		Assert.False(report.HasSerializerEmotionPayloadContract);
 		Assert.False(report.HasSerializerActionPayloadContract);
 		Assert.False(report.HasSerializerCallerOriginPayloadContract);
+		Assert.False(report.HasSerializerImplementationDesign);
+		Assert.Equal(0, report.SerializerImplementationDesignRowCount);
+		Assert.False(report.HasSerializerTopLevelWriterPlan);
+		Assert.False(report.HasSerializerRuntimeFactsWriterPlan);
+		Assert.False(report.HasSerializerTraceRowCoreWriterPlan);
+		Assert.False(report.HasSerializerPlayerSnapshotWriterPlan);
+		Assert.False(report.HasSerializerNestedPayloadWriterPlan);
+		Assert.False(report.HasSerializerTimestampPolicyWriterPlan);
+		Assert.False(report.HasSerializerSourceBreadcrumbWriterPlan);
+		Assert.False(report.HasSerializerArtifactFileWriterPlan);
+		Assert.False(report.HasSerializerActionBranchNameWriterPlan);
+		Assert.False(report.HasSerializerEmotionPayloadWriterPlan);
+		Assert.False(report.HasSerializerActionPayloadWriterPlan);
+		Assert.False(report.HasSerializerCallerOriginPayloadWriterPlan);
 		Assert.True(report.NeedsJavaSerializerImplementation);
 		Assert.True(report.HasJavaToolingGate);
 		Assert.True(report.HasJavaArtifactGenerationGate);
@@ -111,6 +125,46 @@ public sealed class PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecut
 	}
 
 	[Fact]
+	public void Create_WithSerializerImplementationDesignSurfacesWriterPlanBlockers()
+	{
+		var report = CreateReport(withSerializerFieldContract: true, withSerializerImplementationDesign: true);
+
+		Assert.True(report.HasSerializerImplementationDesign);
+		Assert.True(report.SerializerImplementationDesignRowCount > 0);
+		Assert.True(report.HasSerializerTopLevelWriterPlan);
+		Assert.True(report.HasSerializerRuntimeFactsWriterPlan);
+		Assert.True(report.HasSerializerTraceRowCoreWriterPlan);
+		Assert.True(report.HasSerializerPlayerSnapshotWriterPlan);
+		Assert.True(report.HasSerializerNestedPayloadWriterPlan);
+		Assert.True(report.HasSerializerTimestampPolicyWriterPlan);
+		Assert.True(report.HasSerializerSourceBreadcrumbWriterPlan);
+		Assert.True(report.HasSerializerArtifactFileWriterPlan);
+		Assert.True(report.HasSerializerActionBranchNameWriterPlan);
+		Assert.True(report.HasSerializerEmotionPayloadWriterPlan);
+		Assert.True(report.HasSerializerActionPayloadWriterPlan);
+		Assert.True(report.HasSerializerCallerOriginPayloadWriterPlan);
+		Assert.True(report.NeedsJavaSerializerImplementation);
+		Assert.Contains(report.Rows, row =>
+			row.Gate == PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionGate.JavaTraceSerializer
+			&& row.Status == PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionStatus.BlockedMissingJavaArtifact
+			&& row.Evidence.Contains("serializerImplementationDesign=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("topLevelWriter=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("runtimeFactsWriter=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("traceRowCoreWriter=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("playerSnapshotWriter=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("nestedPayloadWriter=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("timestampPolicyWriter=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("sourceBreadcrumbWriter=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("artifactFileWriter=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("actionBranchNameWriter=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("emotionPayloadWriter=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("actionPayloadWriter=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("callerOriginPayloadWriter=True", StringComparison.Ordinal)
+			&& row.Notes.Contains("writer responsibility design", StringComparison.Ordinal)
+			&& row.Notes.Contains("Java implementation still must be written", StringComparison.Ordinal));
+	}
+
+	[Fact]
 	public void Create_DocumentsCSharpEmitterTraceCaptureAndKeyProjectionGates()
 	{
 		var report = CreateReport();
@@ -131,7 +185,8 @@ public sealed class PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecut
 	}
 
 	private static PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionPlanReport CreateReport(
-		bool withSerializerFieldContract = false)
+		bool withSerializerFieldContract = false,
+		bool withSerializerImplementationDesign = false)
 	{
 		var runtimeDesign = CreateRuntimeDesign();
 		var traceSchema = PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaReportService.Create(runtimeDesign);
@@ -139,12 +194,16 @@ public sealed class PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecut
 		var serializerFieldContract = withSerializerFieldContract
 			? PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldContractService.Create(traceSchema)
 			: null;
+		var serializerImplementationDesign = withSerializerImplementationDesign && serializerFieldContract != null
+			? PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerImplementationDesignReportService.Create(serializerFieldContract)
+			: null;
 
 		return PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionPlanService.Create(
 			runtimeDesign,
 			traceSchema,
 			emitterDesign,
-			serializerFieldContract);
+			serializerFieldContract,
+			serializerImplementationDesign);
 	}
 
 	private static PlayerProtectionActiveTaskStopTriggerRuntimeComparisonDesignReport CreateRuntimeDesign() =>
