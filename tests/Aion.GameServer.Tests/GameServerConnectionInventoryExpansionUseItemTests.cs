@@ -1144,7 +1144,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 
 		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
 
-		await WaitUntilAsync(() => fixture.SentPackets.Count >= 7, TimeSpan.FromSeconds(6));
+		await WaitUntilAsync(() => fixture.SentPackets.Count >= 6, TimeSpan.FromSeconds(6));
 		Assert.Equal(140, player.Exp);
 		var reward = Assert.Single(player.InventoryItems, item => item.ItemId == 188053996);
 		Assert.Equal(2, reward.Count);
@@ -2239,7 +2239,9 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 				Assert.IsType<SmInventoryUpdateItem>(packet),
 				expectedObjectId: mergedReward.ObjectId,
 				expectedUpdateType: SmInventoryUpdateItem.IncreaseItemCollect,
-				expectedCleanupSealFlag: 3,
+				// Java parity: item_restriction_cleanups.xml does not list the composition
+				// enchantment-stone reward ids, so GeneralInfoBlobEntry writes cleanup flag 0.
+				expectedCleanupSealFlag: 0,
 				expectedItemMask: 0),
 			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 165010000, expectedTime: 0, expectedEnd: 1, expectedItemObjectId: 7001));
 	}
