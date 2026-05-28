@@ -7,6 +7,17 @@ namespace Aion.GameServer.Tests;
 public sealed class WorldRegionKeyProjectionServiceTests
 {
 	[Fact]
+	public void GetJavaRegionDimension_SelectsThreeDimensionalOnlyForReshanta()
+	{
+		Assert.Equal(
+			WorldMapRegionDimension.ThreeDimensional,
+			WorldRegionKeyProjectionService.GetJavaRegionDimension(WorldRegionKeyProjectionService.ReshantaWorldId));
+		Assert.Equal(
+			WorldMapRegionDimension.TwoDimensional,
+			WorldRegionKeyProjectionService.GetJavaRegionDimension(210010000));
+	}
+
+	[Fact]
 	public void CreateNearby2DRegionKey_DerivesJava2DRegionIdFromWorldPosition()
 	{
 		var position = new WorldPosition(WorldId: 210010000, X: 256.9f, Y: 384.1f, Z: 999.9f, Heading: 40, InstanceId: 7);
@@ -31,12 +42,37 @@ public sealed class WorldRegionKeyProjectionServiceTests
 	}
 
 	[Fact]
+	public void CreateNearbyRegionKey_UsesJavaWorldMapInstanceFactoryDimension()
+	{
+		var reshanta = new WorldPosition(WorldId: WorldRegionKeyProjectionService.ReshantaWorldId, X: 256.9f, Y: 384.1f, Z: 512.5f, Heading: 40, InstanceId: 7);
+		var poeta = new WorldPosition(WorldId: 210010000, X: 256.9f, Y: 384.1f, Z: 512.5f, Heading: 40, InstanceId: 7);
+
+		var reshantaKey = WorldRegionKeyProjectionService.CreateNearbyRegionKey(reshanta);
+		var poetaKey = WorldRegionKeyProjectionService.CreateNearbyRegionKey(poeta);
+
+		Assert.Equal(2003004, reshantaKey.RegionId);
+		Assert.Equal(2003, poetaKey.RegionId);
+	}
+
+	[Fact]
 	public void CreateKnownListRegionKeys_UseSameJavaRegionMathAsNearbyKeys()
 	{
 		var position = new WorldPosition(WorldId: 220010000, X: 128f, Y: 256f, Z: 384f, Heading: 90, InstanceId: 8);
 
 		var key2D = WorldRegionKeyProjectionService.CreateKnownList2DRegionKey(position);
 		var key3D = WorldRegionKeyProjectionService.CreateKnownList3DRegionKey(position);
+
+		Assert.Equal(new PlayerKnownListRegionKey(220010000, 8, 1002), key2D);
+		Assert.Equal(new PlayerKnownListRegionKey(220010000, 8, 1002003), key3D);
+	}
+
+	[Fact]
+	public void CreateKnownListRegionKey_UsesExplicitDimensionSelector()
+	{
+		var position = new WorldPosition(WorldId: 220010000, X: 128f, Y: 256f, Z: 384f, Heading: 90, InstanceId: 8);
+
+		var key2D = WorldRegionKeyProjectionService.CreateKnownListRegionKey(position, WorldMapRegionDimension.TwoDimensional);
+		var key3D = WorldRegionKeyProjectionService.CreateKnownListRegionKey(position, WorldMapRegionDimension.ThreeDimensional);
 
 		Assert.Equal(new PlayerKnownListRegionKey(220010000, 8, 1002), key2D);
 		Assert.Equal(new PlayerKnownListRegionKey(220010000, 8, 1002003), key3D);
