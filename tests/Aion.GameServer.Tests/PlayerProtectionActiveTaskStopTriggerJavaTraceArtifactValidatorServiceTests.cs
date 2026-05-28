@@ -318,6 +318,53 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValida
 			&& issue.Message.Contains("nested payload", StringComparison.Ordinal));
 	}
 
+	[Fact]
+	public void Validate_RequiresTraceActionBranchName()
+	{
+		var json = RepresentativeArtifactJson.Replace(
+			"\"actionBranchName\": \"missing_task_returns_without_running\"",
+			"\"actionBranchNameMissing\": \"missing_task_returns_without_running\"",
+			StringComparison.Ordinal);
+
+		var report = PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidatorService.Validate(json);
+
+		Assert.False(report.IsValidSchemaV1);
+		Assert.Null(report.Metadata);
+		Assert.Contains(report.Issues, issue =>
+			issue.Code == PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationIssueCode.MissingTopLevelField
+			&& issue.Path == "$.traces[0].actionBranchName");
+	}
+
+	[Fact]
+	public void Validate_RejectsMissingCallerOriginNestedPayloadFieldsWhenCallerOriginIsPresent()
+	{
+		var json = RepresentativeArtifactJson.Replace(
+			"\"callerOrigin\": null,",
+			"""
+			"callerOrigin": {
+			  "callerName": "cm_level_ready_before_world_spawn",
+			  "callerClass": "CM_LEVEL_READY",
+			  "callerMethod": "runImpl",
+			  "callerSourceFile": "CM_LEVEL_READY.java",
+			  "callerLine": 53,
+			  "startProtectionLine": 53,
+			  "startsProtectionBeforeWorldSpawn": true,
+			  "worldSpawnLine": 64,
+			  "spawnedBeforeStart": false
+			},
+			""",
+			StringComparison.Ordinal);
+
+		var report = PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidatorService.Validate(json);
+
+		Assert.False(report.IsValidSchemaV1);
+		Assert.Null(report.Metadata);
+		Assert.Contains(report.Issues, issue =>
+			issue.Code == PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationIssueCode.MissingNestedPayloadField
+			&& issue.Path == "$.traces[0].callerOrigin.ordering"
+			&& issue.Message.Contains("nested payload", StringComparison.Ordinal));
+	}
+
 	private const string RepresentativeArtifactJson = """
 		{
 		  "schemaVersion": 1,

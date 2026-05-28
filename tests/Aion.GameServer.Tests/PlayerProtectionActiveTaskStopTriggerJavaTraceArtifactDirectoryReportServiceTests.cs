@@ -127,7 +127,8 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirect
 		        "protectionActiveAfter": true,
 		        "visualStateBefore": ["BLINKING"],
 		        "visualStateAfter": ["BLINKING"]
-		      }
+		      },
+		      "actionBranchName": "missing_task_returns_without_running"
 		    }
 		  ],
 		  "notes": [

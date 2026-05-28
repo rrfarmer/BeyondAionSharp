@@ -145,6 +145,7 @@ public static class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValida
 			Require(trace, issues, "javaSourceFile", path);
 			Require(trace, issues, "javaLine", path);
 			Require(trace, issues, "player", path);
+			Require(trace, issues, "actionBranchName", path);
 
 			if (trace.TryGetProperty("eventSeq", out var eventSeqElement) && eventSeqElement.TryGetInt32(out var eventSeq))
 			{
@@ -181,6 +182,7 @@ public static class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValida
 			ValidateAiNotifyPayload(trace, issues, path);
 			ValidateEmotionPayload(trace, issues, path);
 			ValidateActionPayload(trace, issues, path);
+			ValidateCallerOriginPayload(trace, issues, path);
 
 			index++;
 		}
@@ -319,6 +321,26 @@ public static class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValida
 		RequireNested(actionPayload, issues, "compositeFirstObjectId", $"{tracePath}.actionPayload");
 		RequireNested(actionPayload, issues, "compositeSecondObjectId", $"{tracePath}.actionPayload");
 		RequireNested(actionPayload, issues, "compositeCanActResult", $"{tracePath}.actionPayload");
+	}
+
+	private static void ValidateCallerOriginPayload(
+		JsonElement trace,
+		ICollection<PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationIssue> issues,
+		string tracePath)
+	{
+		if (!trace.TryGetProperty("callerOrigin", out var callerOrigin) || callerOrigin.ValueKind != JsonValueKind.Object)
+			return;
+
+		RequireNested(callerOrigin, issues, "callerName", $"{tracePath}.callerOrigin");
+		RequireNested(callerOrigin, issues, "callerClass", $"{tracePath}.callerOrigin");
+		RequireNested(callerOrigin, issues, "callerMethod", $"{tracePath}.callerOrigin");
+		RequireNested(callerOrigin, issues, "callerSourceFile", $"{tracePath}.callerOrigin");
+		RequireNested(callerOrigin, issues, "callerLine", $"{tracePath}.callerOrigin");
+		RequireNested(callerOrigin, issues, "startProtectionLine", $"{tracePath}.callerOrigin");
+		RequireNested(callerOrigin, issues, "startsProtectionBeforeWorldSpawn", $"{tracePath}.callerOrigin");
+		RequireNested(callerOrigin, issues, "worldSpawnLine", $"{tracePath}.callerOrigin");
+		RequireNested(callerOrigin, issues, "spawnedBeforeStart", $"{tracePath}.callerOrigin");
+		RequireNested(callerOrigin, issues, "ordering", $"{tracePath}.callerOrigin");
 	}
 
 	private static void Require(
