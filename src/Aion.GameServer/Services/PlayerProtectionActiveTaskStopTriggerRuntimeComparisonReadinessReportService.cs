@@ -23,6 +23,7 @@ public enum PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatu
 	BlockedMissingRuntimeEvidence,
 	BlockedScenarioMismatch,
 	BlockedRowCountMismatch,
+	BlockedKeyMismatch,
 	BlockedComparisonNotExecuted,
 }
 
@@ -44,6 +45,7 @@ public sealed record PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadi
 	bool HasShapeValidGeneratedJavaTraceArtifacts,
 	bool HasRuntimeComparisonContractReport,
 	bool HasRuntimeComparisonPreflightReport,
+	bool HasRuntimeComparisonKeyProjectionReport,
 	bool NeedsJavaInstrumentation,
 	bool NeedsJavaTraceSerializer,
 	bool NeedsGeneratedJavaTraceArtifacts,
@@ -51,6 +53,7 @@ public sealed record PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadi
 	bool NeedsLiveCSharpPacketHooks,
 	bool NeedsCSharpRuntimeTraceOutput,
 	bool NeedsRuntimeComparisonPreflightAlignment,
+	bool NeedsRuntimeComparisonKeyAlignment,
 	bool NeedsRuntimeComparisonExecution,
 	bool NeedsRuntimeComparisonEvidence,
 	bool ReadyForRuntimeComparison,
@@ -68,7 +71,8 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 		PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaReport? traceSchema,
 		PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirectoryReport? artifactDirectoryReport = null,
 		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonContractReport? comparisonContract = null,
-		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonPreflightReport? preflightReport = null)
+		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonPreflightReport? preflightReport = null,
+		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonKeyProjectionReport? keyProjectionReport = null)
 	{
 		var rows = new List<PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessRow>();
 
@@ -79,7 +83,7 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 		AddGeneratedJavaTraceArtifacts(rows, traceSchema, artifactDirectoryReport);
 		AddCSharpArtifactReader(rows, traceSchema);
 		AddLiveCSharpPacketHooks(rows, runtimeDesign);
-		AddRuntimeComparisonEvidence(rows, comparisonContract, preflightReport);
+		AddRuntimeComparisonEvidence(rows, comparisonContract, preflightReport, keyProjectionReport);
 
 		var rowArray = rows.ToArray();
 
@@ -91,14 +95,16 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 			HasShapeValidGeneratedJavaTraceArtifacts: artifactDirectoryReport?.Status == PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirectoryStatus.AllArtifactsShapeValid,
 			HasRuntimeComparisonContractReport: comparisonContract != null,
 			HasRuntimeComparisonPreflightReport: preflightReport != null,
+			HasRuntimeComparisonKeyProjectionReport: keyProjectionReport != null,
 			NeedsJavaInstrumentation: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.JavaInstrumentation && row.BlocksRuntimeComparison),
 			NeedsJavaTraceSerializer: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.JavaTraceSerializer && row.BlocksRuntimeComparison),
 			NeedsGeneratedJavaTraceArtifacts: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.GeneratedJavaTraceArtifacts && row.BlocksRuntimeComparison),
 			NeedsCSharpArtifactReader: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.CSharpArtifactReader && row.BlocksRuntimeComparison),
 			NeedsLiveCSharpPacketHooks: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.LiveCSharpPacketHooks && row.BlocksRuntimeComparison),
-			NeedsCSharpRuntimeTraceOutput: comparisonContract?.NeedsCSharpRuntimeTrace == true || preflightReport?.NeedsCSharpTraceRows == true,
+			NeedsCSharpRuntimeTraceOutput: comparisonContract?.NeedsCSharpRuntimeTrace == true || preflightReport?.NeedsCSharpTraceRows == true || keyProjectionReport?.NeedsCSharpKeys == true,
 			NeedsRuntimeComparisonPreflightAlignment: preflightReport?.NeedsScenarioAlignment == true || preflightReport?.NeedsRowCountAlignment == true,
-			NeedsRuntimeComparisonExecution: comparisonContract?.NeedsExecutedComparison == true || preflightReport?.NeedsComparisonExecution == true,
+			NeedsRuntimeComparisonKeyAlignment: keyProjectionReport?.NeedsKeyAlignment == true,
+			NeedsRuntimeComparisonExecution: comparisonContract?.NeedsExecutedComparison == true || preflightReport?.NeedsComparisonExecution == true || keyProjectionReport?.NeedsComparisonExecution == true,
 			NeedsRuntimeComparisonEvidence: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.RuntimeComparisonEvidence && row.BlocksRuntimeComparison),
 			ReadyForRuntimeComparison: rowArray.Length > 0 && rowArray.All(row => !row.BlocksRuntimeComparison),
 			"Protection stop-trigger runtime comparison readiness gate",
@@ -286,8 +292,23 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 	private static void AddRuntimeComparisonEvidence(
 		ICollection<PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessRow> rows,
 		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonContractReport? comparisonContract,
-		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonPreflightReport? preflightReport)
+		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonPreflightReport? preflightReport,
+		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonKeyProjectionReport? keyProjectionReport)
 	{
+		if (keyProjectionReport != null)
+		{
+			var status = GetRuntimeComparisonEvidenceStatus(keyProjectionReport);
+			Add(rows,
+				PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.RuntimeComparisonEvidence,
+				status,
+				blocks: status != PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.SatisfiedByNonLiveMetadata,
+				keyProjectionReport.JavaSource,
+				"PlayerProtectionActiveTaskStopTriggerRuntimeComparisonKeyProjectionReport",
+				$"keyRows={keyProjectionReport.Rows.Count}; javaKeys={keyProjectionReport.JavaKeys.Count}; csharpKeys={keyProjectionReport.CSharpKeys.Count}; needsJavaKeys={keyProjectionReport.NeedsJavaKeys}; needsCSharpKeys={keyProjectionReport.NeedsCSharpKeys}; needsKeyAlignment={keyProjectionReport.NeedsKeyAlignment}; needsComparisonExecution={keyProjectionReport.NeedsComparisonExecution}; preflightNeedsScenarioAlignment={preflightReport?.NeedsScenarioAlignment == true}; preflightNeedsRowCountAlignment={preflightReport?.NeedsRowCountAlignment == true}",
+				GetRuntimeComparisonEvidenceNotes(keyProjectionReport));
+			return;
+		}
+
 		if (preflightReport != null)
 		{
 			var status = GetRuntimeComparisonEvidenceStatus(preflightReport);
@@ -354,6 +375,24 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 	}
 
 	private static PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus GetRuntimeComparisonEvidenceStatus(
+		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonKeyProjectionReport keyProjectionReport)
+	{
+		if (keyProjectionReport.NeedsJavaKeys)
+			return PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedMissingJavaArtifact;
+
+		if (keyProjectionReport.NeedsCSharpKeys)
+			return PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedMissingCSharpRuntimeTrace;
+
+		if (keyProjectionReport.NeedsKeyAlignment)
+			return PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedKeyMismatch;
+
+		if (keyProjectionReport.NeedsComparisonExecution)
+			return PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedComparisonNotExecuted;
+
+		return PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.SatisfiedByNonLiveMetadata;
+	}
+
+	private static PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus GetRuntimeComparisonEvidenceStatus(
 		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonContractReport comparisonContract)
 	{
 		if (comparisonContract.NeedsJavaArtifacts)
@@ -408,6 +447,24 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 			return "Runtime evidence is blocked because preflight alignment has not executed deterministic Java/C# trace comparison.";
 
 		return "Runtime comparison preflight has no current blockers, but verified parity still requires objective comparison evidence.";
+	}
+
+	private static string GetRuntimeComparisonEvidenceNotes(
+		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonKeyProjectionReport keyProjectionReport)
+	{
+		if (keyProjectionReport.NeedsJavaKeys)
+			return "Runtime evidence is blocked because parsed Java comparison keys are missing or invalid.";
+
+		if (keyProjectionReport.NeedsCSharpKeys)
+			return "Runtime evidence is blocked because C# comparison keys are missing or invalid.";
+
+		if (keyProjectionReport.NeedsKeyAlignment)
+			return "Runtime evidence is blocked because projected Java and C# comparison keys do not align.";
+
+		if (keyProjectionReport.NeedsComparisonExecution)
+			return "Runtime evidence is blocked because key projection has not executed deterministic Java/C# runtime comparison.";
+
+		return "Runtime comparison key projection has no current blockers, but verified parity still requires objective comparison evidence.";
 	}
 
 	private static void Add(

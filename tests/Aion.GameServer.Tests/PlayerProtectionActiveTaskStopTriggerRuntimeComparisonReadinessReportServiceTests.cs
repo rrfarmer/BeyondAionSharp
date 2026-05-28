@@ -18,6 +18,7 @@ public sealed class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 		Assert.False(report.HasShapeValidGeneratedJavaTraceArtifacts);
 		Assert.False(report.HasRuntimeComparisonContractReport);
 		Assert.False(report.HasRuntimeComparisonPreflightReport);
+		Assert.False(report.HasRuntimeComparisonKeyProjectionReport);
 		Assert.True(report.NeedsJavaInstrumentation);
 		Assert.True(report.NeedsJavaTraceSerializer);
 		Assert.True(report.NeedsGeneratedJavaTraceArtifacts);
@@ -25,6 +26,7 @@ public sealed class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 		Assert.True(report.NeedsLiveCSharpPacketHooks);
 		Assert.False(report.NeedsCSharpRuntimeTraceOutput);
 		Assert.False(report.NeedsRuntimeComparisonPreflightAlignment);
+		Assert.False(report.NeedsRuntimeComparisonKeyAlignment);
 		Assert.False(report.NeedsRuntimeComparisonExecution);
 		Assert.True(report.NeedsRuntimeComparisonEvidence);
 		Assert.False(report.ReadyForRuntimeComparison);
@@ -315,6 +317,70 @@ public sealed class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 			&& row.Notes.Contains("preflight alignment has not executed deterministic", StringComparison.Ordinal));
 	}
 
+	[Fact]
+	public void Create_WithKeyProjectionMismatchUpdatesRuntimeEvidenceRow()
+	{
+		var artifactReport = CreateShapeValidArtifactDirectoryReportWithMetadata("cm-move-threshold");
+		var csharpTrace = CreateSyntheticCSharpRuntimeTraceReport(hasLivePacketHooks: true, scenario: "cm-teleport-animation-done");
+		var preflight = PlayerProtectionActiveTaskStopTriggerRuntimeComparisonPreflightReportService.Create(
+			artifactReport,
+			csharpTrace);
+		var keyProjection = PlayerProtectionActiveTaskStopTriggerRuntimeComparisonKeyProjectionReportService.Create(
+			artifactReport,
+			csharpTrace);
+
+		var report = PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessReportService.Create(
+			CreateRuntimeDesign(),
+			CreateTraceSchema(),
+			artifactReport,
+			comparisonContract: null,
+			preflight,
+			keyProjection);
+
+		Assert.True(report.HasRuntimeComparisonPreflightReport);
+		Assert.True(report.HasRuntimeComparisonKeyProjectionReport);
+		Assert.True(report.NeedsRuntimeComparisonPreflightAlignment);
+		Assert.True(report.NeedsRuntimeComparisonKeyAlignment);
+		Assert.True(report.NeedsRuntimeComparisonEvidence);
+		Assert.Contains(report.Rows, row =>
+			row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.RuntimeComparisonEvidence
+			&& row.Status == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedKeyMismatch
+			&& row.Evidence.Contains("needsKeyAlignment=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("preflightNeedsScenarioAlignment=True", StringComparison.Ordinal)
+			&& row.Notes.Contains("comparison keys do not align", StringComparison.Ordinal));
+	}
+
+	[Fact]
+	public void Create_WithAlignedKeyProjectionStillBlocksComparisonExecution()
+	{
+		var artifactReport = CreateShapeValidArtifactDirectoryReportWithMetadata("cm-teleport-animation-done");
+		var csharpTrace = CreateSyntheticCSharpRuntimeTraceReport(hasLivePacketHooks: true, scenario: "cm-teleport-animation-done");
+		var preflight = PlayerProtectionActiveTaskStopTriggerRuntimeComparisonPreflightReportService.Create(
+			artifactReport,
+			csharpTrace);
+		var keyProjection = PlayerProtectionActiveTaskStopTriggerRuntimeComparisonKeyProjectionReportService.Create(
+			artifactReport,
+			csharpTrace);
+
+		var report = PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessReportService.Create(
+			CreateRuntimeDesign(),
+			CreateTraceSchema(),
+			artifactReport,
+			comparisonContract: null,
+			preflight,
+			keyProjection);
+
+		Assert.True(report.HasRuntimeComparisonKeyProjectionReport);
+		Assert.False(report.NeedsRuntimeComparisonPreflightAlignment);
+		Assert.False(report.NeedsRuntimeComparisonKeyAlignment);
+		Assert.True(report.NeedsRuntimeComparisonExecution);
+		Assert.Contains(report.Rows, row =>
+			row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.RuntimeComparisonEvidence
+			&& row.Status == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedComparisonNotExecuted
+			&& row.Evidence.Contains("needsComparisonExecution=True", StringComparison.Ordinal)
+			&& row.Notes.Contains("key projection has not executed deterministic", StringComparison.Ordinal));
+	}
+
 	private static PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaReport CreateTraceSchema() =>
 		PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaReportService.Create(CreateRuntimeDesign());
 
@@ -377,6 +443,49 @@ public sealed class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 			HasGeneratedJavaArtifacts: true,
 			ReadyForRuntimeComparison: false,
 			"shape-valid generated Java artifact JSON only");
+
+	private static PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirectoryReport CreateShapeValidArtifactDirectoryReportWithMetadata(
+		string scenarioName) =>
+		new(
+			PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirectoryStatus.AllArtifactsShapeValid,
+			[
+				new PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactFileRow(
+					$"{scenarioName}.json",
+					new PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationReport(
+						[],
+						IsValidSchemaV1: true,
+						ReadyForRuntimeComparison: false,
+						"shape-valid metadata",
+						new PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactMetadata(
+							SchemaVersion: 1,
+							JavaCommit: "abcdef1",
+							Scenario: scenarioName,
+							RuntimePacketName: "CM_TELEPORT_ANIMATION_DONE",
+							RuntimeExpectedReturnReason: "animation_done_no_pending_runnable_teleport_task",
+							TraceRows: new[]
+							{
+								new PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactTraceRow(
+									EventSeq: 0,
+									Phase: "teleport_task_remove",
+									PacketName: "CM_TELEPORT_ANIMATION_DONE",
+									ReturnReason: "animation_done_no_pending_runnable_teleport_task",
+									StopCalled: false,
+									ExpectsStopProtectionCall: false,
+									TimestampIsParityKey: false,
+									Player: new PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactPlayerSnapshot(
+										ObjectId: 1001,
+										Spawned: false,
+										Flying: false,
+										Dead: false,
+										ProtectionActiveBefore: true,
+										ProtectionActiveAfter: true,
+										VisualStateBefore: ["BLINKING"],
+										VisualStateAfter: ["BLINKING"]))
+							})))
+			],
+			HasGeneratedJavaArtifacts: true,
+			ReadyForRuntimeComparison: false,
+			"shape-valid generated Java artifact metadata only");
 
 	private static PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirectoryReport CreateInvalidArtifactDirectoryReport() =>
 		new(
