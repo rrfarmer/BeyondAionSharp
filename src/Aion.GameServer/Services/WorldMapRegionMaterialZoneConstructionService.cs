@@ -51,6 +51,7 @@ public static class WorldMapRegionMaterialZoneConstructionService
 				context.ZoneName,
 				handlerKind,
 				WorldMapRegionMaterialZoneAreaKind.Existing,
+				Geometry: null,
 				ZoneInfoCreated: false,
 				WorldMapRegionMaterialZoneConstructionStatus.ReusedExistingZoneInfo,
 				sideEffects,
@@ -68,6 +69,7 @@ public static class WorldMapRegionMaterialZoneConstructionService
 			context.ZoneName,
 			handlerKind,
 			areaKind,
+			CreateGeometry(areaKind, context),
 			ZoneInfoCreated: areaKind != WorldMapRegionMaterialZoneAreaKind.None,
 			WorldMapRegionMaterialZoneConstructionStatus.Created,
 			sideEffects,
@@ -84,6 +86,7 @@ public static class WorldMapRegionMaterialZoneConstructionService
 			context.ZoneName,
 			WorldMapRegionMaterialZoneHandlerKind.None,
 			WorldMapRegionMaterialZoneAreaKind.None,
+			Geometry: null,
 			ZoneInfoCreated: false,
 			status,
 			Array.Empty<string>(),
@@ -103,6 +106,46 @@ public static class WorldMapRegionMaterialZoneConstructionService
 			? WorldMapRegionMaterialZoneAreaKind.Semisphere
 			: WorldMapRegionMaterialZoneAreaKind.Sphere;
 	}
+
+	private static WorldMapRegionMaterialZoneGeometry? CreateGeometry(
+		WorldMapRegionMaterialZoneAreaKind areaKind,
+		WorldMapRegionMaterialZoneConstructionContext context)
+	{
+		return areaKind switch
+		{
+			WorldMapRegionMaterialZoneAreaKind.Cylinder => new WorldMapRegionMaterialZoneGeometry(
+				context.CenterX,
+				context.CenterY,
+				context.CenterZ,
+				Radius: MathF.Sqrt((context.XExtent * context.XExtent) + (context.YExtent * context.YExtent)) + 1,
+				Top: context.CenterZ + context.ZExtent + 1,
+				Bottom: context.CenterZ - context.ZExtent - 1),
+			WorldMapRegionMaterialZoneAreaKind.Semisphere => new WorldMapRegionMaterialZoneGeometry(
+				context.CenterX,
+				context.CenterY,
+				context.CenterZ,
+				Radius: CalculateDistanceFromCenterToCorner(context) + 1,
+				Top: null,
+				Bottom: null),
+			WorldMapRegionMaterialZoneAreaKind.Sphere => new WorldMapRegionMaterialZoneGeometry(
+				context.CenterX,
+				context.CenterY,
+				context.CenterZ,
+				Radius: CalculateDistanceFromCenterToCorner(context) + 1,
+				Top: null,
+				Bottom: null),
+			_ => null,
+		};
+	}
+
+	private static float CalculateDistanceFromCenterToCorner(
+		WorldMapRegionMaterialZoneConstructionContext context)
+	{
+		return MathF.Sqrt(
+			(context.XExtent * context.XExtent)
+			+ (context.YExtent * context.YExtent)
+			+ (context.ZExtent * context.ZExtent));
+	}
 }
 
 public sealed record WorldMapRegionMaterialZoneConstructionContext(
@@ -110,6 +153,12 @@ public sealed record WorldMapRegionMaterialZoneConstructionContext(
 	string ZoneName,
 	string GeometryName,
 	int MaterialId,
+	float CenterX,
+	float CenterY,
+	float CenterZ,
+	float XExtent,
+	float YExtent,
+	float ZExtent,
 	bool ExistingCollidableHandler,
 	bool ShieldCanRegister,
 	bool MaterialTemplateExists,
@@ -121,10 +170,19 @@ public sealed record WorldMapRegionMaterialZoneConstructionPlan(
 	string ZoneName,
 	WorldMapRegionMaterialZoneHandlerKind HandlerKind,
 	WorldMapRegionMaterialZoneAreaKind AreaKind,
+	WorldMapRegionMaterialZoneGeometry? Geometry,
 	bool ZoneInfoCreated,
 	WorldMapRegionMaterialZoneConstructionStatus Status,
 	IReadOnlyList<string> SideEffects,
 	string JavaSource);
+
+public sealed record WorldMapRegionMaterialZoneGeometry(
+	float CenterX,
+	float CenterY,
+	float CenterZ,
+	float Radius,
+	float? Top,
+	float? Bottom);
 
 public enum WorldMapRegionMaterialZoneHandlerKind
 {

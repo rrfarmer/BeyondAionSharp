@@ -67,6 +67,53 @@ public sealed class WorldMapRegionMaterialZoneConstructionServiceTests
 	}
 
 	[Fact]
+	public void CreatePlan_CylinderGeometryUsesJavaHorizontalExtentRadiusAndVerticalBounds()
+	{
+		var plan = WorldMapRegionMaterialZoneConstructionService.CreatePlan(CreateContext(
+			geometryName: "AION_MATERIAL_CYLINDER",
+			centerX: 10,
+			centerY: 20,
+			centerZ: 30,
+			xExtent: 3,
+			yExtent: 4,
+			zExtent: 5));
+
+		var geometry = Assert.IsType<WorldMapRegionMaterialZoneGeometry>(plan.Geometry);
+		Assert.Equal(10, geometry.CenterX);
+		Assert.Equal(20, geometry.CenterY);
+		Assert.Equal(30, geometry.CenterZ);
+		Assert.Equal(6, geometry.Radius);
+		Assert.Equal(36, geometry.Top);
+		Assert.Equal(24, geometry.Bottom);
+	}
+
+	[Theory]
+	[InlineData("AION_MATERIAL_SEMISPHERE", WorldMapRegionMaterialZoneAreaKind.Semisphere)]
+	[InlineData("AION_MATERIAL_SPHERE", WorldMapRegionMaterialZoneAreaKind.Sphere)]
+	public void CreatePlan_SphereAndSemisphereGeometryUseJavaCornerDistanceRadius(
+		string geometryName,
+		WorldMapRegionMaterialZoneAreaKind expectedAreaKind)
+	{
+		var plan = WorldMapRegionMaterialZoneConstructionService.CreatePlan(CreateContext(
+			geometryName: geometryName,
+			centerX: 1,
+			centerY: 2,
+			centerZ: 3,
+			xExtent: 2,
+			yExtent: 3,
+			zExtent: 6));
+
+		var geometry = Assert.IsType<WorldMapRegionMaterialZoneGeometry>(plan.Geometry);
+		Assert.Equal(expectedAreaKind, plan.AreaKind);
+		Assert.Equal(1, geometry.CenterX);
+		Assert.Equal(2, geometry.CenterY);
+		Assert.Equal(3, geometry.CenterZ);
+		Assert.Equal(8, geometry.Radius);
+		Assert.Null(geometry.Top);
+		Assert.Null(geometry.Bottom);
+	}
+
+	[Fact]
 	public void CreatePlan_DuplicateHandlerStillChecksZoneInfoAndWarns()
 	{
 		var plan = WorldMapRegionMaterialZoneConstructionService.CreatePlan(CreateContext(
@@ -98,6 +145,12 @@ public sealed class WorldMapRegionMaterialZoneConstructionServiceTests
 		string zoneName = "MATERIAL_ZONE_210010000",
 		string geometryName = "AION_MATERIAL_SPHERE",
 		int materialId = 14,
+		float centerX = 100,
+		float centerY = 200,
+		float centerZ = 300,
+		float xExtent = 2,
+		float yExtent = 3,
+		float zExtent = 6,
 		bool existingCollidableHandler = false,
 		bool shieldCanRegister = true,
 		bool materialTemplateExists = true,
@@ -109,6 +162,12 @@ public sealed class WorldMapRegionMaterialZoneConstructionServiceTests
 			zoneName,
 			geometryName,
 			materialId,
+			centerX,
+			centerY,
+			centerZ,
+			xExtent,
+			yExtent,
+			zExtent,
 			existingCollidableHandler,
 			shieldCanRegister,
 			materialTemplateExists,
