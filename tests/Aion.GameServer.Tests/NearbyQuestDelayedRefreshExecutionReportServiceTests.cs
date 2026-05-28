@@ -107,6 +107,53 @@ public sealed class NearbyQuestDelayedRefreshExecutionReportServiceTests
 	}
 
 	[Fact]
+	public async Task CreatePacketIntentSummary_AggregatesMapRegionReadyEmptyAndMissingResults()
+	{
+		using var temp = TempDirectory.Create();
+		var staticData = await LoadStaticDataAsync(temp.Path);
+		var scheduledInstance = new WorldMapInstanceRuntimeState(instanceId: 7);
+		var schedulePlan = scheduledInstance.RegisterQuestStartIdsAndPlanNearbyRefresh([3001, 3002]);
+		var readyRegion = new WorldMapInstanceRuntimeState(instanceId: 7);
+		readyRegion.RegisterQuestStartIds([3001]);
+		var emptyRegion = new WorldMapInstanceRuntimeState(instanceId: 7);
+		var readyPlayer = CreatePlayer(1001, "ELYOS");
+		readyPlayer.Position = new WorldPosition(210010000, 10, 20, 30, 40, InstanceId: 7);
+		var emptyPlayer = CreatePlayer(2002, "ELYOS");
+		emptyPlayer.Position = new WorldPosition(210010000, 11, 21, 31, 41, InstanceId: 7);
+		var missingRegionPlayer = CreatePlayer(3003, "ELYOS");
+		missingRegionPlayer.Position = new WorldPosition(210010000, 12, 22, 32, 42, InstanceId: 7);
+
+		var report = NearbyQuestDelayedRefreshExecutionReportService.CreateReportFromMapRegions(
+			schedulePlan,
+			scheduledInstance,
+			[
+				new NearbyQuestDelayedRefreshPlayerInput(
+					readyPlayer,
+					new NearbyQuestMapRegionSnapshot(readyPlayer.Position, readyRegion)),
+				new NearbyQuestDelayedRefreshPlayerInput(
+					emptyPlayer,
+					new NearbyQuestMapRegionSnapshot(emptyPlayer.Position, emptyRegion)),
+				new NearbyQuestDelayedRefreshPlayerInput(missingRegionPlayer, MapRegion: null),
+			],
+			staticData);
+
+		var summary = NearbyQuestDelayedRefreshExecutionReportService.CreatePacketIntentSummary(report);
+
+		Assert.Equal(3, summary.PlayerCount);
+		Assert.True(summary.HasPacketIntent);
+		Assert.Equal(2, summary.PacketIntentCount);
+		Assert.Equal(1, summary.ReadyPacketCount);
+		Assert.Equal(1, summary.EmptyPacketIntentCount);
+		Assert.Empty(summary.RejectionCounts);
+		Assert.Equal(0, summary.UnsupportedDependencyCount);
+		var missingReport = Assert.Single(
+			report.PlayerReports,
+			playerReport => playerReport.PlayerObjectId == 3003);
+		Assert.Equal(NearbyQuestRefreshInputAdapterStatus.MissingMapRegion, missingReport.RefreshResult.Status);
+		Assert.False(missingReport.RefreshResult.Plan.WouldSendPacket);
+	}
+
+	[Fact]
 	public async Task CreatePacketIntentSummary_AggregatesReadyEmptyRejectedAndUnsupportedCounts()
 	{
 		using var temp = TempDirectory.Create();
