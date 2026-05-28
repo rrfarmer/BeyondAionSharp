@@ -156,6 +156,52 @@ public sealed class WorldMapRuntimeStateTests
 	}
 
 	[Fact]
+	public void WorldMapInstanceRuntimeState_PlansDelayedNearbyRefreshLikeJavaWorldMapInstance()
+	{
+		var instance = new WorldMapInstanceRuntimeState(instanceId: 7, maxPlayers: 6);
+
+		var first = instance.RegisterQuestStartIdsAndPlanNearbyRefresh([1001, 1002, 1001]);
+		var duplicate = instance.RegisterQuestStartIdsAndPlanNearbyRefresh([1002]);
+		var whilePending = instance.RegisterQuestStartIdsAndPlanNearbyRefresh([1003]);
+
+		Assert.Equal(WorldMapNearbyQuestRefreshScheduleStatus.Scheduled, first.Status);
+		Assert.True(first.WouldScheduleTask);
+		Assert.Equal(TimeSpan.FromMilliseconds(1500), first.Delay);
+		Assert.Equal([1001, 1002], first.NewlyRegisteredQuestIds.Order());
+		Assert.Equal([1001, 1002], first.WorldQuestIds.Order());
+		Assert.True(instance.HasPendingNearbyQuestRefresh);
+		Assert.Equal(WorldMapNearbyQuestRefreshScheduleStatus.NoNewQuestIds, duplicate.Status);
+		Assert.False(duplicate.WouldScheduleTask);
+		Assert.Equal([1001, 1002], duplicate.WorldQuestIds.Order());
+		Assert.Equal(WorldMapNearbyQuestRefreshScheduleStatus.AlreadyPending, whilePending.Status);
+		Assert.False(whilePending.WouldScheduleTask);
+		Assert.Equal([1003], whilePending.NewlyRegisteredQuestIds.Order());
+		Assert.Equal([1001, 1002, 1003], whilePending.WorldQuestIds.Order());
+		Assert.Equal([1001, 1002, 1003], instance.QuestIds.Order());
+	}
+
+	[Fact]
+	public void WorldMapInstanceRuntimeState_CompletesPendingNearbyRefreshBeforeSchedulingAgain()
+	{
+		var instance = new WorldMapInstanceRuntimeState(instanceId: 7, maxPlayers: 6);
+		var first = instance.RegisterQuestStartIdsAndPlanNearbyRefresh([2001]);
+
+		var completed = instance.CompletePendingNearbyQuestRefresh();
+		var second = instance.RegisterQuestStartIdsAndPlanNearbyRefresh([2002]);
+		var completedAgain = instance.CompletePendingNearbyQuestRefresh();
+		var noPending = instance.CompletePendingNearbyQuestRefresh();
+
+		Assert.Equal(WorldMapNearbyQuestRefreshScheduleStatus.Scheduled, first.Status);
+		Assert.True(completed);
+		Assert.False(instance.HasPendingNearbyQuestRefresh);
+		Assert.Equal(WorldMapNearbyQuestRefreshScheduleStatus.Scheduled, second.Status);
+		Assert.Equal([2002], second.NewlyRegisteredQuestIds.Order());
+		Assert.Equal([2001, 2002], second.WorldQuestIds.Order());
+		Assert.True(completedAgain);
+		Assert.False(noPending);
+	}
+
+	[Fact]
 	public void NearbyQuestCandidateProjectionService_RegistersNpcStartQuestIdsLikeJavaWorldMapInstance()
 	{
 		var table = new QuestNpcStartTable();

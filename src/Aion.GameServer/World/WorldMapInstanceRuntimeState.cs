@@ -6,6 +6,7 @@ public sealed class WorldMapInstanceRuntimeState
 	private readonly HashSet<int> _registeredObjectIds = new();
 	private readonly HashSet<int> _playerObjectIds = new();
 	private readonly HashSet<int> _questIds = new();
+	private bool _hasPendingNearbyQuestRefresh;
 
 	public WorldMapInstanceRuntimeState(int instanceId, int ownerId = 0, int maxPlayers = 0)
 	{
@@ -60,6 +61,15 @@ public sealed class WorldMapInstanceRuntimeState
 		{
 			lock (_sync)
 				return _questIds.ToHashSet();
+		}
+	}
+
+	public bool HasPendingNearbyQuestRefresh
+	{
+		get
+		{
+			lock (_sync)
+				return _hasPendingNearbyQuestRefresh;
 		}
 	}
 
@@ -128,4 +138,92 @@ public sealed class WorldMapInstanceRuntimeState
 
 		return addedAny;
 	}
+
+	public WorldMapNearbyQuestRefreshSchedulePlan RegisterQuestStartIdsAndPlanNearbyRefresh(IEnumerable<int> questIds)
+	{
+		// Java parity breadcrumb: WorldMapInstance.addObject(Npc) schedules one delayed updateNearbyQuests task
+		// only when at least one QuestNpc.onQuestStart id is newly added and no refresh task is already pending.
+		lock (_sync)
+		{
+			var newlyRegistered = new List<int>();
+			foreach (var questId in questIds)
+			{
+				if (_questIds.Add(questId))
+					newlyRegistered.Add(questId);
+			}
+
+			if (newlyRegistered.Count == 0)
+				return WorldMapNearbyQuestRefreshSchedulePlan.NoNewQuestIds(_questIds);
+
+			if (_hasPendingNearbyQuestRefresh)
+				return WorldMapNearbyQuestRefreshSchedulePlan.AlreadyPending(newlyRegistered, _questIds);
+
+			_hasPendingNearbyQuestRefresh = true;
+			return WorldMapNearbyQuestRefreshSchedulePlan.Scheduled(newlyRegistered, _questIds);
+		}
+	}
+
+	public bool CompletePendingNearbyQuestRefresh()
+	{
+		// Java parity: the delayed task clears updateNearbyQuestsTask before iterating players.
+		lock (_sync)
+		{
+			if (!_hasPendingNearbyQuestRefresh)
+				return false;
+
+			_hasPendingNearbyQuestRefresh = false;
+			return true;
+		}
+	}
+}
+
+public sealed record WorldMapNearbyQuestRefreshSchedulePlan(
+	WorldMapNearbyQuestRefreshScheduleStatus Status,
+	TimeSpan? Delay,
+	IReadOnlySet<int> NewlyRegisteredQuestIds,
+	IReadOnlySet<int> WorldQuestIds,
+	string JavaSource)
+{
+	public bool WouldScheduleTask => Status == WorldMapNearbyQuestRefreshScheduleStatus.Scheduled;
+
+	public static WorldMapNearbyQuestRefreshSchedulePlan Scheduled(
+		IEnumerable<int> newlyRegisteredQuestIds,
+		IEnumerable<int> worldQuestIds)
+	{
+		return new WorldMapNearbyQuestRefreshSchedulePlan(
+			WorldMapNearbyQuestRefreshScheduleStatus.Scheduled,
+			TimeSpan.FromMilliseconds(1500),
+			newlyRegisteredQuestIds.ToHashSet(),
+			worldQuestIds.ToHashSet(),
+			"WorldMapInstance.addObject(Npc) -> ThreadPoolManager.schedule(updateNearbyQuests, 1500)");
+	}
+
+	public static WorldMapNearbyQuestRefreshSchedulePlan AlreadyPending(
+		IEnumerable<int> newlyRegisteredQuestIds,
+		IEnumerable<int> worldQuestIds)
+	{
+		return new WorldMapNearbyQuestRefreshSchedulePlan(
+			WorldMapNearbyQuestRefreshScheduleStatus.AlreadyPending,
+			null,
+			newlyRegisteredQuestIds.ToHashSet(),
+			worldQuestIds.ToHashSet(),
+			"WorldMapInstance.addObject(Npc) suppresses duplicate updateNearbyQuestsTask while pending");
+	}
+
+	public static WorldMapNearbyQuestRefreshSchedulePlan NoNewQuestIds(IEnumerable<int> worldQuestIds)
+	{
+		return new WorldMapNearbyQuestRefreshSchedulePlan(
+			WorldMapNearbyQuestRefreshScheduleStatus.NoNewQuestIds,
+			null,
+			new HashSet<int>(),
+			worldQuestIds.ToHashSet(),
+			"WorldMapInstance.addObject(Npc) schedules only after questIds.add(id) succeeds");
+	}
+}
+
+public enum WorldMapNearbyQuestRefreshScheduleStatus
+{
+	Scheduled,
+	AlreadyPending,
+	NoNewQuestIds,
 }
