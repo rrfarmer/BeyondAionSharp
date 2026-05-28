@@ -1405,6 +1405,41 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleUseItemAsync_DecomposeInventoryFullBeforeCompletionFailsWithoutMutation()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(
+			repository,
+			includeThreadPoolManager: true,
+			idFactory: new IDFactory([5001]));
+		var player = CreatePlayer(itemId: 100);
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
+		player.InventoryItems = player.InventoryItems
+			.Concat(Enumerable.Range(0, 26).Select(index => new InventoryItem
+			{
+				ObjectId = 6100 + index,
+				ItemId = 201,
+				Count = 1,
+				Location = 0,
+			}))
+			.ToArray();
+
+		await WaitUntilAsync(() => fixture.SentPackets.Count >= 3, TimeSpan.FromSeconds(5));
+
+		Assert.Equal(0, player.UsingItemObjectId);
+		Assert.Equal(0, repository.SaveDecomposeActionMutationCalls);
+		Assert.Contains(player.InventoryItems, item => item.ObjectId == 5001 && item.ItemId == 100 && item.Count == 2);
+		Assert.DoesNotContain(player.InventoryItems, item => item.ItemId == 200);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 100, expectedTime: 3000, expectedEnd: 0),
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1300447),
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 100, expectedTime: 0, expectedEnd: 2));
+	}
+
+	[Fact]
 	public async Task HandleUseItemAsync_DecomposeSpecialCubeFullDoesNotScheduleOrMutate()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
