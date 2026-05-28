@@ -57,6 +57,7 @@ public sealed class StaticData
 		SkillTreeTable skillTree,
 		StorageExpansionTemplateTable cubeExpansionTemplates,
 		StorageExpansionTemplateTable warehouseExpansionTemplates,
+		NearbyQuestTemplateTable nearbyQuestTemplates,
 		QuestFinishRewardProjectionLookupTable questFinishRewardProjections,
 		QuestBonusItemGroupTable questBonusItemGroups,
 		Task? validationTask)
@@ -110,6 +111,7 @@ public sealed class StaticData
 		SkillTree = skillTree;
 		CubeExpansionTemplates = cubeExpansionTemplates;
 		WarehouseExpansionTemplates = warehouseExpansionTemplates;
+		NearbyQuestTemplates = nearbyQuestTemplates;
 		QuestFinishRewardProjections = questFinishRewardProjections;
 		QuestBonusItemGroups = questBonusItemGroups;
 		ValidationTask = validationTask;
@@ -214,6 +216,8 @@ public sealed class StaticData
 	public StorageExpansionTemplateTable CubeExpansionTemplates { get; }
 
 	public StorageExpansionTemplateTable WarehouseExpansionTemplates { get; }
+
+	public NearbyQuestTemplateTable NearbyQuestTemplates { get; }
 
 	public QuestFinishRewardProjectionLookupTable QuestFinishRewardProjections { get; }
 
@@ -2579,6 +2583,9 @@ public sealed class StaticData
 		if (experience.Count == 0)
 			experience.AddRange(await LoadExperienceTableFromImportedFilesAsync(importedFiles, cancellationToken));
 		var customNpcDrops = await CustomNpcDropTable.LoadFromImportedFilesAsync(importedFiles, cancellationToken);
+		using var nearbyQuestTemplateStream = File.OpenRead(cacheFilePath);
+		var nearbyQuestTemplates = new NearbyQuestTemplateTable(
+			new NearbyQuestTemplateXmlExtractor().Extract(nearbyQuestTemplateStream));
 		using var questFinishRewardProjectionStream = File.OpenRead(cacheFilePath);
 		var questFinishRewardProjections = new QuestFinishRewardProjectionLookupTableXmlFactory()
 			.Create(questFinishRewardProjectionStream);
@@ -2675,6 +2682,7 @@ public sealed class StaticData
 			new SkillTreeTable(skillTree.AsReadOnly(), new SkillTemplateTable(skillTemplates.AsReadOnly())),
 			new StorageExpansionTemplateTable(cubeExpansionTemplates.AsReadOnly()),
 			new StorageExpansionTemplateTable(warehouseExpansionTemplates.AsReadOnly()),
+			nearbyQuestTemplates,
 			questFinishRewardProjections,
 			new QuestBonusItemGroupTable(questBonusItemGroups.AsReadOnly()),
 			validationTask);

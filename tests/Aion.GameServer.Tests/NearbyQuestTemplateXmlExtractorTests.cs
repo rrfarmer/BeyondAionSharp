@@ -166,9 +166,16 @@ public sealed class NearbyQuestTemplateXmlExtractorTests
 	public void Extract_StreamInputFeedsNearbyQuestTemplateTableAndPredicate()
 	{
 		const string xml = """
-			<quests>
-				<quest id="3001" minlevel_permitted="22" race_permitted="PC_ALL" />
-			</quests>
+			<static_data>
+				<events>
+					<event id="1">
+						<quest id="9999" />
+					</event>
+				</events>
+				<quests>
+					<quest id="3001" minlevel_permitted="22" race_permitted="PC_ALL" />
+				</quests>
+			</static_data>
 			""";
 		var extractor = new NearbyQuestTemplateXmlExtractor();
 		using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(xml));
@@ -178,6 +185,7 @@ public sealed class NearbyQuestTemplateXmlExtractorTests
 		Assert.True(table.TryGetQuest(3001, out var template));
 		Assert.NotNull(template);
 		Assert.Equal(22, template.MinLevelPermitted);
+		Assert.False(table.TryGetQuest(9999, out _));
 	}
 
 	[Fact]

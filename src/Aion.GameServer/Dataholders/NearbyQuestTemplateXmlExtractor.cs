@@ -20,7 +20,7 @@ public sealed class NearbyQuestTemplateXmlExtractor
 		// Java parity breadcrumb: dataholders/QuestsData.afterUnmarshal indexes model/templates/QuestTemplate objects.
 		return document
 			.Descendants()
-			.Where(element => element.Name.LocalName == "quest")
+			.Where(element => element.Name.LocalName == "quest" && element.Parent?.Name.LocalName == "quests")
 			.Select(ToSummary)
 			.ToArray();
 	}

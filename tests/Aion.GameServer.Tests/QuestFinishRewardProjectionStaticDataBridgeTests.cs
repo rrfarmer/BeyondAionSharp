@@ -35,6 +35,13 @@ public sealed class QuestFinishRewardProjectionStaticDataBridgeTests
 
 		var staticData = await StaticData.LoadFromCacheAsync(cacheFile, Array.Empty<string>());
 
+		Assert.Equal(1, staticData.NearbyQuestTemplates.Count);
+		Assert.False(staticData.NearbyQuestTemplates.TryGetQuest(9999, out _));
+		Assert.True(staticData.NearbyQuestTemplates.TryGetQuest(1001, out var questTemplate));
+		Assert.NotNull(questTemplate);
+		Assert.True(questTemplate.CanReport);
+		Assert.Equal(2, questTemplate.RewardRepeatCount);
+		Assert.True(questTemplate.HasRewards);
 		Assert.Equal(1, staticData.QuestFinishRewardProjections.Count);
 		Assert.False(staticData.QuestFinishRewardProjections.TryGetQuest(9999, out _));
 		Assert.True(staticData.QuestFinishRewardProjections.TryGetQuest(1001, out var entry));
@@ -73,10 +80,14 @@ public sealed class QuestFinishRewardProjectionStaticDataBridgeTests
 			});
 
 		Assert.Equal(8043, staticData.QuestFinishRewardProjections.Count);
+		Assert.Equal(8043, staticData.NearbyQuestTemplates.Count);
 		Assert.Equal(8464, staticData.QuestFinishRewardProjections.Entries.Sum(entry => entry.RewardGroupProjections.Count));
 		Assert.True(staticData.QuestFinishRewardProjections.TryGetQuest(1007, out var multiGroupEntry));
 		Assert.NotNull(multiGroupEntry);
 		Assert.Equal(6, multiGroupEntry.RewardGroupProjections.Count);
+		Assert.True(staticData.NearbyQuestTemplates.TryGetQuest(1007, out var nearbyTemplate));
+		Assert.NotNull(nearbyTemplate);
+		Assert.True(nearbyTemplate.HasRewards);
 	}
 
 	private static string FindRepoRoot()
