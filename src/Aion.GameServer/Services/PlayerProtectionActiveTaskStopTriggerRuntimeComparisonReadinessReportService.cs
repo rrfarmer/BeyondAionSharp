@@ -50,6 +50,10 @@ public sealed record PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadi
 	bool HasRuntimeComparisonPreflightReport,
 	bool HasRuntimeComparisonKeyProjectionReport,
 	bool HasJavaObserverRunbookDesign,
+	bool HasSerializerFieldContract,
+	int SerializerFieldContractRowCount,
+	bool HasSerializerTimestampNonParityPolicy,
+	bool HasSerializerNestedPayloadPlaceholders,
 	bool NeedsJavaInstrumentation,
 	bool NeedsJavaObserverRunbookDesign,
 	bool NeedsJavaTraceSerializer,
@@ -84,7 +88,8 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonKeyProjectionReport? keyProjectionReport = null,
 		PlayerProtectionActiveTaskStopTriggerCSharpTraceEmitterDesignReport? csharpTraceEmitterDesign = null,
 		PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionPlanReport? generatedArtifactExecutionPlan = null,
-		PlayerProtectionActiveTaskStopTriggerJavaObserverRunbookDesignReport? javaObserverRunbookDesign = null)
+		PlayerProtectionActiveTaskStopTriggerJavaObserverRunbookDesignReport? javaObserverRunbookDesign = null,
+		PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldContractReport? serializerFieldContract = null)
 	{
 		var rows = new List<PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessRow>();
 
@@ -92,7 +97,7 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 		AddTraceArtifactSchema(rows, traceSchema);
 		AddJavaObserverRunbookDesign(rows, runtimeDesign, traceSchema, javaObserverRunbookDesign);
 		AddJavaInstrumentation(rows, traceSchema);
-		AddJavaTraceSerializer(rows, traceSchema);
+		AddJavaTraceSerializer(rows, traceSchema, serializerFieldContract);
 		AddGeneratedJavaTraceArtifacts(rows, traceSchema, artifactDirectoryReport);
 		AddCSharpArtifactReader(rows, traceSchema);
 		AddCSharpTraceEmitterDesign(rows, runtimeDesign, traceSchema, csharpTraceEmitterDesign);
@@ -112,6 +117,10 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 			HasRuntimeComparisonPreflightReport: preflightReport != null,
 			HasRuntimeComparisonKeyProjectionReport: keyProjectionReport != null,
 			HasJavaObserverRunbookDesign: javaObserverRunbookDesign != null,
+			HasSerializerFieldContract: serializerFieldContract != null,
+			SerializerFieldContractRowCount: serializerFieldContract?.Rows.Count ?? 0,
+			HasSerializerTimestampNonParityPolicy: serializerFieldContract?.HasTimestampNonParityPolicy == true,
+			HasSerializerNestedPayloadPlaceholders: serializerFieldContract?.HasNestedPayloadPlaceholders == true,
 			NeedsJavaInstrumentation: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.JavaInstrumentation && row.BlocksRuntimeComparison),
 			NeedsJavaObserverRunbookDesign: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.JavaObserverRunbookDesign && row.BlocksRuntimeComparison),
 			NeedsJavaTraceSerializer: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.JavaTraceSerializer && row.BlocksRuntimeComparison),
@@ -250,8 +259,10 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 
 	private static void AddJavaTraceSerializer(
 		ICollection<PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessRow> rows,
-		PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaReport? traceSchema)
+		PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaReport? traceSchema,
+		PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldContractReport? serializerFieldContract)
 	{
+		var hasSerializerFieldContract = serializerFieldContract != null;
 		Add(rows,
 			PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.JavaTraceSerializer,
 			traceSchema == null
@@ -260,8 +271,14 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 			blocks: true,
 			"future Java trace serialization boundary",
 			"future schema-v1 Java artifact writer",
-			traceSchema == null ? "trace schema missing" : "schema version and field list defined but no serializer exists",
-			"Serializer must preserve invariant numeric formatting, enum names, event ordering, and optional fields.");
+			traceSchema == null
+				? "trace schema missing"
+				: hasSerializerFieldContract
+					? $"schema version and field contract defined but no serializer exists; contractRows={serializerFieldContract!.Rows.Count}; timestampPolicy={serializerFieldContract.HasTimestampNonParityPolicy}; nestedPayloadPlaceholders={serializerFieldContract.HasNestedPayloadPlaceholders}; needsJavaSerializer={serializerFieldContract.RequiresJavaSerializerImplementation}"
+					: "schema version and field list defined but no serializer exists",
+			hasSerializerFieldContract
+				? "Serializer field contract is metadata only; Java implementation must still preserve invariant numeric formatting, enum names, event ordering, diagnostic timestamps, and nested packet/task-map payloads."
+				: "Serializer must preserve invariant numeric formatting, enum names, event ordering, and optional fields.");
 	}
 
 	private static void AddGeneratedJavaTraceArtifacts(

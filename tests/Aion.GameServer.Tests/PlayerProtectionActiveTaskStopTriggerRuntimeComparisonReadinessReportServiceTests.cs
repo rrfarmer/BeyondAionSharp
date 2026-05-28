@@ -20,6 +20,10 @@ public sealed class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 		Assert.False(report.HasRuntimeComparisonPreflightReport);
 		Assert.False(report.HasRuntimeComparisonKeyProjectionReport);
 		Assert.False(report.HasJavaObserverRunbookDesign);
+		Assert.False(report.HasSerializerFieldContract);
+		Assert.Equal(0, report.SerializerFieldContractRowCount);
+		Assert.False(report.HasSerializerTimestampNonParityPolicy);
+		Assert.False(report.HasSerializerNestedPayloadPlaceholders);
 		Assert.True(report.NeedsJavaInstrumentation);
 		Assert.True(report.NeedsJavaObserverRunbookDesign);
 		Assert.True(report.NeedsJavaTraceSerializer);
@@ -36,6 +40,34 @@ public sealed class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 		Assert.False(report.NeedsRuntimeComparisonExecution);
 		Assert.True(report.NeedsRuntimeComparisonEvidence);
 		Assert.False(report.ReadyForRuntimeComparison);
+	}
+
+	[Fact]
+	public void Create_WithSerializerFieldContractSurfacesSerializerReadinessBlocker()
+	{
+		var runtimeDesign = CreateRuntimeDesign();
+		var traceSchema = PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaReportService.Create(runtimeDesign);
+		var serializerFieldContract = PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldContractService.Create(traceSchema);
+
+		var report = PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessReportService.Create(
+			runtimeDesign,
+			traceSchema,
+			serializerFieldContract: serializerFieldContract);
+
+		Assert.True(report.HasSerializerFieldContract);
+		Assert.True(report.SerializerFieldContractRowCount > 0);
+		Assert.True(report.HasSerializerTimestampNonParityPolicy);
+		Assert.True(report.HasSerializerNestedPayloadPlaceholders);
+		Assert.True(report.NeedsJavaTraceSerializer);
+		Assert.Contains(report.Rows, row =>
+			row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.JavaTraceSerializer
+			&& row.Status == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedMissingJavaArtifact
+			&& row.BlocksRuntimeComparison
+			&& row.Evidence.Contains("contractRows=", StringComparison.Ordinal)
+			&& row.Evidence.Contains("timestampPolicy=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("nestedPayloadPlaceholders=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("needsJavaSerializer=True", StringComparison.Ordinal)
+			&& row.Notes.Contains("metadata only", StringComparison.Ordinal));
 	}
 
 	[Fact]
