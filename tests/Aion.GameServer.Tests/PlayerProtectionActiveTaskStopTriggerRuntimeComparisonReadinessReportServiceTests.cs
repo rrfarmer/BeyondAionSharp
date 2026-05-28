@@ -25,6 +25,8 @@ public sealed class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 		Assert.False(report.NeedsCSharpArtifactReader);
 		Assert.False(report.HasCSharpTraceEmitterDesign);
 		Assert.True(report.NeedsCSharpTraceEmitter);
+		Assert.False(report.HasGeneratedArtifactExecutionPlan);
+		Assert.True(report.NeedsGeneratedArtifactExecutionPlan);
 		Assert.True(report.NeedsLiveCSharpPacketHooks);
 		Assert.False(report.NeedsCSharpRuntimeTraceOutput);
 		Assert.False(report.NeedsRuntimeComparisonPreflightAlignment);
@@ -119,6 +121,34 @@ public sealed class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 			&& row.Evidence.Contains("controllerHooks=True", StringComparison.Ordinal)
 			&& row.Evidence.Contains("teleportHooks=True", StringComparison.Ordinal)
 			&& row.Notes.Contains("non-live design only", StringComparison.Ordinal));
+	}
+
+	[Fact]
+	public void Create_WithGeneratedArtifactExecutionPlanSurfacesExecutionPlanGate()
+	{
+		var runtimeDesign = CreateRuntimeDesign();
+		var traceSchema = PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaReportService.Create(runtimeDesign);
+		var emitterDesign = PlayerProtectionActiveTaskStopTriggerCSharpTraceEmitterDesignReportService.Create(runtimeDesign, traceSchema);
+		var executionPlan = PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionPlanService.Create(
+			runtimeDesign,
+			traceSchema,
+			emitterDesign);
+
+		var report = PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessReportService.Create(
+			runtimeDesign,
+			traceSchema,
+			csharpTraceEmitterDesign: emitterDesign,
+			generatedArtifactExecutionPlan: executionPlan);
+
+		Assert.True(report.HasGeneratedArtifactExecutionPlan);
+		Assert.True(report.NeedsGeneratedArtifactExecutionPlan);
+		Assert.False(report.ReadyForRuntimeComparison);
+		Assert.Contains(report.Rows, row =>
+			row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.GeneratedArtifactExecutionPlan
+			&& row.Status == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedMissingPrerequisite
+			&& row.Evidence.Contains("needsJavaTooling=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("needsComparisonExecution=True", StringComparison.Ordinal)
+			&& row.Notes.Contains("Maven/Java tooling readiness", StringComparison.Ordinal));
 	}
 
 	[Fact]

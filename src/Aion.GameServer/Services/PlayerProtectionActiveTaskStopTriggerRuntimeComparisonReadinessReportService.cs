@@ -9,6 +9,7 @@ public enum PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlock
 	GeneratedJavaTraceArtifacts,
 	CSharpArtifactReader,
 	CSharpTraceEmitterDesign,
+	GeneratedArtifactExecutionPlan,
 	LiveCSharpPacketHooks,
 	RuntimeComparisonEvidence,
 }
@@ -53,6 +54,8 @@ public sealed record PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadi
 	bool NeedsCSharpArtifactReader,
 	bool HasCSharpTraceEmitterDesign,
 	bool NeedsCSharpTraceEmitter,
+	bool HasGeneratedArtifactExecutionPlan,
+	bool NeedsGeneratedArtifactExecutionPlan,
 	bool NeedsLiveCSharpPacketHooks,
 	bool NeedsCSharpRuntimeTraceOutput,
 	bool NeedsRuntimeComparisonPreflightAlignment,
@@ -76,7 +79,8 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonContractReport? comparisonContract = null,
 		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonPreflightReport? preflightReport = null,
 		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonKeyProjectionReport? keyProjectionReport = null,
-		PlayerProtectionActiveTaskStopTriggerCSharpTraceEmitterDesignReport? csharpTraceEmitterDesign = null)
+		PlayerProtectionActiveTaskStopTriggerCSharpTraceEmitterDesignReport? csharpTraceEmitterDesign = null,
+		PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionPlanReport? generatedArtifactExecutionPlan = null)
 	{
 		var rows = new List<PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessRow>();
 
@@ -87,6 +91,7 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 		AddGeneratedJavaTraceArtifacts(rows, traceSchema, artifactDirectoryReport);
 		AddCSharpArtifactReader(rows, traceSchema);
 		AddCSharpTraceEmitterDesign(rows, runtimeDesign, traceSchema, csharpTraceEmitterDesign);
+		AddGeneratedArtifactExecutionPlan(rows, runtimeDesign, traceSchema, csharpTraceEmitterDesign, generatedArtifactExecutionPlan);
 		AddLiveCSharpPacketHooks(rows, runtimeDesign);
 		AddRuntimeComparisonEvidence(rows, comparisonContract, preflightReport, keyProjectionReport);
 
@@ -107,6 +112,8 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 			NeedsCSharpArtifactReader: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.CSharpArtifactReader && row.BlocksRuntimeComparison),
 			HasCSharpTraceEmitterDesign: csharpTraceEmitterDesign != null,
 			NeedsCSharpTraceEmitter: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.CSharpTraceEmitterDesign && row.BlocksRuntimeComparison),
+			HasGeneratedArtifactExecutionPlan: generatedArtifactExecutionPlan != null,
+			NeedsGeneratedArtifactExecutionPlan: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.GeneratedArtifactExecutionPlan && row.BlocksRuntimeComparison),
 			NeedsLiveCSharpPacketHooks: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.LiveCSharpPacketHooks && row.BlocksRuntimeComparison),
 			NeedsCSharpRuntimeTraceOutput: comparisonContract?.NeedsCSharpRuntimeTrace == true || preflightReport?.NeedsCSharpTraceRows == true || keyProjectionReport?.NeedsCSharpKeys == true,
 			NeedsRuntimeComparisonPreflightAlignment: preflightReport?.NeedsScenarioAlignment == true || preflightReport?.NeedsRowCountAlignment == true,
@@ -338,6 +345,50 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 			"C# trace emitter hook sites are documented as non-live design only; production packet/controller hooks remain disabled.");
 	}
 
+	private static void AddGeneratedArtifactExecutionPlan(
+		ICollection<PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessRow> rows,
+		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonDesignReport? runtimeDesign,
+		PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaReport? traceSchema,
+		PlayerProtectionActiveTaskStopTriggerCSharpTraceEmitterDesignReport? csharpTraceEmitterDesign,
+		PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionPlanReport? generatedArtifactExecutionPlan)
+	{
+		if (runtimeDesign == null || traceSchema == null || csharpTraceEmitterDesign == null)
+		{
+			Add(rows,
+				PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.GeneratedArtifactExecutionPlan,
+				PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedMissingPrerequisite,
+				blocks: true,
+				"protection stop-trigger Java runtime artifact generation prerequisites",
+				"PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionPlanService",
+				runtimeDesign == null ? "runtime design missing" : traceSchema == null ? "trace schema missing" : "C# trace emitter design missing",
+				"Need runtime comparison design, trace schema, and C# emitter hook-site design before execution-plan gates can be surfaced.");
+			return;
+		}
+
+		if (generatedArtifactExecutionPlan == null)
+		{
+			Add(rows,
+				PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.GeneratedArtifactExecutionPlan,
+				PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedMissingPrerequisite,
+				blocks: true,
+				"protection stop-trigger Java runtime artifact generation prerequisites",
+				"PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionPlanService",
+				"missing generated-artifact execution plan report",
+				"Need the non-live execution plan to sequence Java tooling, artifact generation, C# trace capture, key projection, and comparison execution gates.");
+			return;
+		}
+
+		var status = GetGeneratedArtifactExecutionPlanStatus(generatedArtifactExecutionPlan);
+		Add(rows,
+			PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.GeneratedArtifactExecutionPlan,
+			status,
+			blocks: status != PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.SatisfiedByNonLiveMetadata,
+			generatedArtifactExecutionPlan.JavaSource,
+			"PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionPlanReport",
+			$"planRows={generatedArtifactExecutionPlan.Rows.Count}; needsJavaTooling={generatedArtifactExecutionPlan.NeedsJavaTooling}; needsJavaArtifacts={generatedArtifactExecutionPlan.NeedsJavaArtifacts}; needsCSharpEmitter={generatedArtifactExecutionPlan.NeedsCSharpEmitter}; needsRuntimeEvidence={generatedArtifactExecutionPlan.NeedsRuntimeEvidence}; needsComparisonExecution={generatedArtifactExecutionPlan.NeedsComparisonExecution}; ready={generatedArtifactExecutionPlan.ReadyForRuntimeComparison}",
+			GetGeneratedArtifactExecutionPlanNotes(generatedArtifactExecutionPlan));
+	}
+
 	private static void AddRuntimeComparisonEvidence(
 		ICollection<PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessRow> rows,
 		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonContractReport? comparisonContract,
@@ -514,6 +565,48 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 			return "Runtime evidence is blocked because key projection has not executed deterministic Java/C# runtime comparison.";
 
 		return "Runtime comparison key projection has no current blockers, but verified parity still requires objective comparison evidence.";
+	}
+
+	private static PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus GetGeneratedArtifactExecutionPlanStatus(
+		PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionPlanReport generatedArtifactExecutionPlan)
+	{
+		if (generatedArtifactExecutionPlan.NeedsJavaTooling)
+			return PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedMissingPrerequisite;
+
+		if (generatedArtifactExecutionPlan.NeedsJavaArtifacts)
+			return PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedMissingJavaArtifact;
+
+		if (generatedArtifactExecutionPlan.NeedsCSharpEmitter)
+			return PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedMissingCSharpImplementation;
+
+		if (generatedArtifactExecutionPlan.NeedsRuntimeEvidence)
+			return PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedMissingRuntimeEvidence;
+
+		if (generatedArtifactExecutionPlan.NeedsComparisonExecution)
+			return PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedComparisonNotExecuted;
+
+		return PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.SatisfiedByNonLiveMetadata;
+	}
+
+	private static string GetGeneratedArtifactExecutionPlanNotes(
+		PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionPlanReport generatedArtifactExecutionPlan)
+	{
+		if (generatedArtifactExecutionPlan.NeedsJavaTooling)
+			return "Execution plan is blocked before Java observer/artifact work because local Maven/Java tooling readiness has not been proven.";
+
+		if (generatedArtifactExecutionPlan.NeedsJavaArtifacts)
+			return "Execution plan is blocked because Java instrumentation, trace serialization, or generated runtime artifacts are missing.";
+
+		if (generatedArtifactExecutionPlan.NeedsCSharpEmitter)
+			return "Execution plan is blocked because live C# trace emitter implementation is missing.";
+
+		if (generatedArtifactExecutionPlan.NeedsRuntimeEvidence)
+			return "Execution plan is blocked because generated Java artifacts and live C# trace rows have not both been captured.";
+
+		if (generatedArtifactExecutionPlan.NeedsComparisonExecution)
+			return "Execution plan is blocked because deterministic Java/C# runtime comparison has not executed.";
+
+		return "Execution plan currently has no blocking gates, but verified parity still requires objective Java/C# runtime comparison evidence.";
 	}
 
 	private static void Add(
