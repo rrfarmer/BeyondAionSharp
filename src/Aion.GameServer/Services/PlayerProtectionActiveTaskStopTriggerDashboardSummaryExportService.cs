@@ -27,8 +27,13 @@ public sealed record PlayerProtectionActiveTaskStopTriggerDashboardSummaryExport
 	bool HasKeyProjectionEvidence,
 	bool HasJavaHookDetailEvidence,
 	int JavaHookDetailRowCount,
+	bool HasSerializerFieldContract,
+	int SerializerFieldContractRowCount,
+	bool HasSerializerTimestampNonParityPolicy,
+	bool HasSerializerNestedPayloadPlaceholders,
 	bool NeedsProtectionArtifactSerializer,
 	bool NeedsJavaObserverImplementation,
+	bool NeedsJavaSerializerImplementation,
 	bool ReadyForRuntimeComparison,
 	string JavaSource,
 	bool IsLive);
@@ -69,6 +74,7 @@ public static class PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportS
 			|| javaHookDetail?.NeedsProtectionArtifactSerializer == true;
 		var needsJavaObserverImplementation = dashboard.NeedsJavaObserverImplementation
 			|| javaHookDetail?.NeedsJavaObserverImplementation == true;
+		var needsJavaSerializerImplementation = dashboard.NeedsJavaSerializerImplementation;
 		var readyForRuntimeComparison = dashboard.ReadyForRuntimeComparison && blockers.Length == 0;
 		var status = readyForRuntimeComparison
 			? PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportStatus.ReadyForRuntimeComparison
@@ -86,8 +92,10 @@ public static class PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportS
 				hasRuntimeEvidenceBlocker,
 				hasComparisonExecutionBlocker,
 				javaHookDetailRowCount,
+				dashboard.SerializerFieldContractRowCount,
 				needsProtectionArtifactSerializer,
-				needsJavaObserverImplementation),
+				needsJavaObserverImplementation,
+				needsJavaSerializerImplementation),
 			blockers,
 			dashboard.Rows.Count,
 			blockers.Length,
@@ -99,8 +107,13 @@ public static class PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportS
 			dashboard.HasKeyProjectionEvidence,
 			hasJavaHookDetailEvidence,
 			javaHookDetailRowCount,
+			dashboard.HasSerializerFieldContract,
+			dashboard.SerializerFieldContractRowCount,
+			dashboard.HasSerializerTimestampNonParityPolicy,
+			dashboard.HasSerializerNestedPayloadPlaceholders,
 			needsProtectionArtifactSerializer,
 			needsJavaObserverImplementation,
+			needsJavaSerializerImplementation,
 			readyForRuntimeComparison,
 			dashboard.JavaSource,
 			IsLive: false);
@@ -116,12 +129,14 @@ public static class PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportS
 		bool hasRuntimeEvidenceBlocker,
 		bool hasComparisonExecutionBlocker,
 		int javaHookDetailRowCount,
+		int serializerFieldContractRowCount,
 		bool needsProtectionArtifactSerializer,
-		bool needsJavaObserverImplementation)
+		bool needsJavaObserverImplementation,
+		bool needsJavaSerializerImplementation)
 	{
 		if (status == PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportStatus.ReadyForRuntimeComparison)
 		{
-			return $"Ready for runtime comparison: dashboardRows={dashboardRowCount}; blockingRows=0; javaHookRows={javaHookDetailRowCount}.";
+			return $"Ready for runtime comparison: dashboardRows={dashboardRowCount}; blockingRows=0; javaHookRows={javaHookDetailRowCount}; serializerRows={serializerFieldContractRowCount}.";
 		}
 
 		var blockerNames = new List<string>();
@@ -160,10 +175,15 @@ public static class PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportS
 			blockerNames.Add("Java observer implementation");
 		}
 
+		if (needsJavaSerializerImplementation)
+		{
+			blockerNames.Add("Java serializer implementation");
+		}
+
 		var blockerSummary = blockerNames.Count == 0
 			? "unspecified blockers"
 			: string.Join(", ", blockerNames);
 
-		return $"Blocked: dashboardRows={dashboardRowCount}; blockingRows={blockingRowCount}; javaHookRows={javaHookDetailRowCount}; blockers={blockerSummary}.";
+		return $"Blocked: dashboardRows={dashboardRowCount}; blockingRows={blockingRowCount}; javaHookRows={javaHookDetailRowCount}; serializerRows={serializerFieldContractRowCount}; blockers={blockerSummary}.";
 	}
 }
