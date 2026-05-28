@@ -62,6 +62,22 @@ public sealed class PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecut
 	}
 
 	[Fact]
+	public void Create_DocumentsTraceArtifactShapeValidationBoundaryWithoutClaimingParity()
+	{
+		var report = CreateReport();
+
+		Assert.Contains(report.Rows, row =>
+			row.Gate == PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionGate.TraceArtifactShapeValidation
+			&& row.Status == PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionStatus.ReadyForDesignOnly
+			&& !row.BlocksRuntimeComparison
+			&& row.Evidence.Contains("actionBranchName", StringComparison.Ordinal)
+			&& row.Evidence.Contains("callerOrigin", StringComparison.Ordinal)
+			&& row.Evidence.Contains("taskCancellation", StringComparison.Ordinal)
+			&& row.Notes.Contains("artifact-reader gating", StringComparison.Ordinal)
+			&& row.Notes.Contains("still required before parity can be claimed", StringComparison.Ordinal));
+	}
+
+	[Fact]
 	public void Create_WithSerializerFieldContractSurfacesTimestampAndNestedPayloadBlockers()
 	{
 		var report = CreateReport(withSerializerFieldContract: true);

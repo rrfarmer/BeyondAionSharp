@@ -6,6 +6,7 @@ public enum PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionGate
 	JavaObserverDesign,
 	JavaInstrumentation,
 	JavaTraceSerializer,
+	TraceArtifactShapeValidation,
 	JavaArtifactGeneration,
 	CSharpEmitterDesign,
 	CSharpEmitterImplementation,
@@ -100,6 +101,14 @@ public static class PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecut
 			"PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidatorService",
 			CreateSerializerEvidence(traceSchema, serializerFieldContract),
 			CreateSerializerNotes(serializerFieldContract));
+
+		Add(rows,
+			PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionGate.TraceArtifactShapeValidation,
+			PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionStatus.ReadyForDesignOnly,
+			"schema-v1 generated Java trace artifact contract",
+			"PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidatorService / PlayerProtectionActiveTaskStopTriggerCSharpTraceEmitterDesignReport",
+			"validatorCoverage=actionBranchName/player/movement/scheduler/taskCancellation/fanout/aiNotify/emotion/actionPayload/callerOrigin",
+			"Shape validation coverage is broad enough for artifact-reader gating, but generated Java artifacts, live C# trace rows, and deterministic comparison are still required before parity can be claimed.");
 
 		Add(rows,
 			PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionGate.JavaArtifactGeneration,
