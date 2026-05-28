@@ -745,6 +745,47 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleQuestionResponseAsync_ChargeAllKinahPaymentSaveFailureStopsBeforeInMemoryMutationAndPackets()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository { SaveItemChargeAllMutationResult = false };
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreateKinahChargeAllPaymentPlayer(kinah: 500);
+		var pendingRequest = new PendingChargeAllRequest(
+			SenderObjectId: player.ObjectId,
+			ChargeWay: 1,
+			PaymentAmount: 500,
+			Items:
+			[
+				new PendingChargeAllItem(
+					ObjectId: 7101,
+					ItemId: 100000401,
+					PreviousCharge: 0,
+					TargetCharge: ItemChargeService.Level1ChargePoints,
+					Level: 1),
+			]);
+		player.PendingChargeAllRequest = pendingRequest;
+		Assert.True(player.ResponseRequester.PutRequest(
+			SmQuestionWindow.ItemChargeAllConfirm,
+			new QuestionResponseRequest(player.ObjectId, QuestionResponseRequestKind.ChargeAll, pendingRequest)));
+
+		await fixture.Connection.HandleQuestionResponseAsync(player, CreateQuestionResponse(SmQuestionWindow.ItemChargeAllConfirm, response: 1));
+
+		Assert.Equal(1, repository.SaveItemChargeAllMutationCalls);
+		Assert.Equal(0, repository.ChargeAllPaymentKinahItem?.Count);
+		Assert.Null(repository.ChargeAllPaymentAbyssRank);
+		var stagedItem = Assert.Single(repository.ChargeAllChargedItems);
+		Assert.Equal(7101, stagedItem.ObjectId);
+		Assert.Equal(ItemChargeService.Level1ChargePoints, stagedItem.Charge);
+		Assert.Null(player.PendingChargeAllRequest);
+		Assert.Equal(0, player.ResponseRequester.Count);
+		var item = Assert.Single(player.InventoryItems, inventoryItem => inventoryItem.ObjectId == 7101);
+		var kinah = Assert.Single(player.InventoryItems, inventoryItem => inventoryItem.ItemId == 182400001);
+		Assert.Equal(0, item.Charge);
+		Assert.Equal(500, kinah.Count);
+		Assert.Empty(fixture.SentPackets);
+	}
+
+	[Fact]
 	public async Task HandleQuestionResponseAsync_ChargeAllKinahPaymentChargesOnlyCurrentChargeableItemWhenOnePendingItemIsStale()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
