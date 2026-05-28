@@ -10,6 +10,7 @@ public sealed class ApExtractServiceTests
 	private const int TargetSwordItemId = 100000363;
 	private const int TargetArmorItemId = 110100001;
 	private const int TargetAccessoryItemId = 120000001;
+	private const int TargetWingItemId = 187000001;
 	private const int NoApExtractSwordItemId = 100000364;
 
 	[Fact]
@@ -60,6 +61,13 @@ public sealed class ApExtractServiceTests
 			ApExtractFailure.CannotAct,
 			ApExtractService.CreateMutationPlan(
 				CreatePlayer(CreateItem(1001, NoApExtractSwordItemId), CreateItem(2001, ToolItemId)),
+				2001,
+				1001,
+				templates).Failure);
+		Assert.Equal(
+			ApExtractFailure.CannotAct,
+			ApExtractService.CreateMutationPlan(
+				CreatePlayer(CreateItem(1001, TargetWingItemId), CreateItem(2001, ToolItemId)),
 				2001,
 				1001,
 				templates).Failure);
@@ -155,6 +163,20 @@ public sealed class ApExtractServiceTests
 				canApExtractMask,
 				30,
 				"RING",
+				"ABYSS",
+				"RARE",
+				"PC_ALL",
+				1,
+				0,
+				1,
+				RequiredAbyssPoints: 4900),
+			new ItemTemplateSummary(
+				TargetWingItemId,
+				"Abyss Wings",
+				0,
+				canApExtractMask,
+				30,
+				"WING",
 				"ABYSS",
 				"RARE",
 				"PC_ALL",

@@ -99,7 +99,9 @@ public static class ApExtractService
 			return "ARMOR";
 		if (AccessoryTargets.Contains(targetTemplate.ItemGroup))
 			return "ACCESSORY";
-		return targetTemplate.IsWing ? "WING" : null;
+		// Java parity: ApExtractAction.canAct switches on ItemGroup and falls through
+		// to default for WING, so even an action target of WING cannot currently act.
+		return null;
 	}
 
 	private static InventoryItem? FindCubeItem(IReadOnlyList<InventoryItem> inventoryItems, int objectId)
