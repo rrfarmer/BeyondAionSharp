@@ -968,6 +968,28 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleUseItemAsync_DecomposePersistenceFailureDoesNotMutateRuntimeInventory()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository { SaveDecomposeActionMutationResult = false };
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(
+			repository,
+			includeThreadPoolManager: true,
+			idFactory: new IDFactory([5001]));
+		var player = CreatePlayer(itemId: 100);
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
+
+		await WaitUntilAsync(() => repository.SaveDecomposeActionMutationCalls == 1, TimeSpan.FromSeconds(5));
+
+		Assert.Equal(0, player.UsingItemObjectId);
+		Assert.Contains(player.InventoryItems, item => item.ObjectId == 5001 && item.ItemId == 100 && item.Count == 2);
+		Assert.DoesNotContain(player.InventoryItems, item => item.ItemId == 200);
+		var packet = Assert.Single(fixture.SentPackets);
+		AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 100, expectedTime: 3000, expectedEnd: 0);
+	}
+
+	[Fact]
 	public async Task HandleUseItemAsync_DecomposeAddsRestrictedRewardWithCleanupSealFlag()
 	{
 		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(
