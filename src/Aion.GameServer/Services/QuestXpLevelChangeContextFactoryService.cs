@@ -8,6 +8,19 @@ public static class QuestXpLevelChangeContextFactoryService
 {
 	public static QuestXpLevelChangeCompositionContext CreateContext(
 		Player? player,
+		QuestXpLevelChangeContextFactoryInput input,
+		StaticData? staticData)
+	{
+		// Java parity breadcrumb: PlayerController.onLevelChange calls updateNearbyQuests against
+		// QuestsData-backed templates; this bridge keeps the dependency non-live and explicit.
+		var resolvedInput = input.NearbyQuestTemplates == null && staticData?.NearbyQuestTemplates != null
+			? input with { NearbyQuestTemplates = staticData.NearbyQuestTemplates }
+			: input;
+		return CreateContext(player, resolvedInput);
+	}
+
+	public static QuestXpLevelChangeCompositionContext CreateContext(
+		Player? player,
 		QuestXpLevelChangeContextFactoryInput input)
 	{
 		// Java parity breadcrumb: PlayerController.onLevelChange builds these side effects in this order after upgradePlayer.

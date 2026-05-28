@@ -97,6 +97,44 @@ public sealed class QuestXpLevelChangeContextFactoryServiceTests
 		Assert.Equal(StarterKitLevelChangePlanStatus.MissingPlayer, context.StarterKitLevelChangePlan!.Status);
 	}
 
+	[Fact]
+	public async Task CreateContext_WithStaticDataUsesNearbyQuestTemplatesWithoutLiveDispatch()
+	{
+		using var temp = TempDirectory.Create();
+		var cacheFile = Path.Combine(temp.Path, "static_data.xml");
+		await File.WriteAllTextAsync(
+			cacheFile,
+			"""
+			<static_data>
+				<events>
+					<event id="1">
+						<quest id="9999" />
+					</event>
+				</events>
+				<quests>
+					<quest id="3001" minlevel_permitted="10" race_permitted="ELYOS" />
+				</quests>
+			</static_data>
+			""");
+		var staticData = await StaticData.LoadFromCacheAsync(cacheFile, Array.Empty<string>());
+		var player = CreatePlayer(level: 12);
+		var worldInstance = new WorldMapInstanceRuntimeState(instanceId: 1);
+		worldInstance.RegisterQuestStartIds([3001, 9999]);
+		var input = new QuestXpLevelChangeContextFactoryInput(
+			FromLevel: 11,
+			ToLevel: 12,
+			WorldInstance: worldInstance);
+
+		var context = QuestXpLevelChangeContextFactoryService.CreateContext(player, input, staticData);
+
+		Assert.Equal(NearbyQuestRefreshPlanStatus.Ready, context.NearbyQuestRefreshPlan!.Status);
+		Assert.True(context.NearbyQuestRefreshPlan.WouldSendPacket);
+		var marker = Assert.Single(context.NearbyQuestRefreshPlan.Markers);
+		Assert.Equal(3001, marker.QuestId);
+		Assert.True(context.NearbyQuestRefreshPlan.RejectedQuestIds.TryGetValue(9999, out var eventQuestFailure));
+		Assert.Equal(NearbyQuestStartConditionFailure.MissingTemplate, eventQuestFailure);
+	}
+
 	private static Player CreatePlayer(int level)
 	{
 		return new Player
@@ -128,5 +166,28 @@ public sealed class QuestXpLevelChangeContextFactoryServiceTests
 	private static ItemTemplateSummary CreateTemplate(int itemId)
 	{
 		return new ItemTemplateSummary(itemId, $"Item {itemId}", 0, 0, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 100, 0, 0);
+	}
+
+	private sealed class TempDirectory : IDisposable
+	{
+		private TempDirectory(string path)
+		{
+			Path = path;
+		}
+
+		public string Path { get; }
+
+		public static TempDirectory Create()
+		{
+			var path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "aion-quest-xp-static-data-" + Guid.NewGuid().ToString("N"));
+			Directory.CreateDirectory(path);
+			return new TempDirectory(path);
+		}
+
+		public void Dispose()
+		{
+			if (Directory.Exists(Path))
+				Directory.Delete(Path, recursive: true);
+		}
 	}
 }
