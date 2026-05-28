@@ -355,6 +355,8 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public bool SaveItemChargeMutationResult { get; init; } = true;
 
+	public bool SaveItemChargeAllMutationResult { get; init; } = true;
+
 	public int SaveItemChargeMutationCalls { get; private set; }
 
 	public int SaveItemChargeAllMutationCalls { get; private set; }
@@ -739,7 +741,7 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		SaveItemChargeAllMutationCalls++;
 		ChargeAllChargedItems = chargedItems;
 		ChargeAllPaymentAbyssRank = abyssRank;
-		return Task.FromResult(true);
+		return Task.FromResult(SaveItemChargeAllMutationResult);
 	}
 
 	public Task<bool> SaveItemChargeBurnMutationAsync(
