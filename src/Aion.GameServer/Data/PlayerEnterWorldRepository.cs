@@ -325,6 +325,8 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public int SaveDecomposeActionMutationCalls { get; private set; }
 
+	public int SaveAssemblyItemActionMutationCalls { get; private set; }
+
 	public PlayerAbyssRank? ApExtractAbyssRank { get; private set; }
 
 	public PlayerAbyssRank? ItemPurificationAbyssRank { get; private set; }
@@ -560,6 +562,7 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		IReadOnlyList<InventoryItem> addedRewardItems,
 		CancellationToken cancellationToken = default)
 	{
+		SaveAssemblyItemActionMutationCalls++;
 		return Task.FromResult(true);
 	}
 

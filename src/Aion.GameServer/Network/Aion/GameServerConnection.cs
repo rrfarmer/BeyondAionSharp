@@ -4088,14 +4088,16 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
-		var validation = AssemblyItemService.CanAct(player, sourceTemplate, staticData.AssemblyItems);
-		if (!validation.Succeeded || validation.AssemblyItem == null)
+		var assemblyItem = sourceTemplate.AssemblyItemId == 0
+			? null
+			: staticData.AssemblyItems.GetAssemblyItem(sourceTemplate.AssemblyItemId);
+		if (assemblyItem == null)
 		{
 			await BroadcastItemUsageAnimationAsync(player, new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 2, 0));
 			return;
 		}
 
-		var rewardTemplate = staticData.ItemTemplates.GetItemTemplate(validation.AssemblyItem.ItemId);
+		var rewardTemplate = staticData.ItemTemplates.GetItemTemplate(assemblyItem.ItemId);
 		if (rewardTemplate == null)
 		{
 			await BroadcastItemUsageAnimationAsync(player, new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 2, 0));
@@ -4105,13 +4107,35 @@ public sealed class GameServerConnection : BaseClientConnection
 		var mutationPlan = AssemblyItemService.CreateMutationPlan(
 			player,
 			inventoryItems,
-			validation.AssemblyItem,
+			assemblyItem,
 			rewardTemplate,
 			staticData.ItemTemplates,
 			() => _idFactory?.NextId() ?? 0);
 		if (!mutationPlan.Succeeded)
 		{
-			await BroadcastItemUsageAnimationAsync(player, new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId, 0, 2, 0));
+			// Java parity: AssemblyItemAction.act returns silently after already-decreased
+			// parts when a later part disappears before the delayed completion runs.
+			if (mutationPlan.UpdatedPartItems.Count == 0 && mutationPlan.DeletedPartObjectIds.Count == 0)
+				return;
+
+			var partialSaved = _playerEnterWorldService == null
+				|| await _playerEnterWorldService.SaveAssemblyItemActionMutationAsync(
+					player,
+					mutationPlan.UpdatedPartItems,
+					mutationPlan.DeletedPartObjectIds,
+					Array.Empty<InventoryItem>(),
+					Array.Empty<InventoryItem>(),
+					cancellationToken);
+			if (!partialSaved)
+				return;
+
+			await SendAssemblyConsumedPartPacketsAsync(
+				inventoryItems,
+				mutationPlan,
+				staticData.ItemTemplates,
+				staticData.ItemRestrictionCleanups);
+			ApplyAssemblyInventoryMutation(inventoryItems, mutationPlan);
+			player.InventoryItems = inventoryItems.ToArray();
 			return;
 		}
 

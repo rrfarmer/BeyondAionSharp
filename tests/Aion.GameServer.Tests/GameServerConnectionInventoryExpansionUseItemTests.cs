@@ -1104,6 +1104,36 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleUseItemAsync_AssemblyKeepsEarlierPartConsumeWhenLaterPartDisappearsBeforeCompletion()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(
+			repository,
+			includeThreadPoolManager: true,
+			idFactory: new IDFactory([5001, 5100, 5101]));
+		var player = CreateAssemblyPlayer();
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
+		player.InventoryItems = player.InventoryItems.Where(item => item.ObjectId != 5101).ToArray();
+
+		await WaitUntilAsync(() => repository.SaveAssemblyItemActionMutationCalls == 1, TimeSpan.FromSeconds(5));
+
+		Assert.DoesNotContain(player.InventoryItems, item => item.ObjectId == 5101);
+		Assert.Contains(player.InventoryItems, item => item.ObjectId == 5100 && item.Count == 1);
+		Assert.DoesNotContain(player.InventoryItems, item => item.ItemId == 188053996);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 103, expectedTime: 1000, expectedEnd: 0),
+			packet => AssertInventoryUpdatePayloadWithCleanupSealFlag(
+				Assert.IsType<SmInventoryUpdateItem>(packet),
+				expectedObjectId: 5100,
+				expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse,
+				expectedCleanupSealFlag: 3,
+				expectedItemMask: 0));
+	}
+
+	[Fact]
 	public async Task HandleUseItemAsync_ExpExtractAddsRestrictedRewardWithCleanupSealFlag()
 	{
 		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(

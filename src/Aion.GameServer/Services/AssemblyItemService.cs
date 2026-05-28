@@ -46,7 +46,10 @@ public static class AssemblyItemService
 		{
 			var partItem = GetFirstCubeItemByItemId(workingItems, partItemId);
 			if (partItem == null)
-				return AssemblyItemMutationPlan.Fail(AssemblyItemFailure.MissingPart);
+				return AssemblyItemMutationPlan.Fail(
+					AssemblyItemFailure.MissingPart,
+					updatedPartsByObjectId.Values.ToArray(),
+					deletedPartObjectIds);
 
 			if (partItem.Count > 1)
 			{
@@ -180,13 +183,16 @@ public sealed record AssemblyItemMutationPlan(
 			rewardInventoryFull);
 	}
 
-	public static AssemblyItemMutationPlan Fail(AssemblyItemFailure failure)
+	public static AssemblyItemMutationPlan Fail(
+		AssemblyItemFailure failure,
+		IReadOnlyList<InventoryItem>? updatedPartItems = null,
+		IReadOnlyList<int>? deletedPartObjectIds = null)
 	{
 		return new AssemblyItemMutationPlan(
 			false,
 			failure,
-			Array.Empty<InventoryItem>(),
-			Array.Empty<int>(),
+			updatedPartItems ?? Array.Empty<InventoryItem>(),
+			deletedPartObjectIds ?? Array.Empty<int>(),
 			Array.Empty<InventoryItem>(),
 			Array.Empty<InventoryItem>(),
 			0,
