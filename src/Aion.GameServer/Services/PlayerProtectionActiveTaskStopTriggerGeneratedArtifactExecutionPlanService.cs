@@ -46,6 +46,10 @@ public sealed record PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecu
 	int SerializerFieldContractRowCount,
 	bool HasSerializerTimestampNonParityPolicy,
 	bool HasSerializerNestedPayloadPlaceholders,
+	bool HasSerializerActionBranchNameTraceContract,
+	bool HasSerializerEmotionPayloadContract,
+	bool HasSerializerActionPayloadContract,
+	bool HasSerializerCallerOriginPayloadContract,
 	bool NeedsJavaSerializerImplementation,
 	bool NeedsJavaTooling,
 	bool NeedsJavaArtifacts,
@@ -171,6 +175,10 @@ public static class PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecut
 			SerializerFieldContractRowCount: serializerFieldContract?.Rows.Count ?? 0,
 			HasSerializerTimestampNonParityPolicy: serializerFieldContract?.HasTimestampNonParityPolicy == true,
 			HasSerializerNestedPayloadPlaceholders: serializerFieldContract?.HasNestedPayloadPlaceholders == true,
+			HasSerializerActionBranchNameTraceContract: serializerFieldContract?.HasActionBranchNameTraceContract == true,
+			HasSerializerEmotionPayloadContract: serializerFieldContract?.HasEmotionPayloadContract == true,
+			HasSerializerActionPayloadContract: serializerFieldContract?.HasActionPayloadContract == true,
+			HasSerializerCallerOriginPayloadContract: serializerFieldContract?.HasCallerOriginPayloadContract == true,
 			NeedsJavaSerializerImplementation: traceSchema.RequiresTraceSerializer
 				|| serializerFieldContract?.RequiresJavaSerializerImplementation == true,
 			NeedsJavaTooling: rowArray.Any(row => row.Status == PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionStatus.BlockedMissingTooling),
@@ -192,7 +200,7 @@ public static class PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecut
 			return $"schemaReady={traceSchema.ReadyForRuntimeComparison}; requiresSerializer={traceSchema.RequiresTraceSerializer}; serializerFieldContract=False";
 		}
 
-		return $"schemaReady={traceSchema.ReadyForRuntimeComparison}; requiresSerializer={traceSchema.RequiresTraceSerializer}; serializerFieldContract=True; contractRows={serializerFieldContract.Rows.Count}; timestampPolicy={serializerFieldContract.HasTimestampNonParityPolicy}; nestedPayloadPlaceholders={serializerFieldContract.HasNestedPayloadPlaceholders}; requiresJavaSerializer={serializerFieldContract.RequiresJavaSerializerImplementation}";
+		return $"schemaReady={traceSchema.ReadyForRuntimeComparison}; requiresSerializer={traceSchema.RequiresTraceSerializer}; serializerFieldContract=True; contractRows={serializerFieldContract.Rows.Count}; timestampPolicy={serializerFieldContract.HasTimestampNonParityPolicy}; nestedPayloadPlaceholders={serializerFieldContract.HasNestedPayloadPlaceholders}; actionBranchNameContract={serializerFieldContract.HasActionBranchNameTraceContract}; emotionPayloadContract={serializerFieldContract.HasEmotionPayloadContract}; actionPayloadContract={serializerFieldContract.HasActionPayloadContract}; callerOriginPayloadContract={serializerFieldContract.HasCallerOriginPayloadContract}; requiresJavaSerializer={serializerFieldContract.RequiresJavaSerializerImplementation}";
 	}
 
 	private static string CreateSerializerNotes(
