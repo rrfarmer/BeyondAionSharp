@@ -307,6 +307,28 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleChargeItemAsync_SelectedEquippedItemCanBeChargedLikeJavaInventoryLookup()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(new EmptyPlayerEnterWorldRepository());
+		var player = CreateChargePaymentPlayer(isEquipped: true);
+
+		await InvokeHandleChargeItemAsync(fixture.Connection, player, CreateChargeItem(itemObjectId: 7001, chargeLevel: 1));
+
+		Assert.Equal(500, player.AbyssRank.Ap);
+		var chargedItem = Assert.Single(player.InventoryItems, item => item.ObjectId == 7001);
+		Assert.True(chargedItem.IsEquipped);
+		Assert.Equal(ItemChargeService.Level1ChargePoints, chargedItem.Charge);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1300965, "500"),
+			packet => Assert.IsType<SmAbyssRank>(packet),
+			packet => AssertChargeInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 7001),
+			packet => Assert.IsType<SmSystemMessage>(packet),
+			packet => Assert.IsType<SmStatsInfo>(packet),
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1401340));
+	}
+
+	[Fact]
 	public async Task HandleChargeItemAsync_ApPaymentHonorsConfiguredAbyssPointCapClamp()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
@@ -2557,7 +2579,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		};
 	}
 
-	private static Player CreateChargePaymentPlayer()
+	private static Player CreateChargePaymentPlayer(bool isEquipped = false)
 	{
 		return new Player
 		{
@@ -2575,6 +2597,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 					ItemId = 100000400,
 					Count = 1,
 					Location = 0,
+					IsEquipped = isEquipped,
 				},
 			],
 		};

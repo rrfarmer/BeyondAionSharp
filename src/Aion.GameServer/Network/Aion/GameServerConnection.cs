@@ -1953,7 +1953,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		var inventoryItems = player.InventoryItems.ToList();
 		var completedChargeWays = new HashSet<int>();
 		foreach (var selectedItem in inventoryItems
-			.Where(item => selectedObjectIds.Contains(item.ObjectId) && item.Location == CubeStorageId && !item.IsEquipped)
+			.Where(item => selectedObjectIds.Contains(item.ObjectId) && item.Location == CubeStorageId)
 			.ToArray())
 		{
 			var currentItem = inventoryItems.FirstOrDefault(item => item.ObjectId == selectedItem.ObjectId);
