@@ -167,6 +167,38 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 	}
 
 	[Fact]
+	public async Task SaveItemChargeAllMutation_RollsBackPriorChargeUpdatesWhenLaterItemMissingAgainstJavaSchema_WhenEnabled()
+	{
+		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
+			return;
+
+		// Java source breadcrumbs: ItemChargeService.chargeItems, ChargeInfo.updateChargePoints,
+		// InventoryDAO.UPDATE_QUERY charge column. C# repository keeps this charge-all write set atomic.
+		InitializeDatabaseFactory();
+		await InitializeSchemaAsync();
+		await SeedPlayerAsync();
+		await SeedInventoryItemAsync(9301, itemId: 100000401, count: 1, charge: 0);
+
+		var repository = new MySqlPlayerEnterWorldRepository(
+			new GameServerRuntimeContext(),
+			NullLogger<MySqlPlayerEnterWorldRepository>.Instance);
+
+		var saved = await repository.SaveItemChargeAllMutationAsync(
+			PlayerObjectId,
+			chargedItems:
+			[
+				new InventoryItem { ObjectId = 9301, Charge = ItemChargeService.Level1ChargePoints },
+				new InventoryItem { ObjectId = 9399, Charge = ItemChargeService.Level1ChargePoints },
+			],
+			kinahItem: null,
+			abyssRank: null);
+
+		Assert.False(saved);
+		Assert.Equal(0, await ExecuteScalarLongAsync("SELECT charge FROM inventory WHERE item_unique_id = 9301"));
+		Assert.Equal(0, await ExecuteScalarLongAsync("SELECT COUNT(*) FROM inventory WHERE item_unique_id = 9399"));
+	}
+
+	[Fact]
 	public async Task LoadPlayerQuests_HydratesRewardGroupAndRepeatTimesAgainstJavaSchema_WhenEnabled()
 	{
 		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
@@ -357,14 +389,15 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 		int objectId,
 		int itemId,
 		long count,
-		int enchant = 0)
+		int enchant = 0,
+		int charge = 0)
 	{
 		return ExecuteNonQueryAsync(
 			$"""
 			INSERT INTO inventory (
-				item_unique_id, item_id, item_count, item_owner, item_location, enchant
+				item_unique_id, item_id, item_count, item_owner, item_location, enchant, charge
 			)
-			VALUES ({objectId}, {itemId}, {count}, {PlayerObjectId}, 0, {enchant})
+			VALUES ({objectId}, {itemId}, {count}, {PlayerObjectId}, 0, {enchant}, {charge})
 			""");
 	}
 
