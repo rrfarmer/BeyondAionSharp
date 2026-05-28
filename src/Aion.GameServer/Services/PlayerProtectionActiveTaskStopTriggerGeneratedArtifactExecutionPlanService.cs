@@ -41,6 +41,11 @@ public sealed record PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecu
 	bool HasCSharpEmitterGate,
 	bool HasKeyProjectionGate,
 	bool HasComparisonExecutionGate,
+	bool HasSerializerFieldContract,
+	int SerializerFieldContractRowCount,
+	bool HasSerializerTimestampNonParityPolicy,
+	bool HasSerializerNestedPayloadPlaceholders,
+	bool NeedsJavaSerializerImplementation,
 	bool NeedsJavaTooling,
 	bool NeedsJavaArtifacts,
 	bool NeedsCSharpEmitter,
@@ -59,7 +64,8 @@ public static class PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecut
 	public static PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionPlanReport Create(
 		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonDesignReport runtimeDesign,
 		PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaReport traceSchema,
-		PlayerProtectionActiveTaskStopTriggerCSharpTraceEmitterDesignReport csharpEmitterDesign)
+		PlayerProtectionActiveTaskStopTriggerCSharpTraceEmitterDesignReport csharpEmitterDesign,
+		PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldContractReport? serializerFieldContract = null)
 	{
 		var rows = new List<PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionPlanRow>();
 
@@ -92,8 +98,8 @@ public static class PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecut
 			PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionStatus.BlockedMissingJavaArtifact,
 			"future schema-v1 Java artifact writer",
 			"PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidatorService",
-			$"schemaReady={traceSchema.ReadyForRuntimeComparison}; requiresSerializer={traceSchema.RequiresTraceSerializer}",
-			"Serializer must preserve event order, enum names, invariant numeric formatting, nulls, and timestamp non-parity semantics.");
+			CreateSerializerEvidence(traceSchema, serializerFieldContract),
+			CreateSerializerNotes(serializerFieldContract));
 
 		Add(rows,
 			PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionGate.JavaArtifactGeneration,
@@ -152,6 +158,12 @@ public static class PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecut
 			HasCSharpEmitterGate: rowArray.Any(row => row.Gate == PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionGate.CSharpEmitterImplementation),
 			HasKeyProjectionGate: rowArray.Any(row => row.Gate == PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionGate.KeyProjection),
 			HasComparisonExecutionGate: rowArray.Any(row => row.Gate == PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionGate.RuntimeComparisonExecution),
+			HasSerializerFieldContract: serializerFieldContract != null,
+			SerializerFieldContractRowCount: serializerFieldContract?.Rows.Count ?? 0,
+			HasSerializerTimestampNonParityPolicy: serializerFieldContract?.HasTimestampNonParityPolicy == true,
+			HasSerializerNestedPayloadPlaceholders: serializerFieldContract?.HasNestedPayloadPlaceholders == true,
+			NeedsJavaSerializerImplementation: traceSchema.RequiresTraceSerializer
+				|| serializerFieldContract?.RequiresJavaSerializerImplementation == true,
 			NeedsJavaTooling: rowArray.Any(row => row.Status == PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionStatus.BlockedMissingTooling),
 			NeedsJavaArtifacts: rowArray.Any(row => row.Status == PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionStatus.BlockedMissingJavaArtifact),
 			NeedsCSharpEmitter: rowArray.Any(row => row.Status == PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionStatus.BlockedMissingCSharpImplementation),
@@ -160,6 +172,29 @@ public static class PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecut
 			ReadyForRuntimeComparison: false,
 			"Protection stop-trigger generated artifact execution plan",
 			IsLive: false);
+	}
+
+	private static string CreateSerializerEvidence(
+		PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaReport traceSchema,
+		PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldContractReport? serializerFieldContract)
+	{
+		if (serializerFieldContract == null)
+		{
+			return $"schemaReady={traceSchema.ReadyForRuntimeComparison}; requiresSerializer={traceSchema.RequiresTraceSerializer}; serializerFieldContract=False";
+		}
+
+		return $"schemaReady={traceSchema.ReadyForRuntimeComparison}; requiresSerializer={traceSchema.RequiresTraceSerializer}; serializerFieldContract=True; contractRows={serializerFieldContract.Rows.Count}; timestampPolicy={serializerFieldContract.HasTimestampNonParityPolicy}; nestedPayloadPlaceholders={serializerFieldContract.HasNestedPayloadPlaceholders}; requiresJavaSerializer={serializerFieldContract.RequiresJavaSerializerImplementation}";
+	}
+
+	private static string CreateSerializerNotes(
+		PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldContractReport? serializerFieldContract)
+	{
+		if (serializerFieldContract == null)
+		{
+			return "Serializer must preserve event order, enum names, invariant numeric formatting, nulls, and timestamp non-parity semantics.";
+		}
+
+		return "Serializer field contract is present as non-live metadata; Java implementation still must write schema-v1 top-level/runtime/trace/player fields, preserve timestamp non-parity semantics, and fill blocked nested payloads before generated artifacts can prove parity.";
 	}
 
 	private static void Add(

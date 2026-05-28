@@ -10,6 +10,11 @@ public sealed class PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecut
 		var report = CreateReport();
 
 		Assert.False(report.IsLive);
+		Assert.False(report.HasSerializerFieldContract);
+		Assert.Equal(0, report.SerializerFieldContractRowCount);
+		Assert.False(report.HasSerializerTimestampNonParityPolicy);
+		Assert.False(report.HasSerializerNestedPayloadPlaceholders);
+		Assert.True(report.NeedsJavaSerializerImplementation);
 		Assert.True(report.HasJavaToolingGate);
 		Assert.True(report.HasJavaArtifactGenerationGate);
 		Assert.True(report.HasCSharpEmitterGate);
@@ -57,6 +62,27 @@ public sealed class PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecut
 	}
 
 	[Fact]
+	public void Create_WithSerializerFieldContractSurfacesTimestampAndNestedPayloadBlockers()
+	{
+		var report = CreateReport(withSerializerFieldContract: true);
+
+		Assert.True(report.HasSerializerFieldContract);
+		Assert.True(report.SerializerFieldContractRowCount > 0);
+		Assert.True(report.HasSerializerTimestampNonParityPolicy);
+		Assert.True(report.HasSerializerNestedPayloadPlaceholders);
+		Assert.True(report.NeedsJavaSerializerImplementation);
+		Assert.True(report.NeedsJavaArtifacts);
+		Assert.Contains(report.Rows, row =>
+			row.Gate == PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionGate.JavaTraceSerializer
+			&& row.Status == PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionStatus.BlockedMissingJavaArtifact
+			&& row.Evidence.Contains("serializerFieldContract=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("timestampPolicy=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("nestedPayloadPlaceholders=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("requiresJavaSerializer=True", StringComparison.Ordinal)
+			&& row.Notes.Contains("blocked nested payloads", StringComparison.Ordinal));
+	}
+
+	[Fact]
 	public void Create_DocumentsCSharpEmitterTraceCaptureAndKeyProjectionGates()
 	{
 		var report = CreateReport();
@@ -76,16 +102,21 @@ public sealed class PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecut
 			&& row.CSharpTarget.Contains("KeyProjection", StringComparison.Ordinal));
 	}
 
-	private static PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionPlanReport CreateReport()
+	private static PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionPlanReport CreateReport(
+		bool withSerializerFieldContract = false)
 	{
 		var runtimeDesign = CreateRuntimeDesign();
 		var traceSchema = PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaReportService.Create(runtimeDesign);
 		var emitterDesign = PlayerProtectionActiveTaskStopTriggerCSharpTraceEmitterDesignReportService.Create(runtimeDesign, traceSchema);
+		var serializerFieldContract = withSerializerFieldContract
+			? PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldContractService.Create(traceSchema)
+			: null;
 
 		return PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionPlanService.Create(
 			runtimeDesign,
 			traceSchema,
-			emitterDesign);
+			emitterDesign,
+			serializerFieldContract);
 	}
 
 	private static PlayerProtectionActiveTaskStopTriggerRuntimeComparisonDesignReport CreateRuntimeDesign() =>
