@@ -63,6 +63,60 @@ public sealed class NearbyQuestRefreshInputAdapterServiceTests
 	}
 
 	[Fact]
+	public async Task CreatePlanFromMapRegion_UsesParentQuestIdsAndCapturesPositionMetadataWithoutLiveDispatch()
+	{
+		using var temp = TempDirectory.Create();
+		var cacheFile = Path.Combine(temp.Path, "static_data.xml");
+		await File.WriteAllTextAsync(
+			cacheFile,
+			"""
+			<static_data>
+				<quests>
+					<quest id="3001" minlevel_permitted="10" race_permitted="ELYOS" />
+				</quests>
+			</static_data>
+			""");
+		var staticData = await StaticData.LoadFromCacheAsync(cacheFile, Array.Empty<string>());
+		var worldInstance = new WorldMapInstanceRuntimeState(instanceId: 7);
+		worldInstance.RegisterQuestStartIds([3001]);
+		var player = CreatePlayer();
+		player.Position = new WorldPosition(210010000, 100, 200, 300, 45, InstanceId: 7);
+		var mapRegion = new NearbyQuestMapRegionSnapshot(player.Position, worldInstance);
+
+		var result = NearbyQuestRefreshInputAdapterService.CreatePlanFromMapRegion(player, mapRegion, staticData);
+
+		Assert.Equal(NearbyQuestRefreshInputAdapterStatus.Created, result.Status);
+		Assert.True(result.Applied);
+		Assert.Equal(NearbyQuestRefreshPlanStatus.Ready, result.Plan.Status);
+		Assert.True(result.Plan.WouldSendPacket);
+		Assert.Equal(player.Position, result.PlayerPosition);
+		Assert.Equal(player.Position, result.MapRegionPosition);
+		Assert.Equal(7, result.MapRegionParentInstanceId);
+		var marker = Assert.Single(result.Plan.Markers);
+		Assert.Equal(3001, marker.QuestId);
+	}
+
+	[Fact]
+	public async Task CreatePlanFromMapRegion_GuardsMissingMapRegionBeforePlanning()
+	{
+		using var temp = TempDirectory.Create();
+		var cacheFile = Path.Combine(temp.Path, "static_data.xml");
+		await File.WriteAllTextAsync(cacheFile, "<static_data><quests /></static_data>");
+		var staticData = await StaticData.LoadFromCacheAsync(cacheFile, Array.Empty<string>());
+		var player = CreatePlayer();
+		player.Position = new WorldPosition(210010000, 1, 2, 3, 4, InstanceId: 1);
+
+		var result = NearbyQuestRefreshInputAdapterService.CreatePlanFromMapRegion(player, mapRegion: null, staticData);
+
+		Assert.Equal(NearbyQuestRefreshInputAdapterStatus.MissingMapRegion, result.Status);
+		Assert.False(result.Applied);
+		Assert.Equal("mapRegion", result.MissingDependency);
+		Assert.Equal(player.Position, result.PlayerPosition);
+		Assert.False(result.Plan.WouldSendPacket);
+		Assert.Empty(result.Plan.Markers);
+	}
+
+	[Fact]
 	public void CreatePlan_GuardsMissingPlayerAndStaticData()
 	{
 		var noPlayer = NearbyQuestRefreshInputAdapterService.CreatePlan(
