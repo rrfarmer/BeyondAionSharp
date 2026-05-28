@@ -174,6 +174,7 @@ public static class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValida
 			}
 
 			ValidatePlayerSnapshot(trace, issues, path);
+			ValidateSchedulerPayload(trace, issues, path);
 
 			index++;
 		}
@@ -195,6 +196,24 @@ public static class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValida
 		RequireNested(player, issues, "protectionActiveAfter", $"{tracePath}.player");
 		RequireNested(player, issues, "visualStateBefore", $"{tracePath}.player");
 		RequireNested(player, issues, "visualStateAfter", $"{tracePath}.player");
+	}
+
+	private static void ValidateSchedulerPayload(
+		JsonElement trace,
+		ICollection<PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationIssue> issues,
+		string tracePath)
+	{
+		if (!trace.TryGetProperty("scheduler", out var scheduler) || scheduler.ValueKind != JsonValueKind.Object)
+			return;
+
+		RequireNested(scheduler, issues, "delayMillis", $"{tracePath}.scheduler");
+		RequireNested(scheduler, issues, "timeUnit", $"{tracePath}.scheduler");
+		RequireNested(scheduler, issues, "runnableWrapperApplied", $"{tracePath}.scheduler");
+		RequireNested(scheduler, issues, "callbackMethod", $"{tracePath}.scheduler");
+		RequireNested(scheduler, issues, "oldFuturePresent", $"{tracePath}.scheduler");
+		RequireNested(scheduler, issues, "oldFutureCancelArgument", $"{tracePath}.scheduler");
+		RequireNested(scheduler, issues, "oldFutureCancelResult", $"{tracePath}.scheduler");
+		RequireNested(scheduler, issues, "newFutureStored", $"{tracePath}.scheduler");
 	}
 
 	private static void Require(

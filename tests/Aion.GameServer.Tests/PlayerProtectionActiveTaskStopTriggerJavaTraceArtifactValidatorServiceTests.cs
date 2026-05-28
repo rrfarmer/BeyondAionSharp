@@ -127,6 +127,26 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValida
 			&& issue.Message.Contains("nested payload", StringComparison.Ordinal));
 	}
 
+	[Fact]
+	public void Validate_RejectsMissingSchedulerNestedPayloadFieldsWhenSchedulerIsPresent()
+	{
+		var json = RepresentativeArtifactJson.Replace(
+			"""
+			        "oldFutureCancelResult": null,
+			""",
+			string.Empty,
+			StringComparison.Ordinal);
+
+		var report = PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidatorService.Validate(json);
+
+		Assert.False(report.IsValidSchemaV1);
+		Assert.Null(report.Metadata);
+		Assert.Contains(report.Issues, issue =>
+			issue.Code == PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationIssueCode.MissingNestedPayloadField
+			&& issue.Path == "$.traces[0].scheduler.oldFutureCancelResult"
+			&& issue.Message.Contains("nested payload", StringComparison.Ordinal));
+	}
+
 	private const string RepresentativeArtifactJson = """
 		{
 		  "schemaVersion": 1,
