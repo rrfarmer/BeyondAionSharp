@@ -4,6 +4,17 @@ namespace Aion.GameServer.Services;
 
 public static class WorldMapRegionLayoutService
 {
+	public static WorldMapRegionLayout CreateLayoutForWorld(
+		int worldId,
+		int worldSize,
+		int regionSize = WorldRegionIdService.DefaultRegionSize)
+	{
+		return CreateLayout(
+			worldSize,
+			WorldRegionKeyProjectionService.GetJavaRegionDimension(worldId),
+			regionSize);
+	}
+
 	public static WorldMapRegionLayout CreateLayout(
 		int worldSize,
 		WorldMapRegionDimension dimension,
@@ -20,6 +31,29 @@ public static class WorldMapRegionLayoutService
 			WorldMapRegionDimension.ThreeDimensional => Create3DLayout(worldSize, regionSize),
 			_ => throw new ArgumentOutOfRangeException(nameof(dimension), dimension, "Unsupported Java world-map region dimension."),
 		};
+	}
+
+	public static WorldMapRegionLayoutResolution ResolvePosition(
+		WorldMapRegionLayout layout,
+		WorldPosition position)
+	{
+		var regionId = layout.Dimension switch
+		{
+			WorldMapRegionDimension.TwoDimensional => WorldRegionIdService.Get2DRegionId(position.X, position.Y, layout.RegionSize),
+			WorldMapRegionDimension.ThreeDimensional => WorldRegionIdService.Get3DRegionId(position.X, position.Y, position.Z, layout.RegionSize),
+			_ => throw new ArgumentOutOfRangeException(nameof(layout), layout.Dimension, "Unsupported Java world-map region dimension."),
+		};
+
+		var exists = layout.NeighbourRegionIds.TryGetValue(regionId, out var neighbourRegionIds);
+		return new WorldMapRegionLayoutResolution(
+			position,
+			layout.Dimension,
+			regionId,
+			exists,
+			neighbourRegionIds ?? Array.Empty<int>(),
+			layout.Dimension == WorldMapRegionDimension.TwoDimensional
+				? "WorldMap2DInstance.getRegion -> regions.get(RegionUtil.get2dRegionId(x, y))"
+				: "WorldMap3DInstance.getRegion -> regions.get(RegionUtil.get3dRegionId(x, y, z))");
 	}
 
 	private static WorldMapRegionLayout Create2DLayout(int worldSize, int regionSize)
@@ -136,3 +170,11 @@ public sealed record WorldMapRegionLayout(
 	int MaxZ,
 	IReadOnlyList<int> RegionIds,
 	IReadOnlyDictionary<int, IReadOnlyList<int>> NeighbourRegionIds);
+
+public sealed record WorldMapRegionLayoutResolution(
+	WorldPosition Position,
+	WorldMapRegionDimension Dimension,
+	int RegionId,
+	bool RegionExists,
+	IReadOnlyList<int> NeighbourRegionIds,
+	string JavaSource);
