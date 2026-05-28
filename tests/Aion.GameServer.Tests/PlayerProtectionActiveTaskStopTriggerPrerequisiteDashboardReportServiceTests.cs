@@ -11,6 +11,10 @@ public sealed class PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardRe
 
 		Assert.False(report.IsLive);
 		Assert.True(report.HasJavaObserverCoverage);
+		Assert.False(report.HasJavaHookDetailEvidence);
+		Assert.Equal(0, report.JavaHookDetailRowCount);
+		Assert.False(report.NeedsProtectionArtifactSerializer);
+		Assert.False(report.NeedsJavaObserverImplementation);
 		Assert.True(report.HasJavaToolingBlocker);
 		Assert.True(report.HasCSharpEmitterCoverage);
 		Assert.True(report.HasRuntimeEvidenceBlocker);
@@ -75,7 +79,42 @@ public sealed class PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardRe
 			&& row.Notes.Contains("verified parity still requires deterministic", StringComparison.Ordinal));
 	}
 
-	private static PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardReport CreateDashboard(bool withKeyProjection)
+	[Fact]
+	public void Create_WithJavaHookDetailAddsSerializerAndObserverBlockerRow()
+	{
+		var report = CreateDashboard(withKeyProjection: true, withJavaHookDetail: true);
+
+		Assert.True(report.HasJavaHookDetailEvidence);
+		Assert.Equal(19, report.JavaHookDetailRowCount);
+		Assert.True(report.NeedsProtectionArtifactSerializer);
+		Assert.True(report.NeedsJavaObserverImplementation);
+		Assert.True(report.NeedsJavaArtifacts);
+		Assert.True(report.NeedsComparisonExecution);
+		Assert.Contains(report.Rows, row =>
+			row.Area == PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardArea.JavaHookDetailCoverage
+			&& row.Status == PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardStatus.BlockedMissingJavaArtifacts
+			&& row.BlocksRuntimeComparison
+			&& row.Evidence.Contains("hookRows=19", StringComparison.Ordinal)
+			&& row.Evidence.Contains("directStopCallers=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("needsSerializer=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("needsJavaObserver=True", StringComparison.Ordinal)
+			&& row.Notes.Contains("schema-v1 artifact serialization", StringComparison.Ordinal));
+		Assert.Equal(
+			[
+				PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardArea.JavaObserverCoverage,
+				PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardArea.JavaHookDetailCoverage,
+				PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardArea.JavaToolingAndArtifacts,
+				PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardArea.CSharpEmitterCoverage,
+				PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardArea.RuntimeEvidence,
+				PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardArea.KeyProjection,
+				PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardArea.RuntimeComparisonReadiness
+			],
+			report.Rows.Select(row => row.Area));
+	}
+
+	private static PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardReport CreateDashboard(
+		bool withKeyProjection,
+		bool withJavaHookDetail = false)
 	{
 		var runtimeDesign = CreateRuntimeDesign();
 		var traceSchema = PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaReportService.Create(runtimeDesign);
@@ -106,7 +145,8 @@ public sealed class PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardRe
 			executionPlan,
 			emitterDesign,
 			readiness,
-			keyProjection);
+			keyProjection,
+			withJavaHookDetail ? PlayerProtectionActiveTaskStopTriggerJavaHookDetailReportService.Create() : null);
 	}
 
 	private static PlayerProtectionActiveTaskStopTriggerRuntimeComparisonDesignReport CreateRuntimeDesign() =>

@@ -3,6 +3,7 @@ namespace Aion.GameServer.Services;
 public enum PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardArea
 {
 	JavaObserverCoverage,
+	JavaHookDetailCoverage,
 	JavaToolingAndArtifacts,
 	CSharpEmitterCoverage,
 	RuntimeEvidence,
@@ -38,6 +39,10 @@ public sealed record PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardR
 	bool HasRuntimeEvidenceBlocker,
 	bool HasKeyProjectionEvidence,
 	bool HasReadinessEvidence,
+	bool HasJavaHookDetailEvidence,
+	int JavaHookDetailRowCount,
+	bool NeedsProtectionArtifactSerializer,
+	bool NeedsJavaObserverImplementation,
 	bool NeedsJavaArtifacts,
 	bool NeedsCSharpEmitter,
 	bool NeedsRuntimeEvidence,
@@ -57,7 +62,8 @@ public static class PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardRe
 		PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionPlanReport generatedArtifactExecutionPlan,
 		PlayerProtectionActiveTaskStopTriggerCSharpTraceEmitterDesignReport csharpTraceEmitterDesign,
 		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessReport readinessReport,
-		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonKeyProjectionReport? keyProjectionReport = null)
+		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonKeyProjectionReport? keyProjectionReport = null,
+		PlayerProtectionActiveTaskStopTriggerJavaHookDetailReport? javaHookDetailReport = null)
 	{
 		var rows = new List<PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardRow>();
 
@@ -71,6 +77,20 @@ public static class PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardRe
 			"PlayerProtectionActiveTaskStopTriggerJavaObserverRunbookDesignReport",
 			$"rows={javaObserverRunbookDesign.Rows.Count}; packetHooks={javaObserverRunbookDesign.HasPacketStopTriggerHooks}; controllerHooks={javaObserverRunbookDesign.HasControllerHooks}; teleportHooks={javaObserverRunbookDesign.HasTeleportHooks}; serializerPlan={javaObserverRunbookDesign.HasSerializerPlan}; requiresJava25Maven={javaObserverRunbookDesign.RequiresJava25Maven}",
 			"Java observer/runbook coverage is planned as non-live metadata; artifact generation remains blocked until Java tooling is available.");
+
+		if (javaHookDetailReport != null)
+		{
+			Add(rows,
+				PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardArea.JavaHookDetailCoverage,
+				javaHookDetailReport.NeedsProtectionArtifactSerializer || javaHookDetailReport.NeedsJavaObserverImplementation
+					? PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardStatus.BlockedMissingJavaArtifacts
+					: PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardStatus.SatisfiedByNonLiveMetadata,
+				javaHookDetailReport.NeedsProtectionArtifactSerializer || javaHookDetailReport.NeedsJavaObserverImplementation || !javaHookDetailReport.ReadyForRuntimeComparison,
+				javaHookDetailReport.JavaSource,
+				"PlayerProtectionActiveTaskStopTriggerJavaHookDetailReport",
+				$"hookRows={javaHookDetailReport.Rows.Count}; directStopCallers={javaHookDetailReport.HasDirectStopPacketCallers}; teleportRunnable={javaHookDetailReport.HasTeleportRunnableFutureHook}; lifecycleHooks={javaHookDetailReport.HasProtectionLifecycleHook}; taskMapHooks={javaHookDetailReport.HasTaskMapHooks}; packetObserver={javaHookDetailReport.HasGenericPacketSerializationObserver}; needsSerializer={javaHookDetailReport.NeedsProtectionArtifactSerializer}; needsJavaObserver={javaHookDetailReport.NeedsJavaObserverImplementation}",
+				"Hook details are source-reviewed metadata only; protection schema-v1 artifact serialization and Java observer wiring remain required before runtime comparison.");
+		}
 
 		Add(rows,
 			PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardArea.JavaToolingAndArtifacts,
@@ -147,10 +167,19 @@ public static class PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardRe
 			HasRuntimeEvidenceBlocker: readinessReport.NeedsRuntimeComparisonEvidence || readinessReport.NeedsCSharpRuntimeTraceOutput,
 			HasKeyProjectionEvidence: keyProjectionReport != null,
 			HasReadinessEvidence: readinessReport.Rows.Count > 0,
-			NeedsJavaArtifacts: generatedArtifactExecutionPlan.NeedsJavaArtifacts || readinessReport.NeedsGeneratedJavaTraceArtifacts,
+			HasJavaHookDetailEvidence: javaHookDetailReport != null,
+			JavaHookDetailRowCount: javaHookDetailReport?.Rows.Count ?? 0,
+			NeedsProtectionArtifactSerializer: javaHookDetailReport?.NeedsProtectionArtifactSerializer == true,
+			NeedsJavaObserverImplementation: javaHookDetailReport?.NeedsJavaObserverImplementation == true,
+			NeedsJavaArtifacts: generatedArtifactExecutionPlan.NeedsJavaArtifacts
+				|| readinessReport.NeedsGeneratedJavaTraceArtifacts
+				|| javaHookDetailReport?.NeedsProtectionArtifactSerializer == true,
 			NeedsCSharpEmitter: generatedArtifactExecutionPlan.NeedsCSharpEmitter || readinessReport.NeedsCSharpTraceEmitter,
 			NeedsRuntimeEvidence: generatedArtifactExecutionPlan.NeedsRuntimeEvidence || readinessReport.NeedsRuntimeComparisonEvidence,
-			NeedsComparisonExecution: generatedArtifactExecutionPlan.NeedsComparisonExecution || readinessReport.NeedsRuntimeComparisonExecution || keyProjectionReport?.NeedsComparisonExecution == true,
+			NeedsComparisonExecution: generatedArtifactExecutionPlan.NeedsComparisonExecution
+				|| readinessReport.NeedsRuntimeComparisonExecution
+				|| keyProjectionReport?.NeedsComparisonExecution == true
+				|| javaHookDetailReport is { ReadyForRuntimeComparison: false },
 			ReadyForRuntimeComparison: false,
 			"Protection stop-trigger prerequisite dashboard",
 			IsLive: false);
