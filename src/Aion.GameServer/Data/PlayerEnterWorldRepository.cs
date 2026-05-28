@@ -353,6 +353,8 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public IReadOnlyList<InventoryItem> ChargeAllChargedItems { get; private set; } = Array.Empty<InventoryItem>();
 
+	public bool SaveItemChargeMutationResult { get; init; } = true;
+
 	public int SaveItemChargeMutationCalls { get; private set; }
 
 	public int SaveItemChargeAllMutationCalls { get; private set; }
@@ -724,7 +726,7 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	{
 		SaveItemChargeMutationCalls++;
 		ChargePaymentAbyssRank = abyssRank;
-		return Task.FromResult(true);
+		return Task.FromResult(SaveItemChargeMutationResult);
 	}
 
 	public Task<bool> SaveItemChargeAllMutationAsync(

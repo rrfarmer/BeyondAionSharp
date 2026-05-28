@@ -373,6 +373,23 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleChargeItemAsync_SaveFailureStopsBeforeInMemoryMutationAndPackets()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository { SaveItemChargeMutationResult = false };
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreateChargePaymentPlayer();
+
+		await InvokeHandleChargeItemAsync(fixture.Connection, player, CreateChargeItem(itemObjectId: 7001, chargeLevel: 1));
+
+		Assert.Equal(1000, player.AbyssRank.Ap);
+		Assert.Equal(1, repository.SaveItemChargeMutationCalls);
+		Assert.Equal(500, repository.ChargePaymentAbyssRank?.Ap);
+		var item = Assert.Single(player.InventoryItems, inventoryItem => inventoryItem.ObjectId == 7001);
+		Assert.Equal(0, item.Charge);
+		Assert.Empty(fixture.SentPackets);
+	}
+
+	[Fact]
 	public async Task HandleChargeItemAsync_KinahPaymentRejectsInsufficientKinahWithoutSideEffects()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
