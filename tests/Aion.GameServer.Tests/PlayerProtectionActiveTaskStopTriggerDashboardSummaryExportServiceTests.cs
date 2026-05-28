@@ -24,6 +24,20 @@ public sealed class PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportS
 		Assert.False(report.HasSerializerEmotionPayloadContract);
 		Assert.False(report.HasSerializerActionPayloadContract);
 		Assert.False(report.HasSerializerCallerOriginPayloadContract);
+		Assert.False(report.HasSerializerImplementationDesign);
+		Assert.Equal(0, report.SerializerImplementationDesignRowCount);
+		Assert.False(report.HasSerializerTopLevelWriterPlan);
+		Assert.False(report.HasSerializerRuntimeFactsWriterPlan);
+		Assert.False(report.HasSerializerTraceRowCoreWriterPlan);
+		Assert.False(report.HasSerializerPlayerSnapshotWriterPlan);
+		Assert.False(report.HasSerializerNestedPayloadWriterPlan);
+		Assert.False(report.HasSerializerTimestampPolicyWriterPlan);
+		Assert.False(report.HasSerializerSourceBreadcrumbWriterPlan);
+		Assert.False(report.HasSerializerArtifactFileWriterPlan);
+		Assert.False(report.HasSerializerActionBranchNameWriterPlan);
+		Assert.False(report.HasSerializerEmotionPayloadWriterPlan);
+		Assert.False(report.HasSerializerActionPayloadWriterPlan);
+		Assert.False(report.HasSerializerCallerOriginPayloadWriterPlan);
 		Assert.True(report.NeedsJavaSerializerImplementation);
 	}
 
@@ -152,12 +166,54 @@ public sealed class PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportS
 			&& row.Notes.Contains("serializer field contract is metadata only", StringComparison.Ordinal));
 	}
 
+	[Fact]
+	public void Create_WithDashboardSerializerImplementationDesignSurfacesWriterPlanBlockers()
+	{
+		var report = PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportService.Create(
+			CreateDashboard(withSerializerFieldContract: true, withSerializerImplementationDesign: true));
+
+		Assert.True(report.HasSerializerImplementationDesign);
+		Assert.True(report.SerializerImplementationDesignRowCount > 0);
+		Assert.True(report.HasSerializerTopLevelWriterPlan);
+		Assert.True(report.HasSerializerRuntimeFactsWriterPlan);
+		Assert.True(report.HasSerializerTraceRowCoreWriterPlan);
+		Assert.True(report.HasSerializerPlayerSnapshotWriterPlan);
+		Assert.True(report.HasSerializerNestedPayloadWriterPlan);
+		Assert.True(report.HasSerializerTimestampPolicyWriterPlan);
+		Assert.True(report.HasSerializerSourceBreadcrumbWriterPlan);
+		Assert.True(report.HasSerializerArtifactFileWriterPlan);
+		Assert.True(report.HasSerializerActionBranchNameWriterPlan);
+		Assert.True(report.HasSerializerEmotionPayloadWriterPlan);
+		Assert.True(report.HasSerializerActionPayloadWriterPlan);
+		Assert.True(report.HasSerializerCallerOriginPayloadWriterPlan);
+		Assert.True(report.NeedsJavaSerializerImplementation);
+		Assert.True(report.HasJavaArtifactBlocker);
+		Assert.Contains("Java serializer implementation", report.Summary, StringComparison.Ordinal);
+		Assert.Contains(report.Blockers, row =>
+			row.Area == PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardArea.JavaToolingAndArtifacts
+			&& row.Evidence.Contains("serializerImplementationDesign=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("topLevelWriter=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("runtimeFactsWriter=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("traceRowCoreWriter=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("playerSnapshotWriter=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("nestedPayloadWriter=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("timestampPolicyWriter=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("sourceBreadcrumbWriter=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("artifactFileWriter=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("actionBranchNameWriter=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("emotionPayloadWriter=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("actionPayloadWriter=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("callerOriginPayloadWriter=True", StringComparison.Ordinal)
+			&& row.Notes.Contains("writer responsibility design are metadata only", StringComparison.Ordinal));
+	}
+
 	private static PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportReport CreateSummaryExport() =>
 		PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportService.Create(CreateDashboard());
 
 	private static PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardReport CreateDashboard(
 		bool withJavaHookDetail = false,
-		bool withSerializerFieldContract = false)
+		bool withSerializerFieldContract = false,
+		bool withSerializerImplementationDesign = false)
 	{
 		var runtimeDesign = CreateRuntimeDesign();
 		var traceSchema = PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaReportService.Create(runtimeDesign);
@@ -165,11 +221,15 @@ public sealed class PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportS
 		var serializerFieldContract = withSerializerFieldContract
 			? PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldContractService.Create(traceSchema)
 			: null;
+		var serializerImplementationDesign = withSerializerImplementationDesign && serializerFieldContract != null
+			? PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerImplementationDesignReportService.Create(serializerFieldContract)
+			: null;
 		var executionPlan = PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionPlanService.Create(
 			runtimeDesign,
 			traceSchema,
 			emitterDesign,
-			serializerFieldContract);
+			serializerFieldContract,
+			serializerImplementationDesign);
 		var observerRunbook = PlayerProtectionActiveTaskStopTriggerJavaObserverRunbookDesignReportService.Create(executionPlan);
 		var artifactReport = CreateShapeValidArtifactDirectoryReportWithMetadata("cm-teleport-animation-done");
 		var csharpTrace = CreateSyntheticCSharpRuntimeTraceReport("cm-teleport-animation-done");
@@ -183,7 +243,9 @@ public sealed class PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportS
 			keyProjection,
 			emitterDesign,
 			executionPlan,
-			observerRunbook);
+			observerRunbook,
+			serializerFieldContract: serializerFieldContract,
+			serializerImplementationDesign: serializerImplementationDesign);
 
 		return PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardReportService.Create(
 			observerRunbook,
@@ -192,7 +254,8 @@ public sealed class PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportS
 			readiness,
 			keyProjection,
 			withJavaHookDetail ? PlayerProtectionActiveTaskStopTriggerJavaHookDetailReportService.Create() : null,
-			serializerFieldContract);
+			serializerFieldContract,
+			serializerImplementationDesign);
 	}
 
 	private static PlayerProtectionActiveTaskStopTriggerRuntimeComparisonDesignReport CreateRuntimeDesign() =>

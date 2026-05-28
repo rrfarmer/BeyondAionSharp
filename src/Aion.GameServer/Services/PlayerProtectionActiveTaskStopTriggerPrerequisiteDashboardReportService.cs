@@ -49,6 +49,20 @@ public sealed record PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardR
 	bool HasSerializerEmotionPayloadContract,
 	bool HasSerializerActionPayloadContract,
 	bool HasSerializerCallerOriginPayloadContract,
+	bool HasSerializerImplementationDesign,
+	int SerializerImplementationDesignRowCount,
+	bool HasSerializerTopLevelWriterPlan,
+	bool HasSerializerRuntimeFactsWriterPlan,
+	bool HasSerializerTraceRowCoreWriterPlan,
+	bool HasSerializerPlayerSnapshotWriterPlan,
+	bool HasSerializerNestedPayloadWriterPlan,
+	bool HasSerializerTimestampPolicyWriterPlan,
+	bool HasSerializerSourceBreadcrumbWriterPlan,
+	bool HasSerializerArtifactFileWriterPlan,
+	bool HasSerializerActionBranchNameWriterPlan,
+	bool HasSerializerEmotionPayloadWriterPlan,
+	bool HasSerializerActionPayloadWriterPlan,
+	bool HasSerializerCallerOriginPayloadWriterPlan,
 	bool NeedsProtectionArtifactSerializer,
 	bool NeedsJavaObserverImplementation,
 	bool NeedsJavaSerializerImplementation,
@@ -73,7 +87,8 @@ public static class PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardRe
 		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessReport readinessReport,
 		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonKeyProjectionReport? keyProjectionReport = null,
 		PlayerProtectionActiveTaskStopTriggerJavaHookDetailReport? javaHookDetailReport = null,
-		PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldContractReport? serializerFieldContract = null)
+		PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldContractReport? serializerFieldContract = null,
+		PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerImplementationDesignReport? serializerImplementationDesign = null)
 	{
 		var rows = new List<PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardRow>();
 
@@ -112,8 +127,8 @@ public static class PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardRe
 			generatedArtifactExecutionPlan.NeedsJavaTooling || generatedArtifactExecutionPlan.NeedsJavaArtifacts,
 			generatedArtifactExecutionPlan.JavaSource,
 			"PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionPlanReport",
-			CreateJavaToolingEvidence(generatedArtifactExecutionPlan, serializerFieldContract),
-			CreateJavaToolingNotes(serializerFieldContract));
+			CreateJavaToolingEvidence(generatedArtifactExecutionPlan, serializerFieldContract, serializerImplementationDesign),
+			CreateJavaToolingNotes(serializerFieldContract, serializerImplementationDesign));
 
 		Add(rows,
 			PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardArea.CSharpEmitterCoverage,
@@ -187,6 +202,20 @@ public static class PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardRe
 			HasSerializerEmotionPayloadContract: serializerFieldContract?.HasEmotionPayloadContract == true,
 			HasSerializerActionPayloadContract: serializerFieldContract?.HasActionPayloadContract == true,
 			HasSerializerCallerOriginPayloadContract: serializerFieldContract?.HasCallerOriginPayloadContract == true,
+			HasSerializerImplementationDesign: serializerImplementationDesign != null,
+			SerializerImplementationDesignRowCount: serializerImplementationDesign?.Rows.Count ?? 0,
+			HasSerializerTopLevelWriterPlan: serializerImplementationDesign?.HasTopLevelWriterPlan == true,
+			HasSerializerRuntimeFactsWriterPlan: serializerImplementationDesign?.HasRuntimeFactsWriterPlan == true,
+			HasSerializerTraceRowCoreWriterPlan: serializerImplementationDesign?.HasTraceRowCoreWriterPlan == true,
+			HasSerializerPlayerSnapshotWriterPlan: serializerImplementationDesign?.HasPlayerSnapshotWriterPlan == true,
+			HasSerializerNestedPayloadWriterPlan: serializerImplementationDesign?.HasNestedPayloadWriterPlan == true,
+			HasSerializerTimestampPolicyWriterPlan: serializerImplementationDesign?.HasTimestampPolicyWriterPlan == true,
+			HasSerializerSourceBreadcrumbWriterPlan: serializerImplementationDesign?.HasSourceBreadcrumbWriterPlan == true,
+			HasSerializerArtifactFileWriterPlan: serializerImplementationDesign?.HasArtifactFileWriterPlan == true,
+			HasSerializerActionBranchNameWriterPlan: serializerImplementationDesign?.HasActionBranchNameWriterPlan == true,
+			HasSerializerEmotionPayloadWriterPlan: serializerImplementationDesign?.HasEmotionPayloadWriterPlan == true,
+			HasSerializerActionPayloadWriterPlan: serializerImplementationDesign?.HasActionPayloadWriterPlan == true,
+			HasSerializerCallerOriginPayloadWriterPlan: serializerImplementationDesign?.HasCallerOriginPayloadWriterPlan == true,
 			NeedsProtectionArtifactSerializer: javaHookDetailReport?.NeedsProtectionArtifactSerializer == true,
 			NeedsJavaObserverImplementation: javaHookDetailReport?.NeedsJavaObserverImplementation == true,
 			NeedsJavaSerializerImplementation: generatedArtifactExecutionPlan.NeedsJavaSerializerImplementation
@@ -208,26 +237,37 @@ public static class PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardRe
 
 	private static string CreateJavaToolingEvidence(
 		PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionPlanReport generatedArtifactExecutionPlan,
-		PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldContractReport? serializerFieldContract)
+		PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldContractReport? serializerFieldContract,
+		PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerImplementationDesignReport? serializerImplementationDesign)
 	{
-		var evidence = $"planRows={generatedArtifactExecutionPlan.Rows.Count}; needsJavaTooling={generatedArtifactExecutionPlan.NeedsJavaTooling}; needsJavaArtifacts={generatedArtifactExecutionPlan.NeedsJavaArtifacts}; ready={generatedArtifactExecutionPlan.ReadyForRuntimeComparison}; serializerFieldContract={serializerFieldContract != null}";
+		var evidence = $"planRows={generatedArtifactExecutionPlan.Rows.Count}; needsJavaTooling={generatedArtifactExecutionPlan.NeedsJavaTooling}; needsJavaArtifacts={generatedArtifactExecutionPlan.NeedsJavaArtifacts}; ready={generatedArtifactExecutionPlan.ReadyForRuntimeComparison}; serializerFieldContract={serializerFieldContract != null}; serializerImplementationDesign={serializerImplementationDesign != null}";
 		if (serializerFieldContract == null)
 		{
 			return evidence;
 		}
 
-		return $"{evidence}; serializerRows={serializerFieldContract.Rows.Count}; timestampPolicy={serializerFieldContract.HasTimestampNonParityPolicy}; nestedPayloadPlaceholders={serializerFieldContract.HasNestedPayloadPlaceholders}; actionBranchNameContract={serializerFieldContract.HasActionBranchNameTraceContract}; emotionPayloadContract={serializerFieldContract.HasEmotionPayloadContract}; actionPayloadContract={serializerFieldContract.HasActionPayloadContract}; callerOriginPayloadContract={serializerFieldContract.HasCallerOriginPayloadContract}; needsJavaSerializer={serializerFieldContract.RequiresJavaSerializerImplementation}";
+		var implementationEvidence = serializerImplementationDesign == null
+			? string.Empty
+			: $"; implementationRows={serializerImplementationDesign.Rows.Count}; topLevelWriter={serializerImplementationDesign.HasTopLevelWriterPlan}; runtimeFactsWriter={serializerImplementationDesign.HasRuntimeFactsWriterPlan}; traceRowCoreWriter={serializerImplementationDesign.HasTraceRowCoreWriterPlan}; playerSnapshotWriter={serializerImplementationDesign.HasPlayerSnapshotWriterPlan}; nestedPayloadWriter={serializerImplementationDesign.HasNestedPayloadWriterPlan}; timestampPolicyWriter={serializerImplementationDesign.HasTimestampPolicyWriterPlan}; sourceBreadcrumbWriter={serializerImplementationDesign.HasSourceBreadcrumbWriterPlan}; artifactFileWriter={serializerImplementationDesign.HasArtifactFileWriterPlan}; actionBranchNameWriter={serializerImplementationDesign.HasActionBranchNameWriterPlan}; emotionPayloadWriter={serializerImplementationDesign.HasEmotionPayloadWriterPlan}; actionPayloadWriter={serializerImplementationDesign.HasActionPayloadWriterPlan}; callerOriginPayloadWriter={serializerImplementationDesign.HasCallerOriginPayloadWriterPlan}";
+
+		return $"{evidence}; serializerRows={serializerFieldContract.Rows.Count}; timestampPolicy={serializerFieldContract.HasTimestampNonParityPolicy}; nestedPayloadPlaceholders={serializerFieldContract.HasNestedPayloadPlaceholders}; actionBranchNameContract={serializerFieldContract.HasActionBranchNameTraceContract}; emotionPayloadContract={serializerFieldContract.HasEmotionPayloadContract}; actionPayloadContract={serializerFieldContract.HasActionPayloadContract}; callerOriginPayloadContract={serializerFieldContract.HasCallerOriginPayloadContract}{implementationEvidence}; needsJavaSerializer={serializerFieldContract.RequiresJavaSerializerImplementation}";
 	}
 
 	private static string CreateJavaToolingNotes(
-		PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldContractReport? serializerFieldContract)
+		PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldContractReport? serializerFieldContract,
+		PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerImplementationDesignReport? serializerImplementationDesign)
 	{
 		if (serializerFieldContract == null)
 		{
 			return "Generated Java schema-v1 artifacts do not exist; dashboard must not advance to runtime comparison.";
 		}
 
-		return "Generated Java schema-v1 artifacts do not exist; serializer field contract is metadata only and still requires Java implementation before runtime comparison.";
+		if (serializerImplementationDesign == null)
+		{
+			return "Generated Java schema-v1 artifacts do not exist; serializer field contract is metadata only and still requires Java implementation before runtime comparison.";
+		}
+
+		return "Generated Java schema-v1 artifacts do not exist; serializer field contract and writer responsibility design are metadata only and still require Java implementation before runtime comparison.";
 	}
 
 	private static void Add(
