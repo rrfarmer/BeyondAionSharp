@@ -20,6 +20,23 @@ public sealed class PlayerProtectionActiveTaskStopTriggerCSharpTraceEmitterDesig
 	}
 
 	[Fact]
+	public void Create_DocumentsArtifactShapeValidationBoundaryForFutureEmitterRows()
+	{
+		var report = PlayerProtectionActiveTaskStopTriggerCSharpTraceEmitterDesignReportService.Create(
+			CreateRuntimeDesign(),
+			CreateTraceSchema());
+
+		Assert.Contains(report.Rows, row =>
+			row.HookSite == PlayerProtectionActiveTaskStopTriggerCSharpTraceEmitterHookSite.ArtifactShapeValidationBoundary
+			&& row.CSharpTarget.Contains("PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidatorService", StringComparison.Ordinal)
+			&& row.RequiredTraceFields.Contains("actionBranchName", StringComparison.Ordinal)
+			&& row.RequiredTraceFields.Contains("callerOrigin", StringComparison.Ordinal)
+			&& row.RequiredTraceFields.Contains("taskCancellation", StringComparison.Ordinal)
+			&& row.Notes.Contains("broad shape contract", StringComparison.Ordinal)
+			&& row.Notes.Contains("does not prove parity", StringComparison.Ordinal));
+	}
+
+	[Fact]
 	public void Create_PacketRowsRequireRuntimeTraceRowKeyFields()
 	{
 		var report = PlayerProtectionActiveTaskStopTriggerCSharpTraceEmitterDesignReportService.Create(

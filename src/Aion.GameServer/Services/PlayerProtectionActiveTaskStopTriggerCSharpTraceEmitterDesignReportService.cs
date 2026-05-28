@@ -2,6 +2,7 @@ namespace Aion.GameServer.Services;
 
 public enum PlayerProtectionActiveTaskStopTriggerCSharpTraceEmitterHookSite
 {
+	ArtifactShapeValidationBoundary,
 	PacketGuardAndStopDecision,
 	PacketExitReason,
 	ControllerStopEntry,
@@ -49,6 +50,7 @@ public static class PlayerProtectionActiveTaskStopTriggerCSharpTraceEmitterDesig
 	{
 		var rows = new List<PlayerProtectionActiveTaskStopTriggerCSharpTraceEmitterDesignRow>();
 
+		AddArtifactShapeValidationBoundary(rows);
 		AddPacketGuardAndStopDecision(rows);
 		AddPacketExitReason(rows);
 		AddControllerStopEntry(rows);
@@ -77,6 +79,15 @@ public static class PlayerProtectionActiveTaskStopTriggerCSharpTraceEmitterDesig
 			$"Future C# trace emitter design; runtimeDesignReady={runtimeDesign.ReadyForRuntimeComparison}; schemaReady={traceSchema.ReadyForRuntimeComparison}",
 			IsLive: false);
 	}
+
+	private static void AddArtifactShapeValidationBoundary(ICollection<PlayerProtectionActiveTaskStopTriggerCSharpTraceEmitterDesignRow> rows) =>
+		Add(
+			rows,
+			PlayerProtectionActiveTaskStopTriggerCSharpTraceEmitterHookSite.ArtifactShapeValidationBoundary,
+			"schema-v1 generated Java trace artifact contract",
+			"PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidatorService / future C# trace emitter row adapter",
+			"actionBranchName, player snapshot, movement, scheduler, taskCancellation, fanout, aiNotify, emotion, actionPayload, callerOrigin",
+			"Future C# trace rows must satisfy the same broad shape contract as generated Java artifacts; this remains non-live metadata and does not prove parity.");
 
 	private static void AddPacketGuardAndStopDecision(ICollection<PlayerProtectionActiveTaskStopTriggerCSharpTraceEmitterDesignRow> rows) =>
 		Add(
