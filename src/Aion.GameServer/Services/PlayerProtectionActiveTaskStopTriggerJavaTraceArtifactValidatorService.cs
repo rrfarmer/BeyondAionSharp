@@ -177,6 +177,7 @@ public static class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValida
 			ValidateMovementPayload(trace, issues, path);
 			ValidateSchedulerPayload(trace, issues, path);
 			ValidateTaskCancellationPayload(trace, issues, path);
+			ValidateFanoutPayload(trace, issues, path);
 
 			index++;
 		}
@@ -256,6 +257,20 @@ public static class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValida
 		RequireNested(taskCancellation, issues, "futureCancelResult", $"{tracePath}.taskCancellation");
 		RequireNested(taskCancellation, issues, "scheduledDelayMillis", $"{tracePath}.taskCancellation");
 		RequireNested(taskCancellation, issues, "stopOrigin", $"{tracePath}.taskCancellation");
+	}
+
+	private static void ValidateFanoutPayload(
+		JsonElement trace,
+		ICollection<PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationIssue> issues,
+		string tracePath)
+	{
+		if (!trace.TryGetProperty("fanout", out var fanout) || fanout.ValueKind != JsonValueKind.Object)
+			return;
+
+		RequireNested(fanout, issues, "packetName", $"{tracePath}.fanout");
+		RequireNested(fanout, issues, "includeSelf", $"{tracePath}.fanout");
+		RequireNested(fanout, issues, "recipientCount", $"{tracePath}.fanout");
+		RequireNested(fanout, issues, "knownListOrderIsParityKey", $"{tracePath}.fanout");
 	}
 
 	private static void Require(

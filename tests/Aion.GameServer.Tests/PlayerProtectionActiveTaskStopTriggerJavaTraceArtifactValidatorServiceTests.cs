@@ -211,6 +211,32 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValida
 			&& issue.Message.Contains("nested payload", StringComparison.Ordinal));
 	}
 
+	[Fact]
+	public void Validate_RejectsMissingFanoutNestedPayloadFieldsWhenFanoutIsPresent()
+	{
+		var json = RepresentativeArtifactJson.Replace(
+			"""
+			      "fanout": null,
+			""",
+			"""
+			      "fanout": {
+			        "packetName": "SM_PLAYER_STATE",
+			        "includeSelf": true,
+			        "recipientCount": 2
+			      },
+			""",
+			StringComparison.Ordinal);
+
+		var report = PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidatorService.Validate(json);
+
+		Assert.False(report.IsValidSchemaV1);
+		Assert.Null(report.Metadata);
+		Assert.Contains(report.Issues, issue =>
+			issue.Code == PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationIssueCode.MissingNestedPayloadField
+			&& issue.Path == "$.traces[0].fanout.knownListOrderIsParityKey"
+			&& issue.Message.Contains("nested payload", StringComparison.Ordinal));
+	}
+
 	private const string RepresentativeArtifactJson = """
 		{
 		  "schemaVersion": 1,
