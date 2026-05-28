@@ -31,6 +31,11 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFiel
 			&& row.JsonPath == "$.traces[*].player"
 			&& row.Status == PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldStatus.RequiredSchemaV1);
 		Assert.Contains(report.Rows, row =>
+			row.Scope == PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldScope.TraceRow
+			&& row.JsonPath == "$.traces[*].actionBranchName"
+			&& row.SourceSchemaField == PlayerProtectionActiveTaskStopTriggerTraceArtifactField.ActionBranchName
+			&& row.Notes.Contains("generic return reasons", StringComparison.Ordinal));
+		Assert.Contains(report.Rows, row =>
 			row.Scope == PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldScope.PlayerSnapshot
 			&& row.JsonPath == "$.traces[*].player.visualStateBefore"
 			&& row.Notes.Contains("BLINKING", StringComparison.Ordinal));
@@ -76,6 +81,32 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFiel
 			row.JsonPath == "$.traces[*].scheduler"
 			&& row.Status == PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldStatus.BlockedUntilJavaSerializer
 			&& row.Notes.Contains("RunnableFuture", StringComparison.Ordinal));
+	}
+
+	[Fact]
+	public void Create_DocumentsActionEmotionAndCallerOriginNestedPayloadContracts()
+	{
+		var report = CreateReport();
+
+		Assert.Contains(report.Rows, row =>
+			row.JsonPath == "$.traces[*].emotion"
+			&& row.Status == PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldStatus.BlockedUntilJavaSerializer
+			&& row.SerializationRule.Contains("emotionBroadcasted", StringComparison.Ordinal)
+			&& row.Notes.Contains("SM_EMOTION", StringComparison.Ordinal)
+			&& row.Notes.Contains("late stop", StringComparison.Ordinal));
+		Assert.Contains(report.Rows, row =>
+			row.JsonPath == "$.traces[*].actionPayload"
+			&& row.Status == PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldStatus.BlockedUntilJavaSerializer
+			&& row.SerializationRule.Contains("compositeCanActResult", StringComparison.Ordinal)
+			&& row.Notes.Contains("item lookup", StringComparison.Ordinal)
+			&& row.Notes.Contains("composite canAct", StringComparison.Ordinal));
+		Assert.Contains(report.Rows, row =>
+			row.JsonPath == "$.traces[*].callerOrigin"
+			&& row.Status == PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldStatus.BlockedUntilJavaSerializer
+			&& row.SerializationRule.Contains("startsProtectionBeforeWorldSpawn", StringComparison.Ordinal)
+			&& row.SerializationRule.Contains("ordering", StringComparison.Ordinal)
+			&& row.Notes.Contains("world-spawn ordering", StringComparison.Ordinal)
+			&& row.Notes.Contains("source line numbers", StringComparison.Ordinal));
 	}
 
 	private static PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldContractReport CreateReport() =>
