@@ -58,6 +58,20 @@ public sealed record PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadi
 	bool HasSerializerEmotionPayloadContract,
 	bool HasSerializerActionPayloadContract,
 	bool HasSerializerCallerOriginPayloadContract,
+	bool HasSerializerImplementationDesign,
+	int SerializerImplementationDesignRowCount,
+	bool HasSerializerTopLevelWriterPlan,
+	bool HasSerializerRuntimeFactsWriterPlan,
+	bool HasSerializerTraceRowCoreWriterPlan,
+	bool HasSerializerPlayerSnapshotWriterPlan,
+	bool HasSerializerNestedPayloadWriterPlan,
+	bool HasSerializerTimestampPolicyWriterPlan,
+	bool HasSerializerSourceBreadcrumbWriterPlan,
+	bool HasSerializerArtifactFileWriterPlan,
+	bool HasSerializerActionBranchNameWriterPlan,
+	bool HasSerializerEmotionPayloadWriterPlan,
+	bool HasSerializerActionPayloadWriterPlan,
+	bool HasSerializerCallerOriginPayloadWriterPlan,
 	bool NeedsJavaInstrumentation,
 	bool NeedsJavaObserverRunbookDesign,
 	bool NeedsJavaTraceSerializer,
@@ -95,7 +109,8 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 		PlayerProtectionActiveTaskStopTriggerCSharpTraceEmitterDesignReport? csharpTraceEmitterDesign = null,
 		PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionPlanReport? generatedArtifactExecutionPlan = null,
 		PlayerProtectionActiveTaskStopTriggerJavaObserverRunbookDesignReport? javaObserverRunbookDesign = null,
-		PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldContractReport? serializerFieldContract = null)
+		PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldContractReport? serializerFieldContract = null,
+		PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerImplementationDesignReport? serializerImplementationDesign = null)
 	{
 		var rows = new List<PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessRow>();
 
@@ -103,7 +118,7 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 		AddTraceArtifactSchema(rows, traceSchema);
 		AddJavaObserverRunbookDesign(rows, runtimeDesign, traceSchema, javaObserverRunbookDesign);
 		AddJavaInstrumentation(rows, traceSchema);
-		AddJavaTraceSerializer(rows, traceSchema, serializerFieldContract);
+		AddJavaTraceSerializer(rows, traceSchema, serializerFieldContract, serializerImplementationDesign);
 		AddGeneratedJavaTraceArtifacts(rows, traceSchema, artifactDirectoryReport);
 		AddCSharpArtifactReader(rows, traceSchema);
 		AddCSharpTraceEmitterDesign(rows, runtimeDesign, traceSchema, csharpTraceEmitterDesign);
@@ -131,6 +146,20 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 			HasSerializerEmotionPayloadContract: serializerFieldContract?.HasEmotionPayloadContract == true,
 			HasSerializerActionPayloadContract: serializerFieldContract?.HasActionPayloadContract == true,
 			HasSerializerCallerOriginPayloadContract: serializerFieldContract?.HasCallerOriginPayloadContract == true,
+			HasSerializerImplementationDesign: serializerImplementationDesign != null,
+			SerializerImplementationDesignRowCount: serializerImplementationDesign?.Rows.Count ?? 0,
+			HasSerializerTopLevelWriterPlan: serializerImplementationDesign?.HasTopLevelWriterPlan == true,
+			HasSerializerRuntimeFactsWriterPlan: serializerImplementationDesign?.HasRuntimeFactsWriterPlan == true,
+			HasSerializerTraceRowCoreWriterPlan: serializerImplementationDesign?.HasTraceRowCoreWriterPlan == true,
+			HasSerializerPlayerSnapshotWriterPlan: serializerImplementationDesign?.HasPlayerSnapshotWriterPlan == true,
+			HasSerializerNestedPayloadWriterPlan: serializerImplementationDesign?.HasNestedPayloadWriterPlan == true,
+			HasSerializerTimestampPolicyWriterPlan: serializerImplementationDesign?.HasTimestampPolicyWriterPlan == true,
+			HasSerializerSourceBreadcrumbWriterPlan: serializerImplementationDesign?.HasSourceBreadcrumbWriterPlan == true,
+			HasSerializerArtifactFileWriterPlan: serializerImplementationDesign?.HasArtifactFileWriterPlan == true,
+			HasSerializerActionBranchNameWriterPlan: serializerImplementationDesign?.HasActionBranchNameWriterPlan == true,
+			HasSerializerEmotionPayloadWriterPlan: serializerImplementationDesign?.HasEmotionPayloadWriterPlan == true,
+			HasSerializerActionPayloadWriterPlan: serializerImplementationDesign?.HasActionPayloadWriterPlan == true,
+			HasSerializerCallerOriginPayloadWriterPlan: serializerImplementationDesign?.HasCallerOriginPayloadWriterPlan == true,
 			NeedsJavaInstrumentation: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.JavaInstrumentation && row.BlocksRuntimeComparison),
 			NeedsJavaObserverRunbookDesign: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.JavaObserverRunbookDesign && row.BlocksRuntimeComparison),
 			NeedsJavaTraceSerializer: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.JavaTraceSerializer && row.BlocksRuntimeComparison),
@@ -270,9 +299,13 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 	private static void AddJavaTraceSerializer(
 		ICollection<PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessRow> rows,
 		PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaReport? traceSchema,
-		PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldContractReport? serializerFieldContract)
+		PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldContractReport? serializerFieldContract,
+		PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerImplementationDesignReport? serializerImplementationDesign)
 	{
 		var hasSerializerFieldContract = serializerFieldContract != null;
+		var implementationDesignEvidence = serializerImplementationDesign == null
+			? "serializerImplementationDesign=False"
+			: $"serializerImplementationDesign=True; implementationRows={serializerImplementationDesign.Rows.Count}; topLevelWriter={serializerImplementationDesign.HasTopLevelWriterPlan}; runtimeFactsWriter={serializerImplementationDesign.HasRuntimeFactsWriterPlan}; traceRowCoreWriter={serializerImplementationDesign.HasTraceRowCoreWriterPlan}; playerSnapshotWriter={serializerImplementationDesign.HasPlayerSnapshotWriterPlan}; nestedPayloadWriter={serializerImplementationDesign.HasNestedPayloadWriterPlan}; timestampPolicyWriter={serializerImplementationDesign.HasTimestampPolicyWriterPlan}; sourceBreadcrumbWriter={serializerImplementationDesign.HasSourceBreadcrumbWriterPlan}; artifactFileWriter={serializerImplementationDesign.HasArtifactFileWriterPlan}; actionBranchNameWriter={serializerImplementationDesign.HasActionBranchNameWriterPlan}; emotionPayloadWriter={serializerImplementationDesign.HasEmotionPayloadWriterPlan}; actionPayloadWriter={serializerImplementationDesign.HasActionPayloadWriterPlan}; callerOriginPayloadWriter={serializerImplementationDesign.HasCallerOriginPayloadWriterPlan}";
 		Add(rows,
 			PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.JavaTraceSerializer,
 			traceSchema == null
@@ -284,10 +317,12 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 			traceSchema == null
 				? "trace schema missing"
 				: hasSerializerFieldContract
-					? $"schema version and field contract defined but no serializer exists; contractRows={serializerFieldContract!.Rows.Count}; timestampPolicy={serializerFieldContract.HasTimestampNonParityPolicy}; nestedPayloadPlaceholders={serializerFieldContract.HasNestedPayloadPlaceholders}; actionBranchNameContract={serializerFieldContract.HasActionBranchNameTraceContract}; emotionPayloadContract={serializerFieldContract.HasEmotionPayloadContract}; actionPayloadContract={serializerFieldContract.HasActionPayloadContract}; callerOriginPayloadContract={serializerFieldContract.HasCallerOriginPayloadContract}; needsJavaSerializer={serializerFieldContract.RequiresJavaSerializerImplementation}"
+					? $"schema version and field contract defined but no serializer exists; contractRows={serializerFieldContract!.Rows.Count}; timestampPolicy={serializerFieldContract.HasTimestampNonParityPolicy}; nestedPayloadPlaceholders={serializerFieldContract.HasNestedPayloadPlaceholders}; actionBranchNameContract={serializerFieldContract.HasActionBranchNameTraceContract}; emotionPayloadContract={serializerFieldContract.HasEmotionPayloadContract}; actionPayloadContract={serializerFieldContract.HasActionPayloadContract}; callerOriginPayloadContract={serializerFieldContract.HasCallerOriginPayloadContract}; {implementationDesignEvidence}; needsJavaSerializer={serializerFieldContract.RequiresJavaSerializerImplementation}"
 					: "schema version and field list defined but no serializer exists",
 			hasSerializerFieldContract
-				? "Serializer field contract is metadata only; Java implementation must still preserve invariant numeric formatting, enum names, event ordering, diagnostic timestamps, and nested packet/task-map payloads."
+				? serializerImplementationDesign == null
+					? "Serializer field contract is metadata only; Java implementation must still preserve invariant numeric formatting, enum names, event ordering, diagnostic timestamps, and nested packet/task-map payloads."
+					: "Serializer field contract and writer responsibility design are metadata only; Java implementation must still be written, executed, and compared before runtime parity can be claimed."
 				: "Serializer must preserve invariant numeric formatting, enum names, event ordering, and optional fields.");
 	}
 

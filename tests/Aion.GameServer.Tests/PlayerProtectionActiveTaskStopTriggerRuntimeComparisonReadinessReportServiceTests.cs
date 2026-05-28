@@ -28,6 +28,20 @@ public sealed class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 		Assert.False(report.HasSerializerEmotionPayloadContract);
 		Assert.False(report.HasSerializerActionPayloadContract);
 		Assert.False(report.HasSerializerCallerOriginPayloadContract);
+		Assert.False(report.HasSerializerImplementationDesign);
+		Assert.Equal(0, report.SerializerImplementationDesignRowCount);
+		Assert.False(report.HasSerializerTopLevelWriterPlan);
+		Assert.False(report.HasSerializerRuntimeFactsWriterPlan);
+		Assert.False(report.HasSerializerTraceRowCoreWriterPlan);
+		Assert.False(report.HasSerializerPlayerSnapshotWriterPlan);
+		Assert.False(report.HasSerializerNestedPayloadWriterPlan);
+		Assert.False(report.HasSerializerTimestampPolicyWriterPlan);
+		Assert.False(report.HasSerializerSourceBreadcrumbWriterPlan);
+		Assert.False(report.HasSerializerArtifactFileWriterPlan);
+		Assert.False(report.HasSerializerActionBranchNameWriterPlan);
+		Assert.False(report.HasSerializerEmotionPayloadWriterPlan);
+		Assert.False(report.HasSerializerActionPayloadWriterPlan);
+		Assert.False(report.HasSerializerCallerOriginPayloadWriterPlan);
 		Assert.True(report.NeedsJavaInstrumentation);
 		Assert.True(report.NeedsJavaObserverRunbookDesign);
 		Assert.True(report.NeedsJavaTraceSerializer);
@@ -80,6 +94,56 @@ public sealed class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 			&& row.Evidence.Contains("callerOriginPayloadContract=True", StringComparison.Ordinal)
 			&& row.Evidence.Contains("needsJavaSerializer=True", StringComparison.Ordinal)
 			&& row.Notes.Contains("metadata only", StringComparison.Ordinal));
+	}
+
+	[Fact]
+	public void Create_WithSerializerImplementationDesignSurfacesSerializerWriterPlanBlocker()
+	{
+		var runtimeDesign = CreateRuntimeDesign();
+		var traceSchema = PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaReportService.Create(runtimeDesign);
+		var serializerFieldContract = PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldContractService.Create(traceSchema);
+		var serializerImplementationDesign = PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerImplementationDesignReportService.Create(serializerFieldContract);
+
+		var report = PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessReportService.Create(
+			runtimeDesign,
+			traceSchema,
+			serializerFieldContract: serializerFieldContract,
+			serializerImplementationDesign: serializerImplementationDesign);
+
+		Assert.True(report.HasSerializerImplementationDesign);
+		Assert.True(report.SerializerImplementationDesignRowCount > 0);
+		Assert.True(report.HasSerializerTopLevelWriterPlan);
+		Assert.True(report.HasSerializerRuntimeFactsWriterPlan);
+		Assert.True(report.HasSerializerTraceRowCoreWriterPlan);
+		Assert.True(report.HasSerializerPlayerSnapshotWriterPlan);
+		Assert.True(report.HasSerializerNestedPayloadWriterPlan);
+		Assert.True(report.HasSerializerTimestampPolicyWriterPlan);
+		Assert.True(report.HasSerializerSourceBreadcrumbWriterPlan);
+		Assert.True(report.HasSerializerArtifactFileWriterPlan);
+		Assert.True(report.HasSerializerActionBranchNameWriterPlan);
+		Assert.True(report.HasSerializerEmotionPayloadWriterPlan);
+		Assert.True(report.HasSerializerActionPayloadWriterPlan);
+		Assert.True(report.HasSerializerCallerOriginPayloadWriterPlan);
+		Assert.True(report.NeedsJavaTraceSerializer);
+		Assert.Contains(report.Rows, row =>
+			row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.JavaTraceSerializer
+			&& row.Status == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedMissingJavaArtifact
+			&& row.BlocksRuntimeComparison
+			&& row.Evidence.Contains("serializerImplementationDesign=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("topLevelWriter=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("runtimeFactsWriter=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("traceRowCoreWriter=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("playerSnapshotWriter=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("nestedPayloadWriter=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("timestampPolicyWriter=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("sourceBreadcrumbWriter=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("artifactFileWriter=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("actionBranchNameWriter=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("emotionPayloadWriter=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("actionPayloadWriter=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("callerOriginPayloadWriter=True", StringComparison.Ordinal)
+			&& row.Notes.Contains("writer responsibility design", StringComparison.Ordinal)
+			&& row.Notes.Contains("Java implementation must still be written", StringComparison.Ordinal));
 	}
 
 	[Fact]
