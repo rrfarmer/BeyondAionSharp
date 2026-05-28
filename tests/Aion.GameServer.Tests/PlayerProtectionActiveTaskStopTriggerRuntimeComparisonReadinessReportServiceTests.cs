@@ -131,6 +131,11 @@ public sealed class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 			&& row.Status == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.SatisfiedByNonLiveMetadata
 			&& !row.BlocksRuntimeComparison
 			&& row.CSharpTarget.Contains("PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidatorService", StringComparison.Ordinal)
+			&& row.Evidence.Contains("actionBranchName", StringComparison.Ordinal)
+			&& row.Evidence.Contains("callerOrigin", StringComparison.Ordinal)
+			&& row.Evidence.Contains("taskCancellation", StringComparison.Ordinal)
+			&& row.Notes.Contains("required action branch names", StringComparison.Ordinal)
+			&& row.Notes.Contains("callerOrigin ordering", StringComparison.Ordinal)
 			&& row.Notes.Contains("not a runtime comparator", StringComparison.Ordinal));
 	}
 

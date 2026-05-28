@@ -79,6 +79,8 @@ public sealed record PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadi
 /// </summary>
 public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessReportService
 {
+	private const string ArtifactReaderValidatorCoverage = "schema-v1 validator and artifact directory report exist; validatorCoverage=top-level/actionBranchName/player/movement/scheduler/taskCancellation/fanout/aiNotify/emotion/actionPayload/callerOrigin";
+
 	public static PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessReport Create(
 		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonDesignReport? runtimeDesign,
 		PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaReport? traceSchema,
@@ -351,10 +353,10 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 			blocks: traceSchema == null,
 			"schema-v1 Java trace artifact",
 			"PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidatorService / PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirectoryReportService",
-			traceSchema == null ? "trace schema missing" : "schema-v1 validator and artifact directory report exist",
+			traceSchema == null ? "trace schema missing" : ArtifactReaderValidatorCoverage,
 			traceSchema == null
 				? "Reader must validate schema version, phase ordering, enum return reasons, invariant floats, optional timestamps, and packet-specific payloads."
-				: "C# can shape-validate schema-v1 Java artifacts, but this is not a runtime comparator and cannot prove parity.");
+				: "C# can shape-validate schema-v1 Java artifacts, including required action branch names and conditional nested payload fields such as callerOrigin ordering, but this is not a runtime comparator and cannot prove parity.");
 	}
 
 	private static void AddLiveCSharpPacketHooks(
