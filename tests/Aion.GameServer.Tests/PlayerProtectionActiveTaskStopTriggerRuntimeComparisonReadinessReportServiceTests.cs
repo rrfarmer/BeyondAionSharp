@@ -23,6 +23,8 @@ public sealed class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 		Assert.True(report.NeedsJavaTraceSerializer);
 		Assert.True(report.NeedsGeneratedJavaTraceArtifacts);
 		Assert.False(report.NeedsCSharpArtifactReader);
+		Assert.False(report.HasCSharpTraceEmitterDesign);
+		Assert.True(report.NeedsCSharpTraceEmitter);
 		Assert.True(report.NeedsLiveCSharpPacketHooks);
 		Assert.False(report.NeedsCSharpRuntimeTraceOutput);
 		Assert.False(report.NeedsRuntimeComparisonPreflightAlignment);
@@ -94,6 +96,29 @@ public sealed class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 			&& !row.BlocksRuntimeComparison
 			&& row.CSharpTarget.Contains("PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidatorService", StringComparison.Ordinal)
 			&& row.Notes.Contains("not a runtime comparator", StringComparison.Ordinal));
+	}
+
+	[Fact]
+	public void Create_WithCSharpTraceEmitterDesignSurfacesDistinctEmitterBlocker()
+	{
+		var runtimeDesign = CreateRuntimeDesign();
+		var traceSchema = PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaReportService.Create(runtimeDesign);
+		var emitterDesign = PlayerProtectionActiveTaskStopTriggerCSharpTraceEmitterDesignReportService.Create(runtimeDesign, traceSchema);
+
+		var report = PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessReportService.Create(
+			runtimeDesign,
+			traceSchema,
+			csharpTraceEmitterDesign: emitterDesign);
+
+		Assert.True(report.HasCSharpTraceEmitterDesign);
+		Assert.True(report.NeedsCSharpTraceEmitter);
+		Assert.Contains(report.Rows, row =>
+			row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.CSharpTraceEmitterDesign
+			&& row.Status == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedMissingCSharpImplementation
+			&& row.Evidence.Contains("packetHooks=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("controllerHooks=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("teleportHooks=True", StringComparison.Ordinal)
+			&& row.Notes.Contains("non-live design only", StringComparison.Ordinal));
 	}
 
 	[Fact]

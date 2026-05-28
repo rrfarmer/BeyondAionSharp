@@ -8,6 +8,7 @@ public enum PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlock
 	JavaTraceSerializer,
 	GeneratedJavaTraceArtifacts,
 	CSharpArtifactReader,
+	CSharpTraceEmitterDesign,
 	LiveCSharpPacketHooks,
 	RuntimeComparisonEvidence,
 }
@@ -50,6 +51,8 @@ public sealed record PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadi
 	bool NeedsJavaTraceSerializer,
 	bool NeedsGeneratedJavaTraceArtifacts,
 	bool NeedsCSharpArtifactReader,
+	bool HasCSharpTraceEmitterDesign,
+	bool NeedsCSharpTraceEmitter,
 	bool NeedsLiveCSharpPacketHooks,
 	bool NeedsCSharpRuntimeTraceOutput,
 	bool NeedsRuntimeComparisonPreflightAlignment,
@@ -72,7 +75,8 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 		PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactDirectoryReport? artifactDirectoryReport = null,
 		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonContractReport? comparisonContract = null,
 		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonPreflightReport? preflightReport = null,
-		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonKeyProjectionReport? keyProjectionReport = null)
+		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonKeyProjectionReport? keyProjectionReport = null,
+		PlayerProtectionActiveTaskStopTriggerCSharpTraceEmitterDesignReport? csharpTraceEmitterDesign = null)
 	{
 		var rows = new List<PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessRow>();
 
@@ -82,6 +86,7 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 		AddJavaTraceSerializer(rows, traceSchema);
 		AddGeneratedJavaTraceArtifacts(rows, traceSchema, artifactDirectoryReport);
 		AddCSharpArtifactReader(rows, traceSchema);
+		AddCSharpTraceEmitterDesign(rows, runtimeDesign, traceSchema, csharpTraceEmitterDesign);
 		AddLiveCSharpPacketHooks(rows, runtimeDesign);
 		AddRuntimeComparisonEvidence(rows, comparisonContract, preflightReport, keyProjectionReport);
 
@@ -100,6 +105,8 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 			NeedsJavaTraceSerializer: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.JavaTraceSerializer && row.BlocksRuntimeComparison),
 			NeedsGeneratedJavaTraceArtifacts: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.GeneratedJavaTraceArtifacts && row.BlocksRuntimeComparison),
 			NeedsCSharpArtifactReader: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.CSharpArtifactReader && row.BlocksRuntimeComparison),
+			HasCSharpTraceEmitterDesign: csharpTraceEmitterDesign != null,
+			NeedsCSharpTraceEmitter: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.CSharpTraceEmitterDesign && row.BlocksRuntimeComparison),
 			NeedsLiveCSharpPacketHooks: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.LiveCSharpPacketHooks && row.BlocksRuntimeComparison),
 			NeedsCSharpRuntimeTraceOutput: comparisonContract?.NeedsCSharpRuntimeTrace == true || preflightReport?.NeedsCSharpTraceRows == true || keyProjectionReport?.NeedsCSharpKeys == true,
 			NeedsRuntimeComparisonPreflightAlignment: preflightReport?.NeedsScenarioAlignment == true || preflightReport?.NeedsRowCountAlignment == true,
@@ -287,6 +294,48 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 			"future C# packet handler stop hooks",
 			runtimeDesign == null ? "runtime design missing" : $"requiresLiveHooks={runtimeDesign.RequiresLiveCSharpPacketHooks}",
 			"Runtime comparison still needs live C# packet/controller execution surfaces; this report does not enable them.");
+	}
+
+	private static void AddCSharpTraceEmitterDesign(
+		ICollection<PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessRow> rows,
+		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonDesignReport? runtimeDesign,
+		PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaReport? traceSchema,
+		PlayerProtectionActiveTaskStopTriggerCSharpTraceEmitterDesignReport? csharpTraceEmitterDesign)
+	{
+		if (runtimeDesign == null || traceSchema == null)
+		{
+			Add(rows,
+				PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.CSharpTraceEmitterDesign,
+				PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedMissingPrerequisite,
+				blocks: true,
+				"future C# stop-trigger trace emitter",
+				"PlayerProtectionActiveTaskStopTriggerCSharpTraceEmitterDesignReportService",
+				runtimeDesign == null ? "runtime design missing" : "trace schema missing",
+				"Need runtime comparison design and trace schema before C# trace emitter hook sites can be planned.");
+			return;
+		}
+
+		if (csharpTraceEmitterDesign == null)
+		{
+			Add(rows,
+				PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.CSharpTraceEmitterDesign,
+				PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedMissingCSharpImplementation,
+				blocks: true,
+				"future C# stop-trigger trace emitter",
+				"PlayerProtectionActiveTaskStopTriggerCSharpTraceEmitterDesignReportService",
+				"missing C# trace emitter design report",
+				"Need a non-live hook-site plan before production packet/controller trace emission can be considered.");
+			return;
+		}
+
+		Add(rows,
+			PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.CSharpTraceEmitterDesign,
+			PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedMissingCSharpImplementation,
+			blocks: true,
+			csharpTraceEmitterDesign.JavaSource,
+			"PlayerProtectionActiveTaskStopTriggerCSharpTraceEmitterDesignReport",
+			$"rows={csharpTraceEmitterDesign.Rows.Count}; packetHooks={csharpTraceEmitterDesign.HasPacketHookSites}; controllerHooks={csharpTraceEmitterDesign.HasControllerHookSites}; teleportHooks={csharpTraceEmitterDesign.HasTeleportHookSites}; requiresLiveEmitter={csharpTraceEmitterDesign.RequiresLiveEmitter}",
+			"C# trace emitter hook sites are documented as non-live design only; production packet/controller hooks remain disabled.");
 	}
 
 	private static void AddRuntimeComparisonEvidence(
