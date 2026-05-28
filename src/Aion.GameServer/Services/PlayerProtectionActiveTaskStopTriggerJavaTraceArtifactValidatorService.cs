@@ -174,6 +174,7 @@ public static class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValida
 			}
 
 			ValidatePlayerSnapshot(trace, issues, path);
+			ValidateMovementPayload(trace, issues, path);
 			ValidateSchedulerPayload(trace, issues, path);
 			ValidateTaskCancellationPayload(trace, issues, path);
 
@@ -197,6 +198,28 @@ public static class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValida
 		RequireNested(player, issues, "protectionActiveAfter", $"{tracePath}.player");
 		RequireNested(player, issues, "visualStateBefore", $"{tracePath}.player");
 		RequireNested(player, issues, "visualStateAfter", $"{tracePath}.player");
+	}
+
+	private static void ValidateMovementPayload(
+		JsonElement trace,
+		ICollection<PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationIssue> issues,
+		string tracePath)
+	{
+		if (!trace.TryGetProperty("movement", out var movement) || movement.ValueKind != JsonValueKind.Object)
+			return;
+
+		RequireNested(movement, issues, "oldX", $"{tracePath}.movement");
+		RequireNested(movement, issues, "oldY", $"{tracePath}.movement");
+		RequireNested(movement, issues, "oldZ", $"{tracePath}.movement");
+		RequireNested(movement, issues, "packetX", $"{tracePath}.movement");
+		RequireNested(movement, issues, "packetY", $"{tracePath}.movement");
+		RequireNested(movement, issues, "packetZ", $"{tracePath}.movement");
+		RequireNested(movement, issues, "zDelta", $"{tracePath}.movement");
+		RequireNested(movement, issues, "heading", $"{tracePath}.movement");
+		RequireNested(movement, issues, "movementType", $"{tracePath}.movement");
+		RequireNested(movement, issues, "antiHackAccepted", $"{tracePath}.movement");
+		RequireNested(movement, issues, "teleportationModeAbsoluteMove", $"{tracePath}.movement");
+		RequireNested(movement, issues, "stopThresholdExceeded", $"{tracePath}.movement");
 	}
 
 	private static void ValidateSchedulerPayload(

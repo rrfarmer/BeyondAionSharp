@@ -177,6 +177,40 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValida
 			&& issue.Message.Contains("nested payload", StringComparison.Ordinal));
 	}
 
+	[Fact]
+	public void Validate_RejectsMissingMovementNestedPayloadFieldsWhenMovementIsPresent()
+	{
+		var json = RepresentativeArtifactJson.Replace(
+			"""
+			      "movement": null,
+			""",
+			"""
+			      "movement": {
+			        "oldX": 100.0,
+			        "oldY": 200.0,
+			        "oldZ": 50.0,
+			        "packetX": 100.0,
+			        "packetY": 200.0,
+			        "packetZ": 49.4,
+			        "zDelta": 0.6,
+			        "heading": 90,
+			        "movementType": "walk",
+			        "antiHackAccepted": true,
+			        "teleportationModeAbsoluteMove": false
+			      },
+			""",
+			StringComparison.Ordinal);
+
+		var report = PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidatorService.Validate(json);
+
+		Assert.False(report.IsValidSchemaV1);
+		Assert.Null(report.Metadata);
+		Assert.Contains(report.Issues, issue =>
+			issue.Code == PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationIssueCode.MissingNestedPayloadField
+			&& issue.Path == "$.traces[0].movement.stopThresholdExceeded"
+			&& issue.Message.Contains("nested payload", StringComparison.Ordinal));
+	}
+
 	private const string RepresentativeArtifactJson = """
 		{
 		  "schemaVersion": 1,
