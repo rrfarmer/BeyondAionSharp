@@ -37,6 +37,10 @@ public sealed record PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFie
 	bool HasPlayerSnapshotContract,
 	bool HasTimestampNonParityPolicy,
 	bool HasNestedPayloadPlaceholders,
+	bool HasActionBranchNameTraceContract,
+	bool HasEmotionPayloadContract,
+	bool HasActionPayloadContract,
+	bool HasCallerOriginPayloadContract,
 	bool RequiresJavaSerializerImplementation,
 	bool ReadyForRuntimeComparison,
 	string JavaSource,
@@ -73,6 +77,10 @@ public static class PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFiel
 				&& row.Status == PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldStatus.DiagnosticOnly
 				&& row.SerializationRule.Contains("false", StringComparison.Ordinal)),
 			HasNestedPayloadPlaceholders: rowArray.Any(row => row.Scope == PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldScope.NestedPayload),
+			HasActionBranchNameTraceContract: HasJsonPath(rowArray, "$.traces[*].actionBranchName"),
+			HasEmotionPayloadContract: HasJsonPath(rowArray, "$.traces[*].emotion"),
+			HasActionPayloadContract: HasJsonPath(rowArray, "$.traces[*].actionPayload"),
+			HasCallerOriginPayloadContract: HasJsonPath(rowArray, "$.traces[*].callerOrigin"),
 			RequiresJavaSerializerImplementation: true,
 			ReadyForRuntimeComparison: false,
 			$"Schema-v1 serializer field contract; traceSchemaFields={traceSchema.Fields.Count}; requiresTraceSerializer={traceSchema.RequiresTraceSerializer}",
@@ -169,4 +177,9 @@ public static class PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFiel
 		IReadOnlyList<PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldContractRow> rows,
 		PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldScope scope) =>
 		rows.Any(row => row.Scope == scope);
+
+	private static bool HasJsonPath(
+		IReadOnlyList<PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldContractRow> rows,
+		string jsonPath) =>
+		rows.Any(row => row.JsonPath == jsonPath);
 }

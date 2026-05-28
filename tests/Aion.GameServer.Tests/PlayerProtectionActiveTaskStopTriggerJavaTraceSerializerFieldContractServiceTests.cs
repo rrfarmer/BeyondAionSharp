@@ -15,6 +15,10 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFiel
 		Assert.True(report.HasTraceRowContract);
 		Assert.True(report.HasPlayerSnapshotContract);
 		Assert.True(report.HasNestedPayloadPlaceholders);
+		Assert.True(report.HasActionBranchNameTraceContract);
+		Assert.True(report.HasEmotionPayloadContract);
+		Assert.True(report.HasActionPayloadContract);
+		Assert.True(report.HasCallerOriginPayloadContract);
 		Assert.True(report.SourceSchemaFieldCount > report.Rows.Count);
 		Assert.Equal(Enumerable.Range(1, report.Rows.Count), report.Rows.Select(row => row.Order));
 		Assert.Contains(report.Rows, row =>
