@@ -141,4 +141,22 @@ public sealed class TargetSelectResolutionPlanServiceTests
 		Assert.False(plan.ShouldCallSetTarget);
 		Assert.Equal(TargetSelectSystemMessage.AssistTooFar, plan.SystemMessage);
 	}
+
+	[Fact]
+	public void CreatePlan_ReturnsAssistNoUserWhenTargetOfTargetIsKnownButNotVisibleLikeJava()
+	{
+		var plan = TargetSelectResolutionPlanService.CreatePlan(new TargetSelectResolutionInput(
+			PlayerObjectId: 1001,
+			RequestedTargetObjectId: 0,
+			SelectTargetOfTarget: true,
+			CurrentTargetObjectId: 7002,
+			TargetOfTargetObjectId: 7003,
+			TargetOfTargetKnownByPlayer: true,
+			TargetOfTargetSeenByPlayer: false));
+
+		Assert.Equal(TargetSelectResolutionStatus.AssistTargetNotVisible, plan.Status);
+		Assert.False(plan.ShouldCallSetTarget);
+		Assert.Equal(TargetSelectSystemMessage.AssistNoUser, plan.SystemMessage);
+		Assert.Equal(0, plan.ResolvedTargetObjectId);
+	}
 }
