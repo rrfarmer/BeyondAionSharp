@@ -147,6 +147,36 @@ public sealed class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValida
 			&& issue.Message.Contains("nested payload", StringComparison.Ordinal));
 	}
 
+	[Fact]
+	public void Validate_RejectsMissingTaskCancellationNestedPayloadFieldsWhenTaskCancellationIsPresent()
+	{
+		var json = RepresentativeArtifactJson.Replace(
+			"""
+			      "taskCancellation": null,
+			""",
+			"""
+			      "taskCancellation": {
+			        "taskIdName": "PROTECTION_ACTIVE",
+			        "taskIdOrdinal": 3,
+			        "taskPresentBeforeCancel": true,
+			        "taskRemovedBeforeCancel": true,
+			        "futureCancelArgument": false,
+			        "scheduledDelayMillis": 60000,
+			        "stopOrigin": "first_action_packet"
+			      },
+			""",
+			StringComparison.Ordinal);
+
+		var report = PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidatorService.Validate(json);
+
+		Assert.False(report.IsValidSchemaV1);
+		Assert.Null(report.Metadata);
+		Assert.Contains(report.Issues, issue =>
+			issue.Code == PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationIssueCode.MissingNestedPayloadField
+			&& issue.Path == "$.traces[0].taskCancellation.futureCancelResult"
+			&& issue.Message.Contains("nested payload", StringComparison.Ordinal));
+	}
+
 	private const string RepresentativeArtifactJson = """
 		{
 		  "schemaVersion": 1,

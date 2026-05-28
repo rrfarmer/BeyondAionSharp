@@ -175,6 +175,7 @@ public static class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValida
 
 			ValidatePlayerSnapshot(trace, issues, path);
 			ValidateSchedulerPayload(trace, issues, path);
+			ValidateTaskCancellationPayload(trace, issues, path);
 
 			index++;
 		}
@@ -214,6 +215,24 @@ public static class PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValida
 		RequireNested(scheduler, issues, "oldFutureCancelArgument", $"{tracePath}.scheduler");
 		RequireNested(scheduler, issues, "oldFutureCancelResult", $"{tracePath}.scheduler");
 		RequireNested(scheduler, issues, "newFutureStored", $"{tracePath}.scheduler");
+	}
+
+	private static void ValidateTaskCancellationPayload(
+		JsonElement trace,
+		ICollection<PlayerProtectionActiveTaskStopTriggerJavaTraceArtifactValidationIssue> issues,
+		string tracePath)
+	{
+		if (!trace.TryGetProperty("taskCancellation", out var taskCancellation) || taskCancellation.ValueKind != JsonValueKind.Object)
+			return;
+
+		RequireNested(taskCancellation, issues, "taskIdName", $"{tracePath}.taskCancellation");
+		RequireNested(taskCancellation, issues, "taskIdOrdinal", $"{tracePath}.taskCancellation");
+		RequireNested(taskCancellation, issues, "taskPresentBeforeCancel", $"{tracePath}.taskCancellation");
+		RequireNested(taskCancellation, issues, "taskRemovedBeforeCancel", $"{tracePath}.taskCancellation");
+		RequireNested(taskCancellation, issues, "futureCancelArgument", $"{tracePath}.taskCancellation");
+		RequireNested(taskCancellation, issues, "futureCancelResult", $"{tracePath}.taskCancellation");
+		RequireNested(taskCancellation, issues, "scheduledDelayMillis", $"{tracePath}.taskCancellation");
+		RequireNested(taskCancellation, issues, "stopOrigin", $"{tracePath}.taskCancellation");
 	}
 
 	private static void Require(
