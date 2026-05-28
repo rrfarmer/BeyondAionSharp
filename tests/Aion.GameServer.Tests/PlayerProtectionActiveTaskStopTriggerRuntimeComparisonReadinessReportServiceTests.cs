@@ -19,7 +19,9 @@ public sealed class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 		Assert.False(report.HasRuntimeComparisonContractReport);
 		Assert.False(report.HasRuntimeComparisonPreflightReport);
 		Assert.False(report.HasRuntimeComparisonKeyProjectionReport);
+		Assert.False(report.HasJavaObserverRunbookDesign);
 		Assert.True(report.NeedsJavaInstrumentation);
+		Assert.True(report.NeedsJavaObserverRunbookDesign);
 		Assert.True(report.NeedsJavaTraceSerializer);
 		Assert.True(report.NeedsGeneratedJavaTraceArtifacts);
 		Assert.False(report.NeedsCSharpArtifactReader);
@@ -121,6 +123,34 @@ public sealed class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 			&& row.Evidence.Contains("controllerHooks=True", StringComparison.Ordinal)
 			&& row.Evidence.Contains("teleportHooks=True", StringComparison.Ordinal)
 			&& row.Notes.Contains("non-live design only", StringComparison.Ordinal));
+	}
+
+	[Fact]
+	public void Create_WithJavaObserverRunbookDesignSurfacesToolingBlocker()
+	{
+		var runtimeDesign = CreateRuntimeDesign();
+		var traceSchema = PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaReportService.Create(runtimeDesign);
+		var emitterDesign = PlayerProtectionActiveTaskStopTriggerCSharpTraceEmitterDesignReportService.Create(runtimeDesign, traceSchema);
+		var executionPlan = PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionPlanService.Create(
+			runtimeDesign,
+			traceSchema,
+			emitterDesign);
+		var observerRunbook = PlayerProtectionActiveTaskStopTriggerJavaObserverRunbookDesignReportService.Create(executionPlan);
+
+		var report = PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessReportService.Create(
+			runtimeDesign,
+			traceSchema,
+			javaObserverRunbookDesign: observerRunbook);
+
+		Assert.True(report.HasJavaObserverRunbookDesign);
+		Assert.True(report.NeedsJavaObserverRunbookDesign);
+		Assert.Contains(report.Rows, row =>
+			row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.JavaObserverRunbookDesign
+			&& row.Status == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedMissingPrerequisite
+			&& row.Evidence.Contains("packetHooks=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("serializerPlan=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("requiresJava25Maven=True", StringComparison.Ordinal)
+			&& row.Notes.Contains("missing Java 25/Maven tooling", StringComparison.Ordinal));
 	}
 
 	[Fact]

@@ -4,6 +4,7 @@ public enum PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlock
 {
 	RuntimeComparisonDesign,
 	TraceArtifactSchema,
+	JavaObserverRunbookDesign,
 	JavaInstrumentation,
 	JavaTraceSerializer,
 	GeneratedJavaTraceArtifacts,
@@ -48,7 +49,9 @@ public sealed record PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadi
 	bool HasRuntimeComparisonContractReport,
 	bool HasRuntimeComparisonPreflightReport,
 	bool HasRuntimeComparisonKeyProjectionReport,
+	bool HasJavaObserverRunbookDesign,
 	bool NeedsJavaInstrumentation,
+	bool NeedsJavaObserverRunbookDesign,
 	bool NeedsJavaTraceSerializer,
 	bool NeedsGeneratedJavaTraceArtifacts,
 	bool NeedsCSharpArtifactReader,
@@ -80,12 +83,14 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonPreflightReport? preflightReport = null,
 		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonKeyProjectionReport? keyProjectionReport = null,
 		PlayerProtectionActiveTaskStopTriggerCSharpTraceEmitterDesignReport? csharpTraceEmitterDesign = null,
-		PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionPlanReport? generatedArtifactExecutionPlan = null)
+		PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionPlanReport? generatedArtifactExecutionPlan = null,
+		PlayerProtectionActiveTaskStopTriggerJavaObserverRunbookDesignReport? javaObserverRunbookDesign = null)
 	{
 		var rows = new List<PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessRow>();
 
 		AddRuntimeComparisonDesign(rows, runtimeDesign);
 		AddTraceArtifactSchema(rows, traceSchema);
+		AddJavaObserverRunbookDesign(rows, runtimeDesign, traceSchema, javaObserverRunbookDesign);
 		AddJavaInstrumentation(rows, traceSchema);
 		AddJavaTraceSerializer(rows, traceSchema);
 		AddGeneratedJavaTraceArtifacts(rows, traceSchema, artifactDirectoryReport);
@@ -106,7 +111,9 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 			HasRuntimeComparisonContractReport: comparisonContract != null,
 			HasRuntimeComparisonPreflightReport: preflightReport != null,
 			HasRuntimeComparisonKeyProjectionReport: keyProjectionReport != null,
+			HasJavaObserverRunbookDesign: javaObserverRunbookDesign != null,
 			NeedsJavaInstrumentation: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.JavaInstrumentation && row.BlocksRuntimeComparison),
+			NeedsJavaObserverRunbookDesign: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.JavaObserverRunbookDesign && row.BlocksRuntimeComparison),
 			NeedsJavaTraceSerializer: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.JavaTraceSerializer && row.BlocksRuntimeComparison),
 			NeedsGeneratedJavaTraceArtifacts: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.GeneratedJavaTraceArtifacts && row.BlocksRuntimeComparison),
 			NeedsCSharpArtifactReader: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.CSharpArtifactReader && row.BlocksRuntimeComparison),
@@ -193,6 +200,52 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 			"future Java observer hooks outside dotnetConversion",
 			traceSchema == null ? "trace schema missing" : "trace phases and fields defined but Java hooks absent",
 			"Packet/controller Java code is not instrumented; production behavior must not be changed by tracing.");
+	}
+
+	private static void AddJavaObserverRunbookDesign(
+		ICollection<PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessRow> rows,
+		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonDesignReport? runtimeDesign,
+		PlayerProtectionActiveTaskStopTriggerTraceArtifactSchemaReport? traceSchema,
+		PlayerProtectionActiveTaskStopTriggerJavaObserverRunbookDesignReport? javaObserverRunbookDesign)
+	{
+		if (runtimeDesign == null || traceSchema == null)
+		{
+			Add(rows,
+				PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.JavaObserverRunbookDesign,
+				PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedMissingPrerequisite,
+				blocks: true,
+				"protection stop-trigger Java observer/runbook prerequisites",
+				"PlayerProtectionActiveTaskStopTriggerJavaObserverRunbookDesignReportService",
+				runtimeDesign == null ? "runtime design missing" : "trace schema missing",
+				"Need runtime comparison design and trace schema before Java observer/runbook coverage can be planned.");
+			return;
+		}
+
+		if (javaObserverRunbookDesign == null)
+		{
+			Add(rows,
+				PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.JavaObserverRunbookDesign,
+				PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedMissingPrerequisite,
+				blocks: true,
+				"protection stop-trigger Java observer/runbook prerequisites",
+				"PlayerProtectionActiveTaskStopTriggerJavaObserverRunbookDesignReportService",
+				"missing Java observer/runbook design report",
+				"Need observer event coverage before Java instrumentation or artifact generation can be considered.");
+			return;
+		}
+
+		Add(rows,
+			PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.JavaObserverRunbookDesign,
+			javaObserverRunbookDesign.RequiresJava25Maven
+				? PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.BlockedMissingPrerequisite
+				: PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessStatus.SatisfiedByNonLiveMetadata,
+			blocks: javaObserverRunbookDesign.RequiresJava25Maven || !javaObserverRunbookDesign.ReadyForArtifactGeneration,
+			javaObserverRunbookDesign.JavaSource,
+			"PlayerProtectionActiveTaskStopTriggerJavaObserverRunbookDesignReport",
+			$"rows={javaObserverRunbookDesign.Rows.Count}; packetHooks={javaObserverRunbookDesign.HasPacketStopTriggerHooks}; controllerHooks={javaObserverRunbookDesign.HasControllerHooks}; teleportHooks={javaObserverRunbookDesign.HasTeleportHooks}; serializerPlan={javaObserverRunbookDesign.HasSerializerPlan}; requiresJava25Maven={javaObserverRunbookDesign.RequiresJava25Maven}; ready={javaObserverRunbookDesign.ReadyForArtifactGeneration}",
+			javaObserverRunbookDesign.RequiresJava25Maven
+				? "Java observer/runbook design exists as non-live metadata but remains blocked by missing Java 25/Maven tooling."
+				: "Java observer/runbook design has no tooling blocker, but verified parity still requires generated Java artifacts and runtime comparison.");
 	}
 
 	private static void AddJavaTraceSerializer(
