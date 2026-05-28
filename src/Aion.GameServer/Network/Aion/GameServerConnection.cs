@@ -7779,6 +7779,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				request.ChargeWay == 1
 					? SmSystemMessage.ItemChargeSuccess(itemName, pending.Level)
 					: SmSystemMessage.ItemCharge2Success(itemName, pending.Level));
+			await SendPacketAsync(CreateStatsInfoPacket(player, staticData));
 		}
 
 		player.InventoryItems = inventoryItems.ToArray();
@@ -7786,7 +7787,6 @@ public sealed class GameServerConnection : BaseClientConnection
 			await ApplyAbyssRankChangedSideEffectsAsync(player, abyssPointsPlan.OldRank, staticData);
 		if (chargedItems.Length > 0)
 		{
-			await SendPacketAsync(CreateStatsInfoPacket(player, staticData));
 			await SendPacketAsync(
 				request.ChargeWay == 1
 					? SmSystemMessage.ItemChargeAllComplete()

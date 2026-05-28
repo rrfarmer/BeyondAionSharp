@@ -446,6 +446,60 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleQuestionResponseAsync_ChargeAllApPaymentSendsPerItemUpdatesStatsThenAllComplete()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreateChargeAllPaymentPlayerWithTwoItems();
+		var pendingRequest = new PendingChargeAllRequest(
+			SenderObjectId: player.ObjectId,
+			ChargeWay: 2,
+			PaymentAmount: 1_000,
+			Items:
+			[
+				new PendingChargeAllItem(
+					ObjectId: 7001,
+					ItemId: 100000400,
+					PreviousCharge: 0,
+					TargetCharge: ItemChargeService.Level1ChargePoints,
+					Level: 1),
+				new PendingChargeAllItem(
+					ObjectId: 7002,
+					ItemId: 100000400,
+					PreviousCharge: 0,
+					TargetCharge: ItemChargeService.Level1ChargePoints,
+					Level: 1),
+			]);
+		player.PendingChargeAllRequest = pendingRequest;
+		Assert.True(player.ResponseRequester.PutRequest(
+			SmQuestionWindow.ItemCharge2AllConfirm,
+			new QuestionResponseRequest(player.ObjectId, QuestionResponseRequestKind.ChargeAll, pendingRequest)));
+
+		await fixture.Connection.HandleQuestionResponseAsync(player, CreateQuestionResponse(SmQuestionWindow.ItemCharge2AllConfirm, response: 1));
+
+		Assert.Equal(0, player.AbyssRank.Ap);
+		Assert.Equal(1, repository.SaveItemChargeAllMutationCalls);
+		Assert.Equal(0, repository.ChargeAllPaymentAbyssRank?.Ap);
+		Assert.Equal([7001, 7002], repository.ChargeAllChargedItems.Select(item => item.ObjectId));
+		Assert.Null(player.PendingChargeAllRequest);
+		Assert.Collection(
+			player.InventoryItems.OrderBy(inventoryItem => inventoryItem.ObjectId).Where(inventoryItem => inventoryItem.ItemId == 100000400),
+			first => Assert.Equal(ItemChargeService.Level1ChargePoints, first.Charge),
+			second => Assert.Equal(ItemChargeService.Level1ChargePoints, second.Charge));
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1300965, "1000"),
+			packet => Assert.IsType<SmAbyssRank>(packet),
+			packet => AssertChargeInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 7001),
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1401335, "Test Conditioning Sword", "1"),
+			packet => Assert.IsType<SmStatsInfo>(packet),
+			packet => AssertChargeInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 7002),
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1401335, "Test Conditioning Sword", "1"),
+			packet => Assert.IsType<SmStatsInfo>(packet),
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1401340));
+	}
+
+	[Fact]
 	public async Task HandleQuestionResponseAsync_ChargeAllApPaymentHonorsConfiguredAbyssPointCapClamp()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
