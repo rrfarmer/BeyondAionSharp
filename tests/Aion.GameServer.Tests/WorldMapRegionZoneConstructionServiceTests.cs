@@ -14,7 +14,28 @@ public sealed class WorldMapRegionZoneConstructionServiceTests
 		Assert.Equal(WorldMapRegionZoneSortClassName.Dummy, fullMap.ZoneClassName);
 		Assert.Equal(WorldMapRegionZoneInstanceKind.Base, fullMap.InstanceKind);
 		Assert.True(fullMap.HandlerAttached);
+		Assert.True(fullMap.IsFullMapZone);
+		Assert.Equal(["210010000"], plan.FinalZoneIds);
 		Assert.Contains("ZoneService.getZoneInstancesByWorldId", plan.JavaSource);
+	}
+
+	[Fact]
+	public void CreatePlan_FullMapZoneCarriesJavaWorldZoneTemplateBoundsAndFlags()
+	{
+		var plan = WorldMapRegionZoneConstructionService.CreatePlan(CreateContext(
+			zones: [],
+			worldSize: 257,
+			regionSize: 128,
+			worldFlags: 72));
+
+		var bounds = Assert.IsType<WorldMapRegionZoneFullMapBounds>(Assert.Single(plan.Zones).FullMapBounds);
+		Assert.Equal(-1, bounds.MinX);
+		Assert.Equal(-1, bounds.MinY);
+		Assert.Equal(258, bounds.MaxX);
+		Assert.Equal(258, bounds.MaxY);
+		Assert.Equal(-1, bounds.Bottom);
+		Assert.Equal(257, bounds.Top);
+		Assert.Equal(72, bounds.Flags);
 	}
 
 	[Fact]
@@ -39,6 +60,23 @@ public sealed class WorldMapRegionZoneConstructionServiceTests
 			("sub", WorldMapRegionZoneInstanceKind.Base),
 		], plan.Zones.Select(zone => (zone.ZoneId, zone.InstanceKind)));
 		Assert.All(plan.Zones, zone => Assert.True(zone.HandlerAttached));
+	}
+
+	[Fact]
+	public void CreatePlan_FinalZoneIdsPreserveJavaHashMapPutReplacementSemantics()
+	{
+		var zones = new[]
+		{
+			Create("duplicate", WorldMapRegionZoneSortClassName.Fly),
+			Create("unique", WorldMapRegionZoneSortClassName.Sub),
+			Create("duplicate", WorldMapRegionZoneSortClassName.Pvp),
+		};
+
+		var plan = WorldMapRegionZoneConstructionService.CreatePlan(CreateContext(zones));
+
+		Assert.Equal(["210010000", "duplicate", "unique"], plan.FinalZoneIds);
+		Assert.Equal(["duplicate"], plan.ReplacedZoneIds);
+		Assert.Equal(WorldMapRegionZoneInstanceKind.Pvp, plan.Zones.Last(zone => zone.ZoneId == "duplicate").InstanceKind);
 	}
 
 	[Fact]
@@ -120,13 +158,18 @@ public sealed class WorldMapRegionZoneConstructionServiceTests
 	private static WorldMapRegionZoneConstructionContext CreateContext(
 		IReadOnlyList<WorldMapRegionZoneConstructionCandidate> zones,
 		int mapId = 210010000,
+		int worldSize = 256,
+		int regionSize = 128,
+		int worldFlags = 0,
 		IReadOnlySet<int>? availableSiegeLocationIds = null,
 		IReadOnlySet<int>? availableArtifactLocationIds = null,
 		IReadOnlySet<int>? vortexMapIds = null)
 	{
 		return new WorldMapRegionZoneConstructionContext(
 			mapId,
-			WorldSize: 256,
+			worldSize,
+			regionSize,
+			worldFlags,
 			zones,
 			availableSiegeLocationIds ?? new HashSet<int>(),
 			availableArtifactLocationIds ?? new HashSet<int>(),

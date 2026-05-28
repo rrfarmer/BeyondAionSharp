@@ -30,16 +30,43 @@ public static class WorldMapRegionZoneConstructionService
 				WorldMapRegionZoneSortClassName.Dummy,
 				WorldMapRegionZoneInstanceKind.Base,
 				HandlerAttached: true,
+				IsFullMapZone: true,
+				FullMapBounds: CreateFullMapBounds(context),
 				SideEffects: ["full-map WorldZoneTemplate handler attached"]),
 		};
 
 		foreach (var zone in context.Zones)
 			zones.Add(CreateZoneEntry(zone, context));
 
+		var finalZonesByName = new Dictionary<string, WorldMapRegionZoneConstructionEntry>(StringComparer.Ordinal);
+		var replacedZoneIds = new List<string>();
+		foreach (var zone in zones)
+		{
+			if (finalZonesByName.ContainsKey(zone.ZoneId))
+				replacedZoneIds.Add(zone.ZoneId);
+			finalZonesByName[zone.ZoneId] = zone;
+		}
+
 		return new WorldMapRegionZoneConstructionPlan(
 			context.MapId,
 			zones,
+			finalZonesByName.Keys.ToArray(),
+			replacedZoneIds,
 			JavaSource: "ZoneService.getZoneInstancesByWorldId non-live construction plan; live ZoneInstance storage disabled");
+	}
+
+	private static WorldMapRegionZoneFullMapBounds CreateFullMapBounds(
+		WorldMapRegionZoneConstructionContext context)
+	{
+		var maxZ = (int)MathF.Round((float)context.WorldSize / context.RegionSize) * context.RegionSize;
+		return new WorldMapRegionZoneFullMapBounds(
+			MinX: -1,
+			MinY: -1,
+			MaxX: context.WorldSize + 1,
+			MaxY: context.WorldSize + 1,
+			Bottom: -1,
+			Top: maxZ + 1,
+			context.WorldFlags);
 	}
 
 	private static WorldMapRegionZoneConstructionEntry CreateZoneEntry(
@@ -63,6 +90,8 @@ public static class WorldMapRegionZoneConstructionService
 			zone.ZoneClassName,
 			kind,
 			HandlerAttached: true,
+			IsFullMapZone: false,
+			FullMapBounds: null,
 			sideEffects);
 	}
 
@@ -123,6 +152,8 @@ public static class WorldMapRegionZoneConstructionService
 public sealed record WorldMapRegionZoneConstructionContext(
 	int MapId,
 	int WorldSize,
+	int RegionSize,
+	int WorldFlags,
 	IReadOnlyList<WorldMapRegionZoneConstructionCandidate> Zones,
 	IReadOnlySet<int> AvailableSiegeLocationIds,
 	IReadOnlySet<int> AvailableArtifactLocationIds,
@@ -137,6 +168,8 @@ public sealed record WorldMapRegionZoneConstructionCandidate(
 public sealed record WorldMapRegionZoneConstructionPlan(
 	int MapId,
 	IReadOnlyList<WorldMapRegionZoneConstructionEntry> Zones,
+	IReadOnlyList<string> FinalZoneIds,
+	IReadOnlyList<string> ReplacedZoneIds,
 	string JavaSource);
 
 public sealed record WorldMapRegionZoneConstructionEntry(
@@ -144,7 +177,18 @@ public sealed record WorldMapRegionZoneConstructionEntry(
 	WorldMapRegionZoneSortClassName ZoneClassName,
 	WorldMapRegionZoneInstanceKind InstanceKind,
 	bool HandlerAttached,
+	bool IsFullMapZone,
+	WorldMapRegionZoneFullMapBounds? FullMapBounds,
 	IReadOnlyList<string> SideEffects);
+
+public sealed record WorldMapRegionZoneFullMapBounds(
+	float MinX,
+	float MinY,
+	float MaxX,
+	float MaxY,
+	float Bottom,
+	float Top,
+	int Flags);
 
 public enum WorldMapRegionZoneInstanceKind
 {
