@@ -41,8 +41,13 @@ public sealed record PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardR
 	bool HasReadinessEvidence,
 	bool HasJavaHookDetailEvidence,
 	int JavaHookDetailRowCount,
+	bool HasSerializerFieldContract,
+	int SerializerFieldContractRowCount,
+	bool HasSerializerTimestampNonParityPolicy,
+	bool HasSerializerNestedPayloadPlaceholders,
 	bool NeedsProtectionArtifactSerializer,
 	bool NeedsJavaObserverImplementation,
+	bool NeedsJavaSerializerImplementation,
 	bool NeedsJavaArtifacts,
 	bool NeedsCSharpEmitter,
 	bool NeedsRuntimeEvidence,
@@ -63,7 +68,8 @@ public static class PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardRe
 		PlayerProtectionActiveTaskStopTriggerCSharpTraceEmitterDesignReport csharpTraceEmitterDesign,
 		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessReport readinessReport,
 		PlayerProtectionActiveTaskStopTriggerRuntimeComparisonKeyProjectionReport? keyProjectionReport = null,
-		PlayerProtectionActiveTaskStopTriggerJavaHookDetailReport? javaHookDetailReport = null)
+		PlayerProtectionActiveTaskStopTriggerJavaHookDetailReport? javaHookDetailReport = null,
+		PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldContractReport? serializerFieldContract = null)
 	{
 		var rows = new List<PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardRow>();
 
@@ -102,8 +108,8 @@ public static class PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardRe
 			generatedArtifactExecutionPlan.NeedsJavaTooling || generatedArtifactExecutionPlan.NeedsJavaArtifacts,
 			generatedArtifactExecutionPlan.JavaSource,
 			"PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionPlanReport",
-			$"planRows={generatedArtifactExecutionPlan.Rows.Count}; needsJavaTooling={generatedArtifactExecutionPlan.NeedsJavaTooling}; needsJavaArtifacts={generatedArtifactExecutionPlan.NeedsJavaArtifacts}; ready={generatedArtifactExecutionPlan.ReadyForRuntimeComparison}",
-			"Generated Java schema-v1 artifacts do not exist; dashboard must not advance to runtime comparison.");
+			CreateJavaToolingEvidence(generatedArtifactExecutionPlan, serializerFieldContract),
+			CreateJavaToolingNotes(serializerFieldContract));
 
 		Add(rows,
 			PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardArea.CSharpEmitterCoverage,
@@ -169,11 +175,18 @@ public static class PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardRe
 			HasReadinessEvidence: readinessReport.Rows.Count > 0,
 			HasJavaHookDetailEvidence: javaHookDetailReport != null,
 			JavaHookDetailRowCount: javaHookDetailReport?.Rows.Count ?? 0,
+			HasSerializerFieldContract: serializerFieldContract != null,
+			SerializerFieldContractRowCount: serializerFieldContract?.Rows.Count ?? 0,
+			HasSerializerTimestampNonParityPolicy: serializerFieldContract?.HasTimestampNonParityPolicy == true,
+			HasSerializerNestedPayloadPlaceholders: serializerFieldContract?.HasNestedPayloadPlaceholders == true,
 			NeedsProtectionArtifactSerializer: javaHookDetailReport?.NeedsProtectionArtifactSerializer == true,
 			NeedsJavaObserverImplementation: javaHookDetailReport?.NeedsJavaObserverImplementation == true,
+			NeedsJavaSerializerImplementation: generatedArtifactExecutionPlan.NeedsJavaSerializerImplementation
+				|| serializerFieldContract?.RequiresJavaSerializerImplementation == true,
 			NeedsJavaArtifacts: generatedArtifactExecutionPlan.NeedsJavaArtifacts
 				|| readinessReport.NeedsGeneratedJavaTraceArtifacts
-				|| javaHookDetailReport?.NeedsProtectionArtifactSerializer == true,
+				|| javaHookDetailReport?.NeedsProtectionArtifactSerializer == true
+				|| serializerFieldContract?.RequiresJavaSerializerImplementation == true,
 			NeedsCSharpEmitter: generatedArtifactExecutionPlan.NeedsCSharpEmitter || readinessReport.NeedsCSharpTraceEmitter,
 			NeedsRuntimeEvidence: generatedArtifactExecutionPlan.NeedsRuntimeEvidence || readinessReport.NeedsRuntimeComparisonEvidence,
 			NeedsComparisonExecution: generatedArtifactExecutionPlan.NeedsComparisonExecution
@@ -183,6 +196,30 @@ public static class PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardRe
 			ReadyForRuntimeComparison: false,
 			"Protection stop-trigger prerequisite dashboard",
 			IsLive: false);
+	}
+
+	private static string CreateJavaToolingEvidence(
+		PlayerProtectionActiveTaskStopTriggerGeneratedArtifactExecutionPlanReport generatedArtifactExecutionPlan,
+		PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldContractReport? serializerFieldContract)
+	{
+		var evidence = $"planRows={generatedArtifactExecutionPlan.Rows.Count}; needsJavaTooling={generatedArtifactExecutionPlan.NeedsJavaTooling}; needsJavaArtifacts={generatedArtifactExecutionPlan.NeedsJavaArtifacts}; ready={generatedArtifactExecutionPlan.ReadyForRuntimeComparison}; serializerFieldContract={serializerFieldContract != null}";
+		if (serializerFieldContract == null)
+		{
+			return evidence;
+		}
+
+		return $"{evidence}; serializerRows={serializerFieldContract.Rows.Count}; timestampPolicy={serializerFieldContract.HasTimestampNonParityPolicy}; nestedPayloadPlaceholders={serializerFieldContract.HasNestedPayloadPlaceholders}; needsJavaSerializer={serializerFieldContract.RequiresJavaSerializerImplementation}";
+	}
+
+	private static string CreateJavaToolingNotes(
+		PlayerProtectionActiveTaskStopTriggerJavaTraceSerializerFieldContractReport? serializerFieldContract)
+	{
+		if (serializerFieldContract == null)
+		{
+			return "Generated Java schema-v1 artifacts do not exist; dashboard must not advance to runtime comparison.";
+		}
+
+		return "Generated Java schema-v1 artifacts do not exist; serializer field contract is metadata only and still requires Java implementation before runtime comparison.";
 	}
 
 	private static void Add(
