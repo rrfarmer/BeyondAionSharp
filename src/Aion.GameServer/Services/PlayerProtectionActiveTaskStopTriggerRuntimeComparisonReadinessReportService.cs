@@ -54,6 +54,10 @@ public sealed record PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadi
 	int SerializerFieldContractRowCount,
 	bool HasSerializerTimestampNonParityPolicy,
 	bool HasSerializerNestedPayloadPlaceholders,
+	bool HasSerializerActionBranchNameTraceContract,
+	bool HasSerializerEmotionPayloadContract,
+	bool HasSerializerActionPayloadContract,
+	bool HasSerializerCallerOriginPayloadContract,
 	bool NeedsJavaInstrumentation,
 	bool NeedsJavaObserverRunbookDesign,
 	bool NeedsJavaTraceSerializer,
@@ -123,6 +127,10 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 			SerializerFieldContractRowCount: serializerFieldContract?.Rows.Count ?? 0,
 			HasSerializerTimestampNonParityPolicy: serializerFieldContract?.HasTimestampNonParityPolicy == true,
 			HasSerializerNestedPayloadPlaceholders: serializerFieldContract?.HasNestedPayloadPlaceholders == true,
+			HasSerializerActionBranchNameTraceContract: serializerFieldContract?.HasActionBranchNameTraceContract == true,
+			HasSerializerEmotionPayloadContract: serializerFieldContract?.HasEmotionPayloadContract == true,
+			HasSerializerActionPayloadContract: serializerFieldContract?.HasActionPayloadContract == true,
+			HasSerializerCallerOriginPayloadContract: serializerFieldContract?.HasCallerOriginPayloadContract == true,
 			NeedsJavaInstrumentation: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.JavaInstrumentation && row.BlocksRuntimeComparison),
 			NeedsJavaObserverRunbookDesign: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.JavaObserverRunbookDesign && row.BlocksRuntimeComparison),
 			NeedsJavaTraceSerializer: rowArray.Any(row => row.Blocker == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadinessBlocker.JavaTraceSerializer && row.BlocksRuntimeComparison),
@@ -276,7 +284,7 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonReadin
 			traceSchema == null
 				? "trace schema missing"
 				: hasSerializerFieldContract
-					? $"schema version and field contract defined but no serializer exists; contractRows={serializerFieldContract!.Rows.Count}; timestampPolicy={serializerFieldContract.HasTimestampNonParityPolicy}; nestedPayloadPlaceholders={serializerFieldContract.HasNestedPayloadPlaceholders}; needsJavaSerializer={serializerFieldContract.RequiresJavaSerializerImplementation}"
+					? $"schema version and field contract defined but no serializer exists; contractRows={serializerFieldContract!.Rows.Count}; timestampPolicy={serializerFieldContract.HasTimestampNonParityPolicy}; nestedPayloadPlaceholders={serializerFieldContract.HasNestedPayloadPlaceholders}; actionBranchNameContract={serializerFieldContract.HasActionBranchNameTraceContract}; emotionPayloadContract={serializerFieldContract.HasEmotionPayloadContract}; actionPayloadContract={serializerFieldContract.HasActionPayloadContract}; callerOriginPayloadContract={serializerFieldContract.HasCallerOriginPayloadContract}; needsJavaSerializer={serializerFieldContract.RequiresJavaSerializerImplementation}"
 					: "schema version and field list defined but no serializer exists",
 			hasSerializerFieldContract
 				? "Serializer field contract is metadata only; Java implementation must still preserve invariant numeric formatting, enum names, event ordering, diagnostic timestamps, and nested packet/task-map payloads."
