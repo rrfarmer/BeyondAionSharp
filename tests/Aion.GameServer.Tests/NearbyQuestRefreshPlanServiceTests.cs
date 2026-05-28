@@ -1,3 +1,5 @@
+using Aion.Commons.Network;
+using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Services;
@@ -123,6 +125,74 @@ public sealed class NearbyQuestRefreshPlanServiceTests
 		Assert.Equal(NearbyQuestStartConditionFailure.Race, rejectedPlan.RejectedQuestIds[3001]);
 	}
 
+	[Fact]
+	public void CreatePacketFactoryPlan_CreatesSmNearbyQuestsForReadyPlan()
+	{
+		var player = CreatePlayer();
+		var instance = new WorldMapInstanceRuntimeState(instanceId: 1);
+		instance.RegisterQuestStartIds([1001]);
+		var templates = new NearbyQuestTemplateTable(
+		[
+			new NearbyQuestTemplateSummary(1001, MinLevelPermitted: 22),
+		]);
+		var refreshPlan = NearbyQuestRefreshPlanService.CreatePlan(player, instance, templates);
+
+		var packetPlan = NearbyQuestRefreshPlanService.CreatePacketFactoryPlan(refreshPlan);
+
+		Assert.Equal(NearbyQuestPacketFactoryPlanStatus.PacketCreated, packetPlan.Status);
+		Assert.True(packetPlan.HasPacket);
+		Assert.Contains("SM_NEARBY_QUESTS", packetPlan.JavaSource);
+		var marker = Assert.Single(packetPlan.Markers);
+		Assert.Equal(1001, marker.QuestId);
+		Assert.Equal(2, marker.LevelRequirementDiff);
+		Assert.Equal(
+			Convert.FromHexString("00FFFFE9030200"),
+			SerializeUnencryptedPayload(packetPlan.Packet!));
+	}
+
+	[Fact]
+	public void CreatePacketFactoryPlan_CreatesEmptySmNearbyQuestsWhenJavaWouldSendEmptyMap()
+	{
+		var emptyWorldPlan = NearbyQuestRefreshPlan.NoWorldQuestIds();
+		var noMarkersPlan = new NearbyQuestRefreshPlan(
+			NearbyQuestRefreshPlanStatus.NoMarkers,
+			WorldQuestIdCount: 1,
+			Markers: [],
+			RejectedQuestIds: new Dictionary<int, NearbyQuestStartConditionFailure>
+			{
+				[3001] = NearbyQuestStartConditionFailure.Race,
+			},
+			RejectionCounts: new Dictionary<NearbyQuestStartConditionFailure, int>
+			{
+				[NearbyQuestStartConditionFailure.Race] = 1,
+			});
+
+		var emptyWorldPacketPlan = NearbyQuestRefreshPlanService.CreatePacketFactoryPlan(emptyWorldPlan);
+		var noMarkersPacketPlan = NearbyQuestRefreshPlanService.CreatePacketFactoryPlan(noMarkersPlan);
+
+		Assert.True(emptyWorldPacketPlan.HasPacket);
+		Assert.True(noMarkersPacketPlan.HasPacket);
+		Assert.Equal(Convert.FromHexString("000000"), SerializeUnencryptedPayload(emptyWorldPacketPlan.Packet!));
+		Assert.Equal(Convert.FromHexString("000000"), SerializeUnencryptedPayload(noMarkersPacketPlan.Packet!));
+	}
+
+	[Fact]
+	public void CreatePacketFactoryPlan_BlocksWhenRefreshPrerequisitesAreMissing()
+	{
+		var noWorldInstancePlan = NearbyQuestRefreshPlan.NoWorldInstance();
+		var noQuestTemplatesPlan = NearbyQuestRefreshPlan.NoQuestTemplates(worldQuestIdCount: 1);
+
+		var noWorldPacketPlan = NearbyQuestRefreshPlanService.CreatePacketFactoryPlan(noWorldInstancePlan);
+		var noTemplatesPacketPlan = NearbyQuestRefreshPlanService.CreatePacketFactoryPlan(noQuestTemplatesPlan);
+
+		Assert.Equal(NearbyQuestPacketFactoryPlanStatus.BlockedMissingDependency, noWorldPacketPlan.Status);
+		Assert.Equal(NearbyQuestPacketFactoryPlanStatus.BlockedMissingDependency, noTemplatesPacketPlan.Status);
+		Assert.False(noWorldPacketPlan.HasPacket);
+		Assert.False(noTemplatesPacketPlan.HasPacket);
+		Assert.Contains(nameof(NearbyQuestRefreshPlanStatus.NoWorldInstance), noWorldPacketPlan.JavaSource);
+		Assert.Contains(nameof(NearbyQuestRefreshPlanStatus.NoQuestTemplates), noTemplatesPacketPlan.JavaSource);
+	}
+
 	private static Player CreatePlayer()
 	{
 		return new Player
@@ -132,5 +202,13 @@ public sealed class NearbyQuestRefreshPlanServiceTests
 			PlayerClass = "GLADIATOR",
 			Gender = "MALE",
 		};
+	}
+
+	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
+	{
+		var crypt = new GameCrypt(() => 0x01020304);
+		crypt.EnableKey();
+		var frame = packet.SerializeFrame(crypt);
+		return frame[7..];
 	}
 }

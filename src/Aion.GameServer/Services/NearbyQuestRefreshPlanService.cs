@@ -35,6 +35,19 @@ public static class NearbyQuestRefreshPlanService
 			projection.RejectedQuestIds,
 			rejectionCounts);
 	}
+
+	public static NearbyQuestPacketFactoryPlan CreatePacketFactoryPlan(NearbyQuestRefreshPlan plan)
+	{
+		ArgumentNullException.ThrowIfNull(plan);
+
+		// Java parity breadcrumb: PlayerController.updateNearbyQuests always sends
+		// new SM_NEARBY_QUESTS(nearbyQuestList) after resolving the live map-region
+		// quest ids and filtering them through QuestService.checkStartConditions.
+		if (!plan.WouldSendPacket)
+			return NearbyQuestPacketFactoryPlan.Blocked(plan.Status);
+
+		return NearbyQuestPacketFactoryPlan.Created(plan.Markers);
+	}
 }
 
 public sealed record NearbyQuestRefreshPlan(
@@ -89,4 +102,37 @@ public enum NearbyQuestRefreshPlanStatus
 	NoQuestTemplates,
 	NoWorldQuestIds,
 	NoMarkers,
+}
+
+public sealed record NearbyQuestPacketFactoryPlan(
+	NearbyQuestPacketFactoryPlanStatus Status,
+	IReadOnlyList<NearbyQuestMarker> Markers,
+	SmNearbyQuests? Packet,
+	string JavaSource)
+{
+	public bool HasPacket => Packet is not null;
+
+	public static NearbyQuestPacketFactoryPlan Created(IReadOnlyList<NearbyQuestMarker> markers)
+	{
+		return new NearbyQuestPacketFactoryPlan(
+			NearbyQuestPacketFactoryPlanStatus.PacketCreated,
+			markers,
+			new SmNearbyQuests(markers),
+			"PlayerController.updateNearbyQuests -> new SM_NEARBY_QUESTS(nearbyQuestList)");
+	}
+
+	public static NearbyQuestPacketFactoryPlan Blocked(NearbyQuestRefreshPlanStatus refreshStatus)
+	{
+		return new NearbyQuestPacketFactoryPlan(
+			NearbyQuestPacketFactoryPlanStatus.BlockedMissingDependency,
+			Array.Empty<NearbyQuestMarker>(),
+			Packet: null,
+			$"PlayerController.updateNearbyQuests prerequisites unavailable: {refreshStatus}");
+	}
+}
+
+public enum NearbyQuestPacketFactoryPlanStatus
+{
+	PacketCreated,
+	BlockedMissingDependency,
 }
