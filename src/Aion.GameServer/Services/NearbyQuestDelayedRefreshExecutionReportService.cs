@@ -35,6 +35,36 @@ public static class NearbyQuestDelayedRefreshExecutionReportService
 			playerReports);
 	}
 
+	public static NearbyQuestDelayedRefreshExecutionReport CreateReportFromMapRegions(
+		WorldMapNearbyQuestRefreshSchedulePlan schedulePlan,
+		WorldMapInstanceRuntimeState? worldInstance,
+		IReadOnlyList<NearbyQuestDelayedRefreshPlayerInput> players,
+		StaticData? staticData)
+	{
+		// Java parity breadcrumb: WorldMapInstance.updateNearbyQuestsTask invokes each player's
+		// PlayerController.updateNearbyQuests, which resolves quest ids from that player's current
+		// position.mapRegion.parent rather than from a pre-supplied flat instance.
+		if (!schedulePlan.WouldScheduleTask)
+			return NearbyQuestDelayedRefreshExecutionReport.NotScheduled(schedulePlan);
+		if (worldInstance == null)
+			return NearbyQuestDelayedRefreshExecutionReport.MissingWorldInstance(schedulePlan);
+
+		var clearedPendingRefresh = worldInstance.CompletePendingNearbyQuestRefresh();
+		if (players.Count == 0)
+			return NearbyQuestDelayedRefreshExecutionReport.NoPlayers(schedulePlan, clearedPendingRefresh);
+
+		var playerReports = players
+			.Select(input => new NearbyQuestDelayedRefreshPlayerReport(
+				input.Player.ObjectId,
+				NearbyQuestRefreshInputAdapterService.CreatePlanFromMapRegion(input.Player, input.MapRegion, staticData)))
+			.ToArray();
+
+		return NearbyQuestDelayedRefreshExecutionReport.Completed(
+			schedulePlan,
+			clearedPendingRefresh,
+			playerReports);
+	}
+
 	public static NearbyQuestDelayedRefreshPacketIntentSummary CreatePacketIntentSummary(
 		NearbyQuestDelayedRefreshExecutionReport report)
 	{
@@ -136,6 +166,10 @@ public sealed record NearbyQuestDelayedRefreshExecutionReport(
 public sealed record NearbyQuestDelayedRefreshPlayerReport(
 	int PlayerObjectId,
 	NearbyQuestRefreshInputAdapterResult RefreshResult);
+
+public sealed record NearbyQuestDelayedRefreshPlayerInput(
+	Player Player,
+	NearbyQuestMapRegionSnapshot? MapRegion);
 
 public sealed record NearbyQuestDelayedRefreshPacketIntentSummary(
 	int PlayerCount,

@@ -40,6 +40,73 @@ public sealed class NearbyQuestDelayedRefreshExecutionReportServiceTests
 	}
 
 	[Fact]
+	public async Task CreateReportFromMapRegions_ComposesPerPlayerMapRegionResultsWithoutSending()
+	{
+		using var temp = TempDirectory.Create();
+		var staticData = await LoadStaticDataAsync(temp.Path);
+		var instance = new WorldMapInstanceRuntimeState(instanceId: 7);
+		var schedulePlan = instance.RegisterQuestStartIdsAndPlanNearbyRefresh([3001, 3002]);
+		var elyos = CreatePlayer(1001, "ELYOS");
+		elyos.Position = new WorldPosition(210010000, 100, 200, 300, 45, InstanceId: 7);
+		var asmodian = CreatePlayer(2002, "ASMODIANS");
+		asmodian.Position = new WorldPosition(220010000, 400, 500, 600, 90, InstanceId: 7);
+
+		var report = NearbyQuestDelayedRefreshExecutionReportService.CreateReportFromMapRegions(
+			schedulePlan,
+			instance,
+			[
+				new NearbyQuestDelayedRefreshPlayerInput(
+					elyos,
+					new NearbyQuestMapRegionSnapshot(elyos.Position, instance)),
+				new NearbyQuestDelayedRefreshPlayerInput(
+					asmodian,
+					new NearbyQuestMapRegionSnapshot(asmodian.Position, instance)),
+			],
+			staticData);
+
+		Assert.Equal(NearbyQuestDelayedRefreshExecutionStatus.Completed, report.Status);
+		Assert.True(report.ClearedPendingRefresh);
+		Assert.False(instance.HasPendingNearbyQuestRefresh);
+		var elyosReport = Assert.Single(report.PlayerReports, player => player.PlayerObjectId == 1001);
+		Assert.Equal(NearbyQuestRefreshInputAdapterStatus.Created, elyosReport.RefreshResult.Status);
+		Assert.Equal(elyos.Position, elyosReport.RefreshResult.PlayerPosition);
+		Assert.Equal(elyos.Position, elyosReport.RefreshResult.MapRegionPosition);
+		Assert.Equal(7, elyosReport.RefreshResult.MapRegionParentInstanceId);
+		Assert.Equal([3001], elyosReport.RefreshResult.Plan.Markers.Select(marker => marker.QuestId));
+		var asmodianReport = Assert.Single(report.PlayerReports, player => player.PlayerObjectId == 2002);
+		Assert.Equal(asmodian.Position, asmodianReport.RefreshResult.PlayerPosition);
+		Assert.Equal([3002], asmodianReport.RefreshResult.Plan.Markers.Select(marker => marker.QuestId));
+	}
+
+	[Fact]
+	public async Task CreateReportFromMapRegions_RecordsMissingMapRegionPerPlayerWithoutPacketIntent()
+	{
+		using var temp = TempDirectory.Create();
+		var staticData = await LoadStaticDataAsync(temp.Path);
+		var instance = new WorldMapInstanceRuntimeState(instanceId: 7);
+		var schedulePlan = instance.RegisterQuestStartIdsAndPlanNearbyRefresh([3001]);
+		var player = CreatePlayer(1001, "ELYOS");
+		player.Position = new WorldPosition(210010000, 1, 2, 3, 4, InstanceId: 7);
+
+		var report = NearbyQuestDelayedRefreshExecutionReportService.CreateReportFromMapRegions(
+			schedulePlan,
+			instance,
+			[new NearbyQuestDelayedRefreshPlayerInput(player, MapRegion: null)],
+			staticData);
+
+		Assert.Equal(NearbyQuestDelayedRefreshExecutionStatus.Completed, report.Status);
+		Assert.True(report.ClearedPendingRefresh);
+		var playerReport = Assert.Single(report.PlayerReports);
+		Assert.Equal(NearbyQuestRefreshInputAdapterStatus.MissingMapRegion, playerReport.RefreshResult.Status);
+		Assert.Equal("mapRegion", playerReport.RefreshResult.MissingDependency);
+		Assert.Equal(player.Position, playerReport.RefreshResult.PlayerPosition);
+		Assert.False(playerReport.RefreshResult.Plan.WouldSendPacket);
+		var summary = NearbyQuestDelayedRefreshExecutionReportService.CreatePacketIntentSummary(report);
+		Assert.False(summary.HasPacketIntent);
+		Assert.Equal(0, summary.PacketIntentCount);
+	}
+
+	[Fact]
 	public async Task CreatePacketIntentSummary_AggregatesReadyEmptyRejectedAndUnsupportedCounts()
 	{
 		using var temp = TempDirectory.Create();
