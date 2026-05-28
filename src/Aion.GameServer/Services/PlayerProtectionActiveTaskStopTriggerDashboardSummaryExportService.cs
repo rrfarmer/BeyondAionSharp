@@ -25,6 +25,10 @@ public sealed record PlayerProtectionActiveTaskStopTriggerDashboardSummaryExport
 	bool HasRuntimeEvidenceBlocker,
 	bool HasComparisonExecutionBlocker,
 	bool HasKeyProjectionEvidence,
+	bool HasJavaHookDetailEvidence,
+	int JavaHookDetailRowCount,
+	bool NeedsProtectionArtifactSerializer,
+	bool NeedsJavaObserverImplementation,
 	bool ReadyForRuntimeComparison,
 	string JavaSource,
 	bool IsLive);
@@ -36,7 +40,8 @@ public sealed record PlayerProtectionActiveTaskStopTriggerDashboardSummaryExport
 public static class PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportService
 {
 	public static PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportReport Create(
-		PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardReport dashboard)
+		PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardReport dashboard,
+		PlayerProtectionActiveTaskStopTriggerJavaHookDetailReport? javaHookDetail = null)
 	{
 		var blockers = dashboard.Rows
 			.Where(row => row.BlocksRuntimeComparison)
@@ -58,6 +63,8 @@ public static class PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportS
 			|| blockers.Any(row => row.Status == PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardStatus.BlockedMissingRuntimeEvidence);
 		var hasComparisonExecutionBlocker = dashboard.NeedsComparisonExecution
 			|| blockers.Any(row => row.Status == PlayerProtectionActiveTaskStopTriggerPrerequisiteDashboardStatus.BlockedComparisonNotExecuted);
+		var needsProtectionArtifactSerializer = javaHookDetail?.NeedsProtectionArtifactSerializer == true;
+		var needsJavaObserverImplementation = javaHookDetail?.NeedsJavaObserverImplementation == true;
 		var readyForRuntimeComparison = dashboard.ReadyForRuntimeComparison && blockers.Length == 0;
 		var status = readyForRuntimeComparison
 			? PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportStatus.ReadyForRuntimeComparison
@@ -73,7 +80,10 @@ public static class PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportS
 				hasJavaArtifactBlocker,
 				hasCSharpEmitterBlocker,
 				hasRuntimeEvidenceBlocker,
-				hasComparisonExecutionBlocker),
+				hasComparisonExecutionBlocker,
+				javaHookDetail?.Rows.Count ?? 0,
+				needsProtectionArtifactSerializer,
+				needsJavaObserverImplementation),
 			blockers,
 			dashboard.Rows.Count,
 			blockers.Length,
@@ -83,6 +93,10 @@ public static class PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportS
 			hasRuntimeEvidenceBlocker,
 			hasComparisonExecutionBlocker,
 			dashboard.HasKeyProjectionEvidence,
+			javaHookDetail != null,
+			javaHookDetail?.Rows.Count ?? 0,
+			needsProtectionArtifactSerializer,
+			needsJavaObserverImplementation,
 			readyForRuntimeComparison,
 			dashboard.JavaSource,
 			IsLive: false);
@@ -96,11 +110,14 @@ public static class PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportS
 		bool hasJavaArtifactBlocker,
 		bool hasCSharpEmitterBlocker,
 		bool hasRuntimeEvidenceBlocker,
-		bool hasComparisonExecutionBlocker)
+		bool hasComparisonExecutionBlocker,
+		int javaHookDetailRowCount,
+		bool needsProtectionArtifactSerializer,
+		bool needsJavaObserverImplementation)
 	{
 		if (status == PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportStatus.ReadyForRuntimeComparison)
 		{
-			return $"Ready for runtime comparison: dashboardRows={dashboardRowCount}; blockingRows=0.";
+			return $"Ready for runtime comparison: dashboardRows={dashboardRowCount}; blockingRows=0; javaHookRows={javaHookDetailRowCount}.";
 		}
 
 		var blockerNames = new List<string>();
@@ -129,10 +146,20 @@ public static class PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportS
 			blockerNames.Add("comparison execution");
 		}
 
+		if (needsProtectionArtifactSerializer)
+		{
+			blockerNames.Add("protection artifact serializer");
+		}
+
+		if (needsJavaObserverImplementation)
+		{
+			blockerNames.Add("Java observer implementation");
+		}
+
 		var blockerSummary = blockerNames.Count == 0
 			? "unspecified blockers"
 			: string.Join(", ", blockerNames);
 
-		return $"Blocked: dashboardRows={dashboardRowCount}; blockingRows={blockingRowCount}; blockers={blockerSummary}.";
+		return $"Blocked: dashboardRows={dashboardRowCount}; blockingRows={blockingRowCount}; javaHookRows={javaHookDetailRowCount}; blockers={blockerSummary}.";
 	}
 }

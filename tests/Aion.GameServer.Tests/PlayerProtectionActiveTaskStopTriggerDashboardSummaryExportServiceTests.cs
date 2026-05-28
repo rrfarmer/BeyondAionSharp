@@ -73,6 +73,23 @@ public sealed class PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportS
 			&& row.Notes.Contains("do not execute comparison", StringComparison.Ordinal));
 	}
 
+	[Fact]
+	public void Create_WithJavaHookDetailSurfacesHookRowsAndSerializerBlockers()
+	{
+		var report = PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportService.Create(
+			CreateDashboard(),
+			PlayerProtectionActiveTaskStopTriggerJavaHookDetailReportService.Create());
+
+		Assert.True(report.HasJavaHookDetailEvidence);
+		Assert.Equal(19, report.JavaHookDetailRowCount);
+		Assert.True(report.NeedsProtectionArtifactSerializer);
+		Assert.True(report.NeedsJavaObserverImplementation);
+		Assert.False(report.ReadyForRuntimeComparison);
+		Assert.Contains("javaHookRows=19", report.Summary, StringComparison.Ordinal);
+		Assert.Contains("protection artifact serializer", report.Summary, StringComparison.Ordinal);
+		Assert.Contains("Java observer implementation", report.Summary, StringComparison.Ordinal);
+	}
+
 	private static PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportReport CreateSummaryExport() =>
 		PlayerProtectionActiveTaskStopTriggerDashboardSummaryExportService.Create(CreateDashboard());
 
