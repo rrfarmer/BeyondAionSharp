@@ -23,7 +23,9 @@ public sealed class WorldMapRegionRuntimeSnapshotServiceTests
 		Assert.Equal(2, snapshot.PlayerCount);
 		Assert.False(snapshot.DeactivationPending);
 		Assert.Equal([0, 1, 2, 1000, 1002, 2000, 2001, 2002], snapshot.NeighbourRegionIds);
-		Assert.Equal(["zone-in-region"], snapshot.ZoneIds);
+		Assert.Equal(["zone-fort", "zone-sub"], snapshot.ZoneIds);
+		Assert.Equal(["zone-sub", "zone-fort"], snapshot.ConstructorOrderedZoneIds);
+		Assert.Empty(snapshot.MissingZoneSortIds);
 		Assert.Contains(snapshot.MissingLivePieces, piece => piece.Contains("ConcurrentHashMap", StringComparison.Ordinal));
 		Assert.Contains("MapRegion constructor", snapshot.JavaSource);
 	}
@@ -47,6 +49,8 @@ public sealed class WorldMapRegionRuntimeSnapshotServiceTests
 		Assert.False(snapshot.CanCreateLiveRegion);
 		Assert.Empty(snapshot.NeighbourRegionIds);
 		Assert.Empty(snapshot.ZoneIds);
+		Assert.Empty(snapshot.ConstructorOrderedZoneIds);
+		Assert.Empty(snapshot.MissingZoneSortIds);
 		Assert.Contains("blocked", snapshot.JavaSource);
 	}
 
@@ -75,7 +79,7 @@ public sealed class WorldMapRegionRuntimeSnapshotServiceTests
 		var zones = new[]
 		{
 			new WorldMapRegionZoneCandidate(
-				"zone-in-region",
+				"zone-fort",
 				210010000,
 				WorldMapRegionZoneClassName.Other,
 				new WorldMapPolygonZoneArea(
@@ -87,8 +91,34 @@ public sealed class WorldMapRegionRuntimeSnapshotServiceTests
 				],
 				Bottom: 0,
 				Top: 256)),
+			new WorldMapRegionZoneCandidate(
+				"zone-sub",
+				210010000,
+				WorldMapRegionZoneClassName.Other,
+				new WorldMapPolygonZoneArea(
+				[
+					new ZonePoint2D(132, 132),
+					new ZonePoint2D(182, 132),
+					new ZonePoint2D(182, 182),
+					new ZonePoint2D(132, 182),
+				],
+				Bottom: 0,
+				Top: 256)),
+		};
+		var sortCandidates = new[]
+		{
+			new WorldMapRegionZoneSortCandidate(
+				"zone-fort",
+				WorldMapRegionZoneSortClassName.Fort,
+				Priority: 0,
+				WorldMapRegionZoneSortService.GetJavaZoneNameId("FORT")),
+			new WorldMapRegionZoneSortCandidate(
+				"zone-sub",
+				WorldMapRegionZoneSortClassName.Sub,
+				Priority: 0,
+				WorldMapRegionZoneSortService.GetJavaZoneNameId("SUB")),
 		};
 
-		return WorldMapRegionCreationSnapshotService.CreateSnapshot(210010000, layout, regionId: 1001, zones);
+		return WorldMapRegionCreationSnapshotService.CreateSnapshot(210010000, layout, regionId: 1001, zones, sortCandidates);
 	}
 }
