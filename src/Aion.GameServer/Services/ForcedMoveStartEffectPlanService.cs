@@ -6,6 +6,8 @@ public enum ForcedMoveEffectKind
 {
 	Pulled,
 	OpenAerial,
+	Stagger,
+	Stumble,
 }
 
 public enum ForcedMoveStartEffectPlanStatus
@@ -33,6 +35,7 @@ public sealed record ForcedMoveStartEffectPlan(
 	ForcedMoveStartEffectPlanInput Input,
 	int? CancelCurrentSkillSourceObjectId,
 	bool ShouldRemoveParalyzeEffects,
+	bool ShouldRemoveStunEffects,
 	bool ShouldCallPlayerOnStopGliding,
 	bool ShouldCallPlayerOnStopMove,
 	bool ShouldUpdateWorldPosition,
@@ -52,10 +55,11 @@ public static class ForcedMoveStartEffectPlanService
 	public static ForcedMoveStartEffectPlan CreatePlan(ForcedMoveStartEffectPlanInput input)
 	{
 		// Java parity breadcrumb:
-		// PulledEffect.startEffect and OpenAerialEffect.startEffect both update world position,
-		// player-stop movement state, optionally emit SM_FORCED_MOVE for players, then set the
-		// matching abnormal state. OpenAerial also removes paralyze effects. Pulled skips cancel/
-		// stop logic when reflected and uses originalEffected as the forced-move packet source.
+		// PulledEffect, OpenAerialEffect, StaggerEffect, and StumbleEffect startEffect methods
+		// update world position, player-stop movement state, optionally emit SM_FORCED_MOVE for
+		// players, then set the matching abnormal state. OpenAerial/Stagger/Stumble remove
+		// paralyze effects, Stumble also removes stun effects, and reflected Pulled skips cancel/
+		// stop logic while using originalEffected as the forced-move packet source.
 		if (input.EffectedCurrentPosition.ObjectId <= 0)
 		{
 			return new ForcedMoveStartEffectPlan(
@@ -63,6 +67,7 @@ public static class ForcedMoveStartEffectPlanService
 				input,
 				CancelCurrentSkillSourceObjectId: null,
 				ShouldRemoveParalyzeEffects: false,
+				ShouldRemoveStunEffects: false,
 				ShouldCallPlayerOnStopGliding: false,
 				ShouldCallPlayerOnStopMove: false,
 				ShouldUpdateWorldPosition: false,
@@ -85,7 +90,8 @@ public static class ForcedMoveStartEffectPlanService
 
 		var shouldSkipPullMotionStops = input.EffectKind == ForcedMoveEffectKind.Pulled && input.IsReflected;
 		int? cancelCurrentSkillSourceObjectId = shouldSkipPullMotionStops ? null : input.EffectorObjectId;
-		var shouldRemoveParalyzeEffects = input.EffectKind == ForcedMoveEffectKind.OpenAerial;
+		var shouldRemoveParalyzeEffects = input.EffectKind is ForcedMoveEffectKind.OpenAerial or ForcedMoveEffectKind.Stagger or ForcedMoveEffectKind.Stumble;
+		var shouldRemoveStunEffects = input.EffectKind == ForcedMoveEffectKind.Stumble;
 		var shouldCallPlayerOnStopGliding = input.IsEffectedPlayer && !shouldSkipPullMotionStops;
 		var shouldCallPlayerOnStopMove = input.IsEffectedPlayer && !shouldSkipPullMotionStops;
 
@@ -118,6 +124,7 @@ public static class ForcedMoveStartEffectPlanService
 			input,
 			cancelCurrentSkillSourceObjectId,
 			shouldRemoveParalyzeEffects,
+			shouldRemoveStunEffects,
 			shouldCallPlayerOnStopGliding,
 			shouldCallPlayerOnStopMove,
 			ShouldUpdateWorldPosition: shouldApplyAbnormal,
@@ -126,7 +133,7 @@ public static class ForcedMoveStartEffectPlanService
 			ResolveAbnormalStateName(input.EffectKind),
 			ShouldSetEffectedControllerAbnormal: shouldApplyAbnormal,
 			ShouldSetEffectAbnormal: shouldApplyAbnormal,
-			input.EffectKind == ForcedMoveEffectKind.Pulled ? "PulledEffect.startEffect" : "OpenAerialEffect.startEffect"
+			ResolveJavaSource(input.EffectKind)
 		);
 	}
 
@@ -136,6 +143,20 @@ public static class ForcedMoveStartEffectPlanService
 		{
 			ForcedMoveEffectKind.Pulled => "PULLED",
 			ForcedMoveEffectKind.OpenAerial => "OPENAERIAL",
+			ForcedMoveEffectKind.Stagger => "STAGGER",
+			ForcedMoveEffectKind.Stumble => "STUMBLE",
+			_ => throw new ArgumentOutOfRangeException(nameof(effectKind), effectKind, "Unsupported forced-move effect kind."),
+		};
+	}
+
+	private static string ResolveJavaSource(ForcedMoveEffectKind effectKind)
+	{
+		return effectKind switch
+		{
+			ForcedMoveEffectKind.Pulled => "PulledEffect.startEffect",
+			ForcedMoveEffectKind.OpenAerial => "OpenAerialEffect.startEffect",
+			ForcedMoveEffectKind.Stagger => "StaggerEffect.startEffect",
+			ForcedMoveEffectKind.Stumble => "StumbleEffect.startEffect",
 			_ => throw new ArgumentOutOfRangeException(nameof(effectKind), effectKind, "Unsupported forced-move effect kind."),
 		};
 	}
