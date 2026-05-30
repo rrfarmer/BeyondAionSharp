@@ -235,9 +235,13 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.SkillCannotCast("state"), 1300026, "state");
 		AssertSystemMessage(SmSystemMessage.SkillCannotCastDead(), 1300026, ChatUtil.L10n(1400059));
 		AssertSystemMessage(SmSystemMessage.SkillNotNeedPet(), 1402918);
+		AssertSystemMessage(SmSystemMessage.SkillSummonAttackMode("Wind Spirit"), 1200008, "Wind Spirit");
+		AssertSystemMessage(SmSystemMessage.SkillSummonGuardMode("Wind Spirit"), 1200009, "Wind Spirit");
+		AssertSystemMessage(SmSystemMessage.SkillSummonRestMode("Wind Spirit"), 1200010, "Wind Spirit");
 		AssertSystemMessage(SmSystemMessage.SkillSummonUnsummoned("Wind Spirit"), 1200006, "Wind Spirit");
 		AssertSystemMessage(SmSystemMessage.SkillSummonUnsummonFollower("Wind Spirit"), 1200011, "Wind Spirit");
 		AssertSystemMessage(SmSystemMessage.SkillSummonUnsummonByTooDistance(), 1300073);
+		AssertSystemMessage(SmSystemMessage.SkillSummonAlreadyHaveAFollower(), 1300072);
 		AssertSystemMessage(SmSystemMessage.GetExp("quest npc", 240), 1370000, "quest npc", "240");
 		AssertSystemMessage(SmSystemMessage.GetExp2(240), 1370002, "240");
 		AssertSystemMessage(SmSystemMessage.GetExpVitalBonus("quest npc", 240, 20), 1400342, "quest npc", "240", "20");

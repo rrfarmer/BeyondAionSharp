@@ -224,6 +224,24 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1402918);
 	}
 
+	public static SmSystemMessage SkillSummonAttackMode(string summonName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_SKILL_SUMMON_ATTACK_MODE(String). %0 is in Attack mode.
+		return new SmSystemMessage(1200008, summonName);
+	}
+
+	public static SmSystemMessage SkillSummonGuardMode(string summonName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_SKILL_SUMMON_GUARD_MODE(String). %0 is in Guard mode.
+		return new SmSystemMessage(1200009, summonName);
+	}
+
+	public static SmSystemMessage SkillSummonRestMode(string summonName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_SKILL_SUMMON_REST_MODE(String). %0 is in Resting mode.
+		return new SmSystemMessage(1200010, summonName);
+	}
+
 	public static SmSystemMessage SkillSummonUnsummoned(string summonName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_SKILL_SUMMON_UNSUMMONED(String).
@@ -240,6 +258,12 @@ public sealed class SmSystemMessage : GameServerPacket
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_SKILL_SUMMON_UNSUMMON_BY_TOO_DISTANCE().
 		return new SmSystemMessage(1300073);
+	}
+
+	public static SmSystemMessage SkillSummonAlreadyHaveAFollower()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_SKILL_SUMMON_ALREADY_HAVE_A_FOLLOWER(). You already have a spirit following you.
+		return new SmSystemMessage(1300072);
 	}
 
 	public static SmSystemMessage InstanceDungeonOpenedForSelf(int worldId)
