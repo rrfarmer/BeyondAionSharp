@@ -1910,6 +1910,18 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1401639, itemName);
 	}
 
+	public static SmSystemMessage ItemReidentifyApplyYes(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ITEM_REIDENTIFY_APPLY_YES.
+		return new SmSystemMessage(1401910, itemName);
+	}
+
+	public static SmSystemMessage ItemReidentifyApplyNo()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ITEM_REIDENTIFY_APPLY_NO.
+		return new SmSystemMessage(1401911);
+	}
+
 	public static SmSystemMessage ExchangeFullInventory()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_EXCHANGE_FULL_INVENTORY.
