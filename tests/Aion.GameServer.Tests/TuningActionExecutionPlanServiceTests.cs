@@ -82,6 +82,7 @@ public sealed class TuningActionExecutionPlanServiceTests
 
 		Assert.Equal(TuningActionCompletionPlanStatus.Planned, plan.Status);
 		Assert.Equal(2, plan.TargetItemUpdate?.TuneCount);
+		Assert.Same(plan.PendingResult, plan.TargetItemUpdate?.PendingTuneResult);
 		Assert.Equal(3, plan.PendingResult?.OptionalSockets);
 		Assert.Equal(4, plan.PendingResult?.EnchantBonus);
 		Assert.Equal(2, plan.PendingResult?.StatBonusId);
@@ -110,6 +111,7 @@ public sealed class TuningActionExecutionPlanServiceTests
 
 		Assert.Equal(TuningActionCompletionPlanStatus.Planned, plan.Status);
 		Assert.Equal(3, plan.TargetItemUpdate?.TuneCount);
+		Assert.Same(plan.PendingResult, plan.TargetItemUpdate?.PendingTuneResult);
 		Assert.Equal(6, plan.PendingResult?.OptionalSockets);
 		Assert.Equal(7, plan.PendingResult?.EnchantBonus);
 		Assert.Equal(1, plan.PendingResult?.StatBonusId);

@@ -29,7 +29,6 @@ public static class CmTuneResultPlanService
 	public static CmTuneResultPlan CreatePlan(
 		InventoryItem? targetItem,
 		ItemTemplateSummary? targetTemplate,
-		PendingTuneResult? pendingResult,
 		bool hasAccepted,
 		string targetItemName)
 	{
@@ -46,10 +45,11 @@ public static class CmTuneResultPlanService
 				JavaSource: "CM_TUNE_RESULT.runImpl -> item lookup by object id returned null -> return");
 		}
 
+		var pendingResult = targetItem.PendingTuneResult;
 		var auditInvalidEvent = !hasAccepted && pendingResult?.IsAttributeOnly == true;
 		if (hasAccepted || auditInvalidEvent)
 		{
-			var applicationPlan = TuneResultApplicationPlanService.CreatePlan(targetItem, pendingResult);
+			var applicationPlan = TuneResultApplicationPlanService.CreatePlan(targetItem);
 			var status = auditInvalidEvent
 				? CmTuneResultPlanStatus.AttributeOnlyCancelForcedApply
 				: applicationPlan.Status == TuneResultApplicationPlanStatus.MissingPendingResultAudited
@@ -74,13 +74,55 @@ public static class CmTuneResultPlanService
 				javaSource);
 		}
 
+		var clearedTarget = CopyInventoryItem(targetItem, pendingResult: null);
+
 		return new CmTuneResultPlan(
 			CmTuneResultPlanStatus.Cancelled,
 			ApplicationPlan: null,
-			ResultingTargetItem: targetItem,
+			ResultingTargetItem: clearedTarget,
 			ResponseMessage: SmSystemMessage.ItemReidentifyApplyNo(),
-			InventoryUpdatePacket: new SmInventoryUpdateItem(targetItem, targetTemplate, SmInventoryUpdateItem.DecreaseItemUse),
+			InventoryUpdatePacket: new SmInventoryUpdateItem(clearedTarget, targetTemplate, SmInventoryUpdateItem.DecreaseItemUse),
 			AuditMessage: null,
 			JavaSource: "CM_TUNE_RESULT.runImpl -> !hasAccepted -> clear pending result, STR_MSG_ITEM_REIDENTIFY_APPLY_NO, SM_INVENTORY_UPDATE_ITEM");
+	}
+
+	private static InventoryItem CopyInventoryItem(InventoryItem item, PendingTuneResult? pendingResult)
+	{
+		return new InventoryItem
+		{
+			ObjectId = item.ObjectId,
+			ItemId = item.ItemId,
+			Count = item.Count,
+			Color = item.Color,
+			ColorExpires = item.ColorExpires,
+			Creator = item.Creator,
+			ExpireTime = item.ExpireTime,
+			ActivationCount = item.ActivationCount,
+			OwnerId = item.OwnerId,
+			IsEquipped = item.IsEquipped,
+			IsSoulBound = item.IsSoulBound,
+			Slot = item.Slot,
+			Location = item.Location,
+			Enchant = item.Enchant,
+			EnchantBonus = item.EnchantBonus,
+			ItemSkin = item.ItemSkin,
+			FusionedItem = item.FusionedItem,
+			OptionalSocket = item.OptionalSocket,
+			OptionalFusionSocket = item.OptionalFusionSocket,
+			Charge = item.Charge,
+			TuneCount = item.TuneCount,
+			RandomBonus = item.RandomBonus,
+			FusionRandomBonus = item.FusionRandomBonus,
+			Tempering = item.Tempering,
+			PackCount = item.PackCount,
+			IsAmplified = item.IsAmplified,
+			BuffSkill = item.BuffSkill,
+			RandomPlumeBonus = item.RandomPlumeBonus,
+			PendingTuneResult = pendingResult,
+			ManaStones = item.ManaStones,
+			FusionStones = item.FusionStones,
+			Godstone = item.Godstone,
+			IdianStone = item.IdianStone,
+		};
 	}
 }

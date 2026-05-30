@@ -21,9 +21,10 @@ public sealed record TuneResultApplicationPlan(
 
 public static class TuneResultApplicationPlanService
 {
-	public static TuneResultApplicationPlan CreatePlan(InventoryItem targetItem, PendingTuneResult? pendingResult)
+	public static TuneResultApplicationPlan CreatePlan(InventoryItem targetItem)
 	{
 		// Java parity: services/item/ItemActionService.applyTuneResult.
+		var pendingResult = targetItem.PendingTuneResult;
 		if (pendingResult == null)
 		{
 			return new TuneResultApplicationPlan(
@@ -86,6 +87,7 @@ public static class TuneResultApplicationPlanService
 			IsAmplified = item.IsAmplified,
 			BuffSkill = item.BuffSkill,
 			RandomPlumeBonus = item.RandomPlumeBonus,
+			PendingTuneResult = null,
 			ManaStones = item.ManaStones,
 			FusionStones = item.FusionStones,
 			Godstone = item.Godstone,

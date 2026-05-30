@@ -1,3 +1,5 @@
+using Aion.GameServer.Model.Items;
+
 namespace Aion.GameServer.Model.GameObjects;
 
 public sealed class InventoryItem
@@ -60,6 +62,9 @@ public sealed class InventoryItem
 	public int BuffSkill { get; init; }
 
 	public int RandomPlumeBonus { get; init; }
+
+	// Java parity: model/gameobjects/Item.pendingTuneResult.
+	public PendingTuneResult? PendingTuneResult { get; set; }
 
 	public IReadOnlyList<ItemStoneSocket> ManaStones { get; set; } = Array.Empty<ItemStoneSocket>();
 

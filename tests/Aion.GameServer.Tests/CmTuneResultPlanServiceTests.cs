@@ -14,7 +14,6 @@ public sealed class CmTuneResultPlanServiceTests
 		var plan = CmTuneResultPlanService.CreatePlan(
 			targetItem: null,
 			targetTemplate: null,
-			pendingResult: null,
 			hasAccepted: true,
 			targetItemName: "target");
 
@@ -34,7 +33,6 @@ public sealed class CmTuneResultPlanServiceTests
 		var plan = CmTuneResultPlanService.CreatePlan(
 			targetItem,
 			targetTemplate,
-			pendingResult: null,
 			hasAccepted: true,
 			targetItemName: "target");
 
@@ -50,14 +48,13 @@ public sealed class CmTuneResultPlanServiceTests
 	[Fact]
 	public void CreatePlan_AcceptedBranchAppliesPendingTuneResultAndBuildsInventoryUpdate()
 	{
-		var targetItem = CreateItem(optionalSockets: 2, enchantBonus: 3, randomBonus: 4);
-		var targetTemplate = CreateTemplate();
 		var pendingResult = new PendingTuneResult(OptionalSockets: 5, EnchantBonus: 7, StatBonusId: 9, IsAttributeOnly: false);
+		var targetItem = CreateItem(optionalSockets: 2, enchantBonus: 3, randomBonus: 4, pendingTuneResult: pendingResult);
+		var targetTemplate = CreateTemplate();
 
 		var plan = CmTuneResultPlanService.CreatePlan(
 			targetItem,
 			targetTemplate,
-			pendingResult,
 			hasAccepted: true,
 			targetItemName: "target");
 
@@ -67,6 +64,7 @@ public sealed class CmTuneResultPlanServiceTests
 		Assert.Equal(5, plan.ResultingTargetItem?.OptionalSocket);
 		Assert.Equal(7, plan.ResultingTargetItem?.EnchantBonus);
 		Assert.Equal(9, plan.ResultingTargetItem?.RandomBonus);
+		Assert.Null(plan.ResultingTargetItem?.PendingTuneResult);
 		Assert.Equal(1401910, plan.ResponseMessage?.MessageId);
 		Assert.IsType<SmInventoryUpdateItem>(plan.InventoryUpdatePacket);
 	}
@@ -74,14 +72,13 @@ public sealed class CmTuneResultPlanServiceTests
 	[Fact]
 	public void CreatePlan_AttributeOnlyCancelForcesApplyAndAudits()
 	{
-		var targetItem = CreateItem();
-		var targetTemplate = CreateTemplate();
 		var pendingResult = new PendingTuneResult(OptionalSockets: 5, EnchantBonus: 7, StatBonusId: 9, IsAttributeOnly: true);
+		var targetItem = CreateItem(pendingTuneResult: pendingResult);
+		var targetTemplate = CreateTemplate();
 
 		var plan = CmTuneResultPlanService.CreatePlan(
 			targetItem,
 			targetTemplate,
-			pendingResult,
 			hasAccepted: false,
 			targetItemName: "target");
 
@@ -96,26 +93,30 @@ public sealed class CmTuneResultPlanServiceTests
 	[Fact]
 	public void CreatePlan_CancelBranchClearsPreviewAndSendsApplyNo()
 	{
-		var targetItem = CreateItem(optionalSockets: 2, enchantBonus: 3, randomBonus: 4);
-		var targetTemplate = CreateTemplate();
 		var pendingResult = new PendingTuneResult(OptionalSockets: 5, EnchantBonus: 7, StatBonusId: 9, IsAttributeOnly: false);
+		var targetItem = CreateItem(optionalSockets: 2, enchantBonus: 3, randomBonus: 4, pendingTuneResult: pendingResult);
+		var targetTemplate = CreateTemplate();
 
 		var plan = CmTuneResultPlanService.CreatePlan(
 			targetItem,
 			targetTemplate,
-			pendingResult,
 			hasAccepted: false,
 			targetItemName: "target");
 
 		Assert.Equal(CmTuneResultPlanStatus.Cancelled, plan.Status);
 		Assert.Null(plan.ApplicationPlan);
-		Assert.Same(targetItem, plan.ResultingTargetItem);
+		Assert.NotSame(targetItem, plan.ResultingTargetItem);
+		Assert.Null(plan.ResultingTargetItem?.PendingTuneResult);
 		Assert.Equal(1401911, plan.ResponseMessage?.MessageId);
 		Assert.IsType<SmInventoryUpdateItem>(plan.InventoryUpdatePacket);
 		Assert.Contains("STR_MSG_ITEM_REIDENTIFY_APPLY_NO", plan.JavaSource, StringComparison.Ordinal);
 	}
 
-	private static InventoryItem CreateItem(int optionalSockets = 0, int enchantBonus = 0, int randomBonus = 0) =>
+	private static InventoryItem CreateItem(
+		int optionalSockets = 0,
+		int enchantBonus = 0,
+		int randomBonus = 0,
+		PendingTuneResult? pendingTuneResult = null) =>
 		new()
 		{
 			ObjectId = 1001,
@@ -128,6 +129,7 @@ public sealed class CmTuneResultPlanServiceTests
 			OptionalSocket = optionalSockets,
 			EnchantBonus = enchantBonus,
 			RandomBonus = randomBonus,
+			PendingTuneResult = pendingTuneResult,
 		};
 
 	private static ItemTemplateSummary CreateTemplate() =>

@@ -126,6 +126,7 @@ public static class IdentifyItemExecutionPlanService
 			IsAmplified = item.IsAmplified,
 			BuffSkill = item.BuffSkill,
 			RandomPlumeBonus = item.RandomPlumeBonus,
+			PendingTuneResult = item.PendingTuneResult,
 			ManaStones = item.ManaStones,
 			FusionStones = item.FusionStones,
 			Godstone = item.Godstone,
