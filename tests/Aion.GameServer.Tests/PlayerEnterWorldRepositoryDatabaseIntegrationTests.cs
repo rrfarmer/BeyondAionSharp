@@ -3,6 +3,7 @@ using Aion.GameServer.Data;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Services;
+using Aion.GameServer.World;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Aion.GameServer.Tests;
@@ -10,6 +11,81 @@ namespace Aion.GameServer.Tests;
 public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 {
 	private const int PlayerObjectId = 1001;
+
+	[Fact]
+	public async Task SavePlayerLogoutAsync_WritesRetuningInventoryFieldsAgainstJavaSchema_WhenEnabled()
+	{
+		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
+			return;
+
+		// Java source breadcrumbs: PlayerLeaveWorldService.leaveWorld -> PlayerService.storePlayer
+		// -> InventoryDAO.store(player) -> InventoryDAO.UPDATE_QUERY.
+		InitializeDatabaseFactory();
+		await InitializeSchemaAsync();
+		await SeedPlayerAsync();
+		await SeedInventoryItemAsync(9401, itemId: 110100001, count: 1);
+
+		var repository = new MySqlPlayerEnterWorldRepository(
+			new GameServerRuntimeContext(),
+			NullLogger<MySqlPlayerEnterWorldRepository>.Instance);
+		var lastOnline = new DateTime(2026, 5, 30, 12, 34, 56, DateTimeKind.Local);
+		var player = new Player
+		{
+			ObjectId = PlayerObjectId,
+			Name = "PurifyIntegration",
+			Exp = 1234,
+			RecoverableExp = 56,
+			Dp = 78,
+			Position = new WorldPosition(210010000, 11, 22, 33, 44),
+			InventoryItems =
+			[
+				new InventoryItem
+				{
+					ObjectId = 9401,
+					ItemId = 110100001,
+					Count = 1,
+					Color = 0x123456,
+					ColorExpires = 789,
+					Creator = "retune-test",
+					ExpireTime = 456,
+					ActivationCount = 2,
+					OwnerId = PlayerObjectId,
+					IsEquipped = false,
+					IsSoulBound = true,
+					Slot = 0,
+					Location = 0,
+					Enchant = 1,
+					EnchantBonus = 7,
+					ItemSkin = 110100099,
+					FusionedItem = 0,
+					OptionalSocket = 4,
+					OptionalFusionSocket = 0,
+					Charge = 12,
+					TuneCount = 3,
+					RandomBonus = 99,
+					FusionRandomBonus = 0,
+					Tempering = 5,
+					PackCount = 1,
+					IsAmplified = true,
+					BuffSkill = 321,
+					RandomPlumeBonus = 8,
+				},
+			],
+		};
+
+		var saved = await repository.SavePlayerLogoutAsync(player, lastOnline);
+
+		Assert.True(saved);
+		Assert.Equal(7, await ExecuteScalarLongAsync("SELECT enchant_bonus FROM inventory WHERE item_unique_id = 9401"));
+		Assert.Equal(4, await ExecuteScalarLongAsync("SELECT optional_socket FROM inventory WHERE item_unique_id = 9401"));
+		Assert.Equal(3, await ExecuteScalarLongAsync("SELECT tune_count FROM inventory WHERE item_unique_id = 9401"));
+		Assert.Equal(99, await ExecuteScalarLongAsync("SELECT rnd_bonus FROM inventory WHERE item_unique_id = 9401"));
+		Assert.Equal(1, await ExecuteScalarLongAsync("SELECT is_soul_bound FROM inventory WHERE item_unique_id = 9401"));
+		Assert.Equal(321, await ExecuteScalarLongAsync("SELECT buff_skill FROM inventory WHERE item_unique_id = 9401"));
+		Assert.Equal(8, await ExecuteScalarLongAsync("SELECT rnd_plume_bonus FROM inventory WHERE item_unique_id = 9401"));
+		Assert.Equal(1234, await ExecuteScalarLongAsync("SELECT exp FROM players WHERE id = 1001"));
+		Assert.Equal(0, await ExecuteScalarLongAsync("SELECT online FROM players WHERE id = 1001"));
+	}
 
 	[Fact]
 	public async Task SaveItemPurificationMutation_WritesInventoryStonesAndAbyssRankAgainstJavaSchema_WhenEnabled()

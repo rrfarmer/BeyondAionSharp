@@ -1030,6 +1030,11 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	{
 		// Java parity: services/player/PlayerLeaveWorldService.leaveWorld -> PlayerService.storePlayer,
 		// PlayerDAO.storeLastOnlineTime, then PlayerDAO.onlinePlayer(false).
+		// Java PlayerService.storePlayer also calls InventoryDAO.store(player), which flushes
+		// dirty storage/equipment item rows via InventoryDAO.UPDATE_QUERY before the final
+		// online/offline flags are written. C# does not yet track Java PersistentState on
+		// InventoryItem/Storage, so logout conservatively flushes the current item snapshots
+		// for the player-owned storages that are already modeled live.
 		try
 		{
 			await using var connection = DatabaseFactory.GetConnection();
@@ -1042,6 +1047,12 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			await SavePlayerHouseObjectCooldownsAsync(connection, player.ObjectId, player.HouseObjectCooldowns, nowMillis, cancellationToken);
 			await SavePlayerPortalCooldownsAsync(connection, player.ObjectId, player.PortalCooldowns, nowMillis, cancellationToken);
 			await SavePlayerSettingsAsync(connection, player.ObjectId, player.Settings, cancellationToken);
+			if (!await SaveInventoryItemSnapshotAsync(connection, player.InventoryItems, cancellationToken))
+				return false;
+			if (!await SaveInventoryItemSnapshotAsync(connection, player.WarehouseItems, cancellationToken))
+				return false;
+			if (!await SaveInventoryItemSnapshotAsync(connection, player.AccountWarehouseItems, cancellationToken))
+				return false;
 
 			await using var command = connection.CreateCommand();
 			command.CommandText = """
@@ -1085,6 +1096,20 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			_logger.LogError(ex, "Could not save logout state for player {PlayerObjectId}", player.ObjectId);
 			return false;
 		}
+	}
+
+	private static async Task<bool> SaveInventoryItemSnapshotAsync(
+		MySqlConnection connection,
+		IReadOnlyList<InventoryItem> items,
+		CancellationToken cancellationToken)
+	{
+		foreach (var item in items)
+		{
+			if (!await SaveInventoryItemFullStateAsync(connection, item, cancellationToken))
+				return false;
+		}
+
+		return true;
 	}
 
 	public async Task<bool> SaveItemChargeMutationAsync(
@@ -1877,6 +1902,55 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				new MySqlParameter { Value = item.Count },
 				new MySqlParameter { Value = item.ObjectId },
 				new MySqlParameter { Value = playerObjectId },
+			});
+		return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+	}
+
+	private static async Task<bool> SaveInventoryItemFullStateAsync(
+		MySqlConnection connection,
+		InventoryItem item,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: dao/InventoryDAO.UPDATE_QUERY used by InventoryDAO.store(player).
+		await using var command = connection.CreateCommand();
+		command.CommandText = """
+			UPDATE inventory
+			SET item_count = ?, item_color = ?, color_expires = ?, item_creator = ?, expire_time = ?, activation_count = ?,
+				item_owner = ?, is_equipped = ?, is_soul_bound = ?, slot = ?, item_location = ?, enchant = ?, enchant_bonus = ?,
+				item_skin = ?, fusioned_item = ?, optional_socket = ?, optional_fusion_socket = ?, charge = ?, tune_count = ?,
+				rnd_bonus = ?, fusion_rnd_bonus = ?, tempering = ?, pack_count = ?, is_amplified = ?, buff_skill = ?, rnd_plume_bonus = ?
+			WHERE item_unique_id = ?
+			""";
+		command.Parameters.AddRange(
+			new[]
+			{
+				new MySqlParameter { Value = item.Count },
+				new MySqlParameter { Value = item.Color.HasValue ? item.Color.Value : DBNull.Value },
+				new MySqlParameter { Value = item.ColorExpires },
+				new MySqlParameter { Value = item.Creator ?? (object)DBNull.Value },
+				new MySqlParameter { Value = item.ExpireTime },
+				new MySqlParameter { Value = item.ActivationCount },
+				new MySqlParameter { Value = item.OwnerId },
+				new MySqlParameter { Value = item.IsEquipped },
+				new MySqlParameter { Value = item.IsSoulBound },
+				new MySqlParameter { Value = item.Slot },
+				new MySqlParameter { Value = item.Location },
+				new MySqlParameter { Value = item.Enchant },
+				new MySqlParameter { Value = item.EnchantBonus },
+				new MySqlParameter { Value = item.ItemSkin },
+				new MySqlParameter { Value = item.FusionedItem },
+				new MySqlParameter { Value = item.OptionalSocket },
+				new MySqlParameter { Value = item.OptionalFusionSocket },
+				new MySqlParameter { Value = item.Charge },
+				new MySqlParameter { Value = item.TuneCount },
+				new MySqlParameter { Value = item.RandomBonus },
+				new MySqlParameter { Value = item.FusionRandomBonus },
+				new MySqlParameter { Value = item.Tempering },
+				new MySqlParameter { Value = item.PackCount },
+				new MySqlParameter { Value = item.IsAmplified },
+				new MySqlParameter { Value = item.BuffSkill },
+				new MySqlParameter { Value = item.RandomPlumeBonus },
+				new MySqlParameter { Value = item.ObjectId },
 			});
 		return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
 	}
