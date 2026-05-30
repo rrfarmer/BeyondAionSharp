@@ -110,7 +110,10 @@ public sealed record ItemTemplateSummary(
 	int HouseDecorateTemplateId = 0,
 	int WeaponBoost = 0,
 	int ToyPetSpawnNpcId = 0,
-	int ToyPetSpawnTime = 0)
+	int ToyPetSpawnTime = 0,
+	int MaxEnchantBonus = 0,
+	int OptionSlotBonus = 0,
+	ItemTuningActionInfo? TuningAction = null)
 {
 	private const int CanPolishMask = 1 << 17;
 	private const int CanApExtractMask = 1 << 16;
@@ -322,6 +325,18 @@ public sealed record ItemTemplateSummary(
 	}
 }
 
+// Java parity: model/templates/item/actions/UseTarget.
+public enum ItemActionUseTargetType
+{
+	Accessory,
+	Armor,
+	Equipment,
+	Weapon,
+	Wing,
+	Other,
+	All,
+}
+
 public sealed record ItemWeaponStats(
 	int MinDamage,
 	int MaxDamage,
@@ -397,6 +412,9 @@ public sealed record ItemAnimationActionInfo(
 
 // Java parity: model/templates/item/actions/RemodelAction.
 public sealed record ItemRemodelActionInfo(int ExtractType, int ExpireMinutes);
+
+// Java parity: model/templates/item/actions/TuningAction.
+public sealed record ItemTuningActionInfo(ItemActionUseTargetType Target, bool ShouldNotReduceTuneCount);
 
 public sealed record ItemStatModifier(
 	string Operation,

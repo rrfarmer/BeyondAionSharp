@@ -2219,6 +2219,15 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 4 && reader.LocalName == "tuning" && currentItemTemplate != null)
+			{
+				// Java parity: model/templates/item/actions/TuningAction target/no_reduce metadata.
+				currentItemTemplate.TuningAction = new ItemTuningActionInfo(
+					ParseItemActionUseTargetType(reader.GetAttribute("target") ?? throw new FormatException("Missing required attribute 'target'.")),
+					ReadBoolAttribute(reader, "no_reduce"));
+				continue;
+			}
+
 			if (reader.Depth == 4 && reader.LocalName == "assemble" && currentItemTemplate != null)
 			{
 				// Java parity: model/templates/item/actions/AssemblyItemAction item attribute.
@@ -3918,6 +3927,8 @@ public sealed class StaticData
 			MaxEnchantLevel = maxEnchantLevel;
 			CanExceedEnchant = canExceedEnchant;
 			ExceedEnchantSkill = exceedEnchantSkill;
+			MaxEnchantBonus = maxEnchantBonus;
+			OptionSlotBonus = optionSlotBonus;
 			StatBonusSetId = randomBonusId;
 			EnchantName = enchantName;
 			TemperingName = temperingName;
@@ -3975,6 +3986,10 @@ public sealed class StaticData
 		private bool CanExceedEnchant { get; }
 
 		private string ExceedEnchantSkill { get; }
+
+		private int MaxEnchantBonus { get; }
+
+		private int OptionSlotBonus { get; }
 
 		private int StatBonusSetId { get; }
 
@@ -4082,6 +4097,8 @@ public sealed class StaticData
 
 		public int HouseDecorateTemplateId { get; set; }
 
+		public ItemTuningActionInfo? TuningAction { get; set; }
+
 		public void AddModifier(ItemStatModifier modifier)
 		{
 			Modifiers.Add(modifier);
@@ -4181,7 +4198,10 @@ public sealed class StaticData
 				HouseDecorateTemplateId,
 				WeaponBoost,
 				ToyPetSpawnNpcId,
-				ToyPetSpawnTime);
+				ToyPetSpawnTime,
+				MaxEnchantBonus,
+				OptionSlotBonus,
+				TuningAction);
 		}
 
 		private static int CalculateMaxTuneCount(
@@ -4199,6 +4219,22 @@ public sealed class StaticData
 				return 0;
 
 			return maxTuneCount;
+		}
+
+		private static ItemActionUseTargetType ParseItemActionUseTargetType(string value)
+		{
+			// Java parity: model/templates/item/actions/UseTarget.fromValue.
+			return value switch
+			{
+				"ACCESSORY" => ItemActionUseTargetType.Accessory,
+				"ARMOR" => ItemActionUseTargetType.Armor,
+				"EQUIPMENT" => ItemActionUseTargetType.Equipment,
+				"WEAPON" => ItemActionUseTargetType.Weapon,
+				"WING" => ItemActionUseTargetType.Wing,
+				"OTHER" => ItemActionUseTargetType.Other,
+				"ALL" => ItemActionUseTargetType.All,
+				_ => throw new FormatException($"Unexpected UseTarget value '{value}'."),
+			};
 		}
 	}
 
@@ -5083,6 +5119,22 @@ public sealed class StaticData
 	private static bool ReadOptionalBoolAttribute(XmlReader reader, string attributeName, bool defaultValue)
 	{
 		return bool.TryParse(reader.GetAttribute(attributeName), out var parsed) ? parsed : defaultValue;
+	}
+
+	private static ItemActionUseTargetType ParseItemActionUseTargetType(string value)
+	{
+		// Java parity: model/templates/item/actions/UseTarget.fromValue.
+		return value switch
+		{
+			"ACCESSORY" => ItemActionUseTargetType.Accessory,
+			"ARMOR" => ItemActionUseTargetType.Armor,
+			"EQUIPMENT" => ItemActionUseTargetType.Equipment,
+			"WEAPON" => ItemActionUseTargetType.Weapon,
+			"WING" => ItemActionUseTargetType.Wing,
+			"OTHER" => ItemActionUseTargetType.Other,
+			"ALL" => ItemActionUseTargetType.All,
+			_ => throw new FormatException($"Unexpected UseTarget value '{value}'."),
+		};
 	}
 
 	private static NpcSubDialogType? ReadNpcSubDialogType(string? value)

@@ -1245,6 +1245,20 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(1, staticData.ItemRandomBonuses.SelectRandomBonusNumber("POLISH", 3, () => 0));
 		Assert.Equal(2, staticData.ItemTemplates.GetItemTemplate(168300003)?.ChargeActionMaxLevel);
 		Assert.Equal(1, staticData.ItemTemplates.GetItemTemplate(168300003)?.Improvement?.ChargeWay);
+		Assert.Equal(
+			new ItemTuningActionInfo(ItemActionUseTargetType.Weapon, ShouldNotReduceTuneCount: false),
+			staticData.ItemTemplates.GetItemTemplate(166200000)?.TuningAction);
+		Assert.Equal(
+			new ItemTuningActionInfo(ItemActionUseTargetType.Weapon, ShouldNotReduceTuneCount: true),
+			staticData.ItemTemplates.GetItemTemplate(166200001)?.TuningAction);
+		Assert.Equal(
+			new ItemTuningActionInfo(ItemActionUseTargetType.Equipment, ShouldNotReduceTuneCount: false),
+			staticData.ItemTemplates.GetItemTemplate(166200002)?.TuningAction);
+		Assert.Equal(
+			staticData.GetElementCount("tuning"),
+			staticData.ItemTemplates.Templates.Count(template => template.TuningAction != null));
+		Assert.Equal(5, staticData.ItemTemplates.GetItemTemplate(100001433)?.MaxEnchantBonus);
+		Assert.Equal(3, staticData.ItemTemplates.GetItemTemplate(100001433)?.OptionSlotBonus);
 		var stigmaStone = staticData.ItemTemplates.GetItemTemplate(140001107);
 		Assert.NotNull(stigmaStone);
 		Assert.Equal(["FI_WHIRLDRAIN", "FI_WHIRLTORNADO"], stigmaStone.StigmaInfo?.GainSkillGroups);
