@@ -1627,6 +1627,19 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1401969);
 	}
 
+	public static SmSystemMessage PersonalShopSellItem(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_PERSONAL_SHOP_SELL_ITEM(String). You have sold %0.
+		return new SmSystemMessage(1400134, itemName);
+	}
+
+	public static SmSystemMessage PersonalShopSellItemMulti(long count, string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_PERSONAL_SHOP_SELL_ITEM_MULTI(long, String). You have sold %num1 %0s.
+		// Java parameter order: (value0=itemName, num1=count).
+		return new SmSystemMessage(1400135, itemName, count.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
 	public static SmSystemMessage StigmaNotEnoughMoney()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_STIGMA_NOT_ENOUGH_MONEY.
