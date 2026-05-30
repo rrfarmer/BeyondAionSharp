@@ -87,14 +87,77 @@ public sealed class GameTimeDayCalculationServiceTests
 	// --- full plan ---
 
 	[Fact]
-	public void CreatePlan_ComputesHourMinuteDayTimeFromGameTimeMinutes()
+	public void CreatePlan_ComputesFullDateTimeFromGameTimeMinutes()
 	{
-		// 9*60 + 30 = 570 minutes = hour 9, minute 30 → AFTERNOON
+		// 9*60 + 30 = 570 minutes = year 0, month 1, day 1, hour 9, minute 30 → AFTERNOON
 		var plan = GameTimeDayCalculationService.CreatePlan(570);
 
+		Assert.Equal(0, plan.Year);
+		Assert.Equal(1, plan.Month);
+		Assert.Equal(1, plan.Day);
 		Assert.Equal(9, plan.Hour);
 		Assert.Equal(30, plan.Minute);
 		Assert.Equal(GameDayTime.Afternoon, plan.DayTime);
 		Assert.False(plan.IsLive);
+	}
+
+	// --- getYear ---
+
+	[Fact]
+	public void GetYear_ZeroMinutesIsYear0()
+	{
+		Assert.Equal(0, GameTimeDayCalculationService.GetYear(0));
+	}
+
+	[Fact]
+	public void GetYear_OnceAroundIsYear1()
+	{
+		// MINUTES_IN_YEAR = 372 * 1440 = 535680
+		Assert.Equal(1, GameTimeDayCalculationService.GetYear(GameTimeDayCalculationService.MinutesInYear));
+	}
+
+	// --- getMonth ---
+
+	[Fact]
+	public void GetMonth_StartOfYearIsMonth1()
+	{
+		Assert.Equal(1, GameTimeDayCalculationService.GetMonth(0));
+	}
+
+	[Fact]
+	public void GetMonth_AfterFirstMonthIsMonth2()
+	{
+		// First month = 31 days = 31 * 1440 = 44640 minutes
+		Assert.Equal(2, GameTimeDayCalculationService.GetMonth(31 * GameTimeDayCalculationService.MinutesInDay));
+	}
+
+	[Fact]
+	public void GetMonth_LastMonthIsMonth12()
+	{
+		// 11 months into year = month 12
+		Assert.Equal(12, GameTimeDayCalculationService.GetMonth(11 * 31 * GameTimeDayCalculationService.MinutesInDay));
+	}
+
+	// --- getDay ---
+
+	[Fact]
+	public void GetDay_StartOfMonthIsDay1()
+	{
+		Assert.Equal(1, GameTimeDayCalculationService.GetDay(0));
+	}
+
+	[Fact]
+	public void GetDay_OneFullDayIntoMonthIsDay2()
+	{
+		Assert.Equal(2, GameTimeDayCalculationService.GetDay(GameTimeDayCalculationService.MinutesInDay));
+	}
+
+	[Fact]
+	public void GetDay_CalendarConstantsAreCorrect()
+	{
+		Assert.Equal(31, GameTimeCalendar.DaysPerMonth);
+		Assert.Equal(12, GameTimeCalendar.MonthsPerYear);
+		Assert.Equal(372, GameTimeCalendar.DaysPerYear);
+		Assert.Equal(535680, GameTimeDayCalculationService.MinutesInYear);
 	}
 }
