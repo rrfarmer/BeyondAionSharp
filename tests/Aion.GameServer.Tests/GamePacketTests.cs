@@ -1384,6 +1384,8 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.ItemReidentifyWrongLevel("scroll", "target"), 1401635, "scroll", "target");
 		AssertSystemMessage(SmSystemMessage.ItemReidentifyCannotReidentify("target"), 1401636, "target");
 		AssertSystemMessage(SmSystemMessage.ItemReidentifyDidntIdentify("target"), 1401637, "target");
+		AssertSystemMessage(SmSystemMessage.ItemIdentifyCanceled("target"), 1401625, "target");
+		AssertSystemMessage(SmSystemMessage.ItemIdentifySucceed("target"), 1401626, "target");
 		AssertSystemMessage(SmSystemMessage.ItemReidentifyApplyYes("target"), 1401910, "target");
 		AssertSystemMessage(SmSystemMessage.ItemReidentifyApplyNo(), 1401911);
 		AssertSystemMessage(SmSystemMessage.ExchangeFullInventory(), 1300366);

@@ -1922,6 +1922,18 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1401911);
 	}
 
+	public static SmSystemMessage ItemIdentifyCanceled(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ITEM_IDENTIFY_CANCELED.
+		return new SmSystemMessage(1401625, itemName);
+	}
+
+	public static SmSystemMessage ItemIdentifySucceed(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ITEM_IDENTIFY_SUCCEED.
+		return new SmSystemMessage(1401626, itemName);
+	}
+
 	public static SmSystemMessage ExchangeFullInventory()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_EXCHANGE_FULL_INVENTORY.
