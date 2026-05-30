@@ -1081,10 +1081,64 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300042);
 	}
 
+	public static SmSystemMessage DiceResultMe(int luck, int maxRoll)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_DICE_RESULT_ME(int value0, int num1). You rolled and got %0 (max. %num1).
+		return new SmSystemMessage(1390162, luck.ToString(System.Globalization.CultureInfo.InvariantCulture), maxRoll.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage DiceResultOther(string playerName, int luck, int maxRoll)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_DICE_RESULT_OTHER(String, int, int). %0 rolled and got %1 (max. %num2).
+		return new SmSystemMessage(1390163, playerName, luck.ToString(System.Globalization.CultureInfo.InvariantCulture), maxRoll.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage DiceGiveupMe()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_DICE_GIVEUP_ME. You gave up rolling the dice.
+		return new SmSystemMessage(1390164);
+	}
+
+	public static SmSystemMessage DiceGiveupOther(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_DICE_GIVEUP_OTHER(String). %0 gave up rolling the dice.
+		return new SmSystemMessage(1390165, playerName);
+	}
+
 	public static SmSystemMessage DiceInventoryError()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_DICE_INVEN_ERROR.
 		return new SmSystemMessage(1390182);
+	}
+
+	public static SmSystemMessage PayResultMe()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_PAY_RESULT_ME. You placed a bid.
+		return new SmSystemMessage(1390183);
+	}
+
+	public static SmSystemMessage PayResultOther(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_PAY_RESULT_OTHER(String). %0 placed a bid.
+		return new SmSystemMessage(1390184, playerName);
+	}
+
+	public static SmSystemMessage PayAllGiveup()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_PAY_ALL_GIVEUP. All members have given up bidding.
+		return new SmSystemMessage(1390227);
+	}
+
+	public static SmSystemMessage PayGiveupMe()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_PAY_GIVEUP_ME. You gave up the Bidding.
+		return new SmSystemMessage(1390228);
+	}
+
+	public static SmSystemMessage PayGiveupOther(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_PAY_GIVEUP_OTHER(String). %0 gave up the Bidding.
+		return new SmSystemMessage(1390229, playerName);
 	}
 
 	public static SmSystemMessage AssemblyItemSucceeded()
