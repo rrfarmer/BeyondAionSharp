@@ -1537,6 +1537,42 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1400873);
 	}
 
+	public static SmSystemMessage PersonalShopDisabledInCombatMode()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_PERSONAL_SHOP_DISABLED_IN_COMBAT_MODE.
+		return new SmSystemMessage(1300663);
+	}
+
+	public static SmSystemMessage PersonalShopDisabledInMovingObject()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_PERSONAL_SHOP_DISABLED_IN_MOVING_OBJECT.
+		return new SmSystemMessage(1300714);
+	}
+
+	public static SmSystemMessage PersonalShopDisabledInFlyMode()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_PERSONAL_SHOP_DISABLED_IN_FLY_MODE.
+		return new SmSystemMessage(1300798);
+	}
+
+	public static SmSystemMessage CantOpenStoreDuringCrafting()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_CANT_OPEN_STORE_DURING_CRAFTING (name is NC fail; message content is correct).
+		return new SmSystemMessage(1400078);
+	}
+
+	public static SmSystemMessage PersonalShopRestrictionRide()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_PERSONAL_SHOP_RESTRICTION_RIDE.
+		return new SmSystemMessage(1401095);
+	}
+
+	public static SmSystemMessage PersonalShopDisabledInHiddenMode()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_PERSONAL_SHOP_DISABLED_IN_HIDDEN_MODE.
+		return new SmSystemMessage(1401969);
+	}
+
 	public static SmSystemMessage StigmaNotEnoughMoney()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_STIGMA_NOT_ENOUGH_MONEY.
