@@ -1537,10 +1537,64 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1400873);
 	}
 
+	public static SmSystemMessage PersonalShopCanNotSellEquippedItem()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_PERSONAL_SHOP_CAN_NOT_SELL_EQUIPED_ITEM.
+		return new SmSystemMessage(1300660);
+	}
+
+	public static SmSystemMessage PersonalShopCannotBeExchanged()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_PERSONAL_SHOP_CANNOT_BE_EXCHANGED. You cannot sell items that cannot be traded.
+		return new SmSystemMessage(1300661);
+	}
+
+	public static SmSystemMessage PersonalShopCanNotSellUsedItem()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_PERSONAL_SHOP_CAN_NOT_SELL_USED_ITEM. You cannot sell used items.
+		return new SmSystemMessage(1300662);
+	}
+
 	public static SmSystemMessage PersonalShopDisabledInCombatMode()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_PERSONAL_SHOP_DISABLED_IN_COMBAT_MODE.
 		return new SmSystemMessage(1300663);
+	}
+
+	public static SmSystemMessage PersonalShopClosedForCombatMode()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_PERSONAL_SHOP_CLOSED_FOR_COMBAT_MODE.
+		return new SmSystemMessage(1300664);
+	}
+
+	public static SmSystemMessage PersonalShopSoldOut(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_PERSONAL_SHOP_SOLD_OUT(String). %0 has already been sold.
+		return new SmSystemMessage(1300665, itemName);
+	}
+
+	public static SmSystemMessage PersonalShopFullBasket()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_PERSONAL_SHOP_FULL_BASKET. You cannot register any more items.
+		return new SmSystemMessage(1300666);
+	}
+
+	public static SmSystemMessage PersonalShopAlreadyRegistItem()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_PERSONAL_SHOP_ALREAY_REGIST_ITEM.
+		return new SmSystemMessage(1300942);
+	}
+
+	public static SmSystemMessage PersonalShopCannotRegistDuringStigma()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_PERSONAL_SHOP_CANNOT_REGIST_DURING_STIGMA.
+		return new SmSystemMessage(1300943);
+	}
+
+	public static SmSystemMessage PersonalShopCannotRegistDuringSelling()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_PERSONAL_SHOP_CANNOT_REGIST_DURING_SELLING.
+		return new SmSystemMessage(1300944);
 	}
 
 	public static SmSystemMessage PersonalShopDisabledInMovingObject()
