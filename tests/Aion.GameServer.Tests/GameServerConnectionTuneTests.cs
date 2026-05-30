@@ -104,6 +104,140 @@ public sealed class GameServerConnectionTuneTests
 			packet => AssertSystemMessageId(Assert.IsType<SmSystemMessage>(packet), 1401639));
 	}
 
+	[Fact]
+	public async Task ProcessPacketAsync_CmTuneResult_AcceptedBranchAppliesPendingPreviewAndSendsApplyYes()
+	{
+		await using var fixture = await TuneFixture.CreateAsync();
+		var player = CreatePlayer(
+		[
+			CreateTargetItem(
+				objectId: 5001,
+				itemId: 110100001,
+				tuneCount: 1,
+				optionalSocket: 1,
+				enchantBonus: 2,
+				randomBonus: 3,
+				pendingTuneResult: new PendingTuneResult(OptionalSockets: 5, EnchantBonus: 7, StatBonusId: 9, IsAttributeOnly: false)),
+		]);
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(238, buffer =>
+			{
+				buffer.WriteD(5001);
+				buffer.WriteC(1);
+			}));
+
+		var targetItem = Assert.Single(player.InventoryItems);
+		Assert.Equal(5, targetItem.OptionalSocket);
+		Assert.Equal(7, targetItem.EnchantBonus);
+		Assert.Equal(9, targetItem.RandomBonus);
+		Assert.Null(targetItem.PendingTuneResult);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertSystemMessageId(Assert.IsType<SmSystemMessage>(packet), 1401910),
+			packet => AssertInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 5001, expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse));
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmTuneResult_AcceptedWithoutPendingStillSendsApplyYesAndInventoryUpdate()
+	{
+		await using var fixture = await TuneFixture.CreateAsync();
+		var player = CreatePlayer([CreateTargetItem(objectId: 5001, itemId: 110100001, tuneCount: 1, optionalSocket: 1, enchantBonus: 2, randomBonus: 3)]);
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(238, buffer =>
+			{
+				buffer.WriteD(5001);
+				buffer.WriteC(1);
+			}));
+
+		var targetItem = Assert.Single(player.InventoryItems);
+		Assert.Equal(1, targetItem.OptionalSocket);
+		Assert.Equal(2, targetItem.EnchantBonus);
+		Assert.Equal(3, targetItem.RandomBonus);
+		Assert.Null(targetItem.PendingTuneResult);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertSystemMessageId(Assert.IsType<SmSystemMessage>(packet), 1401910),
+			packet => AssertInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 5001, expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse));
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmTuneResult_AttributeOnlyCancelForcesApplyAndSendsApplyYes()
+	{
+		await using var fixture = await TuneFixture.CreateAsync();
+		var player = CreatePlayer(
+		[
+			CreateTargetItem(
+				objectId: 5001,
+				itemId: 110100001,
+				tuneCount: 1,
+				optionalSocket: 1,
+				enchantBonus: 2,
+				randomBonus: 3,
+				pendingTuneResult: new PendingTuneResult(OptionalSockets: 4, EnchantBonus: 6, StatBonusId: 8, IsAttributeOnly: true)),
+		]);
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(238, buffer =>
+			{
+				buffer.WriteD(5001);
+				buffer.WriteC(0);
+			}));
+
+		var targetItem = Assert.Single(player.InventoryItems);
+		Assert.Equal(4, targetItem.OptionalSocket);
+		Assert.Equal(6, targetItem.EnchantBonus);
+		Assert.Equal(8, targetItem.RandomBonus);
+		Assert.Null(targetItem.PendingTuneResult);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertSystemMessageId(Assert.IsType<SmSystemMessage>(packet), 1401910),
+			packet => AssertInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 5001, expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse));
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmTuneResult_CancelBranchClearsPendingPreviewAndSendsApplyNo()
+	{
+		await using var fixture = await TuneFixture.CreateAsync();
+		var player = CreatePlayer(
+		[
+			CreateTargetItem(
+				objectId: 5001,
+				itemId: 110100001,
+				tuneCount: 1,
+				optionalSocket: 1,
+				enchantBonus: 2,
+				randomBonus: 3,
+				pendingTuneResult: new PendingTuneResult(OptionalSockets: 5, EnchantBonus: 7, StatBonusId: 9, IsAttributeOnly: false)),
+		]);
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(238, buffer =>
+			{
+				buffer.WriteD(5001);
+				buffer.WriteC(0);
+			}));
+
+		var targetItem = Assert.Single(player.InventoryItems);
+		Assert.Equal(1, targetItem.OptionalSocket);
+		Assert.Equal(2, targetItem.EnchantBonus);
+		Assert.Equal(3, targetItem.RandomBonus);
+		Assert.Null(targetItem.PendingTuneResult);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertSystemMessageId(Assert.IsType<SmSystemMessage>(packet), 1401911),
+			packet => AssertInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 5001, expectedUpdateType: SmInventoryUpdateItem.DecreaseItemUse));
+	}
+
 	private static Player CreatePlayer(InventoryItem[] inventoryItems) =>
 		new()
 		{
@@ -115,7 +249,14 @@ public sealed class GameServerConnectionTuneTests
 			InventoryItems = inventoryItems,
 		};
 
-	private static InventoryItem CreateTargetItem(int objectId, int itemId, int tuneCount) =>
+	private static InventoryItem CreateTargetItem(
+		int objectId,
+		int itemId,
+		int tuneCount,
+		int optionalSocket = 0,
+		int enchantBonus = 0,
+		int randomBonus = 0,
+		PendingTuneResult? pendingTuneResult = null) =>
 		new()
 		{
 			ObjectId = objectId,
@@ -124,6 +265,10 @@ public sealed class GameServerConnectionTuneTests
 			Location = 0,
 			OwnerId = 1001,
 			TuneCount = tuneCount,
+			OptionalSocket = optionalSocket,
+			EnchantBonus = enchantBonus,
+			RandomBonus = randomBonus,
+			PendingTuneResult = pendingTuneResult,
 		};
 
 	private static InventoryItem CreateScrollItem(int objectId, int itemId) =>

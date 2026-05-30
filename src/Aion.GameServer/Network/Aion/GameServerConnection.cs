@@ -590,6 +590,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleTuneAsync(_activePlayer, tune);
 				break;
+			case CmTuneResult tuneResult:
+				if (_activePlayer != null)
+					await HandleTuneResultAsync(_activePlayer, tuneResult);
+				break;
 			case CmSelectDecomposable selectDecomposable:
 				if (_activePlayer != null)
 					await HandleSelectDecomposableAsync(_activePlayer, selectDecomposable);
@@ -3809,6 +3813,42 @@ public sealed class GameServerConnection : BaseClientConnection
 			await SendPacketAsync(completionPlan.ResultPacket);
 		if (completionPlan.SuccessMessage != null)
 			await SendPacketAsync(completionPlan.SuccessMessage);
+	}
+
+	private async Task HandleTuneResultAsync(Player player, CmTuneResult packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_TUNE_RESULT.runImpl.
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var itemTemplates = staticData?.ItemTemplates;
+		if (staticData == null || itemTemplates == null)
+			return;
+
+		var inventoryItems = player.InventoryItems.ToList();
+		var targetItem = inventoryItems.FirstOrDefault(item => item.ObjectId == packet.ItemObjectId);
+		var targetTemplate = targetItem == null ? null : itemTemplates.GetItemTemplate(targetItem.ItemId);
+		var targetItemName = targetTemplate?.GetClientName() ?? targetTemplate?.Name ?? string.Empty;
+		var plan = CmTuneResultPlanService.CreatePlan(targetItem, targetTemplate, packet.HasAccepted, targetItemName);
+		if (plan.Status == CmTuneResultPlanStatus.NoTargetItem || plan.ResultingTargetItem == null || targetTemplate == null)
+			return;
+
+		if (plan.AuditMessage != null)
+		{
+			_logger.LogWarning(
+				"Player {PlayerName} ({PlayerObjectId}) {AuditMessage}",
+				player.Name,
+				player.ObjectId,
+				plan.AuditMessage);
+		}
+
+		ReplaceInventoryItem(inventoryItems, plan.ResultingTargetItem);
+		player.InventoryItems = inventoryItems.ToArray();
+		if (plan.ResponseMessage != null)
+			await SendPacketAsync(plan.ResponseMessage);
+		await SendPacketAsync(new SmInventoryUpdateItem(
+			plan.ResultingTargetItem,
+			targetTemplate,
+			SmInventoryUpdateItem.DecreaseItemUse,
+			GetGeneralInfoWarehouseRestrictionFlag(plan.ResultingTargetItem.ItemId, staticData.ItemRestrictionCleanups)));
 	}
 
 	private async Task SendConsumedItemPacketsAsync(
