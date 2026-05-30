@@ -8,6 +8,7 @@ public sealed class SmActionAnimation : GameServerPacket
 	public const int LevelUp = 0;
 	public const int BindKisk = 2;
 	public const int CraftLevelUp = 4;
+	public const int ClassChange = 4; // Java parity: ActionAnimation.CLASS_CHANGE and CRAFT_LEVEL_UP share id=4
 
 	private readonly int _targetObjectId;
 	private readonly int _actionAnimationId;
