@@ -1053,6 +1053,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				return false;
 			if (!await SaveInventoryItemSnapshotAsync(connection, player.AccountWarehouseItems, cancellationToken))
 				return false;
+			player.MarkDirtyItemsPersisted();
 
 			await using var command = connection.CreateCommand();
 			command.CommandText = """

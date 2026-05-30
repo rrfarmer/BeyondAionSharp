@@ -127,6 +127,7 @@ public static class IdentifyItemExecutionPlanService
 			BuffSkill = item.BuffSkill,
 			RandomPlumeBonus = item.RandomPlumeBonus,
 			PendingTuneResult = item.PendingTuneResult,
+			PersistentState = InventoryItemPersistentState.UpdateRequired,
 			ManaStones = item.ManaStones,
 			FusionStones = item.FusionStones,
 			Godstone = item.Godstone,

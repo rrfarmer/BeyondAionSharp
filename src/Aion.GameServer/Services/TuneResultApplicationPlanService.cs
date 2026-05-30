@@ -88,6 +88,7 @@ public static class TuneResultApplicationPlanService
 			BuffSkill = item.BuffSkill,
 			RandomPlumeBonus = item.RandomPlumeBonus,
 			PendingTuneResult = null,
+			PersistentState = InventoryItemPersistentState.UpdateRequired,
 			ManaStones = item.ManaStones,
 			FusionStones = item.FusionStones,
 			Godstone = item.Godstone,

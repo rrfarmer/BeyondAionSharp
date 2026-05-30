@@ -200,6 +200,24 @@ public sealed class Player
 
 	public IReadOnlyList<InventoryItem> AccountWarehouseItems { get; set; } = Array.Empty<InventoryItem>();
 
+	// Java parity: model/gameobjects/player/Player.getDirtyItemsToUpdate.
+	public List<InventoryItem> GetDirtyItemsToUpdate()
+	{
+		var dirtyItems = new List<InventoryItem>();
+		AddDirtyItems(dirtyItems, InventoryItems);
+		AddDirtyItems(dirtyItems, WarehouseItems);
+		AddDirtyItems(dirtyItems, AccountWarehouseItems);
+		return dirtyItems;
+	}
+
+	// Java parity: Player.getDirtyItemsToUpdate resets storage/equipment persistent state after InventoryDAO.store(player).
+	public void MarkDirtyItemsPersisted()
+	{
+		InventoryItems = NormalizePersistentState(InventoryItems);
+		WarehouseItems = NormalizePersistentState(WarehouseItems);
+		AccountWarehouseItems = NormalizePersistentState(AccountWarehouseItems);
+	}
+
 	public IReadOnlyList<PlayerSkill> Skills { get; set; } = Array.Empty<PlayerSkill>();
 
 	public IReadOnlyDictionary<int, long> SkillCooldowns { get; set; } = new Dictionary<int, long>();
@@ -251,6 +269,63 @@ public sealed class Player
 
 	private readonly List<PlayerPetSkillOrder> _petSkillOrders = [];
 	private readonly Dictionary<int, PlayerSummonKnownObject> _summonKnownObjects = [];
+
+	private static void AddDirtyItems(List<InventoryItem> dirtyItems, IReadOnlyList<InventoryItem> items)
+	{
+		dirtyItems.AddRange(items.Where(item =>
+			item.PersistentState is InventoryItemPersistentState.New
+				or InventoryItemPersistentState.UpdateRequired
+				or InventoryItemPersistentState.Deleted));
+	}
+
+	private static IReadOnlyList<InventoryItem> NormalizePersistentState(IReadOnlyList<InventoryItem> items)
+	{
+		if (!items.Any(item => item.PersistentState != InventoryItemPersistentState.Updated))
+			return items;
+
+		return items.Select(item => item.PersistentState == InventoryItemPersistentState.Updated ? item : CopyInventoryItem(item, InventoryItemPersistentState.Updated)).ToArray();
+	}
+
+	private static InventoryItem CopyInventoryItem(InventoryItem item, InventoryItemPersistentState persistentState)
+	{
+		return new InventoryItem
+		{
+			ObjectId = item.ObjectId,
+			ItemId = item.ItemId,
+			Count = item.Count,
+			Color = item.Color,
+			ColorExpires = item.ColorExpires,
+			Creator = item.Creator,
+			ExpireTime = item.ExpireTime,
+			ActivationCount = item.ActivationCount,
+			OwnerId = item.OwnerId,
+			IsEquipped = item.IsEquipped,
+			IsSoulBound = item.IsSoulBound,
+			Slot = item.Slot,
+			Location = item.Location,
+			Enchant = item.Enchant,
+			EnchantBonus = item.EnchantBonus,
+			ItemSkin = item.ItemSkin,
+			FusionedItem = item.FusionedItem,
+			OptionalSocket = item.OptionalSocket,
+			OptionalFusionSocket = item.OptionalFusionSocket,
+			Charge = item.Charge,
+			TuneCount = item.TuneCount,
+			RandomBonus = item.RandomBonus,
+			FusionRandomBonus = item.FusionRandomBonus,
+			Tempering = item.Tempering,
+			PackCount = item.PackCount,
+			IsAmplified = item.IsAmplified,
+			BuffSkill = item.BuffSkill,
+			RandomPlumeBonus = item.RandomPlumeBonus,
+			PendingTuneResult = item.PendingTuneResult,
+			PersistentState = persistentState,
+			ManaStones = item.ManaStones,
+			FusionStones = item.FusionStones,
+			Godstone = item.Godstone,
+			IdianStone = item.IdianStone,
+		};
+	}
 
 	// Java parity: model/gameobjects/Summon.addSkillOrder represented until the full Summon model exists.
 	public IReadOnlyList<PlayerPetSkillOrder> PetSkillOrders => _petSkillOrders;

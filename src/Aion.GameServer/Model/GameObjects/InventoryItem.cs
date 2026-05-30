@@ -2,6 +2,16 @@ using Aion.GameServer.Model.Items;
 
 namespace Aion.GameServer.Model.GameObjects;
 
+// Java parity: model/gameobjects/Persistable.PersistentState.
+public enum InventoryItemPersistentState
+{
+	New,
+	UpdateRequired,
+	Updated,
+	Deleted,
+	NoAction,
+}
+
 public sealed class InventoryItem
 {
 	public int ObjectId { get; init; }
@@ -65,6 +75,9 @@ public sealed class InventoryItem
 
 	// Java parity: model/gameobjects/Item.pendingTuneResult.
 	public PendingTuneResult? PendingTuneResult { get; set; }
+
+	// Java parity: model/gameobjects/Item.persistentState.
+	public InventoryItemPersistentState PersistentState { get; init; } = InventoryItemPersistentState.Updated;
 
 	public IReadOnlyList<ItemStoneSocket> ManaStones { get; set; } = Array.Empty<ItemStoneSocket>();
 
