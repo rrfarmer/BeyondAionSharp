@@ -1627,6 +1627,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1401969);
 	}
 
+	public static SmSystemMessage DayCannotSellNpc(long remainingLimit)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_DAY_CANNOT_SELL_NPC(long).
+		return new SmSystemMessage(1400938, remainingLimit.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
 	public static SmSystemMessage PersonalShopSellItem(string itemName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_PERSONAL_SHOP_SELL_ITEM(String). You have sold %0.
