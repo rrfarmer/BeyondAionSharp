@@ -292,16 +292,21 @@ public sealed class SmInventoryInfo : GameServerPacket
 	}
 
 	internal static void WriteEnchantInfo(PacketBuffer payload, InventoryItem item) =>
-		WriteEnchantInfo(payload, item, template: null);
+		WriteEnchantInfo(payload, item, item.OptionalSocket, item.EnchantBonus, template: null);
 
 	internal static void WriteEnchantInfo(PacketBuffer payload, InventoryItem item, ItemTemplateSummary? template)
+	{
+		WriteEnchantInfo(payload, item, item.OptionalSocket, item.EnchantBonus, template);
+	}
+
+	internal static void WriteEnchantInfo(PacketBuffer payload, InventoryItem item, int optionalSocket, int enchantBonus, ItemTemplateSummary? template = null)
 	{
 		// Java parity: network/aion/iteminfo/EnchantInfoBlobEntry.writeInfo.
 		payload.WriteC(item.IsSoulBound ? 1 : 0);
 		payload.WriteC(item.Enchant);
 		payload.WriteD(item.ItemSkin == 0 ? item.ItemId : item.ItemSkin);
-		payload.WriteC(item.IsIdentified ? item.OptionalSocket : -1);
-		payload.WriteC(item.IsIdentified ? item.EnchantBonus : -1);
+		payload.WriteC(item.IsIdentified ? optionalSocket : -1);
+		payload.WriteC(item.IsIdentified ? enchantBonus : -1);
 		WriteStoneSlots(payload, item.ManaStones);
 		payload.WriteD(item.Godstone?.ItemId ?? 0);
 		var dyeExpiration = GetRemainingSeconds(item.ColorExpires);

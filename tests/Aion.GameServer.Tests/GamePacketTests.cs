@@ -6,6 +6,7 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.Account;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Model.Items;
 using Aion.GameServer.Model.Templates.Pet;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ClientPackets;
@@ -1102,6 +1103,36 @@ public class GamePacketTests
 		Assert.Equal(3, (int)fullItemUsageReader.ReadC());
 		Assert.Equal(15360, fullItemUsageReader.ReadD());
 		Assert.Equal(0, fullItemUsageReader.Remaining);
+
+		var tuneResultPayload = SerializeUnencryptedPayload(
+			new SmTuneResult(
+				new InventoryItem
+				{
+					ObjectId = 1001,
+					ItemId = 100000001,
+					Location = 0,
+					Slot = 1,
+					Count = 1,
+					TuneCount = 3,
+					OptionalSocket = 1,
+					EnchantBonus = 2,
+					RandomBonus = 4,
+				},
+				new ItemTemplateSummary(100000001, "Tac Officer's Sword", 0, 1, 55, "SWORD", "NORMAL", "UNIQUE", "PC_ALL", 1, 0, 1),
+				166030001,
+				new PendingTuneResult(OptionalSockets: 5, EnchantBonus: 7, StatBonusId: 2, IsAttributeOnly: true))
+		);
+		using var tuneResultReader = new PacketBuffer(tuneResultPayload);
+		Assert.Equal(1001, tuneResultReader.ReadD());
+		Assert.Equal(166030001, tuneResultReader.ReadD());
+		Assert.Equal(2, (int)tuneResultReader.ReadC());
+		Assert.Equal(0, (int)tuneResultReader.ReadC());
+		Assert.Equal(0, (int)tuneResultReader.ReadC());
+		Assert.Equal(100000001, tuneResultReader.ReadD());
+		Assert.Equal(5, (int)tuneResultReader.ReadC());
+		Assert.Equal(7, (int)tuneResultReader.ReadC());
+		Assert.Equal(1, tuneResultPayload[^2]);
+		Assert.Equal(1, tuneResultPayload[^1]);
 
 		var skillCancelPayload = SerializeUnencryptedPayload(new SmSkillCancel(7001, 1234));
 		using var skillCancelReader = new PacketBuffer(skillCancelPayload);
