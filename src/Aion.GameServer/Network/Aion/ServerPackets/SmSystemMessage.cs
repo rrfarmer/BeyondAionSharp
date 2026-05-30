@@ -1687,6 +1687,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1401969);
 	}
 
+	public static SmSystemMessage InstanceClosedTime(int worldId)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_INSTANCE_CLOSED_TIME(int). Instance is not available at this time.
+		return new SmSystemMessage(1401306, worldId.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
 	public static SmSystemMessage ExchangePartnerTooHeavyToExchange()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_PARTNER_TOO_HEAVY_TO_EXCHANGE. Partner is carrying too many items.
