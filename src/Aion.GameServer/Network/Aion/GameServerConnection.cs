@@ -586,6 +586,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleCompositeStonesAsync(_activePlayer, compositeStones);
 				break;
+			case CmTune tune:
+				if (_activePlayer != null)
+					await HandleTuneAsync(_activePlayer, tune);
+				break;
 			case CmSelectDecomposable selectDecomposable:
 				if (_activePlayer != null)
 					await HandleSelectDecomposableAsync(_activePlayer, selectDecomposable);
@@ -2558,9 +2562,11 @@ public sealed class GameServerConnection : BaseClientConnection
 			await SendPacketAsync(pendingItemUse.CancelMessage switch
 			{
 				PendingItemUseCancelMessage.EnchantItem => SmSystemMessage.EnchantItemCanceled(pendingItemUse.TargetItemName),
+				PendingItemUseCancelMessage.ItemIdentify => SmSystemMessage.ItemIdentifyCanceled(pendingItemUse.TargetItemName),
 				PendingItemUseCancelMessage.Item => SmSystemMessage.ItemCanceled(),
 				PendingItemUseCancelMessage.ItemCharge => SmSystemMessage.ItemChargeCanceled(),
 				PendingItemUseCancelMessage.ItemCharge2 => SmSystemMessage.ItemCharge2Canceled(),
+				PendingItemUseCancelMessage.ItemReidentify => SmSystemMessage.ItemReidentifyCanceled(pendingItemUse.TargetItemName),
 				PendingItemUseCancelMessage.GodstoneSocket => SmSystemMessage.GiveItemProcCancel(pendingItemUse.TargetItemName),
 				PendingItemUseCancelMessage.SoulBind => SmSystemMessage.SoulBoundItemCanceled(pendingItemUse.TargetItemName),
 				PendingItemUseCancelMessage.Decompose => SmSystemMessage.DecomposeItemCanceled(pendingItemUse.TargetItemName),
@@ -3585,6 +3591,224 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (!mutationPlan.RewardSucceeded && mutationPlan.RewardInventoryFull)
 			await SendPacketAsync(SmSystemMessage.DiceInventoryError());
 		await SendPacketAsync(new SmItemUsageAnimation(player.ObjectId, toolItem.ObjectId, toolItem.ItemId, 0, 1, 0));
+	}
+
+	private async Task HandleTuneAsync(Player player, CmTune packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_TUNE.runImpl.
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var itemTemplates = staticData?.ItemTemplates;
+		var itemRandomBonuses = staticData?.ItemRandomBonuses;
+		if (staticData == null || itemTemplates == null || itemRandomBonuses == null)
+			return;
+
+		var inventoryItems = player.InventoryItems.ToList();
+		var targetItem = inventoryItems.FirstOrDefault(item => item.ObjectId == packet.ItemObjectId);
+		var tuningScrollItem = packet.TuningScrollObjectId == 0
+			? null
+			: inventoryItems.FirstOrDefault(item => item.ObjectId == packet.TuningScrollObjectId);
+		var targetTemplate = targetItem == null ? null : itemTemplates.GetItemTemplate(targetItem.ItemId);
+		var tuningScrollTemplate = tuningScrollItem == null ? null : itemTemplates.GetItemTemplate(tuningScrollItem.ItemId);
+		var targetItemName = targetTemplate?.GetClientName() ?? targetTemplate?.Name ?? string.Empty;
+		var tuningScrollName = tuningScrollTemplate?.GetClientName() ?? tuningScrollTemplate?.Name ?? string.Empty;
+		var plan = CmTuneRuntimePlanService.CreatePlan(
+			targetItem,
+			targetTemplate,
+			packet.TuningScrollObjectId,
+			tuningScrollItem,
+			tuningScrollTemplate,
+			tuningScrollName,
+			targetItemName);
+
+		switch (plan.Status)
+		{
+			case CmTuneRuntimePlanStatus.NoTargetItem:
+			case CmTuneRuntimePlanStatus.MissingTuningScroll:
+			case CmTuneRuntimePlanStatus.MissingTuningAction:
+				return;
+			case CmTuneRuntimePlanStatus.IdentifyTargetItem:
+				if (targetItem == null || targetTemplate == null)
+					return;
+
+				await ScheduleIdentifyItemAsync(player, inventoryItems, targetItem, targetTemplate, itemRandomBonuses, staticData.ItemRestrictionCleanups);
+				return;
+			case CmTuneRuntimePlanStatus.AuditAlreadyIdentifiedWithoutScroll:
+				if (plan.AuditMessage != null)
+				{
+					_logger.LogWarning(
+						"Player {PlayerName} ({PlayerObjectId}) {AuditMessage}",
+						player.Name,
+						player.ObjectId,
+						plan.AuditMessage);
+				}
+				return;
+			case CmTuneRuntimePlanStatus.GuardBlocked:
+				if (plan.GuardPlan?.DenialMessage != null)
+					await SendPacketAsync(plan.GuardPlan.DenialMessage);
+				return;
+			case CmTuneRuntimePlanStatus.ExecuteTuning:
+				if (plan.ResolvedAction == null)
+					return;
+
+				await ScheduleTuningActionAsync(
+					player,
+					inventoryItems,
+					plan.ResolvedAction,
+					itemRandomBonuses,
+					staticData.ItemRestrictionCleanups);
+				return;
+			default:
+				return;
+		}
+	}
+
+	private async Task ScheduleIdentifyItemAsync(
+		Player player,
+		List<InventoryItem> inventoryItems,
+		InventoryItem targetItem,
+		ItemTemplateSummary targetTemplate,
+		ItemRandomBonusTable itemRandomBonuses,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups)
+	{
+		var targetItemName = targetTemplate.GetClientName() ?? targetTemplate.Name;
+		var startPlan = IdentifyItemExecutionPlanService.CreateStartPlan(player.ObjectId, targetItem.ObjectId, targetItem.ItemId);
+		await CancelPendingItemUseAsync(player);
+		await BroadcastItemUsageAnimationAsync(player, startPlan.BroadcastPacket);
+		await SchedulePendingItemUseAsync(
+			player,
+			itemObjectId: targetItem.ObjectId,
+			itemTemplateId: targetItem.ItemId,
+			targetItemName: targetItemName,
+			cancelMessage: PendingItemUseCancelMessage.ItemIdentify,
+			delay: TimeSpan.FromMilliseconds(startPlan.DelayMilliseconds),
+			completeAsync: async cancellationToken =>
+			{
+				if (cancellationToken.IsCancellationRequested)
+					return;
+
+				await CompleteIdentifyItemAsync(
+					player,
+					inventoryItems,
+					targetItem.ObjectId,
+					targetTemplate,
+					itemRandomBonuses,
+					itemRestrictionCleanups);
+			},
+			cancelEndState: 11);
+	}
+
+	private async Task CompleteIdentifyItemAsync(
+		Player player,
+		List<InventoryItem> inventoryItems,
+		int targetItemObjectId,
+		ItemTemplateSummary targetTemplate,
+		ItemRandomBonusTable itemRandomBonuses,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups)
+	{
+		var targetItem = inventoryItems.FirstOrDefault(item => item.ObjectId == targetItemObjectId);
+		if (targetItem == null)
+			return;
+
+		var targetItemName = targetTemplate.GetClientName() ?? targetTemplate.Name;
+		var completionPlan = IdentifyItemExecutionPlanService.CreateCompletionPlan(
+			targetItem,
+			targetTemplate,
+			player.ObjectId,
+			itemRandomBonuses,
+			targetItemName);
+		ReplaceInventoryItem(inventoryItems, completionPlan.TargetItemUpdate);
+		player.InventoryItems = inventoryItems.ToArray();
+		await BroadcastItemUsageAnimationAsync(player, completionPlan.BroadcastPacket);
+		await SendPacketAsync(new SmInventoryUpdateItem(
+			completionPlan.TargetItemUpdate,
+			targetTemplate,
+			SmInventoryUpdateItem.DecreaseItemUse,
+			GetGeneralInfoWarehouseRestrictionFlag(completionPlan.TargetItemUpdate.ItemId, itemRestrictionCleanups)));
+		await SendPacketAsync(completionPlan.SuccessMessage);
+	}
+
+	private async Task ScheduleTuningActionAsync(
+		Player player,
+		List<InventoryItem> inventoryItems,
+		CmTuneResolvedTuningAction action,
+		ItemRandomBonusTable itemRandomBonuses,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups)
+	{
+		var startPlan = TuningActionExecutionPlanService.CreateStartPlan(player.ObjectId, action.TuningScrollItem.ObjectId, action.TuningScrollItem.ItemId);
+		var removeCooldownDelayIdOnCancel = AddItemCooldownIfNeeded(player, action.TuningScrollTemplate, removeOnCancel: true);
+		await CancelPendingItemUseAsync(player);
+		await BroadcastItemUsageAnimationAsync(player, startPlan.BroadcastPacket);
+		await SchedulePendingItemUseAsync(
+			player,
+			itemObjectId: action.TuningScrollItem.ObjectId,
+			itemTemplateId: action.TuningScrollItem.ItemId,
+			targetItemName: action.TargetTemplate.GetClientName() ?? action.TargetTemplate.Name,
+			cancelMessage: PendingItemUseCancelMessage.ItemReidentify,
+			delay: TimeSpan.FromMilliseconds(startPlan.DelayMilliseconds),
+			completeAsync: async cancellationToken =>
+			{
+				if (cancellationToken.IsCancellationRequested)
+					return;
+
+				await CompleteTuningActionAsync(
+					player,
+					inventoryItems,
+					action,
+					itemRandomBonuses,
+					itemRestrictionCleanups,
+					cancellationToken);
+			},
+			cancelEndState: 14,
+			removeCooldownDelayIdOnCancel: removeCooldownDelayIdOnCancel);
+	}
+
+	private async Task CompleteTuningActionAsync(
+		Player player,
+		List<InventoryItem> inventoryItems,
+		CmTuneResolvedTuningAction action,
+		ItemRandomBonusTable itemRandomBonuses,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups,
+		CancellationToken cancellationToken)
+	{
+		var tuningScrollItem = inventoryItems.FirstOrDefault(item => item.ObjectId == action.TuningScrollItem.ObjectId);
+		if (tuningScrollItem == null)
+			return;
+
+		var targetItem = inventoryItems.FirstOrDefault(item => item.ObjectId == action.TargetItem.ObjectId);
+		if (targetItem == null)
+			return;
+
+		var completionPlan = TuningActionExecutionPlanService.CreateCompletionPlan(
+			targetItem,
+			action.TargetTemplate,
+			action.TargetTemplate.OptionSlotBonus,
+			action.TargetTemplate.MaxEnchantBonus,
+			player.ObjectId,
+			tuningScrollItem.ObjectId,
+			tuningScrollItem.ItemId,
+			action.ShouldNotReduceTuneCount,
+			scrollConsumptionSucceeded: true,
+			itemRandomBonuses,
+			action.TargetTemplate.GetClientName() ?? action.TargetTemplate.Name);
+		await BroadcastItemUsageAnimationAsync(player, completionPlan.BroadcastPacket);
+		var sourceItemUpdate = tuningScrollItem.Count > 1 ? CopyInventoryItem(tuningScrollItem, count: tuningScrollItem.Count - 1) : null;
+		int? deletedSourceObjectId = tuningScrollItem.Count <= 1 ? tuningScrollItem.ObjectId : null;
+		await ApplySourceItemMutationAsync(
+			player,
+			inventoryItems,
+			action.TuningScrollTemplate,
+			sourceItemUpdate,
+			deletedSourceObjectId,
+			itemRestrictionCleanups);
+		if (completionPlan.Status != TuningActionCompletionPlanStatus.Planned || completionPlan.TargetItemUpdate == null)
+			return;
+
+		ReplaceInventoryItem(inventoryItems, completionPlan.TargetItemUpdate);
+		player.InventoryItems = inventoryItems.ToArray();
+		if (completionPlan.ResultPacket != null)
+			await SendPacketAsync(completionPlan.ResultPacket);
+		if (completionPlan.SuccessMessage != null)
+			await SendPacketAsync(completionPlan.SuccessMessage);
 	}
 
 	private async Task SendConsumedItemPacketsAsync(
@@ -11923,8 +12147,10 @@ public sealed class GameServerConnection : BaseClientConnection
 		None,
 		Item,
 		EnchantItem,
+		ItemIdentify,
 		ItemCharge,
 		ItemCharge2,
+		ItemReidentify,
 		ManastoneSocket,
 		GodstoneSocket,
 		SoulBind,
