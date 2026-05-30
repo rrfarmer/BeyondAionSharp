@@ -1693,6 +1693,18 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300357);
 	}
 
+	public static SmSystemMessage AbyssOrderRankerDie(string raceL10n, string rankL10n, string playerName, string zoneName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_ABYSS_ORDER_RANKER_DIE(Player, String). %0 %1 %2 has died in %3.
+		return new SmSystemMessage(1400023, raceL10n, rankL10n, playerName, zoneName);
+	}
+
+	public static SmSystemMessage AbyssSkillIsFired(string raceL10n, string playerName, string subZoneString, string skillL10n)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_SKILL_ABYSS_SKILL_IS_FIRED(Player, String). %0 %1 in %2 used %3.
+		return new SmSystemMessage(1390155, raceL10n, playerName, subZoneString, skillL10n);
+	}
+
 	public static SmSystemMessage ExchangeCantExchangeHeavyToAddExchangeItem()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_EXCHANGE_CANT_EXCHANGE_HEAVY_TO_ADD_EXCHANGE_ITEM. You are carrying too many items to trade.
