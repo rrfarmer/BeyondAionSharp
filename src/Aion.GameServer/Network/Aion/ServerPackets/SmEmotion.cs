@@ -26,6 +26,25 @@ public sealed class SmEmotion : GameServerPacket
 	}
 
 	public SmEmotion(
+		int senderObjectId,
+		EmotionType emotionType,
+		int creatureState,
+		float movementSpeed,
+		int baseAttackSpeed,
+		int currentAttackSpeed)
+		: base(PacketOpCode)
+	{
+		// Java parity: network/aion/serverpackets/SM_EMOTION(Creature, EmotionType, int, int) for non-Player creatures.
+		// Used for summon/NPC broadcasts where the creature's stats are snapshotted before packet construction.
+		_senderObjectId = senderObjectId;
+		_emotionType = emotionType;
+		_state = creatureState;
+		_speed = movementSpeed;
+		_baseAttackSpeed = baseAttackSpeed;
+		_currentAttackSpeed = currentAttackSpeed;
+	}
+
+	public SmEmotion(
 		Player player,
 		EmotionType emotionType,
 		int emotion,
