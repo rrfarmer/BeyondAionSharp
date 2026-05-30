@@ -1681,6 +1681,18 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1401969);
 	}
 
+	public static SmSystemMessage ExchangePartnerTooHeavyToExchange()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_PARTNER_TOO_HEAVY_TO_EXCHANGE. Partner is carrying too many items.
+		return new SmSystemMessage(1300357);
+	}
+
+	public static SmSystemMessage ExchangeCantExchangeHeavyToAddExchangeItem()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_EXCHANGE_CANT_EXCHANGE_HEAVY_TO_ADD_EXCHANGE_ITEM. You are carrying too many items to trade.
+		return new SmSystemMessage(1300359);
+	}
+
 	public static SmSystemMessage GuildWarehouseNoRight()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_WAREHOUSE_NO_RIGHT. Legion warehouse access denied.
