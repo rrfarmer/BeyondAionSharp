@@ -7,6 +7,7 @@ public sealed class SmActionAnimation : GameServerPacket
 	public const int PacketOpCode = 70;
 	public const int LevelUp = 0;
 	public const int BindKisk = 2;
+	public const int CraftLevelUp = 4;
 
 	private readonly int _targetObjectId;
 	private readonly int _actionAnimationId;
