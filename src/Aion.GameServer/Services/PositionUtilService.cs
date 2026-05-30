@@ -50,6 +50,93 @@ public static class PositionUtilService
 		return angle;
 	}
 
+	public static double GetDistance2D(float x1, float y1, float x2, float y2)
+	{
+		// Java parity: utils/PositionUtil.getDistance(float, float, float, float).
+		float dx = x2 - x1;
+		float dy = y2 - y1;
+		return Math.Sqrt(dx * dx + dy * dy);
+	}
+
+	public static double GetDistance3D(float x1, float y1, float z1, float x2, float y2, float z2)
+	{
+		// Java parity: utils/PositionUtil.getDistance(float, float, float, float, float, float).
+		float dx = x1 - x2;
+		float dy = y1 - y2;
+		float dz = z1 - z2;
+		return Math.Sqrt(dx * dx + dy * dy + dz * dz);
+	}
+
+	public static bool IsInRange(float x1, float y1, float z1, float x2, float y2, float z2, float range)
+	{
+		// Java parity: utils/PositionUtil.isInRange(float, float, float, float, float, float, float).
+		// Uses squared distance to avoid Math.sqrt — strictly less-than like Java.
+		float dx = x1 - x2;
+		float dy = y1 - y2;
+		float dz = z1 - z2;
+		return dx * dx + dy * dy + dz * dz < range * range;
+	}
+
+	public static bool IsInRangeLimited(
+		float x1, float y1, float z1,
+		float x2, float y2, float z2,
+		float minRange, float maxRange)
+	{
+		// Java parity: utils/PositionUtil.isInRangeLimited(VisibleObject, VisibleObject, float, float).
+		float dx = x2 - x1;
+		float dy = y2 - y1;
+		float dz = z2 - z1;
+		float distSquared = dx * dx + dy * dy + dz * dz;
+		return !(distSquared < minRange * minRange || distSquared > maxRange * maxRange);
+	}
+
+	public static float CalculateAngleTowards(float x, float y, byte heading, float targetX, float targetY)
+	{
+		// Java parity: utils/PositionUtil.calculateAngleTowards(float, float, byte, float, float).
+		// Returns angle from -180 to +180: 0 = looking directly at target.
+		var angle1 = ConvertHeadingToAngle(heading);
+		var angle2 = CalculateAngleFrom(x, y, targetX, targetY);
+		var angleDiff = angle1 - angle2;
+		if (angleDiff < -180f)
+			angleDiff += 360f;
+		else if (angleDiff > 180f)
+			angleDiff -= 360f;
+		return angleDiff;
+	}
+
+	public static bool CheckAngleDiff(float angle1, float angle2, float maxAngleDiff)
+	{
+		// Java parity: utils/PositionUtil.checkAngleDiff. Shortest path between angles.
+		var angleDiff = Math.Abs(angle1 - angle2);
+		if (angleDiff > 180f)
+			angleDiff -= 360f;
+		return Math.Abs(angleDiff) <= maxAngleDiff;
+	}
+
+	public static bool IsBehind(
+		float objectX, float objectY,
+		float targetX, float targetY, byte targetHeading,
+		float maxAngleDiff = 90f)
+	{
+		// Java parity: utils/PositionUtil.isBehind(VisibleObject, VisibleObject, float).
+		var angle1 = CalculateAngleFrom(objectX, objectY, targetX, targetY);
+		var angle2 = ConvertHeadingToAngle(targetHeading);
+		return CheckAngleDiff(angle1, angle2, maxAngleDiff);
+	}
+
+	public static bool IsInFrontOf(
+		float objectX, float objectY,
+		float targetX, float targetY, byte targetHeading,
+		float maxAngleDiff = 90f)
+	{
+		// Java parity: utils/PositionUtil.isInFrontOf(VisibleObject, VisibleObject, float).
+		if (maxAngleDiff >= 180f)
+			return true;
+		var angle1 = CalculateAngleFrom(targetX, targetY, objectX, objectY);
+		var angle2 = ConvertHeadingToAngle(targetHeading);
+		return CheckAngleDiff(angle1, angle2, maxAngleDiff);
+	}
+
 	public static bool IsInNpcTalkRange(
 		WorldPosition creaturePosition,
 		WorldPosition npcPosition,

@@ -112,4 +112,49 @@ public sealed class PositionUtilServiceTests
 
 		Assert.Equal(expected, result);
 	}
+
+	// --- New UOW-1758 tests ---
+
+	[Fact]
+	public void GetDistance2D_PythagoreanTriple()
+	{
+		Assert.Equal(5.0, PositionUtilService.GetDistance2D(0, 0, 3, 4), 6);
+	}
+
+	[Fact]
+	public void GetDistance3D_PythagoreanTriple()
+	{
+		Assert.Equal(5.0, PositionUtilService.GetDistance3D(0, 0, 0, 3, 4, 0), 6);
+	}
+
+	[Fact]
+	public void IsInRange_StrictlyLessThan()
+	{
+		// Java: dx*dx+dy*dy+dz*dz < range*range (strict)
+		Assert.True(PositionUtilService.IsInRange(0, 0, 0, 3, 4, 0, 6f));
+		Assert.False(PositionUtilService.IsInRange(0, 0, 0, 3, 4, 0, 5f)); // exactly at range → false
+	}
+
+	[Fact]
+	public void IsInRangeLimited_WithinBoundsReturnsTrue()
+	{
+		Assert.True(PositionUtilService.IsInRangeLimited(0, 0, 0, 3, 4, 0, 3f, 8f));
+		Assert.False(PositionUtilService.IsInRangeLimited(0, 0, 0, 1, 0, 0, 5f, 10f)); // too close
+	}
+
+	[Fact]
+	public void CheckAngleDiff_WrapsAroundCorrectly()
+	{
+		// 350° and 10° → shortest diff = 20° ≤ 90° → true
+		Assert.True(PositionUtilService.CheckAngleDiff(350f, 10f, 90f));
+		// 90° diff from 0° and 91° → false
+		Assert.False(PositionUtilService.CheckAngleDiff(0f, 91f, 90f));
+	}
+
+	[Fact]
+	public void IsInFrontOf_AlwaysTrueAt180Degrees()
+	{
+		// Java: if maxAngleDiff >= 180 → always true
+		Assert.True(PositionUtilService.IsInFrontOf(100f, 100f, 0f, 0f, (byte)0, 180f));
+	}
 }
