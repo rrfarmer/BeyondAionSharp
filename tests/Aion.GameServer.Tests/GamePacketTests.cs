@@ -1349,6 +1349,10 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.StigmaEnchantSuccess("stigma"), 1402930, "stigma");
 		AssertSystemMessage(SmSystemMessage.StigmaEnchantFail("stigma"), 1402931, "stigma");
 		AssertSystemMessage(SmSystemMessage.StigmaDeleteHiddenSkill("first", 3, "second"), 1402895, "first", "3", "second");
+		AssertSystemMessage(SmSystemMessage.ItemReidentifyWrongSelect("scroll", "target"), 1401633, "scroll", "target");
+		AssertSystemMessage(SmSystemMessage.ItemReidentifyWrongLevel("scroll", "target"), 1401635, "scroll", "target");
+		AssertSystemMessage(SmSystemMessage.ItemReidentifyCannotReidentify("target"), 1401636, "target");
+		AssertSystemMessage(SmSystemMessage.ItemReidentifyDidntIdentify("target"), 1401637, "target");
 		AssertSystemMessage(SmSystemMessage.ExchangeFullInventory(), 1300366);
 		AssertSystemMessage(SmSystemMessage.MailTakeAllCancel(), 1402251);
 		AssertSystemMessage(SmSystemMessage.NoSuchUser("Kahrun"), 1300627, "Kahrun");

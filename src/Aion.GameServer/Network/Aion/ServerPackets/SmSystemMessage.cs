@@ -1874,6 +1874,30 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1402238, itemName);
 	}
 
+	public static SmSystemMessage ItemReidentifyWrongSelect(string tuningScrollName, string targetItemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ITEM_REIDENTIFY_WRONG_SELECT.
+		return new SmSystemMessage(1401633, tuningScrollName, targetItemName);
+	}
+
+	public static SmSystemMessage ItemReidentifyWrongLevel(string tuningScrollName, string targetItemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ITEM_REIDENTIFY_WRONG_LEVEL.
+		return new SmSystemMessage(1401635, tuningScrollName, targetItemName);
+	}
+
+	public static SmSystemMessage ItemReidentifyCannotReidentify(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ITEM_REIDENTIFY_CANNOT_REIDENTIFY.
+		return new SmSystemMessage(1401636, itemName);
+	}
+
+	public static SmSystemMessage ItemReidentifyDidntIdentify(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ITEM_REIDENTIFY_DIDNT_IDENTIFY.
+		return new SmSystemMessage(1401637, itemName);
+	}
+
 	public static SmSystemMessage ExchangeFullInventory()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_EXCHANGE_FULL_INVENTORY.
