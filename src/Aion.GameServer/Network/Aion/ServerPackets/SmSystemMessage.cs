@@ -1627,6 +1627,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1401969);
 	}
 
+	public static SmSystemMessage CanChatNow()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_CAN_CHAT_NOW. You can now use the chatting functions again.
+		return new SmSystemMessage(1400136);
+	}
+
 	public static SmSystemMessage DayCannotSellNpc(long remainingLimit)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_DAY_CANNOT_SELL_NPC(long).
