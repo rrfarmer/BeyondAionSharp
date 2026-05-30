@@ -7,12 +7,9 @@ namespace Aion.GameServer.Services;
 
 public static class NearbyQuestRefreshPlanService
 {
-	public static NearbyQuestRefreshPlan CreatePlan(
-		Player player,
-		WorldMapInstanceRuntimeState? instance,
-		NearbyQuestTemplateTable? questTemplates)
+	public static NearbyQuestRefreshPlan CreatePlan(Player player, WorldMapInstanceRuntimeState? instance, NearbyQuestTemplateTable? questTemplates)
 	{
-		// Java parity breadcrumb: PlayerController.updateNearbyQuests sends SM_NEARBY_QUESTS after filtering
+		// Java parity: PlayerController.updateNearbyQuests sends SM_NEARBY_QUESTS after filtering
 		// WorldMapInstance.getQuestIds(). This plan is intentionally non-sending until the controller boundary is safe.
 		if (instance == null)
 			return NearbyQuestRefreshPlan.NoWorldInstance();
@@ -22,25 +19,16 @@ public static class NearbyQuestRefreshPlanService
 			return NearbyQuestRefreshPlan.NoWorldQuestIds();
 
 		var projection = NearbyQuestMarkerProjectionService.ProjectMarkers(player, instance, questTemplates);
-		var rejectionCounts = projection.RejectedQuestIds.Values
-			.GroupBy(failure => failure)
-			.ToDictionary(group => group.Key, group => group.Count());
-		var status = projection.Markers.Count == 0
-			? NearbyQuestRefreshPlanStatus.NoMarkers
-			: NearbyQuestRefreshPlanStatus.Ready;
-		return new NearbyQuestRefreshPlan(
-			status,
-			instance.QuestIds.Count,
-			projection.Markers,
-			projection.RejectedQuestIds,
-			rejectionCounts);
+		var rejectionCounts = projection.RejectedQuestIds.Values.GroupBy(failure => failure).ToDictionary(group => group.Key, group => group.Count());
+		var status = projection.Markers.Count == 0 ? NearbyQuestRefreshPlanStatus.NoMarkers : NearbyQuestRefreshPlanStatus.Ready;
+		return new NearbyQuestRefreshPlan(status, instance.QuestIds.Count, projection.Markers, projection.RejectedQuestIds, rejectionCounts);
 	}
 
 	public static NearbyQuestPacketFactoryPlan CreatePacketFactoryPlan(NearbyQuestRefreshPlan plan)
 	{
 		ArgumentNullException.ThrowIfNull(plan);
 
-		// Java parity breadcrumb: PlayerController.updateNearbyQuests always sends
+		// Java parity: PlayerController.updateNearbyQuests always sends
 		// new SM_NEARBY_QUESTS(nearbyQuestList) after resolving the live map-region
 		// quest ids and filtering them through QuestService.checkStartConditions.
 		if (!plan.WouldSendPacket)
@@ -55,12 +43,11 @@ public sealed record NearbyQuestRefreshPlan(
 	int WorldQuestIdCount,
 	IReadOnlyList<NearbyQuestMarker> Markers,
 	IReadOnlyDictionary<int, NearbyQuestStartConditionFailure> RejectedQuestIds,
-	IReadOnlyDictionary<NearbyQuestStartConditionFailure, int> RejectionCounts)
+	IReadOnlyDictionary<NearbyQuestStartConditionFailure, int> RejectionCounts
+)
 {
-	public bool WouldSendPacket => Status
-		is NearbyQuestRefreshPlanStatus.Ready
-		or NearbyQuestRefreshPlanStatus.NoWorldQuestIds
-		or NearbyQuestRefreshPlanStatus.NoMarkers;
+	public bool WouldSendPacket =>
+		Status is NearbyQuestRefreshPlanStatus.Ready or NearbyQuestRefreshPlanStatus.NoWorldQuestIds or NearbyQuestRefreshPlanStatus.NoMarkers;
 
 	public bool HasUnsupportedDependencies =>
 		RejectionCounts.ContainsKey(NearbyQuestStartConditionFailure.UnsupportedXmlStartConditions)
@@ -82,16 +69,15 @@ public sealed record NearbyQuestRefreshPlan(
 		return Empty(NearbyQuestRefreshPlanStatus.NoWorldQuestIds);
 	}
 
-	private static NearbyQuestRefreshPlan Empty(
-		NearbyQuestRefreshPlanStatus status,
-		int worldQuestIdCount = 0)
+	private static NearbyQuestRefreshPlan Empty(NearbyQuestRefreshPlanStatus status, int worldQuestIdCount = 0)
 	{
 		return new NearbyQuestRefreshPlan(
 			status,
 			worldQuestIdCount,
 			Array.Empty<NearbyQuestMarker>(),
 			new Dictionary<int, NearbyQuestStartConditionFailure>(),
-			new Dictionary<NearbyQuestStartConditionFailure, int>());
+			new Dictionary<NearbyQuestStartConditionFailure, int>()
+		);
 	}
 }
 
@@ -108,7 +94,8 @@ public sealed record NearbyQuestPacketFactoryPlan(
 	NearbyQuestPacketFactoryPlanStatus Status,
 	IReadOnlyList<NearbyQuestMarker> Markers,
 	SmNearbyQuests? Packet,
-	string JavaSource)
+	string JavaSource
+)
 {
 	public bool HasPacket => Packet is not null;
 
@@ -118,7 +105,8 @@ public sealed record NearbyQuestPacketFactoryPlan(
 			NearbyQuestPacketFactoryPlanStatus.PacketCreated,
 			markers,
 			new SmNearbyQuests(markers),
-			"PlayerController.updateNearbyQuests -> new SM_NEARBY_QUESTS(nearbyQuestList)");
+			"PlayerController.updateNearbyQuests -> new SM_NEARBY_QUESTS(nearbyQuestList)"
+		);
 	}
 
 	public static NearbyQuestPacketFactoryPlan Blocked(NearbyQuestRefreshPlanStatus refreshStatus)
@@ -127,7 +115,8 @@ public sealed record NearbyQuestPacketFactoryPlan(
 			NearbyQuestPacketFactoryPlanStatus.BlockedMissingDependency,
 			Array.Empty<NearbyQuestMarker>(),
 			Packet: null,
-			$"PlayerController.updateNearbyQuests prerequisites unavailable: {refreshStatus}");
+			$"PlayerController.updateNearbyQuests prerequisites unavailable: {refreshStatus}"
+		);
 	}
 }
 

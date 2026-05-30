@@ -15,10 +15,7 @@ public enum PlayerDeathEmotionFanoutPlanStep
 	StopKnownCreaturesHatingOwner,
 }
 
-public sealed record PlayerDeathKnownCreatureAggroCleanupIntent(
-	int CreatureObjectId,
-	int HatedOwnerObjectId,
-	bool ShouldStopHating);
+public sealed record PlayerDeathKnownCreatureAggroCleanupIntent(int CreatureObjectId, int HatedOwnerObjectId, bool ShouldStopHating);
 
 public sealed record PlayerDeathEmotionFanoutPlan(
 	PlayerDeathEmotionFanoutPlanStatus Status,
@@ -36,24 +33,19 @@ public sealed record PlayerDeathEmotionFanoutPlan(
 	IReadOnlyList<PlayerDeathKnownCreatureAggroCleanupIntent> KnownCreatureAggroCleanupIntents,
 	IReadOnlyList<PlayerDeathEmotionFanoutPlanStep> Steps,
 	string JavaSource,
-	bool IsLive);
+	bool IsLive
+);
 
 public static class PlayerDeathEmotionFanoutPlanService
 {
-	public static PlayerDeathEmotionFanoutPlan CreatePlan(
-		int ownerObjectId,
-		int lastAttackerObjectId,
-		IEnumerable<int> knownCreatureObjectIds)
+	public static PlayerDeathEmotionFanoutPlan CreatePlan(int ownerObjectId, int lastAttackerObjectId, IEnumerable<int> knownCreatureObjectIds)
 	{
-		// Java parity breadcrumb:
+		// Java parity:
 		// CreatureController.onDie notifies observers, broadcasts SM_EMOTION(DIE),
 		// then asks every known Creature aggro list to stop hating the owner.
 		var targetObjectId = ownerObjectId == lastAttackerObjectId ? 0 : lastAttackerObjectId;
 		var cleanupIntents = knownCreatureObjectIds
-			.Select(creatureObjectId => new PlayerDeathKnownCreatureAggroCleanupIntent(
-				creatureObjectId,
-				ownerObjectId,
-				ShouldStopHating: true))
+			.Select(creatureObjectId => new PlayerDeathKnownCreatureAggroCleanupIntent(creatureObjectId, ownerObjectId, ShouldStopHating: true))
 			.ToArray();
 
 		return new PlayerDeathEmotionFanoutPlan(
@@ -77,6 +69,7 @@ public static class PlayerDeathEmotionFanoutPlanService
 				PlayerDeathEmotionFanoutPlanStep.StopKnownCreaturesHatingOwner,
 			},
 			"com.aionemu.gameserver.controllers.CreatureController.onDie -> notifyDeathObservers(lastAttacker); PacketSendUtility.broadcastPacketAndReceive(owner, new SM_EMOTION(owner, EmotionType.DIE, 0, owner.equals(lastAttacker) ? 0 : lastAttacker.getObjectId())); knownList creatures stopHating(owner)",
-			IsLive: false);
+			IsLive: false
+		);
 	}
 }

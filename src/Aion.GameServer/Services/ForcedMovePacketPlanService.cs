@@ -26,7 +26,7 @@ public static class ForcedMovePacketPlanService
 {
 	public static ForcedMovePacketPlan CreateBroadcastReceivePlan(ForcedMoveSnapshot snapshot)
 	{
-		// Java parity breadcrumb: PulledEffect.startEffect, OpenAerialEffect.startEffect,
+		// Java parity: PulledEffect.startEffect, OpenAerialEffect.startEffect,
 		// StaggerEffect.startEffect, StumbleEffect.startEffect, AntiHackService.onMoveValidate,
 		// and CM_MOVE all use PacketSendUtility.broadcastPacketAndReceive(..., new SM_FORCED_MOVE(...)).
 		if (snapshot.SourceObjectId <= 0)

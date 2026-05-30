@@ -5,6 +5,8 @@ namespace Aion.GameServer.Services;
 
 public static class SystemMailRewardPlanService
 {
+	// Java parity: services/mail/SystemMailService.sendMail is the shared delivery boundary for
+	// bonus-pack, faction-pack, and starter-kit reward flows.
 	public const int ExpressLetterTypeId = 1;
 	public const int MailboxStorageId = 127;
 	public const int MaxRecipientNameLength = 16;
@@ -19,8 +21,11 @@ public static class SystemMailRewardPlanService
 		int mailObjectId,
 		int attachedItemObjectId,
 		DateTime receivedTime,
-		ItemTemplateTable? itemTemplates)
+		ItemTemplateTable? itemTemplates
+	)
 	{
+		// Java parity: BonusPackService.addPlayerCustomReward / FactionPackService.sendRewards both
+		// delegate each descriptor to SystemMailService.sendMail.
 		return CreatePlan(
 			recipient,
 			new SystemMailRewardRequest(
@@ -31,11 +36,13 @@ public static class SystemMailRewardPlanService
 				descriptor.Reward.Count,
 				AttachedKinah: 0,
 				descriptor.LetterType,
-				descriptor.JavaSource),
+				descriptor.JavaSource
+			),
 			mailObjectId,
 			attachedItemObjectId,
 			receivedTime,
-			itemTemplates);
+			itemTemplates
+		);
 	}
 
 	public static SystemMailRewardPlan CreatePlan(
@@ -44,8 +51,11 @@ public static class SystemMailRewardPlanService
 		int mailObjectId,
 		int attachedItemObjectId,
 		DateTime receivedTime,
-		ItemTemplateTable? itemTemplates)
+		ItemTemplateTable? itemTemplates
+	)
 	{
+		// Java parity: StarterKitService.onLevelUp also funnels reward delivery through
+		// SystemMailService.sendMail with the starter-kit sender/title/body.
 		return CreatePlan(
 			recipient,
 			new SystemMailRewardRequest(
@@ -56,11 +66,13 @@ public static class SystemMailRewardPlanService
 				descriptor.Reward.Count,
 				AttachedKinah: 0,
 				descriptor.LetterType,
-				descriptor.JavaSource),
+				descriptor.JavaSource
+			),
 			mailObjectId,
 			attachedItemObjectId,
 			receivedTime,
-			itemTemplates);
+			itemTemplates
+		);
 	}
 
 	public static SystemMailRewardPlan CreatePlan(
@@ -69,7 +81,8 @@ public static class SystemMailRewardPlanService
 		int mailObjectId,
 		int attachedItemObjectId,
 		DateTime receivedTime,
-		ItemTemplateTable? itemTemplates)
+		ItemTemplateTable? itemTemplates
+	)
 	{
 		// Java parity: services/mail/SystemMailService.sendMail guard and Letter construction order.
 		if (recipient == null)
@@ -85,18 +98,19 @@ public static class SystemMailRewardPlanService
 		if (recipient.Mailbox.Count > MaxSystemMailboxLetters)
 			return SystemMailRewardPlan.Skipped(SystemMailRewardPlanStatus.RecipientMailboxFull, request, recipient);
 
-		var attachedItem = request.AttachedItemId == 0
-			? null
-			: new InventoryItem
-			{
-				ObjectId = attachedItemObjectId,
-				ItemId = request.AttachedItemId,
-				Count = request.AttachedItemCount,
-				OwnerId = recipient.ObjectId,
-				IsEquipped = false,
-				Slot = 0,
-				Location = MailboxStorageId,
-			};
+		var attachedItem =
+			request.AttachedItemId == 0
+				? null
+				: new InventoryItem
+				{
+					ObjectId = attachedItemObjectId,
+					ItemId = request.AttachedItemId,
+					Count = request.AttachedItemCount,
+					OwnerId = recipient.ObjectId,
+					IsEquipped = false,
+					Slot = 0,
+					Location = MailboxStorageId,
+				};
 		var mail = new PlayerMail(
 			mailObjectId,
 			recipient.ObjectId,
@@ -109,16 +123,15 @@ public static class SystemMailRewardPlanService
 			request.AttachedKinah > 0 ? request.AttachedKinah : 0,
 			ResolveLetterType(request.LetterType),
 			receivedTime,
-			attachedItem);
+			attachedItem
+		);
 
 		return SystemMailRewardPlan.Planned(request, recipient, mail);
 	}
 
 	private static int ResolveLetterType(string letterType)
 	{
-		return string.Equals(letterType, "EXPRESS", StringComparison.OrdinalIgnoreCase)
-			? ExpressLetterTypeId
-			: 0;
+		return string.Equals(letterType, "EXPRESS", StringComparison.OrdinalIgnoreCase) ? ExpressLetterTypeId : 0;
 	}
 
 	private static string Truncate(string value, int maxLength)
@@ -135,7 +148,8 @@ public sealed record SystemMailRewardRequest(
 	long AttachedItemCount,
 	long AttachedKinah,
 	string LetterType,
-	string JavaSource)
+	string JavaSource
+)
 {
 	public string RecipientName(Player recipient)
 	{
@@ -151,14 +165,12 @@ public sealed record SystemMailRewardPlan(
 	int MailboxLetters,
 	PlayerMail? Mail,
 	bool IsLive,
-	string JavaSource)
+	string JavaSource
+)
 {
 	public bool Applied => Status == SystemMailRewardPlanStatus.Planned;
 
-	public static SystemMailRewardPlan Skipped(
-		SystemMailRewardPlanStatus status,
-		SystemMailRewardRequest request,
-		Player? recipient = null)
+	public static SystemMailRewardPlan Skipped(SystemMailRewardPlanStatus status, SystemMailRewardRequest request, Player? recipient = null)
 	{
 		return new SystemMailRewardPlan(
 			status,
@@ -168,13 +180,11 @@ public sealed record SystemMailRewardPlan(
 			recipient?.Mailbox.Count ?? 0,
 			Mail: null,
 			IsLive: false,
-			JavaSource: request.JavaSource);
+			JavaSource: request.JavaSource
+		);
 	}
 
-	public static SystemMailRewardPlan Planned(
-		SystemMailRewardRequest request,
-		Player recipient,
-		PlayerMail mail)
+	public static SystemMailRewardPlan Planned(SystemMailRewardRequest request, Player recipient, PlayerMail mail)
 	{
 		return new SystemMailRewardPlan(
 			SystemMailRewardPlanStatus.Planned,
@@ -184,7 +194,8 @@ public sealed record SystemMailRewardPlan(
 			recipient.Mailbox.Count,
 			mail,
 			IsLive: false,
-			JavaSource: request.JavaSource);
+			JavaSource: request.JavaSource
+		);
 	}
 }
 

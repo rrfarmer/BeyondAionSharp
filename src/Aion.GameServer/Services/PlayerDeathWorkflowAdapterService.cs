@@ -9,10 +9,7 @@ public enum PlayerDeathWorkflowAdapterStatus
 	LiveStateTransitionApplied,
 }
 
-public sealed record PlayerDeathWorkflowAdapterRequest(
-	Player Player,
-	PlayerDeathWorkflowFacts Facts,
-	bool ExecuteLiveStateMutation = false);
+public sealed record PlayerDeathWorkflowAdapterRequest(Player Player, PlayerDeathWorkflowFacts Facts, bool ExecuteLiveStateMutation = false);
 
 public sealed record PlayerDeathWorkflowAdapterResult(
 	PlayerDeathWorkflowAdapterStatus Status,
@@ -25,7 +22,8 @@ public sealed record PlayerDeathWorkflowAdapterResult(
 	bool ExecutedExternalCallbacks,
 	bool ExposesPlanForObservation,
 	string JavaSource,
-	bool IsLive);
+	bool IsLive
+);
 
 public sealed class PlayerDeathWorkflowAdapterService
 {
@@ -38,6 +36,9 @@ public sealed class PlayerDeathWorkflowAdapterService
 
 	public PlayerDeathWorkflowAdapterResult Apply(PlayerDeathWorkflowAdapterRequest request)
 	{
+		// Java parity: PlayerController.onDie is the live outer entry point. This adapter exposes the
+		// staged PlayerDeathWorkflowPlan plus report, and only applies the state-transition slice when
+		// the caller explicitly opts into live mutation.
 		var plan = _planService.CreatePlan(request.Player, request.Facts);
 		var report = PlayerDeathWorkflowReportService.CreateReport(plan);
 		if (!request.ExecuteLiveStateMutation)
@@ -53,7 +54,8 @@ public sealed class PlayerDeathWorkflowAdapterService
 				ExecutedExternalCallbacks: false,
 				ExposesPlanForObservation: true,
 				"com.aionemu.gameserver.controllers.PlayerController.onDie plan exposed with live state mutation disabled",
-				IsLive: false);
+				IsLive: false
+			);
 		}
 
 		if (!plan.Steps.Contains(PlayerDeathWorkflowStep.ApplyPlayerDeathStateTransition))
@@ -69,7 +71,8 @@ public sealed class PlayerDeathWorkflowAdapterService
 				ExecutedExternalCallbacks: false,
 				ExposesPlanForObservation: true,
 				"com.aionemu.gameserver.controllers.PlayerController.onDie returned before super.onDie; no player death state transition executed",
-				IsLive: true);
+				IsLive: true
+			);
 		}
 
 		var transition = PlayerDeathStateTransitionService.Apply(request.Player);
@@ -84,6 +87,7 @@ public sealed class PlayerDeathWorkflowAdapterService
 			ExecutedExternalCallbacks: false,
 			ExposesPlanForObservation: true,
 			"com.aionemu.gameserver.controllers.PlayerController.onDie state transition applied; packet fanout, scheduler, callbacks, rewards, and quest dispatch remain planned",
-			IsLive: true);
+			IsLive: true
+		);
 	}
 }

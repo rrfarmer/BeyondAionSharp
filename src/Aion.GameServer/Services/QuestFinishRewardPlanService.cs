@@ -78,12 +78,14 @@ public sealed record QuestFinishRewardItem(int ItemId, long Count = 1);
 public sealed record QuestFinishRewardBonusTemplateProjection(
 	string BonusType,
 	int Level = 0,
-	QuestFinishRewardBonusSupportStatus SupportStatus = QuestFinishRewardBonusSupportStatus.UnsupportedByJavaBonusService);
+	QuestFinishRewardBonusSupportStatus SupportStatus = QuestFinishRewardBonusSupportStatus.UnsupportedByJavaBonusService
+);
 
 public sealed record QuestFinishRewardGroupProjection(
 	int RewardGroupIndex,
 	IReadOnlyList<QuestFinishRewardItem>? FixedRewardItems = null,
-	IReadOnlyList<QuestFinishRewardItem>? SelectableRewardItems = null)
+	IReadOnlyList<QuestFinishRewardItem>? SelectableRewardItems = null
+)
 {
 	public IReadOnlyList<QuestFinishRewardItem> FixedRewardItems { get; init; } = FixedRewardItems ?? [];
 	public IReadOnlyList<QuestFinishRewardItem> SelectableRewardItems { get; init; } = SelectableRewardItems ?? [];
@@ -96,7 +98,8 @@ public sealed record QuestFinishRewardItemProjectionInput(
 	int CompleteCount,
 	int RewardRepeatCount,
 	int? RewardGroup,
-	string? PlayerClass = null);
+	string? PlayerClass = null
+);
 
 public sealed record QuestFinishRewardItemTemplateProjection(
 	IReadOnlyList<QuestFinishRewardGroupProjection>? RewardGroups = null,
@@ -105,7 +108,8 @@ public sealed record QuestFinishRewardItemTemplateProjection(
 	bool SingleTimeClassReward = false,
 	bool ClassRewardOnEveryRepeat = false,
 	bool HasBonus = false,
-	QuestFinishRewardBonusTemplateProjection? BonusProjection = null)
+	QuestFinishRewardBonusTemplateProjection? BonusProjection = null
+)
 {
 	public IReadOnlyList<QuestFinishRewardGroupProjection> RewardGroups { get; init; } = RewardGroups ?? [];
 	public IReadOnlyDictionary<string, IReadOnlyList<QuestFinishRewardItem>> ClassSelectableRewards { get; init; } =
@@ -121,7 +125,8 @@ public sealed record QuestFinishRewardItemProjectionDescriptor(
 	long Count,
 	int? RewardGroupIndex = null,
 	int? SelectableIndex = null,
-	string? PlayerClass = null);
+	string? PlayerClass = null
+);
 
 public sealed record QuestFinishRewardItemProjectionWarningDescriptor(
 	QuestFinishRewardItemProjectionWarning Warning,
@@ -131,11 +136,13 @@ public sealed record QuestFinishRewardItemProjectionWarningDescriptor(
 	string? PlayerClass = null,
 	string? BonusType = null,
 	int? BonusLevel = null,
-	QuestFinishRewardBonusSupportStatus? BonusSupportStatus = null);
+	QuestFinishRewardBonusSupportStatus? BonusSupportStatus = null
+);
 
 public sealed record QuestFinishRewardItemProjectionPlan(
 	IReadOnlyList<QuestFinishRewardItemProjectionDescriptor> Items,
-	IReadOnlyList<QuestFinishRewardItemProjectionWarningDescriptor> Warnings);
+	IReadOnlyList<QuestFinishRewardItemProjectionWarningDescriptor> Warnings
+);
 
 public sealed record QuestFinishRewardNonItemTemplateProjection(
 	long Kinah = 0,
@@ -147,7 +154,8 @@ public sealed record QuestFinishRewardNonItemTemplateProjection(
 	int ExtendInventory = 0,
 	int ExtendStigma = 0,
 	IReadOnlyList<int>? CollectItemChecks = null,
-	int InventoryItemCheck = 0)
+	int InventoryItemCheck = 0
+)
 {
 	public IReadOnlyList<int> CollectItemChecks { get; init; } = CollectItemChecks ?? [];
 }
@@ -157,7 +165,8 @@ public sealed record QuestFinishRewardNonItemProjectionInput(
 	string QuestCategory = "QUEST",
 	int TargetNpcId = 0,
 	bool HasTargetNpcTemplate = false,
-	QuestFinishRewardNonItemSource Source = QuestFinishRewardNonItemSource.Regular);
+	QuestFinishRewardNonItemSource Source = QuestFinishRewardNonItemSource.Regular
+);
 
 public sealed record QuestFinishRewardNonItemProjectionDescriptor(
 	int Order,
@@ -169,18 +178,21 @@ public sealed record QuestFinishRewardNonItemProjectionDescriptor(
 	bool RateBypassed = false,
 	int? TargetNpcId = null,
 	bool RequiresTargetNpcL10nLookup = false,
-	QuestFinishRewardNonItemSource Source = QuestFinishRewardNonItemSource.Regular);
+	QuestFinishRewardNonItemSource Source = QuestFinishRewardNonItemSource.Regular
+);
 
 public sealed record QuestFinishRewardNonItemProjectionWarningDescriptor(
 	QuestFinishRewardNonItemProjectionWarning Warning,
 	string JavaSource,
 	string FieldName,
 	long Value,
-	QuestFinishRewardNonItemSource Source = QuestFinishRewardNonItemSource.Regular);
+	QuestFinishRewardNonItemSource Source = QuestFinishRewardNonItemSource.Regular
+);
 
 public sealed record QuestFinishRewardNonItemProjectionPlan(
 	IReadOnlyList<QuestFinishRewardNonItemProjectionDescriptor> Descriptors,
-	IReadOnlyList<QuestFinishRewardNonItemProjectionWarningDescriptor> Warnings);
+	IReadOnlyList<QuestFinishRewardNonItemProjectionWarningDescriptor> Warnings
+);
 
 public sealed record QuestFinishRewardTemplateProjection(
 	int? RewardGroupCount = null,
@@ -196,7 +208,8 @@ public sealed record QuestFinishRewardTemplateProjection(
 	int RewardRepeatCount = 0,
 	string? PlayerClass = null,
 	int TargetNpcId = 0,
-	bool HasTargetNpcTemplate = false)
+	bool HasTargetNpcTemplate = false
+)
 {
 	public IReadOnlyList<QuestFinishRewardWorkItem> WorkItems { get; init; } = WorkItems ?? [];
 }
@@ -204,7 +217,8 @@ public sealed record QuestFinishRewardTemplateProjection(
 public sealed record QuestFinishRewardGroupCorrectionResult(
 	PlayerQuestState QuestState,
 	QuestFinishRewardGroupCorrectionStatus Status,
-	int? OriginalRewardGroup);
+	int? OriginalRewardGroup
+);
 
 public sealed record QuestFinishRewardOperationDescriptor(
 	int Order,
@@ -212,13 +226,15 @@ public sealed record QuestFinishRewardOperationDescriptor(
 	string JavaSource,
 	bool IsLive,
 	int? ItemId = null,
-	long? Count = null);
+	long? Count = null
+);
 
 public sealed record QuestFinishRewardOperationPlan(
 	PlayerQuestState QuestState,
 	IReadOnlyList<QuestFinishRewardOperationDescriptor> Descriptors,
 	QuestFinishRewardGroupCorrectionStatus CorrectionStatus,
-	int? OriginalRewardGroup);
+	int? OriginalRewardGroup
+);
 
 public static class QuestFinishRewardPlanService
 {
@@ -231,10 +247,11 @@ public static class QuestFinishRewardPlanService
 	private const string ChallengeTaskJavaSource = "game-server/src/com/aionemu/gameserver/services/QuestService.java#finishQuest";
 	private const string WorkItemJavaSource = "game-server/src/com/aionemu/gameserver/services/QuestService.java#removeQuestWorkItems";
 
-	public static QuestFinishRewardOperationPlan CreatePlan(
-		PlayerQuestState questState,
-		QuestFinishRewardTemplateProjection template)
+	public static QuestFinishRewardOperationPlan CreatePlan(PlayerQuestState questState, QuestFinishRewardTemplateProjection template)
 	{
+		// Java parity: QuestService.finishQuest, validateAndFixRewardGroup, getRewardItems, giveReward,
+		// and removeQuestWorkItems define the finish-reward ordering. This planner keeps that staged order
+		// explicit without executing inventory, currency, XP, title, or challenge-task side effects.
 		ArgumentNullException.ThrowIfNull(questState);
 		ArgumentNullException.ThrowIfNull(template);
 
@@ -242,72 +259,72 @@ public static class QuestFinishRewardPlanService
 		var descriptors = new List<QuestFinishRewardOperationDescriptor>();
 		if (correction.Status is QuestFinishRewardGroupCorrectionStatus.IgnoredNonRewardState)
 		{
-			return new QuestFinishRewardOperationPlan(
-				correction.QuestState,
-				descriptors,
-				correction.Status,
-				correction.OriginalRewardGroup);
+			return new QuestFinishRewardOperationPlan(correction.QuestState, descriptors, correction.Status, correction.OriginalRewardGroup);
 		}
 
 		var order = 1;
 
 		if (correction.Status is not QuestFinishRewardGroupCorrectionStatus.Unchanged)
 		{
-			descriptors.Add(new QuestFinishRewardOperationDescriptor(
-				order++,
-				QuestFinishRewardOperationAction.RewardGroupCorrection,
-				RewardGroupJavaSource,
-				IsLive: false));
+			descriptors.Add(
+				new QuestFinishRewardOperationDescriptor(
+					order++,
+					QuestFinishRewardOperationAction.RewardGroupCorrection,
+					RewardGroupJavaSource,
+					IsLive: false
+				)
+			);
 		}
 
 		if (template.HasItemRewards)
 		{
-			descriptors.Add(new QuestFinishRewardOperationDescriptor(
-				order++,
-				QuestFinishRewardOperationAction.ItemRewardPlaceholder,
-				RewardItemJavaSource,
-				IsLive: false));
+			descriptors.Add(
+				new QuestFinishRewardOperationDescriptor(order++, QuestFinishRewardOperationAction.ItemRewardPlaceholder, RewardItemJavaSource, IsLive: false)
+			);
 		}
 
 		if (template.HasNonItemRewards)
 		{
-			descriptors.Add(new QuestFinishRewardOperationDescriptor(
-				order++,
-				QuestFinishRewardOperationAction.NonItemRewardPlaceholder,
-				GiveRewardJavaSource,
-				IsLive: false));
+			descriptors.Add(
+				new QuestFinishRewardOperationDescriptor(
+					order++,
+					QuestFinishRewardOperationAction.NonItemRewardPlaceholder,
+					GiveRewardJavaSource,
+					IsLive: false
+				)
+			);
 		}
 
 		if (template.IsChallengeTask)
 		{
-			descriptors.Add(new QuestFinishRewardOperationDescriptor(
-				order++,
-				QuestFinishRewardOperationAction.ChallengeTaskCompletionPlaceholder,
-				ChallengeTaskJavaSource,
-				IsLive: false));
+			descriptors.Add(
+				new QuestFinishRewardOperationDescriptor(
+					order++,
+					QuestFinishRewardOperationAction.ChallengeTaskCompletionPlaceholder,
+					ChallengeTaskJavaSource,
+					IsLive: false
+				)
+			);
 		}
 
 		foreach (var workItem in template.WorkItems)
 		{
-			descriptors.Add(new QuestFinishRewardOperationDescriptor(
-				order++,
-				QuestFinishRewardOperationAction.RemoveQuestWorkItemsPlaceholder,
-				WorkItemJavaSource,
-				IsLive: false,
-				ItemId: workItem.ItemId,
-				Count: workItem.Count));
+			descriptors.Add(
+				new QuestFinishRewardOperationDescriptor(
+					order++,
+					QuestFinishRewardOperationAction.RemoveQuestWorkItemsPlaceholder,
+					WorkItemJavaSource,
+					IsLive: false,
+					ItemId: workItem.ItemId,
+					Count: workItem.Count
+				)
+			);
 		}
 
-		return new QuestFinishRewardOperationPlan(
-			correction.QuestState,
-			descriptors,
-			correction.Status,
-			correction.OriginalRewardGroup);
+		return new QuestFinishRewardOperationPlan(correction.QuestState, descriptors, correction.Status, correction.OriginalRewardGroup);
 	}
 
-	public static QuestFinishRewardGroupCorrectionResult CorrectRewardGroup(
-		PlayerQuestState questState,
-		int? rewardGroupCount)
+	public static QuestFinishRewardGroupCorrectionResult CorrectRewardGroup(PlayerQuestState questState, int? rewardGroupCount)
 	{
 		ArgumentNullException.ThrowIfNull(questState);
 
@@ -316,7 +333,8 @@ public static class QuestFinishRewardPlanService
 			return new QuestFinishRewardGroupCorrectionResult(
 				questState,
 				QuestFinishRewardGroupCorrectionStatus.IgnoredNonRewardState,
-				questState.RewardGroup);
+				questState.RewardGroup
+			);
 		}
 
 		if (questState.RewardGroup is { } rewardGroup)
@@ -324,36 +342,46 @@ public static class QuestFinishRewardPlanService
 			if (rewardGroupCount is null)
 			{
 				return new QuestFinishRewardGroupCorrectionResult(
-					questState with { RewardGroup = null },
+					questState with
+					{
+						RewardGroup = null,
+					},
 					QuestFinishRewardGroupCorrectionStatus.ClearedMissingRewards,
-					rewardGroup);
+					rewardGroup
+				);
 			}
 
 			if (rewardGroup < 0 || rewardGroup >= rewardGroupCount.Value)
 			{
 				return new QuestFinishRewardGroupCorrectionResult(
-					questState with { RewardGroup = rewardGroupCount.Value - 1 },
+					questState with
+					{
+						RewardGroup = rewardGroupCount.Value - 1,
+					},
 					QuestFinishRewardGroupCorrectionStatus.ClampedOutOfRange,
-					rewardGroup);
+					rewardGroup
+				);
 			}
 		}
 		else if (rewardGroupCount is > 0)
 		{
 			return new QuestFinishRewardGroupCorrectionResult(
-				questState with { RewardGroup = 0 },
+				questState with
+				{
+					RewardGroup = 0,
+				},
 				QuestFinishRewardGroupCorrectionStatus.DefaultedFirstRewardGroup,
-				null);
+				null
+			);
 		}
 
-		return new QuestFinishRewardGroupCorrectionResult(
-			questState,
-			QuestFinishRewardGroupCorrectionStatus.Unchanged,
-			questState.RewardGroup);
+		return new QuestFinishRewardGroupCorrectionResult(questState, QuestFinishRewardGroupCorrectionStatus.Unchanged, questState.RewardGroup);
 	}
 
 	public static QuestFinishRewardItemProjectionPlan CreateRewardItemProjection(
 		QuestFinishRewardItemProjectionInput input,
-		QuestFinishRewardItemTemplateProjection template)
+		QuestFinishRewardItemTemplateProjection template
+	)
 	{
 		ArgumentNullException.ThrowIfNull(template);
 
@@ -369,21 +397,23 @@ public static class QuestFinishRewardPlanService
 				ref order,
 				template.ExtendedRewards.FixedRewardItems,
 				QuestFinishRewardItemSource.ExtendedFixed,
-				template.ExtendedRewards.RewardGroupIndex);
+				template.ExtendedRewards.RewardGroupIndex
+			);
 
 			if (input.DialogActionId == SelectedQuestNoReward && template.ExtendedRewards.SelectableRewardItems.Count > 0)
 			{
 				if (input.ExtendedRewardIndex is not { } extendedRewardIndex)
 				{
-					warnings.Add(new QuestFinishRewardItemProjectionWarningDescriptor(
-						QuestFinishRewardItemProjectionWarning.ExtendedRewardIndexMissing,
-						RewardItemJavaSource));
+					warnings.Add(
+						new QuestFinishRewardItemProjectionWarningDescriptor(
+							QuestFinishRewardItemProjectionWarning.ExtendedRewardIndexMissing,
+							RewardItemJavaSource
+						)
+					);
 				}
 				else
 				{
-					var selectedIndex = ResolveExtendedSelectableRewardIndex(
-						extendedRewardIndex,
-						template.ExtendedRewards.SelectableRewardItems.Count);
+					var selectedIndex = ResolveExtendedSelectableRewardIndex(extendedRewardIndex, template.ExtendedRewards.SelectableRewardItems.Count);
 					if (selectedIndex is { } index)
 					{
 						AddSelectableItem(
@@ -393,15 +423,19 @@ public static class QuestFinishRewardPlanService
 							QuestFinishRewardItemSource.ExtendedSelectable,
 							template.ExtendedRewards.RewardGroupIndex,
 							index,
-							playerClass: null);
+							playerClass: null
+						);
 					}
 					else
 					{
-						warnings.Add(new QuestFinishRewardItemProjectionWarningDescriptor(
-							QuestFinishRewardItemProjectionWarning.ExtendedSelectableOutOfRange,
-							RewardItemJavaSource,
-							RewardGroupIndex: template.ExtendedRewards.RewardGroupIndex,
-							SelectableIndex: extendedRewardIndex - 8));
+						warnings.Add(
+							new QuestFinishRewardItemProjectionWarningDescriptor(
+								QuestFinishRewardItemProjectionWarning.ExtendedSelectableOutOfRange,
+								RewardItemJavaSource,
+								RewardGroupIndex: template.ExtendedRewards.RewardGroupIndex,
+								SelectableIndex: extendedRewardIndex - 8
+							)
+						);
 					}
 				}
 			}
@@ -412,19 +446,17 @@ public static class QuestFinishRewardPlanService
 			var rewards = template.RewardGroups.FirstOrDefault(group => group.RewardGroupIndex == rewardGroup);
 			if (rewards is null)
 			{
-				warnings.Add(new QuestFinishRewardItemProjectionWarningDescriptor(
-					QuestFinishRewardItemProjectionWarning.RewardGroupOutOfRange,
-					RewardItemJavaSource,
-					RewardGroupIndex: rewardGroup));
+				warnings.Add(
+					new QuestFinishRewardItemProjectionWarningDescriptor(
+						QuestFinishRewardItemProjectionWarning.RewardGroupOutOfRange,
+						RewardItemJavaSource,
+						RewardGroupIndex: rewardGroup
+					)
+				);
 			}
 			else
 			{
-				AddFixedItems(
-					descriptors,
-					ref order,
-					rewards.FixedRewardItems,
-					QuestFinishRewardItemSource.RegularFixed,
-					rewards.RewardGroupIndex);
+				AddFixedItems(descriptors, ref order, rewards.FixedRewardItems, QuestFinishRewardItemSource.RegularFixed, rewards.RewardGroupIndex);
 
 				var rewardIndex = GetRewardIndex(input.DialogActionId);
 				if (rewardIndex >= 0)
@@ -442,15 +474,19 @@ public static class QuestFinishRewardPlanService
 							QuestFinishRewardItemSource.RegularSelectable,
 							rewards.RewardGroupIndex,
 							rewardIndex,
-							playerClass: null);
+							playerClass: null
+						);
 					}
 					else
 					{
-						warnings.Add(new QuestFinishRewardItemProjectionWarningDescriptor(
-							QuestFinishRewardItemProjectionWarning.RegularSelectableOutOfRange,
-							RewardItemJavaSource,
-							RewardGroupIndex: rewards.RewardGroupIndex,
-							SelectableIndex: rewardIndex));
+						warnings.Add(
+							new QuestFinishRewardItemProjectionWarningDescriptor(
+								QuestFinishRewardItemProjectionWarning.RegularSelectableOutOfRange,
+								RewardItemJavaSource,
+								RewardGroupIndex: rewards.RewardGroupIndex,
+								SelectableIndex: rewardIndex
+							)
+						);
 					}
 				}
 				else if (input.DialogActionId == SelectedQuestNoReward && UsesClassSelectableRewards(template, isLastRepeat))
@@ -461,10 +497,13 @@ public static class QuestFinishRewardPlanService
 					}
 					else
 					{
-						warnings.Add(new QuestFinishRewardItemProjectionWarningDescriptor(
-							QuestFinishRewardItemProjectionWarning.ExtendedRewardIndexMissing,
-							RewardItemJavaSource,
-							RewardGroupIndex: rewards.RewardGroupIndex));
+						warnings.Add(
+							new QuestFinishRewardItemProjectionWarningDescriptor(
+								QuestFinishRewardItemProjectionWarning.ExtendedRewardIndexMissing,
+								RewardItemJavaSource,
+								RewardGroupIndex: rewards.RewardGroupIndex
+							)
+						);
 					}
 				}
 			}
@@ -472,25 +511,27 @@ public static class QuestFinishRewardPlanService
 
 		if (template.HasBonus)
 		{
-			warnings.Add(new QuestFinishRewardItemProjectionWarningDescriptor(
-				QuestFinishRewardItemProjectionWarning.BonusHandlerNotProjected,
-				RewardItemJavaSource,
-				BonusType: template.BonusProjection?.BonusType,
-				BonusLevel: template.BonusProjection?.Level,
-				BonusSupportStatus: template.BonusProjection?.SupportStatus));
+			warnings.Add(
+				new QuestFinishRewardItemProjectionWarningDescriptor(
+					QuestFinishRewardItemProjectionWarning.BonusHandlerNotProjected,
+					RewardItemJavaSource,
+					BonusType: template.BonusProjection?.BonusType,
+					BonusLevel: template.BonusProjection?.Level,
+					BonusSupportStatus: template.BonusProjection?.SupportStatus
+				)
+			);
 		}
 
 		return new QuestFinishRewardItemProjectionPlan(descriptors, warnings);
 	}
 
 	public static int GetRewardIndex(int dialogActionId) =>
-		dialogActionId >= SelectedQuestReward1 && dialogActionId <= SelectedQuestReward15
-			? dialogActionId - SelectedQuestReward1
-			: -1;
+		dialogActionId >= SelectedQuestReward1 && dialogActionId <= SelectedQuestReward15 ? dialogActionId - SelectedQuestReward1 : -1;
 
 	public static QuestFinishRewardNonItemProjectionPlan CreateNonItemRewardProjection(
 		QuestFinishRewardNonItemProjectionInput input,
-		QuestFinishRewardNonItemTemplateProjection template)
+		QuestFinishRewardNonItemTemplateProjection template
+	)
 	{
 		ArgumentNullException.ThrowIfNull(template);
 
@@ -500,64 +541,56 @@ public static class QuestFinishRewardPlanService
 
 		if (template.Kinah != 0)
 		{
-			descriptors.Add(CreateNonItemDescriptor(
-				ref order,
-				QuestFinishRewardNonItemAction.Kinah,
-				template.Kinah,
-				input.Source,
-				RateSource: "Rates.QUEST_KINAH"));
+			descriptors.Add(
+				CreateNonItemDescriptor(ref order, QuestFinishRewardNonItemAction.Kinah, template.Kinah, input.Source, RateSource: "Rates.QUEST_KINAH")
+			);
 		}
 
 		if (template.Experience != 0)
 		{
-			descriptors.Add(CreateNonItemDescriptor(
-				ref order,
-				QuestFinishRewardNonItemAction.Experience,
-				template.Experience,
-				input.Source,
-				RateSource: "Rates.XP_QUEST",
-				TargetNpcId: input.TargetNpcId,
-				RequiresTargetNpcL10nLookup: true));
+			descriptors.Add(
+				CreateNonItemDescriptor(
+					ref order,
+					QuestFinishRewardNonItemAction.Experience,
+					template.Experience,
+					input.Source,
+					RateSource: "Rates.XP_QUEST",
+					TargetNpcId: input.TargetNpcId,
+					RequiresTargetNpcL10nLookup: true
+				)
+			);
 		}
 
 		if (template.Title != 0)
 		{
-			descriptors.Add(CreateNonItemDescriptor(
-				ref order,
-				QuestFinishRewardNonItemAction.Title,
-				template.Title,
-				input.Source));
+			descriptors.Add(CreateNonItemDescriptor(ref order, QuestFinishRewardNonItemAction.Title, template.Title, input.Source));
 		}
 
 		if (template.AbyssPoints != 0)
 		{
 			var isNonCountQuest = string.Equals(input.QuestCategory, "NON_COUNT", StringComparison.Ordinal);
-			descriptors.Add(CreateNonItemDescriptor(
-				ref order,
-				QuestFinishRewardNonItemAction.AbyssPoints,
-				template.AbyssPoints,
-				input.Source,
-				RateSource: isNonCountQuest ? null : "Rates.AP_QUEST",
-				RateBypassed: isNonCountQuest));
+			descriptors.Add(
+				CreateNonItemDescriptor(
+					ref order,
+					QuestFinishRewardNonItemAction.AbyssPoints,
+					template.AbyssPoints,
+					input.Source,
+					RateSource: isNonCountQuest ? null : "Rates.AP_QUEST",
+					RateBypassed: isNonCountQuest
+				)
+			);
 		}
 
 		if (template.DivinePoints != 0)
 		{
-			descriptors.Add(CreateNonItemDescriptor(
-				ref order,
-				QuestFinishRewardNonItemAction.DivinePoints,
-				template.DivinePoints,
-				input.Source));
+			descriptors.Add(CreateNonItemDescriptor(ref order, QuestFinishRewardNonItemAction.DivinePoints, template.DivinePoints, input.Source));
 		}
 
 		if (template.GloryPoints != 0)
 		{
-			descriptors.Add(CreateNonItemDescriptor(
-				ref order,
-				QuestFinishRewardNonItemAction.GloryPoints,
-				template.GloryPoints,
-				input.Source,
-				RateSource: "Rates.GP"));
+			descriptors.Add(
+				CreateNonItemDescriptor(ref order, QuestFinishRewardNonItemAction.GloryPoints, template.GloryPoints, input.Source, RateSource: "Rates.GP")
+			);
 		}
 
 		switch (template.ExtendInventory)
@@ -565,26 +598,23 @@ public static class QuestFinishRewardPlanService
 			case 0:
 				break;
 			case 1:
-				descriptors.Add(CreateNonItemDescriptor(
-					ref order,
-					QuestFinishRewardNonItemAction.CubeExpansion,
-					template.ExtendInventory,
-					input.Source));
+				descriptors.Add(CreateNonItemDescriptor(ref order, QuestFinishRewardNonItemAction.CubeExpansion, template.ExtendInventory, input.Source));
 				break;
 			case 2:
-				descriptors.Add(CreateNonItemDescriptor(
-					ref order,
-					QuestFinishRewardNonItemAction.WarehouseExpansion,
-					template.ExtendInventory,
-					input.Source));
+				descriptors.Add(
+					CreateNonItemDescriptor(ref order, QuestFinishRewardNonItemAction.WarehouseExpansion, template.ExtendInventory, input.Source)
+				);
 				break;
 			default:
-				warnings.Add(new QuestFinishRewardNonItemProjectionWarningDescriptor(
-					QuestFinishRewardNonItemProjectionWarning.UnsupportedExtendInventoryValue,
-					GiveRewardJavaSource,
-					FieldName: "extend_inventory",
-					Value: template.ExtendInventory,
-					Source: input.Source));
+				warnings.Add(
+					new QuestFinishRewardNonItemProjectionWarningDescriptor(
+						QuestFinishRewardNonItemProjectionWarning.UnsupportedExtendInventoryValue,
+						GiveRewardJavaSource,
+						FieldName: "extend_inventory",
+						Value: template.ExtendInventory,
+						Source: input.Source
+					)
+				);
 				break;
 		}
 
@@ -601,7 +631,8 @@ public static class QuestFinishRewardPlanService
 		string? RateSource = null,
 		bool RateBypassed = false,
 		int? TargetNpcId = null,
-		bool RequiresTargetNpcL10nLookup = false)
+		bool RequiresTargetNpcL10nLookup = false
+	)
 	{
 		return new QuestFinishRewardNonItemProjectionDescriptor(
 			order++,
@@ -613,42 +644,53 @@ public static class QuestFinishRewardPlanService
 			RateBypassed,
 			TargetNpcId,
 			RequiresTargetNpcL10nLookup,
-			source);
+			source
+		);
 	}
 
 	private static void AddIgnoredXmlFieldWarnings(
 		ICollection<QuestFinishRewardNonItemProjectionWarningDescriptor> warnings,
 		QuestFinishRewardNonItemTemplateProjection template,
-		QuestFinishRewardNonItemSource source)
+		QuestFinishRewardNonItemSource source
+	)
 	{
 		if (template.ExtendStigma != 0)
 		{
-			warnings.Add(new QuestFinishRewardNonItemProjectionWarningDescriptor(
-				QuestFinishRewardNonItemProjectionWarning.XmlFieldIgnoredByJavaGiveReward,
-				GiveRewardJavaSource,
-				FieldName: "extend_stigma",
-				Value: template.ExtendStigma,
-				Source: source));
+			warnings.Add(
+				new QuestFinishRewardNonItemProjectionWarningDescriptor(
+					QuestFinishRewardNonItemProjectionWarning.XmlFieldIgnoredByJavaGiveReward,
+					GiveRewardJavaSource,
+					FieldName: "extend_stigma",
+					Value: template.ExtendStigma,
+					Source: source
+				)
+			);
 		}
 
 		if (template.CollectItemChecks.Count > 0)
 		{
-			warnings.Add(new QuestFinishRewardNonItemProjectionWarningDescriptor(
-				QuestFinishRewardNonItemProjectionWarning.XmlFieldIgnoredByJavaGiveReward,
-				GiveRewardJavaSource,
-				FieldName: "ccheck",
-				Value: template.CollectItemChecks.Count,
-				Source: source));
+			warnings.Add(
+				new QuestFinishRewardNonItemProjectionWarningDescriptor(
+					QuestFinishRewardNonItemProjectionWarning.XmlFieldIgnoredByJavaGiveReward,
+					GiveRewardJavaSource,
+					FieldName: "ccheck",
+					Value: template.CollectItemChecks.Count,
+					Source: source
+				)
+			);
 		}
 
 		if (template.InventoryItemCheck != 0)
 		{
-			warnings.Add(new QuestFinishRewardNonItemProjectionWarningDescriptor(
-				QuestFinishRewardNonItemProjectionWarning.XmlFieldIgnoredByJavaGiveReward,
-				GiveRewardJavaSource,
-				FieldName: "icheck",
-				Value: template.InventoryItemCheck,
-				Source: source));
+			warnings.Add(
+				new QuestFinishRewardNonItemProjectionWarningDescriptor(
+					QuestFinishRewardNonItemProjectionWarning.XmlFieldIgnoredByJavaGiveReward,
+					GiveRewardJavaSource,
+					FieldName: "icheck",
+					Value: template.InventoryItemCheck,
+					Source: source
+				)
+			);
 		}
 	}
 
@@ -664,9 +706,7 @@ public static class QuestFinishRewardPlanService
 		}
 
 		var minusOne = extendedRewardIndex - 1;
-		return minusOne >= 0 && minusOne < selectableRewardCount
-			? minusOne
-			: null;
+		return minusOne >= 0 && minusOne < selectableRewardCount ? minusOne : null;
 	}
 
 	private static void AddFixedItems(
@@ -674,18 +714,22 @@ public static class QuestFinishRewardPlanService
 		ref int order,
 		IReadOnlyList<QuestFinishRewardItem> fixedItems,
 		QuestFinishRewardItemSource source,
-		int rewardGroupIndex)
+		int rewardGroupIndex
+	)
 	{
 		foreach (var item in fixedItems)
 		{
-			descriptors.Add(new QuestFinishRewardItemProjectionDescriptor(
-				order++,
-				source,
-				RewardItemJavaSource,
-				IsLive: false,
-				ItemId: item.ItemId,
-				Count: item.Count,
-				RewardGroupIndex: rewardGroupIndex));
+			descriptors.Add(
+				new QuestFinishRewardItemProjectionDescriptor(
+					order++,
+					source,
+					RewardItemJavaSource,
+					IsLive: false,
+					ItemId: item.ItemId,
+					Count: item.Count,
+					RewardGroupIndex: rewardGroupIndex
+				)
+			);
 		}
 	}
 
@@ -696,18 +740,22 @@ public static class QuestFinishRewardPlanService
 		QuestFinishRewardItemSource source,
 		int rewardGroupIndex,
 		int selectableIndex,
-		string? playerClass)
+		string? playerClass
+	)
 	{
-		descriptors.Add(new QuestFinishRewardItemProjectionDescriptor(
-			order++,
-			source,
-			RewardItemJavaSource,
-			IsLive: false,
-			ItemId: item.ItemId,
-			Count: item.Count,
-			RewardGroupIndex: rewardGroupIndex,
-			SelectableIndex: selectableIndex,
-			PlayerClass: playerClass));
+		descriptors.Add(
+			new QuestFinishRewardItemProjectionDescriptor(
+				order++,
+				source,
+				RewardItemJavaSource,
+				IsLive: false,
+				ItemId: item.ItemId,
+				Count: item.Count,
+				RewardGroupIndex: rewardGroupIndex,
+				SelectableIndex: selectableIndex,
+				PlayerClass: playerClass
+			)
+		);
 	}
 
 	private static void AddClassSelectableItem(
@@ -716,25 +764,31 @@ public static class QuestFinishRewardPlanService
 		ref int order,
 		QuestFinishRewardItemProjectionInput input,
 		QuestFinishRewardItemTemplateProjection template,
-		int rewardIndex)
+		int rewardIndex
+	)
 	{
 		if (string.IsNullOrWhiteSpace(input.PlayerClass))
 		{
-			warnings.Add(new QuestFinishRewardItemProjectionWarningDescriptor(
-				QuestFinishRewardItemProjectionWarning.PlayerClassMissing,
-				RewardItemJavaSource,
-				SelectableIndex: rewardIndex));
+			warnings.Add(
+				new QuestFinishRewardItemProjectionWarningDescriptor(
+					QuestFinishRewardItemProjectionWarning.PlayerClassMissing,
+					RewardItemJavaSource,
+					SelectableIndex: rewardIndex
+				)
+			);
 			return;
 		}
 
-		if (!template.ClassSelectableRewards.TryGetValue(input.PlayerClass, out var classRewards) ||
-		    rewardIndex < 0 || rewardIndex >= classRewards.Count)
+		if (!template.ClassSelectableRewards.TryGetValue(input.PlayerClass, out var classRewards) || rewardIndex < 0 || rewardIndex >= classRewards.Count)
 		{
-			warnings.Add(new QuestFinishRewardItemProjectionWarningDescriptor(
-				QuestFinishRewardItemProjectionWarning.ClassSelectableOutOfRange,
-				RewardItemJavaSource,
-				SelectableIndex: rewardIndex,
-				PlayerClass: input.PlayerClass));
+			warnings.Add(
+				new QuestFinishRewardItemProjectionWarningDescriptor(
+					QuestFinishRewardItemProjectionWarning.ClassSelectableOutOfRange,
+					RewardItemJavaSource,
+					SelectableIndex: rewardIndex,
+					PlayerClass: input.PlayerClass
+				)
+			);
 			return;
 		}
 
@@ -745,6 +799,7 @@ public static class QuestFinishRewardPlanService
 			QuestFinishRewardItemSource.ClassSelectable,
 			input.RewardGroup ?? -1,
 			rewardIndex,
-			input.PlayerClass);
+			input.PlayerClass
+		);
 	}
 }

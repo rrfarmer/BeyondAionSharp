@@ -33,7 +33,8 @@ public sealed record PlayerDeathResurrectionOptionsPlan(
 	bool ScheduledLiveTask,
 	IReadOnlyList<PlayerDeathResurrectionOptionsPlanStep> Steps,
 	string JavaSource,
-	bool IsLive);
+	bool IsLive
+);
 
 public static class PlayerDeathResurrectionOptionsPlanService
 {
@@ -41,11 +42,9 @@ public static class PlayerDeathResurrectionOptionsPlanService
 	public const int JavaTaskIdTeleportOrdinal = 1;
 	public const string JavaTaskIdTeleportName = "TELEPORT";
 
-	public static PlayerDeathResurrectionOptionsPlan CreatePlan(
-		Player player,
-		bool hasTeleportTaskAtCallback)
+	public static PlayerDeathResurrectionOptionsPlan CreatePlan(Player player, bool hasTeleportTaskAtCallback)
 	{
-		// Java parity breadcrumb:
+		// Java parity:
 		// PlayerController.scheduleShowResurrectionOptions always schedules a delayed callback.
 		// The callback sends SM_DIE only if getOwner().isDead() and TaskId.TELEPORT is absent.
 		var steps = new List<PlayerDeathResurrectionOptionsPlanStep>
@@ -62,7 +61,8 @@ public static class PlayerDeathResurrectionOptionsPlanService
 				isDeadAtCallback,
 				PlayerDeathResurrectionOptionsPlanStatus.SkipNotDead,
 				shouldSendPacket: false,
-				steps);
+				steps
+			);
 		}
 
 		steps.Add(PlayerDeathResurrectionOptionsPlanStep.CheckTeleportTask);
@@ -74,7 +74,8 @@ public static class PlayerDeathResurrectionOptionsPlanService
 				isDeadAtCallback,
 				PlayerDeathResurrectionOptionsPlanStatus.SkipTeleportTask,
 				shouldSendPacket: false,
-				steps);
+				steps
+			);
 		}
 
 		steps.Add(PlayerDeathResurrectionOptionsPlanStep.SendSmDie);
@@ -84,7 +85,8 @@ public static class PlayerDeathResurrectionOptionsPlanService
 			isDeadAtCallback,
 			PlayerDeathResurrectionOptionsPlanStatus.SendSmDie,
 			shouldSendPacket: true,
-			steps);
+			steps
+		);
 	}
 
 	private static bool IsDeadAtCallback(Player player)
@@ -94,8 +96,7 @@ public static class PlayerDeathResurrectionOptionsPlanService
 			return player.LifeStats.CurrentHp <= 0;
 		}
 
-		return player.IsInState(PlayerCreatureState.Dead)
-			|| player.IsInState(PlayerCreatureState.FloatingCorpse);
+		return player.IsInState(PlayerCreatureState.Dead) || player.IsInState(PlayerCreatureState.FloatingCorpse);
 	}
 
 	private static PlayerDeathResurrectionOptionsPlan BuildPlan(
@@ -104,7 +105,8 @@ public static class PlayerDeathResurrectionOptionsPlanService
 		bool isDeadAtCallback,
 		PlayerDeathResurrectionOptionsPlanStatus status,
 		bool shouldSendPacket,
-		IReadOnlyList<PlayerDeathResurrectionOptionsPlanStep> steps)
+		IReadOnlyList<PlayerDeathResurrectionOptionsPlanStep> steps
+	)
 	{
 		return new PlayerDeathResurrectionOptionsPlan(
 			status,
@@ -121,6 +123,7 @@ public static class PlayerDeathResurrectionOptionsPlanService
 			ScheduledLiveTask: false,
 			steps.ToArray(),
 			"com.aionemu.gameserver.controllers.PlayerController.scheduleShowResurrectionOptions -> ThreadPoolManager.schedule(..., 500); if getOwner().isDead() && !hasTask(TaskId.TELEPORT) showResurrectionOptions(); showResurrectionOptions -> send SM_DIE",
-			IsLive: false);
+			IsLive: false
+		);
 	}
 }

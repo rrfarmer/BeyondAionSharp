@@ -19,14 +19,14 @@ public sealed record BindPointTeleportKinahOwnerCallbackOutcomeIntegrationPlan(
 	bool DidRollbackOwnerMutation,
 	bool DidCommitOwnerMutation,
 	string JavaSource,
-	bool IsLive);
+	bool IsLive
+);
 
 public sealed class BindPointTeleportKinahOwnerCallbackOutcomeIntegrationService
 {
 	private readonly BindPointTeleportKinahInventoryOwnerService _ownerService;
 
-	public BindPointTeleportKinahOwnerCallbackOutcomeIntegrationService(
-		BindPointTeleportKinahInventoryOwnerService? ownerService = null)
+	public BindPointTeleportKinahOwnerCallbackOutcomeIntegrationService(BindPointTeleportKinahInventoryOwnerService? ownerService = null)
 	{
 		_ownerService = ownerService ?? new BindPointTeleportKinahInventoryOwnerService();
 	}
@@ -43,66 +43,61 @@ public sealed class BindPointTeleportKinahOwnerCallbackOutcomeIntegrationService
 		BindPointTeleportKinahInventorySendResult? suppliedSendResult = null,
 		bool useDisabledSendAdapter = false,
 		BindPointTeleportRuntimeCallbackExecutionResult? runtimeResult = null,
-		BindPointTeleportTeleportToSideEffectPlan? teleportSideEffectPlan = null)
+		BindPointTeleportTeleportToSideEffectPlan? teleportSideEffectPlan = null
+	)
 	{
-		// Java parity breadcrumb: BindPointTeleportService.teleport scheduled task orders
+		// Java parity: BindPointTeleportService.teleport scheduled task orders
 		// tryDecreaseKinah -> SM_INVENTORY_UPDATE_ITEM -> addCooldown/action 3 -> final movement.
 		// This integration composes metadata only; live SQL, sends, fanout, dispatch, and movement remain disabled.
 		var ownerResult = _ownerService.TryApplyScheduledDecrease(player, requiredPrice);
 		var ownerBridge = BindPointTeleportKinahInventoryOwnerCallbackBridgeService.CreatePlan(ownerResult);
-		var callbackPlan = CreateCallbackPlan(
-			ownerBridge,
-			cooldownPlan,
-			cooldownFanoutPlan,
-			finalMovementPlan,
-			teleportSideEffectPlan);
+		var callbackPlan = CreateCallbackPlan(ownerBridge, cooldownPlan, cooldownFanoutPlan, finalMovementPlan, teleportSideEffectPlan);
 
-		var persistenceResult = ownerBridge.ShouldCreatePersistenceDecision && persistenceAffectedRows != null
-			? BindPointTeleportKinahPersistenceOperationPlanService.CreateResult(
-				ownerBridge.PersistenceOperationPlan,
-				persistenceAffectedRows.Value,
-				persistenceException)
-			: null;
-		var persistenceDecision = BindPointTeleportKinahPersistenceDecisionBridgeService.CreateDecision(
-			callbackPlan,
-			persistenceResult);
-		var packetPlan = BindPointTeleportKinahInventoryUpdatePacketPlanService.CreatePlan(
-			persistenceDecision,
-			kinahTemplate);
+		var persistenceResult =
+			ownerBridge.ShouldCreatePersistenceDecision && persistenceAffectedRows != null
+				? BindPointTeleportKinahPersistenceOperationPlanService.CreateResult(
+					ownerBridge.PersistenceOperationPlan,
+					persistenceAffectedRows.Value,
+					persistenceException
+				)
+				: null;
+		var persistenceDecision = BindPointTeleportKinahPersistenceDecisionBridgeService.CreateDecision(callbackPlan, persistenceResult);
+		var packetPlan = BindPointTeleportKinahInventoryUpdatePacketPlanService.CreatePlan(persistenceDecision, kinahTemplate);
 		var callbackComposition = BindPointTeleportKinahCallbackResultCompositionService.CreateComposition(
 			persistenceDecision,
 			packetPlan,
-			runtimeResult);
+			runtimeResult
+		);
 
 		BindPointTeleportKinahInventorySendAdapterPlan? sendAdapterPlan = null;
 		BindPointTeleportKinahInventorySendDecision? sendDecision = null;
 		if (persistenceDecision.Status == BindPointTeleportKinahPersistenceDecisionStatus.ContinueAfterPersistence)
 		{
-			sendAdapterPlan = useDisabledSendAdapter
-				? BindPointTeleportKinahInventorySendAdapterPlanService.CreateDisabledPlan(packetPlan, ownerResult.PlayerObjectId)
-				: suppliedSendResult == null
-					? null
-					: CreateSuppliedSendAdapterPlan(packetPlan, suppliedSendResult);
+			sendAdapterPlan =
+				useDisabledSendAdapter ? BindPointTeleportKinahInventorySendAdapterPlanService.CreateDisabledPlan(packetPlan, ownerResult.PlayerObjectId)
+				: suppliedSendResult == null ? null
+				: CreateSuppliedSendAdapterPlan(packetPlan, suppliedSendResult);
 			sendDecision = BindPointTeleportKinahInventorySendResultPlanService.CreateDecision(
 				callbackComposition,
-				sendAdapterPlan?.SendResult ?? suppliedSendResult);
+				sendAdapterPlan?.SendResult ?? suppliedSendResult
+			);
 		}
 
 		var ownerRollbackPlan = BindPointTeleportKinahOwnerRollbackPlanService.CreatePlan(
 			CreateOriginalPlayerSnapshot(ownerResult),
 			ownerBridge.MutationPlan,
 			persistenceDecision,
-			sendDecision);
+			sendDecision
+		);
 		var outcomePlan = BindPointTeleportKinahCallbackOutcomePlanService.CreatePlan(
 			ownerBridge.MutationPlan,
 			ownerBridge.PersistenceOperationPlan,
 			persistenceDecision,
 			sendAdapterPlan,
 			sendDecision,
-			ownerRollbackPlan);
-		var rollbackResult = outcomePlan.ShouldRollbackInMemoryMutation
-			? _ownerService.RollbackScheduledDecrease(player, ownerResult)
-			: null;
+			ownerRollbackPlan
+		);
+		var rollbackResult = outcomePlan.ShouldRollbackInMemoryMutation ? _ownerService.RollbackScheduledDecrease(player, ownerResult) : null;
 
 		return new BindPointTeleportKinahOwnerCallbackOutcomeIntegrationPlan(
 			ownerResult,
@@ -120,7 +115,8 @@ public sealed class BindPointTeleportKinahOwnerCallbackOutcomeIntegrationService
 			DidRollbackOwnerMutation: rollbackResult?.RestoredOriginalKinah == true,
 			DidCommitOwnerMutation: outcomePlan.ShouldCommitInMemoryMutation,
 			outcomePlan.JavaSource,
-			IsLive: false);
+			IsLive: false
+		);
 	}
 
 	private static BindPointTeleportScheduledCallbackPlan CreateCallbackPlan(
@@ -128,23 +124,27 @@ public sealed class BindPointTeleportKinahOwnerCallbackOutcomeIntegrationService
 		BindPointTeleportCooldownPlan cooldownPlan,
 		BindPointTeleportFanoutPlan cooldownFanoutPlan,
 		BindPointTeleportFinalMovementPlan finalMovementPlan,
-		BindPointTeleportTeleportToSideEffectPlan? teleportSideEffectPlan)
+		BindPointTeleportTeleportToSideEffectPlan? teleportSideEffectPlan
+	)
 	{
 		var kinahPlan = BindPointTeleportScheduledKinahPlanService.CreatePlan(
 			ownerBridge.MutationPlan.RequiredPrice,
-			ownerBridge.MutationPlan.CurrentKinah);
+			ownerBridge.MutationPlan.CurrentKinah
+		);
 		return BindPointTeleportScheduledCallbackPlanService.CreatePlan(
 			kinahPlan,
 			cooldownPlan,
 			cooldownFanoutPlan,
 			finalMovementPlan,
 			teleportSideEffectPlan,
-			ownerBridge.MutationPlan);
+			ownerBridge.MutationPlan
+		);
 	}
 
 	private static BindPointTeleportKinahInventorySendAdapterPlan CreateSuppliedSendAdapterPlan(
 		BindPointTeleportKinahInventoryUpdatePacketPlan packetPlan,
-		BindPointTeleportKinahInventorySendResult suppliedSendResult)
+		BindPointTeleportKinahInventorySendResult suppliedSendResult
+	)
 	{
 		return new BindPointTeleportKinahInventorySendAdapterPlan(
 			BindPointTeleportKinahInventorySendAdapterStatus.DisabledNoSend,
@@ -153,16 +153,12 @@ public sealed class BindPointTeleportKinahOwnerCallbackOutcomeIntegrationService
 			WouldCallSendPacketAsync: packetPlan.ShouldSendPacket,
 			DidCallSendPacketAsync: false,
 			"Supplied non-live send-result metadata for owner callback outcome integration",
-			IsLive: false);
+			IsLive: false
+		);
 	}
 
-	private static Player CreateOriginalPlayerSnapshot(
-		BindPointTeleportKinahInventoryOwnerMutationResult ownerResult)
+	private static Player CreateOriginalPlayerSnapshot(BindPointTeleportKinahInventoryOwnerMutationResult ownerResult)
 	{
-		return new Player
-		{
-			ObjectId = ownerResult.PlayerObjectId,
-			InventoryItems = ownerResult.InventoryBeforeMutation.ToArray(),
-		};
+		return new Player { ObjectId = ownerResult.PlayerObjectId, InventoryItems = ownerResult.InventoryBeforeMutation.ToArray() };
 	}
 }

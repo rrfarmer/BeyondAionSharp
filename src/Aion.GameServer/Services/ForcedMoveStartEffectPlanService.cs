@@ -54,7 +54,7 @@ public static class ForcedMoveStartEffectPlanService
 {
 	public static ForcedMoveStartEffectPlan CreatePlan(ForcedMoveStartEffectPlanInput input)
 	{
-		// Java parity breadcrumb:
+		// Java parity:
 		// PulledEffect, OpenAerialEffect, StaggerEffect, and StumbleEffect startEffect methods
 		// update world position, player-stop movement state, optionally emit SM_FORCED_MOVE for
 		// players, then set the matching abnormal state. OpenAerial/Stagger/Stumble remove
@@ -90,7 +90,8 @@ public static class ForcedMoveStartEffectPlanService
 
 		var shouldSkipPullMotionStops = input.EffectKind == ForcedMoveEffectKind.Pulled && input.IsReflected;
 		int? cancelCurrentSkillSourceObjectId = shouldSkipPullMotionStops ? null : input.EffectorObjectId;
-		var shouldRemoveParalyzeEffects = input.EffectKind is ForcedMoveEffectKind.OpenAerial or ForcedMoveEffectKind.Stagger or ForcedMoveEffectKind.Stumble;
+		var shouldRemoveParalyzeEffects =
+			input.EffectKind is ForcedMoveEffectKind.OpenAerial or ForcedMoveEffectKind.Stagger or ForcedMoveEffectKind.Stumble;
 		var shouldRemoveStunEffects = input.EffectKind == ForcedMoveEffectKind.Stumble;
 		var shouldCallPlayerOnStopGliding = input.IsEffectedPlayer && !shouldSkipPullMotionStops;
 		var shouldCallPlayerOnStopMove = input.IsEffectedPlayer && !shouldSkipPullMotionStops;

@@ -10,9 +10,10 @@ public static class NearbyQuestDelayedRefreshExecutionReportService
 		WorldMapNearbyQuestRefreshSchedulePlan schedulePlan,
 		WorldMapInstanceRuntimeState? worldInstance,
 		IReadOnlyList<Player> players,
-		StaticData? staticData)
+		StaticData? staticData
+	)
 	{
-		// Java parity breadcrumb: WorldMapInstance.updateNearbyQuestsTask clears the pending Future,
+		// Java parity: WorldMapInstance.updateNearbyQuestsTask clears the pending Future,
 		// then forEachPlayer invokes PlayerController.updateNearbyQuests. This report keeps that non-live.
 		if (!schedulePlan.WouldScheduleTask)
 			return NearbyQuestDelayedRefreshExecutionReport.NotScheduled(schedulePlan);
@@ -26,22 +27,21 @@ public static class NearbyQuestDelayedRefreshExecutionReportService
 		var playerReports = players
 			.Select(player => new NearbyQuestDelayedRefreshPlayerReport(
 				player.ObjectId,
-				NearbyQuestRefreshInputAdapterService.CreatePlan(player, worldInstance, staticData)))
+				NearbyQuestRefreshInputAdapterService.CreatePlan(player, worldInstance, staticData)
+			))
 			.ToArray();
 
-		return NearbyQuestDelayedRefreshExecutionReport.Completed(
-			schedulePlan,
-			clearedPendingRefresh,
-			playerReports);
+		return NearbyQuestDelayedRefreshExecutionReport.Completed(schedulePlan, clearedPendingRefresh, playerReports);
 	}
 
 	public static NearbyQuestDelayedRefreshExecutionReport CreateReportFromMapRegions(
 		WorldMapNearbyQuestRefreshSchedulePlan schedulePlan,
 		WorldMapInstanceRuntimeState? worldInstance,
 		IReadOnlyList<NearbyQuestDelayedRefreshPlayerInput> players,
-		StaticData? staticData)
+		StaticData? staticData
+	)
 	{
-		// Java parity breadcrumb: WorldMapInstance.updateNearbyQuestsTask invokes each player's
+		// Java parity: WorldMapInstance.updateNearbyQuestsTask invokes each player's
 		// PlayerController.updateNearbyQuests, which resolves quest ids from that player's current
 		// position.mapRegion.parent rather than from a pre-supplied flat instance.
 		if (!schedulePlan.WouldScheduleTask)
@@ -56,30 +56,23 @@ public static class NearbyQuestDelayedRefreshExecutionReportService
 		var playerReports = players
 			.Select(input => new NearbyQuestDelayedRefreshPlayerReport(
 				input.Player.ObjectId,
-				NearbyQuestRefreshInputAdapterService.CreatePlanFromMapRegion(input.Player, input.MapRegion, staticData)))
+				NearbyQuestRefreshInputAdapterService.CreatePlanFromMapRegion(input.Player, input.MapRegion, staticData)
+			))
 			.ToArray();
 
-		return NearbyQuestDelayedRefreshExecutionReport.Completed(
-			schedulePlan,
-			clearedPendingRefresh,
-			playerReports);
+		return NearbyQuestDelayedRefreshExecutionReport.Completed(schedulePlan, clearedPendingRefresh, playerReports);
 	}
 
-	public static NearbyQuestDelayedRefreshPacketIntentSummary CreatePacketIntentSummary(
-		NearbyQuestDelayedRefreshExecutionReport report)
+	public static NearbyQuestDelayedRefreshPacketIntentSummary CreatePacketIntentSummary(NearbyQuestDelayedRefreshExecutionReport report)
 	{
-		// Java parity breadcrumb: SM_NEARBY_QUESTS is sent even for an empty nearbyQuestList.
-		var packetIntentReports = report.PlayerReports
-			.Where(playerReport => playerReport.RefreshResult.Plan.WouldSendPacket)
-			.ToArray();
-		var readyPacketCount = packetIntentReports.Count(
-			playerReport => playerReport.RefreshResult.Plan.Status == NearbyQuestRefreshPlanStatus.Ready);
-		var emptyPacketIntentCount = packetIntentReports.Count(
-			playerReport => playerReport.RefreshResult.Plan.Status
-				is NearbyQuestRefreshPlanStatus.NoWorldQuestIds
-				or NearbyQuestRefreshPlanStatus.NoMarkers);
-		var rejectionCounts = report.PlayerReports
-			.SelectMany(playerReport => playerReport.RefreshResult.Plan.RejectionCounts)
+		// Java parity: SM_NEARBY_QUESTS is sent even for an empty nearbyQuestList.
+		var packetIntentReports = report.PlayerReports.Where(playerReport => playerReport.RefreshResult.Plan.WouldSendPacket).ToArray();
+		var readyPacketCount = packetIntentReports.Count(playerReport => playerReport.RefreshResult.Plan.Status == NearbyQuestRefreshPlanStatus.Ready);
+		var emptyPacketIntentCount = packetIntentReports.Count(playerReport =>
+			playerReport.RefreshResult.Plan.Status is NearbyQuestRefreshPlanStatus.NoWorldQuestIds or NearbyQuestRefreshPlanStatus.NoMarkers
+		);
+		var rejectionCounts = report
+			.PlayerReports.SelectMany(playerReport => playerReport.RefreshResult.Plan.RejectionCounts)
 			.GroupBy(pair => pair.Key)
 			.ToDictionary(group => group.Key, group => group.Sum(pair => pair.Value));
 		var unsupportedDependencyCount = SumUnsupportedDependencyCount(rejectionCounts);
@@ -89,11 +82,11 @@ public static class NearbyQuestDelayedRefreshExecutionReportService
 			readyPacketCount,
 			emptyPacketIntentCount,
 			rejectionCounts,
-			unsupportedDependencyCount);
+			unsupportedDependencyCount
+		);
 	}
 
-	private static int SumUnsupportedDependencyCount(
-		IReadOnlyDictionary<NearbyQuestStartConditionFailure, int> rejectionCounts)
+	private static int SumUnsupportedDependencyCount(IReadOnlyDictionary<NearbyQuestStartConditionFailure, int> rejectionCounts)
 	{
 		var total = 0;
 		if (rejectionCounts.TryGetValue(NearbyQuestStartConditionFailure.UnsupportedXmlStartConditions, out var xmlConditions))
@@ -112,33 +105,35 @@ public sealed record NearbyQuestDelayedRefreshExecutionReport(
 	bool ClearedPendingRefresh,
 	IReadOnlyList<NearbyQuestDelayedRefreshPlayerReport> PlayerReports,
 	string JavaSource,
-	string? MissingDependency = null)
+	string? MissingDependency = null
+)
 {
 	public bool WouldInvokePlayerRefresh => Status == NearbyQuestDelayedRefreshExecutionStatus.Completed;
 
 	public static NearbyQuestDelayedRefreshExecutionReport Completed(
 		WorldMapNearbyQuestRefreshSchedulePlan schedulePlan,
 		bool clearedPendingRefresh,
-		IReadOnlyList<NearbyQuestDelayedRefreshPlayerReport> playerReports)
+		IReadOnlyList<NearbyQuestDelayedRefreshPlayerReport> playerReports
+	)
 	{
 		return new NearbyQuestDelayedRefreshExecutionReport(
 			NearbyQuestDelayedRefreshExecutionStatus.Completed,
 			schedulePlan,
 			clearedPendingRefresh,
 			playerReports,
-			"WorldMapInstance.updateNearbyQuestsTask -> forEachPlayer(PlayerController.updateNearbyQuests)");
+			"WorldMapInstance.updateNearbyQuestsTask -> forEachPlayer(PlayerController.updateNearbyQuests)"
+		);
 	}
 
-	public static NearbyQuestDelayedRefreshExecutionReport NoPlayers(
-		WorldMapNearbyQuestRefreshSchedulePlan schedulePlan,
-		bool clearedPendingRefresh)
+	public static NearbyQuestDelayedRefreshExecutionReport NoPlayers(WorldMapNearbyQuestRefreshSchedulePlan schedulePlan, bool clearedPendingRefresh)
 	{
 		return new NearbyQuestDelayedRefreshExecutionReport(
 			NearbyQuestDelayedRefreshExecutionStatus.NoPlayers,
 			schedulePlan,
 			clearedPendingRefresh,
 			Array.Empty<NearbyQuestDelayedRefreshPlayerReport>(),
-			"WorldMapInstance.updateNearbyQuestsTask found no players to refresh");
+			"WorldMapInstance.updateNearbyQuestsTask found no players to refresh"
+		);
 	}
 
 	public static NearbyQuestDelayedRefreshExecutionReport NotScheduled(WorldMapNearbyQuestRefreshSchedulePlan schedulePlan)
@@ -148,7 +143,8 @@ public sealed record NearbyQuestDelayedRefreshExecutionReport(
 			schedulePlan,
 			ClearedPendingRefresh: false,
 			Array.Empty<NearbyQuestDelayedRefreshPlayerReport>(),
-			"WorldMapInstance.updateNearbyQuestsTask is not created when no schedule is planned");
+			"WorldMapInstance.updateNearbyQuestsTask is not created when no schedule is planned"
+		);
 	}
 
 	public static NearbyQuestDelayedRefreshExecutionReport MissingWorldInstance(WorldMapNearbyQuestRefreshSchedulePlan schedulePlan)
@@ -159,17 +155,14 @@ public sealed record NearbyQuestDelayedRefreshExecutionReport(
 			ClearedPendingRefresh: false,
 			Array.Empty<NearbyQuestDelayedRefreshPlayerReport>(),
 			"WorldMapInstance.updateNearbyQuestsTask requires the world instance that owns questIds",
-			"worldInstance");
+			"worldInstance"
+		);
 	}
 }
 
-public sealed record NearbyQuestDelayedRefreshPlayerReport(
-	int PlayerObjectId,
-	NearbyQuestRefreshInputAdapterResult RefreshResult);
+public sealed record NearbyQuestDelayedRefreshPlayerReport(int PlayerObjectId, NearbyQuestRefreshInputAdapterResult RefreshResult);
 
-public sealed record NearbyQuestDelayedRefreshPlayerInput(
-	Player Player,
-	NearbyQuestMapRegionSnapshot? MapRegion);
+public sealed record NearbyQuestDelayedRefreshPlayerInput(Player Player, NearbyQuestMapRegionSnapshot? MapRegion);
 
 public sealed record NearbyQuestDelayedRefreshPacketIntentSummary(
 	int PlayerCount,
@@ -177,7 +170,8 @@ public sealed record NearbyQuestDelayedRefreshPacketIntentSummary(
 	int ReadyPacketCount,
 	int EmptyPacketIntentCount,
 	IReadOnlyDictionary<NearbyQuestStartConditionFailure, int> RejectionCounts,
-	int UnsupportedDependencyCount)
+	int UnsupportedDependencyCount
+)
 {
 	public bool HasPacketIntent => PacketIntentCount > 0;
 }

@@ -23,13 +23,14 @@ public sealed record PlayerDeathCoreSideEffectPlan(
 	bool MutatedEffects,
 	IReadOnlyList<PlayerDeathCoreSideEffectPlanStep> Steps,
 	string JavaSource,
-	bool IsLive);
+	bool IsLive
+);
 
 public static class PlayerDeathCoreSideEffectPlanService
 {
 	public static PlayerDeathCoreSideEffectPlan CreatePlan(int ownerObjectId)
 	{
-		// Java parity breadcrumb:
+		// Java parity:
 		// CreatureController.onDie performs these side effects before death-state
 		// selection, observer notification, death emotion fanout, and aggro cleanup.
 		return new PlayerDeathCoreSideEffectPlan(
@@ -48,6 +49,7 @@ public static class PlayerDeathCoreSideEffectPlanService
 				PlayerDeathCoreSideEffectPlanStep.RemoveAllEffects,
 			},
 			"com.aionemu.gameserver.controllers.CreatureController.onDie -> getMoveController().abortMove(); setCasting(null); getEffectController().removeAllEffects()",
-			IsLive: false);
+			IsLive: false
+		);
 	}
 }

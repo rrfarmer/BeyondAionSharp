@@ -5,6 +5,8 @@ namespace Aion.GameServer.Services;
 
 public static class CustomLevelRewardPlanService
 {
+	// Java parity: services/BonusPackService and services/FactionPackService reward tables,
+	// sender/title/body text, and level/mailbox gating all collapse into this shared planner.
 	public const int TargetLevel = 65;
 	public const int MaxMailboxLetters = 100;
 	public const string Sender = "Beyond Aion";
@@ -53,18 +55,18 @@ public static class CustomLevelRewardPlanService
 
 	public static IReadOnlyList<CustomLevelRewardItem> FactionRewards => FactionPackRewards;
 
-	public static CustomLevelRewardPlan CreateBonusPackPlan(
-		Player? player,
-		int receivedPlayerId,
-		bool storeReceivingPlayerSucceeded)
+	public static CustomLevelRewardPlan CreateBonusPackPlan(Player? player, int receivedPlayerId, bool storeReceivingPlayerSucceeded)
 	{
+		// Java parity: BonusPackService.addPlayerCustomReward entry path before DAO receipt checks
+		// fan out to one express system mail per reward descriptor.
 		return CreatePackPlan(
 			CustomLevelRewardPackKind.Bonus,
 			player,
 			accountCreationLocalTime: null,
 			receivedPlayerId,
 			storeReceivingPlayerSucceeded,
-			itemTemplates: null);
+			itemTemplates: null
+		);
 	}
 
 	public static CustomLevelRewardPlan CreateFactionPackPlan(
@@ -72,15 +74,19 @@ public static class CustomLevelRewardPlanService
 		DateTime accountCreationLocalTime,
 		int receivedPlayerId,
 		bool storeReceivingPlayerSucceeded,
-		ItemTemplateTable? itemTemplates = null)
+		ItemTemplateTable? itemTemplates = null
+	)
 	{
+		// Java parity: FactionPackService.sendRewards uses the same descriptor pipeline, but adds
+		// faction-creation-window and opposite-race item filtering.
 		return CreatePackPlan(
 			CustomLevelRewardPackKind.Faction,
 			player,
 			accountCreationLocalTime,
 			receivedPlayerId,
 			storeReceivingPlayerSucceeded,
-			itemTemplates);
+			itemTemplates
+		);
 	}
 
 	private static CustomLevelRewardPlan CreatePackPlan(
@@ -89,34 +95,86 @@ public static class CustomLevelRewardPlanService
 		DateTime? accountCreationLocalTime,
 		int receivedPlayerId,
 		bool storeReceivingPlayerSucceeded,
-		ItemTemplateTable? itemTemplates)
+		ItemTemplateTable? itemTemplates
+	)
 	{
+		// Java parity: BonusPackService.addPlayerCustomReward / FactionPackService.sendRewards guard
+		// order checks player presence, configured rewards, level, mailbox space, faction windows,
+		// prior receipt, and receipt-store success before assembling system-mail descriptors.
 		if (player == null)
 			return CustomLevelRewardPlan.MissingPlayer(kind, accountCreationLocalTime, receivedPlayerId, storeReceivingPlayerSucceeded);
 
 		var rewards = kind == CustomLevelRewardPackKind.Bonus ? BonusPackRewards : FactionPackRewards;
 		if (rewards.Count == 0)
-			return CustomLevelRewardPlan.Skipped(kind, player, accountCreationLocalTime, receivedPlayerId, storeReceivingPlayerSucceeded, CustomLevelRewardPlanStatus.NoRewardsConfigured);
+			return CustomLevelRewardPlan.Skipped(
+				kind,
+				player,
+				accountCreationLocalTime,
+				receivedPlayerId,
+				storeReceivingPlayerSucceeded,
+				CustomLevelRewardPlanStatus.NoRewardsConfigured
+			);
 		if (player.Level != TargetLevel)
-			return CustomLevelRewardPlan.Skipped(kind, player, accountCreationLocalTime, receivedPlayerId, storeReceivingPlayerSucceeded, CustomLevelRewardPlanStatus.SkippedWrongLevel);
+			return CustomLevelRewardPlan.Skipped(
+				kind,
+				player,
+				accountCreationLocalTime,
+				receivedPlayerId,
+				storeReceivingPlayerSucceeded,
+				CustomLevelRewardPlanStatus.SkippedWrongLevel
+			);
 		if (player.Mailbox.Count + rewards.Count > MaxMailboxLetters)
-			return CustomLevelRewardPlan.Skipped(kind, player, accountCreationLocalTime, receivedPlayerId, storeReceivingPlayerSucceeded, CustomLevelRewardPlanStatus.SkippedMailboxLimit);
+			return CustomLevelRewardPlan.Skipped(
+				kind,
+				player,
+				accountCreationLocalTime,
+				receivedPlayerId,
+				storeReceivingPlayerSucceeded,
+				CustomLevelRewardPlanStatus.SkippedMailboxLimit
+			);
 		if (kind == CustomLevelRewardPackKind.Faction && accountCreationLocalTime is { } creationTime)
 		{
 			var window = GetFactionCreationWindow(player.Race);
 			if (creationTime < window.MinCreationTime)
-				return CustomLevelRewardPlan.Skipped(kind, player, accountCreationLocalTime, receivedPlayerId, storeReceivingPlayerSucceeded, CustomLevelRewardPlanStatus.SkippedCreationBeforeWindow);
+				return CustomLevelRewardPlan.Skipped(
+					kind,
+					player,
+					accountCreationLocalTime,
+					receivedPlayerId,
+					storeReceivingPlayerSucceeded,
+					CustomLevelRewardPlanStatus.SkippedCreationBeforeWindow
+				);
 			if (creationTime > window.MaxCreationTime)
-				return CustomLevelRewardPlan.Skipped(kind, player, accountCreationLocalTime, receivedPlayerId, storeReceivingPlayerSucceeded, CustomLevelRewardPlanStatus.SkippedCreationAfterWindow);
+				return CustomLevelRewardPlan.Skipped(
+					kind,
+					player,
+					accountCreationLocalTime,
+					receivedPlayerId,
+					storeReceivingPlayerSucceeded,
+					CustomLevelRewardPlanStatus.SkippedCreationAfterWindow
+				);
 		}
 		if (receivedPlayerId > 0)
-			return CustomLevelRewardPlan.Skipped(kind, player, accountCreationLocalTime, receivedPlayerId, storeReceivingPlayerSucceeded, CustomLevelRewardPlanStatus.SkippedAlreadyReceived);
+			return CustomLevelRewardPlan.Skipped(
+				kind,
+				player,
+				accountCreationLocalTime,
+				receivedPlayerId,
+				storeReceivingPlayerSucceeded,
+				CustomLevelRewardPlanStatus.SkippedAlreadyReceived
+			);
 		if (!storeReceivingPlayerSucceeded)
-			return CustomLevelRewardPlan.Skipped(kind, player, accountCreationLocalTime, receivedPlayerId, storeReceivingPlayerSucceeded, CustomLevelRewardPlanStatus.SkippedStoreFailed);
+			return CustomLevelRewardPlan.Skipped(
+				kind,
+				player,
+				accountCreationLocalTime,
+				receivedPlayerId,
+				storeReceivingPlayerSucceeded,
+				CustomLevelRewardPlanStatus.SkippedStoreFailed
+			);
 
-		var descriptors = kind == CustomLevelRewardPackKind.Bonus
-			? CreateBonusDescriptors(rewards)
-			: CreateFactionDescriptors(player, rewards, itemTemplates);
+		var descriptors =
+			kind == CustomLevelRewardPackKind.Bonus ? CreateBonusDescriptors(rewards) : CreateFactionDescriptors(player, rewards, itemTemplates);
 
 		var status = descriptors.Any(descriptor => descriptor.Status == CustomLevelRewardDescriptorStatus.PlannedSystemMail)
 			? CustomLevelRewardPlanStatus.Planned
@@ -134,7 +192,8 @@ public static class CustomLevelRewardPlanService
 			accountCreationLocalTime,
 			receivedPlayerId,
 			storeReceivingPlayerSucceeded,
-			descriptors);
+			descriptors
+		);
 	}
 
 	private static IReadOnlyList<CustomLevelRewardDescriptor> CreateBonusDescriptors(IReadOnlyList<CustomLevelRewardItem> rewards)
@@ -145,23 +204,24 @@ public static class CustomLevelRewardPlanService
 				CustomLevelRewardDescriptorStatus.PlannedSystemMail,
 				"BonusPackService.addPlayerCustomReward -> SystemMailService.sendMail",
 				TemplateRace: null,
-				Notes: "Java stores the receiving player before sending one express system mail per reward."))
+				Notes: "Java stores the receiving player before sending one express system mail per reward."
+			))
 			.ToArray();
 	}
 
 	private static IReadOnlyList<CustomLevelRewardDescriptor> CreateFactionDescriptors(
 		Player player,
 		IReadOnlyList<CustomLevelRewardItem> rewards,
-		ItemTemplateTable? itemTemplates)
+		ItemTemplateTable? itemTemplates
+	)
 	{
 		var oppositeRace = GetOppositeRace(player.Race);
 		return rewards
 			.Select(reward =>
 			{
 				var templateRace = itemTemplates?.GetItemTemplate(reward.ItemId)?.Race;
-				var skippedOppositeRace = templateRace != null
-					&& oppositeRace != null
-					&& string.Equals(NormalizeRace(templateRace), oppositeRace, StringComparison.Ordinal);
+				var skippedOppositeRace =
+					templateRace != null && oppositeRace != null && string.Equals(NormalizeRace(templateRace), oppositeRace, StringComparison.Ordinal);
 				var notes = skippedOppositeRace
 					? "Java skips faction-pack reward items whose template race is the player's opposite race."
 					: "Java sends one express system mail per deliverable faction-pack reward.";
@@ -172,13 +232,15 @@ public static class CustomLevelRewardPlanService
 						? "FactionPackService.sendRewards -> ItemTemplate.getRace == player.getOppositeRace"
 						: "FactionPackService.sendRewards -> SystemMailService.sendMail",
 					templateRace,
-					Notes: notes);
+					Notes: notes
+				);
 			})
 			.ToArray();
 	}
 
 	private static (DateTime MinCreationTime, DateTime MaxCreationTime) GetFactionCreationWindow(string race)
 	{
+		// Java parity: FactionPackService.sendRewards uses race-specific creation windows.
 		return string.Equals(NormalizeRace(race), "ASMODIANS", StringComparison.Ordinal)
 			? (AsmodianMinCreationTime, AsmodianMaxCreationTime)
 			: (ElyosMinCreationTime, ElyosMaxCreationTime);
@@ -186,6 +248,7 @@ public static class CustomLevelRewardPlanService
 
 	private static string? GetOppositeRace(string race)
 	{
+		// Java parity: Race.getOppositeRace drives faction-pack template-race filtering.
 		return NormalizeRace(race) switch
 		{
 			"ELYOS" => "ASMODIANS",
@@ -214,7 +277,8 @@ public sealed record CustomLevelRewardPlan(
 	DateTime? AccountCreationLocalTime,
 	int ReceivedPlayerId,
 	bool StoreReceivingPlayerSucceeded,
-	IReadOnlyList<CustomLevelRewardDescriptor> Descriptors)
+	IReadOnlyList<CustomLevelRewardDescriptor> Descriptors
+)
 {
 	public bool Applied => Status == CustomLevelRewardPlanStatus.Planned;
 
@@ -222,7 +286,8 @@ public sealed record CustomLevelRewardPlan(
 		CustomLevelRewardPackKind kind,
 		DateTime? accountCreationLocalTime,
 		int receivedPlayerId,
-		bool storeReceivingPlayerSucceeded)
+		bool storeReceivingPlayerSucceeded
+	)
 	{
 		return new CustomLevelRewardPlan(
 			kind,
@@ -236,7 +301,8 @@ public sealed record CustomLevelRewardPlan(
 			accountCreationLocalTime,
 			receivedPlayerId,
 			storeReceivingPlayerSucceeded,
-			Array.Empty<CustomLevelRewardDescriptor>());
+			Array.Empty<CustomLevelRewardDescriptor>()
+		);
 	}
 
 	public static CustomLevelRewardPlan Skipped(
@@ -245,7 +311,8 @@ public sealed record CustomLevelRewardPlan(
 		DateTime? accountCreationLocalTime,
 		int receivedPlayerId,
 		bool storeReceivingPlayerSucceeded,
-		CustomLevelRewardPlanStatus status)
+		CustomLevelRewardPlanStatus status
+	)
 	{
 		return new CustomLevelRewardPlan(
 			kind,
@@ -259,7 +326,8 @@ public sealed record CustomLevelRewardPlan(
 			accountCreationLocalTime,
 			receivedPlayerId,
 			storeReceivingPlayerSucceeded,
-			Array.Empty<CustomLevelRewardDescriptor>());
+			Array.Empty<CustomLevelRewardDescriptor>()
+		);
 	}
 }
 
@@ -269,7 +337,8 @@ public sealed record CustomLevelRewardDescriptor(
 	string JavaSource,
 	string? TemplateRace,
 	bool IsLive = false,
-	string? Notes = null)
+	string? Notes = null
+)
 {
 	public string Sender => CustomLevelRewardPlanService.Sender;
 

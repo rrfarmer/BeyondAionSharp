@@ -26,7 +26,8 @@ public sealed record PlayerProtectionAttackUtilKnownObjectFact(
 	bool IsCasting,
 	int? CastingSkillFirstTargetObjectId,
 	bool CanSeeProtectedTarget = false,
-	string JavaSource = "com.aionemu.gameserver.world.knownlist.KnownList.forEachObject");
+	string JavaSource = "com.aionemu.gameserver.world.knownlist.KnownList.forEachObject"
+);
 
 public sealed record PlayerProtectionAttackUtilRecipientProjection(
 	int KnownObjectId,
@@ -37,7 +38,8 @@ public sealed record PlayerProtectionAttackUtilRecipientProjection(
 	bool IsLive,
 	string JavaOperation,
 	string JavaSource,
-	string Notes);
+	string Notes
+);
 
 public sealed record PlayerProtectionAttackUtilRecipientPlan(
 	int ProtectedPlayerObjectId,
@@ -48,19 +50,14 @@ public sealed record PlayerProtectionAttackUtilRecipientPlan(
 	bool UsesKnownListForEachPlayer,
 	bool DuplicateKnownObjectIdsCollapsed,
 	string JavaSource,
-	bool IsLive)
+	bool IsLive
+)
 {
 	public IReadOnlyList<int> CastCancellationObjectIds { get; } =
-		CastCancellationProjections
-			.Where(projection => projection.WouldCancelCast)
-			.Select(projection => projection.KnownObjectId)
-			.ToArray();
+		CastCancellationProjections.Where(projection => projection.WouldCancelCast).Select(projection => projection.KnownObjectId).ToArray();
 
 	public IReadOnlyList<int> TargetClearPlayerObjectIds { get; } =
-		TargetClearProjections
-			.Where(projection => projection.WouldClearTarget)
-			.Select(projection => projection.KnownObjectId)
-			.ToArray();
+		TargetClearProjections.Where(projection => projection.WouldClearTarget).Select(projection => projection.KnownObjectId).ToArray();
 }
 
 public static class PlayerProtectionAttackUtilRecipientPlannerService
@@ -68,8 +65,12 @@ public static class PlayerProtectionAttackUtilRecipientPlannerService
 	public static PlayerProtectionAttackUtilRecipientPlan CreatePlan(
 		int protectedPlayerObjectId,
 		IEnumerable<PlayerProtectionAttackUtilKnownObjectFact>? knownObjectFacts,
-		bool validateSeeForTargetRemoval = false)
+		bool validateSeeForTargetRemoval = false
+	)
 	{
+		// Java parity: AttackUtil.cancelCastOn and removeTargetFrom iterate the protected player's known
+		// objects to cancel casts and clear targets. This planner projects the affected recipients without
+		// touching live controller state.
 		var facts = CollapseDuplicateKnownObjectIds(knownObjectFacts);
 
 		return new PlayerProtectionAttackUtilRecipientPlan(
@@ -81,11 +82,13 @@ public static class PlayerProtectionAttackUtilRecipientPlannerService
 			UsesKnownListForEachPlayer: true,
 			DuplicateKnownObjectIdsCollapsed: true,
 			"AttackUtil.cancelCastOn(target) / AttackUtil.removeTargetFrom(target, validateSee)",
-			IsLive: false);
+			IsLive: false
+		);
 	}
 
 	private static IReadOnlyList<PlayerProtectionAttackUtilKnownObjectFact> CollapseDuplicateKnownObjectIds(
-		IEnumerable<PlayerProtectionAttackUtilKnownObjectFact>? knownObjectFacts)
+		IEnumerable<PlayerProtectionAttackUtilKnownObjectFact>? knownObjectFacts
+	)
 	{
 		var factsByObjectId = new Dictionary<int, PlayerProtectionAttackUtilKnownObjectFact>();
 		foreach (var fact in knownObjectFacts ?? Array.Empty<PlayerProtectionAttackUtilKnownObjectFact>())
@@ -96,42 +99,90 @@ public static class PlayerProtectionAttackUtilRecipientPlannerService
 
 	private static PlayerProtectionAttackUtilRecipientProjection ProjectCastCancellation(
 		int protectedPlayerObjectId,
-		PlayerProtectionAttackUtilKnownObjectFact fact)
+		PlayerProtectionAttackUtilKnownObjectFact fact
+	)
 	{
 		if (fact.Kind == PlayerProtectionAttackUtilKnownObjectKind.Other)
-			return CastProjection(fact, PlayerProtectionAttackUtilCandidateStatus.SkippedNotCreature, wouldCancelCast: false, "Known object is not a Creature.");
+			return CastProjection(
+				fact,
+				PlayerProtectionAttackUtilCandidateStatus.SkippedNotCreature,
+				wouldCancelCast: false,
+				"Known object is not a Creature."
+			);
 		if (fact.TargetObjectId != protectedPlayerObjectId)
-			return CastProjection(fact, PlayerProtectionAttackUtilCandidateStatus.SkippedTargetMismatch, wouldCancelCast: false, "Creature target is not the protected player.");
+			return CastProjection(
+				fact,
+				PlayerProtectionAttackUtilCandidateStatus.SkippedTargetMismatch,
+				wouldCancelCast: false,
+				"Creature target is not the protected player."
+			);
 		if (!fact.IsCasting)
-			return CastProjection(fact, PlayerProtectionAttackUtilCandidateStatus.SkippedNotCasting, wouldCancelCast: false, "Creature has no current casting skill.");
+			return CastProjection(
+				fact,
+				PlayerProtectionAttackUtilCandidateStatus.SkippedNotCasting,
+				wouldCancelCast: false,
+				"Creature has no current casting skill."
+			);
 		if (fact.CastingSkillFirstTargetObjectId != protectedPlayerObjectId)
-			return CastProjection(fact, PlayerProtectionAttackUtilCandidateStatus.SkippedCastingFirstTargetMismatch, wouldCancelCast: false, "Casting skill first target is not the protected player.");
+			return CastProjection(
+				fact,
+				PlayerProtectionAttackUtilCandidateStatus.SkippedCastingFirstTargetMismatch,
+				wouldCancelCast: false,
+				"Casting skill first target is not the protected player."
+			);
 
-		return CastProjection(fact, PlayerProtectionAttackUtilCandidateStatus.Eligible, wouldCancelCast: true, "Java would call creature.getController().cancelCurrentSkill(null).");
+		return CastProjection(
+			fact,
+			PlayerProtectionAttackUtilCandidateStatus.Eligible,
+			wouldCancelCast: true,
+			"Java would call creature.getController().cancelCurrentSkill(null)."
+		);
 	}
 
 	private static PlayerProtectionAttackUtilRecipientProjection ProjectTargetClear(
 		int protectedPlayerObjectId,
 		PlayerProtectionAttackUtilKnownObjectFact fact,
-		bool validateSee)
+		bool validateSee
+	)
 	{
 		if (fact.Kind != PlayerProtectionAttackUtilKnownObjectKind.Player)
-			return TargetProjection(fact, PlayerProtectionAttackUtilCandidateStatus.SkippedNotPlayer, wouldClearTarget: false, "Known object is not a Player.");
+			return TargetProjection(
+				fact,
+				PlayerProtectionAttackUtilCandidateStatus.SkippedNotPlayer,
+				wouldClearTarget: false,
+				"Known object is not a Player."
+			);
 		if (fact.TargetObjectId != protectedPlayerObjectId)
-			return TargetProjection(fact, PlayerProtectionAttackUtilCandidateStatus.SkippedTargetMismatch, wouldClearTarget: false, "Known player target is not the protected player.");
+			return TargetProjection(
+				fact,
+				PlayerProtectionAttackUtilCandidateStatus.SkippedTargetMismatch,
+				wouldClearTarget: false,
+				"Known player target is not the protected player."
+			);
 		if (validateSee && fact.CanSeeProtectedTarget)
-			return TargetProjection(fact, PlayerProtectionAttackUtilCandidateStatus.SkippedCanSeeWhenValidateSee, wouldClearTarget: false, "Java validateSee=true clears only players that cannot see the target.");
+			return TargetProjection(
+				fact,
+				PlayerProtectionAttackUtilCandidateStatus.SkippedCanSeeWhenValidateSee,
+				wouldClearTarget: false,
+				"Java validateSee=true clears only players that cannot see the target."
+			);
 
-		return TargetProjection(fact, PlayerProtectionAttackUtilCandidateStatus.Eligible, wouldClearTarget: true, validateSee
-			? "Java validateSee=true and player cannot see the protected target, so player.setTarget(null) would run."
-			: "Protection start calls removeTargetFrom(target) with validateSee=false, so player.setTarget(null) would run.");
+		return TargetProjection(
+			fact,
+			PlayerProtectionAttackUtilCandidateStatus.Eligible,
+			wouldClearTarget: true,
+			validateSee
+				? "Java validateSee=true and player cannot see the protected target, so player.setTarget(null) would run."
+				: "Protection start calls removeTargetFrom(target) with validateSee=false, so player.setTarget(null) would run."
+		);
 	}
 
 	private static PlayerProtectionAttackUtilRecipientProjection CastProjection(
 		PlayerProtectionAttackUtilKnownObjectFact fact,
 		PlayerProtectionAttackUtilCandidateStatus status,
 		bool wouldCancelCast,
-		string notes) =>
+		string notes
+	) =>
 		new(
 			fact.KnownObjectId,
 			fact.Kind,
@@ -141,13 +192,15 @@ public static class PlayerProtectionAttackUtilRecipientPlannerService
 			IsLive: false,
 			"AttackUtil.cancelCastOn(target)",
 			"target.getKnownList().forEachObject(visibleObject -> visibleObject instanceof Creature && creature.getTarget() == target && creature.getCastingSkill().getFirstTarget().equals(target))",
-			notes);
+			notes
+		);
 
 	private static PlayerProtectionAttackUtilRecipientProjection TargetProjection(
 		PlayerProtectionAttackUtilKnownObjectFact fact,
 		PlayerProtectionAttackUtilCandidateStatus status,
 		bool wouldClearTarget,
-		string notes) =>
+		string notes
+	) =>
 		new(
 			fact.KnownObjectId,
 			fact.Kind,
@@ -157,5 +210,6 @@ public static class PlayerProtectionAttackUtilRecipientPlannerService
 			IsLive: false,
 			"AttackUtil.removeTargetFrom(target, validateSee)",
 			"object.getKnownList().forEachPlayer(player -> player.getTarget() == object && (!validateSee || !player.canSee(object)))",
-			notes);
+			notes
+		);
 }

@@ -7,8 +7,12 @@ public static class QuestLevelChangedCallbackPlanService
 	public static QuestLevelChangedCallbackPlan CreatePlan(
 		string? playerRace,
 		IEnumerable<QuestLevelChangedRegistration>? registrations,
-		IEnumerable<PlayerQuestState>? questStates)
+		IEnumerable<PlayerQuestState>? questStates
+	)
 	{
+		// Java parity: QuestEngine.registerOnLevelChanged stores race-scoped registrations and
+		// QuestEngine.onLevelChanged dispatches only non-complete quests with registered handlers.
+		// This planner turns that callback eligibility into ordered descriptors.
 		if (registrations == null)
 			return QuestLevelChangedCallbackPlan.MissingRegistrations(playerRace);
 
@@ -20,14 +24,17 @@ public static class QuestLevelChangedCallbackPlanService
 			var normalizedRace = NormalizeRace(playerRace);
 			if (!IsRegisteredForRace(registration.RacePermitted, normalizedRace))
 			{
-				descriptors.Add(new QuestLevelChangedCallbackDescriptor(
-					registration.QuestId,
-					QuestLevelChangedCallbackDescriptorStatus.SkippedRace,
-					registration.RacePermitted,
-					registration.HasHandler,
-					QuestState: null,
-					"QuestEngine.registerOnLevelChanged",
-					Notes: "Java stores registered quest ids in race-specific on-level-up lists; this registration is not in the player's race list."));
+				descriptors.Add(
+					new QuestLevelChangedCallbackDescriptor(
+						registration.QuestId,
+						QuestLevelChangedCallbackDescriptorStatus.SkippedRace,
+						registration.RacePermitted,
+						registration.HasHandler,
+						QuestState: null,
+						"QuestEngine.registerOnLevelChanged",
+						Notes: "Java stores registered quest ids in race-specific on-level-up lists; this registration is not in the player's race list."
+					)
+				);
 				continue;
 			}
 
@@ -37,48 +44,56 @@ public static class QuestLevelChangedCallbackPlanService
 			questStatesById.TryGetValue(registration.QuestId, out var questState);
 			if (questState?.IsComplete == true)
 			{
-				descriptors.Add(new QuestLevelChangedCallbackDescriptor(
-					registration.QuestId,
-					QuestLevelChangedCallbackDescriptorStatus.SkippedComplete,
-					registration.RacePermitted,
-					registration.HasHandler,
-					questState,
-					"QuestEngine.onLevelChanged -> QuestState.COMPLETE guard",
-					Notes: "Java skips level-change handlers when the quest state already exists with QuestStatus.COMPLETE."));
+				descriptors.Add(
+					new QuestLevelChangedCallbackDescriptor(
+						registration.QuestId,
+						QuestLevelChangedCallbackDescriptorStatus.SkippedComplete,
+						registration.RacePermitted,
+						registration.HasHandler,
+						questState,
+						"QuestEngine.onLevelChanged -> QuestState.COMPLETE guard",
+						Notes: "Java skips level-change handlers when the quest state already exists with QuestStatus.COMPLETE."
+					)
+				);
 				continue;
 			}
 
 			if (!registration.HasHandler)
 			{
-				descriptors.Add(new QuestLevelChangedCallbackDescriptor(
-					registration.QuestId,
-					QuestLevelChangedCallbackDescriptorStatus.SkippedMissingHandler,
-					registration.RacePermitted,
-					registration.HasHandler,
-					questState,
-					"QuestEngine.onLevelChanged -> getQuestHandlerByQuestId",
-					Notes: "Java does not dispatch when no quest handler is registered for the quest id."));
+				descriptors.Add(
+					new QuestLevelChangedCallbackDescriptor(
+						registration.QuestId,
+						QuestLevelChangedCallbackDescriptorStatus.SkippedMissingHandler,
+						registration.RacePermitted,
+						registration.HasHandler,
+						questState,
+						"QuestEngine.onLevelChanged -> getQuestHandlerByQuestId",
+						Notes: "Java does not dispatch when no quest handler is registered for the quest id."
+					)
+				);
 				continue;
 			}
 
-			descriptors.Add(new QuestLevelChangedCallbackDescriptor(
-				registration.QuestId,
-				QuestLevelChangedCallbackDescriptorStatus.PlannedDispatch,
-				registration.RacePermitted,
-				registration.HasHandler,
-				questState,
-				"QuestEngine.onLevelChanged -> AbstractQuestHandler.onLevelChangedEvent",
-				Notes: questState == null
-					? "Java dispatches when the player has no quest state for the registered quest."
-					: "Java dispatches when the quest state exists but is not COMPLETE."));
+			descriptors.Add(
+				new QuestLevelChangedCallbackDescriptor(
+					registration.QuestId,
+					QuestLevelChangedCallbackDescriptorStatus.PlannedDispatch,
+					registration.RacePermitted,
+					registration.HasHandler,
+					questState,
+					"QuestEngine.onLevelChanged -> AbstractQuestHandler.onLevelChangedEvent",
+					Notes: questState == null
+						? "Java dispatches when the player has no quest state for the registered quest."
+						: "Java dispatches when the quest state exists but is not COMPLETE."
+				)
+			);
 		}
 
 		var plannedDispatches = descriptors.Count(descriptor => descriptor.Status == QuestLevelChangedCallbackDescriptorStatus.PlannedDispatch);
-		var status = plannedDispatches > 0
-			? QuestLevelChangedCallbackPlanStatus.Applied
-			: descriptors.Count == 0
-				? QuestLevelChangedCallbackPlanStatus.NoRegisteredCallbacks
-				: QuestLevelChangedCallbackPlanStatus.NoDispatches;
+		var status =
+			plannedDispatches > 0 ? QuestLevelChangedCallbackPlanStatus.Applied
+			: descriptors.Count == 0 ? QuestLevelChangedCallbackPlanStatus.NoRegisteredCallbacks
+			: QuestLevelChangedCallbackPlanStatus.NoDispatches;
 		return new QuestLevelChangedCallbackPlan(status, playerRace, descriptors);
 	}
 
@@ -100,15 +115,13 @@ public static class QuestLevelChangedCallbackPlanService
 	}
 }
 
-public sealed record QuestLevelChangedRegistration(
-	int QuestId,
-	string? RacePermitted,
-	bool HasHandler = true);
+public sealed record QuestLevelChangedRegistration(int QuestId, string? RacePermitted, bool HasHandler = true);
 
 public sealed record QuestLevelChangedCallbackPlan(
 	QuestLevelChangedCallbackPlanStatus Status,
 	string? PlayerRace,
-	IReadOnlyList<QuestLevelChangedCallbackDescriptor> Descriptors)
+	IReadOnlyList<QuestLevelChangedCallbackDescriptor> Descriptors
+)
 {
 	public bool Applied => Status == QuestLevelChangedCallbackPlanStatus.Applied;
 
@@ -117,7 +130,8 @@ public sealed record QuestLevelChangedCallbackPlan(
 		return new QuestLevelChangedCallbackPlan(
 			QuestLevelChangedCallbackPlanStatus.MissingRegistrations,
 			playerRace,
-			Array.Empty<QuestLevelChangedCallbackDescriptor>());
+			Array.Empty<QuestLevelChangedCallbackDescriptor>()
+		);
 	}
 }
 
@@ -129,7 +143,8 @@ public sealed record QuestLevelChangedCallbackDescriptor(
 	PlayerQuestState? QuestState,
 	string JavaSource,
 	bool IsLive = false,
-	string? Notes = null);
+	string? Notes = null
+);
 
 public enum QuestLevelChangedCallbackPlanStatus
 {

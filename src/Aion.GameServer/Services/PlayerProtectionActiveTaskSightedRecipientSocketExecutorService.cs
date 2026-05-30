@@ -26,7 +26,8 @@ public sealed record PlayerProtectionActiveTaskSightedRecipientSocketRecipientRe
 	bool AttemptedSend,
 	bool SentPacket,
 	string JavaSource,
-	string? FailureReason);
+	string? FailureReason
+);
 
 public sealed record PlayerProtectionActiveTaskSightedRecipientSocketExecutorResult(
 	PlayerProtectionActiveTaskSightedRecipientSocketExecutorStatus Status,
@@ -38,7 +39,8 @@ public sealed record PlayerProtectionActiveTaskSightedRecipientSocketExecutorRes
 	bool SourceFailureStopsKnownListTraversal,
 	bool KnownListFailureContinuesTraversal,
 	string JavaSource,
-	bool IsLive);
+	bool IsLive
+);
 
 public sealed class PlayerProtectionActiveTaskSightedRecipientSocketExecutorService
 {
@@ -47,7 +49,8 @@ public sealed class PlayerProtectionActiveTaskSightedRecipientSocketExecutorServ
 
 	public PlayerProtectionActiveTaskSightedRecipientSocketExecutorService(
 		IGameClientConnectionRegistry? connectionRegistry = null,
-		bool enabled = false)
+		bool enabled = false
+	)
 	{
 		_connectionRegistry = connectionRegistry;
 		_enabled = enabled;
@@ -56,8 +59,12 @@ public sealed class PlayerProtectionActiveTaskSightedRecipientSocketExecutorServ
 	public async Task<PlayerProtectionActiveTaskSightedRecipientSocketExecutorResult> ExecuteAsync(
 		PlayerProtectionActiveTaskSightedRecipientTrace trace,
 		GameServerPacket? packet,
-		CancellationToken cancellationToken = default)
+		CancellationToken cancellationToken = default
+	)
 	{
+		// Java parity: PacketSendUtility.broadcastToSightedPlayers sends to self first and then walks the
+		// source known list, filtering recipients whose own known list still sees the source. This executor
+		// models that socket-send boundary and failure behavior through the opt-in connection registry.
 		if (trace.Status == PlayerProtectionActiveTaskSightedRecipientTraceStatus.NoBroadcast || packet == null)
 		{
 			return CreateResult(
@@ -65,7 +72,8 @@ public sealed class PlayerProtectionActiveTaskSightedRecipientSocketExecutorServ
 				trace,
 				Array.Empty<PlayerProtectionActiveTaskSightedRecipientSocketRecipientResult>(),
 				sendsPackets: false,
-				isLive: false);
+				isLive: false
+			);
 		}
 
 		if (!_enabled)
@@ -73,15 +81,19 @@ public sealed class PlayerProtectionActiveTaskSightedRecipientSocketExecutorServ
 			return CreateResult(
 				PlayerProtectionActiveTaskSightedRecipientSocketExecutorStatus.DisabledNoSend,
 				trace,
-				trace.Recipients.Select(recipient => new PlayerProtectionActiveTaskSightedRecipientSocketRecipientResult(
-					recipient,
-					PlayerProtectionActiveTaskSightedRecipientSocketRecipientStatus.NotAttemptedDisabled,
-					AttemptedSend: false,
-					SentPacket: false,
-					"PacketSendUtility.broadcastToSightedPlayers socket boundary identified; disabled C# executor did not call SendPacketAsync",
-					FailureReason: null)).ToArray(),
+				trace
+					.Recipients.Select(recipient => new PlayerProtectionActiveTaskSightedRecipientSocketRecipientResult(
+						recipient,
+						PlayerProtectionActiveTaskSightedRecipientSocketRecipientStatus.NotAttemptedDisabled,
+						AttemptedSend: false,
+						SentPacket: false,
+						"PacketSendUtility.broadcastToSightedPlayers socket boundary identified; disabled C# executor did not call SendPacketAsync",
+						FailureReason: null
+					))
+					.ToArray(),
 				sendsPackets: false,
-				isLive: false);
+				isLive: false
+			);
 		}
 
 		if (_connectionRegistry == null)
@@ -89,15 +101,19 @@ public sealed class PlayerProtectionActiveTaskSightedRecipientSocketExecutorServ
 			return CreateResult(
 				PlayerProtectionActiveTaskSightedRecipientSocketExecutorStatus.MissingRegistry,
 				trace,
-				trace.Recipients.Select(recipient => new PlayerProtectionActiveTaskSightedRecipientSocketRecipientResult(
-					recipient,
-					PlayerProtectionActiveTaskSightedRecipientSocketRecipientStatus.MissingConnection,
-					AttemptedSend: false,
-					SentPacket: false,
-					"PacketSendUtility.sendPacket could not execute because the C# connection registry was missing",
-					FailureReason: null)).ToArray(),
+				trace
+					.Recipients.Select(recipient => new PlayerProtectionActiveTaskSightedRecipientSocketRecipientResult(
+						recipient,
+						PlayerProtectionActiveTaskSightedRecipientSocketRecipientStatus.MissingConnection,
+						AttemptedSend: false,
+						SentPacket: false,
+						"PacketSendUtility.sendPacket could not execute because the C# connection registry was missing",
+						FailureReason: null
+					))
+					.ToArray(),
 				sendsPackets: false,
-				isLive: true);
+				isLive: true
+			);
 		}
 
 		var results = new List<PlayerProtectionActiveTaskSightedRecipientSocketRecipientResult>();
@@ -107,13 +123,16 @@ public sealed class PlayerProtectionActiveTaskSightedRecipientSocketExecutorServ
 		{
 			if (stopAfterSourceFailure)
 			{
-				results.Add(new PlayerProtectionActiveTaskSightedRecipientSocketRecipientResult(
-					recipient,
-					PlayerProtectionActiveTaskSightedRecipientSocketRecipientStatus.NotAttemptedSourceFailure,
-					AttemptedSend: false,
-					SentPacket: false,
-					"Known-list traversal was not reached because the projected source self-send failed first",
-					FailureReason: null));
+				results.Add(
+					new PlayerProtectionActiveTaskSightedRecipientSocketRecipientResult(
+						recipient,
+						PlayerProtectionActiveTaskSightedRecipientSocketRecipientStatus.NotAttemptedSourceFailure,
+						AttemptedSend: false,
+						SentPacket: false,
+						"Known-list traversal was not reached because the projected source self-send failed first",
+						FailureReason: null
+					)
+				);
 				continue;
 			}
 
@@ -121,40 +140,41 @@ public sealed class PlayerProtectionActiveTaskSightedRecipientSocketExecutorServ
 			{
 				cancellationToken.ThrowIfCancellationRequested();
 				var sent = await _connectionRegistry.SendPacketToPlayerAsync(recipient.PlayerObjectId, packet);
-				results.Add(new PlayerProtectionActiveTaskSightedRecipientSocketRecipientResult(
-					recipient,
-					sent
-						? PlayerProtectionActiveTaskSightedRecipientSocketRecipientStatus.Sent
-						: PlayerProtectionActiveTaskSightedRecipientSocketRecipientStatus.MissingConnection,
-					AttemptedSend: true,
-					SentPacket: sent,
-					"PacketSendUtility.sendPacket(player, packet) executed through the opt-in C# connection registry",
-					FailureReason: null));
+				results.Add(
+					new PlayerProtectionActiveTaskSightedRecipientSocketRecipientResult(
+						recipient,
+						sent
+							? PlayerProtectionActiveTaskSightedRecipientSocketRecipientStatus.Sent
+							: PlayerProtectionActiveTaskSightedRecipientSocketRecipientStatus.MissingConnection,
+						AttemptedSend: true,
+						SentPacket: sent,
+						"PacketSendUtility.sendPacket(player, packet) executed through the opt-in C# connection registry",
+						FailureReason: null
+					)
+				);
 			}
 			catch (Exception ex) when (ex is not OperationCanceledException)
 			{
 				var sourceSelfFailure = recipient.Kind == PlayerProtectionActiveTaskSightedRecipientKind.SourceSelf;
 				stopAfterSourceFailure = sourceSelfFailure;
-				results.Add(new PlayerProtectionActiveTaskSightedRecipientSocketRecipientResult(
-					recipient,
-					sourceSelfFailure
-						? PlayerProtectionActiveTaskSightedRecipientSocketRecipientStatus.FailedAndStopped
-						: PlayerProtectionActiveTaskSightedRecipientSocketRecipientStatus.FailedAndContinued,
-					AttemptedSend: true,
-					SentPacket: false,
-					sourceSelfFailure
-						? "PacketSendUtility.broadcastToSightedPlayers(..., true) sends source before known-list traversal; source failure prevents traversal"
-						: "KnownList.forEachPlayer delegates through CollectionUtil.forEach; known-list recipient failure continues traversal",
-					FailureReason: ex.Message));
+				results.Add(
+					new PlayerProtectionActiveTaskSightedRecipientSocketRecipientResult(
+						recipient,
+						sourceSelfFailure
+							? PlayerProtectionActiveTaskSightedRecipientSocketRecipientStatus.FailedAndStopped
+							: PlayerProtectionActiveTaskSightedRecipientSocketRecipientStatus.FailedAndContinued,
+						AttemptedSend: true,
+						SentPacket: false,
+						sourceSelfFailure
+							? "PacketSendUtility.broadcastToSightedPlayers(..., true) sends source before known-list traversal; source failure prevents traversal"
+							: "KnownList.forEachPlayer delegates through CollectionUtil.forEach; known-list recipient failure continues traversal",
+						FailureReason: ex.Message
+					)
+				);
 			}
 		}
 
-		return CreateResult(
-			PlayerProtectionActiveTaskSightedRecipientSocketExecutorStatus.Completed,
-			trace,
-			results,
-			sendsPackets: true,
-			isLive: true);
+		return CreateResult(PlayerProtectionActiveTaskSightedRecipientSocketExecutorStatus.Completed, trace, results, sendsPackets: true, isLive: true);
 	}
 
 	private static PlayerProtectionActiveTaskSightedRecipientSocketExecutorResult CreateResult(
@@ -162,7 +182,8 @@ public sealed class PlayerProtectionActiveTaskSightedRecipientSocketExecutorServ
 		PlayerProtectionActiveTaskSightedRecipientTrace trace,
 		IReadOnlyList<PlayerProtectionActiveTaskSightedRecipientSocketRecipientResult> recipients,
 		bool sendsPackets,
-		bool isLive) =>
+		bool isLive
+	) =>
 		new(
 			status,
 			trace,
@@ -173,5 +194,6 @@ public sealed class PlayerProtectionActiveTaskSightedRecipientSocketExecutorServ
 			SourceFailureStopsKnownListTraversal: true,
 			KnownListFailureContinuesTraversal: true,
 			"PacketSendUtility.broadcastToSightedPlayers(player, packet, true) -> sendPacket(source) -> KnownList.forEachPlayer(filter sees(source), sendPacket)",
-			isLive);
+			isLive
+		);
 }

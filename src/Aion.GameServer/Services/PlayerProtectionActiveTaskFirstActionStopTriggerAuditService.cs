@@ -76,7 +76,8 @@ public sealed record PlayerProtectionActiveTaskFirstActionStopTriggerAuditReques
 	bool CmCompositeStonesProtectionActive = true,
 	bool EvaluateCmEmotion = false,
 	PlayerProtectionActiveTaskCmEmotionAuditPath CmEmotionPath = PlayerProtectionActiveTaskCmEmotionAuditPath.ReachesLateEmotionProcessingStop,
-	bool CmEmotionProtectionActive = true);
+	bool CmEmotionProtectionActive = true
+);
 
 public sealed record PlayerProtectionActiveTaskFirstActionStopTriggerAuditRow(
 	int Order,
@@ -88,7 +89,8 @@ public sealed record PlayerProtectionActiveTaskFirstActionStopTriggerAuditRow(
 	string JavaOperation,
 	string JavaSource,
 	string CSharpTarget,
-	string Notes);
+	string Notes
+);
 
 public sealed record PlayerProtectionActiveTaskFirstActionStopTriggerAuditReport(
 	IReadOnlyList<PlayerProtectionActiveTaskFirstActionStopTriggerAuditRow> Rows,
@@ -99,13 +101,18 @@ public sealed record PlayerProtectionActiveTaskFirstActionStopTriggerAuditReport
 	bool TriggersStopProtection,
 	bool WiresProductionHandlers,
 	string JavaSource,
-	bool IsLive);
+	bool IsLive
+);
 
 public static class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 {
 	public static PlayerProtectionActiveTaskFirstActionStopTriggerAuditReport Create(
-		PlayerProtectionActiveTaskFirstActionStopTriggerAuditRequest request)
+		PlayerProtectionActiveTaskFirstActionStopTriggerAuditRequest request
+	)
 	{
+		// Java parity: multiple incoming packets call stopProtectionActiveTask as the player's first action,
+		// but each packet reaches that stop site at a different point in its handler. This audit catalogs
+		// the known packet callers and their branch-sensitive ordering.
 		var rows = new List<PlayerProtectionActiveTaskFirstActionStopTriggerAuditRow>();
 
 		AddCmMove(rows, request);
@@ -127,32 +134,34 @@ public static class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 			HasCmMoveInAirUnconditionalEvidence: rowArray.Any(row => row.Source == PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmMoveInAir),
 			HasCmMoveInAirOrderingEvidence: rowArray.Any(row =>
 				row.Source == PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmMoveInAir
-				&& row.Status != PlayerProtectionActiveTaskFirstActionStopTriggerStatus.PendingAudit),
+				&& row.Status != PlayerProtectionActiveTaskFirstActionStopTriggerStatus.PendingAudit
+			),
 			HasPendingCallerSurface: rowArray.Any(row => row.Status == PlayerProtectionActiveTaskFirstActionStopTriggerStatus.PendingAudit),
 			TriggersStopProtection: rowArray.Any(row => row.WouldStopProtection),
 			WiresProductionHandlers: false,
 			"PlayerController.stopProtectionActiveTask first-action packet caller audit",
-			IsLive: false);
+			IsLive: false
+		);
 	}
 
 	private static void AddCmMove(
 		ICollection<PlayerProtectionActiveTaskFirstActionStopTriggerAuditRow> rows,
-		PlayerProtectionActiveTaskFirstActionStopTriggerAuditRequest request)
+		PlayerProtectionActiveTaskFirstActionStopTriggerAuditRequest request
+	)
 	{
-		var javaCallReached = request.PlayerSpawned
-			&& request.AntiHackAccepted
-			&& !request.TeleportationModeAbsoluteMove
-			&& request.PlayerProtectionActive;
+		var javaCallReached =
+			request.PlayerSpawned && request.AntiHackAccepted && !request.TeleportationModeAbsoluteMove && request.PlayerProtectionActive;
 		var xChanged = request.CurrentX != request.PacketX;
 		var yChanged = request.CurrentY != request.PacketY;
 		var zDroppedPastJavaThreshold = request.CurrentZ > request.PacketZ + 0.5f;
 		var wouldStop = javaCallReached && (xChanged || yChanged || zDroppedPastJavaThreshold);
 
-		var note = !javaCallReached
-			? "Java returns before the protection stop condition when spawn, anti-hack, teleportation absolute-move, or active-protection prerequisites fail."
+		var note =
+			!javaCallReached
+				? "Java returns before the protection stop condition when spawn, anti-hack, teleportation absolute-move, or active-protection prerequisites fail."
 			: wouldStop
 				? $"Accepted CM_MOVE would stop protection because xChanged={xChanged}, yChanged={yChanged}, oldZGreaterThanPacketZPlusHalf={zDroppedPastJavaThreshold}."
-				: "Accepted CM_MOVE keeps protection because x/y are exactly unchanged and old server Z is not greater than packet Z plus 0.5.";
+			: "Accepted CM_MOVE keeps protection because x/y are exactly unchanged and old server Z is not greater than packet Z plus 0.5.";
 
 		Add(
 			rows,
@@ -166,12 +175,14 @@ public static class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 			"if (player.isProtectionActive() && (player.getX() != x || player.getY() != y || player.getZ() > z + 0.5f)) stopProtectionActiveTask()",
 			"CM_MOVE.runImpl",
 			"future CM_MOVE protection-stop hook",
-			note);
+			note
+		);
 	}
 
 	private static void AddCmMoveInAir(
 		ICollection<PlayerProtectionActiveTaskFirstActionStopTriggerAuditRow> rows,
-		PlayerProtectionActiveTaskFirstActionStopTriggerAuditRequest request)
+		PlayerProtectionActiveTaskFirstActionStopTriggerAuditRequest request
+	)
 	{
 		if (!request.EvaluateCmMoveInAir)
 		{
@@ -185,20 +196,20 @@ public static class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 				"if (player.isProtectionActive()) stopProtectionActiveTask()",
 				"CM_MOVE_IN_AIR.runImpl",
 				"future CM_MOVE_IN_AIR protection-stop hook",
-				"Java stops unconditionally after spawned/flying guards; this row is cataloged for the next detailed packet-order audit.");
+				"Java stops unconditionally after spawned/flying guards; this row is cataloged for the next detailed packet-order audit."
+			);
 			return;
 		}
 
-		var javaCallReached = request.MoveInAirPlayerSpawned
-			&& request.MoveInAirPlayerFlying
-			&& request.MoveInAirProtectionActive;
-		var note = javaCallReached
-			? "Java CM_MOVE_IN_AIR reaches unconditional protection stop after spawned/flying guards and before World.updatePosition, onMoveFromClient, and onMove."
+		var javaCallReached = request.MoveInAirPlayerSpawned && request.MoveInAirPlayerFlying && request.MoveInAirProtectionActive;
+		var note =
+			javaCallReached
+				? "Java CM_MOVE_IN_AIR reaches unconditional protection stop after spawned/flying guards and before World.updatePosition, onMoveFromClient, and onMove."
 			: !request.MoveInAirPlayerSpawned
 				? "Java CM_MOVE_IN_AIR returns at the spawned guard before flying, protection, distance, or world-position handling."
-				: !request.MoveInAirPlayerFlying
-					? "Java CM_MOVE_IN_AIR returns at the flying guard before protection stop, distance update, or world-position handling."
-					: "Java CM_MOVE_IN_AIR reaches spawned/flying path but skips stopProtectionActiveTask because protection is not active.";
+			: !request.MoveInAirPlayerFlying
+				? "Java CM_MOVE_IN_AIR returns at the flying guard before protection stop, distance update, or world-position handling."
+			: "Java CM_MOVE_IN_AIR reaches spawned/flying path but skips stopProtectionActiveTask because protection is not active.";
 
 		Add(
 			rows,
@@ -212,14 +223,16 @@ public static class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 			"if (player.isProtectionActive()) stopProtectionActiveTask()",
 			"CM_MOVE_IN_AIR.runImpl",
 			"future CM_MOVE_IN_AIR protection-stop hook",
-			note);
+			note
+		);
 	}
 
 	private static void AddPendingActionCaller(
 		ICollection<PlayerProtectionActiveTaskFirstActionStopTriggerAuditRow> rows,
 		PlayerProtectionActiveTaskFirstActionStopTriggerSource source,
 		string javaSource,
-		string javaOrdering) =>
+		string javaOrdering
+	) =>
 		Add(
 			rows,
 			source,
@@ -230,11 +243,13 @@ public static class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 			"if (player.isProtectionActive()) stopProtectionActiveTask()",
 			javaSource,
 			$"future {source} protection-stop hook",
-			$"Direct Java caller discovered {javaOrdering}; exact production ordering and packet side effects still need a class-specific audit.");
+			$"Direct Java caller discovered {javaOrdering}; exact production ordering and packet side effects still need a class-specific audit."
+		);
 
 	private static void AddCmAttack(
 		ICollection<PlayerProtectionActiveTaskFirstActionStopTriggerAuditRow> rows,
-		PlayerProtectionActiveTaskFirstActionStopTriggerAuditRequest request)
+		PlayerProtectionActiveTaskFirstActionStopTriggerAuditRequest request
+	)
 	{
 		if (!request.EvaluateCmAttack)
 		{
@@ -243,11 +258,11 @@ public static class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 		}
 
 		var javaCallReached = !request.CmAttackPlayerDead && request.CmAttackProtectionActive;
-		var note = request.CmAttackPlayerDead
-			? "Java CM_ATTACK returns at the dead-player guard before protection stop, known-list lookup, or attackTarget."
+		var note =
+			request.CmAttackPlayerDead ? "Java CM_ATTACK returns at the dead-player guard before protection stop, known-list lookup, or attackTarget."
 			: request.CmAttackProtectionActive
 				? "Java CM_ATTACK stops protection after the dead-player guard and before known-list target lookup or attackTarget."
-				: "Java CM_ATTACK reaches the attack path but skips stopProtectionActiveTask because protection is not active.";
+			: "Java CM_ATTACK reaches the attack path but skips stopProtectionActiveTask because protection is not active.";
 
 		Add(
 			rows,
@@ -261,35 +276,41 @@ public static class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 			"if (player.isProtectionActive()) stopProtectionActiveTask()",
 			"CM_ATTACK.runImpl",
 			"future CM_ATTACK protection-stop hook",
-			note);
+			note
+		);
 	}
 
 	private static void AddCmCastSpell(
 		ICollection<PlayerProtectionActiveTaskFirstActionStopTriggerAuditRow> rows,
-		PlayerProtectionActiveTaskFirstActionStopTriggerAuditRequest request)
+		PlayerProtectionActiveTaskFirstActionStopTriggerAuditRequest request
+	)
 	{
 		if (!request.EvaluateCmCastSpell)
 		{
-			AddPendingActionCaller(rows, PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmCastSpell, "CM_CASTSPELL.runImpl", "after dead, zero spell, pet order, template, and passive checks");
+			AddPendingActionCaller(
+				rows,
+				PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmCastSpell,
+				"CM_CASTSPELL.runImpl",
+				"after dead, zero spell, pet order, template, and passive checks"
+			);
 			return;
 		}
 
-		var preconditionSkipped = request.CmCastSpellPlayerDead
+		var preconditionSkipped =
+			request.CmCastSpellPlayerDead
 			|| request.CmCastSpellIdZero
 			|| request.CmCastSpellPetOrderWithoutPet
 			|| request.CmCastSpellTemplateMissingOrPassive;
 		var javaCallReached = !preconditionSkipped && request.CmCastSpellProtectionActive;
-		var note = request.CmCastSpellPlayerDead
-			? "Java CM_CASTSPELL sends cannot-cast message and returns at the dead-player guard before protection stop."
-			: request.CmCastSpellIdZero
-				? "Java CM_CASTSPELL cancels the current skill and returns when spellid is zero before protection stop."
-				: request.CmCastSpellPetOrderWithoutPet
-					? "Java CM_CASTSPELL sends pet-required message and returns for invalid pet-order skills before protection stop."
-					: request.CmCastSpellTemplateMissingOrPassive
-						? "Java CM_CASTSPELL returns for missing or passive skill templates before protection stop."
-						: request.CmCastSpellProtectionActive
-							? "Java CM_CASTSPELL stops protection after dead, zero-spell, pet-order, template, and passive guards, then cancels item use."
-							: "Java CM_CASTSPELL reaches the cast path but skips stopProtectionActiveTask because protection is not active, then cancels item use.";
+		var note =
+			request.CmCastSpellPlayerDead ? "Java CM_CASTSPELL sends cannot-cast message and returns at the dead-player guard before protection stop."
+			: request.CmCastSpellIdZero ? "Java CM_CASTSPELL cancels the current skill and returns when spellid is zero before protection stop."
+			: request.CmCastSpellPetOrderWithoutPet
+				? "Java CM_CASTSPELL sends pet-required message and returns for invalid pet-order skills before protection stop."
+			: request.CmCastSpellTemplateMissingOrPassive ? "Java CM_CASTSPELL returns for missing or passive skill templates before protection stop."
+			: request.CmCastSpellProtectionActive
+				? "Java CM_CASTSPELL stops protection after dead, zero-spell, pet-order, template, and passive guards, then cancels item use."
+			: "Java CM_CASTSPELL reaches the cast path but skips stopProtectionActiveTask because protection is not active, then cancels item use.";
 
 		Add(
 			rows,
@@ -303,16 +324,23 @@ public static class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 			"if (player.isProtectionActive()) stopProtectionActiveTask(); player.getController().cancelUseItem()",
 			"CM_CASTSPELL.runImpl",
 			"future CM_CASTSPELL protection-stop hook",
-			note);
+			note
+		);
 	}
 
 	private static void AddCmUseItem(
 		ICollection<PlayerProtectionActiveTaskFirstActionStopTriggerAuditRow> rows,
-		PlayerProtectionActiveTaskFirstActionStopTriggerAuditRequest request)
+		PlayerProtectionActiveTaskFirstActionStopTriggerAuditRequest request
+	)
 	{
 		if (!request.EvaluateCmUseItem)
 		{
-			AddPendingActionCaller(rows, PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmUseItem, "CM_USE_ITEM.runImpl", "before item lookup and restriction checks");
+			AddPendingActionCaller(
+				rows,
+				PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmUseItem,
+				"CM_USE_ITEM.runImpl",
+				"before item lookup and restriction checks"
+			);
 			return;
 		}
 
@@ -332,16 +360,23 @@ public static class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 			"if (player.isProtectionActive()) stopProtectionActiveTask()",
 			"CM_USE_ITEM.runImpl",
 			"future CM_USE_ITEM protection-stop hook",
-			note);
+			note
+		);
 	}
 
 	private static void AddCmShowDialog(
 		ICollection<PlayerProtectionActiveTaskFirstActionStopTriggerAuditRow> rows,
-		PlayerProtectionActiveTaskFirstActionStopTriggerAuditRequest request)
+		PlayerProtectionActiveTaskFirstActionStopTriggerAuditRequest request
+	)
 	{
 		if (!request.EvaluateCmShowDialog)
 		{
-			AddPendingActionCaller(rows, PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmShowDialog, "CM_SHOW_DIALOG.runImpl", "before trading and NPC validation");
+			AddPendingActionCaller(
+				rows,
+				PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmShowDialog,
+				"CM_SHOW_DIALOG.runImpl",
+				"before trading and NPC validation"
+			);
 			return;
 		}
 
@@ -361,16 +396,23 @@ public static class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 			"if (player.isProtectionActive()) stopProtectionActiveTask()",
 			"CM_SHOW_DIALOG.runImpl",
 			"future CM_SHOW_DIALOG protection-stop hook",
-			note);
+			note
+		);
 	}
 
 	private static void AddCmDialogSelect(
 		ICollection<PlayerProtectionActiveTaskFirstActionStopTriggerAuditRow> rows,
-		PlayerProtectionActiveTaskFirstActionStopTriggerAuditRequest request)
+		PlayerProtectionActiveTaskFirstActionStopTriggerAuditRequest request
+	)
 	{
 		if (!request.EvaluateCmDialogSelect)
 		{
-			AddPendingActionCaller(rows, PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmDialogSelect, "CM_DIALOG_SELECT.runImpl", "before trading and dialog validation");
+			AddPendingActionCaller(
+				rows,
+				PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmDialogSelect,
+				"CM_DIALOG_SELECT.runImpl",
+				"before trading and dialog validation"
+			);
 			return;
 		}
 
@@ -390,25 +432,33 @@ public static class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 			"if (player.isProtectionActive()) stopProtectionActiveTask()",
 			"CM_DIALOG_SELECT.runImpl",
 			"future CM_DIALOG_SELECT protection-stop hook",
-			note);
+			note
+		);
 	}
 
 	private static void AddCmCompositeStones(
 		ICollection<PlayerProtectionActiveTaskFirstActionStopTriggerAuditRow> rows,
-		PlayerProtectionActiveTaskFirstActionStopTriggerAuditRequest request)
+		PlayerProtectionActiveTaskFirstActionStopTriggerAuditRequest request
+	)
 	{
 		if (!request.EvaluateCmCompositeStones)
 		{
-			AddPendingActionCaller(rows, PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmCompositeStones, "CM_COMPOSITE_STONES.runImpl", "after null-player guard");
+			AddPendingActionCaller(
+				rows,
+				PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmCompositeStones,
+				"CM_COMPOSITE_STONES.runImpl",
+				"after null-player guard"
+			);
 			return;
 		}
 
 		var javaCallReached = request.CmCompositeStonesPlayerPresent && request.CmCompositeStonesProtectionActive;
-		var note = !request.CmCompositeStonesPlayerPresent
-			? "Java CM_COMPOSITE_STONES returns at the null-player guard before protection stop, casting cancellation, inventory lookup, restrictions, validation, or scheduling."
+		var note =
+			!request.CmCompositeStonesPlayerPresent
+				? "Java CM_COMPOSITE_STONES returns at the null-player guard before protection stop, casting cancellation, inventory lookup, restrictions, validation, or scheduling."
 			: request.CmCompositeStonesProtectionActive
 				? "Java CM_COMPOSITE_STONES stops protection early after the null-player guard and before casting cancellation, inventory lookup, PlayerRestrictions.canUseItem, CompositionAction.canAct, or CompositionAction.act scheduling."
-				: "Java CM_COMPOSITE_STONES reaches the composition path but skips stopProtectionActiveTask because protection is not active, then continues to casting cancellation and composition validation.";
+			: "Java CM_COMPOSITE_STONES reaches the composition path but skips stopProtectionActiveTask because protection is not active, then continues to casting cancellation and composition validation.";
 
 		Add(
 			rows,
@@ -422,16 +472,23 @@ public static class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 			"if (player.isProtectionActive()) stopProtectionActiveTask()",
 			"CM_COMPOSITE_STONES.runImpl",
 			"future CM_COMPOSITE_STONES protection-stop hook",
-			note);
+			note
+		);
 	}
 
 	private static void AddCmEmotion(
 		ICollection<PlayerProtectionActiveTaskFirstActionStopTriggerAuditRow> rows,
-		PlayerProtectionActiveTaskFirstActionStopTriggerAuditRequest request)
+		PlayerProtectionActiveTaskFirstActionStopTriggerAuditRequest request
+	)
 	{
 		if (!request.EvaluateCmEmotion)
 		{
-			AddPendingActionCaller(rows, PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmEmotion, "CM_EMOTION.runImpl", "near the end of the handled emotion flow");
+			AddPendingActionCaller(
+				rows,
+				PlayerProtectionActiveTaskFirstActionStopTriggerSource.CmEmotion,
+				"CM_EMOTION.runImpl",
+				"near the end of the handled emotion flow"
+			);
 			return;
 		}
 
@@ -451,12 +508,11 @@ public static class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 			"if (player.isProtectionActive()) stopProtectionActiveTask()",
 			"CM_EMOTION.runImpl",
 			"future CM_EMOTION protection-stop hook",
-			note);
+			note
+		);
 	}
 
-	private static string CreateCmEmotionNote(
-		PlayerProtectionActiveTaskCmEmotionAuditPath path,
-		bool protectionActive) =>
+	private static string CreateCmEmotionNote(PlayerProtectionActiveTaskCmEmotionAuditPath path, bool protectionActive) =>
 		path switch
 		{
 			PlayerProtectionActiveTaskCmEmotionAuditPath.ReachesLateEmotionProcessingStop when protectionActive =>
@@ -489,7 +545,8 @@ public static class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 			"client packet runImpl -> player.getController().stopProtectionActiveTask()",
 			"CM_MOVE / CM_MOVE_IN_AIR / action packet callers",
 			"future production packet-handler protection-stop integration",
-			"Non-live audit only; production handlers stay disabled until packet ordering, controller task-map, scheduler, and runtime comparison gates are closed.");
+			"Non-live audit only; production handlers stay disabled until packet ordering, controller task-map, scheduler, and runtime comparison gates are closed."
+		);
 
 	private static void Add(
 		ICollection<PlayerProtectionActiveTaskFirstActionStopTriggerAuditRow> rows,
@@ -501,18 +558,22 @@ public static class PlayerProtectionActiveTaskFirstActionStopTriggerAuditService
 		string javaOperation,
 		string javaSource,
 		string cSharpTarget,
-		string notes)
+		string notes
+	)
 	{
-		rows.Add(new PlayerProtectionActiveTaskFirstActionStopTriggerAuditRow(
-			rows.Count + 1,
-			source,
-			kind,
-			status,
-			javaCallReached,
-			wouldStopProtection,
-			javaOperation,
-			javaSource,
-			cSharpTarget,
-			notes));
+		rows.Add(
+			new PlayerProtectionActiveTaskFirstActionStopTriggerAuditRow(
+				rows.Count + 1,
+				source,
+				kind,
+				status,
+				javaCallReached,
+				wouldStopProtection,
+				javaOperation,
+				javaSource,
+				cSharpTarget,
+				notes
+			)
+		);
 	}
 }

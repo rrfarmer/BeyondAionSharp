@@ -8,9 +8,7 @@ public enum PlayerKnownListTwoWayMembershipAdapterStatus
 	Applied,
 }
 
-public sealed record PlayerKnownListTwoWayMembershipAdapterRequest(
-	PlayerKnownListTwoWayOperationPlan Plan,
-	bool ExecuteMembershipMutation = false);
+public sealed record PlayerKnownListTwoWayMembershipAdapterRequest(PlayerKnownListTwoWayOperationPlan Plan, bool ExecuteMembershipMutation = false);
 
 public sealed record PlayerKnownListTwoWayMembershipAdapterResult(
 	PlayerKnownListTwoWayMembershipAdapterStatus Status,
@@ -22,7 +20,8 @@ public sealed record PlayerKnownListTwoWayMembershipAdapterResult(
 	bool ExecutedControllerSideEffects,
 	bool IsJavaRegionKnownListParity,
 	string JavaSource,
-	bool IsLive);
+	bool IsLive
+);
 
 public sealed class PlayerKnownListTwoWayMembershipAdapterService
 {
@@ -35,38 +34,31 @@ public sealed class PlayerKnownListTwoWayMembershipAdapterService
 
 	public PlayerKnownListTwoWayMembershipAdapterResult Apply(PlayerKnownListTwoWayMembershipAdapterRequest request)
 	{
+		// Java parity: KnownList.add/remove drives two-way player membership plus controller side effects.
+		// This adapter applies only the membership mutations from the staged two-way plan and preserves the
+		// remaining Java side effects as descriptors.
 		if (!request.ExecuteMembershipMutation)
 		{
-			return CreateResult(
-				PlayerKnownListTwoWayMembershipAdapterStatus.Disabled,
-				request.Plan,
-				[],
-				appliedMembershipStepCount: 0);
+			return CreateResult(PlayerKnownListTwoWayMembershipAdapterStatus.Disabled, request.Plan, [], appliedMembershipStepCount: 0);
 		}
 
 		if (request.Plan.Status != PlayerKnownListTwoWayOperationStatus.Planned)
 		{
-			return CreateResult(
-				PlayerKnownListTwoWayMembershipAdapterStatus.SkippedRejectedPlan,
-				request.Plan,
-				[],
-				appliedMembershipStepCount: 0);
+			return CreateResult(PlayerKnownListTwoWayMembershipAdapterStatus.SkippedRejectedPlan, request.Plan, [], appliedMembershipStepCount: 0);
 		}
 
-		var membershipSteps = request.Plan.Steps
-			.Where(step => step.Kind is
-				PlayerKnownListTwoWayOperationStepKind.CandidateAddsOwner or
-				PlayerKnownListTwoWayOperationStepKind.OwnerAddsCandidate or
-				PlayerKnownListTwoWayOperationStepKind.OwnerRemovesCandidate or
-				PlayerKnownListTwoWayOperationStepKind.CandidateRemovesOwner)
+		var membershipSteps = request
+			.Plan.Steps.Where(step =>
+				step.Kind
+					is PlayerKnownListTwoWayOperationStepKind.CandidateAddsOwner
+						or PlayerKnownListTwoWayOperationStepKind.OwnerAddsCandidate
+						or PlayerKnownListTwoWayOperationStepKind.OwnerRemovesCandidate
+						or PlayerKnownListTwoWayOperationStepKind.CandidateRemovesOwner
+			)
 			.ToArray();
 		if (membershipSteps.Length == 0)
 		{
-			return CreateResult(
-				PlayerKnownListTwoWayMembershipAdapterStatus.NoMembershipSteps,
-				request.Plan,
-				[],
-				appliedMembershipStepCount: 0);
+			return CreateResult(PlayerKnownListTwoWayMembershipAdapterStatus.NoMembershipSteps, request.Plan, [], appliedMembershipStepCount: 0);
 		}
 
 		var snapshots = new List<PlayerKnownListMembershipSnapshot>();
@@ -75,26 +67,34 @@ public sealed class PlayerKnownListTwoWayMembershipAdapterService
 			switch (step.Kind)
 			{
 				case PlayerKnownListTwoWayOperationStepKind.CandidateAddsOwner:
-					snapshots.Add(_membershipService.UpsertKnownPlayers(
-						step.CandidatePlayerObjectId,
-						[
-							new PlayerKnownListMembershipCandidate(
-								step.OwnerPlayerObjectId,
-								request.Plan.Steps.Any(s => s.Kind == PlayerKnownListTwoWayOperationStepKind.CandidateSeesOwner),
-								step.JavaSource),
-						],
-						PlayerKnownListMembershipUpdateReason.TwoWayOperationPlan));
+					snapshots.Add(
+						_membershipService.UpsertKnownPlayers(
+							step.CandidatePlayerObjectId,
+							[
+								new PlayerKnownListMembershipCandidate(
+									step.OwnerPlayerObjectId,
+									request.Plan.Steps.Any(s => s.Kind == PlayerKnownListTwoWayOperationStepKind.CandidateSeesOwner),
+									step.JavaSource
+								),
+							],
+							PlayerKnownListMembershipUpdateReason.TwoWayOperationPlan
+						)
+					);
 					break;
 				case PlayerKnownListTwoWayOperationStepKind.OwnerAddsCandidate:
-					snapshots.Add(_membershipService.UpsertKnownPlayers(
-						step.OwnerPlayerObjectId,
-						[
-							new PlayerKnownListMembershipCandidate(
-								step.CandidatePlayerObjectId,
-								request.Plan.Steps.Any(s => s.Kind == PlayerKnownListTwoWayOperationStepKind.OwnerSeesCandidate),
-								step.JavaSource),
-						],
-						PlayerKnownListMembershipUpdateReason.TwoWayOperationPlan));
+					snapshots.Add(
+						_membershipService.UpsertKnownPlayers(
+							step.OwnerPlayerObjectId,
+							[
+								new PlayerKnownListMembershipCandidate(
+									step.CandidatePlayerObjectId,
+									request.Plan.Steps.Any(s => s.Kind == PlayerKnownListTwoWayOperationStepKind.OwnerSeesCandidate),
+									step.JavaSource
+								),
+							],
+							PlayerKnownListMembershipUpdateReason.TwoWayOperationPlan
+						)
+					);
 					break;
 				case PlayerKnownListTwoWayOperationStepKind.OwnerRemovesCandidate:
 					_membershipService.RemoveKnownPlayer(step.OwnerPlayerObjectId, step.CandidatePlayerObjectId, out var ownerSnapshot);
@@ -107,33 +107,34 @@ public sealed class PlayerKnownListTwoWayMembershipAdapterService
 			}
 		}
 
-		return CreateResult(
-			PlayerKnownListTwoWayMembershipAdapterStatus.Applied,
-			request.Plan,
-			snapshots,
-			membershipSteps.Length);
+		return CreateResult(PlayerKnownListTwoWayMembershipAdapterStatus.Applied, request.Plan, snapshots, membershipSteps.Length);
 	}
 
 	private static PlayerKnownListTwoWayMembershipAdapterResult CreateResult(
 		PlayerKnownListTwoWayMembershipAdapterStatus status,
 		PlayerKnownListTwoWayOperationPlan plan,
 		IReadOnlyList<PlayerKnownListMembershipSnapshot> snapshots,
-		int appliedMembershipStepCount) =>
+		int appliedMembershipStepCount
+	) =>
 		new(
 			status,
 			plan,
 			snapshots,
 			appliedMembershipStepCount,
-			plan.Steps.Where(step => step.Kind is
-				PlayerKnownListTwoWayOperationStepKind.CandidateSeesOwner or
-				PlayerKnownListTwoWayOperationStepKind.OwnerSeesCandidate or
-				PlayerKnownListTwoWayOperationStepKind.OwnerNotSeesCandidate or
-				PlayerKnownListTwoWayOperationStepKind.OwnerNotKnowsCandidate or
-				PlayerKnownListTwoWayOperationStepKind.CandidateNotSeesOwner or
-				PlayerKnownListTwoWayOperationStepKind.CandidateNotKnowsOwner).ToArray(),
+			plan.Steps.Where(step =>
+					step.Kind
+						is PlayerKnownListTwoWayOperationStepKind.CandidateSeesOwner
+							or PlayerKnownListTwoWayOperationStepKind.OwnerSeesCandidate
+							or PlayerKnownListTwoWayOperationStepKind.OwnerNotSeesCandidate
+							or PlayerKnownListTwoWayOperationStepKind.OwnerNotKnowsCandidate
+							or PlayerKnownListTwoWayOperationStepKind.CandidateNotSeesOwner
+							or PlayerKnownListTwoWayOperationStepKind.CandidateNotKnowsOwner
+				)
+				.ToArray(),
 			MutatedMembership: status == PlayerKnownListTwoWayMembershipAdapterStatus.Applied,
 			ExecutedControllerSideEffects: false,
 			IsJavaRegionKnownListParity: false,
 			"Applies PlayerKnownListTwoWayOperationPlan membership steps only; controller side effects remain descriptors and live Java KnownList locking is not implemented",
-			IsLive: false);
+			IsLive: false
+		);
 }

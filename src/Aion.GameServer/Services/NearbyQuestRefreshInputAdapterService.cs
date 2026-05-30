@@ -6,12 +6,9 @@ namespace Aion.GameServer.Services;
 
 public static class NearbyQuestRefreshInputAdapterService
 {
-	public static NearbyQuestRefreshInputAdapterResult CreatePlan(
-		Player? player,
-		WorldMapInstanceRuntimeState? worldInstance,
-		StaticData? staticData)
+	public static NearbyQuestRefreshInputAdapterResult CreatePlan(Player? player, WorldMapInstanceRuntimeState? worldInstance, StaticData? staticData)
 	{
-		// Java parity breadcrumb: PlayerController.updateNearbyQuests resolves the player's
+		// Java parity: PlayerController.updateNearbyQuests resolves the player's
 		// current map-region quest ids and DataManager.QUEST_DATA before sending SM_NEARBY_QUESTS.
 		if (player == null)
 			return NearbyQuestRefreshInputAdapterResult.MissingPlayer();
@@ -19,15 +16,17 @@ public static class NearbyQuestRefreshInputAdapterService
 			return NearbyQuestRefreshInputAdapterResult.MissingStaticData();
 
 		return NearbyQuestRefreshInputAdapterResult.Created(
-			NearbyQuestRefreshPlanService.CreatePlan(player, worldInstance, staticData.NearbyQuestTemplates));
+			NearbyQuestRefreshPlanService.CreatePlan(player, worldInstance, staticData.NearbyQuestTemplates)
+		);
 	}
 
 	public static NearbyQuestRefreshInputAdapterResult CreatePlanFromMapRegion(
 		Player? player,
 		NearbyQuestMapRegionSnapshot? mapRegion,
-		StaticData? staticData)
+		StaticData? staticData
+	)
 	{
-		// Java parity breadcrumb: PlayerController.updateNearbyQuests walks
+		// Java parity: PlayerController.updateNearbyQuests walks
 		// player.getPosition().getMapRegion().getParent().getQuestIds(). This overload keeps the
 		// map-region boundary explicit until live region storage and controller dispatch are ported.
 		if (player == null)
@@ -41,14 +40,16 @@ public static class NearbyQuestRefreshInputAdapterService
 			NearbyQuestRefreshPlanService.CreatePlan(player, mapRegion.ParentWorldInstance, staticData.NearbyQuestTemplates),
 			player.Position,
 			mapRegion.Position,
-			mapRegion.ParentWorldInstance?.InstanceId);
+			mapRegion.ParentWorldInstance?.InstanceId
+		);
 	}
 }
 
 public sealed record NearbyQuestMapRegionSnapshot(
 	WorldPosition Position,
 	WorldMapInstanceRuntimeState? ParentWorldInstance,
-	string JavaSource = "Player.getPosition().getMapRegion()");
+	string JavaSource = "Player.getPosition().getMapRegion()"
+);
 
 public sealed record NearbyQuestRefreshInputAdapterResult(
 	NearbyQuestRefreshInputAdapterStatus Status,
@@ -57,7 +58,8 @@ public sealed record NearbyQuestRefreshInputAdapterResult(
 	string? MissingDependency = null,
 	WorldPosition? PlayerPosition = null,
 	WorldPosition? MapRegionPosition = null,
-	int? MapRegionParentInstanceId = null)
+	int? MapRegionParentInstanceId = null
+)
 {
 	public bool Applied => Status == NearbyQuestRefreshInputAdapterStatus.Created;
 
@@ -67,7 +69,8 @@ public sealed record NearbyQuestRefreshInputAdapterResult(
 			NearbyQuestRefreshInputAdapterStatus.MissingPlayer,
 			NearbyQuestRefreshPlan.NoWorldInstance(),
 			"PlayerController.updateNearbyQuests requires a live player controller owner",
-			"player");
+			"player"
+		);
 	}
 
 	public static NearbyQuestRefreshInputAdapterResult MissingStaticData()
@@ -76,7 +79,8 @@ public sealed record NearbyQuestRefreshInputAdapterResult(
 			NearbyQuestRefreshInputAdapterStatus.MissingStaticData,
 			NearbyQuestRefreshPlan.NoQuestTemplates(0),
 			"PlayerController.updateNearbyQuests requires DataManager.QUEST_DATA",
-			"staticData");
+			"staticData"
+		);
 	}
 
 	public static NearbyQuestRefreshInputAdapterResult MissingMapRegion(WorldPosition playerPosition)
@@ -86,7 +90,8 @@ public sealed record NearbyQuestRefreshInputAdapterResult(
 			NearbyQuestRefreshPlan.NoWorldInstance(),
 			"PlayerController.updateNearbyQuests requires player.getPosition().getMapRegion()",
 			"mapRegion",
-			PlayerPosition: playerPosition);
+			PlayerPosition: playerPosition
+		);
 	}
 
 	public static NearbyQuestRefreshInputAdapterResult Created(NearbyQuestRefreshPlan plan)
@@ -94,14 +99,16 @@ public sealed record NearbyQuestRefreshInputAdapterResult(
 		return new NearbyQuestRefreshInputAdapterResult(
 			NearbyQuestRefreshInputAdapterStatus.Created,
 			plan,
-			"PlayerController.updateNearbyQuests -> QuestService.checkStartConditions -> SM_NEARBY_QUESTS");
+			"PlayerController.updateNearbyQuests -> QuestService.checkStartConditions -> SM_NEARBY_QUESTS"
+		);
 	}
 
 	public static NearbyQuestRefreshInputAdapterResult CreatedFromMapRegion(
 		NearbyQuestRefreshPlan plan,
 		WorldPosition playerPosition,
 		WorldPosition mapRegionPosition,
-		int? mapRegionParentInstanceId)
+		int? mapRegionParentInstanceId
+	)
 	{
 		return new NearbyQuestRefreshInputAdapterResult(
 			NearbyQuestRefreshInputAdapterStatus.Created,
@@ -109,7 +116,8 @@ public sealed record NearbyQuestRefreshInputAdapterResult(
 			"PlayerController.updateNearbyQuests -> player.position.mapRegion.parent.questIds -> SM_NEARBY_QUESTS",
 			PlayerPosition: playerPosition,
 			MapRegionPosition: mapRegionPosition,
-			MapRegionParentInstanceId: mapRegionParentInstanceId);
+			MapRegionParentInstanceId: mapRegionParentInstanceId
+		);
 	}
 }
 

@@ -37,7 +37,8 @@ public enum PlayerProtectionActiveTaskTaskMapOwnerSelectionStatus
 public sealed record PlayerProtectionActiveTaskTaskMapOwnerSelectionRequest(
 	bool HasConcreteCSharpControllerTaskMapOwner = false,
 	bool HasPlayerModelStorageCandidate = true,
-	bool HasExternalServiceStorageCandidate = true);
+	bool HasExternalServiceStorageCandidate = true
+);
 
 public sealed record PlayerProtectionActiveTaskTaskMapOwnerSelectionRow(
 	int Order,
@@ -48,7 +49,8 @@ public sealed record PlayerProtectionActiveTaskTaskMapOwnerSelectionRow(
 	string JavaOperation,
 	string JavaSource,
 	string CSharpImplication,
-	string Notes);
+	string Notes
+);
 
 public sealed record PlayerProtectionActiveTaskTaskMapOwnerSelectionReport(
 	IReadOnlyList<PlayerProtectionActiveTaskTaskMapOwnerSelectionRow> Rows,
@@ -58,13 +60,16 @@ public sealed record PlayerProtectionActiveTaskTaskMapOwnerSelectionReport(
 	bool RequiresLifecycleCleanupHook,
 	bool RequiresRuntimeConcurrencyComparison,
 	string JavaSource,
-	bool IsLive);
+	bool IsLive
+);
 
 public static class PlayerProtectionActiveTaskTaskMapOwnerSelectionService
 {
-	public static PlayerProtectionActiveTaskTaskMapOwnerSelectionReport Create(
-		PlayerProtectionActiveTaskTaskMapOwnerSelectionRequest request)
+	public static PlayerProtectionActiveTaskTaskMapOwnerSelectionReport Create(PlayerProtectionActiveTaskTaskMapOwnerSelectionRequest request)
 	{
+		// Java parity: CreatureController owns the task map that protection scheduling uses. This service
+		// compares possible C# owners against that Java lifecycle contract and records why live wiring is
+		// still blocked.
 		var rows = new List<PlayerProtectionActiveTaskTaskMapOwnerSelectionRow>();
 
 		AddJavaRequirements(rows);
@@ -79,11 +84,11 @@ public static class PlayerProtectionActiveTaskTaskMapOwnerSelectionService
 			RequiresLifecycleCleanupHook: true,
 			RequiresRuntimeConcurrencyComparison: true,
 			"CreatureController.tasks owner selection for PlayerController protection active task",
-			IsLive: false);
+			IsLive: false
+		);
 	}
 
-	private static void AddJavaRequirements(
-		ICollection<PlayerProtectionActiveTaskTaskMapOwnerSelectionRow> rows)
+	private static void AddJavaRequirements(ICollection<PlayerProtectionActiveTaskTaskMapOwnerSelectionRow> rows)
 	{
 		Add(
 			rows,
@@ -94,7 +99,8 @@ public static class PlayerProtectionActiveTaskTaskMapOwnerSelectionService
 			"private final ConcurrentHashMap<Integer, Future<?>> tasks = new ConcurrentHashMap<>()",
 			"CreatureController.tasks",
 			"C# owner should be per creature/controller, not a process-global protection-only store.",
-			"Java stores all controller tasks by TaskId ordinal on the controller instance.");
+			"Java stores all controller tasks by TaskId ordinal on the controller instance."
+		);
 		Add(
 			rows,
 			PlayerProtectionActiveTaskTaskMapOwnerSelectionArea.HasTask,
@@ -104,7 +110,8 @@ public static class PlayerProtectionActiveTaskTaskMapOwnerSelectionService
 			"tasks.containsKey(taskId.ordinal())",
 			"CreatureController.hasTask",
 			"C# owner must distinguish stored completed tasks from absent tasks.",
-			"Presence check does not inspect Future.isDone.");
+			"Presence check does not inspect Future.isDone."
+		);
 		Add(
 			rows,
 			PlayerProtectionActiveTaskTaskMapOwnerSelectionArea.HasScheduledTask,
@@ -114,7 +121,8 @@ public static class PlayerProtectionActiveTaskTaskMapOwnerSelectionService
 			"task != null && !task.isDone()",
 			"CreatureController.hasScheduledTask",
 			"C# owner must preserve a separate not-done check for scheduled handles.",
-			"Completion semantics require Java/C# runtime comparison before live enablement.");
+			"Completion semantics require Java/C# runtime comparison before live enablement."
+		);
 		Add(
 			rows,
 			PlayerProtectionActiveTaskTaskMapOwnerSelectionArea.GetAndRemoveTask,
@@ -124,7 +132,8 @@ public static class PlayerProtectionActiveTaskTaskMapOwnerSelectionService
 			"tasks.remove(taskId.ordinal())",
 			"CreatureController.getAndRemoveTask",
 			"C# owner must expose remove-before-cancel ordering.",
-			"Removed task handle is returned to callers in Java.");
+			"Removed task handle is returned to callers in Java."
+		);
 		Add(
 			rows,
 			PlayerProtectionActiveTaskTaskMapOwnerSelectionArea.CancelTask,
@@ -134,7 +143,8 @@ public static class PlayerProtectionActiveTaskTaskMapOwnerSelectionService
 			"Future<?> task = getAndRemoveTask(taskId); if (task != null) task.cancel(false)",
 			"CreatureController.cancelTask",
 			"C# owner must cancel after removal and no-op when absent.",
-			"Protection stop calls this before spawned-state checks.");
+			"Protection stop calls this before spawned-state checks."
+		);
 		Add(
 			rows,
 			PlayerProtectionActiveTaskTaskMapOwnerSelectionArea.CancelTaskIfPresent,
@@ -144,7 +154,8 @@ public static class PlayerProtectionActiveTaskTaskMapOwnerSelectionService
 			"tasks.remove(taskId.ordinal(), task) then task.cancel(false)",
 			"CreatureController.cancelTaskIfPresent",
 			"C# owner should define object-identity conditional removal even if protection does not call it yet.",
-			"Discovered dependency from the shared task-map contract.");
+			"Discovered dependency from the shared task-map contract."
+		);
 		Add(
 			rows,
 			PlayerProtectionActiveTaskTaskMapOwnerSelectionArea.AddTask,
@@ -154,7 +165,8 @@ public static class PlayerProtectionActiveTaskTaskMapOwnerSelectionService
 			"tasks.compute(taskId.ordinal(), ...) cancels old Future before returning the new task",
 			"CreatureController.addTask",
 			"C# owner must make replace-and-cancel atomic enough to avoid leaked delayed-stop callbacks.",
-			"Java only logs DESPAWN replacement, not PROTECTION_ACTIVE replacement.");
+			"Java only logs DESPAWN replacement, not PROTECTION_ACTIVE replacement."
+		);
 		Add(
 			rows,
 			PlayerProtectionActiveTaskTaskMapOwnerSelectionArea.CancelAllTasks,
@@ -164,7 +176,8 @@ public static class PlayerProtectionActiveTaskTaskMapOwnerSelectionService
 			"for each task cancel(false); tasks.clear()",
 			"CreatureController.cancelAllTasks",
 			"C# owner must cancel every stored handle and clear the map.",
-			"Iteration/clear race behavior remains a runtime comparison blocker.");
+			"Iteration/clear race behavior remains a runtime comparison blocker."
+		);
 		Add(
 			rows,
 			PlayerProtectionActiveTaskTaskMapOwnerSelectionArea.OnDeleteCleanup,
@@ -174,12 +187,14 @@ public static class PlayerProtectionActiveTaskTaskMapOwnerSelectionService
 			"onDelete() -> cancelAllTasks(); super.onDelete()",
 			"CreatureController.onDelete",
 			"C# owner must be reachable from future delete/logout/world-removal lifecycle cleanup.",
-			"Lifecycle cleanup is the main reason an external orphaned store is risky.");
+			"Lifecycle cleanup is the main reason an external orphaned store is risky."
+		);
 	}
 
 	private static void AddCandidates(
 		ICollection<PlayerProtectionActiveTaskTaskMapOwnerSelectionRow> rows,
-		PlayerProtectionActiveTaskTaskMapOwnerSelectionRequest request)
+		PlayerProtectionActiveTaskTaskMapOwnerSelectionRequest request
+	)
 	{
 		Add(
 			rows,
@@ -194,7 +209,8 @@ public static class PlayerProtectionActiveTaskTaskMapOwnerSelectionService
 			"Preferred parity target: attach task-map ownership to the eventual C# controller/creature lifecycle boundary.",
 			request.HasConcreteCSharpControllerTaskMapOwner
 				? "Controller-owned storage best matches Java lifecycle and task contract."
-				: "No concrete C# controller task-map owner exists yet, so live scheduling must remain blocked.");
+				: "No concrete C# controller task-map owner exists yet, so live scheduling must remain blocked."
+		);
 		Add(
 			rows,
 			PlayerProtectionActiveTaskTaskMapOwnerSelectionArea.PlayerModelOwnedCandidate,
@@ -204,7 +220,8 @@ public static class PlayerProtectionActiveTaskTaskMapOwnerSelectionService
 			"PlayerController delegates task storage to inherited CreatureController methods",
 			"PlayerController.startProtectionActiveTask / CreatureController.addTask",
 			"Player model storage would place scheduler handles on gameplay state rather than controller lifecycle.",
-			"Rejected for now because it risks persistence/model leakage and does not naturally cover non-player CreatureController task parity.");
+			"Rejected for now because it risks persistence/model leakage and does not naturally cover non-player CreatureController task parity."
+		);
 		Add(
 			rows,
 			PlayerProtectionActiveTaskTaskMapOwnerSelectionArea.ExternalServiceOwnedCandidate,
@@ -214,12 +231,14 @@ public static class PlayerProtectionActiveTaskTaskMapOwnerSelectionService
 			"CreatureController methods are instance methods, not a global task registry",
 			"CreatureController task methods",
 			"External service storage can work for narrow staged adapters but must still hook owner deletion exactly once.",
-			"Rejected as the default protection owner because orphan cleanup and object-id reuse risks are higher than controller-local ownership.");
+			"Rejected as the default protection owner because orphan cleanup and object-id reuse risks are higher than controller-local ownership."
+		);
 	}
 
 	private static void AddRecommendation(
 		ICollection<PlayerProtectionActiveTaskTaskMapOwnerSelectionRow> rows,
-		PlayerProtectionActiveTaskTaskMapOwnerSelectionRequest request)
+		PlayerProtectionActiveTaskTaskMapOwnerSelectionRequest request
+	)
 	{
 		Add(
 			rows,
@@ -230,7 +249,8 @@ public static class PlayerProtectionActiveTaskTaskMapOwnerSelectionService
 			"preserve CreatureController.tasks semantics before enabling PlayerController protection scheduling",
 			"CreatureController.tasks / PlayerController.startProtectionActiveTask",
 			"Implement controller-owned task storage first, then adapt `ScheduledTask` handles through the existing wrapper.",
-			"Recommendation is non-live and conservative until controller lifecycle ownership exists.");
+			"Recommendation is non-live and conservative until controller lifecycle ownership exists."
+		);
 		Add(
 			rows,
 			PlayerProtectionActiveTaskTaskMapOwnerSelectionArea.LiveEnablementBlocker,
@@ -242,7 +262,8 @@ public static class PlayerProtectionActiveTaskTaskMapOwnerSelectionService
 			"Runtime-compare Java and C# replacement/cancel/cleanup race behavior before live scheduling.",
 			request.HasConcreteCSharpControllerTaskMapOwner
 				? "Even with an owner, Java runtime comparison remains required."
-				: "Owner selection plus runtime comparison both remain blockers.");
+				: "Owner selection plus runtime comparison both remain blockers."
+		);
 	}
 
 	private static void Add(
@@ -254,17 +275,21 @@ public static class PlayerProtectionActiveTaskTaskMapOwnerSelectionService
 		string javaOperation,
 		string javaSource,
 		string csharpImplication,
-		string notes)
+		string notes
+	)
 	{
-		rows.Add(new PlayerProtectionActiveTaskTaskMapOwnerSelectionRow(
-			rows.Count + 1,
-			area,
-			status,
-			candidate,
-			blocksLiveEnablement,
-			javaOperation,
-			javaSource,
-			csharpImplication,
-			notes));
+		rows.Add(
+			new PlayerProtectionActiveTaskTaskMapOwnerSelectionRow(
+				rows.Count + 1,
+				area,
+				status,
+				candidate,
+				blocksLiveEnablement,
+				javaOperation,
+				javaSource,
+				csharpImplication,
+				notes
+			)
+		);
 	}
 }

@@ -46,13 +46,15 @@ public sealed record PlayerProtectionActiveTaskTaskMapOperationResult(
 	IPlayerProtectionActiveTaskTaskHandle? RemovedTaskHandle,
 	string JavaOperation,
 	string JavaSource,
-	string Notes);
+	string Notes
+);
 
 public sealed record PlayerProtectionActiveTaskTaskMapSnapshot(
 	IReadOnlyList<int> TaskIdOrdinals,
 	IReadOnlyList<string> TaskIdNames,
 	int Count,
-	string JavaSource);
+	string JavaSource
+);
 
 public sealed class PlayerProtectionActiveTaskTaskMapAdapterService
 {
@@ -61,6 +63,8 @@ public sealed class PlayerProtectionActiveTaskTaskMapAdapterService
 
 	public PlayerProtectionActiveTaskTaskMapOperationResult HasTask(int taskIdOrdinal, string taskIdName)
 	{
+		// Java parity: CreatureController task-map helpers own scheduled-task lookup, replacement, cancel,
+		// and remove behavior. This adapter mirrors those task-id operations over a local non-live handle map.
 		lock (_gate)
 		{
 			var present = _tasks.ContainsKey(taskIdOrdinal);
@@ -77,7 +81,8 @@ public sealed class PlayerProtectionActiveTaskTaskMapAdapterService
 				removedTaskHandle: null,
 				"tasks.containsKey(taskId.ordinal())",
 				"CreatureController.hasTask",
-				present ? "Task id is present in the non-live adapter map." : "Task id is absent from the non-live adapter map.");
+				present ? "Task id is present in the non-live adapter map." : "Task id is absent from the non-live adapter map."
+			);
 		}
 	}
 
@@ -89,11 +94,9 @@ public sealed class PlayerProtectionActiveTaskTaskMapAdapterService
 			var scheduled = present && !storedTask!.Handle.IsDone;
 			return Result(
 				PlayerProtectionActiveTaskTaskMapOperation.HasScheduledTask,
-				scheduled
-					? PlayerProtectionActiveTaskTaskMapOperationStatus.Scheduled
-					: present
-						? PlayerProtectionActiveTaskTaskMapOperationStatus.Done
-						: PlayerProtectionActiveTaskTaskMapOperationStatus.Missing,
+				scheduled ? PlayerProtectionActiveTaskTaskMapOperationStatus.Scheduled
+					: present ? PlayerProtectionActiveTaskTaskMapOperationStatus.Done
+					: PlayerProtectionActiveTaskTaskMapOperationStatus.Missing,
 				taskIdOrdinal,
 				taskIdName,
 				existingBefore: present,
@@ -104,7 +107,8 @@ public sealed class PlayerProtectionActiveTaskTaskMapAdapterService
 				removedTaskHandle: null,
 				"Future<?> task = tasks.get(taskId.ordinal()); return task != null && !task.isDone()",
 				"CreatureController.hasScheduledTask",
-				scheduled ? "Stored handle is not done." : "Missing or done handle is not considered scheduled.");
+				scheduled ? "Stored handle is not done." : "Missing or done handle is not considered scheduled."
+			);
 		}
 	}
 
@@ -126,7 +130,8 @@ public sealed class PlayerProtectionActiveTaskTaskMapAdapterService
 				removed ? storedTask!.Handle : null,
 				"tasks.remove(taskId.ordinal())",
 				"CreatureController.getAndRemoveTask",
-				removed ? "Task was removed without cancellation." : "Missing task removal returned null.");
+				removed ? "Task was removed without cancellation." : "Missing task removal returned null."
+			);
 		}
 	}
 
@@ -149,14 +154,16 @@ public sealed class PlayerProtectionActiveTaskTaskMapAdapterService
 				removed ? storedTask!.Handle : null,
 				"Future<?> task = getAndRemoveTask(taskId); if (task != null) task.cancel(false); return task",
 				"CreatureController.cancelTask",
-				removed ? "Task was removed before cancel(false)." : "Missing task cancel is a no-op.");
+				removed ? "Task was removed before cancel(false)." : "Missing task cancel is a no-op."
+			);
 		}
 	}
 
 	public PlayerProtectionActiveTaskTaskMapOperationResult CancelTaskIfPresent(
 		int taskIdOrdinal,
 		string taskIdName,
-		IPlayerProtectionActiveTaskTaskHandle expectedTask)
+		IPlayerProtectionActiveTaskTaskHandle expectedTask
+	)
 	{
 		lock (_gate)
 		{
@@ -177,7 +184,8 @@ public sealed class PlayerProtectionActiveTaskTaskMapAdapterService
 					removedTaskHandle: null,
 					"tasks.remove(taskId.ordinal(), task)",
 					"CreatureController.cancelTaskIfPresent",
-					"Stored task did not match the supplied handle, so Java would not remove or cancel.");
+					"Stored task did not match the supplied handle, so Java would not remove or cancel."
+				);
 			}
 
 			_tasks.Remove(taskIdOrdinal);
@@ -195,14 +203,12 @@ public sealed class PlayerProtectionActiveTaskTaskMapAdapterService
 				expectedTask,
 				"if (tasks.remove(taskId.ordinal(), task)) task.cancel(false)",
 				"CreatureController.cancelTaskIfPresent",
-				"Stored task matched the supplied handle and was removed before cancel(false).");
+				"Stored task matched the supplied handle and was removed before cancel(false)."
+			);
 		}
 	}
 
-	public PlayerProtectionActiveTaskTaskMapOperationResult AddTask(
-		int taskIdOrdinal,
-		string taskIdName,
-		IPlayerProtectionActiveTaskTaskHandle task)
+	public PlayerProtectionActiveTaskTaskMapOperationResult AddTask(int taskIdOrdinal, string taskIdName, IPlayerProtectionActiveTaskTaskHandle task)
 	{
 		lock (_gate)
 		{
@@ -222,7 +228,8 @@ public sealed class PlayerProtectionActiveTaskTaskMapAdapterService
 				replaced ? oldTask!.Handle : null,
 				"tasks.compute(taskId.ordinal(), (k, oldTask) -> { if (oldTask != null) oldTask.cancel(false); return task; })",
 				"CreatureController.addTask",
-				replaced ? "Old task was canceled before the new handle was stored." : "New handle was stored for the task id.");
+				replaced ? "Old task was canceled before the new handle was stored." : "New handle was stored for the task id."
+			);
 		}
 	}
 
@@ -252,7 +259,8 @@ public sealed class PlayerProtectionActiveTaskTaskMapAdapterService
 				removedTaskHandle: null,
 				"for (Entry<Integer, Future<?>> e : tasks.entrySet()) task.cancel(false); tasks.clear()",
 				"CreatureController.cancelAllTasks",
-				hadTasks ? "All stored task handles were canceled then the map was cleared." : "Cancel-all on an empty task map is a no-op.");
+				hadTasks ? "All stored task handles were canceled then the map was cleared." : "Cancel-all on an empty task map is a no-op."
+			);
 		}
 	}
 
@@ -260,15 +268,13 @@ public sealed class PlayerProtectionActiveTaskTaskMapAdapterService
 	{
 		lock (_gate)
 		{
-			var ordered = _tasks
-				.OrderBy(pair => pair.Key)
-				.Select(pair => (TaskIdOrdinal: pair.Key, pair.Value.TaskIdName))
-				.ToArray();
+			var ordered = _tasks.OrderBy(pair => pair.Key).Select(pair => (TaskIdOrdinal: pair.Key, pair.Value.TaskIdName)).ToArray();
 			return new PlayerProtectionActiveTaskTaskMapSnapshot(
 				ordered.Select(pair => pair.TaskIdOrdinal).ToArray(),
 				ordered.Select(pair => pair.TaskIdName).ToArray(),
 				_tasks.Count,
-				"CreatureController.tasks snapshot for non-live protection task-map adapter");
+				"CreatureController.tasks snapshot for non-live protection task-map adapter"
+			);
 		}
 	}
 
@@ -285,7 +291,8 @@ public sealed class PlayerProtectionActiveTaskTaskMapAdapterService
 		IPlayerProtectionActiveTaskTaskHandle? removedTaskHandle,
 		string javaOperation,
 		string javaSource,
-		string notes) =>
+		string notes
+	) =>
 		new(
 			operation,
 			status,
@@ -299,7 +306,8 @@ public sealed class PlayerProtectionActiveTaskTaskMapAdapterService
 			removedTaskHandle,
 			javaOperation,
 			javaSource,
-			notes);
+			notes
+		);
 
 	private sealed record StoredTask(string TaskIdName, IPlayerProtectionActiveTaskTaskHandle Handle);
 }

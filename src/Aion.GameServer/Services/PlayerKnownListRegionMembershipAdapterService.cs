@@ -3,7 +3,8 @@ namespace Aion.GameServer.Services;
 public sealed record PlayerKnownListRegionMembershipAdapterRequest(
 	PlayerKnownListRegionSnapshot RegionSnapshot,
 	bool RemoveMissingSnapshotCandidates = false,
-	bool CandidateVisibleState = true);
+	bool CandidateVisibleState = true
+);
 
 public sealed record PlayerKnownListRegionMembershipAdapterResult(
 	int OwnerPlayerObjectId,
@@ -16,7 +17,8 @@ public sealed record PlayerKnownListRegionMembershipAdapterResult(
 	bool UsesRegionSnapshotPrerequisite,
 	bool IsJavaRegionKnownListParity,
 	string JavaSource,
-	bool IsLive);
+	bool IsLive
+);
 
 public sealed class PlayerKnownListRegionMembershipAdapterService
 {
@@ -29,6 +31,9 @@ public sealed class PlayerKnownListRegionMembershipAdapterService
 
 	public PlayerKnownListRegionMembershipAdapterResult ApplySnapshot(PlayerKnownListRegionMembershipAdapterRequest request)
 	{
+		// Java parity: KnownList.findVisibleObjects starts from region candidates and then applies range,
+		// canSee, and two-way world-object mutation. This adapter only maps the region snapshot slice into
+		// staged player-player membership metadata.
 		var snapshot = request.RegionSnapshot;
 		var candidateIds = snapshot.CandidatePlayerObjectIds.ToHashSet();
 		var removed = 0;
@@ -50,8 +55,10 @@ public sealed class PlayerKnownListRegionMembershipAdapterService
 			snapshot.CandidatePlayerObjectIds.Select(candidateId => new PlayerKnownListMembershipCandidate(
 				candidateId,
 				request.CandidateVisibleState,
-				"Prerequisite projection of KnownList.findVisibleObjects from PlayerKnownListRegionSnapshotService")),
-			PlayerKnownListMembershipUpdateReason.RegionSnapshotRefresh);
+				"Prerequisite projection of KnownList.findVisibleObjects from PlayerKnownListRegionSnapshotService"
+			)),
+			PlayerKnownListMembershipUpdateReason.RegionSnapshotRefresh
+		);
 
 		return new PlayerKnownListRegionMembershipAdapterResult(
 			snapshot.OwnerPlayerObjectId,
@@ -64,6 +71,7 @@ public sealed class PlayerKnownListRegionMembershipAdapterService
 			UsesRegionSnapshotPrerequisite: true,
 			IsJavaRegionKnownListParity: false,
 			"KnownList.findVisibleObjects region candidate snapshot adapted into player-player membership metadata; missing range/canSee/two-way world-object mutation",
-			IsLive: false);
+			IsLive: false
+		);
 	}
 }

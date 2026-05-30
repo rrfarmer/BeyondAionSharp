@@ -5,24 +5,20 @@ namespace Aion.GameServer.Services;
 public sealed record NpcDialogLimitedItemFactAdapterInput(
 	int NpcId,
 	int PlayerObjectId,
-	IReadOnlyDictionary<int, int>? PlayerBuyCountsByItemId = null);
+	IReadOnlyDictionary<int, int>? PlayerBuyCountsByItemId = null
+);
 
-public sealed record NpcDialogLimitedItemFact(
-	int ItemId,
-	int SellLimit,
-	int BuyLimit,
-	int PlayerBuyCount,
-	string? SalesTime);
+public sealed record NpcDialogLimitedItemFact(int ItemId, int SellLimit, int BuyLimit, int PlayerBuyCount, string? SalesTime);
 
 public sealed record NpcDialogLimitedItemFactAdapterPlan(
 	IReadOnlyList<NpcDialogLimitedItemFact> LimitedItems,
 	IReadOnlyList<int> MissingGoodsListIds,
 	string JavaSource,
-	bool IsLive = false)
+	bool IsLive = false
+)
 {
-	public IReadOnlyList<SmTradeListLimitedItemSummary> PacketItems { get; } = LimitedItems
-		.Select(item => new SmTradeListLimitedItemSummary(item.ItemId, item.PlayerBuyCount, item.SellLimit))
-		.ToArray();
+	public IReadOnlyList<SmTradeListLimitedItemSummary> PacketItems { get; } =
+		LimitedItems.Select(item => new SmTradeListLimitedItemSummary(item.ItemId, item.PlayerBuyCount, item.SellLimit)).ToArray();
 }
 
 public static class NpcDialogLimitedItemFactAdapterService
@@ -30,12 +26,13 @@ public static class NpcDialogLimitedItemFactAdapterService
 	public static NpcDialogLimitedItemFactAdapterPlan CreatePlan(
 		NpcDialogLimitedItemFactAdapterInput input,
 		TradeListTable tradeLists,
-		GoodsListTable goodsLists)
+		GoodsListTable goodsLists
+	)
 	{
 		ArgumentNullException.ThrowIfNull(tradeLists);
 		ArgumentNullException.ThrowIfNull(goodsLists);
 
-		// Java parity breadcrumb:
+		// Java parity:
 		// LimitedItemTradeService.start scans TradeListData.getTradeListTemplate(),
 		// GoodsListData.getGoodsListById(tab.id), and GoodsList.getLimitedItems().
 		// LimitedItem.getBuyCount(playerObjectId) defaults to 0 until live purchase mutation exists.
@@ -60,12 +57,15 @@ public static class NpcDialogLimitedItemFactAdapterService
 					if (!item.IsLimitedItem)
 						continue;
 
-					limitedItems.Add(new NpcDialogLimitedItemFact(
-						item.Id,
-						item.SellLimit!.Value,
-						item.BuyLimit!.Value,
-						buyCounts.GetValueOrDefault(item.Id),
-						goodsList.SalesTime));
+					limitedItems.Add(
+						new NpcDialogLimitedItemFact(
+							item.Id,
+							item.SellLimit!.Value,
+							item.BuyLimit!.Value,
+							buyCounts.GetValueOrDefault(item.Id),
+							goodsList.SalesTime
+						)
+					);
 				}
 			}
 		}
@@ -74,6 +74,7 @@ public static class NpcDialogLimitedItemFactAdapterService
 			limitedItems.AsReadOnly(),
 			missingGoodsListIds.AsReadOnly(),
 			"LimitedItemTradeService.start + LimitedItem.getBuyCount",
-			IsLive: false);
+			IsLive: false
+		);
 	}
 }

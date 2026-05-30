@@ -2,7 +2,8 @@ namespace Aion.GameServer.Services;
 
 public sealed record PlayerProtectionActiveTaskTaskMapLifecycleCleanupRequest(
 	IPlayerProtectionActiveTaskTaskHandle? PendingProtectionTaskHandle = null,
-	IPlayerProtectionActiveTaskTaskHandle? ReplacementProtectionTaskHandle = null);
+	IPlayerProtectionActiveTaskTaskHandle? ReplacementProtectionTaskHandle = null
+);
 
 public enum PlayerProtectionActiveTaskTaskMapLifecycleCleanupRowKind
 {
@@ -19,7 +20,8 @@ public sealed record PlayerProtectionActiveTaskTaskMapLifecycleCleanupRow(
 	PlayerProtectionActiveTaskTaskMapOperationResult? AdapterResult,
 	string JavaOperation,
 	string JavaSource,
-	string Notes);
+	string Notes
+);
 
 public sealed record PlayerProtectionActiveTaskTaskMapLifecycleCleanupReport(
 	IReadOnlyList<PlayerProtectionActiveTaskTaskMapLifecycleCleanupRow> Rows,
@@ -31,16 +33,18 @@ public sealed record PlayerProtectionActiveTaskTaskMapLifecycleCleanupReport(
 	int CleanupCanceledTaskCount,
 	IReadOnlyList<string> RemainingPrerequisites,
 	string JavaSource,
-	bool IsLive);
+	bool IsLive
+);
 
 public static class PlayerProtectionActiveTaskTaskMapLifecycleCleanupService
 {
 	private const int ProtectionActiveTaskIdOrdinal = 3;
 	private const string ProtectionActiveTaskIdName = "PROTECTION_ACTIVE";
 
-	public static PlayerProtectionActiveTaskTaskMapLifecycleCleanupReport Create(
-		PlayerProtectionActiveTaskTaskMapLifecycleCleanupRequest request)
+	public static PlayerProtectionActiveTaskTaskMapLifecycleCleanupReport Create(PlayerProtectionActiveTaskTaskMapLifecycleCleanupRequest request)
 	{
+		// Java parity: CreatureController.onDelete cancels all stored tasks before object teardown.
+		// This service previews the protection-task cleanup path over the staged task-map adapter.
 		var adapter = new PlayerProtectionActiveTaskTaskMapAdapterService();
 		var rows = new List<PlayerProtectionActiveTaskTaskMapLifecycleCleanupRow>();
 
@@ -50,7 +54,8 @@ public static class PlayerProtectionActiveTaskTaskMapLifecycleCleanupService
 			adapterResult: null,
 			"onDelete() -> cancelAllTasks()",
 			"CreatureController.onDelete",
-			"Java cancels all controller tasks during delete; C# protection lifecycle hook is not wired.");
+			"Java cancels all controller tasks during delete; C# protection lifecycle hook is not wired."
+		);
 
 		if (request.PendingProtectionTaskHandle != null)
 		{
@@ -61,7 +66,8 @@ public static class PlayerProtectionActiveTaskTaskMapLifecycleCleanupService
 				seed,
 				"addTask(TaskId.PROTECTION_ACTIVE, future)",
 				"CreatureController.addTask",
-				"Seeds the non-live adapter with a pending protection task before lifecycle cleanup.");
+				"Seeds the non-live adapter with a pending protection task before lifecycle cleanup."
+			);
 		}
 
 		if (request.ReplacementProtectionTaskHandle != null)
@@ -73,7 +79,8 @@ public static class PlayerProtectionActiveTaskTaskMapLifecycleCleanupService
 				replacement,
 				"addTask(TaskId.PROTECTION_ACTIVE, replacementFuture)",
 				"CreatureController.addTask",
-				"Optional replacement simulates Java addTask canceling the previous future before cleanup.");
+				"Optional replacement simulates Java addTask canceling the previous future before cleanup."
+			);
 		}
 
 		var cleanup = adapter.CancelAllTasks();
@@ -83,7 +90,8 @@ public static class PlayerProtectionActiveTaskTaskMapLifecycleCleanupService
 			cleanup,
 			"cancelAllTasks()",
 			"CreatureController.cancelAllTasks",
-			"Lifecycle cleanup simulation cancels remaining task handles and clears the map.");
+			"Lifecycle cleanup simulation cancels remaining task handles and clears the map."
+		);
 
 		foreach (var prerequisite in RemainingPrerequisites())
 		{
@@ -93,7 +101,8 @@ public static class PlayerProtectionActiveTaskTaskMapLifecycleCleanupService
 				adapterResult: null,
 				"future C# lifecycle integration",
 				"CreatureController.onDelete / player logout-delete lifecycle",
-				prerequisite);
+				prerequisite
+			);
 		}
 
 		var rowArray = rows.ToArray();
@@ -102,12 +111,15 @@ public static class PlayerProtectionActiveTaskTaskMapLifecycleCleanupService
 			adapter.CreateSnapshot(),
 			HadPendingProtectionTask: request.PendingProtectionTaskHandle != null,
 			ReplacedPendingProtectionTask: request.ReplacementProtectionTaskHandle != null,
-			CanceledTaskDuringReplacement: rowArray.Any(row => row.Kind == PlayerProtectionActiveTaskTaskMapLifecycleCleanupRowKind.ReplacePendingProtectionTask && row.AdapterResult?.CanceledTask == true),
+			CanceledTaskDuringReplacement: rowArray.Any(row =>
+				row.Kind == PlayerProtectionActiveTaskTaskMapLifecycleCleanupRowKind.ReplacePendingProtectionTask && row.AdapterResult?.CanceledTask == true
+			),
 			CanceledTaskDuringCleanup: cleanup.CanceledTask,
 			cleanup.CanceledTaskCount,
 			RemainingPrerequisites().ToArray(),
 			"CreatureController.onDelete -> cancelAllTasks protection task-map lifecycle cleanup plan",
-			IsLive: false);
+			IsLive: false
+		);
 	}
 
 	private static IEnumerable<string> RemainingPrerequisites()
@@ -123,14 +135,9 @@ public static class PlayerProtectionActiveTaskTaskMapLifecycleCleanupService
 		PlayerProtectionActiveTaskTaskMapOperationResult? adapterResult,
 		string javaOperation,
 		string javaSource,
-		string notes)
+		string notes
+	)
 	{
-		rows.Add(new PlayerProtectionActiveTaskTaskMapLifecycleCleanupRow(
-			rows.Count + 1,
-			kind,
-			adapterResult,
-			javaOperation,
-			javaSource,
-			notes));
+		rows.Add(new PlayerProtectionActiveTaskTaskMapLifecycleCleanupRow(rows.Count + 1, kind, adapterResult, javaOperation, javaSource, notes));
 	}
 }

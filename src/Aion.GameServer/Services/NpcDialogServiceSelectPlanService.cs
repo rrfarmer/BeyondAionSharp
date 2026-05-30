@@ -51,7 +51,8 @@ public sealed record NpcDialogServiceSelectInput(
 	int TradeSellPriceRate = 100,
 	bool HasTradeInList = false,
 	SmTradeListPacketPlan? TradeListPacketPlan = null,
-	SmTradeInListPacketPlan? TradeInListPacketPlan = null);
+	SmTradeInListPacketPlan? TradeInListPacketPlan = null
+);
 
 public sealed record NpcDialogServiceDescriptor(
 	NpcDialogServiceDescriptorKind Kind,
@@ -63,7 +64,8 @@ public sealed record NpcDialogServiceDescriptor(
 	int? ExtendedRewardIndex = null,
 	int? PriceModifier = null,
 	SmTradeListPacketPlan? TradeListPacketPlan = null,
-	SmTradeInListPacketPlan? TradeInListPacketPlan = null);
+	SmTradeInListPacketPlan? TradeInListPacketPlan = null
+);
 
 public sealed record NpcDialogServiceSelectPlan(
 	NpcDialogServiceSelectStatus Status,
@@ -72,7 +74,8 @@ public sealed record NpcDialogServiceSelectPlan(
 	IReadOnlyList<NpcDialogServiceDescriptor> Descriptors,
 	bool CallsQuestEngine = false,
 	bool SendsDialogWindow = false,
-	string? AuditReason = null);
+	string? AuditReason = null
+);
 
 public static class NpcDialogServiceSelectPlanService
 {
@@ -123,52 +126,83 @@ public static class NpcDialogServiceSelectPlanService
 
 	public static NpcDialogServiceSelectPlan CreatePlan(NpcDialogServiceSelectInput input)
 	{
-		// Java parity breadcrumb: services/DialogService.onDialogSelect and
+		// Java parity: services/DialogService.onDialogSelect and
 		// handleQuestDialogueOrSendNextPage. This planner is descriptor-only and
 		// does not call QuestEngine, PacketSendUtility, TeleportService, or live services.
 		var fallback = input.Fallback;
 		if (fallback.QuestId != 0 || fallback.DialogActionId is UseObject or ExchangeCoin)
 		{
-			return QuestEngineOrNextPagePlan(
-				fallback,
-				"DialogService.handleQuestDialogueOrSendNextPage -> QuestEngine.onDialog then SM_DIALOG_WINDOW");
+			return QuestEngineOrNextPagePlan(fallback, "DialogService.handleQuestDialogueOrSendNextPage -> QuestEngine.onDialog then SM_DIALOG_WINDOW");
 		}
 
 		return fallback.DialogActionId switch
 		{
 			Buy => CreateBuyPlan(input),
-			DepositCharWarehouse or OpenVendor or OpenStigmaEnchant or CloseLegionWarehouse or CombineTask
-				or OpenInstanceRecruit or InstanceEntry or CompoundWeapon or DecompoundWeapon or HousingBuild
-				or HousingDestruct or HousingPersonalAuction or ChargeItemSingle or ChargeItemSingle2
-				or ItemUpgrade or TownChallenge => CreateDialogWindowPlan(fallback, input.NpcSupportsAction),
+			DepositCharWarehouse
+			or OpenVendor
+			or OpenStigmaEnchant
+			or CloseLegionWarehouse
+			or CombineTask
+			or OpenInstanceRecruit
+			or InstanceEntry
+			or CompoundWeapon
+			or DecompoundWeapon
+			or HousingBuild
+			or HousingDestruct
+			or HousingPersonalAuction
+			or ChargeItemSingle
+			or ChargeItemSingle2
+			or ItemUpgrade
+			or TownChallenge => CreateDialogWindowPlan(fallback, input.NpcSupportsAction),
 			6 => ServicePlan(fallback, NpcDialogServiceDescriptorKind.LegionDisbandRequest, "LegionService.requestDisbandLegion"),
 			7 => ServicePlan(fallback, NpcDialogServiceDescriptorKind.LegionRecreate, "LegionService.recreateLegion"),
 			Recovery => ServicePlan(fallback, NpcDialogServiceDescriptorKind.ExperienceRecoveryRequest, "DialogService RECOVERY RequestResponseHandler"),
 			36 or 37 => ServicePlan(fallback, NpcDialogServiceDescriptorKind.PvpTeleport, "DialogService ENTER_PVP/LEAVE_PVP TeleportService"),
 			AirlineService => ServicePlan(fallback, NpcDialogServiceDescriptorKind.AirlineService, "DialogService AIRLINE_SERVICE TeleportService.showMap"),
-			GatherSkillLevelUp or CombineSkillLevelUp => ServicePlan(fallback, NpcDialogServiceDescriptorKind.CraftSkillLearn, "CraftSkillUpdateService.learnSkill"),
+			GatherSkillLevelUp or CombineSkillLevelUp => ServicePlan(
+				fallback,
+				NpcDialogServiceDescriptorKind.CraftSkillLearn,
+				"CraftSkillUpdateService.learnSkill"
+			),
 			ExtendInventory => ServicePlan(fallback, NpcDialogServiceDescriptorKind.CubeExpansion, "CubeExpandService.expandCube"),
 			ExtendCharWarehouse => ServicePlan(fallback, NpcDialogServiceDescriptorKind.WarehouseExpansion, "WarehouseService.expandWarehouse"),
 			OpenLegionWarehouse => ServicePlan(fallback, NpcDialogServiceDescriptorKind.LegionWarehouseOpen, "LegionService.openLegionWarehouse"),
-			EditCharacterAll or EditCharacterGender => ServicePlan(fallback, NpcDialogServiceDescriptorKind.PlasticSurgery, "SM_PLASTIC_SURGERY + setInEditMode"),
-			MatchMaker => ServicePlan(fallback, NpcDialogServiceDescriptorKind.AutoGroupOrDialogWindow, "DialogService MATCH_MAKER AutoGroup or SM_DIALOG_WINDOW 1011"),
+			EditCharacterAll or EditCharacterGender => ServicePlan(
+				fallback,
+				NpcDialogServiceDescriptorKind.PlasticSurgery,
+				"SM_PLASTIC_SURGERY + setInEditMode"
+			),
+			MatchMaker => ServicePlan(
+				fallback,
+				NpcDialogServiceDescriptorKind.AutoGroupOrDialogWindow,
+				"DialogService MATCH_MAKER AutoGroup or SM_DIALOG_WINDOW 1011"
+			),
 			FactionJoin => ServicePlan(fallback, NpcDialogServiceDescriptorKind.NpcFactionJoin, "player.getNpcFactions().enterGuild"),
 			FactionSeparate => ServicePlan(fallback, NpcDialogServiceDescriptorKind.NpcFactionLeave, "player.getNpcFactions().leaveNpcFaction"),
 			BuyAgain => ServicePlan(fallback, NpcDialogServiceDescriptorKind.RepurchasePacket, "SM_REPURCHASE"),
 			PetAdopt or PetAbandon or PetHAdopt or PetHAbandon => ServicePlan(fallback, NpcDialogServiceDescriptorKind.PetDialogPacket, "SM_PET"),
-			ChargeItemMulti or ChargeItemMulti2 => ServicePlan(fallback, NpcDialogServiceDescriptorKind.ItemChargeRequest, "ItemChargeService.startChargingEquippedItems"),
+			ChargeItemMulti or ChargeItemMulti2 => ServicePlan(
+				fallback,
+				NpcDialogServiceDescriptorKind.ItemChargeRequest,
+				"ItemChargeService.startChargingEquippedItems"
+			),
 			TradeIn => CreateTradeInPlan(input),
-			Sell or TradeSellList => ServicePlan(fallback, NpcDialogServiceDescriptorKind.SellItemPacket, "SM_SELL_ITEM", NpcDialogServiceSelectStatus.SellItemWindow),
+			Sell or TradeSellList => ServicePlan(
+				fallback,
+				NpcDialogServiceDescriptorKind.SellItemPacket,
+				"SM_SELL_ITEM",
+				NpcDialogServiceSelectStatus.SellItemWindow
+			),
 			GiveupCraftExpert or GiveupCraftMaster => ServicePlan(fallback, NpcDialogServiceDescriptorKind.CraftStatusRelinquish, "RelinquishCraftStatus"),
 			HousingRecreatePersonalInstance => ServicePlan(fallback, NpcDialogServiceDescriptorKind.StudioRecreate, "HousingService.recreatePlayerStudio"),
-			_ => QuestEngineOrNextPagePlan(
-				fallback,
-				"DialogService.onDialogSelect default -> handleQuestDialogueOrSendNextPage"),
+			_ => QuestEngineOrNextPagePlan(fallback, "DialogService.onDialogSelect default -> handleQuestDialogueOrSendNextPage"),
 		};
 	}
 
 	private static NpcDialogServiceSelectPlan CreateBuyPlan(NpcDialogServiceSelectInput input)
 	{
+		// Java parity: DialogService BUY first resolves TradeListTemplate and sellable GoodsList rows,
+		// then either sends STR_BUY_SELL_HE_DOES_NOT_SELL_ITEM or builds SM_TRADELIST.
 		if (!input.HasTradeList || !input.HasSellableTradeGoods)
 		{
 			return new NpcDialogServiceSelectPlan(
@@ -179,8 +213,10 @@ public static class NpcDialogServiceSelectPlanService
 					CreateDescriptor(
 						input.Fallback,
 						NpcDialogServiceDescriptorKind.SystemMessageDoesNotSellItem,
-						"SM_SYSTEM_MESSAGE.STR_BUY_SELL_HE_DOES_NOT_SELL_ITEM"),
-				]);
+						"SM_SYSTEM_MESSAGE.STR_BUY_SELL_HE_DOES_NOT_SELL_ITEM"
+					),
+				]
+			);
 		}
 
 		return new NpcDialogServiceSelectPlan(
@@ -193,13 +229,13 @@ public static class NpcDialogServiceSelectPlanService
 					NpcDialogServiceDescriptorKind.TradeListPacket,
 					"SM_TRADELIST",
 					priceModifier: input.VendorBuyModifier * input.TradeSellPriceRate / 100,
-					tradeListPacketPlan: input.TradeListPacketPlan),
-			]);
+					tradeListPacketPlan: input.TradeListPacketPlan
+				),
+			]
+		);
 	}
 
-	private static NpcDialogServiceSelectPlan CreateDialogWindowPlan(
-		NpcDialogServiceFallbackDescriptor fallback,
-		bool npcSupportsAction)
+	private static NpcDialogServiceSelectPlan CreateDialogWindowPlan(NpcDialogServiceFallbackDescriptor fallback, bool npcSupportsAction)
 	{
 		if (!npcSupportsAction)
 		{
@@ -208,7 +244,8 @@ public static class NpcDialogServiceSelectPlanService
 				"DialogService.sendDialogWindow -> !NpcTemplate.supportsAction(dialogActionId)",
 				IsLive: false,
 				Array.Empty<NpcDialogServiceDescriptor>(),
-				AuditReason: "Java sendDialogWindow silently skips unsupported action");
+				AuditReason: "Java sendDialogWindow silently skips unsupported action"
+			);
 		}
 
 		return new NpcDialogServiceSelectPlan(
@@ -220,16 +257,18 @@ public static class NpcDialogServiceSelectPlanService
 					fallback,
 					NpcDialogServiceDescriptorKind.DialogWindowFromAction,
 					"SM_DIALOG_WINDOW from DialogPage.getByActionId",
-					questId: 0),
+					questId: 0
+				),
 			],
-			SendsDialogWindow: true);
+			SendsDialogWindow: true
+		);
 	}
 
 	private static NpcDialogServiceSelectPlan CreateTradeInPlan(NpcDialogServiceSelectInput input)
 	{
-		var kind = input.HasTradeInList
-			? NpcDialogServiceDescriptorKind.TradeInListPacket
-			: NpcDialogServiceDescriptorKind.SystemMessageDoesNotSellItem;
+		// Java parity: DialogService TRADE_IN sends SM_TRADE_IN_LIST only when a trade-in list exists;
+		// otherwise it falls back to STR_BUY_SELL_HE_DOES_NOT_SELL_ITEM.
+		var kind = input.HasTradeInList ? NpcDialogServiceDescriptorKind.TradeInListPacket : NpcDialogServiceDescriptorKind.SystemMessageDoesNotSellItem;
 		return new NpcDialogServiceSelectPlan(
 			input.HasTradeInList ? NpcDialogServiceSelectStatus.TradeInList : NpcDialogServiceSelectStatus.TradeInUnavailable,
 			input.HasTradeInList
@@ -242,13 +281,13 @@ public static class NpcDialogServiceSelectPlanService
 					kind,
 					input.HasTradeInList ? "SM_TRADE_IN_LIST" : "SM_SYSTEM_MESSAGE.STR_BUY_SELL_HE_DOES_NOT_SELL_ITEM",
 					priceModifier: input.HasTradeInList ? 100 : null,
-					tradeInListPacketPlan: input.TradeInListPacketPlan),
-			]);
+					tradeInListPacketPlan: input.TradeInListPacketPlan
+				),
+			]
+		);
 	}
 
-	private static NpcDialogServiceSelectPlan QuestEngineOrNextPagePlan(
-		NpcDialogServiceFallbackDescriptor fallback,
-		string javaSource)
+	private static NpcDialogServiceSelectPlan QuestEngineOrNextPagePlan(NpcDialogServiceFallbackDescriptor fallback, string javaSource)
 	{
 		return new NpcDialogServiceSelectPlan(
 			NpcDialogServiceSelectStatus.QuestEngineOrNextPage,
@@ -260,31 +299,34 @@ public static class NpcDialogServiceSelectPlanService
 					NpcDialogServiceDescriptorKind.QuestEngineDialog,
 					"QuestEngine.getInstance().onDialog(new QuestEnv(...))",
 					questId: fallback.QuestId,
-					extendedRewardIndex: fallback.ExtendedRewardIndex),
+					extendedRewardIndex: fallback.ExtendedRewardIndex
+				),
 				CreateDescriptor(
 					fallback,
 					NpcDialogServiceDescriptorKind.DialogWindowNextPage,
 					"SM_DIALOG_WINDOW(npc.getObjectId(), dialogActionId, questId)",
-					questId: fallback.QuestId),
+					questId: fallback.QuestId
+				),
 			],
 			CallsQuestEngine: true,
 			SendsDialogWindow: true,
-			AuditReason: "Dialog window descriptor is conditional on QuestEngine.onDialog returning false");
+			AuditReason: "Dialog window descriptor is conditional on QuestEngine.onDialog returning false"
+		);
 	}
 
 	private static NpcDialogServiceSelectPlan ServicePlan(
 		NpcDialogServiceFallbackDescriptor fallback,
 		NpcDialogServiceDescriptorKind descriptorKind,
 		string javaSource,
-		NpcDialogServiceSelectStatus status = NpcDialogServiceSelectStatus.ServiceDispatch)
+		NpcDialogServiceSelectStatus status = NpcDialogServiceSelectStatus.ServiceDispatch
+	)
 	{
 		return new NpcDialogServiceSelectPlan(
 			status,
 			$"DialogService.onDialogSelect -> {javaSource}",
 			IsLive: false,
-			[
-				CreateDescriptor(fallback, descriptorKind, javaSource),
-			]);
+			[CreateDescriptor(fallback, descriptorKind, javaSource)]
+		);
 	}
 
 	private static NpcDialogServiceDescriptor CreateDescriptor(
@@ -295,7 +337,8 @@ public static class NpcDialogServiceSelectPlanService
 		int? extendedRewardIndex = null,
 		int? priceModifier = null,
 		SmTradeListPacketPlan? tradeListPacketPlan = null,
-		SmTradeInListPacketPlan? tradeInListPacketPlan = null)
+		SmTradeInListPacketPlan? tradeInListPacketPlan = null
+	)
 	{
 		return new NpcDialogServiceDescriptor(
 			kind,
@@ -307,6 +350,7 @@ public static class NpcDialogServiceSelectPlanService
 			extendedRewardIndex,
 			priceModifier,
 			tradeListPacketPlan,
-			tradeInListPacketPlan);
+			tradeInListPacketPlan
+		);
 	}
 }

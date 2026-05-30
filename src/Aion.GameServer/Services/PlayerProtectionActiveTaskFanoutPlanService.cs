@@ -42,20 +42,23 @@ public sealed record PlayerProtectionActiveTaskFanoutPlan(
 	IReadOnlyList<PlayerProtectionActiveTaskFanoutStep> Steps,
 	string RecipientSelection,
 	string JavaSource,
-	bool IsLive);
+	bool IsLive
+);
 
 public static class PlayerProtectionActiveTaskFanoutPlanService
 {
-	public static PlayerProtectionActiveTaskFanoutPlan Create(
-		PlayerProtectionActiveTaskPlan plan,
-		PlayerProtectionActiveTaskFanoutAction action)
+	public static PlayerProtectionActiveTaskFanoutPlan Create(PlayerProtectionActiveTaskPlan plan, PlayerProtectionActiveTaskFanoutAction action)
 	{
+		// Java parity: startProtectionActiveTask and stopProtectionActiveTask build SM_PLAYER_STATE and
+		// send it to self first and then to sighted players when the branch reaches broadcast. This plan
+		// captures that recipient ordering and the skipped branches.
 		if (!plan.ShouldBroadcastPlayerState)
 			return CreateSkippedPlan(plan, action);
 
-		var visualMutationStep = action == PlayerProtectionActiveTaskFanoutAction.Start
-			? PlayerProtectionActiveTaskPlanStep.SetBlinkingVisualState
-			: PlayerProtectionActiveTaskPlanStep.UnsetBlinkingVisualState;
+		var visualMutationStep =
+			action == PlayerProtectionActiveTaskFanoutAction.Start
+				? PlayerProtectionActiveTaskPlanStep.SetBlinkingVisualState
+				: PlayerProtectionActiveTaskPlanStep.UnsetBlinkingVisualState;
 
 		return new PlayerProtectionActiveTaskFanoutPlan(
 			action,
@@ -81,16 +84,19 @@ public static class PlayerProtectionActiveTaskFanoutPlanService
 			],
 			"source player first because toSelf=true, then known-list players where other.getKnownList().sees(source)",
 			"com.aionemu.gameserver.controllers.PlayerController protection task -> PacketSendUtility.broadcastToSightedPlayers(player, new SM_PLAYER_STATE(player), true)",
-			IsLive: false);
+			IsLive: false
+		);
 	}
 
 	private static PlayerProtectionActiveTaskFanoutPlan CreateSkippedPlan(
 		PlayerProtectionActiveTaskPlan plan,
-		PlayerProtectionActiveTaskFanoutAction action)
+		PlayerProtectionActiveTaskFanoutAction action
+	)
 	{
-		var status = plan.Status == PlayerProtectionActiveTaskPlanStatus.AlreadyProtected
-			? PlayerProtectionActiveTaskFanoutStatus.SkippedAlreadyProtectedStart
-			: PlayerProtectionActiveTaskFanoutStatus.SkippedUnspawnedStop;
+		var status =
+			plan.Status == PlayerProtectionActiveTaskPlanStatus.AlreadyProtected
+				? PlayerProtectionActiveTaskFanoutStatus.SkippedAlreadyProtectedStart
+				: PlayerProtectionActiveTaskFanoutStatus.SkippedUnspawnedStop;
 
 		return new PlayerProtectionActiveTaskFanoutPlan(
 			action,
@@ -113,12 +119,11 @@ public static class PlayerProtectionActiveTaskFanoutPlanService
 			action == PlayerProtectionActiveTaskFanoutAction.Start
 				? "com.aionemu.gameserver.controllers.PlayerController.startProtectionActiveTask -> already BLINKING, no SM_PLAYER_STATE broadcast"
 				: "com.aionemu.gameserver.controllers.PlayerController.stopProtectionActiveTask -> !player.isSpawned(), no SM_PLAYER_STATE broadcast",
-			IsLive: false);
+			IsLive: false
+		);
 	}
 
-	private static int? IndexOf(
-		IReadOnlyList<PlayerProtectionActiveTaskPlanStep> steps,
-		PlayerProtectionActiveTaskPlanStep step)
+	private static int? IndexOf(IReadOnlyList<PlayerProtectionActiveTaskPlanStep> steps, PlayerProtectionActiveTaskPlanStep step)
 	{
 		for (var i = 0; i < steps.Count; i++)
 		{

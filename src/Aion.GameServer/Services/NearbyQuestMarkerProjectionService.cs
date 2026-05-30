@@ -10,9 +10,10 @@ public static class NearbyQuestMarkerProjectionService
 	public static NearbyQuestMarkerProjectionResult ProjectMarkers(
 		Player player,
 		WorldMapInstanceRuntimeState instance,
-		NearbyQuestTemplateTable questTemplates)
+		NearbyQuestTemplateTable questTemplates
+	)
 	{
-		// Java parity breadcrumb: PlayerController.updateNearbyQuests filters WorldMapInstance.getQuestIds().
+		// Java parity: PlayerController.updateNearbyQuests filters WorldMapInstance.getQuestIds().
 		var markers = new List<NearbyQuestMarker>();
 		var rejected = new Dictionary<int, NearbyQuestStartConditionFailure>();
 
@@ -25,9 +26,7 @@ public static class NearbyQuestMarkerProjectionService
 				continue;
 			}
 
-			markers.Add(new NearbyQuestMarker(
-				questId,
-				NearbyQuestStartConditionService.GetLevelRequirementDiff(questId, player.Level, questTemplates)));
+			markers.Add(new NearbyQuestMarker(questId, NearbyQuestStartConditionService.GetLevelRequirementDiff(questId, player.Level, questTemplates)));
 		}
 
 		return new NearbyQuestMarkerProjectionResult(markers, rejected);
@@ -36,4 +35,5 @@ public static class NearbyQuestMarkerProjectionService
 
 public sealed record NearbyQuestMarkerProjectionResult(
 	IReadOnlyList<NearbyQuestMarker> Markers,
-	IReadOnlyDictionary<int, NearbyQuestStartConditionFailure> RejectedQuestIds);
+	IReadOnlyDictionary<int, NearbyQuestStartConditionFailure> RejectedQuestIds
+);

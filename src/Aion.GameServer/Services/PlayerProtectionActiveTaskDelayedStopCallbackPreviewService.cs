@@ -21,7 +21,8 @@ public enum PlayerProtectionActiveTaskDelayedStopCallbackPreviewRowKind
 public sealed record PlayerProtectionActiveTaskDelayedStopCallbackPreviewRequest(
 	PlayerProtectionActiveTaskSchedulerCallbackPlan SchedulerCallbackPlan,
 	PlayerProtectionActiveTaskTaskOperationPlan StopTaskOperationPlan,
-	PlayerProtectionActiveTaskControllerTaskMapOwnerPrototypeService? OwnerPrototype = null);
+	PlayerProtectionActiveTaskControllerTaskMapOwnerPrototypeService? OwnerPrototype = null
+);
 
 public sealed record PlayerProtectionActiveTaskDelayedStopCallbackPreviewRow(
 	int Order,
@@ -31,7 +32,8 @@ public sealed record PlayerProtectionActiveTaskDelayedStopCallbackPreviewRow(
 	bool IsLive,
 	string JavaOperation,
 	string JavaSource,
-	string Notes);
+	string Notes
+);
 
 public sealed record PlayerProtectionActiveTaskDelayedStopCallbackPreview(
 	PlayerProtectionActiveTaskDelayedStopCallbackPreviewStatus Status,
@@ -46,13 +48,16 @@ public sealed record PlayerProtectionActiveTaskDelayedStopCallbackPreview(
 	bool InvokesSocketFanout,
 	bool InvokesAiMoveNotification,
 	string JavaSource,
-	bool IsLive);
+	bool IsLive
+);
 
 public static class PlayerProtectionActiveTaskDelayedStopCallbackPreviewService
 {
-	public static PlayerProtectionActiveTaskDelayedStopCallbackPreview Create(
-		PlayerProtectionActiveTaskDelayedStopCallbackPreviewRequest request)
+	public static PlayerProtectionActiveTaskDelayedStopCallbackPreview Create(PlayerProtectionActiveTaskDelayedStopCallbackPreviewRequest request)
 	{
+		// Java parity: the delayed callback scheduled by startProtectionActiveTask eventually runs
+		// stopProtectionActiveTask. This preview records that callback chain and its task cancellation
+		// consequences without invoking scheduler, fanout, or AI side effects.
 		var rows = new List<PlayerProtectionActiveTaskDelayedStopCallbackPreviewRow>();
 
 		if (!request.SchedulerCallbackPlan.SchedulesDelayedStop)
@@ -64,7 +69,8 @@ public static class PlayerProtectionActiveTaskDelayedStopCallbackPreviewService
 				javaCallReached: false,
 				"is scheduled callback present",
 				request.SchedulerCallbackPlan.JavaSource,
-				"Scheduler callback plan did not schedule a delayed stop, so no delayed callback preview is composed.");
+				"Scheduler callback plan did not schedule a delayed stop, so no delayed callback preview is composed."
+			);
 
 			return CreateReport(
 				request,
@@ -73,7 +79,8 @@ public static class PlayerProtectionActiveTaskDelayedStopCallbackPreviewService
 				hasScheduledCallbackMetadata: false,
 				composesStopTaskOperationPlan: false,
 				cancelsOwnerTask: false,
-				removesMissingTaskAsNoOp: false);
+				removesMissingTaskAsNoOp: false
+			);
 		}
 
 		Add(
@@ -83,7 +90,8 @@ public static class PlayerProtectionActiveTaskDelayedStopCallbackPreviewService
 			javaCallReached: true,
 			"this::stopProtectionActiveTask",
 			"PlayerController.startProtectionActiveTask -> ThreadPoolManager.schedule(this::stopProtectionActiveTask, 60000)",
-			"Delayed callback target is recorded as metadata only; the callback is not invoked.");
+			"Delayed callback target is recorded as metadata only; the callback is not invoked."
+		);
 
 		Add(
 			rows,
@@ -92,7 +100,8 @@ public static class PlayerProtectionActiveTaskDelayedStopCallbackPreviewService
 			javaCallReached: request.StopTaskOperationPlan.CancelsExistingTask || request.StopTaskOperationPlan.RemovesMissingTaskAsNoOp,
 			"stopProtectionActiveTask -> cancelTask(TaskId.PROTECTION_ACTIVE)",
 			request.StopTaskOperationPlan.JavaSource,
-			$"Stop task-operation plan is composed with status {request.StopTaskOperationPlan.SourcePlanStatus}; IsLive={request.StopTaskOperationPlan.IsLive}.");
+			$"Stop task-operation plan is composed with status {request.StopTaskOperationPlan.SourcePlanStatus}; IsLive={request.StopTaskOperationPlan.IsLive}."
+		);
 
 		if (request.OwnerPrototype == null)
 		{
@@ -103,7 +112,8 @@ public static class PlayerProtectionActiveTaskDelayedStopCallbackPreviewService
 				javaCallReached: true,
 				"cancelTask(TaskId.PROTECTION_ACTIVE)",
 				"CreatureController.cancelTask",
-				"Owner prototype is required before previewing non-live delayed-stop cancellation.");
+				"Owner prototype is required before previewing non-live delayed-stop cancellation."
+			);
 
 			return CreateReport(
 				request,
@@ -112,7 +122,8 @@ public static class PlayerProtectionActiveTaskDelayedStopCallbackPreviewService
 				hasScheduledCallbackMetadata: true,
 				composesStopTaskOperationPlan: true,
 				cancelsOwnerTask: false,
-				removesMissingTaskAsNoOp: false);
+				removesMissingTaskAsNoOp: false
+			);
 		}
 
 		var cancelResult = request.OwnerPrototype.CancelTask();
@@ -126,7 +137,8 @@ public static class PlayerProtectionActiveTaskDelayedStopCallbackPreviewService
 			javaCallReached: true,
 			cancelResult.JavaOperation,
 			cancelResult.JavaSource,
-			$"{cancelResult.Notes} OwnerObjectId={request.OwnerPrototype.OwnerObjectId}; CanceledTask={cancelResult.CanceledTask}; IsLive={request.OwnerPrototype.IsLive}.");
+			$"{cancelResult.Notes} OwnerObjectId={request.OwnerPrototype.OwnerObjectId}; CanceledTask={cancelResult.CanceledTask}; IsLive={request.OwnerPrototype.IsLive}."
+		);
 
 		Add(
 			rows,
@@ -135,7 +147,8 @@ public static class PlayerProtectionActiveTaskDelayedStopCallbackPreviewService
 			javaCallReached: true,
 			"if (player.isSpawned()) unset BLINKING; broadcast SM_PLAYER_STATE; notifyAIOnMove()",
 			"PlayerController.stopProtectionActiveTask",
-			"Preview does not mutate visual state, broadcast sockets, or notify AI movement.");
+			"Preview does not mutate visual state, broadcast sockets, or notify AI movement."
+		);
 
 		Add(
 			rows,
@@ -144,7 +157,8 @@ public static class PlayerProtectionActiveTaskDelayedStopCallbackPreviewService
 			javaCallReached: true,
 			"ScheduledFuture callback execution / Future.cancel(false)",
 			"ThreadPoolManager.schedule / CreatureController.cancelTask",
-			"Java scheduled callback timing and Future cancellation behavior still require runtime comparison.");
+			"Java scheduled callback timing and Future cancellation behavior still require runtime comparison."
+		);
 
 		return CreateReport(
 			request,
@@ -155,7 +169,8 @@ public static class PlayerProtectionActiveTaskDelayedStopCallbackPreviewService
 			hasScheduledCallbackMetadata: true,
 			composesStopTaskOperationPlan: true,
 			cancelsOwnerTask: cancelResult.CanceledTask,
-			removesMissingTaskAsNoOp: missingNoOp);
+			removesMissingTaskAsNoOp: missingNoOp
+		);
 	}
 
 	private static PlayerProtectionActiveTaskDelayedStopCallbackPreview CreateReport(
@@ -165,7 +180,8 @@ public static class PlayerProtectionActiveTaskDelayedStopCallbackPreviewService
 		bool hasScheduledCallbackMetadata,
 		bool composesStopTaskOperationPlan,
 		bool cancelsOwnerTask,
-		bool removesMissingTaskAsNoOp) =>
+		bool removesMissingTaskAsNoOp
+	) =>
 		new(
 			status,
 			request.SchedulerCallbackPlan.PlayerObjectId,
@@ -179,7 +195,8 @@ public static class PlayerProtectionActiveTaskDelayedStopCallbackPreviewService
 			InvokesSocketFanout: false,
 			InvokesAiMoveNotification: false,
 			"PlayerController.startProtectionActiveTask delayed stop callback preview -> stopProtectionActiveTask",
-			IsLive: false);
+			IsLive: false
+		);
 
 	private static void Add(
 		ICollection<PlayerProtectionActiveTaskDelayedStopCallbackPreviewRow> rows,
@@ -188,16 +205,20 @@ public static class PlayerProtectionActiveTaskDelayedStopCallbackPreviewService
 		bool javaCallReached,
 		string javaOperation,
 		string javaSource,
-		string notes)
+		string notes
+	)
 	{
-		rows.Add(new PlayerProtectionActiveTaskDelayedStopCallbackPreviewRow(
-			rows.Count + 1,
-			kind,
-			status,
-			javaCallReached,
-			IsLive: false,
-			javaOperation,
-			javaSource,
-			notes));
+		rows.Add(
+			new PlayerProtectionActiveTaskDelayedStopCallbackPreviewRow(
+				rows.Count + 1,
+				kind,
+				status,
+				javaCallReached,
+				IsLive: false,
+				javaOperation,
+				javaSource,
+				notes
+			)
+		);
 	}
 }

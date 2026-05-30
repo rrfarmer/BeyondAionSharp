@@ -24,22 +24,22 @@ public sealed record PlayerProtectionActiveTaskExecutionBridgeResult(
 	bool SentPackets,
 	bool UsesDisabledSocketExecutorByDefault,
 	string JavaSource,
-	bool IsLive);
+	bool IsLive
+);
 
 public sealed record PlayerProtectionActiveTaskExecutionBridgeRequest(
 	PlayerProtectionActiveTaskAdapterRequest AdapterRequest,
 	IReadOnlyList<PlayerProtectionAttackUtilKnownObjectFact>? KnownObjectFacts = null,
 	bool ValidateSeeForTargetRemoval = false,
-	bool ExistingProtectionTaskPresent = false);
+	bool ExistingProtectionTaskPresent = false
+);
 
 public sealed class PlayerProtectionActiveTaskExecutionBridgeService
 {
 	private readonly IGameClientConnectionRegistry? _connectionRegistry;
 	private readonly bool _enableSocketExecutor;
 
-	public PlayerProtectionActiveTaskExecutionBridgeService(
-		IGameClientConnectionRegistry? connectionRegistry = null,
-		bool enableSocketExecutor = false)
+	public PlayerProtectionActiveTaskExecutionBridgeService(IGameClientConnectionRegistry? connectionRegistry = null, bool enableSocketExecutor = false)
 	{
 		_connectionRegistry = connectionRegistry;
 		_enableSocketExecutor = enableSocketExecutor;
@@ -47,35 +47,29 @@ public sealed class PlayerProtectionActiveTaskExecutionBridgeService
 
 	public async Task<PlayerProtectionActiveTaskExecutionBridgeResult> ExecuteAsync(
 		PlayerProtectionActiveTaskAdapterRequest request,
-		CancellationToken cancellationToken = default) =>
-		await ExecuteAsync(new PlayerProtectionActiveTaskExecutionBridgeRequest(request), cancellationToken);
+		CancellationToken cancellationToken = default
+	) => await ExecuteAsync(new PlayerProtectionActiveTaskExecutionBridgeRequest(request), cancellationToken);
 
 	public async Task<PlayerProtectionActiveTaskExecutionBridgeResult> ExecuteAsync(
 		PlayerProtectionActiveTaskExecutionBridgeRequest request,
-		CancellationToken cancellationToken = default)
+		CancellationToken cancellationToken = default
+	)
 	{
+		// Java parity: PlayerController protection-task start/stop couples visual-state mutation,
+		// AttackUtil side effects, scheduled task bookkeeping, SM_PLAYER_STATE construction, and
+		// PacketSendUtility.broadcastToSightedPlayers. This bridge composes those staged slices.
 		cancellationToken.ThrowIfCancellationRequested();
 		var adapterResult = PlayerProtectionActiveTaskAdapterService.Apply(request.AdapterRequest);
-		var sideEffectOperationPlan = PlayerProtectionActiveTaskSideEffectOperationPlanService.Create(
-			request.AdapterRequest,
-			adapterResult);
+		var sideEffectOperationPlan = PlayerProtectionActiveTaskSideEffectOperationPlanService.Create(request.AdapterRequest, adapterResult);
 		var attackUtilRecipientPlan = PlayerProtectionAttackUtilRecipientPlannerService.CreatePlan(
 			request.AdapterRequest.Player.ObjectId,
 			request.KnownObjectFacts,
-			request.ValidateSeeForTargetRemoval);
-		var taskOperationPlan = PlayerProtectionActiveTaskTaskOperationPlanService.Create(
-			adapterResult.Plan,
-			request.ExistingProtectionTaskPresent);
-		var packet = adapterResult.FanoutPlan.ShouldBroadcast
-			? new SmPlayerState(request.AdapterRequest.Player)
-			: null;
-		var executor = new PlayerProtectionActiveTaskSightedRecipientSocketExecutorService(
-			_connectionRegistry,
-			_enableSocketExecutor);
-		var executorResult = await executor.ExecuteAsync(
-			adapterResult.SightedRecipientTrace,
-			packet,
-			cancellationToken);
+			request.ValidateSeeForTargetRemoval
+		);
+		var taskOperationPlan = PlayerProtectionActiveTaskTaskOperationPlanService.Create(adapterResult.Plan, request.ExistingProtectionTaskPresent);
+		var packet = adapterResult.FanoutPlan.ShouldBroadcast ? new SmPlayerState(request.AdapterRequest.Player) : null;
+		var executor = new PlayerProtectionActiveTaskSightedRecipientSocketExecutorService(_connectionRegistry, _enableSocketExecutor);
+		var executorResult = await executor.ExecuteAsync(adapterResult.SightedRecipientTrace, packet, cancellationToken);
 		var status = ResolveStatus(adapterResult, executorResult);
 
 		return new PlayerProtectionActiveTaskExecutionBridgeResult(
@@ -90,12 +84,14 @@ public sealed class PlayerProtectionActiveTaskExecutionBridgeService
 			SentPackets: executorResult.SentCount > 0,
 			UsesDisabledSocketExecutorByDefault: !_enableSocketExecutor,
 			"PlayerController protection task -> mutate visual state -> new SM_PLAYER_STATE(player) -> PacketSendUtility.broadcastToSightedPlayers(player, packet, true)",
-			IsLive: adapterResult.IsLive || executorResult.IsLive);
+			IsLive: adapterResult.IsLive || executorResult.IsLive
+		);
 	}
 
 	private static PlayerProtectionActiveTaskExecutionBridgeStatus ResolveStatus(
 		PlayerProtectionActiveTaskAdapterResult adapterResult,
-		PlayerProtectionActiveTaskSightedRecipientSocketExecutorResult executorResult)
+		PlayerProtectionActiveTaskSightedRecipientSocketExecutorResult executorResult
+	)
 	{
 		if (!adapterResult.FanoutPlan.ShouldBroadcast)
 			return PlayerProtectionActiveTaskExecutionBridgeStatus.NoBroadcast;

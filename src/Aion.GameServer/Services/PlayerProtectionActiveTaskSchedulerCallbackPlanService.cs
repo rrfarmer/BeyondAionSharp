@@ -19,7 +19,8 @@ public enum PlayerProtectionActiveTaskSchedulerCallbackPlanRowKind
 
 public sealed record PlayerProtectionActiveTaskSchedulerCallbackPlanRequest(
 	PlayerProtectionActiveTaskPlan Plan,
-	PlayerProtectionActiveTaskControllerTaskMapOwnerPrototypeSnapshot? OwnerPrototypeSnapshot = null);
+	PlayerProtectionActiveTaskControllerTaskMapOwnerPrototypeSnapshot? OwnerPrototypeSnapshot = null
+);
 
 public sealed record PlayerProtectionActiveTaskSchedulerCallbackPlanRow(
 	int Order,
@@ -29,7 +30,8 @@ public sealed record PlayerProtectionActiveTaskSchedulerCallbackPlanRow(
 	bool IsLive,
 	string JavaOperation,
 	string JavaSource,
-	string Notes);
+	string Notes
+);
 
 public sealed record PlayerProtectionActiveTaskSchedulerCallbackPlan(
 	PlayerProtectionActiveTaskSchedulerCallbackPlanStatus Status,
@@ -42,15 +44,18 @@ public sealed record PlayerProtectionActiveTaskSchedulerCallbackPlan(
 	bool InvokesCallback,
 	bool HasOwnerPrototypeEvidence,
 	string JavaSource,
-	bool IsLive);
+	bool IsLive
+);
 
 public static class PlayerProtectionActiveTaskSchedulerCallbackPlanService
 {
 	public const int ProtectionActiveDelayMilliseconds = 60000;
 
-	public static PlayerProtectionActiveTaskSchedulerCallbackPlan Create(
-		PlayerProtectionActiveTaskSchedulerCallbackPlanRequest request)
+	public static PlayerProtectionActiveTaskSchedulerCallbackPlan Create(PlayerProtectionActiveTaskSchedulerCallbackPlanRequest request)
 	{
+		// Java parity: PlayerController.startProtectionActiveTask schedules stopProtectionActiveTask after
+		// 60 seconds and stores the ScheduledFuture in the controller task map. This planner records that
+		// scheduler and callback boundary without invoking it.
 		var rows = new List<PlayerProtectionActiveTaskSchedulerCallbackPlanRow>();
 
 		if (request.Plan.Status == PlayerProtectionActiveTaskPlanStatus.AlreadyProtected)
@@ -63,7 +68,8 @@ public static class PlayerProtectionActiveTaskSchedulerCallbackPlanService
 				isLive: false,
 				"if (!getOwner().isProtectionActive())",
 				"PlayerController.startProtectionActiveTask",
-				"Java returns before scheduling when the player is already protected.");
+				"Java returns before scheduling when the player is already protected."
+			);
 
 			return CreateReport(
 				request,
@@ -71,7 +77,8 @@ public static class PlayerProtectionActiveTaskSchedulerCallbackPlanService
 				rows,
 				schedulesDelayedStop: false,
 				storesScheduledFuture: false,
-				hasOwnerPrototypeEvidence: request.OwnerPrototypeSnapshot != null);
+				hasOwnerPrototypeEvidence: request.OwnerPrototypeSnapshot != null
+			);
 		}
 
 		Add(
@@ -82,7 +89,8 @@ public static class PlayerProtectionActiveTaskSchedulerCallbackPlanService
 			isLive: false,
 			"if (!getOwner().isProtectionActive())",
 			"PlayerController.startProtectionActiveTask",
-			"Start branch reaches scheduler metadata when protection is not already active.");
+			"Start branch reaches scheduler metadata when protection is not already active."
+		);
 
 		if (request.OwnerPrototypeSnapshot == null)
 		{
@@ -94,7 +102,8 @@ public static class PlayerProtectionActiveTaskSchedulerCallbackPlanService
 				isLive: false,
 				"addTask(TaskId.PROTECTION_ACTIVE, scheduledFuture)",
 				"PlayerController.startProtectionActiveTask / CreatureController.addTask",
-				"Scheduler metadata requires an owner-shaped task-map target before live scheduling can be considered.");
+				"Scheduler metadata requires an owner-shaped task-map target before live scheduling can be considered."
+			);
 
 			return CreateReport(
 				request,
@@ -102,7 +111,8 @@ public static class PlayerProtectionActiveTaskSchedulerCallbackPlanService
 				rows,
 				schedulesDelayedStop: false,
 				storesScheduledFuture: false,
-				hasOwnerPrototypeEvidence: false);
+				hasOwnerPrototypeEvidence: false
+			);
 		}
 
 		Add(
@@ -113,7 +123,8 @@ public static class PlayerProtectionActiveTaskSchedulerCallbackPlanService
 			isLive: false,
 			"ThreadPoolManager.getInstance().schedule(this::stopProtectionActiveTask, 60000)",
 			"PlayerController.startProtectionActiveTask",
-			"C# records the Java scheduler call but does not invoke ThreadPoolManager.Schedule.");
+			"C# records the Java scheduler call but does not invoke ThreadPoolManager.Schedule."
+		);
 		Add(
 			rows,
 			PlayerProtectionActiveTaskSchedulerCallbackPlanRowKind.RecordCallbackTarget,
@@ -122,7 +133,8 @@ public static class PlayerProtectionActiveTaskSchedulerCallbackPlanService
 			isLive: false,
 			"this::stopProtectionActiveTask",
 			"PlayerController.stopProtectionActiveTask",
-			"Callback target remains metadata-only and is not invoked by this plan.");
+			"Callback target remains metadata-only and is not invoked by this plan."
+		);
 		Add(
 			rows,
 			PlayerProtectionActiveTaskSchedulerCallbackPlanRowKind.RecordTaskMapStorage,
@@ -131,7 +143,8 @@ public static class PlayerProtectionActiveTaskSchedulerCallbackPlanService
 			isLive: false,
 			"addTask(TaskId.PROTECTION_ACTIVE, scheduledFuture)",
 			request.OwnerPrototypeSnapshot.JavaSource,
-			$"Owner prototype evidence exists for object id {request.OwnerPrototypeSnapshot.OwnerObjectId}, but production storage is still not wired.");
+			$"Owner prototype evidence exists for object id {request.OwnerPrototypeSnapshot.OwnerObjectId}, but production storage is still not wired."
+		);
 		Add(
 			rows,
 			PlayerProtectionActiveTaskSchedulerCallbackPlanRowKind.RecordRuntimeBlocker,
@@ -140,7 +153,8 @@ public static class PlayerProtectionActiveTaskSchedulerCallbackPlanService
 			isLive: false,
 			"ScheduledFuture.cancel(false) / Future.isDone",
 			"ThreadPoolManager.schedule / CreatureController.addTask",
-			"Java/C# scheduler and future cancellation runtime comparison is still required.");
+			"Java/C# scheduler and future cancellation runtime comparison is still required."
+		);
 
 		return CreateReport(
 			request,
@@ -148,7 +162,8 @@ public static class PlayerProtectionActiveTaskSchedulerCallbackPlanService
 			rows,
 			schedulesDelayedStop: true,
 			storesScheduledFuture: true,
-			hasOwnerPrototypeEvidence: true);
+			hasOwnerPrototypeEvidence: true
+		);
 	}
 
 	private static PlayerProtectionActiveTaskSchedulerCallbackPlan CreateReport(
@@ -157,7 +172,8 @@ public static class PlayerProtectionActiveTaskSchedulerCallbackPlanService
 		IReadOnlyList<PlayerProtectionActiveTaskSchedulerCallbackPlanRow> rows,
 		bool schedulesDelayedStop,
 		bool storesScheduledFuture,
-		bool hasOwnerPrototypeEvidence) =>
+		bool hasOwnerPrototypeEvidence
+	) =>
 		new(
 			status,
 			request.Plan.PlayerObjectId,
@@ -169,7 +185,8 @@ public static class PlayerProtectionActiveTaskSchedulerCallbackPlanService
 			InvokesCallback: false,
 			hasOwnerPrototypeEvidence,
 			"PlayerController.startProtectionActiveTask scheduler callback metadata plan",
-			IsLive: false);
+			IsLive: false
+		);
 
 	private static void Add(
 		ICollection<PlayerProtectionActiveTaskSchedulerCallbackPlanRow> rows,
@@ -179,16 +196,11 @@ public static class PlayerProtectionActiveTaskSchedulerCallbackPlanService
 		bool isLive,
 		string javaOperation,
 		string javaSource,
-		string notes)
+		string notes
+	)
 	{
-		rows.Add(new PlayerProtectionActiveTaskSchedulerCallbackPlanRow(
-			rows.Count + 1,
-			kind,
-			status,
-			javaCallReached,
-			isLive,
-			javaOperation,
-			javaSource,
-			notes));
+		rows.Add(
+			new PlayerProtectionActiveTaskSchedulerCallbackPlanRow(rows.Count + 1, kind, status, javaCallReached, isLive, javaOperation, javaSource, notes)
+		);
 	}
 }

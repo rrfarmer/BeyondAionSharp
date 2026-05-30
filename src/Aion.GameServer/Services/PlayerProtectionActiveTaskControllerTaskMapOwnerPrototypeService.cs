@@ -7,7 +7,8 @@ public sealed record PlayerProtectionActiveTaskControllerTaskMapOwnerPrototypeSn
 	IReadOnlyList<string> TaskIdNames,
 	bool IsControllerOwned,
 	bool IsLive,
-	string JavaSource);
+	string JavaSource
+);
 
 public sealed class PlayerProtectionActiveTaskControllerTaskMapOwnerPrototypeService
 {
@@ -18,6 +19,9 @@ public sealed class PlayerProtectionActiveTaskControllerTaskMapOwnerPrototypeSer
 
 	public PlayerProtectionActiveTaskControllerTaskMapOwnerPrototypeService(int ownerObjectId)
 	{
+		// Java parity: CreatureController owns the per-controller task map keyed by TaskId ordinal.
+		// This prototype gives the staged protection-active task flow an owner-shaped seam without
+		// claiming live scheduler parity.
 		OwnerObjectId = ownerObjectId;
 	}
 
@@ -29,8 +33,7 @@ public sealed class PlayerProtectionActiveTaskControllerTaskMapOwnerPrototypeSer
 
 	public string JavaSource => "CreatureController.tasks owner-shaped non-live prototype for TaskId.PROTECTION_ACTIVE";
 
-	public PlayerProtectionActiveTaskTaskMapOperationResult HasTask() =>
-		_adapter.HasTask(ProtectionActiveTaskIdOrdinal, ProtectionActiveTaskIdName);
+	public PlayerProtectionActiveTaskTaskMapOperationResult HasTask() => _adapter.HasTask(ProtectionActiveTaskIdOrdinal, ProtectionActiveTaskIdName);
 
 	public PlayerProtectionActiveTaskTaskMapOperationResult HasScheduledTask() =>
 		_adapter.HasScheduledTask(ProtectionActiveTaskIdOrdinal, ProtectionActiveTaskIdName);
@@ -41,16 +44,13 @@ public sealed class PlayerProtectionActiveTaskControllerTaskMapOwnerPrototypeSer
 	public PlayerProtectionActiveTaskTaskMapOperationResult CancelTask() =>
 		_adapter.CancelTask(ProtectionActiveTaskIdOrdinal, ProtectionActiveTaskIdName);
 
-	public PlayerProtectionActiveTaskTaskMapOperationResult CancelTaskIfPresent(
-		IPlayerProtectionActiveTaskTaskHandle expectedTask) =>
+	public PlayerProtectionActiveTaskTaskMapOperationResult CancelTaskIfPresent(IPlayerProtectionActiveTaskTaskHandle expectedTask) =>
 		_adapter.CancelTaskIfPresent(ProtectionActiveTaskIdOrdinal, ProtectionActiveTaskIdName, expectedTask);
 
-	public PlayerProtectionActiveTaskTaskMapOperationResult AddTask(
-		IPlayerProtectionActiveTaskTaskHandle task) =>
+	public PlayerProtectionActiveTaskTaskMapOperationResult AddTask(IPlayerProtectionActiveTaskTaskHandle task) =>
 		_adapter.AddTask(ProtectionActiveTaskIdOrdinal, ProtectionActiveTaskIdName, task);
 
-	public PlayerProtectionActiveTaskTaskMapOperationResult CancelAllTasks() =>
-		_adapter.CancelAllTasks();
+	public PlayerProtectionActiveTaskTaskMapOperationResult CancelAllTasks() => _adapter.CancelAllTasks();
 
 	public PlayerProtectionActiveTaskControllerTaskMapOwnerPrototypeSnapshot CreateSnapshot()
 	{
@@ -62,6 +62,7 @@ public sealed class PlayerProtectionActiveTaskControllerTaskMapOwnerPrototypeSer
 			adapterSnapshot.TaskIdNames,
 			IsControllerOwned,
 			IsLive,
-			JavaSource);
+			JavaSource
+		);
 	}
 }

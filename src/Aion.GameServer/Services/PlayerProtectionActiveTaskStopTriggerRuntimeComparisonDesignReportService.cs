@@ -27,7 +27,8 @@ public sealed record PlayerProtectionActiveTaskStopTriggerRuntimeComparisonRow(
 	string ExpectedControllerObservables,
 	string ExpectedPacketOrActionObservables,
 	string RequiredJavaTraceArtifact,
-	string Notes);
+	string Notes
+);
 
 public sealed record PlayerProtectionActiveTaskStopTriggerRuntimeComparisonDesignReport(
 	IReadOnlyList<PlayerProtectionActiveTaskStopTriggerRuntimeComparisonRow> Rows,
@@ -41,13 +42,18 @@ public sealed record PlayerProtectionActiveTaskStopTriggerRuntimeComparisonDesig
 	bool RequiresLiveCSharpPacketHooks,
 	bool ReadyForRuntimeComparison,
 	string JavaSource,
-	bool IsLive);
+	bool IsLive
+);
 
 public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonDesignReportService
 {
 	public static PlayerProtectionActiveTaskStopTriggerRuntimeComparisonDesignReport Create(
-		PlayerProtectionActiveTaskFirstActionStopTriggerSummaryReport summary)
+		PlayerProtectionActiveTaskFirstActionStopTriggerSummaryReport summary
+	)
 	{
+		// Java parity: the packet handlers that stop protection need runtime comparison artifacts because
+		// each one reaches stopProtectionActiveTask at a different point relative to validation, side effects,
+		// and packet emission. This report defines those comparison scenarios.
 		var rows = new List<PlayerProtectionActiveTaskStopTriggerRuntimeComparisonRow>();
 
 		AddCmMoveThresholdBranches(rows, summary);
@@ -61,22 +67,36 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonDesign
 
 		return new PlayerProtectionActiveTaskStopTriggerRuntimeComparisonDesignReport(
 			rowArray,
-			HasMovementThresholdScenario: rowArray.Any(row => row.Scenario == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonScenario.CmMoveThresholdBranches),
-			HasAirMovementScenario: rowArray.Any(row => row.Scenario == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonScenario.CmMoveInAirAcceptedFlying),
-			HasEarlyActionScenario: rowArray.Any(row => row.Scenario == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonScenario.EarlyActionPacketStop),
-			HasInvalidAfterStopScenario: rowArray.Any(row => row.Scenario == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonScenario.CmCompositeStonesInvalidAfterStop),
+			HasMovementThresholdScenario: rowArray.Any(row =>
+				row.Scenario == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonScenario.CmMoveThresholdBranches
+			),
+			HasAirMovementScenario: rowArray.Any(row =>
+				row.Scenario == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonScenario.CmMoveInAirAcceptedFlying
+			),
+			HasEarlyActionScenario: rowArray.Any(row =>
+				row.Scenario == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonScenario.EarlyActionPacketStop
+			),
+			HasInvalidAfterStopScenario: rowArray.Any(row =>
+				row.Scenario == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonScenario.CmCompositeStonesInvalidAfterStop
+			),
 			HasLateEmotionScenario: rowArray.Any(row => row.Scenario == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonScenario.CmEmotionLateStop),
-			HasEmotionEarlyReturnScenario: rowArray.Any(row => row.Scenario == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonScenario.CmEmotionEarlyReturnNoStop),
-			RequiresJavaTraceArtifacts: rowArray.Any(row => row.Status == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonStatus.BlockedMissingJavaTraceArtifact),
+			HasEmotionEarlyReturnScenario: rowArray.Any(row =>
+				row.Scenario == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonScenario.CmEmotionEarlyReturnNoStop
+			),
+			RequiresJavaTraceArtifacts: rowArray.Any(row =>
+				row.Status == PlayerProtectionActiveTaskStopTriggerRuntimeComparisonStatus.BlockedMissingJavaTraceArtifact
+			),
 			RequiresLiveCSharpPacketHooks: !summary.ReadyForProductionPacketStopWiring,
 			ReadyForRuntimeComparison: false,
 			"Java packet stop trigger runtime comparison design",
-			IsLive: false);
+			IsLive: false
+		);
 	}
 
 	private static void AddCmMoveThresholdBranches(
 		ICollection<PlayerProtectionActiveTaskStopTriggerRuntimeComparisonRow> rows,
-		PlayerProtectionActiveTaskFirstActionStopTriggerSummaryReport summary) =>
+		PlayerProtectionActiveTaskFirstActionStopTriggerSummaryReport summary
+	) =>
 		Add(
 			rows,
 			PlayerProtectionActiveTaskStopTriggerRuntimeComparisonScenario.CmMoveThresholdBranches,
@@ -86,11 +106,13 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonDesign
 			CommonStopObservables(),
 			"Trace accepted anti-hack movement, teleportation absolute-move early return, World.updatePosition ordering, and no-stop heading turn.",
 			"Java trace artifact for CM_MOVE with x-delta, y-delta, z-drop 0.5, z-drop >0.5, same-position turn, anti-hack reject, not-spawned, and teleportation-mode absolute movement.",
-			$"Summary threshold evidence={summary.HasThresholdedMovementSource}; exact float inequality and asymmetric z behavior must be captured.");
+			$"Summary threshold evidence={summary.HasThresholdedMovementSource}; exact float inequality and asymmetric z behavior must be captured."
+		);
 
 	private static void AddCmMoveInAir(
 		ICollection<PlayerProtectionActiveTaskStopTriggerRuntimeComparisonRow> rows,
-		PlayerProtectionActiveTaskFirstActionStopTriggerSummaryReport summary) =>
+		PlayerProtectionActiveTaskFirstActionStopTriggerSummaryReport summary
+	) =>
 		Add(
 			rows,
 			PlayerProtectionActiveTaskStopTriggerRuntimeComparisonScenario.CmMoveInAirAcceptedFlying,
@@ -100,11 +122,13 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonDesign
 			CommonStopObservables(),
 			"Trace flight-path distance update before stop when present, then world-position and movement callbacks after stop.",
 			"Java trace artifact for spawned/flying/protected, not spawned, not flying, and inactive-protection CM_MOVE_IN_AIR branches.",
-			$"Summary air movement evidence={summary.Rows.Any(row => row.Category == PlayerProtectionActiveTaskFirstActionStopTriggerSummaryCategory.AcceptedAirMovement)}.");
+			$"Summary air movement evidence={summary.Rows.Any(row => row.Category == PlayerProtectionActiveTaskFirstActionStopTriggerSummaryCategory.AcceptedAirMovement)}."
+		);
 
 	private static void AddEarlyActionPacketStops(
 		ICollection<PlayerProtectionActiveTaskStopTriggerRuntimeComparisonRow> rows,
-		PlayerProtectionActiveTaskFirstActionStopTriggerSummaryReport summary) =>
+		PlayerProtectionActiveTaskFirstActionStopTriggerSummaryReport summary
+	) =>
 		Add(
 			rows,
 			PlayerProtectionActiveTaskStopTriggerRuntimeComparisonScenario.EarlyActionPacketStop,
@@ -114,11 +138,13 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonDesign
 			CommonStopObservables(),
 			"Trace attack known-list lookup, cast cancelUseItem, use-item source lookup, show-dialog trading/NPC lookup, and dialog-select trading/action lookup after stop.",
 			"Java trace artifact for active/inactive protection plus representative pre-stop guard skips for attack, cast, use-item, show-dialog, and dialog-select.",
-			$"Summary early action evidence={summary.HasEarlyActionStopSources}.");
+			$"Summary early action evidence={summary.HasEarlyActionStopSources}."
+		);
 
 	private static void AddCompositeInvalidAfterStop(
 		ICollection<PlayerProtectionActiveTaskStopTriggerRuntimeComparisonRow> rows,
-		PlayerProtectionActiveTaskFirstActionStopTriggerSummaryReport summary) =>
+		PlayerProtectionActiveTaskFirstActionStopTriggerSummaryReport summary
+	) =>
 		Add(
 			rows,
 			PlayerProtectionActiveTaskStopTriggerRuntimeComparisonScenario.CmCompositeStonesInvalidAfterStop,
@@ -128,11 +154,13 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonDesign
 			CommonStopObservables(),
 			"Trace missing tool/first/second item, PlayerRestrictions failure, CompositionAction.canAct failure, and successful scheduling after the early stop site.",
 			"Java trace artifact for null player, active-protection invalid-after-stop branches, inactive protection, and successful composition scheduling.",
-			$"Summary composition category present={summary.Rows.Any(row => row.Category == PlayerProtectionActiveTaskFirstActionStopTriggerSummaryCategory.EarlyAfterNullGuardActionStop)}.");
+			$"Summary composition category present={summary.Rows.Any(row => row.Category == PlayerProtectionActiveTaskFirstActionStopTriggerSummaryCategory.EarlyAfterNullGuardActionStop)}."
+		);
 
 	private static void AddCmEmotionLateStop(
 		ICollection<PlayerProtectionActiveTaskStopTriggerRuntimeComparisonRow> rows,
-		PlayerProtectionActiveTaskFirstActionStopTriggerSummaryReport summary) =>
+		PlayerProtectionActiveTaskFirstActionStopTriggerSummaryReport summary
+	) =>
 		Add(
 			rows,
 			PlayerProtectionActiveTaskStopTriggerRuntimeComparisonScenario.CmEmotionLateStop,
@@ -142,11 +170,13 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonDesign
 			CommonStopObservables(),
 			"Trace cancelUseItem/cancelCurrentSkill, representative state changes, optional broadcast, and late stop order.",
 			"Java trace artifact for successful SIT/STAND or equivalent late path with active and inactive protection, including canUse false broadcast-skip branch.",
-			$"Summary late emotion evidence={summary.HasLateGuardedEmotionSource}.");
+			$"Summary late emotion evidence={summary.HasLateGuardedEmotionSource}."
+		);
 
 	private static void AddCmEmotionEarlyReturn(
 		ICollection<PlayerProtectionActiveTaskStopTriggerRuntimeComparisonRow> rows,
-		PlayerProtectionActiveTaskFirstActionStopTriggerSummaryReport summary) =>
+		PlayerProtectionActiveTaskFirstActionStopTriggerSummaryReport summary
+	) =>
 		Add(
 			rows,
 			PlayerProtectionActiveTaskStopTriggerRuntimeComparisonScenario.CmEmotionEarlyReturnNoStop,
@@ -156,7 +186,8 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonDesign
 			"No controller stop observables expected; no task-map cancellation, blinking unset, SM_PLAYER_STATE, or notifyAIOnMove should occur.",
 			"Trace any pre-return side effects such as SELECT_TARGET cancelUseItem or stance rejection packet without stopProtectionActiveTask.",
 			"Java trace artifact for representative CM_EMOTION early-return branches that prove no stop call occurs.",
-			$"Summary late emotion evidence={summary.HasLateGuardedEmotionSource}; early-return no-stop cases must be represented separately.");
+			$"Summary late emotion evidence={summary.HasLateGuardedEmotionSource}; early-return no-stop cases must be represented separately."
+		);
 
 	private static void Add(
 		ICollection<PlayerProtectionActiveTaskStopTriggerRuntimeComparisonRow> rows,
@@ -167,19 +198,23 @@ public static class PlayerProtectionActiveTaskStopTriggerRuntimeComparisonDesign
 		string expectedControllerObservables,
 		string expectedPacketOrActionObservables,
 		string requiredJavaTraceArtifact,
-		string notes)
+		string notes
+	)
 	{
-		rows.Add(new PlayerProtectionActiveTaskStopTriggerRuntimeComparisonRow(
-			rows.Count + 1,
-			scenario,
-			PlayerProtectionActiveTaskStopTriggerRuntimeComparisonStatus.BlockedMissingJavaTraceArtifact,
-			expectsStop,
-			javaPacketSources,
-			expectedStopPosition,
-			expectedControllerObservables,
-			expectedPacketOrActionObservables,
-			requiredJavaTraceArtifact,
-			notes));
+		rows.Add(
+			new PlayerProtectionActiveTaskStopTriggerRuntimeComparisonRow(
+				rows.Count + 1,
+				scenario,
+				PlayerProtectionActiveTaskStopTriggerRuntimeComparisonStatus.BlockedMissingJavaTraceArtifact,
+				expectsStop,
+				javaPacketSources,
+				expectedStopPosition,
+				expectedControllerObservables,
+				expectedPacketOrActionObservables,
+				requiredJavaTraceArtifact,
+				notes
+			)
+		);
 	}
 
 	private static string CommonStopObservables() =>

@@ -1,6 +1,6 @@
-using Aion.Commons.Network;
 using System.Buffers.Binary;
 using System.Text;
+using Aion.Commons.Network;
 using Aion.GameServer.Controllers.Movement;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
@@ -111,10 +111,11 @@ public class GamePacketTests
 		// Java parity: ItemRestrictionCleanupData.hasAccountOrLegionWhStorabilityDisabled returns true when
 		// either account or legion warehouse storage is disabled, and packet blobs write flag value 3.
 		var cleanups = new ItemRestrictionCleanupTable(
-		[
-			new ItemRestrictionCleanupSummary(ItemId: 188053996, AccountWarehouse: 0, LegionWarehouse: 1),
-			new ItemRestrictionCleanupSummary(ItemId: 188053997, AccountWarehouse: 1, LegionWarehouse: 1),
-		]);
+			[
+				new ItemRestrictionCleanupSummary(ItemId: 188053996, AccountWarehouse: 0, LegionWarehouse: 1),
+				new ItemRestrictionCleanupSummary(ItemId: 188053997, AccountWarehouse: 1, LegionWarehouse: 1),
+			]
+		);
 
 		Assert.Equal(3, GameServerConnection.GetGeneralInfoWarehouseRestrictionFlag(188053996, cleanups));
 		Assert.Equal(0, GameServerConnection.GetGeneralInfoWarehouseRestrictionFlag(188053997, cleanups));
@@ -162,13 +163,15 @@ public class GamePacketTests
 				HeroicItemAbove: 3,
 				FabledItemAbove: 4,
 				EternalItemAbove: 5,
-				MythicItemAbove: 6),
+				MythicItemAbove: 6
+			),
 			ConstantGroupInfoMarker: 0x02,
 			UnknownByte: 0,
 			TeamType: 0x3F,
 			TeamSubType: 0,
 			MessageId: 0,
-			Name: string.Empty);
+			Name: string.Empty
+		);
 
 		var payload = SerializeUnencryptedPayload(new SmGroupInfo(plan));
 		using var reader = new PacketBuffer(payload);
@@ -232,6 +235,9 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.SkillCannotCast("state"), 1300026, "state");
 		AssertSystemMessage(SmSystemMessage.SkillCannotCastDead(), 1300026, ChatUtil.L10n(1400059));
 		AssertSystemMessage(SmSystemMessage.SkillNotNeedPet(), 1402918);
+		AssertSystemMessage(SmSystemMessage.SkillSummonUnsummoned("Wind Spirit"), 1200006, "Wind Spirit");
+		AssertSystemMessage(SmSystemMessage.SkillSummonUnsummonFollower("Wind Spirit"), 1200011, "Wind Spirit");
+		AssertSystemMessage(SmSystemMessage.SkillSummonUnsummonByTooDistance(), 1300073);
 		AssertSystemMessage(SmSystemMessage.GetExp("quest npc", 240), 1370000, "quest npc", "240");
 		AssertSystemMessage(SmSystemMessage.GetExp2(240), 1370002, "240");
 		AssertSystemMessage(SmSystemMessage.GetExpVitalBonus("quest npc", 240, 20), 1400342, "quest npc", "240", "20");
@@ -267,9 +273,7 @@ public class GamePacketTests
 		// -> new SM_SYSTEM_MESSAGE(1300336, value0), used by DialogService BUY/TRADE_IN no-sell fallbacks.
 		var payload = SerializeUnencryptedPayload(SmSystemMessage.BuySellHeDoesNotSellItem("Merchant"));
 
-		Assert.Equal(
-			Convert.FromHexString("19000000000070D71300014D00650072006300680061006E007400000000"),
-			payload);
+		Assert.Equal(Convert.FromHexString("19000000000070D71300014D00650072006300680061006E007400000000"), payload);
 	}
 
 	[Fact]
@@ -278,14 +282,12 @@ public class GamePacketTests
 		var plan = SmSellItemPacketPlanService.CreatePlan(
 			new SmSellItemPacketPlanInput(
 				TargetObjectId: 7001,
-				PurchaseTemplate: new TradeListTemplateSummary(
-					NpcId: 203060,
-					GoodsListIds: [129, 130],
-					NpcType: "ABYSS",
-					BuyPriceRate: 175),
+				PurchaseTemplate: new TradeListTemplateSummary(NpcId: 203060, GoodsListIds: [129, 130], NpcType: "ABYSS", BuyPriceRate: 175),
 				NpcCanSell: true,
 				NpcCanBuy: false,
-				NpcCanPurchase: true));
+				NpcCanPurchase: true
+			)
+		);
 
 		var payload = SerializeUnencryptedPayload(new SmSellItem(plan));
 		using var reader = new PacketBuffer(payload);
@@ -332,12 +334,7 @@ public class GamePacketTests
 	public void SmLootPackets_WriteJavaLootPayloads()
 	{
 		var player = new Player { ObjectId = 1001 };
-		var visibleDrop = new WorldNpcDropItem(
-			Index: 1,
-			ItemId: 182400001,
-			Count: 25,
-			PlayerObjectIds: new HashSet<int> { 1001 },
-			OptionalSocket: -1);
+		var visibleDrop = new WorldNpcDropItem(Index: 1, ItemId: 182400001, Count: 25, PlayerObjectIds: new HashSet<int> { 1001 }, OptionalSocket: -1);
 		var hiddenDrop = new WorldNpcDropItem(Index: 2, ItemId: 166020000, Count: 1, PlayerObjectIds: new HashSet<int> { 1002 });
 
 		var statusPayload = SerializeUnencryptedPayload(new SmLootStatus(5001, SmLootStatusType.LootEnable, lootEffectId: 1003));
@@ -364,12 +361,9 @@ public class GamePacketTests
 	[Fact]
 	public void SmAttackStatus_WritesJavaHpDamagePayloads()
 	{
-		var regularPayload = SerializeUnencryptedPayload(new SmAttackStatus(
-			creatureObjectId: 5001,
-			SmAttackStatusType.Regular,
-			skillId: 0,
-			value: 25,
-			hpOrMpPercentage: 75));
+		var regularPayload = SerializeUnencryptedPayload(
+			new SmAttackStatus(creatureObjectId: 5001, SmAttackStatusType.Regular, skillId: 0, value: 25, hpOrMpPercentage: 75)
+		);
 		using var regularReader = new PacketBuffer(regularPayload);
 		Assert.Equal(5001, regularReader.ReadD());
 		Assert.Equal(25, regularReader.ReadD());
@@ -379,13 +373,16 @@ public class GamePacketTests
 		Assert.Equal(191, regularReader.ReadH());
 		Assert.Equal(0, regularReader.Remaining);
 
-		var damagePayload = SerializeUnencryptedPayload(new SmAttackStatus(
-			creatureObjectId: 5002,
-			SmAttackStatusType.Damage,
-			skillId: 123,
-			value: 33,
-			hpOrMpPercentage: 50,
-			SmAttackStatusLog.SpellAttack));
+		var damagePayload = SerializeUnencryptedPayload(
+			new SmAttackStatus(
+				creatureObjectId: 5002,
+				SmAttackStatusType.Damage,
+				skillId: 123,
+				value: 33,
+				hpOrMpPercentage: 50,
+				SmAttackStatusLog.SpellAttack
+			)
+		);
 		using var damageReader = new PacketBuffer(damagePayload);
 		Assert.Equal(5002, damageReader.ReadD());
 		Assert.Equal(-33, damageReader.ReadD());
@@ -399,14 +396,17 @@ public class GamePacketTests
 	[Fact]
 	public void SmAttackStatus_WritesJavaHealAliasPayloadsWithPositiveValues()
 	{
-		var hpPayload = SerializeUnencryptedPayload(new SmAttackStatus(
-			creatureObjectId: 5003,
-			SmAttackStatusType.Hp,
-			skillId: 456,
-			value: 20,
-			hpOrMpPercentage: 100,
-			SmAttackStatusLog.Heal,
-			usesNegativeValue: false));
+		var hpPayload = SerializeUnencryptedPayload(
+			new SmAttackStatus(
+				creatureObjectId: 5003,
+				SmAttackStatusType.Hp,
+				skillId: 456,
+				value: 20,
+				hpOrMpPercentage: 100,
+				SmAttackStatusLog.Heal,
+				usesNegativeValue: false
+			)
+		);
 		using var hpReader = new PacketBuffer(hpPayload);
 		Assert.Equal(5003, hpReader.ReadD());
 		Assert.Equal(20, hpReader.ReadD());
@@ -416,14 +416,17 @@ public class GamePacketTests
 		Assert.Equal(3, hpReader.ReadH());
 		Assert.Equal(0, hpReader.Remaining);
 
-		var fpPayload = SerializeUnencryptedPayload(new SmAttackStatus(
-			creatureObjectId: 5004,
-			SmAttackStatusType.Fp,
-			skillId: 789,
-			value: 10,
-			hpOrMpPercentage: 85,
-			SmAttackStatusLog.FpHeal,
-			usesNegativeValue: false));
+		var fpPayload = SerializeUnencryptedPayload(
+			new SmAttackStatus(
+				creatureObjectId: 5004,
+				SmAttackStatusType.Fp,
+				skillId: 789,
+				value: 10,
+				hpOrMpPercentage: 85,
+				SmAttackStatusLog.FpHeal,
+				usesNegativeValue: false
+			)
+		);
 		using var fpReader = new PacketBuffer(fpPayload);
 		Assert.Equal(5004, fpReader.ReadD());
 		Assert.Equal(10, fpReader.ReadD());
@@ -433,14 +436,17 @@ public class GamePacketTests
 		Assert.Equal(134, fpReader.ReadH());
 		Assert.Equal(0, fpReader.Remaining);
 
-		var mpPayload = SerializeUnencryptedPayload(new SmAttackStatus(
-			creatureObjectId: 5005,
-			SmAttackStatusType.AbsorbedMp,
-			skillId: 321,
-			value: 12,
-			hpOrMpPercentage: 65,
-			SmAttackStatusLog.MpHeal,
-			usesNegativeValue: false));
+		var mpPayload = SerializeUnencryptedPayload(
+			new SmAttackStatus(
+				creatureObjectId: 5005,
+				SmAttackStatusType.AbsorbedMp,
+				skillId: 321,
+				value: 12,
+				hpOrMpPercentage: 65,
+				SmAttackStatusLog.MpHeal,
+				usesNegativeValue: false
+			)
+		);
 		using var mpReader = new PacketBuffer(mpPayload);
 		Assert.Equal(5005, mpReader.ReadD());
 		Assert.Equal(12, mpReader.ReadD());
@@ -515,58 +521,47 @@ public class GamePacketTests
 	{
 		Assert.Equal(
 			Convert.FromHexString("0000000000000000000000000000000000000000000000000004000000"),
-			SerializeUnencryptedPayload(new SmAccountProperties()));
+			SerializeUnencryptedPayload(new SmAccountProperties())
+		);
 		Assert.Equal(
 			Convert.FromHexString("0100000000000000000000000000000000000000000000000004000000"),
-			SerializeUnencryptedPayload(new SmAccountProperties(gmPanelEnabled: true)));
-		Assert.Equal(
-			Convert.FromHexString("0000"),
-			SerializeUnencryptedPayload(new SmPong()));
-		Assert.Equal(
-			Convert.FromHexString("04"),
-			SerializeUnencryptedPayload(new SmPingResponse()));
-		Assert.Equal(
-			Convert.FromHexString("D20400002A000000"),
-			SerializeUnencryptedPayload(new SmTimeCheck(42, () => 1234)));
-		Assert.Equal(
-			Convert.FromHexString("03000000010203"),
-			SerializeUnencryptedPayload(new SmChatInit([1, 2, 3])));
-		Assert.Equal(
-			Convert.FromHexString("00616263000000"),
-			SerializeUnencryptedPayload(new SmSecurityToken("abc")));
-		Assert.Equal(
-			Convert.FromHexString("03"),
-			SerializeUnencryptedPayload(new SmFriendStatus(3)));
-		Assert.Equal(
-			Convert.FromHexString("D204000000"),
-			SerializeUnencryptedPayload(new SmCharacterList(playOk2: 1234)));
-		Assert.Equal(
-			Convert.FromHexString("16000000"),
-			SerializeUnencryptedPayload(new SmCreateCharacter(SmCreateCharacter.ResponseOpenCreationWindow)));
-		Assert.Equal(
-			Convert.FromHexString("0A"),
-			SerializeUnencryptedPayload(new SmNicknameCheckResponse(SmCreateCharacter.ResponseNameAlreadyUsed)));
-		Assert.Equal(
-			Convert.FromHexString("00"),
-			SerializeUnencryptedPayload(new SmCharacterSelect(0)));
+			SerializeUnencryptedPayload(new SmAccountProperties(gmPanelEnabled: true))
+		);
+		Assert.Equal(Convert.FromHexString("0000"), SerializeUnencryptedPayload(new SmPong()));
+		Assert.Equal(Convert.FromHexString("04"), SerializeUnencryptedPayload(new SmPingResponse()));
+		Assert.Equal(Convert.FromHexString("D20400002A000000"), SerializeUnencryptedPayload(new SmTimeCheck(42, () => 1234)));
+		Assert.Equal(Convert.FromHexString("03000000010203"), SerializeUnencryptedPayload(new SmChatInit([1, 2, 3])));
+		Assert.Equal(Convert.FromHexString("00616263000000"), SerializeUnencryptedPayload(new SmSecurityToken("abc")));
+		Assert.Equal(Convert.FromHexString("03"), SerializeUnencryptedPayload(new SmFriendStatus(3)));
+		Assert.Equal(Convert.FromHexString("D204000000"), SerializeUnencryptedPayload(new SmCharacterList(playOk2: 1234)));
+		Assert.Equal(Convert.FromHexString("16000000"), SerializeUnencryptedPayload(new SmCreateCharacter(SmCreateCharacter.ResponseOpenCreationWindow)));
+		Assert.Equal(Convert.FromHexString("0A"), SerializeUnencryptedPayload(new SmNicknameCheckResponse(SmCreateCharacter.ResponseNameAlreadyUsed)));
+		Assert.Equal(Convert.FromHexString("00"), SerializeUnencryptedPayload(new SmCharacterSelect(0)));
 		Assert.Equal(
 			Convert.FromHexString("020300010200000005000000"),
-			SerializeUnencryptedPayload(new SmCharacterSelect(type: 2, messageType: 3, wrongCount: 2)));
-		Assert.Equal(
-			Convert.FromHexString("000000"),
-			SerializeUnencryptedPayload(new SmEnterWorldCheck()));
-		Assert.Equal(
-			Convert.FromHexString("060000"),
-			SerializeUnencryptedPayload(new SmEnterWorldCheck(EnterWorldCheckMessage.ReentryTime)));
+			SerializeUnencryptedPayload(new SmCharacterSelect(type: 2, messageType: 3, wrongCount: 2))
+		);
+		Assert.Equal(Convert.FromHexString("000000"), SerializeUnencryptedPayload(new SmEnterWorldCheck()));
+		Assert.Equal(Convert.FromHexString("060000"), SerializeUnencryptedPayload(new SmEnterWorldCheck(EnterWorldCheckMessage.ReentryTime)));
 		Assert.Equal(
 			Convert.FromHexString("01000125000100000040E201000000000000"),
 			SerializeUnencryptedPayload(
-				new SmSkillList(
-					[new PlayerSkill { SkillId = 37, SkillLevel = 1 }],
-					() => DateTimeOffset.FromUnixTimeSeconds(123456))));
+				new SmSkillList([new PlayerSkill { SkillId = 37, SkillLevel = 1 }], () => DateTimeOffset.FromUnixTimeSeconds(123456))
+			)
+		);
 		Assert.Equal(
 			Convert.FromHexString("F4010301"),
-			SerializeUnencryptedPayload(new SmSkillRemove(new PlayerSkill { SkillId = 500, SkillLevel = 3, SkillType = 1 })));
+			SerializeUnencryptedPayload(
+				new SmSkillRemove(
+					new PlayerSkill
+					{
+						SkillId = 500,
+						SkillLevel = 3,
+						SkillType = 1,
+					}
+				)
+			)
+		);
 		Assert.Equal(
 			Convert.FromHexString("01000025000A000000E8030000"),
 			SerializeUnencryptedPayload(
@@ -585,183 +580,124 @@ public class GamePacketTests
 								"PHYSICAL",
 								"NONE",
 								700,
-								10),
-						]),
+								10
+							),
+						]
+					),
 					notify: false,
-					() => DateTimeOffset.FromUnixTimeMilliseconds(10_000))));
+					() => DateTimeOffset.FromUnixTimeMilliseconds(10_000)
+				)
+			)
+		);
 		Assert.Equal(
 			Convert.FromHexString("01007B00140000003C000000"),
 			SerializeUnencryptedPayload(
-				new SmItemCooldown(
-					new Dictionary<int, PlayerItemCooldown> { [123] = new(30_000, 60) },
-					() => DateTimeOffset.FromUnixTimeMilliseconds(10_000))));
+				new SmItemCooldown(new Dictionary<int, PlayerItemCooldown> { [123] = new(30_000, 60) }, () => DateTimeOffset.FromUnixTimeMilliseconds(10_000))
+			)
+		);
 		Assert.Equal(
 			Convert.FromHexString("0100FFFF64000000032200000205"),
-			SerializeUnencryptedPayload(
-				new SmQuestList([new PlayerQuestState(100, "START", 0x22, 2, 5)])));
+			SerializeUnencryptedPayload(new SmQuestList([new PlayerQuestState(100, "START", 0x22, 2, 5)]))
+		);
 		var questActionUpdate = SmQuestAction.Update(new PlayerQuestState(100, "COMPLETE", 0x22, 2, 1));
 		Assert.Equal(124, questActionUpdate.OpCode);
-		Assert.Equal(
-			Convert.FromHexString("02640000000500220000020000"),
-			SerializeUnencryptedPayload(questActionUpdate));
+		Assert.Equal(Convert.FromHexString("02640000000500220000020000"), SerializeUnencryptedPayload(questActionUpdate));
 		Assert.Empty(
-			SerializeUnencryptedPayload(
-				SmQuestAction.Update(
-					new PlayerQuestState(100, "COMPLETE", 0x22, 2, 1),
-					suppressForExtraCategory: true)));
+			SerializeUnencryptedPayload(SmQuestAction.Update(new PlayerQuestState(100, "COMPLETE", 0x22, 2, 1), suppressForExtraCategory: true))
+		);
 		Assert.Equal(
 			Convert.FromHexString("0100FFFF640000000201"),
-			SerializeUnencryptedPayload(
-				new SmQuestCompletedList(0, [new PlayerQuestState(100, "COMPLETE", 0, 0, 2)])));
+			SerializeUnencryptedPayload(new SmQuestCompletedList(0, [new PlayerQuestState(100, "COMPLETE", 0, 0, 2)]))
+		);
 		Assert.Equal(
 			Convert.FromHexString("01000000"),
-			SerializeUnencryptedPayload(SmQuestCompletedList.CreateLoginPackets(Array.Empty<PlayerQuestState>())[0]));
+			SerializeUnencryptedPayload(SmQuestCompletedList.CreateLoginPackets(Array.Empty<PlayerQuestState>())[0])
+		);
 		var nearbyQuestPacket = new SmNearbyQuests(Array.Empty<NearbyQuestMarker>());
 		Assert.Equal(127, nearbyQuestPacket.OpCode);
-		Assert.Equal(
-			Convert.FromHexString("000000"),
-			SerializeUnencryptedPayload(nearbyQuestPacket));
-		Assert.Equal(
-			Convert.FromHexString("00FFFF64000000"),
-			SerializeUnencryptedPayload(new SmNearbyQuests([new NearbyQuestMarker(100, 0)])));
+		Assert.Equal(Convert.FromHexString("000000"), SerializeUnencryptedPayload(nearbyQuestPacket));
+		Assert.Equal(Convert.FromHexString("00FFFF64000000"), SerializeUnencryptedPayload(new SmNearbyQuests([new NearbyQuestMarker(100, 0)])));
 		Assert.Equal(
 			Convert.FromHexString("00FEFF64000000C8000200"),
-			SerializeUnencryptedPayload(
-				new SmNearbyQuests(
-				[
-					new NearbyQuestMarker(100, 0),
-					new NearbyQuestMarker(200, 1),
-				])));
-		Assert.Equal(
-			Convert.FromHexString("014D00"),
-			SerializeUnencryptedPayload(new SmTitleInfo(77)));
-		Assert.Equal(
-			Convert.FromHexString("03E90300004D00"),
-			SerializeUnencryptedPayload(new SmTitleInfo(new Player { ObjectId = 1001 }, 77)));
-		Assert.Equal(
-			Convert.FromHexString("060500"),
-			SerializeUnencryptedPayload(new SmTitleInfo(6, 5)));
+			SerializeUnencryptedPayload(new SmNearbyQuests([new NearbyQuestMarker(100, 0), new NearbyQuestMarker(200, 1)]))
+		);
+		Assert.Equal(Convert.FromHexString("014D00"), SerializeUnencryptedPayload(new SmTitleInfo(77)));
+		Assert.Equal(Convert.FromHexString("03E90300004D00"), SerializeUnencryptedPayload(new SmTitleInfo(new Player { ObjectId = 1001 }, 77)));
+		Assert.Equal(Convert.FromHexString("060500"), SerializeUnencryptedPayload(new SmTitleInfo(6, 5)));
 		Assert.Equal(
 			Convert.FromHexString("00000100050000000A000000"),
-			SerializeUnencryptedPayload(
-				new SmTitleInfo(
-					[new PlayerTitle(5, 1010)],
-					() => DateTimeOffset.FromUnixTimeSeconds(1000))));
+			SerializeUnencryptedPayload(new SmTitleInfo([new PlayerTitle(5, 1010)], () => DateTimeOffset.FromUnixTimeSeconds(1000)))
+		);
 		Assert.Equal(
 			Convert.FromHexString("0101000B000A00000001"),
-			SerializeUnencryptedPayload(
-				new SmMotion(
-					[new PlayerMotion(11, 1010, true)],
-					() => DateTimeOffset.FromUnixTimeSeconds(1000))));
-		Assert.Equal(
-			Convert.FromHexString("050B0001"),
-			SerializeUnencryptedPayload(new SmMotion(11, (byte)1)));
-		Assert.Equal(
-			Convert.FromHexString("020B000A000000"),
-			SerializeUnencryptedPayload(new SmMotion(11, 10)));
-		Assert.Equal(
-			Convert.FromHexString("060B00"),
-			SerializeUnencryptedPayload(SmMotion.Remove(11)));
+			SerializeUnencryptedPayload(new SmMotion([new PlayerMotion(11, 1010, true)], () => DateTimeOffset.FromUnixTimeSeconds(1000)))
+		);
+		Assert.Equal(Convert.FromHexString("050B0001"), SerializeUnencryptedPayload(new SmMotion(11, (byte)1)));
+		Assert.Equal(Convert.FromHexString("020B000A000000"), SerializeUnencryptedPayload(new SmMotion(11, 10)));
+		Assert.Equal(Convert.FromHexString("060B00"), SerializeUnencryptedPayload(SmMotion.Remove(11)));
 		Assert.Equal(
 			Convert.FromHexString("07E90300000B0000000D0000000000"),
 			SerializeUnencryptedPayload(
 				new SmMotion(
 					1001,
-					[
-						new PlayerMotion(11, 1010, true),
-						new PlayerMotion(12, 1010, false),
-						new PlayerMotion(13, 1010, true),
-					],
-					() => DateTimeOffset.FromUnixTimeSeconds(1000))));
+					[new PlayerMotion(11, 1010, true), new PlayerMotion(12, 1010, false), new PlayerMotion(13, 1010, true)],
+					() => DateTimeOffset.FromUnixTimeSeconds(1000)
+				)
+			)
+		);
 		Assert.Equal(
 			Convert.FromHexString("0001000A0000000A00"),
-			SerializeUnencryptedPayload(
-				new SmEmotionList(
-					0,
-					[new PlayerEmotion(10, 1010)],
-					() => DateTimeOffset.FromUnixTimeSeconds(1000))));
+			SerializeUnencryptedPayload(new SmEmotionList(0, [new PlayerEmotion(10, 1010)], () => DateTimeOffset.FromUnixTimeSeconds(1000)))
+		);
 		Assert.Equal(
 			Convert.FromHexString("010100400000002C01"),
-			SerializeUnencryptedPayload(
-				new SmEmotionList(
-					1,
-					[new PlayerEmotion(64, 1300)],
-					() => DateTimeOffset.FromUnixTimeSeconds(1000))));
+			SerializeUnencryptedPayload(new SmEmotionList(1, [new PlayerEmotion(64, 1300)], () => DateTimeOffset.FromUnixTimeSeconds(1000)))
+		);
 		Assert.Equal(
 			Convert.FromHexString("E903000024800000000000"),
 			SerializeUnencryptedPayload(
-				new SmEmotion(
-					new Player
-					{
-						ObjectId = 1001,
-						CreatureState = PlayerCreatureState.Powershard,
-					},
-					EmotionType.PowershardOn)));
+				new SmEmotion(new Player { ObjectId = 1001, CreatureState = PlayerCreatureState.Powershard }, EmotionType.PowershardOn)
+			)
+		);
 		Assert.Equal(
 			Convert.FromHexString("E903000001000000000000"),
-			SerializeUnencryptedPayload(
-				new SmEmotion(
-					new Player { ObjectId = 1001 },
-					EmotionType.Jump)));
+			SerializeUnencryptedPayload(new SmEmotion(new Player { ObjectId = 1001 }, EmotionType.Jump))
+		);
 		Assert.Equal(
 			Convert.FromHexString("E90300000D020000000000"),
-			SerializeUnencryptedPayload(
-				new SmEmotion(
-					new Player
-					{
-						ObjectId = 1001,
-						CreatureState = PlayerCreatureState.Flying,
-					},
-					EmotionType.Fly)));
+			SerializeUnencryptedPayload(new SmEmotion(new Player { ObjectId = 1001, CreatureState = PlayerCreatureState.Flying }, EmotionType.Fly))
+		);
 		Assert.Equal(
 			Convert.FromHexString("E903000004060000000000000030410000B041000004422C"),
 			SerializeUnencryptedPayload(
-				new SmEmotion(
-					new Player
-					{
-						ObjectId = 1001,
-						CreatureState = PlayerCreatureState.Chair,
-					},
-					EmotionType.ChairSit,
-					0,
-					11,
-					22,
-					33,
-					44,
-					0)));
+				new SmEmotion(new Player { ObjectId = 1001, CreatureState = PlayerCreatureState.Chair }, EmotionType.ChairSit, 0, 11, 22, 33, 44, 0)
+			)
+		);
 		Assert.Equal(
 			Convert.FromHexString("E903000015000000000000591B0000650001"),
-			SerializeUnencryptedPayload(
-				new SmEmotion(
-					new Player { ObjectId = 1001 },
-					EmotionType.Emote,
-					101,
-					7001)));
+			SerializeUnencryptedPayload(new SmEmotion(new Player { ObjectId = 1001 }, EmotionType.Emote, 101, 7001))
+		);
 		Assert.Equal(
 			Convert.FromHexString("E90300002301000000D840DC05B00400"),
 			SerializeUnencryptedPayload(
 				new SmEmotion(
-					new Player
-					{
-						ObjectId = 1001,
-						CreatureState = PlayerCreatureState.Active,
-					},
+					new Player { ObjectId = 1001, CreatureState = PlayerCreatureState.Active },
 					EmotionType.ChangeSpeed,
 					0,
 					0,
 					speed: 6.75f,
 					baseAttackSpeed: 1500,
-					currentAttackSpeed: 1200)));
-		Assert.Equal(
-			Convert.FromHexString("646464"),
-			SerializeUnencryptedPayload(new SmPrices()));
+					currentAttackSpeed: 1200
+				)
+			)
+		);
+		Assert.Equal(Convert.FromHexString("646464"), SerializeUnencryptedPayload(new SmPrices()));
 		Assert.Equal(
 			Convert.FromHexString("010100070000000A000000"),
 			SerializeUnencryptedPayload(
-				new SmRecipeCooldown(
-					new Dictionary<int, long> { [7] = 20_000 },
-					mode: 1,
-					() => DateTimeOffset.FromUnixTimeMilliseconds(10_000))));
+				new SmRecipeCooldown(new Dictionary<int, long> { [7] = 20_000 }, mode: 1, () => DateTimeOffset.FromUnixTimeMilliseconds(10_000))
+			)
+		);
 
 		Assert.Equal(
 			Convert.FromHexString("000400030001000100"),
@@ -772,7 +708,10 @@ public class GamePacketTests
 						new PlayerMail(2, 1001, "B", "E", "m", true, 0, 0, 0, 1, DateTime.Now),
 						new PlayerMail(3, 1001, "C", "B", "m", true, 0, 0, 0, 2, DateTime.Now),
 						new PlayerMail(4, 1001, "D", "R", "m", false, 0, 0, 0, 1, DateTime.Now),
-					])));
+					]
+				)
+			)
+		);
 
 		var mailReceivedAt = new DateTime(2026, 1, 1, 10, 0, 0, DateTimeKind.Local);
 		var mailListPackets = SmMailService.CreateListPackets(
@@ -782,7 +721,8 @@ public class GamePacketTests
 				new PlayerMail(11, 1001, "Read", "Express", "m", false, 0, 0, 55, 1, mailReceivedAt.AddMinutes(-1)),
 				new PlayerMail(12, 1001, "Cloud", "BC", "m", true, 0, 0, 999, 2, mailReceivedAt),
 			],
-			expressOnly: false);
+			expressOnly: false
+		);
 		Assert.Single(mailListPackets);
 		var mailListPayload = SerializeUnencryptedPayload(mailListPackets[0]);
 		using var mailListReader = new PacketBuffer(mailListPayload);
@@ -824,7 +764,9 @@ public class GamePacketTests
 					new PlayerMail(11, 1001, "Read", "Express", "m", false, 0, 0, 55, 1, mailReceivedAt.AddMinutes(-1)),
 					new PlayerMail(12, 1001, "Cloud", "BC", "m", true, 0, 0, 999, 2, mailReceivedAt),
 				],
-				expressOnly: true)[0]);
+				expressOnly: true
+			)[0]
+		);
 		using var expressMailReader = new PacketBuffer(expressMailPayload);
 		Assert.Equal(2, (int)expressMailReader.ReadC());
 		Assert.Equal(1001, expressMailReader.ReadD());
@@ -854,19 +796,7 @@ public class GamePacketTests
 		Assert.Equal(1, (int)readMailReader.ReadC());
 		Assert.Equal(0, readMailReader.Remaining);
 
-		var attachedTemplate = new ItemTemplateSummary(
-			100000,
-			"mail_item",
-			40000,
-			0x1234,
-			1,
-			"MATERIAL",
-			"NORMAL",
-			"COMMON",
-			"ALL",
-			100,
-			10,
-			0);
+		var attachedTemplate = new ItemTemplateSummary(100000, "mail_item", 40000, 0x1234, 1, "MATERIAL", "NORMAL", "COMMON", "ALL", 100, 10, 0);
 		var attachedItem = new InventoryItem
 		{
 			ObjectId = 90,
@@ -880,7 +810,9 @@ public class GamePacketTests
 			SmMailService.CreateReadPacket(
 				[attachedMail, new PlayerMail(22, 1001, "Cloud", "BC", "m", true, 0, 0, 0, 2, mailReceivedAt)],
 				attachedMail,
-				new ItemTemplateTable([attachedTemplate])));
+				new ItemTemplateTable([attachedTemplate])
+			)
+		);
 		using var attachedMailReader = new PacketBuffer(attachedMailPayload);
 		Assert.Equal(3, (int)attachedMailReader.ReadC());
 		Assert.Equal(1001, attachedMailReader.ReadD());
@@ -918,7 +850,8 @@ public class GamePacketTests
 			"PC_ALL",
 			1,
 			0,
-			0);
+			0
+		);
 		var restrictedItem = new InventoryItem
 		{
 			ObjectId = 91,
@@ -927,13 +860,28 @@ public class GamePacketTests
 			OwnerId = 1001,
 			Location = 127,
 		};
-		var restrictedMail = new PlayerMail(23, 1001, "SealSender", "SealSubject", "SealBody", true, 91, restrictedTemplate.TemplateId, 0, 0, mailReceivedAt, restrictedItem);
+		var restrictedMail = new PlayerMail(
+			23,
+			1001,
+			"SealSender",
+			"SealSubject",
+			"SealBody",
+			true,
+			91,
+			restrictedTemplate.TemplateId,
+			0,
+			0,
+			mailReceivedAt,
+			restrictedItem
+		);
 		var restrictedMailPayload = SerializeUnencryptedPayload(
 			SmMailService.CreateReadPacket(
 				[restrictedMail],
 				restrictedMail,
 				new ItemTemplateTable([restrictedTemplate]),
-				generalInfoWarehouseRestrictionFlag: 3));
+				generalInfoWarehouseRestrictionFlag: 3
+			)
+		);
 		using var restrictedMailReader = new PacketBuffer(restrictedMailPayload);
 		Assert.Equal(3, (int)restrictedMailReader.ReadC());
 		Assert.Equal(1001, restrictedMailReader.ReadD());
@@ -973,7 +921,8 @@ public class GamePacketTests
 		Assert.Equal(0, deleteWarehouseItemReader.Remaining);
 
 		var inventoryUpdatePayload = SerializeUnencryptedPayload(
-			new SmInventoryUpdateItem(attachedItem, attachedTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+			new SmInventoryUpdateItem(attachedItem, attachedTemplate, SmInventoryUpdateItem.DecreaseItemUse)
+		);
 		using var inventoryUpdateReader = new PacketBuffer(inventoryUpdatePayload);
 		Assert.Equal(90, inventoryUpdateReader.ReadD());
 		Assert.Equal(attachedTemplate.GetClientName(), inventoryUpdateReader.ReadS());
@@ -988,9 +937,17 @@ public class GamePacketTests
 		var kinahTemplate = new ItemTemplateSummary(182400001, "Kinah", 0, 0, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0);
 		var kinahUpdatePayload = SerializeUnencryptedPayload(
 			new SmInventoryUpdateItem(
-				new InventoryItem { ObjectId = 1824, ItemId = 182400001, Count = 0, Location = 0 },
+				new InventoryItem
+				{
+					ObjectId = 1824,
+					ItemId = 182400001,
+					Count = 0,
+					Location = 0,
+				},
 				kinahTemplate,
-				SmInventoryUpdateItem.DecreaseKinahFly));
+				SmInventoryUpdateItem.DecreaseKinahFly
+			)
+		);
 		using var kinahUpdateReader = new PacketBuffer(kinahUpdatePayload);
 		Assert.Equal(1824, kinahUpdateReader.ReadD());
 		Assert.Equal(string.Empty, kinahUpdateReader.ReadS());
@@ -1010,7 +967,8 @@ public class GamePacketTests
 			Charge = 500000,
 		};
 		var chargeInventoryUpdatePayload = SerializeUnencryptedPayload(
-			new SmInventoryUpdateItem(chargeUpdateItem, attachedTemplate, SmInventoryUpdateItem.Charge));
+			new SmInventoryUpdateItem(chargeUpdateItem, attachedTemplate, SmInventoryUpdateItem.Charge)
+		);
 		using var chargeInventoryUpdateReader = new PacketBuffer(chargeInventoryUpdatePayload);
 		Assert.Equal(91, chargeInventoryUpdateReader.ReadD());
 		Assert.Equal(attachedTemplate.GetClientName(), chargeInventoryUpdateReader.ReadS());
@@ -1028,7 +986,8 @@ public class GamePacketTests
 			IdianStone = new PlayerIdianStone(166050001, 1, 299999),
 		};
 		var polishChargeInventoryUpdatePayload = SerializeUnencryptedPayload(
-			new SmInventoryUpdateItem(polishChargeUpdateItem, attachedTemplate, SmInventoryUpdateItem.PolishCharge));
+			new SmInventoryUpdateItem(polishChargeUpdateItem, attachedTemplate, SmInventoryUpdateItem.PolishCharge)
+		);
 		using var polishChargeInventoryUpdateReader = new PacketBuffer(polishChargeInventoryUpdatePayload);
 		Assert.Equal(92, polishChargeInventoryUpdateReader.ReadD());
 		Assert.Equal(attachedTemplate.GetClientName(), polishChargeInventoryUpdateReader.ReadS());
@@ -1044,9 +1003,20 @@ public class GamePacketTests
 					ObjectId = 7001,
 					InventoryItems =
 					[
-						new InventoryItem { ObjectId = 93, ItemId = 100100001, IsEquipped = true, Location = 0, Slot = 3, ItemSkin = 100100002, Enchant = 5 },
+						new InventoryItem
+						{
+							ObjectId = 93,
+							ItemId = 100100001,
+							IsEquipped = true,
+							Location = 0,
+							Slot = 3,
+							ItemSkin = 100100002,
+							Enchant = 5,
+						},
 					],
-				}));
+				}
+			)
+		);
 		using var appearanceReader = new PacketBuffer(appearancePayload);
 		Assert.Equal(7001, appearanceReader.ReadD());
 		Assert.Equal(1, appearanceReader.ReadD());
@@ -1099,8 +1069,7 @@ public class GamePacketTests
 		Assert.Equal(0, timedItemUsageReader.ReadD());
 		Assert.Equal(0, timedItemUsageReader.Remaining);
 
-		var targetedItemUsagePayload = SerializeUnencryptedPayload(
-			new SmItemUsageAnimation(0x11111111, 0x22222222, 0x33333333, 0x44444444, 3000, 0, 7));
+		var targetedItemUsagePayload = SerializeUnencryptedPayload(new SmItemUsageAnimation(0x11111111, 0x22222222, 0x33333333, 0x44444444, 3000, 0, 7));
 		using var targetedItemUsageReader = new PacketBuffer(targetedItemUsagePayload);
 		Assert.Equal(0x11111111, targetedItemUsageReader.ReadD());
 		Assert.Equal(0x22222222, targetedItemUsageReader.ReadD());
@@ -1115,7 +1084,8 @@ public class GamePacketTests
 		Assert.Equal(0, targetedItemUsageReader.Remaining);
 
 		var fullItemUsagePayload = SerializeUnencryptedPayload(
-			new SmItemUsageAnimation(0x01000002, 0x03000004, 0x05000006, 0x07000008, 0, 0x101, -1, 0x102, 0x103, 15360));
+			new SmItemUsageAnimation(0x01000002, 0x03000004, 0x05000006, 0x07000008, 0, 0x101, -1, 0x102, 0x103, 15360)
+		);
 		using var fullItemUsageReader = new PacketBuffer(fullItemUsagePayload);
 		Assert.Equal(0x01000002, fullItemUsageReader.ReadD());
 		Assert.Equal(0x03000004, fullItemUsageReader.ReadD());
@@ -1151,7 +1121,8 @@ public class GamePacketTests
 			useMask: 4,
 			maxMembers: 6,
 			maxResurrects: 18,
-			spawnedAt: kiskSpawnedAt);
+			spawnedAt: kiskSpawnedAt
+		);
 		Assert.True(kisk.AddMember(1001));
 		Assert.True(kisk.UseResurrection());
 		var kiskUpdatePayload = SerializeUnencryptedPayload(new SmKiskUpdate(kisk, kiskSpawnedAt.AddSeconds(30)));
@@ -1217,7 +1188,9 @@ public class GamePacketTests
 					RecoverableExp = 50,
 					ReposeEnergy = 25,
 				},
-				new PlayerExperienceTable([0, 1000, 3000])));
+				new PlayerExperienceTable([0, 1000, 3000])
+			)
+		);
 		using var statUpdateExpReader = new PacketBuffer(statUpdateExpPayload);
 		Assert.Equal(500, statUpdateExpReader.ReadQ());
 		Assert.Equal(50, statUpdateExpReader.ReadQ());
@@ -1259,9 +1232,7 @@ public class GamePacketTests
 		Assert.Equal(0, (int)secondaryDecomposeReader.ReadC());
 		Assert.Equal(0, secondaryDecomposeReader.Remaining);
 
-		Assert.Equal(
-			Convert.FromHexString("0100"),
-			SerializeUnencryptedPayload(SmMailService.CreateMailMessage(SmMailService.MailSendSuccess)));
+		Assert.Equal(Convert.FromHexString("0100"), SerializeUnencryptedPayload(SmMailService.CreateMailMessage(SmMailService.MailSendSuccess)));
 
 		var systemMessagePayload = SerializeUnencryptedPayload(SmSystemMessage.NotEnoughMoney());
 		using var systemMessageReader = new PacketBuffer(systemMessagePayload);
@@ -1295,7 +1266,11 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.ChangeItemSkinSucceed("item"), 1300483, "item");
 		AssertSystemMessage(SmSystemMessage.ChangeItemSkinInvalidItem(), 1400089);
 		AssertSystemMessage(SmSystemMessage.CantChangeSkinOppositeRequirement("keep", "skin"), 1400290, "keep", "skin");
-		AssertSystemMessage(SmSystemMessage.CannotUseItemInvalidRank(PlayerAbyssRank.GetRankL10n("ELYOS", 5)), 1300370, PlayerAbyssRank.GetRankL10n("ELYOS", 5));
+		AssertSystemMessage(
+			SmSystemMessage.CannotUseItemInvalidRank(PlayerAbyssRank.GetRankL10n("ELYOS", 5)),
+			1300370,
+			PlayerAbyssRank.GetRankL10n("ELYOS", 5)
+		);
 		AssertSystemMessage(SmSystemMessage.UnequipRankItem("item"), 1401329, "item");
 		AssertSystemMessage(SmSystemMessage.CannotUseItemInvalidClass(), 1300371);
 		AssertSystemMessage(SmSystemMessage.CannotUseItemTooLowLevel("item", 10), 1300372, "10", "item");
@@ -1470,7 +1445,9 @@ public class GamePacketTests
 					new PlayerMail(31, 1001, "B", "E", "m", false, 0, 0, 0, 1, mailReceivedAt),
 					new PlayerMail(32, 1001, "C", "B", "m", true, 0, 0, 0, 2, mailReceivedAt),
 				],
-				[10, 11]));
+				[10, 11]
+			)
+		);
 		using var deleteMailReader = new PacketBuffer(deleteMailPayload);
 		Assert.Equal(6, (int)deleteMailReader.ReadC());
 		Assert.Equal(131075, deleteMailReader.ReadD());
@@ -1499,11 +1476,11 @@ public class GamePacketTests
 		Assert.Equal(0, brokerSearchReader.ReadH());
 		Assert.Equal(0, brokerSearchReader.Remaining);
 
-		Assert.Equal(
-			Convert.FromHexString("01000000000000"),
-			SerializeUnencryptedPayload(SmBrokerService.CreateEmptyRegisteredItems()));
+		Assert.Equal(Convert.FromHexString("01000000000000"), SerializeUnencryptedPayload(SmBrokerService.CreateEmptyRegisteredItems()));
 
-		var brokerSettledPayload = SerializeUnencryptedPayload(SmBrokerService.CreateEmptySettledItems(totalItemCount: 0, pageIndex: 2, settledKinah: 77));
+		var brokerSettledPayload = SerializeUnencryptedPayload(
+			SmBrokerService.CreateEmptySettledItems(totalItemCount: 0, pageIndex: 2, settledKinah: 77)
+		);
 		using var brokerSettledReader = new PacketBuffer(brokerSettledPayload);
 		Assert.Equal(5, (int)brokerSettledReader.ReadC());
 		Assert.Equal(77, brokerSettledReader.ReadQ());
@@ -1524,15 +1501,23 @@ public class GamePacketTests
 		Assert.Equal(0, brokerSellWindowReader.ReadQ());
 		Assert.Equal(0, brokerSellWindowReader.ReadQ());
 		Assert.Equal(0, brokerSellWindowReader.Remaining);
-		Assert.Equal(
-			Convert.FromHexString("04005A000000"),
-			SerializeUnencryptedPayload(SmBrokerService.CreateCancelRegisteredItem(90)));
+		Assert.Equal(Convert.FromHexString("04005A000000"), SerializeUnencryptedPayload(SmBrokerService.CreateCancelRegisteredItem(90)));
 		Assert.Equal(Convert.FromHexString("0600"), SerializeUnencryptedPayload(SmBrokerService.CreateRemoveSettledIcon()));
 
 		var brokerReturnPayload = SerializeUnencryptedPayload(
 			SmInventoryAddItem.CreateBrokerReturn(
-				new InventoryItem { ObjectId = 90, ItemId = 100000, Count = 2, OwnerId = 1001, Location = 0, Slot = 65535 },
-				attachedTemplate));
+				new InventoryItem
+				{
+					ObjectId = 90,
+					ItemId = 100000,
+					Count = 2,
+					OwnerId = 1001,
+					Location = 0,
+					Slot = 65535,
+				},
+				attachedTemplate
+			)
+		);
 		using var brokerReturnReader = new PacketBuffer(brokerReturnPayload);
 		Assert.Equal(SmInventoryAddItem.BrokerReturn, brokerReturnReader.ReadH());
 		Assert.Equal(1, brokerReturnReader.ReadH());
@@ -1554,13 +1539,26 @@ public class GamePacketTests
 						ItemExpands = 4,
 						InventoryItems =
 						[
-							new InventoryItem { ObjectId = 77, ItemId = 182400001, Count = 10, Location = 0 },
-							new InventoryItem { ObjectId = 90, ItemId = 100000, Count = 2, Location = 0 },
+							new InventoryItem
+							{
+								ObjectId = 77,
+								ItemId = 182400001,
+								Count = 10,
+								Location = 0,
+							},
+							new InventoryItem
+							{
+								ObjectId = 90,
+								ItemId = 100000,
+								Count = 2,
+								Location = 0,
+							},
 						],
-					})));
-		Assert.Equal(
-			Convert.FromHexString("000007000000020304"),
-			SerializeUnencryptedPayload(SmCubeUpdate.CubeSizeSnapshot(7, 2, 3, 4)));
+					}
+				)
+			)
+		);
+		Assert.Equal(Convert.FromHexString("000007000000020304"), SerializeUnencryptedPayload(SmCubeUpdate.CubeSizeSnapshot(7, 2, 3, 4)));
 
 		var brokerItem = new PlayerBrokerItem(
 			90,
@@ -1576,7 +1574,13 @@ public class GamePacketTests
 			DateTime.Now.AddDays(7),
 			DateTime.Now,
 			SplittingAvailable: true,
-			new InventoryItem { ObjectId = 90, ItemId = 100000, Count = 2 });
+			new InventoryItem
+			{
+				ObjectId = 90,
+				ItemId = 100000,
+				Count = 2,
+			}
+		);
 		var brokerRegisteredPayload = SerializeUnencryptedPayload(SmBrokerService.CreateRegisteredItems([brokerItem]));
 		using var brokerRegisteredReader = new PacketBuffer(brokerRegisteredPayload);
 		Assert.Equal(1, (int)brokerRegisteredReader.ReadC());
@@ -1631,8 +1635,8 @@ public class GamePacketTests
 		Assert.Equal(0, brokerRegisterErrorReader.Remaining);
 
 		var brokerSearchedPayload = SerializeUnencryptedPayload(
-			SmBrokerService.CreateSearchedItems(
-				new PlayerBrokerItemPage([brokerItem with { AveragePrice = 75 }], 1, 0, 0)));
+			SmBrokerService.CreateSearchedItems(new PlayerBrokerItemPage([brokerItem with { AveragePrice = 75 }], 1, 0, 0))
+		);
 		using var brokerSearchedReader = new PacketBuffer(brokerSearchedPayload);
 		Assert.Equal(0, (int)brokerSearchedReader.ReadC());
 		Assert.Equal(1, brokerSearchedReader.ReadD());
@@ -1659,19 +1663,9 @@ public class GamePacketTests
 		var settleTime = new DateTime(2026, 1, 1, 10, 30, 0, DateTimeKind.Local);
 		var brokerSettledSoldPayload = SerializeUnencryptedPayload(
 			SmBrokerService.CreateSettledItems(
-				new PlayerBrokerItemPage(
-					[
-						brokerItem with
-						{
-							IsSold = true,
-							IsSettled = true,
-							SettleTime = settleTime,
-							Item = null,
-						},
-					],
-					1,
-					0,
-					100)));
+				new PlayerBrokerItemPage([brokerItem with { IsSold = true, IsSettled = true, SettleTime = settleTime, Item = null }], 1, 0, 100)
+			)
+		);
 		using var brokerSettledSoldReader = new PacketBuffer(brokerSettledSoldPayload);
 		Assert.Equal(5, (int)brokerSettledSoldReader.ReadC());
 		Assert.Equal(100, brokerSettledSoldReader.ReadQ());
@@ -1700,7 +1694,9 @@ public class GamePacketTests
 						new PlayerHouse(51, 700200, 900200, houseNow, null, true),
 					],
 				},
-				() => houseNow));
+				() => houseNow
+			)
+		);
 		using var houseReader = new PacketBuffer(housePayload);
 		Assert.Equal(700100, houseReader.ReadD());
 		Assert.Equal(900100, houseReader.ReadD());
@@ -1712,15 +1708,9 @@ public class GamePacketTests
 		Assert.Equal(871200, houseReader.ReadD());
 		Assert.Equal(0, houseReader.Remaining);
 
-		Assert.Equal(
-			Convert.FromHexString("00000000"),
-			SerializeUnencryptedPayload(new SmReceiveBids(0)));
-		Assert.Equal(
-			Convert.FromHexString("0002"),
-			SerializeUnencryptedPayload(new SmHousePayRent(2)));
-		Assert.Equal(
-			Convert.FromHexString("01"),
-			SerializeUnencryptedPayload(new SmHouseEdit(CmHouseEdit.EnterDecorationMode)));
+		Assert.Equal(Convert.FromHexString("00000000"), SerializeUnencryptedPayload(new SmReceiveBids(0)));
+		Assert.Equal(Convert.FromHexString("0002"), SerializeUnencryptedPayload(new SmHousePayRent(2)));
+		Assert.Equal(Convert.FromHexString("01"), SerializeUnencryptedPayload(new SmHouseEdit(CmHouseEdit.EnterDecorationMode)));
 		var houseAcquirePayload = SerializeUnencryptedPayload(new SmHouseAcquire(1001, 6001, acquire: true));
 		using var houseAcquireReader = new PacketBuffer(houseAcquirePayload);
 		Assert.Equal(1001, houseAcquireReader.ReadD());
@@ -1745,12 +1735,15 @@ public class GamePacketTests
 		var defaultHousePartIds = new[] { 800001, 800002 };
 		var houseTemplates = new HousingTemplateTable(
 			[new HousingAddressSummary(700100, 1, 798000)],
-			[new HousingBuildingSummary(900100, "MANSION", 4, "PERSONAL_FIELD", defaultHouseDecorIds, defaultHousePartIds)]);
+			[new HousingBuildingSummary(900100, "MANSION", 4, "PERSONAL_FIELD", defaultHouseDecorIds, defaultHousePartIds)]
+		);
 		var houseUpdatePayload = SerializeUnencryptedPayload(
 			new SmHouseUpdate(
 				houseUpdatePlayer,
 				new PlayerHouse(50, 700100, 900100, houseNow, houseNow.AddDays(14), false, PlayerHouse.DoorClosedExceptFriends, false, "Visitors welcome"),
-				houseTemplates));
+				houseTemplates
+			)
+		);
 		using var houseUpdateReader = new PacketBuffer(houseUpdatePayload);
 		Assert.Equal(1, houseUpdateReader.ReadH());
 		Assert.Equal(0, houseUpdateReader.ReadH());
@@ -1779,14 +1772,14 @@ public class GamePacketTests
 			new SmHouseRender(
 				houseUpdatePlayer,
 				new PlayerHouse(50, 700100, 900100, houseNow, houseNow.AddDays(14), false, PlayerHouse.DoorClosedExceptFriends, false, "Visitors welcome"),
-				houseTemplates));
+				houseTemplates
+			)
+		);
 		Assert.Equal(houseUpdatePayload[6..], houseRenderPayload);
 
 		var registryDecorPayload = SerializeUnencryptedPayload(
-			SmHouseRegistry.CreateDecorationItems(
-				houseTemplates,
-				900100,
-				[new RegisteredHouseDecorationSummary(9901, 810001)]));
+			SmHouseRegistry.CreateDecorationItems(houseTemplates, 900100, [new RegisteredHouseDecorationSummary(9901, 810001)])
+		);
 		using var registryDecorReader = new PacketBuffer(registryDecorPayload);
 		Assert.Equal(SmHouseRegistry.DecorationItemsAction, (byte)registryDecorReader.ReadC());
 		Assert.Equal(3, registryDecorReader.ReadH());
@@ -1800,7 +1793,9 @@ public class GamePacketTests
 
 		var registryObjectPayload = SerializeUnencryptedPayload(
 			SmHouseRegistry.CreateRegisteredObjects(
-				[new RegisteredHouseObjectSummary(9902, 820001, CooldownSeconds: 12, ExpirationSeconds: 3600, Color: 0x112233, TypeId: 7)]));
+				[new RegisteredHouseObjectSummary(9902, 820001, CooldownSeconds: 12, ExpirationSeconds: 3600, Color: 0x112233, TypeId: 7)]
+			)
+		);
 		using var registryObjectReader = new PacketBuffer(registryObjectPayload);
 		Assert.Equal(SmHouseRegistry.RegisteredObjectsAction, (byte)registryObjectReader.ReadC());
 		Assert.Equal(1, registryObjectReader.ReadH());
@@ -1826,7 +1821,8 @@ public class GamePacketTests
 			ExpirationSeconds: 7200,
 			Color: 0x445566,
 			TypeId: 7,
-			NpcObjectId: 810013);
+			NpcObjectId: 810013
+		);
 		var houseObjectPayload = SerializeUnencryptedPayload(new SmHouseObject(placedHouseObject));
 		using var houseObjectReader = new PacketBuffer(houseObjectPayload);
 		Assert.Equal(700100, houseObjectReader.ReadD());
@@ -1865,7 +1861,8 @@ public class GamePacketTests
 		Assert.Equal(0, houseEditSpawnReader.Remaining);
 
 		var houseEditRemovePayload = SerializeUnencryptedPayload(
-			new SmHouseEdit(CmHouseEdit.DeleteItem, 1, new RegisteredHouseObjectSummary(9903, 3001000)));
+			new SmHouseEdit(CmHouseEdit.DeleteItem, 1, new RegisteredHouseObjectSummary(9903, 3001000))
+		);
 		using var houseEditRemoveReader = new PacketBuffer(houseEditRemovePayload);
 		Assert.Equal(CmHouseEdit.DeleteItem, (int)houseEditRemoveReader.ReadC());
 		Assert.Equal(1, (int)houseEditRemoveReader.ReadC());
@@ -1877,7 +1874,9 @@ public class GamePacketTests
 				CmHouseEdit.AddItem,
 				1,
 				new RegisteredHouseObjectSummary(9903, 3001000, ExpirationSeconds: 7200, Color: 0x445566, TypeId: 7),
-				1001));
+				1001
+			)
+		);
 		using var houseEditAddReader = new PacketBuffer(houseEditAddPayload);
 		Assert.Equal(CmHouseEdit.AddItem, (int)houseEditAddReader.ReadC());
 		Assert.Equal(1, (int)houseEditAddReader.ReadC());
@@ -1890,7 +1889,8 @@ public class GamePacketTests
 		Assert.Equal(0, houseEditAddReader.Remaining);
 
 		var houseEditAddDecorPayload = SerializeUnencryptedPayload(
-			new SmHouseEdit(CmHouseEdit.AddItem, 2, new RegisteredHouseDecorationSummary(9904, 3550000)));
+			new SmHouseEdit(CmHouseEdit.AddItem, 2, new RegisteredHouseDecorationSummary(9904, 3550000))
+		);
 		using var houseEditAddDecorReader = new PacketBuffer(houseEditAddDecorPayload);
 		Assert.Equal(CmHouseEdit.AddItem, (int)houseEditAddDecorReader.ReadC());
 		Assert.Equal(2, (int)houseEditAddDecorReader.ReadC());
@@ -1917,11 +1917,8 @@ public class GamePacketTests
 		Assert.Equal(0, useObjectReader.Remaining);
 
 		var useItemUpdatePayload = SerializeUnencryptedPayload(
-			new SmObjectUseUpdate(
-				1001,
-				2002,
-				3,
-				new RegisteredHouseObjectSummary(9903, 3190001, TypeId: 1, UsageData: [3, 0, 0, 0, 2])));
+			new SmObjectUseUpdate(1001, 2002, 3, new RegisteredHouseObjectSummary(9903, 3190001, TypeId: 1, UsageData: [3, 0, 0, 0, 2]))
+		);
 		using var useItemUpdateReader = new PacketBuffer(useItemUpdatePayload);
 		Assert.Equal(1, (int)useItemUpdateReader.ReadC());
 		Assert.Equal(1001, useItemUpdateReader.ReadD());
@@ -1932,7 +1929,8 @@ public class GamePacketTests
 		Assert.Equal(0, useItemUpdateReader.Remaining);
 
 		var storageUseUpdatePayload = SerializeUnencryptedPayload(
-			new SmObjectUseUpdate(1001, 0, 0, new RegisteredHouseObjectSummary(9904, 3000007, TypeId: 2)));
+			new SmObjectUseUpdate(1001, 0, 0, new RegisteredHouseObjectSummary(9904, 3000007, TypeId: 2))
+		);
 		using var storageUseUpdateReader = new PacketBuffer(storageUseUpdatePayload);
 		Assert.Equal(2, (int)storageUseUpdateReader.ReadC());
 		Assert.Equal(1001, storageUseUpdateReader.ReadD());
@@ -1941,7 +1939,8 @@ public class GamePacketTests
 		Assert.Equal(0, storageUseUpdateReader.Remaining);
 
 		var mailDialogPayload = SerializeUnencryptedPayload(
-			new SmDialogWindow(9905, SmDialogWindow.MailPageId, dialogContextId: Player.MailboxRegularState));
+			new SmDialogWindow(9905, SmDialogWindow.MailPageId, dialogContextId: Player.MailboxRegularState)
+		);
 		using var mailDialogReader = new PacketBuffer(mailDialogPayload);
 		Assert.Equal(9905, mailDialogReader.ReadD());
 		Assert.Equal(SmDialogWindow.MailPageId, mailDialogReader.ReadH());
@@ -1951,11 +1950,8 @@ public class GamePacketTests
 		Assert.Equal(0, mailDialogReader.Remaining);
 
 		var houseObjectsPayload = SerializeUnencryptedPayload(
-			new SmHouseObjects(
-				[
-					placedHouseObject,
-					placedHouseObject with { TemplateId = 3000004, X = 44.5f, Y = 55.25f, Z = 66.75f },
-				]));
+			new SmHouseObjects([placedHouseObject, placedHouseObject with { TemplateId = 3000004, X = 44.5f, Y = 55.25f, Z = 66.75f }])
+		);
 		using var houseObjectsReader = new PacketBuffer(houseObjectsPayload);
 		Assert.Equal(2, houseObjectsReader.ReadH());
 		Assert.Equal(3001000, houseObjectsReader.ReadD());
@@ -1993,11 +1989,9 @@ public class GamePacketTests
 			new Player
 			{
 				LastOnline = houseNow.AddMinutes(-5),
-				Mailbox =
-				[
-					new PlayerMail(500, 1001, "$$HS_AUCTION_MAIL", "4,0", "body,700100", true, 0, 0, 0, 0, houseNow),
-				],
-			});
+				Mailbox = [new PlayerMail(500, 1001, "$$HS_AUCTION_MAIL", "4,0", "body,700100", true, 0, 0, 0, 0, houseNow)],
+			}
+		);
 		Assert.NotNull(houseBidRefresh);
 
 		var houseBidSystemMessages = SmReceiveBids.CreateLoginSystemMessages(
@@ -2011,23 +2005,23 @@ public class GamePacketTests
 					new PlayerMail(504, 1001, "$$HS_AUCTION_MAIL", "7,0", "body,700300", true, 0, 0, 0, 0, houseNow),
 					new PlayerMail(505, 1001, "$$HS_AUCTION_MAIL", "0,0", "body,0", true, 0, 0, 0, 0, houseNow),
 				],
-			});
+			}
+		);
 		Assert.Collection(
 			houseBidSystemMessages,
 			message => AssertSystemMessage(message, 1401267, "700100"),
 			message => AssertSystemMessage(message, 1401270, "700200"),
 			message => AssertSystemMessage(message, 1401269, "700300"),
-			message => AssertSystemMessage(message, 1401266));
+			message => AssertSystemMessage(message, 1401266)
+		);
 
 		var oldHouseBidRefresh = SmReceiveBids.CreateLoginPacket(
 			new Player
 			{
 				LastOnline = houseNow.AddMinutes(5),
-				Mailbox =
-				[
-					new PlayerMail(501, 1001, "$$HS_AUCTION_MAIL", "4,0", "body,700100", true, 0, 0, 0, 0, houseNow),
-				],
-			});
+				Mailbox = [new PlayerMail(501, 1001, "$$HS_AUCTION_MAIL", "4,0", "body,700100", true, 0, 0, 0, 0, houseNow)],
+			}
+		);
 		Assert.Null(oldHouseBidRefresh);
 
 		var macroPackets = SmMacroList.CreateLoginPackets(1001, [new PlayerMacro(1, "<m/>"), new PlayerMacro(12, "two")]);
@@ -2045,13 +2039,10 @@ public class GamePacketTests
 
 		Assert.Equal(
 			Convert.FromHexString("E9030000010000"),
-			SerializeUnencryptedPayload(SmMacroList.CreateLoginPackets(1001, Array.Empty<PlayerMacro>())[0]));
-		Assert.Equal(
-			Convert.FromHexString("00"),
-			SerializeUnencryptedPayload(SmMacroResult.Created));
-		Assert.Equal(
-			Convert.FromHexString("01"),
-			SerializeUnencryptedPayload(SmMacroResult.Deleted));
+			SerializeUnencryptedPayload(SmMacroList.CreateLoginPackets(1001, Array.Empty<PlayerMacro>())[0])
+		);
+		Assert.Equal(Convert.FromHexString("00"), SerializeUnencryptedPayload(SmMacroResult.Created));
+		Assert.Equal(Convert.FromHexString("01"), SerializeUnencryptedPayload(SmMacroResult.Deleted));
 
 		var friendListPayload = SerializeUnencryptedPayload(
 			new SmFriendList(
@@ -2068,9 +2059,12 @@ public class GamePacketTests
 						"memo",
 						false,
 						700100,
-						PlayerHouse.DoorClosedExceptFriends),
+						PlayerHouse.DoorClosedExceptFriends
+					),
 				],
-				new PlayerExperienceTable([0, 1000, 3000])));
+				new PlayerExperienceTable([0, 1000, 3000])
+			)
+		);
 		using var friendListReader = new PacketBuffer(friendListPayload);
 		Assert.Equal(65535, friendListReader.ReadH());
 		Assert.Equal(0, (int)friendListReader.ReadC());
@@ -2092,7 +2086,9 @@ public class GamePacketTests
 			new SmFriendUpdate(
 				new PlayerFriend(44, "Friend", 3000, "RANGER", "FEMALE", 210010000, null, "note", "memo", true),
 				status: 3,
-				new PlayerExperienceTable([0, 1000, 3000])));
+				new PlayerExperienceTable([0, 1000, 3000])
+			)
+		);
 		using var friendUpdateReader = new PacketBuffer(friendUpdatePayload);
 		Assert.Equal("Friend", friendUpdateReader.ReadS());
 		Assert.Equal(2, friendUpdateReader.ReadD());
@@ -2104,20 +2100,13 @@ public class GamePacketTests
 		Assert.Equal(3, (int)friendUpdateReader.ReadC());
 		Assert.Equal(0, friendUpdateReader.Remaining);
 
-		var updateNotePayload = SerializeUnencryptedPayload(
-			new SmUpdateNote(
-				new Player
-				{
-					ObjectId = 44,
-					Note = "Ready for dredge",
-				}));
+		var updateNotePayload = SerializeUnencryptedPayload(new SmUpdateNote(new Player { ObjectId = 44, Note = "Ready for dredge" }));
 		using var updateNoteReader = new PacketBuffer(updateNotePayload);
 		Assert.Equal(44, updateNoteReader.ReadD());
 		Assert.Equal("Ready for dredge", updateNoteReader.ReadS());
 		Assert.Equal(0, updateNoteReader.Remaining);
 
-		var blockListPayload = SerializeUnencryptedPayload(
-			new SmBlockList([new PlayerBlockedUser(55, "Blocked", "reason")]));
+		var blockListPayload = SerializeUnencryptedPayload(new SmBlockList([new PlayerBlockedUser(55, "Blocked", "reason")]));
 		using var blockListReader = new PacketBuffer(blockListPayload);
 		Assert.Equal(65535, blockListReader.ReadH());
 		Assert.Equal(0, (int)blockListReader.ReadC());
@@ -2125,9 +2114,7 @@ public class GamePacketTests
 		Assert.Equal("reason", blockListReader.ReadS());
 		Assert.Equal(0, blockListReader.Remaining);
 
-		Assert.Equal(
-			Convert.FromHexString("E9030000010000"),
-			SerializeUnencryptedPayload(new SmMarkFriendList(1001)));
+		Assert.Equal(Convert.FromHexString("E9030000010000"), SerializeUnencryptedPayload(new SmMarkFriendList(1001)));
 
 		var friendResponsePayload = SerializeUnencryptedPayload(new SmFriendResponse(SmFriendResponse.TargetRemoved, "Friend"));
 		using var friendResponseReader = new PacketBuffer(friendResponsePayload);
@@ -2148,12 +2135,8 @@ public class GamePacketTests
 		Assert.Equal(0, friendNotifyReader.Remaining);
 
 		var diePayload = SerializeUnencryptedPayload(
-			new SmDie(
-				allowReviveBySkill: true,
-				allowReviveByItem: false,
-				remainingKiskTimeSeconds: 123,
-				allowInstanceRevive: true,
-				invasion: true));
+			new SmDie(allowReviveBySkill: true, allowReviveByItem: false, remainingKiskTimeSeconds: 123, allowInstanceRevive: true, invasion: true)
+		);
 		using var dieReader = new PacketBuffer(diePayload);
 		Assert.Equal(1, (int)dieReader.ReadC());
 		Assert.Equal(0, (int)dieReader.ReadC());
@@ -2170,7 +2153,8 @@ public class GamePacketTests
 		Assert.Equal(0, resurrectReader.Remaining);
 
 		var questionWindowPayload = SerializeUnencryptedPayload(
-			new SmQuestionWindow(SmQuestionWindow.BuddyListAddBuddyRequest, 1001, 0, "Kahrun", "hello"));
+			new SmQuestionWindow(SmQuestionWindow.BuddyListAddBuddyRequest, 1001, 0, "Kahrun", "hello")
+		);
 		using var questionWindowReader = new PacketBuffer(questionWindowPayload);
 		Assert.Equal(SmQuestionWindow.BuddyListAddBuddyRequest, questionWindowReader.ReadD());
 		Assert.Equal("Kahrun", questionWindowReader.ReadS());
@@ -2183,13 +2167,8 @@ public class GamePacketTests
 		Assert.Equal(0, questionWindowReader.Remaining);
 
 		var recallQuestionPayload = SerializeUnencryptedPayload(
-			new SmQuestionWindow(
-				SmQuestionWindow.SummonPartyAcceptRequest,
-				0,
-				0,
-				"Kahrun",
-				"Summon Group Member",
-				"30"));
+			new SmQuestionWindow(SmQuestionWindow.SummonPartyAcceptRequest, 0, 0, "Kahrun", "Summon Group Member", "30")
+		);
 		using var recallQuestionReader = new PacketBuffer(recallQuestionPayload);
 		Assert.Equal(SmQuestionWindow.SummonPartyAcceptRequest, recallQuestionReader.ReadD());
 		Assert.Equal("Kahrun", recallQuestionReader.ReadS());
@@ -2201,8 +2180,7 @@ public class GamePacketTests
 		Assert.Equal(0, recallQuestionReader.ReadD());
 		Assert.Equal(0, recallQuestionReader.Remaining);
 
-		var bindstoneQuestionPayload = SerializeUnencryptedPayload(
-			new SmQuestionWindow(SmQuestionWindow.RegisterBindstone, 9001, 5));
+		var bindstoneQuestionPayload = SerializeUnencryptedPayload(new SmQuestionWindow(SmQuestionWindow.RegisterBindstone, 9001, 5));
 		using var bindstoneQuestionReader = new PacketBuffer(bindstoneQuestionPayload);
 		Assert.Equal(SmQuestionWindow.RegisterBindstone, bindstoneQuestionReader.ReadD());
 		Assert.Equal(string.Empty, bindstoneQuestionReader.ReadS());
@@ -2214,8 +2192,7 @@ public class GamePacketTests
 		Assert.Equal(5, bindstoneQuestionReader.ReadD());
 		Assert.Equal(0, bindstoneQuestionReader.Remaining);
 
-		var soulBindQuestionPayload = SerializeUnencryptedPayload(
-			new SmQuestionWindow(SmQuestionWindow.SoulBoundItemConfirm, 0, 0, "item"));
+		var soulBindQuestionPayload = SerializeUnencryptedPayload(new SmQuestionWindow(SmQuestionWindow.SoulBoundItemConfirm, 0, 0, "item"));
 		using var soulBindQuestionReader = new PacketBuffer(soulBindQuestionPayload);
 		Assert.Equal(SmQuestionWindow.SoulBoundItemConfirm, soulBindQuestionReader.ReadD());
 		Assert.Equal("item", soulBindQuestionReader.ReadS());
@@ -2228,7 +2205,8 @@ public class GamePacketTests
 		Assert.Equal(0, soulBindQuestionReader.Remaining);
 
 		var craftQuestionPayload = SerializeUnencryptedPayload(
-			new SmQuestionWindow(SmQuestionWindow.CraftAddSkillConfirm, 9001, 0, "Cooking", "Beginner", "3500"));
+			new SmQuestionWindow(SmQuestionWindow.CraftAddSkillConfirm, 9001, 0, "Cooking", "Beginner", "3500")
+		);
 		using var craftQuestionReader = new PacketBuffer(craftQuestionPayload);
 		Assert.Equal(SmQuestionWindow.CraftAddSkillConfirm, craftQuestionReader.ReadD());
 		Assert.Equal("Cooking", craftQuestionReader.ReadS());
@@ -2240,8 +2218,7 @@ public class GamePacketTests
 		Assert.Equal(0, craftQuestionReader.ReadD());
 		Assert.Equal(0, craftQuestionReader.Remaining);
 
-		var expansionQuestionPayload = SerializeUnencryptedPayload(
-			new SmQuestionWindow(SmQuestionWindow.WarehouseExpandWarning, 0, 0, "1200"));
+		var expansionQuestionPayload = SerializeUnencryptedPayload(new SmQuestionWindow(SmQuestionWindow.WarehouseExpandWarning, 0, 0, "1200"));
 		using var expansionQuestionReader = new PacketBuffer(expansionQuestionPayload);
 		Assert.Equal(SmQuestionWindow.WarehouseExpandWarning, expansionQuestionReader.ReadD());
 		Assert.Equal("1200", expansionQuestionReader.ReadS());
@@ -2261,17 +2238,14 @@ public class GamePacketTests
 					ObjectId = 1001,
 					Name = "Character",
 					Race = "ELYOS",
-					PortalCooldowns = new Dictionary<int, PlayerPortalCooldown>
-					{
-						[300030000] = new(300030000, 20_000, 2),
-					},
+					PortalCooldowns = new Dictionary<int, PlayerPortalCooldown> { [300030000] = new(300030000, 20_000, 2) },
 				},
 				new InstanceCooltimeTable(
-					[
-						new InstanceCooltimeSummary(8, 300030000, "PC_ALL", 5),
-						new InstanceCooltimeSummary(9, 300040000, "ASMODIANS", 1),
-					]),
-				() => DateTimeOffset.FromUnixTimeMilliseconds(10_000)));
+					[new InstanceCooltimeSummary(8, 300030000, "PC_ALL", 5), new InstanceCooltimeSummary(9, 300040000, "ASMODIANS", 1)]
+				),
+				() => DateTimeOffset.FromUnixTimeMilliseconds(10_000)
+			)
+		);
 		using var instanceInfoReader = new PacketBuffer(instanceInfoPayload);
 		Assert.Equal(2, (int)instanceInfoReader.ReadC());
 		Assert.Equal(0, instanceInfoReader.ReadD());
@@ -2294,8 +2268,7 @@ public class GamePacketTests
 		Assert.Equal("Character", instanceInfoReader.ReadS());
 		Assert.Equal(0, instanceInfoReader.Remaining);
 
-		var abyssRankPayload = SerializeUnencryptedPayload(
-			new SmAbyssRank(new PlayerAbyssRank(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)));
+		var abyssRankPayload = SerializeUnencryptedPayload(new SmAbyssRank(new PlayerAbyssRank(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)));
 		using var abyssRankReader = new PacketBuffer(abyssRankPayload);
 		Assert.Equal(3, abyssRankReader.ReadQ());
 		Assert.Equal(6, abyssRankReader.ReadD());
@@ -2317,7 +2290,8 @@ public class GamePacketTests
 		Assert.Equal(0, abyssRankReader.Remaining);
 
 		var abyssRankUpdatePayload = SerializeUnencryptedPayload(
-			SmAbyssRankUpdate.RankChange(new Player { ObjectId = 1001, AbyssRank = PlayerAbyssRank.Default() with { Rank = 5 } }));
+			SmAbyssRankUpdate.RankChange(new Player { ObjectId = 1001, AbyssRank = PlayerAbyssRank.Default() with { Rank = 5 } })
+		);
 		using var abyssRankUpdateReader = new PacketBuffer(abyssRankUpdatePayload);
 		Assert.Equal(0, (int)abyssRankUpdateReader.ReadC());
 		Assert.Equal(1001, abyssRankUpdateReader.ReadD());
@@ -2339,13 +2313,9 @@ public class GamePacketTests
 		Assert.Equal(0, (int)learnRecipeReader.ReadC());
 		Assert.Equal(0, learnRecipeReader.Remaining);
 
-		Assert.Equal(
-			Convert.FromHexString("7B000000"),
-			SerializeUnencryptedPayload(new SmRecipeDelete(123)));
+		Assert.Equal(Convert.FromHexString("7B000000"), SerializeUnencryptedPayload(new SmRecipeDelete(123)));
 
-		Assert.Equal(
-			Convert.FromHexString("010000000000"),
-			SerializeUnencryptedPayload(new SmAfterTimeCheck475()));
+		Assert.Equal(Convert.FromHexString("010000000000"), SerializeUnencryptedPayload(new SmAfterTimeCheck475()));
 
 		var uiSettings = SerializeUnencryptedPayload(new SmUiSettings([0xAA, 0xBB], type: 1));
 		Assert.Equal(0x1c00 + 3, uiSettings.Length);
@@ -2368,15 +2338,25 @@ public class GamePacketTests
 				ItemExpands = 4,
 				InventoryItems =
 				[
-					new InventoryItem { ObjectId = 88, ItemId = 100, Count = 1, IsEquipped = true, Location = 0, Slot = 1 },
+					new InventoryItem
+					{
+						ObjectId = 88,
+						ItemId = 100,
+						Count = 1,
+						IsEquipped = true,
+						Location = 0,
+						Slot = 1,
+					},
 				],
 			},
 			new ItemTemplateTable(
 				[
 					new ItemTemplateSummary(182400001, "Kinah", 0, 12350, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
 					new ItemTemplateSummary(100, "Sword", 0, 1, 1, "SWORD", "NORMAL", "COMMON", "PC_ALL", 1, 0, 3),
-				]),
-			() => 77);
+				]
+			),
+			() => 77
+		);
 		Assert.Equal(2, inventoryPackets.Count);
 
 		var inventoryPayload = SerializeUnencryptedPayload(inventoryPackets[0]);
@@ -2390,9 +2370,7 @@ public class GamePacketTests
 		Assert.Equal((88, 100, 203, 1, 0), ReadInventoryItemHeader(inventoryReader));
 		Assert.Equal(0, inventoryReader.Remaining);
 
-		Assert.Equal(
-			Convert.FromHexString("000203040000"),
-			SerializeUnencryptedPayload(inventoryPackets[1]));
+		Assert.Equal(Convert.FromHexString("000203040000"), SerializeUnencryptedPayload(inventoryPackets[1]));
 
 		var warehousePackets = SmWarehouseInfo.CreateLoginPackets(
 			new Player
@@ -2401,20 +2379,43 @@ public class GamePacketTests
 				WarehouseBonusExpands = 2,
 				WarehouseItems =
 				[
-					new InventoryItem { ObjectId = 88, ItemId = 100, Count = 1, Location = 1, Slot = 1 },
+					new InventoryItem
+					{
+						ObjectId = 88,
+						ItemId = 100,
+						Count = 1,
+						Location = 1,
+						Slot = 1,
+					},
 				],
 				AccountWarehouseItems =
 				[
-					new InventoryItem { ObjectId = 89, ItemId = 182400001, Count = 10, Location = 2, Slot = 0 },
-					new InventoryItem { ObjectId = 90, ItemId = 100, Count = 2, Location = 2, Slot = 2 },
+					new InventoryItem
+					{
+						ObjectId = 89,
+						ItemId = 182400001,
+						Count = 10,
+						Location = 2,
+						Slot = 0,
+					},
+					new InventoryItem
+					{
+						ObjectId = 90,
+						ItemId = 100,
+						Count = 2,
+						Location = 2,
+						Slot = 2,
+					},
 				],
 			},
 			new ItemTemplateTable(
 				[
 					new ItemTemplateSummary(182400001, "Kinah", 0, 12350, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
 					new ItemTemplateSummary(100, "Sword", 0, 1, 1, "SWORD", "NORMAL", "COMMON", "PC_ALL", 1, 0, 3),
-				]),
-			includeAuxiliaryStoragePlaceholders: false);
+				]
+			),
+			includeAuxiliaryStoragePlaceholders: false
+		);
 		Assert.Equal(4, warehousePackets.Count);
 
 		var regularWarehousePayload = SerializeUnencryptedPayload(warehousePackets[0]);
@@ -2428,9 +2429,7 @@ public class GamePacketTests
 		Assert.Equal((88, 100, 0, 203, 1), ReadWarehouseItemHeader(regularWarehouseReader));
 		Assert.Equal(0, regularWarehouseReader.Remaining);
 
-		Assert.Equal(
-			Convert.FromHexString("01000300000000"),
-			SerializeUnencryptedPayload(warehousePackets[1]));
+		Assert.Equal(Convert.FromHexString("01000300000000"), SerializeUnencryptedPayload(warehousePackets[1]));
 
 		var accountWarehousePayload = SerializeUnencryptedPayload(warehousePackets[2]);
 		using var accountWarehouseReader = new PacketBuffer(accountWarehousePayload);
@@ -2443,20 +2442,19 @@ public class GamePacketTests
 		Assert.Equal((89, 182400001, 0, 34, 0), ReadWarehouseItemHeader(accountWarehouseReader));
 		Assert.Equal(0, accountWarehouseReader.Remaining);
 
-		Assert.Equal(
-			Convert.FromHexString("02000000000000"),
-			SerializeUnencryptedPayload(warehousePackets[3]));
+		Assert.Equal(Convert.FromHexString("02000000000000"), SerializeUnencryptedPayload(warehousePackets[3]));
 		Assert.Equal(
 			Convert.FromHexString("0000000005000000"),
-			SerializeUnencryptedPayload(new SmChannelInfo(new WorldPosition(210010000, 1, 2, 3, 32), [new WorldMapSummary(210010000, false, 5)])));
+			SerializeUnencryptedPayload(new SmChannelInfo(new WorldPosition(210010000, 1, 2, 3, 32), [new WorldMapSummary(210010000, false, 5)]))
+		);
 		var teleportPayload = SerializeUnencryptedPayload(
 			new SmTeleportLoc(
 				new WorldPosition(300030000, 100.5f, 200.25f, 300.75f, 64, InstanceId: 7),
 				TeleportAnimation.FadeOutBeam,
-				[new WorldMapSummary(300030000, true, 1)]));
-		Assert.Equal(
-			Convert.FromHexString("013018E211070000000000C942004048430060964340"),
-			teleportPayload);
+				[new WorldMapSummary(300030000, true, 1)]
+			)
+		);
+		Assert.Equal(Convert.FromHexString("013018E211070000000000C942004048430060964340"), teleportPayload);
 		using var teleportReader = new PacketBuffer(teleportPayload);
 		Assert.Equal(TeleportAnimation.FadeOutBeam.Id, teleportReader.ReadC());
 		Assert.Equal(300030000, teleportReader.ReadD());
@@ -2472,10 +2470,11 @@ public class GamePacketTests
 				new SmTeleportLoc(
 					new WorldPosition(210010000, 1.5f, 2.5f, 3.5f, 32, InstanceId: 99),
 					TeleportAnimation.None,
-					[new WorldMapSummary(210010000, false, 1)])));
-		Assert.Equal(
-			Convert.FromHexString("7B000000"),
-			SerializeUnencryptedPayload(new SmGameTime(123)));
+					[new WorldMapSummary(210010000, false, 1)]
+				)
+			)
+		);
+		Assert.Equal(Convert.FromHexString("7B000000"), SerializeUnencryptedPayload(new SmGameTime(123)));
 
 		var bindPointPayload = SerializeUnencryptedPayload(new SmBindPointInfo(210010000, 1.5f, 2.5f, 3.5f));
 		using var bindPointReader = new PacketBuffer(bindPointPayload);
@@ -2499,12 +2498,7 @@ public class GamePacketTests
 		Assert.Equal(9001, kiskBindPointReader.ReadD());
 		Assert.Equal(0, kiskBindPointReader.Remaining);
 
-		var spawnPayload = SerializeUnencryptedPayload(
-			new SmPlayerSpawn(
-				new Player
-				{
-					Position = new WorldPosition(210010000, 1.5f, 2.5f, 3.5f, 32),
-				}));
+		var spawnPayload = SerializeUnencryptedPayload(new SmPlayerSpawn(new Player { Position = new WorldPosition(210010000, 1.5f, 2.5f, 3.5f, 32) }));
 		using var spawnReader = new PacketBuffer(spawnPayload);
 		Assert.Equal(210010000, spawnReader.ReadD());
 		Assert.Equal(210010000, spawnReader.ReadD());
@@ -2529,7 +2523,8 @@ public class GamePacketTests
 			AttackSpeed: 2000,
 			MaxHp: 2256,
 			RunSpeed: 4.23f,
-			BoundRadius: 0.595f);
+			BoundRadius: 0.595f
+		);
 		var postman = PostmanNpc.Create(
 			new Player
 			{
@@ -2539,7 +2534,8 @@ public class GamePacketTests
 				Position = new WorldPosition(210010000, 1, 2, 3, 30),
 			},
 			9001,
-			postmanTemplate);
+			postmanTemplate
+		);
 		Assert.Equal(1, postman.Position.X, precision: 4);
 		Assert.Equal(9, postman.Position.Y, precision: 4);
 
@@ -2556,8 +2552,7 @@ public class GamePacketTests
 		Assert.Equal(0, (int)npcReader.ReadC());
 		Assert.Equal(350579, npcReader.ReadD());
 
-		var attackableNpcPayload = SerializeUnencryptedPayload(
-			new SmNpcInfo(postman, creatureTypeId: (int)PlayerKiskCreatureType.Attackable));
+		var attackableNpcPayload = SerializeUnencryptedPayload(new SmNpcInfo(postman, creatureTypeId: (int)PlayerKiskCreatureType.Attackable));
 		using var attackableNpcReader = new PacketBuffer(attackableNpcPayload);
 		attackableNpcReader.ReadF();
 		attackableNpcReader.ReadF();
@@ -2571,9 +2566,7 @@ public class GamePacketTests
 		using var deleteReader = new PacketBuffer(deletePayload);
 		Assert.Equal(9001, deleteReader.ReadD());
 		Assert.Equal((byte)ObjectDeleteAnimation.FadeOut, deleteReader.ReadC());
-		Assert.Equal(
-			Convert.FromHexString("292300000B"),
-			SerializeUnencryptedPayload(new SmDelete(9001, ObjectDeleteAnimation.JumpIn)));
+		Assert.Equal(Convert.FromHexString("292300000B"), SerializeUnencryptedPayload(new SmDelete(9001, ObjectDeleteAnimation.JumpIn)));
 
 		var brokerTemplate = new NpcTemplateSummary(
 			799211,
@@ -2592,14 +2585,16 @@ public class GamePacketTests
 			RunSpeed: 4.5f,
 			BoundRadius: 0.6f,
 			TalkDistance: 5,
-			FunctionDialogIds: [33]);
+			FunctionDialogIds: [33]
+		);
 		var brokerNpc = new WorldNpc(
 			5001,
 			brokerTemplate.TemplateId,
 			brokerTemplate,
 			new WorldPosition(220070000, 1887.75f, 2878.98f, 532.835f, 70),
 			State: 6,
-			StaticId: 107);
+			StaticId: 107
+		);
 		var brokerNpcPayload = SerializeUnencryptedPayload(new SmNpcInfo(brokerNpc));
 		using var brokerNpcReader = new PacketBuffer(brokerNpcPayload);
 		Assert.Equal(1887.75f, brokerNpcReader.ReadF());
@@ -2777,16 +2772,11 @@ public class GamePacketTests
 				{
 					Houses =
 					[
-						new PlayerHouse(
-							50,
-							700100,
-							900100,
-							new DateTime(2026, 1, 1, 10, 0, 0, DateTimeKind.Local),
-							null,
-							IsInactive: false,
-							TownLevel: 4),
+						new PlayerHouse(50, 700100, 900100, new DateTime(2026, 1, 1, 10, 0, 0, DateTimeKind.Local), null, IsInactive: false, TownLevel: 4),
 					],
-				}));
+				}
+			)
+		);
 		using var reader = new PacketBuffer(payload);
 
 		Assert.Equal(700100, reader.ReadD());
@@ -2805,47 +2795,27 @@ public class GamePacketTests
 	{
 		var now = new DateTime(2026, 1, 12, 0, 0, 0, DateTimeKind.Local);
 		var overdueMessages = SmHouseOwnerInfo.CreateLoginSystemMessages(
-			new Player
-			{
-				Houses =
-				[
-					new PlayerHouse(50, 700100, 900100, now.AddDays(-30), now.AddSeconds(-1), IsInactive: false),
-				],
-			},
+			new Player { Houses = [new PlayerHouse(50, 700100, 900100, now.AddDays(-30), now.AddSeconds(-1), IsInactive: false)] },
 			payEnabled: true,
-			() => now);
+			() => now
+		);
 		Assert.Collection(overdueMessages, message => AssertSystemMessage(message, 1401226));
 
 		var payDisabledMessages = SmHouseOwnerInfo.CreateLoginSystemMessages(
-			new Player
-			{
-				Houses =
-				[
-					new PlayerHouse(50, 700100, 900100, now.AddDays(-30), now.AddSeconds(-1), IsInactive: false),
-				],
-			},
+			new Player { Houses = [new PlayerHouse(50, 700100, 900100, now.AddDays(-30), now.AddSeconds(-1), IsInactive: false)] },
 			payEnabled: false,
-			() => now);
+			() => now
+		);
 		Assert.Empty(payDisabledMessages);
 
 		var sequesterMessages = SmHouseOwnerInfo.CreateLoginSystemMessages(
-			new Player
-			{
-				Mailbox =
-				[
-					new PlayerMail(501, 1001, "$$HS_OVERDUE_3RD", "title", "body", true, 0, 0, 0, 0, now),
-				],
-			});
+			new Player { Mailbox = [new PlayerMail(501, 1001, "$$HS_OVERDUE_3RD", "title", "body", true, 0, 0, 0, 0, now)] }
+		);
 		Assert.Collection(sequesterMessages, message => AssertSystemMessage(message, 1401227));
 
 		var earlierOverdueMessages = SmHouseOwnerInfo.CreateLoginSystemMessages(
-			new Player
-			{
-				Mailbox =
-				[
-					new PlayerMail(502, 1001, "$$HS_OVERDUE_2ND", "title", "body", true, 0, 0, 0, 0, now),
-				],
-			});
+			new Player { Mailbox = [new PlayerMail(502, 1001, "$$HS_OVERDUE_2ND", "title", "body", true, 0, 0, 0, 0, now)] }
+		);
 		Assert.Empty(earlierOverdueMessages);
 	}
 
@@ -2886,8 +2856,10 @@ public class GamePacketTests
 				[
 					new ItemTemplateSummary(182400001, "Kinah", 0, 12350, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
 					new ItemTemplateSummary(100, "Sword", 0, 1 << 17, 1, "SWORD", "NORMAL", "COMMON", "PC_ALL", 1, 0, 3),
-				]),
-			() => 77);
+				]
+			),
+			() => 77
+		);
 
 		var inventoryPayload = SerializeUnencryptedPayload(inventoryPackets[0]);
 		using var inventoryReader = new PacketBuffer(inventoryPayload);
@@ -2957,7 +2929,8 @@ public class GamePacketTests
 		int firstStatId,
 		int firstStatValue,
 		int secondStatId,
-		int secondStatValue)
+		int secondStatValue
+	)
 	{
 		var inventoryPackets = SmInventoryInfo.CreateLoginPackets(
 			new Player
@@ -2980,22 +2953,11 @@ public class GamePacketTests
 			new ItemTemplateTable(
 				[
 					new ItemTemplateSummary(182400001, "Kinah", 0, 12350, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
-					new ItemTemplateSummary(
-						100,
-						"Tempered Item",
-						0,
-						1,
-						1,
-						itemGroup,
-						"NORMAL",
-						"COMMON",
-						"PC_ALL",
-						1,
-						0,
-						1,
-						TemperingName: temperingName),
-				]),
-			() => 77);
+					new ItemTemplateSummary(100, "Tempered Item", 0, 1, 1, itemGroup, "NORMAL", "COMMON", "PC_ALL", 1, 0, 1, TemperingName: temperingName),
+				]
+			),
+			() => 77
+		);
 
 		var inventoryPayload = SerializeUnencryptedPayload(inventoryPackets[0]);
 		using var reader = new PacketBuffer(inventoryPayload);
@@ -3032,28 +2994,25 @@ public class GamePacketTests
 			{
 				InventoryItems =
 				[
-					new InventoryItem { ObjectId = 88, ItemId = 100, Count = 1, IsEquipped = true, Location = 0, Slot = 1 },
+					new InventoryItem
+					{
+						ObjectId = 88,
+						ItemId = 100,
+						Count = 1,
+						IsEquipped = true,
+						Location = 0,
+						Slot = 1,
+					},
 				],
 			},
 			new ItemTemplateTable(
 				[
 					new ItemTemplateSummary(182400001, "Kinah", 0, 12350, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
-					new ItemTemplateSummary(
-						100,
-						"Sword",
-						0,
-						1,
-						1,
-						"SWORD",
-						"NORMAL",
-						"COMMON",
-						"PC_ALL",
-						1,
-						0,
-						3,
-						ConditioningMaxLevel: 1),
-				]),
-			() => 77);
+					new ItemTemplateSummary(100, "Sword", 0, 1, 1, "SWORD", "NORMAL", "COMMON", "PC_ALL", 1, 0, 3, ConditioningMaxLevel: 1),
+				]
+			),
+			() => 77
+		);
 
 		var inventoryPayload = SerializeUnencryptedPayload(inventoryPackets[0]);
 		using var reader = new PacketBuffer(inventoryPayload);
@@ -3085,7 +3044,15 @@ public class GamePacketTests
 			{
 				InventoryItems =
 				[
-					new InventoryItem { ObjectId = 88, ItemId = 100, Count = 1, IsEquipped = true, Location = 0, Slot = 1 },
+					new InventoryItem
+					{
+						ObjectId = 88,
+						ItemId = 100,
+						Count = 1,
+						IsEquipped = true,
+						Location = 0,
+						Slot = 1,
+					},
 				],
 			},
 			new ItemTemplateTable(
@@ -3110,9 +3077,12 @@ public class GamePacketTests
 							new ItemStatModifier("rate", "ATTACK_SPEED", 5, Bonus: true),
 							new ItemStatModifier("add", "MAXMP", 50, Bonus: false),
 							new ItemStatModifier("add", "POWER", 7, Bonus: true, ChargeCondition: 1),
-						]),
-				]),
-			() => 77);
+						]
+					),
+				]
+			),
+			() => 77
+		);
 
 		var inventoryPayload = SerializeUnencryptedPayload(inventoryPackets[0]);
 		using var reader = new PacketBuffer(inventoryPayload);
@@ -3153,25 +3123,31 @@ public class GamePacketTests
 	[Fact]
 	public void SmInventoryInfo_WritesCleanupSealFlagFromRestrictionTableLikeJava()
 	{
-		var cleanupTable = new ItemRestrictionCleanupTable(
-		[
-			new ItemRestrictionCleanupSummary(188053996, AccountWarehouse: 0),
-		]);
+		var cleanupTable = new ItemRestrictionCleanupTable([new ItemRestrictionCleanupSummary(188053996, AccountWarehouse: 0)]);
 		var inventoryPackets = SmInventoryInfo.CreateLoginPackets(
 			new Player
 			{
 				InventoryItems =
 				[
-					new InventoryItem { ObjectId = 88, ItemId = 188053996, Count = 1, Location = 0, Slot = 1 },
+					new InventoryItem
+					{
+						ObjectId = 88,
+						ItemId = 188053996,
+						Count = 1,
+						Location = 0,
+						Slot = 1,
+					},
 				],
 			},
 			new ItemTemplateTable(
 				[
 					new ItemTemplateSummary(182400001, "Kinah", 0, 12350, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
 					new ItemTemplateSummary(188053996, "Emperor Trillirunerk's Feather Box", 0, 123, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
-				]),
+				]
+			),
 			() => 77,
-			cleanupTable);
+			cleanupTable
+		);
 
 		var inventoryPayload = SerializeUnencryptedPayload(inventoryPackets[0]);
 		using var reader = new PacketBuffer(inventoryPayload);
@@ -3204,9 +3180,18 @@ public class GamePacketTests
 		var payload = SerializeUnencryptedPayload(
 			SmWarehouseAddItem.CreateAllSlot(
 				SmWarehouseAddItem.AccountWarehouse,
-				new InventoryItem { ObjectId = 88, ItemId = 188053996, Count = 1, Location = 2, Slot = 7 },
+				new InventoryItem
+				{
+					ObjectId = 88,
+					ItemId = 188053996,
+					Count = 1,
+					Location = 2,
+					Slot = 7,
+				},
 				new ItemTemplateSummary(188053996, "Emperor Trillirunerk's Feather Box", 0, 123, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
-				generalInfoWarehouseRestrictionFlag: 3));
+				generalInfoWarehouseRestrictionFlag: 3
+			)
+		);
 		using var reader = new PacketBuffer(payload);
 		Assert.Equal(SmWarehouseAddItem.AccountWarehouse, (int)reader.ReadC());
 		Assert.Equal(SmWarehouseAddItem.AllSlot, reader.ReadH());
@@ -3235,9 +3220,18 @@ public class GamePacketTests
 	{
 		var payload = SerializeUnencryptedPayload(
 			SmInventoryAddItem.CreateItemCollect(
-				new InventoryItem { ObjectId = 88, ItemId = 188053996, Count = 1, Location = 0, Slot = 7 },
+				new InventoryItem
+				{
+					ObjectId = 88,
+					ItemId = 188053996,
+					Count = 1,
+					Location = 0,
+					Slot = 7,
+				},
 				new ItemTemplateSummary(188053996, "Emperor Trillirunerk's Feather Box", 0, 123, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
-				generalInfoWarehouseRestrictionFlag: 3));
+				generalInfoWarehouseRestrictionFlag: 3
+			)
+		);
 		using var reader = new PacketBuffer(payload);
 		Assert.Equal(SmInventoryAddItem.ItemCollect, reader.ReadH());
 		Assert.Equal(1, reader.ReadH());
@@ -3253,9 +3247,18 @@ public class GamePacketTests
 	{
 		var payload = SerializeUnencryptedPayload(
 			SmInventoryAddItem.CreateBrokerBuy(
-				new InventoryItem { ObjectId = 89, ItemId = 188053996, Count = 1, Location = 0, Slot = 9 },
+				new InventoryItem
+				{
+					ObjectId = 89,
+					ItemId = 188053996,
+					Count = 1,
+					Location = 0,
+					Slot = 9,
+				},
 				new ItemTemplateSummary(188053996, "Emperor Trillirunerk's Feather Box", 0, 123, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
-				generalInfoWarehouseRestrictionFlag: 3));
+				generalInfoWarehouseRestrictionFlag: 3
+			)
+		);
 		using var reader = new PacketBuffer(payload);
 		Assert.Equal(SmInventoryAddItem.BrokerBuy, reader.ReadH());
 		Assert.Equal(1, reader.ReadH());
@@ -3271,9 +3274,18 @@ public class GamePacketTests
 	{
 		var payload = SerializeUnencryptedPayload(
 			SmInventoryAddItem.CreateBrokerReturn(
-				new InventoryItem { ObjectId = 90, ItemId = 188053996, Count = 1, Location = 0, Slot = 10 },
+				new InventoryItem
+				{
+					ObjectId = 90,
+					ItemId = 188053996,
+					Count = 1,
+					Location = 0,
+					Slot = 10,
+				},
 				new ItemTemplateSummary(188053996, "Emperor Trillirunerk's Feather Box", 0, 123, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
-				generalInfoWarehouseRestrictionFlag: 3));
+				generalInfoWarehouseRestrictionFlag: 3
+			)
+		);
 		using var reader = new PacketBuffer(payload);
 		Assert.Equal(SmInventoryAddItem.BrokerReturn, reader.ReadH());
 		Assert.Equal(1, reader.ReadH());
@@ -3289,10 +3301,19 @@ public class GamePacketTests
 	{
 		var payload = SerializeUnencryptedPayload(
 			new SmInventoryUpdateItem(
-				new InventoryItem { ObjectId = 88, ItemId = 188053996, Count = 1, Location = 0, Slot = 7 },
+				new InventoryItem
+				{
+					ObjectId = 88,
+					ItemId = 188053996,
+					Count = 1,
+					Location = 0,
+					Slot = 7,
+				},
 				new ItemTemplateSummary(188053996, "Emperor Trillirunerk's Feather Box", 0, 123, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
 				SmInventoryUpdateItem.IncreaseItemCollect,
-				generalInfoWarehouseRestrictionFlag: 3));
+				generalInfoWarehouseRestrictionFlag: 3
+			)
+		);
 		using var reader = new PacketBuffer(payload);
 		Assert.Equal(88, reader.ReadD());
 		Assert.Equal(string.Empty, reader.ReadS());
@@ -3323,14 +3344,37 @@ public class GamePacketTests
 					LifeStats = new PlayerLifeStats(111, 205, 55),
 					InventoryItems =
 					[
-						new InventoryItem { ObjectId = 1, ItemId = 100, Location = 0 },
-						new InventoryItem { ObjectId = 2, ItemId = 200, Location = 0, IsEquipped = true },
-						new InventoryItem { ObjectId = 3, ItemId = 182400001, Location = 0 },
-						new InventoryItem { ObjectId = 4, ItemId = 300, Location = 1 },
+						new InventoryItem
+						{
+							ObjectId = 1,
+							ItemId = 100,
+							Location = 0,
+						},
+						new InventoryItem
+						{
+							ObjectId = 2,
+							ItemId = 200,
+							Location = 0,
+							IsEquipped = true,
+						},
+						new InventoryItem
+						{
+							ObjectId = 3,
+							ItemId = 182400001,
+							Location = 0,
+						},
+						new InventoryItem
+						{
+							ObjectId = 4,
+							ItemId = 300,
+							Location = 1,
+						},
 					],
 				},
 				new PlayerExperienceTable([0, 400]),
-				gameMinutes: 321));
+				gameMinutes: 321
+			)
+		);
 
 		using var reader = new PacketBuffer(payload);
 		Assert.Equal(1001, reader.ReadD());
@@ -3398,11 +3442,7 @@ public class GamePacketTests
 			LifeStats = new PlayerLifeStats(111, 205, 55),
 		};
 		player.Movement.Mask = MovementMask.Position | MovementMask.Manual;
-		var payload = SerializeUnencryptedPayload(
-			new SmStatsInfo(
-				player,
-				new PlayerExperienceTable([0, 400]),
-				gameMinutes: 321));
+		var payload = SerializeUnencryptedPayload(new SmStatsInfo(player, new PlayerExperienceTable([0, 400]), gameMinutes: 321));
 
 		using var reader = new PacketBuffer(payload);
 		reader.ReadB(96);
@@ -3415,247 +3455,202 @@ public class GamePacketTests
 	public void SmStatsInfo_AppliesEquippedItemTemplateStats()
 	{
 		var templates = new ItemTemplateTable(
-		[
-			new ItemTemplateSummary(
-				200,
-				"Training Sword",
-				0,
-				1,
-				1,
-				"SWORD",
-				"NORMAL",
-				"COMMON",
-				"PC_ALL",
-				1,
-				0,
-				3,
-				AttackType: "PHYSICAL",
-				WeaponStats: new ItemWeaponStats(
-					MinDamage: 20,
-					MaxDamage: 30,
-					AttackSpeed: 1400,
-					PhysicalCritical: 50,
-					PhysicalAccuracy: 52,
-					Parry: 173,
-					MagicalAccuracy: 10,
-					MagicalBoost: 0,
-					AttackRange: 1500,
-					HitCount: 2,
-					ReduceMax: 0),
-				Modifiers:
-				[
-					new ItemStatModifier("add", "MAXHP", 33, Bonus: true),
-					new ItemStatModifier("add", "PHYSICAL_ATTACK", 7, Bonus: true),
-				],
-				StatBonusSetId: 10,
-				EnchantName: "TRAINING_ENCHANT"),
-			new ItemTemplateSummary(
-				300,
-				"Training Breastplate",
-				0,
-				1,
-				1,
-				"CL_TORSO",
-				"NORMAL",
-				"COMMON",
-				"PC_ALL",
-				1,
-				0,
-				8,
-				Modifiers:
-				[
-					new ItemStatModifier("add", "PHYSICAL_DEFENSE", 20, Bonus: true),
-					new ItemStatModifier("add", "MAGICAL_RESIST", 5, Bonus: true),
-					new ItemStatModifier("add", "BLOCK", 9, Bonus: true),
-					new ItemStatModifier("add", "MAXHP", 12, Bonus: true, ChargeCondition: 2),
-					new ItemStatModifier("add", "MAXMP", 9, Bonus: true, ChargeCondition: 1),
-				],
-				TemperingName: "TRAINING_TEMPER"),
-			new ItemTemplateSummary(
-				400,
-				"Manastone: HP +20",
-				0,
-				1,
-				1,
-				"MANASTONE",
-				"NORMAL",
-				"COMMON",
-				"PC_ALL",
-				1,
-				0,
-				0,
-				Modifiers:
-				[
-					new ItemStatModifier("add", "MAXHP", 20, Bonus: true),
-					new ItemStatModifier("add", "PHYSICAL_ACCURACY", 12, Bonus: true),
-				]),
-			new ItemTemplateSummary(
-				500,
-				"Fusion Staff",
-				0,
-				1,
-				1,
-				"STAFF",
-				"NORMAL",
-				"COMMON",
-				"PC_ALL",
-				1,
-				0,
-				3,
-				AttackType: "MAGICAL",
-				WeaponStats: new ItemWeaponStats(
-					MinDamage: 10,
-					MaxDamage: 10,
-					AttackSpeed: 2000,
-					PhysicalCritical: 0,
-					PhysicalAccuracy: 0,
-					Parry: 0,
-					MagicalAccuracy: 0,
-					MagicalBoost: 40,
-					AttackRange: 1500,
-					HitCount: 2,
-					ReduceMax: 0),
-				Modifiers:
-				[
-					new ItemStatModifier("add", "PHYSICAL_ATTACK", 2, Bonus: false),
-					new ItemStatModifier("add", "ATTACK_SPEED", 100, Bonus: true),
-				],
-				StatBonusSetId: 11),
-			new ItemTemplateSummary(
-				401,
-				"Manastone: Magic Boost +12",
-				0,
-				1,
-				1,
-				"MANASTONE",
-				"NORMAL",
-				"COMMON",
-				"PC_ALL",
-				1,
-				0,
-				0,
-				Modifiers:
-				[
-					new ItemStatModifier("add", "BOOST_MAGICAL_SKILL", 12, Bonus: true),
-				]),
-			new ItemTemplateSummary(
-				600,
-				"Training Idian",
-				0,
-				1,
-				1,
-				"NONE",
-				"NORMAL",
-				"COMMON",
-				"PC_ALL",
-				1,
-				0,
-				0,
-				PolishSetId: 12),
-		]);
-		var randomBonuses = new ItemRandomBonusTable(
-		[
-			new ItemRandomBonusSummary(
-				"INVENTORY",
-				10,
-				[
-					[new ItemStatModifier("add", "MAXHP", 11, Bonus: true)],
-				]),
-			new ItemRandomBonusSummary(
-				"INVENTORY",
-				11,
-				[
-					[new ItemStatModifier("add", "BOOST_MAGICAL_SKILL", 5, Bonus: true)],
-				]),
-			new ItemRandomBonusSummary(
-				"POLISH",
-				12,
-				[
+			[
+				new ItemTemplateSummary(
+					200,
+					"Training Sword",
+					0,
+					1,
+					1,
+					"SWORD",
+					"NORMAL",
+					"COMMON",
+					"PC_ALL",
+					1,
+					0,
+					3,
+					AttackType: "PHYSICAL",
+					WeaponStats: new ItemWeaponStats(
+						MinDamage: 20,
+						MaxDamage: 30,
+						AttackSpeed: 1400,
+						PhysicalCritical: 50,
+						PhysicalAccuracy: 52,
+						Parry: 173,
+						MagicalAccuracy: 10,
+						MagicalBoost: 0,
+						AttackRange: 1500,
+						HitCount: 2,
+						ReduceMax: 0
+					),
+					Modifiers: [new ItemStatModifier("add", "MAXHP", 33, Bonus: true), new ItemStatModifier("add", "PHYSICAL_ATTACK", 7, Bonus: true)],
+					StatBonusSetId: 10,
+					EnchantName: "TRAINING_ENCHANT"
+				),
+				new ItemTemplateSummary(
+					300,
+					"Training Breastplate",
+					0,
+					1,
+					1,
+					"CL_TORSO",
+					"NORMAL",
+					"COMMON",
+					"PC_ALL",
+					1,
+					0,
+					8,
+					Modifiers:
 					[
-						new ItemStatModifier("add", "MAXHP", 13, Bonus: true),
-						new ItemStatModifier("add", "MAXMP", 8, Bonus: true),
+						new ItemStatModifier("add", "PHYSICAL_DEFENSE", 20, Bonus: true),
+						new ItemStatModifier("add", "MAGICAL_RESIST", 5, Bonus: true),
+						new ItemStatModifier("add", "BLOCK", 9, Bonus: true),
+						new ItemStatModifier("add", "MAXHP", 12, Bonus: true, ChargeCondition: 2),
+						new ItemStatModifier("add", "MAXMP", 9, Bonus: true, ChargeCondition: 1),
 					],
-				]),
-		]);
-		var itemSets = new ItemSetTable(
-		[
-			new ItemSetSummary(
-				1,
-				"Training Set",
-				new HashSet<int> { 200, 300 },
-				[
-					new ItemSetPartBonus(
-						2,
-						[
-							new ItemStatModifier("add", "PHYSICAL_DEFENSE", 15, Bonus: true),
-						]),
-				],
-				new ItemSetFullBonus(
-					2,
+					TemperingName: "TRAINING_TEMPER"
+				),
+				new ItemTemplateSummary(
+					400,
+					"Manastone: HP +20",
+					0,
+					1,
+					1,
+					"MANASTONE",
+					"NORMAL",
+					"COMMON",
+					"PC_ALL",
+					1,
+					0,
+					0,
+					Modifiers: [new ItemStatModifier("add", "MAXHP", 20, Bonus: true), new ItemStatModifier("add", "PHYSICAL_ACCURACY", 12, Bonus: true)]
+				),
+				new ItemTemplateSummary(
+					500,
+					"Fusion Staff",
+					0,
+					1,
+					1,
+					"STAFF",
+					"NORMAL",
+					"COMMON",
+					"PC_ALL",
+					1,
+					0,
+					3,
+					AttackType: "MAGICAL",
+					WeaponStats: new ItemWeaponStats(
+						MinDamage: 10,
+						MaxDamage: 10,
+						AttackSpeed: 2000,
+						PhysicalCritical: 0,
+						PhysicalAccuracy: 0,
+						Parry: 0,
+						MagicalAccuracy: 0,
+						MagicalBoost: 40,
+						AttackRange: 1500,
+						HitCount: 2,
+						ReduceMax: 0
+					),
+					Modifiers: [new ItemStatModifier("add", "PHYSICAL_ATTACK", 2, Bonus: false), new ItemStatModifier("add", "ATTACK_SPEED", 100, Bonus: true)],
+					StatBonusSetId: 11
+				),
+				new ItemTemplateSummary(
+					401,
+					"Manastone: Magic Boost +12",
+					0,
+					1,
+					1,
+					"MANASTONE",
+					"NORMAL",
+					"COMMON",
+					"PC_ALL",
+					1,
+					0,
+					0,
+					Modifiers: [new ItemStatModifier("add", "BOOST_MAGICAL_SKILL", 12, Bonus: true)]
+				),
+				new ItemTemplateSummary(600, "Training Idian", 0, 1, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0, PolishSetId: 12),
+			]
+		);
+		var randomBonuses = new ItemRandomBonusTable(
+			[
+				new ItemRandomBonusSummary(
+					"INVENTORY",
+					10,
 					[
-						new ItemStatModifier("add", "MAXHP", 46, Bonus: true),
-					])),
-		]);
+						[new ItemStatModifier("add", "MAXHP", 11, Bonus: true)],
+					]
+				),
+				new ItemRandomBonusSummary(
+					"INVENTORY",
+					11,
+					[
+						[new ItemStatModifier("add", "BOOST_MAGICAL_SKILL", 5, Bonus: true)],
+					]
+				),
+				new ItemRandomBonusSummary(
+					"POLISH",
+					12,
+					[
+						[new ItemStatModifier("add", "MAXHP", 13, Bonus: true), new ItemStatModifier("add", "MAXMP", 8, Bonus: true)],
+					]
+				),
+			]
+		);
+		var itemSets = new ItemSetTable(
+			[
+				new ItemSetSummary(
+					1,
+					"Training Set",
+					new HashSet<int> { 200, 300 },
+					[new ItemSetPartBonus(2, [new ItemStatModifier("add", "PHYSICAL_DEFENSE", 15, Bonus: true)])],
+					new ItemSetFullBonus(2, [new ItemStatModifier("add", "MAXHP", 46, Bonus: true)])
+				),
+			]
+		);
 		var enchantTemplates = new EnchantTable(
-		[
-			new EnchantGroupSummary(
-				"TRAINING_ENCHANT",
-				[
-					new EnchantLevelSummary(
-						1,
-						[
-							new EnchantStatSummary("PHYSICAL_ATTACK", 3),
-						]),
-					new EnchantLevelSummary(
-						2,
-						[
-							new EnchantStatSummary("PHYSICAL_ATTACK", 9),
-							new EnchantStatSummary("PHYSICAL_ACCURACY", 6),
-						]),
-					new EnchantLevelSummary(
-						3,
-						[
-							new EnchantStatSummary("PHYSICAL_ATTACK", 1),
-						]),
-				]),
-		]);
+			[
+				new EnchantGroupSummary(
+					"TRAINING_ENCHANT",
+					[
+						new EnchantLevelSummary(1, [new EnchantStatSummary("PHYSICAL_ATTACK", 3)]),
+						new EnchantLevelSummary(2, [new EnchantStatSummary("PHYSICAL_ATTACK", 9), new EnchantStatSummary("PHYSICAL_ACCURACY", 6)]),
+						new EnchantLevelSummary(3, [new EnchantStatSummary("PHYSICAL_ATTACK", 1)]),
+					]
+				),
+			]
+		);
 		var temperingTemplates = new TemperingTable(
-		[
-			new TemperingGroupSummary(
-				"TRAINING_TEMPER",
-				[
-					new TemperingLevelSummary(
-						2,
-						[
-							new TemperingStatSummary("MAXHP", 22),
-							new TemperingStatSummary("PHYSICAL_DEFENSE", 5),
-							new TemperingStatSummary("MAGICAL_RESIST", 4),
-						]),
-				]),
-		]);
+			[
+				new TemperingGroupSummary(
+					"TRAINING_TEMPER",
+					[
+						new TemperingLevelSummary(
+							2,
+							[new TemperingStatSummary("MAXHP", 22), new TemperingStatSummary("PHYSICAL_DEFENSE", 5), new TemperingStatSummary("MAGICAL_RESIST", 4)]
+						),
+					]
+				),
+			]
+		);
 		var skillTemplates = new SkillTemplateTable(
-		[
-			new SkillTemplateSummary(
-				40,
-				"Basic Cloth Armor Proficiency",
-				0,
-				1,
-				"P_EQUIP_ENHANCEDCLOTH",
-				"P_EQUIP_ENHANCEDCLOTH",
-				"PHYSICAL",
-				"NONE",
-				0,
-				0,
-				[
-					new SkillArmorMasteryEffectSummary(
-						"CLOTHES",
-						10,
-						0,
-						[
-							new SkillStatChange("PHYSICAL_DEFENSE", "PERCENT", 10, 0),
-						]),
-				]),
-		]);
+			[
+				new SkillTemplateSummary(
+					40,
+					"Basic Cloth Armor Proficiency",
+					0,
+					1,
+					"P_EQUIP_ENHANCEDCLOTH",
+					"P_EQUIP_ENHANCEDCLOTH",
+					"PHYSICAL",
+					"NONE",
+					0,
+					0,
+					[new SkillArmorMasteryEffectSummary("CLOTHES", 10, 0, [new SkillStatChange("PHYSICAL_DEFENSE", "PERCENT", 10, 0)])]
+				),
+			]
+		);
 
 		var payload = SerializeUnencryptedPayload(
 			new SmStatsInfo(
@@ -3681,7 +3676,16 @@ public class GamePacketTests
 							FusionStones = [new ItemStoneSocket(401, 0)],
 							IdianStone = new PlayerIdianStone(600, 1, 123456),
 						},
-						new InventoryItem { ObjectId = 3, ItemId = 300, Location = 0, IsEquipped = true, Slot = 8, Charge = 500000, Tempering = 2 },
+						new InventoryItem
+						{
+							ObjectId = 3,
+							ItemId = 300,
+							Location = 0,
+							IsEquipped = true,
+							Slot = 8,
+							Charge = 500000,
+							Tempering = 2,
+						},
 					],
 				},
 				new PlayerExperienceTable([0, 400]),
@@ -3691,7 +3695,9 @@ public class GamePacketTests
 				itemSets,
 				enchantTemplates,
 				temperingTemplates,
-				skillTemplates));
+				skillTemplates
+			)
+		);
 
 		using var reader = new PacketBuffer(payload);
 		Assert.Equal(1001, reader.ReadD());
@@ -3755,56 +3761,54 @@ public class GamePacketTests
 	public void SmStatsInfo_AppliesWeaponMasteryToMatchingWeaponHands()
 	{
 		var templates = new ItemTemplateTable(
-		[
-			new ItemTemplateSummary(
-				200,
-				"Training Sword",
-				0,
-				1,
-				1,
-				"SWORD",
-				"NORMAL",
-				"COMMON",
-				"PC_ALL",
-				1,
-				0,
-				3,
-				AttackType: "PHYSICAL",
-				WeaponStats: new ItemWeaponStats(
-					MinDamage: 20,
-					MaxDamage: 30,
-					AttackSpeed: 1400,
-					PhysicalCritical: 50,
-					PhysicalAccuracy: 52,
-					Parry: 173,
-					MagicalAccuracy: 10,
-					MagicalBoost: 0,
-					AttackRange: 1500,
-					HitCount: 2,
-					ReduceMax: 0)),
-		]);
+			[
+				new ItemTemplateSummary(
+					200,
+					"Training Sword",
+					0,
+					1,
+					1,
+					"SWORD",
+					"NORMAL",
+					"COMMON",
+					"PC_ALL",
+					1,
+					0,
+					3,
+					AttackType: "PHYSICAL",
+					WeaponStats: new ItemWeaponStats(
+						MinDamage: 20,
+						MaxDamage: 30,
+						AttackSpeed: 1400,
+						PhysicalCritical: 50,
+						PhysicalAccuracy: 52,
+						Parry: 173,
+						MagicalAccuracy: 10,
+						MagicalBoost: 0,
+						AttackRange: 1500,
+						HitCount: 2,
+						ReduceMax: 0
+					)
+				),
+			]
+		);
 		var skillTemplates = new SkillTemplateTable(
-		[
-			new SkillTemplateSummary(
-				37,
-				"Basic Sword Training",
-				0,
-				1,
-				"P_EQUIP_ENHANCEDSWORD",
-				"P_EQUIP_ENHANCEDSWORD",
-				"PHYSICAL",
-				"NONE",
-				0,
-				0,
-				WeaponMasteryEffects:
-				[
-					new SkillWeaponMasteryEffectSummary(
-						"SWORD",
-						[
-							new SkillStatChange("PHYSICAL_ATTACK", "PERCENT", 16, 0),
-						]),
-				]),
-		]);
+			[
+				new SkillTemplateSummary(
+					37,
+					"Basic Sword Training",
+					0,
+					1,
+					"P_EQUIP_ENHANCEDSWORD",
+					"P_EQUIP_ENHANCEDSWORD",
+					"PHYSICAL",
+					"NONE",
+					0,
+					0,
+					WeaponMasteryEffects: [new SkillWeaponMasteryEffectSummary("SWORD", [new SkillStatChange("PHYSICAL_ATTACK", "PERCENT", 16, 0)])]
+				),
+			]
+		);
 		var payload = SerializeUnencryptedPayload(
 			new SmStatsInfo(
 				new Player
@@ -3814,14 +3818,30 @@ public class GamePacketTests
 					Skills = [new PlayerSkill { SkillId = 37, SkillLevel = 1 }],
 					InventoryItems =
 					[
-						new InventoryItem { ObjectId = 2, ItemId = 200, Location = 0, IsEquipped = true, Slot = 1 },
-						new InventoryItem { ObjectId = 3, ItemId = 200, Location = 0, IsEquipped = true, Slot = 2 },
+						new InventoryItem
+						{
+							ObjectId = 2,
+							ItemId = 200,
+							Location = 0,
+							IsEquipped = true,
+							Slot = 1,
+						},
+						new InventoryItem
+						{
+							ObjectId = 3,
+							ItemId = 200,
+							Location = 0,
+							IsEquipped = true,
+							Slot = 2,
+						},
 					],
 				},
 				new PlayerExperienceTable([0, 400]),
 				gameMinutes: 321,
 				itemTemplates: templates,
-				skillTemplates: skillTemplates));
+				skillTemplates: skillTemplates
+			)
+		);
 
 		using var reader = new PacketBuffer(payload);
 		Assert.Equal(1001, reader.ReadD());
@@ -3854,42 +3874,25 @@ public class GamePacketTests
 	public void SmStatsInfo_AppliesShieldMasteryWhenShieldEquipped()
 	{
 		var templates = new ItemTemplateTable(
-		[
-			new ItemTemplateSummary(
-				201,
-				"Training Shield",
-				0,
-				1,
-				1,
-				"SHIELD",
-				"NORMAL",
-				"COMMON",
-				"PC_ALL",
-				1,
-				0,
-				2),
-		]);
+			[new ItemTemplateSummary(201, "Training Shield", 0, 1, 1, "SHIELD", "NORMAL", "COMMON", "PC_ALL", 1, 0, 2)]
+		);
 		var skillTemplates = new SkillTemplateTable(
-		[
-			new SkillTemplateSummary(
-				50,
-				"Advanced Shield Training I",
-				0,
-				1,
-				"P_EQUIP_ENHANCEDSHIELD",
-				"P_EQUIP_SHIELD",
-				"PHYSICAL",
-				"NONE",
-				0,
-				0,
-				ShieldMasteryEffects:
-				[
-					new SkillShieldMasteryEffectSummary(
-					[
-						new SkillStatChange("BLOCK", "PERCENT", 5, 0),
-					]),
-				]),
-		]);
+			[
+				new SkillTemplateSummary(
+					50,
+					"Advanced Shield Training I",
+					0,
+					1,
+					"P_EQUIP_ENHANCEDSHIELD",
+					"P_EQUIP_SHIELD",
+					"PHYSICAL",
+					"NONE",
+					0,
+					0,
+					ShieldMasteryEffects: [new SkillShieldMasteryEffectSummary([new SkillStatChange("BLOCK", "PERCENT", 5, 0)])]
+				),
+			]
+		);
 		var payload = SerializeUnencryptedPayload(
 			new SmStatsInfo(
 				new Player
@@ -3899,13 +3902,22 @@ public class GamePacketTests
 					Skills = [new PlayerSkill { SkillId = 50, SkillLevel = 1 }],
 					InventoryItems =
 					[
-						new InventoryItem { ObjectId = 3, ItemId = 201, Location = 0, IsEquipped = true, Slot = 2 },
+						new InventoryItem
+						{
+							ObjectId = 3,
+							ItemId = 201,
+							Location = 0,
+							IsEquipped = true,
+							Slot = 2,
+						},
 					],
 				},
 				new PlayerExperienceTable([0, 400]),
 				gameMinutes: 321,
 				itemTemplates: templates,
-				skillTemplates: skillTemplates));
+				skillTemplates: skillTemplates
+			)
+		);
 
 		using var reader = new PacketBuffer(payload);
 		Assert.Equal(1001, reader.ReadD());
@@ -3950,17 +3962,16 @@ public class GamePacketTests
 	public void SmStatsInfo_AppliesBonusTitleStats()
 	{
 		var titleTemplates = new TitleTemplateTable(
-		[
-			new TitleTemplateSummary(
-				1,
-				1100900,
-				"Poeta's Protector",
-				"ELYOS",
-				[
-					new ItemStatModifier("add", "MAXHP", 20, Bonus: true),
-					new ItemStatModifier("add", "PHYSICAL_DEFENSE", 5, Bonus: true),
-				]),
-		]);
+			[
+				new TitleTemplateSummary(
+					1,
+					1100900,
+					"Poeta's Protector",
+					"ELYOS",
+					[new ItemStatModifier("add", "MAXHP", 20, Bonus: true), new ItemStatModifier("add", "PHYSICAL_DEFENSE", 5, Bonus: true)]
+				),
+			]
+		);
 		var payload = SerializeUnencryptedPayload(
 			new SmStatsInfo(
 				new Player
@@ -3972,7 +3983,9 @@ public class GamePacketTests
 				new PlayerExperienceTable([0, 400]),
 				gameMinutes: 321,
 				itemTemplates: new ItemTemplateTable([]),
-				titleTemplates: titleTemplates));
+				titleTemplates: titleTemplates
+			)
+		);
 
 		using var reader = new PacketBuffer(payload);
 		Assert.Equal(1001, reader.ReadD());
@@ -4037,17 +4050,16 @@ public class GamePacketTests
 						Level = 12,
 						TitleId = 5,
 						LastOnlineEpochSeconds = 100,
-						VisibleItems =
-						[
-							new VisibleCharacterItem(1, 110101001, 168000001, 0x123456),
-						],
+						VisibleItems = [new VisibleCharacterItem(1, 110101001, 168000001, 0x123456)],
 						DeletionTimeSeconds = 200,
 						Display = 5,
 						UnreadMailCount = 1,
 						BrokerKinah = 300,
 						BanInfo = new CharacterBanInfo(400, 500, "reason"),
 					},
-				]));
+				]
+			)
+		);
 
 		using var reader = new PacketBuffer(payload);
 		Assert.Equal(1234, reader.ReadD());
@@ -4106,10 +4118,9 @@ public class GamePacketTests
 			new SmL2AuthLoginCheck(
 				ok: true,
 				"test",
-				[
-					new WorldMapSummary(210010000, IsInstance: false, TwinCount: 5),
-					new WorldMapSummary(300030000, IsInstance: true, TwinCount: 9),
-				]));
+				[new WorldMapSummary(210010000, IsInstance: false, TwinCount: 5), new WorldMapSummary(300030000, IsInstance: true, TwinCount: 9)]
+			)
+		);
 
 		Assert.Equal(0, BinaryPrimitives.ReadInt32LittleEndian(payload.AsSpan(0, 4)));
 		Assert.Contains(Convert.FromHexString("0200907F840C05003018E2110000"), payload);
@@ -4127,11 +4138,7 @@ public class GamePacketTests
 	[Fact]
 	public void SmMove_WritesJavaShapedMovementPayload()
 	{
-		var player = new Player
-		{
-			ObjectId = 1234,
-			Position = new WorldPosition(210010000, 1.25f, 2.5f, 3.75f, 9),
-		};
+		var player = new Player { ObjectId = 1234, Position = new WorldPosition(210010000, 1.25f, 2.5f, 3.75f, 9) };
 		player.Movement.Mask = (byte)(MovementMask.Position | MovementMask.Manual);
 		player.Movement.VectorX = 4.25f;
 		player.Movement.VectorY = 5.5f;
@@ -4154,11 +4161,7 @@ public class GamePacketTests
 	[Fact]
 	public void SmMove_WritesAbsoluteGlideAndVehicleTails()
 	{
-		var player = new Player
-		{
-			ObjectId = 4321,
-			Position = new WorldPosition(210010000, 10, 20, 30, 40),
-		};
+		var player = new Player { ObjectId = 4321, Position = new WorldPosition(210010000, 10, 20, 30, 40) };
 		player.Movement.Mask = (byte)(MovementMask.Position | MovementMask.Manual | MovementMask.Absolute | MovementMask.Glide | MovementMask.Vehicle);
 		player.Movement.TargetX = 11;
 		player.Movement.TargetY = 22;
@@ -4178,7 +4181,10 @@ public class GamePacketTests
 		Assert.Equal(20, reader.ReadF());
 		Assert.Equal(30, reader.ReadF());
 		Assert.Equal(40, (int)reader.ReadC());
-		Assert.Equal(MovementMask.Position | MovementMask.Manual | MovementMask.Absolute | MovementMask.Glide | MovementMask.Vehicle, (int)reader.ReadC());
+		Assert.Equal(
+			MovementMask.Position | MovementMask.Manual | MovementMask.Absolute | MovementMask.Glide | MovementMask.Vehicle,
+			(int)reader.ReadC()
+		);
 		Assert.Equal(11, reader.ReadF());
 		Assert.Equal(22, reader.ReadF());
 		Assert.Equal(33, reader.ReadF());
@@ -4195,9 +4201,7 @@ public class GamePacketTests
 	[Fact]
 	public void SmMove_WritesNpcTargetCoordinatesFromWalkerMovementState()
 	{
-		var npc = CreateWorldNpc(
-			objectId: 5678,
-			position: new WorldPosition(210010000, 1.25f, 2.5f, 3.75f, 9));
+		var npc = CreateWorldNpc(objectId: 5678, position: new WorldPosition(210010000, 1.25f, 2.5f, 3.75f, 9));
 		var movementState = WorldNpcWalkerMovementState.ForTarget(
 			npc.ObjectId,
 			"route-a",
@@ -4207,7 +4211,8 @@ public class GamePacketTests
 			restDelay: TimeSpan.Zero,
 			groupStep: 0,
 			sagittalShift: 0,
-			coronalShift: 0);
+			coronalShift: 0
+		);
 
 		using var reader = new PacketBuffer(SerializeUnencryptedPayload(new SmMove(npc, movementState)));
 
@@ -4226,16 +4231,9 @@ public class GamePacketTests
 	[Fact]
 	public void SmMove_WritesZeroGlideFlagForNpcMoveMasks()
 	{
-		var npc = CreateWorldNpc(
-			objectId: 5679,
-			position: new WorldPosition(210010000, 10, 20, 30, 40));
+		var npc = CreateWorldNpc(objectId: 5679, position: new WorldPosition(210010000, 10, 20, 30, 40));
 
-		using var reader = new PacketBuffer(SerializeUnencryptedPayload(new SmMove(
-			npc,
-			MovementMask.NpcRunSlow,
-			targetX: 12,
-			targetY: 24,
-			targetZ: 36)));
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(new SmMove(npc, MovementMask.NpcRunSlow, targetX: 12, targetY: 24, targetZ: 36)));
 
 		Assert.Equal(5679, reader.ReadD());
 		Assert.Equal(10, reader.ReadF());
@@ -4275,27 +4273,11 @@ public class GamePacketTests
 			TargetObjectId = 9005,
 			Position = new WorldPosition(210010000, 10, 20, 30, 40),
 			PortAnimation = ArrivalAnimation.FadeInBeam,
-			Settings = new PlayerSettings
-			{
-				Display = 4,
-				Deny = PlayerSettings.DenyFriendRequests,
-			},
+			Settings = new PlayerSettings { Display = 4, Deny = PlayerSettings.DenyFriendRequests },
 			Houses =
 			[
-				new PlayerHouse(
-					9001,
-					700100,
-					353000,
-					DateTime.UtcNow.AddDays(-1),
-					DateTime.UtcNow.AddDays(7),
-					IsInactive: false),
-				new PlayerHouse(
-					9002,
-					700101,
-					353001,
-					DateTime.UtcNow.AddDays(-2),
-					DateTime.UtcNow.AddDays(6),
-					IsInactive: true),
+				new PlayerHouse(9001, 700100, 353000, DateTime.UtcNow.AddDays(-1), DateTime.UtcNow.AddDays(7), IsInactive: false),
+				new PlayerHouse(9002, 700101, 353001, DateTime.UtcNow.AddDays(-2), DateTime.UtcNow.AddDays(6), IsInactive: true),
 			],
 			Appearance = new CharacterAppearance
 			{
@@ -4310,7 +4292,16 @@ public class GamePacketTests
 			},
 			InventoryItems =
 			[
-				new InventoryItem { ObjectId = 2001, ItemId = 100000001, ItemSkin = 100000099, IsEquipped = true, Location = 0, Slot = 1, Enchant = 5 },
+				new InventoryItem
+				{
+					ObjectId = 2001,
+					ItemId = 100000001,
+					ItemSkin = 100000099,
+					IsEquipped = true,
+					Location = 0,
+					Slot = 1,
+					Enchant = 5,
+				},
 			],
 		};
 		player.Movement.Mask = MovementMask.Position | MovementMask.Manual | MovementMask.Absolute;
@@ -4439,10 +4430,11 @@ public class GamePacketTests
 			Position = new WorldPosition(210010000, 1, 2, 3, 4),
 		};
 
-		using var reader = new PacketBuffer(SerializeUnencryptedPayload(new SmPlayerInfo(
-			player,
-			enemy: true,
-			new SmPlayerInfoViewerContext(ActivePlayerRace: "ASMODIANS", ActivePlayerIsEnemyToPlayer: true))));
+		using var reader = new PacketBuffer(
+			SerializeUnencryptedPayload(
+				new SmPlayerInfo(player, enemy: true, new SmPlayerInfoViewerContext(ActivePlayerRace: "ASMODIANS", ActivePlayerIsEnemyToPlayer: true))
+			)
+		);
 
 		SkipSmPlayerInfoHeaderThroughCreatureType(reader);
 		Assert.Equal(0, (int)reader.ReadC());
@@ -4461,13 +4453,15 @@ public class GamePacketTests
 			Position = new WorldPosition(210010000, 1, 2, 3, 4),
 		};
 
-		using var reader = new PacketBuffer(SerializeUnencryptedPayload(new SmPlayerInfo(
-			player,
-			enemy: true,
-			new SmPlayerInfoViewerContext(
-				ActivePlayerRace: "ASMODIANS",
-				ActivePlayerIsEnemyToPlayer: true,
-				EitherPlayerNeutralToAllPlayers: true))));
+		using var reader = new PacketBuffer(
+			SerializeUnencryptedPayload(
+				new SmPlayerInfo(
+					player,
+					enemy: true,
+					new SmPlayerInfoViewerContext(ActivePlayerRace: "ASMODIANS", ActivePlayerIsEnemyToPlayer: true, EitherPlayerNeutralToAllPlayers: true)
+				)
+			)
+		);
 
 		SkipSmPlayerInfoHeaderThroughCreatureType(reader);
 		Assert.Equal(1, (int)reader.ReadC());
@@ -4497,28 +4491,17 @@ public class GamePacketTests
 
 		var payload = SerializeUnencryptedPayload(new SmAbnormalEffect(player, abnormals: 0x01020304, effects, slots: 2));
 
-		Assert.Equal(
-			Convert.FromHexString("E903000002000000000403020100000000020100D1070000B90B0401C8AF0000"),
-			payload);
+		Assert.Equal(Convert.FromHexString("E903000002000000000403020100000000020100D1070000B90B0401C8AF0000"), payload);
 	}
 
 	[Fact]
 	public void SmAbnormalEffect_CreatureOmitsEffectorLikeJava()
 	{
-		var effects = new[]
-		{
-			new SmAbnormalEffectEntry(2001, 3001, 4, TargetSlotId: 2, TargetSlotOrdinal: 1, RemainingTimeToDisplayMillis: 45000),
-		};
+		var effects = new[] { new SmAbnormalEffectEntry(2001, 3001, 4, TargetSlotId: 2, TargetSlotOrdinal: 1, RemainingTimeToDisplayMillis: 45000) };
 
-		var payload = SerializeUnencryptedPayload(new SmAbnormalEffect(
-			effectedObjectId: 1001,
-			effectedIsPlayer: false,
-			abnormals: 0x01020304,
-			effects));
+		var payload = SerializeUnencryptedPayload(new SmAbnormalEffect(effectedObjectId: 1001, effectedIsPlayer: false, abnormals: 0x01020304, effects));
 
-		Assert.Equal(
-			Convert.FromHexString("E9030000010000000004030201000000007F0100B90B0401C8AF0000"),
-			payload);
+		Assert.Equal(Convert.FromHexString("E9030000010000000004030201000000007F0100B90B0401C8AF0000"), payload);
 	}
 
 	[Fact]
@@ -4536,7 +4519,8 @@ public class GamePacketTests
 			TargetZ: 66.75f,
 			Heading: 90,
 			MasterObjectId: 1001,
-			Decoration: 12345);
+			Decoration: 12345
+		);
 
 		var payload = SerializeUnencryptedPayload(new SmPet(spawn));
 		using var reader = new PacketBuffer(payload);
@@ -4619,15 +4603,18 @@ public class GamePacketTests
 	[Fact]
 	public void SmPet_WritePetDataNoWritableFunctionsPadsNoneLikeJava()
 	{
-		var payload = SerializePetData(new SmPetDataSnapshot(
-			Name: "Tog",
-			TemplateId: 900001,
-			ObjectId: 7001,
-			MasterObjectId: 1001,
-			BirthdayEpochSeconds: 123456,
-			SecondsUntilExpiration: 654,
-			Functions: [],
-			Decoration: 12345));
+		var payload = SerializePetData(
+			new SmPetDataSnapshot(
+				Name: "Tog",
+				TemplateId: 900001,
+				ObjectId: 7001,
+				MasterObjectId: 1001,
+				BirthdayEpochSeconds: 123456,
+				SecondsUntilExpiration: 654,
+				Functions: [],
+				Decoration: 12345
+			)
+		);
 		using var reader = new PacketBuffer(payload);
 
 		AssertSmPetDataHeader(reader);
@@ -4640,18 +4627,18 @@ public class GamePacketTests
 	[Fact]
 	public void SmPet_WritePetDataOneDopingFunctionPadsItemsAndNoneLikeJava()
 	{
-		var payload = SerializePetData(new SmPetDataSnapshot(
-			Name: "Tog",
-			TemplateId: 900001,
-			ObjectId: 7001,
-			MasterObjectId: 1001,
-			BirthdayEpochSeconds: 123456,
-			SecondsUntilExpiration: 654,
-			Functions:
-			[
-				new SmPetFunctionSnapshot(PetFunctionType.Doping, DopingItemIds: [166000001, 166000002]),
-			],
-			Decoration: 12345));
+		var payload = SerializePetData(
+			new SmPetDataSnapshot(
+				Name: "Tog",
+				TemplateId: 900001,
+				ObjectId: 7001,
+				MasterObjectId: 1001,
+				BirthdayEpochSeconds: 123456,
+				SecondsUntilExpiration: 654,
+				Functions: [new SmPetFunctionSnapshot(PetFunctionType.Doping, DopingItemIds: [166000001, 166000002])],
+				Decoration: 12345
+			)
+		);
 		using var reader = new PacketBuffer(payload);
 
 		AssertSmPetDataHeader(reader);
@@ -4672,19 +4659,22 @@ public class GamePacketTests
 	[Fact]
 	public void SmPet_WritePetDataTwoFunctionsUsesJavaOrderAndNoNonePad()
 	{
-		var payload = SerializePetData(new SmPetDataSnapshot(
-			Name: "Tog",
-			TemplateId: 900001,
-			ObjectId: 7001,
-			MasterObjectId: 1001,
-			BirthdayEpochSeconds: 123456,
-			SecondsUntilExpiration: 654,
-			Functions:
-			[
-				new SmPetFunctionSnapshot(PetFunctionType.Food, FeedProgressData: 0x123450, RefeedDelaySeconds: 99),
-				new SmPetFunctionSnapshot(PetFunctionType.Warehouse),
-			],
-			Decoration: 12345));
+		var payload = SerializePetData(
+			new SmPetDataSnapshot(
+				Name: "Tog",
+				TemplateId: 900001,
+				ObjectId: 7001,
+				MasterObjectId: 1001,
+				BirthdayEpochSeconds: 123456,
+				SecondsUntilExpiration: 654,
+				Functions:
+				[
+					new SmPetFunctionSnapshot(PetFunctionType.Food, FeedProgressData: 0x123450, RefeedDelaySeconds: 99),
+					new SmPetFunctionSnapshot(PetFunctionType.Warehouse),
+				],
+				Decoration: 12345
+			)
+		);
 		using var reader = new PacketBuffer(payload);
 
 		AssertSmPetDataHeader(reader);
@@ -4715,7 +4705,8 @@ public class GamePacketTests
 				new SmPetFunctionSnapshot(PetFunctionType.Loot),
 				new SmPetFunctionSnapshot(PetFunctionType.Food, FeedProgressData: 1, RefeedDelaySeconds: 2),
 			],
-			Decoration: 12345);
+			Decoration: 12345
+		);
 
 		Assert.Throws<InvalidOperationException>(() => SmPet.WritePetData(buffer, snapshot));
 	}
@@ -4723,18 +4714,20 @@ public class GamePacketTests
 	[Fact]
 	public void SmPet_AdoptWritesPetDataLikeJava()
 	{
-		var payload = SerializeUnencryptedPayload(SmPet.Adopt(new SmPetDataSnapshot(
-			Name: "Tog",
-			TemplateId: 900001,
-			ObjectId: 7001,
-			MasterObjectId: 1001,
-			BirthdayEpochSeconds: 123456,
-			SecondsUntilExpiration: 654,
-			Functions:
-			[
-				new SmPetFunctionSnapshot(PetFunctionType.Loot),
-			],
-			Decoration: 12345)));
+		var payload = SerializeUnencryptedPayload(
+			SmPet.Adopt(
+				new SmPetDataSnapshot(
+					Name: "Tog",
+					TemplateId: 900001,
+					ObjectId: 7001,
+					MasterObjectId: 1001,
+					BirthdayEpochSeconds: 123456,
+					SecondsUntilExpiration: 654,
+					Functions: [new SmPetFunctionSnapshot(PetFunctionType.Loot)],
+					Decoration: 12345
+				)
+			)
+		);
 		using var reader = new PacketBuffer(payload);
 
 		Assert.Equal((int)PetAction.Adopt, reader.ReadH());
@@ -4750,30 +4743,32 @@ public class GamePacketTests
 	[Fact]
 	public void SmPet_LoadPetsWritesCountAndPetDataListLikeJava()
 	{
-		var payload = SerializeUnencryptedPayload(SmPet.LoadPets(
-		[
-			new SmPetDataSnapshot(
-				Name: "Tog",
-				TemplateId: 900001,
-				ObjectId: 7001,
-				MasterObjectId: 1001,
-				BirthdayEpochSeconds: 123456,
-				SecondsUntilExpiration: 654,
-				Functions: [],
-				Decoration: 12345),
-			new SmPetDataSnapshot(
-				Name: "Porgus",
-				TemplateId: 900002,
-				ObjectId: 7002,
-				MasterObjectId: 1001,
-				BirthdayEpochSeconds: 223456,
-				SecondsUntilExpiration: 0,
-				Functions:
+		var payload = SerializeUnencryptedPayload(
+			SmPet.LoadPets(
 				[
-					new SmPetFunctionSnapshot(PetFunctionType.Warehouse),
-				],
-				Decoration: 54321),
-		]));
+					new SmPetDataSnapshot(
+						Name: "Tog",
+						TemplateId: 900001,
+						ObjectId: 7001,
+						MasterObjectId: 1001,
+						BirthdayEpochSeconds: 123456,
+						SecondsUntilExpiration: 654,
+						Functions: [],
+						Decoration: 12345
+					),
+					new SmPetDataSnapshot(
+						Name: "Porgus",
+						TemplateId: 900002,
+						ObjectId: 7002,
+						MasterObjectId: 1001,
+						BirthdayEpochSeconds: 223456,
+						SecondsUntilExpiration: 0,
+						Functions: [new SmPetFunctionSnapshot(PetFunctionType.Warehouse)],
+						Decoration: 54321
+					),
+				]
+			)
+		);
 		using var reader = new PacketBuffer(payload);
 
 		Assert.Equal((int)PetAction.LoadPets, reader.ReadH());
@@ -4822,10 +4817,9 @@ public class GamePacketTests
 	[InlineData(false, 2)]
 	public void SmPet_SpecialFunctionAutoLootNpcNotificationWritesJavaShape(bool active, int expectedState)
 	{
-		var payload = SerializeUnencryptedPayload(SmPet.SpecialFunction(new SmPetSpecialFunctionSnapshot(
-			PetSpecialFunction.AutoLoot,
-			active,
-			LootNpcObjectId: 50123)));
+		var payload = SerializeUnencryptedPayload(
+			SmPet.SpecialFunction(new SmPetSpecialFunctionSnapshot(PetSpecialFunction.AutoLoot, active, LootNpcObjectId: 50123))
+		);
 		using var reader = new PacketBuffer(payload);
 
 		Assert.Equal((int)PetAction.SpecialFunction, reader.ReadH());
@@ -4848,10 +4842,9 @@ public class GamePacketTests
 	[InlineData(3, 166000001, 0)]
 	public void SmPet_DopingSpecialFunctionWritesJavaDopeActionShapes(int dopeAction, int itemTemplateIdOrSlot2, int slot)
 	{
-		var payload = SerializeUnencryptedPayload(SmPet.DopingSpecialFunction(new SmPetDopingSpecialFunctionSnapshot(
-			dopeAction,
-			ItemTemplateIdOrSlot2: itemTemplateIdOrSlot2,
-			Slot: slot)));
+		var payload = SerializeUnencryptedPayload(
+			SmPet.DopingSpecialFunction(new SmPetDopingSpecialFunctionSnapshot(dopeAction, ItemTemplateIdOrSlot2: itemTemplateIdOrSlot2, Slot: slot))
+		);
 		using var reader = new PacketBuffer(payload);
 
 		Assert.Equal((int)PetAction.SpecialFunction, reader.ReadH());
@@ -4887,11 +4880,9 @@ public class GamePacketTests
 	[Fact]
 	public void SmPet_FoodEatWritesJavaShape()
 	{
-		var payload = SerializeUnencryptedPayload(SmPet.Food(new SmPetFoodSnapshot(
-			SubType: 1,
-			FeedProgressData: 0x123450,
-			ItemObjectId: 4001,
-			Count: 3)));
+		var payload = SerializeUnencryptedPayload(
+			SmPet.Food(new SmPetFoodSnapshot(SubType: 1, FeedProgressData: 0x123450, ItemObjectId: 4001, Count: 3))
+		);
 		using var reader = new PacketBuffer(payload);
 
 		AssertSmPetFoodHeader(reader, 1);
@@ -4905,11 +4896,9 @@ public class GamePacketTests
 	[Fact]
 	public void SmPet_FoodEatingSuccessWritesTrailingStatusLikeJava()
 	{
-		var payload = SerializeUnencryptedPayload(SmPet.Food(new SmPetFoodSnapshot(
-			SubType: 2,
-			FeedProgressData: 0x123450,
-			ItemObjectId: 4001,
-			Count: 3)));
+		var payload = SerializeUnencryptedPayload(
+			SmPet.Food(new SmPetFoodSnapshot(SubType: 2, FeedProgressData: 0x123450, ItemObjectId: 4001, Count: 3))
+		);
 		using var reader = new PacketBuffer(payload);
 
 		AssertSmPetFoodHeader(reader, 2);
@@ -4927,10 +4916,9 @@ public class GamePacketTests
 	[InlineData(5)]
 	public void SmPet_FoodDelaySubtypesWriteProgressAndRefeedLikeJava(int subType)
 	{
-		var payload = SerializeUnencryptedPayload(SmPet.Food(new SmPetFoodSnapshot(
-			SubType: subType,
-			FeedProgressData: 0x123450,
-			RefeedDelaySeconds: 77)));
+		var payload = SerializeUnencryptedPayload(
+			SmPet.Food(new SmPetFoodSnapshot(SubType: subType, FeedProgressData: 0x123450, RefeedDelaySeconds: 77))
+		);
 		using var reader = new PacketBuffer(payload);
 
 		AssertSmPetFoodHeader(reader, subType);
@@ -4942,10 +4930,7 @@ public class GamePacketTests
 	[Fact]
 	public void SmPet_FoodGiveItemWritesJavaShape()
 	{
-		var payload = SerializeUnencryptedPayload(SmPet.Food(new SmPetFoodSnapshot(
-			SubType: 6,
-			FeedProgressData: 0x123450,
-			ItemObjectId: 4001)));
+		var payload = SerializeUnencryptedPayload(SmPet.Food(new SmPetFoodSnapshot(SubType: 6, FeedProgressData: 0x123450, ItemObjectId: 4001)));
 		using var reader = new PacketBuffer(payload);
 
 		AssertSmPetFoodHeader(reader, 6);
@@ -4959,11 +4944,9 @@ public class GamePacketTests
 	[Fact]
 	public void SmPet_FoodPresentNotificationWritesJavaShape()
 	{
-		var payload = SerializeUnencryptedPayload(SmPet.Food(new SmPetFoodSnapshot(
-			SubType: 7,
-			FeedProgressData: 0x123450,
-			ItemObjectId: 4001,
-			RefeedDelaySeconds: 77)));
+		var payload = SerializeUnencryptedPayload(
+			SmPet.Food(new SmPetFoodSnapshot(SubType: 7, FeedProgressData: 0x123450, ItemObjectId: 4001, RefeedDelaySeconds: 77))
+		);
 		using var reader = new PacketBuffer(payload);
 
 		AssertSmPetFoodHeader(reader, 7);
@@ -4977,12 +4960,9 @@ public class GamePacketTests
 	[Fact]
 	public void SmPet_FoodFullWritesJavaShape()
 	{
-		var payload = SerializeUnencryptedPayload(SmPet.Food(new SmPetFoodSnapshot(
-			SubType: 8,
-			FeedProgressData: 0x123450,
-			ItemObjectId: 4001,
-			Count: 3,
-			RefeedDelaySeconds: 77)));
+		var payload = SerializeUnencryptedPayload(
+			SmPet.Food(new SmPetFoodSnapshot(SubType: 8, FeedProgressData: 0x123450, ItemObjectId: 4001, Count: 3, RefeedDelaySeconds: 77))
+		);
 		using var reader = new PacketBuffer(payload);
 
 		AssertSmPetFoodHeader(reader, 8);
@@ -4996,12 +4976,9 @@ public class GamePacketTests
 	[Fact]
 	public void SmPet_FoodUnknownSubtypeWritesJavaHeaderOnly()
 	{
-		var payload = SerializeUnencryptedPayload(SmPet.Food(new SmPetFoodSnapshot(
-			SubType: 99,
-			FeedProgressData: 0x123450,
-			ItemObjectId: 4001,
-			Count: 3,
-			RefeedDelaySeconds: 77)));
+		var payload = SerializeUnencryptedPayload(
+			SmPet.Food(new SmPetFoodSnapshot(SubType: 99, FeedProgressData: 0x123450, ItemObjectId: 4001, Count: 3, RefeedDelaySeconds: 77))
+		);
 		using var reader = new PacketBuffer(payload);
 
 		AssertSmPetFoodHeader(reader, 99);
@@ -5011,10 +4988,7 @@ public class GamePacketTests
 	[Fact]
 	public void SmPet_MoodCheckWritesDeltaWhenMoodIncreasedLikeJava()
 	{
-		var payload = SerializeUnencryptedPayload(SmPet.Mood(new SmPetMoodSnapshot(
-			SubType: 0,
-			MoodPoints: 1400,
-			LastSentPoints: 1000)));
+		var payload = SerializeUnencryptedPayload(SmPet.Mood(new SmPetMoodSnapshot(SubType: 0, MoodPoints: 1400, LastSentPoints: 1000)));
 		using var reader = new PacketBuffer(payload);
 
 		Assert.Equal((int)PetAction.Mood, reader.ReadH());
@@ -5026,10 +5000,7 @@ public class GamePacketTests
 	[Fact]
 	public void SmPet_MoodCheckWritesZeroWhenMoodDidNotIncreaseLikeJava()
 	{
-		var payload = SerializeUnencryptedPayload(SmPet.Mood(new SmPetMoodSnapshot(
-			SubType: 0,
-			MoodPoints: 1000,
-			LastSentPoints: 1400)));
+		var payload = SerializeUnencryptedPayload(SmPet.Mood(new SmPetMoodSnapshot(SubType: 0, MoodPoints: 1000, LastSentPoints: 1400)));
 		using var reader = new PacketBuffer(payload);
 
 		Assert.Equal((int)PetAction.Mood, reader.ReadH());
@@ -5041,10 +5012,7 @@ public class GamePacketTests
 	[Fact]
 	public void SmPet_MoodEmotionWritesMoodAndEmotionLikeJava()
 	{
-		var payload = SerializeUnencryptedPayload(SmPet.Mood(new SmPetMoodSnapshot(
-			SubType: 2,
-			MoodPoints: 2600,
-			ShuggleEmotion: 7)));
+		var payload = SerializeUnencryptedPayload(SmPet.Mood(new SmPetMoodSnapshot(SubType: 2, MoodPoints: 2600, ShuggleEmotion: 7)));
 		using var reader = new PacketBuffer(payload);
 
 		Assert.Equal((int)PetAction.Mood, reader.ReadH());
@@ -5058,9 +5026,7 @@ public class GamePacketTests
 	[Fact]
 	public void SmPet_MoodGiftWritesConditionRewardLikeJava()
 	{
-		var payload = SerializeUnencryptedPayload(SmPet.Mood(new SmPetMoodSnapshot(
-			SubType: 3,
-			ConditionReward: 188053001)));
+		var payload = SerializeUnencryptedPayload(SmPet.Mood(new SmPetMoodSnapshot(SubType: 3, ConditionReward: 188053001)));
 		using var reader = new PacketBuffer(payload);
 
 		Assert.Equal((int)PetAction.Mood, reader.ReadH());
@@ -5072,11 +5038,9 @@ public class GamePacketTests
 	[Fact]
 	public void SmPet_MoodPeriodicUpdateWritesCooldownsLikeJava()
 	{
-		var payload = SerializeUnencryptedPayload(SmPet.Mood(new SmPetMoodSnapshot(
-			SubType: 4,
-			MoodPoints: 4500,
-			MoodRemainingSeconds: 120,
-			GiftRemainingSeconds: 3300)));
+		var payload = SerializeUnencryptedPayload(
+			SmPet.Mood(new SmPetMoodSnapshot(SubType: 4, MoodPoints: 4500, MoodRemainingSeconds: 120, GiftRemainingSeconds: 3300))
+		);
 		using var reader = new PacketBuffer(payload);
 
 		Assert.Equal((int)PetAction.Mood, reader.ReadH());
@@ -5090,14 +5054,19 @@ public class GamePacketTests
 	[Fact]
 	public void SmPet_MoodUnknownSubtypeWritesActionOnlyLikeJava()
 	{
-		var payload = SerializeUnencryptedPayload(SmPet.Mood(new SmPetMoodSnapshot(
-			SubType: 99,
-			MoodPoints: 4500,
-			LastSentPoints: 1000,
-			ShuggleEmotion: 7,
-			ConditionReward: 188053001,
-			MoodRemainingSeconds: 120,
-			GiftRemainingSeconds: 3300)));
+		var payload = SerializeUnencryptedPayload(
+			SmPet.Mood(
+				new SmPetMoodSnapshot(
+					SubType: 99,
+					MoodPoints: 4500,
+					LastSentPoints: 1000,
+					ShuggleEmotion: 7,
+					ConditionReward: 188053001,
+					MoodRemainingSeconds: 120,
+					GiftRemainingSeconds: 3300
+				)
+			)
+		);
 		using var reader = new PacketBuffer(payload);
 
 		Assert.Equal((int)PetAction.Mood, reader.ReadH());
@@ -5121,13 +5090,9 @@ public class GamePacketTests
 	[Fact]
 	public void SmPetEmote_MoveStopWritesCurrentPositionLikeJava()
 	{
-		var payload = SerializeUnencryptedPayload(new SmPetEmote(new SmPetEmoteSnapshot(
-			7001,
-			PetEmote.MoveStop,
-			X: 11.5f,
-			Y: 22.25f,
-			Z: 33.75f,
-			Heading: 90)));
+		var payload = SerializeUnencryptedPayload(
+			new SmPetEmote(new SmPetEmoteSnapshot(7001, PetEmote.MoveStop, X: 11.5f, Y: 22.25f, Z: 33.75f, Heading: 90))
+		);
 		using var reader = new PacketBuffer(payload);
 
 		Assert.Equal(7001, reader.ReadD());
@@ -5142,16 +5107,11 @@ public class GamePacketTests
 	[Fact]
 	public void SmPetEmote_MoveToWritesCurrentAndTargetPositionLikeJava()
 	{
-		var payload = SerializeUnencryptedPayload(new SmPetEmote(new SmPetEmoteSnapshot(
-			7001,
-			PetEmote.MoveTo,
-			X: 11.5f,
-			Y: 22.25f,
-			Z: 33.75f,
-			Heading: 90,
-			TargetX: 44.5f,
-			TargetY: 55.25f,
-			TargetZ: 66.75f)));
+		var payload = SerializeUnencryptedPayload(
+			new SmPetEmote(
+				new SmPetEmoteSnapshot(7001, PetEmote.MoveTo, X: 11.5f, Y: 22.25f, Z: 33.75f, Heading: 90, TargetX: 44.5f, TargetY: 55.25f, TargetZ: 66.75f)
+			)
+		);
 		using var reader = new PacketBuffer(payload);
 
 		Assert.Equal(7001, reader.ReadD());
@@ -5192,7 +5152,8 @@ public class GamePacketTests
 				buffer.WriteD(44);
 				buffer.WriteD(55);
 				buffer.WriteD(66);
-			});
+			}
+		);
 
 		var packet = Assert.IsType<CmL2AuthLoginCheck>(GameClientPacketFactory.TryCreatePacket(payload, GameConnectionState.Connected));
 
@@ -5218,7 +5179,8 @@ public class GamePacketTests
 				buffer.WriteS("AA-BB-CC-DD-EE-FF");
 				buffer.WriteS("disk-1");
 				buffer.WriteD(0x0200007F);
-			});
+			}
+		);
 
 		var packet = Assert.IsType<CmMacAddress>(GameClientPacketFactory.TryCreatePacket(payload, GameConnectionState.Connected));
 
@@ -5233,46 +5195,27 @@ public class GamePacketTests
 	public void ClientPacketFactory_ParsesPingAndTimeCheckPackets()
 	{
 		var timeCheck = Assert.IsType<CmTimeCheck>(
-			GameClientPacketFactory.TryCreatePacket(
-				CreateClientPayload(18, buffer => buffer.WriteD(123456)),
-				GameConnectionState.Connected));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(18, buffer => buffer.WriteD(123456)), GameConnectionState.Connected)
+		);
 		var pingAuthed = Assert.IsType<CmPing>(
-			GameClientPacketFactory.TryCreatePacket(
-				CreateClientPayload(44, buffer => buffer.WriteH(7)),
-				GameConnectionState.Authed));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(44, buffer => buffer.WriteH(7)), GameConnectionState.Authed)
+		);
 
 		Assert.Equal(123456, timeCheck.NanoTime);
 		Assert.Equal(7, pingAuthed.Unknown);
 		Assert.IsType<CmTimeCheck>(
-			GameClientPacketFactory.TryCreatePacket(
-				CreateClientPayload(18, buffer => buffer.WriteD(234567)),
-				GameConnectionState.InGame));
-		Assert.IsType<CmPing>(
-			GameClientPacketFactory.TryCreatePacket(
-				CreateClientPayload(44, buffer => buffer.WriteH(8)),
-				GameConnectionState.InGame));
-		Assert.IsType<CmPingRequest>(
-			GameClientPacketFactory.TryCreatePacket(
-				CreateClientPayload(103, _ => { }),
-				GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(18, buffer => buffer.WriteD(234567)), GameConnectionState.InGame)
+		);
+		Assert.IsType<CmPing>(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(44, buffer => buffer.WriteH(8)), GameConnectionState.InGame));
+		Assert.IsType<CmPingRequest>(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(103, _ => { }), GameConnectionState.InGame));
 		var quitTimeCheck = Assert.IsType<CmTimeCheckQuit>(
-			GameClientPacketFactory.TryCreatePacket(
-				CreateClientPayload(209, buffer => buffer.WriteD(345678)),
-				GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(209, buffer => buffer.WriteD(345678)), GameConnectionState.InGame)
+		);
 
 		Assert.Equal(345678, quitTimeCheck.NanoTime);
-		Assert.Null(
-			GameClientPacketFactory.TryCreatePacket(
-				CreateClientPayload(44, buffer => buffer.WriteH(1)),
-				GameConnectionState.Connected));
-		Assert.Null(
-			GameClientPacketFactory.TryCreatePacket(
-				CreateClientPayload(209, buffer => buffer.WriteD(345678)),
-				GameConnectionState.Authed));
-		Assert.Null(
-			GameClientPacketFactory.TryCreatePacket(
-				CreateClientPayload(103, _ => { }),
-				GameConnectionState.Authed));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(44, buffer => buffer.WriteH(1)), GameConnectionState.Connected));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(209, buffer => buffer.WriteD(345678)), GameConnectionState.Authed));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(103, _ => { }), GameConnectionState.Authed));
 	}
 
 	[Fact]
@@ -5280,23 +5223,33 @@ public class GamePacketTests
 	{
 		var chatMessage = Assert.IsType<CmChatMessagePublic>(
 			GameClientPacketFactory.TryCreatePacket(
-				CreateClientPayload(27, buffer =>
-				{
-					buffer.WriteC(3);
-					buffer.WriteS("Anyone there?");
-				}),
-				GameConnectionState.InGame));
+				CreateClientPayload(
+					27,
+					buffer =>
+					{
+						buffer.WriteC(3);
+						buffer.WriteS("Anyone there?");
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 
 		Assert.Equal(3, (int)chatMessage.ChatType);
 		Assert.Equal("Anyone there?", chatMessage.Message);
 		Assert.Null(
 			GameClientPacketFactory.TryCreatePacket(
-				CreateClientPayload(27, buffer =>
-				{
-					buffer.WriteC(0);
-					buffer.WriteS("too soon");
-				}),
-				GameConnectionState.Authed));
+				CreateClientPayload(
+					27,
+					buffer =>
+					{
+						buffer.WriteC(0);
+						buffer.WriteS("too soon");
+					}
+				),
+				GameConnectionState.Authed
+			)
+		);
 	}
 
 	[Fact]
@@ -5304,56 +5257,72 @@ public class GamePacketTests
 	{
 		var whisper = Assert.IsType<CmChatMessageWhisper>(
 			GameClientPacketFactory.TryCreatePacket(
-				CreateClientPayload(28, buffer =>
-				{
-					buffer.WriteS("kahrun");
-					buffer.WriteS("Need aid?");
-				}),
-				GameConnectionState.InGame));
+				CreateClientPayload(
+					28,
+					buffer =>
+					{
+						buffer.WriteS("kahrun");
+						buffer.WriteS("Need aid?");
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 
 		Assert.Equal("kahrun", whisper.RecipientName);
 		Assert.Equal("Need aid?", whisper.Message);
 		Assert.Null(
 			GameClientPacketFactory.TryCreatePacket(
-				CreateClientPayload(28, buffer =>
-				{
-					buffer.WriteS("kahrun");
-					buffer.WriteS("too soon");
-				}),
-				GameConnectionState.Authed));
+				CreateClientPayload(
+					28,
+					buffer =>
+					{
+						buffer.WriteS("kahrun");
+						buffer.WriteS("too soon");
+					}
+				),
+				GameConnectionState.Authed
+			)
+		);
 	}
 
 	[Fact]
 	public void ClientPacketFactory_ParsesChatInfoPackets()
 	{
 		var playerInfo = Assert.IsType<CmChatPlayerInfo>(
-			GameClientPacketFactory.TryCreatePacket(
-				CreateClientPayload(39, buffer => buffer.WriteS("yustiel")),
-				GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(39, buffer => buffer.WriteS("yustiel")), GameConnectionState.InGame)
+		);
 		var groupInfo = Assert.IsType<CmChatGroupInfo>(
 			GameClientPacketFactory.TryCreatePacket(
-				CreateClientPayload(61, buffer =>
-				{
-					buffer.WriteS("marchutan");
-					buffer.WriteD(7);
-				}),
-				GameConnectionState.InGame));
+				CreateClientPayload(
+					61,
+					buffer =>
+					{
+						buffer.WriteS("marchutan");
+						buffer.WriteD(7);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 
 		Assert.Equal("yustiel", playerInfo.PlayerName);
 		Assert.Equal("marchutan", groupInfo.PlayerName);
 		Assert.Equal(7, groupInfo.Unknown);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(39, buffer => buffer.WriteS("yustiel")), GameConnectionState.Authed));
 		Assert.Null(
 			GameClientPacketFactory.TryCreatePacket(
-				CreateClientPayload(39, buffer => buffer.WriteS("yustiel")),
-				GameConnectionState.Authed));
-		Assert.Null(
-			GameClientPacketFactory.TryCreatePacket(
-				CreateClientPayload(61, buffer =>
-				{
-					buffer.WriteS("marchutan");
-					buffer.WriteD(7);
-				}),
-				GameConnectionState.Authed));
+				CreateClientPayload(
+					61,
+					buffer =>
+					{
+						buffer.WriteS("marchutan");
+						buffer.WriteD(7);
+					}
+				),
+				GameConnectionState.Authed
+			)
+		);
 	}
 
 	[Fact]
@@ -5361,23 +5330,33 @@ public class GamePacketTests
 	{
 		var invite = Assert.IsType<CmInviteToGroup>(
 			GameClientPacketFactory.TryCreatePacket(
-				CreateClientPayload(97, buffer =>
-				{
-					buffer.WriteC(0);
-					buffer.WriteS("marchutan");
-				}),
-				GameConnectionState.InGame));
+				CreateClientPayload(
+					97,
+					buffer =>
+					{
+						buffer.WriteC(0);
+						buffer.WriteS("marchutan");
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 
 		Assert.Equal(0, invite.InviteType);
 		Assert.Equal("marchutan", invite.PlayerName);
 		Assert.Null(
 			GameClientPacketFactory.TryCreatePacket(
-				CreateClientPayload(97, buffer =>
-				{
-					buffer.WriteC(0);
-					buffer.WriteS("marchutan");
-				}),
-				GameConnectionState.Authed));
+				CreateClientPayload(
+					97,
+					buffer =>
+					{
+						buffer.WriteC(0);
+						buffer.WriteS("marchutan");
+					}
+				),
+				GameConnectionState.Authed
+			)
+		);
 	}
 
 	[Fact]
@@ -5385,34 +5364,51 @@ public class GamePacketTests
 	{
 		var chatAuth = Assert.IsType<CmChatAuth>(
 			GameClientPacketFactory.TryCreatePacket(
-				CreateClientPayload(174, buffer =>
-				{
-					buffer.WriteD(7001);
-					buffer.WriteB([0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF]);
-				}),
-				GameConnectionState.InGame));
+				CreateClientPayload(
+					174,
+					buffer =>
+					{
+						buffer.WriteD(7001);
+						buffer.WriteB([0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF]);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 
 		Assert.Equal(7001, chatAuth.ObjectId);
 		Assert.Equal([0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF], chatAuth.MacAddress);
 		Assert.Null(
 			GameClientPacketFactory.TryCreatePacket(
-				CreateClientPayload(174, buffer =>
-				{
-					buffer.WriteD(7001);
-					buffer.WriteB([0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF]);
-				}),
-				GameConnectionState.Authed));
+				CreateClientPayload(
+					174,
+					buffer =>
+					{
+						buffer.WriteD(7001);
+						buffer.WriteB([0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF]);
+					}
+				),
+				GameConnectionState.Authed
+			)
+		);
 	}
 
 	[Fact]
 	public void ClientPacketFactory_ParsesTargetSelect()
 	{
 		var targetSelect = Assert.IsType<CmTargetSelect>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(31, b =>
-			{
-				b.WriteD(7001);
-				b.WriteC(1);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					31,
+					b =>
+					{
+						b.WriteD(7001);
+						b.WriteC(1);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 
 		Assert.Equal(7001, targetSelect.TargetObjectId);
 		Assert.True(targetSelect.SelectTargetOfTarget);
@@ -5423,13 +5419,20 @@ public class GamePacketTests
 	public void ClientPacketFactory_ParsesAttack()
 	{
 		var attack = Assert.IsType<CmAttack>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(32, b =>
-			{
-				b.WriteD(7001);
-				b.WriteC(3);
-				b.WriteH(450);
-				b.WriteC(2);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					32,
+					b =>
+					{
+						b.WriteD(7001);
+						b.WriteC(3);
+						b.WriteH(450);
+						b.WriteC(2);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 
 		Assert.Equal(7001, attack.TargetObjectId);
 		Assert.Equal(3, attack.AttackNo);
@@ -5443,15 +5446,22 @@ public class GamePacketTests
 	{
 		var before = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 		var castSpell = Assert.IsType<CmCastSpell>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(33, b =>
-			{
-				b.WriteH(1606);
-				b.WriteC(2);
-				b.WriteC(3);
-				b.WriteD(7001);
-				b.WriteH(900);
-				b.WriteD(42);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					33,
+					b =>
+					{
+						b.WriteH(1606);
+						b.WriteC(2);
+						b.WriteC(3);
+						b.WriteD(7001);
+						b.WriteH(900);
+						b.WriteD(42);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 		var after = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
 		Assert.InRange(castSpell.ReceiveTimeMilliseconds, before, after);
@@ -5469,17 +5479,24 @@ public class GamePacketTests
 	public void ClientPacketFactory_ParsesCastSpellPointTarget()
 	{
 		var castSpell = Assert.IsType<CmCastSpell>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(33, b =>
-			{
-				b.WriteH(1201);
-				b.WriteC(1);
-				b.WriteC(1);
-				b.WriteF(11.25f);
-				b.WriteF(22.5f);
-				b.WriteF(33.75f);
-				b.WriteH(650);
-				b.WriteD(7);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					33,
+					b =>
+					{
+						b.WriteH(1201);
+						b.WriteC(1);
+						b.WriteC(1);
+						b.WriteF(11.25f);
+						b.WriteF(22.5f);
+						b.WriteF(33.75f);
+						b.WriteH(650);
+						b.WriteD(7);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 
 		Assert.Equal(1201, castSpell.SpellId);
 		Assert.Equal(1, castSpell.Level);
@@ -5496,19 +5513,26 @@ public class GamePacketTests
 	public void ClientPacketFactory_ParsesCastSpellExtendedPointTarget()
 	{
 		var castSpell = Assert.IsType<CmCastSpell>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(33, b =>
-			{
-				b.WriteH(2202);
-				b.WriteC(4);
-				b.WriteC(2);
-				b.WriteF(1.5f);
-				b.WriteF(2.5f);
-				b.WriteF(3.5f);
-				for (var i = 0; i < 8; i++)
-					b.WriteF(10 + i);
-				b.WriteH(777);
-				b.WriteD(99);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					33,
+					b =>
+					{
+						b.WriteH(2202);
+						b.WriteC(4);
+						b.WriteC(2);
+						b.WriteF(1.5f);
+						b.WriteF(2.5f);
+						b.WriteF(3.5f);
+						for (var i = 0; i < 8; i++)
+							b.WriteF(10 + i);
+						b.WriteH(777);
+						b.WriteD(99);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 
 		Assert.Equal(2202, castSpell.SpellId);
 		Assert.Equal(4, castSpell.Level);
@@ -5525,14 +5549,21 @@ public class GamePacketTests
 	public void ClientPacketFactory_ParsesSummonAttack()
 	{
 		var summonAttack = Assert.IsType<CmSummonAttack>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(203, b =>
-			{
-				b.WriteD(8001);
-				b.WriteD(7001);
-				b.WriteC(4);
-				b.WriteH(500);
-				b.WriteC(9);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					203,
+					b =>
+					{
+						b.WriteD(8001);
+						b.WriteD(7001);
+						b.WriteC(4);
+						b.WriteH(500);
+						b.WriteC(9);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 
 		Assert.Equal(8001, summonAttack.SummonObjectId);
 		Assert.Equal(7001, summonAttack.TargetObjectId);
@@ -5546,14 +5577,21 @@ public class GamePacketTests
 	public void ClientPacketFactory_ParsesSummonCastSpell()
 	{
 		var summonCastSpell = Assert.IsType<CmSummonCastSpell>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(205, b =>
-			{
-				b.WriteD(8001);
-				b.WriteH(3101);
-				b.WriteC(3);
-				b.WriteD(7001);
-				b.WriteD(44);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					205,
+					b =>
+					{
+						b.WriteD(8001);
+						b.WriteH(3101);
+						b.WriteC(3);
+						b.WriteD(7001);
+						b.WriteD(44);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 
 		Assert.Equal(8001, summonCastSpell.SummonObjectId);
 		Assert.Equal(3101, summonCastSpell.SkillId);
@@ -5566,8 +5604,7 @@ public class GamePacketTests
 	[Fact]
 	public void ClientPacketFactory_ParsesUseChargeSkill()
 	{
-		Assert.IsType<CmUseChargeSkill>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(234, _ => { }), GameConnectionState.InGame));
+		Assert.IsType<CmUseChargeSkill>(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(234, _ => { }), GameConnectionState.InGame));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(234, _ => { }), GameConnectionState.Authed));
 	}
 
@@ -5575,14 +5612,21 @@ public class GamePacketTests
 	public void ClientPacketFactory_ParsesChargeItem()
 	{
 		var chargeItem = Assert.IsType<CmChargeItem>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(78, b =>
-			{
-				b.WriteD(7001);
-				b.WriteC(2);
-				b.WriteH(2);
-				b.WriteD(101);
-				b.WriteD(102);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					78,
+					b =>
+					{
+						b.WriteD(7001);
+						b.WriteC(2);
+						b.WriteH(2);
+						b.WriteD(101);
+						b.WriteD(102);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 
 		Assert.Equal(7001, chargeItem.TargetNpcObjectId);
 		Assert.Equal(2, chargeItem.ChargeLevel);
@@ -5594,12 +5638,19 @@ public class GamePacketTests
 	public void ClientPacketFactory_ParsesEquipItem()
 	{
 		var equipItem = Assert.IsType<CmEquipItem>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(38, b =>
-			{
-				b.WriteC(0);
-				b.WriteQ(2);
-				b.WriteD(9001);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					38,
+					b =>
+					{
+						b.WriteC(0);
+						b.WriteQ(2);
+						b.WriteD(9001);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 
 		Assert.Equal(0, equipItem.Action);
 		Assert.Equal(2, equipItem.Slot);
@@ -5611,14 +5662,21 @@ public class GamePacketTests
 	public void ClientPacketFactory_ParsesManastone()
 	{
 		var addStone = Assert.IsType<CmManastone>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(74, b =>
-			{
-				b.WriteC(2);
-				b.WriteC(1);
-				b.WriteD(1001);
-				b.WriteD(1002);
-				b.WriteD(1003);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					74,
+					b =>
+					{
+						b.WriteC(2);
+						b.WriteC(1);
+						b.WriteD(1001);
+						b.WriteD(1002);
+						b.WriteD(1003);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 
 		Assert.Equal(2, addStone.ActionType);
 		Assert.Equal(1, addStone.TargetFusedSlot);
@@ -5627,30 +5685,44 @@ public class GamePacketTests
 		Assert.Equal(1003, addStone.SupplementObjectId);
 
 		var removeStone = Assert.IsType<CmManastone>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(74, b =>
-			{
-				b.WriteC(3);
-				b.WriteC(0);
-				b.WriteD(2001);
-				b.WriteC(4);
-				b.WriteC(0);
-				b.WriteH(0);
-				b.WriteD(7001);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					74,
+					b =>
+					{
+						b.WriteC(3);
+						b.WriteC(0);
+						b.WriteD(2001);
+						b.WriteC(4);
+						b.WriteC(0);
+						b.WriteH(0);
+						b.WriteD(7001);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 
 		Assert.Equal(3, removeStone.ActionType);
 		Assert.Equal(4, removeStone.SlotNumber);
 		Assert.Equal(7001, removeStone.NpcObjectId);
 
 		var amplification = Assert.IsType<CmManastone>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(74, b =>
-			{
-				b.WriteC(8);
-				b.WriteC(0);
-				b.WriteD(3001);
-				b.WriteD(3002);
-				b.WriteD(3003);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					74,
+					b =>
+					{
+						b.WriteC(8);
+						b.WriteC(0);
+						b.WriteD(3001);
+						b.WriteD(3002);
+						b.WriteD(3003);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 
 		Assert.Equal(8, amplification.ActionType);
 		Assert.Equal(3001, amplification.TargetItemObjectId);
@@ -5663,7 +5735,8 @@ public class GamePacketTests
 	public void ClientPacketFactory_ParsesShowDialog()
 	{
 		var showDialog = Assert.IsType<CmShowDialog>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(52, b => b.WriteD(7001)), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(52, b => b.WriteD(7001)), GameConnectionState.InGame)
+		);
 
 		Assert.Equal(7001, showDialog.TargetObjectId);
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(52, _ => { }), GameConnectionState.Authed));
@@ -5673,15 +5746,22 @@ public class GamePacketTests
 	public void ClientPacketFactory_ParsesDialogSelect()
 	{
 		var dialogSelect = Assert.IsType<CmDialogSelect>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(54, b =>
-			{
-				b.WriteD(7001);
-				b.WriteH(CmDialogSelect.ChargeItemMulti);
-				b.WriteH(3);
-				b.WriteH(4);
-				b.WriteD(11056);
-				b.WriteH(9);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					54,
+					b =>
+					{
+						b.WriteD(7001);
+						b.WriteH(CmDialogSelect.ChargeItemMulti);
+						b.WriteH(3);
+						b.WriteH(4);
+						b.WriteD(11056);
+						b.WriteH(9);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 
 		Assert.Equal(7001, dialogSelect.TargetObjectId);
 		Assert.Equal(CmDialogSelect.ChargeItemMulti, dialogSelect.DialogActionId);
@@ -5695,43 +5775,58 @@ public class GamePacketTests
 	public void ItemChargeService_CreatesChargeAllPlansForMatchingEquippedItems()
 	{
 		var templates = new ItemTemplateTable(
-		[
-			new ItemTemplateSummary(
-				100,
-				"Conditionable Robe",
-				0,
-				1,
-				1,
-				"CL_TORSO",
-				"NORMAL",
-				"COMMON",
-				"PC_ALL",
-				1,
-				0,
-				8,
-				Improvement: new ItemImprovement(1, 2, 0, 0, 100, 300)),
-			new ItemTemplateSummary(
-				101,
-				"Augmentable Robe",
-				0,
-				1,
-				1,
-				"CL_GLOVE",
-				"NORMAL",
-				"COMMON",
-				"PC_ALL",
-				1,
-				0,
-				16,
-				Improvement: new ItemImprovement(2, 2, 0, 0, 100, 300)),
-		]);
+			[
+				new ItemTemplateSummary(
+					100,
+					"Conditionable Robe",
+					0,
+					1,
+					1,
+					"CL_TORSO",
+					"NORMAL",
+					"COMMON",
+					"PC_ALL",
+					1,
+					0,
+					8,
+					Improvement: new ItemImprovement(1, 2, 0, 0, 100, 300)
+				),
+				new ItemTemplateSummary(
+					101,
+					"Augmentable Robe",
+					0,
+					1,
+					1,
+					"CL_GLOVE",
+					"NORMAL",
+					"COMMON",
+					"PC_ALL",
+					1,
+					0,
+					16,
+					Improvement: new ItemImprovement(2, 2, 0, 0, 100, 300)
+				),
+			]
+		);
 		var player = new Player
 		{
 			InventoryItems =
 			[
-				new InventoryItem { ObjectId = 1, ItemId = 100, IsEquipped = true, Slot = 8 },
+				new InventoryItem
+				{
+					ObjectId = 1,
+					ItemId = 100,
+					IsEquipped = true,
+					Slot = 8,
+				},
 				new InventoryItem { ObjectId = 2, ItemId = 100 },
-				new InventoryItem { ObjectId = 3, ItemId = 101, IsEquipped = true, Slot = 16 },
+				new InventoryItem
+				{
+					ObjectId = 3,
+					ItemId = 101,
+					IsEquipped = true,
+					Slot = 16,
+				},
 			],
 		};
 
@@ -5748,12 +5843,19 @@ public class GamePacketTests
 	public void ClientPacketFactory_ParsesUseItemTargetItemBranch()
 	{
 		var useItem = Assert.IsType<CmUseItem>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(37, b =>
-			{
-				b.WriteD(9001);
-				b.WriteC(2);
-				b.WriteD(9002);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					37,
+					b =>
+					{
+						b.WriteD(9001);
+						b.WriteC(2);
+						b.WriteD(9002);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 
 		Assert.Equal(9001, useItem.SourceItemObjectId);
 		Assert.Equal(2, useItem.Type);
@@ -5762,11 +5864,18 @@ public class GamePacketTests
 		Assert.Equal(0, useItem.IndexReturn);
 
 		var untargetedUseItem = Assert.IsType<CmUseItem>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(37, b =>
-			{
-				b.WriteD(9003);
-				b.WriteC(0);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					37,
+					b =>
+					{
+						b.WriteD(9003);
+						b.WriteC(0);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 		Assert.Equal(9003, untargetedUseItem.SourceItemObjectId);
 		Assert.Equal(0, untargetedUseItem.Type);
 		Assert.Equal(0, untargetedUseItem.TargetItemObjectId);
@@ -5777,12 +5886,19 @@ public class GamePacketTests
 	public void ClientPacketFactory_ParsesSelectDecomposablePacket()
 	{
 		var packet = Assert.IsType<CmSelectDecomposable>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(236, b =>
-			{
-				b.WriteD(9001);
-				b.WriteD(0);
-				b.WriteC(2);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					236,
+					b =>
+					{
+						b.WriteD(9001);
+						b.WriteD(0);
+						b.WriteC(2);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 
 		Assert.Equal(9001, packet.ObjectId);
 		Assert.Equal(0, packet.Unknown);
@@ -5794,12 +5910,19 @@ public class GamePacketTests
 	public void ClientPacketFactory_ParsesCompositeStonesPacket()
 	{
 		var packet = Assert.IsType<CmCompositeStones>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(208, b =>
-			{
-				b.WriteD(9001);
-				b.WriteD(9002);
-				b.WriteD(9003);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					208,
+					b =>
+					{
+						b.WriteD(9001);
+						b.WriteD(9002);
+						b.WriteD(9003);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 
 		Assert.Equal(9001, packet.ToolItemObjectId);
 		Assert.Equal(9002, packet.FirstItemObjectId);
@@ -5811,13 +5934,20 @@ public class GamePacketTests
 	public void ClientPacketFactory_ParsesItemRemodelPacket()
 	{
 		var packet = Assert.IsType<CmItemRemodel>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(90, b =>
-			{
-				b.WriteD(7001);
-				b.WriteD(9001);
-				b.WriteD(9002);
-				b.WriteD(0);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					90,
+					b =>
+					{
+						b.WriteD(7001);
+						b.WriteD(9001);
+						b.WriteD(9002);
+						b.WriteD(0);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 
 		Assert.Equal(7001, packet.NpcObjectId);
 		Assert.Equal(9001, packet.KeepItemObjectId);
@@ -5830,17 +5960,24 @@ public class GamePacketTests
 	public void ClientPacketFactory_ParsesItemPurificationPacket()
 	{
 		var packet = Assert.IsType<CmItemPurification>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(247, b =>
-			{
-				b.WriteD(7001);
-				b.WriteD(9001);
-				b.WriteD(100201416);
-				b.WriteD(9101);
-				b.WriteD(9102);
-				b.WriteD(9103);
-				b.WriteD(9104);
-				b.WriteD(9105);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					247,
+					b =>
+					{
+						b.WriteD(7001);
+						b.WriteD(9001);
+						b.WriteD(100201416);
+						b.WriteD(9101);
+						b.WriteD(9102);
+						b.WriteD(9103);
+						b.WriteD(9104);
+						b.WriteD(9105);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 
 		Assert.Equal(7001, packet.PlayerObjectId);
 		Assert.Equal(9001, packet.BaseItemObjectId);
@@ -5853,22 +5990,36 @@ public class GamePacketTests
 	public void ClientPacketFactory_ParsesAppearancePackets()
 	{
 		var cosmetic = Assert.IsType<CmAppearance>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(197, b =>
-			{
-				b.WriteC(2);
-				b.WriteC(0);
-				b.WriteH(0);
-				b.WriteD(9001);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					197,
+					b =>
+					{
+						b.WriteC(2);
+						b.WriteC(0);
+						b.WriteH(0);
+						b.WriteD(9001);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 		var rename = Assert.IsType<CmAppearance>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(197, b =>
-			{
-				b.WriteC(0);
-				b.WriteC(0);
-				b.WriteH(0);
-				b.WriteD(9002);
-				b.WriteS("Newname");
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					197,
+					b =>
+					{
+						b.WriteC(0);
+						b.WriteC(0);
+						b.WriteH(0);
+						b.WriteD(9002);
+						b.WriteS("Newname");
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 
 		Assert.Equal(2, (int)cosmetic.Type);
 		Assert.Equal(9001, cosmetic.ItemObjectId);
@@ -5883,52 +6034,74 @@ public class GamePacketTests
 	public void ClientPacketFactory_ParsesMovementPackets()
 	{
 		var revive = Assert.IsType<CmRevive>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(5, b => b.WriteC(4)), GameConnectionState.InGame));
-		Assert.IsType<CmRejectRevive>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(146, _ => { }), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(5, b => b.WriteC(4)), GameConnectionState.InGame)
+		);
+		Assert.IsType<CmRejectRevive>(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(146, _ => { }), GameConnectionState.InGame));
 		var headingUpdate = Assert.IsType<CmHeadingUpdate>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(147, b => b.WriteC(88)), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(147, b => b.WriteC(88)), GameConnectionState.InGame)
+		);
 		var move = Assert.IsType<CmMove>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(48, b =>
-			{
-				b.WriteF(10);
-				b.WriteF(20);
-				b.WriteF(30);
-				b.WriteC(4);
-				b.WriteC(MovementMask.Position | MovementMask.Manual | MovementMask.Glide | MovementMask.Vehicle);
-				b.WriteF(1);
-				b.WriteF(2);
-				b.WriteF(3);
-				b.WriteC(GlideFlag.Geyser);
-				b.WriteC(9);
-				b.WriteD(100);
-				b.WriteD(200);
-				b.WriteF(11);
-				b.WriteF(22);
-				b.WriteF(33);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					48,
+					b =>
+					{
+						b.WriteF(10);
+						b.WriteF(20);
+						b.WriteF(30);
+						b.WriteC(4);
+						b.WriteC(MovementMask.Position | MovementMask.Manual | MovementMask.Glide | MovementMask.Vehicle);
+						b.WriteF(1);
+						b.WriteF(2);
+						b.WriteF(3);
+						b.WriteC(GlideFlag.Geyser);
+						b.WriteC(9);
+						b.WriteD(100);
+						b.WriteD(200);
+						b.WriteF(11);
+						b.WriteF(22);
+						b.WriteF(33);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 		var absoluteMove = Assert.IsType<CmMove>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(48, b =>
-			{
-				b.WriteF(5);
-				b.WriteF(6);
-				b.WriteF(7);
-				b.WriteC(8);
-				b.WriteC(MovementMask.Position | MovementMask.Manual | MovementMask.Absolute);
-				b.WriteF(55);
-				b.WriteF(66);
-				b.WriteF(77);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					48,
+					b =>
+					{
+						b.WriteF(5);
+						b.WriteF(6);
+						b.WriteF(7);
+						b.WriteC(8);
+						b.WriteC(MovementMask.Position | MovementMask.Manual | MovementMask.Absolute);
+						b.WriteF(55);
+						b.WriteF(66);
+						b.WriteF(77);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 		var moveInAir = Assert.IsType<CmMoveInAir>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(49, b =>
-			{
-				b.WriteD(210010000);
-				b.WriteF(15);
-				b.WriteF(25);
-				b.WriteF(35);
-				b.WriteC(16);
-				b.WriteD(900);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					49,
+					b =>
+					{
+						b.WriteD(210010000);
+						b.WriteF(15);
+						b.WriteF(25);
+						b.WriteF(35);
+						b.WriteC(16);
+						b.WriteD(900);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 
 		Assert.Equal(10, move.X);
 		Assert.Equal(20, move.Y);
@@ -5970,30 +6143,53 @@ public class GamePacketTests
 	public void ClientPacketFactory_ParsesDeferredGameplayPackets()
 	{
 		var questionnaire = Assert.IsType<CmQuestionnaire>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(145, b =>
-			{
-				b.WriteD(7001);
-				b.WriteH(2);
-				b.WriteD(182400001);
-				b.WriteD(182400002);
-				b.WriteS("182400001,182400002");
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					145,
+					b =>
+					{
+						b.WriteD(7001);
+						b.WriteH(2);
+						b.WriteD(182400001);
+						b.WriteD(182400002);
+						b.WriteS("182400001,182400002");
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 		var startLoot = Assert.IsType<CmStartLoot>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(154, b =>
-			{
-				b.WriteD(9001);
-				b.WriteC(1);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					154,
+					b =>
+					{
+						b.WriteD(9001);
+						b.WriteC(1);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 		var lootItem = Assert.IsType<CmLootItem>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(155, b =>
-			{
-				b.WriteD(9002);
-				b.WriteC(3);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					155,
+					b =>
+					{
+						b.WriteD(9002);
+						b.WriteC(3);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 		var subzoneChange = Assert.IsType<CmSubzoneChange>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(163, b => b.WriteC(1)), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(163, b => b.WriteC(1)), GameConnectionState.InGame)
+		);
 		var changeChannel = Assert.IsType<CmChangeChannel>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(172, b => b.WriteD(2)), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(172, b => b.WriteD(2)), GameConnectionState.InGame)
+		);
 
 		Assert.Equal(7001, questionnaire.ObjectId);
 		Assert.Equal([182400001, 182400002], questionnaire.ItemIds);
@@ -6015,37 +6211,49 @@ public class GamePacketTests
 	public void ClientPacketFactory_ParsesDeferredUtilityPackets()
 	{
 		var objectSearch = Assert.IsType<CmObjectSearch>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(11, b => b.WriteD(730001)), GameConnectionState.InGame));
-		Assert.IsType<CmTeleportAnimationDone>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(15, _ => { }), GameConnectionState.InGame));
-		Assert.IsType<CmPositionSelf>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(17, _ => { }), GameConnectionState.InGame));
-		Assert.IsType<CmPlayerListener>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(40, _ => { }), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(11, b => b.WriteD(730001)), GameConnectionState.InGame)
+		);
+		Assert.IsType<CmTeleportAnimationDone>(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(15, _ => { }), GameConnectionState.InGame));
+		Assert.IsType<CmPositionSelf>(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(17, _ => { }), GameConnectionState.InGame));
+		Assert.IsType<CmPlayerListener>(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(40, _ => { }), GameConnectionState.InGame));
 		var deleteQuest = Assert.IsType<CmDeleteQuest>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(80, b => b.WriteD(1001)), GameConnectionState.InGame));
-		Assert.IsType<CmSecurityToken>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(92, _ => { }), GameConnectionState.Connected));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(80, b => b.WriteD(1001)), GameConnectionState.InGame)
+		);
+		Assert.IsType<CmSecurityToken>(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(92, _ => { }), GameConnectionState.Connected));
 		var checkPak = Assert.IsType<CmCheckPak>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(62, b =>
-			{
-				b.WriteC(2);
-				b.WriteS("[1:OK]");
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					62,
+					b =>
+					{
+						b.WriteC(2);
+						b.WriteS("[1:OK]");
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 		var playMovieEnd = Assert.IsType<CmPlayMovieEnd>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(81, b =>
-			{
-				b.WriteC(1);
-				b.WriteD(7001);
-				b.WriteD(12001);
-				b.WriteD(5);
-				b.WriteC(9);
-				b.WriteC(0);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					81,
+					b =>
+					{
+						b.WriteC(1);
+						b.WriteD(7001);
+						b.WriteD(12001);
+						b.WriteD(5);
+						b.WriteC(9);
+						b.WriteC(0);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 		var showMap = Assert.IsType<CmShowMap>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(196, b => b.WriteC(0)), GameConnectionState.InGame));
-		Assert.IsType<CmCheckMailUnknown>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(213, _ => { }), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(196, b => b.WriteC(0)), GameConnectionState.InGame)
+		);
+		Assert.IsType<CmCheckMailUnknown>(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(213, _ => { }), GameConnectionState.InGame));
 
 		Assert.Equal(730001, objectSearch.NpcId);
 		Assert.Equal(1001, deleteQuest.QuestId);
@@ -6072,35 +6280,59 @@ public class GamePacketTests
 	[Fact]
 	public void ClientPacketFactory_ParsesCharacterSelectionPackets()
 	{
-		var quit = Assert.IsType<CmQuit>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(3, b => b.WriteC(1)), GameConnectionState.Authed));
+		var quit = Assert.IsType<CmQuit>(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(3, b => b.WriteC(1)), GameConnectionState.Authed));
 		var characterList = Assert.IsType<CmCharacterList>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(150, b => b.WriteD(1234)), GameConnectionState.Authed));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(150, b => b.WriteD(1234)), GameConnectionState.Authed)
+		);
 		var createCharacter = Assert.IsType<CmCreateCharacter>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(151, WriteCreateCharacterPayload), GameConnectionState.Authed));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(151, WriteCreateCharacterPayload), GameConnectionState.Authed)
+		);
 		var enterWorld = Assert.IsType<CmEnterWorld>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(8, b => b.WriteD(5678)), GameConnectionState.Authed));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(8, b => b.WriteD(5678)), GameConnectionState.Authed)
+		);
 		var deleteCharacter = Assert.IsType<CmDeleteCharacter>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(152, b =>
-			{
-				b.WriteD(1234);
-				b.WriteD(5678);
-			}), GameConnectionState.Authed));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					152,
+					b =>
+					{
+						b.WriteD(1234);
+						b.WriteD(5678);
+					}
+				),
+				GameConnectionState.Authed
+			)
+		);
 		var restoreCharacter = Assert.IsType<CmRestoreCharacter>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(153, b =>
-			{
-				b.WriteD(2233);
-				b.WriteD(6677);
-			}), GameConnectionState.Authed));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					153,
+					b =>
+					{
+						b.WriteD(2233);
+						b.WriteD(6677);
+					}
+				),
+				GameConnectionState.Authed
+			)
+		);
 		var passkey = Assert.IsType<CmCharacterPasskey>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(210, b =>
-			{
-				b.WriteH(2);
-				WriteFixedUtf16Bytes(b, "old-pass");
-				WriteFixedUtf16Bytes(b, "new-pass");
-			}), GameConnectionState.Authed));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					210,
+					b =>
+					{
+						b.WriteH(2);
+						WriteFixedUtf16Bytes(b, "old-pass");
+						WriteFixedUtf16Bytes(b, "new-pass");
+					}
+				),
+				GameConnectionState.Authed
+			)
+		);
 		var nickname = Assert.IsType<CmCheckNickname>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(177, b => b.WriteS("candidate")), GameConnectionState.Authed));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(177, b => b.WriteS("candidate")), GameConnectionState.Authed)
+		);
 
 		Assert.Equal(1234, characterList.PlayOk2);
 		Assert.True(quit.StayConnected);
@@ -6154,8 +6386,11 @@ public class GamePacketTests
 						buffer.WriteH(0);
 						buffer.WriteH(3);
 						buffer.WriteB([0xAA, 0xBB, 0xCC]);
-					}),
-				GameConnectionState.InGame));
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 
 		Assert.Equal(1, settings.SettingsType);
 		Assert.Equal(3, settings.DeclaredSize);
@@ -6174,8 +6409,11 @@ public class GamePacketTests
 					{
 						buffer.WriteH(4);
 						buffer.WriteH(PlayerSettings.DenyFriendRequests);
-					}),
-				GameConnectionState.InGame));
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 
 		Assert.Equal(4, settings.Display);
 		Assert.Equal(PlayerSettings.DenyFriendRequests, settings.Deny);
@@ -6186,12 +6424,19 @@ public class GamePacketTests
 	public void ClientPacketFactory_ParsesMotionPacket()
 	{
 		var motion = Assert.IsType<CmMotion>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(71, b =>
-			{
-				b.WriteC(4);
-				b.WriteH(11);
-				b.WriteC(1);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					71,
+					b =>
+					{
+						b.WriteC(4);
+						b.WriteH(11);
+						b.WriteC(1);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 
 		Assert.Equal(4, motion.Unknown);
 		Assert.Equal(11, motion.MotionId);
@@ -6203,45 +6448,75 @@ public class GamePacketTests
 	public void ClientPacketFactory_ParsesEmotionPacket()
 	{
 		var selectTarget = Assert.IsType<CmEmotion>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(0)), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(0)), GameConnectionState.InGame)
+		);
 		var jump = Assert.IsType<CmEmotion>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(1)), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(1)), GameConnectionState.InGame)
+		);
 		var landFlyTeleport = Assert.IsType<CmEmotion>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(7)), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(7)), GameConnectionState.InGame)
+		);
 		var fly = Assert.IsType<CmEmotion>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(13)), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(13)), GameConnectionState.InGame)
+		);
 		var land = Assert.IsType<CmEmotion>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(14)), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(14)), GameConnectionState.InGame)
+		);
 		var powershardOn = Assert.IsType<CmEmotion>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(36)), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(36)), GameConnectionState.InGame)
+		);
 		var powershardOff = Assert.IsType<CmEmotion>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(37)), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(37)), GameConnectionState.InGame)
+		);
 		var openDoor = Assert.IsType<CmEmotion>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(31)), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(31)), GameConnectionState.InGame)
+		);
 		var startSprint = Assert.IsType<CmEmotion>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b =>
-			{
-				b.WriteC(53);
-				b.WriteD(0);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					43,
+					b =>
+					{
+						b.WriteC(53);
+						b.WriteD(0);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 		var endSprint = Assert.IsType<CmEmotion>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(54)), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b => b.WriteC(54)), GameConnectionState.InGame)
+		);
 		var emote = Assert.IsType<CmEmotion>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b =>
-			{
-				b.WriteC(21);
-				b.WriteH(101);
-				b.WriteD(7001);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					43,
+					b =>
+					{
+						b.WriteC(21);
+						b.WriteH(101);
+						b.WriteD(7001);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 		var chairSit = Assert.IsType<CmEmotion>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(43, b =>
-			{
-				b.WriteC(4);
-				b.WriteF(11);
-				b.WriteF(22);
-				b.WriteF(33);
-				b.WriteC(44);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					43,
+					b =>
+					{
+						b.WriteC(4);
+						b.WriteF(11);
+						b.WriteF(22);
+						b.WriteF(33);
+						b.WriteC(44);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 
 		Assert.Equal(EmotionType.SelectTarget, selectTarget.EmotionType);
 		Assert.Equal(EmotionType.Jump, jump.EmotionType);
@@ -6268,7 +6543,8 @@ public class GamePacketTests
 	public void ClientPacketFactory_ParsesRecipeDeletePacket()
 	{
 		var recipeDelete = Assert.IsType<CmRecipeDelete>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(89, b => b.WriteD(155000001)), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(89, b => b.WriteD(155000001)), GameConnectionState.InGame)
+		);
 
 		Assert.Equal(155000001, recipeDelete.RecipeId);
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(89, b => b.WriteD(155000001)), GameConnectionState.Authed));
@@ -6278,7 +6554,8 @@ public class GamePacketTests
 	public void ClientPacketFactory_ParsesClientCommandRollPacket()
 	{
 		var commandRoll = Assert.IsType<CmClientCommandRoll>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(107, b => b.WriteD(100)), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(107, b => b.WriteD(100)), GameConnectionState.InGame)
+		);
 
 		Assert.Equal(100, commandRoll.MaxRoll);
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(107, b => b.WriteD(100)), GameConnectionState.Authed));
@@ -6288,9 +6565,11 @@ public class GamePacketTests
 	public void ClientPacketFactory_ParsesTitlePackets()
 	{
 		var titleSet = Assert.IsType<CmTitleSet>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(139, b => b.WriteH(77)), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(139, b => b.WriteH(77)), GameConnectionState.InGame)
+		);
 		var bonusTitle = Assert.IsType<CmBonusTitle>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(233, b => b.WriteH(5)), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(233, b => b.WriteH(5)), GameConnectionState.InGame)
+		);
 
 		Assert.Equal(77, titleSet.TitleId);
 		Assert.Equal(5, bonusTitle.BonusTitleId);
@@ -6302,102 +6581,171 @@ public class GamePacketTests
 	public void ClientPacketFactory_ParsesShowBrandPacket()
 	{
 		var showBrand = Assert.IsType<CmShowBrand>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(181, b =>
-			{
-				b.WriteD(2);
-				b.WriteD(7);
-				b.WriteD(9001);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					181,
+					b =>
+					{
+						b.WriteD(2);
+						b.WriteD(7);
+						b.WriteD(9001);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 
 		Assert.Equal(2, showBrand.Action);
 		Assert.Equal(7, showBrand.BrandId);
 		Assert.Equal(9001, showBrand.TargetObjectId);
-		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(181, b =>
-		{
-			b.WriteD(2);
-			b.WriteD(7);
-			b.WriteD(9001);
-		}), GameConnectionState.Authed));
+		Assert.Null(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					181,
+					b =>
+					{
+						b.WriteD(2);
+						b.WriteD(7);
+						b.WriteD(9001);
+					}
+				),
+				GameConnectionState.Authed
+			)
+		);
 	}
 
 	[Fact]
 	public void ClientPacketFactory_ParsesPlayerStatusInfoPacket()
 	{
 		var playerStatusInfo = Assert.IsType<CmPlayerStatusInfo>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(96, b =>
-			{
-				b.WriteC(21);
-				b.WriteD(1002);
-				b.WriteD(1001);
-				b.WriteD(1003);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					96,
+					b =>
+					{
+						b.WriteC(21);
+						b.WriteD(1002);
+						b.WriteD(1001);
+						b.WriteD(1003);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 
 		Assert.Equal(21, playerStatusInfo.CommandCode);
 		Assert.Equal(1002, playerStatusInfo.SelectedObjectId);
 		Assert.Equal(1001, playerStatusInfo.AllianceGroupId);
 		Assert.Equal(1003, playerStatusInfo.SecondObjectId);
-		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(96, b =>
-		{
-			b.WriteC(21);
-			b.WriteD(1002);
-			b.WriteD(1001);
-			b.WriteD(1003);
-		}), GameConnectionState.Authed));
+		Assert.Null(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					96,
+					b =>
+					{
+						b.WriteC(21);
+						b.WriteD(1002);
+						b.WriteD(1001);
+						b.WriteD(1003);
+					}
+				),
+				GameConnectionState.Authed
+			)
+		);
 	}
 
 	[Fact]
 	public void ClientPacketFactory_ParsesSocialListPackets()
 	{
 		var questionResponse = Assert.IsType<CmQuestionResponse>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(50, buffer =>
-			{
-				buffer.WriteD(SmQuestionWindow.BuddyListAddBuddyRequest);
-				buffer.WriteC(1);
-				buffer.WriteC(0);
-				buffer.WriteH(0);
-				buffer.WriteD(1001);
-				buffer.WriteD(0);
-				buffer.WriteH(0);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					50,
+					buffer =>
+					{
+						buffer.WriteD(SmQuestionWindow.BuddyListAddBuddyRequest);
+						buffer.WriteC(1);
+						buffer.WriteC(0);
+						buffer.WriteH(0);
+						buffer.WriteD(1001);
+						buffer.WriteD(0);
+						buffer.WriteH(0);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 		Assert.IsType<CmMarkFriendList>(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(110, _ => { }), GameConnectionState.InGame));
 		var friendAdd = Assert.IsType<CmFriendAdd>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(111, buffer =>
-			{
-				buffer.WriteS("Friend");
-				buffer.WriteS("hello");
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					111,
+					buffer =>
+					{
+						buffer.WriteS("Friend");
+						buffer.WriteS("hello");
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 		var friendDelete = Assert.IsType<CmFriendDelete>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(112, buffer => buffer.WriteS("Friend")), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(112, buffer => buffer.WriteS("Friend")), GameConnectionState.InGame)
+		);
 		Assert.IsType<CmShowBlockList>(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(158, _ => { }), GameConnectionState.InGame));
 		var blockAdd = Assert.IsType<CmBlockAdd>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(166, buffer =>
-			{
-				buffer.WriteS("Blocked");
-				buffer.WriteS("reason");
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					166,
+					buffer =>
+					{
+						buffer.WriteS("Blocked");
+						buffer.WriteS("reason");
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 		var blockDelete = Assert.IsType<CmBlockDelete>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(167, buffer => buffer.WriteS("Blocked")), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(167, buffer => buffer.WriteS("Blocked")), GameConnectionState.InGame)
+		);
 		Assert.IsType<CmShowFriendList>(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(230, _ => { }), GameConnectionState.InGame));
 		var friendStatus = Assert.IsType<CmFriendStatus>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(170, buffer => buffer.WriteC(3)), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(170, buffer => buffer.WriteC(3)), GameConnectionState.InGame)
+		);
 		var blockSetReason = Assert.IsType<CmBlockSetReason>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(179, buffer =>
-			{
-				buffer.WriteS("Blocked");
-				buffer.WriteS("new reason");
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					179,
+					buffer =>
+					{
+						buffer.WriteS("Blocked");
+						buffer.WriteS("new reason");
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 		var friendSetMemo = Assert.IsType<CmFriendSetMemo>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(239, buffer =>
-			{
-				buffer.WriteS("Friend");
-				buffer.WriteS("new memo");
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					239,
+					buffer =>
+					{
+						buffer.WriteS("Friend");
+						buffer.WriteS("new memo");
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 
 		Assert.Equal(SmQuestionWindow.BuddyListAddBuddyRequest, questionResponse.QuestionId);
 		Assert.Equal(1, (int)questionResponse.Response);
 		Assert.Equal(1001, questionResponse.SenderObjectId);
 		var setNote = Assert.IsType<CmSetNote>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(58, buffer => buffer.WriteS("Available for siege")), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(58, buffer => buffer.WriteS("Available for siege")), GameConnectionState.InGame)
+		);
 		Assert.Equal("Friend", friendAdd.TargetName);
 		Assert.Equal("hello", friendAdd.Message);
 		Assert.Equal("Available for siege", setNote.Note);
@@ -6428,13 +6776,21 @@ public class GamePacketTests
 	public void ClientPacketFactory_ParsesMacroPackets()
 	{
 		var create = Assert.IsType<CmMacroCreate>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(175, buffer =>
-			{
-				buffer.WriteC(3);
-				buffer.WriteS("<macro id=\"3\"/>");
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					175,
+					buffer =>
+					{
+						buffer.WriteC(3);
+						buffer.WriteS("<macro id=\"3\"/>");
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 		var delete = Assert.IsType<CmMacroDelete>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(176, buffer => buffer.WriteC(3)), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(176, buffer => buffer.WriteC(3)), GameConnectionState.InGame)
+		);
 
 		Assert.Equal(3, create.MacroPosition);
 		Assert.Equal("<macro id=\"3\"/>", create.MacroXml);
@@ -6447,11 +6803,18 @@ public class GamePacketTests
 	public void ClientPacketFactory_ParsesInstanceInfoPacket()
 	{
 		var instanceInfo = Assert.IsType<CmInstanceInfo>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(192, buffer =>
-			{
-				buffer.WriteD(0);
-				buffer.WriteC(1);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					192,
+					buffer =>
+					{
+						buffer.WriteD(0);
+						buffer.WriteC(1);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 
 		Assert.Equal(0, instanceInfo.Unknown);
 		Assert.Equal(1, instanceInfo.UpdateType);
@@ -6461,8 +6824,7 @@ public class GamePacketTests
 	[Fact]
 	public void ClientPacketFactory_ParsesShowRestrictionsPacket()
 	{
-		Assert.IsType<CmShowRestrictions>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(194, _ => { }), GameConnectionState.InGame));
+		Assert.IsType<CmShowRestrictions>(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(194, _ => { }), GameConnectionState.InGame));
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(194, _ => { }), GameConnectionState.Authed));
 	}
 
@@ -6470,11 +6832,18 @@ public class GamePacketTests
 	public void ClientPacketFactory_ParsesReportPlayerPacket()
 	{
 		var reportPlayer = Assert.IsType<CmReportPlayer>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(191, buffer =>
-			{
-				buffer.WriteC(0);
-				buffer.WriteS("Reported");
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					191,
+					buffer =>
+					{
+						buffer.WriteC(0);
+						buffer.WriteS("Reported");
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 
 		Assert.Equal(0, reportPlayer.ReportType);
 		Assert.Equal("Reported", reportPlayer.PlayerName);
@@ -6495,12 +6864,14 @@ public class GamePacketTests
 					HouseTypeId: 1,
 					HighestBidKinah: 12_000_000,
 					BidCount: 2,
-					RemainingAuctionSeconds: 3600),
+					RemainingAuctionSeconds: 3600
+				),
 			],
 			LastBidListIndex: 7,
 			LastBidKinah: 12_000_000,
 			RegisteredHouseListIndex: 8,
-			RegisteredHouseStartingPrice: 9_000_000);
+			RegisteredHouseStartingPrice: 9_000_000
+		);
 
 		var payload = SerializeUnencryptedPayload(SmHouseBids.CreatePackets(bidPage)[0]);
 		using var reader = new PacketBuffer(payload);
@@ -6528,63 +6899,115 @@ public class GamePacketTests
 	public void ClientPacketFactory_ParsesHousingPackets()
 	{
 		var houseKick = Assert.IsType<CmHouseKick>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(72, b =>
-			{
-				b.WriteC(2);
-				b.WriteH(0);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					72,
+					b =>
+					{
+						b.WriteC(2);
+						b.WriteH(0);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 		var houseSettings = Assert.IsType<CmHouseSettings>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(73, b =>
-			{
-				b.WriteC(PlayerHouse.DoorClosedExceptFriends);
-				b.WriteC(0);
-				b.WriteS("Visitors welcome");
-			}), GameConnectionState.InGame));
-		Assert.IsType<CmGetHouseBids>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(218, _ => { }), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					73,
+					b =>
+					{
+						b.WriteC(PlayerHouse.DoorClosedExceptFriends);
+						b.WriteC(0);
+						b.WriteS("Visitors welcome");
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
+		Assert.IsType<CmGetHouseBids>(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(218, _ => { }), GameConnectionState.InGame));
 		var registerHouse = Assert.IsType<CmRegisterHouse>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(219, b =>
-			{
-				b.WriteQ(500000);
-				b.WriteQ(100000);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					219,
+					b =>
+					{
+						b.WriteQ(500000);
+						b.WriteQ(100000);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 		var placeBid = Assert.IsType<CmPlaceBid>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(221, b =>
-			{
-				b.WriteD(12);
-				b.WriteQ(750000);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					221,
+					b =>
+					{
+						b.WriteD(12);
+						b.WriteQ(750000);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 		var payRent = Assert.IsType<CmHousePayRent>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(223, b => b.WriteC(2)), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(223, b => b.WriteC(2)), GameConnectionState.InGame)
+		);
 		var useHouseObject = Assert.IsType<CmUseHouseObject>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(224, b => b.WriteD(9903)), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(224, b => b.WriteD(9903)), GameConnectionState.InGame)
+		);
 		var releaseObject = Assert.IsType<CmReleaseObject>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(225, b => b.WriteD(9903)), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(225, b => b.WriteD(9903)), GameConnectionState.InGame)
+		);
 		var houseDecorate = Assert.IsType<CmHouseDecorate>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(75, b =>
-			{
-				b.WriteD(9101);
-				b.WriteD(3504000);
-				b.WriteH(8);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					75,
+					b =>
+					{
+						b.WriteD(9101);
+						b.WriteD(3504000);
+						b.WriteH(8);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 		var enterDecorMode = Assert.IsType<CmHouseEdit>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(82, b => b.WriteC(CmHouseEdit.EnterDecorationMode)), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(82, b => b.WriteC(CmHouseEdit.EnterDecorationMode)), GameConnectionState.InGame)
+		);
 		var moveObject = Assert.IsType<CmHouseEdit>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(82, b =>
-			{
-				b.WriteC(CmHouseEdit.MoveObject);
-				b.WriteD(9902);
-				b.WriteF(10.5f);
-				b.WriteF(20.25f);
-				b.WriteF(30.75f);
-				b.WriteH(90);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					82,
+					b =>
+					{
+						b.WriteC(CmHouseEdit.MoveObject);
+						b.WriteD(9902);
+						b.WriteF(10.5f);
+						b.WriteF(20.25f);
+						b.WriteF(30.75f);
+						b.WriteH(90);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 		var renovate = Assert.IsType<CmHouseEdit>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(82, b =>
-			{
-				b.WriteC(CmHouseEdit.RenovateBuilding);
-				b.WriteD(353000);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					82,
+					b =>
+					{
+						b.WriteC(CmHouseEdit.RenovateBuilding);
+						b.WriteD(353000);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 
 		Assert.Equal(2, houseKick.Option);
 		Assert.Equal(PlayerHouse.DoorClosedExceptFriends, houseSettings.DoorState);
@@ -6621,58 +7044,103 @@ public class GamePacketTests
 	public void ClientPacketFactory_ParsesBrokerPackets()
 	{
 		var sellWindow = Assert.IsType<CmBrokerSellWindow>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(117, b => b.WriteD(90)), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(117, b => b.WriteD(90)), GameConnectionState.InGame)
+		);
 		var brokerList = Assert.IsType<CmBrokerList>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(123, b =>
-			{
-				b.WriteD(7001);
-				b.WriteC(4);
-				b.WriteH(2);
-				b.WriteH(32);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					123,
+					b =>
+					{
+						b.WriteD(7001);
+						b.WriteC(4);
+						b.WriteH(2);
+						b.WriteH(32);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 		var brokerSearch = Assert.IsType<CmBrokerSearch>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(124, b =>
-			{
-				b.WriteD(7002);
-				b.WriteC(6);
-				b.WriteH(3);
-				b.WriteH(64);
-				b.WriteH(2);
-				b.WriteD(1001);
-				b.WriteD(1002);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					124,
+					b =>
+					{
+						b.WriteD(7002);
+						b.WriteC(6);
+						b.WriteH(3);
+						b.WriteH(64);
+						b.WriteH(2);
+						b.WriteD(1001);
+						b.WriteD(1002);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 		var registered = Assert.IsType<CmBrokerRegistered>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(125, b => b.WriteD(7003)), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(125, b => b.WriteD(7003)), GameConnectionState.InGame)
+		);
 		var buy = Assert.IsType<CmBuyBrokerItem>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(126, b =>
-			{
-				b.WriteD(7004);
-				b.WriteD(8004);
-				b.WriteQ(9);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					126,
+					b =>
+					{
+						b.WriteD(7004);
+						b.WriteD(8004);
+						b.WriteQ(9);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 		var register = Assert.IsType<CmRegisterBrokerItem>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(127, b =>
-			{
-				b.WriteD(7005);
-				b.WriteD(8005);
-				b.WriteQ(123456);
-				b.WriteQ(3);
-				b.WriteC(1);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					127,
+					b =>
+					{
+						b.WriteD(7005);
+						b.WriteD(8005);
+						b.WriteQ(123456);
+						b.WriteQ(3);
+						b.WriteC(1);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 		var cancel = Assert.IsType<CmBrokerCancelRegistered>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(128, b =>
-			{
-				b.WriteD(7006);
-				b.WriteD(8006);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					128,
+					b =>
+					{
+						b.WriteD(7006);
+						b.WriteD(8006);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 		var settleList = Assert.IsType<CmBrokerSettleList>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(129, b =>
-			{
-				b.WriteD(7007);
-				b.WriteH(5);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					129,
+					b =>
+					{
+						b.WriteD(7007);
+						b.WriteH(5);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 		var settleAccount = Assert.IsType<CmBrokerSettleAccount>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(130, b => b.WriteD(7008)), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(130, b => b.WriteD(7008)), GameConnectionState.InGame)
+		);
 
 		Assert.Equal(90, sellWindow.ItemObjectId);
 		Assert.Equal(7001, brokerList.BrokerObjectId);
@@ -6723,10 +7191,7 @@ public class GamePacketTests
 		var rangerStigma = CreateBrokerTemplate(140000001, classRestrictions: new HashSet<string>(StringComparer.Ordinal) { "RANGER" });
 		var priestSkillManual = CreateBrokerTemplate(169500001, classRestrictions: new HashSet<string>(StringComparer.Ordinal) { "PRIEST" });
 		var weaponRecipe = CreateBrokerTemplate(152200001, craftLearnRecipeId: 155000001);
-		var recipes = new RecipeTemplateTable(
-		[
-			new RecipeTemplateSummary(155000001, 0, 40002, "PC_ALL", 0, 0, 0, 100000001, 1),
-		]);
+		var recipes = new RecipeTemplateTable([new RecipeTemplateSummary(155000001, 0, 40002, "PC_ALL", 0, 0, 0, 100000001, 1)]);
 
 		Assert.True(BrokerItemMaskMatcher.Matches(6013, rangerStigma));
 		Assert.False(BrokerItemMaskMatcher.Matches(6012, rangerStigma));
@@ -6745,13 +7210,31 @@ public class GamePacketTests
 			NpcExpands = 1,
 			QuestExpands = 2,
 			ItemExpands = 3,
-			InventoryItems = Enumerable.Range(1, 80)
-				.Select(id => new InventoryItem { ObjectId = id, ItemId = 100000000 + id, Location = 0 })
+			InventoryItems = Enumerable
+				.Range(1, 80)
+				.Select(id => new InventoryItem
+				{
+					ObjectId = id,
+					ItemId = 100000000 + id,
+					Location = 0,
+				})
 				.Concat(
-				[
-					new InventoryItem { ObjectId = 1000, ItemId = 182400001, Location = 0 },
-					new InventoryItem { ObjectId = 1001, ItemId = 100000099, Location = 0, IsEquipped = true },
-				])
+					[
+						new InventoryItem
+						{
+							ObjectId = 1000,
+							ItemId = 182400001,
+							Location = 0,
+						},
+						new InventoryItem
+						{
+							ObjectId = 1001,
+							ItemId = 100000099,
+							Location = 0,
+							IsEquipped = true,
+						},
+					]
+				)
 				.ToArray(),
 		};
 
@@ -6759,8 +7242,17 @@ public class GamePacketTests
 		Assert.Equal(80, InventoryCapacity.GetUsedCubeSlots(player));
 		Assert.True(InventoryCapacity.HasFreeCubeSlot(player));
 
-		player.InventoryItems = player.InventoryItems
-			.Concat([new InventoryItem { ObjectId = 1002, ItemId = 100000100, Location = 0 }])
+		player.InventoryItems = player
+			.InventoryItems.Concat(
+				[
+					new InventoryItem
+					{
+						ObjectId = 1002,
+						ItemId = 100000100,
+						Location = 0,
+					},
+				]
+			)
 			.ToArray();
 		Assert.False(InventoryCapacity.HasFreeCubeSlot(player));
 	}
@@ -6772,13 +7264,30 @@ public class GamePacketTests
 		{
 			WarehouseNpcExpands = 1,
 			WarehouseBonusExpands = 2,
-			WarehouseItems = Enumerable.Range(1, 47)
-				.Select(id => new InventoryItem { ObjectId = id, ItemId = 100000000 + id, Location = 1 })
+			WarehouseItems = Enumerable
+				.Range(1, 47)
+				.Select(id => new InventoryItem
+				{
+					ObjectId = id,
+					ItemId = 100000000 + id,
+					Location = 1,
+				})
 				.Concat(
-				[
-					new InventoryItem { ObjectId = 1000, ItemId = 182400001, Location = 1 },
-					new InventoryItem { ObjectId = 1001, ItemId = 100000099, Location = 0 },
-				])
+					[
+						new InventoryItem
+						{
+							ObjectId = 1000,
+							ItemId = 182400001,
+							Location = 1,
+						},
+						new InventoryItem
+						{
+							ObjectId = 1001,
+							ItemId = 100000099,
+							Location = 0,
+						},
+					]
+				)
 				.ToArray(),
 		};
 
@@ -6786,8 +7295,17 @@ public class GamePacketTests
 		Assert.Equal(47, InventoryCapacity.GetUsedWarehouseSlots(player));
 		Assert.Equal(1, InventoryCapacity.GetFreeWarehouseSlots(player));
 
-		player.WarehouseItems = player.WarehouseItems
-			.Concat([new InventoryItem { ObjectId = 1002, ItemId = 100000100, Location = 1 }])
+		player.WarehouseItems = player
+			.WarehouseItems.Concat(
+				[
+					new InventoryItem
+					{
+						ObjectId = 1002,
+						ItemId = 100000100,
+						Location = 1,
+					},
+				]
+			)
 			.ToArray();
 		Assert.Equal(0, InventoryCapacity.GetFreeWarehouseSlots(player));
 	}
@@ -6795,10 +7313,7 @@ public class GamePacketTests
 	[Fact]
 	public void WorldVisibility_MatchesKnownListDefaultRange()
 	{
-		var player = new Player
-		{
-			Position = new WorldPosition(210010000, 0, 0, 0, 0),
-		};
+		var player = new Player { Position = new WorldPosition(210010000, 0, 0, 0, 0) };
 
 		Assert.True(WorldVisibility.IsVisibleTo(player, new WorldPosition(210010000, 95, 0, 0, 0)));
 		Assert.True(WorldVisibility.IsVisibleTo(player, new WorldPosition(210010000, 30, 40, 80, 0)));
@@ -6810,37 +7325,61 @@ public class GamePacketTests
 	public void ClientPacketFactory_ParsesMailPackets()
 	{
 		var sendMail = Assert.IsType<CmSendMail>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(132, b =>
-			{
-				b.WriteS("Recipient");
-				b.WriteS("Title");
-				b.WriteS("Message");
-				b.WriteD(90);
-				b.WriteQ(2);
-				b.WriteQ(500);
-				b.WriteC(1);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					132,
+					b =>
+					{
+						b.WriteS("Recipient");
+						b.WriteS("Title");
+						b.WriteS("Message");
+						b.WriteD(90);
+						b.WriteQ(2);
+						b.WriteQ(500);
+						b.WriteC(1);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 		var checkMail = Assert.IsType<CmCheckMailList>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(133, b => b.WriteC(1)), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(133, b => b.WriteC(1)), GameConnectionState.InGame)
+		);
 		var readMail = Assert.IsType<CmReadMail>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(134, b => b.WriteD(1234)), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(134, b => b.WriteD(1234)), GameConnectionState.InGame)
+		);
 		var getAttachment = Assert.IsType<CmGetMailAttachment>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(136, b =>
-			{
-				b.WriteD(1234);
-				b.WriteC(1);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					136,
+					b =>
+					{
+						b.WriteD(1234);
+						b.WriteC(1);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 		var deleteMail = Assert.IsType<CmDeleteMail>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(137, b =>
-			{
-				b.WriteH(2);
-				b.WriteD(1234);
-				b.WriteC(0);
-				b.WriteD(5678);
-				b.WriteC(1);
-			}), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					137,
+					b =>
+					{
+						b.WriteH(2);
+						b.WriteD(1234);
+						b.WriteC(0);
+						b.WriteD(5678);
+						b.WriteC(1);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
 		var readExpressMail = Assert.IsType<CmReadExpressMail>(
-			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(162, b => b.WriteC(1)), GameConnectionState.InGame));
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(162, b => b.WriteC(1)), GameConnectionState.InGame)
+		);
 
 		Assert.Equal("Recipient", sendMail.RecipientName);
 		Assert.Equal("Title", sendMail.Title);
@@ -7052,7 +7591,8 @@ public class GamePacketTests
 		int physicalAccuracy,
 		int magicalAccuracy,
 		int strikeResist,
-		int spellResist)
+		int spellResist
+	)
 	{
 		Assert.Equal(18, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
@@ -7095,7 +7635,8 @@ public class GamePacketTests
 		int physicalAccuracy,
 		int magicalAccuracy,
 		int strikeResist,
-		int spellResist)
+		int spellResist
+	)
 	{
 		Assert.Equal(18, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
@@ -7189,14 +7730,13 @@ public class GamePacketTests
 				Rating: "NORMAL",
 				Race: "ELYOS",
 				Tribe: "GENERAL",
-				Type: "GENERAL"),
-			Position: position);
+				Type: "GENERAL"
+			),
+			Position: position
+		);
 	}
 
-	private static ItemTemplateSummary CreateBrokerTemplate(
-		int templateId,
-		IReadOnlySet<string>? classRestrictions = null,
-		int craftLearnRecipeId = 0)
+	private static ItemTemplateSummary CreateBrokerTemplate(int templateId, IReadOnlySet<string>? classRestrictions = null, int craftLearnRecipeId = 0)
 	{
 		return new ItemTemplateSummary(
 			templateId,
@@ -7212,6 +7752,7 @@ public class GamePacketTests
 			0,
 			0,
 			ClassRestrictions: classRestrictions,
-			CraftLearnRecipeId: craftLearnRecipeId);
+			CraftLearnRecipeId: craftLearnRecipeId
+		);
 	}
 }

@@ -18,7 +18,8 @@ public sealed record PlayerKnownListMembershipRegistryRefreshAdapterResult(
 	bool DidReadRegistry,
 	bool IsJavaRegionKnownListParity,
 	string JavaSource,
-	bool IsLive);
+	bool IsLive
+);
 
 public sealed class PlayerKnownListMembershipRegistryRefreshAdapterService
 {
@@ -29,7 +30,8 @@ public sealed class PlayerKnownListMembershipRegistryRefreshAdapterService
 	public PlayerKnownListMembershipRegistryRefreshAdapterService(
 		PlayerKnownListMembershipRefreshService refreshService,
 		IGameClientConnectionRegistry? connectionRegistry = null,
-		bool enabled = false)
+		bool enabled = false
+	)
 	{
 		_refreshService = refreshService;
 		_connectionRegistry = connectionRegistry;
@@ -38,6 +40,9 @@ public sealed class PlayerKnownListMembershipRegistryRefreshAdapterService
 
 	public PlayerKnownListMembershipRegistryRefreshAdapterResult RefreshOwner(Player owner)
 	{
+		// Java parity: KnownList.update walks live world visibility and region membership. This adapter
+		// is only a C# seam that snapshots online players from the connection registry and feeds them into
+		// the staged membership refresh service.
 		if (!_enabled)
 			return CreateResult(PlayerKnownListMembershipRegistryRefreshAdapterStatus.Disabled, [], didReadRegistry: false);
 
@@ -50,11 +55,14 @@ public sealed class PlayerKnownListMembershipRegistryRefreshAdapterService
 			PlayerKnownListMembershipRegistryRefreshAdapterStatus.RefreshedOwner,
 			[refreshResult],
 			didReadRegistry: true,
-			onlinePlayers.Count);
+			onlinePlayers.Count
+		);
 	}
 
 	public PlayerKnownListMembershipRegistryRefreshAdapterResult RefreshAll()
 	{
+		// Java parity: this bulk path is still an approximation over a registry snapshot, not a direct
+		// MapRegion or KnownList-driven refresh like the Java runtime.
 		if (!_enabled)
 			return CreateResult(PlayerKnownListMembershipRegistryRefreshAdapterStatus.Disabled, [], didReadRegistry: false);
 
@@ -67,7 +75,8 @@ public sealed class PlayerKnownListMembershipRegistryRefreshAdapterService
 			PlayerKnownListMembershipRegistryRefreshAdapterStatus.RefreshedAll,
 			refreshResults,
 			didReadRegistry: true,
-			onlinePlayers.Count);
+			onlinePlayers.Count
+		);
 	}
 
 	private List<Player> SnapshotOnlinePlayers()
@@ -81,7 +90,8 @@ public sealed class PlayerKnownListMembershipRegistryRefreshAdapterService
 		PlayerKnownListMembershipRegistryRefreshAdapterStatus status,
 		IReadOnlyList<PlayerKnownListMembershipRefreshResult> refreshResults,
 		bool didReadRegistry,
-		int onlinePlayerSnapshotCount = 0) =>
+		int onlinePlayerSnapshotCount = 0
+	) =>
 		new(
 			status,
 			refreshResults,
@@ -89,5 +99,6 @@ public sealed class PlayerKnownListMembershipRegistryRefreshAdapterService
 			didReadRegistry,
 			IsJavaRegionKnownListParity: false,
 			"KnownList.update approximated from IGameClientConnectionRegistry.ForEachOnlinePlayer snapshot plus WorldVisibility; not Java MapRegion parity",
-			IsLive: didReadRegistry);
+			IsLive: didReadRegistry
+		);
 }

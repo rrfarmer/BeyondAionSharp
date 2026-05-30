@@ -31,7 +31,8 @@ public sealed record PlayerProtectionActiveTaskLiveReadinessRow(
 	IReadOnlyList<string> BlockedReasons,
 	string JavaOperation,
 	string JavaSource,
-	string Notes);
+	string Notes
+);
 
 public sealed record PlayerProtectionActiveTaskLiveReadinessReport(
 	PlayerProtectionActiveTaskAdapterAction Action,
@@ -40,19 +41,18 @@ public sealed record PlayerProtectionActiveTaskLiveReadinessReport(
 	IReadOnlyList<PlayerProtectionActiveTaskLiveReadinessRow> Rows,
 	bool CanEnableAdditionalLiveSideEffects,
 	IReadOnlyList<PlayerProtectionActiveTaskLiveReadinessCapability> BlockedCapabilities,
-	string JavaSource);
+	string JavaSource
+);
 
 public static class PlayerProtectionActiveTaskLiveReadinessService
 {
-	public static PlayerProtectionActiveTaskLiveReadinessReport Create(
-		PlayerProtectionActiveTaskExecutionSummary summary)
+	public static PlayerProtectionActiveTaskLiveReadinessReport Create(PlayerProtectionActiveTaskExecutionSummary summary)
 	{
+		// Java parity: protection-task start/stop has multiple live side-effect seams beyond the currently
+		// allowed visual mutation. This readiness pass turns execution-summary rows into capability gates
+		// for packet fanout, scheduler/task-map wiring, AttackUtil helpers, and AI move notification.
 		var rows = summary.Rows.Select(CreateRow).ToArray();
-		var blockedCapabilities = rows
-			.Where(row => row.BlocksAdditionalLiveSideEffects)
-			.Select(row => row.Capability)
-			.Distinct()
-			.ToArray();
+		var blockedCapabilities = rows.Where(row => row.BlocksAdditionalLiveSideEffects).Select(row => row.Capability).Distinct().ToArray();
 
 		return new PlayerProtectionActiveTaskLiveReadinessReport(
 			summary.Action,
@@ -61,11 +61,11 @@ public static class PlayerProtectionActiveTaskLiveReadinessService
 			rows,
 			CanEnableAdditionalLiveSideEffects: blockedCapabilities.Length == 0,
 			blockedCapabilities,
-			"PlayerController protection active task live-readiness gate over summary rows");
+			"PlayerController protection active task live-readiness gate over summary rows"
+		);
 	}
 
-	private static PlayerProtectionActiveTaskLiveReadinessRow CreateRow(
-		PlayerProtectionActiveTaskExecutionSummaryRow row)
+	private static PlayerProtectionActiveTaskLiveReadinessRow CreateRow(PlayerProtectionActiveTaskExecutionSummaryRow row)
 	{
 		var capability = Capability(row.Kind);
 		var blockedReasons = BlockedReasons(row, capability).ToArray();
@@ -82,16 +82,17 @@ public static class PlayerProtectionActiveTaskLiveReadinessService
 			blockedReasons,
 			row.JavaOperation,
 			row.JavaSource,
-			Notes(row, capability, status));
+			Notes(row, capability, status)
+		);
 	}
 
-	private static PlayerProtectionActiveTaskLiveReadinessCapability Capability(
-		PlayerProtectionActiveTaskExecutionSummaryRowKind kind) =>
+	private static PlayerProtectionActiveTaskLiveReadinessCapability Capability(PlayerProtectionActiveTaskExecutionSummaryRowKind kind) =>
 		kind switch
 		{
 			PlayerProtectionActiveTaskExecutionSummaryRowKind.ObservedCondition => PlayerProtectionActiveTaskLiveReadinessCapability.BranchObservation,
 			PlayerProtectionActiveTaskExecutionSummaryRowKind.VisualMutation => PlayerProtectionActiveTaskLiveReadinessCapability.VisualMutation,
-			PlayerProtectionActiveTaskExecutionSummaryRowKind.AttackUtilCastCancellation => PlayerProtectionActiveTaskLiveReadinessCapability.CastCancellation,
+			PlayerProtectionActiveTaskExecutionSummaryRowKind.AttackUtilCastCancellation =>
+				PlayerProtectionActiveTaskLiveReadinessCapability.CastCancellation,
 			PlayerProtectionActiveTaskExecutionSummaryRowKind.AttackUtilTargetClear => PlayerProtectionActiveTaskLiveReadinessCapability.TargetClear,
 			PlayerProtectionActiveTaskExecutionSummaryRowKind.PacketConstruction => PlayerProtectionActiveTaskLiveReadinessCapability.PacketConstruction,
 			PlayerProtectionActiveTaskExecutionSummaryRowKind.PacketFanout => PlayerProtectionActiveTaskLiveReadinessCapability.PacketFanout,
@@ -103,7 +104,8 @@ public static class PlayerProtectionActiveTaskLiveReadinessService
 
 	private static IEnumerable<string> BlockedReasons(
 		PlayerProtectionActiveTaskExecutionSummaryRow row,
-		PlayerProtectionActiveTaskLiveReadinessCapability capability)
+		PlayerProtectionActiveTaskLiveReadinessCapability capability
+	)
 	{
 		if (!row.JavaCallReached)
 			yield break;
@@ -138,7 +140,8 @@ public static class PlayerProtectionActiveTaskLiveReadinessService
 	private static PlayerProtectionActiveTaskLiveReadinessStatus Status(
 		PlayerProtectionActiveTaskExecutionSummaryRow row,
 		PlayerProtectionActiveTaskLiveReadinessCapability capability,
-		int blockedReasonCount)
+		int blockedReasonCount
+	)
 	{
 		if (!row.JavaCallReached)
 			return PlayerProtectionActiveTaskLiveReadinessStatus.NotReached;
@@ -155,11 +158,14 @@ public static class PlayerProtectionActiveTaskLiveReadinessService
 	private static string Notes(
 		PlayerProtectionActiveTaskExecutionSummaryRow row,
 		PlayerProtectionActiveTaskLiveReadinessCapability capability,
-		PlayerProtectionActiveTaskLiveReadinessStatus status) =>
+		PlayerProtectionActiveTaskLiveReadinessStatus status
+	) =>
 		status switch
 		{
-			PlayerProtectionActiveTaskLiveReadinessStatus.Blocked => "Additional live side effects must stay disabled until the listed prerequisites are implemented and verified.",
-			PlayerProtectionActiveTaskLiveReadinessStatus.LiveOnlyAllowed => "Visual-state mutation is the only currently allowed live protection side effect.",
+			PlayerProtectionActiveTaskLiveReadinessStatus.Blocked =>
+				"Additional live side effects must stay disabled until the listed prerequisites are implemented and verified.",
+			PlayerProtectionActiveTaskLiveReadinessStatus.LiveOnlyAllowed =>
+				"Visual-state mutation is the only currently allowed live protection side effect.",
 			PlayerProtectionActiveTaskLiveReadinessStatus.SkippedBranch => "Java reaches the guard but skips this capability for the current state.",
 			PlayerProtectionActiveTaskLiveReadinessStatus.NotReached => "Java branch did not reach this capability for the current state.",
 			_ => capability == PlayerProtectionActiveTaskLiveReadinessCapability.PacketConstruction

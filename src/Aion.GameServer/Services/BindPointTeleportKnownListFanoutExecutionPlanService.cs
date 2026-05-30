@@ -16,7 +16,8 @@ public sealed record BindPointTeleportKnownListFanoutExecutionPlan(
 	bool UsesPlayerIsOnlineGate,
 	bool ContinuesAfterRecipientFailure,
 	string JavaSource,
-	bool IsLive);
+	bool IsLive
+);
 
 public static class BindPointTeleportKnownListFanoutExecutionPlanService
 {
@@ -25,14 +26,19 @@ public static class BindPointTeleportKnownListFanoutExecutionPlanService
 		PlayerKnownListMembershipSnapshot? membershipSnapshot,
 		IEnumerable<int>? onlinePlayerObjectIds,
 		IEnumerable<int>? failingPlayerObjectIds = null,
-		string? failureReason = null)
+		string? failureReason = null
+	)
 	{
+		// Java parity: BindPointTeleportService.teleport broadcasts the teleport packet to the source
+		// and nearby players through PacketSendUtility.broadcastPacket(player, packet, true); this planner
+		// preserves the staged recipient ordering and failure policy without sending packets.
 		var trace = BindPointTeleportKnownListFanoutMembershipAdapterService.CreateTrace(fanoutPlan, membershipSnapshot);
 		var sendPolicy = BindPointTeleportKnownListFanoutSendPolicyService.CreatePolicy(
 			trace,
 			onlinePlayerObjectIds,
 			failingPlayerObjectIds,
-			failureReason);
+			failureReason
+		);
 
 		return new BindPointTeleportKnownListFanoutExecutionPlan(
 			trace.Status == BindPointTeleportKnownListFanoutTraceStatus.NoPacket
@@ -46,6 +52,7 @@ public static class BindPointTeleportKnownListFanoutExecutionPlanService
 			UsesPlayerIsOnlineGate: sendPolicy.UsesPlayerIsOnlineGate,
 			ContinuesAfterRecipientFailure: sendPolicy.ContinuesAfterRecipientFailure,
 			"BindPointTeleportService.teleport -> PacketSendUtility.broadcastPacket(player, packet, true)",
-			IsLive: false);
+			IsLive: false
+		);
 	}
 }

@@ -20,7 +20,8 @@ public sealed record QuestCompletionCallbackRegistration(
 	bool ThrowsBeforeReturning = false,
 	bool UsesDefaultFollowUp = false,
 	int? FollowUpQuestId = null,
-	QuestCompletionFollowUpPlan? FollowUpPlan = null);
+	QuestCompletionFollowUpPlan? FollowUpPlan = null
+);
 
 public sealed record QuestCompletionCallbackDescriptor(
 	int Order,
@@ -33,21 +34,23 @@ public sealed record QuestCompletionCallbackDescriptor(
 	bool StopsRemainingHandlers = false,
 	bool UsesDefaultFollowUp = false,
 	int? FollowUpQuestId = null,
-	QuestCompletionFollowUpPlan? FollowUpPlan = null);
+	QuestCompletionFollowUpPlan? FollowUpPlan = null
+);
 
 public sealed record QuestCompletionCallbackPlan(
 	QuestCompletionCallbackPlanStatus Status,
-	IReadOnlyList<QuestCompletionCallbackDescriptor> Descriptors)
+	IReadOnlyList<QuestCompletionCallbackDescriptor> Descriptors
+)
 {
 	public bool HasHandlers => Status != QuestCompletionCallbackPlanStatus.NoHandlers;
 }
 
 public static class QuestCompletionCallbackPlanService
 {
-	public static QuestCompletionCallbackPlan CreatePlan(
-		int completedQuestId,
-		IEnumerable<QuestCompletionCallbackRegistration> registrations)
+	public static QuestCompletionCallbackPlan CreatePlan(int completedQuestId, IEnumerable<QuestCompletionCallbackRegistration> registrations)
 	{
+		// Java parity: QuestEngine.onQuestComplete iterates registered completion handlers in order,
+		// reuses the shared QuestEnv, and stops further callbacks when a handler throws.
 		ArgumentNullException.ThrowIfNull(registrations);
 
 		var descriptors = new List<QuestCompletionCallbackDescriptor>();
@@ -59,32 +62,32 @@ public static class QuestCompletionCallbackPlanService
 			if (!registeredQuestIds.Add(registration.RegisteredQuestId))
 				continue;
 
-			var action = registration.HandlerExists
-				? QuestCompletionCallbackAction.InvokeHandler
-				: QuestCompletionCallbackAction.SkipMissingHandler;
-			descriptors.Add(new QuestCompletionCallbackDescriptor(
-				order++,
-				action,
-				registration.RegisteredQuestId,
-				completedQuestId,
-				registration.HandlerJavaSource,
-				IsLive: false,
-				UsesSharedQuestEnv: true,
-				StopsRemainingHandlers: registration.ThrowsBeforeReturning,
-				UsesDefaultFollowUp: registration.UsesDefaultFollowUp,
-				FollowUpQuestId: registration.FollowUpQuestId,
-				FollowUpPlan: registration.FollowUpPlan));
+			var action = registration.HandlerExists ? QuestCompletionCallbackAction.InvokeHandler : QuestCompletionCallbackAction.SkipMissingHandler;
+			descriptors.Add(
+				new QuestCompletionCallbackDescriptor(
+					order++,
+					action,
+					registration.RegisteredQuestId,
+					completedQuestId,
+					registration.HandlerJavaSource,
+					IsLive: false,
+					UsesSharedQuestEnv: true,
+					StopsRemainingHandlers: registration.ThrowsBeforeReturning,
+					UsesDefaultFollowUp: registration.UsesDefaultFollowUp,
+					FollowUpQuestId: registration.FollowUpQuestId,
+					FollowUpPlan: registration.FollowUpPlan
+				)
+			);
 
 			if (registration.ThrowsBeforeReturning)
 			{
-				return new QuestCompletionCallbackPlan(
-					QuestCompletionCallbackPlanStatus.StoppedByHandlerException,
-					descriptors);
+				return new QuestCompletionCallbackPlan(QuestCompletionCallbackPlanStatus.StoppedByHandlerException, descriptors);
 			}
 		}
 
 		return new QuestCompletionCallbackPlan(
 			descriptors.Count == 0 ? QuestCompletionCallbackPlanStatus.NoHandlers : QuestCompletionCallbackPlanStatus.Ready,
-			descriptors);
+			descriptors
+		);
 	}
 }

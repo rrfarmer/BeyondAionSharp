@@ -49,7 +49,8 @@ public sealed record PlayerDeathWorkflowFacts(
 	bool HasNoDeathPenaltyEffect = false,
 	bool HasTeleportTaskAtResurrectionOptionsCallback = false,
 	int LastAttackerObjectId = 0,
-	IReadOnlyList<int>? KnownCreatureObjectIds = null);
+	IReadOnlyList<int>? KnownCreatureObjectIds = null
+);
 
 public sealed record PlayerDeathWorkflowPlan(
 	PlayerDeathWorkflowStatus Status,
@@ -67,13 +68,14 @@ public sealed record PlayerDeathWorkflowPlan(
 	bool IsLive,
 	IReadOnlyList<PlayerDeathWorkflowStep> Steps,
 	IReadOnlyList<string> UnsupportedJavaBehaviors,
-	string JavaSource);
+	string JavaSource
+);
 
 public sealed class PlayerDeathWorkflowPlanService
 {
 	public PlayerDeathWorkflowPlan CreatePlan(Player player, PlayerDeathWorkflowFacts facts)
 	{
-		// Java parity breadcrumb:
+		// Java parity:
 		// PlayerController.onDie performs player branches, then calls CreatureController.onDie,
 		// then resumes with resurrection, instance/map, reward, XP-loss, and quest callbacks.
 		var steps = new List<PlayerDeathWorkflowStep>
@@ -91,12 +93,7 @@ public sealed class PlayerDeathWorkflowPlanService
 			{
 				steps.Add(PlayerDeathWorkflowStep.RestoreDuelistHitPointsAndMana);
 				steps.Add(PlayerDeathWorkflowStep.ReturnAfterDuelOpponentKill);
-				return BuildPlan(
-					player,
-					facts,
-					steps,
-					PlayerDeathWorkflowStatus.ReturnedAfterDuelOpponentKill,
-					wouldScheduleResurrectionOptions: false);
+				return BuildPlan(player, facts, steps, PlayerDeathWorkflowStatus.ReturnedAfterDuelOpponentKill, wouldScheduleResurrectionOptions: false);
 			}
 		}
 
@@ -119,24 +116,14 @@ public sealed class PlayerDeathWorkflowPlanService
 		if (facts.InstanceHandlerConsumesDeath)
 		{
 			steps.Add(PlayerDeathWorkflowStep.ReturnAfterInstanceHandler);
-			return BuildPlan(
-				player,
-				facts,
-				steps,
-				PlayerDeathWorkflowStatus.ReturnedAfterInstanceHandler,
-				wouldScheduleResurrectionOptions: true);
+			return BuildPlan(player, facts, steps, PlayerDeathWorkflowStatus.ReturnedAfterInstanceHandler, wouldScheduleResurrectionOptions: true);
 		}
 
 		steps.Add(PlayerDeathWorkflowStep.InvokeMapRegionOnDie);
 		if (facts.MapRegionConsumesDeath)
 		{
 			steps.Add(PlayerDeathWorkflowStep.ReturnAfterMapRegion);
-			return BuildPlan(
-				player,
-				facts,
-				steps,
-				PlayerDeathWorkflowStatus.ReturnedAfterMapRegion,
-				wouldScheduleResurrectionOptions: true);
+			return BuildPlan(player, facts, steps, PlayerDeathWorkflowStatus.ReturnedAfterMapRegion, wouldScheduleResurrectionOptions: true);
 		}
 
 		steps.Add(PlayerDeathWorkflowStep.DoReward);
@@ -146,19 +133,14 @@ public sealed class PlayerDeathWorkflowPlanService
 		}
 
 		steps.Add(PlayerDeathWorkflowStep.NotifyQuestEngineOnDie);
-		return BuildPlan(
-			player,
-			facts,
-			steps,
-			PlayerDeathWorkflowStatus.PlannedFullPlayerDeath,
-			wouldScheduleResurrectionOptions: true);
+		return BuildPlan(player, facts, steps, PlayerDeathWorkflowStatus.PlannedFullPlayerDeath, wouldScheduleResurrectionOptions: true);
 	}
 
 	private static bool ShouldCalculateExperienceLoss(PlayerDeathWorkflowFacts facts)
 	{
-		return facts.LastAttackerMasterIsNpcOrPlayerSelf
-			&& facts.PlayerLevel > 4
-			&& !facts.HasNoDeathPenaltyEffect;
+		// Java parity: PlayerController.onDie only applies experience loss for NPC/self deaths above
+		// level 4 when the no-death-penalty effect path is not active.
+		return facts.LastAttackerMasterIsNpcOrPlayerSelf && facts.PlayerLevel > 4 && !facts.HasNoDeathPenaltyEffect;
 	}
 
 	private static PlayerDeathWorkflowPlan BuildPlan(
@@ -166,7 +148,8 @@ public sealed class PlayerDeathWorkflowPlanService
 		PlayerDeathWorkflowFacts facts,
 		IReadOnlyList<PlayerDeathWorkflowStep> steps,
 		PlayerDeathWorkflowStatus status,
-		bool wouldScheduleResurrectionOptions)
+		bool wouldScheduleResurrectionOptions
+	)
 	{
 		var wouldSetFlyingBeforeDeath = player.IsInState(PlayerCreatureState.Flying);
 		var wouldUseFloatingCorpse = player.IsFlyingBeforeDeath || wouldSetFlyingBeforeDeath;
@@ -174,9 +157,7 @@ public sealed class PlayerDeathWorkflowPlanService
 		return new PlayerDeathWorkflowPlan(
 			status,
 			player.ObjectId,
-			wouldUseFloatingCorpse
-				? PlayerDeathStateTransitionStatus.FloatingCorpseApplied
-				: PlayerDeathStateTransitionStatus.DeadStateApplied,
+			wouldUseFloatingCorpse ? PlayerDeathStateTransitionStatus.FloatingCorpseApplied : PlayerDeathStateTransitionStatus.DeadStateApplied,
 			wouldSetFlyingBeforeDeath,
 			wouldUseFloatingCorpse,
 			steps.Contains(PlayerDeathWorkflowStep.ApplyPlayerDeathStateTransition)
@@ -186,18 +167,15 @@ public sealed class PlayerDeathWorkflowPlanService
 			ShouldCalculateExperienceLoss(facts) && steps.Contains(PlayerDeathWorkflowStep.CalculateExperienceLoss),
 			wouldScheduleResurrectionOptions,
 			wouldScheduleResurrectionOptions
-				? PlayerDeathResurrectionOptionsPlanService.CreatePlan(
-					player,
-					facts.HasTeleportTaskAtResurrectionOptionsCallback)
+				? PlayerDeathResurrectionOptionsPlanService.CreatePlan(player, facts.HasTeleportTaskAtResurrectionOptionsCallback)
 				: null,
-			steps.Contains(PlayerDeathWorkflowStep.AbortMove)
-				? PlayerDeathCoreSideEffectPlanService.CreatePlan(player.ObjectId)
-				: null,
+			steps.Contains(PlayerDeathWorkflowStep.AbortMove) ? PlayerDeathCoreSideEffectPlanService.CreatePlan(player.ObjectId) : null,
 			steps.Contains(PlayerDeathWorkflowStep.BroadcastDieEmotion)
 				? PlayerDeathEmotionFanoutPlanService.CreatePlan(
 					player.ObjectId,
 					facts.LastAttackerObjectId,
-					facts.KnownCreatureObjectIds ?? Array.Empty<int>())
+					facts.KnownCreatureObjectIds ?? Array.Empty<int>()
+				)
 				: null,
 			IsLive: false,
 			steps.ToArray(),
@@ -212,6 +190,7 @@ public sealed class PlayerDeathWorkflowPlanService
 				"Instance and map-region death callbacks are planned from facts rather than invoked.",
 				"Reward, XP-loss, no-death-penalty effect scan, and QuestEngine callback are planned but not executed.",
 			},
-			"com.aionemu.gameserver.controllers.PlayerController.onDie + com.aionemu.gameserver.controllers.CreatureController.onDie");
+			"com.aionemu.gameserver.controllers.PlayerController.onDie + com.aionemu.gameserver.controllers.CreatureController.onDie"
+		);
 	}
 }

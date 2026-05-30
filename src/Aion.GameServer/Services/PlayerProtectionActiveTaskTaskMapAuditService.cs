@@ -35,19 +35,23 @@ public sealed record PlayerProtectionActiveTaskTaskMapAuditRow(
 	string CSharpCurrentState,
 	string Requirement,
 	string JavaSource,
-	string Notes);
+	string Notes
+);
 
 public sealed record PlayerProtectionActiveTaskTaskMapAuditReport(
 	IReadOnlyList<PlayerProtectionActiveTaskTaskMapAuditRow> Rows,
 	bool HasLiveTaskMapAdapter,
 	bool SchedulerCapabilityBlockedByReadiness,
-	string JavaSource);
+	string JavaSource
+);
 
 public static class PlayerProtectionActiveTaskTaskMapAuditService
 {
-	public static PlayerProtectionActiveTaskTaskMapAuditReport Create(
-		PlayerProtectionActiveTaskLiveReadinessReport? readinessReport = null)
+	public static PlayerProtectionActiveTaskTaskMapAuditReport Create(PlayerProtectionActiveTaskLiveReadinessReport? readinessReport = null)
 	{
+		// Java parity: protection scheduling relies on the shared CreatureController task-map contract:
+		// task id ordinals, replace-and-cancel, missing-task no-op, conditional cancel, and cancelAllTasks
+		// on lifecycle teardown. This audit captures that contract against the current C# gap.
 		var rows = new List<PlayerProtectionActiveTaskTaskMapAuditRow>();
 
 		Add(
@@ -60,7 +64,8 @@ public static class PlayerProtectionActiveTaskTaskMapAuditService
 			"C# protection plans preserve the name and ordinal as metadata.",
 			"Future live task map must key protection tasks consistently with Java ordinal behavior or document an intentional adapter mapping.",
 			"TaskId.java",
-			"Do not assume other TaskId ordinals are safe until the full enum is represented.");
+			"Do not assume other TaskId ordinals are safe until the full enum is represented."
+		);
 		Add(
 			rows,
 			PlayerProtectionActiveTaskTaskMapAuditArea.JavaSchedule,
@@ -71,7 +76,8 @@ public static class PlayerProtectionActiveTaskTaskMapAuditService
 			"C# records the 60000 ms delay but does not create a ScheduledTask for protection.",
 			"Live adapter needs a ThreadPoolManager.Schedule callback that invokes stopProtectionActiveTask through the eventual controller boundary.",
 			"PlayerController.startProtectionActiveTask -> ThreadPoolManager.getInstance().schedule(this::stopProtectionActiveTask, 60000)",
-			"Callback threading and exception behavior remain unverified against Java runtime.");
+			"Callback threading and exception behavior remain unverified against Java runtime."
+		);
 		Add(
 			rows,
 			PlayerProtectionActiveTaskTaskMapAuditArea.JavaTaskMapStorage,
@@ -82,7 +88,8 @@ public static class PlayerProtectionActiveTaskTaskMapAuditService
 			"C# has no player/controller task map for protection active tasks.",
 			"Define a controller-owned or player-owned concurrent map before live scheduling is enabled.",
 			"CreatureController.tasks",
-			"Ownership must align with future controller lifecycle cleanup.");
+			"Ownership must align with future controller lifecycle cleanup."
+		);
 		Add(
 			rows,
 			PlayerProtectionActiveTaskTaskMapAuditArea.JavaTaskReplacement,
@@ -93,7 +100,8 @@ public static class PlayerProtectionActiveTaskTaskMapAuditService
 			"C# task-operation plan records replacement intent only.",
 			"Live adapter must perform atomic replace-and-cancel so overlapping protection starts cannot leak old delayed-stop callbacks.",
 			"CreatureController.addTask",
-			"Java logs only for DESPAWN replacement; protection replacement has no warning side effect.");
+			"Java logs only for DESPAWN replacement; protection replacement has no warning side effect."
+		);
 		Add(
 			rows,
 			PlayerProtectionActiveTaskTaskMapAuditArea.JavaTaskCancel,
@@ -104,7 +112,8 @@ public static class PlayerProtectionActiveTaskTaskMapAuditService
 			"C# task-operation plan records existing-task cancellation only.",
 			"Live adapter must remove before cancel and expose missing/existing outcomes for tests.",
 			"CreatureController.cancelTask",
-			"Java cancel(false) does not interrupt a running task.");
+			"Java cancel(false) does not interrupt a running task."
+		);
 		Add(
 			rows,
 			PlayerProtectionActiveTaskTaskMapAuditArea.JavaMissingTaskCancel,
@@ -115,7 +124,8 @@ public static class PlayerProtectionActiveTaskTaskMapAuditService
 			"C# task-operation plan records missing-task cancel as a no-op.",
 			"Live adapter should preserve no-op missing cancel semantics without throwing.",
 			"CreatureController.cancelTask",
-			"Stop protection calls cancelTask before the spawned guard, so this no-op can occur for unspawned players too.");
+			"Stop protection calls cancelTask before the spawned guard, so this no-op can occur for unspawned players too."
+		);
 		Add(
 			rows,
 			PlayerProtectionActiveTaskTaskMapAuditArea.JavaConditionalCancel,
@@ -126,7 +136,8 @@ public static class PlayerProtectionActiveTaskTaskMapAuditService
 			"No C# protection equivalent exists.",
 			"Task-map adapter should decide whether protection needs conditional cancel support or document why stop protection only uses cancelTask.",
 			"CreatureController.cancelTaskIfPresent",
-			"This is a discovered dependency even though protection active task does not call it directly.");
+			"This is a discovered dependency even though protection active task does not call it directly."
+		);
 		Add(
 			rows,
 			PlayerProtectionActiveTaskTaskMapAuditArea.JavaLifecycleCleanup,
@@ -137,7 +148,8 @@ public static class PlayerProtectionActiveTaskTaskMapAuditService
 			"No C# protection task-map lifecycle cleanup exists.",
 			"Live task-map owner must define cleanup on player/controller deletion, logout, or world removal before scheduling is safe.",
 			"CreatureController.cancelAllTasks / onDelete",
-			"Lifecycle cleanup is required to avoid delayed callbacks after owner disposal.");
+			"Lifecycle cleanup is required to avoid delayed callbacks after owner disposal."
+		);
 		Add(
 			rows,
 			PlayerProtectionActiveTaskTaskMapAuditArea.CSharpSchedulerHandle,
@@ -148,7 +160,8 @@ public static class PlayerProtectionActiveTaskTaskMapAuditService
 			"C# ThreadPoolManager.Schedule returns ScheduledTask with Cancel() backed by CancellationTokenSource.",
 			"Adapter tests must prove C# Cancel() behavior is acceptable for Java cancel(false), including after completion.",
 			"ThreadPoolManager.schedule / ScheduledFuture.cancel(false)",
-			"C# cancellation is cooperative; Java non-interrupt cancel also cannot stop already-running work.");
+			"C# cancellation is cooperative; Java non-interrupt cancel also cannot stop already-running work."
+		);
 		Add(
 			rows,
 			PlayerProtectionActiveTaskTaskMapAuditArea.CSharpTaskMapGap,
@@ -159,7 +172,8 @@ public static class PlayerProtectionActiveTaskTaskMapAuditService
 			"C# protection work currently has only non-live task-operation/readiness metadata.",
 			"Implement a narrow task-map adapter only after owner lifecycle and concurrency boundaries are chosen.",
 			"CreatureController task methods",
-			"Do not wire production protection scheduling directly to ThreadPoolManager without the map adapter.");
+			"Do not wire production protection scheduling directly to ThreadPoolManager without the map adapter."
+		);
 
 		if (readinessReport?.BlockedCapabilities.Contains(PlayerProtectionActiveTaskLiveReadinessCapability.SchedulerTaskMap) == true)
 		{
@@ -173,7 +187,8 @@ public static class PlayerProtectionActiveTaskTaskMapAuditService
 				"Readiness report blocks SchedulerTaskMap for the current summary.",
 				"Keep live scheduler/task-map execution disabled until this audit checklist is satisfied.",
 				"PlayerController.startProtectionActiveTask / stopProtectionActiveTask",
-				"Readiness linkage confirms the future adapter is still gated.");
+				"Readiness linkage confirms the future adapter is still gated."
+			);
 		}
 
 		Add(
@@ -186,13 +201,17 @@ public static class PlayerProtectionActiveTaskTaskMapAuditService
 			"No single C# adapter currently satisfies this full contract for players.",
 			"Before live enablement: choose owner, key shape, locking/ConcurrentDictionary strategy, ScheduledTask handle storage, cleanup hook, and runtime parity tests.",
 			"CreatureController.addTask/cancelTask/cancelAllTasks",
-			"Checklist is intentionally conservative because scheduler races are runtime-sensitive.");
+			"Checklist is intentionally conservative because scheduler races are runtime-sensitive."
+		);
 
 		return new PlayerProtectionActiveTaskTaskMapAuditReport(
 			rows,
 			HasLiveTaskMapAdapter: false,
-			SchedulerCapabilityBlockedByReadiness: readinessReport?.BlockedCapabilities.Contains(PlayerProtectionActiveTaskLiveReadinessCapability.SchedulerTaskMap) == true,
-			"CreatureController task map / PlayerController protection active task / ThreadPoolManager schedule audit");
+			SchedulerCapabilityBlockedByReadiness: readinessReport?.BlockedCapabilities.Contains(
+				PlayerProtectionActiveTaskLiveReadinessCapability.SchedulerTaskMap
+			) == true,
+			"CreatureController task map / PlayerController protection active task / ThreadPoolManager schedule audit"
+		);
 	}
 
 	private static void Add(
@@ -205,18 +224,22 @@ public static class PlayerProtectionActiveTaskTaskMapAuditService
 		string csharpCurrentState,
 		string requirement,
 		string javaSource,
-		string notes)
+		string notes
+	)
 	{
-		rows.Add(new PlayerProtectionActiveTaskTaskMapAuditRow(
-			rows.Count + 1,
-			area,
-			status,
-			javaArtifact,
-			csharpArtifact,
-			javaBehavior,
-			csharpCurrentState,
-			requirement,
-			javaSource,
-			notes));
+		rows.Add(
+			new PlayerProtectionActiveTaskTaskMapAuditRow(
+				rows.Count + 1,
+				area,
+				status,
+				javaArtifact,
+				csharpArtifact,
+				javaBehavior,
+				csharpCurrentState,
+				requirement,
+				javaSource,
+				notes
+			)
+		);
 	}
 }

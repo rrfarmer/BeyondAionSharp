@@ -18,16 +18,15 @@ public sealed record BindPointTeleportKinahSqlPersistenceAdapterPlan(
 	bool WouldExecuteSql,
 	bool DidExecuteSql,
 	string JavaSource,
-	bool IsLive);
+	bool IsLive
+);
 
 public sealed class BindPointTeleportKinahSqlPersistenceAdapterService
 {
 	private readonly IBindPointTeleportKinahPersistenceRepository? _repository;
 	private readonly bool _enabled;
 
-	public BindPointTeleportKinahSqlPersistenceAdapterService(
-		IBindPointTeleportKinahPersistenceRepository? repository = null,
-		bool enabled = false)
+	public BindPointTeleportKinahSqlPersistenceAdapterService(IBindPointTeleportKinahPersistenceRepository? repository = null, bool enabled = false)
 	{
 		_repository = repository;
 		_enabled = enabled;
@@ -35,9 +34,10 @@ public sealed class BindPointTeleportKinahSqlPersistenceAdapterService
 
 	public async Task<BindPointTeleportKinahSqlPersistenceAdapterPlan> ExecuteAsync(
 		BindPointTeleportKinahPersistenceOperationPlan operationPlan,
-		CancellationToken cancellationToken = default)
+		CancellationToken cancellationToken = default
+	)
 	{
-		// Java parity breadcrumb: InventoryDAO.updateItems batches dirty item rows and does
+		// Java parity: InventoryDAO.updateItems batches dirty item rows and does
 		// not inspect affected-row counts. This C# seam deliberately keeps the future live
 		// write owner-checked and disabled by default.
 		if (!operationPlan.ShouldExecuteSql)
@@ -49,7 +49,8 @@ public sealed class BindPointTeleportKinahSqlPersistenceAdapterService
 				WouldExecuteSql: false,
 				DidExecuteSql: false,
 				"Scheduled bind-point Kinah persistence adapter found no SQL operation to execute",
-				IsLive: false);
+				IsLive: false
+			);
 		}
 
 		if (!_enabled || _repository == null)
@@ -61,7 +62,8 @@ public sealed class BindPointTeleportKinahSqlPersistenceAdapterService
 				WouldExecuteSql: true,
 				DidExecuteSql: false,
 				"Scheduled bind-point Kinah SQL adapter is disabled; no inventory row update was executed",
-				IsLive: false);
+				IsLive: false
+			);
 		}
 
 		try
@@ -80,14 +82,12 @@ public sealed class BindPointTeleportKinahSqlPersistenceAdapterService
 				WouldExecuteSql: true,
 				DidExecuteSql: true,
 				result.JavaSource,
-				IsLive: true);
+				IsLive: true
+			);
 		}
 		catch (Exception ex)
 		{
-			var result = BindPointTeleportKinahPersistenceOperationPlanService.CreateResult(
-				operationPlan,
-				affectedRows: 0,
-				ex);
+			var result = BindPointTeleportKinahPersistenceOperationPlanService.CreateResult(operationPlan, affectedRows: 0, ex);
 			return new BindPointTeleportKinahSqlPersistenceAdapterPlan(
 				BindPointTeleportKinahSqlPersistenceAdapterStatus.Failed,
 				operationPlan,
@@ -95,7 +95,8 @@ public sealed class BindPointTeleportKinahSqlPersistenceAdapterService
 				WouldExecuteSql: true,
 				DidExecuteSql: true,
 				result.JavaSource,
-				IsLive: true);
+				IsLive: true
+			);
 		}
 	}
 }

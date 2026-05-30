@@ -26,7 +26,8 @@ public sealed record QuestCompletionFollowUpRequest(
 	QuestCompletionFollowUpDecision Decision,
 	PlayerQuestState? ExistingQuestState = null,
 	bool StartConditionsEvaluatedByCaller = false,
-	string JavaSource = "game-server/src/com/aionemu/gameserver/questEngine/handlers/AbstractQuestHandler.java#defaultOnQuestCompletedEvent");
+	string JavaSource = "game-server/src/com/aionemu/gameserver/questEngine/handlers/AbstractQuestHandler.java#defaultOnQuestCompletedEvent"
+);
 
 public sealed record QuestCompletionFollowUpDescriptor(
 	int Order,
@@ -36,20 +37,24 @@ public sealed record QuestCompletionFollowUpDescriptor(
 	string JavaSource,
 	bool IsLive,
 	bool StartConditionsEvaluatedByCaller,
-	PlayerQuestState? ExistingQuestState = null);
+	PlayerQuestState? ExistingQuestState = null
+);
 
 public sealed record QuestCompletionFollowUpPlan(
 	QuestCompletionFollowUpPlanStatus Status,
-	IReadOnlyList<QuestCompletionFollowUpDescriptor> Descriptors)
+	IReadOnlyList<QuestCompletionFollowUpDescriptor> Descriptors
+)
 {
 	public bool HasOperations => Status == QuestCompletionFollowUpPlanStatus.Ready;
 }
 
 public static class QuestCompletionFollowUpPlanService
 {
-	public static QuestCompletionFollowUpPlan CreatePlan(
-		IEnumerable<QuestCompletionFollowUpRequest> requests)
+	public static QuestCompletionFollowUpPlan CreatePlan(IEnumerable<QuestCompletionFollowUpRequest> requests)
 	{
+		// Java parity: AbstractQuestHandler.defaultOnQuestCompletedEvent schedules follow-up quests by
+		// locking or starting them after completion; this planner preserves that add-versus-update decision
+		// and leaves the actual quest-state mutation to later execution.
 		ArgumentNullException.ThrowIfNull(requests);
 
 		var descriptors = new List<QuestCompletionFollowUpDescriptor>();
@@ -63,20 +68,24 @@ public static class QuestCompletionFollowUpPlanService
 			if (request.ExistingQuestState?.Status == targetStatus)
 				continue;
 
-			descriptors.Add(new QuestCompletionFollowUpDescriptor(
-				order++,
-				request.FollowUpQuestId,
-				targetStatus,
-				GetPacketAction(request.ExistingQuestState),
-				request.JavaSource,
-				IsLive: false,
-				request.StartConditionsEvaluatedByCaller,
-				request.ExistingQuestState));
+			descriptors.Add(
+				new QuestCompletionFollowUpDescriptor(
+					order++,
+					request.FollowUpQuestId,
+					targetStatus,
+					GetPacketAction(request.ExistingQuestState),
+					request.JavaSource,
+					IsLive: false,
+					request.StartConditionsEvaluatedByCaller,
+					request.ExistingQuestState
+				)
+			);
 		}
 
 		return new QuestCompletionFollowUpPlan(
 			descriptors.Count == 0 ? QuestCompletionFollowUpPlanStatus.NoAction : QuestCompletionFollowUpPlanStatus.Ready,
-			descriptors);
+			descriptors
+		);
 	}
 
 	private static string? GetTargetStatus(QuestCompletionFollowUpDecision decision)
