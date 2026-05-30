@@ -1627,6 +1627,36 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1401969);
 	}
 
+	public static SmSystemMessage GuildWarehouseNoRight()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_WAREHOUSE_NO_RIGHT. Legion warehouse access denied.
+		return new SmSystemMessage(1300322);
+	}
+
+	public static SmSystemMessage WarehouseCantDepositItem()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_WAREHOUSE_CANT_DEPOSIT_ITEM. You cannot store this in the warehouse.
+		return new SmSystemMessage(1300418);
+	}
+
+	public static SmSystemMessage InventorySplitDuringTrade()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_INVENTORY_SPLIT_DURING_TRADE.
+		return new SmSystemMessage(1300713);
+	}
+
+	public static SmSystemMessage WarehouseCantLegionDeposit()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_WAREHOUSE_CANT_LEGION_DEPOSIT. You cannot store this item in the Legion warehouse.
+		return new SmSystemMessage(1400355);
+	}
+
+	public static SmSystemMessage WarehouseCantAccountDeposit()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_WAREHOUSE_CANT_ACCOUNT_DEPOSIT. You cannot store this item in the account warehouse.
+		return new SmSystemMessage(1400356);
+	}
+
 	public static SmSystemMessage CaptchaRecovered()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_CAPTCHA_RECOVERED.
