@@ -538,6 +538,80 @@ public sealed class CraftService
 			cooldownPlan);
 	}
 
+	public CraftFinishExceptionRiskPlan CreateFinishExceptionRiskPlan(
+		Player? player,
+		RecipeTemplateSummary? recipeTemplate,
+		int critCount)
+	{
+		// Java parity: finishCrafting does not guard missing combo products or item templates.
+		// This diagnostic records the first Java exception-shaped edge before live wiring.
+		if (player == null)
+			return CraftFinishExceptionRiskPlan.MissingPlayer(recipeTemplate?.RecipeId ?? 0, critCount);
+		if (recipeTemplate == null)
+			return CraftFinishExceptionRiskPlan.MissingRecipe(player.ObjectId, critCount);
+
+		if (recipeTemplate.MaxProductionCount.HasValue && critCount == 0 && IsComboProductIndexOutOfRangeLikeJava(recipeTemplate, 1))
+		{
+			return CraftFinishExceptionRiskPlan.JavaWouldThrow(
+				player.ObjectId,
+				recipeTemplate.RecipeId,
+				critCount,
+				CraftFinishExceptionRiskStatus.JavaWouldThrowComboProductIndexOutOfRangeBeforeFailCraft,
+				ProductItemId: 0,
+				MissingComboIndex: 1,
+				MissingItemTemplateId: 0,
+				"RecipeTemplate.getComboProduct(1) calls comboproduct.get(0) when the list exists; empty list throws before QuestEngine.onFailCraft");
+		}
+
+		var productItemId = recipeTemplate.ProductId;
+		if (critCount > 0)
+		{
+			if (IsComboProductIndexOutOfRangeLikeJava(recipeTemplate, critCount))
+			{
+				return CraftFinishExceptionRiskPlan.JavaWouldThrow(
+					player.ObjectId,
+					recipeTemplate.RecipeId,
+					critCount,
+					CraftFinishExceptionRiskStatus.JavaWouldThrowComboProductIndexOutOfRangeAtProductSelection,
+					ProductItemId: 0,
+					MissingComboIndex: critCount,
+					MissingItemTemplateId: 0,
+					"CraftService.finishCrafting product selection calls RecipeTemplate.getComboProduct(critCount); existing combo list with missing index throws IndexOutOfBoundsException");
+			}
+
+			var comboProductId = recipeTemplate.GetComboProduct(critCount);
+			if (!comboProductId.HasValue)
+			{
+				return CraftFinishExceptionRiskPlan.JavaWouldThrow(
+					player.ObjectId,
+					recipeTemplate.RecipeId,
+					critCount,
+					CraftFinishExceptionRiskStatus.JavaWouldThrowNullComboProductUnboxAtProductSelection,
+					ProductItemId: 0,
+					MissingComboIndex: critCount,
+					MissingItemTemplateId: 0,
+					"CraftService.finishCrafting assigns Integer getComboProduct(critCount) into int productItemId; null return throws NullPointerException during unboxing");
+			}
+
+			productItemId = comboProductId.Value;
+		}
+
+		if (_itemTemplates?.GetItemTemplate(productItemId) == null)
+		{
+			return CraftFinishExceptionRiskPlan.JavaWouldThrow(
+				player.ObjectId,
+				recipeTemplate.RecipeId,
+				critCount,
+				CraftFinishExceptionRiskStatus.JavaWouldThrowMissingItemTemplateAtAddItem,
+				productItemId,
+				MissingComboIndex: 0,
+				MissingItemTemplateId: productItemId,
+				"ItemService.addItem calls Objects.requireNonNull(DataManager.ITEM_DATA.getItemTemplate(itemId), \"No item with id \" + itemId)");
+		}
+
+		return CraftFinishExceptionRiskPlan.NoKnownRisk(player.ObjectId, recipeTemplate.RecipeId, critCount, productItemId);
+	}
+
 	public CraftFinishCooldownPlan CreateFinishCooldownPlan(
 		Player? player,
 		RecipeTemplateSummary? recipeTemplate,
@@ -659,6 +733,11 @@ public sealed class CraftService
 			return CraftFinishXpStatus.CraftRankCap;
 
 		return null;
+	}
+
+	private static bool IsComboProductIndexOutOfRangeLikeJava(RecipeTemplateSummary recipeTemplate, int count)
+	{
+		return recipeTemplate.ComboProducts != null && (count <= 0 || count > recipeTemplate.ComboProducts.Count);
 	}
 
 	public CraftFinishRewardPlan CreateFinishRewardPlan(
@@ -2877,6 +2956,110 @@ public enum CraftFinishOrchestrationStep
 	CraftedItemReward,
 	CraftLog,
 	CraftCooldown,
+}
+
+public sealed record CraftFinishExceptionRiskPlan(
+	CraftFinishExceptionRiskStatus Status,
+	int ObjectId,
+	int RecipeId,
+	int CritCount,
+	int ProductItemId,
+	int MissingComboIndex,
+	int MissingItemTemplateId,
+	bool WouldJavaThrow,
+	string JavaExceptionType,
+	string JavaSource,
+	bool IsLive)
+{
+	public static CraftFinishExceptionRiskPlan MissingPlayer(int recipeId, int critCount)
+	{
+		return new CraftFinishExceptionRiskPlan(
+			CraftFinishExceptionRiskStatus.MissingPlayer,
+			ObjectId: 0,
+			recipeId,
+			critCount,
+			ProductItemId: 0,
+			MissingComboIndex: 0,
+			MissingItemTemplateId: 0,
+			WouldJavaThrow: false,
+			JavaExceptionType: string.Empty,
+			"CraftService.finishCrafting exception-risk diagnostic requires player",
+			IsLive: false);
+	}
+
+	public static CraftFinishExceptionRiskPlan MissingRecipe(int objectId, int critCount)
+	{
+		return new CraftFinishExceptionRiskPlan(
+			CraftFinishExceptionRiskStatus.MissingRecipe,
+			objectId,
+			RecipeId: 0,
+			critCount,
+			ProductItemId: 0,
+			MissingComboIndex: 0,
+			MissingItemTemplateId: 0,
+			WouldJavaThrow: false,
+			JavaExceptionType: string.Empty,
+			"CraftService.finishCrafting exception-risk diagnostic requires recipe template",
+			IsLive: false);
+	}
+
+	public static CraftFinishExceptionRiskPlan JavaWouldThrow(
+		int objectId,
+		int recipeId,
+		int critCount,
+		CraftFinishExceptionRiskStatus status,
+		int ProductItemId,
+		int MissingComboIndex,
+		int MissingItemTemplateId,
+		string javaSource)
+	{
+		var exceptionType = status switch
+		{
+			CraftFinishExceptionRiskStatus.JavaWouldThrowComboProductIndexOutOfRangeBeforeFailCraft
+				or CraftFinishExceptionRiskStatus.JavaWouldThrowComboProductIndexOutOfRangeAtProductSelection
+				=> "IndexOutOfBoundsException",
+			_ => "NullPointerException",
+		};
+		return new CraftFinishExceptionRiskPlan(
+			status,
+			objectId,
+			recipeId,
+			critCount,
+			ProductItemId,
+			MissingComboIndex,
+			MissingItemTemplateId,
+			WouldJavaThrow: true,
+			exceptionType,
+			javaSource,
+			IsLive: false);
+	}
+
+	public static CraftFinishExceptionRiskPlan NoKnownRisk(int objectId, int recipeId, int critCount, int productItemId)
+	{
+		return new CraftFinishExceptionRiskPlan(
+			CraftFinishExceptionRiskStatus.NoKnownRisk,
+			objectId,
+			recipeId,
+			critCount,
+			productItemId,
+			MissingComboIndex: 0,
+			MissingItemTemplateId: 0,
+			WouldJavaThrow: false,
+			JavaExceptionType: string.Empty,
+			"CraftService.finishCrafting combo product and ItemService.addItem template lookups have no known Java exception edge for this diagnostic input",
+			IsLive: false);
+	}
+}
+
+public enum CraftFinishExceptionRiskStatus
+{
+	NoKnownRisk,
+	JavaWouldThrowComboProductIndexOutOfRangeBeforeFailCraft,
+	JavaWouldThrowComboProductIndexOutOfRangeAtProductSelection,
+	JavaWouldThrowNullComboProductUnboxAtProductSelection,
+	JavaWouldThrowMissingItemTemplateAtAddItem,
+	MissingPlayer,
+	MissingRecipe,
 }
 
 public sealed record CraftFinishCooldownPlan(

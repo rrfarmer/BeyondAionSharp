@@ -2506,6 +2506,76 @@ public sealed class CraftServiceTests
 	}
 
 	[Fact]
+	public void CreateFinishExceptionRiskPlan_RecordsJavaIndexOutOfBoundsBeforeFailCraftForEmptyComboList()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1164, dp: 600);
+		var recipe = CreateRecipe(
+			recipeId: 155000055,
+			dp: 0,
+			productId: 152000401,
+			skillId: 40001,
+			maxProductionCount: 1,
+			comboProducts: Array.Empty<int>());
+
+		var plan = service.CreateFinishExceptionRiskPlan(player, recipe, critCount: 0);
+
+		Assert.Equal(CraftFinishExceptionRiskStatus.JavaWouldThrowComboProductIndexOutOfRangeBeforeFailCraft, plan.Status);
+		Assert.True(plan.WouldJavaThrow);
+		Assert.Equal("IndexOutOfBoundsException", plan.JavaExceptionType);
+		Assert.Equal(1, plan.MissingComboIndex);
+		Assert.Contains("comboproduct.get(0)", plan.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void CreateFinishExceptionRiskPlan_RecordsJavaNullUnboxWhenCriticalRecipeHasNoComboList()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1165, dp: 600);
+		var recipe = CreateRecipe(recipeId: 155000056, dp: 0, productId: 152000401, skillId: 40001);
+
+		var plan = service.CreateFinishExceptionRiskPlan(player, recipe, critCount: 1);
+
+		Assert.Equal(CraftFinishExceptionRiskStatus.JavaWouldThrowNullComboProductUnboxAtProductSelection, plan.Status);
+		Assert.True(plan.WouldJavaThrow);
+		Assert.Equal("NullPointerException", plan.JavaExceptionType);
+		Assert.Equal(1, plan.MissingComboIndex);
+		Assert.Contains("unboxing", plan.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void CreateFinishExceptionRiskPlan_RecordsMissingItemTemplateAtJavaAddItemBoundary()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1166, dp: 600);
+		var recipe = CreateRecipe(recipeId: 155000057, dp: 0, productId: 199999999, skillId: 40001);
+
+		var plan = service.CreateFinishExceptionRiskPlan(player, recipe, critCount: 0);
+
+		Assert.Equal(CraftFinishExceptionRiskStatus.JavaWouldThrowMissingItemTemplateAtAddItem, plan.Status);
+		Assert.True(plan.WouldJavaThrow);
+		Assert.Equal("NullPointerException", plan.JavaExceptionType);
+		Assert.Equal(199999999, plan.ProductItemId);
+		Assert.Equal(199999999, plan.MissingItemTemplateId);
+		Assert.Contains("Objects.requireNonNull", plan.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void CreateFinishExceptionRiskPlan_ReportsNoKnownRiskForExistingProductTemplate()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1167, dp: 600);
+		var recipe = CreateRecipe(recipeId: 155000058, dp: 0, productId: 152000401, skillId: 40001);
+
+		var plan = service.CreateFinishExceptionRiskPlan(player, recipe, critCount: 0);
+
+		Assert.Equal(CraftFinishExceptionRiskStatus.NoKnownRisk, plan.Status);
+		Assert.False(plan.WouldJavaThrow);
+		Assert.Equal(152000401, plan.ProductItemId);
+		Assert.Equal(string.Empty, plan.JavaExceptionType);
+	}
+
+	[Fact]
 	public void CreateFinishProductPlan_ReportsMissingComboProductConservatively()
 	{
 		var service = CreateService(out _, CreateItemTemplates());
