@@ -240,6 +240,15 @@ public sealed record CmBuyItemWorldKnownVisibleObjectSnapshot(
 	string JavaSource,
 	bool IsLive);
 
+public sealed record CmBuyItemWorldKnownVisibleObjectResolverFactoryPlan(
+	CmBuyItemWorldKnownVisibleObjectSnapshot? WorldSnapshot,
+	CmBuyItemKnownVisibleObjectPopulationResolverAdapterPlan PopulationResolverPlan,
+	bool UsesWorldSnapshotCollector,
+	bool IsDefaultConnectionWiring,
+	bool IsJavaRegionKnownListParity,
+	string JavaSource,
+	bool IsLive);
+
 public sealed class CmBuyItemWorldKnownVisibleObjectSnapshotCollectorService
 {
 	public CmBuyItemWorldKnownVisibleObjectSnapshot Collect(Player owner, GameWorld world)
@@ -260,6 +269,59 @@ public sealed class CmBuyItemWorldKnownVisibleObjectSnapshotCollectorService
 			"KnownList.findVisibleObjects approximated from C# World same-world player/NPC snapshots",
 			IsLive: false);
 	}
+}
+
+public sealed class CmBuyItemWorldKnownVisibleObjectResolverFactoryService
+{
+	private readonly CmBuyItemKnownVisibleObjectPopulationResolverAdapterService _populationResolver;
+	private readonly CmBuyItemWorldKnownVisibleObjectSnapshotCollectorService _snapshotCollector;
+
+	public CmBuyItemWorldKnownVisibleObjectResolverFactoryService(
+		CmBuyItemKnownVisibleObjectPopulationResolverAdapterService populationResolver,
+		CmBuyItemWorldKnownVisibleObjectSnapshotCollectorService snapshotCollector)
+	{
+		_populationResolver = populationResolver;
+		_snapshotCollector = snapshotCollector;
+	}
+
+	public Func<Player, int, object?, bool?> CreateResolver(GameWorld world) =>
+		_populationResolver.CreateResolver(
+			player => _snapshotCollector.Collect(player, world).PlayerCandidates,
+			player => _snapshotCollector.Collect(player, world).NpcCandidates);
+
+	public CmBuyItemWorldKnownVisibleObjectResolverFactoryPlan CreatePlan(Player? player, int sellerObjectId, GameWorld world)
+	{
+		if (player == null)
+			return CreatePlan(
+				worldSnapshot: null,
+				_populationResolver.CreatePlan(player, sellerObjectId, _ => Array.Empty<Player>(), _ => Array.Empty<IWorldNpcObject>()),
+				"CM_BUY_ITEM world snapshot resolver factory cannot collect without active player");
+
+		var worldSnapshot = _snapshotCollector.Collect(player, world);
+		var populationResolverPlan = _populationResolver.CreatePlan(
+			player,
+			sellerObjectId,
+			_ => worldSnapshot.PlayerCandidates,
+			_ => worldSnapshot.NpcCandidates);
+
+		return CreatePlan(
+			worldSnapshot,
+			populationResolverPlan,
+			"CM_BUY_ITEM opt-in diagnostic resolver factory feeds World snapshots into supplied-facts resolver");
+	}
+
+	private static CmBuyItemWorldKnownVisibleObjectResolverFactoryPlan CreatePlan(
+		CmBuyItemWorldKnownVisibleObjectSnapshot? worldSnapshot,
+		CmBuyItemKnownVisibleObjectPopulationResolverAdapterPlan populationResolverPlan,
+		string javaSource) =>
+		new(
+			worldSnapshot,
+			populationResolverPlan,
+			UsesWorldSnapshotCollector: worldSnapshot != null,
+			IsDefaultConnectionWiring: false,
+			IsJavaRegionKnownListParity: false,
+			javaSource,
+			IsLive: false);
 }
 
 public sealed class CmBuyItemKnownVisibleObjectPopulationResolverAdapterService

@@ -202,6 +202,34 @@ public sealed class CmBuyItemKnownVisibleObjectMembershipServiceTests
 	}
 
 	[Fact]
+	public void WorldSnapshotResolverFactory_FeedsCollectorIntoPopulationResolverPlan()
+	{
+		var membership = new CmBuyItemKnownVisibleObjectMembershipService();
+		var population = new CmBuyItemKnownVisibleObjectPopulationAdapterService(membership);
+		var populationResolver = new CmBuyItemKnownVisibleObjectPopulationResolverAdapterService(membership, population);
+		var factory = new CmBuyItemWorldKnownVisibleObjectResolverFactoryService(
+			populationResolver,
+			new CmBuyItemWorldKnownVisibleObjectSnapshotCollectorService());
+		var world = CreateWorld();
+		var owner = CreatePlayer(OwnerPlayerObjectId, x: 0, worldId: 210010000);
+		var sellerNpc = CreateNpc(SellerNpcObjectId, x: 11, worldId: 210010000);
+		Assert.True(world.TryAddObject(owner.ObjectId, owner));
+		Assert.True(world.TryAddObject(SellerNpcObjectId, sellerNpc));
+
+		var plan = factory.CreatePlan(owner, SellerNpcObjectId, world);
+
+		Assert.True(plan.UsesWorldSnapshotCollector);
+		Assert.False(plan.IsDefaultConnectionWiring);
+		Assert.False(plan.IsJavaRegionKnownListParity);
+		Assert.False(plan.IsLive);
+		Assert.NotNull(plan.WorldSnapshot);
+		Assert.Equal([OwnerPlayerObjectId], plan.WorldSnapshot.PlayerCandidates.Select(player => player.ObjectId));
+		Assert.Equal([SellerNpcObjectId], plan.WorldSnapshot.NpcCandidates.Select(npc => npc.ObjectId));
+		Assert.Equal(CmBuyItemKnownVisibleObjectResolverAdapterStatus.KnownObjectTarget, plan.PopulationResolverPlan.ResolverPlan.Status);
+		Assert.True(plan.PopulationResolverPlan.ResolverPlan.IsKnownByPlayer);
+	}
+
+	[Fact]
 	public async Task GameServerConnection_KnownNpcFactAllowsNpcBuyPlannerSelection()
 	{
 		var membership = new CmBuyItemKnownVisibleObjectMembershipService();
@@ -261,6 +289,36 @@ public sealed class CmBuyItemKnownVisibleObjectMembershipServiceTests
 			populationResolver.CreateResolver(
 				player => collector.Collect(player, resolverWorld!).PlayerCandidates,
 				player => collector.Collect(player, resolverWorld!).NpcCandidates));
+		resolverWorld = fixture.World;
+		GameServerConnectionBuyItemTests.SetActivePlayerForPacketDispatchForAdapterTests(fixture.Connection, owner);
+		fixture.World.TryAddObject(owner.ObjectId, owner);
+		fixture.World.TryAddObject(SellerNpcObjectId, sellerNpc);
+
+		await GameServerConnectionBuyItemTests.InvokeProcessPacketAsyncForAdapterTests(
+			fixture.Connection,
+			GameServerConnectionBuyItemTests.CreateBuyItemPayloadForAdapterTests(SellerNpcObjectId, tradeActionId: 13, [(1001, 2)]));
+
+		var plan = Assert.Single(fixture.BuyItemPlans);
+		Assert.Equal(CmBuyItemHandlerCompositionPlanStatus.SelectedBuyFromShopPlanner, plan.Status);
+		Assert.NotNull(plan.BuyFromShopPlan);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		Assert.Contains(SellerNpcObjectId, membership.GetSnapshot(OwnerPlayerObjectId).KnownObjectIds);
+	}
+
+	[Fact]
+	public async Task GameServerConnection_WorldSnapshotResolverFactoryAcceptsVisibleNpcTarget()
+	{
+		var owner = CreatePlayer(OwnerPlayerObjectId, x: 0, worldId: 210010000);
+		var sellerNpc = CreateNpc(SellerNpcObjectId, x: 11, worldId: 210010000);
+		var membership = new CmBuyItemKnownVisibleObjectMembershipService();
+		var population = new CmBuyItemKnownVisibleObjectPopulationAdapterService(membership);
+		var populationResolver = new CmBuyItemKnownVisibleObjectPopulationResolverAdapterService(membership, population);
+		var factory = new CmBuyItemWorldKnownVisibleObjectResolverFactoryService(
+			populationResolver,
+			new CmBuyItemWorldKnownVisibleObjectSnapshotCollectorService());
+		GameWorld? resolverWorld = null;
+		await using var fixture = await GameServerConnectionBuyItemTests.BuyItemFixture.CreateAsync(
+			(player, sellerObjectId, worldObject) => factory.CreateResolver(resolverWorld!)(player, sellerObjectId, worldObject));
 		resolverWorld = fixture.World;
 		GameServerConnectionBuyItemTests.SetActivePlayerForPacketDispatchForAdapterTests(fixture.Connection, owner);
 		fixture.World.TryAddObject(owner.ObjectId, owner);
