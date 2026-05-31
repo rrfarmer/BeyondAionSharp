@@ -2657,18 +2657,76 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		}
 	}
 
-	public Task<bool> SavePlayerCraftCooldownsAsync(
+	public async Task<bool> SavePlayerCraftCooldownsAsync(
 		int playerObjectId,
 		IReadOnlyDictionary<int, long> cooldowns,
 		long? nowMillis = null,
 		CancellationToken cancellationToken = default)
 	{
-		// Java parity target: dao/CraftCooldownsDAO.storeCraftCooldowns. Live MySQL execution
-		// remains disabled until the separate-connection/error-swallowing decision is implemented.
-		_logger.LogWarning(
-			"Craft cooldown persistence for player {PlayerObjectId} is planned but not wired to MySQL yet",
-			playerObjectId);
-		return Task.FromResult(false);
+		// Java parity: dao/CraftCooldownsDAO.storeCraftCooldowns deletes with one connection,
+		// then opens one new connection per active insert and logs SQL errors without
+		// propagating them.
+		var effectiveNowMillis = nowMillis ?? DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+		await DeleteCraftCooldownsJavaStyleAsync(playerObjectId, cancellationToken);
+		foreach (var (delayId, reuseTime) in cooldowns)
+		{
+			if (reuseTime < effectiveNowMillis)
+				continue;
+
+			await InsertCraftCooldownJavaStyleAsync(playerObjectId, delayId, reuseTime, cancellationToken);
+		}
+
+		return true;
+	}
+
+	private async Task DeleteCraftCooldownsJavaStyleAsync(
+		int playerObjectId,
+		CancellationToken cancellationToken)
+	{
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = CraftCooldownPersistencePlanService.JavaCraftCooldownDeleteSql;
+			command.Parameters.Add(new MySqlParameter { Value = playerObjectId });
+			await command.ExecuteNonQueryAsync(cancellationToken);
+		}
+		catch (MySqlException ex)
+		{
+			_logger.LogError(ex, "Couldn't delete craft cooldowns for player {PlayerObjectId}", playerObjectId);
+		}
+	}
+
+	private async Task InsertCraftCooldownJavaStyleAsync(
+		int playerObjectId,
+		int delayId,
+		long reuseTime,
+		CancellationToken cancellationToken)
+	{
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = CraftCooldownPersistencePlanService.JavaCraftCooldownInsertSql;
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = playerObjectId },
+					new MySqlParameter { Value = delayId },
+					new MySqlParameter { Value = reuseTime },
+				});
+			await command.ExecuteNonQueryAsync(cancellationToken);
+		}
+		catch (MySqlException ex)
+		{
+			_logger.LogError(
+				ex,
+				"Couldn't store craft cooldown {DelayId} for player {PlayerObjectId}",
+				delayId,
+				playerObjectId);
+		}
 	}
 
 	private static async Task SavePlayerPortalCooldownsAsync(

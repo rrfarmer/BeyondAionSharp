@@ -574,21 +574,6 @@ public sealed class PlayerEnterWorldServiceTests
 	}
 
 	[Fact]
-	public async Task MySqlRepository_SavePlayerCraftCooldownsAsync_RemainsDisabledUntilLiveSqlIsScoped()
-	{
-		var repository = new MySqlPlayerEnterWorldRepository(
-			new GameServerRuntimeContext(),
-			NullLogger<MySqlPlayerEnterWorldRepository>.Instance);
-
-		var saved = await repository.SavePlayerCraftCooldownsAsync(
-			1001,
-			new Dictionary<int, long> { [77] = 2_000 },
-			nowMillis: 1_000);
-
-		Assert.False(saved);
-	}
-
-	[Fact]
 	public async Task LeaveWorld_PersistsAcceptedStorageExpansionFields()
 	{
 		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));

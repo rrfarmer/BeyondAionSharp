@@ -182,6 +182,42 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 	}
 
 	[Fact]
+	public async Task SavePlayerCraftCooldownsAsync_ReplacesRowsAndKeepsOnlyActiveCooldownsAgainstJavaSchema_WhenEnabled()
+	{
+		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
+			return;
+
+		// Java source breadcrumbs: CraftCooldownsDAO.storeCraftCooldowns deletes all rows,
+		// skips cooldowns older than System.currentTimeMillis(), and inserts active rows.
+		InitializeDatabaseFactory();
+		await InitializeSchemaAsync();
+		await SeedPlayerAsync();
+		await ExecuteNonQueryAsync(
+			"""
+			INSERT INTO craft_cooldowns (player_id, delay_id, reuse_time)
+			VALUES (1001, 10, 10000), (1001, 11, 11000)
+			""");
+
+		var repository = new MySqlPlayerEnterWorldRepository(
+			new GameServerRuntimeContext(),
+			NullLogger<MySqlPlayerEnterWorldRepository>.Instance);
+
+		var saved = await repository.SavePlayerCraftCooldownsAsync(
+			PlayerObjectId,
+			new Dictionary<int, long>
+			{
+				[77] = 20_000,
+				[78] = 500,
+			},
+			nowMillis: 1_000);
+
+		Assert.True(saved);
+		Assert.Equal(1, await ExecuteScalarLongAsync("SELECT COUNT(*) FROM craft_cooldowns WHERE player_id = 1001"));
+		Assert.Equal(20_000, await ExecuteScalarLongAsync("SELECT reuse_time FROM craft_cooldowns WHERE player_id = 1001 AND delay_id = 77"));
+		Assert.Equal(0, await ExecuteScalarLongAsync("SELECT COUNT(*) FROM craft_cooldowns WHERE player_id = 1001 AND delay_id IN (10, 11, 78)"));
+	}
+
+	[Fact]
 	public async Task SaveItemPurificationMutation_WritesInventoryStonesAndAbyssRankAgainstJavaSchema_WhenEnabled()
 	{
 		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
