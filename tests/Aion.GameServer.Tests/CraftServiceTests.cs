@@ -1227,6 +1227,70 @@ public sealed class CraftServiceTests
 	}
 
 	[Fact]
+	public void CreateFinishCooldownPlan_PlansJavaReuseTimestampWithoutMutatingCooldowns()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1142, dp: 600);
+		player.CraftCooldowns = new Dictionary<int, long> { [77] = 1000 };
+		var recipe = CreateRecipe(
+			recipeId: 155000035,
+			dp: 0,
+			productId: 100200203,
+			skillId: 40001,
+			craftDelayId: 77,
+			craftDelayTime: 30);
+
+		var plan = service.CreateFinishCooldownPlan(player, recipe, currentTimeMillis: 1_000_000);
+
+		Assert.Equal(CraftFinishCooldownStatus.Planned, plan.Status);
+		Assert.False(plan.IsLive);
+		Assert.True(plan.ShouldApplyCooldown);
+		Assert.Equal(player.ObjectId, plan.ObjectId);
+		Assert.Equal(recipe.RecipeId, plan.RecipeId);
+		Assert.Equal(77, plan.CraftDelayId);
+		Assert.Equal(30, plan.CraftDelayTimeSeconds);
+		Assert.Equal(1_030_000, plan.ReuseTimeMillis);
+		Assert.Equal(1000, player.CraftCooldowns[77]);
+		Assert.Contains("getCraftCooldowns().put", plan.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void CreateFinishCooldownPlan_SkipsRecipeWithoutCraftDelay()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1143, dp: 600);
+		var recipe = CreateRecipe(recipeId: 155000036, dp: 0, productId: 100200203, skillId: 40001);
+
+		var plan = service.CreateFinishCooldownPlan(player, recipe, currentTimeMillis: 1_000_000);
+
+		Assert.Equal(CraftFinishCooldownStatus.NoCooldown, plan.Status);
+		Assert.False(plan.ShouldApplyCooldown);
+		Assert.Equal(recipe.RecipeId, plan.RecipeId);
+		Assert.Equal(0, plan.CraftDelayId);
+		Assert.Equal(0, plan.ReuseTimeMillis);
+	}
+
+	[Fact]
+	public void CreateFinishCooldownPlan_RequiresDelayTimeWhenDelayIdExists()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1144, dp: 600);
+		var recipe = CreateRecipe(
+			recipeId: 155000037,
+			dp: 0,
+			productId: 100200203,
+			skillId: 40001,
+			craftDelayId: 78);
+
+		var plan = service.CreateFinishCooldownPlan(player, recipe, currentTimeMillis: 1_000_000);
+
+		Assert.Equal(CraftFinishCooldownStatus.MissingDelayTime, plan.Status);
+		Assert.False(plan.ShouldApplyCooldown);
+		Assert.Equal(78, plan.CraftDelayId);
+		Assert.Contains("craftDelayTime", plan.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
 	public void CreateFinishProductPlan_ReportsMissingComboProductConservatively()
 	{
 		var service = CreateService(out _, CreateItemTemplates());

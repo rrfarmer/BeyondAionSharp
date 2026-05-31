@@ -304,6 +304,31 @@ public sealed class CraftService
 			marksCreatorOnEquipment);
 	}
 
+	public CraftFinishCooldownPlan CreateFinishCooldownPlan(
+		Player? player,
+		RecipeTemplateSummary? recipeTemplate,
+		long currentTimeMillis)
+	{
+		// Java parity: CraftService.finishCrafting -> if (craftDelayId != null)
+		// put(craftDelayId, System.currentTimeMillis() + craftDelayTime * 1000).
+		if (player == null)
+			return CraftFinishCooldownPlan.MissingPlayer(recipeTemplate?.RecipeId ?? 0);
+		if (recipeTemplate == null)
+			return CraftFinishCooldownPlan.MissingRecipe(player.ObjectId);
+		if (!recipeTemplate.CraftDelayId.HasValue)
+			return CraftFinishCooldownPlan.NoCooldown(player.ObjectId, recipeTemplate.RecipeId);
+		if (!recipeTemplate.CraftDelayTime.HasValue)
+			return CraftFinishCooldownPlan.MissingDelayTime(player.ObjectId, recipeTemplate);
+
+		var reuseTimeMillis = currentTimeMillis + (recipeTemplate.CraftDelayTime.Value * 1000L);
+		return CraftFinishCooldownPlan.Planned(
+			player.ObjectId,
+			recipeTemplate.RecipeId,
+			recipeTemplate.CraftDelayId.Value,
+			recipeTemplate.CraftDelayTime.Value,
+			reuseTimeMillis);
+	}
+
 	public CraftFinishRewardPlan CreateFinishRewardPlan(
 		Player? player,
 		IReadOnlyList<InventoryItem>? inventoryItems,
@@ -1394,6 +1419,98 @@ public enum CraftFinishProductStatus
 	MissingPlayer,
 	MissingRecipe,
 	MissingComboProduct,
+}
+
+public sealed record CraftFinishCooldownPlan(
+	CraftFinishCooldownStatus Status,
+	int ObjectId,
+	int RecipeId,
+	int CraftDelayId,
+	int CraftDelayTimeSeconds,
+	long ReuseTimeMillis,
+	string JavaSource,
+	bool IsLive)
+{
+	public bool ShouldApplyCooldown => Status == CraftFinishCooldownStatus.Planned;
+
+	public static CraftFinishCooldownPlan MissingPlayer(int recipeId)
+	{
+		return new CraftFinishCooldownPlan(
+			CraftFinishCooldownStatus.MissingPlayer,
+			ObjectId: 0,
+			recipeId,
+			CraftDelayId: 0,
+			CraftDelayTimeSeconds: 0,
+			ReuseTimeMillis: 0,
+			"CraftService.finishCrafting requires player cooldowns",
+			IsLive: false);
+	}
+
+	public static CraftFinishCooldownPlan MissingRecipe(int objectId)
+	{
+		return new CraftFinishCooldownPlan(
+			CraftFinishCooldownStatus.MissingRecipe,
+			objectId,
+			RecipeId: 0,
+			CraftDelayId: 0,
+			CraftDelayTimeSeconds: 0,
+			ReuseTimeMillis: 0,
+			"CraftService.finishCrafting requires recipe template for craft delay",
+			IsLive: false);
+	}
+
+	public static CraftFinishCooldownPlan NoCooldown(int objectId, int recipeId)
+	{
+		return new CraftFinishCooldownPlan(
+			CraftFinishCooldownStatus.NoCooldown,
+			objectId,
+			recipeId,
+			CraftDelayId: 0,
+			CraftDelayTimeSeconds: 0,
+			ReuseTimeMillis: 0,
+			"CraftService.finishCrafting -> recipeTemplate.getCraftDelayId() == null",
+			IsLive: false);
+	}
+
+	public static CraftFinishCooldownPlan MissingDelayTime(int objectId, RecipeTemplateSummary recipeTemplate)
+	{
+		return new CraftFinishCooldownPlan(
+			CraftFinishCooldownStatus.MissingDelayTime,
+			objectId,
+			recipeTemplate.RecipeId,
+			recipeTemplate.CraftDelayId ?? 0,
+			CraftDelayTimeSeconds: 0,
+			ReuseTimeMillis: 0,
+			"CraftService.finishCrafting -> craftDelayId exists but craftDelayTime is unavailable",
+			IsLive: false);
+	}
+
+	public static CraftFinishCooldownPlan Planned(
+		int objectId,
+		int recipeId,
+		int craftDelayId,
+		int craftDelayTimeSeconds,
+		long reuseTimeMillis)
+	{
+		return new CraftFinishCooldownPlan(
+			CraftFinishCooldownStatus.Planned,
+			objectId,
+			recipeId,
+			craftDelayId,
+			craftDelayTimeSeconds,
+			reuseTimeMillis,
+			"CraftService.finishCrafting -> player.getCraftCooldowns().put(craftDelayId, reuseTimeMillis)",
+			IsLive: false);
+	}
+}
+
+public enum CraftFinishCooldownStatus
+{
+	Planned,
+	MissingPlayer,
+	MissingRecipe,
+	NoCooldown,
+	MissingDelayTime,
 }
 
 public sealed record CraftFinishRewardPlan(
