@@ -168,6 +168,82 @@ public sealed class PrivateStoreLiveExecutorFacadePlanServiceTests
 	}
 
 	[Fact]
+	public void CreateDisabledOutcomePlan_GroupsFacadeAdaptersWithoutCommitting()
+	{
+		var facade = PrivateStoreLiveExecutorFacadePlanService.CreateDisabledPlan(CreatePrivateStoreHandlerPlan(CreatePurchasePlan()));
+
+		var outcome = PrivateStorePurchaseOutcomePlanService.CreateDisabledPlan(facade);
+
+		Assert.Equal(PrivateStorePurchaseOutcomePlanStatus.DisabledNoTransaction, outcome.Status);
+		Assert.Same(facade, outcome.FacadePlan);
+		Assert.Same(facade.PersistenceAdapterPlan, outcome.PersistenceAdapterPlan);
+		Assert.Same(facade.SendAdapterPlan, outcome.SendAdapterPlan);
+		Assert.True(outcome.WouldWritePersistence);
+		Assert.False(outcome.DidWritePersistence);
+		Assert.True(outcome.WouldSendPackets);
+		Assert.False(outcome.DidSendPackets);
+		Assert.True(outcome.WouldWriteExchangeLog);
+		Assert.False(outcome.DidWriteExchangeLog);
+		Assert.True(outcome.WouldCommitTransactionBoundary);
+		Assert.False(outcome.DidCommitTransactionBoundary);
+		Assert.False(outcome.ShouldCommitTransactionBoundary);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+		Assert.False(outcome.IsLive);
+		Assert.Collection(
+			outcome.Steps.Select(step => step.Kind),
+			kind => Assert.Equal(PrivateStorePurchaseOutcomeStepKind.PersistRepositoryWrites, kind),
+			kind => Assert.Equal(PrivateStorePurchaseOutcomeStepKind.DispatchPacketAndLogIntents, kind),
+			kind => Assert.Equal(PrivateStorePurchaseOutcomeStepKind.CommitTransactionBoundary, kind));
+		Assert.All(outcome.Steps, step =>
+		{
+			Assert.True(step.WouldRun);
+			Assert.False(step.DidRun);
+		});
+	}
+
+	[Fact]
+	public void CreateDisabledOutcomePlan_MissingFacadeStopsBeforeTransactionBoundary()
+	{
+		var outcome = PrivateStorePurchaseOutcomePlanService.CreateDisabledPlan(null);
+
+		Assert.Equal(PrivateStorePurchaseOutcomePlanStatus.MissingFacadePlan, outcome.Status);
+		Assert.Null(outcome.FacadePlan);
+		Assert.Null(outcome.PersistenceAdapterPlan);
+		Assert.Null(outcome.SendAdapterPlan);
+		Assert.Empty(outcome.Steps);
+		Assert.False(outcome.WouldWritePersistence);
+		Assert.False(outcome.WouldSendPackets);
+		Assert.False(outcome.WouldWriteExchangeLog);
+		Assert.False(outcome.WouldCommitTransactionBoundary);
+		Assert.False(outcome.ShouldCommitTransactionBoundary);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+		Assert.False(outcome.IsLive);
+	}
+
+	[Fact]
+	public void CreateDisabledOutcomePlan_BlockedFacadeCarriesTerminalAdaptersWithoutCommitting()
+	{
+		var facade = PrivateStoreLiveExecutorFacadePlanService.CreateDisabledPlan(CreatePrivateStoreHandlerPlan(CreateBlockedPurchasePlan()));
+
+		var outcome = PrivateStorePurchaseOutcomePlanService.CreateDisabledPlan(facade);
+
+		Assert.Equal(PrivateStorePurchaseOutcomePlanStatus.FacadeNotReady, outcome.Status);
+		Assert.Same(facade, outcome.FacadePlan);
+		Assert.Same(facade.PersistenceAdapterPlan, outcome.PersistenceAdapterPlan);
+		Assert.Same(facade.SendAdapterPlan, outcome.SendAdapterPlan);
+		Assert.Equal(PrivateStorePersistenceAdapterStatus.PurchasePlanNotReady, outcome.PersistenceAdapterPlan!.Status);
+		Assert.Equal(PrivateStoreSendAdapterStatus.PurchasePlanNotReady, outcome.SendAdapterPlan!.Status);
+		Assert.Empty(outcome.Steps);
+		Assert.False(outcome.WouldWritePersistence);
+		Assert.False(outcome.WouldSendPackets);
+		Assert.False(outcome.WouldWriteExchangeLog);
+		Assert.False(outcome.WouldCommitTransactionBoundary);
+		Assert.False(outcome.ShouldCommitTransactionBoundary);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+		Assert.False(outcome.IsLive);
+	}
+
+	[Fact]
 	public void CreateDisabledPlan_BlockedBoughtItemsPlanStopsBeforeSideEffects()
 	{
 		var packet = CreatePacket(0, [new CmBuyItemEntry(4, 1)]);

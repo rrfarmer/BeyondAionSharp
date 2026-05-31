@@ -113,6 +113,20 @@ public enum PrivateStoreSendIntentKind
 	WriteExchangeLog,
 }
 
+public enum PrivateStorePurchaseOutcomePlanStatus
+{
+	MissingFacadePlan,
+	FacadeNotReady,
+	DisabledNoTransaction,
+}
+
+public enum PrivateStorePurchaseOutcomeStepKind
+{
+	PersistRepositoryWrites,
+	DispatchPacketAndLogIntents,
+	CommitTransactionBoundary,
+}
+
 public sealed record PrivateStoreLiveExecutorOperation(
 	PrivateStoreLiveExecutorOperationKind Kind,
 	PrivateStoreLiveExecutorOperationStatus Status,
@@ -152,6 +166,31 @@ public sealed record PrivateStoreSendAdapterPlan(
 	bool DidSendPackets,
 	bool WouldWriteExchangeLog,
 	bool DidWriteExchangeLog,
+	bool ShouldDispatchLiveSideEffects,
+	string JavaSource,
+	bool IsLive);
+
+public sealed record PrivateStorePurchaseOutcomeStepPlan(
+	PrivateStorePurchaseOutcomeStepKind Kind,
+	bool WouldRun,
+	bool DidRun,
+	string JavaSource);
+
+public sealed record PrivateStorePurchaseOutcomePlan(
+	PrivateStorePurchaseOutcomePlanStatus Status,
+	PrivateStoreLiveExecutorFacadePlan? FacadePlan,
+	PrivateStorePersistenceAdapterPlan? PersistenceAdapterPlan,
+	PrivateStoreSendAdapterPlan? SendAdapterPlan,
+	IReadOnlyList<PrivateStorePurchaseOutcomeStepPlan> Steps,
+	bool WouldWritePersistence,
+	bool DidWritePersistence,
+	bool WouldSendPackets,
+	bool DidSendPackets,
+	bool WouldWriteExchangeLog,
+	bool DidWriteExchangeLog,
+	bool WouldCommitTransactionBoundary,
+	bool DidCommitTransactionBoundary,
+	bool ShouldCommitTransactionBoundary,
 	bool ShouldDispatchLiveSideEffects,
 	string JavaSource,
 	bool IsLive);
@@ -416,6 +455,92 @@ public static class PrivateStorePurchasePlanService
 		copy.IdianStone = item.IdianStone;
 		return copy;
 	}
+}
+
+public static class PrivateStorePurchaseOutcomePlanService
+{
+	public static PrivateStorePurchaseOutcomePlan CreateDisabledPlan(PrivateStoreLiveExecutorFacadePlan? facadePlan)
+	{
+		if (facadePlan == null)
+			return CreateTerminalPlan(
+				PrivateStorePurchaseOutcomePlanStatus.MissingFacadePlan,
+				facadePlan,
+				"PrivateStoreService.sellStoreItem final outcome requires a disabled live facade plan");
+
+		if (facadePlan.Status != PrivateStoreLiveExecutorFacadeStatus.DisabledNoSideEffects)
+			return CreateTerminalPlan(
+				PrivateStorePurchaseOutcomePlanStatus.FacadeNotReady,
+				facadePlan,
+				"PrivateStoreService.sellStoreItem final outcome stops because facade is not eligible for disabled side-effect composition");
+
+		var persistenceAdapterPlan = facadePlan.PersistenceAdapterPlan;
+		var sendAdapterPlan = facadePlan.SendAdapterPlan;
+		var wouldWritePersistence = persistenceAdapterPlan.WouldWriteRepository;
+		var wouldSendPackets = sendAdapterPlan.WouldSendPackets;
+		var wouldWriteExchangeLog = sendAdapterPlan.WouldWriteExchangeLog;
+		var wouldCommitBoundary = wouldWritePersistence || wouldSendPackets || wouldWriteExchangeLog;
+
+		var steps = new List<PrivateStorePurchaseOutcomeStepPlan>();
+		if (wouldWritePersistence)
+			steps.Add(Disabled(
+				PrivateStorePurchaseOutcomeStepKind.PersistRepositoryWrites,
+				"PrivateStoreService.sellStoreItem -> apply seller/buyer inventory, Kinah, and store-state persistence writes"));
+		if (wouldSendPackets || wouldWriteExchangeLog)
+			steps.Add(Disabled(
+				PrivateStorePurchaseOutcomeStepKind.DispatchPacketAndLogIntents,
+				"PrivateStoreService.sellStoreItem -> dispatch inventory/Kinah/system packets and EXCHANGE_LOG sale line"));
+		if (wouldCommitBoundary)
+			steps.Add(Disabled(
+				PrivateStorePurchaseOutcomeStepKind.CommitTransactionBoundary,
+				"PrivateStoreService.sellStoreItem final transaction boundary is recorded only; Java transaction semantics are not yet runtime-verified"));
+
+		return new PrivateStorePurchaseOutcomePlan(
+			PrivateStorePurchaseOutcomePlanStatus.DisabledNoTransaction,
+			facadePlan,
+			persistenceAdapterPlan,
+			sendAdapterPlan,
+			steps,
+			wouldWritePersistence,
+			DidWritePersistence: false,
+			wouldSendPackets,
+			DidSendPackets: false,
+			wouldWriteExchangeLog,
+			DidWriteExchangeLog: false,
+			wouldCommitBoundary,
+			DidCommitTransactionBoundary: false,
+			ShouldCommitTransactionBoundary: false,
+			ShouldDispatchLiveSideEffects: false,
+			"PrivateStoreService.sellStoreItem final outcome is disabled; write/send/log/transaction boundaries are recorded without dispatch",
+			IsLive: false);
+	}
+
+	private static PrivateStorePurchaseOutcomePlan CreateTerminalPlan(
+		PrivateStorePurchaseOutcomePlanStatus status,
+		PrivateStoreLiveExecutorFacadePlan? facadePlan,
+		string javaSource) =>
+		new(
+			status,
+			facadePlan,
+			facadePlan?.PersistenceAdapterPlan,
+			facadePlan?.SendAdapterPlan,
+			Steps: Array.Empty<PrivateStorePurchaseOutcomeStepPlan>(),
+			WouldWritePersistence: false,
+			DidWritePersistence: false,
+			WouldSendPackets: false,
+			DidSendPackets: false,
+			WouldWriteExchangeLog: false,
+			DidWriteExchangeLog: false,
+			WouldCommitTransactionBoundary: false,
+			DidCommitTransactionBoundary: false,
+			ShouldCommitTransactionBoundary: false,
+			ShouldDispatchLiveSideEffects: false,
+			javaSource,
+			IsLive: false);
+
+	private static PrivateStorePurchaseOutcomeStepPlan Disabled(
+		PrivateStorePurchaseOutcomeStepKind kind,
+		string javaSource) =>
+		new(kind, WouldRun: true, DidRun: false, javaSource);
 }
 
 public static class PrivateStorePersistenceAdapterPlanService
