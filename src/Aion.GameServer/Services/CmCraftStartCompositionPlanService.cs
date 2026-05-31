@@ -144,7 +144,7 @@ public static class CmCraftStartCompositionPlanService
 			consumptionPlan,
 			player?.InventoryItems);
 		steps.Add(CmCraftStartCompositionPlanStep.CreateInventoryPacketPlan);
-		var inventoryPacketPlan = craftService.CreateStartInventoryPacketPlan(inventoryMutationPlan);
+		var inventoryPacketPlan = craftService.CreateStartInventoryPacketPlan(inventoryMutationPlan, player);
 		steps.Add(CmCraftStartCompositionPlanStep.CreateTaskPlan);
 		var taskPlan = craftService.CreateStartTaskPlan(
 			validationPlan,

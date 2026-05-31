@@ -1190,7 +1190,7 @@ public sealed class CraftServiceTests
 		var consumption = service.CreateStartConsumptionPlan(validation, recipe, selectedMaterials, craftType: 1);
 		var mutation = service.CreateStartInventoryMutationPlan(consumption, player.InventoryItems);
 
-		var packetPlan = service.CreateStartInventoryPacketPlan(mutation);
+		var packetPlan = service.CreateStartInventoryPacketPlan(mutation, player);
 
 		Assert.Equal(CraftStartInventoryPacketStatus.Planned, packetPlan.Status);
 		Assert.False(packetPlan.IsLive);
@@ -1209,7 +1209,9 @@ public sealed class CraftServiceTests
 				Assert.Equal(SmInventoryUpdateItem.DecreaseItemUse, ReadInventoryUpdateType(updatePacket));
 			},
 			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 8020, expectedDeleteType: SmDeleteItem.UseDeleteType),
-			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 8021, expectedDeleteType: SmDeleteItem.UseDeleteType));
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 3),
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 8021, expectedDeleteType: SmDeleteItem.UseDeleteType),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 2));
 	}
 
 	[Fact]
@@ -1248,6 +1250,23 @@ public sealed class CraftServiceTests
 		Assert.Equal(CraftStartInventoryPacketStatus.MissingItemTemplates, missingTemplates.Status);
 		Assert.Empty(missingTemplates.Packets);
 		Assert.Same(plannedMutation, missingTemplates.MutationPlan);
+	}
+
+	[Fact]
+	public void CreateStartInventoryPacketPlan_RequiresPlayerSnapshotForDeletedStackCubeUpdate()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var mutation = CraftStartInventoryMutationPlan.Planned(
+			CraftStartConsumptionPlan.NotPlanned("packet evidence only"),
+			updatedItems: [],
+			deletedObjectIds: [8026]);
+
+		var packetPlan = service.CreateStartInventoryPacketPlan(mutation);
+
+		Assert.Equal(CraftStartInventoryPacketStatus.MissingCubeSizeSnapshot, packetPlan.Status);
+		Assert.Empty(packetPlan.Packets);
+		Assert.Same(mutation, packetPlan.MutationPlan);
+		Assert.False(packetPlan.IsLive);
 	}
 
 	[Fact]
@@ -1904,6 +1923,18 @@ public sealed class CraftServiceTests
 		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
 		Assert.Equal(expectedObjectId, reader.ReadD());
 		Assert.Equal(expectedDeleteType, reader.ReadC());
+	}
+
+	private static void AssertCubeUpdatePayload(SmCubeUpdate packet, int expectedItemsCount)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(expectedItemsCount, reader.ReadD());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
 	}
 
 	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)

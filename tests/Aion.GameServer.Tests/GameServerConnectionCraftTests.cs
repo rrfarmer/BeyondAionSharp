@@ -190,8 +190,10 @@ public sealed class GameServerConnectionCraftTests
 		Assert.Equal([2001], compositionPlan.InventoryMutationPlan!.DeletedObjectIds);
 		Assert.Empty(compositionPlan.InventoryMutationPlan.UpdatedItems);
 		Assert.Equal(CraftStartInventoryPacketStatus.Planned, compositionPlan.InventoryPacketPlan?.Status);
-		var deletePacket = Assert.Single(compositionPlan.InventoryPacketPlan!.Packets);
-		Assert.IsType<SmDeleteItem>(deletePacket);
+		Assert.Collection(
+			compositionPlan.InventoryPacketPlan!.Packets,
+			packet => Assert.IsType<SmDeleteItem>(packet),
+			packet => Assert.IsType<SmCubeUpdate>(packet));
 		Assert.Equal(CraftStartTaskPlanStatus.Planned, compositionPlan.TaskPlan?.Status);
 		Assert.Equal(200, compositionPlan.TaskPlan!.Interval);
 		Assert.True(compositionPlan.RequiresDpSpend);

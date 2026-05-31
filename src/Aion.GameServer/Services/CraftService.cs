@@ -9,6 +9,7 @@ public sealed class CraftService
 {
 	private readonly WorldNpcResourceStatsService _resourceStats;
 	private const int CubeStorageId = 0;
+	private const int KinahItemId = 182400001;
 	private readonly ItemTemplateTable? _itemTemplates;
 	private readonly SkillTemplateTable? _skillTemplates;
 
@@ -332,17 +333,20 @@ public sealed class CraftService
 
 	public CraftStartInventoryPacketPlan CreateStartInventoryPacketPlan(
 		CraftStartInventoryMutationPlan? mutationPlan,
+		Player? player = null,
 		ItemRestrictionCleanupTable? itemRestrictionCleanups = null)
 	{
 		// Java parity: Storage.decreaseItemCount sends SM_INVENTORY_UPDATE_ITEM with
 		// ItemUpdateType.DEC_ITEM_USE for remaining stacks, or SM_DELETE_ITEM with
-		// ItemDeleteType.USE for non-kinah stacks deleted at zero.
+		// ItemDeleteType.USE followed by SM_CUBE_UPDATE for non-kinah stacks deleted at zero.
 		if (mutationPlan == null)
 			return CraftStartInventoryPacketPlan.NotPlanned("CraftService.checkCraft packet planning requires inventory mutation evidence");
 		if (!mutationPlan.IsPlanned)
 			return CraftStartInventoryPacketPlan.NotPlanned("CraftService.checkCraft inventory mutation was not planned");
 		if (_itemTemplates == null)
 			return CraftStartInventoryPacketPlan.MissingItemTemplates(mutationPlan);
+		if (mutationPlan.DeletedObjectIds.Count > 0 && player == null)
+			return CraftStartInventoryPacketPlan.MissingCubeSizeSnapshot(mutationPlan, packets: Array.Empty<GameServerPacket>());
 
 		var packets = new List<GameServerPacket>();
 		foreach (var updatedItem in mutationPlan.UpdatedItems)
@@ -358,8 +362,17 @@ public sealed class CraftService
 				GetGeneralInfoWarehouseRestrictionFlag(updatedItem.ItemId, itemRestrictionCleanups)));
 		}
 
+		var projectedCubeCount = player?.InventoryItems.Count(item => item.Location == CubeStorageId && item.ItemId != KinahItemId) ?? 0;
 		foreach (var deletedObjectId in mutationPlan.DeletedObjectIds)
+		{
 			packets.Add(new SmDeleteItem(deletedObjectId, SmDeleteItem.UseDeleteType));
+			projectedCubeCount--;
+			packets.Add(SmCubeUpdate.CubeSizeSnapshot(
+				projectedCubeCount,
+				player!.NpcExpands,
+				player.QuestExpands,
+				player.ItemExpands));
+		}
 
 		return CraftStartInventoryPacketPlan.Planned(mutationPlan, packets);
 	}
@@ -1553,6 +1566,19 @@ public sealed record CraftStartInventoryPacketPlan(
 			IsLive: false);
 	}
 
+	public static CraftStartInventoryPacketPlan MissingCubeSizeSnapshot(
+		CraftStartInventoryMutationPlan mutationPlan,
+		IReadOnlyList<GameServerPacket> packets)
+	{
+		return new CraftStartInventoryPacketPlan(
+			CraftStartInventoryPacketStatus.MissingCubeSizeSnapshot,
+			mutationPlan,
+			packets.ToArray(),
+			MissingItemTemplateId: 0,
+			"ItemPacketService.sendItemDeletePacket -> SM_CUBE_UPDATE.cubeSize requires player cube expand/count snapshot",
+			IsLive: false);
+	}
+
 	public static CraftStartInventoryPacketPlan Planned(
 		CraftStartInventoryMutationPlan mutationPlan,
 		IReadOnlyList<GameServerPacket> packets)
@@ -1562,7 +1588,7 @@ public sealed record CraftStartInventoryPacketPlan(
 			mutationPlan,
 			packets.ToArray(),
 			MissingItemTemplateId: 0,
-			"Storage.decreaseItemCount -> ItemPacketService.sendItemPacket with DEC_ITEM_USE or SM_DELETE_ITEM with USE",
+			"Storage.decreaseItemCount -> ItemPacketService.sendItemPacket with DEC_ITEM_USE or SM_DELETE_ITEM with USE followed by SM_CUBE_UPDATE",
 			IsLive: false);
 	}
 }
@@ -1572,6 +1598,7 @@ public enum CraftStartInventoryPacketStatus
 	NotPlanned,
 	MissingItemTemplates,
 	MissingUpdatedItemTemplate,
+	MissingCubeSizeSnapshot,
 	Planned,
 }
 
