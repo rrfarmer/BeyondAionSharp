@@ -161,6 +161,8 @@ public sealed record PrivateStoreLiveExecutorFacadePlan(
 	CmBuyItemHandlerCompositionPlan? HandlerPlan,
 	PrivateStoreBoughtItemsPlan? BoughtItemsPlan,
 	PrivateStorePurchasePlan? PurchasePlan,
+	PrivateStorePersistenceAdapterPlan PersistenceAdapterPlan,
+	PrivateStoreSendAdapterPlan SendAdapterPlan,
 	IReadOnlyList<PrivateStoreLiveExecutorOperation> Operations,
 	bool WouldMutateSellerInventory,
 	bool DidMutateSellerInventory,
@@ -680,6 +682,8 @@ public static class PrivateStoreLiveExecutorFacadePlanService
 				NotAttempted(PrivateStoreLiveExecutorOperationStatus.NotAttemptedCompositionNotReady),
 				"PrivateStoreService.sellStoreItem purchase plan is blocked; live private-store effects are not eligible");
 
+		var persistenceAdapterPlan = PrivateStorePersistenceAdapterPlanService.CreateDisabledPlan(purchasePlan);
+		var sendAdapterPlan = PrivateStoreSendAdapterPlanService.CreateDisabledPlan(purchasePlan);
 		var operations = new List<PrivateStoreLiveExecutorOperation>();
 		var wouldMutateSellerInventory = purchasePlan.SellerItemUpdates.Count > 0 || purchasePlan.SellerDeletedItemObjectIds.Count > 0;
 		if (wouldMutateSellerInventory)
@@ -728,6 +732,8 @@ public static class PrivateStoreLiveExecutorFacadePlanService
 			handlerPlan,
 			boughtItemsPlan,
 			purchasePlan,
+			persistenceAdapterPlan,
+			sendAdapterPlan,
 			operations,
 			WouldMutateSellerInventory: wouldMutateSellerInventory,
 			DidMutateSellerInventory: false,
@@ -761,6 +767,8 @@ public static class PrivateStoreLiveExecutorFacadePlanService
 			handlerPlan,
 			boughtItemsPlan,
 			purchasePlan,
+			PrivateStorePersistenceAdapterPlanService.CreateDisabledPlan(purchasePlan),
+			PrivateStoreSendAdapterPlanService.CreateDisabledPlan(purchasePlan),
 			[operation],
 			WouldMutateSellerInventory: false,
 			DidMutateSellerInventory: false,

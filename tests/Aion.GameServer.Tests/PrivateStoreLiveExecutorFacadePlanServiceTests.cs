@@ -18,6 +18,18 @@ public sealed class PrivateStoreLiveExecutorFacadePlanServiceTests
 		Assert.Equal(PrivateStoreLiveExecutorFacadeStatus.DisabledNoSideEffects, facade.Status);
 		Assert.Same(handlerPlan, facade.HandlerPlan);
 		Assert.Same(handlerPlan.PrivateStorePurchasePlan, facade.PurchasePlan);
+		Assert.Equal(PrivateStorePersistenceAdapterStatus.DisabledNoWrites, facade.PersistenceAdapterPlan.Status);
+		Assert.Same(facade.PurchasePlan, facade.PersistenceAdapterPlan.PurchasePlan);
+		Assert.True(facade.PersistenceAdapterPlan.WouldWriteRepository);
+		Assert.False(facade.PersistenceAdapterPlan.DidWriteRepository);
+		Assert.False(facade.PersistenceAdapterPlan.ShouldDispatchLiveSideEffects);
+		Assert.Equal(PrivateStoreSendAdapterStatus.DisabledNoPackets, facade.SendAdapterPlan.Status);
+		Assert.Same(facade.PurchasePlan, facade.SendAdapterPlan.PurchasePlan);
+		Assert.True(facade.SendAdapterPlan.WouldSendPackets);
+		Assert.False(facade.SendAdapterPlan.DidSendPackets);
+		Assert.True(facade.SendAdapterPlan.WouldWriteExchangeLog);
+		Assert.False(facade.SendAdapterPlan.DidWriteExchangeLog);
+		Assert.False(facade.SendAdapterPlan.ShouldDispatchLiveSideEffects);
 		Assert.True(facade.IsDisabled);
 		Assert.False(facade.IsLive);
 		Assert.False(facade.ShouldDispatchLiveSideEffects);
@@ -171,8 +183,32 @@ public sealed class PrivateStoreLiveExecutorFacadePlanServiceTests
 		Assert.Equal(PrivateStoreLiveExecutorFacadeStatus.BoughtItemsPlanNotReady, facade.Status);
 		Assert.Equal(PrivateStoreBoughtItemsPlanStatus.BlockedInvalidStoreIndex, facade.BoughtItemsPlan!.Status);
 		Assert.Null(facade.PurchasePlan);
+		Assert.Equal(PrivateStorePersistenceAdapterStatus.MissingPurchasePlan, facade.PersistenceAdapterPlan.Status);
+		Assert.Equal(PrivateStoreSendAdapterStatus.MissingPurchasePlan, facade.SendAdapterPlan.Status);
 		Assert.False(facade.ShouldDispatchLiveSideEffects);
 		Assert.False(facade.WouldMutateSellerInventory);
+		var operation = Assert.Single(facade.Operations);
+		Assert.Equal(PrivateStoreLiveExecutorOperationStatus.NotAttemptedCompositionNotReady, operation.Status);
+	}
+
+	[Fact]
+	public void CreateDisabledPlan_BlockedPurchasePlanCarriesBlockedAdapterPlans()
+	{
+		var handlerPlan = CreatePrivateStoreHandlerPlan(CreateBlockedPurchasePlan());
+
+		var facade = PrivateStoreLiveExecutorFacadePlanService.CreateDisabledPlan(handlerPlan);
+
+		Assert.Equal(PrivateStoreLiveExecutorFacadeStatus.PurchasePlanNotReady, facade.Status);
+		Assert.Equal(PrivateStorePurchasePlanStatus.BlockedInsufficientKinah, facade.PurchasePlan!.Status);
+		Assert.Equal(PrivateStorePersistenceAdapterStatus.PurchasePlanNotReady, facade.PersistenceAdapterPlan.Status);
+		Assert.Same(facade.PurchasePlan, facade.PersistenceAdapterPlan.PurchasePlan);
+		Assert.Empty(facade.PersistenceAdapterPlan.Operations);
+		Assert.False(facade.PersistenceAdapterPlan.ShouldDispatchLiveSideEffects);
+		Assert.Equal(PrivateStoreSendAdapterStatus.PurchasePlanNotReady, facade.SendAdapterPlan.Status);
+		Assert.Same(facade.PurchasePlan, facade.SendAdapterPlan.PurchasePlan);
+		Assert.Empty(facade.SendAdapterPlan.Intents);
+		Assert.False(facade.SendAdapterPlan.ShouldDispatchLiveSideEffects);
+		Assert.False(facade.ShouldDispatchLiveSideEffects);
 		var operation = Assert.Single(facade.Operations);
 		Assert.Equal(PrivateStoreLiveExecutorOperationStatus.NotAttemptedCompositionNotReady, operation.Status);
 	}
@@ -193,6 +229,8 @@ public sealed class PrivateStoreLiveExecutorFacadePlanServiceTests
 		Assert.Same(handlerPlan, facade.HandlerPlan);
 		Assert.Null(facade.BoughtItemsPlan);
 		Assert.Null(facade.PurchasePlan);
+		Assert.Equal(PrivateStorePersistenceAdapterStatus.MissingPurchasePlan, facade.PersistenceAdapterPlan.Status);
+		Assert.Equal(PrivateStoreSendAdapterStatus.MissingPurchasePlan, facade.SendAdapterPlan.Status);
 		Assert.False(facade.ShouldDispatchLiveSideEffects);
 		var operation = Assert.Single(facade.Operations);
 		Assert.Equal(PrivateStoreLiveExecutorOperationStatus.NotAttemptedNotPrivateStore, operation.Status);
@@ -205,6 +243,8 @@ public sealed class PrivateStoreLiveExecutorFacadePlanServiceTests
 
 		Assert.Equal(PrivateStoreLiveExecutorFacadeStatus.MissingHandlerPlan, facade.Status);
 		Assert.Null(facade.HandlerPlan);
+		Assert.Equal(PrivateStorePersistenceAdapterStatus.MissingPurchasePlan, facade.PersistenceAdapterPlan.Status);
+		Assert.Equal(PrivateStoreSendAdapterStatus.MissingPurchasePlan, facade.SendAdapterPlan.Status);
 		Assert.False(facade.ShouldDispatchLiveSideEffects);
 		var operation = Assert.Single(facade.Operations);
 		Assert.Equal(PrivateStoreLiveExecutorOperationStatus.NotAttemptedMissingPlan, operation.Status);
