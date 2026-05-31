@@ -22,6 +22,7 @@ public enum CmBuyItemSellToShopCompositionStep
 	CreateTradeListItems,
 	ApplyRunGates,
 	AttachSellToShopPlan,
+	AttachSellForApToShopPlan,
 }
 
 public sealed record CmBuyItemSellToShopCompositionInput(
@@ -32,7 +33,8 @@ public sealed record CmBuyItemSellToShopCompositionInput(
 	bool NpcCanBuy = true,
 	bool NpcCanPurchase = false,
 	TradeListTemplateSummary? PurchaseTemplate = null,
-	TradeSellToShopPlan? SellToShopPlan = null);
+	TradeSellToShopPlan? SellToShopPlan = null,
+	TradeSellForApToShopPlan? SellForApToShopPlan = null);
 
 public sealed record CmBuyItemSellToShopDispatchDescriptor(
 	int SellerObjectId,
@@ -40,6 +42,7 @@ public sealed record CmBuyItemSellToShopDispatchDescriptor(
 	TradeListTemplateSummary? PurchaseTemplate,
 	bool DispatchesAbyssApSell,
 	TradeSellToShopPlan? SellToShopPlan,
+	TradeSellForApToShopPlan? SellForApToShopPlan,
 	string JavaSource,
 	bool IsLive = false);
 
@@ -77,6 +80,8 @@ public static class CmBuyItemSellToShopCompositionPlanService
 
 		if (input.SellToShopPlan != null)
 			steps.Add(CmBuyItemSellToShopCompositionStep.AttachSellToShopPlan);
+		if (input.SellForApToShopPlan != null)
+			steps.Add(CmBuyItemSellToShopCompositionStep.AttachSellForApToShopPlan);
 
 		if (input.Packet.IsAudit)
 			return CreatePlan(
@@ -149,6 +154,7 @@ public static class CmBuyItemSellToShopCompositionPlanService
 			input.PurchaseTemplate,
 			dispatchesAbyssApSell,
 			dispatchesAbyssApSell ? null : input.SellToShopPlan,
+			dispatchesAbyssApSell ? input.SellForApToShopPlan : null,
 			dispatchesAbyssApSell
 				? "TradeService.performSellForAPToShop(player, tradeList, tradeTemplate)"
 				: "TradeService.performSellToShop(player, tradeList, tradeTemplate)",

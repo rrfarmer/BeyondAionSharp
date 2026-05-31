@@ -35,15 +35,32 @@ public sealed class CmBuyItemSellToShopCompositionPlanServiceTests
 		Assert.False(dispatch.IsLive);
 		Assert.False(dispatch.DispatchesAbyssApSell);
 		Assert.Same(sellPlan, dispatch.SellToShopPlan);
+		Assert.Null(dispatch.SellForApToShopPlan);
 		Assert.Equal([200, 201], dispatch.TradeItems.Select(item => item.ItemObjectId).ToArray());
 	}
 
 	[Fact]
-	public void CreatePlan_AbyssPurchaseTemplateDispatchesApSellWithoutSellToShopPlan()
+	public void CreatePlan_AbyssPurchaseTemplateDispatchesApSellWithOptionalApSellPlan()
 	{
 		var packet = CreatePacket(1, [new CmBuyItemEntry(200, 1)]);
 		var purchaseTemplate = new TradeListTemplateSummary(203060, [129], NpcType: "ABYSS", BuyPriceRate: 35);
 		var sellPlan = CreateSellPlan([new TradeSellToShopItemRequest(200, 1)]);
+		var apSellPlan = new TradeSellForApToShopPlan(
+			TradeSellForApToShopPlanStatus.PlanCreated,
+			[
+				TradeSellForApToShopStep.CheckSellingApItemsEnabled,
+				TradeSellForApToShopStep.CheckPlayerCanTrade,
+				TradeSellForApToShopStep.FindInventoryItem,
+				TradeSellForApToShopStep.ValidatePurchaseTemplateGoods,
+				TradeSellForApToShopStep.PlanInventoryDecrease,
+				TradeSellForApToShopStep.PlanAbyssPointReward,
+			],
+			DeletedItemObjectIds: [200],
+			SkippedDeleteFailedItemObjectIds: [],
+			AbyssPointRewards: [new TradeSellForApToShopApReward(200, SwordItemId, Count: 1, RequiredApPerItem: 1_000, ApReward: 350)],
+			TotalAbyssPoints: 350,
+			ShouldDispatchLiveSideEffects: false,
+			"TradeService.performSellForAPToShop");
 
 		var plan = CmBuyItemSellToShopCompositionPlanService.CreatePlan(
 			new CmBuyItemSellToShopCompositionInput(
@@ -53,14 +70,47 @@ public sealed class CmBuyItemSellToShopCompositionPlanServiceTests
 				NpcCanBuy: false,
 				NpcCanPurchase: true,
 				PurchaseTemplate: purchaseTemplate,
-				SellToShopPlan: sellPlan));
+				SellToShopPlan: sellPlan,
+				SellForApToShopPlan: apSellPlan));
 
 		Assert.Equal(CmBuyItemSellToShopCompositionPlanStatus.WouldDispatchSellForApToShop, plan.Status);
+		Assert.Contains(CmBuyItemSellToShopCompositionStep.AttachSellToShopPlan, plan.Steps);
+		Assert.Contains(CmBuyItemSellToShopCompositionStep.AttachSellForApToShopPlan, plan.Steps);
 		var dispatch = Assert.IsType<CmBuyItemSellToShopDispatchDescriptor>(plan.Dispatch);
 		Assert.True(dispatch.DispatchesAbyssApSell);
 		Assert.Same(purchaseTemplate, dispatch.PurchaseTemplate);
 		Assert.Null(dispatch.SellToShopPlan);
+		Assert.Same(apSellPlan, dispatch.SellForApToShopPlan);
 		Assert.False(plan.ShouldDispatchLiveSideEffects);
+	}
+
+	[Fact]
+	public void CreatePlan_NormalSellBranchIgnoresApSellPlanPayload()
+	{
+		var packet = CreatePacket(1, [new CmBuyItemEntry(200, 1)]);
+		var apSellPlan = new TradeSellForApToShopPlan(
+			TradeSellForApToShopPlanStatus.PlanCreated,
+			[TradeSellForApToShopStep.CheckSellingApItemsEnabled],
+			DeletedItemObjectIds: [200],
+			SkippedDeleteFailedItemObjectIds: [],
+			AbyssPointRewards: [],
+			TotalAbyssPoints: 0,
+			ShouldDispatchLiveSideEffects: false,
+			"TradeService.performSellForAPToShop");
+
+		var plan = CmBuyItemSellToShopCompositionPlanService.CreatePlan(
+			new CmBuyItemSellToShopCompositionInput(
+				packet,
+				PlayerPresent: true,
+				TargetKind: CmBuyItemRunTargetKind.Npc,
+				NpcCanBuy: true,
+				PurchaseTemplate: new TradeListTemplateSummary(203060, [129], NpcType: "NORMAL"),
+				SellForApToShopPlan: apSellPlan));
+
+		Assert.Equal(CmBuyItemSellToShopCompositionPlanStatus.WouldDispatchSellToShop, plan.Status);
+		var dispatch = Assert.IsType<CmBuyItemSellToShopDispatchDescriptor>(plan.Dispatch);
+		Assert.False(dispatch.DispatchesAbyssApSell);
+		Assert.Null(dispatch.SellForApToShopPlan);
 	}
 
 	[Fact]
