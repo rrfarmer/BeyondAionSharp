@@ -74,7 +74,7 @@ public sealed class GameServerConnectionBuyItemTests
 	[Fact]
 	public async Task ProcessPacketAsync_CmBuyItemKnownListResolverCanRejectWorldObjectTarget()
 	{
-		await using var fixture = await BuyItemFixture.CreateAsync(buyItemKnownObjectResolver: (_, _) => false);
+		await using var fixture = await BuyItemFixture.CreateAsync(buyItemKnownObjectResolver: (_, _, _) => false);
 		SetActivePlayerForPacketDispatch(fixture.Connection, CreatePlayer());
 		fixture.World.TryAddObject(
 			9001,
@@ -87,6 +87,28 @@ public sealed class GameServerConnectionBuyItemTests
 		var plan = Assert.Single(fixture.BuyItemPlans);
 		Assert.Equal(CmBuyItemHandlerCompositionPlanStatus.SkippedUnknownTarget, plan.Status);
 		Assert.Null(plan.BuyFromShopPlan);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		Assert.Empty(fixture.SentPackets);
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmBuyItemPlayerMembershipResolverRejectsUnknownPlayerTarget()
+	{
+		var membership = new PlayerKnownListMembershipService();
+		var activePlayer = CreatePlayer();
+		var sellerPlayer = new Player { ObjectId = 9101, Name = "StoreSeller", Position = new WorldPosition(210010000, 10, 0, 0, 0) };
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			CmBuyItemKnownListMembershipResolverAdapterService.CreateResolver(membership));
+		SetActivePlayerForPacketDispatch(fixture.Connection, activePlayer);
+		fixture.World.TryAddObject(sellerPlayer.ObjectId, sellerPlayer);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateBuyItemPayload(sellerObjectId: sellerPlayer.ObjectId, tradeActionId: 0, [(1001, 1)]));
+
+		var plan = Assert.Single(fixture.BuyItemPlans);
+		Assert.Equal(CmBuyItemHandlerCompositionPlanStatus.SkippedUnknownTarget, plan.Status);
+		Assert.Null(plan.PrivateStorePurchasePlan);
 		Assert.False(plan.ShouldDispatchLiveSideEffects);
 		Assert.Empty(fixture.SentPackets);
 	}
@@ -194,7 +216,7 @@ public sealed class GameServerConnectionBuyItemTests
 
 		public List<GameServerPacket> SentPackets { get; }
 
-		public static async Task<BuyItemFixture> CreateAsync(Func<Player, int, bool>? buyItemKnownObjectResolver = null)
+		public static async Task<BuyItemFixture> CreateAsync(Func<Player, int, object?, bool?>? buyItemKnownObjectResolver = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();

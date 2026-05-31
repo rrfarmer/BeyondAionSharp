@@ -84,7 +84,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly Action<CmCraftRuntimePlan>? _cmCraftRuntimePlanObserver;
 	private readonly Action<CmCraftStartCompositionPlan>? _cmCraftStartCompositionPlanObserver;
 	private readonly Action<CmBuyItemHandlerCompositionPlan>? _cmBuyItemHandlerCompositionPlanObserver;
-	private readonly Func<Player, int, bool>? _buyItemKnownObjectResolver;
+	private readonly Func<Player, int, object?, bool?>? _buyItemKnownObjectResolver;
 	private readonly PlayerSummonCastSpellService _summonCastSpellService;
 	private readonly PlayerSummonSkillExecutionService _summonSkillExecutionService;
 	private readonly SemaphoreSlim _sendLock = new(1, 1);
@@ -156,7 +156,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		Action<CmCraftRuntimePlan>? cmCraftRuntimePlanObserver = null,
 		Action<CmCraftStartCompositionPlan>? cmCraftStartCompositionPlanObserver = null,
 		Action<CmBuyItemHandlerCompositionPlan>? cmBuyItemHandlerCompositionPlanObserver = null,
-		Func<Player, int, bool>? buyItemKnownObjectResolver = null)
+		Func<Player, int, object?, bool?>? buyItemKnownObjectResolver = null)
 		: base(logger, client, clientId)
 	{
 		_packetProcessor = packetProcessor;
@@ -3976,7 +3976,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			: null;
 		bool? isKnownByPlayer = player == null || _buyItemKnownObjectResolver == null
 			? null
-			: _buyItemKnownObjectResolver(player, sellerObjectId);
+			: _buyItemKnownObjectResolver(player, sellerObjectId, worldObject);
 		var factPlan = CmBuyItemKnownListTargetFactAdapterService.CreatePlan(
 			player,
 			sellerObjectId,
