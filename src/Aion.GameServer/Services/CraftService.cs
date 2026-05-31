@@ -2423,6 +2423,162 @@ public enum CraftFinishCooldownStatus
 	MissingDelayTime,
 }
 
+public static class CraftFinishCooldownApplicationPlanService
+{
+	public static CraftFinishCooldownApplicationPlan CreateDisabledPlan(
+		Player? player,
+		CraftFinishCooldownPlan? cooldownPlan,
+		long currentTimeMillis)
+	{
+		// Java parity: Cooldowns.put stores only future reuse times; expired/immediate reuse removes the cooldown id.
+		if (cooldownPlan == null)
+			return CraftFinishCooldownApplicationPlan.CooldownPlanMissing(player?.ObjectId ?? 0, currentTimeMillis);
+		if (player == null)
+			return CraftFinishCooldownApplicationPlan.PlayerMissing(cooldownPlan, currentTimeMillis);
+		if (cooldownPlan.Status != CraftFinishCooldownStatus.Planned)
+			return CraftFinishCooldownApplicationPlan.CooldownPlanNotReady(cooldownPlan, player.CraftCooldowns, currentTimeMillis);
+
+		var existingCooldowns = player.CraftCooldowns ?? new Dictionary<int, long>();
+		existingCooldowns.TryGetValue(cooldownPlan.CraftDelayId, out var previousReuseTimeMillis);
+		var projectedCooldowns = new Dictionary<int, long>(existingCooldowns);
+		var wouldStoreCooldown = cooldownPlan.ReuseTimeMillis > currentTimeMillis;
+		if (wouldStoreCooldown)
+			projectedCooldowns[cooldownPlan.CraftDelayId] = cooldownPlan.ReuseTimeMillis;
+		else
+			projectedCooldowns.Remove(cooldownPlan.CraftDelayId);
+
+		return CraftFinishCooldownApplicationPlan.DisabledNoMutation(
+			cooldownPlan,
+			existingCooldowns,
+			projectedCooldowns,
+			previousReuseTimeMillis,
+			currentTimeMillis,
+			wouldStoreCooldown);
+	}
+}
+
+public sealed record CraftFinishCooldownApplicationPlan(
+	CraftFinishCooldownApplicationStatus Status,
+	CraftFinishCooldownPlan? CooldownPlan,
+	int ObjectId,
+	int RecipeId,
+	int CraftDelayId,
+	long PreviousReuseTimeMillis,
+	long ReuseTimeMillis,
+	long CurrentTimeMillis,
+	IReadOnlyDictionary<int, long> ExistingCooldowns,
+	IReadOnlyDictionary<int, long> ProjectedCooldowns,
+	bool WouldStoreCooldown,
+	bool DidStoreCooldown,
+	bool WouldRemoveCooldown,
+	bool DidRemoveCooldown,
+	string JavaSource,
+	bool IsLive)
+{
+	public static CraftFinishCooldownApplicationPlan CooldownPlanMissing(int objectId, long currentTimeMillis)
+	{
+		return new CraftFinishCooldownApplicationPlan(
+			CraftFinishCooldownApplicationStatus.CooldownPlanMissing,
+			CooldownPlan: null,
+			objectId,
+			RecipeId: 0,
+			CraftDelayId: 0,
+			PreviousReuseTimeMillis: 0,
+			ReuseTimeMillis: 0,
+			currentTimeMillis,
+			ExistingCooldowns: new Dictionary<int, long>(),
+			ProjectedCooldowns: new Dictionary<int, long>(),
+			WouldStoreCooldown: false,
+			DidStoreCooldown: false,
+			WouldRemoveCooldown: false,
+			DidRemoveCooldown: false,
+			"Cooldowns.put boundary skipped because craft-finish cooldown plan is missing",
+			IsLive: false);
+	}
+
+	public static CraftFinishCooldownApplicationPlan PlayerMissing(
+		CraftFinishCooldownPlan cooldownPlan,
+		long currentTimeMillis)
+	{
+		return new CraftFinishCooldownApplicationPlan(
+			CraftFinishCooldownApplicationStatus.PlayerMissing,
+			cooldownPlan,
+			cooldownPlan.ObjectId,
+			cooldownPlan.RecipeId,
+			cooldownPlan.CraftDelayId,
+			PreviousReuseTimeMillis: 0,
+			cooldownPlan.ReuseTimeMillis,
+			currentTimeMillis,
+			ExistingCooldowns: new Dictionary<int, long>(),
+			ProjectedCooldowns: new Dictionary<int, long>(),
+			WouldStoreCooldown: false,
+			DidStoreCooldown: false,
+			WouldRemoveCooldown: false,
+			DidRemoveCooldown: false,
+			"Cooldowns.put boundary skipped because player cooldown map is unavailable",
+			IsLive: false);
+	}
+
+	public static CraftFinishCooldownApplicationPlan CooldownPlanNotReady(
+		CraftFinishCooldownPlan cooldownPlan,
+		IReadOnlyDictionary<int, long> existingCooldowns,
+		long currentTimeMillis)
+	{
+		return new CraftFinishCooldownApplicationPlan(
+			CraftFinishCooldownApplicationStatus.CooldownPlanNotReady,
+			cooldownPlan,
+			cooldownPlan.ObjectId,
+			cooldownPlan.RecipeId,
+			cooldownPlan.CraftDelayId,
+			PreviousReuseTimeMillis: 0,
+			cooldownPlan.ReuseTimeMillis,
+			currentTimeMillis,
+			new Dictionary<int, long>(existingCooldowns),
+			new Dictionary<int, long>(existingCooldowns),
+			WouldStoreCooldown: false,
+			DidStoreCooldown: false,
+			WouldRemoveCooldown: false,
+			DidRemoveCooldown: false,
+			"Cooldowns.put boundary skipped because craft-finish cooldown plan is not planned",
+			IsLive: false);
+	}
+
+	public static CraftFinishCooldownApplicationPlan DisabledNoMutation(
+		CraftFinishCooldownPlan cooldownPlan,
+		IReadOnlyDictionary<int, long> existingCooldowns,
+		IReadOnlyDictionary<int, long> projectedCooldowns,
+		long previousReuseTimeMillis,
+		long currentTimeMillis,
+		bool wouldStoreCooldown)
+	{
+		return new CraftFinishCooldownApplicationPlan(
+			CraftFinishCooldownApplicationStatus.DisabledNoMutation,
+			cooldownPlan,
+			cooldownPlan.ObjectId,
+			cooldownPlan.RecipeId,
+			cooldownPlan.CraftDelayId,
+			previousReuseTimeMillis,
+			cooldownPlan.ReuseTimeMillis,
+			currentTimeMillis,
+			new Dictionary<int, long>(existingCooldowns),
+			new Dictionary<int, long>(projectedCooldowns),
+			wouldStoreCooldown,
+			DidStoreCooldown: false,
+			WouldRemoveCooldown: !wouldStoreCooldown,
+			DidRemoveCooldown: false,
+			"CraftService.finishCrafting -> Cooldowns.put(craftDelayId, reuseTimeMillis) identified, but live cooldown mutation remains disabled",
+			IsLive: false);
+	}
+}
+
+public enum CraftFinishCooldownApplicationStatus
+{
+	DisabledNoMutation,
+	CooldownPlanMissing,
+	PlayerMissing,
+	CooldownPlanNotReady,
+}
+
 public sealed record CraftFinishRewardPlan(
 	CraftFinishRewardStatus Status,
 	CraftFinishProductPlan ProductPlan,

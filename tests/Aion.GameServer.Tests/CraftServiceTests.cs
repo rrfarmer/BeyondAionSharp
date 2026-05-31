@@ -1946,6 +1946,92 @@ public sealed class CraftServiceTests
 	}
 
 	[Fact]
+	public void CreateFinishCooldownApplicationPlan_ProjectsJavaCooldownPutWithoutMutatingPlayer()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1145, dp: 600);
+		player.CraftCooldowns = new Dictionary<int, long> { [77] = 1_000 };
+		var recipe = CreateRecipe(
+			recipeId: 155000038,
+			dp: 0,
+			productId: 100200203,
+			skillId: 40001,
+			craftDelayId: 77,
+			craftDelayTime: 30);
+		var cooldownPlan = service.CreateFinishCooldownPlan(player, recipe, currentTimeMillis: 1_000_000);
+
+		var application = CraftFinishCooldownApplicationPlanService.CreateDisabledPlan(
+			player,
+			cooldownPlan,
+			currentTimeMillis: 1_000_000);
+
+		Assert.Equal(CraftFinishCooldownApplicationStatus.DisabledNoMutation, application.Status);
+		Assert.False(application.IsLive);
+		Assert.True(application.WouldStoreCooldown);
+		Assert.False(application.DidStoreCooldown);
+		Assert.False(application.WouldRemoveCooldown);
+		Assert.False(application.DidRemoveCooldown);
+		Assert.Equal(1_000, application.PreviousReuseTimeMillis);
+		Assert.Equal(1_030_000, application.ReuseTimeMillis);
+		Assert.Equal(1_030_000, application.ProjectedCooldowns[77]);
+		Assert.Equal(1_000, player.CraftCooldowns[77]);
+		Assert.Contains("Cooldowns.put", application.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void CreateFinishCooldownApplicationPlan_ProjectsJavaPutRemovalForImmediateReuseWithoutMutatingPlayer()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1146, dp: 600);
+		player.CraftCooldowns = new Dictionary<int, long> { [78] = 2_000_000 };
+		var recipe = CreateRecipe(
+			recipeId: 155000039,
+			dp: 0,
+			productId: 100200203,
+			skillId: 40001,
+			craftDelayId: 78,
+			craftDelayTime: 0);
+		var cooldownPlan = service.CreateFinishCooldownPlan(player, recipe, currentTimeMillis: 1_000_000);
+
+		var application = CraftFinishCooldownApplicationPlanService.CreateDisabledPlan(
+			player,
+			cooldownPlan,
+			currentTimeMillis: 1_000_000);
+
+		Assert.Equal(CraftFinishCooldownApplicationStatus.DisabledNoMutation, application.Status);
+		Assert.False(application.WouldStoreCooldown);
+		Assert.False(application.DidStoreCooldown);
+		Assert.True(application.WouldRemoveCooldown);
+		Assert.False(application.DidRemoveCooldown);
+		Assert.Equal(2_000_000, application.PreviousReuseTimeMillis);
+		Assert.Equal(1_000_000, application.ReuseTimeMillis);
+		Assert.DoesNotContain(78, application.ProjectedCooldowns.Keys);
+		Assert.Equal(2_000_000, player.CraftCooldowns[78]);
+		Assert.Contains("live cooldown mutation remains disabled", application.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void CreateFinishCooldownApplicationPlan_SkipsUnplannedCooldownPlan()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1147, dp: 600);
+		player.CraftCooldowns = new Dictionary<int, long> { [79] = 2_000_000 };
+		var recipe = CreateRecipe(recipeId: 155000040, dp: 0, productId: 100200203, skillId: 40001);
+		var cooldownPlan = service.CreateFinishCooldownPlan(player, recipe, currentTimeMillis: 1_000_000);
+
+		var application = CraftFinishCooldownApplicationPlanService.CreateDisabledPlan(
+			player,
+			cooldownPlan,
+			currentTimeMillis: 1_000_000);
+
+		Assert.Equal(CraftFinishCooldownApplicationStatus.CooldownPlanNotReady, application.Status);
+		Assert.False(application.WouldStoreCooldown);
+		Assert.False(application.WouldRemoveCooldown);
+		Assert.Equal(2_000_000, application.ProjectedCooldowns[79]);
+		Assert.Equal(2_000_000, player.CraftCooldowns[79]);
+	}
+
+	[Fact]
 	public void CreateFinishProductPlan_ReportsMissingComboProductConservatively()
 	{
 		var service = CreateService(out _, CreateItemTemplates());
