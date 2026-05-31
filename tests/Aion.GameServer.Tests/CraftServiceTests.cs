@@ -119,6 +119,167 @@ public sealed class CraftServiceTests
 	}
 
 	[Fact]
+	public void CreateStartCraftingValidationPlan_ReportsMissingRecipeOrProductTemplate()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1104, dp: 600);
+		var recipe = CreateRecipe(recipeId: 155000005, dp: 0, productId: 199999999);
+
+		var missingRecipe = service.CreateStartCraftingValidationPlan(
+			player,
+			recipeTemplate: null,
+			productTemplate: null,
+			target: null,
+			targetIsStaticObject: false,
+			targetIsWithinToolRange: false,
+			hasCraftingTaskInProgress: false);
+		var missingProduct = service.CreateStartCraftingValidationPlan(
+			player,
+			recipe,
+			productTemplate: null,
+			target: null,
+			targetIsStaticObject: false,
+			targetIsWithinToolRange: false,
+			hasCraftingTaskInProgress: false);
+
+		Assert.Equal(CraftStartValidationStatus.MissingRecipe, missingRecipe.Status);
+		Assert.True(missingRecipe.ShouldSendCancelCraft);
+		Assert.False(missingRecipe.IsReadyForNextValidation);
+		Assert.Equal(CraftStartValidationStatus.MissingProductTemplate, missingProduct.Status);
+		Assert.Equal(recipe.RecipeId, missingProduct.RecipeId);
+		Assert.Equal(recipe.ProductId, missingProduct.ProductItemId);
+		Assert.True(missingProduct.ShouldSendCancelCraft);
+	}
+
+	[Fact]
+	public void CreateStartCraftingValidationPlan_RejectsInProgressBeforeTargetValidation()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1105, dp: 600);
+		var recipe = CreateRecipe(recipeId: 155000006, dp: 0, productId: 100200203, skillId: 40001);
+		var productTemplate = CreateItemTemplates().GetItemTemplate(100200203);
+
+		var plan = service.CreateStartCraftingValidationPlan(
+			player,
+			recipe,
+			productTemplate,
+			target: null,
+			targetIsStaticObject: false,
+			targetIsWithinToolRange: false,
+			hasCraftingTaskInProgress: true);
+
+		Assert.Equal(CraftStartValidationStatus.AlreadyCrafting, plan.Status);
+		Assert.True(plan.ShouldSendCancelCraft);
+		Assert.Contains("CraftingTask", plan.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void CreateStartCraftingValidationPlan_AllowsMorphRecipeWithoutStaticTarget()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1106, dp: 600);
+		var recipe = CreateRecipe(recipeId: 155000007, dp: 0, productId: 152000401, skillId: CraftStartValidationPlan.MorphSubstancesSkillId);
+		var productTemplate = CreateItemTemplates().GetItemTemplate(152000401);
+
+		var plan = service.CreateStartCraftingValidationPlan(
+			player,
+			recipe,
+			productTemplate,
+			target: null,
+			targetIsStaticObject: false,
+			targetIsWithinToolRange: false,
+			hasCraftingTaskInProgress: false);
+
+		Assert.Equal(CraftStartValidationStatus.ReadyForNextValidation, plan.Status);
+		Assert.True(plan.IsMorphRecipe);
+		Assert.True(plan.IsReadyForNextValidation);
+		Assert.False(plan.ShouldSendCancelCraft);
+		Assert.Contains("morphing", plan.JavaSource, StringComparison.OrdinalIgnoreCase);
+	}
+
+	[Fact]
+	public void CreateStartCraftingValidationPlan_RejectsNonMorphMissingOrNonStaticTarget()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1107, dp: 600);
+		var recipe = CreateRecipe(recipeId: 155000008, dp: 0, productId: 100200203, skillId: 40001);
+		var productTemplate = CreateItemTemplates().GetItemTemplate(100200203);
+		var nonStaticTarget = CreateTarget(objectId: 9001, templateId: 730190);
+
+		var missingTarget = service.CreateStartCraftingValidationPlan(
+			player,
+			recipe,
+			productTemplate,
+			target: null,
+			targetIsStaticObject: false,
+			targetIsWithinToolRange: false,
+			hasCraftingTaskInProgress: false);
+		var nonStatic = service.CreateStartCraftingValidationPlan(
+			player,
+			recipe,
+			productTemplate,
+			nonStaticTarget,
+			targetIsStaticObject: false,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false);
+
+		Assert.Equal(CraftStartValidationStatus.InvalidNonMorphTarget, missingTarget.Status);
+		Assert.Equal(CraftStartValidationStatus.InvalidNonMorphTarget, nonStatic.Status);
+		Assert.True(nonStatic.ShouldSendCancelCraft);
+		Assert.Contains("StaticObject", nonStatic.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void CreateStartCraftingValidationPlan_RejectsNonMorphTargetTooFar()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1108, dp: 600);
+		var recipe = CreateRecipe(recipeId: 155000009, dp: 0, productId: 100200203, skillId: 40001);
+		var productTemplate = CreateItemTemplates().GetItemTemplate(100200203);
+		var target = CreateTarget(objectId: 9002, templateId: 730190);
+
+		var plan = service.CreateStartCraftingValidationPlan(
+			player,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: false,
+			hasCraftingTaskInProgress: false);
+
+		Assert.Equal(CraftStartValidationStatus.TooFarFromTool, plan.Status);
+		Assert.Equal(730190, plan.TargetTemplateId);
+		Assert.True(plan.ShouldSendCancelCraft);
+		Assert.Contains("PositionUtil", plan.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void CreateStartCraftingValidationPlan_NonMorphStaticTargetContinuesToLaterGuards()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1109, dp: 600);
+		var recipe = CreateRecipe(recipeId: 155000010, dp: 0, productId: 100200203, skillId: 40001);
+		var productTemplate = CreateItemTemplates().GetItemTemplate(100200203);
+		var target = CreateTarget(objectId: 9003, templateId: 730190);
+
+		var plan = service.CreateStartCraftingValidationPlan(
+			player,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false);
+
+		Assert.Equal(CraftStartValidationStatus.ReadyForNextValidation, plan.Status);
+		Assert.Equal(9003, plan.TargetObjectId);
+		Assert.False(plan.IsMorphRecipe);
+		Assert.True(plan.IsReadyForNextValidation);
+		Assert.False(plan.ShouldSendCancelCraft);
+		Assert.Contains("continue", plan.JavaSource, StringComparison.OrdinalIgnoreCase);
+	}
+
+	[Fact]
 	public void CreateFinishProductPlan_UsesBaseProductWhenCraftDoesNotCrit()
 	{
 		var service = CreateService(out _, CreateItemTemplates());
@@ -353,12 +514,13 @@ public sealed class CraftServiceTests
 		int dp,
 		int productId = 100000001,
 		int quantity = 1,
-		IReadOnlyList<int>? comboProducts = null)
+		IReadOnlyList<int>? comboProducts = null,
+		int skillId = CraftStartValidationPlan.MorphSubstancesSkillId)
 	{
 		return new RecipeTemplateSummary(
 			recipeId,
 			0,
-			40009,
+			skillId,
 			"PC_ALL",
 			0,
 			dp,
@@ -366,6 +528,21 @@ public sealed class CraftServiceTests
 			productId,
 			quantity,
 			comboProducts);
+	}
+
+	private static WorldNpc CreateTarget(int objectId, int templateId)
+	{
+		var template = new NpcTemplateSummary(
+			templateId,
+			"Craft Tool",
+			NameId: 0,
+			Level: 1,
+			Rank: "NORMAL",
+			Rating: "NORMAL",
+			Race: "NONE",
+			Tribe: "NONE",
+			Type: "STATIC");
+		return new WorldNpc(objectId, templateId, template, new WorldPosition(210010000, 10, 20, 30, 0));
 	}
 
 	private static ItemTemplateTable CreateItemTemplates()
