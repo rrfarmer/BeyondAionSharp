@@ -234,6 +234,19 @@ public sealed class CmCraftStartCompositionPlanServiceTests
 		Assert.False(facade.IsLive);
 		Assert.False(facade.ShouldDispatchLiveSideEffects);
 		Assert.Same(plan, facade.CompositionPlan);
+		Assert.NotNull(facade.InventoryPersistenceAdapterPlan);
+		Assert.Equal(CraftStartInventoryPersistenceAdapterStatus.DisabledNoWrite, facade.InventoryPersistenceAdapterPlan!.Status);
+		Assert.Same(plan.InventoryPersistencePlan, facade.InventoryPersistenceAdapterPlan.PersistencePlan);
+		Assert.True(facade.InventoryPersistenceAdapterPlan.WouldExecuteSql);
+		Assert.False(facade.InventoryPersistenceAdapterPlan.DidExecuteSql);
+		Assert.True(facade.InventoryPersistenceAdapterPlan.WouldReleaseObjectIdsAfterSuccessfulDelete);
+		Assert.False(facade.InventoryPersistenceAdapterPlan.DidReleaseObjectIds);
+		Assert.NotNull(facade.InventoryPacketSendAdapterPlan);
+		Assert.Equal(CraftStartInventoryPacketSendAdapterStatus.DisabledNoSend, facade.InventoryPacketSendAdapterPlan!.Status);
+		Assert.Same(plan.InventoryPacketPlan, facade.InventoryPacketSendAdapterPlan.PacketPlan);
+		Assert.Equal(plan.ValidationPlan!.ObjectId, facade.InventoryPacketSendAdapterPlan.PlayerObjectId);
+		Assert.True(facade.InventoryPacketSendAdapterPlan.WouldCallSendPacketAsync);
+		Assert.False(facade.InventoryPacketSendAdapterPlan.DidCallSendPacketAsync);
 		Assert.True(facade.WouldMutateInventory);
 		Assert.False(facade.DidMutateInventory);
 		Assert.True(facade.WouldWriteInventoryPersistence);
@@ -312,6 +325,8 @@ public sealed class CmCraftStartCompositionPlanServiceTests
 
 		Assert.Equal(CraftStartLiveExecutorFacadeStatus.CompositionNotReady, facade.Status);
 		Assert.False(facade.ShouldDispatchLiveSideEffects);
+		Assert.Null(facade.InventoryPersistenceAdapterPlan);
+		Assert.Null(facade.InventoryPacketSendAdapterPlan);
 		Assert.False(facade.WouldMutateInventory);
 		Assert.False(facade.WouldSendInventoryPackets);
 		var operation = Assert.Single(facade.Operations);

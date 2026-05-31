@@ -92,6 +92,8 @@ public sealed record CraftStartLiveExecutorFacadePlan(
 	CraftStartLiveExecutorFacadeStatus Status,
 	CmCraftStartCompositionPlan? CompositionPlan,
 	IReadOnlyList<CraftStartLiveExecutorOperation> Operations,
+	CraftStartInventoryPersistenceAdapterPlan? InventoryPersistenceAdapterPlan,
+	CraftStartInventoryPacketSendAdapterPlan? InventoryPacketSendAdapterPlan,
 	bool WouldMutateInventory,
 	bool DidMutateInventory,
 	bool WouldWriteInventoryPersistence,
@@ -402,6 +404,8 @@ public static class CraftStartLiveExecutorFacadePlanService
 				CraftStartLiveExecutorFacadeStatus.MissingCompositionPlan,
 				CompositionPlan: null,
 				[NotAttempted(CraftStartLiveExecutorOperationKind.ApplyInventoryMutation, CraftStartLiveExecutorOperationStatus.NotAttemptedMissingPlan)],
+				InventoryPersistenceAdapterPlan: null,
+				InventoryPacketSendAdapterPlan: null,
 				WouldMutateInventory: false,
 				DidMutateInventory: false,
 				WouldWriteInventoryPersistence: false,
@@ -426,6 +430,8 @@ public static class CraftStartLiveExecutorFacadePlanService
 				CraftStartLiveExecutorFacadeStatus.CompositionNotReady,
 				compositionPlan,
 				[NotAttempted(CraftStartLiveExecutorOperationKind.ApplyInventoryMutation, CraftStartLiveExecutorOperationStatus.NotAttemptedCompositionNotReady)],
+				InventoryPersistenceAdapterPlan: null,
+				InventoryPacketSendAdapterPlan: null,
 				WouldMutateInventory: false,
 				DidMutateInventory: false,
 				WouldWriteInventoryPersistence: false,
@@ -444,12 +450,14 @@ public static class CraftStartLiveExecutorFacadePlanService
 		}
 
 		var operations = new List<CraftStartLiveExecutorOperation>();
+		var persistenceAdapterPlan = CraftStartInventoryPersistenceAdapterPlanService.CreateDisabledPlan(compositionPlan.InventoryPersistencePlan);
+		var packetSendAdapterPlan = CraftStartInventoryPacketSendAdapterPlanService.CreateDisabledPlan(compositionPlan.InventoryPacketPlan, compositionPlan.ValidationPlan?.ObjectId ?? 0);
 		if (compositionPlan.InventoryMutationPlan?.IsPlanned == true)
 			operations.Add(Disabled(CraftStartLiveExecutorOperationKind.ApplyInventoryMutation, "CraftService.checkCraft -> Storage.decreaseByItemId mutates consumed item stacks"));
-		if (compositionPlan.InventoryPersistencePlan?.IsPlanned == true)
-			operations.Add(Disabled(CraftStartLiveExecutorOperationKind.MarkInventoryPersistenceState, "Storage.decreaseItemCount/delete marks item and storage persistent state for InventoryDAO.store"));
-		if (compositionPlan.InventoryPacketPlan?.IsPlanned == true)
-			operations.Add(Disabled(CraftStartLiveExecutorOperationKind.SendInventoryPackets, "Storage.decreaseItemCount -> ItemPacketService sends inventory update/delete/cube packets"));
+		if (persistenceAdapterPlan.WouldExecuteSql)
+			operations.Add(Disabled(CraftStartLiveExecutorOperationKind.MarkInventoryPersistenceState, "Storage.decreaseItemCount/delete dirty state -> InventoryDAO.store disabled adapter"));
+		if (packetSendAdapterPlan.WouldCallSendPacketAsync)
+			operations.Add(Disabled(CraftStartLiveExecutorOperationKind.SendInventoryPackets, "Storage.decreaseItemCount/delete -> ItemPacketService disabled send adapter"));
 		if (compositionPlan.RequiresDpSpend)
 			operations.Add(Disabled(CraftStartLiveExecutorOperationKind.SpendRecipeDp, "CraftService.startCrafting -> player.getCommonData().addDp(-recipeTemplate.getDp())"));
 		if (compositionPlan.TaskPlan?.IsPlanned == true)
@@ -462,12 +470,14 @@ public static class CraftStartLiveExecutorFacadePlanService
 			CraftStartLiveExecutorFacadeStatus.DisabledNoSideEffects,
 			compositionPlan,
 			operations,
+			persistenceAdapterPlan,
+			packetSendAdapterPlan,
 			WouldMutateInventory: compositionPlan.InventoryMutationPlan?.IsPlanned == true,
 			DidMutateInventory: false,
-			WouldWriteInventoryPersistence: compositionPlan.InventoryPersistencePlan?.IsPlanned == true,
-			DidWriteInventoryPersistence: false,
-			WouldSendInventoryPackets: compositionPlan.InventoryPacketPlan?.IsPlanned == true,
-			DidSendInventoryPackets: false,
+			WouldWriteInventoryPersistence: persistenceAdapterPlan.WouldExecuteSql,
+			DidWriteInventoryPersistence: persistenceAdapterPlan.DidExecuteSql,
+			WouldSendInventoryPackets: packetSendAdapterPlan.WouldCallSendPacketAsync,
+			DidSendInventoryPackets: packetSendAdapterPlan.DidCallSendPacketAsync,
 			WouldSpendDp: compositionPlan.RequiresDpSpend,
 			DidSpendDp: false,
 			WouldCreateCraftingTask: compositionPlan.TaskPlan?.IsPlanned == true,
