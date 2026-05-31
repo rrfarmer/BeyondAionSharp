@@ -2408,6 +2408,104 @@ public sealed class CraftServiceTests
 	}
 
 	[Fact]
+	public void CreateFinishOrchestrationPlan_ComposesExistingFinishPlansInJavaOrder()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1162, dp: 600, name: "Smith");
+		player.Recipes = [155000053];
+		player.Skills =
+		[
+			new PlayerSkill { SkillId = 40001, SkillLevel = 100, CurrentXp = 100 },
+		];
+		var recipe = CreateRecipe(
+			recipeId: 155000053,
+			dp: 0,
+			productId: 152000401,
+			quantity: 2,
+			skillId: 40001,
+			skillPoint: 100,
+			craftDelayId: 80,
+			craftDelayTime: 30,
+			maxProductionCount: 1);
+		var nextObjectId = 9_000;
+
+		var plan = service.CreateFinishOrchestrationPlan(
+			player,
+			Array.Empty<InventoryItem>(),
+			recipe,
+			critCount: 0,
+			bonusPercent: 0,
+			() => ++nextObjectId,
+			currentTimeMillis: 1_000_000,
+			logCraftEnabled: true);
+
+		Assert.Equal(CraftFinishOrchestrationStatus.DisabledNoMutation, plan.Status);
+		Assert.Equal(
+			[
+				CraftFinishOrchestrationStep.WorkOrderRecipeDeleteAndFailQuest,
+				CraftFinishOrchestrationStep.SkillAndCommonXp,
+				CraftFinishOrchestrationStep.CraftedItemReward,
+				CraftFinishOrchestrationStep.CraftLog,
+				CraftFinishOrchestrationStep.CraftCooldown,
+			],
+			plan.OrderedSteps);
+		Assert.True(plan.WouldDeleteRecipe);
+		Assert.True(plan.WouldAddSkillXp);
+		Assert.True(plan.WouldAddCommonXp);
+		Assert.True(plan.WouldAddRewardItems);
+		Assert.True(plan.WouldWriteLog);
+		Assert.True(plan.WouldApplyCooldown);
+		Assert.False(plan.DidExecuteAnyLiveSideEffect);
+		Assert.Equal(CraftFinishWorkOrderStatus.DisabledNoMutation, plan.WorkOrderPlan.Status);
+		Assert.Equal(CraftFinishXpStatus.DisabledWouldAddSkillXp, plan.XpPlan.Status);
+		Assert.Equal(CraftFinishRewardStatus.Planned, plan.RewardPlan.Status);
+		Assert.Equal(CraftFinishLoggingStatus.DisabledNoMutation, plan.LoggingPlan.Status);
+		Assert.Equal(CraftFinishCooldownCompositionStatus.DisabledReady, plan.CooldownCompositionPlan.Status);
+		Assert.Equal([155000053], player.Recipes);
+		Assert.DoesNotContain(80, player.CraftCooldowns.Keys);
+		Assert.Contains("CraftService.finishCrafting order", plan.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void CreateFinishOrchestrationPlan_KeepsJavaOrderWhenOptionalBranchesAreInactive()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1163, dp: 600, name: "Smith");
+		player.Skills =
+		[
+			new PlayerSkill { SkillId = 40001, SkillLevel = 100, CurrentXp = 100 },
+		];
+		var recipe = CreateRecipe(
+			recipeId: 155000054,
+			dp: 0,
+			productId: 152000401,
+			quantity: 1,
+			skillId: 40001,
+			skillPoint: 100);
+
+		var plan = service.CreateFinishOrchestrationPlan(
+			player,
+			Array.Empty<InventoryItem>(),
+			recipe,
+			critCount: 0,
+			bonusPercent: 0,
+			() => 9_001,
+			currentTimeMillis: 1_000_000,
+			logCraftEnabled: false);
+
+		Assert.Equal(CraftFinishOrchestrationStatus.DisabledNoMutation, plan.Status);
+		Assert.Equal(CraftFinishWorkOrderStatus.NotWorkOrder, plan.WorkOrderPlan.Status);
+		Assert.Equal(CraftFinishLoggingStatus.DisabledByConfig, plan.LoggingPlan.Status);
+		Assert.Equal(CraftFinishCooldownCompositionStatus.NotReady, plan.CooldownCompositionPlan.Status);
+		Assert.False(plan.WouldDeleteRecipe);
+		Assert.True(plan.WouldAddRewardItems);
+		Assert.False(plan.WouldWriteLog);
+		Assert.False(plan.WouldApplyCooldown);
+		Assert.False(plan.DidExecuteAnyLiveSideEffect);
+		Assert.Equal(5, plan.OrderedSteps.Count);
+	}
+
+	[Fact]
 	public void CreateFinishProductPlan_ReportsMissingComboProductConservatively()
 	{
 		var service = CreateService(out _, CreateItemTemplates());

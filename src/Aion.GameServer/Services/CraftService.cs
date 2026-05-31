@@ -508,6 +508,36 @@ public sealed class CraftService
 		return CraftFinishLoggingPlan.DisabledNoMutation(productPlan, itemTemplate.Name, message);
 	}
 
+	public CraftFinishOrchestrationPlan CreateFinishOrchestrationPlan(
+		Player? player,
+		IReadOnlyList<InventoryItem>? inventoryItems,
+		RecipeTemplateSummary? recipeTemplate,
+		int critCount,
+		int bonusPercent,
+		Func<int> nextObjectId,
+		long currentTimeMillis,
+		bool logCraftEnabled,
+		float skillXpRate = 1.0f,
+		int boostStatPercent = 100,
+		float commonXpRate = 1.0f,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups = null)
+	{
+		// Java parity: CraftService.finishCrafting order is work-order handling, XP,
+		// reward item insertion, optional craft logging, then craft cooldown mutation.
+		var workOrderPlan = CreateFinishWorkOrderPlan(player, recipeTemplate, critCount);
+		var xpPlan = CreateFinishXpPlan(player, recipeTemplate, bonusPercent, skillXpRate, boostStatPercent, commonXpRate);
+		var rewardPlan = CreateFinishRewardPlan(player, inventoryItems, recipeTemplate, critCount, nextObjectId, itemRestrictionCleanups);
+		var loggingPlan = CreateFinishLoggingPlan(player, recipeTemplate, critCount, logCraftEnabled);
+		var cooldownPlan = CreateFinishCooldownCompositionPlan(player, recipeTemplate, currentTimeMillis);
+
+		return CraftFinishOrchestrationPlan.Create(
+			workOrderPlan,
+			xpPlan,
+			rewardPlan,
+			loggingPlan,
+			cooldownPlan);
+	}
+
 	public CraftFinishCooldownPlan CreateFinishCooldownPlan(
 		Player? player,
 		RecipeTemplateSummary? recipeTemplate,
@@ -2752,6 +2782,101 @@ public enum CraftFinishLoggingStatus
 	MissingProductPlan,
 	MissingComboProduct,
 	MissingItemTemplate,
+}
+
+public sealed record CraftFinishOrchestrationPlan(
+	CraftFinishOrchestrationStatus Status,
+	IReadOnlyList<CraftFinishOrchestrationStep> OrderedSteps,
+	CraftFinishWorkOrderPlan WorkOrderPlan,
+	CraftFinishXpPlan XpPlan,
+	CraftFinishRewardPlan RewardPlan,
+	CraftFinishLoggingPlan LoggingPlan,
+	CraftFinishCooldownCompositionPlan CooldownCompositionPlan,
+	bool WouldDeleteRecipe,
+	bool WouldAddSkillXp,
+	bool WouldAddCommonXp,
+	bool WouldAddRewardItems,
+	bool WouldWriteLog,
+	bool WouldApplyCooldown,
+	bool DidExecuteAnyLiveSideEffect,
+	string JavaSource,
+	bool IsLive)
+{
+	public static CraftFinishOrchestrationPlan Create(
+		CraftFinishWorkOrderPlan workOrderPlan,
+		CraftFinishXpPlan xpPlan,
+		CraftFinishRewardPlan rewardPlan,
+		CraftFinishLoggingPlan loggingPlan,
+		CraftFinishCooldownCompositionPlan cooldownCompositionPlan)
+	{
+		var status = GetStatus(workOrderPlan, xpPlan, rewardPlan, loggingPlan, cooldownCompositionPlan);
+		return new CraftFinishOrchestrationPlan(
+			status,
+			[
+				CraftFinishOrchestrationStep.WorkOrderRecipeDeleteAndFailQuest,
+				CraftFinishOrchestrationStep.SkillAndCommonXp,
+				CraftFinishOrchestrationStep.CraftedItemReward,
+				CraftFinishOrchestrationStep.CraftLog,
+				CraftFinishOrchestrationStep.CraftCooldown,
+			],
+			workOrderPlan,
+			xpPlan,
+			rewardPlan,
+			loggingPlan,
+			cooldownCompositionPlan,
+			workOrderPlan.WouldDeleteKnownRecipe,
+			xpPlan.WouldAddSkillXp,
+			xpPlan.WouldAddCommonXp,
+			rewardPlan.Status == CraftFinishRewardStatus.Planned,
+			loggingPlan.WouldWriteLog,
+			cooldownCompositionPlan.WouldApplyCooldown,
+			DidExecuteAnyLiveSideEffect: false,
+			"CraftService.finishCrafting order: maxProductionCount recipe delete/fail quest, skill/common XP, ItemService.addItem, LOG_CRAFT, craft cooldown put; this composition does not execute live side effects",
+			IsLive: false);
+	}
+
+	private static CraftFinishOrchestrationStatus GetStatus(
+		CraftFinishWorkOrderPlan workOrderPlan,
+		CraftFinishXpPlan xpPlan,
+		CraftFinishRewardPlan rewardPlan,
+		CraftFinishLoggingPlan loggingPlan,
+		CraftFinishCooldownCompositionPlan cooldownCompositionPlan)
+	{
+		if (workOrderPlan.Status == CraftFinishWorkOrderStatus.MissingPlayer
+			|| xpPlan.Status == CraftFinishXpStatus.MissingPlayer
+			|| rewardPlan.Status == CraftFinishRewardStatus.MissingPlayer
+			|| loggingPlan.Status == CraftFinishLoggingStatus.MissingPlayer
+			|| cooldownCompositionPlan.CooldownPlan.Status == CraftFinishCooldownStatus.MissingPlayer)
+			return CraftFinishOrchestrationStatus.MissingPlayer;
+		if (workOrderPlan.Status == CraftFinishWorkOrderStatus.MissingRecipe
+			|| xpPlan.Status == CraftFinishXpStatus.MissingRecipe
+			|| rewardPlan.Status == CraftFinishRewardStatus.MissingRecipe
+			|| loggingPlan.Status == CraftFinishLoggingStatus.MissingRecipe
+			|| cooldownCompositionPlan.CooldownPlan.Status == CraftFinishCooldownStatus.MissingRecipe)
+			return CraftFinishOrchestrationStatus.MissingRecipe;
+		if (rewardPlan.Status != CraftFinishRewardStatus.Planned
+			|| loggingPlan.Status is CraftFinishLoggingStatus.MissingComboProduct or CraftFinishLoggingStatus.MissingItemTemplate)
+			return CraftFinishOrchestrationStatus.PartialPlan;
+
+		return CraftFinishOrchestrationStatus.DisabledNoMutation;
+	}
+}
+
+public enum CraftFinishOrchestrationStatus
+{
+	DisabledNoMutation,
+	PartialPlan,
+	MissingPlayer,
+	MissingRecipe,
+}
+
+public enum CraftFinishOrchestrationStep
+{
+	WorkOrderRecipeDeleteAndFailQuest,
+	SkillAndCommonXp,
+	CraftedItemReward,
+	CraftLog,
+	CraftCooldown,
 }
 
 public sealed record CraftFinishCooldownPlan(
