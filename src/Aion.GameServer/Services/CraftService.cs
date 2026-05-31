@@ -73,6 +73,12 @@ public sealed class CraftService
 		if (InventoryCapacity.GetFreeCubeSlots(player) <= 0)
 			return CraftStartValidationPlan.InventoryFull(player.ObjectId, player.Dp, recipeTemplate, productTemplate, target?.ObjectId ?? 0);
 
+		if (!player.Recipes.Contains(recipeTemplate.RecipeId))
+			return CraftStartValidationPlan.MissingKnownRecipe(player.ObjectId, player.Dp, recipeTemplate, productTemplate, target?.ObjectId ?? 0);
+
+		if (recipeTemplate.CraftDelayId.HasValue && player.CraftCooldowns.ContainsKey(recipeTemplate.CraftDelayId.Value))
+			return CraftStartValidationPlan.CraftCooldownActive(player.ObjectId, player.Dp, recipeTemplate, productTemplate, target?.ObjectId ?? 0);
+
 		return CraftStartValidationPlan.ReadyForNextValidation(
 			player.ObjectId,
 			player.Dp,
@@ -521,6 +527,50 @@ public sealed record CraftStartValidationPlan(
 			"CraftService.checkCraft -> player.getInventory().isFull()");
 	}
 
+	public static CraftStartValidationPlan MissingKnownRecipe(
+		int objectId,
+		int currentDp,
+		RecipeTemplateSummary recipeTemplate,
+		ItemTemplateSummary productTemplate,
+		int targetObjectId)
+	{
+		return FromRecipe(
+			CraftStartValidationStatus.MissingKnownRecipe,
+			objectId,
+			recipeTemplate,
+			productTemplate.TemplateId,
+			targetObjectId,
+			targetTemplateId: 0,
+			requiredDp: recipeTemplate.Dp,
+			currentDp,
+			shouldSendCancelCraft: true,
+			isReadyForNextValidation: false,
+			failurePacket: SmSystemMessage.CombineCannotFindRecipe(),
+			"CraftService.checkCraft -> !player.getRecipeList().isRecipePresent(recipeTemplate.getId())");
+	}
+
+	public static CraftStartValidationPlan CraftCooldownActive(
+		int objectId,
+		int currentDp,
+		RecipeTemplateSummary recipeTemplate,
+		ItemTemplateSummary productTemplate,
+		int targetObjectId)
+	{
+		return FromRecipe(
+			CraftStartValidationStatus.CraftCooldownActive,
+			objectId,
+			recipeTemplate,
+			productTemplate.TemplateId,
+			targetObjectId,
+			targetTemplateId: 0,
+			requiredDp: recipeTemplate.Dp,
+			currentDp,
+			shouldSendCancelCraft: true,
+			isReadyForNextValidation: false,
+			failurePacket: SmSystemMessage.ItemCantUseUntilDelayTime(),
+			"CraftService.checkCraft -> recipeTemplate.getCraftDelayId() != null && player.getCraftCooldowns().hasCooldown(recipeTemplate.getCraftDelayId())");
+	}
+
 	public static CraftStartValidationPlan ReadyForNextValidation(
 		int objectId,
 		int currentDp,
@@ -543,7 +593,7 @@ public sealed record CraftStartValidationPlan(
 			failurePacket: null,
 			isMorphRecipe
 				? "CraftService.checkCraft -> morphing does not need static object/npc to use"
-				: "CraftService.checkCraft -> static target/DP/stance/inventory guards passed; continue to recipe/cooldown/skill/material guards");
+				: "CraftService.checkCraft -> static target/DP/stance/inventory/recipe/cooldown guards passed; continue to skill/material guards");
 	}
 
 	private static CraftStartValidationPlan FromRecipe(
@@ -589,6 +639,8 @@ public enum CraftStartValidationStatus
 	NotEnoughDp,
 	InvalidCurrentStance,
 	InventoryFull,
+	MissingKnownRecipe,
+	CraftCooldownActive,
 	ReadyForNextValidation,
 }
 

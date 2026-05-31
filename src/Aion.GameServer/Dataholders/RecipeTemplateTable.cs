@@ -45,7 +45,9 @@ public sealed record RecipeTemplateSummary(
 	int AutoLearn,
 	int ProductId,
 	int Quantity,
-	IReadOnlyList<int>? ComboProducts = null)
+	IReadOnlyList<int>? ComboProducts = null,
+	int? CraftDelayId = null,
+	int? CraftDelayTime = null)
 {
 	public int? GetComboProduct(int count)
 	{

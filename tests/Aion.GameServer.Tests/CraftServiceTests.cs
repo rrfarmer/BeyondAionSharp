@@ -179,6 +179,7 @@ public sealed class CraftServiceTests
 		var service = CreateService(out _, CreateItemTemplates());
 		var player = CreatePlayer(objectId: 1106, dp: 600);
 		var recipe = CreateRecipe(recipeId: 155000007, dp: 0, productId: 152000401, skillId: CraftStartValidationPlan.MorphSubstancesSkillId);
+		player.Recipes = [recipe.RecipeId];
 		var productTemplate = CreateItemTemplates().GetItemTemplate(152000401);
 
 		var plan = service.CreateStartCraftingValidationPlan(
@@ -259,6 +260,7 @@ public sealed class CraftServiceTests
 		var service = CreateService(out _, CreateItemTemplates());
 		var player = CreatePlayer(objectId: 1109, dp: 600);
 		var recipe = CreateRecipe(recipeId: 155000010, dp: 0, productId: 100200203, skillId: 40001);
+		player.Recipes = [recipe.RecipeId];
 		var productTemplate = CreateItemTemplates().GetItemTemplate(100200203);
 		var target = CreateTarget(objectId: 9003, templateId: 730190);
 
@@ -321,6 +323,7 @@ public sealed class CraftServiceTests
 		var service = CreateService(out _, CreateItemTemplates());
 		var player = CreatePlayer(objectId: 1111, dp: 700);
 		var recipe = CreateRecipe(recipeId: 155000012, dp: 600, productId: 100200203, skillId: 40001);
+		player.Recipes = [recipe.RecipeId];
 		var productTemplate = CreateItemTemplates().GetItemTemplate(100200203);
 		var target = CreateTarget(objectId: 9005, templateId: 730190);
 
@@ -476,6 +479,78 @@ public sealed class CraftServiceTests
 		Assert.True(inventoryFull.ShouldSendCancelCraft);
 		Assert.False(inventoryFull.IsReadyForNextValidation);
 		Assert.Contains("isFull", inventoryFull.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void CreateStartCraftingValidationPlan_RejectsMissingKnownRecipeAfterInventoryValidation()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1118, dp: 700);
+		var fullInventoryPlayer = CreatePlayer(objectId: 1119, dp: 700);
+		fullInventoryPlayer.InventoryItems = CreateFullCubeInventory(fullInventoryPlayer.ObjectId);
+		var recipe = CreateRecipe(recipeId: 155000017, dp: 600, productId: 100200203, skillId: 40001);
+		var productTemplate = CreateItemTemplates().GetItemTemplate(100200203);
+		var target = CreateTarget(objectId: 9010, templateId: 730190);
+
+		var inventoryWinsBeforeRecipe = service.CreateStartCraftingValidationPlan(
+			fullInventoryPlayer,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false);
+		var missingRecipe = service.CreateStartCraftingValidationPlan(
+			player,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false);
+
+		Assert.Equal(CraftStartValidationStatus.InventoryFull, inventoryWinsBeforeRecipe.Status);
+		Assert.Equal(CraftStartValidationStatus.MissingKnownRecipe, missingRecipe.Status);
+		Assert.Equal(1330043, Assert.IsType<SmSystemMessage>(missingRecipe.FailurePacket).MessageId);
+		Assert.True(missingRecipe.ShouldSendCancelCraft);
+		Assert.Contains("isRecipePresent", missingRecipe.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void CreateStartCraftingValidationPlan_RejectsCraftCooldownAfterRecipeValidation()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var missingRecipePlayer = CreatePlayer(objectId: 1120, dp: 700);
+		missingRecipePlayer.CraftCooldowns = new Dictionary<int, long> { [77] = 999999 };
+		var player = CreatePlayer(objectId: 1121, dp: 700);
+		player.Recipes = [155000018];
+		player.CraftCooldowns = new Dictionary<int, long> { [77] = 999999 };
+		var recipe = CreateRecipe(recipeId: 155000018, dp: 600, productId: 100200203, skillId: 40001, craftDelayId: 77);
+		var productTemplate = CreateItemTemplates().GetItemTemplate(100200203);
+		var target = CreateTarget(objectId: 9011, templateId: 730190);
+
+		var recipeWinsBeforeCooldown = service.CreateStartCraftingValidationPlan(
+			missingRecipePlayer,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false);
+		var cooldown = service.CreateStartCraftingValidationPlan(
+			player,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false);
+
+		Assert.Equal(CraftStartValidationStatus.MissingKnownRecipe, recipeWinsBeforeCooldown.Status);
+		Assert.Equal(CraftStartValidationStatus.CraftCooldownActive, cooldown.Status);
+		Assert.Equal(1300494, Assert.IsType<SmSystemMessage>(cooldown.FailurePacket).MessageId);
+		Assert.True(cooldown.ShouldSendCancelCraft);
+		Assert.Contains("hasCooldown", cooldown.JavaSource, StringComparison.Ordinal);
 	}
 
 	[Fact]
@@ -714,7 +789,9 @@ public sealed class CraftServiceTests
 		int productId = 100000001,
 		int quantity = 1,
 		IReadOnlyList<int>? comboProducts = null,
-		int skillId = CraftStartValidationPlan.MorphSubstancesSkillId)
+		int skillId = CraftStartValidationPlan.MorphSubstancesSkillId,
+		int? craftDelayId = null,
+		int? craftDelayTime = null)
 	{
 		return new RecipeTemplateSummary(
 			recipeId,
@@ -726,7 +803,9 @@ public sealed class CraftServiceTests
 			0,
 			productId,
 			quantity,
-			comboProducts);
+			comboProducts,
+			craftDelayId,
+			craftDelayTime);
 	}
 
 	private static WorldNpc CreateTarget(int objectId, int templateId)

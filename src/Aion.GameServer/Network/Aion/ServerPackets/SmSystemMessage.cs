@@ -1507,6 +1507,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1330063);
 	}
 
+	public static SmSystemMessage CombineCannotFindRecipe()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_COMBINE_CAN_NOT_FIND_RECIPE.
+		return new SmSystemMessage(1330043);
+	}
+
 	public static SmSystemMessage SoulBoundItemSucceed(string itemName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_ITEM_SUCCEED.
@@ -1559,6 +1565,12 @@ public sealed class SmSystemMessage : GameServerPacket
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_WEAPON_BOOST_MODE_BURN_OUT.
 		return new SmSystemMessage(1400075);
+	}
+
+	public static SmSystemMessage ItemCantUseUntilDelayTime()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_ITEM_CANT_USE_UNTIL_DELAY_TIME.
+		return new SmSystemMessage(1300494);
 	}
 
 	public static SmSystemMessage SkillCannotChangeModeWhileInCurrentStance()

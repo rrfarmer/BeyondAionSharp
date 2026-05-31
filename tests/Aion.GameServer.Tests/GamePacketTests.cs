@@ -1418,6 +1418,7 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.CraftRecipeLearn(155000001, "Kahrun"), 1330061, "[recipe_ex:155000001;Kahrun]");
 		AssertSystemMessage(SmSystemMessage.CraftRecipeCantLearnSkill("skill"), 1330062, "skill");
 		AssertSystemMessage(SmSystemMessage.CraftRecipeCantLearnSkillPoint(), 1330063);
+		AssertSystemMessage(SmSystemMessage.CombineCannotFindRecipe(), 1330043);
 		AssertSystemMessage(SmSystemMessage.EnchantItemCanceled("item"), 1300457, "item");
 		AssertSystemMessage(SmSystemMessage.GiveItemOptionCanceled("item"), 1300464, "item");
 		AssertSystemMessage(SmSystemMessage.GiveItemProcCancel("item"), 1402238, "item");
@@ -1430,6 +1431,7 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.WeaponBoostStarted(), 1300491);
 		AssertSystemMessage(SmSystemMessage.WeaponBoostEnded(), 1300492);
 		AssertSystemMessage(SmSystemMessage.WeaponBoostBurnOut(), 1400075);
+		AssertSystemMessage(SmSystemMessage.ItemCantUseUntilDelayTime(), 1300494);
 		AssertSystemMessage(SmSystemMessage.SkillCannotChangeModeWhileInCurrentStance(), 1300124);
 		AssertSystemMessage(SmSystemMessage.CraftCannotCombineWhileInCurrentStance(), 1300122);
 		AssertSystemMessage(SmSystemMessage.SkillCannotTakeOffWhileInCurrentStance(), 1300147);
