@@ -106,7 +106,10 @@ public static class WorldNpcDropBoostRateContextPlanService
 		bool hasSalvationSource = false,
 		bool hasActivePalaceSource = false,
 		HousingTemplateTable? housingTemplates = null,
-		byte? salvationPercent = null)
+		byte? salvationPercent = null,
+		int? npcBoostDropRate = null,
+		int? killerBoostDropRate = null,
+		int? killerDrBoost = null)
 	{
 		// Java parity: RatesConfig.DROP_RATES is now represented by GameServerRateOptions.DropRates.
 		return CreateDisabledPlan(
@@ -118,7 +121,10 @@ public static class WorldNpcDropBoostRateContextPlanService
 			hasSalvationSource,
 			hasActivePalaceSource,
 			housingTemplates,
-			salvationPercent);
+			salvationPercent,
+			npcBoostDropRate,
+			killerBoostDropRate,
+			killerDrBoost);
 	}
 
 	public static WorldNpcDropBoostRateContextPlan CreateDisabledPlan(
@@ -130,11 +136,17 @@ public static class WorldNpcDropBoostRateContextPlanService
 		bool hasSalvationSource = false,
 		bool hasActivePalaceSource = false,
 		HousingTemplateTable? housingTemplates = null,
-		byte? salvationPercent = null)
+		byte? salvationPercent = null,
+		int? npcBoostDropRate = null,
+		int? killerBoostDropRate = null,
+		int? killerDrBoost = null)
 	{
 		// Java parity: DropRegistrationService.calculateBoostDropRate reads live
 		// npc/player stats, RatesConfig.DROP_RATES, repose, salvation, and active house.
 		var hasActivePalace = PlayerActiveHouseResolverService.HasActivePalace(looter, housingTemplates);
+		var hasResolvedNpcBoostStatSource = hasNpcBoostStatSource || npcBoostDropRate.HasValue;
+		var hasResolvedKillerBoostStatSource = hasKillerBoostStatSource || killerBoostDropRate.HasValue;
+		var hasResolvedKillerDrBoostStatSource = hasKillerDrBoostStatSource || killerDrBoost.HasValue;
 		var hasResolvedActivePalaceSource = hasActivePalaceSource || hasActivePalace.HasValue;
 		var hasResolvedSalvationSource = hasSalvationSource || salvationPercent.HasValue;
 		var hasSalvation = salvationPercent.HasValue ? salvationPercent.Value > 0 : (bool?)null;
@@ -143,11 +155,11 @@ public static class WorldNpcDropBoostRateContextPlanService
 			missingInputs.Add("looter");
 		if (configuredDropRates is not { Count: > 0 })
 			missingInputs.Add("RatesConfig.DROP_RATES");
-		if (!hasNpcBoostStatSource)
+		if (!hasResolvedNpcBoostStatSource)
 			missingInputs.Add("npc BOOST_DROP_RATE stat source");
-		if (!hasKillerBoostStatSource)
+		if (!hasResolvedKillerBoostStatSource)
 			missingInputs.Add("killer BOOST_DROP_RATE stat source");
-		if (!hasKillerDrBoostStatSource)
+		if (!hasResolvedKillerDrBoostStatSource)
 			missingInputs.Add("killer DR_BOOST stat source");
 		if (!hasResolvedSalvationSource)
 			missingInputs.Add("killer salvation percent source");
@@ -160,6 +172,9 @@ public static class WorldNpcDropBoostRateContextPlanService
 		var context = looter != null && configuredDropRates is { Count: > 0 }
 			? new WorldNpcDropBoostRateContext(
 				configuredDropRate,
+				NpcBoostDropRate: npcBoostDropRate ?? 100,
+				KillerBoostDropRate: killerBoostDropRate,
+				KillerDrBoost: killerDrBoost,
 				HasReposeEnergy: looter.ReposeEnergy > 0,
 				HasSalvation: hasSalvation == true,
 				HasActivePalace: hasActivePalace == true)
@@ -171,13 +186,16 @@ public static class WorldNpcDropBoostRateContextPlanService
 				: WorldNpcDropBoostRateContextPlanStatus.Blocked,
 			context,
 			configuredDropRate,
+			npcBoostDropRate,
+			killerBoostDropRate,
+			killerDrBoost,
 			looter?.ReposeEnergy > 0,
 			salvationPercent,
 			hasSalvation,
 			hasActivePalace,
-			hasNpcBoostStatSource,
-			hasKillerBoostStatSource,
-			hasKillerDrBoostStatSource,
+			hasResolvedNpcBoostStatSource,
+			hasResolvedKillerBoostStatSource,
+			hasResolvedKillerDrBoostStatSource,
 			hasResolvedSalvationSource,
 			hasResolvedActivePalaceSource,
 			missingInputs,
@@ -213,6 +231,9 @@ public sealed record WorldNpcDropBoostRateContextPlan(
 	WorldNpcDropBoostRateContextPlanStatus Status,
 	WorldNpcDropBoostRateContext? Context,
 	float ConfiguredDropRate,
+	int? NpcBoostDropRate,
+	int? KillerBoostDropRate,
+	int? KillerDrBoost,
 	bool? HasReposeEnergy,
 	byte? SalvationPercent,
 	bool? HasSalvation,

@@ -277,6 +277,55 @@ public sealed class WorldNpcDropModifierServiceTests
 		Assert.Equal(1f, plan.Context.CalculateBoostDropRate(), precision: 3);
 	}
 
+	[Fact]
+	public void CreateDisabledPlan_ConsumesResolvedStatChainInputs()
+	{
+		var looter = new Player { ObjectId = 1001, AccountMembership = 0 };
+
+		var plan = WorldNpcDropBoostRateContextPlanService.CreateDisabledPlan(
+			looter,
+			[2f],
+			hasSalvationSource: true,
+			hasActivePalaceSource: true,
+			npcBoostDropRate: 120,
+			killerBoostDropRate: 130,
+			killerDrBoost: 80);
+
+		Assert.Equal(WorldNpcDropBoostRateContextPlanStatus.Ready, plan.Status);
+		Assert.True(plan.HasNpcBoostStatSource);
+		Assert.True(plan.HasKillerBoostStatSource);
+		Assert.True(plan.HasKillerDrBoostStatSource);
+		Assert.Equal(120, plan.NpcBoostDropRate);
+		Assert.Equal(130, plan.KillerBoostDropRate);
+		Assert.Equal(80, plan.KillerDrBoost);
+		Assert.Empty(plan.MissingInputs);
+		Assert.NotNull(plan.Context);
+		Assert.Equal(1.6f, plan.Context.CalculateBoostDropRate(), precision: 3);
+	}
+
+	[Fact]
+	public void CreateDisabledPlan_ResolvedNpcBoostAloneLeavesKillerStatSourcesBlocked()
+	{
+		var looter = new Player { ObjectId = 1001, AccountMembership = 0 };
+
+		var plan = WorldNpcDropBoostRateContextPlanService.CreateDisabledPlan(
+			looter,
+			[1f],
+			hasSalvationSource: true,
+			hasActivePalaceSource: true,
+			npcBoostDropRate: 125);
+
+		Assert.Equal(WorldNpcDropBoostRateContextPlanStatus.Blocked, plan.Status);
+		Assert.True(plan.HasNpcBoostStatSource);
+		Assert.False(plan.HasKillerBoostStatSource);
+		Assert.False(plan.HasKillerDrBoostStatSource);
+		Assert.DoesNotContain("npc BOOST_DROP_RATE stat source", plan.MissingInputs);
+		Assert.Contains("killer BOOST_DROP_RATE stat source", plan.MissingInputs);
+		Assert.Contains("killer DR_BOOST stat source", plan.MissingInputs);
+		Assert.NotNull(plan.Context);
+		Assert.Equal(1.25f, plan.Context.CalculateBoostDropRate(), precision: 3);
+	}
+
 	private static WorldNpc CreateNpc(int level)
 	{
 		return new WorldNpc(
