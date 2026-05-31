@@ -24,6 +24,7 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 		Assert.Null(outcome.PetMerchantSellFacadePlan);
 		Assert.Null(outcome.PetMerchantSellOutcomePlan);
 		Assert.Null(outcome.BuyFromShopOutcomePlan);
+		Assert.Null(outcome.SellToShopOutcomePlan);
 		Assert.Null(outcome.SellForApToShopOutcomePlan);
 		Assert.Equal(PrivateStorePurchaseOutcomePlanStatus.DisabledNoTransaction, outcome.PrivateStoreOutcomePlan!.Status);
 		Assert.True(outcome.WouldWritePersistence);
@@ -53,6 +54,7 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 		Assert.Null(outcome.PrivateStoreFacadePlan);
 		Assert.Null(outcome.PrivateStoreOutcomePlan);
 		Assert.Null(outcome.BuyFromShopOutcomePlan);
+		Assert.Null(outcome.SellToShopOutcomePlan);
 		Assert.Null(outcome.SellForApToShopOutcomePlan);
 		Assert.NotNull(outcome.PetMerchantSellFacadePlan);
 		Assert.NotNull(outcome.PetMerchantSellOutcomePlan);
@@ -86,6 +88,7 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 		Assert.Null(outcome.PetMerchantSellFacadePlan);
 		Assert.Null(outcome.PetMerchantSellOutcomePlan);
 		Assert.NotNull(outcome.BuyFromShopOutcomePlan);
+		Assert.Null(outcome.SellToShopOutcomePlan);
 		Assert.Null(outcome.SellForApToShopOutcomePlan);
 		Assert.Equal(TradeBuyTransactionOutcomePlanStatus.DisabledNoTransaction, outcome.BuyFromShopOutcomePlan!.Status);
 		Assert.True(outcome.WouldWritePersistence);
@@ -174,6 +177,53 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 	}
 
 	[Fact]
+	public void CreateDisabledPlan_ComposesSellToShopFinalOutcomeWithoutDispatch()
+	{
+		var sellPlan = CreateSellToShopPlan();
+		var handlerPlan = CreateSellToShopHandlerPlan(sellPlan);
+
+		var outcome = CmBuyItemSideEffectOutcomePlanService.CreateDisabledPlan(handlerPlan);
+
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.SellToShopOutcomeCreated, outcome.Status);
+		Assert.Same(handlerPlan, outcome.HandlerPlan);
+		Assert.Null(outcome.PrivateStoreFacadePlan);
+		Assert.Null(outcome.PrivateStoreOutcomePlan);
+		Assert.Null(outcome.PetMerchantSellFacadePlan);
+		Assert.Null(outcome.PetMerchantSellOutcomePlan);
+		Assert.Null(outcome.BuyFromShopOutcomePlan);
+		Assert.NotNull(outcome.SellToShopOutcomePlan);
+		Assert.Null(outcome.SellForApToShopOutcomePlan);
+		Assert.Equal(TradeSellToShopOutcomePlanStatus.DisabledNoTransaction, outcome.SellToShopOutcomePlan!.Status);
+		Assert.True(outcome.WouldWritePersistence);
+		Assert.True(outcome.WouldMutateSellerInventory);
+		Assert.False(outcome.WouldMutateBuyerInventory);
+		Assert.True(outcome.WouldMutateKinah);
+		Assert.True(outcome.WouldAddRepurchaseItems);
+		Assert.True(outcome.WouldSendPackets);
+		Assert.False(outcome.WouldWriteExchangeLog);
+		Assert.False(outcome.WouldWriteAuditLog);
+		Assert.True(outcome.WouldCommitTransactionBoundary);
+		Assert.False(outcome.ShouldCommitTransactionBoundary);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+		Assert.False(outcome.IsLive);
+	}
+
+	[Fact]
+	public void CreateDisabledPlan_SellToShopSelectionWithoutSellPlanCarriesMissingOutcome()
+	{
+		var handlerPlan = CreateSellToShopHandlerPlan(sellPlan: null);
+
+		var outcome = CmBuyItemSideEffectOutcomePlanService.CreateDisabledPlan(handlerPlan);
+
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.SellToShopOutcomeCreated, outcome.Status);
+		Assert.Equal(TradeSellToShopOutcomePlanStatus.MissingSellToShopPlan, outcome.SellToShopOutcomePlan!.Status);
+		Assert.False(outcome.WouldWritePersistence);
+		Assert.False(outcome.WouldSendPackets);
+		Assert.False(outcome.WouldCommitTransactionBoundary);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+	}
+
+	[Fact]
 	public void CreateDisabledPlan_ApSellSelectionWithoutApPlanCarriesMissingOutcome()
 	{
 		var handlerPlan = CreateApSellHandlerPlan(apSellPlan: null);
@@ -225,6 +275,7 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 		Assert.Null(outcome.PrivateStoreOutcomePlan);
 		Assert.Null(outcome.PetMerchantSellOutcomePlan);
 		Assert.Null(outcome.BuyFromShopOutcomePlan);
+		Assert.Null(outcome.SellToShopOutcomePlan);
 		Assert.Null(outcome.SellForApToShopOutcomePlan);
 		Assert.False(outcome.WouldWritePersistence);
 		Assert.False(outcome.ShouldDispatchLiveSideEffects);
@@ -241,6 +292,7 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 		Assert.Null(outcome.PrivateStoreOutcomePlan);
 		Assert.Null(outcome.PetMerchantSellOutcomePlan);
 		Assert.Null(outcome.BuyFromShopOutcomePlan);
+		Assert.Null(outcome.SellToShopOutcomePlan);
 		Assert.Null(outcome.SellForApToShopOutcomePlan);
 		Assert.False(outcome.WouldWritePersistence);
 		Assert.False(outcome.ShouldDispatchLiveSideEffects);
@@ -284,6 +336,18 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 				BuyTransactionPlan: buyTransactionPlan));
 	}
 
+	private static CmBuyItemHandlerCompositionPlan CreateSellToShopHandlerPlan(TradeSellToShopPlan? sellPlan)
+	{
+		return CmBuyItemHandlerCompositionPlanService.CreatePlan(
+			new CmBuyItemHandlerCompositionInput(
+				CreatePacket(1, [new CmBuyItemEntry(2001, 1)]),
+				PlayerPresent: true,
+				TargetKind: CmBuyItemRunTargetKind.Npc,
+				NpcCanBuy: true,
+				PurchaseTemplate: new TradeListTemplateSummary(203060, [129], NpcType: "NORMAL", BuyPriceRate: 35),
+				SellToShopPlan: sellPlan));
+	}
+
 	private static CmBuyItemHandlerCompositionPlan CreateApSellHandlerPlan(TradeSellForApToShopPlan? apSellPlan)
 	{
 		return CmBuyItemHandlerCompositionPlanService.CreatePlan(
@@ -320,6 +384,17 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 	}
 
 	private static TradeSellToShopPlan CreatePetSellPlan()
+	{
+		return new TradeSellToShopPlan(
+			TradeSellToShopPlanStatus.PlanCreated,
+			SellerDeletedItemObjectIds: [2001],
+			SellerItemUpdates: [],
+			RepurchaseItems: [new RepurchaseSourceItem(new InventoryItem { ObjectId = 2001, ItemId = 100000001, Count = 1 }, RepurchasePrice: 330)],
+			KinahUpdate: new InventoryItem { ObjectId = 3001, ItemId = InventoryItemFactory.KinahItemId, Count = 1_330 },
+			"TradeService.performSellToShop");
+	}
+
+	private static TradeSellToShopPlan CreateSellToShopPlan()
 	{
 		return new TradeSellToShopPlan(
 			TradeSellToShopPlanStatus.PlanCreated,

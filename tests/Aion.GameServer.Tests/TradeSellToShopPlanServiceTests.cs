@@ -166,6 +166,80 @@ public sealed class TradeSellToShopPlanServiceTests
 		Assert.Empty(plan.RepurchaseItems);
 	}
 
+	[Fact]
+	public void CreateDisabledOutcome_ComposesSellPersistenceAndPacketsWithoutDispatch()
+	{
+		var player = new Player { ObjectId = 1001 };
+		var sword = Item(200, SwordItemId, 1, ownerId: player.ObjectId);
+		var plan = CreatePlan(
+			player,
+			inventoryItems: [Item(99, KinahItemId, 1_000, ownerId: player.ObjectId), sword],
+			tradeItems: [new TradeSellToShopItemRequest(sword.ObjectId, Count: 1)]);
+
+		var outcome = TradeSellToShopOutcomePlanService.CreateDisabledPlan(plan);
+
+		Assert.Equal(TradeSellToShopOutcomePlanStatus.DisabledNoTransaction, outcome.Status);
+		Assert.Same(plan, outcome.SellToShopPlan);
+		Assert.True(outcome.WouldWritePersistence);
+		Assert.True(outcome.WouldMutateSellerInventory);
+		Assert.True(outcome.WouldAddRepurchaseItems);
+		Assert.True(outcome.WouldMutateKinah);
+		Assert.True(outcome.WouldSendPackets);
+		Assert.True(outcome.WouldCommitTransactionBoundary);
+		Assert.False(outcome.ShouldCommitTransactionBoundary);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+		Assert.False(outcome.IsLive);
+		Assert.Contains(outcome.Steps, step => step.Kind == TradeSellToShopOutcomeStepKind.PersistRepositoryWrites);
+		Assert.Contains(outcome.Steps, step => step.Kind == TradeSellToShopOutcomeStepKind.DispatchPacketIntents);
+	}
+
+	[Fact]
+	public void CreateDisabledOutcome_NotSellableCarriesOnlyJavaSystemPacket()
+	{
+		var player = new Player { ObjectId = 1001 };
+		var sword = Item(200, SwordItemId, 1, ownerId: player.ObjectId);
+		var plan = CreatePlan(
+			player,
+			inventoryItems: [sword],
+			tradeItems: [new TradeSellToShopItemRequest(sword.ObjectId, Count: 1, IsSellable: false)]);
+
+		var outcome = TradeSellToShopOutcomePlanService.CreateDisabledPlan(plan);
+
+		Assert.Equal(TradeSellToShopOutcomePlanStatus.DisabledNoTransaction, outcome.Status);
+		Assert.False(outcome.WouldWritePersistence);
+		Assert.False(outcome.WouldMutateSellerInventory);
+		Assert.False(outcome.WouldAddRepurchaseItems);
+		Assert.False(outcome.WouldMutateKinah);
+		Assert.True(outcome.WouldSendPackets);
+		Assert.False(outcome.WouldCommitTransactionBoundary);
+		Assert.Single(outcome.Steps);
+		Assert.Contains("CAN_NOT_BE_SELLED", Assert.Single(outcome.Steps).JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void CreateDisabledOutcome_BlockedPlanStopsBeforeMutationOutcome()
+	{
+		var player = new Player { ObjectId = 1001 };
+		var sword = Item(200, SwordItemId, 1, ownerId: player.ObjectId);
+		var plan = TradeSellToShopPlanService.CreatePlan(
+			canTrade: false,
+			player,
+			inventoryItems: [sword],
+			tradeItems: [new TradeSellToShopItemRequest(sword.ObjectId, Count: 1)],
+			CreateTemplates(),
+			purchaseTemplate: null,
+			goodsLists: null,
+			sellModifier: 20,
+			nextObjectId: () => 100);
+
+		var outcome = TradeSellToShopOutcomePlanService.CreateDisabledPlan(plan);
+
+		Assert.Equal(TradeSellToShopOutcomePlanStatus.SellToShopPlanNotReady, outcome.Status);
+		Assert.False(outcome.WouldWritePersistence);
+		Assert.False(outcome.WouldSendPackets);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+	}
+
 	private static TradeSellToShopPlan CreatePlan(
 		Player player,
 		IReadOnlyList<InventoryItem> inventoryItems,

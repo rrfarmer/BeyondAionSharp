@@ -33,6 +33,47 @@ public sealed record TradeSellToShopPlan(
 	public bool IsLive => false;
 }
 
+public enum TradeSellToShopOutcomePlanStatus
+{
+	MissingSellToShopPlan,
+	SellToShopPlanNotReady,
+	DisabledNoTransaction,
+}
+
+public enum TradeSellToShopOutcomeStepKind
+{
+	PersistRepositoryWrites,
+	DispatchPacketIntents,
+	CommitTransactionBoundary,
+}
+
+public sealed record TradeSellToShopOutcomeStepPlan(
+	TradeSellToShopOutcomeStepKind Kind,
+	bool WouldRun,
+	bool DidRun,
+	string JavaSource);
+
+public sealed record TradeSellToShopOutcomePlan(
+	TradeSellToShopOutcomePlanStatus Status,
+	TradeSellToShopPlan? SellToShopPlan,
+	IReadOnlyList<TradeSellToShopOutcomeStepPlan> Steps,
+	bool WouldWritePersistence,
+	bool DidWritePersistence,
+	bool WouldMutateSellerInventory,
+	bool DidMutateSellerInventory,
+	bool WouldAddRepurchaseItems,
+	bool DidAddRepurchaseItems,
+	bool WouldMutateKinah,
+	bool DidMutateKinah,
+	bool WouldSendPackets,
+	bool DidSendPackets,
+	bool WouldCommitTransactionBoundary,
+	bool DidCommitTransactionBoundary,
+	bool ShouldCommitTransactionBoundary,
+	bool ShouldDispatchLiveSideEffects,
+	string JavaSource,
+	bool IsLive);
+
 public enum PetMerchantSellLiveExecutorFacadeStatus
 {
 	MissingHandlerPlan,
@@ -404,6 +445,124 @@ public static class TradeSellToShopPlanService
 		copy.IdianStone = item.IdianStone;
 		return copy;
 	}
+}
+
+public static class TradeSellToShopOutcomePlanService
+{
+	public static TradeSellToShopOutcomePlan CreateDisabledPlan(TradeSellToShopPlan? sellToShopPlan)
+	{
+		if (sellToShopPlan == null)
+			return CreateTerminalPlan(
+				TradeSellToShopOutcomePlanStatus.MissingSellToShopPlan,
+				sellToShopPlan,
+				"TradeService.performSellToShop final outcome requires a sell-to-shop mutation plan");
+
+		if (sellToShopPlan.Status == TradeSellToShopPlanStatus.BlockedNotSellable)
+		{
+			var notSellableStep = Disabled(
+				TradeSellToShopOutcomeStepKind.DispatchPacketIntents,
+				"TradeService.performSellToShop -> !item.isSellable sends STR_BUY_SELL_ITEM_CAN_NOT_BE_SELLED_TO_NPC and returns false");
+
+			return new TradeSellToShopOutcomePlan(
+				TradeSellToShopOutcomePlanStatus.DisabledNoTransaction,
+				sellToShopPlan,
+				[notSellableStep],
+				WouldWritePersistence: false,
+				DidWritePersistence: false,
+				WouldMutateSellerInventory: false,
+				DidMutateSellerInventory: false,
+				WouldAddRepurchaseItems: false,
+				DidAddRepurchaseItems: false,
+				WouldMutateKinah: false,
+				DidMutateKinah: false,
+				WouldSendPackets: true,
+				DidSendPackets: false,
+				WouldCommitTransactionBoundary: false,
+				DidCommitTransactionBoundary: false,
+				ShouldCommitTransactionBoundary: false,
+				ShouldDispatchLiveSideEffects: false,
+				"TradeService.performSellToShop not-sellable outcome records the Java system packet without dispatch",
+				IsLive: false);
+		}
+
+		if (sellToShopPlan.Status != TradeSellToShopPlanStatus.PlanCreated)
+			return CreateTerminalPlan(
+				TradeSellToShopOutcomePlanStatus.SellToShopPlanNotReady,
+				sellToShopPlan,
+				"TradeService.performSellToShop final outcome stops because the sell-to-shop plan is blocked before mutation");
+
+		var wouldMutateSellerInventory = sellToShopPlan.SellerDeletedItemObjectIds.Count > 0 || sellToShopPlan.SellerItemUpdates.Count > 0;
+		var wouldAddRepurchaseItems = sellToShopPlan.RepurchaseItems.Count > 0;
+		var wouldMutateKinah = sellToShopPlan.KinahUpdate != null;
+		var wouldWritePersistence = wouldMutateSellerInventory || wouldAddRepurchaseItems || wouldMutateKinah;
+		var wouldSendPackets = wouldMutateSellerInventory || wouldMutateKinah;
+		var wouldCommitBoundary = wouldWritePersistence || wouldSendPackets;
+
+		var steps = new List<TradeSellToShopOutcomeStepPlan>();
+		if (wouldWritePersistence)
+			steps.Add(Disabled(
+				TradeSellToShopOutcomeStepKind.PersistRepositoryWrites,
+				"TradeService.performSellToShop -> inventory delete/decrease, RepurchaseService.addRepurchaseItems, and inventory.increaseKinah persist state"));
+		if (wouldSendPackets)
+			steps.Add(Disabled(
+				TradeSellToShopOutcomeStepKind.DispatchPacketIntents,
+				"TradeService.performSellToShop -> storage item/Kinah mutations emit packet intents"));
+		if (wouldCommitBoundary)
+			steps.Add(Disabled(
+				TradeSellToShopOutcomeStepKind.CommitTransactionBoundary,
+				"TradeService.performSellToShop transaction boundary is recorded only; Java runtime transaction semantics are not yet verified"));
+
+		return new TradeSellToShopOutcomePlan(
+			TradeSellToShopOutcomePlanStatus.DisabledNoTransaction,
+			sellToShopPlan,
+			steps,
+			wouldWritePersistence,
+			DidWritePersistence: false,
+			wouldMutateSellerInventory,
+			DidMutateSellerInventory: false,
+			wouldAddRepurchaseItems,
+			DidAddRepurchaseItems: false,
+			wouldMutateKinah,
+			DidMutateKinah: false,
+			wouldSendPackets,
+			DidSendPackets: false,
+			wouldCommitBoundary,
+			DidCommitTransactionBoundary: false,
+			ShouldCommitTransactionBoundary: false,
+			ShouldDispatchLiveSideEffects: false,
+			"TradeService.performSellToShop final outcome is disabled; item/Kinah/repurchase writes and sends are recorded without dispatch",
+			IsLive: false);
+	}
+
+	private static TradeSellToShopOutcomePlan CreateTerminalPlan(
+		TradeSellToShopOutcomePlanStatus status,
+		TradeSellToShopPlan? sellToShopPlan,
+		string javaSource) =>
+		new(
+			status,
+			sellToShopPlan,
+			Steps: Array.Empty<TradeSellToShopOutcomeStepPlan>(),
+			WouldWritePersistence: false,
+			DidWritePersistence: false,
+			WouldMutateSellerInventory: false,
+			DidMutateSellerInventory: false,
+			WouldAddRepurchaseItems: false,
+			DidAddRepurchaseItems: false,
+			WouldMutateKinah: false,
+			DidMutateKinah: false,
+			WouldSendPackets: false,
+			DidSendPackets: false,
+			WouldCommitTransactionBoundary: false,
+			DidCommitTransactionBoundary: false,
+			ShouldCommitTransactionBoundary: false,
+			ShouldDispatchLiveSideEffects: false,
+			javaSource,
+			IsLive: false);
+
+	private static TradeSellToShopOutcomeStepPlan Disabled(
+		TradeSellToShopOutcomeStepKind kind,
+		string javaSource) =>
+		new(kind, WouldRun: true, DidRun: false, javaSource);
 }
 
 public static class PetMerchantSellPersistenceAdapterPlanService
