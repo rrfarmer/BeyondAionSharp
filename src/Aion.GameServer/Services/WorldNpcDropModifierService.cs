@@ -92,3 +92,85 @@ public sealed record WorldNpcDropBoostRateContext(
 			HasActivePalace);
 	}
 }
+
+public static class WorldNpcDropBoostRateContextPlanService
+{
+	public static WorldNpcDropBoostRateContextPlan CreateDisabledPlan(
+		Player? looter,
+		IReadOnlyList<float>? configuredDropRates,
+		bool hasNpcBoostStatSource = false,
+		bool hasKillerBoostStatSource = false,
+		bool hasKillerDrBoostStatSource = false,
+		bool hasSalvationSource = false,
+		bool hasActivePalaceSource = false)
+	{
+		// Java parity: DropRegistrationService.calculateBoostDropRate reads live
+		// npc/player stats, RatesConfig.DROP_RATES, repose, salvation, and active house.
+		var missingInputs = new List<string>();
+		if (looter == null)
+			missingInputs.Add("looter");
+		if (configuredDropRates is not { Count: > 0 })
+			missingInputs.Add("RatesConfig.DROP_RATES");
+		if (!hasNpcBoostStatSource)
+			missingInputs.Add("npc BOOST_DROP_RATE stat source");
+		if (!hasKillerBoostStatSource)
+			missingInputs.Add("killer BOOST_DROP_RATE stat source");
+		if (!hasKillerDrBoostStatSource)
+			missingInputs.Add("killer DR_BOOST stat source");
+		if (!hasSalvationSource)
+			missingInputs.Add("killer salvation percent source");
+		if (!hasActivePalaceSource)
+			missingInputs.Add("active palace source");
+
+		var configuredDropRate = looter != null && configuredDropRates is { Count: > 0 }
+			? SelectMembershipRate(looter.AccountMembership, configuredDropRates)
+			: 1f;
+		var context = looter != null && configuredDropRates is { Count: > 0 }
+			? new WorldNpcDropBoostRateContext(
+				configuredDropRate,
+				HasReposeEnergy: looter.ReposeEnergy > 0)
+			: null;
+
+		return new WorldNpcDropBoostRateContextPlan(
+			missingInputs.Count == 0
+				? WorldNpcDropBoostRateContextPlanStatus.Ready
+				: WorldNpcDropBoostRateContextPlanStatus.Blocked,
+			context,
+			configuredDropRate,
+			looter?.ReposeEnergy > 0,
+			hasNpcBoostStatSource,
+			hasKillerBoostStatSource,
+			hasKillerDrBoostStatSource,
+			hasSalvationSource,
+			hasActivePalaceSource,
+			missingInputs,
+			"DropRegistrationService.calculateBoostDropRate -> Rates.get(killer, RatesConfig.DROP_RATES), npc BOOST_DROP_RATE, killer BOOST_DROP_RATE, killer DR_BOOST, repose, salvation, active palace");
+	}
+
+	private static float SelectMembershipRate(byte membershipLevel, IReadOnlyList<float> rates)
+	{
+		return rates[Math.Min(rates.Count - 1, membershipLevel)];
+	}
+}
+
+public sealed record WorldNpcDropBoostRateContextPlan(
+	WorldNpcDropBoostRateContextPlanStatus Status,
+	WorldNpcDropBoostRateContext? Context,
+	float ConfiguredDropRate,
+	bool? HasReposeEnergy,
+	bool HasNpcBoostStatSource,
+	bool HasKillerBoostStatSource,
+	bool HasKillerDrBoostStatSource,
+	bool HasSalvationSource,
+	bool HasActivePalaceSource,
+	IReadOnlyList<string> MissingInputs,
+	string JavaSource)
+{
+	public bool IsReadyForWorkflow => Status == WorldNpcDropBoostRateContextPlanStatus.Ready;
+}
+
+public enum WorldNpcDropBoostRateContextPlanStatus
+{
+	Blocked,
+	Ready,
+}

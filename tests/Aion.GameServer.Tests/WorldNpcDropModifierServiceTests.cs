@@ -112,6 +112,53 @@ public sealed class WorldNpcDropModifierServiceTests
 		Assert.Equal(1.8f, context.CalculateBoostDropRate(), precision: 3);
 	}
 
+	[Fact]
+	public void CreateDisabledPlan_ResolvesModeledRateAndReposeButBlocksMissingLiveSources()
+	{
+		var looter = new Player
+		{
+			ObjectId = 1001,
+			AccountMembership = 7,
+			ReposeEnergy = 25,
+		};
+
+		var plan = WorldNpcDropBoostRateContextPlanService.CreateDisabledPlan(
+			looter,
+			[1f, 2f, 3f]);
+
+		Assert.Equal(WorldNpcDropBoostRateContextPlanStatus.Blocked, plan.Status);
+		Assert.False(plan.IsReadyForWorkflow);
+		Assert.Equal(3f, plan.ConfiguredDropRate);
+		Assert.True(plan.HasReposeEnergy);
+		Assert.NotNull(plan.Context);
+		Assert.Equal(3.15f, plan.Context.CalculateBoostDropRate(), precision: 3);
+		Assert.Contains("npc BOOST_DROP_RATE stat source", plan.MissingInputs);
+		Assert.Contains("killer salvation percent source", plan.MissingInputs);
+		Assert.Contains("active palace source", plan.MissingInputs);
+		Assert.Contains("DropRegistrationService.calculateBoostDropRate", plan.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void CreateDisabledPlan_MarksReadyOnlyWhenAllLiveSourcesAreExplicit()
+	{
+		var looter = new Player { ObjectId = 1001, AccountMembership = 1 };
+
+		var plan = WorldNpcDropBoostRateContextPlanService.CreateDisabledPlan(
+			looter,
+			[1f, 2f],
+			hasNpcBoostStatSource: true,
+			hasKillerBoostStatSource: true,
+			hasKillerDrBoostStatSource: true,
+			hasSalvationSource: true,
+			hasActivePalaceSource: true);
+
+		Assert.Equal(WorldNpcDropBoostRateContextPlanStatus.Ready, plan.Status);
+		Assert.True(plan.IsReadyForWorkflow);
+		Assert.Empty(plan.MissingInputs);
+		Assert.Equal(2f, plan.ConfiguredDropRate);
+		Assert.False(plan.HasReposeEnergy);
+	}
+
 	private static WorldNpc CreateNpc(int level)
 	{
 		return new WorldNpc(
