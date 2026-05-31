@@ -127,4 +127,98 @@ public sealed class SkillBuffStatChangeEvaluatorServiceTests
 		Assert.True(step.HasConditions);
 		Assert.Equal("weapon", Assert.Single(step.Conditions).ConditionName);
 	}
+
+	[Fact]
+	public void Evaluate_WithConditionContext_AppliesSatisfiedConditionedChange()
+	{
+		var conditionedChange = new SkillStatChange("BOOST_DROP_RATE", "ADD", 20, 0);
+		conditionedChange.AddCondition(new SkillStatChangeConditionSummary(
+			"weapon",
+			new Dictionary<string, string>(StringComparer.Ordinal) { ["weapon"] = "ORB SPELLBOOK" }));
+
+		var evaluation = SkillBuffStatChangeEvaluatorService.Evaluate(
+			"BOOST_DROP_RATE",
+			100,
+			[conditionedChange],
+			skillLevel: 1,
+			conditionContext: new SkillBuffStatConditionEvaluationContext(
+				CreatureSnapshot: new SkillStatConditionCreatureInputSnapshot(true, "ORB", false, [], "test")));
+
+		Assert.Equal(SkillBuffStatChangeEvaluationStatus.Evaluated, evaluation.Status);
+		Assert.Equal(120, evaluation.Current);
+		var conditionResult = Assert.Single(Assert.Single(evaluation.Steps).ConditionResults);
+		Assert.Equal(SkillStatConditionEvaluationStatus.Satisfied, conditionResult.Status);
+		Assert.Contains("validate before apply", evaluation.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void Evaluate_WithConditionContext_SkipsNotSatisfiedConditionedChange()
+	{
+		var conditionedChange = new SkillStatChange("BOOST_DROP_RATE", "ADD", 20, 0);
+		conditionedChange.AddCondition(new SkillStatChangeConditionSummary(
+			"weapon",
+			new Dictionary<string, string>(StringComparer.Ordinal) { ["weapon"] = "ORB" }));
+
+		var evaluation = SkillBuffStatChangeEvaluatorService.Evaluate(
+			"BOOST_DROP_RATE",
+			100,
+			[conditionedChange],
+			skillLevel: 1,
+			conditionContext: new SkillBuffStatConditionEvaluationContext(
+				CreatureSnapshot: new SkillStatConditionCreatureInputSnapshot(true, "DAGGER", false, [], "test")));
+
+		Assert.Equal(SkillBuffStatChangeEvaluationStatus.ConditionNotSatisfied, evaluation.Status);
+		Assert.Equal(100, evaluation.Current);
+		var conditionResult = Assert.Single(Assert.Single(evaluation.Steps).ConditionResults);
+		Assert.Equal(SkillStatConditionEvaluationStatus.NotSatisfied, conditionResult.Status);
+	}
+
+	[Fact]
+	public void Evaluate_WithConditionContext_UsesJavaConditionListOrderShortCircuit()
+	{
+		var conditionedChange = new SkillStatChange("BOOST_DROP_RATE", "ADD", 20, 0);
+		conditionedChange.AddCondition(new SkillStatChangeConditionSummary(
+			"weapon",
+			new Dictionary<string, string>(StringComparer.Ordinal) { ["weapon"] = "ORB" }));
+		conditionedChange.AddCondition(new SkillStatChangeConditionSummary(
+			"charge",
+			new Dictionary<string, string>(StringComparer.Ordinal)));
+
+		var evaluation = SkillBuffStatChangeEvaluatorService.Evaluate(
+			"BOOST_DROP_RATE",
+			100,
+			[conditionedChange],
+			skillLevel: 1,
+			conditionContext: new SkillBuffStatConditionEvaluationContext(
+				CreatureSnapshot: new SkillStatConditionCreatureInputSnapshot(true, "DAGGER", false, [], "test"),
+				ItemOwnerSnapshot: new SkillStatConditionItemOwnerInputSnapshot(true, 2, [], "test")));
+
+		Assert.Equal(SkillBuffStatChangeEvaluationStatus.ConditionNotSatisfied, evaluation.Status);
+		var conditionResult = Assert.Single(Assert.Single(evaluation.Steps).ConditionResults);
+		Assert.Equal("weapon", conditionResult.ConditionName);
+		Assert.Equal(SkillStatConditionEvaluationStatus.NotSatisfied, conditionResult.Status);
+	}
+
+	[Fact]
+	public void Evaluate_WithConditionContext_ReportsMissingConditionInputConservatively()
+	{
+		var conditionedChange = new SkillStatChange("BOOST_DROP_RATE", "ADD", 20, 0);
+		conditionedChange.AddCondition(new SkillStatChangeConditionSummary(
+			"weapon",
+			new Dictionary<string, string>(StringComparer.Ordinal) { ["weapon"] = "ORB" }));
+
+		var evaluation = SkillBuffStatChangeEvaluatorService.Evaluate(
+			"BOOST_DROP_RATE",
+			100,
+			[conditionedChange],
+			skillLevel: 1,
+			conditionContext: new SkillBuffStatConditionEvaluationContext(
+				CreatureSnapshot: new SkillStatConditionCreatureInputSnapshot(true, null, false, ["equipped main-hand item"], "test")));
+
+		Assert.Equal(SkillBuffStatChangeEvaluationStatus.ConditionMissingInput, evaluation.Status);
+		Assert.Equal(100, evaluation.Current);
+		var conditionResult = Assert.Single(Assert.Single(evaluation.Steps).ConditionResults);
+		Assert.Equal(SkillStatConditionEvaluationStatus.MissingInput, conditionResult.Status);
+		Assert.Contains("equipped main-hand item", conditionResult.MissingInputs);
+	}
 }

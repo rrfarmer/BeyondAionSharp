@@ -9,7 +9,8 @@ public static class SkillBuffStatChangeEvaluatorService
 		float baseValue,
 		IReadOnlyList<SkillStatChange> changes,
 		int skillLevel,
-		float initialBonus = 0f)
+		float initialBonus = 0f,
+		SkillBuffStatConditionEvaluationContext? conditionContext = null)
 	{
 		var initialState = SkillBuffStatFormulaService.CreateState(baseValue, initialBonus);
 		var applicableChanges = changes
@@ -22,7 +23,8 @@ public static class SkillBuffStatChangeEvaluatorService
 				change.Value + change.Delta * skillLevel,
 				GetPriority(change.Func),
 				IsSupportedFunc(change.Func),
-				change.Conditions))
+				change.Conditions,
+				[]))
 			.OrderBy(step => step.Priority)
 			.ToArray();
 
@@ -54,20 +56,37 @@ public static class SkillBuffStatChangeEvaluatorService
 
 		if (applicableChanges.Any(step => step.HasConditions))
 		{
-			return new SkillBuffStatChangeEvaluation(
-				SkillBuffStatChangeEvaluationStatus.UnsupportedConditions,
+			if (conditionContext == null)
+			{
+				return new SkillBuffStatChangeEvaluation(
+					SkillBuffStatChangeEvaluationStatus.UnsupportedConditions,
+					statName,
+					baseValue,
+					baseValue,
+					initialBonus,
+					SkillBuffStatFormulaService.GetCurrent(initialState),
+					applicableChanges,
+					"BufEffect.getModifiers attaches Change.conditions to stat functions; pass SkillBuffStatConditionEvaluationContext to use isolated Conditions.validate preview evaluation");
+			}
+
+			var conditionedPreview = EvaluateWithConditions(
 				statName,
 				baseValue,
-				baseValue,
 				initialBonus,
-				SkillBuffStatFormulaService.GetCurrent(initialState),
+				initialState,
 				applicableChanges,
-				"BufEffect.getModifiers attaches Change.conditions to stat functions; this pure evaluator does not evaluate Conditions.validate");
+				conditionContext);
+			if (conditionedPreview != null)
+				return conditionedPreview;
 		}
 
 		var state = initialState;
+		var appliedStepCount = 0;
 		foreach (var step in applicableChanges)
 		{
+			if (step.HasConditions && step.ConditionResults.Any(result => result.Status == SkillStatConditionEvaluationStatus.NotSatisfied))
+				continue;
+
 			state = step.Func switch
 			{
 				"REPLACE" => SkillBuffStatFormulaService.ApplySet(state, step.EffectiveValue, isBonus: false),
@@ -84,17 +103,67 @@ public static class SkillBuffStatChangeEvaluatorService
 					isBonus: true),
 				_ => state,
 			};
+			appliedStepCount++;
 		}
 
 		return new SkillBuffStatChangeEvaluation(
-			SkillBuffStatChangeEvaluationStatus.Evaluated,
+			appliedStepCount == 0 && applicableChanges.Any(step => step.HasConditions)
+				? SkillBuffStatChangeEvaluationStatus.ConditionNotSatisfied
+				: SkillBuffStatChangeEvaluationStatus.Evaluated,
 			statName,
 			baseValue,
 			state.Base,
 			state.Bonus,
 			SkillBuffStatFormulaService.GetCurrent(state),
 			applicableChanges,
-			"BufEffect.getModifiers -> StatSetFunction priority 40, StatRateFunction bonus priority 50, StatAddFunction bonus priority 60; SkillBuffStatFormulaService mirrors AdditionStat/Stat2 math and Java negative SPEED rate handling for this isolated evaluator");
+			"BufEffect.getModifiers -> StatSetFunction priority 40, StatRateFunction bonus priority 50, StatAddFunction bonus priority 60; CreatureGameStats.getStat calls validate before apply; SkillBuffStatFormulaService mirrors AdditionStat/Stat2 math and Java negative SPEED rate handling for this isolated evaluator");
+	}
+
+	private static SkillBuffStatChangeEvaluation? EvaluateWithConditions(
+		string statName,
+		float baseValue,
+		float initialBonus,
+		SkillBuffStatFormulaState initialState,
+		SkillBuffStatChangeStep[] applicableChanges,
+		SkillBuffStatConditionEvaluationContext conditionContext)
+	{
+		for (var index = 0; index < applicableChanges.Length; index++)
+		{
+			var step = applicableChanges[index];
+			if (!step.HasConditions)
+				continue;
+
+			var conditionResults = new List<SkillStatConditionEvaluationResult>();
+			foreach (var condition in step.Conditions)
+			{
+				var result = SkillStatConditionEvaluatorService.Evaluate(
+					condition,
+					conditionContext.CreatureSnapshot,
+					conditionContext.ItemOwnerSnapshot);
+				conditionResults.Add(result);
+				if (result.Status != SkillStatConditionEvaluationStatus.Satisfied)
+					break;
+			}
+
+			applicableChanges[index] = step with { ConditionResults = conditionResults };
+			var blockingResult = conditionResults.LastOrDefault(result => result.Status != SkillStatConditionEvaluationStatus.Satisfied);
+			if (blockingResult == null || blockingResult.Status == SkillStatConditionEvaluationStatus.NotSatisfied)
+				continue;
+
+			return new SkillBuffStatChangeEvaluation(
+				blockingResult.Status == SkillStatConditionEvaluationStatus.MissingInput
+					? SkillBuffStatChangeEvaluationStatus.ConditionMissingInput
+					: SkillBuffStatChangeEvaluationStatus.UnsupportedConditions,
+				statName,
+				baseValue,
+				baseValue,
+				initialBonus,
+				SkillBuffStatFormulaService.GetCurrent(initialState),
+				applicableChanges,
+				"Conditions.validate iterates child Condition instances in XML/list order and returns false on the first failed child; this pure evaluator stops previewing when a required condition input is missing or unsupported");
+		}
+
+		return null;
 	}
 
 	private static int GetPriority(string func)
@@ -120,6 +189,8 @@ public enum SkillBuffStatChangeEvaluationStatus
 	NoApplicableChanges,
 	UnsupportedFunction,
 	UnsupportedConditions,
+	ConditionMissingInput,
+	ConditionNotSatisfied,
 }
 
 public sealed record SkillBuffStatChangeEvaluation(
@@ -140,7 +211,12 @@ public sealed record SkillBuffStatChangeStep(
 	int EffectiveValue,
 	int Priority,
 	bool IsSupported,
-	IReadOnlyList<SkillStatChangeConditionSummary> Conditions)
+	IReadOnlyList<SkillStatChangeConditionSummary> Conditions,
+	IReadOnlyList<SkillStatConditionEvaluationResult> ConditionResults)
 {
 	public bool HasConditions => Conditions.Count > 0;
 }
+
+public sealed record SkillBuffStatConditionEvaluationContext(
+	SkillStatConditionCreatureInputSnapshot? CreatureSnapshot = null,
+	SkillStatConditionItemOwnerInputSnapshot? ItemOwnerSnapshot = null);
