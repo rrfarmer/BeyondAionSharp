@@ -20,6 +20,7 @@ public sealed class WorldNpcDropBoostActiveStatProviderReadinessReportServiceTes
 		Assert.Contains("EffectController.addEffect", report.JavaSource, StringComparison.Ordinal);
 		Assert.Equal(WorldNpcDropBoostStatProviderReadinessStatus.MissingSkillTemplates, report.StaticMetadataReport.Status);
 		Assert.Equal(SkillStatChangeConditionReadinessStatus.MissingSkillTemplates, report.ConditionReadinessReport.Status);
+		Assert.Equal(SkillStatConditionPreviewCoverageStatus.MissingSkillTemplates, report.ConditionPreviewCoverageReport.Status);
 		Assert.Empty(report.StatFunctionPlans);
 		Assert.Equal(SkillBuffStatFunctionRegistryReadinessStatus.NoFunctionPlans, report.StatFunctionRegistryReadinessReport.Status);
 		Assert.Equal(SkillBuffStat2EvaluationReadinessStatus.NoFunctionPlans, report.Stat2EvaluationReadinessReport.Status);
@@ -35,6 +36,7 @@ public sealed class WorldNpcDropBoostActiveStatProviderReadinessReportServiceTes
 		Assert.False(report.IsReadyForDropWorkflow);
 		Assert.Equal(WorldNpcDropBoostStatProviderReadinessStatus.BlockedMissingLiveEffectStateProvider, report.StaticMetadataReport.Status);
 		Assert.Equal(SkillStatChangeConditionReadinessStatus.NoConditionMetadata, report.ConditionReadinessReport.Status);
+		Assert.Equal(SkillStatConditionPreviewCoverageStatus.NoConditionedChanges, report.ConditionPreviewCoverageReport.Status);
 		Assert.DoesNotContain("static boostdroprate BOOST_DROP_RATE metadata", report.MissingInputs);
 		Assert.DoesNotContain("static drboost DR_BOOST metadata", report.MissingInputs);
 		Assert.Contains("live EffectController active-effect provider", report.MissingInputs);
@@ -141,6 +143,8 @@ public sealed class WorldNpcDropBoostActiveStatProviderReadinessReportServiceTes
 		Assert.Equal(WorldNpcDropBoostActiveStatProviderReadinessStatus.BlockedMissingConditionValidatorProvider, report.Status);
 		Assert.False(report.IsReadyForDropWorkflow);
 		Assert.Equal(SkillStatChangeConditionReadinessStatus.BlockedMissingConditionValidators, report.ConditionReadinessReport.Status);
+		Assert.Equal(SkillStatConditionPreviewCoverageStatus.PreviewEvaluable, report.ConditionPreviewCoverageReport.Status);
+		Assert.Equal(2, report.ConditionPreviewCoverageReport.PreviewEvaluableChangeCount);
 		Assert.Equal(2, report.ConditionReadinessReport.ConditionEntryCount);
 		Assert.Contains("live Conditions.validate provider", report.MissingInputs);
 		Assert.DoesNotContain("live EffectController active-effect provider", report.MissingInputs);
@@ -254,6 +258,51 @@ public sealed class WorldNpcDropBoostActiveStatProviderReadinessReportServiceTes
 	}
 
 	[Fact]
+	public void CreateReport_BlocksUnsupportedConditionPreviewCoverageBeforeLiveReadiness()
+	{
+		var boostChange = new SkillStatChange("BOOST_DROP_RATE", "ADD", 20, 0);
+		boostChange.AddCondition(new SkillStatChangeConditionSummary("unsupported_condition", new Dictionary<string, string>(StringComparer.Ordinal)));
+
+		var drBoostChange = new SkillStatChange("DR_BOOST", "ADD", 100, 0);
+		drBoostChange.AddCondition(new SkillStatChangeConditionSummary("front", new Dictionary<string, string>(StringComparer.Ordinal)));
+
+		var templates = new SkillTemplateTable(
+		[
+			CreateTemplate(8472, [new SkillBuffStatEffectSummary("boostdroprate", [boostChange])]),
+			CreateTemplate(9878, [new SkillBuffStatEffectSummary("drboost", [drBoostChange])])
+		]);
+
+		var report = WorldNpcDropBoostActiveStatProviderReadinessReportService.CreateReport(templates);
+
+		Assert.Equal(WorldNpcDropBoostActiveStatProviderReadinessStatus.BlockedUnsupportedConditionPreviewCoverage, report.Status);
+		Assert.Equal(SkillStatConditionPreviewCoverageStatus.BlockedUnsupportedConditions, report.ConditionPreviewCoverageReport.Status);
+		Assert.Contains("supported isolated stat-condition preview coverage", report.MissingInputs);
+		Assert.Contains("unsupported isolated stat-condition evaluator: unsupported_condition", report.MissingInputs);
+	}
+
+	[Fact]
+	public void CreateReport_BlocksBadStaticConditionAttributesBeforeLiveReadiness()
+	{
+		var boostChange = new SkillStatChange("BOOST_DROP_RATE", "ADD", 20, 0);
+		boostChange.AddCondition(new SkillStatChangeConditionSummary("weapon", new Dictionary<string, string>(StringComparer.Ordinal)));
+
+		var drBoostChange = new SkillStatChange("DR_BOOST", "ADD", 100, 0);
+		drBoostChange.AddCondition(new SkillStatChangeConditionSummary("front", new Dictionary<string, string>(StringComparer.Ordinal)));
+
+		var templates = new SkillTemplateTable(
+		[
+			CreateTemplate(8472, [new SkillBuffStatEffectSummary("boostdroprate", [boostChange])]),
+			CreateTemplate(9878, [new SkillBuffStatEffectSummary("drboost", [drBoostChange])])
+		]);
+
+		var report = WorldNpcDropBoostActiveStatProviderReadinessReportService.CreateReport(templates);
+
+		Assert.Equal(WorldNpcDropBoostActiveStatProviderReadinessStatus.BlockedStaticConditionPreviewMetadata, report.Status);
+		Assert.Equal(SkillStatConditionPreviewCoverageStatus.BlockedStaticMetadata, report.ConditionPreviewCoverageReport.Status);
+		Assert.Contains("XML weapon attribute", report.MissingInputs);
+	}
+
+	[Fact]
 	public void CreateReport_IsReadyOnlyWhenStaticMetadataAndEveryLiveProviderArePresent()
 	{
 		var report = WorldNpcDropBoostActiveStatProviderReadinessReportService.CreateReport(
@@ -283,6 +332,7 @@ public sealed class WorldNpcDropBoostActiveStatProviderReadinessReportServiceTes
 		Assert.Empty(report.MissingInputs);
 		Assert.Equal(WorldNpcDropBoostStatProviderReadinessStatus.Ready, report.StaticMetadataReport.Status);
 		Assert.Equal(SkillStatChangeConditionReadinessStatus.Ready, report.ConditionReadinessReport.Status);
+		Assert.Equal(SkillStatConditionPreviewCoverageStatus.PreviewEvaluable, report.ConditionPreviewCoverageReport.Status);
 		Assert.All(report.StatFunctionPlans, plan => Assert.Equal(SkillBuffStatFunctionRegistryPlanStatus.Ready, plan.Status));
 		Assert.Equal(SkillBuffStatFunctionRegistryReadinessStatus.Ready, report.StatFunctionRegistryReadinessReport.Status);
 		Assert.Equal(SkillBuffStat2EvaluationReadinessStatus.Ready, report.Stat2EvaluationReadinessReport.Status);

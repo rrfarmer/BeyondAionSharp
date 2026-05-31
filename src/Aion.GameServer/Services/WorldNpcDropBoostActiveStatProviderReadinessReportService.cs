@@ -35,6 +35,7 @@ public static class WorldNpcDropBoostActiveStatProviderReadinessReportService
 		var conditionReadinessReport = SkillStatChangeConditionReadinessReportService.CreateReport(
 			skillTemplates,
 			hasLiveConditionValidatorProvider);
+		var conditionPreviewCoverageReport = SkillStatConditionPreviewCoverageReportService.CreateReport(skillTemplates);
 		var statFunctionPlans = CreateStatFunctionPlans(
 			skillTemplates,
 			statFunctionPlanSkillLevel,
@@ -86,6 +87,13 @@ public static class WorldNpcDropBoostActiveStatProviderReadinessReportService
 			missingInputs.Add("live CreatureGameStats.getStat provider");
 		if (conditionReadinessReport.ConditionEntryCount > 0 && !hasLiveConditionValidatorProvider)
 			missingInputs.Add("live Conditions.validate provider");
+		if (conditionPreviewCoverageReport.Status == SkillStatConditionPreviewCoverageStatus.BlockedUnsupportedConditions)
+			missingInputs.Add("supported isolated stat-condition preview coverage");
+		foreach (var missingInput in conditionPreviewCoverageReport.MissingInputs)
+		{
+			if (!missingInputs.Contains(missingInput, StringComparer.Ordinal))
+				missingInputs.Add(missingInput);
+		}
 		if (statFunctionPlans.Any(plan => plan.Status == SkillBuffStatFunctionRegistryPlanStatus.UnsupportedFunction))
 			missingInputs.Add("supported BufEffect stat function mapping");
 		foreach (var missingInput in statFunctionRegistryReadinessReport.MissingInputs)
@@ -108,6 +116,7 @@ public static class WorldNpcDropBoostActiveStatProviderReadinessReportService
 			skillTemplates,
 			staticMetadataReport,
 			conditionReadinessReport,
+			conditionPreviewCoverageReport,
 			statFunctionPlans,
 			statFunctionRegistryReadinessReport,
 			stat2EvaluationReadinessReport,
@@ -121,6 +130,7 @@ public static class WorldNpcDropBoostActiveStatProviderReadinessReportService
 			status,
 			staticMetadataReport,
 			conditionReadinessReport,
+			conditionPreviewCoverageReport,
 			statFunctionPlans,
 			statFunctionRegistryReadinessReport,
 			stat2EvaluationReadinessReport,
@@ -138,6 +148,7 @@ public static class WorldNpcDropBoostActiveStatProviderReadinessReportService
 		SkillTemplateTable? skillTemplates,
 		WorldNpcDropBoostStatProviderReadinessReport staticMetadataReport,
 		SkillStatChangeConditionReadinessReport conditionReadinessReport,
+		SkillStatConditionPreviewCoverageReport conditionPreviewCoverageReport,
 		IReadOnlyList<SkillBuffStatFunctionRegistryPlan> statFunctionPlans,
 		SkillBuffStatFunctionRegistryReadinessReport statFunctionRegistryReadinessReport,
 		SkillBuffStat2EvaluationReadinessReport stat2EvaluationReadinessReport,
@@ -157,6 +168,10 @@ public static class WorldNpcDropBoostActiveStatProviderReadinessReportService
 			return WorldNpcDropBoostActiveStatProviderReadinessStatus.MissingStaticMetadata;
 		if (statFunctionPlans.Any(plan => plan.Status == SkillBuffStatFunctionRegistryPlanStatus.UnsupportedFunction))
 			return WorldNpcDropBoostActiveStatProviderReadinessStatus.UnsupportedStatFunctionPlan;
+		if (conditionPreviewCoverageReport.Status == SkillStatConditionPreviewCoverageStatus.BlockedUnsupportedConditions)
+			return WorldNpcDropBoostActiveStatProviderReadinessStatus.BlockedUnsupportedConditionPreviewCoverage;
+		if (conditionPreviewCoverageReport.Status == SkillStatConditionPreviewCoverageStatus.BlockedStaticMetadata)
+			return WorldNpcDropBoostActiveStatProviderReadinessStatus.BlockedStaticConditionPreviewMetadata;
 		if (!hasLiveActiveEffectControllerProvider)
 			return WorldNpcDropBoostActiveStatProviderReadinessStatus.BlockedMissingActiveEffectControllerProvider;
 		if (!hasLiveEffectStatOwnerProvider)
@@ -207,6 +222,8 @@ public enum WorldNpcDropBoostActiveStatProviderReadinessStatus
 	MissingSkillTemplates,
 	MissingStaticMetadata,
 	UnsupportedStatFunctionPlan,
+	BlockedUnsupportedConditionPreviewCoverage,
+	BlockedStaticConditionPreviewMetadata,
 	BlockedMissingActiveEffectControllerProvider,
 	BlockedMissingEffectStatOwnerProvider,
 	BlockedMissingStatFunctionRegistryProvider,
@@ -222,6 +239,7 @@ public sealed record WorldNpcDropBoostActiveStatProviderReadinessReport(
 	WorldNpcDropBoostActiveStatProviderReadinessStatus Status,
 	WorldNpcDropBoostStatProviderReadinessReport StaticMetadataReport,
 	SkillStatChangeConditionReadinessReport ConditionReadinessReport,
+	SkillStatConditionPreviewCoverageReport ConditionPreviewCoverageReport,
 	IReadOnlyList<SkillBuffStatFunctionRegistryPlan> StatFunctionPlans,
 	SkillBuffStatFunctionRegistryReadinessReport StatFunctionRegistryReadinessReport,
 	SkillBuffStat2EvaluationReadinessReport Stat2EvaluationReadinessReport,
