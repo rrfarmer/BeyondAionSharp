@@ -2345,6 +2345,69 @@ public sealed class CraftServiceTests
 	}
 
 	[Fact]
+	public void CreateFinishLoggingPlan_BuildsJavaCraftLogMessageWithoutWritingLog()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1159, dp: 600, name: "Smith");
+		var recipe = CreateRecipe(
+			recipeId: 155000050,
+			dp: 0,
+			productId: 152000401,
+			quantity: 3,
+			skillId: 40001);
+
+		var plan = service.CreateFinishLoggingPlan(player, recipe, critCount: 0, logCraftEnabled: true);
+
+		Assert.Equal(CraftFinishLoggingStatus.DisabledNoMutation, plan.Status);
+		Assert.False(plan.IsLive);
+		Assert.True(plan.LogCraftEnabled);
+		Assert.True(plan.WouldWriteLog);
+		Assert.False(plan.DidWriteLog);
+		Assert.Equal(CraftFinishLoggingPlan.JavaLoggerName, plan.LoggerName);
+		Assert.Equal("Crafted Material", plan.ItemName);
+		Assert.Equal("Player Smith crafted item 152000401 [Crafted Material] (count: 3)", plan.Message);
+		Assert.Contains("LoggingConfig.LOG_CRAFT", plan.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void CreateFinishLoggingPlan_AddsCriticalSuffixForComboProduct()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1160, dp: 600, name: "Smith");
+		var recipe = CreateRecipe(
+			recipeId: 155000051,
+			dp: 0,
+			productId: 100200203,
+			quantity: 1,
+			comboProducts: [100200209],
+			skillId: 40001);
+
+		var plan = service.CreateFinishLoggingPlan(player, recipe, critCount: 1, logCraftEnabled: true);
+
+		Assert.Equal(CraftFinishLoggingStatus.DisabledNoMutation, plan.Status);
+		Assert.Equal(100200209, plan.ProductItemId);
+		Assert.Equal("Critical Sword", plan.ItemName);
+		Assert.Equal("Player Smith crafted item 100200209 [Critical Sword] (count: 1) - critical", plan.Message);
+	}
+
+	[Fact]
+	public void CreateFinishLoggingPlan_SkipsItemLookupWhenLoggingConfigDisabled()
+	{
+		var service = CreateService(out _, itemTemplates: null);
+		var player = CreatePlayer(objectId: 1161, dp: 600, name: "Smith");
+		var recipe = CreateRecipe(recipeId: 155000052, dp: 0, productId: 152000401, quantity: 3, skillId: 40001);
+
+		var plan = service.CreateFinishLoggingPlan(player, recipe, critCount: 0, logCraftEnabled: false);
+
+		Assert.Equal(CraftFinishLoggingStatus.DisabledByConfig, plan.Status);
+		Assert.False(plan.LogCraftEnabled);
+		Assert.False(plan.WouldWriteLog);
+		Assert.False(plan.DidWriteLog);
+		Assert.Equal(string.Empty, plan.Message);
+		Assert.Contains("LOG_CRAFT is false", plan.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
 	public void CreateFinishProductPlan_ReportsMissingComboProductConservatively()
 	{
 		var service = CreateService(out _, CreateItemTemplates());

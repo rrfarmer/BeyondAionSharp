@@ -481,6 +481,33 @@ public sealed class CraftService
 			failCraftItemId);
 	}
 
+	public CraftFinishLoggingPlan CreateFinishLoggingPlan(
+		Player? player,
+		RecipeTemplateSummary? recipeTemplate,
+		int critCount,
+		bool logCraftEnabled)
+	{
+		// Java parity: CraftService.finishCrafting -> if (LoggingConfig.LOG_CRAFT) CRAFT_LOG.info(...).
+		if (player == null)
+			return CraftFinishLoggingPlan.MissingPlayer(recipeTemplate?.RecipeId ?? 0, critCount, logCraftEnabled);
+		if (recipeTemplate == null)
+			return CraftFinishLoggingPlan.MissingRecipe(player.ObjectId, critCount, logCraftEnabled);
+		if (!logCraftEnabled)
+			return CraftFinishLoggingPlan.DisabledByConfig(player.ObjectId, recipeTemplate.RecipeId, critCount);
+
+		var productPlan = CreateFinishProductPlan(player, recipeTemplate, critCount);
+		if (productPlan.Status != CraftFinishProductStatus.Planned)
+			return CraftFinishLoggingPlan.FromProductFailure(productPlan, logCraftEnabled);
+
+		var itemTemplate = _itemTemplates?.GetItemTemplate(productPlan.ProductItemId);
+		if (itemTemplate == null)
+			return CraftFinishLoggingPlan.MissingItemTemplate(productPlan, logCraftEnabled);
+
+		var message = $"Player {player.Name} crafted item {productPlan.ProductItemId} [{itemTemplate.Name}] (count: {productPlan.Quantity})"
+			+ (critCount > 0 ? " - critical" : string.Empty);
+		return CraftFinishLoggingPlan.DisabledNoMutation(productPlan, itemTemplate.Name, message);
+	}
+
 	public CraftFinishCooldownPlan CreateFinishCooldownPlan(
 		Player? player,
 		RecipeTemplateSummary? recipeTemplate,
@@ -2579,6 +2606,152 @@ public enum CraftFinishWorkOrderStatus
 	NotWorkOrder,
 	MissingPlayer,
 	MissingRecipe,
+}
+
+public sealed record CraftFinishLoggingPlan(
+	CraftFinishLoggingStatus Status,
+	int ObjectId,
+	int RecipeId,
+	int CritCount,
+	int ProductItemId,
+	int Quantity,
+	string ItemName,
+	string LoggerName,
+	string Message,
+	bool LogCraftEnabled,
+	bool WouldWriteLog,
+	bool DidWriteLog,
+	string JavaSource,
+	bool IsLive)
+{
+	public const string JavaLoggerName = "CRAFT_LOG";
+
+	public static CraftFinishLoggingPlan MissingPlayer(int recipeId, int critCount, bool logCraftEnabled)
+	{
+		return new CraftFinishLoggingPlan(
+			CraftFinishLoggingStatus.MissingPlayer,
+			ObjectId: 0,
+			recipeId,
+			critCount,
+			ProductItemId: 0,
+			Quantity: 0,
+			ItemName: string.Empty,
+			JavaLoggerName,
+			Message: string.Empty,
+			logCraftEnabled,
+			WouldWriteLog: false,
+			DidWriteLog: false,
+			"CraftService.finishCrafting logging branch requires player name",
+			IsLive: false);
+	}
+
+	public static CraftFinishLoggingPlan MissingRecipe(int objectId, int critCount, bool logCraftEnabled)
+	{
+		return new CraftFinishLoggingPlan(
+			CraftFinishLoggingStatus.MissingRecipe,
+			objectId,
+			RecipeId: 0,
+			critCount,
+			ProductItemId: 0,
+			Quantity: 0,
+			ItemName: string.Empty,
+			JavaLoggerName,
+			Message: string.Empty,
+			logCraftEnabled,
+			WouldWriteLog: false,
+			DidWriteLog: false,
+			"CraftService.finishCrafting logging branch requires recipe template",
+			IsLive: false);
+	}
+
+	public static CraftFinishLoggingPlan DisabledByConfig(int objectId, int recipeId, int critCount)
+	{
+		return new CraftFinishLoggingPlan(
+			CraftFinishLoggingStatus.DisabledByConfig,
+			objectId,
+			recipeId,
+			critCount,
+			ProductItemId: 0,
+			Quantity: 0,
+			ItemName: string.Empty,
+			JavaLoggerName,
+			Message: string.Empty,
+			LogCraftEnabled: false,
+			WouldWriteLog: false,
+			DidWriteLog: false,
+			"CraftService.finishCrafting -> LoggingConfig.LOG_CRAFT is false; no item template lookup or CRAFT_LOG write occurs",
+			IsLive: false);
+	}
+
+	public static CraftFinishLoggingPlan FromProductFailure(CraftFinishProductPlan productPlan, bool logCraftEnabled)
+	{
+		return new CraftFinishLoggingPlan(
+			productPlan.Status == CraftFinishProductStatus.MissingComboProduct
+				? CraftFinishLoggingStatus.MissingComboProduct
+				: CraftFinishLoggingStatus.MissingProductPlan,
+			productPlan.ObjectId,
+			productPlan.RecipeId,
+			productPlan.CritCount,
+			productPlan.ProductItemId,
+			productPlan.Quantity,
+			ItemName: string.Empty,
+			JavaLoggerName,
+			Message: string.Empty,
+			logCraftEnabled,
+			WouldWriteLog: false,
+			DidWriteLog: false,
+			"CraftService.finishCrafting logging branch depends on the product item id selected immediately before ItemService.addItem",
+			IsLive: false);
+	}
+
+	public static CraftFinishLoggingPlan MissingItemTemplate(CraftFinishProductPlan productPlan, bool logCraftEnabled)
+	{
+		return new CraftFinishLoggingPlan(
+			CraftFinishLoggingStatus.MissingItemTemplate,
+			productPlan.ObjectId,
+			productPlan.RecipeId,
+			productPlan.CritCount,
+			productPlan.ProductItemId,
+			productPlan.Quantity,
+			ItemName: string.Empty,
+			JavaLoggerName,
+			Message: string.Empty,
+			logCraftEnabled,
+			WouldWriteLog: false,
+			DidWriteLog: false,
+			"CraftService.finishCrafting logging branch calls DataManager.ITEM_DATA.getItemTemplate(productItemId).getName(); C# logging remains disabled when the template is missing",
+			IsLive: false);
+	}
+
+	public static CraftFinishLoggingPlan DisabledNoMutation(CraftFinishProductPlan productPlan, string itemName, string message)
+	{
+		return new CraftFinishLoggingPlan(
+			CraftFinishLoggingStatus.DisabledNoMutation,
+			productPlan.ObjectId,
+			productPlan.RecipeId,
+			productPlan.CritCount,
+			productPlan.ProductItemId,
+			productPlan.Quantity,
+			itemName,
+			JavaLoggerName,
+			message,
+			LogCraftEnabled: true,
+			WouldWriteLog: true,
+			DidWriteLog: false,
+			"CraftService.finishCrafting -> LoggingConfig.LOG_CRAFT writes to CRAFT_LOG; live logging remains disabled in this planner",
+			IsLive: false);
+	}
+}
+
+public enum CraftFinishLoggingStatus
+{
+	DisabledNoMutation,
+	DisabledByConfig,
+	MissingPlayer,
+	MissingRecipe,
+	MissingProductPlan,
+	MissingComboProduct,
+	MissingItemTemplate,
 }
 
 public sealed record CraftFinishCooldownPlan(
