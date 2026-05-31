@@ -1828,6 +1828,168 @@ public enum CraftStartInventoryPersistenceSqlOperationKind
 	UpdateInventoryRow,
 }
 
+public static class CraftStartInventoryPersistenceAdapterPlanService
+{
+	public static CraftStartInventoryPersistenceAdapterPlan CreateDisabledPlan(
+		CraftStartInventoryPersistencePlan? persistencePlan)
+	{
+		// Java parity: InventoryDAO.store opens a connection, disables autocommit,
+		// executes delete/insert/update batches, then releases deleted object ids after a successful delete batch.
+		if (persistencePlan == null)
+			return CraftStartInventoryPersistenceAdapterPlan.PersistencePlanMissing();
+		if (!persistencePlan.IsPlanned)
+			return CraftStartInventoryPersistenceAdapterPlan.PersistencePlanNotReady(persistencePlan);
+		if (persistencePlan.SqlDescriptors.Count == 0)
+			return CraftStartInventoryPersistenceAdapterPlan.NoSqlRequired(persistencePlan);
+
+		var operations = persistencePlan.SqlDescriptors
+			.Select(CraftStartInventoryPersistenceAdapterOperation.Disabled)
+			.ToArray();
+		return CraftStartInventoryPersistenceAdapterPlan.DisabledNoWrite(persistencePlan, operations);
+	}
+}
+
+public sealed record CraftStartInventoryPersistenceAdapterPlan(
+	CraftStartInventoryPersistenceAdapterStatus Status,
+	CraftStartInventoryPersistencePlan? PersistencePlan,
+	IReadOnlyList<CraftStartInventoryPersistenceAdapterOperation> Operations,
+	bool WouldOpenConnection,
+	bool DidOpenConnection,
+	bool WouldBeginTransaction,
+	bool DidBeginTransaction,
+	bool WouldExecuteSql,
+	bool DidExecuteSql,
+	bool WouldCommitBatches,
+	bool DidCommitBatches,
+	bool WouldReleaseObjectIdsAfterSuccessfulDelete,
+	bool DidReleaseObjectIds,
+	int WouldExecuteSqlCount,
+	int ExecutedSqlCount,
+	string JavaSource,
+	bool IsLive)
+{
+	public static CraftStartInventoryPersistenceAdapterPlan PersistencePlanMissing()
+	{
+		return new CraftStartInventoryPersistenceAdapterPlan(
+			CraftStartInventoryPersistenceAdapterStatus.PersistencePlanMissing,
+			PersistencePlan: null,
+			Operations: Array.Empty<CraftStartInventoryPersistenceAdapterOperation>(),
+			WouldOpenConnection: false,
+			DidOpenConnection: false,
+			WouldBeginTransaction: false,
+			DidBeginTransaction: false,
+			WouldExecuteSql: false,
+			DidExecuteSql: false,
+			WouldCommitBatches: false,
+			DidCommitBatches: false,
+			WouldReleaseObjectIdsAfterSuccessfulDelete: false,
+			DidReleaseObjectIds: false,
+			WouldExecuteSqlCount: 0,
+			ExecutedSqlCount: 0,
+			"InventoryDAO.store boundary skipped because craft-start persistence plan is missing",
+			IsLive: false);
+	}
+
+	public static CraftStartInventoryPersistenceAdapterPlan PersistencePlanNotReady(
+		CraftStartInventoryPersistencePlan persistencePlan)
+	{
+		return new CraftStartInventoryPersistenceAdapterPlan(
+			CraftStartInventoryPersistenceAdapterStatus.PersistencePlanNotReady,
+			persistencePlan,
+			Operations: Array.Empty<CraftStartInventoryPersistenceAdapterOperation>(),
+			WouldOpenConnection: false,
+			DidOpenConnection: false,
+			WouldBeginTransaction: false,
+			DidBeginTransaction: false,
+			WouldExecuteSql: false,
+			DidExecuteSql: false,
+			WouldCommitBatches: false,
+			DidCommitBatches: false,
+			WouldReleaseObjectIdsAfterSuccessfulDelete: false,
+			DidReleaseObjectIds: false,
+			WouldExecuteSqlCount: 0,
+			ExecutedSqlCount: 0,
+			"InventoryDAO.store boundary skipped because craft-start persistence plan is not planned",
+			IsLive: false);
+	}
+
+	public static CraftStartInventoryPersistenceAdapterPlan NoSqlRequired(
+		CraftStartInventoryPersistencePlan persistencePlan)
+	{
+		return new CraftStartInventoryPersistenceAdapterPlan(
+			CraftStartInventoryPersistenceAdapterStatus.NoSqlRequired,
+			persistencePlan,
+			Operations: Array.Empty<CraftStartInventoryPersistenceAdapterOperation>(),
+			WouldOpenConnection: false,
+			DidOpenConnection: false,
+			WouldBeginTransaction: false,
+			DidBeginTransaction: false,
+			WouldExecuteSql: false,
+			DidExecuteSql: false,
+			WouldCommitBatches: false,
+			DidCommitBatches: false,
+			WouldReleaseObjectIdsAfterSuccessfulDelete: false,
+			DidReleaseObjectIds: false,
+			WouldExecuteSqlCount: 0,
+			ExecutedSqlCount: 0,
+			"InventoryDAO.store boundary skipped because craft-start persistence descriptors contain no SQL writes",
+			IsLive: false);
+	}
+
+	public static CraftStartInventoryPersistenceAdapterPlan DisabledNoWrite(
+		CraftStartInventoryPersistencePlan persistencePlan,
+		IReadOnlyList<CraftStartInventoryPersistenceAdapterOperation> operations)
+	{
+		return new CraftStartInventoryPersistenceAdapterPlan(
+			CraftStartInventoryPersistenceAdapterStatus.DisabledNoWrite,
+			persistencePlan,
+			operations.ToArray(),
+			WouldOpenConnection: true,
+			DidOpenConnection: false,
+			WouldBeginTransaction: true,
+			DidBeginTransaction: false,
+			WouldExecuteSql: operations.Count > 0,
+			DidExecuteSql: false,
+			WouldCommitBatches: operations.Count > 0,
+			DidCommitBatches: false,
+			persistencePlan.WouldReleaseObjectIdsAfterSuccessfulDelete,
+			DidReleaseObjectIds: false,
+			WouldExecuteSqlCount: operations.Count,
+			ExecutedSqlCount: 0,
+			"InventoryDAO.store delete/update SQL boundary identified, but live C# database execution remains disabled",
+			IsLive: false);
+	}
+}
+
+public sealed record CraftStartInventoryPersistenceAdapterOperation(
+	CraftStartInventoryPersistenceSqlDescriptor Descriptor,
+	CraftStartInventoryPersistenceSqlOperationKind Kind,
+	string Sql,
+	string JavaDaoMethod,
+	bool WouldExecuteSql,
+	bool DidExecuteSql)
+{
+	public static CraftStartInventoryPersistenceAdapterOperation Disabled(
+		CraftStartInventoryPersistenceSqlDescriptor descriptor)
+	{
+		return new CraftStartInventoryPersistenceAdapterOperation(
+			descriptor,
+			descriptor.Kind,
+			descriptor.Sql,
+			descriptor.JavaDaoMethod,
+			WouldExecuteSql: descriptor.WouldExecuteSql,
+			DidExecuteSql: false);
+	}
+}
+
+public enum CraftStartInventoryPersistenceAdapterStatus
+{
+	PersistencePlanMissing,
+	PersistencePlanNotReady,
+	NoSqlRequired,
+	DisabledNoWrite,
+}
+
 public enum CraftStartInventoryPersistenceStatus
 {
 	NotPlanned,

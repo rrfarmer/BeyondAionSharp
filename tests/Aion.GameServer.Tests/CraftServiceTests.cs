@@ -1252,6 +1252,91 @@ public sealed class CraftServiceTests
 	}
 
 	[Fact]
+	public void CraftStartInventoryPersistenceAdapter_DisabledPlanRecordsJavaDaoBoundaryWithoutWriting()
+	{
+		var service = CreateService(out _, CreateItemTemplates(), CreateSkillTemplates());
+		var player = CreatePlayer(objectId: 1157, dp: 700);
+		var recipe = CreateRecipe(
+			recipeId: 155000053,
+			dp: 600,
+			productId: 100200203,
+			skillId: 40001,
+			skillPoint: 200,
+			componentGroups: [CreateComponentGroup((152000901, 2), (152000902, 1))]);
+		player.Recipes = [recipe.RecipeId];
+		player.Skills = [CreateSkill(recipe.SkillId, skillLevel: 200)];
+		player.InventoryItems =
+		[
+			CreateInventoryItem(objectId: 8044, itemId: 169401081, count: 1),
+			CreateInventoryItem(objectId: 8045, itemId: 152000901, count: 1),
+			CreateInventoryItem(objectId: 8046, itemId: 152000901, count: 3),
+			CreateInventoryItem(objectId: 8047, itemId: 152000902, count: 5),
+		];
+		var productTemplate = CreateItemTemplates().GetItemTemplate(100200203);
+		var target = CreateTarget(objectId: 9042, templateId: 730190);
+		var selectedMaterials = new Dictionary<int, long> { [152000901] = 2 };
+		var validation = service.CreateStartCraftingValidationPlan(
+			player,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false,
+			selectedMaterials,
+			craftType: 1);
+		var consumption = service.CreateStartConsumptionPlan(validation, recipe, selectedMaterials, craftType: 1);
+		var mutation = service.CreateStartInventoryMutationPlan(consumption, player.InventoryItems);
+		var persistence = service.CreateStartInventoryPersistencePlan(mutation);
+
+		var adapterPlan = CraftStartInventoryPersistenceAdapterPlanService.CreateDisabledPlan(persistence);
+
+		Assert.Equal(CraftStartInventoryPersistenceAdapterStatus.DisabledNoWrite, adapterPlan.Status);
+		Assert.Same(persistence, adapterPlan.PersistencePlan);
+		Assert.False(adapterPlan.IsLive);
+		Assert.True(adapterPlan.WouldOpenConnection);
+		Assert.False(adapterPlan.DidOpenConnection);
+		Assert.True(adapterPlan.WouldBeginTransaction);
+		Assert.False(adapterPlan.DidBeginTransaction);
+		Assert.True(adapterPlan.WouldExecuteSql);
+		Assert.False(adapterPlan.DidExecuteSql);
+		Assert.True(adapterPlan.WouldCommitBatches);
+		Assert.False(adapterPlan.DidCommitBatches);
+		Assert.True(adapterPlan.WouldReleaseObjectIdsAfterSuccessfulDelete);
+		Assert.False(adapterPlan.DidReleaseObjectIds);
+		Assert.Equal(persistence.SqlDescriptors.Count, adapterPlan.WouldExecuteSqlCount);
+		Assert.Equal(0, adapterPlan.ExecutedSqlCount);
+		Assert.Contains("InventoryDAO.store", adapterPlan.JavaSource, StringComparison.Ordinal);
+		Assert.Collection(
+			adapterPlan.Operations,
+			operation =>
+			{
+				Assert.Equal(CraftStartInventoryPersistenceSqlOperationKind.DeleteInventoryRow, operation.Kind);
+				Assert.Equal(CraftStartInventoryPersistencePlan.JavaInventoryDeleteSql, operation.Sql);
+				Assert.Equal("InventoryDAO.deleteItems", operation.JavaDaoMethod);
+				Assert.Same(persistence.SqlDescriptors[0], operation.Descriptor);
+				Assert.True(operation.WouldExecuteSql);
+				Assert.False(operation.DidExecuteSql);
+			},
+			operation =>
+			{
+				Assert.Equal(CraftStartInventoryPersistenceSqlOperationKind.DeleteInventoryRow, operation.Kind);
+				Assert.Equal(CraftStartInventoryPersistencePlan.JavaInventoryDeleteSql, operation.Sql);
+			},
+			operation =>
+			{
+				Assert.Equal(CraftStartInventoryPersistenceSqlOperationKind.UpdateInventoryRow, operation.Kind);
+				Assert.Equal(CraftStartInventoryPersistencePlan.JavaInventoryUpdateSql, operation.Sql);
+				Assert.Equal("InventoryDAO.updateItems", operation.JavaDaoMethod);
+			},
+			operation =>
+			{
+				Assert.Equal(CraftStartInventoryPersistenceSqlOperationKind.UpdateInventoryRow, operation.Kind);
+				Assert.Equal(CraftStartInventoryPersistencePlan.JavaInventoryUpdateSql, operation.Sql);
+			});
+	}
+
+	[Fact]
 	public void CreateStartInventoryPersistencePlan_MapsNewDeletedStacksToNoAction()
 	{
 		var service = CreateService(out _, CreateItemTemplates(), CreateSkillTemplates());
@@ -1285,6 +1370,14 @@ public sealed class CraftServiceTests
 		Assert.Equal(InventoryItemPersistentState.NoAction, operation.PersistentState);
 		Assert.False(operation.ShouldWrite);
 		Assert.Equal("Item.setPersistentState(NEW -> NOACTION)", operation.JavaDaoMethod);
+
+		var adapterPlan = CraftStartInventoryPersistenceAdapterPlanService.CreateDisabledPlan(persistence);
+
+		Assert.Equal(CraftStartInventoryPersistenceAdapterStatus.NoSqlRequired, adapterPlan.Status);
+		Assert.False(adapterPlan.WouldOpenConnection);
+		Assert.False(adapterPlan.WouldExecuteSql);
+		Assert.Empty(adapterPlan.Operations);
+		Assert.False(adapterPlan.IsLive);
 	}
 
 	[Fact]
@@ -1353,6 +1446,17 @@ public sealed class CraftServiceTests
 		Assert.Empty(persistence.ObjectIdsPendingRelease);
 		Assert.False(persistence.WouldReleaseObjectIdsAfterSuccessfulDelete);
 		Assert.False(persistence.DidReleaseObjectIds);
+
+		var missingAdapterPlan = CraftStartInventoryPersistenceAdapterPlanService.CreateDisabledPlan(null);
+		var notReadyAdapterPlan = CraftStartInventoryPersistenceAdapterPlanService.CreateDisabledPlan(persistence);
+
+		Assert.Equal(CraftStartInventoryPersistenceAdapterStatus.PersistencePlanMissing, missingAdapterPlan.Status);
+		Assert.Null(missingAdapterPlan.PersistencePlan);
+		Assert.False(missingAdapterPlan.WouldExecuteSql);
+		Assert.Equal(CraftStartInventoryPersistenceAdapterStatus.PersistencePlanNotReady, notReadyAdapterPlan.Status);
+		Assert.Same(persistence, notReadyAdapterPlan.PersistencePlan);
+		Assert.False(notReadyAdapterPlan.WouldOpenConnection);
+		Assert.False(notReadyAdapterPlan.WouldExecuteSql);
 	}
 
 	[Fact]
