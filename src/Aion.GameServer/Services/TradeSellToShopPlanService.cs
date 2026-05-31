@@ -33,6 +33,55 @@ public sealed record TradeSellToShopPlan(
 	public bool IsLive => false;
 }
 
+public enum PetMerchantSellLiveExecutorFacadeStatus
+{
+	MissingHandlerPlan,
+	HandlerNotPetMerchantSell,
+	MissingSellModifier,
+	MissingSellToShopPlan,
+	SellToShopPlanNotReady,
+	DisabledNoSideEffects,
+}
+
+public enum PetMerchantSellLiveExecutorOperationKind
+{
+	ApplySellerInventoryMutation,
+	AddRepurchaseItems,
+	IncreaseKinah,
+}
+
+public enum PetMerchantSellLiveExecutorOperationStatus
+{
+	NotAttemptedMissingPlan,
+	NotAttemptedNotPetMerchantSell,
+	NotAttemptedCompositionNotReady,
+	NotAttemptedDisabled,
+}
+
+public sealed record PetMerchantSellLiveExecutorOperation(
+	PetMerchantSellLiveExecutorOperationKind Kind,
+	PetMerchantSellLiveExecutorOperationStatus Status,
+	string JavaSource);
+
+public sealed record PetMerchantSellLiveExecutorFacadePlan(
+	PetMerchantSellLiveExecutorFacadeStatus Status,
+	CmBuyItemHandlerCompositionPlan? HandlerPlan,
+	int? PetSellModifier,
+	TradeSellToShopPlan? SellToShopPlan,
+	IReadOnlyList<PetMerchantSellLiveExecutorOperation> Operations,
+	bool WouldMutateSellerInventory,
+	bool DidMutateSellerInventory,
+	bool WouldAddRepurchaseItems,
+	bool DidAddRepurchaseItems,
+	bool WouldMutateKinah,
+	bool DidMutateKinah,
+	bool ShouldDispatchLiveSideEffects,
+	string JavaSource,
+	bool IsLive)
+{
+	public bool IsDisabled => Status == PetMerchantSellLiveExecutorFacadeStatus.DisabledNoSideEffects;
+}
+
 public static class TradeSellToShopPlanService
 {
 	private const int CubeStorageId = 0;
@@ -238,5 +287,136 @@ public static class TradeSellToShopPlanService
 		copy.Godstone = item.Godstone;
 		copy.IdianStone = item.IdianStone;
 		return copy;
+	}
+}
+
+public static class PetMerchantSellLiveExecutorFacadePlanService
+{
+	public static PetMerchantSellLiveExecutorFacadePlan CreateDisabledPlan(CmBuyItemHandlerCompositionPlan? handlerPlan)
+	{
+		// Java parity: CM_BUY_ITEM Pet MERCHANT action 17 forwards to
+		// TradeService.performSellToShop(player, tradeList, null, pf.getRatePrice()).
+		// This facade records that side-effect boundary without mutating live state.
+		if (handlerPlan == null)
+			return CreateTerminalPlan(
+				PetMerchantSellLiveExecutorFacadeStatus.MissingHandlerPlan,
+				handlerPlan,
+				petSellModifier: null,
+				sellToShopPlan: null,
+				NotAttempted(PetMerchantSellLiveExecutorOperationStatus.NotAttemptedMissingPlan),
+				"Pet merchant sell facade requires CM_BUY_ITEM handler composition evidence");
+
+		if (handlerPlan.Status != CmBuyItemHandlerCompositionPlanStatus.SelectedPetSellToShopPlanner)
+			return CreateTerminalPlan(
+				PetMerchantSellLiveExecutorFacadeStatus.HandlerNotPetMerchantSell,
+				handlerPlan,
+				handlerPlan.PetSellModifier,
+				handlerPlan.PetSellToShopPlan,
+				NotAttempted(PetMerchantSellLiveExecutorOperationStatus.NotAttemptedNotPetMerchantSell),
+				"CM_BUY_ITEM.runImpl did not select Pet MERCHANT action 17 -> TradeService.performSellToShop");
+
+		if (handlerPlan.PetSellModifier == null)
+			return CreateTerminalPlan(
+				PetMerchantSellLiveExecutorFacadeStatus.MissingSellModifier,
+				handlerPlan,
+				handlerPlan.PetSellModifier,
+				handlerPlan.PetSellToShopPlan,
+				NotAttempted(PetMerchantSellLiveExecutorOperationStatus.NotAttemptedCompositionNotReady),
+				"CM_BUY_ITEM pet merchant facade requires PetFunction.getRatePrice payload before side effects");
+
+		var sellToShopPlan = handlerPlan.PetSellToShopPlan;
+		if (sellToShopPlan == null)
+			return CreateTerminalPlan(
+				PetMerchantSellLiveExecutorFacadeStatus.MissingSellToShopPlan,
+				handlerPlan,
+				handlerPlan.PetSellModifier,
+				sellToShopPlan,
+				NotAttempted(PetMerchantSellLiveExecutorOperationStatus.NotAttemptedCompositionNotReady),
+				"CM_BUY_ITEM pet merchant facade requires TradeService.performSellToShop planning before side effects");
+
+		if (sellToShopPlan.Status != TradeSellToShopPlanStatus.PlanCreated)
+			return CreateTerminalPlan(
+				PetMerchantSellLiveExecutorFacadeStatus.SellToShopPlanNotReady,
+				handlerPlan,
+				handlerPlan.PetSellModifier,
+				sellToShopPlan,
+				NotAttempted(PetMerchantSellLiveExecutorOperationStatus.NotAttemptedCompositionNotReady),
+				"TradeService.performSellToShop plan is blocked; pet merchant live side effects are not eligible");
+
+		var operations = new List<PetMerchantSellLiveExecutorOperation>();
+		var wouldMutateSellerInventory = sellToShopPlan.SellerDeletedItemObjectIds.Count > 0 || sellToShopPlan.SellerItemUpdates.Count > 0;
+		if (wouldMutateSellerInventory)
+			operations.Add(Disabled(
+				PetMerchantSellLiveExecutorOperationKind.ApplySellerInventoryMutation,
+				"TradeService.performSellToShop -> inventory.delete/decreaseItemCount for sold items"));
+
+		var wouldAddRepurchaseItems = sellToShopPlan.RepurchaseItems.Count > 0;
+		if (wouldAddRepurchaseItems)
+			operations.Add(Disabled(
+				PetMerchantSellLiveExecutorOperationKind.AddRepurchaseItems,
+				"TradeService.performSellToShop -> RepurchaseService.addRepurchaseItems(player, items)"));
+
+		var wouldMutateKinah = sellToShopPlan.KinahUpdate != null;
+		if (wouldMutateKinah)
+			operations.Add(Disabled(
+				PetMerchantSellLiveExecutorOperationKind.IncreaseKinah,
+				"TradeService.performSellToShop -> inventory.increaseKinah(kinahReward, INC_KINAH_SELL)"));
+
+		return new PetMerchantSellLiveExecutorFacadePlan(
+			PetMerchantSellLiveExecutorFacadeStatus.DisabledNoSideEffects,
+			handlerPlan,
+			handlerPlan.PetSellModifier,
+			sellToShopPlan,
+			operations,
+			WouldMutateSellerInventory: wouldMutateSellerInventory,
+			DidMutateSellerInventory: false,
+			WouldAddRepurchaseItems: wouldAddRepurchaseItems,
+			DidAddRepurchaseItems: false,
+			WouldMutateKinah: wouldMutateKinah,
+			DidMutateKinah: false,
+			ShouldDispatchLiveSideEffects: false,
+			"Pet merchant TradeService.performSellToShop live side-effect executor facade is disabled; Java side-effect order is recorded without dispatch",
+			IsLive: false);
+	}
+
+	private static PetMerchantSellLiveExecutorFacadePlan CreateTerminalPlan(
+		PetMerchantSellLiveExecutorFacadeStatus status,
+		CmBuyItemHandlerCompositionPlan? handlerPlan,
+		int? petSellModifier,
+		TradeSellToShopPlan? sellToShopPlan,
+		PetMerchantSellLiveExecutorOperation operation,
+		string javaSource)
+	{
+		return new PetMerchantSellLiveExecutorFacadePlan(
+			status,
+			handlerPlan,
+			petSellModifier,
+			sellToShopPlan,
+			[operation],
+			WouldMutateSellerInventory: false,
+			DidMutateSellerInventory: false,
+			WouldAddRepurchaseItems: false,
+			DidAddRepurchaseItems: false,
+			WouldMutateKinah: false,
+			DidMutateKinah: false,
+			ShouldDispatchLiveSideEffects: false,
+			javaSource,
+			IsLive: false);
+	}
+
+	private static PetMerchantSellLiveExecutorOperation Disabled(PetMerchantSellLiveExecutorOperationKind kind, string javaSource)
+	{
+		return new PetMerchantSellLiveExecutorOperation(
+			kind,
+			PetMerchantSellLiveExecutorOperationStatus.NotAttemptedDisabled,
+			javaSource);
+	}
+
+	private static PetMerchantSellLiveExecutorOperation NotAttempted(PetMerchantSellLiveExecutorOperationStatus status)
+	{
+		return new PetMerchantSellLiveExecutorOperation(
+			PetMerchantSellLiveExecutorOperationKind.ApplySellerInventoryMutation,
+			status,
+			"Pet merchant sell live executor facade did not reach this side-effect boundary");
 	}
 }
