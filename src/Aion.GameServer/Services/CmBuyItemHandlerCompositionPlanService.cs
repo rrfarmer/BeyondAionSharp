@@ -15,7 +15,7 @@ public enum CmBuyItemHandlerCompositionPlanStatus
 	SkippedPlayerTargetNonPrivateStoreAction,
 	RunAudit,
 	SkippedNpcUnsupportedAction,
-	UnsupportedPetSellToShop,
+	SelectedPetSellToShopPlanner,
 	SkippedPetWithoutMerchantFunction,
 	SkippedPetNonSellAction,
 	SkippedOtherTarget,
@@ -30,6 +30,7 @@ public enum CmBuyItemHandlerCompositionStep
 	InvokeRepurchasePlanner,
 	InvokeBuyFromShopPlanner,
 	InvokePrivateStorePlanner,
+	InvokePetSellToShopPlanner,
 	ClassifyUnsupportedBranch,
 }
 
@@ -48,6 +49,8 @@ public sealed record CmBuyItemHandlerCompositionInput(
 	TradeListTemplateSummary? SellTemplate = null,
 	IReadOnlyList<PrivateStoreListedItemSummary>? PrivateStoreItems = null,
 	PrivateStorePurchasePlan? PrivateStorePurchasePlan = null,
+	int? PetSellModifier = null,
+	TradeSellToShopPlan? PetSellToShopPlan = null,
 	bool PetHasMerchantFunction = false);
 
 public sealed record CmBuyItemHandlerCompositionPlan(
@@ -61,6 +64,8 @@ public sealed record CmBuyItemHandlerCompositionPlan(
 	CmBuyItemBuyFromShopCompositionPlan? BuyFromShopPlan = null,
 	PrivateStoreBoughtItemsPlan? PrivateStoreBoughtItemsPlan = null,
 	PrivateStorePurchasePlan? PrivateStorePurchasePlan = null,
+	int? PetSellModifier = null,
+	TradeSellToShopPlan? PetSellToShopPlan = null,
 	string? AuditReason = null)
 {
 	public bool IsLive => false;
@@ -235,9 +240,9 @@ public static class CmBuyItemHandlerCompositionPlanService
 		CmBuyItemHandlerCompositionInput input,
 		List<CmBuyItemHandlerCompositionStep> steps)
 	{
-		steps.Add(CmBuyItemHandlerCompositionStep.ClassifyUnsupportedBranch);
 		if (input.Packet.TradeActionId != PetSellToShopTradeActionId)
 		{
+			steps.Add(CmBuyItemHandlerCompositionStep.ClassifyUnsupportedBranch);
 			return CreatePlan(
 				CmBuyItemHandlerCompositionPlanStatus.SkippedPetNonSellAction,
 				input,
@@ -247,6 +252,7 @@ public static class CmBuyItemHandlerCompositionPlanService
 
 		if (!input.PetHasMerchantFunction)
 		{
+			steps.Add(CmBuyItemHandlerCompositionStep.ClassifyUnsupportedBranch);
 			return CreatePlan(
 				CmBuyItemHandlerCompositionPlanStatus.SkippedPetWithoutMerchantFunction,
 				input,
@@ -254,11 +260,14 @@ public static class CmBuyItemHandlerCompositionPlanService
 				"CM_BUY_ITEM.runImpl -> pet merchant function missing -> return");
 		}
 
+		steps.Add(CmBuyItemHandlerCompositionStep.InvokePetSellToShopPlanner);
 		return CreatePlan(
-			CmBuyItemHandlerCompositionPlanStatus.UnsupportedPetSellToShop,
+			CmBuyItemHandlerCompositionPlanStatus.SelectedPetSellToShopPlanner,
 			input,
 			steps,
-			"CM_BUY_ITEM.runImpl -> Pet MERCHANT action 17 -> TradeService.performSellToShop(player, tradeList, null, pf.getRatePrice())");
+			"CM_BUY_ITEM.runImpl -> Pet MERCHANT action 17 -> TradeService.performSellToShop(player, tradeList, null, pf.getRatePrice())",
+			petSellModifier: input.PetSellModifier,
+			petSellToShopPlan: input.PetSellToShopPlan);
 	}
 
 	private static CmBuyItemHandlerCompositionPlan CreatePlan(
@@ -271,6 +280,8 @@ public static class CmBuyItemHandlerCompositionPlanService
 		CmBuyItemBuyFromShopCompositionPlan? buyFromShopPlan = null,
 		PrivateStoreBoughtItemsPlan? privateStoreBoughtItemsPlan = null,
 		PrivateStorePurchasePlan? privateStorePurchasePlan = null,
+		int? petSellModifier = null,
+		TradeSellToShopPlan? petSellToShopPlan = null,
 		string? auditReason = null)
 	{
 		return new CmBuyItemHandlerCompositionPlan(
@@ -284,6 +295,8 @@ public static class CmBuyItemHandlerCompositionPlanService
 			buyFromShopPlan,
 			privateStoreBoughtItemsPlan,
 			privateStorePurchasePlan,
+			petSellModifier,
+			petSellToShopPlan,
 			auditReason);
 	}
 }

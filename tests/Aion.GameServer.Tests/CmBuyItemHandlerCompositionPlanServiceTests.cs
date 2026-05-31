@@ -200,8 +200,33 @@ public sealed class CmBuyItemHandlerCompositionPlanServiceTests
 		Assert.Contains("Unknown shop action", plan.JavaSource, StringComparison.Ordinal);
 	}
 
+	[Fact]
+	public void CreatePlan_SelectsPetSellToShopPlannerForMerchantActionSeventeen()
+	{
+		var packet = CreatePacket(17, [new CmBuyItemEntry(200, 1)]);
+		var sellPlan = CreateTradeSellToShopPlan();
+
+		var plan = CmBuyItemHandlerCompositionPlanService.CreatePlan(
+			new CmBuyItemHandlerCompositionInput(
+				packet,
+				PlayerPresent: true,
+				TargetKind: CmBuyItemRunTargetKind.Pet,
+				PetHasMerchantFunction: true,
+				PetSellModifier: 33,
+				PetSellToShopPlan: sellPlan));
+
+		Assert.Equal(CmBuyItemHandlerCompositionPlanStatus.SelectedPetSellToShopPlanner, plan.Status);
+		Assert.Contains(CmBuyItemHandlerCompositionStep.InvokePetSellToShopPlanner, plan.Steps);
+		Assert.DoesNotContain(CmBuyItemHandlerCompositionStep.ClassifyUnsupportedBranch, plan.Steps);
+		Assert.Equal(33, plan.PetSellModifier);
+		Assert.Same(sellPlan, plan.PetSellToShopPlan);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		Assert.Null(plan.SellToShopPlan);
+		Assert.Null(plan.RepurchasePlan);
+		Assert.Null(plan.BuyFromShopPlan);
+	}
+
 	[Theory]
-	[InlineData(17, true, CmBuyItemHandlerCompositionPlanStatus.UnsupportedPetSellToShop)]
 	[InlineData(17, false, CmBuyItemHandlerCompositionPlanStatus.SkippedPetWithoutMerchantFunction)]
 	[InlineData(1, true, CmBuyItemHandlerCompositionPlanStatus.SkippedPetNonSellAction)]
 	public void CreatePlan_ClassifiesPetBranchWithoutLivePetSellMutation(
@@ -216,10 +241,14 @@ public sealed class CmBuyItemHandlerCompositionPlanServiceTests
 				packet,
 				PlayerPresent: true,
 				TargetKind: CmBuyItemRunTargetKind.Pet,
-				PetHasMerchantFunction: petHasMerchantFunction));
+				PetHasMerchantFunction: petHasMerchantFunction,
+				PetSellModifier: 33,
+				PetSellToShopPlan: CreateTradeSellToShopPlan()));
 
 		Assert.Equal(expectedStatus, plan.Status);
 		Assert.Contains(CmBuyItemHandlerCompositionStep.ClassifyUnsupportedBranch, plan.Steps);
+		Assert.Null(plan.PetSellModifier);
+		Assert.Null(plan.PetSellToShopPlan);
 		Assert.Null(plan.SellToShopPlan);
 		Assert.Null(plan.RepurchasePlan);
 		Assert.Null(plan.BuyFromShopPlan);
@@ -257,6 +286,17 @@ public sealed class CmBuyItemHandlerCompositionPlanServiceTests
 			SellerMessages: Array.Empty<SmSystemMessage>(),
 			ShouldCloseSellerStore: false,
 			"PrivateStoreService.sellStoreItem");
+	}
+
+	private static TradeSellToShopPlan CreateTradeSellToShopPlan()
+	{
+		return new TradeSellToShopPlan(
+			TradeSellToShopPlanStatus.PlanCreated,
+			SellerDeletedItemObjectIds: [],
+			SellerItemUpdates: [],
+			RepurchaseItems: [],
+			KinahUpdate: null,
+			"TradeService.performSellToShop");
 	}
 
 	private const int SellerObjectId = 7001;
