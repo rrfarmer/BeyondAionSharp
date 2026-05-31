@@ -151,6 +151,50 @@ public sealed class GameServerConnectionCraftTests
 		Assert.Empty(fixture.SentPackets);
 	}
 
+	[Fact]
+	public async Task ProcessPacketAsync_CmCraftWithStaticDataRecordsReadyCompositionPlan()
+	{
+		var runtimeContext = new GameServerRuntimeContext();
+		runtimeContext.SetDataManager(await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false));
+		await using var fixture = await CraftFixture.CreateAsync(runtimeContext: runtimeContext);
+		var player = CreatePlayer(isOnline: true);
+		player.Dp = 500;
+		player.Recipes = [155000001];
+		player.Skills = [new PlayerSkill { SkillId = CraftStartValidationPlan.MorphSubstancesSkillId, SkillLevel = 10 }];
+		player.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 2001, ItemId = 152000901, Count = 1, Location = 0 },
+		];
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateCraftPayload(
+				unknownByte: CmCraftRuntimePlanService.MorphSubstancesMarker,
+				targetTemplateId: 0,
+				recipeId: 155000001,
+				targetObjectId: 0,
+				craftType: 0,
+				new Dictionary<int, long> { [152000901] = 1 }));
+
+		var runtimePlan = Assert.Single(fixture.CraftPlans);
+		Assert.Equal(CmCraftRuntimePlanStatus.StartCrafting, runtimePlan.Status);
+		var compositionPlan = Assert.Single(fixture.CraftStartCompositionPlans);
+		Assert.Equal(CmCraftStartCompositionPlanStatus.ReadyForDpSpendAndTaskStart, compositionPlan.Status);
+		Assert.True(compositionPlan.ValidationPlan?.IsReadyForNextValidation);
+		Assert.Equal(CraftStartConsumptionStatus.Planned, compositionPlan.ConsumptionPlan?.Status);
+		var decrease = Assert.Single(compositionPlan.ConsumptionPlan!.Decreases);
+		Assert.Equal(152000901, decrease.ItemId);
+		Assert.Equal(1, decrease.Quantity);
+		Assert.Equal(CraftStartTaskPlanStatus.Planned, compositionPlan.TaskPlan?.Status);
+		Assert.Equal(200, compositionPlan.TaskPlan!.Interval);
+		Assert.True(compositionPlan.RequiresDpSpend);
+		Assert.Equal(200, compositionPlan.RequiredDp);
+		Assert.False(compositionPlan.IsLive);
+		Assert.False(compositionPlan.ShouldDispatchLiveSideEffects);
+		Assert.Empty(fixture.SentPackets);
+	}
+
 	private static Player CreatePlayer(bool isOnline) =>
 		new()
 		{
@@ -267,7 +311,9 @@ public sealed class GameServerConnectionCraftTests
 
 		public List<GameServerPacket> SentPackets { get; }
 
-		public static async Task<CraftFixture> CreateAsync(Func<bool>? isShuttingDownSoon = null)
+		public static async Task<CraftFixture> CreateAsync(
+			Func<bool>? isShuttingDownSoon = null,
+			GameServerRuntimeContext? runtimeContext = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -293,6 +339,7 @@ public sealed class GameServerConnectionCraftTests
 						"cm-craft-test",
 						new GamePacketProcessor<string>((_, _) => Task.CompletedTask),
 						options: new GameServerOptions(),
+						runtimeContext: runtimeContext,
 						world: world,
 						crypt: crypt,
 						sentPacketObserver: sentPackets.Add,
@@ -316,5 +363,15 @@ public sealed class GameServerConnectionCraftTests
 			await Connection.DisposeAsync();
 			_client.Dispose();
 		}
+	}
+
+	private static string FindRepoRoot()
+	{
+		var directory = new DirectoryInfo(AppContext.BaseDirectory);
+		while (directory != null && !Directory.Exists(Path.Combine(directory.FullName, "game-server")))
+			directory = directory.Parent;
+
+		Assert.NotNull(directory);
+		return directory.FullName;
 	}
 }
