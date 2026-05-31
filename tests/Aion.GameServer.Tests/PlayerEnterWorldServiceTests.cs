@@ -448,14 +448,16 @@ public sealed class PlayerEnterWorldServiceTests
 			CountUpdateItems: [countUpdate],
 			EquipUpdateItems: Array.Empty<InventoryItem>(),
 			DeletedItemObjectIds: [12],
-			PowerShardDeactivated: false);
+			PowerShardDeactivated: false,
+			MarksEquipmentPersistentState: true);
 		var secondUse = new PowerShardUseResult(
 			Changed: true,
 			InventoryItems: Array.Empty<InventoryItem>(),
 			CountUpdateItems: Array.Empty<InventoryItem>(),
 			EquipUpdateItems: [equipUpdate],
 			DeletedItemObjectIds: [12],
-			PowerShardDeactivated: false);
+			PowerShardDeactivated: false,
+			MarksEquipmentPersistentState: true);
 
 		var saved = await service.SavePowerShardUseMutationAsync(player, [firstUse, secondUse]);
 

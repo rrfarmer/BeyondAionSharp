@@ -23,6 +23,7 @@ public sealed class EquipmentServiceTests
 		Assert.True(sword.IsEquipped);
 		Assert.Equal(1, sword.Slot);
 		Assert.Equal(InventoryItemPersistentState.New, sword.PersistentState);
+		Assert.True(change.MarksEquipmentPersistentState);
 		Assert.Equal([1001], change.PersistedItems.Select(item => item.ObjectId));
 		Assert.Equal([1], change.InventoryUpdateItems.Select(item => item.Slot));
 	}
@@ -51,6 +52,51 @@ public sealed class EquipmentServiceTests
 		Assert.False(updatedItem.IsEquipped);
 		Assert.Equal(0, updatedItem.Slot);
 		Assert.Equal(InventoryItemPersistentState.UpdateRequired, updatedItem.PersistentState);
+		Assert.True(change.MarksEquipmentPersistentState);
+	}
+
+	[Fact]
+	public void NormalizeImmediatelySavedItems_ClearsDirtyStateForPersistedEquipmentAndKinahRows()
+	{
+		var persistedEquipment = new InventoryItem
+		{
+			ObjectId = 1001,
+			ItemId = SwordId,
+			Location = 0,
+			IsEquipped = true,
+			Slot = 1,
+			PersistentState = InventoryItemPersistentState.UpdateRequired,
+		};
+		var persistedKinah = new InventoryItem
+		{
+			ObjectId = 77,
+			ItemId = KinahItemId,
+			Location = 0,
+			Count = 49_000,
+			PersistentState = InventoryItemPersistentState.UpdateRequired,
+		};
+		var untouched = new InventoryItem
+		{
+			ObjectId = 2001,
+			ItemId = RobeId,
+			Location = 0,
+			IsEquipped = false,
+			Slot = 65535,
+			PersistentState = InventoryItemPersistentState.New,
+		};
+
+		var normalized = EquipmentService.NormalizeImmediatelySavedItems(
+			[persistedEquipment, persistedKinah, untouched],
+			[persistedEquipment],
+			persistedKinah);
+
+		Assert.Equal(
+			[
+				(1001, InventoryItemPersistentState.Updated),
+				(77, InventoryItemPersistentState.Updated),
+				(2001, InventoryItemPersistentState.New),
+			],
+			normalized.Select(item => (item.ObjectId, item.PersistentState)).ToArray());
 	}
 
 	[Fact]

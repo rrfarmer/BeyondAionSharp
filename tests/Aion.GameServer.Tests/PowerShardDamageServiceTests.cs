@@ -48,6 +48,7 @@ public sealed class PowerShardDamageServiceTests
 
 		Assert.Equal(20, result.Damage);
 		var use = Assert.Single(result.PowerShardUses);
+		Assert.True(use.MarksEquipmentPersistentState);
 		Assert.Equal(2, Assert.Single(use.CountUpdateItems).Count);
 		Assert.Equal(2, result.InventoryItems.First(item => item.ObjectId == 2).Count);
 	}
@@ -99,6 +100,7 @@ public sealed class PowerShardDamageServiceTests
 
 		Assert.Equal(25, result.Damage);
 		var use = Assert.Single(result.PowerShardUses);
+		Assert.True(use.MarksEquipmentPersistentState);
 		Assert.Equal(4, Assert.Single(use.CountUpdateItems).ObjectId);
 		Assert.Equal(2, result.InventoryItems.First(item => item.ObjectId == 3).Count);
 		Assert.Equal(1, result.InventoryItems.First(item => item.ObjectId == 4).Count);

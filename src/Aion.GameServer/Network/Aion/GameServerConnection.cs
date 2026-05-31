@@ -3093,7 +3093,10 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (!saved)
 			return;
 
-		player.InventoryItems = change.InventoryItems;
+		player.InventoryItems = EquipmentService.NormalizeImmediatelySavedItems(
+			change.InventoryItems,
+			change.PersistedItems,
+			change.KinahItemUpdate);
 		if (change.PowerShardDeactivated)
 		{
 			// Java parity: model/gameobjects/player/Equipment.unEquipItem POWER_SHARDS branch sends SM_EMOTION to owner only.

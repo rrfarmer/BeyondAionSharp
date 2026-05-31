@@ -59,6 +59,8 @@ public static class PowerShardDamageService
 				return;
 
 			useResults.Add(useResult);
+			if (useResult.MarksEquipmentPersistentState)
+				workingPlayer.MarkEquipmentDirty();
 			inventoryItems = useResult.InventoryItems;
 			workingPlayer.InventoryItems = inventoryItems;
 		}

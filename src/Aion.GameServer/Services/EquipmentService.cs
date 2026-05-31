@@ -135,7 +135,8 @@ public static class EquipmentService
 				CountUpdateItems: [countUpdate],
 				EquipUpdateItems: Array.Empty<InventoryItem>(),
 				DeletedItemObjectIds: Array.Empty<int>(),
-				PowerShardDeactivated: false);
+				PowerShardDeactivated: false,
+				MarksEquipmentPersistentState: true);
 		}
 
 		inventoryItems.RemoveAll(item => item.ObjectId == equippedShard.ObjectId);
@@ -154,7 +155,8 @@ public static class EquipmentService
 				CountUpdateItems: Array.Empty<InventoryItem>(),
 				EquipUpdateItems: [replacementUpdate],
 				DeletedItemObjectIds: [equippedShard.ObjectId],
-				PowerShardDeactivated: false);
+				PowerShardDeactivated: false,
+				MarksEquipmentPersistentState: true);
 		}
 
 		return new PowerShardUseResult(
@@ -163,7 +165,36 @@ public static class EquipmentService
 			CountUpdateItems: Array.Empty<InventoryItem>(),
 			EquipUpdateItems: Array.Empty<InventoryItem>(),
 			DeletedItemObjectIds: [equippedShard.ObjectId],
-			PowerShardDeactivated: true);
+			PowerShardDeactivated: true,
+			MarksEquipmentPersistentState: true);
+	}
+
+	public static IReadOnlyList<InventoryItem> NormalizeImmediatelySavedItems(
+		IReadOnlyList<InventoryItem> inventoryItems,
+		IReadOnlyList<InventoryItem> persistedItems,
+		InventoryItem? kinahItemUpdate = null)
+	{
+		// Java parity: immediate repository writes should not leave modeled runtime rows dirty
+		// solely because the in-memory copies still carry pre-save UPDATE_REQUIRED state.
+		if (persistedItems.Count == 0 && kinahItemUpdate == null)
+			return inventoryItems;
+
+		var savedObjectIds = persistedItems.Select(item => item.ObjectId).ToHashSet();
+		if (kinahItemUpdate != null)
+			savedObjectIds.Add(kinahItemUpdate.ObjectId);
+
+		var changed = false;
+		var normalized = inventoryItems
+			.Select(item =>
+			{
+				if (!savedObjectIds.Contains(item.ObjectId) || item.PersistentState == InventoryItemPersistentState.Updated)
+					return item;
+
+				changed = true;
+				return CopyInventoryItem(item, persistentState: InventoryItemPersistentState.Updated);
+			})
+			.ToArray();
+		return changed ? normalized : inventoryItems;
 	}
 
 	private static EquipmentChangeResult EquipItem(
@@ -629,7 +660,8 @@ public static class EquipmentService
 		long? count = null,
 		long? slot = null,
 		bool? isEquipped = null,
-		bool? isSoulBound = null)
+		bool? isSoulBound = null,
+		InventoryItemPersistentState? persistentState = null)
 	{
 		var effectiveCount = count ?? item.Count;
 		var effectiveSlot = slot ?? item.Slot;
@@ -670,9 +702,10 @@ public static class EquipmentService
 			BuffSkill = item.BuffSkill,
 			RandomPlumeBonus = item.RandomPlumeBonus,
 			PendingTuneResult = item.PendingTuneResult,
-			PersistentState = changed
-				? InventoryItem.TransitionPersistentState(item.PersistentState, InventoryItemPersistentState.UpdateRequired)
-				: item.PersistentState,
+			PersistentState = persistentState
+				?? (changed
+					? InventoryItem.TransitionPersistentState(item.PersistentState, InventoryItemPersistentState.UpdateRequired)
+					: item.PersistentState),
 		};
 		copy.ManaStones = item.ManaStones;
 		copy.FusionStones = item.FusionStones;
@@ -706,7 +739,8 @@ public sealed record PowerShardUseResult(
 	IReadOnlyList<InventoryItem> CountUpdateItems,
 	IReadOnlyList<InventoryItem> EquipUpdateItems,
 	IReadOnlyList<int> DeletedItemObjectIds,
-	bool PowerShardDeactivated)
+	bool PowerShardDeactivated,
+	bool MarksEquipmentPersistentState)
 {
 	public static PowerShardUseResult NoChange()
 	{
@@ -716,7 +750,8 @@ public sealed record PowerShardUseResult(
 			CountUpdateItems: Array.Empty<InventoryItem>(),
 			EquipUpdateItems: Array.Empty<InventoryItem>(),
 			DeletedItemObjectIds: Array.Empty<int>(),
-			PowerShardDeactivated: false);
+			PowerShardDeactivated: false,
+			MarksEquipmentPersistentState: false);
 	}
 }
 
@@ -729,6 +764,7 @@ public sealed record EquipmentChangeResult(
 	IReadOnlyList<InventoryItem> PersistedItems,
 	IReadOnlyList<InventoryItem> InventoryUpdateItems,
 	bool PowerShardDeactivated = false,
+	bool MarksEquipmentPersistentState = false,
 	EquipmentChangeFailure Failure = EquipmentChangeFailure.None,
 	int RequiredLevel = 0,
 	int MaxLevel = 0,
@@ -880,6 +916,7 @@ public sealed record EquipmentChangeResult(
 			PersistedItems: persistedItems,
 			InventoryUpdateItems: inventoryUpdateItems,
 			PowerShardDeactivated: powerShardDeactivated,
+			MarksEquipmentPersistentState: true,
 			KinahItemUpdate: kinahItemUpdate,
 			Skills: skills,
 			AddedSkills: addedSkills,
