@@ -907,6 +907,138 @@ public sealed class CraftServiceTests
 	}
 
 	[Fact]
+	public void CreateStartConsumptionPlan_PlansBonusBeforeSelectedComponentsWithoutMutatingInventory()
+	{
+		var service = CreateService(out _, CreateItemTemplates(), CreateSkillTemplates());
+		var player = CreatePlayer(objectId: 1135, dp: 700);
+		var recipe = CreateRecipe(
+			recipeId: 155000028,
+			dp: 600,
+			productId: 100200203,
+			skillId: 40001,
+			skillPoint: 200,
+			componentGroups: [CreateComponentGroup((152000901, 2), (152000902, 1))]);
+		player.Recipes = [recipe.RecipeId];
+		player.Skills = [CreateSkill(recipe.SkillId, skillLevel: 200)];
+		player.InventoryItems =
+		[
+			CreateInventoryItem(objectId: 8006, itemId: 169401081, count: 1),
+			CreateInventoryItem(objectId: 8007, itemId: 152000901, count: 2),
+			CreateInventoryItem(objectId: 8008, itemId: 152000902, count: 1),
+		];
+		var productTemplate = CreateItemTemplates().GetItemTemplate(100200203);
+		var target = CreateTarget(objectId: 9021, templateId: 730190);
+		var selectedMaterials = new Dictionary<int, long> { [152000901] = 2 };
+		var validation = service.CreateStartCraftingValidationPlan(
+			player,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false,
+			selectedMaterials,
+			craftType: 1);
+
+		var plan = service.CreateStartConsumptionPlan(validation, recipe, selectedMaterials, craftType: 1);
+
+		Assert.Equal(CraftStartValidationStatus.ReadyForNextValidation, validation.Status);
+		Assert.Equal(CraftStartConsumptionStatus.Planned, plan.Status);
+		Assert.False(plan.IsLive);
+		Assert.Same(validation, plan.ValidationPlan);
+		Assert.Equal(recipe.RecipeId, plan.RecipeId);
+		Assert.Collection(
+			plan.Decreases,
+			decrease =>
+			{
+				Assert.Equal(CraftStartConsumedItemKind.BonusItem, decrease.Kind);
+				Assert.Equal(169401081, decrease.ItemId);
+				Assert.Equal(1, decrease.Quantity);
+			},
+			decrease =>
+			{
+				Assert.Equal(CraftStartConsumedItemKind.Component, decrease.Kind);
+				Assert.Equal(152000901, decrease.ItemId);
+				Assert.Equal(2, decrease.Quantity);
+			},
+			decrease =>
+			{
+				Assert.Equal(CraftStartConsumedItemKind.Component, decrease.Kind);
+				Assert.Equal(152000902, decrease.ItemId);
+				Assert.Equal(1, decrease.Quantity);
+			});
+		Assert.Equal(1, player.InventoryItems.Single(item => item.ItemId == 169401081).Count);
+		Assert.Equal(2, player.InventoryItems.Single(item => item.ItemId == 152000901).Count);
+		Assert.Contains("bonus decrease first", plan.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void CreateStartConsumptionPlan_PlansOnlySelectedComponentGroupWithoutBonus()
+	{
+		var service = CreateService(out _, CreateItemTemplates(), CreateSkillTemplates());
+		var player = CreatePlayer(objectId: 1136, dp: 700);
+		var recipe = CreateRecipe(
+			recipeId: 155000029,
+			dp: 600,
+			productId: 100200203,
+			skillId: 40001,
+			skillPoint: 200,
+			componentGroups:
+			[
+				CreateComponentGroup((152000901, 5)),
+				CreateComponentGroup((152000902, 1)),
+			]);
+		player.Recipes = [recipe.RecipeId];
+		player.Skills = [CreateSkill(recipe.SkillId, skillLevel: 200)];
+		player.InventoryItems = [CreateInventoryItem(objectId: 8009, itemId: 152000902, count: 1)];
+		var productTemplate = CreateItemTemplates().GetItemTemplate(100200203);
+		var target = CreateTarget(objectId: 9022, templateId: 730190);
+		var selectedMaterials = new Dictionary<int, long> { [152000902] = 1 };
+		var validation = service.CreateStartCraftingValidationPlan(
+			player,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false,
+			selectedMaterials);
+
+		var plan = service.CreateStartConsumptionPlan(validation, recipe, selectedMaterials);
+
+		Assert.Equal(CraftStartValidationStatus.ReadyForNextValidation, validation.Status);
+		var decrease = Assert.Single(plan.Decreases);
+		Assert.Equal(CraftStartConsumedItemKind.Component, decrease.Kind);
+		Assert.Equal(152000902, decrease.ItemId);
+		Assert.Equal(1, decrease.Quantity);
+	}
+
+	[Fact]
+	public void CreateStartConsumptionPlan_DoesNotPlanWhenValidationFailed()
+	{
+		var service = CreateService(out _, CreateItemTemplates(), CreateSkillTemplates());
+		var player = CreatePlayer(objectId: 1137, dp: 100);
+		var recipe = CreateRecipe(recipeId: 155000030, dp: 600, productId: 100200203, skillId: 40001, skillPoint: 200);
+		var productTemplate = CreateItemTemplates().GetItemTemplate(100200203);
+		var target = CreateTarget(objectId: 9023, templateId: 730190);
+		var validation = service.CreateStartCraftingValidationPlan(
+			player,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false);
+
+		var plan = service.CreateStartConsumptionPlan(validation, recipe, craftType: 1);
+
+		Assert.Equal(CraftStartValidationStatus.NotEnoughDp, validation.Status);
+		Assert.Equal(CraftStartConsumptionStatus.NotPlanned, plan.Status);
+		Assert.Empty(plan.Decreases);
+		Assert.Contains("returned false", plan.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
 	public void CreateFinishProductPlan_UsesBaseProductWhenCraftDoesNotCrit()
 	{
 		var service = CreateService(out _, CreateItemTemplates());

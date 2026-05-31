@@ -216,6 +216,35 @@ public sealed class CraftService
 			orderedPackets);
 	}
 
+	public CraftStartConsumptionPlan CreateStartConsumptionPlan(
+		CraftStartValidationPlan? validationPlan,
+		RecipeTemplateSummary? recipeTemplate,
+		IReadOnlyDictionary<int, long>? selectedMaterialData = null,
+		int craftType = 0)
+	{
+		// Java parity: CraftService.checkCraft successful tail consumes the bonus item first,
+		// then decreases each component in the selected components_data group.
+		if (validationPlan == null)
+			return CraftStartConsumptionPlan.NotPlanned("CraftService.checkCraft consumption planning requires validation evidence");
+		if (!validationPlan.IsReadyForNextValidation)
+			return CraftStartConsumptionPlan.NotPlanned("CraftService.checkCraft returned false; consumption is not planned");
+		if (recipeTemplate == null)
+			return CraftStartConsumptionPlan.NotPlanned("CraftService.checkCraft consumption planning requires recipe template");
+
+		var decreases = new List<CraftStartConsumedItemPlan>();
+		if (craftType == 1)
+			decreases.Add(CraftStartConsumedItemPlan.Bonus(GetBonusRequiredItemId(recipeTemplate.SkillId), quantity: 1));
+
+		var selectedComponents = GetSelectedComponentGroup(recipeTemplate, selectedMaterialData ?? new Dictionary<int, long>());
+		if (selectedComponents != null)
+		{
+			foreach (var component in selectedComponents.Components)
+				decreases.Add(CraftStartConsumedItemPlan.Component(component.ItemId, component.Quantity));
+		}
+
+		return CraftStartConsumptionPlan.Planned(validationPlan, recipeTemplate.RecipeId, decreases);
+	}
+
 	public CraftFinishProductPlan CreateFinishProductPlan(Player? player, RecipeTemplateSummary? recipeTemplate, int critCount)
 	{
 		// Java parity: services/craft/CraftService.finishCrafting product-selection branch.
@@ -325,20 +354,31 @@ public sealed class CraftService
 		RecipeTemplateSummary recipeTemplate,
 		IReadOnlyDictionary<int, long> selectedMaterialData)
 	{
+		var selectedComponents = GetSelectedComponentGroup(recipeTemplate, selectedMaterialData);
+		if (selectedComponents == null)
+			return null;
+
+		foreach (var component in selectedComponents.Components)
+		{
+			var availableCount = GetCubeItemCountByItemId(player.InventoryItems, component.ItemId);
+			if (availableCount < component.Quantity)
+				return new MissingCraftComponent(component.ItemId, component.Quantity, availableCount);
+		}
+
+		return null;
+	}
+
+	private static RecipeComponentDataSummary? GetSelectedComponentGroup(
+		RecipeTemplateSummary recipeTemplate,
+		IReadOnlyDictionary<int, long> selectedMaterialData)
+	{
 		foreach (var componentGroup in recipeTemplate.ComponentGroups)
 		{
 			var firstComponent = componentGroup.FirstComponent;
 			if (firstComponent == null || !selectedMaterialData.ContainsKey(firstComponent.ItemId))
 				continue;
 
-			foreach (var component in componentGroup.Components)
-			{
-				var availableCount = GetCubeItemCountByItemId(player.InventoryItems, component.ItemId);
-				if (availableCount < component.Quantity)
-					return new MissingCraftComponent(component.ItemId, component.Quantity, availableCount);
-			}
-
-			break;
+			return componentGroup;
 		}
 
 		return null;
@@ -1097,6 +1137,79 @@ public enum CraftStartFailureOrchestrationStatus
 	NotPlanned,
 	Planned,
 	CancelNotPlanned,
+}
+
+public sealed record CraftStartConsumptionPlan(
+	CraftStartConsumptionStatus Status,
+	CraftStartValidationPlan? ValidationPlan,
+	int RecipeId,
+	IReadOnlyList<CraftStartConsumedItemPlan> Decreases,
+	string JavaSource,
+	bool IsLive)
+{
+	public bool IsPlanned => Status == CraftStartConsumptionStatus.Planned;
+
+	public static CraftStartConsumptionPlan NotPlanned(string javaSource)
+	{
+		return new CraftStartConsumptionPlan(
+			CraftStartConsumptionStatus.NotPlanned,
+			ValidationPlan: null,
+			RecipeId: 0,
+			Decreases: Array.Empty<CraftStartConsumedItemPlan>(),
+			javaSource,
+			IsLive: false);
+	}
+
+	public static CraftStartConsumptionPlan Planned(
+		CraftStartValidationPlan validationPlan,
+		int recipeId,
+		IReadOnlyList<CraftStartConsumedItemPlan> decreases)
+	{
+		return new CraftStartConsumptionPlan(
+			CraftStartConsumptionStatus.Planned,
+			validationPlan,
+			recipeId,
+			decreases,
+			"CraftService.checkCraft -> bonus decrease first, selected component group decreases second",
+			IsLive: false);
+	}
+}
+
+public enum CraftStartConsumptionStatus
+{
+	NotPlanned,
+	Planned,
+}
+
+public sealed record CraftStartConsumedItemPlan(
+	int ItemId,
+	long Quantity,
+	CraftStartConsumedItemKind Kind,
+	string JavaSource)
+{
+	public static CraftStartConsumedItemPlan Bonus(int itemId, long quantity)
+	{
+		return new CraftStartConsumedItemPlan(
+			itemId,
+			quantity,
+			CraftStartConsumedItemKind.BonusItem,
+			"CraftService.checkCraft -> inventory.decreaseByItemId(getBonusReqItem(skillId), 1)");
+	}
+
+	public static CraftStartConsumedItemPlan Component(int itemId, long quantity)
+	{
+		return new CraftStartConsumedItemPlan(
+			itemId,
+			quantity,
+			CraftStartConsumedItemKind.Component,
+			"CraftService.checkCraft -> inventory.decreaseByItemId(component.getItemId(), component.getQuantity())");
+	}
+}
+
+public enum CraftStartConsumedItemKind
+{
+	BonusItem,
+	Component,
 }
 
 public sealed record CraftFinishProductPlan(
