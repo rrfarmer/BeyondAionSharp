@@ -84,6 +84,7 @@ public sealed record ItemTemplateSummary(
 	ItemEnchantActionInfo? EnchantAction = null,
 	int UseDelayId = 0,
 	int UseDelayMillis = 0,
+	bool HasTamperingAction = false,
 	int RideNpcId = 0,
 	int EmotionLearnId = 0,
 	int EmotionLearnMinutes = 0,

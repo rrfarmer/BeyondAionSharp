@@ -1934,6 +1934,36 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1401626, itemName);
 	}
 
+	public static SmSystemMessage ItemAuthorizeCancel(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ITEM_AUTHORIZE_CANCEL.
+		return new SmSystemMessage(1402147, itemName);
+	}
+
+	public static SmSystemMessage ItemAuthorizeSucceeded(string itemName, int temperingLevel)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ITEM_AUTHORIZE_SUCCEEDED.
+		return new SmSystemMessage(1402148, itemName, temperingLevel.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage ItemAuthorizeFailed(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ITEM_AUTHORIZE_FAILED.
+		return new SmSystemMessage(1402149, itemName);
+	}
+
+	public static SmSystemMessage ItemAuthorizeSucceededMax(string playerName, string itemName, int temperingLevel)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ITEM_AUTHORIZE_SUCCEEDED_MAX.
+		return new SmSystemMessage(1402154, playerName, itemName, temperingLevel.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage ItemAuthorizeFailedTShirt(string plumeName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ITEM_AUTHORIZE_FAILED_TSHIRT.
+		return new SmSystemMessage(1402447, plumeName);
+	}
+
 	public static SmSystemMessage ExchangeFullInventory()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_EXCHANGE_FULL_INVENTORY.

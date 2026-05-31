@@ -2229,6 +2229,13 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 4 && reader.LocalName == "tampering" && currentItemTemplate != null)
+			{
+				// Java parity: model/templates/item/actions/TamperingAction marker.
+				currentItemTemplate.HasTamperingAction = true;
+				continue;
+			}
+
 			if (reader.Depth == 4 && reader.LocalName == "assemble" && currentItemTemplate != null)
 			{
 				// Java parity: model/templates/item/actions/AssemblyItemAction item attribute.
@@ -4094,6 +4101,8 @@ public sealed class StaticData
 
 		public int UseDelayMillis { get; set; }
 
+		public bool HasTamperingAction { get; set; }
+
 		public bool HasHouseObjectAction { get; set; }
 
 		public int HouseObjectTemplateId { get; set; }
@@ -4177,6 +4186,7 @@ public sealed class StaticData
 				EnchantAction,
 				UseDelayId,
 				UseDelayMillis,
+				HasTamperingAction,
 				RideNpcId,
 				EmotionLearnId,
 				EmotionLearnMinutes,

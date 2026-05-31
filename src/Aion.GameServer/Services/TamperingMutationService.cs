@@ -60,7 +60,7 @@ public static class TamperingMutationService
 			IsAmplified = item.IsAmplified,
 			BuffSkill = item.BuffSkill,
 			RandomPlumeBonus = randomPlumeBonus,
-			PersistentState = item.PersistentState,
+			PersistentState = InventoryItem.TransitionPersistentState(item.PersistentState, InventoryItemPersistentState.UpdateRequired),
 			PendingTuneResult = item.PendingTuneResult,
 		};
 		updatedItem.ManaStones = item.ManaStones;

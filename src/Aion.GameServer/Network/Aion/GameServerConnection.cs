@@ -2567,6 +2567,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			{
 				PendingItemUseCancelMessage.EnchantItem => SmSystemMessage.EnchantItemCanceled(pendingItemUse.TargetItemName),
 				PendingItemUseCancelMessage.ItemIdentify => SmSystemMessage.ItemIdentifyCanceled(pendingItemUse.TargetItemName),
+				PendingItemUseCancelMessage.ItemAuthorize => SmSystemMessage.ItemAuthorizeCancel(pendingItemUse.TargetItemName),
 				PendingItemUseCancelMessage.Item => SmSystemMessage.ItemCanceled(),
 				PendingItemUseCancelMessage.ItemCharge => SmSystemMessage.ItemChargeCanceled(),
 				PendingItemUseCancelMessage.ItemCharge2 => SmSystemMessage.ItemCharge2Canceled(),
@@ -4292,6 +4293,17 @@ public sealed class GameServerConnection : BaseClientConnection
 					await SendPacketAsync(SmSystemMessage.PolishNeedIdentify());
 					break;
 			}
+			return;
+		}
+
+		if (sourceTemplate.HasTamperingAction && packet.Type == 2)
+		{
+			await HandleTamperingUseItemAsync(
+				player,
+				sourceItem,
+				sourceTemplate,
+				packet.TargetItemObjectId,
+				staticData);
 			return;
 		}
 
@@ -6784,6 +6796,175 @@ public sealed class GameServerConnection : BaseClientConnection
 			SmInventoryUpdateItem.DecreaseItemUse,
 			GetGeneralInfoWarehouseRestrictionFlag(polishPlan.TargetItemUpdate.ItemId, staticData.ItemRestrictionCleanups)));
 		if (polishPlan.TargetItemUpdate.IsEquipped)
+			await SendPacketAsync(CreateStatsInfoPacket(player, staticData));
+	}
+
+	private async Task HandleTamperingUseItemAsync(
+		Player player,
+		InventoryItem sourceItem,
+		ItemTemplateSummary sourceTemplate,
+		int targetItemObjectId,
+		StaticData staticData)
+	{
+		// Java parity: model/templates/item/actions/TamperingAction.canAct + act.
+		if (targetItemObjectId == 0)
+			return;
+
+		var inventoryItems = player.InventoryItems.ToList();
+		var targetItem = inventoryItems.FirstOrDefault(item => item.ObjectId == targetItemObjectId);
+		if (targetItem == null)
+			return;
+
+		var targetTemplate = staticData.ItemTemplates.GetItemTemplate(targetItem.ItemId);
+		if (targetTemplate == null || targetTemplate.MaxTampering <= 0 || targetItem.Tempering >= targetTemplate.MaxTampering)
+			return;
+
+		var startPlan = TamperingActionExecutionPlanService.CreateStartPlan(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId);
+		var removeCooldownDelayIdOnCancel = AddItemCooldownIfNeeded(player, sourceTemplate, removeOnCancel: true);
+		await CancelPendingItemUseAsync(player);
+		await BroadcastItemUsageAnimationAsync(player, startPlan.BroadcastPacket);
+		await SchedulePendingItemUseAsync(
+			player,
+			itemObjectId: sourceItem.ObjectId,
+			itemTemplateId: sourceItem.ItemId,
+			targetItemName: targetTemplate.GetClientName() ?? targetTemplate.Name,
+			cancelMessage: PendingItemUseCancelMessage.ItemAuthorize,
+			delay: TimeSpan.FromMilliseconds(startPlan.DelayMilliseconds),
+			completeAsync: async cancellationToken =>
+			{
+				if (cancellationToken.IsCancellationRequested)
+					return;
+
+				await CompleteTamperingUseItemAsync(
+					player,
+					sourceItem.ObjectId,
+					sourceTemplate,
+					targetItem,
+					targetTemplate,
+					staticData,
+					cancellationToken);
+			},
+			cancelEndState: 3,
+			removeCooldownDelayIdOnCancel: removeCooldownDelayIdOnCancel);
+	}
+
+	private async Task CompleteTamperingUseItemAsync(
+		Player player,
+		int sourceItemObjectId,
+		ItemTemplateSummary sourceTemplate,
+		InventoryItem originalTargetItem,
+		ItemTemplateSummary targetTemplate,
+		StaticData staticData,
+		CancellationToken cancellationToken)
+	{
+		var inventoryItems = player.InventoryItems.ToList();
+		var currentTargetItem = inventoryItems.FirstOrDefault(item => item.ObjectId == originalTargetItem.ObjectId);
+		if (currentTargetItem == null && !originalTargetItem.IsEquipped)
+		{
+			await SendPacketAsync(SmSystemMessage.EnchantItemNoTargetItem());
+			await BroadcastItemUsageAnimationAsync(player, new SmItemUsageAnimation(player.ObjectId, sourceItemObjectId, sourceTemplate.TemplateId, 0, 2, 0));
+			return;
+		}
+
+		var sourceItem = inventoryItems.FirstOrDefault(item => item.ObjectId == sourceItemObjectId && item.Location == CubeStorageId && !item.IsEquipped);
+		if (sourceItem == null)
+		{
+			await BroadcastItemUsageAnimationAsync(player, new SmItemUsageAnimation(player.ObjectId, sourceItemObjectId, sourceTemplate.TemplateId, 0, 2, 0));
+			return;
+		}
+
+		var sourceItemUpdate = sourceItem.Count > 1 ? CopyInventoryItem(sourceItem, count: sourceItem.Count - 1) : null;
+		int? deletedSourceObjectId = sourceItem.Count <= 1 ? sourceItem.ObjectId : null;
+		var targetItem = currentTargetItem ?? originalTargetItem;
+		if (targetTemplate.MaxTampering <= 0 || targetItem.Tempering >= targetTemplate.MaxTampering)
+		{
+			var sourceSaved = _playerEnterWorldService == null
+				|| await _playerEnterWorldService.SaveItemUseSourceMutationAsync(player, sourceItemUpdate, deletedSourceObjectId, cancellationToken);
+			if (!sourceSaved)
+				return;
+
+			await ApplySourceItemMutationAsync(
+				player,
+				inventoryItems,
+				sourceTemplate,
+				sourceItemUpdate,
+				deletedSourceObjectId,
+				staticData.ItemRestrictionCleanups);
+			return;
+		}
+
+		var plan = TamperingActionExecutionPlanService.CreateMutationPlan(
+			targetItem,
+			targetTemplate,
+			player.AccountMembership,
+			_options.Rates.TamperingChances,
+			_options.Custom.EnableEnchantAnnounce,
+			player.Name);
+		var updatedItems = new List<InventoryItem> { plan.TargetItemUpdate };
+		if (sourceItemUpdate != null)
+			updatedItems.Add(sourceItemUpdate);
+		var deletedObjectIds = new List<int>();
+		if (deletedSourceObjectId.HasValue)
+			deletedObjectIds.Add(deletedSourceObjectId.Value);
+		if (plan.Status == TamperingActionMutationStatus.FailedDestroyed)
+			deletedObjectIds.Add(targetItem.ObjectId);
+		var saved = _playerEnterWorldService == null
+			|| await _playerEnterWorldService.SaveAssemblyItemActionMutationAsync(
+				player,
+				updatedItems,
+				deletedObjectIds,
+				Array.Empty<InventoryItem>(),
+				Array.Empty<InventoryItem>(),
+				cancellationToken);
+		if (!saved)
+			return;
+
+		await ApplySourceItemMutationAsync(
+			player,
+			inventoryItems,
+			sourceTemplate,
+			sourceItemUpdate,
+			deletedSourceObjectId,
+			staticData.ItemRestrictionCleanups);
+		await SendPacketAsync(new SmInventoryUpdateItem(
+			plan.TargetItemUpdate,
+			targetTemplate,
+			SmInventoryUpdateItem.StatsChange,
+			GetGeneralInfoWarehouseRestrictionFlag(plan.TargetItemUpdate.ItemId, staticData.ItemRestrictionCleanups)));
+		await SendPacketAsync(plan.ResultMessage);
+		await BroadcastItemUsageAnimationAsync(
+			player,
+			new SmItemUsageAnimation(
+				player.ObjectId,
+				sourceItemObjectId,
+				sourceTemplate.TemplateId,
+				0,
+				plan.Status == TamperingActionMutationStatus.Succeeded ? 1 : 2,
+				0));
+
+		if (plan.Status == TamperingActionMutationStatus.FailedDestroyed)
+		{
+			player.TrackDeletedItem(targetItem);
+			inventoryItems.RemoveAll(item => item.ObjectId == targetItem.ObjectId);
+			player.InventoryItems = inventoryItems.ToArray();
+			await SendPacketAsync(new SmDeleteItem(targetItem.ObjectId, SmDeleteItem.UseDeleteType));
+			if (!targetItem.IsEquipped)
+				await SendPacketAsync(SmCubeUpdate.CubeSize(player));
+			if (targetItem.IsEquipped)
+				await SendPacketAsync(CreateStatsInfoPacket(player, staticData));
+			return;
+		}
+
+		ReplaceInventoryItem(inventoryItems, plan.TargetItemUpdate);
+		player.InventoryItems = inventoryItems.ToArray();
+		if (plan.AnnouncementPacket != null && _connectionRegistry != null)
+		{
+			await _connectionRegistry.BroadcastToWorldAsync(
+				plan.AnnouncementPacket,
+				otherPlayer => string.Equals(otherPlayer.Race, player.Race, StringComparison.Ordinal));
+		}
+
+		if (plan.TargetItemUpdate.IsEquipped)
 			await SendPacketAsync(CreateStatsInfoPacket(player, staticData));
 	}
 
@@ -12191,6 +12372,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		Item,
 		EnchantItem,
 		ItemIdentify,
+		ItemAuthorize,
 		ItemCharge,
 		ItemCharge2,
 		ItemReidentify,

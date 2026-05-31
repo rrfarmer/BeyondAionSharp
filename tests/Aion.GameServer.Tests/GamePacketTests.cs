@@ -1388,6 +1388,11 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.ItemIdentifySucceed("target"), 1401626, "target");
 		AssertSystemMessage(SmSystemMessage.ItemReidentifyApplyYes("target"), 1401910, "target");
 		AssertSystemMessage(SmSystemMessage.ItemReidentifyApplyNo(), 1401911);
+		AssertSystemMessage(SmSystemMessage.ItemAuthorizeCancel("target"), 1402147, "target");
+		AssertSystemMessage(SmSystemMessage.ItemAuthorizeSucceeded("target", 5), 1402148, "target", "5");
+		AssertSystemMessage(SmSystemMessage.ItemAuthorizeFailed("target"), 1402149, "target");
+		AssertSystemMessage(SmSystemMessage.ItemAuthorizeSucceededMax("TemperTester", "target", 10), 1402154, "TemperTester", "target", "10");
+		AssertSystemMessage(SmSystemMessage.ItemAuthorizeFailedTShirt("target"), 1402447, "target");
 		AssertSystemMessage(SmSystemMessage.ExchangeFullInventory(), 1300366);
 		AssertSystemMessage(SmSystemMessage.MailTakeAllCancel(), 1402251);
 		AssertSystemMessage(SmSystemMessage.NoSuchUser("Kahrun"), 1300627, "Kahrun");
