@@ -1,4 +1,5 @@
 using Aion.Commons.Network;
+using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ClientPackets;
@@ -22,6 +23,7 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 		Assert.NotNull(outcome.PrivateStoreOutcomePlan);
 		Assert.Null(outcome.PetMerchantSellFacadePlan);
 		Assert.Null(outcome.PetMerchantSellOutcomePlan);
+		Assert.Null(outcome.BuyFromShopOutcomePlan);
 		Assert.Equal(PrivateStorePurchaseOutcomePlanStatus.DisabledNoTransaction, outcome.PrivateStoreOutcomePlan!.Status);
 		Assert.True(outcome.WouldWritePersistence);
 		Assert.True(outcome.WouldMutateSellerInventory);
@@ -30,6 +32,7 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 		Assert.False(outcome.WouldAddRepurchaseItems);
 		Assert.True(outcome.WouldSendPackets);
 		Assert.True(outcome.WouldWriteExchangeLog);
+		Assert.False(outcome.WouldWriteAuditLog);
 		Assert.True(outcome.WouldCommitTransactionBoundary);
 		Assert.False(outcome.ShouldCommitTransactionBoundary);
 		Assert.False(outcome.ShouldDispatchLiveSideEffects);
@@ -48,6 +51,7 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 		Assert.Same(handlerPlan, outcome.HandlerPlan);
 		Assert.Null(outcome.PrivateStoreFacadePlan);
 		Assert.Null(outcome.PrivateStoreOutcomePlan);
+		Assert.Null(outcome.BuyFromShopOutcomePlan);
 		Assert.NotNull(outcome.PetMerchantSellFacadePlan);
 		Assert.NotNull(outcome.PetMerchantSellOutcomePlan);
 		Assert.Equal(PetMerchantSellOutcomePlanStatus.DisabledNoTransaction, outcome.PetMerchantSellOutcomePlan!.Status);
@@ -58,10 +62,81 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 		Assert.True(outcome.WouldAddRepurchaseItems);
 		Assert.True(outcome.WouldSendPackets);
 		Assert.False(outcome.WouldWriteExchangeLog);
+		Assert.False(outcome.WouldWriteAuditLog);
 		Assert.True(outcome.WouldCommitTransactionBoundary);
 		Assert.False(outcome.ShouldCommitTransactionBoundary);
 		Assert.False(outcome.ShouldDispatchLiveSideEffects);
 		Assert.False(outcome.IsLive);
+	}
+
+	[Fact]
+	public void CreateDisabledPlan_ComposesBuyFromShopFinalOutcomeWithoutDispatch()
+	{
+		var transactionPlan = CreateBuyTransactionPlan();
+		var handlerPlan = CreateBuyFromShopHandlerPlan(transactionPlan);
+
+		var outcome = CmBuyItemSideEffectOutcomePlanService.CreateDisabledPlan(handlerPlan);
+
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.BuyFromShopOutcomeCreated, outcome.Status);
+		Assert.Same(handlerPlan, outcome.HandlerPlan);
+		Assert.Null(outcome.PrivateStoreFacadePlan);
+		Assert.Null(outcome.PrivateStoreOutcomePlan);
+		Assert.Null(outcome.PetMerchantSellFacadePlan);
+		Assert.Null(outcome.PetMerchantSellOutcomePlan);
+		Assert.NotNull(outcome.BuyFromShopOutcomePlan);
+		Assert.Equal(TradeBuyTransactionOutcomePlanStatus.DisabledNoTransaction, outcome.BuyFromShopOutcomePlan!.Status);
+		Assert.True(outcome.WouldWritePersistence);
+		Assert.False(outcome.WouldMutateSellerInventory);
+		Assert.True(outcome.WouldMutateBuyerInventory);
+		Assert.True(outcome.WouldMutateKinah);
+		Assert.False(outcome.WouldAddRepurchaseItems);
+		Assert.True(outcome.WouldSendPackets);
+		Assert.False(outcome.WouldWriteExchangeLog);
+		Assert.False(outcome.WouldWriteAuditLog);
+		Assert.True(outcome.WouldCommitTransactionBoundary);
+		Assert.False(outcome.ShouldCommitTransactionBoundary);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+		Assert.False(outcome.IsLive);
+	}
+
+	[Fact]
+	public void CreateDisabledPlan_BuyFromShopSelectionWithoutTransactionPlanCarriesMissingOutcome()
+	{
+		var handlerPlan = CreateBuyFromShopHandlerPlan(buyTransactionPlan: null);
+
+		var outcome = CmBuyItemSideEffectOutcomePlanService.CreateDisabledPlan(handlerPlan);
+
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.BuyFromShopOutcomeCreated, outcome.Status);
+		Assert.Equal(TradeBuyTransactionOutcomePlanStatus.MissingTransactionPlan, outcome.BuyFromShopOutcomePlan!.Status);
+		Assert.False(outcome.WouldWritePersistence);
+		Assert.False(outcome.WouldSendPackets);
+		Assert.False(outcome.WouldWriteAuditLog);
+		Assert.False(outcome.WouldCommitTransactionBoundary);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+	}
+
+	[Fact]
+	public void CreateDisabledPlan_ComposesBuyFromShopAuditOutcomeWithoutDispatch()
+	{
+		var transactionPlan = new TradeBuyTransactionPlan(
+			TradeBuyTransactionPlanStatus.AuditNegativeRequiredAp,
+			[TradeBuyTransactionStep.CheckRequiredApExploit],
+			RequiredKinah: 0,
+			RequiredAbyssPoints: -100,
+			RequiredItems: [],
+			ShouldDispatchLiveSideEffects: false,
+			"TradeService.performBuyTransaction -> tradeList.getRequiredAp() < 0",
+			AuditReason: "possibly used packet hack: tradeList.getRequiredAp() < 0");
+		var handlerPlan = CreateBuyFromShopHandlerPlan(transactionPlan);
+
+		var outcome = CmBuyItemSideEffectOutcomePlanService.CreateDisabledPlan(handlerPlan);
+
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.BuyFromShopOutcomeCreated, outcome.Status);
+		Assert.False(outcome.WouldWritePersistence);
+		Assert.True(outcome.WouldSendPackets);
+		Assert.True(outcome.WouldWriteAuditLog);
+		Assert.True(outcome.WouldCommitTransactionBoundary);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
 	}
 
 	[Fact]
@@ -90,7 +165,7 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 	{
 		var handlerPlan = CmBuyItemHandlerCompositionPlanService.CreatePlan(
 			new CmBuyItemHandlerCompositionInput(
-				CreatePacket(13, [new CmBuyItemEntry(100000001, 1)]),
+				CreatePacket(99, [new CmBuyItemEntry(100000001, 1)]),
 				PlayerPresent: true,
 				TargetKind: CmBuyItemRunTargetKind.Npc));
 
@@ -100,6 +175,7 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 		Assert.Same(handlerPlan, outcome.HandlerPlan);
 		Assert.Null(outcome.PrivateStoreOutcomePlan);
 		Assert.Null(outcome.PetMerchantSellOutcomePlan);
+		Assert.Null(outcome.BuyFromShopOutcomePlan);
 		Assert.False(outcome.WouldWritePersistence);
 		Assert.False(outcome.ShouldDispatchLiveSideEffects);
 		Assert.False(outcome.IsLive);
@@ -114,6 +190,7 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 		Assert.Null(outcome.HandlerPlan);
 		Assert.Null(outcome.PrivateStoreOutcomePlan);
 		Assert.Null(outcome.PetMerchantSellOutcomePlan);
+		Assert.Null(outcome.BuyFromShopOutcomePlan);
 		Assert.False(outcome.WouldWritePersistence);
 		Assert.False(outcome.ShouldDispatchLiveSideEffects);
 		Assert.False(outcome.IsLive);
@@ -143,6 +220,17 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 				PetHasMerchantFunction: true,
 				PetSellModifier: 33,
 				PetSellToShopPlan: sellPlan));
+	}
+
+	private static CmBuyItemHandlerCompositionPlan CreateBuyFromShopHandlerPlan(TradeBuyTransactionPlan? buyTransactionPlan)
+	{
+		return CmBuyItemHandlerCompositionPlanService.CreatePlan(
+			new CmBuyItemHandlerCompositionInput(
+				CreatePacket(13, [new CmBuyItemEntry(100000001, 1)]),
+				PlayerPresent: true,
+				TargetKind: CmBuyItemRunTargetKind.Npc,
+				SellTemplate: new TradeListTemplateSummary(203060, [129], NpcType: "NORMAL"),
+				BuyTransactionPlan: buyTransactionPlan));
 	}
 
 	private static PrivateStorePurchasePlan CreatePrivateStorePurchasePlan()
@@ -177,6 +265,40 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 			RepurchaseItems: [new RepurchaseSourceItem(new InventoryItem { ObjectId = 2001, ItemId = 100000001, Count = 1 }, RepurchasePrice: 330)],
 			KinahUpdate: new InventoryItem { ObjectId = 3001, ItemId = InventoryItemFactory.KinahItemId, Count = 1_330 },
 			"TradeService.performSellToShop");
+	}
+
+	private static TradeBuyTransactionPlan CreateBuyTransactionPlan()
+	{
+		var mutation = new TradeBuyTransactionMutationDescriptor(
+			RequiredKinah: 1_000,
+			RequiredAbyssPoints: 500,
+			RequiredItems: [new TradeBuyTransactionRequiredItem(186000001, 2)],
+			AddedItems: [new TradeBuyTransactionItemRequest(100000001, 1, UnitBuyPrice: 1_000, RequiredApPerItem: 500, AcquisitionType: "AP", RequiredItemId: 186000001, RequiredItemCountPerItem: 2)],
+			LimitedItemUpdateItemIds: [100000001],
+			JavaSource: "TradeService.performBuyTransaction steps 6-7",
+			IsLive: false);
+
+		return new TradeBuyTransactionPlan(
+			TradeBuyTransactionPlanStatus.WouldApplyBuyTransaction,
+			[
+				TradeBuyTransactionStep.CheckPlayerCanTrade,
+				TradeBuyTransactionStep.ValidateBuyItems,
+				TradeBuyTransactionStep.SnapshotInventoryFreeSlots,
+				TradeBuyTransactionStep.ClassifyTradeNpcRates,
+				TradeBuyTransactionStep.CalculateKinahPrice,
+				TradeBuyTransactionStep.CalculateAbyssRewardRequirements,
+				TradeBuyTransactionStep.CheckRequiredApExploit,
+				TradeBuyTransactionStep.CheckInventoryFreeSlots,
+				TradeBuyTransactionStep.CheckLimitedItems,
+				TradeBuyTransactionStep.PlanCostSubtraction,
+				TradeBuyTransactionStep.PlanItemAddsAndLimitUpdates,
+			],
+			RequiredKinah: 1_000,
+			RequiredAbyssPoints: 500,
+			RequiredItems: [new TradeBuyTransactionRequiredItem(186000001, 2)],
+			ShouldDispatchLiveSideEffects: false,
+			"TradeService.performBuyTransaction",
+			Mutation: mutation);
 	}
 
 	private static CmBuyItem CreatePacket(int tradeActionId, IReadOnlyList<CmBuyItemEntry> entries)

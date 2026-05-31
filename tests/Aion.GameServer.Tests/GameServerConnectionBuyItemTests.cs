@@ -54,6 +54,7 @@ public sealed class GameServerConnectionBuyItemTests
 		var outcome = Assert.Single(fixture.BuyItemSideEffectOutcomePlans);
 		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.HandlerNotOutcomeEligible, outcome.Status);
 		Assert.Same(plan, outcome.HandlerPlan);
+		Assert.Null(outcome.BuyFromShopOutcomePlan);
 		Assert.False(outcome.ShouldDispatchLiveSideEffects);
 		Assert.Empty(fixture.SentPackets);
 	}
@@ -77,8 +78,11 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.False(plan.IsLive);
 		Assert.False(plan.ShouldDispatchLiveSideEffects);
 		var outcome = Assert.Single(fixture.BuyItemSideEffectOutcomePlans);
-		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.HandlerNotOutcomeEligible, outcome.Status);
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.BuyFromShopOutcomeCreated, outcome.Status);
 		Assert.Same(plan, outcome.HandlerPlan);
+		Assert.Equal(TradeBuyTransactionOutcomePlanStatus.MissingTransactionPlan, outcome.BuyFromShopOutcomePlan!.Status);
+		Assert.False(outcome.WouldWritePersistence);
+		Assert.False(outcome.WouldSendPackets);
 		Assert.False(outcome.ShouldDispatchLiveSideEffects);
 		Assert.Empty(fixture.SentPackets);
 	}

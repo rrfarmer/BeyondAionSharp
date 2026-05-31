@@ -6,6 +6,7 @@ public enum CmBuyItemSideEffectOutcomePlanStatus
 	HandlerNotOutcomeEligible,
 	PrivateStoreOutcomeCreated,
 	PetMerchantSellOutcomeCreated,
+	BuyFromShopOutcomeCreated,
 }
 
 public sealed record CmBuyItemSideEffectOutcomePlan(
@@ -15,6 +16,7 @@ public sealed record CmBuyItemSideEffectOutcomePlan(
 	PrivateStorePurchaseOutcomePlan? PrivateStoreOutcomePlan,
 	PetMerchantSellLiveExecutorFacadePlan? PetMerchantSellFacadePlan,
 	PetMerchantSellOutcomePlan? PetMerchantSellOutcomePlan,
+	TradeBuyTransactionOutcomePlan? BuyFromShopOutcomePlan,
 	bool WouldWritePersistence,
 	bool WouldMutateSellerInventory,
 	bool WouldMutateBuyerInventory,
@@ -22,6 +24,7 @@ public sealed record CmBuyItemSideEffectOutcomePlan(
 	bool WouldAddRepurchaseItems,
 	bool WouldSendPackets,
 	bool WouldWriteExchangeLog,
+	bool WouldWriteAuditLog,
 	bool WouldCommitTransactionBoundary,
 	bool ShouldCommitTransactionBoundary,
 	bool ShouldDispatchLiveSideEffects,
@@ -42,10 +45,11 @@ public static class CmBuyItemSideEffectOutcomePlanService
 		{
 			CmBuyItemHandlerCompositionPlanStatus.SelectedPrivateStorePlanner => CreatePrivateStoreOutcomePlan(handlerPlan),
 			CmBuyItemHandlerCompositionPlanStatus.SelectedPetSellToShopPlanner => CreatePetMerchantOutcomePlan(handlerPlan),
+			CmBuyItemHandlerCompositionPlanStatus.SelectedBuyFromShopPlanner => CreateBuyFromShopOutcomePlan(handlerPlan),
 			_ => CreateTerminalPlan(
 				CmBuyItemSideEffectOutcomePlanStatus.HandlerNotOutcomeEligible,
 				handlerPlan,
-				"CM_BUY_ITEM side-effect outcome composition only covers Player action 0 and Pet MERCHANT action 17"),
+				"CM_BUY_ITEM side-effect outcome composition only covers Player action 0, Pet MERCHANT action 17, and Npc buy-from-shop actions 13-16"),
 		};
 	}
 
@@ -61,6 +65,7 @@ public static class CmBuyItemSideEffectOutcomePlanService
 			outcomePlan,
 			PetMerchantSellFacadePlan: null,
 			PetMerchantSellOutcomePlan: null,
+			BuyFromShopOutcomePlan: null,
 			WouldWritePersistence: outcomePlan.WouldWritePersistence,
 			WouldMutateSellerInventory: facadePlan.WouldMutateSellerInventory,
 			WouldMutateBuyerInventory: facadePlan.WouldMutateBuyerInventory,
@@ -68,6 +73,7 @@ public static class CmBuyItemSideEffectOutcomePlanService
 			WouldAddRepurchaseItems: false,
 			WouldSendPackets: outcomePlan.WouldSendPackets,
 			WouldWriteExchangeLog: outcomePlan.WouldWriteExchangeLog,
+			WouldWriteAuditLog: false,
 			WouldCommitTransactionBoundary: outcomePlan.WouldCommitTransactionBoundary,
 			ShouldCommitTransactionBoundary: false,
 			ShouldDispatchLiveSideEffects: false,
@@ -85,8 +91,9 @@ public static class CmBuyItemSideEffectOutcomePlanService
 			handlerPlan,
 			PrivateStoreFacadePlan: null,
 			PrivateStoreOutcomePlan: null,
-			facadePlan,
-			outcomePlan,
+			PetMerchantSellFacadePlan: facadePlan,
+			PetMerchantSellOutcomePlan: outcomePlan,
+			BuyFromShopOutcomePlan: null,
 			WouldWritePersistence: outcomePlan.WouldWritePersistence,
 			WouldMutateSellerInventory: outcomePlan.WouldMutateSellerInventory,
 			WouldMutateBuyerInventory: false,
@@ -94,10 +101,39 @@ public static class CmBuyItemSideEffectOutcomePlanService
 			WouldAddRepurchaseItems: outcomePlan.WouldAddRepurchaseItems,
 			WouldSendPackets: outcomePlan.WouldSendPackets,
 			WouldWriteExchangeLog: false,
+			WouldWriteAuditLog: false,
 			WouldCommitTransactionBoundary: outcomePlan.WouldCommitTransactionBoundary,
 			ShouldCommitTransactionBoundary: false,
 			ShouldDispatchLiveSideEffects: false,
 			"CM_BUY_ITEM Pet MERCHANT action 17 disabled final outcome is composed from handler plan without dispatch",
+			IsLive: false);
+	}
+
+	private static CmBuyItemSideEffectOutcomePlan CreateBuyFromShopOutcomePlan(CmBuyItemHandlerCompositionPlan handlerPlan)
+	{
+		var transactionPlan = handlerPlan.BuyFromShopPlan?.Dispatch?.BuyTransactionPlan;
+		var outcomePlan = TradeBuyTransactionOutcomePlanService.CreateDisabledPlan(transactionPlan);
+
+		return new CmBuyItemSideEffectOutcomePlan(
+			CmBuyItemSideEffectOutcomePlanStatus.BuyFromShopOutcomeCreated,
+			handlerPlan,
+			PrivateStoreFacadePlan: null,
+			PrivateStoreOutcomePlan: null,
+			PetMerchantSellFacadePlan: null,
+			PetMerchantSellOutcomePlan: null,
+			BuyFromShopOutcomePlan: outcomePlan,
+			WouldWritePersistence: outcomePlan.WouldWritePersistence,
+			WouldMutateSellerInventory: false,
+			WouldMutateBuyerInventory: outcomePlan.WouldWritePersistence && transactionPlan?.Mutation?.AddedItems.Count > 0,
+			WouldMutateKinah: outcomePlan.WouldWritePersistence && transactionPlan?.RequiredKinah > 0,
+			WouldAddRepurchaseItems: false,
+			WouldSendPackets: outcomePlan.WouldSendPackets,
+			WouldWriteExchangeLog: false,
+			WouldWriteAuditLog: outcomePlan.WouldWriteAuditLog,
+			WouldCommitTransactionBoundary: outcomePlan.WouldCommitTransactionBoundary,
+			ShouldCommitTransactionBoundary: false,
+			ShouldDispatchLiveSideEffects: false,
+			"CM_BUY_ITEM Npc actions 13-16 disabled buy-from-shop final outcome is composed from handler plan without dispatch",
 			IsLive: false);
 	}
 
@@ -112,6 +148,7 @@ public static class CmBuyItemSideEffectOutcomePlanService
 			PrivateStoreOutcomePlan: null,
 			PetMerchantSellFacadePlan: null,
 			PetMerchantSellOutcomePlan: null,
+			BuyFromShopOutcomePlan: null,
 			WouldWritePersistence: false,
 			WouldMutateSellerInventory: false,
 			WouldMutateBuyerInventory: false,
@@ -119,6 +156,7 @@ public static class CmBuyItemSideEffectOutcomePlanService
 			WouldAddRepurchaseItems: false,
 			WouldSendPackets: false,
 			WouldWriteExchangeLog: false,
+			WouldWriteAuditLog: false,
 			WouldCommitTransactionBoundary: false,
 			ShouldCommitTransactionBoundary: false,
 			ShouldDispatchLiveSideEffects: false,

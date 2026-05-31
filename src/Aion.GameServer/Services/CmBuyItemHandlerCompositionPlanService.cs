@@ -47,6 +47,7 @@ public sealed record CmBuyItemHandlerCompositionInput(
 	IReadOnlySet<int>? RepurchasableItemObjectIds = null,
 	RepurchasePlan? RepurchasePlan = null,
 	TradeListTemplateSummary? SellTemplate = null,
+	TradeBuyTransactionPlan? BuyTransactionPlan = null,
 	IReadOnlyList<PrivateStoreListedItemSummary>? PrivateStoreItems = null,
 	PrivateStorePurchasePlan? PrivateStorePurchasePlan = null,
 	int? PetSellModifier = null,
@@ -218,7 +219,8 @@ public static class CmBuyItemHandlerCompositionPlanService
 					CmBuyItemRunTargetKind.Npc,
 					input.SellTemplate,
 					input.InteractionAllowed,
-					input.NpcCanSell));
+					input.NpcCanSell,
+					input.BuyTransactionPlan));
 
 			return CreatePlan(
 				CmBuyItemHandlerCompositionPlanStatus.SelectedBuyFromShopPlanner,
