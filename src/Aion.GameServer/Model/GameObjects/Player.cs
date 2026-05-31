@@ -211,7 +211,8 @@ public sealed class Player
 		set
 		{
 			_inventoryItems = value;
-			InventoryStoragePersistentState = PromoteStoragePersistentState(InventoryStoragePersistentState, value);
+			InventoryStoragePersistentState = PromoteStoragePersistentState(InventoryStoragePersistentState, value.Where(item => !item.IsEquipped).ToArray());
+			EquipmentPersistentState = PromoteEquipmentPersistentState(EquipmentPersistentState, value);
 		}
 	}
 
@@ -242,6 +243,9 @@ public sealed class Player
 
 	public StoragePersistentState AccountWarehouseStoragePersistentState { get; private set; } = StoragePersistentState.Updated;
 
+	// Java parity: model/gameobjects/player/Equipment.persistentState.
+	public StoragePersistentState EquipmentPersistentState { get; private set; } = StoragePersistentState.Updated;
+
 	// Java parity: model/items/storage/Storage.deletedItems for the currently modeled player-owned storages.
 	public IReadOnlyList<InventoryItem> DeletedInventoryItems { get; private set; } = Array.Empty<InventoryItem>();
 
@@ -253,9 +257,10 @@ public sealed class Player
 	public List<InventoryItem> GetDirtyItemsToUpdate()
 	{
 		var dirtyItems = new List<InventoryItem>();
-		AddDirtyStorageItems(dirtyItems, StorageLocation.Cube, InventoryItems, DeletedInventoryItems);
+		AddDirtyStorageItems(dirtyItems, StorageLocation.Cube, InventoryItems.Where(item => !item.IsEquipped).ToArray(), DeletedInventoryItems);
 		AddDirtyStorageItems(dirtyItems, StorageLocation.Warehouse, WarehouseItems, DeletedWarehouseItems);
 		AddDirtyStorageItems(dirtyItems, StorageLocation.AccountWarehouse, AccountWarehouseItems, DeletedAccountWarehouseItems);
+		AddDirtyEquipmentItems(dirtyItems, InventoryItems);
 		return dirtyItems;
 	}
 
@@ -268,6 +273,7 @@ public sealed class Player
 		InventoryStoragePersistentState = StoragePersistentState.Updated;
 		WarehouseStoragePersistentState = StoragePersistentState.Updated;
 		AccountWarehouseStoragePersistentState = StoragePersistentState.Updated;
+		EquipmentPersistentState = StoragePersistentState.Updated;
 		DeletedInventoryItems = Array.Empty<InventoryItem>();
 		DeletedWarehouseItems = Array.Empty<InventoryItem>();
 		DeletedAccountWarehouseItems = Array.Empty<InventoryItem>();
@@ -288,6 +294,12 @@ public sealed class Player
 				AccountWarehouseStoragePersistentState = StoragePersistentState.UpdateRequired;
 				return;
 		}
+	}
+
+	// Java parity: model/gameobjects/player/Equipment.setPersistentState(UPDATE_REQUIRED).
+	public void MarkEquipmentDirty()
+	{
+		EquipmentPersistentState = StoragePersistentState.UpdateRequired;
 	}
 
 	// Java parity: model/items/storage/Storage.delete(Item, ...) adds deleted rows to storage.deletedItems.
@@ -387,6 +399,15 @@ public sealed class Player
 		SetStoragePersistentState(location, StoragePersistentState.Updated);
 	}
 
+	private void AddDirtyEquipmentItems(List<InventoryItem> dirtyItems, IReadOnlyList<InventoryItem> items)
+	{
+		if (EquipmentPersistentState != StoragePersistentState.UpdateRequired)
+			return;
+
+		dirtyItems.AddRange(items.Where(item => item.IsEquipped));
+		EquipmentPersistentState = StoragePersistentState.Updated;
+	}
+
 	private static IReadOnlyList<InventoryItem> NormalizePersistentState(IReadOnlyList<InventoryItem> items)
 	{
 		if (!items.Any(item => item.PersistentState != InventoryItemPersistentState.Updated))
@@ -405,6 +426,22 @@ public sealed class Player
 		return items.Any(item => item.PersistentState is InventoryItemPersistentState.New
 			or InventoryItemPersistentState.UpdateRequired
 			or InventoryItemPersistentState.Deleted)
+			? StoragePersistentState.UpdateRequired
+			: StoragePersistentState.Updated;
+	}
+
+	private static StoragePersistentState PromoteEquipmentPersistentState(
+		StoragePersistentState currentState,
+		IReadOnlyList<InventoryItem> items)
+	{
+		if (currentState == StoragePersistentState.UpdateRequired)
+			return currentState;
+
+		return items.Any(item =>
+			item.IsEquipped
+			&& item.PersistentState is InventoryItemPersistentState.New
+				or InventoryItemPersistentState.UpdateRequired
+				or InventoryItemPersistentState.Deleted)
 			? StoragePersistentState.UpdateRequired
 			: StoragePersistentState.Updated;
 	}
