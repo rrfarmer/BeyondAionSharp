@@ -1,9 +1,15 @@
+using System.Text.Json;
 using Aion.GameServer.Services;
 
 namespace Aion.GameServer.Tests;
 
 public sealed class SkillStatConditionPreviewGoldenFixturePlanServiceTests
 {
+	private static readonly JsonSerializerOptions JsonOptions = new()
+	{
+		PropertyNameCaseInsensitive = true,
+	};
+
 	[Fact]
 	public void CreatePlan_ListsRequiredJavaRuntimeEvidence()
 	{
@@ -82,10 +88,63 @@ public sealed class SkillStatConditionPreviewGoldenFixturePlanServiceTests
 		Assert.Contains("first failed child", mixed.JavaSource, StringComparison.Ordinal);
 	}
 
+	[Fact]
+	public void GoldenFixtureContract_MatchesSourceDerivedPlanAndRemainsMarkedUncaptured()
+	{
+		var plan = SkillStatConditionPreviewGoldenFixturePlanService.CreatePlan();
+		var artifactPath = Path.Combine(FindRepositoryRoot(), "docs", "phase6-condition-preview-golden-fixture-contract.json");
+		var json = File.ReadAllText(artifactPath);
+
+		var artifact = JsonSerializer.Deserialize<ConditionPreviewGoldenFixtureContractArtifact>(json, JsonOptions);
+
+		Assert.NotNull(artifact);
+		Assert.Equal(1, artifact.SchemaVersion);
+		Assert.False(artifact.JavaRuntimeEvidenceCaptured);
+		Assert.Equal("contract-only", artifact.EvidenceLevel);
+		Assert.Contains("blocked-local-toolchain", artifact.JavaCaptureStatus, StringComparison.Ordinal);
+		Assert.Contains("Conditions.validate(Stat2, IStatFunction)", artifact.JavaExecutionPlan, StringComparison.Ordinal);
+		Assert.Equal(plan.FixtureCount, artifact.Fixtures.Count);
+
+		foreach (var fixture in artifact.Fixtures)
+		{
+			var plannedCase = Find(plan, fixture.FixtureName);
+			Assert.Equal(plannedCase.ConditionSequence, fixture.ConditionSequence);
+			Assert.Equal(plannedCase.ExpectedPurePreviewStatus, fixture.ExpectedPurePreviewStatus);
+			Assert.Equal(plannedCase.ExpectedConditionStatuses, fixture.ExpectedConditionStatuses);
+		}
+	}
+
 	private static SkillStatConditionPreviewGoldenFixtureCase Find(
 		SkillStatConditionPreviewGoldenFixturePlan plan,
 		string fixtureName)
 	{
 		return Assert.Single(plan.Cases, testCase => string.Equals(testCase.FixtureName, fixtureName, StringComparison.Ordinal));
 	}
+
+	private static string FindRepositoryRoot()
+	{
+		var directory = new DirectoryInfo(AppContext.BaseDirectory);
+		while (directory != null)
+		{
+			if (File.Exists(Path.Combine(directory.FullName, "docs", "csharp-port.md")))
+				return directory.FullName;
+			directory = directory.Parent;
+		}
+
+		throw new DirectoryNotFoundException("Could not locate repository root from " + AppContext.BaseDirectory);
+	}
+
+	private sealed record ConditionPreviewGoldenFixtureContractArtifact(
+		int SchemaVersion,
+		string EvidenceLevel,
+		bool JavaRuntimeEvidenceCaptured,
+		string JavaCaptureStatus,
+		string JavaExecutionPlan,
+		IReadOnlyList<ConditionPreviewGoldenFixtureContractCase> Fixtures);
+
+	private sealed record ConditionPreviewGoldenFixtureContractCase(
+		string FixtureName,
+		string ConditionSequence,
+		IReadOnlyList<string> ExpectedConditionStatuses,
+		string ExpectedPurePreviewStatus);
 }
