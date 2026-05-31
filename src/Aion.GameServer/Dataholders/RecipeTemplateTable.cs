@@ -44,4 +44,15 @@ public sealed record RecipeTemplateSummary(
 	int Dp,
 	int AutoLearn,
 	int ProductId,
-	int Quantity);
+	int Quantity,
+	IReadOnlyList<int>? ComboProducts = null)
+{
+	public int? GetComboProduct(int count)
+	{
+		var comboProducts = ComboProducts;
+		if (count <= 0 || comboProducts == null || count > comboProducts.Count)
+			return null;
+
+		return comboProducts[count - 1];
+	}
+}

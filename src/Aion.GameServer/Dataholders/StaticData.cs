@@ -345,6 +345,7 @@ public sealed class StaticData
 		NpcSkillListBuilder? currentNpcSkillList = null;
 		NpcSkillTemplateBuilder? currentNpcSkill = null;
 		TitleTemplateBuilder? currentTitleTemplate = null;
+		RecipeTemplateBuilder? currentRecipeTemplate = null;
 		List<int>? currentStorageExpansionNpcIds = null;
 		List<StorageExpansionPrice>? currentStorageExpansionPrices = null;
 		bool currentStorageExpansionIsCube = false;
@@ -420,6 +421,12 @@ public sealed class StaticData
 				{
 					cosmeticItems.Add(currentCosmeticItem.ToSummary());
 					currentCosmeticItem = null;
+				}
+
+				if (reader.Depth == 2 && reader.LocalName == "recipe_template" && currentRecipeTemplate != null)
+				{
+					recipeTemplates.Add(currentRecipeTemplate.ToSummary());
+					currentRecipeTemplate = null;
 				}
 
 				if (reader.Depth == 2 && reader.LocalName == "decomposable" && currentDecomposableItem != null)
@@ -2531,7 +2538,7 @@ public sealed class StaticData
 
 			if (reader.Depth == 2 && reader.LocalName == "recipe_template")
 			{
-				recipeTemplates.Add(new RecipeTemplateSummary(
+				currentRecipeTemplate = new RecipeTemplateBuilder(
 					ReadRequiredIntAttribute(reader, "id"),
 					ReadIntAttribute(reader, "nameid"),
 					ReadIntAttribute(reader, "skillid"),
@@ -2540,7 +2547,20 @@ public sealed class StaticData
 					ReadIntAttribute(reader, "dp"),
 					ReadIntAttribute(reader, "autolearn"),
 					ReadIntAttribute(reader, "productid"),
-					ReadIntAttribute(reader, "quantity")));
+					ReadIntAttribute(reader, "quantity"));
+				if (reader.IsEmptyElement)
+				{
+					recipeTemplates.Add(currentRecipeTemplate.ToSummary());
+					currentRecipeTemplate = null;
+				}
+				continue;
+			}
+
+			if (reader.Depth == 3
+				&& currentRecipeTemplate != null
+				&& reader.LocalName == "comboproduct")
+			{
+				currentRecipeTemplate.AddComboProduct(ReadRequiredIntAttribute(reader, "itemid"));
 				continue;
 			}
 
@@ -3722,6 +3742,71 @@ public sealed class StaticData
 				Description,
 				Race,
 				_modifiers.ToArray());
+		}
+	}
+
+	private sealed class RecipeTemplateBuilder
+	{
+		private readonly List<int> _comboProducts = [];
+
+		public RecipeTemplateBuilder(
+			int recipeId,
+			int nameId,
+			int skillId,
+			string race,
+			int skillPoint,
+			int dp,
+			int autoLearn,
+			int productId,
+			int quantity)
+		{
+			RecipeId = recipeId;
+			NameId = nameId;
+			SkillId = skillId;
+			Race = race;
+			SkillPoint = skillPoint;
+			Dp = dp;
+			AutoLearn = autoLearn;
+			ProductId = productId;
+			Quantity = quantity;
+		}
+
+		public int RecipeId { get; }
+
+		public int NameId { get; }
+
+		public int SkillId { get; }
+
+		public string Race { get; }
+
+		public int SkillPoint { get; }
+
+		public int Dp { get; }
+
+		public int AutoLearn { get; }
+
+		public int ProductId { get; }
+
+		public int Quantity { get; }
+
+		public void AddComboProduct(int itemId)
+		{
+			_comboProducts.Add(itemId);
+		}
+
+		public RecipeTemplateSummary ToSummary()
+		{
+			return new RecipeTemplateSummary(
+				RecipeId,
+				NameId,
+				SkillId,
+				Race,
+				SkillPoint,
+				Dp,
+				AutoLearn,
+				ProductId,
+				Quantity,
+				_comboProducts.Count == 0 ? null : _comboProducts.AsReadOnly());
 		}
 	}
 

@@ -944,6 +944,11 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(staticData.GetElementCount("skill_template"), staticData.SkillTemplates.Count);
 		Assert.Equal(300, staticData.TitleTemplates.Count);
 		Assert.Equal(staticData.GetElementCount("recipe_template"), staticData.RecipeTemplates.Count);
+		var comboRecipe = staticData.RecipeTemplates.GetRecipeTemplateById(155000078);
+		Assert.NotNull(comboRecipe);
+		Assert.Equal(100200203, comboRecipe.ProductId);
+		Assert.Equal(100200209, comboRecipe.GetComboProduct(1));
+		Assert.Null(comboRecipe.GetComboProduct(2));
 		Assert.Equal(staticData.GetElementCount("ride_info"), staticData.RideInfos.Count);
 		Assert.Equal(staticData.GetElementCount("item_purification"), staticData.ItemPurifications.Count);
 		Assert.Equal(staticData.GetElementCount("purification_result"), staticData.ItemPurifications.ResultCount);

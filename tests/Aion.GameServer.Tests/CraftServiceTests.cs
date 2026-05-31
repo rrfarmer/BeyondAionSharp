@@ -117,14 +117,101 @@ public sealed class CraftServiceTests
 		Assert.Equal(2, registry.SentPackets.Count);
 	}
 
-	private static CraftService CreateService(out CapturingConnectionRegistry registry)
+	[Fact]
+	public void CreateFinishProductPlan_UsesBaseProductWhenCraftDoesNotCrit()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1104, dp: 600, name: "Artisan");
+		var recipe = CreateRecipe(
+			recipeId: 155000005,
+			dp: 0,
+			productId: 152000401,
+			quantity: 3,
+			comboProducts: [188052501]);
+
+		var plan = service.CreateFinishProductPlan(player, recipe, critCount: 0);
+
+		Assert.Equal(CraftFinishProductStatus.Planned, plan.Status);
+		Assert.Equal(player.ObjectId, plan.ObjectId);
+		Assert.Equal(recipe.RecipeId, plan.RecipeId);
+		Assert.Equal(152000401, plan.ProductItemId);
+		Assert.Equal(3, plan.Quantity);
+		Assert.False(plan.UsesComboProduct);
+		Assert.False(plan.MarksCreatorOnEquipment);
+		Assert.Null(plan.CreatorName);
+	}
+
+	[Fact]
+	public void CreateFinishProductPlan_UsesComboProductAndMarksCreatorForWeapons()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1105, dp: 600, name: "Smith");
+		var recipe = CreateRecipe(
+			recipeId: 155000006,
+			dp: 0,
+			productId: 100200203,
+			quantity: 1,
+			comboProducts: [100200209]);
+
+		var plan = service.CreateFinishProductPlan(player, recipe, critCount: 1);
+
+		Assert.Equal(CraftFinishProductStatus.Planned, plan.Status);
+		Assert.Equal(100200209, plan.ProductItemId);
+		Assert.Equal(1, plan.Quantity);
+		Assert.True(plan.UsesComboProduct);
+		Assert.True(plan.MarksCreatorOnEquipment);
+		Assert.Equal("Smith", plan.CreatorName);
+	}
+
+	[Fact]
+	public void CreateFinishProductPlan_UsesComboIndexInJavaOrder()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1106, dp: 600);
+		var recipe = CreateRecipe(
+			recipeId: 155000007,
+			dp: 0,
+			productId: 100200203,
+			quantity: 1,
+			comboProducts: [100200209, 100000195]);
+
+		var plan = service.CreateFinishProductPlan(player, recipe, critCount: 2);
+
+		Assert.Equal(CraftFinishProductStatus.Planned, plan.Status);
+		Assert.Equal(100000195, plan.ProductItemId);
+		Assert.True(plan.UsesComboProduct);
+	}
+
+	[Fact]
+	public void CreateFinishProductPlan_ReportsMissingComboProductConservatively()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1107, dp: 600);
+		var recipe = CreateRecipe(
+			recipeId: 155000008,
+			dp: 0,
+			productId: 100200203,
+			quantity: 1);
+
+		var plan = service.CreateFinishProductPlan(player, recipe, critCount: 1);
+
+		Assert.Equal(CraftFinishProductStatus.MissingComboProduct, plan.Status);
+		Assert.Equal(player.ObjectId, plan.ObjectId);
+		Assert.Equal(recipe.RecipeId, plan.RecipeId);
+		Assert.Equal(1, plan.Quantity);
+		Assert.True(plan.UsesComboProduct);
+		Assert.False(plan.MarksCreatorOnEquipment);
+		Assert.Null(plan.CreatorName);
+	}
+
+	private static CraftService CreateService(out CapturingConnectionRegistry registry, ItemTemplateTable? itemTemplates = null)
 	{
 		registry = new CapturingConnectionRegistry();
 		var resourceStats = new WorldNpcResourceStatsService(
 			new WorldNpcLifeStatsService(new WorldNpcDeathDropWorkflowService(null!, null!)),
 			registry,
 			new PlayerVisualStatsUpdateService(registry));
-		return new CraftService(resourceStats);
+		return new CraftService(resourceStats, itemTemplates);
 	}
 
 	private static void AssertVisualStatsUpdate(WorldNpcResourceChangeResult change)
@@ -139,11 +226,12 @@ public sealed class CraftServiceTests
 		Assert.Equal(1, change.VisualStatsUpdate.SpeedBroadcastCount);
 	}
 
-	private static Player CreatePlayer(int objectId, int dp)
+	private static Player CreatePlayer(int objectId, int dp, string name = "Crafter")
 	{
 		return new Player
 		{
 			ObjectId = objectId,
+			Name = name,
 			Race = "ELYOS",
 			PlayerClass = "RANGER",
 			Level = 10,
@@ -154,7 +242,12 @@ public sealed class CraftServiceTests
 		};
 	}
 
-	private static RecipeTemplateSummary CreateRecipe(int recipeId, int dp)
+	private static RecipeTemplateSummary CreateRecipe(
+		int recipeId,
+		int dp,
+		int productId = 100000001,
+		int quantity = 1,
+		IReadOnlyList<int>? comboProducts = null)
 	{
 		return new RecipeTemplateSummary(
 			recipeId,
@@ -164,8 +257,68 @@ public sealed class CraftServiceTests
 			0,
 			dp,
 			0,
-			100000001,
-			1);
+			productId,
+			quantity,
+			comboProducts);
+	}
+
+	private static ItemTemplateTable CreateItemTemplates()
+	{
+		return new ItemTemplateTable(
+		[
+			new ItemTemplateSummary(
+				100200203,
+				"Practice Sword",
+				0,
+				0,
+				1,
+				"SWORD",
+				"ITEM",
+				"COMMON",
+				"PC_ALL",
+				1,
+				1,
+				1),
+			new ItemTemplateSummary(
+				100200209,
+				"Critical Sword",
+				0,
+				0,
+				1,
+				"SWORD",
+				"ITEM",
+				"COMMON",
+				"PC_ALL",
+				1,
+				1,
+				1),
+			new ItemTemplateSummary(
+				100000195,
+				"Second Critical Sword",
+				0,
+				0,
+				1,
+				"SWORD",
+				"ITEM",
+				"COMMON",
+				"PC_ALL",
+				1,
+				1,
+				1),
+			new ItemTemplateSummary(
+				152000401,
+				"Crafted Material",
+				0,
+				0,
+				1,
+				"QUEST",
+				"ITEM",
+				"COMMON",
+				"PC_ALL",
+				1,
+				1,
+				0),
+		]);
 	}
 
 	private sealed class CapturingConnectionRegistry : IGameClientConnectionRegistry
