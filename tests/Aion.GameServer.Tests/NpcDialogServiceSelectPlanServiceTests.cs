@@ -1,4 +1,6 @@
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 
 namespace Aion.GameServer.Tests;
@@ -132,6 +134,37 @@ public sealed class NpcDialogServiceSelectPlanServiceTests
 	}
 
 	[Fact]
+	public void CreatePlan_PlansBuyAgainWithRepurchasePacketSnapshot()
+	{
+		var item = new InventoryItem
+		{
+			ObjectId = 7001,
+			ItemId = SwordItemId,
+			Count = 1,
+			OwnerId = 1001,
+			Location = 0,
+			Slot = 65535,
+		};
+		var packet = new SmRepurchase(
+			targetObjectId: 9001,
+			items: [new RepurchasePacketItem(item, Template(SwordItemId), RepurchasePrice: 1_200)]);
+
+		var plan = NpcDialogServiceSelectPlanService.CreatePlan(
+			new NpcDialogServiceSelectInput(
+				CreateFallback(dialogActionId: 70),
+				RepurchasePacket: packet));
+
+		Assert.Equal(NpcDialogServiceSelectStatus.ServiceDispatch, plan.Status);
+		Assert.False(plan.IsLive);
+		Assert.Contains("BUY_AGAIN", plan.JavaSource, StringComparison.Ordinal);
+		var descriptor = Assert.Single(plan.Descriptors);
+		Assert.Equal(NpcDialogServiceDescriptorKind.RepurchasePacket, descriptor.Kind);
+		Assert.Equal(9001, descriptor.TargetObjectId);
+		Assert.Same(packet, descriptor.RepurchasePacket);
+		Assert.False(descriptor.IsLive);
+	}
+
+	[Fact]
 	public void CreatePlan_PlansTradeInFromExplicitTradeInListAvailability()
 	{
 		var packetPlan = SmTradeInListPacketPlanService.CreatePlan(
@@ -188,4 +221,23 @@ public sealed class NpcDialogServiceSelectPlanServiceTests
 	{
 		return new GoodsListTable(goodsLists, Array.Empty<GoodsListSummary>(), Array.Empty<GoodsListSummary>());
 	}
+
+	private static ItemTemplateSummary Template(int itemId)
+	{
+		return new ItemTemplateSummary(
+			itemId,
+			$"Item {itemId}",
+			DescriptionId: 40_000,
+			Mask: 0,
+			Level: 1,
+			ItemGroup: "NORMAL",
+			ItemType: "NORMAL",
+			Quality: "COMMON",
+			Race: "PC_ALL",
+			MaxStackCount: 1,
+			Price: 0,
+			ValidEquipmentSlots: 0);
+	}
+
+	private const int SwordItemId = 100000001;
 }

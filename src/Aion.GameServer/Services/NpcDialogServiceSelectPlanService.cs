@@ -1,3 +1,5 @@
+using Aion.GameServer.Network.Aion.ServerPackets;
+
 namespace Aion.GameServer.Services;
 
 public enum NpcDialogServiceSelectStatus
@@ -51,7 +53,8 @@ public sealed record NpcDialogServiceSelectInput(
 	int TradeSellPriceRate = 100,
 	bool HasTradeInList = false,
 	SmTradeListPacketPlan? TradeListPacketPlan = null,
-	SmTradeInListPacketPlan? TradeInListPacketPlan = null
+	SmTradeInListPacketPlan? TradeInListPacketPlan = null,
+	SmRepurchase? RepurchasePacket = null
 );
 
 public sealed record NpcDialogServiceDescriptor(
@@ -64,7 +67,8 @@ public sealed record NpcDialogServiceDescriptor(
 	int? ExtendedRewardIndex = null,
 	int? PriceModifier = null,
 	SmTradeListPacketPlan? TradeListPacketPlan = null,
-	SmTradeInListPacketPlan? TradeInListPacketPlan = null
+	SmTradeInListPacketPlan? TradeInListPacketPlan = null,
+	SmRepurchase? RepurchasePacket = null
 );
 
 public sealed record NpcDialogServiceSelectPlan(
@@ -179,7 +183,7 @@ public static class NpcDialogServiceSelectPlanService
 			),
 			FactionJoin => ServicePlan(fallback, NpcDialogServiceDescriptorKind.NpcFactionJoin, "player.getNpcFactions().enterGuild"),
 			FactionSeparate => ServicePlan(fallback, NpcDialogServiceDescriptorKind.NpcFactionLeave, "player.getNpcFactions().leaveNpcFaction"),
-			BuyAgain => ServicePlan(fallback, NpcDialogServiceDescriptorKind.RepurchasePacket, "SM_REPURCHASE"),
+			BuyAgain => CreateRepurchasePlan(input),
 			PetAdopt or PetAbandon or PetHAdopt or PetHAbandon => ServicePlan(fallback, NpcDialogServiceDescriptorKind.PetDialogPacket, "SM_PET"),
 			ChargeItemMulti or ChargeItemMulti2 => ServicePlan(
 				fallback,
@@ -287,6 +291,23 @@ public static class NpcDialogServiceSelectPlanService
 		);
 	}
 
+	private static NpcDialogServiceSelectPlan CreateRepurchasePlan(NpcDialogServiceSelectInput input)
+	{
+		return new NpcDialogServiceSelectPlan(
+			NpcDialogServiceSelectStatus.ServiceDispatch,
+			"DialogService BUY_AGAIN -> SM_REPURCHASE(player, npc.getObjectId())",
+			IsLive: false,
+			[
+				CreateDescriptor(
+					input.Fallback,
+					NpcDialogServiceDescriptorKind.RepurchasePacket,
+					"SM_REPURCHASE",
+					repurchasePacket: input.RepurchasePacket
+				),
+			]
+		);
+	}
+
 	private static NpcDialogServiceSelectPlan QuestEngineOrNextPagePlan(NpcDialogServiceFallbackDescriptor fallback, string javaSource)
 	{
 		return new NpcDialogServiceSelectPlan(
@@ -337,7 +358,8 @@ public static class NpcDialogServiceSelectPlanService
 		int? extendedRewardIndex = null,
 		int? priceModifier = null,
 		SmTradeListPacketPlan? tradeListPacketPlan = null,
-		SmTradeInListPacketPlan? tradeInListPacketPlan = null
+		SmTradeInListPacketPlan? tradeInListPacketPlan = null,
+		SmRepurchase? repurchasePacket = null
 	)
 	{
 		return new NpcDialogServiceDescriptor(
@@ -350,7 +372,8 @@ public static class NpcDialogServiceSelectPlanService
 			extendedRewardIndex,
 			priceModifier,
 			tradeListPacketPlan,
-			tradeInListPacketPlan
+			tradeInListPacketPlan,
+			repurchasePacket
 		);
 	}
 }
