@@ -3,6 +3,10 @@ namespace Aion.GameServer.Services;
 public static class SkillBuffStat2EvaluationReadinessReportService
 {
 	public const string JavaCurrentValueFormula = "(int) (base * baseRate + bonus * bonusRate + base * fixedBonusRate)";
+	public const string JavaAdditionPercentFormula = "(100 + delta) / 100f";
+	public const string JavaReversePercentFormula = "max(0, (100 - delta) / 100f)";
+	public const string JavaAdditionBonusFormula = "bonus += bonusRate * value";
+	public const string JavaReverseBonusFormula = "bonus -= bonusRate * value";
 
 	public static SkillBuffStat2EvaluationReadinessReport CreateReport(
 		IReadOnlyList<SkillBuffStatFunctionRegistryPlan> functionPlans,
@@ -74,8 +78,13 @@ public static class SkillBuffStat2EvaluationReadinessReportService
 			hasLiveStatCapProvider,
 			hasLiveNegativeSpeedRateFunctionProvider,
 			JavaCurrentValueFormula,
+			JavaAdditionPercentFormula,
+			JavaReversePercentFormula,
+			JavaAdditionBonusFormula,
+			JavaReverseBonusFormula,
+			"ReverseStat.addToBase subtracts from base and floors at zero",
 			missingInputs,
-			"CreatureGameStats.getStat creates AdditionStat or ReverseStat, applies sorted IStatFunction instances that validate(stat), then calls StatCapUtil.calculateBaseValue; Stat2.getCurrent truncates base * baseRate + bonus * bonusRate + base * fixedBonusRate; StatRateFunction uses current value instead of baseWithoutBaseRate for negative bonus SPEED when bonus is already negative");
+			"CreatureGameStats.getStat creates AdditionStat or ReverseStat, applies sorted IStatFunction instances that validate(stat), then calls StatCapUtil.calculateBaseValue; Stat2.getCurrent truncates base * baseRate + bonus * bonusRate + base * fixedBonusRate; AdditionStat.addToBonus and ReverseStat.addToBonus both multiply by bonusRate; ReverseStat.addToBase floors at zero; ReverseStat.calculatePercent floors negative percentages at zero; StatRateFunction uses current value instead of baseWithoutBaseRate for negative bonus SPEED when bonus is already negative");
 	}
 
 	private static SkillBuffStat2EvaluationReadinessStatus DetermineStatus(
@@ -155,6 +164,11 @@ public sealed record SkillBuffStat2EvaluationReadinessReport(
 	bool HasLiveStatCapProvider,
 	bool HasLiveNegativeSpeedRateFunctionProvider,
 	string CurrentValueFormula,
+	string AdditionPercentFormula,
+	string ReversePercentFormula,
+	string AdditionBonusFormula,
+	string ReverseBonusFormula,
+	string ReverseBaseFloorRule,
 	IReadOnlyList<string> MissingInputs,
 	string JavaSource)
 {

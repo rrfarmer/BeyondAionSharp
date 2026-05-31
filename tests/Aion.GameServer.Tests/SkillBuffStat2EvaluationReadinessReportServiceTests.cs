@@ -16,7 +16,14 @@ public sealed class SkillBuffStat2EvaluationReadinessReportServiceTests
 		Assert.Equal(0, report.FunctionCount);
 		Assert.Empty(report.StatNames);
 		Assert.Equal("(int) (base * baseRate + bonus * bonusRate + base * fixedBonusRate)", report.CurrentValueFormula);
+		Assert.Equal("(100 + delta) / 100f", report.AdditionPercentFormula);
+		Assert.Equal("max(0, (100 - delta) / 100f)", report.ReversePercentFormula);
+		Assert.Equal("bonus += bonusRate * value", report.AdditionBonusFormula);
+		Assert.Equal("bonus -= bonusRate * value", report.ReverseBonusFormula);
+		Assert.Equal("ReverseStat.addToBase subtracts from base and floors at zero", report.ReverseBaseFloorRule);
 		Assert.Contains("Stat2.getCurrent", report.JavaSource, StringComparison.Ordinal);
+		Assert.Contains("AdditionStat.addToBonus", report.JavaSource, StringComparison.Ordinal);
+		Assert.Contains("ReverseStat.addToBase floors at zero", report.JavaSource, StringComparison.Ordinal);
 		Assert.Contains("live Stat2 base/bonus/baseRate/bonusRate/fixedBonusRate state provider", report.MissingInputs);
 		Assert.Contains("live Stat2.getCurrent/getExactCurrent formula provider", report.MissingInputs);
 		Assert.Contains("live AdditionStat addToBase/addToBonus/calculatePercent provider", report.MissingInputs);
@@ -57,6 +64,8 @@ public sealed class SkillBuffStat2EvaluationReadinessReportServiceTests
 		Assert.Equal(1, report.ConditionedFunctionCount);
 		Assert.Equal(0, report.NegativeSpeedRateFunctionCount);
 		Assert.False(report.RequiresNegativeSpeedRateFunctionHandling);
+		Assert.Equal(SkillBuffStat2EvaluationReadinessReportService.JavaAdditionPercentFormula, report.AdditionPercentFormula);
+		Assert.Equal(SkillBuffStat2EvaluationReadinessReportService.JavaReversePercentFormula, report.ReversePercentFormula);
 	}
 
 	[Fact]
