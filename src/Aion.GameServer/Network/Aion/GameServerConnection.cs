@@ -83,6 +83,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly Func<bool> _isShuttingDownSoon;
 	private readonly Action<CmCraftRuntimePlan>? _cmCraftRuntimePlanObserver;
 	private readonly Action<CmCraftStartCompositionPlan>? _cmCraftStartCompositionPlanObserver;
+	private readonly Action<CmBuyItemHandlerCompositionPlan>? _cmBuyItemHandlerCompositionPlanObserver;
 	private readonly PlayerSummonCastSpellService _summonCastSpellService;
 	private readonly PlayerSummonSkillExecutionService _summonSkillExecutionService;
 	private readonly SemaphoreSlim _sendLock = new(1, 1);
@@ -152,7 +153,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		Action<QuestDialogNpcTargetBranchInputAssemblyPlan>? dialogSelectPlanObserver = null,
 		Func<bool>? isShuttingDownSoon = null,
 		Action<CmCraftRuntimePlan>? cmCraftRuntimePlanObserver = null,
-		Action<CmCraftStartCompositionPlan>? cmCraftStartCompositionPlanObserver = null)
+		Action<CmCraftStartCompositionPlan>? cmCraftStartCompositionPlanObserver = null,
+		Action<CmBuyItemHandlerCompositionPlan>? cmBuyItemHandlerCompositionPlanObserver = null)
 		: base(logger, client, clientId)
 	{
 		_packetProcessor = packetProcessor;
@@ -196,6 +198,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_isShuttingDownSoon = isShuttingDownSoon ?? (() => false);
 		_cmCraftRuntimePlanObserver = cmCraftRuntimePlanObserver;
 		_cmCraftStartCompositionPlanObserver = cmCraftStartCompositionPlanObserver;
+		_cmBuyItemHandlerCompositionPlanObserver = cmBuyItemHandlerCompositionPlanObserver;
 		_summonCastSpellService = new PlayerSummonCastSpellService();
 		_summonSkillExecutionService = new PlayerSummonSkillExecutionService();
 		_riftPortalInteractionService = riftPortalInteractionService
@@ -605,6 +608,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				break;
 			case CmCraft craft:
 				await HandleCraftAsync(_activePlayer, craft);
+				break;
+			case CmBuyItem buyItem:
+				HandleBuyItem(_activePlayer, buyItem);
 				break;
 			case CmSelectDecomposable selectDecomposable:
 				if (_activePlayer != null)
@@ -3941,6 +3947,35 @@ public sealed class GameServerConnection : BaseClientConnection
 			targetIsWithinToolRange,
 			hasCraftingTaskInProgress: false);
 		_cmCraftStartCompositionPlanObserver.Invoke(compositionPlan);
+	}
+
+	private void HandleBuyItem(Player? player, CmBuyItem packet)
+	{
+		if (_cmBuyItemHandlerCompositionPlanObserver == null)
+			return;
+
+		var targetKind = ResolveBuyItemTargetKind(packet.SellerObjectId);
+		var plan = CmBuyItemHandlerCompositionPlanService.CreatePlan(
+			new CmBuyItemHandlerCompositionInput(
+				packet,
+				PlayerPresent: player != null,
+				TargetKind: targetKind));
+		_cmBuyItemHandlerCompositionPlanObserver.Invoke(plan);
+	}
+
+	private CmBuyItemRunTargetKind ResolveBuyItemTargetKind(int sellerObjectId)
+	{
+		// Java resolves player.getKnownList().getObject(sellerObjId). This diagnostic
+		// path only classifies already-available C# world objects and stays non-live.
+		if (_world?.TryGetObject(sellerObjectId, out var gameObject) != true || gameObject == null)
+			return CmBuyItemRunTargetKind.Unknown;
+
+		return gameObject switch
+		{
+			Player => CmBuyItemRunTargetKind.Player,
+			IWorldNpcObject => CmBuyItemRunTargetKind.Npc,
+			_ => CmBuyItemRunTargetKind.Other,
+		};
 	}
 
 	private IWorldNpcObject? ResolveCraftTarget(int targetObjectId)
