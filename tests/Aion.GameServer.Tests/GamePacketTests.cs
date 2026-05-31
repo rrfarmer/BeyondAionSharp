@@ -1104,6 +1104,67 @@ public class GamePacketTests
 		Assert.Equal(15360, fullItemUsageReader.ReadD());
 		Assert.Equal(0, fullItemUsageReader.Remaining);
 
+		var craftTemplate = new ItemTemplateSummary(
+			TemplateId: 152200001,
+			Name: "Crafted Blade",
+			DescriptionId: 901001,
+			Mask: 0,
+			Level: 1,
+			ItemGroup: "SWORD",
+			ItemType: "NORMAL",
+			Quality: "COMMON",
+			Race: "PC_ALL",
+			MaxStackCount: 1,
+			Price: 0,
+			ValidEquipmentSlots: 1);
+
+		var craftAnimationPayload = SerializeUnencryptedPayload(new SmCraftAnimation(7001, 8002, 40001, 1));
+		using var craftAnimationReader = new PacketBuffer(craftAnimationPayload);
+		Assert.Equal(7001, craftAnimationReader.ReadD());
+		Assert.Equal(8002, craftAnimationReader.ReadD());
+		Assert.Equal(40001, craftAnimationReader.ReadH());
+		Assert.Equal(1, craftAnimationReader.ReadC());
+		Assert.Equal(0, craftAnimationReader.Remaining);
+
+		var craftInitPayload = SerializeUnencryptedPayload(new SmCraftUpdate(40001, craftTemplate, 1000, 1000, 0, 0, 0));
+		using var craftInitReader = new PacketBuffer(craftInitPayload);
+		Assert.Equal(40001, craftInitReader.ReadH());
+		Assert.Equal(0, craftInitReader.ReadC());
+		Assert.Equal(152200001, craftInitReader.ReadD());
+		Assert.Equal(1000, craftInitReader.ReadD());
+		Assert.Equal(1000, craftInitReader.ReadD());
+		Assert.Equal(0, craftInitReader.ReadD());
+		Assert.Equal(0, craftInitReader.ReadD());
+		Assert.Equal(1330048, craftInitReader.ReadD());
+		Assert.Equal(craftTemplate.GetClientName(), craftInitReader.ReadS());
+		Assert.Equal(0, craftInitReader.Remaining);
+
+		var craftCancelPayload = SerializeUnencryptedPayload(new SmCraftUpdate(40001, craftTemplate, 0, 0, 4, 0, 0));
+		using var craftCancelReader = new PacketBuffer(craftCancelPayload);
+		Assert.Equal(40001, craftCancelReader.ReadH());
+		Assert.Equal(4, craftCancelReader.ReadC());
+		craftCancelReader.ReadD();
+		craftCancelReader.ReadD();
+		craftCancelReader.ReadD();
+		craftCancelReader.ReadD();
+		craftCancelReader.ReadD();
+		Assert.Equal(1330051, craftCancelReader.ReadD());
+		Assert.Equal(string.Empty, craftCancelReader.ReadS());
+		Assert.Equal(0, craftCancelReader.Remaining);
+
+		var craftMorphPayload = SerializeUnencryptedPayload(new SmCraftUpdate(SmCraftUpdate.MorphSkillId, craftTemplate, 1000, 0, 1, 500, 250));
+		using var craftMorphReader = new PacketBuffer(craftMorphPayload);
+		Assert.Equal(SmCraftUpdate.MorphSkillId, craftMorphReader.ReadH());
+		Assert.Equal(1, craftMorphReader.ReadC());
+		craftMorphReader.ReadD();
+		craftMorphReader.ReadD();
+		craftMorphReader.ReadD();
+		Assert.Equal(500, craftMorphReader.ReadD());
+		Assert.Equal(1000, craftMorphReader.ReadD());
+		Assert.Equal(0, craftMorphReader.ReadD());
+		Assert.Equal(string.Empty, craftMorphReader.ReadS());
+		Assert.Equal(0, craftMorphReader.Remaining);
+
 		var tuneResultPayload = SerializeUnencryptedPayload(
 			new SmTuneResult(
 				new InventoryItem
