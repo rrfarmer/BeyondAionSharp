@@ -80,6 +80,8 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly PlayerShowBrandCommandPlanner _showBrandCommandPlanner;
 	private readonly PlayerCastSpellEarlyExitService _castSpellEarlyExitService;
 	private readonly GameServerCastSpellHandlerHooks _castSpellHooks;
+	private readonly Func<bool> _isShuttingDownSoon;
+	private readonly Action<CmCraftRuntimePlan>? _cmCraftRuntimePlanObserver;
 	private readonly PlayerSummonCastSpellService _summonCastSpellService;
 	private readonly PlayerSummonSkillExecutionService _summonSkillExecutionService;
 	private readonly SemaphoreSlim _sendLock = new(1, 1);
@@ -146,7 +148,9 @@ public sealed class GameServerConnection : BaseClientConnection
 		PlayerShowBrandCommandPlanner? showBrandCommandPlanner = null,
 		PlayerCastSpellEarlyExitService? castSpellEarlyExitService = null,
 		GameServerCastSpellHandlerHooks? castSpellHooks = null,
-		Action<QuestDialogNpcTargetBranchInputAssemblyPlan>? dialogSelectPlanObserver = null)
+		Action<QuestDialogNpcTargetBranchInputAssemblyPlan>? dialogSelectPlanObserver = null,
+		Func<bool>? isShuttingDownSoon = null,
+		Action<CmCraftRuntimePlan>? cmCraftRuntimePlanObserver = null)
 		: base(logger, client, clientId)
 	{
 		_packetProcessor = packetProcessor;
@@ -187,6 +191,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			?? new PlayerShowBrandCommandPlanner(_playerGroupRuntime, _playerAllianceRuntime);
 		_castSpellEarlyExitService = castSpellEarlyExitService ?? new PlayerCastSpellEarlyExitService();
 		_castSpellHooks = castSpellHooks ?? new GameServerCastSpellHandlerHooks();
+		_isShuttingDownSoon = isShuttingDownSoon ?? (() => false);
+		_cmCraftRuntimePlanObserver = cmCraftRuntimePlanObserver;
 		_summonCastSpellService = new PlayerSummonCastSpellService();
 		_summonSkillExecutionService = new PlayerSummonSkillExecutionService();
 		_riftPortalInteractionService = riftPortalInteractionService
@@ -593,6 +599,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmTuneResult tuneResult:
 				if (_activePlayer != null)
 					await HandleTuneResultAsync(_activePlayer, tuneResult);
+				break;
+			case CmCraft craft:
+				await HandleCraftAsync(_activePlayer, craft);
 				break;
 			case CmSelectDecomposable selectDecomposable:
 				if (_activePlayer != null)
@@ -3853,6 +3862,77 @@ public sealed class GameServerConnection : BaseClientConnection
 			targetTemplate,
 			SmInventoryUpdateItem.DecreaseItemUse,
 			GetGeneralInfoWarehouseRestrictionFlag(plan.ResultingTargetItem.ItemId, staticData.ItemRestrictionCleanups)));
+	}
+
+	private Task HandleCraftAsync(Player? player, CmCraft packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_CRAFT.runImpl guard shell.
+		var hasPlayer = player != null;
+		var isPlayerSpawned = player?.IsOnline == true;
+		var isShuttingDownSoon = _isShuttingDownSoon();
+		var targetExists = true;
+		var targetIsInRange = true;
+		var targetTemplateMatches = true;
+
+		if (hasPlayer && isPlayerSpawned && !isShuttingDownSoon && packet.UnknownByte != CmCraftRuntimePlanService.MorphSubstancesMarker)
+		{
+			var target = ResolveCraftTarget(packet.TargetObjectId);
+			targetExists = target != null;
+			targetIsInRange = target != null && IsInCraftTargetRange(player!, target);
+			targetTemplateMatches = target != null && target.TemplateId == packet.TargetTemplateId;
+		}
+
+		var plan = CmCraftRuntimePlanService.CreatePlan(
+			hasPlayer,
+			isPlayerSpawned,
+			isShuttingDownSoon,
+			packet.UnknownByte,
+			packet.RecipeId,
+			packet.TargetObjectId,
+			packet.CraftType,
+			packet.MaterialsData,
+			targetExists,
+			targetIsInRange,
+			targetTemplateMatches);
+		_cmCraftRuntimePlanObserver?.Invoke(plan);
+
+		if (plan.Status == CmCraftRuntimePlanStatus.StartCrafting)
+		{
+			_logger.LogDebug(
+				"Deferred CM_CRAFT startCrafting for player {PlayerObjectId}, recipe {RecipeId}, target {TargetObjectId}; CraftService.startCrafting runtime is not ported yet",
+				player?.ObjectId,
+				packet.RecipeId,
+				packet.TargetObjectId);
+		}
+
+		return Task.CompletedTask;
+	}
+
+	private IWorldNpcObject? ResolveCraftTarget(int targetObjectId)
+	{
+		// Java resolves player.getKnownList().getObject(targetObjId). The current C# world object
+		// model does not have StaticObject yet, so live dispatch uses available world-visible
+		// object metadata only for the CM_CRAFT pre-start guard.
+		return _world != null
+			&& _world.TryGetObject(targetObjectId, out var gameObject)
+			&& gameObject is IWorldNpcObject target
+				? target
+				: null;
+	}
+
+	private static bool IsInCraftTargetRange(Player player, IWorldNpcObject target)
+	{
+		if (player.Position.WorldId != target.Position.WorldId || player.Position.InstanceId != target.Position.InstanceId)
+			return false;
+
+		return PositionUtilService.IsInRange(
+			player.Position.X,
+			player.Position.Y,
+			player.Position.Z,
+			target.Position.X,
+			target.Position.Y,
+			target.Position.Z,
+			10);
 	}
 
 	private async Task SendConsumedItemPacketsAsync(
