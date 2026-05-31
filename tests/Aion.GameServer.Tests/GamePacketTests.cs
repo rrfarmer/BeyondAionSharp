@@ -1340,6 +1340,7 @@ public class GamePacketTests
 		Assert.Equal(0, (int)systemMessageReader.ReadC());
 		Assert.Equal(0, systemMessageReader.Remaining);
 		AssertSystemMessage(SmSystemMessage.FullInventory(), 1300762);
+		AssertSystemMessage(SmSystemMessage.CombineInventoryFull(), 1330037);
 		AssertSystemMessage(SmSystemMessage.UiInventoryFull(), 1300042);
 		AssertSystemMessage(SmSystemMessage.DiceInventoryError(), 1390182);
 		AssertSystemMessage(SmSystemMessage.AssemblyItemSucceeded(), 1401122);
@@ -1430,6 +1431,7 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.WeaponBoostEnded(), 1300492);
 		AssertSystemMessage(SmSystemMessage.WeaponBoostBurnOut(), 1400075);
 		AssertSystemMessage(SmSystemMessage.SkillCannotChangeModeWhileInCurrentStance(), 1300124);
+		AssertSystemMessage(SmSystemMessage.CraftCannotCombineWhileInCurrentStance(), 1300122);
 		AssertSystemMessage(SmSystemMessage.SkillCannotTakeOffWhileInCurrentStance(), 1300147);
 		AssertSystemMessage(SmSystemMessage.FlyingForbiddenHere(), 1300960);
 		AssertSystemMessage(SmSystemMessage.CantFlyNowDueToNoFly(), 1301032);

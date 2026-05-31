@@ -1075,6 +1075,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300762);
 	}
 
+	public static SmSystemMessage CombineInventoryFull()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_COMBINE_INVENTORY_IS_FULL.
+		return new SmSystemMessage(1330037);
+	}
+
 	public static SmSystemMessage UiInventoryFull()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_UI_INVENTORY_FULL.
@@ -1559,6 +1565,12 @@ public sealed class SmSystemMessage : GameServerPacket
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_SKILL_CAN_NOT_CHANGE_MODE__WHILE_IN_CURRENT_STANCE.
 		return new SmSystemMessage(1300124);
+	}
+
+	public static SmSystemMessage CraftCannotCombineWhileInCurrentStance()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_SKILL_CAN_NOT_COMBINE_WHILE_IN_CURRENT_STANCE.
+		return new SmSystemMessage(1300122);
 	}
 
 	public static SmSystemMessage SkillCannotTakeOffWhileInCurrentStance()

@@ -394,6 +394,91 @@ public sealed class CraftServiceTests
 	}
 
 	[Fact]
+	public void CreateStartCraftingValidationPlan_RejectsRideOrHideAfterDpValidation()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var rider = CreatePlayer(objectId: 1114, dp: 100);
+		rider.IsInRideMode = true;
+		var hidden = CreatePlayer(objectId: 1115, dp: 700);
+		hidden.SetVisualState(PlayerVisualStates.Hide1);
+		var recipe = CreateRecipe(recipeId: 155000015, dp: 600, productId: 100200203, skillId: 40001);
+		var productTemplate = CreateItemTemplates().GetItemTemplate(100200203);
+		var target = CreateTarget(objectId: 9008, templateId: 730190);
+
+		var dpWinsBeforeStance = service.CreateStartCraftingValidationPlan(
+			rider,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false);
+		rider.Dp = 700;
+		var ridePlan = service.CreateStartCraftingValidationPlan(
+			rider,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false);
+		var hidePlan = service.CreateStartCraftingValidationPlan(
+			hidden,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false);
+
+		Assert.Equal(CraftStartValidationStatus.NotEnoughDp, dpWinsBeforeStance.Status);
+		Assert.Equal(CraftStartValidationStatus.InvalidCurrentStance, ridePlan.Status);
+		Assert.Equal(1300122, Assert.IsType<SmSystemMessage>(ridePlan.FailurePacket).MessageId);
+		Assert.True(ridePlan.ShouldSendCancelCraft);
+		Assert.Contains("PlayerMode.RIDE", ridePlan.JavaSource, StringComparison.Ordinal);
+		Assert.Equal(CraftStartValidationStatus.InvalidCurrentStance, hidePlan.Status);
+		Assert.Equal(1300122, Assert.IsType<SmSystemMessage>(hidePlan.FailurePacket).MessageId);
+	}
+
+	[Fact]
+	public void CreateStartCraftingValidationPlan_RejectsInventoryFullAfterStanceValidation()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1116, dp: 700);
+		player.InventoryItems = CreateFullCubeInventory(player.ObjectId);
+		var ridingPlayer = CreatePlayer(objectId: 1117, dp: 700);
+		ridingPlayer.IsInRideMode = true;
+		ridingPlayer.InventoryItems = CreateFullCubeInventory(ridingPlayer.ObjectId);
+		var recipe = CreateRecipe(recipeId: 155000016, dp: 600, productId: 100200203, skillId: 40001);
+		var productTemplate = CreateItemTemplates().GetItemTemplate(100200203);
+		var target = CreateTarget(objectId: 9009, templateId: 730190);
+
+		var stanceWinsBeforeInventory = service.CreateStartCraftingValidationPlan(
+			ridingPlayer,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false);
+		var inventoryFull = service.CreateStartCraftingValidationPlan(
+			player,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false);
+
+		Assert.Equal(CraftStartValidationStatus.InvalidCurrentStance, stanceWinsBeforeInventory.Status);
+		Assert.Equal(CraftStartValidationStatus.InventoryFull, inventoryFull.Status);
+		Assert.Equal(1330037, Assert.IsType<SmSystemMessage>(inventoryFull.FailurePacket).MessageId);
+		Assert.True(inventoryFull.ShouldSendCancelCraft);
+		Assert.False(inventoryFull.IsReadyForNextValidation);
+		Assert.Contains("isFull", inventoryFull.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
 	public void CreateFinishProductPlan_UsesBaseProductWhenCraftDoesNotCrit()
 	{
 		var service = CreateService(out _, CreateItemTemplates());
@@ -657,6 +742,21 @@ public sealed class CraftServiceTests
 			Tribe: "NONE",
 			Type: "STATIC");
 		return new WorldNpc(objectId, templateId, template, new WorldPosition(210010000, 10, 20, 30, 0));
+	}
+
+	private static IReadOnlyList<InventoryItem> CreateFullCubeInventory(int ownerId)
+	{
+		return Enumerable.Range(0, 27)
+			.Select(index => new InventoryItem
+			{
+				ObjectId = 7000 + index,
+				ItemId = 199100000 + index,
+				Count = 1,
+				OwnerId = ownerId,
+				Location = 0,
+				Slot = index,
+			})
+			.ToArray();
 	}
 
 	private static ItemTemplateTable CreateItemTemplates()
