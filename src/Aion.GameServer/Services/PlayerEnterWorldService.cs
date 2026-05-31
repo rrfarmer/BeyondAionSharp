@@ -1119,3 +1119,146 @@ public enum PlayerLogoutCraftCooldownSavePlanStatus
 	PlayerMissing,
 	PersistencePlanNotReady,
 }
+
+public static class PlayerLogoutCraftCooldownLiveReadinessPlanService
+{
+	public static PlayerLogoutCraftCooldownLiveReadinessPlan CreatePlan(
+		PlayerLogoutCraftCooldownSavePlan? savePlan,
+		PlayerLogoutCraftCooldownConnectionDecision connectionDecision,
+		PlayerLogoutCraftCooldownErrorDecision errorDecision,
+		bool repositoryMethodAvailable,
+		bool logoutSaveHookAvailable,
+		bool databaseIntegrationTestAvailable)
+	{
+		if (savePlan == null)
+			return PlayerLogoutCraftCooldownLiveReadinessPlan.NotReady(
+				savePlan,
+				connectionDecision,
+				errorDecision,
+				repositoryMethodAvailable,
+				logoutSaveHookAvailable,
+				databaseIntegrationTestAvailable,
+				new[] { PlayerLogoutCraftCooldownLiveReadinessCriterion.SavePlanAvailable });
+
+		var missingCriteria = new List<PlayerLogoutCraftCooldownLiveReadinessCriterion>();
+		if (savePlan.Status != PlayerLogoutCraftCooldownSavePlanStatus.DisabledNoWrite)
+			missingCriteria.Add(PlayerLogoutCraftCooldownLiveReadinessCriterion.SavePlanReady);
+		if (connectionDecision == PlayerLogoutCraftCooldownConnectionDecision.Unspecified)
+			missingCriteria.Add(PlayerLogoutCraftCooldownLiveReadinessCriterion.ConnectionBehaviorDecided);
+		if (errorDecision == PlayerLogoutCraftCooldownErrorDecision.Unspecified)
+			missingCriteria.Add(PlayerLogoutCraftCooldownLiveReadinessCriterion.ErrorBehaviorDecided);
+		if (!repositoryMethodAvailable)
+			missingCriteria.Add(PlayerLogoutCraftCooldownLiveReadinessCriterion.RepositoryMethodAvailable);
+		if (!logoutSaveHookAvailable)
+			missingCriteria.Add(PlayerLogoutCraftCooldownLiveReadinessCriterion.LogoutSaveHookAvailable);
+		if (!databaseIntegrationTestAvailable)
+			missingCriteria.Add(PlayerLogoutCraftCooldownLiveReadinessCriterion.DatabaseIntegrationTestAvailable);
+
+		return missingCriteria.Count == 0
+			? PlayerLogoutCraftCooldownLiveReadinessPlan.Ready(
+				savePlan,
+				connectionDecision,
+				errorDecision,
+				repositoryMethodAvailable,
+				logoutSaveHookAvailable,
+				databaseIntegrationTestAvailable)
+			: PlayerLogoutCraftCooldownLiveReadinessPlan.NotReady(
+				savePlan,
+				connectionDecision,
+				errorDecision,
+				repositoryMethodAvailable,
+				logoutSaveHookAvailable,
+				databaseIntegrationTestAvailable,
+				missingCriteria);
+	}
+}
+
+public sealed record PlayerLogoutCraftCooldownLiveReadinessPlan(
+	PlayerLogoutCraftCooldownLiveReadinessStatus Status,
+	PlayerLogoutCraftCooldownSavePlan? SavePlan,
+	PlayerLogoutCraftCooldownConnectionDecision ConnectionDecision,
+	PlayerLogoutCraftCooldownErrorDecision ErrorDecision,
+	IReadOnlyList<PlayerLogoutCraftCooldownLiveReadinessCriterion> MissingCriteria,
+	bool RepositoryMethodAvailable,
+	bool LogoutSaveHookAvailable,
+	bool DatabaseIntegrationTestAvailable,
+	bool ReadyForLiveRepositoryWiring,
+	string JavaSource,
+	bool IsLive)
+{
+	public static PlayerLogoutCraftCooldownLiveReadinessPlan Ready(
+		PlayerLogoutCraftCooldownSavePlan savePlan,
+		PlayerLogoutCraftCooldownConnectionDecision connectionDecision,
+		PlayerLogoutCraftCooldownErrorDecision errorDecision,
+		bool repositoryMethodAvailable,
+		bool logoutSaveHookAvailable,
+		bool databaseIntegrationTestAvailable)
+	{
+		return new PlayerLogoutCraftCooldownLiveReadinessPlan(
+			PlayerLogoutCraftCooldownLiveReadinessStatus.ReadyForLiveRepositoryWiring,
+			savePlan,
+			connectionDecision,
+			errorDecision,
+			MissingCriteria: Array.Empty<PlayerLogoutCraftCooldownLiveReadinessCriterion>(),
+			repositoryMethodAvailable,
+			logoutSaveHookAvailable,
+			databaseIntegrationTestAvailable,
+			ReadyForLiveRepositoryWiring: true,
+			"CraftCooldownsDAO.storeCraftCooldowns live wiring is gated on explicit connection/error behavior decisions, repository support, logout hook, and database integration coverage",
+			IsLive: false);
+	}
+
+	public static PlayerLogoutCraftCooldownLiveReadinessPlan NotReady(
+		PlayerLogoutCraftCooldownSavePlan? savePlan,
+		PlayerLogoutCraftCooldownConnectionDecision connectionDecision,
+		PlayerLogoutCraftCooldownErrorDecision errorDecision,
+		bool repositoryMethodAvailable,
+		bool logoutSaveHookAvailable,
+		bool databaseIntegrationTestAvailable,
+		IReadOnlyList<PlayerLogoutCraftCooldownLiveReadinessCriterion> missingCriteria)
+	{
+		return new PlayerLogoutCraftCooldownLiveReadinessPlan(
+			PlayerLogoutCraftCooldownLiveReadinessStatus.NotReady,
+			savePlan,
+			connectionDecision,
+			errorDecision,
+			missingCriteria.ToArray(),
+			repositoryMethodAvailable,
+			logoutSaveHookAvailable,
+			databaseIntegrationTestAvailable,
+			ReadyForLiveRepositoryWiring: false,
+			"CraftCooldownsDAO.storeCraftCooldowns live wiring remains gated until Java connection/error behavior and C# repository/logout/test coverage are explicitly ready",
+			IsLive: false);
+	}
+}
+
+public enum PlayerLogoutCraftCooldownLiveReadinessStatus
+{
+	NotReady,
+	ReadyForLiveRepositoryWiring,
+}
+
+public enum PlayerLogoutCraftCooldownConnectionDecision
+{
+	Unspecified,
+	PreserveJavaSeparateConnections,
+	IntentionalDifferenceReuseLogoutConnectionDocumented,
+}
+
+public enum PlayerLogoutCraftCooldownErrorDecision
+{
+	Unspecified,
+	PreserveJavaSwallowSqlExceptionsPerOperation,
+	IntentionalDifferenceAggregateRepositoryFailureDocumented,
+}
+
+public enum PlayerLogoutCraftCooldownLiveReadinessCriterion
+{
+	SavePlanAvailable,
+	SavePlanReady,
+	ConnectionBehaviorDecided,
+	ErrorBehaviorDecided,
+	RepositoryMethodAvailable,
+	LogoutSaveHookAvailable,
+	DatabaseIntegrationTestAvailable,
+}

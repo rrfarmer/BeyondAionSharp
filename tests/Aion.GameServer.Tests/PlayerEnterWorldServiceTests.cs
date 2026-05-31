@@ -409,6 +409,78 @@ public sealed class PlayerEnterWorldServiceTests
 	}
 
 	[Fact]
+	public void CreateLogoutCraftCooldownLiveReadinessPlan_BlocksWhenConnectionAndErrorDecisionsAreMissing()
+	{
+		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
+		player.CraftCooldowns = new Dictionary<int, long> { [77] = 2_000 };
+		var savePlan = PlayerLogoutCraftCooldownSavePlanService.CreateDisabledPlan(player, currentTimeMillis: 1_000);
+
+		var readiness = PlayerLogoutCraftCooldownLiveReadinessPlanService.CreatePlan(
+			savePlan,
+			PlayerLogoutCraftCooldownConnectionDecision.Unspecified,
+			PlayerLogoutCraftCooldownErrorDecision.Unspecified,
+			repositoryMethodAvailable: false,
+			logoutSaveHookAvailable: false,
+			databaseIntegrationTestAvailable: false);
+
+		Assert.Equal(PlayerLogoutCraftCooldownLiveReadinessStatus.NotReady, readiness.Status);
+		Assert.False(readiness.ReadyForLiveRepositoryWiring);
+		Assert.Contains(PlayerLogoutCraftCooldownLiveReadinessCriterion.ConnectionBehaviorDecided, readiness.MissingCriteria);
+		Assert.Contains(PlayerLogoutCraftCooldownLiveReadinessCriterion.ErrorBehaviorDecided, readiness.MissingCriteria);
+		Assert.Contains(PlayerLogoutCraftCooldownLiveReadinessCriterion.RepositoryMethodAvailable, readiness.MissingCriteria);
+		Assert.Contains(PlayerLogoutCraftCooldownLiveReadinessCriterion.LogoutSaveHookAvailable, readiness.MissingCriteria);
+		Assert.Contains(PlayerLogoutCraftCooldownLiveReadinessCriterion.DatabaseIntegrationTestAvailable, readiness.MissingCriteria);
+		Assert.False(readiness.IsLive);
+	}
+
+	[Fact]
+	public void CreateLogoutCraftCooldownLiveReadinessPlan_AllowsDocumentedIntentionalConnectionDifferenceButStillRequiresWiring()
+	{
+		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
+		player.CraftCooldowns = new Dictionary<int, long> { [77] = 2_000 };
+		var savePlan = PlayerLogoutCraftCooldownSavePlanService.CreateDisabledPlan(player, currentTimeMillis: 1_000);
+
+		var readiness = PlayerLogoutCraftCooldownLiveReadinessPlanService.CreatePlan(
+			savePlan,
+			PlayerLogoutCraftCooldownConnectionDecision.IntentionalDifferenceReuseLogoutConnectionDocumented,
+			PlayerLogoutCraftCooldownErrorDecision.PreserveJavaSwallowSqlExceptionsPerOperation,
+			repositoryMethodAvailable: false,
+			logoutSaveHookAvailable: false,
+			databaseIntegrationTestAvailable: false);
+
+		Assert.Equal(PlayerLogoutCraftCooldownLiveReadinessStatus.NotReady, readiness.Status);
+		Assert.DoesNotContain(PlayerLogoutCraftCooldownLiveReadinessCriterion.ConnectionBehaviorDecided, readiness.MissingCriteria);
+		Assert.DoesNotContain(PlayerLogoutCraftCooldownLiveReadinessCriterion.ErrorBehaviorDecided, readiness.MissingCriteria);
+		Assert.Contains(PlayerLogoutCraftCooldownLiveReadinessCriterion.RepositoryMethodAvailable, readiness.MissingCriteria);
+		Assert.Contains(PlayerLogoutCraftCooldownLiveReadinessCriterion.LogoutSaveHookAvailable, readiness.MissingCriteria);
+		Assert.Contains(PlayerLogoutCraftCooldownLiveReadinessCriterion.DatabaseIntegrationTestAvailable, readiness.MissingCriteria);
+	}
+
+	[Fact]
+	public void CreateLogoutCraftCooldownLiveReadinessPlan_IsReadyOnlyWhenEveryGateIsPresent()
+	{
+		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
+		player.CraftCooldowns = new Dictionary<int, long> { [77] = 2_000 };
+		var savePlan = PlayerLogoutCraftCooldownSavePlanService.CreateDisabledPlan(player, currentTimeMillis: 1_000);
+
+		var readiness = PlayerLogoutCraftCooldownLiveReadinessPlanService.CreatePlan(
+			savePlan,
+			PlayerLogoutCraftCooldownConnectionDecision.PreserveJavaSeparateConnections,
+			PlayerLogoutCraftCooldownErrorDecision.PreserveJavaSwallowSqlExceptionsPerOperation,
+			repositoryMethodAvailable: true,
+			logoutSaveHookAvailable: true,
+			databaseIntegrationTestAvailable: true);
+
+		Assert.Equal(PlayerLogoutCraftCooldownLiveReadinessStatus.ReadyForLiveRepositoryWiring, readiness.Status);
+		Assert.True(readiness.ReadyForLiveRepositoryWiring);
+		Assert.Empty(readiness.MissingCriteria);
+		Assert.Equal(PlayerLogoutCraftCooldownConnectionDecision.PreserveJavaSeparateConnections, readiness.ConnectionDecision);
+		Assert.Equal(PlayerLogoutCraftCooldownErrorDecision.PreserveJavaSwallowSqlExceptionsPerOperation, readiness.ErrorDecision);
+		Assert.False(readiness.IsLive);
+		Assert.Contains("CraftCooldownsDAO.storeCraftCooldowns live wiring is gated", readiness.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
 	public async Task LeaveWorld_PersistsAcceptedStorageExpansionFields()
 	{
 		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
