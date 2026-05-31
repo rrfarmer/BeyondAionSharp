@@ -59,6 +59,58 @@ public sealed record CraftStartSideEffectBoundaryPlan(
 	public bool IsPlanned => Status == CraftStartSideEffectBoundaryStatus.Planned;
 }
 
+public enum CraftStartLiveExecutorFacadeStatus
+{
+	MissingCompositionPlan,
+	CompositionNotReady,
+	DisabledNoSideEffects,
+}
+
+public enum CraftStartLiveExecutorOperationKind
+{
+	ApplyInventoryMutation,
+	MarkInventoryPersistenceState,
+	SendInventoryPackets,
+	SpendRecipeDp,
+	CreateCraftingTask,
+	StartCraftingTask,
+}
+
+public enum CraftStartLiveExecutorOperationStatus
+{
+	NotAttemptedMissingPlan,
+	NotAttemptedCompositionNotReady,
+	NotAttemptedDisabled,
+}
+
+public sealed record CraftStartLiveExecutorOperation(
+	CraftStartLiveExecutorOperationKind Kind,
+	CraftStartLiveExecutorOperationStatus Status,
+	string JavaSource);
+
+public sealed record CraftStartLiveExecutorFacadePlan(
+	CraftStartLiveExecutorFacadeStatus Status,
+	CmCraftStartCompositionPlan? CompositionPlan,
+	IReadOnlyList<CraftStartLiveExecutorOperation> Operations,
+	bool WouldMutateInventory,
+	bool DidMutateInventory,
+	bool WouldWriteInventoryPersistence,
+	bool DidWriteInventoryPersistence,
+	bool WouldSendInventoryPackets,
+	bool DidSendInventoryPackets,
+	bool WouldSpendDp,
+	bool DidSpendDp,
+	bool WouldCreateCraftingTask,
+	bool DidCreateCraftingTask,
+	bool WouldStartCraftingTask,
+	bool DidStartCraftingTask,
+	bool ShouldDispatchLiveSideEffects,
+	string JavaSource,
+	bool IsLive)
+{
+	public bool IsDisabled => Status == CraftStartLiveExecutorFacadeStatus.DisabledNoSideEffects;
+}
+
 public sealed record CmCraftStartCompositionPlan(
 	CmCraftStartCompositionPlanStatus Status,
 	CmCraftRuntimePlan? RuntimePlan,
@@ -334,5 +386,114 @@ public static class CmCraftStartCompositionPlanService
 			ShouldDispatchLiveSideEffects: false,
 			"CraftService.checkCraft successful inventory side effects -> startCrafting DP spend -> set CraftingTask -> CraftingTask.start",
 			IsLive: false);
+	}
+}
+
+public static class CraftStartLiveExecutorFacadePlanService
+{
+	public static CraftStartLiveExecutorFacadePlan CreateDisabledPlan(CmCraftStartCompositionPlan? compositionPlan)
+	{
+		// Java parity: CraftService.startCrafting live side effects remain behind a disabled
+		// C# boundary until mutation, persistence, packet send, DP, and CraftingTask wiring
+		// are each explicitly enabled and verified.
+		if (compositionPlan == null)
+		{
+			return new CraftStartLiveExecutorFacadePlan(
+				CraftStartLiveExecutorFacadeStatus.MissingCompositionPlan,
+				CompositionPlan: null,
+				[NotAttempted(CraftStartLiveExecutorOperationKind.ApplyInventoryMutation, CraftStartLiveExecutorOperationStatus.NotAttemptedMissingPlan)],
+				WouldMutateInventory: false,
+				DidMutateInventory: false,
+				WouldWriteInventoryPersistence: false,
+				DidWriteInventoryPersistence: false,
+				WouldSendInventoryPackets: false,
+				DidSendInventoryPackets: false,
+				WouldSpendDp: false,
+				DidSpendDp: false,
+				WouldCreateCraftingTask: false,
+				DidCreateCraftingTask: false,
+				WouldStartCraftingTask: false,
+				DidStartCraftingTask: false,
+				ShouldDispatchLiveSideEffects: false,
+				"CraftService.startCrafting live facade requires CM_CRAFT composition evidence before any side effects can be considered",
+				IsLive: false);
+		}
+
+		if (compositionPlan.Status != CmCraftStartCompositionPlanStatus.ReadyForDpSpendAndTaskStart
+			|| !compositionPlan.SideEffectBoundaryPlan.IsPlanned)
+		{
+			return new CraftStartLiveExecutorFacadePlan(
+				CraftStartLiveExecutorFacadeStatus.CompositionNotReady,
+				compositionPlan,
+				[NotAttempted(CraftStartLiveExecutorOperationKind.ApplyInventoryMutation, CraftStartLiveExecutorOperationStatus.NotAttemptedCompositionNotReady)],
+				WouldMutateInventory: false,
+				DidMutateInventory: false,
+				WouldWriteInventoryPersistence: false,
+				DidWriteInventoryPersistence: false,
+				WouldSendInventoryPackets: false,
+				DidSendInventoryPackets: false,
+				WouldSpendDp: false,
+				DidSpendDp: false,
+				WouldCreateCraftingTask: false,
+				DidCreateCraftingTask: false,
+				WouldStartCraftingTask: false,
+				DidStartCraftingTask: false,
+				ShouldDispatchLiveSideEffects: false,
+				"CraftService.startCrafting live facade stops before success side effects when CM_CRAFT composition is not ready",
+				IsLive: false);
+		}
+
+		var operations = new List<CraftStartLiveExecutorOperation>();
+		if (compositionPlan.InventoryMutationPlan?.IsPlanned == true)
+			operations.Add(Disabled(CraftStartLiveExecutorOperationKind.ApplyInventoryMutation, "CraftService.checkCraft -> Storage.decreaseByItemId mutates consumed item stacks"));
+		if (compositionPlan.InventoryPersistencePlan?.IsPlanned == true)
+			operations.Add(Disabled(CraftStartLiveExecutorOperationKind.MarkInventoryPersistenceState, "Storage.decreaseItemCount/delete marks item and storage persistent state for InventoryDAO.store"));
+		if (compositionPlan.InventoryPacketPlan?.IsPlanned == true)
+			operations.Add(Disabled(CraftStartLiveExecutorOperationKind.SendInventoryPackets, "Storage.decreaseItemCount -> ItemPacketService sends inventory update/delete/cube packets"));
+		if (compositionPlan.RequiresDpSpend)
+			operations.Add(Disabled(CraftStartLiveExecutorOperationKind.SpendRecipeDp, "CraftService.startCrafting -> player.getCommonData().addDp(-recipeTemplate.getDp())"));
+		if (compositionPlan.TaskPlan?.IsPlanned == true)
+		{
+			operations.Add(Disabled(CraftStartLiveExecutorOperationKind.CreateCraftingTask, "CraftService.startCrafting -> player.setCraftingTask(new CraftingTask(...))"));
+			operations.Add(Disabled(CraftStartLiveExecutorOperationKind.StartCraftingTask, "CraftService.startCrafting -> player.getCraftingTask().start()"));
+		}
+
+		return new CraftStartLiveExecutorFacadePlan(
+			CraftStartLiveExecutorFacadeStatus.DisabledNoSideEffects,
+			compositionPlan,
+			operations,
+			WouldMutateInventory: compositionPlan.InventoryMutationPlan?.IsPlanned == true,
+			DidMutateInventory: false,
+			WouldWriteInventoryPersistence: compositionPlan.InventoryPersistencePlan?.IsPlanned == true,
+			DidWriteInventoryPersistence: false,
+			WouldSendInventoryPackets: compositionPlan.InventoryPacketPlan?.IsPlanned == true,
+			DidSendInventoryPackets: false,
+			WouldSpendDp: compositionPlan.RequiresDpSpend,
+			DidSpendDp: false,
+			WouldCreateCraftingTask: compositionPlan.TaskPlan?.IsPlanned == true,
+			DidCreateCraftingTask: false,
+			WouldStartCraftingTask: compositionPlan.TaskPlan?.IsPlanned == true,
+			DidStartCraftingTask: false,
+			ShouldDispatchLiveSideEffects: false,
+			"CraftService.startCrafting live side-effect executor facade is disabled; Java side-effect order is recorded without dispatch",
+			IsLive: false);
+	}
+
+	private static CraftStartLiveExecutorOperation Disabled(CraftStartLiveExecutorOperationKind kind, string javaSource)
+	{
+		return new CraftStartLiveExecutorOperation(
+			kind,
+			CraftStartLiveExecutorOperationStatus.NotAttemptedDisabled,
+			javaSource);
+	}
+
+	private static CraftStartLiveExecutorOperation NotAttempted(
+		CraftStartLiveExecutorOperationKind kind,
+		CraftStartLiveExecutorOperationStatus status)
+	{
+		return new CraftStartLiveExecutorOperation(
+			kind,
+			status,
+			"CraftService.startCrafting live executor facade did not reach this side-effect boundary");
 	}
 }

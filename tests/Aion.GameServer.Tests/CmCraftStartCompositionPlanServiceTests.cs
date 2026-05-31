@@ -223,6 +223,102 @@ public sealed class CmCraftStartCompositionPlanServiceTests
 	}
 
 	[Fact]
+	public void CreateDisabledLiveExecutorFacade_RecordsJavaSideEffectBoundariesWithoutDispatch()
+	{
+		var plan = CreateReadyCompositionPlan(dp: 100, craftType: 1);
+
+		var facade = CraftStartLiveExecutorFacadePlanService.CreateDisabledPlan(plan);
+
+		Assert.Equal(CraftStartLiveExecutorFacadeStatus.DisabledNoSideEffects, facade.Status);
+		Assert.True(facade.IsDisabled);
+		Assert.False(facade.IsLive);
+		Assert.False(facade.ShouldDispatchLiveSideEffects);
+		Assert.Same(plan, facade.CompositionPlan);
+		Assert.True(facade.WouldMutateInventory);
+		Assert.False(facade.DidMutateInventory);
+		Assert.True(facade.WouldWriteInventoryPersistence);
+		Assert.False(facade.DidWriteInventoryPersistence);
+		Assert.True(facade.WouldSendInventoryPackets);
+		Assert.False(facade.DidSendInventoryPackets);
+		Assert.True(facade.WouldSpendDp);
+		Assert.False(facade.DidSpendDp);
+		Assert.True(facade.WouldCreateCraftingTask);
+		Assert.False(facade.DidCreateCraftingTask);
+		Assert.True(facade.WouldStartCraftingTask);
+		Assert.False(facade.DidStartCraftingTask);
+		Assert.Equal(
+			[
+				CraftStartLiveExecutorOperationKind.ApplyInventoryMutation,
+				CraftStartLiveExecutorOperationKind.MarkInventoryPersistenceState,
+				CraftStartLiveExecutorOperationKind.SendInventoryPackets,
+				CraftStartLiveExecutorOperationKind.SpendRecipeDp,
+				CraftStartLiveExecutorOperationKind.CreateCraftingTask,
+				CraftStartLiveExecutorOperationKind.StartCraftingTask,
+			],
+			facade.Operations.Select(operation => operation.Kind).ToArray());
+		Assert.All(facade.Operations, operation => Assert.Equal(CraftStartLiveExecutorOperationStatus.NotAttemptedDisabled, operation.Status));
+	}
+
+	[Fact]
+	public void CreateDisabledLiveExecutorFacade_OmitsDpOperationWhenNoDpSpendIsPlanned()
+	{
+		var plan = CreateReadyCompositionPlan(dp: 0, craftType: 0);
+
+		var facade = CraftStartLiveExecutorFacadePlanService.CreateDisabledPlan(plan);
+
+		Assert.Equal(CraftStartLiveExecutorFacadeStatus.DisabledNoSideEffects, facade.Status);
+		Assert.False(facade.WouldSpendDp);
+		Assert.False(facade.DidSpendDp);
+		Assert.DoesNotContain(CraftStartLiveExecutorOperationKind.SpendRecipeDp, facade.Operations.Select(operation => operation.Kind));
+		Assert.Equal(
+			[
+				CraftStartLiveExecutorOperationKind.ApplyInventoryMutation,
+				CraftStartLiveExecutorOperationKind.MarkInventoryPersistenceState,
+				CraftStartLiveExecutorOperationKind.SendInventoryPackets,
+				CraftStartLiveExecutorOperationKind.CreateCraftingTask,
+				CraftStartLiveExecutorOperationKind.StartCraftingTask,
+			],
+			facade.Operations.Select(operation => operation.Kind).ToArray());
+	}
+
+	[Fact]
+	public void CreateDisabledLiveExecutorFacade_DoesNotPlanSuccessSideEffectsWhenCompositionIsNotReady()
+	{
+		var service = CreateCraftService();
+		var runtimePlan = CmCraftRuntimePlanService.CreatePlan(
+			hasPlayer: false,
+			isPlayerSpawned: false,
+			isShuttingDownSoon: false,
+			unknownByte: 1,
+			recipeId: 155000104,
+			targetObjectId: 9001,
+			craftType: 0,
+			materialsData: null,
+			targetExists: true,
+			targetIsInRange: true,
+			targetTemplateMatches: true);
+		var plan = CmCraftStartCompositionPlanService.CreatePlan(
+			runtimePlan,
+			service,
+			player: null,
+			recipeTemplate: null,
+			productTemplate: null,
+			target: null,
+			targetIsStaticObject: false,
+			targetIsWithinToolRange: false,
+			hasCraftingTaskInProgress: false);
+
+		var facade = CraftStartLiveExecutorFacadePlanService.CreateDisabledPlan(plan);
+
+		Assert.Equal(CraftStartLiveExecutorFacadeStatus.CompositionNotReady, facade.Status);
+		Assert.False(facade.ShouldDispatchLiveSideEffects);
+		Assert.False(facade.WouldMutateInventory);
+		Assert.False(facade.WouldSendInventoryPackets);
+		var operation = Assert.Single(facade.Operations);
+		Assert.Equal(CraftStartLiveExecutorOperationStatus.NotAttemptedCompositionNotReady, operation.Status);
+	}
+
+	[Fact]
 	public void CreatePlan_StopsWhenRuntimeGuardDidNotReachStartCrafting()
 	{
 		var service = CreateCraftService();
@@ -261,6 +357,46 @@ public sealed class CmCraftStartCompositionPlanServiceTests
 		Assert.Equal([CmCraftStartCompositionPlanStep.UseRuntimeGuardPlan], plan.Steps);
 		Assert.Equal(CraftStartSideEffectBoundaryStatus.NotPlanned, plan.SideEffectBoundaryPlan.Status);
 		Assert.Empty(plan.SideEffectBoundaryPlan.Steps);
+	}
+
+	private static CmCraftStartCompositionPlan CreateReadyCompositionPlan(int dp, int craftType)
+	{
+		var service = CreateCraftService();
+		var player = CreatePlayer();
+		var recipeId = dp > 0 ? 155000105 : 155000106;
+		var recipe = CreateRecipe(
+			recipeId,
+			dp,
+			productId: 100200203,
+			skillId: 40001,
+			skillPoint: 200,
+			componentGroups: [CreateComponentGroup((152000901, 2))]);
+		player.Recipes = [recipeId];
+		var productTemplate = CreateProductTemplate();
+		var target = CreateCraftTarget();
+		var runtimePlan = CmCraftRuntimePlanService.CreatePlan(
+			hasPlayer: true,
+			isPlayerSpawned: true,
+			isShuttingDownSoon: false,
+			unknownByte: 1,
+			recipeId: recipe.RecipeId,
+			targetObjectId: target.ObjectId,
+			craftType,
+			materialsData: new Dictionary<int, long> { [152000901] = 2 },
+			targetExists: true,
+			targetIsInRange: true,
+			targetTemplateMatches: true);
+
+		return CmCraftStartCompositionPlanService.CreatePlan(
+			runtimePlan,
+			service,
+			player,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false);
 	}
 
 	private static CraftService CreateCraftService()
