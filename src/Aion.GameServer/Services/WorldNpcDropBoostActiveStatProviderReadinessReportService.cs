@@ -22,7 +22,11 @@ public static class WorldNpcDropBoostActiveStatProviderReadinessReportService
 		bool hasLiveAdditionStatProvider = false,
 		bool hasLiveReverseStatProvider = false,
 		bool hasLiveStatFunctionApplyProvider = false,
-		bool hasLiveStatCapProvider = false)
+		bool hasLiveStatCapProvider = false,
+		bool hasLiveCalculateBaseValueProvider = false,
+		bool hasLiveCreatureAwareCapProvider = false,
+		bool hasLiveAttackSpeedBonusClampProvider = false,
+		bool hasLiveMaxHpMpRecalculationProvider = false)
 	{
 		var staticMetadataReport = WorldNpcDropBoostStatProviderReadinessReportService.CreateReport(
 			skillTemplates,
@@ -52,6 +56,12 @@ public static class WorldNpcDropBoostActiveStatProviderReadinessReportService
 			hasLiveReverseStatProvider,
 			hasLiveStatFunctionApplyProvider,
 			hasLiveStatCapProvider);
+		var statCapRecalculationReadinessReport = SkillBuffStatCapRecalculationReadinessReportService.CreateReport(
+			statFunctionPlans,
+			hasLiveCalculateBaseValueProvider,
+			hasLiveCreatureAwareCapProvider,
+			hasLiveAttackSpeedBonusClampProvider,
+			hasLiveMaxHpMpRecalculationProvider);
 		var missingInputs = new List<string>();
 
 		if (skillTemplates == null)
@@ -88,6 +98,11 @@ public static class WorldNpcDropBoostActiveStatProviderReadinessReportService
 			if (!missingInputs.Contains(missingInput, StringComparer.Ordinal))
 				missingInputs.Add(missingInput);
 		}
+		foreach (var missingInput in statCapRecalculationReadinessReport.MissingInputs)
+		{
+			if (!missingInputs.Contains(missingInput, StringComparer.Ordinal))
+				missingInputs.Add(missingInput);
+		}
 
 		var status = DetermineStatus(
 			skillTemplates,
@@ -96,6 +111,7 @@ public static class WorldNpcDropBoostActiveStatProviderReadinessReportService
 			statFunctionPlans,
 			statFunctionRegistryReadinessReport,
 			stat2EvaluationReadinessReport,
+			statCapRecalculationReadinessReport,
 			hasLiveActiveEffectControllerProvider,
 			hasLiveEffectStatOwnerProvider,
 			hasLiveStatFunctionRegistryProvider,
@@ -108,13 +124,14 @@ public static class WorldNpcDropBoostActiveStatProviderReadinessReportService
 			statFunctionPlans,
 			statFunctionRegistryReadinessReport,
 			stat2EvaluationReadinessReport,
+			statCapRecalculationReadinessReport,
 			hasLiveActiveEffectControllerProvider,
 			hasLiveEffectStatOwnerProvider,
 			hasLiveStatFunctionRegistryProvider,
 			hasLiveCreatureGameStatsStatQueryProvider,
 			hasLiveConditionValidatorProvider,
 			missingInputs,
-			"DropRegistrationService.calculateBoostDropRate -> CreatureGameStats.getStat -> Stat2.getCurrent; EffectController.addEffect -> Effect.startEffect -> BufEffect.startEffect -> CreatureGameStats.addEffect(Effect, modifiers); CreatureGameStats.endEffect removes functions by StatOwner");
+			"DropRegistrationService.calculateBoostDropRate -> CreatureGameStats.getStat -> Stat2.getCurrent -> StatCapUtil.calculateBaseValue; EffectController.addEffect -> Effect.startEffect -> BufEffect.startEffect -> CreatureGameStats.addEffect(Effect, modifiers); CreatureGameStats.onStatsChange rescales max HP/MP; CreatureGameStats.endEffect removes functions by StatOwner");
 	}
 
 	private static WorldNpcDropBoostActiveStatProviderReadinessStatus DetermineStatus(
@@ -124,6 +141,7 @@ public static class WorldNpcDropBoostActiveStatProviderReadinessReportService
 		IReadOnlyList<SkillBuffStatFunctionRegistryPlan> statFunctionPlans,
 		SkillBuffStatFunctionRegistryReadinessReport statFunctionRegistryReadinessReport,
 		SkillBuffStat2EvaluationReadinessReport stat2EvaluationReadinessReport,
+		SkillBuffStatCapRecalculationReadinessReport statCapRecalculationReadinessReport,
 		bool hasLiveActiveEffectControllerProvider,
 		bool hasLiveEffectStatOwnerProvider,
 		bool hasLiveStatFunctionRegistryProvider,
@@ -149,6 +167,8 @@ public static class WorldNpcDropBoostActiveStatProviderReadinessReportService
 			return WorldNpcDropBoostActiveStatProviderReadinessStatus.BlockedMissingStatFunctionRegistryReadiness;
 		if (!stat2EvaluationReadinessReport.IsReadyForRuntimeEvaluation)
 			return WorldNpcDropBoostActiveStatProviderReadinessStatus.BlockedMissingStat2EvaluationReadiness;
+		if (!statCapRecalculationReadinessReport.IsReadyForStatCapRecalculation)
+			return WorldNpcDropBoostActiveStatProviderReadinessStatus.BlockedMissingStatCapRecalculationReadiness;
 		if (!hasLiveCreatureGameStatsStatQueryProvider)
 			return WorldNpcDropBoostActiveStatProviderReadinessStatus.BlockedMissingCreatureGameStatsStatQueryProvider;
 		if (conditionReadinessReport.ConditionEntryCount > 0 && !hasLiveConditionValidatorProvider)
@@ -192,6 +212,7 @@ public enum WorldNpcDropBoostActiveStatProviderReadinessStatus
 	BlockedMissingStatFunctionRegistryProvider,
 	BlockedMissingStatFunctionRegistryReadiness,
 	BlockedMissingStat2EvaluationReadiness,
+	BlockedMissingStatCapRecalculationReadiness,
 	BlockedMissingCreatureGameStatsStatQueryProvider,
 	BlockedMissingConditionValidatorProvider,
 	Ready,
@@ -204,6 +225,7 @@ public sealed record WorldNpcDropBoostActiveStatProviderReadinessReport(
 	IReadOnlyList<SkillBuffStatFunctionRegistryPlan> StatFunctionPlans,
 	SkillBuffStatFunctionRegistryReadinessReport StatFunctionRegistryReadinessReport,
 	SkillBuffStat2EvaluationReadinessReport Stat2EvaluationReadinessReport,
+	SkillBuffStatCapRecalculationReadinessReport StatCapRecalculationReadinessReport,
 	bool HasLiveActiveEffectControllerProvider,
 	bool HasLiveEffectStatOwnerProvider,
 	bool HasLiveStatFunctionRegistryProvider,

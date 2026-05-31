@@ -23,6 +23,7 @@ public sealed class WorldNpcDropBoostActiveStatProviderReadinessReportServiceTes
 		Assert.Empty(report.StatFunctionPlans);
 		Assert.Equal(SkillBuffStatFunctionRegistryReadinessStatus.NoFunctionPlans, report.StatFunctionRegistryReadinessReport.Status);
 		Assert.Equal(SkillBuffStat2EvaluationReadinessStatus.NoFunctionPlans, report.Stat2EvaluationReadinessReport.Status);
+		Assert.Equal(SkillBuffStatCapRecalculationReadinessStatus.NoFunctionPlans, report.StatCapRecalculationReadinessReport.Status);
 	}
 
 	[Fact]
@@ -45,6 +46,7 @@ public sealed class WorldNpcDropBoostActiveStatProviderReadinessReportServiceTes
 		Assert.All(report.StatFunctionPlans, plan => Assert.Equal(SkillBuffStatFunctionRegistryPlanStatus.BlockedMissingEffectStatOwnerProvider, plan.Status));
 		Assert.Equal(SkillBuffStatFunctionRegistryReadinessStatus.BlockedMissingConcurrentStatFunctionStorage, report.StatFunctionRegistryReadinessReport.Status);
 		Assert.Equal(SkillBuffStat2EvaluationReadinessStatus.BlockedMissingStat2StateProvider, report.Stat2EvaluationReadinessReport.Status);
+		Assert.Equal(SkillBuffStatCapRecalculationReadinessStatus.BlockedMissingCalculateBaseValueProvider, report.StatCapRecalculationReadinessReport.Status);
 	}
 
 	[Fact]
@@ -82,6 +84,8 @@ public sealed class WorldNpcDropBoostActiveStatProviderReadinessReportServiceTes
 		Assert.Equal(["BOOST_DROP_RATE", "DR_BOOST"], report.Stat2EvaluationReadinessReport.StatNames);
 		Assert.Equal(1, report.Stat2EvaluationReadinessReport.AddFunctionCount);
 		Assert.Equal(1, report.Stat2EvaluationReadinessReport.SetFunctionCount);
+		Assert.Equal(["BOOST_DROP_RATE", "DR_BOOST"], report.StatCapRecalculationReadinessReport.StatNames);
+		Assert.True(report.StatCapRecalculationReadinessReport.RequiresMaxHpMpRecalculation);
 	}
 
 	[Fact]
@@ -129,7 +133,10 @@ public sealed class WorldNpcDropBoostActiveStatProviderReadinessReportServiceTes
 			hasLiveAdditionStatProvider: true,
 			hasLiveReverseStatProvider: true,
 			hasLiveStatFunctionApplyProvider: true,
-			hasLiveStatCapProvider: true);
+			hasLiveStatCapProvider: true,
+			hasLiveCalculateBaseValueProvider: true,
+			hasLiveCreatureAwareCapProvider: true,
+			hasLiveMaxHpMpRecalculationProvider: true);
 
 		Assert.Equal(WorldNpcDropBoostActiveStatProviderReadinessStatus.BlockedMissingConditionValidatorProvider, report.Status);
 		Assert.False(report.IsReadyForDropWorkflow);
@@ -193,6 +200,37 @@ public sealed class WorldNpcDropBoostActiveStatProviderReadinessReportServiceTes
 	}
 
 	[Fact]
+	public void CreateReport_BlocksWhenStat2EvaluationIsReadyButStatCapRecalculationIsMissing()
+	{
+		var report = WorldNpcDropBoostActiveStatProviderReadinessReportService.CreateReport(
+			CreateDropBoostSkillTemplates(),
+			hasLiveActiveEffectControllerProvider: true,
+			hasLiveEffectStatOwnerProvider: true,
+			hasLiveStatFunctionRegistryProvider: true,
+			hasLiveCreatureGameStatsStatQueryProvider: true,
+			hasLiveConditionValidatorProvider: true,
+			hasLiveConcurrentStatFunctionStorage: true,
+			hasLiveStatFunctionInsertionProvider: true,
+			hasLiveStatFunctionRemovalProvider: true,
+			hasLiveSortedStatFunctionSnapshotProvider: true,
+			hasLiveStatsChangeRecalculationProvider: true,
+			hasLiveStat2StateProvider: true,
+			hasLiveCurrentValueFormulaProvider: true,
+			hasLiveAdditionStatProvider: true,
+			hasLiveReverseStatProvider: true,
+			hasLiveStatFunctionApplyProvider: true,
+			hasLiveStatCapProvider: true);
+
+		Assert.Equal(WorldNpcDropBoostActiveStatProviderReadinessStatus.BlockedMissingStatCapRecalculationReadiness, report.Status);
+		Assert.False(report.IsReadyForDropWorkflow);
+		Assert.Equal(SkillBuffStat2EvaluationReadinessStatus.Ready, report.Stat2EvaluationReadinessReport.Status);
+		Assert.Equal(SkillBuffStatCapRecalculationReadinessStatus.BlockedMissingCalculateBaseValueProvider, report.StatCapRecalculationReadinessReport.Status);
+		Assert.Contains("live StatCapUtil.calculateBaseValue provider", report.MissingInputs);
+		Assert.Contains("live StatCapUtil creature-aware lower/upper cap provider", report.MissingInputs);
+		Assert.Contains("live CreatureGameStats.onStatsChange max HP/MP recalculation provider", report.MissingInputs);
+	}
+
+	[Fact]
 	public void CreateReport_ReportsUnsupportedStatFunctionPlansBeforeLiveProviderReadiness()
 	{
 		var templates = new SkillTemplateTable(
@@ -235,7 +273,10 @@ public sealed class WorldNpcDropBoostActiveStatProviderReadinessReportServiceTes
 			hasLiveAdditionStatProvider: true,
 			hasLiveReverseStatProvider: true,
 			hasLiveStatFunctionApplyProvider: true,
-			hasLiveStatCapProvider: true);
+			hasLiveStatCapProvider: true,
+			hasLiveCalculateBaseValueProvider: true,
+			hasLiveCreatureAwareCapProvider: true,
+			hasLiveMaxHpMpRecalculationProvider: true);
 
 		Assert.Equal(WorldNpcDropBoostActiveStatProviderReadinessStatus.Ready, report.Status);
 		Assert.True(report.IsReadyForDropWorkflow);
@@ -245,6 +286,7 @@ public sealed class WorldNpcDropBoostActiveStatProviderReadinessReportServiceTes
 		Assert.All(report.StatFunctionPlans, plan => Assert.Equal(SkillBuffStatFunctionRegistryPlanStatus.Ready, plan.Status));
 		Assert.Equal(SkillBuffStatFunctionRegistryReadinessStatus.Ready, report.StatFunctionRegistryReadinessReport.Status);
 		Assert.Equal(SkillBuffStat2EvaluationReadinessStatus.Ready, report.Stat2EvaluationReadinessReport.Status);
+		Assert.Equal(SkillBuffStatCapRecalculationReadinessStatus.Ready, report.StatCapRecalculationReadinessReport.Status);
 	}
 
 	private static SkillTemplateTable CreateDropBoostSkillTemplates()
