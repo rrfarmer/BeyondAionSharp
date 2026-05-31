@@ -5,6 +5,13 @@ using Aion.GameServer.World;
 
 namespace Aion.GameServer.Model.GameObjects;
 
+// Java parity: model/items/storage/Storage.persistentState and model/gameobjects/player/Equipment.persistentState.
+public enum StoragePersistentState
+{
+	Updated,
+	UpdateRequired,
+}
+
 public sealed class Player
 {
 	public const byte MailboxClosedState = 0;
@@ -194,11 +201,46 @@ public sealed class Player
 
 	public int CurrentExchangePartnerObjectId { get; set; }
 
-	public IReadOnlyList<InventoryItem> InventoryItems { get; set; } = Array.Empty<InventoryItem>();
+	private IReadOnlyList<InventoryItem> _inventoryItems = Array.Empty<InventoryItem>();
+	private IReadOnlyList<InventoryItem> _warehouseItems = Array.Empty<InventoryItem>();
+	private IReadOnlyList<InventoryItem> _accountWarehouseItems = Array.Empty<InventoryItem>();
 
-	public IReadOnlyList<InventoryItem> WarehouseItems { get; set; } = Array.Empty<InventoryItem>();
+	public IReadOnlyList<InventoryItem> InventoryItems
+	{
+		get => _inventoryItems;
+		set
+		{
+			_inventoryItems = value;
+			InventoryStoragePersistentState = PromoteStoragePersistentState(InventoryStoragePersistentState, value);
+		}
+	}
 
-	public IReadOnlyList<InventoryItem> AccountWarehouseItems { get; set; } = Array.Empty<InventoryItem>();
+	public IReadOnlyList<InventoryItem> WarehouseItems
+	{
+		get => _warehouseItems;
+		set
+		{
+			_warehouseItems = value;
+			WarehouseStoragePersistentState = PromoteStoragePersistentState(WarehouseStoragePersistentState, value);
+		}
+	}
+
+	public IReadOnlyList<InventoryItem> AccountWarehouseItems
+	{
+		get => _accountWarehouseItems;
+		set
+		{
+			_accountWarehouseItems = value;
+			AccountWarehouseStoragePersistentState = PromoteStoragePersistentState(AccountWarehouseStoragePersistentState, value);
+		}
+	}
+
+	// Java parity: model/items/storage/Storage.persistentState for the currently modeled player-owned storages.
+	public StoragePersistentState InventoryStoragePersistentState { get; private set; } = StoragePersistentState.Updated;
+
+	public StoragePersistentState WarehouseStoragePersistentState { get; private set; } = StoragePersistentState.Updated;
+
+	public StoragePersistentState AccountWarehouseStoragePersistentState { get; private set; } = StoragePersistentState.Updated;
 
 	// Java parity: model/items/storage/Storage.deletedItems for the currently modeled player-owned storages.
 	public IReadOnlyList<InventoryItem> DeletedInventoryItems { get; private set; } = Array.Empty<InventoryItem>();
@@ -211,21 +253,41 @@ public sealed class Player
 	public List<InventoryItem> GetDirtyItemsToUpdate()
 	{
 		var dirtyItems = new List<InventoryItem>();
-		AddDirtyStorageItems(dirtyItems, InventoryItems, DeletedInventoryItems);
-		AddDirtyStorageItems(dirtyItems, WarehouseItems, DeletedWarehouseItems);
-		AddDirtyStorageItems(dirtyItems, AccountWarehouseItems, DeletedAccountWarehouseItems);
+		AddDirtyStorageItems(dirtyItems, StorageLocation.Cube, InventoryItems, DeletedInventoryItems);
+		AddDirtyStorageItems(dirtyItems, StorageLocation.Warehouse, WarehouseItems, DeletedWarehouseItems);
+		AddDirtyStorageItems(dirtyItems, StorageLocation.AccountWarehouse, AccountWarehouseItems, DeletedAccountWarehouseItems);
 		return dirtyItems;
 	}
 
 	// Java parity: Player.getDirtyItemsToUpdate resets storage/equipment persistent state after InventoryDAO.store(player).
 	public void MarkDirtyItemsPersisted()
 	{
-		InventoryItems = NormalizePersistentState(InventoryItems);
-		WarehouseItems = NormalizePersistentState(WarehouseItems);
-		AccountWarehouseItems = NormalizePersistentState(AccountWarehouseItems);
+		_inventoryItems = NormalizePersistentState(InventoryItems);
+		_warehouseItems = NormalizePersistentState(WarehouseItems);
+		_accountWarehouseItems = NormalizePersistentState(AccountWarehouseItems);
+		InventoryStoragePersistentState = StoragePersistentState.Updated;
+		WarehouseStoragePersistentState = StoragePersistentState.Updated;
+		AccountWarehouseStoragePersistentState = StoragePersistentState.Updated;
 		DeletedInventoryItems = Array.Empty<InventoryItem>();
 		DeletedWarehouseItems = Array.Empty<InventoryItem>();
 		DeletedAccountWarehouseItems = Array.Empty<InventoryItem>();
+	}
+
+	// Java parity: Storage.setPersistentState(UPDATE_REQUIRED) at the currently modeled player-owned storage boundary.
+	public void MarkStorageDirty(int location)
+	{
+		switch ((StorageLocation)location)
+		{
+			case StorageLocation.Cube:
+				InventoryStoragePersistentState = StoragePersistentState.UpdateRequired;
+				return;
+			case StorageLocation.Warehouse:
+				WarehouseStoragePersistentState = StoragePersistentState.UpdateRequired;
+				return;
+			case StorageLocation.AccountWarehouse:
+				AccountWarehouseStoragePersistentState = StoragePersistentState.UpdateRequired;
+				return;
+		}
 	}
 
 	// Java parity: model/items/storage/Storage.delete(Item, ...) adds deleted rows to storage.deletedItems.
@@ -243,12 +305,15 @@ public sealed class Player
 				{
 					case 0:
 						DeletedInventoryItems = ReplaceDeletedItem(DeletedInventoryItems, deletedItem);
+						InventoryStoragePersistentState = StoragePersistentState.UpdateRequired;
 						return;
 					case 1:
 						DeletedWarehouseItems = ReplaceDeletedItem(DeletedWarehouseItems, deletedItem);
+						WarehouseStoragePersistentState = StoragePersistentState.UpdateRequired;
 						return;
 					case 2:
 						DeletedAccountWarehouseItems = ReplaceDeletedItem(DeletedAccountWarehouseItems, deletedItem);
+						AccountWarehouseStoragePersistentState = StoragePersistentState.UpdateRequired;
 						return;
 				}
 
@@ -308,24 +373,18 @@ public sealed class Player
 	private readonly List<PlayerPetSkillOrder> _petSkillOrders = [];
 	private readonly Dictionary<int, PlayerSummonKnownObject> _summonKnownObjects = [];
 
-	private static void AddDirtyStorageItems(
+	private void AddDirtyStorageItems(
 		List<InventoryItem> dirtyItems,
+		StorageLocation location,
 		IReadOnlyList<InventoryItem> items,
 		IReadOnlyList<InventoryItem> deletedItems)
 	{
-		if (!IsStorageDirty(items, deletedItems))
+		if (GetStoragePersistentState(location) != StoragePersistentState.UpdateRequired)
 			return;
 
 		dirtyItems.AddRange(items);
 		dirtyItems.AddRange(deletedItems);
-	}
-
-	private static bool IsStorageDirty(IReadOnlyList<InventoryItem> items, IReadOnlyList<InventoryItem> deletedItems)
-	{
-		return deletedItems.Count != 0
-			|| items.Any(item => item.PersistentState is InventoryItemPersistentState.New
-				or InventoryItemPersistentState.UpdateRequired
-				or InventoryItemPersistentState.Deleted);
+		SetStoragePersistentState(location, StoragePersistentState.Updated);
 	}
 
 	private static IReadOnlyList<InventoryItem> NormalizePersistentState(IReadOnlyList<InventoryItem> items)
@@ -334,6 +393,47 @@ public sealed class Player
 			return items;
 
 		return items.Select(item => item.PersistentState == InventoryItemPersistentState.Updated ? item : CopyInventoryItem(item, InventoryItemPersistentState.Updated)).ToArray();
+	}
+
+	private static StoragePersistentState PromoteStoragePersistentState(
+		StoragePersistentState currentState,
+		IReadOnlyList<InventoryItem> items)
+	{
+		if (currentState == StoragePersistentState.UpdateRequired)
+			return currentState;
+
+		return items.Any(item => item.PersistentState is InventoryItemPersistentState.New
+			or InventoryItemPersistentState.UpdateRequired
+			or InventoryItemPersistentState.Deleted)
+			? StoragePersistentState.UpdateRequired
+			: StoragePersistentState.Updated;
+	}
+
+	private StoragePersistentState GetStoragePersistentState(StorageLocation location)
+	{
+		return location switch
+		{
+			StorageLocation.Cube => InventoryStoragePersistentState,
+			StorageLocation.Warehouse => WarehouseStoragePersistentState,
+			StorageLocation.AccountWarehouse => AccountWarehouseStoragePersistentState,
+			_ => StoragePersistentState.Updated,
+		};
+	}
+
+	private void SetStoragePersistentState(StorageLocation location, StoragePersistentState persistentState)
+	{
+		switch (location)
+		{
+			case StorageLocation.Cube:
+				InventoryStoragePersistentState = persistentState;
+				return;
+			case StorageLocation.Warehouse:
+				WarehouseStoragePersistentState = persistentState;
+				return;
+			case StorageLocation.AccountWarehouse:
+				AccountWarehouseStoragePersistentState = persistentState;
+				return;
+		}
 	}
 
 	private void RemoveDeletedItem(InventoryItem item)
@@ -406,6 +506,13 @@ public sealed class Player
 			Godstone = item.Godstone,
 			IdianStone = item.IdianStone,
 		};
+	}
+
+	private enum StorageLocation
+	{
+		Cube = 0,
+		Warehouse = 1,
+		AccountWarehouse = 2,
 	}
 
 	// Java parity: model/gameobjects/Summon.addSkillOrder represented until the full Summon model exists.

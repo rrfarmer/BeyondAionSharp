@@ -45,6 +45,9 @@ public sealed class PlayerInventoryPersistentStateTests
 		var dirtyItems = player.GetDirtyItemsToUpdate();
 
 		Assert.Equal([1001, 1002, 2001, 3001, 3002], dirtyItems.Select(item => item.ObjectId).ToArray());
+		Assert.Equal(StoragePersistentState.Updated, player.InventoryStoragePersistentState);
+		Assert.Equal(StoragePersistentState.Updated, player.WarehouseStoragePersistentState);
+		Assert.Equal(StoragePersistentState.Updated, player.AccountWarehouseStoragePersistentState);
 	}
 
 	[Fact]
@@ -73,6 +76,9 @@ public sealed class PlayerInventoryPersistentStateTests
 				(3001, InventoryItemPersistentState.Deleted),
 			],
 			dirtyItems.Select(item => (item.ObjectId, item.PersistentState)).ToArray());
+		Assert.Equal(StoragePersistentState.Updated, player.InventoryStoragePersistentState);
+		Assert.Equal(StoragePersistentState.Updated, player.WarehouseStoragePersistentState);
+		Assert.Equal(StoragePersistentState.Updated, player.AccountWarehouseStoragePersistentState);
 	}
 
 	[Fact]
@@ -116,6 +122,9 @@ public sealed class PlayerInventoryPersistentStateTests
 		Assert.Equal(pendingTuneResult, player.InventoryItems.Single().PendingTuneResult);
 		Assert.Equal(InventoryItemPersistentState.Updated, player.WarehouseItems.Single().PersistentState);
 		Assert.Equal(InventoryItemPersistentState.Updated, player.AccountWarehouseItems.Single().PersistentState);
+		Assert.Equal(StoragePersistentState.Updated, player.InventoryStoragePersistentState);
+		Assert.Equal(StoragePersistentState.Updated, player.WarehouseStoragePersistentState);
+		Assert.Equal(StoragePersistentState.Updated, player.AccountWarehouseStoragePersistentState);
 	}
 
 	[Fact]
@@ -148,6 +157,53 @@ public sealed class PlayerInventoryPersistentStateTests
 		var dirtyItems = player.GetDirtyItemsToUpdate();
 
 		Assert.Equal([1001, 1002], dirtyItems.Select(item => item.ObjectId).ToArray());
+		Assert.Equal(StoragePersistentState.Updated, player.InventoryStoragePersistentState);
+	}
+
+	[Fact]
+	public void MarkStorageDirty_HarvestsAllCurrentRowsEvenWhenTheyAreUpdated()
+	{
+		var player = new Player
+		{
+			InventoryItems =
+			[
+				CreateItem(1001, location: 0, InventoryItemPersistentState.Updated),
+				CreateItem(1002, location: 0, InventoryItemPersistentState.Updated),
+			],
+		};
+
+		player.MarkStorageDirty(location: 0);
+
+		var firstHarvest = player.GetDirtyItemsToUpdate();
+		var secondHarvest = player.GetDirtyItemsToUpdate();
+
+		Assert.Equal([1001, 1002], firstHarvest.Select(item => item.ObjectId).ToArray());
+		Assert.Empty(secondHarvest);
+		Assert.Equal(StoragePersistentState.Updated, player.InventoryStoragePersistentState);
+	}
+
+	[Fact]
+	public void AssigningDirtyRows_PromotesTheModeledStorageState()
+	{
+		var player = new Player();
+
+		player.InventoryItems =
+		[
+			CreateItem(1001, location: 0, InventoryItemPersistentState.UpdateRequired),
+			CreateItem(1002, location: 0, InventoryItemPersistentState.Updated),
+		];
+		player.WarehouseItems =
+		[
+			CreateItem(2001, location: 1, InventoryItemPersistentState.New),
+		];
+		player.AccountWarehouseItems =
+		[
+			CreateItem(3001, location: 2, InventoryItemPersistentState.Deleted),
+		];
+
+		Assert.Equal(StoragePersistentState.UpdateRequired, player.InventoryStoragePersistentState);
+		Assert.Equal(StoragePersistentState.UpdateRequired, player.WarehouseStoragePersistentState);
+		Assert.Equal(StoragePersistentState.UpdateRequired, player.AccountWarehouseStoragePersistentState);
 	}
 
 	private static InventoryItem CreateItem(
