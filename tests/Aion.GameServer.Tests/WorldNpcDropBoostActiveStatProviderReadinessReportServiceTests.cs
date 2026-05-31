@@ -22,6 +22,7 @@ public sealed class WorldNpcDropBoostActiveStatProviderReadinessReportServiceTes
 		Assert.Equal(SkillStatChangeConditionReadinessStatus.MissingSkillTemplates, report.ConditionReadinessReport.Status);
 		Assert.Empty(report.StatFunctionPlans);
 		Assert.Equal(SkillBuffStatFunctionRegistryReadinessStatus.NoFunctionPlans, report.StatFunctionRegistryReadinessReport.Status);
+		Assert.Equal(SkillBuffStat2EvaluationReadinessStatus.NoFunctionPlans, report.Stat2EvaluationReadinessReport.Status);
 	}
 
 	[Fact]
@@ -43,6 +44,7 @@ public sealed class WorldNpcDropBoostActiveStatProviderReadinessReportServiceTes
 		Assert.Equal(2, report.StatFunctionPlanCount);
 		Assert.All(report.StatFunctionPlans, plan => Assert.Equal(SkillBuffStatFunctionRegistryPlanStatus.BlockedMissingEffectStatOwnerProvider, plan.Status));
 		Assert.Equal(SkillBuffStatFunctionRegistryReadinessStatus.BlockedMissingConcurrentStatFunctionStorage, report.StatFunctionRegistryReadinessReport.Status);
+		Assert.Equal(SkillBuffStat2EvaluationReadinessStatus.BlockedMissingStat2StateProvider, report.Stat2EvaluationReadinessReport.Status);
 	}
 
 	[Fact]
@@ -77,6 +79,9 @@ public sealed class WorldNpcDropBoostActiveStatProviderReadinessReportServiceTes
 		Assert.Equal(100, drBoostFunction.EffectiveValue);
 		Assert.False(drBoostFunction.IsBonus);
 		Assert.Equal(2, report.StatFunctionRegistryReadinessReport.StatBuckets.Count);
+		Assert.Equal(["BOOST_DROP_RATE", "DR_BOOST"], report.Stat2EvaluationReadinessReport.StatNames);
+		Assert.Equal(1, report.Stat2EvaluationReadinessReport.AddFunctionCount);
+		Assert.Equal(1, report.Stat2EvaluationReadinessReport.SetFunctionCount);
 	}
 
 	[Fact]
@@ -118,7 +123,13 @@ public sealed class WorldNpcDropBoostActiveStatProviderReadinessReportServiceTes
 			hasLiveStatFunctionInsertionProvider: true,
 			hasLiveStatFunctionRemovalProvider: true,
 			hasLiveSortedStatFunctionSnapshotProvider: true,
-			hasLiveStatsChangeRecalculationProvider: true);
+			hasLiveStatsChangeRecalculationProvider: true,
+			hasLiveStat2StateProvider: true,
+			hasLiveCurrentValueFormulaProvider: true,
+			hasLiveAdditionStatProvider: true,
+			hasLiveReverseStatProvider: true,
+			hasLiveStatFunctionApplyProvider: true,
+			hasLiveStatCapProvider: true);
 
 		Assert.Equal(WorldNpcDropBoostActiveStatProviderReadinessStatus.BlockedMissingConditionValidatorProvider, report.Status);
 		Assert.False(report.IsReadyForDropWorkflow);
@@ -151,6 +162,34 @@ public sealed class WorldNpcDropBoostActiveStatProviderReadinessReportServiceTes
 		Assert.Contains("live CreatureGameStats.endEffect removal provider", report.MissingInputs);
 		Assert.Contains("live CreatureGameStats.getStatsSorted snapshot provider", report.MissingInputs);
 		Assert.Contains("live CreatureGameStats.onStatsChange recalculation provider", report.MissingInputs);
+	}
+
+	[Fact]
+	public void CreateReport_BlocksWhenRegistryIsReadyButStat2RuntimeEvaluationIsMissing()
+	{
+		var report = WorldNpcDropBoostActiveStatProviderReadinessReportService.CreateReport(
+			CreateDropBoostSkillTemplates(),
+			hasLiveActiveEffectControllerProvider: true,
+			hasLiveEffectStatOwnerProvider: true,
+			hasLiveStatFunctionRegistryProvider: true,
+			hasLiveCreatureGameStatsStatQueryProvider: true,
+			hasLiveConditionValidatorProvider: true,
+			hasLiveConcurrentStatFunctionStorage: true,
+			hasLiveStatFunctionInsertionProvider: true,
+			hasLiveStatFunctionRemovalProvider: true,
+			hasLiveSortedStatFunctionSnapshotProvider: true,
+			hasLiveStatsChangeRecalculationProvider: true);
+
+		Assert.Equal(WorldNpcDropBoostActiveStatProviderReadinessStatus.BlockedMissingStat2EvaluationReadiness, report.Status);
+		Assert.False(report.IsReadyForDropWorkflow);
+		Assert.Equal(SkillBuffStatFunctionRegistryReadinessStatus.Ready, report.StatFunctionRegistryReadinessReport.Status);
+		Assert.Equal(SkillBuffStat2EvaluationReadinessStatus.BlockedMissingStat2StateProvider, report.Stat2EvaluationReadinessReport.Status);
+		Assert.Contains("live Stat2 base/bonus/baseRate/bonusRate/fixedBonusRate state provider", report.MissingInputs);
+		Assert.Contains("live Stat2.getCurrent/getExactCurrent formula provider", report.MissingInputs);
+		Assert.Contains("live AdditionStat addToBase/addToBonus/calculatePercent provider", report.MissingInputs);
+		Assert.Contains("live ReverseStat addToBase/addToBonus/calculatePercent provider", report.MissingInputs);
+		Assert.Contains("live StatAddFunction/StatRateFunction/StatSetFunction apply provider", report.MissingInputs);
+		Assert.Contains("live StatCapUtil.calculateBaseValue provider", report.MissingInputs);
 	}
 
 	[Fact]
@@ -190,7 +229,13 @@ public sealed class WorldNpcDropBoostActiveStatProviderReadinessReportServiceTes
 			hasLiveStatFunctionInsertionProvider: true,
 			hasLiveStatFunctionRemovalProvider: true,
 			hasLiveSortedStatFunctionSnapshotProvider: true,
-			hasLiveStatsChangeRecalculationProvider: true);
+			hasLiveStatsChangeRecalculationProvider: true,
+			hasLiveStat2StateProvider: true,
+			hasLiveCurrentValueFormulaProvider: true,
+			hasLiveAdditionStatProvider: true,
+			hasLiveReverseStatProvider: true,
+			hasLiveStatFunctionApplyProvider: true,
+			hasLiveStatCapProvider: true);
 
 		Assert.Equal(WorldNpcDropBoostActiveStatProviderReadinessStatus.Ready, report.Status);
 		Assert.True(report.IsReadyForDropWorkflow);
@@ -199,6 +244,7 @@ public sealed class WorldNpcDropBoostActiveStatProviderReadinessReportServiceTes
 		Assert.Equal(SkillStatChangeConditionReadinessStatus.Ready, report.ConditionReadinessReport.Status);
 		Assert.All(report.StatFunctionPlans, plan => Assert.Equal(SkillBuffStatFunctionRegistryPlanStatus.Ready, plan.Status));
 		Assert.Equal(SkillBuffStatFunctionRegistryReadinessStatus.Ready, report.StatFunctionRegistryReadinessReport.Status);
+		Assert.Equal(SkillBuffStat2EvaluationReadinessStatus.Ready, report.Stat2EvaluationReadinessReport.Status);
 	}
 
 	private static SkillTemplateTable CreateDropBoostSkillTemplates()
