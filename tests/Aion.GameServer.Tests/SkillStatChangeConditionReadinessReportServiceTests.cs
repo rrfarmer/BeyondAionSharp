@@ -56,6 +56,17 @@ public sealed class SkillStatChangeConditionReadinessReportServiceTests
 		Assert.Equal(["front", "weapon"], report.ValidatorPlans.Select(plan => plan.ConditionName));
 		Assert.Equal(["FrontCondition", "WeaponCondition"], report.ValidatorPlans.Select(plan => plan.JavaConditionType));
 		Assert.Equal([1, 2], report.ValidatorPlans.Select(plan => plan.EntryCount));
+		var frontPlan = report.ValidatorPlans.Single(plan => plan.ConditionName == "front");
+		Assert.Contains("does not override validate(Stat2, IStatFunction)", frontPlan.StatValidationBehavior, StringComparison.Ordinal);
+		Assert.Contains("returns true", frontPlan.StatValidationBehavior, StringComparison.Ordinal);
+		Assert.Contains("Condition base-class Stat2 validation pass-through", frontPlan.RequiredLiveInputs);
+		Assert.Contains("Condition.validate(Stat2, IStatFunction) base method returns true", frontPlan.JavaSource, StringComparison.Ordinal);
+
+		var weaponPlan = report.ValidatorPlans.Single(plan => plan.ConditionName == "weapon");
+		Assert.Contains("Player equipment main-hand weapon ItemGroup", weaponPlan.RequiredLiveInputs);
+		Assert.Contains("XML weapon attribute ItemGroup list", weaponPlan.RequiredLiveInputs);
+		Assert.Contains("NPC owner pass-through rule", weaponPlan.RequiredLiveInputs);
+		Assert.Contains("non-player owners return true", weaponPlan.JavaSource, StringComparison.Ordinal);
 		Assert.All(report.ValidatorPlans, plan =>
 		{
 			Assert.Equal(SkillStatChangeConditionValidatorPlanStatus.BlockedMissingConditionValidatorProvider, plan.Status);

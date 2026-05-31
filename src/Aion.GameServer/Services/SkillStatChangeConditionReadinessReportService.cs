@@ -111,6 +111,8 @@ public static class SkillStatChangeConditionReadinessReportService
 	{
 		var javaConditionType = MapJavaConditionType(conditionName);
 		var hasMapping = !string.IsNullOrEmpty(javaConditionType);
+		var statValidationBehavior = GetStatValidationBehavior(conditionName, javaConditionType);
+		var requiredLiveInputs = GetRequiredLiveInputs(conditionName, javaConditionType);
 		var missingInputs = new List<string>();
 
 		if (!hasMapping)
@@ -131,10 +133,55 @@ public static class SkillStatChangeConditionReadinessReportService
 			entryCount,
 			hasMapping,
 			hasLiveConditionValidatorProvider,
+			statValidationBehavior,
+			requiredLiveInputs,
 			"StatFunction.validate delegates to Conditions.validate(stat, statFunction) before apply",
 			"Conditions.validate returns false on first child Condition failure and skips remaining validation",
 			missingInputs,
-			"Conditions.validate iterates child Condition instances and returns false on the first child validator failure");
+			GetValidatorJavaSource(conditionName, javaConditionType));
+	}
+
+	private static string GetStatValidationBehavior(string conditionName, string? javaConditionType)
+	{
+		return conditionName switch
+		{
+			"weapon" => "WeaponCondition.validate(Stat2, IStatFunction) checks the Stat2 owner; players must have a main-hand weapon ItemGroup listed by the XML weapon attribute, while NPCs pass without weapon validation",
+			"front" => "FrontCondition does not override validate(Stat2, IStatFunction), so stat-function validation inherits Condition.validate and returns true; front-facing geometry is only implemented for Skill/Effect validation",
+			_ when javaConditionType != null => $"{javaConditionType} stat-function validation behavior has not been audited in this readiness slice",
+			_ => "No Java condition mapping is available for stat-function validation",
+		};
+	}
+
+	private static IReadOnlyList<string> GetRequiredLiveInputs(string conditionName, string? javaConditionType)
+	{
+		return conditionName switch
+		{
+			"weapon" =>
+			[
+				"Stat2 owner Creature",
+				"Player equipment main-hand weapon ItemGroup",
+				"XML weapon attribute ItemGroup list",
+				"NPC owner pass-through rule"
+			],
+			"front" =>
+			[
+				"Condition base-class Stat2 validation pass-through",
+				"Skill/Effect effector/effected geometry remains separate from stat-function validation"
+			],
+			_ when javaConditionType != null => [$"{javaConditionType} live input audit"],
+			_ => [],
+		};
+	}
+
+	private static string GetValidatorJavaSource(string conditionName, string? javaConditionType)
+	{
+		return conditionName switch
+		{
+			"weapon" => "Conditions.validate -> WeaponCondition.validate(Stat2, IStatFunction) -> isValidWeapon(stat.getOwner()) -> Player.getEquipment().getMainHandWeaponType(); non-player owners return true",
+			"front" => "Conditions.validate -> FrontCondition overrides Skill/Effect validation only; Condition.validate(Stat2, IStatFunction) base method returns true",
+			_ when javaConditionType != null => $"{javaConditionType}; Conditions.validate iterates child Condition instances and returns false on the first child validator failure",
+			_ => "Conditions.validate child mapping missing",
+		};
 	}
 
 	private static string? MapJavaConditionType(string conditionName)
@@ -211,6 +258,8 @@ public sealed record SkillStatChangeConditionValidatorPlan(
 	int EntryCount,
 	bool HasJavaConditionMapping,
 	bool HasLiveConditionValidatorProvider,
+	string StatValidationBehavior,
+	IReadOnlyList<string> RequiredLiveInputs,
 	string ValidateBeforeApplyRule,
 	string ConditionShortCircuitRule,
 	IReadOnlyList<string> MissingInputs,
