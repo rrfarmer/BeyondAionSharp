@@ -211,12 +211,9 @@ public sealed class Player
 	public List<InventoryItem> GetDirtyItemsToUpdate()
 	{
 		var dirtyItems = new List<InventoryItem>();
-		AddDirtyItems(dirtyItems, InventoryItems);
-		AddDirtyItems(dirtyItems, WarehouseItems);
-		AddDirtyItems(dirtyItems, AccountWarehouseItems);
-		dirtyItems.AddRange(DeletedInventoryItems);
-		dirtyItems.AddRange(DeletedWarehouseItems);
-		dirtyItems.AddRange(DeletedAccountWarehouseItems);
+		AddDirtyStorageItems(dirtyItems, InventoryItems, DeletedInventoryItems);
+		AddDirtyStorageItems(dirtyItems, WarehouseItems, DeletedWarehouseItems);
+		AddDirtyStorageItems(dirtyItems, AccountWarehouseItems, DeletedAccountWarehouseItems);
 		return dirtyItems;
 	}
 
@@ -311,12 +308,24 @@ public sealed class Player
 	private readonly List<PlayerPetSkillOrder> _petSkillOrders = [];
 	private readonly Dictionary<int, PlayerSummonKnownObject> _summonKnownObjects = [];
 
-	private static void AddDirtyItems(List<InventoryItem> dirtyItems, IReadOnlyList<InventoryItem> items)
+	private static void AddDirtyStorageItems(
+		List<InventoryItem> dirtyItems,
+		IReadOnlyList<InventoryItem> items,
+		IReadOnlyList<InventoryItem> deletedItems)
 	{
-		dirtyItems.AddRange(items.Where(item =>
-			item.PersistentState is InventoryItemPersistentState.New
+		if (!IsStorageDirty(items, deletedItems))
+			return;
+
+		dirtyItems.AddRange(items);
+		dirtyItems.AddRange(deletedItems);
+	}
+
+	private static bool IsStorageDirty(IReadOnlyList<InventoryItem> items, IReadOnlyList<InventoryItem> deletedItems)
+	{
+		return deletedItems.Count != 0
+			|| items.Any(item => item.PersistentState is InventoryItemPersistentState.New
 				or InventoryItemPersistentState.UpdateRequired
-				or InventoryItemPersistentState.Deleted));
+				or InventoryItemPersistentState.Deleted);
 	}
 
 	private static IReadOnlyList<InventoryItem> NormalizePersistentState(IReadOnlyList<InventoryItem> items)

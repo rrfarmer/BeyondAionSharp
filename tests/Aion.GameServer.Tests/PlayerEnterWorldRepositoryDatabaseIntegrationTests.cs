@@ -128,6 +128,60 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 	}
 
 	[Fact]
+	public async Task SavePlayerLogoutAsync_WritesAllCurrentRowsFromDirtyInventoryStorageAgainstJavaSchema_WhenEnabled()
+	{
+		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
+			return;
+
+		// Java source breadcrumbs: Player.getDirtyItemsToUpdate adds storage.getItemsWithKinah()
+		// for UPDATE_REQUIRED storages, not just the individually dirty item rows.
+		InitializeDatabaseFactory();
+		await InitializeSchemaAsync();
+		await SeedPlayerAsync();
+		await SeedInventoryItemAsync(9601, itemId: 110100001, count: 1, enchant: 0);
+		await SeedInventoryItemAsync(9602, itemId: 110100002, count: 1, enchant: 0);
+
+		var repository = new MySqlPlayerEnterWorldRepository(
+			new GameServerRuntimeContext(),
+			NullLogger<MySqlPlayerEnterWorldRepository>.Instance);
+		var player = new Player
+		{
+			ObjectId = PlayerObjectId,
+			Name = "PurifyIntegration",
+			Position = new WorldPosition(210010000, 11, 22, 33, 44),
+			InventoryItems =
+			[
+				new InventoryItem
+				{
+					ObjectId = 9601,
+					ItemId = 110100001,
+					Count = 1,
+					OwnerId = PlayerObjectId,
+					Location = 0,
+					Enchant = 7,
+					PersistentState = InventoryItemPersistentState.UpdateRequired,
+				},
+				new InventoryItem
+				{
+					ObjectId = 9602,
+					ItemId = 110100002,
+					Count = 1,
+					OwnerId = PlayerObjectId,
+					Location = 0,
+					Enchant = 9,
+					PersistentState = InventoryItemPersistentState.Updated,
+				},
+			],
+		};
+
+		var saved = await repository.SavePlayerLogoutAsync(player, new DateTime(2026, 5, 30, 13, 15, 0, DateTimeKind.Local));
+
+		Assert.True(saved);
+		Assert.Equal(7, await ExecuteScalarLongAsync("SELECT enchant FROM inventory WHERE item_unique_id = 9601"));
+		Assert.Equal(9, await ExecuteScalarLongAsync("SELECT enchant FROM inventory WHERE item_unique_id = 9602"));
+	}
+
+	[Fact]
 	public async Task SaveItemPurificationMutation_WritesInventoryStonesAndAbyssRankAgainstJavaSchema_WhenEnabled()
 	{
 		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")

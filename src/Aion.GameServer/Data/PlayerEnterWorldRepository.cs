@@ -1047,19 +1047,21 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			await SavePlayerHouseObjectCooldownsAsync(connection, player.ObjectId, player.HouseObjectCooldowns, nowMillis, cancellationToken);
 			await SavePlayerPortalCooldownsAsync(connection, player.ObjectId, player.PortalCooldowns, nowMillis, cancellationToken);
 			await SavePlayerSettingsAsync(connection, player.ObjectId, player.Settings, cancellationToken);
+			var dirtyItems = player.GetDirtyItemsToUpdate();
 			if (!await DeleteInventoryItemSnapshotAsync(
 				connection,
-				player.GetDirtyItemsToUpdate().Where(item => item.PersistentState == InventoryItemPersistentState.Deleted).ToArray(),
+				dirtyItems.Where(item => item.PersistentState == InventoryItemPersistentState.Deleted).ToArray(),
 				cancellationToken))
 			{
 				return false;
 			}
-			if (!await SaveInventoryItemSnapshotAsync(connection, player.InventoryItems, cancellationToken))
+			if (!await SaveInventoryItemSnapshotAsync(
+				connection,
+				dirtyItems.Where(item => item.PersistentState != InventoryItemPersistentState.Deleted).ToArray(),
+				cancellationToken))
+			{
 				return false;
-			if (!await SaveInventoryItemSnapshotAsync(connection, player.WarehouseItems, cancellationToken))
-				return false;
-			if (!await SaveInventoryItemSnapshotAsync(connection, player.AccountWarehouseItems, cancellationToken))
-				return false;
+			}
 			player.MarkDirtyItemsPersisted();
 
 			await using var command = connection.CreateCommand();

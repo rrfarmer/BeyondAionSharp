@@ -44,7 +44,7 @@ public sealed class PlayerInventoryPersistentStateTests
 
 		var dirtyItems = player.GetDirtyItemsToUpdate();
 
-		Assert.Equal([1002, 2001, 3001], dirtyItems.Select(item => item.ObjectId).ToArray());
+		Assert.Equal([1001, 1002, 2001, 3001, 3002], dirtyItems.Select(item => item.ObjectId).ToArray());
 	}
 
 	[Fact]
@@ -64,7 +64,14 @@ public sealed class PlayerInventoryPersistentStateTests
 		var dirtyItems = player.GetDirtyItemsToUpdate();
 
 		Assert.Equal(
-			[(1001, InventoryItemPersistentState.Deleted), (2001, InventoryItemPersistentState.Deleted), (3001, InventoryItemPersistentState.Deleted)],
+			[
+				(1001, InventoryItemPersistentState.Updated),
+				(1001, InventoryItemPersistentState.Deleted),
+				(2001, InventoryItemPersistentState.Updated),
+				(2001, InventoryItemPersistentState.Deleted),
+				(3001, InventoryItemPersistentState.Updated),
+				(3001, InventoryItemPersistentState.Deleted),
+			],
 			dirtyItems.Select(item => (item.ObjectId, item.PersistentState)).ToArray());
 	}
 
@@ -124,6 +131,23 @@ public sealed class PlayerInventoryPersistentStateTests
 
 		Assert.Empty(player.DeletedInventoryItems);
 		Assert.Empty(player.GetDirtyItemsToUpdate());
+	}
+
+	[Fact]
+	public void GetDirtyItemsToUpdate_ReturnsAllCurrentRowsWhenOneStorageItemIsDirty()
+	{
+		var player = new Player
+		{
+			InventoryItems =
+			[
+				CreateItem(1001, location: 0, InventoryItemPersistentState.UpdateRequired),
+				CreateItem(1002, location: 0, InventoryItemPersistentState.Updated),
+			],
+		};
+
+		var dirtyItems = player.GetDirtyItemsToUpdate();
+
+		Assert.Equal([1001, 1002], dirtyItems.Select(item => item.ObjectId).ToArray());
 	}
 
 	private static InventoryItem CreateItem(
