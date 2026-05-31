@@ -43,6 +43,69 @@ public sealed record PrivateStorePurchasePlan(
 	public bool IsLive => false;
 }
 
+public enum PrivateStoreLiveExecutorFacadeStatus
+{
+	MissingHandlerPlan,
+	HandlerNotPrivateStore,
+	MissingBoughtItemsPlan,
+	BoughtItemsPlanNotReady,
+	MissingPurchasePlan,
+	PurchasePlanNotReady,
+	DisabledNoSideEffects,
+}
+
+public enum PrivateStoreLiveExecutorOperationKind
+{
+	DecreaseSellerItem,
+	UpdateSellerStoreItem,
+	AddBuyerItem,
+	SendSellerNotification,
+	LogPrivateStoreSale,
+	DecreaseBuyerKinah,
+	IncreaseSellerKinah,
+	CloseSellerStore,
+}
+
+public enum PrivateStoreLiveExecutorOperationStatus
+{
+	NotAttemptedMissingPlan,
+	NotAttemptedNotPrivateStore,
+	NotAttemptedCompositionNotReady,
+	NotAttemptedDisabled,
+}
+
+public sealed record PrivateStoreLiveExecutorOperation(
+	PrivateStoreLiveExecutorOperationKind Kind,
+	PrivateStoreLiveExecutorOperationStatus Status,
+	string JavaSource);
+
+public sealed record PrivateStoreLiveExecutorFacadePlan(
+	PrivateStoreLiveExecutorFacadeStatus Status,
+	CmBuyItemHandlerCompositionPlan? HandlerPlan,
+	PrivateStoreBoughtItemsPlan? BoughtItemsPlan,
+	PrivateStorePurchasePlan? PurchasePlan,
+	IReadOnlyList<PrivateStoreLiveExecutorOperation> Operations,
+	bool WouldMutateSellerInventory,
+	bool DidMutateSellerInventory,
+	bool WouldMutateBuyerInventory,
+	bool DidMutateBuyerInventory,
+	bool WouldSendSellerMessages,
+	bool DidSendSellerMessages,
+	bool WouldWriteExchangeLog,
+	bool DidWriteExchangeLog,
+	bool WouldMutateBuyerKinah,
+	bool DidMutateBuyerKinah,
+	bool WouldMutateSellerKinah,
+	bool DidMutateSellerKinah,
+	bool WouldCloseSellerStore,
+	bool DidCloseSellerStore,
+	bool ShouldDispatchLiveSideEffects,
+	string JavaSource,
+	bool IsLive)
+{
+	public bool IsDisabled => Status == PrivateStoreLiveExecutorFacadeStatus.DisabledNoSideEffects;
+}
+
 public static class PrivateStorePurchasePlanService
 {
 	private const int CubeStorageId = 0;
@@ -273,5 +336,186 @@ public static class PrivateStorePurchasePlanService
 		copy.Godstone = item.Godstone;
 		copy.IdianStone = item.IdianStone;
 		return copy;
+	}
+}
+
+public static class PrivateStoreLiveExecutorFacadePlanService
+{
+	public static PrivateStoreLiveExecutorFacadePlan CreateDisabledPlan(CmBuyItemHandlerCompositionPlan? handlerPlan)
+	{
+		// Java parity: PrivateStoreService.sellStoreItem live side effects remain behind
+		// a disabled boundary until seller/buyer inventory, Kinah, store state, packet,
+		// and exchange-log mutation can be enabled and verified together.
+		if (handlerPlan == null)
+			return CreateTerminalPlan(
+				PrivateStoreLiveExecutorFacadeStatus.MissingHandlerPlan,
+				handlerPlan,
+				boughtItemsPlan: null,
+				purchasePlan: null,
+				NotAttempted(PrivateStoreLiveExecutorOperationStatus.NotAttemptedMissingPlan),
+				"PrivateStoreService.sellStoreItem live facade requires CM_BUY_ITEM handler composition evidence");
+
+		if (handlerPlan.Status != CmBuyItemHandlerCompositionPlanStatus.SelectedPrivateStorePlanner)
+			return CreateTerminalPlan(
+				PrivateStoreLiveExecutorFacadeStatus.HandlerNotPrivateStore,
+				handlerPlan,
+				handlerPlan.PrivateStoreBoughtItemsPlan,
+				handlerPlan.PrivateStorePurchasePlan,
+				NotAttempted(PrivateStoreLiveExecutorOperationStatus.NotAttemptedNotPrivateStore),
+				"CM_BUY_ITEM.runImpl dispatch did not select Player action 0 -> PrivateStoreService.sellStoreItem");
+
+		var boughtItemsPlan = handlerPlan.PrivateStoreBoughtItemsPlan;
+		if (boughtItemsPlan == null)
+			return CreateTerminalPlan(
+				PrivateStoreLiveExecutorFacadeStatus.MissingBoughtItemsPlan,
+				handlerPlan,
+				boughtItemsPlan,
+				handlerPlan.PrivateStorePurchasePlan,
+				NotAttempted(PrivateStoreLiveExecutorOperationStatus.NotAttemptedCompositionNotReady),
+				"PrivateStoreService.sellStoreItem facade requires getBoughtItems composition before side effects");
+
+		if (boughtItemsPlan.Status != PrivateStoreBoughtItemsPlanStatus.PlanCreated)
+			return CreateTerminalPlan(
+				PrivateStoreLiveExecutorFacadeStatus.BoughtItemsPlanNotReady,
+				handlerPlan,
+				boughtItemsPlan,
+				handlerPlan.PrivateStorePurchasePlan,
+				NotAttempted(PrivateStoreLiveExecutorOperationStatus.NotAttemptedCompositionNotReady),
+				"PrivateStoreService.getBoughtItems returned null-equivalent blocked plan; live private-store effects are not eligible");
+
+		var purchasePlan = handlerPlan.PrivateStorePurchasePlan;
+		if (purchasePlan == null)
+			return CreateTerminalPlan(
+				PrivateStoreLiveExecutorFacadeStatus.MissingPurchasePlan,
+				handlerPlan,
+				boughtItemsPlan,
+				purchasePlan,
+				NotAttempted(PrivateStoreLiveExecutorOperationStatus.NotAttemptedCompositionNotReady),
+				"PrivateStoreService.sellStoreItem facade requires purchase mutation planning before side effects");
+
+		if (purchasePlan.Status != PrivateStorePurchasePlanStatus.PlanCreated)
+			return CreateTerminalPlan(
+				PrivateStoreLiveExecutorFacadeStatus.PurchasePlanNotReady,
+				handlerPlan,
+				boughtItemsPlan,
+				purchasePlan,
+				NotAttempted(PrivateStoreLiveExecutorOperationStatus.NotAttemptedCompositionNotReady),
+				"PrivateStoreService.sellStoreItem purchase plan is blocked; live private-store effects are not eligible");
+
+		var operations = new List<PrivateStoreLiveExecutorOperation>();
+		var wouldMutateSellerInventory = purchasePlan.SellerItemUpdates.Count > 0 || purchasePlan.SellerDeletedItemObjectIds.Count > 0;
+		if (wouldMutateSellerInventory)
+		{
+			operations.Add(Disabled(
+				PrivateStoreLiveExecutorOperationKind.DecreaseSellerItem,
+				"PrivateStoreService.decreaseItemFromPlayer -> seller.getInventory().decreaseItemCount(item, boughtItem.getCount())"));
+			operations.Add(Disabled(
+				PrivateStoreLiveExecutorOperationKind.UpdateSellerStoreItem,
+				"PrivateStoreService.decreaseItemFromPlayer -> storeItem.decreaseCount/removeItem when count reaches zero"));
+		}
+
+		var wouldMutateBuyerInventory = purchasePlan.BuyerAddedItems.Count > 0 || purchasePlan.BuyerUpdatedItems.Count > 0;
+		if (wouldMutateBuyerInventory)
+			operations.Add(Disabled(
+				PrivateStoreLiveExecutorOperationKind.AddBuyerItem,
+				"PrivateStoreService.sellStoreItem -> ItemService.addItem(buyer, item, boughtItem.getCount())"));
+
+		if (purchasePlan.SellerMessages.Count > 0)
+			operations.Add(Disabled(
+				PrivateStoreLiveExecutorOperationKind.SendSellerNotification,
+				"PrivateStoreService.sellStoreItem -> STR_MSG_PERSONAL_SHOP_SELL_ITEM or STR_MSG_PERSONAL_SHOP_SELL_ITEM_MULTI"));
+
+		if (purchasePlan.BoughtItems.Count > 0)
+			operations.Add(Disabled(
+				PrivateStoreLiveExecutorOperationKind.LogPrivateStoreSale,
+				"PrivateStoreService.sellStoreItem -> EXCHANGE_LOG private-store sale line"));
+
+		if (purchasePlan.BuyerKinahUpdate != null)
+			operations.Add(Disabled(
+				PrivateStoreLiveExecutorOperationKind.DecreaseBuyerKinah,
+				"PrivateStoreService.sellStoreItem -> buyer.getInventory().decreaseKinah(price)"));
+
+		if (purchasePlan.SellerKinahUpdate != null)
+			operations.Add(Disabled(
+				PrivateStoreLiveExecutorOperationKind.IncreaseSellerKinah,
+				"PrivateStoreService.sellStoreItem -> seller.getInventory().increaseKinah(price)"));
+
+		if (purchasePlan.ShouldCloseSellerStore)
+			operations.Add(Disabled(
+				PrivateStoreLiveExecutorOperationKind.CloseSellerStore,
+				"PrivateStoreService.sellStoreItem -> if seller store empty closePrivateStore(seller)"));
+
+		return new PrivateStoreLiveExecutorFacadePlan(
+			PrivateStoreLiveExecutorFacadeStatus.DisabledNoSideEffects,
+			handlerPlan,
+			boughtItemsPlan,
+			purchasePlan,
+			operations,
+			WouldMutateSellerInventory: wouldMutateSellerInventory,
+			DidMutateSellerInventory: false,
+			WouldMutateBuyerInventory: wouldMutateBuyerInventory,
+			DidMutateBuyerInventory: false,
+			WouldSendSellerMessages: purchasePlan.SellerMessages.Count > 0,
+			DidSendSellerMessages: false,
+			WouldWriteExchangeLog: purchasePlan.BoughtItems.Count > 0,
+			DidWriteExchangeLog: false,
+			WouldMutateBuyerKinah: purchasePlan.BuyerKinahUpdate != null,
+			DidMutateBuyerKinah: false,
+			WouldMutateSellerKinah: purchasePlan.SellerKinahUpdate != null,
+			DidMutateSellerKinah: false,
+			WouldCloseSellerStore: purchasePlan.ShouldCloseSellerStore,
+			DidCloseSellerStore: false,
+			ShouldDispatchLiveSideEffects: false,
+			"PrivateStoreService.sellStoreItem live side-effect executor facade is disabled; Java side-effect order is recorded without dispatch",
+			IsLive: false);
+	}
+
+	private static PrivateStoreLiveExecutorFacadePlan CreateTerminalPlan(
+		PrivateStoreLiveExecutorFacadeStatus status,
+		CmBuyItemHandlerCompositionPlan? handlerPlan,
+		PrivateStoreBoughtItemsPlan? boughtItemsPlan,
+		PrivateStorePurchasePlan? purchasePlan,
+		PrivateStoreLiveExecutorOperation operation,
+		string javaSource)
+	{
+		return new PrivateStoreLiveExecutorFacadePlan(
+			status,
+			handlerPlan,
+			boughtItemsPlan,
+			purchasePlan,
+			[operation],
+			WouldMutateSellerInventory: false,
+			DidMutateSellerInventory: false,
+			WouldMutateBuyerInventory: false,
+			DidMutateBuyerInventory: false,
+			WouldSendSellerMessages: false,
+			DidSendSellerMessages: false,
+			WouldWriteExchangeLog: false,
+			DidWriteExchangeLog: false,
+			WouldMutateBuyerKinah: false,
+			DidMutateBuyerKinah: false,
+			WouldMutateSellerKinah: false,
+			DidMutateSellerKinah: false,
+			WouldCloseSellerStore: false,
+			DidCloseSellerStore: false,
+			ShouldDispatchLiveSideEffects: false,
+			javaSource,
+			IsLive: false);
+	}
+
+	private static PrivateStoreLiveExecutorOperation Disabled(PrivateStoreLiveExecutorOperationKind kind, string javaSource)
+	{
+		return new PrivateStoreLiveExecutorOperation(
+			kind,
+			PrivateStoreLiveExecutorOperationStatus.NotAttemptedDisabled,
+			javaSource);
+	}
+
+	private static PrivateStoreLiveExecutorOperation NotAttempted(PrivateStoreLiveExecutorOperationStatus status)
+	{
+		return new PrivateStoreLiveExecutorOperation(
+			PrivateStoreLiveExecutorOperationKind.DecreaseSellerItem,
+			status,
+			"PrivateStoreService.sellStoreItem live executor facade did not reach this side-effect boundary");
 	}
 }
