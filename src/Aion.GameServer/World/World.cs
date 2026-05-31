@@ -65,6 +65,21 @@ public sealed class World
 			.ToArray();
 	}
 
+	public IReadOnlyList<Player> GetPlayers()
+	{
+		// Java parity: WorldMapInstance stores visible Player objects for KnownList scans.
+		return _objects.Values.OfType<Player>().ToArray();
+	}
+
+	public IReadOnlyList<Player> GetPlayers(int worldId)
+	{
+		// Java parity: WorldMapInstance visible-object scans are scoped to the player's world map.
+		return _objects.Values
+			.OfType<Player>()
+			.Where(player => player.Position.WorldId == worldId)
+			.ToArray();
+	}
+
 	public bool TryRemoveObject(int objectId, out object? gameObject)
 	{
 		var removed = _objects.TryRemove(objectId, out gameObject);

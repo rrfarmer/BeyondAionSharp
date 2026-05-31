@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using Aion.GameServer.Model.GameObjects;
+using GameWorld = Aion.GameServer.World.World;
 
 namespace Aion.GameServer.Services;
 
@@ -228,6 +229,38 @@ public sealed record CmBuyItemKnownVisibleObjectPopulationResolverAdapterPlan(
 	bool IsJavaRegionKnownListParity,
 	string JavaSource,
 	bool IsLive);
+
+public sealed record CmBuyItemWorldKnownVisibleObjectSnapshot(
+	int OwnerPlayerObjectId,
+	IReadOnlyList<Player> PlayerCandidates,
+	IReadOnlyList<IWorldNpcObject> NpcCandidates,
+	int WorldObjectCount,
+	bool UsesWorldContainerSnapshot,
+	bool IsJavaRegionKnownListParity,
+	string JavaSource,
+	bool IsLive);
+
+public sealed class CmBuyItemWorldKnownVisibleObjectSnapshotCollectorService
+{
+	public CmBuyItemWorldKnownVisibleObjectSnapshot Collect(Player owner, GameWorld world)
+	{
+		// Java parity breadcrumb: KnownList.findVisibleObjects scans the owner's
+		// current map-region neighbours. This disabled collector only snapshots
+		// same-world objects already stored in the C# World container.
+		var playerCandidates = world.GetPlayers(owner.Position.WorldId);
+		var npcCandidates = world.GetNpcs(owner.Position.WorldId);
+
+		return new CmBuyItemWorldKnownVisibleObjectSnapshot(
+			owner.ObjectId,
+			playerCandidates,
+			npcCandidates,
+			world.ObjectCount,
+			UsesWorldContainerSnapshot: true,
+			IsJavaRegionKnownListParity: false,
+			"KnownList.findVisibleObjects approximated from C# World same-world player/NPC snapshots",
+			IsLive: false);
+	}
+}
 
 public sealed class CmBuyItemKnownVisibleObjectPopulationResolverAdapterService
 {

@@ -2,6 +2,8 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Services;
 using Aion.GameServer.World;
+using Microsoft.Extensions.Logging.Abstractions;
+using GameWorld = Aion.GameServer.World.World;
 
 namespace Aion.GameServer.Tests;
 
@@ -173,6 +175,33 @@ public sealed class CmBuyItemKnownVisibleObjectMembershipServiceTests
 	}
 
 	[Fact]
+	public void WorldSnapshotCollector_ReturnsSameWorldPlayersAndNpcsOnly()
+	{
+		var collector = new CmBuyItemWorldKnownVisibleObjectSnapshotCollectorService();
+		var world = CreateWorld();
+		var owner = CreatePlayer(OwnerPlayerObjectId, x: 0, worldId: 210010000);
+		var sameWorldPlayer = CreatePlayer(SellerPlayerObjectId, x: 94, worldId: 210010000);
+		var otherWorldPlayer = CreatePlayer(2003, x: 1, worldId: 220010000);
+		var sameWorldNpc = CreateNpc(SellerNpcObjectId, x: 11, worldId: 210010000);
+		var otherWorldNpc = CreateNpc(9003, x: 1, worldId: 220010000);
+		Assert.True(world.TryAddObject(owner.ObjectId, owner));
+		Assert.True(world.TryAddObject(sameWorldPlayer.ObjectId, sameWorldPlayer));
+		Assert.True(world.TryAddObject(otherWorldPlayer.ObjectId, otherWorldPlayer));
+		Assert.True(world.TryAddObject(sameWorldNpc.ObjectId, sameWorldNpc));
+		Assert.True(world.TryAddObject(otherWorldNpc.ObjectId, otherWorldNpc));
+		Assert.True(world.TryAddObject(5001, "not visible object"));
+
+		var snapshot = collector.Collect(owner, world);
+
+		Assert.True(snapshot.UsesWorldContainerSnapshot);
+		Assert.False(snapshot.IsJavaRegionKnownListParity);
+		Assert.False(snapshot.IsLive);
+		Assert.Equal(6, snapshot.WorldObjectCount);
+		Assert.Equal([OwnerPlayerObjectId, SellerPlayerObjectId], snapshot.PlayerCandidates.Select(player => player.ObjectId).Order());
+		Assert.Equal([SellerNpcObjectId], snapshot.NpcCandidates.Select(npc => npc.ObjectId));
+	}
+
+	[Fact]
 	public async Task GameServerConnection_KnownNpcFactAllowsNpcBuyPlannerSelection()
 	{
 		var membership = new CmBuyItemKnownVisibleObjectMembershipService();
@@ -205,6 +234,36 @@ public sealed class CmBuyItemKnownVisibleObjectMembershipServiceTests
 		await using var fixture = await GameServerConnectionBuyItemTests.BuyItemFixture.CreateAsync(
 			adapter.CreateResolver(_ => [owner], _ => [sellerNpc]));
 		GameServerConnectionBuyItemTests.SetActivePlayerForPacketDispatchForAdapterTests(fixture.Connection, owner);
+		fixture.World.TryAddObject(SellerNpcObjectId, sellerNpc);
+
+		await GameServerConnectionBuyItemTests.InvokeProcessPacketAsyncForAdapterTests(
+			fixture.Connection,
+			GameServerConnectionBuyItemTests.CreateBuyItemPayloadForAdapterTests(SellerNpcObjectId, tradeActionId: 13, [(1001, 2)]));
+
+		var plan = Assert.Single(fixture.BuyItemPlans);
+		Assert.Equal(CmBuyItemHandlerCompositionPlanStatus.SelectedBuyFromShopPlanner, plan.Status);
+		Assert.NotNull(plan.BuyFromShopPlan);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		Assert.Contains(SellerNpcObjectId, membership.GetSnapshot(OwnerPlayerObjectId).KnownObjectIds);
+	}
+
+	[Fact]
+	public async Task GameServerConnection_PopulationResolverAcceptsWorldSnapshotVisibleNpcTarget()
+	{
+		var owner = CreatePlayer(OwnerPlayerObjectId, x: 0, worldId: 210010000);
+		var sellerNpc = CreateNpc(SellerNpcObjectId, x: 11, worldId: 210010000);
+		var membership = new CmBuyItemKnownVisibleObjectMembershipService();
+		var population = new CmBuyItemKnownVisibleObjectPopulationAdapterService(membership);
+		var populationResolver = new CmBuyItemKnownVisibleObjectPopulationResolverAdapterService(membership, population);
+		var collector = new CmBuyItemWorldKnownVisibleObjectSnapshotCollectorService();
+		GameWorld? resolverWorld = null;
+		await using var fixture = await GameServerConnectionBuyItemTests.BuyItemFixture.CreateAsync(
+			populationResolver.CreateResolver(
+				player => collector.Collect(player, resolverWorld!).PlayerCandidates,
+				player => collector.Collect(player, resolverWorld!).NpcCandidates));
+		resolverWorld = fixture.World;
+		GameServerConnectionBuyItemTests.SetActivePlayerForPacketDispatchForAdapterTests(fixture.Connection, owner);
+		fixture.World.TryAddObject(owner.ObjectId, owner);
 		fixture.World.TryAddObject(SellerNpcObjectId, sellerNpc);
 
 		await GameServerConnectionBuyItemTests.InvokeProcessPacketAsyncForAdapterTests(
@@ -262,6 +321,13 @@ public sealed class CmBuyItemKnownVisibleObjectMembershipServiceTests
 		Assert.Equal(CmBuyItemHandlerCompositionPlanStatus.SkippedUnknownTarget, plan.Status);
 		Assert.Null(plan.BuyFromShopPlan);
 		Assert.False(plan.ShouldDispatchLiveSideEffects);
+	}
+
+	private static GameWorld CreateWorld()
+	{
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		world.Initialize();
+		return world;
 	}
 
 	private static Player CreatePlayer(int objectId, float x = 0, int worldId = 210010000) =>
