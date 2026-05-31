@@ -1154,6 +1154,103 @@ public sealed class CraftServiceTests
 	}
 
 	[Fact]
+	public void CreateStartInventoryPacketPlan_MapsMutationIntentToJavaInventoryPackets()
+	{
+		var service = CreateService(out _, CreateItemTemplates(), CreateSkillTemplates());
+		var player = CreatePlayer(objectId: 1147, dp: 700);
+		var recipe = CreateRecipe(
+			recipeId: 155000040,
+			dp: 600,
+			productId: 100200203,
+			skillId: 40001,
+			skillPoint: 200,
+			componentGroups: [CreateComponentGroup((152000901, 2), (152000902, 1))]);
+		player.Recipes = [recipe.RecipeId];
+		player.Skills = [CreateSkill(recipe.SkillId, skillLevel: 200)];
+		player.InventoryItems =
+		[
+			CreateInventoryItem(objectId: 8020, itemId: 169401081, count: 1),
+			CreateInventoryItem(objectId: 8021, itemId: 152000901, count: 1),
+			CreateInventoryItem(objectId: 8022, itemId: 152000901, count: 3),
+			CreateInventoryItem(objectId: 8023, itemId: 152000902, count: 5),
+		];
+		var productTemplate = CreateItemTemplates().GetItemTemplate(100200203);
+		var target = CreateTarget(objectId: 9031, templateId: 730190);
+		var selectedMaterials = new Dictionary<int, long> { [152000901] = 2 };
+		var validation = service.CreateStartCraftingValidationPlan(
+			player,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false,
+			selectedMaterials,
+			craftType: 1);
+		var consumption = service.CreateStartConsumptionPlan(validation, recipe, selectedMaterials, craftType: 1);
+		var mutation = service.CreateStartInventoryMutationPlan(consumption, player.InventoryItems);
+
+		var packetPlan = service.CreateStartInventoryPacketPlan(mutation);
+
+		Assert.Equal(CraftStartInventoryPacketStatus.Planned, packetPlan.Status);
+		Assert.False(packetPlan.IsLive);
+		Assert.Same(mutation, packetPlan.MutationPlan);
+		Assert.Contains("DEC_ITEM_USE", packetPlan.JavaSource, StringComparison.Ordinal);
+		Assert.Collection(
+			packetPlan.Packets,
+			packet =>
+			{
+				var updatePacket = Assert.IsType<SmInventoryUpdateItem>(packet);
+				Assert.Equal(SmInventoryUpdateItem.DecreaseItemUse, ReadInventoryUpdateType(updatePacket));
+			},
+			packet =>
+			{
+				var updatePacket = Assert.IsType<SmInventoryUpdateItem>(packet);
+				Assert.Equal(SmInventoryUpdateItem.DecreaseItemUse, ReadInventoryUpdateType(updatePacket));
+			},
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 8020, expectedDeleteType: SmDeleteItem.UseDeleteType),
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 8021, expectedDeleteType: SmDeleteItem.UseDeleteType));
+	}
+
+	[Fact]
+	public void CreateStartInventoryPacketPlan_ReportsMissingTemplateForUpdatedStack()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var consumption = CraftStartConsumptionPlan.NotPlanned("packet evidence only");
+		var mutation = CraftStartInventoryMutationPlan.Planned(
+			consumption,
+			[CreateInventoryItem(objectId: 8024, itemId: 999999999, count: 2)],
+			[]);
+
+		var packetPlan = service.CreateStartInventoryPacketPlan(mutation);
+
+		Assert.Equal(CraftStartInventoryPacketStatus.MissingUpdatedItemTemplate, packetPlan.Status);
+		Assert.Equal(999999999, packetPlan.MissingItemTemplateId);
+		Assert.Empty(packetPlan.Packets);
+		Assert.False(packetPlan.IsLive);
+	}
+
+	[Fact]
+	public void CreateStartInventoryPacketPlan_DoesNotPlanWithoutMutationOrTemplates()
+	{
+		var service = CreateService(out _);
+		var notPlannedMutation = CraftStartInventoryMutationPlan.NotPlanned("validation failed");
+		var plannedMutation = CraftStartInventoryMutationPlan.Planned(
+			CraftStartConsumptionPlan.NotPlanned("packet evidence only"),
+			[CreateInventoryItem(objectId: 8025, itemId: 152000901, count: 2)],
+			[]);
+
+		var withoutMutation = service.CreateStartInventoryPacketPlan(notPlannedMutation);
+		var missingTemplates = service.CreateStartInventoryPacketPlan(plannedMutation);
+
+		Assert.Equal(CraftStartInventoryPacketStatus.NotPlanned, withoutMutation.Status);
+		Assert.Empty(withoutMutation.Packets);
+		Assert.Equal(CraftStartInventoryPacketStatus.MissingItemTemplates, missingTemplates.Status);
+		Assert.Empty(missingTemplates.Packets);
+		Assert.Same(plannedMutation, missingTemplates.MutationPlan);
+	}
+
+	[Fact]
 	public void CreateStartTaskPlan_UsesJavaIntervalFormulaAndBonusModifier()
 	{
 		var service = CreateService(out _, CreateItemTemplates(), CreateSkillTemplates());
@@ -1800,6 +1897,13 @@ public sealed class CraftServiceTests
 		var blobSize = reader.ReadH();
 		reader.ReadB(blobSize);
 		return reader.ReadH();
+	}
+
+	private static void AssertDeleteItemPayload(SmDeleteItem packet, int expectedObjectId, int expectedDeleteType)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(expectedObjectId, reader.ReadD());
+		Assert.Equal(expectedDeleteType, reader.ReadC());
 	}
 
 	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)

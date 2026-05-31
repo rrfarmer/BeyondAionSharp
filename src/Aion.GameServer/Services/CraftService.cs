@@ -330,6 +330,40 @@ public sealed class CraftService
 		return CraftStartInventoryMutationPlan.Planned(consumptionPlan, updatedItems, deletedObjectIds);
 	}
 
+	public CraftStartInventoryPacketPlan CreateStartInventoryPacketPlan(
+		CraftStartInventoryMutationPlan? mutationPlan,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups = null)
+	{
+		// Java parity: Storage.decreaseItemCount sends SM_INVENTORY_UPDATE_ITEM with
+		// ItemUpdateType.DEC_ITEM_USE for remaining stacks, or SM_DELETE_ITEM with
+		// ItemDeleteType.USE for non-kinah stacks deleted at zero.
+		if (mutationPlan == null)
+			return CraftStartInventoryPacketPlan.NotPlanned("CraftService.checkCraft packet planning requires inventory mutation evidence");
+		if (!mutationPlan.IsPlanned)
+			return CraftStartInventoryPacketPlan.NotPlanned("CraftService.checkCraft inventory mutation was not planned");
+		if (_itemTemplates == null)
+			return CraftStartInventoryPacketPlan.MissingItemTemplates(mutationPlan);
+
+		var packets = new List<GameServerPacket>();
+		foreach (var updatedItem in mutationPlan.UpdatedItems)
+		{
+			var template = _itemTemplates.GetItemTemplate(updatedItem.ItemId);
+			if (template == null)
+				return CraftStartInventoryPacketPlan.MissingUpdatedItemTemplate(mutationPlan, updatedItem.ItemId, packets);
+
+			packets.Add(new SmInventoryUpdateItem(
+				updatedItem,
+				template,
+				SmInventoryUpdateItem.DecreaseItemUse,
+				GetGeneralInfoWarehouseRestrictionFlag(updatedItem.ItemId, itemRestrictionCleanups)));
+		}
+
+		foreach (var deletedObjectId in mutationPlan.DeletedObjectIds)
+			packets.Add(new SmDeleteItem(deletedObjectId, SmDeleteItem.UseDeleteType));
+
+		return CraftStartInventoryPacketPlan.Planned(mutationPlan, packets);
+	}
+
 	public CraftFinishProductPlan CreateFinishProductPlan(Player? player, RecipeTemplateSummary? recipeTemplate, int critCount)
 	{
 		// Java parity: services/craft/CraftService.finishCrafting product-selection branch.
@@ -1470,6 +1504,74 @@ public enum CraftStartInventoryMutationStatus
 	NotPlanned,
 	MissingInventory,
 	InsufficientInventory,
+	Planned,
+}
+
+public sealed record CraftStartInventoryPacketPlan(
+	CraftStartInventoryPacketStatus Status,
+	CraftStartInventoryMutationPlan? MutationPlan,
+	IReadOnlyList<GameServerPacket> Packets,
+	int MissingItemTemplateId,
+	string JavaSource,
+	bool IsLive)
+{
+	public bool IsPlanned => Status == CraftStartInventoryPacketStatus.Planned;
+
+	public static CraftStartInventoryPacketPlan NotPlanned(string javaSource)
+	{
+		return new CraftStartInventoryPacketPlan(
+			CraftStartInventoryPacketStatus.NotPlanned,
+			MutationPlan: null,
+			Packets: Array.Empty<GameServerPacket>(),
+			MissingItemTemplateId: 0,
+			javaSource,
+			IsLive: false);
+	}
+
+	public static CraftStartInventoryPacketPlan MissingItemTemplates(CraftStartInventoryMutationPlan mutationPlan)
+	{
+		return new CraftStartInventoryPacketPlan(
+			CraftStartInventoryPacketStatus.MissingItemTemplates,
+			mutationPlan,
+			Packets: Array.Empty<GameServerPacket>(),
+			MissingItemTemplateId: 0,
+			"SM_INVENTORY_UPDATE_ITEM packet planning requires item templates",
+			IsLive: false);
+	}
+
+	public static CraftStartInventoryPacketPlan MissingUpdatedItemTemplate(
+		CraftStartInventoryMutationPlan mutationPlan,
+		int missingItemTemplateId,
+		IReadOnlyList<GameServerPacket> packets)
+	{
+		return new CraftStartInventoryPacketPlan(
+			CraftStartInventoryPacketStatus.MissingUpdatedItemTemplate,
+			mutationPlan,
+			packets.ToArray(),
+			missingItemTemplateId,
+			"SM_INVENTORY_UPDATE_ITEM packet planning requires the updated stack template",
+			IsLive: false);
+	}
+
+	public static CraftStartInventoryPacketPlan Planned(
+		CraftStartInventoryMutationPlan mutationPlan,
+		IReadOnlyList<GameServerPacket> packets)
+	{
+		return new CraftStartInventoryPacketPlan(
+			CraftStartInventoryPacketStatus.Planned,
+			mutationPlan,
+			packets.ToArray(),
+			MissingItemTemplateId: 0,
+			"Storage.decreaseItemCount -> ItemPacketService.sendItemPacket with DEC_ITEM_USE or SM_DELETE_ITEM with USE",
+			IsLive: false);
+	}
+}
+
+public enum CraftStartInventoryPacketStatus
+{
+	NotPlanned,
+	MissingItemTemplates,
+	MissingUpdatedItemTemplate,
 	Planned,
 }
 
