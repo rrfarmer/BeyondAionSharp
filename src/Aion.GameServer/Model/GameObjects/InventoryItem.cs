@@ -14,6 +14,23 @@ public enum InventoryItemPersistentState
 
 public sealed class InventoryItem
 {
+	// Java parity: model/gameobjects/Item.setPersistentState(PersistentState).
+	public static InventoryItemPersistentState TransitionPersistentState(
+		InventoryItemPersistentState currentState,
+		InventoryItemPersistentState requestedState)
+	{
+		return requestedState switch
+		{
+			InventoryItemPersistentState.Deleted => currentState == InventoryItemPersistentState.New
+				? InventoryItemPersistentState.NoAction
+				: InventoryItemPersistentState.Deleted,
+			InventoryItemPersistentState.UpdateRequired => currentState == InventoryItemPersistentState.New
+				? InventoryItemPersistentState.New
+				: InventoryItemPersistentState.UpdateRequired,
+			_ => requestedState,
+		};
+	}
+
 	public int ObjectId { get; init; }
 
 	public int ItemId { get; init; }

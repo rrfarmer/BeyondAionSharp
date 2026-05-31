@@ -176,7 +176,7 @@ public static class TuningActionExecutionPlanService
 			BuffSkill = item.BuffSkill,
 			RandomPlumeBonus = item.RandomPlumeBonus,
 			PendingTuneResult = item.PendingTuneResult,
-			PersistentState = InventoryItemPersistentState.UpdateRequired,
+			PersistentState = InventoryItem.TransitionPersistentState(item.PersistentState, InventoryItemPersistentState.UpdateRequired),
 			ManaStones = item.ManaStones,
 			FusionStones = item.FusionStones,
 			Godstone = item.Godstone,

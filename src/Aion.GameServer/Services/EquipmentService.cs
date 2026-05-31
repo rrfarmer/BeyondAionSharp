@@ -631,20 +631,28 @@ public static class EquipmentService
 		bool? isEquipped = null,
 		bool? isSoulBound = null)
 	{
+		var effectiveCount = count ?? item.Count;
+		var effectiveSlot = slot ?? item.Slot;
+		var effectiveIsEquipped = isEquipped ?? item.IsEquipped;
+		var effectiveIsSoulBound = isSoulBound ?? item.IsSoulBound;
+		var changed = effectiveCount != item.Count
+			|| effectiveSlot != item.Slot
+			|| effectiveIsEquipped != item.IsEquipped
+			|| effectiveIsSoulBound != item.IsSoulBound;
 		var copy = new InventoryItem
 		{
 			ObjectId = item.ObjectId,
 			ItemId = item.ItemId,
-			Count = count ?? item.Count,
+			Count = effectiveCount,
 			Color = item.Color,
 			ColorExpires = item.ColorExpires,
 			Creator = item.Creator,
 			ExpireTime = item.ExpireTime,
 			ActivationCount = item.ActivationCount,
 			OwnerId = item.OwnerId,
-			IsEquipped = isEquipped ?? item.IsEquipped,
-			IsSoulBound = isSoulBound ?? item.IsSoulBound,
-			Slot = slot ?? item.Slot,
+			IsEquipped = effectiveIsEquipped,
+			IsSoulBound = effectiveIsSoulBound,
+			Slot = effectiveSlot,
 			Location = item.Location,
 			Enchant = item.Enchant,
 			EnchantBonus = item.EnchantBonus,
@@ -661,6 +669,10 @@ public static class EquipmentService
 			IsAmplified = item.IsAmplified,
 			BuffSkill = item.BuffSkill,
 			RandomPlumeBonus = item.RandomPlumeBonus,
+			PendingTuneResult = item.PendingTuneResult,
+			PersistentState = changed
+				? InventoryItem.TransitionPersistentState(item.PersistentState, InventoryItemPersistentState.UpdateRequired)
+				: item.PersistentState,
 		};
 		copy.ManaStones = item.ManaStones;
 		copy.FusionStones = item.FusionStones;

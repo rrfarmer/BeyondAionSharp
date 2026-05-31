@@ -5,6 +5,22 @@ namespace Aion.GameServer.Tests;
 
 public sealed class PlayerInventoryPersistentStateTests
 {
+	[Theory]
+	[InlineData(InventoryItemPersistentState.New, InventoryItemPersistentState.UpdateRequired, InventoryItemPersistentState.New)]
+	[InlineData(InventoryItemPersistentState.New, InventoryItemPersistentState.Deleted, InventoryItemPersistentState.NoAction)]
+	[InlineData(InventoryItemPersistentState.Updated, InventoryItemPersistentState.UpdateRequired, InventoryItemPersistentState.UpdateRequired)]
+	[InlineData(InventoryItemPersistentState.UpdateRequired, InventoryItemPersistentState.Deleted, InventoryItemPersistentState.Deleted)]
+	[InlineData(InventoryItemPersistentState.Updated, InventoryItemPersistentState.Updated, InventoryItemPersistentState.Updated)]
+	public void TransitionPersistentState_MirrorsJavaItemStateRules(
+		InventoryItemPersistentState currentState,
+		InventoryItemPersistentState requestedState,
+		InventoryItemPersistentState expectedState)
+	{
+		var actualState = InventoryItem.TransitionPersistentState(currentState, requestedState);
+
+		Assert.Equal(expectedState, actualState);
+	}
+
 	[Fact]
 	public void GetDirtyItemsToUpdate_ReturnsDirtyItemsAcrossModeledStorages()
 	{
@@ -53,7 +69,7 @@ public sealed class PlayerInventoryPersistentStateTests
 
 		player.MarkDirtyItemsPersisted();
 
-		Assert.All(player.GetDirtyItemsToUpdate(), item => Assert.True(false, $"Expected no remaining dirty items, found {item.ObjectId}"));
+		Assert.Empty(player.GetDirtyItemsToUpdate());
 		Assert.Equal(InventoryItemPersistentState.Updated, player.InventoryItems.Single().PersistentState);
 		Assert.Equal(pendingTuneResult, player.InventoryItems.Single().PendingTuneResult);
 		Assert.Equal(InventoryItemPersistentState.Updated, player.WarehouseItems.Single().PersistentState);

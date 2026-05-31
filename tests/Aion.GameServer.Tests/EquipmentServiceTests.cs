@@ -13,7 +13,7 @@ public sealed class EquipmentServiceTests
 		var player = CreatePlayer();
 		player.InventoryItems =
 		[
-			new InventoryItem { ObjectId = 1001, ItemId = SwordId, Location = 0, Slot = 65535 },
+			new InventoryItem { ObjectId = 1001, ItemId = SwordId, Location = 0, Slot = 65535, PersistentState = InventoryItemPersistentState.New },
 		];
 
 		var change = EquipmentService.ChangeEquipment(player, action: 0, slotRead: 2, itemObjectId: 1001, CreateItemTemplates(), skillTemplates: null);
@@ -22,8 +22,35 @@ public sealed class EquipmentServiceTests
 		var sword = Assert.Single(change.InventoryItems);
 		Assert.True(sword.IsEquipped);
 		Assert.Equal(1, sword.Slot);
+		Assert.Equal(InventoryItemPersistentState.New, sword.PersistentState);
 		Assert.Equal([1001], change.PersistedItems.Select(item => item.ObjectId));
 		Assert.Equal([1], change.InventoryUpdateItems.Select(item => item.Slot));
+	}
+
+	[Fact]
+	public void ChangeEquipment_UnequipsUpdatedItemAndMarksItUpdateRequired()
+	{
+		var player = CreatePlayer();
+		player.InventoryItems =
+		[
+			new InventoryItem
+			{
+				ObjectId = 1001,
+				ItemId = RobeId,
+				Location = 0,
+				IsEquipped = true,
+				Slot = 8,
+				PersistentState = InventoryItemPersistentState.Updated,
+			},
+		];
+
+		var change = EquipmentService.ChangeEquipment(player, action: 1, slotRead: 0, itemObjectId: 1001, CreateItemTemplates(), skillTemplates: null);
+
+		Assert.True(change.Changed);
+		var updatedItem = Assert.Single(change.PersistedItems);
+		Assert.False(updatedItem.IsEquipped);
+		Assert.Equal(0, updatedItem.Slot);
+		Assert.Equal(InventoryItemPersistentState.UpdateRequired, updatedItem.PersistentState);
 	}
 
 	[Fact]
