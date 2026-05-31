@@ -2,6 +2,7 @@ using Aion.Commons.Network;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ClientPackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 
 namespace Aion.GameServer.Tests;
@@ -107,23 +108,66 @@ public sealed class CmBuyItemHandlerCompositionPlanServiceTests
 		Assert.Null(unknownTargetPlan.SellToShopPlan);
 	}
 
-	[Theory]
-	[InlineData(0, CmBuyItemHandlerCompositionPlanStatus.UnsupportedPrivateStorePlayerSale)]
-	[InlineData(1, CmBuyItemHandlerCompositionPlanStatus.SkippedPlayerTargetNonPrivateStoreAction)]
-	public void CreatePlan_ClassifiesPlayerTargetBranchWithoutLivePrivateStoreMutation(
-		int actionId,
-		CmBuyItemHandlerCompositionPlanStatus expectedStatus)
+	[Fact]
+	public void CreatePlan_SelectsPrivateStorePlannerForPlayerActionZero()
 	{
-		var packet = CreatePacket(actionId, [new CmBuyItemEntry(1, 1)]);
+		var packet = CreatePacket(0, [new CmBuyItemEntry(1, 2)]);
+		var purchasePlan = CreatePrivateStorePurchasePlan();
+
+		var plan = CmBuyItemHandlerCompositionPlanService.CreatePlan(
+			new CmBuyItemHandlerCompositionInput(
+				packet,
+				PlayerPresent: true,
+				TargetKind: CmBuyItemRunTargetKind.Player,
+				PrivateStoreItems:
+				[
+					new PrivateStoreListedItemSummary(0, ItemObjectId: 3001, ItemId: 100000001, Count: 1, PricePerItem: 10_000, ItemName: "Practice Sword"),
+					new PrivateStoreListedItemSummary(1, ItemObjectId: 3002, ItemId: 182003001, Count: 5, PricePerItem: 300, ItemName: "Practice Bundle"),
+				],
+				PrivateStorePurchasePlan: purchasePlan));
+
+		Assert.Equal(CmBuyItemHandlerCompositionPlanStatus.SelectedPrivateStorePlanner, plan.Status);
+		Assert.Contains(CmBuyItemHandlerCompositionStep.InvokePrivateStorePlanner, plan.Steps);
+		Assert.Equal(PrivateStoreBoughtItemsPlanStatus.PlanCreated, plan.PrivateStoreBoughtItemsPlan!.Status);
+		var boughtItem = Assert.Single(plan.PrivateStoreBoughtItemsPlan.BoughtItems);
+		Assert.Equal((1, 3002, 182003001, 2L, 300L), (boughtItem.StoreIndex, boughtItem.ItemObjectId, boughtItem.ItemId, boughtItem.Count, boughtItem.PricePerItem));
+		Assert.Same(purchasePlan, plan.PrivateStorePurchasePlan);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		Assert.Null(plan.SellToShopPlan);
+		Assert.Null(plan.RepurchasePlan);
+		Assert.Null(plan.BuyFromShopPlan);
+	}
+
+	[Fact]
+	public void CreatePlan_PlayerActionZeroCarriesBlockedPrivateStoreSelectionWithoutLiveMutation()
+	{
+		var packet = CreatePacket(0, [new CmBuyItemEntry(4, 1)]);
+
+		var plan = CmBuyItemHandlerCompositionPlanService.CreatePlan(
+			new CmBuyItemHandlerCompositionInput(
+				packet,
+				PlayerPresent: true,
+				TargetKind: CmBuyItemRunTargetKind.Player,
+				PrivateStoreItems: []));
+
+		Assert.Equal(CmBuyItemHandlerCompositionPlanStatus.SelectedPrivateStorePlanner, plan.Status);
+		Assert.Equal(PrivateStoreBoughtItemsPlanStatus.BlockedInvalidStoreIndex, plan.PrivateStoreBoughtItemsPlan!.Status);
+		Assert.Null(plan.PrivateStorePurchasePlan);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+	}
+
+	[Fact]
+	public void CreatePlan_PlayerTargetNonPrivateStoreActionSkipsPrivateStorePlanner()
+	{
+		var packet = CreatePacket(1, [new CmBuyItemEntry(1, 1)]);
 
 		var plan = CmBuyItemHandlerCompositionPlanService.CreatePlan(
 			new CmBuyItemHandlerCompositionInput(packet, PlayerPresent: true, TargetKind: CmBuyItemRunTargetKind.Player));
 
-		Assert.Equal(expectedStatus, plan.Status);
+		Assert.Equal(CmBuyItemHandlerCompositionPlanStatus.SkippedPlayerTargetNonPrivateStoreAction, plan.Status);
 		Assert.Contains(CmBuyItemHandlerCompositionStep.ClassifyUnsupportedBranch, plan.Steps);
-		Assert.Null(plan.SellToShopPlan);
-		Assert.Null(plan.RepurchasePlan);
-		Assert.Null(plan.BuyFromShopPlan);
+		Assert.Null(plan.PrivateStoreBoughtItemsPlan);
+		Assert.Null(plan.PrivateStorePurchasePlan);
 	}
 
 	[Fact]
@@ -196,6 +240,23 @@ public sealed class CmBuyItemHandlerCompositionPlanServiceTests
 		var packet = new CmBuyItem(51, new HashSet<GameConnectionState> { GameConnectionState.InGame });
 		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
 		return packet;
+	}
+
+	private static PrivateStorePurchasePlan CreatePrivateStorePurchasePlan()
+	{
+		return new PrivateStorePurchasePlan(
+			PrivateStorePurchasePlanStatus.PlanCreated,
+			BoughtItems: [],
+			SellerItemUpdates: [],
+			SellerDeletedItemObjectIds: [],
+			BuyerAddedItems: [],
+			BuyerUpdatedItems: [],
+			BuyerKinahUpdate: null,
+			SellerKinahUpdate: null,
+			BuyerMessages: Array.Empty<SmSystemMessage>(),
+			SellerMessages: Array.Empty<SmSystemMessage>(),
+			ShouldCloseSellerStore: false,
+			"PrivateStoreService.sellStoreItem");
 	}
 
 	private const int SellerObjectId = 7001;

@@ -8,10 +8,10 @@ public enum CmBuyItemHandlerCompositionPlanStatus
 	SelectedSellToShopPlanner,
 	SelectedRepurchasePlanner,
 	SelectedBuyFromShopPlanner,
+	SelectedPrivateStorePlanner,
 	SkippedReadAudit,
 	SkippedMissingPlayer,
 	SkippedUnknownTarget,
-	UnsupportedPrivateStorePlayerSale,
 	SkippedPlayerTargetNonPrivateStoreAction,
 	RunAudit,
 	SkippedNpcUnsupportedAction,
@@ -29,6 +29,7 @@ public enum CmBuyItemHandlerCompositionStep
 	InvokeSellToShopPlanner,
 	InvokeRepurchasePlanner,
 	InvokeBuyFromShopPlanner,
+	InvokePrivateStorePlanner,
 	ClassifyUnsupportedBranch,
 }
 
@@ -45,6 +46,8 @@ public sealed record CmBuyItemHandlerCompositionInput(
 	IReadOnlySet<int>? RepurchasableItemObjectIds = null,
 	RepurchasePlan? RepurchasePlan = null,
 	TradeListTemplateSummary? SellTemplate = null,
+	IReadOnlyList<PrivateStoreListedItemSummary>? PrivateStoreItems = null,
+	PrivateStorePurchasePlan? PrivateStorePurchasePlan = null,
 	bool PetHasMerchantFunction = false);
 
 public sealed record CmBuyItemHandlerCompositionPlan(
@@ -56,6 +59,8 @@ public sealed record CmBuyItemHandlerCompositionPlan(
 	CmBuyItemSellToShopCompositionPlan? SellToShopPlan = null,
 	CmBuyItemRepurchaseCompositionPlan? RepurchasePlan = null,
 	CmBuyItemBuyFromShopCompositionPlan? BuyFromShopPlan = null,
+	PrivateStoreBoughtItemsPlan? PrivateStoreBoughtItemsPlan = null,
+	PrivateStorePurchasePlan? PrivateStorePurchasePlan = null,
 	string? AuditReason = null)
 {
 	public bool IsLive => false;
@@ -117,16 +122,23 @@ public static class CmBuyItemHandlerCompositionPlanService
 		CmBuyItemHandlerCompositionInput input,
 		List<CmBuyItemHandlerCompositionStep> steps)
 	{
-		steps.Add(CmBuyItemHandlerCompositionStep.ClassifyUnsupportedBranch);
 		if (input.Packet.TradeActionId == PrivateStoreTradeActionId)
 		{
+			steps.Add(CmBuyItemHandlerCompositionStep.InvokePrivateStorePlanner);
+			var boughtItemsPlan = PrivateStoreBoughtItemsPlanService.CreatePlan(
+				input.Packet.Items,
+				input.PrivateStoreItems ?? Array.Empty<PrivateStoreListedItemSummary>());
+
 			return CreatePlan(
-				CmBuyItemHandlerCompositionPlanStatus.UnsupportedPrivateStorePlayerSale,
+				CmBuyItemHandlerCompositionPlanStatus.SelectedPrivateStorePlanner,
 				input,
 				steps,
-				"CM_BUY_ITEM.runImpl -> target instanceof Player && action 0 -> PrivateStoreService.sellStoreItem");
+				"CM_BUY_ITEM.runImpl -> target instanceof Player && action 0 -> PrivateStoreService.sellStoreItem",
+				privateStoreBoughtItemsPlan: boughtItemsPlan,
+				privateStorePurchasePlan: input.PrivateStorePurchasePlan);
 		}
 
+		steps.Add(CmBuyItemHandlerCompositionStep.ClassifyUnsupportedBranch);
 		return CreatePlan(
 			CmBuyItemHandlerCompositionPlanStatus.SkippedPlayerTargetNonPrivateStoreAction,
 			input,
@@ -257,6 +269,8 @@ public static class CmBuyItemHandlerCompositionPlanService
 		CmBuyItemSellToShopCompositionPlan? sellToShopPlan = null,
 		CmBuyItemRepurchaseCompositionPlan? repurchasePlan = null,
 		CmBuyItemBuyFromShopCompositionPlan? buyFromShopPlan = null,
+		PrivateStoreBoughtItemsPlan? privateStoreBoughtItemsPlan = null,
+		PrivateStorePurchasePlan? privateStorePurchasePlan = null,
 		string? auditReason = null)
 	{
 		return new CmBuyItemHandlerCompositionPlan(
@@ -268,6 +282,8 @@ public static class CmBuyItemHandlerCompositionPlanService
 			sellToShopPlan,
 			repurchasePlan,
 			buyFromShopPlan,
+			privateStoreBoughtItemsPlan,
+			privateStorePurchasePlan,
 			auditReason);
 	}
 }
