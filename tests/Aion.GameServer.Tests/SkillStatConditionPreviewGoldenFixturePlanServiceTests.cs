@@ -102,6 +102,7 @@ public sealed class SkillStatConditionPreviewGoldenFixturePlanServiceTests
 		Assert.False(artifact.JavaRuntimeEvidenceCaptured);
 		Assert.Equal("contract-only", artifact.EvidenceLevel);
 		Assert.Equal("docs/Phase-6-ConditionPreviewJavaGoldenHarnessDesign.md", artifact.HarnessDesignDocument);
+		Assert.Equal("docs/Phase-6-ConditionPreviewJavaGoldenCaptureDraft.md", artifact.HarnessDraftDocument);
 		Assert.Contains("blocked-local-toolchain", artifact.JavaCaptureStatus, StringComparison.Ordinal);
 		Assert.Contains("Conditions.validate(Stat2, IStatFunction)", artifact.JavaExecutionPlan, StringComparison.Ordinal);
 		Assert.Equal(plan.FixtureCount, artifact.Fixtures.Count);
@@ -112,6 +113,28 @@ public sealed class SkillStatConditionPreviewGoldenFixturePlanServiceTests
 			Assert.Equal(plannedCase.ConditionSequence, fixture.ConditionSequence);
 			Assert.Equal(plannedCase.ExpectedPurePreviewStatus, fixture.ExpectedPurePreviewStatus);
 			Assert.Equal(plannedCase.ExpectedConditionStatuses, fixture.ExpectedConditionStatuses);
+		}
+	}
+
+	[Fact]
+	public void JavaCaptureDraftDocument_CoversAllFixturesAndStaysUncompiled()
+	{
+		var plan = SkillStatConditionPreviewGoldenFixturePlanService.CreatePlan();
+		var documentPath = Path.Combine(FindRepositoryRoot(), "docs", "Phase-6-ConditionPreviewJavaGoldenCaptureDraft.md");
+		var document = File.ReadAllText(documentPath);
+
+		Assert.Contains("Status: Uncompiled source draft", document, StringComparison.Ordinal);
+		Assert.Contains("class ConditionPreviewGoldenCaptureTest", document, StringComparison.Ordinal);
+		Assert.Contains("Boolean.getBoolean(\"aion.conditionPreview.capture\")", document, StringComparison.Ordinal);
+		Assert.Contains("conditions.validate(stat, statFunction)", document, StringComparison.Ordinal);
+		Assert.Contains("WeaponCondition.itemGroups", document, StringComparison.Ordinal);
+		Assert.Contains("condition.value = value", document, StringComparison.Ordinal);
+		Assert.Contains("player.getEquipment().getMainHandWeaponType()", document, StringComparison.Ordinal);
+		Assert.Contains("new ChargeInfo(chargePoints, item)", document, StringComparison.Ordinal);
+
+		foreach (var plannedCase in plan.Cases)
+		{
+			Assert.Contains(plannedCase.FixtureName, document, StringComparison.Ordinal);
 		}
 	}
 
@@ -162,6 +185,7 @@ public sealed class SkillStatConditionPreviewGoldenFixturePlanServiceTests
 		bool JavaRuntimeEvidenceCaptured,
 		string JavaCaptureStatus,
 		string HarnessDesignDocument,
+		string HarnessDraftDocument,
 		string JavaExecutionPlan,
 		IReadOnlyList<ConditionPreviewGoldenFixtureContractCase> Fixtures);
 
