@@ -1262,3 +1262,117 @@ public enum PlayerLogoutCraftCooldownLiveReadinessCriterion
 	LogoutSaveHookAvailable,
 	DatabaseIntegrationTestAvailable,
 }
+
+public static class PlayerLogoutCraftCooldownRepositoryContractPlanService
+{
+	public const string RepositoryMethodSignature =
+		"Task<bool> SavePlayerCraftCooldownsAsync(int playerObjectId, IReadOnlyDictionary<int, long> cooldowns, long? nowMillis = null, CancellationToken cancellationToken = default)";
+	public const string RepositoryInterfaceName = "IPlayerEnterWorldRepository";
+	public const string RepositoryImplementationName = "MySqlPlayerEnterWorldRepository";
+	public const string FakeRepositoryCaptureProperty = "SavedCraftCooldowns";
+	public const string DatabaseIntegrationTestName = "SavePlayerCraftCooldownsAsync_ReplacesRowsAndKeepsOnlyActiveCooldownsAgainstJavaSchema_WhenEnabled";
+
+	public static PlayerLogoutCraftCooldownRepositoryContractPlan CreateDisabledPlan(
+		PlayerLogoutCraftCooldownConnectionDecision connectionDecision,
+		PlayerLogoutCraftCooldownErrorDecision errorDecision)
+	{
+		if (connectionDecision == PlayerLogoutCraftCooldownConnectionDecision.Unspecified
+			|| errorDecision == PlayerLogoutCraftCooldownErrorDecision.Unspecified)
+		{
+			return PlayerLogoutCraftCooldownRepositoryContractPlan.MissingBehaviorDecision(connectionDecision, errorDecision);
+		}
+
+		return PlayerLogoutCraftCooldownRepositoryContractPlan.DisabledContractPlanned(connectionDecision, errorDecision);
+	}
+}
+
+public sealed record PlayerLogoutCraftCooldownRepositoryContractPlan(
+	PlayerLogoutCraftCooldownRepositoryContractPlanStatus Status,
+	PlayerLogoutCraftCooldownConnectionDecision ConnectionDecision,
+	PlayerLogoutCraftCooldownErrorDecision ErrorDecision,
+	string RepositoryInterfaceName,
+	string RepositoryImplementationName,
+	string MethodSignature,
+	string DeleteSql,
+	string InsertSql,
+	string FakeRepositoryCaptureProperty,
+	string DatabaseIntegrationTestName,
+	bool ShouldAddInterfaceMethod,
+	bool DidAddInterfaceMethod,
+	bool ShouldAddFakeRepositoryCapture,
+	bool DidAddFakeRepositoryCapture,
+	bool ShouldAddDatabaseIntegrationTest,
+	bool DidAddDatabaseIntegrationTest,
+	bool RequiresSeparateConnectionPerSqlOperation,
+	bool RequiresIntentionalConnectionDifferenceDocumentation,
+	bool RequiresPerOperationSqlExceptionSwallowing,
+	bool RequiresIntentionalErrorDifferenceDocumentation,
+	string JavaSource,
+	bool IsLive)
+{
+	public static PlayerLogoutCraftCooldownRepositoryContractPlan MissingBehaviorDecision(
+		PlayerLogoutCraftCooldownConnectionDecision connectionDecision,
+		PlayerLogoutCraftCooldownErrorDecision errorDecision)
+	{
+		return new PlayerLogoutCraftCooldownRepositoryContractPlan(
+			PlayerLogoutCraftCooldownRepositoryContractPlanStatus.MissingBehaviorDecision,
+			connectionDecision,
+			errorDecision,
+			PlayerLogoutCraftCooldownRepositoryContractPlanService.RepositoryInterfaceName,
+			PlayerLogoutCraftCooldownRepositoryContractPlanService.RepositoryImplementationName,
+			PlayerLogoutCraftCooldownRepositoryContractPlanService.RepositoryMethodSignature,
+			CraftCooldownPersistencePlanService.JavaCraftCooldownDeleteSql,
+			CraftCooldownPersistencePlanService.JavaCraftCooldownInsertSql,
+			PlayerLogoutCraftCooldownRepositoryContractPlanService.FakeRepositoryCaptureProperty,
+			PlayerLogoutCraftCooldownRepositoryContractPlanService.DatabaseIntegrationTestName,
+			ShouldAddInterfaceMethod: false,
+			DidAddInterfaceMethod: false,
+			ShouldAddFakeRepositoryCapture: false,
+			DidAddFakeRepositoryCapture: false,
+			ShouldAddDatabaseIntegrationTest: false,
+			DidAddDatabaseIntegrationTest: false,
+			RequiresSeparateConnectionPerSqlOperation: false,
+			RequiresIntentionalConnectionDifferenceDocumentation: false,
+			RequiresPerOperationSqlExceptionSwallowing: false,
+			RequiresIntentionalErrorDifferenceDocumentation: false,
+			"CraftCooldownsDAO.storeCraftCooldowns repository contract planning is blocked until connection and SQL error behavior decisions are explicit",
+			IsLive: false);
+	}
+
+	public static PlayerLogoutCraftCooldownRepositoryContractPlan DisabledContractPlanned(
+		PlayerLogoutCraftCooldownConnectionDecision connectionDecision,
+		PlayerLogoutCraftCooldownErrorDecision errorDecision)
+	{
+		var preservesConnections = connectionDecision == PlayerLogoutCraftCooldownConnectionDecision.PreserveJavaSeparateConnections;
+		var preservesErrors = errorDecision == PlayerLogoutCraftCooldownErrorDecision.PreserveJavaSwallowSqlExceptionsPerOperation;
+		return new PlayerLogoutCraftCooldownRepositoryContractPlan(
+			PlayerLogoutCraftCooldownRepositoryContractPlanStatus.DisabledContractPlanned,
+			connectionDecision,
+			errorDecision,
+			PlayerLogoutCraftCooldownRepositoryContractPlanService.RepositoryInterfaceName,
+			PlayerLogoutCraftCooldownRepositoryContractPlanService.RepositoryImplementationName,
+			PlayerLogoutCraftCooldownRepositoryContractPlanService.RepositoryMethodSignature,
+			CraftCooldownPersistencePlanService.JavaCraftCooldownDeleteSql,
+			CraftCooldownPersistencePlanService.JavaCraftCooldownInsertSql,
+			PlayerLogoutCraftCooldownRepositoryContractPlanService.FakeRepositoryCaptureProperty,
+			PlayerLogoutCraftCooldownRepositoryContractPlanService.DatabaseIntegrationTestName,
+			ShouldAddInterfaceMethod: true,
+			DidAddInterfaceMethod: false,
+			ShouldAddFakeRepositoryCapture: true,
+			DidAddFakeRepositoryCapture: false,
+			ShouldAddDatabaseIntegrationTest: true,
+			DidAddDatabaseIntegrationTest: false,
+			RequiresSeparateConnectionPerSqlOperation: preservesConnections,
+			RequiresIntentionalConnectionDifferenceDocumentation: !preservesConnections,
+			RequiresPerOperationSqlExceptionSwallowing: preservesErrors,
+			RequiresIntentionalErrorDifferenceDocumentation: !preservesErrors,
+			"CraftCooldownsDAO.storeCraftCooldowns repository contract should expose delete-first/active-insert SQL using the Java craft_cooldowns schema before live logout wiring",
+			IsLive: false);
+	}
+}
+
+public enum PlayerLogoutCraftCooldownRepositoryContractPlanStatus
+{
+	MissingBehaviorDecision,
+	DisabledContractPlanned,
+}

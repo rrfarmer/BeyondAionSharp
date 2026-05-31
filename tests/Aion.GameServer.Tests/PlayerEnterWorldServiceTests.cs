@@ -481,6 +481,71 @@ public sealed class PlayerEnterWorldServiceTests
 	}
 
 	[Fact]
+	public void CreateLogoutCraftCooldownRepositoryContractPlan_RecordsFutureInterfaceAndJavaSqlWithoutChangingInterface()
+	{
+		var plan = PlayerLogoutCraftCooldownRepositoryContractPlanService.CreateDisabledPlan(
+			PlayerLogoutCraftCooldownConnectionDecision.PreserveJavaSeparateConnections,
+			PlayerLogoutCraftCooldownErrorDecision.PreserveJavaSwallowSqlExceptionsPerOperation);
+
+		Assert.Equal(PlayerLogoutCraftCooldownRepositoryContractPlanStatus.DisabledContractPlanned, plan.Status);
+		Assert.Equal("IPlayerEnterWorldRepository", plan.RepositoryInterfaceName);
+		Assert.Equal("MySqlPlayerEnterWorldRepository", plan.RepositoryImplementationName);
+		Assert.Equal(
+			"Task<bool> SavePlayerCraftCooldownsAsync(int playerObjectId, IReadOnlyDictionary<int, long> cooldowns, long? nowMillis = null, CancellationToken cancellationToken = default)",
+			plan.MethodSignature);
+		Assert.Equal(CraftCooldownPersistencePlanService.JavaCraftCooldownDeleteSql, plan.DeleteSql);
+		Assert.Equal(CraftCooldownPersistencePlanService.JavaCraftCooldownInsertSql, plan.InsertSql);
+		Assert.Equal("SavedCraftCooldowns", plan.FakeRepositoryCaptureProperty);
+		Assert.Equal(
+			"SavePlayerCraftCooldownsAsync_ReplacesRowsAndKeepsOnlyActiveCooldownsAgainstJavaSchema_WhenEnabled",
+			plan.DatabaseIntegrationTestName);
+		Assert.True(plan.ShouldAddInterfaceMethod);
+		Assert.False(plan.DidAddInterfaceMethod);
+		Assert.True(plan.ShouldAddFakeRepositoryCapture);
+		Assert.False(plan.DidAddFakeRepositoryCapture);
+		Assert.True(plan.ShouldAddDatabaseIntegrationTest);
+		Assert.False(plan.DidAddDatabaseIntegrationTest);
+		Assert.True(plan.RequiresSeparateConnectionPerSqlOperation);
+		Assert.False(plan.RequiresIntentionalConnectionDifferenceDocumentation);
+		Assert.True(plan.RequiresPerOperationSqlExceptionSwallowing);
+		Assert.False(plan.RequiresIntentionalErrorDifferenceDocumentation);
+		Assert.False(plan.IsLive);
+	}
+
+	[Fact]
+	public void CreateLogoutCraftCooldownRepositoryContractPlan_RequiresIntentionalDifferenceDocsWhenJavaConnectionOrErrorBehaviorIsNotPreserved()
+	{
+		var plan = PlayerLogoutCraftCooldownRepositoryContractPlanService.CreateDisabledPlan(
+			PlayerLogoutCraftCooldownConnectionDecision.IntentionalDifferenceReuseLogoutConnectionDocumented,
+			PlayerLogoutCraftCooldownErrorDecision.IntentionalDifferenceAggregateRepositoryFailureDocumented);
+
+		Assert.Equal(PlayerLogoutCraftCooldownRepositoryContractPlanStatus.DisabledContractPlanned, plan.Status);
+		Assert.False(plan.RequiresSeparateConnectionPerSqlOperation);
+		Assert.True(plan.RequiresIntentionalConnectionDifferenceDocumentation);
+		Assert.False(plan.RequiresPerOperationSqlExceptionSwallowing);
+		Assert.True(plan.RequiresIntentionalErrorDifferenceDocumentation);
+		Assert.True(plan.ShouldAddInterfaceMethod);
+		Assert.False(plan.DidAddInterfaceMethod);
+		Assert.False(plan.IsLive);
+	}
+
+	[Fact]
+	public void CreateLogoutCraftCooldownRepositoryContractPlan_BlocksWhenBehaviorDecisionIsMissing()
+	{
+		var plan = PlayerLogoutCraftCooldownRepositoryContractPlanService.CreateDisabledPlan(
+			PlayerLogoutCraftCooldownConnectionDecision.Unspecified,
+			PlayerLogoutCraftCooldownErrorDecision.PreserveJavaSwallowSqlExceptionsPerOperation);
+
+		Assert.Equal(PlayerLogoutCraftCooldownRepositoryContractPlanStatus.MissingBehaviorDecision, plan.Status);
+		Assert.False(plan.ShouldAddInterfaceMethod);
+		Assert.False(plan.ShouldAddFakeRepositoryCapture);
+		Assert.False(plan.ShouldAddDatabaseIntegrationTest);
+		Assert.False(plan.RequiresSeparateConnectionPerSqlOperation);
+		Assert.False(plan.IsLive);
+		Assert.Contains("blocked until connection and SQL error behavior decisions are explicit", plan.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
 	public async Task LeaveWorld_PersistsAcceptedStorageExpansionFields()
 	{
 		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
