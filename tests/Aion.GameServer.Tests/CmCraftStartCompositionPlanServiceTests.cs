@@ -61,6 +61,7 @@ public sealed class CmCraftStartCompositionPlanServiceTests
 				CmCraftStartCompositionPlanStep.CreateStartValidationPlan,
 				CmCraftStartCompositionPlanStep.CreateConsumptionPlan,
 				CmCraftStartCompositionPlanStep.CreateInventoryMutationPlan,
+				CmCraftStartCompositionPlanStep.CreateInventoryPersistencePlan,
 				CmCraftStartCompositionPlanStep.CreateInventoryPacketPlan,
 				CmCraftStartCompositionPlanStep.CreateTaskPlan,
 			],
@@ -78,6 +79,9 @@ public sealed class CmCraftStartCompositionPlanServiceTests
 		Assert.Equal(CraftStartInventoryMutationStatus.Planned, plan.InventoryMutationPlan?.Status);
 		Assert.Equal([2003], plan.InventoryMutationPlan!.DeletedObjectIds);
 		Assert.Equal([2001, 2002], plan.InventoryMutationPlan.UpdatedItems.Select(item => item.ObjectId).ToArray());
+		Assert.Equal(CraftStartInventoryPersistenceStatus.Planned, plan.InventoryPersistencePlan?.Status);
+		Assert.Equal([2003], plan.InventoryPersistencePlan!.DeletedObjectIds);
+		Assert.Equal([2001, 2002], plan.InventoryPersistencePlan.UpdatedItems.Select(item => item.ObjectId).ToArray());
 		Assert.Equal(CraftStartInventoryPacketStatus.Planned, plan.InventoryPacketPlan?.Status);
 		Assert.Equal(
 			[
@@ -154,6 +158,7 @@ public sealed class CmCraftStartCompositionPlanServiceTests
 		Assert.Equal(CraftStartFailureOrchestrationStatus.Planned, plan.FailurePlan?.Status);
 		Assert.Null(plan.ConsumptionPlan);
 		Assert.Null(plan.InventoryMutationPlan);
+		Assert.Null(plan.InventoryPersistencePlan);
 		Assert.Null(plan.InventoryPacketPlan);
 		Assert.Null(plan.TaskPlan);
 		Assert.False(plan.RequiresDpSpend);
@@ -250,6 +255,7 @@ public sealed class CmCraftStartCompositionPlanServiceTests
 		Assert.Null(plan.ValidationPlan);
 		Assert.Null(plan.ConsumptionPlan);
 		Assert.Null(plan.InventoryMutationPlan);
+		Assert.Null(plan.InventoryPersistencePlan);
 		Assert.Null(plan.InventoryPacketPlan);
 		Assert.Null(plan.TaskPlan);
 		Assert.Equal([CmCraftStartCompositionPlanStep.UseRuntimeGuardPlan], plan.Steps);

@@ -315,7 +315,7 @@ public sealed class CraftService
 				if (item.Count <= 0)
 				{
 					deletedObjectIds.Add(item.Item.ObjectId);
-					operations.Add(CraftStartInventoryMutationOperation.Deleted(decrease, item.Item.ObjectId));
+					operations.Add(CraftStartInventoryMutationOperation.Deleted(decrease, item.Item));
 				}
 				else
 				{
@@ -386,6 +386,44 @@ public sealed class CraftService
 		}
 
 		return CraftStartInventoryPacketPlan.Planned(mutationPlan, packets);
+	}
+
+	public CraftStartInventoryPersistencePlan CreateStartInventoryPersistencePlan(CraftStartInventoryMutationPlan? mutationPlan)
+	{
+		// Java parity: Storage.decreaseItemCount marks changed/deleted items dirty,
+		// Storage.delete adds deleted items to storage.deletedItems, and InventoryDAO.store
+		// later batches DELETE rows before UPDATE rows. This method plans only; it does
+		// not mutate storage, write the database, or release object ids.
+		if (mutationPlan == null)
+			return CraftStartInventoryPersistencePlan.NotPlanned("CraftService.checkCraft persistence planning requires inventory mutation evidence");
+		if (!mutationPlan.IsPlanned)
+			return CraftStartInventoryPersistencePlan.MutationNotPlanned(mutationPlan);
+
+		var operations = new List<CraftStartInventoryPersistenceOperation>();
+		foreach (var operation in mutationPlan.OrderedOperations)
+		{
+			if (operation.UpdatedItem != null)
+			{
+				operations.Add(CraftStartInventoryPersistenceOperation.UpdateItem(
+					operation.Decrease,
+					CopyInventoryItem(
+						operation.UpdatedItem,
+						operation.UpdatedItem.Count,
+						InventoryItemPersistentState.UpdateRequired)));
+			}
+			else if (operation.DeletedObjectId.HasValue)
+			{
+				var deletedState = operation.DeletedItem == null
+					? InventoryItemPersistentState.Deleted
+					: InventoryItem.TransitionPersistentState(operation.DeletedItem.PersistentState, InventoryItemPersistentState.Deleted);
+				operations.Add(CraftStartInventoryPersistenceOperation.DeleteItem(
+					operation.Decrease,
+					operation.DeletedObjectId.Value,
+					deletedState));
+			}
+		}
+
+		return CraftStartInventoryPersistencePlan.Planned(mutationPlan, operations);
 	}
 
 	public CraftFinishProductPlan CreateFinishProductPlan(Player? player, RecipeTemplateSummary? recipeTemplate, int critCount)
@@ -632,7 +670,10 @@ public sealed class CraftService
 		return CopyInventoryItem(item, item.Count);
 	}
 
-	private static InventoryItem CopyInventoryItem(InventoryItem item, long count)
+	private static InventoryItem CopyInventoryItem(
+		InventoryItem item,
+		long count,
+		InventoryItemPersistentState? requestedPersistentState = null)
 	{
 		return new InventoryItem
 		{
@@ -665,7 +706,9 @@ public sealed class CraftService
 			BuffSkill = item.BuffSkill,
 			RandomPlumeBonus = item.RandomPlumeBonus,
 			PendingTuneResult = item.PendingTuneResult,
-			PersistentState = item.PersistentState,
+			PersistentState = requestedPersistentState.HasValue
+				? InventoryItem.TransitionPersistentState(item.PersistentState, requestedPersistentState.Value)
+				: item.PersistentState,
 			ManaStones = item.ManaStones,
 			FusionStones = item.FusionStones,
 			Godstone = item.Godstone,
@@ -1543,6 +1586,7 @@ public sealed record CraftStartInventoryMutationOperation(
 	CraftStartConsumedItemPlan Decrease,
 	InventoryItem? UpdatedItem,
 	int? DeletedObjectId,
+	InventoryItem? DeletedItem,
 	string JavaSource)
 {
 	public static CraftStartInventoryMutationOperation Updated(CraftStartConsumedItemPlan decrease, InventoryItem updatedItem)
@@ -1552,16 +1596,29 @@ public sealed record CraftStartInventoryMutationOperation(
 			decrease,
 			updatedItem,
 			DeletedObjectId: null,
+			DeletedItem: null,
 			"Storage.decreaseItemCount -> ItemPacketService.sendItemPacket with DEC_ITEM_USE for remaining stack");
 	}
 
 	public static CraftStartInventoryMutationOperation Deleted(CraftStartConsumedItemPlan decrease, int deletedObjectId)
 	{
+		return Deleted(
+			decrease,
+			new InventoryItem
+			{
+				ObjectId = deletedObjectId,
+				PersistentState = InventoryItemPersistentState.Updated,
+			});
+	}
+
+	public static CraftStartInventoryMutationOperation Deleted(CraftStartConsumedItemPlan decrease, InventoryItem deletedItem)
+	{
 		return new CraftStartInventoryMutationOperation(
 			CraftStartInventoryMutationOperationKind.Deleted,
 			decrease,
 			UpdatedItem: null,
-			deletedObjectId,
+			deletedItem.ObjectId,
+			deletedItem,
 			"Storage.decreaseItemCount -> delete(..., ItemDeleteType.USE) for zero stack");
 	}
 }
@@ -1570,6 +1627,129 @@ public enum CraftStartInventoryMutationOperationKind
 {
 	Updated,
 	Deleted,
+}
+
+public sealed record CraftStartInventoryPersistencePlan(
+	CraftStartInventoryPersistenceStatus Status,
+	CraftStartInventoryMutationPlan? MutationPlan,
+	IReadOnlyList<CraftStartInventoryPersistenceOperation> Operations,
+	IReadOnlyList<InventoryItem> UpdatedItems,
+	IReadOnlyList<int> DeletedObjectIds,
+	IReadOnlyList<int> NoActionDeletedObjectIds,
+	bool ShouldWriteLiveState,
+	string JavaSource,
+	bool IsLive)
+{
+	public bool IsPlanned => Status == CraftStartInventoryPersistenceStatus.Planned;
+
+	public static CraftStartInventoryPersistencePlan NotPlanned(string javaSource)
+	{
+		return new CraftStartInventoryPersistencePlan(
+			CraftStartInventoryPersistenceStatus.NotPlanned,
+			MutationPlan: null,
+			Operations: Array.Empty<CraftStartInventoryPersistenceOperation>(),
+			UpdatedItems: Array.Empty<InventoryItem>(),
+			DeletedObjectIds: Array.Empty<int>(),
+			NoActionDeletedObjectIds: Array.Empty<int>(),
+			ShouldWriteLiveState: false,
+			javaSource,
+			IsLive: false);
+	}
+
+	public static CraftStartInventoryPersistencePlan MutationNotPlanned(CraftStartInventoryMutationPlan mutationPlan)
+	{
+		return new CraftStartInventoryPersistencePlan(
+			CraftStartInventoryPersistenceStatus.MutationNotPlanned,
+			mutationPlan,
+			Operations: Array.Empty<CraftStartInventoryPersistenceOperation>(),
+			UpdatedItems: Array.Empty<InventoryItem>(),
+			DeletedObjectIds: Array.Empty<int>(),
+			NoActionDeletedObjectIds: Array.Empty<int>(),
+			ShouldWriteLiveState: false,
+			"InventoryDAO.store is not planned when CraftService.checkCraft inventory mutation was not planned",
+			IsLive: false);
+	}
+
+	public static CraftStartInventoryPersistencePlan Planned(
+		CraftStartInventoryMutationPlan mutationPlan,
+		IReadOnlyList<CraftStartInventoryPersistenceOperation> operations)
+	{
+		return new CraftStartInventoryPersistencePlan(
+			CraftStartInventoryPersistenceStatus.Planned,
+			mutationPlan,
+			operations.ToArray(),
+			operations
+				.Where(operation => operation.Kind == CraftStartInventoryPersistenceOperationKind.UpdateItem)
+				.Select(operation => operation.UpdatedItem!)
+				.ToArray(),
+			operations
+				.Where(operation => operation.Kind == CraftStartInventoryPersistenceOperationKind.DeleteItem)
+				.Select(operation => operation.DeletedObjectId!.Value)
+				.ToArray(),
+			operations
+				.Where(operation => operation.Kind == CraftStartInventoryPersistenceOperationKind.NoAction)
+				.Select(operation => operation.DeletedObjectId!.Value)
+				.ToArray(),
+			ShouldWriteLiveState: false,
+			"Storage.decreaseItemCount dirty states -> InventoryDAO.store deleteItems before updateItems",
+			IsLive: false);
+	}
+}
+
+public sealed record CraftStartInventoryPersistenceOperation(
+	CraftStartInventoryPersistenceOperationKind Kind,
+	CraftStartConsumedItemPlan Decrease,
+	InventoryItem? UpdatedItem,
+	int? DeletedObjectId,
+	InventoryItemPersistentState PersistentState,
+	bool ShouldWrite,
+	string JavaDaoMethod)
+{
+	public static CraftStartInventoryPersistenceOperation UpdateItem(
+		CraftStartConsumedItemPlan decrease,
+		InventoryItem updatedItem)
+	{
+		return new CraftStartInventoryPersistenceOperation(
+			CraftStartInventoryPersistenceOperationKind.UpdateItem,
+			decrease,
+			updatedItem,
+			DeletedObjectId: null,
+			updatedItem.PersistentState,
+			ShouldWrite: true,
+			"InventoryDAO.updateItems");
+	}
+
+	public static CraftStartInventoryPersistenceOperation DeleteItem(
+		CraftStartConsumedItemPlan decrease,
+		int deletedObjectId,
+		InventoryItemPersistentState persistentState)
+	{
+		var shouldDelete = persistentState == InventoryItemPersistentState.Deleted;
+		return new CraftStartInventoryPersistenceOperation(
+			shouldDelete
+				? CraftStartInventoryPersistenceOperationKind.DeleteItem
+				: CraftStartInventoryPersistenceOperationKind.NoAction,
+			decrease,
+			UpdatedItem: null,
+			deletedObjectId,
+			persistentState,
+			shouldDelete,
+			shouldDelete ? "InventoryDAO.deleteItems" : "Item.setPersistentState(NEW -> NOACTION)");
+	}
+}
+
+public enum CraftStartInventoryPersistenceOperationKind
+{
+	UpdateItem,
+	DeleteItem,
+	NoAction,
+}
+
+public enum CraftStartInventoryPersistenceStatus
+{
+	NotPlanned,
+	MutationNotPlanned,
+	Planned,
 }
 
 public sealed record CraftStartInventoryPacketPlan(

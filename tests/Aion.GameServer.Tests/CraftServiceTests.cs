@@ -1123,6 +1123,127 @@ public sealed class CraftServiceTests
 	}
 
 	[Fact]
+	public void CreateStartInventoryPersistencePlan_MapsOrderedMutationOperationsToDirtyItemWrites()
+	{
+		var service = CreateService(out _, CreateItemTemplates(), CreateSkillTemplates());
+		var player = CreatePlayer(objectId: 1156, dp: 700);
+		var recipe = CreateRecipe(
+			recipeId: 155000051,
+			dp: 600,
+			productId: 100200203,
+			skillId: 40001,
+			skillPoint: 200,
+			componentGroups: [CreateComponentGroup((152000901, 2), (152000902, 1))]);
+		player.Recipes = [recipe.RecipeId];
+		player.Skills = [CreateSkill(recipe.SkillId, skillLevel: 200)];
+		player.InventoryItems =
+		[
+			CreateInventoryItem(objectId: 8030, itemId: 169401081, count: 1),
+			CreateInventoryItem(objectId: 8031, itemId: 152000901, count: 1),
+			CreateInventoryItem(objectId: 8032, itemId: 152000901, count: 3),
+			CreateInventoryItem(objectId: 8033, itemId: 152000902, count: 5),
+		];
+		var productTemplate = CreateItemTemplates().GetItemTemplate(100200203);
+		var target = CreateTarget(objectId: 9040, templateId: 730190);
+		var selectedMaterials = new Dictionary<int, long> { [152000901] = 2 };
+		var validation = service.CreateStartCraftingValidationPlan(
+			player,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false,
+			selectedMaterials,
+			craftType: 1);
+		var consumption = service.CreateStartConsumptionPlan(validation, recipe, selectedMaterials, craftType: 1);
+		var mutation = service.CreateStartInventoryMutationPlan(consumption, player.InventoryItems);
+
+		var persistence = service.CreateStartInventoryPersistencePlan(mutation);
+
+		Assert.Equal(CraftStartInventoryPersistenceStatus.Planned, persistence.Status);
+		Assert.False(persistence.IsLive);
+		Assert.False(persistence.ShouldWriteLiveState);
+		Assert.Same(mutation, persistence.MutationPlan);
+		Assert.Equal([8030, 8031], persistence.DeletedObjectIds);
+		Assert.Empty(persistence.NoActionDeletedObjectIds);
+		Assert.Collection(
+			persistence.UpdatedItems,
+			item =>
+			{
+				Assert.Equal(8032, item.ObjectId);
+				Assert.Equal(2, item.Count);
+				Assert.Equal(InventoryItemPersistentState.UpdateRequired, item.PersistentState);
+			},
+			item =>
+			{
+				Assert.Equal(8033, item.ObjectId);
+				Assert.Equal(4, item.Count);
+				Assert.Equal(InventoryItemPersistentState.UpdateRequired, item.PersistentState);
+			});
+		Assert.Collection(
+			persistence.Operations,
+			operation =>
+			{
+				Assert.Equal(CraftStartInventoryPersistenceOperationKind.DeleteItem, operation.Kind);
+				Assert.Equal(8030, operation.DeletedObjectId);
+				Assert.Equal(InventoryItemPersistentState.Deleted, operation.PersistentState);
+				Assert.True(operation.ShouldWrite);
+				Assert.Equal("InventoryDAO.deleteItems", operation.JavaDaoMethod);
+			},
+			operation =>
+			{
+				Assert.Equal(CraftStartInventoryPersistenceOperationKind.DeleteItem, operation.Kind);
+				Assert.Equal(8031, operation.DeletedObjectId);
+			},
+			operation =>
+			{
+				Assert.Equal(CraftStartInventoryPersistenceOperationKind.UpdateItem, operation.Kind);
+				Assert.Equal(8032, operation.UpdatedItem?.ObjectId);
+				Assert.Equal("InventoryDAO.updateItems", operation.JavaDaoMethod);
+			},
+			operation =>
+			{
+				Assert.Equal(CraftStartInventoryPersistenceOperationKind.UpdateItem, operation.Kind);
+				Assert.Equal(8033, operation.UpdatedItem?.ObjectId);
+			});
+		Assert.All(mutation.UpdatedItems, item => Assert.Equal(InventoryItemPersistentState.Updated, item.PersistentState));
+		Assert.Contains("InventoryDAO.store", persistence.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void CreateStartInventoryPersistencePlan_MapsNewDeletedStacksToNoAction()
+	{
+		var service = CreateService(out _, CreateItemTemplates(), CreateSkillTemplates());
+		var consumption = CreatePlannedConsumption(
+			service,
+			recipeId: 155000052,
+			itemId: 152000901,
+			quantity: 1);
+		var newItem = CreateInventoryItem(
+			objectId: 8034,
+			itemId: 152000901,
+			count: 1,
+			persistentState: InventoryItemPersistentState.New);
+		var mutation = CraftStartInventoryMutationPlan.Planned(
+			consumption,
+			updatedItems: [],
+			deletedObjectIds: [newItem.ObjectId],
+			orderedOperations: [CraftStartInventoryMutationOperation.Deleted(CraftStartConsumedItemPlan.Component(152000901, 1), newItem)]);
+
+		var persistence = service.CreateStartInventoryPersistencePlan(mutation);
+
+		Assert.Equal(CraftStartInventoryPersistenceStatus.Planned, persistence.Status);
+		Assert.Empty(persistence.DeletedObjectIds);
+		Assert.Equal([8034], persistence.NoActionDeletedObjectIds);
+		var operation = Assert.Single(persistence.Operations);
+		Assert.Equal(CraftStartInventoryPersistenceOperationKind.NoAction, operation.Kind);
+		Assert.Equal(InventoryItemPersistentState.NoAction, operation.PersistentState);
+		Assert.False(operation.ShouldWrite);
+		Assert.Equal("Item.setPersistentState(NEW -> NOACTION)", operation.JavaDaoMethod);
+	}
+
+	[Fact]
 	public void CreateStartInventoryMutationPlan_ReportsInsufficientInventoryConservatively()
 	{
 		var service = CreateService(out _, CreateItemTemplates(), CreateSkillTemplates());
@@ -1179,6 +1300,11 @@ public sealed class CraftServiceTests
 		Assert.Empty(mutation.DeletedObjectIds);
 		Assert.Empty(mutation.OrderedOperations);
 		Assert.Contains("not planned", mutation.JavaSource, StringComparison.Ordinal);
+
+		var persistence = service.CreateStartInventoryPersistencePlan(mutation);
+
+		Assert.Equal(CraftStartInventoryPersistenceStatus.MutationNotPlanned, persistence.Status);
+		Assert.Empty(persistence.Operations);
 	}
 
 	[Fact]
@@ -1767,7 +1893,43 @@ public sealed class CraftServiceTests
 				.ToArray());
 	}
 
-	private static InventoryItem CreateInventoryItem(int objectId, int itemId, long count)
+	private static CraftStartConsumptionPlan CreatePlannedConsumption(
+		CraftService service,
+		int recipeId,
+		int itemId,
+		long quantity)
+	{
+		var player = CreatePlayer(objectId: 1160, dp: 700);
+		var recipe = CreateRecipe(
+			recipeId,
+			dp: 0,
+			productId: 100200203,
+			skillId: 40001,
+			skillPoint: 200,
+			componentGroups: [CreateComponentGroup((itemId, quantity))]);
+		player.Recipes = [recipe.RecipeId];
+		player.Skills = [CreateSkill(recipe.SkillId, skillLevel: 200)];
+		player.InventoryItems = [CreateInventoryItem(objectId: 8035, itemId, quantity)];
+		var validation = service.CreateStartCraftingValidationPlan(
+			player,
+			recipe,
+			CreateItemTemplates().GetItemTemplate(100200203),
+			CreateTarget(objectId: 9041, templateId: 730190),
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false,
+			new Dictionary<int, long> { [itemId] = quantity });
+		return service.CreateStartConsumptionPlan(
+			validation,
+			recipe,
+			new Dictionary<int, long> { [itemId] = quantity });
+	}
+
+	private static InventoryItem CreateInventoryItem(
+		int objectId,
+		int itemId,
+		long count,
+		InventoryItemPersistentState persistentState = InventoryItemPersistentState.Updated)
 	{
 		return new InventoryItem
 		{
@@ -1775,6 +1937,7 @@ public sealed class CraftServiceTests
 			ItemId = itemId,
 			Count = count,
 			Location = 0,
+			PersistentState = persistentState,
 		};
 	}
 

@@ -22,6 +22,7 @@ public enum CmCraftStartCompositionPlanStep
 	CreateFailureOrchestrationPlan,
 	CreateConsumptionPlan,
 	CreateInventoryMutationPlan,
+	CreateInventoryPersistencePlan,
 	CreateInventoryPacketPlan,
 	CreateTaskPlan,
 }
@@ -66,6 +67,7 @@ public sealed record CmCraftStartCompositionPlan(
 	CraftStartFailureOrchestrationPlan? FailurePlan,
 	CraftStartConsumptionPlan? ConsumptionPlan,
 	CraftStartInventoryMutationPlan? InventoryMutationPlan,
+	CraftStartInventoryPersistencePlan? InventoryPersistencePlan,
 	CraftStartInventoryPacketPlan? InventoryPacketPlan,
 	CraftStartTaskPlan? TaskPlan,
 	CraftStartSideEffectBoundaryPlan SideEffectBoundaryPlan,
@@ -107,6 +109,7 @@ public static class CmCraftStartCompositionPlanService
 				FailurePlan: null,
 				ConsumptionPlan: null,
 				InventoryMutationPlan: null,
+				InventoryPersistencePlan: null,
 				InventoryPacketPlan: null,
 				TaskPlan: null,
 				CreateSideEffectBoundaryPlan(
@@ -163,6 +166,7 @@ public static class CmCraftStartCompositionPlanService
 				failurePlan,
 				ConsumptionPlan: null,
 				InventoryMutationPlan: null,
+				InventoryPersistencePlan: null,
 				InventoryPacketPlan: null,
 				TaskPlan: null,
 				CreateSideEffectBoundaryPlan(
@@ -190,6 +194,8 @@ public static class CmCraftStartCompositionPlanService
 		var inventoryMutationPlan = craftService.CreateStartInventoryMutationPlan(
 			consumptionPlan,
 			player?.InventoryItems);
+		steps.Add(CmCraftStartCompositionPlanStep.CreateInventoryPersistencePlan);
+		var inventoryPersistencePlan = craftService.CreateStartInventoryPersistencePlan(inventoryMutationPlan);
 		steps.Add(CmCraftStartCompositionPlanStep.CreateInventoryPacketPlan);
 		var inventoryPacketPlan = craftService.CreateStartInventoryPacketPlan(inventoryMutationPlan, player);
 		steps.Add(CmCraftStartCompositionPlanStep.CreateTaskPlan);
@@ -199,6 +205,7 @@ public static class CmCraftStartCompositionPlanService
 			startIntent.CraftType);
 		var isReady = consumptionPlan.Status == CraftStartConsumptionStatus.Planned
 			&& inventoryMutationPlan.Status == CraftStartInventoryMutationStatus.Planned
+			&& inventoryPersistencePlan.Status == CraftStartInventoryPersistenceStatus.Planned
 			&& inventoryPacketPlan.Status == CraftStartInventoryPacketStatus.Planned
 			&& taskPlan.Status == CraftStartTaskPlanStatus.Planned;
 		var planStatus = isReady
@@ -215,6 +222,7 @@ public static class CmCraftStartCompositionPlanService
 			FailurePlan: null,
 			consumptionPlan,
 			inventoryMutationPlan,
+			inventoryPersistencePlan,
 			inventoryPacketPlan,
 			taskPlan,
 			CreateSideEffectBoundaryPlan(
@@ -245,6 +253,7 @@ public static class CmCraftStartCompositionPlanService
 			FailurePlan: null,
 			ConsumptionPlan: null,
 			InventoryMutationPlan: null,
+			InventoryPersistencePlan: null,
 			InventoryPacketPlan: null,
 			TaskPlan: null,
 			CreateSideEffectBoundaryPlan(
