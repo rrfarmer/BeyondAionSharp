@@ -58,6 +58,36 @@ public enum PetMerchantSellLiveExecutorOperationStatus
 	NotAttemptedDisabled,
 }
 
+public enum PetMerchantSellPersistenceAdapterStatus
+{
+	MissingSellToShopPlan,
+	SellToShopPlanNotReady,
+	DisabledNoWrites,
+}
+
+public enum PetMerchantSellPersistenceOperationKind
+{
+	SaveSellerItemUpdate,
+	DeleteSellerItem,
+	SaveRepurchaseItem,
+	SaveKinah,
+}
+
+public enum PetMerchantSellSendAdapterStatus
+{
+	MissingSellToShopPlan,
+	SellToShopPlanNotReady,
+	DisabledNoPackets,
+}
+
+public enum PetMerchantSellSendIntentKind
+{
+	SendSellerItemUpdate,
+	SendSellerItemDelete,
+	SendKinahUpdate,
+	SendAutoSellNotification,
+}
+
 public enum PetMerchantSellOutcomePlanStatus
 {
 	MissingFacadePlan,
@@ -67,9 +97,8 @@ public enum PetMerchantSellOutcomePlanStatus
 
 public enum PetMerchantSellOutcomeStepKind
 {
-	ApplySellerInventoryMutation,
-	AddRepurchaseItems,
-	IncreaseKinah,
+	PersistRepositoryWrites,
+	DispatchPacketIntents,
 	CommitTransactionBoundary,
 }
 
@@ -77,6 +106,44 @@ public sealed record PetMerchantSellLiveExecutorOperation(
 	PetMerchantSellLiveExecutorOperationKind Kind,
 	PetMerchantSellLiveExecutorOperationStatus Status,
 	string JavaSource);
+
+public sealed record PetMerchantSellPersistenceOperationPlan(
+	PetMerchantSellPersistenceOperationKind Kind,
+	int? ItemObjectId,
+	int? PlayerObjectId,
+	bool WouldWrite,
+	bool DidWrite,
+	string JavaSource);
+
+public sealed record PetMerchantSellPersistenceAdapterPlan(
+	PetMerchantSellPersistenceAdapterStatus Status,
+	TradeSellToShopPlan? SellToShopPlan,
+	IReadOnlyList<PetMerchantSellPersistenceOperationPlan> Operations,
+	bool WouldWriteRepository,
+	bool DidWriteRepository,
+	bool ShouldDispatchLiveSideEffects,
+	string JavaSource,
+	bool IsLive);
+
+public sealed record PetMerchantSellSendIntentPlan(
+	PetMerchantSellSendIntentKind Kind,
+	int? TargetPlayerObjectId,
+	int? ItemObjectId,
+	bool WouldSend,
+	bool DidSend,
+	string JavaSource);
+
+public sealed record PetMerchantSellSendAdapterPlan(
+	PetMerchantSellSendAdapterStatus Status,
+	TradeSellToShopPlan? SellToShopPlan,
+	IReadOnlyList<PetMerchantSellSendIntentPlan> Intents,
+	bool WouldSendPackets,
+	bool DidSendPackets,
+	bool WouldSendAutoSellNotification,
+	bool DidSendAutoSellNotification,
+	bool ShouldDispatchLiveSideEffects,
+	string JavaSource,
+	bool IsLive);
 
 public sealed record PetMerchantSellOutcomeStepPlan(
 	PetMerchantSellOutcomeStepKind Kind,
@@ -87,8 +154,16 @@ public sealed record PetMerchantSellOutcomeStepPlan(
 public sealed record PetMerchantSellOutcomePlan(
 	PetMerchantSellOutcomePlanStatus Status,
 	PetMerchantSellLiveExecutorFacadePlan? FacadePlan,
+	PetMerchantSellPersistenceAdapterPlan? PersistenceAdapterPlan,
+	PetMerchantSellSendAdapterPlan? SendAdapterPlan,
 	TradeSellToShopPlan? SellToShopPlan,
 	IReadOnlyList<PetMerchantSellOutcomeStepPlan> Steps,
+	bool WouldWritePersistence,
+	bool DidWritePersistence,
+	bool WouldSendPackets,
+	bool DidSendPackets,
+	bool WouldSendAutoSellNotification,
+	bool DidSendAutoSellNotification,
 	bool WouldMutateSellerInventory,
 	bool DidMutateSellerInventory,
 	bool WouldAddRepurchaseItems,
@@ -107,6 +182,8 @@ public sealed record PetMerchantSellLiveExecutorFacadePlan(
 	CmBuyItemHandlerCompositionPlan? HandlerPlan,
 	int? PetSellModifier,
 	TradeSellToShopPlan? SellToShopPlan,
+	PetMerchantSellPersistenceAdapterPlan PersistenceAdapterPlan,
+	PetMerchantSellSendAdapterPlan SendAdapterPlan,
 	IReadOnlyList<PetMerchantSellLiveExecutorOperation> Operations,
 	bool WouldMutateSellerInventory,
 	bool DidMutateSellerInventory,
@@ -329,6 +406,149 @@ public static class TradeSellToShopPlanService
 	}
 }
 
+public static class PetMerchantSellPersistenceAdapterPlanService
+{
+	public static PetMerchantSellPersistenceAdapterPlan CreateDisabledPlan(TradeSellToShopPlan? sellToShopPlan)
+	{
+		if (sellToShopPlan == null)
+			return CreateTerminalPlan(
+				PetMerchantSellPersistenceAdapterStatus.MissingSellToShopPlan,
+				sellToShopPlan,
+				"TradeService.performSellToShop pet merchant persistence adapter requires a sell-to-shop mutation plan");
+
+		if (sellToShopPlan.Status != TradeSellToShopPlanStatus.PlanCreated)
+			return CreateTerminalPlan(
+				PetMerchantSellPersistenceAdapterStatus.SellToShopPlanNotReady,
+				sellToShopPlan,
+				"TradeService.performSellToShop pet merchant persistence adapter stops because sell-to-shop plan is blocked");
+
+		var operations = new List<PetMerchantSellPersistenceOperationPlan>();
+		operations.AddRange(sellToShopPlan.SellerItemUpdates.Select(item => Disabled(
+			PetMerchantSellPersistenceOperationKind.SaveSellerItemUpdate,
+			item.ObjectId,
+			item.OwnerId,
+			"TradeService.performSellToShop -> inventory.decreaseItemCount(item, count) persists seller item stack update")));
+		operations.AddRange(sellToShopPlan.SellerDeletedItemObjectIds.Select(objectId => Disabled(
+			PetMerchantSellPersistenceOperationKind.DeleteSellerItem,
+			objectId,
+			playerObjectId: null,
+			"TradeService.performSellToShop -> inventory.delete(item, SELL) persists seller item delete")));
+		operations.AddRange(sellToShopPlan.RepurchaseItems.Select(repurchase => Disabled(
+			PetMerchantSellPersistenceOperationKind.SaveRepurchaseItem,
+			repurchase.Item.ObjectId,
+			repurchase.Item.OwnerId,
+			"TradeService.performSellToShop -> RepurchaseService.addRepurchaseItems(player, items) stores repurchase item")));
+		if (sellToShopPlan.KinahUpdate != null)
+			operations.Add(Disabled(
+				PetMerchantSellPersistenceOperationKind.SaveKinah,
+				sellToShopPlan.KinahUpdate.ObjectId,
+				sellToShopPlan.KinahUpdate.OwnerId,
+				"TradeService.performSellToShop -> inventory.increaseKinah(kinahReward, INC_KINAH_SELL) persists Kinah update"));
+
+		return new PetMerchantSellPersistenceAdapterPlan(
+			PetMerchantSellPersistenceAdapterStatus.DisabledNoWrites,
+			sellToShopPlan,
+			operations,
+			WouldWriteRepository: operations.Count > 0,
+			DidWriteRepository: false,
+			ShouldDispatchLiveSideEffects: false,
+			"TradeService.performSellToShop pet merchant persistence writes are recorded but disabled",
+			IsLive: false);
+	}
+
+	private static PetMerchantSellPersistenceAdapterPlan CreateTerminalPlan(
+		PetMerchantSellPersistenceAdapterStatus status,
+		TradeSellToShopPlan? sellToShopPlan,
+		string javaSource) =>
+		new(
+			status,
+			sellToShopPlan,
+			Operations: Array.Empty<PetMerchantSellPersistenceOperationPlan>(),
+			WouldWriteRepository: false,
+			DidWriteRepository: false,
+			ShouldDispatchLiveSideEffects: false,
+			javaSource,
+			IsLive: false);
+
+	private static PetMerchantSellPersistenceOperationPlan Disabled(
+		PetMerchantSellPersistenceOperationKind kind,
+		int? itemObjectId,
+		int? playerObjectId,
+		string javaSource) =>
+		new(kind, itemObjectId, playerObjectId, WouldWrite: true, DidWrite: false, javaSource);
+}
+
+public static class PetMerchantSellSendAdapterPlanService
+{
+	public static PetMerchantSellSendAdapterPlan CreateDisabledPlan(TradeSellToShopPlan? sellToShopPlan)
+	{
+		if (sellToShopPlan == null)
+			return CreateTerminalPlan(
+				PetMerchantSellSendAdapterStatus.MissingSellToShopPlan,
+				sellToShopPlan,
+				"TradeService.performSellToShop pet merchant send adapter requires a sell-to-shop mutation plan");
+
+		if (sellToShopPlan.Status != TradeSellToShopPlanStatus.PlanCreated)
+			return CreateTerminalPlan(
+				PetMerchantSellSendAdapterStatus.SellToShopPlanNotReady,
+				sellToShopPlan,
+				"TradeService.performSellToShop pet merchant send adapter stops because sell-to-shop plan is blocked");
+
+		var intents = new List<PetMerchantSellSendIntentPlan>();
+		intents.AddRange(sellToShopPlan.SellerItemUpdates.Select(item => Disabled(
+			PetMerchantSellSendIntentKind.SendSellerItemUpdate,
+			item.OwnerId,
+			item.ObjectId,
+			"TradeService.performSellToShop -> inventory.decreaseItemCount sends seller inventory update")));
+		intents.AddRange(sellToShopPlan.SellerDeletedItemObjectIds.Select(objectId => Disabled(
+			PetMerchantSellSendIntentKind.SendSellerItemDelete,
+			targetPlayerObjectId: null,
+			objectId,
+			"TradeService.performSellToShop -> inventory.delete(item, SELL) sends seller inventory delete")));
+		if (sellToShopPlan.KinahUpdate != null)
+			intents.Add(Disabled(
+				PetMerchantSellSendIntentKind.SendKinahUpdate,
+				sellToShopPlan.KinahUpdate.OwnerId,
+				sellToShopPlan.KinahUpdate.ObjectId,
+				"TradeService.performSellToShop -> inventory.increaseKinah(kinahReward, INC_KINAH_SELL) sends Kinah update"));
+
+		return new PetMerchantSellSendAdapterPlan(
+			PetMerchantSellSendAdapterStatus.DisabledNoPackets,
+			sellToShopPlan,
+			intents,
+			WouldSendPackets: intents.Count > 0,
+			DidSendPackets: false,
+			WouldSendAutoSellNotification: false,
+			DidSendAutoSellNotification: false,
+			ShouldDispatchLiveSideEffects: false,
+			"CM_BUY_ITEM Pet MERCHANT action 17 sell packets are recorded but disabled; PetService.sell auto-sell notification is a separate Java path",
+			IsLive: false);
+	}
+
+	private static PetMerchantSellSendAdapterPlan CreateTerminalPlan(
+		PetMerchantSellSendAdapterStatus status,
+		TradeSellToShopPlan? sellToShopPlan,
+		string javaSource) =>
+		new(
+			status,
+			sellToShopPlan,
+			Intents: Array.Empty<PetMerchantSellSendIntentPlan>(),
+			WouldSendPackets: false,
+			DidSendPackets: false,
+			WouldSendAutoSellNotification: false,
+			DidSendAutoSellNotification: false,
+			ShouldDispatchLiveSideEffects: false,
+			javaSource,
+			IsLive: false);
+
+	private static PetMerchantSellSendIntentPlan Disabled(
+		PetMerchantSellSendIntentKind kind,
+		int? targetPlayerObjectId,
+		int? itemObjectId,
+		string javaSource) =>
+		new(kind, targetPlayerObjectId, itemObjectId, WouldSend: true, DidSend: false, javaSource);
+}
+
 public static class PetMerchantSellOutcomePlanService
 {
 	public static PetMerchantSellOutcomePlan CreateDisabledPlan(PetMerchantSellLiveExecutorFacadePlan? facadePlan)
@@ -345,24 +565,24 @@ public static class PetMerchantSellOutcomePlanService
 				facadePlan,
 				"CM_BUY_ITEM pet merchant final outcome stops because facade is not eligible for disabled side-effect composition");
 
+		var persistenceAdapterPlan = facadePlan.PersistenceAdapterPlan;
+		var sendAdapterPlan = facadePlan.SendAdapterPlan;
+		var wouldWritePersistence = persistenceAdapterPlan.WouldWriteRepository;
+		var wouldSendPackets = sendAdapterPlan.WouldSendPackets;
 		var wouldMutateSellerInventory = facadePlan.WouldMutateSellerInventory;
 		var wouldAddRepurchaseItems = facadePlan.WouldAddRepurchaseItems;
 		var wouldMutateKinah = facadePlan.WouldMutateKinah;
-		var wouldCommitBoundary = wouldMutateSellerInventory || wouldAddRepurchaseItems || wouldMutateKinah;
+		var wouldCommitBoundary = wouldWritePersistence || wouldSendPackets;
 
 		var steps = new List<PetMerchantSellOutcomeStepPlan>();
-		if (wouldMutateSellerInventory)
+		if (wouldWritePersistence)
 			steps.Add(Disabled(
-				PetMerchantSellOutcomeStepKind.ApplySellerInventoryMutation,
-				"TradeService.performSellToShop -> inventory.delete/decreaseItemCount for pet merchant sold items"));
-		if (wouldAddRepurchaseItems)
+				PetMerchantSellOutcomeStepKind.PersistRepositoryWrites,
+				"TradeService.performSellToShop -> persist inventory delete/decrease, repurchase items, and Kinah increase"));
+		if (wouldSendPackets)
 			steps.Add(Disabled(
-				PetMerchantSellOutcomeStepKind.AddRepurchaseItems,
-				"TradeService.performSellToShop -> RepurchaseService.addRepurchaseItems(player, items)"));
-		if (wouldMutateKinah)
-			steps.Add(Disabled(
-				PetMerchantSellOutcomeStepKind.IncreaseKinah,
-				"TradeService.performSellToShop -> inventory.increaseKinah(kinahReward, INC_KINAH_SELL)"));
+				PetMerchantSellOutcomeStepKind.DispatchPacketIntents,
+				"TradeService.performSellToShop -> dispatch inventory/Kinah packet intents from Storage mutations"));
 		if (wouldCommitBoundary)
 			steps.Add(Disabled(
 				PetMerchantSellOutcomeStepKind.CommitTransactionBoundary,
@@ -371,8 +591,16 @@ public static class PetMerchantSellOutcomePlanService
 		return new PetMerchantSellOutcomePlan(
 			PetMerchantSellOutcomePlanStatus.DisabledNoTransaction,
 			facadePlan,
+			persistenceAdapterPlan,
+			sendAdapterPlan,
 			facadePlan.SellToShopPlan,
 			steps,
+			wouldWritePersistence,
+			DidWritePersistence: false,
+			wouldSendPackets,
+			DidSendPackets: false,
+			sendAdapterPlan.WouldSendAutoSellNotification,
+			DidSendAutoSellNotification: false,
 			wouldMutateSellerInventory,
 			DidMutateSellerInventory: false,
 			wouldAddRepurchaseItems,
@@ -383,7 +611,7 @@ public static class PetMerchantSellOutcomePlanService
 			DidCommitTransactionBoundary: false,
 			ShouldCommitTransactionBoundary: false,
 			ShouldDispatchLiveSideEffects: false,
-			"CM_BUY_ITEM Pet MERCHANT action 17 final outcome is disabled; inventory/repurchase/Kinah/transaction boundaries are recorded without dispatch",
+			"CM_BUY_ITEM Pet MERCHANT action 17 final outcome is disabled; write/send/transaction boundaries are recorded without dispatch",
 			IsLive: false);
 	}
 
@@ -394,8 +622,16 @@ public static class PetMerchantSellOutcomePlanService
 		new(
 			status,
 			facadePlan,
+			facadePlan?.PersistenceAdapterPlan,
+			facadePlan?.SendAdapterPlan,
 			facadePlan?.SellToShopPlan,
 			Steps: Array.Empty<PetMerchantSellOutcomeStepPlan>(),
+			WouldWritePersistence: false,
+			DidWritePersistence: false,
+			WouldSendPackets: false,
+			DidSendPackets: false,
+			WouldSendAutoSellNotification: false,
+			DidSendAutoSellNotification: false,
 			WouldMutateSellerInventory: false,
 			DidMutateSellerInventory: false,
 			WouldAddRepurchaseItems: false,
@@ -468,6 +704,8 @@ public static class PetMerchantSellLiveExecutorFacadePlanService
 				NotAttempted(PetMerchantSellLiveExecutorOperationStatus.NotAttemptedCompositionNotReady),
 				"TradeService.performSellToShop plan is blocked; pet merchant live side effects are not eligible");
 
+		var persistenceAdapterPlan = PetMerchantSellPersistenceAdapterPlanService.CreateDisabledPlan(sellToShopPlan);
+		var sendAdapterPlan = PetMerchantSellSendAdapterPlanService.CreateDisabledPlan(sellToShopPlan);
 		var operations = new List<PetMerchantSellLiveExecutorOperation>();
 		var wouldMutateSellerInventory = sellToShopPlan.SellerDeletedItemObjectIds.Count > 0 || sellToShopPlan.SellerItemUpdates.Count > 0;
 		if (wouldMutateSellerInventory)
@@ -492,6 +730,8 @@ public static class PetMerchantSellLiveExecutorFacadePlanService
 			handlerPlan,
 			handlerPlan.PetSellModifier,
 			sellToShopPlan,
+			persistenceAdapterPlan,
+			sendAdapterPlan,
 			operations,
 			WouldMutateSellerInventory: wouldMutateSellerInventory,
 			DidMutateSellerInventory: false,
@@ -517,6 +757,8 @@ public static class PetMerchantSellLiveExecutorFacadePlanService
 			handlerPlan,
 			petSellModifier,
 			sellToShopPlan,
+			PetMerchantSellPersistenceAdapterPlanService.CreateDisabledPlan(sellToShopPlan),
+			PetMerchantSellSendAdapterPlanService.CreateDisabledPlan(sellToShopPlan),
 			[operation],
 			WouldMutateSellerInventory: false,
 			DidMutateSellerInventory: false,

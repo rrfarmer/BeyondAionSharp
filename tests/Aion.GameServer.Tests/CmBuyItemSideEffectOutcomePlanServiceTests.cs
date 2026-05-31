@@ -56,7 +56,7 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 		Assert.False(outcome.WouldMutateBuyerInventory);
 		Assert.True(outcome.WouldMutateKinah);
 		Assert.True(outcome.WouldAddRepurchaseItems);
-		Assert.False(outcome.WouldSendPackets);
+		Assert.True(outcome.WouldSendPackets);
 		Assert.False(outcome.WouldWriteExchangeLog);
 		Assert.True(outcome.WouldCommitTransactionBoundary);
 		Assert.False(outcome.ShouldCommitTransactionBoundary);
