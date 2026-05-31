@@ -74,10 +74,87 @@ public enum PrivateStoreLiveExecutorOperationStatus
 	NotAttemptedDisabled,
 }
 
+public enum PrivateStorePersistenceAdapterStatus
+{
+	MissingPurchasePlan,
+	PurchasePlanNotReady,
+	DisabledNoWrites,
+}
+
+public enum PrivateStorePersistenceOperationKind
+{
+	SaveSellerItemUpdate,
+	DeleteSellerItem,
+	SaveBuyerAddedItem,
+	SaveBuyerUpdatedItem,
+	SaveBuyerKinah,
+	SaveSellerKinah,
+	UpdateSellerStoreItem,
+	CloseSellerStore,
+}
+
+public enum PrivateStoreSendAdapterStatus
+{
+	MissingPurchasePlan,
+	PurchasePlanNotReady,
+	DisabledNoPackets,
+}
+
+public enum PrivateStoreSendIntentKind
+{
+	SendSellerItemUpdate,
+	SendSellerItemDelete,
+	SendBuyerItemAdd,
+	SendBuyerItemUpdate,
+	SendBuyerKinahUpdate,
+	SendSellerKinahUpdate,
+	SendSellerNotification,
+	BroadcastSellerStoreClose,
+	WriteExchangeLog,
+}
+
 public sealed record PrivateStoreLiveExecutorOperation(
 	PrivateStoreLiveExecutorOperationKind Kind,
 	PrivateStoreLiveExecutorOperationStatus Status,
 	string JavaSource);
+
+public sealed record PrivateStorePersistenceOperationPlan(
+	PrivateStorePersistenceOperationKind Kind,
+	int? ItemObjectId,
+	int? PlayerObjectId,
+	bool WouldWrite,
+	bool DidWrite,
+	string JavaSource);
+
+public sealed record PrivateStorePersistenceAdapterPlan(
+	PrivateStorePersistenceAdapterStatus Status,
+	PrivateStorePurchasePlan? PurchasePlan,
+	IReadOnlyList<PrivateStorePersistenceOperationPlan> Operations,
+	bool WouldWriteRepository,
+	bool DidWriteRepository,
+	bool ShouldDispatchLiveSideEffects,
+	string JavaSource,
+	bool IsLive);
+
+public sealed record PrivateStoreSendIntentPlan(
+	PrivateStoreSendIntentKind Kind,
+	int? TargetPlayerObjectId,
+	int? ItemObjectId,
+	bool WouldSend,
+	bool DidSend,
+	string JavaSource);
+
+public sealed record PrivateStoreSendAdapterPlan(
+	PrivateStoreSendAdapterStatus Status,
+	PrivateStorePurchasePlan? PurchasePlan,
+	IReadOnlyList<PrivateStoreSendIntentPlan> Intents,
+	bool WouldSendPackets,
+	bool DidSendPackets,
+	bool WouldWriteExchangeLog,
+	bool DidWriteExchangeLog,
+	bool ShouldDispatchLiveSideEffects,
+	string JavaSource,
+	bool IsLive);
 
 public sealed record PrivateStoreLiveExecutorFacadePlan(
 	PrivateStoreLiveExecutorFacadeStatus Status,
@@ -337,6 +414,207 @@ public static class PrivateStorePurchasePlanService
 		copy.IdianStone = item.IdianStone;
 		return copy;
 	}
+}
+
+public static class PrivateStorePersistenceAdapterPlanService
+{
+	public static PrivateStorePersistenceAdapterPlan CreateDisabledPlan(PrivateStorePurchasePlan? purchasePlan)
+	{
+		if (purchasePlan == null)
+			return CreateTerminalPlan(
+				PrivateStorePersistenceAdapterStatus.MissingPurchasePlan,
+				purchasePlan,
+				"PrivateStoreService.sellStoreItem persistence adapter requires a purchase mutation plan");
+
+		if (purchasePlan.Status != PrivateStorePurchasePlanStatus.PlanCreated)
+			return CreateTerminalPlan(
+				PrivateStorePersistenceAdapterStatus.PurchasePlanNotReady,
+				purchasePlan,
+				"PrivateStoreService.sellStoreItem persistence adapter stops because purchase plan is blocked");
+
+		var operations = new List<PrivateStorePersistenceOperationPlan>();
+		operations.AddRange(purchasePlan.SellerItemUpdates.Select(item => Disabled(
+			PrivateStorePersistenceOperationKind.SaveSellerItemUpdate,
+			item.ObjectId,
+			item.OwnerId,
+			"PrivateStoreService.decreaseItemFromPlayer -> persist seller inventory decreased stack")));
+		operations.AddRange(purchasePlan.SellerDeletedItemObjectIds.Select(objectId => Disabled(
+			PrivateStorePersistenceOperationKind.DeleteSellerItem,
+			objectId,
+			playerObjectId: null,
+			"PrivateStoreService.decreaseItemFromPlayer -> persist seller inventory item delete")));
+		operations.AddRange(purchasePlan.BuyerAddedItems.Select(item => Disabled(
+			PrivateStorePersistenceOperationKind.SaveBuyerAddedItem,
+			item.ObjectId,
+			item.OwnerId,
+			"ItemService.addItem(buyer, item, count) -> persist buyer added item")));
+		operations.AddRange(purchasePlan.BuyerUpdatedItems.Select(item => Disabled(
+			PrivateStorePersistenceOperationKind.SaveBuyerUpdatedItem,
+			item.ObjectId,
+			item.OwnerId,
+			"ItemService.addItem(buyer, item, count) -> persist buyer stack update")));
+
+		if (purchasePlan.BuyerKinahUpdate != null)
+			operations.Add(Disabled(
+				PrivateStorePersistenceOperationKind.SaveBuyerKinah,
+				purchasePlan.BuyerKinahUpdate.ObjectId,
+				purchasePlan.BuyerKinahUpdate.OwnerId,
+				"buyer.getInventory().decreaseKinah(price) -> persist buyer Kinah"));
+		if (purchasePlan.SellerKinahUpdate != null)
+			operations.Add(Disabled(
+				PrivateStorePersistenceOperationKind.SaveSellerKinah,
+				purchasePlan.SellerKinahUpdate.ObjectId,
+				purchasePlan.SellerKinahUpdate.OwnerId,
+				"seller.getInventory().increaseKinah(price) -> persist seller Kinah"));
+		foreach (var boughtItem in purchasePlan.BoughtItems)
+			operations.Add(Disabled(
+				PrivateStorePersistenceOperationKind.UpdateSellerStoreItem,
+				boughtItem.ItemObjectId,
+				playerObjectId: null,
+				"PrivateStoreService.decreaseItemFromPlayer -> persist private-store sold item count/remove"));
+		if (purchasePlan.ShouldCloseSellerStore)
+			operations.Add(Disabled(
+				PrivateStorePersistenceOperationKind.CloseSellerStore,
+				itemObjectId: null,
+				playerObjectId: null,
+				"PrivateStoreService.sellStoreItem -> closePrivateStore(seller) after soldItems empty"));
+
+		return new PrivateStorePersistenceAdapterPlan(
+			PrivateStorePersistenceAdapterStatus.DisabledNoWrites,
+			purchasePlan,
+			operations,
+			WouldWriteRepository: operations.Count > 0,
+			DidWriteRepository: false,
+			ShouldDispatchLiveSideEffects: false,
+			"PrivateStoreService.sellStoreItem persistence writes are recorded but disabled",
+			IsLive: false);
+	}
+
+	private static PrivateStorePersistenceAdapterPlan CreateTerminalPlan(
+		PrivateStorePersistenceAdapterStatus status,
+		PrivateStorePurchasePlan? purchasePlan,
+		string javaSource) =>
+		new(
+			status,
+			purchasePlan,
+			Operations: Array.Empty<PrivateStorePersistenceOperationPlan>(),
+			WouldWriteRepository: false,
+			DidWriteRepository: false,
+			ShouldDispatchLiveSideEffects: false,
+			javaSource,
+			IsLive: false);
+
+	private static PrivateStorePersistenceOperationPlan Disabled(
+		PrivateStorePersistenceOperationKind kind,
+		int? itemObjectId,
+		int? playerObjectId,
+		string javaSource) =>
+		new(kind, itemObjectId, playerObjectId, WouldWrite: true, DidWrite: false, javaSource);
+}
+
+public static class PrivateStoreSendAdapterPlanService
+{
+	public static PrivateStoreSendAdapterPlan CreateDisabledPlan(PrivateStorePurchasePlan? purchasePlan)
+	{
+		if (purchasePlan == null)
+			return CreateTerminalPlan(
+				PrivateStoreSendAdapterStatus.MissingPurchasePlan,
+				purchasePlan,
+				"PrivateStoreService.sellStoreItem send adapter requires a purchase mutation plan");
+
+		if (purchasePlan.Status != PrivateStorePurchasePlanStatus.PlanCreated)
+			return CreateTerminalPlan(
+				PrivateStoreSendAdapterStatus.PurchasePlanNotReady,
+				purchasePlan,
+				"PrivateStoreService.sellStoreItem send adapter stops because purchase plan is blocked");
+
+		var intents = new List<PrivateStoreSendIntentPlan>();
+		intents.AddRange(purchasePlan.SellerItemUpdates.Select(item => Disabled(
+			PrivateStoreSendIntentKind.SendSellerItemUpdate,
+			item.OwnerId,
+			item.ObjectId,
+			"seller.getInventory().decreaseItemCount -> send seller inventory update")));
+		intents.AddRange(purchasePlan.SellerDeletedItemObjectIds.Select(objectId => Disabled(
+			PrivateStoreSendIntentKind.SendSellerItemDelete,
+			targetPlayerObjectId: null,
+			objectId,
+			"seller.getInventory().decreaseItemCount -> send seller inventory delete")));
+		intents.AddRange(purchasePlan.BuyerAddedItems.Select(item => Disabled(
+			PrivateStoreSendIntentKind.SendBuyerItemAdd,
+			item.OwnerId,
+			item.ObjectId,
+			"ItemService.addItem -> send buyer item add")));
+		intents.AddRange(purchasePlan.BuyerUpdatedItems.Select(item => Disabled(
+			PrivateStoreSendIntentKind.SendBuyerItemUpdate,
+			item.OwnerId,
+			item.ObjectId,
+			"ItemService.addItem -> send buyer stack update")));
+
+		if (purchasePlan.BuyerKinahUpdate != null)
+			intents.Add(Disabled(
+				PrivateStoreSendIntentKind.SendBuyerKinahUpdate,
+				purchasePlan.BuyerKinahUpdate.OwnerId,
+				purchasePlan.BuyerKinahUpdate.ObjectId,
+				"buyer.getInventory().decreaseKinah(price) -> send buyer Kinah update"));
+		if (purchasePlan.SellerKinahUpdate != null)
+			intents.Add(Disabled(
+				PrivateStoreSendIntentKind.SendSellerKinahUpdate,
+				purchasePlan.SellerKinahUpdate.OwnerId,
+				purchasePlan.SellerKinahUpdate.ObjectId,
+				"seller.getInventory().increaseKinah(price) -> send seller Kinah update"));
+		intents.AddRange(purchasePlan.SellerMessages.Select(message => Disabled(
+			PrivateStoreSendIntentKind.SendSellerNotification,
+			targetPlayerObjectId: null,
+			itemObjectId: null,
+			$"PrivateStoreService.sellStoreItem -> send seller system message {message.MessageId}")));
+		if (purchasePlan.ShouldCloseSellerStore)
+			intents.Add(Disabled(
+				PrivateStoreSendIntentKind.BroadcastSellerStoreClose,
+				targetPlayerObjectId: null,
+				itemObjectId: null,
+				"PrivateStoreService.closePrivateStore -> broadcast SM_EMOTION(CLOSE_PRIVATESHOP)"));
+		if (purchasePlan.BoughtItems.Count > 0)
+			intents.Add(Disabled(
+				PrivateStoreSendIntentKind.WriteExchangeLog,
+				targetPlayerObjectId: null,
+				itemObjectId: null,
+				"PrivateStoreService.sellStoreItem -> EXCHANGE_LOG private-store sale line"));
+
+		return new PrivateStoreSendAdapterPlan(
+			PrivateStoreSendAdapterStatus.DisabledNoPackets,
+			purchasePlan,
+			intents,
+			WouldSendPackets: intents.Any(intent => intent.Kind != PrivateStoreSendIntentKind.WriteExchangeLog),
+			DidSendPackets: false,
+			WouldWriteExchangeLog: intents.Any(intent => intent.Kind == PrivateStoreSendIntentKind.WriteExchangeLog),
+			DidWriteExchangeLog: false,
+			ShouldDispatchLiveSideEffects: false,
+			"PrivateStoreService.sellStoreItem packet/log sends are recorded but disabled",
+			IsLive: false);
+	}
+
+	private static PrivateStoreSendAdapterPlan CreateTerminalPlan(
+		PrivateStoreSendAdapterStatus status,
+		PrivateStorePurchasePlan? purchasePlan,
+		string javaSource) =>
+		new(
+			status,
+			purchasePlan,
+			Intents: Array.Empty<PrivateStoreSendIntentPlan>(),
+			WouldSendPackets: false,
+			DidSendPackets: false,
+			WouldWriteExchangeLog: false,
+			DidWriteExchangeLog: false,
+			ShouldDispatchLiveSideEffects: false,
+			javaSource,
+			IsLive: false);
+
+	private static PrivateStoreSendIntentPlan Disabled(
+		PrivateStoreSendIntentKind kind,
+		int? targetPlayerObjectId,
+		int? itemObjectId,
+		string javaSource) =>
+		new(kind, targetPlayerObjectId, itemObjectId, WouldSend: true, DidSend: false, javaSource);
 }
 
 public static class PrivateStoreLiveExecutorFacadePlanService

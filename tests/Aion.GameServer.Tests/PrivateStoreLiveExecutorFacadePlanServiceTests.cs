@@ -49,6 +49,113 @@ public sealed class PrivateStoreLiveExecutorFacadePlanServiceTests
 	}
 
 	[Fact]
+	public void CreateDisabledPersistenceAdapterPlan_RecordsRepositoryWriteIntentsWithoutWriting()
+	{
+		var purchasePlan = CreatePurchasePlan();
+
+		var adapter = PrivateStorePersistenceAdapterPlanService.CreateDisabledPlan(purchasePlan);
+
+		Assert.Equal(PrivateStorePersistenceAdapterStatus.DisabledNoWrites, adapter.Status);
+		Assert.Same(purchasePlan, adapter.PurchasePlan);
+		Assert.True(adapter.WouldWriteRepository);
+		Assert.False(adapter.DidWriteRepository);
+		Assert.False(adapter.ShouldDispatchLiveSideEffects);
+		Assert.False(adapter.IsLive);
+		Assert.Collection(
+			adapter.Operations.Select(operation => operation.Kind),
+			kind => Assert.Equal(PrivateStorePersistenceOperationKind.DeleteSellerItem, kind),
+			kind => Assert.Equal(PrivateStorePersistenceOperationKind.SaveBuyerAddedItem, kind),
+			kind => Assert.Equal(PrivateStorePersistenceOperationKind.SaveBuyerKinah, kind),
+			kind => Assert.Equal(PrivateStorePersistenceOperationKind.SaveSellerKinah, kind),
+			kind => Assert.Equal(PrivateStorePersistenceOperationKind.UpdateSellerStoreItem, kind),
+			kind => Assert.Equal(PrivateStorePersistenceOperationKind.CloseSellerStore, kind));
+		Assert.All(adapter.Operations, operation =>
+		{
+			Assert.True(operation.WouldWrite);
+			Assert.False(operation.DidWrite);
+		});
+	}
+
+	[Fact]
+	public void CreateDisabledSendAdapterPlan_RecordsPacketAndLogIntentsWithoutSending()
+	{
+		var purchasePlan = CreatePurchasePlan();
+
+		var adapter = PrivateStoreSendAdapterPlanService.CreateDisabledPlan(purchasePlan);
+
+		Assert.Equal(PrivateStoreSendAdapterStatus.DisabledNoPackets, adapter.Status);
+		Assert.Same(purchasePlan, adapter.PurchasePlan);
+		Assert.True(adapter.WouldSendPackets);
+		Assert.False(adapter.DidSendPackets);
+		Assert.True(adapter.WouldWriteExchangeLog);
+		Assert.False(adapter.DidWriteExchangeLog);
+		Assert.False(adapter.ShouldDispatchLiveSideEffects);
+		Assert.False(adapter.IsLive);
+		Assert.Collection(
+			adapter.Intents.Select(intent => intent.Kind),
+			kind => Assert.Equal(PrivateStoreSendIntentKind.SendSellerItemDelete, kind),
+			kind => Assert.Equal(PrivateStoreSendIntentKind.SendBuyerItemAdd, kind),
+			kind => Assert.Equal(PrivateStoreSendIntentKind.SendBuyerKinahUpdate, kind),
+			kind => Assert.Equal(PrivateStoreSendIntentKind.SendSellerKinahUpdate, kind),
+			kind => Assert.Equal(PrivateStoreSendIntentKind.SendSellerNotification, kind),
+			kind => Assert.Equal(PrivateStoreSendIntentKind.BroadcastSellerStoreClose, kind),
+			kind => Assert.Equal(PrivateStoreSendIntentKind.WriteExchangeLog, kind));
+		Assert.All(adapter.Intents, intent =>
+		{
+			Assert.True(intent.WouldSend);
+			Assert.False(intent.DidSend);
+		});
+	}
+
+	[Fact]
+	public void CreateDisabledAdapterPlans_MissingPurchasePlanStopsBeforeIntents()
+	{
+		var persistence = PrivateStorePersistenceAdapterPlanService.CreateDisabledPlan(null);
+		var send = PrivateStoreSendAdapterPlanService.CreateDisabledPlan(null);
+
+		Assert.Equal(PrivateStorePersistenceAdapterStatus.MissingPurchasePlan, persistence.Status);
+		Assert.Empty(persistence.Operations);
+		Assert.False(persistence.WouldWriteRepository);
+		Assert.False(persistence.DidWriteRepository);
+		Assert.False(persistence.ShouldDispatchLiveSideEffects);
+		Assert.False(persistence.IsLive);
+		Assert.Equal(PrivateStoreSendAdapterStatus.MissingPurchasePlan, send.Status);
+		Assert.Empty(send.Intents);
+		Assert.False(send.WouldSendPackets);
+		Assert.False(send.DidSendPackets);
+		Assert.False(send.WouldWriteExchangeLog);
+		Assert.False(send.DidWriteExchangeLog);
+		Assert.False(send.ShouldDispatchLiveSideEffects);
+		Assert.False(send.IsLive);
+	}
+
+	[Fact]
+	public void CreateDisabledAdapterPlans_BlockedPurchasePlanStopsBeforeIntents()
+	{
+		var blockedPlan = CreateBlockedPurchasePlan();
+
+		var persistence = PrivateStorePersistenceAdapterPlanService.CreateDisabledPlan(blockedPlan);
+		var send = PrivateStoreSendAdapterPlanService.CreateDisabledPlan(blockedPlan);
+
+		Assert.Equal(PrivateStorePersistenceAdapterStatus.PurchasePlanNotReady, persistence.Status);
+		Assert.Same(blockedPlan, persistence.PurchasePlan);
+		Assert.Empty(persistence.Operations);
+		Assert.False(persistence.WouldWriteRepository);
+		Assert.False(persistence.DidWriteRepository);
+		Assert.False(persistence.ShouldDispatchLiveSideEffects);
+		Assert.False(persistence.IsLive);
+		Assert.Equal(PrivateStoreSendAdapterStatus.PurchasePlanNotReady, send.Status);
+		Assert.Same(blockedPlan, send.PurchasePlan);
+		Assert.Empty(send.Intents);
+		Assert.False(send.WouldSendPackets);
+		Assert.False(send.DidSendPackets);
+		Assert.False(send.WouldWriteExchangeLog);
+		Assert.False(send.DidWriteExchangeLog);
+		Assert.False(send.ShouldDispatchLiveSideEffects);
+		Assert.False(send.IsLive);
+	}
+
+	[Fact]
 	public void CreateDisabledPlan_BlockedBoughtItemsPlanStopsBeforeSideEffects()
 	{
 		var packet = CreatePacket(0, [new CmBuyItemEntry(4, 1)]);
@@ -139,6 +246,23 @@ public sealed class PrivateStoreLiveExecutorFacadePlanServiceTests
 			SellerMessages: [notification.NotificationMessage!],
 			ShouldCloseSellerStore: true,
 			"PrivateStoreService.sellStoreItem");
+	}
+
+	private static PrivateStorePurchasePlan CreateBlockedPurchasePlan()
+	{
+		return new PrivateStorePurchasePlan(
+			PrivateStorePurchasePlanStatus.BlockedInsufficientKinah,
+			BoughtItems: [new PrivateStorePurchaseItemRequest(0, 3001, 100000001, Count: 1, PricePerItem: 10_000, ItemName: "Practice Sword")],
+			SellerItemUpdates: [],
+			SellerDeletedItemObjectIds: [],
+			BuyerAddedItems: [],
+			BuyerUpdatedItems: [],
+			BuyerKinahUpdate: null,
+			SellerKinahUpdate: null,
+			BuyerMessages: [],
+			SellerMessages: [],
+			ShouldCloseSellerStore: false,
+			"PrivateStoreService.sellStoreItem -> price > buyer.getInventory().getKinah() -> return");
 	}
 
 	private static CmBuyItem CreatePacket(int tradeActionId, IReadOnlyList<CmBuyItemEntry> entries)
