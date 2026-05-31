@@ -101,6 +101,7 @@ public sealed class SkillStatConditionPreviewGoldenFixturePlanServiceTests
 		Assert.Equal(1, artifact.SchemaVersion);
 		Assert.False(artifact.JavaRuntimeEvidenceCaptured);
 		Assert.Equal("contract-only", artifact.EvidenceLevel);
+		Assert.Equal("docs/Phase-6-ConditionPreviewJavaGoldenHarnessDesign.md", artifact.HarnessDesignDocument);
 		Assert.Contains("blocked-local-toolchain", artifact.JavaCaptureStatus, StringComparison.Ordinal);
 		Assert.Contains("Conditions.validate(Stat2, IStatFunction)", artifact.JavaExecutionPlan, StringComparison.Ordinal);
 		Assert.Equal(plan.FixtureCount, artifact.Fixtures.Count);
@@ -111,6 +112,27 @@ public sealed class SkillStatConditionPreviewGoldenFixturePlanServiceTests
 			Assert.Equal(plannedCase.ConditionSequence, fixture.ConditionSequence);
 			Assert.Equal(plannedCase.ExpectedPurePreviewStatus, fixture.ExpectedPurePreviewStatus);
 			Assert.Equal(plannedCase.ExpectedConditionStatuses, fixture.ExpectedConditionStatuses);
+		}
+	}
+
+	[Fact]
+	public void JavaHarnessDesignDocument_CoversAllContractFixturesAndCriticalSourceSeams()
+	{
+		var plan = SkillStatConditionPreviewGoldenFixturePlanService.CreatePlan();
+		var documentPath = Path.Combine(FindRepositoryRoot(), "docs", "Phase-6-ConditionPreviewJavaGoldenHarnessDesign.md");
+		var document = File.ReadAllText(documentPath);
+
+		Assert.Contains("Conditions.validate(Stat2, IStatFunction)", document, StringComparison.Ordinal);
+		Assert.Contains("WeaponCondition.itemGroups", document, StringComparison.Ordinal);
+		Assert.Contains("ChargeCondition.value", document, StringComparison.Ordinal);
+		Assert.Contains("player.getEquipment().getMainHandWeaponType()", document, StringComparison.Ordinal);
+		Assert.Contains("Item.getChargeLevel()", document, StringComparison.Ordinal);
+		Assert.Contains("NotEvaluated", document, StringComparison.Ordinal);
+		Assert.Contains("mvn -pl game-server", document, StringComparison.Ordinal);
+
+		foreach (var plannedCase in plan.Cases)
+		{
+			Assert.Contains(plannedCase.FixtureName, document, StringComparison.Ordinal);
 		}
 	}
 
@@ -139,6 +161,7 @@ public sealed class SkillStatConditionPreviewGoldenFixturePlanServiceTests
 		string EvidenceLevel,
 		bool JavaRuntimeEvidenceCaptured,
 		string JavaCaptureStatus,
+		string HarnessDesignDocument,
 		string JavaExecutionPlan,
 		IReadOnlyList<ConditionPreviewGoldenFixtureContractCase> Fixtures);
 
