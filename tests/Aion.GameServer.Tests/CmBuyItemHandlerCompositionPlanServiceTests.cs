@@ -31,6 +31,28 @@ public sealed class CmBuyItemHandlerCompositionPlanServiceTests
 	}
 
 	[Fact]
+	public void CreatePlan_ForwardsApSellPlanForAbyssPurchaseTemplate()
+	{
+		var packet = CreatePacket(1, [new CmBuyItemEntry(200, 1)]);
+		var apSellPlan = CreateTradeSellForApToShopPlan();
+
+		var plan = CmBuyItemHandlerCompositionPlanService.CreatePlan(
+			new CmBuyItemHandlerCompositionInput(
+				packet,
+				PlayerPresent: true,
+				TargetKind: CmBuyItemRunTargetKind.Npc,
+				NpcCanPurchase: true,
+				PurchaseTemplate: new TradeListTemplateSummary(203060, [129], NpcType: "ABYSS"),
+				SellForApToShopPlan: apSellPlan));
+
+		Assert.Equal(CmBuyItemHandlerCompositionPlanStatus.SelectedSellToShopPlanner, plan.Status);
+		Assert.Equal(CmBuyItemSellToShopCompositionPlanStatus.WouldDispatchSellForApToShop, plan.SellToShopPlan!.Status);
+		Assert.Contains(CmBuyItemSellToShopCompositionStep.AttachSellForApToShopPlan, plan.SellToShopPlan.Steps);
+		Assert.Same(apSellPlan, plan.SellToShopPlan.Dispatch!.SellForApToShopPlan);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+	}
+
+	[Fact]
 	public void CreatePlan_SelectsRepurchasePlannerForNpcActionTwo()
 	{
 		var packet = CreatePacket(2, [new CmBuyItemEntry(101, 1), new CmBuyItemEntry(102, 1)]);
@@ -297,6 +319,26 @@ public sealed class CmBuyItemHandlerCompositionPlanServiceTests
 			RepurchaseItems: [],
 			KinahUpdate: null,
 			"TradeService.performSellToShop");
+	}
+
+	private static TradeSellForApToShopPlan CreateTradeSellForApToShopPlan()
+	{
+		return new TradeSellForApToShopPlan(
+			TradeSellForApToShopPlanStatus.PlanCreated,
+			[
+				TradeSellForApToShopStep.CheckSellingApItemsEnabled,
+				TradeSellForApToShopStep.CheckPlayerCanTrade,
+				TradeSellForApToShopStep.FindInventoryItem,
+				TradeSellForApToShopStep.ValidatePurchaseTemplateGoods,
+				TradeSellForApToShopStep.PlanInventoryDecrease,
+				TradeSellForApToShopStep.PlanAbyssPointReward,
+			],
+			DeletedItemObjectIds: [200],
+			SkippedDeleteFailedItemObjectIds: [],
+			AbyssPointRewards: [new TradeSellForApToShopApReward(200, ItemId: 100000001, Count: 1, RequiredApPerItem: 1_000, ApReward: 350)],
+			TotalAbyssPoints: 350,
+			ShouldDispatchLiveSideEffects: false,
+			"TradeService.performSellForAPToShop");
 	}
 
 	private const int SellerObjectId = 7001;

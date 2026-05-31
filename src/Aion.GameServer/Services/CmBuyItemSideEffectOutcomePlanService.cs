@@ -7,6 +7,7 @@ public enum CmBuyItemSideEffectOutcomePlanStatus
 	PrivateStoreOutcomeCreated,
 	PetMerchantSellOutcomeCreated,
 	BuyFromShopOutcomeCreated,
+	SellForApToShopOutcomeCreated,
 }
 
 public sealed record CmBuyItemSideEffectOutcomePlan(
@@ -17,6 +18,7 @@ public sealed record CmBuyItemSideEffectOutcomePlan(
 	PetMerchantSellLiveExecutorFacadePlan? PetMerchantSellFacadePlan,
 	PetMerchantSellOutcomePlan? PetMerchantSellOutcomePlan,
 	TradeBuyTransactionOutcomePlan? BuyFromShopOutcomePlan,
+	TradeSellForApToShopOutcomePlan? SellForApToShopOutcomePlan,
 	bool WouldWritePersistence,
 	bool WouldMutateSellerInventory,
 	bool WouldMutateBuyerInventory,
@@ -46,10 +48,12 @@ public static class CmBuyItemSideEffectOutcomePlanService
 			CmBuyItemHandlerCompositionPlanStatus.SelectedPrivateStorePlanner => CreatePrivateStoreOutcomePlan(handlerPlan),
 			CmBuyItemHandlerCompositionPlanStatus.SelectedPetSellToShopPlanner => CreatePetMerchantOutcomePlan(handlerPlan),
 			CmBuyItemHandlerCompositionPlanStatus.SelectedBuyFromShopPlanner => CreateBuyFromShopOutcomePlan(handlerPlan),
+			CmBuyItemHandlerCompositionPlanStatus.SelectedSellToShopPlanner when
+				handlerPlan.SellToShopPlan?.Dispatch?.DispatchesAbyssApSell == true => CreateSellForApToShopOutcomePlan(handlerPlan),
 			_ => CreateTerminalPlan(
 				CmBuyItemSideEffectOutcomePlanStatus.HandlerNotOutcomeEligible,
 				handlerPlan,
-				"CM_BUY_ITEM side-effect outcome composition only covers Player action 0, Pet MERCHANT action 17, and Npc buy-from-shop actions 13-16"),
+				"CM_BUY_ITEM side-effect outcome composition only covers Player action 0, Pet MERCHANT action 17, Npc buy-from-shop actions 13-16, and Npc action 1 ABYSS AP-sell"),
 		};
 	}
 
@@ -66,6 +70,7 @@ public static class CmBuyItemSideEffectOutcomePlanService
 			PetMerchantSellFacadePlan: null,
 			PetMerchantSellOutcomePlan: null,
 			BuyFromShopOutcomePlan: null,
+			SellForApToShopOutcomePlan: null,
 			WouldWritePersistence: outcomePlan.WouldWritePersistence,
 			WouldMutateSellerInventory: facadePlan.WouldMutateSellerInventory,
 			WouldMutateBuyerInventory: facadePlan.WouldMutateBuyerInventory,
@@ -94,6 +99,7 @@ public static class CmBuyItemSideEffectOutcomePlanService
 			PetMerchantSellFacadePlan: facadePlan,
 			PetMerchantSellOutcomePlan: outcomePlan,
 			BuyFromShopOutcomePlan: null,
+			SellForApToShopOutcomePlan: null,
 			WouldWritePersistence: outcomePlan.WouldWritePersistence,
 			WouldMutateSellerInventory: outcomePlan.WouldMutateSellerInventory,
 			WouldMutateBuyerInventory: false,
@@ -122,6 +128,7 @@ public static class CmBuyItemSideEffectOutcomePlanService
 			PetMerchantSellFacadePlan: null,
 			PetMerchantSellOutcomePlan: null,
 			BuyFromShopOutcomePlan: outcomePlan,
+			SellForApToShopOutcomePlan: null,
 			WouldWritePersistence: outcomePlan.WouldWritePersistence,
 			WouldMutateSellerInventory: false,
 			WouldMutateBuyerInventory: outcomePlan.WouldWritePersistence && transactionPlan?.Mutation?.AddedItems.Count > 0,
@@ -137,6 +144,35 @@ public static class CmBuyItemSideEffectOutcomePlanService
 			IsLive: false);
 	}
 
+	private static CmBuyItemSideEffectOutcomePlan CreateSellForApToShopOutcomePlan(CmBuyItemHandlerCompositionPlan handlerPlan)
+	{
+		var apSellPlan = handlerPlan.SellToShopPlan?.Dispatch?.SellForApToShopPlan;
+		var outcomePlan = TradeSellForApToShopOutcomePlanService.CreateDisabledPlan(apSellPlan);
+
+		return new CmBuyItemSideEffectOutcomePlan(
+			CmBuyItemSideEffectOutcomePlanStatus.SellForApToShopOutcomeCreated,
+			handlerPlan,
+			PrivateStoreFacadePlan: null,
+			PrivateStoreOutcomePlan: null,
+			PetMerchantSellFacadePlan: null,
+			PetMerchantSellOutcomePlan: null,
+			BuyFromShopOutcomePlan: null,
+			SellForApToShopOutcomePlan: outcomePlan,
+			WouldWritePersistence: outcomePlan.WouldWritePersistence,
+			WouldMutateSellerInventory: outcomePlan.WouldMutateSellerInventory,
+			WouldMutateBuyerInventory: false,
+			WouldMutateKinah: false,
+			WouldAddRepurchaseItems: false,
+			WouldSendPackets: outcomePlan.WouldSendPackets,
+			WouldWriteExchangeLog: false,
+			WouldWriteAuditLog: false,
+			WouldCommitTransactionBoundary: outcomePlan.WouldCommitTransactionBoundary,
+			ShouldCommitTransactionBoundary: false,
+			ShouldDispatchLiveSideEffects: false,
+			"CM_BUY_ITEM Npc action 1 ABYSS disabled AP-sell final outcome is composed from handler plan without dispatch",
+			IsLive: false);
+	}
+
 	private static CmBuyItemSideEffectOutcomePlan CreateTerminalPlan(
 		CmBuyItemSideEffectOutcomePlanStatus status,
 		CmBuyItemHandlerCompositionPlan? handlerPlan,
@@ -149,6 +185,7 @@ public static class CmBuyItemSideEffectOutcomePlanService
 			PetMerchantSellFacadePlan: null,
 			PetMerchantSellOutcomePlan: null,
 			BuyFromShopOutcomePlan: null,
+			SellForApToShopOutcomePlan: null,
 			WouldWritePersistence: false,
 			WouldMutateSellerInventory: false,
 			WouldMutateBuyerInventory: false,

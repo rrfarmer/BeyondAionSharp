@@ -44,6 +44,7 @@ public sealed record CmBuyItemHandlerCompositionInput(
 	bool NpcCanSell = true,
 	TradeListTemplateSummary? PurchaseTemplate = null,
 	TradeSellToShopPlan? SellToShopPlan = null,
+	TradeSellForApToShopPlan? SellForApToShopPlan = null,
 	IReadOnlySet<int>? RepurchasableItemObjectIds = null,
 	RepurchasePlan? RepurchasePlan = null,
 	TradeListTemplateSummary? SellTemplate = null,
@@ -178,7 +179,8 @@ public static class CmBuyItemHandlerCompositionPlanService
 					input.NpcCanBuy,
 					input.NpcCanPurchase,
 					input.PurchaseTemplate,
-					input.SellToShopPlan));
+					input.SellToShopPlan,
+					input.SellForApToShopPlan));
 
 			return CreatePlan(
 				CmBuyItemHandlerCompositionPlanStatus.SelectedSellToShopPlanner,

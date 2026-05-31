@@ -24,6 +24,7 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 		Assert.Null(outcome.PetMerchantSellFacadePlan);
 		Assert.Null(outcome.PetMerchantSellOutcomePlan);
 		Assert.Null(outcome.BuyFromShopOutcomePlan);
+		Assert.Null(outcome.SellForApToShopOutcomePlan);
 		Assert.Equal(PrivateStorePurchaseOutcomePlanStatus.DisabledNoTransaction, outcome.PrivateStoreOutcomePlan!.Status);
 		Assert.True(outcome.WouldWritePersistence);
 		Assert.True(outcome.WouldMutateSellerInventory);
@@ -52,6 +53,7 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 		Assert.Null(outcome.PrivateStoreFacadePlan);
 		Assert.Null(outcome.PrivateStoreOutcomePlan);
 		Assert.Null(outcome.BuyFromShopOutcomePlan);
+		Assert.Null(outcome.SellForApToShopOutcomePlan);
 		Assert.NotNull(outcome.PetMerchantSellFacadePlan);
 		Assert.NotNull(outcome.PetMerchantSellOutcomePlan);
 		Assert.Equal(PetMerchantSellOutcomePlanStatus.DisabledNoTransaction, outcome.PetMerchantSellOutcomePlan!.Status);
@@ -84,6 +86,7 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 		Assert.Null(outcome.PetMerchantSellFacadePlan);
 		Assert.Null(outcome.PetMerchantSellOutcomePlan);
 		Assert.NotNull(outcome.BuyFromShopOutcomePlan);
+		Assert.Null(outcome.SellForApToShopOutcomePlan);
 		Assert.Equal(TradeBuyTransactionOutcomePlanStatus.DisabledNoTransaction, outcome.BuyFromShopOutcomePlan!.Status);
 		Assert.True(outcome.WouldWritePersistence);
 		Assert.False(outcome.WouldMutateSellerInventory);
@@ -140,6 +143,52 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 	}
 
 	[Fact]
+	public void CreateDisabledPlan_ComposesApSellFinalOutcomeWithoutDispatch()
+	{
+		var apSellPlan = CreateApSellPlan();
+		var handlerPlan = CreateApSellHandlerPlan(apSellPlan);
+
+		var outcome = CmBuyItemSideEffectOutcomePlanService.CreateDisabledPlan(handlerPlan);
+
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.SellForApToShopOutcomeCreated, outcome.Status);
+		Assert.Same(handlerPlan, outcome.HandlerPlan);
+		Assert.Null(outcome.PrivateStoreFacadePlan);
+		Assert.Null(outcome.PrivateStoreOutcomePlan);
+		Assert.Null(outcome.PetMerchantSellFacadePlan);
+		Assert.Null(outcome.PetMerchantSellOutcomePlan);
+		Assert.Null(outcome.BuyFromShopOutcomePlan);
+		Assert.NotNull(outcome.SellForApToShopOutcomePlan);
+		Assert.Equal(TradeSellForApToShopOutcomePlanStatus.DisabledNoTransaction, outcome.SellForApToShopOutcomePlan!.Status);
+		Assert.True(outcome.WouldWritePersistence);
+		Assert.True(outcome.WouldMutateSellerInventory);
+		Assert.False(outcome.WouldMutateBuyerInventory);
+		Assert.False(outcome.WouldMutateKinah);
+		Assert.False(outcome.WouldAddRepurchaseItems);
+		Assert.True(outcome.WouldSendPackets);
+		Assert.False(outcome.WouldWriteExchangeLog);
+		Assert.False(outcome.WouldWriteAuditLog);
+		Assert.True(outcome.WouldCommitTransactionBoundary);
+		Assert.False(outcome.ShouldCommitTransactionBoundary);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+		Assert.False(outcome.IsLive);
+	}
+
+	[Fact]
+	public void CreateDisabledPlan_ApSellSelectionWithoutApPlanCarriesMissingOutcome()
+	{
+		var handlerPlan = CreateApSellHandlerPlan(apSellPlan: null);
+
+		var outcome = CmBuyItemSideEffectOutcomePlanService.CreateDisabledPlan(handlerPlan);
+
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.SellForApToShopOutcomeCreated, outcome.Status);
+		Assert.Equal(TradeSellForApToShopOutcomePlanStatus.MissingSellForApToShopPlan, outcome.SellForApToShopOutcomePlan!.Status);
+		Assert.False(outcome.WouldWritePersistence);
+		Assert.False(outcome.WouldSendPackets);
+		Assert.False(outcome.WouldCommitTransactionBoundary);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+	}
+
+	[Fact]
 	public void CreateDisabledPlan_BlockedPrivateStoreSelectionCarriesTerminalOutcome()
 	{
 		var packet = CreatePacket(0, [new CmBuyItemEntry(4, 1)]);
@@ -176,6 +225,7 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 		Assert.Null(outcome.PrivateStoreOutcomePlan);
 		Assert.Null(outcome.PetMerchantSellOutcomePlan);
 		Assert.Null(outcome.BuyFromShopOutcomePlan);
+		Assert.Null(outcome.SellForApToShopOutcomePlan);
 		Assert.False(outcome.WouldWritePersistence);
 		Assert.False(outcome.ShouldDispatchLiveSideEffects);
 		Assert.False(outcome.IsLive);
@@ -191,6 +241,7 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 		Assert.Null(outcome.PrivateStoreOutcomePlan);
 		Assert.Null(outcome.PetMerchantSellOutcomePlan);
 		Assert.Null(outcome.BuyFromShopOutcomePlan);
+		Assert.Null(outcome.SellForApToShopOutcomePlan);
 		Assert.False(outcome.WouldWritePersistence);
 		Assert.False(outcome.ShouldDispatchLiveSideEffects);
 		Assert.False(outcome.IsLive);
@@ -231,6 +282,18 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 				TargetKind: CmBuyItemRunTargetKind.Npc,
 				SellTemplate: new TradeListTemplateSummary(203060, [129], NpcType: "NORMAL"),
 				BuyTransactionPlan: buyTransactionPlan));
+	}
+
+	private static CmBuyItemHandlerCompositionPlan CreateApSellHandlerPlan(TradeSellForApToShopPlan? apSellPlan)
+	{
+		return CmBuyItemHandlerCompositionPlanService.CreatePlan(
+			new CmBuyItemHandlerCompositionInput(
+				CreatePacket(1, [new CmBuyItemEntry(2001, 1)]),
+				PlayerPresent: true,
+				TargetKind: CmBuyItemRunTargetKind.Npc,
+				NpcCanPurchase: true,
+				PurchaseTemplate: new TradeListTemplateSummary(203060, [129], NpcType: "ABYSS", BuyPriceRate: 35),
+				SellForApToShopPlan: apSellPlan));
 	}
 
 	private static PrivateStorePurchasePlan CreatePrivateStorePurchasePlan()
@@ -299,6 +362,26 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 			ShouldDispatchLiveSideEffects: false,
 			"TradeService.performBuyTransaction",
 			Mutation: mutation);
+	}
+
+	private static TradeSellForApToShopPlan CreateApSellPlan()
+	{
+		return new TradeSellForApToShopPlan(
+			TradeSellForApToShopPlanStatus.PlanCreated,
+			[
+				TradeSellForApToShopStep.CheckSellingApItemsEnabled,
+				TradeSellForApToShopStep.CheckPlayerCanTrade,
+				TradeSellForApToShopStep.FindInventoryItem,
+				TradeSellForApToShopStep.ValidatePurchaseTemplateGoods,
+				TradeSellForApToShopStep.PlanInventoryDecrease,
+				TradeSellForApToShopStep.PlanAbyssPointReward,
+			],
+			DeletedItemObjectIds: [2001],
+			SkippedDeleteFailedItemObjectIds: [],
+			AbyssPointRewards: [new TradeSellForApToShopApReward(2001, ItemId: 100000001, Count: 1, RequiredApPerItem: 1_000, ApReward: 350)],
+			TotalAbyssPoints: 350,
+			ShouldDispatchLiveSideEffects: false,
+			"TradeService.performSellForAPToShop");
 	}
 
 	private static CmBuyItem CreatePacket(int tradeActionId, IReadOnlyList<CmBuyItemEntry> entries)

@@ -49,6 +49,45 @@ public sealed record TradeSellForApToShopPlan(
 	public bool IsLive => false;
 }
 
+public enum TradeSellForApToShopOutcomePlanStatus
+{
+	MissingSellForApToShopPlan,
+	SellForApToShopPlanNotReady,
+	DisabledNoTransaction,
+}
+
+public enum TradeSellForApToShopOutcomeStepKind
+{
+	PersistRepositoryWrites,
+	DispatchPacketIntents,
+	CommitTransactionBoundary,
+}
+
+public sealed record TradeSellForApToShopOutcomeStepPlan(
+	TradeSellForApToShopOutcomeStepKind Kind,
+	bool WouldRun,
+	bool DidRun,
+	string JavaSource);
+
+public sealed record TradeSellForApToShopOutcomePlan(
+	TradeSellForApToShopOutcomePlanStatus Status,
+	TradeSellForApToShopPlan? SellForApToShopPlan,
+	IReadOnlyList<TradeSellForApToShopOutcomeStepPlan> Steps,
+	bool WouldWritePersistence,
+	bool DidWritePersistence,
+	bool WouldMutateSellerInventory,
+	bool DidMutateSellerInventory,
+	bool WouldMutateAbyssPoints,
+	bool DidMutateAbyssPoints,
+	bool WouldSendPackets,
+	bool DidSendPackets,
+	bool WouldCommitTransactionBoundary,
+	bool DidCommitTransactionBoundary,
+	bool ShouldCommitTransactionBoundary,
+	bool ShouldDispatchLiveSideEffects,
+	string JavaSource,
+	bool IsLive);
+
 public static class TradeSellForApToShopPlanService
 {
 	public static TradeSellForApToShopPlan CreatePlan(
@@ -172,4 +211,115 @@ public static class TradeSellForApToShopPlanService
 			javaSource,
 			rejectedItemObjectId);
 	}
+}
+
+public static class TradeSellForApToShopOutcomePlanService
+{
+	public static TradeSellForApToShopOutcomePlan CreateDisabledPlan(TradeSellForApToShopPlan? sellForApToShopPlan)
+	{
+		if (sellForApToShopPlan == null)
+			return CreateTerminalPlan(
+				TradeSellForApToShopOutcomePlanStatus.MissingSellForApToShopPlan,
+				sellForApToShopPlan,
+				"TradeService.performSellForAPToShop final outcome requires a sell-for-AP-to-shop mutation plan");
+
+		if (sellForApToShopPlan.Status == TradeSellForApToShopPlanStatus.BlockedSellingApItemsDisabled)
+		{
+			var disabledMessageStep = Disabled(
+				TradeSellForApToShopOutcomeStepKind.DispatchPacketIntents,
+				"TradeService.performSellForAPToShop -> !CustomConfig.SELLING_APITEMS_ENABLED sends disabled message and returns false");
+
+			return new TradeSellForApToShopOutcomePlan(
+				TradeSellForApToShopOutcomePlanStatus.DisabledNoTransaction,
+				sellForApToShopPlan,
+				[disabledMessageStep],
+				WouldWritePersistence: false,
+				DidWritePersistence: false,
+				WouldMutateSellerInventory: false,
+				DidMutateSellerInventory: false,
+				WouldMutateAbyssPoints: false,
+				DidMutateAbyssPoints: false,
+				WouldSendPackets: true,
+				DidSendPackets: false,
+				WouldCommitTransactionBoundary: false,
+				DidCommitTransactionBoundary: false,
+				ShouldCommitTransactionBoundary: false,
+				ShouldDispatchLiveSideEffects: false,
+				"TradeService.performSellForAPToShop disabled-feature outcome records the Java message send without dispatch",
+				IsLive: false);
+		}
+
+		if (sellForApToShopPlan.Status != TradeSellForApToShopPlanStatus.PlanCreated)
+			return CreateTerminalPlan(
+				TradeSellForApToShopOutcomePlanStatus.SellForApToShopPlanNotReady,
+				sellForApToShopPlan,
+				"TradeService.performSellForAPToShop final outcome stops because the AP-sell plan is blocked before mutation");
+
+		var wouldMutateSellerInventory = sellForApToShopPlan.DeletedItemObjectIds.Count > 0;
+		var wouldMutateAbyssPoints = sellForApToShopPlan.AbyssPointRewards.Count > 0;
+		var wouldWritePersistence = wouldMutateSellerInventory || wouldMutateAbyssPoints;
+		var wouldSendPackets = wouldMutateSellerInventory || wouldMutateAbyssPoints;
+		var wouldCommitBoundary = wouldWritePersistence || wouldSendPackets;
+
+		var steps = new List<TradeSellForApToShopOutcomeStepPlan>();
+		if (wouldWritePersistence)
+			steps.Add(Disabled(
+				TradeSellForApToShopOutcomeStepKind.PersistRepositoryWrites,
+				"TradeService.performSellForAPToShop -> inventory.decreaseByObjectId and AbyssPointsService.addAp persist item/AP state"));
+		if (wouldSendPackets)
+			steps.Add(Disabled(
+				TradeSellForApToShopOutcomeStepKind.DispatchPacketIntents,
+				"TradeService.performSellForAPToShop -> inventory decrease and AbyssPointsService.addAp emit item/AP packet intents"));
+		if (wouldCommitBoundary)
+			steps.Add(Disabled(
+				TradeSellForApToShopOutcomeStepKind.CommitTransactionBoundary,
+				"TradeService.performSellForAPToShop transaction boundary is recorded only; Java runtime transaction semantics are not yet verified"));
+
+		return new TradeSellForApToShopOutcomePlan(
+			TradeSellForApToShopOutcomePlanStatus.DisabledNoTransaction,
+			sellForApToShopPlan,
+			steps,
+			wouldWritePersistence,
+			DidWritePersistence: false,
+			wouldMutateSellerInventory,
+			DidMutateSellerInventory: false,
+			wouldMutateAbyssPoints,
+			DidMutateAbyssPoints: false,
+			wouldSendPackets,
+			DidSendPackets: false,
+			wouldCommitBoundary,
+			DidCommitTransactionBoundary: false,
+			ShouldCommitTransactionBoundary: false,
+			ShouldDispatchLiveSideEffects: false,
+			"TradeService.performSellForAPToShop final outcome is disabled; item/AP writes and sends are recorded without dispatch",
+			IsLive: false);
+	}
+
+	private static TradeSellForApToShopOutcomePlan CreateTerminalPlan(
+		TradeSellForApToShopOutcomePlanStatus status,
+		TradeSellForApToShopPlan? sellForApToShopPlan,
+		string javaSource) =>
+		new(
+			status,
+			sellForApToShopPlan,
+			Steps: Array.Empty<TradeSellForApToShopOutcomeStepPlan>(),
+			WouldWritePersistence: false,
+			DidWritePersistence: false,
+			WouldMutateSellerInventory: false,
+			DidMutateSellerInventory: false,
+			WouldMutateAbyssPoints: false,
+			DidMutateAbyssPoints: false,
+			WouldSendPackets: false,
+			DidSendPackets: false,
+			WouldCommitTransactionBoundary: false,
+			DidCommitTransactionBoundary: false,
+			ShouldCommitTransactionBoundary: false,
+			ShouldDispatchLiveSideEffects: false,
+			javaSource,
+			IsLive: false);
+
+	private static TradeSellForApToShopOutcomeStepPlan Disabled(
+		TradeSellForApToShopOutcomeStepKind kind,
+		string javaSource) =>
+		new(kind, WouldRun: true, DidRun: false, javaSource);
 }

@@ -133,6 +133,66 @@ public sealed class TradeSellForApToShopPlanServiceTests
 		Assert.Equal(1_255, Assert.Single(plan.AbyssPointRewards).RequiredApPerItem);
 	}
 
+	[Fact]
+	public void CreateDisabledOutcome_ComposesInventoryApAndPacketBoundariesWithoutDispatch()
+	{
+		var item = Item(200, ApSwordItemId, 1);
+		var plan = CreatePlan(
+			inventoryItems: [item],
+			tradeItems: [new TradeSellForApToShopItemRequest(item.ObjectId, Count: 1)]);
+
+		var outcome = TradeSellForApToShopOutcomePlanService.CreateDisabledPlan(plan);
+
+		Assert.Equal(TradeSellForApToShopOutcomePlanStatus.DisabledNoTransaction, outcome.Status);
+		Assert.Same(plan, outcome.SellForApToShopPlan);
+		Assert.True(outcome.WouldWritePersistence);
+		Assert.True(outcome.WouldMutateSellerInventory);
+		Assert.True(outcome.WouldMutateAbyssPoints);
+		Assert.True(outcome.WouldSendPackets);
+		Assert.True(outcome.WouldCommitTransactionBoundary);
+		Assert.False(outcome.ShouldCommitTransactionBoundary);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+		Assert.False(outcome.IsLive);
+		Assert.Contains(outcome.Steps, step => step.Kind == TradeSellForApToShopOutcomeStepKind.PersistRepositoryWrites);
+		Assert.Contains(outcome.Steps, step => step.Kind == TradeSellForApToShopOutcomeStepKind.DispatchPacketIntents);
+	}
+
+	[Fact]
+	public void CreateDisabledOutcome_FeatureDisabledCarriesOnlyJavaMessageSend()
+	{
+		var plan = CreatePlan(
+			sellingApItemsEnabled: false,
+			inventoryItems: [],
+			tradeItems: [new TradeSellForApToShopItemRequest(200, Count: 1)]);
+
+		var outcome = TradeSellForApToShopOutcomePlanService.CreateDisabledPlan(plan);
+
+		Assert.Equal(TradeSellForApToShopOutcomePlanStatus.DisabledNoTransaction, outcome.Status);
+		Assert.False(outcome.WouldWritePersistence);
+		Assert.False(outcome.WouldMutateSellerInventory);
+		Assert.False(outcome.WouldMutateAbyssPoints);
+		Assert.True(outcome.WouldSendPackets);
+		Assert.False(outcome.WouldCommitTransactionBoundary);
+		Assert.Single(outcome.Steps);
+		Assert.Contains("disabled message", Assert.Single(outcome.Steps).JavaSource, StringComparison.OrdinalIgnoreCase);
+	}
+
+	[Fact]
+	public void CreateDisabledOutcome_BlockedPlanStopsBeforeOutcomeSideEffects()
+	{
+		var plan = CreatePlan(
+			canTrade: false,
+			inventoryItems: [Item(200, ApSwordItemId, 1)],
+			tradeItems: [new TradeSellForApToShopItemRequest(200, Count: 1)]);
+
+		var outcome = TradeSellForApToShopOutcomePlanService.CreateDisabledPlan(plan);
+
+		Assert.Equal(TradeSellForApToShopOutcomePlanStatus.SellForApToShopPlanNotReady, outcome.Status);
+		Assert.False(outcome.WouldWritePersistence);
+		Assert.False(outcome.WouldSendPackets);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+	}
+
 	private static TradeSellForApToShopPlan CreatePlan(
 		bool sellingApItemsEnabled = true,
 		bool canTrade = true,
