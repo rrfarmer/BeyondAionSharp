@@ -26,6 +26,38 @@ public enum CmCraftStartCompositionPlanStep
 	CreateTaskPlan,
 }
 
+public enum CraftStartSideEffectBoundaryStatus
+{
+	NotPlanned,
+	ValidationFailed,
+	PlannerGaps,
+	Planned,
+}
+
+public enum CraftStartSideEffectBoundaryStep
+{
+	ApplyCheckCraftInventoryMutation,
+	SendCheckCraftInventoryPackets,
+	SpendRecipeDp,
+	CreateCraftingTask,
+	StartCraftingTask,
+}
+
+public sealed record CraftStartSideEffectBoundaryPlan(
+	CraftStartSideEffectBoundaryStatus Status,
+	CraftStartInventoryMutationPlan? InventoryMutationPlan,
+	CraftStartInventoryPacketPlan? InventoryPacketPlan,
+	CraftStartTaskPlan? TaskPlan,
+	IReadOnlyList<CraftStartSideEffectBoundaryStep> Steps,
+	bool RequiresDpSpend,
+	int RequiredDp,
+	bool ShouldDispatchLiveSideEffects,
+	string JavaSource,
+	bool IsLive)
+{
+	public bool IsPlanned => Status == CraftStartSideEffectBoundaryStatus.Planned;
+}
+
 public sealed record CmCraftStartCompositionPlan(
 	CmCraftStartCompositionPlanStatus Status,
 	CmCraftRuntimePlan? RuntimePlan,
@@ -36,6 +68,7 @@ public sealed record CmCraftStartCompositionPlan(
 	CraftStartInventoryMutationPlan? InventoryMutationPlan,
 	CraftStartInventoryPacketPlan? InventoryPacketPlan,
 	CraftStartTaskPlan? TaskPlan,
+	CraftStartSideEffectBoundaryPlan SideEffectBoundaryPlan,
 	IReadOnlyList<CmCraftStartCompositionPlanStep> Steps,
 	bool RequiresDpSpend,
 	int RequiredDp,
@@ -76,6 +109,13 @@ public static class CmCraftStartCompositionPlanService
 				InventoryMutationPlan: null,
 				InventoryPacketPlan: null,
 				TaskPlan: null,
+				CreateSideEffectBoundaryPlan(
+					CmCraftStartCompositionPlanStatus.RuntimeBlocked,
+					inventoryMutationPlan: null,
+					inventoryPacketPlan: null,
+					taskPlan: null,
+					requiresDpSpend: false,
+					requiredDp: 0),
 				[CmCraftStartCompositionPlanStep.UseRuntimeGuardPlan],
 				RequiresDpSpend: false,
 				RequiredDp: 0,
@@ -125,6 +165,13 @@ public static class CmCraftStartCompositionPlanService
 				InventoryMutationPlan: null,
 				InventoryPacketPlan: null,
 				TaskPlan: null,
+				CreateSideEffectBoundaryPlan(
+					CmCraftStartCompositionPlanStatus.ValidationFailed,
+					inventoryMutationPlan: null,
+					inventoryPacketPlan: null,
+					taskPlan: null,
+					requiresDpSpend: false,
+					requiredDp: 0),
 				steps,
 				RequiresDpSpend: false,
 				RequiredDp: 0,
@@ -154,11 +201,14 @@ public static class CmCraftStartCompositionPlanService
 			&& inventoryMutationPlan.Status == CraftStartInventoryMutationStatus.Planned
 			&& inventoryPacketPlan.Status == CraftStartInventoryPacketStatus.Planned
 			&& taskPlan.Status == CraftStartTaskPlanStatus.Planned;
+		var planStatus = isReady
+			? CmCraftStartCompositionPlanStatus.ReadyForDpSpendAndTaskStart
+			: CmCraftStartCompositionPlanStatus.ReadyWithPlannerGaps;
+		var requiresDpSpend = recipeTemplate?.Dp > 0;
+		var requiredDp = recipeTemplate?.Dp ?? 0;
 
 		return new CmCraftStartCompositionPlan(
-			isReady
-				? CmCraftStartCompositionPlanStatus.ReadyForDpSpendAndTaskStart
-				: CmCraftStartCompositionPlanStatus.ReadyWithPlannerGaps,
+			planStatus,
 			runtimePlan,
 			validationPlan,
 			CancelPacketPlan: null,
@@ -167,9 +217,16 @@ public static class CmCraftStartCompositionPlanService
 			inventoryMutationPlan,
 			inventoryPacketPlan,
 			taskPlan,
+			CreateSideEffectBoundaryPlan(
+				planStatus,
+				inventoryMutationPlan,
+				inventoryPacketPlan,
+				taskPlan,
+				requiresDpSpend,
+				requiredDp),
 			steps,
-			RequiresDpSpend: recipeTemplate?.Dp > 0,
-			RequiredDp: recipeTemplate?.Dp ?? 0,
+			RequiresDpSpend: requiresDpSpend,
+			RequiredDp: requiredDp,
 			ShouldDispatchLiveSideEffects: false,
 			"CM_CRAFT.runImpl -> CraftService.startCrafting successful checkCraft path composed through consumption/task planners",
 			IsLive: false);
@@ -190,11 +247,83 @@ public static class CmCraftStartCompositionPlanService
 			InventoryMutationPlan: null,
 			InventoryPacketPlan: null,
 			TaskPlan: null,
+			CreateSideEffectBoundaryPlan(
+				status,
+				inventoryMutationPlan: null,
+				inventoryPacketPlan: null,
+				taskPlan: null,
+				requiresDpSpend: false,
+				requiredDp: 0),
 			runtimePlan == null ? [] : [CmCraftStartCompositionPlanStep.UseRuntimeGuardPlan],
 			RequiresDpSpend: false,
 			RequiredDp: 0,
 			ShouldDispatchLiveSideEffects: false,
 			javaSource,
+			IsLive: false);
+	}
+
+	private static CraftStartSideEffectBoundaryPlan CreateSideEffectBoundaryPlan(
+		CmCraftStartCompositionPlanStatus status,
+		CraftStartInventoryMutationPlan? inventoryMutationPlan,
+		CraftStartInventoryPacketPlan? inventoryPacketPlan,
+		CraftStartTaskPlan? taskPlan,
+		bool requiresDpSpend,
+		int requiredDp)
+	{
+		// Java parity: CraftService.checkCraft performs inventory decrease packet side effects
+		// before startCrafting spends recipe DP, creates CraftingTask, and starts it.
+		if (status == CmCraftStartCompositionPlanStatus.ValidationFailed)
+		{
+			return new CraftStartSideEffectBoundaryPlan(
+				CraftStartSideEffectBoundaryStatus.ValidationFailed,
+				inventoryMutationPlan,
+				inventoryPacketPlan,
+				taskPlan,
+				[],
+				RequiresDpSpend: false,
+				RequiredDp: 0,
+				ShouldDispatchLiveSideEffects: false,
+				"CraftService.startCrafting stops after checkCraft false and sendCancelCraft; no success side effects are planned",
+				IsLive: false);
+		}
+
+		if (status != CmCraftStartCompositionPlanStatus.ReadyForDpSpendAndTaskStart)
+		{
+			return new CraftStartSideEffectBoundaryPlan(
+				status == CmCraftStartCompositionPlanStatus.ReadyWithPlannerGaps
+					? CraftStartSideEffectBoundaryStatus.PlannerGaps
+					: CraftStartSideEffectBoundaryStatus.NotPlanned,
+				inventoryMutationPlan,
+				inventoryPacketPlan,
+				taskPlan,
+				[],
+				requiresDpSpend,
+				requiredDp,
+				ShouldDispatchLiveSideEffects: false,
+				"CraftService.startCrafting success boundary requires planned inventory mutation, packet intent, and task intent",
+				IsLive: false);
+		}
+
+		var steps = new List<CraftStartSideEffectBoundaryStep>
+		{
+			CraftStartSideEffectBoundaryStep.ApplyCheckCraftInventoryMutation,
+			CraftStartSideEffectBoundaryStep.SendCheckCraftInventoryPackets,
+		};
+		if (requiresDpSpend)
+			steps.Add(CraftStartSideEffectBoundaryStep.SpendRecipeDp);
+		steps.Add(CraftStartSideEffectBoundaryStep.CreateCraftingTask);
+		steps.Add(CraftStartSideEffectBoundaryStep.StartCraftingTask);
+
+		return new CraftStartSideEffectBoundaryPlan(
+			CraftStartSideEffectBoundaryStatus.Planned,
+			inventoryMutationPlan,
+			inventoryPacketPlan,
+			taskPlan,
+			steps,
+			requiresDpSpend,
+			requiredDp,
+			ShouldDispatchLiveSideEffects: false,
+			"CraftService.checkCraft successful inventory side effects -> startCrafting DP spend -> set CraftingTask -> CraftingTask.start",
 			IsLive: false);
 	}
 }

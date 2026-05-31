@@ -89,6 +89,23 @@ public sealed class CmCraftStartCompositionPlanServiceTests
 			plan.InventoryPacketPlan!.Packets.Select(packet => packet.GetType()).ToArray());
 		Assert.Equal(CraftStartTaskPlanStatus.Planned, plan.TaskPlan?.Status);
 		Assert.Equal(15, plan.TaskPlan!.BonusCritModifier);
+		Assert.Equal(CraftStartSideEffectBoundaryStatus.Planned, plan.SideEffectBoundaryPlan.Status);
+		Assert.False(plan.SideEffectBoundaryPlan.IsLive);
+		Assert.False(plan.SideEffectBoundaryPlan.ShouldDispatchLiveSideEffects);
+		Assert.True(plan.SideEffectBoundaryPlan.RequiresDpSpend);
+		Assert.Equal(100, plan.SideEffectBoundaryPlan.RequiredDp);
+		Assert.Same(plan.InventoryMutationPlan, plan.SideEffectBoundaryPlan.InventoryMutationPlan);
+		Assert.Same(plan.InventoryPacketPlan, plan.SideEffectBoundaryPlan.InventoryPacketPlan);
+		Assert.Same(plan.TaskPlan, plan.SideEffectBoundaryPlan.TaskPlan);
+		Assert.Equal(
+			[
+				CraftStartSideEffectBoundaryStep.ApplyCheckCraftInventoryMutation,
+				CraftStartSideEffectBoundaryStep.SendCheckCraftInventoryPackets,
+				CraftStartSideEffectBoundaryStep.SpendRecipeDp,
+				CraftStartSideEffectBoundaryStep.CreateCraftingTask,
+				CraftStartSideEffectBoundaryStep.StartCraftingTask,
+			],
+			plan.SideEffectBoundaryPlan.Steps);
 		Assert.Null(plan.CancelPacketPlan);
 		Assert.Null(plan.FailurePlan);
 	}
@@ -142,6 +159,62 @@ public sealed class CmCraftStartCompositionPlanServiceTests
 		Assert.False(plan.RequiresDpSpend);
 		Assert.Contains(CmCraftStartCompositionPlanStep.CreateFailureOrchestrationPlan, plan.Steps);
 		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		Assert.Equal(CraftStartSideEffectBoundaryStatus.ValidationFailed, plan.SideEffectBoundaryPlan.Status);
+		Assert.Empty(plan.SideEffectBoundaryPlan.Steps);
+		Assert.False(plan.SideEffectBoundaryPlan.ShouldDispatchLiveSideEffects);
+	}
+
+	[Fact]
+	public void CreatePlan_OmitsDpBoundaryStepWhenRecipeHasNoDpCost()
+	{
+		var service = CreateCraftService();
+		var player = CreatePlayer();
+		var recipe = CreateRecipe(
+			recipeId: 155000102,
+			dp: 0,
+			productId: 100200203,
+			skillId: 40001,
+			skillPoint: 200,
+			componentGroups: [CreateComponentGroup((152000901, 2))]);
+		var productTemplate = CreateProductTemplate();
+		var target = CreateCraftTarget();
+		var runtimePlan = CmCraftRuntimePlanService.CreatePlan(
+			hasPlayer: true,
+			isPlayerSpawned: true,
+			isShuttingDownSoon: false,
+			unknownByte: 1,
+			recipeId: recipe.RecipeId,
+			targetObjectId: target.ObjectId,
+			craftType: 0,
+			materialsData: new Dictionary<int, long> { [152000901] = 2 },
+			targetExists: true,
+			targetIsInRange: true,
+			targetTemplateMatches: true);
+
+		var plan = CmCraftStartCompositionPlanService.CreatePlan(
+			runtimePlan,
+			service,
+			player,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false);
+
+		Assert.Equal(CmCraftStartCompositionPlanStatus.ReadyForDpSpendAndTaskStart, plan.Status);
+		Assert.False(plan.RequiresDpSpend);
+		Assert.Equal(0, plan.RequiredDp);
+		Assert.Equal(CraftStartSideEffectBoundaryStatus.Planned, plan.SideEffectBoundaryPlan.Status);
+		Assert.Equal(
+			[
+				CraftStartSideEffectBoundaryStep.ApplyCheckCraftInventoryMutation,
+				CraftStartSideEffectBoundaryStep.SendCheckCraftInventoryPackets,
+				CraftStartSideEffectBoundaryStep.CreateCraftingTask,
+				CraftStartSideEffectBoundaryStep.StartCraftingTask,
+			],
+			plan.SideEffectBoundaryPlan.Steps);
+		Assert.DoesNotContain(CraftStartSideEffectBoundaryStep.SpendRecipeDp, plan.SideEffectBoundaryPlan.Steps);
 	}
 
 	[Fact]
@@ -180,6 +253,8 @@ public sealed class CmCraftStartCompositionPlanServiceTests
 		Assert.Null(plan.InventoryPacketPlan);
 		Assert.Null(plan.TaskPlan);
 		Assert.Equal([CmCraftStartCompositionPlanStep.UseRuntimeGuardPlan], plan.Steps);
+		Assert.Equal(CraftStartSideEffectBoundaryStatus.NotPlanned, plan.SideEffectBoundaryPlan.Status);
+		Assert.Empty(plan.SideEffectBoundaryPlan.Steps);
 	}
 
 	private static CraftService CreateCraftService()
