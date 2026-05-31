@@ -1417,6 +1417,119 @@ public sealed class CraftServiceTests
 	}
 
 	[Fact]
+	public void CraftStartInventoryPacketSendAdapter_DisabledPlanRecordsJavaBoundaryWithoutSending()
+	{
+		var service = CreateService(out _, CreateItemTemplates(), CreateSkillTemplates());
+		var player = CreatePlayer(objectId: 1148, dp: 700);
+		var recipe = CreateRecipe(
+			recipeId: 155000041,
+			dp: 600,
+			productId: 100200203,
+			skillId: 40001,
+			skillPoint: 200,
+			componentGroups: [CreateComponentGroup((152000901, 2), (152000902, 1))]);
+		player.Recipes = [recipe.RecipeId];
+		player.Skills = [CreateSkill(recipe.SkillId, skillLevel: 200)];
+		player.InventoryItems =
+		[
+			CreateInventoryItem(objectId: 8040, itemId: 169401081, count: 1),
+			CreateInventoryItem(objectId: 8041, itemId: 152000901, count: 1),
+			CreateInventoryItem(objectId: 8042, itemId: 152000901, count: 3),
+			CreateInventoryItem(objectId: 8043, itemId: 152000902, count: 5),
+		];
+		var productTemplate = CreateItemTemplates().GetItemTemplate(100200203);
+		var target = CreateTarget(objectId: 9041, templateId: 730190);
+		var selectedMaterials = new Dictionary<int, long> { [152000901] = 2 };
+		var validation = service.CreateStartCraftingValidationPlan(
+			player,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false,
+			selectedMaterials,
+			craftType: 1);
+		var consumption = service.CreateStartConsumptionPlan(validation, recipe, selectedMaterials, craftType: 1);
+		var mutation = service.CreateStartInventoryMutationPlan(consumption, player.InventoryItems);
+		var packetPlan = service.CreateStartInventoryPacketPlan(mutation, player);
+
+		var adapterPlan = CraftStartInventoryPacketSendAdapterPlanService.CreateDisabledPlan(packetPlan, player.ObjectId);
+
+		Assert.Equal(CraftStartInventoryPacketSendAdapterStatus.DisabledNoSend, adapterPlan.Status);
+		Assert.Same(packetPlan, adapterPlan.PacketPlan);
+		Assert.Equal(player.ObjectId, adapterPlan.PlayerObjectId);
+		Assert.False(adapterPlan.IsLive);
+		Assert.True(adapterPlan.WouldCallSendPacketAsync);
+		Assert.False(adapterPlan.DidCallSendPacketAsync);
+		Assert.Equal(packetPlan.Packets.Count, adapterPlan.WouldSendPacketCount);
+		Assert.Equal(0, adapterPlan.SentPacketCount);
+		Assert.Contains("ItemPacketService", adapterPlan.JavaSource, StringComparison.Ordinal);
+		Assert.Collection(
+			adapterPlan.Operations,
+			operation =>
+			{
+				Assert.Equal(0, operation.PacketIndex);
+				Assert.Equal(nameof(SmDeleteItem), operation.PacketTypeName);
+				Assert.Same(packetPlan.Packets[0], operation.Packet);
+				Assert.True(operation.WouldCallSendPacketAsync);
+				Assert.False(operation.DidCallSendPacketAsync);
+			},
+			operation =>
+			{
+				Assert.Equal(1, operation.PacketIndex);
+				Assert.Equal(nameof(SmCubeUpdate), operation.PacketTypeName);
+				Assert.Same(packetPlan.Packets[1], operation.Packet);
+			},
+			operation =>
+			{
+				Assert.Equal(2, operation.PacketIndex);
+				Assert.Equal(nameof(SmDeleteItem), operation.PacketTypeName);
+				Assert.Same(packetPlan.Packets[2], operation.Packet);
+			},
+			operation =>
+			{
+				Assert.Equal(3, operation.PacketIndex);
+				Assert.Equal(nameof(SmCubeUpdate), operation.PacketTypeName);
+				Assert.Same(packetPlan.Packets[3], operation.Packet);
+			},
+			operation =>
+			{
+				Assert.Equal(4, operation.PacketIndex);
+				Assert.Equal(nameof(SmInventoryUpdateItem), operation.PacketTypeName);
+				Assert.Same(packetPlan.Packets[4], operation.Packet);
+			},
+			operation =>
+			{
+				Assert.Equal(5, operation.PacketIndex);
+				Assert.Equal(nameof(SmInventoryUpdateItem), operation.PacketTypeName);
+				Assert.Same(packetPlan.Packets[5], operation.Packet);
+			});
+		Assert.All(adapterPlan.Operations, operation => Assert.Equal("ItemPacketService -> PacketSendUtility.sendPacket", operation.JavaUtilityMethod));
+	}
+
+	[Fact]
+	public void CraftStartInventoryPacketSendAdapter_DoesNotSendWithoutPlannedPacketIntent()
+	{
+		var missing = CraftStartInventoryPacketSendAdapterPlanService.CreateDisabledPlan(null, playerObjectId: 1149);
+		var notPlanned = CraftStartInventoryPacketPlan.NotPlanned("validation failed");
+
+		var notReady = CraftStartInventoryPacketSendAdapterPlanService.CreateDisabledPlan(notPlanned, playerObjectId: 1149);
+
+		Assert.Equal(CraftStartInventoryPacketSendAdapterStatus.PacketPlanMissing, missing.Status);
+		Assert.Null(missing.PacketPlan);
+		Assert.False(missing.WouldCallSendPacketAsync);
+		Assert.False(missing.DidCallSendPacketAsync);
+		Assert.Empty(missing.Operations);
+		Assert.Equal(CraftStartInventoryPacketSendAdapterStatus.PacketPlanNotReady, notReady.Status);
+		Assert.Same(notPlanned, notReady.PacketPlan);
+		Assert.False(notReady.WouldCallSendPacketAsync);
+		Assert.False(notReady.DidCallSendPacketAsync);
+		Assert.Empty(notReady.Operations);
+		Assert.False(notReady.IsLive);
+	}
+
+	[Fact]
 	public void CreateStartInventoryPacketPlan_ReportsMissingTemplateForUpdatedStack()
 	{
 		var service = CreateService(out _, CreateItemTemplates());

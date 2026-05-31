@@ -1917,6 +1917,116 @@ public enum CraftStartInventoryPacketStatus
 	Planned,
 }
 
+public static class CraftStartInventoryPacketSendAdapterPlanService
+{
+	public static CraftStartInventoryPacketSendAdapterPlan CreateDisabledPlan(
+		CraftStartInventoryPacketPlan? packetPlan,
+		int playerObjectId)
+	{
+		// Java parity: Storage.decreaseItemCount/delete dispatch through ItemPacketService,
+		// which reaches PacketSendUtility.sendPacket. This adapter records that boundary only.
+		if (packetPlan == null)
+			return CraftStartInventoryPacketSendAdapterPlan.PacketPlanMissing(playerObjectId);
+		if (!packetPlan.IsPlanned || packetPlan.Packets.Count == 0)
+			return CraftStartInventoryPacketSendAdapterPlan.PacketPlanNotReady(packetPlan, playerObjectId);
+
+		var operations = packetPlan.Packets
+			.Select((packet, index) => CraftStartInventoryPacketSendOperation.Disabled(packet, index))
+			.ToArray();
+		return CraftStartInventoryPacketSendAdapterPlan.DisabledNoSend(packetPlan, playerObjectId, operations);
+	}
+}
+
+public sealed record CraftStartInventoryPacketSendAdapterPlan(
+	CraftStartInventoryPacketSendAdapterStatus Status,
+	CraftStartInventoryPacketPlan? PacketPlan,
+	int PlayerObjectId,
+	IReadOnlyList<CraftStartInventoryPacketSendOperation> Operations,
+	bool WouldCallSendPacketAsync,
+	bool DidCallSendPacketAsync,
+	int WouldSendPacketCount,
+	int SentPacketCount,
+	string JavaSource,
+	bool IsLive)
+{
+	public static CraftStartInventoryPacketSendAdapterPlan PacketPlanMissing(int playerObjectId)
+	{
+		return new CraftStartInventoryPacketSendAdapterPlan(
+			CraftStartInventoryPacketSendAdapterStatus.PacketPlanMissing,
+			PacketPlan: null,
+			playerObjectId,
+			Operations: Array.Empty<CraftStartInventoryPacketSendOperation>(),
+			WouldCallSendPacketAsync: false,
+			DidCallSendPacketAsync: false,
+			WouldSendPacketCount: 0,
+			SentPacketCount: 0,
+			"ItemPacketService packet-send boundary skipped because craft-start inventory packet intent is missing",
+			IsLive: false);
+	}
+
+	public static CraftStartInventoryPacketSendAdapterPlan PacketPlanNotReady(
+		CraftStartInventoryPacketPlan packetPlan,
+		int playerObjectId)
+	{
+		return new CraftStartInventoryPacketSendAdapterPlan(
+			CraftStartInventoryPacketSendAdapterStatus.PacketPlanNotReady,
+			packetPlan,
+			playerObjectId,
+			Operations: Array.Empty<CraftStartInventoryPacketSendOperation>(),
+			WouldCallSendPacketAsync: false,
+			DidCallSendPacketAsync: false,
+			WouldSendPacketCount: 0,
+			SentPacketCount: 0,
+			"ItemPacketService packet-send boundary skipped because craft-start inventory packet intent is not planned",
+			IsLive: false);
+	}
+
+	public static CraftStartInventoryPacketSendAdapterPlan DisabledNoSend(
+		CraftStartInventoryPacketPlan packetPlan,
+		int playerObjectId,
+		IReadOnlyList<CraftStartInventoryPacketSendOperation> operations)
+	{
+		return new CraftStartInventoryPacketSendAdapterPlan(
+			CraftStartInventoryPacketSendAdapterStatus.DisabledNoSend,
+			packetPlan,
+			playerObjectId,
+			operations.ToArray(),
+			WouldCallSendPacketAsync: operations.Count > 0,
+			DidCallSendPacketAsync: false,
+			WouldSendPacketCount: operations.Count,
+			SentPacketCount: 0,
+			"ItemPacketService.sendItemPacket/sendItemDeletePacket boundary identified, but live C# SendPacketAsync remains disabled",
+			IsLive: false);
+	}
+}
+
+public sealed record CraftStartInventoryPacketSendOperation(
+	int PacketIndex,
+	GameServerPacket Packet,
+	string PacketTypeName,
+	string JavaUtilityMethod,
+	bool WouldCallSendPacketAsync,
+	bool DidCallSendPacketAsync)
+{
+	public static CraftStartInventoryPacketSendOperation Disabled(GameServerPacket packet, int packetIndex)
+	{
+		return new CraftStartInventoryPacketSendOperation(
+			packetIndex,
+			packet,
+			packet.GetType().Name,
+			"ItemPacketService -> PacketSendUtility.sendPacket",
+			WouldCallSendPacketAsync: true,
+			DidCallSendPacketAsync: false);
+	}
+}
+
+public enum CraftStartInventoryPacketSendAdapterStatus
+{
+	PacketPlanMissing,
+	PacketPlanNotReady,
+	DisabledNoSend,
+}
+
 public sealed record CraftStartTaskPlan(
 	CraftStartTaskPlanStatus Status,
 	CraftStartValidationPlan? ValidationPlan,
