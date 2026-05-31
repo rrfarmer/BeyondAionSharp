@@ -30,6 +30,10 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.Equal(CmBuyItemHandlerCompositionPlanStatus.SkippedMissingPlayer, plan.Status);
 		Assert.False(plan.IsLive);
 		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		var outcome = Assert.Single(fixture.BuyItemSideEffectOutcomePlans);
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.HandlerNotOutcomeEligible, outcome.Status);
+		Assert.Same(plan, outcome.HandlerPlan);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
 		Assert.Empty(fixture.SentPackets);
 	}
 
@@ -47,6 +51,10 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.Equal(CmBuyItemHandlerCompositionPlanStatus.SkippedUnknownTarget, plan.Status);
 		Assert.False(plan.IsLive);
 		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		var outcome = Assert.Single(fixture.BuyItemSideEffectOutcomePlans);
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.HandlerNotOutcomeEligible, outcome.Status);
+		Assert.Same(plan, outcome.HandlerPlan);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
 		Assert.Empty(fixture.SentPackets);
 	}
 
@@ -68,6 +76,10 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.NotNull(plan.BuyFromShopPlan);
 		Assert.False(plan.IsLive);
 		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		var outcome = Assert.Single(fixture.BuyItemSideEffectOutcomePlans);
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.HandlerNotOutcomeEligible, outcome.Status);
+		Assert.Same(plan, outcome.HandlerPlan);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
 		Assert.Empty(fixture.SentPackets);
 	}
 
@@ -88,6 +100,10 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.Equal(CmBuyItemHandlerCompositionPlanStatus.SkippedUnknownTarget, plan.Status);
 		Assert.Null(plan.BuyFromShopPlan);
 		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		var outcome = Assert.Single(fixture.BuyItemSideEffectOutcomePlans);
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.HandlerNotOutcomeEligible, outcome.Status);
+		Assert.Same(plan, outcome.HandlerPlan);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
 		Assert.Empty(fixture.SentPackets);
 	}
 
@@ -110,6 +126,45 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.Equal(CmBuyItemHandlerCompositionPlanStatus.SkippedUnknownTarget, plan.Status);
 		Assert.Null(plan.PrivateStorePurchasePlan);
 		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		var outcome = Assert.Single(fixture.BuyItemSideEffectOutcomePlans);
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.HandlerNotOutcomeEligible, outcome.Status);
+		Assert.Same(plan, outcome.HandlerPlan);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+		Assert.Empty(fixture.SentPackets);
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmBuyItemPlayerPrivateStoreSelectionRecordsDisabledOutcomeDiagnostic()
+	{
+		var membership = new PlayerKnownListMembershipService();
+		var activePlayer = CreatePlayer();
+		var sellerPlayer = new Player { ObjectId = 9101, Name = "StoreSeller", Position = new WorldPosition(210010000, 10, 0, 0, 0) };
+		membership.UpsertKnownPlayers(
+			activePlayer.ObjectId,
+			[new PlayerKnownListMembershipCandidate(sellerPlayer.ObjectId, IsVisibleToOwner: true)]);
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			CmBuyItemKnownListMembershipResolverAdapterService.CreateResolver(membership));
+		SetActivePlayerForPacketDispatch(fixture.Connection, activePlayer);
+		fixture.World.TryAddObject(sellerPlayer.ObjectId, sellerPlayer);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateBuyItemPayload(sellerObjectId: sellerPlayer.ObjectId, tradeActionId: 0, [(0, 1)]));
+
+		var plan = Assert.Single(fixture.BuyItemPlans);
+		Assert.Equal(CmBuyItemHandlerCompositionPlanStatus.SelectedPrivateStorePlanner, plan.Status);
+		Assert.NotNull(plan.PrivateStoreBoughtItemsPlan);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+
+		var outcome = Assert.Single(fixture.BuyItemSideEffectOutcomePlans);
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.PrivateStoreOutcomeCreated, outcome.Status);
+		Assert.Same(plan, outcome.HandlerPlan);
+		Assert.NotNull(outcome.PrivateStoreFacadePlan);
+		Assert.NotNull(outcome.PrivateStoreOutcomePlan);
+		Assert.Equal(PrivateStoreLiveExecutorFacadeStatus.BoughtItemsPlanNotReady, outcome.PrivateStoreFacadePlan!.Status);
+		Assert.False(outcome.WouldWritePersistence);
+		Assert.False(outcome.WouldSendPackets);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
 		Assert.Empty(fixture.SentPackets);
 	}
 
@@ -211,12 +266,14 @@ public sealed class GameServerConnectionBuyItemTests
 			GameServerConnection connection,
 			GameWorld world,
 			List<CmBuyItemHandlerCompositionPlan> buyItemPlans,
+			List<CmBuyItemSideEffectOutcomePlan> buyItemSideEffectOutcomePlans,
 			List<GameServerPacket> sentPackets)
 		{
 			_client = client;
 			Connection = connection;
 			World = world;
 			BuyItemPlans = buyItemPlans;
+			BuyItemSideEffectOutcomePlans = buyItemSideEffectOutcomePlans;
 			SentPackets = sentPackets;
 		}
 
@@ -225,6 +282,8 @@ public sealed class GameServerConnectionBuyItemTests
 		public GameWorld World { get; }
 
 		public List<CmBuyItemHandlerCompositionPlan> BuyItemPlans { get; }
+
+		public List<CmBuyItemSideEffectOutcomePlan> BuyItemSideEffectOutcomePlans { get; }
 
 		public List<GameServerPacket> SentPackets { get; }
 
@@ -244,6 +303,7 @@ public sealed class GameServerConnectionBuyItemTests
 				var world = new GameWorld(NullLogger<GameWorld>.Instance);
 				world.Initialize();
 				var buyItemPlans = new List<CmBuyItemHandlerCompositionPlan>();
+				var buyItemSideEffectOutcomePlans = new List<CmBuyItemSideEffectOutcomePlan>();
 				var sentPackets = new List<GameServerPacket>();
 				var fixture = new BuyItemFixture(
 					client,
@@ -257,9 +317,11 @@ public sealed class GameServerConnectionBuyItemTests
 						crypt: crypt,
 						sentPacketObserver: sentPackets.Add,
 						cmBuyItemHandlerCompositionPlanObserver: buyItemPlans.Add,
+						cmBuyItemSideEffectOutcomePlanObserver: buyItemSideEffectOutcomePlans.Add,
 						buyItemKnownObjectResolver: buyItemKnownObjectResolver),
 					world,
 					buyItemPlans,
+					buyItemSideEffectOutcomePlans,
 					sentPackets);
 				return fixture;
 			}

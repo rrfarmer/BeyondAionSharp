@@ -84,6 +84,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly Action<CmCraftRuntimePlan>? _cmCraftRuntimePlanObserver;
 	private readonly Action<CmCraftStartCompositionPlan>? _cmCraftStartCompositionPlanObserver;
 	private readonly Action<CmBuyItemHandlerCompositionPlan>? _cmBuyItemHandlerCompositionPlanObserver;
+	private readonly Action<CmBuyItemSideEffectOutcomePlan>? _cmBuyItemSideEffectOutcomePlanObserver;
 	private readonly Func<Player, int, object?, bool?>? _buyItemKnownObjectResolver;
 	private readonly PlayerSummonCastSpellService _summonCastSpellService;
 	private readonly PlayerSummonSkillExecutionService _summonSkillExecutionService;
@@ -156,6 +157,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		Action<CmCraftRuntimePlan>? cmCraftRuntimePlanObserver = null,
 		Action<CmCraftStartCompositionPlan>? cmCraftStartCompositionPlanObserver = null,
 		Action<CmBuyItemHandlerCompositionPlan>? cmBuyItemHandlerCompositionPlanObserver = null,
+		Action<CmBuyItemSideEffectOutcomePlan>? cmBuyItemSideEffectOutcomePlanObserver = null,
 		Func<Player, int, object?, bool?>? buyItemKnownObjectResolver = null)
 		: base(logger, client, clientId)
 	{
@@ -201,6 +203,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_cmCraftRuntimePlanObserver = cmCraftRuntimePlanObserver;
 		_cmCraftStartCompositionPlanObserver = cmCraftStartCompositionPlanObserver;
 		_cmBuyItemHandlerCompositionPlanObserver = cmBuyItemHandlerCompositionPlanObserver;
+		_cmBuyItemSideEffectOutcomePlanObserver = cmBuyItemSideEffectOutcomePlanObserver;
 		_buyItemKnownObjectResolver = buyItemKnownObjectResolver;
 		_summonCastSpellService = new PlayerSummonCastSpellService();
 		_summonSkillExecutionService = new PlayerSummonSkillExecutionService();
@@ -3954,7 +3957,7 @@ public sealed class GameServerConnection : BaseClientConnection
 
 	private void HandleBuyItem(Player? player, CmBuyItem packet)
 	{
-		if (_cmBuyItemHandlerCompositionPlanObserver == null)
+		if (_cmBuyItemHandlerCompositionPlanObserver == null && _cmBuyItemSideEffectOutcomePlanObserver == null)
 			return;
 
 		var targetKind = ResolveBuyItemTargetKind(player, packet.SellerObjectId);
@@ -3963,7 +3966,8 @@ public sealed class GameServerConnection : BaseClientConnection
 				packet,
 				PlayerPresent: player != null,
 				TargetKind: targetKind));
-		_cmBuyItemHandlerCompositionPlanObserver.Invoke(plan);
+		_cmBuyItemHandlerCompositionPlanObserver?.Invoke(plan);
+		_cmBuyItemSideEffectOutcomePlanObserver?.Invoke(CmBuyItemSideEffectOutcomePlanService.CreateDisabledPlan(plan));
 	}
 
 	private CmBuyItemRunTargetKind ResolveBuyItemTargetKind(Player? player, int sellerObjectId)
