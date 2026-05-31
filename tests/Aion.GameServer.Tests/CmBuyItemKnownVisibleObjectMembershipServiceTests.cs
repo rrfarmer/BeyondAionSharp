@@ -66,6 +66,65 @@ public sealed class CmBuyItemKnownVisibleObjectMembershipServiceTests
 	}
 
 	[Fact]
+	public void RefreshOwnerFromSuppliedFacts_UpsertsVisiblePlayersAndNpcsOnly()
+	{
+		var membership = new CmBuyItemKnownVisibleObjectMembershipService();
+		var adapter = new CmBuyItemKnownVisibleObjectPopulationAdapterService(membership);
+		var owner = CreatePlayer(OwnerPlayerObjectId, x: 0, worldId: 210010000);
+		var nearPlayer = CreatePlayer(SellerPlayerObjectId, x: 94, worldId: 210010000);
+		var farPlayer = CreatePlayer(2002, x: 96, worldId: 210010000);
+		var otherWorldPlayer = CreatePlayer(2003, x: 1, worldId: 220010000);
+		var nearNpc = CreateNpc(SellerNpcObjectId, x: 11, worldId: 210010000);
+		var farNpc = CreateNpc(9002, x: 200, worldId: 210010000);
+		var otherWorldNpc = CreateNpc(9003, x: 1, worldId: 220010000);
+
+		var result = adapter.RefreshOwnerFromSuppliedFacts(
+			owner,
+			[owner, nearPlayer, farPlayer, otherWorldPlayer],
+			[nearNpc, farNpc, otherWorldNpc]);
+
+		Assert.True(result.UsesWorldVisibilityApproximation);
+		Assert.False(result.IsJavaRegionKnownListParity);
+		Assert.False(result.IsLive);
+		Assert.Equal(4, result.PlayerCandidateCount);
+		Assert.Equal(3, result.NpcCandidateCount);
+		Assert.Equal(2, result.UpsertedVisibleObjectCount);
+		Assert.Equal(0, result.RemovedStaleObjectCount);
+		Assert.Equal([SellerPlayerObjectId, SellerNpcObjectId], result.Snapshot.KnownObjectIds.Order());
+		Assert.Contains(result.Snapshot.Entries, entry =>
+			entry.KnownObjectId == SellerPlayerObjectId
+			&& entry.Kind == CmBuyItemKnownVisibleObjectKind.Player
+			&& entry.UpdateReason == CmBuyItemKnownVisibleObjectMembershipUpdateReason.KnownListRefresh);
+		Assert.Contains(result.Snapshot.Entries, entry =>
+			entry.KnownObjectId == SellerNpcObjectId
+			&& entry.Kind == CmBuyItemKnownVisibleObjectKind.Npc
+			&& entry.UpdateReason == CmBuyItemKnownVisibleObjectMembershipUpdateReason.KnownListRefresh);
+	}
+
+	[Fact]
+	public void RefreshOwnerFromSuppliedFacts_RemovesStaleObjectFacts()
+	{
+		var membership = new CmBuyItemKnownVisibleObjectMembershipService();
+		var adapter = new CmBuyItemKnownVisibleObjectPopulationAdapterService(membership);
+		membership.UpsertKnownObjects(
+			OwnerPlayerObjectId,
+			[
+				new CmBuyItemKnownVisibleObjectMembershipCandidate(SellerNpcObjectId, CmBuyItemKnownVisibleObjectKind.Npc, IsVisibleToOwner: true),
+				new CmBuyItemKnownVisibleObjectMembershipCandidate(SellerPlayerObjectId, CmBuyItemKnownVisibleObjectKind.Player, IsVisibleToOwner: true),
+			]);
+		var owner = CreatePlayer(OwnerPlayerObjectId, x: 0, worldId: 210010000);
+
+		var result = adapter.RefreshOwnerFromSuppliedFacts(
+			owner,
+			[CreatePlayer(SellerPlayerObjectId, x: 94, worldId: 210010000)],
+			[]);
+
+		Assert.Equal(1, result.RemovedStaleObjectCount);
+		Assert.Equal([SellerPlayerObjectId], result.Snapshot.KnownObjectIds);
+		Assert.DoesNotContain(result.Snapshot.Entries, entry => entry.KnownObjectId == SellerNpcObjectId);
+	}
+
+	[Fact]
 	public async Task GameServerConnection_KnownNpcFactAllowsNpcBuyPlannerSelection()
 	{
 		var membership = new CmBuyItemKnownVisibleObjectMembershipService();
@@ -106,15 +165,15 @@ public sealed class CmBuyItemKnownVisibleObjectMembershipServiceTests
 		Assert.False(plan.ShouldDispatchLiveSideEffects);
 	}
 
-	private static Player CreatePlayer(int objectId) =>
+	private static Player CreatePlayer(int objectId, float x = 0, int worldId = 210010000) =>
 		new()
 		{
 			ObjectId = objectId,
 			Name = "Player" + objectId,
-			Position = new WorldPosition(210010000, 0, 0, 0, Heading: 0),
+			Position = new WorldPosition(worldId, x, 0, 0, Heading: 0),
 		};
 
-	private static WorldNpc CreateNpc(int objectId)
+	private static WorldNpc CreateNpc(int objectId, float x = 11, int worldId = 210010000)
 	{
 		var template = new NpcTemplateSummary(
 			700001,
@@ -126,7 +185,7 @@ public sealed class CmBuyItemKnownVisibleObjectMembershipServiceTests
 			Race: "NONE",
 			Tribe: "NONE",
 			Type: "NPC");
-		return new WorldNpc(objectId, 700001, template, new WorldPosition(210010000, 11, 0, 0, 0));
+		return new WorldNpc(objectId, 700001, template, new WorldPosition(worldId, x, 0, 0, 0));
 	}
 
 	private const int OwnerPlayerObjectId = 1001;

@@ -132,6 +132,87 @@ public sealed class CmBuyItemKnownVisibleObjectMembershipService
 			IsLive: false);
 }
 
+public sealed record CmBuyItemKnownVisibleObjectPopulationResult(
+	int OwnerPlayerObjectId,
+	CmBuyItemKnownVisibleObjectMembershipSnapshot Snapshot,
+	int PlayerCandidateCount,
+	int NpcCandidateCount,
+	int UpsertedVisibleObjectCount,
+	int RemovedStaleObjectCount,
+	bool UsesWorldVisibilityApproximation,
+	bool IsJavaRegionKnownListParity,
+	string JavaSource,
+	bool IsLive);
+
+public sealed class CmBuyItemKnownVisibleObjectPopulationAdapterService
+{
+	private readonly CmBuyItemKnownVisibleObjectMembershipService _membershipService;
+
+	public CmBuyItemKnownVisibleObjectPopulationAdapterService(CmBuyItemKnownVisibleObjectMembershipService membershipService)
+	{
+		_membershipService = membershipService;
+	}
+
+	public CmBuyItemKnownVisibleObjectPopulationResult RefreshOwnerFromSuppliedFacts(
+		Player owner,
+		IEnumerable<Player>? onlinePlayers,
+		IEnumerable<IWorldNpcObject>? npcs)
+	{
+		// Java parity breadcrumb: KnownList.findVisibleObjects scans the owner's
+		// world-map region neighbours, handles two-way add, and updates visibility.
+		// This disabled adapter only converts supplied player/NPC facts through the
+		// current WorldVisibility approximation for CM_BUY_ITEM target membership.
+		var playerCandidates = (onlinePlayers ?? Array.Empty<Player>()).ToArray();
+		var npcCandidates = (npcs ?? Array.Empty<IWorldNpcObject>()).ToArray();
+		var visibleCandidates = playerCandidates
+			.Where(player => player.ObjectId != owner.ObjectId)
+			.Where(player => WorldVisibility.IsVisibleTo(player, owner.Position))
+			.Select(player => new CmBuyItemKnownVisibleObjectMembershipCandidate(
+				player.ObjectId,
+				CmBuyItemKnownVisibleObjectKind.Player,
+				IsVisibleToOwner: true,
+				"KnownList.findVisibleObjects approximated with supplied online players + WorldVisibility"))
+			.Concat(npcCandidates
+				.Where(npc => WorldVisibility.IsVisibleTo(owner, npc.Position))
+				.Select(npc => new CmBuyItemKnownVisibleObjectMembershipCandidate(
+					npc.ObjectId,
+					CmBuyItemKnownVisibleObjectKind.Npc,
+					IsVisibleToOwner: true,
+					"KnownList.findVisibleObjects approximated with supplied NPCs + WorldVisibility")))
+			.GroupBy(candidate => candidate.ObjectId)
+			.Select(group => group.First())
+			.ToArray();
+		var visibleObjectIds = visibleCandidates.Select(candidate => candidate.ObjectId).ToHashSet();
+		var removed = 0;
+
+		foreach (var existingKnownObjectId in _membershipService.GetSnapshot(owner.ObjectId).KnownObjectIds)
+		{
+			if (visibleObjectIds.Contains(existingKnownObjectId))
+				continue;
+
+			if (_membershipService.RemoveKnownObject(owner.ObjectId, existingKnownObjectId, out _))
+				removed++;
+		}
+
+		var snapshot = _membershipService.UpsertKnownObjects(
+			owner.ObjectId,
+			visibleCandidates,
+			CmBuyItemKnownVisibleObjectMembershipUpdateReason.KnownListRefresh);
+
+		return new CmBuyItemKnownVisibleObjectPopulationResult(
+			owner.ObjectId,
+			snapshot,
+			playerCandidates.Length,
+			npcCandidates.Length,
+			visibleCandidates.Length,
+			removed,
+			UsesWorldVisibilityApproximation: true,
+			IsJavaRegionKnownListParity: false,
+			"KnownList.update -> forgetObjectsOrUpdateVisibility/findVisibleObjects approximated from supplied players/NPCs and WorldVisibility",
+			IsLive: false);
+	}
+}
+
 public enum CmBuyItemKnownVisibleObjectResolverAdapterStatus
 {
 	MissingPlayer,
