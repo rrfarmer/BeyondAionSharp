@@ -1,3 +1,4 @@
+using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 
 namespace Aion.GameServer.Services;
@@ -102,10 +103,13 @@ public static class WorldNpcDropBoostRateContextPlanService
 		bool hasKillerBoostStatSource = false,
 		bool hasKillerDrBoostStatSource = false,
 		bool hasSalvationSource = false,
-		bool hasActivePalaceSource = false)
+		bool hasActivePalaceSource = false,
+		HousingTemplateTable? housingTemplates = null)
 	{
 		// Java parity: DropRegistrationService.calculateBoostDropRate reads live
 		// npc/player stats, RatesConfig.DROP_RATES, repose, salvation, and active house.
+		var hasActivePalace = PlayerActiveHouseResolverService.HasActivePalace(looter, housingTemplates);
+		var hasResolvedActivePalaceSource = hasActivePalaceSource || hasActivePalace.HasValue;
 		var missingInputs = new List<string>();
 		if (looter == null)
 			missingInputs.Add("looter");
@@ -119,7 +123,7 @@ public static class WorldNpcDropBoostRateContextPlanService
 			missingInputs.Add("killer DR_BOOST stat source");
 		if (!hasSalvationSource)
 			missingInputs.Add("killer salvation percent source");
-		if (!hasActivePalaceSource)
+		if (!hasResolvedActivePalaceSource)
 			missingInputs.Add("active palace source");
 
 		var configuredDropRate = looter != null && configuredDropRates is { Count: > 0 }
@@ -128,7 +132,8 @@ public static class WorldNpcDropBoostRateContextPlanService
 		var context = looter != null && configuredDropRates is { Count: > 0 }
 			? new WorldNpcDropBoostRateContext(
 				configuredDropRate,
-				HasReposeEnergy: looter.ReposeEnergy > 0)
+				HasReposeEnergy: looter.ReposeEnergy > 0,
+				HasActivePalace: hasActivePalace == true)
 			: null;
 
 		return new WorldNpcDropBoostRateContextPlan(
@@ -138,11 +143,12 @@ public static class WorldNpcDropBoostRateContextPlanService
 			context,
 			configuredDropRate,
 			looter?.ReposeEnergy > 0,
+			hasActivePalace,
 			hasNpcBoostStatSource,
 			hasKillerBoostStatSource,
 			hasKillerDrBoostStatSource,
 			hasSalvationSource,
-			hasActivePalaceSource,
+			hasResolvedActivePalaceSource,
 			missingInputs,
 			"DropRegistrationService.calculateBoostDropRate -> Rates.get(killer, RatesConfig.DROP_RATES), npc BOOST_DROP_RATE, killer BOOST_DROP_RATE, killer DR_BOOST, repose, salvation, active palace");
 	}
@@ -153,11 +159,31 @@ public static class WorldNpcDropBoostRateContextPlanService
 	}
 }
 
+public static class PlayerActiveHouseResolverService
+{
+	public static PlayerHouse? FindActiveHouse(Player? player)
+	{
+		// Java parity: HousingService.findActiveHouse returns the loaded studio first;
+		// C# login loading already keeps the studio/oldest active house as the first non-inactive entry.
+		return player?.Houses.FirstOrDefault(house => !house.IsInactive);
+	}
+
+	public static bool? HasActivePalace(Player? player, HousingTemplateTable? housingTemplates)
+	{
+		if (player == null || housingTemplates == null)
+			return null;
+
+		var activeHouse = FindActiveHouse(player);
+		return activeHouse != null && housingTemplates.IsPalaceBuilding(activeHouse.BuildingId);
+	}
+}
+
 public sealed record WorldNpcDropBoostRateContextPlan(
 	WorldNpcDropBoostRateContextPlanStatus Status,
 	WorldNpcDropBoostRateContext? Context,
 	float ConfiguredDropRate,
 	bool? HasReposeEnergy,
+	bool? HasActivePalace,
 	bool HasNpcBoostStatSource,
 	bool HasKillerBoostStatSource,
 	bool HasKillerDrBoostStatSource,

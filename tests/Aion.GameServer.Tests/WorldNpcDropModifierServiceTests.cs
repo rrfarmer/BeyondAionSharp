@@ -159,6 +159,57 @@ public sealed class WorldNpcDropModifierServiceTests
 		Assert.False(plan.HasReposeEnergy);
 	}
 
+	[Fact]
+	public void FindActiveHouse_ReturnsFirstNonInactiveLoadedHouse()
+	{
+		var activeHouse = new PlayerHouse(51, 700200, 350000, DateTime.UtcNow, null, IsInactive: false);
+		var player = new Player
+		{
+			ObjectId = 1001,
+			Houses =
+			[
+				new PlayerHouse(50, 700100, 353000, DateTime.UtcNow, null, IsInactive: true),
+				activeHouse,
+				new PlayerHouse(52, 700300, 355000, DateTime.UtcNow, null, IsInactive: false),
+			],
+		};
+
+		Assert.Same(activeHouse, PlayerActiveHouseResolverService.FindActiveHouse(player));
+	}
+
+	[Fact]
+	public void CreateDisabledPlan_ConsumesResolvedActivePalaceSource()
+	{
+		var looter = new Player
+		{
+			ObjectId = 1001,
+			AccountMembership = 0,
+			Houses =
+			[
+				new PlayerHouse(50, 700100, 353000, DateTime.UtcNow, null, IsInactive: true),
+				new PlayerHouse(51, 700200, 350000, DateTime.UtcNow, null, IsInactive: false),
+			],
+		};
+		var housingTemplates = new HousingTemplateTable(
+			[],
+			[
+				new HousingBuildingSummary(353000, "studio", HouseTypeId: 0),
+				new HousingBuildingSummary(350000, "palace", HouseTypeId: 4),
+			]);
+
+		var plan = WorldNpcDropBoostRateContextPlanService.CreateDisabledPlan(
+			looter,
+			[1f],
+			housingTemplates: housingTemplates);
+
+		Assert.Equal(WorldNpcDropBoostRateContextPlanStatus.Blocked, plan.Status);
+		Assert.True(plan.HasActivePalace);
+		Assert.True(plan.HasActivePalaceSource);
+		Assert.DoesNotContain("active palace source", plan.MissingInputs);
+		Assert.NotNull(plan.Context);
+		Assert.Equal(1.05f, plan.Context.CalculateBoostDropRate(), precision: 3);
+	}
+
 	private static WorldNpc CreateNpc(int level)
 	{
 		return new WorldNpc(
