@@ -2182,6 +2182,95 @@ public sealed class CraftServiceTests
 	}
 
 	[Fact]
+	public void CreateFinishXpPlan_ProjectsAcceptedSkillXpAndCommonXpWithoutMutatingPlayer()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1153, dp: 600);
+		player.Skills =
+		[
+			new PlayerSkill { SkillId = 40001, SkillLevel = 100, CurrentXp = 100 },
+		];
+		var recipe = CreateRecipe(
+			recipeId: 155000043,
+			dp: 0,
+			productId: 100200203,
+			skillId: 40001,
+			skillPoint: 100);
+
+		var plan = service.CreateFinishXpPlan(player, recipe, bonusPercent: 0);
+
+		Assert.Equal(CraftFinishXpStatus.DisabledWouldAddSkillXp, plan.Status);
+		Assert.False(plan.IsLive);
+		Assert.True(plan.WouldAddSkillXp);
+		Assert.False(plan.DidAddSkillXp);
+		Assert.True(plan.WouldAddCommonXp);
+		Assert.False(plan.DidAddCommonXp);
+		Assert.False(plan.WouldLevelSkill);
+		Assert.Equal(380, plan.XpFormulaPlan.TotalXpReward);
+		Assert.Equal(380, plan.GainedCraftSkillXp);
+		Assert.Equal(3159, plan.RequiredSkillXpForNextLevel);
+		Assert.Equal(480, plan.ProjectedSkill?.CurrentXp);
+		Assert.Equal(100, plan.ProjectedSkill?.SkillLevel);
+		Assert.Equal(100, player.Skills.Single().CurrentXp);
+		Assert.Contains("PlayerSkillList.addSkillXp accepted", plan.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void CreateFinishXpPlan_ProjectsSkillLevelUpWhenRequiredXpReached()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1154, dp: 600);
+		player.Skills =
+		[
+			new PlayerSkill { SkillId = 40001, SkillLevel = 100, CurrentXp = 4_300 },
+		];
+		var recipe = CreateRecipe(
+			recipeId: 155000044,
+			dp: 0,
+			productId: 100200203,
+			skillId: 40001,
+			skillPoint: 100);
+
+		var plan = service.CreateFinishXpPlan(player, recipe, bonusPercent: 0);
+
+		Assert.Equal(CraftFinishXpStatus.DisabledWouldLevelSkill, plan.Status);
+		Assert.True(plan.WouldAddSkillXp);
+		Assert.True(plan.WouldLevelSkill);
+		Assert.False(plan.DidLevelSkill);
+		Assert.Equal(101, plan.ProjectedSkill?.SkillLevel);
+		Assert.Equal(0, plan.ProjectedSkill?.CurrentXp);
+		Assert.Equal(100, player.Skills.Single().SkillLevel);
+		Assert.Equal(4_300, player.Skills.Single().CurrentXp);
+	}
+
+	[Fact]
+	public void CreateFinishXpPlan_RejectsCraftRankCapLikeJavaAddSkillXp()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1155, dp: 600);
+		player.Skills =
+		[
+			new PlayerSkill { SkillId = 40001, SkillLevel = 199, CurrentXp = 4_000 },
+		];
+		var recipe = CreateRecipe(
+			recipeId: 155000045,
+			dp: 0,
+			productId: 100200203,
+			skillId: 40001,
+			skillPoint: 199);
+
+		var plan = service.CreateFinishXpPlan(player, recipe, bonusPercent: 0);
+
+		Assert.Equal(CraftFinishXpStatus.CraftRankCap, plan.Status);
+		Assert.False(plan.WouldAddSkillXp);
+		Assert.False(plan.WouldAddCommonXp);
+		Assert.True(plan.WouldSendNoProductionXpMessage);
+		Assert.False(plan.DidSendNoProductionXpMessage);
+		Assert.Equal(199, plan.ProjectedSkill?.SkillLevel);
+		Assert.Equal(4_000, player.Skills.Single().CurrentXp);
+	}
+
+	[Fact]
 	public void CreateFinishProductPlan_ReportsMissingComboProductConservatively()
 	{
 		var service = CreateService(out _, CreateItemTemplates());

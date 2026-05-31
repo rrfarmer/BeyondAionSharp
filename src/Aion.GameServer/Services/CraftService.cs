@@ -504,6 +504,79 @@ public sealed class CraftService
 			persistenceAdapterPlan);
 	}
 
+	public CraftFinishXpPlan CreateFinishXpPlan(
+		Player? player,
+		RecipeTemplateSummary? recipeTemplate,
+		int bonusPercent,
+		float skillXpRate = 1.0f,
+		int boostStatPercent = 100,
+		float commonXpRate = 1.0f)
+	{
+		// Java parity: CraftService.finishCrafting XP calculation, then
+		// PlayerSkillList.addSkillXp gate/update, then PlayerCommonData.addExp only when skill XP is accepted.
+		if (player == null)
+			return CraftFinishXpPlan.MissingPlayer(recipeTemplate?.RecipeId ?? 0, bonusPercent);
+		if (recipeTemplate == null)
+			return CraftFinishXpPlan.MissingRecipe(player.ObjectId, bonusPercent);
+
+		var xpFormula = CraftingXpFormulaService.CreatePlan(recipeTemplate.SkillPoint, bonusPercent);
+		var skill = player.Skills.FirstOrDefault(candidate => candidate.SkillId == recipeTemplate.SkillId);
+		if (skill == null)
+			return CraftFinishXpPlan.MissingSkill(player.ObjectId, recipeTemplate, xpFormula, skillXpRate, boostStatPercent, commonXpRate);
+
+		var skillXpAfterRate = (int)(xpFormula.TotalXpReward * skillXpRate);
+		var boostedSkillXp = recipeTemplate.SkillId == CraftStartValidationPlan.MorphSubstancesSkillId
+			? skillXpAfterRate
+			: (int)(skillXpAfterRate * (boostStatPercent / 100f));
+		var gainedCraftXp = Math.Max(1, boostedSkillXp);
+		var rejectedStatus = GetFinishXpRejectionStatus(skill, recipeTemplate.SkillPoint);
+		if (rejectedStatus.HasValue)
+			return CraftFinishXpPlan.Rejected(player.ObjectId, recipeTemplate, skill, xpFormula, skillXpRate, boostStatPercent, commonXpRate, gainedCraftXp, rejectedStatus.Value);
+
+		var requiredSkillXp = CalculateRequiredCraftSkillXp(skill.SkillLevel);
+		var wouldLevelUp = skill.CurrentXp + gainedCraftXp >= requiredSkillXp;
+		var projectedSkill = new PlayerSkill
+		{
+			SkillId = skill.SkillId,
+			SkillLevel = wouldLevelUp ? skill.SkillLevel + 1 : skill.SkillLevel,
+			SkillType = skill.SkillType,
+			CurrentXp = wouldLevelUp ? 0 : skill.CurrentXp + gainedCraftXp,
+		};
+		var commonXpReward = (long)(xpFormula.TotalXpReward * commonXpRate);
+
+		return CraftFinishXpPlan.DisabledNoMutation(
+			player.ObjectId,
+			recipeTemplate,
+			skill,
+			projectedSkill,
+			xpFormula,
+			skillXpRate,
+			boostStatPercent,
+			commonXpRate,
+			gainedCraftXp,
+			requiredSkillXp,
+			commonXpReward,
+			wouldLevelUp);
+	}
+
+	private static int CalculateRequiredCraftSkillXp(int skillLevel)
+	{
+		return (int)(0.23 * (skillLevel + 17.2) * (skillLevel + 17.2));
+	}
+
+	private static CraftFinishXpStatus? GetFinishXpRejectionStatus(PlayerSkill skill, int objectiveSkillLevel)
+	{
+		if (skill.SkillLevel - objectiveSkillLevel > 40)
+			return CraftFinishXpStatus.SkillLevelTooHighForObjective;
+		if (skill.SkillId == 30001 && skill.SkillLevel == 49)
+			return CraftFinishXpStatus.HumanGatheringCap;
+		if (skill.SkillId is 40001 or 40002 or 40003 or 40004 or 40007 or 40008 or 40010
+			&& skill.SkillLevel is 99 or 199 or 299 or 399 or 449 or 499 or 549)
+			return CraftFinishXpStatus.CraftRankCap;
+
+		return null;
+	}
+
 	public CraftFinishRewardPlan CreateFinishRewardPlan(
 		Player? player,
 		IReadOnlyList<InventoryItem>? inventoryItems,
@@ -2932,6 +3005,217 @@ public enum CraftFinishCooldownCompositionStatus
 {
 	DisabledReady,
 	NotReady,
+}
+
+public sealed record CraftFinishXpPlan(
+	CraftFinishXpStatus Status,
+	int ObjectId,
+	int RecipeId,
+	int SkillId,
+	int ObjectiveSkillLevel,
+	PlayerSkill? ExistingSkill,
+	PlayerSkill? ProjectedSkill,
+	CraftingXpPlan XpFormulaPlan,
+	float SkillXpRate,
+	int BoostStatPercent,
+	float CommonXpRate,
+	int GainedCraftSkillXp,
+	int RequiredSkillXpForNextLevel,
+	long CommonXpReward,
+	bool WouldAddSkillXp,
+	bool DidAddSkillXp,
+	bool WouldLevelSkill,
+	bool DidLevelSkill,
+	bool WouldAddCommonXp,
+	bool DidAddCommonXp,
+	bool WouldSendNoProductionXpMessage,
+	bool DidSendNoProductionXpMessage,
+	string JavaSource,
+	bool IsLive)
+{
+	public static CraftFinishXpPlan MissingPlayer(int recipeId, int bonusPercent)
+	{
+		return new CraftFinishXpPlan(
+			Status: CraftFinishXpStatus.MissingPlayer,
+			ObjectId: 0,
+			RecipeId: recipeId,
+			SkillId: 0,
+			ObjectiveSkillLevel: 0,
+			ExistingSkill: null,
+			ProjectedSkill: null,
+			XpFormulaPlan: CraftingXpFormulaService.CreatePlan(0, bonusPercent),
+			SkillXpRate: 1.0f,
+			BoostStatPercent: 100,
+			CommonXpRate: 1.0f,
+			GainedCraftSkillXp: 0,
+			RequiredSkillXpForNextLevel: 0,
+			CommonXpReward: 0,
+			WouldAddSkillXp: false,
+			DidAddSkillXp: false,
+			WouldLevelSkill: false,
+			DidLevelSkill: false,
+			WouldAddCommonXp: false,
+			DidAddCommonXp: false,
+			WouldSendNoProductionXpMessage: false,
+			DidSendNoProductionXpMessage: false,
+			"CraftService.finishCrafting XP branch skipped because player is missing",
+			IsLive: false);
+	}
+
+	public static CraftFinishXpPlan MissingRecipe(int objectId, int bonusPercent)
+	{
+		return new CraftFinishXpPlan(
+			Status: CraftFinishXpStatus.MissingRecipe,
+			ObjectId: objectId,
+			RecipeId: 0,
+			SkillId: 0,
+			ObjectiveSkillLevel: 0,
+			ExistingSkill: null,
+			ProjectedSkill: null,
+			XpFormulaPlan: CraftingXpFormulaService.CreatePlan(0, bonusPercent),
+			SkillXpRate: 1.0f,
+			BoostStatPercent: 100,
+			CommonXpRate: 1.0f,
+			GainedCraftSkillXp: 0,
+			RequiredSkillXpForNextLevel: 0,
+			CommonXpReward: 0,
+			WouldAddSkillXp: false,
+			DidAddSkillXp: false,
+			WouldLevelSkill: false,
+			DidLevelSkill: false,
+			WouldAddCommonXp: false,
+			DidAddCommonXp: false,
+			WouldSendNoProductionXpMessage: false,
+			DidSendNoProductionXpMessage: false,
+			"CraftService.finishCrafting XP branch skipped because recipe template is missing",
+			IsLive: false);
+	}
+
+	public static CraftFinishXpPlan MissingSkill(
+		int objectId,
+		RecipeTemplateSummary recipeTemplate,
+		CraftingXpPlan xpFormulaPlan,
+		float skillXpRate,
+		int boostStatPercent,
+		float commonXpRate)
+	{
+		return new CraftFinishXpPlan(
+			Status: CraftFinishXpStatus.MissingSkill,
+			ObjectId: objectId,
+			RecipeId: recipeTemplate.RecipeId,
+			SkillId: recipeTemplate.SkillId,
+			ObjectiveSkillLevel: recipeTemplate.SkillPoint,
+			ExistingSkill: null,
+			ProjectedSkill: null,
+			XpFormulaPlan: xpFormulaPlan,
+			SkillXpRate: skillXpRate,
+			BoostStatPercent: boostStatPercent,
+			CommonXpRate: commonXpRate,
+			GainedCraftSkillXp: 0,
+			RequiredSkillXpForNextLevel: 0,
+			CommonXpReward: 0,
+			WouldAddSkillXp: false,
+			DidAddSkillXp: false,
+			WouldLevelSkill: false,
+			DidLevelSkill: false,
+			WouldAddCommonXp: false,
+			DidAddCommonXp: false,
+			WouldSendNoProductionXpMessage: true,
+			DidSendNoProductionXpMessage: false,
+			"CraftService.finishCrafting -> player.getSkillList().addSkillXp cannot run because the skill entry is missing; live no-production-XP message remains disabled",
+			IsLive: false);
+	}
+
+	public static CraftFinishXpPlan Rejected(
+		int objectId,
+		RecipeTemplateSummary recipeTemplate,
+		PlayerSkill existingSkill,
+		CraftingXpPlan xpFormulaPlan,
+		float skillXpRate,
+		int boostStatPercent,
+		float commonXpRate,
+		int gainedCraftSkillXp,
+		CraftFinishXpStatus status)
+	{
+		return new CraftFinishXpPlan(
+			Status: status,
+			ObjectId: objectId,
+			RecipeId: recipeTemplate.RecipeId,
+			SkillId: recipeTemplate.SkillId,
+			ObjectiveSkillLevel: recipeTemplate.SkillPoint,
+			ExistingSkill: existingSkill,
+			ProjectedSkill: existingSkill,
+			XpFormulaPlan: xpFormulaPlan,
+			SkillXpRate: skillXpRate,
+			BoostStatPercent: boostStatPercent,
+			CommonXpRate: commonXpRate,
+			GainedCraftSkillXp: gainedCraftSkillXp,
+			RequiredSkillXpForNextLevel: 0,
+			CommonXpReward: 0,
+			WouldAddSkillXp: false,
+			DidAddSkillXp: false,
+			WouldLevelSkill: false,
+			DidLevelSkill: false,
+			WouldAddCommonXp: false,
+			DidAddCommonXp: false,
+			WouldSendNoProductionXpMessage: true,
+			DidSendNoProductionXpMessage: false,
+			"PlayerSkillList.addSkillXp returned false; CraftService.finishCrafting would send STR_MSG_DONT_GET_PRODUCTION_EXP, but live mutation/packet dispatch remains disabled",
+			IsLive: false);
+	}
+
+	public static CraftFinishXpPlan DisabledNoMutation(
+		int objectId,
+		RecipeTemplateSummary recipeTemplate,
+		PlayerSkill existingSkill,
+		PlayerSkill projectedSkill,
+		CraftingXpPlan xpFormulaPlan,
+		float skillXpRate,
+		int boostStatPercent,
+		float commonXpRate,
+		int gainedCraftSkillXp,
+		int requiredSkillXpForNextLevel,
+		long commonXpReward,
+		bool wouldLevelSkill)
+	{
+		return new CraftFinishXpPlan(
+			Status: wouldLevelSkill ? CraftFinishXpStatus.DisabledWouldLevelSkill : CraftFinishXpStatus.DisabledWouldAddSkillXp,
+			ObjectId: objectId,
+			RecipeId: recipeTemplate.RecipeId,
+			SkillId: recipeTemplate.SkillId,
+			ObjectiveSkillLevel: recipeTemplate.SkillPoint,
+			ExistingSkill: existingSkill,
+			ProjectedSkill: projectedSkill,
+			XpFormulaPlan: xpFormulaPlan,
+			SkillXpRate: skillXpRate,
+			BoostStatPercent: boostStatPercent,
+			CommonXpRate: commonXpRate,
+			GainedCraftSkillXp: gainedCraftSkillXp,
+			RequiredSkillXpForNextLevel: requiredSkillXpForNextLevel,
+			CommonXpReward: commonXpReward,
+			WouldAddSkillXp: true,
+			DidAddSkillXp: false,
+			WouldLevelSkill: wouldLevelSkill,
+			DidLevelSkill: false,
+			WouldAddCommonXp: true,
+			DidAddCommonXp: false,
+			WouldSendNoProductionXpMessage: false,
+			DidSendNoProductionXpMessage: false,
+			"CraftService.finishCrafting -> PlayerSkillList.addSkillXp accepted, then PlayerCommonData.addExp(xpReward, Rates.XP_CRAFTING); live C# skill/common XP mutation remains disabled",
+			IsLive: false);
+	}
+}
+
+public enum CraftFinishXpStatus
+{
+	DisabledWouldAddSkillXp,
+	DisabledWouldLevelSkill,
+	MissingPlayer,
+	MissingRecipe,
+	MissingSkill,
+	SkillLevelTooHighForObjective,
+	HumanGatheringCap,
+	CraftRankCap,
 }
 
 public sealed record CraftFinishRewardPlan(
