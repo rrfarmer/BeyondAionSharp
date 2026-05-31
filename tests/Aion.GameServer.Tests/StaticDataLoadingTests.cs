@@ -98,6 +98,44 @@ public sealed class StaticDataLoadingTests
 	}
 
 	[Fact]
+	public async Task StaticData_LoadsDropBoostBuffStatEffectsLikeJavaBufEffectChanges()
+	{
+		using var temp = TempDirectory.Create();
+		var cacheFile = Path.Combine(temp.Path, "static_data.xml");
+		File.WriteAllText(
+			cacheFile,
+			"""
+			<?xml version="1.0" encoding="UTF-8"?>
+			<static_data>
+				<skill_templates>
+					<skill_template skill_id="9878" name="Drop Rate Boost effect_Basic" nameId="296488" lvl="1" group="" stack="TEST_DRBOOST_01" skilltype="MAGICAL" skillsubtype="NONE" cooldownId="0" cooldown="0" activation="ACTIVE">
+						<effects>
+							<drboost duration2="600000" e="1" noresist="true">
+								<change stat="DR_BOOST" func="ADD" value="100" />
+							</drboost>
+							<boostdroprate duration2="30000" effectid="200" e="3" element="FIRE" preeffect="1">
+								<change stat="BOOST_DROP_RATE" func="ADD" value="20" delta="5" />
+							</boostdroprate>
+						</effects>
+					</skill_template>
+				</skill_templates>
+			</static_data>
+			""");
+
+		var staticData = await StaticData.LoadFromCacheAsync(cacheFile, []);
+
+		var template = staticData.SkillTemplates.GetSkillTemplate(9878);
+		Assert.NotNull(template);
+		Assert.Equal(2, template.BuffStatEffects.Count);
+		var drBoost = template.BuffStatEffects[0];
+		Assert.Equal("drboost", drBoost.EffectName);
+		Assert.Equal(new SkillStatChange("DR_BOOST", "ADD", 100, 0), Assert.Single(drBoost.Changes));
+		var boostDropRate = template.BuffStatEffects[1];
+		Assert.Equal("boostdroprate", boostDropRate.EffectName);
+		Assert.Equal(new SkillStatChange("BOOST_DROP_RATE", "ADD", 20, 5), Assert.Single(boostDropRate.Changes));
+	}
+
+	[Fact]
 	public async Task StaticData_LoadsStorageExpansionTemplatesByNpcId()
 	{
 		using var temp = TempDirectory.Create();
@@ -1389,6 +1427,16 @@ public sealed class StaticDataLoadingTests
 		Assert.False(exhaustingWave.IsPassive);
 		Assert.Equal("ADVANCED", exhaustingWave.StigmaType);
 		Assert.True(exhaustingWave.IsStigmaSkill);
+		var dropRateAddEffect = staticData.SkillTemplates.GetSkillTemplate(8472);
+		Assert.NotNull(dropRateAddEffect);
+		var dropRateEffect = Assert.Single(dropRateAddEffect.BuffStatEffects);
+		Assert.Equal("boostdroprate", dropRateEffect.EffectName);
+		Assert.Equal(new SkillStatChange("BOOST_DROP_RATE", "ADD", 10000, 0), Assert.Single(dropRateEffect.Changes));
+		var drBoostEffectBasic = staticData.SkillTemplates.GetSkillTemplate(9878);
+		Assert.NotNull(drBoostEffectBasic);
+		var drBoostEffect = Assert.Single(drBoostEffectBasic.BuffStatEffects);
+		Assert.Equal("drboost", drBoostEffect.EffectName);
+		Assert.Equal(new SkillStatChange("DR_BOOST", "ADD", 100, 0), Assert.Single(drBoostEffect.Changes));
 		Assert.Contains(staticData.SkillTree.GetTemplatesForSkill(539, "GLADIATOR", "ELYOS"), skill => skill.Stigma == 2);
 		var poetaProtector = staticData.TitleTemplates.GetTitleTemplate(1);
 		Assert.NotNull(poetaProtector);

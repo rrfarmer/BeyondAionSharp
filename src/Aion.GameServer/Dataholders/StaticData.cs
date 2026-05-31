@@ -632,6 +632,9 @@ public sealed class StaticData
 				if (reader.Depth == 4 && reader.LocalName is "armormastery" or "wpnmastery" or "shieldmastery")
 					currentSkillTemplate?.EndMastery();
 
+				if (reader.Depth == 4 && IsDropBoostStatEffectElement(reader.LocalName))
+					currentSkillTemplate?.EndBuffStatEffect();
+
 				if (reader.LocalName == "npc_skill" && currentNpcSkillList != null && currentNpcSkill != null)
 				{
 					currentNpcSkillList.AddSkill(currentNpcSkill.ToSummary());
@@ -2428,14 +2431,23 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 4 && IsDropBoostStatEffectElement(reader.LocalName) && currentSkillTemplate != null)
+			{
+				currentSkillTemplate.StartBuffStatEffect(reader.LocalName);
+				if (reader.IsEmptyElement)
+					currentSkillTemplate.EndBuffStatEffect();
+				continue;
+			}
+
 			if (reader.Depth == 5 && reader.LocalName == "change" && currentSkillTemplate != null)
 			{
-				currentSkillTemplate.AddCurrentMasteryChange(
-					new SkillStatChange(
-						reader.GetAttribute("stat") ?? string.Empty,
-						reader.GetAttribute("func") ?? string.Empty,
-						ReadIntAttribute(reader, "value"),
-						ReadIntAttribute(reader, "delta")));
+				var change = new SkillStatChange(
+					reader.GetAttribute("stat") ?? string.Empty,
+					reader.GetAttribute("func") ?? string.Empty,
+					ReadIntAttribute(reader, "value"),
+					ReadIntAttribute(reader, "delta"));
+				currentSkillTemplate.AddCurrentMasteryChange(change);
+				currentSkillTemplate.AddCurrentBuffStatChange(change);
 				continue;
 			}
 
@@ -3510,7 +3522,9 @@ public sealed class StaticData
 		private readonly List<SkillShieldMasteryEffectSummary> _shieldMasteryEffects = [];
 		private readonly List<SkillWeaponDualEffectSummary> _weaponDualEffects = [];
 		private readonly List<SkillSignetBurstEffectSummary> _signetBurstEffects = [];
+		private readonly List<SkillBuffStatEffectSummary> _buffStatEffects = [];
 		private List<SkillStatChange>? _currentMasteryChanges;
+		private List<SkillStatChange>? _currentBuffStatChanges;
 
 		public SkillTemplateBuilder(
 			int skillId,
@@ -3592,6 +3606,25 @@ public sealed class StaticData
 			_currentMasteryChanges.Add(change);
 		}
 
+		public void StartBuffStatEffect(string effectName)
+		{
+			_currentBuffStatChanges = [];
+			_buffStatEffects.Add(new SkillBuffStatEffectSummary(effectName, _currentBuffStatChanges));
+		}
+
+		public void AddCurrentBuffStatChange(SkillStatChange change)
+		{
+			if (_currentBuffStatChanges == null)
+				return;
+
+			_currentBuffStatChanges.Add(change);
+		}
+
+		public void EndBuffStatEffect()
+		{
+			_currentBuffStatChanges = null;
+		}
+
 		public void AddWeaponDual(SkillWeaponDualEffectSummary weaponDual)
 		{
 			_weaponDualEffects.Add(weaponDual);
@@ -3627,7 +3660,8 @@ public sealed class StaticData
 				_weaponDualEffects.ToArray(),
 				StigmaType,
 				Activation,
-				_signetBurstEffects.ToArray());
+				_signetBurstEffects.ToArray(),
+				_buffStatEffects.ToArray());
 		}
 	}
 
@@ -5341,6 +5375,11 @@ public sealed class StaticData
 	private static bool IsStatModifierElement(string elementName)
 	{
 		return elementName is "add" or "sub" or "rate" or "set" or "abs";
+	}
+
+	private static bool IsDropBoostStatEffectElement(string elementName)
+	{
+		return elementName is "boostdroprate" or "drboost";
 	}
 
 	private static long ReadLongAttribute(XmlReader reader, string attributeName)

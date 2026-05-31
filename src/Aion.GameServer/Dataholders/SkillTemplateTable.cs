@@ -81,7 +81,8 @@ public sealed record SkillTemplateSummary(
 	IReadOnlyList<SkillWeaponDualEffectSummary>? WeaponDualEffects = null,
 	string StigmaType = "",
 	string Activation = "",
-	IReadOnlyList<SkillSignetBurstEffectSummary>? SignetBurstEffects = null)
+	IReadOnlyList<SkillSignetBurstEffectSummary>? SignetBurstEffects = null,
+	IReadOnlyList<SkillBuffStatEffectSummary>? BuffStatEffectSummaries = null)
 {
 	public IReadOnlyList<SkillArmorMasteryEffectSummary> ArmorMastery => ArmorMasteryEffects ?? Array.Empty<SkillArmorMasteryEffectSummary>();
 
@@ -92,6 +93,8 @@ public sealed record SkillTemplateSummary(
 	public IReadOnlyList<SkillWeaponDualEffectSummary> WeaponDual => WeaponDualEffects ?? Array.Empty<SkillWeaponDualEffectSummary>();
 
 	public IReadOnlyList<SkillSignetBurstEffectSummary> SignetBurst => SignetBurstEffects ?? Array.Empty<SkillSignetBurstEffectSummary>();
+
+	public IReadOnlyList<SkillBuffStatEffectSummary> BuffStatEffects => BuffStatEffectSummaries ?? Array.Empty<SkillBuffStatEffectSummary>();
 
 	public bool IsStigmaSkill => !string.IsNullOrEmpty(StigmaType) && !string.Equals(StigmaType, "NONE", StringComparison.Ordinal);
 
@@ -126,6 +129,9 @@ public sealed record SkillWeaponDualEffectSummary(int Value, int Delta, int Skil
 
 // Java parity: skillengine/effect/SignetBurstEffect.
 public sealed record SkillSignetBurstEffectSummary(string Signet, int SignetLevel);
+
+// Java parity: skillengine/effect/BufEffect subclasses such as BoostDropRateEffect and DRBoostEffect.
+public sealed record SkillBuffStatEffectSummary(string EffectName, IReadOnlyList<SkillStatChange> Changes);
 
 // Java parity: skillengine/change/Change entries under passive skill effects.
 public sealed record SkillStatChange(string Stat, string Func, int Value, int Delta);
