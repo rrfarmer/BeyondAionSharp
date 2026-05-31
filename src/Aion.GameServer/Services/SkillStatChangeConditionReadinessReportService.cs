@@ -61,8 +61,11 @@ public static class SkillStatChangeConditionReadinessReportService
 				.ToArray(),
 			validatorPlans,
 			HasLiveConditionValidatorProvider: hasLiveConditionValidatorProvider,
+			"CreatureGameStats.getStat calls IStatFunction.validate(stat) before IStatFunction.apply(stat)",
+			"Conditions.validate iterates child Condition instances in XML/list order and returns false on the first failed child validator",
+			"Conditioned stat functions must be skipped without applying when StatFunction.validate returns false",
 			missingInputs,
-			"Change.conditions -> Conditions.validate(Skill/Stat2/Effect); BufEffect.getModifiers attaches conditions to generated stat functions");
+			"Change.conditions -> StatFunction.validate -> Conditions.validate(Stat2, IStatFunction) before apply; BufEffect.getModifiers attaches conditions to generated stat functions");
 	}
 
 	private static IEnumerable<SkillStatChange> EnumerateStatChanges(SkillTemplateSummary template)
@@ -128,6 +131,8 @@ public static class SkillStatChangeConditionReadinessReportService
 			entryCount,
 			hasMapping,
 			hasLiveConditionValidatorProvider,
+			"StatFunction.validate delegates to Conditions.validate(stat, statFunction) before apply",
+			"Conditions.validate returns false on first child Condition failure and skips remaining validation",
 			missingInputs,
 			"Conditions.validate iterates child Condition instances and returns false on the first child validator failure");
 	}
@@ -188,6 +193,9 @@ public sealed record SkillStatChangeConditionReadinessReport(
 	IReadOnlyList<SkillStatChangeConditionNameCount> ConditionNameCounts,
 	IReadOnlyList<SkillStatChangeConditionValidatorPlan> ValidatorPlans,
 	bool HasLiveConditionValidatorProvider,
+	string ValidateBeforeApplyRule,
+	string ConditionShortCircuitRule,
+	string FailedValidationApplyRule,
 	IReadOnlyList<string> MissingInputs,
 	string JavaSource)
 {
@@ -203,6 +211,8 @@ public sealed record SkillStatChangeConditionValidatorPlan(
 	int EntryCount,
 	bool HasJavaConditionMapping,
 	bool HasLiveConditionValidatorProvider,
+	string ValidateBeforeApplyRule,
+	string ConditionShortCircuitRule,
 	IReadOnlyList<string> MissingInputs,
 	string JavaSource)
 {

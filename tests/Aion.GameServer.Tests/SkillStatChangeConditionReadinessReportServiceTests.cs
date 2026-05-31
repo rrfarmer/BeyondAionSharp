@@ -13,7 +13,10 @@ public sealed class SkillStatChangeConditionReadinessReportServiceTests
 		Assert.Equal(SkillStatChangeConditionReadinessStatus.MissingSkillTemplates, report.Status);
 		Assert.False(report.IsReadyForConditionedStatChanges);
 		Assert.Contains("skill_templates", report.MissingInputs);
-		Assert.Contains("Conditions.validate", report.JavaSource, StringComparison.Ordinal);
+		Assert.Contains("StatFunction.validate", report.JavaSource, StringComparison.Ordinal);
+		Assert.Contains("before IStatFunction.apply", report.ValidateBeforeApplyRule, StringComparison.Ordinal);
+		Assert.Contains("first failed child", report.ConditionShortCircuitRule, StringComparison.Ordinal);
+		Assert.Contains("without applying", report.FailedValidationApplyRule, StringComparison.Ordinal);
 	}
 
 	[Fact]
@@ -58,6 +61,8 @@ public sealed class SkillStatChangeConditionReadinessReportServiceTests
 			Assert.Equal(SkillStatChangeConditionValidatorPlanStatus.BlockedMissingConditionValidatorProvider, plan.Status);
 			Assert.True(plan.HasJavaConditionMapping);
 			Assert.False(plan.HasLiveConditionValidatorProvider);
+			Assert.Contains("before apply", plan.ValidateBeforeApplyRule, StringComparison.Ordinal);
+			Assert.Contains("first child", plan.ConditionShortCircuitRule, StringComparison.Ordinal);
 			Assert.Contains("live Conditions.validate provider", plan.MissingInputs);
 			Assert.Contains("Conditions.validate", plan.JavaSource, StringComparison.Ordinal);
 		});
