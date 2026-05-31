@@ -22,6 +22,7 @@ public enum CmBuyItemBuyFromShopCompositionStep
 	CreateTradeListItems,
 	ApplyRunGates,
 	ClassifyTradeNpcType,
+	AttachBuyTransactionPlan,
 }
 
 public sealed record CmBuyItemBuyFromShopCompositionInput(
@@ -30,7 +31,8 @@ public sealed record CmBuyItemBuyFromShopCompositionInput(
 	CmBuyItemRunTargetKind TargetKind,
 	TradeListTemplateSummary? TradeTemplate,
 	bool InteractionAllowed = true,
-	bool NpcCanSell = true);
+	bool NpcCanSell = true,
+	TradeBuyTransactionPlan? BuyTransactionPlan = null);
 
 public sealed record CmBuyItemBuyFromShopDispatchDescriptor(
 	int SellerObjectId,
@@ -38,6 +40,7 @@ public sealed record CmBuyItemBuyFromShopDispatchDescriptor(
 	IReadOnlyList<CmBuyItemBuyFromShopItemRequest> TradeItems,
 	TradeListTemplateSummary? TradeTemplate,
 	bool UseKinah,
+	TradeBuyTransactionPlan? BuyTransactionPlan,
 	string JavaSource,
 	bool IsLive = false);
 
@@ -140,6 +143,9 @@ public static class CmBuyItemBuyFromShopCompositionPlanService
 				steps,
 				"TradeService.performBuyFromShop -> default unhandled TradeNpcType warning and false");
 
+		if (input.BuyTransactionPlan != null)
+			steps.Add(CmBuyItemBuyFromShopCompositionStep.AttachBuyTransactionPlan);
+
 		return CreatePlan(
 			CmBuyItemBuyFromShopCompositionPlanStatus.WouldDispatchBuyFromShop,
 			input,
@@ -152,6 +158,7 @@ public static class CmBuyItemBuyFromShopCompositionPlanService
 				tradeItems,
 				input.TradeTemplate,
 				useKinah,
+				input.BuyTransactionPlan,
 				useKinah
 					? "TradeService.performBuyFromShop -> NORMAL/ABYSS_KINAH -> performBuyTransaction(..., true)"
 					: "TradeService.performBuyFromShop -> ABYSS/REWARD -> performBuyTransaction(..., false)",

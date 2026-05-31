@@ -36,7 +36,49 @@ public sealed class CmBuyItemBuyFromShopCompositionPlanServiceTests
 		Assert.Equal(tradeActionId, dispatch.TradeActionId);
 		Assert.True(dispatch.UseKinah);
 		Assert.Same(tradeTemplate, dispatch.TradeTemplate);
+		Assert.Null(dispatch.BuyTransactionPlan);
 		Assert.False(dispatch.IsLive);
+	}
+
+	[Fact]
+	public void CreatePlan_CarriesOptionalBuyTransactionPlanToDispatchDescriptor()
+	{
+		var packet = CreatePacket(13, [new CmBuyItemEntry(100000001, 1)]);
+		var tradeTemplate = new TradeListTemplateSummary(203060, [129], NpcType: "NORMAL");
+		var buyTransactionPlan = new TradeBuyTransactionPlan(
+			TradeBuyTransactionPlanStatus.WouldApplyBuyTransaction,
+			[
+				TradeBuyTransactionStep.CheckPlayerCanTrade,
+				TradeBuyTransactionStep.ValidateBuyItems,
+				TradeBuyTransactionStep.SnapshotInventoryFreeSlots,
+				TradeBuyTransactionStep.ClassifyTradeNpcRates,
+				TradeBuyTransactionStep.CalculateKinahPrice,
+				TradeBuyTransactionStep.CalculateAbyssRewardRequirements,
+				TradeBuyTransactionStep.CheckRequiredApExploit,
+				TradeBuyTransactionStep.CheckInventoryFreeSlots,
+				TradeBuyTransactionStep.CheckLimitedItems,
+				TradeBuyTransactionStep.PlanCostSubtraction,
+				TradeBuyTransactionStep.PlanItemAddsAndLimitUpdates,
+			],
+			RequiredKinah: 1_000,
+			RequiredAbyssPoints: 0,
+			RequiredItems: [],
+			ShouldDispatchLiveSideEffects: false,
+			"TradeService.performBuyTransaction");
+
+		var plan = CmBuyItemBuyFromShopCompositionPlanService.CreatePlan(
+			new CmBuyItemBuyFromShopCompositionInput(
+				packet,
+				PlayerPresent: true,
+				TargetKind: CmBuyItemRunTargetKind.Npc,
+				TradeTemplate: tradeTemplate,
+				BuyTransactionPlan: buyTransactionPlan));
+
+		Assert.Equal(CmBuyItemBuyFromShopCompositionPlanStatus.WouldDispatchBuyFromShop, plan.Status);
+		Assert.Contains(CmBuyItemBuyFromShopCompositionStep.AttachBuyTransactionPlan, plan.Steps);
+		var dispatch = Assert.IsType<CmBuyItemBuyFromShopDispatchDescriptor>(plan.Dispatch);
+		Assert.Same(buyTransactionPlan, dispatch.BuyTransactionPlan);
+		Assert.False(dispatch.BuyTransactionPlan!.IsLive);
 	}
 
 	[Theory]
@@ -74,6 +116,32 @@ public sealed class CmBuyItemBuyFromShopCompositionPlanServiceTests
 		Assert.Equal(CmBuyItemBuyFromShopCompositionPlanStatus.UnknownTradeNpcType, plan.Status);
 		Assert.Null(plan.Dispatch);
 		Assert.Contains(CmBuyItemBuyFromShopCompositionStep.ClassifyTradeNpcType, plan.Steps);
+	}
+
+	[Fact]
+	public void CreatePlan_UnknownTradeNpcTypeDoesNotAttachBuyTransactionPayload()
+	{
+		var packet = CreatePacket(13, [new CmBuyItemEntry(100000001, 1)]);
+		var buyTransactionPlan = new TradeBuyTransactionPlan(
+			TradeBuyTransactionPlanStatus.WouldApplyBuyTransaction,
+			[TradeBuyTransactionStep.CheckPlayerCanTrade],
+			RequiredKinah: 0,
+			RequiredAbyssPoints: 0,
+			RequiredItems: [],
+			ShouldDispatchLiveSideEffects: false,
+			"TradeService.performBuyTransaction");
+
+		var plan = CmBuyItemBuyFromShopCompositionPlanService.CreatePlan(
+			new CmBuyItemBuyFromShopCompositionInput(
+				packet,
+				PlayerPresent: true,
+				TargetKind: CmBuyItemRunTargetKind.Npc,
+				TradeTemplate: new TradeListTemplateSummary(203060, [129], NpcType: "CUSTOM"),
+				BuyTransactionPlan: buyTransactionPlan));
+
+		Assert.Equal(CmBuyItemBuyFromShopCompositionPlanStatus.UnknownTradeNpcType, plan.Status);
+		Assert.Null(plan.Dispatch);
+		Assert.DoesNotContain(CmBuyItemBuyFromShopCompositionStep.AttachBuyTransactionPlan, plan.Steps);
 	}
 
 	[Fact]
