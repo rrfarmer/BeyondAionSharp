@@ -15,7 +15,8 @@ public static class InventoryAddService
 		long count,
 		Func<int> nextObjectId,
 		bool allowInventoryOverflow = false,
-		ItemTemplateTable? itemTemplates = null)
+		ItemTemplateTable? itemTemplates = null,
+		InventoryItem? sourceItem = null)
 	{
 		// Java parity: services/item/ItemService.addItem plus model/items/storage/Storage.increaseItemCount/add.
 		if (count <= 0)
@@ -77,6 +78,8 @@ public static class InventoryAddService
 				player.ObjectId,
 				CubeStorageId,
 				FirstAvailableSlot);
+			if (sourceItem != null && itemTemplate.MaxStackCount <= 1)
+				item = CopyNonStackableSourceItemInfo(sourceItem, item);
 			addedItems.Add(item);
 			remaining -= item.Count;
 		}
@@ -148,6 +151,43 @@ public static class InventoryAddService
 		copy.FusionStones = item.FusionStones;
 		copy.Godstone = item.Godstone;
 		copy.IdianStone = item.IdianStone;
+		return copy;
+	}
+
+	private static InventoryItem CopyNonStackableSourceItemInfo(InventoryItem sourceItem, InventoryItem newItem)
+	{
+		// Java parity: ItemService.copyItemInfo copies selected non-stackable item state, but not fusion attributes.
+		var copy = new InventoryItem
+		{
+			ObjectId = newItem.ObjectId,
+			ItemId = newItem.ItemId,
+			Count = newItem.Count,
+			Color = sourceItem.Color,
+			ColorExpires = sourceItem.ColorExpires,
+			Creator = sourceItem.Creator,
+			ExpireTime = newItem.ExpireTime,
+			ActivationCount = newItem.ActivationCount,
+			OwnerId = newItem.OwnerId,
+			IsEquipped = newItem.IsEquipped,
+			IsSoulBound = sourceItem.IsSoulBound,
+			Slot = newItem.Slot,
+			Location = newItem.Location,
+			Enchant = sourceItem.Enchant,
+			EnchantBonus = sourceItem.EnchantBonus,
+			ItemSkin = sourceItem.ItemSkin,
+			OptionalSocket = sourceItem.OptionalSocket,
+			TuneCount = sourceItem.TuneCount,
+			RandomBonus = sourceItem.RandomBonus,
+			Tempering = sourceItem.Tempering,
+			IsAmplified = sourceItem.IsAmplified,
+			BuffSkill = sourceItem.BuffSkill,
+			PackCount = newItem.PackCount,
+			RandomPlumeBonus = newItem.RandomPlumeBonus,
+			PersistentState = newItem.PersistentState,
+		};
+		copy.ManaStones = sourceItem.ManaStones.ToArray();
+		copy.Godstone = sourceItem.Godstone;
+		copy.IdianStone = sourceItem.IdianStone;
 		return copy;
 	}
 }

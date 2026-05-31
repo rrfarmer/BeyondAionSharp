@@ -185,6 +185,111 @@ public sealed class InventoryAddServiceTests
 		Assert.Empty(plan.AddedItems);
 	}
 
+	[Fact]
+	public void CreateAddItemPlan_CopiesNonStackableSourceItemInfo()
+	{
+		var template = CreateTemplate(200, maxStackCount: 1);
+		var player = new Player { ObjectId = 1000 };
+		var sourceItem = new InventoryItem
+		{
+			ObjectId = 1,
+			ItemId = 200,
+			Count = 1,
+			Color = 123,
+			ColorExpires = 456,
+			Creator = "maker",
+			OwnerId = player.ObjectId,
+			IsSoulBound = true,
+			Location = 0,
+			Slot = 65535,
+			Enchant = 12,
+			EnchantBonus = 4,
+			ItemSkin = 300,
+			FusionedItem = 900,
+			OptionalSocket = 2,
+			OptionalFusionSocket = 3,
+			Charge = 5,
+			TuneCount = 7,
+			RandomBonus = 8,
+			FusionRandomBonus = 9,
+			Tempering = 10,
+			IsAmplified = true,
+			BuffSkill = 11,
+		};
+		sourceItem.ManaStones = [new ItemStoneSocket(167000001, 0)];
+		sourceItem.FusionStones = [new ItemStoneSocket(167000002, 1)];
+		sourceItem.Godstone = new PlayerGodstone(168000001, ProcCount: 6);
+		sourceItem.IdianStone = new PlayerIdianStone(169000001, PolishNumber: 2, PolishCharge: 1000);
+
+		var plan = InventoryAddService.CreateAddItemPlan(
+			player,
+			Array.Empty<InventoryItem>(),
+			template,
+			1,
+			() => 99,
+			sourceItem: sourceItem);
+
+		Assert.True(plan.Succeeded);
+		var addedItem = Assert.Single(plan.AddedItems);
+		Assert.Equal((99, 200, 1L, player.ObjectId, 0, 65535L), (addedItem.ObjectId, addedItem.ItemId, addedItem.Count, addedItem.OwnerId, addedItem.Location, addedItem.Slot));
+		Assert.Equal(sourceItem.Color, addedItem.Color);
+		Assert.Equal(sourceItem.ColorExpires, addedItem.ColorExpires);
+		Assert.Equal(sourceItem.Creator, addedItem.Creator);
+		Assert.Equal(sourceItem.IsSoulBound, addedItem.IsSoulBound);
+		Assert.Equal(sourceItem.Enchant, addedItem.Enchant);
+		Assert.Equal(sourceItem.EnchantBonus, addedItem.EnchantBonus);
+		Assert.Equal(sourceItem.ItemSkin, addedItem.ItemSkin);
+		Assert.Equal(sourceItem.OptionalSocket, addedItem.OptionalSocket);
+		Assert.Equal(sourceItem.TuneCount, addedItem.TuneCount);
+		Assert.Equal(sourceItem.RandomBonus, addedItem.RandomBonus);
+		Assert.Equal(sourceItem.Tempering, addedItem.Tempering);
+		Assert.Equal(sourceItem.IsAmplified, addedItem.IsAmplified);
+		Assert.Equal(sourceItem.BuffSkill, addedItem.BuffSkill);
+		Assert.Equal(sourceItem.ManaStones, addedItem.ManaStones);
+		Assert.Equal(sourceItem.Godstone, addedItem.Godstone);
+		Assert.Equal(sourceItem.IdianStone, addedItem.IdianStone);
+		Assert.Equal(0, addedItem.FusionedItem);
+		Assert.Equal(0, addedItem.OptionalFusionSocket);
+		Assert.Equal(0, addedItem.FusionRandomBonus);
+		Assert.Equal(0, addedItem.Charge);
+		Assert.Empty(addedItem.FusionStones);
+	}
+
+	[Fact]
+	public void CreateAddItemPlan_DoesNotCopySourceItemInfoForStackableRows()
+	{
+		var template = CreateTemplate(200, maxStackCount: 10);
+		var player = new Player { ObjectId = 1000 };
+		var sourceItem = new InventoryItem
+		{
+			ObjectId = 1,
+			ItemId = 200,
+			Count = 5,
+			OwnerId = player.ObjectId,
+			Enchant = 12,
+			OptionalSocket = 2,
+			RandomBonus = 8,
+			IsSoulBound = true,
+		};
+
+		var plan = InventoryAddService.CreateAddItemPlan(
+			player,
+			Array.Empty<InventoryItem>(),
+			template,
+			5,
+			() => 99,
+			sourceItem: sourceItem);
+
+		Assert.True(plan.Succeeded);
+		var addedItem = Assert.Single(plan.AddedItems);
+		Assert.Equal(99, addedItem.ObjectId);
+		Assert.Equal(5, addedItem.Count);
+		Assert.Equal(0, addedItem.Enchant);
+		Assert.Equal(0, addedItem.OptionalSocket);
+		Assert.Equal(0, addedItem.RandomBonus);
+		Assert.False(addedItem.IsSoulBound);
+	}
+
 	private static ItemTemplateSummary CreateTemplate(int itemId, int maxStackCount, int extraInventoryId = -1, string itemGroup = "NONE")
 	{
 		return new ItemTemplateSummary(
