@@ -346,6 +346,69 @@ public sealed class PlayerEnterWorldServiceTests
 	}
 
 	[Fact]
+	public void CreateLogoutCraftCooldownSavePlan_RecordsJavaLogoutStoreBoundaryWithoutWriting()
+	{
+		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
+		player.CraftCooldowns = new Dictionary<int, long>
+		{
+			[77] = 2_000,
+			[78] = 500,
+		};
+
+		var plan = PlayerLogoutCraftCooldownSavePlanService.CreateDisabledPlan(player, currentTimeMillis: 1_000);
+
+		Assert.Equal(PlayerLogoutCraftCooldownSavePlanStatus.DisabledNoWrite, plan.Status);
+		Assert.Equal(player.ObjectId, plan.PlayerObjectId);
+		Assert.NotNull(plan.PersistencePlan);
+		Assert.Equal(CraftCooldownPersistencePlanStatus.DisabledNoWrite, plan.PersistencePlan!.Status);
+		Assert.Equal(1, plan.PersistencePlan.InsertDescriptorCount);
+		Assert.Equal(1, plan.PersistencePlan.SkippedExpiredCooldownCount);
+		Assert.NotNull(plan.AdapterPlan);
+		Assert.Equal(CraftCooldownPersistenceAdapterStatus.DisabledNoWrite, plan.AdapterPlan!.Status);
+		Assert.True(plan.JavaDeletesBeforeInserts);
+		Assert.Equal(2, plan.JavaConnectionOpenCount);
+		Assert.Equal(1, plan.JavaStoreOrderAfterPortalCooldowns);
+		Assert.Equal(1, plan.JavaStoreOrderBeforeHouseObjectCooldowns);
+		Assert.True(plan.JavaSwallowsDeleteSqlExceptions);
+		Assert.True(plan.JavaSwallowsInsertSqlExceptions);
+		Assert.True(plan.WouldPersistCraftCooldowns);
+		Assert.False(plan.DidPersistCraftCooldowns);
+		Assert.False(plan.IsLive);
+		Assert.Contains("PlayerService.storePlayer calls CraftCooldownsDAO.storeCraftCooldowns", plan.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void CreateLogoutCraftCooldownSavePlan_DeletesEvenWithoutActiveCraftCooldownsLikeJava()
+	{
+		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
+		player.CraftCooldowns = new Dictionary<int, long> { [77] = 500 };
+
+		var plan = PlayerLogoutCraftCooldownSavePlanService.CreateDisabledPlan(player, currentTimeMillis: 1_000);
+
+		Assert.Equal(PlayerLogoutCraftCooldownSavePlanStatus.DisabledNoWrite, plan.Status);
+		Assert.NotNull(plan.PersistencePlan);
+		Assert.Equal(1, plan.PersistencePlan!.DeleteDescriptorCount);
+		Assert.Equal(0, plan.PersistencePlan.InsertDescriptorCount);
+		Assert.Equal(1, plan.PersistencePlan.SkippedExpiredCooldownCount);
+		Assert.Equal(1, plan.JavaConnectionOpenCount);
+		Assert.True(plan.WouldPersistCraftCooldowns);
+		Assert.False(plan.DidPersistCraftCooldowns);
+	}
+
+	[Fact]
+	public void CreateLogoutCraftCooldownSavePlan_HandlesMissingPlayerAsNotReady()
+	{
+		var plan = PlayerLogoutCraftCooldownSavePlanService.CreateDisabledPlan(player: null, currentTimeMillis: 1_000);
+
+		Assert.Equal(PlayerLogoutCraftCooldownSavePlanStatus.PlayerMissing, plan.Status);
+		Assert.Null(plan.PersistencePlan);
+		Assert.Null(plan.AdapterPlan);
+		Assert.False(plan.WouldPersistCraftCooldowns);
+		Assert.False(plan.JavaDeletesBeforeInserts);
+		Assert.False(plan.IsLive);
+	}
+
+	[Fact]
 	public async Task LeaveWorld_PersistsAcceptedStorageExpansionFields()
 	{
 		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));

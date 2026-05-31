@@ -1030,3 +1030,92 @@ public enum PortalEntryPreparationStatus
 	RequirementApplicationFailed,
 	RequirementPersistenceFailed,
 }
+
+public static class PlayerLogoutCraftCooldownSavePlanService
+{
+	public static PlayerLogoutCraftCooldownSavePlan CreateDisabledPlan(Player? player, long currentTimeMillis)
+	{
+		if (player == null)
+			return PlayerLogoutCraftCooldownSavePlan.PlayerMissing(currentTimeMillis);
+
+		var persistencePlan = CraftCooldownPersistencePlanService.CreateDisabledPlan(
+			player.ObjectId,
+			player.CraftCooldowns,
+			currentTimeMillis);
+		var adapterPlan = CraftCooldownPersistenceAdapterPlanService.CreateDisabledPlan(persistencePlan);
+		return PlayerLogoutCraftCooldownSavePlan.Create(player.ObjectId, currentTimeMillis, persistencePlan, adapterPlan);
+	}
+}
+
+public sealed record PlayerLogoutCraftCooldownSavePlan(
+	PlayerLogoutCraftCooldownSavePlanStatus Status,
+	int PlayerObjectId,
+	long CurrentTimeMillis,
+	CraftCooldownPersistencePlan? PersistencePlan,
+	CraftCooldownPersistenceAdapterPlan? AdapterPlan,
+	int JavaStoreOrderAfterPortalCooldowns,
+	int JavaStoreOrderBeforeHouseObjectCooldowns,
+	int JavaConnectionOpenCount,
+	bool JavaDeletesBeforeInserts,
+	bool JavaSwallowsDeleteSqlExceptions,
+	bool JavaSwallowsInsertSqlExceptions,
+	bool WouldPersistCraftCooldowns,
+	bool DidPersistCraftCooldowns,
+	string JavaSource,
+	bool IsLive)
+{
+	public static PlayerLogoutCraftCooldownSavePlan PlayerMissing(long currentTimeMillis)
+	{
+		return new PlayerLogoutCraftCooldownSavePlan(
+			PlayerLogoutCraftCooldownSavePlanStatus.PlayerMissing,
+			PlayerObjectId: 0,
+			currentTimeMillis,
+			PersistencePlan: null,
+			AdapterPlan: null,
+			JavaStoreOrderAfterPortalCooldowns: 0,
+			JavaStoreOrderBeforeHouseObjectCooldowns: 0,
+			JavaConnectionOpenCount: 0,
+			JavaDeletesBeforeInserts: false,
+			JavaSwallowsDeleteSqlExceptions: false,
+			JavaSwallowsInsertSqlExceptions: false,
+			WouldPersistCraftCooldowns: false,
+			DidPersistCraftCooldowns: false,
+			"PlayerService.storePlayer -> CraftCooldownsDAO.storeCraftCooldowns skipped because player is missing",
+			IsLive: false);
+	}
+
+	public static PlayerLogoutCraftCooldownSavePlan Create(
+		int playerObjectId,
+		long currentTimeMillis,
+		CraftCooldownPersistencePlan persistencePlan,
+		CraftCooldownPersistenceAdapterPlan adapterPlan)
+	{
+		var status = persistencePlan.Status == CraftCooldownPersistencePlanStatus.DisabledNoWrite
+			&& adapterPlan.Status == CraftCooldownPersistenceAdapterStatus.DisabledNoWrite
+				? PlayerLogoutCraftCooldownSavePlanStatus.DisabledNoWrite
+				: PlayerLogoutCraftCooldownSavePlanStatus.PersistencePlanNotReady;
+		return new PlayerLogoutCraftCooldownSavePlan(
+			status,
+			playerObjectId,
+			currentTimeMillis,
+			persistencePlan,
+			adapterPlan,
+			JavaStoreOrderAfterPortalCooldowns: 1,
+			JavaStoreOrderBeforeHouseObjectCooldowns: 1,
+			JavaConnectionOpenCount: persistencePlan.SqlDescriptors.Count,
+			JavaDeletesBeforeInserts: persistencePlan.DeleteDescriptorCount > 0,
+			JavaSwallowsDeleteSqlExceptions: true,
+			JavaSwallowsInsertSqlExceptions: true,
+			WouldPersistCraftCooldowns: adapterPlan.WouldExecuteSql,
+			DidPersistCraftCooldowns: false,
+			"PlayerService.storePlayer calls CraftCooldownsDAO.storeCraftCooldowns after PortalCooldownsDAO.storePortalCooldowns and before HouseObjectCooldownsDAO.storeHouseObjectCooldowns; CraftCooldownsDAO deletes first, then opens one connection per active insert and logs SQLException without propagating",
+			IsLive: false);
+	}
+}
+
+public enum PlayerLogoutCraftCooldownSavePlanStatus
+{
+	DisabledNoWrite,
+	PlayerMissing,
+	PersistencePlanNotReady,
+}
