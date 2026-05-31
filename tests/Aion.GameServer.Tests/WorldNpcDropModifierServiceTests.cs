@@ -49,6 +49,28 @@ public sealed class WorldNpcDropModifierServiceTests
 		Assert.Equal(75f, modifiers.CalculateDropChance(50f, allowReductionDropRate: false), precision: 3);
 	}
 
+	[Fact]
+	public void CreateModifiers_UsesResolvedBoostRateContextWhenProvided()
+	{
+		var service = new WorldNpcDropModifierService();
+		var npc = CreateNpc(level: 20);
+		var looter = new Player { ObjectId = 1001, Race = "ELYOS", Level = 20 };
+		var context = new WorldNpcDropBoostRateContext(
+			ConfiguredDropRate: 2f,
+			NpcBoostDropRate: 120,
+			KillerBoostDropRate: 130,
+			KillerDrBoost: 80,
+			HasReposeEnergy: true,
+			HasSalvation: true,
+			HasActivePalace: true);
+
+		var modifiers = service.CreateModifiers(npc, looter, boostDropRate: 9f, boostRateContext: context);
+
+		Assert.Equal("ELYOS", modifiers.DropRace);
+		Assert.Equal(1.9f, modifiers.BoostDropRate, precision: 3);
+		Assert.Null(modifiers.ReductionDropRate);
+	}
+
 	[Theory]
 	[InlineData(1f, 100, null, null, false, false, false, 1f)]
 	[InlineData(1.5f, 120, null, null, false, false, false, 1.8f)]
@@ -76,6 +98,18 @@ public sealed class WorldNpcDropModifierServiceTests
 				hasSalvation,
 				hasActivePalace),
 			precision: 3);
+	}
+
+	[Fact]
+	public void DropBoostRateContext_CalculatesJavaBoostRateFromResolvedInputs()
+	{
+		var context = new WorldNpcDropBoostRateContext(
+			ConfiguredDropRate: 1.5f,
+			NpcBoostDropRate: 110,
+			KillerBoostDropRate: 115,
+			HasReposeEnergy: true);
+
+		Assert.Equal(1.8f, context.CalculateBoostDropRate(), precision: 3);
 	}
 
 	private static WorldNpc CreateNpc(int level)

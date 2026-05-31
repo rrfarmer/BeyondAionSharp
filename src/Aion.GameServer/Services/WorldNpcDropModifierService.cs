@@ -8,13 +8,15 @@ public sealed class WorldNpcDropModifierService
 		IWorldNpcObject npc,
 		Player looter,
 		int? highestLevel = null,
-		float boostDropRate = 1f)
+		float boostDropRate = 1f,
+		WorldNpcDropBoostRateContext? boostRateContext = null)
 	{
 		// Java parity: services/drop/DropRegistrationService.createDropModifiers, narrowed until live stats/rates/house boosts are modeled.
 		// Zone names stay empty until the future CM_SUBZONE_CHANGE / MapRegion revalidation model can mirror npc.isInsideZone(...).
+		var effectiveBoostDropRate = boostRateContext?.CalculateBoostDropRate() ?? boostDropRate;
 		return new WorldNpcDropModifiers(
 			looter.Race,
-			boostDropRate,
+			effectiveBoostDropRate,
 			GetReductionDropRate(npc.Template.Level, highestLevel ?? looter.Level),
 			IsDropNpcChest: IsChest(npc));
 	}
@@ -66,5 +68,27 @@ public sealed class WorldNpcDropModifierService
 	{
 		// Java parity: services/drop/DropRegistrationService.createDropModifiers chest AI slice, narrowed until group-drop template names exist.
 		return string.Equals(npc.AiName, "chest", StringComparison.OrdinalIgnoreCase);
+	}
+}
+
+public sealed record WorldNpcDropBoostRateContext(
+	float ConfiguredDropRate,
+	int NpcBoostDropRate = 100,
+	int? KillerBoostDropRate = null,
+	int? KillerDrBoost = null,
+	bool HasReposeEnergy = false,
+	bool HasSalvation = false,
+	bool HasActivePalace = false)
+{
+	public float CalculateBoostDropRate()
+	{
+		return WorldNpcDropModifierService.CalculateBoostDropRate(
+			ConfiguredDropRate,
+			NpcBoostDropRate,
+			KillerBoostDropRate,
+			KillerDrBoost,
+			HasReposeEnergy,
+			HasSalvation,
+			HasActivePalace);
 	}
 }
