@@ -31,6 +31,7 @@ public sealed class SkillStatChangeConditionReadinessReportServiceTests
 		Assert.Equal(0, report.ConditionedChangeCount);
 		Assert.Equal(0, report.ConditionEntryCount);
 		Assert.Empty(report.ConditionNameCounts);
+		Assert.Empty(report.ValidatorPlans);
 		Assert.Empty(report.MissingInputs);
 	}
 
@@ -49,6 +50,17 @@ public sealed class SkillStatChangeConditionReadinessReportServiceTests
 				new SkillStatChangeConditionNameCount("weapon", 2)
 			],
 			report.ConditionNameCounts);
+		Assert.Equal(["front", "weapon"], report.ValidatorPlans.Select(plan => plan.ConditionName));
+		Assert.Equal(["FrontCondition", "WeaponCondition"], report.ValidatorPlans.Select(plan => plan.JavaConditionType));
+		Assert.Equal([1, 2], report.ValidatorPlans.Select(plan => plan.EntryCount));
+		Assert.All(report.ValidatorPlans, plan =>
+		{
+			Assert.Equal(SkillStatChangeConditionValidatorPlanStatus.BlockedMissingConditionValidatorProvider, plan.Status);
+			Assert.True(plan.HasJavaConditionMapping);
+			Assert.False(plan.HasLiveConditionValidatorProvider);
+			Assert.Contains("live Conditions.validate provider", plan.MissingInputs);
+			Assert.Contains("Conditions.validate", plan.JavaSource, StringComparison.Ordinal);
+		});
 		Assert.Contains("live Conditions.validate provider", report.MissingInputs);
 	}
 
@@ -62,6 +74,29 @@ public sealed class SkillStatChangeConditionReadinessReportServiceTests
 		Assert.Equal(SkillStatChangeConditionReadinessStatus.Ready, report.Status);
 		Assert.True(report.IsReadyForConditionedStatChanges);
 		Assert.Empty(report.MissingInputs);
+		Assert.All(report.ValidatorPlans, plan => Assert.True(plan.IsReadyForValidation));
+		Assert.Equal([SkillStatChangeConditionValidatorPlanStatus.Ready, SkillStatChangeConditionValidatorPlanStatus.Ready], report.ValidatorPlans.Select(plan => plan.Status));
+	}
+
+	[Fact]
+	public void CreateReport_BlocksUnknownConditionMetadataBeforeValidatorProviderReadiness()
+	{
+		var change = new SkillStatChange("BOOST_DROP_RATE", "ADD", 20, 0);
+		change.AddCondition(new SkillStatChangeConditionSummary("unsupported_condition", new Dictionary<string, string>(StringComparer.Ordinal)));
+		var report = SkillStatChangeConditionReadinessReportService.CreateReport(
+			new SkillTemplateTable(
+			[
+				CreateTemplate(8472, [new SkillBuffStatEffectSummary("boostdroprate", [change])])
+			]),
+			hasLiveConditionValidatorProvider: true);
+
+		Assert.Equal(SkillStatChangeConditionReadinessStatus.UnsupportedConditionMetadata, report.Status);
+		Assert.False(report.IsReadyForConditionedStatChanges);
+		var plan = Assert.Single(report.ValidatorPlans);
+		Assert.Equal(SkillStatChangeConditionValidatorPlanStatus.UnsupportedConditionMetadata, plan.Status);
+		Assert.Equal("unsupported", plan.JavaConditionType);
+		Assert.False(plan.HasJavaConditionMapping);
+		Assert.Contains("supported Java Conditions child mapping", report.MissingInputs);
 	}
 
 	private static SkillTemplateTable CreateConditionedSkillTemplates()

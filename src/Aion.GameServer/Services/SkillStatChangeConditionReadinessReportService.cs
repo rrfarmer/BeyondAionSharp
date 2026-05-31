@@ -36,10 +36,21 @@ public static class SkillStatChangeConditionReadinessReportService
 			}
 		}
 
+		var validatorPlans = conditionNameCounts
+			.OrderBy(pair => pair.Key, StringComparer.Ordinal)
+			.Select(pair => CreateValidatorPlan(pair.Key, pair.Value, hasLiveConditionValidatorProvider))
+			.ToArray();
+
+		if (validatorPlans.Any(plan => !plan.HasJavaConditionMapping))
+			missingInputs.Add("supported Java Conditions child mapping");
 		if (conditionEntryCount > 0 && !hasLiveConditionValidatorProvider)
 			missingInputs.Add("live Conditions.validate provider");
 
-		var status = DetermineStatus(skillTemplates, conditionEntryCount, hasLiveConditionValidatorProvider);
+		var status = DetermineStatus(
+			skillTemplates,
+			conditionEntryCount,
+			validatorPlans.Any(plan => !plan.HasJavaConditionMapping),
+			hasLiveConditionValidatorProvider);
 		return new SkillStatChangeConditionReadinessReport(
 			status,
 			conditionedChangeCount,
@@ -48,6 +59,7 @@ public static class SkillStatChangeConditionReadinessReportService
 				.OrderBy(pair => pair.Key, StringComparer.Ordinal)
 				.Select(pair => new SkillStatChangeConditionNameCount(pair.Key, pair.Value))
 				.ToArray(),
+			validatorPlans,
 			HasLiveConditionValidatorProvider: hasLiveConditionValidatorProvider,
 			missingInputs,
 			"Change.conditions -> Conditions.validate(Skill/Stat2/Effect); BufEffect.getModifiers attaches conditions to generated stat functions");
@@ -75,15 +87,81 @@ public static class SkillStatChangeConditionReadinessReportService
 	private static SkillStatChangeConditionReadinessStatus DetermineStatus(
 		SkillTemplateTable? skillTemplates,
 		int conditionEntryCount,
+		bool hasUnsupportedConditionMetadata,
 		bool hasLiveConditionValidatorProvider)
 	{
 		if (skillTemplates == null)
 			return SkillStatChangeConditionReadinessStatus.MissingSkillTemplates;
 		if (conditionEntryCount == 0)
 			return SkillStatChangeConditionReadinessStatus.NoConditionMetadata;
+		if (hasUnsupportedConditionMetadata)
+			return SkillStatChangeConditionReadinessStatus.UnsupportedConditionMetadata;
 		if (!hasLiveConditionValidatorProvider)
 			return SkillStatChangeConditionReadinessStatus.BlockedMissingConditionValidators;
 		return SkillStatChangeConditionReadinessStatus.Ready;
+	}
+
+	private static SkillStatChangeConditionValidatorPlan CreateValidatorPlan(
+		string conditionName,
+		int entryCount,
+		bool hasLiveConditionValidatorProvider)
+	{
+		var javaConditionType = MapJavaConditionType(conditionName);
+		var hasMapping = !string.IsNullOrEmpty(javaConditionType);
+		var missingInputs = new List<string>();
+
+		if (!hasMapping)
+			missingInputs.Add("supported Java Conditions child mapping");
+		if (hasMapping && !hasLiveConditionValidatorProvider)
+			missingInputs.Add("live Conditions.validate provider");
+
+		var status = !hasMapping
+			? SkillStatChangeConditionValidatorPlanStatus.UnsupportedConditionMetadata
+			: hasLiveConditionValidatorProvider
+				? SkillStatChangeConditionValidatorPlanStatus.Ready
+				: SkillStatChangeConditionValidatorPlanStatus.BlockedMissingConditionValidatorProvider;
+
+		return new SkillStatChangeConditionValidatorPlan(
+			status,
+			conditionName,
+			javaConditionType ?? "unsupported",
+			entryCount,
+			hasMapping,
+			hasLiveConditionValidatorProvider,
+			missingInputs,
+			"Conditions.validate iterates child Condition instances and returns false on the first child validator failure");
+	}
+
+	private static string? MapJavaConditionType(string conditionName)
+	{
+		return conditionName switch
+		{
+			"abnormal" => "AbnormalStateCondition",
+			"back" => "BackCondition",
+			"chain" => "ChainCondition",
+			"charge" => "ItemChargeCondition",
+			"chargearmor" => "ChargeArmorCondition",
+			"chargeweapon" => "ChargeWeaponCondition",
+			"combatcheck" => "CombatCheckCondition",
+			"dp" => "DpCondition",
+			"form" => "FormCondition",
+			"front" => "FrontCondition",
+			"hp" => "HpCondition",
+			"lefthandweapon" => "LeftHandCondition",
+			"move_casting" => "PlayerMovedCondition",
+			"mp" => "MpCondition",
+			"noflying" => "NoFlyingCondition",
+			"onfly" => "OnFlyCondition",
+			"polishchargeweapon" => "PolishChargeCondition",
+			"race" => "RaceCondition",
+			"ride_robot" => "RideRobotCondition",
+			"selfflying" => "SelfFlyingCondition",
+			"skillcharge" => "SkillChargeCondition",
+			"target" => "TargetCondition",
+			"targetflying" => "TargetFlyingCondition",
+			"weapon" => "WeaponCondition",
+			_ => null,
+		};
 	}
 }
 
@@ -91,7 +169,15 @@ public enum SkillStatChangeConditionReadinessStatus
 {
 	MissingSkillTemplates,
 	NoConditionMetadata,
+	UnsupportedConditionMetadata,
 	BlockedMissingConditionValidators,
+	Ready,
+}
+
+public enum SkillStatChangeConditionValidatorPlanStatus
+{
+	UnsupportedConditionMetadata,
+	BlockedMissingConditionValidatorProvider,
 	Ready,
 }
 
@@ -100,6 +186,7 @@ public sealed record SkillStatChangeConditionReadinessReport(
 	int ConditionedChangeCount,
 	int ConditionEntryCount,
 	IReadOnlyList<SkillStatChangeConditionNameCount> ConditionNameCounts,
+	IReadOnlyList<SkillStatChangeConditionValidatorPlan> ValidatorPlans,
 	bool HasLiveConditionValidatorProvider,
 	IReadOnlyList<string> MissingInputs,
 	string JavaSource)
@@ -108,3 +195,16 @@ public sealed record SkillStatChangeConditionReadinessReport(
 }
 
 public sealed record SkillStatChangeConditionNameCount(string ConditionName, int Count);
+
+public sealed record SkillStatChangeConditionValidatorPlan(
+	SkillStatChangeConditionValidatorPlanStatus Status,
+	string ConditionName,
+	string JavaConditionType,
+	int EntryCount,
+	bool HasJavaConditionMapping,
+	bool HasLiveConditionValidatorProvider,
+	IReadOnlyList<string> MissingInputs,
+	string JavaSource)
+{
+	public bool IsReadyForValidation => Status == SkillStatChangeConditionValidatorPlanStatus.Ready;
+}
