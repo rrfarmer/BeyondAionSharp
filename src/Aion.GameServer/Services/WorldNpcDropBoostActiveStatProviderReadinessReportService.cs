@@ -11,7 +11,12 @@ public static class WorldNpcDropBoostActiveStatProviderReadinessReportService
 		bool hasLiveStatFunctionRegistryProvider = false,
 		bool hasLiveCreatureGameStatsStatQueryProvider = false,
 		bool hasLiveConditionValidatorProvider = false,
-		int statFunctionPlanSkillLevel = 1)
+		int statFunctionPlanSkillLevel = 1,
+		bool hasLiveConcurrentStatFunctionStorage = false,
+		bool hasLiveStatFunctionInsertionProvider = false,
+		bool hasLiveStatFunctionRemovalProvider = false,
+		bool hasLiveSortedStatFunctionSnapshotProvider = false,
+		bool hasLiveStatsChangeRecalculationProvider = false)
 	{
 		var staticMetadataReport = WorldNpcDropBoostStatProviderReadinessReportService.CreateReport(
 			skillTemplates,
@@ -26,6 +31,13 @@ public static class WorldNpcDropBoostActiveStatProviderReadinessReportService
 			hasLiveEffectStatOwnerProvider,
 			hasLiveStatFunctionRegistryProvider,
 			hasLiveConditionValidatorProvider);
+		var statFunctionRegistryReadinessReport = SkillBuffStatFunctionRegistryReadinessReportService.CreateReport(
+			statFunctionPlans,
+			hasLiveConcurrentStatFunctionStorage,
+			hasLiveStatFunctionInsertionProvider,
+			hasLiveStatFunctionRemovalProvider,
+			hasLiveSortedStatFunctionSnapshotProvider,
+			hasLiveStatsChangeRecalculationProvider);
 		var missingInputs = new List<string>();
 
 		if (skillTemplates == null)
@@ -52,12 +64,18 @@ public static class WorldNpcDropBoostActiveStatProviderReadinessReportService
 			missingInputs.Add("live Conditions.validate provider");
 		if (statFunctionPlans.Any(plan => plan.Status == SkillBuffStatFunctionRegistryPlanStatus.UnsupportedFunction))
 			missingInputs.Add("supported BufEffect stat function mapping");
+		foreach (var missingInput in statFunctionRegistryReadinessReport.MissingInputs)
+		{
+			if (!missingInputs.Contains(missingInput, StringComparer.Ordinal))
+				missingInputs.Add(missingInput);
+		}
 
 		var status = DetermineStatus(
 			skillTemplates,
 			staticMetadataReport,
 			conditionReadinessReport,
 			statFunctionPlans,
+			statFunctionRegistryReadinessReport,
 			hasLiveActiveEffectControllerProvider,
 			hasLiveEffectStatOwnerProvider,
 			hasLiveStatFunctionRegistryProvider,
@@ -68,6 +86,7 @@ public static class WorldNpcDropBoostActiveStatProviderReadinessReportService
 			staticMetadataReport,
 			conditionReadinessReport,
 			statFunctionPlans,
+			statFunctionRegistryReadinessReport,
 			hasLiveActiveEffectControllerProvider,
 			hasLiveEffectStatOwnerProvider,
 			hasLiveStatFunctionRegistryProvider,
@@ -82,6 +101,7 @@ public static class WorldNpcDropBoostActiveStatProviderReadinessReportService
 		WorldNpcDropBoostStatProviderReadinessReport staticMetadataReport,
 		SkillStatChangeConditionReadinessReport conditionReadinessReport,
 		IReadOnlyList<SkillBuffStatFunctionRegistryPlan> statFunctionPlans,
+		SkillBuffStatFunctionRegistryReadinessReport statFunctionRegistryReadinessReport,
 		bool hasLiveActiveEffectControllerProvider,
 		bool hasLiveEffectStatOwnerProvider,
 		bool hasLiveStatFunctionRegistryProvider,
@@ -103,6 +123,8 @@ public static class WorldNpcDropBoostActiveStatProviderReadinessReportService
 			return WorldNpcDropBoostActiveStatProviderReadinessStatus.BlockedMissingEffectStatOwnerProvider;
 		if (!hasLiveStatFunctionRegistryProvider)
 			return WorldNpcDropBoostActiveStatProviderReadinessStatus.BlockedMissingStatFunctionRegistryProvider;
+		if (!statFunctionRegistryReadinessReport.IsReadyForLiveRegistry)
+			return WorldNpcDropBoostActiveStatProviderReadinessStatus.BlockedMissingStatFunctionRegistryReadiness;
 		if (!hasLiveCreatureGameStatsStatQueryProvider)
 			return WorldNpcDropBoostActiveStatProviderReadinessStatus.BlockedMissingCreatureGameStatsStatQueryProvider;
 		if (conditionReadinessReport.ConditionEntryCount > 0 && !hasLiveConditionValidatorProvider)
@@ -144,6 +166,7 @@ public enum WorldNpcDropBoostActiveStatProviderReadinessStatus
 	BlockedMissingActiveEffectControllerProvider,
 	BlockedMissingEffectStatOwnerProvider,
 	BlockedMissingStatFunctionRegistryProvider,
+	BlockedMissingStatFunctionRegistryReadiness,
 	BlockedMissingCreatureGameStatsStatQueryProvider,
 	BlockedMissingConditionValidatorProvider,
 	Ready,
@@ -154,6 +177,7 @@ public sealed record WorldNpcDropBoostActiveStatProviderReadinessReport(
 	WorldNpcDropBoostStatProviderReadinessReport StaticMetadataReport,
 	SkillStatChangeConditionReadinessReport ConditionReadinessReport,
 	IReadOnlyList<SkillBuffStatFunctionRegistryPlan> StatFunctionPlans,
+	SkillBuffStatFunctionRegistryReadinessReport StatFunctionRegistryReadinessReport,
 	bool HasLiveActiveEffectControllerProvider,
 	bool HasLiveEffectStatOwnerProvider,
 	bool HasLiveStatFunctionRegistryProvider,
