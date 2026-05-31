@@ -1167,6 +1167,9 @@ public sealed class CraftServiceTests
 		Assert.Same(mutation, persistence.MutationPlan);
 		Assert.Equal([8030, 8031], persistence.DeletedObjectIds);
 		Assert.Empty(persistence.NoActionDeletedObjectIds);
+		Assert.Equal([8030, 8031], persistence.ObjectIdsPendingRelease);
+		Assert.True(persistence.WouldReleaseObjectIdsAfterSuccessfulDelete);
+		Assert.False(persistence.DidReleaseObjectIds);
 		Assert.Collection(
 			persistence.UpdatedItems,
 			item =>
@@ -1207,6 +1210,43 @@ public sealed class CraftServiceTests
 				Assert.Equal(CraftStartInventoryPersistenceOperationKind.UpdateItem, operation.Kind);
 				Assert.Equal(8033, operation.UpdatedItem?.ObjectId);
 			});
+		Assert.Collection(
+			persistence.SqlDescriptors,
+			descriptor =>
+			{
+				Assert.Equal(CraftStartInventoryPersistenceSqlOperationKind.DeleteInventoryRow, descriptor.Kind);
+				Assert.Equal(8030, descriptor.DeletedObjectId);
+				Assert.Equal(CraftStartInventoryPersistencePlan.JavaInventoryDeleteSql, descriptor.Sql);
+				Assert.Equal("DELETE FROM inventory WHERE item_unique_id=?", descriptor.Sql);
+				Assert.Equal("InventoryDAO.deleteItems", descriptor.JavaDaoMethod);
+				Assert.Equal("stmt.setInt(1, item.getObjectId())", descriptor.JavaParameterSource);
+				Assert.True(descriptor.WouldExecuteSql);
+				Assert.False(descriptor.DidExecuteSql);
+			},
+			descriptor =>
+			{
+				Assert.Equal(CraftStartInventoryPersistenceSqlOperationKind.DeleteInventoryRow, descriptor.Kind);
+				Assert.Equal(8031, descriptor.DeletedObjectId);
+				Assert.Equal(CraftStartInventoryPersistencePlan.JavaInventoryDeleteSql, descriptor.Sql);
+			},
+			descriptor =>
+			{
+				Assert.Equal(CraftStartInventoryPersistenceSqlOperationKind.UpdateInventoryRow, descriptor.Kind);
+				Assert.Equal(8032, descriptor.UpdatedItem?.ObjectId);
+				Assert.Equal(2, descriptor.UpdatedItem?.Count);
+				Assert.Equal(CraftStartInventoryPersistencePlan.JavaInventoryUpdateSql, descriptor.Sql);
+				Assert.Equal("UPDATE inventory SET item_count=?, item_color=?, color_expires=?, item_creator=?, expire_time=?, activation_count=?, item_owner=?, is_equipped=?, is_soul_bound=?, slot=?, item_location=?, enchant=?, enchant_bonus=?, item_skin=?, fusioned_item=?, optional_socket=?, optional_fusion_socket=?, charge=?, tune_count=?, rnd_bonus=?, fusion_rnd_bonus=?, tempering=?, pack_count=?, is_amplified=?, buff_skill=?, rnd_plume_bonus=? WHERE item_unique_id=?", descriptor.Sql);
+				Assert.Equal("InventoryDAO.updateItems", descriptor.JavaDaoMethod);
+				Assert.Equal("stmt.setLong(1, item.getItemCount()) ... stmt.setInt(27, item.getObjectId())", descriptor.JavaParameterSource);
+				Assert.True(descriptor.WouldExecuteSql);
+				Assert.False(descriptor.DidExecuteSql);
+			},
+			descriptor =>
+			{
+				Assert.Equal(CraftStartInventoryPersistenceSqlOperationKind.UpdateInventoryRow, descriptor.Kind);
+				Assert.Equal(8033, descriptor.UpdatedItem?.ObjectId);
+				Assert.Equal(CraftStartInventoryPersistencePlan.JavaInventoryUpdateSql, descriptor.Sql);
+			});
 		Assert.All(mutation.UpdatedItems, item => Assert.Equal(InventoryItemPersistentState.Updated, item.PersistentState));
 		Assert.Contains("InventoryDAO.store", persistence.JavaSource, StringComparison.Ordinal);
 	}
@@ -1236,6 +1276,10 @@ public sealed class CraftServiceTests
 		Assert.Equal(CraftStartInventoryPersistenceStatus.Planned, persistence.Status);
 		Assert.Empty(persistence.DeletedObjectIds);
 		Assert.Equal([8034], persistence.NoActionDeletedObjectIds);
+		Assert.Empty(persistence.SqlDescriptors);
+		Assert.Empty(persistence.ObjectIdsPendingRelease);
+		Assert.False(persistence.WouldReleaseObjectIdsAfterSuccessfulDelete);
+		Assert.False(persistence.DidReleaseObjectIds);
 		var operation = Assert.Single(persistence.Operations);
 		Assert.Equal(CraftStartInventoryPersistenceOperationKind.NoAction, operation.Kind);
 		Assert.Equal(InventoryItemPersistentState.NoAction, operation.PersistentState);
@@ -1305,6 +1349,10 @@ public sealed class CraftServiceTests
 
 		Assert.Equal(CraftStartInventoryPersistenceStatus.MutationNotPlanned, persistence.Status);
 		Assert.Empty(persistence.Operations);
+		Assert.Empty(persistence.SqlDescriptors);
+		Assert.Empty(persistence.ObjectIdsPendingRelease);
+		Assert.False(persistence.WouldReleaseObjectIdsAfterSuccessfulDelete);
+		Assert.False(persistence.DidReleaseObjectIds);
 	}
 
 	[Fact]

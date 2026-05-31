@@ -1633,13 +1633,20 @@ public sealed record CraftStartInventoryPersistencePlan(
 	CraftStartInventoryPersistenceStatus Status,
 	CraftStartInventoryMutationPlan? MutationPlan,
 	IReadOnlyList<CraftStartInventoryPersistenceOperation> Operations,
+	IReadOnlyList<CraftStartInventoryPersistenceSqlDescriptor> SqlDescriptors,
 	IReadOnlyList<InventoryItem> UpdatedItems,
 	IReadOnlyList<int> DeletedObjectIds,
 	IReadOnlyList<int> NoActionDeletedObjectIds,
+	IReadOnlyList<int> ObjectIdsPendingRelease,
+	bool WouldReleaseObjectIdsAfterSuccessfulDelete,
+	bool DidReleaseObjectIds,
 	bool ShouldWriteLiveState,
 	string JavaSource,
 	bool IsLive)
 {
+	public const string JavaInventoryDeleteSql = "DELETE FROM inventory WHERE item_unique_id=?";
+	public const string JavaInventoryUpdateSql = "UPDATE inventory SET item_count=?, item_color=?, color_expires=?, item_creator=?, expire_time=?, activation_count=?, item_owner=?, is_equipped=?, is_soul_bound=?, slot=?, item_location=?, enchant=?, enchant_bonus=?, item_skin=?, fusioned_item=?, optional_socket=?, optional_fusion_socket=?, charge=?, tune_count=?, rnd_bonus=?, fusion_rnd_bonus=?, tempering=?, pack_count=?, is_amplified=?, buff_skill=?, rnd_plume_bonus=? WHERE item_unique_id=?";
+
 	public bool IsPlanned => Status == CraftStartInventoryPersistenceStatus.Planned;
 
 	public static CraftStartInventoryPersistencePlan NotPlanned(string javaSource)
@@ -1648,9 +1655,13 @@ public sealed record CraftStartInventoryPersistencePlan(
 			CraftStartInventoryPersistenceStatus.NotPlanned,
 			MutationPlan: null,
 			Operations: Array.Empty<CraftStartInventoryPersistenceOperation>(),
+			SqlDescriptors: Array.Empty<CraftStartInventoryPersistenceSqlDescriptor>(),
 			UpdatedItems: Array.Empty<InventoryItem>(),
 			DeletedObjectIds: Array.Empty<int>(),
 			NoActionDeletedObjectIds: Array.Empty<int>(),
+			ObjectIdsPendingRelease: Array.Empty<int>(),
+			WouldReleaseObjectIdsAfterSuccessfulDelete: false,
+			DidReleaseObjectIds: false,
 			ShouldWriteLiveState: false,
 			javaSource,
 			IsLive: false);
@@ -1662,9 +1673,13 @@ public sealed record CraftStartInventoryPersistencePlan(
 			CraftStartInventoryPersistenceStatus.MutationNotPlanned,
 			mutationPlan,
 			Operations: Array.Empty<CraftStartInventoryPersistenceOperation>(),
+			SqlDescriptors: Array.Empty<CraftStartInventoryPersistenceSqlDescriptor>(),
 			UpdatedItems: Array.Empty<InventoryItem>(),
 			DeletedObjectIds: Array.Empty<int>(),
 			NoActionDeletedObjectIds: Array.Empty<int>(),
+			ObjectIdsPendingRelease: Array.Empty<int>(),
+			WouldReleaseObjectIdsAfterSuccessfulDelete: false,
+			DidReleaseObjectIds: false,
 			ShouldWriteLiveState: false,
 			"InventoryDAO.store is not planned when CraftService.checkCraft inventory mutation was not planned",
 			IsLive: false);
@@ -1674,25 +1689,87 @@ public sealed record CraftStartInventoryPersistencePlan(
 		CraftStartInventoryMutationPlan mutationPlan,
 		IReadOnlyList<CraftStartInventoryPersistenceOperation> operations)
 	{
+		var operationSnapshot = operations.ToArray();
+		var deletedObjectIds = operationSnapshot
+			.Where(operation => operation.Kind == CraftStartInventoryPersistenceOperationKind.DeleteItem)
+			.Select(operation => operation.DeletedObjectId!.Value)
+			.ToArray();
+
 		return new CraftStartInventoryPersistencePlan(
 			CraftStartInventoryPersistenceStatus.Planned,
 			mutationPlan,
-			operations.ToArray(),
-			operations
+			operationSnapshot,
+			CreateSqlDescriptors(operationSnapshot),
+			operationSnapshot
 				.Where(operation => operation.Kind == CraftStartInventoryPersistenceOperationKind.UpdateItem)
 				.Select(operation => operation.UpdatedItem!)
 				.ToArray(),
-			operations
-				.Where(operation => operation.Kind == CraftStartInventoryPersistenceOperationKind.DeleteItem)
-				.Select(operation => operation.DeletedObjectId!.Value)
-				.ToArray(),
-			operations
+			deletedObjectIds,
+			operationSnapshot
 				.Where(operation => operation.Kind == CraftStartInventoryPersistenceOperationKind.NoAction)
 				.Select(operation => operation.DeletedObjectId!.Value)
 				.ToArray(),
+			ObjectIdsPendingRelease: deletedObjectIds,
+			WouldReleaseObjectIdsAfterSuccessfulDelete: deletedObjectIds.Length > 0,
+			DidReleaseObjectIds: false,
 			ShouldWriteLiveState: false,
 			"Storage.decreaseItemCount dirty states -> InventoryDAO.store deleteItems before updateItems",
 			IsLive: false);
+	}
+
+	private static IReadOnlyList<CraftStartInventoryPersistenceSqlDescriptor> CreateSqlDescriptors(
+		IReadOnlyList<CraftStartInventoryPersistenceOperation> operations)
+	{
+		var descriptors = new List<CraftStartInventoryPersistenceSqlDescriptor>();
+		foreach (var operation in operations.Where(operation => operation.Kind == CraftStartInventoryPersistenceOperationKind.DeleteItem))
+			descriptors.Add(CraftStartInventoryPersistenceSqlDescriptor.DeleteInventoryRow(operation));
+
+		foreach (var operation in operations.Where(operation => operation.Kind == CraftStartInventoryPersistenceOperationKind.UpdateItem))
+			descriptors.Add(CraftStartInventoryPersistenceSqlDescriptor.UpdateInventoryRow(operation));
+
+		return descriptors;
+	}
+}
+
+public sealed record CraftStartInventoryPersistenceSqlDescriptor(
+	CraftStartInventoryPersistenceSqlOperationKind Kind,
+	CraftStartInventoryPersistenceOperation Operation,
+	InventoryItem? UpdatedItem,
+	int? DeletedObjectId,
+	string Sql,
+	string JavaDaoMethod,
+	string JavaParameterSource,
+	bool WouldExecuteSql,
+	bool DidExecuteSql)
+{
+	public static CraftStartInventoryPersistenceSqlDescriptor DeleteInventoryRow(
+		CraftStartInventoryPersistenceOperation operation)
+	{
+		return new CraftStartInventoryPersistenceSqlDescriptor(
+			CraftStartInventoryPersistenceSqlOperationKind.DeleteInventoryRow,
+			operation,
+			UpdatedItem: null,
+			operation.DeletedObjectId,
+			CraftStartInventoryPersistencePlan.JavaInventoryDeleteSql,
+			"InventoryDAO.deleteItems",
+			"stmt.setInt(1, item.getObjectId())",
+			WouldExecuteSql: true,
+			DidExecuteSql: false);
+	}
+
+	public static CraftStartInventoryPersistenceSqlDescriptor UpdateInventoryRow(
+		CraftStartInventoryPersistenceOperation operation)
+	{
+		return new CraftStartInventoryPersistenceSqlDescriptor(
+			CraftStartInventoryPersistenceSqlOperationKind.UpdateInventoryRow,
+			operation,
+			operation.UpdatedItem,
+			DeletedObjectId: null,
+			CraftStartInventoryPersistencePlan.JavaInventoryUpdateSql,
+			"InventoryDAO.updateItems",
+			"stmt.setLong(1, item.getItemCount()) ... stmt.setInt(27, item.getObjectId())",
+			WouldExecuteSql: true,
+			DidExecuteSql: false);
 	}
 }
 
@@ -1743,6 +1820,12 @@ public enum CraftStartInventoryPersistenceOperationKind
 	UpdateItem,
 	DeleteItem,
 	NoAction,
+}
+
+public enum CraftStartInventoryPersistenceSqlOperationKind
+{
+	DeleteInventoryRow,
+	UpdateInventoryRow,
 }
 
 public enum CraftStartInventoryPersistenceStatus
