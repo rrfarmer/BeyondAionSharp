@@ -1,3 +1,4 @@
+using Aion.GameServer.Configuration;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Services;
@@ -208,6 +209,32 @@ public sealed class WorldNpcDropModifierServiceTests
 		Assert.DoesNotContain("active palace source", plan.MissingInputs);
 		Assert.NotNull(plan.Context);
 		Assert.Equal(1.05f, plan.Context.CalculateBoostDropRate(), precision: 3);
+	}
+
+	[Fact]
+	public void CreateDisabledPlan_ConsumesDropRatesFromGameServerRateOptions()
+	{
+		var looter = new Player
+		{
+			ObjectId = 1001,
+			AccountMembership = 4,
+		};
+		var rateOptions = new GameServerRateOptions
+		{
+			DropRates = [1f, 2f, 3f],
+		};
+
+		var plan = WorldNpcDropBoostRateContextPlanService.CreateDisabledPlan(
+			looter,
+			rateOptions,
+			hasActivePalaceSource: true);
+
+		Assert.Equal(WorldNpcDropBoostRateContextPlanStatus.Blocked, plan.Status);
+		Assert.Equal(3f, plan.ConfiguredDropRate);
+		Assert.NotNull(plan.Context);
+		Assert.Equal(3f, plan.Context.CalculateBoostDropRate(), precision: 3);
+		Assert.DoesNotContain("RatesConfig.DROP_RATES", plan.MissingInputs);
+		Assert.Contains("npc BOOST_DROP_RATE stat source", plan.MissingInputs);
 	}
 
 	private static WorldNpc CreateNpc(int level)

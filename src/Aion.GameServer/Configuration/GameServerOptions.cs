@@ -251,6 +251,7 @@ public sealed class GameServerOptions
 				GpRates = GetFloatListWithEnvironment(loader, "gameserver.rates.gp.gain", "1.0, 2.0"),
 				XpQuestRates = GetFloatListWithEnvironment(loader, "gameserver.rates.xp.quest", "1.0, 2.0"),
 				QuestKinahRates = GetFloatListWithEnvironment(loader, "gameserver.rates.kinah.quest", "1.0, 2.0"),
+				DropRates = GetFloatListWithEnvironment(loader, "gameserver.rates.drop", "1.0, 2.0"),
 				PvpArenaDisciplineRewardRates = GetFloatListWithEnvironment(loader, "gameserver.rates.pvparena.discipline", "1.0, 2.0"),
 				PvpArenaChaosRewardRates = GetFloatListWithEnvironment(loader, "gameserver.rates.pvparena.chaos", "1.0, 2.0"),
 				PvpArenaHarmonyRewardRates = GetFloatListWithEnvironment(loader, "gameserver.rates.pvparena.harmony", "1.0, 2.0"),
@@ -619,6 +620,8 @@ public sealed class GameServerRateOptions
 	public IReadOnlyList<float> XpQuestRates { get; init; } = [1f, 2f];
 
 	public IReadOnlyList<float> QuestKinahRates { get; init; } = [1f, 2f];
+
+	public IReadOnlyList<float> DropRates { get; init; } = [1f, 2f];
 
 	public IReadOnlyList<float> PvpArenaDisciplineRewardRates { get; init; } = [1f, 2f];
 

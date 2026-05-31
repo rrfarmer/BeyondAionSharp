@@ -39,6 +39,7 @@ public class GameServerOptionsTests
 		Assert.Equal([1f, 2f], options.Rates.GpRates);
 		Assert.Equal([1f, 2f], options.Rates.XpQuestRates);
 		Assert.Equal([1f, 2f], options.Rates.QuestKinahRates);
+		Assert.Equal([1f, 2f], options.Rates.DropRates);
 		Assert.Equal(100, options.Prices.DefaultPrices);
 		Assert.Equal(100, options.Prices.DefaultModifier);
 		Assert.Equal(100, options.Prices.DefaultTaxes);
@@ -152,6 +153,7 @@ public class GameServerOptionsTests
 				gameserver.rates.gp.gain = 1.25, 2.25
 				gameserver.rates.xp.quest = 1.75, 2.75
 				gameserver.rates.kinah.quest = 1.5, 2.5, 3.5
+				gameserver.rates.drop = 0.5, 1.5, 2.5
 				gameserver.prices.default.prices = 110
 				gameserver.prices.default.modifier = 95
 				gameserver.prices.default.taxes = 105
@@ -178,6 +180,7 @@ public class GameServerOptionsTests
 			Assert.Equal([1.25f, 2.25f], options.Rates.GpRates);
 			Assert.Equal([1.75f, 2.75f], options.Rates.XpQuestRates);
 			Assert.Equal([1.5f, 2.5f, 3.5f], options.Rates.QuestKinahRates);
+			Assert.Equal([0.5f, 1.5f, 2.5f], options.Rates.DropRates);
 			Assert.Equal(110, options.Prices.DefaultPrices);
 			Assert.Equal(95, options.Prices.DefaultModifier);
 			Assert.Equal(105, options.Prices.DefaultTaxes);

@@ -1,3 +1,4 @@
+using Aion.GameServer.Configuration;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 
@@ -96,6 +97,28 @@ public sealed record WorldNpcDropBoostRateContext(
 
 public static class WorldNpcDropBoostRateContextPlanService
 {
+	public static WorldNpcDropBoostRateContextPlan CreateDisabledPlan(
+		Player? looter,
+		GameServerRateOptions? rateOptions,
+		bool hasNpcBoostStatSource = false,
+		bool hasKillerBoostStatSource = false,
+		bool hasKillerDrBoostStatSource = false,
+		bool hasSalvationSource = false,
+		bool hasActivePalaceSource = false,
+		HousingTemplateTable? housingTemplates = null)
+	{
+		// Java parity: RatesConfig.DROP_RATES is now represented by GameServerRateOptions.DropRates.
+		return CreateDisabledPlan(
+			looter,
+			rateOptions?.DropRates,
+			hasNpcBoostStatSource,
+			hasKillerBoostStatSource,
+			hasKillerDrBoostStatSource,
+			hasSalvationSource,
+			hasActivePalaceSource,
+			housingTemplates);
+	}
+
 	public static WorldNpcDropBoostRateContextPlan CreateDisabledPlan(
 		Player? looter,
 		IReadOnlyList<float>? configuredDropRates,
