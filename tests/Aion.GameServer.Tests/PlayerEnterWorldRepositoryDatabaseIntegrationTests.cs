@@ -218,6 +218,52 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 	}
 
 	[Fact]
+	public async Task SavePlayerLogoutAsync_WritesCraftCooldownsAfterPortalCooldownsAgainstJavaSchema_WhenEnabled()
+	{
+		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
+			return;
+
+		// Java source breadcrumbs: PlayerService.storePlayer calls PortalCooldownsDAO,
+		// CraftCooldownsDAO, then HouseObjectCooldownsDAO during logout persistence.
+		InitializeDatabaseFactory();
+		await InitializeSchemaAsync();
+		await SeedPlayerAsync();
+		await ExecuteNonQueryAsync(
+			"""
+			INSERT INTO craft_cooldowns (player_id, delay_id, reuse_time)
+			VALUES (1001, 10, 10000), (1001, 11, 11000)
+			""");
+
+		var repository = new MySqlPlayerEnterWorldRepository(
+			new GameServerRuntimeContext(),
+			NullLogger<MySqlPlayerEnterWorldRepository>.Instance);
+		var player = new Player
+		{
+			ObjectId = PlayerObjectId,
+			Name = "PurifyIntegration",
+			Position = new WorldPosition(210010000, 11, 22, 33, 44),
+			PortalCooldowns = new Dictionary<int, PlayerPortalCooldown>
+			{
+				[300030000] = new PlayerPortalCooldown(300030000, 4_102_444_800_000, EntryCount: 2),
+			},
+			CraftCooldowns = new Dictionary<int, long>
+			{
+				[77] = 4_102_444_800_000,
+				[78] = 500,
+			},
+		};
+
+		var saved = await repository.SavePlayerLogoutAsync(player, new DateTime(2026, 5, 30, 13, 30, 0, DateTimeKind.Local));
+
+		Assert.True(saved);
+		Assert.Equal(1, await ExecuteScalarLongAsync("SELECT COUNT(*) FROM portal_cooldowns WHERE player_id = 1001"));
+		Assert.Equal(2, await ExecuteScalarLongAsync("SELECT entry_count FROM portal_cooldowns WHERE player_id = 1001 AND world_id = 300030000"));
+		Assert.Equal(1, await ExecuteScalarLongAsync("SELECT COUNT(*) FROM craft_cooldowns WHERE player_id = 1001"));
+		Assert.Equal(4_102_444_800_000, await ExecuteScalarLongAsync("SELECT reuse_time FROM craft_cooldowns WHERE player_id = 1001 AND delay_id = 77"));
+		Assert.Equal(0, await ExecuteScalarLongAsync("SELECT COUNT(*) FROM craft_cooldowns WHERE player_id = 1001 AND delay_id IN (10, 11, 78)"));
+	}
+
+	[Fact]
 	public async Task SaveItemPurificationMutation_WritesInventoryStonesAndAbyssRankAgainstJavaSchema_WhenEnabled()
 	{
 		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
