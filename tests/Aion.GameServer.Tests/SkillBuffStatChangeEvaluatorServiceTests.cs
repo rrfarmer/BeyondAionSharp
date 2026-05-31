@@ -44,6 +44,7 @@ public sealed class SkillBuffStatChangeEvaluatorServiceTests
 		Assert.Equal(127, evaluation.Current);
 		Assert.Equal(["REPLACE", "PERCENT", "ADD"], evaluation.Steps.Select(step => step.Func).ToArray());
 		Assert.Equal([40, 50, 60], evaluation.Steps.Select(step => step.Priority).ToArray());
+		Assert.Contains("SkillBuffStatFormulaService", evaluation.JavaSource, StringComparison.Ordinal);
 	}
 
 	[Fact]
@@ -58,6 +59,22 @@ public sealed class SkillBuffStatChangeEvaluatorServiceTests
 		Assert.Equal(SkillBuffStatChangeEvaluationStatus.Evaluated, evaluation.Status);
 		Assert.Equal(9.9f, evaluation.Bonus, precision: 3);
 		Assert.Equal(109, evaluation.Current);
+	}
+
+	[Fact]
+	public void Evaluate_UsesJavaNegativeSpeedRateCurrentValueBase()
+	{
+		var evaluation = SkillBuffStatChangeEvaluatorService.Evaluate(
+			"SPEED",
+			100,
+			[new SkillStatChange("SPEED", "PERCENT", -50, 0)],
+			skillLevel: 1,
+			initialBonus: -10);
+
+		Assert.Equal(SkillBuffStatChangeEvaluationStatus.Evaluated, evaluation.Status);
+		Assert.Equal(100, evaluation.FinalBase);
+		Assert.Equal(-55, evaluation.Bonus);
+		Assert.Equal(45, evaluation.Current);
 	}
 
 	[Fact]

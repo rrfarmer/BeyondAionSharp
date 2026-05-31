@@ -8,8 +8,10 @@ public static class SkillBuffStatChangeEvaluatorService
 		string statName,
 		float baseValue,
 		IReadOnlyList<SkillStatChange> changes,
-		int skillLevel)
+		int skillLevel,
+		float initialBonus = 0f)
 	{
+		var initialState = SkillBuffStatFormulaService.CreateState(baseValue, initialBonus);
 		var applicableChanges = changes
 			.Where(change => string.Equals(change.Stat, statName, StringComparison.Ordinal))
 			.Select(change => new SkillBuffStatChangeStep(
@@ -31,8 +33,8 @@ public static class SkillBuffStatChangeEvaluatorService
 				statName,
 				baseValue,
 				baseValue,
-				0,
-				(int)baseValue,
+				initialBonus,
+				SkillBuffStatFormulaService.GetCurrent(initialState),
 				applicableChanges,
 				"BufEffect.getModifiers -> no matching Change.stat for requested StatEnum");
 		}
@@ -44,8 +46,8 @@ public static class SkillBuffStatChangeEvaluatorService
 				statName,
 				baseValue,
 				baseValue,
-				0,
-				(int)baseValue,
+				initialBonus,
+				SkillBuffStatFormulaService.GetCurrent(initialState),
 				applicableChanges,
 				"BufEffect.getModifiers supports ADD, PERCENT, and REPLACE for this evaluator slice");
 		}
@@ -57,39 +59,42 @@ public static class SkillBuffStatChangeEvaluatorService
 				statName,
 				baseValue,
 				baseValue,
-				0,
-				(int)baseValue,
+				initialBonus,
+				SkillBuffStatFormulaService.GetCurrent(initialState),
 				applicableChanges,
 				"BufEffect.getModifiers attaches Change.conditions to stat functions; this pure evaluator does not evaluate Conditions.validate");
 		}
 
-		var currentBase = baseValue;
-		var bonus = 0f;
+		var state = initialState;
 		foreach (var step in applicableChanges)
 		{
-			switch (step.Func)
+			state = step.Func switch
 			{
-				case "REPLACE":
-					currentBase = step.EffectiveValue;
-					break;
-				case "PERCENT":
-					bonus += (int)currentBase * step.EffectiveValue / 100f;
-					break;
-				case "ADD":
-					bonus += step.EffectiveValue;
-					break;
-			}
+				"REPLACE" => SkillBuffStatFormulaService.ApplySet(state, step.EffectiveValue, isBonus: false),
+				"PERCENT" => SkillBuffStatFormulaService.ApplyRate(
+					state,
+					SkillBuffStatFormulaMode.Addition,
+					statName,
+					step.EffectiveValue,
+					isBonus: true),
+				"ADD" => SkillBuffStatFormulaService.ApplyAdd(
+					state,
+					SkillBuffStatFormulaMode.Addition,
+					step.EffectiveValue,
+					isBonus: true),
+				_ => state,
+			};
 		}
 
 		return new SkillBuffStatChangeEvaluation(
 			SkillBuffStatChangeEvaluationStatus.Evaluated,
 			statName,
 			baseValue,
-			currentBase,
-			bonus,
-			(int)(currentBase + bonus),
+			state.Base,
+			state.Bonus,
+			SkillBuffStatFormulaService.GetCurrent(state),
 			applicableChanges,
-			"BufEffect.getModifiers -> StatSetFunction priority 40, StatRateFunction bonus priority 50, StatAddFunction bonus priority 60, AdditionStat.getCurrent truncates to int");
+			"BufEffect.getModifiers -> StatSetFunction priority 40, StatRateFunction bonus priority 50, StatAddFunction bonus priority 60; SkillBuffStatFormulaService mirrors AdditionStat/Stat2 math and Java negative SPEED rate handling for this isolated evaluator");
 	}
 
 	private static int GetPriority(string func)
