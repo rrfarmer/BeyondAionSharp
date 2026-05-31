@@ -245,6 +245,37 @@ public sealed class CraftService
 		return CraftStartConsumptionPlan.Planned(validationPlan, recipeTemplate.RecipeId, decreases);
 	}
 
+	public CraftStartTaskPlan CreateStartTaskPlan(
+		CraftStartValidationPlan? validationPlan,
+		ItemTemplateSummary? productTemplate,
+		int craftType = 0)
+	{
+		// Java parity: CraftService.startCrafting computes skillLvlDiff, CraftingTask bonus,
+		// quality-based interval cap, morph interval, and non-morph interval before task start.
+		if (validationPlan == null)
+			return CraftStartTaskPlan.NotPlanned("CraftService.startCrafting task planning requires validation evidence");
+		if (!validationPlan.IsReadyForNextValidation)
+			return CraftStartTaskPlan.NotPlanned("CraftService.startCrafting task is not planned when checkCraft returned false");
+		if (productTemplate == null)
+			return CraftStartTaskPlan.NotPlanned("CraftService.startCrafting task planning requires item template");
+
+		var intervalCap = GetCraftIntervalCap(productTemplate.Quality);
+		var skillLevelDiff = validationPlan.CurrentSkillLevel - validationPlan.RequiredSkillPoint;
+		var interval = validationPlan.SkillId == CraftStartValidationPlan.MorphSubstancesSkillId
+			? 200
+			: Math.Max(intervalCap, 2500 - (skillLevelDiff * 60));
+		var bonusCritModifier = craftType == 1 ? 15 : 0;
+
+		return CraftStartTaskPlan.Planned(
+			validationPlan,
+			productTemplate.TemplateId,
+			productTemplate.Quality,
+			skillLevelDiff,
+			intervalCap,
+			interval,
+			bonusCritModifier);
+	}
+
 	public CraftFinishProductPlan CreateFinishProductPlan(Player? player, RecipeTemplateSummary? recipeTemplate, int critCount)
 	{
 		// Java parity: services/craft/CraftService.finishCrafting product-selection branch.
@@ -404,6 +435,17 @@ public sealed class CraftService
 			40008 => 169401079,
 			40010 => 169401082,
 			_ => 0,
+		};
+	}
+
+	private static int GetCraftIntervalCap(string itemQuality)
+	{
+		// Java parity: CraftService.startCrafting switch(itemTemplate.getItemQuality()).
+		return itemQuality switch
+		{
+			"UNIQUE" or "EPIC" => 1500,
+			"MYTHIC" => 1700,
+			_ => 1200,
 		};
 	}
 
@@ -1210,6 +1252,64 @@ public enum CraftStartConsumedItemKind
 {
 	BonusItem,
 	Component,
+}
+
+public sealed record CraftStartTaskPlan(
+	CraftStartTaskPlanStatus Status,
+	CraftStartValidationPlan? ValidationPlan,
+	int ProductItemId,
+	string ProductQuality,
+	int SkillLevelDiff,
+	int IntervalCap,
+	int Interval,
+	int BonusCritModifier,
+	string JavaSource,
+	bool IsLive)
+{
+	public bool IsPlanned => Status == CraftStartTaskPlanStatus.Planned;
+
+	public static CraftStartTaskPlan NotPlanned(string javaSource)
+	{
+		return new CraftStartTaskPlan(
+			CraftStartTaskPlanStatus.NotPlanned,
+			ValidationPlan: null,
+			ProductItemId: 0,
+			ProductQuality: string.Empty,
+			SkillLevelDiff: 0,
+			IntervalCap: 0,
+			Interval: 0,
+			BonusCritModifier: 0,
+			javaSource,
+			IsLive: false);
+	}
+
+	public static CraftStartTaskPlan Planned(
+		CraftStartValidationPlan validationPlan,
+		int productItemId,
+		string productQuality,
+		int skillLevelDiff,
+		int intervalCap,
+		int interval,
+		int bonusCritModifier)
+	{
+		return new CraftStartTaskPlan(
+			CraftStartTaskPlanStatus.Planned,
+			validationPlan,
+			productItemId,
+			productQuality,
+			skillLevelDiff,
+			intervalCap,
+			interval,
+			bonusCritModifier,
+			"CraftService.startCrafting -> set CraftingTask, setInterval, then start",
+			IsLive: false);
+	}
+}
+
+public enum CraftStartTaskPlanStatus
+{
+	NotPlanned,
+	Planned,
 }
 
 public sealed record CraftFinishProductPlan(

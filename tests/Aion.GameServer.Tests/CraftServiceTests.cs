@@ -1039,6 +1039,129 @@ public sealed class CraftServiceTests
 	}
 
 	[Fact]
+	public void CreateStartTaskPlan_UsesJavaIntervalFormulaAndBonusModifier()
+	{
+		var service = CreateService(out _, CreateItemTemplates(), CreateSkillTemplates());
+		var player = CreatePlayer(objectId: 1138, dp: 700);
+		var recipe = CreateRecipe(recipeId: 155000031, dp: 600, productId: 100200203, skillId: 40001, skillPoint: 200);
+		player.Recipes = [recipe.RecipeId];
+		player.Skills = [CreateSkill(recipe.SkillId, skillLevel: 205)];
+		var productTemplate = CreateItemTemplates().GetItemTemplate(100200203);
+		var target = CreateTarget(objectId: 9024, templateId: 730190);
+		var validation = service.CreateStartCraftingValidationPlan(
+			player,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false);
+
+		var plan = service.CreateStartTaskPlan(validation, productTemplate, craftType: 1);
+
+		Assert.Equal(CraftStartTaskPlanStatus.Planned, plan.Status);
+		Assert.False(plan.IsLive);
+		Assert.Same(validation, plan.ValidationPlan);
+		Assert.Equal(100200203, plan.ProductItemId);
+		Assert.Equal("COMMON", plan.ProductQuality);
+		Assert.Equal(5, plan.SkillLevelDiff);
+		Assert.Equal(1200, plan.IntervalCap);
+		Assert.Equal(2200, plan.Interval);
+		Assert.Equal(15, plan.BonusCritModifier);
+		Assert.Contains("setInterval", plan.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void CreateStartTaskPlan_AppliesQualityIntervalCaps()
+	{
+		var service = CreateService(out _, CreateItemTemplates(), CreateSkillTemplates());
+		var player = CreatePlayer(objectId: 1139, dp: 700);
+		var recipe = CreateRecipe(recipeId: 155000032, dp: 600, productId: 100200203, skillId: 40001, skillPoint: 200);
+		player.Recipes = [recipe.RecipeId];
+		player.Skills = [CreateSkill(recipe.SkillId, skillLevel: 230)];
+		var commonProduct = CreateItemTemplates().GetItemTemplate(100200203)!;
+		var uniqueProduct = commonProduct with { Quality = "UNIQUE" };
+		var mythicProduct = commonProduct with { Quality = "MYTHIC" };
+		var target = CreateTarget(objectId: 9025, templateId: 730190);
+		var validation = service.CreateStartCraftingValidationPlan(
+			player,
+			recipe,
+			commonProduct,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false);
+
+		var common = service.CreateStartTaskPlan(validation, commonProduct);
+		var unique = service.CreateStartTaskPlan(validation, uniqueProduct);
+		var mythic = service.CreateStartTaskPlan(validation, mythicProduct);
+
+		Assert.Equal(1200, common.IntervalCap);
+		Assert.Equal(1200, common.Interval);
+		Assert.Equal(1500, unique.IntervalCap);
+		Assert.Equal(1500, unique.Interval);
+		Assert.Equal(1700, mythic.IntervalCap);
+		Assert.Equal(1700, mythic.Interval);
+	}
+
+	[Fact]
+	public void CreateStartTaskPlan_UsesFixedMorphInterval()
+	{
+		var service = CreateService(out _, CreateItemTemplates(), CreateSkillTemplates());
+		var player = CreatePlayer(objectId: 1140, dp: 700);
+		var recipe = CreateRecipe(
+			recipeId: 155000033,
+			dp: 600,
+			productId: 152000401,
+			skillId: CraftStartValidationPlan.MorphSubstancesSkillId,
+			skillPoint: 200);
+		player.Recipes = [recipe.RecipeId];
+		player.Skills = [CreateSkill(recipe.SkillId, skillLevel: 200)];
+		var productTemplate = CreateItemTemplates().GetItemTemplate(152000401)! with { Quality = "MYTHIC" };
+		var validation = service.CreateStartCraftingValidationPlan(
+			player,
+			recipe,
+			productTemplate,
+			target: null,
+			targetIsStaticObject: false,
+			targetIsWithinToolRange: false,
+			hasCraftingTaskInProgress: false);
+
+		var plan = service.CreateStartTaskPlan(validation, productTemplate);
+
+		Assert.Equal(CraftStartValidationStatus.ReadyForNextValidation, validation.Status);
+		Assert.True(validation.IsMorphRecipe);
+		Assert.Equal(1700, plan.IntervalCap);
+		Assert.Equal(200, plan.Interval);
+		Assert.Equal(0, plan.SkillLevelDiff);
+	}
+
+	[Fact]
+	public void CreateStartTaskPlan_DoesNotPlanWhenValidationFailed()
+	{
+		var service = CreateService(out _, CreateItemTemplates(), CreateSkillTemplates());
+		var player = CreatePlayer(objectId: 1141, dp: 100);
+		var recipe = CreateRecipe(recipeId: 155000034, dp: 600, productId: 100200203, skillId: 40001, skillPoint: 200);
+		var productTemplate = CreateItemTemplates().GetItemTemplate(100200203);
+		var target = CreateTarget(objectId: 9026, templateId: 730190);
+		var validation = service.CreateStartCraftingValidationPlan(
+			player,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false);
+
+		var plan = service.CreateStartTaskPlan(validation, productTemplate);
+
+		Assert.Equal(CraftStartValidationStatus.NotEnoughDp, validation.Status);
+		Assert.Equal(CraftStartTaskPlanStatus.NotPlanned, plan.Status);
+		Assert.Equal(0, plan.Interval);
+		Assert.Contains("checkCraft returned false", plan.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
 	public void CreateFinishProductPlan_UsesBaseProductWhenCraftDoesNotCrit()
 	{
 		var service = CreateService(out _, CreateItemTemplates());
