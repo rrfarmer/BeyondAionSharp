@@ -134,4 +134,43 @@ public sealed record SkillSignetBurstEffectSummary(string Signet, int SignetLeve
 public sealed record SkillBuffStatEffectSummary(string EffectName, IReadOnlyList<SkillStatChange> Changes);
 
 // Java parity: skillengine/change/Change entries under passive skill effects.
-public sealed record SkillStatChange(string Stat, string Func, int Value, int Delta);
+public sealed record SkillStatChange(
+	string Stat,
+	string Func,
+	int Value,
+	int Delta)
+{
+	private readonly List<SkillStatChangeConditionSummary> _conditions = [];
+
+	public IReadOnlyList<SkillStatChangeConditionSummary> Conditions => _conditions;
+
+	public bool HasConditions => Conditions.Count > 0;
+
+	public void AddCondition(SkillStatChangeConditionSummary condition)
+	{
+		_conditions.Add(condition);
+	}
+
+	public bool Equals(SkillStatChange? other)
+	{
+		return other != null
+			&& string.Equals(Stat, other.Stat, StringComparison.Ordinal)
+			&& string.Equals(Func, other.Func, StringComparison.Ordinal)
+			&& Value == other.Value
+			&& Delta == other.Delta;
+	}
+
+	public override int GetHashCode()
+	{
+		return HashCode.Combine(
+			StringComparer.Ordinal.GetHashCode(Stat),
+			StringComparer.Ordinal.GetHashCode(Func),
+			Value,
+			Delta);
+	}
+}
+
+// Java parity: skillengine/condition/Conditions child entries under Change.
+public sealed record SkillStatChangeConditionSummary(
+	string ConditionName,
+	IReadOnlyDictionary<string, string> Attributes);

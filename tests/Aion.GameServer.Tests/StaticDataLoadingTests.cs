@@ -114,7 +114,11 @@ public sealed class StaticDataLoadingTests
 								<change stat="DR_BOOST" func="ADD" value="100" />
 							</drboost>
 							<boostdroprate duration2="30000" effectid="200" e="3" element="FIRE" preeffect="1">
-								<change stat="BOOST_DROP_RATE" func="ADD" value="20" delta="5" />
+								<change stat="BOOST_DROP_RATE" func="ADD" value="20" delta="5">
+									<conditions>
+										<weapon weapon="ORB" />
+									</conditions>
+								</change>
 							</boostdroprate>
 						</effects>
 					</skill_template>
@@ -132,7 +136,14 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(new SkillStatChange("DR_BOOST", "ADD", 100, 0), Assert.Single(drBoost.Changes));
 		var boostDropRate = template.BuffStatEffects[1];
 		Assert.Equal("boostdroprate", boostDropRate.EffectName);
-		Assert.Equal(new SkillStatChange("BOOST_DROP_RATE", "ADD", 20, 5), Assert.Single(boostDropRate.Changes));
+		var boostDropRateChange = Assert.Single(boostDropRate.Changes);
+		Assert.Equal("BOOST_DROP_RATE", boostDropRateChange.Stat);
+		Assert.Equal("ADD", boostDropRateChange.Func);
+		Assert.Equal(20, boostDropRateChange.Value);
+		Assert.Equal(5, boostDropRateChange.Delta);
+		var condition = Assert.Single(boostDropRateChange.Conditions);
+		Assert.Equal("weapon", condition.ConditionName);
+		Assert.Equal("ORB", condition.Attributes["weapon"]);
 	}
 
 	[Fact]

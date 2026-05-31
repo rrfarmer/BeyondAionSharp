@@ -635,6 +635,9 @@ public sealed class StaticData
 				if (reader.Depth == 4 && IsDropBoostStatEffectElement(reader.LocalName))
 					currentSkillTemplate?.EndBuffStatEffect();
 
+				if (reader.Depth == 5 && reader.LocalName == "change")
+					currentSkillTemplate?.EndCurrentStatChangeConditions();
+
 				if (reader.LocalName == "npc_skill" && currentNpcSkillList != null && currentNpcSkill != null)
 				{
 					currentNpcSkillList.AddSkill(currentNpcSkill.ToSummary());
@@ -2448,6 +2451,16 @@ public sealed class StaticData
 					ReadIntAttribute(reader, "delta"));
 				currentSkillTemplate.AddCurrentMasteryChange(change);
 				currentSkillTemplate.AddCurrentBuffStatChange(change);
+				currentSkillTemplate.StartCurrentStatChangeConditions(change);
+				continue;
+			}
+
+			if (reader.LocalName != "conditions"
+				&& elementPath.GetValueOrDefault(reader.Depth - 1) == "conditions"
+				&& elementPath.GetValueOrDefault(reader.Depth - 2) == "change"
+				&& currentSkillTemplate != null)
+			{
+				currentSkillTemplate.AddCurrentStatChangeCondition(ReadSkillStatChangeCondition(reader));
 				continue;
 			}
 
@@ -3525,6 +3538,7 @@ public sealed class StaticData
 		private readonly List<SkillBuffStatEffectSummary> _buffStatEffects = [];
 		private List<SkillStatChange>? _currentMasteryChanges;
 		private List<SkillStatChange>? _currentBuffStatChanges;
+		private SkillStatChange? _currentStatChange;
 
 		public SkillTemplateBuilder(
 			int skillId,
@@ -3618,6 +3632,21 @@ public sealed class StaticData
 				return;
 
 			_currentBuffStatChanges.Add(change);
+		}
+
+		public void StartCurrentStatChangeConditions(SkillStatChange change)
+		{
+			_currentStatChange = change;
+		}
+
+		public void AddCurrentStatChangeCondition(SkillStatChangeConditionSummary condition)
+		{
+			_currentStatChange?.AddCondition(condition);
+		}
+
+		public void EndCurrentStatChangeConditions()
+		{
+			_currentStatChange = null;
 		}
 
 		public void EndBuffStatEffect()
@@ -5380,6 +5409,21 @@ public sealed class StaticData
 	private static bool IsDropBoostStatEffectElement(string elementName)
 	{
 		return elementName is "boostdroprate" or "drboost";
+	}
+
+	private static SkillStatChangeConditionSummary ReadSkillStatChangeCondition(XmlReader reader)
+	{
+		var attributes = new Dictionary<string, string>(StringComparer.Ordinal);
+		if (reader.HasAttributes)
+		{
+			while (reader.MoveToNextAttribute())
+				attributes[reader.Name] = reader.Value;
+			reader.MoveToElement();
+		}
+
+		return new SkillStatChangeConditionSummary(
+			reader.LocalName,
+			new ReadOnlyDictionary<string, string>(attributes));
 	}
 
 	private static long ReadLongAttribute(XmlReader reader, string attributeName)

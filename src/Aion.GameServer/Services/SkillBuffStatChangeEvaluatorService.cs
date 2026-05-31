@@ -19,7 +19,8 @@ public static class SkillBuffStatChangeEvaluatorService
 				change.Delta,
 				change.Value + change.Delta * skillLevel,
 				GetPriority(change.Func),
-				IsSupportedFunc(change.Func)))
+				IsSupportedFunc(change.Func),
+				change.Conditions))
 			.OrderBy(step => step.Priority)
 			.ToArray();
 
@@ -47,6 +48,19 @@ public static class SkillBuffStatChangeEvaluatorService
 				(int)baseValue,
 				applicableChanges,
 				"BufEffect.getModifiers supports ADD, PERCENT, and REPLACE for this evaluator slice");
+		}
+
+		if (applicableChanges.Any(step => step.HasConditions))
+		{
+			return new SkillBuffStatChangeEvaluation(
+				SkillBuffStatChangeEvaluationStatus.UnsupportedConditions,
+				statName,
+				baseValue,
+				baseValue,
+				0,
+				(int)baseValue,
+				applicableChanges,
+				"BufEffect.getModifiers attaches Change.conditions to stat functions; this pure evaluator does not evaluate Conditions.validate");
 		}
 
 		var currentBase = baseValue;
@@ -100,6 +114,7 @@ public enum SkillBuffStatChangeEvaluationStatus
 	Evaluated,
 	NoApplicableChanges,
 	UnsupportedFunction,
+	UnsupportedConditions,
 }
 
 public sealed record SkillBuffStatChangeEvaluation(
@@ -119,4 +134,8 @@ public sealed record SkillBuffStatChangeStep(
 	int Delta,
 	int EffectiveValue,
 	int Priority,
-	bool IsSupported);
+	bool IsSupported,
+	IReadOnlyList<SkillStatChangeConditionSummary> Conditions)
+{
+	public bool HasConditions => Conditions.Count > 0;
+}

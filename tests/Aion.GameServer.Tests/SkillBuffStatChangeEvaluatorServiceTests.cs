@@ -89,4 +89,25 @@ public sealed class SkillBuffStatChangeEvaluatorServiceTests
 		Assert.False(step.IsSupported);
 		Assert.Equal(int.MaxValue, step.Priority);
 	}
+
+	[Fact]
+	public void Evaluate_ReportsUnsupportedConditionsWithoutApplyingChanges()
+	{
+		var conditionedChange = new SkillStatChange("BOOST_DROP_RATE", "ADD", 20, 0);
+		conditionedChange.AddCondition(new SkillStatChangeConditionSummary(
+			"weapon",
+			new Dictionary<string, string>(StringComparer.Ordinal) { ["weapon"] = "ORB" }));
+
+		var evaluation = SkillBuffStatChangeEvaluatorService.Evaluate(
+			"BOOST_DROP_RATE",
+			100,
+			[conditionedChange],
+			skillLevel: 1);
+
+		Assert.Equal(SkillBuffStatChangeEvaluationStatus.UnsupportedConditions, evaluation.Status);
+		Assert.Equal(100, evaluation.Current);
+		var step = Assert.Single(evaluation.Steps);
+		Assert.True(step.HasConditions);
+		Assert.Equal("weapon", Assert.Single(step.Conditions).ConditionName);
+	}
 }
