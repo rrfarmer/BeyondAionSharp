@@ -9,6 +9,7 @@ public sealed class SmInventoryAddItem : GameServerPacket
 	public const int PacketOpCode = 27;
 	public const int AllSlot = 0x13;
 	public const int ItemCollect = 0x19;
+	public const int CraftedItem = 0x2D;
 	public const int BrokerBuy = 0x2E;
 	public const int BrokerReturn = 0x2F;
 	public const int Decomposable = 0x50;
@@ -58,6 +59,15 @@ public sealed class SmInventoryAddItem : GameServerPacket
 	{
 		// Java parity: ItemPacketService.sendItemUnlockPacket -> ItemAddType.ALL_SLOT for normal cube storage.
 		return new SmInventoryAddItem([new InventoryPacketItem(item, template, generalInfoWarehouseRestrictionFlag)], AllSlot);
+	}
+
+	public static SmInventoryAddItem CreateCraftedItem(
+		InventoryItem item,
+		ItemTemplateSummary template,
+		int generalInfoWarehouseRestrictionFlag = 0)
+	{
+		// Java parity: services/craft/CraftService.finishCrafting -> ItemService.addItem(..., ItemAddType.CRAFTED_ITEM, ItemUpdateType.INC_ITEM_COLLECT).
+		return new SmInventoryAddItem([new InventoryPacketItem(item, template, generalInfoWarehouseRestrictionFlag)], CraftedItem);
 	}
 
 	public static SmInventoryAddItem CreateDecomposable(IReadOnlyList<InventoryPacketItem> items)

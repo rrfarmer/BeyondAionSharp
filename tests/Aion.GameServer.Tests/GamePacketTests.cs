@@ -3291,6 +3291,33 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmInventoryAddItem_CraftedItemWritesCraftedAddTypeAndCleanupSealFlagLikeJava()
+	{
+		var payload = SerializeUnencryptedPayload(
+			SmInventoryAddItem.CreateCraftedItem(
+				new InventoryItem
+				{
+					ObjectId = 91,
+					ItemId = 188053996,
+					Count = 1,
+					Location = 0,
+					Slot = 11,
+				},
+				new ItemTemplateSummary(188053996, "Emperor Trillirunerk's Feather Box", 0, 123, 1, "NONE", "NORMAL", "COMMON", "PC_ALL", 1, 0, 0),
+				generalInfoWarehouseRestrictionFlag: 3
+			)
+		);
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(SmInventoryAddItem.CraftedItem, reader.ReadH());
+		Assert.Equal(1, reader.ReadH());
+		var restrictedItem = ReadInventoryItemWithBlob(reader);
+		Assert.Equal((91, 188053996, 11, 0), (restrictedItem.ObjectId, restrictedItem.ItemId, restrictedItem.EquipmentSlot, restrictedItem.IsCloth));
+		Assert.Equal(0, reader.Remaining);
+
+		AssertGeneralInfoCleanupSealFlag(restrictedItem.Blob, expectedItemMask: 123, expectedFlag: 3);
+	}
+
+	[Fact]
 	public void SmInventoryAddItem_BrokerBuyWritesCleanupSealFlagInItemBlobLikeJava()
 	{
 		var payload = SerializeUnencryptedPayload(

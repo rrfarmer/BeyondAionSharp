@@ -4,6 +4,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.World;
+using Aion.Commons.Network;
 
 namespace Aion.GameServer.Tests;
 
@@ -204,6 +205,111 @@ public sealed class CraftServiceTests
 		Assert.Null(plan.CreatorName);
 	}
 
+	[Fact]
+	public void CreateFinishRewardPlan_AddsCraftedEquipmentWithCreatorAndCraftedAddPacket()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1108, dp: 600, name: "Smith");
+		var recipe = CreateRecipe(
+			recipeId: 155000009,
+			dp: 0,
+			productId: 100200203,
+			quantity: 1,
+			comboProducts: [100200209]);
+		var nextObjectId = 9000;
+
+		var plan = service.CreateFinishRewardPlan(player, Array.Empty<InventoryItem>(), recipe, critCount: 1, () => ++nextObjectId);
+
+		Assert.Equal(CraftFinishRewardStatus.Planned, plan.Status);
+		Assert.Equal(0, plan.RemainingCount);
+		Assert.False(plan.InventoryFull);
+		Assert.False(plan.ShouldSendInventoryFullMessage);
+		Assert.Empty(plan.UpdatedItems);
+		var addedItem = Assert.Single(plan.AddedItems);
+		Assert.Equal(9001, addedItem.ObjectId);
+		Assert.Equal(100200209, addedItem.ItemId);
+		Assert.Equal("Smith", addedItem.Creator);
+		var packet = Assert.Single(plan.Packets);
+		var addPacket = Assert.IsType<SmInventoryAddItem>(packet);
+		Assert.Equal(SmInventoryAddItem.CraftedItem, ReadInventoryAddType(addPacket));
+	}
+
+	[Fact]
+	public void CreateFinishRewardPlan_MergesStackUsingIncreaseItemCollectUpdate()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1109, dp: 600);
+		var recipe = CreateRecipe(
+			recipeId: 155000010,
+			dp: 0,
+			productId: 152000401,
+			quantity: 3);
+		var inventoryItems = new[]
+		{
+			new InventoryItem { ObjectId = 5001, ItemId = 152000401, Count = 7, OwnerId = player.ObjectId, Location = 0, Slot = 3 },
+		};
+
+		var plan = service.CreateFinishRewardPlan(player, inventoryItems, recipe, critCount: 0, () => 9001);
+
+		Assert.Equal(CraftFinishRewardStatus.Planned, plan.Status);
+		var updatedItem = Assert.Single(plan.UpdatedItems);
+		Assert.Equal(10, updatedItem.Count);
+		Assert.Empty(plan.AddedItems);
+		var packet = Assert.Single(plan.Packets);
+		var updatePacket = Assert.IsType<SmInventoryUpdateItem>(packet);
+		Assert.Equal(SmInventoryUpdateItem.IncreaseItemCollect, ReadInventoryUpdateType(updatePacket));
+	}
+
+	[Fact]
+	public void CreateFinishRewardPlan_ReportsInventoryFullAndPreservesPartialMerge()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1110, dp: 600);
+		var recipe = CreateRecipe(
+			recipeId: 155000011,
+			dp: 0,
+			productId: 152000401,
+			quantity: 5);
+		var fillerItems = Enumerable.Range(0, 26)
+			.Select(index => new InventoryItem
+			{
+				ObjectId = 6000 + index,
+				ItemId = 199000000 + index,
+				Count = 1,
+				OwnerId = player.ObjectId,
+				Location = 0,
+				Slot = index,
+			});
+		var inventoryItems = fillerItems
+			.Prepend(new InventoryItem { ObjectId = 5002, ItemId = 152000401, Count = 8, OwnerId = player.ObjectId, Location = 0, Slot = 30 })
+			.ToArray();
+
+		var plan = service.CreateFinishRewardPlan(player, inventoryItems, recipe, critCount: 0, () => 9001);
+
+		Assert.Equal(CraftFinishRewardStatus.InventoryFull, plan.Status);
+		Assert.Equal(3, plan.RemainingCount);
+		Assert.True(plan.InventoryFull);
+		Assert.True(plan.ShouldSendInventoryFullMessage);
+		Assert.Empty(plan.AddedItems);
+		Assert.Single(plan.UpdatedItems);
+		Assert.Single(plan.Packets);
+	}
+
+	[Fact]
+	public void CreateFinishRewardPlan_ReportsMissingItemTemplate()
+	{
+		var service = CreateService(out _, itemTemplates: null);
+		var player = CreatePlayer(objectId: 1111, dp: 600);
+		var recipe = CreateRecipe(recipeId: 155000012, dp: 0, productId: 152000401, quantity: 1);
+
+		var plan = service.CreateFinishRewardPlan(player, Array.Empty<InventoryItem>(), recipe, critCount: 0, () => 1);
+
+		Assert.Equal(CraftFinishRewardStatus.MissingItemTemplate, plan.Status);
+		Assert.Empty(plan.Packets);
+		Assert.Empty(plan.AddedItems);
+		Assert.Empty(plan.UpdatedItems);
+	}
+
 	private static CraftService CreateService(out CapturingConnectionRegistry registry, ItemTemplateTable? itemTemplates = null)
 	{
 		registry = new CapturingConnectionRegistry();
@@ -315,10 +421,34 @@ public sealed class CraftServiceTests
 				"ITEM",
 				"COMMON",
 				"PC_ALL",
-				1,
+				10,
 				1,
 				0),
 		]);
+	}
+
+	private static int ReadInventoryAddType(SmInventoryAddItem packet)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		return reader.ReadH();
+	}
+
+	private static int ReadInventoryUpdateType(SmInventoryUpdateItem packet)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		reader.ReadD();
+		reader.ReadS();
+		var blobSize = reader.ReadH();
+		reader.ReadB(blobSize);
+		return reader.ReadH();
+	}
+
+	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
+	{
+		var crypt = new GameCrypt(() => 0x01020304);
+		crypt.EnableKey();
+		var frame = packet.SerializeFrame(crypt);
+		return frame[7..];
 	}
 
 	private sealed class CapturingConnectionRegistry : IGameClientConnectionRegistry
