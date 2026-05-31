@@ -1,0 +1,271 @@
+using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Model.Items;
+using Aion.GameServer.Services;
+
+namespace Aion.GameServer.Tests;
+
+public sealed class RepurchasePlanServiceTests
+{
+	[Fact]
+	public void CreatePlan_RepurchasesNonStackableSourceItemWithCloneAndKinahDecrease()
+	{
+		var player = new Player { ObjectId = 1001 };
+		var kinah = Item(10, KinahItemId, 5_000, ownerId: player.ObjectId);
+		var repurchaseItem = new InventoryItem
+		{
+			ObjectId = 200,
+			ItemId = SwordItemId,
+			Count = 1,
+			OwnerId = player.ObjectId,
+			Location = 0,
+			Slot = 65535,
+			Color = 123,
+			Creator = "maker",
+			Enchant = 7,
+			OptionalSocket = 2,
+			RandomBonus = 9,
+			IsSoulBound = true,
+		};
+		repurchaseItem.ManaStones = [new ItemStoneSocket(167000001, 0)];
+		repurchaseItem.Godstone = new PlayerGodstone(168000001, ProcCount: 3);
+
+		var plan = CreatePlan(
+			player,
+			inventoryItems: [kinah],
+			requestedItemObjectIds: [repurchaseItem.ObjectId],
+			repurchaseItems: [new RepurchaseSourceItem(repurchaseItem, RepurchasePrice: 1_200)]);
+
+		Assert.Equal(RepurchasePlanStatus.PlanCreated, plan.Status);
+		Assert.False(plan.IsLive);
+		Assert.Equal([repurchaseItem.ObjectId], plan.RepurchasedItemObjectIds);
+		Assert.Equal([repurchaseItem.ObjectId], plan.RemovedRepurchaseItemObjectIds);
+		Assert.Empty(plan.MissingRepurchaseItemObjectIds);
+		Assert.Empty(plan.InsufficientKinahItemObjectIds);
+		Assert.Equal(3_800, plan.KinahUpdate!.Count);
+
+		var addedItem = Assert.Single(plan.AddedItems);
+		Assert.Equal((100, SwordItemId, 1L, player.ObjectId, 0, 65535L), (addedItem.ObjectId, addedItem.ItemId, addedItem.Count, addedItem.OwnerId, addedItem.Location, addedItem.Slot));
+		Assert.Equal(repurchaseItem.Color, addedItem.Color);
+		Assert.Equal(repurchaseItem.Creator, addedItem.Creator);
+		Assert.Equal(repurchaseItem.Enchant, addedItem.Enchant);
+		Assert.Equal(repurchaseItem.OptionalSocket, addedItem.OptionalSocket);
+		Assert.Equal(repurchaseItem.RandomBonus, addedItem.RandomBonus);
+		Assert.True(addedItem.IsSoulBound);
+		Assert.Equal(repurchaseItem.ManaStones, addedItem.ManaStones);
+		Assert.Equal(repurchaseItem.Godstone, addedItem.Godstone);
+	}
+
+	[Fact]
+	public void CreatePlan_AllowsOverflowAfterJavaPrecheckPasses()
+	{
+		var player = new Player { ObjectId = 1001 };
+		var fillerItems = Enumerable.Range(0, 26)
+			.Select(index => Item(index + 1, 3_000 + index, 1, ownerId: player.ObjectId))
+			.ToArray();
+		var repurchaseItem = Item(200, SwordItemId, 2, ownerId: player.ObjectId);
+
+		var plan = CreatePlan(
+			player,
+			inventoryItems: [Item(99, KinahItemId, 10_000, ownerId: player.ObjectId), .. fillerItems],
+			requestedItemObjectIds: [repurchaseItem.ObjectId],
+			repurchaseItems: [new RepurchaseSourceItem(repurchaseItem, RepurchasePrice: 100)]);
+
+		Assert.Equal(RepurchasePlanStatus.PlanCreated, plan.Status);
+		Assert.Equal(2, plan.AddedItems.Count);
+		Assert.Equal([100, 101], plan.AddedItems.Select(item => item.ObjectId).ToArray());
+		Assert.Equal(9_900, plan.KinahUpdate!.Count);
+	}
+
+	[Fact]
+	public void CreatePlan_InventoryFullBlocksBeforeStackableMerge()
+	{
+		var player = new Player { ObjectId = 1001 };
+		var fillerItems = Enumerable.Range(0, 26)
+			.Select(index => Item(index + 1, 3_000 + index, 1, ownerId: player.ObjectId))
+			.ToArray();
+		var existingStack = Item(50, StackableItemId, 1, ownerId: player.ObjectId);
+		var repurchaseItem = Item(200, StackableItemId, 2, ownerId: player.ObjectId);
+
+		var plan = CreatePlan(
+			player,
+			inventoryItems: [Item(99, KinahItemId, 10_000, ownerId: player.ObjectId), .. fillerItems, existingStack],
+			requestedItemObjectIds: [repurchaseItem.ObjectId],
+			repurchaseItems: [new RepurchaseSourceItem(repurchaseItem, RepurchasePrice: 100)]);
+
+		Assert.Equal(RepurchasePlanStatus.BlockedInventoryFull, plan.Status);
+		Assert.Equal(1390182, Assert.Single(plan.Messages).MessageId);
+		Assert.Empty(plan.AddedItems);
+		Assert.Empty(plan.UpdatedItems);
+		Assert.Equal(10_000, plan.KinahUpdate!.Count);
+	}
+
+	[Fact]
+	public void CreatePlan_MissingRepurchaseItemIsSkipped()
+	{
+		var player = new Player { ObjectId = 1001 };
+
+		var plan = CreatePlan(
+			player,
+			inventoryItems: [Item(99, KinahItemId, 10_000, ownerId: player.ObjectId)],
+			requestedItemObjectIds: [999],
+			repurchaseItems: []);
+
+		Assert.Equal(RepurchasePlanStatus.PlanCreated, plan.Status);
+		Assert.Equal([999], plan.MissingRepurchaseItemObjectIds);
+		Assert.Empty(plan.RepurchasedItemObjectIds);
+		Assert.Equal(10_000, plan.KinahUpdate!.Count);
+	}
+
+	[Fact]
+	public void CreatePlan_InsufficientKinahSkipsItemAndContinues()
+	{
+		var player = new Player { ObjectId = 1001 };
+		var expensiveItem = Item(200, SwordItemId, 1, ownerId: player.ObjectId);
+		var affordableItem = Item(201, StackableItemId, 3, ownerId: player.ObjectId);
+
+		var plan = CreatePlan(
+			player,
+			inventoryItems: [Item(99, KinahItemId, 100, ownerId: player.ObjectId)],
+			requestedItemObjectIds: [expensiveItem.ObjectId, affordableItem.ObjectId],
+			repurchaseItems:
+			[
+				new RepurchaseSourceItem(expensiveItem, RepurchasePrice: 200),
+				new RepurchaseSourceItem(affordableItem, RepurchasePrice: 50),
+			]);
+
+		Assert.Equal(RepurchasePlanStatus.PlanCreated, plan.Status);
+		Assert.Equal([expensiveItem.ObjectId], plan.InsufficientKinahItemObjectIds);
+		Assert.Equal([affordableItem.ObjectId], plan.RepurchasedItemObjectIds);
+		Assert.Equal(50, plan.KinahUpdate!.Count);
+		var addedItem = Assert.Single(plan.AddedItems);
+		Assert.Equal((StackableItemId, 3L), (addedItem.ItemId, addedItem.Count));
+	}
+
+	[Fact]
+	public void CreatePlan_CannotTradeBlocksBeforeMutations()
+	{
+		var player = new Player { ObjectId = 1001 };
+		var repurchaseItem = Item(200, SwordItemId, 1, ownerId: player.ObjectId);
+
+		var plan = RepurchasePlanService.CreatePlan(
+			canTrade: false,
+			player,
+			inventoryItems: [Item(99, KinahItemId, 10_000, ownerId: player.ObjectId)],
+			requestedItemObjectIds: [repurchaseItem.ObjectId],
+			repurchaseItems: [new RepurchaseSourceItem(repurchaseItem, RepurchasePrice: 100)],
+			CreateTemplates(),
+			nextObjectId: () => 100);
+
+		Assert.Equal(RepurchasePlanStatus.BlockedCannotTrade, plan.Status);
+		Assert.Null(plan.KinahUpdate);
+		Assert.Empty(plan.AddedItems);
+		Assert.Empty(plan.RemovedRepurchaseItemObjectIds);
+	}
+
+	[Fact]
+	public void CreatePlan_MissingTemplateBlocksConservatively()
+	{
+		var player = new Player { ObjectId = 1001 };
+		var repurchaseItem = Item(200, MissingTemplateItemId, 1, ownerId: player.ObjectId);
+
+		var plan = CreatePlan(
+			player,
+			inventoryItems: [Item(99, KinahItemId, 10_000, ownerId: player.ObjectId)],
+			requestedItemObjectIds: [repurchaseItem.ObjectId],
+			repurchaseItems: [new RepurchaseSourceItem(repurchaseItem, RepurchasePrice: 100)]);
+
+		Assert.Equal(RepurchasePlanStatus.BlockedMissingTemplate, plan.Status);
+		Assert.Equal(10_000, plan.KinahUpdate!.Count);
+		Assert.Empty(plan.AddedItems);
+		Assert.Empty(plan.RemovedRepurchaseItemObjectIds);
+	}
+
+	[Fact]
+	public void CreatePlan_AddFailureBlocksWithoutKinahDecrease()
+	{
+		var player = new Player { ObjectId = 1001 };
+		var repurchaseItem = Item(200, SwordItemId, 1, ownerId: player.ObjectId);
+
+		var plan = RepurchasePlanService.CreatePlan(
+			canTrade: true,
+			player,
+			inventoryItems: [Item(99, KinahItemId, 10_000, ownerId: player.ObjectId)],
+			requestedItemObjectIds: [repurchaseItem.ObjectId],
+			repurchaseItems: [new RepurchaseSourceItem(repurchaseItem, RepurchasePrice: 100)],
+			CreateTemplates(),
+			nextObjectId: () => 0);
+
+		Assert.Equal(RepurchasePlanStatus.BlockedAddFailed, plan.Status);
+		Assert.Equal(10_000, plan.KinahUpdate!.Count);
+		Assert.Empty(plan.AddedItems);
+		Assert.Empty(plan.RemovedRepurchaseItemObjectIds);
+	}
+
+	private static RepurchasePlan CreatePlan(
+		Player player,
+		IReadOnlyList<InventoryItem> inventoryItems,
+		IReadOnlyList<int> requestedItemObjectIds,
+		IReadOnlyList<RepurchaseSourceItem> repurchaseItems)
+	{
+		var nextObjectId = 99;
+		player.InventoryItems = inventoryItems;
+		return RepurchasePlanService.CreatePlan(
+			canTrade: true,
+			player,
+			inventoryItems,
+			requestedItemObjectIds,
+			repurchaseItems,
+			CreateTemplates(),
+			() => ++nextObjectId);
+	}
+
+	private static InventoryItem Item(int objectId, int itemId, long count, int ownerId)
+	{
+		return new InventoryItem
+		{
+			ObjectId = objectId,
+			ItemId = itemId,
+			Count = count,
+			OwnerId = ownerId,
+			Location = 0,
+			Slot = 65535,
+		};
+	}
+
+	private static ItemTemplateTable CreateTemplates()
+	{
+		var fillerTemplates = Enumerable.Range(3_000, 27)
+			.Select(itemId => Template(itemId, maxStackCount: 1))
+			.ToArray();
+		return new ItemTemplateTable(
+		[
+			Template(KinahItemId, maxStackCount: 1),
+			Template(SwordItemId, maxStackCount: 1),
+			Template(StackableItemId, maxStackCount: 10),
+			.. fillerTemplates,
+		]);
+	}
+
+	private static ItemTemplateSummary Template(int itemId, int maxStackCount)
+	{
+		return new ItemTemplateSummary(
+			itemId,
+			$"Item {itemId}",
+			DescriptionId: 1,
+			Mask: 0,
+			Level: 1,
+			ItemGroup: "NORMAL",
+			ItemType: "NORMAL",
+			Quality: "COMMON",
+			Race: "PC_ALL",
+			MaxStackCount: maxStackCount,
+			Price: 0,
+			ValidEquipmentSlots: 0);
+	}
+
+	private const int KinahItemId = 182400001;
+	private const int SwordItemId = 100000001;
+	private const int StackableItemId = 182003001;
+	private const int MissingTemplateItemId = 100000099;
+}

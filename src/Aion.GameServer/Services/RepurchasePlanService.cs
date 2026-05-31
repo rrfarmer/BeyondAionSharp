@@ -1,0 +1,257 @@
+using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion.ServerPackets;
+
+namespace Aion.GameServer.Services;
+
+public enum RepurchasePlanStatus
+{
+	PlanCreated,
+	BlockedCannotTrade,
+	BlockedInventoryFull,
+	BlockedMissingTemplate,
+	BlockedAddFailed,
+}
+
+public sealed record RepurchaseSourceItem(
+	InventoryItem Item,
+	long RepurchasePrice);
+
+public sealed record RepurchasePlan(
+	RepurchasePlanStatus Status,
+	IReadOnlyList<int> RequestedItemObjectIds,
+	IReadOnlyList<int> RepurchasedItemObjectIds,
+	IReadOnlyList<int> MissingRepurchaseItemObjectIds,
+	IReadOnlyList<int> InsufficientKinahItemObjectIds,
+	IReadOnlyList<InventoryItem> AddedItems,
+	IReadOnlyList<InventoryItem> UpdatedItems,
+	InventoryItem? KinahUpdate,
+	IReadOnlyList<int> RemovedRepurchaseItemObjectIds,
+	IReadOnlyList<SmSystemMessage> Messages,
+	string JavaSource)
+{
+	public bool IsLive => false;
+}
+
+public static class RepurchasePlanService
+{
+	private const int CubeStorageId = 0;
+
+	public static RepurchasePlan CreatePlan(
+		bool canTrade,
+		Player player,
+		IReadOnlyList<InventoryItem> inventoryItems,
+		IReadOnlyList<int> requestedItemObjectIds,
+		IReadOnlyList<RepurchaseSourceItem> repurchaseItems,
+		ItemTemplateTable itemTemplates,
+		Func<int> nextObjectId)
+	{
+		// Java parity: services/RepurchaseService.repurchaseFromShop.
+		if (!canTrade)
+			return Block(
+				RepurchasePlanStatus.BlockedCannotTrade,
+				requestedItemObjectIds,
+				"RepurchaseService.repurchaseFromShop -> !PlayerRestrictions.canTrade(player) -> return");
+
+		var workingItems = inventoryItems.ToList();
+		var addedItems = new List<InventoryItem>();
+		var updatedItems = new List<InventoryItem>();
+		var repurchasedIds = new List<int>();
+		var missingIds = new List<int>();
+		var insufficientKinahIds = new List<int>();
+		var removedRepurchaseIds = new List<int>();
+		var kinahItem = workingItems.FirstOrDefault(item => item.ItemId == InventoryItemFactory.KinahItemId && item.Location == CubeStorageId);
+		var kinahCount = kinahItem?.Count ?? 0;
+
+		foreach (var itemObjectId in requestedItemObjectIds)
+		{
+			if (InventoryCapacity.GetFreeCubeSlots(player, workingItems) == 0)
+			{
+				return CreatePlan(
+					RepurchasePlanStatus.BlockedInventoryFull,
+					requestedItemObjectIds,
+					repurchasedIds,
+					missingIds,
+					insufficientKinahIds,
+					addedItems,
+					updatedItems,
+					kinahItem,
+					kinahCount,
+					removedRepurchaseIds,
+					messages: [SmSystemMessage.DiceInventoryError()],
+					"RepurchaseService.repurchaseFromShop -> player.getInventory().isFull() -> STR_MSG_DICE_INVEN_ERROR and break");
+			}
+
+			var repurchaseItem = repurchaseItems.FirstOrDefault(item => item.Item.ObjectId == itemObjectId);
+			if (repurchaseItem == null)
+			{
+				missingIds.Add(itemObjectId);
+				continue;
+			}
+
+			if (kinahCount < repurchaseItem.RepurchasePrice)
+			{
+				insufficientKinahIds.Add(itemObjectId);
+				continue;
+			}
+
+			var template = itemTemplates.GetItemTemplate(repurchaseItem.Item.ItemId);
+			if (template == null)
+				return CreatePlan(
+					RepurchasePlanStatus.BlockedMissingTemplate,
+					requestedItemObjectIds,
+					repurchasedIds,
+					missingIds,
+					insufficientKinahIds,
+					addedItems,
+					updatedItems,
+					kinahItem,
+					kinahCount,
+					removedRepurchaseIds,
+					messages: Array.Empty<SmSystemMessage>(),
+					"ItemService.addItem(player, repurchaseItem) -> DataManager.ITEM_DATA missing template would fail before inventory mutation");
+
+			kinahCount -= repurchaseItem.RepurchasePrice;
+			var addPlan = InventoryAddService.CreateAddItemPlan(
+				player,
+				workingItems,
+				template,
+				repurchaseItem.Item.Count,
+				nextObjectId,
+				allowInventoryOverflow: true,
+				itemTemplates: itemTemplates,
+				sourceItem: repurchaseItem.Item);
+
+			if (!addPlan.Succeeded)
+				return CreatePlan(
+					RepurchasePlanStatus.BlockedAddFailed,
+					requestedItemObjectIds,
+					repurchasedIds,
+					missingIds,
+					insufficientKinahIds,
+					addedItems,
+					updatedItems,
+					kinahItem,
+					kinahCount + repurchaseItem.RepurchasePrice,
+					removedRepurchaseIds,
+					messages: addPlan.InventoryFull ? [SmSystemMessage.DiceInventoryError()] : Array.Empty<SmSystemMessage>(),
+					"ItemService.addItem(player, repurchaseItem) returned remaining count; live exception/partial-add behavior is not wired in this non-live planner");
+
+			addedItems.AddRange(addPlan.AddedItems);
+			updatedItems.AddRange(addPlan.UpdatedItems);
+			ApplyAddPlan(workingItems, addPlan);
+			repurchasedIds.Add(itemObjectId);
+			removedRepurchaseIds.Add(itemObjectId);
+		}
+
+		return CreatePlan(
+			RepurchasePlanStatus.PlanCreated,
+			requestedItemObjectIds,
+			repurchasedIds,
+			missingIds,
+			insufficientKinahIds,
+			addedItems,
+			updatedItems,
+			kinahItem,
+			kinahCount,
+			removedRepurchaseIds,
+			messages: Array.Empty<SmSystemMessage>(),
+			"RepurchaseService.repurchaseFromShop -> for each requested object id, precheck inventory full -> find repurchase item -> tryDecreaseKinah(price) -> ItemService.addItem(player, repurchaseItem) -> remove from repurchase set");
+	}
+
+	private static RepurchasePlan Block(RepurchasePlanStatus status, IReadOnlyList<int> requestedItemObjectIds, string javaSource)
+	{
+		return new RepurchasePlan(
+			status,
+			requestedItemObjectIds,
+			RepurchasedItemObjectIds: Array.Empty<int>(),
+			MissingRepurchaseItemObjectIds: Array.Empty<int>(),
+			InsufficientKinahItemObjectIds: Array.Empty<int>(),
+			AddedItems: Array.Empty<InventoryItem>(),
+			UpdatedItems: Array.Empty<InventoryItem>(),
+			KinahUpdate: null,
+			RemovedRepurchaseItemObjectIds: Array.Empty<int>(),
+			Messages: Array.Empty<SmSystemMessage>(),
+			javaSource);
+	}
+
+	private static RepurchasePlan CreatePlan(
+		RepurchasePlanStatus status,
+		IReadOnlyList<int> requestedItemObjectIds,
+		IReadOnlyList<int> repurchasedIds,
+		IReadOnlyList<int> missingIds,
+		IReadOnlyList<int> insufficientKinahIds,
+		IReadOnlyList<InventoryItem> addedItems,
+		IReadOnlyList<InventoryItem> updatedItems,
+		InventoryItem? kinahItem,
+		long kinahCount,
+		IReadOnlyList<int> removedRepurchaseIds,
+		IReadOnlyList<SmSystemMessage> messages,
+		string javaSource)
+	{
+		return new RepurchasePlan(
+			status,
+			requestedItemObjectIds,
+			repurchasedIds.ToArray(),
+			missingIds.ToArray(),
+			insufficientKinahIds.ToArray(),
+			addedItems.ToArray(),
+			updatedItems.ToArray(),
+			kinahItem == null ? null : CopyInventoryItem(kinahItem, kinahCount),
+			removedRepurchaseIds.ToArray(),
+			messages,
+			javaSource);
+	}
+
+	private static void ApplyAddPlan(List<InventoryItem> workingItems, InventoryAddPlan addPlan)
+	{
+		foreach (var updatedItem in addPlan.UpdatedItems)
+		{
+			var index = workingItems.FindIndex(item => item.ObjectId == updatedItem.ObjectId);
+			if (index >= 0)
+				workingItems[index] = updatedItem;
+		}
+		workingItems.AddRange(addPlan.AddedItems);
+	}
+
+	private static InventoryItem CopyInventoryItem(InventoryItem item, long count)
+	{
+		var copy = new InventoryItem
+		{
+			ObjectId = item.ObjectId,
+			ItemId = item.ItemId,
+			Count = count,
+			Color = item.Color,
+			ColorExpires = item.ColorExpires,
+			Creator = item.Creator,
+			ExpireTime = item.ExpireTime,
+			ActivationCount = item.ActivationCount,
+			OwnerId = item.OwnerId,
+			IsEquipped = item.IsEquipped,
+			IsSoulBound = item.IsSoulBound,
+			Slot = item.Slot,
+			Location = item.Location,
+			Enchant = item.Enchant,
+			EnchantBonus = item.EnchantBonus,
+			ItemSkin = item.ItemSkin,
+			FusionedItem = item.FusionedItem,
+			OptionalSocket = item.OptionalSocket,
+			OptionalFusionSocket = item.OptionalFusionSocket,
+			Charge = item.Charge,
+			TuneCount = item.TuneCount,
+			RandomBonus = item.RandomBonus,
+			FusionRandomBonus = item.FusionRandomBonus,
+			Tempering = item.Tempering,
+			PackCount = item.PackCount,
+			IsAmplified = item.IsAmplified,
+			BuffSkill = item.BuffSkill,
+			RandomPlumeBonus = item.RandomPlumeBonus,
+			PersistentState = item.PersistentState,
+		};
+		copy.ManaStones = item.ManaStones;
+		copy.FusionStones = item.FusionStones;
+		copy.Godstone = item.Godstone;
+		copy.IdianStone = item.IdianStone;
+		return copy;
+	}
+}
