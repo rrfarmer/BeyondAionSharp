@@ -44,6 +44,86 @@ public sealed class PetMerchantSellLiveExecutorFacadePlanServiceTests
 	}
 
 	[Fact]
+	public void CreateDisabledOutcomePlan_GroupsPetSellFacadeWithoutCommitting()
+	{
+		var sellPlan = CreateSellPlan();
+		var facade = PetMerchantSellLiveExecutorFacadePlanService.CreateDisabledPlan(CreatePetMerchantHandlerPlan(petSellModifier: 33, sellPlan));
+
+		var outcome = PetMerchantSellOutcomePlanService.CreateDisabledPlan(facade);
+
+		Assert.Equal(PetMerchantSellOutcomePlanStatus.DisabledNoTransaction, outcome.Status);
+		Assert.Same(facade, outcome.FacadePlan);
+		Assert.Same(sellPlan, outcome.SellToShopPlan);
+		Assert.True(outcome.WouldMutateSellerInventory);
+		Assert.False(outcome.DidMutateSellerInventory);
+		Assert.True(outcome.WouldAddRepurchaseItems);
+		Assert.False(outcome.DidAddRepurchaseItems);
+		Assert.True(outcome.WouldMutateKinah);
+		Assert.False(outcome.DidMutateKinah);
+		Assert.True(outcome.WouldCommitTransactionBoundary);
+		Assert.False(outcome.DidCommitTransactionBoundary);
+		Assert.False(outcome.ShouldCommitTransactionBoundary);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+		Assert.False(outcome.IsLive);
+		Assert.Collection(
+			outcome.Steps.Select(step => step.Kind),
+			kind => Assert.Equal(PetMerchantSellOutcomeStepKind.ApplySellerInventoryMutation, kind),
+			kind => Assert.Equal(PetMerchantSellOutcomeStepKind.AddRepurchaseItems, kind),
+			kind => Assert.Equal(PetMerchantSellOutcomeStepKind.IncreaseKinah, kind),
+			kind => Assert.Equal(PetMerchantSellOutcomeStepKind.CommitTransactionBoundary, kind));
+		Assert.All(outcome.Steps, step =>
+		{
+			Assert.True(step.WouldRun);
+			Assert.False(step.DidRun);
+		});
+	}
+
+	[Fact]
+	public void CreateDisabledOutcomePlan_MissingFacadeStopsBeforeTransactionBoundary()
+	{
+		var outcome = PetMerchantSellOutcomePlanService.CreateDisabledPlan(null);
+
+		Assert.Equal(PetMerchantSellOutcomePlanStatus.MissingFacadePlan, outcome.Status);
+		Assert.Null(outcome.FacadePlan);
+		Assert.Null(outcome.SellToShopPlan);
+		Assert.Empty(outcome.Steps);
+		Assert.False(outcome.WouldMutateSellerInventory);
+		Assert.False(outcome.WouldAddRepurchaseItems);
+		Assert.False(outcome.WouldMutateKinah);
+		Assert.False(outcome.WouldCommitTransactionBoundary);
+		Assert.False(outcome.ShouldCommitTransactionBoundary);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+		Assert.False(outcome.IsLive);
+	}
+
+	[Fact]
+	public void CreateDisabledOutcomePlan_BlockedFacadeCarriesSellPlanWithoutCommitting()
+	{
+		var sellPlan = new TradeSellToShopPlan(
+			TradeSellToShopPlanStatus.BlockedCannotTrade,
+			SellerDeletedItemObjectIds: [],
+			SellerItemUpdates: [],
+			RepurchaseItems: [],
+			KinahUpdate: null,
+			"TradeService.performSellToShop -> !PlayerRestrictions.canTrade(player) -> false");
+		var facade = PetMerchantSellLiveExecutorFacadePlanService.CreateDisabledPlan(CreatePetMerchantHandlerPlan(petSellModifier: 33, sellPlan));
+
+		var outcome = PetMerchantSellOutcomePlanService.CreateDisabledPlan(facade);
+
+		Assert.Equal(PetMerchantSellOutcomePlanStatus.FacadeNotReady, outcome.Status);
+		Assert.Same(facade, outcome.FacadePlan);
+		Assert.Same(sellPlan, outcome.SellToShopPlan);
+		Assert.Empty(outcome.Steps);
+		Assert.False(outcome.WouldMutateSellerInventory);
+		Assert.False(outcome.WouldAddRepurchaseItems);
+		Assert.False(outcome.WouldMutateKinah);
+		Assert.False(outcome.WouldCommitTransactionBoundary);
+		Assert.False(outcome.ShouldCommitTransactionBoundary);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+		Assert.False(outcome.IsLive);
+	}
+
+	[Fact]
 	public void CreateDisabledPlan_NonPetMerchantHandlerPlanIsNotEligible()
 	{
 		var packet = CreatePacket(13, [new CmBuyItemEntry(100000001, 1)]);
@@ -124,6 +204,17 @@ public sealed class PetMerchantSellLiveExecutorFacadePlanServiceTests
 				PetHasMerchantFunction: true,
 				PetSellModifier: petSellModifier,
 				PetSellToShopPlan: sellPlan));
+	}
+
+	private static TradeSellToShopPlan CreateSellPlan()
+	{
+		return new TradeSellToShopPlan(
+			TradeSellToShopPlanStatus.PlanCreated,
+			SellerDeletedItemObjectIds: [2001],
+			SellerItemUpdates: [],
+			RepurchaseItems: [new RepurchaseSourceItem(new InventoryItem { ObjectId = 2001, ItemId = 100000001, Count = 1 }, RepurchasePrice: 330)],
+			KinahUpdate: new InventoryItem { ObjectId = 3001, ItemId = InventoryItemFactory.KinahItemId, Count = 1_330 },
+			"TradeService.performSellToShop");
 	}
 
 	private static CmBuyItem CreatePacket(int tradeActionId, IReadOnlyList<CmBuyItemEntry> entries)

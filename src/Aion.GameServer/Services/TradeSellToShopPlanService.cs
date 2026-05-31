@@ -58,10 +58,49 @@ public enum PetMerchantSellLiveExecutorOperationStatus
 	NotAttemptedDisabled,
 }
 
+public enum PetMerchantSellOutcomePlanStatus
+{
+	MissingFacadePlan,
+	FacadeNotReady,
+	DisabledNoTransaction,
+}
+
+public enum PetMerchantSellOutcomeStepKind
+{
+	ApplySellerInventoryMutation,
+	AddRepurchaseItems,
+	IncreaseKinah,
+	CommitTransactionBoundary,
+}
+
 public sealed record PetMerchantSellLiveExecutorOperation(
 	PetMerchantSellLiveExecutorOperationKind Kind,
 	PetMerchantSellLiveExecutorOperationStatus Status,
 	string JavaSource);
+
+public sealed record PetMerchantSellOutcomeStepPlan(
+	PetMerchantSellOutcomeStepKind Kind,
+	bool WouldRun,
+	bool DidRun,
+	string JavaSource);
+
+public sealed record PetMerchantSellOutcomePlan(
+	PetMerchantSellOutcomePlanStatus Status,
+	PetMerchantSellLiveExecutorFacadePlan? FacadePlan,
+	TradeSellToShopPlan? SellToShopPlan,
+	IReadOnlyList<PetMerchantSellOutcomeStepPlan> Steps,
+	bool WouldMutateSellerInventory,
+	bool DidMutateSellerInventory,
+	bool WouldAddRepurchaseItems,
+	bool DidAddRepurchaseItems,
+	bool WouldMutateKinah,
+	bool DidMutateKinah,
+	bool WouldCommitTransactionBoundary,
+	bool DidCommitTransactionBoundary,
+	bool ShouldCommitTransactionBoundary,
+	bool ShouldDispatchLiveSideEffects,
+	string JavaSource,
+	bool IsLive);
 
 public sealed record PetMerchantSellLiveExecutorFacadePlan(
 	PetMerchantSellLiveExecutorFacadeStatus Status,
@@ -288,6 +327,92 @@ public static class TradeSellToShopPlanService
 		copy.IdianStone = item.IdianStone;
 		return copy;
 	}
+}
+
+public static class PetMerchantSellOutcomePlanService
+{
+	public static PetMerchantSellOutcomePlan CreateDisabledPlan(PetMerchantSellLiveExecutorFacadePlan? facadePlan)
+	{
+		if (facadePlan == null)
+			return CreateTerminalPlan(
+				PetMerchantSellOutcomePlanStatus.MissingFacadePlan,
+				facadePlan,
+				"CM_BUY_ITEM pet merchant final outcome requires a disabled live facade plan");
+
+		if (facadePlan.Status != PetMerchantSellLiveExecutorFacadeStatus.DisabledNoSideEffects)
+			return CreateTerminalPlan(
+				PetMerchantSellOutcomePlanStatus.FacadeNotReady,
+				facadePlan,
+				"CM_BUY_ITEM pet merchant final outcome stops because facade is not eligible for disabled side-effect composition");
+
+		var wouldMutateSellerInventory = facadePlan.WouldMutateSellerInventory;
+		var wouldAddRepurchaseItems = facadePlan.WouldAddRepurchaseItems;
+		var wouldMutateKinah = facadePlan.WouldMutateKinah;
+		var wouldCommitBoundary = wouldMutateSellerInventory || wouldAddRepurchaseItems || wouldMutateKinah;
+
+		var steps = new List<PetMerchantSellOutcomeStepPlan>();
+		if (wouldMutateSellerInventory)
+			steps.Add(Disabled(
+				PetMerchantSellOutcomeStepKind.ApplySellerInventoryMutation,
+				"TradeService.performSellToShop -> inventory.delete/decreaseItemCount for pet merchant sold items"));
+		if (wouldAddRepurchaseItems)
+			steps.Add(Disabled(
+				PetMerchantSellOutcomeStepKind.AddRepurchaseItems,
+				"TradeService.performSellToShop -> RepurchaseService.addRepurchaseItems(player, items)"));
+		if (wouldMutateKinah)
+			steps.Add(Disabled(
+				PetMerchantSellOutcomeStepKind.IncreaseKinah,
+				"TradeService.performSellToShop -> inventory.increaseKinah(kinahReward, INC_KINAH_SELL)"));
+		if (wouldCommitBoundary)
+			steps.Add(Disabled(
+				PetMerchantSellOutcomeStepKind.CommitTransactionBoundary,
+				"TradeService.performSellToShop pet merchant transaction boundary is recorded only; Java transaction semantics are not yet runtime-verified"));
+
+		return new PetMerchantSellOutcomePlan(
+			PetMerchantSellOutcomePlanStatus.DisabledNoTransaction,
+			facadePlan,
+			facadePlan.SellToShopPlan,
+			steps,
+			wouldMutateSellerInventory,
+			DidMutateSellerInventory: false,
+			wouldAddRepurchaseItems,
+			DidAddRepurchaseItems: false,
+			wouldMutateKinah,
+			DidMutateKinah: false,
+			wouldCommitBoundary,
+			DidCommitTransactionBoundary: false,
+			ShouldCommitTransactionBoundary: false,
+			ShouldDispatchLiveSideEffects: false,
+			"CM_BUY_ITEM Pet MERCHANT action 17 final outcome is disabled; inventory/repurchase/Kinah/transaction boundaries are recorded without dispatch",
+			IsLive: false);
+	}
+
+	private static PetMerchantSellOutcomePlan CreateTerminalPlan(
+		PetMerchantSellOutcomePlanStatus status,
+		PetMerchantSellLiveExecutorFacadePlan? facadePlan,
+		string javaSource) =>
+		new(
+			status,
+			facadePlan,
+			facadePlan?.SellToShopPlan,
+			Steps: Array.Empty<PetMerchantSellOutcomeStepPlan>(),
+			WouldMutateSellerInventory: false,
+			DidMutateSellerInventory: false,
+			WouldAddRepurchaseItems: false,
+			DidAddRepurchaseItems: false,
+			WouldMutateKinah: false,
+			DidMutateKinah: false,
+			WouldCommitTransactionBoundary: false,
+			DidCommitTransactionBoundary: false,
+			ShouldCommitTransactionBoundary: false,
+			ShouldDispatchLiveSideEffects: false,
+			javaSource,
+			IsLive: false);
+
+	private static PetMerchantSellOutcomeStepPlan Disabled(
+		PetMerchantSellOutcomeStepKind kind,
+		string javaSource) =>
+		new(kind, WouldRun: true, DidRun: false, javaSource);
 }
 
 public static class PetMerchantSellLiveExecutorFacadePlanService
