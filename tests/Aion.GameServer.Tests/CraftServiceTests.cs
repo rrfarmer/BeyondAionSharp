@@ -710,7 +710,80 @@ public sealed class CraftServiceTests
 		Assert.Equal(CraftStartValidationStatus.ReadyForNextValidation, plan.Status);
 		Assert.Equal(0, plan.MissingComponentItemId);
 		Assert.True(plan.IsReadyForNextValidation);
-		Assert.Contains("bonus item guard", plan.JavaSource, StringComparison.Ordinal);
+		Assert.Contains("material consumption", plan.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void CreateStartCraftingValidationPlan_RejectsMissingBonusItemAfterMaterialValidation()
+	{
+		var service = CreateService(out _, CreateItemTemplates(), CreateSkillTemplates());
+		var missingMaterialPlayer = CreatePlayer(objectId: 1128, dp: 700);
+		var player = CreatePlayer(objectId: 1129, dp: 700);
+		var readyPlayer = CreatePlayer(objectId: 1130, dp: 700);
+		var recipe = CreateRecipe(
+			recipeId: 155000023,
+			dp: 600,
+			productId: 100200203,
+			skillId: 40001,
+			skillPoint: 200,
+			componentGroups: [CreateComponentGroup((152000901, 1))]);
+		foreach (var candidate in new[] { missingMaterialPlayer, player, readyPlayer })
+		{
+			candidate.Recipes = [recipe.RecipeId];
+			candidate.Skills = [CreateSkill(recipe.SkillId, skillLevel: 200)];
+		}
+
+		player.InventoryItems = [CreateInventoryItem(objectId: 8003, itemId: 152000901, count: 1)];
+		readyPlayer.InventoryItems =
+		[
+			CreateInventoryItem(objectId: 8004, itemId: 152000901, count: 1),
+			CreateInventoryItem(objectId: 8005, itemId: 169401081, count: 1),
+		];
+		var productTemplate = CreateItemTemplates().GetItemTemplate(100200203);
+		var target = CreateTarget(objectId: 9016, templateId: 730190);
+		var selectedMaterials = new Dictionary<int, long> { [152000901] = 1 };
+
+		var materialWinsBeforeBonus = service.CreateStartCraftingValidationPlan(
+			missingMaterialPlayer,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false,
+			selectedMaterials,
+			craftType: 1);
+		var missingBonus = service.CreateStartCraftingValidationPlan(
+			player,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false,
+			selectedMaterials,
+			craftType: 1);
+		var ready = service.CreateStartCraftingValidationPlan(
+			readyPlayer,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false,
+			selectedMaterials,
+			craftType: 1);
+
+		Assert.Equal(CraftStartValidationStatus.MissingComponentItem, materialWinsBeforeBonus.Status);
+		Assert.Equal(CraftStartValidationStatus.MissingBonusItem, missingBonus.Status);
+		Assert.Equal(169401081, missingBonus.MissingComponentItemId);
+		Assert.Equal(1, missingBonus.MissingComponentRequiredCount);
+		Assert.Equal(0, missingBonus.MissingComponentAvailableCount);
+		Assert.Equal(1330046, Assert.IsType<SmSystemMessage>(missingBonus.FailurePacket).MessageId);
+		Assert.True(missingBonus.ShouldSendCancelCraft);
+		Assert.Contains("getBonusReqItem", missingBonus.JavaSource, StringComparison.Ordinal);
+		Assert.Equal(CraftStartValidationStatus.ReadyForNextValidation, ready.Status);
+		Assert.True(ready.IsReadyForNextValidation);
 	}
 
 	[Fact]
@@ -1105,6 +1178,19 @@ public sealed class CraftServiceTests
 				152000902,
 				"Material B",
 				730901,
+				0,
+				1,
+				"MATERIAL",
+				"ITEM",
+				"COMMON",
+				"PC_ALL",
+				10,
+				1,
+				0),
+			new ItemTemplateSummary(
+				169401081,
+				"Cooking Bonus",
+				731081,
 				0,
 				1,
 				"MATERIAL",

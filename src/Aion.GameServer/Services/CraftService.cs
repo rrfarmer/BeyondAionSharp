@@ -50,7 +50,8 @@ public sealed class CraftService
 		bool targetIsStaticObject,
 		bool targetIsWithinToolRange,
 		bool hasCraftingTaskInProgress,
-		IReadOnlyDictionary<int, long>? selectedMaterialData = null)
+		IReadOnlyDictionary<int, long>? selectedMaterialData = null,
+		int craftType = 0)
 	{
 		// Java parity: services/craft/CraftService.startCrafting + early checkCraft guards.
 		if (player == null)
@@ -121,6 +122,21 @@ public sealed class CraftService
 				missingComponent.ItemId,
 				missingComponent.RequiredQuantity,
 				missingComponent.AvailableCount,
+				itemName);
+		}
+
+		var bonusItemId = GetBonusRequiredItemId(recipeTemplate.SkillId);
+		if (craftType == 1 && GetCubeItemCountByItemId(player.InventoryItems, bonusItemId) < 1)
+		{
+			var itemName = GetItemClientName(bonusItemId);
+			return CraftStartValidationPlan.MissingBonusItem(
+				player.ObjectId,
+				player.Dp,
+				playerSkill.SkillLevel,
+				recipeTemplate,
+				productTemplate,
+				target?.ObjectId ?? 0,
+				bonusItemId,
 				itemName);
 		}
 
@@ -297,6 +313,22 @@ public sealed class CraftService
 		return inventoryItems
 			.Where(item => item.ItemId == itemId && item.Location == CubeStorageId && !item.IsEquipped)
 			.Sum(item => item.Count);
+	}
+
+	private static int GetBonusRequiredItemId(int skillId)
+	{
+		// Java parity: services/craft/CraftService.getBonusReqItem.
+		return skillId switch
+		{
+			40001 => 169401081,
+			40002 => 169401076,
+			40003 => 169401077,
+			40004 => 169401078,
+			40007 => 169401080,
+			40008 => 169401079,
+			40010 => 169401082,
+			_ => 0,
+		};
 	}
 
 	private static InventoryItem CopyInventoryItem(InventoryItem item, string creatorName)
@@ -809,6 +841,36 @@ public sealed record CraftStartValidationPlan(
 			"CraftService.checkCraft -> selected recipe component group inventory count is below component quantity");
 	}
 
+	public static CraftStartValidationPlan MissingBonusItem(
+		int objectId,
+		int currentDp,
+		int currentSkillLevel,
+		RecipeTemplateSummary recipeTemplate,
+		ItemTemplateSummary productTemplate,
+		int targetObjectId,
+		int bonusItemId,
+		string itemName)
+	{
+		return FromRecipe(
+			CraftStartValidationStatus.MissingBonusItem,
+			objectId,
+			recipeTemplate,
+			productTemplate.TemplateId,
+			targetObjectId,
+			targetTemplateId: 0,
+			requiredDp: recipeTemplate.Dp,
+			currentDp,
+			requiredSkillPoint: recipeTemplate.SkillPoint,
+			currentSkillLevel,
+			missingComponentItemId: bonusItemId,
+			missingComponentRequiredCount: 1,
+			missingComponentAvailableCount: 0,
+			shouldSendCancelCraft: true,
+			isReadyForNextValidation: false,
+			failurePacket: SmSystemMessage.CombineNoComponentItemSingle(itemName),
+			"CraftService.checkCraft -> craftType == 1 && !inventory.decreaseByItemId(getBonusReqItem(skillId), 1)");
+	}
+
 	public static CraftStartValidationPlan ReadyForNextValidation(
 		int objectId,
 		int currentDp,
@@ -836,8 +898,8 @@ public sealed record CraftStartValidationPlan(
 			isReadyForNextValidation: true,
 			failurePacket: null,
 			isMorphRecipe
-				? "CraftService.checkCraft -> morphing does not need static object/npc to use; skill/material guards passed"
-				: "CraftService.checkCraft -> static target/DP/stance/inventory/recipe/cooldown/skill/material guards passed; continue to bonus item guard");
+				? "CraftService.checkCraft -> morphing does not need static object/npc to use; skill/material/bonus guards passed"
+				: "CraftService.checkCraft -> static target/DP/stance/inventory/recipe/cooldown/skill/material/bonus guards passed; continue to material consumption");
 	}
 
 	private static CraftStartValidationPlan FromRecipe(
@@ -898,6 +960,7 @@ public enum CraftStartValidationStatus
 	MissingCraftSkill,
 	CraftSkillTooLow,
 	MissingComponentItem,
+	MissingBonusItem,
 	ReadyForNextValidation,
 }
 
