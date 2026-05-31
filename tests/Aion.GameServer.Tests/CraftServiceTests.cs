@@ -2032,6 +2032,97 @@ public sealed class CraftServiceTests
 	}
 
 	[Fact]
+	public void CreateCraftCooldownPersistencePlan_UsesJavaDeleteThenActiveInsertSqlWithoutWriting()
+	{
+		var cooldowns = new Dictionary<int, long>
+		{
+			[77] = 1_030_000,
+			[78] = 900_000,
+			[79] = 1_000_000,
+		};
+
+		var plan = CraftCooldownPersistencePlanService.CreateDisabledPlan(
+			playerObjectId: 1148,
+			cooldowns,
+			currentTimeMillis: 1_000_000);
+
+		Assert.Equal(CraftCooldownPersistencePlanStatus.DisabledNoWrite, plan.Status);
+		Assert.False(plan.IsLive);
+		Assert.True(plan.WouldDeleteExistingRows);
+		Assert.False(plan.DidDeleteExistingRows);
+		Assert.True(plan.WouldInsertActiveCooldowns);
+		Assert.False(plan.DidInsertActiveCooldowns);
+		Assert.Equal(1, plan.DeleteDescriptorCount);
+		Assert.Equal(2, plan.InsertDescriptorCount);
+		Assert.Equal(1, plan.SkippedExpiredCooldownCount);
+		Assert.Equal(3, plan.SqlDescriptors.Count);
+		Assert.Equal(CraftCooldownPersistenceSqlOperationKind.DeleteAllForPlayer, plan.SqlDescriptors[0].Kind);
+		Assert.Equal(CraftCooldownPersistencePlanService.JavaCraftCooldownDeleteSql, plan.SqlDescriptors[0].Sql);
+		Assert.Equal(CraftCooldownPersistenceSqlOperationKind.InsertActiveCooldown, plan.SqlDescriptors[1].Kind);
+		Assert.Equal(CraftCooldownPersistencePlanService.JavaCraftCooldownInsertSql, plan.SqlDescriptors[1].Sql);
+		Assert.Equal(77, plan.SqlDescriptors[1].DelayId);
+		Assert.Equal(1_030_000, plan.SqlDescriptors[1].ReuseTimeMillis);
+		Assert.Equal(CraftCooldownPersistenceSqlOperationKind.InsertActiveCooldown, plan.SqlDescriptors[2].Kind);
+		Assert.Equal(79, plan.SqlDescriptors[2].DelayId);
+		Assert.Equal(1_000_000, plan.SqlDescriptors[2].ReuseTimeMillis);
+		Assert.All(plan.SqlDescriptors, descriptor => Assert.False(descriptor.DidExecuteSql));
+		Assert.Contains("delete-all/insert-active", plan.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void CreateCraftCooldownPersistenceAdapterPlan_RecordsDisabledSqlExecutionBoundary()
+	{
+		var persistence = CraftCooldownPersistencePlanService.CreateDisabledPlan(
+			playerObjectId: 1149,
+			new Dictionary<int, long> { [77] = 1_030_000 },
+			currentTimeMillis: 1_000_000);
+
+		var adapter = CraftCooldownPersistenceAdapterPlanService.CreateDisabledPlan(persistence);
+
+		Assert.Equal(CraftCooldownPersistenceAdapterStatus.DisabledNoWrite, adapter.Status);
+		Assert.False(adapter.IsLive);
+		Assert.True(adapter.WouldOpenConnection);
+		Assert.False(adapter.DidOpenConnection);
+		Assert.True(adapter.WouldExecuteSql);
+		Assert.False(adapter.DidExecuteSql);
+		Assert.Equal(2, adapter.WouldExecuteSqlCount);
+		Assert.Equal(0, adapter.ExecutedSqlCount);
+		Assert.Collection(
+			adapter.Operations,
+			deleteOperation =>
+			{
+				Assert.Equal(CraftCooldownPersistenceSqlOperationKind.DeleteAllForPlayer, deleteOperation.Kind);
+				Assert.Equal(CraftCooldownPersistencePlanService.JavaCraftCooldownDeleteSql, deleteOperation.Sql);
+				Assert.False(deleteOperation.DidExecuteSql);
+			},
+			insertOperation =>
+			{
+				Assert.Equal(CraftCooldownPersistenceSqlOperationKind.InsertActiveCooldown, insertOperation.Kind);
+				Assert.Equal(CraftCooldownPersistencePlanService.JavaCraftCooldownInsertSql, insertOperation.Sql);
+				Assert.False(insertOperation.DidExecuteSql);
+			});
+		Assert.Contains("database execution remains disabled", adapter.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void CreateCraftCooldownPersistencePlan_DeletesEvenWhenNoActiveCooldownsLikeJavaStore()
+	{
+		var plan = CraftCooldownPersistencePlanService.CreateDisabledPlan(
+			playerObjectId: 1150,
+			new Dictionary<int, long> { [77] = 999_999 },
+			currentTimeMillis: 1_000_000);
+
+		Assert.Equal(CraftCooldownPersistencePlanStatus.DisabledNoWrite, plan.Status);
+		Assert.True(plan.WouldDeleteExistingRows);
+		Assert.False(plan.WouldInsertActiveCooldowns);
+		Assert.Equal(1, plan.DeleteDescriptorCount);
+		Assert.Equal(0, plan.InsertDescriptorCount);
+		Assert.Equal(1, plan.SkippedExpiredCooldownCount);
+		Assert.Single(plan.SqlDescriptors);
+		Assert.Equal(CraftCooldownPersistenceSqlOperationKind.DeleteAllForPlayer, plan.SqlDescriptors[0].Kind);
+	}
+
+	[Fact]
 	public void CreateFinishProductPlan_ReportsMissingComboProductConservatively()
 	{
 		var service = CreateService(out _, CreateItemTemplates());

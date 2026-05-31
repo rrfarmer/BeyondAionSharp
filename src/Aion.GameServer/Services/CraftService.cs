@@ -2579,6 +2579,290 @@ public enum CraftFinishCooldownApplicationStatus
 	CooldownPlanNotReady,
 }
 
+public static class CraftCooldownPersistencePlanService
+{
+	public const string JavaCraftCooldownInsertSql = "INSERT INTO `craft_cooldowns` (`player_id`, `delay_id`, `reuse_time`) VALUES (?,?,?)";
+	public const string JavaCraftCooldownDeleteSql = "DELETE FROM `craft_cooldowns` WHERE `player_id`=?";
+
+	public static CraftCooldownPersistencePlan CreateDisabledPlan(
+		int playerObjectId,
+		IReadOnlyDictionary<int, long>? craftCooldowns,
+		long currentTimeMillis)
+	{
+		// Java parity: CraftCooldownsDAO.storeCraftCooldowns deletes all rows first,
+		// then inserts entries whose reuse time is not before System.currentTimeMillis().
+		if (playerObjectId <= 0)
+			return CraftCooldownPersistencePlan.PlayerMissing(currentTimeMillis);
+		if (craftCooldowns == null)
+			return CraftCooldownPersistencePlan.CooldownsMissing(playerObjectId, currentTimeMillis);
+
+		var descriptors = new List<CraftCooldownPersistenceSqlDescriptor>
+		{
+			CraftCooldownPersistenceSqlDescriptor.DeleteAllForPlayer(playerObjectId),
+		};
+		var skippedExpired = 0;
+		foreach (var (delayId, reuseTimeMillis) in craftCooldowns)
+		{
+			if (reuseTimeMillis < currentTimeMillis)
+			{
+				skippedExpired++;
+				continue;
+			}
+
+			descriptors.Add(CraftCooldownPersistenceSqlDescriptor.InsertActiveCooldown(
+				playerObjectId,
+				delayId,
+				reuseTimeMillis));
+		}
+
+		return CraftCooldownPersistencePlan.DisabledNoWrite(
+			playerObjectId,
+			currentTimeMillis,
+			descriptors,
+			skippedExpired);
+	}
+}
+
+public sealed record CraftCooldownPersistencePlan(
+	CraftCooldownPersistencePlanStatus Status,
+	int PlayerObjectId,
+	long CurrentTimeMillis,
+	IReadOnlyList<CraftCooldownPersistenceSqlDescriptor> SqlDescriptors,
+	int DeleteDescriptorCount,
+	int InsertDescriptorCount,
+	int SkippedExpiredCooldownCount,
+	bool WouldDeleteExistingRows,
+	bool DidDeleteExistingRows,
+	bool WouldInsertActiveCooldowns,
+	bool DidInsertActiveCooldowns,
+	string JavaSource,
+	bool IsLive)
+{
+	public bool IsPlanned => Status == CraftCooldownPersistencePlanStatus.DisabledNoWrite;
+
+	public static CraftCooldownPersistencePlan PlayerMissing(long currentTimeMillis)
+	{
+		return new CraftCooldownPersistencePlan(
+			CraftCooldownPersistencePlanStatus.PlayerMissing,
+			PlayerObjectId: 0,
+			currentTimeMillis,
+			SqlDescriptors: Array.Empty<CraftCooldownPersistenceSqlDescriptor>(),
+			DeleteDescriptorCount: 0,
+			InsertDescriptorCount: 0,
+			SkippedExpiredCooldownCount: 0,
+			WouldDeleteExistingRows: false,
+			DidDeleteExistingRows: false,
+			WouldInsertActiveCooldowns: false,
+			DidInsertActiveCooldowns: false,
+			"CraftCooldownsDAO.storeCraftCooldowns skipped because player id is unavailable",
+			IsLive: false);
+	}
+
+	public static CraftCooldownPersistencePlan CooldownsMissing(int playerObjectId, long currentTimeMillis)
+	{
+		return new CraftCooldownPersistencePlan(
+			CraftCooldownPersistencePlanStatus.CooldownsMissing,
+			playerObjectId,
+			currentTimeMillis,
+			SqlDescriptors: Array.Empty<CraftCooldownPersistenceSqlDescriptor>(),
+			DeleteDescriptorCount: 0,
+			InsertDescriptorCount: 0,
+			SkippedExpiredCooldownCount: 0,
+			WouldDeleteExistingRows: false,
+			DidDeleteExistingRows: false,
+			WouldInsertActiveCooldowns: false,
+			DidInsertActiveCooldowns: false,
+			"CraftCooldownsDAO.storeCraftCooldowns skipped because craft cooldowns are unavailable",
+			IsLive: false);
+	}
+
+	public static CraftCooldownPersistencePlan DisabledNoWrite(
+		int playerObjectId,
+		long currentTimeMillis,
+		IReadOnlyList<CraftCooldownPersistenceSqlDescriptor> descriptors,
+		int skippedExpiredCooldownCount)
+	{
+		var insertCount = descriptors.Count(descriptor => descriptor.Kind == CraftCooldownPersistenceSqlOperationKind.InsertActiveCooldown);
+		return new CraftCooldownPersistencePlan(
+			CraftCooldownPersistencePlanStatus.DisabledNoWrite,
+			playerObjectId,
+			currentTimeMillis,
+			descriptors.ToArray(),
+			DeleteDescriptorCount: descriptors.Count(descriptor => descriptor.Kind == CraftCooldownPersistenceSqlOperationKind.DeleteAllForPlayer),
+			InsertDescriptorCount: insertCount,
+			skippedExpiredCooldownCount,
+			WouldDeleteExistingRows: true,
+			DidDeleteExistingRows: false,
+			WouldInsertActiveCooldowns: insertCount > 0,
+			DidInsertActiveCooldowns: false,
+			"CraftCooldownsDAO.storeCraftCooldowns delete-all/insert-active SQL boundary identified, but live C# database execution remains disabled",
+			IsLive: false);
+	}
+}
+
+public sealed record CraftCooldownPersistenceSqlDescriptor(
+	CraftCooldownPersistenceSqlOperationKind Kind,
+	int PlayerObjectId,
+	int DelayId,
+	long ReuseTimeMillis,
+	string Sql,
+	string JavaDaoMethod,
+	bool WouldExecuteSql,
+	bool DidExecuteSql,
+	bool IsLive)
+{
+	public static CraftCooldownPersistenceSqlDescriptor DeleteAllForPlayer(int playerObjectId)
+	{
+		return new CraftCooldownPersistenceSqlDescriptor(
+			CraftCooldownPersistenceSqlOperationKind.DeleteAllForPlayer,
+			playerObjectId,
+			DelayId: 0,
+			ReuseTimeMillis: 0,
+			CraftCooldownPersistencePlanService.JavaCraftCooldownDeleteSql,
+			"CraftCooldownsDAO.deleteCraftCoolDowns",
+			WouldExecuteSql: true,
+			DidExecuteSql: false,
+			IsLive: false);
+	}
+
+	public static CraftCooldownPersistenceSqlDescriptor InsertActiveCooldown(
+		int playerObjectId,
+		int delayId,
+		long reuseTimeMillis)
+	{
+		return new CraftCooldownPersistenceSqlDescriptor(
+			CraftCooldownPersistenceSqlOperationKind.InsertActiveCooldown,
+			playerObjectId,
+			delayId,
+			reuseTimeMillis,
+			CraftCooldownPersistencePlanService.JavaCraftCooldownInsertSql,
+			"CraftCooldownsDAO.storeCraftCooldowns",
+			WouldExecuteSql: true,
+			DidExecuteSql: false,
+			IsLive: false);
+	}
+}
+
+public static class CraftCooldownPersistenceAdapterPlanService
+{
+	public static CraftCooldownPersistenceAdapterPlan CreateDisabledPlan(CraftCooldownPersistencePlan? persistencePlan)
+	{
+		if (persistencePlan == null)
+			return CraftCooldownPersistenceAdapterPlan.PersistencePlanMissing();
+		if (!persistencePlan.IsPlanned)
+			return CraftCooldownPersistenceAdapterPlan.PersistencePlanNotReady(persistencePlan);
+
+		var operations = persistencePlan.SqlDescriptors
+			.Select(CraftCooldownPersistenceAdapterOperation.Disabled)
+			.ToArray();
+		return CraftCooldownPersistenceAdapterPlan.DisabledNoWrite(persistencePlan, operations);
+	}
+}
+
+public sealed record CraftCooldownPersistenceAdapterPlan(
+	CraftCooldownPersistenceAdapterStatus Status,
+	CraftCooldownPersistencePlan? PersistencePlan,
+	IReadOnlyList<CraftCooldownPersistenceAdapterOperation> Operations,
+	bool WouldOpenConnection,
+	bool DidOpenConnection,
+	bool WouldExecuteSql,
+	bool DidExecuteSql,
+	int WouldExecuteSqlCount,
+	int ExecutedSqlCount,
+	string JavaSource,
+	bool IsLive)
+{
+	public static CraftCooldownPersistenceAdapterPlan PersistencePlanMissing()
+	{
+		return new CraftCooldownPersistenceAdapterPlan(
+			CraftCooldownPersistenceAdapterStatus.PersistencePlanMissing,
+			PersistencePlan: null,
+			Operations: Array.Empty<CraftCooldownPersistenceAdapterOperation>(),
+			WouldOpenConnection: false,
+			DidOpenConnection: false,
+			WouldExecuteSql: false,
+			DidExecuteSql: false,
+			WouldExecuteSqlCount: 0,
+			ExecutedSqlCount: 0,
+			"CraftCooldownsDAO.storeCraftCooldowns boundary skipped because persistence plan is missing",
+			IsLive: false);
+	}
+
+	public static CraftCooldownPersistenceAdapterPlan PersistencePlanNotReady(CraftCooldownPersistencePlan persistencePlan)
+	{
+		return new CraftCooldownPersistenceAdapterPlan(
+			CraftCooldownPersistenceAdapterStatus.PersistencePlanNotReady,
+			persistencePlan,
+			Operations: Array.Empty<CraftCooldownPersistenceAdapterOperation>(),
+			WouldOpenConnection: false,
+			DidOpenConnection: false,
+			WouldExecuteSql: false,
+			DidExecuteSql: false,
+			WouldExecuteSqlCount: 0,
+			ExecutedSqlCount: 0,
+			"CraftCooldownsDAO.storeCraftCooldowns boundary skipped because persistence plan is not planned",
+			IsLive: false);
+	}
+
+	public static CraftCooldownPersistenceAdapterPlan DisabledNoWrite(
+		CraftCooldownPersistencePlan persistencePlan,
+		IReadOnlyList<CraftCooldownPersistenceAdapterOperation> operations)
+	{
+		return new CraftCooldownPersistenceAdapterPlan(
+			CraftCooldownPersistenceAdapterStatus.DisabledNoWrite,
+			persistencePlan,
+			operations.ToArray(),
+			WouldOpenConnection: operations.Count > 0,
+			DidOpenConnection: false,
+			WouldExecuteSql: operations.Count > 0,
+			DidExecuteSql: false,
+			WouldExecuteSqlCount: operations.Count,
+			ExecutedSqlCount: 0,
+			"CraftCooldownsDAO.storeCraftCooldowns SQL boundary identified, but live C# database execution remains disabled",
+			IsLive: false);
+	}
+}
+
+public sealed record CraftCooldownPersistenceAdapterOperation(
+	CraftCooldownPersistenceSqlDescriptor Descriptor,
+	CraftCooldownPersistenceSqlOperationKind Kind,
+	string Sql,
+	string JavaDaoMethod,
+	bool WouldExecuteSql,
+	bool DidExecuteSql)
+{
+	public static CraftCooldownPersistenceAdapterOperation Disabled(CraftCooldownPersistenceSqlDescriptor descriptor)
+	{
+		return new CraftCooldownPersistenceAdapterOperation(
+			descriptor,
+			descriptor.Kind,
+			descriptor.Sql,
+			descriptor.JavaDaoMethod,
+			descriptor.WouldExecuteSql,
+			DidExecuteSql: false);
+	}
+}
+
+public enum CraftCooldownPersistenceSqlOperationKind
+{
+	DeleteAllForPlayer,
+	InsertActiveCooldown,
+}
+
+public enum CraftCooldownPersistencePlanStatus
+{
+	DisabledNoWrite,
+	PlayerMissing,
+	CooldownsMissing,
+}
+
+public enum CraftCooldownPersistenceAdapterStatus
+{
+	PersistencePlanMissing,
+	PersistencePlanNotReady,
+	DisabledNoWrite,
+}
+
 public sealed record CraftFinishRewardPlan(
 	CraftFinishRewardStatus Status,
 	CraftFinishProductPlan ProductPlan,
