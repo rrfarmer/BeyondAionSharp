@@ -49,6 +49,35 @@ public sealed class WorldNpcDropModifierServiceTests
 		Assert.Equal(75f, modifiers.CalculateDropChance(50f, allowReductionDropRate: false), precision: 3);
 	}
 
+	[Theory]
+	[InlineData(1f, 100, null, null, false, false, false, 1f)]
+	[InlineData(1.5f, 120, null, null, false, false, false, 1.8f)]
+	[InlineData(1f, 120, 130, null, false, false, false, 1.3f)]
+	[InlineData(1f, 120, 130, 80, false, false, false, 0.8f)]
+	[InlineData(2f, 100, null, null, true, true, true, 2.3f)]
+	public void CalculateBoostDropRate_MatchesJavaStatDefaultChainAndBonusStack(
+		float configuredDropRate,
+		int npcBoostDropRate,
+		int? killerBoostDropRate,
+		int? killerDrBoost,
+		bool hasReposeEnergy,
+		bool hasSalvation,
+		bool hasActivePalace,
+		float expected)
+	{
+		Assert.Equal(
+			expected,
+			WorldNpcDropModifierService.CalculateBoostDropRate(
+				configuredDropRate,
+				npcBoostDropRate,
+				killerBoostDropRate,
+				killerDrBoost,
+				hasReposeEnergy,
+				hasSalvation,
+				hasActivePalace),
+			precision: 3);
+	}
+
 	private static WorldNpc CreateNpc(int level)
 	{
 		return new WorldNpc(

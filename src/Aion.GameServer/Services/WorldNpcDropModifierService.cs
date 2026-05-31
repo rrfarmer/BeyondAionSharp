@@ -40,6 +40,28 @@ public sealed class WorldNpcDropModifierService
 		};
 	}
 
+	public static float CalculateBoostDropRate(
+		float configuredDropRate,
+		int npcBoostDropRate = 100,
+		int? killerBoostDropRate = null,
+		int? killerDrBoost = null,
+		bool hasReposeEnergy = false,
+		bool hasSalvation = false,
+		bool hasActivePalace = false)
+	{
+		// Java parity: DropRegistrationService.calculateBoostDropRate stat-default chain.
+		var boostDropRate = killerBoostDropRate ?? npcBoostDropRate;
+		boostDropRate = killerDrBoost ?? boostDropRate;
+		if (hasReposeEnergy)
+			boostDropRate += 5;
+		if (hasSalvation)
+			boostDropRate += 5;
+		if (hasActivePalace)
+			boostDropRate += 5;
+
+		return configuredDropRate * boostDropRate / 100f;
+	}
+
 	private static bool IsChest(IWorldNpcObject npc)
 	{
 		// Java parity: services/drop/DropRegistrationService.createDropModifiers chest AI slice, narrowed until group-drop template names exist.
