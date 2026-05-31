@@ -81,10 +81,10 @@ public sealed class CmCraftStartCompositionPlanServiceTests
 		Assert.Equal(CraftStartInventoryPacketStatus.Planned, plan.InventoryPacketPlan?.Status);
 		Assert.Equal(
 			[
-				typeof(SmInventoryUpdateItem),
-				typeof(SmInventoryUpdateItem),
 				typeof(SmDeleteItem),
 				typeof(SmCubeUpdate),
+				typeof(SmInventoryUpdateItem),
+				typeof(SmInventoryUpdateItem),
 			],
 			plan.InventoryPacketPlan!.Packets.Select(packet => packet.GetType()).ToArray());
 		Assert.Equal(CraftStartTaskPlanStatus.Planned, plan.TaskPlan?.Status);

@@ -1092,6 +1092,30 @@ public sealed class CraftServiceTests
 				Assert.Equal(8013, item.ObjectId);
 				Assert.Equal(4, item.Count);
 			});
+		Assert.Collection(
+			mutation.OrderedOperations,
+			operation =>
+			{
+				Assert.Equal(CraftStartInventoryMutationOperationKind.Deleted, operation.Kind);
+				Assert.Equal(8010, operation.DeletedObjectId);
+				Assert.Equal(CraftStartConsumedItemKind.BonusItem, operation.Decrease.Kind);
+			},
+			operation =>
+			{
+				Assert.Equal(CraftStartInventoryMutationOperationKind.Deleted, operation.Kind);
+				Assert.Equal(8011, operation.DeletedObjectId);
+				Assert.Equal(CraftStartConsumedItemKind.Component, operation.Decrease.Kind);
+			},
+			operation =>
+			{
+				Assert.Equal(CraftStartInventoryMutationOperationKind.Updated, operation.Kind);
+				Assert.Equal(8012, operation.UpdatedItem?.ObjectId);
+			},
+			operation =>
+			{
+				Assert.Equal(CraftStartInventoryMutationOperationKind.Updated, operation.Kind);
+				Assert.Equal(8013, operation.UpdatedItem?.ObjectId);
+			});
 		Assert.Equal(1, player.InventoryItems.Single(item => item.ObjectId == 8010).Count);
 		Assert.Equal(1, player.InventoryItems.Single(item => item.ObjectId == 8011).Count);
 		Assert.Equal(3, player.InventoryItems.Single(item => item.ObjectId == 8012).Count);
@@ -1136,6 +1160,9 @@ public sealed class CraftServiceTests
 		Assert.Equal(1, mutation.AvailableCount);
 		Assert.Equal([8015], mutation.DeletedObjectIds);
 		Assert.Empty(mutation.UpdatedItems);
+		var operation = Assert.Single(mutation.OrderedOperations);
+		Assert.Equal(CraftStartInventoryMutationOperationKind.Deleted, operation.Kind);
+		Assert.Equal(8015, operation.DeletedObjectId);
 		Assert.False(mutation.IsLive);
 	}
 
@@ -1150,6 +1177,7 @@ public sealed class CraftServiceTests
 		Assert.Equal(CraftStartInventoryMutationStatus.NotPlanned, mutation.Status);
 		Assert.Empty(mutation.UpdatedItems);
 		Assert.Empty(mutation.DeletedObjectIds);
+		Assert.Empty(mutation.OrderedOperations);
 		Assert.Contains("not planned", mutation.JavaSource, StringComparison.Ordinal);
 	}
 
@@ -1198,20 +1226,20 @@ public sealed class CraftServiceTests
 		Assert.Contains("DEC_ITEM_USE", packetPlan.JavaSource, StringComparison.Ordinal);
 		Assert.Collection(
 			packetPlan.Packets,
-			packet =>
-			{
-				var updatePacket = Assert.IsType<SmInventoryUpdateItem>(packet);
-				Assert.Equal(SmInventoryUpdateItem.DecreaseItemUse, ReadInventoryUpdateType(updatePacket));
-			},
-			packet =>
-			{
-				var updatePacket = Assert.IsType<SmInventoryUpdateItem>(packet);
-				Assert.Equal(SmInventoryUpdateItem.DecreaseItemUse, ReadInventoryUpdateType(updatePacket));
-			},
 			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 8020, expectedDeleteType: SmDeleteItem.UseDeleteType),
 			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 3),
 			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 8021, expectedDeleteType: SmDeleteItem.UseDeleteType),
-			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 2));
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 2),
+			packet =>
+			{
+				var updatePacket = Assert.IsType<SmInventoryUpdateItem>(packet);
+				Assert.Equal(SmInventoryUpdateItem.DecreaseItemUse, ReadInventoryUpdateType(updatePacket));
+			},
+			packet =>
+			{
+				var updatePacket = Assert.IsType<SmInventoryUpdateItem>(packet);
+				Assert.Equal(SmInventoryUpdateItem.DecreaseItemUse, ReadInventoryUpdateType(updatePacket));
+			});
 	}
 
 	[Fact]
@@ -1219,10 +1247,12 @@ public sealed class CraftServiceTests
 	{
 		var service = CreateService(out _, CreateItemTemplates());
 		var consumption = CraftStartConsumptionPlan.NotPlanned("packet evidence only");
+		var missingTemplateItem = CreateInventoryItem(objectId: 8024, itemId: 999999999, count: 2);
 		var mutation = CraftStartInventoryMutationPlan.Planned(
 			consumption,
-			[CreateInventoryItem(objectId: 8024, itemId: 999999999, count: 2)],
-			[]);
+			[missingTemplateItem],
+			[],
+			[CraftStartInventoryMutationOperation.Updated(CraftStartConsumedItemPlan.Component(999999999, 1), missingTemplateItem)]);
 
 		var packetPlan = service.CreateStartInventoryPacketPlan(mutation);
 
@@ -1237,10 +1267,12 @@ public sealed class CraftServiceTests
 	{
 		var service = CreateService(out _);
 		var notPlannedMutation = CraftStartInventoryMutationPlan.NotPlanned("validation failed");
+		var updatedItem = CreateInventoryItem(objectId: 8025, itemId: 152000901, count: 2);
 		var plannedMutation = CraftStartInventoryMutationPlan.Planned(
 			CraftStartConsumptionPlan.NotPlanned("packet evidence only"),
-			[CreateInventoryItem(objectId: 8025, itemId: 152000901, count: 2)],
-			[]);
+			[updatedItem],
+			[],
+			[CraftStartInventoryMutationOperation.Updated(CraftStartConsumedItemPlan.Component(152000901, 1), updatedItem)]);
 
 		var withoutMutation = service.CreateStartInventoryPacketPlan(notPlannedMutation);
 		var missingTemplates = service.CreateStartInventoryPacketPlan(plannedMutation);
@@ -1259,7 +1291,8 @@ public sealed class CraftServiceTests
 		var mutation = CraftStartInventoryMutationPlan.Planned(
 			CraftStartConsumptionPlan.NotPlanned("packet evidence only"),
 			updatedItems: [],
-			deletedObjectIds: [8026]);
+			deletedObjectIds: [8026],
+			orderedOperations: [CraftStartInventoryMutationOperation.Deleted(CraftStartConsumedItemPlan.Component(152000901, 1), 8026)]);
 
 		var packetPlan = service.CreateStartInventoryPacketPlan(mutation);
 

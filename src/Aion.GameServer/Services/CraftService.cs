@@ -295,6 +295,7 @@ public sealed class CraftService
 			.ToList();
 		var updatedItems = new List<InventoryItem>();
 		var deletedObjectIds = new List<int>();
+		var operations = new List<CraftStartInventoryMutationOperation>();
 
 		foreach (var decrease in consumptionPlan.Decreases)
 		{
@@ -312,9 +313,16 @@ public sealed class CraftService
 				remaining -= removed;
 				item.Count -= removed;
 				if (item.Count <= 0)
+				{
 					deletedObjectIds.Add(item.Item.ObjectId);
+					operations.Add(CraftStartInventoryMutationOperation.Deleted(decrease, item.Item.ObjectId));
+				}
 				else
-					updatedItems.Add(CopyInventoryItem(item.Item, item.Count));
+				{
+					var updatedItem = CopyInventoryItem(item.Item, item.Count);
+					updatedItems.Add(updatedItem);
+					operations.Add(CraftStartInventoryMutationOperation.Updated(decrease, updatedItem));
+				}
 			}
 
 			if (remaining > 0)
@@ -324,11 +332,12 @@ public sealed class CraftService
 					decrease,
 					decrease.Quantity - remaining,
 					updatedItems,
-					deletedObjectIds);
+					deletedObjectIds,
+					operations);
 			}
 		}
 
-		return CraftStartInventoryMutationPlan.Planned(consumptionPlan, updatedItems, deletedObjectIds);
+		return CraftStartInventoryMutationPlan.Planned(consumptionPlan, updatedItems, deletedObjectIds, operations);
 	}
 
 	public CraftStartInventoryPacketPlan CreateStartInventoryPacketPlan(
@@ -345,33 +354,35 @@ public sealed class CraftService
 			return CraftStartInventoryPacketPlan.NotPlanned("CraftService.checkCraft inventory mutation was not planned");
 		if (_itemTemplates == null)
 			return CraftStartInventoryPacketPlan.MissingItemTemplates(mutationPlan);
-		if (mutationPlan.DeletedObjectIds.Count > 0 && player == null)
+		if (mutationPlan.OrderedOperations.Any(operation => operation.Kind == CraftStartInventoryMutationOperationKind.Deleted) && player == null)
 			return CraftStartInventoryPacketPlan.MissingCubeSizeSnapshot(mutationPlan, packets: Array.Empty<GameServerPacket>());
 
 		var packets = new List<GameServerPacket>();
-		foreach (var updatedItem in mutationPlan.UpdatedItems)
-		{
-			var template = _itemTemplates.GetItemTemplate(updatedItem.ItemId);
-			if (template == null)
-				return CraftStartInventoryPacketPlan.MissingUpdatedItemTemplate(mutationPlan, updatedItem.ItemId, packets);
-
-			packets.Add(new SmInventoryUpdateItem(
-				updatedItem,
-				template,
-				SmInventoryUpdateItem.DecreaseItemUse,
-				GetGeneralInfoWarehouseRestrictionFlag(updatedItem.ItemId, itemRestrictionCleanups)));
-		}
-
 		var projectedCubeCount = player?.InventoryItems.Count(item => item.Location == CubeStorageId && item.ItemId != KinahItemId) ?? 0;
-		foreach (var deletedObjectId in mutationPlan.DeletedObjectIds)
+		foreach (var operation in mutationPlan.OrderedOperations)
 		{
-			packets.Add(new SmDeleteItem(deletedObjectId, SmDeleteItem.UseDeleteType));
-			projectedCubeCount--;
-			packets.Add(SmCubeUpdate.CubeSizeSnapshot(
-				projectedCubeCount,
-				player!.NpcExpands,
-				player.QuestExpands,
-				player.ItemExpands));
+			if (operation.UpdatedItem != null)
+			{
+				var template = _itemTemplates.GetItemTemplate(operation.UpdatedItem.ItemId);
+				if (template == null)
+					return CraftStartInventoryPacketPlan.MissingUpdatedItemTemplate(mutationPlan, operation.UpdatedItem.ItemId, packets);
+
+				packets.Add(new SmInventoryUpdateItem(
+					operation.UpdatedItem,
+					template,
+					SmInventoryUpdateItem.DecreaseItemUse,
+					GetGeneralInfoWarehouseRestrictionFlag(operation.UpdatedItem.ItemId, itemRestrictionCleanups)));
+			}
+			else if (operation.DeletedObjectId.HasValue)
+			{
+				packets.Add(new SmDeleteItem(operation.DeletedObjectId.Value, SmDeleteItem.UseDeleteType));
+				projectedCubeCount--;
+				packets.Add(SmCubeUpdate.CubeSizeSnapshot(
+					projectedCubeCount,
+					player!.NpcExpands,
+					player.QuestExpands,
+					player.ItemExpands));
+			}
 		}
 
 		return CraftStartInventoryPacketPlan.Planned(mutationPlan, packets);
@@ -1444,6 +1455,7 @@ public sealed record CraftStartInventoryMutationPlan(
 	CraftStartConsumptionPlan? ConsumptionPlan,
 	IReadOnlyList<InventoryItem> UpdatedItems,
 	IReadOnlyList<int> DeletedObjectIds,
+	IReadOnlyList<CraftStartInventoryMutationOperation> OrderedOperations,
 	CraftStartConsumedItemPlan? FailedDecrease,
 	long AvailableCount,
 	string JavaSource,
@@ -1458,6 +1470,7 @@ public sealed record CraftStartInventoryMutationPlan(
 			ConsumptionPlan: null,
 			UpdatedItems: Array.Empty<InventoryItem>(),
 			DeletedObjectIds: Array.Empty<int>(),
+			OrderedOperations: Array.Empty<CraftStartInventoryMutationOperation>(),
 			FailedDecrease: null,
 			AvailableCount: 0,
 			javaSource,
@@ -1471,6 +1484,7 @@ public sealed record CraftStartInventoryMutationPlan(
 			consumptionPlan,
 			UpdatedItems: Array.Empty<InventoryItem>(),
 			DeletedObjectIds: Array.Empty<int>(),
+			OrderedOperations: Array.Empty<CraftStartInventoryMutationOperation>(),
 			FailedDecrease: null,
 			AvailableCount: 0,
 			"CraftService.checkCraft inventory mutation planning requires player inventory",
@@ -1482,13 +1496,15 @@ public sealed record CraftStartInventoryMutationPlan(
 		CraftStartConsumedItemPlan failedDecrease,
 		long availableCount,
 		IReadOnlyList<InventoryItem> updatedItems,
-		IReadOnlyList<int> deletedObjectIds)
+		IReadOnlyList<int> deletedObjectIds,
+		IReadOnlyList<CraftStartInventoryMutationOperation> orderedOperations)
 	{
 		return new CraftStartInventoryMutationPlan(
 			CraftStartInventoryMutationStatus.InsufficientInventory,
 			consumptionPlan,
 			updatedItems.ToArray(),
 			deletedObjectIds.ToArray(),
+			orderedOperations.ToArray(),
 			failedDecrease,
 			availableCount,
 			"Storage.decreaseByItemId -> matching stacks could not satisfy requested count",
@@ -1498,16 +1514,18 @@ public sealed record CraftStartInventoryMutationPlan(
 	public static CraftStartInventoryMutationPlan Planned(
 		CraftStartConsumptionPlan consumptionPlan,
 		IReadOnlyList<InventoryItem> updatedItems,
-		IReadOnlyList<int> deletedObjectIds)
+		IReadOnlyList<int> deletedObjectIds,
+		IReadOnlyList<CraftStartInventoryMutationOperation> orderedOperations)
 	{
 		return new CraftStartInventoryMutationPlan(
 			CraftStartInventoryMutationStatus.Planned,
 			consumptionPlan,
 			updatedItems.ToArray(),
 			deletedObjectIds.ToArray(),
+			orderedOperations.ToArray(),
 			FailedDecrease: null,
 			AvailableCount: 0,
-			"Storage.decreaseByItemId -> decreaseItemCount(..., ItemUpdateType.DEC_ITEM_USE), delete stacks at zero",
+			"Storage.decreaseByItemId -> ordered decreaseItemCount(..., ItemUpdateType.DEC_ITEM_USE), delete stacks at zero",
 			IsLive: false);
 	}
 }
@@ -1518,6 +1536,40 @@ public enum CraftStartInventoryMutationStatus
 	MissingInventory,
 	InsufficientInventory,
 	Planned,
+}
+
+public sealed record CraftStartInventoryMutationOperation(
+	CraftStartInventoryMutationOperationKind Kind,
+	CraftStartConsumedItemPlan Decrease,
+	InventoryItem? UpdatedItem,
+	int? DeletedObjectId,
+	string JavaSource)
+{
+	public static CraftStartInventoryMutationOperation Updated(CraftStartConsumedItemPlan decrease, InventoryItem updatedItem)
+	{
+		return new CraftStartInventoryMutationOperation(
+			CraftStartInventoryMutationOperationKind.Updated,
+			decrease,
+			updatedItem,
+			DeletedObjectId: null,
+			"Storage.decreaseItemCount -> ItemPacketService.sendItemPacket with DEC_ITEM_USE for remaining stack");
+	}
+
+	public static CraftStartInventoryMutationOperation Deleted(CraftStartConsumedItemPlan decrease, int deletedObjectId)
+	{
+		return new CraftStartInventoryMutationOperation(
+			CraftStartInventoryMutationOperationKind.Deleted,
+			decrease,
+			UpdatedItem: null,
+			deletedObjectId,
+			"Storage.decreaseItemCount -> delete(..., ItemDeleteType.USE) for zero stack");
+	}
+}
+
+public enum CraftStartInventoryMutationOperationKind
+{
+	Updated,
+	Deleted,
 }
 
 public sealed record CraftStartInventoryPacketPlan(
