@@ -1777,6 +1777,7 @@ public sealed class StaticData
 					ReadOptionalIntAttribute(reader, "rnd_count", -1),
 					reader.GetAttribute("enchant_name") ?? string.Empty,
 					reader.GetAttribute("tempering_name") ?? string.Empty,
+					ReadIntAttribute(reader, "max_tampering"),
 					ReadIntAttribute(reader, "weapon_boost"));
 				if (reader.IsEmptyElement)
 				{
@@ -3901,6 +3902,7 @@ public sealed class StaticData
 			int maxTuneCount,
 			string enchantName,
 			string temperingName,
+			int maxTampering,
 			int weaponBoost)
 		{
 			TemplateId = templateId;
@@ -3932,6 +3934,7 @@ public sealed class StaticData
 			StatBonusSetId = randomBonusId;
 			EnchantName = enchantName;
 			TemperingName = temperingName;
+			MaxTampering = maxTampering;
 			WeaponBoost = weaponBoost;
 			MaxTuneCount = CalculateMaxTuneCount(validEquipmentSlots, maxTuneCount, maxEnchantBonus, optionSlotBonus, randomBonusId);
 			CanTune = MaxTuneCount != 0;
@@ -3996,6 +3999,8 @@ public sealed class StaticData
 		private string EnchantName { get; }
 
 		private string TemperingName { get; }
+
+		private int MaxTampering { get; }
 
 		private bool CanTune { get; }
 
@@ -4151,6 +4156,7 @@ public sealed class StaticData
 				StatBonusSetId,
 				EnchantName,
 				TemperingName,
+				MaxTampering,
 				PolishSetId,
 				ChargeActionMaxLevel,
 				GodstoneInfo,

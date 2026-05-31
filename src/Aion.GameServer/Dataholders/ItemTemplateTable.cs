@@ -63,6 +63,7 @@ public sealed record ItemTemplateSummary(
 	int StatBonusSetId = 0,
 	string EnchantName = "",
 	string TemperingName = "",
+	int MaxTampering = 0,
 	int PolishSetId = 0,
 	int ChargeActionMaxLevel = 0,
 	ItemGodstoneInfo? GodstoneInfo = null,
