@@ -21,6 +21,8 @@ public enum CmCraftStartCompositionPlanStep
 	CreateCancelPacketPlan,
 	CreateFailureOrchestrationPlan,
 	CreateConsumptionPlan,
+	CreateInventoryMutationPlan,
+	CreateInventoryPacketPlan,
 	CreateTaskPlan,
 }
 
@@ -31,6 +33,8 @@ public sealed record CmCraftStartCompositionPlan(
 	CraftStartCancelPacketPlan? CancelPacketPlan,
 	CraftStartFailureOrchestrationPlan? FailurePlan,
 	CraftStartConsumptionPlan? ConsumptionPlan,
+	CraftStartInventoryMutationPlan? InventoryMutationPlan,
+	CraftStartInventoryPacketPlan? InventoryPacketPlan,
 	CraftStartTaskPlan? TaskPlan,
 	IReadOnlyList<CmCraftStartCompositionPlanStep> Steps,
 	bool RequiresDpSpend,
@@ -69,6 +73,8 @@ public static class CmCraftStartCompositionPlanService
 				CancelPacketPlan: null,
 				FailurePlan: null,
 				ConsumptionPlan: null,
+				InventoryMutationPlan: null,
+				InventoryPacketPlan: null,
 				TaskPlan: null,
 				[CmCraftStartCompositionPlanStep.UseRuntimeGuardPlan],
 				RequiresDpSpend: false,
@@ -116,6 +122,8 @@ public static class CmCraftStartCompositionPlanService
 				cancelPlan,
 				failurePlan,
 				ConsumptionPlan: null,
+				InventoryMutationPlan: null,
+				InventoryPacketPlan: null,
 				TaskPlan: null,
 				steps,
 				RequiresDpSpend: false,
@@ -131,12 +139,20 @@ public static class CmCraftStartCompositionPlanService
 			recipeTemplate,
 			startIntent.MaterialsData,
 			startIntent.CraftType);
+		steps.Add(CmCraftStartCompositionPlanStep.CreateInventoryMutationPlan);
+		var inventoryMutationPlan = craftService.CreateStartInventoryMutationPlan(
+			consumptionPlan,
+			player?.InventoryItems);
+		steps.Add(CmCraftStartCompositionPlanStep.CreateInventoryPacketPlan);
+		var inventoryPacketPlan = craftService.CreateStartInventoryPacketPlan(inventoryMutationPlan);
 		steps.Add(CmCraftStartCompositionPlanStep.CreateTaskPlan);
 		var taskPlan = craftService.CreateStartTaskPlan(
 			validationPlan,
 			productTemplate,
 			startIntent.CraftType);
 		var isReady = consumptionPlan.Status == CraftStartConsumptionStatus.Planned
+			&& inventoryMutationPlan.Status == CraftStartInventoryMutationStatus.Planned
+			&& inventoryPacketPlan.Status == CraftStartInventoryPacketStatus.Planned
 			&& taskPlan.Status == CraftStartTaskPlanStatus.Planned;
 
 		return new CmCraftStartCompositionPlan(
@@ -148,6 +164,8 @@ public static class CmCraftStartCompositionPlanService
 			CancelPacketPlan: null,
 			FailurePlan: null,
 			consumptionPlan,
+			inventoryMutationPlan,
+			inventoryPacketPlan,
 			taskPlan,
 			steps,
 			RequiresDpSpend: recipeTemplate?.Dp > 0,
@@ -169,6 +187,8 @@ public static class CmCraftStartCompositionPlanService
 			CancelPacketPlan: null,
 			FailurePlan: null,
 			ConsumptionPlan: null,
+			InventoryMutationPlan: null,
+			InventoryPacketPlan: null,
 			TaskPlan: null,
 			runtimePlan == null ? [] : [CmCraftStartCompositionPlanStep.UseRuntimeGuardPlan],
 			RequiresDpSpend: false,

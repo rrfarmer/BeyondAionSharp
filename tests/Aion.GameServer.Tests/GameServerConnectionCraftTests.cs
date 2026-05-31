@@ -186,6 +186,12 @@ public sealed class GameServerConnectionCraftTests
 		var decrease = Assert.Single(compositionPlan.ConsumptionPlan!.Decreases);
 		Assert.Equal(152000901, decrease.ItemId);
 		Assert.Equal(1, decrease.Quantity);
+		Assert.Equal(CraftStartInventoryMutationStatus.Planned, compositionPlan.InventoryMutationPlan?.Status);
+		Assert.Equal([2001], compositionPlan.InventoryMutationPlan!.DeletedObjectIds);
+		Assert.Empty(compositionPlan.InventoryMutationPlan.UpdatedItems);
+		Assert.Equal(CraftStartInventoryPacketStatus.Planned, compositionPlan.InventoryPacketPlan?.Status);
+		var deletePacket = Assert.Single(compositionPlan.InventoryPacketPlan!.Packets);
+		Assert.IsType<SmDeleteItem>(deletePacket);
 		Assert.Equal(CraftStartTaskPlanStatus.Planned, compositionPlan.TaskPlan?.Status);
 		Assert.Equal(200, compositionPlan.TaskPlan!.Interval);
 		Assert.True(compositionPlan.RequiresDpSpend);

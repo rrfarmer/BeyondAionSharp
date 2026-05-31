@@ -1,5 +1,6 @@
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.World;
 
@@ -59,6 +60,8 @@ public sealed class CmCraftStartCompositionPlanServiceTests
 				CmCraftStartCompositionPlanStep.UseRuntimeGuardPlan,
 				CmCraftStartCompositionPlanStep.CreateStartValidationPlan,
 				CmCraftStartCompositionPlanStep.CreateConsumptionPlan,
+				CmCraftStartCompositionPlanStep.CreateInventoryMutationPlan,
+				CmCraftStartCompositionPlanStep.CreateInventoryPacketPlan,
 				CmCraftStartCompositionPlanStep.CreateTaskPlan,
 			],
 			plan.Steps);
@@ -72,6 +75,17 @@ public sealed class CmCraftStartCompositionPlanServiceTests
 				CraftStartConsumedItemKind.Component,
 			],
 			plan.ConsumptionPlan!.Decreases.Select(item => item.Kind).ToArray());
+		Assert.Equal(CraftStartInventoryMutationStatus.Planned, plan.InventoryMutationPlan?.Status);
+		Assert.Equal([2003], plan.InventoryMutationPlan!.DeletedObjectIds);
+		Assert.Equal([2001, 2002], plan.InventoryMutationPlan.UpdatedItems.Select(item => item.ObjectId).ToArray());
+		Assert.Equal(CraftStartInventoryPacketStatus.Planned, plan.InventoryPacketPlan?.Status);
+		Assert.Equal(
+			[
+				typeof(SmInventoryUpdateItem),
+				typeof(SmInventoryUpdateItem),
+				typeof(SmDeleteItem),
+			],
+			plan.InventoryPacketPlan!.Packets.Select(packet => packet.GetType()).ToArray());
 		Assert.Equal(CraftStartTaskPlanStatus.Planned, plan.TaskPlan?.Status);
 		Assert.Equal(15, plan.TaskPlan!.BonusCritModifier);
 		Assert.Null(plan.CancelPacketPlan);
@@ -121,6 +135,8 @@ public sealed class CmCraftStartCompositionPlanServiceTests
 		Assert.Equal(CraftStartCancelPacketPlanStatus.Planned, plan.CancelPacketPlan?.Status);
 		Assert.Equal(CraftStartFailureOrchestrationStatus.Planned, plan.FailurePlan?.Status);
 		Assert.Null(plan.ConsumptionPlan);
+		Assert.Null(plan.InventoryMutationPlan);
+		Assert.Null(plan.InventoryPacketPlan);
 		Assert.Null(plan.TaskPlan);
 		Assert.False(plan.RequiresDpSpend);
 		Assert.Contains(CmCraftStartCompositionPlanStep.CreateFailureOrchestrationPlan, plan.Steps);
@@ -159,6 +175,8 @@ public sealed class CmCraftStartCompositionPlanServiceTests
 		Assert.Same(runtimePlan, plan.RuntimePlan);
 		Assert.Null(plan.ValidationPlan);
 		Assert.Null(plan.ConsumptionPlan);
+		Assert.Null(plan.InventoryMutationPlan);
+		Assert.Null(plan.InventoryPacketPlan);
 		Assert.Null(plan.TaskPlan);
 		Assert.Equal([CmCraftStartCompositionPlanStep.UseRuntimeGuardPlan], plan.Steps);
 	}
