@@ -280,6 +280,120 @@ public sealed class CraftServiceTests
 	}
 
 	[Fact]
+	public void CreateStartCraftingValidationPlan_ChecksDpAfterTargetValidation()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1110, dp: 100);
+		var recipe = CreateRecipe(recipeId: 155000011, dp: 600, productId: 100200203, skillId: 40001);
+		var productTemplate = CreateItemTemplates().GetItemTemplate(100200203);
+		var target = CreateTarget(objectId: 9004, templateId: 730190);
+
+		var invalidTarget = service.CreateStartCraftingValidationPlan(
+			player,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: false,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false);
+		var notEnoughDp = service.CreateStartCraftingValidationPlan(
+			player,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false);
+
+		Assert.Equal(CraftStartValidationStatus.InvalidNonMorphTarget, invalidTarget.Status);
+		Assert.Equal(CraftStartValidationStatus.NotEnoughDp, notEnoughDp.Status);
+		Assert.Equal(600, notEnoughDp.RequiredDp);
+		Assert.Equal(100, notEnoughDp.CurrentDp);
+		Assert.Equal(9004, notEnoughDp.TargetObjectId);
+		Assert.True(notEnoughDp.ShouldSendCancelCraft);
+		Assert.False(notEnoughDp.IsReadyForNextValidation);
+		Assert.Contains("getDp", notEnoughDp.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void CreateStartCraftingValidationPlan_AllowsSufficientDpToContinue()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1111, dp: 700);
+		var recipe = CreateRecipe(recipeId: 155000012, dp: 600, productId: 100200203, skillId: 40001);
+		var productTemplate = CreateItemTemplates().GetItemTemplate(100200203);
+		var target = CreateTarget(objectId: 9005, templateId: 730190);
+
+		var plan = service.CreateStartCraftingValidationPlan(
+			player,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false);
+
+		Assert.Equal(CraftStartValidationStatus.ReadyForNextValidation, plan.Status);
+		Assert.Equal(600, plan.RequiredDp);
+		Assert.Equal(700, plan.CurrentDp);
+		Assert.False(plan.ShouldSendCancelCraft);
+		Assert.True(plan.IsReadyForNextValidation);
+	}
+
+	[Fact]
+	public void CreateStartCancelPacketPlan_PlansJavaCancelUpdateAndAnimation()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1112, dp: 100);
+		var recipe = CreateRecipe(recipeId: 155000013, dp: 600, productId: 100200203, skillId: 40001);
+		var productTemplate = CreateItemTemplates().GetItemTemplate(100200203);
+
+		var plan = service.CreateStartCancelPacketPlan(player, recipe, productTemplate, targetObjectId: 9006);
+
+		Assert.Equal(CraftStartCancelPacketPlanStatus.Planned, plan.Status);
+		Assert.False(plan.IsLive);
+		var update = Assert.IsType<SmCraftUpdate>(plan.SelfPacket);
+		var animation = Assert.IsType<SmCraftAnimation>(plan.BroadcastPacket);
+		Assert.Contains("sendCancelCraft", plan.JavaSource, StringComparison.Ordinal);
+
+		using var updateReader = new PacketBuffer(SerializeUnencryptedPayload(update));
+		Assert.Equal(40001, updateReader.ReadH());
+		Assert.Equal(4, updateReader.ReadC());
+		Assert.Equal(100200203, updateReader.ReadD());
+		Assert.Equal(0, updateReader.ReadD());
+		Assert.Equal(0, updateReader.ReadD());
+		Assert.Equal(0, updateReader.ReadD());
+		Assert.Equal(0, updateReader.ReadD());
+		Assert.Equal(1330051, updateReader.ReadD());
+
+		using var animationReader = new PacketBuffer(SerializeUnencryptedPayload(animation));
+		Assert.Equal(1112, animationReader.ReadD());
+		Assert.Equal(9006, animationReader.ReadD());
+		Assert.Equal(0, animationReader.ReadH());
+		Assert.Equal(2, animationReader.ReadC());
+	}
+
+	[Fact]
+	public void CreateStartCancelPacketPlan_MissingInputsDoesNotPlan()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1113, dp: 100);
+		var recipe = CreateRecipe(recipeId: 155000014, dp: 600, productId: 100200203, skillId: 40001);
+		var productTemplate = CreateItemTemplates().GetItemTemplate(100200203);
+
+		var missingPlayer = service.CreateStartCancelPacketPlan(null, recipe, productTemplate, targetObjectId: 9007);
+		var missingRecipe = service.CreateStartCancelPacketPlan(player, null, productTemplate, targetObjectId: 9007);
+		var missingProduct = service.CreateStartCancelPacketPlan(player, recipe, null, targetObjectId: 9007);
+
+		Assert.Equal(CraftStartCancelPacketPlanStatus.NotPlanned, missingPlayer.Status);
+		Assert.Equal(CraftStartCancelPacketPlanStatus.NotPlanned, missingRecipe.Status);
+		Assert.Equal(CraftStartCancelPacketPlanStatus.NotPlanned, missingProduct.Status);
+		Assert.Null(missingPlayer.SelfPacket);
+		Assert.Null(missingRecipe.BroadcastPacket);
+		Assert.Null(missingProduct.SelfPacket);
+	}
+
+	[Fact]
 	public void CreateFinishProductPlan_UsesBaseProductWhenCraftDoesNotCrit()
 	{
 		var service = CreateService(out _, CreateItemTemplates());

@@ -64,12 +64,46 @@ public sealed class CraftService
 				return CraftStartValidationPlan.TooFarFromTool(player.ObjectId, recipeTemplate, productTemplate, target.TemplateId);
 		}
 
+		if (recipeTemplate.Dp > 0 && player.Dp < recipeTemplate.Dp)
+			return CraftStartValidationPlan.NotEnoughDp(player.ObjectId, player.Dp, recipeTemplate, productTemplate, target?.ObjectId ?? 0);
+
 		return CraftStartValidationPlan.ReadyForNextValidation(
 			player.ObjectId,
+			player.Dp,
 			recipeTemplate,
 			productTemplate,
 			target?.ObjectId ?? 0,
 			isMorphRecipe);
+	}
+
+	public CraftStartCancelPacketPlan CreateStartCancelPacketPlan(
+		Player? player,
+		RecipeTemplateSummary? recipeTemplate,
+		ItemTemplateSummary? productTemplate,
+		int targetObjectId)
+	{
+		// Java parity: services/craft/CraftService.sendCancelCraft.
+		if (player == null)
+			return CraftStartCancelPacketPlan.NotPlanned("CraftService.sendCancelCraft requires player object id");
+		if (recipeTemplate == null)
+			return CraftStartCancelPacketPlan.NotPlanned("CraftService.sendCancelCraft requires skill id from recipe template");
+		if (productTemplate == null)
+			return CraftStartCancelPacketPlan.NotPlanned("CraftService.sendCancelCraft requires item template for SM_CRAFT_UPDATE");
+
+		return CraftStartCancelPacketPlan.Planned(
+			new SmCraftUpdate(
+				recipeTemplate.SkillId,
+				productTemplate,
+				success: 0,
+				failure: 0,
+				CraftingTaskPacketPlanService.CancelAction,
+				executionSpeed: 0,
+				delay: 0),
+			new SmCraftAnimation(
+				player.ObjectId,
+				targetObjectId,
+				skillId: 0,
+				CraftingTaskPacketPlanService.AnimationCompleteAction));
 	}
 
 	public CraftFinishProductPlan CreateFinishProductPlan(Player? player, RecipeTemplateSummary? recipeTemplate, int critCount)
@@ -289,6 +323,8 @@ public sealed record CraftStartValidationPlan(
 	int ProductItemId,
 	int TargetObjectId,
 	int TargetTemplateId,
+	int RequiredDp,
+	int CurrentDp,
 	bool IsMorphRecipe,
 	bool ShouldSendCancelCraft,
 	bool IsReadyForNextValidation,
@@ -302,6 +338,8 @@ public sealed record CraftStartValidationPlan(
 			CraftStartValidationStatus.MissingPlayer,
 			0,
 			recipeId,
+			0,
+			0,
 			0,
 			0,
 			0,
@@ -322,6 +360,8 @@ public sealed record CraftStartValidationPlan(
 			0,
 			0,
 			0,
+			0,
+			0,
 			IsMorphRecipe: false,
 			ShouldSendCancelCraft: true,
 			IsReadyForNextValidation: false,
@@ -337,8 +377,10 @@ public sealed record CraftStartValidationPlan(
 			productItemId: recipeTemplate.ProductId,
 			targetObjectId: 0,
 			targetTemplateId: 0,
-			ShouldSendCancelCraft: true,
-			IsReadyForNextValidation: false,
+			requiredDp: recipeTemplate.Dp,
+			currentDp: 0,
+			shouldSendCancelCraft: true,
+			isReadyForNextValidation: false,
 			"CraftService.startCrafting -> DataManager.ITEM_DATA.getItemTemplate(productId); checkCraft itemTemplate == null");
 	}
 
@@ -354,8 +396,10 @@ public sealed record CraftStartValidationPlan(
 			productTemplate.TemplateId,
 			targetObjectId: 0,
 			targetTemplateId: 0,
-			ShouldSendCancelCraft: true,
-			IsReadyForNextValidation: false,
+			requiredDp: recipeTemplate.Dp,
+			currentDp: 0,
+			shouldSendCancelCraft: true,
+			isReadyForNextValidation: false,
 			"CraftService.checkCraft -> player.getCraftingTask() != null && isInProgress()");
 	}
 
@@ -371,8 +415,10 @@ public sealed record CraftStartValidationPlan(
 			productTemplate.TemplateId,
 			targetObjectId: 0,
 			targetTemplateId: 0,
-			ShouldSendCancelCraft: true,
-			IsReadyForNextValidation: false,
+			requiredDp: recipeTemplate.Dp,
+			currentDp: 0,
+			shouldSendCancelCraft: true,
+			isReadyForNextValidation: false,
 			"CraftService.checkCraft -> skillId != 40009 && (target == null || !(target instanceof StaticObject))");
 	}
 
@@ -389,13 +435,37 @@ public sealed record CraftStartValidationPlan(
 			productTemplate.TemplateId,
 			targetObjectId: 0,
 			targetTemplateId,
-			ShouldSendCancelCraft: true,
-			IsReadyForNextValidation: false,
+			requiredDp: recipeTemplate.Dp,
+			currentDp: 0,
+			shouldSendCancelCraft: true,
+			isReadyForNextValidation: false,
 			"CraftService.checkCraft -> !PositionUtil.isInRange(player, target, 5, false)");
+	}
+
+	public static CraftStartValidationPlan NotEnoughDp(
+		int objectId,
+		int currentDp,
+		RecipeTemplateSummary recipeTemplate,
+		ItemTemplateSummary productTemplate,
+		int targetObjectId)
+	{
+		return FromRecipe(
+			CraftStartValidationStatus.NotEnoughDp,
+			objectId,
+			recipeTemplate,
+			productTemplate.TemplateId,
+			targetObjectId,
+			targetTemplateId: 0,
+			requiredDp: recipeTemplate.Dp,
+			currentDp,
+			shouldSendCancelCraft: true,
+			isReadyForNextValidation: false,
+			"CraftService.checkCraft -> recipeTemplate.getDp() != null && player.getCommonData().getDp() < recipeTemplate.getDp()");
 	}
 
 	public static CraftStartValidationPlan ReadyForNextValidation(
 		int objectId,
+		int currentDp,
 		RecipeTemplateSummary recipeTemplate,
 		ItemTemplateSummary productTemplate,
 		int targetObjectId,
@@ -408,8 +478,10 @@ public sealed record CraftStartValidationPlan(
 			productTemplate.TemplateId,
 			targetObjectId,
 			targetTemplateId: 0,
-			ShouldSendCancelCraft: false,
-			IsReadyForNextValidation: true,
+			requiredDp: recipeTemplate.Dp,
+			currentDp,
+			shouldSendCancelCraft: false,
+			isReadyForNextValidation: true,
 			isMorphRecipe
 				? "CraftService.checkCraft -> morphing does not need static object/npc to use"
 				: "CraftService.checkCraft -> static target guard passed; continue to DP/stance/inventory/recipe/cooldown/skill/material guards");
@@ -422,8 +494,10 @@ public sealed record CraftStartValidationPlan(
 		int productItemId,
 		int targetObjectId,
 		int targetTemplateId,
-		bool ShouldSendCancelCraft,
-		bool IsReadyForNextValidation,
+		int requiredDp,
+		int currentDp,
+		bool shouldSendCancelCraft,
+		bool isReadyForNextValidation,
 		string javaSource)
 	{
 		return new CraftStartValidationPlan(
@@ -434,9 +508,11 @@ public sealed record CraftStartValidationPlan(
 			productItemId,
 			targetObjectId,
 			targetTemplateId,
+			requiredDp,
+			currentDp,
 			recipeTemplate.SkillId == MorphSubstancesSkillId,
-			ShouldSendCancelCraft,
-			IsReadyForNextValidation,
+			shouldSendCancelCraft,
+			isReadyForNextValidation,
 			javaSource);
 	}
 }
@@ -449,7 +525,42 @@ public enum CraftStartValidationStatus
 	AlreadyCrafting,
 	InvalidNonMorphTarget,
 	TooFarFromTool,
+	NotEnoughDp,
 	ReadyForNextValidation,
+}
+
+public sealed record CraftStartCancelPacketPlan(
+	CraftStartCancelPacketPlanStatus Status,
+	GameServerPacket? SelfPacket,
+	GameServerPacket? BroadcastPacket,
+	string JavaSource,
+	bool IsLive)
+{
+	public static CraftStartCancelPacketPlan NotPlanned(string javaSource)
+	{
+		return new CraftStartCancelPacketPlan(
+			CraftStartCancelPacketPlanStatus.NotPlanned,
+			SelfPacket: null,
+			BroadcastPacket: null,
+			javaSource,
+			IsLive: false);
+	}
+
+	public static CraftStartCancelPacketPlan Planned(GameServerPacket selfPacket, GameServerPacket broadcastPacket)
+	{
+		return new CraftStartCancelPacketPlan(
+			CraftStartCancelPacketPlanStatus.Planned,
+			selfPacket,
+			broadcastPacket,
+			"CraftService.sendCancelCraft -> send SM_CRAFT_UPDATE(action=4), broadcast SM_CRAFT_ANIMATION(skill=0, action=2)",
+			IsLive: false);
+	}
+}
+
+public enum CraftStartCancelPacketPlanStatus
+{
+	NotPlanned,
+	Planned,
 }
 
 public sealed record CraftFinishProductPlan(
